@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.29 2001-08-20 07:38:30 geuzaine Exp $
+# $Id: Makefile,v 1.30 2001-08-20 08:03:00 geuzaine Exp $
 #
 # Makefile for "libMesh.a"
 #
@@ -14,12 +14,12 @@ LIB     = ../lib/libMesh.a
 INCLUDE = -I../Adapt -I../Common -I../DataStr -I../Geo -I../Mesh\
           -I../Graphics -I../Motif -I../Parser -I../Fltk -I../Triangle
 
-C_FLAGS       = -g -Wall
+OPT_FLAGS     = -g -Wall
 OS_FLAGS      = -D_LITTLE_ENDIAN
 VERSION_FLAGS = 
 
 RMFLAGS  = -f
-CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(INCLUDE)
+CFLAGS   = $(OPT_FLAGS) $(OS_FLAGS) $(INCLUDE)
 
 SRC = 1D_Mesh.cpp \
       2D_Mesh.cpp \

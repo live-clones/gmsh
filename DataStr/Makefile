@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2001-08-11 23:32:18 geuzaine Exp $
+# $Id: Makefile,v 1.12 2001-08-20 08:03:00 geuzaine Exp $
 #
 # Makefile for "libDataStr.a"
 #
@@ -12,12 +12,12 @@ RANLIB   = ranlib
 LIB      = ../lib/libDataStr.a
 INCLUDE  = -I../Common
 
-C_FLAGS       = -g -Wall
+OPT_FLAGS     = -g -Wall
 OS_FLAGS      = 
 VERSION_FLAGS = 
 
 RMFLAGS  = -f
-CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)
+CFLAGS   = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)
 
 SRC = List.cpp \
       Malloc.cpp \

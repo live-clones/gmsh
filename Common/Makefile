@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.26 2001-08-11 23:32:17 geuzaine Exp $
+# $Id: Makefile,v 1.27 2001-08-20 08:03:00 geuzaine Exp $
 #
 # Makefile for "libCommon.a"
 #
@@ -14,7 +14,7 @@ LIB     = ../lib/libCommon.a
 INCLUDE = -I../includes -I../Common -I../DataStr -I../Geo -I../Graphics\
           -I../Mesh -I../Parser -I../Motif -I../Fltk
 
-C_FLAGS       = -g -Wall
+OPT_FLAGS     = -g -Wall
 OS_FLAGS      = -D_LITTLE_ENDIAN
 VERSION_FLAGS = -D_FLTK
 
@@ -23,7 +23,7 @@ GL_INCLUDE    = -I$(HOME)/SOURCES/Mesa-3.1/include\
 GUI_INCLUDE   = -I/usr/X11R6/LessTif/Motif1.2/include
 
 RMFLAGS = -f
-CFLAGS  = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
+CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
           $(GL_INCLUDE) $(GUI_INCLUDE)
 
 SRC =  	Context.cpp\

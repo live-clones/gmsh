@@ -1,4 +1,4 @@
-# $Id: Makefile.Motif,v 1.3 2001-08-15 10:03:33 geuzaine Exp $
+# $Id: Makefile.Motif,v 1.4 2001-08-20 08:03:00 geuzaine Exp $
 
 GMSH_RELEASE = 1.23
 
@@ -35,9 +35,9 @@ THREAD_LIB = -L/usr/lib -lpthread
 # ----------------------------------------------------------------------
 
 GMSH_DIR = Adapt Common DataStr Geo Graphics Mesh Parser\
-           Motif Fltk Plugin jpeg utils Parallel
-GMSH_XMOTIF_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif jpeg Parallel
-GMSH_BOX_DIR = Adapt Box Common DataStr Geo Mesh Parser Plugin Parallel
+           Motif Fltk Plugin jpeg utils Parallel Triangle
+GMSH_XMOTIF_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif jpeg Parallel Triangle
+GMSH_BOX_DIR = Adapt Box Common DataStr Geo Mesh Parser Plugin Parallel Triangle
 GMSH_BIN_DIR = bin
 GMSH_LIB_DIR = lib
 GMSH_DOC_DIR = doc
@@ -46,9 +46,9 @@ GMSH_TUTOR_DIR = tutorial
 GMSH_ARCHIVE_DIR = archives
 
 GMSH_XMOTIF_LIB = -L$(GMSH_LIB_DIR) -lMotif -lGraphics -lParser -lMesh -lGeo\
-                                    -lAdapt -lCommon -lDataStr -lJpeg -lParallel
+                                    -lAdapt -lCommon -lDataStr -lJpeg -lParallel -lTriangle
 GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lBox -lParser -lMesh -lGeo\
-                                 -lAdapt -lPlugin -lCommon -lDataStr -lParallel
+                                 -lAdapt -lPlugin -lCommon -lDataStr -lParallel -lTriangle
 GMSH_ARCHIVE = $(GMSH_ARCHIVE_DIR)/gmsh-`date "+%Y.%m.%d"`
 GMSH_SRCRPM = gmsh-$(GMSH_RELEASE)
 GMSH_SOURCES = `find . \( ! -name "*.tar*" -a ! -name "*.tgz" \
@@ -65,7 +65,7 @@ GMSH_UNAME = `uname`
 default: initialtag
 	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
-           "C_FLAGS=$(FLAGS)" \
+           "OPT_FLAGS=$(FLAGS)" \
            "OS_FLAGS=-D_LITTLE_ENDIAN -D_NOPLUGIN" \
            "VERSION_FLAGS=-D_XMOTIF" \
            "GL_INCLUDE=$(OPENGL_INC)" \
@@ -180,7 +180,7 @@ rpm: src
 compile_little_endian:
 	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
-           "C_FLAGS=-O3" \
+           "OPT_FLAGS=-O3" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_XMOTIF -D_NOPLUGIN" \
            "GL_INCLUDE=$(OPENGL_INC)" \
@@ -190,7 +190,7 @@ compile_little_endian:
 compile_little_endian_2952:
 	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=$(HOME)/gcc-2.95.2/bin/g++" \
-           "C_FLAGS=-O3" \
+           "OPT_FLAGS=-O3" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_XMOTIF -D_NOPLUGIN" \
            "GL_INCLUDE=$(OPENGL_INC)" \
@@ -200,7 +200,7 @@ compile_little_endian_2952:
 compile_little_endian_threads:
 	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
-           "C_FLAGS=-D_REENTRANT -O3" \
+           "OPT_FLAGS=-D_REENTRANT -O3" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_XMOTIF -D_NOPLUGIN -D_USETHREADS" \
            "GL_INCLUDE=$(OPENGL_INC)" \
@@ -210,7 +210,7 @@ compile_little_endian_threads:
 compile_big_endian:
 	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
-           "C_FLAGS=-O3" \
+           "OPT_FLAGS=-O3" \
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_XMOTIF -D_NOPLUGIN" \
            "GL_INCLUDE=$(OPENGL_INC)" \
@@ -221,7 +221,7 @@ compile_big_endian:
 compile_sgi:
 	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=CC" \
-           "C_FLAGS=-O2 -o32 -Olimit 3000" \
+           "OPT_FLAGS=-O2 -o32 -Olimit 3000" \
            "RANLIB=true"\
            "AR=CC -o32 -ar -o"\
            "OS_FLAGS=" \
@@ -231,7 +231,7 @@ compile_sgi:
         ); done
 	@for i in Mesh; do (cd $$i && $(MAKE) \
            "CC=CC" \
-           "C_FLAGS=-O1 -o32" \
+           "OPT_FLAGS=-O1 -o32" \
            "AR=CC -o32 -ar -o"\
            "RANLIB=true"\
            "OS_FLAGS=" \

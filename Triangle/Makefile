@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2001-08-20 07:38:30 geuzaine Exp $
+# $Id: Makefile,v 1.2 2001-08-20 08:03:00 geuzaine Exp $
 #
 # Makefile for "libTriangle.a"
 #
@@ -31,10 +31,10 @@ RANLIB   = ranlib
 
 LIB     = ../lib/libTriangle.a
 
-FORCE_C_FLAGS = -O0
-
 RMFLAGS  = -f
-CFLAGS   = $(FORCE_C_FLAGS) -DTRILIBRARY
+
+# Do not optimize Triangle: it fucks up on Linux
+CFLAGS   = $(OS_FLAGS) -O0 -DTRILIBRARY
 
 SRC = triangle.c
 

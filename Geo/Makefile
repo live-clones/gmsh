@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.23 2001-08-11 23:32:20 geuzaine Exp $
+# $Id: Makefile,v 1.24 2001-08-20 08:03:00 geuzaine Exp $
 #
 # Makefile for "libGeo.a"
 #
@@ -14,12 +14,12 @@ LIB       = ../lib/libGeo.a
 INCLUDE   = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Parser\
             -I../Motif -I../Fltk
 
-C_FLAGS       = -g -Wall
+OPT_FLAGS     = -g -Wall
 OS_FLAGS      = 
 VERSION_FLAGS = 
 
 RMFLAGS  = -f
-CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)
+CFLAGS   = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)
 
 SRC =  	CAD.cpp \
         DataBase.cpp \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.29 2001-08-11 23:32:24 geuzaine Exp $
+# $Id: Makefile,v 1.30 2001-08-20 08:03:00 geuzaine Exp $
 #
 # Makefile for "libParser.a"
 #
@@ -16,7 +16,7 @@ LIB      = ../lib/libParser.a
 INCLUDE  = -I../includes -I../Common -I../DataStr -I../Geo -I../Graphics\
            -I../Mesh -I../Motif -I../Fltk -I../Plugin -I../Parallel
 
-C_FLAGS       = -g -Wall
+OPT_FLAGS     = -g -Wall
 OS_FLAGS      = -D_LITTLE_ENDIAN
 VERSION_FLAGS = -D_XMOTIF
 
@@ -25,7 +25,7 @@ GL_INCLUDE    = -I$(HOME)/SOURCES/Mesa-3.1/include\
 GUI_INCLUDE   = -I/usr/X11R6/LessTif/Motif1.2/include
 
 RMFLAGS  = -f
-CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
+CFLAGS   = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
            $(GL_INCLUDE) $(GUI_INCLUDE)
 
 SRC =  	Gmsh.yy.cpp \

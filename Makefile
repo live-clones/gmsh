@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.137 2001-08-20 07:38:29 geuzaine Exp $
+# $Id: Makefile,v 1.138 2001-08-20 08:03:00 geuzaine Exp $
 
 GMSH_RELEASE = 1.24
 
@@ -47,7 +47,7 @@ GMSH_SOURCES = `find . \( ! -name "*.tar*" -a ! -name "*.tgz" \
 default: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
-           "C_FLAGS=$(FLAGS)" \
+           "OPT_FLAGS=$(FLAGS)" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
@@ -61,7 +61,7 @@ gmsh:
 static:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
-           "C_FLAGS=-O3" \
+           "OPT_FLAGS=-O3" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-static/include" \
@@ -189,7 +189,7 @@ dem:
 bb: tag
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
-           "C_FLAGS=-O3" \
+           "OPT_FLAGS=-O3" \
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_BLACKBOX" \
            "GL_INCLUDE=" \
@@ -201,7 +201,7 @@ bb-parallel: tag
 	PARALLEL=1
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CC=mpiCC" \
-           "C_FLAGS=-O3" \
+           "OPT_FLAGS=-O3" \
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_BLACKBOX -DPARALLEL" \
            "GL_INCLUDE=" \
@@ -212,7 +212,7 @@ bb-parallel: tag
 bb-mingw: tag
 	@for i in $(GMSH_BOX_DIR) ; do (cd $$i && $(MAKE) \
            "CC=g++ -mno-cygwin -I/mingw/include" \
-           "C_FLAGS=-O3" \
+           "OPT_FLAGS=-O3" \
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_BLACKBOX" \
            "GL_INCLUDE=" \
@@ -230,7 +230,7 @@ bb-mingw: tag
 compile_linux:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
-           "C_FLAGS=-g -O2 -Wall" \
+           "OPT_FLAGS=-g -O2 -Wall" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
@@ -247,7 +247,7 @@ linux: tag compile_linux link_linux strip_bin
 compile_fltk2:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
-           "C_FLAGS=-g -Wall" \
+           "OPT_FLAGS=-g -Wall" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
@@ -268,7 +268,7 @@ fltk2: compile_fltk2 link_fltk2
 compile_linux_gcc-2.95:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(HOME)/gcc-2.95.3/bin/g++" \
-           "C_FLAGS=-O2" \
+           "OPT_FLAGS=-O2" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=-I/usr/X11R6/include" \
@@ -277,7 +277,7 @@ compile_linux_gcc-2.95:
 	rm -f Mesh/3D_Extrude.o
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(HOME)/gcc-2.95.3/bin/g++" \
-           "C_FLAGS=-O0" \
+           "OPT_FLAGS=-O0" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=-I/usr/X11R6/include" \
@@ -299,7 +299,7 @@ rpm: src
 compile_linux_scorec :
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
-           "C_FLAGS=-O2" \
+           "OPT_FLAGS=-O2" \
            "VERSION_FLAGS=-D_FLTK" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "GL_INCLUDE=" \
@@ -317,7 +317,7 @@ linux_scorec : compile_linux_scorec link_linux_scorec strip_bin
 compile_dec:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
-           "C_FLAGS=-O2" \
+           "OPT_FLAGS=-O2" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
@@ -334,7 +334,7 @@ dec: tag compile_dec link_dec strip_bin
 compile_hp:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
-           "C_FLAGS=-O3" \
+           "OPT_FLAGS=-O3" \
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_FLTK -D_NODLL" \
            "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-3.1/include" \
@@ -352,7 +352,7 @@ hp: tag compile_hp link_hp strip_bin
 compile_ibm:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
-           "C_FLAGS=-O3" \
+           "OPT_FLAGS=-O3" \
            "OS_FLAGS=-D_BSD" \
            "VERSION_FLAGS=-D_FLTK -D_NODLL" \
            "GL_INCLUDE=" \
@@ -369,10 +369,10 @@ ibm: tag compile_ibm link_ibm strip_bin
 compile_sgi:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=CC" \
-           "C_FLAGS=-O2 -mips3 -n32 -OPT:Olimit=0 -LANG:std" \
+           "OPT_FLAGS=-O2 -OPT:Olimit=0 -LANG:std" \
            "RANLIB=true"\
            "AR=CC -mips3 -n32 -ar -o"\
-           "OS_FLAGS=" \
+           "OS_FLAGS=-mips3 -n32" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
@@ -388,8 +388,8 @@ sgi: tag compile_sgi link_sgi strip_bin
 compile_mingw:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=g++ -mno-cygwin -I/mingw/include" \
-           "C_FLAGS=-O2 -DWIN32" \
-           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "OPT_FLAGS=-O2" \
+           "OS_FLAGS= -DWIN32 -D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
@@ -407,8 +407,8 @@ mingw: tag compile_mingw link_mingw
 compile_cygwin:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
-           "C_FLAGS=-O2 -DWIN32" \
-           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "OPT_FLAGS=-O2" \
+           "OS_FLAGS=-DWIN32 -D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK -I/usr/include/w32api" \
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
@@ -426,8 +426,8 @@ cygwin: tag compile_cygwin link_cygwin
 cygwin_gertha_buro: tag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
-           "C_FLAGS=-O2 -DWIN32" \
-           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "OPT_FLAGS=-O2" \
+           "OS_FLAGS=-DWIN32 -D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I../../fltk" \
@@ -442,8 +442,8 @@ cygwin_gertha_buro: tag
 cygwin_laptopjf: 
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
-           "C_FLAGS=-O2 -DWIN32" \
-           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "OPT_FLAGS=-O2" \
+           "OS_FLAGS=-DWIN32 -D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I../../fltk-1.0.9" \
@@ -459,7 +459,7 @@ cygwin_laptopjf_tag: tag cygwin_laptopjf
 compile_sun:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
-           "C_FLAGS=-O3" \
+           "OPT_FLAGS=-O3" \
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_FLTK -D_NODLL" \
            "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-3.1/include" \
@@ -478,7 +478,7 @@ sun: tag compile_sun link_sun strip_bin
 compile_solaris_scorec :
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
-           "C_FLAGS=-O3" \
+           "OPT_FLAGS=-O3" \
            "VERSION_FLAGS=-D_FLTK" \
            "OS_FLAGS=" \
            "GL_INCLUDE=" \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2001-08-11 23:32:25 geuzaine Exp $
+# $Id: Makefile,v 1.17 2001-08-20 08:03:00 geuzaine Exp $
 #
 # Makefile for "libAdapt.a"
 #
@@ -13,12 +13,12 @@ RANLIB    = ranlib
 LIB       = ../lib/libPlugin.a
 INCLUDE   = -I../Common -I../Graphics -I../DataStr -I../Mesh
 
-C_FLAGS       = -g -Wall
+OPT_FLAGS     = -g -Wall
 OS_FLAGS      = 
 VERSION_FLAGS = 
 
 RMFLAGS   = -f
-CFLAGS    = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) $(GUI_INCLUDE) 
+CFLAGS    = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) $(GUI_INCLUDE) 
 
 SRC = Plugin.cpp\
         LevelsetPlugin.cpp\

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.25 2001-08-11 23:32:19 geuzaine Exp $
+# $Id: Makefile,v 1.26 2001-08-20 08:03:00 geuzaine Exp $
 #
 # Makefile for "libFltk.a"
 #
@@ -14,7 +14,7 @@ LIB      = ../lib/libFltk.a
 INCLUDE  = -I../Common -I../DataStr -I../Graphics -I../Geo\
            -I../Mesh -I../Parser -I../Fltk -I../Plugin
 
-C_FLAGS       = -g -Wall
+OPT_FLAGS     = -g -Wall
 OS_FLAGS      = -D_LITTLE_ENDIAN
 VERSION_FLAGS = -D_NOTHREADS -D_FLTK
 
@@ -23,7 +23,7 @@ GL_INCLUDE    = -I$(HOME)/SOURCES/Mesa-3.1/include\
 GUI_INCLUDE   = -I$(HOME)/SOURCES/fltk
 
 RMFLAGS  = -f
-CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
+CFLAGS   = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
            $(GUI_INCLUDE) $(GL_INCLUDE)
 
 SRC = Main.cpp \

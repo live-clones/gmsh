@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.19 2001-08-11 23:32:27 geuzaine Exp $
+# $Id: Makefile,v 1.20 2001-08-20 08:03:00 geuzaine Exp $
 #
 # Makefile for "libJpeg.a"
 #
@@ -13,12 +13,12 @@ RANLIB   = ranlib
 LIB      = ../lib/libJpeg.a
 INCLUDE  = -I.
 
-C_FLAGS       = -g -Wall
+OPT_FLAGS     = -g -Wall
 OS_FLAGS      = 
 VERSION_FLAGS = 
 
 RMFLAGS  = -f
-CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)
+CFLAGS   = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)
 
 SRC = jcomapi.c jutils.c jerror.c jmemmgr.c jmemnobs.c \
       jcapi.c jcparam.c jdatadst.c jcmaster.c jcmarker.c jcmainct.c \

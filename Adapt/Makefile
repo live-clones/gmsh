@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.21 2001-08-11 23:32:15 geuzaine Exp $
+# $Id: Makefile,v 1.22 2001-08-20 08:03:00 geuzaine Exp $
 #
 # Makefile for "libAdapt.a"
 #
@@ -13,12 +13,12 @@ RANLIB    = ranlib
 LIB       = ../lib/libAdapt.a
 INCLUDE   = -I../Common -I../DataStr
 
-C_FLAGS       = -g -Wall
+OPT_FLAGS     = -g -Wall
 OS_FLAGS      = 
 VERSION_FLAGS = 
 
 RMFLAGS   = -f
-CFLAGS    = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) 
+CFLAGS    = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) 
 
 SRC = Adapt.cpp \
       mnbrak.cpp \
