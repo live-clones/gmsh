@@ -1,4 +1,4 @@
-dnl "$Id: configure.in,v 1.5 2003-02-11 22:01:43 geuzaine Exp $"
+dnl "$Id: configure.in,v 1.6 2003-02-11 22:09:53 geuzaine Exp $"
 dnl
 dnl Machine independent configuration script for Gmsh.
 dnl
@@ -89,9 +89,6 @@ if test "x$enable_gui" != "xno"; then
   AC_PATH_PROG(FLTKCONFIG,fltk-config)
   if test "x${FLTKCONFIG}" = "x" -a "x${FLTK_PREFIX}" != "x" ; then
     AC_PATH_PROG(FLTKCONFIG,fltk-config,"",${FLTK_PREFIX})
-  fi
-  if test "x${FLTKCONFIG}" = "x" ; then
-    AC_PATH_PROG(FLTKCONFIG,fltk-config,"",${HOME}/SOURCES/fltk-1.1)
   fi
   if test "x$FLTKCONFIG" = "x"; then
     AC_MSG_ERROR(Could not find fltk-config. Try --with-prefix-fltk?)
