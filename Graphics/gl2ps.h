@@ -1,4 +1,4 @@
-/* $Id: gl2ps.h,v 1.54 2004-11-22 07:34:35 geuzaine Exp $ */
+/* $Id: gl2ps.h,v 1.55 2004-12-21 03:07:00 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2004 Christophe Geuzaine <geuz@geuz.org>
@@ -37,14 +37,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 
-/* To generate a Windows dll, you should define GL2PSDLL at compile
-   time */
+/* Define GL2PSDLL at compile time to build a Windows dll */
 
 #if defined (WIN32) || defined(_WIN32)
-/* Shut up warning due to bad windows header file */
-#  if defined(_MSC_VER) 
+#  if defined(_MSC_VER)
 #    pragma warning(disable:4115)
 #  endif
 #  include <windows.h>
@@ -148,22 +145,6 @@
 #define GL2PS_TEXT_TL 8
 #define GL2PS_TEXT_TR 9
 
-/* Pass through options */
-
-#define GL2PS_BEGIN_POLYGON_OFFSET_FILL 1
-#define GL2PS_END_POLYGON_OFFSET_FILL   2
-#define GL2PS_BEGIN_POLYGON_BOUNDARY    3
-#define GL2PS_END_POLYGON_BOUNDARY      4
-#define GL2PS_BEGIN_LINE_STIPPLE        5
-#define GL2PS_END_LINE_STIPPLE          6
-#define GL2PS_SET_POINT_SIZE            7
-#define GL2PS_SET_LINE_WIDTH            8
-#define GL2PS_BEGIN_BLEND               9
-#define GL2PS_END_BLEND                10
-#define GL2PS_SRC_BLEND                11
-#define GL2PS_DST_BLEND                12
-#define GL2PS_DRAW_IMAGEMAP_TOKEN      13
-
 typedef GLfloat GL2PSrgba[4];
 
 #if defined(__cplusplus)
@@ -198,7 +179,7 @@ GL2PSDLL_API GLint gl2psDrawImageMap(GLsizei width, GLsizei height,
                                      const unsigned char *imagemap);
 
 #if defined(__cplusplus)
-};
+}
 #endif
 
 #endif /* __GL2PS_H__ */
