@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.30 2001-07-31 08:10:33 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.31 2001-08-02 19:11:40 geuzaine Exp $
 
 #include <unistd.h>
 #include "Gmsh.h"
@@ -146,6 +146,9 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "recombine")){ //old extrusion mesh generator
         CTX.mesh.oldxtrude_recombine = 1; i++;
+      }
+      else if(!strcmp(argv[i]+1, "dupli")){
+        CTX.mesh.check_duplicates = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "histogram")){ 
         CTX.mesh.histogram = 1; i++;

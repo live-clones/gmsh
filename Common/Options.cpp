@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.36 2001-07-31 22:20:05 geuzaine Exp $
+// $Id: Options.cpp,v 1.37 2001-08-02 19:11:40 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -94,6 +94,7 @@ void Init_Options(int num){
   CTX.threads_lock = 0 ; //very primitive locking during mesh generation
   CTX.mesh.histogram = 0 ;
   CTX.mesh.oldxtrude = CTX.mesh.oldxtrude_recombine = 0; //old extrusion mesh generator
+  CTX.mesh.check_duplicates = 0; //check for duplicate nodes in Read_Mesh
 
   // For motif versions only:
   CTX.overlay = 1 ;

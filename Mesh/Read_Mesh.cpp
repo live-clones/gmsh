@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.21 2001-08-02 08:04:40 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.22 2001-08-02 19:11:40 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -6,6 +6,9 @@
 #include "3D_Mesh.h"
 #include "Create.h"
 #include "MinMax.h"
+#include "Context.h"
+
+extern Context_T CTX;
 
 /* ------------------------------------------------------------------------ */
 /*  M S H    F O R M A T                                                    */
@@ -48,6 +51,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
   Curve   C , *c , **cc;
   Surface S , *s , **ss;
   Volume  V , *v , **vv;
+  Tree_T *Duplis ;
   
   while (1) {
     do { 
@@ -78,21 +82,17 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
       fscanf(File_GEO, "%d", &Nbr_Nodes) ;
       Msg(INFO, "%d Nodes", Nbr_Nodes);
       
-//#define SEARCH_DUPLICATES
-#ifdef SEARCH_DUPLICATES
-    Tree_T *Duplis = Tree_Create (sizeof (Vertex *), comparePosition);
-#endif
+      if(CTX.mesh.check_duplicates)
+	Duplis = Tree_Create (sizeof (Vertex *), comparePosition);
       for (i_Node = 0 ; i_Node < Nbr_Nodes ; i_Node++) {
         fscanf(File_GEO, "%d %lf %lf %lf", &Num, &x, &y, &z) ;
         vert = Create_Vertex (Num, x, y, z, 1.0 ,0.0);
         Tree_Replace(M->Vertices, &vert);
-#ifdef SEARCH_DUPLICATES
-        if(Tree_Replace(Duplis, &vert)) Msg(WARNING, "Node %g %g %g already exists");
-#endif
+	if(CTX.mesh.check_duplicates)
+	  if(Tree_Replace(Duplis, &vert)) Msg(WARNING, "Node %g %g %g already exists");
       }
-#ifdef SEARCH_DUPLICATES
-    Tree_Delete(Duplis);
-#endif
+      if(CTX.mesh.check_duplicates)
+	Tree_Delete(Duplis);
     }
     
     /* ELEMENTS */
