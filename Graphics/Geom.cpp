@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.55 2004-05-17 17:40:03 geuzaine Exp $
+// $Id: Geom.cpp,v 1.56 2004-05-17 18:46:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -594,49 +594,6 @@ void Draw_Surface(void *a, void *b)
 
 // Volumes
 
-int TheVolume;
-
-void Draw_Curve_For_Volume(void *a, void *b)
-{
-  int i, N;
-  Curve *c;
-
-  glLineWidth(CTX.geom.line_width);
-  gl2psLineWidth(CTX.geom.line_width * CTX.print.eps_line_width_factor);
-
-  c = *(Curve **) a;
-
-  if(CTX.render_mode == GMSH_SELECT) {
-    glLoadName(3);
-    glPushName(TheVolume);
-  }
-
-  if(c->Typ == MSH_SEGM_LINE)
-    N = List_Nbr(c->Control_Points);
-  else
-    N = 10;
-
-  glBegin(GL_LINE_STRIP);
-  for(i = 0; i < N; i++) {
-    Vertex v = InterpolateCurve(c, 0.2 * (double)i / (double)(N - 1), 0);
-    glVertex3d(v.Pos.X, v.Pos.Y, v.Pos.Z);
-  }
-  glEnd();
-
-  glBegin(GL_LINE_STRIP);
-  for(i = N - 1; i >= 0; i--) {
-    Vertex v = InterpolateCurve(c, 1. - 0.2 * (double)i / (double)(N - 1), 0);
-    glVertex3d(v.Pos.X, v.Pos.Y, v.Pos.Z);
-  }
-  glEnd();
-
-
-  if(CTX.render_mode == GMSH_SELECT) {
-    glPopName();
-  }
-}
-
-
 void DrawVolumes(Mesh * m)
 {
 }
@@ -667,7 +624,7 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
   int i, nbg;
 
   if(permanent){
-    // we want to draw incrementally (in between to "Draw()" calls):
+    // we want to draw incrementally (in-between to "Draw()" calls):
     // we need to make sure that the opengl context is set correctly
     SetOpenglContext();
   }
