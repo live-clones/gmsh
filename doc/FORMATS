@@ -1,4 +1,4 @@
-$Id: FORMATS,v 1.8 2001-03-01 08:04:15 geuzaine Exp $
+$Id: FORMATS,v 1.9 2001-08-31 07:08:47 geuzaine Exp $
 
 This document describes the mesh and post-processing file formats for
 Gmsh, version >= 1.0. 
@@ -46,7 +46,7 @@ The elm-region value is the number of the physical entity to which the
 element belongs.
 
 
-Gmsh Ascii Post-Processing File Format
+Gmsh ASCII Post-Processing File Format
 ======================================
    
 A post-processing file is divided in several sections: one format
@@ -82,7 +82,7 @@ pairs).
 version-number is a floating point number giving the version of
 Gmsh for which the file is destined (e.g. 1.0).
 
-file-type is an integer equal to 0 in the ascii file format.
+file-type is an integer equal to 0 in the ASCII file format.
 
 data-size is an integer equal to the size of the floating point
 numbers used in the file (usually, data-size == sizeof(double)).
@@ -119,8 +119,8 @@ defined as
 Gmsh Binary Post-Processing File Format
 =======================================
 
-The binary post-processing file format is the same as the ascii file format,
-except that:
+The binary post-processing file format is the same as the ASCII file
+format, except that:
 
 1) file-type equals 1.
 
@@ -164,7 +164,7 @@ Gmsh Parsed Post-Processing Format
 
 For testing purposes (or with very small data sets, e.g. in the
 tutorials), there is an additional post-processing format which is
-parsed by the same grammar analyser as the geometry. You can thus, for
+parsed by the same grammar analyzer as the geometry. You can thus, for
 example, embed small post-processing views into your geometrical
 descriptions. The format of the parsed post-processing files is the
 following:
@@ -191,11 +191,11 @@ following:
    vector tetrahedron  VS                12                     12 * nb-time-steps
    tensor tetrahedron  TS                12                     36 * nb-time-steps
 
-Contrary to the ascii post-processing file format, the coordinates are
+Contrary to the ASCII post-processing file format, the coordinates are
 given by node, i.e. (coord1, coord2, coord3) for a point,
 (coord1-node1, coord2-node1, coord3-node1, coord1-node2, coord2-node2,
 coord3-node2) for a line, (coord1-node1, coord2-node1, coord3-node1,
 coord1-node2, coord2-node2, coord3-node2, coord1-node3, coord2-node3,
 coord3-node3) for a triangle, etc. The values are given in the same
-order as for the ascii post-processing file format.
+order as for the ASCII post-processing file format.
 

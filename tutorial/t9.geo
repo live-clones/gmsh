@@ -16,18 +16,14 @@
 
 Include "view3.pos" ;
 
-// Plugins can be controlled as other options in Gmsh. For example,
-// the CutMap plugin extracts an isovalue surface from a 3D scalar
-// view. The plugin can either be called from the graphical interface
-// (right click on the view button, then Plugins->CutMap), or from
-// the command file, as is shown below.
+// Plugins can be controlled in the same way as other options in
+// Gmsh. For example, the CutMap plugin (which extracts an isovalue
+// surface from a 3D scalar view) can either be called from the
+// graphical interface (right click on the view button, then
+// Plugins->CutMap), or from the command file:
 
-// This sets the optional parameter A of the CutMap plugin to the
-// value 0.67 (see the About in the graphical interface for the
-// documentation of each plugin), and runs the plugin:
-
-Plugin(CutMap).A = 0.67 ; 
-Plugin(CutMap).iView = 0 ; //select View[0] as the working view
+Plugin(CutMap).A = 0.67 ; // iso-value level
+Plugin(CutMap).iView = 0 ; // source view is View[0]
 Plugin(CutMap).Run ; 
 
 // The following runs the CutPlane plugin:

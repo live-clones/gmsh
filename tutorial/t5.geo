@@ -14,8 +14,9 @@ lcar3 = .075;
 
 // In order to change these lengths globally (without changing the
 // file), a global scaling factor for all characteristic lengths can
-// be specified on the command line with the option '-clscale'. For
-// example, with:
+// be specified on the command line with the option '-clscale' (or
+// with the option Mesh.CharacteristicLengthFactor). For example,
+// with:
 //
 // > gmsh t5 -clscale 1
 //

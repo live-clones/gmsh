@@ -82,29 +82,28 @@ Transfinite Surface {28} = {  2,  3, 14, 13};
 Transfinite Surface {30} = {  3,  4,  5, 14};
 Transfinite Surface {32} = {  5,  6, 15, 14};
 Transfinite Surface {34} = {  6,  7,  8, 15};
-Transfinite Surface {36} = {  8,  9, 16, 15};
+Transfinite Surface {36} = {  15, 16, 9, 8};
+//Transfinite Surface {36} = {  8,  9, 16, 15}; causes swapping to fail in non-recombined case...
 Transfinite Surface {38} = {  9, 10, 11, 16};
 Transfinite Surface {40} = { 11, 12, 13, 16};
 Transfinite Surface {42} = { 13, 14, 15, 16};
-
-Recombine Surface {26,28,30,32,34,36,38,40,42};
 
 // number of layers:
 NLdn = 8;
 NLup = 3;
 
 // extrude down first:
-Extrude Surface {42, {0,0,-A*L}}{ Layers { {NLdn}, {9001}, {1} } ; Recombine; };
+Extrude Surface {42, {0,0,-A*L}}{ Layers { {NLdn}, {9001}, {1} } ; };
 // extrude up second:
-Extrude Surface {26, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
-Extrude Surface {28, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
-Extrude Surface {30, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
-Extrude Surface {32, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
-Extrude Surface {34, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
-Extrude Surface {36, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
-Extrude Surface {38, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
-Extrude Surface {40, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
-Extrude Surface {42, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
+Extrude Surface {26, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; };
+Extrude Surface {28, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; };
+Extrude Surface {30, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; };
+Extrude Surface {32, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; };
+Extrude Surface {34, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; };
+Extrude Surface {36, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; };
+Extrude Surface {38, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; };
+Extrude Surface {40, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; };
+Extrude Surface {42, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; };
 
 // wafer surface including surfaces that are extruded downwards:
 Physical Surface(1001) = {26,28,30,32,34,36,38,40, 51,55,59,63,64};

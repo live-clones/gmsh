@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <HTML>
 <HEAD>
-<TITLE>Enscript Output</TITLE>
+<TITLE>Gmsh tutorial</TITLE>
 </HEAD>
 <BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#1F00FF" ALINK="#FF0000" VLINK="#9900DD">
 <A NAME="top">
@@ -23,7 +23,7 @@
 <H1>README 1/10</H1>
 [<A HREF="#top">top</A>][prev][<A HREF="#file2">next</A>]
 <PRE>
-$Id: tutorial.html,v 1.20 2001-08-18 12:43:41 geuzaine Exp $
+$Id: tutorial.html,v 1.21 2001-08-31 07:08:47 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -368,8 +368,8 @@ Extrude Surface { 6, {0,0,h} } {
 </FONT></I><I><FONT COLOR="#B22222">// extruded 3D mesh can be recombined into prisms (wedges) if the
 </FONT></I><I><FONT COLOR="#B22222">// surface elements are triangles, or hexahedra if the surface
 </FONT></I><I><FONT COLOR="#B22222">// elements are quadrangles. All rotations are specified by an axis
-</FONT></I><I><FONT COLOR="#B22222">// direction ({0,1,0}), an axis point ({0,0,0}) and a rotation angle
-</FONT></I><I><FONT COLOR="#B22222">// (Pi/2):
+</FONT></I><I><FONT COLOR="#B22222">// direction ({0,1,0}), an axis point ({-0.1,0,0.1}) and a rotation
+</FONT></I><I><FONT COLOR="#B22222">// angle (-Pi/2):
 </FONT></I>
 Extrude Surface { 122, {0,1,0} , {-0.1,0,0.1} , -Pi/2 } { 
   Recombine ; Layers { 7, 9004, 1 } ; 

@@ -67,7 +67,7 @@ System "mpeg_encode anim.par" ;
 
 // Call whirlgif
 
-System "whirlgif -loop -o anim.gif anim-*.gif" ;
+System "whirlgif -minimize -loop -o anim.gif anim-*.gif" ;
 
 // Clean-up all temp files
 

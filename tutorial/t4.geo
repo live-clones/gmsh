@@ -45,7 +45,7 @@ Lc2 = 0.003 ;
 // Grouping is done, as usual, with parentheses.
 //
 // In addition to these operators, all C mathematical functions can
-// also be used (note the first capital letter):
+// also be used (note the first capital letter), i.e.
 // 
 //   Exp(x)
 //   Log(x)
@@ -65,11 +65,11 @@ Lc2 = 0.003 ;
 //   Floor(x)
 //   Ceil(x)
 //   Fmod(x,y)
-//   Hypot(x,y)
-
-// An additional function 'Rand(x)' generates a random number in [0,x]
+// 
+// as well as a series of other functions:
 //
-//   Rand(x)
+//   Hypot(x,y)   computes Sqrt(x^2+y^2)
+//   Rand(x)      generates a random number in [0,x]
 //
 // The only predefined constant in Gmsh is Pi.
 
