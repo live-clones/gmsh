@@ -1,12 +1,6 @@
-$Id: TODO,v 1.40 2004-04-06 19:21:08 geuzaine Exp $
+$Id: TODO,v 1.41 2004-04-13 21:05:00 geuzaine Exp $
 
 generalize Plugin(Triangulate) to vector and tensor points
-
-********************************************************************
-
-lighting of the new 3D arrows seems to behave in a weird way for
-"negative" vectors on Linux (as if the cone surface has an interior
-normal)
 
 ********************************************************************
 
@@ -34,7 +28,7 @@ ordering".
 
 ********************************************************************
 
-find a better way to dsicplay the time/timestep in the scale...
+find a better way to display the time/timestep in the scale...
 
 ********************************************************************
 
@@ -94,7 +88,7 @@ etc.
 Include Tetgen (the same way we did it with Triangle--the license is
 the same).
 
-Include the 3D frontal algo from netgen? (it's LGPL now)
+Include the 3D frontal algo from Netgen? (it's LGPL now...)
 
 ********************************************************************
 
