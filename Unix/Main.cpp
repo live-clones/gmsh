@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.23 2000-12-08 11:16:55 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.24 2000-12-08 13:06:56 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -860,7 +860,7 @@ int main(int argc, char *argv[]){
   Msg(STATUS, "Ready");
   Msg(SELECT, "Gmsh %g", GMSH_VERSION);
 
-  /* Compute viewport and Draw */
+  /* Compute viewport and Draw empty scene */
   CTX.expose = 1 ;
   Init();
   Draw();
@@ -889,8 +889,10 @@ int main(int argc, char *argv[]){
       Msg(ERROR, "Invalid Background Mesh (no View)");
   }
   
-  Replot();
-  
+  /* Draw the actual scene */
+  Init();
+  Draw();
+
   /* Loop until were done */
   
   XtAppMainLoop(XCTX.AppContext);

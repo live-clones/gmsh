@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.29 2000-12-08 12:38:29 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.30 2000-12-08 13:06:53 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -40,6 +40,7 @@ static Symbol         TheSymbol, *pSymbol;
 static Surface       *STL_Surf;
 static Shape          TheShape;
 static int            i,j,k,flag,RecursionLevel=0,ImbricatedLoop = 0;
+static int            Last_NumberOfPoints = 0;
 static double         d;
 static ExtrudeParams  extr;
 static List_T         *ListOfDouble_L,*ListOfDouble2_L;
@@ -1694,8 +1695,15 @@ Command :
    }
    | tDraw tEND
    {
-     Init();
-     Draw();
+     if(Tree_Nbr(THEM->Points) != Last_NumberOfPoints){
+       Last_NumberOfPoints = Tree_Nbr(THEM->Points);
+       Replot();
+     }
+     else{
+       Init();
+       Draw();
+     }
+       
    }
    | tSleep FExpr tEND
    {
