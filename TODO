@@ -1,4 +1,4 @@
-$Id: TODO,v 1.15 2003-03-16 21:23:17 geuzaine Exp $
+$Id: TODO,v 1.16 2003-03-17 19:56:42 geuzaine Exp $
 
 ********************************************************************
 
@@ -30,8 +30,20 @@ Rewrite the View interface in C++
 
 ********************************************************************
 
+Improve Triangle integration: bgmesh on file, 2nd intermediate mesh?,
+etc.
+
+********************************************************************
+
 Include Tetgen (the same way we did it with Triangle--the license is
 the same).
+
+********************************************************************
+
+All surface meshes are made in a mean plane. If your surface cannot be
+projected into a plane with a 1-to-1 correspondance between the nodes,
+then gmsh will fail. We should mesh in the parametric space in these
+cases.
 
 ********************************************************************
 

@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.2 2003-03-13 01:32:50 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.3 2003-03-17 19:56:42 geuzaine Exp $
 @c =========================================================================
 @c
 @c This is the Gmsh documentation texinfo source file
@@ -1281,11 +1281,8 @@ files that produce the bug (problem definition and mesh files). Don't forget
 to mention both the version of Gmsh and the version of your operation
 system (@pxref{Running Gmsh} to see how to get this information).
 
-Here is the list of open bugs for version @value{GMSH-VERSION}:
-
-@example
-@include ../BUGS
-@end example
+See the @file{TODO} file in the distribution to check the problems we
+already know about.
 
 @c -------------------------------------------------------------------------
 @c Versions
