@@ -1,5 +1,5 @@
 
-steps=10;
+steps=20;
 
 xmin = View[0].MinX; xmax = View[0].MaxX;
 ymin = View[0].MinY; ymax = View[0].MaxY;
@@ -23,7 +23,10 @@ For z In {zmin:zmax:(zmax-zmin)/steps}
 EndFor
 */
 
-// ok to merge all three
+// ok to merge all three... But the way vis5d does it: only display
+// on of the three, depending on the view point!
+
+/*
 For x In {xmin:xmax:(xmax-xmin)/steps}
   Plugin(CutGrid).X0 = x ; Plugin(CutGrid).Y0 = ymin ; Plugin(CutGrid).Z0 = zmin ; 
   Plugin(CutGrid).X1 = x ; Plugin(CutGrid).Y1 = ymax ; Plugin(CutGrid).Z1 = zmin ; 
@@ -36,6 +39,7 @@ For y In {ymin:ymax:(ymax-ymin)/steps}
   Plugin(CutGrid).X2 = xmin ; Plugin(CutGrid).Y2 = y ; Plugin(CutGrid).Z2 = zmax ; 
   Plugin(CutGrid).Run ; 
 EndFor
+*/
 For z In {zmin:zmax:(zmax-zmin)/steps}
   Plugin(CutGrid).X0 = xmin ; Plugin(CutGrid).Y0 = ymin ; Plugin(CutGrid).Z0 = z ; 
   Plugin(CutGrid).X1 = xmax ; Plugin(CutGrid).Y1 = ymin ; Plugin(CutGrid).Z1 = z ; 
