@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.19 2001-05-03 00:09:42 geuzaine Exp $
+// $Id: Scale.cpp,v 1.20 2001-08-06 12:26:26 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -47,7 +47,7 @@ void draw_scale(Post_View *v, double xmin, double ymin, double *width, double he
   double    font_h, font_a, label_h;
   double    cs_xmin, cs_ymin, cs_h, cs_w, cs_bh;
   double    cv_xmin, cv_ymin, cv_h, cv_w, cv_bh;
-  char      label[128] ;
+  char      label[1024] ;
   double    Val, ValMin, ValMax;
 
   font_h  = CTX.gl_fontheight ;       /* hauteur totale de la fonte */

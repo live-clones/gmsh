@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.6 2001-08-06 11:13:25 geuzaine Exp $
+// $Id: Skin.cpp,v 1.7 2001-08-06 12:26:26 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Skin.h"
@@ -145,7 +145,8 @@ Post_View *GMSH_SkinPlugin::execute (Post_View *v)
 
     Tree_Action(skin, addSTinView);
     Tree_Delete(skin);
-    char name[1024],filename[1024];
+
+    char name[1024], filename[1024];
     sprintf(name,"skin-%s",vv->Name);
     sprintf(filename,"skin-%s",vv->FileName);
     EndView(1, filename, name);
