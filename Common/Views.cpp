@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.31 2001-02-17 22:25:46 geuzaine Exp $
+// $Id: Views.cpp,v 1.32 2001-02-27 13:23:52 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -243,6 +243,7 @@ void EndView(int add_in_gui, int force_number, char *file_name, char *name){
   opt_view_name(ActualViewIndex, GMSH_SET|GMSH_GUI, name);
   opt_view_filename(ActualViewIndex, GMSH_SET|GMSH_GUI, file_name);
   opt_view_nb_timestep(ActualViewIndex, GMSH_GUI, 0);
+  opt_view_timestep(ActualViewIndex, GMSH_SET|GMSH_GUI, ActualView->TimeStep);
   if(ActualView->Min > ActualView->Max){
     opt_view_min(ActualViewIndex, GMSH_SET|GMSH_GUI, 0.);
     opt_view_max(ActualViewIndex, GMSH_SET|GMSH_GUI, 0.);
