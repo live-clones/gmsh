@@ -1,4 +1,4 @@
-/* $Id: Box.cpp,v 1.5 2000-11-23 23:20:34 geuzaine Exp $ */
+/* $Id: Box.cpp,v 1.6 2000-11-24 08:10:10 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -11,8 +11,10 @@
 #include "Context.h"
 #include "Main.h"
 #include "MinMax.h"
+#include "Version.h"
 
 #include "Static.h"
+
 
 char *TheFileNameTab[MAX_OPEN_FILES];
 char *ThePathForIncludes=NULL, *TheBgmFileName=NULL;
