@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.297 2003-08-22 05:52:43 geuzaine Exp $
+# $Id: Makefile,v 1.298 2003-08-24 23:21:23 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -104,7 +104,8 @@ clean:
 	rm -f ${GMSH_VERSION_FILE}
 
 depend:
-	for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE} depend "FLAGS=-DHAVE_GSL -DHAVE_FLTK"); done
+	for i in ${GMSH_DIRS};\
+        do (cd $$i && ${MAKE} depend "FLAGS=-DHAVE_GSL -DHAVE_FLTK"); done
 
 nodepend:
 	for i in ${GMSH_DIRS} ; do \
@@ -236,13 +237,6 @@ package-mac:
                gmsh-${GMSH_RELEASE}/*/*~\
                gmsh-${GMSH_RELEASE}/*/*.msh
 	tar zcvf gmsh-${GMSH_RELEASE}-MacOSX.tgz gmsh-${GMSH_RELEASE}
-
-rpmold:
-	tar zcvf gmsh-${GMSH_RELEASE}.tar.gz ${GMSH_SOURCES}
-	mv gmsh-${GMSH_RELEASE}.tar.gz /usr/src/redhat/SOURCES
-	rpm -bb --define 'gmshversion ${GMSH_RELEASE}' gmsh.spec
-	cp /usr/src/redhat/RPMS/i386/gmsh-${GMSH_RELEASE}-?.i386.rpm .
-	cp /usr/src/redhat/BUILD/gmsh-${GMSH_RELEASE}/gmsh-${GMSH_RELEASE}-${UNAME}.tgz .
 
 rpm:
 	tar zcvf gmsh-${GMSH_RELEASE}.tar.gz ${GMSH_SOURCES}
