@@ -1,4 +1,13 @@
-$Id: TODO,v 1.7 2003-01-23 20:07:19 geuzaine Exp $
+$Id: TODO,v 1.8 2003-01-29 17:36:55 geuzaine Exp $
+
+* Two-field plots <nicolas.moes@ec-nantes.fr>
+
+Imagine I would like to plot a temperature field on a deformed
+mesh. This requires two field : the temperature field and the
+displacement field to deform the mesh. Is there something done in gmsh
+done for this?
+
+=================================================================================
 
 * Pb avec View->Reload si plusieurs vues dans le meme fichier
 
