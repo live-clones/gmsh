@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.110 2004-10-15 02:30:51 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.111 2004-10-15 18:36:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -170,7 +170,7 @@ void Draw_Mesh(Mesh * M)
     glVertex3d(CTX.min[0], CTX.max[1], CTX.max[2]);
     glEnd();
     char label[256];
-    double offset = 0.5 * CTX.gl_fontsize * CTX.pixel_equiv_x;
+    double offset = 0.3 * CTX.gl_fontsize * CTX.pixel_equiv_x;
     glRasterPos3d(CTX.min[0] + offset / CTX.s[0], 
 		  CTX.min[1] + offset / CTX.s[0], 
 		  CTX.min[2] + offset / CTX.s[0]);
@@ -426,7 +426,7 @@ void Draw_Mesh_Point(int num, double x, double y, double z, int degree, int visi
   if(CTX.mesh.points_num) {
     char Num[100];
     sprintf(Num, "%d", num);
-    double offset = 0.5 * (CTX.mesh.point_size + CTX.gl_fontsize) * CTX.pixel_equiv_x;
+    double offset = 0.3 * (CTX.mesh.point_size + CTX.gl_fontsize) * CTX.pixel_equiv_x;
     glRasterPos3d(x + offset / CTX.s[0],
                   y + offset / CTX.s[1],
                   z + offset / CTX.s[2]);
@@ -510,7 +510,7 @@ void Draw_Mesh_Line(void *a, void *b)
 
   if(CTX.mesh.lines_num) {
     sprintf(Num, "%d", s->Num);
-    double offset = 0.5 * (CTX.mesh.line_width + CTX.gl_fontsize) * CTX.pixel_equiv_x;
+    double offset = 0.3 * (CTX.mesh.line_width + CTX.gl_fontsize) * CTX.pixel_equiv_x;
     glRasterPos3d(Xc + offset / CTX.s[0],
                   Yc + offset / CTX.s[1],
                   Zc + offset / CTX.s[2]);

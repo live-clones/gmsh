@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.71 2004-08-16 17:52:59 remacle Exp $
+// $Id: Geom.cpp,v 1.72 2004-10-15 18:36:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -94,7 +94,7 @@ void Draw_Geo_Point(void *a, void *b)
 
   if(CTX.geom.points_num) {
     sprintf(Num, "%d", v->Num);
-    double offset = 0.5 * (CTX.geom.point_size + CTX.gl_fontsize) * CTX.pixel_equiv_x;
+    double offset = (0.5 * CTX.geom.point_size + 0.3 * CTX.gl_fontsize) * CTX.pixel_equiv_x;
     glRasterPos3d(v->Pos.X + offset / CTX.s[0],
                   v->Pos.Y + offset / CTX.s[1],
                   v->Pos.Z + offset / CTX.s[2]);
@@ -207,7 +207,7 @@ void Draw_Curve(void *a, void *b)
   if(CTX.geom.lines_num) {
     v = InterpolateCurve(c, 0.5, 0);
     sprintf(Num, "%d", c->Num);
-    double offset = 0.5 * (CTX.geom.line_width + CTX.gl_fontsize) * CTX.pixel_equiv_x;
+    double offset = (0.5 * CTX.geom.line_width + 0.3 * CTX.gl_fontsize) * CTX.pixel_equiv_x;
     glRasterPos3d(v.Pos.X + offset / CTX.s[0],
                   v.Pos.Y + offset / CTX.s[1],
                   v.Pos.Z + offset / CTX.s[2]);
@@ -498,7 +498,7 @@ void Draw_Plane_Surface(Surface * s)
       List_Read(s->Orientations, 0, &vv1);
       List_Read(s->Orientations, 1, &vv2);
       sprintf(Num, "%d", s->Num);
-      double offset = 0.5 * CTX.gl_fontsize * CTX.pixel_equiv_x;
+      double offset = 0.3 * CTX.gl_fontsize * CTX.pixel_equiv_x;
       glRasterPos3d((vv2.Pos.X + vv1.Pos.X) / 2. + offset / CTX.s[0],
                     (vv2.Pos.Y + vv1.Pos.Y) / 2. + offset / CTX.s[1],
                     (vv2.Pos.Z + vv1.Pos.Z) / 2. + offset / CTX.s[2]);
@@ -573,7 +573,7 @@ void Draw_NonPlane_Surface(Surface * s)
     Vertex v = InterpolateSurface(s, 0.5, 0.5, 0, 0);
     char Num[100];
     sprintf(Num, "%d", s->Num);
-    double offset = 0.5 * CTX.gl_fontsize * CTX.pixel_equiv_x;
+    double offset = 0.3 * CTX.gl_fontsize * CTX.pixel_equiv_x;
     glRasterPos3d(v.Pos.X + offset / CTX.s[0],
                   v.Pos.Y + offset / CTX.s[1],
                   v.Pos.Z + offset / CTX.s[2]);

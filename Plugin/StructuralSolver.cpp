@@ -821,7 +821,7 @@ bool StructuralSolver :: GL_enhancePoint ( Vertex *v)
 		  dv[1] += dir2[1] * it->second.val[1];
 		}
 
-	      const double offset = 0.5 * CTX.gl_fontsize * CTX.pixel_equiv_x;
+	      const double offset = 0.3 * CTX.gl_fontsize * CTX.pixel_equiv_x;
 	      const double l = sqrt (dv[0]*dv[0]+dv[1]*dv[1]);
 	      const double kk = (CTX.max[0]-CTX.min[0])*.1*l / (MAX_FORCE);
 	      if (l != 0.0)
