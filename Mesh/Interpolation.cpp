@@ -1,4 +1,4 @@
-/* $Id: Interpolation.cpp,v 1.5 2000-11-26 18:43:48 geuzaine Exp $ */
+/* $Id: Interpolation.cpp,v 1.6 2000-11-30 14:57:52 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -84,15 +84,15 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
       Curve->Circle.f2 * sin (teta) * sin (Curve->Circle.incl);
     V.Pos.Y = Curve->Circle.f1 * cos (teta) * sin (Curve->Circle.incl) +
       Curve->Circle.f2 * sin (teta) * cos (Curve->Circle.incl);
-
     V.Pos.Z = 0.0;
-    V.lc = (u * Curve->beg->lc + (1. - u) * Curve->end->lc);
     Projette (&V, Curve->Circle.invmat);
     V.Pos.X += Curve->Circle.v[2]->Pos.X;
     V.Pos.Y += Curve->Circle.v[2]->Pos.Y;
     V.Pos.Z += Curve->Circle.v[2]->Pos.Z;
     V.w = (u * Curve->beg->w + (1. - u) * Curve->end->w);
-    V.lc = (u * Curve->beg->lc + (1. - u) * Curve->end->lc);
+
+    // ?????
+    V.lc = (u * Curve->end->lc + (1. - u) * Curve->beg->lc);
     return V;
     
   case MSH_SEGM_BSPLN:

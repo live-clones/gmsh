@@ -1,4 +1,4 @@
-/* $Id: 3D_Coherence.cpp,v 1.7 2000-11-26 15:43:46 geuzaine Exp $ */
+/* $Id: 3D_Coherence.cpp,v 1.8 2000-11-30 14:57:52 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -1338,13 +1338,14 @@ int Coherence (Volume * v, Mesh * m){
 
   Impression_Resultats ();
 
+  if (List_Nbr (MissingFaces) || List_Nbr (MissingEdges)){
+    return 0;
+  }
+
   Link_Simplexes (NULL, v->Simplexes);
   Msg(STATUS, "Volume Recovery");
   Restore_Volume (v);
 
-  if (List_Nbr (MissingFaces) || List_Nbr (MissingEdges)){
-    return 0;
-  }
   return 1;
 }
 
