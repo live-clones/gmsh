@@ -85,6 +85,9 @@ Physical Surface(9999) = {6};
 
    If you want modifications made to one view to affect also all 
    other views, select the appropriate option in Options->Post-Processing
+
+   All the options can also be specified in the input files. You can save the 
+   current options with File->Save Options as
 */
 
 

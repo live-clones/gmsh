@@ -37,9 +37,9 @@ Volume(10023) = {10022};
 Physical Volume (1) = {41} ;
 
 /* README: You can also specify options in the file. For example, this
-   redefines the color of geometry points. Click on the '?' button in the
-   main window, print the file in 'geo' format, or add '-0' on the command
-   line to get the full list of available options. */
+   redefines the color of geometry points. Click on the '?' button in
+   the main window, or save the options with File->Save Options as to
+   get the full list of available options. */
 
 General.Rotation0 = 10;
 General.Color.Background = Red;

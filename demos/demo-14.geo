@@ -6,13 +6,7 @@
    All important comments are marked with "README"
 */
 
-Options{
-  
-  Mesh{
-    Algorithm = 2 ; // This is the new 2D anisotropic algorithm
-  }
-
-}
+Mesh.Algorithm = 2 ; // This is the new 2D anisotropic algorithm
 
 lc = .1;
 
