@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.53 2004-05-27 06:23:48 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.54 2004-06-07 23:52:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -646,8 +646,9 @@ static void _unv_print_record(int num, int fetyp, int geo, int n, int nsup,
 {
   fprintf(UNVFILE, "%10d%10d%10d%10d%10d%10d\n",
 	  num, fetyp, geo, geo, 7, n + nsup);
+  if(fetyp == BEAM || fetyp == BEAM2)
+    fprintf(UNVFILE, "%10d%10d%10d\n", 0, 0, 0);
   int ntot = 0;
-  fprintf(UNVFILE, "%10d%10d%10d\n", 0, 0, 0);
   for(int k = 0; k < n; k++) {
     fprintf(UNVFILE, "%10d", v[k]->Num);
     if(ntot % 8 == 7)
