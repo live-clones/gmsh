@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.22 2000-12-17 21:17:29 remacle Exp $ */
+%{ /* $Id: Gmsh.l,v 1.23 2000-12-19 08:59:59 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,8 +60,7 @@ stepid  {dieze}({digit})*
 %%
 
 [\ \t\n]		/* none */ ;
-[;]                     return tEND;
-
+";"                     return tEND;
 "/*"			skipcomments();
 "//"			skipline();
 "\""			{parsestring('\"'); return tBIGSTR;}
