@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.28 2002-11-13 02:36:20 geuzaine Exp $
+# $Id: Makefile,v 1.29 2002-11-13 02:36:51 geuzaine Exp $
 #
 # Makefile for "libGmshPlugin.a"
 #
@@ -90,3 +90,6 @@ SphericalRaise.o: SphericalRaise.cpp Plugin.h ../Common/Options.h \
 Skin.o: Skin.cpp Plugin.h ../Common/Options.h ../Common/Message.h Skin.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/Context.h ../DataStr/Malloc.h
+Harmonic2Time.o: Harmonic2Time.cpp Plugin.h ../Common/Options.h \
+  ../Common/Message.h Harmonic2Time.h ../DataStr/List.h ../Common/Views.h \
+  ../Common/ColorTable.h ../Common/Context.h ../Numeric/Numeric.h
