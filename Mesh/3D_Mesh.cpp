@@ -1,4 +1,4 @@
-/* $Id: 3D_Mesh.cpp,v 1.11 2000-11-28 19:36:41 geuzaine Exp $ */
+/* $Id: 3D_Mesh.cpp,v 1.12 2000-12-27 17:25:52 geuzaine Exp $ */
 /*
  
   J-F Remacle 1995
@@ -839,12 +839,18 @@ void Maillage_Volume (void *data, void *dum){
     
     Progress(-1);
 
+    if (CTX.mesh.quality){
+      extern void SwapEdges3D (Mesh * M, Volume * v, double GammaPrescribed, bool order);
+      Msg(STATUS, "Swapping Edges (1st pass)");
+      SwapEdges3D (THEM, v, CTX.mesh.quality, true);
+      Msg(STATUS, "Swapping Edges (2nd pass)");
+      SwapEdges3D (THEM, v, CTX.mesh.quality, false);
+      Msg(STATUS, "Swapping Edges (last pass)");
+      SwapEdges3D (THEM, v, CTX.mesh.quality, true);
+    }
+
     if (CTX.mesh.nb_smoothing){
       /*
-      Msg(STATUS, "Swapping Edges (1st pass)");
-      SwapEdges3D (THEM, v, 0.5, true);
-      Msg(STATUS, "Swapping Edges (2nd pass)");
-      SwapEdges3D (THEM, v, 0.5, false);
       Msg(STATUS, "Laplacian Smoothing");
       tnxe = Tree_Create (sizeof (NXE), compareNXE);
       create_NXE (v->Vertices, v->Simplexes, tnxe);

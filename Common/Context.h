@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.23 2000-12-21 12:30:36 geuzaine Exp $ */
+/* $Id: Context.h,v 1.24 2000-12-27 17:25:52 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -123,6 +123,7 @@ class Context_T {
     int draw;
     int points, lines, surfaces, volumes;
     int points_num, lines_num, surfaces_num, volumes_num;
+    double quality;
     double limit_gamma, limit_eta, limit_rho;
     double scaling_factor, lc_factor, rand_factor;
     int dual, interactive;

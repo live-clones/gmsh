@@ -1,4 +1,4 @@
-$Id: FORMATS,v 1.6 2000-12-26 20:45:42 geuzaine Exp $
+$Id: FORMATS,v 1.7 2000-12-27 17:25:52 geuzaine Exp $
 
 This document describes the mesh and post-processing file formats for
 Gmsh, version >= 1.0. 
@@ -123,7 +123,7 @@ except that:
 
 1) file-type equals 1.
 
-2) all lists of double precision numbers are written in binary format
+2) all lists of floating point numbers are written in binary format
 
 3) there is an additional integer, of value 1, written before
    time-step-values. This integer serves to detect if the computer on

@@ -1,4 +1,4 @@
-/* $Id: Options.h,v 1.12 2000-12-21 12:30:36 geuzaine Exp $ */
+/* $Id: Options.h,v 1.13 2000-12-27 17:25:52 geuzaine Exp $ */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
@@ -151,6 +151,7 @@ StringXNumber GeometryOptions_Number[] = {
 } ;
 
 StringXNumber MeshOptions_Number[] = {
+  { "Quality"         , GMSH_DOUBLE, (void*)&CTX.mesh.quality        , 0.0 }, 
   { "Normals"         , GMSH_DOUBLE, (void*)&CTX.mesh.normals        , 0.0 }, 
   { "Tangents"        , GMSH_DOUBLE, (void*)&CTX.mesh.tangents       , 0.0 }, 
   { "Explode"         , GMSH_DOUBLE, (void*)&CTX.mesh.explode        , 1.0 }, 

@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.33 2000-12-21 12:30:39 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.34 2000-12-27 17:25:52 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -247,6 +247,14 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "interactive")){ 
         CTX.mesh.interactive = 1; i++;
+      }
+      else if(!strcmp(argv[i]+1, "quality")){
+        i++;
+        if(argv[i]!=NULL) CTX.mesh.quality = atof(argv[i++]);
+        else {    
+          fprintf(stderr, ERROR_STR "Missing Number\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "scale")){
         i++;
