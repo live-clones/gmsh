@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.97 2001-07-31 11:13:16 geuzaine Exp $
+// $Id: GUI.cpp,v 1.98 2001-07-31 14:06:16 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -624,22 +624,26 @@ void GUI::create_menu_window(int argc, char **argv){
       m_popup_butt[i]->type(Fl_Menu_Button::POPUP3);
       m_popup_butt[i]->add("Reload/View", 0, 
 			   (Fl_Callback *)view_reload_cb, (void*)i, 0);
-      m_popup_butt[i]->add("Reload/All Views", 0, 
+      m_popup_butt[i]->add("Reload/All views", 0, 
 			   (Fl_Callback *)view_reload_all_cb, (void*)i, 0);
+      m_popup_butt[i]->add("Reload/All visible views", 0, 
+			   (Fl_Callback *)view_reload_visible_cb, (void*)i, 0);
       m_popup_butt[i]->add("Remove/View", 0, 
 			   (Fl_Callback *)view_remove_cb, (void*)i, 0);
-      m_popup_butt[i]->add("Remove/All Views", 0, 
+      m_popup_butt[i]->add("Remove/All views", 0, 
 			   (Fl_Callback *)view_remove_all_cb, (void*)i, 0);
-      m_popup_butt[i]->add("Duplicate/View without Options", 0,
+      m_popup_butt[i]->add("Remove/All visible views", 0, 
+			   (Fl_Callback *)view_remove_visible_cb, (void*)i, 0);
+      m_popup_butt[i]->add("Duplicate/View without options", 0,
 			   (Fl_Callback *)view_duplicate_cb, (void*)i, 0) ;
-      m_popup_butt[i]->add("Duplicate/View with Options", 0,
+      m_popup_butt[i]->add("Duplicate/View with options", 0,
 			   (Fl_Callback *)view_duplicate_with_options_cb, (void*)i, 0) ;
-      m_popup_butt[i]->add("Save as/ASCII View...", 0,
+      m_popup_butt[i]->add("Save as/ASCII view...", 0,
 			   (Fl_Callback *)view_save_ascii_cb, (void*)i, 0) ;
-      m_popup_butt[i]->add("Save as/Binary View...", 0,
+      m_popup_butt[i]->add("Save as/Binary view...", 0,
 			   (Fl_Callback *)view_save_binary_cb, (void*)i, 0) ;
       add_post_plugins ( m_popup_butt[i] , i);
-      m_popup_butt[i]->add("Apply as Background Mesh", 0,
+      m_popup_butt[i]->add("Apply as background mesh", 0,
 			   (Fl_Callback *)view_applybgmesh_cb, (void*)i, FL_MENU_DIVIDER);
       m_popup_butt[i]->add("Options...", 0,
 			   (Fl_Callback *)view_options_cb, (void*)i, 0);

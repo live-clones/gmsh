@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.69 2001-07-31 12:52:41 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.70 2001-07-31 14:06:16 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1448,6 +1448,16 @@ void view_reload_all_cb(CALLBACK_ARGS) {
   Draw();
 }
 
+void view_reload_visible_cb(CALLBACK_ARGS) {
+  if(!Post_ViewList) return;
+  RELOAD_ALL_VIEWS = 1;
+  for(int i = 0 ; i<List_Nbr(Post_ViewList) ; i++)
+    if(opt_view_visible(i, GMSH_GET, 0))
+      view_reload_cb(NULL, (void *)i);
+  RELOAD_ALL_VIEWS = 0;
+  Draw();
+}
+
 void view_reload_cb(CALLBACK_ARGS){
   Post_View tmp ;
   char filename[NAME_STR_L];
@@ -1480,6 +1490,17 @@ void view_remove_all_cb(CALLBACK_ARGS) {
   REMOVE_ALL_VIEWS = 1;
   while(List_Nbr(Post_ViewList))
     view_remove_cb(NULL, (void*)0);
+  REMOVE_ALL_VIEWS = 0;
+  Draw();
+}
+
+void view_remove_visible_cb(CALLBACK_ARGS) {
+  int i;
+  if(!Post_ViewList) return;
+  REMOVE_ALL_VIEWS = 1;
+  for(i=List_Nbr(Post_ViewList)-1 ; i>=0 ; i--)
+    if(opt_view_visible(i, GMSH_GET, 0))
+      view_remove_cb(NULL, (void*)i);
   REMOVE_ALL_VIEWS = 0;
   Draw();
 }
