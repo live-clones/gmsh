@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.317 2004-12-30 23:39:48 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.318 2004-12-30 23:53:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1221,10 +1221,10 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Ctrl+r        rename project file");
   Msg(DIRECT, "  Ctrl+s        save file as");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "  Ctrl+Shift+c    show clipping plane window");
-  Msg(DIRECT, "  Ctrl+Shift+o    show option window"); 
-  Msg(DIRECT, "  Ctrl+Shift+s  save mesh in default format");
-  Msg(DIRECT, "  Ctrl+Shift+v    show visibility window");
+  Msg(DIRECT, "  Shift+Ctrl+c  show clipping plane window");
+  Msg(DIRECT, "  Shift+Ctrl+o  show option window"); 
+  Msg(DIRECT, "  Shift+Ctrl+s  save mesh in default format");
+  Msg(DIRECT, "  Shift+Ctrl+v  show visibility window");
   Msg(DIRECT, " ");
   Msg(DIRECT, "  Alt+a         hide/show small axes"); 
   Msg(DIRECT, "  Alt+b         hide/show bounding boxes");
