@@ -55,7 +55,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-%doc doc/gmsh.pdf doc/COPYING doc/FORMATS doc/VERSIONS doc/FAQ doc/CONTRIBUTORS demos tutorial
+%doc doc/gmsh.pdf doc/COPYING doc/VERSIONS doc/FAQ doc/CONTRIBUTORS demos tutorial
 /usr/bin/gmsh
 /usr/bin/dxf2geo
 /usr/share/man/man1/gmsh*

@@ -6,8 +6,7 @@
  *
  *********************************************************************/
 
-// The first example is included, as well as some post-processing maps
-// (for the format of the post-processing maps, see the FORMATS file):
+// The first example is included, as well as some post-processing maps:
 
 Include "t1.geo" ;
 Include "view1.pos" ;
@@ -130,19 +129,3 @@ For num In {1:255}
   EndIf
 
 EndFor
-
-
-// Here is the list of available scripting commands:
-//  
-//  Merge string;                (to merge a file)
-//  MergeWithBoundingBox string; (to merge a file and force the recalculation
-//                                of the scene's bounding box)
-//  Draw;                        (to redraw the scene)
-//  Save string;                 (to save the mesh)
-//  Print string;                (to print the graphic window in the format
-//                                defined in Print.Format)
-//  Sleep expr;                  (to sleep during expr seconds)
-//  Delete View[int];            (to free the view int)
-//  Delete Meshes;               (to free all meshes)
-//  Duplicata View[int];         (to duplicate the view int)
-//  System string;               (to execute a system call)

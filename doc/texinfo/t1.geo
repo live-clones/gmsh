@@ -104,6 +104,6 @@ Physical Surface(MySurface) = @{6@} ;
 // If no physical groups are defined, all the elements in the mesh are
 // directly saved with their default orientation and with a region
 // number equal to their elementary region number. For a description
-// of the mesh and post-processing formats, see the FORMATS file.
+// of the mesh and post-processing formats, see the reference manual.
 }
 @end format

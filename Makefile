@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.280 2003-04-14 22:46:58 geuzaine Exp $
+# $Id: Makefile,v 1.281 2003-04-15 05:05:10 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -167,8 +167,7 @@ package-unix:
 	mkdir gmsh-${GMSH_RELEASE}
 	strip bin/gmsh
 	cp bin/gmsh gmsh-${GMSH_RELEASE}
-	cp doc/COPYING doc/gmsh.1 doc/FORMATS doc/VERSIONS doc/FAQ\
-           doc/CONTRIBUTORS gmsh-${GMSH_RELEASE}
+	cp doc/gmsh.1 doc/COPYING doc/VERSIONS doc/FAQ doc/CONTRIBUTORS gmsh-${GMSH_RELEASE}
 	cp -R tutorial gmsh-${GMSH_RELEASE}
 	cp -R demos gmsh-${GMSH_RELEASE}
 	rm -rf gmsh-${GMSH_RELEASE}/*/CVS
@@ -185,7 +184,6 @@ package-windows:
 	cp /usr/bin/cygwin1.dll gmsh-${GMSH_RELEASE}
 	cp bin/gmsh.exe gmsh-${GMSH_RELEASE}
 	cp doc/README.win32 gmsh-${GMSH_RELEASE}/README.txt
-	cp doc/FORMATS gmsh-${GMSH_RELEASE}/FORMATS.txt
 	cp doc/VERSIONS gmsh-${GMSH_RELEASE}/VERSIONS.txt
 	cp doc/FAQ gmsh-${GMSH_RELEASE}/FAQ.txt
 	cp doc/CONTRIBUTORS gmsh-${GMSH_RELEASE}/CONTRIBUTORS.txt
@@ -229,7 +227,6 @@ package-mac:
 	cp bin/gmsh gmsh-${GMSH_RELEASE}/Gmsh.app/Contents/MacOS/Gmsh
 	cp Fltk/MacIcons.icns gmsh-${GMSH_RELEASE}/Gmsh.app/Contents/Resources/gmsh.icns
 	cp -R doc/gmsh.1 tutorial demos gmsh-${GMSH_RELEASE}
-	cp doc/FORMATS gmsh-${GMSH_RELEASE}/FORMATS.txt
 	cp doc/VERSIONS gmsh-${GMSH_RELEASE}/VERSIONS.txt
 	cp doc/FAQ gmsh-${GMSH_RELEASE}/FAQ.txt
 	cp doc/CONTRIBUTORS gmsh-${GMSH_RELEASE}/CONTRIBUTORS.txt
