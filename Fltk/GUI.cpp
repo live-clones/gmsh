@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.118 2001-10-29 08:52:19 geuzaine Exp $
+// $Id: GUI.cpp,v 1.119 2001-10-29 16:06:55 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1995,68 +1995,28 @@ void GUI::create_view_options_window(int num){
       { 
 	Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "General");
 	o->labelsize(CTX.fontsize);
-        o->hide();
+
+	view_butt[1] = new Fl_Check_Button(width/2, 2*WB+1*BH, BW, BH, "3D view");
+	view_butt[2] = new Fl_Check_Button(width/2, 2*WB+2*BH, BW, BH, "2D space table");
+	view_butt[3] = new Fl_Check_Button(width/2, 2*WB+3*BH, BW, BH, "2D time table");
+	for(i=1 ; i<=3 ; i++){
+	  view_butt[i]->type(FL_RADIO_BUTTON);
+	  view_butt[i]->labelsize(CTX.fontsize);
+	  view_butt[i]->selection_color(FL_YELLOW);
+	  view_butt[i]->callback(set_changed_cb, 0);
+	}
 
 	view_input[0] = new Fl_Input(2*WB, 2*WB+1*BH, IW, BH, "Name");
 	view_input[1] = new Fl_Input(2*WB, 2*WB+2*BH, IW, BH, "Format");
-	for(i=0 ; i<2 ; i++){
+	for(i=0 ; i<=1 ; i++){
 	  view_input[i]->labelsize(CTX.fontsize);
 	  view_input[i]->textsize(CTX.fontsize);
 	  view_input[i]->align(FL_ALIGN_RIGHT);
 	  view_input[i]->callback(set_changed_cb, 0);
 	}
-
-        view_butt[13] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Show elements");
-        view_butt[14] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Show color bar");
-        view_butt[15] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Display time");
-        view_butt[16] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW, BH, "Transparent color bar");
-	view_butt[17] = new Fl_Check_Button(2*WB, 2*WB+7*BH, BW, BH, "Enable Lighting");
-
-	view_butt[27] = new Fl_Check_Button(2*WB, 2*WB+8*BH, BW, BH, "Smooth normals");	
-	view_butt[27]->type(FL_TOGGLE_BUTTON);
-	view_butt[27]->down_box(FL_DOWN_BOX);
-	view_butt[27]->labelsize(CTX.fontsize);
-	view_butt[27]->selection_color(FL_YELLOW);
-	view_butt[27]->callback(set_changed_cb, 0);
-
-	view_value[13] = new Fl_Value_Input(2*WB, 2*WB+9*BH, IW, BH, "Angle");
-	view_value[13]->labelsize(CTX.fontsize);
-	view_value[13]->textsize(CTX.fontsize);
-	view_value[13]->type(FL_HORIZONTAL);
-	view_value[13]->align(FL_ALIGN_RIGHT);
-	view_value[13]->minimum(0.); 
-	view_value[13]->step(1.); 
-	view_value[13]->maximum(180.); 
-	view_value[13]->callback(set_changed_cb, 0);
-
-	view_value[11] = new Fl_Value_Input(width/2, 2*WB+ 1*BH, IW, BH, "Boundary");
-	view_value[11]->labelsize(CTX.fontsize);
-	view_value[11]->textsize(CTX.fontsize);
-	view_value[11]->type(FL_HORIZONTAL);
-	view_value[11]->align(FL_ALIGN_RIGHT);
-	view_value[11]->minimum(0); 
-	view_value[11]->step(1); 
-	view_value[11]->maximum(3); 
-	view_value[11]->callback(set_changed_cb, 0);
-
-	view_value[12] = new Fl_Value_Input(width/2, 2*WB+ 2*BH, IW, BH, "Explode");
-	view_value[12]->labelsize(CTX.fontsize);
-	view_value[12]->textsize(CTX.fontsize);
-	view_value[12]->type(FL_HORIZONTAL);
-	view_value[12]->align(FL_ALIGN_RIGHT);
-	view_value[12]->minimum(0.); 
-	view_value[12]->step(0.01); 
-	view_value[12]->maximum(1.); 
-	view_value[12]->callback(set_changed_cb, 0);
-
-        view_butt[18] = new Fl_Check_Button(width/2, 2*WB+3*BH, BW, BH, "Draw points");
-        view_butt[19] = new Fl_Check_Button(width/2, 2*WB+4*BH, BW, BH, "Draw lines");
-        view_butt[20] = new Fl_Check_Button(width/2, 2*WB+5*BH, BW, BH, "Draw triangles");
-        view_butt[21] = new Fl_Check_Button(width/2, 2*WB+6*BH, BW, BH, "Draw tetrahedra");
-        view_butt[22] = new Fl_Check_Button(width/2, 2*WB+7*BH, BW, BH, "Draw scalar values");
-        view_butt[23] = new Fl_Check_Button(width/2, 2*WB+8*BH, BW, BH, "Draw vector values");
-        view_butt[24] = new Fl_Check_Button(width/2, 2*WB+9*BH, BW, BH, "Draw tensor values");
-	for(i=13 ; i<25 ; i++){
+        view_butt[4] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Show labels");	
+        view_butt[5] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Transparent labels");
+	for(i=4 ; i<=5 ; i++){
 	  view_butt[i]->type(FL_TOGGLE_BUTTON);
 	  view_butt[i]->down_box(FL_DOWN_BOX);
 	  view_butt[i]->labelsize(CTX.fontsize);
@@ -2066,21 +2026,35 @@ void GUI::create_view_options_window(int num){
 
         o->end();
       }
-      // Range
+      // 3D
       { 
-	Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Range");
+	Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "3D");
 	o->labelsize(CTX.fontsize);
-	o->hide();
-        view_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Custom range");
-	view_butt[0]->type(FL_TOGGLE_BUTTON);
-	view_butt[0]->down_box(FL_DOWN_BOX);
-	view_butt[0]->labelsize(CTX.fontsize);
-	view_butt[0]->selection_color(FL_YELLOW);
-	//no set_changed since customrange has its own callback
+        o->hide();
 
-        view_value[0] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Minimum");
-        view_value[1] = new Fl_Value_Input(2*WB, 2*WB+3*BH, IW, BH, "Maximum");
-	for(i=0 ; i<2 ; i++){
+        view_butt[10] = new Fl_Check_Button(width/2, 2*WB+1*BH, BW, BH, "Show elements");
+	view_butt[11] = new Fl_Check_Button(width/2, 2*WB+2*BH, BW, BH, "Enable Lighting");
+	view_butt[12] = new Fl_Check_Button(width/2, 2*WB+3*BH, BW, BH, "Smooth normals");	
+	for(i=10 ; i<=12 ; i++){
+	  view_butt[i]->type(FL_TOGGLE_BUTTON);
+	  view_butt[i]->down_box(FL_DOWN_BOX);
+	  view_butt[i]->labelsize(CTX.fontsize);
+	  view_butt[i]->selection_color(FL_YELLOW);
+	  view_butt[i]->callback(set_changed_cb, 0);
+	}
+	view_value[10] = new Fl_Value_Input(width/2, 2*WB+4*BH, IW, BH, "Angle");
+	view_value[10]->minimum(0.); 
+	view_value[10]->step(1.); 
+	view_value[10]->maximum(180.); 
+	view_value[11] = new Fl_Value_Input(width/2, 2*WB+5*BH, IW, BH, "Boundary");
+	view_value[11]->minimum(0); 
+	view_value[11]->step(1); 
+	view_value[11]->maximum(3); 
+	view_value[12] = new Fl_Value_Input(width/2, 2*WB+6*BH, IW, BH, "Explode");
+	view_value[12]->minimum(0.); 
+	view_value[12]->step(0.01); 
+	view_value[12]->maximum(1.); 
+	for(i=10 ; i<=12 ; i++){
 	  view_value[i]->labelsize(CTX.fontsize);
 	  view_value[i]->textsize(CTX.fontsize);
 	  view_value[i]->type(FL_HORIZONTAL);
@@ -2088,69 +2062,126 @@ void GUI::create_view_options_window(int num){
 	  view_value[i]->callback(set_changed_cb, 0);
 	}
 
-	view_butt[1] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Linear");
-	view_butt[2] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Logarithmic");
-	for(i=1 ; i<3 ; i++){
-	  view_butt[i]->type(FL_RADIO_BUTTON);
+        view_butt[13] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Draw points");
+        view_butt[14] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Draw lines");
+        view_butt[15] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Draw triangles");
+        view_butt[16] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Draw tetrahedra");
+        view_butt[17] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Draw scalar values");
+        view_butt[18] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW, BH, "Draw vector values");
+        view_butt[19] = new Fl_Check_Button(2*WB, 2*WB+7*BH, BW, BH, "Draw tensor values");
+	for(i=13 ; i<=19 ; i++){
+	  view_butt[i]->type(FL_TOGGLE_BUTTON);
+	  view_butt[i]->down_box(FL_DOWN_BOX);
 	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(FL_YELLOW);
 	  view_butt[i]->callback(set_changed_cb, 0);
 	}
 
-	view_butt[26] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW, BH, "Double logarithmic");
-	view_butt[26]->type(FL_RADIO_BUTTON);
-	view_butt[26]->labelsize(CTX.fontsize);
-	view_butt[26]->selection_color(FL_YELLOW);
-	view_butt[26]->callback(set_changed_cb, 0);
+        o->end();
+      }
+      // 2D
+      { 
+	Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "2D");
+	o->labelsize(CTX.fontsize);
+        o->hide();
+	
+	view_value[20] = new Fl_Value_Input(2*WB, 2*WB+ 1*BH, IW, BH, "X position");
+	view_value[21] = new Fl_Value_Input(2*WB, 2*WB+ 2*BH, IW, BH, "Y position");
+	view_value[22] = new Fl_Value_Input(2*WB, 2*WB+ 3*BH, IW, BH, "Width");
+	view_value[23] = new Fl_Value_Input(2*WB, 2*WB+ 4*BH, IW, BH, "Height");
+	for(i=20 ; i<=23 ; i++){
+	  view_value[i]->labelsize(CTX.fontsize);
+	  view_value[i]->textsize(CTX.fontsize);
+	  view_value[i]->type(FL_HORIZONTAL);
+	  view_value[i]->align(FL_ALIGN_RIGHT);
+	  view_value[i]->callback(set_changed_cb, 0);
+	}
 
-        view_butt[25] = new Fl_Check_Button(2*WB, 2*WB+7*BH, BW, BH, "Saturate values");
-	view_butt[25]->type(FL_TOGGLE_BUTTON);
-	view_butt[25]->down_box(FL_DOWN_BOX);
-	view_butt[25]->labelsize(CTX.fontsize);
-	view_butt[25]->selection_color(FL_YELLOW);
-	view_butt[25]->callback(set_changed_cb, 0);
+        o->end();
+      }
+      // Range
+      { 
+	Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Range");
+	o->labelsize(CTX.fontsize);
+	o->hide();
+
+	view_value[30] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Intervals");
+	view_value[30]->labelsize(CTX.fontsize);
+	view_value[30]->textsize(CTX.fontsize);
+	view_value[30]->type(FL_HORIZONTAL);
+	view_value[30]->align(FL_ALIGN_RIGHT);
+	view_value[30]->minimum(1); 
+	view_value[30]->maximum(256); 
+	view_value[30]->step(1);
+	view_value[30]->callback(set_changed_cb, 0);
+
+	{
+	  Fl_Group *o2 = new Fl_Group(2*WB, 2*WB+2*BH, width/2, 4*BH, 0);
+	  view_butt[30] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Iso-values");
+	  view_butt[31] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Filled iso-values");
+	  view_butt[32] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Continuous map");
+	  view_butt[33] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Numeric values");
+	  for(i=30 ; i<=33 ; i++){
+	    view_butt[i]->type(FL_RADIO_BUTTON);
+	    view_butt[i]->labelsize(CTX.fontsize);
+	    view_butt[i]->selection_color(FL_YELLOW);
+	    view_butt[i]->callback(set_changed_cb, 0);
+	  }
+	  o2->end();
+	}
+
+        view_butt[34] = new Fl_Check_Button(width/2, 2*WB+1*BH, BW, BH, "Custom range");
+	view_butt[34]->type(FL_TOGGLE_BUTTON);
+	view_butt[34]->down_box(FL_DOWN_BOX);
+	view_butt[34]->labelsize(CTX.fontsize);
+	view_butt[34]->selection_color(FL_YELLOW);
+	//no set_changed since customrange has its own callback
+
+        view_value[31] = new Fl_Value_Input(width/2, 2*WB+3*BH, IW, BH, "Minimum");
+        view_value[32] = new Fl_Value_Input(width/2, 2*WB+4*BH, IW, BH, "Maximum");
+	for(i=31 ; i<=32 ; i++){
+	  view_value[i]->labelsize(CTX.fontsize);
+	  view_value[i]->textsize(CTX.fontsize);
+	  view_value[i]->type(FL_HORIZONTAL);
+	  view_value[i]->align(FL_ALIGN_RIGHT);
+	  view_value[i]->callback(set_changed_cb, 0);
+	}
+
+	{
+	  Fl_Group *o2 = new Fl_Group(width/2, 2*WB+5*BH, width-4*WB, 3*BH, 0);
+	  view_butt[35] = new Fl_Check_Button(width/2, 2*WB+5*BH, BW, BH, "Linear");
+	  view_butt[36] = new Fl_Check_Button(width/2, 2*WB+6*BH, BW, BH, "Logarithmic");
+	  view_butt[37] = new Fl_Check_Button(width/2, 2*WB+7*BH, BW, BH, "Double logarithmic");
+	  for(i=35 ; i<=37 ; i++){
+	    view_butt[i]->type(FL_RADIO_BUTTON);
+	    view_butt[i]->labelsize(CTX.fontsize);
+	    view_butt[i]->selection_color(FL_YELLOW);
+	    view_butt[i]->callback(set_changed_cb, 0);
+	  }
+	  o2->end();
+	}
+
+        view_butt[38] = new Fl_Check_Button(width/2, 2*WB+2*BH, BW, BH, "Saturate values");
+	view_butt[38]->type(FL_TOGGLE_BUTTON);
+	view_butt[38]->down_box(FL_DOWN_BOX);
+	view_butt[38]->labelsize(CTX.fontsize);
+	view_butt[38]->selection_color(FL_YELLOW);
+	view_butt[38]->callback(set_changed_cb, 0);
 
 	o->end();
-      }
-      // Intervals
-      {
-	Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Intervals");
-	o->labelsize(CTX.fontsize);
-	//view_intervals->hide();
-	view_value[2] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Number of intervals");
-	view_value[2]->labelsize(CTX.fontsize);
-	view_value[2]->textsize(CTX.fontsize);
-	view_value[2]->type(FL_HORIZONTAL);
-	view_value[2]->align(FL_ALIGN_RIGHT);
-	view_value[2]->minimum(1); 
-	view_value[2]->maximum(256); 
-	view_value[2]->step(1);
-	view_value[2]->callback(set_changed_cb, 0);
-
-	view_butt[3] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Iso-values");
-	view_butt[4] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Filled iso-values");
-	view_butt[5] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Continuous map");
-	view_butt[6] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Numeric values");
-	for(i=3 ; i<7 ; i++){
-	  view_butt[i]->type(FL_RADIO_BUTTON);
-	  view_butt[i]->labelsize(CTX.fontsize);
-	  view_butt[i]->selection_color(FL_YELLOW);
-	  view_butt[i]->callback(set_changed_cb, 0);
-	}
-        o->end();
       }
       // Offset and Raise
       { 
 	Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Offset");
 	o->labelsize(CTX.fontsize);
         o->hide();
-	view_value[3] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "X offset");
-        view_value[4] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Y offset");
-	view_value[5] = new Fl_Value_Input(2*WB, 2*WB+3*BH, IW, BH, "Z offset");
-	view_value[6] = new Fl_Value_Input(width/2, 2*WB+1*BH, IW, BH, "X raise");
-        view_value[7] = new Fl_Value_Input(width/2, 2*WB+2*BH, IW, BH, "Y raise");
-	view_value[8] = new Fl_Value_Input(width/2, 2*WB+3*BH, IW, BH, "Z raise");
-	for(i=3 ; i<9 ; i++){
+	view_value[40] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "X offset");
+        view_value[41] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Y offset");
+	view_value[42] = new Fl_Value_Input(2*WB, 2*WB+3*BH, IW, BH, "Z offset");
+	view_value[43] = new Fl_Value_Input(width/2, 2*WB+1*BH, IW, BH, "X raise");
+        view_value[44] = new Fl_Value_Input(width/2, 2*WB+2*BH, IW, BH, "Y raise");
+	view_value[45] = new Fl_Value_Input(width/2, 2*WB+3*BH, IW, BH, "Z raise");
+	for(i=40 ; i<=45 ; i++){
 	  view_value[i]->labelsize(CTX.fontsize);
 	  view_value[i]->textsize(CTX.fontsize);
 	  view_value[i]->type(FL_HORIZONTAL);
@@ -2164,16 +2195,25 @@ void GUI::create_view_options_window(int num){
 	view_timestep = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Time step");
 	view_timestep->labelsize(CTX.fontsize);
         view_timestep->hide();
-	view_value[9] = new Fl_Value_Input(2*WB, 2*WB+BH, IW, BH, "Time step number");
-	view_value[9]->labelsize(CTX.fontsize);
-	view_value[9]->textsize(CTX.fontsize);
-	view_value[9]->type(FL_HORIZONTAL);
-	view_value[9]->align(FL_ALIGN_RIGHT);
-	view_value[9]->minimum(0); 
-	view_value[9]->maximum(0); 
-	view_value[9]->step(1);
-	view_timestep->end();
+
+	view_value[50] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Time step number");
+	view_value[50]->labelsize(CTX.fontsize);
+	view_value[50]->textsize(CTX.fontsize);
+	view_value[50]->type(FL_HORIZONTAL);
+	view_value[50]->align(FL_ALIGN_RIGHT);
+	view_value[50]->minimum(0); 
+	view_value[50]->maximum(0); 
+	view_value[50]->step(1);
 	//no set_changed since timestep has its own callback
+
+        view_butt[50] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Display time");
+	view_butt[50]->type(FL_TOGGLE_BUTTON);
+	view_butt[50]->down_box(FL_DOWN_BOX);
+	view_butt[50]->labelsize(CTX.fontsize);
+	view_butt[50]->selection_color(FL_YELLOW);
+	view_butt[50]->callback(set_changed_cb, 0);
+
+	view_timestep->end();
       }
       // Vector display
       { 
@@ -2182,38 +2222,33 @@ void GUI::create_view_options_window(int num){
         view_vector->hide();
 
 	{
-	  Fl_Group *o = new Fl_Group(2*WB, WB+BH, width-4*WB, 2*BH, 0);
-	  view_butt[7] = new Fl_Check_Button(2*WB, 2*WB+1*BH, IW, BH, "Line");
-	  view_butt[8] = new Fl_Check_Button(2*WB, 2*WB+2*BH, IW, BH, "Arrow");
-	  view_butt[9] = new Fl_Check_Button(width/2, 2*WB+1*BH, IW, BH, "Cone");
-	  view_butt[10] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Displacement");
-	  for(i=7 ; i<11 ; i++){
-	    view_butt[i]->type(FL_RADIO_BUTTON);
-	    view_butt[i]->labelsize(CTX.fontsize);
-	    view_butt[i]->selection_color(FL_YELLOW);
-	    view_butt[i]->callback(set_changed_cb, 0);
-	  }
+	  Fl_Group *o = new Fl_Group(width/2, 2*WB+1*BH, width-4*WB, 4*BH, 0);
+	  view_butt[60] = new Fl_Check_Button(width/2, 2*WB+1*BH, IW, BH, "Line");
+	  view_butt[61] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Arrow");
+	  view_butt[62] = new Fl_Check_Button(width/2, 2*WB+3*BH, IW, BH, "Cone");
+	  view_butt[63] = new Fl_Check_Button(width/2, 2*WB+4*BH, IW, BH, "Displacement");
 	  o->end();
 	}
 	{
-	  Fl_Group *o = new Fl_Group(2*WB, WB+3*BH, width-4*WB, 2*BH, 0);
-	  view_butt[11] = new Fl_Check_Button(2*WB, 2*WB+3*BH, IW, BH, "Cell centered");
-	  view_butt[12] = new Fl_Check_Button(2*WB, 2*WB+4*BH, IW, BH, "Vertex centered");
-	  for(i=11 ; i<13 ; i++){
-	    view_butt[i]->type(FL_RADIO_BUTTON);
-	    view_butt[i]->labelsize(CTX.fontsize);
-	    view_butt[i]->selection_color(FL_YELLOW);
-	    view_butt[i]->callback(set_changed_cb, 0);
-	  }
+	  Fl_Group *o = new Fl_Group(2*WB, 2*WB+2*BH, width-4*WB, 2*BH, 0);
+	  view_butt[64] = new Fl_Check_Button(2*WB, 2*WB+2*BH, IW, BH, "Cell centered");
+	  view_butt[65] = new Fl_Check_Button(2*WB, 2*WB+3*BH, IW, BH, "Vertex centered");
 	  o->end();
 	}
-	view_value[10] = new Fl_Value_Input(2*WB, 2*WB+ 5*BH, IW, BH, "Vector scale");
-	view_value[10]->labelsize(CTX.fontsize);
-	view_value[10]->textsize(CTX.fontsize);
-	view_value[10]->type(FL_HORIZONTAL);
-	view_value[10]->align(FL_ALIGN_RIGHT);
-	view_value[10]->minimum(0); 
-	view_value[10]->callback(set_changed_cb, 0);
+	for(i=60 ; i<=65 ; i++){
+	  view_butt[i]->type(FL_RADIO_BUTTON);
+	  view_butt[i]->labelsize(CTX.fontsize);
+	  view_butt[i]->selection_color(FL_YELLOW);
+	  view_butt[i]->callback(set_changed_cb, 0);
+	}
+
+	view_value[60] = new Fl_Value_Input(2*WB, 2*WB+ 1*BH, IW, BH, "Size");
+	view_value[60]->labelsize(CTX.fontsize);
+	view_value[60]->textsize(CTX.fontsize);
+	view_value[60]->type(FL_HORIZONTAL);
+	view_value[60]->align(FL_ALIGN_RIGHT);
+	view_value[60]->minimum(0); 
+	view_value[60]->callback(set_changed_cb, 0);
 	view_vector->end();
       }
       // Colors
@@ -2268,12 +2303,19 @@ void GUI::update_view_window(int num){
   view_window->label(buffer);
 
   // general
-  opt_view_show_element(num, GMSH_GUI, 0);
-  opt_view_show_scale(num, GMSH_GUI, 0);
-  opt_view_show_time(num, GMSH_GUI, 0);
-  opt_view_transparent_scale(num, GMSH_GUI, 0);
   opt_view_name(num, GMSH_GUI, NULL);
   opt_view_format(num, GMSH_GUI, NULL);
+  opt_view_graph_type(num, GMSH_GUI, 0);
+  opt_view_show_scale(num, GMSH_GUI, 0);
+  opt_view_transparent_scale(num, GMSH_GUI, 0);
+
+  //3D
+  opt_view_show_element(num, GMSH_GUI, 0);
+  opt_view_light(num, GMSH_GUI, 0);
+  opt_view_smooth_normals(num, GMSH_GUI, 0);
+  opt_view_angle_smooth_normals(num, GMSH_GUI, 0);
+  opt_view_boundary(num, GMSH_GUI, 0);
+  opt_view_explode(num, GMSH_GUI, 0);
   opt_view_draw_points(num, GMSH_GUI, 0);
   opt_view_draw_lines(num, GMSH_GUI, 0);
   opt_view_draw_triangles(num, GMSH_GUI, 0);
@@ -2282,25 +2324,27 @@ void GUI::update_view_window(int num){
   opt_view_draw_vectors(num, GMSH_GUI, 0);
   opt_view_draw_tensors(num, GMSH_GUI, 0);
 
+  //2D
+  opt_view_graph_position0(num, GMSH_GUI, 0);
+  opt_view_graph_position1(num, GMSH_GUI, 0);
+  opt_view_graph_size0(num, GMSH_GUI, 0);
+  opt_view_graph_size1(num, GMSH_GUI, 0);
+
   // range
+  opt_view_nb_iso(num, GMSH_GUI, 0);
+  opt_view_intervals_type(num, GMSH_GUI, 0);
   opt_view_range_type(num, GMSH_GUI, 0);
-  view_butt[0]->callback(view_options_custom_cb, (void*)num);
+  view_butt[34]->callback(view_options_custom_cb, (void*)num);
   view_options_custom_cb(0,0);
-  view_butt[0]->clear_changed();
+  view_butt[34]->clear_changed();
   opt_view_custom_min(num, GMSH_GUI, 0);
   opt_view_custom_max(num, GMSH_GUI, 0);
-  for(i=0 ; i<2 ; i++){
+  for(i=31 ; i<=32 ; i++){
     view_value[i]->minimum(v->CustomMin); 
     view_value[i]->maximum(v->CustomMax); 
   }
   opt_view_scale_type(num, GMSH_GUI, 0);
   opt_view_saturate_values(num, GMSH_GUI, 0);
-
-  // intervals
-  opt_view_nb_iso(num, GMSH_GUI, 0);
-  opt_view_intervals_type(num, GMSH_GUI, 0);
-  opt_view_boundary(num, GMSH_GUI, 0);
-  opt_view_explode(num, GMSH_GUI, 0);
 
   // offset/raise
   opt_view_offset0(num, GMSH_GUI, 0);
@@ -2310,7 +2354,7 @@ void GUI::update_view_window(int num){
   opt_view_raise1(num, GMSH_GUI, 0);
   opt_view_raise2(num, GMSH_GUI, 0);
   val = 10.*CTX.lc ;
-  for(i=3 ; i<9 ; i++){
+  for(i=40 ; i<=45 ; i++){
     view_value[i]->step(val,1000); 
     view_value[i]->minimum(-val); 
     view_value[i]->maximum(val); 
@@ -2319,9 +2363,10 @@ void GUI::update_view_window(int num){
   // timestep
   if(v->NbTimeStep==1) view_timestep->deactivate();
   else view_timestep->activate();
-  view_value[9]->callback(view_options_timestep_cb, (void*)num);
-  view_value[9]->maximum(v->NbTimeStep-1); 
+  view_value[50]->callback(view_options_timestep_cb, (void*)num);
+  view_value[50]->maximum(v->NbTimeStep-1); 
   opt_view_timestep(num, GMSH_GUI, 0);
+  opt_view_show_time(num, GMSH_GUI, 0);
 
   // vector
   if(v->ScalarOnly) view_vector->deactivate();
@@ -2333,14 +2378,8 @@ void GUI::update_view_window(int num){
   // colors
   view_colorbar_window->update(v->Name, v->Min, v->Max, &v->CT, &v->Changed);
 
-  // light
-  opt_view_light(num, GMSH_GUI, 0);
-  opt_view_smooth_normals(num, GMSH_GUI, 0);
-  opt_view_angle_smooth_normals(num, GMSH_GUI, 0);
-
   // OK
   view_ok->callback(view_options_ok_cb, (void*)num);
-
 }
 
 //*************** Create the window for geometry context dependant definitions *********

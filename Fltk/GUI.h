@@ -160,7 +160,7 @@ public:
   int init_view_window, view_number ;
   Fl_Window        *view_window ;
   Fl_Group         *view_timestep, *view_vector ;
-#define VIEW_OPT_BUTT 50
+#define VIEW_OPT_BUTT 100
   Fl_Check_Button  *view_butt[VIEW_OPT_BUTT] ;
   Fl_Value_Input   *view_value[VIEW_OPT_BUTT] ;
   Fl_Input         *view_input[VIEW_OPT_BUTT] ;
