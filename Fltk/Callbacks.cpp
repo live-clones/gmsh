@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.98 2001-12-04 12:06:49 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.99 2001-12-04 16:42:42 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -684,6 +684,18 @@ void opt_visibility_number_cb(CALLBACK_ARGS){
     case 1: //element
       allelm = !allelm;
       velm = allelm ? VIS_MESH : 0;
+      tmp = Tree2List(THEM->Curves);
+      for(i=0; i<List_Nbr(tmp); i++){
+	List_Read(tmp, i, &c);
+	Tree_Action(c->Simplexes, vis_sim);
+      }
+      List_Delete(tmp);
+      tmp = Tree2List(THEM->Surfaces);
+      for(i=0; i<List_Nbr(tmp); i++){
+	List_Read(tmp, i, &s);
+	Tree_Action(s->Simplexes, vis_sim);
+      }
+      List_Delete(tmp);
       Tree_Action(THEM->Simplexes, vis_sim);
       tmp = Tree2List(THEM->Volumes);
       for(i=0; i<List_Nbr(tmp); i++){
@@ -693,6 +705,7 @@ void opt_visibility_number_cb(CALLBACK_ARGS){
 	Tree_Action(V->Pyramids, vis_pyr);
       }
       List_Delete(tmp);
+      break;
     case 2: //point
       allpnt = !allpnt;
       vnod = allpnt ? VIS_MESH|VIS_GEOM : 0;
@@ -731,27 +744,47 @@ void opt_visibility_number_cb(CALLBACK_ARGS){
       HH.Num = num; H = &HH;
       PP.Num = num; P = &PP;
       QQ.Num = num; Q = &QQ;
-      if((pS = (Simplex**)Tree_PQuery(THEM->Simplexes, &S))){
-	(*pS)->Visible = (*pS)->Visible ? 0 : VIS_MESH;
+      found = 0;
+      tmp = Tree2List(THEM->Curves);
+      for(i=0; i<List_Nbr(tmp); i++){
+	List_Read(tmp, i, &c);
+	if((pS = (Simplex**)Tree_PQuery(c->Simplexes, &S))){
+	  (*pS)->Visible = (*pS)->Visible ? 0 : VIS_MESH; found = 1; break;
+	}
       }
-      else{
-	found = 0;
-	tmp = Tree2List(THEM->Volumes);
+      List_Delete(tmp);
+      if(!found){
+	tmp = Tree2List(THEM->Surfaces);
 	for(i=0; i<List_Nbr(tmp); i++){
-	  List_Read(tmp, i, &V);
-	  if((pH = (Hexahedron**)Tree_PQuery(V->Hexahedra, &H))){
-	    (*pH)->Visible = (*pH)->Visible ? 0 : VIS_MESH; found = 1; break;
-	  }
-	  if((pP = (Prism**)Tree_PQuery(V->Prisms, &P))){
-	    (*pP)->Visible = (*pP)->Visible ? 0 : VIS_MESH; found = 1; break;
-	  }
-	  if((pQ = (Pyramid**)Tree_PQuery(V->Pyramids, &Q))){
-	    (*pQ)->Visible = (*pQ)->Visible ? 0 : VIS_MESH; found = 1; break;
+	  List_Read(tmp, i, &s);
+	  if((pS = (Simplex**)Tree_PQuery(s->Simplexes, &S))){
+	    (*pS)->Visible = (*pS)->Visible ? 0 : VIS_MESH; found = 1; break;
 	  }
 	}
 	List_Delete(tmp);
-	if(!found) 
-	  Msg(WARNING, "Unknown element %d (use '*' to hide/show all elements)", num);
+	if(!found){
+	  if((pS = (Simplex**)Tree_PQuery(THEM->Simplexes, &S))){
+	    (*pS)->Visible = (*pS)->Visible ? 0 : VIS_MESH;
+	  }
+	  else{
+	    tmp = Tree2List(THEM->Volumes);
+	    for(i=0; i<List_Nbr(tmp); i++){
+	      List_Read(tmp, i, &V);
+	      if((pH = (Hexahedron**)Tree_PQuery(V->Hexahedra, &H))){
+		(*pH)->Visible = (*pH)->Visible ? 0 : VIS_MESH; found = 1; break;
+	      }
+	      if((pP = (Prism**)Tree_PQuery(V->Prisms, &P))){
+		(*pP)->Visible = (*pP)->Visible ? 0 : VIS_MESH; found = 1; break;
+	      }
+	      if((pQ = (Pyramid**)Tree_PQuery(V->Pyramids, &Q))){
+		(*pQ)->Visible = (*pQ)->Visible ? 0 : VIS_MESH; found = 1; break;
+	      }
+	    }
+	    List_Delete(tmp);
+	    if(!found) 
+	      Msg(WARNING, "Unknown element %d (use '*' to hide/show all elements)", num);
+	  }
+	}
       }
       break;
     case 2: //point
