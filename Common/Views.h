@@ -41,8 +41,16 @@ class Post_View{
   List_T *SL, *VL, *TL; // lines
   int NbST, NbVT, NbTT;
   List_T *ST, *VT, *TT; // triangles
+  int NbSQ, NbVQ, NbTQ;
+  List_T *SQ, *VQ, *TQ; // quadrangles
   int NbSS, NbVS, NbTS;
   List_T *SS, *VS, *TS; // tetrahedra
+  int NbSH, NbVH, NbTH;
+  List_T *SH, *VH, *TH; // hexahedra
+  int NbSI, NbVI, NbTI;
+  List_T *SI, *VI, *TI; // prisms
+  int NbSY, NbVY, NbTY;
+  List_T *SY, *VY, *TY; // pyramids
   int NbT2, NbT3;
   List_T *T2D, *T2C, *T3D, *T3C; // 2D and 3D text strings
 
@@ -59,7 +67,8 @@ class Post_View{
   int ArrowType, ArrowLocation;
   int TimeStep;
   int DrawStrings;
-  int DrawPoints, DrawLines, DrawTriangles, DrawTetrahedra;
+  int DrawPoints, DrawLines, DrawTriangles, DrawQuadrangles;
+  int DrawTetrahedra, DrawHexahedra, DrawPrisms, DrawPyramids;
   int DrawScalars, DrawVectors, DrawTensors;
   int Boundary, Grid, PointType;
   double PointSize, LineWidth;

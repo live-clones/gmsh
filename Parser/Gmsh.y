@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.123 2002-05-20 18:28:29 geuzaine Exp $
+// $Id: Gmsh.y,v 1.124 2002-09-01 21:54:13 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -111,10 +111,14 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer);
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
 %token tLoop tRecombine tDelete tCoherence tIntersect
 %token tAttractor tLayers
-%token tScalarTetrahedron tVectorTetrahedron tTensorTetrahedron
-%token tScalarTriangle tVectorTriangle tTensorTriangle
-%token tScalarLine tVectorLine tTensorLine
 %token tScalarPoint tVectorPoint tTensorPoint
+%token tScalarLine tVectorLine tTensorLine
+%token tScalarTriangle tVectorTriangle tTensorTriangle
+%token tScalarQuadrangle tVectorQuadrangle tTensorQuadrangle
+%token tScalarTetrahedron tVectorTetrahedron tTensorTetrahedron
+%token tScalarHexahedron tVectorHexahedron tTensorHexahedron
+%token tScalarPrism tVectorPrism tTensorPrism
+%token tScalarPyramid tVectorPyramid tTensorPyramid
 %token tText2D tText3D
 %token tBSpline tBezier tNurbs tOrder tWith tBounds tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
@@ -457,9 +461,21 @@ Views :
   | Views ScalarTriangle
   | Views VectorTriangle
   | Views TensorTriangle
+  | Views ScalarQuadrangle
+  | Views VectorQuadrangle
+  | Views TensorQuadrangle
   | Views ScalarTetrahedron
   | Views VectorTetrahedron
   | Views TensorTetrahedron
+  | Views ScalarHexahedron
+  | Views VectorHexahedron
+  | Views TensorHexahedron
+  | Views ScalarPrism
+  | Views VectorPrism
+  | Views TensorPrism
+  | Views ScalarPyramid
+  | Views VectorPyramid
+  | Views TensorPyramid
   | Views Text2D
   | Views Text3D
 ;
@@ -659,6 +675,84 @@ TensorTriangle :
     }
 ;
 
+ScalarQuadrangleValues :
+    FExpr
+    { List_Add(View->SQ, &$1) ; }
+  | ScalarQuadrangleValues ',' FExpr
+    { List_Add(View->SQ, &$3) ; }
+  ;
+
+ScalarQuadrangle : 
+    tScalarQuadrangle '(' FExpr ',' FExpr ',' FExpr ',' 
+                          FExpr ',' FExpr ',' FExpr ','
+                          FExpr ',' FExpr ',' FExpr ','
+                          FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(View->SQ, &$3);  List_Add(View->SQ, &$9);
+      List_Add(View->SQ, &$15); List_Add(View->SQ, &$21);
+      List_Add(View->SQ, &$5);  List_Add(View->SQ, &$11);
+      List_Add(View->SQ, &$17); List_Add(View->SQ, &$23);
+      List_Add(View->SQ, &$7);  List_Add(View->SQ, &$13);
+      List_Add(View->SQ, &$19); List_Add(View->SQ, &$25);
+    }
+    '{' ScalarQuadrangleValues '}' tEND
+    {
+      View->NbSQ++ ;
+    }
+;
+
+VectorQuadrangleValues :
+    FExpr
+    { List_Add(View->VQ, &$1) ; }
+  | VectorQuadrangleValues ',' FExpr
+    { List_Add(View->VQ, &$3) ; }
+  ;
+
+VectorQuadrangle : 
+    tVectorQuadrangle '(' FExpr ',' FExpr ',' FExpr ',' 
+                          FExpr ',' FExpr ',' FExpr ','
+                          FExpr ',' FExpr ',' FExpr ','
+                          FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(View->VQ, &$3);  List_Add(View->VQ, &$9);
+      List_Add(View->VQ, &$15); List_Add(View->VQ, &$21);
+      List_Add(View->VQ, &$5);  List_Add(View->VQ, &$11);
+      List_Add(View->VQ, &$17); List_Add(View->VQ, &$23);
+      List_Add(View->VQ, &$7);  List_Add(View->VQ, &$13);
+      List_Add(View->VQ, &$19); List_Add(View->VQ, &$25);
+    }
+    '{' VectorQuadrangleValues '}' tEND
+    {
+      View->NbVQ++ ;
+    }
+;
+
+TensorQuadrangleValues :
+    FExpr
+    { List_Add(View->TQ, &$1) ; }
+  | TensorQuadrangleValues ',' FExpr
+    { List_Add(View->TQ, &$3) ; }
+  ;
+
+TensorQuadrangle :
+    tTensorQuadrangle '(' FExpr ',' FExpr ',' FExpr ',' 
+                          FExpr ',' FExpr ',' FExpr ','
+                          FExpr ',' FExpr ',' FExpr ','
+                          FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(View->TQ, &$3);  List_Add(View->TQ, &$9);
+      List_Add(View->TQ, &$15); List_Add(View->TQ, &$21);
+      List_Add(View->TQ, &$5);  List_Add(View->TQ, &$11);
+      List_Add(View->TQ, &$17); List_Add(View->TQ, &$23);
+      List_Add(View->TQ, &$7);  List_Add(View->TQ, &$13);
+      List_Add(View->TQ, &$19); List_Add(View->TQ, &$25);
+    }
+    '{' TensorQuadrangleValues '}' tEND
+    {
+      View->NbTQ++ ;
+    }
+;
+
 ScalarTetrahedronValues :
     FExpr
     { List_Add(View->SS, &$1) ; }
@@ -734,6 +828,297 @@ TensorTetrahedron :
     '{' TensorTetrahedronValues '}' tEND
     {
       View->NbTS++ ;
+    }
+;
+
+ScalarHexahedronValues :
+    FExpr
+    { List_Add(View->SH, &$1) ; }
+  | ScalarHexahedronValues ',' FExpr
+    { List_Add(View->SH, &$3) ; }
+  ;
+
+ScalarHexahedron : 
+    tScalarHexahedron '(' FExpr ',' FExpr ',' FExpr ',' 
+                          FExpr ',' FExpr ',' FExpr ','
+                          FExpr ',' FExpr ',' FExpr ',' 
+                          FExpr ',' FExpr ',' FExpr ','
+                          FExpr ',' FExpr ',' FExpr ',' 
+                          FExpr ',' FExpr ',' FExpr ','
+                          FExpr ',' FExpr ',' FExpr ',' 
+                          FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(View->SH, &$3);  List_Add(View->SH, &$9);
+      List_Add(View->SH, &$15); List_Add(View->SH, &$21);
+      List_Add(View->SH, &$27); List_Add(View->SH, &$33);
+      List_Add(View->SH, &$39); List_Add(View->SH, &$45);
+      List_Add(View->SH, &$5);  List_Add(View->SH, &$11);
+      List_Add(View->SH, &$17); List_Add(View->SH, &$23);
+      List_Add(View->SH, &$29); List_Add(View->SH, &$35);
+      List_Add(View->SH, &$41); List_Add(View->SH, &$47);
+      List_Add(View->SH, &$7);  List_Add(View->SH, &$13);
+      List_Add(View->SH, &$19); List_Add(View->SH, &$25);
+      List_Add(View->SH, &$31); List_Add(View->SH, &$37);
+      List_Add(View->SH, &$43); List_Add(View->SH, &$49);
+    }
+    '{' ScalarHexahedronValues '}' tEND
+    {
+      View->NbSH++ ;
+    }
+;
+
+VectorHexahedronValues :
+    FExpr
+    { List_Add(View->VH, &$1) ; }
+  | VectorHexahedronValues ',' FExpr
+    { List_Add(View->VH, &$3) ; }
+  ;
+
+VectorHexahedron : 
+    tVectorHexahedron '(' FExpr ',' FExpr ',' FExpr ',' 
+                          FExpr ',' FExpr ',' FExpr ','
+                          FExpr ',' FExpr ',' FExpr ',' 
+                          FExpr ',' FExpr ',' FExpr ','
+                          FExpr ',' FExpr ',' FExpr ',' 
+                          FExpr ',' FExpr ',' FExpr ','
+                          FExpr ',' FExpr ',' FExpr ',' 
+                          FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(View->VH, &$3);  List_Add(View->VH, &$9);
+      List_Add(View->VH, &$15); List_Add(View->VH, &$21);
+      List_Add(View->VH, &$27); List_Add(View->VH, &$33);
+      List_Add(View->VH, &$39); List_Add(View->VH, &$45);
+      List_Add(View->VH, &$5);  List_Add(View->VH, &$11);
+      List_Add(View->VH, &$17); List_Add(View->VH, &$23);
+      List_Add(View->VH, &$29); List_Add(View->VH, &$35);
+      List_Add(View->VH, &$41); List_Add(View->VH, &$47);
+      List_Add(View->VH, &$7);  List_Add(View->VH, &$13);
+      List_Add(View->VH, &$19); List_Add(View->VH, &$25);
+      List_Add(View->VH, &$31); List_Add(View->VH, &$37);
+      List_Add(View->VH, &$43); List_Add(View->VH, &$49);
+    }
+    '{' VectorHexahedronValues '}' tEND
+    {
+      View->NbVH++ ;
+    }
+;
+
+TensorHexahedronValues :
+    FExpr
+    { List_Add(View->TH, &$1) ; }
+  | TensorHexahedronValues ',' FExpr
+    { List_Add(View->TH, &$3) ; }
+  ;
+
+TensorHexahedron :
+    tTensorHexahedron '(' FExpr ',' FExpr ',' FExpr ',' 
+                          FExpr ',' FExpr ',' FExpr ','
+                          FExpr ',' FExpr ',' FExpr ',' 
+                          FExpr ',' FExpr ',' FExpr ',' 
+                          FExpr ',' FExpr ',' FExpr ','
+                          FExpr ',' FExpr ',' FExpr ',' 
+                          FExpr ',' FExpr ',' FExpr ',' 
+                          FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(View->TH, &$3);  List_Add(View->TH, &$9);
+      List_Add(View->TH, &$15); List_Add(View->TH, &$21);
+      List_Add(View->TH, &$27); List_Add(View->TH, &$33);
+      List_Add(View->TH, &$39); List_Add(View->TH, &$45);
+      List_Add(View->TH, &$5);  List_Add(View->TH, &$11);
+      List_Add(View->TH, &$17); List_Add(View->TH, &$23);
+      List_Add(View->TH, &$29); List_Add(View->TH, &$35);
+      List_Add(View->TH, &$41); List_Add(View->TH, &$47);
+      List_Add(View->TH, &$7);  List_Add(View->TH, &$13);
+      List_Add(View->TH, &$19); List_Add(View->TH, &$25);
+      List_Add(View->TH, &$31); List_Add(View->TH, &$37);
+      List_Add(View->TH, &$43); List_Add(View->TH, &$49);
+    }
+    '{' TensorHexahedronValues '}' tEND
+    {
+      View->NbTH++ ;
+    }
+;
+
+ScalarPrismValues :
+    FExpr
+    { List_Add(View->SI, &$1) ; }
+  | ScalarPrismValues ',' FExpr
+    { List_Add(View->SI, &$3) ; }
+  ;
+
+ScalarPrism : 
+    tScalarPrism '(' FExpr ',' FExpr ',' FExpr ',' 
+                     FExpr ',' FExpr ',' FExpr ','
+                     FExpr ',' FExpr ',' FExpr ',' 
+                     FExpr ',' FExpr ',' FExpr ','
+                     FExpr ',' FExpr ',' FExpr ',' 
+                     FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(View->SI, &$3);  List_Add(View->SI, &$9);
+      List_Add(View->SI, &$15); List_Add(View->SI, &$21);
+      List_Add(View->SI, &$27); List_Add(View->SI, &$33);
+      List_Add(View->SI, &$5);  List_Add(View->SI, &$11);
+      List_Add(View->SI, &$17); List_Add(View->SI, &$23);
+      List_Add(View->SI, &$29); List_Add(View->SI, &$35);
+      List_Add(View->SI, &$7);  List_Add(View->SI, &$13);
+      List_Add(View->SI, &$19); List_Add(View->SI, &$25);
+      List_Add(View->SI, &$31); List_Add(View->SI, &$37);
+    }
+    '{' ScalarPrismValues '}' tEND
+    {
+      View->NbSI++ ;
+    }
+;
+
+VectorPrismValues :
+    FExpr
+    { List_Add(View->VI, &$1) ; }
+  | VectorPrismValues ',' FExpr
+    { List_Add(View->VI, &$3) ; }
+  ;
+
+VectorPrism : 
+    tVectorPrism '(' FExpr ',' FExpr ',' FExpr ',' 
+                     FExpr ',' FExpr ',' FExpr ','
+                     FExpr ',' FExpr ',' FExpr ',' 
+                     FExpr ',' FExpr ',' FExpr ','
+                     FExpr ',' FExpr ',' FExpr ',' 
+                     FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(View->VI, &$3);  List_Add(View->VI, &$9);
+      List_Add(View->VI, &$15); List_Add(View->VI, &$21);
+      List_Add(View->VI, &$27); List_Add(View->VI, &$33);
+      List_Add(View->VI, &$5);  List_Add(View->VI, &$11);
+      List_Add(View->VI, &$17); List_Add(View->VI, &$23);
+      List_Add(View->VI, &$29); List_Add(View->VI, &$35);
+      List_Add(View->VI, &$7);  List_Add(View->VI, &$13);
+      List_Add(View->VI, &$19); List_Add(View->VI, &$25);
+      List_Add(View->VI, &$31); List_Add(View->VI, &$37);
+    }
+    '{' VectorPrismValues '}' tEND
+    {
+      View->NbVI++ ;
+    }
+;
+
+TensorPrismValues :
+    FExpr
+    { List_Add(View->TI, &$1) ; }
+  | TensorPrismValues ',' FExpr
+    { List_Add(View->TI, &$3) ; }
+  ;
+
+TensorPrism :
+    tTensorPrism '(' FExpr ',' FExpr ',' FExpr ',' 
+                     FExpr ',' FExpr ',' FExpr ','
+                     FExpr ',' FExpr ',' FExpr ',' 
+                     FExpr ',' FExpr ',' FExpr ','
+                     FExpr ',' FExpr ',' FExpr ',' 
+                     FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(View->TI, &$3);  List_Add(View->TI, &$9);
+      List_Add(View->TI, &$15); List_Add(View->TI, &$21);
+      List_Add(View->TI, &$27); List_Add(View->TI, &$33);
+      List_Add(View->TI, &$5);  List_Add(View->TI, &$11);
+      List_Add(View->TI, &$17); List_Add(View->TI, &$23);
+      List_Add(View->TI, &$29); List_Add(View->TI, &$35);
+      List_Add(View->TI, &$7);  List_Add(View->TI, &$13);
+      List_Add(View->TI, &$19); List_Add(View->TI, &$25);
+      List_Add(View->TI, &$31); List_Add(View->TI, &$37);
+    }
+    '{' TensorPrismValues '}' tEND
+    {
+      View->NbTI++ ;
+    }
+;
+
+ScalarPyramidValues :
+    FExpr
+    { List_Add(View->SY, &$1) ; }
+  | ScalarPyramidValues ',' FExpr
+    { List_Add(View->SY, &$3) ; }
+  ;
+
+ScalarPyramid : 
+    tScalarPyramid '(' FExpr ',' FExpr ',' FExpr ',' 
+                       FExpr ',' FExpr ',' FExpr ','
+                       FExpr ',' FExpr ',' FExpr ',' 
+                       FExpr ',' FExpr ',' FExpr ','
+                       FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(View->SY, &$3);  List_Add(View->SY, &$9);
+      List_Add(View->SY, &$15); List_Add(View->SY, &$21);
+      List_Add(View->SY, &$27);
+      List_Add(View->SY, &$5);  List_Add(View->SY, &$11);
+      List_Add(View->SY, &$17); List_Add(View->SY, &$23);
+      List_Add(View->SY, &$29);
+      List_Add(View->SY, &$7);  List_Add(View->SY, &$13);
+      List_Add(View->SY, &$19); List_Add(View->SY, &$25);
+      List_Add(View->SY, &$31);
+    }
+    '{' ScalarPyramidValues '}' tEND
+    {
+      View->NbSY++ ;
+    }
+;
+
+VectorPyramidValues :
+    FExpr
+    { List_Add(View->VY, &$1) ; }
+  | VectorPyramidValues ',' FExpr
+    { List_Add(View->VY, &$3) ; }
+  ;
+
+VectorPyramid : 
+    tVectorPyramid '(' FExpr ',' FExpr ',' FExpr ',' 
+                       FExpr ',' FExpr ',' FExpr ','
+                       FExpr ',' FExpr ',' FExpr ',' 
+                       FExpr ',' FExpr ',' FExpr ',' 
+                       FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(View->VY, &$3);  List_Add(View->VY, &$9);
+      List_Add(View->VY, &$15); List_Add(View->VY, &$21);
+      List_Add(View->VY, &$27);
+      List_Add(View->VY, &$5);  List_Add(View->VY, &$11);
+      List_Add(View->VY, &$17); List_Add(View->VY, &$23);
+      List_Add(View->VY, &$29);
+      List_Add(View->VY, &$7);  List_Add(View->VY, &$13);
+      List_Add(View->VY, &$19); List_Add(View->VY, &$25);
+      List_Add(View->VY, &$31);
+    }
+    '{' VectorPyramidValues '}' tEND
+    {
+      View->NbVY++ ;
+    }
+;
+
+TensorPyramidValues :
+    FExpr
+    { List_Add(View->TY, &$1) ; }
+  | TensorPyramidValues ',' FExpr
+    { List_Add(View->TY, &$3) ; }
+  ;
+
+TensorPyramid :
+    tTensorPyramid '(' FExpr ',' FExpr ',' FExpr ',' 
+                       FExpr ',' FExpr ',' FExpr ','
+                       FExpr ',' FExpr ',' FExpr ',' 
+                       FExpr ',' FExpr ',' FExpr ',' 
+                       FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(View->TY, &$3);  List_Add(View->TY, &$9);
+      List_Add(View->TY, &$15); List_Add(View->TY, &$21);
+      List_Add(View->TY, &$27);
+      List_Add(View->TY, &$5);  List_Add(View->TY, &$11);
+      List_Add(View->TY, &$17); List_Add(View->TY, &$23);
+      List_Add(View->TY, &$29);
+      List_Add(View->TY, &$7);  List_Add(View->TY, &$13);
+      List_Add(View->TY, &$19); List_Add(View->TY, &$25);
+      List_Add(View->TY, &$31);
+    }
+    '{' TensorPyramidValues '}' tEND
+    {
+      View->NbTY++ ;
     }
 ;
 

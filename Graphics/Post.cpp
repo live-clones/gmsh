@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.40 2002-08-29 03:55:49 geuzaine Exp $
+// $Id: Post.cpp,v 1.41 2002-09-01 21:54:10 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -31,7 +31,7 @@
 
 extern Context_T   CTX;
 
-static double      Raise[3][5];
+static double      Raise[3][8];
 static double      RaiseFactor[3];
 
 // Give Value from Index
@@ -100,13 +100,13 @@ void Palette2(Post_View *v,double min, double max, double val){ /* val in [min,m
   glColor4ubv((GLubyte *) &v->CT.table[index]);
 }
 
-void RaiseFill(int i, double Val, double ValMin, double Raise[3][5]){
+void RaiseFill(int i, double Val, double ValMin, double Raise[3][8]){
   int j ;
   for(j=0 ; j<3 ; j++) Raise[j][i] = (Val-ValMin) * RaiseFactor[j] ;
 }
 
 
-// Draw Post routines
+// Compute node coordinates taking Offset and Explode into account
 
 void Get_Coords(double Explode, double *Offset, int nbnod, 
 		double *x1, double *y1, double *z1, 
@@ -138,6 +138,8 @@ void Get_Coords(double Explode, double *Offset, int nbnod,
   }
 }
 
+// Compare barycenters with viewpoint (eye)
+
 static double storedEye[3]={0.,0.,0.};
 
 int changedEye(){
@@ -157,25 +159,21 @@ int changedEye(){
   return 0;
 }
 
-// to be rigorous, we should take Raise into account...
+// to be rigorous, we should take Raise into account
 
-int compareTriangleEye(const void *a, const void *b){
-  double d, dq, dw, *q=(double*)a, *w=(double*)b;
-  double cgq[3], cgw[3];
-
-  cgq[0] = q[0]+q[1]+q[2];
-  cgq[1] = q[3]+q[4]+q[5];
-  cgq[2] = q[6]+q[7]+q[8];
-
-  cgw[0] = w[0]+w[1]+w[2];
-  cgw[1] = w[3]+w[4]+w[5];
-  cgw[2] = w[6]+w[7]+w[8];
-
+int compareEye(double *q, double *w, int nbnodes){
+  double d, dq, dw, cgq[3]={0.,0.,0.}, cgw[3]={0.,0.,0.};
+  for(int i=0; i<nbnodes; i++){
+    cgq[0] += q[i];
+    cgq[1] += q[i+nbnodes];
+    cgq[2] += q[i+2*nbnodes];
+    cgw[0] += w[i];
+    cgw[1] += w[i+nbnodes];
+    cgw[2] += w[i+2*nbnodes];
+  }
   prosca(storedEye,cgq,&dq);
   prosca(storedEye,cgw,&dw);
-
   d = dq-dw;
-
   if(d > 0)
     return 1;
   if(d < 0)
@@ -183,33 +181,103 @@ int compareTriangleEye(const void *a, const void *b){
   return 0;
 }
 
-int compareTetrahedronEye(const void *a, const void *b){
-  double d, dq, dw, *q=(double*)a, *w=(double*)b;
-  double cgq[3], cgw[3];
-
-  cgq[0] = q[0]+q[1]+q[2]+q[3];  
-  cgq[1] = q[4]+q[5]+q[6]+q[7];  
-  cgq[2] = q[8]+q[9]+q[10]+q[11];
-
-  cgw[0] = w[0]+w[1]+w[2]+w[3];  
-  cgw[1] = w[4]+w[5]+w[6]+w[7];  
-  cgw[2] = w[8]+w[9]+w[10]+w[11];
-
-  prosca(storedEye,cgq,&dq);
-  prosca(storedEye,cgw,&dw);
-
-  d = dq-dw;
-
-  if(d > 0)
-    return 1;
-  if(d < 0)
-    return -1;
-  return 0;
+int compareEye3Nodes(const void *a, const void *b){
+  return compareEye((double*)a,(double*)b,3); 
 }
 
-void Draw_Post (void) {
-  int            iView,i,j,k,nb;
-  double         ValMin,ValMax,AbsMax,X[4],Y[4],Z[4];
+int compareEye4Nodes(const void *a, const void *b){
+  return compareEye((double*)a,(double*)b,4); 
+}
+
+int compareEye5Nodes(const void *a, const void *b){
+  return compareEye((double*)a,(double*)b,5); 
+}
+
+int compareEye6Nodes(const void *a, const void *b){
+  return compareEye((double*)a,(double*)b,6); 
+}
+
+int compareEye8Nodes(const void *a, const void *b){
+  return compareEye((double*)a,(double*)b,8); 
+}
+
+// Draw_Post
+
+void Draw_ScalarList(Post_View *v, double ValMin, double ValMax, double Raise[3][8],
+		     List_T *list, int nbelm, int nbnod, int smoothnormals, 
+		     void (*draw)(Post_View *, int, double, double, double [3][8],
+				  double *, double *, double *, double *)){
+  int i, nb;
+  double X[8],Y[8],Z[8];
+
+  if(nbelm && v->DrawScalars){
+    nb = List_Nbr(list) / nbelm ;
+    if(smoothnormals && v->Light && v->SmoothNormals && v->Changed && 
+       v->IntervalsType != DRAW_POST_ISO){
+      Msg(DEBUG, "Preprocessing of normals in view %d", v->Num);
+      for(i = 0 ; i < List_Nbr(list) ; i+=nb){
+	Get_Coords(v->Explode, v->Offset, nbnod, 
+		   (double*)List_Pointer_Fast(list,i), 
+		   (double*)List_Pointer_Fast(list,i+nbnod),
+		   (double*)List_Pointer_Fast(list,i+2*nbnod), X, Y, Z);
+	draw(v, 1, ValMin, ValMax, Raise, X, Y, Z, 
+	     (double*)List_Pointer_Fast(list,i+3*nbnod));
+      }
+    }
+    for(i = 0 ; i < List_Nbr(list) ; i+=nb){
+      Get_Coords(v->Explode, v->Offset, nbnod, 
+		 (double*)List_Pointer_Fast(list,i), 
+		 (double*)List_Pointer_Fast(list,i+nbnod),
+		 (double*)List_Pointer_Fast(list,i+2*nbnod), X, Y, Z);
+      draw(v, 0, ValMin, ValMax, Raise, X, Y, Z, 
+	   (double*)List_Pointer_Fast(list,i+3*nbnod));
+    }
+  }
+}
+
+void Draw_VectorList(Post_View *v, double ValMin, double ValMax, double Raise[3][8],
+		     List_T *list, int nbelm, int nbnod,
+		     void (*draw)(Post_View *, double, double, double [3][8],
+				  double *, double *, double *, double *)){
+  int i, nb;
+  double X[8],Y[8],Z[8];
+
+  if(nbelm && v->DrawVectors){
+    nb = List_Nbr(list) / nbelm ;
+    for(i = 0 ; i < List_Nbr(list) ; i+=nb){
+      Get_Coords(v->Explode, v->Offset, nbnod,
+		 (double*)List_Pointer_Fast(list,i), 
+		 (double*)List_Pointer_Fast(list,i+nbnod),
+		 (double*)List_Pointer_Fast(list,i+2*nbnod), X, Y, Z);
+      draw(v, ValMin, ValMax, Raise, X, Y, Z, 
+	   (double*)List_Pointer_Fast(list,i+3*nbnod));
+    }
+  }
+}
+
+void Draw_TensorList(Post_View *v, double ValMin, double ValMax, double Raise[3][8],
+		     List_T *list, int nbelm, int nbnod,
+		     void (*draw)(Post_View *, double, double, double [3][8],
+				  double *, double *, double *, double *)){
+  int i, nb;
+  double X[8],Y[8],Z[8];
+
+  if(nbelm && v->DrawTensors){
+    nb = List_Nbr(list) / nbelm ;
+    for(i = 0 ; i < List_Nbr(list) ; i+=nb){
+      Get_Coords(v->Explode, v->Offset, nbnod,
+		 (double*)List_Pointer_Fast(list,i), 
+		 (double*)List_Pointer_Fast(list,i+nbnod),
+		 (double*)List_Pointer_Fast(list,i+2*nbnod), X, Y, Z);
+      draw(v, ValMin, ValMax, Raise, X, Y, Z, 
+	   (double*)List_Pointer_Fast(list,i+3*nbnod));
+    }
+  }
+}
+
+void Draw_Post(void){
+  int            iView,j,k,nb;
+  double         ValMin,ValMax,AbsMax;
   Post_View     *v;
 
   if(!CTX.post.list) return;
@@ -252,23 +320,57 @@ void Draw_Post (void) {
 
     if(v->Visible && !v->Dirty){ 
 
-      // sort the data % eye for transparency
+      // sort the data % eye for transparency. Hybrid views
+      // (e.g. tri+qua) or multiple views will be sorted
+      // incorrectly... One should have a function (plugin?) to
+      // merge+decompose in simplices a group of views.
 
       if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && changedEye()){
 	Msg(DEBUG, "Sorting view %d", v->Num);
-	if(v->NbST && v->DrawTriangles && v->DrawScalars){
-	  nb = List_Nbr(v->ST) / v->NbST ;
-	  qsort(v->ST->array,v->NbST,nb*sizeof(double),compareTriangleEye);
-	  v->Changed = 1; // force displaylist regeneration
+
+	if(v->DrawScalars){
+
+	  if(v->IntervalsType != DRAW_POST_ISO){
+
+	    if(v->NbST && v->DrawTriangles){
+	      nb = List_Nbr(v->ST) / v->NbST ;
+	      qsort(v->ST->array,v->NbST,nb*sizeof(double),compareEye3Nodes);
+	      v->Changed = 1;
+	    }
+	    if(v->NbSQ && v->DrawQuadrangles){
+	      nb = List_Nbr(v->SQ) / v->NbSQ ;
+	      qsort(v->SQ->array,v->NbSQ,nb*sizeof(double),compareEye4Nodes);
+	      v->Changed = 1;
+	    }
+	
+	  }
+
+	  // the following is of course not rigorous (we should store
+	  // the triangles generated during the iso computation, and
+	  // sort these... But this is better than doing nothing :-)
+	  if(v->NbSS && v->DrawTetrahedra){
+	    nb = List_Nbr(v->SS) / v->NbSS ;
+	    qsort(v->SS->array,v->NbSS,nb*sizeof(double),compareEye4Nodes);
+	    v->Changed = 1;
+	  }
+	  if(v->NbSH && v->DrawHexahedra){
+	    nb = List_Nbr(v->SH) / v->NbSH ;
+	    qsort(v->SH->array,v->NbSH,nb*sizeof(double),compareEye8Nodes);
+	    v->Changed = 1;
+	  }
+	  if(v->NbSI && v->DrawPrisms){
+	    nb = List_Nbr(v->SI) / v->NbSI ;
+	    qsort(v->SI->array,v->NbSI,nb*sizeof(double),compareEye6Nodes);
+	    v->Changed = 1;
+	  }
+	  if(v->NbSY && v->DrawPyramids){
+	    nb = List_Nbr(v->SY) / v->NbSY ;
+	    qsort(v->SY->array,v->NbSY,nb*sizeof(double),compareEye5Nodes);
+	    v->Changed = 1;
+	  }
+
 	}
-	// the following is of course not rigorous (we should store
-	// the triangles generated during the iso computation, and
-	// sort these... But this is better than doing nothing :-)
-	if(v->NbSS && v->DrawTetrahedra && v->DrawScalars){
-	  nb = List_Nbr(v->SS) / v->NbSS ;
-	  qsort(v->SS->array,v->NbSS,nb*sizeof(double),compareTetrahedronEye);
-	  v->Changed = 1;
-	}
+
       }
 
       if(CTX.display_lists && !v->Changed && v->DisplayListNum>0){
@@ -349,185 +451,63 @@ void Draw_Post (void) {
         }
 
 	// Points
-
-	if(v->Type==DRAW_POST_3D && v->NbSP && v->DrawPoints && v->DrawScalars){
-	  nb = List_Nbr(v->SP) / v->NbSP ;
-	  for(i = 0 ; i < List_Nbr(v->SP) ; i+=nb){
-	    Get_Coords(1., v->Offset, 1, 
-		       (double*)List_Pointer_Fast(v->SP,i), 
-		       (double*)List_Pointer_Fast(v->SP,i+1), 
-		       (double*)List_Pointer_Fast(v->SP,i+2), 
-		       X, Y, Z);
-	    Draw_ScalarPoint(v, ValMin, ValMax, Raise, X, Y, Z,
-			     (double*)List_Pointer_Fast(v->SP,i+3));
-	  }
-	}
-	if(v->NbVP && v->DrawPoints && v->DrawVectors){
-	  nb = List_Nbr(v->VP) / v->NbVP ;
-	  for(i = 0 ; i < List_Nbr(v->VP) ; i+=nb){
-	    Get_Coords(1., v->Offset, 1, 
-		       (double*)List_Pointer_Fast(v->VP,i), 
-		       (double*)List_Pointer_Fast(v->VP,i+1), 
-		       (double*)List_Pointer_Fast(v->VP,i+2), 
-		       X, Y, Z);
-	    Draw_VectorPoint(v, ValMin, ValMax, Raise, X, Y, Z,
-			     (double*)List_Pointer_Fast(v->VP,i+3));
-	  }
-	}
-	if(v->NbTP && v->DrawPoints && v->DrawTensors){
-	  nb = List_Nbr(v->TP) / v->NbTP ;
-	  for(i = 0 ; i < List_Nbr(v->TP) ; i+=nb){
-	    Get_Coords(1., v->Offset, 1, 
-		       (double*)List_Pointer_Fast(v->TP,i), 
-		       (double*)List_Pointer_Fast(v->TP,i+1), 
-		       (double*)List_Pointer_Fast(v->TP,i+2), 
-		       X, Y, Z);
-	    Draw_TensorPoint(v, ValMin, ValMax, Raise, X, Y, Z,
-			     (double*)List_Pointer_Fast(v->TP,i+3));
-	  }
+	if(v->DrawPoints){
+	  if(v->Type==DRAW_POST_3D)
+	    Draw_ScalarList(v, ValMin, ValMax, Raise, v->SP, v->NbSP, 1, 0, Draw_ScalarPoint);
+	  Draw_VectorList(v, ValMin, ValMax, Raise, v->VP, v->NbVP, 1, Draw_VectorPoint);
+	  Draw_TensorList(v, ValMin, ValMax, Raise, v->TP, v->NbTP, 1, Draw_TensorPoint);
 	}
 
 	// Lines
-	
-	if(v->NbSL && v->DrawLines && v->DrawScalars){
-	  nb = List_Nbr(v->SL) / v->NbSL ;
-	  for(i = 0 ; i < List_Nbr(v->SL) ; i+=nb){
-	    Get_Coords(v->Explode, v->Offset, 2, 
-		       (double*)List_Pointer_Fast(v->SL,i), 
-		       (double*)List_Pointer_Fast(v->SL,i+2), 
-		       (double*)List_Pointer_Fast(v->SL,i+4), 
-		       X, Y, Z);
-	    Draw_ScalarLine(v, ValMin, ValMax, Raise, X, Y, Z,
-			    (double*)List_Pointer_Fast(v->SL,i+6));
-	  }
-	}
-	if(v->NbVL && v->DrawLines && v->DrawVectors){
-	  nb = List_Nbr(v->VL) / v->NbVL ;
-	  for(i = 0 ; i < List_Nbr(v->VL) ; i+=nb){
-	    Get_Coords(v->Explode, v->Offset, 2, 
-		       (double*)List_Pointer_Fast(v->VL,i),
-		       (double*)List_Pointer_Fast(v->VL,i+2),
-		       (double*)List_Pointer_Fast(v->VL,i+4),
-		       X, Y, Z);
-	    Draw_VectorLine(v, ValMin, ValMax, Raise, X, Y, Z,
-			    (double*)List_Pointer_Fast(v->VL,i+6));
-	  }
-	}
-	if(v->NbTL && v->DrawLines && v->DrawTensors){
-	  nb = List_Nbr(v->TL) / v->NbTL ;
-	  for(i = 0 ; i < List_Nbr(v->TL) ; i+=nb){
-	    Get_Coords(v->Explode, v->Offset, 2, 
-		       (double*)List_Pointer_Fast(v->TL,i), 
-		       (double*)List_Pointer_Fast(v->TL,i+2), 
-		       (double*)List_Pointer_Fast(v->TL,i+4), 
-		       X, Y, Z);
-	    Draw_TensorLine(v, ValMin, ValMax, Raise, X, Y, Z,
-			    (double*)List_Pointer_Fast(v->TL,i+6));
-	  }
+	if(v->DrawLines){
+	  Draw_ScalarList(v, ValMin, ValMax, Raise, v->SL, v->NbSL, 2, 0, Draw_ScalarLine);
+	  Draw_VectorList(v, ValMin, ValMax, Raise, v->VL, v->NbVL, 2, Draw_VectorLine);
+	  Draw_TensorList(v, ValMin, ValMax, Raise, v->TL, v->NbTL, 2, Draw_TensorLine);
 	}
 	
 	// Triangles
-	
-	if(v->NbST && v->DrawTriangles && v->DrawScalars){
-	  nb = List_Nbr(v->ST) / v->NbST ;
-	  if(v->Light && v->SmoothNormals && v->Changed && v->IntervalsType != DRAW_POST_ISO){
-	    Msg(DEBUG, "Preprocessing of triangle normals in view %d", v->Num);
-	    for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb){
-	      Get_Coords(v->Explode, v->Offset, 3, 
-			 (double*)List_Pointer_Fast(v->ST,i), 
-			 (double*)List_Pointer_Fast(v->ST,i+3), 
-			 (double*)List_Pointer_Fast(v->ST,i+6), 
-			 X, Y, Z);
-	      Draw_ScalarTriangle(v, 1, ValMin, ValMax, Raise, X, Y, Z,
-				  (double*)List_Pointer_Fast(v->ST,i+9));
-	    }
-	  }
-	  for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb){
-	    Get_Coords(v->Explode, v->Offset, 3, 
-		       (double*)List_Pointer_Fast(v->ST,i), 
-		       (double*)List_Pointer_Fast(v->ST,i+3), 
-		       (double*)List_Pointer_Fast(v->ST,i+6), 
-		       X, Y, Z);
-	    Draw_ScalarTriangle(v, 0, ValMin, ValMax, Raise, X, Y, Z,
-				(double*)List_Pointer_Fast(v->ST,i+9));
-	  }
-	}
-	if(v->NbVT && v->DrawTriangles && v->DrawVectors){
-	  nb = List_Nbr(v->VT) / v->NbVT ;
-	  for(i = 0 ; i < List_Nbr(v->VT) ; i+=nb){
-	    Get_Coords(v->Explode, v->Offset, 3, 
-		       (double*)List_Pointer_Fast(v->VT,i),
-		       (double*)List_Pointer_Fast(v->VT,i+3),
-		       (double*)List_Pointer_Fast(v->VT,i+6),
-		       X, Y, Z);
-	    Draw_VectorTriangle(v, ValMin, ValMax, Raise, X, Y, Z,
-				(double*)List_Pointer_Fast(v->VT,i+9));
-	  }
-	}
-	if(v->NbTT && v->DrawTriangles && v->DrawTensors){
-	  nb = List_Nbr(v->TT) / v->NbTT ;
-	  for(i = 0 ; i < List_Nbr(v->TT) ; i+=nb){
-	    Get_Coords(v->Explode, v->Offset, 3, 
-		       (double*)List_Pointer_Fast(v->TT,i), 
-		       (double*)List_Pointer_Fast(v->TT,i+3), 
-		       (double*)List_Pointer_Fast(v->TT,i+6), 
-		       X, Y, Z);
-	    Draw_TensorTriangle(v, ValMin, ValMax, Raise, X, Y, Z,
-				(double*)List_Pointer_Fast(v->TT,i+9));
-	  }
-	}
-	
-	// Tetrahedra
-	
-	if(v->NbSS && v->DrawTetrahedra && v->DrawScalars){
-	  nb = List_Nbr(v->SS) / v->NbSS ;
-	  if(v->Light && v->SmoothNormals && v->Changed && v->IntervalsType != DRAW_POST_ISO){
-	    Msg(DEBUG, "Preprocessing of tets normals in view %d", v->Num);
-	    for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb){
-	      Get_Coords(v->Explode, v->Offset, 4, 
-			 (double*)List_Pointer_Fast(v->SS,i), 
-			 (double*)List_Pointer_Fast(v->SS,i+4), 
-			 (double*)List_Pointer_Fast(v->SS,i+8), 
-			 X, Y, Z);
-	      Draw_ScalarTetrahedron(v, 1, ValMin, ValMax, Raise, X, Y, Z,
-				     (double*)List_Pointer_Fast(v->SS,i+12));
-	    }
-	  }
-	  for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb){
-	    Get_Coords(v->Explode, v->Offset, 4, 
-		       (double*)List_Pointer_Fast(v->SS,i), 
-		       (double*)List_Pointer_Fast(v->SS,i+4), 
-		       (double*)List_Pointer_Fast(v->SS,i+8), 
-		       X, Y, Z);
-	    Draw_ScalarTetrahedron(v, 0, ValMin, ValMax, Raise, X, Y, Z,
-				   (double*)List_Pointer_Fast(v->SS,i+12));
-	  }
-	}
-	if(v->NbVS && v->DrawTetrahedra && v->DrawVectors){
-	  nb = List_Nbr(v->VS) / v->NbVS ;
-	  for(i = 0 ; i < List_Nbr(v->VS) ; i+=nb){
-	    Get_Coords(v->Explode, v->Offset, 4,
-		       (double*)List_Pointer_Fast(v->VS,i), 
-		       (double*)List_Pointer_Fast(v->VS,i+4), 
-		       (double*)List_Pointer_Fast(v->VS,i+8), 
-		       X, Y, Z);
-	    Draw_VectorTetrahedron(v, ValMin, ValMax, Raise, X, Y, Z,
-				   (double*)List_Pointer_Fast(v->VS,i+12));
-	  }
-	}
-	if(v->NbTS && v->DrawTetrahedra && v->DrawTensors){
-	  nb = List_Nbr(v->TS) / v->NbTS ;
-	  for(i = 0 ; i < List_Nbr(v->TS) ; i+=nb){
-	    Get_Coords(v->Explode, v->Offset, 4,
-		       (double*)List_Pointer_Fast(v->TS,i), 
-		       (double*)List_Pointer_Fast(v->TS,i+4), 
-		       (double*)List_Pointer_Fast(v->TS,i+8), 
-		       X, Y, Z);
-	    Draw_TensorTetrahedron(v, ValMin, ValMax, Raise, X, Y, Z,
-				   (double*)List_Pointer_Fast(v->TS,i+12));
-	  }
+	if(v->DrawTriangles){
+	  Draw_ScalarList(v, ValMin, ValMax, Raise, v->ST, v->NbST, 3, 1, Draw_ScalarTriangle);
+	  Draw_VectorList(v, ValMin, ValMax, Raise, v->VT, v->NbVT, 3, Draw_VectorTriangle);
+	  Draw_TensorList(v, ValMin, ValMax, Raise, v->TT, v->NbTT, 3, Draw_TensorTriangle);
 	}
 
+	// Quadrangles
+	if(v->DrawQuadrangles){
+	  Draw_ScalarList(v, ValMin, ValMax, Raise, v->SQ, v->NbSQ, 4, 1, Draw_ScalarQuadrangle);
+	  Draw_VectorList(v, ValMin, ValMax, Raise, v->VQ, v->NbVQ, 4, Draw_VectorQuadrangle);
+	  Draw_TensorList(v, ValMin, ValMax, Raise, v->TQ, v->NbTQ, 4, Draw_TensorQuadrangle);
+	}
+
+	// Tetrahedra
+	if(v->DrawTetrahedra){
+	  Draw_ScalarList(v, ValMin, ValMax, Raise, v->SS, v->NbSS, 4, 1, Draw_ScalarTetrahedron);
+	  Draw_VectorList(v, ValMin, ValMax, Raise, v->VS, v->NbVS, 4, Draw_VectorTetrahedron);
+	  Draw_TensorList(v, ValMin, ValMax, Raise, v->TS, v->NbTS, 4, Draw_TensorTetrahedron);
+	}
+	
+	// Hexahedra
+	if(v->DrawHexahedra){
+	  Draw_ScalarList(v, ValMin, ValMax, Raise, v->SH, v->NbSH, 8, 1, Draw_ScalarHexahedron);
+	  Draw_VectorList(v, ValMin, ValMax, Raise, v->VH, v->NbVH, 8, Draw_VectorHexahedron);
+	  Draw_TensorList(v, ValMin, ValMax, Raise, v->TH, v->NbTH, 8, Draw_TensorHexahedron);
+	}
+
+	// Prisms
+	if(v->DrawPrisms){
+	  Draw_ScalarList(v, ValMin, ValMax, Raise, v->SI, v->NbSI, 6, 1, Draw_ScalarPrism);
+	  Draw_VectorList(v, ValMin, ValMax, Raise, v->VI, v->NbVI, 6, Draw_VectorPrism);
+	  Draw_TensorList(v, ValMin, ValMax, Raise, v->TI, v->NbTI, 6, Draw_TensorPrism);
+	}
+
+	// Pyramids
+	if(v->DrawPyramids){
+	  Draw_ScalarList(v, ValMin, ValMax, Raise, v->SY, v->NbSY, 5, 1, Draw_ScalarPyramid);
+	  Draw_VectorList(v, ValMin, ValMax, Raise, v->VY, v->NbVY, 5, Draw_VectorPyramid);
+	  Draw_TensorList(v, ValMin, ValMax, Raise, v->TY, v->NbTY, 5, Draw_TensorPyramid);
+	}
+
+	// Strings
 	if(v->DrawStrings){
 	  glColor4ubv((GLubyte*)&CTX.color.text);
 	  Draw_Text2D3D(3, v->TimeStep, v->NbT3, v->T3D, v->T3C);

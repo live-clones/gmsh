@@ -1,6 +1,6 @@
-$Id: FORMATS,v 1.11 2002-07-15 18:21:27 geuzaine Exp $
+$Id: FORMATS,v 1.12 2002-09-01 21:54:13 geuzaine Exp $
 
-This document describes the version 1.1 of Gmsh's mesh and
+This document describes the version 1.2 of Gmsh's mesh and
 post-processing file formats
 
 (This document deals only with the import/export interfaces for
@@ -55,7 +55,7 @@ multiple) post-processing views (enclosed between $View/$EndView
 pairs).
 
     $PostFormat
-    1.1 file-type data-size
+    1.2 file-type data-size
     $EndPostFormat
     $View
     view-name nb-time-steps
@@ -74,9 +74,21 @@ pairs).
     scalar-triangle-value ...
     vector-triangle-value ...
     tensor-triangle-value ...
+    scalar-quadrangle-value ...
+    vector-quadrangle-value ...
+    tensor-quadrangle-value ...
     scalar-tetrahedron-value ...
     vector-tetrahedron-value ...
     tensor-tetrahedron-value ...
+    scalar-hexahedron-value ...
+    vector-hexahedron-value ...
+    tensor-hexahedron-value ...
+    scalar-prism-value ...
+    vector-prism-value ...
+    tensor-prism-value ...
+    scalar-pyramid-value ...
+    vector-pyramid-value ...
+    tensor-pyramid-value ...
     text2d ... text2d-chars ...
     text3d ... text3d-chars ...
     $endView
@@ -157,17 +169,22 @@ file in binary format:
 int one = 1;
 
 fprintf(file, "$PostFormat\n");
-fprintf(file, "%g %d %d\n", 1.1, 1, sizeof(double));
+fprintf(file, "%g %d %d\n", 1.2, 1, sizeof(double));
 fprintf(file, "$EndPostFormat\n");
 
 fprintf(file, "$View\n");
-fprintf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
+fprintf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+              "%d %d %d %d %d %d %d %d %d %d %d %d\n", 
         view-name, nb-time-steps,
         nb-scalar-points, nb-vector-points, nb-tensor-points,
         nb-scalar-lines, nb-vector-lines, nb-tensor-lines,
         nb-scalar-triangles, nb-vector-triangles, nb-tensor-triangles,
+        nb-scalar-quadrangles, nb-vector-quadrangles, nb-tensor-quadrangles,
         nb-scalar-tetrahedra, nb-vector-tetrahedra, nb-tensor-tetrahedra,
-	nb-text2d, nb-text2d-chars, nb-text3d, nb-text3d-chars);
+        nb-scalar-hexahedra, nb-vector-hexahedra, nb-tensor-hexahedra,
+        nb-scalar-prisms, nb-vector-prisms, nb-tensor-prisms,
+        nb-scalar-pyramids, nb-vector-pyramids, nb-tensor-pyramids,
+        nb-text2d, nb-text2d-chars, nb-text3d, nb-text3d-chars);
 fwrite(&one, sizeof(int), 1, file);
 fwrite(time-step-values, sizeof(double), nb-time-steps, file);
 fwrite(all-scalar-point-values, sizeof(double), ..., file);
@@ -195,7 +212,7 @@ following:
      ...
    };
 
-   14 base objects can be displayed:
+   26 base objects can be displayed:
 
                        type-of-element   list-of-coordinates    list-of-values
    --------------------------------------------------------------------------------
@@ -208,9 +225,21 @@ following:
    scalar triangle     ST                9                      3  * nb-time-steps
    vector triangle     VT                9                      9  * nb-time-steps
    tensor triangle     TT                9                      27 * nb-time-steps
+   scalar quadrangle   SQ                12                     4  * nb-time-steps
+   vector quadrangle   VQ                12                     12 * nb-time-steps
+   tensor quadrangle   TQ                12                     36 * nb-time-steps
    scalar tetrahedron  SS                12                     4  * nb-time-steps
    vector tetrahedron  VS                12                     12 * nb-time-steps
    tensor tetrahedron  TS                12                     36 * nb-time-steps
+   scalar hexahedron   SH                24                     8  * nb-time-steps
+   vector hexahedron   VH                24                     24 * nb-time-steps
+   tensor hexahedron   TH                24                     72 * nb-time-steps
+   scalar prism        SI                18                     6  * nb-time-steps
+   vector prism        VI                18                     18 * nb-time-steps
+   tensor prism        TI                18                     54 * nb-time-steps
+   scalar pyramid      SY                15                     5  * nb-time-steps
+   vector pyramid      VY                15                     15 * nb-time-steps
+   tensor pyramid      TY                15                     45 * nb-time-steps
    text 2d             T2                4                      arbitrary
    text 3d             T3                5                      arbitrary
 
@@ -221,3 +250,108 @@ coord3-node2) for a line, (coord1-node1, coord2-node1, coord3-node1,
 coord1-node2, coord2-node2, coord3-node2, coord1-node3, coord2-node3,
 coord3-node3) for a triangle, etc. The values are given in the same
 order as for the ASCII post-processing file format.
+
+Ordering of nodes
+=================
+
+* POINT
+        v                            
+        |                            
+        |                            
+   -----1-----u  
+        |                            
+        |                            
+
+*  LINE          edge 1: nodes 1 -> 2  
+        v                            
+        |                            
+        |                            
+   --1-----2--u  
+        |                            
+        |                            
+
+*  TRIANGLE      edge 1: nodes 1 -> 2         
+   v                  2:       1 -> 3                  
+   |                  3:       2 -> 3                  
+   |                           
+   3             face 1: edges 1 -2 3   nodes 1 2 3                      
+   |\        
+   | \       
+   |__\___u                    
+   1   2                       
+
+*  QUADRANGLE     edge 1: nodes 1 -> 2 
+        v              2:       1 -> 4                    
+        |              3:       2 -> 3                    
+     4--|--3           4:       3 -> 4 
+     |  |  |     
+   -----------u   face 1: edges 1 -2 3 4   nodes 1 2 3 4
+     |  |  |     
+     1--|--2                          
+        |                             
+
+*  TETRAHEDRON    edge 1: nodes 1 -> 2                
+   v                   2:       1 -> 3                                            
+   |                   3:       1 -> 4                
+   |                   4:       2 -> 3                
+   |                   5:       2 -> 4                
+   3                   6:       3 -> 4                
+   |\                                                 
+   | \            face 1: edges  1 -3  5  nodes 1 2 4
+   |__\2_____u         2:       -1  2 -4        1 3 2
+   1\ /                3:       -2  3 -6        1 4 3
+     \4                4:        4 -5  6        2 3 4
+      \          
+       w         
+
+*  HEXAHEDRON         edge 1: nodes 1 -> 2
+        v                  2:       1 -> 4
+        |                  3:       1 -> 5
+        |                  4:       2 -> 3
+   4----|--3               5:       2 -> 6
+   |\   |  |\              6:       3 -> 4
+   | 8-------7             7:       3 -> 7
+   | |   ----|---u         8:       4 -> 8
+   1-|---\-2 |             9:       5 -> 6
+    \|    \ \|            10:       5 -> 8
+     5-----\-6            11:       6 -> 7
+            \             12:       7 -> 8
+             w         
+                      face 1: edges  1 -3  5 -9    nodes 1 2 6 5
+                           2:       -1  2 -4 -6          1 4 3 2
+                           3:       -2  3 -8  10         1 5 8 4
+                           4:        4 -5  7 -11         2 3 7 6
+                           5:        6 -7  8 -12         3 4 8 7
+                           6:        9 -10 11 12         5 6 7 8
+
+*  PRISM          edge 1: nodes 1 -> 2
+      v                2:       1 -> 3
+    3 |                3:       1 -> 4
+    |\|                4:       2 -> 3
+    | |                5:       2 -> 5
+    1_|2               6:       3 -> 6
+     \| 6              7:       4 -> 5
+      |_|_\___u        8:       4 -> 6 
+       \|  \           9:       5 -> 6 
+        4 __5
+         \        face 1: edges  1 -3  5 -7     nodes 1 2 5 4
+          \            2:       -1  2 -4              1 3 2
+           w           3:       -2  3 -6  8           1 4 6 3
+                       4:        4 -5  6 -9           2 3 6 5
+                       5:        7 -8  9              4 5 6
+
+*  PYRAMID        edge 1: nodes 1 -> 2
+     v                 2:       2 -> 3 
+     |                 3:       4 -> 3
+     4-------3         4:       1 -> 4
+     |\     /|         5:       1 -> 5
+     |\    / |         6:       2 -> 5
+     1-\- /--2---u     7:       4 -> 5
+      \ \/ /           8:       3 -> 5
+      \ 5  
+       \          face 1: edges  1  6 -5       nodes 1 2 5
+        \              2:        5 -7  3             1 5 4
+         w             3:        2  8 -6             2 3 5
+                       4:       -3  7 -8             3 4 5
+                       5:        4  3 -2 -1          1 4 3 2
+                       

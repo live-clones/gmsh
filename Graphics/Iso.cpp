@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.13 2002-05-20 18:28:26 geuzaine Exp $
+// $Id: Iso.cpp,v 1.14 2002-09-01 21:54:10 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,7 @@
 
 extern Context_T   CTX;
 
-void RaiseFill(int i, double Val, double ValMin, double Raise[3][5]);
+void RaiseFill(int i, double Val, double ValMin, double Raise[3][8]);
 
 // Iso line computation for triangles.
 
@@ -367,7 +367,7 @@ void IsoSimplex( Post_View *View,
 		 int preproNormals,
 		 double *X, double *Y, double *Z, double *Val, 
 		 double V, double Vmin, double Vmax, 
-		 double Raise[3][5]){
+		 double Raise[3][8]){
   int    nb;
   double Xp[6],Yp[6],Zp[6],PVals[6];
   double norms[12];

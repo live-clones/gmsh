@@ -44,6 +44,6 @@ void IsoSimplex (Post_View *View,
 		 int preproNormals,
 		 double *X, double *Y, double *Z, double *Val,
                  double V, double Vmin, double Vmax,
-                 double Raise[3][5]);
+                 double Raise[3][8]);
   
 #endif

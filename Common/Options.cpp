@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.84 2002-08-07 00:30:25 geuzaine Exp $
+// $Id: Options.cpp,v 1.85 2002-09-01 21:54:10 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2602,6 +2602,18 @@ double opt_view_draw_triangles(OPT_ARGS_NUM){
 #endif
   return v->DrawTriangles;
 }
+double opt_view_draw_quadrangles(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->DrawQuadrangles = (int)val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+    WID->view_butt[16]->value(v->DrawQuadrangles);
+#endif
+  return v->DrawQuadrangles;
+}
 double opt_view_draw_tetrahedra(OPT_ARGS_NUM){
   GET_VIEW(0.) ;
   if(action & GMSH_SET){
@@ -2610,9 +2622,45 @@ double opt_view_draw_tetrahedra(OPT_ARGS_NUM){
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number))
-    WID->view_butt[16]->value(v->DrawTetrahedra);
+    WID->view_butt[17]->value(v->DrawTetrahedra);
 #endif
   return v->DrawTetrahedra;
+}
+double opt_view_draw_hexahedra(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->DrawHexahedra = (int)val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+    WID->view_butt[18]->value(v->DrawHexahedra);
+#endif
+  return v->DrawHexahedra;
+}
+double opt_view_draw_prisms(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->DrawPrisms = (int)val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+    WID->view_butt[19]->value(v->DrawPrisms);
+#endif
+  return v->DrawPrisms;
+}
+double opt_view_draw_pyramids(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->DrawPyramids = (int)val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+    WID->view_butt[20]->value(v->DrawPyramids);
+#endif
+  return v->DrawPyramids;
 }
 double opt_view_draw_scalars(OPT_ARGS_NUM){
   GET_VIEW(0.) ;
@@ -2622,7 +2670,7 @@ double opt_view_draw_scalars(OPT_ARGS_NUM){
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number))
-    WID->view_butt[17]->value(v->DrawScalars);
+    WID->view_butt[21]->value(v->DrawScalars);
 #endif
   return v->DrawScalars;
 }
@@ -2634,7 +2682,7 @@ double opt_view_draw_vectors(OPT_ARGS_NUM){
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number))
-    WID->view_butt[18]->value(v->DrawVectors);
+    WID->view_butt[22]->value(v->DrawVectors);
 #endif
   return v->DrawVectors;
 }
@@ -2646,7 +2694,7 @@ double opt_view_draw_tensors(OPT_ARGS_NUM){
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number))
-    WID->view_butt[19]->value(v->DrawTensors);
+    WID->view_butt[23]->value(v->DrawTensors);
 #endif
   return v->DrawTensors;
 }

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.40 2002-05-18 21:08:22 geuzaine Exp $
+# $Id: Makefile,v 1.41 2002-09-01 21:54:10 geuzaine Exp $
 #
 # Makefile for "libGmshGraphics.a"
 #
@@ -24,7 +24,7 @@ SRC = Draw.cpp \
       Mesh.cpp \
       Geom.cpp \
       Post.cpp \
-      PostSimplex.cpp \
+      PostElement.cpp \
       Iso.cpp \
       Entity.cpp \
       Visibility.cpp \
@@ -89,7 +89,7 @@ Post.o: Post.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h Draw.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h gl2ps.h
-PostSimplex.o: PostSimplex.cpp ../Common/Gmsh.h ../Common/Message.h \
+PostElement.o: PostElement.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
   ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \

@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.42 2002-05-20 18:28:28 geuzaine Exp $
+// $Id: Gmsh.l,v 1.43 2002-09-01 21:54:11 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,7 @@
 #include "Numeric.h"
 #include "Geo.h"
 #include "CAD.h"
-#include "Gmsh.tab.cpp.h"
+#include "Gmsh.tab.hpp"
 
 char   TmpString[1024];
 int    yywhere = INFILE;
@@ -220,18 +220,30 @@ Volume                  return tVolume;
 
 With			return tWith;
 
-SS                      return tScalarTetrahedron;
-VS                      return tVectorTetrahedron;
-TS                      return tTensorTetrahedron;
-ST                      return tScalarTriangle;
-VT                      return tVectorTriangle;
-TT                      return tTensorTriangle;
-SL                      return tScalarLine;
-VL                      return tVectorLine;
-TL                      return tTensorLine;
 SP                      return tScalarPoint;
 VP                      return tVectorPoint;
 TP                      return tTensorPoint;
+SL                      return tScalarLine;
+VL                      return tVectorLine;
+TL                      return tTensorLine;
+ST                      return tScalarTriangle;
+VT                      return tVectorTriangle;
+TT                      return tTensorTriangle;
+SQ                      return tScalarQuadrangle;
+VQ                      return tVectorQuadrangle;
+TQ                      return tTensorQuadrangle;
+SS                      return tScalarTetrahedron;
+VS                      return tVectorTetrahedron;
+TS                      return tTensorTetrahedron;
+SH                      return tScalarHexahedron;
+VH                      return tVectorHexahedron;
+TH                      return tTensorHexahedron;
+SI                      return tScalarPrism;
+VI                      return tVectorPrism;
+TI                      return tTensorPrism;
+SY                      return tScalarPyramid;
+VY                      return tVectorPyramid;
+TY                      return tTensorPyramid;
 T2                      return tText2D;
 T3                      return tText3D;
 

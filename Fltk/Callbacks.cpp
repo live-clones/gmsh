@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.137 2002-08-07 00:30:25 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.138 2002-09-01 21:54:10 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2391,16 +2391,28 @@ void view_options_ok_cb(CALLBACK_ARGS){
 	opt_view_draw_triangles(i, GMSH_SET, WID->view_butt[15]->value());
 
       if(force || WID->view_butt[16]->changed())
-	opt_view_draw_tetrahedra(i, GMSH_SET, WID->view_butt[16]->value());
+	opt_view_draw_quadrangles(i, GMSH_SET, WID->view_butt[16]->value());
 
       if(force || WID->view_butt[17]->changed())
-	opt_view_draw_scalars(i, GMSH_SET, WID->view_butt[17]->value());
+	opt_view_draw_tetrahedra(i, GMSH_SET, WID->view_butt[17]->value());
 
       if(force || WID->view_butt[18]->changed())
-	opt_view_draw_vectors(i, GMSH_SET, WID->view_butt[18]->value());
+	opt_view_draw_hexahedra(i, GMSH_SET, WID->view_butt[18]->value());
 
       if(force || WID->view_butt[19]->changed())
-	opt_view_draw_tensors(i, GMSH_SET, WID->view_butt[19]->value());
+	opt_view_draw_prisms(i, GMSH_SET, WID->view_butt[19]->value());
+
+      if(force || WID->view_butt[20]->changed())
+	opt_view_draw_pyramids(i, GMSH_SET, WID->view_butt[20]->value());
+
+      if(force || WID->view_butt[21]->changed())
+	opt_view_draw_scalars(i, GMSH_SET, WID->view_butt[21]->value());
+
+      if(force || WID->view_butt[22]->changed())
+	opt_view_draw_vectors(i, GMSH_SET, WID->view_butt[22]->value());
+
+      if(force || WID->view_butt[23]->changed())
+	opt_view_draw_tensors(i, GMSH_SET, WID->view_butt[23]->value());
 
       // view_values
 

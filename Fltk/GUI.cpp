@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.193 2002-08-26 17:41:32 geuzaine Exp $
+// $Id: GUI.cpp,v 1.194 2002-09-01 21:54:10 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1753,8 +1753,12 @@ void GUI::create_statistics_window(){
       stat_value[num++] = new Fl_Output(2*WB, 2*WB+2*BH, IW, BH, "Visible points");
       stat_value[num++] = new Fl_Output(2*WB, 2*WB+3*BH, IW, BH, "Visible lines");
       stat_value[num++] = new Fl_Output(2*WB, 2*WB+4*BH, IW, BH, "Visible triangles");
-      stat_value[num++] = new Fl_Output(2*WB, 2*WB+5*BH, IW, BH, "Visible tetrahedra");
-      stat_value[num++] = new Fl_Output(2*WB, 2*WB+6*BH, IW, BH, "Visible strings");
+      stat_value[num++] = new Fl_Output(2*WB, 2*WB+5*BH, IW, BH, "Visible quadrangles");
+      stat_value[num++] = new Fl_Output(2*WB, 2*WB+6*BH, IW, BH, "Visible tetrahedra");
+      stat_value[num++] = new Fl_Output(2*WB, 2*WB+7*BH, IW, BH, "Visible hexahedra");
+      stat_value[num++] = new Fl_Output(2*WB, 2*WB+8*BH, IW, BH, "Visible prisms");
+      stat_value[num++] = new Fl_Output(2*WB, 2*WB+9*BH, IW, BH, "Visible pyramids");
+      stat_value[num++] = new Fl_Output(2*WB, 2*WB+10*BH, IW, BH, "Visible strings");
       o->end();
     }
     o->end();
@@ -1831,29 +1835,49 @@ void GUI::set_statistics(){
     p[1] += v->NbSP + v->NbVP + v->NbTP;
     p[2] += v->NbSL + v->NbVL + v->NbTL;
     p[3] += v->NbST + v->NbVT + v->NbTT;
-    p[4] += v->NbSS + v->NbVS + v->NbTS;
-    p[5] += v->NbT2 + v->NbT3;
+    p[4] += v->NbSQ + v->NbVQ + v->NbTQ;
+    p[5] += v->NbSS + v->NbVS + v->NbTS;
+    p[6] += v->NbSH + v->NbVH + v->NbTH;
+    p[7] += v->NbSI + v->NbVI + v->NbTI;
+    p[8] += v->NbSY + v->NbVY + v->NbTY;
+    p[9] += v->NbT2 + v->NbT3;
     if(v->Visible){
-      if(v->DrawPoints)	p[6] += (v->DrawScalars ? v->NbSP : 0) + 
-			        (v->DrawVectors ? v->NbVP : 0) + 
-			        (v->DrawTensors ? v->NbTP : 0) ;
-      if(v->DrawLines) p[7] += (v->DrawScalars ? v->NbSL : 0) + 
-			       (v->DrawVectors ? v->NbVL : 0) + 
-			       (v->DrawTensors ? v->NbTL : 0) ;
-      if(v->DrawTriangles) p[8] += (v->DrawScalars ? v->NbST : 0) + 
-			           (v->DrawVectors ? v->NbVT : 0) + 
-			           (v->DrawTensors ? v->NbTT : 0) ;
-      if(v->DrawTetrahedra) p[9] += (v->DrawScalars ? v->NbSS : 0) + 
-			            (v->DrawVectors ? v->NbVS : 0) + 
-   			            (v->DrawTensors ? v->NbTS : 0) ;
-      if(v->DrawStrings) p[10] += v->NbT2 + v->NbT3 ;
+      if(v->DrawPoints)	p[10] += (v->DrawScalars ? v->NbSP : 0) + 
+			         (v->DrawVectors ? v->NbVP : 0) + 
+			         (v->DrawTensors ? v->NbTP : 0) ;
+      if(v->DrawLines) p[11] += (v->DrawScalars ? v->NbSL : 0) + 
+			        (v->DrawVectors ? v->NbVL : 0) + 
+			        (v->DrawTensors ? v->NbTL : 0) ;
+      if(v->DrawTriangles) p[12] += (v->DrawScalars ? v->NbST : 0) + 
+			            (v->DrawVectors ? v->NbVT : 0) + 
+			            (v->DrawTensors ? v->NbTT : 0) ;
+      if(v->DrawQuadrangles) p[13] += (v->DrawScalars ? v->NbSQ : 0) + 
+			              (v->DrawVectors ? v->NbVQ : 0) + 
+			              (v->DrawTensors ? v->NbTQ : 0) ;
+      if(v->DrawTetrahedra) p[14] += (v->DrawScalars ? v->NbSS : 0) + 
+			             (v->DrawVectors ? v->NbVS : 0) + 
+   			             (v->DrawTensors ? v->NbTS : 0) ;
+      if(v->DrawHexahedra) p[15] += (v->DrawScalars ? v->NbSH : 0) + 
+			            (v->DrawVectors ? v->NbVH : 0) + 
+   			            (v->DrawTensors ? v->NbTH : 0) ;
+      if(v->DrawPrisms) p[16] += (v->DrawScalars ? v->NbSI : 0) + 
+			         (v->DrawVectors ? v->NbVI : 0) + 
+   			         (v->DrawTensors ? v->NbTI : 0) ;
+      if(v->DrawPyramids) p[17] += (v->DrawScalars ? v->NbSY : 0) + 
+			           (v->DrawVectors ? v->NbVY : 0) + 
+   			           (v->DrawTensors ? v->NbTY : 0) ;
+      if(v->DrawStrings) p[18] += v->NbT2 + v->NbT3 ;
     }
   }
-  sprintf(label[num], "%g/%g", p[6],p[1]); stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%g/%g", p[7],p[2]); stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%g/%g", p[8],p[3]); stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%g/%g", p[9],p[4]); stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%g/%g", p[10],p[5]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", p[10],p[1]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", p[11],p[2]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", p[12],p[3]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", p[13],p[4]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", p[14],p[5]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", p[15],p[6]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", p[16],p[7]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", p[17],p[8]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", p[18],p[9]); stat_value[num]->value(label[num]); num++;
 }
 
 
@@ -2317,14 +2341,18 @@ void GUI::create_view_options_window(int num){
 	view_value[i]->callback(set_changed_cb, 0);
       }
       
-      view_butt[13] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW/2-WB, BH, "Draw points");
-      view_butt[14] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW/2-WB, BH, "Draw lines");
-      view_butt[15] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW/2-WB, BH, "Draw triangles");
-      view_butt[16] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW/2-WB, BH, "Draw tetrahedra");
-      view_butt[17] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW/2-WB, BH, "Draw scalar values");
-      view_butt[18] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW/2-WB, BH, "Draw vector values");
-      view_butt[19] = new Fl_Check_Button(2*WB, 2*WB+7*BH, BW/2-WB, BH, "Draw tensor values");
-      for(i=13 ; i<=19 ; i++){
+      view_butt[13] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW/2-WB, BH, "Points");
+      view_butt[14] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW/2-WB, BH, "Lines");
+      view_butt[15] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW/2-WB, BH, "Triangles");
+      view_butt[16] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW/2-WB, BH, "Quadrangles");
+      view_butt[17] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW/2-WB, BH, "Tetrahedra");
+      view_butt[18] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW/2-WB, BH, "Hexahedra");
+      view_butt[19] = new Fl_Check_Button(2*WB, 2*WB+7*BH, BW/2-WB, BH, "Prisms");
+      view_butt[20] = new Fl_Check_Button(2*WB, 2*WB+8*BH, BW/2-WB, BH, "Pyramids");
+      view_butt[21] = new Fl_Check_Button(width/2, 2*WB+7*BH, BW/2-WB, BH, "Show scalar values");
+      view_butt[22] = new Fl_Check_Button(width/2, 2*WB+8*BH, BW/2-WB, BH, "Show vector values");
+      view_butt[23] = new Fl_Check_Button(width/2, 2*WB+9*BH, BW/2-WB, BH, "Show tensor values");
+      for(i=13 ; i<=23 ; i++){
 	view_butt[i]->type(FL_TOGGLE_BUTTON);
 	view_butt[i]->down_box(TOGGLE_BOX);
 	view_butt[i]->selection_color(TOGGLE_COLOR);
@@ -2585,7 +2613,11 @@ void GUI::update_view_window(int num){
   opt_view_draw_points(num, GMSH_GUI, 0);
   opt_view_draw_lines(num, GMSH_GUI, 0);
   opt_view_draw_triangles(num, GMSH_GUI, 0);
+  opt_view_draw_quadrangles(num, GMSH_GUI, 0);
   opt_view_draw_tetrahedra(num, GMSH_GUI, 0);
+  opt_view_draw_hexahedra(num, GMSH_GUI, 0);
+  opt_view_draw_prisms(num, GMSH_GUI, 0);
+  opt_view_draw_pyramids(num, GMSH_GUI, 0);
   opt_view_draw_scalars(num, GMSH_GUI, 0);
   opt_view_draw_vectors(num, GMSH_GUI, 0);
   opt_view_draw_tensors(num, GMSH_GUI, 0);

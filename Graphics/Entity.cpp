@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.19 2002-06-16 03:53:33 geuzaine Exp $
+// $Id: Entity.cpp,v 1.20 2002-09-01 21:54:10 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -28,7 +28,7 @@
 
 extern Context_T   CTX;
 
-void Draw_Point (int type, double size, double *x, double *y, double *z, double Raise[3][5]){
+void Draw_Point (int type, double size, double *x, double *y, double *z, double Raise[3][8]){
   if(type){
     static GLUquadricObj *qua;
     static int first=1;
@@ -48,7 +48,7 @@ void Draw_Point (int type, double size, double *x, double *y, double *z, double 
   }
 }
 
-void Draw_Line (double *x, double *y, double *z, double Raise[3][5]){
+void Draw_Line (double *x, double *y, double *z, double Raise[3][8]){
   glBegin(GL_LINES);
   glVertex3d(x[0]+Raise[0][0], y[0]+Raise[1][0], z[0]+Raise[2][0]);
   glVertex3d(x[1]+Raise[0][1], y[1]+Raise[1][1], z[1]+Raise[2][1]);
@@ -56,7 +56,7 @@ void Draw_Line (double *x, double *y, double *z, double Raise[3][5]){
 }
 
 void Draw_Triangle (double *x, double *y, double *z, double *n,
-                    double Raise[3][5], int shade){
+                    double Raise[3][8], int shade){
 
   double x1x0, y1y0, z1z0, x2x0, y2y0, z2z0, nn[3];
 
@@ -95,7 +95,7 @@ void Draw_Triangle (double *x, double *y, double *z, double *n,
 }
 
 void Draw_Quadrangle (double *x, double *y, double *z, double *n,
-                      double Raise[3][5], int shade){
+                      double Raise[3][8], int shade){
   double x2[3]={x[2],x[3],x[0]};
   double y2[3]={y[2],y[3],y[0]};
   double z2[3]={z[2],z[3],z[0]};
@@ -120,7 +120,7 @@ void Draw_Quadrangle (double *x, double *y, double *z, double *n,
 }
 
 void Draw_Polygon (int n, double *x, double *y, double *z,
-                   double Raise[3][5]){
+                   double Raise[3][8]){
   int i;
   
   glBegin(GL_POLYGON);
@@ -133,7 +133,7 @@ void Draw_Polygon (int n, double *x, double *y, double *z,
 void Draw_Vector (int Type, int Fill, 
                   double x, double y, double z, 
                   double d, double dx, double dy, double dz,
-                  double Raise[3][5]){
+                  double Raise[3][8]){
 
   double  n[3],t[3],u[3];
   double  l,b,c, f1, f2;
