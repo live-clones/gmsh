@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.252 2003-01-26 18:24:59 geuzaine Exp $
+# $Id: Makefile,v 1.253 2003-02-03 17:07:30 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 37
@@ -477,6 +477,10 @@ solaris-scorec: compile-solaris-scorec link-solaris-scorec
 
 #
 # MacOS X
+# - we don't use resource forks anymore in the distributed version, but we
+# leave the Rez step so that one can still launch a working version
+# from the command line without having to do "distrib-mac".
+# - use 'otool -L' to check linked dynamic libraries
 #
 compile-macosx: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
@@ -493,10 +497,6 @@ link-macosx:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) -L$(FLTK_DIR)/lib -lfltk_gl -lfltk \
                -framework AGL -framework OpenGL -framework Carbon -framework ApplicationServices
 	/Developer/Tools/Rez -t APPL -o $(GMSH_BIN_DIR)/gmsh $(FLTK_DIR)/FL/mac.r
-# We don't use resources anymore in the distributed version, but we
-# can leave the Rez step so that we can still launch a working version
-# of the code from the command line without having to do the
-# "distrib-mac" step.
 macosx: compile-macosx link-macosx
 distrib-macosx:
 	make clean
