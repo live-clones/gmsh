@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.29 2001-05-30 15:22:41 geuzaine Exp $
+// $Id: Main.cpp,v 1.30 2001-05-30 18:09:17 geuzaine Exp $
 
 #include <signal.h>
 #include <time.h>
@@ -139,9 +139,9 @@ int main(int argc, char *argv[]){
   Msg(LOG_INFO, gmsh_date);
   Msg(LOG_INFO, gmsh_host);
   Msg(LOG_INFO, gmsh_packager);
-  Msg(LOG_INFO, "Home directory   : '%s'", CTX.home_dir);
+  Msg(LOG_INFO, "Home directory   : %s", CTX.home_dir);
   Msg(LOG_INFO, "Launch date      : %s", ctime(&now));
-  Msg(LOG_INFO, "Command line     : '%s'", cmdline);
+  Msg(LOG_INFO, "Command line     : %s", cmdline);
   Msg(LOG_INFO, "-------------------------------------------------------");
 
   // Display the GUI immediately to have a quick "a la Windows" launch time
