@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.72 2004-09-28 17:13:49 geuzaine Exp $
+// $Id: Main.cpp,v 1.73 2004-10-28 08:13:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -88,13 +88,11 @@ int main(int argc, char *argv[])
   M.BGM.bgm = NULL;
   M.Grid.init = 0;
 
-  // Initialize the default plugins
-
-  GMSH_PluginManager::instance()->registerDefaultPlugins();
-
   // Generate automatic documentation (before getting user-defined options)
   
   if(argc == 2 && !strcmp(argv[1], "-doc")){
+    // force all plugins for the doc
+    GMSH_PluginManager::instance()->registerDefaultPlugins();
     Print_OptionsDoc();
     exit(0);
   }
@@ -113,6 +111,10 @@ int main(int argc, char *argv[])
   signal(SIGINT, Signal);
   signal(SIGSEGV, Signal);
   signal(SIGFPE, Signal);
+
+  // Initialize the default plugins
+
+  GMSH_PluginManager::instance()->registerDefaultPlugins();
 
   // Non-interactive Gmsh
 

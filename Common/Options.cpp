@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.196 2004-10-26 01:04:50 geuzaine Exp $
+// $Id: Options.cpp,v 1.197 2004-10-28 08:13:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -4107,6 +4107,13 @@ double opt_solver_max_delay(OPT_ARGS_NUM)
   return CTX.solver.max_delay;
 }
 
+double opt_solver_plugins(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.solver.plugins = (int)val;
+  return CTX.solver.plugins;
+}
+
 double opt_solver_client_server(OPT_ARGS_NUM)
 {
 #if defined(HAVE_FLTK)
@@ -4302,6 +4309,13 @@ double opt_post_combine_remove_orig(OPT_ARGS_NUM)
     WID->post_butt[1]->value(CTX.post.combine_remove_orig);
 #endif
   return CTX.post.combine_remove_orig;
+}
+
+double opt_post_plugins(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.post.plugins = (int)val;
+  return CTX.post.plugins;
 }
 
 double opt_post_nb_views(OPT_ARGS_NUM)

@@ -888,6 +888,9 @@ StringXNumber SolverOptions_Number[] = {
   { F|O, "MaximumDelay" , opt_solver_max_delay , 4.0 ,
     "Maximum delay allowed for solver response (in seconds)" },
 
+  { F|O, "Plugins" , opt_solver_plugins , 0. ,
+    "Enable default solver plugins?" },
+
   { F|O, "ClientServer0" , opt_solver_client_server0 , 1. ,
     "Connect solver 0 to the Gmsh server" },
   { F|O, "MergeViews0" , opt_solver_merge_views0 , 1. , 
@@ -951,6 +954,9 @@ StringXNumber PostProcessingOptions_Number[] = {
 
   { F,   "NbViews" , opt_post_nb_views , 0. ,//this default val is not used
     "Current number of views merged" },
+
+  { F|O, "Plugins" , opt_post_plugins , 1. ,
+    "Enable default post-processing plugins?" },
 
   { F|O, "Scales" , opt_post_scales , 1. , 
     "Show value scales" },

@@ -197,13 +197,13 @@ public :
     int force_num, compute_bb, vertex_arrays;
     int draw, scales, link, horizontal_scales ;
     int smooth, anim_cycle, combine_time, combine_remove_orig ;
-    int file_format;
+    int file_format, plugins;
     double anim_delay ;
   }post;
 
   // solver options 
   struct{
-    int max_delay ;
+    int max_delay, plugins ;
   }solver;
 
   // print options 

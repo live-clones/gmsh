@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.60 2004-10-28 03:40:16 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.61 2004-10-28 08:13:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -49,8 +49,11 @@
 #include "DisplacementRaise.h"
 #include "StructuralSolver.h"
 #include "Evaluate.h"
+#include "Context.h"
 
 using namespace std;
+
+extern Context_T CTX;
 
 const char *GMSH_PluginEntry = "GMSH_RegisterPlugin";
 
@@ -76,12 +79,6 @@ GMSH_Plugin *GMSH_PluginManager::find(char *pluginName)
 
 GMSH_Solve_Plugin *GMSH_PluginManager::findSolverPlugin()
 {
-  // to avoid showing the solver plugin popups for "regular" users,
-  // let's just say for the moment that we don't have any solver
-  // plugins if the environment variable is not defined...
-  if(!getenv("GMSHPLUGINSHOME"))
-    return 0;
-
   iter it  = allPlugins.begin();
   iter ite = allPlugins.end();
   for (;it!=ite;++it) {
@@ -159,43 +156,48 @@ GMSH_PluginManager *GMSH_PluginManager::instance()
 void GMSH_PluginManager::registerDefaultPlugins()
 {
   // SOLVE PLUGINS
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-    		    ("StructuralSolver", GMSH_RegisterStructuralSolverPlugin()));
+  if(CTX.solver.plugins){
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("StructuralSolver", GMSH_RegisterStructuralSolverPlugin()));
+  }
+
   // POST PLUGINS
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("StreamLines", GMSH_RegisterStreamLinesPlugin()));
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("CutGrid", GMSH_RegisterCutGridPlugin()));
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("CutMap", GMSH_RegisterCutMapPlugin()));
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("CutPlane", GMSH_RegisterCutPlanePlugin()));
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("CutSphere", GMSH_RegisterCutSpherePlugin()));
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("Skin", GMSH_RegisterSkinPlugin()));
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("Extract", GMSH_RegisterExtractPlugin()));
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("DecomposeInSimplex", GMSH_RegisterDecomposeInSimplexPlugin()));
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("Smooth", GMSH_RegisterSmoothPlugin()));
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("Transform", GMSH_RegisterTransformPlugin()));
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("SphericalRaise", GMSH_RegisterSphericalRaisePlugin()));
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("DisplacementRaise", GMSH_RegisterDisplacementRaisePlugin()));
+  if(CTX.post.plugins){
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("StreamLines", GMSH_RegisterStreamLinesPlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("CutGrid", GMSH_RegisterCutGridPlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("CutMap", GMSH_RegisterCutMapPlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("CutPlane", GMSH_RegisterCutPlanePlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("CutSphere", GMSH_RegisterCutSpherePlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("Skin", GMSH_RegisterSkinPlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("Extract", GMSH_RegisterExtractPlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("DecomposeInSimplex", GMSH_RegisterDecomposeInSimplexPlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("Smooth", GMSH_RegisterSmoothPlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("Transform", GMSH_RegisterTransformPlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("SphericalRaise", GMSH_RegisterSphericalRaisePlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("DisplacementRaise", GMSH_RegisterDisplacementRaisePlugin()));
 #if defined(HAVE_TRIANGLE)
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("Triangulate", GMSH_RegisterTriangulatePlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("Triangulate", GMSH_RegisterTriangulatePlugin()));
 #endif
 #if defined(HAVE_MATH_EVAL)
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("Evaluate", GMSH_RegisterEvaluatePlugin()));
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("CutParametric", GMSH_RegisterCutParametricPlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("Evaluate", GMSH_RegisterEvaluatePlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("CutParametric", GMSH_RegisterCutParametricPlugin()));
 #endif
+  }
 
 #if defined(HAVE_FLTK)
   struct dirent **list;

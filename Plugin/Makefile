@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.56 2004-10-28 06:11:23 geuzaine Exp $
+# $Id: Makefile,v 1.57 2004-10-28 08:13:09 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -76,7 +76,8 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   SphericalRaise.h DisplacementRaise.h StructuralSolver.h ../Geo/Geo.h \
   ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
   ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h ../Common/GmshUI.h Evaluate.h
+  ../Mesh/Metric.h ../Mesh/Matrix.h ../Common/GmshUI.h Evaluate.h \
+  ../Common/Context.h
 Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
