@@ -1,4 +1,4 @@
-/* $Id: Socket.cpp,v 1.7 2001-05-04 22:42:21 geuzaine Exp $ */
+/* $Id: Socket.cpp,v 1.8 2001-05-07 07:25:04 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -88,7 +88,9 @@ int Socket_StartProgram(char *progname, char *sockname){
 #endif
   struct sockaddr_un addr, from;
   char command[1000];
+#ifndef _AIX
   fd_set rfds;
+#endif
   struct timeval tv;
   int retval;
 
@@ -121,12 +123,16 @@ int Socket_StartProgram(char *progname, char *sockname){
   if(listen(s, 20)) Msg(GERROR, "Socket listen failed");
   
   /* Watch s to see when it has input. */
-  FD_ZERO(&rfds);
-  FD_SET(s, &rfds);
   /* Wait up to 2 seconds */
   tv.tv_sec = 2;
   tv.tv_usec = 0;
+#ifdef _AIX
+  /* select not done */
+#else
+  FD_ZERO(&rfds);
+  FD_SET(s, &rfds);
   retval = select(s+1, &rfds, NULL, NULL, &tv);
+#endif
   
   if(!retval){
     Msg(GERROR, "Socket listening timeout");	
