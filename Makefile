@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.99 2001-05-09 07:18:35 geuzaine Exp $
+# $Id: Makefile,v 1.100 2001-05-09 15:03:39 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -532,7 +532,7 @@ fltk_sgi: tag fltk_compile_sgi fltk_link_sgi strip_bin compress_bin
 fltk_mingw: tag fltk_compile_mingw fltk_link_mingw
 	strip $(GMSH_BIN_DIR)/gmsh.exe
 
-fltk_cygwin: tag fltk_compile_cygwin fltk_kink_cygwin strip_bin
+fltk_cygwin: tag fltk_compile_cygwin fltk_link_cygwin strip_bin
 	strip $(GMSH_BIN_DIR)/gmsh.exe
 
 fltk_cygwin_gertha_buro: tag
