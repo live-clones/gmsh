@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.26 2001-08-14 10:49:47 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.27 2001-08-14 10:50:03 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -11,7 +11,7 @@
 extern Context_T CTX;
 
 //test for hanging nodes
-#define MOES
+//#define MOES
 
 /* ------------------------------------------------------------------------ */
 /*  M S H    F O R M A T                                                    */
