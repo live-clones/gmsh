@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.46 2003-09-17 17:51:25 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.47 2003-09-23 00:54:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -195,16 +195,22 @@ void CreateOutputFile(char *name, int format)
   case FORMAT_EPSTEX:
   case FORMAT_PDF:
   case FORMAT_PDFTEX:
-    if(!(fp = fopen(name, "w"))) {
+    if(format == FORMAT_PDF || format == FORMAT_PDFTEX){
+      fp = fopen(name, "wb");
+      psformat = GL2PS_PDF;
+    }
+    else{
+      fp = fopen(name, "w");
+      if(format == FORMAT_PS || format == FORMAT_PSTEX)
+	psformat = GL2PS_PS;
+      else
+	psformat = GL2PS_EPS;
+    }
+
+    if(!fp) {
       Msg(GERROR, "Unable to open file '%s'", name);
       return;
     }
-    if(format == FORMAT_PDF || format == FORMAT_PDFTEX)
-      psformat = GL2PS_PDF;
-    else if(format == FORMAT_PS || format == FORMAT_PSTEX)
-      psformat = GL2PS_PS;
-    else
-      psformat = GL2PS_EPS;
     pssort = (CTX.print.eps_quality == 1) ? GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT;
     psoptions =
       GL2PS_SIMPLE_LINE_OFFSET | GL2PS_SILENT | 
