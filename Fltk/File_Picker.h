@@ -39,6 +39,8 @@ public:
   }
   void show(){ _win->show(); }
   void position(int x, int y){ _win->position(x,y);}
+  int x(){ return _win->x();}
+  int y(){ return _win->y();}
 };
 
 #endif
