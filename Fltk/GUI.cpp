@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.229 2003-03-01 22:36:37 geuzaine Exp $
+// $Id: GUI.cpp,v 1.230 2003-03-02 00:16:13 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -3249,12 +3249,16 @@ void GUI::create_about_window()
     sprintf(buffer, "@c@.Version: %d.%d.%d", GMSH_MAJOR_VERSION,
             GMSH_MINOR_VERSION, GMSH_PATCH_VERSION);
     o->add(buffer);
-    sprintf(buffer, "@c@.Build date: %s", GMSH_DATE);
-    o->add(buffer);
-    sprintf(buffer, "@c@.Build OS: %s", GMSH_OS);
+    sprintf(buffer, "@c@.License: GNU GPL");
     o->add(buffer);
     sprintf(buffer, "@c@.Graphical user interface toolkit: FLTK %d.%d.%d",
             FL_MAJOR_VERSION, FL_MINOR_VERSION, FL_PATCH_VERSION);
+    o->add(buffer);
+    sprintf(buffer, "@c@.Build OS: %s", GMSH_OS);
+    o->add(buffer);
+    sprintf(buffer, "@c@.Build options: %s", Get_BuildOptions());
+    o->add(buffer);
+    sprintf(buffer, "@c@.Build date: %s", GMSH_DATE);
     o->add(buffer);
     sprintf(buffer, "@c@.Build host: %s", GMSH_HOST);
     o->add(buffer);
@@ -3263,6 +3267,12 @@ void GUI::create_about_window()
     o->add("");
     o->add("@c@.Visit http://www.geuz.org/gmsh/ for more information");
     o->add("");
+  }
+
+  {
+    Fl_Button *o =
+      new Fl_Button(width - 2*BB - 2*WB, height - BH - WB, BB, BH, "License");
+    o->callback(help_license_cb);
   }
 
   {

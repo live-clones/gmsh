@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.9 2003-03-01 22:36:36 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.10 2003-03-02 00:16:13 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -49,8 +49,10 @@ char *TheBgmFileName = NULL, *TheOptString = NULL;
 char gmsh_progname[]  = "This is Gmsh" ;
 char gmsh_copyright[] = "Copyright (C) 1997-2003 Jean-Francois Remacle and Christophe Geuzaine";
 char gmsh_version[]   = "Version        : " ;
-char gmsh_os[]        = "Build OS       : " GMSH_OS ;
+char gmsh_license[]   = "License        : GNU GPL" ;
 char gmsh_gui[]       = "GUI toolkit    : " ;
+char gmsh_os[]        = "Build OS       : " GMSH_OS ;
+char gmsh_options[]   = "Build options  : " ;
 char gmsh_date[]      = "Build date     : " GMSH_DATE ;
 char gmsh_host[]      = "Build host     : " GMSH_HOST ;
 char gmsh_packager[]  = "Packager       : " GMSH_PACKAGER ;
@@ -106,6 +108,26 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -version              show version number");
   Msg(DIRECT, "  -info                 show detailed version information");
   Msg(DIRECT, "  -help                 show this message");
+}
+
+char *Get_BuildOptions(void)
+{
+  static int first=1;
+  static char opt[128] = "";
+  
+  if(first){
+#if defined(HAVE_GSL)
+    strcat(opt, "GSL, ");
+#endif
+#if defined(HAVE_TRIANGLE)
+    strcat(opt, "Triangle, ");
+#endif
+#if defined(HAVE_LIBJPEG)
+    strcat(opt, "JPEG ");
+#endif
+    first = 0;
+  }
+  return opt;
 }
 
 // *INDENT-ON*
@@ -380,15 +402,18 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
         exit(1);
       }
       else if(!strcmp(argv[i] + 1, "info") || !strcmp(argv[i] + 1, "-info")) {
+        fprintf(stderr, "%s\n", gmsh_copyright);
         fprintf(stderr, "%s%d.%d.%d\n", gmsh_version, GMSH_MAJOR_VERSION,
                 GMSH_MINOR_VERSION, GMSH_PATCH_VERSION);
-        fprintf(stderr, "%s\n", gmsh_os);
 #if defined(HAVE_FLTK)
         fprintf(stderr, "%sFLTK %d.%d.%d\n", gmsh_gui, FL_MAJOR_VERSION,
                 FL_MINOR_VERSION, FL_PATCH_VERSION);
 #else
         fprintf(stderr, "%snone\n", gmsh_gui);
 #endif
+        fprintf(stderr, "%s\n", gmsh_license);
+        fprintf(stderr, "%s\n", gmsh_os);
+        fprintf(stderr, "%s%s\n", gmsh_options, Get_BuildOptions());
         fprintf(stderr, "%s\n", gmsh_date);
         fprintf(stderr, "%s\n", gmsh_host);
         fprintf(stderr, "%s\n", gmsh_packager);

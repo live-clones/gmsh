@@ -140,6 +140,7 @@ void visibility_ok_cb(CALLBACK_ARGS) ;
 
 void help_short_cb(CALLBACK_ARGS) ;
 void help_command_line_cb(CALLBACK_ARGS) ;
+void help_license_cb(CALLBACK_ARGS) ;
 void help_about_cb(CALLBACK_ARGS) ;
 
 // Module Menu

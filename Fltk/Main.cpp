@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.44 2003-03-01 22:36:38 geuzaine Exp $
+// $Id: Main.cpp,v 1.45 2003-03-02 00:16:13 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -172,6 +172,7 @@ int main(int argc, char *argv[])
 
   Msg(LOG_INFO, "-------------------------------------------------------");
   Msg(LOG_INFO, gmsh_os);
+  Msg(LOG_INFO, "%s%s", gmsh_options, Get_BuildOptions());
   Msg(LOG_INFO, gmsh_date);
   Msg(LOG_INFO, gmsh_host);
   Msg(LOG_INFO, gmsh_packager);

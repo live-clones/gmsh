@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.39 2003-02-23 05:51:27 geuzaine Exp $
+# $Id: Makefile,v 1.40 2003-03-02 00:16:13 geuzaine Exp $
 
 include ../variables
 
@@ -13,7 +13,8 @@ SRC = Context.cpp\
       CommandLine.cpp\
       Timer.cpp\
       ColorTable.cpp\
-      Trackball.cpp
+      Trackball.cpp\
+      GPL.cpp
 
 OBJ = ${SRC:.cpp=.o}
 
