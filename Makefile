@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.206 2002-04-13 05:30:45 geuzaine Exp $
+# $Id: Makefile,v 1.207 2002-04-13 05:31:13 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -72,7 +72,7 @@ static:
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
 	$(CXX) -o $(GMSH_BIN_DIR)/gmshm $(GMSH_FLTK_LIB)\
-                 $(HOME)/SOURCES/fltk-1.1/lib/libfltk_gl.a
+                 $(HOME)/SOURCES/fltk-1.1/lib/libfltk_gl.a\
                  $(HOME)/SOURCES/Mesa-static/lib/libGLU.a\
                  $(HOME)/SOURCES/Mesa-static/lib/libGL.a\
                  $(HOME)/SOURCES/fltk-1.1/lib/libfltk.a -lX11 -lm
