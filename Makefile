@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.219 2002-05-19 07:49:06 geuzaine Exp $
+# $Id: Makefile,v 1.220 2002-05-19 19:59:09 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -277,7 +277,8 @@ bb-mingw: initialtag
 #
 source:
 	tar zcvf gmsh.tgz `ls README* COPYING Makefile */Makefile */*.[chyl]\
-                           */*.rc */*.res */*.ico */*.cpp` demos tutorial utils
+                           */*.rc */*.res */*.ico */*.cpp */*.pl */*.pm */*.opt */*.spec`\
+                           demos tutorial
 	mkdir gmsh-$(GMSH_RELEASE)
 	cd gmsh-$(GMSH_RELEASE) && tar zxvf ../gmsh.tgz
 	cd gmsh-$(GMSH_RELEASE) && zip -r gmsh-$(GMSH_RELEASE)-source.zip *
