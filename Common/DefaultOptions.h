@@ -30,7 +30,7 @@ StringXString GeneralOptions_String[] = {
 #else
   { F|O, "TextEditor" , opt_general_editor , "emacs %s &" ,
 #endif
-    "System command to launch a text editor (may contain '\%s')" },
+    "System command to launch a text editor (may contain '%%s')" },
   { 0, NULL , NULL , NULL , NULL }
 } ;
 
@@ -314,7 +314,7 @@ StringXNumber GeometryOptions_Number[] = {
 
 StringXNumber MeshOptions_Number[] = {
   { F|O, "Quality" , opt_mesh_quality , 0.0 ,
-    "Only diplay elements of quality inferior to this factor" },
+    "Only display elements of quality inferior to this factor" },
   { F|O, "Normals" , opt_mesh_normals , 0.0 ,
     "Size of the normal vectors" }, 
   { F|O, "Tangents" , opt_mesh_tangents , 0.0 , 
