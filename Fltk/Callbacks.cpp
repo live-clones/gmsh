@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.173 2003-04-02 05:53:23 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.174 2003-04-02 06:25:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -553,15 +553,23 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"GIF (*.gif)", _save_gif},
     {"GIF dithered (*.gif)", _save_gif_dithered},
     {"GIF transparent (*.gif)", _save_gif_transparent},
+#if defined(HAVE_LIBJPEG)
     {"JPEG (*.jpg)", _save_jpeg},
+#endif
+#if defined(HAVE_LIBPNG)
     {"PNG (*.png)", _save_png},
+#endif
     {"PostScript fast (*.ps)", _save_ps_simple},
     {"PostScript accurate (*.ps)", _save_ps_accurate},
     {"Encapsulated PostScript fast (*.eps)", _save_eps_simple},
     {"Encapsulated PostScript accurate (*.eps)", _save_eps_accurate},
     {"PPM (*.ppm)", _save_ppm},
+#if defined(HAVE_LIBJPEG)
     {"LaTeX JPEG part (*.jpg)", _save_jpegtex},
+#endif
+#if defined(HAVE_LIBPNG)
     {"LaTeX PNG part (*.png)", _save_pngtex},
+#endif
     {"LaTeX EPS part fast (*.eps)", _save_epstex_simple},
     {"LaTeX EPS part accurate (*.eps)", _save_epstex_accurate},
     {"LaTeX TeX part (*.tex)", _save_tex},

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.235 2003-04-01 17:05:31 geuzaine Exp $
+// $Id: GUI.cpp,v 1.236 2003-04-02 06:25:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -108,11 +108,21 @@ Fl_Menu_Item m_menubar_table[] = {
          {"GIF (*.gif)...",               0, (Fl_Callback *)file_save_as_gif_cb, 0},
          {"GIF dithered...",              0, (Fl_Callback *)file_save_as_gif_dithered_cb, 0},
          {"GIF transparent...",           0, (Fl_Callback *)file_save_as_gif_transparent_cb, 0},
+#if defined(HAVE_LIBJPEG)
          {"JPEG (*.jpg)...",              0, (Fl_Callback *)file_save_as_jpeg_cb, 0},
+#endif
+#if defined(HAVE_LIBPNG)
+         {"PNG (*.png)...",               0, (Fl_Callback *)file_save_as_png_cb, 0},
+#endif
          {"PostScript fast (*.ps)...",    0, (Fl_Callback *)file_save_as_ps_simple_cb, 0},
          {"PostScript accurate...",       0, (Fl_Callback *)file_save_as_ps_accurate_cb, 0},
          {"PPM (*.ppm)...",               0, (Fl_Callback *)file_save_as_ppm_cb, 0},
+#if defined(HAVE_LIBJPEG)
          {"LaTeX JPEG...",                0, (Fl_Callback *)file_save_as_jpegtex_cb, 0},
+#endif
+#if defined(HAVE_LIBPNG)
+         {"LaTeX PNG...",                 0, (Fl_Callback *)file_save_as_pngtex_cb, 0},
+#endif
          {"LaTeX PostScript fast...",     0, (Fl_Callback *)file_save_as_pstex_simple_cb, 0},
          {"LaTeX PostScript accurate...", 0, (Fl_Callback *)file_save_as_pstex_accurate_cb, 0},
          {"LaTeX TeX (*.tex)...",         0, (Fl_Callback *)file_save_as_tex_cb, 0},
