@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.21 2001-09-25 08:21:14 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.22 2001-10-29 08:52:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -59,9 +59,6 @@ void Draw_String(char *s){
     }
   }
 
-  gl_font(FL_HELVETICA, CTX.gl_fontsize);
-  CTX.gl_fontheight = gl_height() ;
-  CTX.gl_fontascent = gl_height()-gl_descent() ;
   gl_draw(s);
 
 }

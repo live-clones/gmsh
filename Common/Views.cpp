@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.54 2001-09-26 08:28:12 geuzaine Exp $
+// $Id: Views.cpp,v 1.55 2001-10-29 08:52:19 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -12,10 +12,8 @@ extern Context_T   CTX ;
 
 #define INFINITY 1.e200
 
-// this static stuff should be removed
-List_T     *Post_ViewList = NULL;
+//static reference view
 Post_View  *Post_ViewReference = NULL;
-int         Post_ViewForceNumber = 0;
 
 /* ------------------------------------------------------------------------ */
 /*  V i e w s                                                               */
@@ -34,21 +32,19 @@ Post_View * BeginView(int allocate){
   static int  UniqueNum=0;
   int i;
 
-  if(!Post_ViewList) Post_ViewList = List_Create(100,1,sizeof(Post_View));
+  if(!CTX.post.list) CTX.post.list = List_Create(100,1,sizeof(Post_View));
 
-  if(!Post_ViewForceNumber){
+  if(!CTX.post.force_num){
     vv.Num = ++UniqueNum; // each view _must_ have a unique number
-    List_Add(Post_ViewList, &vv);
+    List_Add(CTX.post.list, &vv);
   }
   else{
-    vv.Num = Post_ViewForceNumber;    
-    List_Replace(Post_ViewList,&vv,fcmpPostViewNum);
+    vv.Num = CTX.post.force_num;    
+    List_Replace(CTX.post.list,&vv,fcmpPostViewNum);
   }
 
-  CTX.post.nb_views = List_Nbr(Post_ViewList);
-
-  i = List_ISearch(Post_ViewList, &vv, fcmpPostViewNum);
-  v = (Post_View*)List_Pointer(Post_ViewList, i);
+  i = List_ISearch(CTX.post.list, &vv, fcmpPostViewNum);
+  v = (Post_View*)List_Pointer(CTX.post.list, i);
 
   v->Index = i;
   v->Dirty = 1;
@@ -320,8 +316,8 @@ void EndView(Post_View *v, int add_in_gui, char *file_name, char *name){
 
   if(CTX.post.smooth) v->smooth();
 
-  if(!Post_ViewForceNumber && add_in_gui)
-    AddViewInUI(List_Nbr(Post_ViewList), v->Name, v->Num);
+  if(!CTX.post.force_num && add_in_gui)
+    AddViewInUI(List_Nbr(CTX.post.list), v->Name, v->Num);
 
   v->Dirty = 0; //the view is complete, we may draw it
 }
@@ -331,15 +327,14 @@ bool FreeView(int num){
 
   Msg(DEBUG, "Trying to free view %d",num);
   
-  if(num < 0 || num >= List_Nbr(Post_ViewList)){
+  if(num < 0 || num >= List_Nbr(CTX.post.list)){
     return false ;
   }
-  v = (Post_View*)List_Pointer(Post_ViewList, num);
+  v = (Post_View*)List_Pointer(CTX.post.list, num);
   FreeView(v);
-  List_PSuppress(Post_ViewList, num);
-  CTX.post.nb_views = List_Nbr(Post_ViewList);
+  List_PSuppress(CTX.post.list, num);
 
-  Msg(INFO, "View %d deleted (%d views left)",num, List_Nbr(Post_ViewList));
+  Msg(INFO, "View %d deleted (%d views left)",num, List_Nbr(CTX.post.list));
   return true;
 }
 
@@ -351,11 +346,11 @@ void FreeView(Post_View *v){
   if(v->DuplicateOf){
     vv.Num = v->DuplicateOf ;
     Msg(DEBUG, "This view is a duplicata");
-    if(!(v2 = (Post_View*)List_PQuery(Post_ViewList, &vv, fcmpPostViewNum))){
+    if(!(v2 = (Post_View*)List_PQuery(CTX.post.list, &vv, fcmpPostViewNum))){
       Msg(DEBUG, "  -the original view is gone");
       numdup = 0;
-      for(i=0 ; i<List_Nbr(Post_ViewList); i++)
-	numdup += (((Post_View*)List_Pointer(Post_ViewList, i))->DuplicateOf == v->DuplicateOf);
+      for(i=0 ; i<List_Nbr(CTX.post.list); i++)
+	numdup += (((Post_View*)List_Pointer(CTX.post.list, i))->DuplicateOf == v->DuplicateOf);
       if(numdup == 1){
         Msg(DEBUG, "  -there are no other duplicata, so I can free");
         free = 1 ;
@@ -399,6 +394,11 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   dest->Visible = src->Visible;
   dest->IntervalsType = src->IntervalsType;
   dest->SaturateValues = src->SaturateValues;
+  dest->GraphType = src->GraphType;
+  dest->GraphPosition[0] = src->GraphPosition[0];
+  dest->GraphPosition[1] = src->GraphPosition[1];
+  dest->GraphSize[0] = src->GraphSize[0];
+  dest->GraphSize[1] = src->GraphSize[1];
   dest->Boundary = src->Boundary ;
   dest->NbIso = src->NbIso;
   dest->Light = src->Light ;
@@ -429,10 +429,10 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
 ColorTable *Get_ColorTable(int num){
   Post_View *v;
 
-  if(!Post_ViewList)
+  if(!CTX.post.list)
     v = Post_ViewReference ;
   else
-    v = (Post_View*)List_Pointer_Test(Post_ViewList, num);
+    v = (Post_View*)List_Pointer_Test(CTX.post.list, num);
   if(v)
     return &v->CT ;
   else
@@ -442,10 +442,10 @@ ColorTable *Get_ColorTable(int num){
 void Print_ColorTable(int num, char *prefix, FILE *file){
   char tmp[1024];
   Post_View *v;
-  if(!Post_ViewList)
+  if(!CTX.post.list)
     v = Post_ViewReference ;
   else
-    v = (Post_View*)List_Pointer_Test(Post_ViewList, num);
+    v = (Post_View*)List_Pointer_Test(CTX.post.list, num);
   if(!v) return;
   sprintf(tmp, "%s = {", prefix);
   if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, tmp);

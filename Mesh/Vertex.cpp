@@ -1,10 +1,13 @@
-// $Id: Vertex.cpp,v 1.10 2001-08-30 08:55:49 geuzaine Exp $
+// $Id: Vertex.cpp,v 1.11 2001-10-29 08:52:20 geuzaine Exp $
 
 #include "Gmsh.h"
+#include "Numeric.h"
 #include "Vertex.h"
+#include "Mesh.h"
 #include "Context.h"
 
 extern Context_T CTX ;
+extern Mesh *THEM ;
 
 Vertex::Vertex (){
   Frozen = 0;
@@ -74,6 +77,7 @@ Vertex *Create_Vertex (int Num, double X, double Y, double Z, double lc, double 
   pV = new Vertex (X, Y, Z, lc);
   pV->w = 1.0;
   pV->Num = Num;
+  THEM->MaxPointNum = IMAX(THEM->MaxPointNum,Num);
   pV->u = u;
   return pV;
 }

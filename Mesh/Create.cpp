@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.25 2001-08-28 20:40:21 geuzaine Exp $
+// $Id: Create.cpp,v 1.26 2001-10-29 08:52:20 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -11,7 +11,6 @@
 
 extern Mesh      *THEM;
 extern Context_T  CTX;
-extern int        CurrentSimplexNumber;
 
 //static double CIRC_GRAN = 2.2;
 
@@ -146,6 +145,7 @@ void Add_SurfaceLoop (int Num, List_T * intlist, Mesh * M){
   pSL = (SurfaceLoop *) Malloc (sizeof (SurfaceLoop));
   pSL->Surfaces = List_Create (List_Nbr (intlist), 1, sizeof (int));
   pSL->Num = Num;
+  THEM->MaxSurfaceLoopNum = IMAX(THEM->MaxSurfaceLoopNum,Num);
   for (i = 0; i < List_Nbr (intlist); i++){
     List_Read (intlist, i, &j);
     List_Add (pSL->Surfaces, &j);
@@ -159,6 +159,7 @@ void Add_PhysicalGroup (int Num, int typ, List_T * intlist, Mesh * M){
   pSL = (PhysicalGroup *) Malloc (sizeof (PhysicalGroup));
   pSL->Entities = List_Create (List_Nbr (intlist), 1, sizeof (int));
   pSL->Num = Num;
+  THEM->MaxPhysicalNum = IMAX(THEM->MaxPhysicalNum,Num);
   pSL->Typ = typ;
   for (i = 0; i < List_Nbr (intlist); i++){
     List_Read (intlist, i, &j);
@@ -173,6 +174,7 @@ void Add_EdgeLoop (int Num, List_T * intlist, Mesh * M){
   pEL = (EdgeLoop *) Malloc (sizeof (EdgeLoop));
   pEL->Curves = List_Create (List_Nbr (intlist), 1, sizeof (int));
   pEL->Num = Num;
+  THEM->MaxLineLoopNum = IMAX(THEM->MaxLineLoopNum,Num);
   for (i = 0; i < List_Nbr (intlist); i++){
     List_Read (intlist, i, &j);
     List_Add (pEL->Curves, &j);
@@ -437,6 +439,7 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
   pC->Extrude = NULL;
   pC->Typ = Typ;
   pC->Num = Num;
+  THEM->MaxLineNum = IMAX(THEM->MaxLineNum,Num);
   pC->Simplexes = Tree_Create (sizeof (Simplex *), compareSimplex);
   pC->TrsfSimplexes = List_Create (1, 10, sizeof (Simplex *));
   pC->Circle.done = 0;
@@ -544,6 +547,7 @@ Surface * Create_Surface (int Num, int Typ, int Mat){
   pS = (Surface *) Malloc (sizeof (Surface));
   pS->Dirty = 0;
   pS->Num = Num;
+  THEM->MaxSurfaceNum = IMAX(THEM->MaxSurfaceNum,Num);
   pS->Typ = Typ;
   pS->Mat = Mat;
   pS->Method = LIBRE;
@@ -592,6 +596,7 @@ Volume * Create_Volume (int Num, int Typ, int Mat){
   pV = (Volume *) Malloc (sizeof (Volume));
   pV->Dirty = 0;
   pV->Num = Num;
+  THEM->MaxVolumeNum = IMAX(THEM->MaxVolumeNum,Num);
   pV->Typ = Typ;
   pV->Mat = Mat;
   pV->Method = LIBRE;
@@ -637,7 +642,7 @@ Hexahedron * Create_Hexahedron (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * 
 
   h = (Hexahedron *) Malloc (sizeof (Hexahedron));
   h->iEnt = -1;
-  h->Num = ++CurrentSimplexNumber;
+  h->Num = ++THEM->MaxSimplexNum;
   h->V[0] = v1;
   h->V[1] = v2;
   h->V[2] = v3;
@@ -665,7 +670,7 @@ Prism * Create_Prism (Vertex * v1, Vertex * v2, Vertex * v3,
 
   p = (Prism *) Malloc (sizeof (Prism));
   p->iEnt = -1;
-  p->Num = ++CurrentSimplexNumber;
+  p->Num = ++THEM->MaxSimplexNum;
   p->V[0] = v1;
   p->V[1] = v2;
   p->V[2] = v3;
@@ -691,7 +696,7 @@ Pyramid * Create_Pyramid (Vertex * v1, Vertex * v2, Vertex * v3,
 
   p = (Pyramid *) Malloc (sizeof (Pyramid));
   p->iEnt = -1;
-  p->Num = ++CurrentSimplexNumber;
+  p->Num = ++THEM->MaxSimplexNum;
   p->V[0] = v1;
   p->V[1] = v2;
   p->V[2] = v3;

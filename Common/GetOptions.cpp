@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.40 2001-09-05 19:14:05 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.41 2001-10-29 08:52:19 geuzaine Exp $
 
 #include <unistd.h>
 #include "Gmsh.h"
@@ -60,13 +60,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -convert file file    convert an ascii view into a binary one");
   Msg(DIRECT, "Display options:");    
   Msg(DIRECT, "  -nodb                 disable double buffering");
-#ifdef _XMOTIF
-  Msg(DIRECT, "  -noov                 disable overlay visual");
-  Msg(DIRECT, "  -flash                allow colormap flashing");
-  Msg(DIRECT, "  -samevisual           force same visual for graphics and GUI");
-#else
   Msg(DIRECT, "  -fontsize int         specify the font size for the GUI (default: 12)");
-#endif
   Msg(DIRECT, "  -alpha                enable alpha blending");
   Msg(DIRECT, "  -notrack              don't use trackball mode for rotations");
   Msg(DIRECT, "  -display string       specify display");
@@ -78,9 +72,6 @@ void Print_Usage(char *name){
   Msg(DIRECT, "                        post-processing mode (default: automatic)");
 #endif
   Msg(DIRECT, "  -v int                set verbosity level (default: 2)");
-#ifdef _XMOTIF
-  Msg(DIRECT, "  -nothreads            disable threads");
-#endif
   Msg(DIRECT, "  -opt \"string\"         parse string before project file");
   Msg(DIRECT, "  -version              show version number");
   Msg(DIRECT, "  -info                 show detailed version information");
@@ -182,8 +173,8 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	CTX.terminal = 1;
 	if(argv[i] && argv[i+1]){
 	  ParseFile(argv[i]);
-	  if(List_Nbr(Post_ViewList))
-	    Write_View(1,(Post_View*)List_Pointer(Post_ViewList, 0),argv[i+1]);
+	  if(List_Nbr(CTX.post.list))
+	    Write_View(1,(Post_View*)List_Pointer(CTX.post.list, 0),argv[i+1]);
 	  else
 	    fprintf(stderr, ERROR_STR "No view to convert\n");
 	}
@@ -325,9 +316,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
               !strcmp(argv[i]+1, "-info")){
         fprintf(stderr, "%s%.2f\n", gmsh_version, GMSH_VERSION);
         fprintf(stderr, "%s\n", gmsh_os);
-#if _XMOTIF
-        fprintf(stderr, "%s%s\n", gmsh_gui, XmVERSION_STRING);
-#elif _FLTK
+#if _FLTK
         fprintf(stderr, "%sFLTK %d.%d.%d\n", gmsh_gui, FL_MAJOR_VERSION, 
 		FL_MINOR_VERSION, FL_PATCH_VERSION);
 #else
@@ -369,14 +358,8 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       else if(!strcmp(argv[i]+1, "notrack")){ 
         CTX.useTrackball = 0; i++;
       }
-      else if(!strcmp(argv[i]+1, "flash")){ 
-        CTX.flash = 1; i++;
-      }
       else if(!strcmp(argv[i]+1, "dual")){ 
         CTX.mesh.dual = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "samevisual")){ 
-        CTX.same_visual = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "interactive")){ 
         CTX.mesh.interactive = 1; i++;

@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.22 2001-08-12 14:24:50 geuzaine Exp $
+// $Id: Geo.cpp,v 1.23 2001-10-29 08:52:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -12,8 +12,7 @@ extern Context_T CTX ;
 
 #define BUFFSIZE 32000
 
-// Ceci, c'est horrible. Des que Motif est completement zingle, je
-// vire et je refais une routine generique.
+// Ceci, c'est horrible. 
 
 char x_text[100]  = "0.0", y_text[100]  = "0.0", z_text[100]  = "0.0";
 char l_text[100] = "1.0" ;
@@ -216,21 +215,21 @@ void add_line(int p1, int p2, char *fich){
   }
   List_Delete(list);
   
-  sprintf(text,"Line(%d) = {%d,%d};",NEWREG(),p1,p2);
+  sprintf(text,"Line(%d) = {%d,%d};",NEWLINE(),p1,p2);
   add_infile(text,fich);
 }
 
 void add_circ(int p1, int p2, int p3, char *fich){
   char text[BUFFSIZE];
 
-  sprintf(text,"Circle(%d) = {%d,%d,%d};",NEWREG(),p1,p2,p3);
+  sprintf(text,"Circle(%d) = {%d,%d,%d};",NEWLINE(),p1,p2,p3);
   add_infile(text,fich);
 }
 
 void add_ell(int p1, int p2, int p3, int p4, char *fich){
   char text[BUFFSIZE];
 
-  sprintf(text,"Ellipsis(%d) = {%d,%d,%d,%d};",NEWREG(),p1,p2,p3,p4);
+  sprintf(text,"Ellipsis(%d) = {%d,%d,%d,%d};",NEWLINE(),p1,p2,p3,p4);
   add_infile(text,fich);
 }
 
@@ -239,7 +238,7 @@ void add_spline(int N, int *p, char *fich){
   char text2[BUFFSIZE];
   int i;
 
-  sprintf(text,"CatmullRom(%d) = {",NEWREG());
+  sprintf(text,"CatmullRom(%d) = {",NEWLINE());
   for(i=0;i<N;i++){
     if(i != N-1)
       sprintf(text2,"%d,",p[i]);
@@ -255,7 +254,7 @@ void add_bezier(int N, int *p, char *fich){
   char text2[BUFFSIZE];
   int i;
 
-  sprintf(text,"Bezier(%d) = {",NEWREG());
+  sprintf(text,"Bezier(%d) = {",NEWLINE());
   for(i=0;i<N;i++){
     if(i != N-1)
       sprintf(text2,"%d,",p[i]);
@@ -272,7 +271,7 @@ void add_bspline(int N, int *p, char *fich){
   char text2[BUFFSIZE];
   int i;
 
-  sprintf(text,"BSpline(%d) = {",NEWREG());
+  sprintf(text,"BSpline(%d) = {",NEWLINE());
   for(i=0;i<N;i++){
     if(i != N-1)
       sprintf(text2,"%d,",p[i]);
@@ -298,7 +297,7 @@ void add_multline(int N, int *p, char *fich){
   }
   List_Delete(list);
 
-  sprintf(text,"Line(%d) = {",NEWREG());
+  sprintf(text,"Line(%d) = {",NEWLINE());
   for(i=0;i<N;i++){
     if(i != N-1)
       sprintf(text2,"%d,",p[i]);
@@ -316,8 +315,8 @@ void add_loop(List_T *list, char *fich, int *numloop){
 
   if((recognize_loop(list,numloop))) return;
 
-  *numloop = NEWREG();
-  sprintf(text,"Line Loop(%d) = {",NEWREG());
+  *numloop = NEWLINELOOP();
+  sprintf(text,"Line Loop(%d) = {",*numloop);
   for(i=0;i<List_Nbr(list);i++){
       List_Read(list,i,&seg);
     if(i != List_Nbr(list)-1)
@@ -336,14 +335,14 @@ void add_surf(List_T *list, char *fich, int support, int typ){
   int i,seg;
 
   if(typ ==1){
-    sprintf(text,"Ruled Surface(%d) = {",NEWREG());
+    sprintf(text,"Ruled Surface(%d) = {",NEWSURFACE());
   }
   else if (typ == 2){
-    sprintf(text,"Plane Surface(%d) = {",NEWREG());
+    sprintf(text,"Plane Surface(%d) = {",NEWSURFACE());
   }
   else
   {
-    sprintf(text,"Trimmed Surface(%d) = %d {",NEWREG(),support);
+    sprintf(text,"Trimmed Surface(%d) = %d {",NEWSURFACE(),support);
   }
   for(i=0;i<List_Nbr(list);i++){
       List_Read(list,i,&seg);
@@ -363,7 +362,7 @@ void add_vol(List_T *list, char *fich, int *numvol){
 
   if((recognize_surfloop(list,numvol))) return;
 
-  *numvol = NEWREG();
+  *numvol = NEWSURFACELOOP();
   sprintf(text,"Surface Loop(%d) = {",*numvol);
   for(i=0;i<List_Nbr(list);i++){
     List_Read(list,i,&seg);
@@ -381,7 +380,7 @@ void add_multvol(List_T *list, char *fich){
   char text2[BUFFSIZE];
   int i,seg;
 
-  sprintf(text,"Volume(%d) = {",NEWREG());
+  sprintf(text,"Volume(%d) = {",NEWVOLUME());
   for(i=0;i<List_Nbr(list);i++){
     List_Read(list,i,&seg);
     if(i != List_Nbr(list)-1)
@@ -413,7 +412,7 @@ void add_physical(List_T *list, char *fich, int type, int *num){
   char text[BUFFSIZE], text2[BUFFSIZE];
   int  i, elementary_entity;
 
-  *num = NEWREG();
+  *num = NEWPHYSICAL();
   switch(type){
   case ENT_POINT : sprintf(text, "Physical Point(%d) = {", *num); break;
   case ENT_LINE : sprintf(text, "Physical Line(%d) = {", *num); break;

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.157 2001-10-10 11:15:38 geuzaine Exp $
+# $Id: Makefile,v 1.158 2001-10-29 08:52:19 geuzaine Exp $
 
 GMSH_RELEASE = 1.27
 
@@ -19,7 +19,7 @@ X11_LIB = -lX11
 GMSH_COMMON_DIR = Adapt Common DataStr Geo Mesh Parallel Parser Plugin Triangle
 GMSH_BOX_DIR =$(GMSH_COMMON_DIR) Box
 GMSH_FLTK_DIR = $(GMSH_COMMON_DIR) Graphics Fltk jpeg
-GMSH_DIR = $(GMSH_COMMON_DIR) Box Graphics Motif Fltk jpeg utils
+GMSH_DIR = $(GMSH_COMMON_DIR) Box Graphics Fltk jpeg utils
 GMSH_BIN_DIR = bin
 GMSH_LIB_DIR = lib
 GMSH_DOC_DIR = doc

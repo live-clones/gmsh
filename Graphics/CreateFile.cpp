@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.20 2001-07-25 13:11:07 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.21 2001-10-29 08:52:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -9,15 +9,6 @@
 
 extern Context_T   CTX;
 extern Mesh        M;
-
-#ifdef _XMOTIF
-#include <unistd.h>
-#include "Widgets.h"
-#include "XContext.h"
-#include "XDump.h"
-extern Widgets_T   WID;
-extern XContext_T  XCTX;
-#endif
 
 #include "gl2ps.h"
 #include "gl2gif.h"
@@ -37,11 +28,6 @@ void CreateOutputFile (char *name, int format) {
   GLint    size3d;
   char     ext[256];
   int      res, i;
-
-#ifdef _XMOTIF
-  FILE    *tmp;
-  char     cmd[1000], *tmpFileName="tmp.xwd";
-#endif
 
   if(!name || !strlen(name)) return;
 
@@ -89,19 +75,6 @@ void CreateOutputFile (char *name, int format) {
   case FORMAT_GREF :
     Print_Mesh(&M, name, FORMAT_GREF); 
     break;
-
-#ifdef _XMOTIF
-  case FORMAT_XPM :
-    if(!(fp = fopen(name,"wb"))) {
-      Msg(WARNING, "Unable to open file '%s'", name); 
-      return;
-    }
-    Window_Dump(XCTX.display, XCTX.scrnum, XtWindow(WID.G.glw), fp);    
-    Msg(INFO, "XPM creation complete '%s'", name);
-    Msg(STATUS2, "Wrote '%s'", name);
-    fclose(fp);
-    break;
-#endif
 
   case FORMAT_JPEG :
     if(!(fp = fopen(name,"wb"))) {
@@ -164,58 +137,29 @@ void CreateOutputFile (char *name, int format) {
     break;
 
   case FORMAT_EPS :
-
-    switch(CTX.print.eps_quality){
-
-#ifdef _XMOTIF
-    case 0 : // Bitmap EPS
-      if(!(fp = fopen(name,"w"))) {
-	Msg(WARNING, "Unable to open file '%s'", name); 
-	return;
-      }
-      if(!(tmp = fopen(tmpFileName,"w"))){
-	Msg(WARNING, "Unable to open file '%s'", tmpFileName); 
-	return;
-      }
-      Window_Dump(XCTX.display, XCTX.scrnum, XtWindow(WID.G.glw), tmp);
-      fclose(tmp);
-      sprintf(cmd, "xpr -device ps -gray 4 %s >%s", tmpFileName, name);
-      Msg(INFO, "Executing '%s'", cmd);
-      system(cmd);
-      unlink(tmpFileName);
-      Msg(INFO, "Bitmap EPS creation complete '%s'", name);
-      Msg(STATUS2, "Wrote '%s'", name);
-      fclose(fp);
-      break;
-#endif
-      
-    default : // Vector EPS
-      if(!(fp = fopen(name,"w"))) {
-	Msg(WARNING, "Unable to open file '%s'", name); 
-	return;
-      }
-      CTX.print.gl_fonts = 0;
-      size3d = 0 ;
-      res = GL2PS_OVERFLOW ;
-      while(res == GL2PS_OVERFLOW){
-	size3d += 2048*2048 ;
-	gl2psBeginPage(CTX.base_filename, "Gmsh", 
-		       (CTX.print.eps_quality == 1 ? GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT),
-		       GL2PS_SIMPLE_LINE_OFFSET | 
-		       (CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0),
-		       GL_RGBA, 0, NULL, size3d, fp);
-	CTX.stream = TO_FILE ;
-	FillBuffer();
-	CTX.stream = TO_SCREEN ;
-	res = gl2psEndPage();
-      }
-      Msg(INFO, "EPS creation complete '%s'", name);
-      Msg(STATUS2, "Wrote '%s'", name);
-      fclose(fp);
-      CTX.print.gl_fonts = 1;
-      break;
-      
+    if(!(fp = fopen(name,"w"))) {
+      Msg(WARNING, "Unable to open file '%s'", name); 
+      return;
     }
+    CTX.print.gl_fonts = 0;
+    size3d = 0 ;
+    res = GL2PS_OVERFLOW ;
+    while(res == GL2PS_OVERFLOW){
+      size3d += 2048*2048 ;
+      gl2psBeginPage(CTX.base_filename, "Gmsh", 
+		     (CTX.print.eps_quality == 1 ? GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT),
+		     GL2PS_SIMPLE_LINE_OFFSET | 
+		     (CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0),
+		     GL_RGBA, 0, NULL, size3d, fp);
+      CTX.stream = TO_FILE ;
+      FillBuffer();
+      CTX.stream = TO_SCREEN ;
+      res = gl2psEndPage();
+    }
+    Msg(INFO, "EPS creation complete '%s'", name);
+    Msg(STATUS2, "Wrote '%s'", name);
+    fclose(fp);
+    CTX.print.gl_fonts = 1;
     break ;
     
   default :

@@ -1,4 +1,4 @@
-// $Id: 2D_SMesh.cpp,v 1.7 2001-06-03 11:21:02 geuzaine Exp $
+// $Id: 2D_SMesh.cpp,v 1.8 2001-10-29 08:52:20 geuzaine Exp $
 
 /*  
   Maillage transfini surfacique                                                 
@@ -27,7 +27,6 @@
 #include "Interpolation.h"
 
 extern Mesh  *THEM;
-extern int    CurrentNodeNumber;
 
 int index1d (int flag, int N, int n){
   switch(flag){    
@@ -168,7 +167,7 @@ int MeshTransfiniteSurface (Surface *sur) {
             V = TransfiniteTri(*C[0],*C[1],*C[2],*S[0],*S[1],*S[2],u,v);
           if(issphere) 
             TransfiniteSph(*C[0],*c1,&V);
-          list[i+N1*j] = Create_Vertex(++CurrentNodeNumber,V.Pos.X,V.Pos.Y,V.Pos.Z,V.lc,0.0);
+          list[i+N1*j] = Create_Vertex(++THEM->MaxPointNum,V.Pos.X,V.Pos.Y,V.Pos.Z,V.lc,0.0);
         }
         else if(!i) 
           list[i+N1*j] = (nb == 4)?C[3]:C[2];

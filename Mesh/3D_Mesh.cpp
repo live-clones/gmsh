@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.30 2001-09-04 13:27:00 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.31 2001-10-29 08:52:20 geuzaine Exp $
 
 /*
  
@@ -25,7 +25,7 @@
 
 extern Mesh       *THEM, *LOCAL;
 extern Context_T   CTX;
-extern int         CurrentNodeNumber, FACE_DIMENSION;
+extern int         FACE_DIMENSION;
 
 static Tree_T *Tsd, *Sim_Sur_Le_Bord, *POINTS_TREE;
 static List_T *Simplexes_Destroyed, *Simplexes_New, *Suppress;
@@ -103,7 +103,7 @@ double Interpole_lcTetraedre (Simplex * s, Vertex * v){
 Vertex *NewVertex (Simplex * s){
   Vertex *v;
 
-  v = Create_Vertex (++CurrentNodeNumber, s->Center.X, s->Center.Y, s->Center.Z, 1., 0.0);
+  v = Create_Vertex (++THEM->MaxPointNum, s->Center.X, s->Center.Y, s->Center.Z, 1., 0.0);
   v->lc = Interpole_lcTetraedre (s, v);
 
   return (v);
@@ -345,7 +345,7 @@ void Box_6_Tetraedron (List_T * P, Mesh * m){
     else
       V[i].Pos.Z = ZM + LOIN * Zc;
     
-    V[i].Num = -(++CurrentNodeNumber);
+    V[i].Num = -(++THEM->MaxPointNum);
     pv = &V[i];
     pv->lc = 1.0;
     pv->Mov = NULL;

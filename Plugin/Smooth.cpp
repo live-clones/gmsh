@@ -1,9 +1,12 @@
-// $Id: Smooth.cpp,v 1.6 2001-08-06 11:39:22 geuzaine Exp $
+// $Id: Smooth.cpp,v 1.7 2001-10-29 08:52:21 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Smooth.h"
 #include "List.h"
 #include "Views.h"
+#include "Context.h"
+
+extern Context_T CTX;
 
 StringXNumber SmoothOptions_Number[] = {
   { GMSH_FULLRC, "iView" , NULL , -1. }
@@ -51,8 +54,6 @@ void GMSH_SmoothPlugin::CatchErrorMessage (char *errorMessage) const
   strcpy(errorMessage,"Smooth failed...");
 }
 
-extern List_T *Post_ViewList;
-
 Post_View *GMSH_SmoothPlugin::execute (Post_View *v)
 {
   Post_View *vv;
@@ -62,7 +63,7 @@ Post_View *GMSH_SmoothPlugin::execute (Post_View *v)
     vv = v;
   else{
     if(!v && iView < 0) iView = 0;
-    if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
+    if(!(vv = (Post_View*)List_Pointer_Test(CTX.post.list,iView))){
       Msg(WARNING,"View[%d] does not exist",iView);
       return 0;
     }

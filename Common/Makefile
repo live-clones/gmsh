@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.28 2001-08-20 08:25:23 geuzaine Exp $
+# $Id: Makefile,v 1.29 2001-10-29 08:52:19 geuzaine Exp $
 #
 # Makefile for "libCommon.a"
 #
@@ -12,7 +12,7 @@ RM      = rm
 
 LIB     = ../lib/libCommon.a
 INCLUDE = -I../includes -I../Common -I../DataStr -I../Geo -I../Graphics\
-          -I../Mesh -I../Parser -I../Motif -I../Fltk
+          -I../Mesh -I../Parser -I../Fltk
 
 OPT_FLAGS     = -g -Wall
 OS_FLAGS      = -D_LITTLE_ENDIAN
@@ -20,7 +20,7 @@ VERSION_FLAGS = -D_FLTK
 
 GL_INCLUDE    = -I$(HOME)/SOURCES/Mesa-3.1/include\
                 -I$(HOME)/SOURCES/Mesa-3.1/include/GL
-GUI_INCLUDE   = -I/usr/X11R6/LessTif/Motif1.2/include
+GUI_INCLUDE   = 
 
 RMFLAGS = -f
 CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\

@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.18 2001-10-03 06:59:37 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.19 2001-10-29 08:52:20 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -8,6 +8,7 @@
 #include "Context.h"
 
 extern Context_T   CTX;
+extern Mesh *THEM;
 
 int Simplex::TotalAllocated = 0;
 int Simplex::TotalNumber = 0;
@@ -35,6 +36,7 @@ Simplex::Simplex (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4){
   Quality = 0. ;
   Fourre_Simplexe (v1, v2, v3, v4);
   Num = TotalNumber;
+  THEM->MaxSimplexNum = IMAX(THEM->MaxSimplexNum,Num);
   iEnt = -1;
 }
 

@@ -389,6 +389,9 @@ struct _Mesh{
   int Histogram[3][NB_HISTOGRAM]; /* Quality histograms                 */
   GMSHMetric *Metric;           /* Metric                                */
   MeshParameters MeshParams;
+  int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
+  int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
+  int MaxSimplexNum;
 };
 
 typedef struct {

@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.27 2001-08-28 20:40:21 geuzaine Exp $
+// $Id: Generator.cpp,v 1.28 2001-10-29 08:52:20 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -9,7 +9,6 @@
 
 extern Mesh     *THEM;
 extern Context_T CTX;
-extern int       CurrentNodeNumber, CurrentSimplexNumber;
 
 static List_T *Curves;
 
@@ -132,6 +131,15 @@ void Maillage_Dimension_3 (Mesh * M){
 void Init_Mesh (Mesh * M, int all){
   THEM = M;
 
+  M->MaxPointNum = 0;
+  M->MaxLineNum = 0;
+  M->MaxLineLoopNum = 0;
+  M->MaxSurfaceNum = 0;
+  M->MaxSurfaceLoopNum = 0;
+  M->MaxVolumeNum = 0;
+  M->MaxPhysicalNum = 0;
+  M->MaxSimplexNum = 0;
+
   ExitExtrude();
   
   if (M->Vertices){
@@ -194,8 +202,7 @@ void Init_Mesh (Mesh * M, int all){
   M->PhysicalGroups = List_Create (5, 5, sizeof (PhysicalGroup *));
   M->Metric = new GMSHMetric;
   M->BGM.bgm = NULL;
-  CurrentNodeNumber = 1;
-  CurrentSimplexNumber = 0;
+
   M->status = 0;
 }
 

@@ -1,4 +1,4 @@
-// $Id: 3D_SMesh.cpp,v 1.10 2001-08-13 09:38:14 geuzaine Exp $
+// $Id: 3D_SMesh.cpp,v 1.11 2001-10-29 08:52:20 geuzaine Exp $
 
 /*  
   Maillage transfini volumique
@@ -29,7 +29,6 @@
 #include "Create.h"
 
 extern Mesh  *THEM;
-extern int    CurrentNodeNumber;
 
 int index2d (int flag, int M, int N, int m, int n){
   switch(flag){    
@@ -299,7 +298,7 @@ int MeshTransfiniteVolume (Volume *vol) {
                              *C[6],*C[7],*C[8],*C[9],*C[10],*C[11],
                              *S[0],*S[1],*S[2],*S[3],*S[4],*S[5],*S[6],*S[7],
                              u,v,w);
-          list[i+N1*j+N1*N2*k] = Create_Vertex(++CurrentNodeNumber,
+          list[i+N1*j+N1*N2*k] = Create_Vertex(++THEM->MaxPointNum,
                                                V.Pos.X,V.Pos.Y,V.Pos.Z,V.lc,0.0);
           /*
             printf(" NEW node : %f %f %f\n", list[i+N1*j+N1*N2*k]->Pos.X, 

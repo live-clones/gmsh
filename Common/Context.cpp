@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.40 2001-08-11 23:28:31 geuzaine Exp $
+// $Id: Context.cpp,v 1.41 2001-10-29 08:52:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -9,8 +9,6 @@
 #include "Options.h"
 #include "DefaultOptions.h"
 #include "trackball.c"
-
-extern Context_T  CTX ;
 
 /*
   3 rotations successives autour de x, y et z:
@@ -39,7 +37,7 @@ void Context_T::buildRotmatrix(void)
   double x, y, z;
   extern void set_r(int i, double val);
 
-  if(CTX.useTrackball){
+  if(useTrackball){
     build_rotmatrix(rot, quaternion);
     // get the position angles
     /*

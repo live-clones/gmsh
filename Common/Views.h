@@ -40,6 +40,7 @@ class Post_View{
   int DrawScalars, DrawVectors, DrawTensors;
   int Boundary, PointSize, LineWidth;
   ColorTable CT;
+  int GraphType, GraphPosition[2], GraphSize[2];
 
   // dynamic
   double (*GVFI) (double min, double max, int nb, int index);
@@ -57,16 +58,10 @@ class Post_View{
   void transform(double mat[3][3]);
 };
 
-// The static list with pointers to all views
-
-extern List_T *Post_ViewList;
-
-// Reference view storing default options and the static options
-
-extern Post_View *Post_ViewReference;
-extern int        Post_ViewForceNumber, Post_ViewComputeBBox;
-
-
+// GraphType
+#define DRAW_POST_3D       1
+#define DRAW_POST_2D_SPACE 2
+#define DRAW_POST_2D_TIME  3
 
 // IntervalsType
 #define DRAW_POST_ISO          1

@@ -1,8 +1,11 @@
-// $Id: CutSphere.cpp,v 1.17 2001-08-11 23:25:50 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.18 2001-10-29 08:52:21 geuzaine Exp $
 
 #include <string.h>
 #include "CutSphere.h"
 #include "List.h"
+#include "Context.h"
+
+extern Context_T CTX;
 
 StringXNumber CutSphereOptions_Number[] = {
   { GMSH_FULLRC, "Xc" , NULL , 0. },
@@ -64,8 +67,6 @@ double GMSH_CutSpherePlugin :: levelset (double x, double y, double z, double va
   return (x-a)*(x-a) + (y-b)*(y-b) + (z-c)*(z-c) - r*r;
 }
 
-extern List_T *Post_ViewList;
-
 Post_View *GMSH_CutSpherePlugin::execute (Post_View *v)
 {
   Post_View *vv;
@@ -80,7 +81,7 @@ Post_View *GMSH_CutSpherePlugin::execute (Post_View *v)
     vv = v;
   else{
     if(!v && iView < 0) iView = 0;
-    if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
+    if(!(vv = (Post_View*)List_Pointer_Test(CTX.post.list,iView))){
       Msg(WARNING,"View[%d] does not exist",iView);
       return 0;
     }

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.117 2001-10-10 19:28:09 geuzaine Exp $
+// $Id: GUI.cpp,v 1.118 2001-10-29 08:52:19 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -441,7 +441,7 @@ int GUI::global_shortcuts(int event){
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+'t')){
-    for(i=0 ; i<List_Nbr(Post_ViewList) ; i++){
+    for(i=0 ; i<List_Nbr(CTX.post.list) ; i++){
       if(opt_view_visible(i,GMSH_GET,0)){
 	j = (int)opt_view_intervals_type(i, GMSH_GET, 0);
 	opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 
@@ -455,7 +455,7 @@ int GUI::global_shortcuts(int event){
   }
   else if(Fl::test_shortcut(FL_ALT+'h')){
     static int show = 0;
-    for(i=0 ; i<List_Nbr(Post_ViewList) ; i++)
+    for(i=0 ; i<List_Nbr(CTX.post.list) ; i++)
       opt_view_visible(i, GMSH_SET|GMSH_GUI, show);
     redraw_opengl();
     show = !show;
@@ -726,17 +726,17 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
   
   switch(m_module_butt->value()){
   case 3 : // post-processing contexts
-    for(i = 0 ; i < List_Nbr(Post_ViewList) ; i++) {
+    for(i = 0 ; i < List_Nbr(CTX.post.list) ; i++) {
       if(i == NB_BUTT_MAX) break;
       nb++ ;
-      v = (Post_View*)List_Pointer(Post_ViewList,i);
+      v = (Post_View*)List_Pointer(CTX.post.list,i);
       m_push_butt[i]->hide();
       m_toggle_butt[i]->show();
       m_toggle_butt[i]->value(v->Visible);
       m_toggle_butt[i]->label(v->Name);
       m_popup_butt[i]->show();
     }
-    for(i = List_Nbr(Post_ViewList) ; i < NB_BUTT_MAX ; i++) {
+    for(i = List_Nbr(CTX.post.list) ; i < NB_BUTT_MAX ; i++) {
       m_push_butt[i]->hide();
       m_toggle_butt[i]->hide();
       m_popup_butt[i]->hide();
@@ -1686,11 +1686,11 @@ void GUI::set_statistics(){
                                     stat_value[num]->value(label[num]); num++;
 
   // post
-  p[0] = List_Nbr(Post_ViewList) ;
+  p[0] = List_Nbr(CTX.post.list) ;
   sprintf(label[num], "%g", p[0]); stat_value[num]->value(label[num]); num++;
   p[1] = p[2] = p[3] = p[4] = p[5] = p[6] = p[7] = p[8] = 0 ;
-  for(i=0 ; i<List_Nbr(Post_ViewList) ; i++){
-    Post_View *v = (Post_View*)List_Pointer(Post_ViewList, i);
+  for(i=0 ; i<List_Nbr(CTX.post.list) ; i++){
+    Post_View *v = (Post_View*)List_Pointer(CTX.post.list, i);
     p[1] += v->NbSP + v->NbVP + v->NbTP;
     p[2] += v->NbSL + v->NbVL + v->NbTL;
     p[3] += v->NbST + v->NbVT + v->NbTT;
@@ -2261,7 +2261,7 @@ void GUI::update_view_window(int num){
   double val;
 
   view_number = num ;
-  Post_View *v = (Post_View*)List_Pointer(Post_ViewList, num);
+  Post_View *v = (Post_View*)List_Pointer(CTX.post.list, num);
 
   static char buffer[1024];
   sprintf(buffer, "Options for \"%s\" (\"%s\")", v->Name, v->FileName);

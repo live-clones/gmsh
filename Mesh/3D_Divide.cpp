@@ -1,4 +1,4 @@
-// $Id: 3D_Divide.cpp,v 1.13 2001-09-04 16:25:05 geuzaine Exp $
+// $Id: 3D_Divide.cpp,v 1.14 2001-10-29 08:52:20 geuzaine Exp $
 
 /* Routine de division des elements tetraedriques
    ou triangulaires
@@ -13,8 +13,8 @@
 #include "Numeric.h"
 #include "Mesh.h"
 
+extern Mesh * THEM;
 extern int    edges_tetra[6][2];
-extern int    CurrentNodeNumber; 
 
 static Tree_T *New_Edges = NULL;
 static int    IENT;
@@ -216,7 +216,7 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
     Msg(INFO, "Found steiner prism 1!");
     
     e1 = Create_Vertex 
-      (++CurrentNodeNumber,
+      (++THEM->MaxPointNum,
        (v1->Pos.X + v2->Pos.X + v3->Pos.X + v4->Pos.X + v5->Pos.X + v6->Pos.X) / 6.,
        (v1->Pos.Y + v2->Pos.Y + v3->Pos.Y + v4->Pos.Y + v5->Pos.Y + v6->Pos.Y) / 6.,
        (v1->Pos.Z + v2->Pos.Z + v3->Pos.Z + v4->Pos.Z + v5->Pos.Z + v6->Pos.Z) / 6.,
@@ -249,7 +249,7 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
     Msg(INFO, "Found steiner prism 2!");
 
     e1 = Create_Vertex 
-      (++CurrentNodeNumber,
+      (++THEM->MaxPointNum,
        (v1->Pos.X + v2->Pos.X + v3->Pos.X + v4->Pos.X + v5->Pos.X + v6->Pos.X) / 6.,
        (v1->Pos.Y + v2->Pos.Y + v3->Pos.Y + v4->Pos.Y + v5->Pos.Y + v6->Pos.Y) / 6.,
        (v1->Pos.Z + v2->Pos.Z + v3->Pos.Z + v4->Pos.Z + v5->Pos.Z + v6->Pos.Z) / 6.,

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.29 2001-09-25 08:20:50 geuzaine Exp $
+// $Id: Geom.cpp,v 1.30 2001-10-29 08:52:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -649,9 +649,6 @@ void BeginHighlight(void){
     Highlighted = 1;
     glPushMatrix();
     InitPosition();    
-#ifdef _XMOTIF
-    if(CTX.db) glDrawBuffer(GL_FRONT);
-#endif
   }
 }
 
@@ -663,9 +660,6 @@ void EndHighlight(int permanent){
   else{
     if(CTX.geom.highlight) {
       glPopMatrix();
-#ifdef _XMOTIF
-      if(CTX.db) glDrawBuffer(GL_BACK);
-#endif
     }
   }
 }

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.10 2001-08-11 23:28:31 geuzaine Exp $
+// $Id: Main.cpp,v 1.11 2001-10-29 08:52:19 geuzaine Exp $
 
 #include <signal.h>
 #include "ParUtil.h"
@@ -109,8 +109,8 @@ int main(int argc, char *argv[]){
     for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
     if(TheBgmFileName){
       MergeProblem(TheBgmFileName);
-      if(List_Nbr(Post_ViewList))
-        BGMWithView((Post_View*)List_Pointer(Post_ViewList, List_Nbr(Post_ViewList)-1));
+      if(List_Nbr(CTX.post.list))
+        BGMWithView((Post_View*)List_Pointer(CTX.post.list, List_Nbr(CTX.post.list)-1));
       else
         fprintf(stderr, ERROR_STR "Invalid background mesh (no view)\n"); exit(1);
     }

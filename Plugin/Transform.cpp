@@ -1,9 +1,12 @@
-// $Id: Transform.cpp,v 1.7 2001-08-09 20:53:23 geuzaine Exp $
+// $Id: Transform.cpp,v 1.8 2001-10-29 08:52:21 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Transform.h"
 #include "List.h"
 #include "Views.h"
+#include "Context.h"
+
+extern Context_T CTX;
 
 StringXNumber TransformOptions_Number[] = {
   { GMSH_FULLRC, "A11" , NULL , 1. },
@@ -60,8 +63,6 @@ void GMSH_TransformPlugin::CatchErrorMessage (char *errorMessage) const
   strcpy(errorMessage,"Transform failed...");
 }
 
-extern List_T *Post_ViewList;
-
 Post_View *GMSH_TransformPlugin::execute (Post_View *v)
 {
   Post_View *vv;
@@ -83,7 +84,7 @@ Post_View *GMSH_TransformPlugin::execute (Post_View *v)
     vv = v;
   else{
     if(!v && iView < 0) iView = 0;
-    if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
+    if(!(vv = (Post_View*)List_Pointer_Test(CTX.post.list,iView))){
       Msg(WARNING,"View[%d] does not exist",iView);
       return 0;
     }

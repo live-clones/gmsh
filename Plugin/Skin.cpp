@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.10 2001-10-03 06:59:37 geuzaine Exp $
+// $Id: Skin.cpp,v 1.11 2001-10-29 08:52:21 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Skin.h"
@@ -133,8 +133,6 @@ static void skinSimplex(List_T *Simp, int NbSimp){
   Tree_Delete(Skin);
 }
 
-extern List_T * Post_ViewList;
-
 Post_View *GMSH_SkinPlugin::execute (Post_View *v)
 {
   Post_View *vv, *View;
@@ -145,7 +143,7 @@ Post_View *GMSH_SkinPlugin::execute (Post_View *v)
     vv = v;
   else{
     if(!v && iView < 0) iView = 0;
-    if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
+    if(!(vv = (Post_View*)List_Pointer_Test(CTX.post.list,iView))){
       Msg(WARNING,"View[%d] does not exist",iView);
       return 0;
     }

@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.22 2001-09-26 08:28:12 geuzaine Exp $
+// $Id: Scale.cpp,v 1.23 2001-10-29 08:52:20 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -11,17 +11,7 @@
 
 extern Context_T   CTX;
 
-#if _XMOTIF
-
-#include "XContext.h"
-extern XContext_T  XCTX;
-static int          dir,ascent, descent;
-static XCharStruct  overall;
-#define CHECK_W                                                                         \
-  XTextExtents(XCTX.xfont.helve, label, strlen(label), &dir,&ascent,&descent,&overall); \
-  if(overall.width > cv_w) cv_w=overall.width
-
-#elif _FLTK
+#if _FLTK
 static double overall ; 
 #define CHECK_W  overall=gl_width(label) ; if(overall > cv_w) cv_w=overall
 
@@ -51,8 +41,8 @@ void draw_scale(Post_View *v, double xmin, double ymin, double *width, double he
   char      label[1024] ;
   double    Val, ValMin, ValMax;
 
-  font_h  = CTX.gl_fontheight ;       /* hauteur totale de la fonte */
-  font_a  = CTX.gl_fontascent ;       /* hauteur de la fonte au dessus de pt de ref */
+  font_h  = gl_height() ;             /* hauteur totale de la fonte */
+  font_a  = gl_height()-gl_descent() ;/* hauteur de la fonte au dessus de pt de ref */
   label_h = 1.8*font_h ;              /* hauteur du label */
 
   cs_xmin = xmin ;                    /* colorscale xmin */
@@ -220,7 +210,7 @@ void Draw_Scales(void){
   double      oldwidth, totalwidth;
   Post_View  *v;
 
-  if(!Post_ViewList) return;
+  if(!CTX.post.list) return;
 
   /* scales to draw ? */
   
@@ -229,9 +219,9 @@ void Draw_Scales(void){
   else
     List_Reset(todraw);
 
-  for(i=0;i<List_Nbr(Post_ViewList);i++){
-    v = (Post_View*)List_Pointer(Post_ViewList,i);
-    if(v->Visible && v->ShowScale) List_Add(todraw,&v);
+  for(i=0;i<List_Nbr(CTX.post.list);i++){
+    v = (Post_View*)List_Pointer(CTX.post.list,i);
+    if(v->Visible && v->ShowScale && v->GraphType==DRAW_POST_3D) List_Add(todraw,&v);
   }
   
   if(!List_Nbr(todraw)){

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.25 2001-08-20 08:25:23 geuzaine Exp $
+# $Id: Makefile,v 1.26 2001-10-29 08:52:19 geuzaine Exp $
 #
 # Makefile for "libGeo.a"
 #
@@ -12,7 +12,7 @@ RM      = rm
 
 LIB       = ../lib/libGeo.a
 INCLUDE   = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Parser\
-            -I../Motif -I../Fltk
+            -I../Fltk
 
 OPT_FLAGS     = -g -Wall
 OS_FLAGS      = 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.31 2001-08-20 08:25:24 geuzaine Exp $
+# $Id: Makefile,v 1.32 2001-10-29 08:52:21 geuzaine Exp $
 #
 # Makefile for "libParser.a"
 #
@@ -14,15 +14,15 @@ LEX      = flex
 
 LIB      = ../lib/libParser.a
 INCLUDE  = -I../includes -I../Common -I../DataStr -I../Geo -I../Graphics\
-           -I../Mesh -I../Motif -I../Fltk -I../Plugin -I../Parallel
+           -I../Mesh -I../Fltk -I../Plugin -I../Parallel
 
 OPT_FLAGS     = -g -Wall
 OS_FLAGS      = -D_LITTLE_ENDIAN
-VERSION_FLAGS = -D_XMOTIF
+VERSION_FLAGS = 
 
 GL_INCLUDE    = -I$(HOME)/SOURCES/Mesa-3.1/include\
                 -I$(HOME)/SOURCES/Mesa-3.1/include/GL
-GUI_INCLUDE   = -I/usr/X11R6/LessTif/Motif1.2/include
+GUI_INCLUDE   = 
 
 RMFLAGS  = -f
 CFLAGS   = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
@@ -86,6 +86,5 @@ OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
  ../Common/Views.h ../Common/ColorTable.h ../Geo/MinMax.h \
- ../Geo/Visibility.h ../Common/GmshUI.h ../Graphics/Draw.h \
- ../Motif/Widgets.h
+ ../Geo/Visibility.h ../Common/GmshUI.h ../Graphics/Draw.h
 FunctionManager.o: FunctionManager.cpp FunctionManager.h

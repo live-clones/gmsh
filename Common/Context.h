@@ -1,6 +1,8 @@
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
+#include "List.h"
+
 // How RGBA values are packed and unpacked into/from a 4-byte integer 
 
 #  ifdef _LITTLE_ENDIAN
@@ -17,7 +19,7 @@
 #    define UNPACK_ALPHA(X)       ( (X) & 0xff )
 #  endif
 
-// Interface-independant context 
+// Interface-independent context 
 
 class Context_T {
 
@@ -76,22 +78,13 @@ public :
   int command_win;            // command window? 
   int display_lists;          // use display lists? 
   int axes, small_axes;       // draw axes? 
+  int small_axes_pos[2];      // small axes position 
   int threads, threads_lock;  // threads?, lock (should be a mutex...) 
   int alpha;                  // enable alpha blending 
-  int flash;                  // authorize colormap flashing (beek) 
-  int same_visual;            // force same visual for GUI and Graphics 
   double zoom_factor;         // mouse2 zoom coefficient
-
-  //only used for Motif
-  int font_base;              // display list index for the font 
-  char *font;                 // main font
-  char *fixed_font;           // font for colorbar 
-  //end(only used for Motif)
 
   int fontsize;               // font size for fltk UI
   int gl_fontsize;            // font size for opengl graphics
-  int gl_fontheight;          // font height
-  int gl_fontascent;          // height of the font above the reference point
 
   int viewport[4];            // current viewport 
   double vxmin, vxmax, vymin, vymax; // current viewport in real coordinates 
@@ -115,7 +108,7 @@ public :
     int point_sel_size, line_sel_width;
     int hidden, shade;
     int highlight;
-    int level, old_circle;
+    int level, old_circle, old_newreg;
     double normals, tangents;
     double scaling_factor;
     int color_scheme ;
@@ -154,9 +147,10 @@ public :
 
   // post processing options 
   struct{
+    List_T *list ;
+    int force_num, compute_bb;
     int draw, scales, link ;
     int smooth ;
-    int nb_views ;
     double anim_delay ;
   }post;
 

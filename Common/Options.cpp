@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.49 2001-10-05 15:25:35 geuzaine Exp $
+// $Id: Options.cpp,v 1.50 2001-10-29 08:52:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -15,6 +15,8 @@ extern Context_T   CTX ;
 #include "GUI.h"
 extern GUI        *WID ;
 #endif
+
+extern Post_View  *Post_ViewReference;
 
 // ************** General routines ****************************************
 
@@ -77,8 +79,6 @@ void Init_Options(int num){
   CTX.output_filename = NULL ;
   CTX.expose = 0 ;
   CTX.stream = TO_SCREEN ;
-  CTX.gl_fontheight = 12;
-  CTX.gl_fontascent = 8;
   CTX.lc = 1.0 ;
   CTX.viewport[0] = CTX.viewport[1] = 0 ;
   CTX.min[0] = CTX.min[1] = CTX.min[2] = 0.0 ;
@@ -92,17 +92,12 @@ void Init_Options(int num){
   CTX.mesh.vis_type = 0 ;
   CTX.mesh.draw = 1 ;  
   CTX.post.draw = 1 ;
+  CTX.post.list = NULL ;
+  CTX.post.force_num = 0 ;
   CTX.threads_lock = 0 ; //very primitive locking during mesh generation
   CTX.mesh.histogram = 0 ;
   CTX.mesh.oldxtrude = CTX.mesh.oldxtrude_recombine = 0; //old extrusion mesh generator
   CTX.mesh.check_duplicates = 0; //check for duplicate nodes in Read_Mesh
-
-  // For motif versions only:
-  CTX.overlay = 1 ;
-  CTX.command_win = 0 ;
-  CTX.threads = 1 ;
-  CTX.font = "-*-helvetica-medium-r-*-*-*-*-*-*-*-*-*-*" ;
-  CTX.fixed_font = "fixed" ;
 }
 
 void Init_Options_GUI(int num){
@@ -204,7 +199,7 @@ void Print_Options(int num, int level, char *filename){
   Print_ColorOptions(num, level, PostProcessingOptions_Color, "PostProcessing.", file);
   Print_OptionCategory(level, "View options", file);
   if(level & GMSH_FULLRC){
-    for(i=0; i<List_Nbr(Post_ViewList) ; i++){
+    for(i=0; i<List_Nbr(CTX.post.list) ; i++){
       sprintf(tmp, "View[%d].", i);
       Print_StringOptions(i, level, ViewOptions_String, tmp, file);
       Print_NumberOptions(i, level, ViewOptions_Number, tmp, file);
@@ -427,10 +422,10 @@ int Get_ColorForString(StringX4Int SX4I[], int alpha,
 
 #define GET_VIEW(error_val)						\
   Post_View *v;								\
-  if(!Post_ViewList)							\
+  if(!CTX.post.list)							\
     v = Post_ViewReference ;						\
   else{									\
-    if(!(v = (Post_View*)List_Pointer_Test(Post_ViewList, num))){	\
+    if(!(v = (Post_View*)List_Pointer_Test(CTX.post.list, num))){	\
       Msg(WARNING, "View[%d] does not exist", num) ;			\
       return (error_val) ;						\
     }									\
@@ -739,13 +734,23 @@ double opt_general_small_axes(OPT_ARGS_NUM){
 #endif
   return CTX.small_axes;
 }
+double opt_general_small_axes_position0(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.small_axes_pos[0] = (int)val;
+  return CTX.small_axes_pos[0];
+}
+double opt_general_small_axes_position1(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.small_axes_pos[1] = (int)val;
+  return CTX.small_axes_pos[1];
+}
 double opt_general_display_lists(OPT_ARGS_NUM){
   int i;
   if(action & GMSH_SET){
     CTX.display_lists = (int)val;
     if(CTX.display_lists)
-      for(i=0 ; i<List_Nbr(Post_ViewList) ; i++)
-	((Post_View*)List_Pointer_Test(Post_ViewList, i))->Changed = 1;
+      for(i=0 ; i<List_Nbr(CTX.post.list) ; i++)
+	((Post_View*)List_Pointer_Test(CTX.post.list, i))->Changed = 1;
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
@@ -1194,6 +1199,11 @@ double opt_geometry_old_circle(OPT_ARGS_NUM){
     CTX.geom.old_circle = (int)val;
   return CTX.geom.old_circle;
 }
+double opt_geometry_old_newreg(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.geom.old_newreg = (int)val;
+  return CTX.geom.old_newreg;
+}
 double opt_geometry_scaling_factor(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.geom.scaling_factor = (int)val;
@@ -1600,9 +1610,7 @@ double opt_post_anim_delay(OPT_ARGS_NUM){
   return CTX.post.anim_delay;
 }
 double opt_post_nb_views(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
-    CTX.post.nb_views = (int)val;
-  return CTX.post.nb_views;
+  return List_Nbr(CTX.post.list);
 }
 
 
@@ -1815,6 +1823,51 @@ double opt_view_saturate_values(OPT_ARGS_NUM){
   }
 #endif
   return v->SaturateValues;
+}
+
+double opt_view_graph_type(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->GraphType = (int)val;
+    v->Changed = 1;
+  }
+  return v->GraphType;
+}
+
+double opt_view_graph_position0(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->GraphPosition[0] = (int)val;
+    v->Changed = 1;
+  }
+  return v->GraphPosition[0];
+}
+
+double opt_view_graph_position1(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->GraphPosition[1] = (int)val;
+    v->Changed = 1;
+  }
+  return v->GraphPosition[1];
+}
+
+double opt_view_graph_size0(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->GraphSize[0] = (int)val;
+    v->Changed = 1;
+  }
+  return v->GraphSize[0];
+}
+
+double opt_view_graph_size1(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->GraphSize[1] = (int)val;
+    v->Changed = 1;
+  }
+  return v->GraphSize[1];
 }
 
 double opt_view_nb_iso(OPT_ARGS_NUM){

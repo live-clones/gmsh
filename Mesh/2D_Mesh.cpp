@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.36 2001-10-03 06:59:37 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.37 2001-10-29 08:52:20 geuzaine Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -27,7 +27,6 @@
 
 extern Mesh       *THEM;
 extern Context_T   CTX;
-extern int         CurrentNodeNumber;
 
 PointRecord   *gPointArray;
 DocRecord     *BGMESH, *FGMESH;
@@ -715,7 +714,7 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
 
   for (i = 0; i < M.numpoints; i++){
     if (gPointArray[i].initial < 0){
-      gPointArray[i].initial = ++CurrentNodeNumber;
+      gPointArray[i].initial = ++THEM->MaxPointNum;
       v = Create_Vertex (gPointArray[i].initial, gPointArray[i].where.h,
                          gPointArray[i].where.v, 0.0, gPointArray[i].quality, 0.0);
       if (!Tree_Search (pS->Vertices, &v))

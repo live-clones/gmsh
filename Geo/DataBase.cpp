@@ -1,4 +1,4 @@
-// $Id: DataBase.cpp,v 1.16 2001-08-11 23:28:31 geuzaine Exp $
+// $Id: DataBase.cpp,v 1.17 2001-10-29 08:52:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -9,16 +9,13 @@
 #include "Verif.h"
 #include "Context.h"
 
-
 extern Context_T  CTX ;
-extern int        CurrentNodeNumber;
 extern Mesh      *THEM;
 
 /* POINTS */
 
 void Cdbpts101(int ip, double x, double y, double z, double l, double w){
   Vertex *v;
-  CurrentNodeNumber = IMAX(CurrentNodeNumber, ip);
   v = Create_Vertex(ip,
 		    CTX.geom.scaling_factor*x,
 		    CTX.geom.scaling_factor*y,
@@ -327,7 +324,6 @@ void Cdbz101(int izon, int typzon,int o1, int o2, int nbu, int nbv,
     }
     printf("}\n");
     */
-
     Add_EdgeLoop(izon,templist,THEM);
   }
   else  if(typzon == MSH_VOLUME){

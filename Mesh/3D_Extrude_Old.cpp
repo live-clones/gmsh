@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.13 2001-08-14 16:10:47 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.14 2001-10-29 08:52:20 geuzaine Exp $
 
 // This is the old extrusion mesh generator -> only available through
 // the command line option -extrude (w/o -recombine). This mesh
@@ -38,7 +38,6 @@
 
 extern Context_T CTX ;
 extern Mesh   *LOCAL, *THEM;
-extern int     CurrentNodeNumber; 
 
 static Tree_T *Tree_Ares, *Tree_Swaps;
 
@@ -392,7 +391,7 @@ static void Extrude_Vertex (void *data , void *dum){
       
       h += a*pow(parLayer[i],j);
 
-      newv = Create_Vertex(++CurrentNodeNumber,v->Pos.X,v->Pos.Y,v->Pos.Z + h, v->lc , v->u );
+      newv = Create_Vertex(++THEM->MaxPointNum,v->Pos.X,v->Pos.Y,v->Pos.Z + h, v->lc , v->u );
       Tree_Add(THEM->Vertices,&newv);
       List_Add(v->Extruded_Points,&newv);
     }

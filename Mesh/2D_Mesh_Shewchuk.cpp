@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Shewchuk.cpp,v 1.6 2001-09-04 16:25:05 geuzaine Exp $
+// $Id: 2D_Mesh_Shewchuk.cpp,v 1.7 2001-10-29 08:52:20 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -12,8 +12,8 @@ extern "C" {
 #include "triangle.h"
 }
 
-extern int         CurrentNodeNumber;
 extern Context_T   CTX;
+extern Mesh * THEM;
 
 void AddInMesh(Surface *sur, int nbbound, Vertex **vertexbound,
 	       struct triangulateio *out){
@@ -29,7 +29,7 @@ void AddInMesh(Surface *sur, int nbbound, Vertex **vertexbound,
   Free(vertexbound);
   
   for (i = nbbound; i < out->numberofpoints; i++) {
-    vtable[i] = Create_Vertex (++CurrentNodeNumber, 
+    vtable[i] = Create_Vertex (++(THEM->MaxPointNum), 
 			       out->pointlist[i * 2], out->pointlist[i * 2 + 1], 0.0, 
 			       out->pointattributelist[i], 0.0);
     Tree_Add (sur->Vertices, &vtable[i]);

@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.22 2001-10-09 14:41:06 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.23 2001-10-29 08:52:20 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -10,7 +10,6 @@
 
 extern Mesh      *THEM;
 extern Context_T  CTX;
-extern int        CurrentNodeNumber;
 
 Curve *THEC;
 
@@ -179,8 +178,7 @@ void Maillage_Curve (void *data, void *dummy){
         dp = P2.p - P1.p;
         t = P1.t + dt / dp * (d - P1.p);
         V = InterpolateCurve (c, t, 0);
-        pV = Create_Vertex (++CurrentNodeNumber, 
-                            V.Pos.X, V.Pos.Y, V.Pos.Z, V.lc, t);
+        pV = Create_Vertex (++THEM->MaxPointNum, V.Pos.X, V.Pos.Y, V.Pos.Z, V.lc, t);
         pV->w = V.w;
         pV->ListCurves = List_Create (1, 1, sizeof (Curve *));
         List_Add (pV->ListCurves, &c);

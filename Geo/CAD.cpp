@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.32 2001-10-05 15:25:35 geuzaine Exp $
+// $Id: CAD.cpp,v 1.33 2001-10-29 08:52:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -13,10 +13,67 @@
                                     
 extern Mesh      *THEM;
 extern Context_T  CTX;
-extern int        CurrentNodeNumber;
 
-static int      MAXREG,MAXPOINT;
 static List_T  *ListOfTransformedPoints=NULL;
+
+
+int NEWPOINT(void){
+  return (THEM->MaxPointNum + 1);
+}
+
+int NEWLINE(void){
+  if(CTX.geom.old_newreg)
+    return NEWREG();
+  else
+    return (THEM->MaxLineNum + 1);
+}
+
+int NEWLINELOOP(void){
+  if(CTX.geom.old_newreg)
+    return NEWREG();
+  else
+    return (THEM->MaxLineLoopNum + 1);
+}
+
+int NEWSURFACE(void){
+  if(CTX.geom.old_newreg)
+    return NEWREG();
+  else
+    return (THEM->MaxSurfaceNum + 1);
+}
+
+int NEWSURFACELOOP(void){
+  if(CTX.geom.old_newreg)
+    return NEWREG();
+  else
+    return (THEM->MaxSurfaceLoopNum + 1);
+}
+
+int NEWVOLUME(void){
+  if(CTX.geom.old_newreg)
+    return NEWREG();
+  else
+    return (THEM->MaxVolumeNum + 1);
+}
+
+int NEWPHYSICAL(void){
+  if(CTX.geom.old_newreg)
+    return NEWREG();
+  else
+    return (THEM->MaxPhysicalNum + 1);
+}
+
+int NEWREG(void){
+  return (IMAX(THEM->MaxLineNum,
+	       IMAX(THEM->MaxLineLoopNum,
+		    IMAX(THEM->MaxSurfaceNum,
+			 IMAX(THEM->MaxSurfaceLoopNum,
+			      IMAX(THEM->MaxVolumeNum, THEM->MaxPhysicalNum)))))
+	  + 1);
+}
+
+
+
 
 int compare2Lists (List_T *List1, List_T *List2,
                    int (*fcmp)(const void *a, const void *b)){
@@ -45,31 +102,6 @@ int compare2Lists (List_T *List1, List_T *List2,
   return 0;
 }
 
-void MaxNumCurve(void *a, void *b){
-  Curve *c = *(Curve**)a;
-  MAXREG = (c->Num>MAXREG)?c->Num:MAXREG;
-}
-
-void MaxNumSurface(void *a, void *b){
-  Surface *s = *(Surface**)a;
-  MAXREG = (s->Num>MAXREG)?s->Num:MAXREG;
-}
-
-void MaxNumEdgeLoop(void *a, void *b){
-  EdgeLoop *s = *(EdgeLoop**)a;
-  MAXREG = (s->Num>MAXREG)?s->Num:MAXREG;
-}
-
-void MaxNumSurfaceLoop(void *a, void *b){
-  SurfaceLoop *s = *(SurfaceLoop**)a;
-  MAXREG = (s->Num>MAXREG)?s->Num:MAXREG;
-}
-
-void MaxNumPoint(void *a, void *b){
-  Vertex *v = *(Vertex**)a;
-  MAXPOINT = (v->Num>MAXPOINT)?v->Num:MAXPOINT;
-}
-
 void dist_ddg(double x1,double y1,double z1,
               double x2,double y2,double z2,
               double x3,double y3,double z3,
@@ -94,26 +126,6 @@ void dist_ddg(double x1,double y1,double z1,
   *z = d* z4 + z3 * (1.-d);
 }
 
-
-int NEWREG(void){
-  MAXREG = 0;
-  PhysicalGroup *p;
-  Tree_Action(THEM->Curves,MaxNumCurve);
-  Tree_Action(THEM->Surfaces,MaxNumSurface);
-  Tree_Action(THEM->EdgeLoops,MaxNumEdgeLoop);
-  Tree_Action(THEM->SurfaceLoops,MaxNumSurfaceLoop);
-  for(int i=0;i<List_Nbr(THEM->PhysicalGroups);i++){
-    List_Read( THEM->PhysicalGroups , i, &p);
-    MAXREG = IMAX(MAXREG,p->Num);
-  }
-  return MAXREG+1;
-}
-
-int NEWPOINT(void){
-  MAXPOINT = 0;
-  Tree_Action(THEM->Points,MaxNumPoint);
-  return MAXPOINT+1;
-}
 
 Vertex *FindPoint(int inum, Mesh *M){
   Vertex  C,*pc;
@@ -493,10 +505,8 @@ void CopyVertex (Vertex *v, Vertex *vv){
 
 Vertex *DuplicateVertex (Vertex *v){
   Vertex *pv;
-  pv = Create_Vertex(MAXPOINT++,0,0,0,0,0);
-  
+  pv = Create_Vertex(NEWPOINT(),0,0,0,0,0);
   CopyVertex (v,pv);
-  CurrentNodeNumber = (CurrentNodeNumber>pv->Num)?CurrentNodeNumber:pv->Num;
   Tree_Insert(THEM->Points,&pv);
   return pv;
 }
@@ -525,7 +535,7 @@ void CopyCurve (Curve *c, Curve *cc){
 Curve *DuplicateCurve (Curve *c){
   Curve *pc;
   Vertex *v,*newv;
-  pc = Create_Curve(MAXREG++,0,1,NULL,NULL,-1,-1,0.,1.);
+  pc = Create_Curve(NEWLINE(),0,1,NULL,NULL,-1,-1,0.,1.);
   CopyCurve(c,pc);
   for(int i=0;i<List_Nbr(c->Control_Points);i++){
     List_Read(pc->Control_Points,i,&v);
@@ -565,13 +575,13 @@ void CopySurface (Surface *s, Surface *ss){
   Tree_Insert(THEM->Surfaces,&ss);
 }
 
-Surface *DuplicateSurface (Surface *s, int addthesurf){
+Surface *DuplicateSurface (Surface *s){
   Surface *ps;
   Curve *c,*newc;
   Vertex *v,*newv;
   int i;
 
-  ps = Create_Surface(addthesurf?MAXREG++:-MAXREG,0,0);
+  ps = Create_Surface(NEWSURFACE(),0,0);
   CopySurface(s,ps);
   for(i=0;i<List_Nbr(ps->Generatrices);i++){
     List_Read(ps->Generatrices,i,&c);
@@ -731,61 +741,6 @@ void SetRotationMatrix( double matrix[4][4],double Axe[3], double alpha){
   matrix[3][3] = 1.0;
 }
 
-void SetRotationMatrixs(double matrix[4][4],double Axe[3], double alpha){
-  double phi,C,S,C2,S2;
-  double teta;
-  double a,b,c,d,e,f,g,h,ii;
-  double Ax=Axe[0],Ay=Axe[1],Az=Axe[2];
-  if(Ax != 0.0){
-    phi = atan2(Ay,Ax);
-    teta = atan2(Az,myhypot(Ax,Ay));
-    C = cos(phi);
-    S = sin(phi);
-    C2= cos(teta);
-    S2= sin(teta);
-  }
-  else if(Ay != 0.0){
-    teta = atan2(Az,myhypot(Ax,Ay));
-    C = 0.0;
-    S = 1.0;
-    C2= cos(teta);
-    S2= sin(teta);
-  }
-  else{
-    C = 1.0;
-    S = 0.0;
-    C2= 0.0;
-    S2= 1.0;
-  }
-
-  a = C2*C;
-  b = -C2*S;
-  c = S2;
-  d = cos(alpha)*S + sin(alpha)*S2*C;
-  e = cos(alpha)*C - sin(alpha)*S*S2;
-  f = -sin(alpha)*C2;
-  g = sin(alpha)*S - cos(alpha)*S2*C;
-  h = sin(alpha)*C + cos(alpha)*S*S2;
-  ii=cos(alpha)*C2;
-
-  matrix[0][0] = a*a + S*d -C*S2*g;
-  matrix[0][1] = a*b+S*e-C*S2*h;
-  matrix[0][2] = a*c+S*f-C*S2*ii;
-  matrix[0][3] = 0.0;
-  matrix[1][0] = -S*C2*a+C*d+S*S2*g;
-  matrix[1][1] = -S*C2*b+C*e+S*S2*h;
-  matrix[1][2] = -S*C2*c+C*f+S*S2*ii;
-  matrix[1][3] = 0.0;
-  matrix[2][0] = S2*a+C2*g;
-  matrix[2][1] = S2*b+C2*h;
-  matrix[2][2] = S2*c+C2*ii;
-  matrix[2][3] = 0.0;
-  matrix[3][0] = 0.;
-  matrix[3][1] = 0.;
-  matrix[3][2] = 0.;
-  matrix[3][3] = 1.0;
-}
-
 void ApplyTransformationToCurve (double matrix[4][4],Curve *c){
   Vertex *v;
   
@@ -809,18 +764,6 @@ void printCurve(Curve *c){
   }
 }
 
-void printSurface(Surface*s){
-  Curve *c;
-  int N = List_Nbr(s->Generatrices);
-
-  Msg(DEBUG,"Surface %d, %d generatrices",s->Num,N);
-  for(int i=0;i<N;i++){
-    List_Read(s->Generatrices,i,&c);
-    printCurve(c);
-  }
-}
-
-
 void ApplyTransformationToSurface (double matrix[4][4],Surface *s){
   Curve *c;
   Vertex *v;
@@ -837,6 +780,16 @@ void ApplyTransformationToSurface (double matrix[4][4],Surface *s){
   End_Surface(s);
 }
 
+void printSurface(Surface*s){
+  Curve *c;
+  int N = List_Nbr(s->Generatrices);
+
+  Msg(DEBUG,"Surface %d, %d generatrices",s->Num,N);
+  for(int i=0;i<N;i++){
+    List_Read(s->Generatrices,i,&c);
+    printCurve(c);
+  }
+}
 
 void ProtudeXYZ ( double &x, double &y, double &z, ExtrudeParams *e){
   double matrix[4][4];
@@ -867,9 +820,6 @@ void Extrude_ProtudePoint(int ep, int ip, double A, double B, double C,
   double xnew,ynew,znew,matrix[4][4],T[3],Ax[3];
   Vertex V,*pv, *chapeau;
   Curve *c;
-  
-  MAXREG = NEWREG();
-  MAXPOINT = NEWPOINT();
   
   pv= &V;
   pv->Num = ip;
@@ -905,7 +855,7 @@ void Extrude_ProtudePoint(int ep, int ip, double A, double B, double C,
 
   if(!comparePosition(&pv,&chapeau)) return ;
 
-  c = Create_Curve(MAXREG++,(ep)?MSH_SEGM_LINE:MSH_SEGM_CIRC,1,NULL,NULL,-1,-1,0.,1.);
+  c = Create_Curve(NEWLINE(),(ep)?MSH_SEGM_LINE:MSH_SEGM_CIRC,1,NULL,NULL,-1,-1,0.,1.);
   c->Control_Points = List_Create((ep)?2:3,1,sizeof(Vertex*));
 
   // je me souviens
@@ -953,9 +903,6 @@ Surface *Extrude_ProtudeCurve(int ep, int ic,
   Curve *pc, *revpc, *chapeau;
   Surface *s;
   
-  MAXREG = NEWREG();
-  MAXPOINT = NEWPOINT();
-  
   pc    = FindCurve(ic,THEM);
   revpc = FindCurve(-ic,THEM);
   
@@ -1000,9 +947,9 @@ Surface *Extrude_ProtudeCurve(int ep, int ic,
   if(!CurveBeg && !CurveEnd) return NULL;
 
   if(!CurveBeg || !CurveEnd)
-    s = Create_Surface(MAXREG++,MSH_SURF_TRIC,0);
+    s = Create_Surface(NEWSURFACE(),MSH_SURF_TRIC,0);
   else
-    s = Create_Surface(MAXREG++,MSH_SURF_REGL,0);
+    s = Create_Surface(NEWSURFACE(),MSH_SURF_REGL,0);
 
   s->Generatrices = List_Create(4,1,sizeof(Curve*));
   
@@ -1051,20 +998,8 @@ void Extrude_ProtudeSurface(int ep, int is,
   if(!(ps = FindSurface(is,THEM)) )return;
 
   Msg(DEBUG, "Extrude Surface %d", is);
-  
-  if(NewVolume){
-    pv = Create_Volume(NewVolume,0,0);
-    pv->Extrude = new ExtrudeParams;
-    pv->Extrude->fill(ep,A,B,C,X,Y,Z,alpha);
-    pv->Extrude->geo.Source = is;
-    if(e)pv->Extrude->mesh = e->mesh;
-    if(pv)List_Add(pv->Surfaces,&ps);
-  }
-  
-  MAXREG = NEWREG();
-  MAXPOINT = NEWPOINT();
-  
-  chapeau = DuplicateSurface(ps,1);
+
+  chapeau = DuplicateSurface(ps);
   chapeau->Extrude = new ExtrudeParams(COPIED_ENTITY);
   chapeau->Extrude->fill(ep,A,B,C,X,Y,Z,alpha);
   chapeau->Extrude->geo.Source = ps->Num;
@@ -1085,6 +1020,17 @@ void Extrude_ProtudeSurface(int ep, int is,
     if(e)c->Extrude->mesh = e->mesh;
   }
   
+  if(NewVolume){
+    pv = Create_Volume(NewVolume,0,0);
+    //if(CTX.geom.old_newreg){//dirty compatibility trick...
+      //THEM->MaxVolumeNum--;
+    //}
+    pv->Extrude = new ExtrudeParams;
+    pv->Extrude->fill(ep,A,B,C,X,Y,Z,alpha);
+    pv->Extrude->geo.Source = is;
+    if(e)pv->Extrude->mesh = e->mesh;
+    if(pv)List_Add(pv->Surfaces,&ps);
+  }
   if(pv)List_Add(pv->Surfaces,&chapeau);
 
   // filling extrude params
@@ -1118,19 +1064,22 @@ void Extrude_ProtudeSurface(int ep, int is,
     List_Reset(ListOfTransformedPoints);
   }
   Tree_Suppress(THEM->Surfaces,&chapeau);
-  chapeau->Num = NEWREG();
+
+  chapeau->Num = NEWSURFACE();
+  THEM->MaxSurfaceNum = chapeau->Num;
+
   Tree_Add(THEM->Surfaces,&chapeau);
   
   if(pv)Tree_Add(THEM->Volumes,&pv);
   
   if(CTX.geom.auto_coherence) ReplaceAllDuplicates ( THEM );
   List_Reset(ListOfTransformedPoints);
-  
+
 }
 
 void DivideCurve (Curve *c , double u, Vertex *v, Curve **c1, Curve **c2){
-  (*c1) = Create_Curve(MAXREG++,c->Typ,1,NULL,NULL,-1,-1,0.,1.);
-  (*c2) = Create_Curve(MAXREG++,c->Typ,1,NULL,NULL,-1,-1,0.,1.);
+  (*c1) = Create_Curve(NEWLINE(),c->Typ,1,NULL,NULL,-1,-1,0.,1.);
+  (*c2) = Create_Curve(NEWLINE(),c->Typ,1,NULL,NULL,-1,-1,0.,1.);
   CopyCurve(c,*c1);
   CopyCurve(c,*c2);
   (*c1)->uend = u;
@@ -1144,7 +1093,6 @@ bool IntersectCurves (Curve *c1, Curve *c2,
                       Curve **c21, Curve **c22, Vertex **v){
   float x[3];
   Vertex v1,v2;
-  Vertex V,*pv;
   int check;
   
   if(!compareVertex(&c1->beg,&c2->beg))return false;
@@ -1164,10 +1112,8 @@ bool IntersectCurves (Curve *c1, Curve *c2,
   if(x[2] <= c2->ubeg)return false;
   if(x[2] >= c2->uend)return false;
   if(fabs(v1.Pos.Z - v2.Pos.Z) > 1.e-06 * CTX.lc)return false;
-  pv = &V;
-  pv->Num = MAXPOINT++;
-  Cdbpts101(pv->Num,v1.Pos.X,v1.Pos.Y,v1.Pos.Z,v1.lc,x[1]);
-  v = (Vertex**)Tree_PQuery(THEM->Points,&pv);
+  *v = Create_Vertex(NEWPOINT(), v1.Pos.X,v1.Pos.Y,v1.Pos.Z,v1.lc,x[1]);
+  Tree_Insert(THEM->Points,v);
   DivideCurve(c1,x[1],*v,c11,c12);
   DivideCurve(c2,x[2],*v,c21,c22);
   return true;
@@ -1371,7 +1317,6 @@ void ReplaceAllDuplicates ( Mesh *m ){
       List_Write(s->Generatrices,j,
                  Tree_PQuery( allNonDulpicatedCurves,
                               List_Pointer(s->Generatrices,j)));
-
       // Arghhh. Revoir compareTwoCurves !
       End_Curve(*(Curve**)List_Pointer(s->Generatrices,j));
     }
@@ -1525,9 +1470,6 @@ void CopyShape(int Type, int Num, int *New){
   Curve *c, *newc;
   Vertex *v,*newv;
   
-  MAXREG = NEWREG();
-  MAXPOINT = NEWPOINT();
-
   switch(Type){
   case MSH_POINT:
     if(!(v = FindPoint(Num,THEM))){
@@ -1559,7 +1501,7 @@ void CopyShape(int Type, int Num, int *New){
       Msg(GERROR, "Unknown Surface %d", Num);
       return;
     }
-    news = DuplicateSurface(s,1);
+    news = DuplicateSurface(s);
     *New = news->Num;
     break;
   default:

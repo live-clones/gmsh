@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.7 2001-05-21 13:01:13 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.8 2001-10-29 08:52:19 geuzaine Exp $
 
 #include "Gmsh.h"
 
@@ -69,10 +69,10 @@ int GetDP(char *args){
       break ;
     case GETDP_LOAD_VIEW :
       if(GetDP_Info.mergeviews){
-	n = List_Nbr(Post_ViewList);
+	n = List_Nbr(CTX.post.list);
 	MergeProblem(str);
 	Draw(); 
-	if(n != List_Nbr(Post_ViewList))
+	if(n != List_Nbr(CTX.post.list))
 	  WID->set_context(menu_post, 0);
       }
       break ;

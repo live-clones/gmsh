@@ -1,4 +1,4 @@
-// $Id: Axes.cpp,v 1.7 2001-09-25 10:12:26 geuzaine Exp $
+// $Id: Axes.cpp,v 1.8 2001-10-29 08:52:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -101,8 +101,16 @@ void Draw_SmallAxes(void){
 
   l  = 30  ;
   o  = 2  ;
-  cx = CTX.viewport[2] - 45;
-  cy = CTX.viewport[1] + 35;
+
+  if(CTX.small_axes_pos[0]>0)
+    cx = CTX.viewport[0] + CTX.small_axes_pos[0];
+  else
+    cx = CTX.viewport[2] + CTX.small_axes_pos[0];
+
+  if(CTX.small_axes_pos[1]>0)
+    cy = CTX.viewport[3] - CTX.small_axes_pos[1];    
+  else
+    cy = CTX.viewport[1] - CTX.small_axes_pos[1];    
 
   xx = l*CTX.rot[0][0] ; xy = l*CTX.rot[0][1] ;
   yx = l*CTX.rot[1][0] ; yy = l*CTX.rot[1][1] ;

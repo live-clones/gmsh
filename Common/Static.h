@@ -7,8 +7,6 @@
 char        yyname[256];
 int         yyerrorstate;
 
-int         CurrentNodeNumber, CurrentSimplexNumber;
-
 Context_T   CTX ;
 Mesh        M, *THEM, *LOCAL;
 

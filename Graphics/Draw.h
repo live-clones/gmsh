@@ -49,6 +49,7 @@ void Draw_String(char *s);
 void Draw_Geom (Mesh *m);
 void Draw_Mesh(Mesh *M);
 void Draw_Post(void);
+void Draw_Graph2D(void);
 void Draw_Scales(void);
 void Draw_Axes (double s);
 void Draw_SmallAxes(void);

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.31 2001-08-20 08:25:23 geuzaine Exp $
+# $Id: Makefile,v 1.32 2001-10-29 08:52:20 geuzaine Exp $
 #
 # Makefile for "libMesh.a"
 #
@@ -12,7 +12,7 @@ RANLIB  = ranlib
 
 LIB     = ../lib/libMesh.a
 INCLUDE = -I../Adapt -I../Common -I../DataStr -I../Geo -I../Mesh\
-          -I../Graphics -I../Motif -I../Parser -I../Fltk -I../Triangle
+          -I../Graphics -I../Parser -I../Fltk -I../Triangle
 
 OPT_FLAGS     = -g -Wall
 OS_FLAGS      = -D_LITTLE_ENDIAN

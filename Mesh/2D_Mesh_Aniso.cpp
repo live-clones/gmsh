@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.21 2001-08-28 22:15:15 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.22 2001-10-29 08:52:20 geuzaine Exp $
 
 /*
    Jean-Francois Remacle
@@ -33,7 +33,6 @@ MeshParameters:: MeshParameters ():
 
 extern Simplex MyNewBoundary;
 extern Mesh *THEM;
-extern int CurrentNodeNumber;
 extern double MAXIMUM_LC_FOR_SURFACE;
 extern int Alerte_Point_Scabreux;
 extern PointRecord *gPointArray;
@@ -212,7 +211,7 @@ void Box_2_Triangles (List_T * P, Surface * s){
     
     V[i].Freeze.Z = V[i].Pos.Z = 0.0;
     
-    V[i].Num = -(++CurrentNodeNumber);
+    V[i].Num = -(++THEM->MaxPointNum);
     V[i].ListSurf = NULL;
     pv = &V[i];
     pv->lc = 1.0;
@@ -867,14 +866,14 @@ Vertex * NewVertex_2D (Simplex * s){
 
   //lc = DMIN(MAXIMUM_LC_FOR_SURFACE,lc);
 
-  /*v = Create_Vertex(  ++CurrentNodeNumber,
+  /*v = Create_Vertex(  ++THEM->MaxPointNum,
      (s->V[0]->Pos.X + s->V[1]->Pos.X + s->V[2]->Pos.X)/3.,
      (s->V[0]->Pos.Y + s->V[1]->Pos.Y + s->V[2]->Pos.Y)/3.,
      0.0, lc, 0.0);
    */
 
   if (THEM->MeshParams.DelaunayInsertionMethod == INSERTION_CENTROID)
-    v = Create_Vertex (++CurrentNodeNumber, s->Center.X, s->Center.Y, 0.0, lc, 0.0);
+    v = Create_Vertex (++THEM->MaxPointNum, s->Center.X, s->Center.Y, 0.0, lc, 0.0);
   else if (THEM->MeshParams.DelaunayInsertionMethod == INSERTION_EDGE) {
     Vertex *vv[2];
     double l = THEM->Metric->getWorstEdge (s, PARAMETRIC, vv);
@@ -886,9 +885,9 @@ Vertex * NewVertex_2D (Simplex * s){
       f = 1. - (vv[1]->lc / l);
     
     if (f >= 1)
-      v = Create_Vertex (++CurrentNodeNumber, s->Center.X, s->Center.Y, 0.0, lc, 0.0);
+      v = Create_Vertex (++THEM->MaxPointNum, s->Center.X, s->Center.Y, 0.0, lc, 0.0);
     else
-      v = Create_Vertex (++CurrentNodeNumber,
+      v = Create_Vertex (++THEM->MaxPointNum,
                          f * vv[0]->Pos.X + (1. - f) * vv[1]->Pos.X,
                          f * vv[0]->Pos.Y + (1. - f) * vv[1]->Pos.Y, 0.0, lc, 0.0);
   }

@@ -7,21 +7,11 @@
 #include <GL/glu.h>
 #endif
 
-#if _XMOTIF // X11 Motif for Unix
-
-#include <X11/keysym.h>
-#include <Xm/XmAll.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glx.h>
-#include <GLwMDrawA.h>
-
-#elif _FLTK // FLTK for both Unix and Windows
-
+#ifdef _FLTK
 #include <FL/Fl.H>
 #include <FL/gl.h>
 #include <GL/glu.h>
-
 #endif
+
 
 #endif

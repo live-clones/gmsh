@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.25 2001-09-26 08:28:12 geuzaine Exp $
+// $Id: Post.cpp,v 1.26 2001-10-29 08:52:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -97,8 +97,8 @@ void RaiseFill(int i, double Val, double ValMin, double Raise[3][5]){
 
 void Free_DisplayLists(void){
   Post_View     *v;
-  for(int iView=0 ; iView<List_Nbr(Post_ViewList) ; iView++){
-    v = (Post_View*)List_Pointer(Post_ViewList,iView);
+  for(int iView=0 ; iView<List_Nbr(CTX.post.list) ; iView++){
+    v = (Post_View*)List_Pointer(CTX.post.list,iView);
     if(glIsList(v->Num)) glDeleteLists(v->Num,1);
   }
 }
@@ -139,12 +139,12 @@ void Draw_Post (void) {
   double         ValMin,ValMax,AbsMax,X[4],Y[4],Z[4];
   Post_View     *v;
 
-  if(!Post_ViewList) return;
+  if(!CTX.post.list) return;
 
   if(!CTX.post.draw){ // draw only the bbox of the visible views
-    for(iView=0 ; iView<List_Nbr(Post_ViewList) ; iView++){
-      v = (Post_View*)List_Pointer(Post_ViewList,iView);
-      if(v->Visible){ 
+    for(iView=0 ; iView<List_Nbr(CTX.post.list) ; iView++){
+      v = (Post_View*)List_Pointer(CTX.post.list,iView);
+      if(v->Visible && v->GraphType==DRAW_POST_3D){ 
 	glColor4ubv((GLubyte*)&CTX.color.fg);
 	glBegin(GL_LINE_LOOP);
 	glVertex3d(v->BBox[0], v->BBox[2], v->BBox[4]);
@@ -173,9 +173,9 @@ void Draw_Post (void) {
     return;
   }
   
-  for(iView=0 ; iView<List_Nbr(Post_ViewList) ; iView++){
+  for(iView=0 ; iView<List_Nbr(CTX.post.list) ; iView++){
 
-    v = (Post_View*)List_Pointer(Post_ViewList,iView);
+    v = (Post_View*)List_Pointer(CTX.post.list,iView);
 
     if(v->Visible && !v->Dirty){ 
 
@@ -245,7 +245,7 @@ void Draw_Post (void) {
 
 	// Points
 
-	if(v->NbSP && v->DrawPoints && v->DrawScalars){
+	if(v->GraphType==DRAW_POST_3D && v->NbSP && v->DrawPoints && v->DrawScalars){
 	  nb = List_Nbr(v->SP) / v->NbSP ;
 	  for(i = 0 ; i < List_Nbr(v->SP) ; i+=nb){
 	    Get_Coords(1., v->Offset, 1, 

@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.1 2001-10-25 07:22:46 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.2 2001-10-29 08:52:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Plugin.h"
@@ -165,8 +165,6 @@ void Triangulate(Post_View *vin, Post_View *vout){
 }
 
 
-extern List_T * Post_ViewList;
-
 Post_View *GMSH_TriangulatePlugin::execute (Post_View *v)
 {
   Post_View *vv, *View;
@@ -177,7 +175,7 @@ Post_View *GMSH_TriangulatePlugin::execute (Post_View *v)
     vv = v;
   else{
     if(!v && iView < 0) iView = 0;
-    if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
+    if(!(vv = (Post_View*)List_Pointer_Test(CTX.post.list,iView))){
       Msg(WARNING,"View[%d] does not exist",iView);
       return 0;
     }

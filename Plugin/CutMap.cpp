@@ -1,7 +1,10 @@
-// $Id: CutMap.cpp,v 1.22 2001-08-11 23:25:50 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.23 2001-10-29 08:52:21 geuzaine Exp $
 
 #include "CutMap.h"
 #include "List.h"
+#include "Context.h"
+
+extern Context_T CTX;
 
 StringXNumber CutMapOptions_Number[] = {
   { GMSH_FULLRC, "A" , NULL , 1. },
@@ -60,8 +63,6 @@ double GMSH_CutMapPlugin :: levelset (double x, double y, double z, double val) 
   return CutMapOptions_Number[0].def - val;
 }
 
-extern List_T *Post_ViewList;
-
 Post_View *GMSH_CutMapPlugin::execute (Post_View *v)
 {
   Post_View *vv;
@@ -74,7 +75,7 @@ Post_View *GMSH_CutMapPlugin::execute (Post_View *v)
     vv = v;
   else{
     if(!v && iView < 0) iView = 0;
-    if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
+    if(!(vv = (Post_View*)List_Pointer_Test(CTX.post.list,iView))){
       Msg(WARNING,"View[%d] does not exist",iView);
       return 0;
     }

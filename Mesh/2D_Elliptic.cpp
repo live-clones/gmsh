@@ -1,4 +1,4 @@
-// $Id: 2D_Elliptic.cpp,v 1.7 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: 2D_Elliptic.cpp,v 1.8 2001-10-29 08:52:20 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -7,7 +7,6 @@
 #include "Mesh.h"
 
 extern Mesh *THEM;
-extern int CurrentNodeNumber;
 
 int MeshEllipticSurface (Surface * sur){
 
@@ -158,7 +157,7 @@ int MeshEllipticSurface (Surface * sur){
                      (S[2]->lc * (1 - u) * (1. - v)) +
                      (S[3]->lc * (1 + u) * (1. - v)));
         
-        list[i + N1 * j] = Create_Vertex (++CurrentNodeNumber, x, y, z, lc, 0.0);
+        list[i + N1 * j] = Create_Vertex (++THEM->MaxPointNum, x, y, z, lc, 0.0);
       }
     }
   }

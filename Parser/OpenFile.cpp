@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.20 2001-09-06 05:25:19 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.21 2001-10-29 08:52:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -17,10 +17,7 @@
 #include "Draw.h"
 #endif
 
-#if _XMOTIF
-#include "Widgets.h"
-extern Widgets_T WID;
-#elif _FLTK
+#if _FLTK
 #include "GUI.h"
 extern GUI *WID;
 #endif
@@ -134,17 +131,12 @@ void OpenProblem(char *name){
   strncpy(THEM->name, CTX.base_filename,255);
 
   if(!CTX.batch){
-#if _XMOTIF
-    XtVaSetValues(WID.G.shell,
-                  XmNtitle, CTX.filename,
-                  XmNiconName, CTX.base_filename,
-                  NULL);
-#elif _FLTK
+#if _FLTK
     WID->set_title(CTX.filename);
 #endif
   }
 
-  int nb = List_Nbr(Post_ViewList);
+  int nb = List_Nbr(CTX.post.list);
 
   status = ParseFile(CTX.filename);  
 
@@ -161,9 +153,9 @@ void OpenProblem(char *name){
   ZeroHighlight(&M); 
 #endif
   
-  if(List_Nbr(Post_ViewList) > nb)
+  if(List_Nbr(CTX.post.list) > nb)
     CalculateMinMax(NULL, ((Post_View*)List_Pointer
-			   (Post_ViewList,List_Nbr(Post_ViewList)-1))->BBox);
+			   (CTX.post.list,List_Nbr(CTX.post.list)-1))->BBox);
   else if(!status) 
     CalculateMinMax(THEM->Points,NULL);
   else

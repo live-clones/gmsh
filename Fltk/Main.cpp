@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.32 2001-08-03 14:58:04 geuzaine Exp $
+// $Id: Main.cpp,v 1.33 2001-10-29 08:52:19 geuzaine Exp $
 
 #include <signal.h>
 #include <time.h>
@@ -96,8 +96,8 @@ int main(int argc, char *argv[]){
       for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
       if(TheBgmFileName){
         MergeProblem(TheBgmFileName);
-        if(List_Nbr(Post_ViewList))
-          BGMWithView((Post_View*)List_Pointer(Post_ViewList, List_Nbr(Post_ViewList)-1));
+        if(List_Nbr(CTX.post.list))
+          BGMWithView((Post_View*)List_Pointer(CTX.post.list, List_Nbr(CTX.post.list)-1));
         else
           Msg(GERROR, "Invalid background mesh (no view)");
       }
@@ -175,7 +175,7 @@ int main(int argc, char *argv[]){
     WID->set_context(menu_post, 0); 
     break;
   default : // automatic
-    if(List_Nbr(Post_ViewList))
+    if(List_Nbr(CTX.post.list))
       WID->set_context(menu_post, 0);
     else
       WID->set_context(menu_geometry, 0); 
@@ -186,11 +186,13 @@ int main(int argc, char *argv[]){
 
   if(TheBgmFileName){
     MergeProblem(TheBgmFileName);
-    if(List_Nbr(Post_ViewList))
-      BGMWithView((Post_View*)List_Pointer(Post_ViewList, List_Nbr(Post_ViewList)-1));
+    if(List_Nbr(CTX.post.list))
+      BGMWithView((Post_View*)List_Pointer(CTX.post.list, List_Nbr(CTX.post.list)-1));
     else
       Msg(GERROR, "Invalid background mesh (no view)");
   }
+
+  gl_font(FL_HELVETICA, CTX.gl_fontsize);
 
   // Draw the actual scene
   Draw();

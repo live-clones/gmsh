@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.26 2001-08-14 13:23:40 geuzaine Exp $
+// $Id: Draw.cpp,v 1.27 2001-10-29 08:52:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -67,6 +67,7 @@ void Draw2d(void){
   glLoadIdentity();
 
   glPushMatrix();
+  Draw_Graph2D();
   if(CTX.post.draw && CTX.post.scales) Draw_Scales();
   if(CTX.small_axes) Draw_SmallAxes();
   glPopMatrix();

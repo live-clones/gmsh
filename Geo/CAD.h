@@ -3,8 +3,14 @@
 
 #include "Mesh.h"
 
-int NEWREG(void);
 int NEWPOINT(void);
+int NEWLINE(void);
+int NEWLINELOOP(void);
+int NEWSURFACE(void);
+int NEWSURFACELOOP(void);
+int NEWVOLUME(void);
+int NEWPHYSICAL(void);
+int NEWREG(void);
 
 Vertex *FindPoint(int inum, Mesh *M);
 Vertex *FindVertex(int inum, Mesh *M);

@@ -1,4 +1,4 @@
-// $Id: 3D_Coherence.cpp,v 1.22 2001-09-04 16:25:05 geuzaine Exp $
+// $Id: 3D_Coherence.cpp,v 1.23 2001-10-29 08:52:20 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -8,7 +8,7 @@
 #include "Create.h"
 
 extern Mesh *THEM;
-extern int CurrentNodeNumber, FACE_DIMENSION;
+extern int FACE_DIMENSION;
 extern Simplex MyNewBoundary;
 
 static Volume *THEVOL;
@@ -555,7 +555,7 @@ Vertex *Edge_Face (Edge * e, Face * f){
     Msg(DEBUG3, "%g %g %g", res[0], res[1], res[2]);
   }
 
-  v = Create_Vertex (++CurrentNodeNumber,
+  v = Create_Vertex (++THEM->MaxPointNum,
                      (1. - res[2]) * e->V[0]->Pos.X + res[2] * e->V[1]->Pos.X,
                      (1. - res[2]) * e->V[0]->Pos.Y + res[2] * e->V[1]->Pos.Y,
                      (1. - res[2]) * e->V[0]->Pos.Z + res[2] * e->V[1]->Pos.Z,
@@ -740,7 +740,7 @@ Vertex *Edge_Edge (Edge * e, Vertex * v1, Vertex * v2){
   }
   if (fabs (val / lc) > 1.e-08 /*08 */ )
     return NULL;
-  v = Create_Vertex (++CurrentNodeNumber,
+  v = Create_Vertex (++THEM->MaxPointNum,
                      (1. - res[0]) * e->V[0]->Pos.X + res[0] * e->V[1]->Pos.X,
                      (1. - res[0]) * e->V[0]->Pos.Y + res[0] * e->V[1]->Pos.Y,
                      (1. - res[0]) * e->V[0]->Pos.Z + res[0] * e->V[1]->Pos.Z,

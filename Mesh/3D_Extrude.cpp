@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.48 2001-09-27 15:00:50 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.49 2001-10-29 08:52:20 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -10,7 +10,6 @@
 
 extern Context_T  CTX ;
 extern Mesh      *THEM;
-extern int        CurrentNodeNumber;
 
 static int DIM, NUM; // current dimension of parent entity
 
@@ -559,7 +558,7 @@ void Extrude_Vertex (void *data, void *dum){
 
   for (i = 0; i < ep->mesh.NbLayer; i++){
     for (j = 0; j < ep->mesh.NbElmLayer[i]; j++){
-      newv = Create_Vertex (++CurrentNodeNumber, v->Pos.X,
+      newv = Create_Vertex (++THEM->MaxPointNum, v->Pos.X,
                             v->Pos.Y, v->Pos.Z, v->lc, v->u);
       ep->Extrude (i, j + 1, newv->Pos.X, newv->Pos.Y, newv->Pos.Z);
 
@@ -705,7 +704,7 @@ void copy_mesh (Curve * from, Curve * to, int direction){
       List_Read (list, List_Nbr(list)-1-i, &v);
     else
       List_Read (list, i, &v);
-    vi = Create_Vertex (++CurrentNodeNumber, v->Pos.X,
+    vi = Create_Vertex (++THEM->MaxPointNum, v->Pos.X,
 			v->Pos.Y, v->Pos.Z, v->lc, (direction>0)?v->u:(1.-v->u));
     ep->Extrude (ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
 		 vi->Pos.X, vi->Pos.Y, vi->Pos.Z);
@@ -822,7 +821,7 @@ void copy_mesh (Surface * from, Surface * to){
     for (int j = 0; j < 4; j++){
       if(s->V[j]){
 	v = s->V[j];
-	vi[j] = Create_Vertex (++CurrentNodeNumber, v->Pos.X,
+	vi[j] = Create_Vertex (++THEM->MaxPointNum, v->Pos.X,
 			       v->Pos.Y, v->Pos.Z, v->lc, v->u);
 	ep->Extrude (ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
 		     vi[j]->Pos.X, vi[j]->Pos.Y, vi[j]->Pos.Z);

@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.6 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.7 2001-10-29 08:52:20 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -7,7 +7,7 @@
 #include "Interpolation.h"
 #include "Numeric.h"
 
-extern int CurrentNodeNumber;
+extern Mesh *THEM;
 
 static Surface *THES;
 static Curve *THEC;
@@ -27,7 +27,7 @@ Vertex *middlecurve (Vertex * v1, Vertex * v2){
   else
     v = InterpolateCurve (THEC, 0.5 * (v1->u + v2->u), 0);
 
-  pv = Create_Vertex (++CurrentNodeNumber, v.Pos.X, v.Pos.Y, v.Pos.Z, v.lc, v.u);
+  pv = Create_Vertex (++THEM->MaxPointNum, v.Pos.X, v.Pos.Y, v.Pos.Z, v.lc, v.u);
 
   if (!pv->ListCurves){
     pv->ListCurves = List_Create (1, 1, sizeof (Curve *));
@@ -51,7 +51,7 @@ Vertex *middleface (Vertex * v1, Vertex * v2){
   U = 0.5 *(U1+U2);
   V = 0.5 *(V1+V2);
   v = InterpolateSurface(THES,U,V,0,0);
-  pv = Create_Vertex(++CurrentNodeNumber,v.Pos.X,v.Pos.Y,v.Pos.Z,v.lc,v.u);
+  pv = Create_Vertex(++THEM->MaxPointNum,v.Pos.X,v.Pos.Y,v.Pos.Z,v.lc,v.u);
   return pv;
 }
 
@@ -74,7 +74,7 @@ void PutMiddlePoint (void *a, void *b){
   else if ((v = middlecurve (ed->V[0], ed->V[1])));
   else if ((v = middleface (ed->V[0], ed->V[1])));
   else
-    v = Create_Vertex (++CurrentNodeNumber,
+    v = Create_Vertex (++THEM->MaxPointNum,
                        0.5 * (ed->V[0]->Pos.X + ed->V[1]->Pos.X),
                        0.5 * (ed->V[0]->Pos.Y + ed->V[1]->Pos.Y),
                        0.5 * (ed->V[0]->Pos.Z + ed->V[1]->Pos.Z),

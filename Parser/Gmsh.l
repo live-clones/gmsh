@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.36 2001-08-17 08:31:31 geuzaine Exp $
+// $Id: Gmsh.l,v 1.37 2001-10-29 08:52:20 geuzaine Exp $
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,6 +70,9 @@ stepid  {dieze}({digit})*
 "\'"			{parsestring('\''); return tBIGSTR;}
 "newreg"		{yylval.d = NEWREG(); return tDOUBLE;}
 "newp"  		{yylval.d = NEWPOINT(); return tDOUBLE;}
+"newc"  		{yylval.d = NEWLINE(); return tDOUBLE;}
+"news"  		{yylval.d = NEWSURFACE(); return tDOUBLE;}
+"newv"  		{yylval.d = NEWVOLUME(); return tDOUBLE;}
 "="                     return tAFFECT;
 "+="                    return tAFFECTPLUS ;
 "-="                    return tAFFECTMINUS ;
