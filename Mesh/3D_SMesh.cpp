@@ -1,4 +1,4 @@
-// $Id: 3D_SMesh.cpp,v 1.17 2003-03-02 16:10:28 geuzaine Exp $
+// $Id: 3D_SMesh.cpp,v 1.18 2003-03-16 21:23:18 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -411,8 +411,8 @@ int MeshTransfiniteVolume(Volume * vol)
   for(i = 0; i < N1; i++) {
     for(j = 0; j < N2; j++) {
       for(k = 0; k < N3; k++) {
-        Tree_Replace(THEM->Vertices, &list[i + N1 * j + N1 * N2 * k]);
-        Tree_Replace(vol->Vertices, &list[i + N1 * j + N1 * N2 * k]);
+        Tree_Insert(THEM->Vertices, &list[i + N1 * j + N1 * N2 * k]);
+        Tree_Insert(vol->Vertices, &list[i + N1 * j + N1 * N2 * k]);
       }
     }
   }
@@ -425,7 +425,7 @@ int MeshTransfiniteVolume(Volume * vol)
              G[3]->Recombine && G[4]->Recombine && G[5]->Recombine) {
             hexa = CREATE_HEX;
             hexa->iEnt = vol->Num;
-            Tree_Replace(vol->Hexahedra, &hexa);
+            Tree_Add(vol->Hexahedra, &hexa);
 
             nbhex++;
           }
@@ -438,7 +438,7 @@ int MeshTransfiniteVolume(Volume * vol)
                                  list[(i + 1) + N1 * (j + 1) + N1 * N2 * (k)],
                                  list[(i) + N1 * (j + 1) + N1 * N2 * (k + 1)]);
             prism->iEnt = vol->Num;
-            Tree_Replace(vol->Prisms, &prism);
+            Tree_Add(vol->Prisms, &prism);
 
             prism = Create_Prism(list[(i + 1) + N1 * (j) + N1 * N2 * (k + 1)],
                                  list[(i) + N1 * (j) + N1 * N2 * (k + 1)],
@@ -447,7 +447,7 @@ int MeshTransfiniteVolume(Volume * vol)
                                  list[(i) + N1 * (j + 1) + N1 * N2 * (k + 1)],
                                  list[(i + 1) + N1 * (j + 1) + N1 * N2 * (k)]);
             prism->iEnt = vol->Num;
-            Tree_Replace(vol->Prisms, &prism);
+            Tree_Add(vol->Prisms, &prism);
 
             nbpri += 2;
           }
@@ -460,7 +460,7 @@ int MeshTransfiniteVolume(Volume * vol)
                                  list[(i) + N1 * (j + 1) + N1 * N2 * (k)],
                                  list[(i) + N1 * (j) + N1 * N2 * (k + 1)]);
             prism->iEnt = vol->Num;
-            Tree_Replace(vol->Prisms, &prism);
+            Tree_Add(vol->Prisms, &prism);
 
             prism =
               Create_Prism(list[(i + 1) + N1 * (j + 1) + N1 * N2 * (k + 1)],
@@ -470,7 +470,7 @@ int MeshTransfiniteVolume(Volume * vol)
                            list[(i) + N1 * (j) + N1 * N2 * (k + 1)],
                            list[(i) + N1 * (j + 1) + N1 * N2 * (k)]);
             prism->iEnt = vol->Num;
-            Tree_Replace(vol->Prisms, &prism);
+            Tree_Add(vol->Prisms, &prism);
 
             nbpri += 2;
           }
@@ -478,10 +478,10 @@ int MeshTransfiniteVolume(Volume * vol)
                   G[3]->Recombine && !G[4]->Recombine && !G[5]->Recombine) {
             prism = CREATE_PRISM_1;
             prism->iEnt = vol->Num;
-            Tree_Replace(vol->Prisms, &prism);
+            Tree_Add(vol->Prisms, &prism);
             prism = CREATE_PRISM_2;
             prism->iEnt = vol->Num;
-            Tree_Replace(vol->Prisms, &prism);
+            Tree_Add(vol->Prisms, &prism);
 
             nbpri += 2;
           }
@@ -489,22 +489,22 @@ int MeshTransfiniteVolume(Volume * vol)
                   !G[3]->Recombine && !G[4]->Recombine && !G[5]->Recombine) {
             simp = CREATE_SIM_1;
             simp->iEnt = vol->Num;
-            Tree_Replace(vol->Simplexes, &simp);
+            Tree_Add(vol->Simplexes, &simp);
             simp = CREATE_SIM_2;
             simp->iEnt = vol->Num;
-            Tree_Replace(vol->Simplexes, &simp);
+            Tree_Add(vol->Simplexes, &simp);
             simp = CREATE_SIM_3;
             simp->iEnt = vol->Num;
-            Tree_Replace(vol->Simplexes, &simp);
+            Tree_Add(vol->Simplexes, &simp);
             simp = CREATE_SIM_4;
             simp->iEnt = vol->Num;
-            Tree_Replace(vol->Simplexes, &simp);
+            Tree_Add(vol->Simplexes, &simp);
             simp = CREATE_SIM_5;
             simp->iEnt = vol->Num;
-            Tree_Replace(vol->Simplexes, &simp);
+            Tree_Add(vol->Simplexes, &simp);
             simp = CREATE_SIM_6;
             simp->iEnt = vol->Num;
-            Tree_Replace(vol->Simplexes, &simp);
+            Tree_Add(vol->Simplexes, &simp);
 
             nbtet += 6;
           }
@@ -531,7 +531,7 @@ int MeshTransfiniteVolume(Volume * vol)
                                list[1 + N1 * (j) + N1 * N2 * (k + 1)],
                                list[1 + N1 * (j + 1) + N1 * N2 * (k + 1)]);
           prism->iEnt = vol->Num;
-          Tree_Replace(vol->Prisms, &prism);
+          Tree_Add(vol->Prisms, &prism);
 
           nbpri++;
         }
@@ -542,21 +542,21 @@ int MeshTransfiniteVolume(Volume * vol)
                                 list[1 + N1 * (j + 1) + N1 * N2 * (k)],
                                 list[+N1 * (j) + N1 * N2 * (k + 1)]);
           simp->iEnt = vol->Num;
-          Tree_Replace(vol->Simplexes, &simp);
+          Tree_Add(vol->Simplexes, &simp);
 
           simp = Create_Simplex(list[1 + N1 * (j) + N1 * N2 * (k)],
                                 list[1 + N1 * (j + 1) + N1 * N2 * (k)],
                                 list[+N1 * (j) + N1 * N2 * (k + 1)],
                                 list[1 + N1 * (j) + N1 * N2 * (k + 1)]);
           simp->iEnt = vol->Num;
-          Tree_Replace(vol->Simplexes, &simp);
+          Tree_Add(vol->Simplexes, &simp);
 
           simp = Create_Simplex(list[+N1 * (j) + N1 * N2 * (k + 1)],
                                 list[1 + N1 * (j + 1) + N1 * N2 * (k + 1)],
                                 list[1 + N1 * (j) + N1 * N2 * (k + 1)],
                                 list[1 + N1 * (j + 1) + N1 * N2 * (k)]);
           simp->iEnt = vol->Num;
-          Tree_Replace(vol->Simplexes, &simp);
+          Tree_Add(vol->Simplexes, &simp);
 
           nbtet += 2;
         }
@@ -574,7 +574,7 @@ int MeshTransfiniteVolume(Volume * vol)
              G[4]->Recombine && G[5]->Recombine) {
             hexa = CREATE_HEX;
             hexa->iEnt = vol->Num;
-            Tree_Replace(vol->Hexahedra, &hexa);
+            Tree_Add(vol->Hexahedra, &hexa);
 
             nbhex++;
           }
@@ -582,10 +582,10 @@ int MeshTransfiniteVolume(Volume * vol)
                   !G[4]->Recombine && !G[5]->Recombine) {
             prism = CREATE_PRISM_1;
             prism->iEnt = vol->Num;
-            Tree_Replace(vol->Prisms, &prism);
+            Tree_Add(vol->Prisms, &prism);
             prism = CREATE_PRISM_2;
             prism->iEnt = vol->Num;
-            Tree_Replace(vol->Prisms, &prism);
+            Tree_Add(vol->Prisms, &prism);
 
             nbpri += 2;
           }
@@ -593,22 +593,22 @@ int MeshTransfiniteVolume(Volume * vol)
                   !G[4]->Recombine && !G[5]->Recombine) {
             simp = CREATE_SIM_1;
             simp->iEnt = vol->Num;
-            Tree_Replace(vol->Simplexes, &simp);
+            Tree_Add(vol->Simplexes, &simp);
             simp = CREATE_SIM_2;
             simp->iEnt = vol->Num;
-            Tree_Replace(vol->Simplexes, &simp);
+            Tree_Add(vol->Simplexes, &simp);
             simp = CREATE_SIM_3;
             simp->iEnt = vol->Num;
-            Tree_Replace(vol->Simplexes, &simp);
+            Tree_Add(vol->Simplexes, &simp);
             simp = CREATE_SIM_4;
             simp->iEnt = vol->Num;
-            Tree_Replace(vol->Simplexes, &simp);
+            Tree_Add(vol->Simplexes, &simp);
             simp = CREATE_SIM_5;
             simp->iEnt = vol->Num;
-            Tree_Replace(vol->Simplexes, &simp);
+            Tree_Add(vol->Simplexes, &simp);
             simp = CREATE_SIM_6;
             simp->iEnt = vol->Num;
-            Tree_Replace(vol->Simplexes, &simp);
+            Tree_Add(vol->Simplexes, &simp);
 
             nbtet += 6;
           }

@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.62 2003-03-11 06:53:36 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.63 2003-03-16 21:23:17 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -176,14 +176,14 @@ static int compnxn(const void *a, const void *b)
   return 0;
 }
 
-void ReplaceInVertexBound(void *a, void *b)
+void InsertInVertexBound(void *a, void *b)
 {
-  Tree_Replace(Vertex_Bound, a);
+  Tree_Insert(Vertex_Bound, a);
 }
 
-void ReplaceInPointBound(void *a, void *b)
+void InsertInPointBound(void *a, void *b)
 {
-  Tree_Replace(Point_Bound, a);
+  Tree_Insert(Point_Bound, a);
 }
 
 void InitExtrude()
@@ -201,8 +201,8 @@ void InitExtrude()
     Tree_Delete(Vertex_Bound);
   Vertex_Bound = Tree_Create(sizeof(Vertex *), comparePosition);
 
-  Tree_Action(THEM->Points, ReplaceInPointBound);
-  Tree_Action(THEM->Vertices, ReplaceInVertexBound);
+  Tree_Action(THEM->Points, InsertInPointBound);
+  Tree_Action(THEM->Vertices, InsertInVertexBound);
 }
 
 void ExitExtrude()
@@ -628,7 +628,7 @@ void Extrude_Vertex(void *data, void *dum)
 	  newv->Num = (*vexist)->Num;
 	}
         List_Add(NXL.List, &newv);
-        Tree_Insert(THEM->Vertices, &newv);
+        Tree_Add(THEM->Vertices, &newv);
         Tree_Insert(Vertex_Bound, &newv);
       }
     }
@@ -765,7 +765,7 @@ void copy_mesh(Curve * from, Curve * to, int direction)
   }
   else {
     newv = Create_Vertex(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, to->ubeg);
-    Tree_Insert(THEM->Vertices, &newv);
+    Tree_Add(THEM->Vertices, &newv);
     newv->ListCurves = List_Create(1, 1, sizeof(Curve *));
     List_Add(newv->ListCurves, &to);
     List_Add(to->Vertices, &newv);
@@ -796,7 +796,7 @@ void copy_mesh(Curve * from, Curve * to, int direction)
 	// pointing to the same memory location
 	newv->Num = (*vexist)->Num;
       }
-      Tree_Insert(THEM->Vertices, &newv);
+      Tree_Add(THEM->Vertices, &newv);
       Tree_Insert(Vertex_Bound, &newv);
     }
     if(!newv->ListCurves)
@@ -814,7 +814,7 @@ void copy_mesh(Curve * from, Curve * to, int direction)
   }
   else {
     newv = Create_Vertex(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, to->uend);
-    Tree_Insert(THEM->Vertices, &newv);
+    Tree_Add(THEM->Vertices, &newv);
     newv->ListCurves = List_Create(1, 1, sizeof(Curve *));
     List_Add(newv->ListCurves, &to);
     List_Add(to->Vertices, &newv);
@@ -853,7 +853,7 @@ int Extrude_Mesh(Curve * c)
       newv = Create_Vertex(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, 0.0);
       newv->ListCurves = List_Create(1, 1, sizeof(Curve *));
       List_Add(newv->ListCurves, &c);
-      Tree_Insert(THEM->Vertices, &newv);
+      Tree_Add(THEM->Vertices, &newv);
       List_Add(c->Vertices, &newv);
     }
 
@@ -878,7 +878,7 @@ int Extrude_Mesh(Curve * c)
       newv = Create_Vertex(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, 0.0);
       newv->ListCurves = List_Create(1, 1, sizeof(Curve *));
       List_Add(newv->ListCurves, &c);
-      Tree_Insert(THEM->Vertices, &newv);
+      Tree_Add(THEM->Vertices, &newv);
       List_Add(c->Vertices, &newv);
     }
     return true;
@@ -926,7 +926,7 @@ void copy_mesh(Surface * from, Surface * to)
 	    // pointing to the same memory location
 	    newv[j]->Num = (*vexist)->Num;
 	  }
-          Tree_Insert(THEM->Vertices, &newv[j]);
+          Tree_Add(THEM->Vertices, &newv[j]);
           Tree_Insert(Vertex_Bound, &newv[j]);
         }
       }
@@ -952,7 +952,7 @@ void AddVertsInSurf(void *a, void *b)
   Simplex *s = *(Simplex **) a;
   for(int i = 0; i < 4; i++)
     if(s->V[i])
-      Tree_Replace(THES->Vertices, &s->V[i]);
+      Tree_Insert(THES->Vertices, &s->V[i]);
 }
 
 int Extrude_Mesh(Surface * s)

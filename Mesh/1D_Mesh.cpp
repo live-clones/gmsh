@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.30 2003-03-01 22:36:40 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.31 2003-03-16 21:23:17 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -184,7 +184,6 @@ void Maillage_Curve(void *data, void *dummy)
     v = &c->beg;
     if((vexist = (Vertex **) Tree_PQuery(THEM->Vertices, v))) {
       (*vexist)->u = c->ubeg;
-      Tree_Insert(THEM->Vertices, vexist);
       if((*vexist)->ListCurves)
         List_Add((*vexist)->ListCurves, &c);
       List_Add(c->Vertices, vexist);
@@ -194,7 +193,7 @@ void Maillage_Curve(void *data, void *dummy)
                          (*v)->Pos.Z, (*v)->lc, c->ubeg);
       pV->ListCurves = List_Create(1, 1, sizeof(Curve *));
       List_Add(pV->ListCurves, &c);
-      Tree_Insert(THEM->Vertices, &pV);
+      Tree_Add(THEM->Vertices, &pV);
       List_Add(c->Vertices, &pV);
     }
 
@@ -215,7 +214,7 @@ void Maillage_Curve(void *data, void *dummy)
         pV->w = V.w;
         pV->ListCurves = List_Create(1, 1, sizeof(Curve *));
         List_Add(pV->ListCurves, &c);
-        Tree_Insert(THEM->Vertices, &pV);
+        Tree_Add(THEM->Vertices, &pV);
         List_Add(c->Vertices, &pV);
         NUMP++;
       }
@@ -229,7 +228,6 @@ void Maillage_Curve(void *data, void *dummy)
     v = &c->end;
     if((vexist = (Vertex **) Tree_PQuery(THEM->Vertices, v))) {
       (*vexist)->u = c->uend;
-      Tree_Insert(THEM->Vertices, vexist);
       if((*vexist)->ListCurves)
         List_Add((*vexist)->ListCurves, &c);
       List_Add(c->Vertices, vexist);
@@ -239,7 +237,7 @@ void Maillage_Curve(void *data, void *dummy)
                          (*v)->Pos.Z, (*v)->lc, c->uend);
       pV->ListCurves = List_Create(1, 1, sizeof(Curve *));
       List_Add(pV->ListCurves, &c);
-      Tree_Insert(THEM->Vertices, &pV);
+      Tree_Add(THEM->Vertices, &pV);
       List_Add(c->Vertices, &pV);
     }
   }

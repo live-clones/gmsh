@@ -1,4 +1,4 @@
-// $Id: Tree.cpp,v 1.13 2003-03-01 22:36:37 geuzaine Exp $
+// $Id: Tree.cpp,v 1.14 2003-03-16 21:23:17 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -78,10 +78,15 @@ int Tree_Nbr(Tree_T * tree)
   return (avl_count(tree->root));
 }
 
-void Tree_Insert(Tree_T * tree, void *data)
+int Tree_Insert(Tree_T * tree, void *data)
 {
-  if(Tree_Search(tree, data) == 0)
+  if(Tree_Search(tree, data) == 0){
     Tree_Add(tree, data);
+    return 1;
+  }
+  else{
+    return 0;
+  }
 }
 
 int Tree_Replace(Tree_T * tree, void *data)
@@ -100,6 +105,7 @@ int Tree_Replace(Tree_T * tree, void *data)
   }
   else {
     memcpy(ptr, data, tree->size);
+    Msg(INFO, "memcpy in tree_repl");
     return (1);
   }
 }

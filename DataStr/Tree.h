@@ -32,7 +32,7 @@ void    Tree_Delete(Tree_T *Tree);
 void    Tree_Add(Tree_T *tree, void *data);
 void   *Tree_AddP(Tree_T *tree, void *data);
 int     Tree_Nbr(Tree_T *Tree);
-void    Tree_Insert(Tree_T *Tree, void *data);
+int     Tree_Insert(Tree_T *Tree, void *data);
 int     Tree_Replace(Tree_T *Tree, void *data);
 int     Tree_Search(Tree_T *Tree, void *data);
 int     Tree_Query(Tree_T *Tree, void *data);

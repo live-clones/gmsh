@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.51 2003-03-10 04:26:32 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.52 2003-03-16 21:23:18 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -123,7 +123,10 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
         fscanf(File_GEO, "%d %lf %lf %lf %lf %lf", &Num, &x, &y, &z, &lc1,
                &lc2);
         vert = Create_Vertex(Num, x, y, z, lc1, lc2);
-        Tree_Replace(M->Points, &vert);
+        if(!Tree_Insert(M->Points, &vert)){
+	  Msg(GERROR, "Point %d already exists\n", vert->Num);
+	  Free_Vertex(&vert, 0);
+	}
       }
     }
 
@@ -139,11 +142,13 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
       for(i_Node = 0; i_Node < Nbr_Nodes; i_Node++) {
         fscanf(File_GEO, "%d %lf %lf %lf", &Num, &x, &y, &z);
         vert = Create_Vertex(Num, x, y, z, 1.0, 0.0);
-        Tree_Replace(M->Vertices, &vert);
-        if(CTX.mesh.check_duplicates) {
+        if(!Tree_Insert(M->Vertices, &vert)){
+	  Msg(GERROR, "Node %d already exists\n", vert->Num);
+	  Free_Vertex(&vert, 0);
+	}
+	else if(CTX.mesh.check_duplicates) {
           if((vertspp = (Vertex **) Tree_PQuery(Duplicates, &vert)))
-            Msg(GERROR,
-                "Nodes %d and %d have identical coordinates (%g, %g, %g)",
+            Msg(GERROR, "Nodes %d and %d have identical coordinates (%g, %g, %g)",
                 Num, (*vertspp)->Num, x, y, z);
           else
             Tree_Add(Duplicates, &vert);
@@ -244,7 +249,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
           vert->Pos.Y /= (double)Nbr_Nodes;
           vert->Pos.Z /= (double)Nbr_Nodes;
           if((vertspp = (Vertex **) Tree_PQuery(Duplicates, &vert)))
-            Msg(GERROR, "Elements %d and %d have identical barycenters",
+            Msg(WARNING, "Elements %d and %d have identical barycenters",
                 Num, (*vertspp)->Num);
           else
             Tree_Add(Duplicates, &vert);
@@ -255,72 +260,97 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
           simp = Create_Simplex(vertsp[0], vertsp[1], NULL, NULL);
           simp->Num = Num;
           simp->iEnt = Elementary;
-          Tree_Replace(c->Simplexes, &simp);
-          //NO!!! Tree_Replace(M->Simplexes, &simp) ; 
+          if(!Tree_Insert(c->Simplexes, &simp)){
+	    Msg(GERROR, "Line element %d already exists\n", simp->Num);
+	    Free_Simplex(&simp, 0);
+	  }
+          //NO!!! Tree_Insert(M->Simplexes, &simp) ; 
           break;
         case TRI1:
           simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], NULL);
           simp->Num = Num;
           simp->iEnt = Elementary;
-          Tree_Replace(s->Simplexes, &simp);
-          replace = Tree_Replace(M->Simplexes, &simp);
-          if(!replace)
+          if(Tree_Insert(s->Simplexes, &simp) && Tree_Insert(M->Simplexes, &simp)){
             M->Statistics[7]++;
+	  }
+          else{
+	    Msg(GERROR, "Triangle %d already exists\n", simp->Num);
+	    Free_Simplex(&simp, 0);
+	  }
           break;
         case QUA1:
-          simp =
-            Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
+          simp = Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
           simp->Num = Num;
           simp->iEnt = Elementary;
-          Tree_Replace(s->Simplexes, &simp);
-          replace = Tree_Replace(M->Simplexes, &simp);
-          if(!replace) {
+          if(Tree_Insert(s->Simplexes, &simp) && Tree_Insert(M->Simplexes, &simp)){
             M->Statistics[7]++; //since s->Simplexes holds quads, too :-(
             M->Statistics[8]++;
           }
+	  else{
+	    Msg(GERROR, "Quadrangle %d already exists\n", simp->Num);
+	    Free_Simplex(&simp, 0);
+	  }
           break;
         case TET1:
           simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
           simp->Num = Num;
           simp->iEnt = Elementary;
-          Tree_Replace(v->Simplexes, &simp);
-          replace = Tree_Replace(M->Simplexes, &simp);
-          if(!replace)
+          if(Tree_Insert(v->Simplexes, &simp) && Tree_Insert(M->Simplexes, &simp)){
             M->Statistics[9]++;
+	  }
+	  else{
+	    Msg(GERROR, "Tetrahedron %d already exists\n", simp->Num);
+	    Free_Simplex(&simp, 0);
+	  }
           break;
         case HEX1:
           hex = Create_Hexahedron(vertsp[0], vertsp[1], vertsp[2], vertsp[3],
                                   vertsp[4], vertsp[5], vertsp[6], vertsp[7]);
           hex->Num = Num;
           hex->iEnt = Elementary;
-          replace = Tree_Replace(v->Hexahedra, &hex);
-          if(!replace)
+          if(Tree_Insert(v->Hexahedra, &hex)){
             M->Statistics[10]++;
+	  }
+	  else{
+	    Msg(GERROR, "Hexahedron %d already exists\n", hex->Num);
+	    Free_Hexahedron(&hex, 0);
+	  }
           break;
         case PRI1:
           pri = Create_Prism(vertsp[0], vertsp[1], vertsp[2],
                              vertsp[3], vertsp[4], vertsp[5]);
           pri->Num = Num;
           pri->iEnt = Elementary;
-          replace = Tree_Replace(v->Prisms, &pri);
-          if(!replace)
+          if(Tree_Insert(v->Prisms, &pri)){
             M->Statistics[11]++;
+	  }
+	  else{
+	    Msg(GERROR, "Prism %d already exists\n", pri->Num);
+	    Free_Prism(&pri, 0);
+	  }
           break;
         case PYR1:
           pyr = Create_Pyramid(vertsp[0], vertsp[1], vertsp[2],
                                vertsp[3], vertsp[4]);
           pyr->Num = Num;
           pyr->iEnt = Elementary;
-          replace = Tree_Replace(v->Pyramids, &pyr);
-          if(!replace)
+          if(Tree_Insert(v->Pyramids, &pyr)){
             M->Statistics[12]++;
+	  }
+	  else{
+	    Msg(GERROR, "Pyramid %d already exists\n", pri->Num);
+	    Free_Pyramid(&pyr, 0);
+	  }
           break;
         case PNT:
 	  // we need to make a new one: vertices in M->Vertices and
 	  // M->Points should never point to the same memory location
 	  vert = Create_Vertex(vertsp[0]->Num, vertsp[0]->Pos.X, vertsp[0]->Pos.Y, 
 			       vertsp[0]->Pos.Z, vertsp[0]->lc, vertsp[0]->w);
-          Tree_Replace(M->Points, &vert);
+          if(!Tree_Insert(M->Points, &vert)){
+	    Msg(GERROR, "Point %d already exists\n", vert->Num);
+	    Free_Vertex(&vert, 0);
+	  }
           break;
         default:
           Msg(WARNING, "Unknown type of element in Read_Mesh");

@@ -1,4 +1,4 @@
-// $Id: 2D_SMesh.cpp,v 1.13 2003-03-01 22:36:41 geuzaine Exp $
+// $Id: 2D_SMesh.cpp,v 1.14 2003-03-16 21:23:17 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -230,7 +230,7 @@ int MeshTransfiniteSurface(Surface * sur)
     if(nb == 4) {
       for(i = 0; i < N1; i++) {
         for(j = 0; j < N2; j++) {
-          Tree_Replace(sur->Vertices, &list[i + N1 * j]);
+          Tree_Insert(sur->Vertices, &list[i + N1 * j]);
         }
       }
       for(i = 0; i < N1 - 1; i++) {
@@ -269,10 +269,10 @@ int MeshTransfiniteSurface(Surface * sur)
       }
     }
     else if(nb == 3) {
-      Tree_Replace(sur->Vertices, &list[0]);
+      Tree_Insert(sur->Vertices, &list[0]);
       for(i = 1; i < N1; i++) {
         for(j = 0; j < N2; j++) {
-          Tree_Replace(sur->Vertices, &list[i + N1 * j]);
+          Tree_Insert(sur->Vertices, &list[i + N1 * j]);
         }
       }
       for(j = 0; j < N2 - 1; j++) {
