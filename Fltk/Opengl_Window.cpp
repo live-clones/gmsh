@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.5 2001-01-10 21:28:18 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.6 2001-01-10 21:35:08 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -242,7 +242,6 @@ int Opengl_Window::handle(int event) {
 	(CTX.vymax - CTX.vymin) ;
 
       movzx = xz - xb; movzy = yz - yb;
-      draw_overlay();
     }
     else {
       clear_overlay();
