@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.14 2001-02-22 14:43:39 remacle Exp $
+// $Id: GetOptions.cpp,v 1.15 2001-03-08 14:52:05 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -25,8 +25,7 @@ char gmsh_date[]      = "Build Date       : " GMSH_DATE ;
 char gmsh_host[]      = "Build Host       : " GMSH_HOST ;
 char gmsh_packager[]  = "Packager         : " GMSH_PACKAGER ;
 char gmsh_url[]       = "URL              : http://www.geuz.org/gmsh/" ;
-char gmsh_email[]     = "E-Mail           : Christophe.Geuzaine@ulg.ac.be\n"
-                        "                   Remacle@scorec.rpi.edu" ;
+char gmsh_email[]     = "Mailing List     : gmsh@geuz.org" ;
 
 void Print_Usage(char *name){
   Msg(DIRECT, "Usage: %s [options] [files]", name);
