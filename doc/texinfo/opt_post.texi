@@ -17,7 +17,7 @@ Saved in: @code{General.OptionsFileName}
 @item PostProcessing.Format
 Default file format for post-processing views@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item PostProcessing.HorizontalScales
 Display value scales horizontally@*

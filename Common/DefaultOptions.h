@@ -957,7 +957,7 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "CombineRemoveOriginal" , opt_post_combine_remove_orig , 1. ,
     "Remove original views after a Combine operation" },
 
-  { F|0, "Format" , opt_post_file_format , 0. ,
+  { F|O, "Format" , opt_post_file_format , 0. ,
     "Default file format for post-processing views" },
 
   { F|O, "HorizontalScales" , opt_post_horizontal_scales , 1. , 
@@ -1087,19 +1087,19 @@ StringXNumber ViewOptions_Number[] = {
 
   { F,   "Max" , opt_view_max , 0. , 
     "Maximum value in the view (read-only)" },
-  { F|O, "MaxX" , opt_view_xmax , 0. , 
+  { F,   "MaxX" , opt_view_xmax , 0. , 
     "Maximum view coordinate along the X-axis (read-only)" }, 
-  { F|O, "MaxY" , opt_view_ymax , 0. , 
+  { F,   "MaxY" , opt_view_ymax , 0. , 
     "Maximum view coordinate along the Y-axis (read-only)" }, 
-  { F|O, "MaxZ" , opt_view_zmax , 0. , 
+  { F,   "MaxZ" , opt_view_zmax , 0. , 
     "Maximum view coordinate along the Z-axis (read-only)" }, 
   { F,   "Min" , opt_view_min , 0. ,
     "Minimum value in the view (read-only)" },
-  { F|O, "MinX" , opt_view_xmin , 0. , 
+  { F,   "MinX" , opt_view_xmin , 0. , 
     "Minimum view coordinate along the X-axis (read-only)" }, 
-  { F|O, "MinY" , opt_view_ymin , 0. , 
+  { F,   "MinY" , opt_view_ymin , 0. , 
     "Minimum view coordinate along the Y-axis (read-only)" }, 
-  { F|O, "MinZ" , opt_view_zmin , 0. , 
+  { F,   "MinZ" , opt_view_zmin , 0. , 
     "Minimum view coordinate along the Z-axis (read-only)" }, 
 
   { F|O, "NbAbscissa" , opt_view_nb_abscissa , 5. ,
@@ -1149,7 +1149,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "SmoothNormals" , opt_view_smooth_normals , 0. ,
     "Smooth the normals?" },
 
-  { F|0, "Tangents" , opt_view_normals , 0. ,
+  { F|O, "Tangents" , opt_view_normals , 0. ,
     "Display size of tangent vectors (in pixels)" }, 
   { F|O, "TensorType" , opt_view_tensor_type , 0. ,
     "Tensor Visualization Type" },

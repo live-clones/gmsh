@@ -272,17 +272,17 @@ Saved in: @code{-}
 @item View.MaxX
 Maximum view coordinate along the X-axis (read-only)@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
+Saved in: @code{-}
 
 @item View.MaxY
 Maximum view coordinate along the Y-axis (read-only)@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
+Saved in: @code{-}
 
 @item View.MaxZ
 Maximum view coordinate along the Z-axis (read-only)@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
+Saved in: @code{-}
 
 @item View.Min
 Minimum value in the view (read-only)@*
@@ -292,17 +292,17 @@ Saved in: @code{-}
 @item View.MinX
 Minimum view coordinate along the X-axis (read-only)@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
+Saved in: @code{-}
 
 @item View.MinY
 Minimum view coordinate along the Y-axis (read-only)@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
+Saved in: @code{-}
 
 @item View.MinZ
 Minimum view coordinate along the Z-axis (read-only)@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
+Saved in: @code{-}
 
 @item View.NbAbscissa
 Number of abscissa intervals for 2D graphs@*
@@ -412,7 +412,7 @@ Saved in: @code{General.OptionsFileName}
 @item View.Tangents
 Display size of tangent vectors (in pixels)@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item View.TensorType
 Tensor Visualization Type@*
