@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.44 2003-11-29 01:38:54 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.45 2003-11-29 19:29:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -71,18 +71,15 @@ GMSH_Plugin *GMSH_PluginManager::find(char *pluginName)
 void GMSH_PluginManager::action(char *pluginName, char *action, void *data)
 {
   GMSH_Plugin *plugin = find(pluginName);
-  if(!plugin) {
-    throw 1;
-  }
-  if(!strcmp(action, "Run")) {
+  if(!plugin)
+    throw "Unknown plugin name";
+
+  if(!strcmp(action, "Run"))
     plugin->run();
-  }
-  else if(!strcmp(action, "Save")) {
+  else if(!strcmp(action, "Save"))
     plugin->save();
-  }
-  else {
-    throw 1;
-  }
+  else
+    throw "Unknown plugin action";
 }
 
 void GMSH_PluginManager::setPluginOption(char *pluginName, char *option,

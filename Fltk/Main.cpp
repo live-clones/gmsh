@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.52 2003-11-27 02:33:31 geuzaine Exp $
+// $Id: Main.cpp,v 1.53 2003-11-29 19:29:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
             gmsh_progname, GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION,
             GMSH_PATCH_VERSION, currtime);
 
-  // Register Default Plugins (in test ...)
+  // Register Default Plugins
   if(CTX.default_plugins)
     GMSH_PluginManager::instance()->registerDefaultPlugins();
 

@@ -1,5 +1,5 @@
 %{ 
-// $Id: Gmsh.y,v 1.150 2003-11-29 01:38:52 geuzaine Exp $
+// $Id: Gmsh.y,v 1.151 2003-11-29 19:29:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -76,7 +76,7 @@ void yyerror (char *s);
 void yymsg (int type, char *fmt, ...);
 void skip_until (char *skip, char *until);
 int PrintListOfDouble (char *format, List_T *list, char *buffer);
- void FixRelativePath(char *in, char *out);
+void FixRelativePath(char *in, char *out);
 %}
 
 %union {
@@ -1504,25 +1504,21 @@ Affectation :
 
   | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT FExpr tEND 
     {
-      if(CTX.default_plugins){
-	try {
-	  GMSH_PluginManager::instance()->setPluginOption($3, $6, $8); 
-	}
-	catch (...) {
-	  yymsg(WARNING, "Unknown option '%s' or plugin '%s'", $6, $3);
-	}
+      try {
+	GMSH_PluginManager::instance()->setPluginOption($3, $6, $8); 
+      }
+      catch (...) {
+	yymsg(WARNING, "Unknown option '%s' or plugin '%s'", $6, $3);
       }
     }
 
   | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT StringExpr tEND 
     {
-      if(CTX.default_plugins){
-	try {
-	  GMSH_PluginManager::instance()->setPluginOption($3, $6, $8); 
-	}
-	catch (...) {
-	  yymsg(WARNING, "Unknown option '%s' or plugin '%s'", $6, $3);
-	}
+      try {
+	GMSH_PluginManager::instance()->setPluginOption($3, $6, $8); 
+      }
+      catch (...) {
+	yymsg(WARNING, "Unknown option '%s' or plugin '%s'", $6, $3);
       }
     }
 ;
@@ -2018,8 +2014,12 @@ Command :
     }
    | tPlugin '(' tSTRING ')' '.' tSTRING tEND
    {
-    if(CTX.default_plugins)
-      GMSH_PluginManager::instance()->action($3, $6, 0); 
+      try {
+	GMSH_PluginManager::instance()->action($3, $6, 0);
+      }
+      catch (...) {
+	yymsg(WARNING, "Unknown action '%s' or plugin '%s'", $6, $3);
+      }
    }
    | tCombine tSTRING tEND
     {
