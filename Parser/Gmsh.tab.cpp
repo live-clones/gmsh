@@ -172,7 +172,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.96 2001-07-30 13:47:18 remacle Exp $
+// $Id: Gmsh.tab.cpp,v 1.97 2001-07-30 14:24:41 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -3698,8 +3698,8 @@ case 141:
 	    for(i=0 ; i<List_Nbr(yyvsp[-5].l) ; i++){
 	      List_Put(TheSymbol.val, (int)(*(double*)List_Pointer(yyvsp[-5].l,i)),
 		       (double*)List_Pointer(yyvsp[-1].l,i));
-	      List_Add(Symbol_L, &TheSymbol);
 	    }
+	    List_Add(Symbol_L, &TheSymbol);
 	  }
 	  else
 	    vyyerror("Unknown variable '%s'", yyvsp[-8].c) ;

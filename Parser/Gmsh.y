@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.83 2001-07-30 12:54:40 geuzaine Exp $
+// $Id: Gmsh.y,v 1.84 2001-07-30 14:24:26 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -834,8 +834,8 @@ Affectation :
 	    for(i=0 ; i<List_Nbr($4) ; i++){
 	      List_Put(TheSymbol.val, (int)(*(double*)List_Pointer($4,i)),
 		       (double*)List_Pointer($8,i));
-	      List_Add(Symbol_L, &TheSymbol);
 	    }
+	    List_Add(Symbol_L, &TheSymbol);
 	  }
 	  else
 	    vyyerror("Unknown variable '%s'", $1) ;
