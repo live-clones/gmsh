@@ -1,10 +1,8 @@
-#include "Gmsh.h"
-#include "GmshUI.h"
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2001  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.33 2001-11-19 14:24:02 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.34 2001-11-20 08:04:59 geuzaine Exp $
  *
  * E-mail: Christophe.Geuzaine@AdValvas.be
  * URL: http://www.geuz.org/gl2ps/
@@ -1473,7 +1471,11 @@ GLvoid gl2psText(char *str, char *fontname, GLint fontsize){
   strcpy(prim->text->str, str);
   prim->text->fontname = fontname;
   prim->text->fontsize = fontsize;
-  gl2psListAdd(gl2ps.primitives, &prim);
+
+  if(!gl2ps.primitives)
+    gl2psMsg(GL2PS_ERROR, "gl2psText should be called inside gl2psBeginPage/gl2psEndPage");
+  else
+    gl2psListAdd(gl2ps.primitives, &prim);
 }
 
 GLvoid gl2psEnable(GLint mode){
