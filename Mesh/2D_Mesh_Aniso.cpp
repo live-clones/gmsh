@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.40 2004-05-25 23:16:26 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.41 2004-05-26 01:29:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -288,29 +288,6 @@ int Intersect_Edges_2d(Edge * a, Edge * b)
     return 0;
   if(x[0] > 0.0 && x[0] < 1.0 && x[1] > 0.0 && x[1] < 1.0)
     return 1;
-  return 0;
-}
-
-int compareEdgePtr(const void *a, const void *b)
-{
-  int i1, i2, j1, j2;
-  Edge *q, *w;
-
-  q = *(Edge **) a;
-  w = *(Edge **) b;
-  i1 = IMAX(q->V[0]->Num, q->V[1]->Num);
-  i2 = IMAX(w->V[0]->Num, w->V[1]->Num);
-  j1 = IMIN(q->V[0]->Num, q->V[1]->Num);
-  j2 = IMIN(w->V[0]->Num, w->V[1]->Num);
-
-  if(i1 < i2)
-    return (1);
-  if(i1 > i2)
-    return (-1);
-  if(j1 < j2)
-    return (1);
-  if(j1 > j2)
-    return (-1);
   return 0;
 }
 

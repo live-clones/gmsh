@@ -1,4 +1,4 @@
-// $Id: Edge.cpp,v 1.17 2004-05-25 23:16:26 geuzaine Exp $
+// $Id: Edge.cpp,v 1.18 2004-05-26 01:29:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -83,15 +83,12 @@ int edges_non[3] = { 2, 0, 1 };
 
 int compareEdge(const void *a, const void *b)
 {
-  int i1, i2, j1, j2;
-  Edge *q, *w;
-
-  q = (Edge *) a;
-  w = (Edge *) b;
-  i1 = IMAX(q->V[0]->Num, q->V[1]->Num);
-  i2 = IMAX(w->V[0]->Num, w->V[1]->Num);
-  j1 = IMIN(q->V[0]->Num, q->V[1]->Num);
-  j2 = IMIN(w->V[0]->Num, w->V[1]->Num);
+  Edge *q = (Edge *) a;
+  Edge *w = (Edge *) b;
+  int i1 = IMAX(q->V[0]->Num, q->V[1]->Num);
+  int i2 = IMAX(w->V[0]->Num, w->V[1]->Num);
+  int j1 = IMIN(q->V[0]->Num, q->V[1]->Num);
+  int j2 = IMIN(w->V[0]->Num, w->V[1]->Num);
 
   if(i1 < i2)
     return (1);
@@ -104,12 +101,18 @@ int compareEdge(const void *a, const void *b)
   return 0;
 }
 
+int compareEdgePtr(const void *a, const void *b)
+{
+  Edge *q = *(Edge **) a;
+  Edge *w = *(Edge **) b;
+
+  return compareEdge(q, w);
+}
+
 int compareEdgeAngle(const void *a, const void *b)
 {
-  Edge *q, *w;
-
-  q = (Edge *) a;
-  w = (Edge *) b;
+  Edge *q = (Edge *) a;
+  Edge *w = (Edge *) b;
   if(q->a >= w->a)
     return (1);
   return (-1);
