@@ -1,36 +1,33 @@
-$Id: CONTRIBUTORS,v 1.3 2001-03-05 07:43:53 geuzaine Exp $
+$Id: CONTRIBUTORS,v 1.4 2001-04-25 20:42:39 geuzaine Exp $
 
 Gmsh is copyright (c) 1997-2001 by
 
-    Jean-François Remacle <remacle@scorec.rpi.edu>
+    Jean-François Remacle <remacle@scorec.rpi.edu> and
     Christophe Geuzaine <christophe.geuzaine@ulg.ac.be>
 
-Significant parts of the code have been contributed by
+Parts of the code have been contributed by
 
-    ...
+    Marc Umé <Marc.Ume@digitalgraphics.be>
 
 Special thanks to the following folks who have greatly contributed by
 providing fresh ideas on theoretical or programming topics, or who
 have sent patches, requests, warnings, or pleas for changes or
 improvements. While attempts were made to be as complete as possible,
 it is inevitable that some contributors have been omitted. If you are
-in this situation, feel free to add yourself to this list!
+in this situation, just send an e-mail to one of the authors, and you
+will be added to the list!
 
-    Nicolas Moës <>
-    Éric Bechet <>
-    David Colignon <>
-    Patrick Dular <>
-    Johan Gyselinck <>
+    Éric Bechet <eric.bechet@epost.de>
+    David Colignon <david.colignon@ulg.ac.be>
+    Patrick Dular <patrick.dular@ulg.ac.be>
     Philippe Geuzaine <geuzaine@gnat.colorado.edu>
+    Johan Gyselinck <johan.gyselinck@ulg.ac.be>
     François Henrotte <fhenrott@esat.kuleuven.ac.be>
     Benoît Meys <bmeys@techspace-aero.be>
-    André Nicolet <andre.nicolet@fresnel.fr>
-    Uwe Pahner <uwe.pahner@esat.kuleuven.ac.be>
-    Ahmed Rassili <a.rassili@ulg.ac.be>
+    Nicolas Moës <moes@tam9.mech.nwu.edu>
 
-Finally, thanks to all of you who sent e-mail showing interrest. This
+Finally, thanks to all of you who sent e-mail showing interest. This
 has motivated us a lot to release the code as free software and to
-continue to improve it.
-
+continue improving it.
 
 

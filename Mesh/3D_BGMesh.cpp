@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.16 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.17 2001-04-25 20:42:39 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -7,8 +7,10 @@
 #include "Adapt.h"
 #include "Views.h"
 #include "Numeric.h"
+#include "Context.h"
 
 extern Mesh *THEM;
+extern Context_T  CTX;
 
 static Mesh m;
 static double XX, YY, ZZ, D, LL;
@@ -111,6 +113,7 @@ double Lc_XYZ (double X, double Y, double Z, Mesh * m){
     LCBGM (X, Y, Z, &l);
     break;
   case WITHPOINTS:
+    Msg(WARNING, "Send a mail to <gmsh@geuz.org> if you see this (Lc_XYZ)");
     if (Pt_In_Volume (X, Y, Z, m, &l, 0.0));
     else if (Pt_In_Volume (X, Y, Z, m, &l, 0.2));
     else if (Pt_In_Volume (X, Y, Z, m, &l, 0.5));
@@ -120,7 +123,7 @@ double Lc_XYZ (double X, double Y, double Z, Mesh * m){
     }
     break;
   }
-  return l;
+  return CTX.mesh.lc_factor*l;
 }
 
 /* ------------------------------------------------------------------------ */

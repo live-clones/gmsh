@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.13 2001-04-25 15:44:10 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.14 2001-04-25 20:42:39 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -81,7 +81,7 @@ double F_Lc (double t){
   Vertex  der, point;
   double  Lc;
 
-  if (THEM->BGM.Typ == ONFILE && CTX.mesh.algo == DELAUNAY_OLDALGO){
+  if (CTX.mesh.algo == DELAUNAY_OLDALGO && THEM->BGM.Typ == ONFILE){
     der = InterpolateCurve(THEC, t, 1);
     point = InterpolateCurve(THEC, t, 0);  
     Lc = Lc_XYZ(point.Pos.X, point.Pos.Y, point.Pos.Z, THEM);
@@ -89,7 +89,7 @@ double F_Lc (double t){
       Msg(GERROR, "Null characteristic length in background mesh");
       return sqrt(DSQR(der.Pos.X)+DSQR(der.Pos.Y)+DSQR(der.Pos.Z));
     }
-    return(sqrt(DSQR(der.Pos.X)+DSQR(der.Pos.Y)+DSQR(der.Pos.Z)) / (CTX.mesh.lc_factor*Lc));  
+    return sqrt(DSQR(der.Pos.X)+DSQR(der.Pos.Y)+DSQR(der.Pos.Z))/Lc;  
   }
   else{
     return THEM->Metric->getLc(t, THEC);
