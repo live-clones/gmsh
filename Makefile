@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.122 2001-08-07 21:00:10 remacle Exp $
+# $Id: Makefile,v 1.123 2001-08-08 13:34:02 remacle Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -279,7 +279,7 @@ bbn: tag
            "CC=g++ -mno-cygwin -I/mingw/include" \
            "C_FLAGS=-O3" \
            "OS_FLAGS=" \
-           "VERSION_FLAGS=-D_BLACKBOX -D_NOPLUGIN" \
+           "VERSION_FLAGS=-D_BLACKBOX" \
            "GL_INCLUDE=" \
            "GUI_INCLUDE=" \
         ); done
