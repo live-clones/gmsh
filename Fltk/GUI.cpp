@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.196 2002-09-24 02:04:34 geuzaine Exp $
+// $Id: GUI.cpp,v 1.197 2002-10-02 17:10:46 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -41,6 +41,7 @@
 #include "Icon.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
+#include "Solvers.h"
 
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
 #define WINDOW_BOX FL_FLAT_BOX
@@ -302,6 +303,7 @@ Context_Item menu_mesh[] =
 	  { NULL } 
 	};  
 
+// should create MAXSOLVERS items...
 Context_Item menu_solver[] = 
 { { "2Solver", NULL } ,
   { "Solver 0", (Fl_Callback *)solver_cb , (void*)0} ,
@@ -600,11 +602,6 @@ GUI::GUI(int argc, char **argv) {
   Fl_Tooltip::size(CTX.fontsize);
 #endif
 
-  // disable default fltk keyboard navigation. It is not necessary
-  // anymore, since correct handlers for the graphic and the colorbar
-  // window have been added.
-  // Fl::visible_focus(0);
-
   // All static windows are contructed (even if some are not
   // displayed) since the shortcuts should be valid even for hidden
   // windows, and we don't want to test for widget existence every time
@@ -640,7 +637,7 @@ GUI::GUI(int argc, char **argv) {
   create_visibility_window();
   create_about_window();
 
-  for(i=0; i<5; i++){
+  for(i=0; i<MAXSOLVERS; i++){
     solver[i].window = NULL;
     create_solver_window(i);
   }
@@ -879,12 +876,13 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
     break;
   default : // geometry, mesh, solver contexts
     if(m_module_butt->value() == 2){ //solver
+      // should handle MAXSOLVERS
       menu[1].label = opt_solver_name0(0,GMSH_GET,0);
       menu[2].label = opt_solver_name1(0,GMSH_GET,0);
       menu[3].label = opt_solver_name2(0,GMSH_GET,0);
       menu[4].label = opt_solver_name3(0,GMSH_GET,0);
       menu[5].label = opt_solver_name4(0,GMSH_GET,0);
-      for(i=0 ; i<5 ; i++){
+      for(i=0 ; i<MAXSOLVERS ; i++){
 	if(!strlen(menu[i+1].label)) menu[i+1].label = NULL;
       }
     }
@@ -2913,8 +2911,6 @@ void GUI::create_mesh_context_window(int num){
 
 // Create the windows for the solvers
 
-#include "Solvers.h"
-
 void GUI::create_solver_window(int num){
   int i, nbbutts=0, newrow=0;
   static Fl_Group *g[10];
@@ -2926,10 +2922,10 @@ void GUI::create_solver_window(int num){
     return;
   }
 
-  for(i=0; i<5; i++)
+  for(i=0; i<MAXSOLVERS; i++)
     if(strlen(SINFO[num].option_name[i])) SINFO[num].nboptions = i+1;
 
-  for(i=0; i<5; i++)
+  for(i=0; i<MAXSOLVERS; i++)
     if(strlen(SINFO[num].button_name[i])) nbbutts++ ;
   if(nbbutts > 3) newrow = 1;
 
@@ -3007,7 +3003,7 @@ void GUI::create_solver_window(int num){
     o->end();
   }
 
-  static int arg[5][5][2];
+  static int arg[MAXSOLVERS][5][2];
   int nb=0;
   for(i=4; i>=0; i--){
     if(strlen(SINFO[num].button_name[i])){
