@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.25 2004-12-24 04:58:20 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.26 2004-12-24 18:12:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -31,6 +31,7 @@
 #include "Gmsh.h"
 #include "ColorTable.h"
 #include "Context.h"
+#include "Numeric.h"
 
 extern Context_T CTX;
 
@@ -97,6 +98,9 @@ void ColorTable_Recompute(GmshColorTable * ct)
       s = 1.0 - s;
 
     switch (ct->ipar[COLORTABLE_NUMBER]) {
+    case 0:  // all black
+      r = g = b = 0;
+      break;
     case 1:  // vis5d
       t = (curvature + 1.4) * (s - (1. + bias) / 2.);
       r = (int)(128.0 + 127.0 * atan(7.0 * t) / 1.57);
@@ -128,7 +132,7 @@ void ColorTable_Recompute(GmshColorTable * ct)
 	b = (int)(bb*255.);
       }
       break;
-    case 3:  // samcef
+    case 3:  // lucie, samcef (?)
       if(s - bias <= 0.) {
 	r = 0;
 	g = 0;
@@ -171,8 +175,7 @@ void ColorTable_Recompute(GmshColorTable * ct)
 	curvature = (curvature == 0.25) ? 0.26 : curvature;
 	r = 0;
 	g = 255;
-	b =
-	  (int)(255. - (255. / (0.25 - curvature)) * (s - bias - 0.25 - curvature));
+	b = (int)(255. - (255. / (0.25 - curvature)) * (s - bias - 0.25 - curvature));
       }
       else if(s - bias <= 0.75 - curvature) {
 	curvature = (curvature == 0.25) ? 0.26 : curvature;
@@ -183,8 +186,7 @@ void ColorTable_Recompute(GmshColorTable * ct)
       else if(s - bias <= 1.) {
 	curvature = (curvature == -0.25) ? -0.26 : curvature;
 	r = 255;
-	g =
-	  (int)(255. - (255. / (0.25 + curvature)) * (s - bias - 0.75 + curvature));
+	g = (int)(255. - (255. / (0.25 + curvature)) * (s - bias - 0.75 + curvature));
 	b = 0;
       }
       else {
@@ -261,7 +263,53 @@ void ColorTable_Recompute(GmshColorTable * ct)
 	r = g = b = (int)(255 * (1. - curvature));
       }
       break;
-    case 0:  // all black
+    case 10: // all white
+      r = g = b = 255;
+      break;
+    case 11: // matlab "hsv"
+      {
+	double H = 6. * s + 1.e-10, R, G, B;
+	HSV_to_RGB(H, 1., 1., &R, &G, &B);
+	r = (int)(255 * R);
+	g = (int)(255 * G);
+	b = (int)(255 * B);
+      }
+      break;
+    case 12: // matlab "bone"
+      r = (int)(255. * (7.*gray(s-bias) + hot_b(s-bias))/8.);
+      g = (int)(255. * (7.*gray(s-bias) + hot_g(s-bias))/8.);
+      b = (int)(255. * (7.*gray(s-bias) + hot_r(s-bias))/8.);
+      break;
+    case 13: // matlab "spring"
+      r = (int)(255. * 1.);
+      g = (int)(255. * gray(s-bias));
+      b = (int)(255. * (1. - gray(s-bias)));
+      break;
+    case 14: // matlab "summer"
+      r = (int)(255. * gray(s-bias));
+      g = (int)(255. * (0.5+gray(s-bias)/2.));
+      b = (int)(255. * 0.4);
+      break;
+    case 15: // matlab "autumn"
+      r = (int)(255. * 1.);
+      g = (int)(255. * gray(s-bias));
+      b = (int)(255. * 0.);
+      break;
+    case 16: // matlab "winter"
+      r = (int)(255. * 0.);
+      g = (int)(255. * gray(s-bias));
+      b = (int)(255. * (0.5+(1.-gray(s-bias))/2.));
+      break;
+    case 17: // matlab "cool"
+      r = (int)(255. * gray(s-bias));
+      g = (int)(255. * (1.-gray(s-bias)));
+      b = (int)(255. * 1.);
+      break;
+    case 18: // matlab "copper"
+      r = (int)(255. * DMIN(1., gray(s-bias) * 1.25));
+      g = (int)(255. * DMIN(1., gray(s-bias) * 0.7812));
+      b = (int)(255. * DMIN(1., gray(s-bias) * 0.4975));
+      break;
     default:
       r = g = b = 0;
       break;
@@ -360,5 +408,66 @@ int ColorTable_IsAlpha(GmshColorTable * ct)
       return 1;
   }
   return 0;
+}
+
+// HSV/RBG conversion routines
+
+#define UNDEFINED   0
+
+// rgb on [0, 1], sv returned on [0, 1] and h on [0, 6]. 
+// Exception: h is returned UNDEFINED if S==0.
+
+#define RETURN_HSV(h,s,v) {*H=h; *S=s; *V=v; return;}
+
+void RGB_to_HSV(double R, double G, double B,
+		double *H, double *S, double *V)
+{
+  double v, x, f;
+  int i;
+
+  x = DMIN(DMIN(R, G), B);
+  v = DMAX(DMAX(R, G), B);
+  if(v == x)
+    RETURN_HSV(UNDEFINED, 0, v);
+  f = (R == x) ? G - B : ((G == x) ? B - R : R - G);
+  i = (R == x) ? 3 : ((G == x) ? 5 : 1);
+  RETURN_HSV(i - f / (v - x), (v - x) / v, v);
+}
+
+// h given on [0, 6] or UNDEFINED. s and v given on [0, 1].      
+// rgb each returned on [0, 1].
+
+#define RETURN_RGB(r,g,b) {*R=r; *G=g; *B=b; return;}
+
+void HSV_to_RGB(double H, double S, double V,
+		double *R, double *G, double *B)
+{
+  double m, n, f;
+  int i;
+
+  if(H == UNDEFINED)
+    RETURN_RGB(V, V, V);
+  i = (int)floor(H);
+  f = H - i;
+  if(!(i & 1))
+    f = 1 - f;  // if i is even
+  m = V * (1 - S);
+  n = V * (1 - S * f);
+
+  switch (i) {
+  case 6:
+  case 0:
+    RETURN_RGB(V, n, m);
+  case 1:
+    RETURN_RGB(n, V, m);
+  case 2:
+    RETURN_RGB(m, V, n);
+  case 3:
+    RETURN_RGB(m, n, V);
+  case 4:
+    RETURN_RGB(n, m, V);
+  case 5:
+    RETURN_RGB(V, m, n);
+  }
 }
 

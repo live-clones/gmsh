@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.41 2004-12-24 05:32:53 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.42 2004-12-24 18:12:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,6 @@
    
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "Numeric.h"
 #include "GUI.h"
 #include "ColorTable.h"
 #include "Colorbar_Window.h"
@@ -34,7 +33,6 @@
 
 extern Context_T CTX;
 
-#define UNDEFINED   0
 #define EPS         1.e-10
 
 // This file defines the Colorbar_Window class (subclass of Fl_Window)
@@ -53,65 +51,6 @@ Colorbar_Window::Colorbar_Window(int x, int y, int w, int h, const char *l)
   marker_pos = 0;
   minval = maxval = 0.0;
 }
-
-
-// rgb on [0, 1], sv returned on [0, 1] and h on [0, 6]. 
-// Exception: h is returned UNDEFINED if S==0.
-
-#define RETURN_HSV(h,s,v) {*H=h; *S=s; *V=v; return;}
-
-static void RGB_to_HSV(double R, double G, double B,
-                       double *H, double *S, double *V)
-{
-  double v, x, f;
-  int i;
-
-  x = DMIN(DMIN(R, G), B);
-  v = DMAX(DMAX(R, G), B);
-  if(v == x)
-    RETURN_HSV(UNDEFINED, 0, v);
-  f = (R == x) ? G - B : ((G == x) ? B - R : R - G);
-  i = (R == x) ? 3 : ((G == x) ? 5 : 1);
-  RETURN_HSV(i - f / (v - x), (v - x) / v, v);
-}
-
-// h given on [0, 6] or UNDEFINED. s and v given on [0, 1].      
-// rgb each returned on [0, 1].
-
-#define RETURN_RGB(r,g,b) {*R=r; *G=g; *B=b; return;}
-
-static void HSV_to_RGB(double H, double S, double V,
-                       double *R, double *G, double *B)
-{
-  double m, n, f;
-  int i;
-
-  if(H == UNDEFINED)
-    RETURN_RGB(V, V, V);
-  i = (int)floor(H);
-  f = H - i;
-  if(!(i & 1))
-    f = 1 - f;  // if i is even
-  m = V * (1 - S);
-  n = V * (1 - S * f);
-
-  switch (i) {
-  case 6:
-  case 0:
-    RETURN_RGB(V, n, m);
-  case 1:
-    RETURN_RGB(n, V, m);
-  case 2:
-    RETURN_RGB(m, V, n);
-  case 3:
-    RETURN_RGB(m, n, V);
-  case 4:
-    RETURN_RGB(n, m, V);
-  case 5:
-    RETURN_RGB(V, m, n);
-  }
-}
-
 
 // Convert window X coordinate to color table index
 
@@ -287,7 +226,10 @@ void Colorbar_Window::redraw_range(int a, int b)
   int xx0 = 10, xx1 = 12 * font_height, yy0 = 10;
   if(help_flag) {
     i = 0;
-    fl_draw("0, 1, 2, ..., 9", xx0, yy0 + (i + 1) * font_height);
+    fl_draw("0, 1, 2, 3, ...", xx0, yy0 + (i + 1) * font_height);
+    fl_draw("select predefined colormap", xx1, yy0 + (i + 1) * font_height);
+    i++;
+    fl_draw("Ctrl+0, Ctrl+1, ...", xx0, yy0 + (i + 1) * font_height);
     fl_draw("select predefined colormap", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("mouse1", xx0, yy0 + (i + 1) * font_height);
@@ -459,6 +401,46 @@ int Colorbar_Window::handle(int event)
     }
     else if(Fl::test_shortcut('9')) {
       ColorTable_InitParam(9, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_CTRL + '0')) {
+      ColorTable_InitParam(10, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_CTRL + '1')) {
+      ColorTable_InitParam(11, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_CTRL + '2')) {
+      ColorTable_InitParam(12, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_CTRL + '3')) {
+      ColorTable_InitParam(13, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_CTRL + '4')) {
+      ColorTable_InitParam(14, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_CTRL + '5')) {
+      ColorTable_InitParam(15, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_CTRL + '6')) {
+      ColorTable_InitParam(16, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_CTRL + '7')) {
+      ColorTable_InitParam(17, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_CTRL + '8')) {
+      ColorTable_InitParam(18, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_CTRL + '9')) {
+      ColorTable_InitParam(19, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('c')) {
