@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.8 2004-11-26 15:06:50 remacle Exp $
+// $Id: Integrate.cpp,v 1.9 2004-11-26 16:16:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -30,235 +30,199 @@
 extern Context_T CTX;
 
 StringXNumber IntegrateOptions_Number[] = {
-    {GMSH_FULLRC, "iView", NULL, -1.},
-    {GMSH_FULLRC, "computeLevelsetPositive", NULL, 0.}
+  {GMSH_FULLRC, "iView", NULL, -1.},
+  {GMSH_FULLRC, "computeLevelsetPositive", NULL, 0.}
 };
 
 extern "C"
 {
-    GMSH_Plugin *GMSH_RegisterIntegratePlugin()
-    {
-	return new GMSH_IntegratePlugin();
-    }
+  GMSH_Plugin *GMSH_RegisterIntegratePlugin()
+  {
+    return new GMSH_IntegratePlugin();
+  }
 }
 
 GMSH_IntegratePlugin::GMSH_IntegratePlugin()
 {
-    ;
+  ;
 }
 
 void GMSH_IntegratePlugin::getName(char *name) const
 {
-    strcpy(name, "Integrate");
+  strcpy(name, "Integrate");
 }
 
 void GMSH_IntegratePlugin::getInfos(char *author, char *copyright,
 				    char *help_text) const
 {
-    strcpy(author, "C. Geuzaine (geuz@geuz.org)");
-    strcpy(copyright, "DGR (www.multiphysics.com)");
-    strcpy(help_text,
-	   "Plugin(Integrate) integrates scalar fields over\n"
-	   "all the elements in the view `iView', as well\n"
-	   "as the circulation/flux of vector fields over\n"
-	   "line/surface elements. If `iView' < 0, the\n"
-	   "plugin is run on the current view. If\n"
-	   "`computeLevelsetPositive' is set, the plugin\n"
-	   "computes the positive area (volume) of the map\n"
-	   "(for triangle/tetrahedron maps only).\n"
-	   "\n"
-	   "Plugin(Integrate) creates one new view.\n");
+  strcpy(author, "C. Geuzaine (geuz@geuz.org)");
+  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(help_text,
+	 "Plugin(Integrate) integrates scalar fields over\n"
+	 "all the elements in the view `iView', as well\n"
+	 "as the circulation/flux of vector fields over\n"
+	 "line/surface elements. If `iView' < 0, the\n"
+	 "plugin is run on the current view. If\n"
+	 "`computeLevelsetPositive' is set, the plugin\n"
+	 "computes the positive area (volume) of the map\n"
+	 "(for triangle/tetrahedron maps only).\n"
+	 "\n"
+	 "Plugin(Integrate) creates one new view.\n");
 }
 
 int GMSH_IntegratePlugin::getNbOptions() const
 {
-    return sizeof(IntegrateOptions_Number) / sizeof(StringXNumber);
+  return sizeof(IntegrateOptions_Number) / sizeof(StringXNumber);
 }
 
 StringXNumber *GMSH_IntegratePlugin::getOption(int iopt)
 {
-    return &IntegrateOptions_Number[iopt];
+  return &IntegrateOptions_Number[iopt];
 }
 
 void GMSH_IntegratePlugin::catchErrorMessage(char *errorMessage) const
 {
-    strcpy(errorMessage, "Integrate failed...");
+  strcpy(errorMessage, "Integrate failed...");
 }
 
 static double integrate(int nbList, List_T *list, int dim, 
 			int nbNod, int nbComp, int step)
 {
-    if(!nbList) return 0.;
+  if(!nbList) return 0.;
   
-    const int levelsetPositive = (int)IntegrateOptions_Number[1].def;
-
-    double res = 0.;
-    int nb = List_Nbr(list) / nbList;
-    for(int i = 0; i < List_Nbr(list); i += nb) {
-	double *x = (double *)List_Pointer_Fast(list, i);
-	double *y = (double *)List_Pointer_Fast(list, i + nbNod);
-	double *z = (double *)List_Pointer_Fast(list, i + 2 * nbNod);
-	double *v = (double *)List_Pointer_Fast(list, i + 3 * nbNod +
-						nbNod * nbComp * step);
-	if(dim == 0){
-	    if(nbNod == 1){ 
-		point p(x, y, z); 
-		if(nbComp == 1) res += p.integrate(v); 
-	    }
+  const int levelsetPositive = (int)IntegrateOptions_Number[1].def;
+  
+  double res = 0.;
+  int nb = List_Nbr(list) / nbList;
+  for(int i = 0; i < List_Nbr(list); i += nb) {
+    double *x = (double *)List_Pointer_Fast(list, i);
+    double *y = (double *)List_Pointer_Fast(list, i + nbNod);
+    double *z = (double *)List_Pointer_Fast(list, i + 2 * nbNod);
+    double *v = (double *)List_Pointer_Fast(list, i + 3 * nbNod +
+					    nbNod * nbComp * step);
+    if(dim == 0){
+      if(nbNod == 1){ 
+	point p(x, y, z); 
+	if(nbComp == 1){
+	  if(!levelsetPositive) res += p.integrate(v);
+	  else res += p.integrateLevelsetPositive(v);
 	}
-	else if(dim == 1){
-	    if(nbNod == 2){ 
-		line l(x, y, z);
-		if(nbComp == 1) res += l.integrate(v);
-		else if(nbComp == 3) res += l.integrateCirculation(v);
-	    }
-	}
-	else if(dim == 2){
-	    if(nbNod == 3){
-		triangle t(x, y, z);
-		if(nbComp == 1){
-		    if(!levelsetPositive)
-			res += t.integrate(v); 
-		    else{
-			double ONES[]       = { 1.0 , 1.0 , 1.0 }; 
-			const double area   = t.integrate(ONES);
-			const double SUM    = v[0] + v[1] + v[2];
-			const double SUMABS = fabs(v[0]) + fabs(v[1]) + fabs (v[2]);		
-			if(SUMABS){
-			    const double XI     = SUM / SUMABS;
-			    res                += area * (1 - XI) * 0.5 ;
-			}
-		    }
-		}
-		else if(nbComp == 3) res += t.integrateFlux(v); 
-	    }
-	    else if(nbNod == 4){ 
-		quadrangle q(x, y, z); 	
-		if(nbComp == 1) {
-		    if(!levelsetPositive)
-		    {
-			res += q.integrate(v);
-		    }
-		    else
-		    {
-			double ONES[]       = { 1.0 , 1.0 , 1.0 , 1.0}; 
-			const double area   = q.integrate(ONES);
-			const double SUM    = v[0] + v[1] + v[2] + v[3];
-			const double SUMABS = fabs(v[0]) + fabs(v[1]) + fabs (v[2]) + fabs (v[3]);
-			if(SUMABS != 0.0){
-			    const double XI     = SUM / SUMABS;
-			    res                += area * (1 - XI) * 0.5 ;
-			}
-		    }	    
-		}
-		else if(nbComp == 3) res += q.integrateFlux(v);
-	    }
-	}
-	else if(dim == 3)
-	{
-	    if(nbNod == 4)
-	    { 
-		tetrahedron t(x, y, z); 
-		if(nbComp == 1) 
-		{
-		    if ( ! levelsetPositive )
-			res += t.integrate(v); 
-		    else
-		    {
-			double ONES[]       = { 1.0 , 1.0 , 1.0, 1.0 }; 
-			const double area   = fabs(t.integrate (ONES));
-			const double SUM    = v[0] + v[1] + v[2] + v[3];
-			const double SUMABS = fabs(v[0]) + fabs(v[1]) + fabs (v[2]) + fabs (v[3]);		
-			const double XI     = SUM / SUMABS;
-			res                += area  * (1 - XI) * 0.5 ;
-		    }
-		}
-	    }
-	    else if(nbNod == 8){
-		hexahedron h(x, y, z); 
-		if(nbComp == 1) 
-		{
-		    if ( ! levelsetPositive )
-			res += h.integrate(v); 
-		    else
-		    {
-			double ONES[]       = { 1.0 , 1.0 , 1.0, 1.0 ,1,1,1,1}; 
-			const double area   = fabs(h.integrate (ONES));
-			const double SUM    = v[0] + v[1] + v[2] + v[3]+v[4] + v[5] + v[6] + v[7];
-			const double SUMABS = fabs(v[0]) + fabs(v[1]) + fabs (v[2]) + fabs (v[3]) +
-			    fabs(v[4]) + fabs(v[5]) + fabs (v[6]) + fabs (v[7]);		
-			if (SUMABS)
-			{
-			    const double XI     = SUM / SUMABS;
-			    res                += area  * (1 - XI) * 0.5 ;
-			}
-		    }
-		}
-	    }
-	    else if(nbNod == 6){ 
-		prism p(x, y, z);
-		if(nbComp == 1) res += p.integrate(v); 
-	    }
-	    else if(nbNod == 5){ 
-		pyramid p(x, y, z); 
-		if(nbComp == 1) res += p.integrate(v); 
-	    }
-	}
+      }
     }
-// printf("integration res = %22.15E\n",res);
-    return res;
+    else if(dim == 1){
+      if(nbNod == 2){ 
+	line l(x, y, z);
+	if(nbComp == 1){
+	  if(!levelsetPositive) res += l.integrate(v);
+	  else res += l.integrateLevelsetPositive(v);
+	}
+	else if(nbComp == 3) res += l.integrateCirculation(v);
+      }
+    }
+    else if(dim == 2){
+      if(nbNod == 3){
+	triangle t(x, y, z);
+	if(nbComp == 1){
+	  if(!levelsetPositive) res += t.integrate(v); 
+	  else res += t.integrateLevelsetPositive(v); 
+	}
+	else if(nbComp == 3) res += t.integrateFlux(v); 
+      }
+      else if(nbNod == 4){ 
+	quadrangle q(x, y, z); 	
+	if(nbComp == 1) {
+	  if(!levelsetPositive) res += q.integrate(v);
+	  else res += q.integrateLevelsetPositive(v);
+	}
+	else if(nbComp == 3) res += q.integrateFlux(v);
+      }
+    }
+    else if(dim == 3){
+      if(nbNod == 4){ 
+	tetrahedron t(x, y, z); 
+	if(nbComp == 1){
+	  if(!levelsetPositive) res += t.integrate(v); 
+	  else res += t.integrateLevelsetPositive(v); 
+	}
+      }
+      else if(nbNod == 8){
+	hexahedron h(x, y, z); 
+	if(nbComp == 1){
+	  if(!levelsetPositive) res += h.integrate(v); 
+	  else res += h.integrateLevelsetPositive(v); 
+	}
+      }
+      else if(nbNod == 6){ 
+	prism p(x, y, z);
+	if(nbComp == 1){
+	  if(!levelsetPositive) res += p.integrate(v);
+	  else res += p.integrateLevelsetPositive(v);
+	}
+      }
+      else if(nbNod == 5){ 
+	pyramid p(x, y, z);
+	if(nbComp == 1){
+	  if(!levelsetPositive) res += p.integrate(v);
+	  else res += p.integrateLevelsetPositive(v);
+	}
+      }
+    }
+  }
+  // printf("integration res = %22.15E\n",res);
+  return res;
 }
+
 Post_View *GMSH_IntegratePlugin::execute(Post_View * v)
 {
-    int iView = (int)IntegrateOptions_Number[0].def;
-    
-    if(iView < 0)
-	iView = v ? v->Index : 0;
-    
-    if(!List_Pointer_Test(CTX.post.list, iView)) {
-	Msg(GERROR, "View[%d] does not exist", iView);
-	return v;
-    }
-    
-    Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-    Post_View *v2 = BeginView(1);
-    
-    double x = (v1->BBox[0]+v1->BBox[1])/2.;
-    double y = (v1->BBox[2]+v1->BBox[3])/2.;
-    double z = (v1->BBox[4]+v1->BBox[5])/2.;
-    List_Add(v2->SP, &x);
-    List_Add(v2->SP, &y);
-    List_Add(v2->SP, &z);
-    for(int ts = 0; ts < v1->NbTimeStep; ts++){
-	double val = 0;
-// scalar fields
-	val += integrate(v1->NbSP, v1->SP, 0, 1, 1, ts);
-	val += integrate(v1->NbSL, v1->SL, 1, 2, 1, ts);
-	val += integrate(v1->NbST, v1->ST, 2, 3, 1, ts);
-	val += integrate(v1->NbSQ, v1->SQ, 2, 4, 1, ts);
-	val += integrate(v1->NbSS, v1->SS, 3, 4, 1, ts);
-	val += integrate(v1->NbSH, v1->SH, 3, 8, 1, ts);
-	val += integrate(v1->NbSI, v1->SI, 3, 6, 1, ts);
-	val += integrate(v1->NbSY, v1->SY, 3, 5, 1, ts);
-// circulations
-	val += integrate(v1->NbVL, v1->VL, 1, 2, 3, ts);
-// fluxes
-	val += integrate(v1->NbVT, v1->VT, 2, 3, 3, ts);
-	val += integrate(v1->NbVQ, v1->VQ, 2, 4, 3, ts);
-	Msg(INFO, "Step %d: integral = %.16g", ts, val);
-	List_Add(v2->SP, &val);
-    }
-    v2->NbSP = 1;
-    v2->IntervalsType = DRAW_POST_NUMERIC;
-    
-// copy time data
-    for(int i = 0; i < List_Nbr(v1->Time); i++)
-	List_Add(v2->Time, List_Pointer(v1->Time, i));
-// finalize
-    char name[1024], filename[1024];
-    sprintf(name, "%s_Integrate", v1->Name);
-    sprintf(filename, "%s_Integrate.pos", v1->Name);
-    EndView(v2, 1, filename, name);
-    
-    return v2;
+  int iView = (int)IntegrateOptions_Number[0].def;
+  
+  if(iView < 0)
+    iView = v ? v->Index : 0;
+  
+  if(!List_Pointer_Test(CTX.post.list, iView)) {
+    Msg(GERROR, "View[%d] does not exist", iView);
+    return v;
+  }
+  
+  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
+  Post_View *v2 = BeginView(1);
+  
+  double x = (v1->BBox[0]+v1->BBox[1])/2.;
+  double y = (v1->BBox[2]+v1->BBox[3])/2.;
+  double z = (v1->BBox[4]+v1->BBox[5])/2.;
+  List_Add(v2->SP, &x);
+  List_Add(v2->SP, &y);
+  List_Add(v2->SP, &z);
+  for(int ts = 0; ts < v1->NbTimeStep; ts++){
+    double val = 0;
+    // scalar fields
+    val += integrate(v1->NbSP, v1->SP, 0, 1, 1, ts);
+    val += integrate(v1->NbSL, v1->SL, 1, 2, 1, ts);
+    val += integrate(v1->NbST, v1->ST, 2, 3, 1, ts);
+    val += integrate(v1->NbSQ, v1->SQ, 2, 4, 1, ts);
+    val += integrate(v1->NbSS, v1->SS, 3, 4, 1, ts);
+    val += integrate(v1->NbSH, v1->SH, 3, 8, 1, ts);
+    val += integrate(v1->NbSI, v1->SI, 3, 6, 1, ts);
+    val += integrate(v1->NbSY, v1->SY, 3, 5, 1, ts);
+    // circulations
+    val += integrate(v1->NbVL, v1->VL, 1, 2, 3, ts);
+    // fluxes
+    val += integrate(v1->NbVT, v1->VT, 2, 3, 3, ts);
+    val += integrate(v1->NbVQ, v1->VQ, 2, 4, 3, ts);
+    Msg(INFO, "Step %d: integral = %.16g", ts, val);
+    List_Add(v2->SP, &val);
+  }
+  v2->NbSP = 1;
+  v2->IntervalsType = DRAW_POST_NUMERIC;
+  
+  // copy time data
+  for(int i = 0; i < List_Nbr(v1->Time); i++)
+    List_Add(v2->Time, List_Pointer(v1->Time, i));
+  // finalize
+  char name[1024], filename[1024];
+  sprintf(name, "%s_Integrate", v1->Name);
+  sprintf(filename, "%s_Integrate.pos", v1->Name);
+  EndView(v2, 1, filename, name);
+  
+  return v2;
 }

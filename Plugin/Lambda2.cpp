@@ -1,4 +1,4 @@
-// $Id: Lambda2.cpp,v 1.1 2004-11-26 10:31:54 remacle Exp $
+// $Id: Lambda2.cpp,v 1.2 2004-11-26 16:16:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -30,17 +30,12 @@
 #include <math.h>
 #include <stdio.h>
 
-#if defined(HAVE_MATH_EVAL)
-#include "matheval.h"
-#endif
-
 extern Context_T CTX;
 
 StringXNumber Lambda2Options_Number[] = {
   {GMSH_FULLRC, "Eigenvalue", NULL, 2.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
-
 
 extern "C"
 {
@@ -49,7 +44,6 @@ extern "C"
     return new GMSH_Lambda2Plugin();
   }
 }
-
 
 GMSH_Lambda2Plugin::GMSH_Lambda2Plugin()
 {
@@ -79,7 +73,7 @@ void GMSH_Lambda2Plugin::getInfos(char *author, char *copyright,
 	 "If `iView' < 0, the plugin is run\n"
 	 "on the current view.\n"
 	 "\n"
-	 "Plugin(Lambda2) is executed in-place.\n");
+	 "Plugin(Lambda2) creates one noew view.\n");
 }
 
 int GMSH_Lambda2Plugin::getNbOptions() const
@@ -97,45 +91,44 @@ void GMSH_Lambda2Plugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Lambda2 failed...");
 }
 
-//-----------------------------------------------------------------------------
 static void eigen(List_T *inList, int inNb, 
 		  List_T *outListScalar, int *outNbScalar,
 		  int nbTime, int nbNod, int nbComp, int lam)
 {
-
   if(!inNb)
     return;
   
   int outNbComp, *outNb;
   List_T *outList;
-
+  
   outNbComp = 1;
   outNb = outNbScalar;
   outList = outListScalar;
-
+  
   int nb = List_Nbr(inList) / inNb;
-
+  
   //boucle sur les elements
   //-----------------------
   for(int i = 0; i < List_Nbr(inList); i += nb) {
-
+    
     for(int j = 0; j < 3 * nbNod; j++)
       List_Add(outList, List_Pointer_Fast(inList, i + j));
-
+    
     for(int j = 0; j < nbTime; j++){
       
       double *x = (double *)List_Pointer_Fast(inList, i);
       double *y = (double *)List_Pointer_Fast(inList, i + nbNod);
       double *z = (double *)List_Pointer_Fast(inList, i + 2 * nbNod);
+      double *v = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + 
+					      nbNod * nbComp * j + nbComp * 0);
       double GradVel[3][3];
-      double *v = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + nbNod * nbComp * j + nbComp * 0);
       GradVel[0][0] = v[0]; GradVel[0][1] = v[1]; GradVel[0][2] = v[2];
       GradVel[1][0] = v[3]; GradVel[1][1] = v[4]; GradVel[1][2] = v[5];
       GradVel[2][0] = v[6]; GradVel[2][1] = v[7]; GradVel[2][2] = v[8];
-    
+      
       //par element
       //------------
-
+      
       //calcul partie sym et antisymetrique
       double sym[3][3];
       double asym[3][3];
@@ -156,7 +149,7 @@ static void eigen(List_T *inList, int inNb,
       //calcul de lambda avec tri
       double lambda[3];
       eigenvalue(a, lambda);
-                   
+      
       double res;
       for(int k = 0; k < nbNod; k++){
         for(int l = 0; l < outNbComp; l++){
@@ -167,46 +160,34 @@ static void eigen(List_T *inList, int inNb,
     }
     (*outNb)++;
   }
-
 }
 
-//-----------------------------------------------------------------------------
 Post_View *GMSH_Lambda2Plugin::execute(Post_View * v)
 {
   int ev = (int)Lambda2Options_Number[0].def;
   int iView = (int)Lambda2Options_Number[1].def;
-
+  
   if(iView < 0)
     iView = v ? v->Index : 0;
-
+  
   if(!List_Pointer_Test(CTX.post.list, iView)) {
     Msg(GERROR, "View[%d] does not exist", iView);
     return v;
   }
 
+  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);  
   Post_View *v2 = BeginView(1);
 
-  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
-
   eigen(v1->TT, v1->NbTT, v2->ST, &v2->NbSS, v1->NbTimeStep, 3, 9, ev);
- 
   eigen(v1->TS, v1->NbTS, v2->SS, &v2->NbSS, v1->NbTimeStep, 4, 9, ev);
-
- if(v2->empty()) {
-    RemoveViewByNumber(v2->Num);
-    return v1;
-  }
-  else{
-    // copy time data
-    for(int i = 0; i < List_Nbr(v1->Time); i++)
-      List_Add(v2->Time, List_Pointer(v1->Time, i));
-    // finalize
-    char name[1024], filename[1024];
-    sprintf(name, "%s_Extract", v1->Name);
-    sprintf(filename, "%s_Extract.pos", v1->Name);
-    EndView(v2, 1, filename, name);
-    return v2;
-
-  }
+  
+  // copy time data
+  for(int i = 0; i < List_Nbr(v1->Time); i++)
+    List_Add(v2->Time, List_Pointer(v1->Time, i));
+  // finalize
+  char name[1024], filename[1024];
+  sprintf(name, "%s_Extract", v1->Name);
+  sprintf(filename, "%s_Extract.pos", v1->Name);
+  EndView(v2, 1, filename, name);
+  return v2;
 }
-//------------------------------------------------------------------

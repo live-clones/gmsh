@@ -37,8 +37,6 @@ public:
   void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt); 
-  int getNbOptionsStr() const;
-  StringXString* getOptionStr(int iopt);  
   Post_View *execute(Post_View *);
 };
 

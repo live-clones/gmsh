@@ -93,6 +93,20 @@ public:
     }
     return sum;
   }
+  double integrateLevelsetPositive(double val[])
+  {
+    double ones[8] = {1., 1., 1., 1., 1., 1., 1., 1.}; // FIXME: 8-node max
+    double area = integrate(ones);
+    double sum = 0, sumabs = 0.;
+    for(int i = 0; i < getNumNodes(); i++){
+      sum += val[i];
+      sumabs += fabs(val[i]);		
+    }
+    double res = 0.;
+    if(sumabs)
+      res = area * (1 - sum/sumabs) * 0.5 ;
+    return res;
+  }
 };
 
 class point : public element{
