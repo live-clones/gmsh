@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.20 2001-05-17 07:11:49 geuzaine Exp $
+// $Id: CAD.cpp,v 1.21 2001-05-22 07:11:14 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -17,7 +17,7 @@ extern Context_T  CTX;
 extern int        CurrentNodeNumber;
 
 static int      MAXREG,MAXPOINT;
-static List_T  *ListOfTransformedPoints;
+static List_T  *ListOfTransformedPoints=NULL;
 
 int compare2Lists (List_T *List1, List_T *List2,
                    int (*fcmp)(const void *a, const void *b)){
@@ -596,7 +596,8 @@ static void vecmat4x4(double mat[4][4],double vec[4], double res[4]){
 void ApplyTransformationToPoint ( double matrix[4][4], Vertex *v ){
   double pos[4],vec[4];
 
-  if(!ListOfTransformedPoints)ListOfTransformedPoints = List_Create(2,2,sizeof(int));
+  if(!ListOfTransformedPoints)
+    ListOfTransformedPoints = List_Create(2,2,sizeof(int));
   
   if(!List_Search(ListOfTransformedPoints,&v->Num,fcmp_absint)){
     List_Add(ListOfTransformedPoints,&v->Num);

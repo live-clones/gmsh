@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.15 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: List.cpp,v 1.16 2001-05-22 07:11:14 geuzaine Exp $
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -319,6 +319,7 @@ void List_Invert(List_T *a , List_T *b)
 
 void List_Reset(List_T *liste)
 {
+  if(!liste) return;
   liste->n = 0;
 }
 
