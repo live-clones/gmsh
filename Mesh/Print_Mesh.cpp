@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.19 2001-04-26 17:58:00 remacle Exp $
+// $Id: Print_Mesh.cpp,v 1.20 2001-05-28 07:33:06 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -320,7 +320,7 @@ void process_msh_elements (Mesh * M){
   fprintf (mshfile, "%d\n", MSH_ELEMENT_NUM - 1);
 
   if (MSH_ELEMENT_NUM == 1)
-    Msg (WARNING, "No elements (did You forget to define Physical entities?)");
+    Msg (WARNING, "No elements (did you forget to define physical entities?)");
 
   MSH_ADD = 1;
   MSH_ELEMENT_NUM = 1;

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.81 2001-05-25 08:43:24 geuzaine Exp $
+// $Id: GUI.cpp,v 1.82 2001-05-28 07:33:06 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -2508,9 +2508,25 @@ void GUI::create_getdp_window(){
 	o->labelsize(CTX.fontsize);
 	o->callback(getdp_ok_cb);
 
-        g[0]->end();
+        g[1]->end();
       }
+      { 
+	g[2] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "About");
+	g[2]->labelsize(CTX.fontsize);
 
+	Fl_Browser *o = new Fl_Browser(2*WB, 2*WB+1*BH, width-4*WB, height-5*WB-2*BH);
+	o->add("");
+	o->add("@c@b@.GetDP");
+	o->add("@c@.A General environment for the treatment");
+	o->add("@c@.of Discrete Problems");
+	o->add("");
+	o->add("@c@.Exerimental solver plug-in for Gmsh");
+	o->add("");
+	o->add("@c@.Visit http://www.geuz.org/getdp/ for more info");
+	o->textsize(CTX.fontsize);
+
+        g[2]->end();
+      }
       o->end();
     }
 

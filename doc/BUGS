@@ -1,8 +1,9 @@
-$Id: BUGS,v 1.1 2001-03-04 16:28:12 geuzaine Exp $
+$Id: BUGS,v 1.2 2001-05-28 07:33:06 geuzaine Exp $
 
 * Si la coherence des surfaces n'est pas recouvree en une etape, et
 qu'on fait une seconde passe qui marche, les volumes ne sont pas
 retrouves-< pas de maillage final.
 
-* il faudrait initialiser les statistiques qd on loade un maillage
-avec Read_Mesh.
+* Comme le code se stabilise, je pense qu'il serait grand temps de
+penser a desallouer les structures. On pourrait alors cloturer une
+version 1 "stable".
