@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.35 2003-11-23 06:58:01 geuzaine Exp $
+// $Id: Geo.cpp,v 1.36 2003-11-25 16:51:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,7 @@ extern Context_T CTX;
 int snprintf(char *str, size_t size, const char* fmt, ...){
   va_list args;
   va_start(args, fmt);
-  int ret = sprintf(str, fmt, args);
+  int ret = vsprintf(str, fmt, args);
   va_end(args);
   return ret;
 }
