@@ -1,4 +1,4 @@
-/* $Id: Print_Mesh.cpp,v 1.5 2000-11-24 01:03:53 geuzaine Exp $ */
+/* $Id: Print_Mesh.cpp,v 1.6 2000-11-24 16:18:16 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -44,11 +44,11 @@ void print_msh_node (void *a, void *b){
 void process_msh_nodes (Mesh * M){
   MSH_NODE_NUM = Tree_Nbr (M->Vertices) + Tree_Nbr (M->VertexEdges);
 
-  fprintf (mshfile, "$NOE\n");
+  fprintf (mshfile, "$NOD\n");
   fprintf (mshfile, "%d\n", MSH_NODE_NUM);
   Tree_Action (M->Vertices, print_msh_node);
   Tree_Action (M->VertexEdges, print_msh_node);
-  fprintf (mshfile, "$ENDNOE\n");
+  fprintf (mshfile, "$ENDNOD\n");
 }
 
 void add_msh_simplex (void *a, void *b){
