@@ -112,7 +112,7 @@ perform the three-dimensional mesh, i.e. discretize all the volumes in
 the geometry.
 .TP 4
 .B \-saveall
-save all elements (and discards all physical group definitions).
+save all elements (and discard all physical group definitions).
 .TP 4
 .B \-o file
 specify mesh output file name.
@@ -124,30 +124,30 @@ set output mesh format (default: msh).
 select the two-dimensional mesh algorithm (default: iso).
 .TP 4
 .B \-smooth int
-set the number of smoothing passes (default value is 3).
+set the number of smoothing steps (default value is 0).
 .\"   .TP 4
 .\"   .B \-degree int
 .\"   set the degree of the generated elements (default value is 1).
 .TP 4
 .B \-scale float
-apply a global scaling factor to the generated mesh (default value is
-1.0).
+apply a global scaling factor to the model (default value is 1.0).
 .TP 4
 .B \-meshscale float
-apply a global scaling factor to all generated elements (default value is 1.0).
+apply a global scaling factor to the mesh output (default value is 1.0).
 .TP 4
 .B \-clscale float
-apply a global scaling factor to all the characteristic lengths in the
-mesh (default value is 1.0).
+apply a global scaling factor to the mesh characteristic lengths in the
+model (default value is 1.0).
 .TP 4
 .B \-rand float
 set random perturbation factor (default: 1.e-4).
 .TP 4
 .B \-bgm file
-load view in file as current background mesh.
+load the post-processing view in file as the current background mesh.
 .TP 4
 .B \-constrain
-constrain background mesh with characteristic lengths.
+constrain the background mesh with the characteristic lengths of the
+model.
 .TP 4
 .B \-histogram
 print mesh quality histogram.
@@ -157,10 +157,10 @@ display the 2D mesh construction interactively if the anisotropic mesh
 algorithm is selected.
 .TP 4
 .B \-extrude
-use old extrusion mesh generator.
+use the old extrusion mesh generator.
 .TP 4
 .B \-recombine
-recombine meshes from old extrusion mesh generator.
+recombine meshes from the old extrusion mesh generator.
 .\" ======================================================================
 .SH POST-PROCESSING OPTIONS
 .TP 4
