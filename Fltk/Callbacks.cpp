@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.119 2002-04-25 18:06:15 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.120 2002-05-01 21:11:53 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -81,7 +81,10 @@ int file_chooser(int multi, const char* message, const char* pat){
 
   while (fc->shown()) Fl::wait();
 
-  return fc->count();
+  if(fc->value())
+    return fc->count();
+  else
+    return 0;
 }
 
 char* file_chooser_get_name(int num){
