@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.50 2005-01-09 05:17:59 geuzaine Exp $
+$Id: FAQ,v 1.51 2005-02-04 19:42:26 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -321,7 +321,7 @@ Yes, using the CutMap plugin.
 * 7.9 Is there a way to save animations?
 
 Yes. For example, have a look at tutorial/t8.geo or
-demos/anim-seq.script.
+demos/anim.script.
 
 * 7.10 Is there a way to visualize only certain components of
 vector/tensor fields?
