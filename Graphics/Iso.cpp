@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.5 2001-01-19 22:32:31 remacle Exp $
+// $Id: Iso.cpp,v 1.6 2001-01-25 21:36:59 remacle Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -35,51 +35,74 @@ void IsoSimplex(double *X, double *Y, double *Z, double *Val,
                 double V, double Vmin, double Vmax, 
                 double *Offset, double Raise[3][5], int shade){
   int    nb,i;
+  int    ed[6] = {0,0,0,0,0,0};
   double Xp[6],Yp[6],Zp[6];
   double Xpi[6],Ypi[6],Zpi[6];
 
   if(V != Vmax){
     nb = 0;
     if((Val[0] > V && Val[1] <= V) || (Val[1] > V && Val[0] <= V)){
-      Interpolate(X,Y,Z,Val,V,0,1,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+      Interpolate(X,Y,Z,Val,V,0,1,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[0]++;
     }
     if((Val[0] > V && Val[2] <= V) || (Val[2] > V && Val[0] <= V)){
-      Interpolate(X,Y,Z,Val,V,0,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+      Interpolate(X,Y,Z,Val,V,0,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[1]++;
     }
     if((Val[0] > V && Val[3] <= V) || (Val[3] > V && Val[0] <= V)){
-      Interpolate(X,Y,Z,Val,V,0,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+      Interpolate(X,Y,Z,Val,V,0,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[2]++;
     }
     if((Val[1] > V && Val[2] <= V) || (Val[2] > V && Val[1] <= V)){
-      Interpolate(X,Y,Z,Val,V,1,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+      Interpolate(X,Y,Z,Val,V,1,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[3]++;
     }
     if((Val[1] > V && Val[3] <= V) || (Val[3] > V && Val[1] <= V)){
-      Interpolate(X,Y,Z,Val,V,1,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+      Interpolate(X,Y,Z,Val,V,1,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[4]++;
     }
     if((Val[2] > V && Val[3] <= V) || (Val[3] > V && Val[2] <= V)){
-      Interpolate(X,Y,Z,Val,V,2,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+      Interpolate(X,Y,Z,Val,V,2,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[5]++;
     }
   }
   else{
     nb=0;
     if((Val[0] < V && Val[1] <= V) || (Val[1] < V && Val[0] <= V)){
-      Interpolate(X,Y,Z,Val,V,0,1,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+      Interpolate(X,Y,Z,Val,V,0,1,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[0]++;
     }
     if((Val[0] < V && Val[2] <= V) || (Val[2] < V && Val[0] <= V)){
-      Interpolate(X,Y,Z,Val,V,0,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+      Interpolate(X,Y,Z,Val,V,0,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[1]++;
     }
     if((Val[0] < V && Val[3] <= V) || (Val[3] < V && Val[0] <= V)){
-      Interpolate(X,Y,Z,Val,V,0,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+      Interpolate(X,Y,Z,Val,V,0,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[2]++;
     }
     if((Val[1] < V && Val[2] <= V) || (Val[2] < V && Val[1] <= V)){
-      Interpolate(X,Y,Z,Val,V,1,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+      Interpolate(X,Y,Z,Val,V,1,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[3]++;
     }
     if((Val[1] < V && Val[3] <= V) || (Val[3] < V && Val[1] <= V)){
-      Interpolate(X,Y,Z,Val,V,1,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+      Interpolate(X,Y,Z,Val,V,1,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[4]++;
     }
     if((Val[2] < V && Val[3] <= V) || (Val[3] < V && Val[2] <= V)){
-      Interpolate(X,Y,Z,Val,V,2,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+      Interpolate(X,Y,Z,Val,V,2,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[5]++;
     }
   }
+
+  /*
+    3 possibilities for quads
+      -) 0,2,5,3
+      -) 0,1,5,4
+      -) 1,2,4,3
+      in all cases, simply invert the 2 last ones
+      for having the quads ordered      
+   */
+
+  if(nb == 4)
+    {
+      double xx =  Xp[3];
+      double yy =  Yp[3];
+      double zz =  Zp[3];
+      Xp[3] = Xp[2]; 
+      Yp[3] = Yp[2]; 
+      Zp[3] = Zp[2];
+      Xp[2] = xx;
+      Yp[2] = yy;
+      Zp[2] = zz;
+    }
 
   /*
     for having a nice isosurface, we should have n . grad v > 0
@@ -109,9 +132,9 @@ void IsoSimplex(double *X, double *Y, double *Z, double *Val,
 	  double gr[3] = {X[2]-X[0],Y[2]-Y[0],Z[2]-Z[0]};
 	  double xx = gr[0] * n[0] + gr[1] * n[1] + gr[2] + n[2];
 	  if(Val[2] > Val[0]) xx = -xx;
-	}
+	}      
 
-      
+      // test
 
       if(xx > 0)
 	{
@@ -125,12 +148,10 @@ void IsoSimplex(double *X, double *Y, double *Z, double *Val,
 	    {
 	      Xp[i] = Xpi[nb-i-1];
 	      Yp[i] = Ypi[nb-i-1];
-	      Zp[i] = Zpi[nb-i-1];
+	      Zp[i] = Zpi[nb-i-1];	      
 	    }
 	}
     }
-
-
 
   if(nb == 3) 
     Draw_Triangle(Xp,Yp,Zp,Offset,Raise,shade);

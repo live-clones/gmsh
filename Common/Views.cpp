@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.24 2001-01-19 22:32:31 remacle Exp $
+// $Id: Views.cpp,v 1.25 2001-01-25 21:36:58 remacle Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -768,9 +768,9 @@ void Post_View :: smooth ()
 		n1++;
 		n2 += (*it).nboccurences;
 		// test
-		//double val = sqrt (x[j] * x[j] + y[j] * y[j] + z[j] * z[j]);
+		// double val = sqrt ((x[j]-1) * (x[j]-1) + y[j] * y[j] + z[j] * z[j]);
 		//for(int k=0;k<NbTimeStep;k++)v[j+k*8] = val;
-				for(int k=0;k<NbTimeStep;k++)v[j+k*8] = (*it).vals[k];
+		for(int k=0;k<NbTimeStep;k++)v[j+k*8] = (*it).vals[k];
 	      }
 	  }
       } 

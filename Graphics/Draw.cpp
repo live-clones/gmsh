@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.17 2001-01-17 21:26:24 remacle Exp $
+// $Id: Draw.cpp,v 1.18 2001-01-25 21:36:59 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -132,8 +132,14 @@ void Orthogonalize(int x, int y){
 /* ------------------------------------------------------------------------ */
 
 void InitShading(void){
-  GLfloat specular[4];
   int i;
+  float ambient[] = {0.1745, 0.01175, 0.01175};
+  float diffuse[] = {0.61424, 0.04136, 0.04136};
+  float specular[4];
+
+  glMaterialfv(GL_FRONT, GL_AMBIENT, ambient);
+  glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
+  glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
 
   glEnable(GL_LIGHTING);
   glEnable(GL_NORMALIZE);
