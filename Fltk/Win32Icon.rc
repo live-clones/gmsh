@@ -1,5 +1,0 @@
-
-#include "Win32Icon.h"
-
-IDI_ICON   ICON    DISCARDABLE     "Win32Icon.ico"
-
