@@ -56,8 +56,8 @@
 #define NB_BUTT_MAX    100
 #define NB_HISTORY_MAX 1000
 
-// Undefine this to get the menu inside Gmsh (like in Window/Unix)
-#define APPLE_USE_SYS_MENU
+// define this to get a true Mac menu (not inside gmsh as in Window/Unix)
+#undef APPLE_USE_SYS_MENU
 
 // The dynamic contexts
 
