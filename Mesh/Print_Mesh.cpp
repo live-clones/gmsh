@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.49 2004-04-30 15:13:41 stainier Exp $
+// $Id: Print_Mesh.cpp,v 1.50 2004-05-01 13:55:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -770,8 +770,14 @@ int process_unv_3D_elements(Mesh * m)
         temp = sx->V[0];
         sx->V[0] = sx->V[1];
         sx->V[1] = temp;
-        if(sx->Volume_Simplexe() < 0)
-          Msg(WARNING, "Negative volume for simplex %d", sx->Num);
+	if(sx->VSUP){
+	  temp = sx->VSUP[1];
+	  sx->VSUP[1] = sx->VSUP[2];
+	  sx->VSUP[2] = temp;
+	  temp = sx->VSUP[5];
+	  sx->VSUP[5] = sx->VSUP[3];
+	  sx->VSUP[3] = temp;
+	}
       }
       geo = v->Num;
       fprintf(meshfile, "%10d%10d%10d%10d%10d%10d\n",
