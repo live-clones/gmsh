@@ -1,4 +1,4 @@
-$Id: README,v 1.8 2001-03-01 08:04:15 geuzaine Exp $
+$Id: README,v 1.9 2001-04-25 15:41:27 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -62,6 +62,12 @@ are performed without any interaction. To mesh the first tutorial in
 non-interactive mode, just type:
 
 > gmsh t1.geo -2
+
+To mesh the same example, but with the backgound mesh available in the
+file 'bgmesh.pos', just type:
+
+> gmsh t1.geo -2 -bgm bgmesh.pos
+
 
 Several files can be loaded simultaneously in Gmsh. The first one
 defines the project, while the others are appended ("merged") to this
