@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.2 2004-06-15 18:27:36 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.3 2004-06-15 22:32:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -75,11 +75,11 @@ void GMSH_CutParametricPlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuzaine@acm.caltech.edu)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(CutParametric) cuts the view `iView' with\n"
-	 "the parametric function (`X'(u), `Y'(u), `Z'(u)),\n"
-	 "using `nPointsU' values of the parameter u in [`minU',\n"
-	 "`maxU']. If `iView' < 0, the plugin is run on the\n"
-	 "current view.\n"
+         "Plugin(CutParametric) cuts the scalar view `iView'\n"
+	 "with the parametric function (`X'(u), `Y'(u), `Z'(u)),\n"
+	 "using `nPointsU' values of the parameter u in\n"
+	 "[`minU', `maxU']. If `iView' < 0, the plugin is run\n"
+	 "on the current view.\n"
 	 "\n"
 	 "Plugin(CutParametric) creates one new view.\n");
 }
@@ -144,12 +144,15 @@ Post_View *GMSH_CutParametricPlugin::execute(Post_View * v)
 
   void *fy = evaluator_create(expry);
   if(!fy){
+    evaluator_destroy(fx);
     Msg(GERROR, "Invalid expression '%s'", expry);
     return v;
   }
 
   void *fz = evaluator_create(exprz);
   if(!fz){
+    evaluator_destroy(fx);
+    evaluator_destroy(fy);
     Msg(GERROR, "Invalid expression '%s'", exprz);
     return v;
   }
@@ -166,21 +169,25 @@ Post_View *GMSH_CutParametricPlugin::execute(Post_View * v)
     double x = evaluator_evaluate(fx, sizeof(names)/sizeof(names[0]), names, values);
     double y = evaluator_evaluate(fy, sizeof(names)/sizeof(names[0]), names, values);
     double z = evaluator_evaluate(fz, sizeof(names)/sizeof(names[0]), names, values);
+    o.searchScalar(x, y, z, res);
     List_Add(v2->SP, &x);
     List_Add(v2->SP, &y);
     List_Add(v2->SP, &z);
-    v2->NbSP++;
-    o.searchScalar(x, y, z, res);
-    for(int k = 0; k < v1->NbTimeStep; ++k){
+    for(int k = 0; k < v1->NbTimeStep; ++k)
       List_Add(v2->SP, &res[k]);	      
-    }
+    v2->NbSP++;
   }
 
   char name[1024], filename[1024];
   sprintf(name, "%s_CutParametric", v1->Name);
   sprintf(filename, "%s_CutParametric.pos", v1->Name);
   EndView(v2, 1, filename, name);
+
+  evaluator_destroy(fx);
+  evaluator_destroy(fy);
+  evaluator_destroy(fz);
   delete [] res;
+
   return v2;
 
 #endif
