@@ -284,7 +284,7 @@ StringXNumber GeneralOptions_Number[] = {
 
 StringXNumber GeometryOptions_Number[] = {
   { F|O, "AutoCoherence" , opt_geometry_auto_coherence , 1. , 
-    "Should all duplicate entities be automatically be removed? (Beware! Setting this option to 1 will slow down things a lot)" }, 
+    "Should all duplicate entities be automatically removed?" }, 
   { F|O, "Normals" , opt_geometry_normals , 0. , 
     "Size of the vectors normal to the surfaces" }, 
   { F|O, "Tangents" , opt_geometry_tangents , 0. ,
