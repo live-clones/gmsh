@@ -1,4 +1,4 @@
-/* $Id: Views.cpp,v 1.5 2000-11-26 15:43:44 geuzaine Exp $ */
+/* $Id: Views.cpp,v 1.6 2000-11-26 21:34:22 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Views.h"
@@ -307,10 +307,10 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
 void AddView_ScalarSimplex(int dim, double *coord, int N, double *v){
   Post_Simplex S;
   int i,nbnod;
-
+  
   S.Type = DRAW_POST_SCALAR;
   S.Dimension = dim;
-
+  
   switch(dim){
   case 0 : nbnod = 1 ; break; // point
   case 1 : nbnod = 2 ; break; // line
@@ -333,7 +333,7 @@ void AddView_ScalarSimplex(int dim, double *coord, int N, double *v){
     if(S.V[i] < ActualView->Min) ActualView->Min = S.V[i] ;
     if(S.V[i] > ActualView->Max) ActualView->Max = S.V[i] ;
   }
-
+  
   switch(dim){
   case 0 : List_Add(ActualView->Points,&S); break;
   case 1 : List_Add(ActualView->Lines,&S); break;
@@ -520,3 +520,4 @@ void Read_View(FILE *file, char *filename){
   }   /* while 1 ... */
 
 }
+
