@@ -1,7 +1,11 @@
-$Id: TODO,v 1.53 2004-06-30 00:57:49 geuzaine Exp $
+$Id: TODO,v 1.54 2004-06-30 01:49:41 geuzaine Exp $
 
 add an interactive way to choose the orientation of surfaces in
-surface loops and lines in line loops?
+surface loops and lines in line loops
+
+(To make things simple, all line loops should be oriented "aire a
+gauche", and all surface loops whould be oriented with exterior
+normals...)
 
 ********************************************************************
 
