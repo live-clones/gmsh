@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.61 2004-06-22 17:34:10 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.62 2004-06-22 18:04:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -789,6 +789,18 @@ void ActionInvertTriQua(void *a, void *b)
   }
 }
 
+int isPointOnPlanarSurface(Surface * S, double X, double Y, double Z, double n[3]);
+
+int isMiddlePointOnPlanarSurface(Surface *s, Vertex *v1, Vertex *v2)
+{
+  double n[3] = {s->a, s->b, s->c};
+  norme(n);
+  double x = 0.5 * (v1->Pos.X + v2->Pos.X);
+  double y = 0.5 * (v1->Pos.Y + v2->Pos.Y);
+  double z = 0.5 * (v1->Pos.Z + v2->Pos.Z);
+  return isPointOnPlanarSurface(s, x, y, z, n);
+}
+
 void Get_SurfaceNormal(Surface *s, double n[3])
 {
   double t1[3], t2[3];
@@ -817,7 +829,7 @@ void Get_SurfaceNormal(Surface *s, double n[3])
 	t2[1] = v3->Pos.Y - v1->Pos.Y;
 	t2[2] = v3->Pos.Z - v1->Pos.Z;
 	prodve(t1, t2, n);
-	if(norme(n))
+	if(norme(n) && isMiddlePointOnPlanarSurface(s, v1, v3))
 	  break;
       }
     }
@@ -827,6 +839,7 @@ void Get_SurfaceNormal(Surface *s, double n[3])
       n[0] = s->a;
       n[1] = s->b;
       n[2] = s->c;
+      norme(n);
     }
     List_Delete(points);
   }
