@@ -28,8 +28,8 @@ post-processor.
 %setup -c -q
 
 %build
-make fltk_linux_gcc-2.95
-#make fltk_linux
+make linux_gcc-2.95
+#make linux
 make distrib
 make utilities
 rm -rf CVS */CVS */*/CVS
