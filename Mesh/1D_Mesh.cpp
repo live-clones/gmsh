@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.41 2005-01-01 19:35:30 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.42 2005-01-12 01:20:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -52,7 +52,7 @@ double F_One(double t)
 double F_Transfini(double t)
 {
   Vertex der;
-  double d, a, b, val;
+  double d, a, b, val, r;
   int i;
 
   der = InterpolateCurve(THEC, t, 1);
@@ -66,16 +66,16 @@ double F_Transfini(double t)
     switch (abs(THEC->ipar[1])) {
 
     case 1:    // Geometric progression ar^i; Sum of n terms = THEC->l = a (r^n-1)/(r-1)
-      if(THEC->dpar[0] == 1.)
+      if(sign(THEC->ipar[1]) >= 0)
+	r = THEC->dpar[0];
+      else
+	r = 1. / THEC->dpar[0];
+      if(r == 1.)
         a = THEC->l / (double)THEC->ipar[0];
       else
-        a =
-          THEC->l * (THEC->dpar[0] -
-                     1.) / (pow(THEC->dpar[0], THEC->ipar[0]) - 1.);
-      i =
-        (int)(log(t * THEC->l / a * (THEC->dpar[0] - 1.) + 1.) /
-              log(THEC->dpar[0]));
-      val = d / (a * pow(THEC->dpar[0], (double)i));
+        a = THEC->l * (r - 1.) / (pow(r, THEC->ipar[0]) - 1.);
+      i = (int)(log(t * THEC->l / a * (r - 1.) + 1.) / log(r));
+      val = d / (a * pow(r, (double)i));
       break;
 
     case 2:    // Bump
