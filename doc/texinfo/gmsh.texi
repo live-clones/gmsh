@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.48 2003-04-25 19:08:46 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.49 2003-04-28 06:45:11 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -46,7 +46,7 @@
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
-@set EDITION        1.4
+@set EDITION        1.5
 @set GMSH-VERSION   1.44
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
 @set COPYRIGHT      @copyright{} 1997-2003 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
@@ -2528,7 +2528,7 @@ All non-parsed file formats have sections enclosed between @code{$KEY} and
 @cindex @file{.msh} file
 
 The @file{.msh} file format is Gmsh's native mesh file format. The file is
-divided in two sections, defining the nodes (@code{NOD}-@code{ENDNOD}) and
+divided in two sections, defining the nodes (@code{$NOD}-@code{$ENDNOD}) and
 the elements (@code{$ELM}-@code{$ENDELM}) in the mesh:
 
 @example
