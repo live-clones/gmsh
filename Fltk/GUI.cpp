@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.274 2004-02-28 00:48:48 geuzaine Exp $
+// $Id: GUI.cpp,v 1.275 2004-02-28 02:15:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -79,15 +79,12 @@ extern Context_T CTX;
 
 // Definition of the static menus
 
-// Don't define shortcuts for FL_CTRL+'n', FL_CTRL+'p', FL_CTRL+'f', FL_CTRL+'b'
-// these are used by fltk for widget navigation (in the same way as the 4 arrow keys)
-
 // We shouldn't use the 'g', 'm' 's' and 'p' mnemonics since they are
-// already defined as global shortcuts (geometry, mesh, solver, post).
+// already defined as global shortcuts (for geometry, mesh, solver, post).
 
 Fl_Menu_Item m_menubar_table[] = {
   {"&File", 0, 0, 0, FL_SUBMENU},
-    {"&New...",    0, (Fl_Callback *)file_new_cb, 0},
+    {"&New...",    FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
     {"&Open...",   FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"M&erge...",  FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
     {"Sa&ve mesh", FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
@@ -159,7 +156,7 @@ Fl_Menu_Item m_menubar_table[] = {
 #if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
 Fl_Menu_Item m_sys_menubar_table[] = {
   {"File", 0, 0, 0, FL_SUBMENU},
-    {"New...",     0, (Fl_Callback *)file_new_cb, 0},
+    {"New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
     {"Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"Merge...",   FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
     {"Save Mesh",  FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},

@@ -31,6 +31,9 @@ merge file
 @item Shift+n
 show general options
 
+@item Ctrl+n
+show new file
+
 @item Shift+o
 show option window
 

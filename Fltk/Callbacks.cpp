@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.206 2004-02-28 00:48:48 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.207 2004-02-28 02:15:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1471,6 +1471,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Shift+m       show mesh options");
   Msg(DIRECT, "  "XX"+m        merge file"); 
   Msg(DIRECT, "  Shift+n       show general options"); 
+  Msg(DIRECT, "  "XX"+m        new file"); 
   Msg(DIRECT, "  Shift+o       show option window"); 
   Msg(DIRECT, "  "XX"+o        open file"); 
   Msg(DIRECT, "  p             go to post-processor module");
