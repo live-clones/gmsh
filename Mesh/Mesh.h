@@ -19,6 +19,7 @@
 #define FORMAT_PPM     11
 #define FORMAT_YUV     12
 #define FORMAT_SMS     14
+#define FORMAT_OPT     15
 
 #define CONV_VALUE    0.8
 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.91 2001-11-05 08:37:43 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.92 2001-11-13 08:10:00 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -212,8 +212,8 @@ void file_save_as_geo_cb(CALLBACK_ARGS) {
 
 void file_save_as_geo_options_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save options file", "*", NULL)))
-    Print_Options(0,GMSH_FULLRC, newfile); 
+  if((newfile = fl_file_chooser("Save option file", "*", NULL)))
+    CreateOutputFile(newfile, CTX.print.format = FORMAT_OPT); 
 }
 
 void file_save_as_msh_cb(CALLBACK_ARGS) {
