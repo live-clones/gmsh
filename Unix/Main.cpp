@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.9 2000-11-24 08:04:14 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.10 2000-11-24 12:50:06 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -42,9 +42,9 @@ char gmsh_url[]       = "URL              : " GMSH_URL ;
 char gmsh_help[]      = 
   "Usage: %s [options] [files]\n"
   "Mesh options:\n"
-  "  -0                    parse input and exit\n"
+  "  -0                    parse input and output analysed geometry\n"
   "  -1, -2, -3            batch 1-, 2- or 3-dimensional mesh\n"
-  "  -format msh|unv       mesh format (default: msh)\n"
+  "  -format msh|unv|gref  output format (default: msh)\n"
   "  -algo iso|aniso       mesh algorithm (default: iso)\n"
   "  -smooth int           mesh smoothing (default: 0)\n"
   "  -degree int           mesh degree (default: 1)\n"
@@ -508,6 +508,9 @@ int main(int argc, char *argv[]){
       if(CTX.interactive > 0){
 	mai3d(THEM, CTX.interactive);
 	Print_Mesh(THEM,NULL,CTX.mesh.format);
+      }
+      else{
+	Print_Geo(THEM, NULL);
       }
       exit(1);
     }    

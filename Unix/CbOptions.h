@@ -1,4 +1,4 @@
-/* $Id: CbOptions.h,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: CbOptions.h,v 1.6 2000-11-24 12:50:06 geuzaine Exp $ */
 #ifndef _CB_OPTIONS_H_
 #define _CB_OPTIONS_H_
 
@@ -102,5 +102,6 @@
 #define  OPTIONS_PRINT_GL2PS_COMPLEX            402
 #define  OPTIONS_PRINT_GL2PS_IMAGE              403
 #define  OPTIONS_PRINT_GL2GIF                   404
+#define  OPTIONS_PRINT_GEO                      405
 					     
 #endif

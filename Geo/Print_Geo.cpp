@@ -1,4 +1,4 @@
-/* $Id: Print_Geo.cpp,v 1.2 2000-11-23 14:11:30 geuzaine Exp $ */
+/* $Id: Print_Geo.cpp,v 1.3 2000-11-24 12:49:59 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -11,7 +11,7 @@ FILE *FOUT;
 void Print_Point(void *a, void *b){
   Vertex *v;
   v = *(Vertex**)a;
-  fprintf(FOUT, "Point(%d) = {%g, %gE, %g, %g};\n",
+  fprintf(FOUT, "Point(%d) = {%g, %g, %g, %g};\n",
           v->Num,v->Pos.X,v->Pos.Y,v->Pos.Z,v->lc);
 }
 
@@ -31,8 +31,8 @@ void Print_Nurbs (Curve *c, FILE *f){
   fprintf(f,"}\n");
   fprintf(f,"Knots {");
   for(j=0;j<List_Nbr(c->Control_Points)+c->degre+1;j++){
-    if(!j)fprintf(f,"%12.5E",c->k[j]);
-    else fprintf(f,",%12.5E",c->k[j]);
+    if(!j)fprintf(f,"%g",c->k[j]);
+    else fprintf(f,",%g",c->k[j]);
     if(j%5 == 4 && j!=List_Nbr(c->Control_Points)+c->degre)fprintf(FOUT,"\n");
   }
   fprintf(f,"}");
@@ -52,6 +52,9 @@ void Print_Curve(void *a, void *b){
     fprintf(FOUT,"Line (%d) = ",c->Num);
     break;
   case MSH_SEGM_CIRC:
+  case MSH_SEGM_CIRC_INV:
+  case MSH_SEGM_ELLI:
+  case MSH_SEGM_ELLI_INV:
     fprintf(FOUT,"Circle (%d) = ",c->Num);
     break;
   case MSH_SEGM_NURBS:
@@ -60,6 +63,9 @@ void Print_Curve(void *a, void *b){
   case MSH_SEGM_SPLN:
     fprintf(FOUT,"CatmullRom (%d) = ",c->Num);
     break;
+  default:
+    Msg(ERROR, "Unknown Curve Type %d", c->Typ);
+    return;
   }
   
   for(i=0;i<List_Nbr(c->Control_Points);i++){
@@ -70,11 +76,19 @@ void Print_Curve(void *a, void *b){
       fprintf(FOUT,"{%d",v->Num);
     if(i%6 == 7)fprintf(FOUT,"\n");
   }
-  if(c->Typ != MSH_SEGM_CIRC)
-    fprintf(FOUT,"};\n");
-  else
-    fprintf(FOUT,"} Plane{%12.5E,%12.5E,%12.5E};\n",
+
+  switch(c->Typ){
+  case MSH_SEGM_CIRC:
+  case MSH_SEGM_CIRC_INV:
+  case MSH_SEGM_ELLI:
+  case MSH_SEGM_ELLI_INV:
+    fprintf(FOUT,"} Plane{%g,%g,%g};\n",
             c->Circle.n[0],c->Circle.n[1],c->Circle.n[2]);
+    break;
+  default :
+    fprintf(FOUT,"};\n");
+    break;
+  }
   
 }
 
@@ -128,14 +142,14 @@ void Print_Surface(void *a, void *b){
     }
     fprintf(FOUT,"\t\tKnots\n\t\t{");
     for(j=0;j<s->Nu+s->OrderU+1;j++){
-      if(!j)fprintf(FOUT,"%12.5E",s->ku[j]);
-      else fprintf(FOUT,",%12.5E",s->ku[j]);
+      if(!j)fprintf(FOUT,"%g",s->ku[j]);
+      else fprintf(FOUT,",%g",s->ku[j]);
       if(j%5 == 4 && j!=s->Nu + s->OrderU)fprintf(FOUT,"\n\t\t");
     }
     fprintf(FOUT,"}\n\t\t{");
     for(j=0;j<s->Nv+s->OrderV+1;j++){
-      if(!j)fprintf(FOUT,"%12.5E",s->kv[j]);
-      else fprintf(FOUT,",%12.5E",s->kv[j]);
+      if(!j)fprintf(FOUT,"%g",s->kv[j]);
+      else fprintf(FOUT,",%g",s->kv[j]);
       if(j%5 == 4 && j!=s->Nv + s->OrderV)fprintf(FOUT,"\n\t\t");
     }
     fprintf(FOUT,"}\n\t\tOrder %3d %3d;\n\n",s->OrderU,s->OrderV);
@@ -145,11 +159,25 @@ void Print_Surface(void *a, void *b){
 
 void Print_Geo(Mesh *M, char *filename){
   Coherence_PS();
-  FOUT = fopen(filename,"w");
-  if(!FOUT)return;
+
+  if(filename){
+    FOUT = fopen(filename,"w");
+    if(!FOUT){
+      Msg(WARNING, "Unable to Open File '%s'", filename);
+      return;
+    }
+  }
+  else
+    FOUT = stdout;
+
   Tree_Action(M->Points,Print_Point);
   Tree_Action(M->Curves,Print_Curve);
   Tree_Action(M->Surfaces,Print_Surface);
-  fclose(FOUT);
+
+  if(filename){
+    Msg (INFOS, "Wrote File '%s'", filename);
+    fclose(FOUT);
+  }
+
 }
 

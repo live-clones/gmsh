@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.6 2000-11-24 09:44:05 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.7 2000-11-24 12:50:06 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -80,13 +80,13 @@ void CreateWidgets_M(Widgets_T *w){
   XtManageChild(w->M.fileSep[0]);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Save")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Save Mesh")); i++;
   XtSetArg(arg[i], XmNacceleratorText, XmStringCreateSimple("(C-s)")); i++;
   w->M.fileButt[2] = XmCreatePushButton(w->M.filePane, "MfileButt2", arg, i);
   XtManageChild(w->M.fileButt[2]);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Save as")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Save Mesh as")); i++;
   XtSetArg(arg[i], XmNacceleratorText, XmStringCreateSimple("(C-S-s)")); i++;
   XtSetArg(arg[i], XmNaccelerator, "Ctrl<Key>s:"); i++;
   w->M.fileButt[3] = XmCreatePushButton(w->M.filePane, "MfileButt3", arg, i);
@@ -589,7 +589,7 @@ void CreateWidgets_FD(Widgets_T *w){
 
   /* save as */
   i=0 ;
-  XtSetArg(arg[i], XmNdialogTitle, XmStringCreateSimple("Save Mesh")); i++;
+  XtSetArg(arg[i], XmNdialogTitle, XmStringCreateSimple("Save")); i++;
   XtSetArg(arg[i], XmNnoMatchString, XmStringCreateSimple("[ NONE ]")); i++;
   XtSetArg(arg[i], XmNdirMask, XmStringCreateSimple("*")); i++;
   XtSetArg(arg[i], XmNautoUnmanage, True); i++;
@@ -678,7 +678,11 @@ void CreateWidgets_FD(Widgets_T *w){
   w->FD.printButt[3] = XmCreatePushButton(w->FD.printPane[0], "MprintButt3", arg, i);
   XtManageChild(w->FD.printButt[3]);
   i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("GEO")); i++;
+  w->FD.printButt[4] = XmCreatePushButton(w->FD.printPane[0], "MprintButt3", arg, i);
+  XtManageChild(w->FD.printButt[4]);
 
+  i=0;
   XtSetArg(arg[i], XmNsubMenuId, w->FD.printPane[0]); i++;
   XtSetArg(arg[i], XmNspacing, 0); i++;
   w->FD.printMenu[0] = XmCreateOptionMenu(w->FD.printRowCol, "FDprintMenu0", arg, i);

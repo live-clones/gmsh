@@ -1,4 +1,4 @@
-/* $Id: Mesh.h,v 1.4 2000-11-23 15:05:59 geuzaine Exp $ */
+/* $Id: Mesh.h,v 1.5 2000-11-24 12:50:03 geuzaine Exp $ */
 #ifndef _MESH_H_
 #define _MESH_H_
 
@@ -10,6 +10,11 @@
 #define FORMAT_MSH  1
 #define FORMAT_UNV  2
 #define FORMAT_GREF 3
+#define FORMAT_XPM  4
+#define FORMAT_EPS  5
+#define FORMAT_BMP  6
+#define FORMAT_GIF  7
+#define FORMAT_GEO  7
 
 #define CONV_VALUE    0.8
 
@@ -413,6 +418,7 @@ void mai3d (Mesh * M, int Asked);
 
 void Init_Mesh (Mesh * M, int all);
 void Create_BgMesh (int i, double d, Mesh * m);
+void Print_Geo (Mesh * M, char *c);
 void Print_Mesh (Mesh * M, char *c, int Type);
 void Read_Mesh (Mesh * M, FILE * File_GEO, int Type);
 void GetStatistics (double s[50]);

@@ -1,4 +1,4 @@
-/* $Id: Draw.h,v 1.3 2000-11-23 16:51:29 geuzaine Exp $ */
+/* $Id: Draw.h,v 1.4 2000-11-24 12:50:01 geuzaine Exp $ */
 #ifndef _DRAW_H_
 #define _DRAW_H_
 
@@ -16,11 +16,6 @@
 #define PRINT_GL2PS_RECURSIVE  3
 #define PRINT_GL2PS_IMAGE      4
 #define PRINT_GL2GIF           5
-
-#define FORMAT_XPM  1
-#define FORMAT_EPS  2
-#define FORMAT_BMP  3
-#define FORMAT_GIF  4
 
 void Init(void);
 void InitOv(void);

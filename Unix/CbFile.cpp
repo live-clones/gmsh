@@ -1,4 +1,4 @@
-/* $Id: CbFile.cpp,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: CbFile.cpp,v 1.6 2000-11-24 12:50:06 geuzaine Exp $ */
 
 #include <unistd.h>
 
@@ -147,8 +147,13 @@ void FileCb(Widget w, XtPointer client_data, XtPointer call_data){
   case FILE_SAVE_COLORTABLE_AS : SaveToDisk(c, WID.ED.saveDialog, SaveColorTable); break;
   case FILE_CANCEL             : WARNING_OVERRIDE = 0; break;
   case FILE_PRINT              : 
-    SaveToDisk(c, WID.ED.printDialog, CreateImage); 
-    Init(); Draw(); break;
+    if(CTX.print.format == FORMAT_GEO)
+      Print_Geo(&M, c);
+    else{
+      SaveToDisk(c, WID.ED.printDialog, CreateImage); 
+      Init(); Draw(); 
+    }
+    break;
   default :
     Msg(WARNING, "Unknown event in FileCb : %d", (long int)client_data); 
     break;
