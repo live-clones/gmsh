@@ -46,7 +46,7 @@ cat << EOM
 page requests since<br>1998/05/24<p>
 ENDSCRIPT--->
 
-<!---BEGINDATE$Date: 2001-08-28 20:41:48 $ENDDATE--->
+<!---BEGINDATE$Date: 2001-08-29 12:09:34 $ENDDATE--->
 
 Copyright &copy; 1998-2001<br>
 Jean-François Remacle and
@@ -290,21 +290,10 @@ files.
 
   <td align="left" colspan=2><font face="Helvetica, Arial" size=-1>
 
-<form method="post" action="/cgi-bin/htsearch">
-<input type="text" size="30" name="words" value="">
-<input type="hidden" name="config" value="htdig">
-<input type="hidden" name="exclude" value="">
-&nbsp;
-Match <select name="method">
-<option value="and" selected>all words</option>
-<option value="or">any words</option>
-<option value="boolean">boolean expression</option>
-</select>
-Limit to <select name="restrict">
-<option value="http://www.geuz.org/gmsh/">regular pages</option>
-<option value="http://www.geuz.org/pipermail/gmsh/">mailing list</option>
-</select>
-</form>
+<FORM METHOD=GET ACTION="http://www.geuz.org/search/search-geuz.cgi" TARGET="_top">
+<INPUT SIZE=30 NAME="q" VALUE="">
+<INPUT TYPE=HIDDEN NAME="ul" VALUE="/gmsh/">
+</FORM>
 
   </font></td>
 
