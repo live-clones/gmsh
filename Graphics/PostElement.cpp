@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.18 2003-06-23 17:26:23 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.19 2003-11-22 01:43:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -738,7 +738,7 @@ void Draw_ScalarPrism(Post_View * View, int preproNormals,
     Draw_ElementBoundary(PRISM, View, X, Y, Z, Raise);
   }
 
-  Draw_ScalarTetrahedron(View, 0, ValMin, ValMax, Raise, &X[0], &Y[0], &Z[0], &V[0]);   //0123
+  Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, Raise, X, Y, Z, vv); //0123
   REORDER4(3, 4, 5, 2);
   Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);  //3452
   REORDER4(1, 2, 4, 3);
