@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.84 2005-02-28 23:57:38 geuzaine Exp $
+// $Id: CAD.cpp,v 1.85 2005-03-01 00:01:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1304,7 +1304,7 @@ int Extrude_ProtudeCurve(int type, int ic,
 
   if(!pc->beg || !pc->end){
     Msg(GERROR, "Cannot extrude curve with no begin/end points");
-    return;
+    return 0;
   }
 
   Msg(DEBUG, "Extrude Curve %d", ic);
