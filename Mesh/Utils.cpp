@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.9 2002-02-12 20:11:34 geuzaine Exp $
+// $Id: Utils.cpp,v 1.10 2002-02-16 14:14:47 remacle Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -131,19 +131,20 @@ void MeanPlane(List_T *points, Surface *s){
 end:
   res[3] = (xm*res[0]+ym*res[1]+zm*res[2]);
 
+  for(i=0; i<3; i++) s->plan[0][i] = t1[i];
+  for(i=0; i<3; i++) s->plan[1][i] = t2[i];
+  for(i=0; i<3; i++) s->plan[2][i] = res[i];
+
   s->a = res[0];
   s->b = res[1];
   s->c = res[2];
   s->d = res[3];
-  for(i=0; i<3; i++) s->plan[0][i] = t1[i];
-  for(i=0; i<3; i++) s->plan[1][i] = t2[i];
-  for(i=0; i<3; i++) s->plan[2][i] = res[i];
 
   Msg(DEBUG1, "Surface: %d", s->Num);
   Msg(DEBUG2, "SVD    : %g,%g,%g (min=%d)", svd[0],svd[1],svd[2],min);
   Msg(DEBUG2, "Plane  : (%g x + %g y + %g z = %g)", s->a, s->b, s->c, s->d);
   Msg(DEBUG2, "Normal : (%g , %g , %g )", s->a, s->b, s->c);
-  Msg(DEBUG2, "t1     : (%g , %g , %g )", t1[0], t1[1], t1[2]);
+  Msg(DEBUG3, "t1     : (%g , %g , %g )", t1[0], t1[1], t1[2]);
   Msg(DEBUG3, "t2     : (%g , %g , %g )", t2[0], t2[1], t2[2]);
 
   for(i=0;i<3;i++){

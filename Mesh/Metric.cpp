@@ -1,4 +1,4 @@
-// $Id: Metric.cpp,v 1.9 2002-02-01 14:34:05 remacle Exp $
+// $Id: Metric.cpp,v 1.10 2002-02-16 14:14:47 remacle Exp $
 #include <time.h>
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -159,7 +159,7 @@ Local_Metric_Of_Attractors ( double X, double Y, double Z,
       x1 = (1. - u) + u * a->lc1;
       x2 = (1. - u) + u * a->lc2;
       // cout << " dist from "<<  X  << " " << Y << " = " << d << endl;
-      if (u > 0.)
+      if (u > 1.e-2)
 	{
 	  if (a->v)
 	    {
@@ -414,6 +414,10 @@ setSimplexQuality (Simplex * s)
     }
   else
     {
+      //double x = (s->V[0]->Pos.X + s->V[1]->Pos.X + s->V[2]->Pos.X + s->V[3]->Pos.X) / 4.;
+      //double y = (s->V[0]->Pos.Y + s->V[1]->Pos.Y + s->V[2]->Pos.Y + s->V[3]->Pos.Y) / 4.;
+      //      double z = (s->V[0]->Pos.Z + s->V[1]->Pos.Z + s->V[2]->Pos.Z + s->V[3]->Pos.Z) / 4.;
+      //      setMetric(x,y,z);
       s->Center_Ellipsum_3D (m);
       s->Quality = 4. * s->Radius / (s->V[0]->lc + s->V[1]->lc + s->V[2]->lc + s->V[3]->lc);
     }

@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.35 2002-01-03 10:25:06 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.36 2002-02-16 14:14:47 remacle Exp $
 
 /*
  
@@ -632,6 +632,20 @@ bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
     for (i = 0; i < List_Nbr (Simplexes_New); i++){
       Simplex *theNewS;
       List_Read (Simplexes_New, i, &theNewS);
+      /*      if(force)
+	{
+	  double xc = theNewS->Center.X;
+	  double yc = theNewS->Center.Y;
+	  double zc = theNewS->Center.Z;
+	  double rd = theNewS->Radius;	
+	  cgsmpl (theNewS,x,y,z);
+	  THEM->Metric->setMetric (x, y, z);
+	  THEM->Metric->setSimplexQuality (theNewS);
+	  theNewS->Center.X = xc;
+	  theNewS->Center.Y = yc;
+	  theNewS->Center.Z = zc;
+	  theNewS->Radius = rd;	
+	  }*/
       Tree_Add (m->Simplexes, &theNewS);
     }
     

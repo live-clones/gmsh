@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.23 2001-12-03 08:41:44 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.24 2002-02-16 14:14:47 remacle Exp $
 
 /*
    Jean-Francois Remacle
@@ -21,6 +21,16 @@ extern double LC2D ;
 
 void draw_polygon_2d (double r, double g, double b, int n, 
                       double *x, double *y, double *z);
+
+inline void cgsmpl (Simplex *s, double &x, double &y)
+{
+  x = (1./3.) * ( s->V[0]->Pos.X +
+		  s->V[1]->Pos.X +
+		  s->V[2]->Pos.X);  
+  y = (1./3.) * ( s->V[0]->Pos.Y +
+		  s->V[1]->Pos.Y +
+		  s->V[2]->Pos.Y);  
+}
 
 MeshParameters:: MeshParameters ():
   NbSmoothing (3),
@@ -112,9 +122,15 @@ void TmatXmat (int n, double mat1[3][3], double mat2[3][3], double Res[3][3]){
 Simplex * Create_Simplex_For2dmesh (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4){
   Simplex *s;
   double p12, p23, p13;
-
-  s = Create_Simplex (v1, v2, v3, v4);
-
+  double srf = ((v2->Pos.X - v1->Pos.X) *
+		(v3->Pos.Y - v2->Pos.Y) -
+		(v3->Pos.X - v2->Pos.X) *
+		(v2->Pos.Y - v1->Pos.Y));
+  if(srf > 0)
+    s = Create_Simplex (v3, v2, v1, v4);
+  else
+    s = Create_Simplex (v1, v2, v3, v4);
+    
   THEM->Metric->setSimplexQuality (s, PARAMETRIC);
 
   if (PARAMETRIC){
@@ -630,6 +646,19 @@ bool Bowyer_Watson_2D (Surface * sur, Vertex * v, Simplex * S, int force){
     }
     for (i = 0; i < List_Nbr (Simplexes_New); i++){
       List_Read (Simplexes_New, i, &s);
+      if(0 || !force)
+	{
+	  double xc = s->Center.X;
+	  double yc = s->Center.Y;
+	  double rd = s->Radius;
+	  cgsmpl (s,x,y);
+	  THEM->Metric->setMetric (x, y, sur->Support);
+	  THEM->Metric->setSimplexQuality (s, sur->Support);
+	  s->Center.X = xc;
+	  s->Center.Y = yc;
+	  s->Radius = rd;
+	  if(force)THEM->Metric->Identity();
+	}
       draw_simplex2d (sur, s, 1);
       Tree_Add (sur->Simplexes, &s);
     }
