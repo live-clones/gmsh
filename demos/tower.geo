@@ -1,12 +1,8 @@
 /* 
    Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
-
-   3D with splines and includes
-
-   All important comments are marked with "README"
 */
 
-Include "demo-12.i1" ;
+Include "tower.i1" ;
 
 /* Post-Processing meshes */
 

@@ -45,7 +45,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-%doc demos/ex* demos/view*
+%doc demos/*.* tutorial/*.* doc/FORMATS
 /usr/bin/gmsh
 /usr/bin/dxf2geo
 /usr/man/man1/gmsh*

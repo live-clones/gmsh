@@ -1,9 +1,5 @@
 /* 
    Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
-
-   More complex 2D example with holes, includes and a loop
-
-   All important comments are marked with "README"
 */
 
 // All dimensions in meters and rads
@@ -16,7 +12,7 @@ Z  = 0.0 ;              // Z-coord
 nbs = 36 ;		// Num. of poles
 dths = 2 * Pi / nbs ;   // Ang. shift between 2 poles.
 
-// README: Pi is the only constant predefined in Gmsh
+// Pi is the only constant predefined in Gmsh
 
 th0s = dths / 2 ;       // Angular pos.
 des = 0.1529 ;          // Ext. diam.
@@ -54,10 +50,10 @@ r2r = d2r / 2 ;
 			  
 dist = rer - espa ;	// Radial dist. of intersect. point
 
-/* README: 'newp' is a meta variable defining a new point number for
-   you.  This is mostly useful with included files. There is also
-   'newreg' which defines a new region number (that is, everything
-   that is not a point). */
+/* 'newp' is a meta variable defining a new point number for you.
+   This is mostly useful with included files. There is also 'newreg'
+   which defines a new region number (that is, everything that is not
+   a point). */
 
 pAxe = newp ; Point(pAxe) = { 0. , 0. , 0., 15*Lc} ;
 
@@ -108,16 +104,16 @@ H  = hr ;
 R1 = r1r ; 
 R2 = r2r ; 
 
-/* README: You can include files with the 'Include' command. Note that
-   *ALL* variables in Gmsh are global. Including a file is similar to
-   paste its content where the include command is located. */
+/* You can include files with the 'Include' command. Note that *ALL*
+   variables in Gmsh are global. Including a file is similar to paste
+   its content where the include command is located. */
 
 i = 0;
 
 For(1:8)
   i++ ;
   th = th0r + (i - 1) * dthr ;
-  Include "demo-08.i1" ; 
+  Include "machine.i1" ; 
 EndFor
 
 // 9 stator poles
@@ -133,31 +129,31 @@ E2 = e2s ;
 H1 = h1s ;
 
 i = 1 ; th = th0s + (i - 1) * dths ;
-Include "demo-08.i2" ; 
+Include "machine.i2" ; 
 PP2 = p1 ; PP3 = p9 ;
 i = 2 ; th = th0s + (i - 1) * dths ;
-Include "demo-08.i2" ; 
+Include "machine.i2" ; 
 PP4 = p1 ; PP5 = p9 ;
 i = 3 ; th = th0s + (i - 1) * dths ;
-Include "demo-08.i2" ; 
+Include "machine.i2" ; 
 PP6 = p1 ; PP7 = p9 ;
 i = 4 ; th = th0s + (i - 1) * dths ;
-Include "demo-08.i2" ; 
+Include "machine.i2" ; 
 PP8 = p1 ; PP9 = p9 ;
 i = 5 ; th = th0s + (i - 1) * dths ;
-Include "demo-08.i2" ; 
+Include "machine.i2" ; 
 PP10 = p1 ; PP11 = p9 ;
 i = 6 ; th = th0s + (i - 1) * dths ;
-Include "demo-08.i2" ;
+Include "machine.i2" ;
 PP12 = p1 ; PP13 = p9 ;
 i = 7 ; th = th0s + (i - 1) * dths ;
-Include "demo-08.i2" ; 
+Include "machine.i2" ; 
 PP14 = p1 ; PP15 = p9 ;
 i = 8 ; th = th0s + (i - 1) * dths ;
-Include "demo-08.i2" ; 
+Include "machine.i2" ; 
 PP16 = p1 ; PP17 = p9 ;
 i = 9 ; th = th0s + (i - 1) * dths ;
-Include "demo-08.i2" ; 
+Include "machine.i2" ; 
 PP18 = p1 ; PP19 = p9 ;
 
 lin1 = newreg ; Line(lin1) = {PP1 , PP2 } ;
@@ -185,9 +181,6 @@ Line Loop(149) = {70,71,72,73,134,77,78,79,80,135,84,85,86,87,136,
                   128,129,142,-13,-12,-11,133};
 Plane Surface(150) = {149};
 
-/* README: One should define physical regions to specify what to
+/* One should define physical regions to specify what to
    save. Otherwise, only mesh points will be output in the mesh
    file. */
-
-/*  Physical Surface(1000) = {.......} */
-

@@ -1,9 +1,5 @@
 /* 
    Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
-
-   More complex 3D example. Test for 2nd order elts.
-
-   All important comments are marked with "README"
 */
 
 /*
@@ -78,28 +74,28 @@ l20 = 1404.e-3/2-ll/2 ; r20 = 12.e-3/2 ; d20 = 1241.7e-3 ; e20 = em+dc+d20*Sin(t
 l21 = 1648.e-3/2-ll/2 ; r21 = 12.e-3/2 ; d21 = 1467.7e-3 ; e21 = em+dc+d21*Sin(t)       ; s21 = f3*r21 ;
 l22 = 1934.e-3/2-ll/2 ; r22 = 12.e-3/2 ; d22 = 1734.3e-3 ; e22 = em+dc+d22*Sin(t)       ; s22 = f3*r22 ;
 
-dx = d1 ; rx = r1 ; sx = s1 ; lx = l1 ; e = e1 ; x = 100; Include "demo-13.i1" ;
-dx = d2 ; rx = r2 ; sx = s2 ; lx = l2 ; e =-e2 ; x = 200; Include "demo-13.i1" ;
-dx = d3 ; rx = r3 ; sx = s3 ; lx = l3 ; e = e3 ; x = 300; Include "demo-13.i1" ;
-dx = d4 ; rx = r4 ; sx = s4 ; lx = l4 ; e =-e4 ; x = 400; Include "demo-13.i1" ;
-dx = d5 ; rx = r5 ; sx = s5 ; lx = l5 ; e = e5 ; x = 500; Include "demo-13.i1" ;
-dx = d6 ; rx = r6 ; sx = s6 ; lx = l6 ; e =-e6 ; x = 600; Include "demo-13.i1" ;
-dx = d7 ; rx = r7 ; sx = s7 ; lx = l7 ; e = e7 ; x = 700; Include "demo-13.i1" ;
-dx = d8 ; rx = r8 ; sx = s8 ; lx = l8 ; e =-e8 ; x = 800; Include "demo-13.i1" ;
-dx = d9 ; rx = r9 ; sx = s9 ; lx = l9 ; e = e9 ; x = 900; Include "demo-13.i1" ;
-dx = d10; rx = r10; sx = s10; lx = l10; e =-e10; x =1000; Include "demo-13.i1" ;
-dx = d11; rx = r11; sx = s11; lx = l11; e = e11; x =1100; Include "demo-13.i1" ;
-dx = d12; rx = r12; sx = s12; lx = l12; e =-e12; x =1200; Include "demo-13.i1" ;
-dx = d13; rx = r13; sx = s13; lx = l13; e = e13; x =1300; Include "demo-13.i1" ;
-dx = d14; rx = r14; sx = s14; lx = l14; e =-e14; x =1400; Include "demo-13.i1" ;
-dx = d15; rx = r15; sx = s15; lx = l15; e = e15; x =1500; Include "demo-13.i1" ;
-dx = d16; rx = r16; sx = s16; lx = l16; e =-e16; x =1600; Include "demo-13.i1" ;
-dx = d17; rx = r17; sx = s17; lx = l17; e = e17; x =1700; Include "demo-13.i1" ;
-dx = d18; rx = r18; sx = s18; lx = l18; e =-e18; x =1800; Include "demo-13.i1" ;
-dx = d19; rx = r19; sx = s19; lx = l19; e = e19; x =1900; Include "demo-13.i1" ;
-dx = d20; rx = r20; sx = s20; lx = l20; e =-e20; x =2000; Include "demo-13.i1" ;
-dx = d21; rx = r21; sx = s21; lx = l21; e = e21; x =2100; Include "demo-13.i1" ;
-dx = d22; rx = r22; sx = s22; lx = l22; e =-e22; x =2200; Include "demo-13.i1" ;
+dx = d1 ; rx = r1 ; sx = s1 ; lx = l1 ; e = e1 ; x = 100; Include "antenna.i1" ;
+dx = d2 ; rx = r2 ; sx = s2 ; lx = l2 ; e =-e2 ; x = 200; Include "antenna.i1" ;
+dx = d3 ; rx = r3 ; sx = s3 ; lx = l3 ; e = e3 ; x = 300; Include "antenna.i1" ;
+dx = d4 ; rx = r4 ; sx = s4 ; lx = l4 ; e =-e4 ; x = 400; Include "antenna.i1" ;
+dx = d5 ; rx = r5 ; sx = s5 ; lx = l5 ; e = e5 ; x = 500; Include "antenna.i1" ;
+dx = d6 ; rx = r6 ; sx = s6 ; lx = l6 ; e =-e6 ; x = 600; Include "antenna.i1" ;
+dx = d7 ; rx = r7 ; sx = s7 ; lx = l7 ; e = e7 ; x = 700; Include "antenna.i1" ;
+dx = d8 ; rx = r8 ; sx = s8 ; lx = l8 ; e =-e8 ; x = 800; Include "antenna.i1" ;
+dx = d9 ; rx = r9 ; sx = s9 ; lx = l9 ; e = e9 ; x = 900; Include "antenna.i1" ;
+dx = d10; rx = r10; sx = s10; lx = l10; e =-e10; x =1000; Include "antenna.i1" ;
+dx = d11; rx = r11; sx = s11; lx = l11; e = e11; x =1100; Include "antenna.i1" ;
+dx = d12; rx = r12; sx = s12; lx = l12; e =-e12; x =1200; Include "antenna.i1" ;
+dx = d13; rx = r13; sx = s13; lx = l13; e = e13; x =1300; Include "antenna.i1" ;
+dx = d14; rx = r14; sx = s14; lx = l14; e =-e14; x =1400; Include "antenna.i1" ;
+dx = d15; rx = r15; sx = s15; lx = l15; e = e15; x =1500; Include "antenna.i1" ;
+dx = d16; rx = r16; sx = s16; lx = l16; e =-e16; x =1600; Include "antenna.i1" ;
+dx = d17; rx = r17; sx = s17; lx = l17; e = e17; x =1700; Include "antenna.i1" ;
+dx = d18; rx = r18; sx = s18; lx = l18; e =-e18; x =1800; Include "antenna.i1" ;
+dx = d19; rx = r19; sx = s19; lx = l19; e = e19; x =1900; Include "antenna.i1" ;
+dx = d20; rx = r20; sx = s20; lx = l20; e =-e20; x =2000; Include "antenna.i1" ;
+dx = d21; rx = r21; sx = s21; lx = l21; e = e21; x =2100; Include "antenna.i1" ;
+dx = d22; rx = r22; sx = s22; lx = l22; e =-e22; x =2200; Include "antenna.i1" ;
 
 
 /* 

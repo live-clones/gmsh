@@ -1,9 +1,6 @@
-/*
- * Sample Gmsh demo file
- * 
- * Copyright (C) 2000 C. Geuzaine, J.-F. Remacle
- *
- */
+/* 
+   Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
+*/
 
 /* INPUT :
    i_p

@@ -165,7 +165,7 @@
 #define	tMINUSMINUS	415
 
 #line 1 "Gmsh.y"
- /* $Id: Gmsh.tab.cpp,v 1.35 2000-12-08 22:35:29 geuzaine Exp $ */
+ /* $Id: Gmsh.tab.cpp,v 1.36 2000-12-09 03:13:48 geuzaine Exp $ */
 
 #include <stdarg.h>
 

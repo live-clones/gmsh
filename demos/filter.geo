@@ -1,9 +1,5 @@
 /* 
    Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
-
-   3D example with large characteristic lengths
-
-   All important comments are marked with "README"
 */
 
 ech = 0.001 ;

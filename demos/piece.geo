@@ -1,9 +1,5 @@
 /* 
    Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
-
-   More complex 3D  with geometric transformations and extrusion
-
-   All important comments are marked with "README"
 */
 
 r1 = .1;

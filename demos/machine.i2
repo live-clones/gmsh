@@ -1,12 +1,8 @@
 /* 
    Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
-
-   Stator pole definition. Included by demo-08.geo.
-
-   All important comments are marked with "README"
 */
 
-/* README: Variables that must be defined when including this file:
+/* Variables that must be defined when including this file:
    th,D2,H,R1,E1 */
 
 dtH = ArcSin(E1/2./D2) ;

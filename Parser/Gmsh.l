@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.16 2000-12-08 22:34:53 geuzaine Exp $ */
+%{ /* $Id: Gmsh.l,v 1.17 2000-12-09 03:13:48 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -330,7 +330,7 @@ void skip_until(char *until)
 	  if(chars[0] == until[0])break;
 	}
       
-      printf("%c",chars[0]); 
+      //printf("%c",chars[0]); 
       for(i=1;i<l;i++)
 	{
 	  chars[i] = yyinput();

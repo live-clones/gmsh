@@ -1,18 +1,9 @@
 /* 
    Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
-
-   Rotor pole definition. Included by demo-08.geo.
-
-   All important comments are marked with "README"
 */
 
-/* README: Variables that must be defined when including this file:
+/* Variables that must be defined when including this file:
    th,D1,H,R1,R2,Lc */
-
-/* README: Besides the classical '-', '+', '*', '/' and '^' (power)
-   operators, Gmsh provides the following math functions: 'Sqrt',
-   'Sin', 'Cos','Tan', 'ArcSin', 'ArcCos', 'ArcTan', 'Log' */
-
 
 XC1 = (D1 - R1) * Cos(th) ;             // Sup. circle center
 YC1 = (D1 - R1) * Sin(th) ;
@@ -35,7 +26,7 @@ YB2 = YC2 + R2 * Sin(th + dth) ;
 
 // Pole
 
-/* README: 'newp' is a meta variable defining a new point number for
+/* 'newp' is a meta variable defining a new point number for
    you.  This is mostly useful with included files. There is also
    'newreg' which defines a new region number (that is, everything
    that is not a point). */

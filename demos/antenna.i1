@@ -1,9 +1,5 @@
 /* 
    Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
-
-   Included by ex13.geo
-
-   All important comments are marked with "README"
 */
 
 Point(x+01) = {dx,    -e,    -ll/2,    sx};  Point(x+11) = {dx,     e,     ll/2,    sx}; 
