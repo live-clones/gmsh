@@ -108,6 +108,8 @@ class Adaptive_Post_View
   Double_Matrix * _STposY;
   Double_Matrix * _STposZ;
   Double_Matrix * _STval;
+  Double_Matrix * _Interpolate;
+  Double_Matrix * _Geometry;
 public:
   Adaptive_Post_View (Post_View *view, List_T *_coeffs, List_T *_eexps);
   ~Adaptive_Post_View();

@@ -64,6 +64,7 @@ void _triangle::clean ()
 }
 void _triangle::Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) 
 {
+  printf("creating the sub-elements\n");
   int level = 0;
   clean();
   _point *p1 = _point::New ( 0,0,0, coeffs, eexps);
@@ -71,6 +72,8 @@ void _triangle::Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexp
   _point *p3 = _point::New ( 1,0,0, coeffs, eexps);
   _triangle *t = new _triangle(p1,p2,p3);
   Recur_Create (t, maxlevel,level,coeffs,eexps) ;
+
+  printf("%d _triangle and %d _point created\n",_triangle::all_triangles.size(),_point::all_points.size());
 }
 void _triangle::Recur_Create (_triangle *t, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps) 
 {
@@ -93,6 +96,7 @@ void _triangle::Recur_Create (_triangle *t, int maxlevel, int level , Double_Mat
   _triangle *t4 = new _triangle (p12,p23,p13);
   Recur_Create (t4, maxlevel,level,coeffs,eexps);
   t->t[0]=t1;t->t[1]=t2;t->t[2]=t3;t->t[3]=t4;      
+
 }
 
 void _triangle::Error ( double AVG , double tol )
@@ -173,30 +177,62 @@ void _triangle::Recur_Error ( _triangle *t, double AVG, double tol )
     }
 }
 
+static double t0,t1,t2,t3;
+
 void Adaptive_Post_View:: zoomElement (Post_View * view ,
-				       int ielem , int level, GMSH_Post_Plugin *plug)
+				       int ielem ,
+				       int level, 
+				       GMSH_Post_Plugin *plug)
 {
   std::set<_point>::iterator it  = _point::all_points.begin();
   std::set<_point>::iterator ite = _point::all_points.end();
+
+  clock_t c0 = clock();
+
+  const int N = _coefs->size1();
+  Double_Vector val ( N ), res(_point::all_points.size());
+  Double_Matrix xyz (3,3);
+  Double_Matrix XYZ (_point::all_points.size(),3);
+
+  for ( int k=0;k<3;++k)
+    {
+      xyz(k,0) = (*_STposX) ( ielem , k );
+      xyz(k,1) = (*_STposY) ( ielem , k );
+      xyz(k,2) = (*_STposZ) ( ielem , k );
+    }
+
+  for ( int k=0;k<N;++k)
+    {
+      val(k) = (*_STval )( ielem , k );
+    }	        
+  _Interpolate->mult(val,res);
+  _Geometry->mult(xyz,XYZ);
   
+  clock_t c1 = clock();
+
+  int kk=0;
   for ( ; it !=ite ; ++it)
     {
       _point *p = (_point*) &(*it);
-      p->val = 0;
-      for ( int k=0;k<_coefs->size1();++k)
-	{
-	  p->val += it->shape_functions[k] * (*_STval )( ielem , k );
-	}	        
-      p->X = (*_STposX) ( ielem , 0 ) * ( 1.-p->x-p->y) + (*_STposX) ( ielem , 1 ) * p->x + (*_STposX) ( ielem , 2 ) * p->y;
-      p->Y = (*_STposY) ( ielem , 0 ) * ( 1.-p->x-p->y) + (*_STposY) ( ielem , 1 ) * p->x + (*_STposY) ( ielem , 2 ) * p->y;
-      p->Z = (*_STposZ) ( ielem , 0 ) * ( 1.-p->x-p->y) + (*_STposZ) ( ielem , 1 ) * p->x + (*_STposZ) ( ielem , 2 ) * p->y;
+      p->val = res(kk);
+      //      for ( int k=0;k<N;++k)
+      //	{
+      //	  p->val += p->shape_functions[k] * (*_STval )( ielem , k );
+      //	}	        
+      //      p->X = (*_STposX) ( ielem , 0 ) * ( 1.-p->x-p->y) + (*_STposX) ( ielem , 1 ) * p->x + (*_STposX) ( ielem , 2 ) * p->y;
+      //      p->Y = (*_STposY) ( ielem , 0 ) * ( 1.-p->x-p->y) + (*_STposY) ( ielem , 1 ) * p->x + (*_STposY) ( ielem , 2 ) * p->y;
+      //      p->Z = (*_STposZ) ( ielem , 0 ) * ( 1.-p->x-p->y) + (*_STposZ) ( ielem , 1 ) * p->x + (*_STposZ) ( ielem , 2 ) * p->y;
 
-      if (level == 0)
-	{
-	  if (min > p->val) min = p->val;
-	  if (max < p->val) max = p->val;
-	}
+      p->X = XYZ(kk,0);
+      p->Y = XYZ(kk,1);
+      p->Z = XYZ(kk,2);
+
+      if (min > p->val) min = p->val;
+      if (max < p->val) max = p->val;
+      kk++;
     }
+
+  clock_t c2 = clock();
 
   std::list<_triangle*>::iterator itt  = _triangle::all_triangles.begin();
   std::list<_triangle*>::iterator itte = _triangle::all_triangles.end();
@@ -210,8 +246,9 @@ void Adaptive_Post_View:: zoomElement (Post_View * view ,
   if (plug)
     plug->assign_specific_visibility ();
   else
-  _triangle::Error ( max-min, tol );
-
+    _triangle::Error ( max-min, tol );
+ 
+  clock_t c3 = clock();
   itt  = _triangle::all_triangles.begin();
   for ( ;itt != itte ; itt++)
     {
@@ -235,6 +272,13 @@ void Adaptive_Post_View:: zoomElement (Post_View * view ,
 	  view->NbST++;
 	}
     }
+  clock_t c4 = clock();
+
+  t0 += (double)(c1-c0)/CLOCKS_PER_SEC;
+  t1 += (double)(c2-c1)/CLOCKS_PER_SEC;
+  t2 += (double)(c3-c2)/CLOCKS_PER_SEC;
+  t3 += (double)(c4-c3)/CLOCKS_PER_SEC;
+
 }
 
 void Adaptive_Post_View:: setAdaptiveResolutionLevel (Post_View * view , int level, GMSH_Post_Plugin *plug)
@@ -245,17 +289,48 @@ void Adaptive_Post_View:: setAdaptiveResolutionLevel (Post_View * view , int lev
 
   _triangle::Create ( level, _coefs, _eexps );
 
+  std::set<_point>::iterator it  = _point::all_points.begin();
+  std::set<_point>::iterator ite = _point::all_points.end();
+
+  const int N = _coefs->size1();
+  if (_Interpolate)
+    delete _Interpolate;
+  if (_Geometry)
+    delete _Geometry;
+  _Interpolate = new Double_Matrix ( _point::all_points.size(), N);
+  _Geometry    = new Double_Matrix ( _point::all_points.size(), 3);
+
+  int kk=0;
+  for ( ; it !=ite ; ++it)
+    {
+      _point *p = (_point*) &(*it);
+      for ( int k=0;k<N;++k)
+	{
+	  (*_Interpolate)(kk,k) = p->shape_functions[k];
+	}
+      (*_Geometry)(kk,0) = ( 1.-p->x-p->y);
+      (*_Geometry)(kk,1) = p->x;
+      (*_Geometry)(kk,2) = p->y;
+      kk++;	  
+    }
+
   List_Delete(view->ST); view->ST = 0;  
   view->NbST = 0;
   /// for now, that's all we do, 1 TS
   view->NbTimeStep=1;
   int nbelm = _STposX->size1();
-  view->ST = List_Create ( nbelm * (int) pow(4.,level), nbelm *12, sizeof(double));
+  view->ST = List_Create ( nbelm * 4, nbelm , sizeof(double));
+
+
+  t0=t1 = t2 = t3 = 0;
 
   for ( int i=0;i<nbelm;++i)
     {
       zoomElement ( view , i , level, plug);
     }  
+
+  printf("finished %g %g %g %g\n",t0,t1,t2,t3);
+
   view->Changed = 1;
   presentZoomLevel = level;
   presentTol = tol;
@@ -322,6 +397,7 @@ Adaptive_Post_View:: Adaptive_Post_View (Post_View *view, List_T *_c , List_T *_
   : tol(1.e-3)
 {
 
+  _Interpolate = _Geometry = 0;
   _coefs = new Double_Matrix ( List_Nbr (_c) , List_Nbr (_c)  );
   _eexps  = new Double_Matrix ( List_Nbr (_c) , 3  );
 
@@ -359,5 +435,7 @@ Adaptive_Post_View::~Adaptive_Post_View()
   delete _STposY;
   delete _STposZ;
   delete _STval;
+  if(_Interpolate)delete _Interpolate;
+  if(_Geometry)delete _Geometry;
   _triangle::clean();
 }
