@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.16 2001-03-08 16:11:03 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.17 2001-03-08 21:06:35 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -17,15 +17,15 @@ char  *TheFileNameTab[MAX_OPEN_FILES];
 char  *TheBgmFileName=NULL;
 
 char gmsh_progname[]  = "This is Gmsh" ;
-char gmsh_copyright[] = "Copyright (C) 1997-2001 J.-F. Remacle, C. Geuzaine";
+char gmsh_copyright[] = "Copyright (C) 1997-2001 Jean-Francois Remacle and Christophe Geuzaine";
 char gmsh_version[]   = "Version          : " ;
-char gmsh_os[]        = "Operating System : " GMSH_OS ;
+char gmsh_os[]        = "Operating system : " GMSH_OS ;
 char gmsh_gui[]       = "GUI toolkit      : " ;
-char gmsh_date[]      = "Build Date       : " GMSH_DATE ;
-char gmsh_host[]      = "Build Host       : " GMSH_HOST ;
+char gmsh_date[]      = "Build date       : " GMSH_DATE ;
+char gmsh_host[]      = "Build host       : " GMSH_HOST ;
 char gmsh_packager[]  = "Packager         : " GMSH_PACKAGER ;
-char gmsh_url[]       = "Web Site         : http://www.geuz.org/gmsh/" ;
-char gmsh_email[]     = "Mailing List     : gmsh@geuz.org" ;
+char gmsh_url[]       = "Web site         : http://www.geuz.org/gmsh/" ;
+char gmsh_email[]     = "Mailing list     : gmsh@geuz.org" ;
 
 void Print_Usage(char *name){
   Msg(DIRECT, "Usage: %s [options] [files]", name);
