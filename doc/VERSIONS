@@ -1,8 +1,8 @@
-$Date: 2001-12-03 10:56:16 $
+$Date: 2001-12-04 09:31:27 $
 
 New in 1.32: New visibility browser; better floating point exception
 checks; fixed infinite looping when merging meshes in project files;
-various small clean ups;
+various small clean ups (degenerate 2D extrusion, view->reload, ...);
 
 New in 1.31: Corrected ellipses; PostScript output update (better
 shading, new combined PS/LaTeX output format); more interface polish;
