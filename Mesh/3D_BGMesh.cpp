@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.27 2004-05-07 22:49:57 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.28 2004-05-07 22:51:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -128,7 +128,7 @@ double Lc_XYZ(double X, double Y, double Z, Mesh * m)
     }
     break;
   case WITHPOINTS:
-    Msg(GERROR, "We should call Lc_XYZ with BGM.Typ == WITHPOINTS!");
+    Msg(GERROR, "We should never call Lc_XYZ with BGM.Typ == WITHPOINTS!");
     l = 1.0;
     break;
   }
