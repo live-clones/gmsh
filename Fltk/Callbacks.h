@@ -26,6 +26,7 @@ void file_save_as_auto_cb(CALLBACK_ARGS) ;
 void file_save_as_geo_cb(CALLBACK_ARGS) ;
 void file_save_as_geo_options_cb(CALLBACK_ARGS) ;
 void file_save_as_msh_cb(CALLBACK_ARGS) ;
+void file_save_as_msh_all_cb(CALLBACK_ARGS) ;
 void file_save_as_unv_cb(CALLBACK_ARGS) ;
 void file_save_as_gref_cb(CALLBACK_ARGS) ;
 void file_save_as_eps_simple_cb(CALLBACK_ARGS) ;
@@ -176,6 +177,7 @@ void con_geometry_define_symmetry_cb(CALLBACK_ARGS) ;
 // Dynamic Mesh Menus
 
 void mesh_save_cb(CALLBACK_ARGS) ;
+void mesh_save_all_cb(CALLBACK_ARGS) ;
 void mesh_define_cb(CALLBACK_ARGS) ;
 void mesh_1d_cb(CALLBACK_ARGS) ;
 void mesh_2d_cb(CALLBACK_ARGS) ; 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.82 2001-08-23 18:03:45 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.83 2001-09-06 06:38:48 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -216,6 +216,15 @@ void file_save_as_msh_cb(CALLBACK_ARGS) {
   if((newfile = fl_file_chooser("Save MSH file", "*", NULL)))
     CreateOutputFile(newfile, CTX.print.format = CTX.mesh.format = FORMAT_MSH); 
 }
+void file_save_as_msh_all_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save MSH file (no physicals)", "*", NULL))){
+    int all = CTX.mesh.save_all;
+    CTX.mesh.save_all = 1;
+    CreateOutputFile(newfile, CTX.print.format = CTX.mesh.format = FORMAT_MSH); 
+    CTX.mesh.save_all = all;
+  }
+}
 void file_save_as_unv_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save UNV file", "*", NULL)))
@@ -229,15 +238,19 @@ void file_save_as_gref_cb(CALLBACK_ARGS) {
 void file_save_as_eps_simple_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save EPS file", "*", NULL))){
+    int old = CTX.print.eps_quality;
     CTX.print.eps_quality = 1; 
     CreateOutputFile(newfile, CTX.print.format = FORMAT_EPS); 
+    CTX.print.eps_quality = old; 
   }
 }
 void file_save_as_eps_accurate_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save EPS file", "*", NULL))){
+    int old = CTX.print.eps_quality;
     CTX.print.eps_quality = 2; 
     CreateOutputFile(newfile, CTX.print.format = FORMAT_EPS); 
+    CTX.print.eps_quality = old; 
   }
 }
 void file_save_as_jpeg_cb(CALLBACK_ARGS) {
@@ -249,25 +262,37 @@ void file_save_as_jpeg_cb(CALLBACK_ARGS) {
 void file_save_as_gif_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save GIF file", "*", NULL))){
+    int dither = CTX.print.gif_dither;
+    int transp = CTX.print.gif_transparent;
     CTX.print.gif_dither = 0;
     CTX.print.gif_transparent = 0;
     CreateOutputFile(newfile, CTX.print.format = FORMAT_GIF); 
+    CTX.print.gif_dither = dither;
+    CTX.print.gif_transparent = transp;
   }
 }
 void file_save_as_gif_dithered_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save GIF file", "*", NULL))){
+    int dither = CTX.print.gif_dither;
+    int transp = CTX.print.gif_transparent;
     CTX.print.gif_dither = 1; 
     CTX.print.gif_transparent = 0; 
     CreateOutputFile(newfile, CTX.print.format = FORMAT_GIF); 
+    CTX.print.gif_dither = dither;
+    CTX.print.gif_transparent = transp;
   }
 }
 void file_save_as_gif_transparent_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save GIF file", "*", NULL))){
+    int dither = CTX.print.gif_dither;
+    int transp = CTX.print.gif_transparent;
     CTX.print.gif_dither = 0;
     CTX.print.gif_transparent = 1; 
     CreateOutputFile(newfile, CTX.print.format = FORMAT_GIF);
+    CTX.print.gif_dither = dither;
+    CTX.print.gif_transparent = transp;
   }
 }
 void file_save_as_ppm_cb(CALLBACK_ARGS) {
@@ -1165,6 +1190,12 @@ void geometry_physical_add_volume_cb (CALLBACK_ARGS){
 
 void mesh_save_cb(CALLBACK_ARGS) {
   Print_Mesh(&M, CTX.output_filename, CTX.mesh.format);
+}
+void mesh_save_all_cb(CALLBACK_ARGS) {
+  int all = CTX.mesh.save_all;
+  CTX.mesh.save_all = 1;
+  Print_Mesh(&M, CTX.output_filename, CTX.mesh.format);
+  CTX.mesh.save_all = all;
 }
 void mesh_define_cb(CALLBACK_ARGS){
   WID->set_context(menu_mesh_define, 0);

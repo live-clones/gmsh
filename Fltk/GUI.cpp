@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.112 2001-08-28 20:40:21 geuzaine Exp $
+// $Id: GUI.cpp,v 1.113 2001-09-06 06:38:48 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -43,6 +43,7 @@ Fl_Menu_Item m_menubar_table[] = {
     {"Save as",          0, 0, 0, FL_MENU_DIVIDER|FL_SUBMENU},
       {"By extension...",        FL_CTRL+'p', (Fl_Callback *)file_save_as_auto_cb, 0, FL_MENU_DIVIDER},
       {"MSH native mesh format...",       0, (Fl_Callback *)file_save_as_msh_cb, 0},
+      {"MSH without physicals...",        0, (Fl_Callback *)file_save_as_msh_all_cb, 0},
       {"UNV universal mesh format...",    0, (Fl_Callback *)file_save_as_unv_cb, 0},
       {"GREF gref mesh format...",        0, (Fl_Callback *)file_save_as_gref_cb, 0},
       {"GEO flattened geometry...",       0, (Fl_Callback *)file_save_as_geo_cb, 0},
@@ -124,8 +125,8 @@ Context_Item menu_geometry[] =
 	      { "B-Spline",      (Fl_Callback *)geometry_elementary_add_new_bspline_cb } ,
 	      { "Circle",        (Fl_Callback *)geometry_elementary_add_new_circle_cb } ,
 	      { "Ellipsis",      (Fl_Callback *)geometry_elementary_add_new_ellipsis_cb } ,
-	      { "Plane Surface", (Fl_Callback *)geometry_elementary_add_new_planesurface_cb } ,
-	      { "Ruled Surface", (Fl_Callback *)geometry_elementary_add_new_ruledsurface_cb } ,
+	      { "Plane surface", (Fl_Callback *)geometry_elementary_add_new_planesurface_cb } ,
+	      { "Ruled surface", (Fl_Callback *)geometry_elementary_add_new_ruledsurface_cb } ,
 	      { "Volume",        (Fl_Callback *)geometry_elementary_add_new_volume_cb } ,
 	      { NULL } 
 	    };  
@@ -233,6 +234,7 @@ Context_Item menu_mesh[] =
   { "2D",     (Fl_Callback *)mesh_2d_cb } , 
   { "3D",     (Fl_Callback *)mesh_3d_cb } , 
   { "Save",   (Fl_Callback *)mesh_save_cb } ,
+  { "Save all", (Fl_Callback *)mesh_save_all_cb } ,
   { NULL } 
 };  
     Context_Item menu_mesh_define[] = 
