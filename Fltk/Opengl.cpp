@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.47 2004-12-29 17:48:47 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.48 2004-12-31 22:02:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -66,6 +66,28 @@ void Draw(void)
   WID->redraw_opengl();
 }
 
+void SanitizeTexString(char *in, char *out)
+{
+  // if there is a '$' or a '\' in the string, assume the author knows
+  // what he's doing:
+  if(strstr(in, "$") || strstr(in, "\\")){
+    strcpy(out, in);
+    return;
+  }
+  // otherwise, escape the following special characters:
+  char bad[8] = { '%', '^', '#', '%', '&', '_', '{', '}' };
+  while(*in){
+    for(unsigned int i = 0; i < sizeof(bad); i++){
+      if(*in == bad[i]){
+	*out++ = '\\';
+	break;
+      }
+    }
+    *out++ = *in++;
+  }
+  *out = '\0';
+}
+
 void Draw_String(char *s, char *font_name, int font_enum, int font_size, int align)
 {
   if(align > 0){
@@ -94,11 +116,14 @@ void Draw_String(char *s, char *font_name, int font_enum, int font_size, int ali
     if(CTX.print.format == FORMAT_JPEGTEX ||
        CTX.print.format == FORMAT_PNGTEX)
       return;
-    if(CTX.print.format == FORMAT_TEX)
-      gl2psTextOpt(s, font_name, font_size, 
+    if(CTX.print.format == FORMAT_TEX){
+      char tmp[1024];
+      SanitizeTexString(s, tmp);
+      gl2psTextOpt(tmp, font_name, font_size, 
 		   (align == 0) ? GL2PS_TEXT_BL :
 		   (align == 1) ? GL2PS_TEXT_B :
 		   GL2PS_TEXT_BR, 0.);
+    }
     else
       gl2psText(s, font_name, font_size);
   }
