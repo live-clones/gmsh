@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.83 2002-12-02 05:58:37 geuzaine Exp $
+// $Id: Views.cpp,v 1.84 2002-12-14 09:10:09 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -963,7 +963,8 @@ void generate_connectivities (List_T *SS , int NbTimeStep, int nbvert, int nb,
 			      mycont & connectivities){
   double *x,*y,*z,*v;
   int i,j,k;
-  double vals[NbTimeStep];
+  // double vals[NbTimeStep]; // sgi compiler does not allow this
+  double *vals = new double[NbTimeStep];
 
   for(i = 0 ; i < List_Nbr(SS) ; i+=nb){
     x = (double*)List_Pointer_Fast(SS,i);
@@ -986,7 +987,8 @@ void generate_connectivities (List_T *SS , int NbTimeStep, int nbvert, int nb,
 	xx->update(NbTimeStep,vals);
       }
     }
-  }   
+  }
+  delete [] vals;
 }
 
 void smooth_list (List_T *SS , double *min, double *max,
