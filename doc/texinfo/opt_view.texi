@@ -39,11 +39,6 @@ Default post-processing view name@*
 Default value: @code{""}@*
 Saved in: @code{-}
 
-@item View.AlphaChannel
-Global alpha channel value (used only if != 1)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item View.AngleSmoothNormals
 Threshold angle below which normals are not smoothed@*
 Default value: @code{180}@*
@@ -86,6 +81,46 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.Boundary
 Draw the `N minus b'-dimensional boundary of the simplex (N=simplex dimension, b=option value)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ColormapAlpha
+Colormap alpha channel value (used only if != 1)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ColormapBeta
+Colormap beta parameter (gamma = 1-beta)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ColormapBias
+Colormap bias@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ColormapCurvature
+Colormap curvature or slope coeficient@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ColormapInvert
+Invert the color values, i.e., replace x with (255-x) in the colormap?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ColormapNumber
+Default colormap number@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ColormapRotation
+Incremental colormap rotation@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ColormapSwap
+Swap the min/max values in the colormap?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

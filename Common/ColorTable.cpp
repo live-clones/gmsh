@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.24 2004-12-23 22:26:34 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.25 2004-12-24 04:58:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -34,19 +34,16 @@
 
 extern Context_T CTX;
 
-void ColorTable_InitParam(int number, double alpha, GmshColorTable * ct)
+void ColorTable_InitParam(int number, GmshColorTable * ct)
 {
   ct->size = 255;
+  for(int i = 0; i < COLORTABLE_NBMAX_PARAM; i++){
+    ct->ipar[i] = 0;
+    ct->dpar[i] = 0.;
+  }
   ct->ipar[COLORTABLE_MODE] = COLORTABLE_RGB;
   ct->ipar[COLORTABLE_NUMBER] = number;
-  ct->ipar[COLORTABLE_INVERT] = 0;
-  ct->ipar[COLORTABLE_SWAP] = 0;
-  ct->ipar[COLORTABLE_ROTATE] = 0;
-
-  ct->dpar[COLORTABLE_CURVE] = 0.0;
-  ct->dpar[COLORTABLE_BIAS] = 0.0;
-  ct->dpar[COLORTABLE_BETA] = 0.0;
-  ct->dpar[COLORTABLE_ALPHAVAL] = alpha;
+  ct->dpar[COLORTABLE_ALPHA] = 1.0;
 }
 
 static double gray(double s)
@@ -76,24 +73,22 @@ static double cubic(double a, double b, double c, double d, double x)
 
 void ColorTable_Recompute(GmshColorTable * ct)
 {
-  double curve, bias, s, t, gamma;
-  int i, r, g, b, a, rotate;
+  double s, t, gamma;
+  int r, g, b, a;
 
-  ct->ipar[COLORTABLE_CHANGED] = 1;
+  double bias = ct->dpar[COLORTABLE_BIAS];
+  double curvature = ct->dpar[COLORTABLE_CURVATURE];
+  int rotation = ct->ipar[COLORTABLE_ROTATION];
 
-  bias = ct->dpar[COLORTABLE_BIAS];
-  curve = ct->dpar[COLORTABLE_CURVE];
-  rotate = ct->ipar[COLORTABLE_ROTATE];
-
-  for(i = 0; i < ct->size; i++) {
+  for(int i = 0; i < ct->size; i++) {
 
     if(ct->size > 1) {
-      if(i + rotate < 0)
-        s = (double)(i + rotate + ct->size) / (double)(ct->size - 1);
-      else if(i + rotate > ct->size - 1)
-        s = (double)(i + rotate - ct->size) / (double)(ct->size - 1);
+      if(i + rotation < 0)
+        s = (double)(i + rotation + ct->size) / (double)(ct->size - 1);
+      else if(i + rotation > ct->size - 1)
+        s = (double)(i + rotation - ct->size) / (double)(ct->size - 1);
       else
-        s = (double)(i + rotate) / (double)(ct->size - 1);
+        s = (double)(i + rotation) / (double)(ct->size - 1);
     }
     else
       s = 0.;
@@ -103,7 +98,7 @@ void ColorTable_Recompute(GmshColorTable * ct)
 
     switch (ct->ipar[COLORTABLE_NUMBER]) {
     case 1:  // vis5d
-      t = (curve + 1.4) * (s - (1. + bias) / 2.);
+      t = (curvature + 1.4) * (s - (1. + bias) / 2.);
       r = (int)(128.0 + 127.0 * atan(7.0 * t) / 1.57);
       g = (int)(128.0 + 127.0 * (2 * exp(-7 * t * t) - 1));
       b = (int)(128.0 + 127.0 * atan(-7.0 * t) / 1.57);
@@ -166,30 +161,30 @@ void ColorTable_Recompute(GmshColorTable * ct)
 	g = 0;
 	b = 255;
       }
-      else if(s - bias <= 0.25 + curve) {
-	curve = (curve == -0.25) ? -0.26 : curve;
+      else if(s - bias <= 0.25 + curvature) {
+	curvature = (curvature == -0.25) ? -0.26 : curvature;
 	r = 0;
-	g = (int)((s - bias) * (255. / (0.25 + curve)));
+	g = (int)((s - bias) * (255. / (0.25 + curvature)));
 	b = 255;
       }
       else if(s - bias <= 0.50) {
-	curve = (curve == 0.25) ? 0.26 : curve;
+	curvature = (curvature == 0.25) ? 0.26 : curvature;
 	r = 0;
 	g = 255;
 	b =
-	  (int)(255. - (255. / (0.25 - curve)) * (s - bias - 0.25 - curve));
+	  (int)(255. - (255. / (0.25 - curvature)) * (s - bias - 0.25 - curvature));
       }
-      else if(s - bias <= 0.75 - curve) {
-	curve = (curve == 0.25) ? 0.26 : curve;
-	r = (int)((s - bias - 0.5) * (255. / (0.25 - curve)));
+      else if(s - bias <= 0.75 - curvature) {
+	curvature = (curvature == 0.25) ? 0.26 : curvature;
+	r = (int)((s - bias - 0.5) * (255. / (0.25 - curvature)));
 	g = 255;
 	b = 0;
       }
       else if(s - bias <= 1.) {
-	curve = (curve == -0.25) ? -0.26 : curve;
+	curvature = (curvature == -0.25) ? -0.26 : curvature;
 	r = 255;
 	g =
-	  (int)(255. - (255. / (0.25 + curve)) * (s - bias - 0.75 + curve));
+	  (int)(255. - (255. / (0.25 + curvature)) * (s - bias - 0.75 + curvature));
 	b = 0;
       }
       else {
@@ -260,10 +255,10 @@ void ColorTable_Recompute(GmshColorTable * ct)
 	r = g = b = 0;
       }
       else if(s - bias <= 1.) {
-	r = g = b = (int)(255 * (1. - curve) * (s - bias));
+	r = g = b = (int)(255 * (1. - curvature) * (s - bias));
       }
       else {
-	r = g = b = (int)(255 * (1. - curve));
+	r = g = b = (int)(255 * (1. - curvature));
       }
       break;
     case 0:  // all black
@@ -272,19 +267,13 @@ void ColorTable_Recompute(GmshColorTable * ct)
       break;
     }
 
-    a = (int)(255. * ct->dpar[COLORTABLE_ALPHAVAL]);
+    a = (int)(255. * ct->dpar[COLORTABLE_ALPHA]);
 
-    // clamp to [0,255]
-    r = r < 0 ? 0 : (r > 255 ? 255 : r);
-    g = g < 0 ? 0 : (g > 255 ? 255 : g);
-    b = b < 0 ? 0 : (b > 255 ? 255 : b);
-    a = a < 0 ? 0 : (a > 255 ? 255 : a);
-    
     if(ct->dpar[COLORTABLE_BETA]) {
       if(ct->dpar[COLORTABLE_BETA] > 0.0)
 	gamma = 1. - ct->dpar[COLORTABLE_BETA];
       else
-	gamma = 1. / (1.001 + ct->dpar[COLORTABLE_BETA]);     // beta is thresholded to [-1,1]
+	gamma = 1. / (1.001 + ct->dpar[COLORTABLE_BETA]); // beta is thresholded to [-1,1]
       r = (int)(255. * pow((double)r / 255., gamma));
       g = (int)(255. * pow((double)g / 255., gamma));
       b = (int)(255. * pow((double)b / 255., gamma));
@@ -295,6 +284,12 @@ void ColorTable_Recompute(GmshColorTable * ct)
       g = 255 - g;
       b = 255 - b;
     }
+
+    // clamp to [0,255]
+    r = r < 0 ? 0 : (r > 255 ? 255 : r);
+    g = g < 0 ? 0 : (g > 255 ? 255 : g);
+    b = b < 0 ? 0 : (b > 255 ? 255 : b);
+    a = a < 0 ? 0 : (a > 255 ? 255 : a);
     
     ct->table[i] = PACK_COLOR(r, g, b, a);
   }

@@ -38,20 +38,19 @@ typedef struct{
 // integrer parameters indices
 
 #define COLORTABLE_NUMBER    0  // predefined curve index
-#define COLORTABLE_CHANGED   1  // did the colortable change ?
-#define COLORTABLE_INVERT    2  // invert (rbg<->255-rgb)
-#define COLORTABLE_SWAP      3  // swap (min<->max)
-#define COLORTABLE_ROTATE    4  // rotate
-#define COLORTABLE_MODE      5  // mode (rgb, hsv)
+#define COLORTABLE_INVERT    1  // invert (rbg<->255-rgb)
+#define COLORTABLE_SWAP      2  // swap (min<->max)
+#define COLORTABLE_ROTATION  3  // rotation
+#define COLORTABLE_MODE      4  // mode (rgb, hsv)
 
 // double parameters indices
 
-#define COLORTABLE_CURVE     0  // curvature
+#define COLORTABLE_CURVATURE 0  // curvature
 #define COLORTABLE_BIAS      1  // offset
-#define COLORTABLE_ALPHAVAL  2  // alpha channel value
+#define COLORTABLE_ALPHA     2  // alpha channel value
 #define COLORTABLE_BETA      3  // beta coeff for brighten
 
-void ColorTable_InitParam(int number, double alpha, GmshColorTable *ct);
+void ColorTable_InitParam(int number, GmshColorTable *ct);
 void ColorTable_Recompute(GmshColorTable *ct);
 void ColorTable_Copy(GmshColorTable *ct);
 void ColorTable_Paste(GmshColorTable *ct);

@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.39 2004-12-23 22:26:34 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.40 2004-12-24 04:58:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -422,43 +422,43 @@ int Colorbar_Window::handle(int event)
   case FL_SHORTCUT:
   case FL_KEYBOARD:
     if(Fl::test_shortcut('0')) {
-      ColorTable_InitParam(0, 1., ct);
+      ColorTable_InitParam(0, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('1')) {
-      ColorTable_InitParam(1, 1., ct);
+      ColorTable_InitParam(1, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('2')) {
-      ColorTable_InitParam(2, 1., ct);
+      ColorTable_InitParam(2, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('3')) {
-      ColorTable_InitParam(3, 1., ct);
+      ColorTable_InitParam(3, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('4')) {
-      ColorTable_InitParam(4, 1., ct);
+      ColorTable_InitParam(4, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('5')) {
-      ColorTable_InitParam(5, 1., ct);
+      ColorTable_InitParam(5, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('6')) {
-      ColorTable_InitParam(6, 1., ct);
+      ColorTable_InitParam(6, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('7')) {
-      ColorTable_InitParam(7, 1., ct);
+      ColorTable_InitParam(7, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('8')) {
-      ColorTable_InitParam(8, 1., ct);
+      ColorTable_InitParam(8, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('9')) {
-      ColorTable_InitParam(9, 1., ct);
+      ColorTable_InitParam(9, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('c')) {
@@ -473,7 +473,7 @@ int Colorbar_Window::handle(int event)
       draw();
     }
     else if(Fl::test_shortcut('r')) {
-      ColorTable_InitParam(ct->ipar[COLORTABLE_NUMBER], 1., ct);
+      ColorTable_InitParam(ct->ipar[COLORTABLE_NUMBER], ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('m')) {
@@ -504,15 +504,15 @@ int Colorbar_Window::handle(int event)
       compute = 1;
     }
     else if(Fl::test_shortcut('a')) {
-      ct->dpar[COLORTABLE_ALPHAVAL] -= 0.05;
-      if(ct->dpar[COLORTABLE_ALPHAVAL] < 0.0)
-        ct->dpar[COLORTABLE_ALPHAVAL] = 0.0;
+      ct->dpar[COLORTABLE_ALPHA] -= 0.05;
+      if(ct->dpar[COLORTABLE_ALPHA] < 0.0)
+        ct->dpar[COLORTABLE_ALPHA] = 0.0;
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_CTRL + 'a')) {
-      ct->dpar[COLORTABLE_ALPHAVAL] += 0.05;
-      if(ct->dpar[COLORTABLE_ALPHAVAL] > 1.0)
-        ct->dpar[COLORTABLE_ALPHAVAL] = 1.0;
+      ct->dpar[COLORTABLE_ALPHA] += 0.05;
+      if(ct->dpar[COLORTABLE_ALPHA] > 1.0)
+        ct->dpar[COLORTABLE_ALPHA] = 1.0;
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_Left)) {
@@ -520,9 +520,9 @@ int Colorbar_Window::handle(int event)
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_CTRL + FL_Left)) {
-      ct->ipar[COLORTABLE_ROTATE] += 5;
-      if(ct->ipar[COLORTABLE_ROTATE] > ct->size - 1)
-        ct->ipar[COLORTABLE_ROTATE] -= ct->size - 1;
+      ct->ipar[COLORTABLE_ROTATION] += 5;
+      if(ct->ipar[COLORTABLE_ROTATION] > ct->size - 1)
+        ct->ipar[COLORTABLE_ROTATION] -= ct->size - 1;
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_Right)) {
@@ -530,17 +530,17 @@ int Colorbar_Window::handle(int event)
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_CTRL + FL_Right)) {
-      ct->ipar[COLORTABLE_ROTATE] -= 5;
-      if(ct->ipar[COLORTABLE_ROTATE] < -(ct->size - 1))
-        ct->ipar[COLORTABLE_ROTATE] += ct->size - 1;
+      ct->ipar[COLORTABLE_ROTATION] -= 5;
+      if(ct->ipar[COLORTABLE_ROTATION] < -(ct->size - 1))
+        ct->ipar[COLORTABLE_ROTATION] += ct->size - 1;
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_Up)) {
-      ct->dpar[COLORTABLE_CURVE] -= 0.05;
+      ct->dpar[COLORTABLE_CURVATURE] -= 0.05;
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_Down)) {
-      ct->dpar[COLORTABLE_CURVE] += 0.05;
+      ct->dpar[COLORTABLE_CURVATURE] += 0.05;
       compute = 1;
     }
     else {

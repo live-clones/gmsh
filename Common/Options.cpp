@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.213 2004-12-24 03:25:36 geuzaine Exp $
+// $Id: Options.cpp,v 1.214 2004-12-24 04:58:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -42,7 +42,7 @@ extern Post_View *Post_ViewReference;
 
 void Init_Options_Safe(int num)
 {
-  ColorTable_InitParam(1, 1., &Post_ViewReference->CT);
+  ColorTable_InitParam(1, &Post_ViewReference->CT);
   ColorTable_Recompute(&Post_ViewReference->CT);
 
   // Default string options
@@ -5402,26 +5402,132 @@ double opt_view_line_type(OPT_ARGS_NUM)
   return v->LineType;
 }
 
-double opt_view_alpha_channel(OPT_ARGS_NUM)
+double opt_view_colormap_alpha(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    ColorTable_InitParam(v->CT.ipar[COLORTABLE_NUMBER], val, &v->CT);
+    v->CT.dpar[COLORTABLE_ALPHA] = val;
     ColorTable_Recompute(&v->CT);
     v->Changed = 1;
   }
-  return v->CT.dpar[COLORTABLE_ALPHAVAL];
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_colorbar_window->redraw();
+  }
+#endif
+  return v->CT.dpar[COLORTABLE_ALPHA];
 }
 
-double opt_view_default_colormap(OPT_ARGS_NUM)
+double opt_view_colormap_beta(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    ColorTable_InitParam((int)val, v->CT.dpar[COLORTABLE_ALPHAVAL], &v->CT);
+    v->CT.dpar[COLORTABLE_BETA] = val;
     ColorTable_Recompute(&v->CT);
     v->Changed = 1;
   }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_colorbar_window->redraw();
+  }
+#endif
+  return v->CT.dpar[COLORTABLE_BETA];
+}
+
+double opt_view_colormap_bias(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->CT.dpar[COLORTABLE_BIAS] = val;
+    ColorTable_Recompute(&v->CT);
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_colorbar_window->redraw();
+  }
+#endif
+  return v->CT.dpar[COLORTABLE_BIAS];
+}
+
+double opt_view_colormap_curvature(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->CT.dpar[COLORTABLE_CURVATURE] = val;
+    ColorTable_Recompute(&v->CT);
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_colorbar_window->redraw();
+  }
+#endif
+  return v->CT.dpar[COLORTABLE_CURVATURE];
+}
+
+double opt_view_colormap_invert(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->CT.ipar[COLORTABLE_INVERT] = (int)val;
+    ColorTable_Recompute(&v->CT);
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_colorbar_window->redraw();
+  }
+#endif
+  return v->CT.ipar[COLORTABLE_INVERT];
+}
+
+double opt_view_colormap_number(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->CT.ipar[COLORTABLE_NUMBER] = (int)val;
+    ColorTable_Recompute(&v->CT);
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_colorbar_window->redraw();
+  }
+#endif
   return v->CT.ipar[COLORTABLE_NUMBER];
+}
+
+double opt_view_colormap_rotation(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->CT.ipar[COLORTABLE_ROTATION] = (int)val;
+    ColorTable_Recompute(&v->CT);
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_colorbar_window->redraw();
+  }
+#endif
+  return v->CT.ipar[COLORTABLE_ROTATION];
+}
+
+double opt_view_colormap_swap(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->CT.ipar[COLORTABLE_SWAP] = (int)val;
+    ColorTable_Recompute(&v->CT);
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_colorbar_window->redraw();
+  }
+#endif
+  return v->CT.ipar[COLORTABLE_SWAP];
 }
 
 double opt_view_external_view(OPT_ARGS_NUM)

@@ -720,8 +720,8 @@ Default value: @code{150}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.ZoomFactor
-`Speed' of the middle mouse button zoom@*
-Default value: @code{1.1}@*
+Middle mouse button zoom acceleration factor@*
+Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Color.Background

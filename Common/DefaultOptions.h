@@ -983,8 +983,6 @@ StringXNumber PostProcessingOptions_Number[] = {
 } ;
 
 StringXNumber ViewOptions_Number[] = {
-  { F|O, "AlphaChannel" , opt_view_alpha_channel , 1.0 ,
-    "Global alpha channel value (used only if != 1)" },
   { F|O, "AngleSmoothNormals" , opt_view_angle_smooth_normals , 180. ,
     "Threshold angle below which normals are not smoothed" },
   { F|O, "ArrowHeadRadius" , opt_view_arrow_head_radius , 0.12 ,
@@ -1005,8 +1003,23 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "Boundary" , opt_view_boundary , 0. ,
     "Draw the `N minus b'-dimensional boundary of the simplex (N=simplex dimension, b=option value)" },
 
-  { F|O, "Colormap" , opt_view_default_colormap , 1. ,
+  { F|O, "ColormapAlpha" , opt_view_colormap_alpha , 1.0 ,
+    "Colormap alpha channel value (used only if != 1)" },
+  { F|O, "ColormapBeta" , opt_view_colormap_beta , 0.0 ,
+    "Colormap beta parameter (gamma = 1-beta)" },
+  { F|O, "ColormapBias" , opt_view_colormap_bias , 0.0 ,
+    "Colormap bias" },
+  { F|O, "ColormapCurvature" , opt_view_colormap_curvature , 0.0 ,
+    "Colormap curvature or slope coeficient" },
+  { F|O, "ColormapInvert" , opt_view_colormap_invert , 0. ,
+    "Invert the color values, i.e., replace x with (255-x) in the colormap?" },
+  { F|O, "ColormapNumber" , opt_view_colormap_number , 1. ,
     "Default colormap number" },
+  { F|O, "ColormapRotation" , opt_view_colormap_rotation , 0. ,
+    "Incremental colormap rotation" },
+  { F|O, "ColormapSwap" , opt_view_colormap_swap , 0. ,
+    "Swap the min/max values in the colormap?" },
+
   { F,   "CustomMax" , opt_view_custom_max , 0. , 
     "User-defined maximum value to be displayed" },
   { F,   "CustomMin" , opt_view_custom_min , 0. , 

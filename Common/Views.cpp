@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.150 2004-12-23 22:26:34 geuzaine Exp $
+// $Id: Views.cpp,v 1.151 2004-12-24 04:58:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -699,10 +699,13 @@ void Print_ColorTable(int num, int diff, char *prefix, FILE * file)
 
   if(diff){
     // compare the current colormap with a vanilla colormap having the
-    // same index number
+    // parameters
     GmshColorTable ref;
-    ColorTable_InitParam(v->CT.ipar[COLORTABLE_NUMBER], 
-			 v->CT.dpar[COLORTABLE_ALPHAVAL], &ref);
+    ColorTable_InitParam(v->CT.ipar[COLORTABLE_NUMBER], &ref); 
+    for(int i = 0; i < COLORTABLE_NBMAX_PARAM; i++){
+      ref.ipar[i] = v->CT.ipar[i];
+      ref.dpar[i] = v->CT.dpar[i];
+    }
     ColorTable_Recompute(&ref);
     if(!ColorTable_Diff(&ref, &v->CT))
       return;
