@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.219 2002-11-17 06:25:58 geuzaine Exp $
+// $Id: GUI.cpp,v 1.220 2002-11-18 04:10:54 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1162,6 +1162,7 @@ void GUI::create_general_options_window(){
   hide_option_subwindows();
   gen_window->show();
   opt_browser->value(1);
+  opt_window->label("Options - General");
 }
 
 void GUI::create_geometry_options_window(){
@@ -1169,6 +1170,7 @@ void GUI::create_geometry_options_window(){
   hide_option_subwindows();
   geo_window->show();
   opt_browser->value(2);
+  opt_window->label("Options - Geometry");
 }
  
 void GUI::create_mesh_options_window(){
@@ -1176,6 +1178,7 @@ void GUI::create_mesh_options_window(){
   hide_option_subwindows();
   mesh_window->show();
   opt_browser->value(3);
+  opt_window->label("Options - Mesh");
 }
 
 void GUI::create_solver_options_window(){
@@ -1183,6 +1186,7 @@ void GUI::create_solver_options_window(){
   hide_option_subwindows();
   solver_window->show();
   opt_browser->value(4);
+  opt_window->label("Options - Solver");
 }
 
 void GUI::create_post_options_window(){
@@ -1190,6 +1194,7 @@ void GUI::create_post_options_window(){
   hide_option_subwindows();
   post_window->show();
   opt_browser->value(5);
+  opt_window->label("Options - Post-processing");
 }
 
 void GUI::create_view_options_window(int num){
@@ -1198,6 +1203,9 @@ void GUI::create_view_options_window(int num){
   update_view_window(num);
   view_window->show();
   opt_browser->value(6+num);
+  static char str[128];
+  sprintf(str, "Options - View [%d]", num);
+  opt_window->label(str);
 }
 
 void GUI::reset_option_browser(){
@@ -1230,7 +1238,7 @@ void GUI::create_option_window(){
     return;
   }
 
-  opt_window = new Fl_Window(width,height,"Options");
+  opt_window = new Fl_Window(width,height);
   opt_window->box(WINDOW_BOX);
 
   // Buttons
@@ -1254,6 +1262,7 @@ void GUI::create_option_window(){
   reset_option_browser();
   opt_browser->callback(options_browser_cb);
   opt_browser->value(1);
+  opt_window->label("Options - General");
 
   width -= BROWSERW;
   int BW = width-4*WB;
