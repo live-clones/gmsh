@@ -1,4 +1,4 @@
-/* $Id: Widgets.h,v 1.8 2000-12-08 11:16:55 geuzaine Exp $ */
+/* $Id: Widgets.h,v 1.9 2000-12-13 13:57:00 geuzaine Exp $ */
 #ifndef _WIDGETS_H_
 #define _WIDGETS_H_
 
@@ -169,6 +169,9 @@ typedef struct {
 
     Widget   dilatDialog, dilatRowCol ;
     Widget   dilatFrame[2][2], dilatFrameRowCol[2], dilatText[4] ;
+
+    Widget   symmDialog, symmRowCol ;
+    Widget   symmFrame[2], symmFrameRowCol, symmText[4] ;
   } GD;
 
   /* mesh dialogs */

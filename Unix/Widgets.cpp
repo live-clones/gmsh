@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.17 2000-12-08 11:16:55 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.18 2000-12-13 13:57:00 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1998,7 +1998,7 @@ void CreateWidgets_GD(Widgets_T *w){
   /* Translation */
 
   i=0;
-  XtSetArg(arg[i], XmNdialogTitle, XmStringCreateSimple("CurrentTranslation")); i++;
+  XtSetArg(arg[i], XmNdialogTitle, XmStringCreateSimple("Current Translation")); i++;
   XtSetArg(arg[i], XmNokLabelString, XmStringCreateSimple("Ok")); i++;
   XtSetArg(arg[i], XmNcancelLabelString, XmStringCreateSimple("Cancel")); i++;
   XtSetArg(arg[i], XmNautoUnmanage, False); i++;
@@ -2082,7 +2082,7 @@ void CreateWidgets_GD(Widgets_T *w){
   w->GD.dilatText[2] = XmCreateTextField(w->GD.dilatFrameRowCol[0], "GDdilatText2", arg, i);
   XtManageChild(w->GD.dilatText[2]);
 
-  /* dilat - char length */
+  /* dilat - factor */
   
   i=0;
   w->GD.dilatFrame[0][1] = XmCreateFrame(w->GD.dilatRowCol, "GDdilatFrame01", arg, i);
@@ -2103,6 +2103,51 @@ void CreateWidgets_GD(Widgets_T *w){
   XtSetArg(arg[i], XmNcolumns, 10); i++;
   w->GD.dilatText[3] = XmCreateTextField(w->GD.dilatFrameRowCol[1], "GDdilatText3", arg, i);
   XtManageChild(w->GD.dilatText[3]);
+
+  /* Symmetry */
+
+  i=0;
+  XtSetArg(arg[i], XmNdialogTitle, XmStringCreateSimple("Current Symmetry")); i++;
+  XtSetArg(arg[i], XmNokLabelString, XmStringCreateSimple("Ok")); i++;
+  XtSetArg(arg[i], XmNcancelLabelString, XmStringCreateSimple("Cancel")); i++;
+  XtSetArg(arg[i], XmNautoUnmanage, False); i++;
+  w->GD.symmDialog = XmCreateTemplateDialog(w->M.shell, "GDsymmDialog", arg, i);
+  XtUnmanageChild(w->GD.symmDialog);
+
+  i=0;
+  w->GD.symmFrame[0] = XmCreateFrame(w->GD.symmDialog, "GDsymmFrame0", arg, i);
+  XtManageChild(w->GD.symmFrame[0]);
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Plane")); i++;
+  XtSetArg(arg[i], XmNchildType, XmFRAME_TITLE_CHILD); i++;
+  w->GD.symmFrame[1] = XmCreateLabel(w->GD.symmFrame[0], "GDsymmFrame1", arg, i);
+  XtManageChild(w->GD.symmFrame[1]);
+
+  i=0;
+  XtSetArg(arg[i], XmNorientation, XmHORIZONTAL); i++;
+  w->GD.symmFrameRowCol = XmCreateRowColumn(w->GD.symmFrame[0], "ODsymmFrameRowCol", arg, i);
+  XtManageChild(w->GD.symmFrameRowCol);
+
+  i=0;
+  XtSetArg(arg[i], XmNvalue, ""); i++;
+  XtSetArg(arg[i], XmNcolumns, 10); i++;
+  w->GD.symmText[0] = XmCreateTextField(w->GD.symmFrameRowCol, "GDsymmText0", arg, i);
+  XtManageChild(w->GD.symmText[0]);
+  i=0;
+  XtSetArg(arg[i], XmNvalue, ""); i++;
+  XtSetArg(arg[i], XmNcolumns, 10); i++;
+  w->GD.symmText[1] = XmCreateTextField(w->GD.symmFrameRowCol, "GDsymmText1", arg, i);
+  XtManageChild(w->GD.symmText[1]);
+  i=0;
+  XtSetArg(arg[i], XmNvalue, ""); i++;
+  XtSetArg(arg[i], XmNcolumns, 10); i++;
+  w->GD.symmText[2] = XmCreateTextField(w->GD.symmFrameRowCol, "GDsymmText2", arg, i);
+  XtManageChild(w->GD.symmText[2]);
+  i=0;
+  XtSetArg(arg[i], XmNvalue, ""); i++;
+  XtSetArg(arg[i], XmNcolumns, 10); i++;
+  w->GD.symmText[3] = XmCreateTextField(w->GD.symmFrameRowCol, "GDsymmText3", arg, i);
+  XtManageChild(w->GD.symmText[3]);
 
 }
 

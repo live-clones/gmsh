@@ -1,4 +1,4 @@
-/* $Id: Geometry.cpp,v 1.5 2000-12-08 11:16:55 geuzaine Exp $ */
+/* $Id: Geometry.cpp,v 1.6 2000-12-13 13:57:00 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -645,6 +645,21 @@ void ForceGeometry_GD (Widgets_T *w){
                   XmNchildVerticalAlignment, TITLE_ALIGN,
                   NULL);
   }
+
+  XtVaSetValues(w->GD.symmDialog,
+                XmNmarginHeight, DIALOG_H,
+                XmNmarginWidth, DIALOG_W,
+                NULL);
+
+  XtVaSetValues(w->GD.symmFrame[0],
+                XmNshadowType, IN_FRAME_TYPE,
+                XmNshadowThickness, IN_FRAME_SHADOW,
+                NULL);
+
+  XtVaSetValues(w->GD.symmFrame[1],
+                XmNchildHorizontalSpacing, TITLE_SPACE,
+                XmNchildVerticalAlignment, TITLE_ALIGN,
+                NULL);
 
 }
 

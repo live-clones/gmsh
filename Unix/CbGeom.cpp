@@ -1,4 +1,4 @@
-/* $Id: CbGeom.cpp,v 1.8 2000-12-13 13:18:49 geuzaine Exp $ */
+/* $Id: CbGeom.cpp,v 1.9 2000-12-13 13:57:00 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -15,16 +15,17 @@
 extern Context_T  CTX;
 extern Widgets_T  WID;
 
-extern Mesh       M;
-extern char       TheFileName[256];
+extern Mesh  M;
+extern char  TheFileName[256];
 
-extern char     x_text[100], y_text[100], z_text[100], l_text[100];
-extern char     tx_text[100], ty_text[100], tz_text[100];
-extern char     px_text[100], py_text[100], pz_text[100], angle_text[100];
-extern char     ax_text[100], ay_text[100], az_text[100], angle_text[100];
-extern char     dx_text[100], dy_text[100], dz_text[100], df_text[100];
-
-static char     name_text[100], value_text[100];
+extern char  x_text[100], y_text[100], z_text[100], l_text[100];
+extern char  tx_text[100], ty_text[100], tz_text[100];
+extern char  px_text[100], py_text[100], pz_text[100], angle_text[100];
+extern char  ax_text[100], ay_text[100], az_text[100], angle_text[100];
+extern char  dx_text[100], dy_text[100], dz_text[100], df_text[100];
+extern char  sa_text[100], sb_text[100], sc_text[100], sd_text[100];
+	     
+static char  name_text[100], value_text[100];
 
 int SelectContour (int type, int num, List_T *Liste1){
   int      k,ip,i;
@@ -382,6 +383,8 @@ void geom_event_handler (int event) {
 
   case GEOM_ELEM_ADD_DILATE_POINT :
   case GEOM_ELEM_MOVE_DILATE_POINT :
+  case GEOM_ELEM_ADD_SYMMETRY_POINT :
+  case GEOM_ELEM_MOVE_SYMMETRY_POINT :
     while(1){
       Msg(STATUS,"Select Point ('q'=quit)");
       if(!SelectEntity(ENT_POINT, &v,&c,&s)){
@@ -389,13 +392,28 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      dilate(event==GEOM_ELEM_ADD_DILATE_POINT?1:0,v->Num,TheFileName,"Point");
+      switch(event){
+      case GEOM_ELEM_ADD_DILATE_POINT :
+	dilate(1,v->Num,TheFileName,"Point");
+	break;
+      case GEOM_ELEM_MOVE_DILATE_POINT :
+	dilate(0,v->Num,TheFileName,"Point");
+	break;
+      case GEOM_ELEM_ADD_SYMMETRY_POINT :
+	symmetry(1,v->Num,TheFileName,"Point");
+	break;
+      case GEOM_ELEM_MOVE_SYMMETRY_POINT :
+	symmetry(0,v->Num,TheFileName,"Point");
+	break;
+      }
       ZeroHighlight(&M);
       Replot();
     }
     break;
   case GEOM_ELEM_ADD_DILATE_LINE :
   case GEOM_ELEM_MOVE_DILATE_LINE :
+  case GEOM_ELEM_ADD_SYMMETRY_LINE :
+  case GEOM_ELEM_MOVE_SYMMETRY_LINE :
     while(1){
       Msg(STATUS,"Select Line ('q'=quit)");
       if(!SelectEntity(ENT_LINE, &v,&c,&s)){
@@ -403,13 +421,28 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      dilate(event==GEOM_ELEM_ADD_DILATE_LINE?1:0,c->Num,TheFileName,"Line");
+      switch(event){
+      case GEOM_ELEM_ADD_DILATE_LINE :
+	dilate(1,c->Num,TheFileName,"Line");
+	break;
+      case GEOM_ELEM_MOVE_DILATE_LINE :
+	dilate(0,c->Num,TheFileName,"Line");
+	break;
+      case GEOM_ELEM_ADD_SYMMETRY_LINE :
+	symmetry(1,c->Num,TheFileName,"Line");
+	break;
+      case GEOM_ELEM_MOVE_SYMMETRY_LINE :
+	symmetry(0,c->Num,TheFileName,"Line");
+	break;
+      }
       ZeroHighlight(&M);
       Replot();
     }
     break;
   case GEOM_ELEM_ADD_DILATE_SURF :
   case GEOM_ELEM_MOVE_DILATE_SURF :
+  case GEOM_ELEM_ADD_SYMMETRY_SURF :
+  case GEOM_ELEM_MOVE_SYMMETRY_SURF :
     while(1){
       Msg(STATUS,"Select Surface ('q'=quit)");
       if(!SelectEntity(ENT_SURFACE, &v,&c,&s)){
@@ -417,7 +450,20 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      dilate(event==GEOM_ELEM_ADD_DILATE_SURF?1:0,s->Num,TheFileName,"Surface");
+      switch(event){
+      case GEOM_ELEM_ADD_DILATE_SURF :
+	dilate(1,s->Num,TheFileName,"Surface");
+	break;
+      case GEOM_ELEM_MOVE_DILATE_SURF :
+	dilate(0,s->Num,TheFileName,"Surface");
+	break;
+      case GEOM_ELEM_ADD_SYMMETRY_SURF :
+	symmetry(1,s->Num,TheFileName,"Surface");
+	break;
+      case GEOM_ELEM_MOVE_SYMMETRY_SURF :
+	symmetry(0,s->Num,TheFileName,"Surface");
+	break;
+      }
       ZeroHighlight(&M);
       Replot();
     }
@@ -566,7 +612,10 @@ void GeomCb (Widget w, XtPointer client_data, XtPointer call_data){
   case GEOM_DILAT_Y    : strcpy(dy_text,XmTextGetString(w)); break;
   case GEOM_DILAT_Z    : strcpy(dz_text,XmTextGetString(w)); break;
   case GEOM_DILAT_F    : strcpy(df_text,XmTextGetString(w)); break;
-
+  case GEOM_SYMMETRY_A : strcpy(sa_text,XmTextGetString(w)); break;
+  case GEOM_SYMMETRY_B : strcpy(sb_text,XmTextGetString(w)); break;
+  case GEOM_SYMMETRY_C : strcpy(sc_text,XmTextGetString(w)); break;
+  case GEOM_SYMMETRY_D : strcpy(sd_text,XmTextGetString(w)); break;
   default :
     Msg(WARNING, "Unknown Value in GeomCb (%d)", (long int)client_data); 
     break;

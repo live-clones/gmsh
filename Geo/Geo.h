@@ -1,4 +1,4 @@
-/* $Id: Geo.h,v 1.4 2000-11-26 15:43:45 geuzaine Exp $ */
+/* $Id: Geo.h,v 1.5 2000-12-13 13:56:58 geuzaine Exp $ */
 #ifndef _GEO_H_
 #define _GEO_H_
 
@@ -108,6 +108,7 @@ void translate_surf(int add, int s, char *fich);
 void translate_pt(int add, int s, char *fich);
 void rotate(int add, int s, char *fich, char *quoi);
 void dilate(int add, int s, char *fich, char *quoi);
+void symmetry(int add, int s, char *fich, char *quoi);
 void protude(int s, char *fich, char *what);
 
 #endif

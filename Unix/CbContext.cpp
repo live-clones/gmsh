@@ -1,4 +1,4 @@
-/* $Id: CbContext.cpp,v 1.7 2000-12-09 15:21:17 geuzaine Exp $ */
+/* $Id: CbContext.cpp,v 1.8 2000-12-13 13:57:00 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -376,6 +376,7 @@ void NextContextCb (Widget w, XtPointer client_data, XtPointer call_data){
       ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_ADD_DILATE,call_data);
       break;
     case 5: 
+      XtManageChild(WID.GD.symmDialog);
       ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_ADD_SYMMETRY,call_data); 
       break;
     }
@@ -419,12 +420,15 @@ void NextContextCb (Widget w, XtPointer client_data, XtPointer call_data){
     case 1: geom_event_handler(GEOM_ELEM_ADD_DILATE_POINT); break ;
     case 2: geom_event_handler(GEOM_ELEM_ADD_DILATE_LINE); break ;
     case 3: geom_event_handler(GEOM_ELEM_ADD_DILATE_SURF); break ;
-    case 4: break ;
     }
     break;
 
   case CONTEXT_GEOM_ELEM_ADD_SYMMETRY :
-    Msg(WARNING, "Add Symmetry not done yet"); 
+    switch((long int)client_data){
+    case 1: geom_event_handler(GEOM_ELEM_ADD_SYMMETRY_POINT); break ;
+    case 2: geom_event_handler(GEOM_ELEM_ADD_SYMMETRY_LINE); break ;
+    case 3: geom_event_handler(GEOM_ELEM_ADD_SYMMETRY_SURF); break ;
+    }
     break;
      
   case CONTEXT_GEOM_ELEM_MOVE :
@@ -442,6 +446,7 @@ void NextContextCb (Widget w, XtPointer client_data, XtPointer call_data){
       ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_MOVE_DILATE,call_data);
       break;
     case 4:
+      XtManageChild(WID.GD.symmDialog);
       ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_MOVE_SYMMETRY,call_data);
       break;
     }
@@ -468,12 +473,15 @@ void NextContextCb (Widget w, XtPointer client_data, XtPointer call_data){
     case 1: geom_event_handler(GEOM_ELEM_MOVE_DILATE_POINT); break ;
     case 2: geom_event_handler(GEOM_ELEM_MOVE_DILATE_LINE); break ;
     case 3: geom_event_handler(GEOM_ELEM_MOVE_DILATE_SURF); break ;
-    case 4: break ;
     }
     break;
 
   case CONTEXT_GEOM_ELEM_MOVE_SYMMETRY :
-    Msg(WARNING, "Move Symmetry not done yet"); 
+    switch((long int)client_data){
+    case 1: geom_event_handler(GEOM_ELEM_MOVE_SYMMETRY_POINT); break ;
+    case 2: geom_event_handler(GEOM_ELEM_MOVE_SYMMETRY_LINE); break ;
+    case 3: geom_event_handler(GEOM_ELEM_MOVE_SYMMETRY_SURF); break ;
+    }
     break;
 
   case CONTEXT_GEOM_ELEM_EXTRUDE :
@@ -491,6 +499,7 @@ void NextContextCb (Widget w, XtPointer client_data, XtPointer call_data){
       ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_EXTRUDE_DILATE,call_data);
       break;
     case 4:
+      XtManageChild(WID.GD.symmDialog);
       ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_EXTRUDE_SYMMETRY,call_data);
       break;
     }
@@ -513,11 +522,11 @@ void NextContextCb (Widget w, XtPointer client_data, XtPointer call_data){
     break;
     
   case CONTEXT_GEOM_ELEM_EXTRUDE_DILATE :
-    Msg(WARNING, "Extrude Dilate not done yet!"); 
+    Msg(WARNING, "Extrude Dilate is not implemented"); 
     break;
 
   case CONTEXT_GEOM_ELEM_EXTRUDE_SYMMETRY :
-    Msg(WARNING, "Extrude Symmetry not done yet!"); 
+    Msg(WARNING, "Extrude Symmetry is not implemented"); 
     break;
      
   case CONTEXT_GEOM_ELEM_DELETE :

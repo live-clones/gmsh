@@ -1,4 +1,4 @@
-/* $Id: Register.cpp,v 1.12 2000-12-08 11:16:55 geuzaine Exp $ */
+/* $Id: Register.cpp,v 1.13 2000-12-13 13:57:00 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -292,6 +292,11 @@ void RegisterCallbacks_GD(Widgets_T *w){
   register_valchg_cb  (w->GD.dilatText[2],   GeomCb,    GEOM_DILAT_Z);
   register_valchg_cb  (w->GD.dilatText[3],   GeomCb,    GEOM_DILAT_F);
 
+  register_cancel_cb  (w->GD.symmDialog,     ManageCb,  w->GD.symmDialog); 
+  register_valchg_cb  (w->GD.symmText[0],    GeomCb,    GEOM_SYMMETRY_A);
+  register_valchg_cb  (w->GD.symmText[1],    GeomCb,    GEOM_SYMMETRY_B);
+  register_valchg_cb  (w->GD.symmText[2],    GeomCb,    GEOM_SYMMETRY_C);
+  register_valchg_cb  (w->GD.symmText[3],    GeomCb,    GEOM_SYMMETRY_D);
 }
 
 void RegisterCallbacks_MD(Widgets_T *w){

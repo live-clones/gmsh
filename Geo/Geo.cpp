@@ -1,4 +1,4 @@
-/* $Id: Geo.cpp,v 1.10 2000-12-11 16:23:11 geuzaine Exp $ */
+/* $Id: Geo.cpp,v 1.11 2000-12-13 13:56:58 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -17,8 +17,8 @@ char attrdec_text[100] = "2.0";
 char px_text[100] = "0.0", py_text[100] = "0.0", pz_text[100] = "0.0" ;
 char angle_text[100] = "3.14159/2" ;
 char ax_text[100] = "0.0", ay_text[100] = "0.0", az_text[100] = "1.0";
-char dx_text[100] = "0.0", dy_text[100] = "0.0", dz_text[100] = "0.0";
-char df_text[100] = "1.0";
+char dx_text[100] = "0.0", dy_text[100] = "0.0", dz_text[100] = "0.0", df_text[100] = "1.0";
+char sa_text[100] = "0.0", sb_text[100] = "0.0", sc_text[100] = "0.0", sd_text[100] = "0.0";
 char nb_pts[100] ="10", mode_value[100] = "1";
 char trsf_pts_text[100] = "2", trsf_type_text[100] = "Power 1.0";
 char trsf_vol_text[100] = "1";
@@ -527,6 +527,18 @@ void dilate(int add, int s, char *fich, char *quoi){
   add_infile(text,fich);
 }
 
+void symmetry(int add, int s, char *fich, char *quoi){
+  char text[BUFFSIZE];
+
+  if(add)
+    sprintf(text,"Symmetry { %s,%s,%s,%s } {\n  Duplicata { %s{%d}; }\n}",
+            sa_text,sb_text,sc_text,sd_text, quoi,s);
+  else
+    sprintf(text,"Symmetry { %s,%s,%s,%s } {\n   %s{%d};\n  }",
+            sa_text,sb_text,sc_text,sd_text, quoi,s);
+  add_infile(text,fich);
+
+}
 
 void protude(int s, char *fich, char *what){
   char text[BUFFSIZE];
