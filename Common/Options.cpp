@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.169 2004-06-30 17:49:51 geuzaine Exp $
+// $Id: Options.cpp,v 1.170 2004-07-02 20:03:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -775,7 +775,7 @@ int Get_ColorForString(StringX4Int SX4I[], int alpha,
 
 #define GET_VIEW(error_val)						\
   Post_View *v;								\
-  if(!CTX.post.list)							\
+  if(!List_Nbr(CTX.post.list))							\
     v = Post_ViewReference ;						\
   else{									\
     if(!(v = (Post_View*)List_Pointer_Test(CTX.post.list, num))){	\
@@ -1731,7 +1731,7 @@ int _gui_action_valid(int action, int num)
 
 char *opt_view_name(OPT_ARGS_STR)
 {
-  GET_VIEW(NULL); 
+  GET_VIEW(""); 
   if(action & GMSH_SET) {
     strcpy(v->Name, val);
 #if defined(HAVE_FLTK)
@@ -1755,7 +1755,7 @@ char *opt_view_name(OPT_ARGS_STR)
 
 char *opt_view_format(OPT_ARGS_STR)
 {
-  GET_VIEW(NULL);
+  GET_VIEW("");
   if(action & GMSH_SET) {
     strcpy(v->Format, val);
   }
@@ -1768,7 +1768,7 @@ char *opt_view_format(OPT_ARGS_STR)
 
 char *opt_view_filename(OPT_ARGS_STR)
 {
-  GET_VIEW(NULL);
+  GET_VIEW("");
   if(action & GMSH_SET) {
     strcpy(v->FileName, val);
   }
@@ -1777,7 +1777,7 @@ char *opt_view_filename(OPT_ARGS_STR)
 
 char *opt_view_abscissa_name(OPT_ARGS_STR)
 {
-  GET_VIEW(NULL);
+  GET_VIEW("");
   if(action & GMSH_SET) {
     strcpy(v->AbscissaName, val);
   }
@@ -1790,7 +1790,7 @@ char *opt_view_abscissa_name(OPT_ARGS_STR)
 
 char *opt_view_abscissa_format(OPT_ARGS_STR)
 {
-  GET_VIEW(NULL);
+  GET_VIEW("");
   if(action & GMSH_SET) {
     strcpy(v->AbscissaFormat, val);
   }
