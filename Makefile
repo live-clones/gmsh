@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.127 2001-08-13 14:51:12 geuzaine Exp $
+# $Id: Makefile,v 1.128 2001-08-14 10:49:47 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -427,7 +427,7 @@ fltk_compile_little_endian:
         ); done
 
 # optimized gcc fucks up with 3D_Extrude on old linux boxes...
-fltk_compile_little_endian_2952:
+fltk_compile_little_endian_gcc-2.95:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(HOME)/gcc-2.95.3/bin/g++" \
            "C_FLAGS=-O2" \
@@ -534,8 +534,8 @@ fltk_link_mesa:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
                  $(FLTK_LIB) -lm -ldl
 
-fltk_link_mesa_2952:
-	$(HOME)/gcc-2.95.2/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
+fltk_link_mesa_gcc-2.95:
+	$(HOME)/gcc-2.95.3/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
                  $(FLTK_LIB) -lm -ldl
 
 fltk_link_opengl:
@@ -565,7 +565,7 @@ fltk_link_cygwin:
 
 fltk_linux: tag fltk_compile_little_endian fltk_link_mesa strip_bin
 
-fltk_linux_2952: tag fltk_compile_little_endian_2952 fltk_link_mesa_2952 strip_bin
+fltk_linux_gcc-2.95: tag fltk_compile_little_endian_gcc-2.95 fltk_link_mesa_gcc-2.95 strip_bin
 
 fltk_rpm: src
 	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES

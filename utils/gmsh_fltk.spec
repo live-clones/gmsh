@@ -28,7 +28,7 @@ post-processor.
 %setup -c -q
 
 %build
-make fltk_linux_2952
+make fltk_linux_gcc-2.95
 #make fltk_linux
 make distrib
 make utilities
