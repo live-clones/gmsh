@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.27 2001-08-13 09:38:14 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.28 2001-08-13 10:43:16 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -401,7 +401,8 @@ void Extrude_Seg (Vertex * V1, Vertex * V2){
       List_Read (V2->Extruded_Points, k + 1, &v4);
       if(ep->mesh.Recombine){
         s = Create_Quadrangle(v1,v2,v4,v3);
-        s->iEnt = THES->Num;
+        s->iEnt = THES->Num; 
+	s->Num = -s->Num; //Tag quadrangles to re-extrude
         Tree_Add(THES->Simplexes,&s);
       }
       else{
