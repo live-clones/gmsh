@@ -1,4 +1,4 @@
-// $Id: avl.cpp,v 1.5 2001-01-08 08:05:41 geuzaine Exp $
+// $Id: avl.cpp,v 1.6 2001-10-31 16:33:46 remacle Exp $
 
 /*
  * This is a modified version for Gmsh (for c++, 64-bit architectures, etc.)
@@ -35,7 +35,6 @@
 #include "Malloc.h"
 
 #define ALLOC(type, number)  (type *) Malloc((unsigned) sizeof(type) * number)
-#define NIL(type)            (type *) 0
 #define FREE(item)           (void) Free(item)
 #define XRNMAX(a,b)          ((a) > (b) ? (a) : (b))
 #define HEIGHT(node)         (node == NIL(avl_node) ? -1 : (node)->height)
@@ -57,8 +56,6 @@ static avl_node *find_rightmost(avl_node **node_p);
 static void do_rebalance(avl_node ***stack_nodep, int stack_n);
 static void rotate_left(avl_node **node_p);
 static void rotate_right(avl_node **node_p);
-static void avl_walk_forward(avl_node *node, void (*func)(void *key, void *value));
-static void avl_walk_backward(avl_node *node, void (*func)(void *key, void *value));
 static void free_entry(avl_node *node, void (*key_free)(void *key), 
                        void (*value_free)(void *value));
 static avl_node *new_node(void *key, void *value);
@@ -307,32 +304,6 @@ static void rotate_right(avl_node **node_p)
     compute_height(new_root);
 }
 
-static void avl_walk_forward(avl_node *node, void (*func)(void *key, void *value))
-{
-    if (node != NIL(avl_node)) {
-        avl_walk_forward(node->left, func);
-        (*func)(node->key, node->value);
-        avl_walk_forward(node->right, func);
-    }
-}
-
-static void avl_walk_backward(avl_node *node, void (*func)(void *key, void *value))
-{
-    if (node != NIL(avl_node)) {
-        avl_walk_backward(node->right, func);
-        (*func)(node->key, node->value);
-        avl_walk_backward(node->left, func);
-    }
-}
-
-void avl_foreach(avl_tree *tree, void (*func)(void *key, void *value), int direction)
-{
-    if (direction == AVL_FORWARD) {
-        avl_walk_forward(tree->root, func);
-    } else {
-        avl_walk_backward(tree->root, func);
-    }
-}
 
 int avl_extremum(avl_tree *tree, int side, void **value_p)
 {

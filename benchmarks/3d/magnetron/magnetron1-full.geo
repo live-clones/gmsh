@@ -1,5 +1,5 @@
 mm = 0.001 ; // 1 milimetre = 0.001 metre
-lc = 2.1*mm ; // unite de base min pour la taille caracteristique du maillage
+lc = 0.75*mm ; // unite de base min pour la taille caracteristique du maillage
 
 lcpba2  =  1.5*lc ;        // lc dessous plaque base 
 lcpba1  =  lc ;          // lc dessus  plaque base

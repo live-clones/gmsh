@@ -1,4 +1,4 @@
-// $Id: Tree.cpp,v 1.7 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: Tree.cpp,v 1.8 2001-10-31 16:33:46 remacle Exp $
 
 #include <stdlib.h>
 #include <string.h>
@@ -165,13 +165,6 @@ int Tree_Right(Tree_T *tree, void *data)
   memcpy(data,ptr,tree->size);
 
   return (1);
-}
-
-void Tree_Action(Tree_T *tree, void (*action) (void *data, void *dummy))
-{
-  if(!tree) return;
-
-  avl_foreach(tree->root, action, AVL_FORWARD);
 }
 
 int Tree_Size(Tree_T *tree) {

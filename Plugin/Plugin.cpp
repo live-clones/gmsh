@@ -1,5 +1,6 @@
-// $Id: Plugin.cpp,v 1.21 2001-10-25 07:22:46 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.22 2001-10-31 16:33:46 remacle Exp $
 
+#include <map>
 #ifndef _NODLL
 #include <dlfcn.h>
 #endif

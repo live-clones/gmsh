@@ -59,17 +59,44 @@ struct avl_generator_struct {
 #define AVL_MOST_RIGHT  1
 
 #define avl_is_member(tree, key)   avl_lookup(tree, key, (void **) 0)
+#define NIL(type)            (type *) 0
 
 #define avl_foreach_item(table, gen, dir, key_p, value_p)               \
     for(gen = avl_init_gen(table, dir);                                 \
             avl_gen(gen, key_p, value_p) || (avl_free_gen(gen),0);)
 
 
+inline void avl_walk_forward(avl_node *node, void (*func)(void *key, void *value))
+{
+  if (node != NIL(avl_node)) {
+    avl_walk_forward(node->left, func);
+    (*func)(node->key, node->value);
+    avl_walk_forward(node->right, func);
+  }
+}
+
+inline void avl_walk_backward(avl_node *node, void (*func)(void *key, void *value))
+{
+  if (node != NIL(avl_node)) {
+    avl_walk_backward(node->right, func);
+    (*func)(node->key, node->value);
+    avl_walk_backward(node->left, func);
+  }
+}
+
+inline void avl_foreach(avl_tree *tree, void (*func)(void *key, void *value), int direction)
+{
+  if (direction == AVL_FORWARD) {
+    avl_walk_forward(tree->root, func);
+  } else {
+    avl_walk_backward(tree->root, func);
+  }
+}
+
 avl_tree *avl_init_table(int (*compar)(const void *key1, const void *key2));
 int avl_lookup(avl_tree *tree, void *key, void **value_p);
 int avl_insert(avl_tree *tree, void *key, void *value);
 int avl_delete(avl_tree *tree, void **key_p, void **value_p);
-void avl_foreach(avl_tree *tree, void (*func)(void *key, void *value), int direction);
 void avl_free_table(avl_tree *tree, void (*key_free)(void *key), void (*value_free)(void *value));
 int avl_count(avl_tree *tree);
 int avl_check_tree(avl_tree *tree);

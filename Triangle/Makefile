@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2001-08-20 08:25:24 geuzaine Exp $
+# $Id: Makefile,v 1.4 2001-10-31 16:33:46 remacle Exp $
 #
 # Makefile for "libTriangle.a"
 #
@@ -24,7 +24,7 @@
 
 .IGNORE:
 
-CC       = cc
+CC       = gcc
 AR       = ar ruvs
 RM       = rm
 RANLIB   = ranlib

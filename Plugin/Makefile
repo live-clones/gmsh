@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.20 2001-10-30 09:52:40 geuzaine Exp $
+# $Id: Makefile,v 1.21 2001-10-31 16:33:46 remacle Exp $
 #
 # Makefile for "libAdapt.a"
 #
@@ -18,7 +18,7 @@ OS_FLAGS      =
 VERSION_FLAGS = 
 
 RMFLAGS   = -f
-CFLAGS    = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) $(GUI_INCLUDE) 
+CFLAGS    = -DMPICH_SKIP_MPICXX $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) $(GUI_INCLUDE) 
 
 SRC = Plugin.cpp\
         LevelsetPlugin.cpp\
