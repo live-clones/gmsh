@@ -20,7 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "List.h"
+#include "Vertex.h"
 
 class Element {
  public:
@@ -29,7 +29,63 @@ class Element {
   int     iPart;         // Mesh partition index
   char    Visible;       // Visualization flag
   Vertex  **VSUP;        // suppl. nodes for higher order elts
-  virtual ~Element(){;}
+  static  int TotalNumber;
+  Element();
+  virtual ~Element();
 };
+
+class Quadrangle : public Element{
+ public:
+  Vertex *V[4];
+  Quadrangle();
+  Quadrangle(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
+  ~Quadrangle();
+};
+
+class Hexahedron : public Element{
+ public:
+  Vertex *V[8];
+  Hexahedron();
+  Hexahedron(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4,
+	     Vertex *v5, Vertex *v6, Vertex *v7, Vertex *v8);
+  ~Hexahedron();
+};
+
+class Prism : public Element{
+ public:
+  Vertex *V[6];
+  Prism();
+  Prism(Vertex *v1, Vertex *v2, Vertex *v3, 
+	Vertex *v4, Vertex *v5, Vertex *v6);
+  ~Prism();
+};
+
+class Pyramid : public Element{
+ public:
+  Vertex *V[5];
+  Pyramid();
+  Pyramid(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4, Vertex *v5);
+  ~Pyramid();
+};
+
+// C interface
+
+Quadrangle *Create_Quadrangle (Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
+Hexahedron *Create_Hexahedron(Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4,
+			      Vertex * v5, Vertex * v6, Vertex * v7, Vertex * v8);
+Prism *Create_Prism(Vertex * v1, Vertex * v2, Vertex * v3,
+		    Vertex * v4, Vertex * v5, Vertex * v6);
+Pyramid *Create_Pyramid(Vertex * v1, Vertex * v2, Vertex * v3,
+			Vertex * v4, Vertex * v5);
+
+void Free_Quadrangle(void *a, void *b);
+void Free_Hexahedron(void *a, void *b);
+void Free_Prism(void *a, void *b);
+void Free_Pyramid(void *a, void *b);
+
+int compareQuadrangle(const void *a, const void *b);
+int compareHexahedron(const void *a, const void *b);
+int comparePrism(const void *a, const void *b);
+int comparePyramid(const void *a, const void *b);
 
 #endif

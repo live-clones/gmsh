@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.62 2004-05-22 01:29:46 geuzaine Exp $
+// $Id: Geom.cpp,v 1.63 2004-05-25 04:10:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -574,10 +574,10 @@ void Draw_Surface(void *a, void *b)
   }
 
   if(s->Typ == MSH_SURF_STL) {
-    Tree_Action(s->STL->Simplexes, Draw_Simplex_Surface);
+    Tree_Action(s->STL->Simplexes, Draw_Mesh_Triangle);
   }
   else if(s->Typ == MSH_SURF_DISCRETE) {
-    Tree_Action(s->Simplexes, Draw_Simplex_Surface);
+    Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
   }
   else if(s->Typ == MSH_SURF_PLAN)
     Draw_Plane_Surface(s);

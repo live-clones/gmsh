@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.61 2004-04-24 03:51:59 geuzaine Exp $
+# $Id: Makefile,v 1.62 2004-05-25 04:10:05 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -57,7 +57,6 @@ SRC = 1D_Mesh.cpp \
       Print_Mesh.cpp \
       Read_Mesh.cpp \
       STL.cpp \
-      SMS.cpp \
       SwapEdge.cpp \
       Utils.cpp \
       Metric.cpp \
@@ -68,6 +67,7 @@ SRC = 1D_Mesh.cpp \
       CrossData.cpp \
       Vertex.cpp \
       Edge.cpp \
+      Element.cpp \
       Simplex.cpp 
 
 OBJ = ${SRC:.cpp=.o}
@@ -246,7 +246,8 @@ Generator.o: Generator.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
   Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
-  Metric.h Matrix.h Create.h ../Common/Context.h ../Parser/OpenFile.h
+  Metric.h Matrix.h Create.h ../Common/Context.h ../Parser/OpenFile.h \
+  ../Common/Views.h ../Common/ColorTable.h
 Print_Mesh.o: Print_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
@@ -264,11 +265,6 @@ STL.o: STL.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Numeric/Numeric.h Mesh.h Vertex.h Element.h Simplex.h Edge.h \
   ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h ../Geo/CAD.h \
   ../Geo/Geo.h Create.h Interpolation.h ../Common/Context.h
-SMS.o: SMS.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  ../Geo/Geo.h Mesh.h Vertex.h Element.h Simplex.h Edge.h \
-  ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h Create.h ../Geo/MinMax.h \
-  ../Geo/CAD.h ../Common/Context.h
 SwapEdge.o: SwapEdge.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
@@ -320,6 +316,10 @@ Edge.o: Edge.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Numeric/Numeric.h Mesh.h Vertex.h Element.h Simplex.h Edge.h \
   ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h
+Element.o: Element.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Element.h Simplex.h \
+  Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h
 Simplex.o: Simplex.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \

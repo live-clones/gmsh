@@ -1,4 +1,4 @@
-// $Id: 2D_SMesh.cpp,v 1.17 2004-05-12 22:51:07 geuzaine Exp $
+// $Id: 2D_SMesh.cpp,v 1.18 2004-05-25 04:10:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -51,7 +51,7 @@ int index1d(int flag, int N, int n)
 {
   switch (flag) {
   case 0:
-    return (n);
+    return n;
   case 1:
     return (N - n - 1);
   default:
@@ -62,10 +62,10 @@ int index1d(int flag, int N, int n)
 int MeshTransfiniteSurface(Surface * sur)
 {
   int i, j, k, flag, nb, N1, N2, issphere;
-  int nbquad = 0, nbtri = 0;
   Curve *G[4], *GG[4];
   Vertex V, *c1, *c2, **list, *CP[2];
   Simplex *simp;
+  Quadrangle *quad;
   double u, v;
   int C_flag[4];
   Vertex *C[4], *S[4];
@@ -126,18 +126,18 @@ int MeshTransfiniteSurface(Surface * sur)
     for(i = 0; i < nb; i++)
       if(G[i] == NULL) {
         Msg(WARNING, "Wrong definition of Transfinite Surface %d", sur->Num);
-        return (0);
+        return 0;
       }
 
     if(nb == 4) {
       if((N1 = List_Nbr(G[0]->Vertices)) != List_Nbr(G[2]->Vertices))
-        return (0);
+        return 0;
       if((N2 = List_Nbr(G[1]->Vertices)) != List_Nbr(G[3]->Vertices))
-        return (0);
+        return 0;
     }
     else {
       if((N1 = List_Nbr(G[0]->Vertices)) != List_Nbr(G[2]->Vertices))
-        return (0);
+        return 0;
       N2 = List_Nbr(G[1]->Vertices);
     }
 
@@ -227,34 +227,25 @@ int MeshTransfiniteSurface(Surface * sur)
       for(i = 0; i < N1 - 1; i++) {
         for(j = 0; j < N2 - 1; j++) {
           if(sur->Recombine) {
-            simp =
-              Create_Quadrangle(list[(i) + N1 * (j)],
-                                list[(i + 1) + N1 * (j)],
-                                list[(i + 1) + N1 * (j + 1)],
-                                list[(i) + N1 * (j + 1)]);
-            simp->iEnt = sur->Num;
-            Tree_Add(sur->Simplexes, &simp);
-            List_Add(sur->TrsfSimplexes, &simp);
-
-            nbquad++;
+            quad = Create_Quadrangle(list[(i) + N1 * (j)],
+				     list[(i + 1) + N1 * (j)],
+				     list[(i + 1) + N1 * (j + 1)],
+				     list[(i) + N1 * (j + 1)]);
+            quad->iEnt = sur->Num;
+            Tree_Add(sur->Quadrangles, &quad);
           }
           else {
-            simp =
-              Create_Simplex(list[(i) + N1 * (j)], list[(i + 1) + N1 * (j)],
-                             list[(i) + N1 * (j + 1)], NULL);
+            simp = Create_Simplex(list[(i) + N1 * (j)], 
+				  list[(i + 1) + N1 * (j)],
+				  list[(i) + N1 * (j + 1)], NULL);
             simp->iEnt = sur->Num;
             Tree_Add(sur->Simplexes, &simp);
-            List_Add(sur->TrsfSimplexes, &simp);
 
-            simp =
-              Create_Simplex(list[(i + 1) + N1 * (j + 1)],
-                             list[(i) + N1 * (j + 1)],
-                             list[(i + 1) + N1 * (j)], NULL);
+            simp = Create_Simplex(list[(i + 1) + N1 * (j + 1)],
+				  list[(i) + N1 * (j + 1)],
+				  list[(i + 1) + N1 * (j)], NULL);
             simp->iEnt = sur->Num;
             Tree_Add(sur->Simplexes, &simp);
-            List_Add(sur->TrsfSimplexes, &simp);
-
-            nbtri += 2;
           }
         }
       }
@@ -267,62 +258,45 @@ int MeshTransfiniteSurface(Surface * sur)
         }
       }
       for(j = 0; j < N2 - 1; j++) {
-        simp =
-          Create_Simplex(list[1 + N1 * (j + 1)], list[N1 * (j + 1)],
-                         list[1 + N1 * (j)], NULL);
+        simp = Create_Simplex(list[1 + N1 * (j + 1)], 
+			      list[N1 * (j + 1)],
+			      list[1 + N1 * (j)], NULL);
         simp->iEnt = sur->Num;
         Tree_Add(sur->Simplexes, &simp);
-        List_Add(sur->TrsfSimplexes, &simp);
-
-        nbtri++;
       }
       for(i = 1; i < N1 - 1; i++) {
         for(j = 0; j < N2 - 1; j++) {
           if(sur->Recombine) {
-            simp =
-              Create_Quadrangle(list[(i) + N1 * (j)],
-                                list[(i + 1) + N1 * (j)],
-                                list[(i + 1) + N1 * (j + 1)],
-                                list[i + N1 * (j + 1)]);
-            simp->iEnt = sur->Num;
-            Tree_Add(sur->Simplexes, &simp);
-            List_Add(sur->TrsfSimplexes, &simp);
-
-            nbquad++;
+            quad = Create_Quadrangle(list[(i) + N1 * (j)],
+				     list[(i + 1) + N1 * (j)],
+				     list[(i + 1) + N1 * (j + 1)],
+				     list[i + N1 * (j + 1)]);
+            quad->iEnt = sur->Num;
+            Tree_Add(sur->Quadrangles, &quad);
           }
           else {
-            simp =
-              Create_Simplex(list[(i) + N1 * (j)], list[(i + 1) + N1 * (j)],
-                             list[(i) + N1 * (j + 1)], NULL);
+            simp = Create_Simplex(list[(i) + N1 * (j)], 
+				  list[(i + 1) + N1 * (j)],
+				  list[(i) + N1 * (j + 1)], NULL);
             simp->iEnt = sur->Num;
             Tree_Add(sur->Simplexes, &simp);
-            List_Add(sur->TrsfSimplexes, &simp);
 
-            simp =
-              Create_Simplex(list[(i + 1) + N1 * (j + 1)],
-                             list[(i) + N1 * (j + 1)],
-                             list[(i + 1) + N1 * (j)], NULL);
+            simp = Create_Simplex(list[(i + 1) + N1 * (j + 1)],
+				  list[(i) + N1 * (j + 1)],
+				  list[(i + 1) + N1 * (j)], NULL);
             simp->iEnt = sur->Num;
             Tree_Add(sur->Simplexes, &simp);
-            List_Add(sur->TrsfSimplexes, &simp);
-
-            nbtri += 2;
           }
         }
       }
 
     }
+    Free(list);
     break;
 
   default:
-    return (0);
+    return 0;
   }
 
-  Free(list);
-
-  // We count this here, to be able to distinguish very quickly
-  // between triangles and quadrangles later
-  THEM->Statistics[8] += nbquad;
-
-  return (1);
+  return 1;
 }

@@ -1,4 +1,4 @@
-// $Id: MeshQuality.cpp,v 1.13 2004-02-07 01:40:22 geuzaine Exp $
+// $Id: MeshQuality.cpp,v 1.14 2004-05-25 04:10:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -135,7 +135,7 @@ static void r(void *a, void *b)
   Msg(DEBUG, "Rho computed in volume %d (%d values)", v->Num, NbCalcGamma);
 }
 
-void R_Maillage(Mesh * m, double *gamma, double *gammamax, double *gammamin)
+void R_Maillage(Mesh *m, double *gamma, double *gammamax, double *gammamin)
 {
   GAMMA = 0.0;
   GAMMAMAX = 0.0;
@@ -152,12 +152,11 @@ void R_Maillage(Mesh * m, double *gamma, double *gammamax, double *gammamin)
   *gammamin = GAMMAMIN;
 }
 
-void Mesh_Quality(Mesh * m)
+void Mesh_Quality(Mesh *m)
 {
-  Gamma_Maillage(m, &m->Statistics[17], &m->Statistics[18],
-                 &m->Statistics[19]);
-  Eta_Maillage(m, &m->Statistics[20], &m->Statistics[21], &m->Statistics[22]);
-  R_Maillage(m, &m->Statistics[23], &m->Statistics[24], &m->Statistics[25]);
+  Gamma_Maillage(m, &m->quality_gamma[0], &m->quality_gamma[2], &m->quality_gamma[1]);
+  Eta_Maillage(m, &m->quality_eta[0], &m->quality_eta[2], &m->quality_eta[1]);
+  R_Maillage(m, &m->quality_rho[0], &m->quality_rho[2], &m->quality_rho[1]);
 }
 
 void Print_Histogram(int *h)

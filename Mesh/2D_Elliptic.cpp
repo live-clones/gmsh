@@ -1,4 +1,4 @@
-// $Id: 2D_Elliptic.cpp,v 1.17 2004-05-12 22:51:07 geuzaine Exp $
+// $Id: 2D_Elliptic.cpp,v 1.18 2004-05-25 04:10:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -32,7 +32,6 @@ int MeshEllipticSurface(Surface * sur)
   int i, j, k, nb, N1, N2, N3, N4;
   Curve *GG[444];
   Vertex **list;
-  Simplex *simp;
   double alpha, beta, gamma, u, v, lc, x, y, z;
   Vertex *S[4], *v11, *v12, *v13, *v21, *v22, *v23, *v31, *v32, *v33;
   List_T *l1, *l2, *l3, *l4;
@@ -233,35 +232,26 @@ int MeshEllipticSurface(Surface * sur)
   for(i = 0; i < N1 - 1; i++) {
     for(j = 0; j < N2 - 1; j++) {
       if(sur->Recombine) {
-        simp = Create_Quadrangle
+        Quadrangle *q = Create_Quadrangle
           (list[(i) + N1 * (j)], list[(i + 1) + N1 * (j)],
            list[(i + 1) + N1 * (j + 1)], list[i + N1 * (j + 1)]);
-        simp->iEnt = sur->Num;
-        Tree_Add(sur->Simplexes, &simp);
-        List_Add(sur->TrsfSimplexes, &simp);
+        q->iEnt = sur->Num;
+        Tree_Add(sur->Quadrangles, &q);
       }
       else {
-        simp = Create_Simplex(list[(i) + N1 * (j)], list[(i + 1) + N1 * (j)],
-                              list[(i) + N1 * (j + 1)], NULL);
+	Simplex *simp = Create_Simplex(list[(i) + N1 * (j)], list[(i + 1) + N1 * (j)],
+				       list[(i) + N1 * (j + 1)], NULL);
         simp->iEnt = sur->Num;
         Tree_Add(sur->Simplexes, &simp);
-        List_Add(sur->TrsfSimplexes, &simp);
-
-        simp =
-          Create_Simplex(list[(i + 1) + N1 * (j + 1)],
-                         list[(i) + N1 * (j + 1)], list[(i + 1) + N1 * (j)],
-                         NULL);
+	
+        simp = Create_Simplex(list[(i + 1) + N1 * (j + 1)],
+			      list[(i) + N1 * (j + 1)], list[(i + 1) + N1 * (j)],
+			      NULL);
         simp->iEnt = sur->Num;
         Tree_Add(sur->Simplexes, &simp);
-        List_Add(sur->TrsfSimplexes, &simp);
       }
     }
   }
-
-  // We count this here, to be able to distinguish very quickly
-  // between triangles and quadrangles later
-  if(sur->Recombine)
-    THEM->Statistics[8] += List_Nbr(sur->TrsfSimplexes);
 
   return 1;
 }

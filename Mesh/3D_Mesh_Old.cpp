@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Old.cpp,v 1.11 2004-04-18 03:36:07 geuzaine Exp $
+// $Id: 3D_Mesh_Old.cpp,v 1.12 2004-05-25 04:10:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -908,20 +908,6 @@ void Maillage_Volume(void *data, void *dum)
 
     List_Delete(Simplexes_New);
     List_Delete(Simplexes_Destroyed);
-  }
-
-  THEM->Statistics[6] += Tree_Nbr(v->Vertices);
-  THEM->Statistics[9] += Tree_Nbr(v->Simplexes);
-  THEM->Statistics[10] += Tree_Nbr(v->Hexahedra);
-  THEM->Statistics[11] += Tree_Nbr(v->Prisms);
-
-  if(v->Typ == 99999) {
-    Gamma_Maillage(THEM, &THEM->Statistics[17], &THEM->Statistics[18],
-                   &THEM->Statistics[19]);
-    Eta_Maillage(THEM, &THEM->Statistics[20], &THEM->Statistics[21],
-                 &THEM->Statistics[22]);
-    R_Maillage(THEM, &THEM->Statistics[23], &THEM->Statistics[24],
-               &THEM->Statistics[25]);
   }
 
 }

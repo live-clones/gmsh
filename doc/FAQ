@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.35 2004-04-08 23:45:02 geuzaine Exp $
+$Id: FAQ,v 1.36 2004-05-25 04:10:10 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -11,7 +11,7 @@ Section 1: The basics
 Gmsh is an automatic three-dimensional finite element mesh generator,
 primarily Delaunay, with built-in pre- and post-processing
 facilities. Its primal design goal is to provide a simple meshing tool
-for academic test cases with parametric input and up to date
+for academic problems with parametric input and up to date
 visualization capabilities.  One of the strengths of Gmsh is its
 ability to respect a characteristic length field for the generation of
 adapted meshes on lines, surfaces and volumes.

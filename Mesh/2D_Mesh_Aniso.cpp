@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.38 2004-05-07 22:49:57 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.39 2004-05-25 04:10:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -379,7 +379,7 @@ void constraint_the_edge(int isurf, int iv1, int iv2)
 
   if(!v1 || !v2)
     return;
-  EdgesContainer EdgesOnSurface(s->Simplexes, false);
+  EdgesContainer EdgesOnSurface(s->Simplexes);
   e.V[0] = v1;
   e.V[1] = v2;
   if(!EdgesOnSurface.Search(v1, v2)) {
@@ -394,7 +394,7 @@ void missing_edges_2d(Surface * s)
   Vertex *v1, *v2;
   Edge e;
 
-  EdgesContainer EdgesOnSurface(s->Simplexes, false);
+  EdgesContainer EdgesOnSurface(s->Simplexes);
 
   for(i = 0; i < List_Nbr(s->Generatrices); i++) {
     List_Read(s->Generatrices, i, &c);

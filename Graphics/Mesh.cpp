@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.82 2004-05-04 22:31:54 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.83 2004-05-25 04:10:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -209,20 +209,10 @@ void Draw_Mesh(Mesh * M)
 void Draw_Mesh_Volumes(void *a, void *b)
 {
   Volume *v = *(Volume **) a;
-  Tree_Action(v->Simplexes, Draw_Simplex_Volume);
-  Tree_Action(v->Hexahedra, Draw_Hexahedron_Volume);
-  Tree_Action(v->Prisms, Draw_Prism_Volume);
-  Tree_Action(v->Pyramids, Draw_Pyramid_Volume);
-}
-
-int Test_Simple_Surface_Draw()
-{
-  if(CTX.mesh.use_cut_plane ||
-     CTX.mesh.explode != 1.0 ||
-     CTX.mesh.dual || CTX.mesh.surfaces_num || CTX.mesh.normals)
-    return 0;
-  //printf("simple simplex surface drawing\n");
-  return 1;
+  Tree_Action(v->Simplexes, Draw_Mesh_Tetrahedron);
+  Tree_Action(v->Hexahedra, Draw_Mesh_Hexahedron);
+  Tree_Action(v->Prisms, Draw_Mesh_Prism);
+  Tree_Action(v->Pyramids, Draw_Mesh_Pyramid);
 }
 
 void Draw_Mesh_Surfaces(void *a, void *b)
@@ -232,10 +222,8 @@ void Draw_Mesh_Surfaces(void *a, void *b)
   thePhysical = getFirstPhysical(MSH_PHYSICAL_SURFACE, s->Num);
   if(!(s->Visible & VIS_MESH))
     return;
-  if(!Test_Simple_Surface_Draw())
-    Tree_Action(s->Simplexes, Draw_Simplex_Surface);
-  else
-    Tree_Action(s->Simplexes, Draw_Simplex_Surface_Simple);
+  Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
+  Tree_Action(s->Quadrangles, Draw_Mesh_Quadrangle);
 }
 
 void Draw_Mesh_Extruded_Surfaces(void *a, void *b)
@@ -244,10 +232,8 @@ void Draw_Mesh_Extruded_Surfaces(void *a, void *b)
   v = *(Volume **) a;
   if(!(v->Visible & VIS_MESH))
     return;
-  if(!Test_Simple_Surface_Draw())
-    Tree_Action(v->Simp_Surf, Draw_Simplex_Surface);
-  else
-    Tree_Action(v->Simp_Surf, Draw_Simplex_Surface_Simple);
+  Tree_Action(v->Simp_Surf, Draw_Mesh_Triangle);
+  Tree_Action(v->Quad_Surf, Draw_Mesh_Quadrangle);
 }
 
 void Draw_Mesh_Curves(void *a, void *b)
@@ -259,7 +245,7 @@ void Draw_Mesh_Curves(void *a, void *b)
   thePhysical = getFirstPhysical(MSH_PHYSICAL_LINE, c->Num);
   if(!(c->Visible & VIS_MESH))
     return;
-  Tree_Action(c->Simplexes, Draw_Simplex_Curves);
+  Tree_Action(c->Simplexes, Draw_Mesh_Line);
 }
 
 double intersectCutPlane(int num, Vertex **v, int *edges, int *faces)
@@ -338,7 +324,7 @@ void Draw_Mesh_Points(void *a, void *b)
   }
 }
 
-void Draw_Simplex_Curves(void *a, void *b)
+void Draw_Mesh_Line(void *a, void *b)
 {
   Simplex *s;
   double Xc = 0.0, Yc = 0.0, Zc = 0.0, m[3];
@@ -436,10 +422,65 @@ void glNormal3verts(Vertex *v0, Vertex *v1, Vertex *v2, double n[3])
   glNormal3dv(n);
 }
 
-void Draw_Simplex_Surface_Common(Simplex * s, int L, int K, 
-				 double *pX, double *pY, double *pZ, double n[3])
+void Draw_Mesh_Triangle(void *a, void *b)
 {
-  int i;
+  double pX[6], pY[6], pZ[6];
+  double n[3];
+  char Num[256];
+
+  Simplex *s = *(Simplex **) a;
+
+  if(!s->V[2]) // the old extrusion algo puts lines in the simp_surf tree...
+    return;
+
+  if(!(s->Visible & VIS_MESH))
+    return;
+
+  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, s->iPart);
+  if(part && !(*part)->Visible)
+    return;
+
+  if(intersectCutPlane(3, s->V) < 0)
+    return;
+
+  double Xc = (s->V[0]->Pos.X + s->V[1]->Pos.X + s->V[2]->Pos.X) / 3.;
+  double Yc = (s->V[0]->Pos.Y + s->V[1]->Pos.Y + s->V[2]->Pos.Y) / 3.;
+  double Zc = (s->V[0]->Pos.Z + s->V[1]->Pos.Z + s->V[2]->Pos.Z) / 3.;
+
+  int nn = s->VSUP ? 6 : 3;
+
+  int k = 0;
+  for(int i = 0; i < 3; i++) {
+    pX[k] = Xc + CTX.mesh.explode * (s->V[i]->Pos.X - Xc);
+    pY[k] = Yc + CTX.mesh.explode * (s->V[i]->Pos.Y - Yc);
+    pZ[k] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
+    k++;
+    if(s->VSUP){
+      pX[k] = Xc + CTX.mesh.explode * (s->VSUP[i]->Pos.X - Xc);
+      pY[k] = Yc + CTX.mesh.explode * (s->VSUP[i]->Pos.Y - Yc);
+      pZ[k] = Zc + CTX.mesh.explode * (s->VSUP[i]->Pos.Z - Zc);
+      k++;
+    }
+  }
+
+  if(CTX.mesh.dual) {
+    glColor4ubv((GLubyte *) & CTX.color.fg);
+    glEnable(GL_LINE_STIPPLE);
+    glLineStipple(1, 0x0F0F);
+    gl2psEnable(GL2PS_LINE_STIPPLE);
+    glBegin(GL_LINES);
+    int incr = s->VSUP ? 2 : 1;
+    for(int i = 0; i < nn; i+=incr) {
+      int j = i ? (i - 1) : 2;
+      glVertex3d(Xc, Yc, Zc);
+      glVertex3d((pX[i] + pX[j]) / 2.,
+		 (pY[i] + pY[j]) / 2.,
+		 (pZ[i] + pZ[j]) / 2.);
+    }
+    glEnd();
+    glDisable(GL_LINE_STIPPLE);
+    gl2psDisable(GL2PS_LINE_STIPPLE);
+  }
 
   if(CTX.mesh.normals || CTX.mesh.light)
     glNormal3verts(s->V[0], s->V[1], s->V[2], n);
@@ -456,17 +497,14 @@ void Draw_Simplex_Surface_Common(Simplex * s, int L, int K,
       ColorSwitch(thePhysical);
     else if(CTX.mesh.color_carousel == 3)
       ColorSwitch(s->iPart);
-    else if(K == 3)
-      glColor4ubv((GLubyte *) & CTX.color.mesh.triangle);
     else
-      glColor4ubv((GLubyte *) & CTX.color.mesh.quadrangle);
+      glColor4ubv((GLubyte *) & CTX.color.mesh.triangle);
   }
 
   if(CTX.mesh.surfaces_edges){
     glBegin(GL_LINE_LOOP);
-    for(i = 0; i < K * (1 + L); i++) {
+    for(int i = 0; i < nn; i++)
       glVertex3d(pX[i], pY[i], pZ[i]);
-    }
     glEnd();
   }
 
@@ -480,177 +518,42 @@ void Draw_Simplex_Surface_Common(Simplex * s, int L, int K,
       ColorSwitch(thePhysical);
     else if(CTX.mesh.color_carousel == 3)
       ColorSwitch(s->iPart);
-    else if(K == 3)
-      glColor4ubv((GLubyte *) & CTX.color.mesh.triangle);
     else
-      glColor4ubv((GLubyte *) & CTX.color.mesh.quadrangle);
+      glColor4ubv((GLubyte *) & CTX.color.mesh.triangle);
 
     if(CTX.mesh.light) glEnable(GL_LIGHTING);
     glEnable(GL_POLYGON_OFFSET_FILL);
 
-    if(!L) { // first order elements
-      if(K == 3) {
-	glBegin(GL_TRIANGLES);
-	glVertex3d(pX[0], pY[0], pZ[0]);
-	glVertex3d(pX[1], pY[1], pZ[1]);
-	glVertex3d(pX[2], pY[2], pZ[2]);
-	glEnd();
-      }
-      else {
-	glBegin(GL_QUADS);
-	glVertex3d(pX[0], pY[0], pZ[0]);
-	glVertex3d(pX[1], pY[1], pZ[1]);
-	glVertex3d(pX[2], pY[2], pZ[2]);
-	glVertex3d(pX[3], pY[3], pZ[3]);
-	glEnd();
-      }
+    if(!s->VSUP) { // first order elements
+      glBegin(GL_TRIANGLES);
+      glVertex3d(pX[0], pY[0], pZ[0]);
+      glVertex3d(pX[1], pY[1], pZ[1]);
+      glVertex3d(pX[2], pY[2], pZ[2]);
+      glEnd();
     }
     else {
-      if(K == 3) {
-	glBegin(GL_TRIANGLES);
-	glNormal3verts(s->V[0], s->VSUP[0], s->VSUP[2], n);
-	glVertex3d(pX[0], pY[0], pZ[0]);
-	glVertex3d(pX[1], pY[1], pZ[1]);
-	glVertex3d(pX[5], pY[5], pZ[5]);
-	glNormal3verts(s->VSUP[0], s->V[1], s->VSUP[1], n);
-	glVertex3d(pX[1], pY[1], pZ[1]);
-	glVertex3d(pX[2], pY[2], pZ[2]);
-	glVertex3d(pX[3], pY[3], pZ[3]);
-	glNormal3verts(s->VSUP[1], s->V[2], s->VSUP[2], n);
-	glVertex3d(pX[3], pY[3], pZ[3]);
-	glVertex3d(pX[4], pY[4], pZ[4]);
-	glVertex3d(pX[5], pY[5], pZ[5]);
-	glNormal3verts(s->VSUP[0], s->VSUP[1], s->VSUP[2], n);
-	glVertex3d(pX[1], pY[1], pZ[1]);
-	glVertex3d(pX[3], pY[3], pZ[3]);
-	glVertex3d(pX[5], pY[5], pZ[5]);
-	glEnd();
-      }
-      else {
-	// FIXME: should subdivide...
-	glBegin(GL_POLYGON);
-	for(i = 0; i < K * (1 + L); i++)
-	  glVertex3d(pX[i], pY[i], pZ[i]);
-	glEnd();
-      }
+      glBegin(GL_TRIANGLES);
+      glNormal3verts(s->V[0], s->VSUP[0], s->VSUP[2], n);
+      glVertex3d(pX[0], pY[0], pZ[0]);
+      glVertex3d(pX[1], pY[1], pZ[1]);
+      glVertex3d(pX[5], pY[5], pZ[5]);
+      glNormal3verts(s->VSUP[0], s->V[1], s->VSUP[1], n);
+      glVertex3d(pX[1], pY[1], pZ[1]);
+      glVertex3d(pX[2], pY[2], pZ[2]);
+      glVertex3d(pX[3], pY[3], pZ[3]);
+      glNormal3verts(s->VSUP[1], s->V[2], s->VSUP[2], n);
+      glVertex3d(pX[3], pY[3], pZ[3]);
+      glVertex3d(pX[4], pY[4], pZ[4]);
+      glVertex3d(pX[5], pY[5], pZ[5]);
+      glNormal3verts(s->VSUP[0], s->VSUP[1], s->VSUP[2], n);
+      glVertex3d(pX[1], pY[1], pZ[1]);
+      glVertex3d(pX[3], pY[3], pZ[3]);
+      glVertex3d(pX[5], pY[5], pZ[5]);
+      glEnd();
     }
     glDisable(GL_POLYGON_OFFSET_FILL);
     glDisable(GL_LIGHTING);
   }
-}
-
-void Draw_Simplex_Surface_Simple(void *a, void *b)
-{
-  Simplex *s;
-  int L, K;
-  double n[3], pX[8], pY[8], pZ[8];
-
-  s = *(Simplex **) a;
-
-  if(!s->V[2] || !(s->Visible & VIS_MESH))
-    return;
-
-  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, s->iPart);
-  if(part && !(*part)->Visible)
-    return;
-
-  L = (s->VSUP) ? 1 : 0;
-  K = (s->V[3]) ? 4 : 3;
-
-  if(!L) {
-    for(int i = 0; i < K; i++) {
-      pX[i] = s->V[i]->Pos.X;
-      pY[i] = s->V[i]->Pos.Y;
-      pZ[i] = s->V[i]->Pos.Z;
-    }
-  }
-  else {
-    for(int i = 0; i < K; i++) {
-      pX[2*i] = s->V[i]->Pos.X;
-      pY[2*i] = s->V[i]->Pos.Y;
-      pZ[2*i] = s->V[i]->Pos.Z;
-      pX[2*i+1] = s->VSUP[i]->Pos.X;
-      pY[2*i+1] = s->VSUP[i]->Pos.Y;
-      pZ[2*i+1] = s->VSUP[i]->Pos.Z;
-    }
-  }
-  
-  Draw_Simplex_Surface_Common(s, L, K, pX, pY, pZ, n);
-}
-
-void Draw_Simplex_Surface(void *a, void *b)
-{
-  Simplex *s;
-  double Xc, Yc, Zc, pX[8], pY[8], pZ[8];
-  double n[3];
-  int i, j, K, L, k;
-  char Num[256];
-
-  s = *(Simplex **) a;
-
-  if(!s->V[2] || !(s->Visible & VIS_MESH))
-    return;
-
-  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, s->iPart);
-  if(part && !(*part)->Visible)
-    return;
-
-  if(intersectCutPlane(3, s->V) < 0)
-    return;
-
-  L = (s->VSUP) ? 1 : 0;
-  K = (s->V[3]) ? 4 : 3;
-
-  if(K == 4) {
-    Xc = .25 * (s->V[0]->Pos.X + s->V[1]->Pos.X +
-                s->V[2]->Pos.X + s->V[3]->Pos.X);
-    Yc = .25 * (s->V[0]->Pos.Y + s->V[1]->Pos.Y +
-                s->V[2]->Pos.Y + s->V[3]->Pos.Y);
-    Zc = .25 * (s->V[0]->Pos.Z + s->V[1]->Pos.Z +
-                s->V[2]->Pos.Z + s->V[3]->Pos.Z);
-  }
-  else {
-    Xc = (s->V[0]->Pos.X + s->V[1]->Pos.X + s->V[2]->Pos.X) / 3.;
-    Yc = (s->V[0]->Pos.Y + s->V[1]->Pos.Y + s->V[2]->Pos.Y) / 3.;
-    Zc = (s->V[0]->Pos.Z + s->V[1]->Pos.Z + s->V[2]->Pos.Z) / 3.;
-  }
-
-  k = 0;
-  for(i = 0; i < K; i++) {
-    pX[k] = Xc + CTX.mesh.explode * (s->V[i]->Pos.X - Xc);
-    pY[k] = Yc + CTX.mesh.explode * (s->V[i]->Pos.Y - Yc);
-    pZ[k] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
-    k += (L + 1);
-  }
-
-  if(L) {
-    k = 1;
-    for(i = 0; i < K; i++) {
-      pX[k] = Xc + CTX.mesh.explode * (s->VSUP[i]->Pos.X - Xc);
-      pY[k] = Yc + CTX.mesh.explode * (s->VSUP[i]->Pos.Y - Yc);
-      pZ[k] = Zc + CTX.mesh.explode * (s->VSUP[i]->Pos.Z - Zc);
-      k += (L + 1);
-    }
-  }
-
-  if(CTX.mesh.dual) {
-    glColor4ubv((GLubyte *) & CTX.color.fg);
-    glEnable(GL_LINE_STIPPLE);
-    glLineStipple(1, 0x0F0F);
-    gl2psEnable(GL2PS_LINE_STIPPLE);
-    glBegin(GL_LINES);
-    for(i = 0; i < K; i++) {
-      (!i) ? j = K - 1 : j = i - 1;
-      glVertex3d(Xc, Yc, Zc);
-      glVertex3d((pX[i] + pX[j]) / 2., (pY[i] + pY[j]) / 2.,
-                 (pZ[i] + pZ[j]) / 2.);
-    }
-    glEnd();
-    glDisable(GL_LINE_STIPPLE);
-    gl2psDisable(GL2PS_LINE_STIPPLE);
-  }
-
-  Draw_Simplex_Surface_Common(s, L, K, pX, pY, pZ, n);
 
   if(CTX.mesh.surfaces_num) {
     if(CTX.mesh.surfaces_faces)
@@ -672,7 +575,147 @@ void Draw_Simplex_Surface(void *a, void *b)
   }
 }
 
-void Draw_Simplex_Volume(void *a, void *b)
+void Draw_Mesh_Quadrangle(void *a, void *b)
+{
+  double pX[8], pY[8], pZ[8];
+  double n[3];
+  char Num[256];
+
+  Quadrangle *q = *(Quadrangle **) a;
+
+  if(!(q->Visible & VIS_MESH))
+    return;
+
+  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, q->iPart);
+  if(part && !(*part)->Visible)
+    return;
+
+  if(intersectCutPlane(4, q->V) < 0)
+    return;
+
+  double Xc = 0.25 * (q->V[0]->Pos.X + q->V[1]->Pos.X + 
+		      q->V[2]->Pos.X + q->V[3]->Pos.X);
+  double Yc = 0.25 * (q->V[0]->Pos.Y + q->V[1]->Pos.Y + 
+		      q->V[2]->Pos.Y + q->V[3]->Pos.Y);
+  double Zc = 0.25 * (q->V[0]->Pos.Z + q->V[1]->Pos.Z + 
+		      q->V[2]->Pos.Z + q->V[3]->Pos.Z);
+
+  int nn = q->VSUP ? 8 : 4;
+
+  int k = 0;
+  for(int i = 0; i < 4; i++) {
+    pX[k] = Xc + CTX.mesh.explode * (q->V[i]->Pos.X - Xc);
+    pY[k] = Yc + CTX.mesh.explode * (q->V[i]->Pos.Y - Yc);
+    pZ[k] = Zc + CTX.mesh.explode * (q->V[i]->Pos.Z - Zc);
+    k++;
+    if(q->VSUP){
+      pX[k] = Xc + CTX.mesh.explode * (q->VSUP[i]->Pos.X - Xc);
+      pY[k] = Yc + CTX.mesh.explode * (q->VSUP[i]->Pos.Y - Yc);
+      pZ[k] = Zc + CTX.mesh.explode * (q->VSUP[i]->Pos.Z - Zc);
+      k++;
+    }
+  }
+
+  if(CTX.mesh.dual) {
+    glColor4ubv((GLubyte *) & CTX.color.fg);
+    glEnable(GL_LINE_STIPPLE);
+    glLineStipple(1, 0x0F0F);
+    gl2psEnable(GL2PS_LINE_STIPPLE);
+    glBegin(GL_LINES);
+    int incr = q->VSUP ? 2 : 1;
+    for(int i = 0; i < nn; i+=incr) {
+      int j = i ? (i - 1) : 3;
+      glVertex3d(Xc, Yc, Zc);
+      glVertex3d((pX[i] + pX[j]) / 2.,
+		 (pY[i] + pY[j]) / 2.,
+		 (pZ[i] + pZ[j]) / 2.);
+    }
+    glEnd();
+    glDisable(GL_LINE_STIPPLE);
+    gl2psDisable(GL2PS_LINE_STIPPLE);
+  }
+
+  if(CTX.mesh.normals || CTX.mesh.light)
+    glNormal3verts(q->V[0], q->V[1], q->V[2], n);
+
+  if(CTX.mesh.surfaces_faces){
+    glColor4ubv((GLubyte *) & CTX.color.mesh.line);
+  }
+  else{
+    if(theColor.type)
+      glColor4ubv((GLubyte *) & theColor.mesh);
+    else if(CTX.mesh.color_carousel == 1)
+      ColorSwitch(q->iEnt);
+    else if(CTX.mesh.color_carousel == 2)
+      ColorSwitch(thePhysical);
+    else if(CTX.mesh.color_carousel == 3)
+      ColorSwitch(q->iPart);
+    else
+      glColor4ubv((GLubyte *) & CTX.color.mesh.quadrangle);
+  }
+
+  if(CTX.mesh.surfaces_edges){
+    glBegin(GL_LINE_LOOP);
+    for(int i = 0; i < nn; i++)
+      glVertex3d(pX[i], pY[i], pZ[i]);
+    glEnd();
+  }
+
+  if(CTX.mesh.surfaces_faces) {
+
+    if(theColor.type)
+      glColor4ubv((GLubyte *) & theColor.mesh);
+    else if(CTX.mesh.color_carousel == 1)
+      ColorSwitch(q->iEnt);
+    else if(CTX.mesh.color_carousel == 2)
+      ColorSwitch(thePhysical);
+    else if(CTX.mesh.color_carousel == 3)
+      ColorSwitch(q->iPart);
+    else
+      glColor4ubv((GLubyte *) & CTX.color.mesh.quadrangle);
+
+    if(CTX.mesh.light) glEnable(GL_LIGHTING);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    if(!q->VSUP) { // first order elements
+      glBegin(GL_QUADS);
+      glVertex3d(pX[0], pY[0], pZ[0]);
+      glVertex3d(pX[1], pY[1], pZ[1]);
+      glVertex3d(pX[2], pY[2], pZ[2]);
+      glVertex3d(pX[3], pY[3], pZ[3]);
+      glEnd();
+    }
+    else {
+      // FIXME: should subdivide...
+      glBegin(GL_POLYGON);
+      for(int i = 0; i < nn; i++)
+	glVertex3d(pX[i], pY[i], pZ[i]);
+      glEnd();
+    }
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    glDisable(GL_LIGHTING);
+  }
+
+  if(CTX.mesh.surfaces_num) {
+    if(CTX.mesh.surfaces_faces)
+      glColor4ubv((GLubyte *) & CTX.color.mesh.line);
+    sprintf(Num, "%d", q->Num);
+    glRasterPos3d(Xc, Yc, Zc);
+    Draw_String(Num);
+  }
+
+  if(CTX.mesh.normals) {
+    norme(n);
+    glColor4ubv((GLubyte *) & CTX.color.mesh.normals);
+    n[0] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[0];
+    n[1] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[1];
+    n[2] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[2];
+    Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
+		Xc, Yc, Zc, n[0], n[1], n[2], NULL, CTX.mesh.light);
+  }
+}
+
+void Draw_Mesh_Tetrahedron(void *a, void *b)
 {
   Simplex *s;
   char Num[100];
@@ -712,7 +755,7 @@ void Draw_Simplex_Volume(void *a, void *b)
   int edges = CTX.mesh.volumes_edges;
   int faces = CTX.mesh.volumes_faces;
 
-  if(intersectCutPlane(3, s->V, &edges, &faces) < 0)
+  if(intersectCutPlane(4, s->V, &edges, &faces) < 0)
     return;
 
   double Xc = .25 * (s->V[0]->Pos.X + s->V[1]->Pos.X +
@@ -926,7 +969,7 @@ void Draw_Simplex_Volume(void *a, void *b)
   }
 }
 
-void Draw_Hexahedron_Volume(void *a, void *b)
+void Draw_Mesh_Hexahedron(void *a, void *b)
 {
   Hexahedron *h;
   int i;
@@ -1115,7 +1158,7 @@ void Draw_Hexahedron_Volume(void *a, void *b)
 
 }
 
-void Draw_Prism_Volume(void *a, void *b)
+void Draw_Mesh_Prism(void *a, void *b)
 {
   Prism *p;
   int i;
@@ -1289,7 +1332,7 @@ void Draw_Prism_Volume(void *a, void *b)
   }
 }
 
-void Draw_Pyramid_Volume(void *a, void *b)
+void Draw_Mesh_Pyramid(void *a, void *b)
 {
   Pyramid *p;
   int i;

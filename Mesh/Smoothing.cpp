@@ -1,4 +1,4 @@
-// $Id: Smoothing.cpp,v 1.12 2004-02-07 01:40:22 geuzaine Exp $
+// $Id: Smoothing.cpp,v 1.13 2004-05-25 04:10:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -81,7 +81,7 @@ void ActionLiss(void *data, void *dummy)
 
   pnxe = (NXE *) data;
 
-  /* On Ne Lisse Point Les Points sur les courbes (quelle horreur) */
+  // On Ne Lisse Point Les Points sur les courbes (quelle horreur)
   if(pnxe->v->ListCurves)
     return;
   nodes = List_Create(2, 2, sizeof(Vertex *));
@@ -93,7 +93,8 @@ void ActionLiss(void *data, void *dummy)
     List_Read(pnxe->Liste, i, &s);
     min_quality_old = DMIN(min_quality_old, s->GammaShapeMeasure());
     volume_before += s->Volume_Simplexe();
-    /* On Ne Lisse Point Les Points sur les surfaces quand les volumes sont mailles */
+    // On Ne Lisse Point Les Points sur les surfaces quand les volumes
+    // sont mailles
     if(s->V[3] && pnxe->v->ListSurf)
       return;
     for(j = 0; j < 4; j++) {
@@ -128,9 +129,9 @@ void ActionLiss(void *data, void *dummy)
     List_Read(pnxe->Liste, i, &s);
     volume_after += s->Volume_Simplexe();
   }
-  if(fabs(volume_after - volume_before) >
-     1.e-8 * fabs(volume_after + volume_before)
-     || min_quality_old > min_quality_new) {
+  if(fabs(volume_after - volume_before) > 1.e-8 * 
+     fabs(volume_after + volume_before) || 
+     min_quality_old > min_quality_new) {
     pnxe->v->Pos.X = xold;
     pnxe->v->Pos.Y = yold;
     pnxe->v->Pos.Z = zold;
@@ -148,19 +149,15 @@ void ActionLissSurf(void *data, void *dummy)
 
   pnxe = (NXE *) data;
 
-  /*
-     On Ne Lisse Point Les Points sur les courbes
-   */
+  // On Ne Lisse Point Les Points sur les courbes
   if(pnxe->v->ListCurves)
     return;
 
   X = Y = Z = Sum = 0.0;
   for(i = 0; i < List_Nbr(pnxe->Liste); i++) {
     List_Read(pnxe->Liste, i, &s);
-    /*
-       On Ne Lisse Point Les Points sur les surfaces quand les
-       volumes sont mailles
-     */
+    // On Ne Lisse Point Les Points sur les surfaces quand les volumes
+    // sont mailles
     for(j = 0; j < 4; j++) {
       if(s->V[j] && compareVertex(&pnxe->v, &s->V[j])) {
         Sum += 0.5;

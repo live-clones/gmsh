@@ -1,6 +1,6 @@
-$Id: VERSIONS,v 1.209 2004-05-22 01:24:18 geuzaine Exp $
+$Id: VERSIONS,v 1.210 2004-05-25 04:10:10 geuzaine Exp $
 
-New since 1.52: various background mesh fixes and enhancements; new
+New in 1.53: various background mesh fixes and enhancements; new
 Plugin(Evaluate) to evaluate arbitrary expressions on post-processing
 views; generalized Plugin(Extract) to handle any combination of
 components; generalized "Coherence" to handle transfinite
@@ -8,7 +8,9 @@ surface/volume attributes; plugin options can now be set in the option
 file (like all other options); added "undo" capability during geometry
 creation; rewrote the contour guessing routines so that entities can
 be selected in an arbitrary order; Mac users can now double click on
-geo/msh/pos files in the Finder to launch Gmsh; many small cleanups;
+geo/msh/pos files in the Finder to launch Gmsh; removed support for
+fltk 1.0; rewrote most of the code related to quadrangles; many code
+cleanups;
 
 New in 1.52: new raster ("bitmap") PostScript/EPS/PDF output formats;
 new Plugin(Extract) to extract a given component from a

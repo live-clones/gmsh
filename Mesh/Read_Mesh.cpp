@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.71 2004-04-18 03:36:07 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.72 2004-05-25 04:10:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,7 @@
 
 extern Context_T CTX;
 
-// Read mesh in the native MSH format
+// Read mesh in native MSH format
 
 #define LGN1 1
 #define TRI1 2
@@ -113,6 +113,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
   double x, y, z, lc1, lc2;
   Vertex *vert, verts[NB_NOD_MAX_ELM], *vertsp[NB_NOD_MAX_ELM], **vertspp;
   Simplex *simp;
+  Quadrangle *quad;
   Hexahedron *hex;
   Prism *pri;
   Pyramid *pyr;
@@ -299,7 +300,6 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    Msg(GERROR, "Line element %d already exists", simp->Num);
 	    Free_Simplex(&simp, 0);
 	  }
-          //NO!!! Tree_Insert(M->Simplexes, &simp) ; 
           break;
         case TRI1:
         case TRI2:
@@ -316,10 +316,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	      simp->VSUP[i]->Degree = 2;
 	    }
 	  }
-          if(Tree_Insert(s->Simplexes, &simp) && Tree_Insert(M->Simplexes, &simp)){
-            M->Statistics[7]++;
-	  }
-          else{
+          if(!Tree_Insert(s->Simplexes, &simp)){
 	    Msg(GERROR, "Triangle %d already exists", simp->Num);
 	    Free_Simplex(&simp, 0);
 	  }
@@ -328,22 +325,18 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
         case QUA2:
 	  s = addElementarySurface(M, Elementary);
 	  addPhysicalGroup(M, MSH_PHYSICAL_SURFACE, Physical, Elementary);
-          simp = Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
-          simp->Num = Num;
-          simp->iEnt = Elementary;
-          simp->iPart = Add_MeshPartition(Partition, M);
+          quad = Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
+          quad->Num = Num;
+          quad->iEnt = Elementary;
+          quad->iPart = Add_MeshPartition(Partition, M);
 	  if(Type == QUA2){
-	    simp->VSUP = (Vertex **) Malloc(4 * sizeof(Vertex *));
+	    quad->VSUP = (Vertex **) Malloc(4 * sizeof(Vertex *));
 	    for(i = 0; i < 4; i++){
-	      simp->VSUP[i] = vertsp[i+4];
-	      simp->VSUP[i]->Degree = 2;
+	      quad->VSUP[i] = vertsp[i+4];
+	      quad->VSUP[i]->Degree = 2;
 	    }
 	  }
-          if(Tree_Insert(s->Simplexes, &simp) && Tree_Insert(M->Simplexes, &simp)){
-            M->Statistics[7]++; //since s->Simplexes holds quads, too :-(
-            M->Statistics[8]++;
-          }
-	  else{
+          if(!Tree_Insert(s->Quadrangles, &quad)){
 	    Msg(GERROR, "Quadrangle %d already exists", simp->Num);
 	    Free_Simplex(&simp, 0);
 	  }
@@ -363,10 +356,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	      simp->VSUP[i]->Degree = 2;
 	    }
 	  }
-          if(Tree_Insert(v->Simplexes, &simp) && Tree_Insert(M->Simplexes, &simp)){
-            M->Statistics[9]++;
-	  }
-	  else{
+          if(!Tree_Insert(v->Simplexes, &simp)){
 	    Msg(GERROR, "Tetrahedron %d already exists", simp->Num);
 	    Free_Simplex(&simp, 0);
 	  }
@@ -387,10 +377,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	      hex->VSUP[i]->Degree = 2;
 	    }
 	  }
-          if(Tree_Insert(v->Hexahedra, &hex)){
-            M->Statistics[10]++;
-	  }
-	  else{
+          if(!Tree_Insert(v->Hexahedra, &hex)){
 	    Msg(GERROR, "Hexahedron %d already exists", hex->Num);
 	    Free_Hexahedron(&hex, 0);
 	  }
@@ -411,10 +398,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	      pri->VSUP[i]->Degree = 2;
 	    }
 	  }
-          if(Tree_Insert(v->Prisms, &pri)){
-            M->Statistics[11]++;
-	  }
-	  else{
+          if(!Tree_Insert(v->Prisms, &pri)){
 	    Msg(GERROR, "Prism %d already exists", pri->Num);
 	    Free_Prism(&pri, 0);
 	  }
@@ -435,10 +419,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	      pyr->VSUP[i]->Degree = 2;
 	    }
 	  }
-          if(Tree_Insert(v->Pyramids, &pyr)){
-            M->Statistics[12]++;
-	  }
-	  else{
+          if(!Tree_Insert(v->Pyramids, &pyr)){
 	    Msg(GERROR, "Pyramid %d already exists", pri->Num);
 	    Free_Pyramid(&pyr, 0);
 	  }
@@ -475,18 +456,12 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 
   }
 
-  if(Tree_Nbr(M->Volumes)) {
+  if(Tree_Nbr(M->Volumes))
     M->status = 3;
-    M->Statistics[6] = Tree_Nbr(M->Vertices);   // wrong, but...
-  }
-  else if(Tree_Nbr(M->Surfaces)) {
+  else if(Tree_Nbr(M->Surfaces))
     M->status = 2;
-    M->Statistics[5] = Tree_Nbr(M->Vertices);   // wrong, but...
-  }
-  else if(Tree_Nbr(M->Curves)) {
+  else if(Tree_Nbr(M->Curves))
     M->status = 1;
-    M->Statistics[4] = Tree_Nbr(M->Vertices);   // wrong, but...
-  }
   else if(Tree_Nbr(M->Points))
     M->status = 0;
   else
@@ -499,10 +474,336 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
   List_Sort(M->Partitions, compareMeshPartitionIndex);
 }
 
+// Read mesh in VTK format
+
+void Read_Mesh_VTK(Mesh * m, FILE *fp)
+{
+  char line[256], dumline1[256], dumline2[256];
+  int i;
+  int NbFaces, NbVertices, Vertex1, Vertex2, Vertex3, NbVerticesOnFace;
+  double x, y, z;
+  Vertex *v1, *v2, *v3;
+
+  fgets(line, 255, fp);
+  fgets(line, 255, fp);
+  fgets(line, 255, fp);
+  fgets(line, 255, fp);
+  fgets(line, 255, fp);
+
+  sscanf(line, "%s %d %s", dumline1, &NbVertices, dumline2);
+  Surface *surf = Create_Surface(1, MSH_SURF_DISCRETE);
+  surf->Dirty = 1;
+  Tree_Add(m->Surfaces, &surf);
+  for(i = 0; i < NbVertices; i++) {
+    fscanf(fp, "%le %le %le", &x, &y, &z);
+    Vertex *v = Create_Vertex(i, x, y, z, 1.0, 1.0);
+    Tree_Add(m->Vertices, &v);
+    Tree_Add(surf->Vertices, &v);
+    v->ListSurf = List_Create(1, 1, sizeof(Surface *));
+    List_Add(v->ListSurf, &surf);
+  }
+
+  fscanf(fp, "%s %d %d", dumline1, &NbFaces, &i);
+  for(int i = 0; i < NbFaces; i++) {
+    fscanf(fp, "%d", &NbVerticesOnFace);
+    Simplex *s;
+    if(NbVerticesOnFace == 3) {
+      fscanf(fp, "%d %d %d", &Vertex1, &Vertex2, &Vertex3);
+      v1 = FindVertex(Vertex1, m);
+      v2 = FindVertex(Vertex2, m);
+      v3 = FindVertex(Vertex3, m);
+      if(!v1 || !v2 || !v3){
+	Msg(GERROR, "Bad vertex reference in VTK file: aborting");
+	return;
+      }
+      else{
+	s = Create_Simplex(v1, v2, v3, NULL);
+	s->Num = i;
+	s->iEnt = 1;
+      }
+    }
+    if(!(surf = FindSurface(1, m))) {
+      surf = Create_Surface(1, MSH_SURF_DISCRETE);
+      surf->Dirty = 1;
+      Tree_Add(m->Surfaces, &surf);
+    }
+    Tree_Add(surf->Simplexes, &s);
+  }
+
+  if(NbFaces)
+    m->status = 2;
+
+  Volume *vol = Create_Volume(1, MSH_VOLUME);
+  vol->Dirty = 1;
+  vol->Surfaces = List_Create(1, 1, sizeof(Surface *));
+  List_Add(vol->Surfaces, &surf);
+  Tree_Add(m->Volumes, &vol);
+}
+
+// Read mesh in SMS format
+
+#define ENTITY_VERTEX 0
+#define ENTITY_EDGE   1
+#define ENTITY_FACE   2
+#define ENTITY_REGION 3
+#define ENTITY_NONE   4
+
+void Read_Mesh_SMS(Mesh * m, FILE * in)
+{
+  char line[1023];
+  int i, patch, nbPts;
+  int NbRegions, NbFaces, NbEdges, NbVertices, NbPoints,
+    GEntityType, GEntityId, EntityNbConnections, Dummy,
+    Edge1, Edge2, Edge3, Edge4, Face1, Face2, Face3, Face4;
+  int VertexId1, VertexId2, NbEdgesOnFace, NbFacesOnRegion;
+  double x, y, z, u, v;
+  List_T *AllEdges, *AllFaces;
+  Vertex *v1 = NULL, *v2 = NULL, *v3 = NULL, *v4 = NULL;
+
+  fscanf(in, "%s %d", line, &Dummy);
+  fscanf(in, "%d %d %d %d %d", &NbRegions, &NbFaces, &NbEdges, &NbVertices,
+         &NbPoints);
+
+  Msg(INFO, "Reading a mesh in scorec format");
+  Msg(INFO, "%d Vertices", NbVertices);
+
+  for(i = 0; i < NbVertices; i++) {
+    fscanf(in, "%d", &GEntityId);
+    if(GEntityId) {
+      fscanf(in, "%d %d %lf %lf %lf", &GEntityType, &EntityNbConnections, &x,
+             &y, &z);
+      Vertex *vert = Create_Vertex(i, x, y, z, 1.0, 1.0);
+      Tree_Add(m->Vertices, &vert);
+      switch (GEntityType) {
+      case 0:
+	{
+	  // we need to make a new one: vertices in m->Vertices and
+	  // m->Points should never point to the same memory location
+	  Vertex *pnt = Create_Vertex(i, x, y, z, 1.0, 1.0);
+	  Tree_Add(m->Points, &pnt);
+	}
+        break;
+      case 1:
+        fscanf(in, "%le", &u);
+        break;
+      case 2:
+        fscanf(in, "%le %le %d", &u, &v, &patch);
+        break;
+      case 3:
+        break;
+      }
+    }
+  }
+
+  Msg(INFO, "%d edges", NbEdges);
+  AllEdges = List_Create(NbEdges, 1, sizeof(Edge));
+  Edge e;
+
+  for(int i = 0; i < NbEdges; i++) {
+    fscanf(in, "%d", &GEntityId);
+
+    if(GEntityId) {
+      fscanf(in, "%d %d %d %d %d", &GEntityType, &VertexId1, &VertexId2,
+             &EntityNbConnections, &nbPts);
+      for(int j = 0; j < nbPts; j++) {
+        switch (GEntityType) {
+        case 0:
+          break;
+        case 1:
+          fscanf(in, "%le", &u);
+          break;
+        case 2:
+          fscanf(in, "%le %le %d", &u, &v, &patch);
+          break;
+        case 3:
+          break;
+        }
+      }
+      e.Points = NULL;
+      Vertex *v1 = FindVertex(VertexId1 - 1, m);
+      Vertex *v2 = FindVertex(VertexId2 - 1, m);
+      e.V[0] = v1;
+      e.V[1] = v2;
+      List_Add(AllEdges, &e);
+      switch (GEntityType) {
+      case ENTITY_EDGE:
+        Simplex * s = Create_Simplex(v1, v2, NULL, NULL);
+        Curve *c;
+        if(!(c = FindCurve(GEntityId, m))) {
+          c = Create_Curve(GEntityId, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0, 1);
+	  c->Dirty = 1;
+          Tree_Add(m->Curves, &c);
+        }
+        s->iEnt = GEntityId;
+        s->Num = i;
+        Tree_Add(c->Simplexes, &s);
+      }
+    }
+  }
+
+  AllFaces = List_Create(NbFaces, 1, sizeof(Simplex *));
+
+  Volume *vol = Create_Volume(1, MSH_VOLUME);
+  vol->Dirty = 1;
+  vol->Surfaces = List_Create(1, 1, sizeof(Surface *));
+  Tree_Add(m->Volumes, &vol);
+
+  Msg(INFO, "%d faces", NbFaces);
+  for(int i = 0; i < NbFaces; i++) {
+    fscanf(in, "%d", &GEntityId);
+    if(GEntityId) {
+      fscanf(in, "%d %d", &GEntityType, &NbEdgesOnFace);
+
+      List_T *Lists[4] = { 0, 0, 0, 0 };
+
+      if(NbEdgesOnFace == 3) {
+        fscanf(in, "%d %d %d %d", &Edge1, &Edge2, &Edge3, &nbPts);
+        List_Read(AllEdges, abs(Edge1) - 1, &e);
+        Lists[0] = e.Points;
+        if(Edge1 > 0)
+          v1 = e.V[0];
+        else
+          v1 = e.V[1];
+        List_Read(AllEdges, abs(Edge2) - 1, &e);
+        Lists[1] = e.Points;
+        if(Edge2 > 0)
+          v2 = e.V[0];
+        else
+          v2 = e.V[1];
+        List_Read(AllEdges, abs(Edge3) - 1, &e);
+        Lists[2] = e.Points;
+        if(Edge3 > 0)
+          v3 = e.V[0];
+        else
+          v3 = e.V[1];
+        v4 = NULL;
+      }
+      else if(NbEdgesOnFace == 4) {
+        fscanf(in, "%d %d %d %d %d", &Edge1, &Edge2, &Edge3, &Edge4, &nbPts);
+        List_Read(AllEdges, abs(Edge1) - 1, &e);
+        if(Edge1 > 0)
+          v1 = e.V[0];
+        else
+          v1 = e.V[1];
+        List_Read(AllEdges, abs(Edge2) - 1, &e);
+        if(Edge2 > 0)
+          v2 = e.V[0];
+        else
+          v2 = e.V[1];
+        List_Read(AllEdges, abs(Edge3) - 1, &e);
+        if(Edge3 > 0)
+          v3 = e.V[0];
+        else
+          v3 = e.V[1];
+        List_Read(AllEdges, abs(Edge4) - 1, &e);
+        if(Edge4 > 0)
+          v4 = e.V[0];
+        else
+          v4 = e.V[1];
+      }
+      else {
+        Msg(GERROR, "Wrong number pf edges on face (%d)", NbEdgesOnFace);
+      }
+      for(int j = 0; j < nbPts; j++) {
+        switch (GEntityType) {
+        case 0:
+          break;
+        case 1:
+          fscanf(in, "%le", &u);
+          break;
+        case 2:
+          fscanf(in, "%le %le %d", &u, &v, &patch);
+          break;
+        case 3:
+          break;
+        }
+      }
+
+      Simplex *s = Create_Simplex(v1, v2, v3, v4);
+      s->Num = i + 1;
+      s->iEnt = GEntityId + 10000;
+
+      Surface *surf;
+      List_Add(AllFaces, &s);
+
+      switch (GEntityType) {
+      case ENTITY_REGION:
+        break;
+      case ENTITY_FACE:
+        if(!(surf = FindSurface(GEntityId + 10000, m))) {
+          surf = Create_Surface(GEntityId + 10000, MSH_SURF_DISCRETE);
+          surf->Dirty = 1;
+          if(!NbRegions)
+            List_Add(vol->Surfaces, &surf);
+          Tree_Add(m->Surfaces, &surf);
+        }
+        Tree_Add(surf->Vertices, &s->V[0]);
+        Tree_Add(surf->Vertices, &s->V[1]);
+        Tree_Add(surf->Vertices, &s->V[2]);
+        Tree_Add(surf->Simplexes, &s);
+      }
+    }
+  }
+
+  Msg(INFO, "%d region", NbRegions);
+
+  for(int i = 0; i < NbRegions; i++) {
+    fscanf(in, "%d", &GEntityId);
+    if(GEntityId) {
+      fscanf(in, "%d", &NbFacesOnRegion);
+      Simplex *myS1, *myS2;
+      if(NbFacesOnRegion == 4) {
+        fscanf(in, "%d %d %d %d %d", &Face1, &Face2, &Face3, &Face4, &Dummy);
+        List_Read(AllFaces, abs(Face1) - 1, &myS1);
+        List_Read(AllFaces, abs(Face2) - 1, &myS2);
+        v1 = myS1->V[0];
+        v2 = myS1->V[1];
+        v3 = myS1->V[2];
+        for(int hh = 0; hh < 3; hh++)
+          if(compareVertex(&v1, &myS2->V[hh]) &&
+             compareVertex(&v2, &myS2->V[hh]) &&
+             compareVertex(&v3, &myS2->V[hh]))
+            v4 = myS2->V[hh];
+      }
+      if(!v1 || !v2 || !v3 || !v4) {
+        Msg(GERROR, "%d\n", NbFacesOnRegion);
+        Msg(GERROR, "%p %p %p %p\n", v1, v2, v3, v4);
+	Msg(GERROR, "%p %p %p \n", myS1->V[0], myS1->V[1], myS1->V[2]);
+        Msg(GERROR, "%p %p %p \n", myS2->V[0], myS2->V[1], myS2->V[2]);
+        return;
+      }
+      Simplex *s = Create_Simplex(v1, v2, v3, v4);
+
+      if(!(vol = FindVolume(GEntityId, m))) {
+        vol = Create_Volume(GEntityId, MSH_VOLUME);
+	vol->Dirty = 1;
+        Tree_Add(m->Volumes, &vol);
+      }
+      s->iEnt = GEntityId;
+      Tree_Insert(vol->Simplexes, &s);
+      Tree_Insert(m->Simplexes, &s);
+    }
+  }
+
+  List_Delete(AllEdges);
+  List_Delete(AllFaces);
+
+  if(Tree_Nbr(m->Volumes)) {
+    m->status = 3;
+  }
+  else if(Tree_Nbr(m->Surfaces)) {
+    m->status = 2;
+  }
+  else if(Tree_Nbr(m->Curves)) {
+    m->status = 1;
+  }
+  else if(Tree_Nbr(m->Points))
+    m->status = 0;
+  else
+    m->status = -1;
+}
 
 // Public Read_Mesh routine
-
-void Read_Mesh_SMS(Mesh * m, FILE * fp);
 
 void Read_Mesh(Mesh * M, FILE * fp, char *filename, int type)
 {
@@ -510,12 +811,9 @@ void Read_Mesh(Mesh * M, FILE * fp, char *filename, int type)
     Msg(INFO, "Reading mesh file '%s'", filename);
 
   switch (type) {
-  case FORMAT_MSH:
-    Read_Mesh_MSH(M, fp);
-    break;
-  case FORMAT_SMS:
-    Read_Mesh_SMS(M, fp);
-    break;
+  case FORMAT_MSH: Read_Mesh_MSH(M, fp); break;
+  case FORMAT_SMS: Read_Mesh_SMS(M, fp); break;
+  case FORMAT_VTK: Read_Mesh_VTK(M, fp); break;
   default:
     Msg(GERROR, "Unkown mesh file format");
     return;

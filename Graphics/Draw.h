@@ -89,14 +89,13 @@ void Draw_Mesh_Extruded_Surfaces(void *a, void *b);
 void Draw_Mesh_Curves(void *a, void *b);
 void Draw_Mesh_Points(void *a, void *b);
 
-void Draw_Simplex_Volume(void *a, void *b);
-void Draw_Simplex_Surface(void *a, void *b);
-void Draw_Simplex_Surface_Simple(void *a, void *b);
-void Draw_Simplex_Curves(void *a,void *b);
-
-void Draw_Hexahedron_Volume(void *a, void *b);
-void Draw_Prism_Volume(void *a, void *b);
-void Draw_Pyramid_Volume(void *a, void *b);
+void Draw_Mesh_Tetrahedron(void *a, void *b);
+void Draw_Mesh_Triangle(void *a, void *b);
+void Draw_Mesh_Line(void *a,void *b);
+void Draw_Mesh_Quadrangle(void *a, void *b);
+void Draw_Mesh_Hexahedron(void *a, void *b);
+void Draw_Mesh_Prism(void *a, void *b);
+void Draw_Mesh_Pyramid(void *a, void *b);
 
 void Draw_ScalarPoint(Post_View *View, int preproNormals,
 		      double ValMin, double ValMax, 

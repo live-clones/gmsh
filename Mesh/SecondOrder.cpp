@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.22 2004-04-19 00:18:07 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.23 2004-05-25 04:10:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -26,18 +26,15 @@
 #include "Interpolation.h"
 #include "Numeric.h"
 
-// FIXME: still todo
-// - middle edge nodes for hexas, prisms and pyramids
-// - middle face nodes for quads, hexas, prisms and pyramids
-
-// we really need to remove the quads from the simplex tree: it's a
-// real mess right now -> add a Quad tree in Surface (like the
-// Hax/Prism/Pyramid tree in Volume); generalize Edge in terms of
-// Element, and dynamic cast to Simplex, Quandrangle, Hexahdra, etc.
+// FIXME: still to add middle face nodes for quads, hexas, prisms and
+// pyramids
 
 extern Mesh *THEM;
 extern int edges_tetra[6][2];
 extern int edges_quad[4][2];
+extern int edges_hexa[12][2];
+extern int edges_prism[9][2];
+extern int edges_pyramid[8][2];
 
 static Surface *THES = NULL;
 static Curve *THEC = NULL;
@@ -125,10 +122,8 @@ Vertex *onsurface(Vertex * v1, Vertex * v2)
 void PutMiddlePoint(void *a, void *b)
 {
   Edge *ed;
-  Simplex *s;
   Vertex *v;
-  int i, j, k, N;
-  int edges[6][2];
+  int i, j, N;
 
   ed = (Edge *) a;
 
@@ -151,51 +146,88 @@ void PutMiddlePoint(void *a, void *b)
 
   ed->newv = v;
   Tree_Insert(THEM->Vertices, &v);
-
+      
   for(i = 0; i < List_Nbr(ed->Simplexes); i++) {
+    Simplex *s;
     List_Read(ed->Simplexes, i, &s);
-    if(s->V[3] && !THES) { // tetrahedron
-      if(!s->VSUP)
-        s->VSUP = (Vertex **) Malloc(6 * sizeof(Vertex *));
+    if(s->V[3]) // tetrahedron
       N = 6;
-      for(k = 0; k < N; k++)
-        for(j = 0; j < 2; j++)
-          edges[k][j] = edges_tetra[k][j];
-    }
-    else if(s->V[3]) { // quadrangle
-      if(!s->VSUP)
-        s->VSUP = (Vertex **) Malloc(4 * sizeof(Vertex *));
-      N = 4;
-      for(k = 0; k < N; k++)
-        for(j = 0; j < 2; j++)
-          edges[k][j] = edges_quad[k][j];
-    }
-    else if(s->V[2]) { // triangle
-      if(!s->VSUP)
-        s->VSUP = (Vertex **) Malloc(3 * sizeof(Vertex *));
+    else if(s->V[2]) // triangle
       N = 3;
-      for(k = 0; k < N; k++)
-        for(j = 0; j < 2; j++)
-          edges[k][j] = edges_tetra[k][j];
-    }
-    else { // line
-      if(!s->VSUP)
-        s->VSUP = (Vertex **) Malloc(sizeof(Vertex *));
+    else // line
       N = 1;
-      for(k = 0; k < N; k++)
-        for(j = 0; j < 2; j++)
-          edges[k][j] = edges_tetra[k][j];
-    }
-
+    if(!s->VSUP)
+      s->VSUP = (Vertex **) Malloc(N * sizeof(Vertex *));
     for(j = 0; j < N; j++) {
-      if((!compareVertex(&s->V[edges[j][0]], &ed->V[0]) &&
-          !compareVertex(&s->V[edges[j][1]], &ed->V[1])) ||
-         (!compareVertex(&s->V[edges[j][0]], &ed->V[1]) &&
-          !compareVertex(&s->V[edges[j][1]], &ed->V[0]))) {
-        s->VSUP[j] = v;
+      if((!compareVertex(&s->V[edges_tetra[j][0]], &ed->V[0]) &&
+	  !compareVertex(&s->V[edges_tetra[j][1]], &ed->V[1])) ||
+	 (!compareVertex(&s->V[edges_tetra[j][0]], &ed->V[1]) &&
+	  !compareVertex(&s->V[edges_tetra[j][1]], &ed->V[0]))) {
+	s->VSUP[j] = v;
       }
     }
   }
+
+  for(i = 0; i < List_Nbr(ed->Quadrangles); i++) {
+    Quadrangle *q;
+    List_Read(ed->Quadrangles, i, &q);
+    if(!q->VSUP)
+      q->VSUP = (Vertex **) Malloc(4 * sizeof(Vertex *));
+    for(j = 0; j < 4; j++) {
+      if((!compareVertex(&q->V[edges_quad[j][0]], &ed->V[0]) &&
+          !compareVertex(&q->V[edges_quad[j][1]], &ed->V[1])) ||
+         (!compareVertex(&q->V[edges_quad[j][0]], &ed->V[1]) &&
+          !compareVertex(&q->V[edges_quad[j][1]], &ed->V[0]))) {
+        q->VSUP[j] = v;
+      }
+    }
+  }
+
+  for(i = 0; i < List_Nbr(ed->Hexahedra); i++) {
+    Hexahedron *h;
+    List_Read(ed->Hexahedra, i, &h);
+    if(!h->VSUP)
+      h->VSUP = (Vertex **) Malloc(12 * sizeof(Vertex *));
+    for(j = 0; j < 12; j++) {
+      if((!compareVertex(&h->V[edges_hexa[j][0]], &ed->V[0]) &&
+          !compareVertex(&h->V[edges_hexa[j][1]], &ed->V[1])) ||
+         (!compareVertex(&h->V[edges_hexa[j][0]], &ed->V[1]) &&
+          !compareVertex(&h->V[edges_hexa[j][1]], &ed->V[0]))) {
+        h->VSUP[j] = v;
+      }
+    }
+  }
+
+  for(i = 0; i < List_Nbr(ed->Prisms); i++) {
+    Prism *p;
+    List_Read(ed->Prisms, i, &p);
+    if(!p->VSUP)
+      p->VSUP = (Vertex **) Malloc(9 * sizeof(Vertex *));
+    for(j = 0; j < 9; j++) {
+      if((!compareVertex(&p->V[edges_prism[j][0]], &ed->V[0]) &&
+          !compareVertex(&p->V[edges_prism[j][1]], &ed->V[1])) ||
+         (!compareVertex(&p->V[edges_prism[j][0]], &ed->V[1]) &&
+          !compareVertex(&p->V[edges_prism[j][1]], &ed->V[0]))) {
+        p->VSUP[j] = v;
+      }
+    }
+  }
+
+  for(i = 0; i < List_Nbr(ed->Pyramids); i++) {
+    Pyramid *p;
+    List_Read(ed->Pyramids, i, &p);
+    if(!p->VSUP)
+      p->VSUP = (Vertex **) Malloc(8 * sizeof(Vertex *));
+    for(j = 0; j < 8; j++) {
+      if((!compareVertex(&p->V[edges_pyramid[j][0]], &ed->V[0]) &&
+          !compareVertex(&p->V[edges_pyramid[j][1]], &ed->V[1])) ||
+         (!compareVertex(&p->V[edges_pyramid[j][0]], &ed->V[1]) &&
+          !compareVertex(&p->V[edges_pyramid[j][1]], &ed->V[0]))) {
+        p->VSUP[j] = v;
+      }
+    }
+  }
+
 }
 
 void ResetDegre2_Vertex(void *a, void *b)
@@ -212,6 +244,34 @@ void ResetDegre2_Simplex(void *a, void *b)
   s->VSUP = NULL;
 }
 
+void ResetDegre2_Quadrangle(void *a, void *b)
+{
+  Quadrangle *q = *(Quadrangle**)a;
+  Free(q->VSUP);  
+  q->VSUP = NULL;
+}
+
+void ResetDegre2_Hexahedron(void *a, void *b)
+{
+  Hexahedron *h = *(Hexahedron**)a;
+  Free(h->VSUP);  
+  h->VSUP = NULL;
+}
+
+void ResetDegre2_Prism(void *a, void *b)
+{
+  Prism *p = *(Prism**)a;
+  Free(p->VSUP);  
+  p->VSUP = NULL;
+}
+
+void ResetDegre2_Pyramid(void *a, void *b)
+{
+  Pyramid *p = *(Pyramid**)a;
+  Free(p->VSUP);  
+  p->VSUP = NULL;
+}
+
 void ResetDegre2_Curve(void *a, void *b)
 {
   Curve *c = *(Curve**)a;
@@ -224,6 +284,7 @@ void ResetDegre2_Surface(void *a, void *b)
   Surface *s = *(Surface**)a;
   if(s->Dirty) return;
   Tree_Action(s->Simplexes, ResetDegre2_Simplex);
+  Tree_Action(s->Quadrangles, ResetDegre2_Quadrangle);
 }
 
 void ResetDegre2_Volume(void *a, void *b)
@@ -231,6 +292,9 @@ void ResetDegre2_Volume(void *a, void *b)
   Volume *v = *(Volume**)a;
   if(v->Dirty) return;
   Tree_Action(v->Simplexes, ResetDegre2_Simplex);
+  Tree_Action(v->Hexahedra, ResetDegre2_Hexahedron);
+  Tree_Action(v->Prisms, ResetDegre2_Prism);
+  Tree_Action(v->Pyramids, ResetDegre2_Pyramid);
 }
 
 void Degre1()
@@ -255,15 +319,13 @@ void Degre1()
     Tree_Suppress(THEM->Vertices, v);
     Free_Vertex(v, NULL);
   }
-
-  THEM->Statistics[16] = 0;
 }
 
 void Degre2_Curve(void *a, void *b)
 {
   Curve *c = *(Curve**)a;
   if(c->Dirty) return;
-  edges->AddTree(c->Simplexes, false);
+  edges->AddSimplexTree(c->Simplexes);
   THEC = c;
   THES = NULL;
   Tree_Action(edges->AllEdges, PutMiddlePoint);
@@ -273,7 +335,8 @@ void Degre2_Surface(void *a, void *b)
 {
   Surface *s = *(Surface**)a;
   if(s->Dirty) return;
-  edges->AddTree(s->Simplexes, false);
+  edges->AddSimplexTree(s->Simplexes);
+  edges->AddQuadrangleTree(s->Quadrangles);
   THEC = NULL;
   THES = s;
   Tree_Action(edges->AllEdges, PutMiddlePoint);
@@ -284,14 +347,10 @@ void Degre2_Volume(void *a, void *b)
   Volume *v = *(Volume**)a;
   if(v->Dirty) return;
 
-  // FIXME: warn if we have unhandled elements
-  if(Tree_Nbr(v->Hexahedra) || Tree_Nbr(v->Prisms) || Tree_Nbr(v->Pyramids) ||
-     THEM->Statistics[8]){
-    Msg(GERROR, "Second order hexahedra, prisms and pyramids not supported yet");
-    return;
-  }
-
-  edges->AddTree(v->Simplexes, true);
+  edges->AddSimplexTree(v->Simplexes);
+  edges->AddHexahedronTree(v->Hexahedra);
+  edges->AddPrismTree(v->Prisms);
+  edges->AddPyramidTree(v->Pyramids);
   THEC = NULL;
   THES = NULL;
   Tree_Action(edges->AllEdges, PutMiddlePoint);
@@ -303,7 +362,6 @@ void Degre2(int dim)
   double t1 = Cpu();
 
   Degre1();
-  int nb1 = Tree_Nbr(THEM->Vertices);
 
   if(dim >= 1)
     Tree_Action(THEM->Curves, Degre2_Curve);
@@ -311,9 +369,6 @@ void Degre2(int dim)
     Tree_Action(THEM->Surfaces, Degre2_Surface);
   if(dim >= 3)
     Tree_Action(THEM->Volumes, Degre2_Volume);
-
-  int nb2 = Tree_Nbr(THEM->Vertices);
-  THEM->Statistics[16] = nb2 - nb1;
 
   double t2 = Cpu();
   Msg(STATUS2, "Mesh second order complete (%g s)", t2 - t1);

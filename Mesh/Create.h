@@ -28,9 +28,6 @@ int compareNXE(const void *a, const void *b);
 int compareFxE(const void *a, const void *b);
 int compareSurfaceLoop(const void *a, const void *b);
 int compareEdgeLoop(const void *a, const void *b);
-int compareHexahedron(const void *a, const void *b);
-int comparePrism(const void *a, const void *b);
-int comparePyramid(const void *a, const void *b);
 int compareQuality(const void *a, const void *b);
 int compareCurve(const void *a, const void *b);
 int compareAttractor(const void *a, const void *b);
@@ -48,12 +45,6 @@ Curve         *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
 			    List_T * Knots, int p1, int p2, double u1, double u2);
 Surface       *Create_Surface(int Num, int Typ);
 Volume        *Create_Volume(int Num, int Typ);
-Hexahedron    *Create_Hexahedron(Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4,
-				 Vertex * v5, Vertex * v6, Vertex * v7, Vertex * v8);
-Prism         *Create_Prism(Vertex * v1, Vertex * v2, Vertex * v3,
-			    Vertex * v4, Vertex * v5, Vertex * v6);
-Pyramid       *Create_Pyramid(Vertex * v1, Vertex * v2, Vertex * v3,
-			      Vertex * v4, Vertex * v5);
 EdgeLoop      *Create_EdgeLoop(int Num, List_T * intlist);
 SurfaceLoop   *Create_SurfaceLoop(int Num, List_T * intlist);
 
@@ -61,9 +52,6 @@ void Free_PhysicalGroup(void *a, void *b);
 void Free_MeshPartition(void *a, void *b);
 void Free_Surface(void *a, void *b);
 void Free_Volume(void *a, void *b);
-void Free_Hexahedron(void *a, void *b);
-void Free_Prism(void *a, void *b);
-void Free_Pyramid(void *a, void *b);
 void Free_Curve(void *a, void *b);
 void Free_EdgeLoop(void *a, void *b);
 void Free_SurfaceLoop(void *a, void *b);

@@ -41,8 +41,10 @@
 #define FORMAT_AUTO          10
 #define FORMAT_PPM           11
 #define FORMAT_YUV           12
+#define FORMAT_DMG           13
 #define FORMAT_SMS           14
 #define FORMAT_OPT           15
+#define FORMAT_VTK           16
 #define FORMAT_JPEGTEX       17
 #define FORMAT_TEX           18
 #define FORMAT_VRML          19
@@ -195,21 +197,6 @@ class NXE{
   NXE();
 };
 
-class Hexahedron : public Element{
- public:
-  Vertex *V[8];
-};
-
-class Prism : public Element{
- public:
-  Vertex *V[6];
-};
-
-class Pyramid : public Element{
- public:
-  Vertex *V[5];
-};
-
 typedef struct{
   int N;
   List_T *pT;
@@ -254,7 +241,7 @@ struct _Surf{
   List_T *Orientations;
   List_T *Contours;
   Tree_T *Simplexes;
-  List_T *TrsfSimplexes;
+  Tree_T *Quadrangles;
   Tree_T *Vertices;
   List_T *TrsfVertices;
   Tree_T *Edges;
@@ -317,6 +304,7 @@ typedef struct {
   Tree_T *Faces;
   Tree_T *Simplexes;
   Tree_T *Simp_Surf; // for old extrusion mesh generator
+  Tree_T *Quad_Surf; // for old extrusion mesh generator
   Tree_T *Hexahedra;
   Tree_T *Prisms;
   Tree_T *Pyramids;
@@ -377,7 +365,6 @@ typedef struct{
   List_T *Control_Points;
   List_T *Vertices;
   Tree_T *Simplexes;
-  List_T *TrsfSimplexes;
   ExtrudeParams *Extrude;
   float *k, *cp;
   int degre;
@@ -414,7 +401,7 @@ class MeshParameters{
   int DelaunayInsertionMethod;
   int DelaunayQuality;
   bool InteractiveDelaunay;
-  MeshParameters ();
+  MeshParameters();
 };
 
 struct _Mesh{
@@ -432,13 +419,15 @@ struct _Mesh{
   List_T *Partitions;
   Grid_T Grid; // fast search grid
   LcField BGM; // background mesh
-  double Statistics[50]; // mesh statistics
+  double timing[3]; // timing for 1d, 2d and 3d mesh
+  double quality_gamma[3]; // mesh quality statistics
+  double quality_eta[3]; // mesh quality statistics
+  double quality_rho[3]; // mesh quality statistics
   int Histogram[3][NB_HISTOGRAM]; // quality histograms
   GMSHMetric *Metric;
   MeshParameters MeshParams;
   int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
-  int MaxSimplexNum;
 };
 
 typedef struct {
@@ -455,65 +444,65 @@ struct Map{
 
 // public functions
 
-void mai3d (Mesh * M, int Asked);
+void mai3d(Mesh * M, int Asked);
 
-void Init_Mesh (Mesh * M);
-void Create_BgMesh (int i, double d, Mesh * m);
-void Print_Geo (Mesh * M, char *c);
-void Print_Mesh (Mesh * M, char *c, int Type);
-void Read_Mesh (Mesh * M, FILE *fp, char *filename, int Type);
-void GetStatistics (double s[50]);
+void Init_Mesh(Mesh * M);
+void Create_BgMesh(int i, double d, Mesh * m);
+void Print_Geo(Mesh * M, char *c);
+void Print_Mesh(Mesh * M, char *c, int Type);
+void Read_Mesh(Mesh * M, FILE *fp, char *filename, int Type);
+void GetStatistics(double s[50]);
 
-void Maillage_Dimension_0 (Mesh *M);
-void Maillage_Dimension_1 (Mesh *M);
-void Maillage_Dimension_2 (Mesh *M);
-void Maillage_Dimension_3 (Mesh *M);
+void Maillage_Dimension_1(Mesh *M);
+void Maillage_Dimension_2(Mesh *M);
+void Maillage_Dimension_3(Mesh *M);
 
-void Maillage_Curve (void *data, void *dummy);
-void Maillage_Surface (void *data, void *dum);
-void Maillage_Volume (void *data, void *dum);
+void Maillage_Curve(void *data, void *dummy);
+void Maillage_Surface(void *data, void *dum);
+void Maillage_Volume(void *data, void *dum);
 
-int Extrude_Mesh (Curve * c);
-int Extrude_Mesh (Surface * s);
-int Extrude_Mesh (Volume * v);
-int Extrude_Mesh (Tree_T * Volumes);
+int Extrude_Mesh(Curve * c);
+int Extrude_Mesh(Surface * s);
+int Extrude_Mesh(Volume * v);
+int Extrude_Mesh(Tree_T * Volumes);
 void ExitExtrude();
 void Extrude_Mesh_Old(Mesh *M);
 
-int MeshTransfiniteSurface (Surface *sur);
-int MeshTransfiniteVolume (Volume *vol);
-int MeshCylindricalSurface (Surface * s);
-int MeshParametricSurface (Surface * s);
-int MeshEllipticSurface (Surface * sur);
+int MeshTransfiniteSurface(Surface *sur);
+int MeshTransfiniteVolume(Volume *vol);
+int MeshCylindricalSurface(Surface * s);
+int MeshParametricSurface(Surface * s);
+int MeshEllipticSurface(Surface * sur);
 
-int  AlgorithmeMaillage2DAnisotropeModeJF (Surface * s);
-void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori);
+int  AlgorithmeMaillage2DAnisotropeModeJF(Surface * s);
+void Maillage_Automatique_VieuxCode(Surface * pS, Mesh * m, int ori);
 int  Mesh_Shewchuk(Surface *s);
 
-int  Calcule_Contours (Surface * s);
-void Link_Simplexes (List_T * Sim, Tree_T * Tim);
-void Calcule_Z (void *data, void *dum);
-void Calcule_Z_Plan (void *data, void *dum);
-void Projette_Plan_Moyen (void *a, void *b);
-void Projette_Inverse (void *a, void *b);
-void Freeze_Vertex (void *a, void *b);
-void deFreeze_Vertex (void *a, void *b);
+int  Calcule_Contours(Surface * s);
+void Link_Simplexes(List_T * Sim, Tree_T * Tim);
+void Calcule_Z(void *data, void *dum);
+void Calcule_Z_Plan(void *data, void *dum);
+void Projette_Plan_Moyen(void *a, void *b);
+void Projette_Inverse(void *a, void *b);
+void Freeze_Vertex(void *a, void *b);
+void deFreeze_Vertex(void *a, void *b);
 
-double Lc_XYZ (double X, double Y, double Z, Mesh * m);
+double Lc_XYZ(double X, double Y, double Z, Mesh * m);
 void Degre1();
 void Degre2(int dim);
 void Degre2_Curve(void *a, void *b);
 void Degre2_Surface(void *a, void *b);
-void ActionLiss (void *data, void *dummy);
-void ActionLissSurf (void *data, void *dummy);
-int  Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a);
+void ActionLiss(void *data, void *dummy);
+void ActionLissSurf(void *data, void *dummy);
+int  Recombine(Tree_T *TreeAllVert, Tree_T *TreeAllSimp, Tree_T *TreeAllQuad,
+		double a);
 void ApplyLcFactor(Mesh *M);
 void ExportLcFieldOnVolume(Mesh * M, char *filename);
 void ExportLcFieldOnSurfaces(Mesh * M, char *filename);
 
-void Gamma_Maillage (Mesh * m, double *gamma, double *gammamax, double *gammamin);
-void Eta_Maillage (Mesh * m, double *gamma, double *gammamax, double *gammamin);
-void R_Maillage (Mesh * m, double *gamma, double *gammamax, double *gammamin);
+void Gamma_Maillage(Mesh * m, double *gamma, double *gammamax, double *gammamin);
+void Eta_Maillage(Mesh * m, double *gamma, double *gammamax, double *gammamin);
+void R_Maillage(Mesh * m, double *gamma, double *gammamax, double *gammamin);
 void Mesh_Quality(Mesh *m);
 void Print_Histogram(int *h);
 

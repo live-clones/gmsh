@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.305 2004-05-22 01:29:46 geuzaine Exp $
+// $Id: GUI.cpp,v 1.306 2004-05-25 04:10:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2564,144 +2564,52 @@ void GUI::create_statistics_window()
 void GUI::set_statistics()
 {
 
-  int i, num = 0;
-  static double s[50], p[20];
+  int num = 0;
+  static double s[50];
   static char label[50][256];
 
   GetStatistics(s);
 
   // geom
-  sprintf(label[num], "%g", s[0]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[1]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[2]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[3]);
-  stat_value[num]->value(label[num]);
-  num++;
+  sprintf(label[num], "%g", s[0]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[1]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[2]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[3]); stat_value[num]->value(label[num]); num++;
 
   // mesh
-  sprintf(label[num], "%g", s[4]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[5]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[6]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[16]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[7] - s[8]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[8]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[9]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[10]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[11]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[12]);
-  stat_value[num]->value(label[num]);
-  num++;
+  sprintf(label[num], "%g", s[4]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[5]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[6]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[16]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[7]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[8]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[9]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[10]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[11]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[12]); stat_value[num]->value(label[num]); num++;
 
-  sprintf(label[num], "%g", s[13]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[14]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[15]);
-  stat_value[num]->value(label[num]);
-  num++;
+  sprintf(label[num], "%g", s[13]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[14]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[15]); stat_value[num]->value(label[num]); num++;
 
-  sprintf(label[num], "%.4g (%.4g->%.4g)", s[17], s[19], s[18]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%.4g (%.4g->%.4g)", s[20], s[22], s[21]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%.4g (%.4g->%.4g)", s[23], s[25], s[24]);
-  stat_value[num]->value(label[num]);
-  num++;
+  sprintf(label[num], "%.4g (%.4g->%.4g)", s[17], s[18], s[19]);
+  stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%.4g (%.4g->%.4g)", s[20], s[21], s[22]);
+  stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%.4g (%.4g->%.4g)", s[23], s[24], s[25]);
+  stat_value[num]->value(label[num]); num++;
 
   // post
-  p[0] = List_Nbr(CTX.post.list);
-  sprintf(label[num], "%g", p[0]);
-  stat_value[num]->value(label[num]);
-  num++;
-  p[1] = p[2] = p[3] = p[4] = p[5] = p[6] = p[7] = p[8] = p[9] = 0;
-  p[10] = p[11] = p[12] = p[13] = p[14] = p[15] = p[16] = p[17] = p[18] = 0;
-  for(i = 0; i < List_Nbr(CTX.post.list); i++) {
-    Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
-    p[1] += v->NbSP + v->NbVP + v->NbTP;
-    p[2] += v->NbSL + v->NbVL + v->NbTL;
-    p[3] += v->NbST + v->NbVT + v->NbTT;
-    p[4] += v->NbSQ + v->NbVQ + v->NbTQ;
-    p[5] += v->NbSS + v->NbVS + v->NbTS;
-    p[6] += v->NbSH + v->NbVH + v->NbTH;
-    p[7] += v->NbSI + v->NbVI + v->NbTI;
-    p[8] += v->NbSY + v->NbVY + v->NbTY;
-    p[9] += v->NbT2 + v->NbT3;
-    if(v->Visible) {
-      if(v->DrawPoints)
-        p[10] += (v->DrawScalars ? v->NbSP : 0) + (v->DrawVectors ? v->NbVP : 0) + (v->DrawTensors ? v->NbTP : 0);
-      if(v->DrawLines)
-        p[11] += (v->DrawScalars ? v->NbSL : 0) + (v->DrawVectors ? v->NbVL : 0) + (v->DrawTensors ? v->NbTL : 0);
-      if(v->DrawTriangles)
-        p[12] += (v->DrawScalars ? v->NbST : 0) + (v->DrawVectors ? v->NbVT : 0) + (v->DrawTensors ? v->NbTT : 0);
-      if(v->DrawQuadrangles)
-        p[13] += (v->DrawScalars ? v->NbSQ : 0) + (v->DrawVectors ? v->NbVQ : 0) + (v->DrawTensors ? v->NbTQ : 0);
-      if(v->DrawTetrahedra)
-        p[14] += (v->DrawScalars ? v->NbSS : 0) + (v->DrawVectors ? v->NbVS : 0) + (v->DrawTensors ? v->NbTS : 0);
-      if(v->DrawHexahedra)
-        p[15] += (v->DrawScalars ? v->NbSH : 0) + (v->DrawVectors ? v->NbVH : 0) + (v->DrawTensors ? v->NbTH : 0);
-      if(v->DrawPrisms)
-        p[16] += (v->DrawScalars ? v->NbSI : 0) + (v->DrawVectors ? v->NbVI : 0) + (v->DrawTensors ? v->NbTI : 0);
-      if(v->DrawPyramids)
-        p[17] += (v->DrawScalars ? v->NbSY : 0) + (v->DrawVectors ? v->NbVY : 0) + (v->DrawTensors ? v->NbTY : 0);
-      if(v->DrawStrings)
-        p[18] += v->NbT2 + v->NbT3;
-    }
-  }
-  sprintf(label[num], "%g/%g", p[10], p[1]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g/%g", p[11], p[2]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g/%g", p[12], p[3]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g/%g", p[13], p[4]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g/%g", p[14], p[5]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g/%g", p[15], p[6]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g/%g", p[16], p[7]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g/%g", p[17], p[8]);
-  stat_value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g/%g", p[18], p[9]);
-  stat_value[num]->value(label[num]);
-  num++;
+  sprintf(label[num], "%g", s[26]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", s[36], s[27]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", s[37], s[28]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", s[38], s[29]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", s[39], s[30]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", s[40], s[31]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", s[41], s[32]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", s[42], s[33]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", s[43], s[34]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", s[44], s[35]); stat_value[num]->value(label[num]); num++;
 }
 
 

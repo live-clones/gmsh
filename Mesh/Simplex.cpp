@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.31 2004-05-13 00:50:40 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.32 2004-05-25 04:10:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -29,37 +29,29 @@
 extern Context_T CTX;
 extern Mesh *THEM, *LOCAL;
 
-int Simplex::TotalAllocated = 0;
-int Simplex::TotalNumber = 0;
-
 extern Simplex MyNewBoundary;
 
 int FACE_DIMENSION = 2;
 
 Simplex::Simplex()
 {
-  TotalAllocated++;
-  TotalNumber++;
   VSUP = NULL;
   V[0] = V[1] = V[2] = V[3] = NULL;
   S[0] = S[1] = S[2] = S[3] = NULL;
   iEnt = -1;
   iPart = -1;
   Quality = 0.;
-  Num = TotalNumber;
+  Num = ++TotalNumber;
   Visible = VIS_MESH;
 }
 
 Simplex::Simplex(Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)
 {
-  TotalAllocated++;
-  TotalNumber++;
   VSUP = NULL;
   S[0] = S[1] = S[2] = S[3] = NULL;
   Quality = 0.;
   Fourre_Simplexe(v1, v2, v3, v4);
-  Num = TotalNumber;
-  THEM->MaxSimplexNum = IMAX(THEM->MaxSimplexNum, Num);
+  Num = ++TotalNumber;
   iEnt = -1;
   iPart = -1;
   Visible = VIS_MESH;
@@ -67,7 +59,7 @@ Simplex::Simplex(Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)
 
 Simplex::~Simplex()
 {
-  TotalAllocated--;
+  if(VSUP) Free(VSUP);
 }
 
 int Simplex::CircumCircle(double x1, double y1,
@@ -162,7 +154,8 @@ double Simplex::Volume_Simplexe2D()
 {
   return ((V[1]->Pos.X - V[0]->Pos.X) *
           (V[2]->Pos.Y - V[1]->Pos.Y) -
-          (V[2]->Pos.X - V[1]->Pos.X) * (V[1]->Pos.Y - V[0]->Pos.Y));
+          (V[2]->Pos.X - V[1]->Pos.X) * 
+	  (V[1]->Pos.Y - V[0]->Pos.Y));
 }
 
 void Simplex::center_tet(double X[4], double Y[4], double Z[4], double res[3])
@@ -256,8 +249,7 @@ double Simplex::EtaShapeMeasure()
       lij2 += DSQR(lij(i, j));
     }
   }
-  return 12. * pow(9. / 10. * DSQR(fabs(Volume_Simplexe())),
-                   1. / 3.) / (lij2);
+  return 12. * pow(9. / 10. * DSQR(fabs(Volume_Simplexe())), 1./3.) / (lij2);
 }
 
 double Simplex::RhoShapeMeasure()
@@ -382,29 +374,11 @@ void Free_Simplex(void *a, void *b)
   }
 }
 
-// to avoid the renumbering of the nodes and all the 'Fourre_Simplex' stuff
-Simplex *Create_Quadrangle(Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)
-{
-  Simplex *s;
-  s = new Simplex();
-  s->V[0] = v1;
-  s->V[1] = v2;
-  s->V[2] = v3;
-  s->V[3] = v4;
-  return s;
-}
-
 int compareSimplex(const void *a, const void *b)
 {
-  Simplex **q, **w;
-
-  /* Les simplexes sont definis une seule fois :
-     1 pointeur par entite -> on compare les pointeurs */
-
-  q = (Simplex **) a;
-  w = (Simplex **) b;
-  //if((*q)->iEnt != (*w)->iEnt) return (*q)->iEnt - (*w)->iEnt;
-  return ((*q)->Num - (*w)->Num);
+  Simplex *q = *(Simplex **) a;
+  Simplex *w = *(Simplex **) b;
+  return (q->Num - w->Num);
 }
 
 int Simplex::Pt_In_Simplexe(Vertex * v, double uvw[3], double tol)
@@ -589,7 +563,7 @@ int Simplex::Pt_In_Simplex_2D(Vertex * v)
   return 1;
 }
 
-void Simplex::ExportLcField(FILE * f, int dim)
+void Simplex::ExportLcField(FILE * f)
 {
   if(!V[2])
     fprintf(f, "SL(%f,%f,%f,%f,%f,%f){%12.5E,%12.5E};\n",
@@ -601,9 +575,7 @@ void Simplex::ExportLcField(FILE * f, int dim)
             V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[0]->lc,
             V[1]->lc, V[2]->lc);
   else
-    fprintf(f,
-	    "%s(%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f){%12.5E,%12.5E,%12.5E,%12.5E};\n",
-	    (dim == 3) ? "SS" : "SQ",
+    fprintf(f, "SS(%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f){%12.5E,%12.5E,%12.5E,%12.5E};\n",
 	    V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	    V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
 	    V[3]->Pos.Y, V[3]->Pos.Z, V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc);
@@ -791,8 +763,7 @@ bool Simplex::SwapFace(int iFac, List_T * newsimp, List_T * delsimp)
   s3 = Create_Simplex(s->F[iFac].V[2], s->F[iFac].V[0], o[0], o[1]);
 
   double vol1 = s->Volume_Simplexe() + Volume_Simplexe();
-  double vol2 =
-    s1->Volume_Simplexe() + s2->Volume_Simplexe() + s3->Volume_Simplexe();
+  double vol2 = s1->Volume_Simplexe() + s2->Volume_Simplexe() + s3->Volume_Simplexe();
 
   if(fabs(fabs(vol1) - fabs(vol2)) > 1.e-5 * (fabs(vol1) + fabs(vol2))) {
     delete s1;
@@ -804,7 +775,8 @@ bool Simplex::SwapFace(int iFac, List_T * newsimp, List_T * delsimp)
   double gamma1 = GammaShapeMeasure();
 
   if(s1->GammaShapeMeasure() < gamma1 ||
-     s2->GammaShapeMeasure() < gamma1 || s3->GammaShapeMeasure() < gamma1)
+     s2->GammaShapeMeasure() < gamma1 || 
+     s3->GammaShapeMeasure() < gamma1)
     return false;
 
   return true;
@@ -812,14 +784,11 @@ bool Simplex::SwapFace(int iFac, List_T * newsimp, List_T * delsimp)
 
 int compareFace(const void *a, const void *b)
 {
-  Face *q, *w;
-
-  q = (Face *) a;
-  w = (Face *) b;
+  Face *q = (Face *) a;
+  Face *w = (Face *) b;
 
   if(!q->V[0] || !w->V[0])
-    Msg(FATAL,
-        "Bad face (are you trying to generate hexahedra with a Delaunay?!)");
+    Msg(FATAL, "Bad face (are you trying to generate hexahedra with a Delaunay?!)");
 
   if(q->V[0]->Num > w->V[0]->Num)
     return (1);

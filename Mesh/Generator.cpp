@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.52 2004-05-07 18:42:48 geuzaine Exp $
+// $Id: Generator.cpp,v 1.53 2004-05-25 04:10:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -25,26 +25,151 @@
 #include "Create.h"
 #include "Context.h"
 #include "OpenFile.h"
+#include "Views.h"
 
 extern Mesh *THEM;
 extern Context_T CTX;
 
-void GetStatistics(double s[50])
+static int nbOrder2 = 0;
+
+void countOrder2(void *a, void *b)
 {
-  int i;
-  if(!THEM) {
-    for(i = 0; i < 50; i++)
-      s[i] = 0.;
+  Vertex *v = *(Vertex**)a;
+  if(v->Degree == 2) nbOrder2++;
+}
+
+void GetStatistics(double stat[50])
+{
+  for(int i = 0; i < 50; i++)
+    stat[i] = 0.;
+
+  if(!THEM)
+    return;
+
+  stat[0] = Tree_Nbr(THEM->Points);
+  stat[1] = Tree_Nbr(THEM->Curves);
+  stat[2] = Tree_Nbr(THEM->Surfaces);
+  stat[3] = Tree_Nbr(THEM->Volumes);
+  
+  stat[4] = 0.;
+  if(Tree_Nbr(THEM->Curves)) {
+    List_T *curves = Tree2List(THEM->Curves);
+    for(int i = 0; i < List_Nbr(curves); i++){
+      Curve *c;
+      List_Read(curves, i, &c);
+      stat[4] += List_Nbr(c->Vertices);
+    }
+    List_Delete(curves);
   }
-  else {
-    THEM->Statistics[0] = Tree_Nbr(THEM->Points);
-    THEM->Statistics[1] = Tree_Nbr(THEM->Curves);
-    THEM->Statistics[2] = Tree_Nbr(THEM->Surfaces);
-    THEM->Statistics[3] = Tree_Nbr(THEM->Volumes);
-    Mesh_Quality(THEM);
-    for(i = 0; i < 50; i++)
-      s[i] = THEM->Statistics[i];
+
+  stat[5] = stat[7] = stat[8] = 0.;
+  if(Tree_Nbr(THEM->Surfaces)) {
+    List_T *surfaces = Tree2List(THEM->Surfaces);
+    for(int i = 0; i < List_Nbr(surfaces); i++){
+      Surface *s;
+      List_Read(surfaces, i, &s);
+      stat[5] += Tree_Nbr(s->Vertices);
+      stat[7] += Tree_Nbr(s->Simplexes);
+      stat[8] += Tree_Nbr(s->Quadrangles);
+    }
+    List_Delete(surfaces);
   }
+
+  stat[6] = stat[9] = stat[10] = stat[11] = stat[12] = 0.;
+  if(Tree_Nbr(THEM->Volumes)) {
+    List_T *volumes = Tree2List(THEM->Volumes);
+    for(int i = 0; i < List_Nbr(volumes); i++){
+      Volume *v;
+      List_Read(volumes, i, &v);
+      stat[6] += Tree_Nbr(v->Vertices);
+      stat[9] += Tree_Nbr(v->Simplexes);
+      stat[10] += Tree_Nbr(v->Hexahedra);
+      stat[11] += Tree_Nbr(v->Prisms);
+      stat[12] += Tree_Nbr(v->Pyramids);
+    }
+    List_Delete(volumes);
+  }
+
+  // hack... (Read_Mesh does not fill-in the vertices)
+  int nbnod = Tree_Nbr(THEM->Vertices);
+  if(nbnod && !stat[4] && !stat[5] && !stat[6]){
+    if(stat[9] || stat[10] || stat[11] || stat[12])
+      stat[6] = nbnod;
+    else if(stat[7] || stat[8])
+      stat[5] = nbnod;
+    else
+      stat[4] = nbnod;
+  }
+
+  stat[13] = THEM->timing[0];
+  stat[14] = THEM->timing[1];
+  stat[15] = THEM->timing[2];
+
+  nbOrder2 = 0;
+  Tree_Action(THEM->Vertices, countOrder2);
+  stat[16] = nbOrder2;
+
+  Mesh_Quality(THEM);
+  stat[17] = THEM->quality_gamma[0];
+  stat[18] = THEM->quality_gamma[1];
+  stat[19] = THEM->quality_gamma[2];
+  stat[20] = THEM->quality_eta[0];
+  stat[21] = THEM->quality_eta[1];
+  stat[22] = THEM->quality_eta[2];
+  stat[23] = THEM->quality_rho[0];
+  stat[24] = THEM->quality_rho[1];
+  stat[25] = THEM->quality_rho[2];
+
+  stat[26] = List_Nbr(CTX.post.list);
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+    Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
+    stat[27] += v->NbSP + v->NbVP + v->NbTP;
+    stat[28] += v->NbSL + v->NbVL + v->NbTL;
+    stat[29] += v->NbST + v->NbVT + v->NbTT;
+    stat[30] += v->NbSQ + v->NbVQ + v->NbTQ;
+    stat[31] += v->NbSS + v->NbVS + v->NbTS;
+    stat[32] += v->NbSH + v->NbVH + v->NbTH;
+    stat[33] += v->NbSI + v->NbVI + v->NbTI;
+    stat[34] += v->NbSY + v->NbVY + v->NbTY;
+    stat[35] += v->NbT2 + v->NbT3;
+    if(v->Visible) {
+      if(v->DrawPoints)
+        stat[36] += 
+	  (v->DrawScalars ? v->NbSP : 0) + (v->DrawVectors ? v->NbVP : 0) + 
+	  (v->DrawTensors ? v->NbTP : 0);
+      if(v->DrawLines)
+        stat[37] += 
+	  (v->DrawScalars ? v->NbSL : 0) + (v->DrawVectors ? v->NbVL : 0) + 
+	  (v->DrawTensors ? v->NbTL : 0);
+      if(v->DrawTriangles)
+        stat[38] += 
+	  (v->DrawScalars ? v->NbST : 0) + (v->DrawVectors ? v->NbVT : 0) + 
+	  (v->DrawTensors ? v->NbTT : 0);
+      if(v->DrawQuadrangles)
+        stat[39] +=
+	  (v->DrawScalars ? v->NbSQ : 0) + (v->DrawVectors ? v->NbVQ : 0) + 
+	  (v->DrawTensors ? v->NbTQ : 0);
+      if(v->DrawTetrahedra)
+        stat[40] += 
+	  (v->DrawScalars ? v->NbSS : 0) + (v->DrawVectors ? v->NbVS : 0) + 
+	  (v->DrawTensors ? v->NbTS : 0);
+      if(v->DrawHexahedra)
+        stat[41] +=
+	  (v->DrawScalars ? v->NbSH : 0) + (v->DrawVectors ? v->NbVH : 0) +
+	  (v->DrawTensors ? v->NbTH : 0);
+      if(v->DrawPrisms)
+        stat[42] += 
+	  (v->DrawScalars ? v->NbSI : 0) + (v->DrawVectors ? v->NbVI : 0) +
+	  (v->DrawTensors ? v->NbTI : 0);
+      if(v->DrawPyramids)
+        stat[43] += 
+	  (v->DrawScalars ? v->NbSY : 0) + (v->DrawVectors ? v->NbVY : 0) + 
+	  (v->DrawTensors ? v->NbTY : 0);
+      if(v->DrawStrings)
+        stat[44] += v->NbT2 + v->NbT3;
+    }
+  }
+
 }
 
 void ApplyLcFactor_Point(void *a, void *b)
@@ -72,20 +197,6 @@ void ApplyLcFactor(Mesh * M)
   List_Action(M->Metric->Attractors, ApplyLcFactor_Attractor);
 }
 
-void Maillage_Dimension_0(Mesh * M)
-{
-  for(int i = 0; i < 50; i++)
-    M->Statistics[i] = 0.0;
-  for(int i = 0; i < NB_HISTOGRAM; i++)
-    M->Histogram[0][i] = M->Histogram[1][i] = M->Histogram[2][i] = 0;
-  // This is the default type of BGM (lc associated with 
-  // points of the geometry). It can be changed to
-  // - ONFILE by loading a view containing a bgmesh
-  // - CONSTANT
-  // - FUNCTION
-  Create_BgMesh(WITHPOINTS, .2, M);
-}
-
 void Maillage_Dimension_1(Mesh * M)
 {
   double t1, t2;
@@ -93,7 +204,7 @@ void Maillage_Dimension_1(Mesh * M)
   t1 = Cpu();
   Tree_Action(M->Curves, Maillage_Curve);
   t2 = Cpu();
-  M->Statistics[13] = t2 - t1;
+  M->timing[0] = t2 - t1;
 }
 
 void Maillage_Dimension_2(Mesh * M)
@@ -130,7 +241,7 @@ void Maillage_Dimension_2(Mesh * M)
 
   t2 = Cpu();
 
-  M->Statistics[14] = t2 - t1;
+  M->timing[1] = t2 - t1;
 }
 
 void Maillage_Dimension_3(Mesh * M)
@@ -167,7 +278,7 @@ void Maillage_Dimension_3(Mesh * M)
 
   t2 = Cpu();
 
-  M->Statistics[15] = t2 - t1;
+  M->timing[2] = t2 - t1;
 }
 
 
@@ -182,7 +293,8 @@ void Init_Mesh(Mesh * M)
   M->MaxSurfaceLoopNum = 0;
   M->MaxVolumeNum = 0;
   M->MaxPhysicalNum = 0;
-  M->MaxSimplexNum = 0;
+
+  Element::TotalNumber = 0;
 
   ExitExtrude();
 
@@ -242,6 +354,14 @@ void Init_Mesh(Mesh * M)
 
   M->status = 0;
 
+  Create_BgMesh(WITHPOINTS, .2, M);
+
+  for(int i = 0; i < 3; i++){
+    M->timing[i] = 0.0;
+    M->quality_gamma[i] = 0.0;
+    M->quality_eta[i] = 0.0;
+    M->quality_rho[i] = 0.0;
+  }
   CTX.mesh.changed = 1;
 }
 

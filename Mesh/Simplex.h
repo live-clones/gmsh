@@ -36,8 +36,6 @@ class Simplex : public Element {
   Coord   Center;        // CC center
   double  Radius;        // CC radius
   Simplex *S[4];         // 4 neighbours
-  static  int TotalNumber;
-  static  int TotalAllocated;
   Simplex();
   ~Simplex();
   Simplex(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
@@ -60,7 +58,7 @@ class Simplex : public Element {
   bool SwapEdge (int iFac);
   bool SwapFace (int iFac, List_T *newsimp, List_T *delsimp);
   bool ExtractOppositeEdges ( int iFac, Vertex *p[2], Vertex *q[2]);
-  void ExportLcField (FILE *f, int dim=3);
+  void ExportLcField (FILE *f);
   void Center_Ellipsum_3D (double m[3][3]);
   double GammaShapeMeasure ();
   double RhoShapeMeasure ();
@@ -74,7 +72,6 @@ int compareFace (const void *a, const void *b);
 
 Simplex *Create_Simplex (Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
 void Free_Simplex (void *a, void *b);
-Simplex *Create_Quadrangle (Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
 
 
 #endif

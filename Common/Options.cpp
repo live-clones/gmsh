@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.155 2004-05-22 01:24:16 geuzaine Exp $
+// $Id: Options.cpp,v 1.156 2004-05-25 04:10:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3653,7 +3653,7 @@ double opt_mesh_nb_triangles(OPT_ARGS_NUM)
 {
   double s[50];
   GetStatistics(s);
-  return s[7] - s[8];
+  return s[7];
 }
 
 double opt_mesh_nb_quadrangles(OPT_ARGS_NUM)

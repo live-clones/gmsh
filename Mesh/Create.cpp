@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.54 2004-05-22 01:29:46 geuzaine Exp $
+// $Id: Create.cpp,v 1.55 2004-05-25 04:10:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -68,33 +68,6 @@ int compareEdgeLoop(const void *a, const void *b)
 
   q = (EdgeLoop **) a;
   w = (EdgeLoop **) b;
-  return ((*q)->Num - (*w)->Num);
-}
-
-int compareHexahedron(const void *a, const void *b)
-{
-  Hexahedron **q, **w;
-
-  q = (Hexahedron **) a;
-  w = (Hexahedron **) b;
-  return ((*q)->Num - (*w)->Num);
-}
-
-int comparePrism(const void *a, const void *b)
-{
-  Prism **q, **w;
-
-  q = (Prism **) a;
-  w = (Prism **) b;
-  return ((*q)->Num - (*w)->Num);
-}
-
-int comparePyramid(const void *a, const void *b)
-{
-  Pyramid **q, **w;
-
-  q = (Pyramid **) a;
-  w = (Pyramid **) b;
   return ((*q)->Num - (*w)->Num);
 }
 
@@ -561,7 +534,6 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
   pC->Num = Num;
   THEM->MaxLineNum = IMAX(THEM->MaxLineNum, Num);
   pC->Simplexes = Tree_Create(sizeof(Simplex *), compareSimplex);
-  pC->TrsfSimplexes = List_Create(1, 10, sizeof(Simplex *));
   pC->Method = LIBRE;
   pC->degre = Order;
   pC->Circle.n[0] = 0.0;
@@ -658,7 +630,6 @@ void Free_Curve(void *a, void *b)
     List_Delete(pC->Vertices);
     Tree_Action(pC->Simplexes, Free_Simplex);
     Tree_Delete(pC->Simplexes);
-    List_Delete(pC->TrsfSimplexes);
     Free(pC->k);
     List_Delete(pC->Control_Points);
     Free(pC->cp);
@@ -684,10 +655,10 @@ Surface *Create_Surface(int Num, int Typ)
   for(i = 0; i < 5; i++)
     pS->ipar[i] = 0;
   pS->Recombine = 0;
-  pS->RecombineAngle = 30;
+  pS->RecombineAngle = 90;
   pS->TrsfPoints = List_Create(4, 4, sizeof(Vertex *));
   pS->Simplexes = Tree_Create(sizeof(Simplex *), compareQuality);
-  pS->TrsfSimplexes = List_Create(1, 10, sizeof(Simplex *));
+  pS->Quadrangles = Tree_Create(sizeof(Quadrangle *), compareQuadrangle);
   pS->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
   pS->TrsfVertices = List_Create(1, 10, sizeof(Vertex *));
   pS->Contours = List_Create(1, 1, sizeof(List_T *));
@@ -708,7 +679,8 @@ void Free_Surface(void *a, void *b)
     List_Delete(pS->TrsfPoints);
     Tree_Action(pS->Simplexes, Free_Simplex);
     Tree_Delete(pS->Simplexes);
-    List_Delete(pS->TrsfSimplexes);
+    Tree_Action(pS->Quadrangles, Free_Quadrangle);
+    Tree_Delete(pS->Quadrangles);
     Tree_Delete(pS->Vertices);
     List_Delete(pS->TrsfVertices);
     List_Delete(pS->Contours);
@@ -746,10 +718,12 @@ Volume *Create_Volume(int Num, int Typ)
   pV->Hexahedra = Tree_Create(sizeof(Hexahedron *), compareHexahedron);
   pV->Prisms = Tree_Create(sizeof(Prism *), comparePrism);
   pV->Pyramids = Tree_Create(sizeof(Pyramid *), comparePyramid);
-  pV->Simp_Surf = Tree_Create(sizeof(Simplex *), compareSimplex);       // for old extrusion mesh generator
   pV->Extrude = NULL;
   pV->Edges = NULL;
   pV->Faces = NULL;
+  // for old extrusion mesh generator
+  pV->Simp_Surf = Tree_Create(sizeof(Simplex *), compareSimplex);
+  pV->Quad_Surf = Tree_Create(sizeof(Simplex *), compareQuadrangle);
   return pV;
 }
 
@@ -758,11 +732,12 @@ void Free_Volume(void *a, void *b)
   Volume *pV = *(Volume **) a;
   if(pV) {
     List_Delete(pV->TrsfPoints);
-    List_Delete(pV->Surfaces);  //surfaces freed elsewhere
+    List_Delete(pV->Surfaces);  // surfaces freed elsewhere
     Tree_Action(pV->Simplexes, Free_Simplex);
     Tree_Delete(pV->Simplexes);
     Tree_Delete(pV->Simp_Surf); // for old extrusion mesh generator
-    Tree_Delete(pV->Vertices);  //vertices freed elsewhere
+    Tree_Delete(pV->Quad_Surf); // for old extrusion mesh generator
+    Tree_Delete(pV->Vertices);  // vertices freed elsewhere
     Tree_Action(pV->Hexahedra, Free_Hexahedron);
     Tree_Delete(pV->Hexahedra);
     Tree_Action(pV->Prisms, Free_Prism);
@@ -777,94 +752,3 @@ void Free_Volume(void *a, void *b)
   }
 }
 
-Hexahedron *Create_Hexahedron(Vertex * v1, Vertex * v2, Vertex * v3,
-                              Vertex * v4, Vertex * v5, Vertex * v6,
-                              Vertex * v7, Vertex * v8)
-{
-  Hexahedron *h;
-
-  h = (Hexahedron *) Malloc(sizeof(Hexahedron));
-  h->iEnt = -1;
-  h->iPart = -1;
-  h->Num = ++THEM->MaxSimplexNum;
-  h->Visible = VIS_MESH;
-  h->V[0] = v1;
-  h->V[1] = v2;
-  h->V[2] = v3;
-  h->V[3] = v4;
-  h->V[4] = v5;
-  h->V[5] = v6;
-  h->V[6] = v7;
-  h->V[7] = v8;
-  h->VSUP = NULL;
-
-  return (h);
-}
-
-void Free_Hexahedron(void *a, void *b)
-{
-  Hexahedron *pH = *(Hexahedron **) a;
-  if(pH) {
-    Free(pH);
-    pH = NULL;
-  }
-}
-
-Prism *Create_Prism(Vertex * v1, Vertex * v2, Vertex * v3,
-                    Vertex * v4, Vertex * v5, Vertex * v6)
-{
-  Prism *p;
-
-  p = (Prism *) Malloc(sizeof(Prism));
-  p->iEnt = -1;
-  p->iPart = -1;
-  p->Num = ++THEM->MaxSimplexNum;
-  p->Visible = VIS_MESH;
-  p->V[0] = v1;
-  p->V[1] = v2;
-  p->V[2] = v3;
-  p->V[3] = v4;
-  p->V[4] = v5;
-  p->V[5] = v6;
-  p->VSUP = NULL;
-
-  return (p);
-}
-
-void Free_Prism(void *a, void *b)
-{
-  Prism *pP = *(Prism **) a;
-  if(pP) {
-    Free(pP);
-    pP = NULL;
-  }
-}
-
-Pyramid *Create_Pyramid(Vertex * v1, Vertex * v2, Vertex * v3,
-                        Vertex * v4, Vertex * v5)
-{
-  Pyramid *p;
-
-  p = (Pyramid *) Malloc(sizeof(Pyramid));
-  p->iEnt = -1;
-  p->iPart = -1;
-  p->Num = ++THEM->MaxSimplexNum;
-  p->Visible = VIS_MESH;
-  p->V[0] = v1;
-  p->V[1] = v2;
-  p->V[2] = v3;
-  p->V[3] = v4;
-  p->V[4] = v5;
-  p->VSUP = NULL;
-
-  return (p);
-}
-
-void Free_Pyramid(void *a, void *b)
-{
-  Pyramid *p = *(Pyramid **) a;
-  if(p) {
-    Free(p);
-    p = NULL;
-  }
-}

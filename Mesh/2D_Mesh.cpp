@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.56 2004-05-22 01:29:46 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.57 2004-05-25 04:10:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -776,7 +776,7 @@ void Maillage_Surface(void *data, void *dum)
 {
   Surface **pS, *s;
   Tree_T *tnxe;
-  int ori, nbqua = 0;
+  int ori;
 
   pS = (Surface **) data;
   s = *pS;
@@ -809,81 +809,69 @@ void Maillage_Surface(void *data, void *dum)
   if(MeshTransfiniteSurface(s) ||
      MeshEllipticSurface(s) ||
      MeshCylindricalSurface(s) ||
-     MeshParametricSurface(s) || Extrude_Mesh(s)) {
+     MeshParametricSurface(s) || 
+     Extrude_Mesh(s)) {
     Tree_Action(THEM->Points, PutVertex_OnSurf);
     Tree_Action(s->Vertices, PutVertex_OnSurf);
     Tree_Action(s->Vertices, Add_In_Mesh);
-    THEM->Statistics[5] += Tree_Nbr(THESURFACE->Vertices);
-    THEM->Statistics[7] += Tree_Nbr(THESURFACE->Simplexes);
+  }
+  else{
+    int TypSurface = s->Typ;
+    Plan_Moyen(pS, dum);
+    Tree_Action(THEM->Points, Freeze_Vertex);
+    Tree_Action(s->Vertices, Freeze_Vertex);
+    Tree_Action(THEM->Points, Projette_Plan_Moyen);
+    Tree_Action(s->Vertices, Projette_Plan_Moyen);
+    Tree_Action(THEM->Curves, ActionEndTheCurve);
+    s->Typ = MSH_SURF_PLAN;
+    End_Surface(s, 0);
 
-    /* void TRIE_MON_GARS(void *a, void *b);
-       Tree_Action (THES->Simplexes, TRIE_MON_GARS);
-       Link_Simplexes(NULL, THES->Simplexes);
-       void  constraint_the_edge (int ,int ,int);
-       constraint_the_edge (6, 45, 85);
-     */
-    return;
+    ori = Calcule_Contours(s);
+    
+    if(CTX.mesh.algo == DELAUNAY_ISO)
+      Maillage_Automatique_VieuxCode(s, THEM, ori);
+    else if(CTX.mesh.algo == DELAUNAY_ANISO)
+      AlgorithmeMaillage2DAnisotropeModeJF(s);
+    else
+      Mesh_Shewchuk(s);
+    
+    if(CTX.mesh.nb_smoothing) {
+      Msg(STATUS3, "Mesh smoothing");
+      tnxe = Tree_Create(sizeof(NXE), compareNXE);
+      create_NXE(s->Vertices, s->Simplexes, tnxe);
+      for(int i = 0; i < CTX.mesh.nb_smoothing; i++)
+	Tree_Action(tnxe, ActionLiss);
+      delete_NXE(tnxe);
+    }
+    
+    if(s->Recombine)
+      Recombine(s->Vertices, s->Simplexes, s->Quadrangles, s->RecombineAngle);
+    
+    s->Typ = TypSurface;
+    
+    if(s->Typ != MSH_SURF_PLAN) {
+      if(s->Extrude)
+	s->Extrude->Rotate(s->plan);
+      Tree_Action(s->Vertices, Calcule_Z);
+      if(s->Extrude)
+	s->Extrude->Rotate(s->invplan);
+    }
+    else
+      Tree_Action(s->Vertices, Calcule_Z_Plan);
+
+    Tree_Action(s->Vertices, Projette_Inverse);
+    Tree_Action(THEM->Points, Projette_Inverse);
+    
+    Tree_Action(THEM->Points, deFreeze_Vertex);
+    Tree_Action(s->Vertices, deFreeze_Vertex);
+    
+    Tree_Action(THEM->Points, PutVertex_OnSurf);
+    Tree_Action(s->Vertices, PutVertex_OnSurf);
+    Tree_Action(s->Vertices, Add_In_Mesh);
+    
+    Tree_Action(THEM->Curves, ActionEndTheCurve);
+    End_Surface(s->Support, 0);
+    End_Surface(s, 0);
   }
 
-  int TypSurface = s->Typ;
-  Plan_Moyen(pS, dum);
-  Tree_Action(THEM->Points, Freeze_Vertex);
-  Tree_Action(s->Vertices, Freeze_Vertex);
-  Tree_Action(THEM->Points, Projette_Plan_Moyen);
-  Tree_Action(s->Vertices, Projette_Plan_Moyen);
-  Tree_Action(THEM->Curves, ActionEndTheCurve);
-  s->Typ = MSH_SURF_PLAN;
-  End_Surface(s, 0);
-
-  ori = Calcule_Contours(s);
-
-  if(CTX.mesh.algo == DELAUNAY_ISO)
-    Maillage_Automatique_VieuxCode(s, THEM, ori);
-  else if(CTX.mesh.algo == DELAUNAY_ANISO)
-    AlgorithmeMaillage2DAnisotropeModeJF(s);
-  else
-    Mesh_Shewchuk(s);
-
-  if(CTX.mesh.nb_smoothing) {
-    Msg(STATUS3, "Mesh smoothing");
-    tnxe = Tree_Create(sizeof(NXE), compareNXE);
-    create_NXE(s->Vertices, s->Simplexes, tnxe);
-    for(int i = 0; i < CTX.mesh.nb_smoothing; i++)
-      Tree_Action(tnxe, ActionLiss);
-    delete_NXE(tnxe);
-  }
-
-
-  if(s->Recombine)
-    nbqua = Recombine(s->Vertices, s->Simplexes, s->RecombineAngle);
-
-  s->Typ = TypSurface;
-
-  if(s->Typ != MSH_SURF_PLAN) {
-    if(s->Extrude)
-      s->Extrude->Rotate(s->plan);
-    Tree_Action(s->Vertices, Calcule_Z);
-    if(s->Extrude)
-      s->Extrude->Rotate(s->invplan);
-  }
-  else
-    Tree_Action(s->Vertices, Calcule_Z_Plan);
-
-  Tree_Action(s->Vertices, Projette_Inverse);
-  Tree_Action(THEM->Points, Projette_Inverse);
-
-  Tree_Action(THEM->Points, deFreeze_Vertex);
-  Tree_Action(s->Vertices, deFreeze_Vertex);
-
-  Tree_Action(THEM->Points, PutVertex_OnSurf);
-  Tree_Action(s->Vertices, PutVertex_OnSurf);
-  Tree_Action(s->Vertices, Add_In_Mesh);
-
-  Tree_Action(THEM->Curves, ActionEndTheCurve);
-  End_Surface(s->Support, 0);
-  End_Surface(s, 0);
-
-  THEM->Statistics[5] += Tree_Nbr(THESURFACE->Vertices);
-  THEM->Statistics[7] += Tree_Nbr(THESURFACE->Simplexes);       // tri+qua
-  THEM->Statistics[8] += nbqua;
 }

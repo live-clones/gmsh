@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.26 2004-05-22 01:24:18 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.27 2004-05-25 04:10:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -159,12 +159,10 @@ static void are_del(Vertex * v1, Vertex * v2, Tree_T * t)
 
 static void Extrude_Simplex_Phase1(void *data, void *dum)
 {
-  Simplex **pS, *s;
   int i, j, k;
   Vertex *v1, *v2, *v3, *v4, *v5, *v6;
 
-  pS = (Simplex **) data;
-  s = *pS;
+  Simplex *s = *(Simplex **) data;
 
   k = 0;
   for(i = 0; i < NbLayer; i++) {
@@ -188,19 +186,12 @@ static void Extrude_Simplex_Phase1(void *data, void *dum)
 
 static void Extrude_Simplex_Phase3(void *data, void *dum)
 {
-  Simplex **pS, *s, *news;
+  Simplex  *news;
   Prism *newp;
-  Hexahedron *newh;
   int i, j, k;
-  Vertex *v1, *v2, *v3, *v4, *v5, *v6, *v7, *v8;
+  Vertex *v1, *v2, *v3, *v4, *v5, *v6;
 
-  pS = (Simplex **) data;
-  s = *pS;
-
-  if(s->V[3] && !CTX.mesh.oldxtrude_recombine) {
-    Msg(GERROR,
-        "Non recombined extrusion impossible with quadrangles (use -recombine)");
-  }
+  Simplex *s = *(Simplex **) data;
 
   k = 0;
   for(i = 0; i <= NbLayer; i++) {
@@ -209,10 +200,6 @@ static void Extrude_Simplex_Phase3(void *data, void *dum)
       List_Read(s->V[1]->Extruded_Points, k, &v2);
       List_Read(s->V[2]->Extruded_Points, k, &v3);
       news = Create_Simplex(v1, v2, v3, NULL);
-      if(s->V[3]) {
-        List_Read(s->V[3]->Extruded_Points, k, &v4);
-        news->V[3] = v4;
-      }
       news->iEnt = SurfLayer[i];
       Tree_Add(THEV->Simp_Surf, &news);
     }
@@ -224,39 +211,19 @@ static void Extrude_Simplex_Phase3(void *data, void *dum)
   k = 0;
   for(i = 0; i < NbLayer; i++) {
     for(j = 0; j < NbElmLayer[i]; j++) {
-
-      if(s->V[3]) {
-        List_Read(s->V[0]->Extruded_Points, k, &v1);
-        List_Read(s->V[1]->Extruded_Points, k, &v2);
-        List_Read(s->V[2]->Extruded_Points, k, &v3);
-        List_Read(s->V[3]->Extruded_Points, k, &v4);
-        List_Read(s->V[0]->Extruded_Points, k + 1, &v5);
-        List_Read(s->V[1]->Extruded_Points, k + 1, &v6);
-        List_Read(s->V[2]->Extruded_Points, k + 1, &v7);
-        List_Read(s->V[3]->Extruded_Points, k + 1, &v8);
-      }
-      else {
-        List_Read(s->V[0]->Extruded_Points, k, &v1);
-        List_Read(s->V[1]->Extruded_Points, k, &v2);
-        List_Read(s->V[2]->Extruded_Points, k, &v3);
-        List_Read(s->V[0]->Extruded_Points, k + 1, &v4);
-        List_Read(s->V[1]->Extruded_Points, k + 1, &v5);
-        List_Read(s->V[2]->Extruded_Points, k + 1, &v6);
-      }
+      List_Read(s->V[0]->Extruded_Points, k, &v1);
+      List_Read(s->V[1]->Extruded_Points, k, &v2);
+      List_Read(s->V[2]->Extruded_Points, k, &v3);
+      List_Read(s->V[0]->Extruded_Points, k + 1, &v4);
+      List_Read(s->V[1]->Extruded_Points, k + 1, &v5);
+      List_Read(s->V[2]->Extruded_Points, k + 1, &v6);
 
       k++;
       if(ZonLayer[i]) {
         if(CTX.mesh.oldxtrude_recombine) {
-          if(s->V[3]) {
-            newh = Create_Hexahedron(v1, v2, v3, v4, v5, v6, v7, v8);
-            newh->iEnt = ZonLayer[i];
-            Tree_Add(THEV->Hexahedra, &newh);
-          }
-          else {
-            newp = Create_Prism(v1, v2, v3, v4, v5, v6);
-            newp->iEnt = ZonLayer[i];
-            Tree_Add(THEV->Prisms, &newp);
-          }
+	  newp = Create_Prism(v1, v2, v3, v4, v5, v6);
+	  newp->iEnt = ZonLayer[i];
+	  Tree_Add(THEV->Prisms, &newp);
         }
         else {
           if(are_exist(v4, v2, Tree_Ares) &&
@@ -337,14 +304,62 @@ static void Extrude_Simplex_Phase3(void *data, void *dum)
   }
 }
 
+static void Extrude_Quadrangle_Phase3(void *data, void *dum)
+{
+  int i, j, k;
+  Vertex *v1, *v2, *v3, *v4, *v5, *v6, *v7, *v8;
+
+  Quadrangle *q = *(Quadrangle **) data;
+
+  if(!CTX.mesh.oldxtrude_recombine){
+    Msg(GERROR, "Non recombined extrusion impossible with quadrangles (use -recombine)");
+    return;
+  }
+
+  k = 0;
+  for(i = 0; i <= NbLayer; i++) {
+    if(SurfLayer[i]) {
+      List_Read(q->V[0]->Extruded_Points, k, &v1);
+      List_Read(q->V[1]->Extruded_Points, k, &v2);
+      List_Read(q->V[2]->Extruded_Points, k, &v3);
+      List_Read(q->V[3]->Extruded_Points, k, &v4);
+      Quadrangle *newq = Create_Quadrangle(v1, v2, v3, v4);
+      newq->iEnt = SurfLayer[i];
+      Tree_Add(THEV->Quad_Surf, &newq);
+    }
+    for(j = 0; j < NbElmLayer[i]; j++) {
+      k++;
+    }
+  }
+
+  k = 0;
+  for(i = 0; i < NbLayer; i++) {
+    for(j = 0; j < NbElmLayer[i]; j++) {
+      List_Read(q->V[0]->Extruded_Points, k, &v1);
+      List_Read(q->V[1]->Extruded_Points, k, &v2);
+      List_Read(q->V[2]->Extruded_Points, k, &v3);
+      List_Read(q->V[3]->Extruded_Points, k, &v4);
+      List_Read(q->V[0]->Extruded_Points, k + 1, &v5);
+      List_Read(q->V[1]->Extruded_Points, k + 1, &v6);
+      List_Read(q->V[2]->Extruded_Points, k + 1, &v7);
+      List_Read(q->V[3]->Extruded_Points, k + 1, &v8);
+
+      k++;
+      if(ZonLayer[i]) {
+	Hexahedron *newh = Create_Hexahedron(v1, v2, v3, v4, v5, v6, v7, v8);
+	newh->iEnt = ZonLayer[i];
+	Tree_Add(THEV->Hexahedra, &newh);
+      }
+    }
+  }
+}
+
 static void Extrude_Simplex_Phase2(void *data, void *dum)
 {
-  Simplex **pS, *s;
   int i, j, k;
   Vertex *v1, *v2, *v3, *v4, *v5, *v6;
 
-  pS = (Simplex **) data;
-  s = *pS;
+  Simplex *s = *(Simplex **) data;
 
   k = 0;
   for(i = 0; i < NbLayer; i++) {
@@ -450,11 +465,10 @@ static void Extrude_Vertex(void *data, void *dum)
 
 static void Extrude_Surface1(void *data, void *dum)
 {
-  Surface **pS, *s;
   if(!NbLayer)
     return;
-  pS = (Surface **) data;
-  s = THES = *pS;
+  Surface *s = *(Surface **) data;
+  THES = s;
 
   Tree_Action(s->Vertices, Extrude_Vertex);
   if(!CTX.mesh.oldxtrude_recombine)
@@ -463,11 +477,10 @@ static void Extrude_Surface1(void *data, void *dum)
 
 static void Extrude_Surface2(void *data, void *dum)
 {
-  Surface **pS, *s;
   if(!NbLayer)
     return;
-  pS = (Surface **) data;
-  s = THES = *pS;
+  Surface *s = *(Surface **) data;
+  THES = s;
 
   Tree_Action(s->Simplexes, Extrude_Simplex_Phase2);
 }
@@ -475,12 +488,12 @@ static void Extrude_Surface2(void *data, void *dum)
 
 static void Extrude_Surface3(void *data, void *dum)
 {
-  Surface **pS, *s;
   int i;
   if(!NbLayer)
     return;
-  pS = (Surface **) data;
-  s = THES = *pS;
+
+  Surface *s = *(Surface **) data;
+  THES = s;
 
   /* Numerotation automatique des entites physiques */
   Msg(INFO, "Extruding Surface %d", s->Num);
@@ -493,6 +506,7 @@ static void Extrude_Surface3(void *data, void *dum)
   }
 
   Tree_Action(s->Simplexes, Extrude_Simplex_Phase3);
+  Tree_Action(s->Quadrangles, Extrude_Quadrangle_Phase3);
 }
 
 
@@ -501,6 +515,7 @@ static void Extrude_Seg(Vertex * V1, Vertex * V2)
   int i, j, k;
   Vertex *v1, *v2, *v3, *v4;
   Simplex *s;
+  Quadrangle *q;
 
   //printf("-curve vertex %d %p   %d %p\n", V1->Num, V1, V2->Num, V2);
 
@@ -527,10 +542,9 @@ static void Extrude_Seg(Vertex * V1, Vertex * V2)
       List_Read(V2->Extruded_Points, k + 1, &v4);
       if(SurfLayer[i]) {
         if(CTX.mesh.oldxtrude_recombine) {
-          s = Create_Simplex(v1, v2, v4, NULL);
-          s->V[3] = v3;
-          s->iEnt = SurfLayer[i];
-          Tree_Add(THEV->Simp_Surf, &s);
+          q = Create_Quadrangle(v1, v2, v4, v3);
+          q->iEnt = SurfLayer[i];
+          Tree_Add(THEV->Quad_Surf, &q);
         }
         else {
           if(are_exist(v3, v2, Tree_Ares)) {

@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.56 2004-05-22 01:38:31 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.57 2004-05-25 04:10:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -274,10 +274,8 @@ void OpenProblem(char *name)
 
   CTX.threads_lock = 0;
 
-  if(!status) {
+  if(!status)
     mai3d(THEM, 0);
-    Maillage_Dimension_0(&M);
-  }
 
 #if defined(HAVE_FLTK)
   if(!CTX.batch)
