@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.20 2001-05-21 13:01:13 geuzaine Exp $
+// $Id: Options.cpp,v 1.21 2001-05-21 13:19:05 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -22,8 +22,11 @@ void Init_Options(int num){
   char *tmp;
 
   // Home directory
+#if !defined(WIN32) // Some WinNT systems have bad HOME variables...
   if((tmp = getenv("HOME")))      strcpy(CTX.home_dir, tmp);
-  else if((tmp = getenv("TMP")))  strcpy(CTX.home_dir, tmp);
+  else 
+#endif
+  if((tmp = getenv("TMP")))       strcpy(CTX.home_dir, tmp);
   else if((tmp = getenv("TEMP"))) strcpy(CTX.home_dir, tmp);
   else                            strcpy(CTX.home_dir, "");
   if(strlen(CTX.home_dir)){
