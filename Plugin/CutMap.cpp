@@ -1,11 +1,12 @@
-// $Id: CutMap.cpp,v 1.19 2001-08-06 11:13:25 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.20 2001-08-09 18:28:23 remacle Exp $
 
 #include "CutMap.h"
 #include "List.h"
 
 StringXNumber CutMapOptions_Number[] = {
   { GMSH_FULLRC, "A" , NULL , 1. },
-  { GMSH_FULLRC, "iView" , NULL , -1. }
+  { GMSH_FULLRC, "iView" , NULL , -1. },
+  { GMSH_FULLRC, "iField" , NULL , 0. }
 };
 
 extern "C"
@@ -33,7 +34,8 @@ void GMSH_CutMapPlugin::getInfos(char *author, char *copyright, char *help_text)
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text, 
 	 "Extracts the isovalue surface of value A from a\n"
-	 "3D scalar map. Script name: Plugin(CutMap).");
+	 "3D scalar map and draw ith component of the field on the iso.\n"
+         "Script name: Plugin(CutMap).");
 }
 
 int GMSH_CutMapPlugin::getNbOptions() const
@@ -65,8 +67,10 @@ Post_View *GMSH_CutMapPlugin::execute (Post_View *v)
 {
   Post_View *vv;
   A = CutMapOptions_Number[0].def;
-  int iView = (int)CutMapOptions_Number[1].def;
   
+  int iView = (int)CutMapOptions_Number[1].def;
+  _ith_field_to_draw_on_the_iso = (int)CutMapOptions_Number[2].def;
+
   if(v && iView < 0)
     vv = v;
   else{

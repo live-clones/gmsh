@@ -21,4 +21,5 @@ public:
   virtual StringXNumber* GetOption (int iopt);  
   virtual Post_View *execute (Post_View *);
 };
+
 #endif

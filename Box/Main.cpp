@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.8 2001-08-08 18:03:15 remacle Exp $
+// $Id: Main.cpp,v 1.9 2001-08-09 18:28:23 remacle Exp $
 
 #include <signal.h>
 #include "ParUtil.h"
@@ -124,9 +124,11 @@ int main(int argc, char *argv[]){
       Print_Histogram(THEM->Histogram[0]);
     ParUtil::Instance()->Barrier(__LINE__,__FILE__);
     ParUtil::Instance()->Exit();
+    return 1;
   }
   ParUtil::Instance()->Barrier(__LINE__,__FILE__);
   ParUtil::Instance()->Exit();
+  return 1;
 }
 
 
@@ -151,6 +153,7 @@ void Signal (int sig_num){
 /* ------------------------------------------------------------------------ */
 
 void Msg(int level, char *fmt, ...){
+
   va_list  args;
   int      abort=0;
   int      nb, nbvis;
@@ -160,13 +163,15 @@ void Msg(int level, char *fmt, ...){
   switch(level){
 
   case DIRECT :
-    vfprintf(stdout, fmt, args); fprintf(stdout, "\n");
+    if(ParUtil::Instance()->master()) 
+     vfprintf(stdout, fmt, args); fprintf(stdout, "\n");
     break;
 
   case FATAL :
   case FATAL1 :
   case FATAL2 :
   case FATAL3 :
+    fprintf(stderr,"On processor %d : ",ParUtil::Instance()->rank());
     fprintf(stderr, FATAL_STR);
     vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
     abort = 1 ;
@@ -176,6 +181,7 @@ void Msg(int level, char *fmt, ...){
   case GERROR1 :
   case GERROR2 :
   case GERROR3 :
+    fprintf(stderr,"On processor %d : ",ParUtil::Instance()->rank());
     fprintf(stderr, ERROR_STR);
     vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
     abort = 1 ;
@@ -185,17 +191,21 @@ void Msg(int level, char *fmt, ...){
   case WARNING1 :
   case WARNING2 :
   case WARNING3 :
+    fprintf(stderr,"On processor %d : ",ParUtil::Instance()->rank());
     fprintf(stderr, WARNING_STR);
     vfprintf(stderr, fmt,args); fprintf(stderr, "\n");
     break;
 
   case PARSER_ERROR :
-    fprintf(stderr, PARSER_ERROR_STR); 
-    vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
+    if(ParUtil::Instance()->master())
+      {
+	fprintf(stderr, PARSER_ERROR_STR); 
+	vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
+      }
     break ;
 
   case PARSER_INFO :
-    if(CTX.verbosity == 5){
+    if(CTX.verbosity == 5 && ParUtil::Instance()->master()){
       fprintf(stderr, PARSER_INFO_STR);
       vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
     }
@@ -205,14 +215,14 @@ void Msg(int level, char *fmt, ...){
   case DEBUG1   : 
   case DEBUG2   :		     	  
   case DEBUG3   : 
-    if(CTX.verbosity > 2){
+    if(ParUtil::Instance()->master() && CTX.verbosity > 2){
       fprintf(stderr, DEBUG_STR);
       vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
     }
     break;
 
   default :
-    if(CTX.verbosity > 0){
+    if(ParUtil::Instance()->master() && CTX.verbosity > 0){
       fprintf(stderr, INFO_STR);
       vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
     }

@@ -1,4 +1,4 @@
-// $Id: LevelsetPlugin.cpp,v 1.12 2001-08-09 13:27:41 remacle Exp $
+// $Id: LevelsetPlugin.cpp,v 1.13 2001-08-09 18:28:24 remacle Exp $
 
 #include "LevelsetPlugin.h"
 #include "List.h"
@@ -14,6 +14,7 @@ int sys3x3 (double mat[3][3], double b[3], double res[3], double *det);
 GMSH_LevelsetPlugin::GMSH_LevelsetPlugin()
 {
   processed = 0;
+  _ith_field_to_draw_on_the_iso = 0;
   strcpy (OutputFileName,"levelset.pos");
 }
 
@@ -60,22 +61,13 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	  for(k=0;k<6;k++)
 	    {
 	      if(levels[edtet[k][0]] * levels[edtet[k][1]] <= 0.0)
-		{
+		{		  
 		  double coef = InterpolateIso(X,Y,Z,levels,0.0,
 					       edtet[k][0],edtet[k][1],
 					       &Xp[nx],&Yp[nx],&Zp[nx]); 
-		  myVals[nx] = coef * (VAL[edtet[k][1]] - VAL[edtet[k][0]])
-		    + VAL[edtet[k][0]]; 
+		  myVals[nx] = what_to_draw (Xp[nx],Yp[nx],Zp[nx],edtet[k][0],edtet[k][1],coef,VAL);
 		  nx++;
 		}
-	    }
-	  if(nx == 3 || nx == 4)
-	    {
-	      for(k=0;k<3;k++)List_Add(View->ST, &Xp[k]);
-	      for(k=0;k<3;k++)List_Add(View->ST, &Yp[k]);
-	      for(k=0;k<3;k++)List_Add(View->ST, &Zp[k]);
-	      for(k=0;k<3;k++)List_Add(View->ST, &myVals[k]);
-	      View->NbST++;
 	    }
 	  if(nx == 4)
 	    {
@@ -91,11 +83,6 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	      Yp[2] = yy;
 	      Zp[2] = zz;
 	      myVals[2] = vv;
-	      for(k=1;k<4;k++)List_Add(View->ST, &Xp[k %4]);
-	      for(k=1;k<4;k++)List_Add(View->ST, &Yp[k % 4]);
-	      for(k=1;k<4;k++)List_Add(View->ST, &Zp[k % 4]);
-	      for(k=1;k<4;k++)List_Add(View->ST, &myVals[k %4]);
-	      View->NbST++;
 	    }
 
 	  double v1[3] = {Xp[2]-Xp[0],Yp[2]-Yp[0],Zp[2]-Zp[0]};
@@ -108,17 +95,33 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	  prosca(gr,n,&xx);
 	  
 	  if(xx > 0){
-	    for(i=0;i<nb;i++){
-	      Xpi[i] = Xp[i];
-	      Ypi[i] = Yp[i];
-	      Zpi[i] = Zp[i];
+	    for(k=0;k<nx;k++){
+	      Xpi[k] = Xp[k];
+	      Ypi[k] = Yp[k];
+	      Zpi[k] = Zp[k];
 	    }
-	    for(i=0;i<nb;i++){
-	      Xp[i] = Xpi[nb-i-1];
-	      Yp[i] = Ypi[nb-i-1];
-	      Zp[i] = Zpi[nb-i-1];	      
+	    for(k=0;k<nx;k++){
+	      Xp[k] = Xpi[nx-k-1];
+	      Yp[k] = Ypi[nx-k-1];
+	      Zp[k] = Zpi[nx-k-1];	      
 	    }
-	  }	  
+	  }
+	  if(nx == 3 || nx == 4)
+	    {
+	      for(k=0;k<3;k++)List_Add(View->ST, &Xp[k]);
+	      for(k=0;k<3;k++)List_Add(View->ST, &Yp[k]);
+	      for(k=0;k<3;k++)List_Add(View->ST, &Zp[k]);
+	      for(k=0;k<3;k++)List_Add(View->ST, &myVals[k]);
+	      View->NbST++;
+	    }
+	  if(nx == 4)
+	    {	  
+	      for(k=1;k<4;k++)List_Add(View->ST, &Xp[k %4]);
+	      for(k=1;k<4;k++)List_Add(View->ST, &Yp[k % 4]);
+	      for(k=1;k<4;k++)List_Add(View->ST, &Zp[k % 4]);
+	      for(k=1;k<4;k++)List_Add(View->ST, &myVals[k %4]);
+	      View->NbST++;
+	    }
 	}
       char name[1024],filename[1024];
 
@@ -134,7 +137,21 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
   return 0;
 }
 
-
+double  GMSH_LevelsetPlugin::what_to_draw (double x, 
+					   double y, 
+					   double z, 
+					   int p1, 
+					   int p2, 
+					   double coef, 
+					   double *VAL) const
+{
+  int offset =  _ith_field_to_draw_on_the_iso * 4;
+  // TEST JF, this would draw y coord on the iso
+  //  return y;
+  p2 += offset;
+  p1 += offset;
+  return coef * (VAL[p2] - VAL[p1]) + VAL[p1]; 
+}
 
 
 

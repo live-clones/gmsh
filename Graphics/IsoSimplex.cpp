@@ -6,6 +6,7 @@
 #include "Iso.h"
 #include "Context.h"
 #include "Views.h"
+#include "Numeric.h"
 
 extern Context_T   CTX;
 
