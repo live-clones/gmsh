@@ -1,4 +1,4 @@
-// $Id: SMS.cpp,v 1.8 2002-05-20 18:28:28 geuzaine Exp $
+// $Id: SMS.cpp,v 1.9 2002-10-03 07:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,6 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
-#include <iostream.h>
 #include <assert.h>
 #include "Gmsh.h"
 #include "Geo.h"
@@ -284,8 +283,7 @@ void Read_Mesh_SMS (Mesh *m, FILE *in)
 	    }
 	  else
 	    {
-	      cout << "exiting" << endl;
-	      exit(-1);
+	      Msg(FATAL, "Read mesh SMS exiting");
 	    }
 	  for(int j=0;j<nbPts;j++)
 	    {
@@ -651,7 +649,7 @@ void Write_DMG_FILE (Mesh *m, char *filename)
 	      beg = c->beg;
 	      deb = 0;
 	    }
-	  cout << "beg-> " << c->beg->Num << " end-> " << c->end->Num << endl;
+	  Msg(INFO, "beg->%d end->%d", c->beg->Num, c->end->Num);
 	  (numEdgeLoop[iLoop]) ++ ;
 	  if(c->end == beg)
 	    {

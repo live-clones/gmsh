@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.42 2002-09-20 19:53:08 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.43 2002-10-03 07:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -238,7 +238,7 @@ struct SimplexInBox
 {
   double sizeBox;
   SimplexInBox(double sb) : sizeBox(sb) {}
-  bool operator() ( Simplex * s , double min[3], double max[3])
+  void operator() ( Simplex * s , double min[3], double max[3])
   {
     double ss;
     if(sizeBox > s->Radius) ss = s->Radius;
