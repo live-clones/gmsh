@@ -1,9 +1,32 @@
-$Id: TODO,v 1.71 2004-12-08 03:10:06 geuzaine Exp $
+$Id: TODO,v 1.72 2004-12-27 21:43:38 geuzaine Exp $
+
+create Gradient, Curl and Divergence plugins (based on
+Plugins/ShapeFunctions.h)
 
 ********************************************************************
 
-add a "non-formatted" view->save mode; would enable to exploit results
-from plugins in gnuplot & co.
+generalize Plugin(Evaluate) to get data from other views and/or write
+a general plugin that uses OctreePost to combine values from arbitrary
+points in datasets
+
+********************************************************************
+
+add the ability to create tensors with Plugin(Extract)?
+
+********************************************************************
+
+add an option to enable lighting of wireframe plots?
+
+********************************************************************
+
+keep a table (stack) with the N last file positions when add_infile()
+is called; we could then easily implement a simple (but real) UNDO
+strategy
+
+********************************************************************
+
+add a "non-formatted" View->Save mode; would enable to exploit results
+from plugins in gnuplot, excell, etc.
 
 ********************************************************************
 
@@ -23,7 +46,8 @@ index-based format)
 
 ********************************************************************
 
-Raise & offsets should modify the bounding boxes... (maybe?)
+Should Raise & offsets modify the bounding boxes? (I don't think
+so --Christophe)
 
 ********************************************************************
 
@@ -107,7 +131,7 @@ like in Vertex.cpp and Simplex.cpp.
 
 ********************************************************************
 
-Rewrite the View interface in C++
+Rewrite the View and ColorTable interface in C++
 
 ********************************************************************
 
