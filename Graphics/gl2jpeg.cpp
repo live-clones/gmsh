@@ -1,13 +1,10 @@
-/* $Id: gl2jpeg.cpp,v 1.2 2000-12-21 10:29:45 geuzaine Exp $ */
+/* $Id: gl2jpeg.cpp,v 1.3 2000-12-28 18:58:20 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "Context.h"
 
 #include "jpeglib.h"
 #include "jerror.h"
-
-extern Context_T CTX ;
 
 void my_output_message (j_common_ptr cinfo){
   char buffer[JMSG_LENGTH_MAX];
@@ -18,7 +15,7 @@ void my_output_message (j_common_ptr cinfo){
   Msg(DEBUG, "%s", buffer);
 }
 
-void create_jpeg(FILE *outfile, int width, int height){
+void create_jpeg(FILE *outfile, int width, int height, int quality){
   int i;
   unsigned char *pixels;
   struct jpeg_compress_struct cinfo;
@@ -36,9 +33,11 @@ void create_jpeg(FILE *outfile, int width, int height){
   cinfo.input_components = 3;      /* # of color components per pixel */
   cinfo.in_color_space = JCS_RGB;  /* colorspace of input image */
   jpeg_set_defaults(&cinfo);                            
-  jpeg_set_quality(&cinfo, CTX.print.jpeg_quality, TRUE /* limit to baseline-JPEG values */);
+  jpeg_set_quality(&cinfo, quality, TRUE /* limit to baseline-JPEG values */);
   jpeg_start_compress(&cinfo, TRUE);
 
+  glPixelStorei(GL_PACK_ALIGNMENT,1);
+  glPixelStorei(GL_UNPACK_ALIGNMENT,1);
   pixels=(unsigned char *)Malloc(height*width*3);
   glReadPixels(0,0,width,height,GL_RGB,GL_UNSIGNED_BYTE,pixels);
 

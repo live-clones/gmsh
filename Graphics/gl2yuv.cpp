@@ -1,4 +1,4 @@
-/* $Id: gl2yuv.cpp,v 1.1 2000-12-26 17:40:18 geuzaine Exp $ */
+/* $Id: gl2yuv.cpp,v 1.2 2000-12-28 18:58:20 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -41,9 +41,11 @@ void create_yuv(FILE *outfile, int width, int height){
   }
 
   /* yuv format assumes even number of rows and columns */
-  if(height%2) height--;
-  if(width%2) width--;
+  height -= height%2;
+  width -= width%2;
 
+  glPixelStorei(GL_PACK_ALIGNMENT,1);
+  glPixelStorei(GL_UNPACK_ALIGNMENT,1);
   pixels=(unsigned char *)Malloc(height*width*3);
   glReadPixels(0,0,width,height,GL_RGB,GL_UNSIGNED_BYTE,pixels);
   row_stride = width * 3;

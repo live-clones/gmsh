@@ -1,4 +1,4 @@
-/* $Id: gl2ppm.cpp,v 1.3 2000-12-21 10:29:45 geuzaine Exp $ */
+/* $Id: gl2ppm.cpp,v 1.4 2000-12-28 18:58:20 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -6,7 +6,9 @@
 void create_ppm(FILE *outfile, int width, int height){
   unsigned char *pixels;
   int i, row_stride;
-  
+
+  glPixelStorei(GL_PACK_ALIGNMENT,1);
+  glPixelStorei(GL_UNPACK_ALIGNMENT,1);
   pixels=(unsigned char *)Malloc(height*width*3);
   glReadPixels(0,0,width,height,GL_RGB,GL_UNSIGNED_BYTE,pixels);
 
