@@ -1,3 +1,8 @@
+// Alpha 666 (the number of the beast) MHz
+// gmsh naca12.geo -clscale 1.0  -3  -> Elm=5567, 1.3 s
+// gmsh naca12.geo -clscale 0.3  -3  -> Elm=152411, 66 s
+// gmsh naca12.geo -clscale 0.15 -3  -> Elm=1057132, 968 s
+// gmsh naca12.geo -clscale 0.11 -3  -> Elm=2541338, 3658 s (1.6 Gb = bcp trop)
 lc = 0.1; 
 Point(1) = {1.000000e+00,0.000000e+00,0.000000e+00,lc}; 
 Point(2) = {9.997533e-01,0.000000e+00,-3.498543e-05,lc}; 
