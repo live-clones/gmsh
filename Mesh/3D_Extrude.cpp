@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.72 2003-12-16 22:17:48 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.73 2003-12-22 16:42:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -31,8 +31,7 @@ extern Context_T CTX;
 extern Mesh *THEM;
 
 static int DIM, NUM;            // current dimension of parent entity
-static int TEST_IS_ALL_OK;
-//static double RANDOM_SWAP_FACT = 0.0;
+static int BAD_TETS;
 static Tree_T *Tree_Ares = NULL, *Tree_Swaps = NULL;
 static Curve *THEC = NULL;
 static Surface *THES = NULL;
@@ -233,13 +232,6 @@ void are_cree(Vertex * v1, Vertex * v2, Tree_T * t)
   n.a = IMAX(v1->Num, v2->Num);
   n.b = IMIN(v1->Num, v2->Num);
   Tree_Replace(t, &n);
-
-#if 0
-  if(!comparePosition(&v1, &v2)){
-    Msg(GERROR, "Created zero-length edge!");
-  }
-#endif
-
 }
 
 void are_del(Vertex * v1, Vertex * v2, Tree_T * t)
@@ -281,6 +273,80 @@ void Extrude_Simplex_Phase1(void *data, void *dum)
         are_cree(v2, v6, Tree_Ares);
       if(!are_exist(v4, v3, Tree_Ares))
         are_cree(v1, v6, Tree_Ares);
+    }
+  }
+}
+
+void Extrude_Simplex_Phase2(void *data, void *dum)
+{
+  Simplex **pS, *s;
+  int i, j, k;
+  Vertex *v1, *v2, *v3, *v4, *v5, *v6;
+  List_T *L0, *L1, *L2;
+
+  pS = (Simplex **) data;
+  s = *pS;
+
+  L0 = getnxl(s->V[0], DIM);
+  L1 = getnxl(s->V[1], DIM);
+  L2 = getnxl(s->V[2], DIM);
+
+  k = 0;
+  for(i = 0; i < ep->mesh.NbLayer; i++) {
+    for(j = 0; j < ep->mesh.NbElmLayer[i]; j++) {
+      List_Read(L0, k, &v1);
+      List_Read(L1, k, &v2);
+      List_Read(L2, k, &v3);
+      List_Read(L0, k + 1, &v4);
+      List_Read(L1, k + 1, &v5);
+      List_Read(L2, k + 1, &v6);
+      k++;
+      if(are_exist(v4, v2, Tree_Ares) &&
+         are_exist(v5, v3, Tree_Ares) && 
+	 are_exist(v1, v6, Tree_Ares)) {
+        BAD_TETS++;
+        if(!are_exist(v4, v2, Tree_Swaps)) {
+          are_del(v4, v2, Tree_Ares);
+          are_cree(v1, v5, Tree_Ares);
+          are_cree(v1, v5, Tree_Swaps);
+          are_cree(v4, v2, Tree_Swaps);
+        }
+        else if(!are_exist(v5, v3, Tree_Swaps)) {
+          are_del(v5, v3, Tree_Ares);
+          are_cree(v2, v6, Tree_Ares);
+          are_cree(v5, v3, Tree_Swaps);
+          are_cree(v2, v6, Tree_Swaps);
+        }
+        else if(!are_exist(v1, v6, Tree_Swaps)) {
+          are_del(v1, v6, Tree_Ares);
+          are_cree(v4, v3, Tree_Ares);
+          are_cree(v1, v6, Tree_Swaps);
+          are_cree(v4, v3, Tree_Swaps);
+        }
+      }
+      else if(are_exist(v1, v5, Tree_Ares) &&
+              are_exist(v2, v6, Tree_Ares) &&
+	      are_exist(v4, v3, Tree_Ares)) {
+        BAD_TETS++;
+        if(!are_exist(v1, v5, Tree_Swaps)) {
+          are_del(v1, v5, Tree_Ares);
+          are_cree(v4, v2, Tree_Ares);
+          are_cree(v1, v5, Tree_Swaps);
+          are_cree(v4, v2, Tree_Swaps);
+        }
+        else if(!are_exist(v2, v6, Tree_Swaps)) {
+          are_del(v2, v6, Tree_Ares);
+          are_cree(v5, v3, Tree_Ares);
+          are_cree(v5, v3, Tree_Swaps);
+          are_cree(v2, v6, Tree_Swaps);
+        }
+        else if(!are_exist(v4, v3, Tree_Swaps)) {
+          are_del(v4, v3, Tree_Ares);
+          are_cree(v1, v6, Tree_Ares);
+          are_cree(v1, v6, Tree_Swaps);
+          are_cree(v4, v3, Tree_Swaps);
+        }
+      }
     }
   }
 }
@@ -499,87 +565,6 @@ void Extrude_Simplex_Phase3(void *data, void *dum)
     }
   }
 }
-
-void Extrude_Simplex_Phase2(void *data, void *dum)
-{
-  Simplex **pS, *s;
-  int i, j, k;
-  Vertex *v1, *v2, *v3, *v4, *v5, *v6;
-  List_T *L0, *L1, *L2;
-
-  pS = (Simplex **) data;
-  s = *pS;
-
-  L0 = getnxl(s->V[0], DIM);
-  L1 = getnxl(s->V[1], DIM);
-  L2 = getnxl(s->V[2], DIM);
-
-  k = 0;
-  for(i = 0; i < ep->mesh.NbLayer; i++) {
-    for(j = 0; j < ep->mesh.NbElmLayer[i]; j++) {
-      List_Read(L0, k, &v1);
-      List_Read(L1, k, &v2);
-      List_Read(L2, k, &v3);
-      List_Read(L0, k + 1, &v4);
-      List_Read(L1, k + 1, &v5);
-      List_Read(L2, k + 1, &v6);
-      k++;
-      /*
-      if(RANDOM_SWAP_FACT){
-	if((double)rand()/(double)RAND_MAX < RANDOM_SWAP_FACT)
-	  break;
-      }
-      */
-      if(are_exist(v4, v2, Tree_Ares) &&
-         are_exist(v5, v3, Tree_Ares) && 
-	 are_exist(v1, v6, Tree_Ares)) {
-        TEST_IS_ALL_OK++;
-        if(!are_exist(v4, v2, Tree_Swaps)) {
-          are_del(v4, v2, Tree_Ares);
-          are_cree(v1, v5, Tree_Ares);
-          are_cree(v1, v5, Tree_Swaps);
-          are_cree(v4, v2, Tree_Swaps);
-        }
-        else if(!are_exist(v5, v3, Tree_Swaps)) {
-          are_del(v5, v3, Tree_Ares);
-          are_cree(v2, v6, Tree_Ares);
-          are_cree(v5, v3, Tree_Swaps);
-          are_cree(v2, v6, Tree_Swaps);
-        }
-        else if(!are_exist(v1, v6, Tree_Swaps)) {
-          are_del(v1, v6, Tree_Ares);
-          are_cree(v4, v3, Tree_Ares);
-          are_cree(v1, v6, Tree_Swaps);
-          are_cree(v4, v3, Tree_Swaps);
-        }
-      }
-      else if(are_exist(v1, v5, Tree_Ares) &&
-              are_exist(v2, v6, Tree_Ares) &&
-	      are_exist(v4, v3, Tree_Ares)) {
-        TEST_IS_ALL_OK++;
-        if(!are_exist(v1, v5, Tree_Swaps)) {
-          are_del(v1, v5, Tree_Ares);
-          are_cree(v4, v2, Tree_Ares);
-          are_cree(v1, v5, Tree_Swaps);
-          are_cree(v4, v2, Tree_Swaps);
-        }
-        else if(!are_exist(v2, v6, Tree_Swaps)) {
-          are_del(v2, v6, Tree_Ares);
-          are_cree(v5, v3, Tree_Ares);
-          are_cree(v5, v3, Tree_Swaps);
-          are_cree(v2, v6, Tree_Swaps);
-        }
-        else if(!are_exist(v4, v3, Tree_Swaps)) {
-          are_del(v4, v3, Tree_Ares);
-          are_cree(v1, v6, Tree_Ares);
-          are_cree(v1, v6, Tree_Swaps);
-          are_cree(v4, v3, Tree_Swaps);
-        }
-      }
-    }
-  }
-}
-
 
 void Extrude_Vertex(void *data, void *dum)
 {
@@ -1082,9 +1067,8 @@ int Extrude_Mesh(Tree_T * Volumes)
   }
 
   j = 0;
-  //RANDOM_SWAP_FACT = 0.0;
   do {
-    TEST_IS_ALL_OK = 0;
+    BAD_TETS = 0;
     for(int ivol = 0; ivol < List_Nbr(vol); ivol++) {
       List_Read(vol, ivol, &THEV);
       ep = THEV->Extrude;
@@ -1096,23 +1080,13 @@ int Extrude_Mesh(Tree_T * Volumes)
           Extrude_Surface2(s);
       }
     }
-    Msg(STATUS3, "Swapping %d", TEST_IS_ALL_OK);
-    if(TEST_IS_ALL_OK == j && j != 0) {
+    Msg(STATUS3, "Swapping %d", BAD_TETS);
+    if(BAD_TETS == j && j != 0) {
       Msg(GERROR, "Unable to swap all edges (output mesh will be incorrect): use 'Recombine'");
       break;
-      /*
-      if(RANDOM_SWAP_FACT > 0.8){
-	Msg(GERROR, "Unable to swap all edges (output mesh will be incorrect): use 'Recombine'");
-	break;
-      }
-      else{
-	RANDOM_SWAP_FACT += 0.05;
-	Msg(INFO, "Setting random swapping factor to %g", RANDOM_SWAP_FACT);
-      }
-      */
     }
-    j = TEST_IS_ALL_OK;
-  } while(TEST_IS_ALL_OK);
+    j = BAD_TETS;
+  } while(BAD_TETS);
 
   Msg(STATUS2, "Mesh 3D... (Final)");
 
