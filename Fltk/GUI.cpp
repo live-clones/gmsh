@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.33 2001-02-03 14:03:46 geuzaine Exp $
+// $Id: GUI.cpp,v 1.34 2001-02-03 15:55:18 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -787,8 +787,8 @@ void GUI::create_graphic_window(int argc, char **argv){
       }
 
       g_status_label[0] = new Fl_Box(x,glheight+2,(width-x)/3,sh-4);
-      g_status_label[1] = new Fl_Box(x+(width-x)/3,glheight+2,(height-x)/3,sh-4);
-      g_status_label[2] = new Fl_Box(x+2*(width-x)/3,glheight+2,(height-x)/3-2,sh-4);
+      g_status_label[1] = new Fl_Box(x+(width-x)/3,glheight+2,(width-x)/3,sh-4);
+      g_status_label[2] = new Fl_Box(x+2*(width-x)/3,glheight+2,(width-x)/3-2,sh-4);
       for(i = 0 ; i<3 ; i++){
 	g_status_label[i]->box(FL_FLAT_BOX);
 	g_status_label[i]->labelsize(CTX.fontsize);
@@ -1910,7 +1910,7 @@ void GUI::update_view_window(int num){
   view_input[0]->value(v->Name);
   view_input[1]->callback(view_options_format_cb, (void*)num);
   view_input[1]->value(v->Format);
-  view_colorbar_window->update(v->Name, v->Min, v->Max, &v->CT);
+  view_colorbar_window->update(v->Name, v->Min, v->Max, &v->CT, &v->Changed);
 
   // range
   if(v->RangeType==DRAW_POST_CUSTOM) activate_custom(1);

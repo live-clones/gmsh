@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.4 2001-02-03 13:10:26 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.5 2001-02-03 15:55:18 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -320,9 +320,11 @@ void Colorbar_Window::draw(){
 
 // Update
 
-void Colorbar_Window::update(char *name, float min, float max, ColorTable *table){
-  label  = name;
-  ct     = table;
+void Colorbar_Window::update(char *name, float min, float max, 
+			     ColorTable *table, int *changed){
+  label = name;
+  ct = table;
+  viewchanged = changed;
   minval = min;
   maxval = max;
   redraw();
@@ -460,6 +462,7 @@ int Colorbar_Window::handle(int event){
     if(compute){
       ColorTable_Recompute(ct, 1, 1);
       draw();
+      *viewchanged = 1;
     }
     // discard the event for other uses
     return 1;
@@ -532,6 +535,8 @@ int Colorbar_Window::handle(int event){
     else {
       // changing color graph
       int a, b, value;
+
+      *viewchanged = 1;
       
       value = y_to_intensity(ypos);
       

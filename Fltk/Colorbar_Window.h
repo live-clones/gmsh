@@ -10,8 +10,8 @@ class Colorbar_Window : public Fl_Window {
   // new
   int  x_to_index(int x);
   int  index_to_x(int index);
-  int  intensity_to_y(int intensity);
   int  y_to_intensity(int y);
+  int  intensity_to_y(int intensity);
   void redraw_range(int a, int b);
   void redraw_marker();
 
@@ -25,12 +25,13 @@ class Colorbar_Window : public Fl_Window {
   int help_flag;   // if nonzero, print help message
   int marker_pos;  // position of marker as index into table
   
-  ColorTable *ct; // pointer to the color table (allocated in Post_View)
+  ColorTable *ct;  // pointer to the color table (allocated in Post_View)
+  int *viewchanged;// pointer to changed bit in view
 
 public:
 
   Colorbar_Window(int x,int y,int w,int h,const char *l=0);
-  void update(char *name, float min, float max, ColorTable *ct);
+  void update(char *name, float min, float max, ColorTable *ct, int *changed);
 
 };
 
