@@ -1,10 +1,10 @@
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
- * Copyright (C) 1999-2001  Christophe Geuzaine 
+ * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.34 2001-11-20 08:04:59 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.35 2002-01-22 16:54:16 geuzaine Exp $
  *
- * E-mail: Christophe.Geuzaine@AdValvas.be
+ * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
  *
  * This library is free software; you can redistribute it and/or
@@ -1099,7 +1099,7 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
 	  "%%%%Orientation: Portrait\n"
 	  "%%%%DocumentMedia: Default %d %d 0 () ()\n"
 	  "%%%%BoundingBox: %d %d %d %d\n"
-	  "%%%%Copyright: GNU LGPL (C) 1999-2001 Christophe.Geuzaine@AdValvas.be\n"
+	  "%%%%Copyright: GNU LGPL (C) 1999-2002 geuz@geuz.org\n"
 	  "%%%%EndComments\n"
 	  "%%%%BeginProlog\n"
 	  "/gl2psdict 64 dict def gl2psdict begin\n"
@@ -1450,15 +1450,20 @@ GLint gl2psEndPage(GLvoid){
 GLvoid gl2psText(char *str, char *fontname, GLint fontsize){
   GLfloat         pos[4];
   GL2PSprimitive  *prim;
+  GLboolean       valid;
 
   if(gl2ps.options & GL2PS_NO_TEXT) return;
+
+  glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
+  if(!valid) return; /* the primitive is culled */
+
+  glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
 
   prim = (GL2PSprimitive *)gl2psMalloc(sizeof(GL2PSprimitive));
   prim->type = GL2PS_TEXT;
   prim->boundary = 0;
   prim->numverts = 1;
   prim->verts = (GL2PSvertex *)gl2psMalloc(sizeof(GL2PSvertex));
-  glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
   prim->verts[0].xyz[0] = pos[0];
   prim->verts[0].xyz[1] = pos[1];
   prim->verts[0].xyz[2] = pos[2];
