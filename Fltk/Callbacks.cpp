@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.116 2002-04-12 23:59:22 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.117 2002-04-13 05:49:50 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -765,6 +765,7 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "Menu bar shortcuts:");
   Msg(DIRECT, "");
   Msg(DIRECT, "  b             go back to previous context");
+  Msg(DIRECT, "  Ctrl+e        save file by extension");
   Msg(DIRECT, "  f             go forward to next context");
   Msg(DIRECT, "  g             go to geometry module");
   Msg(DIRECT, "  Shift+g       show geometry options");
@@ -776,7 +777,6 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "  Ctrl+o        open file"); 
   Msg(DIRECT, "  p             go to post-processor module");
   Msg(DIRECT, "  Shift+p       show post-processing general options");
-  Msg(DIRECT, "  Ctrl+e        save file by extension");
   Msg(DIRECT, "  Ctrl+q        quit");
   Msg(DIRECT, "  Ctrl+s        save mesh in default format");
   Msg(DIRECT, "");
