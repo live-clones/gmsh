@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.15 2001-08-06 11:00:26 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.16 2001-08-09 20:53:23 geuzaine Exp $
 
 #include <string.h>
 #include "CutSphere.h"
@@ -16,16 +16,12 @@ extern "C"
 {
   GMSH_Plugin *GMSH_RegisterCutSpherePlugin ()
   {
-    return new GMSH_CutSpherePlugin (CutSphereOptions_Number[0].def,
-				     CutSphereOptions_Number[1].def,
-				     CutSphereOptions_Number[2].def,
-				     CutSphereOptions_Number[3].def);
+    return new GMSH_CutSpherePlugin ();
   }
 }
 
 
-GMSH_CutSpherePlugin::GMSH_CutSpherePlugin(double A, double B, double C, double D)
-  :a(A),b(B),c(C),r(D)
+GMSH_CutSpherePlugin::GMSH_CutSpherePlugin()
 {
 }
 
@@ -61,6 +57,10 @@ void GMSH_CutSpherePlugin::CatchErrorMessage (char *errorMessage) const
 
 double GMSH_CutSpherePlugin :: levelset (double x, double y, double z, double val) const
 {
+  double a = CutSphereOptions_Number[0].def;
+  double b = CutSphereOptions_Number[1].def;
+  double c = CutSphereOptions_Number[2].def;
+  double r = CutSphereOptions_Number[3].def;
   return (x-a)*(x-a) + (y-b)*(y-b) + (z-c)*(z-c) - r*r;
 }
 
@@ -69,10 +69,6 @@ extern List_T *Post_ViewList;
 Post_View *GMSH_CutSpherePlugin::execute (Post_View *v)
 {
   Post_View *vv;
-  a = CutSphereOptions_Number[0].def;
-  b = CutSphereOptions_Number[1].def;
-  c = CutSphereOptions_Number[2].def;
-  r = CutSphereOptions_Number[3].def;
   int iView = (int)CutSphereOptions_Number[4].def;
 
   if(v && iView < 0)

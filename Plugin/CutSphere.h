@@ -10,11 +10,9 @@ extern "C"
 
 class GMSH_CutSpherePlugin : public GMSH_LevelsetPlugin
 {
-  /*Sphere (x-a)^2 + (y-b)^2 + (z-c)^2 - r^2 = 0*/
-  double a,b,c,r;
   virtual double levelset (double x, double y, double z, double val) const;
 public:
-  GMSH_CutSpherePlugin(double A, double B, double C, double R);
+  GMSH_CutSpherePlugin();
   virtual void getName  (char *name) const;
   virtual void getInfos (char *author, 
 			 char *copyright,

@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.16 2001-08-06 11:00:26 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.17 2001-08-09 20:53:23 geuzaine Exp $
 
 #include "CutPlane.h"
 #include "List.h"
@@ -15,16 +15,12 @@ extern "C"
 {
   GMSH_Plugin *GMSH_RegisterCutPlanePlugin ()
   {
-    return new GMSH_CutPlanePlugin (CutPlaneOptions_Number[0].def,
-				    CutPlaneOptions_Number[1].def,
-				    CutPlaneOptions_Number[2].def,
-				    CutPlaneOptions_Number[3].def);
+    return new GMSH_CutPlanePlugin ();
   }
 }
 
 
-GMSH_CutPlanePlugin::GMSH_CutPlanePlugin(double A, double B, double C, double D)
-  :a(A),b(B),c(C),d(D)
+GMSH_CutPlanePlugin::GMSH_CutPlanePlugin()
 {
 }
 
@@ -60,7 +56,10 @@ void GMSH_CutPlanePlugin::CatchErrorMessage (char *errorMessage) const
 
 double GMSH_CutPlanePlugin :: levelset (double x, double y, double z, double val) const
 {
-  return a * x + b * y + c * z + d;
+  return CutPlaneOptions_Number[0].def * x +
+    CutPlaneOptions_Number[1].def * y +
+    CutPlaneOptions_Number[2].def * z +
+    CutPlaneOptions_Number[3].def ;
 }
 
 extern List_T *Post_ViewList;
@@ -68,10 +67,7 @@ extern List_T *Post_ViewList;
 Post_View *GMSH_CutPlanePlugin::execute (Post_View *v)
 {
   Post_View *vv;
-  a = CutPlaneOptions_Number[0].def;
-  b = CutPlaneOptions_Number[1].def;
-  c = CutPlaneOptions_Number[2].def;
-  d = CutPlaneOptions_Number[3].def;
+
   int iView = (int)CutPlaneOptions_Number[4].def;
 
   if(v && iView < 0)

@@ -10,11 +10,9 @@ extern "C"
 
 class GMSH_CutPlanePlugin : public GMSH_LevelsetPlugin
 {
-  /*Plane a x + b y + c z + d = 0*/
-  double a,b,c,d;
   virtual double levelset (double x, double y, double z, double val) const;
 public:
-  GMSH_CutPlanePlugin(double A, double B, double C, double D);
+  GMSH_CutPlanePlugin();
   virtual void getName  (char *name) const;
   virtual void getInfos (char *author, 
 			 char *copyright,

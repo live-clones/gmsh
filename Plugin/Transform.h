@@ -8,11 +8,8 @@ extern "C"
 
 class GMSH_TransformPlugin : public GMSH_Post_Plugin
 {
-  double mat[3][3];
 public:
-  GMSH_TransformPlugin(double a11, double a12, double a13,
-		       double a21, double a22, double a23,
-		       double a31, double a32, double a33);
+  GMSH_TransformPlugin();
   virtual void Run();
   virtual void Save();
   virtual void getName  (char *name) const;

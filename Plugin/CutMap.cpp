@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.20 2001-08-09 18:28:23 remacle Exp $
+// $Id: CutMap.cpp,v 1.21 2001-08-09 20:53:23 geuzaine Exp $
 
 #include "CutMap.h"
 #include "List.h"
@@ -13,13 +13,12 @@ extern "C"
 {
   GMSH_Plugin *GMSH_RegisterCutMapPlugin ()
   {
-    return new GMSH_CutMapPlugin (CutMapOptions_Number[0].def);
+    return new GMSH_CutMapPlugin ();
   }
 }
 
 
-GMSH_CutMapPlugin::GMSH_CutMapPlugin(double a)
-  :A(a)
+GMSH_CutMapPlugin::GMSH_CutMapPlugin()
 {
 }
 
@@ -58,7 +57,7 @@ double GMSH_CutMapPlugin :: levelset (double x, double y, double z, double val) 
   // we must look into the map for A - Map(x,y,z)
   // this is the case when the map is the same as the view,
   // the result is the extraction of isovalue A
-  return A - val;
+  return CutMapOptions_Number[0].def - val;
 }
 
 extern List_T *Post_ViewList;
@@ -66,7 +65,6 @@ extern List_T *Post_ViewList;
 Post_View *GMSH_CutMapPlugin::execute (Post_View *v)
 {
   Post_View *vv;
-  A = CutMapOptions_Number[0].def;
   
   int iView = (int)CutMapOptions_Number[1].def;
   _ith_field_to_draw_on_the_iso = (int)CutMapOptions_Number[2].def;

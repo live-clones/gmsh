@@ -8,10 +8,9 @@ extern "C"
 
 class GMSH_CutMapPlugin : public GMSH_LevelsetPlugin
 {
-  double A;
   virtual double levelset (double x, double y, double z, double val) const;
 public:
-  GMSH_CutMapPlugin(double A);
+  GMSH_CutMapPlugin();
   virtual void getName  (char *name) const;
   virtual void getInfos (char *author, 
 			 char *copyright,
