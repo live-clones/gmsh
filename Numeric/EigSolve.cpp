@@ -1,4 +1,4 @@
-// $Id: EigSolve.cpp,v 1.1 2004-12-08 05:38:56 geuzaine Exp $
+// $Id: EigSolve.cpp,v 1.2 2004-12-08 16:44:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -568,6 +568,10 @@ static void swap_columns(int N, double **v, int i, int k)
 
 void EigSort(int N, double *wr, double *wi, double **B)
 {
+  // Sorts the eigenvalues/vectors in ascending order according to
+  // their real part. Warning: this might screw up the ordering of
+  // complex eigenvectors --- VERIFY THIS
+
   for (int i = 0; i < N - 1; i++){
     int k = i;
     double ek = wr[i];
@@ -593,8 +597,7 @@ int EigSolve(int N, double **A, double *wr, double *wi, double **B,
   // Computes the N eigenvalues of the square, real matrix A. All
   // vectors have dimension N and all matrices have dimension
   // NxN. Warning: the matrix A gets modified during the
-  // computation. The eigenvalues/vectors are sorted in ascending
-  // order according to the real part of the eigenvalues.
+  // computation.
 
   // Balance the matrix to improve accuracy of
   // eigenvalues. (Introduces no rounding errors, since it scales A by
@@ -852,8 +855,6 @@ int EigSolve(int N, double **A, double *wr, double *wi, double **B,
     
   }//End if ierr = -1
 
-  EigSort(N, wr, wi, B);
-  
   return ierr;
 }  //End of Eig3Solve
 

@@ -1,4 +1,4 @@
-// $Id: PrincipalStresses.cpp,v 1.3 2004-12-08 06:22:23 geuzaine Exp $
+// $Id: PrincipalStresses.cpp,v 1.4 2004-12-08 16:44:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -116,6 +116,7 @@ static void principal_stresses(List_T *inList, int inNb, int nbNod, int nbTime,
 	A[1][0] = val[3]; A[1][1] = val[4]; A[1][2] = val[5];
 	A[2][0] = val[6]; A[2][1] = val[7]; A[2][2] = val[8];
 	EigSolve(3, A, wr, wi, B, itmp, dtmp);
+	EigSort(3, wr, wi, B);
 	nbcomplex += nonzero(wi); 
 	//printf("djf=%g %g %g\n", wr[0], wr[1], wr[2]);
 	//printf("vec1=%g %g %g\n", B[0][0], B[1][0], B[2][0]);
