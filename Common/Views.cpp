@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.162 2005-01-13 05:45:41 geuzaine Exp $
+// $Id: Views.cpp,v 1.163 2005-01-13 20:36:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1899,8 +1899,10 @@ void ApplyGeneralizedRaise(Post_View * v, int numNodes, int numComp, double *val
     for(int l = 0; l < numComp; l++)
       d[l] = vals[numComp * k + l];
 #if defined(HAVE_MATH_EVAL)
-    char *names[] = { "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" };
-    double values[] = { d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8] };
+    char *names[] = { "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" ,
+		      "x", "y", "z" };
+    double values[] = { d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8],
+			x[k], y[k], z[k] };
     for(int i = 0; i < 3; i++) {
       if(v->GenRaise_f[i])
         coords[i][k] += 
