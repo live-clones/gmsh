@@ -1,20 +1,20 @@
-$Id: VERSIONS,v 1.214 2004-05-29 10:11:12 geuzaine Exp $
+$Id: VERSIONS,v 1.215 2004-05-29 20:33:15 geuzaine Exp $
 
 New in 1.53: completed support for second order elements (lines,
 triangles, quadrangles, tetrahedra, hexahedra, prisms and pyramids);
 various background mesh fixes and enhancements; major performance
-improvements for mesh and post-processing drawing speed (OpenGL vertex
-arrays for triangles); new Plugin(Evaluate) to evaluate arbitrary
-expressions on post-processing views; generalized Plugin(Extract) to
-handle any combination of components; generalized "Coherence" to
-handle transfinite surface/volume attributes; plugin options can now
-be set in the option file (like all other options); added "undo"
-capability during geometry creation; rewrote the contour guessing
-routines so that entities can be selected in an arbitrary order; Mac
-users can now double click on geo/msh/pos files in the Finder to
-launch Gmsh; removed support for fltk 1.0; rewrote most of the code
-related to quadrangles; fixed 2d elliptic algorithm; removed all
-OpenGL display list code and options; many code cleanups;
+improvements in mesh and post-processing drawing routines (using
+OpenGL vertex arrays for triangles); new Plugin(Evaluate) to evaluate
+arbitrary expressions on post-processing views; generalized
+Plugin(Extract) to handle any combination of components; generalized
+"Coherence" to handle transfinite surface/volume attributes; plugin
+options can now be set in the option file (like all other options);
+added "undo" capability during geometry creation; rewrote the contour
+guessing routines so that entities can be selected in an arbitrary
+order; Mac users can now double click on geo/msh/pos files in the
+Finder to launch Gmsh; removed support for fltk 1.0; rewrote most of
+the code related to quadrangles; fixed 2d elliptic algorithm; removed
+all OpenGL display list code and options; many code cleanups;
 
 New in 1.52: new raster ("bitmap") PostScript/EPS/PDF output formats;
 new Plugin(Extract) to extract a given component from a
