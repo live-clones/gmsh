@@ -55,7 +55,8 @@ gap0[g0]=gap0[0];
 gap[g]=gap[0];
 
 j=1; g=0; le=0; lge=0;
-For i In {1:p-2:2}
+
+For i In {1:p-1:2}
   If( Modulo(j,nbr_tooth/nbr_gap) )
     loopext[le] = newreg;
     Circle(loopext[le]) = {points[i],1,points[i+1]};
@@ -81,7 +82,6 @@ For i In {1:p-2:2}
   j++;
 EndFor
 loopext[le] = loopext[0];
-
 
 li=0; lgi=0; lg=0;
 For i In {0:g0-2:2}
