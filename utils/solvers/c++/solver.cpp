@@ -1,4 +1,4 @@
-// $Id: solver.cpp,v 1.3 2005-01-17 18:52:49 geuzaine Exp $
+// $Id: solver.cpp,v 1.4 2005-02-05 20:20:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -42,12 +42,7 @@
 // You will then see a new button labeled "My C++ solver" in Gmsh's
 // solver menu.
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <math.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include "GmshClient.h"
 
 typedef enum { send_options, run_code } action;
@@ -93,7 +88,7 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  client.Start(getpid());
+  client.Start();
 
   if(what_to_do == send_options) {
     // send the available options for this computation

@@ -152,7 +152,7 @@ class GmshClient {
     }
     return -2; // Error: Couldn't connect
   }
-  void Start(int pid)
+  void Start()
   {
     char tmp[256];
     sprintf(tmp, "%d", getpid());
