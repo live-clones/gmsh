@@ -1,4 +1,4 @@
-// $Id: LevelsetPlugin.cpp,v 1.28 2003-01-25 01:22:42 geuzaine Exp $
+// $Id: LevelsetPlugin.cpp,v 1.29 2003-01-25 01:31:29 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,7 @@
 #include "Views.h"
 #include "Iso.h"
 #include "Numeric.h"
+#include "Malloc.h"
 
 GMSH_LevelsetPlugin::GMSH_LevelsetPlugin()
 {
@@ -62,7 +63,7 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 
   if(v->NbSS){
 
-    Post_View **View = new (Post_View*)[v->NbTimeStep];
+    Post_View **View = (Post_View**)Malloc(v->NbTimeStep* sizeof(Post_View*));
 
     switch(_orientation){
     case ORIENT_PLANE:
@@ -221,7 +222,7 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
     // a little bogus if multiple output views, but we don't use it anyway
     processed = View[0];
 
-    delete [] View;
+    Free(View);
 
     return processed;
   }
