@@ -1,4 +1,39 @@
-$Id: TODO,v 1.18 2003-04-02 05:53:23 geuzaine Exp $
+$Id: TODO,v 1.19 2003-05-21 19:28:21 geuzaine Exp $
+
+********************************************************************
+
+We sould somehow keep track (or compute) the min/max for each time
+step.
+
+********************************************************************
+
+Add something like this in the post-processing documentation:
+
+3D graphs blabla...
+
+Each post-processing view containing Scalar Points can be represented as
+a 2D graph:
+
+- 2D space table: the scalar points are taken in the same order as they
+are defined in the view (the abscissa of the graph is the curvilinear
+abscissa of the curve defined by the point series) and only one curve is
+drawn using the values associated with the points. If several time steps
+are available, you can of course animate the 2D graph.
+
+- 2D time table: one curve is drawn for each scalar point in the view:
+the abscissa is now the time step. You should have several time steps in
+order for this graph to display something useful :-)
+
+All usual options for 3D drawings are also available for 2D graphs
+(colors, point/line sizes, iso type, etc.).
+
+Try for example tutorial/view4.pos: in View->Options->general, just
+select "2d Space table", et voila!
+
+You can modify the size of the graph and, either define its position
+explicitly, or let Gmsh organize the screen presentation to avoid
+overlap between 2D graphs. There are also some options peculiar to 2D
+graphs (see Options->2D).
 
 ********************************************************************
 
