@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2002-05-18 21:34:29 geuzaine Exp $
+# $Id: Makefile,v 1.5 2002-07-18 18:28:52 geuzaine Exp $
 #
 # Makefile for "libGmshNumeric.a"
 #
@@ -22,7 +22,7 @@ SRC = Numeric.cpp\
       Newton.cpp \
       Opti.cpp \
       SVD.cpp \
-      NRUtil.cpp \
+      NRUtil.cpp
 
 OBJ = $(SRC:.cpp=.o)
 
