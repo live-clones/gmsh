@@ -1025,7 +1025,7 @@ StringXNumber ViewOptions_Number[] = {
     "Current time step displayed" },
   { F|O, "TransparentScale" , opt_view_transparent_scale , 1. ,
     "Display a `transparent' value scale?" },
-  { F|O, "Type" , opt_view_type , DRAW_POST_3D ,
+  { F, "Type" , opt_view_type , DRAW_POST_3D ,
     "Type of graph (1=3D, 2=2D-space, 3=2D-time)" },
 
   { F|O, "VectorType" , opt_view_vector_type , DRAW_POST_ARROW3D ,
