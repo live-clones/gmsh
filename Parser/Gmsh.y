@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.125 2002-09-19 21:44:13 geuzaine Exp $
+// $Id: Gmsh.y,v 1.126 2002-10-04 21:14:18 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1909,6 +1909,10 @@ Duplicata :
 	List_Add($$,&TheShape);
       }
     }
+  | tDuplicata tSTRING '[' FExpr ']' tEND
+    {
+      if(!strcmp($2, "View")) DuplicateView((int)$4,0);
+    }
 ;
 
 
@@ -1923,10 +1927,9 @@ Delete :
       }
     }
     | tDelete tSTRING '[' FExpr ']' tEND
-      {
-	if(!strcmp($2, "View"))
-	  FreeView((int)$4);
-      }
+    {
+      if(!strcmp($2, "View")) FreeView((int)$4);
+    }
     | tDelete tMesh tEND
     {
       Init_Mesh(THEM, 1);

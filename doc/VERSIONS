@@ -1,4 +1,7 @@
-$Date: 2002-09-02 22:39:40 $
+$Date: 2002-10-04 21:14:19 $
+
+New in 1.36: Enhance view duplication (one can now use "Duplicata
+View[num]" in the input file);
 
 New in 1.35: Graphical user interface upgraded to FLTK 1.1 (tooltips,
 new file chooser with multiple selection, full keyboard navigation,

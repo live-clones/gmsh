@@ -134,8 +134,10 @@ int fcmpPostViewDuplicateOf(const void *v1, const void *v2);
 
 Post_View * BeginView (int alloc);
 void EndView (Post_View *v, int AddInUI, char *FileName, char *Name);
+void DuplicateView(Post_View *v1, int withoptions);
+void DuplicateView(int num, int withoptions);
 void FreeView(Post_View *v);
-bool FreeView(int);
+bool FreeView(int num);
 void Read_View(FILE *file, char *filename);
 void Write_View(int Flag_BIN, Post_View *v, char *filename);
 void CopyViewOptions(Post_View *src, Post_View *dest);

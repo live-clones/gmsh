@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.142 2002-10-04 17:27:43 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.143 2002-10-04 21:14:17 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2149,84 +2149,13 @@ void view_save_binary_cb(CALLBACK_ARGS){
   }
 }
 
-static void _duplicate_view(int num, int options){
-  Post_View  v, *v1, *v2, *v3 ;
-
-  if(!CTX.post.list) return;
-
-  v1 = (Post_View*)List_Pointer(CTX.post.list,num);
-
-  v2 = BeginView(0);
-  EndView(v2, 0, v1->FileName, v1->Name);
-
-  if(!v1->DuplicateOf){
-    v2->DuplicateOf = v1->Num ;
-    v1->Links++ ;
-  }
-  else{
-    v.Num = v1->DuplicateOf ;
-    if(!(v3 = (Post_View*)List_PQuery(CTX.post.list, &v, fcmpPostViewNum))){
-      v2->DuplicateOf = v1->Num ;
-      v1->Links++ ;
-    }
-    else{
-      v2->DuplicateOf = v3->Num;
-      v3->Links++ ;
-    }
-  }
-
-  v2->Time = v1->Time;
-
-  v2->NbSP = v1->NbSP; v2->SP = v1->SP; 
-  v2->NbVP = v1->NbVP; v2->VP = v1->VP; 
-  v2->NbTP = v1->NbTP; v2->TP = v1->TP;
-
-  v2->NbSL = v1->NbSL; v2->SL = v1->SL; 
-  v2->NbVL = v1->NbVL; v2->VL = v1->VL; 
-  v2->NbTL = v1->NbTL; v2->TL = v1->TL;
-
-  v2->NbST = v1->NbST; v2->ST = v1->ST; 
-  v2->NbVT = v1->NbVT; v2->VT = v1->VT; 
-  v2->NbTT = v1->NbTT; v2->TT = v1->TT;
-
-  v2->NbSQ = v1->NbSQ; v2->SQ = v1->SQ; 
-  v2->NbVQ = v1->NbVQ; v2->VQ = v1->VQ; 
-  v2->NbTQ = v1->NbTQ; v2->TQ = v1->TQ;
-
-  v2->NbSS = v1->NbSS; v2->SS = v1->SS; 
-  v2->NbVS = v1->NbVS; v2->VS = v1->VS; 
-  v2->NbTS = v1->NbTS; v2->TS = v1->TS;
-
-  v2->NbSH = v1->NbSH; v2->SH = v1->SH; 
-  v2->NbVH = v1->NbVH; v2->VH = v1->VH; 
-  v2->NbTH = v1->NbTH; v2->TH = v1->TH;
-
-  v2->NbSI = v1->NbSI; v2->SI = v1->SI; 
-  v2->NbVI = v1->NbVI; v2->VI = v1->VI; 
-  v2->NbTI = v1->NbTI; v2->TI = v1->TI;
-
-  v2->NbSY = v1->NbSY; v2->SY = v1->SY; 
-  v2->NbVY = v1->NbVY; v2->VY = v1->VY; 
-  v2->NbTY = v1->NbTY; v2->TY = v1->TY;
-
-  v2->NbT2 = v1->NbT2; v2->T2D = v1->T2D; v2->T2C = v1->T2C;
-  v2->NbT3 = v1->NbT3; v2->T3D = v1->T3D; v2->T3C = v1->T3C;
-
-  v2->ScalarOnly  = v1->ScalarOnly;
-  v2->TextOnly    = v1->TextOnly;
-  v2->Min         = v1->Min;       
-  v2->Max         = v1->Max;      
-  v2->NbTimeStep  = v1->NbTimeStep;
-
-  if(options) CopyViewOptions(v1, v2);
-  AddViewInUI(List_Nbr(CTX.post.list), v2->Name, v2->Num);
+void view_duplicate_cb(CALLBACK_ARGS){
+  DuplicateView((long int)data,0);
   Draw();
 }
-void view_duplicate_cb(CALLBACK_ARGS){
-  _duplicate_view((long int)data,0);
-}
 void view_duplicate_with_options_cb(CALLBACK_ARGS){
-  _duplicate_view((long int)data,1);
+  DuplicateView((long int)data,1);
+  Draw();
 }
 
 void view_applybgmesh_cb(CALLBACK_ARGS){
