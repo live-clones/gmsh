@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.68 2004-07-14 22:42:26 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.69 2004-12-31 04:51:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -275,7 +275,7 @@ int mesh_domain(ContourPeek * ListContours, int numcontours,
 
   if(!numcontours) {
     Msg(GERROR, "No contour");
-    return 0;
+    return -1;
   }
 
   numact = 0;
@@ -625,9 +625,10 @@ void Maillage_Automatique_VieuxCode(Surface * pS, Mesh * m, int ori)
     liste[i] = cp;
   }
 
+  int res_mesh_domain = 1;
   if(pS->Method)
-    mesh_domain(liste, List_Nbr(pS->Contours), &M, &N,
-                (CTX.mesh.initial_only == 2));
+    res_mesh_domain = mesh_domain(liste, List_Nbr(pS->Contours), &M, &N,
+				  (CTX.mesh.initial_only == 2));
 
   for(i = 0; i < M.numpoints; i++) {
     if(gPointArray[i].initial < 0) {
@@ -682,7 +683,9 @@ void Maillage_Automatique_VieuxCode(Surface * pS, Mesh * m, int ori)
     //xxxxFree(M.listdel[i]);
 
   }
-  Free(M.listdel);
+  
+  if(res_mesh_domain >= 0)
+    Free(M.listdel);
   Free(gPointArray);
 }
 
