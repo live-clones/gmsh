@@ -315,7 +315,6 @@ typedef struct{
 }LcField;
 
 typedef struct{
-  int done;
   double t1, t2, f1, f2, incl;
   Vertex *v[4];
   double invmat[3][3];

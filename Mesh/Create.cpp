@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.28 2001-11-19 09:29:18 geuzaine Exp $
+// $Id: Create.cpp,v 1.29 2001-11-29 08:19:06 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -184,8 +184,8 @@ void Add_EdgeLoop (int Num, List_T * intlist, Mesh * M){
 
 void End_Curve (Curve * c){
   double R2, mat[3][3], R, A3, A1, A4;
-  Vertex *v[5], v1, v3, v4;
-  double dd[3], qq[3], AX, f1, f2, DP, dir32[3], dir12[3], n[3], m[3], dir42[3];
+  Vertex *v[4], v0, v2, v3;
+  double f1, f2, DP, dir32[3], dir12[3], n[3], m[3], dir42[3];
   double rhs[2], sys[2][2], sol[2];
   int i;
   Curve *Curve;
@@ -197,73 +197,67 @@ void End_Curve (Curve * c){
 
     Curve = c;
 
+    // v[0] = first point
+    // v[1] = center
+    // v[2] = last point
+    // v[3] = major axis point
+
     if (List_Nbr (Curve->Control_Points) == 4)
-      List_Read (Curve->Control_Points, 2, &v[4]);
+      List_Read (Curve->Control_Points, 2, &v[3]);
     else
-      v[4] = NULL;
+      v[3] = NULL;
     
     if (Curve->Typ == MSH_SEGM_CIRC_INV ||
         Curve->Typ == MSH_SEGM_ELLI_INV){
-      List_Read (Curve->Control_Points, 0, &v[3]);
-      List_Read (Curve->Control_Points, 1, &v[2]);
-      if (!v[4])
-        List_Read (Curve->Control_Points, 2, &v[1]);
+      List_Read (Curve->Control_Points, 0, &v[2]);
+      List_Read (Curve->Control_Points, 1, &v[1]);
+      if (!v[3])
+        List_Read (Curve->Control_Points, 2, &v[0]);
       else
-        List_Read (Curve->Control_Points, 3, &v[1]);
+        List_Read (Curve->Control_Points, 3, &v[0]);
     }
     else{
-      List_Read (Curve->Control_Points, 0, &v[1]);
-      List_Read (Curve->Control_Points, 1, &v[2]);
-      if (!v[4])
-        List_Read (Curve->Control_Points, 2, &v[3]);
+      List_Read (Curve->Control_Points, 0, &v[0]);
+      List_Read (Curve->Control_Points, 1, &v[1]);
+      if (!v[3])
+        List_Read (Curve->Control_Points, 2, &v[2]);
       else
-        List_Read (Curve->Control_Points, 3, &v[3]);
+        List_Read (Curve->Control_Points, 3, &v[2]);
     }
-    
-    direction (v[2], v[3], dir32);
-    direction (v[2], v[1], dir12);
-    if (v[4])
-      direction (v[2], v[4], dir42);
 
-    /*
-      norme(dir32);
-      norme(dir12);
-      norme(dir42);
-    */
+    direction(v[1], v[0], dir12);
+    direction(v[1], v[2], dir32);
+    if(v[3]) direction(v[1], v[3], dir42);
 
-    //prodve(dir12,dir32,n);
-    dd[0] = dir12[0];
-    dd[1] = dir12[1];
-    dd[2] = dir12[2];
-    qq[0] = dir32[0];
-    qq[1] = dir32[1];
-    qq[2] = dir32[2];
-    norme (dd);
-    norme (qq);
-    prodve (dd, qq, n);
+    // v0 = vector center->first pt
+    // v2 = vector center->last pt
+    // v3 = vector center->major axis pt
+
+    v0.Pos.X = dir12[0];
+    v0.Pos.Y = dir12[1];
+    v0.Pos.Z = dir12[2];
+    v2.Pos.X = dir32[0];
+    v2.Pos.Y = dir32[1];
+    v2.Pos.Z = dir32[2];
+    if (v[3]){
+      v3.Pos.X = dir42[0];
+      v3.Pos.Y = dir42[1];
+      v3.Pos.Z = dir42[2];
+    }
+
+    norme(dir12);
+    norme(dir32);
+    prodve(dir12, dir32, n);
+    norme(n);
+    // use provided plane if unable to compute it from input points...
     if (fabs (n[0]) < 1.e-5 && fabs (n[1]) < 1.e-5 && fabs (n[2]) < 1.e-5){
       n[0] = Curve->Circle.n[0];
       n[1] = Curve->Circle.n[1];
       n[2] = Curve->Circle.n[2];
+      norme(n);
     }
-
-    /* BOF BOF BOF */
-    prodve (n, dir12, m);
-
-    v1.Pos.X = dir12[0];
-    v1.Pos.Y = dir12[1];
-    v1.Pos.Z = dir12[2];
-    v3.Pos.X = dir32[0];
-    v3.Pos.Y = dir32[1];
-    v3.Pos.Z = dir32[2];
-    if (v[4]){
-      v4.Pos.X = dir42[0];
-      v4.Pos.Y = dir42[1];
-      v4.Pos.Z = dir42[2];
-    }
-    norme (dir12);
-    norme (n);
-    norme (m);
+    prodve(n, dir12, m);
+    norme(m);
     
     mat[2][0] = Curve->Circle.invmat[0][2] = n[0];
     mat[2][1] = Curve->Circle.invmat[1][2] = n[1];
@@ -273,7 +267,9 @@ void End_Curve (Curve * c){
     mat[1][2] = Curve->Circle.invmat[2][1] = m[2];
     mat[0][0] = Curve->Circle.invmat[0][0] = dir12[0];
     mat[0][1] = Curve->Circle.invmat[1][0] = dir12[1];
-    mat[0][2] = Curve->Circle.invmat[2][0] = dir12[2];    
+    mat[0][2] = Curve->Circle.invmat[2][0] = dir12[2];
+
+    // assume circle in z=0 plane
     if(CTX.geom.old_circle){
       if(n[0] == 0.0 && n[1] == 0.0){
         mat[2][0] = Curve->Circle.invmat[0][2] = 0;
@@ -288,70 +284,62 @@ void End_Curve (Curve * c){
       }
     }
 
-    Projette (&v1, mat);
-    Projette (&v3, mat);
-    if (v[4])
-      Projette (&v4, mat);
+    Projette(&v0, mat);
+    Projette(&v2, mat);
+    if(v[3]) Projette(&v3, mat);
 
-    R = sqrt (v1.Pos.X * v1.Pos.X + v1.Pos.Y * v1.Pos.Y);
-    R2 = sqrt (v3.Pos.X * v3.Pos.X + v3.Pos.Y * v3.Pos.Y);
-    A3 = myatan2 (v3.Pos.Y, v3.Pos.X);
-    if (v[4])
-      A4 = myatan2 (v4.Pos.Y, v4.Pos.X);
-    else
-      A4 = 0.0;
-    A1 = myatan2 (v1.Pos.Y, v1.Pos.X);
+    R  = sqrt(v0.Pos.X * v0.Pos.X + v0.Pos.Y * v0.Pos.Y);
+    R2 = sqrt(v2.Pos.X * v2.Pos.X + v2.Pos.Y * v2.Pos.Y);
+
+    // check radius
+    if(!R || !R2)
+      Msg(GERROR, "Zero radius in Circle/Ellipsis %d", c->Num);
+
+    // check if circle is coherent (allow 10% error)
+    if(!v[3] && fabs((R-R2)/(R+R2))>0.1)
+      Msg(GERROR, "Control points of Circle %d are not cocircular %g %g", c->Num, R,R2);
+
+    // A1 = angle first pt
+    // A3 = angle last pt
+    // A4 = angle major axis
+
+    A1 = myatan2(v0.Pos.Y, v0.Pos.X);
+    A3 = myatan2(v2.Pos.Y, v2.Pos.X);
+    if(v[3]) A4 = myatan2(v3.Pos.Y, v3.Pos.X);
+    else     A4 = 0.0;
     
-    DP = 2 * Pi;
-    
-    A3 = angle_02pi (A3);
-    A1 = angle_02pi (A1);
-    if (v[4])
-      A4 = angle_02pi (A4);
-    if (A1 >= A3)
-      A3 += DP;
-    //    if (A4 > A1)
-    //      A4 -= DP;
-    
-    if (v[4]){
-      AX = (A4);
-      double x1 = v1.Pos.X * cos (AX) + v1.Pos.Y * sin(AX);
-      double y1 = -v1.Pos.X * sin (AX) + v1.Pos.Y * cos(AX); 
-      double x3 = v3.Pos.X * cos (AX) + v3.Pos.Y * sin(AX);
-      double y3 = -v3.Pos.X * sin (AX) + v3.Pos.Y * cos(AX); 
+    DP = 2*Pi;
+    A1 = angle_02pi(A1);    
+    A3 = angle_02pi(A3);
+    if(A1 >= A3) A3 += DP;
+    if(v[3]) A4 = angle_02pi(A4);
+    if(A4 > A1) A4 -= DP;
+   
+    if (v[3]){
+      double x1 = v0.Pos.X * cos (A4) + v0.Pos.Y * sin(A4);
+      double y1 = -v0.Pos.X * sin (A4) + v0.Pos.Y * cos(A4); 
+      double x3 = v2.Pos.X * cos (A4) + v2.Pos.Y * sin(A4);
+      double y3 = -v2.Pos.X * sin (A4) + v2.Pos.Y * cos(A4); 
       sys[0][0] = x1 * x1;
       sys[0][1] = y1 * y1;
       sys[1][0] = x3 * x3;
       sys[1][1] = y3 * y3;
-
       rhs[0] = 1;
       rhs[1] = 1;
-
-      //      printf("AX = %lf\n",AX*180./M_PI);
-      //      printf("%lf %lf %lf %lf\n", v1.Pos.X , v1.Pos.Y,x1,y1);
-      //      printf("%lf %lf %lf %lf\n", v3.Pos.X , v3.Pos.Y,x3,y3);
-
-
       sys2x2 (sys, rhs, sol);
-      //      printf("%lf %lf   %lf = %lf \n",sys[0][0],sys[0][1],rhs[0],sol[0]);
-      //      printf("%lf %lf   %lf = %lf\n",sys[1][0],sys[1][1],rhs[1],sol[1]);
-      if(sol[0] < 0)Msg(FATAL, "Ellipsis %d invalid", Curve->Num);	
-      if(sol[1] < 0)Msg(FATAL, "Ellipsis %d invalid", Curve->Num);	
+      if(sol[0] <= 0 || sol[1] <= 0) 
+	Msg(GERROR, "Ellipsis %d is wrong", Curve->Num);	
       f1 = sqrt(1./sol[0]);
       f2 = sqrt(1./sol[1]);
-      if(x1 > 0)
-	A1 = asin(y1/f2) + A4; 
-      else 
-	A1 = -asin(y1/f2) + A4; 
-
-      if(x3 > 0)
-	A3 = asin(y3/f2) + A4; 
-      else 
-	A3 = -asin(y3/f2) + A4; 
+      A1 = asin(y1/f2) + A4; 
+      A3 = asin(y3/f2) + A4; 
     }
     else{
       f1 = f2 = R;
     }
+
+    //printf("f1=%g f2=%g a1=%g a3=%g a4=%g\n", 
+    //	   f1, f2, A1*180./M_PI, A3*180./M_PI, A4*180./M_PI);
 
     Curve->Circle.t1 = A1;
     Curve->Circle.t2 = A3;
@@ -361,35 +349,8 @@ void End_Curve (Curve * c){
     
     for (i = 0; i < 4; i++)
       Curve->Circle.v[i] = v[i];
-
-    //    double xxx = 180./M_PI;
-    //    printf("%d %lf %lf %lf %lf %lf\n",Curve->Num,f1,f2,A1*xxx,A3*xxx,A4*xxx);
-
-    /*
-    if (!c->Circle.done){
-      float proj[4][4];
-      for (i = 0; i < 4; i++){
-        for (int j = 0; j < 4; j++){
-          if (i != 3 && j != 3)
-            proj[i][j] = Curve->Circle.f1 * Curve->Circle.invmat[i][j];
-          else
-            proj[i][j] = 0.0;
-        }
-      }
-      proj[0][3] = Curve->Circle.v[2]->Pos.X;
-      proj[1][3] = Curve->Circle.v[2]->Pos.Y;
-      proj[2][3] = Curve->Circle.v[2]->Pos.Z;
-      proj[3][3] = 1.0;
-      c->Circle.done = 1;
-    }
-    */
-    // Un cercle a au moins 16 pts par pi radiants
-    
-    // c->beg->lc = DMIN (R*Pi/(fabs(c->Circle.t1-c->Circle.t2)*CIRC_GRAN),c->beg->lc);
-    // c->end->lc = DMIN (R*Pi/(fabs(c->Circle.t1-c->Circle.t2)*CIRC_GRAN),c->end->lc);
-    
   }
-  // MEMORY LEAK (JF)
+
   if (c->cp) Free (c->cp);
   c->cp = (float *) Malloc (4 * List_Nbr (c->Control_Points) * sizeof (float));
   for (i = 0; i < List_Nbr (c->Control_Points); i++){
@@ -451,12 +412,11 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
   THEM->MaxLineNum = IMAX(THEM->MaxLineNum,Num);
   pC->Simplexes = Tree_Create (sizeof (Simplex *), compareSimplex);
   pC->TrsfSimplexes = List_Create (1, 10, sizeof (Simplex *));
-  pC->Circle.done = 0;
   pC->Method = LIBRE;
   pC->degre = Order;
-  pC->Circle.n[0] = 1.0;
+  pC->Circle.n[0] = 0.0;
   pC->Circle.n[1] = 0.0;
-  pC->Circle.n[2] = 0.0;
+  pC->Circle.n[2] = 1.0;
   if (Typ == MSH_SEGM_SPLN){
     for (i = 0; i < 4; i++)
       for (j = 0; j < 4; j++)
