@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.16 2001-05-22 07:11:14 geuzaine Exp $
+// $Id: List.cpp,v 1.17 2001-10-30 16:02:29 geuzaine Exp $
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -383,6 +383,13 @@ List_T *List_CreateFromFile(int n, int size, FILE *file, int format, int swap){
       for(i=0;i<n;i++) fscanf(file, "%f", (float*)&liste->array[i*size]) ;
     else if(size == sizeof(int))
       for(i=0;i<n;i++) fscanf(file, "%d", (int*)&liste->array[i*size]) ;
+    /*
+    else if(size == sizeof(char))
+      for(i=0;i<n;i++){
+	fscanf(file, "%c", (char*)&liste->array[i*size]) ;
+	if(liste->array[i*size]=='^') liste->array[i*size]='\0';
+      }
+    */
     else{
       Msg(GERROR, "Bad type of data to create list from (size = %d)", size);
       return NULL;
@@ -412,6 +419,15 @@ void List_WriteToFile(List_T *liste, FILE *file, int format){
       for(i=0;i<n;i++) fprintf(file, "%g ", *((float*)&liste->array[i*liste->size])) ;
     else if(liste->size == sizeof(int))
       for(i=0;i<n;i++) fprintf(file, "%d ", *((int*)&liste->array[i*liste->size])) ;
+    /*
+    else if(liste->size == sizeof(char))
+      for(i=0;i<n;i++){
+	if(*((char*)&liste->array[i*liste->size]) == '\0')
+	  fprintf(file, "^") ;
+	else
+	  fprintf(file, "%c", *((char*)&liste->array[i*liste->size])) ;
+      }
+    */
     else
       Msg(GERROR, "Bad type of data to write list to file (size = %d)", liste->size);
     fprintf(file, "\n");

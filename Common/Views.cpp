@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.56 2001-10-30 14:27:47 geuzaine Exp $
+// $Id: Views.cpp,v 1.57 2001-10-30 16:02:29 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -471,7 +471,7 @@ void Print_ColorTable(int num, char *prefix, FILE *file){
 
 void Read_View(FILE *file, char *filename){
   char   str[256], name[256];
-  int    nb, format, size, testone, swap;
+  int    nb, format, size, testone, swap, t2l, t3l;
   double version;
   Post_View *v;
 
@@ -517,12 +517,24 @@ void Read_View(FILE *file, char *filename){
 
       v = BeginView(0);
 
-      fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
-             name, &v->NbTimeStep,
-             &v->NbSP, &v->NbVP, &v->NbTP, 
-             &v->NbSL, &v->NbVL, &v->NbTL, 
-             &v->NbST, &v->NbVT, &v->NbTT, 
-             &v->NbSS, &v->NbVS, &v->NbTS);
+      if(version >= 1.1){
+	fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
+	       name, &v->NbTimeStep,
+	       &v->NbSP, &v->NbVP, &v->NbTP, 
+	       &v->NbSL, &v->NbVL, &v->NbTL, 
+	       &v->NbST, &v->NbVT, &v->NbTT, 
+	       &v->NbSS, &v->NbVS, &v->NbTS,
+	       &v->NbT2, &t2l, &v->NbT3, &t3l);
+      }
+      else{
+	fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
+	       name, &v->NbTimeStep,
+	       &v->NbSP, &v->NbVP, &v->NbTP, 
+	       &v->NbSL, &v->NbVL, &v->NbTL, 
+	       &v->NbST, &v->NbVT, &v->NbTT, 
+	       &v->NbSS, &v->NbVS, &v->NbTS);
+	v->NbT2 = t2l = v->NbT3 = t3l = 0;
+      }
 
       swap = 0 ;
       if(format == LIST_FORMAT_BINARY){
@@ -578,17 +590,34 @@ void Read_View(FILE *file, char *filename){
       nb = v->NbTS ? v->NbTS * (v->NbTimeStep*4*9+12) : 0 ;
       v->TS = List_CreateFromFile(nb, size, file, format, swap);
 
-      Msg(DEBUG, "Read View '%s' (%d TimeSteps): %d %d %d %d %d %d %d %d %d %d %d %d",
+      // Strings
+      nb = v->NbT2 ? v->NbT2 * 4 : 0 ;
+      v->T2D = List_CreateFromFile(nb, size, file, format, swap);
+      v->T2C = List_CreateFromFile(t2l, sizeof(char), file, format, swap);      
+
+      nb = v->NbT3 ? v->NbT3 * 5 : 0 ;
+      v->T3D = List_CreateFromFile(nb, size, file, format, swap);
+      v->T3C = List_CreateFromFile(t3l, sizeof(char), file, format, swap);      
+
+
+      Msg(DEBUG, "Read View '%s' (%d TimeSteps): %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
           name, v->NbTimeStep,
           v->NbSP, v->NbVP, v->NbTP, 
           v->NbSL, v->NbVL, v->NbTL, 
           v->NbST, v->NbVT, v->NbTT, 
-          v->NbSS, v->NbVS, v->NbTS);
-      Msg(DEBUG, "List_Nbrs: %d %d %d %d %d %d %d %d %d %d %d %d",
+          v->NbSS, v->NbVS, v->NbTS,
+	  v->NbT2, v->NbT3);
+      Msg(DEBUG, "List_Nbrs: "
+	  "SP%d VP%d TP%d "
+	  "SL%d VL%d TL%d "
+	  "ST%d VT%d TT%d "
+	  "SS%d VS%d TS%d "
+	  "T2D%d T2C%d T3D%d T3C%d",
           List_Nbr(v->SP), List_Nbr(v->VP), List_Nbr(v->TP), 
           List_Nbr(v->SL), List_Nbr(v->VL), List_Nbr(v->TL), 
           List_Nbr(v->ST), List_Nbr(v->VT), List_Nbr(v->TT), 
-          List_Nbr(v->SS), List_Nbr(v->VS), List_Nbr(v->TS));
+          List_Nbr(v->SS), List_Nbr(v->VS), List_Nbr(v->TS),
+	  List_Nbr(v->T2D), List_Nbr(v->T2C), List_Nbr(v->T3D), List_Nbr(v->T3C));
 
       EndView(v, 1, filename, name); 
     }
@@ -620,8 +649,8 @@ void Write_View(int Flag_BIN, Post_View *v, char *filename){
   else
     file = stdout;
  
-  fprintf(file, "$PostFormat /* Gmsh 1.0, %s */\n", Flag_BIN ? "binary" : "ascii") ;
-  fprintf(file, "1.0 %d %d\n", Flag_BIN, (int)sizeof(double)) ;
+  fprintf(file, "$PostFormat /* Gmsh 1.1, %s */\n", Flag_BIN ? "binary" : "ascii") ;
+  fprintf(file, "1.1 %d %d\n", Flag_BIN, (int)sizeof(double)) ;
   fprintf(file, "$EndPostFormat\n") ;
   for(i=0;i<(int)strlen(v->Name);i++) if(v->Name[i]==' ') v->Name[i]='_'; 
   // -> Il faudra changer le format de post pour autoriser les blancs.
@@ -630,10 +659,11 @@ void Write_View(int Flag_BIN, Post_View *v, char *filename){
   // simplexes ?
   fprintf(file, "$View /* %s */\n", v->Name);
   fprintf(file, "%s ", v->Name);
-  fprintf(file, "%d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
+  fprintf(file, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
 	  List_Nbr(v->Time),
 	  v->NbSP, v->NbVP, v->NbTP, v->NbSL, v->NbVL, v->NbTL, 
-	  v->NbST, v->NbVT, v->NbTT, v->NbSS, v->NbVS, v->NbTS);
+	  v->NbST, v->NbVT, v->NbTT, v->NbSS, v->NbVS, v->NbTS,
+	  v->NbT2, List_Nbr(v->T2C), v->NbT3, List_Nbr(v->T3C));
   if(Flag_BIN){
     f = LIST_FORMAT_BINARY;
     fwrite(&One, sizeof(int), 1, file);
@@ -647,6 +677,8 @@ void Write_View(int Flag_BIN, Post_View *v, char *filename){
   List_WriteToFile(v->ST, file, f); List_WriteToFile(v->VT, file, f);
   List_WriteToFile(v->TT, file, f); List_WriteToFile(v->SS, file, f);
   List_WriteToFile(v->VS, file, f); List_WriteToFile(v->TS, file, f);
+  List_WriteToFile(v->T2D, file, f); List_WriteToFile(v->T2C, file, f);
+  List_WriteToFile(v->T3D, file, f); List_WriteToFile(v->T3C, file, f);
   if(Flag_BIN) fprintf(file, "\n");
   fprintf(file, "$EndView\n");
 
