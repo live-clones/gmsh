@@ -40,7 +40,7 @@ int yylex (void);
    prematurely (i.e., in case of a parse error) so that the next time
    we call the scanner, all is nicely reset. Without this, the
    behaviour of the next call after an error is unpredictable.  */
-int force_buffer_flush(void);
+void force_buffer_flush(void);
 
 %}
 

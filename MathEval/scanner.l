@@ -125,4 +125,4 @@ static int input_from_string (char *buffer, int max_size)
   return count;
 }
 
-int force_buffer_flush() { YY_FLUSH_BUFFER; }
+void force_buffer_flush() { YY_FLUSH_BUFFER; }
