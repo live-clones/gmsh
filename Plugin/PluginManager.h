@@ -73,12 +73,5 @@ public :
   // Save. Other plugins may perform other actions.
   void action (char *pluginMane , char *action , void *data); 
 };
+
 #endif
-
-
-
-
-
-
-
-

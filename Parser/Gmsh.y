@@ -1,5 +1,5 @@
 %{ 
-// $Id: Gmsh.y,v 1.148 2003-11-27 02:33:34 geuzaine Exp $
+// $Id: Gmsh.y,v 1.149 2003-11-27 04:32:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -58,7 +58,7 @@ static char tmpstring[1024];
 static Symbol TheSymbol, *pSymbol;
 static Surface *STL_Surf;
 static Shape TheShape;
-static int i, j, k, flag, RecursionLevel = 0, ImbricatedLoop = 0;
+static int i, j, k, flag, ImbricatedLoop = 0;
 static int Last_NumberOfPoints = 0;
 static double d, *pd;
 static ExtrudeParams extr;

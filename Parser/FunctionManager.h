@@ -24,22 +24,20 @@ class mystack;
 class mymap;
 
 #include <stdio.h>
-/*
-  Singleton, one function manager for 
-  all parsers. 
-*/
+
+// Singleton, one function manager for all parsers. 
 
 class FunctionManager
 {
-    mymap *functions;
-    mystack *calls;  
-    FunctionManager ();
-    static FunctionManager *instance;
-  public :
-    static FunctionManager* Instance();
-    int createFunction  (char *name, FILE *f, char *filename, int lineno);
-    int enterFunction (char *name, FILE **f, char *filename, int &lineno) const;
-    int leaveFunction (FILE **f, char *filename, int &lineno);
+  mymap *functions;
+  mystack *calls;  
+  FunctionManager ();
+  static FunctionManager *instance;
+ public :
+  static FunctionManager* Instance();
+  int createFunction(char *name, FILE *f, char *filename, int lineno);
+  int enterFunction(char *name, FILE **f, char *filename, int &lineno) const;
+  int leaveFunction(FILE **f, char *filename, int &lineno);
 };
 
 #endif
