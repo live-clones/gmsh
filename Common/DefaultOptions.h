@@ -336,7 +336,7 @@ StringXString PrintOptions_String[] = {
 // NUMBERS
 
 StringXNumber GeneralOptions_Number[] = {
-  { F|O, "AlphaBlending" , opt_general_alpha_blending , 0. ,
+  { F|O, "AlphaBlending" , opt_general_alpha_blending , 1. ,
     "Enable alpha blending (transparency) in post-processing views" },
   { F|O, "Axes" , opt_general_axes , 1. ,
     "Display the axes linked to the model" },
