@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.73 2004-05-25 23:16:27 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.74 2004-05-26 23:53:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -238,19 +238,19 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	  switch (Type) {
 	  case PNT : Nbr_Nodes = 1; break;
 	  case LGN1: Nbr_Nodes = 2; break;
-	  case LGN2: Nbr_Nodes = 3; break;
+	  case LGN2: Nbr_Nodes = 2 + 1; break;
 	  case TRI1: Nbr_Nodes = 3; break;
-	  case TRI2: Nbr_Nodes = 6; break;
+	  case TRI2: Nbr_Nodes = 3 + 3; break;
 	  case QUA1: Nbr_Nodes = 4; break;
-	  case QUA2: Nbr_Nodes = 8 + 1; break;
+	  case QUA2: Nbr_Nodes = 4 + 4 + 1; break;
 	  case TET1: Nbr_Nodes = 4; break;
-	  case TET2: Nbr_Nodes = 10; break;
+	  case TET2: Nbr_Nodes = 4 + 6; break;
 	  case HEX1: Nbr_Nodes = 8; break;
-	  case HEX2: Nbr_Nodes = 20 + 6; break;
+	  case HEX2: Nbr_Nodes = 8 + 12 + 6; break;
 	  case PRI1: Nbr_Nodes = 6; break;
-	  case PRI2: Nbr_Nodes = 15 + 3; break;
+	  case PRI2: Nbr_Nodes = 6 + 9 + 3; break;
 	  case PYR1: Nbr_Nodes = 5; break;
-	  case PYR2: Nbr_Nodes = 13 + 1; break;
+	  case PYR2: Nbr_Nodes = 5 + 8 + 1; break;
 	  }
 	}
 

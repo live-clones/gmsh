@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.84 2004-05-25 23:16:26 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.85 2004-05-26 23:53:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -166,23 +166,23 @@ void Draw_Mesh(Mesh * M)
 			    CTX.mesh.volumes_num || 
 			    (CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_as_surface &&
 			     (CTX.mesh.surfaces_edges || CTX.mesh.surfaces_faces)))) {
-	Tree_Action(M->Volumes, Draw_Mesh_Volumes);
+	Tree_Action(M->Volumes, Draw_Mesh_Volume);
       }
 
       if(M->status >= 2 && (CTX.mesh.surfaces_faces || CTX.mesh.surfaces_edges ||
 			    CTX.mesh.surfaces_num || CTX.mesh.normals)) {
-        Tree_Action(M->Surfaces, Draw_Mesh_Surfaces);
+        Tree_Action(M->Surfaces, Draw_Mesh_Surface);
         if(CTX.mesh.oldxtrude)  //old extrusion algo
           Tree_Action(M->Volumes, Draw_Mesh_Extruded_Surfaces);
       }
 
       if(M->status >= 1 && (CTX.mesh.lines || CTX.mesh.lines_num || 
 			    CTX.mesh.tangents)) {
-        Tree_Action(M->Curves, Draw_Mesh_Curves);
+        Tree_Action(M->Curves, Draw_Mesh_Curve);
       }
 
       if(M->status >= 0 && (CTX.mesh.points || CTX.mesh.points_num)) {
-        Tree_Action(M->Vertices, Draw_Mesh_Points);
+        Tree_Action(M->Vertices, Draw_Mesh_Point);
       }
 
     }
@@ -211,7 +211,7 @@ void Draw_Mesh(Mesh * M)
   }
 }
 
-void Draw_Mesh_Volumes(void *a, void *b)
+void Draw_Mesh_Volume(void *a, void *b)
 {
   Volume *v = *(Volume **) a;
   Tree_Action(v->Simplexes, Draw_Mesh_Tetrahedron);
@@ -220,7 +220,7 @@ void Draw_Mesh_Volumes(void *a, void *b)
   Tree_Action(v->Pyramids, Draw_Mesh_Pyramid);
 }
 
-void Draw_Mesh_Surfaces(void *a, void *b)
+void Draw_Mesh_Surface(void *a, void *b)
 {
   Surface *s = *(Surface **) a;
   theColor = s->Color;
@@ -241,7 +241,7 @@ void Draw_Mesh_Extruded_Surfaces(void *a, void *b)
   Tree_Action(v->Quad_Surf, Draw_Mesh_Quadrangle);
 }
 
-void Draw_Mesh_Curves(void *a, void *b)
+void Draw_Mesh_Curve(void *a, void *b)
 {
   Curve *c = *(Curve **) a;
   if(c->Num < 0)
@@ -280,7 +280,7 @@ double intersectCutPlane(int num, Vertex **v)
   return intersectCutPlane(num, v, &dummy, &dummy);
 }
 
-void Draw_Mesh_Points(void *a, void *b)
+void Draw_Mesh_Point(void *a, void *b)
 {
   Vertex *v;
   char Num[100];
@@ -769,7 +769,7 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
   if(part && !(*part)->Visible)
     return;
 
-  // FIXME: move this in Draw_Mesh_Volumes as soon as a coherent
+  // FIXME: move this in Draw_Mesh_Volume as soon as a coherent
   // structure exists for volumes
   Volume *v = FindVolume(s->iEnt, THEM);
   if(v){
@@ -927,7 +927,7 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
   if(part && !(*part)->Visible)
     return;
 
-  // FIXME: move this in Draw_Mesh_Volumes as soon as a coherent
+  // FIXME: move this in Draw_Mesh_Volume as soon as a coherent
   // structure exists for volumes
   Volume *v = FindVolume(h->iEnt, THEM);
   if(v){
@@ -1099,7 +1099,7 @@ void Draw_Mesh_Prism(void *a, void *b)
   if(part && !(*part)->Visible)
     return;
 
-  // FIXME: move this in Draw_Mesh_Volumes as soon as a coherent
+  // FIXME: move this in Draw_Mesh_Volume as soon as a coherent
   // structure exists for volumes
   Volume *v = FindVolume(p->iEnt, THEM);
   if(v){
@@ -1265,7 +1265,7 @@ void Draw_Mesh_Pyramid(void *a, void *b)
   if(part && !(*part)->Visible)
     return;
 
-  // FIXME: move this in Draw_Mesh_Volumes as soon as a coherent
+  // FIXME: move this in Draw_Mesh_Volume as soon as a coherent
   // structure exists for volumes
   Volume *v = FindVolume(p->iEnt, THEM);
   if(v){

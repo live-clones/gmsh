@@ -45,7 +45,6 @@ void set_s(int i, double val);
 void PaletteContinuous(Post_View * View, double min, double max, double val);
 void PaletteContinuousLinear(Post_View * v, double min, double max, double val);
 void PaletteDiscrete(Post_View * View, int nbi, int i);
-void ColorSwitch(int i);
 
 char SelectEntity(int type, Vertex **v, Curve **c, Surface **s);
 void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent);
@@ -59,7 +58,6 @@ void Draw(void);
 
 void Draw_String(char *s);
 void Draw_Geom(Mesh *m);
-void Draw_Mesh(Mesh *M);
 void Draw_Post(void);
 void Draw_Graph2D(void);
 void Draw_Text2D(void);
@@ -82,17 +80,16 @@ void Draw_Vector(int Type, int Fill,
 		 double relHeadRadius, double relStemLength, double relStemRadius,
 		 double x, double y, double z, double dx, double dy, double dz,
 		 double Raise[3][8], int light);
-
-void Draw_Mesh_Volumes(void *a, void *b);
-void Draw_Mesh_Surfaces(void *a, void *b);
+void Draw_Mesh(Mesh *M);
+void Draw_Mesh_Volume(void *a, void *b);
+void Draw_Mesh_Surface(void *a, void *b);
 void Draw_Mesh_Extruded_Surfaces(void *a, void *b);
-void Draw_Mesh_Curves(void *a, void *b);
-void Draw_Mesh_Points(void *a, void *b);
-
-void Draw_Mesh_Tetrahedron(void *a, void *b);
+void Draw_Mesh_Curve(void *a, void *b);
+void Draw_Mesh_Point(void *a, void *b);
+void Draw_Mesh_Line(void *a, void *b);
 void Draw_Mesh_Triangle(void *a, void *b);
-void Draw_Mesh_Line(void *a,void *b);
 void Draw_Mesh_Quadrangle(void *a, void *b);
+void Draw_Mesh_Tetrahedron(void *a, void *b);
 void Draw_Mesh_Hexahedron(void *a, void *b);
 void Draw_Mesh_Prism(void *a, void *b);
 void Draw_Mesh_Pyramid(void *a, void *b);
