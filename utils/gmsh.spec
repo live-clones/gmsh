@@ -7,7 +7,7 @@ Release: 1
 Copyright: distributable
 Group: Applications/Engineering
 URL: http://www.geuz.org/gmsh/
-Packager: Christophe.Geuzaine@AdValvas.be
+Packager: geuz@geuz.org
 Buildroot: /var/tmp/%{name}-buildroot
 Requires: Mesa >= 3.2
 

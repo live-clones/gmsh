@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.179 2002-01-19 00:13:33 geuzaine Exp $
+# $Id: Makefile,v 1.180 2002-01-19 00:40:07 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 33
@@ -437,7 +437,7 @@ distrib-hp:
 	make hp
 	make distrib
 #
-# IBM Aix
+# IBM AIX
 #
 compile-ibm: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
