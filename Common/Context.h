@@ -108,6 +108,7 @@ public :
   int small_axes_pos[2];      // small axes position 
   int threads, threads_lock;  // threads?, lock (should be a mutex...) 
   int alpha;                  // enable alpha blending 
+  int fake_transparency;      // use fake transparency (a la xpost)
   double zoom_factor;         // mouse2 zoom coefficient
 
   int fontsize;               // font size for fltk UI

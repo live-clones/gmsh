@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.67 2004-06-01 16:49:01 geuzaine Exp $
+// $Id: Post.cpp,v 1.68 2004-06-04 02:07:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -407,36 +407,48 @@ void Draw_Post(void)
 	break;
       }
 
-      // if we don't use vertex arrays, do a simple sort of
-      // transparent views (hybrid views will be sorted incorrectly;
-      // use Plugin(DecomposeInSimplex) and View->Combine to do remedy
-      // this limitation)
-      if(!CTX.post.vertex_arrays && CTX.alpha && ColorTable_IsAlpha(&v->CT) && 
-	 v->DrawScalars && (changedEye() || v->Changed)) {
-	Msg(DEBUG, "Sorting View[%d] for transparency (NO vertex array)", v->Index);
-	if(v->NbST && v->DrawTriangles) {
-	  nb = List_Nbr(v->ST) / v->NbST;
-	  qsort(v->ST->array, v->NbST, nb * sizeof(double), compareEye3Nodes);
+      // initialize alpha blending for transparency
+      if(CTX.alpha && ColorTable_IsAlpha(&v->CT)){
+	if(CTX.fake_transparency){ // "a la xpost"
+	  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	  glEnable(GL_BLEND);
+	  glDisable(GL_DEPTH_TEST);
 	}
-	if(v->NbSQ && v->DrawQuadrangles) {
-	  nb = List_Nbr(v->SQ) / v->NbSQ;
-	  qsort(v->SQ->array, v->NbSQ, nb * sizeof(double), compareEye4Nodes);
-	}
-	if(v->NbSS && v->DrawTetrahedra) {
-	  nb = List_Nbr(v->SS) / v->NbSS;
-	  qsort(v->SS->array, v->NbSS, nb * sizeof(double), compareEye4Nodes);
-	}
-	if(v->NbSH && v->DrawHexahedra) {
-	  nb = List_Nbr(v->SH) / v->NbSH;
-	  qsort(v->SH->array, v->NbSH, nb * sizeof(double), compareEye8Nodes);
-	}
-	if(v->NbSI && v->DrawPrisms) {
-	  nb = List_Nbr(v->SI) / v->NbSI;
-	  qsort(v->SI->array, v->NbSI, nb * sizeof(double), compareEye6Nodes);
-	}
-	if(v->NbSY && v->DrawPyramids) {
-	  nb = List_Nbr(v->SY) / v->NbSY;
-	  qsort(v->SY->array, v->NbSY, nb * sizeof(double), compareEye5Nodes);
+	else{
+	  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	  glEnable(GL_BLEND);
+	  // if we don't use vertex arrays, do a simple sort of
+	  // transparent views (hybrid views will be sorted incorrectly;
+	  // use Plugin(DecomposeInSimplex) and View->Combine to do remedy
+	  // this limitation)
+	  if(!CTX.post.vertex_arrays && v->DrawScalars && 
+	     (changedEye() || v->Changed)) {
+	    Msg(DEBUG, "Sorting View[%d] for transparency (NO vertex array)", v->Index);
+	    if(v->NbST && v->DrawTriangles) {
+	      nb = List_Nbr(v->ST) / v->NbST;
+	      qsort(v->ST->array, v->NbST, nb * sizeof(double), compareEye3Nodes);
+	    }
+	    if(v->NbSQ && v->DrawQuadrangles) {
+	      nb = List_Nbr(v->SQ) / v->NbSQ;
+	      qsort(v->SQ->array, v->NbSQ, nb * sizeof(double), compareEye4Nodes);
+	    }
+	    if(v->NbSS && v->DrawTetrahedra) {
+	      nb = List_Nbr(v->SS) / v->NbSS;
+	      qsort(v->SS->array, v->NbSS, nb * sizeof(double), compareEye4Nodes);
+	    }
+	    if(v->NbSH && v->DrawHexahedra) {
+	      nb = List_Nbr(v->SH) / v->NbSH;
+	      qsort(v->SH->array, v->NbSH, nb * sizeof(double), compareEye8Nodes);
+	    }
+	    if(v->NbSI && v->DrawPrisms) {
+	      nb = List_Nbr(v->SI) / v->NbSI;
+	      qsort(v->SI->array, v->NbSI, nb * sizeof(double), compareEye6Nodes);
+	    }
+	    if(v->NbSY && v->DrawPyramids) {
+	      nb = List_Nbr(v->SY) / v->NbSY;
+	      qsort(v->SY->array, v->NbSY, nb * sizeof(double), compareEye5Nodes);
+	    }
+	  }
 	}
       }
       
@@ -529,7 +541,8 @@ void Draw_Post(void)
 
       if(v->TriVertexArray && v->TriVertexArray->num){
 
-	if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && (changedEye() || v->Changed)){
+	if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && !CTX.fake_transparency &&
+	   (changedEye() || v->Changed)){
 	  Msg(DEBUG, "Sorting View[%d] for transparency (WITH vertex array)", v->Index);
 	  v->TriVertexArray->sort(storedEye);
 	}
@@ -559,6 +572,12 @@ void Draw_Post(void)
       if(v->DrawStrings) {
 	glColor4ubv((GLubyte *) & CTX.color.text);
 	Draw_Text2D3D(3, v->TimeStep, v->NbT3, v->T3D, v->T3C);
+      }
+
+      // reset alpha blending
+      if(CTX.alpha){
+	glDisable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
       }
       
       v->Changed = 0;

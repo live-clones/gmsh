@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.313 2004-06-02 00:16:30 geuzaine Exp $
+// $Id: GUI.cpp,v 1.314 2004-06-04 02:07:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1458,7 +1458,7 @@ void GUI::create_option_window()
       gen_butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW, BH, "Show small axes");
       gen_butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, BW, BH, "Enable fast redraw");
       gen_butt[3] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, BW, BH, "Enable double buffering");
-      gen_butt[4] = new Fl_Check_Button(2 * WB, 2 * WB + 6 * BH, BW, BH, "Enable alpha blending");
+      gen_butt[4] = new Fl_Check_Button(2 * WB, 2 * WB + 6 * BH, BW, BH, "Use fake transparency");
       gen_butt[5] = new Fl_Check_Button(2 * WB, 2 * WB + 7 * BH, BW, BH, "Use trackball rotation mode");
       for(i = 0; i < 6; i++) {
         gen_butt[i]->type(FL_TOGGLE_BUTTON);

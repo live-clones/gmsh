@@ -445,6 +445,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "DoubleBuffer" , opt_general_double_buffer , 1. ,
     "Use a double buffered graphic window (on Unix, should be set to 0 when working on a remote host without GLX)" },
 
+  { F|O, "FakeTransparency" , opt_general_fake_transparency , 0. ,
+    "Use fake transparency (cheaper than the real thing, but incorrect)" },
   { F|O, "FastRedraw" , opt_general_fast_redraw , 1. ,
     "Fast redraw (no mesh or view display) when interacting with the model" },
   { F|S, "FontSize" , opt_general_fontsize , 12. , 

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.163 2004-06-02 00:16:30 geuzaine Exp $
+// $Id: Options.cpp,v 1.164 2004-06-04 02:07:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2327,11 +2327,18 @@ double opt_general_alpha_blending(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.alpha = (int)val;
+  return CTX.alpha;
+}
+
+double opt_general_fake_transparency(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.fake_transparency = (int)val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->gen_butt[4]->value(CTX.alpha);
+    WID->gen_butt[4]->value(CTX.fake_transparency);
 #endif
-  return CTX.alpha;
+  return CTX.fake_transparency;
 }
 
 double opt_general_vector_type(OPT_ARGS_NUM)

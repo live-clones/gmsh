@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.58 2004-06-02 15:04:33 geuzaine Exp $
+// $Id: Draw.cpp,v 1.59 2004-06-04 02:07:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -36,14 +36,9 @@ extern Mesh M;
 
 void Draw3d(void)
 {
-  if(CTX.alpha) {
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-  }
   glPolygonOffset(1.0, 1.0);
   glDepthFunc(GL_LESS);
   glEnable(GL_DEPTH_TEST);
-  glDisable(GL_CULL_FACE);
 
   InitRenderModel();
 
