@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.8 2003-11-24 21:38:40 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.9 2004-01-25 09:28:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,7 @@
 #include "Levelset.h"
 #include "DecomposeInSimplex.h"
 #include "List.h"
+#include "Tools.h"
 #include "Views.h"
 #include "Iso.h"
 #include "Numeric.h"
@@ -525,13 +526,19 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
     EndView(out[i], 1, filename, name);
   }
 
-  // remove empty views (this is a bit ugly because, due to the
-  // dynamic GUI events, this should actually be locked...)
-  for(int i = List_Nbr(CTX.post.list) - 1; i >= 0; --i) {
-    w = (Post_View*) List_Pointer_Test(CTX.post.list, i);
-    if(w && w->empty())
-      RemoveViewByIndex(i);
+  // remove empty views
+  List_T *to_remove = List_Create(10, 10, sizeof(int));
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+    w = (Post_View*) List_Pointer(CTX.post.list, i);
+    if(w->empty())
+      List_Insert(to_remove, &w->Num, fcmp_int);
   }
+  for(int i = 0; i < List_Nbr(to_remove); i++) {
+    int num;
+    List_Read(to_remove, i, &num);
+    RemoveViewByNumber(num);
+  }
+  List_Delete(to_remove);
 
   return 0;
 }
