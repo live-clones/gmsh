@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.29 2003-03-06 23:01:17 geuzaine Exp $
+$Id: FAQ,v 1.30 2003-04-21 22:29:09 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -32,9 +32,10 @@ pronouncing it could be 'Gnu-mesh'...)
 
 * 1.4 Where can I find more information?
 
-<http://www.geuz.org/gmsh/> is the primary site to obtain information
-about Gmsh. You will for example find a searchable archive of the Gmsh
-mailing list (<gmsh@geuz.org>) on this site.
+<http://www.geuz.org/gmsh/> is the primary location to obtain
+information about Gmsh. You will for example find a complete reference
+manual as well as a searchable archive of the Gmsh mailing list
+(<gmsh@geuz.org>) on this webpage.
 
 ********************************************************************
 
