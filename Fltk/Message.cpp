@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.46 2004-02-07 01:28:51 geuzaine Exp $
+// $Id: Message.cpp,v 1.47 2004-05-09 18:59:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -203,6 +203,19 @@ void Msg(int level, char *fmt, ...)
 
 void Exit(int level)
 {
+  // delete the temp file
+  unlink(CTX.tmprc_filename);
+
+  if(level){
+    // in case of an abnormal exit, force the abort directly
+    // (bypassing any post main stuff, e.g. destructors for static
+    // variables). This still guarantees that any open streams are
+    // flushed and closed, but can prevent nasty infinite loops.
+    abort();
+  }
+
+  // if we exit cleanly (level==0) and we are in full GUI mode, save
+  // the persistent info to disk
   if(WID && !CTX.batch) {
     if(CTX.session_save) {
       CTX.position[0] = WID->m_window->x();
@@ -219,19 +232,17 @@ void Exit(int level)
       CTX.stat_position[1] = WID->stat_window->y();
       CTX.vis_position[0] = WID->vis_window->x();
       CTX.vis_position[1] = WID->vis_window->y();
-      // bof
       CTX.ctx_position[0] = WID->context_geometry_window->x();
       CTX.ctx_position[1] = WID->context_geometry_window->y();
       CTX.solver_position[0] = WID->solver[0].window->x();
       CTX.solver_position[1] = WID->solver[0].window->y();
-
       Print_Options(0, GMSH_SESSIONRC, CTX.sessionrc_filename);
     }
     if(CTX.options_save)
       Print_Options(0, GMSH_OPTIONSRC, CTX.optionsrc_filename);
   }
-  unlink(CTX.tmprc_filename);     //delete temp file
-  exit(level);
+
+  exit(0);
 }
 
 // CPU time computation, etc.
