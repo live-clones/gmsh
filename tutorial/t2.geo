@@ -12,15 +12,15 @@
 
 Include "t1.geo";
 
-// We can then add new points and lines and surfaces in the same way
-// as we did in `t1.geo':
+// We can then add new points and lines in the same way as we did in
+// `t1.geo':
 
 Point(5) = {0, .4, 0, lc};
 Line(5) = {4, 5};
 
 // But Gmsh also provides tools to tranform (translate, rotate, etc.)
 // elementary entities or copies of elementary entities. For example,
-// the point 3 can be moved by 0.05 units on the left with:
+// the point 3 can be moved by 0.05 units to the left with:
 
 Translate {-0.05,0,0} { Point{3}; }
 
@@ -46,8 +46,8 @@ Plane Surface(11) = {10};
 Extrude Surface { 11, {0, 0, h} };
 
 // All these geometrical transformations automatically generate new
-// elementary entities. The following command permits to specify
-// manually a characteristic length for some of the new points:
+// elementary entities. The following command permits to manually
+// specify a characteristic length for some of the new points:
 
 Characteristic Length {6, 22, 2, 3, 16, 12} = lc * 2;
 

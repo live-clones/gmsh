@@ -69,16 +69,16 @@ General.TranslationX = -0.2;
 
 // Note that all colors can be defined literally or numerically, i.e.
 // `General.Color.Background = Red' is equivalent to
-// `General.Color.Background = {255,0,0}'; and that, as with
+// `General.Color.Background = {255,0,0}'; and also note that, as with
 // user-defined variables, the options can be used either as right or
-// left hand sides, so that the following command will set the
-// surface color to the same color as the points:
+// left hand sides, so that the following command will set the surface
+// color to the same color as the points:
 
 Geometry.Color.Surfaces = Geometry.Color.Points;
 
 // You can click on the `?'  button in the status bar of the graphic
 // window to see the current values of all options. To save all the
-// options to a file, you can use the `File->Save as->Gmsh options'
+// options in a file, you can use the `File->Save as->Gmsh options'
 // menu. To save the current options as the default options for all
 // future Gmsh sessions, you should use the `Tools->Options->Save'
 // button.

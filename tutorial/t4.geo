@@ -58,8 +58,7 @@ Line(2)  = {17,16};
 // Since not all curves are straight lines, Gmsh provides many other
 // curve primitives: splines, B-splines, circle arcs, ellipse arcs,
 // etc. Here we define a new circle arc, starting at point 14 and
-// ending at point 16, and with the circle's center being the point
-// 15:
+// ending at point 16, with the circle's center being the point 15:
 
 Circle(3) = {14,15,16};
  
@@ -94,9 +93,9 @@ Plane Surface(22) = {21};
 Line Loop(23) = {11,-12,13,14,1,2,-3,4,5,6,7,-8,9,10};
 Plane Surface(24) = {23,21};
 
-// Finally, we can add some comments by simply embedding a
-// post-processing view containg some strings, and change the color of
-// some mesh entities:
+// Finally, we can add some comments by embedding a post-processing
+// view containing some strings, and change the color of some mesh
+// entities:
 
 View "comments" {
   // 10 pixels from the left and 15 pixels from the top of the graphic
