@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.47 2005-03-12 00:59:41 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.48 2005-03-12 07:52:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -138,13 +138,13 @@ static void Draw_Graph2D(Post_View * v, double xx, double yy,
 
   // axes
 
-  if(v->Grid) {
+  if(v->Axes) {
     glColor4ubv((GLubyte *) & CTX.color.fg);
     glBegin(GL_LINE_STRIP);
     glVertex2d(xtop, ytop);
     glVertex2d(xtop, ytop - height);
     glVertex2d(xtop + width, ybot);
-    if(v->Grid > 1) {
+    if(v->Axes > 1) {
       glVertex2d(xtop + width, ytop);
       glVertex2d(xtop, ytop);
     }
@@ -160,17 +160,17 @@ static void Draw_Graph2D(Post_View * v, double xx, double yy,
   dy = height / (double)nb;
   dv = (ValMax - ValMin) / (double)nb;
   for(i = 0; i < nb + 1; i++) {
-    if(v->Grid > 0) {
+    if(v->Axes > 0) {
       glColor4ubv((GLubyte *) & CTX.color.fg);
       glBegin(GL_LINES);
       glVertex2d(xtop, ytop - i * dy);
       glVertex2d(xtop + tic, ytop - i * dy);
-      if(v->Grid > 1) {
+      if(v->Axes > 1) {
         glVertex2d(xtop + width - tic, ytop - i * dy);
         glVertex2d(xtop + width, ytop - i * dy);
       }
       glEnd();
-      if(v->Grid > 2 && i != 0 && i != nb) {
+      if(v->Axes > 2 && i != 0 && i != nb) {
         glEnable(GL_LINE_STIPPLE);
         glLineStipple(1, 0x1111);
         gl2psEnable(GL2PS_LINE_STIPPLE);
@@ -231,7 +231,7 @@ static void Draw_Graph2D(Post_View * v, double xx, double yy,
     AbsMax = *(double *)List_Pointer(v->Time, List_Nbr(v->Time) - 1);
   }
 
-  nb = v->NbTics[0];
+  nb = v->AxesTics[0];
   if(v->ShowScale) {
     sprintf(label, v->AxesFormat[0], -M_PI/1.e4);
     if((nb-1) * gl_width(label) > width)
@@ -242,17 +242,17 @@ static void Draw_Graph2D(Post_View * v, double xx, double yy,
   dx = width / (double)(nb - 1);
   
   for(i = 0; i < nb; i++) {
-    if(v->Grid > 0) {
+    if(v->Axes > 0) {
       glColor4ubv((GLubyte *) & CTX.color.fg);
       glBegin(GL_LINES);
       glVertex2d(xtop + i * dx, ybot);
       glVertex2d(xtop + i * dx, ybot + tic);
-      if(v->Grid > 1) {
+      if(v->Axes > 1) {
         glVertex2d(xtop + i * dx, ytop);
         glVertex2d(xtop + i * dx, ytop - tic);
       }
       glEnd();
-      if(v->Grid > 2 && i != 0 && i != nb - 1) {
+      if(v->Axes > 2 && i != 0 && i != nb - 1) {
         glEnable(GL_LINE_STIPPLE);
         glLineStipple(1, 0x1111);
         gl2psEnable(GL2PS_LINE_STIPPLE);
@@ -384,8 +384,8 @@ void Draw_Graph2D(void)
   for(int i = 0; i < List_Nbr(todraw); i++) {
     Post_View *v = *(Post_View **) List_Pointer(todraw, i);
 
-    if(!v->AutoPosition2D) {
-      Draw_Graph2D(v, v->Position2D[0], v->Position2D[1], v->Size2D[0], v->Size2D[1], tic);
+    if(!v->AutoPosition) {
+      Draw_Graph2D(v, v->Position[0], v->Position[1], v->Size[0], v->Size[1], tic);
     }
     else{
       double winw = CTX.viewport[2] - CTX.viewport[0];

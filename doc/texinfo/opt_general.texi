@@ -1,4 +1,34 @@
 @ftable @code
+@item General.AxesFormatX
+Number format for X-axis (in standard C form)@*
+Default value: @code{"%.3g"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.AxesFormatY
+Number format for Y-axis (in standard C form)@*
+Default value: @code{"%.3g"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.AxesFormatZ
+Number format for Z-axis (in standard C form)@*
+Default value: @code{"%.3g"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.AxesLabelX
+X-axis label@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.AxesLabelY
+Y-axis label@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.AxesLabelZ
+Z-axis label@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.DefaultFileName
 Default project file name@*
 Default value: @code{"untitled.geo"}@*
@@ -70,13 +100,58 @@ Default value: @code{0.02}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Axes
-Display the axes linked to the model@*
+Axes (0=none, 1=simple axes, 2=box, 3=full grid, 4=open grid)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item General.AxesSize
-Size (in pixels) of moving axes@*
-Default value: @code{100}@*
+@item General.AxesAutoPosition
+Position the axes automatically@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.AxesMaxX
+Maximum X-axis coordinate@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.AxesMaxY
+Maximum Y-axis coordinate@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.AxesMaxZ
+Maximum Z-axis coordinate@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.AxesMinX
+Minimum X-axis coordinate@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.AxesMinY
+Minimum Y-axis coordinate@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.AxesMinZ
+Minimum Z-axis coordinate@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.AxesTicsX
+Number of tics on the X-axis@*
+Default value: @code{5}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.AxesTicsY
+Number of tics on the Y-axis@*
+Default value: @code{5}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.AxesTicsZ
+Number of tics on the Z-axis@*
+Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Clip0
@@ -776,7 +851,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.Color.Axes
 Axes color@*
-Default value: @code{@{255,255,0@}}@*
+Default value: @code{@{255,255,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Color.SmallAxes

@@ -75,14 +75,16 @@ class Post_View{
 
   // options
   int Type;
-  int Position2D[2], Size2D[2], AutoPosition2D, AutoPosition3D;
-  double Position3D[6];
-  char   Format[256], AxesFormat[3][256], AxesLabel[3][256];
+  int Position[2], Size[2], AutoPosition;
+  char Format[256];
+  int Axes, AxesAutoPosition, AxesTics[3];
+  char AxesFormat[3][256], AxesLabel[3][256];
+  double AxesPosition[6];
   double CustomMin, CustomMax;
   double Offset[3], Raise[3], Transform[3][3], DisplacementFactor, Explode;
   double ArrowSize, ArrowRelHeadRadius, ArrowRelStemRadius, ArrowRelStemLength;
   double Normals, Tangents;
-  int Visible, IntervalsType, NbIso, NbTics[3], ArrowSizeProportional;
+  int Visible, IntervalsType, NbIso, ArrowSizeProportional;
   int Light, LightTwoSide, SmoothNormals;
   double AngleSmoothNormals;
   int SaturateValues, FakeTransparency;
@@ -94,7 +96,7 @@ class Post_View{
   int DrawPoints, DrawLines, DrawTriangles, DrawQuadrangles;
   int DrawTetrahedra, DrawHexahedra, DrawPrisms, DrawPyramids;
   int DrawScalars, DrawVectors, DrawTensors;
-  int Boundary, Grid, PointType, LineType;
+  int Boundary, PointType, LineType;
   double PointSize, LineWidth;
   GmshColorTable CT;
   int ExternalViewIndex, ViewIndexForGenRaise;

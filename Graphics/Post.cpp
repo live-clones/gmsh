@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.96 2005-03-12 00:59:41 geuzaine Exp $
+// $Id: Post.cpp,v 1.97 2005-03-12 07:52:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -782,9 +782,10 @@ void Draw_Post(void)
       for(int i = 0; i < 6; i++)
 	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
-      if(v->Grid && v->Type == DRAW_POST_3D){
-	if(!v->AutoPosition3D){
-	  Draw_3DGrid(v->Grid, v->NbTics, v->AxesFormat, v->AxesLabel, v->Position3D);
+      if(v->Axes && v->Type == DRAW_POST_3D){
+	glColor4ubv((GLubyte *) & CTX.color.fg);
+	if(!v->AxesAutoPosition){
+	  Draw_Axes(v->Axes, v->AxesTics, v->AxesFormat, v->AxesLabel, v->AxesPosition);
 	}
 	else{
 	  int ok = 1;
@@ -795,7 +796,7 @@ void Draw_Post(void)
 	    }
 	  }
 	  if(ok)
-	    Draw_3DGrid(v->Grid, v->NbTics, v->AxesFormat, v->AxesLabel, v->TmpBBox);
+	    Draw_Axes(v->Axes, v->AxesTics, v->AxesFormat, v->AxesLabel, v->TmpBBox);
 	}
       }
       

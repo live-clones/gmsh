@@ -69,8 +69,6 @@ void Draw_Text2D3D(int dim, int timestep, int nb, List_T *td, List_T *tc);
 void FixText2DCoordinates(double *x, double *y);
 void Draw_OnScreenMessages(void);
 void Draw_Scales(void);
-void Draw_Axes(void);
-void Draw_SmallAxes(void);
 void Draw_Disk(double size, double rint, double x, double y, double z, int light);
 void Draw_Sphere(double size, double x, double y, double z, int light);
 void Draw_Cylinder(double width, double *x, double *y, double *z, int light);
@@ -85,8 +83,9 @@ void Draw_Vector(int Type, int Fill,
 void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
 			     double xmax, double ymax, double zmax,
 			     double a, double b, double c, double d);
-void Draw_3DGrid(int mode, int tics[3], char format[3][256], char label[3][256],
-		 double bbox[6]);
+void Draw_SmallAxes(void);
+void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
+	       double bbox[6]);
 
 void Draw_Mesh(Mesh *M);
 void Draw_Mesh_Volume(void *a, void *b);

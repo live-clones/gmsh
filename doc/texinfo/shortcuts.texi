@@ -87,7 +87,7 @@ Show visibility window
 @sp 1 @c ----------------------------------------------
 
 @item Alt+a
-Hide/show small axes 
+Loop through axes modes
 @item Alt+b
 Hide/show bounding boxes
 @item Alt+c
@@ -97,7 +97,7 @@ Change surface mesh display mode (solid/wireframe)
 @item Alt+f
 Change redraw mode (fast/full) 
 @item Alt+g
-Loop through grid modes for all post-processing views 
+Loop through grid modes for visible post-processing views 
 @item Alt+h
 Hide/show all post-processing views 
 @item Alt+i
@@ -115,7 +115,7 @@ Hide/show geometry points
 @item Alt+s
 Hide/show geometry surfaces
 @item Alt+t
-Loop through interval modes for all post-processing views 
+Loop through interval modes for visible post-processing views 
 @item Alt+v
 Hide/show geometry volumes
 @item Alt+w
@@ -130,7 +130,7 @@ Set Z view
 @sp 1 @c ----------------------------------------------
 
 @item Alt+Shift+a
-Hide/show moving axes 
+Hide/show small axes 
 @item Alt+Shift+l
 Hide/show surface mesh edges
 @item Alt+Shift+p

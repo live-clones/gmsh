@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.75 2005-03-11 08:56:38 geuzaine Exp $
+// $Id: Draw.cpp,v 1.76 2005-03-12 07:52:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,7 @@ int NeedPolygonOffset()
   for(int i = 0; i < List_Nbr(CTX.post.list); i++){
     Post_View *v = *(Post_View**)List_Pointer(CTX.post.list, i);
     if(v->Visible){
-      if(v->ShowElement || v->Grid)
+      if(v->ShowElement || v->Axes)
 	return 1;
       if((v->NbST || v->NbSQ) && (v->IntervalsType == DRAW_POST_ISO))
 	return 1;
@@ -275,6 +275,12 @@ void InitPosition(void)
     glTranslated(-CTX.rotation_center[0],
 		 -CTX.rotation_center[1],
 		 -CTX.rotation_center[2]);
+
+  // store the projection and modelview matrices at this precise
+  // moment (so that we can use them at any later time, even if the
+  // context has changed, i.e., even if we are out of Draw())
+  glGetDoublev(GL_PROJECTION_MATRIX, CTX.proj);
+  glGetDoublev(GL_MODELVIEW_MATRIX, CTX.model);
 }
 
 // Entity selection
@@ -355,18 +361,18 @@ void Filter_SelectionBuffer(int n, GLuint * typ, GLuint * ient,
 void unproject(double x, double y, double p[3], double d[3])
 {
   GLint viewport[4];
-  GLdouble model[16], proj[16];
   glGetIntegerv(GL_VIEWPORT, viewport);
-  glGetDoublev(GL_PROJECTION_MATRIX, proj);
-  glGetDoublev(GL_MODELVIEW_MATRIX, model);
 
   y = viewport[3]-y;
 
   GLdouble x0, y0, z0, x1, y1, z1;
+
+  // we use CTX.model and CTX.proj instead of directly getGetDouble'ing
+  // the matrices since unproject can be called in or after Draw2D
   
-  if(!gluUnProject(x, y, 0.0, model, proj, viewport, &x0, &y0, &z0))
+  if(!gluUnProject(x, y, 0.0, CTX.model, CTX.proj, viewport, &x0, &y0, &z0))
     Msg(WARNING, "unproject1 failed");
-  if(!gluUnProject(x, y, 1.0, model, proj, viewport, &x1, &y1, &z1))
+  if(!gluUnProject(x, y, 1.0, CTX.model, CTX.proj, viewport, &x1, &y1, &z1))
     Msg(WARNING, "unproject2 failed");
   
   p[0] = x0;

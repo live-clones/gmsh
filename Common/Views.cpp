@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.166 2005-03-12 00:59:40 geuzaine Exp $
+// $Id: Views.cpp,v 1.167 2005-03-12 07:52:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -611,13 +611,14 @@ void FreeView(Post_View * v)
 void CopyViewOptions(Post_View * src, Post_View * dest)
 {
   dest->Type = src->Type;
-  dest->AutoPosition2D = src->AutoPosition2D;
-  dest->AutoPosition3D = src->AutoPosition3D;
-  dest->Position2D[0] = src->Position2D[0];
-  dest->Position2D[1] = src->Position2D[1];
-  dest->Size2D[0] = src->Size2D[0];
-  dest->Size2D[1] = src->Size2D[1];
-  for(int i = 0; i < 6; i++) dest->Position3D[i] = src->Position3D[i];
+  dest->AutoPosition = src->AutoPosition;
+  dest->AxesAutoPosition = src->AxesAutoPosition;
+  dest->Position[0] = src->Position[0];
+  dest->Position[1] = src->Position[1];
+  dest->Size[0] = src->Size[0];
+  dest->Size[1] = src->Size[1];
+  for(int i = 0; i < 6; i++) dest->AxesPosition[i] = src->AxesPosition[i];
+  for(int i = 0; i < 3; i++) dest->AxesTics[i] = src->AxesTics[i];
   strcpy(dest->Format, src->Format);
   for(int i = 0; i < 3; i++) strcpy(dest->AxesFormat[i], src->AxesFormat[i]);
   for(int i = 0; i < 3; i++) strcpy(dest->AxesLabel[i], src->AxesLabel[i]);
@@ -645,7 +646,6 @@ void CopyViewOptions(Post_View * src, Post_View * dest)
   dest->IntervalsType = src->IntervalsType;
   dest->SaturateValues = src->SaturateValues;
   dest->Boundary = src->Boundary;
-  for(int i = 0; i < 3; i++) dest->NbTics[i] = src->NbTics[i];
   dest->NbIso = src->NbIso;
   dest->Light = src->Light;
   dest->LightTwoSide = src->LightTwoSide;
@@ -676,7 +676,7 @@ void CopyViewOptions(Post_View * src, Post_View * dest)
   dest->LineWidth = src->LineWidth;
   dest->PointType = src->PointType;
   dest->LineType = src->LineType;
-  dest->Grid = src->Grid;
+  dest->Axes = src->Axes;
   dest->ExternalViewIndex = src->ExternalViewIndex;
   dest->ViewIndexForGenRaise = src->ViewIndexForGenRaise;
   dest->UseGenRaise = src->UseGenRaise;
@@ -779,7 +779,7 @@ Post_View *Create2DGraph(char *xname, char *yname,
   sprintf(filename, "%s.pos", yname);
   EndView(v, 1, filename, yname);
   v->Type = DRAW_POST_2D_SPACE;
-  v->Grid = 2;
+  v->Axes = 2;
   strcpy(v->AxesLabel[0], xname);
   return v;
 }

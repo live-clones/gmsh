@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.344 2005-03-12 01:41:10 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.345 2005-03-12 07:52:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -696,7 +696,7 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
 
 void general_options_ok_cb(CALLBACK_ARGS)
 {
-  opt_general_axes(0, GMSH_SET, WID->gen_butt[0]->value());
+  opt_general_axes_auto_position(0, GMSH_SET, WID->gen_butt[0]->value());
   opt_general_small_axes(0, GMSH_SET, WID->gen_butt[1]->value());
   opt_general_fast_redraw(0, GMSH_SET, WID->gen_butt[2]->value());
   if(opt_general_double_buffer(0, GMSH_GET, 0) != WID->gen_butt[3]->value())
@@ -731,10 +731,27 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_clip_factor(0, GMSH_SET, WID->gen_value[14]->value());
   opt_general_polygon_offset_factor(0, GMSH_SET, WID->gen_value[15]->value());
   opt_general_polygon_offset_units(0, GMSH_SET, WID->gen_value[16]->value());
+  opt_general_axes_tics0(0, GMSH_SET, WID->gen_value[17]->value());
+  opt_general_axes_tics1(0, GMSH_SET, WID->gen_value[18]->value());
+  opt_general_axes_tics2(0, GMSH_SET, WID->gen_value[19]->value());
+  opt_general_axes_xmin(0, GMSH_SET, WID->gen_value[20]->value());
+  opt_general_axes_ymin(0, GMSH_SET, WID->gen_value[21]->value());
+  opt_general_axes_zmin(0, GMSH_SET, WID->gen_value[22]->value());
+  opt_general_axes_xmax(0, GMSH_SET, WID->gen_value[23]->value());
+  opt_general_axes_ymax(0, GMSH_SET, WID->gen_value[24]->value());
+  opt_general_axes_zmax(0, GMSH_SET, WID->gen_value[25]->value());
+  opt_general_small_axes_position0(0, GMSH_SET, WID->gen_value[26]->value());
+  opt_general_small_axes_position1(0, GMSH_SET, WID->gen_value[27]->value());
 
   opt_general_default_filename(0, GMSH_SET, (char *)WID->gen_input[0]->value());
   opt_general_editor(0, GMSH_SET, (char *)WID->gen_input[1]->value());
   opt_general_web_browser(0, GMSH_SET, (char *)WID->gen_input[2]->value());
+  opt_general_axes_format0(0, GMSH_SET, (char *)WID->gen_input[3]->value());
+  opt_general_axes_format1(0, GMSH_SET, (char *)WID->gen_input[4]->value());
+  opt_general_axes_format2(0, GMSH_SET, (char *)WID->gen_input[5]->value());
+  opt_general_axes_label0(0, GMSH_SET, (char *)WID->gen_input[6]->value());
+  opt_general_axes_label1(0, GMSH_SET, (char *)WID->gen_input[7]->value());
+  opt_general_axes_label2(0, GMSH_SET, (char *)WID->gen_input[8]->value());
 
   int val;
   switch (WID->gen_choice[0]->value()) {
@@ -754,6 +771,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_vector_type(0, GMSH_SET, val);
   opt_general_graphics_font(0, GMSH_SET, (char *)WID->gen_choice[1]->text());
   opt_general_orthographic(0, GMSH_SET | GMSH_GUI, !WID->gen_choice[2]->value());
+  opt_general_axes(0, GMSH_SET, WID->gen_choice[4]->value());
 }
 
 void general_arrow_param_cb(CALLBACK_ARGS)
@@ -1323,12 +1341,12 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Shift+Ctrl+s  Save mesh in default format");
   Msg(DIRECT, "  Shift+Ctrl+v  Show visibility window");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "  Alt+a         Hide/show small axes"); 
+  Msg(DIRECT, "  Alt+a         Loop through axes modes"); 
   Msg(DIRECT, "  Alt+b         Hide/show bounding boxes");
   Msg(DIRECT, "  Alt+c         Loop through predefined color schemes");
   Msg(DIRECT, "  Alt+d         Change surface mesh display mode (solid/wireframe)");
   Msg(DIRECT, "  Alt+f         Change redraw mode (fast/full)"); 
-  Msg(DIRECT, "  Alt+g         Loop through grid modes for all post-processing views"); 
+  Msg(DIRECT, "  Alt+g         Loop through axes modes for visible post-processing views"); 
   Msg(DIRECT, "  Alt+h         Hide/show all post-processing views"); 
   Msg(DIRECT, "  Alt+i         Hide/show all post-processing view scales");
   Msg(DIRECT, "  Alt+l         Hide/show geometry lines");
@@ -1337,14 +1355,14 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Alt+o         Change projection mode (orthographic/perspective)");
   Msg(DIRECT, "  Alt+p         Hide/show geometry points");
   Msg(DIRECT, "  Alt+s         Hide/show geometry surfaces");
-  Msg(DIRECT, "  Alt+t         Loop through interval modes for all post-processing views"); 
+  Msg(DIRECT, "  Alt+t         Loop through interval modes for visible post-processing views"); 
   Msg(DIRECT, "  Alt+v         Hide/show geometry volumes");
   Msg(DIRECT, "  Alt+w         Enable/disable all lighting");
   Msg(DIRECT, "  Alt+x         Set X view"); 
   Msg(DIRECT, "  Alt+y         Set Y view"); 
   Msg(DIRECT, "  Alt+z         Set Z view"); 
   Msg(DIRECT, " ");
-  Msg(DIRECT, "  Alt+Shift+a   Hide/show moving axes"); 
+  Msg(DIRECT, "  Alt+Shift+a   Hide/show small axes"); 
   Msg(DIRECT, "  Alt+Shift+l   Hide/show surface mesh edges");
   Msg(DIRECT, "  Alt+Shift+p   Hide/show mesh points");
   Msg(DIRECT, "  Alt+Shift+s   Hide/show mesh surfaces");
@@ -3304,7 +3322,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double arrow_location = opt_view_arrow_location(current, GMSH_GET, 0);
   //double tensor_type = opt_view_tensor_type(current, GMSH_GET, 0);
   double range_type = opt_view_range_type(current, GMSH_GET, 0);
-  double grid = opt_view_grid(current, GMSH_GET, 0);
+  double axes = opt_view_axes(current, GMSH_GET, 0);
   double boundary = opt_view_boundary(current, GMSH_GET, 0);
   double external_view = opt_view_external_view(current, GMSH_GET, 0);
   double gen_raise_view = opt_view_gen_raise_view(current, GMSH_GET, 0);
@@ -3315,8 +3333,8 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double target_error = opt_view_target_error(current, GMSH_GET, 0);
   double show_element = opt_view_show_element(current, GMSH_GET, 0);
   double show_scale = opt_view_show_scale(current, GMSH_GET, 0);
-  double auto_position2d = opt_view_auto_position2d(current, GMSH_GET, 0);
-  double auto_position3d = opt_view_auto_position3d(current, GMSH_GET, 0);
+  double auto_position = opt_view_auto_position(current, GMSH_GET, 0);
+  double axes_auto_position = opt_view_axes_auto_position(current, GMSH_GET, 0);
   double show_time = opt_view_show_time(current, GMSH_GET, 0);
   double draw_strings = opt_view_draw_strings(current, GMSH_GET, 0);
   double light = opt_view_light(current, GMSH_GET, 0);
@@ -3368,15 +3386,15 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double position1 = opt_view_position1(current, GMSH_GET, 0);
   double size0 = opt_view_size0(current, GMSH_GET, 0);
   double size1 = opt_view_size1(current, GMSH_GET, 0);
-  double nb_tics0 = opt_view_nb_tics0(current, GMSH_GET, 0);
-  double nb_tics1 = opt_view_nb_tics1(current, GMSH_GET, 0);
-  double nb_tics2 = opt_view_nb_tics2(current, GMSH_GET, 0);
-  double position_xmin = opt_view_position_xmin(current, GMSH_GET, 0);
-  double position_ymin = opt_view_position_ymin(current, GMSH_GET, 0);
-  double position_zmin = opt_view_position_zmin(current, GMSH_GET, 0);
-  double position_xmax = opt_view_position_xmax(current, GMSH_GET, 0);
-  double position_ymax = opt_view_position_ymax(current, GMSH_GET, 0);
-  double position_zmax = opt_view_position_zmax(current, GMSH_GET, 0);
+  double axes_tics0 = opt_view_axes_tics0(current, GMSH_GET, 0);
+  double axes_tics1 = opt_view_axes_tics1(current, GMSH_GET, 0);
+  double axes_tics2 = opt_view_axes_tics2(current, GMSH_GET, 0);
+  double axes_xmin = opt_view_axes_xmin(current, GMSH_GET, 0);
+  double axes_ymin = opt_view_axes_ymin(current, GMSH_GET, 0);
+  double axes_zmin = opt_view_axes_zmin(current, GMSH_GET, 0);
+  double axes_xmax = opt_view_axes_xmax(current, GMSH_GET, 0);
+  double axes_ymax = opt_view_axes_ymax(current, GMSH_GET, 0);
+  double axes_zmax = opt_view_axes_zmax(current, GMSH_GET, 0);
   double gen_raise_factor = opt_view_gen_raise_factor(current, GMSH_GET, 0);
 
   char name[256];
@@ -3511,8 +3529,8 @@ void view_options_ok_cb(CALLBACK_ARGS)
         opt_view_range_type(i, GMSH_SET, val);
 
       val = WID->view_choice[8]->value();
-      if(force || (val != grid))
-        opt_view_grid(i, GMSH_SET, val);
+      if(force || (val != axes))
+        opt_view_axes(i, GMSH_SET, val);
 
       val = WID->view_choice[9]->value();
       if(force || (val != boundary))
@@ -3550,12 +3568,12 @@ void view_options_ok_cb(CALLBACK_ARGS)
         opt_view_show_scale(i, GMSH_SET, val);
 
       val = WID->view_butt[7]->value();
-      if(force || (val != auto_position2d))
-        opt_view_auto_position2d(i, GMSH_SET, val);
+      if(force || (val != auto_position))
+        opt_view_auto_position(i, GMSH_SET, val);
 
       val = WID->view_butt[25]->value();
-      if(force || (val != auto_position3d))
-        opt_view_auto_position3d(i, GMSH_SET, val);
+      if(force || (val != axes_auto_position))
+        opt_view_axes_auto_position(i, GMSH_SET, val);
 
       val = WID->view_butt[8]->value();
       if(force || (val != show_time))
@@ -3764,44 +3782,44 @@ void view_options_ok_cb(CALLBACK_ARGS)
         opt_view_size1(i, GMSH_SET, val);
 
       val = WID->view_value[13]->value();
-      if(force || (val != position_xmin))
-        opt_view_position_xmin(i, GMSH_SET, val);
+      if(force || (val != axes_xmin))
+        opt_view_axes_xmin(i, GMSH_SET, val);
 
       val = WID->view_value[14]->value();
-      if(force || (val != position_ymin))
-        opt_view_position_ymin(i, GMSH_SET, val);
+      if(force || (val != axes_ymin))
+        opt_view_axes_ymin(i, GMSH_SET, val);
 
       val = WID->view_value[15]->value();
-      if(force || (val != position_zmin))
-        opt_view_position_zmin(i, GMSH_SET, val);
+      if(force || (val != axes_zmin))
+        opt_view_axes_zmin(i, GMSH_SET, val);
 
       val = WID->view_value[16]->value();
-      if(force || (val != position_xmax))
-        opt_view_position_xmax(i, GMSH_SET, val);
+      if(force || (val != axes_xmax))
+        opt_view_axes_xmax(i, GMSH_SET, val);
 
       val = WID->view_value[17]->value();
-      if(force || (val != position_ymax))
-        opt_view_position_ymax(i, GMSH_SET, val);
+      if(force || (val != axes_ymax))
+        opt_view_axes_ymax(i, GMSH_SET, val);
 
       val = WID->view_value[18]->value();
-      if(force || (val != position_zmax))
-        opt_view_position_zmax(i, GMSH_SET, val);
+      if(force || (val != axes_zmax))
+        opt_view_axes_zmax(i, GMSH_SET, val);
 
       val = WID->view_value[2]->value();
       if(force || (val != gen_raise_factor))
         opt_view_gen_raise_factor(i, GMSH_SET, val);
 
       val = WID->view_value[3]->value();
-      if(force || (val != nb_tics0))
-        opt_view_nb_tics0(i, GMSH_SET, val);
+      if(force || (val != axes_tics0))
+        opt_view_axes_tics0(i, GMSH_SET, val);
 
       val = WID->view_value[4]->value();
-      if(force || (val != nb_tics1))
-        opt_view_nb_tics1(i, GMSH_SET, val);
+      if(force || (val != axes_tics1))
+        opt_view_axes_tics1(i, GMSH_SET, val);
 
       val = WID->view_value[5]->value();
-      if(force || (val != nb_tics2))
-        opt_view_nb_tics2(i, GMSH_SET, val);
+      if(force || (val != axes_tics2))
+        opt_view_axes_tics2(i, GMSH_SET, val);
 
       // view_inputs
 

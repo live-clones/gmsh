@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.68 2005-03-11 05:47:55 geuzaine Exp $
+# $Id: Makefile,v 1.69 2005-03-12 07:52:56 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -36,7 +36,6 @@ SRC = Draw.cpp \
       ReadImg.cpp \
       Scale.cpp \
       Graph2D.cpp \
-      Axes.cpp \
       CreateFile.cpp \
       gl2ps.cpp\
       gl2gif.cpp\
@@ -159,15 +158,6 @@ Graph2D.o: Graph2D.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
   ../Mesh/Matrix.h Draw.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h gl2ps.h
-Axes.o: Axes.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  ../Common/GmshUI.h ../Numeric/Numeric.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/DiscreteSurface.h \
-  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h Draw.h ../Common/Views.h ../Common/ColorTable.h \
-  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/Context.h \
-  gl2ps.h
 CreateFile.o: CreateFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Mesh/Mesh.h \

@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.58 2005-03-12 00:59:41 geuzaine Exp $
+// $Id: Entity.cpp,v 1.59 2005-03-12 07:52:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -503,19 +503,66 @@ void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
   }
 }
 
+void Draw_SmallAxes()
+{
+  double l, o, xx, xy, yx, yy, zx, zy, cx, cy;
+
+  l = CTX.small_axes_size;
+  o = 2;
+
+  if(CTX.small_axes_pos[0] > 0)
+    cx = CTX.viewport[0] + CTX.small_axes_pos[0];
+  else
+    cx = CTX.viewport[2] + CTX.small_axes_pos[0];
+
+  if(CTX.small_axes_pos[1] > 0)
+    cy = CTX.viewport[3] - CTX.small_axes_pos[1];
+  else
+    cy = CTX.viewport[1] - CTX.small_axes_pos[1];
+
+  xx = l * CTX.rot[0];
+  xy = l * CTX.rot[1];
+  yx = l * CTX.rot[4];
+  yy = l * CTX.rot[5];
+  zx = l * CTX.rot[8];
+  zy = l * CTX.rot[9];
+
+  glLineWidth(CTX.line_width);
+  gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
+  glColor4ubv((GLubyte *) & CTX.color.small_axes);
+
+  glBegin(GL_LINES);
+  glVertex2d(cx, cy);
+  glVertex2d(cx + xx, cy + xy);
+  glVertex2d(cx, cy);
+  glVertex2d(cx + yx, cy + yy);
+  glVertex2d(cx, cy);
+  glVertex2d(cx + zx, cy + zy);
+  glEnd();
+  glRasterPos2d(cx + xx + o, cy + xy + o);
+  Draw_String("X");
+  glRasterPos2d(cx + yx + o, cy + yy + o);
+  Draw_String("Y");
+  glRasterPos2d(cx + zx + o, cy + zy + o);
+  Draw_String("Z");
+}
+
 int Draw_Tics(int comp, int n, char *format, char *label,
 	      double p1[3], double p2[3], double perp[3])
 {
   // draws n tic marks (in direction perp) and labels along the line p1->p2
 
-  if(n < 2) return 0;
-
-  if(!strlen(format)) return n;
-
   double t[3] = { p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2] };
   double l = norme(t);
   double w = 10 * CTX.pixel_equiv_x / CTX.s[0]; // big tics 10 pixels
   double w2 = 4 * CTX.pixel_equiv_x / CTX.s[0]; // small tics 4 pixels
+
+  glRasterPos3d(p2[0]+t[0]*w*1.4, p2[1]+t[1]*w*1.4, p2[2]+t[2]*w*1.4);
+  Draw_String(label);
+
+  if(n < 2) return 0;
+
+  if(!strlen(format)) return n;
 
   double lp = norme(perp);
   if(!lp){
@@ -575,9 +622,6 @@ int Draw_Tics(int comp, int n, char *format, char *label,
     Draw_String(str);
   }
 
-  glRasterPos3d(p2[0]+t[0]*w*1.4, p2[1]+t[1]*w*1.4, p2[2]+t[2]*w*1.4);
-  Draw_String(label);
-
   return n;
 }
 
@@ -617,8 +661,8 @@ void Draw_GridStipple(int n1, int n2, double p1[3], double p2[3], double p3[3])
   gl2psDisable(GL2PS_LINE_STIPPLE);
 }
 
-void Draw_3DGrid(int mode, int tics[3], char format[3][256], char label[3][256], 
-		 double bb[6])
+void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256], 
+	       double bb[6])
 {
   // mode 0: nothing
   //      1: axes
@@ -632,8 +676,6 @@ void Draw_3DGrid(int mode, int tics[3], char format[3][256], char label[3][256],
   double xmin = bb[0], xmax = bb[1];
   double ymin = bb[2], ymax = bb[3];
   double zmin = bb[4], zmax = bb[5];
-
-  glColor4ubv((GLubyte *) & CTX.color.fg);
 
   glBegin(GL_LINES);
   // 3 axes

@@ -1,4 +1,4 @@
-// $Id: solver.cpp,v 1.5 2005-03-12 01:02:46 geuzaine Exp $
+// $Id: solver.cpp,v 1.6 2005-03-12 07:52:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
 	client.Error("Unable to open output file");
       else {
 	fprintf(file, "View.Type = 2;\n");
-	fprintf(file, "View.Grid = 3;\n");
+	fprintf(file, "View.Axes = 3;\n");
 	fprintf(file, "Delete View[0];\n");
 	fprintf(file, "View \"%s\"{\n", option);
 	for(int j = 0; j < 100; j++)

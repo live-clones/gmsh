@@ -162,7 +162,7 @@ public:
   Fl_Group         *gen_group ;
   Fl_Check_Button  *gen_butt[20] ;
   Fl_Button        *gen_push_butt[20] ;
-  Fl_Value_Input   *gen_value[20] ;
+  Fl_Value_Input   *gen_value[50] ;
   Fl_Button        *gen_col[50] ;
   Fl_Input         *gen_input[20] ;
   Fl_Choice        *gen_choice[20] ;

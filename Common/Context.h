@@ -109,9 +109,10 @@ public :
   int ortho;                  // orthogonal projection? 
   int draw_bbox;              // always draw the bounding boxes?
   int fast_redraw;            // only draw the bbox when rotating/panning the model?
-  int axes, small_axes;       // draw axes? 
-  int axes_size, small_axes_size; // axes size
-  int small_axes_pos[2];      // small axes position
+  int small_axes, small_axes_size, small_axes_pos[2]; // small axes
+  int axes, axes_auto_position, axes_tics[3]; // large axes
+  double axes_position[6];  
+  char axes_label[3][256], axes_format[3][256];
   int threads, threads_lock;  // threads?, lock (should be a mutex...) 
   int alpha;                  // enable alpha blending 
   double zoom_factor;         // mouse2 zoom coefficient
@@ -141,6 +142,9 @@ public :
   double arrow_rel_head_radius;  // relative radius of arrow head
   double arrow_rel_stem_radius;  // relative radius of arrow stem
   double arrow_rel_stem_length;  // relative length of arrow stem
+
+  double model[16], proj[16]; // the modelview and projection matrix as they were
+                              // at the time of the last InitPosition() call
 
   // geometry options 
   struct{

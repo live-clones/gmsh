@@ -17,7 +17,7 @@ View "test" {
 
 View[PostProcessing.NbViews-1].Type=2;
 View[PostProcessing.NbViews-1].Format="%.3g";
-View[PostProcessing.NbViews-1].Grid=3;
+View[PostProcessing.NbViews-1].Axes=3;
 
 /*
 View "annote" {
