@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.38 2001-08-28 20:40:21 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.39 2001-09-01 15:19:05 geuzaine Exp $
 
 #include <unistd.h>
 #include "Gmsh.h"
@@ -39,7 +39,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -format msh|unv|gref  set output mesh format (default: msh)");
   Msg(DIRECT, "  -algo iso|tri|aniso   select 2D mesh algorithm (default: iso)");
   Msg(DIRECT, "  -smooth int           set mesh smoothing (default: 0)");
-  Msg(DIRECT, "  -degree int           set mesh degree (default: 1)");
+  //  Msg(DIRECT, "  -degree int           set mesh degree (default: 1)");
   Msg(DIRECT, "  -scale float          set global scaling factor (default: 1.0)");
   Msg(DIRECT, "  -meshscale float      set mesh scaling factor (default: 1.0)");
   Msg(DIRECT, "  -clscale float        set characteristic length scaling factor (default: 1.0)");
@@ -255,13 +255,8 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "degree")){  
         i++;
-        if(argv[i]!=NULL){
-          CTX.mesh.degree = atoi(argv[i++]);
-          if(CTX.mesh.degree != 1 && CTX.mesh.degree != 2){
-            fprintf(stderr, ERROR_STR "Wrong degree\n");
-            exit(1);
-          }
-        }
+        if(argv[i]!=NULL)
+          opt_mesh_degree(0, GMSH_SET, atof(argv[i++]));
         else {    
           fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.44 2001-08-28 20:40:21 geuzaine Exp $
+// $Id: Options.cpp,v 1.45 2001-09-01 15:19:05 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1418,8 +1418,8 @@ double opt_mesh_constrained_bgmesh(OPT_ARGS_NUM){
   return CTX.mesh.constrained_bgmesh;
 }
 double opt_mesh_degree(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
-    CTX.mesh.degree = (int)val;
+  if(action & GMSH_SET)
+    CTX.mesh.degree = 1; //(int)val;  INTERDIT POUR LE MOMENT !!!
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_butt[3]->value(CTX.mesh.degree==2);

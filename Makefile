@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.144 2001-08-31 09:23:40 geuzaine Exp $
+# $Id: Makefile,v 1.145 2001-09-01 15:19:05 geuzaine Exp $
 
 GMSH_RELEASE = 1.25
 
@@ -522,9 +522,4 @@ link_solaris_scorec:
                  /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libfltk-gcc.a\
                  -L/usr/X11R6/lib -lX11 -lm -ldl -lsocket
 solaris_scorec : compile_solaris_scorec link_solaris_scorec strip_bin 
-
-
-
-
-
 
