@@ -1,4 +1,4 @@
-// $Id: Axes.cpp,v 1.20 2004-02-07 01:40:19 geuzaine Exp $
+// $Id: Axes.cpp,v 1.21 2004-04-24 16:24:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -44,8 +44,8 @@ void Draw_Axes(double s)
   b = .1 * s;
   c = 0.666 * b;
 
-  glLineWidth(1.);
-  gl2psLineWidth(1. * CTX.print.eps_line_width_factor);
+  glLineWidth(CTX.line_width);
+  gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
   glColor4ubv((GLubyte *) & CTX.color.axes);
 
   glBegin(GL_LINES);
@@ -142,8 +142,8 @@ void Draw_SmallAxes(void)
   zx = l * CTX.rot[2][0];
   zy = l * CTX.rot[2][1];
 
-  glLineWidth(1.);
-  gl2psLineWidth(1. * CTX.print.eps_line_width_factor);
+  glLineWidth(CTX.line_width);
+  gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
   glColor4ubv((GLubyte *) & CTX.color.small_axes);
 
   glBegin(GL_LINES);

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.56 2004-04-24 15:05:40 geuzaine Exp $
+// $Id: Post.cpp,v 1.57 2004-04-24 16:24:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -337,6 +337,7 @@ void Draw_Post(void)
       v = (Post_View *) List_Pointer(CTX.post.list, iView);
       if(v->Visible && v->Type == DRAW_POST_3D) {
         glColor4ubv((GLubyte *) & CTX.color.fg);
+	glLineWidth(CTX.line_width);
         glBegin(GL_LINE_LOOP);
         glVertex3d(v->BBox[0], v->BBox[2], v->BBox[4]);
         glVertex3d(v->BBox[1], v->BBox[2], v->BBox[4]);
