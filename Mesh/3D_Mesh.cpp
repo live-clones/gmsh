@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.32 2001-10-31 16:33:46 remacle Exp $
+// $Id: 3D_Mesh.cpp,v 1.33 2001-11-16 19:35:26 remacle Exp $
 
 /*
  
@@ -614,7 +614,7 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
   SimplexInteriorCheck ick;
   SimplexInBox         ibx (LC3D/30.);
 
-  fastSearch = new AOMD::mGeomSearch < Simplex, SimplexInBox, SimplexInteriorCheck >
+    fastSearch = new AOMD::mGeomSearch < Simplex, SimplexInBox, SimplexInteriorCheck >
     (  m->Grid.min.X,m->Grid.max.X,
        m->Grid.min.Y,m->Grid.max.Y,
        m->Grid.min.Z,m->Grid.max.Z,
@@ -640,7 +640,7 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
 		break;
 	      }
 	  }
-      }
+      }    
     else
       {
 	nbFast++;

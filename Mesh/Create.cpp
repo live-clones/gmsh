@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.26 2001-10-29 08:52:20 geuzaine Exp $
+// $Id: Create.cpp,v 1.27 2001-11-16 19:35:26 remacle Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -273,8 +273,7 @@ void End_Curve (Curve * c){
     mat[1][2] = Curve->Circle.invmat[2][1] = m[2];
     mat[0][0] = Curve->Circle.invmat[0][0] = dir12[0];
     mat[0][1] = Curve->Circle.invmat[1][0] = dir12[1];
-    mat[0][2] = Curve->Circle.invmat[2][0] = dir12[2];
-    
+    mat[0][2] = Curve->Circle.invmat[2][0] = dir12[2];    
     if(CTX.geom.old_circle){
       if(n[0] == 0.0 && n[1] == 0.0){
         mat[2][0] = Curve->Circle.invmat[0][2] = 0;
@@ -311,37 +310,44 @@ void End_Curve (Curve * c){
       A4 = angle_02pi (A4);
     if (A1 >= A3)
       A3 += DP;
-    if (A4 > A1)
-      A4 -= DP;
+    //    if (A4 > A1)
+    //      A4 -= DP;
     
     if (v[4]){
-      AX = (A1 - A4);
-      sys[0][0] = cos (AX) * cos (A4);
-      sys[0][1] = -sin (AX) * sin (A4);
-      sys[1][0] = cos (AX) * sin (A4);
-      sys[1][1] = sin (AX) * cos (A4);
-      rhs[0] = v1.Pos.X;
-      rhs[1] = v1.Pos.Y;
-      det = sys[0][0] * sys[1][1] - sys[1][0] * sys[0][1];
-      if (det < 1.e-12){
-        AX = (A3 - A4);
-        sys[0][0] = cos (AX) * cos (A4);
-        sys[0][1] = -sin (AX) * sin (A4);
-        sys[1][0] = cos (AX) * sin (A4);
-        sys[1][1] = sin (AX) * cos (A4);
-        rhs[0] = v3.Pos.X;
-        rhs[1] = v3.Pos.Y;
-        det = sys[0][0] * sys[1][1] - sys[1][0] * sys[0][1];
-      }
-      if (det < 1.e-12){
-        f1 = DMAX (R, R2);
-        f2 = DMIN (R, R2);
-      }
-      else{
-        sys2x2 (sys, rhs, sol);
-        f1 = sol[0];
-        f2 = sol[1];
-      }
+      AX = (A4);
+      double x1 = v1.Pos.X * cos (AX) + v1.Pos.Y * sin(AX);
+      double y1 = -v1.Pos.X * sin (AX) + v1.Pos.Y * cos(AX); 
+      double x3 = v3.Pos.X * cos (AX) + v3.Pos.Y * sin(AX);
+      double y3 = -v3.Pos.X * sin (AX) + v3.Pos.Y * cos(AX); 
+      sys[0][0] = x1 * x1;
+      sys[0][1] = y1 * y1;
+      sys[1][0] = x3 * x3;
+      sys[1][1] = y3 * y3;
+
+      rhs[0] = 1;
+      rhs[1] = 1;
+
+      //      printf("AX = %lf\n",AX*180./M_PI);
+      //      printf("%lf %lf %lf %lf\n", v1.Pos.X , v1.Pos.Y,x1,y1);
+      //      printf("%lf %lf %lf %lf\n", v3.Pos.X , v3.Pos.Y,x3,y3);
+
+
+      sys2x2 (sys, rhs, sol);
+      //      printf("%lf %lf   %lf = %lf \n",sys[0][0],sys[0][1],rhs[0],sol[0]);
+      //      printf("%lf %lf   %lf = %lf\n",sys[1][0],sys[1][1],rhs[1],sol[1]);
+      if(sol[0] < 0)Msg(FATAL, "Ellipsis %d invalid", Curve->Num);	
+      if(sol[1] < 0)Msg(FATAL, "Ellipsis %d invalid", Curve->Num);	
+      f1 = sqrt(1./sol[0]);
+      f2 = sqrt(1./sol[1]);
+      if(x1 > 0)
+	A1 = asin(y1/f2) + A4; 
+      else 
+	A1 = -asin(y1/f2) + A4; 
+
+      if(x3 > 0)
+	A3 = asin(y3/f2) + A4; 
+      else 
+	A3 = -asin(y3/f2) + A4; 
     }
     else{
       f1 = f2 = R;
@@ -355,6 +361,9 @@ void End_Curve (Curve * c){
     
     for (i = 0; i < 4; i++)
       Curve->Circle.v[i] = v[i];
+
+    //    double xxx = 180./M_PI;
+    //    printf("%d %lf %lf %lf %lf %lf\n",Curve->Num,f1,f2,A1*xxx,A3*xxx,A4*xxx);
 
     /*
     if (!c->Circle.done){

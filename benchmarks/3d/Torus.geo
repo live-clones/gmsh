@@ -15,3 +15,5 @@ Plane Surface(6) = {5};
 Extrude Surface{6, {0.0,1,0}, {0,0.0,0.0}, 1*3.14159/2};         
        
 Coherence;         
+Surface Loop(29) = {6,15,19,23,27,28};
+Volume(30) = {29};

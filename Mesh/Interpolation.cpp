@@ -1,4 +1,4 @@
-// $Id: Interpolation.cpp,v 1.14 2001-08-17 10:40:23 geuzaine Exp $
+// $Id: Interpolation.cpp,v 1.15 2001-11-16 19:35:26 remacle Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -77,9 +77,12 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
     /* pour les ellipses */
     teta -= Curve->Circle.incl;
     
-    V.Pos.X = Curve->Circle.f1 * cos (teta) * cos (Curve->Circle.incl) -
+    V.Pos.X = 
+      Curve->Circle.f1 * cos (teta) * cos (Curve->Circle.incl) -
       Curve->Circle.f2 * sin (teta) * sin (Curve->Circle.incl);
-    V.Pos.Y = Curve->Circle.f1 * cos (teta) * sin (Curve->Circle.incl) +
+
+    V.Pos.Y = 
+      Curve->Circle.f1 * cos (teta) * sin (Curve->Circle.incl) +
       Curve->Circle.f2 * sin (teta) * cos (Curve->Circle.incl);
     V.Pos.Z = 0.0;
     Projette (&V, Curve->Circle.invmat);

@@ -1,4 +1,4 @@
-fact     = 0.4 ;
+fact     = 0.1 ;
 rondelle = fact * 0.01;
 iris     = fact * 0.004;
 size     = fact * 0.01;
