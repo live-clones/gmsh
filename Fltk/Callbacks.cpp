@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.60 2001-05-25 08:43:24 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.61 2001-05-31 05:43:11 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -463,7 +463,7 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "                  its properties in the status bar");
   Msg(DIRECT, "                - size a rubber zoom started with Ctrl+mouse1");
   Msg(DIRECT, "  mouse1        - rotate");
-  Msg(DIRECT, "                - accept a rubber zoom started by Ctrl+mouse1"); 
+  Msg(DIRECT, "                - accept a rubber zoom started with Ctrl+mouse1"); 
   Msg(DIRECT, "  Ctrl+mouse1   start (anisotropic) rubber zoom"); 
   Msg(DIRECT, "  Shift+mouse1  - zoom (isotropic)");
   Msg(DIRECT, "                - cancel a rubber zoom");
