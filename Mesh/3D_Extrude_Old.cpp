@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.10 2001-06-27 14:40:28 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.11 2001-06-27 15:42:00 geuzaine Exp $
 
 // This is the old extrusion mesh generator -> only available through
 // the command line option -extrude (w/o -recombine). This mesh
@@ -24,9 +24,9 @@
 // There is no way to save XY generated lines or other entities for the
 // moment
 
-#define NB_LAYER_MAX 100
+#define MAXLAYERS 100
 #define K1 100.e6
-#define K2 1.e6 // to store NB_LAYER_MAX
+#define K2 1.e6 // to store MAXLAYERS
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -47,12 +47,12 @@ Mesh          *THEm;
 Surface       *THES;
 Volume        *THEV;
 int            TEST_IS_ALL_OK, NbLayer;
-int            NbElmLayer [NB_LAYER_MAX];
-int            ZonLayer   [NB_LAYER_MAX];
-int            LineLayer  [NB_LAYER_MAX];
-int            SurfLayer  [NB_LAYER_MAX+1];
-double         hLayer     [NB_LAYER_MAX];
-double         parLayer   [NB_LAYER_MAX];
+int            NbElmLayer [MAXLAYERS];
+int            ZonLayer   [MAXLAYERS];
+int            LineLayer  [MAXLAYERS];
+int            SurfLayer  [MAXLAYERS+1];
+double         hLayer     [MAXLAYERS];
+double         parLayer   [MAXLAYERS];
 
 
 typedef struct {
@@ -74,7 +74,7 @@ static void InitExtrudeParams (void){
   int i;
   printf("Number of layers: ");
   scanf("%d",&NbLayer);
-  if(NbLayer >NB_LAYER_MAX)
+  if(NbLayer >MAXLAYERS)
     Msg(GERROR, "Max number of layer exceeded");
   fprintf(file, "%d\n", NbLayer); fflush(file);
   for(i=0;i<NbLayer;i++){
