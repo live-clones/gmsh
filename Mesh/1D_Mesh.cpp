@@ -1,4 +1,4 @@
-/* $Id: 1D_Mesh.cpp,v 1.7 2000-11-28 11:28:31 geuzaine Exp $ */
+/* $Id: 1D_Mesh.cpp,v 1.8 2000-12-05 20:02:16 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -81,8 +81,6 @@ double F_Lc (double t){
   return THEM->Metric->getLc(t, THEC);
 }
 
-double CIRC_GRAN = 10.;
-
 void Maillage_Curve (void *data, void *dummy){
   Curve **pc, *c;
   Simplex *s;
@@ -121,7 +119,7 @@ void Maillage_Curve (void *data, void *dummy){
           c->Typ == MSH_SEGM_ELLI ||
           c->Typ == MSH_SEGM_ELLI_INV){
         N = IMAX (N, (int) (fabs (c->Circle.t1 - c->Circle.t2) *
-                            CIRC_GRAN / Pi));
+                            (double)CTX.mesh.min_circ_points / Pi));
       }
       else if (c->Typ == MSH_SEGM_NURBS){
         N = IMAX (N, 2);

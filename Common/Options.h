@@ -1,4 +1,4 @@
-/* $Id: Options.h,v 1.2 2000-12-05 18:38:09 geuzaine Exp $ */
+/* $Id: Options.h,v 1.3 2000-12-05 20:02:12 geuzaine Exp $ */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
@@ -115,6 +115,8 @@ StringXNumber MeshOptions_Number[] = {
   { "Algorithm"       , GMSH_INT,    (void*)&CTX.mesh.algo           , DELAUNAY_OLDALGO }, 
   { "PointInsertion"  , GMSH_INT,    (void*)&CTX.mesh.point_insertion, CENTER_CIRCCIRC }, 
   { "SpeedMax"        , GMSH_INT,    (void*)&CTX.mesh.speed_max      , 0. }, 
+  { "MinimumCirclePoints" ,
+                        GMSH_INT,    (void*)&CTX.mesh.min_circ_points, 7. }, 
   { "Degree"          , GMSH_INT,    (void*)&CTX.mesh.degree         , 1. }, 
   { "Dual"            , GMSH_INT,    (void*)&CTX.mesh.dual           , 0. }, 
   { "Interactive"     , GMSH_INT,    (void*)&CTX.mesh.interactive    , 0. }, 

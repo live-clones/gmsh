@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.13 2000-12-05 18:38:08 geuzaine Exp $ */
+/* $Id: Context.h,v 1.14 2000-12-05 20:02:12 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -126,7 +126,7 @@ class Context_T {
     int dual, interactive;
     int hidden, shade;
     int format, nb_smoothing, algo, degree;
-    int point_insertion, speed_max;
+    int point_insertion, speed_max, min_circ_points;
     double normals, tangents, explode;
   } mesh;
 
