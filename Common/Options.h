@@ -455,6 +455,8 @@ double opt_view_point_type(OPT_ARGS_NUM);
 double opt_view_line_type(OPT_ARGS_NUM);
 double opt_print_format(OPT_ARGS_NUM);
 double opt_print_eps_quality(OPT_ARGS_NUM);
+double opt_print_eps_occlusion_culling(OPT_ARGS_NUM);
+double opt_print_eps_best_root(OPT_ARGS_NUM);
 double opt_print_eps_background(OPT_ARGS_NUM);
 double opt_print_eps_font_size(OPT_ARGS_NUM);
 double opt_print_eps_line_width_factor(OPT_ARGS_NUM);

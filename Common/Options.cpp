@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.96 2002-11-17 17:08:32 geuzaine Exp $
+// $Id: Options.cpp,v 1.97 2002-12-11 17:37:17 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -3008,6 +3008,16 @@ double opt_print_eps_quality(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.print.eps_quality = (int)val;
   return CTX.print.eps_quality;
+}
+double opt_print_eps_occlusion_culling(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.print.eps_occlusion_culling = (int)val;
+  return CTX.print.eps_occlusion_culling;
+}
+double opt_print_eps_best_root(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.print.eps_best_root = (int)val;
+  return CTX.print.eps_best_root;
 }
 double opt_print_eps_background(OPT_ARGS_NUM){
   if(action & GMSH_SET) 

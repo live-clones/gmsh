@@ -975,6 +975,10 @@ StringXNumber PrintOptions_Number[] = {
     "Size factor for points in postscript output" },
   { F|O, "EpsQuality" , opt_print_eps_quality , 1 ,
     "Postscript quality (1=simple sort, 2=recursive sort)" },
+  { F|O, "EpsOcclusionCulling" , opt_print_eps_occlusion_culling , 0 ,
+    "Cull occluded primitives (to reduce PostScript file size)" },
+  { F|O, "EpsBestRoot" , opt_print_eps_best_root , 0 ,
+    "Try to minimize primitive splitting in recursive sort" },
 
   { F|O, "Format" , opt_print_format , FORMAT_AUTO , 
     "File format (10=automatic)" }, 

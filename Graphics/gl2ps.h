@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine
  *
- * $Id: gl2ps.h,v 1.29 2002-11-12 19:11:50 geuzaine Exp $
+ * $Id: gl2ps.h,v 1.30 2002-12-11 17:37:17 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -55,7 +55,7 @@
 #endif /* __APPLE__ */
 
 
-#define GL2PS_VERSION                    0.63
+#define GL2PS_VERSION                    0.7
 #define GL2PS_NONE                       0
 
 /* Output file format */
@@ -123,6 +123,12 @@
 #define GL2PS_IN_BACK_OF                 3
 #define GL2PS_SPANNING                   4
 
+/* 2D BSP tree primitive comparison */
+
+#define GL2PS_POINT_COINCIDENT           0
+#define GL2PS_POINT_INFRONT              1
+#define GL2PS_POINT_BACK                 2
+
 /* Pass through options */
 
 #define GL2PS_BEGIN_POLYGON_OFFSET_FILL  1
@@ -137,6 +143,13 @@
 typedef GLfloat GL2PSrgba[4];
 typedef GLfloat GL2PSxyz[3];
 typedef GLfloat GL2PSplane[4];
+
+typedef struct _GL2PSbsptree2d GL2PSbsptree2d;
+
+struct _GL2PSbsptree2d {
+  GL2PSplane plane;
+  GL2PSbsptree2d *front, *back;
+};
 
 typedef struct {
   GLint nmax, size, incr, n;
@@ -169,13 +182,14 @@ typedef struct {
 } GL2PSprimitive;
 
 typedef struct {
-  GLint format, sort, options, colorsize, colormode, buffersize;
-  char *title, *producer, *filename;
+  GLint format, sort, options, colorsize, colormode, buffersize, maxbestroot;
+  const char *title, *producer, *filename;
   GLboolean shade, boundary;
   GLfloat *feedback, offset[2];
   GL2PSrgba *colormap, lastrgba, threshold;
   float lastlinewidth;
   GL2PSlist *primitives;
+  GL2PSbsptree2d *image;
   FILE *stream;
 } GL2PScontext;
 
@@ -186,13 +200,13 @@ typedef struct {
 extern "C" {
 #endif
 
-GL2PSDLL_API void  gl2psBeginPage(char *title, char *producer, 
+GL2PSDLL_API void  gl2psBeginPage(const char *title, const char *producer, 
 				  GLint format, GLint sort, GLint options, 
 				  GLint colormode, GLint colorsize, 
 				  GL2PSrgba *colormap, GLint buffersize, 
-				  FILE *stream, char *filename);
+				  FILE *stream, const char *filename);
 GL2PSDLL_API GLint gl2psEndPage(void);
-GL2PSDLL_API void  gl2psText(char *str, char *fontname, GLint size);
+GL2PSDLL_API void  gl2psText(const char *str, const char *fontname, GLint size);
 GL2PSDLL_API void  gl2psEnable(GLint mode);
 GL2PSDLL_API void  gl2psDisable(GLint mode);
 GL2PSDLL_API void  gl2psPointSize(GLfloat value);
