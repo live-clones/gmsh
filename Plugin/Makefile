@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2001-03-05 02:02:41 remacle Exp $
+# $Id: Makefile,v 1.4 2001-03-10 19:55:07 remacle Exp $
 #
 # Makefile for "libAdapt.a"
 #
@@ -11,7 +11,7 @@ RM        = rm
 RANLIB    = ranlib
 
 LIB       = ../lib/libPlugin.a
-INCLUDE   = -I../Common
+INCLUDE   = -I../Common -I../Graphics -I../DataStr
 
 C_FLAGS       = -g -Wall
 OS_FLAGS      = 
@@ -20,7 +20,7 @@ VERSION_FLAGS =
 RMFLAGS   = -f
 CFLAGS    = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) $(GUI_INCLUDE) 
 
-SRC = Plugin.cpp
+SRC = Plugin.cpp CutPlane.cpp
 
 OBJ = $(SRC:.cpp=.o)
 

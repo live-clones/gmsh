@@ -196,6 +196,7 @@ void view_elements_cb(CALLBACK_ARGS) ;
 void view_applybgmesh_cb(CALLBACK_ARGS) ;
 void view_options_cb(CALLBACK_ARGS) ;
 void view_plugin_cb(CALLBACK_ARGS) ;
+void view_options_plugin_cb(CALLBACK_ARGS) ;
 void view_options_custom_cb(CALLBACK_ARGS) ;
 void view_options_timestep_cb(CALLBACK_ARGS) ;
 void view_options_ok_cb(CALLBACK_ARGS) ;

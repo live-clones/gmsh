@@ -7,17 +7,30 @@
     -) When there is an unacceptable error in the plugin,
     just throw this, the plugin manager will be able to 
     catch the exception.
-*/
 
+  Some Plugins are default gmsh plugins and are insterted
+  directly in the executable. I think that it's a good 
+  way to start.
+*/
+#include <stdio.h>
+#include "Options.h"
+
+
+class PluginDialogBox;
 class Post_View;
 class GMSH_Plugin
 {
 public :
+  /* a dialog box for user interface */
+  PluginDialogBox *dialogBox;
   /*this is there for internal use, this variable will be
    used by the PluginManager, just forget it*/
   void *hlib;
   /* 3 kind of plugins, one for cad, one for mesh, one for postpro*/
-  typedef enum GMSH_PLUGIN_TYPE {GMSH_CAD_PLUGIN, GMSH_MESH_PLUGIN, GMSH_POST_PLUGIN};
+  typedef enum GMSH_PLUGIN_TYPE {GMSH_CAD_PLUGIN, 
+				 GMSH_MESH_PLUGIN, 
+				 GMSH_POST_PLUGIN, 
+				 GMSH_SOLVE_PLUGIN};
   /* returns the type of plugin for downcasting GMSH_Plugin into
      GMSH_CAD_Plugin, GMSH_Mesh_Plugin and GMSH_Post_Plugin */
   virtual GMSH_PLUGIN_TYPE getType() const = 0;
@@ -29,9 +42,8 @@ public :
      will show the message and hopefully continue */
   virtual void CatchErrorMessage (char *errorMessage) const = 0;
   /* gmsh style option, ca be loaded, saved and set*/
-  virtual void SetOption (char *optionName, void *optionValue) = 0;
   virtual int getNbOptions() const = 0;
-  virtual void GetOption (int iopt, char *optionName, void *optionValue) const = 0;  
+  virtual void GetOption (int iopt, StringXNumber *option) const = 0;  
 };
 
 /* Base class for Post-Processing Plugins

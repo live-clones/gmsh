@@ -1,16 +1,16 @@
-# $Id: Makefile,v 1.4 2001-03-06 04:38:56 remacle Exp $
+# $Id: Makefile,v 1.5 2001-03-10 19:55:07 remacle Exp $
 #
 # Makefile for "libAdapt.a"
 #
 
 .IGNORE:
 
-CC        = c++ -fPIC
-AR        = gcc -shared -o
+CC        = c++ 
+AR        = ar ruvs
 RM        = rm
 RANLIB    = ranlib
 
-LIB       = ../lib/libCutPlane.so
+LIB       = ../../lib/libCutPlane.a 
 INCLUDE   = -I../../Common -I../../DataStr -I../ -I../../Graphics
 
 C_FLAGS       = -g -Wall 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.80 2001-03-08 09:19:41 geuzaine Exp $
+# $Id: Makefile,v 1.81 2001-03-10 19:55:06 remacle Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -42,7 +42,7 @@ FLTK_LIB_LINUX_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/x86_linux/lib
              GMSH_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif Fltk\
                         jpeg utils
       GMSH_XMOTIF_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif jpeg
-        GMSH_FLTK_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Fltk jpeg Plugin Plugin/CutPlane
+        GMSH_FLTK_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Fltk jpeg Plugin
          GMSH_BOX_DIR = Adapt Box Common DataStr Geo Mesh Parser
          GMSH_BIN_DIR = bin
          GMSH_LIB_DIR = lib
@@ -53,7 +53,7 @@ FLTK_LIB_LINUX_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/x86_linux/lib
       GMSH_XMOTIF_LIB = -L$(GMSH_LIB_DIR) -lMotif -lGraphics -lParser -lMesh -lGeo\
                                           -lAdapt -lCommon -lDataStr -lJpeg
         GMSH_FLTK_LIB = -L$(GMSH_LIB_DIR) -lFltk -lParser -lGraphics -lMesh -lGeo\
-                                          -lAdapt -lCommon -lDataStr -lJpeg -lPlugin
+                                          -lAdapt -lCommon -lDataStr -lJpeg -lPlugin 
          GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lBox -lParser -lMesh -lGeo\
                                           -lAdapt -lCommon -lDataStr
          GMSH_ARCHIVE = $(GMSH_ARCHIVE_DIR)/gmsh-`date "+%Y.%m.%d"`
@@ -515,7 +515,7 @@ fltk_cygwin_laptopjf:
         ); done
 	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh-cyg.exe $(GMSH_FLTK_LIB) \
                  ../fltk-1.0.9/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
-	strip $(GMSH_BIN_DIR)/gmsh-cyg.exe
+#	strip $(GMSH_BIN_DIR)/gmsh-cyg.exe
 
 fltk_cygwin_laptopjf_tag: tag fltk_cygwin_laptopjf
 

@@ -5,6 +5,8 @@
 #include "PluginManager.h"
 #include "Message.h"
 #include <FL/filename.H>
+#include "CutPlane/CutPlane.h"
+
 using namespace std;
 
 const char *GMSH_PluginEntry = "GMSH_RegisterPlugin";
@@ -43,9 +45,11 @@ void GMSH_PluginManager::RegisterDefaultPlugins()
   struct dirent **list;
   char ext[6];
 
+  allPlugins.insert(std::pair<char*,GMSH_Plugin*>("Cut Plane" ,GMSH_RegisterCutPlanePlugin()));
+
+
   char *homeplugins = getenv ("GMSHPLUGINSHOME");
-  if(!homeplugins)
-    homeplugins = "./Plugin/lib";
+  if(!homeplugins)return;
   int nbFiles = filename_list(homeplugins,&list);
   if(nbFiles <= 0)  return;
   for(int i=0;i<nbFiles;i++)
@@ -54,7 +58,7 @@ void GMSH_PluginManager::RegisterDefaultPlugins()
       if(strlen(name) > 3)
 	{
 	  strcpy(ext,name+(strlen(name)-3));
-	  if(!strcmp(ext,".so"))
+	  if(!strcmp(ext,".so") || !strcmp(ext,"dll"))
 	  {
 	    AddPlugin(homeplugins,name);
 	  }

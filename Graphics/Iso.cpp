@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.8 2001-02-04 10:23:56 geuzaine Exp $
+// $Id: Iso.cpp,v 1.9 2001-03-10 19:55:07 remacle Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -11,7 +11,7 @@ void RaiseFill(int i, double Val, double ValMin, double Raise[3][5]);
 /*  I n t e r p o l a t e                                                   */
 /* ------------------------------------------------------------------------ */
 
-void InterpolateIso(double *X, double *Y, double *Z, 
+double InterpolateIso(double *X, double *Y, double *Z, 
                  double *Val, double V, int I1, int I2, 
                  double *XI, double *YI ,double *ZI){
   
@@ -19,11 +19,14 @@ void InterpolateIso(double *X, double *Y, double *Z,
     *XI = X[I1]; 
     *YI = Y[I1]; 
     *ZI = Z[I1]; 
+    return 0;
   }
   else{
-    *XI= (V - Val[I1])*(X[I2]-X[I1])/(Val[I2]-Val[I1]) + X[I1];
-    *YI= (V - Val[I1])*(Y[I2]-Y[I1])/(Val[I2]-Val[I1]) + Y[I1];
-    *ZI= (V - Val[I1])*(Z[I2]-Z[I1])/(Val[I2]-Val[I1]) + Z[I1];
+    double coef = (V - Val[I1])/(Val[I2]-Val[I1]);
+    *XI= coef*(X[I2]-X[I1]) + X[I1];
+    *YI= coef*(Y[I2]-Y[I1]) + Y[I1];
+    *ZI= coef*(Z[I2]-Z[I1]) + Z[I1];
+    return coef;
   }
 }
 

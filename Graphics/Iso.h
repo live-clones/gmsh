@@ -19,8 +19,8 @@ void CutLine1D (double *X, double *Y, double *Z, double *Val,
                 double *Xp, double *Yp, double *Zp, int *nb,
                 double *value);
 
-void InterpolateIso(double *X, double *Y, double *Z, 
-		    double *Val, double V, int I1, int I2, 
-		    double *XI, double *YI ,double *ZI);
+double InterpolateIso(double *X, double *Y, double *Z, 
+		      double *Val, double V, int I1, int I2, 
+		      double *XI, double *YI ,double *ZI);
   
 #endif

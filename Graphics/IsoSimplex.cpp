@@ -10,10 +10,6 @@
 
 extern Context_T   CTX;
 
-/* ------------------------------------------------------------------------ */
-/*  S i m p l e x                                                           */
-/* ------------------------------------------------------------------------ */
-
 /*
   compute the gradient of a linear interpolation in a tetrahedron
 */
@@ -40,61 +36,24 @@ void gradSimplex (double *x, double *y, double *z, double *v, double *grad)
   sys3x3 (mat, b, grad, &det); 
 }
 
-void IsoSimplex( Post_View *View, 
-		 int preproNormals,
-		 double *X, double *Y, double *Z, double *Val, 
-		 double V, double Vmin, double Vmax, 
-		 double *Offset, double Raise[3][5], int shade){
-  int    nb,i;
-  double Xp[6],Yp[6],Zp[6];
-  double Xpi[6],Ypi[6],Zpi[6];
-  double norms[12];
+/* ------------------------------------------------------------------------ */
+/*  S i m p l e x                                                           */
+/* ------------------------------------------------------------------------ */
 
-  if(V != Vmax){
-    nb = 0;
-    if((Val[0] > V && Val[1] <= V) || (Val[1] > V && Val[0] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,1,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[0] > V && Val[2] <= V) || (Val[2] > V && Val[0] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[0] > V && Val[3] <= V) || (Val[3] > V && Val[0] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[1] > V && Val[2] <= V) || (Val[2] > V && Val[1] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,1,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[1] > V && Val[3] <= V) || (Val[3] > V && Val[1] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,1,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[2] > V && Val[3] <= V) || (Val[3] > V && Val[2] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,2,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-  }
-  else{
-    nb=0;
-    if((Val[0] < V && Val[1] <= V) || (Val[1] < V && Val[0] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,1,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[0] < V && Val[2] <= V) || (Val[2] < V && Val[0] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[0] < V && Val[3] <= V) || (Val[3] < V && Val[0] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[1] < V && Val[2] <= V) || (Val[2] < V && Val[1] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,1,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[1] < V && Val[3] <= V) || (Val[3] < V && Val[1] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,1,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[2] < V && Val[3] <= V) || (Val[3] < V && Val[2] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,2,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-  }
-
-  if(nb < 3)return;
-
+void EnhanceSimplexPolygon (Post_View *View,
+			    int nb, // nb of points in polygon 
+			    double *Xp, // x positions
+			    double *Yp, // y positions
+			    double *Zp, // z positions
+			    double *Valp, // values at points
+			    double *X, // x positions of the simplex
+			    double *Y, // y positions of the simplex
+			    double *Z, // z posistions of the simplex
+			    double *Val, // values at simplex points
+			    double *norms, // output : normals at points
+			    int preproNormals  // do we compute normals or do we get them
+			    )
+{
   /*
     3 possibilities for quads
       -) 0,2,5,3
@@ -103,6 +62,8 @@ void IsoSimplex( Post_View *View,
       in all cases, simply invert the 2 last ones
       for having the quads ordered      
    */
+  int i;
+  double Xpi[6],Ypi[6],Zpi[6];
 
   if(nb == 4)
     {
@@ -153,6 +114,7 @@ void IsoSimplex( Post_View *View,
       n[1] = -n[1];
       n[2] = -n[2];
     }
+
   if(preproNormals)
     {
       for(i=0;i<nb;i++)
@@ -174,7 +136,67 @@ void IsoSimplex( Post_View *View,
 	    }	      
 	}	  
     }  
-  
+}
+
+
+void IsoSimplex( Post_View *View, 
+		 int preproNormals,
+		 double *X, double *Y, double *Z, double *Val, 
+		 double V, double Vmin, double Vmax, 
+		 double *Offset, double Raise[3][5], int shade){
+  int    nb,i;
+  double Xp[6],Yp[6],Zp[6],PVals[6];
+  double norms[12];
+
+  if(V != Vmax){
+    nb = 0;
+    if((Val[0] > V && Val[1] <= V) || (Val[1] > V && Val[0] <= V)){
+      InterpolateIso(X,Y,Z,Val,V,0,1,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+    }
+    if((Val[0] > V && Val[2] <= V) || (Val[2] > V && Val[0] <= V)){
+      InterpolateIso(X,Y,Z,Val,V,0,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+    }
+    if((Val[0] > V && Val[3] <= V) || (Val[3] > V && Val[0] <= V)){
+      InterpolateIso(X,Y,Z,Val,V,0,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+    }
+    if((Val[1] > V && Val[2] <= V) || (Val[2] > V && Val[1] <= V)){
+      InterpolateIso(X,Y,Z,Val,V,1,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+    }
+    if((Val[1] > V && Val[3] <= V) || (Val[3] > V && Val[1] <= V)){
+      InterpolateIso(X,Y,Z,Val,V,1,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+    }
+    if((Val[2] > V && Val[3] <= V) || (Val[3] > V && Val[2] <= V)){
+      InterpolateIso(X,Y,Z,Val,V,2,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+    }
+  }
+  else{
+    nb=0;
+    if((Val[0] < V && Val[1] <= V) || (Val[1] < V && Val[0] <= V)){
+      InterpolateIso(X,Y,Z,Val,V,0,1,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+    }
+    if((Val[0] < V && Val[2] <= V) || (Val[2] < V && Val[0] <= V)){
+      InterpolateIso(X,Y,Z,Val,V,0,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+    }
+    if((Val[0] < V && Val[3] <= V) || (Val[3] < V && Val[0] <= V)){
+      InterpolateIso(X,Y,Z,Val,V,0,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+    }
+    if((Val[1] < V && Val[2] <= V) || (Val[2] < V && Val[1] <= V)){
+      InterpolateIso(X,Y,Z,Val,V,1,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+    }
+    if((Val[1] < V && Val[3] <= V) || (Val[3] < V && Val[1] <= V)){
+      InterpolateIso(X,Y,Z,Val,V,1,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+    }
+    if((Val[2] < V && Val[3] <= V) || (Val[3] < V && Val[2] <= V)){
+      InterpolateIso(X,Y,Z,Val,V,2,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+    }
+  }
+
+  if(nb < 3)return;
+
+  EnhanceSimplexPolygon (View, nb, Xp, Yp, Zp, PVals, X, Y, Z, Val, norms, preproNormals);
+
+  if(preproNormals)return;
+
   if(nb == 3) 
     Draw_Triangle(Xp,Yp,Zp,norms,Offset,Raise,shade);
   else if(nb == 4)

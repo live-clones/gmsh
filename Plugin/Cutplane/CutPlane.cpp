@@ -5,11 +5,21 @@
 /*
   Plugin Entry : GMSH_RegisterPlugin
  */
-extern "C"{
-GMSH_Plugin *GMSH_RegisterPlugin ()
+
+double opt_cut_plane_A(OPT_ARGS_NUM)
 {
-  return new GMSH_CutPlanePlugin (1.0,0.0,0.0,0.0);
 }
+
+StringXNumber CutPlaneOptions_Number[] = {
+  { GMSH_FULLRC, "A" , opt_cut_plane_A , 1. }
+};
+
+extern "C"
+{
+  GMSH_Plugin *GMSH_RegisterCutPlanePlugin ()
+  {
+    return new GMSH_CutPlanePlugin (1.0,0.0,0.0,0.0);
+  }
 }
 
 
@@ -35,10 +45,9 @@ int GMSH_CutPlanePlugin::getNbOptions() const
   return 4;
 }
 
-void GMSH_CutPlanePlugin:: GetOption (int iopt, char *optionName, void *optionValue) const
+void GMSH_CutPlanePlugin:: GetOption (int iopt, StringXNumber *option) const
 {
-  // geuz, t'es le specialiste des options, regarde comment
-  // on pourrait faire Plugin.CutPlane.a = 1.0;
+  *option = CutPlaneOptions_Number[iopt];
 }
 
 void GMSH_CutPlanePlugin::CatchErrorMessage (char *errorMessage) const
@@ -48,8 +57,9 @@ void GMSH_CutPlanePlugin::CatchErrorMessage (char *errorMessage) const
 
 Post_View *GMSH_CutPlanePlugin::execute (Post_View *v)
 {
+
   int i,nb,edtet[6][2] = {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
-  /* for all scalar simplices */
+  //   for all scalar simplices 
   if(v->NbSS)
     {
       nb = List_Nbr(v->ST) / v->NbST ;
@@ -77,15 +87,18 @@ Post_View *GMSH_CutPlanePlugin::execute (Post_View *v)
 	    }
 	}
     }
-  return 0;
-}
 
-void GMSH_CutPlanePlugin::SetOption (char *optionName, void *optionValue)
-{
+  return 0;
 }
 
 double GMSH_CutPlanePlugin :: levelset (double x, double y, double z)
 {
   return a * x + b * y + c * z + d;
 }
+
+
+
+
+
+
 

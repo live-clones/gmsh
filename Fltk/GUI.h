@@ -60,6 +60,19 @@ extern    Context_Item menu_mesh_define[];
 extern        Context_Item menu_mesh_define_transfinite[]; 
 extern Context_Item menu_post[]; 
 
+// Forward Declarations
+
+class GMSH_Plugin;
+
+// A generalized dialogbox for plugins
+
+struct PluginDialogBox
+{
+  Fl_Window *main_window;
+  int nb_viewvalue;
+  Fl_Value_Input *view_value[20];
+};
+
 // The GUI class contains only the important widgets (which can be set/queried).
 
 class GUI{
@@ -69,6 +82,7 @@ class GUI{
   // Bitmaps
   Fl_Bitmap  *icon1_bmp, *icon2_bmp, *icon3_bmp;
   Fl_Bitmap  *abort_bmp, *start_bmp, *stop_bmp, *about_bmp ;
+  void add_post_plugins ( Fl_Menu_Button *button , int iView);
 
 public:
 
@@ -164,6 +178,7 @@ public:
   void create_geometry_options_window();
   void create_mesh_options_window();
   void create_post_options_window();
+  PluginDialogBox *create_plugin_window(GMSH_Plugin *, int);
   void create_view_options_window(int numview);
   void create_statistics_window();
   void create_message_window();

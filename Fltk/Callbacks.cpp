@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.39 2001-03-06 04:38:56 remacle Exp $
+// $Id: Callbacks.cpp,v 1.40 2001-03-10 19:55:06 remacle Exp $
 
 #include <map>
 #include "Gmsh.h"
@@ -1459,7 +1459,7 @@ void view_plugin_cb(CALLBACK_ARGS){
     {
       Post_View *v = (Post_View*)List_Pointer(Post_ViewList,iView);
       p->execute(v);
-      Msg(INFO,"Plugin %s was called",name);
+      Msg(INFO,"Plugin %s was called win = %p",name,p->dialogBox);
     }
   catch (GMSH_Plugin *err)
     {
@@ -1467,6 +1467,22 @@ void view_plugin_cb(CALLBACK_ARGS){
       Msg(WARNING,"%s",name);
     }
   //
+}
+
+void view_options_plugin_cb(CALLBACK_ARGS){
+  std::pair<int,GMSH_Plugin*> *pair =  (std::pair<int,GMSH_Plugin*>*)data;
+  int iView = pair->first;
+  GMSH_Plugin *p = pair->second;
+
+  if(!p->dialogBox)p->dialogBox = WID->create_plugin_window(p,iView);
+
+  Fl_Window *pwindow = p->dialogBox->main_window;
+
+
+  if(pwindow->shown())
+    pwindow->redraw();
+  else
+    pwindow->show();    
 }
 
 void view_options_custom_cb(CALLBACK_ARGS){
