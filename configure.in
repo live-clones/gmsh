@@ -1,4 +1,4 @@
-dnl "$Id: configure.in,v 1.6 2003-02-11 22:09:53 geuzaine Exp $"
+dnl "$Id: configure.in,v 1.7 2003-02-12 00:27:06 geuzaine Exp $"
 dnl
 dnl Machine independent configuration script for Gmsh.
 dnl
@@ -83,24 +83,29 @@ GMSH_DIRS="Common DataStr Geo Mesh Numeric Parallel Parser Plugin"
 
 dnl Choose blackbox or GUI version
 if test "x$enable_gui" != "xno"; then
+
   GMSH_DIRS="${GMSH_DIRS} Graphics Fltk jpeg"
   GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo -lGmshNumeric -lGmshCommon -lGmshDataStr -lGmshJpeg -lGmshPlugin -lGmshParallel"
   VERSION_FLAGS="-D_FLTK"
-  AC_PATH_PROG(FLTKCONFIG,fltk-config)
-  if test "x${FLTKCONFIG}" = "x" -a "x${FLTK_PREFIX}" != "x" ; then
+  if test "x${FLTK_PREFIX}" != "x" ; then
     AC_PATH_PROG(FLTKCONFIG,fltk-config,"",${FLTK_PREFIX})
+  else
+    AC_PATH_PROG(FLTKCONFIG,fltk-config)
   fi
   if test "x$FLTKCONFIG" = "x"; then
-    AC_MSG_ERROR(Could not find fltk-config. Try --with-prefix-fltk?)
+    AC_MSG_ERROR(Could not find fltk-config. Try --with-fltk-prefix?)
   fi
   GUI_LIBS="`$FLTKCONFIG --use-gl --ldstaticflags`"
   GUI_INCLUDE="`$FLTKCONFIG --use-gl --cxxflags`"
+
 else
+
   GMSH_DIRS="${GMSH_DIRS} Box"
   GMSH_LIBS="-Llib -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshNumeric -lGmshPlugin -lGmshCommon -lGmshDataStr -lGmshParallel"
   VERSION_FLAGS="-D_BLACKBOX"
   GUI_LIBS=""
   GUI_INCLUDE=""
+
 fi
 
 dnl Check if Triangle is installed
@@ -119,10 +124,13 @@ fi
 AC_SUBST(VERSION_FLAGS)
 AC_SUBST(GUI_INCLUDE)
 
-dnl default flags and linker
+dnl Default flags, linker and post build action
 OPT_FLAGS="${CXXFLAGS}"
+OS_FLAGS=""
 LINKER="${CXX}"
 POSTBUILD=""
+
+dnl Set libs to link against
 if test "x$enable_gui" != "xno"; then
   GMSH_LIBS="${GMSH_LIBS} ${GUI_LIBS}"
 else
@@ -133,52 +141,43 @@ dnl Modify defaults according to OS
 case "$UNAME" in
 
   CYGWIN* | MINGW*)
-    OS_FLAGS="-mwindows -DWIN32 -D_LITTLE_ENDIAN"
-    LINKER="g++ -Wl,--subsystem,windows -mwindows"
+    LINKER="${LINKER} -Wl,--subsystem,windows -mwindows"
     if test "x$enable_gui" != "xno"; then
       GMSH_LIBS="${GMSH_LIBS} Fltk/Win32Icon.res"
     fi
     ;;
 
   Darwin*)
-    OS_FLAGS="-D_NODLL"
+    OS_FLAGS="${OS_FLAGS} -D_NODLL"
     POSTBUILD="/Developer/Tools/Rez -t APPL -o bin/gmsh Fltk/MacRes.r"
     ;;
 
-  Linux*)
-    OS_FLAGS="-D_LITTLE_ENDIAN"
-    GMSH_LIBS="${GMSH_LIBS} -ldl"
-    ;;
-
-  OSF1*)
-    OS_FLAGS="-D_LITTLE_ENDIAN"
-    ;;
-
   AIX*)
-    OS_FLAGS="-D_BSD -D_NODLL"
+    OS_FLAGS="${OS_FLAGS} -D_BSD -D_NODLL"
     ;;
 
   IRIX*)
-    OS_FLAGS="-mips3 -n32" 
     CXX="CC"
     CC="cc"
+    OS_FLAGS="${OS_FLAGS} -mips3 -n32" 
     OPT_FLAGS="-O2 -OPT:Olimit=0 -LANG:std"
     AR="CC -mips3 -n32 -ar -o"
     LINKER="CC -O2 -mips3 -n32"
     ;;
 
   SunOS*)
-    OS_FLAGS="-D_NODLL"
-    CXX="g++"
-    CC="gcc"
+    OS_FLAGS="${OS_FLAGS} -D_NODLL"
     GMSH_LIBS="${GMSH_LIBS} -lsocket -lnsl -ldl"
     ;;
 
-  *)
+  HP-UX*)
     OS_FLAGS="-D_NODLL"
     ;;
 
 esac
+
+dnl Is the machine big or littke endian?
+AC_C_BIGENDIAN(,OS_FLAGS="-D_LITTLE_ENDIAN ${OS_FLAGS}")
 
 AC_SUBST(OPT_FLAGS)
 AC_SUBST(OS_FLAGS)

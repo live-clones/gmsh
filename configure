@@ -2669,49 +2669,11 @@ AR="${AR} ruvs"
 GMSH_DIRS="Common DataStr Geo Mesh Numeric Parallel Parser Plugin"
 
 if test "x$enable_gui" != "xno"; then
+
   GMSH_DIRS="${GMSH_DIRS} Graphics Fltk jpeg"
   GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo -lGmshNumeric -lGmshCommon -lGmshDataStr -lGmshJpeg -lGmshPlugin -lGmshParallel"
   VERSION_FLAGS="-D_FLTK"
-  # Extract the first word of "fltk-config", so it can be a program name with args.
-set dummy fltk-config; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_FLTKCONFIG+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $FLTKCONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_FLTKCONFIG="$FLTKCONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_FLTKCONFIG="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  ;;
-esac
-fi
-FLTKCONFIG=$ac_cv_path_FLTKCONFIG
-
-if test -n "$FLTKCONFIG"; then
-  echo "$as_me:$LINENO: result: $FLTKCONFIG" >&5
-echo "${ECHO_T}$FLTKCONFIG" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  if test "x${FLTKCONFIG}" = "x" -a "x${FLTK_PREFIX}" != "x" ; then
+  if test "x${FLTK_PREFIX}" != "x" ; then
     # Extract the first word of "fltk-config", so it can be a program name with args.
 set dummy fltk-config; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -2752,20 +2714,63 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
+  else
+    # Extract the first word of "fltk-config", so it can be a program name with args.
+set dummy fltk-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_FLTKCONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $FLTKCONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_FLTKCONFIG="$FLTKCONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_FLTKCONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+FLTKCONFIG=$ac_cv_path_FLTKCONFIG
+
+if test -n "$FLTKCONFIG"; then
+  echo "$as_me:$LINENO: result: $FLTKCONFIG" >&5
+echo "${ECHO_T}$FLTKCONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
   fi
   if test "x$FLTKCONFIG" = "x"; then
-    { { echo "$as_me:$LINENO: error: Could not find fltk-config. Try --with-prefix-fltk?" >&5
-echo "$as_me: error: Could not find fltk-config. Try --with-prefix-fltk?" >&2;}
+    { { echo "$as_me:$LINENO: error: Could not find fltk-config. Try --with-fltk-prefix?" >&5
+echo "$as_me: error: Could not find fltk-config. Try --with-fltk-prefix?" >&2;}
    { (exit 1); exit 1; }; }
   fi
   GUI_LIBS="`$FLTKCONFIG --use-gl --ldstaticflags`"
   GUI_INCLUDE="`$FLTKCONFIG --use-gl --cxxflags`"
+
 else
+
   GMSH_DIRS="${GMSH_DIRS} Box"
   GMSH_LIBS="-Llib -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshNumeric -lGmshPlugin -lGmshCommon -lGmshDataStr -lGmshParallel"
   VERSION_FLAGS="-D_BLACKBOX"
   GUI_LIBS=""
   GUI_INCLUDE=""
+
 fi
 
 echo "$as_me:$LINENO: checking for ./Triangle/triangle.c" >&5
@@ -2805,8 +2810,10 @@ fi
 
 
 OPT_FLAGS="${CXXFLAGS}"
+OS_FLAGS=""
 LINKER="${CXX}"
 POSTBUILD=""
+
 if test "x$enable_gui" != "xno"; then
   GMSH_LIBS="${GMSH_LIBS} ${GUI_LIBS}"
 else
@@ -2816,52 +2823,244 @@ fi
 case "$UNAME" in
 
   CYGWIN* | MINGW*)
-    OS_FLAGS="-mwindows -DWIN32 -D_LITTLE_ENDIAN"
-    LINKER="g++ -Wl,--subsystem,windows -mwindows"
+    LINKER="${LINKER} -Wl,--subsystem,windows -mwindows"
     if test "x$enable_gui" != "xno"; then
       GMSH_LIBS="${GMSH_LIBS} Fltk/Win32Icon.res"
     fi
     ;;
 
   Darwin*)
-    OS_FLAGS="-D_NODLL"
+    OS_FLAGS="${OS_FLAGS} -D_NODLL"
     POSTBUILD="/Developer/Tools/Rez -t APPL -o bin/gmsh Fltk/MacRes.r"
     ;;
 
-  Linux*)
-    OS_FLAGS="-D_LITTLE_ENDIAN"
-    GMSH_LIBS="${GMSH_LIBS} -ldl"
-    ;;
-
-  OSF1*)
-    OS_FLAGS="-D_LITTLE_ENDIAN"
-    ;;
-
   AIX*)
-    OS_FLAGS="-D_BSD -D_NODLL"
+    OS_FLAGS="${OS_FLAGS} -D_BSD -D_NODLL"
     ;;
 
   IRIX*)
-    OS_FLAGS="-mips3 -n32"
     CXX="CC"
     CC="cc"
+    OS_FLAGS="${OS_FLAGS} -mips3 -n32"
     OPT_FLAGS="-O2 -OPT:Olimit=0 -LANG:std"
     AR="CC -mips3 -n32 -ar -o"
     LINKER="CC -O2 -mips3 -n32"
     ;;
 
   SunOS*)
-    OS_FLAGS="-D_NODLL"
-    CXX="g++"
-    CC="gcc"
+    OS_FLAGS="${OS_FLAGS} -D_NODLL"
     GMSH_LIBS="${GMSH_LIBS} -lsocket -lnsl -ldl"
     ;;
 
-  *)
+  HP-UX*)
     OS_FLAGS="-D_NODLL"
     ;;
 
 esac
+
+
+echo "$as_me:$LINENO: checking whether byte ordering is bigendian" >&5
+echo $ECHO_N "checking whether byte ordering is bigendian... $ECHO_C" >&6
+if test "${ac_cv_c_bigendian+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  # See if sys/param.h defines the BYTE_ORDER macro.
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/param.h>
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+#if !BYTE_ORDER || !BIG_ENDIAN || !LITTLE_ENDIAN
+ bogus endian macros
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  # It does; now see whether it defined to BIG_ENDIAN or not.
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/param.h>
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+#if BYTE_ORDER != BIG_ENDIAN
+ not big endian
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_c_bigendian=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_c_bigendian=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+# It does not; compile a test program.
+if test "$cross_compiling" = yes; then
+  # try to guess the endianess by grep'ing values into an object file
+  ac_cv_c_bigendian=unknown
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+short ascii_mm[] = { 0x4249, 0x4765, 0x6E44, 0x6961, 0x6E53, 0x7953, 0 };
+short ascii_ii[] = { 0x694C, 0x5454, 0x656C, 0x6E45, 0x6944, 0x6E61, 0 };
+void _ascii () { char *s = (char *) ascii_mm; s = (char *) ascii_ii; }
+short ebcdic_ii[] = { 0x89D3, 0xE3E3, 0x8593, 0x95C5, 0x89C4, 0x9581, 0 };
+short ebcdic_mm[] = { 0xC2C9, 0xC785, 0x95C4, 0x8981, 0x95E2, 0xA8E2, 0 };
+void _ebcdic () { char *s = (char *) ebcdic_mm; s = (char *) ebcdic_ii; }
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+ _ascii (); _ebcdic ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  if fgrep BIGenDianSyS conftest.$ac_objext >/dev/null ; then
+  ac_cv_c_bigendian=yes
+fi
+if fgrep LiTTleEnDian conftest.$ac_objext >/dev/null ; then
+  if test "$ac_cv_c_bigendian" = unknown; then
+    ac_cv_c_bigendian=no
+  else
+    # finding both strings is unlikely to happen, but who knows?
+    ac_cv_c_bigendian=unknown
+  fi
+fi
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+int
+main ()
+{
+  /* Are we little or big endian?  From Harbison&Steele.  */
+  union
+  {
+    long l;
+    char c[sizeof (long)];
+  } u;
+  u.l = 1;
+  exit (u.c[sizeof (long) - 1] == 1);
+}
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_c_bigendian=no
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+( exit $ac_status )
+ac_cv_c_bigendian=yes
+fi
+rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_c_bigendian" >&5
+echo "${ECHO_T}$ac_cv_c_bigendian" >&6
+case $ac_cv_c_bigendian in
+  yes)
+
+cat >>confdefs.h <<\_ACEOF
+#define WORDS_BIGENDIAN 1
+_ACEOF
+ ;;
+  no)
+    OS_FLAGS="-D_LITTLE_ENDIAN ${OS_FLAGS}" ;;
+  *)
+    { { echo "$as_me:$LINENO: error: unknown endianess
+presetting ac_cv_c_bigendian=no (or yes) will help" >&5
+echo "$as_me: error: unknown endianess
+presetting ac_cv_c_bigendian=no (or yes) will help" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+
 
 
 
@@ -2876,7 +3075,6 @@ if test "x${GSL_PREFIX}" = "x"; then
 else
   LDFLAGS="-L${GSL_PREFIX}/lib -lgslcblas"
 fi
-
 echo "$as_me:$LINENO: checking for gsl_vector_alloc in -lgsl" >&5
 echo $ECHO_N "checking for gsl_vector_alloc in -lgsl... $ECHO_C" >&6
 if test "${ac_cv_lib_gsl_gsl_vector_alloc+set}" = set; then
