@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.105 2003-11-29 01:38:49 geuzaine Exp $
+// $Id: Views.cpp,v 1.106 2003-11-29 03:15:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -361,7 +361,7 @@ void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
 
   v->Dirty = 0; //the view is complete, we may draw it
 
-  Msg(INFO, "Added View[%d]", v->Index);
+  Msg(DEBUG, "Added View[%d]", v->Index);
 }
 
 void DuplicateView(int num, int withoptions)
@@ -465,17 +465,16 @@ bool RemoveViewByIndex(int index)
   FreeView(v);
   List_PSuppress(CTX.post.list, index);
 
-#if defined(HAVE_FLTK)
-  RemoveViewInUI();
-#endif
-
   // recalculate the indices
   for(int i = 0; i < List_Nbr(CTX.post.list); i++){
     v = (Post_View *) List_Pointer(CTX.post.list, i);
     v->Index = i;
   }
 
-  Msg(INFO, "Removed View[%d] (%d views left)", index, List_Nbr(CTX.post.list));
+#if defined(HAVE_FLTK)
+  RemoveViewInUI();
+#endif
+  Msg(DEBUG, "Removed View[%d] (%d views left)", index, List_Nbr(CTX.post.list));
   return true;
 }
 
@@ -521,7 +520,7 @@ void FreeView(Post_View * v)
   }
 
   if(free && !v->Links) {
-    Msg(DEBUG, "FREEING VIEW");
+    Msg(DEBUG, "Freeing View!");
     List_Delete(v->Time);
     // *INDENT-OFF*
     List_Delete(v->SP); List_Delete(v->VP); List_Delete(v->TP);
@@ -704,8 +703,7 @@ void ReadView(FILE *file, char *filename)
     if(!strncmp(&str[1], "PostFormat", 10)) {
       fscanf(file, "%lf %d %d\n", &version, &format, &size);
       if(version < 1.0) {
-        Msg(GERROR,
-            "The version of this post-processing file is too old (%g < 1.0)",
+        Msg(GERROR, "This post-processing file is too old (version %g < 1.0)",
             version);
         return;
       }
@@ -714,8 +712,7 @@ void ReadView(FILE *file, char *filename)
       else if(size == sizeof(float))
         Msg(DEBUG, "Data is in single precision format (size==%d)", size);
       else {
-        Msg(GERROR,
-            "Unknown type of data (size = %d) in post-processing file", size);
+        Msg(GERROR, "Unknown data size (%d) in post-processing file", size);
         return;
       }
       if(format == 0)
@@ -741,7 +738,7 @@ void ReadView(FILE *file, char *filename)
                &v->NbSL, &v->NbVL, &v->NbTL,
                &v->NbST, &v->NbVT, &v->NbTT, &v->NbSS, &v->NbVS, &v->NbTS);
         v->NbT2 = t2l = v->NbT3 = t3l = 0;
-        Msg(INFO, "Detected version <= 1.0");
+        Msg(INFO, "Detected post-processing view format <= 1.0");
       }
       else if(version == 1.1) {
         fscanf(file,
@@ -749,7 +746,7 @@ void ReadView(FILE *file, char *filename)
                name, &v->NbTimeStep, &v->NbSP, &v->NbVP, &v->NbTP, &v->NbSL,
                &v->NbVL, &v->NbTL, &v->NbST, &v->NbVT, &v->NbTT, &v->NbSS,
                &v->NbVS, &v->NbTS, &v->NbT2, &t2l, &v->NbT3, &t3l);
-        Msg(INFO, "Detected version 1.1");
+        Msg(INFO, "Detected post-processing view format 1.1");
       }
       else if(version == 1.2) {
         fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
@@ -763,7 +760,7 @@ void ReadView(FILE *file, char *filename)
                &v->NbSH, &v->NbVH, &v->NbTH,
                &v->NbSI, &v->NbVI, &v->NbTI,
                &v->NbSY, &v->NbVY, &v->NbTY, &v->NbT2, &t2l, &v->NbT3, &t3l);
-        Msg(INFO, "Detected version 1.2");
+        Msg(INFO, "Detected post-processing view format 1.2");
       }
       else {
         Msg(GERROR, "Unknown post-processing file format (version %g)",
@@ -1373,7 +1370,6 @@ void CombineViews(int all)
   for(int i = 0; i < List_Nbr(CTX.post.list) - 1; i++) {
     Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
     if(all || v->Visible) {
-      Msg(DEBUG, "Merging view %d", i);
       // *INDENT-OFF*
       combine(v->SP,vm->SP); vm->NbSP += v->NbSP;
       combine(v->VP,vm->VP); vm->NbVP += v->NbVP; 
