@@ -1,4 +1,7 @@
-$Date: 2001-11-14 19:00:05 $
+$Date: 2001-11-19 11:18:25 $
+
+New in 1.31: Corrected ellipses; PostScript output update (better
+shading, new combined PS/LaTeX output format); more interface polish;
 
 New in 1.30: Interface polish; fix crash when extruding quadrangles;
 
