@@ -365,12 +365,12 @@ StringXString PostProcessingOptions_String[] = {
 StringXString ViewOptions_String[] = {
   { F|O, "AbscissaName" , opt_view_abscissa_name , "" , 
     "Abscissa name for 2D graphs" },
-  { F|O, "AbscissaFormat" , opt_view_abscissa_format , "%.3e" , 
+  { F|O, "AbscissaFormat" , opt_view_abscissa_format , "%g" , 
     "Abscissa number format for 2D graphs (in standard C form)" },
 
   { F,   "FileName" , opt_view_filename , "" , 
     "Default post-processing view file name" },
-  { F|O, "Format" , opt_view_format , "%.3e" , 
+  { F|O, "Format" , opt_view_format , "%g" , 
     "Number format (in standard C form)" },
 
   { F|O, "GeneralizedRaiseX" , opt_view_gen_raise0 , "v0" , 

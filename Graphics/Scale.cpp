@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.55 2005-01-01 19:35:29 geuzaine Exp $
+// $Id: Scale.cpp,v 1.56 2005-01-18 05:31:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -268,8 +268,11 @@ void draw_scale(Post_View * v,
   // the label
 
   if((v->ShowTime == 1 && List_Nbr(v->Time) > 1) ||
-     (v->ShowTime == 2 && List_Nbr(v->Time) > 0))
-    sprintf(label, "%s (%g)", v->Name, *(double *)List_Pointer(v->Time, v->TimeStep));
+     (v->ShowTime == 2 && List_Nbr(v->Time) > 0)){
+    char tmp[256];
+    sprintf(tmp, v->Format, *(double *)List_Pointer(v->Time, v->TimeStep));
+    sprintf(label, "%s (%s)", v->Name, tmp);
+  }
   else
     sprintf(label, "%s", v->Name);
 
@@ -378,8 +381,11 @@ void Draw_Scales(void)
 	width_prev = width;
 	sprintf(label, v->Format, -100*M_PI);
 	width = bar_size + tic + gl_width(label);
-	if(List_Nbr(v->Time) > 1 && v->ShowTime)
-	  sprintf(label, "%s (%g)", v->Name, *(double *)List_Pointer(v->Time, v->TimeStep));
+	if(List_Nbr(v->Time) > 1 && v->ShowTime){
+	  char tmp[256];
+	  sprintf(tmp, v->Format, *(double *)List_Pointer(v->Time, v->TimeStep));
+	  sprintf(label, "%s (%s)", v->Name, tmp);
+	}
 	else
 	  sprintf(label, "%s", v->Name);
 	if(gl_width(label) > width)
