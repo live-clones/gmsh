@@ -1,4 +1,4 @@
-// $Id: FunctionManager.cpp,v 1.8 2001-02-09 14:51:31 geuzaine Exp $
+// $Id: FunctionManager.cpp,v 1.9 2001-02-16 20:16:40 remacle Exp $
 
 #include <stdio.h>
 #include <stack>
@@ -30,20 +30,12 @@ class File_Position
 class mystack
 {
 public:
-#ifdef WIN32
-	std::stack<File_Position> s;
-#else
-	stack<File_Position> s;
-#endif
+  std::stack<File_Position> s;
 };
 class mymap
 {
 public :
-#ifdef WIN32
     std::map<char*,File_Position,ltstr> m;
-#else
-	map<char*,File_Position,ltstr> m;
-#endif
 };
 
 FunctionManager *FunctionManager::instance = 0;

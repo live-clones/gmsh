@@ -93,6 +93,8 @@ void IsoSimplex( Post_View *View,
     }
   }
 
+  if(nb < 3)return;
+
   /*
     3 possibilities for quads
       -) 0,2,5,3
@@ -121,66 +123,61 @@ void IsoSimplex( Post_View *View,
     v = unknown field we wanna draw
    */
 
-  if(nb > 2)
-    {
-      double v1[3] = {Xp[2]-Xp[0],Yp[2]-Yp[0],Zp[2]-Zp[0]};
-      double v2[3] = {Xp[1]-Xp[0],Yp[1]-Yp[0],Zp[1]-Zp[0]};
-      double gr[3];
-      double n[3],xx;
-      prodve(v1,v2,n);
-      norme(n);
-      gradSimplex(X,Y,Z,Val,gr);      
-      prosca(gr,n,&xx);
+  double v1[3] = {Xp[2]-Xp[0],Yp[2]-Yp[0],Zp[2]-Zp[0]};
+  double v2[3] = {Xp[1]-Xp[0],Yp[1]-Yp[0],Zp[1]-Zp[0]};
+  double gr[3];
+  double n[3],xx;
+  prodve(v1,v2,n);
+  norme(n);
+  gradSimplex(X,Y,Z,Val,gr);      
+  prosca(gr,n,&xx);
   
-      if(xx > 0)
+  if(xx > 0)
+    {
+      for(i=0;i<nb;i++)
 	{
-	  for(i=0;i<nb;i++)
-	    {
-	      Xpi[i] = Xp[i];
-	      Ypi[i] = Yp[i];
-	      Zpi[i] = Zp[i];
-	    }
-	  for(i=0;i<nb;i++)
-	    {
-	      Xp[i] = Xpi[nb-i-1];
-	      Yp[i] = Ypi[nb-i-1];
-	      Zp[i] = Zpi[nb-i-1];	      
-	    }
+	  Xpi[i] = Xp[i];
+	  Ypi[i] = Yp[i];
+	  Zpi[i] = Zp[i];
 	}
-      else
+      for(i=0;i<nb;i++)
 	{
-	  n[0] = -n[0];
-	  n[1] = -n[1];
-	  n[2] = -n[2];
-	}
-      if(preproNormals)
-	{
-	  for(i=0;i<nb;i++)
-	    {
-	      View->add_normal(Xp[i],Yp[i],Zp[i],n[0],n[1],n[2]);
-	    }
-	  return;
-	}
-      else
-	{
-	  for(i=0;i<nb;i++)
-	    {
-	      if(!View->get_normal(Xp[i],Yp[i],Zp[i],norms[3*i],norms[3*i+1],norms[3*i+2]))
-		{
-		  //printf("coucou\n");
-		  norms[3*i] = n[0];
-		  norms[3*i+1] = n[1];
-		  norms[3*i+2] = n[2];
-		}	      
-	    }	  
+	  Xp[i] = Xpi[nb-i-1];
+	  Yp[i] = Ypi[nb-i-1];
+	  Zp[i] = Zpi[nb-i-1];	      
 	}
     }
-
-
+  else
+    {
+      n[0] = -n[0];
+      n[1] = -n[1];
+      n[2] = -n[2];
+    }
+  if(preproNormals)
+    {
+      for(i=0;i<nb;i++)
+	{
+	  View->add_normal(Xp[i],Yp[i],Zp[i],n[0],n[1],n[2]);
+	}
+      return;
+    }
+  else
+    {
+      for(i=0;i<nb;i++)
+	{
+	  if(!View->get_normal(Xp[i],Yp[i],Zp[i],norms[3*i],norms[3*i+1],norms[3*i+2]))
+	    {
+	      //printf("coucou\n");
+	      norms[3*i] = n[0];
+	      norms[3*i+1] = n[1];
+	      norms[3*i+2] = n[2];
+	    }	      
+	}	  
+    }  
+  
   if(nb == 3) 
     Draw_Triangle(Xp,Yp,Zp,norms,Offset,Raise,shade);
   else if(nb == 4)
-    Draw_Quadrangle(Xp,Yp,Zp,norms,Offset,Raise,shade);
-
+    Draw_Quadrangle(Xp,Yp,Zp,norms,Offset,Raise,shade);  
 }
 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.29 2001-02-12 17:38:02 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.30 2001-02-16 20:16:40 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1307,7 +1307,7 @@ void view_duplicate_cb(CALLBACK_ARGS){
     v = (Post_View*)List_Pointer(Post_ViewList, i);	\
     if(CTX.post.link == 2 ||				\
        (CTX.post.link == 1 && v->Visible) ||		\
-       (CTX.post.link == 0 && i == (int)data)){
+       (CTX.post.link == 0 && i == WID->view_number)){
 
 #define ENDVIEWMOD				\
     }						\

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.44 2001-02-12 17:38:02 geuzaine Exp $
+// $Id: GUI.cpp,v 1.45 2001-02-16 20:16:40 remacle Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1744,7 +1744,8 @@ void GUI::create_view_options_window(int num){
     { 
       Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
       o->labelsize(CTX.fontsize);
-      o->callback(view_options_ok_cb);
+      printf("num = %d\n",num);
+      o->callback(view_options_ok_cb,(void*)num);
     }
     { 
       Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");

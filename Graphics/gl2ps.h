@@ -149,12 +149,12 @@ typedef struct {
 
 /* public functions */
 
-GLvoid gl2psBeginPage(char *title, char *producer, GLint sort, GLint options, 
+void gl2psBeginPage(char *title, char *producer, GLint sort, GLint options, 
                       GLint colormode, GLint colorsize, GL2PSrgba *colormap, 
                       GLint buffersize, FILE * stream);
-GLint  gl2psEndPage(GLvoid);
-GLvoid gl2psText(char *str, char *fontname, GLint size);
-GLvoid gl2psEnable(GLint mode);
-GLvoid gl2psDisable(GLint mode);
+GLint  gl2psEndPage(void);
+void gl2psText(char *str, char *fontname, GLint size);
+void gl2psEnable(GLint mode);
+void gl2psDisable(GLint mode);
 
 #endif

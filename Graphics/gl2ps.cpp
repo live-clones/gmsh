@@ -1,4 +1,4 @@
-// $Id: gl2ps.cpp,v 1.7 2001-01-11 14:11:57 geuzaine Exp $
+// $Id: gl2ps.cpp,v 1.8 2001-02-16 20:16:40 remacle Exp $
 
 /*
  * GL2PS, an OpenGL to Postscript Printing Library, version 0.31
@@ -36,7 +36,7 @@
 
 static GL2PScontext gl2ps;
 
-GLvoid gl2psMsg(GLint level, char *fmt, ...){
+void gl2psMsg(GLint level, char *fmt, ...){
   va_list args;
 
   if(!(gl2ps.options & GL2PS_SILENT)){
@@ -69,12 +69,12 @@ GLvoid *gl2psRealloc(GLvoid *ptr, size_t size){
   return(ptr);
 }
 
-GLvoid gl2psFree(GLvoid *ptr){
+void gl2psFree(GLvoid *ptr){
   if(!ptr) return;
   free(ptr);
 }
 
-GLvoid gl2psListRealloc(GL2PSlist *list, GLint n){
+void gl2psListRealloc(GL2PSlist *list, GLint n){
   if(n <= 0) return;
   if(!list->array){
     list->nmax = ((n - 1) / list->incr + 1) * list->incr;
@@ -103,12 +103,12 @@ GL2PSlist *gl2psListCreate(GLint n, GLint incr, GLint size){
   return(list);
 }
 
-GLvoid gl2psListDelete(GL2PSlist *list){
+void gl2psListDelete(GL2PSlist *list){
   gl2psFree(list->array);
   gl2psFree(list);
 }
 
-GLvoid gl2psListAdd(GL2PSlist *list, GLvoid *data){
+void gl2psListAdd(GL2PSlist *list, GLvoid *data){
   list->n++;
   gl2psListRealloc(list, list->n);
   memcpy(&list->array[(list->n - 1) * list->size], data, list->size);
@@ -118,18 +118,18 @@ GLint gl2psListNbr(GL2PSlist *list){
   return(list->n);
 }
 
-GLvoid *gl2psListPointer(GL2PSlist *list, GLint index){
+void *gl2psListPointer(GL2PSlist *list, GLint index){
   if((index < 0) || (index >= list->n))
     gl2psMsg(GL2PS_ERROR, "Wrong List Index in gl2psListPointer");
   return(&list->array[index * list->size]);
 }
 
-GLvoid gl2psListSort(GL2PSlist *list,
+void gl2psListSort(GL2PSlist *list,
                      GLint (*fcmp)(const GLvoid *a, const GLvoid *b)){
   qsort(list->array, list->n, list->size, fcmp);
 }
 
-GLvoid gl2psListAction(GL2PSlist *list, 
+void gl2psListAction(GL2PSlist *list, 
                        GLvoid (*action)(GLvoid *data, GLvoid *dummy)){
   GLint i, dummy;
 
@@ -957,7 +957,7 @@ GLint gl2psGetVertex(GL2PSvertex *v, GLfloat *p){
   }
 }
 
-GLint gl2psParseFeedbackBuffer(GLvoid){
+GLint gl2psParseFeedbackBuffer(){
   GLint        i, used, count, v, vtot, offset=0, dash=0;
   GLshort      boundary, flag;
   GLfloat     *current;
@@ -1063,7 +1063,7 @@ GLint gl2psParseFeedbackBuffer(GLvoid){
   return GL2PS_SUCCESS;
 }
 
-GLvoid gl2psPrintPostscriptHeader(GLvoid){
+GLvoid gl2psPrintPostscriptHeader(){
   GLint   viewport[4], index;
   GLfloat rgba[4];
   time_t  now;
@@ -1229,7 +1229,7 @@ GLvoid gl2psBeginPage(char *title, char *producer, GLint sort, GLint options,
   glRenderMode(GL_FEEDBACK);  
 }
 
-GLint gl2psEndPage(GLvoid){
+GLint gl2psEndPage(void){
   GL2PSbsptree   *root;
   GL2PSxyz        eye={0., 0., 100000.};
   GLint           shademodel, res;
