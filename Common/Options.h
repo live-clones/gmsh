@@ -23,6 +23,7 @@ char * opt_general_tmp_filename(OPT_ARGS_STR);
 char * opt_general_error_filename(OPT_ARGS_STR);
 char * opt_general_session_filename(OPT_ARGS_STR);
 char * opt_general_options_filename(OPT_ARGS_STR);
+char * opt_general_editor(OPT_ARGS_STR);
 char * opt_view_name(OPT_ARGS_STR);
 char * opt_view_format(OPT_ARGS_STR);
 char * opt_view_filename(OPT_ARGS_STR);

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.47 2001-05-03 00:09:42 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.48 2001-05-03 08:41:55 geuzaine Exp $
 
 #include <map>
 #include "Gmsh.h"
@@ -1325,7 +1325,10 @@ void getdp_file_open_cb(CALLBACK_ARGS){
   GetDP(GetDP_Info.file);
 }
 void getdp_file_edit_cb(CALLBACK_ARGS){
-  Msg(WARNING, "Should lauch a file editor");
+  char cmd[1000];
+  sprintf(cmd, CTX.editor, GetDP_Info.file);
+  Msg(INFO, "Starting text editor '%s'", cmd);
+  system(cmd);
 }
 void getdp_choose_mesh_cb(CALLBACK_ARGS){
   char *newfile;

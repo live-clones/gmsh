@@ -19,6 +19,11 @@ StringXString GeneralOptions_String[] = {
   { F|S, "TmpFileName" , opt_general_tmp_filename , ".gmsh-tmp" },
   { F|S, "ErrorFileName" , opt_general_error_filename , ".gmsh-errors" },
   { F|S, "OptionsFileName" , opt_general_options_filename , ".gmsh-options" },
+#ifdef WIN32
+  { F|O, "Editor" , opt_general_editor , "wordpad %s" },
+#else
+  { F|O, "Editor" , opt_general_editor , "emacs %s &" },
+#endif
   { 0, NULL , NULL , NULL }
 } ;
 
