@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.333 2005-02-05 21:49:00 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.334 2005-02-12 18:43:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -133,6 +133,37 @@ void view_color_cb(CALLBACK_ARGS)
 void redraw_cb(CALLBACK_ARGS)
 {
   Draw();
+}
+
+void window_cb(CALLBACK_ARGS)
+{
+  switch((long)data){
+  case 0: // minimize
+    WID->g_window->iconize();
+    if(WID->opt_window->shown()) WID->opt_window->iconize();
+    if(WID->vis_window->shown()) WID->vis_window->iconize();
+    if(WID->clip_window->shown()) WID->clip_window->iconize();
+    if(WID->stat_window->shown()) WID->stat_window->iconize();
+    if(WID->msg_window->shown()) WID->msg_window->iconize();
+    WID->m_window->iconize();
+    break;
+  case 1: // maximize
+    WID->g_window->size((int)(0.95*Fl::w()), (int)(0.95*Fl::h())); // bof bof bof
+    WID->g_window->show();
+    WID->m_window->show();
+    break;
+  case 2: // bring all to front (the order is important!)
+    WID->g_window->show();
+    if(WID->opt_window->shown()) WID->opt_window->show();
+    if(WID->vis_window->shown()) WID->vis_window->show();
+    if(WID->clip_window->shown()) WID->clip_window->show();
+    if(WID->stat_window->shown()) WID->stat_window->show();
+    if(WID->msg_window->shown()) WID->msg_window->show();
+    WID->m_window->show();
+    break;
+  default:
+    break;
+  }
 }
 
 // Graphical window 

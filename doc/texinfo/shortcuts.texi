@@ -1,6 +1,5 @@
-Keyboard shortcuts:
-
 @table @kbd
+
 @item Left arrow
 Go to previous time step 
 @item Right arrow

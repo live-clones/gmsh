@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.417 2005-02-02 18:47:55 geuzaine Exp $
+// $Id: GUI.cpp,v 1.418 2005-02-12 18:43:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -146,6 +146,11 @@ Fl_Menu_Item m_sys_menubar_table[] = {
     {"Clipping Planes", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0, FL_MENU_DIVIDER},
     {"Statistics",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0},
     {"Message Console", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
+    {0},
+  {"Window",0,0,0,FL_SUBMENU},
+    {"Minimize",           0, (Fl_Callback *)window_cb, (void*)0},
+    {"Zoom",               0, (Fl_Callback *)window_cb, (void*)1, FL_MENU_DIVIDER},
+    {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)2},
     {0},
   {"Help",0,0,0,FL_SUBMENU},
     {"Online Documentation", 0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
@@ -529,14 +534,7 @@ int GUI::global_shortcuts(int event)
     return 0;   // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'a')) { 
-    // raise all open windows (graphics first, then options, then menu)
-    if(g_window && g_window->shown()) g_window->show();
-    if(opt_window && opt_window->shown()) opt_window->show();
-    if(vis_window && vis_window->shown()) vis_window->show();
-    if(clip_window && clip_window->shown()) clip_window->show();
-    if(stat_window && stat_window->shown()) stat_window->show();
-    if(msg_window && msg_window->shown()) msg_window->show();
-    if(m_window && m_window->shown()) m_window->show();
+    window_cb(0, (void*)2);
     return 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'o')) {
@@ -835,8 +833,9 @@ GUI::GUI(int argc, char **argv)
   g_window->icon((char *)p2);
 #endif
 
-  m_window->show(1, argv);
+  // show menu window last, so it's always in front
   g_window->show(1, argv);
+  m_window->show(1, argv);
 
   create_option_window();
   create_message_window();

@@ -33,6 +33,7 @@ void cancel_cb(CALLBACK_ARGS);
 void color_cb(CALLBACK_ARGS);
 void view_color_cb(CALLBACK_ARGS);
 void redraw_cb(CALLBACK_ARGS);
+void window_cb(CALLBACK_ARGS);
 
 // Graphical window
 
