@@ -3536,24 +3536,24 @@ else
   fi
 fi
 
-echo "$as_me:$LINENO: checking for ./MathEval/matheval.c" >&5
-echo $ECHO_N "checking for ./MathEval/matheval.c... $ECHO_C" >&6
-if test "${ac_cv_file___MathEval_matheval_c+set}" = set; then
+echo "$as_me:$LINENO: checking for ./MathEval/matheval.cpp" >&5
+echo $ECHO_N "checking for ./MathEval/matheval.cpp... $ECHO_C" >&6
+if test "${ac_cv_file___MathEval_matheval_cpp+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   test "$cross_compiling" = yes &&
   { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
 echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
    { (exit 1); exit 1; }; }
-if test -r "./MathEval/matheval.c"; then
-  ac_cv_file___MathEval_matheval_c=yes
+if test -r "./MathEval/matheval.cpp"; then
+  ac_cv_file___MathEval_matheval_cpp=yes
 else
-  ac_cv_file___MathEval_matheval_c=no
+  ac_cv_file___MathEval_matheval_cpp=no
 fi
 fi
-echo "$as_me:$LINENO: result: $ac_cv_file___MathEval_matheval_c" >&5
-echo "${ECHO_T}$ac_cv_file___MathEval_matheval_c" >&6
-if test $ac_cv_file___MathEval_matheval_c = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_file___MathEval_matheval_cpp" >&5
+echo "${ECHO_T}$ac_cv_file___MathEval_matheval_cpp" >&6
+if test $ac_cv_file___MathEval_matheval_cpp = yes; then
   MATHEVAL="yes"
 else
   MATHEVAL="no"
