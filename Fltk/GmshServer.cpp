@@ -1,4 +1,4 @@
-/* $Id: GmshServer.cpp,v 1.13 2003-03-21 00:52:37 geuzaine Exp $ */
+/* $Id: GmshServer.cpp,v 1.14 2003-03-25 19:10:08 geuzaine Exp $ */
 /*
   Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 
@@ -59,7 +59,7 @@ static int Socket_ReceiveData(int socket, void *buffer, int bytes)
 
 static int Socket_UnlinkName(char *name)
 {
-#if defined(_AIX)
+#if defined(_AIX) || defined(__APPLE__)
   char name2[1000];
   strcpy(name2, name);
   name2[strlen(name2) - 1] = '\0';
