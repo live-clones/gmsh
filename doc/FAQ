@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.55 2005-03-12 22:25:24 geuzaine Exp $
+$Id: FAQ,v 1.56 2005-03-23 16:53:44 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -366,3 +366,28 @@ There can be several reasons:
 In any case, you can automatically remove all empty views with
 'View->Remove->Empty Views' in the GUI, or with "Delete Empty Views;"
 in a script.
+
+* 7.13 My code generates data "time step by time step", and thus
+cannot easily output Gmsh's multi-time-step post-processing files,
+where the values for all the time steps are given per element. How can
+I use Gmsh's post-processor in this situation?
+
+Just create one view for each time step: Gmsh can handle an arbitrary
+number of views and it can deal with these separate views as
+efficiently as with a single multi-time-step view. The only
+disadvantage is that the total amount of disk space used is greater
+(since the node data is repeated for each time step).
+
+In practice, depending on the size of the data set, you may want to
+store all the views in a single file or create one separate file for
+each view, which you can then load selectively (and thus reduce the
+memory required for the analysis). In any case you can use
+'Tools->Options->Post-processing->View links' to apply options to
+multiple views at once, and the up and down arrow keys to loop through
+(animate) the views (instead of the left and right arrow keys for
+multi-time-step views).
+
+Also note that if all the views are based on the same grid, Gmsh can
+combine the separate views into a multi-time-step view by using the
+'View->Combine->Time Steps' menu, or by using the '-combine' command
+line option.
