@@ -307,7 +307,7 @@ Saved in: @code{General.OptionsFileName}
 @item View.Type
 Type of graph (1=3D, 2=2D-space, 3=2D-time)@*
 Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
+Saved in: @code{-}
 
 @item View.VectorType
 Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement)@*

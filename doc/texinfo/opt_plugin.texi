@@ -173,18 +173,25 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Extract)
-Plugin(Extract) extracts the `iComponent'-th
-component of the view `iView'. If `iView' < 0, the
+Plugin(Extract) extracts a combination of
+components from the view `iView', as specified
+by `Expression'. In addition to the usual
+mathematical functions, `Expression' can contain
+the symbols v0, v1, v2, ..., vn, which represent
+the n components of the field. If `iView' < 0, the
 plugin is run on the current view.
 
 Plugin(Extract) creates one new view.
 
+String options:
+@table @code
+@item Expression
+Default value: @code{"v0"}
+@end table
 Numeric options:
 @table @code
 @item iView
 Default value: @code{-1}
-@item iComponent
-Default value: @code{0}
 @end table
 
 @item Plugin(Skin)
