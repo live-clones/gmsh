@@ -2,7 +2,7 @@
  * GL2GIF, an OpenGL to GIF Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2gif.cpp,v 1.17 2003-03-01 22:36:40 geuzaine Exp $
+ * $Id: gl2gif.cpp,v 1.18 2003-03-04 04:22:37 geuzaine Exp $
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -23,31 +23,42 @@
 /* 
  * Warning: This code is really a dirty hack. It SHOULD be cleaned
  * (and most of all, all the static variables should be removed).
- * 
+ *
  * It is based on 
  *
- *  . libppm3.c - ppm utility library part 3
- *    Copyright (C) 1989, 1991 by Jef Poskanzer.
+ * - libppm3.c - ppm utility library part 3
+ * - ppmquant.c - quantize the colors in a pixmap down to a specified number
  *
- *  . ppmtogif.c - read a portable pixmap and produce a GIF file
- *    Copyright (C) 1989 by Jef Poskanzer.
+ * Copyright (C) 1989, 1991 by Jef Poskanzer.
  *
- *  . GIFCOMPR.C
- *    Lempel-Ziv compression based on 'compress.c'. 
- *    File compression ala IEEE Computer, June 1984.
- *    By Authors:  Spencer W. Thomas       (decvax!harpo!utah-cs!utah-gr!thomas)
- *                 Jim McKie               (decvax!mcvax!jim)
- *                 Steve Davies            (decvax!vax135!petsd!peora!srd)
- *                 Ken Turkowski           (decvax!decwrl!turtlevax!ken)
- *                 James A. Woods          (decvax!ihnp4!ames!jaw)
- *                 Joe Orost               (decvax!vax135!petsd!joe)
- *    GIF modifications by David Rowley (mgardi@watdcsu.waterloo.edu)
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose and without fee is hereby granted, provided
+ * that the above copyright notice appear in all copies and that both that
+ * copyright notice and this permission notice appear in supporting
+ * documentation.  This software is provided "as is" without express or
+ * implied warranty.
  *
- * .  ppmquant.c - quantize the colors in a pixmap down to a specified
- *    number 
- *    Copyright (C) 1989, 1991 by Jef Poskanzer.  Based on Paul
- *    Heckbert's paper "Color Image Quantization for Frame Buffer
- *    Display", SIGGRAPH '82 Proceedings, page 297.  
+ * and 
+ *
+ * - ppmtogif.c - read a portable pixmap and produce a GIF file
+ *
+ * Based on GIFENCOD by David Rowley <mgardi@watdscu.waterloo.edu>.A
+ * Lempel-Zim compression based on "compress".
+ *
+ * Modified by Marcel Wijkstra <wijkstra@fwi.uva.nl>
+ *
+ * Copyright (C) 1989 by Jef Poskanzer.
+ *
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose and without fee is hereby granted, provided
+ * that the above copyright notice appear in all copies and that both that
+ * copyright notice and this permission notice appear in supporting
+ * documentation.  This software is provided "as is" without express or
+ * implied warranty.
+ *
+ * The Graphics Interchange Format(c) is the Copyright property of
+ * CompuServe Incorporated.  GIF(sm) is a Service Mark property of
+ * CompuServe Incorporated.
  *
  */
 
