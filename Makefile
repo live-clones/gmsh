@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.371 2004-09-28 22:45:14 geuzaine Exp $
+# $Id: Makefile,v 1.372 2004-10-04 05:08:14 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,7 @@ include variables
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 55
-GMSH_PATCH_VERSION = 4
+GMSH_PATCH_VERSION = 5
 GMSH_EXTRA_VERSION = "-cvs"
 
 GMSH_VERSION = ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}
