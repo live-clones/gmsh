@@ -1,4 +1,4 @@
-$Id: CONTRIBUTORS,v 1.19 2003-02-12 02:46:21 geuzaine Exp $
+$Id: CONTRIBUTORS,v 1.20 2003-02-12 16:12:27 geuzaine Exp $
 
 Gmsh is copyright (c) 1997-2003 by
 
@@ -10,7 +10,6 @@ Portions of Gmsh are copyright (c)
   1988-1993, 1995 The Regents of the University of California.
   1993, 1994, Silicon Graphics, Inc.
   1990-1995 Bill Hibbard, Brian Paul, Dave Santek, and Andre Battaiola.
-  1994, Thomas G. Lane.
   1989, 1991 Jef Poskanzer.
 
 This version of Gmsh may also contain code copyright (c) 1993, 1995,

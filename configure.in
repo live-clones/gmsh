@@ -1,4 +1,4 @@
-dnl "$Id: configure.in,v 1.7 2003-02-12 00:27:06 geuzaine Exp $"
+dnl "$Id: configure.in,v 1.16 2003-02-12 21:46:59 geuzaine Exp $"
 dnl
 dnl Machine independent configuration script for Gmsh.
 dnl
@@ -40,11 +40,9 @@ dnl Parse --enable command line options
 AC_ARG_ENABLE(gui,
               AC_HELP_STRING([--enable-gui],
                              [build the graphical user interface (default=yes)]))
-
 AC_ARG_ENABLE(parallel,
               AC_HELP_STRING([--enable-parallel],
                              [enable parallel version (default=no)]))
-
 AC_ARG_ENABLE(triangle,
               AC_HELP_STRING([--enable-triangle],
                              [compile Triangle if available (default=yes)]))
@@ -56,9 +54,6 @@ if test "x${UNAME}" = "xIRIX64"; then
   UNAME="IRIX"
 fi
 AC_SUBST(UNAME)
-
-dnl Use C++ for configure tests
-AC_LANG(C++)
 
 dnl Check for default compilers
 AC_PROG_CC
@@ -84,25 +79,35 @@ GMSH_DIRS="Common DataStr Geo Mesh Numeric Parallel Parser Plugin"
 dnl Choose blackbox or GUI version
 if test "x$enable_gui" != "xno"; then
 
-  GMSH_DIRS="${GMSH_DIRS} Graphics Fltk jpeg"
-  GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo -lGmshNumeric -lGmshCommon -lGmshDataStr -lGmshJpeg -lGmshPlugin -lGmshParallel"
-  VERSION_FLAGS="-D_FLTK"
+  GMSH_DIRS="${GMSH_DIRS} Graphics Fltk"
+  GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo -lGmshNumeric -lGmshCommon -lGmshDataStr -lGmshPlugin -lGmshParallel"
+  VERSION_FLAGS="-DHAVE_FLTK"
+
   if test "x${FLTK_PREFIX}" != "x" ; then
     AC_PATH_PROG(FLTKCONFIG,fltk-config,"",${FLTK_PREFIX})
+    dnl This is a hack, so that it still works for people who compiled fltk,
+    dnl but didn't install it properly...
+    GUI_LIBS="-L${FLTK_PREFIX}/lib"
+    GUI_INCLUDE="-I${FLTK_PREFIX}"
   else
     AC_PATH_PROG(FLTKCONFIG,fltk-config)
   fi
   if test "x$FLTKCONFIG" = "x"; then
     AC_MSG_ERROR(Could not find fltk-config. Try --with-fltk-prefix?)
   fi
-  GUI_LIBS="`$FLTKCONFIG --use-gl --ldstaticflags`"
-  GUI_INCLUDE="`$FLTKCONFIG --use-gl --cxxflags`"
+  GUI_LIBS="${GUI_LIBS} `$FLTKCONFIG --use-gl --use-images --ldflags`"
+  GUI_INCLUDE="${GUI_INCLUDE} `$FLTKCONFIG --use-gl --use-images --cxxflags`"
+
+  dnl Check if libjpeg is available (in case fltk didn't find it) to enable/disable gl2jpg
+  AC_CHECK_HEADER(jpeglib.h,
+    AC_CHECK_LIB(jpeg, jpeg_destroy_decompress,
+      VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_LIBJPEG" GUI_LIBS="${GUI_LIBS} -ljpeg"))
 
 else
 
   GMSH_DIRS="${GMSH_DIRS} Box"
   GMSH_LIBS="-Llib -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshNumeric -lGmshPlugin -lGmshCommon -lGmshDataStr -lGmshParallel"
-  VERSION_FLAGS="-D_BLACKBOX"
+  VERSION_FLAGS=""
   GUI_LIBS=""
   GUI_INCLUDE=""
 
@@ -148,12 +153,12 @@ case "$UNAME" in
     ;;
 
   Darwin*)
-    OS_FLAGS="${OS_FLAGS} -D_NODLL"
+    OS_FLAGS="${OS_FLAGS} -DNODLL"
     POSTBUILD="/Developer/Tools/Rez -t APPL -o bin/gmsh Fltk/MacRes.r"
     ;;
 
   AIX*)
-    OS_FLAGS="${OS_FLAGS} -D_BSD -D_NODLL"
+    OS_FLAGS="${OS_FLAGS} -D_BSD -DNODLL"
     ;;
 
   IRIX*)
@@ -166,18 +171,18 @@ case "$UNAME" in
     ;;
 
   SunOS*)
-    OS_FLAGS="${OS_FLAGS} -D_NODLL"
+    OS_FLAGS="${OS_FLAGS} -DNODLL"
     GMSH_LIBS="${GMSH_LIBS} -lsocket -lnsl -ldl"
     ;;
 
   HP-UX*)
-    OS_FLAGS="-D_NODLL"
+    OS_FLAGS="-DNODLL"
     ;;
 
 esac
 
 dnl Is the machine big or littke endian?
-AC_C_BIGENDIAN(,OS_FLAGS="-D_LITTLE_ENDIAN ${OS_FLAGS}")
+AC_C_BIGENDIAN(OS_FLAGS="${OS_FLAGS}",OS_FLAGS="-DLITTLE_ENDIAN ${OS_FLAGS}")
 
 AC_SUBST(OPT_FLAGS)
 AC_SUBST(OS_FLAGS)
@@ -214,6 +219,7 @@ echo "*******************************************************************"
 echo "Gmsh is configured for"
 echo "- Operating system: $UNAME"
 echo "- Version flags: $VERSION_FLAGS"
+echo "- OS flags: $OS_FLAGS"
 echo "*******************************************************************"
 
 if test "x${HAVE_TRIANGLE}" = "xno"; then
@@ -231,12 +237,13 @@ if test "x${HAVE_TRIANGLE}" = "xno"; then
   echo "*******************************************************************"
 fi
 
-if test "x${GSL}" = "xno"; then
-  echo "*******************************************************************"
-  echo "Configure could not find the GNU Scientific Library (GSL):"
-  echo "- if it is installed in a non-standard location, please run"
-  echo "  ./configure again with the --with-gsl-prefix option"
-  echo "- if it is not installed on your system, you can download it from"
-  echo "  http://sources.redhat.com/gsl/"
-  echo "*******************************************************************"
-fi
+dnl Don't print the warning at the moment, since we don't use the GSL yet
+dnl if test "x${GSL}" = "xno"; then
+dnl   echo "*******************************************************************"
+dnl   echo "Configure could not find the GNU Scientific Library (GSL):"
+dnl   echo "- if it is installed in a non-standard location, please run"
+dnl   echo "  ./configure again with the --with-gsl-prefix option"
+dnl   echo "- if it is not installed on your system, you can download it from"
+dnl   echo "  http://sources.redhat.com/gsl/"
+dnl   echo "*******************************************************************"
+dnl fi

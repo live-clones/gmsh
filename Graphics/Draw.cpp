@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.34 2003-01-23 20:19:20 geuzaine Exp $
+// $Id: Draw.cpp,v 1.35 2003-02-12 20:27:12 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,7 @@ void Draw3d(void){
   if(CTX.alpha){
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
-#ifndef WIN32
+#if !defined(WIN32)
     // This seems to perturb the font rendering on Windows... And
     // everything seems to work fine without, so...
     glEnable(GL_ALPHA);

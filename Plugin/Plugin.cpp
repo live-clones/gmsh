@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.34 2003-01-25 01:32:58 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.35 2003-02-12 20:27:14 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -19,20 +19,19 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
-#ifndef _NODLL
+#if !defined(NODLL)
 #include <dlfcn.h>
 #endif
 
 #include <map>
 
-#ifdef _FLTK
+#if defined(HAVE_FLTK)
 #include <FL/Fl.H>
 #include <FL/filename.H>
 #endif
 
 #include "Plugin.h"
 #include "PluginManager.h"
-
 #include "CutMap.h"
 #include "CutPlane.h"
 #include "CutSphere.h"
@@ -135,7 +134,7 @@ void GMSH_PluginManager::RegisterDefaultPlugins(){
   allPlugins.insert(std::pair<char*,GMSH_Plugin*>("SphericalRaise",
 						  GMSH_RegisterSphericalRaisePlugin()));
 
-#ifdef _FLTK
+#if defined(HAVE_FLTK)
   struct dirent **list;
   char ext[6];
   char *homeplugins = getenv ("GMSHPLUGINSHOME");
@@ -162,7 +161,7 @@ void GMSH_PluginManager::RegisterDefaultPlugins(){
 
 void GMSH_PluginManager::AddPlugin( char *dirName, char *pluginName){
 
-#if defined(_NODLL) || !defined(_FLTK)
+#if defined(NODLL) || !defined(HAVE_FLTK)
   Msg(WARNING,"No dynamic plugin loading on this platform");
   return;
 #else

@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.6 2003-01-23 20:19:17 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.7 2003-02-12 20:27:12 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -32,7 +32,7 @@
 #include "OpenFile.h"
 #include "Parser.h"
 
-#ifndef GMSH_MAJOR_VERSION
+#if !defined(GMSH_MAJOR_VERSION)
 #error 
 #error Common/GmshVersion.h is not up-to-date. 
 #error Please run 'make tag'.
@@ -76,7 +76,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -histogram            print mesh quality histogram");
   Msg(DIRECT, "  -extrude              use old extrusion mesh generator");
   Msg(DIRECT, "  -recombine            recombine meshes from old extrusion mesh generator");
-#ifndef _BLACKBOX
+#if defined(HAVE_FLTK)
   Msg(DIRECT, "  -interactive          display 2D mesh construction interactively");
   Msg(DIRECT, "Post-processing options:");
   Msg(DIRECT, "  -dl                   enable display lists");
@@ -94,7 +94,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -perspective          set projection mode to perspective");
 #endif
   Msg(DIRECT, "Other options:");      
-#ifndef _BLACKBOX
+#if defined(HAVE_FLTK)
   Msg(DIRECT, "  -a, -g, -m, -s, -p    start in automatic, geometry, mesh, solver or");
   Msg(DIRECT, "                        post-processing mode (default: automatic)");
 #endif
@@ -354,7 +354,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         fprintf(stderr, "%s%d.%d.%d\n", gmsh_version, GMSH_MAJOR_VERSION, 
 	      GMSH_MINOR_VERSION, GMSH_PATCH_VERSION);
         fprintf(stderr, "%s\n", gmsh_os);
-#if _FLTK
+#if defined(HAVE_FLTK)
         fprintf(stderr, "%sFLTK %d.%d.%d\n", gmsh_gui, FL_MAJOR_VERSION, 
 		FL_MINOR_VERSION, FL_PATCH_VERSION);
 #else
@@ -383,7 +383,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
           exit(1);
         }
       }
-#ifndef _BLACKBOX
+#if defined(HAVE_FLTK)
       else if(!strcmp(argv[i]+1, "noterm")){ 
         CTX.terminal = 0; i++;
       }
@@ -513,11 +513,11 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
           exit(1);
         }
       }
-#endif // !_BLACKBOX
+#endif
 
 
       else{
-#ifdef __APPLE__ 
+#if defined(__APPLE__)
 	// The Mac Finder launches programs with special command line
 	// arguments: just ignore them (and don't exit!)
         fprintf(stderr, "Unknown option '%s'\n", argv[i]);

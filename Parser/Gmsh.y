@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.129 2003-01-24 23:13:36 geuzaine Exp $
+// $Id: Gmsh.y,v 1.130 2003-02-12 20:27:14 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -22,9 +22,7 @@
 // Please report all bugs and problems to "gmsh@geuz.org".
 
 #include <stdarg.h>
-#ifndef _NOPLUGIN
 #include "PluginManager.h"
-#endif
 #include "ParUtil.h"
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -46,10 +44,6 @@
 #include "Timer.h"
 #include "CreateFile.h"
 #include "STL.h"
-
-#ifdef __DECCXX // bug in bison
-#include <alloca.h>
-#endif
 
 List_T *Symbol_L=NULL;
 
@@ -1986,12 +1980,12 @@ Command :
 
       }
       else if(!strcmp($1, "Print")){
-#ifndef _BLACKBOX
+#if defined(HAVE_FLTK)
 	if(!CTX.batch) CreateOutputFile($2, CTX.print.format);
 #endif
       }
       else if(!strcmp($1, "Save")){
-#ifndef _BLACKBOX
+#if defined(HAVE_FLTK)
 	CreateOutputFile($2, CTX.mesh.format);
 #endif
       }
@@ -2047,10 +2041,8 @@ Command :
     }
    | tPlugin '(' tSTRING ')' '.' tSTRING tEND
    {
-#ifndef _NOPLUGIN
     if(CTX.default_plugins)
       GMSH_PluginManager::Instance()->Action($3,$6,0); 
-#endif
    }
    | tExit tEND
     {
@@ -2058,7 +2050,7 @@ Command :
     } 
    | tDraw tEND
     {
-#ifndef _BLACKBOX
+#if defined(HAVE_FLTK)
       if(!CTX.batch){ // we're in interactive mode
 	if(Tree_Nbr(THEM->Points) != Last_NumberOfPoints){
 	  Last_NumberOfPoints = Tree_Nbr(THEM->Points);

@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.7 2003-02-05 01:35:08 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.8 2003-02-14 04:02:30 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -51,6 +51,8 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
   int k;
   double xx[8], yy[8], zz[8];
 
+  if(View->Light) glDisable(GL_LIGHTING);
+
   glColor4ubv((GLubyte*)&CTX.color.fg);
   switch(type){
   case POINT :
@@ -71,7 +73,6 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
       yy[k] = Y[k]+Raise[1][k] ;
       zz[k] = Z[k]+Raise[2][k] ;
     }
-    if(View->Light) glDisable(GL_LIGHTING);
     glBegin(GL_LINES);
     glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[1], yy[1], zz[1]);
     glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[2], yy[2], zz[2]);
@@ -80,7 +81,6 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
     glVertex3d(xx[1], yy[1], zz[1]); glVertex3d(xx[3], yy[3], zz[3]);
     glVertex3d(xx[2], yy[2], zz[2]); glVertex3d(xx[3], yy[3], zz[3]);
     glEnd();
-    if(View->Light) glEnable(GL_LIGHTING);
     break;
   case QUADRANGLE :
     glBegin(GL_LINE_LOOP);
@@ -94,7 +94,6 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
       yy[k] = Y[k]+Raise[1][k] ;
       zz[k] = Z[k]+Raise[2][k] ;
     }
-    if(View->Light) glDisable(GL_LIGHTING);
     glBegin(GL_LINES);
     glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[1], yy[1], zz[1]);
     glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[3], yy[3], zz[3]);
@@ -109,7 +108,6 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
     glVertex3d(xx[5], yy[5], zz[5]); glVertex3d(xx[6], yy[6], zz[6]);
     glVertex3d(xx[6], yy[6], zz[6]); glVertex3d(xx[7], yy[7], zz[7]);
     glEnd();
-    if(View->Light) glEnable(GL_LIGHTING);
     break;
   case PRISM :
     for(k=0 ; k<6 ; k++){
@@ -117,7 +115,6 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
       yy[k] = Y[k]+Raise[1][k] ;
       zz[k] = Z[k]+Raise[2][k] ;
     }
-    if(View->Light) glDisable(GL_LIGHTING);
     glBegin(GL_LINES);
     glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[1], yy[1], zz[1]);
     glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[2], yy[2], zz[2]);
@@ -129,7 +126,6 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
     glVertex3d(xx[3], yy[3], zz[3]); glVertex3d(xx[5], yy[5], zz[5]);
     glVertex3d(xx[4], yy[4], zz[4]); glVertex3d(xx[5], yy[5], zz[5]);
     glEnd();
-    if(View->Light) glEnable(GL_LIGHTING);
     break;
   case PYRAMID :
     for(k=0 ; k<5 ; k++){
@@ -137,7 +133,6 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
       yy[k] = Y[k]+Raise[1][k] ;
       zz[k] = Z[k]+Raise[2][k] ;
     }
-    if(View->Light) glDisable(GL_LIGHTING);
     glBegin(GL_LINES);
     glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[1], yy[1], zz[1]);
     glVertex3d(xx[1], yy[1], zz[1]); glVertex3d(xx[2], yy[2], zz[2]);
@@ -148,9 +143,10 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
     glVertex3d(xx[3], yy[3], zz[3]); glVertex3d(xx[4], yy[4], zz[4]);
     glVertex3d(xx[2], yy[2], zz[2]); glVertex3d(xx[4], yy[4], zz[4]);
     glEnd();
-    if(View->Light) glEnable(GL_LIGHTING);
     break;
   }
+
+  if(View->Light) glEnable(GL_LIGHTING);
 }
 
 void SaturateValues(int saturate, double min, double max,
@@ -667,7 +663,7 @@ void Draw_ScalarPyramid(Post_View *View, int preproNormals,
   static int error=0 ;
   if(!error){
     error = 1;
-    Msg(GERROR, "Pyramid drawing not implemented yet...");
+    Msg(WARNING, "Pyramid drawing not implemented yet...");
   }
 }
 

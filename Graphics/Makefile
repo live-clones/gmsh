@@ -1,10 +1,10 @@
-# $Id: Makefile,v 1.43 2003-02-12 09:20:41 remacle Exp $
+# $Id: Makefile,v 1.44 2003-02-12 16:12:27 geuzaine Exp $
 
 include ../variables
 
 LIB     = ../lib/libGmshGraphics.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics\
-          -I../Fltk -I../Mesh -I../Numeric -I../Parser -I../jpeg
+          -I../Fltk -I../Mesh -I../Numeric -I../Parser
 CFLAGS  = ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE} ${GUI_INCLUDE}
 
 SRC = Draw.cpp \
@@ -136,8 +136,7 @@ gl2gif.o: gl2gif.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h gl2gif.h
 gl2jpeg.o: gl2jpeg.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
-  ../jpeg/jpeglib.h ../jpeg/jconfig.h ../jpeg/jmorecfg.h ../jpeg/jerror.h
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h
 gl2ppm.o: gl2ppm.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h

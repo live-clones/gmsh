@@ -24,19 +24,19 @@
 
 // How RGBA values are packed and unpacked into/from a 4-byte integer 
 
-#  ifdef _LITTLE_ENDIAN
-#    define PACK_COLOR(R,G,B,A)   ( (A)<<24 | (B)<<16 | (G)<<8 | (R) )
-#    define UNPACK_RED(X)         ( (X) & 0xff )
-#    define UNPACK_GREEN(X)       ( ( (X) >> 8 ) & 0xff )
-#    define UNPACK_BLUE(X)        ( ( (X) >> 16 ) & 0xff )
-#    define UNPACK_ALPHA(X)       ( ( (X) >> 24 ) & 0xff )
-#  else
-#    define PACK_COLOR(R,G,B,A)   ( (R)<<24 | (G)<<16 | (B)<<8 | (A) )
-#    define UNPACK_RED(X)         ( ( (X) >> 24 ) & 0xff )
-#    define UNPACK_GREEN(X)       ( ( (X) >> 16 ) & 0xff )
-#    define UNPACK_BLUE(X)        ( ( (X) >> 8 ) & 0xff )
-#    define UNPACK_ALPHA(X)       ( (X) & 0xff )
-#  endif
+#ifdef LITTLE_ENDIAN
+#  define PACK_COLOR(R,G,B,A)   ( (A)<<24 | (B)<<16 | (G)<<8 | (R) )
+#  define UNPACK_RED(X)         ( (X) & 0xff )
+#  define UNPACK_GREEN(X)       ( ( (X) >> 8 ) & 0xff )
+#  define UNPACK_BLUE(X)        ( ( (X) >> 16 ) & 0xff )
+#  define UNPACK_ALPHA(X)       ( ( (X) >> 24 ) & 0xff )
+#else
+#  define PACK_COLOR(R,G,B,A)   ( (R)<<24 | (G)<<16 | (B)<<8 | (A) )
+#  define UNPACK_RED(X)         ( ( (X) >> 24 ) & 0xff )
+#  define UNPACK_GREEN(X)       ( ( (X) >> 16 ) & 0xff )
+#  define UNPACK_BLUE(X)        ( ( (X) >> 8 ) & 0xff )
+#  define UNPACK_ALPHA(X)       ( (X) & 0xff )
+#endif
 
 // Interface-independent context 
 
