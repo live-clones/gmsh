@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.41 2003-03-24 20:44:09 geuzaine Exp $
+// $Id: Draw.cpp,v 1.42 2003-03-26 16:57:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -202,8 +202,22 @@ void InitPosition(void)
   glScaled(CTX.s[0], CTX.s[1], CTX.s[2]);
   glTranslated(CTX.t[0], CTX.t[1], CTX.t[2]);
 
+  if(CTX.rotation_center_cg)
+    glTranslated(CTX.cg[0], CTX.cg[1], CTX.cg[2]);
+  else
+    glTranslated(CTX.rotation_center[0],
+		 CTX.rotation_center[1],
+		 CTX.rotation_center[2]);
+  
   CTX.buildRotmatrix();
   glMultMatrixf(&(CTX.rot[0][0]));
+
+  if(CTX.rotation_center_cg)
+    glTranslated(-CTX.cg[0], -CTX.cg[1], -CTX.cg[2]);
+  else
+    glTranslated(-CTX.rotation_center[0],
+		 -CTX.rotation_center[1],
+		 -CTX.rotation_center[2]);
 }
 
 // Replot

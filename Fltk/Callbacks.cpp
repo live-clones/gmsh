@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.168 2003-03-21 00:52:36 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.169 2003-03-26 16:57:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -817,6 +817,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_moving_light(0, GMSH_SET, WID->gen_butt[12]->value());
   opt_general_tooltips(0, GMSH_SET, WID->gen_butt[13]->value());
   opt_general_confirm_overwrite(0, GMSH_SET, WID->gen_butt[14]->value());
+  opt_general_rotation_center_cg(0, GMSH_SET, WID->gen_butt[15]->value());
 
   opt_general_shine(0, GMSH_SET, WID->gen_value[1]->value());
   opt_general_light00(0, GMSH_SET, WID->gen_value[2]->value());
@@ -825,6 +826,9 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_verbosity(0, GMSH_SET, WID->gen_value[5]->value());
   opt_general_point_size(0, GMSH_SET, WID->gen_value[6]->value());
   opt_general_line_width(0, GMSH_SET, WID->gen_value[7]->value());
+  opt_general_rotation_center0(0, GMSH_SET, WID->gen_value[8]->value());
+  opt_general_rotation_center1(0, GMSH_SET, WID->gen_value[9]->value());
+  opt_general_rotation_center2(0, GMSH_SET, WID->gen_value[10]->value());
 
   opt_general_default_filename(0, GMSH_SET,
                                (char *)WID->gen_input[0]->value());

@@ -1,6 +1,8 @@
-$Id: VERSIONS,v 1.136 2003-03-25 22:54:01 geuzaine Exp $
+$Id: VERSIONS,v 1.137 2003-03-26 16:57:07 geuzaine Exp $
 
-New in 1.43: fixed solver interface problem on Mac OS X;
+New in 1.43: fixed solver interface problem on Mac OS X; new option to
+specify the interactive rotation center (default is center of
+gravity);
 
 New in 1.42: suppressed the automatic addition of a ".geo" extension
 if the file given on the command line is not recognized; added missing
@@ -15,7 +17,7 @@ New in 1.39: removed all non-free routines; more build system work;
 implemented Von-Mises tensor display for all element types; fixed
 small GUI bugs;
 
-New in 1.38: fixed custom range selection for 3D iso graphs; New build
+New in 1.38: fixed custom range selection for 3D iso graphs; new build
 system based on autoconf; new image reading code to import bitmaps as
 post-processing views;
 

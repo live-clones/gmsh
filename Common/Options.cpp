@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.102 2003-03-21 00:52:35 geuzaine Exp $
+// $Id: Options.cpp,v 1.103 2003-03-26 16:57:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -108,6 +108,7 @@ void Init_Options(int num)
   CTX.viewport[0] = CTX.viewport[1] = 0;
   CTX.min[0] = CTX.min[1] = CTX.min[2] = 0.0;
   CTX.max[0] = CTX.max[1] = CTX.max[2] = 1.0;
+  CTX.cg[0] = CTX.cg[1] = CTX.cg[2] = 0.0;
   CTX.range[0] = CTX.range[1] = CTX.range[2] = 1.0;
   CTX.vxmin = CTX.vymin = CTX.vxmax = CTX.vymax = 0.;
   CTX.render_mode = GMSH_RENDER;
@@ -1718,6 +1719,27 @@ double opt_general_rotation2(OPT_ARGS_NUM)
   return CTX.r[2];
 }
 
+double opt_general_rotation_center0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.rotation_center[0] = (int)val;
+  return CTX.rotation_center[0];
+}
+
+double opt_general_rotation_center1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.rotation_center[1] = (int)val;
+  return CTX.rotation_center[1];
+}
+
+double opt_general_rotation_center2(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.rotation_center[2] = (int)val;
+  return CTX.rotation_center[2];
+}
+
 double opt_general_quaternion0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -1990,6 +2012,17 @@ double opt_general_trackball(OPT_ARGS_NUM)
     WID->gen_butt[6]->value(CTX.useTrackball);
 #endif
   return CTX.useTrackball;
+}
+
+double opt_general_rotation_center_cg(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.rotation_center_cg = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_butt[15]->value(CTX.rotation_center_cg);
+#endif
+  return CTX.rotation_center_cg;
 }
 
 double opt_general_zoom_factor(OPT_ARGS_NUM)

@@ -1,4 +1,4 @@
-// $Id: MinMax.cpp,v 1.12 2003-03-21 00:52:38 geuzaine Exp $
+// $Id: MinMax.cpp,v 1.13 2003-03-26 16:57:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -36,6 +36,10 @@ void minmax(void *a, void *b)
   CTX.max[1] = (CTX.max[1] > v->Pos.Y) ? CTX.max[1] : v->Pos.Y;
   CTX.min[2] = (CTX.min[2] < v->Pos.Z) ? CTX.min[2] : v->Pos.Z;
   CTX.max[2] = (CTX.max[2] > v->Pos.Z) ? CTX.max[2] : v->Pos.Z;
+
+  CTX.cg[0] += v->Pos.X;
+  CTX.cg[1] += v->Pos.Y;
+  CTX.cg[2] += v->Pos.Z;
 }
 
 void CalculateMinMax(Tree_T * t, double *bbox)
@@ -43,6 +47,10 @@ void CalculateMinMax(Tree_T * t, double *bbox)
   Vertex *v;
   double frac;
   int exp;
+
+  CTX.cg[0] = 0.0;
+  CTX.cg[1] = 0.0;
+  CTX.cg[2] = 0.0;
 
   if(!Tree_Nbr(t)) {
     if(!bbox || (bbox[0] > bbox[1])) {  //the bbox is wrong
@@ -59,6 +67,10 @@ void CalculateMinMax(Tree_T * t, double *bbox)
       CTX.max[1] = bbox[3];
       CTX.min[2] = bbox[4];
       CTX.max[2] = bbox[5];
+
+      CTX.cg[0] = (CTX.min[0] + CTX.max[0])/2.;
+      CTX.cg[1] = (CTX.min[1] + CTX.max[1])/2.;
+      CTX.cg[2] = (CTX.min[2] + CTX.max[2])/2.;
     }
   }
   else {
@@ -67,6 +79,10 @@ void CalculateMinMax(Tree_T * t, double *bbox)
     CTX.min[1] = CTX.max[1] = v->Pos.Y;
     CTX.min[2] = CTX.max[2] = v->Pos.Z;
     Tree_Action(t, minmax);
+    int nb = Tree_Nbr(t);
+    CTX.cg[0] /= nb;
+    CTX.cg[1] /= nb;
+    CTX.cg[2] /= nb;
   }
 
   CTX.range[0] = CTX.max[0] - CTX.min[0];
