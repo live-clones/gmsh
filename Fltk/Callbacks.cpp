@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.130 2002-06-23 19:56:46 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.131 2002-06-24 05:03:18 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -57,7 +57,7 @@ extern Context_T  CTX;
 
 static char *fn = NULL;
 
-int file_chooser(int multi, const char* message, const char* pat){
+int file_chooser(int multi, const char* message, const char* pat, int patindex){
   char *fn = fl_file_chooser(message,pat,NULL);
   if(fn) return 1;
   else return 0;
@@ -67,34 +67,33 @@ char* file_chooser_get_name(int num){
   return fn;
 }
 
+int file_chooser_get_filter(){
+  return 0;
+}
+
 #else
 
 #include <FL/filename.H>
-
 #include <FL/Fl_File_Chooser.H>
 
 static Fl_File_Chooser *fc = NULL;
 
-int file_chooser(int multi, const char* message, const char* pat){
+int file_chooser(int multi, const char* message, const char* pat, int patindex){
+  static char oldfilter[1024];
+
   Fl_File_Chooser::show_label = "Format:";
 
   if (!fc) {
     fc = new Fl_File_Chooser(".", pat, Fl_File_Chooser::CREATE, message);
+    strncpy(oldfilter, pat, 1024);
   }
-  else {
-    if (fc->value() && 
-	fc->filter() != pat && 
-	(!pat || !fc->filter() || strcmp(pat, fc->filter()))) {
-      // if pattern is different, remove name but leave old directory:
-      char* p = (char *)fc->value();
-      const char* q = fl_filename_name(p);
-      int i;
-      if (q == NULL) i = 0;
-      else i = strlen(q);
-      p[i] = 0;
-    }
+
+  fc->label(message);
+
+  if(strncmp(oldfilter, pat, 1024)){
+    strncpy(oldfilter, pat, 1024);
     fc->filter(pat);
-    fc->label(message);
+    //FIXME fc->filter_value(patindex);
   }
 
   if(multi)
@@ -114,6 +113,10 @@ int file_chooser(int multi, const char* message, const char* pat){
 
 char* file_chooser_get_name(int num){
   return (char*)fc->value(num);
+}
+
+int file_chooser_get_filter(){
+  return 0; //FIXME return fc->filter_value();
 }
 
 #endif
@@ -291,7 +294,7 @@ void status_cancel_cb(CALLBACK_ARGS){
 
 void file_open_cb(CALLBACK_ARGS) {
   int n = List_Nbr(CTX.post.list);
-  if(file_chooser(0,"Open file", "*")){
+  if(file_chooser(0,"Open file", "*", 0)){
     OpenProblem(file_chooser_get_name(1)); 
     Draw(); 
   }
@@ -301,7 +304,7 @@ void file_open_cb(CALLBACK_ARGS) {
 
 void file_merge_cb(CALLBACK_ARGS) {
   int n = List_Nbr(CTX.post.list);
-  int f = file_chooser(1,"Merge file(s)", "*");
+  int f = file_chooser(1,"Merge file(s)", "*", 0);
   if (f) {
     for(int i=1; i<=f; i++)
       MergeProblem(file_chooser_get_name(i)); 
@@ -311,175 +314,230 @@ void file_merge_cb(CALLBACK_ARGS) {
     WID->set_context(menu_post, 0);
 }
 
+typedef struct{
+  char *pat;
+  void (*func)(char *name) ;
+} patXfunc;
+
+void _save_auto(char *name){
+  CreateOutputFile(name, CTX.print.format = FORMAT_AUTO); 
+}
+void _save_geo_options(char *name){
+  CreateOutputFile(name, CTX.print.format = FORMAT_OPT); 
+}
+void _save_geo(char *name){
+  CreateOutputFile(name, CTX.print.format = FORMAT_GEO); 
+}
+void _save_msh(char *name){
+  CreateOutputFile(name, CTX.print.format = CTX.mesh.format = FORMAT_MSH); 
+}
+void _save_msh_all(char *name){
+  int all = CTX.mesh.save_all;
+  CTX.mesh.save_all = 1;
+  CreateOutputFile(name, CTX.print.format = CTX.mesh.format = FORMAT_MSH); 
+  CTX.mesh.save_all = all;
+}
+void _save_gref(char *name){
+  CreateOutputFile(name, CTX.print.format = CTX.mesh.format = FORMAT_GREF);  
+}
+void _save_unv(char *name){ 
+ CreateOutputFile(name, CTX.print.format = CTX.mesh.format = FORMAT_UNV); 
+}
+void _save_vrml(char *name){ 
+  CreateOutputFile(name, CTX.print.format = CTX.mesh.format = FORMAT_VRML); 
+}
+void _save_ps_simple(char *name){ 
+  int old = CTX.print.eps_quality;
+  CTX.print.eps_quality = 1; 
+  CreateOutputFile(name, CTX.print.format = FORMAT_PS); 
+  CTX.print.eps_quality = old; 
+}
+void _save_ps_accurate(char *name){ 
+  int old = CTX.print.eps_quality;
+  CTX.print.eps_quality = 2; 
+  CreateOutputFile(name, CTX.print.format = FORMAT_PS); 
+  CTX.print.eps_quality = old; 
+}
+void _save_pstex_simple(char *name){ 
+  int old = CTX.print.eps_quality;
+  CTX.print.eps_quality = 1; 
+  CreateOutputFile(name, CTX.print.format = FORMAT_PSTEX); 
+  CTX.print.eps_quality = old; 
+}
+void _save_pstex_accurate(char *name){     
+  int old = CTX.print.eps_quality;
+  CTX.print.eps_quality = 2; 
+  CreateOutputFile(name, CTX.print.format = FORMAT_PSTEX); 
+  CTX.print.eps_quality = old; 
+}
+void _save_jpegtex(char *name){     
+  CreateOutputFile(name, CTX.print.format = FORMAT_JPEGTEX); 
+}
+void _save_tex(char *name){ 
+  CreateOutputFile(name, CTX.print.format = FORMAT_TEX); 
+}
+void _save_jpeg(char *name){ 
+  CreateOutputFile(name, CTX.print.format = FORMAT_JPEG); 
+}
+void _save_gif(char *name){ 
+  int dither = CTX.print.gif_dither;
+  int transp = CTX.print.gif_transparent;
+  CTX.print.gif_dither = 0;
+  CTX.print.gif_transparent = 0;
+  CreateOutputFile(name, CTX.print.format = FORMAT_GIF); 
+  CTX.print.gif_dither = dither;
+  CTX.print.gif_transparent = transp;
+}
+void _save_gif_dithered(char *name){ 
+  int dither = CTX.print.gif_dither;
+  int transp = CTX.print.gif_transparent;
+  CTX.print.gif_dither = 1; 
+  CTX.print.gif_transparent = 0; 
+  CreateOutputFile(name, CTX.print.format = FORMAT_GIF); 
+  CTX.print.gif_dither = dither;
+  CTX.print.gif_transparent = transp;
+}
+void _save_gif_transparent(char *name){ 
+  int dither = CTX.print.gif_dither;
+  int transp = CTX.print.gif_transparent;
+  CTX.print.gif_dither = 0;
+  CTX.print.gif_transparent = 1; 
+  CreateOutputFile(name, CTX.print.format = FORMAT_GIF);
+  CTX.print.gif_dither = dither;
+  CTX.print.gif_transparent = transp;
+}
+void _save_ppm(char *name){     
+ CreateOutputFile(name, CTX.print.format = FORMAT_PPM); 
+}
+void _save_yuv(char *name){ 
+  CreateOutputFile(name, CTX.print.format = FORMAT_YUV); 
+}
+
 void file_save_as_cb(CALLBACK_ARGS) {
   int i, nbformats;
-  static char *pat=NULL, *formats[] ={
-    "By extension (*)",
-    "Gmsh options (*.opt)",
-    "Gmsh unrolled geometry (*.geo)",
-    "Gmsh mesh (*.msh)",
-    "Gmsh mesh without physicals (*.msh)",
-    "GREF mesh (*.gref)",
-    "I-DEAS universal mesh format (*.unv)",
-    "VRML surface mesh (*.wrl)",
-    "GIF (*.gif)",
-    "GIF dithered (*.gif)",
-    "GIF transparent (*.gif)",
-    "JPEG (*.jpg)",
-    "PostScript fast (*.ps)",
-    "PostScript accurate (*.ps)",
-    "PPM (*.ppm)",
-    "LaTeX JPEG (*.jpg)",
-    "LaTeX PostScript fast (*.ps)",
-    "LaTeX PostScript accurate (*.ps)",
-    "LaTeX TeX (*.tex)",
-    "UCB YUV (*.yuv)"};
+  static int patindex=0;
+  static char *pat=NULL;
+  static patXfunc formats[] ={
+    { "By extension (*)", _save_auto },
+    { "Gmsh options (*.opt)", _save_geo_options },
+    { "Gmsh unrolled geometry (*.geo)", _save_geo },
+    { "Gmsh mesh (*.msh)", _save_msh },
+    { "Gmsh mesh without physicals (*.msh)", _save_msh_all },
+    { "GREF mesh (*.gref)", _save_gref },
+    { "I-DEAS universal mesh format (*.unv)", _save_unv },
+    { "VRML surface mesh (*.wrl)", _save_vrml },
+    { "GIF (*.gif)", _save_gif },
+    { "GIF dithered (*.gif)", _save_gif_dithered },
+    { "GIF transparent (*.gif)", _save_gif_transparent },
+    { "JPEG (*.jpg)", _save_jpeg },
+    { "PostScript fast (*.ps)", _save_ps_simple },
+    { "PostScript accurate (*.ps)", _save_ps_accurate },
+    { "PPM (*.ppm)", _save_ppm },
+    { "LaTeX JPEG (*.jpg)", _save_jpegtex },
+    { "LaTeX PostScript fast (*.ps)", _save_pstex_simple },
+    { "LaTeX PostScript accurate (*.ps)", _save_pstex_accurate },
+    { "LaTeX TeX (*.tex)", _save_tex },
+    { "UCB YUV (*.yuv)", _save_yuv }
+  };
 
   if(!pat){
     nbformats = sizeof(formats)/sizeof(formats[0]);
     pat = (char*)Malloc(nbformats*256*sizeof(char));
-    strcpy(pat, formats[0]);
+    strcpy(pat, formats[0].pat);
     for(i=1; i<nbformats; i++){
       strcat(pat, "\t");
-      strcat(pat, formats[i]);
+      strcat(pat, formats[i].pat);
     }
   }
 
-  if(file_chooser(0,"Save file as", pat)){
-    // pas moyen de recuperer l'index du filtre...
+  if(file_chooser(0,"Save file as", pat, patindex)){
+    formats[file_chooser_get_filter()].func(file_chooser_get_name(1));
   }
-
+  patindex = file_chooser_get_filter();
 }
 
-
 void file_save_as_auto_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save file by extension", "*"))
-    CreateOutputFile(file_chooser_get_name(1), CTX.print.format = FORMAT_AUTO); 
+  if(file_chooser(0,"Save file by extension", "*", 0))
+    _save_auto(file_chooser_get_name(1));
 }
 
 void file_save_as_geo_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save GEO file", "*"))
-    CreateOutputFile(file_chooser_get_name(1), CTX.print.format = FORMAT_GEO); 
+  if(file_chooser(0,"Save GEO file", "*", 0))
+    _save_geo(file_chooser_get_name(1));
 }
 
 void file_save_as_geo_options_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save option file", "*"))
-    CreateOutputFile(file_chooser_get_name(1), CTX.print.format = FORMAT_OPT); 
+  if(file_chooser(0,"Save option file", "*", 0))
+    _save_geo_options(file_chooser_get_name(1));
 }
 
 void file_save_as_msh_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save MSH file", "*"))
-    CreateOutputFile(file_chooser_get_name(1), 
-		     CTX.print.format = CTX.mesh.format = FORMAT_MSH); 
+  if(file_chooser(0,"Save MSH file", "*", 0))
+    _save_msh(file_chooser_get_name(1));
 }
 void file_save_as_msh_all_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save MSH file (no physicals)", "*")){
-    int all = CTX.mesh.save_all;
-    CTX.mesh.save_all = 1;
-    CreateOutputFile(file_chooser_get_name(1),
-		     CTX.print.format = CTX.mesh.format = FORMAT_MSH); 
-    CTX.mesh.save_all = all;
-  }
+  if(file_chooser(0,"Save MSH file (no physicals)", "*", 0))
+    _save_msh_all(file_chooser_get_name(1));
 }
 void file_save_as_unv_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save UNV file", "*"))
-    CreateOutputFile(file_chooser_get_name(1),
-		     CTX.print.format = CTX.mesh.format = FORMAT_UNV); 
+  if(file_chooser(0,"Save UNV file", "*", 0))
+    _save_unv(file_chooser_get_name(1));
 }
 void file_save_as_gref_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save GREF file", "*"))
-    CreateOutputFile(file_chooser_get_name(1),
-		     CTX.print.format = CTX.mesh.format = FORMAT_GREF); 
+  if(file_chooser(0,"Save GREF file", "*", 0))
+    _save_gref(file_chooser_get_name(1));
 }
 void file_save_as_vrml_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save VRML file", "*"))
-    CreateOutputFile(file_chooser_get_name(1),
-		     CTX.print.format = CTX.mesh.format = FORMAT_VRML); 
+  if(file_chooser(0,"Save VRML file", "*", 0))
+    _save_vrml(file_chooser_get_name(1));
 }
 void file_save_as_ps_simple_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save PS file", "*")){
-    int old = CTX.print.eps_quality;
-    CTX.print.eps_quality = 1; 
-    CreateOutputFile(file_chooser_get_name(1), CTX.print.format = FORMAT_PS); 
-    CTX.print.eps_quality = old; 
-  }
+  if(file_chooser(0,"Save PS file", "*", 0))
+    _save_ps_simple(file_chooser_get_name(1));
 }
 void file_save_as_ps_accurate_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save PS file", "*")){
-    int old = CTX.print.eps_quality;
-    CTX.print.eps_quality = 2; 
-    CreateOutputFile(file_chooser_get_name(1), CTX.print.format = FORMAT_PS); 
-    CTX.print.eps_quality = old; 
-  }
+  if(file_chooser(0,"Save PS file", "*", 0))
+    _save_ps_accurate(file_chooser_get_name(1));
 }
 void file_save_as_pstex_simple_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save LaTeX file (PS part)", "*")){
-    int old = CTX.print.eps_quality;
-    CTX.print.eps_quality = 1; 
-    CreateOutputFile(file_chooser_get_name(1), CTX.print.format = FORMAT_PSTEX); 
-    CTX.print.eps_quality = old; 
-  }
+  if(file_chooser(0,"Save LaTeX file (PS part)", "*", 0))
+    _save_pstex_simple(file_chooser_get_name(1));
 }
 void file_save_as_pstex_accurate_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save LaTeX file (PS part)", "*")){
-    int old = CTX.print.eps_quality;
-    CTX.print.eps_quality = 2; 
-    CreateOutputFile(file_chooser_get_name(1), CTX.print.format = FORMAT_PSTEX); 
-    CTX.print.eps_quality = old; 
-  }
+  if(file_chooser(0,"Save LaTeX file (PS part)", "*", 0))
+    _save_ps_accurate(file_chooser_get_name(1));
 }
 void file_save_as_jpegtex_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save LaTeX file (Jpeg part)", "*"))
-    CreateOutputFile(file_chooser_get_name(1), CTX.print.format = FORMAT_JPEGTEX); 
+  if(file_chooser(0,"Save LaTeX file (Jpeg part)", "*", 0))
+    _save_jpegtex(file_chooser_get_name(1));
 }
 void file_save_as_tex_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save LaTeX file (TeX part)", "*"))
-    CreateOutputFile(file_chooser_get_name(1), CTX.print.format = FORMAT_TEX); 
+  if(file_chooser(0,"Save LaTeX file (TeX part)", "*", 0))
+    _save_tex(file_chooser_get_name(1));
 }
 void file_save_as_jpeg_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save JPEG file", "*"))
-    CreateOutputFile(file_chooser_get_name(1), CTX.print.format = FORMAT_JPEG); 
+  if(file_chooser(0,"Save JPEG file", "*", 0))
+    _save_jpeg(file_chooser_get_name(1));
 }
 void file_save_as_gif_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save GIF file", "*")){
-    int dither = CTX.print.gif_dither;
-    int transp = CTX.print.gif_transparent;
-    CTX.print.gif_dither = 0;
-    CTX.print.gif_transparent = 0;
-    CreateOutputFile(file_chooser_get_name(1), CTX.print.format = FORMAT_GIF); 
-    CTX.print.gif_dither = dither;
-    CTX.print.gif_transparent = transp;
-  }
+  if(file_chooser(0,"Save GIF file", "*", 0))
+    _save_gif(file_chooser_get_name(1));
 }
 void file_save_as_gif_dithered_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save GIF file", "*")){
-    int dither = CTX.print.gif_dither;
-    int transp = CTX.print.gif_transparent;
-    CTX.print.gif_dither = 1; 
-    CTX.print.gif_transparent = 0; 
-    CreateOutputFile(file_chooser_get_name(1), CTX.print.format = FORMAT_GIF); 
-    CTX.print.gif_dither = dither;
-    CTX.print.gif_transparent = transp;
-  }
+  if(file_chooser(0,"Save GIF file", "*", 0))
+    _save_gif_dithered(file_chooser_get_name(1));
 }
 void file_save_as_gif_transparent_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save GIF file", "*")){
-    int dither = CTX.print.gif_dither;
-    int transp = CTX.print.gif_transparent;
-    CTX.print.gif_dither = 0;
-    CTX.print.gif_transparent = 1; 
-    CreateOutputFile(file_chooser_get_name(1), CTX.print.format = FORMAT_GIF);
-    CTX.print.gif_dither = dither;
-    CTX.print.gif_transparent = transp;
-  }
+  if(file_chooser(0,"Save GIF file", "*", 0))
+    _save_gif_transparent(file_chooser_get_name(1));
 }
 void file_save_as_ppm_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save PPM file", "*"))
-    CreateOutputFile(file_chooser_get_name(1), CTX.print.format = FORMAT_PPM); 
+  if(file_chooser(0,"Save PPM file", "*", 0))
+    _save_ppm(file_chooser_get_name(1));
 }
 void file_save_as_yuv_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save YUV file", "*"))
-    CreateOutputFile(file_chooser_get_name(1), CTX.print.format = FORMAT_YUV); 
+  if(file_chooser(0,"Save YUV file", "*", 0))
+    _save_yuv(file_chooser_get_name(1));
 }
 
 void file_quit_cb(CALLBACK_ARGS) {
@@ -691,7 +749,7 @@ void opt_message_clear_cb(CALLBACK_ARGS) {
   WID->msg_browser->clear();
 }
 void opt_message_save_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save messages", "*"))
+  if(file_chooser(0,"Save messages", "*", 0))
     WID->save_message(file_chooser_get_name(1)); 
 }
 void opt_save_cb(CALLBACK_ARGS) {
@@ -1801,7 +1859,7 @@ void solver_file_open_cb(CALLBACK_ARGS){
   char tmp[256];
   int num = (int)data;
   sprintf(tmp, "*%s", SINFO[num].extension);
-  if (file_chooser(0,"Open problem definition file", tmp)){
+  if (file_chooser(0,"Open problem definition file", tmp, 0)){
     WID->solver[num].input[0]->value(file_chooser_get_name(1));
     if(SINFO[num].nboptions){
       sprintf(tmp, "%s %s", SINFO[num].option_command, file_chooser_get_name(1));
@@ -1818,7 +1876,7 @@ void solver_file_edit_cb(CALLBACK_ARGS){
 }
 void solver_choose_mesh_cb(CALLBACK_ARGS){
   int num = (int)data;
-  if(file_chooser(0,"Open mesh file", "*.[Mm][Ss][Hh]"))
+  if(file_chooser(0,"Open mesh file", "*.msh", 0))
     WID->solver[num].input[1]->value(file_chooser_get_name(1));
 }
 int nbs(char *str){
@@ -1875,11 +1933,11 @@ void solver_choose_executable_cb(CALLBACK_ARGS){
   int num = (int)data;
   if(file_chooser(0,"Choose executable", 
 #if defined(WIN32)
-		  "*.[Ee][Xx][Ee]"
+		  "*.exe"
 #else
                   "*"
 #endif
-		  ))
+		  , 0))
     WID->solver[num].input[2]->value(file_chooser_get_name(1));
 }
 void solver_ok_cb(CALLBACK_ARGS){
@@ -1993,13 +2051,13 @@ void view_remove_cb(CALLBACK_ARGS){
 }
 
 void view_save_ascii_cb(CALLBACK_ARGS){
-  if(file_chooser(0,"Save view in ASCII format", "*"))
+  if(file_chooser(0,"Save view in ASCII format", "*", 0))
     Write_View(0, (Post_View*)List_Pointer(CTX.post.list,(long int)data), 
 	       file_chooser_get_name(1)); 
 }
 
 void view_save_binary_cb(CALLBACK_ARGS){
-  if(file_chooser(0,"Save view in binary format", "*"))
+  if(file_chooser(0,"Save view in binary format", "*", 0))
     Write_View(1, (Post_View*)List_Pointer(CTX.post.list,(long int)data),
 	       file_chooser_get_name(1)); 
 }
