@@ -1,4 +1,4 @@
-/* $Id: Socket.cpp,v 1.1 2001-05-03 00:09:42 geuzaine Exp $ */
+/* $Id: Socket.cpp,v 1.2 2001-05-03 00:27:03 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #include "Message.h"
