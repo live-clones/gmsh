@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.23 2001-08-12 00:15:04 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.24 2001-08-12 09:07:16 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -449,7 +449,7 @@ void Extrude_Curve (void *data, void *dum){
 
 void copy_mesh (Curve * from, Curve * to){
   List_T *list = from->Vertices;
-  Vertex *vi, *v, **vexist;
+  Vertex *vi, *v, **vv, **vexist;
 
   int nb = List_Nbr(to->Vertices);
   if(nb){
@@ -460,21 +460,23 @@ void copy_mesh (Curve * from, Curve * to){
   }
 
   to->Vertices =  List_Create (List_Nbr(from->Vertices), 2, sizeof (Vertex *));
-  
-  if (Vertex_Bound && (vexist = (Vertex **) Tree_PQuery (Vertex_Bound, &to->beg))){
+
+  vv = &to->beg;
+  if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, vv))){
     (*vexist)->u = to->ubeg;
-    vi = *vexist;
+    Tree_Insert (THEM->Vertices, vexist);
+    if ((*vexist)->ListCurves)
+      List_Add ((*vexist)->ListCurves, &to);
+    List_Add (to->Vertices, vexist);
   }
   else{
-    vi = Create_Vertex (++CurrentNodeNumber, 
-			to->beg->Pos.X, to->beg->Pos.Y, to->beg->Pos.Z, to->beg->lc, to->ubeg);
+    vi = Create_Vertex ((*vv)->Num, (*vv)->Pos.X, (*vv)->Pos.Y, (*vv)->Pos.Z,
+			(*vv)->lc, to->ubeg);
     Tree_Insert (THEM->Vertices, &vi);
-    Tree_Insert (Vertex_Bound, &vi);
-  }
-  if(!vi->ListCurves)
     vi->ListCurves = List_Create (1, 1, sizeof (Curve *));
-  List_Add (vi->ListCurves, &to);
-  List_Add (to->Vertices, &vi);
+    List_Add (vi->ListCurves, &to);
+    List_Add (to->Vertices, &vi);
+  }
 
   for (int i = 1; i < List_Nbr (list)-1; i++){
     List_Read (list, i, &v);
@@ -482,35 +484,29 @@ void copy_mesh (Curve * from, Curve * to){
 			v->Pos.Y, v->Pos.Z, v->lc, v->u);
     ep->Extrude (ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
 		 vi->Pos.X, vi->Pos.Y, vi->Pos.Z);
-    if (Vertex_Bound && (vexist = (Vertex **) Tree_PQuery (Vertex_Bound, &vi))){
-      Free_Vertex(&vi,0);
-      vi = *vexist;
-    }
-    else{
-      Tree_Insert (THEM->Vertices, &vi);
-      Tree_Insert (Vertex_Bound, &vi);
-    }
+    Tree_Insert (THEM->Vertices, &vi);
     if(!vi->ListCurves)
       vi->ListCurves = List_Create (1, 1, sizeof (Curve *));
     List_Add (vi->ListCurves, &to);
     List_Add (to->Vertices, &vi);
   }
 
-  
-  if (Vertex_Bound && (vexist = (Vertex **) Tree_PQuery (Vertex_Bound, &to->end))){
+  vv = &to->end;
+  if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, vv))){
     (*vexist)->u = to->uend;
-    vi = *vexist;
+    Tree_Insert (THEM->Vertices, vexist);
+    if ((*vexist)->ListCurves)
+      List_Add ((*vexist)->ListCurves, &to);
+    List_Add (to->Vertices, vexist);
   }
   else{
-    vi = Create_Vertex (++CurrentNodeNumber, 
-			to->end->Pos.X, to->end->Pos.Y, to->end->Pos.Z, to->end->lc, to->uend);
+    vi = Create_Vertex ((*vv)->Num, (*vv)->Pos.X, (*vv)->Pos.Y, (*vv)->Pos.Z, 
+			(*vv)->lc, to->uend);
     Tree_Insert (THEM->Vertices, &vi);
-    Tree_Insert (Vertex_Bound, &vi);
-  }
-  if(!vi->ListCurves)
     vi->ListCurves = List_Create (1, 1, sizeof (Curve *));
-  List_Add (vi->ListCurves, &to);
-  List_Add (to->Vertices, &vi);
+    List_Add (vi->ListCurves, &to);
+    List_Add (to->Vertices, &vi);
+  }
 
 
 }
