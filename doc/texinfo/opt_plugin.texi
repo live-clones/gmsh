@@ -1,9 +1,9 @@
 @ftable @code
 @item Plugin(CutGrid)
-Plugin(CutGrid) cuts a 3D view with a rectangular
-grid defined by the 3 points (`X0',`Y0',`Z0') (origin),
-(`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2') (axis
-of V). The number of points along U and V is set
+Plugin(CutGrid) cuts a tetrahedron view with a
+rectangular grid defined by the 3 points (`X0',`Y0',`Z0')
+(origin), (`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2')
+(axis of V). The number of points along U and V is set
 with the options `nPointsU' and `nPointsV'. If
 `iView' < 0, the plugin is run on the current view.
 
@@ -63,11 +63,11 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(CutParametric)
-Plugin(CutParametric) cuts the scalar view `iView'
-with the parametric function (`X'(u), `Y'(u), `Z'(u)),
-using `nPointsU' values of the parameter u in
-[`minU', `maxU']. If `iView' < 0, the plugin is run
-on the current view.
+Plugin(CutParametric) cuts a triangle/tetrahedron
+scalar view `iView' with the parametric function
+(`X'(u), `Y'(u), `Z'(u)), using `nPointsU' values of
+the parameter u in [`minU', `maxU']. If `iView' < 0,
+the plugin is run on the current view.
 
 Plugin(CutParametric) creates one new view.
 
@@ -296,9 +296,9 @@ Default value: @code{-1}
 
 @item Plugin(StreamLines)
 Plugin(StreamLines) computes stream lines
-from a vector view `iView' and optionally
-interpolates the scalar view `dView' on the
-resulting stream lines. It takes as input a
+from a triangle/tetrahedron vector view `iView'
+and optionally interpolates the scalar view `dView'
+on the resulting stream lines. It takes as input a
 grid defined by the 3 points (`X0',`Y0',`Z0')
 (origin), (`X1',`Y1',`Z1') (axis of U) and
 (`X2',`Y2',`Z2') (axis of V). The number of points

@@ -1,4 +1,4 @@
-// $Id: CutGrid.cpp,v 1.7 2004-05-16 20:04:43 geuzaine Exp $
+// $Id: CutGrid.cpp,v 1.8 2004-06-24 16:02:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -67,10 +67,10 @@ void GMSH_CutGridPlugin::getInfos(char *author, char *copyright,
   strcpy(author, "J.-F. Remacle (remacle@scorec.rpi.edu)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(CutGrid) cuts a 3D view with a rectangular\n"
-	 "grid defined by the 3 points (`X0',`Y0',`Z0') (origin),\n"
-	 "(`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2') (axis\n"
-	 "of V). The number of points along U and V is set\n"
+         "Plugin(CutGrid) cuts a tetrahedron view with a\n"
+	 "rectangular grid defined by the 3 points (`X0',`Y0',`Z0')\n"
+	 "(origin), (`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2')\n"
+	 "(axis of V). The number of points along U and V is set\n"
 	 "with the options `nPointsU' and `nPointsV'. If\n"
 	 "`iView' < 0, the plugin is run on the current view.\n"
 	 "\n"
@@ -135,7 +135,7 @@ Post_View * GMSH_CutGridPlugin::GenerateView(Post_View * v) const
       getPoint(i+1, j  , X2);
       getPoint(i+1, j+1, X3);
       getPoint(i  , j+1, X4);
-      if(v->NbSS || v->NbSH){
+      if(v->NbSS){
 	List_Add(View->SQ, &X1[0]);
 	List_Add(View->SQ, &X2[0]);
 	List_Add(View->SQ, &X3[0]);
@@ -160,7 +160,7 @@ Post_View * GMSH_CutGridPlugin::GenerateView(Post_View * v) const
 	  List_Add(View->SQ, &VALUES4[k]);	      
 	}
       }
-      if(v->NbVS || v->NbVH){
+      if(v->NbVS){
 	List_Add(View->VQ, &X1[0]);
 	List_Add(View->VQ, &X2[0]);
 	List_Add(View->VQ, &X3[0]);

@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.3 2004-06-15 22:32:18 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.4 2004-06-24 16:02:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -75,11 +75,11 @@ void GMSH_CutParametricPlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuzaine@acm.caltech.edu)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(CutParametric) cuts the scalar view `iView'\n"
-	 "with the parametric function (`X'(u), `Y'(u), `Z'(u)),\n"
-	 "using `nPointsU' values of the parameter u in\n"
-	 "[`minU', `maxU']. If `iView' < 0, the plugin is run\n"
-	 "on the current view.\n"
+         "Plugin(CutParametric) cuts a triangle/tetrahedron\n"
+	 "scalar view `iView' with the parametric function\n"
+	 "(`X'(u), `Y'(u), `Z'(u)), using `nPointsU' values of\n"
+	 "the parameter u in [`minU', `maxU']. If `iView' < 0,\n"
+	 "the plugin is run on the current view.\n"
 	 "\n"
 	 "Plugin(CutParametric) creates one new view.\n");
 }
