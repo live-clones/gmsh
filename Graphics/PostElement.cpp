@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.4 2002-11-16 08:29:15 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.5 2003-01-20 23:28:09 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -773,7 +773,9 @@ void Draw_VectorElement(int type, Post_View *View,
     dy /= (double)nbnod; yc /= (double)nbnod;
     dz /= (double)nbnod; zc /= (double)nbnod;
     dd = sqrt(dx*dx+dy*dy+dz*dz);
-    if(dd!=0.0 && dd>=ValMin && dd<=ValMax){             
+
+    // allow for some roundoff error due to the computation at the barycenter
+    if(dd!=0.0 && dd>=ValMin*(1.-1.e-15) && dd<=ValMax*(1.+1.e-15)){
       Palette1(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,dd));            
       if(View->IntervalsType == DRAW_POST_NUMERIC){
 	glRasterPos3d(xc, yc, zc);
