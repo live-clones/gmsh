@@ -23,6 +23,9 @@
 #include <FL/Fl_Browser.H>
 #include <FL/Fl_Bitmap.H>
 
+#include "Opengl_Window.h"
+#include "Colorbar_Window.h"
+
 #define NB_BUTT_MAX    100
 #define NB_HISTORY_MAX 1000
 
@@ -56,24 +59,6 @@ extern Context_Item menu_mesh[];
 extern    Context_Item menu_mesh_define[]; 
 extern        Context_Item menu_mesh_define_transfinite[]; 
 extern Context_Item menu_post[]; 
-
-// New composite widgets
-
-class Opengl_Window : public Fl_Gl_Window {
-  void draw();
-  void draw_overlay();
-  int handle(int);
-
-  // new
-  void draw_highlight();
-  void clear_overlay();
-  void draw_overlay_zoom();
-  void draw_overlay_highlight();
-
-public:
-  Opengl_Window(int x,int y,int w,int h,const char *l=0)
-    : Fl_Gl_Window(x, y, w, h, l) {}
-};
 
 // The GUI class contains only the important widgets. All these
 // widgets should stay private, and be accessed only by the public

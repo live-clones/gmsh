@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2001-01-09 14:24:06 geuzaine Exp $
+# $Id: Makefile,v 1.3 2001-01-10 09:08:59 geuzaine Exp $
 #
 # Makefile for "libFltk.a"
 #
@@ -28,8 +28,9 @@ CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
 SRC = Main.cpp \
       Message.cpp \
       GUI.cpp\
-      Opengl.cpp\
-      Callbacks.cpp
+      Callbacks.cpp\
+      Opengl_Window.cpp\
+      Colorbar_Window.cpp
 
 
 OBJ = $(SRC:.cpp=.o)

@@ -1,6 +1,6 @@
 
 // To make the interface as visually consistent as possible, please:
-// - use the BH and WB values for button heights and window borders
+// - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
 // - use CTX.fontsize for font sizes
 // - examine what's already done before adding something new...
 

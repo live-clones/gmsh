@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.4 2001-01-09 15:45:03 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.1 2001-01-10 09:08:59 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -8,6 +8,7 @@
 #include "Mesh.h"
 #include "Draw.h"
 #include "GUI.h"
+#include "Opengl_Window.h"
 
 extern GUI *WID;
 extern Mesh M;
