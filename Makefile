@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.75 2001-03-06 04:38:56 remacle Exp $
+# $Id: Makefile,v 1.76 2001-03-06 16:40:18 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -365,6 +365,16 @@ fltk_compile_little_endian:
            "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
 
+fltk_compile_big_endian:
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(CC)" \
+           "C_FLAGS=-O3" \
+           "OS_FLAGS=" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "GUI_INCLUDE=$(FLTK_INC)" \
+        ); done
+
 fltk_compile_little_endian_2952:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(HOME)/gcc-2.95.2/bin/g++" \
@@ -418,11 +428,12 @@ fltk_link_mesa:
 fltk_link_opengl:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  $(FLTK_LIB) -lm -ldl
-
 fltk_link_sgi:
 	CC -O2 -n32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                   $(FLTK_LIB) $(OPENGL_LIB) -lm -ldl
-
+fltk_link_sun:
+        $(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
+                 $(FLTK_LIB) -lXext -lsocket -lnsl -lm
 fltk_link_mesa_2952:
 	$(HOME)/gcc-2.95.2/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
                  $(FLTK_LIB) -lm -ldl

@@ -217,7 +217,7 @@ StringXNumber MeshOptions_Number[] = {
 StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "Scales" , opt_post_scales , 1. }, 
   { F|O, "Link" , opt_post_link , 0. }, 
-  { F|O, "Smoothing" , opt_post_smooth , 1. }, 
+  { F|O, "Smoothing" , opt_post_smooth , 0. }, 
   { F|O, "AnimationDelay" , opt_post_anim_delay , 0.25 }, 
   { F, "NbViews" , opt_post_nb_views , 0. }, 
   { 0, NULL , NULL , 0. }
