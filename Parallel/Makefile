@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2001-08-20 08:25:24 geuzaine Exp $
+# $Id: Makefile,v 1.6 2001-10-30 09:52:38 geuzaine Exp $
 #
 # Makefile for "libParallel.a"
 #
@@ -45,3 +45,4 @@ depend:
 	$(RM) $(RMFLAGS) Makefile.new
 
 # DO NOT DELETE THIS LINE
+ParUtil.o: ParUtil.cpp ParUtil.h

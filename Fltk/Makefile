@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.27 2001-08-20 08:25:23 geuzaine Exp $
+# $Id: Makefile,v 1.28 2001-10-30 09:52:33 geuzaine Exp $
 #
 # Makefile for "libFltk.a"
 #
@@ -69,10 +69,10 @@ Main.o: Main.cpp ../Plugin/PluginManager.h ../Common/Gmsh.h \
  ../Common/GmshUI.h ../Common/GmshVersion.h ../Geo/Geo.h \
  ../Geo/Verif.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
- ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
- ../Common/Context.h ../Common/Options.h ../Parser/Parser.h \
- ../Common/Static.h GUI.h Opengl_Window.h Colorbar_Window.h \
- ../Parser/OpenFile.h ../Common/GetOptions.h
+ ../Mesh/Matrix.h ../Graphics/Draw.h ../Common/Views.h \
+ ../Common/ColorTable.h ../Common/Context.h ../Common/Options.h \
+ ../Parser/Parser.h ../Common/Static.h GUI.h Opengl_Window.h \
+ Colorbar_Window.h ../Parser/OpenFile.h ../Common/GetOptions.h
 Message.o: Message.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
@@ -85,35 +85,36 @@ GUI.o: GUI.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
  ../Common/Numeric.h ../Common/GmshVersion.h ../Common/Context.h \
  ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
- ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h GUI.h \
- Opengl_Window.h Colorbar_Window.h Callbacks.h ../Common/Bitmaps.h \
- ../Common/Icon.h ../Common/GetOptions.h
+ ../Mesh/Matrix.h ../Graphics/Draw.h ../Common/Views.h \
+ ../Common/ColorTable.h GUI.h Opengl_Window.h Colorbar_Window.h \
+ Callbacks.h ../Common/Bitmaps.h ../Common/Icon.h ../Parser/OpenFile.h \
+ ../Common/GetOptions.h
 Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
  ../Geo/Verif.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
- ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
- ../Common/Timer.h ../Geo/Visibility.h ../Graphics/CreateFile.h \
- ../Parser/OpenFile.h ../Common/GetOptions.h ../Common/Context.h \
- ../Common/Options.h GUI.h Opengl_Window.h Colorbar_Window.h \
- Callbacks.h ../Plugin/Plugin.h Solvers.h
+ ../Mesh/Matrix.h ../Graphics/Draw.h ../Common/Views.h \
+ ../Common/ColorTable.h ../Common/Timer.h ../Geo/Visibility.h \
+ ../Graphics/CreateFile.h ../Parser/OpenFile.h ../Common/GetOptions.h \
+ ../Common/Context.h ../Common/Options.h GUI.h Opengl_Window.h \
+ Colorbar_Window.h Callbacks.h ../Plugin/Plugin.h Solvers.h
 Opengl.o: Opengl.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
  ../Common/Numeric.h ../Common/Context.h ../Geo/Geo.h ../Mesh/Mesh.h \
  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
- ../Common/Views.h ../Common/ColorTable.h GUI.h Opengl_Window.h \
- Colorbar_Window.h ../Graphics/gl2ps.h
+ ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
+ ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h GUI.h \
+ Opengl_Window.h Colorbar_Window.h ../Graphics/gl2ps.h
 Opengl_Window.o: Opengl_Window.cpp ../Common/Gmsh.h \
  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
  ../Common/Numeric.h ../Common/GmshUI.h ../Common/Context.h \
  ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
- ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h GUI.h \
- Opengl_Window.h Colorbar_Window.h
+ ../Mesh/Matrix.h ../Graphics/Draw.h ../Common/Views.h \
+ ../Common/ColorTable.h GUI.h Opengl_Window.h Colorbar_Window.h
 Colorbar_Window.o: Colorbar_Window.cpp ../Common/Gmsh.h \
  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
@@ -126,5 +127,5 @@ Solvers.o: Solvers.cpp ../Common/Gmsh.h ../Common/Message.h \
  Solvers.h ../Common/GmshUI.h GUI.h Opengl_Window.h Colorbar_Window.h \
  ../Common/ColorTable.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
- ../Mesh/Metric.h ../Graphics/Draw.h ../Common/Views.h \
- ../Common/Context.h
+ ../Mesh/Metric.h ../Mesh/Matrix.h ../Graphics/Draw.h \
+ ../Common/Views.h ../Common/Context.h

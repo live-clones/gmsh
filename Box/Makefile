@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2001-10-29 08:52:19 geuzaine Exp $
+# $Id: Makefile,v 1.14 2001-10-30 09:52:30 geuzaine Exp $
 #
 # Makefile for "libBox.a"
 #
@@ -48,11 +48,13 @@ depend:
 	$(RM) $(RMFLAGS) Makefile.new
 
 # DO NOT DELETE THIS LINE
-Main.o: Main.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshVersion.h \
- ../Common/Numeric.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
- ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
- ../Mesh/Metric.h ../Common/Views.h ../Common/ColorTable.h \
- ../Parser/Parser.h ../Common/Context.h ../Parser/OpenFile.h \
- ../Common/GetOptions.h ../Geo/MinMax.h ../Common/Static.h
+Main.o: Main.cpp ../Parallel/ParUtil.h ../Plugin/PluginManager.h \
+ ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
+ ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
+ ../DataStr/Tools.h ../Common/GmshVersion.h ../Common/Numeric.h \
+ ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+ ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
+ ../Mesh/Matrix.h ../Common/Views.h ../Common/ColorTable.h \
+ ../Parser/Parser.h ../Common/Context.h ../Common/Options.h \
+ ../Parser/OpenFile.h ../Common/GetOptions.h ../Geo/MinMax.h \
+ ../Common/Static.h

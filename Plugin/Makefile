@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.19 2001-10-25 07:22:46 geuzaine Exp $
+# $Id: Makefile,v 1.20 2001-10-30 09:52:40 geuzaine Exp $
 #
 # Makefile for "libAdapt.a"
 #
@@ -56,22 +56,34 @@ depend:
 # DO NOT DELETE THIS LINE
 Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
  PluginManager.h CutMap.h LevelsetPlugin.h CutPlane.h CutSphere.h \
- Skin.h Smooth.h Transform.h
+ Skin.h Smooth.h Transform.h Triangulate.h
 LevelsetPlugin.o: LevelsetPlugin.cpp LevelsetPlugin.h Plugin.h \
  ../Common/Options.h ../Common/Message.h ../DataStr/List.h \
  ../Common/Views.h ../Common/ColorTable.h ../Common/Iso.h \
  ../Common/Numeric.h
 CutPlane.o: CutPlane.cpp CutPlane.h LevelsetPlugin.h Plugin.h \
- ../Common/Options.h ../Common/Message.h ../DataStr/List.h
+ ../Common/Options.h ../Common/Message.h ../DataStr/List.h \
+ ../Common/Context.h
 CutSphere.o: CutSphere.cpp CutSphere.h LevelsetPlugin.h Plugin.h \
- ../Common/Options.h ../Common/Message.h ../DataStr/List.h
+ ../Common/Options.h ../Common/Message.h ../DataStr/List.h \
+ ../Common/Context.h
 CutMap.o: CutMap.cpp CutMap.h LevelsetPlugin.h Plugin.h \
- ../Common/Options.h ../Common/Message.h ../DataStr/List.h
+ ../Common/Options.h ../Common/Message.h ../DataStr/List.h \
+ ../Common/Context.h
 Smooth.o: Smooth.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
- Smooth.h ../DataStr/List.h ../Common/Views.h ../Common/ColorTable.h
+ Smooth.h ../DataStr/List.h ../Common/Views.h ../Common/ColorTable.h \
+ ../Common/Context.h
 Transform.o: Transform.cpp Plugin.h ../Common/Options.h \
  ../Common/Message.h Transform.h ../DataStr/List.h ../Common/Views.h \
- ../Common/ColorTable.h
+ ../Common/ColorTable.h ../Common/Context.h
+Triangulate.o: Triangulate.cpp ../Common/Gmsh.h ../Common/Message.h \
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h Plugin.h ../Common/Options.h \
+ Triangulate.h ../Common/Views.h ../Common/ColorTable.h \
+ ../Common/Context.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+ ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+ ../Mesh/Metric.h ../Mesh/Matrix.h ../Mesh/Utils.h ../Mesh/Create.h \
+ ../Triangle/triangle.h
 Skin.o: Skin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
  Skin.h ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
  ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h \
