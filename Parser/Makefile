@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.64 2004-12-06 04:59:09 geuzaine Exp $
+# $Id: Makefile,v 1.65 2004-12-30 04:08:46 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -41,6 +41,11 @@ ${LIB}: ${OBJ}
 
 .cpp.o:
 	${CXX} ${CFLAGS} -c $<
+
+# Don't optimize Gmsh.tab.o: on many architectures, g++ -O2 generates
+# assembly code too large to be addressed correctly
+Gmsh.tab.o:
+	${CXX} ${FLAGS} ${INCLUDE} -c $<
 
 parser:
 	bison --output Gmsh.tab.cpp -d Gmsh.y 
