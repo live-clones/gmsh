@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.50 2003-04-28 06:47:35 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.51 2003-04-30 21:30:05 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -2079,7 +2079,7 @@ data sets along with the geometry and the mesh. The data sets should be
 given in one of Gmsh's post-processing file formats described in @ref{File
 formats}. Once loaded into Gmsh, scalar fields can be displayed as iso-value
 lines and surfaces or color maps, whereas vector and tensor fields can be
-represented either by three-dimensional arrows or by displacement maps. in
+represented either by three-dimensional arrows or by displacement maps. In
 Gmsh's jargon, each data set is called a ``view'', and can arbitrarily mix
 all types of elements and fields. Each view is given a name, and can be
 manipulated either individually (each view has its own button in the GUI and
