@@ -470,7 +470,7 @@ GLint gl2psFindRoot(GL2PSlist *primitives, GL2PSprimitive **root){
 	if(!count) return index;
       }
     }
-    if(index) gl2psMsg("GL2PS_BEST_ROOT was worth it: %d", index);
+    if(index) gl2psMsg(GL2PS_INFO, "GL2PS_BEST_ROOT was worth it: %d", index);
     return index;
   }
   else{
