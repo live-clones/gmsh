@@ -1,4 +1,4 @@
-// $Id: Vertex.cpp,v 1.6 2001-01-24 16:15:31 geuzaine Exp $
+// $Id: Vertex.cpp,v 1.7 2001-05-29 13:32:02 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Vertex.h"
@@ -77,7 +77,13 @@ Vertex *Create_Vertex (int Num, double X, double Y, double Z, double lc, double 
 void Free_Vertex (void *a, void *b){
   Vertex *pV = *(Vertex**)a;
 
-  if(pV)Free(pV);
+  if(pV){
+    List_Delete(pV->ListSurf);
+    List_Delete(pV->ListCurves);
+    List_Delete(pV->Extruded_Points);
+    Free(pV);
+    pV = NULL ;
+  }
 }
 
 int compareVertex (const void *a, const void *b){
