@@ -1,4 +1,4 @@
-/* $Id: CAD.cpp,v 1.6 2000-11-24 10:21:21 geuzaine Exp $ */
+/* $Id: CAD.cpp,v 1.7 2000-11-24 10:58:02 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -1213,17 +1213,20 @@ void Coherence_PS(void){
 }
 
 void ReplaceAllDuplicates ( Mesh *m ){
-  List_T *All = Tree2List(m->Points);
+  List_T *All;
+  Tree_T *allNonDulpicatedPoints;
   Vertex *v;
   Curve *c,*c2;
   Surface *s;
   Volume *vol;
-  int i,j;
+  int i,j,start,end;
   
   /*Creation de points uniques*/
-  Tree_T *allNonDulpicatedPoints;
+
+  All = Tree2List(m->Points);
+  start = List_Nbr(All);
+
   allNonDulpicatedPoints = Tree_Create(sizeof(Vertex*),comparePosition);
-  Msg(INFOS, "Beginning with %d Points", List_Nbr(All));
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&v);
     if(!Tree_Search(allNonDulpicatedPoints,&v)){
@@ -1233,14 +1236,18 @@ void ReplaceAllDuplicates ( Mesh *m ){
       Tree_Suppress(m->Points,&v);
     }
   }
-  
+
   List_Delete(All);
-  Msg(INFOS, "Ending with %d Points", Tree_Nbr(m->Points));
+
+  end = Tree_Nbr(m->Points);
+
+  if(start-end) Msg(INFOS, "Removed %d Duplicate Points", start-end);
 
   /*Remplacement dans les courbes*/
+
   All = Tree2List(m->Curves);
-  
-  Msg(INFOS, "Beginning with %d Curves", List_Nbr(All));
+  start = List_Nbr(All);
+
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&c);
     Tree_Query( allNonDulpicatedPoints,&c->beg);
@@ -1287,7 +1294,10 @@ void ReplaceAllDuplicates ( Mesh *m ){
   }
   
   List_Delete(All);
-  Msg(INFOS, "Ending with %d Curves", Tree_Nbr(m->Curves));
+
+  end = Tree_Nbr(m->Curves);
+
+  if(start-end) Msg(INFOS, "Removed %d Duplicate Curves", start-end);
 
   /*Remplacement dans les surfaces*/
   All = Tree2List(m->Surfaces);
@@ -1301,7 +1311,8 @@ void ReplaceAllDuplicates ( Mesh *m ){
   }
   
   /*Creation de surfaces uniques*/
-  Msg(INFOS, "Beginning with %d Surfaces",List_Nbr(All));
+
+  start = List_Nbr(All);
   
   Tree_T *allNonDulpicatedSurfaces;
   allNonDulpicatedSurfaces = Tree_Create(sizeof(Curve*),compareTwoSurfaces);
@@ -1317,8 +1328,12 @@ void ReplaceAllDuplicates ( Mesh *m ){
       }
     }
   }
+
   List_Delete(All);
-  Msg(INFOS, "Ending with %d Surfaces",Tree_Nbr(m->Surfaces));
+
+  end = Tree_Nbr(m->Surfaces);
+
+  if(start-end) Msg(INFOS, "Removed %d Duplicate Surfaces", start-end);
 
   /*Remplacement dans les volumes*/
   All = Tree2List(m->Volumes);
