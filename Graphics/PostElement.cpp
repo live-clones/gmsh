@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.28 2004-04-27 00:11:55 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.29 2004-05-28 21:06:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -434,9 +434,9 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
         norms[3 * i + 2] = nn[2];
       }
     }
-    //norme(norms); not necessary since GL_NORMALIZE is enabled
-    //norme(&norms[3]);
-    //norme(&norms[6]);
+    norme(&norms[0]);
+    norme(&norms[3]);
+    norme(&norms[6]);
     glNormal3dv(norms);
   }
 

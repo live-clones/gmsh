@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.87 2004-05-28 19:22:12 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.88 2004-05-28 21:06:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -229,32 +229,27 @@ void Draw_Mesh_Surface(void *a, void *b)
   if(!(s->Visible & VIS_MESH))
     return;
 
-  if(Tree_Nbr(s->Simplexes)){
-    
-    if(CTX.mesh.vertex_arrays && !CTX.threads_lock){
-      CTX.threads_lock = 1;
-      if(CTX.mesh.changed){
-	printf("generate vertex array\n");
-	if(s->vertexArray) delete s->vertexArray;
-	s->vertexArray = new triangleVertexArray(Tree_Nbr(s->Simplexes));
-	theVertexArray = s->vertexArray;
-	fillTheVertexArray = 1;
-	useTheVertexArray = 1;
-	Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
-	fillTheVertexArray = 0;
-      }
-      CTX.threads_lock = 0;
+  if(CTX.mesh.vertex_arrays && Tree_Nbr(s->Simplexes) && !CTX.threads_lock){
+    CTX.threads_lock = 1;
+    if(CTX.mesh.changed){
+      printf("generate vertex array\n");
+      if(s->vertexArray) delete s->vertexArray;
+      s->vertexArray = new triangleVertexArray(Tree_Nbr(s->Simplexes));
+      theVertexArray = s->vertexArray;
+      fillTheVertexArray = 1;
+      useTheVertexArray = 1;
+      Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
+      fillTheVertexArray = 0;
     }
-    else{
-      useTheVertexArray = 0;
-    }
-    
     if(s->vertexArray && useTheVertexArray)
       Draw_Mesh_Triangle_Array(s->vertexArray);
+    CTX.threads_lock = 0;
+  }
     
-    if(!useTheVertexArray || CTX.mesh.dual || 
-       CTX.mesh.surfaces_num || CTX.mesh.normals)
-      Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
+  fillTheVertexArray = 0; // just to make sure...
+  if(!useTheVertexArray || CTX.mesh.dual || 
+     CTX.mesh.surfaces_num || CTX.mesh.normals){
+    Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
   }
   
   Tree_Action(s->Quadrangles, Draw_Mesh_Quadrangle);
@@ -428,6 +423,7 @@ void _normal3points(double x0, double y0, double z0,
   n[0] = y1y0 * z2z0 - z1z0 * y2y0;
   n[1] = z1z0 * x2x0 - x1x0 * z2z0;
   n[2] = x1x0 * y2y0 - y1y0 * x2x0;
+  norme(n);
   glNormal3dv(n);
 }
 
@@ -619,7 +615,6 @@ void Draw_Mesh_Triangle(void *a, void *b)
   }
 
   if(CTX.mesh.normals) {
-    norme(n);
     glColor4ubv((GLubyte *) & CTX.color.mesh.normals);
     n[0] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[0];
     n[1] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[1];
@@ -642,7 +637,7 @@ void Draw_Mesh_Triangle_Array(triangleVertexArray *va)
   glEnableClientState(GL_VERTEX_ARRAY);
   glEnableClientState(GL_COLOR_ARRAY);
   glEnableClientState(GL_NORMAL_ARRAY);
-      
+
   if(CTX.mesh.surfaces_faces){
     if(CTX.mesh.surfaces_edges)
       glEnable(GL_POLYGON_OFFSET_FILL);
@@ -788,7 +783,6 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
   }
 
   if(CTX.mesh.normals) {
-    norme(n);
     glColor4ubv((GLubyte *) & CTX.color.mesh.normals);
     n[0] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[0];
     n[1] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[1];

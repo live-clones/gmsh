@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.53 2004-05-18 17:00:37 geuzaine Exp $
+// $Id: Draw.cpp,v 1.54 2004-05-28 21:06:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -169,7 +169,7 @@ void InitRenderModel(void)
   glShadeModel(GL_SMOOTH);
   float specular[4] = {CTX.shine, CTX.shine, CTX.shine, 1.0};
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
-  glEnable(GL_NORMALIZE);
+  glEnable(GL_RESCALE_NORMAL);
   glEnable(GL_COLOR_MATERIAL);
   // disable lighting by default (we enable it for each particular
   // case in the drawing routines)

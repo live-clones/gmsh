@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.39 2004-05-13 18:01:36 geuzaine Exp $
+// $Id: Entity.cpp,v 1.40 2004-05-28 21:06:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -145,7 +145,7 @@ void Draw_Triangle(double *x, double *y, double *z, double *n,
       nn[0] = y1y0 * z2z0 - z1z0 * y2y0;
       nn[1] = z1z0 * x2x0 - x1x0 * z2z0;
       nn[2] = x1x0 * y2y0 - y1y0 * x2x0;
-      //norme(nn); not necessary if GL_NORMALIZE is enabled
+      norme(nn);
       glNormal3dv(nn);
     }
     else
