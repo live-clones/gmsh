@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.33 2001-03-18 10:40:54 geuzaine Exp $
+// $Id: Views.cpp,v 1.34 2001-04-08 20:36:49 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -151,7 +151,7 @@ void Stat_VectorSimplex(int nbnod, int N, double *V){
 }
 
 void Stat_TensorSimplex(int nbnod, int N, double *v){
-  Msg(GERROR, "Tensor Field Views not Implemented Yet");
+  Msg(GERROR, "Tensor field views not implemented yet");
 }
 
 
@@ -404,15 +404,15 @@ void Read_View(FILE *file, char *filename){
     if (!strncmp(&str[1], "PostFormat", 10)){
       fscanf(file, "%lf %d %d\n", &version, &format, &size) ;
       if(version < 1.0){
-        Msg(GERROR, "The Version of this File is too old (%g < 1.0)", version);
+        Msg(GERROR, "The version of this post-processing file is too old (%g < 1.0)", version);
         return;
       }
       if(size == sizeof(double))
-	Msg(DEBUG, "Data is in Double Precision Format (size==%d)", size);
+	Msg(DEBUG, "Data is in double precision format (size==%d)", size);
       else if(size == sizeof(float))
-	Msg(DEBUG, "Data is in Single Precision Format (size==%d)", size);
+	Msg(DEBUG, "Data is in single precision format (size==%d)", size);
       else{
-        Msg(GERROR, "Unknown Type of Data (Size = %d) in Post-Processing File", 
+        Msg(GERROR, "Unknown type of data (size = %d) in post-processing file", 
 	    size);
         return;
       }
@@ -421,7 +421,7 @@ void Read_View(FILE *file, char *filename){
       else if(format == 1)
 	format = LIST_FORMAT_BINARY ;
       else{
-	Msg(GERROR, "Unknown Format for View");
+	Msg(GERROR, "Unknown format for view");
 	return ;
       }
     }
@@ -443,7 +443,7 @@ void Read_View(FILE *file, char *filename){
       if(format == LIST_FORMAT_BINARY){
 	fread(&testone, sizeof(int), 1, file);
 	if(testone != 1){
-	  Msg(INFO, "Swapping Bytes from Binary File");
+	  Msg(INFO, "Swapping bytes from binary file");
 	  swap = 1;
 	}
       }
@@ -511,7 +511,7 @@ void Read_View(FILE *file, char *filename){
 
     do {
       fgets(str, NAME_STR_L, file) ;
-      if (feof(file)) Msg(GERROR,"Prematured End of File");
+      if (feof(file)) Msg(GERROR,"Prematured end of file");
     } while (str[0] != '$') ;
 
   }   /* while 1 ... */
@@ -529,7 +529,7 @@ void Write_View(int Flag_BIN, Post_View *v, char *filename){
   if(filename){
     file = fopen(filename,"w");
     if(!file){
-      Msg(WARNING, "Unable to Open File '%s'", filename);
+      Msg(WARNING, "Unable to open file '%s'", filename);
       return;
     }
   }
@@ -569,7 +569,7 @@ void Write_View(int Flag_BIN, Post_View *v, char *filename){
   fprintf(file, "$EndView\n");
 
   if(filename){
-    Msg(INFO, "View Output Complete '%s'", filename);
+    Msg(INFO, "View output complete '%s'", filename);
     Msg(STATUS2, "Wrote '%s'", filename);
     fclose(file);
   }

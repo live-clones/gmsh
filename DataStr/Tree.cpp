@@ -1,4 +1,4 @@
-// $Id: Tree.cpp,v 1.6 2001-01-09 19:40:56 remacle Exp $
+// $Id: Tree.cpp,v 1.7 2001-04-08 20:36:49 geuzaine Exp $
 
 #include <stdlib.h>
 #include <string.h>
@@ -31,7 +31,7 @@ void Tree_Add(Tree_T *tree, void *data)
   void *ptr;
 
   if(!tree) 
-    Msg(GERROR, "Impossible to Add in Unallocated Tree");
+    Msg(GERROR, "Impossible to add in unallocated tree");
   else{
     ptr = Malloc(tree->size);
     memcpy(ptr,data,tree->size);
@@ -44,7 +44,7 @@ void * Tree_AddP(Tree_T *tree, void *data)
   void *ptr;
 
   if(!tree) 
-    Msg(FATAL, "Impossible to Add in Unallocated Tree");
+    Msg(FATAL, "Impossible to add in unallocated tree");
   ptr = Malloc(tree->size);
   memcpy(ptr,data,tree->size);
   avl_insert(tree->root, ptr, ptr);
@@ -69,7 +69,7 @@ int Tree_Replace(Tree_T *tree, void *data)
   int state;
 
   if(!tree) {
-    Msg(GERROR, "Impossible to Replace in Unallocated Tree");
+    Msg(GERROR, "Impossible to replace in unallocated tree");
     return(0);
   }
   state = avl_lookup(tree->root, data, &ptr);

@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.7 2001-01-29 22:33:41 remacle Exp $
+// $Id: Entity.cpp,v 1.8 2001-04-08 20:36:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -378,7 +378,7 @@ void Draw_Vector (int Type, int Fill,
     break ;
 
   default :
-    Msg(GERROR, "Unknown Type of Vector to Draw");
+    Msg(GERROR, "Unknown type of vector to draw");
     break;
   }
   

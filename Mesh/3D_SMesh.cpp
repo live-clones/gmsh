@@ -1,4 +1,4 @@
-// $Id: 3D_SMesh.cpp,v 1.7 2001-01-11 22:27:55 geuzaine Exp $
+// $Id: 3D_SMesh.cpp,v 1.8 2001-04-08 20:36:50 geuzaine Exp $
 
 /*  
   Maillage transfini volumique
@@ -143,7 +143,7 @@ int MeshTransfiniteVolume (Volume *vol) {
     V.Num = vol->ipar[i];
     pV = &V;
     if((vexist = (Vertex**)Tree_PQuery(THEM->Vertices,&pV)) == NULL) {
-      Msg(WARNING, "Unknown Control Point %d in Transfinite Volume %d",
+      Msg(WARNING, "Unknown control point %d in Transfinite Volume %d",
           V.Num,vol->Num); 
       return(0);
     }
@@ -177,7 +177,7 @@ int MeshTransfiniteVolume (Volume *vol) {
       V.Num = GG[i]->ipar[j];
       pV = &V;
       if((vexist = (Vertex**)Tree_PQuery(THEM->Vertices,&pV)) == NULL) {
-        Msg(WARNING, "Unknown Control Point %d in Transfinite Surface %d",
+        Msg(WARNING, "Unknown control point %d in Transfinite Surface %d",
             V.Num,GG[i]->Num); 
         return(0);
       }
@@ -211,13 +211,13 @@ int MeshTransfiniteVolume (Volume *vol) {
   }
 
   if(nbs == 6 && NbFacesFound != 6) {
-    Msg(WARNING, "Wrong Definition of Hexahedric Transfinite Volume %d", 
+    Msg(WARNING, "Wrong definition of hexahedric Transfinite Volume %d", 
         vol->Num); 
     return(0);
   }
 
   if(nbs == 5 && NbFacesFound != 5) {
-    Msg(WARNING1, "Wrong Definition of Prismatic Transfinite Volume %d", vol->Num);
+    Msg(WARNING1, "Wrong definition of prismatic Transfinite Volume %d", vol->Num);
     Msg(WARNING2, "Possibly because the first and fourth points are not the");
     Msg(WARNING3, "degenerated ones"); 
     return(0);
@@ -226,7 +226,7 @@ int MeshTransfiniteVolume (Volume *vol) {
   if(nbs == 6){
     for(i=0;i<6;i++){
       if(G[i] == NULL) {
-        Msg(WARNING, "Wrong Definition of Hexahedric Transfinite Volume %d",
+        Msg(WARNING, "Wrong definition of hexahedric Transfinite Volume %d",
             vol->Num); 
         return(0);
       }
@@ -236,7 +236,7 @@ int MeshTransfiniteVolume (Volume *vol) {
     for(i=0;i<6;i++){
       if(i != 3) {
         if(G[i] == NULL) {
-          Msg(WARNING1, "Wrong Definition of Prismatic Transfinite Volume %d", vol->Num);
+          Msg(WARNING1, "Wrong definition of prismatic Transfinite Volume %d", vol->Num);
 	  Msg(WARNING2, "Possibly because the first and fourth points are not the");
 	  Msg(WARNING3, "degenerated ones"); 
           return(0);
@@ -410,7 +410,7 @@ int MeshTransfiniteVolume (Volume *vol) {
             nbtet += 6;
           }
           else{
-            Msg(WARNING, "Wrong Surface Recombining in Transfinite Volume %d", 
+            Msg(WARNING, "Wrong surface recombining in Transfinite Volume %d", 
                 vol->Num); 
             return(0);
           }
@@ -462,7 +462,7 @@ int MeshTransfiniteVolume (Volume *vol) {
           nbtet += 2;
         }
         else{
-          Msg(WARNING, "Wrong Surface Recombining in Transfinite Volume %d", 
+          Msg(WARNING, "Wrong surface recombining in Transfinite Volume %d", 
               vol->Num); 
           return(0);              
         }
@@ -496,7 +496,7 @@ int MeshTransfiniteVolume (Volume *vol) {
             nbtet += 6;
           }
           else{
-            Msg(WARNING, "Wrong Surface Recombining in Transfinite Volume %d", 
+            Msg(WARNING, "Wrong surface recombining in Transfinite Volume %d", 
                 vol->Num); 
             return(0);
           }

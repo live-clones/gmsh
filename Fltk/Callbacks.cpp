@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.41 2001-03-18 10:40:54 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.42 2001-04-08 20:36:49 geuzaine Exp $
 
 #include <map>
 #include "Gmsh.h"
@@ -619,9 +619,9 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS){
 
   n=0;
   while(1){
-    if(n == 0) Msg(STATUS3N,"Select Center ('q'=quit)");
-    if(n == 1) Msg(STATUS3N,"Select Starting Point ('q'=quit)");
-    if(n == 2) Msg(STATUS3N,"Select Ending Point ('q'=quit)");
+    if(n == 0) Msg(STATUS3N,"Select center Point ('q'=quit)");
+    if(n == 1) Msg(STATUS3N,"Select start Point ('q'=quit)");
+    if(n == 2) Msg(STATUS3N,"Select end Point ('q'=quit)");
     ib = SelectEntity(ENT_POINT, &v,&c,&s);
     if(ib == 1) { /* left mouse butt */
       p[n++] = v->Num; 
@@ -655,10 +655,10 @@ void geometry_elementary_add_new_ellipsis_cb(CALLBACK_ARGS){
 
   n=0;
   while(1){
-    if(n == 0) Msg(STATUS3N,"Select Center ('q'=quit)");
-    if(n == 1) Msg(STATUS3N,"Select an Axis Point ('q'=quit)");
-    if(n == 2) Msg(STATUS3N,"Select Starting Point ('q'=quit)");
-    if(n == 3) Msg(STATUS3N,"Select Ending Point ('q'=quit)");
+    if(n == 0) Msg(STATUS3N,"Select center Point ('q'=quit)");
+    if(n == 1) Msg(STATUS3N,"Select axis Point ('q'=quit)");
+    if(n == 2) Msg(STATUS3N,"Select start Point ('q'=quit)");
+    if(n == 3) Msg(STATUS3N,"Select end Point ('q'=quit)");
     ib = SelectEntity(ENT_POINT, &v,&c,&s);
     if(ib == 1) { /* left mouse butt */
       p[n++] = v->Num; 
@@ -709,7 +709,7 @@ static void _new_surface_volume(int mode){
     List_Reset(Liste2);
     
     while(1) {        
-      Msg(STATUS3N,"Select Boundary ('q'=quit)");
+      Msg(STATUS3N,"Select boundary ('q'=quit)");
       ib = SelectEntity(type, &v,&c,&s);
       if(ib <= 0){
 	ZeroHighlight(&M);
@@ -724,7 +724,7 @@ static void _new_surface_volume(int mode){
 	List_Reset(Liste1);
 	List_Add(Liste2,&zone);
 	while(1){
-	  Msg(STATUS3N,"Select Holes ('q'=quit)");
+	  Msg(STATUS3N,"Select holes ('q'=quit)");
 	  ib = SelectEntity(type, &v,&c,&s); 
 	  if(ib <= 0){
 	    ZeroHighlight(&M);
@@ -1024,8 +1024,8 @@ static void _add_physical(char *what){
     }
   }
   else{
-    Msg(GERROR, "Interactive Volume Selection not done: "
-	"Please edit the input file manually");
+    Msg(GERROR, "Interactive volume selection not done "
+	"(you will have to edit the input file manually)");
     if(!opt_geometry_volumes(0,GMSH_GET,0)){
       opt_geometry_volumes(0,GMSH_SET|GMSH_GUI,1);
       Draw();
@@ -1240,13 +1240,13 @@ static void _add_transfinite(int dim){
 	      if(n == 3+1 || n == 4+1)
 		add_trsfsurf(n,p,CTX.filename); 
 	      else
-		Msg(STATUS2, "Wrong Number of Points for Transfinite Surface");
+		Msg(STATUS2, "Wrong number of points for Transfinite Surface");
 	      break;
 	    case 3 :
 	      if(n == 6 || n == 8)
 		add_trsfvol(n,p,CTX.filename);
 	      else
-		Msg(STATUS2, "Wrong Number of Points for Transfinite Volume");
+		Msg(STATUS2, "Wrong number of points for Transfinite Volume");
 	      break;
 	    }
 	    n=0;

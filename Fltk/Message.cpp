@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.17 2001-04-08 12:49:31 geuzaine Exp $
+// $Id: Message.cpp,v 1.18 2001-04-08 20:36:49 geuzaine Exp $
 
 #include <signal.h>
 #if !defined(WIN32) || defined(__CYGWIN__)
@@ -23,21 +23,21 @@ void Signal (int sig_num){
 
   switch (sig_num){
   case SIGSEGV : 
-    Msg(FATAL1, "Segmentation Violation (Invalid Memory Reference)");
+    Msg(FATAL1, "Segmentation violation (invalid memory reference)");
     Msg(FATAL2, "------------------------------------------------------");
     Msg(FATAL2, "You have discovered a bug in Gmsh! You may report it");
     Msg(FATAL2, "by e-mail (together with any helpful data permitting to");
     Msg(FATAL3, "reproduce it) to <gmsh@geuz.org>"); 
     break;
   case SIGFPE : 
-    Msg(FATAL, "Floating Point Exception (Division by Zero?)"); 
+    Msg(FATAL, "Floating point exception (division by zero?)"); 
     break;
   case SIGINT :
-    Msg(INFO, "Interrupt (Generated from Terminal Special Character)"); 
+    Msg(INFO, "Interrupt (generated from terminal special character)"); 
     Exit(1);
     break;
   default :
-    Msg(FATAL, "Unknown Signal");
+    Msg(FATAL, "Unknown signal");
     break;
   }
 }

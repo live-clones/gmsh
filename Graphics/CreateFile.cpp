@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.16 2001-02-17 22:08:56 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.17 2001-04-08 20:36:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -51,7 +51,7 @@ void CreateOutputFile (char *name, int format) {
 
   case FORMAT_AUTO :
     if(strlen(name) < 4)
-      Msg(GERROR, "Unknown Extension for Automatic Format Detection");
+      Msg(GERROR, "Unknown extension for automatic format detection");
     else{
       strcpy(ext,name+(strlen(name)-4));
       if(!strcmp(ext,".geo")) CreateOutputFile(name, FORMAT_GEO);
@@ -65,14 +65,14 @@ void CreateOutputFile (char *name, int format) {
       else if(!strcmp(ext,".yuv")) CreateOutputFile(name, FORMAT_YUV);
       else {
 	if(strlen(name) < 5)
-	  Msg(GERROR, "Unknown Extension in \"%s\" for Automatic Format Detection",
+	  Msg(GERROR, "Unknown extension in \"%s\" for automatic format detection",
 	      name);
 	else{
 	  strcpy(ext,name+(strlen(name)-5));
 	  if(!strcmp(ext,".jpeg")) CreateOutputFile(name, FORMAT_JPEG);
 	  else if(!strcmp(ext,".gref")) CreateOutputFile(name, FORMAT_GREF);
 	  else if(!strcmp(ext,".Gref")) CreateOutputFile(name, FORMAT_GREF);
-	  else Msg(GERROR, "Unknown Extension in \"%s\" for Automatic Format Detection",
+	  else Msg(GERROR, "Unknown extension in \"%s\" for automatic format detection",
 		   name);
 	}
       }
@@ -98,11 +98,11 @@ void CreateOutputFile (char *name, int format) {
 #ifdef _XMOTIF
   case FORMAT_XPM :
     if(!(fp = fopen(name,"wb"))) {
-      Msg(WARNING, "Unable to Open File '%s'", name); 
+      Msg(WARNING, "Unable to open file '%s'", name); 
       return;
     }
     Window_Dump(XCTX.display, XCTX.scrnum, XtWindow(WID.G.glw), fp);    
-    Msg(INFO, "XPM Creation Complete '%s'", name);
+    Msg(INFO, "XPM creation complete '%s'", name);
     Msg(STATUS2, "Wrote '%s'", name);
     fclose(fp);
     break;
@@ -110,21 +110,21 @@ void CreateOutputFile (char *name, int format) {
 
   case FORMAT_JPEG :
     if(!(fp = fopen(name,"wb"))) {
-      Msg(WARNING, "Unable to Open File '%s'", name); 
+      Msg(WARNING, "Unable to open file '%s'", name); 
       return;
     }
     FillBuffer();
     create_jpeg(fp, CTX.viewport[2]-CTX.viewport[0],
 		CTX.viewport[3]-CTX.viewport[1],
 		CTX.print.jpeg_quality);
-    Msg(INFO, "JPEG Creation Complete '%s'", name);
+    Msg(INFO, "JPEG creation complete '%s'", name);
     Msg(STATUS2, "Wrote '%s'", name);
     fclose(fp);
     break;
 
   case FORMAT_GIF :
     if(!(fp = fopen(name,"wb"))) {
-      Msg(WARNING, "Unable to Open File '%s'", name); 
+      Msg(WARNING, "Unable to open file '%s'", name); 
       return;
     }
     FillBuffer();
@@ -137,33 +137,33 @@ void CreateOutputFile (char *name, int format) {
 	       UNPACK_RED(CTX.color.bg),
 	       UNPACK_GREEN(CTX.color.bg),
 	       UNPACK_BLUE(CTX.color.bg));
-    Msg(INFO, "GIF Creation Complete '%s'", name);
+    Msg(INFO, "GIF creation complete '%s'", name);
     Msg(STATUS2, "Wrote '%s'", name);
     fclose(fp);
     break;
 
   case FORMAT_PPM :
     if(!(fp = fopen(name,"wb"))) {
-      Msg(WARNING, "Unable to Open File '%s'", name); 
+      Msg(WARNING, "Unable to open file '%s'", name); 
       return;
     }
     FillBuffer();
     create_ppm(fp, CTX.viewport[2]-CTX.viewport[0],
 	       CTX.viewport[3]-CTX.viewport[1]);
-    Msg(INFO, "PPM Creation Complete '%s'", name);
+    Msg(INFO, "PPM creation complete '%s'", name);
     Msg(STATUS2, "Wrote '%s'", name);
     fclose(fp);
     break;
 
   case FORMAT_YUV :
     if(!(fp = fopen(name,"wb"))) {
-      Msg(WARNING, "Unable to Open File '%s'", name); 
+      Msg(WARNING, "Unable to open file '%s'", name); 
       return;
     }
     FillBuffer();
     create_yuv(fp, CTX.viewport[2]-CTX.viewport[0],
 	       CTX.viewport[3]-CTX.viewport[1]);
-    Msg(INFO, "YUV Creation Complete '%s'", name);
+    Msg(INFO, "YUV creation complete '%s'", name);
     Msg(STATUS2, "Wrote '%s'", name);
     fclose(fp);
     break;
@@ -175,11 +175,11 @@ void CreateOutputFile (char *name, int format) {
 #ifdef _XMOTIF
     case 0 : // Bitmap EPS
       if(!(fp = fopen(name,"w"))) {
-	Msg(WARNING, "Unable to Open File '%s'", name); 
+	Msg(WARNING, "Unable to open file '%s'", name); 
 	return;
       }
       if(!(tmp = fopen(tmpFileName,"w"))){
-	Msg(WARNING, "Unable to Open File '%s'", tmpFileName); 
+	Msg(WARNING, "Unable to open file '%s'", tmpFileName); 
 	return;
       }
       Window_Dump(XCTX.display, XCTX.scrnum, XtWindow(WID.G.glw), tmp);
@@ -188,7 +188,7 @@ void CreateOutputFile (char *name, int format) {
       Msg(INFO, "Executing '%s'", cmd);
       system(cmd);
       unlink(tmpFileName);
-      Msg(INFO, "Bitmap EPS Creation Complete '%s'", name);
+      Msg(INFO, "Bitmap EPS creation complete '%s'", name);
       Msg(STATUS2, "Wrote '%s'", name);
       fclose(fp);
       break;
@@ -196,7 +196,7 @@ void CreateOutputFile (char *name, int format) {
       
     default : // Vector EPS
       if(!(fp = fopen(name,"w"))) {
-	Msg(WARNING, "Unable to Open File '%s'", name); 
+	Msg(WARNING, "Unable to open file '%s'", name); 
 	return;
       }
       CTX.print.gl_fonts = 0;
@@ -213,7 +213,7 @@ void CreateOutputFile (char *name, int format) {
 	CTX.stream = TO_SCREEN ;
 	res = gl2psEndPage();
       }
-      Msg(INFO, "EPS Creation Complete '%s'", name);
+      Msg(INFO, "EPS creation complete '%s'", name);
       Msg(STATUS2, "Wrote '%s'", name);
       fclose(fp);
       CTX.print.gl_fonts = 1;
@@ -223,7 +223,7 @@ void CreateOutputFile (char *name, int format) {
     break ;
     
   default :
-    Msg(WARNING, "Unknown Print Format");
+    Msg(WARNING, "Unknown print format");
     break;
   }
 

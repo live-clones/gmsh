@@ -1,4 +1,4 @@
-// $Id: 3D_Coherence.cpp,v 1.13 2001-01-12 13:29:00 geuzaine Exp $
+// $Id: 3D_Coherence.cpp,v 1.14 2001-04-08 20:36:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -1159,14 +1159,14 @@ int Coherence (Volume * v, Mesh * m){
   MissingFaces = Missing_Faces (v);
 
   /* Edges Recovery */
-  Msg(STATUS3, "Boundary Edges Recovery");
+  Msg(STATUS3, "Boundary edges recovery");
 
   volume = 0;
   Tree_Action (v->Simplexes, VSIM);
   Msg(INFO, "Volume = %g", volume);
 
   Msg(INFO1, "===================================================");
-  Msg(INFO2, "(1) Number of Missing Edges = %d", List_Nbr (Missing));
+  Msg(INFO2, "Number of missing edges = %d", List_Nbr (Missing));
   Msg(INFO3, "===================================================");
 
   for (i = 0; i < List_Nbr (Missing); i++){
@@ -1197,17 +1197,17 @@ int Coherence (Volume * v, Mesh * m){
         }
       }
     */
-    Msg(INFO, "Edge %d->%d => %d Division(s)", 
+    Msg(INFO, "Edge %d->%d => %d division(s)", 
         pE1->V[0]->Num, pE1->V[1]->Num, List_Nbr(NewPoints));
 
     if (!List_Nbr (NewPoints))
-      Msg(GERROR, "Missing Edge Without Any Intersection (%g,%g,%g) (%g,%g,%g)",
+      Msg(GERROR, "Missing edge without any intersection (%g,%g,%g) (%g,%g,%g)",
           pE1->V[0]->Pos.X, pE1->V[0]->Pos.Y, pE1->V[0]->Pos.Z,
           pE1->V[1]->Pos.X, pE1->V[1]->Pos.Y, pE1->V[1]->Pos.Z);
     
   }
 
-  Msg(STATUS3, "Boundary Faces Recovery");
+  Msg(STATUS3, "Boundary faces recovery");
   volume = 0;
   Tree_Action (v->Simplexes, VSIM);
   Msg(INFO, "Volume = %g", volume);
@@ -1215,7 +1215,7 @@ int Coherence (Volume * v, Mesh * m){
   /* Missing Faces */
 
   Msg(INFO1, "===================================================");
-  Msg(INFO2, "(1) Number of Missing Faces = %d", List_Nbr (MissingFaces));
+  Msg(INFO2, "Number of missing faces = %d", List_Nbr (MissingFaces));
   Msg(INFO3, "===================================================");
 
   for (i = 0; i < List_Nbr (MissingS); i++){
@@ -1280,7 +1280,7 @@ int Coherence (Volume * v, Mesh * m){
 
     if (1 || List_Nbr (ListFaces) == 2 * (Np - 1) - Nh){
       
-      Msg(INFO, "Recoverable Face (%d <--> %d=2*(%d-1)-%d)",
+      Msg(INFO, "Recoverable face (%d <--> %d=2*(%d-1)-%d)",
           List_Nbr (ListFaces), 2 * (Np - 1) - Nh, Np, Nh);
       
       for (j = 0; j < List_Nbr (v->Surfaces); j++){
@@ -1302,7 +1302,7 @@ int Coherence (Volume * v, Mesh * m){
       }
     }
     else{
-      Msg(GERROR, "*Unrecoverable* Face (%d <--> %d=2*(%d-1)-%d)",
+      Msg(GERROR, "*Unrecoverable* face (%d <--> %d=2*(%d-1)-%d)",
           List_Nbr (ListFaces), 2 * (Np - 1) - Nh, Np, Nh);
       for (k = 0; k < List_Nbr (ListFaces); k++){
         List_Read (ListFaces, k, &Face);
@@ -1314,7 +1314,7 @@ int Coherence (Volume * v, Mesh * m){
 
   volume = 0;
   Tree_Action (v->Simplexes, VSIM);
-  Msg(INFO, "Volume after Edge/Face Recovering = %g", volume);
+  Msg(INFO, "Volume after edge/face recovery = %g", volume);
 
   /* Missing Edges */
   create_Edges (v);
@@ -1324,18 +1324,18 @@ int Coherence (Volume * v, Mesh * m){
   create_Faces (v);
   MissingFaces = Missing_Faces (v);
 
-  Msg(INFO, "Final Check : Missing %d Edges, %d Faces", 
+  Msg(INFO, "Final check: %d missing edges, %d missing faces", 
       List_Nbr(MissingEdges), List_Nbr(MissingFaces));
 
   Impression_Resultats ();
 
   if (List_Nbr (MissingFaces) || List_Nbr (MissingEdges)){
-    Msg(GERROR, "Could not Restore all Edges/Faces");
+    Msg(GERROR, "Could not restore all edges/faces");
     return 0;
   }
 
   Link_Simplexes (NULL, v->Simplexes);
-  Msg(STATUS3, "Volume Recovery");
+  Msg(STATUS3, "Volume recovery");
   Restore_Volume (v);
 
   return 1;
@@ -1523,7 +1523,7 @@ void Restore_Volume (Volume * v){
     }
     
     N = Tree_Nbr (keep);
-    Msg(INFO, "Initial Mesh of Volume %d: %d Simplices", iVolume, N);
+    Msg(INFO, "Initial mesh of volume %d: %d simplices", iVolume, N);
     Tree_Action (keep, attribueVolume);
     Tree_Delete (keep);
     List_Reset (ListSurfaces);

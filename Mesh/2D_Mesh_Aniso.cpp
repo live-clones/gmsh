@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.13 2001-02-23 00:07:51 remacle Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.14 2001-04-08 20:36:49 geuzaine Exp $
 
 /*
    Jean-Francois Remacle
@@ -301,11 +301,11 @@ void Recover_Edge (Surface * s, Edge * e, EdgesContainer & Edges){
   coquille = List_Create (3, 3, sizeof (Edge *));
   /*On cherche la coquille */
   Tree_Action (Edges.AllEdges, putaindecoquille_2D);
-  Msg(INFO, "Edge %d->%d, %d Intersections", 
+  Msg(INFO, "Edge %d->%d, %d intersections", 
       e->V[0]->Num, e->V[1]->Num, List_Nbr (coquille));
 
   if(List_Nbr(coquille)==1){
-    Msg(WARNING, "Unable to Swap Edge");
+    Msg(WARNING, "Unable to swap edge");
     List_Delete (coquille);
     return;
   }
@@ -330,7 +330,7 @@ void Recover_Edge (Surface * s, Edge * e, EdgesContainer & Edges){
 
   List_Delete (coquille);
 
-  Msg(INFO, "Edge Recovered");
+  Msg(INFO, "Edge recovered");
   /*On swappe */
 }
 
@@ -366,7 +366,7 @@ void missing_edges_2d (Surface * s){
       e.V[0] = v1;
       e.V[1] = v2;
       if (!EdgesOnSurface.Search (v1, v2)) {
-        Msg(INFO, "Missing Edge %d->%d", v1->Num, v2->Num);
+        Msg(INFO, "Missing edge %d->%d", v1->Num, v2->Num);
         Recover_Edge (s, &e, EdgesOnSurface);
       }
     }
@@ -467,7 +467,7 @@ void NewSimplexes_2D (Surface * s, List_T * Sim, List_T * news){
       ZONEELIMINEE = S->iEnt;
     else{
       if (S->iEnt != ZONEELIMINEE){
-        Msg(WARNING, "Huh! The Elimination Failed %d %d",
+        Msg(WARNING, "Huh! The elimination failed %d %d",
             S->iEnt, ZONEELIMINEE);
       }
     }
@@ -624,7 +624,7 @@ bool Bowyer_Watson_2D (Surface * sur, Vertex * v, Simplex * S, int force){
       List_Read (Simplexes_Destroyed, i, &s);
       draw_simplex2d (sur, s, 0);
       if (!Tree_Suppress (sur->Simplexes, &s)){
-        Msg(WARNING, "Failed to Suppress Simplex %d", s->Num);
+        Msg(WARNING, "Failed to suppress simplex %d", s->Num);
       }
       Free (s);
     }
@@ -652,7 +652,7 @@ void Convex_Hull_Mesh_2D (List_T * Points, Surface * s){
 
   N = List_Nbr (Points);
 
-  Msg(STATUS2, "Mesh 2D... (Initial)");
+  Msg(STATUS2, "Mesh 2D... (initial)");
 
   Box_2_Triangles (Points, s);
   for (i = 0; i < N; i++){
@@ -667,7 +667,7 @@ void Convex_Hull_Mesh_2D (List_T * Points, Surface * s){
       } 
     */
     if (!THES){
-      Msg(GERROR, "Vertex (%g,%g,%g) in no Simplex",
+      Msg(GERROR, "Vertex (%g,%g,%g) in no simplex",
           THEV->Pos.X, THEV->Pos.Y, THEV->Pos.Z);
       THEV->Pos.X += CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;
       THEV->Pos.Y += CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;
@@ -838,7 +838,7 @@ void Restore_Surface (Surface * s){
     iSurface = isListaSurface (ListCurves, s);
     
     N = Tree_Nbr (keep);
-    Msg(INFO, "Initial Mesh of Surface %d: %d Simplices, %d/%d Curves, %d Faces",
+    Msg(INFO, "Initial mesh of Surface %d: %d simplices, %d/%d curves, %d faces",
          iSurface, N, List_Nbr (ListCurves), List_Nbr (ListAllCurves),
          Tree_Nbr (FacesTree));
 
@@ -1033,7 +1033,7 @@ int AlgorithmeMaillage2DAnisotropeModeJF (Surface * s){
   List_Delete (Suppress);
   
   if(!Tree_Right (s->Simplexes, &simp))
-    Msg(WARNING, "No Simplex Left");
+    Msg(WARNING, "No simplex left");
   else{
     i = 0;
     while ( simp->Quality > CONV_VALUE){
@@ -1100,7 +1100,7 @@ int AlgorithmeMaillage2DAnisotropeModeJF (Surface * s){
   List_Delete (List);
 
   if(!Tree_Nbr(s->Simplexes))
-    Msg(GERROR, "No Triangles in surface %d", s->Num);
+    Msg(GERROR, "No triangles in surface %d", s->Num);
 
   /*
      RandomSwapEdges2d(s);

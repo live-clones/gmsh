@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.14 2001-02-17 22:08:55 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.15 2001-04-08 20:36:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -67,7 +67,7 @@ void Print_Curve(void *a, void *b){
     fprintf(FOUT,"CatmullRom (%d) = ",c->Num);
     break;
   default:
-    Msg(GERROR, "Unknown Curve Type %d", c->Typ);
+    Msg(GERROR, "Unknown Curve type %d", c->Typ);
     return;
   }
   
@@ -225,7 +225,7 @@ void Print_Geo(Mesh *M, char *filename){
   if(filename){
     FOUT = fopen(filename,"w");
     if(!FOUT){
-      Msg(WARNING, "Unable to Open File '%s'", filename);
+      Msg(WARNING, "Unable to open file '%s'", filename);
       return;
     }
   }
@@ -239,7 +239,7 @@ void Print_Geo(Mesh *M, char *filename){
   List_Action(M->PhysicalGroups,Print_PhysicalGroups);
 
   if(filename){
-    Msg(INFO, "Geo Output Complete '%s'", filename);
+    Msg(INFO, "Geo output complete '%s'", filename);
     Msg(STATUS2, "Wrote '%s'", filename);
     fclose(FOUT);
   }

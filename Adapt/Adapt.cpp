@@ -1,4 +1,4 @@
-// $Id: Adapt.cpp,v 1.5 2001-01-12 13:28:51 geuzaine Exp $
+// $Id: Adapt.cpp,v 1.6 2001-04-08 20:36:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Adapt.h"
@@ -184,7 +184,7 @@ double AdaptMesh (int N,        /* Number of elements */
     break;
 
   default :
-    Msg(GERROR, "Unknown Adaption Method");
+    Msg(GERROR, "Unknown adaption method");
   }
 
   return(contr) ;

@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.15 2001-01-12 13:29:00 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.16 2001-04-08 20:36:50 geuzaine Exp $
 
 /*
  
@@ -417,7 +417,7 @@ void NewSimplexes (Mesh * m, List_T * Sim, List_T * news){
       ZONEELIMINEE = S->iEnt;
     else {
       if (S->iEnt != ZONEELIMINEE){
-        Msg(WARNING, "Huh! The Elimination Failed %d %d",
+        Msg(WARNING, "Huh! The elimination failed %d %d",
             S->iEnt, ZONEELIMINEE);
       }
     }
@@ -457,7 +457,7 @@ int recur_bowyer (Simplex * s){
       }
       else{
         if (s->iEnt != s->S[i]->iEnt){
-	  //Msg(WARNING, "Point Scabreux %d", s->S[i]->Num);
+	  //Msg(WARNING, "Point scabreux %d", s->S[i]->Num);
           Alerte_Point_Scabreux = 1;
         }
         Tree_Insert (Sim_Sur_Le_Bord, &s->S[i]);
@@ -551,7 +551,7 @@ bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
     for (i = 0; i < List_Nbr (Simplexes_Destroyed); i++){
       List_Read (Simplexes_Destroyed, i, &s);
       if (!Tree_Suppress (m->Simplexes, &s))
-        Msg(GERROR, "Impossible to Delete Simplex");
+        Msg(GERROR, "Impossible to delete simplex");
       Free (s);
     }
     
@@ -578,7 +578,7 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
   N = List_Nbr (Points);
   n = IMAX (N / 20, 1);
 
-  Msg(STATUS2, "Mesh 3D... (Initial)");
+  Msg(STATUS2, "Mesh 3D... (initial)");
 
   Box_6_Tetraedron (Points, m);
   // List_Sort (Points, comparePosition);
@@ -606,7 +606,7 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
       Msg(STATUS1, "Vol=%g",volume); 
     }
     if (!THES){
-      Msg(WARNING, "Vertex (%g,%g,%g) in no Simplex",
+      Msg(WARNING, "Vertex (%g,%g,%g) in no simplex",
           THEV->Pos.X,THEV->Pos.Y,THEV->Pos.Z); 
       THEV->Pos.X += 10 * CTX.mesh.rand_factor * LC3D * (double)rand()/(double)RAND_MAX;
       THEV->Pos.Y += 10 * CTX.mesh.rand_factor * LC3D * (double)rand()/(double)RAND_MAX;
@@ -616,7 +616,7 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
     bool  ca_marche = Bowyer_Watson (m, THEV, THES, 1);
     int count = 0;
     while(!ca_marche){
-      //Msg(INFO, "Unable to Add Point %d (%g,%g,%g)",
+      //Msg(INFO, "Unable to add point %d (%g,%g,%g)",
       //	  THEV->Num, THEV->Pos.X,THEV->Pos.Y,THEV->Pos.Z );
       count ++;
       double dx = rand_sign() * 1000 * CTX.mesh.rand_factor * LC3D *
@@ -637,7 +637,7 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
       if(count > 5){
         N++;
         List_Add(POINTS,&THEV);
-        Msg(WARNING, "Unable to Add Point %d (Will do it Later)",
+        Msg(WARNING, "Unable to add point %d (will do it later)",
             THEV->Num);
         break;
       }
@@ -790,7 +790,7 @@ void Maillage_Volume (void *data, void *dum){
     Bgm_With_Points (THEM, LOCAL);
     POINTS_TREE = THEM->Simplexes;
     
-    Msg(STATUS2, "Mesh 3D... (Final)");
+    Msg(STATUS2, "Mesh 3D... (final)");
 
     Tree_Right (LOCAL->Simplexes, &simp);
     i = 0;
@@ -842,23 +842,23 @@ void Maillage_Volume (void *data, void *dum){
 
     if (CTX.mesh.quality){
       extern void SwapEdges3D (Mesh * M, Volume * v, double GammaPrescribed, bool order);
-      Msg(STATUS3, "Swapping Edges (1st pass)");
+      Msg(STATUS3, "Swapping edges (1st pass)");
       SwapEdges3D (THEM, v, CTX.mesh.quality, true);
-      Msg(STATUS3, "Swapping Edges (2nd pass)");
+      Msg(STATUS3, "Swapping edges (2nd pass)");
       SwapEdges3D (THEM, v, CTX.mesh.quality, false);
-      Msg(STATUS3, "Swapping Edges (last pass)");
+      Msg(STATUS3, "Swapping edges (last pass)");
       SwapEdges3D (THEM, v, CTX.mesh.quality, true);
     }
 
     if (CTX.mesh.nb_smoothing){
       /*
-      Msg(STATUS3, "Laplacian Smoothing");
+      Msg(STATUS3, "Laplacian smoothing");
       tnxe = Tree_Create (sizeof (NXE), compareNXE);
       create_NXE (v->Vertices, v->Simplexes, tnxe);
       for (int i = 0; i < CTX.mesh.nb_smoothing; i++)
         Tree_Action (tnxe, ActionLiss);
       Tree_Delete (tnxe);
-      Msg(STATUS3, "Swapping Edges (last pass)");
+      Msg(STATUS3, "Swapping edges (last pass)");
       SwapEdges3D (THEM, v, 0.5, true);
       */
     }

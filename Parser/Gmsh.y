@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.72 2001-03-26 14:15:05 geuzaine Exp $
+// $Id: Gmsh.y,v 1.73 2001-04-08 20:36:50 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -166,7 +166,7 @@ SignedDouble :
 STLFormatItem : 
     tSolid
     {
-      Msg(PARSER_INFO,"STL File Format");
+      Msg(PARSER_INFO,"STL file format");
       STL_Surf = Create_Surface(1,MSH_SURF_STL,1);
       STL_Surf->STL = new STL_Data;
       return 1;
@@ -187,7 +187,7 @@ STLFormatItem :
     }
   | tEndSolid
     {
-      Msg(PARSER_INFO,"STL File Format Read");
+      Msg(PARSER_INFO,"STL file format read");
       Tree_Add(THEM->Surfaces, &STL_Surf);
       return 1;
     }
@@ -211,12 +211,12 @@ StepFormatItem :
 StepSpecial :
     tISO tEND
     {
-      Msg(PARSER_INFO,"Step Iso-10303-21 File Format");
+      Msg(PARSER_INFO,"Step Iso-10303-21 file format");
       Create_Step_Solid_BRep();
     }
   | tENDISO tEND
     {
-      Msg(PARSER_INFO,"Step Iso-10303-21 File Format Read");
+      Msg(PARSER_INFO,"Step Iso-10303-21 file format read");
       Resolve_BREP ();
     }
   | tDATA tEND
@@ -268,7 +268,7 @@ StepDataItem  :
   | tDOUBLE tAFFECT tFACE_BOUND '(' tBIGSTR ',' tDOUBLE ','  BoolExpr  ')' tEND
     {
       /* La je dois voir la norme ! Face_Bound : trou externe a la surface ! */
-      Msg(PARSER_INFO,"Found a Face Bound");
+      Msg(PARSER_INFO,"Found a face bound");
       Add_Face_Outer_Bound((int)$1,$5,(int)$7,$9,0);
     }
   | tDOUBLE tAFFECT tORIENTED_EDGE '(' tBIGSTR ',' '*' ','  '*' ','  FExpr ',' 
@@ -311,7 +311,7 @@ StepDataItem  :
     }
   | tDOUBLE tAFFECT tCLOSED_SHELL '(' tBIGSTR ',' ListOfDouble ')' tEND
     {
-      Msg(PARSER_INFO,"Found a Closed shell");
+      Msg(PARSER_INFO,"Found a closed shell");
       Add_Closed_Shell((int)$1, $5 , $7);
     }
   | tDOUBLE tAFFECT tADVANCED_BREP_SHAPE_REPRESENTATION
@@ -377,7 +377,7 @@ GeomFormatList :
   }  
   | GeomFormatList GeomFormat
   {
-      Msg(PARSER_INFO,"Gmsh File Format Read");
+      Msg(PARSER_INFO,"Gmsh file format read");
     }
 ;
 
@@ -1479,7 +1479,7 @@ Command :
       }
       else if(!strcmp($1, "System")){
 	
-	Msg(PARSER_INFO, "Executing System Call \"%s\"", $2);
+	Msg(PARSER_INFO, "Executing system call \"%s\"", $2);
 	system($2);
 
       }

@@ -1,4 +1,4 @@
-// $Id: gl2gif.cpp,v 1.10 2001-02-09 14:51:31 geuzaine Exp $
+// $Id: gl2gif.cpp,v 1.11 2001-04-08 20:36:49 geuzaine Exp $
 
 /* 
  * gl2gif: an OpenGL to GIF printing library
@@ -1160,7 +1160,7 @@ void create_gif(FILE *outfile, int width, int height,
 
   if ( chv == (colorhist_vector) 0 ){
 
-    Msg(DEBUG, "GIF: Too many colors in image");
+    Msg(DEBUG, "GIF: too many colors in image");
     
     rows = height ;
     cols = width ;

@@ -1,4 +1,4 @@
-// $Id: 2D_Bowyer.cpp,v 1.6 2001-01-09 19:40:56 remacle Exp $
+// $Id: 2D_Bowyer.cpp,v 1.7 2001-04-08 20:36:49 geuzaine Exp $
 
 /*
 
@@ -88,7 +88,7 @@ int PE_Del_Triangle (Delaunay *del , MPoint pt, DListPeek *ListEdges ,
       rslt &= DListInsert(ListEdges,pt,b);
       rslt &= DListInsert(ListEdges,pt,c);
       if(!rslt)
-        Msg(GERROR, "List Insert Failed in Boyer Watson"); 
+        Msg(GERROR, "List insert failed in Boyer Watson"); 
       
     }
     else { 
@@ -148,21 +148,21 @@ int PE_Del_Triangle (Delaunay *del , MPoint pt, DListPeek *ListEdges ,
         else if (de1->v.voisin2 == del )de1->v.voisin2 = NULL;
       else if (de1->v.voisin3 == del )de1->v.voisin3 = NULL;
       else
-        Msg(GERROR, "Bad Link in Boyer Watson"); 
+        Msg(GERROR, "Bad link in Boyer Watson"); 
     }
     if(de2 != NULL){
       if (de2->v.voisin1 == del )de2->v.voisin1 = NULL;
       else if (de2->v.voisin2 == del )de2->v.voisin2 = NULL;
       else if (de2->v.voisin3 == del )de2->v.voisin3 = NULL;
       else
-        Msg(GERROR, "Bad Link in Boyer Watson"); 
+        Msg(GERROR, "Bad link in Boyer Watson"); 
     }      
     if(de3 != NULL){
       if (de3->v.voisin1 == del )de3->v.voisin1 = NULL;
       else if (de3->v.voisin2 == del )de3->v.voisin2 = NULL;
       else if (de3->v.voisin3 == del )de3->v.voisin3 = NULL;
       else
-        Msg(GERROR, "Bad Link in Boyer Watson");
+        Msg(GERROR, "Bad link in Boyer Watson");
     }      
     
     del->v.voisin1 = NULL ;

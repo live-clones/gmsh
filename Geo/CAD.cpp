@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.18 2001-04-07 07:20:22 geuzaine Exp $
+// $Id: CAD.cpp,v 1.19 2001-04-08 20:36:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -1534,7 +1534,7 @@ void CopyShape(int Type, int Num, int *New){
     *New = news->Num;
     break;
   default:
-    Msg(GERROR, "Impossible to Copy the Entity %d (of Type %d)", Num, Type);
+    Msg(GERROR, "Impossible to copy entity %d (of type %d)", Num, Type);
     break;
   }
 }
@@ -1610,7 +1610,7 @@ void DeleteShape(int Type, int Num){
     DeleteSurf(Num);
     break;
   default:
-    Msg(GERROR, "Impossible to Delete the Entity %d (of Type %d)", Num, Type);
+    Msg(GERROR, "Impossible to delete entity %d (of type %d)", Num, Type);
     break;
   }
 }

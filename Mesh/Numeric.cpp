@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.13 2001-01-08 08:05:46 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.14 2001-04-08 20:36:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -120,7 +120,7 @@ int sys3x3_with_tol (double mat[3][3], double b[3], double res[3], double *det){
   out = sys3x3(mat,b,res,det);
 
   if (fabs(*det) < 1.e-12){
-    Msg(DEBUG, "Assuming 3x3 Matrix is Singular (Is this OK?)");
+    Msg(DEBUG, "Assuming 3x3 matrix is singular (is this OK?)");
     res[0] = res[1] = res[2] = 0.0 ;
     return (0);
   }
@@ -238,9 +238,9 @@ void XYZtoUV (Surface *s, double X, double Y, double Z, double *U, double *V) {
     *V = Vnew;
   }
 
-  if(iter == MaxIter) Msg(WARNING, "Could not Converge in XYZtoUV");
+  if(iter == MaxIter) Msg(WARNING, "Could not converge in XYZtoUV");
 
-  if(iter > 10) Msg(WARNING, "Many (%d) Iterations in XYZtoUV", iter);
+  if(iter > 10) Msg(WARNING, "Many (%d) iterations in XYZtoUV", iter);
 
   free_dmatrix(mat,1,3,1,3);
   free_dmatrix(jac,1,3,1,3);

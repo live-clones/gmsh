@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.11 2001-01-12 13:29:00 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.12 2001-04-08 20:36:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -69,7 +69,7 @@ double F_Transfini (double t){
       break ;
 
     default:
-      Msg(WARNING, "Unknown Case in Transfinite Mesh Line");
+      Msg(WARNING, "Unknown case in Transfinite Line mesh");
       val = 1. ;
     }
   }

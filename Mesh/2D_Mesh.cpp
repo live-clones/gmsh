@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.19 2001-02-17 22:08:58 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.20 2001-04-08 20:36:49 geuzaine Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -146,7 +146,7 @@ void Plan_Moyen (void *data, void *dum){
     s->d = X;
     res[0] = 1.;
     res[1] = res[2] = 0.0;
-    Msg(DEBUG, "Mean Plane of Type 'x = c'");
+    Msg(DEBUG, "Mean plane of type 'x = c'");
   }
 
   /* y = Y */
@@ -155,7 +155,7 @@ void Plan_Moyen (void *data, void *dum){
     s->d = Y;
     res[1] = 1.;
     res[0] = res[2] = 0.0;
-    Msg(DEBUG, "Mean Plane of Type 'y = c'");
+    Msg(DEBUG, "Mean plane of type 'y = c'");
   }
 
   /* z = Z */
@@ -164,7 +164,7 @@ void Plan_Moyen (void *data, void *dum){
     s->d = Z;
     res[2] = 1.;
     res[1] = res[0] = 0.0;
-    Msg(DEBUG, "Mean Plane of Type 'y = c'");
+    Msg(DEBUG, "Mean plane of type 'y = c'");
   }
 
   /* by + cz = -x */
@@ -181,7 +181,7 @@ void Plan_Moyen (void *data, void *dum){
       res[0] = 1.;
       res[1] = r2[0];
       res[2] = r2[1];
-      Msg(DEBUG, "Mean Plane of Type 'by + cz = -x'");
+      Msg(DEBUG, "Mean plane of type 'by + cz = -x'");
     }
 
     /* ax + cz = -y */
@@ -198,7 +198,7 @@ void Plan_Moyen (void *data, void *dum){
         res[0] = r2[0];
         res[1] = 1.;
         res[2] = r2[1];
-        Msg(DEBUG, "Mean Plane of Type 'ax + cz = -y'");
+        Msg(DEBUG, "Mean plane of type 'ax + cz = -y'");
       }
       
       /* ax + by = -z */
@@ -215,10 +215,10 @@ void Plan_Moyen (void *data, void *dum){
           res[0] = r2[0];
           res[1] = r2[1];
           res[2] = 1.;
-          Msg(DEBUG, "Mean Plane of Type 'ax + by = -z'");
+          Msg(DEBUG, "Mean plane of type 'ax + by = -z'");
         }
         else{
-          Msg(GERROR, "Problem in Mean Plane");
+          Msg(GERROR, "Problem in mean plane computation");
         }
       }
     }
@@ -260,7 +260,7 @@ void Plan_Moyen (void *data, void *dum){
   for (i = 0; i < 3; i++)
     s->plan[2][i] = res[i];
 
-  Msg(DEBUG1, "Plan   : (%g x + %g y + %g z = %g)", s->a, s->b, s->c, s->d);
+  Msg(DEBUG1, "Plane  : (%g x + %g y + %g z = %g)", s->a, s->b, s->c, s->d);
   Msg(DEBUG2, "Normal : (%g , %g , %g )", res[0], res[1], res[2]);
   Msg(DEBUG2, "t1     : (%g , %g , %g )", t1[0], t1[1], t1[2]);
   Msg(DEBUG3, "t2     : (%g , %g , %g )", t2[0], t2[1], t2[2]);
@@ -466,7 +466,7 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
   mai->numpoints = 0;
 
   if (!numcontours){
-    Msg(GERROR, "No Contour");
+    Msg(GERROR, "No contour");
     return 0;
   }
 
@@ -530,7 +530,7 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
 
   if (doc->numTriangles == 1){
     doc->delaunay[0].t.position = INTERN;
-    Msg(INFO, "Only 1 triangle in initial mesh: skipping refinement");
+    Msg(INFO, "Only one triangle in initial mesh (skipping refinement)");
     onlyinit = 1;
   }
 
@@ -586,7 +586,7 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
     list = NULL;
 
     if (!PE_Del_Triangle (del, pt, &list, kill_L, del_L, &numlink, &numkil)){
-      Msg(WARNING, "Triangle Non Deleted");
+      Msg(WARNING, "Triangle non deleted");
       Delete_Triangle (root, del);
       Delete_Triangle (root_w, del);
       del->t.quality_value /= 10.;
@@ -645,7 +645,7 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
     }
     
     if ((volume_old - volume_new) / (volume_old + volume_new) > 1.e-6){
-      Msg(WARNING, "Volume has Changed (%g->%g)", volume_old, volume_new);
+      Msg(WARNING, "Volume has changed (%g->%g)", volume_old, volume_new);
       Delete_Triangle (root, del);
       Delete_Triangle (root_w, del);
       del->t.quality_value /= 10.;
@@ -922,7 +922,7 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
       }
       else{
         err = 1;
-        Msg(GERROR, "Unknown Vertex %d", ver[j]->Num);
+        Msg(GERROR, "Unknown vertex %d", ver[j]->Num);
       }
     }
     if (ori && !err)
@@ -1091,7 +1091,7 @@ void Maillage_Surface (void *data, void *dum){
     AlgorithmeMaillage2DAnisotropeModeJF (s);
 
   if(CTX.mesh.nb_smoothing){
-    Msg(STATUS3, "Mesh Smoothing");
+    Msg(STATUS3, "Mesh smoothing");
     tnxe = Tree_Create (sizeof (NXE), compareNXE);
     create_NXE (s->Vertices, s->Simplexes, tnxe);
     for (int i = 0; i < CTX.mesh.nb_smoothing; i++)

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.9 2001-04-08 12:49:31 geuzaine Exp $
+// $Id: Options.cpp,v 1.10 2001-04-08 20:36:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -107,7 +107,7 @@ void Print_Options(int num, int level, char *filename){
   if(filename){
     file = fopen(filename,"w");
     if(!file){
-      Msg(WARNING, "Unable to Open File '%s'", filename);
+      Msg(WARNING, "Unable to open file '%s'", filename);
       return;
     }
   }
@@ -169,7 +169,7 @@ void Print_Options(int num, int level, char *filename){
 
   if(filename){
     if((level & GMSH_OPTIONSRC) || (level & GMSH_FULLRC)){
-      Msg(INFO, "Options Output Complete '%s'", filename);
+      Msg(INFO, "Options output complete '%s'", filename);
       Msg(STATUS2, "Wrote '%s'", filename);
     }
     fclose(file);
@@ -683,11 +683,11 @@ double opt_general_double_buffer(OPT_ARGS_NUM){
 #ifdef _FLTK
     if(WID){
       if(CTX.db){
-	Msg(INFO, "Setting Opengl visual to double buffered");
+	Msg(INFO, "Setting OpenGL visual to double buffered");
 	WID->g_opengl_window->mode(FL_RGB | FL_DEPTH | FL_DOUBLE);
       }
       else{
-	Msg(INFO, "Setting Opengl visual to single buffered");
+	Msg(INFO, "Setting OpenGL visual to single buffered");
 	WID->g_opengl_window->mode(FL_RGB | FL_DEPTH | FL_SINGLE);
       }
     }

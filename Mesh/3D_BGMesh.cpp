@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.15 2001-01-12 13:29:00 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.16 2001-04-08 20:36:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -20,7 +20,7 @@ void ExportLcFieldOnVolume (Mesh * M){
   FILE *f = fopen ("OutFile.pos", "w");
 
   if(!f){
-    Msg(GERROR, "Unable to Open File");
+    Msg(GERROR, "Unable to open file");
     return;
   }
 
@@ -46,7 +46,7 @@ void ExportLcFieldOnSurfaces (Mesh * M){
   FILE *f = fopen ("OutFileS.pos", "w");
 
   if(!f){
-    Msg(GERROR, "Unable to Open File");
+    Msg(GERROR, "Unable to open file");
     return;
   }
 
@@ -225,7 +225,7 @@ int BGMWithView (Post_View * ErrView){
 
   Tree_Action (m.Simplexes, AIG);
 
-  Msg(INFO, "Background Mesh Loaded (%d Nodes, %d Elements)",
+  Msg(INFO, "Background mesh loaded (%d nodes, %d elements)",
       Tree_Nbr(m.Vertices), Tree_Nbr(m.Simplexes)); 
 
   return (1);
@@ -237,7 +237,7 @@ double ErrorInView (Post_View * ErrView, int *n){
   int i, j=0, nb;
 
   if(ErrView == NULL){
-    Msg(WARNING, "Empty Error View");
+    Msg(WARNING, "Empty error view");
     return 0.;
   }
 
@@ -342,7 +342,7 @@ int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
   f = fopen (OutFile, "w");
 
   if(!f){
-    Msg(GERROR, "Unable to Open File '%s'", OutFile);
+    Msg(GERROR, "Unable to open file '%s'", OutFile);
     return 0;
   }
 
@@ -385,7 +385,7 @@ int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
   fprintf (f, "};\n");
   fclose (f);
 
-  Msg(INFO, "Background Mesh Wriiten in '%s'", OutFile); 
+  Msg(INFO, "Background mesh written in '%s'", OutFile); 
 
   return 1;
 

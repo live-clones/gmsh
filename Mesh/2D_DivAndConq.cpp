@@ -1,4 +1,4 @@
-// $Id: 2D_DivAndConq.cpp,v 1.9 2001-01-09 19:40:56 remacle Exp $
+// $Id: 2D_DivAndConq.cpp,v 1.10 2001-04-08 20:36:49 geuzaine Exp $
 
 /*
 
@@ -162,7 +162,7 @@ int Qtest(PointNumero h,PointNumero i,PointNumero j,PointNumero k){
   double xc,yc,rcarre,distca;
   
   if ((h == i) && (h == j) && (h == k)){
-    Msg(GERROR, "3 Points Identical in Qtest"); 
+    Msg(GERROR, "3 identical points in Qtest"); 
     return(0);  /* returning 1 will cause looping for ever */
   }
   if (CircumCircle( (double) pPointArray[h].where.h,
@@ -342,7 +342,7 @@ int CircumCircle(double x1,double y1,double x2,double y2,double x3,double y3,
   
   d = 2. * (double)(y1*(x2-x3)+y2*(x3-x1)+y3*(x1-x2));
   if (d == 0.0){
-    Msg(WARNING, "Colinear Points in CircumCircle"); 
+    Msg(WARNING, "Colinear points in circum circle computation"); 
     *xc = *yc = -99999.;      
     return(0);
   }
@@ -354,7 +354,7 @@ int CircumCircle(double x1,double y1,double x2,double y2,double x3,double y3,
   *yc = (double) ((a1*(x2-x3) + a2*(x3-x1) + a3*(x1-x2)) / d);
   
   if(fabs(d) < 1.e-12 * DSQR(LC2D))
-    Msg(WARNING, "Points Almost Colinear in CircumCircle (d = %g)", d); 
+    Msg(WARNING, "Almost colinear points in circum circle computation (d = %g)", d); 
 
   return(1);
 }

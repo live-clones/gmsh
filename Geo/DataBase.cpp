@@ -1,4 +1,4 @@
-// $Id: DataBase.cpp,v 1.11 2001-04-08 12:49:31 geuzaine Exp $
+// $Id: DataBase.cpp,v 1.12 2001-04-08 20:36:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -122,7 +122,7 @@ void AddQuadricSurfaceInDataBase (int Typ, int NumQuadric, double zaxis[3],
   for(i=0;i<NbLoop;i++){
     List_Read(loops,i,&iLoop);
     if(!(el = FindEdgeLoop(iLoop,THEM))){
-      Msg(GERROR, "Unknown Loop %d", iLoop);
+      Msg(GERROR, "Unknown Line Loop %d", iLoop);
       List_Delete(s->s.Generatrices);
       Free(s);
       return;
@@ -290,7 +290,7 @@ void Cdbz101(int izon, int typzon,int o1, int o2, int nbu, int nbv,
     }
     List_Reset(templist);
 
-    int j = 0;
+    int j = 0, k = 0;
     c0 = c1 = *(Curve**)List_Pointer(curves, 0);
     List_Add(templist, &c1->Num);
     List_PSuppress(curves, 0);
@@ -303,7 +303,8 @@ void Cdbz101(int izon, int typzon,int o1, int o2, int nbu, int nbv,
 	  c1 = c2 ;
 	  if(c2->end == c0->beg){
 	    if(List_Nbr(curves)){
-	      Msg(INFO, "Starting new sub loop in Line Loop %d: are you sure about this?", izon);
+	      Msg(INFO, "Starting subloop %d in Line Loop %d (are you sure about this?)",
+		  ++k, izon);
 	      c0 = c1 = *(Curve**)List_Pointer(curves, 0);
 	      List_Add(templist, &c1->Num);
 	      List_PSuppress(curves, 0);

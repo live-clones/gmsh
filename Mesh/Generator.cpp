@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.11 2001-03-14 12:04:25 geuzaine Exp $
+// $Id: Generator.cpp,v 1.12 2001-04-08 20:36:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -25,7 +25,7 @@ void GetStatistics (double s[50]){
 void ApplyLcFactor_Point(void *a, void *b){
   Vertex *v = *(Vertex**)a;
   if(v->lc <= 0.0){
-    Msg(GERROR, "Wrong characteristic Length (%g <= 0) for Point %d (defaulting to 1.0)",
+    Msg(GERROR, "Wrong characteristic length (%g <= 0) for Point %d (defaulting to 1.0)",
         v->lc, v->Num);
     v->lc = 1.0 ;
   }
@@ -81,7 +81,7 @@ void Maillage_Dimension_2 (Mesh * M){
   }
   List_Delete (Curves);
 
-  Msg(DEBUG, "Shortest Curve has Length %g", shortest);
+  Msg(DEBUG, "Shortest curve has length %g", shortest);
 
   Tree_Action (M->Surfaces, Maillage_Surface);
 

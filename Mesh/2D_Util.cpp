@@ -1,4 +1,4 @@
-// $Id: 2D_Util.cpp,v 1.8 2001-01-09 19:40:56 remacle Exp $
+// $Id: 2D_Util.cpp,v 1.9 2001-04-08 20:36:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -231,7 +231,7 @@ MPoint Localize (Delaunay * del , DocRecord *MESH) {
           b = del->t.b;
         }
         else{
-          Msg(GERROR, "Voronoi Insert 1"); 
+          Msg(GERROR, "Voronoi insert 1"); 
         }
       }      
       else if(v2 != NULL) {     
@@ -248,7 +248,7 @@ MPoint Localize (Delaunay * del , DocRecord *MESH) {
           b = del->t.c;
         }
         else {
-          Msg(GERROR,"Voronoi Insert 2"); 
+          Msg(GERROR,"Voronoi insert 2"); 
         }
       }      
       else if(v3 != NULL) {     
@@ -265,7 +265,7 @@ MPoint Localize (Delaunay * del , DocRecord *MESH) {
           b = del->t.c;
         }
         else {
-          Msg(GERROR, "Voronoi Insert 3"); 
+          Msg(GERROR, "Voronoi insert 3"); 
         }
       }
     }    
@@ -290,7 +290,7 @@ MPoint Localize (Delaunay * del , DocRecord *MESH) {
         b = del->t.b;
       }
       else{
-        Msg(GERROR,"Voronoi Insert"); 
+        Msg(GERROR,"Voronoi insert"); 
       }
     }
 

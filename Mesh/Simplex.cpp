@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.10 2001-01-08 08:05:46 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.11 2001-04-08 20:36:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -49,7 +49,7 @@ int Simplex:: CircumCircle (double x1, double y1,
   d = 2. * (double) (y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
   if (d == 0.0){
     *xc = *yc = -99999.;
-    Msg(WARNING, "Deganarated Simplex");
+    Msg(WARNING, "Degenerated simplex");
     return 0;
   }
 
@@ -162,7 +162,7 @@ void Simplex::center_tet (double X[4], double Y[4], double Z[4], double res[3]){
   mat[2][2] = Z[3] - Z[2];
 
   if (!sys3x3 (mat, b, res, &dum)){
-    Msg(WARNING, "Coplanar Points in Circum Sphere"); 
+    Msg(WARNING, "Coplanar points in circum sphere computation"); 
     Msg(WARNING, "(%g,%g,%g) (%g,%g,%g) (%g,%g,%g) (%g,%g,%g)", 
 	X[0],Y[0],Z[0],  X[1],Y[1],Z[1], X[2],Y[2],Z[2], X[3],Y[3],Z[3] );
     res[0] = res[1] = res[2] = 10.0e10;

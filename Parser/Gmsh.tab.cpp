@@ -169,7 +169,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.82 2001-03-26 14:15:04 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.83 2001-04-08 20:36:50 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -2985,7 +2985,7 @@ case 6:
 case 7:
 #line 168 "Gmsh.y"
 {
-      Msg(PARSER_INFO,"STL File Format");
+      Msg(PARSER_INFO,"STL file format");
       STL_Surf = Create_Surface(1,MSH_SURF_STL,1);
       STL_Surf->STL = new STL_Data;
       return 1;
@@ -3003,7 +3003,7 @@ case 8:
 case 9:
 #line 189 "Gmsh.y"
 {
-      Msg(PARSER_INFO,"STL File Format Read");
+      Msg(PARSER_INFO,"STL file format read");
       Tree_Add(THEM->Surfaces, &STL_Surf);
       return 1;
     ;
@@ -3023,14 +3023,14 @@ case 14:
 case 15:
 #line 213 "Gmsh.y"
 {
-      Msg(PARSER_INFO,"Step Iso-10303-21 File Format");
+      Msg(PARSER_INFO,"Step Iso-10303-21 file format");
       Create_Step_Solid_BRep();
     ;
     break;}
 case 16:
 #line 218 "Gmsh.y"
 {
-      Msg(PARSER_INFO,"Step Iso-10303-21 File Format Read");
+      Msg(PARSER_INFO,"Step Iso-10303-21 file format read");
       Resolve_BREP ();
     ;
     break;}
@@ -3084,7 +3084,7 @@ case 28:
 #line 269 "Gmsh.y"
 {
       /* La je dois voir la norme ! Face_Bound : trou externe a la surface ! */
-      Msg(PARSER_INFO,"Found a Face Bound");
+      Msg(PARSER_INFO,"Found a face bound");
       Add_Face_Outer_Bound((int)yyvsp[-10].d,yyvsp[-6].c,(int)yyvsp[-4].d,yyvsp[-2].i,0);
     ;
     break;}
@@ -3144,7 +3144,7 @@ case 37:
 case 38:
 #line 313 "Gmsh.y"
 {
-      Msg(PARSER_INFO,"Found a Closed shell");
+      Msg(PARSER_INFO,"Found a closed shell");
       Add_Closed_Shell((int)yyvsp[-8].d, yyvsp[-4].c , yyvsp[-2].l);
     ;
     break;}
@@ -3231,7 +3231,7 @@ case 53:
 case 54:
 #line 379 "Gmsh.y"
 {
-      Msg(PARSER_INFO,"Gmsh File Format Read");
+      Msg(PARSER_INFO,"Gmsh file format read");
     ;
     break;}
 case 55:
@@ -4396,7 +4396,7 @@ case 196:
       }
       else if(!strcmp(yyvsp[-2].c, "System")){
 	
-	Msg(PARSER_INFO, "Executing System Call \"%s\"", yyvsp[-1].c);
+	Msg(PARSER_INFO, "Executing system call \"%s\"", yyvsp[-1].c);
 	system(yyvsp[-1].c);
 
       }

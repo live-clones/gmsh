@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.2 2001-02-20 18:32:58 geuzaine Exp $
+// $Id: Main.cpp,v 1.3 2001-04-08 20:36:49 geuzaine Exp $
 
 #include <signal.h>
 
@@ -103,10 +103,10 @@ int main(int argc, char *argv[]){
 void Signal (int sig_num){
 
   switch (sig_num){
-  case SIGSEGV : Msg(FATAL, "Segmentation Violation (Invalid Memory Reference)"); break;
-  case SIGFPE  : Msg(FATAL, "Floating Point Exception (Division by Zero?)"); break;
-  case SIGINT  : Msg(FATAL, "Interrupt (Generated from Terminal Special Char)"); break;
-  default      : Msg(FATAL, "Unknown Signal"); break;
+  case SIGSEGV : Msg(FATAL, "Segmentation violation (invalid memory reference)"); break;
+  case SIGFPE  : Msg(FATAL, "Floating point exception (division by zero?)"); break;
+  case SIGINT  : Msg(FATAL, "Interrupt (generated from terminal special char)"); break;
+  default      : Msg(FATAL, "Unknown signal"); break;
   }
 }
 

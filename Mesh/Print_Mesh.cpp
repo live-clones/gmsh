@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.17 2001-02-26 10:46:53 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.18 2001-04-08 20:36:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -135,7 +135,7 @@ void add_msh_simplex (void *a, void *b){
         (*S)->V[0] = (*S)->V[1];
         (*S)->V[1] = temp;
 	//        if ((*S)->Volume_Simplexe () < 0)
-          Msg(WARNING, "Negative Volume for Simplex %d", (*S)->Num);
+          Msg(WARNING, "Negative volume for simplex %d", (*S)->Num);
       }
     }
 #endif
@@ -304,7 +304,7 @@ void add_msh_elements (Mesh * M){
       break;
       
     default :
-      Msg(GERROR, "Unknown Type of Physical Group");
+      Msg(GERROR, "Unknown type of Physical group");
       break;
     }
 
@@ -320,7 +320,7 @@ void process_msh_elements (Mesh * M){
   fprintf (mshfile, "%d\n", MSH_ELEMENT_NUM - 1);
 
   if (MSH_ELEMENT_NUM == 1)
-    Msg (WARNING, "No Elements (Did You Forget to Define Physical Entities?)");
+    Msg (WARNING, "No elements (did You forget to define Physical entities?)");
 
   MSH_ADD = 1;
   MSH_ELEMENT_NUM = 1;
@@ -574,7 +574,7 @@ int process_3D_elements (FILE * funv, Mesh * m){
         sx->V[0] = sx->V[1];
         sx->V[1] = temp;
         if (sx->Volume_Simplexe () < 0)
-          Msg(WARNING, "Negative Volume for Simplex %d", sx->Num);
+          Msg(WARNING, "Negative volume for simplex %d", sx->Num);
       }
       geo = v->Num;
       fprintf (funv, "%10d%10d%10d%10d%10d%10d\n",
@@ -1060,13 +1060,13 @@ void Print_Mesh (Mesh * M, char *c, int Type){
     c ? strcpy (name, c) : strcat (name, ".msh");
     mshfile = fopen (name, "w");
     if (!mshfile){
-      Msg(WARNING, "Unable to Open File '%s'", name);
+      Msg(WARNING, "Unable to open file '%s'", name);
       return;
     }
-    Msg(INFO, "Writing File '%s'", name);
+    Msg(INFO, "Writing file '%s'", name);
     process_msh_nodes (M);
     process_msh_elements (M);
-    Msg(INFO, "Msh Ouput Complete '%s' (%d Nodes, %d Elements)",
+    Msg(INFO, "Msh ouput complete '%s' (%d Nodes, %d Elements)",
          name, MSH_NODE_NUM, MSH_ELEMENT_NUM - 1);
     Msg(STATUS2, "Wrote '%s'", name);
     fclose (mshfile);
@@ -1075,10 +1075,10 @@ void Print_Mesh (Mesh * M, char *c, int Type){
     c ? strcpy (name, c) : strcat (name, ".unv");
     unvfile = fopen (name, "w");
     if (!unvfile){
-      Msg(WARNING, "Unable to Open File '%s'", name);
+      Msg(WARNING, "Unable to open file '%s'", name);
       return;
     }
-    Msg(INFO, "Writing File '%s'", name);
+    Msg(INFO, "Writing file '%s'", name);
     process_nodes (unvfile, M);
     fprintf (unvfile, "%6d\n", -1);
     fprintf (unvfile, "%6d\n", ELEMENTS);
@@ -1089,7 +1089,7 @@ void Print_Mesh (Mesh * M, char *c, int Type){
     fprintf (unvfile, "%6d\n", -1);
     PrintGroups (M);
     fclose (unvfile);
-    Msg(INFO, "Unv Ouput Complete '%s'", name);
+    Msg(INFO, "Unv ouput complete '%s'", name);
     Msg(STATUS2, "Wrote '%s'", name);
   }
   else if (Type == FORMAT_GREF){
@@ -1098,10 +1098,10 @@ void Print_Mesh (Mesh * M, char *c, int Type){
     Tree_T *TRE = Tree_Create (sizeof (Vertex *), compareFrozen);
     Greffile = fopen (name, "w");
     if (!Greffile){
-      Msg(WARNING, "Unable to Open File '%s'", name);
+      Msg(WARNING, "Unable to open file '%s'", name);
       return;
     }
-    Msg(INFO, "Writing File '%s'", name);
+    Msg(INFO, "Writing file '%s'", name);
     process_Gref_nodes (Greffile, M, TRN, TRE);
     process_Gref_elements (Greffile, M, Tree_Nbr (TRN));
     process_Gref_poundarybonditions (Greffile, M, TRN, TRE);
@@ -1109,7 +1109,7 @@ void Print_Mesh (Mesh * M, char *c, int Type){
     Tree_Delete (TRN);
     Tree_Delete (TRE);
     EndConsecutiveNodes (M);
-    Msg(INFO, "Gref Ouput Complete '%s'", name);
+    Msg(INFO, "Gref ouput complete '%s'", name);
     Msg(STATUS2, "Wrote '%s'", name);
   }
 }

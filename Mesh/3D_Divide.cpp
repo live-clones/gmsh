@@ -1,4 +1,4 @@
-// $Id: 3D_Divide.cpp,v 1.10 2001-01-12 13:29:00 geuzaine Exp $
+// $Id: 3D_Divide.cpp,v 1.11 2001-04-08 20:36:50 geuzaine Exp $
 
 /* Routine de division des elements tetraedriques
    ou triangulaires
@@ -57,7 +57,7 @@ void Remise_A_Zero (void){
 void Impression_Resultats (void){
 
   Msg(INFO1, "===================================================");
-  Msg(INFO2, "Surface Coherence Results (Number of Intersections)");
+  Msg(INFO2, "Surface coherence results (number of intersections)");
   Msg(INFO2, "%d EV, %d EE, %d FV, %d FF, %d FE, %d EEE, %d EEEE",
       EV, EE, FV, FF, FE, EEE, EEEE);
   Msg(INFO3, "===================================================");
@@ -73,7 +73,7 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
   Simplex *news;
   Vertex *e1;
 
-  Msg(INFO, "Prism Cut");
+  Msg(INFO, "Prism cut");
 
   /* test des meilleures aretes a creer */
   /*
@@ -213,7 +213,7 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
   else if (are_exists (v6, v1) &&
            are_exists (v5, v3) &&
            are_exists (v4, v2)) {
-    Msg(INFO, "Found Steiner Prism 1!");
+    Msg(INFO, "Found steiner prism 1!");
     
     e1 = Create_Vertex 
       (++CurrentNodeNumber,
@@ -246,7 +246,7 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
   else if (are_exists (v4, v3) &&
            are_exists (v6, v2) &&
            are_exists (v5, v1)){
-    Msg(INFO, "Found Steiner Prism 2!");
+    Msg(INFO, "Found steiner prism 2!");
 
     e1 = Create_Vertex 
       (++CurrentNodeNumber,
@@ -277,7 +277,7 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
     
   }
   else{
-    Msg(GERROR, "Uncoherent Prism");
+    Msg(GERROR, "Uncoherent prism");
   }
 }
 
@@ -455,7 +455,7 @@ void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
       v7 = pI->s->V[3];
     }
     else{
-      Msg(GERROR, "Three Edges Cut Without Common Point!");
+      Msg(GERROR, "Three edges cut without common point!");
       return;
     }
     
@@ -720,14 +720,14 @@ void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
       v8 = pI->VE[3];
     }
     else{
-      Msg(GERROR, "Incoherent 4 Edges Intersection");
+      Msg(GERROR, "Incoherent 4 edges intersection");
       return;
     }
     cut_prism (v8, v4, v6, v7, v3, v5, newpoints, AddedTet);
     cut_prism (v2, v8, v7, v1, v6, v5, newpoints, AddedTet);
   }
   else{
-    Msg(GERROR, "Error On Cut %d %d %d", pI->NbVertex, pI->NbEdge, pI->NbFace);
+    Msg(GERROR, "Error on cut %d %d %d", pI->NbVertex, pI->NbEdge, pI->NbFace);
   }
 }
 

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.59 2001-03-18 10:40:54 geuzaine Exp $
+// $Id: GUI.cpp,v 1.60 2001-04-08 20:36:49 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -683,7 +683,7 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
   else if(menu[0].label[0] == '1') m_module_butt->value(1);
   else if(menu[0].label[0] == '2') m_module_butt->value(2);
   else {
-    Msg(WARNING, "Something Wrong in your Dynamic Context Definition");
+    Msg(WARNING, "Something is wrong in your dynamic context definition");
     return;
   }
   
@@ -755,7 +755,7 @@ void GUI::create_graphic_window(int argc, char **argv){
     
     g_opengl_window = new Opengl_Window(0,0,width,glheight);
     if(!opt_general_double_buffer(0,GMSH_GET,0)){
-      Msg(INFO, "Setting Opengl visual to single buffered");
+      Msg(INFO, "Setting OpenGL visual to single buffered");
       g_opengl_window->mode(FL_RGB | FL_DEPTH | FL_SINGLE);
     }
     g_opengl_window->end();
@@ -1666,7 +1666,7 @@ void GUI::save_message(char *filename){
   FILE *fp;
 
   if(!(fp = fopen(filename,"w"))) {
-    Msg(WARNING, "Unable to Open File '%s'", filename); 
+    Msg(WARNING, "Unable to open file '%s'", filename); 
     return;
   }
   for(int i = 1 ; i<=msg_browser->size() ; i++){
@@ -1675,7 +1675,7 @@ void GUI::save_message(char *filename){
     else fprintf(fp, "%s\n", c);
   }
 
-  Msg(INFO, "Log Creation Complete '%s'", filename);
+  Msg(INFO, "Log creation complete '%s'", filename);
   Msg(STATUS2, "Wrote '%s'", filename);
   fclose(fp);
 }

@@ -1,4 +1,4 @@
-// $Id: Malloc.cpp,v 1.6 2001-01-08 08:05:40 geuzaine Exp $
+// $Id: Malloc.cpp,v 1.7 2001-04-08 20:36:49 geuzaine Exp $
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
@@ -13,7 +13,7 @@ void *Malloc(size_t size)
   if (!size) return(NULL);
   ptr = malloc(size);
   if (ptr == NULL)
-    Msg(FATAL, "Out of Memory in Malloc");
+    Msg(FATAL, "Out of memory (buy some more RAM!)");
   return(ptr);
 }
 
@@ -24,7 +24,7 @@ void *Calloc(size_t num, size_t size)
   if (!size) return(NULL);
   ptr = calloc(num, size);
   if (ptr == NULL)
-    Msg(FATAL, "Out of Memory in Calloc");
+    Msg(FATAL, "Out of memory (buy some more RAM!)");
   return(ptr);
 }
 
@@ -33,7 +33,7 @@ void *Realloc(void *ptr, size_t size)
   if (!size) return(NULL);
   ptr = realloc(ptr,size);
   if (ptr == NULL)
-    Msg(FATAL, "Out of Memory in Realloc");
+    Msg(FATAL, "Out of memory (buy some more RAM!)");
   return(ptr);
 }
 

@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.9 2001-02-23 00:07:51 remacle Exp $
+// $Id: Read_Mesh.cpp,v 1.10 2001-04-08 20:36:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -133,7 +133,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	    for(i=0 ; i<Nbr_Nodes ; i++) {
 	      vertsp[i] = &verts[i];
 	      if(!(vertspp = (Vertex**)Tree_PQuery(M->Vertices, &vertsp[i])))
-		Msg(GERROR, "Unknown Vertex %d in Element %d", verts[i].Num, Num);
+		Msg(GERROR, "Unknown vertex %d in element %d", verts[i].Num, Num);
 	      else
 		vertsp[i] = *vertspp;
 	    }
@@ -184,7 +184,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	    case PNT:
 	      break;
 	    default :
-	      Msg(WARNING, "Unknown Type of Element in Read_Mesh");
+	      Msg(WARNING, "Unknown type of element in Read_Mesh");
 	      break;
 	    }
 	  }
@@ -194,7 +194,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 
     do {
       fgets(String, 256, File_GEO) ;
-      if (feof(File_GEO)) Msg(GERROR, "Prematured End of Mesh File");
+      if (feof(File_GEO)) Msg(GERROR, "Prematured end of mesh file");
     } while (String[0] != '$') ;
     
   }   
@@ -224,7 +224,7 @@ void Read_Mesh (Mesh *M, FILE *File_GEO, int type){
   switch(type){
   case FORMAT_MSH : Read_Mesh_MSH(M,File_GEO); break;
   case FORMAT_SMS : Read_Mesh_SMS(M,File_GEO); break;
-  default : Msg(WARNING, "Unkown Mesh File Format to Read"); break;
+  default : Msg(WARNING, "Unkown mesh file format to read"); break;
   }
 
 }

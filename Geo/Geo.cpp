@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.18 2001-02-17 22:08:55 geuzaine Exp $
+// $Id: Geo.cpp,v 1.19 2001-04-08 20:36:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -37,7 +37,7 @@ double evaluate_scalarfunction (char *var, double val, char *funct){
   tempf = yyin;
   
   if(!(yyin = fopen(CTX.tmp_filename,"w"))){
-    Msg(GERROR, "Unable to Open Temporary File");
+    Msg(GERROR, "Unable to open temporary file '%s'", CTX.tmp_filename);
     return 0.;
   }
 
@@ -67,11 +67,11 @@ void add_infile(char *text, char *fich){
   FILE *file;
 
   if(!(yyin = fopen(CTX.tmp_filename,"w"))){
-    Msg(GERROR, "Unable to Open Temporary File");
+    Msg(GERROR, "Unable to open temporary file '%s'", CTX.tmp_filename);
     return;
   }
   if(!(file = fopen(fich,"a"))){
-    Msg(GERROR, "Unable to Open File '%s'", fich);
+    Msg(GERROR, "Unable to open file '%s'", fich);
     return;
   }
   fprintf(yyin,"%s\n",text);

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.21 2001-04-06 12:29:32 geuzaine Exp $
+// $Id: Main.cpp,v 1.22 2001-04-08 20:36:49 geuzaine Exp $
 
 #include <signal.h>
 
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]){
         if(List_Nbr(Post_ViewList))
           BGMWithView((Post_View*)List_Pointer(Post_ViewList, List_Nbr(Post_ViewList)-1));
         else
-          Msg(GERROR, "Invalid Background Mesh (no View)");
+          Msg(GERROR, "Invalid background mesh (no view)");
       }
       if(CTX.batch > 0){
         mai3d(THEM, CTX.batch);
@@ -150,7 +150,7 @@ int main(int argc, char *argv[]){
     if(List_Nbr(Post_ViewList))
       BGMWithView((Post_View*)List_Pointer(Post_ViewList, List_Nbr(Post_ViewList)-1));
     else
-      Msg(GERROR, "Invalid Background Mesh (no View)");
+      Msg(GERROR, "Invalid background mesh (no view)");
   }
 
   // Draw the actual scene
