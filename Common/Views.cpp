@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.99 2003-11-08 05:59:35 geuzaine Exp $
+// $Id: Views.cpp,v 1.100 2003-11-12 21:42:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,11 @@
 #include "ColorTable.h"
 
 extern Context_T CTX;
+
+#if defined(HAVE_FLTK)
+extern int AddViewInUI(int, char *, int);
+extern int RemoveViewInUI(int);
+#endif
 
 #define VAL_INF 1.e200
 
@@ -350,7 +355,6 @@ void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
     v->smooth();
 
 #if defined(HAVE_FLTK)
-  extern int AddViewInUI(int, char *, int);
   if(!CTX.post.force_num && add_in_gui)
     AddViewInUI(List_Nbr(CTX.post.list), v->Name, v->Num);
 #endif
@@ -444,7 +448,6 @@ void DuplicateView(Post_View * v1, int withoptions)
     CopyViewOptions(v1, v2);
 
 #if defined(HAVE_FLTK)
-  extern int AddViewInUI(int, char *, int);
   AddViewInUI(List_Nbr(CTX.post.list), v2->Name, v2->Num);
 #endif
 }
@@ -461,6 +464,10 @@ bool FreeView(int num)
   v = (Post_View *) List_Pointer(CTX.post.list, num);
   FreeView(v);
   List_PSuppress(CTX.post.list, num);
+
+#if defined(HAVE_FLTK)
+  RemoveViewInUI(num);
+#endif
 
   Msg(INFO, "View %d deleted (%d views left)", num, List_Nbr(CTX.post.list));
   return true;

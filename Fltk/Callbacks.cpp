@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.184 2003-10-29 19:51:43 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.185 2003-11-12 21:42:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -145,6 +145,19 @@ int AddViewInUI(int i, char *Name, int Num)
   if(i > NB_BUTT_MAX - 1)
     return 1;
   if(WID) {
+    if(WID->get_context() == 3)
+      WID->set_context(menu_post, 0);
+    WID->reset_option_browser();
+  }
+  return 0;
+}
+
+int RemoveViewInUI(int i)
+{
+  if(i > NB_BUTT_MAX - 1)
+    return 1;
+  if(WID) {
+    WID->check_anim_buttons();
     if(WID->get_context() == 3)
       WID->set_context(menu_post, 0);
     WID->reset_option_browser();
@@ -2765,13 +2778,6 @@ void view_remove_invisible_cb(CALLBACK_ARGS)
 void view_remove_cb(CALLBACK_ARGS)
 {
   FreeView((long int)data);
-
-  WID->check_anim_buttons();
-
-  if(WID->get_context() == 3)
-    WID->set_context(menu_post, 0);
-
-  WID->reset_option_browser();
 
   if(!REMOVE_ALL_VIEWS)
     Draw();
