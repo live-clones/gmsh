@@ -1,4 +1,4 @@
-// $Id: Edge.cpp,v 1.13 2004-02-07 01:40:22 geuzaine Exp $
+// $Id: Edge.cpp,v 1.14 2004-04-18 03:20:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -143,6 +143,10 @@ EdgesContainer::EdgesContainer(List_T * Surfaces)
   }
 }
 
+EdgesContainer::EdgesContainer()
+{
+  AllEdges = Tree_Create(sizeof(Edge), compareedge);
+}
 
 void EdgesContainer::AddTree(Tree_T * Simplexes, bool EdgesInVolume)
 {

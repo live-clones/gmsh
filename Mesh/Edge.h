@@ -57,6 +57,7 @@ class EdgesContainer
     Tree_T * AllEdges;
     EdgesContainer (Tree_T *Simplexes, bool i = false);
     EdgesContainer (List_T *Surfaces);
+    EdgesContainer ();
     ~EdgesContainer();
     void AddTree (Tree_T *Simplexes, bool EdgesInVolume);
     void AddEdges(Simplex *s, bool i);
