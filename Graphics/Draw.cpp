@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.67 2004-12-27 16:13:45 geuzaine Exp $
+// $Id: Draw.cpp,v 1.68 2004-12-29 22:03:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -47,6 +47,12 @@ void Draw3d(void)
   glPopMatrix();
 }
 
+double GetClip(){
+  double maxz = MAX(fabs(CTX.min[2]), fabs(CTX.max[2]));
+  if(maxz < CTX.lc) maxz = CTX.lc;
+  return maxz * CTX.s[2] * CTX.clip_factor;
+}
+
 void Draw2d(void)
 {
   glDisable(GL_DEPTH_TEST);
@@ -55,12 +61,19 @@ void Draw2d(void)
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  // to draw directly in screen coords
+  // draw directly in screen coords. The special near and far clipping
+  // planes and the translation are there for GL2PS: without this,
+  // GL2PS has no way to know that the 2D primitives should be drawn
+  // "in front" of the scene. It's a hack, but it's the only way if we
+  // don't want special GL2PS commands to tell that some special
+  // primitives should be sorted in a non-standard way.
+  double clip = GetClip();
   glOrtho((double)CTX.viewport[0], (double)CTX.viewport[2],
-          (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
+          (double)CTX.viewport[1], (double)CTX.viewport[3], -clip, clip);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-
+  // make sure that all the 2D stuff gets printed in front
+  glTranslated(0.0, 0.0, 0.9*clip);
   glPushMatrix();
   Draw_Graph2D();
   Draw_Text2D();
@@ -143,9 +156,7 @@ void Orthogonalize(int x, int y)
   // Mesa on Linux; with hardware acceleration or on Windows
   // everyhting seems to be fine).
   if(CTX.ortho) {
-    double maxz = MAX(fabs(CTX.min[2]), fabs(CTX.max[2]));
-    if(maxz < CTX.lc) maxz = CTX.lc;
-    double clip = maxz * CTX.s[2] * CTX.clip_factor;
+    double clip = GetClip();
     glOrtho(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, -clip, clip);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
