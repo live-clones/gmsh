@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.341 2005-03-11 08:56:37 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.342 2005-03-11 09:14:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -145,6 +145,7 @@ void window_cb(CALLBACK_ARGS)
     if(WID->opt_window->shown()) WID->opt_window->iconize();
     if(WID->vis_window->shown()) WID->vis_window->iconize();
     if(WID->clip_window->shown()) WID->clip_window->iconize();
+    if(WID->manip_window->shown()) WID->manip_window->iconize();
     if(WID->stat_window->shown()) WID->stat_window->iconize();
     if(WID->msg_window->shown()) WID->msg_window->iconize();
     WID->m_window->iconize();
@@ -170,6 +171,7 @@ void window_cb(CALLBACK_ARGS)
     if(WID->opt_window->shown()) WID->opt_window->show();
     if(WID->vis_window->shown()) WID->vis_window->show();
     if(WID->clip_window->shown()) WID->clip_window->show();
+    if(WID->manip_window->shown()) WID->manip_window->show();
     if(WID->stat_window->shown()) WID->stat_window->show();
     if(WID->msg_window->shown()) WID->msg_window->show();
     WID->m_window->show();
