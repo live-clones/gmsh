@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.35 2001-01-11 14:19:48 geuzaine Exp $
+# $Id: Makefile,v 1.36 2001-01-11 14:26:18 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -111,6 +111,10 @@ gmsh2:
 gmsh3:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
                  $(FLTK_LIB) -lm
+
+gmshwin:
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) \
+                 -L$(HOME)/SOURCES/fltk/lib -lfltk -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 
 gmsh4:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
