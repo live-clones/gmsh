@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.31 2003-10-30 02:00:01 geuzaine Exp $
+$Id: FAQ,v 1.32 2003-11-04 20:13:12 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -45,8 +45,8 @@ Section 2: Installation
 
 Gmsh is known to run on Windows 95/98/NT/2000/XP, Linux, Mac OS X,
 Compaq Tru64 Unix (aka OSF1, aka Digital Unix), Sun OS, IBM AIX, SGI
-IRIX and HP-UX. It should compile on any Unix-like operating system,
-provided that you have access to a recent C and C++ compiler.
+IRIX, FreeBSD and HP-UX. It should compile on any Unix-like operating
+system, provided that you have access to a recent C and C++ compiler.
 
 * 2.2 Are there additional requirements to run Gmsh?
 
