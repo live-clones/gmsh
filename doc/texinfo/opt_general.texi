@@ -29,10 +29,10 @@ System command to launch a text editor (OS-dependent)@*
 Default value: @code{"emacs %s &"}@*
 Saved in: @code{General.OptionsFileName}
 
-@item General.Theme
-FLTK graphical user interface theme (try e.g. plastic)@*
+@item General.Scheme
+FLTK graphical user interface scheme (try e.g. plastic)@*
 Default value: @code{""}@*
-Saved in: @code{General.OptionsFileName}
+Saved in: @code{General.SessionFileName}
 
 @item General.TmpFileName
 Temporary file used by the geometry module@*
@@ -43,6 +43,11 @@ Saved in: @code{General.SessionFileName}
 Enable alpha blending (transparency) in post-processing views@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
+
+@item General.AppleMenuBar
+Use Apple-style menu bar?@*
+Default value: @code{0}@*
+Saved in: @code{General.SessionFileName}
 
 @item General.Axes
 Display the axes linked to the model@*
