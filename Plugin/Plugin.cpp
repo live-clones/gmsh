@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.33 2003-01-25 01:31:29 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.34 2003-01-25 01:32:58 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -118,8 +118,6 @@ GMSH_PluginManager* GMSH_PluginManager::Instance(){
 }
 
 void GMSH_PluginManager::RegisterDefaultPlugins(){
-  struct dirent **list;
-
   allPlugins.insert(std::pair<char*,GMSH_Plugin*>("CutMap",
 						  GMSH_RegisterCutMapPlugin()));
   allPlugins.insert(std::pair<char*,GMSH_Plugin*>("CutPlane",
@@ -138,6 +136,7 @@ void GMSH_PluginManager::RegisterDefaultPlugins(){
 						  GMSH_RegisterSphericalRaisePlugin()));
 
 #ifdef _FLTK
+  struct dirent **list;
   char ext[6];
   char *homeplugins = getenv ("GMSHPLUGINSHOME");
   if(!homeplugins) return;
