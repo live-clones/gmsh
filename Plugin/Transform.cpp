@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.17 2003-11-14 21:20:55 geuzaine Exp $
+// $Id: Transform.cpp,v 1.18 2003-11-14 21:28:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -65,8 +65,8 @@ void GMSH_TransformPlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(Transforms) transforms the coordinates\n"
-	 "of the nodes of the view 'iView' by the matrix\n"
+         "Plugin(Transform) transforms the coordinates of\n"
+	 "the nodes of the view 'iView' by the matrix\n"
          "['A11' 'A12' 'A13']\n"
 	 "['A21' 'A22' 'A23']\n"
 	 "['A31' 'A32' 'A33'].\n"
