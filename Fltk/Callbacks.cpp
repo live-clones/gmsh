@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.124 2002-05-18 07:56:47 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.125 2002-05-18 23:07:42 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -792,80 +792,91 @@ void opt_visibility_number_cb(CALLBACK_ARGS){
 
 // Help Menu
 
+#ifdef __APPLE__
+#define XX "Cmd "
+#else
+#define XX "Ctrl"
+#endif
+
 void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "");
   Msg(DIRECT, "Mouse:");
   Msg(DIRECT, "");
-  Msg(DIRECT, "  move          - highlight the elementary geometrical entity");
-  Msg(DIRECT, "                  currently under the mouse pointer and display");
-  Msg(DIRECT, "                  its properties in the status bar");
-  Msg(DIRECT, "                - size a rubber zoom started with Ctrl+mouse1");
-  Msg(DIRECT, "  mouse1        - rotate");
-  Msg(DIRECT, "                - accept a rubber zoom started with Ctrl+mouse1"); 
-  Msg(DIRECT, "  Ctrl+mouse1   start (anisotropic) rubber zoom"); 
-  Msg(DIRECT, "  Shift+mouse1  - zoom (isotropic)");
-  Msg(DIRECT, "                - cancel a rubber zoom");
-  Msg(DIRECT, "  mouse2        same as Shift+mouse1");
-  Msg(DIRECT, "  Ctrl+mouse2   orthogonalize display"); 
-  Msg(DIRECT, "  mouse3        - pan");
-  Msg(DIRECT, "                - cancel a rubber zoom");
-  Msg(DIRECT, "                - pop up menu on post-processing view button");
-  Msg(DIRECT, "  Ctrl+mouse3   reset to default viewpoint");   
+  Msg(DIRECT, "  move            - highlight the elementary geometrical entity");
+  Msg(DIRECT, "                    currently under the mouse pointer and display");
+  Msg(DIRECT, "                    its properties in the status bar");
+  Msg(DIRECT, "                  - size a rubber zoom started with "XX"+mouse1");
+  Msg(DIRECT, "  LeftButt        - rotate");
+  Msg(DIRECT, "                  - accept a rubber zoom started with "XX"+mouse1"); 
+  Msg(DIRECT, "  "XX"+LeftButt   start (anisotropic) rubber zoom"); 
+  Msg(DIRECT, "  MiddleButt      - zoom (isotropic)");
+  Msg(DIRECT, "                  - cancel a rubber zoom");
+  Msg(DIRECT, "  "XX"+MiddleButt orthogonalize display"); 
+  Msg(DIRECT, "  RightButt       - pan");
+  Msg(DIRECT, "                  - cancel a rubber zoom");
+  Msg(DIRECT, "                  - pop up menu on post-processing view button");
+  Msg(DIRECT, "  "XX"+RightButt  reset to default viewpoint");   
+  Msg(DIRECT, "");   
+  Msg(DIRECT, "  For a 2 button mouse, MiddleButt = Shift+LeftButt");
+  Msg(DIRECT, "  For a 1 button mouse, MiddleButt = Shift+LeftButt, RightButt = Alt+LeftButt");
   Msg(DIRECT, "");
   Msg(DIRECT, "Menu bar shortcuts:");
   Msg(DIRECT, "");
-  Msg(DIRECT, "  b             go back to previous context");
-  Msg(DIRECT, "  Ctrl+e        save file by extension");
-  Msg(DIRECT, "  f             go forward to next context");
-  Msg(DIRECT, "  g             go to geometry module");
-  Msg(DIRECT, "  Shift+g       show geometry options");
-  Msg(DIRECT, "  Shift+i       show statistics window"); 
-  Msg(DIRECT, "  m             go to mesh module");
-  Msg(DIRECT, "  Shift+m       show mesh options");
-  Msg(DIRECT, "  Ctrl+m        merge file"); 
-  Msg(DIRECT, "  Shift+o       show general options"); 
-  Msg(DIRECT, "  Ctrl+o        open file"); 
-  Msg(DIRECT, "  p             go to post-processor module");
-  Msg(DIRECT, "  Shift+p       show post-processing general options");
-  Msg(DIRECT, "  Ctrl+q        quit");
-  Msg(DIRECT, "  Ctrl+s        save mesh in default format");
+  Msg(DIRECT, "  b               go back to previous context");
+  Msg(DIRECT, "  "XX"+e          save file by extension");
+  Msg(DIRECT, "  f               go forward to next context");
+  Msg(DIRECT, "  g               go to geometry module");
+  Msg(DIRECT, "  Shift+g         show geometry options");
+  Msg(DIRECT, "  Shift+i         show statistics window"); 
+  Msg(DIRECT, "  m               go to mesh module");
+  Msg(DIRECT, "  Shift+m         show mesh options");
+  Msg(DIRECT, "  "XX"+m          merge file"); 
+  Msg(DIRECT, "  Shift+o         show general options"); 
+  Msg(DIRECT, "  "XX"+o          open file"); 
+  Msg(DIRECT, "  p               go to post-processor module");
+  Msg(DIRECT, "  Shift+p         show post-processing general options");
+  Msg(DIRECT, "  "XX"+q          quit");
+  Msg(DIRECT, "  "XX"+s          save mesh in default format");
   Msg(DIRECT, "");
   Msg(DIRECT, "Other shortcuts");
   Msg(DIRECT, "");
-  Msg(DIRECT, "  0 or Esc      reload geometry input file");
-  Msg(DIRECT, "  1 or F1       mesh curves");
-  Msg(DIRECT, "  2 or F2       mesh surfaces");
-  Msg(DIRECT, "  3 or F3       mesh volumes");
-  Msg(DIRECT, "  Alt+a         hide/show small axes"); 
-  Msg(DIRECT, "  Alt+Shift+a   hide/show big moving axes"); 
-  Msg(DIRECT, "  Alt+b         hide/show all post-processing scales");
-  Msg(DIRECT, "  Alt+c         alternate between predefined color schemes");
-  Msg(DIRECT, "  Alt+d         alternate between mesh wire frame, hidden lines and shading modes");
-  Msg(DIRECT, "  Shift+d       decrease animation delay");
-  Msg(DIRECT, "  Ctrl+Shift+d  increase animation delay");
-  Msg(DIRECT, "  Alt+f         toggle redraw mode (fast/full)"); 
-  Msg(DIRECT, "  Alt+h         hide/show all post-processing views"); 
-  Msg(DIRECT, "  Alt+l         hide/show geometry lines");
-  Msg(DIRECT, "  Alt+Shift+l   hide/show mesh lines");
-  Msg(DIRECT, "  Alt+m         toggle visibility of all mesh entities");
-  Msg(DIRECT, "  Alt+o         change projection mode");
-  Msg(DIRECT, "  Alt+p         hide/show geometry points");
-  Msg(DIRECT, "  Alt+Shift+p   hide/show mesh points");
-  Msg(DIRECT, "  Alt+s         hide/show geometry surfaces");
-  Msg(DIRECT, "  Alt+Shift+s   hide/show mesh surfaces");
-  Msg(DIRECT, "  Alt+t         alternate intervals mode for visible post-processing views"); 
-  Msg(DIRECT, "  Alt+v         hide/show geometry volumes");
-  Msg(DIRECT, "  Alt+Shift+v   hide/show mesh volumes");
-  Msg(DIRECT, "  Alt+x         set X view"); 
-  Msg(DIRECT, "  Alt+y         set Y view"); 
-  Msg(DIRECT, "  Alt+z         set Z view"); 
-  Msg(DIRECT, "  Left arrow    previous time step"); 
-  Msg(DIRECT, "  Right arrow   next time step"); 
-  Msg(DIRECT, "  Up arrow      previous view"); 
-  Msg(DIRECT, "  Down arrow    next view"); 
+  Msg(DIRECT, "  0 or Esc        reload geometry input file");
+  Msg(DIRECT, "  1 or F1         mesh curves");
+  Msg(DIRECT, "  2 or F2         mesh surfaces");
+  Msg(DIRECT, "  3 or F3         mesh volumes");
+  Msg(DIRECT, "  Alt+a           hide/show small axes"); 
+  Msg(DIRECT, "  Alt+Shift+a     hide/show big moving axes"); 
+  Msg(DIRECT, "  Alt+b           hide/show all post-processing scales");
+  Msg(DIRECT, "  Alt+c           alternate between predefined color schemes");
+  Msg(DIRECT, "  Alt+d           alternate between mesh wire frame, hidden lines and shading modes");
+  Msg(DIRECT, "  Shift+d         decrease animation delay");
+  Msg(DIRECT, "  "XX"+Shift+d    increase animation delay");
+  Msg(DIRECT, "  Alt+f           toggle redraw mode (fast/full)"); 
+  Msg(DIRECT, "  Alt+h           hide/show all post-processing views"); 
+  Msg(DIRECT, "  Alt+l           hide/show geometry lines");
+  Msg(DIRECT, "  Alt+Shift+l     hide/show mesh lines");
+  Msg(DIRECT, "  Alt+m           toggle visibility of all mesh entities");
+  Msg(DIRECT, "  Alt+o           change projection mode");
+  Msg(DIRECT, "  Alt+p           hide/show geometry points");
+  Msg(DIRECT, "  Alt+Shift+p     hide/show mesh points");
+  Msg(DIRECT, "  Alt+s           hide/show geometry surfaces");
+  Msg(DIRECT, "  Alt+Shift+s     hide/show mesh surfaces");
+  Msg(DIRECT, "  Alt+t           alternate intervals mode for visible post-processing views"); 
+  Msg(DIRECT, "  Alt+v           hide/show geometry volumes");
+  Msg(DIRECT, "  Alt+Shift+v     hide/show mesh volumes");
+  Msg(DIRECT, "  Alt+x           set X view"); 
+  Msg(DIRECT, "  Alt+y           set Y view"); 
+  Msg(DIRECT, "  Alt+z           set Z view"); 
+  Msg(DIRECT, "  Left arrow      previous time step"); 
+  Msg(DIRECT, "  Right arrow     next time step"); 
+  Msg(DIRECT, "  Up arrow        previous view"); 
+  Msg(DIRECT, "  Down arrow      next view"); 
   Msg(DIRECT, "");
   WID->create_message_window();
 }
+
+#undef XX
+
 void help_command_line_cb(CALLBACK_ARGS){
   Msg(DIRECT, "");
   Print_Usage("gmsh");

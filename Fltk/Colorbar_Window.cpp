@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.23 2002-05-18 07:56:47 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.24 2002-05-18 23:07:42 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -521,10 +521,9 @@ int Colorbar_Window::handle(int event){
     // determine which curve to modify
     if (Fl::event_state(FL_CTRL))
       p4 = 1;
-    else if(ibut == 1 && !Fl::event_state(FL_SHIFT))
+    else if(ibut == 1 && !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT))
       p1 = 1 ;
-    else if(ibut == 2 ||
-	    ibut == 1 && Fl::event_state(FL_SHIFT))
+    else if(ibut == 2 || (ibut == 1 && Fl::event_state(FL_SHIFT)))
       p2 = 1 ;
     else
       p3 = 1 ;

@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.23 2002-05-18 07:56:48 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.24 2002-05-18 23:07:42 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -157,7 +157,7 @@ int Opengl_Window::handle(int event) {
     xpos = Fl::event_x();
     ypos = Fl::event_y();
 
-    if(ibut == 1 && !Fl::event_state(FL_SHIFT)){
+    if(ibut == 1 && !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)){
       if(!ZoomClick && Fl::event_state(FL_CTRL)){
         ZOOM_X0 = ZOOM_X1 = CTX.vxmin + ((double)xpos/(double)w()) * (CTX.vxmax - CTX.vxmin);
         ZOOM_Y0 = ZOOM_Y1 = CTX.vymax - ((double)ypos/(double)h()) * (CTX.vymax - CTX.vymin);
@@ -240,7 +240,7 @@ int Opengl_Window::handle(int event) {
 	FirstClick=0;
       }
 
-      if(ibut == 1 && !Fl::event_state(FL_SHIFT)){
+      if(ibut == 1 && !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)){
 	if(CTX.useTrackball)
 	  CTX.addQuaternion((2.0*xpos - w()) / w(),
 			    (h() - 2.0*ypos) / h(),

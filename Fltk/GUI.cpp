@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.174 2002-05-18 07:56:47 geuzaine Exp $
+// $Id: GUI.cpp,v 1.175 2002-05-18 23:07:42 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -35,6 +35,7 @@
 #include "GUI.h"
 #include "Callbacks.h"
 #include "Bitmaps.h"
+#include "Icon.h"
 #include "OpenFile.h"
 #include "GetOptions.h"
 
@@ -738,7 +739,11 @@ void GUI::create_menu_window(int argc, char **argv){
     m_toggle_butt[i] = new Fl_Light_Button(0,y+i*BH,width,BH); 
     m_toggle_butt[i]->callback(view_toggle_cb, (void*)i);
     m_toggle_butt[i]->hide();
+#ifdef __APPLE__ // FIXME: is there a better way??
+    m_popup_butt[i] = new Fl_Menu_Button(0,y+i*BH,width,BH,"&Options");
+#else
     m_popup_butt[i] = new Fl_Menu_Button(0,y+i*BH,width,BH);
+#endif
     m_popup_butt[i]->type(Fl_Menu_Button::POPUP3);
     m_popup_butt[i]->add("Reload/View", 0, 
 			 (Fl_Callback *)view_reload_cb, (void*)i, 0);
@@ -1605,9 +1610,15 @@ void GUI::create_post_options_window(){
 	post_butt[i]->selection_color(RADIO_COLOR);
       }
       Fl_Box *text =  new Fl_Box(FL_NO_BOX, 2*WB, 3*WB+6*BH, width-4*WB, 2*BH,
+#ifdef __APPLE__
+				 "Individual view options are available by "
+				 "pressing 'o' when the mouse is over the view "
+				 "button in the post-processing menu");
+#else
 				 "Individual view options are available "
 				 "by right-clicking on each view button "
 				 "in the post-processing menu");
+#endif
       text->align(FL_ALIGN_LEFT|FL_ALIGN_TOP|FL_ALIGN_INSIDE|FL_ALIGN_WRAP);
       o->end();
     }
