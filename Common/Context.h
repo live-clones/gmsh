@@ -115,6 +115,8 @@ public :
   double zoom_factor;         // mouse2 zoom coefficient
 
   int fontsize;               // font size for fltk UI
+  char *gl_font;              // font for opengl graphics
+  int gl_font_enum;           // font for opengl graphics (fltk enum value)
   int gl_fontsize;            // font size for opengl graphics
   double point_size, line_width; // point/line widths
 
@@ -197,9 +199,8 @@ public :
   // print options 
   struct{
     int format;
-    int eps_quality, eps_background, eps_font_size, eps_compress, eps_ps3shading;
+    int eps_quality, eps_background, eps_compress, eps_ps3shading;
     int eps_occlusion_culling, eps_best_root;
-    char *eps_font;
     double eps_line_width_factor, eps_point_size_factor;
     int jpeg_quality;
     int gif_dither, gif_sort, gif_interlace, gif_transparent;

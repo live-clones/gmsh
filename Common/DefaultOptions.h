@@ -48,6 +48,9 @@ StringXString GeneralOptions_String[] = {
   { F|S, "ErrorFileName" , opt_general_error_filename , ".gmsh-errors" ,
     "File into which the log is saved if a fatal error occurs" },
 
+  { F|S, "GraphicsFont" , opt_general_graphics_font , "Helvetica" ,
+    "Font used in the graphic window" }, 
+
   { F|S, "OptionsFileName" , opt_general_options_filename , ".gmsh-options" ,
     "Option file created with `Tools->Options->Save'; automatically read on startup" },
 
@@ -353,8 +356,6 @@ StringXString ViewOptions_String[] = {
 } ;
 
 StringXString PrintOptions_String[] = {
-  { F|O, "EpsFont" , opt_print_eps_font , "Courier" , 
-    "Font used in PostScript/PDF output" },
   { 0, NULL , NULL , NULL , NULL }
 } ;
 
@@ -451,7 +452,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "FontSize" , opt_general_fontsize , 12. , 
     "Size of the font in the graphical user interface" },
 
-  { F|S, "GraphicsFontSize" , opt_general_graphics_fontsize , 12. ,
+  { F|S, "GraphicsFontSize" , opt_general_graphics_fontsize , 14. ,
     "Size of the font in the graphic window" }, 
   { F|S, "GraphicsHeight" , opt_general_viewport3 , 500. , 
     "Height (in pixels) of the graphic window" }, 
@@ -573,9 +574,9 @@ StringXNumber GeneralOptions_Number[] = {
     "Material shininess (must be > 0)" },
   { F|O, "SmallAxes" , opt_general_small_axes , 1. ,
     "Display the small axes" },
-  { F|O, "SmallAxesPositionX" , opt_general_small_axes_position0 , -45. ,
+  { F|O, "SmallAxesPositionX" , opt_general_small_axes_position0 , -60. ,
     "X position of small axes (use negative values for right alignment)" },
-  { F|O, "SmallAxesPositionY" , opt_general_small_axes_position1 , -35. ,
+  { F|O, "SmallAxesPositionY" , opt_general_small_axes_position1 , -40. ,
     "Y position of small axes (use negative values for bottom alignment)" },
   { F|S, "SolverPositionX" , opt_general_solver_position0 , 650. , 
     "Horizontal position (in pixels) of the upper left corner of the solver windows" }, 
@@ -1049,8 +1050,6 @@ StringXNumber PrintOptions_Number[] = {
     "Try to minimize primitive splitting in BSP tree sorted PostScript/PDF output" },
   { F|O, "EpsCompress" , opt_print_eps_compress , 0. ,
     "Compress PostScript/PDF output using zlib" },
-  { F|O, "EpsFontSize" , opt_print_eps_font_size , 12. ,
-    "Font size used in PostScript/PDF output" },
   { F|O, "EpsLineWidthFactor" , opt_print_eps_line_width_factor , 0.5 ,
     "Width factor for lines in PostScript/PDF output" },
   { F|O, "EpsOcclusionCulling" , opt_print_eps_occlusion_culling , 1. ,

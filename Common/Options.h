@@ -45,6 +45,7 @@ char * opt_general_options_filename(OPT_ARGS_STR);
 char * opt_general_editor(OPT_ARGS_STR);
 char * opt_general_web_browser(OPT_ARGS_STR);
 char * opt_general_scheme(OPT_ARGS_STR);
+char * opt_general_graphics_font(OPT_ARGS_STR);
 char * opt_mesh_triangle_options(OPT_ARGS_STR);
 char * opt_solver_name(OPT_ARGS_STR);
 char * opt_solver_name0(OPT_ARGS_STR);
@@ -183,7 +184,6 @@ char * opt_view_format(OPT_ARGS_STR);
 char * opt_view_filename(OPT_ARGS_STR);
 char * opt_view_abscissa_name(OPT_ARGS_STR);
 char * opt_view_abscissa_format(OPT_ARGS_STR);
-char * opt_print_eps_font(OPT_ARGS_STR);
 
 // NUMBERS
 
@@ -487,7 +487,6 @@ double opt_print_eps_quality(OPT_ARGS_NUM);
 double opt_print_eps_occlusion_culling(OPT_ARGS_NUM);
 double opt_print_eps_best_root(OPT_ARGS_NUM);
 double opt_print_eps_background(OPT_ARGS_NUM);
-double opt_print_eps_font_size(OPT_ARGS_NUM);
 double opt_print_eps_line_width_factor(OPT_ARGS_NUM);
 double opt_print_eps_point_size_factor(OPT_ARGS_NUM);
 double opt_print_jpeg_quality(OPT_ARGS_NUM);

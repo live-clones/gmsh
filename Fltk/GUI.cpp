@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.291 2004-04-23 18:31:01 geuzaine Exp $
+// $Id: GUI.cpp,v 1.292 2004-04-24 02:13:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -377,8 +377,26 @@ static Fl_Menu_Item menu_point_display[] = {
 };
 
 static Fl_Menu_Item menu_line_display[] = {
-  {"Color segment",   0, 0, 0},
+  {"Color segment", 0, 0, 0},
   {"3D cylinder",   0, 0, 0},
+  {0}
+};
+
+Fl_Menu_Item menu_font_names[] = {
+  {"Times-Roman",           0, 0, (void*)FL_TIMES},
+  {"Times-Bold",            0, 0, (void*)FL_TIMES_BOLD},
+  {"Times-Italic",          0, 0, (void*)FL_TIMES_ITALIC},
+  {"Times-BoldItalic",      0, 0, (void*)FL_TIMES_BOLD_ITALIC},
+  {"Helvetica",             0, 0, (void*)FL_HELVETICA},
+  {"Helvetica-Bold",        0, 0, (void*)FL_HELVETICA_BOLD},
+  {"Helvetica-Oblique",     0, 0, (void*)FL_HELVETICA_ITALIC},
+  {"Helvetica-BoldOblique", 0, 0, (void*)FL_HELVETICA_BOLD_ITALIC},
+  {"Courier",               0, 0, (void*)FL_COURIER},
+  {"Courier-Bold",          0, 0, (void*)FL_COURIER_BOLD},
+  {"Courier-Oblique",       0, 0, (void*)FL_COURIER_ITALIC},
+  {"Courier-BoldOblique",   0, 0, (void*)FL_COURIER_BOLD_ITALIC},
+  {"Symbol",                0, 0, (void*)FL_SYMBOL},
+  {"ZapfDingbats",          0, 0, (void*)FL_ZAPF_DINGBATS},
   {0}
 };
 
@@ -1569,16 +1587,22 @@ void GUI::create_option_window()
       gen_value[4]->step(0.01);
       gen_value[4]->align(FL_ALIGN_RIGHT);
 
-      gen_butt[12] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, BW, BH, "Moving light");
+      gen_butt[12] = new Fl_Check_Button(2 * IW - 2 * WB, 2 * WB + 3 * BH, (int)(1.5*BB), BH, "Moving light");
       gen_butt[12]->type(FL_TOGGLE_BUTTON);
       gen_butt[12]->down_box(TOGGLE_BOX);
       gen_butt[12]->selection_color(TOGGLE_COLOR);
 
-      gen_value[1] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Material shininess");
+      gen_value[1] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Material shininess");
       gen_value[1]->minimum(0);
       gen_value[1]->maximum(10);
       gen_value[1]->step(0.1);
       gen_value[1]->align(FL_ALIGN_RIGHT);
+
+      gen_value[11] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Quadric subdivisions");
+      gen_value[11]->minimum(3);
+      gen_value[11]->maximum(30);
+      gen_value[11]->step(1);
+      gen_value[11]->align(FL_ALIGN_RIGHT);
 
       gen_value[6] = new Fl_Value_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Point size");
       gen_value[6]->minimum(0.1);
@@ -1606,6 +1630,16 @@ void GUI::create_option_window()
 
       Fl_Button *b = new Fl_Button(2 * IW - 2 * WB, 2 * WB + 8 * BH, (int)(1.5*BB), BH, "Edit arrow shape");
       b->callback(general_arrow_param_cb);
+
+      gen_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 9 * BH, IW, BH, "Font");
+      gen_choice[1]->menu(menu_font_names);
+      gen_choice[1]->align(FL_ALIGN_RIGHT);
+
+      gen_value[12] = new Fl_Value_Input(2 * WB, 2 * WB + 10 * BH, IW, BH, "Font size");
+      gen_value[12]->minimum(5);
+      gen_value[12]->maximum(40);
+      gen_value[12]->step(1);
+      gen_value[12]->align(FL_ALIGN_RIGHT);
 
       o->end();
     }
@@ -1693,7 +1727,7 @@ void GUI::create_option_window()
       geo_value[3]->maximum(50);
       geo_value[3]->step(0.1);
 
-      geo_value[5] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Highlighted point size");
+      geo_value[5] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Selected point size");
       geo_value[5]->minimum(0.1);
       geo_value[5]->maximum(50);
       geo_value[5]->step(0.1);
@@ -1707,7 +1741,12 @@ void GUI::create_option_window()
       geo_value[4]->maximum(50);
       geo_value[4]->step(0.1);
 
-      for(i = 3; i <= 5; i++) {
+      geo_value[6] = new Fl_Value_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Selected line width");
+      geo_value[6]->minimum(0.1);
+      geo_value[6]->maximum(50);
+      geo_value[6]->step(0.1);
+
+      for(i = 3; i <= 6; i++) {
         geo_value[i]->align(FL_ALIGN_RIGHT);
       }
       o->end();

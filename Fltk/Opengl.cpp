@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.34 2004-02-07 01:40:17 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.35 2004-04-24 02:13:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -76,14 +76,14 @@ void Draw_String(char *s)
 {
 
   if(CTX.print.gl_fonts) {
-    gl_font(FL_HELVETICA, CTX.gl_fontsize);
+    gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
     gl_draw(s);
   }
   else {        // ps or *tex output
     if(CTX.print.format == FORMAT_JPEGTEX ||
        CTX.print.format == FORMAT_PNGTEX)
       return;
-    gl2psText(s, CTX.print.eps_font, CTX.print.eps_font_size);
+    gl2psText(s, CTX.gl_font, CTX.gl_fontsize);
   }
 }
 

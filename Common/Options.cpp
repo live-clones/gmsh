@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.147 2004-04-21 04:26:44 geuzaine Exp $
+// $Id: Options.cpp,v 1.148 2004-04-24 02:13:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -123,6 +123,11 @@ void Init_Options(int num)
   CTX.mesh.oldxtrude = CTX.mesh.oldxtrude_recombine = 0;        //old extrusion mesh generator
   CTX.mesh.check_duplicates = 0;        //check for duplicate nodes in Read_Mesh
   CTX.post.combine_time = 0; // try to combine_time views at startup
+#if defined(HAVE_FLTK)
+  CTX.gl_font_enum = FL_HELVETICA;
+#else
+  CTX.gl_font_enum = -1;
+#endif
 }
 
 void ReInit_Options(int num)
@@ -826,6 +831,47 @@ char *opt_general_scheme(OPT_ARGS_STR)
   if(action & GMSH_SET)
     CTX.scheme = val;
   return CTX.scheme;
+}
+
+#if defined(HAVE_FLTK)
+extern Fl_Menu_Item menu_font_names[];
+#endif
+
+char *opt_general_graphics_font(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX.gl_font = val;
+#if defined(HAVE_FLTK)
+  int index = -1, i = 0;
+  if(CTX.gl_font){
+    while(menu_font_names[i].label()){
+      if(!strcmp(menu_font_names[i].label(), CTX.gl_font)){
+	index = i;
+	break;
+      }
+      i++;
+    }
+  }
+  if(action & GMSH_SET){
+    if(index < 0){
+      Msg(GERROR, "Unknown font \"%s\" (using \"Helvetica\" instead)", CTX.gl_font);
+      Msg(INFO, "Available fonts:");
+      i = 0;
+      while(menu_font_names[i].label()){
+	Msg(INFO, "  \"%s\"", menu_font_names[i].label());
+	i++;
+      }
+      CTX.gl_font = "Helvetica";
+      CTX.gl_font_enum = FL_HELVETICA;
+    }
+    else
+      CTX.gl_font_enum = (int)menu_font_names[index].user_data();
+  }
+  if(WID && (action & GMSH_GUI)){
+    WID->gen_choice[1]->value(index);
+  }
+#endif
+  return CTX.gl_font;
 }
 
 char *opt_mesh_triangle_options(OPT_ARGS_STR){
@@ -1718,15 +1764,6 @@ char *opt_view_abscissa_format(OPT_ARGS_STR)
   return v->AbscissaFormat;
 }
 
-
-char *opt_print_eps_font(OPT_ARGS_STR)
-{
-  if(action & GMSH_SET)
-    CTX.print.eps_font = val;
-  return CTX.print.eps_font;
-}
-
-
 // Numeric option routines
 
 
@@ -1748,6 +1785,10 @@ double opt_general_graphics_fontsize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.gl_fontsize = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_value[12]->value(CTX.gl_fontsize);
+#endif
   return CTX.gl_fontsize;
 }
 
@@ -2207,6 +2248,10 @@ double opt_general_quadric_subdivisions(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.quadric_subdivisions = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_value[11]->value(CTX.quadric_subdivisions);
+#endif
   return CTX.quadric_subdivisions;
 }
 
@@ -2927,6 +2972,10 @@ double opt_geometry_line_sel_width(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.geom.line_sel_width = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->geo_value[6]->value(CTX.geom.line_sel_width);
+#endif
   return CTX.geom.line_sel_width;
 }
 
@@ -4834,13 +4883,6 @@ double opt_print_eps_background(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.print.eps_background = (int)val;
   return CTX.print.eps_background;
-}
-
-double opt_print_eps_font_size(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.print.eps_font_size = (int)val;
-  return CTX.print.eps_font_size;
 }
 
 double opt_print_eps_line_width_factor(OPT_ARGS_NUM)

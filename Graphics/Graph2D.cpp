@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.32 2004-04-20 19:15:14 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.33 2004-04-24 02:13:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -116,7 +116,7 @@ static void Draw_Graph2D(Post_View * v,
     glEnd();
   }
 
-  gl_font(FL_HELVETICA, CTX.gl_fontsize);
+  gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
   font_h = gl_height(); // total font height
   font_a = gl_height() - gl_descent();  // height above ref pt
 
@@ -212,7 +212,7 @@ static void Draw_Graph2D(Post_View * v,
       sprintf(label, "%s (%g)", v->Name, *(double *)List_Pointer(v->Time, v->TimeStep));
     else
       sprintf(label, "%s", v->Name);
-    glRasterPos2d(xtop - gl_width(label) / 2., ytop + 1.5 * font_h);
+    glRasterPos2d(xtop - gl_width(label) / 2., ytop + font_h + tic);
     Draw_String(label);
   }
 
@@ -288,14 +288,14 @@ static void Draw_Graph2D(Post_View * v,
         sprintf(label, v->AbscissaFormat,
                 AbsMin + i * (AbsMax - AbsMin) / (double)(nb - 1));
       glRasterPos2d(xtop + i * dx - gl_width(label) / 2.,
-                    ybot - 1.5 * font_h);
+                    ybot - font_h - tic);
       Draw_String(label);
     }
   }
   if(v->ShowScale) {
     glColor4ubv((GLubyte *) & CTX.color.text);
     sprintf(label, "%s", v->AbscissaName);
-    glRasterPos2d(xtop + width / 2 - gl_width(label) / 2., ybot - 3 * font_h);
+    glRasterPos2d(xtop + width / 2 - gl_width(label) / 2., ybot - 2 * font_h - 2 * tic);
     Draw_String(label);
   }
 
@@ -391,7 +391,7 @@ void Draw_Graph2D(void)
       tic = 5;
       dx = dy = 0.;
       if(v->ShowScale) {
-        gl_font(FL_HELVETICA, CTX.gl_fontsize);
+        gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
         sprintf(label, v->AbscissaFormat, v->CustomMin);
         if(gl_width(label) + tic > dx)
           dx = gl_width(label) + tic;

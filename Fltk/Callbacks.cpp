@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.220 2004-04-23 18:31:01 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.221 2004-04-24 02:13:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1050,6 +1050,8 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_rotation_center0(0, GMSH_SET, WID->gen_value[8]->value());
   opt_general_rotation_center1(0, GMSH_SET, WID->gen_value[9]->value());
   opt_general_rotation_center2(0, GMSH_SET, WID->gen_value[10]->value());
+  opt_general_quadric_subdivisions(0, GMSH_SET, WID->gen_value[11]->value());
+  opt_general_graphics_fontsize(0, GMSH_SET, WID->gen_value[12]->value());
 
   opt_general_default_filename(0, GMSH_SET, (char *)WID->gen_input[0]->value());
   opt_general_tmp_filename(0, GMSH_SET, (char *)WID->gen_input[1]->value());
@@ -1074,6 +1076,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
     break;
   }
   opt_general_vector_type(0, GMSH_SET, val);
+  opt_general_graphics_font(0, GMSH_SET, (char *)WID->gen_choice[1]->text());
 }
 
 void general_arrow_param_cb(CALLBACK_ARGS)
@@ -1120,6 +1123,7 @@ void geometry_options_ok_cb(CALLBACK_ARGS)
   opt_geometry_point_size(0, GMSH_SET, WID->geo_value[3]->value());
   opt_geometry_line_width(0, GMSH_SET, WID->geo_value[4]->value());
   opt_geometry_point_sel_size(0, GMSH_SET, WID->geo_value[5]->value());
+  opt_geometry_line_sel_width(0, GMSH_SET, WID->geo_value[6]->value());
 
   opt_geometry_point_type(0, GMSH_SET, WID->geo_choice[0]->value());
   opt_geometry_line_type(0, GMSH_SET, WID->geo_choice[1]->value());
