@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to Postscript Printing Library
  * Copyright (C) 1999-2001  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.16 2001-06-11 15:05:46 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.17 2001-06-12 07:27:32 geuzaine Exp $
  *
  * E-mail: Christophe.Geuzaine@AdValvas.be
  * URL: http://www.geuz.org/gl2ps/
@@ -32,8 +32,8 @@
 
 #include "gl2ps.h"
 
-/* The static gl2ps structure. gl2ps is not thread safe (we should
-   create a local GL2PScontext when doing gl2psBeginPage). */
+/* The static gl2ps context. gl2ps is not thread safe (we should
+   create a local GL2PScontext during gl2psBeginPage). */
 
 static GL2PScontext gl2ps;
 
@@ -832,7 +832,7 @@ GLvoid  gl2psBuildPolygonBoundary(GL2PSbsptree *tree){
 
 GLvoid gl2psAddPolyPrimitive(GLshort type, GLshort numverts, 
 			     GL2PSvertex *verts, GLint offset, 
-			     GLint dash, GLint width,
+			     GLshort dash, GLshort width,
 			     GLshort boundary){
   GLshort         i;
   GLfloat         factor, units, area, dZ, dZdX, dZdY, maxdZ;
@@ -933,8 +933,8 @@ GLint gl2psGetVertex(GL2PSvertex *v, GLfloat *p){
 }
 
 GLint gl2psParseFeedbackBuffer(GLvoid){
-  GLint        i, used, count, v, vtot, offset=0, dash=0, psize=1, lwidth=1;
-  GLshort      boundary, flag;
+  GLint        i, used, count, v, vtot, offset=0;
+  GLshort      boundary, flag, dash=0, psize=1, lwidth=1;
   GLfloat     *current;
   GL2PSvertex  vertices[3];
 
@@ -1284,10 +1284,9 @@ GLint gl2psEndPage(GLvoid){
   GL2PSbsptree   *root;
   GL2PSxyz        eye={0., 0., 100000.};
   GLint           shademodel, res;
-  
-  void (*phead)(GLvoid);
-  void (*pprim)(GLvoid *a, GLvoid *b);
-  void (*pfoot)(GLvoid);
+  void          (*phead)(GLvoid);
+  void          (*pprim)(GLvoid *a, GLvoid *b);
+  void          (*pfoot)(GLvoid);
 
   glGetIntegerv(GL_SHADE_MODEL, &shademodel);
   gl2ps.shade = (shademodel == GL_SMOOTH);
