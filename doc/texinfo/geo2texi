@@ -1,0 +1,11 @@
+#!/bin/sh
+
+for file in  $*; do
+  echo modifying file $file...
+  echo "@format" > tmp.geo
+  echo "@code{" >> tmp.geo
+  sed -e "s|{|@{|g" -e "s|}|@}|g" $file >> tmp.geo
+  echo "}" >> tmp.geo
+  echo "@end format" >> tmp.geo
+  mv tmp.geo $file
+done

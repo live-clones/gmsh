@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.1 2003-03-12 23:41:45 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.2 2003-03-13 01:32:50 geuzaine Exp $
 @c =========================================================================
 @c
 @c This is the Gmsh documentation texinfo source file
@@ -1137,6 +1137,16 @@ is usually preferred with such fields.
 
 @cindex Short examples
 @cindex Examples, short
+
+@include t1.geo
+@include t2.geo
+@include t3.geo
+@include t4.geo
+@include t5.geo
+@include t6.geo
+@include t7.geo
+@include t8.geo
+@include t9.geo
 
 @c =========================================================================
 @c Running Gmsh
