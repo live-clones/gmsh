@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.114 2001-09-06 06:42:45 geuzaine Exp $
+// $Id: GUI.cpp,v 1.115 2001-09-06 07:18:13 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1254,11 +1254,11 @@ void GUI::create_mesh_options_window(){
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Visibility");
 	o->labelsize(CTX.fontsize);
 	mesh_butt[6] = new Fl_Check_Button(2*WB, 2*WB+1*BH, IW, BH, "Points");
-	mesh_butt[7] = new Fl_Check_Button(2*WB, 2*WB+2*BH, IW, BH, "Curves");
+	mesh_butt[7] = new Fl_Check_Button(2*WB, 2*WB+2*BH, IW, BH, "Lines");
 	mesh_butt[8] = new Fl_Check_Button(2*WB, 2*WB+3*BH, IW, BH, "Surfaces");
 	mesh_butt[9] = new Fl_Check_Button(2*WB, 2*WB+4*BH, IW, BH, "Volumes");
 	mesh_butt[10] = new Fl_Check_Button(width/2, 2*WB+1*BH, IW, BH, "Point numbers");
-	mesh_butt[11] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Curve numbers");
+	mesh_butt[11] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Line numbers");
 	mesh_butt[12] = new Fl_Check_Button(width/2, 2*WB+3*BH, IW, BH, "Surface numbers");
 	mesh_butt[13] = new Fl_Check_Button(width/2, 2*WB+4*BH, IW, BH, "Volume numbers");
 	for(i=6 ; i<14 ; i++){
