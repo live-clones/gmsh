@@ -1,7 +1,7 @@
 /* 
    Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
 
-   Simple 3D example
+   Simple 3D example, with customization commands
 
    All important comments are marked with "README"
 */
@@ -130,13 +130,13 @@ Ruled Surface(76) = {75};
 // Definition of volumes
 
 Surface Loop(77) = {60,-58,54,-44,-56};
-Complex Volume(78) = {77};
+Volume(78) = {77};
 
 Surface Loop(79) = {64,-68,-74,-62,-48,50,66,76};
-Complex Volume(80) = {79};
+Volume(80) = {79};
 
 Surface Loop(81) = {64,-68,-74,-62,70,-46,-72,58,-60,42,-40,-52,76};
-Complex Volume(82) = {81};
+Volume(82) = {81};
 
 // Some definitions for saving the mesh
 

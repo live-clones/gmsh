@@ -103,27 +103,27 @@ Line Loop(122) = {32,-22,-27,21};Ruled Surface(123) = {122};
 Line Loop(124) = {33,-23,-28,22};Ruled Surface(125) = {124};
 Line Loop(126) = {34,-24,-29,23};Ruled Surface(127) = {126};
 
-Surface Loop(128) = {93,-73,-55,95,-91};        Complex Volume(129) = {128}; /* int */
-Surface Loop(130) = {107,-75,-97,95,57,121};    Complex Volume(131) = {130}; /* int b */
-Surface Loop(132) = {105,-65,-97,-83,-93};      Complex Volume(133) = {132}; /* int h */
-Surface Loop(134) = {99,-111,77,123,59,107};    Complex Volume(135) = {134}; /* shell b */
-Surface Loop(136) = {99,-109,67,105,85};        Complex Volume(137) = {136}; /* shell h */
-Surface Loop(138) = {113,79,-101,-111,-125,-61};Complex Volume(139) = {138}; /* ext b */
-Surface Loop(140) = {115,-69,-101,-87,-109};    Complex Volume(141) = {140}; /* ext h */
-Surface Loop(142) = {103,-117,-81,113,127,63};  Complex Volume(143) = {142}; /* inf b */
-Surface Loop(144) = {89,-119,71,103,115};       Complex Volume(145) = {144}; /* inf h */
+Surface Loop(128) = {93,-73,-55,95,-91};         Volume(129) = {128}; /* int */
+Surface Loop(130) = {107,-75,-97,95,57,121};     Volume(131) = {130}; /* int b */
+Surface Loop(132) = {105,-65,-97,-83,-93};       Volume(133) = {132}; /* int h */
+Surface Loop(134) = {99,-111,77,123,59,107};     Volume(135) = {134}; /* shell b */
+Surface Loop(136) = {99,-109,67,105,85};         Volume(137) = {136}; /* shell h */
+Surface Loop(138) = {113,79,-101,-111,-125,-61}; Volume(139) = {138}; /* ext b */
+Surface Loop(140) = {115,-69,-101,-87,-109};     Volume(141) = {140}; /* ext h */
+Surface Loop(142) = {103,-117,-81,113,127,63};   Volume(143) = {142}; /* inf b */
+Surface Loop(144) = {89,-119,71,103,115};        Volume(145) = {144}; /* inf h */
 
 /* README: Tranfinite line commands explicitly specify the number of
    points and their repartition. A minus sign in the argument list of
    the transfinite command will produce the reversed mesh. */
 
-Transfinite Line{35,21,22,23,24,38,17,18,19,20}   = nbpt_phi Using Power 1.0;
+Transfinite Line{35,21,22,23,24,38,17,18,19,20}   = nbpt_phi ;
 Transfinite Line{31,26,48,44,42}                  = nbpt_int Using Progression 0.95;
-Transfinite Line{41,37,36,9,11,1,3,13,5,15,7}     = nbpt_arc1 Using Power 1.0;
-Transfinite Line{30,25,40,39,10,2,12,4,14,6,16,8} = nbpt_arc2 Using Power 1.0;
-Transfinite Line{32,27,49,45,43}                  = nbpt_shell Using Power 1.0;
+Transfinite Line{41,37,36,9,11,1,3,13,5,15,7}     = nbpt_arc1 ;
+Transfinite Line{30,25,40,39,10,2,12,4,14,6,16,8} = nbpt_arc2 ;
+Transfinite Line{32,27,49,45,43}                  = nbpt_shell ;
 Transfinite Line{33,28,46,50,52}                  = nbpt_far Using Progression 1.05 ;
-Transfinite Line{34,29,51,47,53}                  = nbpt_inf Using Progression 1.2;
+Transfinite Line{34,29,51,47,53}                  = nbpt_inf Using Progression 0.01;
 
 /* README: *All* 2D and 3D transfinite entities are defined in respect
    to points. The ordering of the points defines the ordering of the

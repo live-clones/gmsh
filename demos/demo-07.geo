@@ -1,7 +1,7 @@
 /* 
    Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
 
-   2D example with hole
+   Trivial 2D example, with hole
    
    All important comments are marked with "README"
 */

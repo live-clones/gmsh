@@ -29,36 +29,36 @@ z8 = 150 ;  dy8 =  0. ;
 
 p0 = 2. ;  p1 = 30. ;
 
-Include "ex12.b" ;
+Include "demo-12.i2" ;
 
 /* ------------ */
 /* Fil 1a, b, c */
 /* ------------ */
 
 x = x1a ;  y = y1a ;  i_p = 100 ;  i_l = 10 ;
-Include "ex12.c" ;
+Include "demo-12.i3" ;
 x = x1b ;  y = y1b ;  i_p = 200 ;  i_l = 20 ;
-Include "ex12.c" ;
+Include "demo-12.i3" ;
 x = x1c ;  y = y1c ;  i_p = 300 ;  i_l = 30 ;
-Include "ex12.c" ;
+Include "demo-12.i3" ;
 
 /* ------------ */
 /* Fil 2a, b, c */
 /* ------------ */
 
 x = x2a ;  y = y2a ;  i_p = 400 ;  i_l = 40 ;
-Include "ex12.c" ;
+Include "demo-12.i3" ;
 x = x2b ;  y = y2b ;  i_p = 500 ;  i_l = 50 ;
-Include "ex12.c" ;
+Include "demo-12.i3" ;
 x = x2c ;  y = y2c ;  i_p = 600 ;  i_l = 60 ;
-Include "ex12.c" ;
+Include "demo-12.i3" ;
 
 /* ------ */
 /* Fil g  */
 /* ------ */
 
 x = xg ;  y = yg ;  i_p = 700 ;  i_l = 70 ;
-Include "ex12.c" ;
+Include "demo-12.i3" ;
 
 
 /* --------------------------------------------- */

@@ -6,7 +6,7 @@
    All important comments are marked with "README"
 */
 
-Include "ex12.a" ;
+Include "demo-12.i1" ;
 
 /* Post-Processing meshes */
 

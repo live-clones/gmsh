@@ -41,33 +41,33 @@ pt0 = 1. ;  pt1 = 1. ;  pt2 = 1. ;  pt3 = 1. ;  pt4 = 1. ;  pt5 = 1. ;
 pt6 = 1. ;  pt7 = 1. ;  pt8 = 1. ;  pt9 = 1. ;
 
 ci = c0 ; hi = h0 ;   pti = pt0 ;   i_p = 0 ;
-Include "ex12.d" ;
+Include "demo-12.i4" ;
 
 ci = c1 ; hi = h1 ;   pti = pt1 ;   i_p = 10 ;
-Include "ex12.d" ;
-Include "ex12.e" ;
+Include "demo-12.i4" ;
+Include "demo-12.i5" ;
 
 ci = c2 ; hi = h2 ;   pti = pt2 ;   i_p = 20 ;
-Include "ex12.d" ;
-Include "ex12.e" ;
+Include "demo-12.i4" ;
+Include "demo-12.i5" ;
 
 ci = c3 ; hi = h3 ;   pti = pt3 ;   i_p = 30 ;
-Include "ex12.d" ;
+Include "demo-12.i4" ;
 
 ci = c4 ; hi = h4 ;   pti = pt4 ;   i_p = 40 ;
-Include "ex12.d" ;
+Include "demo-12.i4" ;
 
 ci = c5 ; hi = h5 ;   pti = pt5 ;   i_p = 50 ;
-Include "ex12.d" ;
+Include "demo-12.i4" ;
 
 ci = c6 ; hi = h6 ;   pti = pt6 ;   i_p = 60 ;
-Include "ex12.d" ;
+Include "demo-12.i4" ;
 
 ci = c7 ; hi = h7 ;   pti = pt7 ;   i_p = 70 ;
-Include "ex12.d" ;
+Include "demo-12.i4" ;
 
 ci = c8 ; hi = h8 ;   pti = pt8 ;   i_p = 80 ;
-Include "ex12.d" ;
+Include "demo-12.i4" ;
 
 ci = c9 ; hi = h9 ;   pti = pt9 ;   i_p = 90 ;
 Point(91) = {  ci , hi , 0. , pti } ;

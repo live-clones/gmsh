@@ -14,7 +14,12 @@ lc = 0.007;
 
 /* README: This defines the point '1', located at x=0, y=0, z=0, with
    an associated characteristic length 'lc'. The characteristic length
-   sets the target mesh size at the point. */
+   sets the target mesh size at the point. 
+   
+   The same convention is applied for all command: "If a number
+   defines a new entity, it is enclosed between parentheses. If a
+   number refers to a previously defined entity, it is enclosed
+   between braces." */
 
 Point(1) = {0,  0,  0, lc};
 
@@ -72,8 +77,9 @@ Color{
    toggle the visibility of the particular view. A right mouse click
    will give you access to the view's options:
 
+   - Reload: reload the file from which the view was loaded
    - Remove: removes the view
-   - Duplicate: makes a formal copy of the view
+   - Duplicate: makes a copy of the view (without duplicating the data)
    - Lighting: activates/deactivates lighting for the view
    - Scale: gives access to the scale menu (range definition, iso-value
      choice, ...)
@@ -93,47 +99,8 @@ Color{
 
 
 /* README: The 'msh' file format is the native output file format for
-   Gmsh. The file is divided in several sections (enclosed in $KEY and
-   $ENDKEY pairs). Two fields are important: $NOD/$ENDNOD defines the
-   nodes and $ELM/$ENDELM defines the elements.
-
-   The syntax is as follows:
-
-   $NOD
-   number-of-nodes
-   node-number x-coord y-coord z-coord 
-   ...
-   $ENDNOD
-
-   $ELM
-   number-of-elements
-   elm-number elm-type elm-region unused number-of-nodes node-numbers
-   ...
-   $ENDELM
-
-   All the syntactic variables stand for integers except x-coord,
-   y-coord and z-coord which stand for floating point values.  The
-   elm-type value defines the geometrical type for the element:
-   
-   elm-type: 
-   
-   1 Line (2 nodes, 1 edge). 
-   2 Triangle (3 nodes, 3 edges). 
-   3 Quadrangle (4 nodes, 4 edges). 
-   4 Tetrahedron (4 nodes, 6 edges, 4 facets). 
-   5 Hexahedron (8 nodes, 12 edges, 6 facets). 
-   6 Prism (6 nodes, 9 edges, 5 facets). 
-   7 Pyramid (5 nodes, 8 edges, 5 facets). 
-   15 Point (1 node). 
-
-   The elm-region value is the number of the physical entity to which
-   the element belongs. 
-
-   The 'unv' is the universal file format standard. 
-*/
-
-/* README: The format of post-processing views is detailled in 'view01.pos' */
-
+   Gmsh. See the FORMAT file for an explanation of all the formats
+   used by Gmsh.  */
 
 
 

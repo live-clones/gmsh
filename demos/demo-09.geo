@@ -1,7 +1,7 @@
 /* 
    Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
 
-   3D example with (too) large characteristic lengths
+   3D example with large characteristic lengths
 
    All important comments are marked with "README"
 */
@@ -429,7 +429,7 @@ Complex Volume(608) = {607};
 Surface Loop(6001) = {213,-239,-182,180,186,237,231,-229,227,-233,-188,-201,-199,-219,132,138,136,134,112,156,-114,162,-160,158,-140,101,-146,-144,-142,154,148,-105,-152,-150};
 Complex Volume(6002) = {6001};
 
-Delete { Line(169); }
+Delete { Line{169} ; }
 
 Line(6003) = {83,87};
 Line(6004) = {87,85};
@@ -480,6 +480,9 @@ Physical Volume  (R1)      = 602;
 Physical Volume  (R2)      = 604;
 Physical Volume  (SOU)     = 6032;
 
-Physical Surface (CLD0) = {231,229,223,237,227,  199,201,219,209,207,203,205,  180,182,188,176,178,174,172  ,  6026,6024,6028,6030};
+Physical Surface (CLD0) = {231,229,223,237,227,
+                           199,201,219,209,207,203,205,
+                           180,182,188,176,178,174,172,
+                           6026,6024,6028,6030};
 Physical Surface (CLTEM) = {211,6022};
 

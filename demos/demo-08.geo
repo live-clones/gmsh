@@ -1,7 +1,7 @@
 /* 
    Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
 
-   More complex 2D example
+   More complex 2D example with holes
 
    All important comments are marked with "README"
 */
@@ -112,22 +112,14 @@ R2 = r2r ;
    *ALL* variables in Gmsh are global. Including a file is similar to
    paste its content where the include command is located. */
 
-i = 1 ; th = th0r + (i - 1) * dthr ;
-Include "ex05.i1" ; 
-i  = 2 ; th = th0r + (i - 1) * dthr ;
-Include "ex05.i1" ;
-i  = 3 ; th = th0r + (i - 1) * dthr ;
-Include "ex05.i1" ;
-i  = 4 ; th = th0r + (i - 1) * dthr ;
-Include "ex05.i1" ;
-i  = 5 ; th = th0r + (i - 1) * dthr ;
-Include "ex05.i1" ;
-i = 6 ; th = th0r + (i - 1) * dthr ;
-Include "ex05.i1" ;
-i = 7 ; th = th0r + (i - 1) * dthr ;
-Include "ex05.i1" ;
-i = 8 ;	th = th0r + (i - 1) * dthr ;
-Include "ex05.i1" ;
+i = 1 ; th = th0r + (i - 1) * dthr ;   Include "demo-08.i1" ; 
+i  = 2 ; th = th0r + (i - 1) * dthr ;  Include "demo-08.i1" ;
+i  = 3 ; th = th0r + (i - 1) * dthr ;  Include "demo-08.i1" ;
+i  = 4 ; th = th0r + (i - 1) * dthr ;  Include "demo-08.i1" ;
+i  = 5 ; th = th0r + (i - 1) * dthr ;  Include "demo-08.i1" ;
+i = 6 ; th = th0r + (i - 1) * dthr ;   Include "demo-08.i1" ;
+i = 7 ; th = th0r + (i - 1) * dthr ;   Include "demo-08.i1" ;
+i = 8 ;	th = th0r + (i - 1) * dthr ;   Include "demo-08.i1" ;
 
 // 9 stator poles
 
@@ -142,31 +134,31 @@ E2 = e2s ;
 H1 = h1s ;
 
 i = 1 ; th = th0s + (i - 1) * dths ;
-Include "ex05.i2" ; 
+Include "demo-08.i2" ; 
 PP2 = p1 ; PP3 = p9 ;
 i = 2 ; th = th0s + (i - 1) * dths ;
-Include "ex05.i2" ; 
+Include "demo-08.i2" ; 
 PP4 = p1 ; PP5 = p9 ;
 i = 3 ; th = th0s + (i - 1) * dths ;
-Include "ex05.i2" ; 
+Include "demo-08.i2" ; 
 PP6 = p1 ; PP7 = p9 ;
 i = 4 ; th = th0s + (i - 1) * dths ;
-Include "ex05.i2" ; 
+Include "demo-08.i2" ; 
 PP8 = p1 ; PP9 = p9 ;
 i = 5 ; th = th0s + (i - 1) * dths ;
-Include "ex05.i2" ; 
+Include "demo-08.i2" ; 
 PP10 = p1 ; PP11 = p9 ;
 i = 6 ; th = th0s + (i - 1) * dths ;
-Include "ex05.i2" ;
+Include "demo-08.i2" ;
 PP12 = p1 ; PP13 = p9 ;
 i = 7 ; th = th0s + (i - 1) * dths ;
-Include "ex05.i2" ; 
+Include "demo-08.i2" ; 
 PP14 = p1 ; PP15 = p9 ;
 i = 8 ; th = th0s + (i - 1) * dths ;
-Include "ex05.i2" ; 
+Include "demo-08.i2" ; 
 PP16 = p1 ; PP17 = p9 ;
 i = 9 ; th = th0s + (i - 1) * dths ;
-Include "ex05.i2" ; 
+Include "demo-08.i2" ; 
 PP18 = p1 ; PP19 = p9 ;
 
 lin1 = newreg ; Line(lin1) = {PP1 , PP2 } ;
@@ -184,10 +176,14 @@ lin1 = newreg ; Line(lin1) = {PP19, PPB } ;
 Line Loop(145) = {8,-2,6,7};
 Plane Surface(146) = {145,68,61,54,47,40,33,26,19};
 
-Line Loop(147) = {-7,9,133,-74,134,-81,135,-88,136,-95,137,-102,138,-109,139,-116,140,-123,141,-130,142,10};
+Line Loop(147) = {-7,9,133,-74,134,-81,135,-88,136,-95,137,-102,
+                  138,-109,139,-116,140,-123,141,-130,142,10};
 Plane Surface(148) = {147};
 
-Line Loop(149) = {70,71,72,73,134,77,78,79,80,135,84,85,86,87,136,91,92,93,94,137,98,99,100,101,138,105,106,107,108,139,112,113,114,115,140,119,120,121,122,141,126,127,128,129,142,-13,-12,-11,133};
+Line Loop(149) = {70,71,72,73,134,77,78,79,80,135,84,85,86,87,136,
+                  91,92,93,94,137,98,99,100,101,138,105,106,107,108,
+                  139,112,113,114,115,140,119,120,121,122,141,126,127,
+                  128,129,142,-13,-12,-11,133};
 Plane Surface(150) = {149};
 
 /* README: One should define physical regions to specify what to
