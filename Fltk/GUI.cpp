@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.288 2004-04-21 05:17:25 geuzaine Exp $
+// $Id: GUI.cpp,v 1.289 2004-04-22 05:45:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1546,6 +1546,7 @@ void GUI::create_option_window()
     {
       Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Aspect");
       o->hide();
+
       gen_butt[10] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Orthographic projection");
       gen_butt[11] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Perspective projection");
       for(i = 10; i < 12; i++) {
@@ -1553,11 +1554,37 @@ void GUI::create_option_window()
         gen_butt[i]->down_box(RADIO_BOX);
         gen_butt[i]->selection_color(RADIO_COLOR);
       }
-      gen_value[6] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Point size");
+
+      gen_value[2] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW/3, BH);
+      gen_value[2]->minimum(-1);
+      gen_value[2]->maximum(1);
+      gen_value[2]->step(0.01);
+      gen_value[3] = new Fl_Value_Input(2 * WB + IW / 3, 2 * WB + 3 * BH, IW/3, BH);
+      gen_value[3]->minimum(-1);
+      gen_value[3]->maximum(1);
+      gen_value[3]->step(0.01);
+      gen_value[4] = new Fl_Value_Input(2 * WB + 2 * IW / 3, 2 * WB + 3 * BH, IW/3, BH, "Light position");
+      gen_value[4]->minimum(-1);
+      gen_value[4]->maximum(1);
+      gen_value[4]->step(0.01);
+      gen_value[4]->align(FL_ALIGN_RIGHT);
+
+      gen_butt[12] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, BW, BH, "Moving light");
+      gen_butt[12]->type(FL_TOGGLE_BUTTON);
+      gen_butt[12]->down_box(TOGGLE_BOX);
+      gen_butt[12]->selection_color(TOGGLE_COLOR);
+
+      gen_value[1] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Material shininess");
+      gen_value[1]->minimum(0);
+      gen_value[1]->maximum(10);
+      gen_value[1]->step(0.1);
+      gen_value[1]->align(FL_ALIGN_RIGHT);
+
+      gen_value[6] = new Fl_Value_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Point size");
       gen_value[6]->minimum(0.1);
       gen_value[6]->maximum(50);
       gen_value[6]->step(0.1);
-      gen_value[7] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Line width");
+      gen_value[7] = new Fl_Value_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Line width");
       gen_value[7]->minimum(0.1);
       gen_value[7]->maximum(50);
       gen_value[7]->step(0.1);
@@ -1572,7 +1599,7 @@ void GUI::create_option_window()
 	{"3D Arrow", 0, 0, 0},
 	{0}
       };
-      gen_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 5 * BH, IW, BH, "Vector display");
+      gen_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 8 * BH, IW, BH, "Vector display");
       gen_choice[0]->menu(menu_genvectype);
       gen_choice[0]->align(FL_ALIGN_RIGHT);
       gen_choice[0]->callback(set_changed_cb, 0);
@@ -1597,33 +1624,6 @@ void GUI::create_option_window()
         i++;
       }
       s->end();
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Light");
-      o->hide();
-      gen_value[1] = new Fl_Value_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Material shininess");
-      gen_value[1]->minimum(0);
-      gen_value[1]->maximum(10);
-      gen_value[1]->step(0.1);
-      gen_value[1]->align(FL_ALIGN_RIGHT);
-      gen_butt[12] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Moving light");
-      gen_butt[12]->type(FL_TOGGLE_BUTTON);
-      gen_butt[12]->down_box(TOGGLE_BOX);
-      gen_butt[12]->selection_color(TOGGLE_COLOR);
-      gen_value[2] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW/3, BH);
-      gen_value[2]->minimum(-1);
-      gen_value[2]->maximum(1);
-      gen_value[2]->step(0.01);
-      gen_value[3] = new Fl_Value_Input(2 * WB + IW / 3, 2 * WB + 3 * BH, IW/3, BH);
-      gen_value[3]->minimum(-1);
-      gen_value[3]->maximum(1);
-      gen_value[3]->step(0.01);
-      gen_value[4] = new Fl_Value_Input(2 * WB + 2 * IW / 3, 2 * WB + 3 * BH, IW/3, BH, "Light position");
-      gen_value[4]->minimum(-1);
-      gen_value[4]->maximum(1);
-      gen_value[4]->step(0.01);
-      gen_value[4]->align(FL_ALIGN_RIGHT);
       o->end();
     }
     o->end();
