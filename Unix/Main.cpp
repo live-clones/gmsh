@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.4 2000-11-23 15:06:04 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.5 2000-11-23 16:51:30 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -27,6 +27,18 @@
 
 #include "Static.h"
 #include "XStatic.h"
+
+#include "Version.h"
+
+char gmsh_progname[]  = "This is Gmsh" ;
+char gmsh_copyright[] = "Copyright (C) 1997-2000 J.-F. Remacle, C. Geuzaine";
+char gmsh_version[]   = "Version          : " ;
+char gmsh_os[]        = "Operating System : " GMSH_OS ;
+char gmsh_date[]      = "Build Date       : " GMSH_DATE ;
+char gmsh_host[]      = "Build Host       : " GMSH_HOST ;
+char gmsh_packager[]  = "Packager         : " GMSH_PACKAGER ;
+char gmsh_email[]     = "E-Mail           : " GMSH_EMAIL ;
+char gmsh_url[]       = "URL              : " GMSH_URL ;
 
 char *TheFileNameTab[MAX_OPEN_FILES], *TheBgmFileName=NULL;
 char  ThePathForIncludes[NAME_STR_L];
@@ -334,10 +346,18 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	      !strcmp(argv[i]+1, "bg")){
 	i+=2;
       }
+      else if(!strcmp(argv[i]+1, "v")){  
+	i++;
+	if(argv[i]!=NULL){
+	  CTX.verbosity = atoi(argv[i]); i++;
+	}
+	else {	  
+	  fprintf(stderr, "Error: Missing Number\n");
+	  exit(1);
+	}
+      }
       else if(!strcmp(argv[i]+1, "version") || 
-	      !strcmp(argv[i]+1, "v") ||
-	      !strcmp(argv[i]+1, "-version") || 
-	      !strcmp(argv[i]+1, "-v")){
+	      !strcmp(argv[i]+1, "-version")){
 	Info(2,argv[0]); 
       }
       else if(!strcmp(argv[i]+1, "info") || 
@@ -345,9 +365,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	Info(1,argv[0]); 
       }
       else if(!strcmp(argv[i]+1, "help") || 
-	      !strcmp(argv[i]+1, "h") || 
-	      !strcmp(argv[i]+1, "-help") || 
-	      !strcmp(argv[i]+1, "-h")){
+	      !strcmp(argv[i]+1, "-help")){
 	Info(0,argv[0]);
       }
       else{

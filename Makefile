@@ -115,6 +115,8 @@ tag:
 	echo "#define GMSH_HOST     \"`hostname`\""  >> Common/Version.h
 	echo "#define GMSH_PACKAGER \"`logname`\""   >> Common/Version.h
 	echo "#define GMSH_OS       \"`uname -sr`\"" >> Common/Version.h
+	echo "#define GMSH_URL      \"http://www.geuz.org/gmsh/\"" >> Common/Version.h
+	echo "#define GMSH_EMAIL    \"Christophe.Geuzaine@ulg.ac.be, Remacle@scorec.rpi.edu\"" >> Common/Version.h
 
 initialtag:
 	@if [ ! -r Common/Version.h ]; then \

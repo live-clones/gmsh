@@ -1,4 +1,4 @@
-/* $Id: CbFile.cpp,v 1.3 2000-11-23 14:11:40 geuzaine Exp $ */
+/* $Id: CbFile.cpp,v 1.4 2000-11-23 16:51:30 geuzaine Exp $ */
 
 #include <unistd.h>
 
@@ -71,12 +71,11 @@ void CreateImage (FILE *fp) {
 
   switch(CTX.print.type){
     
-  case XDUMP :    
+  case PRINT_XDUMP :    
     switch(CTX.print.format){
     case FORMAT_XPM :
       Window_Dump(XCTX.display, XCTX.scrnum, XtWindow(WID.G.glw), fp);    
       break;
-    case FORMAT_PS :
     case FORMAT_EPS :
       tmp = fopen(tmpFileName,"w");
       Window_Dump(XCTX.display, XCTX.scrnum, XtWindow(WID.G.glw), tmp);
@@ -90,21 +89,20 @@ void CreateImage (FILE *fp) {
     Msg(INFOS, "X image dump complete: '%s'", KeepFileName);
     break ;
 
-  case GIF :
+  case PRINT_GL2GIF :
     create_gif(fp, CTX.viewport[2]-CTX.viewport[0],
 	       CTX.viewport[3]-CTX.viewport[1]);
     Msg(INFOS, "GIF dump complete: '%s'", KeepFileName);
     break;
 
-  case GLPRPAINTER :
-  case GLPRRECURSIVE :
+  case PRINT_GL2PS_SIMPLE :
+  case PRINT_GL2PS_RECURSIVE :
     size3d = 0 ;
     res = GL2PS_OVERFLOW ;
     while(res == GL2PS_OVERFLOW){
       size3d += 1024*1024 ;
       gl2psBeginPage(TheBaseFileName, "Gmsh", 
-		     (CTX.print.type == GLPRPAINTER ? 
-		      GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT),
+		     (CTX.print.type == PRINT_GL2PS_SIMPLE ? GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT),
 		     GL2PS_SIMPLE_LINE_OFFSET | GL2PS_DRAW_BACKGROUND,
 		     GL_RGBA, 0, NULL, size3d, fp);
       CTX.stream = TO_FILE ;

@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.3 2000-11-23 14:11:41 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.4 2000-11-23 16:51:30 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -680,14 +680,6 @@ void CreateWidgets_FD(Widgets_T *w){
   w->FD.printButt[3] = XmCreatePushButton(w->FD.printPane[0], "MprintButt3", arg, i);
   XtManageChild(w->FD.printButt[3]);
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("EPS (GLPr)")); i++;
-  w->FD.printButt[4] = XmCreatePushButton(w->FD.printPane[0], "MprintButt4", arg, i);
-  XtManageChild(w->FD.printButt[4]);
-  i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("EPS Bitmap (GLPr)")); i++;
-  w->FD.printButt[5] = XmCreatePushButton(w->FD.printPane[0], "MprintButt5", arg, i);
-  XtManageChild(w->FD.printButt[5]);
-  i=0;
 
   XtSetArg(arg[i], XmNsubMenuId, w->FD.printPane[0]); i++;
   XtSetArg(arg[i], XmNspacing, 0); i++;
@@ -717,11 +709,6 @@ void CreateWidgets_FD(Widgets_T *w){
   w->FD.printMenu[1] = XmCreateOptionMenu(w->FD.printRowCol, "FDprintMenu1", arg, i);
   XtManageChild(w->FD.printMenu[1]);
   */
-
-#ifndef _GL_PRINT
-  XtSetSensitive(w->FD.printButt[4], 0);
-  XtSetSensitive(w->FD.printButt[5], 0);
-#endif
 
   tmp = XmFileSelectionBoxGetChild(w->FD.openDialog, XmDIALOG_HELP_BUTTON); 
   XtUnmanageChild(tmp);

@@ -1,4 +1,4 @@
-/* $Id: CbOptions.cpp,v 1.3 2000-11-23 14:11:41 geuzaine Exp $ */
+/* $Id: CbOptions.cpp,v 1.4 2000-11-23 16:51:30 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -112,14 +112,11 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
 
     /* print */
 
-  case OPTIONS_PRINT_XDUMP        : CTX.print.type = XDUMP; CTX.print.format = FORMAT_XPM; break;
-  case OPTIONS_PRINT_GIF          : CTX.print.type = GIF; CTX.print.format = FORMAT_GIF; break;
-  case OPTIONS_PRINT_GLPPAINTER   : CTX.print.type = GLPPAINTER; CTX.print.format = FORMAT_EPS; break;
-  case OPTIONS_PRINT_GLPRECURSIVE : CTX.print.type = GLPRECURSIVE; CTX.print.format = FORMAT_EPS; break;
-  case OPTIONS_PRINT_GLPIMAGE     : CTX.print.type = GLPIMAGE; CTX.print.format = FORMAT_EPS; break;
-  case OPTIONS_PRINT_GL2PS_SIMPLE : CTX.print.type = GLPRPAINTER; CTX.print.format = FORMAT_EPS;break;
-  case OPTIONS_PRINT_GL2PS_COMPLEX: CTX.print.type = GLPRRECURSIVE; CTX.print.format = FORMAT_EPS;break;
-  case OPTIONS_PRINT_GL2PS_IMAGE  : CTX.print.type = XDUMP; CTX.print.format = FORMAT_EPS;break;
+  case OPTIONS_PRINT_XDUMP        : CTX.print.type = PRINT_XDUMP; CTX.print.format = FORMAT_XPM; break;
+  case OPTIONS_PRINT_GL2GIF       : CTX.print.type = PRINT_GL2GIF; CTX.print.format = FORMAT_GIF; break;
+  case OPTIONS_PRINT_GL2PS_SIMPLE : CTX.print.type = PRINT_GL2PS_SIMPLE; CTX.print.format = FORMAT_EPS;break;
+  case OPTIONS_PRINT_GL2PS_COMPLEX: CTX.print.type = PRINT_GL2PS_RECURSIVE; CTX.print.format = FORMAT_EPS;break;
+  case OPTIONS_PRINT_GL2PS_IMAGE  : CTX.print.type = PRINT_XDUMP; CTX.print.format = FORMAT_EPS;break;
 
     /* geometrie */
 

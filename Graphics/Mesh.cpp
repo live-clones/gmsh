@@ -1,4 +1,4 @@
-/* $Id: Mesh.cpp,v 1.4 2000-11-23 16:07:11 geuzaine Exp $ */
+/* $Id: Mesh.cpp,v 1.5 2000-11-23 16:51:29 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -342,7 +342,7 @@ void Draw_Simplex_Surfaces (void *a, void *b){
   Simplex **s;
   double X[4],Y[4],Z[4],Xc,Yc,Zc,pX[8],pY[8],pZ[8];
   double x1x0, y1y0, z1z0, x2x0, y2y0, z2z0, n[3], m[3], mm;
-  int i,j,K,L,k,special;
+  int i,j,K,L,k;
   char Num[256];
   
   s = (Simplex**)a;
@@ -438,12 +438,6 @@ void Draw_Simplex_Surfaces (void *a, void *b){
 
   if(CTX.mesh.surfaces){
 
-    special =
-      CTX.mesh.hidden &&
-      CTX.stream == TO_FILE &&
-      (CTX.print.type == GLPPAINTER || CTX.print.type == GLPRECURSIVE) ;
-    
-    
     if (CTX.mesh.hidden) { 
       glEnable(GL_POLYGON_OFFSET_FILL);
       glBegin(GL_POLYGON);
@@ -452,7 +446,7 @@ void Draw_Simplex_Surfaces (void *a, void *b){
       glDisable(GL_POLYGON_OFFSET_FILL);
     }
     
-    if(CTX.mesh.lines && !special){
+    if(CTX.mesh.lines){
       glColor4ubv((GLubyte*)&CTX.color.mesh.line);
       glBegin(GL_LINE_LOOP);
       for(i=0 ; i<K*(1+L) ; i++){

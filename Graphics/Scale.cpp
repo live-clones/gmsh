@@ -1,4 +1,4 @@
-/* $Id: Scale.cpp,v 1.2 2000-11-23 14:11:32 geuzaine Exp $ */
+/* $Id: Scale.cpp,v 1.3 2000-11-23 16:51:29 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -32,7 +32,8 @@ extern List_T   *Post_ViewList;
 void Draw_String(char *s){
 
   if(CTX.stream == TO_FILE){
-    if(CTX.print.type == GLPRPAINTER || CTX.print.type == GLPRRECURSIVE) {
+    if(CTX.print.type == PRINT_GL2PS_SIMPLE ||
+       CTX.print.type == PRINT_GL2PS_RECURSIVE) {
       gl2psText(s,CTX.post.font,CTX.post.fontsize);
       return ;
     }

@@ -1,4 +1,4 @@
-/* $Id: CbOptions.h,v 1.3 2000-11-23 14:11:41 geuzaine Exp $ */
+/* $Id: CbOptions.h,v 1.4 2000-11-23 16:51:30 geuzaine Exp $ */
 #ifndef _CB_OPTIONS_H_
 #define _CB_OPTIONS_H_
 
@@ -96,12 +96,9 @@
 /* options print */
 
 #define  OPTIONS_PRINT_XDUMP                    400
-#define  OPTIONS_PRINT_GLPPAINTER               401
-#define  OPTIONS_PRINT_GLPRECURSIVE             402
-#define  OPTIONS_PRINT_GLPIMAGE                 403
-#define  OPTIONS_PRINT_GL2PS_SIMPLE             404
-#define  OPTIONS_PRINT_GL2PS_COMPLEX            405
-#define  OPTIONS_PRINT_GL2PS_IMAGE              406
-#define  OPTIONS_PRINT_GIF                      407
+#define  OPTIONS_PRINT_GL2PS_SIMPLE             401
+#define  OPTIONS_PRINT_GL2PS_COMPLEX            402
+#define  OPTIONS_PRINT_GL2PS_IMAGE              403
+#define  OPTIONS_PRINT_GL2GIF                   404
 					     
 #endif

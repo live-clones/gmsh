@@ -1,4 +1,4 @@
-/* $Id: Register.cpp,v 1.3 2000-11-23 14:11:41 geuzaine Exp $ */
+/* $Id: Register.cpp,v 1.4 2000-11-23 16:51:30 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -151,14 +151,7 @@ void RegisterCallbacks_FD(Widgets_T *w){
   register_activate_cb (w->FD.printButt[0],    OptionsCb, OPTIONS_PRINT_GL2PS_SIMPLE);
   register_activate_cb (w->FD.printButt[1],    OptionsCb, OPTIONS_PRINT_GL2PS_COMPLEX);
   register_activate_cb (w->FD.printButt[2],    OptionsCb, OPTIONS_PRINT_XDUMP);
-  register_activate_cb (w->FD.printButt[3],    OptionsCb, OPTIONS_PRINT_GIF);
-  register_activate_cb (w->FD.printButt[4],    OptionsCb, OPTIONS_PRINT_GLPRECURSIVE);
-  register_activate_cb (w->FD.printButt[5],    OptionsCb, OPTIONS_PRINT_GLPIMAGE);
-  /*
-  register_activate_cb (w->FD.printButt[6],    OptionsCb, OPTIONS_PRINT_XPM);
-  register_activate_cb (w->FD.printButt[7],    OptionsCb, OPTIONS_PRINT_PS);
-  register_activate_cb (w->FD.printButt[8],    OptionsCb, OPTIONS_PRINT_EPS);
-  */
+  register_activate_cb (w->FD.printButt[3],    OptionsCb, OPTIONS_PRINT_GL2GIF);
 }
 
 void RegisterCallbacks_OD(Widgets_T *w){

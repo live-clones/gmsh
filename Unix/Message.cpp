@@ -1,4 +1,4 @@
-/* $Id: Message.cpp,v 1.3 2000-11-23 14:11:41 geuzaine Exp $ */
+/* $Id: Message.cpp,v 1.4 2000-11-23 16:51:30 geuzaine Exp $ */
 
 #include <signal.h>
 #include <sys/resource.h>
@@ -47,6 +47,7 @@ char clargs[]    =
   "  -flash                allow colormap flashing\n"
   "  -samevisual           force same visual for OpenGL and GUI\n"
   "Other options:\n"	  
+  "  -v int                set verbosity level (default: 2)\n"
   "  -threads              enable threads\n"
   "  -path string          path for included files\n"
   "  -version              show version number\n"
@@ -121,6 +122,9 @@ void Msg(int level, char *fmt, ...){
   int      abort=0;
   Arg      arg[2];
   int      nb, nbvis;
+
+  if(!CTX.verbosity && CTX.interactive && 
+     level != ERROR && level != PARSER_ERROR) return ;
 
   va_start (args, fmt);
 

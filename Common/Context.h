@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.3 2000-11-23 14:11:27 geuzaine Exp $ */
+/* $Id: Context.h,v 1.4 2000-11-23 16:51:28 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -51,6 +51,7 @@ typedef struct{
 typedef struct {
 
   int interactive;		/* 0=full gfx; -1=just parse; 1,2,3=batch mesh */
+  int verbosity;                /* 0=silent -> 3=debug */
   int expose;                   /* 1 if everything is ready to expose and draw */
 
   double r[3], t[3], s[3];	/* current rotation, translation and scale */

@@ -1,4 +1,4 @@
-/* $Id: Context.cpp,v 1.3 2000-11-23 14:11:27 geuzaine Exp $ */
+/* $Id: Context.cpp,v 1.4 2000-11-23 16:51:28 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -21,21 +21,21 @@ void InitColors(rgbacolors * col, int num){
   case 1 : /* alternative drawing colors: white background */
     switch(num){
     case 0 :
-      col->bg                 = PACK_COLOR(0,   0,   0,   255) ;
-      col->fg                 = PACK_COLOR(255, 255, 255, 255) ;
-      col->text               = PACK_COLOR(255, 255, 255, 255) ;
-      col->axes               = PACK_COLOR(255, 255, 0,   255) ;
-      col->little_axes        = PACK_COLOR(255, 255, 255, 255) ;
-      break;
-    case 1 :
-      col->bg                 = PACK_COLOR(255, 255, 255, 255) ;
-      col->fg                 = PACK_COLOR(0,   0,   0,   255) ;
-      col->text               = PACK_COLOR(0,   0,   0,   255) ;
-      col->axes               = PACK_COLOR(128, 128, 128, 255) ;
-      col->little_axes        = PACK_COLOR(0,   0,   0,   255) ;
+      col->bg               = PACK_COLOR(0,   0,   0,   255) ;
+      col->fg               = PACK_COLOR(255, 255, 255, 255) ;
+      col->text             = PACK_COLOR(255, 255, 255, 255) ;
+      col->axes             = PACK_COLOR(255, 255, 0,   255) ;
+      col->little_axes      = PACK_COLOR(255, 255, 255, 255) ;
+      break;		  
+    case 1 :		  
+      col->bg               = PACK_COLOR(255, 255, 255, 255) ;
+      col->fg               = PACK_COLOR(0,   0,   0,   255) ;
+      col->text             = PACK_COLOR(0,   0,   0,   255) ;
+      col->axes             = PACK_COLOR(128, 128, 128, 255) ;
+      col->little_axes      = PACK_COLOR(0,   0,   0,   255) ;
       break;
     }
-    col->geom.point         = PACK_COLOR(178,   182, 129,   255) ;
+    col->geom.point         = PACK_COLOR(178, 182, 129, 255) ;
     col->geom.line          = PACK_COLOR(0,   0,   255, 255) ;
     col->geom.surface       = PACK_COLOR(128, 128, 128, 255) ;
     col->geom.volume        = PACK_COLOR(128, 128, 128, 255) ;
@@ -128,44 +128,40 @@ void InitColors(rgbacolors * col, int num){
 
 void InitContext(Context_T *ctx){
 
-  ctx->interactive       = 0 ;
-  ctx->expose            = 0 ;
+  ctx->interactive  = 0 ;
+  ctx->verbosity    = 2 ;
+  ctx->expose       = 0 ;
 
-  ctx->r[0]              = 0.0 ;
-  ctx->r[1]              = 0.0 ;
-  ctx->r[2]              = 0.0 ;
-  ctx->t[0]              = 0.0 ;
-  ctx->t[1]              = 0.0 ;
-  ctx->t[2]              = 0.0 ;
-  ctx->s[0]              = 1.0 ;
-  ctx->s[1]              = 1.0 ;
-  ctx->s[2]              = 1.0 ;
+  ctx->r[0]  = 0.0 ;
+  ctx->r[1]  = 0.0 ;
+  ctx->r[2]  = 0.0 ;
+  ctx->t[0]  = 0.0 ;
+  ctx->t[1]  = 0.0 ;
+  ctx->t[2]  = 0.0 ;
+  ctx->s[0]  = 1.0 ;
+  ctx->s[1]  = 1.0 ;
+  ctx->s[2]  = 1.0 ;
 
-  ctx->min[0]          = 0.0 ;
-  ctx->min[1]          = 0.0 ;
-  ctx->min[2]          = 0.0 ;
-  ctx->max[0]          = 0.0 ;
-  ctx->max[1]          = 0.0 ;
-  ctx->max[2]          = 0.0 ;
-  ctx->range[0]          = 0.0 ;
-  ctx->range[1]          = 0.0 ;
-  ctx->range[2]          = 0.0 ;
+  ctx->min[0]     = 0.0 ;
+  ctx->min[1]     = 0.0 ;
+  ctx->min[2]     = 0.0 ;
+  ctx->max[0]     = 0.0 ;
+  ctx->max[1]     = 0.0 ;
+  ctx->max[2]     = 0.0 ;
+  ctx->range[0]   = 0.0 ;
+  ctx->range[1]   = 0.0 ;
+  ctx->range[2]   = 0.0 ;
 
-  ctx->viewport[0]       = 0 ;
-  ctx->viewport[1]       = 0 ;
-  ctx->viewport[2]       = 1 ;
-  ctx->viewport[3]       = 1 ;
-  ctx->render_mode       = GMSH_RENDER ;
-  ctx->pixel_equiv_x     = 0. ;
-  ctx->pixel_equiv_y     = 0. ; 
+  ctx->viewport[0]    = 0 ;
+  ctx->viewport[1]    = 0 ;
+  ctx->viewport[2]    = 1 ;
+  ctx->viewport[3]    = 1 ;
+  ctx->render_mode    = GMSH_RENDER ;
+  ctx->pixel_equiv_x  = 0. ;
+  ctx->pixel_equiv_y  = 0. ; 
 
-#ifdef _UNIX
   ctx->font_string          = "-*-helvetica-medium-r-*-*-*-*-*-*-*-*-*-*";
   ctx->colorbar_font_string = "fixed";
-#else
-  ctx->font_string          = "dummy";
-  ctx->colorbar_font_string = "dummy";
-#endif
 
   ctx->light0[0]         = 0.5 ;
   ctx->light0[1]         = 0.3 ;
@@ -204,45 +200,45 @@ void InitContext(Context_T *ctx){
   ctx->geom.hidden       = 0 ;
   ctx->geom.shade        = 0 ;
 
-  ctx->mesh.vis_type     = 0 ;
-  ctx->mesh.draw         = 1 ;  
-  ctx->mesh.points       = 1 ;
-  ctx->mesh.lines        = 1 ;
-  ctx->mesh.surfaces     = 1 ;
-  ctx->mesh.volumes      = 1 ;
-  ctx->mesh.points_num   = 0 ;
-  ctx->mesh.lines_num    = 0 ;
-  ctx->mesh.surfaces_num = 0 ;
-  ctx->mesh.volumes_num  = 0 ;
-  ctx->mesh.normals      = 0.0 ;
-  ctx->mesh.tangents     = 0.0 ;  
-  ctx->mesh.explode      = 1.0 ;
-  ctx->mesh.hidden       = 0 ;  
-  ctx->mesh.shade        = 0 ;  
-  ctx->mesh.format       = FORMAT_MSH ;
-  ctx->mesh.nb_smoothing = 0 ;
-  ctx->mesh.algo         = DELAUNAY_OLDALGO ;
-  ctx->mesh.point_insertion = CENTER_CIRCCIRC;
-  ctx->mesh.speed_max    = 0 ;
-  ctx->mesh.degree       = 1 ;
-  ctx->mesh.limit_gamma  = 0.0 ;
-  ctx->mesh.limit_eta    = 0.0 ;
-  ctx->mesh.limit_rho    = 0.0 ;
-  ctx->mesh.dual         = 0 ;
-  ctx->mesh.interactive  = 0 ;
+  ctx->mesh.vis_type          = 0 ;
+  ctx->mesh.draw              = 1 ;  
+  ctx->mesh.points            = 1 ;
+  ctx->mesh.lines             = 1 ;
+  ctx->mesh.surfaces          = 1 ;
+  ctx->mesh.volumes           = 1 ;
+  ctx->mesh.points_num        = 0 ;
+  ctx->mesh.lines_num         = 0 ;
+  ctx->mesh.surfaces_num      = 0 ;
+  ctx->mesh.volumes_num       = 0 ;
+  ctx->mesh.normals           = 0.0 ;
+  ctx->mesh.tangents          = 0.0 ;  
+  ctx->mesh.explode           = 1.0 ;
+  ctx->mesh.hidden            = 0 ;  
+  ctx->mesh.shade             = 0 ;  
+  ctx->mesh.format            = FORMAT_MSH ;
+  ctx->mesh.nb_smoothing      = 0 ;
+  ctx->mesh.algo              = DELAUNAY_OLDALGO ;
+  ctx->mesh.point_insertion   = CENTER_CIRCCIRC;
+  ctx->mesh.speed_max         = 0 ;
+  ctx->mesh.degree            = 1 ;
+  ctx->mesh.limit_gamma       = 0.0 ;
+  ctx->mesh.limit_eta         = 0.0 ;
+  ctx->mesh.limit_rho         = 0.0 ;
+  ctx->mesh.dual              = 0 ;
+  ctx->mesh.interactive       = 0 ;
 
-  ctx->post.draw         = 1 ;
-  ctx->post.scales       = 1 ;
-  ctx->post.link         = 0 ;
-  ctx->post.font         = "Courier" ;
-  ctx->post.fontsize     = 12 ;
-  ctx->post.initial_visibility = 1 ;
-  ctx->post.initial_intervals = DRAW_POST_ISO ;
-  ctx->post.initial_nbiso = 15 ;
-  ctx->post.anim_delay    = 0 ;
+  ctx->post.draw                   = 1 ;
+  ctx->post.scales                 = 1 ;
+  ctx->post.link                   = 0 ;
+  ctx->post.font                   = "Courier" ;
+  ctx->post.fontsize               = 12 ;
+  ctx->post.initial_visibility     = 1 ;
+  ctx->post.initial_intervals      = DRAW_POST_ISO ;
+  ctx->post.initial_nbiso          = 15 ;
+  ctx->post.anim_delay             = 0 ;
 
-  ctx->print.type        = GLPRPAINTER ;
-  ctx->print.format      = FORMAT_EPS ;
+  ctx->print.type    = PRINT_GL2PS_SIMPLE ;
+  ctx->print.format  = FORMAT_EPS ;
 
   ctx->color.id = -1;
   InitColors(&ctx->color, 0) ;

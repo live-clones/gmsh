@@ -1,4 +1,4 @@
-/* $Id: Box.cpp,v 1.3 2000-11-23 14:11:26 geuzaine Exp $ */
+/* $Id: Box.cpp,v 1.4 2000-11-23 16:51:27 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -18,9 +18,16 @@ char *TheFileNameTab[MAX_OPEN_FILES];
 char *ThePathForIncludes=NULL, *TheBgmFileName=NULL;
 int   VERBOSE = 0 ;
 
-char progname[]  = "This is Gmsh (non-interactive)" ;
-char copyright[] = "Copyright (C) 1997-2000 C. Geuzaine, J.-F. Remacle" ;
-char clargs[]    = 
+char gmsh_progname[]  = "This is Gmsh (non-interactive)" ;
+char gmsh_copyright[] = "Copyright (C) 1997-2000 J.-F. Remacle, C. Geuzaine";
+char gmsh_version[]   = "Version          : " ;
+char gmsh_os[]        = "Operating System : " GMSH_OS ;
+char gmsh_date[]      = "Build Date       : " GMSH_DATE ;
+char gmsh_host[]      = "Build Host       : " GMSH_HOST ;
+char gmsh_packager[]  = "Packager         : " GMSH_PACKAGER ;
+char gmsh_email[]     = "E-Mail           : " GMSH_EMAIL ;
+char gmsh_url[]       = "URL              : " GMSH_URL ;
+char gmsh_help[]      = 
   "Usage: %s [options] [files]\n"
   "Mesh options:\n"
   "  -0                    parse input and exit\n"
@@ -284,19 +291,21 @@ int main(int argc, char *argv[]){
 void Info (int level, char *arg0){
   switch(level){
   case 0 :
-    fprintf(stderr, "%s\n", progname);
-    fprintf(stderr, "%s\n", copyright);
-    fprintf(stderr, clargs, arg0);
+    fprintf(stderr, "%s\n", gmsh_progname);
+    fprintf(stderr, "%s\n", gmsh_copyright);
+    fprintf(stderr, gmsh_help, arg0);
     exit(1);
   case 1:
     fprintf(stderr, "%g\n", GMSH_VERSION);
     exit(1) ; 
   case 2:
-    fprintf(stderr, "Version    : %g\n", GMSH_VERSION);
-    fprintf(stderr, "OS         : %s\n", GMSH_OS);
-    fprintf(stderr, "Build Date : %s\n", GMSH_DATE);
-    fprintf(stderr, "Build Host : %s\n", GMSH_HOST);
-    fprintf(stderr, "Packager   : %s\n", GMSH_PACKAGER);
+    fprintf(stderr, "%s%g\n", gmsh_version, GMSH_VERSION);
+    fprintf(stderr, "%s\n", gmsh_os);
+    fprintf(stderr, "%s\n", gmsh_date);
+    fprintf(stderr, "%s\n", gmsh_host);
+    fprintf(stderr, "%s\n", gmsh_packager);
+    fprintf(stderr, "%s\n", gmsh_email);
+    fprintf(stderr, "%s\n", gmsh_url);
     exit(1) ; 
   default :
     break;
