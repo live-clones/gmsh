@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.269 2004-02-07 01:28:50 geuzaine Exp $
+// $Id: GUI.cpp,v 1.270 2004-02-07 01:39:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3012,6 +3012,9 @@ void GUI::create_about_window()
     Fl_Return_Button *o = new Fl_Return_Button(width - BB - WB, height - BH - WB, BB, BH, "OK");
     o->callback(cancel_cb, (void *)about_window);
   }
+
+  about_window->position(m_window->x() + m_window->w() / 2 - width / 2,
+			 m_window->y());
 
   about_window->end();
 }
