@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.63 2003-12-07 20:32:47 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.64 2003-12-08 15:31:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -253,10 +253,10 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
                              NULL, -1, -1, 0., 1.);
             c->Dirty = 1;
             Tree_Add(M->Curves, &c);
-            addPhysicalGroup(M, MSH_PHYSICAL_LINE, Physical, abs(Elementary));
           }
           else
             c = *cc;
+	  addPhysicalGroup(M, MSH_PHYSICAL_LINE, Physical, abs(Elementary));
           break;
         case TRI1:
         case QUA1:
@@ -268,10 +268,10 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
             s = Create_Surface(Elementary, MSH_SURF_PLAN);
             s->Dirty = 1;
             Tree_Add(M->Surfaces, &s);
-            addPhysicalGroup(M, MSH_PHYSICAL_SURFACE, Physical, Elementary);
           }
           else
             s = *ss;
+	  addPhysicalGroup(M, MSH_PHYSICAL_SURFACE, Physical, Elementary);
           break;
         case TET1:
         case HEX1:
@@ -287,14 +287,10 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
             v = Create_Volume(Elementary, MSH_VOLUME);
             v->Dirty = 1;
             Tree_Add(M->Volumes, &v);
-            addPhysicalGroup(M, MSH_PHYSICAL_VOLUME, Physical, Elementary);
           }
           else
             v = *vv;
-          break;
-        default:
-	  // JF, why did you add this?
-	  addPhysicalGroup(M, MSH_PHYSICAL_POINT, Physical, Elementary);
+	  addPhysicalGroup(M, MSH_PHYSICAL_VOLUME, Physical, Elementary);
           break;
 	} 
 	
