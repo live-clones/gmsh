@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.33 2001-08-04 01:16:58 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.34 2001-08-04 03:35:32 geuzaine Exp $
 
 #include <unistd.h>
 #include "Gmsh.h"
@@ -55,6 +55,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -dl                   enable display lists");
   Msg(DIRECT, "  -noview               hide all views on startup");
   Msg(DIRECT, "  -link int             select link mode between views (default: 0)");
+  Msg(DIRECT, "  -smoothview           smooth views");
   Msg(DIRECT, "  -convert file file    convert an ascii view into a binary one");
   Msg(DIRECT, "Display options:");    
   Msg(DIRECT, "  -nodb                 disable double buffering");
@@ -381,10 +382,19 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	opt_general_default_plugins(0, GMSH_SET, 0); i++;
       }
       else if(!strcmp(argv[i]+1, "link")){ 
-        CTX.post.link = 2 ; i++;
+        i++ ;
+        if(argv[i]!=NULL)
+	  CTX.post.link = atoi(argv[i++]);
+        else{
+          fprintf(stderr, ERROR_STR "Missing number\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "fill")){ 
         opt_view_intervals_type(0, GMSH_SET, DRAW_POST_CONTINUOUS) ; i++;
+      }
+      else if(!strcmp(argv[i]+1, "smoothview")){ 
+	CTX.post.smooth=1; i++;
       }
       else if(!strcmp(argv[i]+1, "nbiso")){ 
         i++ ;

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.46 2001-08-03 21:27:20 geuzaine Exp $
+// $Id: Views.cpp,v 1.47 2001-08-04 03:35:32 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -725,12 +725,12 @@ void xyzv::update (int n, double *v){
     throw n;
   }
 
-  //if(n==3)printf("val(%d,%f,%f,%f) = %f %f %f\n",nboccurences,x,y,z,v[0],v[1],v[2]);
-
   double x1 = (double)(nboccurences)/ (double)(nboccurences + 1);
   double x2 = 1./(double)(nboccurences + 1);
   for(i=0;i<nbvals;i++)vals[i] = (x1 * vals[i] + x2 * v[i]);
   nboccurences++;
+
+  //printf("val(%d,%f,%f,%f) = %f\n",nboccurences,x,y,z,vals[0]);
 }
 
 // trop simple... If faudrait coder une structure qui tient compte des
@@ -759,6 +759,7 @@ public :
 };
 
 void smooth_list (List_T *SS ,
+		  double *min, double *max,
 		  int NbTimeStep,
 		  int nbvert,
 		  int nb, 
@@ -766,6 +767,9 @@ void smooth_list (List_T *SS ,
   double *x,*y,*z,*v;
   int i,j,k;
   double *vals = new double[NbTimeStep];
+  *min = 1.e200;
+  *max = -1.e200;
+
   for(i = 0 ; i < List_Nbr(SS) ; i+=nb){
     x = (double*)List_Pointer_Fast(SS,i);
     y = (double*)List_Pointer_Fast(SS,i+nbvert);
@@ -798,8 +802,13 @@ void smooth_list (List_T *SS ,
     for(j=0;j<nbvert;j++){
       xyzv xyz(x[j],y[j],z[j]);
       iter it = connectivities.find(xyz);
-      if(it != connectivities.end())
-	for(k=0;k<NbTimeStep;k++)v[j+k*nbvert] = (*it).vals[k];
+      if(it != connectivities.end()){
+	for(k=0;k<NbTimeStep;k++){
+	  v[j+k*nbvert] = (*it).vals[k];
+	  if(v[j+k*nbvert] < *min) *min = v[j+k*nbvert] ;
+	  if(v[j+k*nbvert] > *max) *max = v[j+k*nbvert] ;
+	}
+      }
     }
   } 
   delete [] vals;
@@ -813,14 +822,14 @@ void Post_View :: smooth (){
     mycont conSS;
     Msg(INFO,"Smoothing SS vector in a view ...");
     nb = List_Nbr(SS) / NbSS ;
-    smooth_list (SS , NbTimeStep, 4, nb, conSS);
+    smooth_list (SS , &Min, &Max, NbTimeStep, 4, nb, conSS);
     Msg(INFO,"...done");
   }
   if(NbST){
     mycont conST;
     Msg(INFO,"Smoothing ST vector in a view ...");
     nb = List_Nbr(ST) / NbST ;
-    smooth_list (ST , NbTimeStep, 3, nb, conST);
+    smooth_list (ST , &Min, &Max, NbTimeStep, 3, nb, conST);
     Msg(INFO,"...done");
   }
   
