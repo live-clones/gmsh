@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.26 2002-08-28 17:55:12 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.27 2002-08-28 21:40:06 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -288,8 +288,8 @@ void Colorbar_Window::redraw_range(int a, int b){
      fl_draw(    "move or rotate colormap", xx1,yy0+(i+1)*font_height); i++;
      fl_draw("up, down", xx0,yy0+(i+1)*font_height); 
      fl_draw(    "modify color curvature", xx1,yy0+(i+1)*font_height); i++;
-     //fl_draw("Ctrl+up, Ctrl+down", xx0,yy0+(i+1)*font_height); 
-     //fl_draw(    "modify alpha curvature", xx1,yy0+(i+1)*font_height); i++;
+     fl_draw("Ctrl+up, Ctrl+down", xx0,yy0+(i+1)*font_height); 
+     fl_draw(    "increase or decrease alpha channel", xx1,yy0+(i+1)*font_height); i++;
      fl_draw("i, Ctrl+i", xx0,yy0+(i+1)*font_height); 
      fl_draw(    "invert x or y range", xx1,yy0+(i+1)*font_height); i++;
      fl_draw("b, Ctrl+b", xx0,yy0+(i+1)*font_height); 
