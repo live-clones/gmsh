@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.262 2003-02-18 08:52:40 geuzaine Exp $
+# $Id: Makefile,v 1.263 2003-02-20 17:09:32 geuzaine Exp $
 
 include variables
 
@@ -38,7 +38,7 @@ variables: configure
 	@echo "********************************************************************"
 	@exit 1
 
-source:
+source-common:
 	rm -rf gmsh-${GMSH_RELEASE}
 	tar zcvf gmsh.tgz `ls README* */README* configure *.in Makefile */Makefile\
                            */*.[chyl] */*.[ch]pp */*.rc */*.res */*.r */*.ico */*.icns\
@@ -47,9 +47,15 @@ source:
 	mkdir gmsh-${GMSH_RELEASE}
 	cd gmsh-${GMSH_RELEASE} && tar zxvf ../gmsh.tgz
 	rm -f gmsh.tgz
-	cd gmsh-${GMSH_RELEASE} && rm -rf CVS */CVS */*/CVS */.globalrc\
-                                          NR ${GMSH_VERSION_FILE}
+
+source: source-common
+	cd gmsh-${GMSH_RELEASE} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
+           NR Triangle/triangle.*
 	tar zcvf gmsh-${GMSH_RELEASE}-source.tgz gmsh-${GMSH_RELEASE}
+
+source-nonfree: source-common
+	cd gmsh-${GMSH_RELEASE} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}
+	tar zcvf gmsh-${GMSH_RELEASE}-source-nonfree.tgz gmsh-${GMSH_RELEASE}
 
 parser:
 	cd Parser && ${MAKE} parser
