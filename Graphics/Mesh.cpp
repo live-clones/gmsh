@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.118 2005-01-01 19:35:29 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.119 2005-01-08 20:15:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -552,23 +552,6 @@ void Draw_Mesh_Line(void *a, void *b)
   }
 }
 
-void _normal3points(double x0, double y0, double z0,
-		    double x1, double y1, double z1,
-		    double x2, double y2, double z2,
-		    double n[3])
-{
-  double x1x0 = x1 - x0;
-  double y1y0 = y1 - y0;
-  double z1z0 = z1 - z0;
-  double x2x0 = x2 - x0;
-  double y2y0 = y2 - y0;
-  double z2z0 = z2 - z0;
-  n[0] = y1y0 * z2z0 - z1z0 * y2y0;
-  n[1] = z1z0 * x2x0 - x1x0 * z2z0;
-  n[2] = x1x0 * y2y0 - y1y0 * x2x0;
-  norme(n);
-}
-
 void _triFace(double x0, double y0, double z0,
 	      double x1, double y1, double z1,
 	      double x2, double y2, double z2)
@@ -576,7 +559,7 @@ void _triFace(double x0, double y0, double z0,
   double n[3], ns[3];
 
   if(CTX.mesh.light || (theSurface && preproNormals)){
-    _normal3points(x0, y0, z0, x1, y1, z1, x2, y2, z2, n);
+    normal3points(x0, y0, z0, x1, y1, z1, x2, y2, z2, n);
     if(theSurface && preproNormals){
       theSurface->normals->add(x0, y0, z0, n[0], n[1], n[2]);
       theSurface->normals->add(x1, y1, z1, n[0], n[1], n[2]);
@@ -628,9 +611,9 @@ void _quadFace(double *x, double *y, double *z,
   double n[3], ns[3];
 
   if(CTX.mesh.light || (theSurface && preproNormals)){
-    _normal3points(x[i0], y[i0], z[i0],
-		   x[i1], y[i1], z[i1],
-		   x[i2], y[i2], z[i2], n);
+    normal3points(x[i0], y[i0], z[i0],
+		  x[i1], y[i1], z[i1],
+		  x[i2], y[i2], z[i2], n);
     if(theSurface && preproNormals){
       theSurface->normals->add(x[i0], y[i0], z[i0], n[0], n[1], n[2]);
       theSurface->normals->add(x[i1], y[i1], z[i1], n[0], n[1], n[2]);
@@ -799,9 +782,9 @@ void Draw_Mesh_Triangle(void *a, void *b)
 
   if(theSurface && theSurface->TriVertexArray){
     if(preproNormals || theSurface->TriVertexArray->fill)
-      _normal3points(X[0], Y[0], Z[0], 
-		     X[1], Y[1], Z[1],
-		     X[2], Y[2], Z[2], n);
+     normal3points(X[0], Y[0], Z[0], 
+		   X[1], Y[1], Z[1],
+		   X[2], Y[2], Z[2], n);
     if(preproNormals){
       for(int i = 0; i < 3; i++)
 	theSurface->normals->add(X[i], Y[i], Z[i], n[0], n[1], n[2]);
@@ -878,9 +861,9 @@ void Draw_Mesh_Triangle(void *a, void *b)
   }
 
   if(CTX.mesh.normals) {
-    _normal3points(X[0], Y[0], Z[0], 
-		   X[1], Y[1], Z[1],
-		   X[2], Y[2], Z[2], n);
+    normal3points(X[0], Y[0], Z[0], 
+		  X[1], Y[1], Z[1],
+		  X[2], Y[2], Z[2], n);
     glColor4ubv((GLubyte *) & CTX.color.mesh.normals);
     n[0] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[0];
     n[1] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[1];
@@ -961,9 +944,9 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
 
   if(theSurface && theSurface->QuadVertexArray){
     if(preproNormals || theSurface->QuadVertexArray->fill)
-      _normal3points(X[0], Y[0], Z[0], 
-		     X[1], Y[1], Z[1],
-		     X[2], Y[2], Z[2], n);
+      normal3points(X[0], Y[0], Z[0], 
+		    X[1], Y[1], Z[1],
+		    X[2], Y[2], Z[2], n);
     if(preproNormals){
       for(int i = 0; i < 4; i++)
 	theSurface->normals->add(X[i], Y[i], Z[i], n[0], n[1], n[2]);
@@ -1041,9 +1024,9 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
 
   if(CTX.mesh.normals) {
     glColor4ubv((GLubyte *) & CTX.color.mesh.normals);
-    _normal3points(X[0], Y[0], Z[0], 
-		   X[1], Y[1], Z[1],
-		   X[2], Y[2], Z[2], n);
+    normal3points(X[0], Y[0], Z[0], 
+		  X[1], Y[1], Z[1],
+		  X[2], Y[2], Z[2], n);
     n[0] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[0];
     n[1] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[1];
     n[2] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[2];
@@ -1138,7 +1121,7 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
 	int b = trifaces_tetra[i][1];
 	int c = trifaces_tetra[i][2];
 	double n[3];
-	_normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
+	normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
 	theVolume->TriVertexArray->add(X[a], Y[a], Z[a], n[0], n[1], n[2], col);
 	theVolume->TriVertexArray->add(X[b], Y[b], Z[b], n[0], n[1], n[2], col);
 	theVolume->TriVertexArray->add(X[c], Y[c], Z[c], n[0], n[1], n[2], col);
@@ -1308,7 +1291,7 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
 	int c = quadfaces_hexa[i][2];
 	int d = quadfaces_hexa[i][3];
 	double n[3];
-	_normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
+	normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
 	theVolume->QuadVertexArray->add(X[a], Y[a], Z[a], n[0], n[1], n[2], col);
 	theVolume->QuadVertexArray->add(X[b], Y[b], Z[b], n[0], n[1], n[2], col);
 	theVolume->QuadVertexArray->add(X[c], Y[c], Z[c], n[0], n[1], n[2], col);
@@ -1493,7 +1476,7 @@ void Draw_Mesh_Prism(void *a, void *b)
 	int b = trifaces_prism[i][1];
 	int c = trifaces_prism[i][2];
 	double n[3];
-	_normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
+	normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
 	theVolume->TriVertexArray->add(X[a], Y[a], Z[a], n[0], n[1], n[2], col);
 	theVolume->TriVertexArray->add(X[b], Y[b], Z[b], n[0], n[1], n[2], col);
 	theVolume->TriVertexArray->add(X[c], Y[c], Z[c], n[0], n[1], n[2], col);
@@ -1507,7 +1490,7 @@ void Draw_Mesh_Prism(void *a, void *b)
 	int c = quadfaces_prism[i][2];
 	int d = quadfaces_prism[i][3];
 	double n[3];
-	_normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
+	normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
 	theVolume->QuadVertexArray->add(X[a], Y[a], Z[a], n[0], n[1], n[2], col);
 	theVolume->QuadVertexArray->add(X[b], Y[b], Z[b], n[0], n[1], n[2], col);
 	theVolume->QuadVertexArray->add(X[c], Y[c], Z[c], n[0], n[1], n[2], col);
@@ -1689,7 +1672,7 @@ void Draw_Mesh_Pyramid(void *a, void *b)
 	int b = trifaces_pyramid[i][1];
 	int c = trifaces_pyramid[i][2];
 	double n[3];
-	_normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
+	normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
 	theVolume->TriVertexArray->add(X[a], Y[a], Z[a], n[0], n[1], n[2], col);
 	theVolume->TriVertexArray->add(X[b], Y[b], Z[b], n[0], n[1], n[2], col);
 	theVolume->TriVertexArray->add(X[c], Y[c], Z[c], n[0], n[1], n[2], col);
@@ -1702,7 +1685,7 @@ void Draw_Mesh_Pyramid(void *a, void *b)
       int c = quadfaces_pyramid[0][2];
       int d = quadfaces_pyramid[0][3];
       double n[3];
-      _normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
+      normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
       theVolume->QuadVertexArray->add(X[a], Y[a], Z[a], n[0], n[1], n[2], col);
       theVolume->QuadVertexArray->add(X[b], Y[b], Z[b], n[0], n[1], n[2], col);
       theVolume->QuadVertexArray->add(X[c], Y[c], Z[c], n[0], n[1], n[2], col);

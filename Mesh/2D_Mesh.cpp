@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.70 2005-01-01 19:35:30 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.71 2005-01-08 20:15:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -858,11 +858,6 @@ void Maillage_Surface(void *data, void *dum)
     return;
   }
 
-  if(s->Typ == MSH_SURF_STL) {
-    Msg(GERROR, "Remeshing of STL surfaces is not implemented (yet)");
-    return;
-  }
-
   THESUPPORT = s->Support;
   THESURFACE = s;
 
@@ -875,7 +870,8 @@ void Maillage_Surface(void *data, void *dum)
 
   Msg(STATUS3, "Meshing surface %d", s->Num);
 
-  if(MeshTransfiniteSurface(s) ||
+  if(MeshDiscreteSurface(s) ||
+     MeshTransfiniteSurface(s) ||
      MeshEllipticSurface(s) ||
      MeshCylindricalSurface(s) ||
      MeshParametricSurface(s) ||

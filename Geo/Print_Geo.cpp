@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.33 2005-01-01 19:35:28 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.34 2005-01-08 20:15:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -24,7 +24,11 @@
 #include "Mesh.h"
 #include "Vertex.h"
 #include "CAD.h"
+#include "SmoothNormals.h"
+#include "Numeric.h"
 #include "Context.h"
+
+#include <map>
 
 FILE *FOUT;
 
@@ -143,16 +147,17 @@ void Print_Surface(void *a, void *b)
   int NUMLOOP = s->Num + 1000000;
 
   if(s->Typ != MSH_SURF_NURBS) {
-    fprintf(FOUT, "Line Loop (%d) = ", NUMLOOP);
-
-    for(i = 0; i < List_Nbr(s->Generatrices); i++) {
-      List_Read(s->Generatrices, i, &c);
-      if(i)
-        fprintf(FOUT, ", %d", c->Num);
-      else
-        fprintf(FOUT, "{%d", c->Num);
+    if(List_Nbr(s->Generatrices)){
+      fprintf(FOUT, "Line Loop (%d) = ", NUMLOOP);
+      for(i = 0; i < List_Nbr(s->Generatrices); i++) {
+	List_Read(s->Generatrices, i, &c);
+	if(i)
+	  fprintf(FOUT, ", %d", c->Num);
+	else
+	  fprintf(FOUT, "{%d", c->Num);
+      }
+      fprintf(FOUT, "};\n");
     }
-    fprintf(FOUT, "};\n");
   }
 
   switch (s->Typ) {
@@ -204,6 +209,131 @@ void Print_Surface(void *a, void *b)
     fprintf(FOUT, "}\n  Order %d %d;\n", s->OrderU, s->OrderV);
     break;
   }
+}
+
+void Print_Discrete_Surface(void *a, void *b)
+{
+  Surface *s = *(Surface **) a;
+  
+  // if we have a poly_rep, print it:
+
+  if(s->thePolyRep){
+    if(!List_Nbr(s->Generatrices))
+      fprintf(FOUT, "Discrete Surface (%d) = {%d, %d}\n", 
+	      s->Num, s->thePolyRep->num_points, s->thePolyRep->num_polys);
+    else
+      fprintf(FOUT, "Discrete Surface {%d} = {%d, %d}\n", 
+	      s->Num, s->thePolyRep->num_points, s->thePolyRep->num_polys);
+    
+    fprintf(FOUT, "{\n");
+    for(int i = 0; i < List_Nbr(s->thePolyRep->points_and_normals); i++){
+      if(i){
+	fprintf(FOUT, ",");
+	if(!(i%6)) fprintf(FOUT, "\n");
+      }
+      fprintf(FOUT, "%.16g", 
+	      *(double*)List_Pointer_Fast(s->thePolyRep->points_and_normals, i));
+    }
+    fprintf(FOUT, "}\n");
+    fprintf(FOUT, "{\n");    
+    for(int i = 0; i < List_Nbr(s->thePolyRep->polygons); i++){
+      if(i){
+	fprintf(FOUT, ",");
+	if(!(i%4)) fprintf(FOUT, "\n");
+      }
+      fprintf(FOUT, "%.16g", *(double*)List_Pointer_Fast(s->thePolyRep->polygons, i));
+    }
+    fprintf(FOUT, "};\n");
+    return;
+  }
+
+  // else, print the surface mesh:
+
+  if(s->Dirty || !Tree_Nbr(s->Vertices))
+    return;
+
+  List_T *verts = Tree2List(s->Vertices);  
+  List_T *tmp = Tree2List(s->Simplexes);
+  List_T *tris = Tree2List(s->SimplexesBase);
+  List_Copy(tmp, tris);
+  List_Delete(tmp);
+  List_T *quads = Tree2List(s->Quadrangles);
+
+  // compute smoothed normals
+  smooth_normals norms;
+  for(int i = 0; i < List_Nbr(tris); i++){
+    SimplexBase *t = *(SimplexBase**)List_Pointer(tris, i);
+    if(t->V[2]){
+      double n[3];
+      normal3points(t->V[0]->Pos.X, t->V[0]->Pos.Y, t->V[0]->Pos.Z,
+		    t->V[1]->Pos.X, t->V[1]->Pos.Y, t->V[1]->Pos.Z,
+		    t->V[2]->Pos.X, t->V[2]->Pos.Y, t->V[2]->Pos.Z, n);
+      norms.add(t->V[0]->Pos.X, t->V[0]->Pos.Y, t->V[0]->Pos.Z, n[0], n[1], n[2]);
+      norms.add(t->V[1]->Pos.X, t->V[1]->Pos.Y, t->V[1]->Pos.Z, n[0], n[1], n[2]);
+      norms.add(t->V[2]->Pos.X, t->V[2]->Pos.Y, t->V[2]->Pos.Z, n[0], n[1], n[2]);
+    }
+  }
+  for(int i = 0; i < List_Nbr(quads); i++){
+    Quadrangle *q = *(Quadrangle**)List_Pointer(quads, i);
+    double n[3];
+    normal3points(q->V[0]->Pos.X, q->V[0]->Pos.Y, q->V[0]->Pos.Z,
+		  q->V[1]->Pos.X, q->V[1]->Pos.Y, q->V[1]->Pos.Z,
+		  q->V[2]->Pos.X, q->V[2]->Pos.Y, q->V[2]->Pos.Z, n);
+    norms.add(q->V[0]->Pos.X, q->V[0]->Pos.Y, q->V[0]->Pos.Z, n[0], n[1], n[2]);
+    norms.add(q->V[1]->Pos.X, q->V[1]->Pos.Y, q->V[1]->Pos.Z, n[0], n[1], n[2]);
+    norms.add(q->V[2]->Pos.X, q->V[2]->Pos.Y, q->V[2]->Pos.Z, n[0], n[1], n[2]);
+  }
+
+  if(!List_Nbr(s->Generatrices))
+    fprintf(FOUT, "Discrete Surface (%d) = {%d, %d}\n", 
+	    s->Num, List_Nbr(verts), List_Nbr(tris)+List_Nbr(quads));
+  else
+    fprintf(FOUT, "Discrete Surface {%d} = {%d, %d}\n", 
+	    s->Num, List_Nbr(verts), List_Nbr(tris)+List_Nbr(quads));
+
+  // print nodes and create dense vertex numbering
+  fprintf(FOUT, "{\n");
+  map<int, int> nodes;
+  for(int i = 0; i < List_Nbr(verts); i++){
+    Vertex *v = *(Vertex**)List_Pointer(verts, i);
+    nodes[v->Num] = i;
+    double n[3] = {0.,0.,0.};
+    norms.get(v->Pos.X, v->Pos.Y, v->Pos.Z, n[0], n[1], n[2], 180.);
+    fprintf(FOUT, "  %.16g,%.16g,%.16g, %g,%g,%g", 
+	    v->Pos.X, v->Pos.Y, v->Pos.Z, n[0], n[1], n[2]);
+    if(i != List_Nbr(verts) - 1) 
+      fprintf(FOUT, ",\n");
+    else
+      fprintf(FOUT, "\n");
+  }
+  fprintf(FOUT, "}\n");
+  
+  // print polygons
+  fprintf(FOUT, "{\n");
+  for(int i = 0; i < List_Nbr(tris); i++){
+    SimplexBase *t = *(SimplexBase**)List_Pointer(tris, i);
+    if(t->V[2])
+      fprintf(FOUT, "  3, %d,%d,%d", 
+	      nodes[t->V[0]->Num], nodes[t->V[1]->Num], nodes[t->V[2]->Num]);
+    if(List_Nbr(quads) || i != List_Nbr(tris) - 1) 
+      fprintf(FOUT, ",\n");    
+    else
+      fprintf(FOUT, "\n");
+  }
+  for(int i = 0; i < List_Nbr(quads); i++){
+    Quadrangle *q = *(Quadrangle**)List_Pointer(quads, i);
+    fprintf(FOUT, "  4, %d,%d,%d,%d", nodes[q->V[0]->Num], nodes[q->V[1]->Num],
+	    nodes[q->V[2]->Num], nodes[q->V[3]->Num]);
+    if(i != List_Nbr(quads) - 1) 
+      fprintf(FOUT, ",\n");
+    else
+      fprintf(FOUT, "\n");
+  }
+  fprintf(FOUT, "};\n");
+  
+  List_Delete(verts);
+  List_Delete(tris);
+  List_Delete(quads);
 }
 
 void Print_Volume(void *a, void *b)
@@ -269,7 +399,7 @@ void Print_PhysicalGroups(void *a, void *b)
 
 }
 
-void Print_Geo(Mesh * M, char *filename)
+void Print_Geo(Mesh * M, char *filename, int discrete_surf)
 {
   if(filename) {
     FOUT = fopen(filename, "w");
@@ -285,6 +415,8 @@ void Print_Geo(Mesh * M, char *filename)
   Tree_Action(M->Points, Print_Point);
   Tree_Action(M->Curves, Print_Curve);
   Tree_Action(M->Surfaces, Print_Surface);
+  if(discrete_surf)
+    Tree_Action(M->Surfaces, Print_Discrete_Surface);
   Tree_Action(M->Volumes, Print_Volume);
   List_Action(M->PhysicalGroups, Print_PhysicalGroups);
 

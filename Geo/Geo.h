@@ -67,7 +67,6 @@
 #define MSH_SURF_TORUS       1399
 #define MSH_SURF_CONE        1499
 #define MSH_SURF_TRIMMED     1599
-#define MSH_SURF_STL         1699
 #define MSH_SURF_DISCRETE    1799
 
 #define MSH_VOLUME                   14

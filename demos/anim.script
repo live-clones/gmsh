@@ -81,9 +81,9 @@ If(format == MPEG)
   System 'echo "REFERENCE_FRAME  DECODED"         >> /tmp/tmp.par' ;
   System 'echo "OUTPUT      /tmp/animation.mpg"   >> /tmp/tmp.par' ;
   System 'echo "INPUT_CONVERT    *"               >> /tmp/tmp.par' ;
-  System 'echo "INPUT_DIR        ."               >> /tmp/tmp.par' ;
+  System 'echo "INPUT_DIR        /tmp"               >> /tmp/tmp.par' ;
   System 'echo "INPUT"                            >> /tmp/tmp.par' ;
-  System Sprintf('echo "/tmp/tmp*.jpg [001-%03g]" >> /tmp/tmp.par', index) ;
+  System Sprintf('echo "tmp*.jpg [001-%03g]" >> /tmp/tmp.par', index) ;
   System 'echo "END_INPUT"                        >> /tmp/tmp.par' ;
   // Call mpeg_encode
   System "mpeg_encode /tmp/tmp.par" ;

@@ -33,6 +33,7 @@ int gif_dialog(char *filename);
 int gl2ps_dialog(char *filename, char *title, int format, int TeX);
 int options_dialog(char *filename);
 int msh_dialog(char *filename);
+int geo_dialog(char *filename);
 
 #endif
 

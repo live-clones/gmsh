@@ -62,6 +62,10 @@ double myacos(double a);
 void prodve(double a[3], double b[3], double c[3]);
 void prosca(double a[3], double b[3], double *c);
 double norme(double a[3]);
+void normal3points(double x0, double y0, double z0,
+		   double x1, double y1, double z1,
+		   double x2, double y2, double z2,
+		   double n[3]);
 int sys2x2(double mat[2][2], double b[2], double res[2]);
 int sys3x3(double mat[3][3], double b[3], double res[3], double *det);
 int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det);

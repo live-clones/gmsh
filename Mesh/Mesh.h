@@ -27,7 +27,7 @@
 #include "Simplex.h"
 #include "Edge.h"
 #include "ExtrudeParams.h"
-#include "STL.h"
+#include "DiscreteSurface.h"
 #include "VertexArray.h"
 #include "SmoothNormals.h"
 
@@ -57,6 +57,7 @@
 #define FORMAT_PDF           24
 #define FORMAT_PDFTEX        25
 #define FORMAT_LC            26
+#define FORMAT_STL           27
 
 #define CONV_VALUE    0.8
 
@@ -247,7 +248,6 @@ struct _Surf{
   CylParam Cyl;
   Grid_T Grid;  // fast search grid
   ExtrudeParams *Extrude;
-  STL_Data *STL; // stl representation of the surface
   POLY_rep *thePolyRep;
   int Dirty; // flag to prevent any meshing
   DrawingColor Color;
@@ -437,7 +437,7 @@ void mai3d(Mesh *M, int Asked);
 
 void Init_Mesh(Mesh *M);
 void Create_BgMesh(int i, double d, Mesh *m);
-void Print_Geo(Mesh *M, char *c);
+void Print_Geo(Mesh *M, char *c, int discrete_surf=0);
 void Print_Mesh(Mesh *M, char *c, int Type);
 void Read_Mesh(Mesh *M, FILE *fp, char *filename, int Type);
 void GetStatistics(double s[50]);
@@ -462,6 +462,7 @@ int MeshTransfiniteVolume(Volume *vol);
 int MeshCylindricalSurface(Surface *s);
 int MeshParametricSurface(Surface *s);
 int MeshEllipticSurface(Surface *sur);
+int MeshDiscreteSurface(Surface *sur);
 
 int AlgorithmeMaillage2DAnisotropeModeJF(Surface *s);
 void Maillage_Automatique_VieuxCode(Surface *pS, Mesh *m, int ori);
@@ -498,5 +499,7 @@ void Eta_Maillage(Mesh *m, double *gamma, double *gammamax, double *gammamin);
 void R_Maillage(Mesh *m, double *gamma, double *gammamax, double *gammamin);
 void Mesh_Quality(Mesh *m);
 void Print_Histogram(int *h);
+
+void POLY_rep_To_Mesh(POLY_rep *prep, Surface *s);
 
 #endif

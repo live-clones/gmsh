@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.326 2005-01-03 07:03:02 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.327 2005-01-08 20:15:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -288,10 +288,19 @@ void file_new_cb(CALLBACK_ARGS)
   }
 }
 
+static char *file_types =
+  "*"
+  "\tGmsh geometry (*.geo)"
+  "\tGmsh mesh (*.msh)"
+  "\tGmsh post-processing view (*.pos)"
+  "\tSTL triangulation (*.stl)"
+  "\tPPM (*.ppm)"
+  "\tPNM (*.pnm)";
+
 void file_open_cb(CALLBACK_ARGS)
 {
   int n = List_Nbr(CTX.post.list);
-  if(file_chooser(0, 0, "Open", "*", 0)) {
+  if(file_chooser(0, 0, "Open", file_types, 0)) {
     OpenProblem(file_chooser_get_name(1));
     Draw();
   }
@@ -302,7 +311,7 @@ void file_open_cb(CALLBACK_ARGS)
 void file_merge_cb(CALLBACK_ARGS)
 {
   int n = List_Nbr(CTX.post.list);
-  int f = file_chooser(1, 0, "Merge", "*", 0);
+  int f = file_chooser(1, 0, "Merge", file_types, 0);
   if(f) {
     for(int i = 1; i <= f; i++)
       MergeProblem(file_chooser_get_name(i));
@@ -325,8 +334,7 @@ int _save_options(char *name)
 
 int _save_geo(char *name)
 {
-  CreateOutputFile(name, FORMAT_GEO);
-  return 1;
+  return geo_dialog(name);
 }
 
 int _save_msh(char *name)
@@ -355,6 +363,12 @@ int _save_unv(char *name)
 int _save_vrml(char *name)
 {
   CreateOutputFile(name, CTX.mesh.format = FORMAT_VRML);
+  return 1;
+}
+
+int _save_stl(char *name)
+{
+  CreateOutputFile(name, CTX.mesh.format = FORMAT_STL);
   return 1;
 }
 
@@ -447,6 +461,7 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"GREF mesh (*.gref)", _save_gref},
     {"I-DEAS universal mesh (*.unv)", _save_unv},
     {"VRML surface mesh (*.wrl)", _save_vrml},
+    {"STL triangulation (*.stl)", _save_stl},
     {"GIF (*.gif)", _save_gif},
 #if defined(HAVE_LIBJPEG)
     {"JPEG (*.jpg)", _save_jpeg},
@@ -2902,12 +2917,12 @@ void view_remove_cb(CALLBACK_ARGS)
   Draw();
 }
 
-void view_save_ascii_cb(CALLBACK_ARGS)
+static void _view_save_as(int view_num, char *title, int type)
 {
-  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
+  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, view_num);
   
  test:
-  if(file_chooser(0, 1, "Save As ASCII View", "*", 0, v->FileName)) {
+  if(file_chooser(0, 1, title, "*", 0, v->FileName)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
@@ -2915,42 +2930,33 @@ void view_save_ascii_cb(CALLBACK_ARGS)
         if(!fl_ask("%s already exists.\n\nDo you want to replace it?", name))
           goto test;
     }
-    WriteView(v, name, 0, 0);
+    WriteView(v, name, type, 0);
   }
+}
+
+void view_save_ascii_cb(CALLBACK_ARGS)
+{
+  _view_save_as((long)data, "Save As ASCII View", 0);
 }
 
 void view_save_binary_cb(CALLBACK_ARGS)
 {
-  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
-
- test:
-  if(file_chooser(0, 1, "Save As Binary View", "*", 0, v->FileName)) {
-    char *name = file_chooser_get_name(1);
-    if(CTX.confirm_overwrite) {
-      struct stat buf;
-      if(!stat(name, &buf))
-        if(!fl_ask("%s already exists.\n\nDo you want to replace it?", name))
-          goto test;
-    }
-    WriteView(v, name, 1, 0);
-  }
+  _view_save_as((long)data, "Save As Binary View", 1);
 }
 
 void view_save_parsed_cb(CALLBACK_ARGS)
 {
-  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
+  _view_save_as((long)data, "Save As Parsed View", 2);
+}
 
- test:
-  if(file_chooser(0, 1, "Save As Parsed View", "*", 0, v->FileName)) {
-    char *name = file_chooser_get_name(1);
-    if(CTX.confirm_overwrite) {
-      struct stat buf;
-      if(!stat(name, &buf))
-        if(!fl_ask("%s already exists.\n\nDo you want to replace it?", name))
-          goto test;
-    }
-    WriteView(v, name, 2, 0);
-  }
+void view_save_stl_cb(CALLBACK_ARGS)
+{
+  _view_save_as((long)data, "Save As STL Triangulation", 3);
+}
+
+void view_save_txt_cb(CALLBACK_ARGS)
+{
+  _view_save_as((long)data, "Save As Text", 4);
 }
 
 void view_duplicate_cb(CALLBACK_ARGS)

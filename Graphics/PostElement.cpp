@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.60 2005-01-01 19:35:29 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.61 2005-01-08 20:15:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -343,7 +343,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 {
   int nb = 0;
   double d;
-  double x1x0, y1y0, z1z0, x2x0, y2y0, z2z0, nn[3], norms[30];
+  double nn[3], norms[30];
   double Xp[10], Yp[10], Zp[10], Vp[10], Val[3];
   char Num[100];
 
@@ -367,16 +367,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
   if(preproNormals || View->Normals ||
      (View->Light && 
       (!View->TriVertexArray || (View->TriVertexArray && View->TriVertexArray->fill)))) {
-    x1x0 = X[1] - X[0];
-    y1y0 = Y[1] - Y[0];
-    z1z0 = Z[1] - Z[0];
-    x2x0 = X[2] - X[0];
-    y2y0 = Y[2] - Y[0];
-    z2z0 = Z[2] - Z[0];
-    nn[0] = y1y0 * z2z0 - z1z0 * y2y0;
-    nn[1] = z1z0 * x2x0 - x1x0 * z2z0;
-    nn[2] = x1x0 * y2y0 - y1y0 * x2x0;
-    norme(nn);
+    normal3points(X[0], Y[0], Z[0], X[1], Y[1], Z[1], X[2], Y[2], Z[2], nn);
   }
 
   if(!preproNormals && View->ShowElement)
@@ -1000,17 +991,8 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
   }
 
   if(View->Normals && (type == POST_TRIANGLE || type == POST_QUADRANGLE)){
-    double x1x0 = X[1] - X[0];
-    double y1y0 = Y[1] - Y[0];
-    double z1z0 = Z[1] - Z[0];
-    double x2x0 = X[2] - X[0];
-    double y2y0 = Y[2] - Y[0];
-    double z2z0 = Z[2] - Z[0];
     double nn[3];
-    nn[0] = y1y0 * z2z0 - z1z0 * y2y0;
-    nn[1] = z1z0 * x2x0 - x1x0 * z2z0;
-    nn[2] = x1x0 * y2y0 - y1y0 * x2x0;
-    norme(nn);
+    normal3points(X[0], Y[0], Z[0], X[1], Y[1], Z[1], X[2], Y[2], Z[2], nn);
     nn[0] *= View->Normals * CTX.pixel_equiv_x / CTX.s[0];
     nn[1] *= View->Normals * CTX.pixel_equiv_x / CTX.s[1];
     nn[2] *= View->Normals * CTX.pixel_equiv_x / CTX.s[2];

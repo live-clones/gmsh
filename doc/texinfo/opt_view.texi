@@ -116,7 +116,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.ColormapNumber
 Default colormap number@*
-Default value: @code{1}@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ColormapRotation

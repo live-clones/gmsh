@@ -22,6 +22,7 @@
 
 #include "xmath.h"
 #include <math.h>
+#include <stdlib.h>
 
 double
 x_ctan(double x)
@@ -87,4 +88,14 @@ x_actanh(double x)
    * Calculate inverse hyperbolic cotangent value.
    */
   return atanh(1 / x);
+}
+
+double
+x_rand(double x)
+{
+  /*
+   * Calculate random value in [0, x].
+   */
+  
+  return x*(double)rand()/(double)RAND_MAX;
 }

@@ -1,4 +1,4 @@
-/* $Id: GmshServer.cpp,v 1.24 2005-01-01 19:35:28 geuzaine Exp $ */
+/* $Id: GmshServer.cpp,v 1.25 2005-01-08 20:15:11 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
  *
@@ -90,7 +90,7 @@ int Gmsh_StartClient(char *command, char *sockname)
   static int init = 0;
   static int s;
   int sock;
-#if defined(linux) || defined(_AIX) || defined(__FreeBSD__)
+#if defined(linux) || defined(_AIX) || defined(__FreeBSD__) || defined(__sun__)
   socklen_t len;
 #else
   int len;
@@ -149,7 +149,7 @@ int Gmsh_StartClient(char *command, char *sockname)
 	return -1;  /* Error: Couldn't create socket */
       
       /* bind the socket to its name */
-      bzero((char *) &addr_in, sizeof(addr_in));
+      memset((char *) &addr_in, 0, sizeof(addr_in));
       addr_in.sin_family = AF_INET;
       addr_in.sin_addr.s_addr = INADDR_ANY;
       addr_in.sin_port = htons(portno);

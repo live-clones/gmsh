@@ -30,5 +30,6 @@ double x_asinh(double x);
 double x_acosh(double x);
 double x_atanh(double x);
 double x_actanh(double x);
+double x_rand(double x);
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.28 2005-01-01 19:35:39 geuzaine Exp $
+// $Id: Transform.cpp,v 1.29 2005-01-08 20:15:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -40,7 +40,7 @@ StringXNumber TransformOptions_Number[] = {
   {GMSH_FULLRC, "T1", NULL, 0.},
   {GMSH_FULLRC, "T2", NULL, 0.},
   {GMSH_FULLRC, "T3", NULL, 0.},
-  {GMSH_FULLRC, "swapOrientation", NULL, 0.},
+  {GMSH_FULLRC, "SwapOrientation", NULL, 0.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
@@ -75,7 +75,7 @@ void GMSH_TransformPlugin::getInfos(char *author, char *copyright,
          "[`A11' `A12' `A13' `T1']\n"
 	 "[`A21' `A22' `A23' `T2']\n"
 	 "[`A31' `A32' `A33' `T3'].\n"
-	 "If `swapOrientation' is set, the orientation of the\n"
+	 "If `SwapOrientation' is set, the orientation of the\n"
 	 "elements is reversed. If `iView' < 0, the plugin\n"
 	 "is run on the current view.\n"
 	 "\n"

@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.20 2005-01-01 19:35:32 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.21 2005-01-08 20:15:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -115,6 +115,17 @@ double norme(double a[3])
     a[2] /= mod;
   }
   return mod;
+}
+
+void normal3points(double x0, double y0, double z0,
+		   double x1, double y1, double z1,
+		   double x2, double y2, double z2,
+		   double n[3])
+{
+  double t1[3] = {x1 - x0, y1 - y0, z1 - z0};
+  double t2[3] = {x2 - x0, y2 - y0, z2 - z0};
+  prodve(t1, t2, n);
+  norme(n);
 }
 
 int sys2x2(double mat[2][2], double b[2], double res[2])

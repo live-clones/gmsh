@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.8 2005-01-01 19:35:38 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.9 2005-01-08 20:15:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -32,16 +32,16 @@
 extern Context_T CTX;
 
 StringXNumber CutParametricOptions_Number[] = {
-  {GMSH_FULLRC, "minU", NULL, 0.},
-  {GMSH_FULLRC, "maxU", NULL, 2*M_PI},
+  {GMSH_FULLRC, "MinU", NULL, 0.},
+  {GMSH_FULLRC, "MaxU", NULL, 2*M_PI},
   {GMSH_FULLRC, "nPointsU", NULL, 360.},
-  //{GMSH_FULLRC, "minV", NULL, 0.},
-  //{GMSH_FULLRC, "maxV", NULL, 1.},
+  //{GMSH_FULLRC, "MinV", NULL, 0.},
+  //{GMSH_FULLRC, "MaxV", NULL, 1.},
   //{GMSH_FULLRC, "nPointsV", NULL, 0.},
-  //{GMSH_FULLRC, "minW", NULL, 0.},
-  //{GMSH_FULLRC, "maxW", NULL, 1.},
+  //{GMSH_FULLRC, "MinW", NULL, 0.},
+  //{GMSH_FULLRC, "MaxW", NULL, 1.},
   //{GMSH_FULLRC, "nPointsW", NULL, 0.},
-  {GMSH_FULLRC, "connectPoints", NULL, 0.},
+  {GMSH_FULLRC, "ConnectPoints", NULL, 0.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
@@ -79,10 +79,11 @@ void GMSH_CutParametricPlugin::getInfos(char *author, char *copyright,
          "Plugin(CutParametric) cuts a triangle/tetrahedron\n"
 	 "scalar view `iView' with the parametric function\n"
 	 "(`X'(u), `Y'(u), `Z'(u)), using `nPointsU' values of\n"
-	 "the parameter u in [`minU', `maxU']. If `connect'\n"
-	 "is set, the plugin creates scalar line elements;\n"
-	 "otherwise, the plugin generates scalar points. If\n"
-	 "`iView' < 0, the plugin is run on the current view.\n"
+	 "the parameter u in [`MinU', `MaxU']. If\n"
+	 "`ConnectPoints' is set, the plugin creates scalar\n"
+	 "line elements; otherwise, the plugin generates\n"
+	 "scalar points. If `iView' < 0, the plugin is run on\n"
+	 "the current view.\n"
 	 "\n"
 	 "Plugin(CutParametric) creates one new view.\n");
 }

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.76 2005-01-03 04:09:27 geuzaine Exp $
+# $Id: Makefile,v 1.77 2005-01-08 20:15:19 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -81,9 +81,10 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   Smooth.h Transform.h Triangulate.h SphericalRaise.h DisplacementRaise.h \
   StructuralSolver.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
   ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ../Common/GmshUI.h Eigenvectors.h Lambda2.h ../Numeric/Numeric.h \
-  Evaluate.h Probe.h ../Common/Context.h
+  ../Geo/ExtrudeParams.h ../Mesh/DiscreteSurface.h ../Mesh/Metric.h \
+  ../Mesh/Matrix.h ../Common/GmshUI.h Eigenvectors.h Lambda2.h \
+  ../Numeric/Numeric.h Evaluate.h OctreePost.h Octree.h OctreeInternals.h \
+  Probe.h ../Common/Context.h
 Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
@@ -97,8 +98,8 @@ CutPlane.o: CutPlane.cpp CutPlane.h Levelset.h Plugin.h \
   ../Common/AdaptiveViews.h ../Common/Context.h ../Common/GmshUI.h \
   ../Graphics/Draw.h ../Mesh/Mesh.h ../DataStr/Tree.h ../DataStr/avl.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/DiscreteSurface.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h
 CutSphere.o: CutSphere.cpp CutSphere.h Levelset.h Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
@@ -106,8 +107,8 @@ CutSphere.o: CutSphere.cpp CutSphere.h Levelset.h Plugin.h \
   ../Common/AdaptiveViews.h ../Common/Context.h ../Common/GmshUI.h \
   ../Graphics/Draw.h ../Mesh/Mesh.h ../DataStr/Tree.h ../DataStr/avl.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/DiscreteSurface.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h
 CutMap.o: CutMap.cpp CutMap.h Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
@@ -148,8 +149,8 @@ StreamLines.o: StreamLines.cpp OctreePost.h Octree.h OctreeInternals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/Context.h \
   ../Common/GmshUI.h ../Graphics/Draw.h ../Mesh/Mesh.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
-  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h
+  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/DiscreteSurface.h ../Mesh/Metric.h ../Mesh/Matrix.h
 CutGrid.o: CutGrid.cpp OctreePost.h Octree.h OctreeInternals.h CutGrid.h \
   Plugin.h ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
@@ -157,8 +158,8 @@ CutGrid.o: CutGrid.cpp OctreePost.h Octree.h OctreeInternals.h CutGrid.h \
   ../Common/AdaptiveViews.h ../Common/Context.h ../Common/GmshUI.h \
   ../Graphics/Draw.h ../Mesh/Mesh.h ../DataStr/Tree.h ../DataStr/avl.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/DiscreteSurface.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h
 Transform.o: Transform.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
@@ -172,8 +173,8 @@ Triangulate.o: Triangulate.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/AdaptiveViews.h Triangulate.h ../Common/Context.h \
   ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
   ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
-  ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h ../Mesh/Utils.h \
-  ../Mesh/Create.h
+  ../Mesh/DiscreteSurface.h ../Mesh/Metric.h ../Mesh/Matrix.h \
+  ../Mesh/Utils.h ../Mesh/Create.h
 SphericalRaise.o: SphericalRaise.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
@@ -187,7 +188,7 @@ DisplacementRaise.o: DisplacementRaise.cpp Plugin.h ../Common/Options.h \
 StructuralSolver.o: StructuralSolver.cpp StructuralSolver.h ../Geo/Geo.h \
   ../DataStr/List.h ../Mesh/Mesh.h ../DataStr/Tree.h ../DataStr/avl.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/DiscreteSurface.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
   ../Mesh/Matrix.h Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/GmshMatrix.h \
@@ -215,7 +216,8 @@ Evaluate.o: Evaluate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h Evaluate.h \
-  ../Common/Context.h ../Numeric/Numeric.h
+  OctreePost.h Octree.h OctreeInternals.h ../Common/Context.h \
+  ../Numeric/Numeric.h
 Integrate.o: Integrate.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
@@ -228,8 +230,9 @@ Annotate.o: Annotate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Context.h ../Numeric/Numeric.h ../Common/GmshUI.h \
   ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Mesh/Mesh.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
-  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h ../Fltk/Colorbar_Window.h
+  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/DiscreteSurface.h ../Mesh/Metric.h ../Mesh/Matrix.h \
+  ../Fltk/Colorbar_Window.h
 Remove.o: Remove.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
@@ -241,9 +244,9 @@ Probe.o: Probe.cpp Probe.h Plugin.h ../Common/Options.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/Context.h \
   ../Common/GmshUI.h ../Graphics/Draw.h ../Mesh/Mesh.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
-  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h OctreePost.h Octree.h \
-  OctreeInternals.h
+  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/DiscreteSurface.h ../Mesh/Metric.h ../Mesh/Matrix.h \
+  OctreePost.h Octree.h OctreeInternals.h
 HarmonicToTime.o: HarmonicToTime.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \

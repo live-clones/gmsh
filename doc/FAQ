@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.48 2004-12-31 04:04:51 geuzaine Exp $
+$Id: FAQ,v 1.49 2005-01-08 20:15:21 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -199,6 +199,15 @@ the mesh menu after the mesh is completed. To always generate 2nd
 order elements, select 'Generate second order elements' in the mesh
 option panel. From the command line, you can also use '-order 2'.
 
+* 5.10 Can I import an existing surface mesh in Gmsh and use it to
+build a 3D mesh?
+
+Yes, either in the form of a STL triangulation, or by using the
+"Discrete Surface" commands. Note that Gmsh cannot currently modify
+the surface mesh you provide in this way, so the surface mesh has to
+be conform (without gaps, hanging nodes, etc.) and must contain
+surface elements having the (final) desired sizes.
+
 ********************************************************************
 
 Section 6: Solver module
@@ -244,7 +253,17 @@ Section 7: Post-processing module
 
 Use 'View->Plugins->Cut Plane'.
 
-* 7.2 How do I animate my plots?
+* 7.2 Can I save isosurfaces to a files?
+
+Yes: first run the CutMap plugin to extract the isosurface, then use
+'View->Save As' to save the new view.
+
+* 7.3 Can Gmsh generate isovolumes?
+
+Yes, with the CutMap plugin (set the extractVolume to -1 or 1 to
+extract the positive or negative levelset). 
+
+* 7.4 How do I animate my plots?
 
 If the views contain multiple time steps, you can press the 'play'
 button under the graphic window, or change the time step by hand in
@@ -255,7 +274,7 @@ If you want to loop through different views instead of time steps, you
 can use the 'Loop through views instead of time steps' option in the
 view option panel, or use the up and down arrow keys.
 
-* 7.3 How do I visualize a deformed mesh?
+* 7.5 How do I visualize a deformed mesh?
 
 Load a vector view containing the displacement field, and select
 'Vector type->Displacement' in the view options. If the displacement
@@ -267,7 +286,7 @@ Another option is to use the "general raise expressions" (in
 View->Options->Offset) on a scalar view, with the displacement map
 selected as the raise data source.
 
-* 7.4 Can I visualize a field on a deformed mesh?
+* 7.6 Can I visualize a field on a deformed mesh?
 
 Yes, there are several ways to do that. 
 
@@ -287,24 +306,49 @@ displacement map selected as the raise data source.
 
 And yet another solution is to use the DiplacementRaise plugin.
 
-* 7.5 Can I color the arrows representing a vector field with data
+* 7.7 Can I color the arrows representing a vector field with data
 from a scalar field?
 
 Yes: load both the vector and the scalar fields (the two views must
 have the same number of elements) and, in the vector field options,
 select the scalar view in 'Data source'.
 
-* 7.6 Can I color iso-value surfaces with data from another scalar
+* 7.8 Can I color iso-value surfaces with data from another scalar
 view?
 
 Yes, using the CutMap plugin.
 
-* 7.7 Is there a way to save animations?
+* 7.9 Is there a way to save animations?
 
 Yes. For example, have a look at tutorial/t8.geo or
 demos/anim-seq.script.
 
-* 7.8 Is there a way to visualize only certain components of
+* 7.10 Is there a way to visualize only certain components of
 vector/tensor fields?
 
 Yes: use 'View->Plugin->Extract'.
+
+* 7.11 Can I do operations on a view? Can I perform operations
+involving different views?
+
+Yes, with the Evaluate plugin.
+
+* 7.12 Some plugins seem to create empty views. What's wrong?
+
+There can be several reasons:
+
+- the plugin might be written for specific element types only (for
+  example, only for scalar triangles or tetrahedra). In that case, you
+  should transform you view into a simplectic view with
+  Plugin(DecomposeinSimplex) first.
+
+- the plugin might expect a mesh while all you provide is a point
+  cloud. In 2D, you can use Plugin(Triangulate) to transform a point
+  cloud into a triangulated surface. A 3D version of this plugin is
+  not available yet but it is on our TODO list.
+
+- the input parameters are out of range.
+
+In any case, you can automatically remove all empty views with
+'View->Remove->Empty Views' in the GUI, or with "Delete Empty Views;"
+in a script.

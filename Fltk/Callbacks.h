@@ -114,6 +114,8 @@ void view_remove_empty_cb(CALLBACK_ARGS) ;
 void view_save_ascii_cb(CALLBACK_ARGS) ;
 void view_save_binary_cb(CALLBACK_ARGS) ;
 void view_save_parsed_cb(CALLBACK_ARGS) ;
+void view_save_stl_cb(CALLBACK_ARGS) ;
+void view_save_txt_cb(CALLBACK_ARGS) ;
 void view_duplicate_cb(CALLBACK_ARGS) ;
 void view_duplicate_with_options_cb(CALLBACK_ARGS) ;
 void view_combine_space_all_cb(CALLBACK_ARGS) ;

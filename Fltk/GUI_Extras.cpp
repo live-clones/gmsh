@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.5 2005-01-01 19:35:28 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.6 2005-01-08 20:15:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -206,8 +206,8 @@ int jpeg_dialog(char *name, int TeX)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	CTX.print.jpeg_quality = (int)dialog->s[0]->value();
-	CTX.print.jpeg_smoothing = (int)dialog->s[1]->value();
+	opt_print_jpeg_quality(0, GMSH_SET | GMSH_GUI, (int)dialog->s[0]->value());
+	opt_print_jpeg_smoothing(0, GMSH_SET | GMSH_GUI, (int)dialog->s[1]->value());
 	CreateOutputFile(name, TeX ? FORMAT_JPEGTEX : FORMAT_JPEG);
 	dialog->window->hide();
 	return 1;
@@ -266,10 +266,10 @@ int gif_dialog(char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	CTX.print.gif_dither = dialog->b[0]->value();
-	CTX.print.gif_interlace = dialog->b[1]->value();
-	CTX.print.gif_sort = dialog->b[2]->value();
-	CTX.print.gif_transparent = dialog->b[3]->value();
+	opt_print_gif_dither(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value());
+	opt_print_gif_interlace(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value());
+	opt_print_gif_sort(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value());
+	opt_print_gif_transparent(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value());
 	CreateOutputFile(name, FORMAT_GIF);
 	dialog->window->hide();
 	return 1;
@@ -371,12 +371,12 @@ int gl2ps_dialog(char *name, char *title, int format, int TeX)
 	activate_gl2ps_choices(dialog->c->value(), dialog->b);
       }
       if (o == dialog->ok) {
-	CTX.print.eps_quality = dialog->c->value();
-	CTX.print.eps_compress = dialog->b[0]->value();
-	CTX.print.eps_background = dialog->b[1]->value();
-	CTX.print.eps_occlusion_culling = dialog->b[2]->value();
-	CTX.print.eps_best_root = dialog->b[3]->value();
-	CTX.print.eps_ps3shading = dialog->b[4]->value();
+	opt_print_eps_quality(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+	opt_print_eps_compress(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value());
+	opt_print_eps_background(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value());
+	opt_print_eps_occlusion_culling(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value());
+	opt_print_eps_best_root(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value());
+	opt_print_eps_ps3shading(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value());
 	CreateOutputFile(name, 
 			 (format == 2) ? (TeX ? FORMAT_PDFTEX : FORMAT_PDF) : 
 			 (format == 1) ? (TeX ? FORMAT_EPSTEX : FORMAT_EPS) : 
@@ -491,9 +491,61 @@ int msh_dialog(char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	CTX.mesh.msh_file_version = dialog->c->value() + 1;
-	CTX.mesh.save_all = dialog->b->value();
+	opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI, dialog->c->value() + 1);
+	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value());
 	CreateOutputFile(name, FORMAT_MSH);
+	dialog->window->hide();
+	return 1;
+      }
+      if (o == dialog->window || o == dialog->cancel){
+	dialog->window->hide();
+	return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+// geo options dialog
+
+int geo_dialog(char *name)
+{
+  struct _geo_dialog{
+    Fl_Window *window;
+    Fl_Check_Button *b;
+    Fl_Button *ok, *cancel;
+  };
+  static _geo_dialog *dialog = NULL;
+
+  if(!dialog){
+    dialog = new _geo_dialog;
+    int h = 3*10 + 25 + 1*25, y = 0;
+    // not a "Dialog_Window" since it is modal 
+    dialog->window = new Fl_Window(200, h, "GEO options"); y = 10;
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->b = new Fl_Check_Button(10, y, 180, 25, "Save discrete surfaces"); y += 25;
+    dialog->b->value(1);
+    dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->b->down_box(GMSH_TOGGLE_BOX);
+    dialog->b->selection_color(GMSH_TOGGLE_COLOR);
+    dialog->ok = new Fl_Return_Button(10, y+10, 85, 25, "OK");
+    dialog->cancel = new Fl_Button(105, y+10, 85, 25, "Cancel");
+    dialog->window->set_modal();
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+  
+  dialog->window->show();
+
+  extern Mesh *THEM;
+
+  while(dialog->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == dialog->ok) {
+	Print_Geo(THEM, name, dialog->b->value());
 	dialog->window->hide();
 	return 1;
       }

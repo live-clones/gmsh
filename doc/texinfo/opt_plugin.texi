@@ -77,15 +77,15 @@ Default value: @code{-1}
 @item Plugin(CutMap)
 Plugin(CutMap) extracts the isosurface of value
 `A' from the view `iView' and draws the
-`dTimeStep'-th value of the view `dView' on this
-isovalue surface. If `iView' < 0, the plugin is
-run on the current view. If `dTimeStep' < 0, the
+`dTimeStep'-th value of the view `dView' on the
+isosurface. If `iView' < 0, the plugin is run
+on the current view. If `dTimeStep' < 0, the
 plugin uses, for each time step in `iView', the
 corresponding time step in `dView'. If `dView'
 < 0, the plugin uses `iView' as the value source.
-If `extractVolume' is nonzero, the plugin
+If `ExtractVolume' is nonzero, the plugin
 extracts the isovolume with values smaller (if
-`extractVolume' > 0) or greater (if `extractVolume'
+`ExtractVolume' > 0) or greater (if `ExtractVolume'
 < 0) than the isosurface `A'.
 
 Plugin(CutMap) creates as many views as there
@@ -99,11 +99,11 @@ Default value: @code{1}
 Default value: @code{-1}
 @item dView
 Default value: @code{-1}
-@item extractVolume
+@item ExtractVolume
 Default value: @code{0}
-@item recurLevel
+@item RecurLevel
 Default value: @code{4}
-@item targetError
+@item TargetError
 Default value: @code{0}
 @item iView
 Default value: @code{-1}
@@ -113,10 +113,11 @@ Default value: @code{-1}
 Plugin(CutParametric) cuts a triangle/tetrahedron
 scalar view `iView' with the parametric function
 (`X'(u), `Y'(u), `Z'(u)), using `nPointsU' values of
-the parameter u in [`minU', `maxU']. If `connect'
-is set, the plugin creates scalar line elements;
-otherwise, the plugin generates scalar points. If
-`iView' < 0, the plugin is run on the current view.
+the parameter u in [`MinU', `MaxU']. If
+`ConnectPoints' is set, the plugin creates scalar
+line elements; otherwise, the plugin generates
+scalar points. If `iView' < 0, the plugin is run on
+the current view.
 
 Plugin(CutParametric) creates one new view.
 
@@ -131,13 +132,13 @@ Default value: @code{"0"}
 @end table
 Numeric options:
 @table @code
-@item minU
+@item MinU
 Default value: @code{0}
-@item maxU
+@item MaxU
 Default value: @code{6.28319}
 @item nPointsU
 Default value: @code{360}
-@item connectPoints
+@item ConnectPoints
 Default value: @code{0}
 @item iView
 Default value: @code{-1}
@@ -146,9 +147,9 @@ Default value: @code{-1}
 @item Plugin(CutPlane)
 Plugin(CutPlane) cuts the view `iView' with
 the plane `A'*X + `B'*Y + `C'*Z + `D' = 0. If
-`extractVolume' is nonzero, the plugin extracts
+`ExtractVolume' is nonzero, the plugin extracts
 the elements on one side of the plane (depending
-on the sign of `extractVolume'). If `iView' < 0,
+on the sign of `ExtractVolume'). If `iView' < 0,
 the plugin is run on the current view.
 
 Plugin(CutPlane) creates one new view.
@@ -163,11 +164,11 @@ Default value: @code{0}
 Default value: @code{0}
 @item D
 Default value: @code{-0.01}
-@item extractVolume
+@item ExtractVolume
 Default value: @code{0}
-@item recurLevel
+@item RecurLevel
 Default value: @code{4}
-@item targetError
+@item TargetError
 Default value: @code{0}
 @item iView
 Default value: @code{-1}
@@ -176,9 +177,9 @@ Default value: @code{-1}
 @item Plugin(CutSphere)
 Plugin(CutSphere) cuts the view `iView' with the
 sphere (X-`Xc')^2 + (Y-`Yc')^2 + (Z-`Zc')^2 = `R'^2.
-If `extractVolume' is nonzero, the plugin extracts
-the elements inside (if `extractVolume' < 0) or
-outside (if `extractVolume' > 0) the sphere. If
+If `ExtractVolume' is nonzero, the plugin extracts
+the elements inside (if `ExtractVolume' < 0) or
+outside (if `ExtractVolume' > 0) the sphere. If
 `iView' < 0, the plugin is run on the current view.
 
 Plugin(CutSphere) creates one new view.
@@ -193,9 +194,9 @@ Default value: @code{0}
 Default value: @code{0}
 @item R
 Default value: @code{0.25}
-@item extractVolume
+@item ExtractVolume
 Default value: @code{0}
-@item recurLevel
+@item RecurLevel
 Default value: @code{4}
 @item iView
 Default value: @code{-1}
@@ -264,33 +265,65 @@ Default value: @code{-1}
 
 @item Plugin(Evaluate)
 Plugin(Evaluate) sets the `Component'-th
-component of the `TimeStep'-th time step
-in the view `iView' to the expression
-`Expression'. In addition to the usual
-mathematical functions (Exp, Log, Sqrt, Sin,
-Cos, Fabs, etc.) and operators (+, -, *, /, ^),
-`Expression' can contain the symbols x, y, z
-(which represent the current position), v (which
-represents the `Component'-th component of
-the field at the `TimeStep'-th time step), and v0,
-v1, v2, ..., vn (which represent the n components
-of the field at the `TimeStep'-th time step). If
-`iView' < 0, the plugin is run on the current
-view.
+component of the `TimeStep'-th time step in the
+view `iView' to the expression `Expression'.
+`Expression' can contain:
+
+- the usual mathematical functions (Log, Sqrt
+Sin, Cos, Fabs, ...) and operators (+, -, *, /, ^);
+
+- the symbols x, y and z, to retrieve the coordinates
+of the current node;
+
+- the symbols Time and TimeStep, to retrieve the
+current time and time step values;
+
+- the symbol v, to retrieve the `Component'-th
+component of the field in `iView' at the
+`TimeStep'-th time step;
+
+- the symbols v0, v1, v2, ..., v8, to retrieve each
+component of the field in `iView' at the
+`TimeStep'-th time step;
+
+- the symbol w, to retrieve the `Component'-th
+component of the field in `ExternalView' at the
+`ExternalTimeStep'-th time step. If `ExternalView'
+and `iView' are not based on the same spatial
+grid, `ExternalView' is interpolated onto `iView';
+
+- the symbols w0, w1, w2, ..., w8, to retrieve each
+component of the field in `ExternalView' at the
+`ExternalTimeStep'-th time step.
+
+If `TimeStep' < 0, the plugin atomatically loops
+over all the time steps in `iView' and evaluates
+`Expression' for each one. If `ExternalTimeStep'
+< 0, the plugin uses `TimeStep' instead. If
+`Component' < 0, the plugin automatically loops
+over all the components in the view and
+evaluates `Expression' for each one. If `iView'
+< 0, the plugin is run on the current view. If
+`ExternalView' < 0, the plugin uses `iView'
+instead.
 
 Plugin(Evaluate) is executed in-place.
 
 String options:
 @table @code
 @item Expression
-Default value: @code{"Fabs(Sin(x)*Cos(y))"}
+Default value: @code{"v0*Sin(x)"}
 @end table
 Numeric options:
 @table @code
-@item TimeStep
-Default value: @code{0}
 @item Component
-Default value: @code{0}
+Default value: @code{-1}
+@item TimeStep
+Default value: @code{-1}
+@item ExternalView
+Default value: @code{-1}
+@item ExternalTimeStep
+Default value: @code{-1}
 @item iView
 Default value: @code{-1}
 @end table
@@ -330,10 +363,10 @@ Default value: @code{-1}
 
 @item Plugin(HarmonicToTime)
 Plugin(HarmonicToTime) takes the values in the
-time steps `realPart' and `imaginaryPart' of
+time steps `RealPart' and `ImaginaryPart' of
 the view `iView', and creates a new view
-containing (`iView'[`realPart'] * cos(p) -
-`iView'[`imaginaryPart'] * sin(p)), with
+containing (`iView'[`RealPart'] * cos(p) -
+`iView'[`ImaginaryPart'] * sin(p)), with
 p = 2*Pi*k/`nSteps', k = 0, ..., `nSteps'-1.
 If `iView' < 0, the plugin is run on the
 current view.
@@ -342,9 +375,9 @@ Plugin(HarmonicToTime) creates one new view.
 
 Numeric options:
 @table @code
-@item realPart
+@item RealPart
 Default value: @code{0}
-@item imaginaryPart
+@item ImaginaryPart
 Default value: @code{1}
 @item nSteps
 Default value: @code{20}
@@ -358,17 +391,17 @@ all the elements in the view `iView', as well
 as the circulation/flux of vector fields over
 line/surface elements. If `iView' < 0, the
 plugin is run on the current view. If
-`computeLevelsetPositive' is set, the plugin
+`ComputeLevelsetPositive' is set, the plugin
 computes the positive area (volume) of the map.
 
 Plugin(Integrate) creates one new view.
 
 Numeric options:
 @table @code
+@item ComputeLevelsetPositive
+Default value: @code{0}
 @item iView
 Default value: @code{-1}
-@item computeLevelsetPositive
-Default value: @code{0}
 @end table
 
 @item Plugin(Lambda2)
@@ -377,7 +410,7 @@ Lambda(1,2,3) of the tensor (S_ik S_kj +
 Om_ik Om_kj), where S_ij = 0.5 (ui,j + uj,i)
 and Om_ij = 0.5 (ui,j - uj,i) are respectively
 the symmetric and antisymmetric parts of the
-velocity gradient tensor. Vortices are well-
+velocity gradient tensor. Vortices are well
 represented by regions where Lambda(2) is
 negative. If `iView' contains tensor elements,
 the plugin directly uses the tensors as the
@@ -574,7 +607,7 @@ the view `iView' by the matrix
 [`A11' `A12' `A13' `T1']
 [`A21' `A22' `A23' `T2']
 [`A31' `A32' `A33' `T3'].
-If `swapOrientation' is set, the orientation of the
+If `SwapOrientation' is set, the orientation of the
 elements is reversed. If `iView' < 0, the plugin
 is run on the current view.
 
@@ -606,7 +639,7 @@ Default value: @code{0}
 Default value: @code{0}
 @item T3
 Default value: @code{0}
-@item swapOrientation
+@item SwapOrientation
 Default value: @code{0}
 @item iView
 Default value: @code{-1}
@@ -616,8 +649,9 @@ Default value: @code{-1}
 Plugin(Triangulate) triangulates the points
 in the view `iView', assuming that all the
 points belong to a surface that can be
-univoquely projected into a plane. If `iView'
-< 0, the plugin is run on the current view.
+projected into a plane in a one-to-one
+fashion. If `iView' < 0, the plugin is run
+on the current view.
 
 Plugin(Triangulate) creates one new view.
 

@@ -167,11 +167,13 @@ node_simplify(Node * node)
     
   case 'f':
     /*
-     * Simplify function argument and if constant evaluate
-     * function and replace function node with constant node.
+     * Simplify function argument and if constant evaluate function
+     * and replace function node with constant node (unless the
+     * function is Rand(x)).
      */
     node->data.function.child = node_simplify(node->data.function.child);
-    if (node->data.function.child->type == 'c') {
+    if (node->data.function.child->type == 'c' && 
+	strcmp(node->data.function.record->name, "Rand")) {
       double          value = node_evaluate(node);
       
       node_destroy(node);

@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.57 2005-01-01 19:35:31 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.58 2005-01-08 20:15:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -683,7 +683,7 @@ static void _unv_process_1D_elements(Mesh *m)
   List_T *AllCurves = List_Create(2, 2, sizeof(Surface *));
   List_T *ListSurfaces = Tree2List(m->Surfaces);
   List_T *Elements;
-  Simplex *sx;
+  SimplexBase *sx;
   Curve *c;
   Surface *surf;
 
@@ -729,7 +729,7 @@ static void _unv_process_2D_elements(Mesh *m)
   List_T *Elements;
   Volume *vol;
   Surface *s;
-  Simplex *sx;
+  SimplexBase *sx;
   Quadrangle *qx;
 
   for(int i = 0; i < List_Nbr(ListVolumes); i++) {
@@ -780,7 +780,7 @@ static void _unv_process_3D_elements(Mesh *m)
 {
   List_T *ListVolumes = Tree2List(m->Volumes);
   List_T *Elements;
-  Simplex *sx;
+  SimplexBase *sx;
   Hexahedron *hx;
   Prism *px;
   Volume *v;
@@ -854,7 +854,7 @@ static void _unv_add_vertex(void *a, void *b)
 
 static void _unv_add_simplex_vertices(void *a, void *b)
 {
-  Simplex *s = *(Simplex **) a;
+  SimplexBase *s = *(SimplexBase **) a;
   if(s->iEnt != UNV_VOL_NUM)
     return;
   for(int i = 0; i < 4; i++)
@@ -978,7 +978,7 @@ static FILE *GREFFILE;
 static void _gref_consecutive_nodes(Mesh *M, Tree_T *ConsecutiveNTree,
 				    Tree_T *ConsecutiveETree)
 {
-  Simplex *sx;
+  SimplexBase *sx;
   Quadrangle *qx;
   Surface *s;
   int nbnod, nbedges, nbdof;
@@ -1057,7 +1057,7 @@ static void _gref_consecutive_nodes(Mesh *M, Tree_T *ConsecutiveNTree,
 
 static void _gref_end_consecutive_nodes(Mesh *M)
 {
-  Simplex *sx;
+  SimplexBase *sx;
   Quadrangle *qx;
   Surface *s;
 
@@ -1207,7 +1207,7 @@ static void _gref_process_boundary_conditions(Mesh *M, Tree_T *TRN, Tree_T *TRE)
 
 static void _gref_process_elements(Mesh *M, int nn)
 {
-  Simplex *sx;
+  SimplexBase *sx;
   Quadrangle *qx;
   Surface *s;
 
@@ -1329,7 +1329,7 @@ static void _wrl_process_nodes(Mesh *M)
 
 static void _wrl_print_line(void *a, void *b)
 {
-  Simplex *s = *(Simplex **) a;
+  SimplexBase *s = *(SimplexBase **) a;
   for(int i = 0; i < 2; i++){
     if(s->V[i]){
       int j = List_ISearch(wrlnodes, &s->V[i]->Num, fcmp_int);
@@ -1344,7 +1344,7 @@ static void _wrl_print_line(void *a, void *b)
 
 static void _wrl_print_triangle(void *a, void *b)
 {
-  Simplex *s = *(Simplex **) a;
+  SimplexBase *s = *(SimplexBase **) a;
   for(int i = 0; i < 3; i++){
     if(s->V[i]){
       int j = List_ISearch(wrlnodes, &s->V[i]->Num, fcmp_int);
@@ -1412,6 +1412,71 @@ void Print_Mesh_WRL(Mesh *M, FILE *fp)
   WRLFILE = fp;
   _wrl_process_nodes(M);
   _wrl_process_elements(M);
+}
+
+// Write surface mesh in STL format
+
+static FILE *STLFILE;
+
+static void _stl_print_triangle(void *a, void *b)
+{
+  SimplexBase *s = *(SimplexBase **) a;
+  
+  if(!s->V[2]) return;
+  
+  double n[3];
+  normal3points(s->V[0]->Pos.X, s->V[0]->Pos.Y, s->V[0]->Pos.Z, 
+		s->V[1]->Pos.X, s->V[1]->Pos.Y, s->V[1]->Pos.Z, 
+		s->V[2]->Pos.X, s->V[2]->Pos.Y, s->V[2]->Pos.Z, n);
+
+  fprintf(STLFILE, "facet normal %g %g %g\n", n[0], n[1], n[2]);
+  fprintf(STLFILE, "  outer loop\n");
+  fprintf(STLFILE, "    vertex %g %g %g\n", s->V[0]->Pos.X, s->V[0]->Pos.Y, s->V[0]->Pos.Z);
+  fprintf(STLFILE, "    vertex %g %g %g\n", s->V[1]->Pos.X, s->V[1]->Pos.Y, s->V[1]->Pos.Z);
+  fprintf(STLFILE, "    vertex %g %g %g\n", s->V[2]->Pos.X, s->V[2]->Pos.Y, s->V[2]->Pos.Z);
+  fprintf(STLFILE, "  endloop\n");
+  fprintf(STLFILE, "endfacet\n");
+}
+
+static void _stl_print_quadrangle(void *a, void *b)
+{
+  Quadrangle *q = *(Quadrangle **) a;
+  
+  double n[3];
+  normal3points(q->V[0]->Pos.X, q->V[0]->Pos.Y, q->V[0]->Pos.Z, 
+		q->V[1]->Pos.X, q->V[1]->Pos.Y, q->V[1]->Pos.Z, 
+		q->V[2]->Pos.X, q->V[2]->Pos.Y, q->V[2]->Pos.Z, n);
+
+  fprintf(STLFILE, "facet normal %g %g %g\n", n[0], n[1], n[2]);
+  fprintf(STLFILE, "  outer loop\n");
+  fprintf(STLFILE, "    vertex %g %g %g\n", q->V[0]->Pos.X, q->V[0]->Pos.Y, q->V[0]->Pos.Z);
+  fprintf(STLFILE, "    vertex %g %g %g\n", q->V[1]->Pos.X, q->V[1]->Pos.Y, q->V[1]->Pos.Z);
+  fprintf(STLFILE, "    vertex %g %g %g\n", q->V[2]->Pos.X, q->V[2]->Pos.Y, q->V[2]->Pos.Z);
+  fprintf(STLFILE, "  endloop\n");
+  fprintf(STLFILE, "endfacet\n");
+  fprintf(STLFILE, "facet normal %g %g %g\n", n[0], n[1], n[2]);
+  fprintf(STLFILE, "  outer loop\n");
+  fprintf(STLFILE, "    vertex %g %g %g\n", q->V[0]->Pos.X, q->V[0]->Pos.Y, q->V[0]->Pos.Z);
+  fprintf(STLFILE, "    vertex %g %g %g\n", q->V[2]->Pos.X, q->V[2]->Pos.Y, q->V[2]->Pos.Z);
+  fprintf(STLFILE, "    vertex %g %g %g\n", q->V[3]->Pos.X, q->V[3]->Pos.Y, q->V[3]->Pos.Z);
+  fprintf(STLFILE, "  endloop\n");
+  fprintf(STLFILE, "endfacet\n");
+}
+
+static void _stl_print_all_surfaces(void *a, void *b)
+{
+  Surface *s = *(Surface **) a;
+  Tree_Action(s->Simplexes, _stl_print_triangle);
+  Tree_Action(s->SimplexesBase, _stl_print_triangle);
+  Tree_Action(s->Quadrangles, _stl_print_quadrangle);
+}
+
+void Print_Mesh_STL(Mesh *M, FILE *fp)
+{
+  STLFILE = fp;
+  fprintf(STLFILE, "solid Created by Gmsh\n");
+  Tree_Action(M->Surfaces, _stl_print_all_surfaces);
+  fprintf(STLFILE, "endsolid Created by Gmsh\n");
 }
 
 // Write mesh in DMG format
@@ -1559,6 +1624,7 @@ void Print_Mesh(Mesh *M, char *c, int Type)
   case FORMAT_UNV:  strcpy(ext, ".unv"); break;
   case FORMAT_GREF: strcpy(ext, ".Gref"); break;
   case FORMAT_DMG:  strcpy(ext, ".dmg"); break;
+  case FORMAT_STL:  strcpy(ext, ".stl"); break;
   default:
     Msg(GERROR, "Unknown mesh file format %d", Type);
     return;
@@ -1581,6 +1647,7 @@ void Print_Mesh(Mesh *M, char *c, int Type)
   case FORMAT_UNV:  Print_Mesh_UNV(M, fp); break;
   case FORMAT_GREF: Print_Mesh_GREF(M, fp); break;
   case FORMAT_DMG:  Print_Mesh_DMG(M, fp); break;
+  case FORMAT_STL:  Print_Mesh_STL(M, fp); break;
   default:
     break;
   }

@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.45 2005-01-03 04:09:27 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.46 2005-01-08 20:15:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -37,9 +37,9 @@ StringXNumber CutPlaneOptions_Number[] = {
   {GMSH_FULLRC, "B", GMSH_CutPlanePlugin::callbackB, 0.},
   {GMSH_FULLRC, "C", GMSH_CutPlanePlugin::callbackC, 0.},
   {GMSH_FULLRC, "D", GMSH_CutPlanePlugin::callbackD, -0.01},
-  {GMSH_FULLRC, "extractVolume", GMSH_CutPlanePlugin::callbackVol, 0},
-  {GMSH_FULLRC, "recurLevel", GMSH_CutPlanePlugin::callbackRecur, 4},
-  {GMSH_FULLRC, "targetError", GMSH_CutPlanePlugin::callbackTarget, 0.},
+  {GMSH_FULLRC, "ExtractVolume", GMSH_CutPlanePlugin::callbackVol, 0},
+  {GMSH_FULLRC, "RecurLevel", GMSH_CutPlanePlugin::callbackRecur, 4},
+  {GMSH_FULLRC, "TargetError", GMSH_CutPlanePlugin::callbackTarget, 0.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
@@ -145,9 +145,9 @@ void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright,
   strcpy(help_text,
          "Plugin(CutPlane) cuts the view `iView' with\n"
 	 "the plane `A'*X + `B'*Y + `C'*Z + `D' = 0. If\n"
-	 "`extractVolume' is nonzero, the plugin extracts\n"
+	 "`ExtractVolume' is nonzero, the plugin extracts\n"
 	 "the elements on one side of the plane (depending\n"
-	 "on the sign of `extractVolume'). If `iView' < 0,\n"
+	 "on the sign of `ExtractVolume'). If `iView' < 0,\n"
 	 "the plugin is run on the current view.\n"
 	 "\n"
 	 "Plugin(CutPlane) creates one new view.\n");

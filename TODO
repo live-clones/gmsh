@@ -1,13 +1,28 @@
-$Id: TODO,v 1.73 2004-12-30 05:43:42 geuzaine Exp $
+$Id: TODO,v 1.74 2005-01-08 20:15:10 geuzaine Exp $
 
 create Gradient, Curl and Divergence plugins (based on
 Plugins/ShapeFunctions.h)
 
 ********************************************************************
 
-generalize Plugin(Evaluate) to get data from other views and/or write
-a general plugin that uses OctreePost to combine values from arbitrary
-points in datasets
+Add dynamic variables in labels? E.g., if a string contains
+%string.string, replace it dynamically in Draw_Text2D/3D by calling
+Get_OptionsCategory/Get_OptionValue. (provide a global option to
+disable all replacements)
+
+********************************************************************
+
+generalize CutGrid to generate Lines (and provide an option
+"connectPoints" to generate points) if nbV==1 or nbU==1
+
+********************************************************************
+
+change handling of x,y position of graphs so that -x means "from the
+right", etc.  also, val>99999 == center
+
+********************************************************************
+
+Add a "bitmap" object in the views, e.g. to add a logo
 
 ********************************************************************
 
@@ -22,11 +37,6 @@ add an option to enable lighting of wireframe plots?
 keep a table (stack) with the N last file positions when add_infile()
 is called; we could then easily implement a simple (but real) UNDO
 strategy
-
-********************************************************************
-
-add a "non-formatted" View->Save mode; would enable to exploit results
-from plugins in gnuplot, excell, etc.
 
 ********************************************************************
 
@@ -88,7 +98,8 @@ other using 2nd order elements (in the same geometry)?
 
 ********************************************************************
 
-find a better way to display the time/timestep in the scale...
+find a better way to display the time/timestep in the scale... (would
+be solved if we had dynamic labels)
 
 ********************************************************************
 
@@ -193,4 +204,3 @@ ainsi de suite. Ca fait donc un supeeer memory leak : tu recharges
 bien toutes les vues, mais tu ne sais acceder qu'a la derniere... Pour
 corriger ca, il faudrait que l'on garde comme info supplementaire dans
 chaque vue quelle etait sa position dans le fichier.
-

@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.26 2005-01-01 19:35:39 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.27 2005-01-08 20:15:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -65,8 +65,9 @@ void GMSH_TriangulatePlugin::getInfos(char *author, char *copyright,
          "Plugin(Triangulate) triangulates the points\n"
 	 "in the view `iView', assuming that all the\n"
          "points belong to a surface that can be\n"
-	 "univoquely projected into a plane. If `iView'\n"
-	 "< 0, the plugin is run on the current view.\n"
+	 "projected into a plane in a one-to-one\n"
+	 "fashion. If `iView' < 0, the plugin is run\n"
+	 "on the current view.\n"
 	 "\n"
 	 "Plugin(Triangulate) creates one new view.\n");
 }

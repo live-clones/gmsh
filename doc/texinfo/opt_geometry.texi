@@ -96,7 +96,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.StlCreateElementary
 Treat each STL input face as a new geometrical surface@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.StlCreatePhysical

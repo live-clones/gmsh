@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.79 2005-01-01 19:35:29 geuzaine Exp $
+// $Id: Geom.cpp,v 1.80 2005-01-08 20:15:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -31,7 +31,6 @@
 #include "Interpolation.h"
 #include "Plugin.h"
 #include "PluginManager.h"
-#include "STL.h"
 #include "gl2ps.h"
 
 extern Context_T CTX;
@@ -318,31 +317,42 @@ void getPlaneSurfaceNormal(Surface *s, double x, double y, double z, double n[3]
   }
 }
 
-void Draw_Triangulated_Surface(Surface * s)
+void Draw_Polygonal_Surface(Surface * s)
 {
-  int k = 0;
-  double *points, *p1, *p2, *p3;
-
   if(CTX.geom.surfaces) {
     if(CTX.geom.light) glEnable(GL_LIGHTING);
-    if(CTX.polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
-    glBegin(GL_TRIANGLES);
+    glEnable(GL_POLYGON_OFFSET_FILL); // always!
+    int k = 0;
     while (k < List_Nbr(s->thePolyRep->polygons)){
-      points = (double*)List_Pointer(s->thePolyRep->polygons,k);
+      double *points = (double*)List_Pointer(s->thePolyRep->polygons,k);
       k+= ((int)points[0] + 1);
       if (points[0] == 3){
-	p1 = (double*)List_Pointer(s->thePolyRep->points_and_normals, 6*(int)points[1]);
-	p2 = (double*)List_Pointer(s->thePolyRep->points_and_normals, 6*(int)points[2]);
-	p3 = (double*)List_Pointer(s->thePolyRep->points_and_normals, 6*(int)points[3]);
+	glBegin(GL_TRIANGLES);
+	double *p1 = (double*)List_Pointer(s->thePolyRep->points_and_normals, 
+					   6*(int)points[1]);
+	double *p2 = (double*)List_Pointer(s->thePolyRep->points_and_normals,
+					   6*(int)points[2]);
+	double *p3 = (double*)List_Pointer(s->thePolyRep->points_and_normals,
+					   6*(int)points[3]);
 	if(CTX.geom.light) glNormal3dv(&p1[3]);
 	glVertex3d(p1[0],p1[1],p1[2]);
 	if(CTX.geom.light) glNormal3dv(&p2[3]);
 	glVertex3d(p2[0],p2[1],p2[2]);
 	if(CTX.geom.light) glNormal3dv(&p3[3]);
 	glVertex3d(p3[0],p3[1],p3[2]);
+	glEnd();
+      }
+      else{
+	glBegin(GL_POLYGON);
+	for(int i = 0; i < (int)points[0]; i++){
+	  double *p = (double*)List_Pointer(s->thePolyRep->points_and_normals,
+					    6*(int)points[i+1]);
+	  if(CTX.geom.light) glNormal3dv(&p[3]);
+	  glVertex3d(p[0],p[1],p[2]);
+	}
+	glEnd();
       }
     }
-    glEnd();
     glDisable(GL_POLYGON_OFFSET_FILL);
     glDisable(GL_LIGHTING);
   }  
@@ -353,11 +363,6 @@ void Draw_Plane_Surface(Surface * s)
   Curve *c;
   Vertex V[4], vv, vv1, vv2;
   double n[3];
-
-  if(s->thePolyRep) {
-    Draw_Triangulated_Surface(s);
-    return;
-  }
 
   if(!CTX.threads_lock && List_Nbr(s->Orientations) < 1) {
     CTX.threads_lock = 1;
@@ -568,15 +573,10 @@ void Draw_NonPlane_Surface(Surface * s)
     Vertex v1 = InterpolateSurface(s, 0.5, 0.5, 0, 0);
     Vertex v2 = InterpolateSurface(s, 0.6, 0.5, 0, 0);
     Vertex v3 = InterpolateSurface(s, 0.5, 0.6, 0, 0);
-    double t1[3], t2[3], n[3];
-    t1[0] = v2.Pos.X - v1.Pos.X;
-    t1[1] = v2.Pos.Y - v1.Pos.Y;
-    t1[2] = v2.Pos.Z - v1.Pos.Z;
-    t2[0] = v3.Pos.X - v1.Pos.X;
-    t2[1] = v3.Pos.Y - v1.Pos.Y;
-    t2[2] = v3.Pos.Z - v1.Pos.Z;
-    prodve(t1, t2, n);
-    norme(n);
+    double n[3];
+    normal3points(v1.Pos.X, v1.Pos.Y, v1.Pos.Z, 
+		  v2.Pos.X, v2.Pos.Y, v2.Pos.Z, 
+		  v3.Pos.X, v3.Pos.Y, v3.Pos.Z, n);
     n[0] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[0];
     n[1] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[1];
     n[2] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[2];
@@ -612,12 +612,10 @@ void Draw_Surface(void *a, void *b)
     glColor4ubv((GLubyte *) & CTX.color.geom.surface);
   }
 
-  if(s->Typ == MSH_SURF_STL) {
-    Tree_Action(s->STL->Simplexes, Draw_Mesh_Triangle);
-  }
-  else if(s->Typ == MSH_SURF_DISCRETE) {
+  if(s->thePolyRep) // always draw the poly reprentation if available
+    Draw_Polygonal_Surface(s);
+  else if(s->Typ == MSH_SURF_DISCRETE)
     Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
-  }
   else if(s->Typ == MSH_SURF_PLAN)
     Draw_Plane_Surface(s);
   else

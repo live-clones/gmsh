@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.65 2005-01-01 19:35:30 geuzaine Exp $
+// $Id: Create.cpp,v 1.66 2005-01-08 20:15:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -672,7 +672,6 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Generatrices = NULL;
   pS->Edges = NULL;
   pS->Extrude = NULL;
-  pS->STL = NULL;
   pS->TriVertexArray = NULL;
   pS->QuadVertexArray = NULL;
   pS->normals = new smooth_normals;

@@ -1,4 +1,4 @@
-// $Id: Lambda2.cpp,v 1.7 2005-01-01 19:35:39 geuzaine Exp $
+// $Id: Lambda2.cpp,v 1.8 2005-01-08 20:15:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -65,7 +65,7 @@ void GMSH_Lambda2Plugin::getInfos(char *author, char *copyright,
 	 "Om_ik Om_kj), where S_ij = 0.5 (ui,j + uj,i)\n"
 	 "and Om_ij = 0.5 (ui,j - uj,i) are respectively\n"
 	 "the symmetric and antisymmetric parts of the\n"
-	 "velocity gradient tensor. Vortices are well-\n"
+	 "velocity gradient tensor. Vortices are well\n"
 	 "represented by regions where Lambda(2) is\n"
 	 "negative. If `iView' contains tensor elements,\n"
 	 "the plugin directly uses the tensors as the\n"

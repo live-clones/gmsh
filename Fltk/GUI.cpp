@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.409 2005-01-03 07:03:02 geuzaine Exp $
+// $Id: GUI.cpp,v 1.410 2005-01-08 20:15:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1189,6 +1189,10 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 		  (Fl_Callback *) view_save_ascii_cb, (void *)nb, 0);
 	p[j]->add("Save As/Binary View...", 0, 
 		  (Fl_Callback *) view_save_binary_cb, (void *)nb, 0);
+	p[j]->add("Save As/STL Triangulation...", 0, 
+		  (Fl_Callback *) view_save_stl_cb, (void *)nb, 0);
+	p[j]->add("Save As/Text...", 0, 
+		  (Fl_Callback *) view_save_txt_cb, (void *)nb, 0);
 	add_post_plugins(p[j], nb);
 	p[j]->add("Apply As Background Mesh", 0, 
 		  (Fl_Callback *) view_applybgmesh_cb, (void *)nb, FL_MENU_DIVIDER);
@@ -3257,7 +3261,7 @@ void GUI::add_multiline_in_browser(Fl_Browser * o, char *prefix, char *str)
 
 PluginDialogBox *GUI::create_plugin_window(GMSH_Plugin * p)
 {
-  char buffer[1024], namep[1024], copyright[256], author[256], help[1024];
+  char buffer[1024], namep[1024], copyright[256], author[256], help[4096];
 
   // get plugin info
 

@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.69 2005-01-01 19:35:37 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.70 2005-01-08 20:15:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -91,6 +91,39 @@ void SetBoundingBox(void)
   else if(Tree_Nbr(THEM->Points)) { 
     // else, if we have geometry points, use them
     CalculateMinMax(THEM->Points, NULL);
+  }
+  else if(Tree_Nbr(THEM->Surfaces)) { 
+    // else, if we have (discrete) surfaces, use them
+    List_T *l = Tree2List(THEM->Surfaces);
+    int first = 1;
+    double bbox[6];
+    for(int i = 0; i < List_Nbr(l); i++){
+      Surface *s = *(Surface**)List_Pointer(l, i);
+      if(s->thePolyRep){
+	if(first){
+	  first = 0;
+	  for(int j = 0; j < 6; j++)
+	    bbox[j] = s->thePolyRep->bounding_box[j];
+	}
+	else{
+	  if(s->thePolyRep->bounding_box[0] < bbox[0])
+	    bbox[0] = s->thePolyRep->bounding_box[0];
+	  if(s->thePolyRep->bounding_box[1] > bbox[1])
+	    bbox[1] = s->thePolyRep->bounding_box[1];
+	  if(s->thePolyRep->bounding_box[2] < bbox[2])
+	    bbox[2] = s->thePolyRep->bounding_box[2];
+	  if(s->thePolyRep->bounding_box[3] > bbox[3])
+	    bbox[3] = s->thePolyRep->bounding_box[3];
+	  if(s->thePolyRep->bounding_box[4] < bbox[4])
+	    bbox[4] = s->thePolyRep->bounding_box[4];
+	  if(s->thePolyRep->bounding_box[5] > bbox[5])
+	    bbox[5] = s->thePolyRep->bounding_box[5];
+	}
+      }
+    }
+    CalculateMinMax(NULL, bbox);
+    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
+    List_Delete(l);
   }
   else if(List_Nbr(CTX.post.list)) {
     // else, if we have views, use the max bb of all the views

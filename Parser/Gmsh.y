@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.196 2005-01-02 17:46:09 geuzaine Exp $
+// $Id: Gmsh.y,v 1.197 2005-01-08 20:15:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,6 @@
 #include "ColorTable.h"
 #include "Timer.h"
 #include "CreateFile.h"
-#include "STL.h"
 #include "Visibility.h"
 
 Tree_T *Symbol_T = NULL;
@@ -53,7 +52,6 @@ Tree_T *Symbol_T = NULL;
 extern Context_T CTX;
 extern Mesh *THEM;
 
-static Surface *STL_Surf;
 static ExtrudeParams extr;
 static Post_View *View;
 static int ntmp;
@@ -94,7 +92,7 @@ int CheckViewErrorFlags(Post_View *v);
 %token tPoint tCircle tEllipse tLine tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTriangulation tTransfinite tComplex tPhysical
-%token tUsing tBump tProgression tPlugin
+%token tUsing tBump tProgression tPlugin tDiscrete
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
 %token tLoop tRecombine tDelete tCoherence tIntersect
 %token tAttractor tLayers
@@ -182,8 +180,7 @@ StlFormatItem :
     tSolid
     {
       yymsg(INFO, "Reading STL solid");
-      STL_Surf = Create_Surface(NEWSURFACE(), MSH_SURF_STL);
-      STL_Surf->STL = new STL_Data;
+      STLStartSolid();
       return 1;
     }
   | tFacet
@@ -195,21 +192,13 @@ StlFormatItem :
     tEndLoop
     tEndFacet
     {
-      STL_Surf->STL->Add_Facet($9, $10, $11,
-			       $13, $14, $15,
-			       $17, $18, $19, CTX.geom.stl_create_elementary);
+      STLAddFacet($9, $10, $11, $13, $14, $15, $17, $18, $19,
+		  $3, $4, $5);
       return 1;
     }
   | tEndSolid
     {
-      if(CTX.geom.stl_create_elementary){
-	STL_Surf->STL->ReplaceDuplicate();
-	if(CTX.geom.stl_create_physical)
-	  STL_Surf->STL->CreatePhysicalSurface();
-      }
-      else{
-	Tree_Add(THEM->Surfaces, &STL_Surf);
-      }
+      STLEndSolid();
       yymsg(INFO, "Read STL solid");
       return 1;
     }
@@ -2089,28 +2078,45 @@ Shape :
       $$.Type = MSH_SURF_TRIMMED;
       $$.Num = num;
     }
-  | tTriangulation tSurface '{' FExpr '}' tAFFECT '(' FExpr ',' FExpr ')' 
+  | tDiscrete tSurface '(' FExpr ')' tAFFECT '{' FExpr ',' FExpr '}' 
        ListOfDouble ListOfDouble tEND
     {
+      // define a new surface
+      int num = (int)$4;
+      if(FindSurface(num, THEM)){
+	yymsg(GERROR, "Surface %d already exists", num);
+	List_Delete($12);
+	List_Delete($13);
+      }
+      else{
+	Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
+	s->Support = s;
+	s->thePolyRep = new POLY_rep((int)$8, (int)$10, $12, $13);
+	End_Surface(s);
+	Tree_Add(THEM->Surfaces, &s);
+      }
+      $$.Type = MSH_SURF_DISCRETE;
+      $$.Num = num;
+    }
+  | tDiscrete tSurface '{' FExpr '}' tAFFECT '{' FExpr ',' FExpr '}' 
+       ListOfDouble ListOfDouble tEND
+    {
+      // add a poly rep to an existing surface
       int num = (int)$4, type = 0;
       Surface *s = FindSurface(num, THEM);
       if(!s) {
 	yymsg(GERROR, "Unknown surface %d", num);
+	List_Delete($12);
+	List_Delete($13);
       }
       else{
-	// FIXME: parameters not used; undocumented
-	POLY_rep *rep = new POLY_rep($12, $13);
-	s->thePolyRep = rep;
+	s->thePolyRep = new POLY_rep((int)$8, (int)$10, $12, $13);
 	type = s->Typ;
       }
-      //FIXME: do you copy the data?
-      //List_Delete($12);
-      //List_Delete($13);
       $$.Type = type;
-      $$.Num = (int)$4;
+      $$.Num = num;
     }
-  // for backward compatibility only: when we don't create a new entity,
-  // we should use braces (and not parentheses)
+  // for backward compatibility:
   | tTriangulation tSurface '(' FExpr ')' tAFFECT '(' FExpr ',' FExpr ')' 
        ListOfDouble ListOfDouble tEND
     {
@@ -2118,14 +2124,15 @@ Shape :
       Surface *s = FindSurface(num, THEM);
       if(!s) {
 	yymsg(GERROR, "Unknown surface %d", num);
+	List_Delete($12);
+	List_Delete($13);
       }
       else{
-	POLY_rep *rep = new POLY_rep($12, $13);
-	s->thePolyRep = rep;
+	s->thePolyRep = new POLY_rep((int)$8, (int)$10, $12, $13);
 	type = s->Typ;
       }
       $$.Type = type;
-      $$.Num = (int)$4;
+      $$.Num = num;
     }
   | tNurbs tSurface tWith tBounds '(' FExpr ')' tAFFECT 
        ListOfListOfDouble tKnots  '{' ListOfDouble ',' ListOfDouble '}'

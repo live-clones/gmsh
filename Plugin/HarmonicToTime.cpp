@@ -1,4 +1,4 @@
-// $Id: HarmonicToTime.cpp,v 1.5 2005-01-01 19:35:39 geuzaine Exp $
+// $Id: HarmonicToTime.cpp,v 1.6 2005-01-08 20:15:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -29,8 +29,8 @@
 extern Context_T CTX;
 
 StringXNumber HarmonicToTimeOptions_Number[] = {
-  {GMSH_FULLRC, "realPart", NULL, 0.},
-  {GMSH_FULLRC, "imaginaryPart", NULL, 1.},
+  {GMSH_FULLRC, "RealPart", NULL, 0.},
+  {GMSH_FULLRC, "ImaginaryPart", NULL, 1.},
   {GMSH_FULLRC, "nSteps", NULL, 20.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
@@ -61,10 +61,10 @@ void GMSH_HarmonicToTimePlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(HarmonicToTime) takes the values in the\n"
-	 "time steps `realPart' and `imaginaryPart' of\n"
+	 "time steps `RealPart' and `ImaginaryPart' of\n"
          "the view `iView', and creates a new view\n"
-         "containing (`iView'[`realPart'] * cos(p) -\n"
-         "`iView'[`imaginaryPart'] * sin(p)), with\n"
+         "containing (`iView'[`RealPart'] * cos(p) -\n"
+         "`iView'[`ImaginaryPart'] * sin(p)), with\n"
          "p = 2*Pi*k/`nSteps', k = 0, ..., `nSteps'-1.\n"
 	 "If `iView' < 0, the plugin is run on the\n"
 	 "current view.\n"

@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.42 2005-01-03 04:09:27 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.43 2005-01-08 20:15:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -36,8 +36,8 @@ StringXNumber CutSphereOptions_Number[] = {
   {GMSH_FULLRC, "Yc", GMSH_CutSpherePlugin::callbackY, 0.},
   {GMSH_FULLRC, "Zc", GMSH_CutSpherePlugin::callbackZ, 0.},
   {GMSH_FULLRC, "R", GMSH_CutSpherePlugin::callbackR, 0.25},
-  {GMSH_FULLRC, "extractVolume", GMSH_CutSpherePlugin::callbackVol, 0.},
-  {GMSH_FULLRC, "recurLevel", GMSH_CutSpherePlugin::callbackRecur, 4},
+  {GMSH_FULLRC, "ExtractVolume", GMSH_CutSpherePlugin::callbackVol, 0.},
+  {GMSH_FULLRC, "RecurLevel", GMSH_CutSpherePlugin::callbackRecur, 4},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
@@ -143,9 +143,9 @@ void GMSH_CutSpherePlugin::getInfos(char *author, char *copyright,
   strcpy(help_text,
          "Plugin(CutSphere) cuts the view `iView' with the\n"
 	 "sphere (X-`Xc')^2 + (Y-`Yc')^2 + (Z-`Zc')^2 = `R'^2.\n"
-	 "If `extractVolume' is nonzero, the plugin extracts\n"
-	 "the elements inside (if `extractVolume' < 0) or\n"
-	 "outside (if `extractVolume' > 0) the sphere. If\n"
+	 "If `ExtractVolume' is nonzero, the plugin extracts\n"
+	 "the elements inside (if `ExtractVolume' < 0) or\n"
+	 "outside (if `ExtractVolume' > 0) the sphere. If\n"
 	 "`iView' < 0, the plugin is run on the current view.\n"
 	 "\n"
 	 "Plugin(CutSphere) creates one new view.\n");

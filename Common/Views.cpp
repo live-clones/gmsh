@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.160 2005-01-01 19:35:27 geuzaine Exp $
+// $Id: Views.cpp,v 1.161 2005-01-08 20:15:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1072,6 +1072,127 @@ static void write_parsed_strings(int nbc, int nb, List_T *TD, List_T *TC, FILE *
   }
 }
 
+static void write_stl(FILE *file, int nbelm, List_T *list, int nbnod)
+{
+  if(nbelm){
+    int nb = List_Nbr(list) / nbelm;
+    for(int i = 0; i < List_Nbr(list); i+=nb){
+      double *x = (double*)List_Pointer(list, i);
+      double n[3];
+      normal3points(x[0], x[3], x[6],
+		    x[1], x[4], x[7],
+		    x[2], x[5], x[8], n);
+      if(nbnod == 3){
+	fprintf(file, "facet normal %g %g %g\n", n[0], n[1], n[2]);
+	fprintf(file, "  outer loop\n");
+	fprintf(file, "    vertex %g %g %g\n", x[0], x[3], x[6]);
+	fprintf(file, "    vertex %g %g %g\n", x[1], x[4], x[7]);
+	fprintf(file, "    vertex %g %g %g\n", x[2], x[5], x[8]);
+	fprintf(file, "  endloop\n");
+	fprintf(file, "endfacet\n");
+      }
+      else{
+	fprintf(file, "facet normal %g %g %g\n", n[0], n[1], n[2]);
+	fprintf(file, "  outer loop\n");
+	fprintf(file, "    vertex %g %g %g\n", x[0], x[4], x[8]);
+	fprintf(file, "    vertex %g %g %g\n", x[1], x[5], x[9]);
+	fprintf(file, "    vertex %g %g %g\n", x[2], x[6], x[10]);
+	fprintf(file, "  endloop\n");
+	fprintf(file, "endfacet\n");
+	fprintf(file, "facet normal %g %g %g\n", n[0], n[1], n[2]);
+	fprintf(file, "  outer loop\n");
+	fprintf(file, "    vertex %g %g %g\n", x[0], x[4], x[8]);
+	fprintf(file, "    vertex %g %g %g\n", x[2], x[6], x[10]);
+	fprintf(file, "    vertex %g %g %g\n", x[3], x[7], x[11]);
+	fprintf(file, "  endloop\n");
+	fprintf(file, "endfacet\n");
+      }
+    }
+  }
+}
+
+void WriteViewSTL(Post_View *v, char *filename)
+{
+  if(!v->NbST && !v->NbVT && !v->NbTT &&
+     !v->NbSQ && !v->NbVQ && !v->NbTQ){
+    Msg(GERROR, "No surface elements to save");
+    return;
+  }
+
+  FILE *file = fopen(filename, "w");
+  if(!file){
+    Msg(GERROR, "Unable to open file '%s'", filename);
+    return;
+  }
+  
+  fprintf(file, "solid Created by Gmsh\n");
+  write_stl(file, v->NbST, v->ST, 3);
+  write_stl(file, v->NbVT, v->VT, 3);
+  write_stl(file, v->NbTT, v->TT, 3);
+  write_stl(file, v->NbSQ, v->SQ, 4);
+  write_stl(file, v->NbVQ, v->VQ, 4);
+  write_stl(file, v->NbTQ, v->TQ, 4);
+  fprintf(file, "endsolid Created by Gmsh\n");
+
+  Msg(INFO, "Wrote view '%s' in STL file '%s'", v->Name, filename);
+  Msg(STATUS2N, "Wrote '%s'", filename);
+
+  fclose(file);
+}
+
+static void write_txt(FILE *file, int nbelm, List_T *list,
+		      int nbnod, int nbcomp, int nbtime)
+{
+  if(nbelm){
+    int nb = List_Nbr(list) / nbelm;
+    for(int i = 0; i < List_Nbr(list); i+=nb){
+      double *x = (double*)List_Pointer(list, i);
+      for(int j = 0; j < nbnod*(3+nbcomp*nbtime); j++)
+	fprintf(file, "%.16g ", x[j]);
+      fprintf(file, "\n");
+    }
+    fprintf(file, "\n");
+  }
+}
+
+void WriteViewTXT(Post_View *v, char *filename)
+{
+  FILE *file = fopen(filename, "w");
+  if(!file){
+    Msg(GERROR, "Unable to open file '%s'", filename);
+    return;
+  }
+  
+  write_txt(file, v->NbSP, v->SP, 1, 1, v->NbTimeStep);
+  write_txt(file, v->NbVP, v->VP, 1, 3, v->NbTimeStep);
+  write_txt(file, v->NbTP, v->TP, 1, 9, v->NbTimeStep);
+  write_txt(file, v->NbSL, v->SL, 2, 1, v->NbTimeStep);
+  write_txt(file, v->NbVL, v->VL, 2, 3, v->NbTimeStep);
+  write_txt(file, v->NbTL, v->TL, 2, 9, v->NbTimeStep);
+  write_txt(file, v->NbST, v->ST, 3, 1, v->NbTimeStep);
+  write_txt(file, v->NbVT, v->VT, 3, 3, v->NbTimeStep);
+  write_txt(file, v->NbTT, v->TT, 3, 9, v->NbTimeStep);
+  write_txt(file, v->NbSQ, v->SQ, 4, 1, v->NbTimeStep);
+  write_txt(file, v->NbVQ, v->VQ, 4, 3, v->NbTimeStep);
+  write_txt(file, v->NbTQ, v->TQ, 4, 9, v->NbTimeStep);
+  write_txt(file, v->NbSS, v->SS, 4, 1, v->NbTimeStep);
+  write_txt(file, v->NbVS, v->VS, 4, 3, v->NbTimeStep);
+  write_txt(file, v->NbTS, v->TS, 4, 9, v->NbTimeStep);
+  write_txt(file, v->NbSH, v->SH, 8, 1, v->NbTimeStep);
+  write_txt(file, v->NbVH, v->VH, 8, 3, v->NbTimeStep);
+  write_txt(file, v->NbTH, v->TH, 8, 9, v->NbTimeStep);
+  write_txt(file, v->NbSI, v->SI, 6, 1, v->NbTimeStep);
+  write_txt(file, v->NbVI, v->VI, 6, 3, v->NbTimeStep);
+  write_txt(file, v->NbTI, v->TI, 6, 9, v->NbTimeStep);
+  write_txt(file, v->NbSY, v->SY, 5, 1, v->NbTimeStep);
+  write_txt(file, v->NbVY, v->VY, 5, 3, v->NbTimeStep);
+  write_txt(file, v->NbTY, v->TY, 5, 9, v->NbTimeStep);
+
+  Msg(INFO, "Wrote view '%s' in text file '%s'", v->Name, filename);
+  Msg(STATUS2N, "Wrote '%s'", filename);
+  fclose(file);
+}
+
 void WriteView(Post_View *v, char *filename, int format, int append)
 {
   FILE *file;
@@ -1079,6 +1200,18 @@ void WriteView(Post_View *v, char *filename, int format, int append)
   int f, One = 1;
   int binary = (format == 1) ? 1 : 0;
   int parsed = (format == 2);
+  int stl = (format == 3);
+  int txtpts = (format == 4);
+
+  if(stl){
+    WriteViewSTL(v, filename);
+    return;
+  }
+  
+  if(txtpts){
+    WriteViewTXT(v, filename);
+    return;
+  }
 
   if(filename) {
     file = fopen(filename, append ? (binary ? "ab" : "a") : (binary ? "wb" : "w"));

@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.47 2005-01-03 04:09:27 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.48 2005-01-08 20:15:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -29,9 +29,9 @@ StringXNumber CutMapOptions_Number[] = {
   {GMSH_FULLRC, "A", GMSH_CutMapPlugin::callbackA, 1.},
   {GMSH_FULLRC, "dTimeStep", NULL, -1.},
   {GMSH_FULLRC, "dView", NULL, -1.},
-  {GMSH_FULLRC, "extractVolume", GMSH_CutMapPlugin::callbackVol, 0.},
-  {GMSH_FULLRC, "recurLevel", GMSH_CutMapPlugin::callbackRecur, 4},
-  {GMSH_FULLRC, "targetError", GMSH_CutMapPlugin::callbackTarget, 0},
+  {GMSH_FULLRC, "ExtractVolume", GMSH_CutMapPlugin::callbackVol, 0.},
+  {GMSH_FULLRC, "RecurLevel", GMSH_CutMapPlugin::callbackRecur, 4},
+  {GMSH_FULLRC, "TargetError", GMSH_CutMapPlugin::callbackTarget, 0},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
@@ -115,15 +115,15 @@ void GMSH_CutMapPlugin::getInfos(char *author, char *copyright,
   strcpy(help_text,
          "Plugin(CutMap) extracts the isosurface of value\n"
          "`A' from the view `iView' and draws the\n"
-	 "`dTimeStep'-th value of the view `dView' on this\n"
-	 "isovalue surface. If `iView' < 0, the plugin is\n"
-	 "run on the current view. If `dTimeStep' < 0, the\n"
+	 "`dTimeStep'-th value of the view `dView' on the\n"
+	 "isosurface. If `iView' < 0, the plugin is run\n"
+	 "on the current view. If `dTimeStep' < 0, the\n"
 	 "plugin uses, for each time step in `iView', the\n"
 	 "corresponding time step in `dView'. If `dView'\n"
 	 "< 0, the plugin uses `iView' as the value source.\n"
-	 "If `extractVolume' is nonzero, the plugin\n" 
+	 "If `ExtractVolume' is nonzero, the plugin\n" 
 	 "extracts the isovolume with values smaller (if\n"
-	 "`extractVolume' > 0) or greater (if `extractVolume'\n"
+	 "`ExtractVolume' > 0) or greater (if `ExtractVolume'\n"
 	 "< 0) than the isosurface `A'.\n"
 	 "\n"
 	 "Plugin(CutMap) creates as many views as there\n"

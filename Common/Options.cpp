@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.224 2005-01-02 18:10:12 geuzaine Exp $
+// $Id: Options.cpp,v 1.225 2005-01-08 20:15:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -430,7 +430,7 @@ void Print_OptionsDoc()
     return;
   }
   fprintf(file, "@ftable @code\n");
-  char author[256], copyright[256], help[1024];
+  char author[256], copyright[256], help[4096];
   for(GMSH_PluginManager::iter it = GMSH_PluginManager::instance()->begin();
       it != GMSH_PluginManager::instance()->end(); ++it) {
     GMSH_Plugin *p = (*it).second;

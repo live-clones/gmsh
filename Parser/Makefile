@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.67 2005-01-01 19:35:37 geuzaine Exp $
+# $Id: Makefile,v 1.68 2005-01-08 20:15:17 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -69,8 +69,9 @@ Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
   ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
   ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
-  ../Mesh/STL.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h Gmsh.tab.hpp
+  ../Mesh/DiscreteSurface.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Matrix.h \
+  Gmsh.tab.hpp
 Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
@@ -80,10 +81,10 @@ Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../DataStr/Tools.h ../Numeric/Numeric.h ../Common/Context.h \
   ../Geo/Geo.h ../Geo/GeoUtils.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
   ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ../Mesh/Nurbs.h ../Geo/CAD.h ../Graphics/Draw.h ../Mesh/Create.h \
-  ../Geo/StepGeomDatabase.h ../Common/Colors.h Parser.h OpenFile.h \
-  ../Common/CommandLine.h FunctionManager.h ../Common/Timer.h \
+  ../Geo/ExtrudeParams.h ../Mesh/DiscreteSurface.h ../Mesh/Metric.h \
+  ../Mesh/Matrix.h ../Mesh/Nurbs.h ../Geo/CAD.h ../Graphics/Draw.h \
+  ../Mesh/Create.h ../Geo/StepGeomDatabase.h ../Common/Colors.h Parser.h \
+  OpenFile.h ../Common/CommandLine.h FunctionManager.h ../Common/Timer.h \
   ../Graphics/CreateFile.h ../Common/Visibility.h
 OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -94,8 +95,8 @@ OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
   ../Common/AdaptiveViews.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
   ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ../Geo/MinMax.h ../Common/Visibility.h ../Graphics/ReadImg.h \
-  ../Common/GmshUI.h ../Graphics/Draw.h ../Fltk/GUI.h \
-  ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h
+  ../Geo/ExtrudeParams.h ../Mesh/DiscreteSurface.h ../Mesh/Metric.h \
+  ../Mesh/Matrix.h ../Geo/MinMax.h ../Common/Visibility.h \
+  ../Graphics/ReadImg.h ../Common/GmshUI.h ../Graphics/Draw.h \
+  ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h
 FunctionManager.o: FunctionManager.cpp FunctionManager.h

@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.65 2005-01-01 19:35:29 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.66 2005-01-08 20:15:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -79,6 +79,7 @@ void CreateOutputFile(char *name, int format)
     else if(!strcmp(ext, ".msh"))  CreateOutputFile(name, FORMAT_MSH);
     else if(!strcmp(ext, ".unv"))  CreateOutputFile(name, FORMAT_UNV);
     else if(!strcmp(ext, ".dmg"))  CreateOutputFile(name, FORMAT_DMG);
+    else if(!strcmp(ext, ".stl"))  CreateOutputFile(name, FORMAT_STL);
     else if(!strcmp(ext, ".pos"))  CreateOutputFile(name, FORMAT_LC);
     else if(!strcmp(ext, ".gif"))  CreateOutputFile(name, FORMAT_GIF);
     else if(!strcmp(ext, ".jpg"))  CreateOutputFile(name, FORMAT_JPEG);
@@ -111,6 +112,7 @@ void CreateOutputFile(char *name, int format)
   case FORMAT_MSH:
   case FORMAT_UNV:
   case FORMAT_DMG:
+  case FORMAT_STL:
   case FORMAT_GREF:
   case FORMAT_VRML:
     Print_Mesh(&M, name, format);

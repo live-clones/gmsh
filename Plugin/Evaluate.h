@@ -21,6 +21,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Plugin.h"
+#include "OctreePost.h"
 
 extern "C"
 {
@@ -29,6 +30,13 @@ extern "C"
 
 class GMSH_EvaluatePlugin : public GMSH_Post_Plugin
 {
+private:
+  OctreePost *_octree;
+  void evaluate(Post_View *v, List_T *list, int nbElm,
+		Post_View *v2, List_T *list2, int nbElm2,
+		int nbNod, int nbComp, int comp, 
+		int timeStep, int timeStep2,
+		char *expression);
 public:
   GMSH_EvaluatePlugin();
   void getName(char *name) const;

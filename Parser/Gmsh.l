@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.64 2005-01-02 17:46:07 geuzaine Exp $
+// $Id: Gmsh.l,v 1.65 2005-01-08 20:15:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -140,6 +140,7 @@ Call                    return tCall;
 
 Delete                  return tDelete;
 Dilate                  return tDilate;
+Discrete                return tDiscrete;
 Duplicata               return tDuplicata;
 Draw                    return tDraw;
 

@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.12 2005-01-01 19:35:39 geuzaine Exp $
+// $Id: Integrate.cpp,v 1.13 2005-01-08 20:15:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -30,8 +30,8 @@
 extern Context_T CTX;
 
 StringXNumber IntegrateOptions_Number[] = {
-  {GMSH_FULLRC, "iView", NULL, -1.},
-  {GMSH_FULLRC, "computeLevelsetPositive", NULL, 0.}
+  {GMSH_FULLRC, "ComputeLevelsetPositive", NULL, 0.},
+  {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
 extern "C"
@@ -63,7 +63,7 @@ void GMSH_IntegratePlugin::getInfos(char *author, char *copyright,
 	 "as the circulation/flux of vector fields over\n"
 	 "line/surface elements. If `iView' < 0, the\n"
 	 "plugin is run on the current view. If\n"
-	 "`computeLevelsetPositive' is set, the plugin\n"
+	 "`ComputeLevelsetPositive' is set, the plugin\n"
 	 "computes the positive area (volume) of the map.\n"
 	 "\n"
 	 "Plugin(Integrate) creates one new view.\n");
@@ -89,7 +89,7 @@ static double integrate(int nbList, List_T *list, int dim,
 {
   if(!nbList) return 0.;
   
-  const int levelsetPositive = (int)IntegrateOptions_Number[1].def;
+  const int levelsetPositive = (int)IntegrateOptions_Number[0].def;
   
   double res = 0.;
   int nb = List_Nbr(list) / nbList;
@@ -124,7 +124,7 @@ static double integrate(int nbList, List_T *list, int dim,
 
 Post_View *GMSH_IntegratePlugin::execute(Post_View * v)
 {
-  int iView = (int)IntegrateOptions_Number[0].def;
+  int iView = (int)IntegrateOptions_Number[1].def;
   
   if(iView < 0)
     iView = v ? v->Index : 0;
