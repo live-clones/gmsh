@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.39 2001-06-26 16:47:23 geuzaine Exp $
+// $Id: Views.cpp,v 1.40 2001-06-27 13:35:33 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -53,6 +53,7 @@ void BeginView(int allocate){
 
   NbPoints = NbLines = NbTriangles = NbTetrahedra = 0;
 
+  ActualView->NbTimeStep = 0;
   ActualView->NbSP = ActualView->NbVP = ActualView->NbTP = 0;
   ActualView->NbSL = ActualView->NbVL = ActualView->NbTL = 0;
   ActualView->NbST = ActualView->NbVT = ActualView->NbTT = 0;
@@ -95,6 +96,8 @@ void BeginView(int allocate){
   ActualView->DuplicateOf = 0;
   ActualView->ScalarOnly = 1;
   ActualView->normals = NULL;
+  ActualView->Min = 1.e200;
+  ActualView->Max = -1.e200;
   for(i=0;i<3;i++){
     ActualView->BBox[2*i] = 1.e200;
     ActualView->BBox[2*i+1] = -1.e200;
