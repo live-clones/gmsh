@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.134 2004-09-18 20:25:25 geuzaine Exp $
+// $Id: Views.cpp,v 1.135 2004-10-11 17:22:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -649,7 +649,6 @@ void CopyViewOptions(Post_View * src, Post_View * dest)
   dest->DrawVectors = src->DrawVectors;
   dest->DrawTensors = src->DrawTensors;
   dest->DrawStrings = src->DrawStrings;
-  dest->TransparentScale = src->TransparentScale;
   dest->ScaleType = src->ScaleType;
   dest->RangeType = src->RangeType;
   dest->VectorType = src->VectorType;

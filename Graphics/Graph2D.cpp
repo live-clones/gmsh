@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.35 2004-04-24 05:31:13 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.36 2004-10-11 17:22:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -105,16 +105,6 @@ static void Draw_Graph2D(Post_View * v,
   double ybot = ytop - height;
   double Abs, Val, ValMin = 0., ValMax = 0., AbsMin, AbsMax;
   double p1[3], p2[3];
-
-  if(!v->TransparentScale) {
-    glColor4ubv((GLubyte *) & CTX.color.bg);
-    glBegin(GL_QUADS);
-    glVertex2d(bb[0], CTX.viewport[3] - bb[1]);
-    glVertex2d(bb[2], CTX.viewport[3] - bb[1]);
-    glVertex2d(bb[2], CTX.viewport[3] - bb[3]);
-    glVertex2d(bb[0], CTX.viewport[3] - bb[3]);
-    glEnd();
-  }
 
   gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
   font_h = gl_height(); // total font height

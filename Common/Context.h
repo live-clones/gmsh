@@ -192,7 +192,7 @@ public :
   struct{
     List_T *list ;
     int force_num, compute_bb, vertex_arrays;
-    int draw, scales, link ;
+    int draw, scales, link, horizontal_scales ;
     int smooth, anim_cycle, combine_time, combine_remove_orig ;
     double anim_delay ;
   }post;

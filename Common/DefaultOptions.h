@@ -915,6 +915,9 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "CombineRemoveOriginal" , opt_post_combine_remove_orig , 1. ,
     "Remove original views after a Combine operation" },
 
+  { F|O, "HorizontalScales" , opt_post_horizontal_scales , 0. , 
+    "Display value scales horizontally" },
+
   { F|O, "Link" , opt_post_link , 0. ,
     "Link post-processing views (0=none, 1,2=changes in visible/all, 3,4=everything in visible/all)" },
 
@@ -1061,8 +1064,6 @@ StringXNumber ViewOptions_Number[] = {
     "Tensor Visualization Type" },
   { F,   "TimeStep" , opt_view_timestep , 0. ,
     "Current time step displayed" },
-  { F|O, "TransparentScale" , opt_view_transparent_scale , 1. ,
-    "Display a `transparent' value scale?" },
   { F, "Type" , opt_view_type , DRAW_POST_3D ,
     "Type of graph (1=3D, 2=2D-space, 3=2D-time)" },
 

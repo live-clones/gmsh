@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.38 2004-06-30 21:15:58 geuzaine Exp $
+$Id: FAQ,v 1.39 2004-10-11 17:22:57 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -211,6 +211,10 @@ executable. What's wrong?
 The solver executable (e.g. 'getdp.exe') has to be in your path. If
 not, simply go to the solver options
 (e.g. Solver->GetDP->Options->Executable) to specify its location.
+
+On recent versions of Microsoft Windows (XP SP2), it seems that you
+need to execute the solver (e.g. launch 'getdp.exe') at least once
+independently of Gmsh in order to authorize future executions.
 
 ********************************************************************
 

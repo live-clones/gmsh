@@ -73,7 +73,7 @@ class Post_View{
   double AngleSmoothNormals, AlphaChannel;
   int SaturateValues;
   int ShowElement, ShowTime, ShowScale;
-  int TransparentScale, ScaleType, RangeType;
+  int ScaleType, RangeType;
   int VectorType, TensorType, ArrowLocation;
   int TimeStep;
   int DrawStrings;

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.186 2004-09-25 06:16:12 geuzaine Exp $
+// $Id: Options.cpp,v 1.187 2004-10-11 17:22:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -4141,6 +4141,17 @@ double opt_post_scales(OPT_ARGS_NUM)
   return CTX.post.scales;
 }
 
+double opt_post_horizontal_scales(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.post.horizontal_scales = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->post_butt[2]->value(CTX.post.horizontal_scales);
+#endif
+  return CTX.post.horizontal_scales;
+}
+
 double opt_post_link(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -4922,15 +4933,6 @@ double opt_view_draw_tensors(OPT_ARGS_NUM)
     WID->view_butt[23]->value(v->DrawTensors);
 #endif
   return v->DrawTensors;
-}
-
-double opt_view_transparent_scale(OPT_ARGS_NUM)
-{
-  GET_VIEW(0.);
-  if(action & GMSH_SET) {
-    v->TransparentScale = (int)val;
-  }
-  return v->TransparentScale;
 }
 
 double opt_view_scale_type(OPT_ARGS_NUM)

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.279 2004-09-25 17:25:45 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.280 2004-10-11 17:22:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1058,6 +1058,7 @@ void post_options_ok_cb(CALLBACK_ARGS)
 {
   opt_post_anim_cycle(0, GMSH_SET, WID->post_butt[0]->value());
   opt_post_combine_remove_orig(0, GMSH_SET, WID->post_butt[1]->value());
+  opt_post_horizontal_scales(0, GMSH_SET, WID->post_butt[2]->value());
 
   opt_post_anim_delay(0, GMSH_SET, WID->post_value[0]->value());
 
