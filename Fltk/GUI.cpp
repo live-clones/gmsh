@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.145 2002-01-27 20:24:54 geuzaine Exp $
+// $Id: GUI.cpp,v 1.146 2002-01-27 20:47:33 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -934,14 +934,20 @@ void GUI::set_anim_buttons(int mode){
 
 void GUI::check_anim_buttons(){
   int i, play=0;
-  for(i=0 ; i<List_Nbr(CTX.post.list) ; i++)
-    if(((Post_View*)List_Pointer(CTX.post.list,i))->NbTimeStep > 1){
+  for(i=0 ; i<List_Nbr(CTX.post.list) ; i++){
+    if(((Post_View*)List_Pointer(CTX.post.list,i))->NbTimeStep > 1 ||
+       CTX.post.anim_cycle){
       play = 1 ; 
       break ;
     }
+  }
   if(!play){
     g_status_butt[5]->deactivate();
     g_status_butt[6]->deactivate();
+  }
+  else{
+    g_status_butt[5]->activate();
+    g_status_butt[6]->activate();
   }
 }
 

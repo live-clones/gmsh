@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.103 2002-01-27 20:24:54 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.104 2002-01-27 20:47:33 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -512,12 +512,6 @@ void opt_post_ok_cb(CALLBACK_ARGS) {
 		4);
   opt_post_smooth(0, GMSH_SET, WID->post_butt[5]->value());
   opt_post_anim_cycle(0, GMSH_SET, WID->post_butt[6]->value());
-  if(WID->post_butt[6]->value()){
-    WID->g_status_butt[5]->activate();
-    WID->g_status_butt[6]->activate();
-  }
-  else
-    WID->check_anim_buttons();
 
   opt_post_anim_delay(0, GMSH_SET, WID->post_value[0]->value());
   Draw();
