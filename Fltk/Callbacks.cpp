@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.36 2001-02-22 08:16:30 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.37 2001-02-23 08:18:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -425,7 +425,7 @@ void opt_message_cb(CALLBACK_ARGS) {
   WID->create_message_window();
 }
 void opt_message_clear_cb(CALLBACK_ARGS) {
-  WID->clear_message();
+  WID->msg_browser->clear();
 }
 void opt_message_save_cb(CALLBACK_ARGS) {
   char *newfile;

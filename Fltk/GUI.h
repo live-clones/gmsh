@@ -186,7 +186,6 @@ public:
   void set_anim(int mode);
   void set_status(char *msg, int num);
   void add_message(char *msg);
-  void clear_message();
   void save_message(char *filename);
   void set_statistics();
   void update_view_window(int numview);

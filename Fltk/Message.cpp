@@ -1,7 +1,7 @@
-// $Id: Message.cpp,v 1.14 2001-02-20 18:32:58 geuzaine Exp $
+// $Id: Message.cpp,v 1.15 2001-02-23 08:18:50 geuzaine Exp $
 
 #include <signal.h>
-#ifndef WIN32
+#if !defined(WIN32) || defined(__CYGWIN__)
 #include <sys/resource.h>
 #endif
 
@@ -163,7 +163,7 @@ void Exit(int level){
 /* ------------------------------------------------------------------------ */
 
 void GetResources(long *s, long *us, long *mem){
-#ifndef WIN32
+#if !defined(WIN32) || defined(__CYGWIN__)
   static struct rusage r;
 
   getrusage(RUSAGE_SELF,&r);

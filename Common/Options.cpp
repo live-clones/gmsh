@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.4 2001-02-22 08:16:30 geuzaine Exp $
+// $Id: Options.cpp,v 1.5 2001-02-23 08:18:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -119,8 +119,8 @@ void Print_Options(int num, int level, char *filename){
     fprintf(file, "// you want to keep between two Gmsh sessions). You are\n");
     fprintf(file, "// not supposed to edit it manually, but of course you\n");
     fprintf(file, "// can do. This file will be entirely rewritten every time\n");
-    fprintf(file, "// you quit Gmsh. If this file isn't found, defaults\n");
-    fprintf(file, "// are used.\n");
+    fprintf(file, "// you quit Gmsh if the option 'General.SaveSession' is\n");
+    fprintf(file, "// set. If this file isn't found, defaults are used.\n");
   }
 
   if((level & GMSH_OPTIONSRC) && file){
@@ -128,8 +128,10 @@ void Print_Options(int num, int level, char *filename){
     fprintf(file, "// This file takes configuration options that should\n");
     fprintf(file, "// be loaded each time Gmsh is launched. You can create\n");
     fprintf(file, "// this file by hand, or let Gmsh generate it for you (with\n");
-    fprintf(file, "// the 'File->Save Options' menu button). If this file\n");
-    fprintf(file, "// isn't found, defaults are used.\n");
+    fprintf(file, "// the 'File->Save Options' menu button). This file can\n");
+    fprintf(file, "// also be automatically regenerated every time you quit\n");
+    fprintf(file, "// Gmsh if the option 'General.SaveOptions' is set. If\n");
+    fprintf(file, "// this file isn't found, defaults are used.\n");
   }
 
   Print_StringOptions(num, level, GeneralOptions_String, "General.", file);

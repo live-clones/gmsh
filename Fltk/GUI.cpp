@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.51 2001-02-22 08:16:30 geuzaine Exp $
+// $Id: GUI.cpp,v 1.52 2001-02-23 08:18:50 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1575,13 +1575,6 @@ void GUI::create_message_window(){
 void GUI::add_message(char *msg){
   msg_browser->add(msg,0);
   msg_browser->bottomline(msg_browser->size());
-}
-
-void GUI::clear_message(){
-  for(int i =msg_browser->size() ; i > 0; i--)
-    msg_browser->remove(i);
-  msg_browser->bottomline(msg_browser->size());
-  msg_browser->redraw();
 }
 
 void GUI::save_message(char *name){
