@@ -77,11 +77,24 @@ capabilities</a>.
       <a href="/gmsh/doc/myperlsolver.tgz">Perl solver</a>
 </ul>
 
+<!-- simple interface
 <form method=GET action="http://www.geuz.org/search/search-geuz.cgi">
 <input size=30 name="q" value="">&nbsp;
 <input type="submit" value="Search!">
 <input type=HIDDEN name="ul" value="/gmsh/">
 <input type=HIDDEN name="ps" value=10>
+</form>
+-->
+
+<form method=GET action="http://www.geuz.org/search/search-geuz.cgi">
+<input size=30 name="q" value="">&nbsp;
+<input type="submit" value="Search!">&nbsp;
+<input type=HIDDEN name="ps" value=10>
+<select name="ul">
+<option value="/gmsh/" SELECTED>all Gmsh resources
+<option value="/gmsh/doc/">documentation
+<option value="/pipermail/gmsh/">mailing lists archives
+</select>
 </form>
 
 <h2><a name="Mailing lists"></a>Mailing lists</h2>
