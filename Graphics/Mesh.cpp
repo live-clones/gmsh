@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.35 2001-07-31 11:48:27 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.36 2001-08-03 10:02:32 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -261,10 +261,12 @@ void Draw_Simplex_Volume (void *a, void *b){
     fulldraw = 1;
   }
 
-  if(CTX.mesh.color_carousel)
+  if(CTX.mesh.color_carousel && !fulldraw)
     ColorSwitch((*s)->iEnt);
+  else if(fulldraw)
+    glColor4ubv((GLubyte*)&CTX.color.mesh.line);
   else
-    glColor4ubv((GLubyte*)&CTX.color.mesh.tetrahedron);    
+    glColor4ubv((GLubyte*)&CTX.color.mesh.tetrahedron);
 
   for (int i=0 ; i<4 ; i++) {
      X[i] = Xc + CTX.mesh.explode * ((*s)->V[i]->Pos.X - Xc);
@@ -272,7 +274,7 @@ void Draw_Simplex_Volume (void *a, void *b){
      Z[i] = Zc + CTX.mesh.explode * ((*s)->V[i]->Pos.Z - Zc);
   }
 
-  if(CTX.mesh.volumes){
+  if(CTX.mesh.volumes && !(fulldraw && CTX.mesh.shade)){
     glBegin(GL_LINES);
     glVertex3d(X[1], Y[1], Z[1]);
     glVertex3d(X[0], Y[0], Z[0]);
@@ -334,13 +336,15 @@ void Draw_Simplex_Volume (void *a, void *b){
 
   if (CTX.mesh.hidden) {
 
-    x1x0 = X[2]-X[0]; y1y0 = Y[2]-Y[0];
-    z1z0 = Z[2]-Z[0]; x2x0 = X[1]-X[0];
-    y2y0 = Y[1]-Y[0]; z2z0 = Z[1]-Z[0];
-    n[0]  = y1y0 * z2z0 - z1z0 * y2y0 ;
-    n[1]  = z1z0 * x2x0 - x1x0 * z2z0 ;
-    n[2]  = x1x0 * y2y0 - y1y0 * x2x0;
-    glNormal3dv(n);
+    if(CTX.mesh.shade){
+      x1x0 = X[2]-X[0]; y1y0 = Y[2]-Y[0];
+      z1z0 = Z[2]-Z[0]; x2x0 = X[1]-X[0];
+      y2y0 = Y[1]-Y[0]; z2z0 = Z[1]-Z[0];
+      n[0]  = y1y0 * z2z0 - z1z0 * y2y0 ;
+      n[1]  = z1z0 * x2x0 - x1x0 * z2z0 ;
+      n[2]  = x1x0 * y2y0 - y1y0 * x2x0;
+      glNormal3dv(n);
+    }
 
     glBegin(GL_TRIANGLES);
     glVertex3d(X[0], Y[0], Z[0]);
@@ -348,13 +352,15 @@ void Draw_Simplex_Volume (void *a, void *b){
     glVertex3d(X[1], Y[1], Z[1]);
     glEnd();
 
-    x1x0 = X[1]-X[0]; y1y0 = Y[1]-Y[0];
-    z1z0 = Z[1]-Z[0]; x2x0 = X[3]-X[0];
-    y2y0 = Y[3]-Y[0]; z2z0 = Z[3]-Z[0];
-    n[0]  = y1y0 * z2z0 - z1z0 * y2y0 ;
-    n[1]  = z1z0 * x2x0 - x1x0 * z2z0 ;
-    n[2]  = x1x0 * y2y0 - y1y0 * x2x0;
-    glNormal3dv(n);
+    if(CTX.mesh.shade){
+      x1x0 = X[1]-X[0]; y1y0 = Y[1]-Y[0];
+      z1z0 = Z[1]-Z[0]; x2x0 = X[3]-X[0];
+      y2y0 = Y[3]-Y[0]; z2z0 = Z[3]-Z[0];
+      n[0]  = y1y0 * z2z0 - z1z0 * y2y0 ;
+      n[1]  = z1z0 * x2x0 - x1x0 * z2z0 ;
+      n[2]  = x1x0 * y2y0 - y1y0 * x2x0;
+      glNormal3dv(n);
+    }
 
     glBegin(GL_TRIANGLES);
     glVertex3d(X[0], Y[0], Z[0]);
@@ -362,14 +368,15 @@ void Draw_Simplex_Volume (void *a, void *b){
     glVertex3d(X[3], Y[3], Z[3]);
     glEnd();
 
-    x1x0 = X[3]-X[0]; y1y0 = Y[3]-Y[0];
-    z1z0 = Z[3]-Z[0]; x2x0 = X[2]-X[0];
-    y2y0 = Y[2]-Y[0]; z2z0 = Z[2]-Z[0];
-    n[0]  = y1y0 * z2z0 - z1z0 * y2y0 ;
-    n[1]  = z1z0 * x2x0 - x1x0 * z2z0 ;
-    n[2]  = x1x0 * y2y0 - y1y0 * x2x0;
-    glNormal3dv(n);
-
+    if(CTX.mesh.shade){
+      x1x0 = X[3]-X[0]; y1y0 = Y[3]-Y[0];
+      z1z0 = Z[3]-Z[0]; x2x0 = X[2]-X[0];
+      y2y0 = Y[2]-Y[0]; z2z0 = Z[2]-Z[0];
+      n[0]  = y1y0 * z2z0 - z1z0 * y2y0 ;
+      n[1]  = z1z0 * x2x0 - x1x0 * z2z0 ;
+      n[2]  = x1x0 * y2y0 - y1y0 * x2x0;
+      glNormal3dv(n);
+    }
 
     glBegin(GL_TRIANGLES);
     glVertex3d(X[0], Y[0], Z[0]);
@@ -377,13 +384,15 @@ void Draw_Simplex_Volume (void *a, void *b){
     glVertex3d(X[2], Y[2], Z[2]);
     glEnd();
 
-    x1x0 = X[3]-X[1]; y1y0 = Y[3]-Y[1];
-    z1z0 = Z[3]-Z[1]; x2x0 = X[2]-X[1];
-    y2y0 = Y[2]-Y[1]; z2z0 = Z[2]-Z[1];
-    n[0]  = y1y0 * z2z0 - z1z0 * y2y0 ;
-    n[1]  = z1z0 * x2x0 - x1x0 * z2z0 ;
-    n[2]  = x1x0 * y2y0 - y1y0 * x2x0;
-    glNormal3dv(n);
+    if(CTX.mesh.shade){
+      x1x0 = X[3]-X[1]; y1y0 = Y[3]-Y[1];
+      z1z0 = Z[3]-Z[1]; x2x0 = X[2]-X[1];
+      y2y0 = Y[2]-Y[1]; z2z0 = Z[2]-Z[1];
+      n[0]  = y1y0 * z2z0 - z1z0 * y2y0 ;
+      n[1]  = z1z0 * x2x0 - x1x0 * z2z0 ;
+      n[2]  = x1x0 * y2y0 - y1y0 * x2x0;
+      glNormal3dv(n);
+    }
 
     glBegin(GL_TRIANGLES);
     glVertex3d(X[3], Y[3], Z[3]);
