@@ -1,6 +1,6 @@
-// $Id: SecondOrder.cpp,v 1.28 2004-10-28 18:50:27 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.29 2005-01-01 19:35:31 geuzaine Exp $
 //
-// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

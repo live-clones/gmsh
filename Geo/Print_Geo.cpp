@@ -1,6 +1,6 @@
-// $Id: Print_Geo.cpp,v 1.32 2004-02-07 01:40:19 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.33 2005-01-01 19:35:28 geuzaine Exp $
 //
-// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

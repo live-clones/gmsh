@@ -1,7 +1,7 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.159 2005-01-01 18:59:07 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.160 2005-01-01 19:35:40 geuzaine Exp $
 @c
-@c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
+@c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
 @c This program is free software; you can redistribute it and/or modify
 @c it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@
 @set EDITION        1.29
 @set GMSH-VERSION   1.58
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
-@set COPYRIGHT      @copyright{} 1997-2004 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set COPYRIGHT      @copyright{} 1997-2005 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @c
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate

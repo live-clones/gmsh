@@ -1,7 +1,7 @@
 #ifndef _DEFAULT_OPTIONS_H_
 #define _DEFAULT_OPTIONS_H_
 
-// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -106,7 +106,7 @@ StringXString SolverOptions_String[] = {
     "Name of solver 0" },
   { F|O, "Help0" , opt_solver_help0 , 
     "A General environment for the treatment of\nDiscrete Problems\n\n"
-    "Copyright (C) 1997-2004\nPatrick Dular and Christophe Geuzaine\n\n"
+    "Copyright (C) 1997-2005\nPatrick Dular and Christophe Geuzaine\n\n"
     "Visit http://www.geuz.org/getdp/ for more info",
     "Help string for solver 0" },
   { F|O, "Executable0" , opt_solver_executable0 , 

@@ -1,6 +1,6 @@
-// $Id: Edge.cpp,v 1.18 2004-05-26 01:29:29 geuzaine Exp $
+// $Id: Edge.cpp,v 1.19 2005-01-01 19:35:30 geuzaine Exp $
 //
-// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

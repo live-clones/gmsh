@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.383 2004-12-30 05:45:24 geuzaine Exp $
+# $Id: Makefile,v 1.384 2005-01-01 19:35:27 geuzaine Exp $
 #
-# Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
+# Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -219,7 +219,7 @@ package-mac:
         "    <key>CFBundleIconFile</key><string>Gmsh.icns</string>\n"\
         "    <key>CFBundleSignature</key><string>GMSH</string>\n"\
         "    <key>CFBundleGetInfoString</key><string>Gmsh ${GMSH_VERSION},"\
-                  "Copyright (C) 1997-2004 C. Geuzaine and J.-F. Remacle</string>\n"\
+                  "Copyright (C) 1997-2005 C. Geuzaine and J.-F. Remacle</string>\n"\
         "    <key>CFBundleIdentifier</key><string>org.geuz.Gmsh</string>\n"\
         "    <key>CFBundleDocumentTypes</key>\n"\
         "      <array>\n"\

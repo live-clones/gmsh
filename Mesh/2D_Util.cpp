@@ -1,6 +1,6 @@
-// $Id: 2D_Util.cpp,v 1.22 2004-03-03 22:26:34 geuzaine Exp $
+// $Id: 2D_Util.cpp,v 1.23 2005-01-01 19:35:30 geuzaine Exp $
 //
-// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

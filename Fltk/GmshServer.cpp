@@ -1,6 +1,6 @@
-/* $Id: GmshServer.cpp,v 1.23 2005-01-01 18:57:19 geuzaine Exp $ */
+/* $Id: GmshServer.cpp,v 1.24 2005-01-01 19:35:28 geuzaine Exp $ */
 /*
- * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
+ * Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation

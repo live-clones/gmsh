@@ -1,6 +1,6 @@
-// $Id: 2D_Mesh_Triangle.cpp,v 1.11 2004-07-14 22:53:50 geuzaine Exp $
+// $Id: 2D_Mesh_Triangle.cpp,v 1.12 2005-01-01 19:35:30 geuzaine Exp $
 //
-// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
-// $Id: StepGeomDatabase.cpp,v 1.16 2004-02-28 00:48:49 geuzaine Exp $
+// $Id: StepGeomDatabase.cpp,v 1.17 2005-01-01 19:35:29 geuzaine Exp $
 //
-// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

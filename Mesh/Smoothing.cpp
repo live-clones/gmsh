@@ -1,6 +1,6 @@
-// $Id: Smoothing.cpp,v 1.14 2004-06-28 19:00:22 geuzaine Exp $
+// $Id: Smoothing.cpp,v 1.15 2005-01-01 19:35:31 geuzaine Exp $
 //
-// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

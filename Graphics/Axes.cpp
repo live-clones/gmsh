@@ -1,6 +1,6 @@
-// $Id: Axes.cpp,v 1.23 2004-12-21 03:13:02 geuzaine Exp $
+// $Id: Axes.cpp,v 1.24 2005-01-01 19:35:29 geuzaine Exp $
 //
-// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

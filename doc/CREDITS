@@ -1,13 +1,13 @@
-$Id: CREDITS,v 1.23 2004-12-23 06:11:17 geuzaine Exp $
+$Id: CREDITS,v 1.24 2005-01-01 19:35:39 geuzaine Exp $
 
-             Gmsh is copyright (C) 1997-2004 
+             Gmsh is copyright (C) 1997-2005
 
-                   Christophe Geuzaine 
-              <geuzaine at acm.caltech.edu> 
+                   Christophe Geuzaine
+              <geuzaine at acm.caltech.edu>
 
-                           and 
+                           and
 
-                  Jean-Francois Remacle 
+                  Jean-Francois Remacle
                <remacle at gce.ucl.ac.be>
 
 Major code contributions to Gmsh have been provided by Nicolas Tardieu

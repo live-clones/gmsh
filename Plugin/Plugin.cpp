@@ -1,6 +1,6 @@
-// $Id: Plugin.cpp,v 1.70 2004-12-27 19:18:12 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.71 2005-01-01 19:35:39 geuzaine Exp $
 //
-// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

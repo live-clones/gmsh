@@ -1,7 +1,7 @@
-/* $Id: gl2ps.cpp,v 1.93 2004-12-29 16:34:38 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.94 2005-01-01 19:35:29 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
- * Copyright (C) 1999-2004 Christophe Geuzaine <geuz@geuz.org>
+ * Copyright (C) 1999-2005 Christophe Geuzaine <geuz@geuz.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of either:
@@ -2355,7 +2355,7 @@ static void gl2psPrintPostScriptHeader(void)
   }
 
   gl2psPrintf("%%%%Title: %s\n"
-              "%%%%Creator: GL2PS %d.%d.%d, (C) 1999-2004 Christophe Geuzaine <geuz@geuz.org>\n"
+              "%%%%Creator: GL2PS %d.%d.%d, (C) 1999-2005 Christophe Geuzaine <geuz@geuz.org>\n"
               "%%%%For: %s\n"
               "%%%%CreationDate: %s"
               "%%%%LanguageLevel: 3\n"
@@ -3477,7 +3477,7 @@ static int gl2psPrintPDFInfo(void)
                  "/Title (%s)\n"
                  "/Creator (%s)\n"
                  "/Producer (GL2PS %d.%d.%d, "
-                 "(C) 1999-2004 Christophe Geuzaine <geuz@geuz.org>)\n",
+                 "(C) 1999-2005 Christophe Geuzaine <geuz@geuz.org>)\n",
                  gl2ps->title, gl2ps->producer,
                  GL2PS_MAJOR_VERSION, GL2PS_MINOR_VERSION, GL2PS_PATCH_VERSION);
   
