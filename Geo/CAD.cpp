@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.56 2003-02-20 10:05:09 remacle Exp $
+// $Id: CAD.cpp,v 1.57 2003-02-21 09:39:01 remacle Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1599,9 +1599,10 @@ static Surface *SURFACE;
 static Vertex *VERTEX;
 
 double min1d (double (*funct)(double), double *xmin){
-  double ax=1.e-15, bx=1.e-12, xx, fa, fb, fx, tol = 1.e-8;
-  mnbrak(&ax,&xx,&bx,&fa,&fx,&fb,funct);
-  return(brent(ax,xx,bx,funct,tol,xmin));
+  double ax=1.e-15, bx=1.e-12, cx= 1.E-11, fa, fb, fx, tol = 1.e-3;
+  mnbrak(&ax,&bx,&cx,&fa,&fx,&fb,funct);
+  //  Msg(INFO, "--MIN1D : ax %12.5E bx %12.5E cx %12.5E \n",ax,bx,cx);  
+  return(brent(ax,bx,cx,funct,tol,xmin));
 }
 
 static void intersectCS (int N, double x[], double res[]){

@@ -1,4 +1,4 @@
-// $Id: gsl_brent.cpp,v 1.2 2003-02-19 00:17:01 geuzaine Exp $
+// $Id: gsl_brent.cpp,v 1.3 2003-02-21 09:39:01 remacle Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -35,7 +35,9 @@
 static double (*nrfunc)(double);
 
 double fn1 (double x, void * params){
-  return nrfunc(x);
+
+  double val = nrfunc(x);
+  return val;
 }
 
 #define MAXITER 100
@@ -43,29 +45,28 @@ double fn1 (double x, void * params){
 // Returns the minimum betwen ax and bx to a given tol using brent's
 // method.
 
-double brent(double ax, double xx, double bx, 
+double brent(double ax, double bx, double cx, 
 	     double (*f)(double), double tol, double *xmin){
   int status;
   int iter = 0;
-  double m, a, b;
+  double a, b, c; // a < b < c
   const gsl_min_fminimizer_type *T;
   gsl_min_fminimizer *s;
   gsl_function F;
 
-  m = xx;
-
   // gsl wants a<b
-  if(ax < bx){
+  b = bx;
+  if(ax < cx){
     a = ax;
-    b = bx;
+    c = cx;
   }
   else{
-    a = bx;
-    b = bx;
+    a = ax;
+    c = cx;
   }
 
   // if a-b < tol, return func(a)
-  if(fabs(b-a) < tol){
+  if(fabs(c-a) < tol){
     *xmin = ax;
     return(f(*xmin));
   }
@@ -77,24 +78,25 @@ double brent(double ax, double xx, double bx,
   
   T = gsl_min_fminimizer_brent;
   s = gsl_min_fminimizer_alloc(T);
-  gsl_min_fminimizer_set(s, &F, m, a, b);
+  gsl_min_fminimizer_set(s, &F, b, a, c);
   
   do{
     iter++;
     status = gsl_min_fminimizer_iterate(s);
-    
-    m = gsl_min_fminimizer_x_minimum(s);
+    if(status) break; // solver problem    
+    b = gsl_min_fminimizer_x_minimum(s);
     a = gsl_min_fminimizer_x_lower(s);
-    b = gsl_min_fminimizer_x_upper(s);
+    c = gsl_min_fminimizer_x_upper(s);
     
-    status = gsl_min_test_interval(a, b, tol, 0.0);
+    status = gsl_min_test_interval(a, c, tol, 0.0);
     
     //if(status == GSL_SUCCESS) printf ("Converged\n");
   }
   while(status == GSL_CONTINUE && iter < MAXITER);
-  
-  *xmin = m;
-  return fn1(m, NULL);
+  if(status != GSL_SUCCESS)Msg(GERROR, "MIN1D NOT CONVERGED : f(%lf) = %lf \n",b,fn1(b,NULL));  
+  *xmin = b;
+  gsl_min_fminimizer_free (s);
+  return fn1(b, NULL);
 }
 
 
@@ -105,63 +107,69 @@ double brent(double ax, double xx, double bx,
 // switched) and bx, and we know that there is a minimum between ax
 // and bx.
 
-#define GOLD 1.618034
+#define MYGOLD__ 1.618034
 #define GLIMIT 100.0
-#define TINY 1.0e-20
+#define TINY 1.0e-12
 #define SHFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
 
 void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb, double *fc,
-	    double (*func)(double)){
+	    double (*func)(double))
+{
   double ulim,u,r,q,fu,dum;
+  //  Msg(INFO, "--MNBRAK1 : ax %12.5E bx = %12.5E\n",*ax,*bx);  
 
   *fa=(*func)(*ax);
   *fb=(*func)(*bx);
-  if(*fb > *fa){
+  if (*fb > *fa) {
     SHFT(dum,*ax,*bx,dum);
     SHFT(dum,*fb,*fa,dum);
   }
-  *cx=(*bx)+GOLD*(*bx-*ax);
+  //  Msg(INFO, "--MNBRAK2 : ax %12.5E  bx = %12.5E\n",*ax,*bx);  
+  *cx=(*bx)+MYGOLD__*(*bx-*ax);
   *fc=(*func)(*cx);
-  while(*fb > *fc){
+  while (*fb > *fc) {
     r=(*bx-*ax)*(*fb-*fc);
     q=(*bx-*cx)*(*fb-*fa);
-    u=(*bx)-((*bx-*cx)*q-(*bx-*ax)*r)/(2.0*SIGN(FMAX(fabs(q-r),TINY),q-r));
+    u=(*bx)-((*bx-*cx)*q-(*bx-*ax)*r)/
+      (2.0*SIGN(FMAX(fabs(q-r),TINY),q-r));
+    //    Msg(INFO, "--MNBRAK : %12.5E %12.5E %12.5E %12.5E %12.5E\n",*ax,*fa,*fb,*fc,u);  
     ulim=(*bx)+GLIMIT*(*cx-*bx);
-    if((*bx-u)*(u-*cx) > 0.0){
+    if ((*bx-u)*(u-*cx) > 0.0) {
       fu=(*func)(u);
-      if(fu < *fc){
+      if (fu < *fc) {
 	*ax=(*bx);
 	*bx=u;
 	*fa=(*fb);
 	*fb=fu;
 	return;
-      }
-      else if(fu > *fb){
+      } else if (fu > *fb) {
 	*cx=u;
 	*fc=fu;
 	return;
       }
-      u=(*cx)+GOLD*(*cx-*bx);
+      u=(*cx)+MYGOLD__*(*cx-*bx);
       fu=(*func)(u);
-    }
-    else if((*cx-u)*(u-ulim) > 0.0){
+    } else if ((*cx-u)*(u-ulim) > 0.0) {
       fu=(*func)(u);
-      if(fu < *fc){
-	SHFT(*bx,*cx,u,*cx+GOLD*(*cx-*bx));
-	SHFT(*fb,*fc,fu,(*func)(u));
-      }
-    }
-    else if((u-ulim)*(ulim-*cx) >= 0.0){
+      if (fu < *fc) {
+	SHFT(*bx,*cx,u,*cx+MYGOLD__*(*cx-*bx))
+	  SHFT(*fb,*fc,fu,(*func)(u))
+	  }
+    } else if ((u-ulim)*(ulim-*cx) >= 0.0) {
       u=ulim;
       fu=(*func)(u);
-    } 
-    else{
-      u=(*cx)+GOLD*(*cx-*bx);
+    } else {
+      u=(*cx)+MYGOLD__*(*cx-*bx);
       fu=(*func)(u);
     }
-    SHFT(*ax,*bx,*cx,u);
-    SHFT(*fa,*fb,*fc,fu);
+    SHFT(*ax,*bx,*cx,u)
+    SHFT(*fa,*fb,*fc,fu)
+      //      Msg(INFO, "MNBRAK : %12.5E %12.5E %12.5E \n",*ax,*bx,*cx);  
   }
 }
+#undef MYGOLD__
+#undef GLIMIT
+#undef TINY
+#undef SHFT
 
 #endif
