@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.20 2001-08-02 07:26:51 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.21 2001-08-02 08:04:40 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -87,7 +87,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
         vert = Create_Vertex (Num, x, y, z, 1.0 ,0.0);
         Tree_Replace(M->Vertices, &vert);
 #ifdef SEARCH_DUPLICATES
-        if(Tree_Replace(Duplis, &vert)) Msg(WARNING, "Node %g %g %g already exsists");
+        if(Tree_Replace(Duplis, &vert)) Msg(WARNING, "Node %g %g %g already exists");
 #endif
       }
 #ifdef SEARCH_DUPLICATES
