@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.180 2002-01-19 00:40:07 geuzaine Exp $
+# $Id: Makefile,v 1.181 2002-01-19 01:17:50 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 33
@@ -263,7 +263,7 @@ compile-linux: initialtag
 link-linux:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
-linux: compile-linux link-linux strip-bin
+linux: compile-linux link-linux
 
 #
 # Test for fltk 1.1
@@ -324,7 +324,7 @@ compile-linux-gcc-2.95: initialtag
 link-linux-gcc-2.95:
 	$(HOME)/gcc-2.95.3/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
-linux-gcc-2.95: compile-linux-gcc-2.95 link-linux-gcc-2.95 strip-bin
+linux-gcc-2.95: compile-linux-gcc-2.95 link-linux-gcc-2.95
 distrib-linux-gcc-2.95:
 	make tag
 	make clean
@@ -341,6 +341,7 @@ distrib-linux-gcc-2.95:
 	strip $(GMSH_BIN_DIR)/gmsh-batch
 	make clean
 	make linux-gcc-2.95
+	make strip-bin
 	make distrib
 rpm: src
 	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
@@ -365,7 +366,7 @@ link-linux-scorec:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-linux $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  /users/develop/develop/visual/fltk/1.0/lib/x86_linux/libfltk.a\
                  -L/usr/X11R6/lib -lX11 -lm -ldl 
-linux-scorec: compile-linux-scorec link-linux-scorec strip-bin 
+linux-scorec: compile-linux-scorec link-linux-scorec
 
 #
 # Digital (Compaq) Tru64
@@ -383,7 +384,7 @@ compile-dec: initialtag
 link-dec:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
-dec: compile-dec link-dec strip-bin
+dec: compile-dec link-dec
 distrib-dec:
 	make tag
 	make clean
@@ -400,6 +401,7 @@ distrib-dec:
 	strip $(GMSH_BIN_DIR)/gmsh-batch
 	make clean
 	make dec
+	make strip-bin
 	make distrib
 #
 # HP-UX
@@ -418,7 +420,7 @@ link-hp:
 	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                       -L$(HOME)/SOURCES/Mesa-3.1/lib $(OPENGL_LIB)\
                       -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
-hp: compile-hp link-hp strip-bin
+hp: compile-hp link-hp
 distrib-hp:
 	make tag
 	make clean
@@ -435,6 +437,7 @@ distrib-hp:
 	strip $(GMSH_BIN_DIR)/gmsh-batch
 	make clean
 	make hp
+	make strip-bin
 	make distrib
 #
 # IBM AIX
@@ -452,7 +455,7 @@ compile-ibm: initialtag
 link-ibm:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
-ibm: compile-ibm link-ibm strip-bin
+ibm: compile-ibm link-ibm
 distrib-ibm:
 	make tag
 	make clean
@@ -469,6 +472,7 @@ distrib-ibm:
 	strip $(GMSH_BIN_DIR)/gmsh-batch
 	make clean
 	make ibm
+	make strip-bin
 	make distrib
 #
 # SGI Irix
@@ -488,7 +492,7 @@ compile-sgi: initialtag
 link-sgi:
 	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) $(OPENGL_LIB) -lm
-sgi: compile-sgi link-sgi strip-bin
+sgi: compile-sgi link-sgi
 distrib-sgi:
 	make tag
 	make clean
@@ -507,6 +511,7 @@ distrib-sgi:
 	strip $(GMSH_BIN_DIR)/gmsh-batch
 	make clean
 	make sgi
+	make strip-bin
 	make distrib
 #
 # Mingw
@@ -526,7 +531,6 @@ link-mingw:
                  Common/Icon.res $(HOME)/SOURCES/fltk/lib/libfltk.a\
                  -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 mingw: compile-mingw link-mingw
-	strip $(GMSH_BIN_DIR)/gmsh.exe
 
 #
 # Cygwin
@@ -546,10 +550,11 @@ link-cygwin:
                  Common/Icon.res $(HOME)/SOURCES/fltk/lib/libfltk.a\
                  -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 cygwin: compile-cygwin link-cygwin
-	strip $(GMSH_BIN_DIR)/gmsh.exe
 distrib-cygwin:
 	make tag
+	make clean
 	make cygwin
+	strip $(GMSH_BIN_DIR)/gmsh.exe
 	make distrib-win
 #
 # Cygwin with fltk 1.1
@@ -571,7 +576,6 @@ link-cygwin1:
                  $(HOME)/SOURCES/fltk-1.1/lib/libfltk.a\
                  -lgdi32 -lwsock32 -lm
 cygwin1: compile-cygwin1 link-cygwin1
-	strip $(GMSH_BIN_DIR)/gmsh.exe
 
 #
 # Cygwin gertha-buro
@@ -626,7 +630,7 @@ link-sun:
                  -L$(HOME)/SOURCES/Mesa-3.1/lib $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB)\
                  $(X11_LIB) -lXext -lsocket -lnsl -ldl -lm
-sun: compile-sun link-sun strip-bin
+sun: compile-sun link-sun
 distrib-sun:
 	make tag
 	make clean
@@ -643,6 +647,7 @@ distrib-sun:
 	strip $(GMSH_BIN_DIR)/gmsh-batch
 	make clean
 	make sun
+	make strip-bin
 	make distrib
 #
 # Solaris SCOREC
@@ -661,5 +666,5 @@ link-solaris-scorec:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libfltk-gcc.a\
                  -L/usr/X11R6/lib -lX11 -lm -ldl -lsocket
-solaris-scorec: compile-solaris-scorec link-solaris-scorec strip-bin 
+solaris-scorec: compile-solaris-scorec link-solaris-scorec
 
