@@ -28,7 +28,6 @@ Install Gmsh if you need a simple 3D finite element mesh generator.
 
 %build
 make linux
-mv bin/gmsh-Linux bin/gmsh
 make utils
 rm -rf CVS */CVS */*/CVS
 
