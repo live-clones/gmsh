@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.143 2004-04-18 03:36:06 geuzaine Exp $
+// $Id: Options.cpp,v 1.144 2004-04-18 06:48:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -5062,7 +5062,7 @@ unsigned int opt_mesh_color_points_deg2(OPT_ARGS_COL)
     CTX.mesh.changed = 1;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.vertex, WID->mesh_col[1]);
+  CCC(CTX.color.mesh.vertex_deg2, WID->mesh_col[1]);
 #endif
   return CTX.color.mesh.vertex_deg2;
 }
