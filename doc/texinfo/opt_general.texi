@@ -15,7 +15,7 @@ Default value: @code{".gmsh-errors"}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.OptionsFileName
-File created in your home directory with 'Tools->Options->Save', and which is read on startup@*
+File created in your home directory with `Tools->Options->Save', and which is read on startup@*
 Default value: @code{".gmsh-options"}@*
 Saved in: @code{General.SessionFileName}
 
@@ -60,22 +60,22 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip0A
-First coefficient in equation for clip plane 0 ('A' in equation 'AX+BY+CZ+D=0')@*
+First coefficient in equation for clip plane 0 (`A' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip0B
-Second coefficient in equation for clip plane 0 ('B' in equation 'AX+BY+CZ+D=0')@*
+Second coefficient in equation for clip plane 0 (`B' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip0C
-Third coefficient in equation for clip plane 0 ('C' in equation 'AX+BY+CZ+D=0')@*
+Third coefficient in equation for clip plane 0 (`C' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip0D
-Fourth coefficient in equation for clip plane 0 ('D' in equation 'AX+BY+CZ+D=0')@*
+Fourth coefficient in equation for clip plane 0 (`D' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
@@ -605,7 +605,7 @@ Default value: @code{150}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.ZoomFactor
-'Speed' of the middle mouse button zoom@*
+`Speed' of the middle mouse button zoom@*
 Default value: @code{1.1}@*
 Saved in: @code{General.OptionsFileName}
 

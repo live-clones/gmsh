@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.23 2003-04-16 04:49:31 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.24 2003-04-16 08:11:17 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -141,7 +141,7 @@ the @cite{Gmsh Reference Manual}, for Gmsh @value{GMSH-VERSION}.
 * Tutorial::                    A step-by-step tutorial.
 * Running Gmsh::                How to run Gmsh on your operating system.
 * File formats::                Input and output file formats.
-* Programming notes::           
+* Programming notes::           Random notes for developers.
 * Bugs and versions::           Contact information, version history and list of contributors.
 * Tips and tricks::             Some tips to make your life easier with Gmsh.
 * GNU General Public License::  Copy of the GNU GPL.
@@ -171,6 +171,12 @@ General tools
 * Loops and conditionals::      
 * General commands::            
 * General options::             
+
+Expressions 
+
+* Floating point expressions::  
+* Character expressions::       
+* Color expressions::           
 
 Geometry module
 
@@ -296,9 +302,9 @@ primal design goal is to provide a simple meshing tool for academic test
 cases with parametric input and up to date visualization capabilities.  One
 of its strengths is the ability to respect a characteristic length field for
 the generation of adapted meshes on lines, surfaces and volumes, and to mix
-these with simple structured (transfinite, extruded, etc.) meshes.  
+these meshes with simple structured (transfinite, extruded, etc.) grids.
 
-Gmsh is structured around four modules: geometry, mesh, solver and
+Gmsh is built around four modules: geometry, mesh, solver and
 post-processing. All geometrical, mesh, solver and post-processing
 instructions are prescribed either interactively using the graphical user
 interface (GUI) or in ASCII data files using Gmsh's own scripting language.
@@ -326,11 +332,11 @@ modules is given hereafter.
 @section Geometry: geometrical entity definition
 
 Geometries are created in a bottom-up flow by successively defining points,
-oriented curves (segments, circles, ellipses, splines, @dots{}), oriented
-surfaces (plane surfaces, ruled surfaces, @dots{}) and volumes. Compound
-groups of geometrical entities can be defined, based on these elementary
-geometric entities. Gmsh's scripting language allows all geometrical
-entities to be fully parameterized.
+oriented curves (line segments, circles, ellipses, splines,@w{ }@dots{}),
+oriented surfaces (plane surfaces, ruled surfaces,@w{ }@dots{}) and
+volumes. Compound groups of geometrical entities can be defined, based on
+these elementary geometric entities. Gmsh's scripting language allows all
+geometrical entities to be fully parameterized.
 
 @c -------------------------------------------------------------------------
 @c Mesh: finite element mesh generation
@@ -347,19 +353,17 @@ intersect, they do so along a face, an edge or a node, and never
 otherwise. All the finite element meshes produced by Gmsh as unstructured,
 even if they were generated in a structured way (e.g. by extrusion). This
 implies that the elementary geometrical elements are defined only by an
-ordered list of their vertices (which allows the orientation of all their
-lower order geometrical entities) but no predefined relation is assumed
-between any two elementary elements.
+ordered list of their vertices but no predefined relation is assumed between
+any two elements.
 
-The mesh generation is performed in the same order as the geometry
-creation: curves are discretized first; the mesh of the curves is then
-used to mesh the surfaces; then the mesh of the surfaces is used to
-mesh the volumes. This automatically assures the conformity of the
-mesh when, for example, two surfaces share a common curve. Every
-meshing step is constrained by the characteristic length field, which
-can be uniform, specified by characteristic length associated to
-elementary geometrical entities, or associated to another mesh (the
-background mesh).
+The mesh generation is performed in the same order as the geometry creation:
+curves are discretized first; the mesh of the curves is then used to mesh
+the surfaces; then the mesh of the surfaces is used to mesh the
+volumes. This automatically assures the conformity of the mesh when, for
+example, two surfaces share a common curve. Every meshing step is
+constrained by the characteristic length field, which can be uniform,
+specified by characteristic lengths associated with elementary geometrical
+entities, or associated with another mesh (the background mesh).
 
 For each meshing step (i.e. the discretization of lines, surfaces and
 volumes), all structured mesh directives are executed first, and serve
@@ -416,7 +420,7 @@ range modification, animation, vector graphic output, etc. All
 post-processing options can be accessed either interactively or through the
 input ASCII text files. Scripting permits to automate all post-processing
 operations, e.g. for the creation of animations. User-defined operations can
-also be performed on post-proessing views through to dynamically loadable
+also be performed on post-processing views through dynamically loadable
 plugins.
 
 @c -------------------------------------------------------------------------
@@ -426,62 +430,62 @@ plugins.
 @node What Gmsh is pretty good at, and what Gmsh is not so good at, Post-processing, Overview
 @section What Gmsh is pretty good at @dots{}
 
-Gmsh is a (relatively) small program, and was principally developped ``in
+Gmsh is a (relatively) small program, and was principally developed ``in
 academia, to solve academic problems''@dots{} Nevertheless, over the
 years, many people outside universities have found Gmsh useful in their
 day-to-day jobs. So here is a tentative list of what Gmsh does best:
 
 @itemize @bullet
 @item
-Quickly describe simple and/or ``repetitive'' geometries, thanks to
+quickly describe simple and/or ``repetitive'' geometries, thanks to
 user-defined functions, loops, conditionals and includes (see
-@ref{User-defined functions}, @ref{Loops and conditionals} and @pxref{General
-commands}).
+@ref{User-defined functions}, @ref{Loops and conditionals}, and @ref{General
+commands});
 @item
-Parameterize these geometries. Gmsh's scripting language permits all
+parameterize these geometries. Gmsh's scripting language permits all
 commands and command arguments to depend on previous calculations (see
-@ref{Expressions} and @ref{Geometry commands}).
+@ref{Expressions} and @ref{Geometry commands});
 @item
-Generate 1D, 2D and 3D simplicial (i.e. using line segments, triangles and
-tetrahedra) finite element meshes. The 1D and 2D algorithms should have
-pretty good performance in most cases; the 3D algorithm is still somewhat
-experimental and slow (see @ref{Mesh module} and @ref{Tutorial}).
+generate 1D, 2D and 3D simplicial (i.e. using line segments, triangles and
+tetrahedra) finite element meshes. The performance of the 1D and 2D
+algorithms is pretty good; the 3D algorithm is still somewhat experimental
+and slow (see @ref{Mesh module} and @ref{Tutorial});
 @item
-Specify target element sizes. Gmsh provides several mechanisms to control
-the size of the elements in the final mesh: through interpolation from
-geometrical point characteristic lengths or geometrical attractors, or from
-a user-defined background mesh (@pxref{Mesh commands}).
+specify target element sizes accurately. Gmsh provides several mechanisms to
+control the size of the elements in the final mesh: through interpolation
+from geometrical point characteristic lengths or geometrical attractors, or
+from user-defined background meshes (@pxref{Mesh commands});
 @item
-Create simple extruded geometries and meshes (see @ref{Geometry commands}
-and @ref{Mesh commands}).
+create simple extruded geometries and meshes (see @ref{Geometry commands}
+and @ref{Mesh commands});
 @item
-Interact with external solvers. Gmsh provides C/C++ and Perl interfaces, and
-others can be easily added (@pxref{Solver}).
+interact with external solvers. Gmsh provides C/C++ and Perl interfaces, and
+others can be easily added (@pxref{Solver});
 @item
-Visualize computational results in a great variety of ways. Gmsh can display
+visualize computational results in a great variety of ways. Gmsh can display
 scalar, vector and tensor data sets, and can perform various operations on
-the resulting post-processing views (@pxref{Post-processing}).
+the resulting post-processing views (@pxref{Post-processing});
 @item
-Export plots in many different formats: vector PostScript or encapsulated
-PostScript, LaTeX, PNG, JPEG, @dots{} (@pxref{General options}).
+export plots in many different formats: vector PostScript or encapsulated
+PostScript, LaTeX, PNG, JPEG,@w{ }@dots{} (@pxref{General options});
 @item
-Generate complex animations (see @ref{General tools} and @ref{t8.geo}).
+generate complex animations (see @ref{General tools} and @ref{t8.geo});
 @item
-Run on low end machines and/or machines with no graphic system. Gmsh can be
+run on low end machines and/or machines with no graphic system. Gmsh can be
 compiled with or without the graphical user interface, and all versions can
 be used either interactively or not, directly from the command line
-(@pxref{Running Gmsh}).
+(@pxref{Running Gmsh});
 @item
-Configure your preferred options. Gmsh has a large number of configurations
+configure your preferred options. Gmsh has a large number of configurations
 options that can be set interactively using the GUI, scattered inside
 command files, changed on the fly in scripts, set in per-user configuration
 files, or specified on the command-line (see @ref{General options},
 @ref{Geometry options}, @ref{Mesh options}, @ref{Post-processing options}
-and @ref{Running Gmsh}).
+and @ref{Running Gmsh});
 @item
-Do all the above on various platforms, for free (@pxref{Copying
-conditions}), using clear-text ASCII files and/or a small but powerful
-graphical user interface.
+and do all the above on various platforms (Windows, Mac and Unix), for free
+(@pxref{Copying conditions}), using clear-text ASCII files and/or a small
+but powerful graphical user interface.
 @end itemize
 
 @c -------------------------------------------------------------------------
@@ -496,23 +500,23 @@ Gmsh has also some (a lot of?) weaknesses:
 
 @itemize @bullet
 @item
-The bottom-up approach for describing geometries can become impractical for
-complex models.
+the bottom-up approach for describing geometries can become impractical for
+complex models;
 @item
-There is no support for NURBS and only very limited support for trimmed
-surfaces.
+there is no support for NURBS and only very limited support for trimmed
+surfaces;
 @item
 Gmsh is not primarily a structured mesh generator: no automatic
 quadrilateral or hexahedral meshing algorithm is provided. If you want
 quadrangles, you have to use transfinite or extruded meshes or recombine
 unstructured triangular meshes. For hexahedra, your only choice is
-transfinite or extruded meshes.
+transfinite or extruded meshes;
 @item
 Gmsh is not a multibloc generator: all meshes produced by Gmsh are
-conforming in the sense of finite element meshes.
+conforming in the sense of finite element meshes;
 @item
-There is not support for curved mesh elements as of this writing (Gmsh
-1.44).
+there is not support for curved mesh elements as of this writing (Gmsh
+1.44);
 @item
 Gmsh was designed to solve academic test-cases, not industrial-size
 problems. You may find that Gmsh is too slow for large problems (with
@@ -627,20 +631,31 @@ commands and esoteric options.
 
 @cindex Expression, definition
 @cindex Constant, definition
-@cindex Constant, evaluation
-@cindex Evaluation mechanism
-@cindex Real numbers
-@cindex Floating point numbers
-@cindex Numbers, real
-@cindex Numbers, integer
-@cindex String
-
-@findex =
 
 The two constant types used in Gmsh are @var{real} and @var{string} (there
 is no integer type).  These types have the same meaning and syntax as in the
-C or C++ programming languages.  Expressions are denoted by the
-metasyntactic variable @var{expression} (remember the definition of the
+C or C++ programming languages.  
+
+@c .........................................................................
+@c Floating point expressions
+@c .........................................................................
+
+@menu
+* Floating point expressions::  
+* Character expressions::       
+* Color expressions::           
+@end menu
+
+@node Floating point expressions, Character expressions, Expressions, Expressions
+@subsection Floating point expressions
+
+@cindex Expression, floating point
+@cindex Real numbers
+@cindex Numbers, real
+@cindex Floating point numbers
+
+Floating point expressions (or, more simply, ``expressions'') are denoted by
+the metasyntactic variable @var{expression} (remember the definition of the
 syntactic rules in @ref{Syntactic rules}), and are evaluated during the
 parsing of the data file:
 
@@ -650,16 +665,18 @@ parsing of the data file:
   @var{expression-id} |
   @var{operator-unary} @var{expression} |
   @var{expression} @var{operator-binary} @var{expression} |
-  @var{expression} @var{operator-ternary-left} @var{expression}
-      @var{operator-ternary-right} @var{expression} |
+  @var{expression} @var{operator-ternary-left} @var{expression} @var{operator-ternary-right} @var{expression} |
   @var{built-in-function}
 @end example
 
-Such @var{expression}s are used in most of Gmsh's commands. The operators
-@var{operator-unary}, @var{operator-binary} and
+Such @w{@var{expression}s} are used in most of Gmsh's commands. The
+operators @var{operator-unary}, @var{operator-binary} and
 @var{operator-ternary-left}/@var{operator-ternary-right} are defined in
-@ref{Operators}. For the definition of @var{built-in-function}s, see
+@ref{Operators}. For the definition of @w{@var{built-in-function}s}, see
 @ref{Built-in functions}.
+
+@cindex Expression, lists
+@cindex Number, lists
 
 List of expressions are also widely used, and are defined as:
 
@@ -680,15 +697,26 @@ List of expressions are also widely used, and are defined as:
 @end example
 
 The second case in this last definition permits to create a list containing
-the range of numbers comprised between two @var{expression}s, with a unit
-incrementation step. The third case also permits to create a list containing
-the range of numbers comprised between two @var{expression}s, but with a
-positive or negative incrementation step equal to the third
-@var{expression}. The fourth and fifth cases permit to lists or sublists of
-expressions. To see the practical use of such expressions, have a look at
-the three first examples in @ref{Tutorial}. C and C++ users will recognize
-the usual syntax for arithmetic operations and variable affectation. The
-syntax for the definition of expression identifiers is:
+the range of numbers comprised between two @w{@var{expression}s}, with a
+unit incrementation step. The third case also permits to create a list
+containing the range of numbers comprised between two @w{@var{expression}s},
+but with a positive or negative incrementation step equal to the third
+@var{expression}. The fourth case permits to reference an expression list.
+The last case permits to reference an expression sublist (whose elements are
+those corresponding to the indices provided by the
+@var{expression-list}). To see the practical use of such expressions, have a
+look at the first couple of examples in @ref{Tutorial}.
+
+@cindex Expression, affectation
+@cindex Expression, identifier
+
+@findex =
+@findex +=
+@findex -=
+@findex *=
+@findex /=
+
+The syntax for the definition of a new expression identifier is:
 
 @example
 @var{expression-id} = @var{expression-def};
@@ -698,14 +726,22 @@ syntax for the definition of expression identifiers is:
 
 @example
 @var{expression-id}:
-  @var{string}
+  @var{string} |
+  @var{real-option}
+@end example
 
+@noindent and
+
+@example
 @var{expression-def}:
   @var{expression-list-item} |
   @{ @var{expression-list} @}
 @end example
 
-Eight @var{expression-id}s are predefined (hard-coded in Gmsh's parser):
+The various @w{@var{real-option}s} are listed in @ref{General options},
+@ref{Geometry options}, @ref{Mesh options}, @ref{Solver options}, and
+@ref{Post-processing options}. In addition to the @w{@var{real-option}s},
+eight @w{@var{expression-id}s} are predefined (hard coded in Gmsh's parser):
 @ftable @code
 @item Pi
 Returns 3.1415926535897932.
@@ -742,8 +778,32 @@ of @code{newc}, @code{news}, @code{newv} and @code{newreg} can be modified
 with the @code{Geometry.OldNewReg} option (@pxref{Geometry options}).}.
 @end ftable
 
-Character expressions can also be defined (but there exists no character
-expression identifier at the moment):
+One can also perform additions, subtractions, multiplications ands divisions
+while affecting a value to an existing @var{expression-id}, using:
+
+@example
+@var{expression-id} += @var{expression-def};
+@var{expression-id} -= @var{expression-def};
+@var{expression-id} *= @var{expression-def};
+@end example
+
+@noindent and
+
+@example
+@var{expression-id} /= @var{expression-def};
+@end example
+
+@c .........................................................................
+@c Character expressions
+@c .........................................................................
+
+@node Character expressions, Color expressions, Floating point expressions, Expressions
+@subsection Character expressions
+
+@cindex Expression, character
+@cindex Strings
+
+Character expressions are defined as follows:
 
 @example
 @var{expression-char}:
@@ -753,16 +813,66 @@ expression identifier at the moment):
   Sprintf ( @var{expression-char} , @var{expression-list} )
 @end example
 
-@noindent The third case in this definition permits to take the
+@noindent The second case in this definition permits to take the
 prefix of a string (e.g. for removing the extension from a file name). The
-fourth case permits to concatenate two character expressions, and the fifth
-is an equivalent of the @code{sprintf} C function: in this case,
+third case permits to concatenate two character expressions, and the fifth
+is an equivalent of the @code{sprintf} C function (where
 @var{expression-char} is a format string that can contain floating point
-formatting characters: @code{%e}, @code{%g}, etc.
+formatting characters: @code{%e}, @code{%g}, etc.).
 
-Character expressions are mostly used to specify non-numeric options (see
-e.g. @ref{General options}) and input/output file names. See @ref{t8.geo}
-for an intersting usage of @var{expression-char}s in an animation script.
+Character expressions are mostly used to specify non-numeric options and
+input/output file names. See @ref{t8.geo}, for an intersting usage of
+@w{@var{expression-char}s} in an animation script. Altough there exists no
+character expression identifier at the moment, @w{@var{expression-char}s}
+can be affected to @w{@var{string-option}s}:
+
+@example
+@var{string-option} = @var{expression-char};
+@end example
+
+The various @w{@var{string-option}s} are listed in @ref{General options},
+@ref{Geometry options}, @ref{Mesh options}, @ref{Solver options}, and
+@ref{Post-processing options}.
+
+@c .........................................................................
+@c Color expressions
+@c .........................................................................
+
+@node Color expressions,  , Character expressions, Expressions
+@subsection Color expressions
+
+@cindex Expression, color
+@cindex Colors
+
+The last type of expressions encountered in Gmsh is color expression, which
+is an hybrid between a bracketted @var{expression-list} with three or four
+elements, and a @var{string}:
+
+@example
+@var{expression-color}:
+  @var{string} |
+  @{ @var{expression}, @var{expression}, @var{expression} @} |
+  @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} @}
+@end example
+
+@noindent The first case in this definition permits to use usual color
+names as defined by the X Window system, e.g. @code{Red},
+@code{SpringGreen}, @code{LavenderBlush3},@w{ }@dots{} (see
+@file{Common/Colors.h}). The second case permits to define colors by using
+three expressions to specify their red, green and blue components (with
+values comprised between 0 and 255). The last case permits to define colors
+by using the red, green, blue color components as well as the alpha channel.
+
+Altough there exists no color expression identifier at the moment,
+@w{@var{expression-color}s} can be affected to @w{@var{color-option}s}:
+
+@example
+@var{color-option} = @var{expression-color};
+@end example
+
+The various @w{@var{color-option}s} are listed in @ref{General options},
+@ref{Geometry options}, @ref{Mesh options}, @ref{Solver options}, and
+@ref{Post-processing options}.
 
 @c -------------------------------------------------------------------------
 @c Operators
@@ -790,7 +900,7 @@ Logical not.
 @item ++
 Post-incrementation. (Pre-incrementation is not supported.)
 @item --
-Post-decrementation.(Pre-decrementation is not supported.)
+Post-decrementation. (Pre-decrementation is not supported.)
 @end ftable
 
 @noindent
@@ -812,14 +922,6 @@ Subtraction.
 Equality.
 @item !=
 Inequality.
-@item +=
-Addition and affectation.
-@item -=
-Subtraction and affectation.
-@item *=
-Multiplication and affectation.
-@item /=
-Division and affectation.
 @item >
 Greater.
 @item >=
@@ -829,13 +931,13 @@ Less.
 @item <=
 Less or equality.
 @item &&
-Logical `and'. (Warning: the logical `and' always (unlike in C or C++)
-implies the evaluation of both arguments. That is, the second operand of
-@code{&&} is evaluated even if the first one is false.)
+Logical `and'. (Warning: the logical `and' always implies the evaluation of
+both arguments. That is, unlike in C or C++, the second operand of @code{&&}
+is evaluated even if the first one is false.)
 @item ||
-Logical `or'. (Warning: the logical `or' always (unlike in C or C++) implies
-the evaluation of both arguments.  That is, the second operand of @code{||}
-is evaluated even if the first one is true).
+Logical `or'. (Warning: the logical `or' always implies the evaluation of
+both arguments.  That is, unlike in C or C++, the second operand of
+@code{||} is evaluated even if the first one is true).
 @end ftable
 
 @noindent
@@ -888,8 +990,8 @@ evaluation:
 
 @cindex Functions, built-in
 
-A built-in function is composed from an identifier followed by a pair of
-parentheses @code{()} containing an @var{expression-list} (the list of its
+A built-in function is composed of an identifier followed by a pair of
+parentheses containing an @var{expression-list} (the list of its
 arguments)@footnote{For compatibility with GetDP
 (@uref{http://www.geuz.org/getdp/}), parentheses can be replaced by brackets
 @code{[]}.}. Here is the list of the built-in functions currently
@@ -901,11 +1003,11 @@ implemented:
 @ftable @code
 
 @item Acos ( @var{expression} )
-Arc cosine (inverse cosine) of @var{expression} in [-1,1]. Returns a value
+Arc cosine (inverse cosine) of an @var{expression} in [-1,1]. Returns a value
 in [0,Pi]. 
 
 @item Asin ( @var{expression} )
-Arc sine (inverse sine) of @var{expression} in [-1,1]. Returns a value in
+Arc sine (inverse sine) of an @var{expression} in [-1,1]. Returns a value in
 [-Pi/2,Pi/2].
 
 @item Atan ( @var{expression} )
@@ -943,19 +1045,19 @@ Rounds @var{expression} down to the nearest integer.
 Returns the square root of the sum of the square of its two arguments.
 
 @item Log ( @var{expression} )
-Natural logarithm of @var{expression}, @var{expression}>0.
+Natural logarithm of @var{expression} (@var{expression} > 0).
 
 @item Log10 ( @var{expression} )
-Base 10 logarithm of @var{expression}, @var{expression}>0.
+Base 10 logarithm of @var{expression} (@var{expression} > 0).
 
 @item Modulo ( @var{expression}, @var{expression} )
 Synomym of @code{Fmod( @var{expression}, @var{expression} )}.
 
 @item Rand ( @var{expression} )
-Randum numbver between zero and @var{expression}.
+Random numbver between zero and @var{expression}.
 
 @item Sqrt ( @var{expression} )
-Square root, @var{expression}>=0.
+Square root of @var{expression} (@var{expression} >= 0).
 
 @item Sin ( @var{expression} )
 Sine of @var{expression}.
@@ -979,20 +1081,20 @@ Hyperbolic tangent of @var{expression}.
 
 @cindex Function, user-defined
 
-User-defined functions can be defined, but are somewhat rudimentary: they
-take no arguments, and are evaluated as if a file containg the function body
-was included at the location of the @code{Call} statement.
+User-defined functions take no arguments, and are evaluated as if a file
+containg the function body was included at the location of the @code{Call}
+statement.
 
 @ftable @code
 
 @item Function @var{string}
-Begins the definition of a user-defined function named @var{string}. The
+Begins the declaration of a user-defined function named @var{string}. The
 body of the function starts on the line after `@code{Function
 @var{string}}', and can contain any Gmsh command.
 
 @item Return
-Ends the body of the matching current user-defined function. Function
-definitions cannot be imbricated.
+Ends the body of the current user-defined function. Function declarations
+cannot be imbricated.
 
 @item Call @var{string};
 Executes the body of a (previously defined) function named @var{string}.
@@ -1049,9 +1151,9 @@ The body enclosed between @code{If ( @var{expression} )} and the matching
 Ends a matching @code{If} command.
 @end ftable
 
-@xref{t5.geo}, for an example of a user-defined function. Gmsh does not
-provide any @code{Else} (or similar) command at the time of this writing
-(Gmsh 1.44).
+@xref{t5.geo}, for an example of @code{For} and @code{If} commands. Gmsh
+does not provide any @code{Else} (or similar) command at the time of this
+writing (Gmsh 1.44).
 
 @c -------------------------------------------------------------------------
 @c General commands
@@ -1069,54 +1171,54 @@ Aborts the current script.
 
 @item Printf ( @var{expression-char} , @var{expression-list} );
 Prints strings in the information window and/or on the
-terninal. @code{Printf} is equivalent to the @code{printf} C function:
-@var{expression-char} is a format string that can contain floating point
-formatting characters (@code{%f}, @code{%e}, etc.). Note that all
-@var{expression}s are evaluated as floating point values in Gmsh
-(@pxref{Expressions}), so that only valid floating point formatting
-characters make sens in @var{expression-char}. @xref{t5.geo}, for an example
-of the use of @code{Printf}.
+terminal. @code{Printf} is equivalent to the @code{printf} C function:
+@var{expression-char} is a format string that can contain formatting
+characters (@code{%f}, @code{%e}, etc.). Note that all @w{@var{expression}s}
+are evaluated as floating point values in Gmsh (@pxref{Expressions}), so
+that only valid floating point formatting characters make sens in
+@var{expression-char}. @xref{t5.geo}, for an example of the use of
+@code{Printf}.
 
 @item Merge @var{expression-char};
-To merge a file named @var{expression-char}. This command is equivalent to
-the `File->Merge' menu in the graphical user interface. If the path in
+Merges a file named @var{expression-char}. This command is equivalent to the
+`File->Merge' menu in the graphical user interface. If the path in
 @var{expression-char} is not absolute, @var{expression-char} is appended to
 the dierctory where the current opened project resides.
 
 @item MergeWithBoundingBox @var{expression-char};
-To merge a file and force the recalculation of the scene's bounding box.
+Merges a file and force the recalculation of the scene's bounding box.
 
 @item Draw;
-To redraw the scene.
+Redraws the scene.
 
 @item Save @var{expression-char};
-To save the mesh in a file named @var{expression-char}, using the current
+Saves the mesh in a file named @var{expression-char}, using the current
 @code{Mesh.Format} (@pxref{Mesh options}).
 
 @item Print @var{expression-char};
-To print the graphic window in a file named @var{expression-char}, using the
+Prints the graphic window in a file named @var{expression-char}, using the
 current @code{Print.Format} (@pxref{General options}).
 
 @item Sleep @var{expression};
-To suspend the execution of Gmsh during @var{expression} seconds.
+Suspends the execution of Gmsh during @var{expression} seconds.
 
 @item Delete View[@var{expression}];
-To delete (remove) the @var{expression}-th post-processing view. View
+Delete (removes) the @var{expression}-th post-processing view. View
 numbers start at zero.
 
 @item Delete Meshes;
-To delete all currently loaded meshes.
+Deletes all currently loaded meshes.
 
 @item Duplicata View[@var{expression}];
-To duplicate the @var{expression}-th post-processing view. View
+Duplicates the @var{expression}-th post-processing view. View
 numbers start at zero.
 
 @item System @var{expression-char};
-To execute a system call.
+Executes a system call.
 
 @item Include @var{expression-char};
 @item #include @var{expression-char};
-To include the file named @var{expression-char} at the current position in
+Includes the file named @var{expression-char} at the current position in
 the input file. The @code{Include} commands should given on a line of their
 onwn.
 @end ftable
@@ -1128,7 +1230,23 @@ onwn.
 @node General options,  , General commands, General tools
 @section General options
 
-@c All the opt_XXX.texi files are generated automatically with 'gmsh -doc'
+Here is the list of the general @w{@var{string-option}s},
+@w{@var{real-option}s} and @w{@var{color-option}s} (in that order---check
+the default values to see the types). Most of these options are accessible
+in the graphical user interface, but not all of them. When running Gmsh
+interactively, changing an option in the ASCII text input file will modify
+the option in the GUI in real time. This permits for example to resize the
+graphical window in a script, or to interact with animations in the script
+and in the GUI at the same time.
+
+Gmsh's default behaviour is to save some of these options in a per-user
+``session resource'' file (@code{General.SessionFileName}) each time Gmsh is
+shut down. This permits for example to automatically remember the size and
+location of the windows or which fonts to use. Other options can be saved in
+a per-user ``option'' file (@code{General.OptionsFileName}), automatically
+loaded by Gmsh during startup, by using the `Tools->Options->Save' menu. 
+
+@c All the opt_XXX.texi files are generated automatically with `gmsh -doc'
 
 @include opt_general.texi
 
@@ -1551,24 +1669,24 @@ Mac), or type
 @noindent at your shell prompt on the command line (Unix). This will open
 two windows: the graphic window (with a status bar at the bottom) and the
 menu window (with a menu bar and some context dependent buttons). To open
-the first tutorial file, select the 'File->Open' menu, and choose
+the first tutorial file, select the `File->Open' menu, and choose
 @file{t1.geo} in the input field. To perform the mesh generation, go to the
-mesh module (by selecting 'Mesh' in the module menu) and choose the required
-dimension in the context-dependent buttons ('1D' will mesh all the curves;
-'2D' will mesh all the surfaces---as well as all the curves if '1D' was not
-called before; '3D' will mesh all the volumes---and all the surfaces if '2D'
+mesh module (by selecting `Mesh' in the module menu) and choose the required
+dimension in the context-dependent buttons (`1D' will mesh all the curves;
+`2D' will mesh all the surfaces---as well as all the curves if `1D' was not
+called before; `3D' will mesh all the volumes---and all the surfaces if `2D'
 was not called before). To save the resulting mesh in the current mesh
-format, choose 'Save' in the context-dependent buttons, or select the
-appropriate format with the 'File->Save as' menu. The default mesh file name
+format, choose `Save' in the context-dependent buttons, or select the
+appropriate format with the `File->Save as' menu. The default mesh file name
 is based on the name of the first input file on the command line (or
-'untitled' if there wasn't any input file given), with an appended extension
-depending on the mesh format.
+@file{untitled} if there wasn't any input file given), with an appended
+extension depending on the mesh format.
 
 Note that nearly all the interactive commands have shortcuts: see
-@ref{Keyboard shortcuts} or select 'Help->Shortcuts' in the menu bar to
+@ref{Keyboard shortcuts} or select `Help->Shortcuts' in the menu bar to
 learn about these.
 
-Instead of opening the tutorial with the 'File->Open' menu, it is
+Instead of opening the tutorial with the `File->Open' menu, it is
 often more convenient to put the file name on the command line, for
 example with:
 
@@ -1581,10 +1699,10 @@ directly in the input files (you may use any text editor for this purpose,
 e.g. Wordpad on Windows, or Emacs on Unix), it is almost always more simple
 to define the curves, the surfaces and the volumes interactively. To do so,
 just follow the context dependent buttons in the Geometry module. For
-example, to create a spline, select 'Geometry' in the module menu, and then
-select 'Elementary, Add, New, Spline'. You will then be asked (in the status
-bar of the graphic window) to select a list of points, and to click 'e' to
-finish the selection (or 'q' to abort it). Once the interactive command is
+example, to create a spline, select `Geometry' in the module menu, and then
+select `Elementary, Add, New, Spline'. You will then be asked (in the status
+bar of the graphic window) to select a list of points, and to type @kbd{e} to
+finish the selection (or @kbd{q} to abort it). Once the interactive command is
 completed, a string is automatically added at the end of the currently
 opened project file.
 
@@ -1611,7 +1729,7 @@ background meshes.
 
 Several files can be loaded simultaneously in Gmsh. The first one defines
 the project, while the others are appended ("merged") to this project. You
-can merge such files with the 'File->Merge' menu, or by directly specifying
+can merge such files with the `File->Merge' menu, or by directly specifying
 the names of the files on the command line. This is most useful for
 post-processing purposes. For example, to merge the post-processing views
 contained in the files @file{view1.pos} and @file{view2.pos} together with
@@ -1621,21 +1739,21 @@ the first tutorial @file{t1.geo}, you can type the following command:
 > gmsh t1.geo view1.pos view2.pos
 @end example
 
-In the Post-Processing module (select 'Post_Processing' in the module
+In the Post-Processing module (select `Post_Processing' in the module
 menu), two view buttons will appear, respectively labeled "a scalar
 map" and "a vector map". A mouse click on the name will toggle the
 visibility of the selected view, while a click on the arrow button on
 the right will provide access to the view's options. If you want the
 modifications made to one view to affect also all the other views,
-select the 'Apply next changes to all views' or 'Force same options
-for all views' option in the 'Tools->Options->Post-processing' menu.
+select the `Apply next changes to all views' or `Force same options
+for all views' option in the `Tools->Options->Post-processing' menu.
 
 Note that all the options specified interactively can also be directly
 specified in the ASCII input files. All available options, with their
-current values, can be saved into a file by selecting 'File->Save as->Gmsh
-options', or simply viewed by pressing the '?' button in the status bar. To
+current values, can be saved into a file by selecting `File->Save as->Gmsh
+options', or simply viewed by pressing the `?' button in the status bar. To
 save the current options as your default preferences for all future Gmsh
-sessions, use the 'Tools->Options->Save' button.
+sessions, use the `Tools->Options->Save' button.
 
 @c -------------------------------------------------------------------------
 @c Command-line options
@@ -1767,8 +1885,8 @@ is the number of nodes in the mesh
 
 @item @var{node-number}
 is the number (index) of the n-th node in the mesh. Note that the
-@var{node-number}s should not necessarily given in a consecutive (or even an
-ordered) way.
+@w{@var{node-number}s} should not necessarily given in a consecutive (or
+even an ordered) way.
 
 @item @var{x-coord}
 @item @var{y-coord}
@@ -1781,8 +1899,8 @@ is the number of elements in the mesh
 
 @item @var{elm-number}
 is the number (index) of the n-th element in the mesh. Note that the
-@var{elm-number}s should not necessarily given in a consecutive (or even an
-ordered) way.
+@w{@var{elm-number}s} should not necessarily given in a consecutive (or even
+an ordered) way.
 
 @item @var{elm-type}
 defines the geometrical type for the n-th element:
@@ -1814,8 +1932,8 @@ is the number of the elementary entity to which the element belongs.
 @item @var{number-of-nodes}
 is the number of nodes for the n-th element. This is redundant, but kept for
 backward compatibility reasons. The redundancy may disappear in the future
-if higher order elements are implemented using the same @var{elm-type}s as
-the current ones.
+if higher order elements are implemented using the same @w{@var{elm-type}s}
+as the current ones.
 
 @item @var{node-number-list}
 is a list of @var{number-of-nodes} node numbers (separated by white space,
@@ -1901,8 +2019,8 @@ is an integer giving the number of time steps in the view
 @item @var{nb-scalar-points}
 @item @var{nb-vector-points}
 @item @dots{}
-are integers giving the number of scalar points, vector points, @dots{} in
-the view.
+are integers giving the number of scalar points, vector points,@w{ }@dots{}
+in the view.
 
 @item @var{nb-text2d}
 @item @var{nb-text3d}
@@ -1922,7 +2040,7 @@ time (or any other variable) for which an evolution was saved.
 @item @dots{}
 are lists of double precision numbers giving the node coordinates and the
 values associated with the nodes of the @var{nb-scalar-points} scalar
-points, @var{nb-vector-points} vector points, @dots{}, for each of the
+points, @var{nb-vector-points} vector points,@w{ }@dots{}, for each of the
 @var{time-step-values}.
 
 For example, @var{vector-triangle-value} is defined as:
@@ -2267,23 +2385,21 @@ Pyramid:
 @cindex @code{yacc}
 @cindex @code{bison}
 
-The analysis of the syntax is performed by Lex and Yacc.
+This is section is not yet written: see @file{utils/README.devel}.
 
-The code itself is in C++ (but most of it was initially written in C, which
-results in some hybrid code...).
+@c The code itself is in C++, but most of it was initially written in C (hence
+@c the hybrid code style...). The analysis of the syntax is performed by Lex
+@c and Yacc.
 
-All graphics are rendered using OpenGL.
+@c All graphics are rendered using OpenGL (@uref{http://www.opengl.org}). A
+@c free replacement for OpenGL can be found at @uref{http://www.mesa3d.org}.
 
-The user interface is based on the FLTK widget set. 
+@c The user interface is based on the FLTK widget set
+@c (@uref{http://www.fltk.org}).
 
-
-@uref{http://www.opengl.org}
-
-@uref{http://www.mesa3d.org}
-
-@uref{http://www.fltk.org}
-
-@uref{http://www.cygwin.com}
+@c Build system based on autoconf. Should we add a chapter/section on how to
+@c compile Gmsh? Compiling the Windows version requires the Cygwin tools
+@c (freely available from @uref{http://www.cygwin.com}).
 
 
 @c =========================================================================
@@ -2366,13 +2482,13 @@ already know about.
 
 @itemize @bullet
 @item
-Install the 'info' version of this user's guide! On your (Unix) system, this
+Install the `info' version of this user's guide! On your (Unix) system, this
 can be achieved by 1) copying all gmsh.info* files to the place where your
 info files live (usually /usr/info), and 2) issuing the command
-'install-info /usr/info/gmsh.info /usr/info/dir'. You will then be able to
-access the documentation with the command 'info gmsh'. Note that particular
-sections ("nodes") can be accessed directly. For example, 'info gmsh
-extrude' will take you directly to the definition of the Extrude command.
+`install-info /usr/info/gmsh.info /usr/info/dir'. You will then be able to
+access the documentation with the command `info gmsh'. Note that particular
+sections ("nodes") can be accessed directly. For example, `info gmsh
+contributors' will take you directly to @ref{Contributors}.
 @item
 Use emacs to edit your files, and load the C++ mode! This permits automatic
 syntax highlighting and easy indentation. Automatic loading of the C++ mode

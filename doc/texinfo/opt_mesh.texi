@@ -20,7 +20,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ColorCarousel
-Use a 'color by region number' scheme@*
+Use a `color by region number' scheme@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -45,22 +45,22 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.CutPlaneA
-First cut plane equation coefficient ('A' in equation 'AX+BY+CZ+D=0')@*
+First cut plane equation coefficient (`A' in `AX+BY+CZ+D=0')@*
 Default value: @code{1}@*
 Saved in: @code{-}
 
 @item Mesh.CutPlaneB
-Second cut plane equation coefficient ('B' in equation 'AX+BY+CZ+D=0')@*
+Second cut plane equation coefficient (`B' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.CutPlaneC
-Third cut plane equation coefficient ('C' in equation 'AX+BY+CZ+D=0')@*
+Third cut plane equation coefficient (`C' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.CutPlaneD
-Fourth cut plane equation coefficient ('D' in equation 'AX+BY+CZ+D=0')@*
+Fourth cut plane equation coefficient (`D' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
 Saved in: @code{-}
 

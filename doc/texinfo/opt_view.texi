@@ -280,7 +280,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item View.TransparentScale
-Display a 'transparent' value scale?@*
+Display a `transparent' value scale?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

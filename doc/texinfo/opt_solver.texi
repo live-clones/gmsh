@@ -14,7 +14,7 @@ Visit http://www.geuz.org/getdp/ for more info"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.Executable0
-System command to launch solver 0 (should _not_ contain the '&' character)@*
+System command to launch solver 0 (should _not_ contain the `&' character)@*
 Default value: @code{"getdp"}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -124,7 +124,7 @@ Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.Executable1
-System command to launch solver 1 (should _not_ contain the '&' character)@*
+System command to launch solver 1 (should _not_ contain the `&' character)@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -234,7 +234,7 @@ Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.Executable2
-System command to launch solver 2 (should _not_ contain the '&' character)@*
+System command to launch solver 2 (should _not_ contain the `&' character)@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -344,7 +344,7 @@ Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.Executable3
-System command to launch solver 3 (should _not_ contain the '&' character)@*
+System command to launch solver 3 (should _not_ contain the `&' character)@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -454,7 +454,7 @@ Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.Executable4
-System command to launch solver 4 (should _not_ contain the '&' character)@*
+System command to launch solver 4 (should _not_ contain the `&' character)@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
