@@ -1,4 +1,4 @@
-GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2002-03-04 16:45:21 $)
+GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2002-03-05 00:28:04 $)
 
 1. GENERAL
 ==========
@@ -105,7 +105,7 @@ projecting a 2D mesh in the mean plane of the surface. This gives nice
 results only if the surface curvature is small enough. Otherwise you
 _have_ to cut the surface in pieces. For example, using use half
 circles to define a cylinder will fail with the unstructured algorithm
-(you should define arcs with angles smaller than 2*Pi, and thus
+(you should define arcs with angles smaller than Pi, and thus
 define the cylinder with at least three patch surfaces).
 
 5.3) What should I do when the 3D unstructured algorithm fails?
