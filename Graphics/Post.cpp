@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.39 2002-08-28 07:14:55 geuzaine Exp $
+// $Id: Post.cpp,v 1.40 2002-08-29 03:55:49 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -183,6 +183,30 @@ int compareTriangleEye(const void *a, const void *b){
   return 0;
 }
 
+int compareTetrahedronEye(const void *a, const void *b){
+  double d, dq, dw, *q=(double*)a, *w=(double*)b;
+  double cgq[3], cgw[3];
+
+  cgq[0] = q[0]+q[1]+q[2]+q[3];  
+  cgq[1] = q[4]+q[5]+q[6]+q[7];  
+  cgq[2] = q[8]+q[9]+q[10]+q[11];
+
+  cgw[0] = w[0]+w[1]+w[2]+w[3];  
+  cgw[1] = w[4]+w[5]+w[6]+w[7];  
+  cgw[2] = w[8]+w[9]+w[10]+w[11];
+
+  prosca(storedEye,cgq,&dq);
+  prosca(storedEye,cgw,&dw);
+
+  d = dq-dw;
+
+  if(d > 0)
+    return 1;
+  if(d < 0)
+    return -1;
+  return 0;
+}
+
 void Draw_Post (void) {
   int            iView,i,j,k,nb;
   double         ValMin,ValMax,AbsMax,X[4],Y[4],Z[4];
@@ -230,14 +254,21 @@ void Draw_Post (void) {
 
       // sort the data % eye for transparency
 
-      if(CTX.alpha && 
-	 v->NbST && v->DrawTriangles && v->DrawScalars &&
-	 ColorTable_IsAlpha(&v->CT) && 
-	 changedEye()){
-	Msg(DEBUG, "Sorting triangles in view %d", v->Num);
-	nb = List_Nbr(v->ST) / v->NbST ;
-	qsort(v->ST->array,v->NbST,nb*sizeof(double),compareTriangleEye);
-	v->Changed = 1; // force displaylist regeneration
+      if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && changedEye()){
+	Msg(DEBUG, "Sorting view %d", v->Num);
+	if(v->NbST && v->DrawTriangles && v->DrawScalars){
+	  nb = List_Nbr(v->ST) / v->NbST ;
+	  qsort(v->ST->array,v->NbST,nb*sizeof(double),compareTriangleEye);
+	  v->Changed = 1; // force displaylist regeneration
+	}
+	// the following is of course not rigorous (we should store
+	// the triangles generated during the iso computation, and
+	// sort these... But this is better than doing nothing :-)
+	if(v->NbSS && v->DrawTetrahedra && v->DrawScalars){
+	  nb = List_Nbr(v->SS) / v->NbSS ;
+	  qsort(v->SS->array,v->NbSS,nb*sizeof(double),compareTetrahedronEye);
+	  v->Changed = 1;
+	}
       }
 
       if(CTX.display_lists && !v->Changed && v->DisplayListNum>0){
