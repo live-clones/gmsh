@@ -1,4 +1,4 @@
-/* $Id: GmshServer.cpp,v 1.11 2003-03-05 23:15:04 geuzaine Exp $ */
+/* $Id: GmshServer.cpp,v 1.12 2003-03-06 04:18:46 geuzaine Exp $ */
 /*
   Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 
@@ -27,7 +27,7 @@ void SystemCall(char *str);
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if defied(_AIX)
+#if defined(_AIX)
 #include <strings.h>
 #endif
 #include <sys/types.h>
