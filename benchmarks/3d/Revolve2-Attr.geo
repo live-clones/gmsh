@@ -1,3 +1,6 @@
+
+Mesh.Algorithm = 2;
+
 lc = .3;                
 Point(2) = {3.0,-1.0,0.0,lc};                
 Point(3) = {1,-1,0.0,lc};                
@@ -10,10 +13,10 @@ Line(4) = {5,4};
 Line Loop(5) = {4,1,2,3};               
 Plane Surface(6) = {5};               
              
-Extrude Surface(6, {0.0,1,0}, {0,0.0,0.0},  3.14159/2);               
+Extrude Surface{6, {0.0,1,0}, {0,0.0,0.0},  3.14159/2 };               
              
 Coherence;               
   
-Attractor Line (.1,.1,1.0) = {14};  
+Attractor Line{14} = {.1,.1,1.0} ;  
 Surface Loop(29) = {15,6,19,23,27,28};
 Complex Volume(30) = {29};

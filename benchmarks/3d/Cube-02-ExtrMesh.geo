@@ -1,6 +1,4 @@
-/*****************************                                        
-cube meshed uniformly                                        
-*****************************/               
+
 x = .0;                                        
 Point(1) = {0.0,0.,0.0,.2+x};                                                
 Point(2) = {1,0.,0.0,.2+x};                                                
@@ -14,9 +12,9 @@ Line(3) = {2,1};
 Line(4) = {1,4};                                                
 Line Loop(5) = {2,3,4,1};                                                
 Plane Surface(6) = {5};                                                
-Extrude Surface (6, {0,0.0,1})                                     
+Extrude Surface {6, {0,0.0,1}}                                     
 {                                     
-      Layers {120}{1.}{1};                                        
+      Layers { {120}, {1.}, {1} };                                        
 } ;                                    
            
 Line(29) = {4,6};        
@@ -24,7 +22,7 @@ Line(30) = {6,5};
 Line(31) = {5,3};        
 Line Loop(32) = {-31,-30,-29,1};        
 Plane Surface(33) = {32};        
-Extrude Surface (33, {0,0.0,1});        
+Extrude Surface {33, {0,0.0,1}};        
 Coherence;        
-Surface Loop(56) = {54,33,42,46,50,55};        
-Complex Volume(57) = {56};        
+Surface Loop(56) = {27,33,42,46,50,55};
+Volume(57) = {56};

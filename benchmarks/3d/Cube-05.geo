@@ -24,7 +24,7 @@ Line Loop(9) = {1,2,3,4};
 Line Loop(10) = {7,8,5,6};     
 Plane Surface(11) = {9,10};     
    
-Extrude Surface(11, {0.0,1,0}, {-.5,0.0,0.0}, 3.14159/4) ;   
+Extrude Surface{11, {0.0,1,0}, {-.5,0.0,0.0}, 3.14159/4 } ;   
 Coherence;   
 Surface Loop(54) = {36,11,24,28,32,53,40,44,48,52};
 Complex Volume(55) = {54};

@@ -105,26 +105,26 @@ Plane Surface(76) = {75};
 Line Loop(77) = {-51,-39,-49,40};      
 Plane Surface(78) = {77};      
       
-Extrude(64, {0,0,100});      
+Extrude Surface {64, {0,0,100}};      
 Coherence;      
-Extrude(78, {0,0,100});      
+Extrude Surface {78, {0,0,100}};      
 Coherence;      
-Extrude(76, {0,0,100});      
+Extrude Surface {76, {0,0,100}};      
 Coherence;      
-Extrude(74, {0,0,100});      
+Extrude Surface {74, {0,0,100}};      
 Coherence;      
-Extrude(72, {0,0,100});      
+Extrude Surface {72, {0,0,100}};      
 Coherence;      
-Extrude(70, {0,0,100});      
+Extrude Surface {70, {0,0,100}};      
 Coherence;      
-Extrude(68, {0,0,100});      
+Extrude Surface {68, {0,0,100}};      
 Coherence;      
-Extrude(66, {0,0,100});      
+Extrude Surface {66, {0,0,100}};      
 Coherence;      
       
-Extrude Surface (35, {0,0.0,19})  
+Extrude Surface {35, {0,0.0,19}}  
 {  
-Layers {3,3,3}{100,200,300}{.1,.9,1.};  
+Layers { {3,3,3}, {100,200,300}, {.1,.9,1.}} ;  
 };  
   
 Coherence;  

@@ -10,21 +10,21 @@ Line(4) = {5,4};
 Line Loop(5) = {4,1,2,3};            
 Plane Surface(6) = {5};            
           
-Extrude Surface(6, {0.0,1,0}, {0,0.0,0.0},  3.14159/2);            
+Extrude Surface{6, {0.0,1,0}, {0,0.0,0.0},  3.14159/2};            
           
 Coherence;            
 Delete { 
- Surface(6); 
+ Surface{6}; 
 } 
 Delete { 
- Surface(15); 
+ Surface{15}; 
 } 
 Delete { 
- Surface(28); 
+ Surface{28}; 
 } 
 Delete { 
- Surface(23); 
+ Surface{23}; 
 } 
 Delete { 
- Surface(27); 
+ Surface{27}; 
 } 

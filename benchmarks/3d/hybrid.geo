@@ -23,7 +23,7 @@ Surface Loop(51) = {6,37,41,45,49,50};
 Complex Volume(52) = {51}; 
 Extrude Surface {45, {0,2,0.0}}
 {    
-   Layers {{10,10,10},{111,222,111},{.3,.6,1.}};    
+   Layers {{1,1,1},{111,222,111},{.3,.6,1.}};    
 } ; 
 Coherence; 
 Extrude Surface {64, {-1,0,0}};

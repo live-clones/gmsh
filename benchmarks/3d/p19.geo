@@ -79,41 +79,37 @@ Circle(23) = {16,13,17};
 Circle(24) = {15,13,16};
 Circle(25) = {12,13,15};
 
-Loop(26) = {-5,1,2,3,20,4,10};
+Line Loop(26) = {-5,1,2,3,20,4,10};
 Plane Surface(27) = {26};
 
-Loop(28) = {-6,-10,-19,-18,-17,-16,21,25,24,23,22};
+Line Loop(28) = {-6,-10,-19,-18,-17,-16,21,25,24,23,22};
 Plane Surface(29) = {28};
 
-Loop(30) = {11,12,25,24,23,22};
+Line Loop(30) = {11,12,25,24,23,22};
 Plane Surface(31) = {30};
 
-Extrude(27, {0,0,hg} );
+Extrude Surface{27, {0,0,hg} };
 Coherence;
 
-Extrude(29, {0,0,hg} );
+Extrude Surface{29, {0,0,hg} };
 Coherence;
 
-Extrude(31, {0,0,hg} );
+Extrude Surface{31, {0,0,hg} };
 Coherence;
 
-Volume(127) = {60,-27,-43,61,46,49,52,55,58};
-Volume Complexe(128) = {127};
-
-Extrude (105, {0,0,hcav-hg} );
+Extrude Surface {105, {0,0,hcav-hg} };
 Coherence;
 
-Extrude (126, {0,0,hcav-hg} );
+Extrude Surface {126, {0,0,hcav-hg} };
 Coherence;
 
-Characteristic Length {58,71} = 0.01; 
+//Characteristic Length {58,71} = 0.01; 
 
-Volume(196) = {31,-115,-117,-96,-99,-102,-104,-173,-184,-186,-165,-168,-171,-195};
-Complex Volume(197) = {196};
-
-Volume(198) = {93,-29,-76,104,173,-144,174,-147,-60,-81,-150,-153,-84,-87,-156,-159,-90,162,165,96,99,102,171,168};
-
-Complex Volume(199) = {198};
+Point(85) = {0.0,0.0,0.0,1.0};
+Surface Loop(158) = {67,27,43,47,51,55,59,63,68};
+Volume(159) = {158};
+Surface Loop(159) = {112,29,84,67,125,92,96,100,104,108,116,120,124};
+Volume(160) = {159};
 
 GO      = 1 ;
 CAV     = 2 ;
@@ -121,9 +117,3 @@ DIS     = 3 ;
 CLDSRC  = 4 ;
 CLD     = 5 ;
 
-Physical Volume (GO)     = 128;
-Physical Volume (CAV)    = 199;
-Physical Volume (DIS)    = 197;
-Physical Volume (CLDSRC) = 46;
-Physical Volume (CLD)    = {61,49,27,52,55,58,81,150,147,84,153,87,156,90,159,29,31,174,195};
-Point(85) = {0.0,0.0,0.0,1.0};

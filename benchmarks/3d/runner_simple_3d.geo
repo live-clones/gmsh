@@ -119,23 +119,23 @@ Plane Surface(619) = {618};
   
 ex = .05;
 
-Extrude(619, {0.0,0.0,ex});  
+Extrude Surface{619, {0.0,0.0,ex}};  
 Coherence;  
-Extrude(301, {0.0,0.0,ex});  
+Extrude Surface{301, {0.0,0.0,ex}};  
 Coherence;  
-Extrude(401, {0.0,0.0,ex});  
+Extrude Surface{401, {0.0,0.0,ex}};  
 Coherence;  
-Extrude(403, {0.0,0.0,ex});  
+Extrude Surface{403, {0.0,0.0,ex}};  
 Coherence;  
-Extrude(405, {0.0,0.0,ex});  
+Extrude Surface{405, {0.0,0.0,ex}};  
 Coherence;  
-Extrude(407, {0.0,0.0,ex});  
+Extrude Surface{407, {0.0,0.0,ex}};  
 Coherence;  
-Extrude(409, {0.0,0.0,ex});  
+Extrude Surface{409, {0.0,0.0,ex}};  
 Coherence;  
-Extrude(411, {0.0,0.0,ex});  
+Extrude Surface{411, {0.0,0.0,ex}};  
 Coherence;  
-Extrude(413, {0.0,0.0,ex});  
+Extrude Surface{413, {0.0,0.0,ex}};  
 Coherence;  
  
  

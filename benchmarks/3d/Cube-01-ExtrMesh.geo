@@ -1,6 +1,4 @@
-/*****************************                                  
-cube meshed uniformly                                  
-*****************************/         
+
 x = .0;                                  
 Point(1) = {0.0,0.0,0.0,.2+x};                                          
 Point(2) = {1,0.0,0.0,.2+x};                                          
@@ -12,10 +10,10 @@ Line(3) = {2,1};
 Line(4) = {1,4};                                          
 Line Loop(5) = {2,3,4,1};                                          
 Plane Surface(6) = {5};                                          
-Extrude Surface (6, {0,0.0,1})                               
+Extrude Surface {6, {0,0.0,1}}                               
 {                               
   Layers {{10,5,10},{100,200,300},{.1,.9,1.}};                                  
-  Recombine;
+  //Recombine;
 } ;
 
 
