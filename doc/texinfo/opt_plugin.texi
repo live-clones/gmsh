@@ -276,10 +276,13 @@ Default value: @code{-1}
 
 @item Plugin(Integrate)
 Plugin(Integrate) integrates scalar fields over
-all the elements in the view `iView', as well as
-the circulation/flux of vector fields over
-line/surface elements. If `iView' < 0, the plugin
-is run on the current view.
+all the elements in the view `iView', as well
+as the circulation/flux of vector fields over
+line/surface elements. If `iView' < 0, the
+plugin is run on the current view. If
+`computeLevelsetPositive' is set, the plugin
+computes the positive area (volume) of the map
+(for triangle maps only).
 
 Plugin(Integrate) creates one new view.
 
@@ -287,6 +290,8 @@ Numeric options:
 @table @code
 @item iView
 Default value: @code{-1}
+@item computeLevelsetPositive
+Default value: @code{0}
 @end table
 
 @item Plugin(Skin)
