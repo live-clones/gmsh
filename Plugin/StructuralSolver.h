@@ -28,33 +28,13 @@
 #include <string>
 
 #ifdef HAVE_FLTK
+#include "GmshUI.h"
 #include <FL/Fl_Window.H>
-#include <FL/Fl_Box.H>
-#include <FL/Fl_Menu_Bar.H>
-#include <FL/fl_draw.H>
-#include <FL/gl.h>
 #include <FL/Fl_Choice.H>
-#include <FL/Fl_Scroll.H>
-#include <FL/Fl_Tabs.H>
-#include <FL/Fl_Button.H>
-#include <FL/Fl_Return_Button.H>
-#include <FL/Fl_Repeat_Button.H>
-#include <FL/Fl_Light_Button.H>
-#include <FL/Fl_Menu_Button.H>
-#include <FL/Fl_Check_Button.H>
-#include <FL/Fl_Input.H>
 #include <FL/Fl_Value_Input.H>
-#include <FL/Fl_Output.H>
-#include <FL/Fl_Multiline_Output.H>
-#include <FL/Fl_Bitmap.H>
-#include <FL/Fl_Browser.H>
-#include <FL/Fl_Multi_Browser.H>
-#include <FL/Fl_Hold_Browser.H>
-#include <FL/x.H>
-#include <FL/Fl_Color_Chooser.H>
-#include <FL/fl_ask.H>
-#include <FL/Fl_Tooltip.H>
-#include <GL/glu.h>
+#include <FL/Fl_Tabs.H>
+#include <FL/filename.H>
+#include <FL/Fl_PNG_Image.H>
 #endif
 
 extern "C"
@@ -117,7 +97,7 @@ class StructuralSolver : public GMSH_Solve_Plugin
   void addPhysicalLine          (int id);
 #ifdef HAVE_FLTK 
   Fl_Window        *_window ;
-  Fl_Value_Input         *_value[20] ;
+  Fl_Value_Input   *_value[20] ;
   Fl_Choice        *_choice[20] ;
 #endif
   double MAX_FORCE;

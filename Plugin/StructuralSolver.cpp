@@ -5,16 +5,8 @@
 #include "Utils.h"
 #include "Numeric.h"
 
-#if defined(HAVE_FLTK)
-#include <FL/Fl.H>
-#include <FL/filename.H>
-#include <FL/Fl_PNG_Image.H>
-#include "GL/glu.h"
-#endif
-
 extern Mesh *THEM;
 extern Context_T CTX;
-
 
 extern "C"
 {
@@ -97,7 +89,6 @@ void Structural_Texture::setup ()
   
   Fl_PNG_Image image(filename.c_str());
 
-  int width, height;
   // allocate a texture name
   glGenTextures( 1, &tag );
   
@@ -143,7 +134,6 @@ void Structural_BeamSection ::  GL_DrawBeam (double pinit[3], double dir[3], con
   double X[3] = {dir[0],dir[1],dir[2]};
   double Z[3] = {dirz[0],dirz[1],dirz[2]};
   double Y[3];
-  double nn = norme(X);
   prodve(X,Z,Y);
   double transl[3] = {pinit[0]-xc,pinit[1]-yc,pinit[2]};
   double rot[3][3] = {{Z[0],Y[0],X[0]},
@@ -387,6 +377,7 @@ Structural_BeamSection * StructuralSolver :: GetBeamSection (const std::string &
       if ((*it)->name == name)
 	return *it;
     }
+  return 0;
 }
 
 
@@ -862,7 +853,6 @@ bool StructuralSolver :: GL_enhanceLine ( int CurveId, Vertex *v1, Vertex *v2)
   PhysicalGroup *p;
   for(int i = 0; i < List_Nbr(THEM->PhysicalGroups); i++) 
     { 
-      char Num[100];
       List_Read(THEM->PhysicalGroups, i, &p);
       if(p->Typ == MSH_PHYSICAL_LINE) {
 	if(List_Search(p->Entities, &CurveId, fcmp_absint)) { 
