@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.168 2005-01-18 00:12:35 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.169 2005-01-18 16:13:35 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -735,7 +735,7 @@ are those corresponding to the indices provided by the
 @var{expression-list}). The sixth case permits to retrieve the coordinates
 of a given geometry point (@pxref{Points}). The last two cases permit to
 retreive the indices of entities created through geometrical transformations
-adn extrusions (see @ref{Transformations}, and @ref{Extrusions}).
+and extrusions (see @ref{Transformations}, and @ref{Extrusions}).
 
 @c todo: explain in detail what numbers are returned once we decide what to
 @c do (chapeau et body pour extrude, etc.)...
