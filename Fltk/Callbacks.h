@@ -154,6 +154,7 @@ void visibility_ok_cb(CALLBACK_ARGS) ;
 // Help Menu
 
 void help_short_cb(CALLBACK_ARGS) ;
+void help_mouse_cb(CALLBACK_ARGS) ;
 void help_command_line_cb(CALLBACK_ARGS) ;
 void help_online_cb(CALLBACK_ARGS) ;
 void help_license_cb(CALLBACK_ARGS) ;

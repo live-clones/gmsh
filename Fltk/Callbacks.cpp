@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.246 2004-06-04 02:07:06 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.247 2004-06-12 18:34:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -885,11 +885,8 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_graphics_fontsize(0, GMSH_SET, WID->gen_value[12]->value());
 
   opt_general_default_filename(0, GMSH_SET, (char *)WID->gen_input[0]->value());
-  opt_general_tmp_filename(0, GMSH_SET, (char *)WID->gen_input[1]->value());
-  opt_general_error_filename(0, GMSH_SET, (char *)WID->gen_input[2]->value());
-  opt_general_options_filename(0, GMSH_SET, (char *)WID->gen_input[3]->value());
-  opt_general_editor(0, GMSH_SET, (char *)WID->gen_input[4]->value());
-  opt_general_web_browser(0, GMSH_SET, (char *)WID->gen_input[5]->value());
+  opt_general_editor(0, GMSH_SET, (char *)WID->gen_input[1]->value());
+  opt_general_web_browser(0, GMSH_SET, (char *)WID->gen_input[2]->value());
 
   int val;
   switch (WID->gen_choice[0]->value()) {
@@ -1348,26 +1345,6 @@ void help_short_cb(CALLBACK_ARGS)
 {
   // *INDENT-OFF*
   Msg(DIRECT, " ");
-  Msg(DIRECT, "Mouse:");
-  Msg(DIRECT, " ");
-  Msg(DIRECT, "  move                - highlight the elementary geometrical entity");
-  Msg(DIRECT, "                        currently under the mouse pointer and display");
-  Msg(DIRECT, "                        its properties in the status bar");
-  Msg(DIRECT, "                      - size a rubber zoom started with "XX"+Left button");
-  Msg(DIRECT, "  Left button         - rotate");
-  Msg(DIRECT, "                      - accept a rubber zoom started with "XX"+Left button"); 
-  Msg(DIRECT, "  "XX"+Left button     start (anisotropic) rubber zoom"); 
-  Msg(DIRECT, "  Middle button       - zoom (isotropic)");
-  Msg(DIRECT, "                      - cancel a rubber zoom");
-  Msg(DIRECT, "  "XX"+Middle button  orthogonalize display"); 
-  Msg(DIRECT, "  Right button        - pan");
-  Msg(DIRECT, "                      - cancel a rubber zoom");
-  Msg(DIRECT, "                      - pop up menu on post-processing view button");
-  Msg(DIRECT, "  "XX"+Right button   reset to default viewpoint");   
-  Msg(DIRECT, " ");   
-  Msg(DIRECT, "  For a 2 button mouse, Middle button = Shift+Left button");
-  Msg(DIRECT, "  For a 1 button mouse, Middle button = Shift+Left button, Right button = Alt+Left button");
-  Msg(DIRECT, " ");
   Msg(DIRECT, "Menu bar shortcuts:");
   Msg(DIRECT, " ");
   Msg(DIRECT, "  <             go back to previous context");
@@ -1424,6 +1401,34 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Right arrow   go to next time step"); 
   Msg(DIRECT, "  Up arrow      make previous view visible"); 
   Msg(DIRECT, "  Down arrow    make next view visible"); 
+  Msg(DIRECT, " ");
+  // *INDENT-ON*
+  WID->create_message_window();
+}
+
+void help_mouse_cb(CALLBACK_ARGS)
+{
+  // *INDENT-OFF*
+  Msg(DIRECT, " ");
+  Msg(DIRECT, "Mouse:");
+  Msg(DIRECT, " ");
+  Msg(DIRECT, "  move                - highlight the elementary geometrical entity");
+  Msg(DIRECT, "                        currently under the mouse pointer and display");
+  Msg(DIRECT, "                        its properties in the status bar");
+  Msg(DIRECT, "                      - size a rubber zoom started with "XX"+Left button");
+  Msg(DIRECT, "  Left button         - rotate");
+  Msg(DIRECT, "                      - accept a rubber zoom started with "XX"+Left button"); 
+  Msg(DIRECT, "  "XX"+Left button     start (anisotropic) rubber zoom"); 
+  Msg(DIRECT, "  Middle button       - zoom (isotropic)");
+  Msg(DIRECT, "                      - cancel a rubber zoom");
+  Msg(DIRECT, "  "XX"+Middle button  orthogonalize display"); 
+  Msg(DIRECT, "  Right button        - pan");
+  Msg(DIRECT, "                      - cancel a rubber zoom");
+  Msg(DIRECT, "                      - pop up menu on post-processing view button");
+  Msg(DIRECT, "  "XX"+Right button   reset to default viewpoint");   
+  Msg(DIRECT, " ");   
+  Msg(DIRECT, "  For a 2 button mouse, Middle button = Shift+Left button");
+  Msg(DIRECT, "  For a 1 button mouse, Middle button = Shift+Left button, Right button = Alt+Left button");
   Msg(DIRECT, " ");
   // *INDENT-ON*
   WID->create_message_window();

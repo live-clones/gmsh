@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.315 2004-06-08 00:30:21 geuzaine Exp $
+// $Id: GUI.cpp,v 1.316 2004-06-12 18:34:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -89,6 +89,7 @@ Fl_Menu_Item m_menubar_table[] = {
     {0},
   {"&Help", 0, 0, 0, FL_SUBMENU},
     {"&Current options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5},
+    {"M&ouse...",                0, (Fl_Callback *)help_mouse_cb, 0},
     {"S&hortcuts...",            0, (Fl_Callback *)help_short_cb, 0},
     {"C&ommand line options...", 0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
     {"On&line documentation",    0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
@@ -119,6 +120,7 @@ Fl_Menu_Item m_sys_menubar_table[] = {
     {0},
   {"Help",0,0,0,FL_SUBMENU},
     {"Current Options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5},
+    {"Mouse...",                0, (Fl_Callback *)help_mouse_cb, 0},
     {"Shortcuts...",            0, (Fl_Callback *)help_short_cb, 0},
     {"Command Line Options...", 0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
     {"Online Documentation",    0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
@@ -1456,10 +1458,10 @@ void GUI::create_option_window()
 
       gen_butt[0] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Show moving axes");
       gen_butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW, BH, "Show small axes");
-      gen_butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, BW, BH, "Enable fast redraw");
+      gen_butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, BW, BH, "Draw simplified model while rotating, panning and zooming");
       gen_butt[3] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, BW, BH, "Enable double buffering");
-      gen_butt[4] = new Fl_Check_Button(2 * WB, 2 * WB + 6 * BH, BW, BH, "Use fake transparency");
-      gen_butt[5] = new Fl_Check_Button(2 * WB, 2 * WB + 7 * BH, BW, BH, "Use trackball rotation mode");
+      gen_butt[4] = new Fl_Check_Button(2 * WB, 2 * WB + 6 * BH, BW, BH, "Use fake transparency mode");
+      gen_butt[5] = new Fl_Check_Button(2 * WB, 2 * WB + 7 * BH, BW, BH, "Use trackball rotation mode instead of Euler angles");
       for(i = 0; i < 6; i++) {
         gen_butt[i]->type(FL_TOGGLE_BUTTON);
         gen_butt[i]->down_box(TOGGLE_BOX);
@@ -1486,12 +1488,15 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Output");
       gen_butt[7] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Print messages on terminal");
       gen_butt[8] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Save session information on exit");
-      gen_butt[9] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW, BH, "Save options on exit");
+      gen_butt[9] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW/2-WB, BH, "Save options on exit");
       for(i = 7; i < 10; i++) {
         gen_butt[i]->type(FL_TOGGLE_BUTTON);
         gen_butt[i]->down_box(TOGGLE_BOX);
         gen_butt[i]->selection_color(TOGGLE_COLOR);
       }
+
+      Fl_Button *b0 = new Fl_Button(width / 2, 2 * WB + 3 * BH, 2 * BB, BH, "Restore default options");
+      b0->callback(options_restore_defaults_cb);
 
       gen_butt[14] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, BW, BH, "Ask confirmation before overwriting files");
       gen_butt[14]->type(FL_TOGGLE_BUTTON);
@@ -1504,23 +1509,15 @@ void GUI::create_option_window()
       gen_value[5]->step(1);
       gen_value[5]->align(FL_ALIGN_RIGHT);
       gen_input[0] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Default file name");
-      gen_input[1] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Temporary file");
-      gen_input[2] = new Fl_Input(2 * WB, 2 * WB + 8 * BH, IW, BH, "Error file");
-      gen_input[3] = new Fl_Input(2 * WB, 2 * WB + 9 * BH, IW, BH, "Option file");
-      for(i = 0; i < 4; i++) {
-        gen_input[i]->align(FL_ALIGN_RIGHT);
-      }
-
-      Fl_Button *b0 = new Fl_Button(width - 2 * BB - 2 * WB, 2 * WB + 9 * BH, 2 * BB, BH, "Restore default options");
-      b0->callback(options_restore_defaults_cb);
+      gen_input[0]->align(FL_ALIGN_RIGHT);
 
       o->end();
     }
     {
       Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Helpers");
-      gen_input[4] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Text editor command");
-      gen_input[5] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Web browser command");
-      for(i = 4; i < 6; i++) {
+      gen_input[1] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Text editor command");
+      gen_input[2] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Web browser command");
+      for(i = 1; i <= 2; i++) {
         gen_input[i]->align(FL_ALIGN_RIGHT);
       }
       o->end();
@@ -1635,7 +1632,7 @@ void GUI::create_option_window()
     {
       Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "General");
       o->hide();
-      geo_butt[8] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Auto coherence (suppress duplicates)");
+      geo_butt[8] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Auto coherence (suppress duplicate entities)");
       geo_butt[8]->type(FL_TOGGLE_BUTTON);
       geo_butt[8]->down_box(TOGGLE_BOX);
       geo_butt[8]->selection_color(TOGGLE_COLOR);

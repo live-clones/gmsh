@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.165 2004-06-08 02:10:32 geuzaine Exp $
+// $Id: Options.cpp,v 1.166 2004-06-12 18:34:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -76,20 +76,33 @@ void Init_Options_Safe(int num)
 void Init_Options(int num)
 {
   char *tmp;
+  int ok = 1;
 
   // Home directory
   if((tmp = getenv("GMSH_HOME")))
     strcpy(CTX.home_dir, tmp);
-  else if((tmp = getenv("HOME")))
+  else if((tmp = getenv("HOME"))){
     strcpy(CTX.home_dir, tmp);
-  else if((tmp = getenv("TMP")))
-    strcpy(CTX.home_dir, tmp);
-  else if((tmp = getenv("TEMP")))
-    strcpy(CTX.home_dir, tmp);
-  else
-    strcpy(CTX.home_dir, "");
+#if defined(WIN32)
+    // old windows systems (e.g. win98) define incorrect HOME variables
+    if(!strcmp(CTX.home_dir, "/"))
+      ok = 0;
+#endif
+  }
+  else{
+    ok = 0;
+  }
+  if(!ok){
+    if((tmp = getenv("TMP")))
+      strcpy(CTX.home_dir, tmp);
+    else if((tmp = getenv("TEMP")))
+      strcpy(CTX.home_dir, tmp);
+    else
+      strcpy(CTX.home_dir, "");
+  }
 
-  if(strlen(CTX.home_dir))
+  int len = strlen(CTX.home_dir);
+  if(len && CTX.home_dir[len-1] != '/')
     strcat(CTX.home_dir, "/");
 
   // Reference view storing default options
@@ -796,10 +809,6 @@ char *opt_general_tmp_filename(OPT_ARGS_STR)
     strcpy(CTX.tmprc_filename, CTX.home_dir);
     strcat(CTX.tmprc_filename, CTX.tmp_filename);
   }
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->gen_input[1]->value(CTX.tmp_filename);
-#endif
   return CTX.tmp_filename;
 }
 
@@ -810,10 +819,6 @@ char *opt_general_error_filename(OPT_ARGS_STR)
     strcpy(CTX.errorrc_filename, CTX.home_dir);
     strcat(CTX.errorrc_filename, CTX.error_filename);
   }
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->gen_input[2]->value(CTX.error_filename);
-#endif
   return CTX.error_filename;
 }
 
@@ -834,10 +839,6 @@ char *opt_general_options_filename(OPT_ARGS_STR)
     strcpy(CTX.optionsrc_filename, CTX.home_dir);
     strcat(CTX.optionsrc_filename, CTX.options_filename);
   }
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->gen_input[3]->value(CTX.options_filename);
-#endif
   return CTX.options_filename;
 }
 
@@ -847,7 +848,7 @@ char *opt_general_editor(OPT_ARGS_STR)
     CTX.editor = val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->gen_input[4]->value(CTX.editor);
+    WID->gen_input[1]->value(CTX.editor);
 #endif
   return CTX.editor;
 }
@@ -858,7 +859,7 @@ char *opt_general_web_browser(OPT_ARGS_STR)
     CTX.web_browser = val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->gen_input[5]->value(CTX.web_browser);
+    WID->gen_input[2]->value(CTX.web_browser);
 #endif
   return CTX.web_browser;
 }
