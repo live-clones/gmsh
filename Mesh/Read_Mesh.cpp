@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.80 2004-11-19 18:26:47 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.81 2004-12-16 20:26:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -356,8 +356,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    }
 	  }
           if(!Tree_Insert(s->Quadrangles, &quad)){
-	    Msg(GERROR, "Quadrangle %d already exists", simp->Num);
-	    Free_SimplexBase(&simp, 0);
+	    Msg(GERROR, "Quadrangle %d already exists", quad->Num);
+	    Free_SimplexBase(&quad, 0);
 	  }
           break;
         case TET1:
@@ -439,7 +439,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    }
 	  }
           if(!Tree_Insert(v->Pyramids, &pyr)){
-	    Msg(GERROR, "Pyramid %d already exists", pri->Num);
+	    Msg(GERROR, "Pyramid %d already exists", pyr->Num);
 	    Free_Pyramid(&pyr, 0);
 	  }
           break;
