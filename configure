@@ -2343,6 +2343,11 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
+if test "x${CC}" = "x" -o "x${CXX}" = "x" ; then
+  { { echo "$as_me:$LINENO: error: Could not find required compilers, aborting." >&5
+echo "$as_me: error: Could not find required compilers, aborting." >&2;}
+   { (exit 1); exit 1; }; }
+fi
 
 FLAGS=""
 INCLS=""
@@ -2628,6 +2633,7 @@ else
   RANLIB="$ac_cv_prog_RANLIB"
 fi
 
+
 # Extract the first word of "ar", so it can be a program name with args.
 set dummy ar; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -2667,6 +2673,12 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
+if test "x${AR}" = "x:"; then
+  { { echo "$as_me:$LINENO: error: Could not find the library archiver, aborting." >&5
+echo "$as_me: error: Could not find the library archiver, aborting." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+AR="${AR} ruvs"
 
 
 
@@ -2730,13 +2742,6 @@ fi
 
 
 
-
-if test "x${AR}" = "x:"; then
-  { { echo "$as_me:$LINENO: error: Could not find the library archiver" >&5
-echo "$as_me: error: Could not find the library archiver" >&2;}
-   { (exit aborting.); exit aborting.; }; }
-fi
-AR="${AR} ruvs"
 
 GMSH_DIRS="Common DataStr Geo Mesh Numeric Parallel Parser Plugin"
 
@@ -3141,8 +3146,8 @@ fi
     echo "versions <= 1.1.1 have a bug in the singular value decomposition"
     echo "algorithm that will cause Gmsh to hang during mesh generation."
     echo "********************************************************************"
-    { { echo "$as_me:$LINENO: error: " >&5
-echo "$as_me: error: " >&2;}
+    { { echo "$as_me:$LINENO: error: Could not find GSL, aborting." >&5
+echo "$as_me: error: Could not find GSL, aborting." >&2;}
    { (exit 1); exit 1; }; }
   fi
 fi
