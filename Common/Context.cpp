@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.46 2003-01-23 20:19:17 geuzaine Exp $
+// $Id: Context.cpp,v 1.47 2003-02-12 20:27:12 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -57,7 +57,7 @@ void Context_T::buildRotmatrix(void){
   if(useTrackball){
     build_rotmatrix(rot, quaternion);
 
-#ifndef _BLACKBOX
+#if defined(HAVE_FLTK)
     // We should reconstruct the Euler angles from the rotation
     // matrix. I'm too lazy to do it :-(
     extern void set_r(int i, double val);

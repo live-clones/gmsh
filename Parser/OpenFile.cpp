@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.38 2003-02-12 09:20:41 remacle Exp $
+// $Id: OpenFile.cpp,v 1.39 2003-02-12 20:27:14 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -32,12 +32,9 @@
 #include "Visibility.h"
 #include "ReadImg.h"
 
-#ifndef _BLACKBOX
+#if defined(HAVE_FLTK)
 #include "GmshUI.h"
 #include "Draw.h"
-#endif
-
-#if _FLTK
 #include "GUI.h"
 extern GUI *WID;
 #endif
@@ -108,22 +105,26 @@ void ParseString(char *str){
 
 
 int MergeProblem(char *name){
-
   char ext[5];
 
-  strncpy (ext,&name[strlen(name)-4],5);
-  /// a jpg file is used as an inpu, we transform it onto 
-  /// a post pro file that could be used as a background mesh
+  if(strlen(name) > 4){
+    strncpy(ext,&name[strlen(name)-4],5);
+  }
+  else{
+    strcpy(ext, "");
+  }
 
-  if(!strcmp(ext,".ppm") ||!strcmp(ext,".pnm"))
-    {
-      read_pnm (name);
-      return 1;
-    }
-  else
-    {
-      return ParseFile(name,0);  
-    }
+  // a image file is used as an input, we transform it onto 
+  // a post pro file that could be used as a background mesh
+  if(!strcmp(ext,".ppm") ||!strcmp(ext,".pnm")){
+#if defined(HAVE_FLTK)
+    read_pnm (name);
+#endif
+    return 1;
+  }
+  else{
+    return ParseFile(name,0);  
+  }
 }
 
 void MergeProblemWithBoundingBox(char *name){
@@ -158,7 +159,12 @@ void OpenProblem(char *name){
   strncpy(CTX.filename,name,255);
   strncpy(CTX.base_filename,name,255);
 
-  strcpy(ext,name+(strlen(name)-4));
+  if(strlen(name) > 4){
+    strncpy(ext,&name[strlen(name)-4],5);
+  }
+  else{
+    strcpy(ext, "");
+  }
   if(!strcmp(ext,".geo") || !strcmp(ext,".GEO") ||
      !strcmp(ext,".msh") || !strcmp(ext,".MSH") ||
      !strcmp(ext,".stl") || !strcmp(ext,".STL") ||
@@ -173,14 +179,12 @@ void OpenProblem(char *name){
 
   strncpy(THEM->name, CTX.base_filename,255);
 
-#if _FLTK
+#if defined(HAVE_FLTK)
   if(!CTX.batch) WID->set_title(CTX.filename);
 #endif
 
   int nb = List_Nbr(CTX.post.list);
-
   int status = MergeProblem(CTX.filename);
-    //ParseFile(CTX.filename,0);
 
   ApplyLcFactor(THEM);
 
@@ -191,11 +195,8 @@ void OpenProblem(char *name){
     Maillage_Dimension_0(&M);
   }
 
-#if _FLTK
+#if defined(HAVE_FLTK)
   if(!CTX.batch) WID->reset_visibility();
-#endif
-
-#ifndef _BLACKBOX
   ZeroHighlight(&M); 
 #endif
 
@@ -228,7 +229,7 @@ void decygwin(char *in, char *out){
 }
 
 void SystemCall(char *command){
-#if defined(WIN32) && !defined(_BLACKBOX)
+#if defined(WIN32) && defined(HAVE_FLTK)
   STARTUPINFO		suInfo;	// Process startup information
   PROCESS_INFORMATION	prInfo;	// Process information
   

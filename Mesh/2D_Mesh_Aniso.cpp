@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.31 2003-02-12 09:20:41 remacle Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.32 2003-02-12 20:27:12 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -570,7 +570,7 @@ bool draw_simplex2d (Surface * sur, Simplex * s, bool nouv){
   z[1] = v2.Pos.Z;
   z[2] = v3.Pos.Z;
 
-#ifndef _BLACKBOX
+#if defined(HAVE_FLTK)
   void draw_polygon_2d (double r, double g, double b, int n, 
 			double *x, double *y, double *z);
   if (nouv)
