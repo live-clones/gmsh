@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.423 2005-03-11 09:21:56 geuzaine Exp $
+// $Id: GUI.cpp,v 1.424 2005-03-12 00:59:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2507,7 +2507,7 @@ void GUI::create_option_window()
       view_input[0] = new Fl_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Name");
       view_input[0]->align(FL_ALIGN_RIGHT);
 
-      view_input[1] = new Fl_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Number format");
+      view_input[1] = new Fl_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Format");
       view_input[1]->align(FL_ALIGN_RIGHT);
 
       static Fl_Menu_Item menu_grid_mode[] = {
@@ -2518,30 +2518,41 @@ void GUI::create_option_window()
 	{"Open grid", 0, 0, 0},
 	{0}
       };
-      view_choice[8] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Grid mode");
+      view_choice[8] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Grid");
       view_choice[8]->menu(menu_grid_mode);
       view_choice[8]->align(FL_ALIGN_RIGHT);
       view_choice[8]->tooltip("(Alt+g)");
 
-      view_input[3] = new Fl_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Grid number format");
-      view_input[3]->align(FL_ALIGN_RIGHT);
-      
-      view_value[25] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Axis tics");
-      view_value[25]->minimum(0.);
-      view_value[25]->step(1);
-      view_value[25]->maximum(256);
-      view_value[25]->align(FL_ALIGN_RIGHT);
+      view_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW/3, BH);
+      view_value[3]->minimum(0.);
+      view_value[3]->step(1);
+      view_value[3]->maximum(100);
+      view_value[4] = new Fl_Value_Input(L + 2 * WB + 1*IW/3, 2 * WB + 8 * BH, IW/3, BH);
+      view_value[4]->minimum(0.);
+      view_value[4]->step(1);
+      view_value[4]->maximum(100);
+      view_value[5] = new Fl_Value_Input(L + 2 * WB + 2*IW/3, 2 * WB + 8 * BH, IW/3, BH, "Axes tics");
+      view_value[5]->minimum(0.);
+      view_value[5]->step(1);
+      view_value[5]->maximum(100);
+      view_value[5]->align(FL_ALIGN_RIGHT);
 
-      view_input[2] = new Fl_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Abscissa name");
-      view_input[2]->align(FL_ALIGN_RIGHT);
+      view_input[7] = new Fl_Input(L + 2 * WB, 2 * WB + 9 * BH, IW/3, BH);
+      view_input[8] = new Fl_Input(L + 2 * WB + 1*IW/3, 2 * WB + 9 * BH, IW/3, BH);
+      view_input[9] = new Fl_Input(L + 2 * WB + 2*IW/3, 2 * WB + 9 * BH, IW/3, BH, "Axes format");
+      view_input[9]->align(FL_ALIGN_RIGHT);
       
-      view_butt[7] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Set position automatically");
+      view_input[10] = new Fl_Input(L + 2 * WB, 2 * WB + 10 * BH, IW/3, BH);
+      view_input[11] = new Fl_Input(L + 2 * WB + 1*IW/3, 2 * WB + 10 * BH, IW/3, BH);
+      view_input[12] = new Fl_Input(L + 2 * WB + 2*IW/3, 2 * WB + 10 * BH, IW/3, BH, "Axes labels");
+      view_input[12]->align(FL_ALIGN_RIGHT);
+      
+      view_butt[7] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Automatic 2D grid position");
       view_butt[7]->type(FL_TOGGLE_BUTTON);
       view_butt[7]->down_box(GMSH_TOGGLE_BOX);
       view_butt[7]->selection_color(GMSH_TOGGLE_COLOR);
       
-      view_value[20] = new Fl_Value_Input(L + width /2, 2 * WB + 2 * BH, IW / 2, BH);
-      view_value[20]->align(FL_ALIGN_RIGHT);
+      view_value[20] = new Fl_Value_Input(L + width / 2, 2 * WB + 2 * BH, IW / 2, BH);
       view_value[20]->minimum(0);
       view_value[20]->maximum(1024);
       view_value[20]->step(1);
@@ -2551,8 +2562,7 @@ void GUI::create_option_window()
       view_value[21]->maximum(1024);
       view_value[21]->step(1);
 
-      view_value[22] = new Fl_Value_Input(L + width /2, 2 * WB + 3 * BH, IW / 2, BH);
-      view_value[22]->align(FL_ALIGN_RIGHT);
+      view_value[22] = new Fl_Value_Input(L + width / 2, 2 * WB + 3 * BH, IW / 2, BH);
       view_value[22]->minimum(0);
       view_value[22]->maximum(1024);
       view_value[22]->step(1);
@@ -2561,6 +2571,21 @@ void GUI::create_option_window()
       view_value[23]->minimum(0);
       view_value[23]->maximum(1024);
       view_value[23]->step(1);
+
+      view_butt[25] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Automatic 3D grid position");
+      view_butt[25]->type(FL_TOGGLE_BUTTON);
+      view_butt[25]->down_box(GMSH_TOGGLE_BOX);
+      view_butt[25]->selection_color(GMSH_TOGGLE_COLOR);
+      
+      view_value[13] = new Fl_Value_Input(L + width / 2, 2 * WB + 5 * BH, IW / 3, BH);
+      view_value[14] = new Fl_Value_Input(L + width / 2 + IW / 3, 2 * WB + 5 * BH, IW / 3, BH);
+      view_value[15] = new Fl_Value_Input(L + width / 2 + 2 * IW / 3, 2 * WB + 5 * BH, IW / 3, BH, "Minimum");
+      view_value[15]->align(FL_ALIGN_RIGHT);
+
+      view_value[16] = new Fl_Value_Input(L + width / 2, 2 * WB + 6 * BH, IW / 3, BH);
+      view_value[17] = new Fl_Value_Input(L + width / 2 + IW / 3, 2 * WB + 6 * BH, IW / 3, BH);
+      view_value[18] = new Fl_Value_Input(L + width / 2 + 2 * IW / 3, 2 * WB + 6 * BH, IW / 3, BH, "Maximum");
+      view_value[18]->align(FL_ALIGN_RIGHT);
 
       o->end();
     }
@@ -2723,7 +2748,7 @@ void GUI::create_option_window()
       view_butt[38]->down_box(GMSH_TOGGLE_BOX);
       view_butt[38]->selection_color(GMSH_TOGGLE_COLOR);
 
-      view_value[33] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Maximal recursion level");
+      view_value[33] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Maximum recursion level");
       view_value[33]->align(FL_ALIGN_RIGHT);
       view_value[33]->minimum(0);
       view_value[33]->maximum(MAX_LEVEL_OF_ZOOM);
@@ -2978,20 +3003,17 @@ void GUI::update_view_window(int num)
   opt_view_type(num, GMSH_GUI, 0);
   opt_view_show_scale(num, GMSH_GUI, 0);
   opt_view_draw_strings(num, GMSH_GUI, 0);
-  opt_view_auto_position(num, GMSH_GUI, 0);
 
   opt_view_max_recursion_level (num, GMSH_GUI, 0);
   opt_view_target_error (num, GMSH_GUI, 0);
-  if(v->adaptive)
-    {
-      view_value[33]->activate();
-      view_value[34]->activate();
-    }
-  else
-    {
-      view_value[33]->deactivate();
-      view_value[34]->deactivate();
-    }
+  if(v->adaptive){
+    view_value[33]->activate();
+    view_value[34]->activate();
+  }
+  else{
+    view_value[33]->deactivate();
+    view_value[34]->deactivate();
+  }
 
   if(v->NbSP) {
     view_butt[2]->activate();
@@ -3001,10 +3023,24 @@ void GUI::update_view_window(int num)
     view_butt[2]->deactivate();
     view_butt[3]->deactivate();
   }
+
+  opt_view_auto_position2d(num, GMSH_GUI, 0);
   opt_view_position0(num, GMSH_GUI, 0);
   opt_view_position1(num, GMSH_GUI, 0);
   opt_view_size0(num, GMSH_GUI, 0);
   opt_view_size1(num, GMSH_GUI, 0);
+  opt_view_auto_position3d(num, GMSH_GUI, 0);
+  opt_view_position_xmin(num, GMSH_GUI, 0);
+  opt_view_position_xmax(num, GMSH_GUI, 0);
+  opt_view_position_ymin(num, GMSH_GUI, 0);
+  opt_view_position_ymax(num, GMSH_GUI, 0);
+  opt_view_position_zmin(num, GMSH_GUI, 0);
+  opt_view_position_zmax(num, GMSH_GUI, 0);
+  for(int i = 13; i <= 18; i++){
+    view_value[i]->step(CTX.lc/200.);
+    view_value[i]->minimum(-CTX.lc);
+    view_value[i]->maximum(CTX.lc);
+  }
 
   if(v->TextOnly) {
     view_range->deactivate();
@@ -3036,14 +3072,15 @@ void GUI::update_view_window(int num)
   opt_view_tangents(num, GMSH_GUI, 0);
 
   opt_view_grid(num, GMSH_GUI, 0);
-  opt_view_abscissa_format(num, GMSH_GUI, NULL);
-  opt_view_nb_abscissa(num, GMSH_GUI, 0);
-
-  if(v->NbSP)
-    view_input[2]->activate();
-  else
-    view_input[2]->deactivate();
-  opt_view_abscissa_name(num, GMSH_GUI, NULL);
+  opt_view_axes_format0(num, GMSH_GUI, NULL);
+  opt_view_axes_format1(num, GMSH_GUI, NULL);
+  opt_view_axes_format2(num, GMSH_GUI, NULL);
+  opt_view_nb_tics0(num, GMSH_GUI, 0);
+  opt_view_nb_tics1(num, GMSH_GUI, 0);
+  opt_view_nb_tics2(num, GMSH_GUI, 0);
+  opt_view_axes_label0(num, GMSH_GUI, NULL);
+  opt_view_axes_label1(num, GMSH_GUI, NULL);
+  opt_view_axes_label2(num, GMSH_GUI, NULL);
 
   opt_view_nb_iso(num, GMSH_GUI, 0);
   opt_view_intervals_type(num, GMSH_GUI, 0);

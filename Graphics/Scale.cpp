@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.57 2005-01-21 03:03:47 geuzaine Exp $
+// $Id: Scale.cpp,v 1.58 2005-03-12 00:59:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -326,13 +326,13 @@ void Draw_Scales(void)
 
   for(int i = 0; i < List_Nbr(todraw); i++) {
     Post_View *v = *(Post_View **) List_Pointer(todraw, i);
-
-    if(!v->AutoPosition) {
-	draw_scale(v, 
-		   v->Position[0], 
-		   CTX.viewport[3] - v->Size[1] - v->Position[1], 
-		   v->Size[0], v->Size[1], 
-		   tic, CTX.post.horizontal_scales);
+    
+    if(!v->AutoPosition2D) {
+      draw_scale(v, 
+		 v->Position2D[0], 
+		 CTX.viewport[3] - v->Size2D[1] - v->Position2D[1], 
+		 v->Size2D[0], v->Size2D[1], 
+		 tic, CTX.post.horizontal_scales);
     }
     else{
       if(CTX.post.horizontal_scales){

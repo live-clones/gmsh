@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.46 2005-03-09 02:18:40 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.47 2005-03-12 00:59:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -92,9 +92,8 @@ static void addval(Post_View * v, double Abs, double Val,
 }
 
 
-static void Draw_Graph2D(Post_View * v,
-                         double xx, double yy, double width, double height,
-                         double tic, double bb[4])
+static void Draw_Graph2D(Post_View * v, double xx, double yy, 
+			 double width, double height, double tic)
 {
   char label[1024];
   float font_h, font_a;
@@ -232,21 +231,16 @@ static void Draw_Graph2D(Post_View * v,
     AbsMax = *(double *)List_Pointer(v->Time, List_Nbr(v->Time) - 1);
   }
 
-  nb = v->NbAbscissa;
+  nb = v->NbTics[0];
   if(v->ShowScale) {
-    sprintf(label, v->AbscissaFormat, AbsMin);
-    double ww = gl_width(label);
-    sprintf(label, v->AbscissaFormat, AbsMax);
-    if(gl_width(label) > ww)
-      ww = gl_width(label);
-    if((nb - 1) * (ww + 2) > width)
-      nb = (int)floor(width / (ww + 2)) + 1;
+    sprintf(label, v->AxesFormat[0], -M_PI/1.e4);
+    if((nb-1) * gl_width(label) > width)
+      nb = (int)(width / gl_width(label)) + 1;
   }
-  if(nb == 1)
-    dx = width;
-  else
-    dx = width / (double)(nb - 1);
+  if(nb == 1) nb++;
 
+  dx = width / (double)(nb - 1);
+  
   for(i = 0; i < nb; i++) {
     if(v->Grid > 0) {
       glColor4ubv((GLubyte *) & CTX.color.fg);
@@ -277,9 +271,9 @@ static void Draw_Graph2D(Post_View * v,
     if(v->ShowScale) {
       glColor4ubv((GLubyte *) & CTX.color.text);
       if(nb == 1)
-        sprintf(label, v->AbscissaFormat, AbsMin);
+        sprintf(label, v->AxesFormat[0], AbsMin);
       else
-        sprintf(label, v->AbscissaFormat,
+        sprintf(label, v->AxesFormat[0],
                 AbsMin + i * (AbsMax - AbsMin) / (double)(nb - 1));
       glRasterPos2d(xtop + i * dx, ybot - font_h - tic);
       Draw_String_Center(label);
@@ -287,7 +281,7 @@ static void Draw_Graph2D(Post_View * v,
   }
   if(v->ShowScale) {
     glColor4ubv((GLubyte *) & CTX.color.text);
-    sprintf(label, "%s", v->AbscissaName);
+    sprintf(label, "%s", v->AxesLabel[0]);
     glRasterPos2d(xtop + width / 2, ybot - 2 * font_h - 2 * tic);
     Draw_String_Center(label);
   }
@@ -350,71 +344,81 @@ static void Draw_Graph2D(Post_View * v,
 
 }
 
-void getbb(double pos[2], double width, double height,
-           double dx, double dy, double tic, double space,
-           double bbtot[4], double bb[4])
-{
-  bbtot[0] = pos[0] - dx - space; //topleft x
-  bb[0] = bbtot[0];
-
-  //don't recompute bbtot[1]
-  bb[1] = pos[1] - 1.5 * dy - space; //topleft y
-
-  bbtot[2] = MAX(bbtot[2], pos[0] + width + (dx - tic) / 2 + space); //bottomright x
-  bb[2] = pos[0] + width + (dx - tic) / 2 + space;
-
-  bbtot[3] = pos[1] + height + 2 * dy + space; //bottomright y
-  bb[3] = bbtot[3];
-}
-
 void Draw_Graph2D(void)
 {
-  int nbauto = 0;
-  double dx, dy, bb[4], bbtot[4] = { 0., 0., 0., 0. }, pos[2] = {0., 0.}, tic;
-  double space = 10.;
-  char label[1024];
+  static List_T *todraw = NULL;
 
   if(!CTX.post.list)
     return;
 
+  // 2d graphs to draw?
+
+  if(!todraw)
+    todraw = List_Create(5, 5, sizeof(Post_View *));
+  else
+    List_Reset(todraw);
+
+  gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
+  char label[1024];
+  double largest_number = 0.;
+
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, i);
-    if(v->Visible && !v->Dirty && v->NbSP && v->Type != DRAW_POST_3D) {
-      tic = 5;
-      dx = dy = 0.;
-      if(v->ShowScale) {
-        gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
-        sprintf(label, v->AbscissaFormat, v->CustomMin);
-        if(gl_width(label) + tic > dx)
-          dx = gl_width(label) + tic;
-        sprintf(label, v->AbscissaFormat, v->CustomMax);
-        if(gl_width(label) + tic > dx)
-          dx = gl_width(label) + tic;
-        dy = 1.5 * gl_height(); //2 below and & above!
+    if(v->Visible && !v->Dirty && v->NbSP && v->Type != DRAW_POST_3D){
+      List_Add(todraw, &v);
+      sprintf(label, v->Format, -M_PI/1.e4);
+      if(largest_number < gl_width(label))
+	largest_number = gl_width(label);
+    }
+  }
+  
+  if(!List_Nbr(todraw))
+    return;
+
+  const double tic = 5;
+  double xsep = largest_number;
+  double ysep = 5 * gl_height();
+  
+  int num = 0;
+
+  for(int i = 0; i < List_Nbr(todraw); i++) {
+    Post_View *v = *(Post_View **) List_Pointer(todraw, i);
+
+    if(!v->AutoPosition2D) {
+      Draw_Graph2D(v, v->Position2D[0], v->Position2D[1], v->Size2D[0], v->Size2D[1], tic);
+    }
+    else{
+      double winw = CTX.viewport[2] - CTX.viewport[0];
+      double winh = CTX.viewport[3] - CTX.viewport[1];
+      if(List_Nbr(todraw) == 1){
+	double fracw = 0.75, frach = 0.75;
+	double w = fracw * winw - xsep;
+	double h = frach * winh - ysep;
+	double xmin = CTX.viewport[0] + (1-fracw)/2. * winw;
+	double ymin = CTX.viewport[1] + (1-frach)/2. * winh;
+	Draw_Graph2D(v, xmin + 0.95*xsep, ymin + 0.4*ysep, w, h, tic);
       }
-      if(!v->AutoPosition || !nbauto) {
-        pos[0] = v->Position[0];
-        pos[1] = v->Position[1];
-        bbtot[1] = pos[1] - 1.5 * dy - space;   //top y
-        getbb(pos, v->Size[0], v->Size[1], dx, dy, tic, space, bbtot, bb);
-        Draw_Graph2D(v, pos[0], pos[1], v->Size[0], v->Size[1], tic, bb);
+      else if(List_Nbr(todraw) == 2){
+	double fracw = 0.75, frach = 0.85;
+	double w = fracw * winw - xsep;
+	double h = frach * winh / 2. - ysep;
+	double xmin = CTX.viewport[0] + (1-fracw)/2. * winw;
+	double ymin = CTX.viewport[1] + (1-frach)/3. * winh;
+	if(num == 1) ymin += (h + ysep + (1-frach)/3. * winh);
+	Draw_Graph2D(v, xmin + 0.95*xsep, ymin + 0.4*ysep, w, h, tic);
+	num++;
       }
-      else {
-        if(bbtot[3] + v->Size[1] + 3 * dy + 2 * space < CTX.viewport[3]) { 
-	  //try to put below
-          pos[1] = bbtot[3] + 1.5 * dy + space;
-          getbb(pos, v->Size[0], v->Size[1], dx, dy, tic, space, bbtot, bb);
-          Draw_Graph2D(v, pos[0], pos[1], v->Size[0], v->Size[1], tic, bb);
-        }
-        else { 
-	  //start a new column
-          pos[0] = bbtot[2] + dx + space;
-          pos[1] = bbtot[1] + 1.5 * dy + space;
-          getbb(pos, v->Size[0], v->Size[1], dx, dy, tic, space, bbtot, bb);
-          Draw_Graph2D(v, pos[0], pos[1], v->Size[0], v->Size[1], tic, bb);
-        }
+      else{
+	double fracw = 0.85, frach = 0.85;
+	double w = fracw * winw / 2. - xsep;
+	double h = frach * winh / 2. - ysep;
+	double xmin = CTX.viewport[0] + (1-fracw)/3. * winw;
+	if(num == 1 || num == 3) xmin += (w + xsep + (1-fracw)/3. * winw);
+	double ymin = CTX.viewport[1] + (1-frach)/3. * winh;
+	if(num == 2 || num == 3) ymin += (h + ysep + (1-frach)/3. * winh);
+	Draw_Graph2D(v, xmin + 0.95*xsep, ymin + 0.4*ysep, w, h, tic);
+	num++;
       }
-      nbauto++;
     }
   }
 }

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.229 2005-03-11 08:56:37 geuzaine Exp $
+// $Id: Options.cpp,v 1.230 2005-03-12 00:59:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1846,30 +1846,82 @@ char *opt_view_filename(OPT_ARGS_STR)
   return v->FileName;
 }
 
-char *opt_view_abscissa_name(OPT_ARGS_STR)
+char *opt_view_axes_label0(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(v->AbscissaName, val);
+    strcpy(v->AxesLabel[0], val);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_input[2]->value(v->AbscissaName);
+    WID->view_input[10]->value(v->AxesLabel[0]);
 #endif
-  return v->AbscissaName;
+  return v->AxesLabel[0];
 }
 
-char *opt_view_abscissa_format(OPT_ARGS_STR)
+char *opt_view_axes_label1(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(v->AbscissaFormat, val);
+    strcpy(v->AxesLabel[1], val);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_input[3]->value(v->AbscissaFormat);
+    WID->view_input[11]->value(v->AxesLabel[1]);
 #endif
-  return v->AbscissaFormat;
+  return v->AxesLabel[1];
+}
+
+char *opt_view_axes_label2(OPT_ARGS_STR)
+{
+  GET_VIEW("");
+  if(action & GMSH_SET) {
+    strcpy(v->AxesLabel[2], val);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_input[12]->value(v->AxesLabel[2]);
+#endif
+  return v->AxesLabel[2];
+}
+
+char *opt_view_axes_format0(OPT_ARGS_STR)
+{
+  GET_VIEW("");
+  if(action & GMSH_SET) {
+    strcpy(v->AxesFormat[0], val);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_input[7]->value(v->AxesFormat[0]);
+#endif
+  return v->AxesFormat[0];
+}
+
+char *opt_view_axes_format1(OPT_ARGS_STR)
+{
+  GET_VIEW("");
+  if(action & GMSH_SET) {
+    strcpy(v->AxesFormat[1], val);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_input[8]->value(v->AxesFormat[1]);
+#endif
+  return v->AxesFormat[1];
+}
+
+char *opt_view_axes_format2(OPT_ARGS_STR)
+{
+  GET_VIEW("");
+  if(action & GMSH_SET) {
+    strcpy(v->AxesFormat[2], val);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_input[9]->value(v->AxesFormat[2]);
+#endif
+  return v->AxesFormat[2];
 }
 
 char * opt_view_gen_raise0(OPT_ARGS_STR)
@@ -5080,70 +5132,168 @@ double opt_view_type(OPT_ARGS_NUM)
   return v->Type;
 }
 
+double opt_view_auto_position2d(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->AutoPosition2D = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_butt[7]->value(v->AutoPosition2D);
+  }
+#endif
+  return v->AutoPosition2D;
+}
+
 double opt_view_position0(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Position[0] = (int)val;
+    v->Position2D[0] = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[20]->value(v->Position[0]);
+    WID->view_value[20]->value(v->Position2D[0]);
 #endif
-  return v->Position[0];
+  return v->Position2D[0];
 }
 
 double opt_view_position1(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Position[1] = (int)val;
+    v->Position2D[1] = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[21]->value(v->Position[1]);
+    WID->view_value[21]->value(v->Position2D[1]);
 #endif
-  return v->Position[1];
-}
-
-double opt_view_auto_position(OPT_ARGS_NUM)
-{
-  GET_VIEW(0.);
-  if(action & GMSH_SET) {
-    v->AutoPosition = (int)val;
-  }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    WID->view_butt[7]->value(v->AutoPosition);
-  }
-#endif
-  return v->AutoPosition;
+  return v->Position2D[1];
 }
 
 double opt_view_size0(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Size[0] = (int)val;
+    v->Size2D[0] = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[22]->value(v->Size[0]);
+    WID->view_value[22]->value(v->Size2D[0]);
 #endif
-  return v->Size[0];
+  return v->Size2D[0];
 }
 
 double opt_view_size1(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Size[1] = (int)val;
+    v->Size2D[1] = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[23]->value(v->Size[1]);
+    WID->view_value[23]->value(v->Size2D[1]);
 #endif
-  return v->Size[1];
+  return v->Size2D[1];
+}
+
+double opt_view_auto_position3d(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->AutoPosition3D = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_butt[25]->value(v->AutoPosition3D);
+  }
+#endif
+  return v->AutoPosition3D;
+}
+
+double opt_view_position_xmin(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->Position3D[0] = val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_value[13]->value(v->Position3D[0]);
+  }
+#endif
+  return v->Position3D[0];
+}
+
+double opt_view_position_xmax(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->Position3D[1] = val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_value[16]->value(v->Position3D[1]);
+  }
+#endif
+  return v->Position3D[1];
+}
+
+double opt_view_position_ymin(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->Position3D[2] = val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_value[14]->value(v->Position3D[2]);
+  }
+#endif
+  return v->Position3D[2];
+}
+
+double opt_view_position_ymax(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->Position3D[3] = val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_value[17]->value(v->Position3D[3]);
+  }
+#endif
+  return v->Position3D[3];
+}
+
+double opt_view_position_zmin(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->Position3D[4] = val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_value[15]->value(v->Position3D[4]);
+  }
+#endif
+  return v->Position3D[4];
+}
+
+double opt_view_position_zmax(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->Position3D[5] = val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_value[18]->value(v->Position3D[5]);
+  }
+#endif
+  return v->Position3D[5];
 }
 
 double opt_view_grid(OPT_ARGS_NUM)
@@ -5162,18 +5312,46 @@ double opt_view_grid(OPT_ARGS_NUM)
   return v->Grid;
 }
 
-double opt_view_nb_abscissa(OPT_ARGS_NUM)
+double opt_view_nb_tics0(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->NbAbscissa = (int)val;
+    v->NbTics[0] = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_value[25]->value(v->NbAbscissa);
+    WID->view_value[3]->value(v->NbTics[0]);
   }
 #endif
-  return v->NbAbscissa;
+  return v->NbTics[0];
+}
+
+double opt_view_nb_tics1(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->NbTics[1] = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_value[4]->value(v->NbTics[1]);
+  }
+#endif
+  return v->NbTics[1];
+}
+
+double opt_view_nb_tics2(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->NbTics[2] = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_value[5]->value(v->NbTics[2]);
+  }
+#endif
+  return v->NbTics[2];
 }
 
 double opt_view_nb_iso(OPT_ARGS_NUM)

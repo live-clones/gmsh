@@ -44,7 +44,7 @@ class Post_View{
  public :
   // intrinsic to a view
   int Num, Index, Changed, AliasOf, Links, Dirty;
-  char FileName[256], Name[256], AbscissaName[256];
+  char FileName[256], Name[256];
 
   // the data
   int DataSize; // size(double) or sizeof(float)
@@ -74,13 +74,15 @@ class Post_View{
   VertexArray *TriVertexArray;
 
   // options
-  int Type, Position[2], AutoPosition, Size[2];
-  char   Format[256], AbscissaFormat[256];
+  int Type;
+  int Position2D[2], Size2D[2], AutoPosition2D, AutoPosition3D;
+  double Position3D[6];
+  char   Format[256], AxesFormat[3][256], AxesLabel[3][256];
   double CustomMin, CustomMax;
   double Offset[3], Raise[3], Transform[3][3], DisplacementFactor, Explode;
   double ArrowSize, ArrowRelHeadRadius, ArrowRelStemRadius, ArrowRelStemLength;
   double Normals, Tangents;
-  int Visible, IntervalsType, NbIso, NbAbscissa, ArrowSizeProportional;
+  int Visible, IntervalsType, NbIso, NbTics[3], ArrowSizeProportional;
   int Light, LightTwoSide, SmoothNormals;
   double AngleSmoothNormals;
   int SaturateValues, FakeTransparency;
@@ -100,7 +102,7 @@ class Post_View{
   double GenRaiseFactor;
   char GenRaiseX[256], GenRaiseY[256], GenRaiseZ[256];
   void *GenRaise_f[3];
-  
+
   // color options
   struct{
     unsigned int point, line, triangle, quadrangle;

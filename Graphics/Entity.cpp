@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.57 2005-03-11 05:47:55 geuzaine Exp $
+// $Id: Entity.cpp,v 1.58 2005-03-12 00:59:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -503,7 +503,7 @@ void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
   }
 }
 
-int Draw_Tics(int comp, int n, char *format, 
+int Draw_Tics(int comp, int n, char *format, char *label,
 	      double p1[3], double p2[3], double perp[3])
 {
   // draws n tic marks (in direction perp) and labels along the line p1->p2
@@ -514,10 +514,19 @@ int Draw_Tics(int comp, int n, char *format,
 
   double t[3] = { p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2] };
   double l = norme(t);
-  norme(perp);
   double w = 10 * CTX.pixel_equiv_x / CTX.s[0]; // big tics 10 pixels
   double w2 = 4 * CTX.pixel_equiv_x / CTX.s[0]; // small tics 4 pixels
 
+  double lp = norme(perp);
+  if(!lp){
+    switch(comp){
+    case 0: perp[1] = -1.; break;
+    case 1: perp[0] = -1.; break;
+    case 2: perp[0] = 1.; break;
+    default: break;
+    }
+  }
+  
   double tmp = 2. * CTX.gl_fontsize * CTX.pixel_equiv_x / CTX.s[0];
   if(n * tmp > l) n = 3;
   if(n * tmp > l) n = 2;
@@ -547,24 +556,27 @@ int Draw_Tics(int comp, int n, char *format,
       }
     }
 
-    char label[256];
-    sprintf(label, format, p[comp]);
+    char str[256];
+    sprintf(str, format, p[comp]);
     double winp[3], winr[3];
     World2Viewport(p, winp);
     World2Viewport(r, winr);
     gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
     if(fabs(winr[0] - winp[0]) < 2.) // center align
-      winr[0] -= gl_width(label) / 2.;
+      winr[0] -= gl_width(str) / 2.;
     else if(winr[0] < winp[0]) // right align
-      winr[0] -= gl_width(label);
+      winr[0] -= gl_width(str);
     if(fabs(winr[1] - winp[1]) < 2.) // center align
       winr[1] -= gl_height() / 3.;
     else if(winr[1] < winp[1]) // top align
       winr[1] -= gl_height();
     Viewport2World(winr, r);
     glRasterPos3d(r[0], r[1], r[2]);
-    Draw_String(label);
+    Draw_String(str);
   }
+
+  glRasterPos3d(p2[0]+t[0]*w*1.4, p2[1]+t[1]*w*1.4, p2[2]+t[2]*w*1.4);
+  Draw_String(label);
 
   return n;
 }
@@ -605,7 +617,8 @@ void Draw_GridStipple(int n1, int n2, double p1[3], double p2[3], double p3[3])
   gl2psDisable(GL2PS_LINE_STIPPLE);
 }
 
-void Draw_3DGrid(int mode, int tics, char *format, double bb[6])
+void Draw_3DGrid(int mode, int tics[3], char format[3][256], char label[3][256], 
+		 double bb[6])
 {
   // mode 0: nothing
   //      1: axes
@@ -613,10 +626,7 @@ void Draw_3DGrid(int mode, int tics, char *format, double bb[6])
   //      3: full grid
   //      4: open grid
 
-  if( (mode < 1) || 
-      (bb[0] == bb[1] && bb[2] == bb[3]) ||
-      (bb[0] == bb[1] && bb[4] == bb[5]) ||
-      (bb[2] == bb[3] && bb[4] == bb[5]) )
+  if((mode < 1) || (bb[0] == bb[1] && bb[2] == bb[3] && bb[4] == bb[5]))
     return;
   
   double xmin = bb[0], xmax = bb[1];
@@ -655,9 +665,9 @@ void Draw_3DGrid(int mode, int tics, char *format, double bb[6])
   double dym[3] = {(xmin != xmax) ? -1. : 0., 0., (zmin != zmax) ? -1. : 0.};
   double dzm[3] = {(xmin != xmax) ? -1. : 0., (ymin != ymax) ? -1. : 0., 0.};
 
-  int nx = (xmin != xmax) ? Draw_Tics(0, tics, format, orig, xx, dxm) : 0;
-  int ny = (ymin != ymax) ? Draw_Tics(1, tics, format, orig, yy, dym) : 0;
-  int nz = (zmin != zmax) ? Draw_Tics(2, tics, format, orig, zz, dzm) : 0;
+  int nx = (xmin != xmax) ? Draw_Tics(0, tics[0], format[0], label[0], orig, xx, dxm) : 0;
+  int ny = (ymin != ymax) ? Draw_Tics(1, tics[1], format[1], label[1], orig, yy, dym) : 0;
+  int nz = (zmin != zmax) ? Draw_Tics(2, tics[2], format[2], label[2], orig, zz, dzm) : 0;
   
   if(mode > 2){
     Draw_GridStipple(nx, ny, orig, xx, yy);

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.342 2005-03-11 09:14:40 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.343 2005-03-12 00:59:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3314,7 +3314,8 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double target_error = opt_view_target_error(current, GMSH_GET, 0);
   double show_element = opt_view_show_element(current, GMSH_GET, 0);
   double show_scale = opt_view_show_scale(current, GMSH_GET, 0);
-  double auto_position = opt_view_auto_position(current, GMSH_GET, 0);
+  double auto_position2d = opt_view_auto_position2d(current, GMSH_GET, 0);
+  double auto_position3d = opt_view_auto_position3d(current, GMSH_GET, 0);
   double show_time = opt_view_show_time(current, GMSH_GET, 0);
   double draw_strings = opt_view_draw_strings(current, GMSH_GET, 0);
   double light = opt_view_light(current, GMSH_GET, 0);
@@ -3366,17 +3367,33 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double position1 = opt_view_position1(current, GMSH_GET, 0);
   double size0 = opt_view_size0(current, GMSH_GET, 0);
   double size1 = opt_view_size1(current, GMSH_GET, 0);
-  double nb_abscissa = opt_view_nb_abscissa(current, GMSH_GET, 0);
+  double nb_tics0 = opt_view_nb_tics0(current, GMSH_GET, 0);
+  double nb_tics1 = opt_view_nb_tics1(current, GMSH_GET, 0);
+  double nb_tics2 = opt_view_nb_tics2(current, GMSH_GET, 0);
+  double position_xmin = opt_view_position_xmin(current, GMSH_GET, 0);
+  double position_ymin = opt_view_position_ymin(current, GMSH_GET, 0);
+  double position_zmin = opt_view_position_zmin(current, GMSH_GET, 0);
+  double position_xmax = opt_view_position_xmax(current, GMSH_GET, 0);
+  double position_ymax = opt_view_position_ymax(current, GMSH_GET, 0);
+  double position_zmax = opt_view_position_zmax(current, GMSH_GET, 0);
   double gen_raise_factor = opt_view_gen_raise_factor(current, GMSH_GET, 0);
 
   char name[256];
   strcpy(name, opt_view_name(current, GMSH_GET, NULL));
   char format[256];
   strcpy(format, opt_view_format(current, GMSH_GET, NULL));
-  char abscissa_name[256];
-  strcpy(abscissa_name, opt_view_abscissa_name(current, GMSH_GET, NULL));
-  char abscissa_format[256];
-  strcpy(abscissa_format, opt_view_abscissa_format(current, GMSH_GET, NULL));
+  char axes_label0[256];
+  strcpy(axes_label0, opt_view_axes_label0(current, GMSH_GET, NULL));
+  char axes_label1[256];
+  strcpy(axes_label1, opt_view_axes_label1(current, GMSH_GET, NULL));
+  char axes_label2[256];
+  strcpy(axes_label2, opt_view_axes_label2(current, GMSH_GET, NULL));
+  char axes_format0[256];
+  strcpy(axes_format0, opt_view_axes_format0(current, GMSH_GET, NULL));
+  char axes_format1[256];
+  strcpy(axes_format1, opt_view_axes_format1(current, GMSH_GET, NULL));
+  char axes_format2[256];
+  strcpy(axes_format2, opt_view_axes_format2(current, GMSH_GET, NULL));
   char gen_raise0[256];
   strcpy(gen_raise0, opt_view_gen_raise0(current, GMSH_GET, NULL));
   char gen_raise1[256];
@@ -3532,8 +3549,12 @@ void view_options_ok_cb(CALLBACK_ARGS)
         opt_view_show_scale(i, GMSH_SET, val);
 
       val = WID->view_butt[7]->value();
-      if(force || (val != auto_position))
-        opt_view_auto_position(i, GMSH_SET, val);
+      if(force || (val != auto_position2d))
+        opt_view_auto_position2d(i, GMSH_SET, val);
+
+      val = WID->view_butt[25]->value();
+      if(force || (val != auto_position3d))
+        opt_view_auto_position3d(i, GMSH_SET, val);
 
       val = WID->view_butt[8]->value();
       if(force || (val != show_time))
@@ -3740,14 +3761,46 @@ void view_options_ok_cb(CALLBACK_ARGS)
       val = WID->view_value[23]->value();
       if(force || (val != size1))
         opt_view_size1(i, GMSH_SET, val);
-      
-      val = WID->view_value[25]->value();
-      if(force || (val != nb_abscissa))
-        opt_view_nb_abscissa(i, GMSH_SET, val);
+
+      val = WID->view_value[13]->value();
+      if(force || (val != position_xmin))
+        opt_view_position_xmin(i, GMSH_SET, val);
+
+      val = WID->view_value[14]->value();
+      if(force || (val != position_ymin))
+        opt_view_position_ymin(i, GMSH_SET, val);
+
+      val = WID->view_value[15]->value();
+      if(force || (val != position_zmin))
+        opt_view_position_zmin(i, GMSH_SET, val);
+
+      val = WID->view_value[16]->value();
+      if(force || (val != position_xmax))
+        opt_view_position_xmax(i, GMSH_SET, val);
+
+      val = WID->view_value[17]->value();
+      if(force || (val != position_ymax))
+        opt_view_position_ymax(i, GMSH_SET, val);
+
+      val = WID->view_value[18]->value();
+      if(force || (val != position_zmax))
+        opt_view_position_zmax(i, GMSH_SET, val);
 
       val = WID->view_value[2]->value();
       if(force || (val != gen_raise_factor))
         opt_view_gen_raise_factor(i, GMSH_SET, val);
+
+      val = WID->view_value[3]->value();
+      if(force || (val != nb_tics0))
+        opt_view_nb_tics0(i, GMSH_SET, val);
+
+      val = WID->view_value[4]->value();
+      if(force || (val != nb_tics1))
+        opt_view_nb_tics1(i, GMSH_SET, val);
+
+      val = WID->view_value[5]->value();
+      if(force || (val != nb_tics2))
+        opt_view_nb_tics2(i, GMSH_SET, val);
 
       // view_inputs
 
@@ -3761,13 +3814,29 @@ void view_options_ok_cb(CALLBACK_ARGS)
       if(force || strcmp(str, format))
         opt_view_format(i, GMSH_SET, str);
 
-      str = (char *)WID->view_input[2]->value();
-      if(force || strcmp(str, abscissa_name))
-        opt_view_abscissa_name(i, GMSH_SET, str);
+      str = (char *)WID->view_input[10]->value();
+      if(force || strcmp(str, axes_label0))
+        opt_view_axes_label0(i, GMSH_SET, str);
 
-      str = (char *)WID->view_input[3]->value();
-      if(force || strcmp(str, abscissa_format))
-        opt_view_abscissa_format(i, GMSH_SET, str);
+      str = (char *)WID->view_input[11]->value();
+      if(force || strcmp(str, axes_label1))
+        opt_view_axes_label1(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[12]->value();
+      if(force || strcmp(str, axes_label2))
+        opt_view_axes_label2(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[7]->value();
+      if(force || strcmp(str, axes_format0))
+        opt_view_axes_format0(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[8]->value();
+      if(force || strcmp(str, axes_format1))
+        opt_view_axes_format1(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[9]->value();
+      if(force || strcmp(str, axes_format2))
+        opt_view_axes_format2(i, GMSH_SET, str);
 
       str = (char *)WID->view_input[4]->value();
       if(force || strcmp(str, gen_raise0))

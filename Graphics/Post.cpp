@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.95 2005-03-11 05:47:56 geuzaine Exp $
+// $Id: Post.cpp,v 1.96 2005-03-12 00:59:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -783,15 +783,20 @@ void Draw_Post(void)
 	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
       if(v->Grid && v->Type == DRAW_POST_3D){
-	int ok = 1;
-	for(int i = 0; i < 6; i++) {
-	  if(fabs(v->TmpBBox[i]) == VAL_INF){
-	    ok = 0;
-	    break;
-	  }
+	if(!v->AutoPosition3D){
+	  Draw_3DGrid(v->Grid, v->NbTics, v->AxesFormat, v->AxesLabel, v->Position3D);
 	}
-	if(ok)
-	  Draw_3DGrid(v->Grid, v->NbAbscissa, v->AbscissaFormat, v->TmpBBox);
+	else{
+	  int ok = 1;
+	  for(int i = 0; i < 6; i++) {
+	    if(fabs(v->TmpBBox[i]) == VAL_INF){
+	      ok = 0;
+	      break;
+	    }
+	  }
+	  if(ok)
+	    Draw_3DGrid(v->Grid, v->NbTics, v->AxesFormat, v->AxesLabel, v->TmpBBox);
+	}
       }
       
       // reset alpha blending
