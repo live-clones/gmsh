@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.86 2001-06-27 06:49:35 geuzaine Exp $
+// $Id: GUI.cpp,v 1.87 2001-06-29 07:27:16 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1838,7 +1838,7 @@ void GUI::create_about_window(){
       o->add("");
       sprintf(buffer, "@c@.Version: %.2f", GMSH_VERSION); o->add(buffer);
       sprintf(buffer, "@c@.Build date: %s", GMSH_DATE); o->add(buffer);
-      sprintf(buffer, "@c@.Operating system: %s", GMSH_OS); o->add(buffer);
+      sprintf(buffer, "@c@.Build OS: %s", GMSH_OS); o->add(buffer);
       sprintf(buffer, "@c@.Graphical user interface toolkit: FLTK %d.%d.%d",
 	      FL_MAJOR_VERSION, FL_MINOR_VERSION, FL_PATCH_VERSION); o->add(buffer);
       sprintf(buffer, "@c@.Build host: %s", GMSH_HOST); o->add(buffer);
