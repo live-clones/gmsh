@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/sh
 
 if [ $# -lt 2 ]; then
   echo "Usage: $0 path program [options]" 1>&2;

@@ -1,3 +1,4 @@
+#!/bin/sh
 
 SRCDIR=gmsh-distrib
 DMGNAME=gmsh.dmg
