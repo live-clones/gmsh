@@ -1,4 +1,4 @@
-dnl "$Id: configure.in,v 1.21 2003-02-17 01:49:42 geuzaine Exp $"
+dnl "$Id: configure.in,v 1.22 2003-02-17 01:52:55 geuzaine Exp $"
 dnl
 dnl Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 dnl
@@ -218,6 +218,7 @@ AC_SUBST(GSL_LIBS)
 AC_SUBST(GSL_INCLUDE)
 
 dnl Check for header files
+AC_HEADER_STDC
 AC_CHECK_HEADERS(sys/time.h sys/resource.h)
 
 dnl Write output
