@@ -1,4 +1,4 @@
-// $Id: gsl_newt.cpp,v 1.2 2003-02-18 07:13:57 geuzaine Exp $
+// $Id: gsl_newt.cpp,v 1.3 2003-02-20 10:05:09 remacle Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -46,20 +46,21 @@ void convert_vector_from_gsl(const gsl_vector *gv, double * v){
   int i, m;
   m=gv->size;
   for (i=0;i<m;i++){
-    v[i]=gsl_vector_get(gv,i);
+    v[i+1]=gsl_vector_get(gv,i);
   }
 }
 
 void convert_vector_to_gsl(double *v, int n, gsl_vector *gv){
   int i;
   for (i=0;i<n;i++){
-    gsl_vector_set (gv, i, v[i]);
+    gsl_vector_set (gv, i, v[i+1]);
   }
 }
 
 int gslfunc(const gsl_vector *xx, void *params, gsl_vector *f){
   convert_vector_from_gsl(xx,gsl_u);
   (*nrfunc)(gsl_dim,gsl_u,gsl_v);
+  //  Msg(INFO, "f(%lf,%lf) = %lf %lf\n",gsl_u[1],gsl_u[2],gsl_v[1],gsl_v[2]);
   convert_vector_to_gsl(gsl_v,gsl_dim,f);
   return GSL_SUCCESS;
 }
@@ -86,16 +87,23 @@ void newt(double x[], int n, int *check, void (*func)(int, double [],double []))
   do{
     iter++;
     status = gsl_multiroot_fsolver_iterate(s);
+    //    Msg(INFO, "status %d %d %d %lf %lf\n",status,n,iter,gsl_vector_get(s->x,0),gsl_vector_get(s->x,1));
     if(status) break; // solver problem
     status = gsl_multiroot_test_residual(s->f, n*PREC);
   }
   while(status == GSL_CONTINUE && iter < MAXITER);
 
-  if (status == GSL_CONTINUE)
-   *check=1;
-  else
-   *check=0;
-  
+  if (status == GSL_CONTINUE)// problem !!!
+    {
+      *check=1;
+    }
+  else// converged
+    {
+      //      Msg(INFO, "status %d %d %d %lf %lf\n",status,n,iter,gsl_vector_get(s->x,0),gsl_vector_get(s->x,1));
+      convert_vector_from_gsl(s->x,x);
+      *check=0;
+    }
+
   gsl_multiroot_fsolver_free(s);
   gsl_vector_free(xx); 
 }

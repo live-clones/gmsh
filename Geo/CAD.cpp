@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.55 2003-02-19 00:17:01 geuzaine Exp $
+// $Id: CAD.cpp,v 1.56 2003-02-20 10:05:09 remacle Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1910,6 +1910,7 @@ bool IntersectCurves (Curve *c1, Curve *c2,
   if(check) return false;
   v1 = InterpolateCurve(c1,x[1],0);
   v2 = InterpolateCurve(c2,x[2],0);
+  //  Msg(INFO, "success : %lf %lf,%lf,%lf\n",v1.Pos.X,v1.Pos.Y,x[1],x[2]);
   if(x[1] <= c1->ubeg) return false;
   if(x[1] >= c1->uend) return false;
   if(x[2] <= c2->ubeg) return false;
