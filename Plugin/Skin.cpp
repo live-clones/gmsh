@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.4 2001-08-06 10:52:52 geuzaine Exp $
+// $Id: Skin.cpp,v 1.5 2001-08-06 11:00:26 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Skin.h"
@@ -120,7 +120,7 @@ Post_View *GMSH_SkinPlugin::execute (Post_View *v)
   else{
     if(!v && iView < 0) iView = 0;
     if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
-      Msg(WARNING,"Plugin Skin: View[%d] does not exist",iView);
+      Msg(WARNING,"View[%d] does not exist",iView);
       return 0;
     }
   }
@@ -150,7 +150,7 @@ Post_View *GMSH_SkinPlugin::execute (Post_View *v)
     sprintf(name,"skin-%s",vv->Name);
     sprintf(filename,"skin-%s",vv->FileName);
     EndView(1, filename, name);
-    Msg(INFO, "Skin: created view '%s' (%d triangles)", name, View->NbST);
+    Msg(INFO, "Created view '%s' (%d triangles)", name, View->NbST);
     return View;
   }
 

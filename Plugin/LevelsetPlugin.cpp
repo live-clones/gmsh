@@ -1,4 +1,4 @@
-// $Id: LevelsetPlugin.cpp,v 1.10 2001-08-06 10:35:47 geuzaine Exp $
+// $Id: LevelsetPlugin.cpp,v 1.11 2001-08-06 11:00:26 geuzaine Exp $
 
 #include "LevelsetPlugin.h"
 #include "List.h"
@@ -97,12 +97,10 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
       sprintf(filename,"cut-%s",v->FileName);
       EndView(1, filename, name);
       
-      Msg(INFO, "Levelset: created view '%s' (%d triangles)", name, View->NbST);
+      Msg(INFO, "Created view '%s' (%d triangles)", name, View->NbST);
       processed = View;
       return View;
     }
-
-  Msg(INFO, "Levelset plugin: nothing to do");
 
   return 0;
 }

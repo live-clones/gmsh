@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.17 2001-08-06 10:52:52 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.18 2001-08-06 11:00:26 geuzaine Exp $
 
 #include "CutMap.h"
 #include "List.h"
@@ -73,7 +73,7 @@ Post_View *GMSH_CutMapPlugin::execute (Post_View *v)
   else{
     if(!v && iView < 0) iView = 0;
     if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
-      Msg(WARNING,"Plugin CutMap: View[%d] does not exist",iView);
+      Msg(WARNING,"View[%d] does not exist",iView);
       return 0;
     }
   }

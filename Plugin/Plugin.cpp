@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.18 2001-08-06 08:09:51 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.19 2001-08-06 11:00:26 geuzaine Exp $
 
 #ifndef _NODLL
 #include <dlfcn.h>
@@ -146,7 +146,7 @@ void GMSH_PluginManager::AddPlugin( char *dirName, char *pluginName){
   char plugin_help[256];
   class GMSH_Plugin* (*RegisterPlugin)(void);
   sprintf(dynamic_lib,"%s%s%s",dirName,SLASH,pluginName);
-  Msg(INFO,"Opening Plugin %s",dynamic_lib);
+  Msg(INFO,"Opening Plugin '%s'",dynamic_lib);
   void *hlib = dlopen (dynamic_lib,RTLD_NOW);
   char *err = dlerror();
   if(hlib == NULL){

@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.14 2001-08-06 10:52:52 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.15 2001-08-06 11:00:26 geuzaine Exp $
 
 #include <string.h>
 #include "CutSphere.h"
@@ -80,7 +80,7 @@ Post_View *GMSH_CutSpherePlugin::execute (Post_View *v)
   else{
     if(!v && iView < 0) iView = 0;
     if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
-      Msg(WARNING,"Plugin CutSphere: View[%d] does not exist",iView);
+      Msg(WARNING,"View[%d] does not exist",iView);
       return 0;
     }
   }
