@@ -21,17 +21,17 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.GeneralizedRaiseX
 Generalized elevation of the view along X-axis (in model coordinates)@*
-Default value: @code{""}@*
+Default value: @code{"v0"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.GeneralizedRaiseY
 Generalized elevation of the view along Y-axis (in model coordinates)@*
-Default value: @code{""}@*
+Default value: @code{"v1"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.GeneralizedRaiseZ
 Generalized elevation of the view along Z-axis (in model coordinates)@*
-Default value: @code{"v0"}@*
+Default value: @code{"v2"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Name

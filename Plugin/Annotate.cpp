@@ -1,4 +1,4 @@
-// $Id: Annotate.cpp,v 1.5 2005-01-03 04:09:27 geuzaine Exp $
+// $Id: Annotate.cpp,v 1.6 2005-01-17 05:19:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -72,14 +72,15 @@ void GMSH_AnnotatePlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(Annotate) adds a text string of size\n"
-	 "`FontSize' in the view `iView'. If `3D' is equal\n"
-	 "to 1, the plugin inserts the string in model\n"
-	 "coordinates at the position (`X',`Y',`Z'). If\n"
-	 "`3D' is equal to 0, the plugin inserts the string\n"
-	 "in screen coordinates at the position (`X',`Y'),\n"
-	 "and aligns it according to `Align'. If `iView'\n"
-	 "< 0, the plugin is run on the current view.\n"
+         "Plugin(Annotate) adds the text string `Text' in\n"
+	 "font `Font' and size `FontSize' in the view `iView'.\n"
+	 "If `3D' is equal to 1, the plugin inserts the\n"
+	 "string in model coordinates at the position\n"
+	 "(`X',`Y',`Z'). If `3D' is equal to 0, the plugin\n"
+	 "inserts the string in screen coordinates at the\n"
+	 "position (`X',`Y'), and aligns it according to\n"
+	 "`Align'. If `iView' < 0, the plugin is run on the\n"
+	 "current view.\n"
 	 "\n"
 	 "Plugin(Annotate) is executed in-place.\n");
 }
