@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.8 2001-02-23 00:07:51 remacle Exp $
+// $Id: OpenFile.cpp,v 1.9 2001-03-18 13:57:12 geuzaine Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -51,7 +51,6 @@ void ParseFile(char *f){
   }
   else if(!strncmp(String, "sms", 3))
   {
-   
     if(THEM->status < 0) mai3d(THEM, 0);
     Read_Mesh(THEM, yyin, FORMAT_SMS);
   }
@@ -92,7 +91,7 @@ void OpenProblem(char *name){
   strcpy(ext,name+(strlen(name)-4));
   if(!strcmp(ext,".GEO") || 
      !strcmp(ext,".geo") || 
-     !strcmp(ext,".msh") || 
+     //!strcmp(ext,".msh") || 
      !strcmp(ext,".pos")){
     CTX.basefilename[strlen(name)-4] = '\0';
   }
