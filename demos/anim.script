@@ -1,0 +1,95 @@
+// A demo script to save mpeg or gif animations of post-processing views
+
+oldw = General.GraphicsWidth;
+oldh = General.GraphicsHeight;
+
+all = GetValue("Animate one view at a time, or all views together (0=one, 1=all)?", 1) ;
+General.GraphicsWidth = GetValue("Width of animation?", 320); 
+General.GraphicsHeight = GetValue("Height of animation?", 240) ;
+format = GetValue("Animation format? (0=mpeg, 1=gif)?", 1) ;
+MPEG = 0;
+GIF = 1;
+
+Print.JpegQuality = 100;
+
+If(all)
+  For i In {1:PostProcessing.NbViews}
+    View[i-1].TimeStep = 0;
+  EndFor
+  // Use the first view as the reference
+  frame = View[0].NbTimeStep;
+  For index In {1:View[0].NbTimeStep}
+    Draw;
+    If(format == GIF)
+      Print Sprintf("/tmp/tmp%03g.gif", index);
+    EndIf
+    If(format == MPEG)
+      Print Sprintf("/tmp/tmp%03g.jpg", index);
+    EndIf
+    For j In {1:PostProcessing.NbViews}
+      View[j-1].TimeStep++;
+    EndFor
+  EndFor
+EndIf
+
+If(!all)
+  // Hide all views
+  For i In {1:PostProcessing.NbViews}
+    View[i-1].Visible = 0;
+    View[i-1].TimeStep = 0;
+  EndFor
+  index = 0;
+  For i In {1:PostProcessing.NbViews}
+    // Display view i-1
+    View[i-1].Visible = 1;
+    // Loop on all solutions in view i-1
+    For j In {1:View[i-1].NbTimeStep}
+      index++;
+      Draw;
+      If(format == GIF)
+        Print Sprintf("/tmp/tmp%03g.gif", index);
+      EndIf
+      If(format == MPEG)
+        Print Sprintf("/tmp/tmp%03g.jpg", index);
+      EndIf
+      View[i-1].TimeStep++;
+    EndFor
+    View[i-1].Visible = 0;
+  EndFor
+EndIf
+
+If(format == GIF)
+  // Call whirlgif
+  System "whirlgif -minimize -loop -o /tmp/animation.gif /tmp/tmp*.gif" ;
+  // Clean-up
+  System "rm -f /tmp/tmp*.gif" ;
+EndIf
+
+If(format == MPEG)
+  // create the parameter file for mpeg_encode
+  System 'echo "PATTERN          I"                > /tmp/tmp.par' ;
+  System 'echo "BASE_FILE_FORMAT JPEG"            >> /tmp/tmp.par' ;
+  System 'echo "GOP_SIZE         30"              >> /tmp/tmp.par' ;
+  System 'echo "SLICES_PER_FRAME 1"               >> /tmp/tmp.par' ;
+  System 'echo "PIXEL            HALF"            >> /tmp/tmp.par' ;
+  System 'echo "RANGE            10"              >> /tmp/tmp.par' ;
+  System 'echo "PSEARCH_ALG      TWOLEVEL"        >> /tmp/tmp.par' ;
+  System 'echo "BSEARCH_ALG      CROSS2"          >> /tmp/tmp.par' ;
+  System 'echo "IQSCALE          1"               >> /tmp/tmp.par' ;
+  System 'echo "PQSCALE          10"              >> /tmp/tmp.par' ;
+  System 'echo "BQSCALE          25"              >> /tmp/tmp.par' ;
+  System 'echo "REFERENCE_FRAME  DECODED"         >> /tmp/tmp.par' ;
+  System 'echo "OUTPUT      /tmp/animation.mpg"   >> /tmp/tmp.par' ;
+  System 'echo "INPUT_CONVERT    *"               >> /tmp/tmp.par' ;
+  System 'echo "INPUT_DIR        ."               >> /tmp/tmp.par' ;
+  System 'echo "INPUT"                            >> /tmp/tmp.par' ;
+  System Sprintf('echo "/tmp/tmp*.jpg [001-%03g]" >> /tmp/tmp.par', index) ;
+  System 'echo "END_INPUT"                        >> /tmp/tmp.par' ;
+  // Call mpeg_encode
+  System "mpeg_encode /tmp/tmp.par" ;
+  // Clean-up
+  System "rm -f /tmp/tmp*.jpg /tmp/tmp.par" ;
+EndIf
+
+General.GraphicsWidth = oldw;
+General.GraphicsHeight = oldh;
