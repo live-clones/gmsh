@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.6 2001-01-10 08:50:29 geuzaine Exp $
+// $Id: Main.cpp,v 1.7 2001-01-11 12:25:23 geuzaine Exp $
 
 #include <signal.h>
 
@@ -92,7 +92,6 @@ int main(int argc, char *argv[]){
 
   // The GUI is ready
   CTX.interactive = 0 ; 
-  CTX.expose = 1 ;
 
   // Say welcome!
 
@@ -130,6 +129,7 @@ int main(int argc, char *argv[]){
   // Draw the actual scene
   Init();
   Draw();
+  CTX.expose = 1 ;
 
   // loop
   WID->run();

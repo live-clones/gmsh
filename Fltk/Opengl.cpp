@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.10 2001-01-11 07:32:35 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.11 2001-01-11 12:25:23 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -43,10 +43,11 @@ void DrawUI(void){
   WID->check();
 }
 
-// one should not call Opengl_Window::draw() from the handle(), but
+// Opengl_Window::draw() from the handle(), but
 // rather the following:
 
 void DrawUpdate(){
+  if(!CTX.expose) return ;
   WID->make_current();
   Orthogonalize(0,0);
   glClearColor(UNPACK_RED(CTX.color.bg)/255.,
@@ -114,6 +115,7 @@ int SelectEntity(int type, Vertex **v, Curve **c, Surface **s){
 
   *v = NULL; *c = NULL; *s = NULL;
   
+  WID->try_selection = 0;
   WID->quit_selection = 0;
   WID->end_selection = 0;
   
@@ -127,7 +129,8 @@ int SelectEntity(int type, Vertex **v, Curve **c, Surface **s){
       WID->end_selection = 0;
       return -1;
     }
-    if(Fl::event_is_click()){
+    if(WID->try_selection){
+      WID->try_selection = 0;
       Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &hits, ii, jj);
       Filter_SelectionBuffer(hits,ii,jj,v,c,s,&M);
       if(check_type(type,*v,*c,*s)){

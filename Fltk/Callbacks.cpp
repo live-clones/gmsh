@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.13 2001-01-11 07:32:35 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.14 2001-01-11 12:25:23 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -761,6 +761,8 @@ void mesh_1d_cb(CALLBACK_ARGS){
   else
 #endif
     mai3d(&M, 1); 
+  Init(); 
+  Draw();
 }
 void mesh_2d_cb(CALLBACK_ARGS){
 #ifdef _USETHREADS
@@ -772,6 +774,8 @@ void mesh_2d_cb(CALLBACK_ARGS){
   else
 #endif
     mai3d(&M, 2);
+  Init(); 
+  Draw();
 } 
 void mesh_3d_cb(CALLBACK_ARGS){
 #ifdef _USETHREADS
@@ -783,6 +787,8 @@ void mesh_3d_cb(CALLBACK_ARGS){
   else
 #endif
     mai3d(&M, 3); 
+  Init(); 
+  Draw();
 } 
 void mesh_define_length_cb (CALLBACK_ARGS){
   Vertex   *v;
@@ -802,20 +808,20 @@ void mesh_define_length_cb (CALLBACK_ARGS){
     if (ib == -1){ /* 'e' */
       if(n >= 1) {
 	add_charlength(n,p,CTX.filename); 
+	n=0;
+	ZeroHighlight(&M);
+	DrawUpdate();
 	break;
       }
-      n=0;
-      ZeroHighlight(&M);
-      Replot();
     }
     if(ib == 0){ /* 'q' */
       n=0 ;
       ZeroHighlight(&M);
-      Replot();
+      DrawUpdate();
       break;
     }
   }
-  if(!CTX.threads) Msg(STATUS,"Ready");
+  Msg(STATUS,"Ready");
 }
 void mesh_define_recombine_cb (CALLBACK_ARGS){
   printf("mesh define reco\n");

@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.6 2001-01-10 21:35:08 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.7 2001-01-11 12:25:23 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -173,7 +173,10 @@ int Opengl_Window::handle(int event) {
         ZoomClick=0;
         clear_overlay();
         if(xb!=xe && yb!=ye) myZoom(xb,xe,yb,ye,xc1,xc2,yc1,yc2);
-      } 
+      }
+      else{
+	WID->try_selection = 1 ;
+      }
       break;
     case 2:
       if(Modifier && !ZoomClick){
@@ -313,15 +316,16 @@ int Opengl_Window::handle(int event) {
   case FL_MOVE:
     movx = Fl::event_x()-x;
     movy = Fl::event_y()-y;
+    WID->make_current();
     Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &hits, ii, jj);
     ov = v; oc = c; os = s; v = NULL; c = NULL; s = NULL;
     Filter_SelectionBuffer(hits,ii,jj,&v,&c,&s,&M);
 
-
-            BeginHighlight();
-            HighlightEntity(v,c,s,0);
-            EndHighlight(0);
-
+    if(ov != v || oc != c || os != s) { 
+      BeginHighlight();
+      HighlightEntity(v,c,s,0);
+      EndHighlight(0);
+    }
 
 #if 0
     // l'overlay ne marche pas, meme dans les demos de fltk!

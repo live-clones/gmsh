@@ -179,7 +179,7 @@ public:
   void activate_custom(int val);
   void add_handler();
   int  global_shortcuts(int event);
-  int  quit_selection, end_selection;
+  int  try_selection, quit_selection, end_selection;
 
   // geometry contexts queries
   char *get_geometry_parameter(int num);
