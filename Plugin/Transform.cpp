@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.8 2001-10-29 08:52:21 geuzaine Exp $
+// $Id: Transform.cpp,v 1.9 2001-10-30 08:42:46 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Transform.h"
@@ -44,7 +44,8 @@ void GMSH_TransformPlugin::getInfos(char *author, char *copyright, char *help_te
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text, 
-	 "Transforms a view by the matrix [ [A11 A12 A13] [A21 A22 A23] [A31 A32 A33] ].\n"
+	 "Transforms a view by the matrix\n"
+	 "[ [A11 A12 A13] [A21 A22 A23] [A31 A32 A33] ].\n"
 	 "Script name: Plugin(Transform).");
 }
 
