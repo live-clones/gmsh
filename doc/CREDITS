@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.22 2004-12-14 20:05:44 geuzaine Exp $
+$Id: CREDITS,v 1.23 2004-12-23 06:11:17 geuzaine Exp $
 
              Gmsh is copyright (C) 1997-2004 
 
@@ -94,7 +94,5 @@ at debian.org>, Sebastien.Clerc <Sebastien.Clerc at space.alcatel.fr>,
 Jose Miguel Pasini <jmp84 at cornell.edu>, Philippe Lussou <plussou at
 necs.fr>, Jacques Kools <JKools at veeco.com>, Bayram Yenikaya
 <yenikaya at math.umn.edu>, Peter Hornby <p.hornby at arrc.csiro.au>,
-Krishna Mohan Gundu <gkmohan at gmail.com>, Chris Stott
-<C.Stott@surrey.ac.uk>, Timmy Schumacher
-<Tim.Schumacher@colorado.edu>, Christopher Stott
-<C.Stott@surrey.ac.uk>.
+Krishna Mohan Gundu <gkmohan at gmail.com>, Christopher Stott
+<C.Stott@surrey.ac.uk>, Timmy Schumacher <Tim.Schumacher@colorado.edu>.
