@@ -20,14 +20,13 @@ lcar3 = .055;
 //
 // > gmsh t5 -clscale 1
 //
-// this input file produces a mesh of approximately 2,000 nodes and
-// 10,000 tetrahedra (in 3 seconds on a 666MHz alpha
-// workstation). With
+// this input file produces a mesh of approximately 2,500 nodes and
+// 13,000 tetrahedra (in 4 seconds on a 1.2GHz PC). With
 //
 // > gmsh t5 -clscale 0.2
 //
 // (i.e. with all characteristic lengths divided by 5), the mesh
-// counts approximately 170,000 nodes and one million tetrahedra (and
+// counts approximately 260,000 nodes and 1.6 million tetrahedra (and
 // the computation takes 16 minutes on the same machine).
 
 // Let us proceed by defining some elementary entities describing a
