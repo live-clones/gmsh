@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Netgen.cpp,v 1.7 2004-06-30 07:27:19 geuzaine Exp $
+// $Id: 3D_Mesh_Netgen.cpp,v 1.8 2004-06-30 16:38:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -69,7 +69,8 @@ Netgen::Netgen(Volume *vol, int importVolumeMesh)
   : _volverts(0), _vol(vol)
 {
   // creates Netgen mesh structure
-  Ng_Init();
+  //Ng_Init();
+  NgAddOn_Init();
   _ngmesh = Ng_NewMesh();
   
   // Get all surface vertices (the same vertex can belong to several
@@ -194,6 +195,9 @@ void Netgen::TransferVolumeMesh()
 {
   // Gets total number of vertices of Netgen's mesh
   int nbv = Ng_GetNP(_ngmesh);
+  
+  if(!nbv) return;
+
   Vertex **vtable = (Vertex **)Malloc(nbv * sizeof(Vertex*));
   
   // Get existing unmodified surface vertices
@@ -276,6 +280,12 @@ int Mesh_Netgen(Volume * v)
 
 void Optimize_Netgen(Volume * v)
 {
+  // abort of we don't have real volumes (volume is "dirty", or has no
+  // surface loop w/ oriented surfaces) or if there are no simplices
+  // to optimize
+  if(v->Dirty || Extrude_Mesh(v) || !Tree_Nbr(v->Simplexes))
+    return;
+
   Msg(STATUS3, "Optimizing volume %d", v->Num);
   Netgen ng(v, 1);
   ng.OptimizeVolume();
