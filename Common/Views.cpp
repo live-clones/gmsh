@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.80 2002-11-05 19:52:06 geuzaine Exp $
+// $Id: Views.cpp,v 1.81 2002-11-13 02:36:20 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1243,4 +1243,14 @@ void MergeViews(int all){
     }
   }
   EndView(vm, 1, "merged.pos", "merged");
+}
+
+// generic access functions
+
+int Post_View::get_val(int list, int node, int timestep, double *value){
+  return 0;
+}
+
+void Post_View::add_val(int list, int node, int timestep, double value){
+  
 }

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.27 2002-08-14 17:47:48 geuzaine Exp $
+# $Id: Makefile,v 1.28 2002-11-13 02:36:20 geuzaine Exp $
 #
 # Makefile for "libGmshPlugin.a"
 #
@@ -27,7 +27,8 @@ SRC = Plugin.cpp\
         Transform.cpp\
         Triangulate.cpp\
         SphericalRaise.cpp\
-        Skin.cpp
+        Skin.cpp\
+        Harmonic2Time.cpp
 
 OBJ = $(SRC:.cpp=.o)
 
@@ -54,7 +55,7 @@ depend:
 # DO NOT DELETE THIS LINE
 Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   PluginManager.h CutMap.h LevelsetPlugin.h CutPlane.h CutSphere.h Skin.h \
-  Smooth.h Transform.h Triangulate.h
+  Smooth.h Transform.h Triangulate.h SphericalRaise.h
 LevelsetPlugin.o: LevelsetPlugin.cpp LevelsetPlugin.h Plugin.h \
   ../Common/Options.h ../Common/Message.h ../DataStr/List.h \
   ../Common/Views.h ../Common/ColorTable.h ../Graphics/Iso.h \
@@ -82,6 +83,10 @@ Triangulate.o: Triangulate.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
   ../Mesh/Metric.h ../Mesh/Matrix.h ../Mesh/Utils.h ../Mesh/Create.h \
   ../Triangle/triangle.h
+SphericalRaise.o: SphericalRaise.cpp Plugin.h ../Common/Options.h \
+  ../Common/Message.h SphericalRaise.h ../DataStr/List.h \
+  ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h \
+  ../Numeric/Numeric.h
 Skin.o: Skin.cpp Plugin.h ../Common/Options.h ../Common/Message.h Skin.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/Context.h ../DataStr/Malloc.h

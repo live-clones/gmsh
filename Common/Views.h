@@ -22,6 +22,9 @@
 
 #include "ColorTable.h"
 
+#define VIEW_NB_ELEMENT_TYPES  (8*3)
+#define VIEW_MAX_ELEMENT_NODES  8
+
 class smooth_container;
 
 class Post_View{
@@ -88,6 +91,10 @@ class Post_View{
 		  double &nx, double &ny, double &nz);
   // transform the view
   void transform(double mat[3][3]);
+
+  // some generic access functions
+  int get_val(int list, int node, int timestep, double *value);
+  void add_val(int list, int node, int timestep, double value);
 };
 
 // Type
