@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.45 2004-06-30 17:49:51 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.46 2004-07-01 22:23:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -71,17 +71,15 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -1, -2, -3            perform batch 1D, 2D and 3D mesh generation");
   Msg(DIRECT, "  -saveall              save all elements (discard physical group definitions)");
   Msg(DIRECT, "  -o file               specify mesh output file name");
-  Msg(DIRECT, "  -format msh|unv|gref  set output mesh format (default: msh)");
-  Msg(DIRECT, "  -algo iso|tri|aniso   select mesh algorithm (default: iso)");
-  Msg(DIRECT, "  -smooth int           set mesh smoothing (default: 0)");
-#if defined(HAVE_NETGEN)
+  Msg(DIRECT, "  -format string        set output mesh format (msh, unv, gref)");
+  Msg(DIRECT, "  -algo string          select mesh algorithm (iso, tri, aniso, netgen)");
+  Msg(DIRECT, "  -smooth int           set number of mesh smoothing steps");
   Msg(DIRECT, "  -optimize             optimize quality of tetrahedral elements");
-#endif
-  Msg(DIRECT, "  -order int            set mesh order (default: 1)");
-  Msg(DIRECT, "  -scale float          set global scaling factor (default: 1.0)");
-  Msg(DIRECT, "  -meshscale float      set mesh scaling factor (default: 1.0)");
-  Msg(DIRECT, "  -clscale float        set characteristic length scaling factor (default: 1.0)");
-  Msg(DIRECT, "  -rand float           set random perturbation factor (default: 1.e-4)");
+  Msg(DIRECT, "  -order int            set mesh order (1, 2)");
+  Msg(DIRECT, "  -scale float          set global scaling factor");
+  Msg(DIRECT, "  -meshscale float      set mesh scaling factor");
+  Msg(DIRECT, "  -clscale float        set characteristic length scaling factor");
+  Msg(DIRECT, "  -rand float           set random perturbation factor");
   Msg(DIRECT, "  -bgm file             load backround mesh from file");
   Msg(DIRECT, "  -constrain            constrain background mesh with characteristic lengths");
   Msg(DIRECT, "  -histogram            print mesh quality histogram");
@@ -91,24 +89,22 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -interactive          display 2D mesh construction interactively");
   Msg(DIRECT, "Post-processing options:");
   Msg(DIRECT, "  -noview               hide all views on startup");
-  Msg(DIRECT, "  -link int             select link mode between views (default: 0)");
-  Msg(DIRECT, "  -smoothview           smooth views");
+  Msg(DIRECT, "  -link int             select link mode between views (0, 1, 2, 3, 4)");
   Msg(DIRECT, "  -combine              combine input views into multi time step ones");
   Msg(DIRECT, "Display options:");    
   Msg(DIRECT, "  -nodb                 disable double buffering");
-  Msg(DIRECT, "  -fontsize int         specify the font size for the GUI (default: 12)");
+  Msg(DIRECT, "  -fontsize int         specify the font size for the GUI");
   Msg(DIRECT, "  -scheme string        specify FLTK GUI scheme");
   Msg(DIRECT, "  -display string       specify display");
 #endif
   Msg(DIRECT, "Other options:");      
 #if defined(HAVE_FLTK)
-  Msg(DIRECT, "  -a, -g, -m, -s, -p    start in automatic, geometry, mesh, solver or post-processing");
-  Msg(DIRECT, "                        mode (default: automatic)");
+  Msg(DIRECT, "  -a, -g, -m, -s, -p    start in automatic, geometry, mesh, solver or post-processing mode");
 #endif
-  Msg(DIRECT, "  -v int                set verbosity level (default: 3)");
+  Msg(DIRECT, "  -v int                set verbosity level");
   Msg(DIRECT, "  -string \"string\"      parse string before project file");
   Msg(DIRECT, "  -option file          parse option file before GUI creation");
-  Msg(DIRECT, "  -convert file file    perform batch conversion of view(s)/mesh into latest file formats");
+  Msg(DIRECT, "  -convert file file    perform batch conversion of views and meshes into latest file formats");
   Msg(DIRECT, "  -version              show version number");
   Msg(DIRECT, "  -info                 show detailed version information");
   Msg(DIRECT, "  -help                 show this message");
