@@ -1,4 +1,4 @@
-$Id: TODO,v 1.41 2004-04-13 21:05:00 geuzaine Exp $
+$Id: TODO,v 1.42 2004-04-21 00:11:01 geuzaine Exp $
 
 generalize Plugin(Triangulate) to vector and tensor points
 
@@ -20,19 +20,7 @@ at least make this behaviour optional)
 
 ********************************************************************
 
-degre2: remove from after each 1d/2d/3d step, and add a global
-"add_degre2_nodes" and "remove_degre2_nodes" menu
-
-+ Document the 2nd order elements in "msh file format" and "node
-ordering".
-
-********************************************************************
-
 find a better way to display the time/timestep in the scale...
-
-********************************************************************
-
-fix drawing of 2nd oder surface elements (subdivide?)
 
 ********************************************************************
 
