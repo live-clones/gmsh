@@ -52,7 +52,7 @@ class GUI{
   Fl_Window  *m_window, *g_window, *gen_window, *geo_window ;
   Fl_Window  *mesh_window, *post_window, *stat_window ;
   Fl_Window  *view_window ;
-  Opengl_Window    *g_opengl_window ;
+  Opengl_Window *g_opengl_window ;
   
   // We keep the following widgets for easy further reference
 

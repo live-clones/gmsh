@@ -15,6 +15,8 @@
 #include "GUI.h"
 #include "Callbacks.h"
 
+//int strtok_r(char *, char const *, char **){return 0;}
+
 extern Context_T CTX;
 
 // Definition of the static menus
