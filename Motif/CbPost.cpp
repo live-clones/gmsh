@@ -1,4 +1,4 @@
-// $Id: CbPost.cpp,v 1.4 2001-01-29 08:43:45 geuzaine Exp $
+// $Id: CbPost.cpp,v 1.5 2001-02-12 17:38:03 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -104,8 +104,8 @@ void DuplicateViewCb (Widget w, XtPointer client_data, XtPointer call_data){
 
   v1 = (Post_View*)List_Pointer(Post_ViewList,(long int)client_data-1);
 
-  BeginView(0);
-  EndView(0, 0, v1->FileName, v1->Name, 0., 0., 0.);
+  BeginView(0, 0);
+  EndView(0, 0, v1->FileName, v1->Name);
 
   v2 = (Post_View*)List_Pointer(Post_ViewList,List_Nbr(Post_ViewList)-1);
 

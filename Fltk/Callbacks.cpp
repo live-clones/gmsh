@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.28 2001-02-08 16:32:15 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.29 2001-02-12 17:38:02 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -12,6 +12,7 @@
 #include "CreateFile.h"
 #include "OpenFile.h"
 #include "Context.h"
+#include "Options.h"
 #include "GUI.h"
 #include "Callbacks.h"
 
@@ -21,8 +22,6 @@
 extern GUI       *WID;
 extern Mesh       M;
 extern Context_T  CTX;
-
-///////////////////////////////////////////////////////////////////////////////
 
 // Compatibility/local routines
 
@@ -152,10 +151,6 @@ void cancel_cb(CALLBACK_ARGS){
   if(data) ((Fl_Window*)data)->hide();
 }
 
-void ok_cb(CALLBACK_ARGS){
-  Draw();
-}
-
 // Graphical window 
 
 void status_xyz1p_cb(CALLBACK_ARGS){
@@ -189,7 +184,7 @@ void status_xyz1p_cb(CALLBACK_ARGS){
     Draw(); 
     break;
   case 4 :
-    Print_Context(NULL);
+    Print_Context(0,NULL);
     break ;
   }
 }
@@ -260,7 +255,7 @@ void file_save_as_geo_cb(CALLBACK_ARGS) {
 void file_save_as_geo_options_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save Options File", "*", NULL)))
-    Print_Context(newfile); 
+    Print_Context(0,newfile); 
 }
 
 void file_save_as_msh_cb(CALLBACK_ARGS) {
@@ -364,59 +359,27 @@ void file_quit_cb(CALLBACK_ARGS) {
 void opt_general_cb(CALLBACK_ARGS) {
   WID->create_general_options_window();
 }
-void opt_general_moving_axes_cb(CALLBACK_ARGS){
-  CTX.axes = !CTX.axes ;
-}
-void opt_general_small_axes_cb(CALLBACK_ARGS){
-  CTX.small_axes = !CTX.small_axes ;
-}
-void opt_general_fast_redraw_cb(CALLBACK_ARGS){
-  CTX.fast = !CTX.fast ;
-}
-void opt_general_display_lists_cb(CALLBACK_ARGS){
-  CTX.display_lists = !CTX.display_lists ;
-}
-void opt_general_alpha_blending_cb(CALLBACK_ARGS){
-  CTX.alpha = !CTX.alpha ;
-}
-void opt_general_trackball_cb(CALLBACK_ARGS){
-  CTX.useTrackball = !CTX.useTrackball ;
-}
-void opt_general_orthographic_cb(CALLBACK_ARGS){
-  if((int)data) CTX.ortho = 1;
-  else CTX.ortho = 0;
-}
-void opt_general_color_cb(CALLBACK_ARGS){
-  Init_Colors((int)((Fl_Value_Input*)w)->value());
+void opt_general_ok_cb(CALLBACK_ARGS){
+  opt_general_axes(0, GMSH_SET, WID->gen_butt[0]->value());
+  opt_general_small_axes(0, GMSH_SET, WID->gen_butt[1]->value());
+  opt_general_fast_redraw(0, GMSH_SET, WID->gen_butt[2]->value());
+  opt_general_display_lists(0, GMSH_SET, WID->gen_butt[3]->value());
+  opt_general_alpha_blending(0, GMSH_SET, WID->gen_butt[4]->value());
+  opt_general_trackball(0, GMSH_SET, WID->gen_butt[5]->value());
+  opt_general_orthographic(0, GMSH_SET, WID->gen_butt[6]->value());
+
+  opt_general_color_scheme(0,GMSH_SET, WID->gen_value[0]->value());
+  opt_general_shine(0, GMSH_SET, WID->gen_value[1]->value());
+  opt_general_light00(0, GMSH_SET, WID->gen_value[2]->value());
+  opt_general_light01(0, GMSH_SET, WID->gen_value[3]->value());
+  opt_general_light02(0, GMSH_SET, WID->gen_value[4]->value());
   Draw();
-}
-void opt_general_shininess_cb(CALLBACK_ARGS){
-  CTX.shine = ((Fl_Value_Input*)w)->value();
-}
-void opt_general_light_cb(CALLBACK_ARGS){
-  CTX.light_position[0][(int)data] = ((Fl_Value_Input*)w)->value();
 }
 
 // Option Geometry Menu
 
 void opt_geometry_cb(CALLBACK_ARGS) {
   WID->create_geometry_options_window();
-}
-void opt_geometry_entity_cb(CALLBACK_ARGS) {
-  switch((int)data){
-  case 0: CTX.geom.points = !CTX.geom.points; break;
-  case 1: CTX.geom.lines = !CTX.geom.lines; break;
-  case 2: CTX.geom.surfaces = !CTX.geom.surfaces; break;
-  case 3: CTX.geom.volumes = !CTX.geom.volumes; break;
-  }
-}
-void opt_geometry_num_cb(CALLBACK_ARGS) {
-  switch((int)data){
-  case 0: CTX.geom.points_num = !CTX.geom.points_num; break;
-  case 1: CTX.geom.lines_num = !CTX.geom.lines_num; break;
-  case 2: CTX.geom.surfaces_num = !CTX.geom.surfaces_num; break;
-  case 3: CTX.geom.volumes_num = !CTX.geom.volumes_num; break;
-  }
 }
 void opt_geometry_show_by_entity_num_cb(CALLBACK_ARGS) {
   char * c = (char*)((Fl_Input*)w)->value(); 
@@ -431,12 +394,19 @@ void opt_geometry_show_by_entity_num_cb(CALLBACK_ARGS) {
   }
   Draw();
 }
+void opt_geometry_ok_cb(CALLBACK_ARGS) {
+  opt_geometry_points(0, GMSH_SET, WID->geo_butt[0]->value());
+  opt_geometry_lines(0, GMSH_SET, WID->geo_butt[1]->value());
+  opt_geometry_surfaces(0, GMSH_SET, WID->geo_butt[2]->value());
+  opt_geometry_volumes(0, GMSH_SET, WID->geo_butt[3]->value());
+  opt_geometry_points_num(0, GMSH_SET, WID->geo_butt[4]->value());
+  opt_geometry_lines_num(0, GMSH_SET, WID->geo_butt[5]->value());
+  opt_geometry_surfaces_num(0, GMSH_SET, WID->geo_butt[6]->value());
+  opt_geometry_volumes_num(0, GMSH_SET, WID->geo_butt[7]->value());
 
-void opt_geometry_normals_cb(CALLBACK_ARGS) {
-  CTX.geom.normals = ((Fl_Value_Input*)w)->value();
-}
-void opt_geometry_tangents_cb(CALLBACK_ARGS) {
-  CTX.geom.tangents = ((Fl_Value_Input*)w)->value();
+  opt_geometry_normals(0, GMSH_SET, WID->geo_value[0]->value());
+  opt_geometry_tangents(0, GMSH_SET, WID->geo_value[1]->value());
+  Draw();
 }
 
 // Option Mesh Menu
@@ -444,63 +414,33 @@ void opt_geometry_tangents_cb(CALLBACK_ARGS) {
 void opt_mesh_cb(CALLBACK_ARGS) {
   WID->create_mesh_options_window();
 }
-void opt_mesh_entity_cb(CALLBACK_ARGS) {
-  switch((int)data){
-  case 0: CTX.mesh.points = !CTX.mesh.points; break;
-  case 1: CTX.mesh.lines = !CTX.mesh.lines; break;
-  case 2: CTX.mesh.surfaces = !CTX.mesh.surfaces; break;
-  case 3: CTX.mesh.volumes = !CTX.mesh.volumes; break;
-  }
-}
-void opt_mesh_num_cb(CALLBACK_ARGS) {
-  switch((int)data){
-  case 0: CTX.mesh.points_num = !CTX.mesh.points_num; break;
-  case 1: CTX.mesh.lines_num = !CTX.mesh.lines_num; break;
-  case 2: CTX.mesh.surfaces_num = !CTX.mesh.surfaces_num; break;
-  case 3: CTX.mesh.volumes_num = !CTX.mesh.volumes_num; break;
-  }
-}
 void opt_mesh_show_by_entity_num_cb(CALLBACK_ARGS) {
   opt_geometry_show_by_entity_num_cb(w,data);
 }
-void opt_mesh_show_by_quality_cb(CALLBACK_ARGS) {
-  CTX.mesh.limit_gamma = ((Fl_Value_Input*)w)->value();
-}
-void opt_mesh_normals_cb(CALLBACK_ARGS) {
-  CTX.mesh.normals = ((Fl_Value_Input*)w)->value();
-}
-void opt_mesh_degree_cb(CALLBACK_ARGS){
-  if(CTX.mesh.degree==2) CTX.mesh.degree = 1;
-  else CTX.mesh.degree = 2;
-}
-void opt_mesh_algo_cb(CALLBACK_ARGS){
-  if(CTX.mesh.algo==DELAUNAY_OLDALGO) CTX.mesh.algo = DELAUNAY_NEWALGO;
-  else CTX.mesh.algo = DELAUNAY_OLDALGO;
-}
-void opt_mesh_smoothing_cb(CALLBACK_ARGS){
-  CTX.mesh.nb_smoothing = (int)((Fl_Value_Input*)w)->value();
-}
-void opt_mesh_scaling_factor_cb(CALLBACK_ARGS){
-  CTX.mesh.scaling_factor = ((Fl_Value_Input*)w)->value();
-}
-void opt_mesh_lc_factor_cb(CALLBACK_ARGS){
-  CTX.mesh.lc_factor = ((Fl_Value_Input*)w)->value();
-}
-void opt_mesh_rand_factor_cb(CALLBACK_ARGS){
-  CTX.mesh.rand_factor = ((Fl_Value_Input*)w)->value();
-}
-void opt_mesh_interactive_cb(CALLBACK_ARGS){
-  CTX.mesh.interactive = !CTX.mesh.interactive;
-}
-void opt_mesh_explode_cb(CALLBACK_ARGS){
-  CTX.mesh.explode = ((Fl_Value_Input*)w)->value();
-}
-void opt_mesh_aspect_cb(CALLBACK_ARGS){
-  switch((int)data){
-  case 0 : CTX.mesh.hidden = 0; CTX.mesh.shade = 0; break; 
-  case 1 : CTX.mesh.hidden = 1; CTX.mesh.shade = 0; break; 
-  case 2 : CTX.mesh.hidden = 1; CTX.mesh.shade = 1; break; 
-  }
+void opt_mesh_ok_cb(CALLBACK_ARGS) {
+  opt_mesh_degree(0, GMSH_SET, WID->mesh_butt[0]->value()?2:1);
+  opt_mesh_interactive(0, GMSH_SET, WID->mesh_butt[1]->value());
+  opt_mesh_algo(0, GMSH_SET, WID->mesh_butt[2]->value()?DELAUNAY_NEWALGO:DELAUNAY_OLDALGO);
+  opt_mesh_points(0, GMSH_SET, WID->mesh_butt[3]->value());
+  opt_mesh_lines(0, GMSH_SET, WID->mesh_butt[4]->value());
+  opt_mesh_surfaces(0, GMSH_SET, WID->mesh_butt[5]->value());
+  opt_mesh_volumes(0, GMSH_SET, WID->mesh_butt[6]->value());
+  opt_mesh_points_num(0, GMSH_SET, WID->mesh_butt[7]->value());
+  opt_mesh_lines_num(0, GMSH_SET, WID->mesh_butt[8]->value());
+  opt_mesh_surfaces_num(0, GMSH_SET, WID->mesh_butt[9]->value());
+  opt_mesh_volumes_num(0, GMSH_SET, WID->mesh_butt[10]->value());
+  opt_mesh_hidden(0, GMSH_SET, !WID->mesh_butt[11]->value());
+  opt_mesh_shade(0, GMSH_SET, WID->mesh_butt[13]->value());
+
+  opt_mesh_nb_smoothing(0, GMSH_SET, WID->mesh_value[0]->value());
+  opt_mesh_scaling_factor(0, GMSH_SET, WID->mesh_value[1]->value());
+  opt_mesh_lc_factor(0, GMSH_SET, WID->mesh_value[2]->value());
+  opt_mesh_rand_factor(0, GMSH_SET, WID->mesh_value[3]->value());
+  opt_mesh_limit_gamma(0, GMSH_SET, WID->mesh_value[4]->value());
+  opt_mesh_normals(0, GMSH_SET, WID->mesh_value[5]->value());
+  opt_mesh_explode(0, GMSH_SET, WID->mesh_value[6]->value());
+
+  Draw();
 }
 
 // Option Post Menu
@@ -508,14 +448,12 @@ void opt_mesh_aspect_cb(CALLBACK_ARGS){
 void opt_post_cb(CALLBACK_ARGS) {
   WID->create_post_options_window();
 }
-void opt_post_link_cb(CALLBACK_ARGS) {
-  CTX.post.link = (int)data;
-}
-void opt_post_smooth_cb(CALLBACK_ARGS) {
-  CTX.post.smooth = !CTX.post.smooth;
-}
-void opt_post_anim_delay_cb(CALLBACK_ARGS) {
-  CTX.post.anim_delay = ((Fl_Value_Input*)w)->value();
+void opt_post_ok_cb(CALLBACK_ARGS) {
+  opt_post_link(0, GMSH_SET, WID->post_butt[0]->value()?0:(WID->post_butt[1]->value()?1:2));
+  opt_post_smooth(0, GMSH_SET, WID->post_butt[3]->value());
+
+  opt_post_anim_delay(0, GMSH_SET, WID->post_value[0]->value());
+  Draw();
 }
 
 // Option Statistics Menu
@@ -1318,8 +1256,8 @@ void view_duplicate_cb(CALLBACK_ARGS){
 
   v1 = (Post_View*)List_Pointer(Post_ViewList,(int)data);
 
-  BeginView(0);
-  EndView(0, 0, v1->FileName, v1->Name, 0., 0., 0.);
+  BeginView(0, 0);
+  EndView(0, 0, v1->FileName, v1->Name);
 
   v2 = (Post_View*)List_Pointer(Post_ViewList,List_Nbr(Post_ViewList)-1);
 
@@ -1362,26 +1300,6 @@ void view_duplicate_cb(CALLBACK_ARGS){
   Draw();
 }
 
-void view_lighting_cb(CALLBACK_ARGS){
-  Post_View *v = (Post_View*)List_Pointer(Post_ViewList,(int)data);
-  v->Light = !v->Light;
-  v->Changed = 1;
-  Draw() ;
-}
-void view_elements_cb(CALLBACK_ARGS){
-  Post_View *v = (Post_View*)List_Pointer(Post_ViewList,(int)data);
-  v->ShowElement = !v->ShowElement;
-  v->Changed = 1;
-  Draw() ;
-}
-void view_applybgmesh_cb(CALLBACK_ARGS){
-  Post_View *v = (Post_View*)List_Pointer(Post_ViewList,(int)data);
-  BGMWithView(v); 
-}
-void view_options_cb(CALLBACK_ARGS){
-  WID->create_view_window((int)data);
-}
-
 #define STARTVIEWMOD					\
   Post_View *v;						\
   int i;						\
@@ -1395,152 +1313,38 @@ void view_options_cb(CALLBACK_ARGS){
     }						\
   }
 
-void view_options_show_scale_cb(CALLBACK_ARGS){
+void view_lighting_cb(CALLBACK_ARGS){
   STARTVIEWMOD
-    v->ShowScale = ((Fl_Check_Button*)w)->value() ;
-  ENDVIEWMOD
-}
-void view_options_show_time_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    v->ShowTime = ((Fl_Check_Button*)w)->value() ;
-  ENDVIEWMOD
-}
-void view_options_transparent_scale_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    v->TransparentScale = ((Fl_Check_Button*)w)->value() ;
-  ENDVIEWMOD
-}
-void view_options_name_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    strcpy(v->Name, ((Fl_Input*)w)->value()) ;
-  ENDVIEWMOD
-}
-void view_options_format_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    strcpy(v->Format, ((Fl_Input*)w)->value()) ;
-  ENDVIEWMOD
-}
-void view_options_custom_range_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    if(((Fl_Check_Button*)w)->value()){
-      WID->activate_custom(1);
-      v->RangeType = DRAW_POST_CUSTOM;
-    }
-    else{
-      WID->activate_custom(0);
-      v->RangeType = DRAW_POST_DEFAULT;
-    }
+    v->Light = !v->Light;
     v->Changed = 1;
   ENDVIEWMOD
+  Draw() ;
 }
-void view_options_custom_min_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    v->CustomMin = ((Fl_Value_Input*)w)->value() ;
-    v->Changed = 1;
-  ENDVIEWMOD
+void view_elements_cb(CALLBACK_ARGS){
+  Post_View *v = (Post_View*)List_Pointer(Post_ViewList,(int)data);
+  v->ShowElement = !v->ShowElement;
+  v->Changed = 1;
+  Draw() ;
 }
-void view_options_custom_max_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    v->CustomMax = ((Fl_Value_Input*)w)->value() ;
-    v->Changed = 1;
-  ENDVIEWMOD
+void view_applybgmesh_cb(CALLBACK_ARGS){
+  Post_View *v = (Post_View*)List_Pointer(Post_ViewList,(int)data);
+  BGMWithView(v); 
 }
-void view_options_linear_range_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    if(((Fl_Check_Button*)w)->value()){
-      v->ScaleType = DRAW_POST_LINEAR;
-    }
-    else{
-      v->ScaleType = DRAW_POST_LOGARITHMIC;
-    }
-    v->Changed = 1;
-  ENDVIEWMOD
+void view_options_cb(CALLBACK_ARGS){
+  WID->create_view_options_window((int)data);
 }
-void view_options_logarithmic_range_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    if(((Fl_Check_Button*)w)->value()){
-      v->ScaleType = DRAW_POST_LOGARITHMIC;
-    }
-    else{
-      v->ScaleType = DRAW_POST_LINEAR;
-    }
-    v->Changed = 1;
-  ENDVIEWMOD
+
+void view_options_custom_cb(CALLBACK_ARGS){
+  if(WID->view_butt[3]->value()){
+    WID->view_value[0]->activate();
+    WID->view_value[1]->activate();
+  }
+  else{
+    WID->view_value[0]->deactivate();
+    WID->view_value[1]->deactivate();
+  }
 }
-void view_options_nbiso_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    v->NbIso = (int)((Fl_Value_Input*)w)->value() ;
-    v->Changed = 1;
-  ENDVIEWMOD
-}
-void view_options_iso_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    if(((Fl_Check_Button*)w)->value()){
-      v->IntervalsType = DRAW_POST_ISO;
-      v->Changed = 1;
-    }
-  ENDVIEWMOD
-}
-void view_options_fillediso_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    if(((Fl_Check_Button*)w)->value()){
-      v->IntervalsType = DRAW_POST_DISCRETE;
-      v->Changed = 1;
-    }
-  ENDVIEWMOD
-}
-void view_options_continuousiso_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    if(((Fl_Check_Button*)w)->value()){
-      v->IntervalsType = DRAW_POST_CONTINUOUS;
-      v->Changed = 1;
-    }
-  ENDVIEWMOD
-}
-void view_options_numericiso_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    if(((Fl_Check_Button*)w)->value()){
-      v->IntervalsType = DRAW_POST_NUMERIC;
-      v->Changed = 1;
-    }
-  ENDVIEWMOD
-}
-void view_options_xoffset_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    v->Offset[0] = ((Fl_Value_Input*)w)->value() ;
-    v->Changed = 1;
-  ENDVIEWMOD
-}
-void view_options_yoffset_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    v->Offset[1] = ((Fl_Value_Input*)w)->value() ;
-    v->Changed = 1;
-  ENDVIEWMOD
-}
-void view_options_zoffset_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    v->Offset[2] = ((Fl_Value_Input*)w)->value() ;
-    v->Changed = 1;
-  ENDVIEWMOD
-}
-void view_options_xraise_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    v->Raise[0] = ((Fl_Value_Input*)w)->value() ;
-    v->Changed = 1;
-  ENDVIEWMOD
-}
-void view_options_yraise_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    v->Raise[1] = ((Fl_Value_Input*)w)->value() ;
-    v->Changed = 1;
-  ENDVIEWMOD
-}
-void view_options_zraise_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    v->Raise[2] = ((Fl_Value_Input*)w)->value() ;
-    v->Changed = 1;
-  ENDVIEWMOD
-}
+
 void view_options_timestep_cb(CALLBACK_ARGS){
   int ii = (int)((Fl_Value_Input*)w)->value();
   STARTVIEWMOD
@@ -1551,59 +1355,45 @@ void view_options_timestep_cb(CALLBACK_ARGS){
   ENDVIEWMOD
   Draw();
 }
-void view_options_vector_line_cb(CALLBACK_ARGS){
+
+void view_options_ok_cb(CALLBACK_ARGS){
   STARTVIEWMOD
-    if(((Fl_Check_Button*)w)->value()){
-      v->ArrowType = DRAW_POST_SEGMENT;
-      v->Changed = 1;
-    }
-  ENDVIEWMOD
-}
-void view_options_vector_arrow_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    if(((Fl_Check_Button*)w)->value()){
-      v->ArrowType = DRAW_POST_ARROW;
-      v->Changed = 1;
-    }
-  ENDVIEWMOD
-}
-void view_options_vector_cone_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    if(((Fl_Check_Button*)w)->value()){
-      v->ArrowType = DRAW_POST_CONE;
-      v->Changed = 1;
-    }
-  ENDVIEWMOD
-}
-void view_options_vector_displacement_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    if(((Fl_Check_Button*)w)->value()){
-      v->ArrowType = DRAW_POST_DISPLACEMENT;
-      v->Changed = 1;
-    }
-  ENDVIEWMOD
-}
-void view_options_vector_scale_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    v->ArrowScale = ((Fl_Value_Input*)w)->value() ;
+    opt_view_show_scale(i, GMSH_SET, WID->view_butt[0]->value());
+    opt_view_show_time(i, GMSH_SET, WID->view_butt[1]->value());
+    opt_view_transparent_scale(i, GMSH_SET, WID->view_butt[2]->value());
+    opt_view_range_type(i, GMSH_SET, WID->view_butt[3]->value()?DRAW_POST_CUSTOM:DRAW_POST_DEFAULT);
+    opt_view_scale_type(i, GMSH_SET, WID->view_butt[4]->value()?DRAW_POST_LINEAR:DRAW_POST_LOGARITHMIC);
+    opt_view_intervals_type(i, GMSH_SET, 
+			    WID->view_butt[6]->value()?DRAW_POST_ISO:
+			    WID->view_butt[7]->value()?DRAW_POST_DISCRETE:
+			    WID->view_butt[8]->value()?DRAW_POST_CONTINUOUS:
+			    DRAW_POST_NUMERIC);
+    opt_view_arrow_type(i, GMSH_SET, 
+			WID->view_butt[10]->value()?DRAW_POST_SEGMENT:
+			WID->view_butt[11]->value()?DRAW_POST_ARROW:
+			WID->view_butt[12]->value()?DRAW_POST_CONE:
+			DRAW_POST_DISPLACEMENT);
+    opt_view_arrow_location(i, GMSH_SET, 
+			    WID->view_butt[14]->value()?DRAW_POST_LOCATE_COG:
+			    DRAW_POST_LOCATE_VERTEX);
+
+    opt_view_custom_min(i, GMSH_SET, WID->view_value[0]->value());
+    opt_view_custom_max(i, GMSH_SET, WID->view_value[1]->value());
+    opt_view_nb_iso(i, GMSH_SET, WID->view_value[2]->value());
+    opt_view_offset0(i, GMSH_SET, WID->view_value[3]->value());
+    opt_view_offset1(i, GMSH_SET, WID->view_value[4]->value());
+    opt_view_offset2(i, GMSH_SET, WID->view_value[5]->value());
+    opt_view_raise0(i, GMSH_SET, WID->view_value[6]->value());
+    opt_view_raise1(i, GMSH_SET, WID->view_value[7]->value());
+    opt_view_raise2(i, GMSH_SET, WID->view_value[8]->value());
+    opt_view_timestep(i, GMSH_SET, WID->view_value[9]->value());
+    opt_view_arrow_scale(i, GMSH_SET, WID->view_value[10]->value());
+
+    opt_view_name(i, GMSH_SET, (char*)WID->view_input[0]->value());
+    opt_view_format(i, GMSH_SET, (char*)WID->view_input[1]->value());
     v->Changed = 1;
   ENDVIEWMOD
-}
-void view_options_vector_cog_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    if(((Fl_Check_Button*)w)->value()){
-      v->ArrowLocation = DRAW_POST_LOCATE_COG;
-      v->Changed = 1;
-    }
-  ENDVIEWMOD
-}
-void view_options_vector_vertex_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    if(((Fl_Check_Button*)w)->value()){
-      v->ArrowLocation = DRAW_POST_LOCATE_VERTEX;
-      v->Changed = 1;
-    }
-  ENDVIEWMOD
+  Draw();
 }
 
 #undef STARTVIEWMOD

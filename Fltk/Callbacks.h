@@ -44,50 +44,24 @@ void file_quit_cb(CALLBACK_ARGS) ;
 // Option General Menu
 
 void opt_general_cb(CALLBACK_ARGS) ;
-void opt_general_moving_axes_cb(CALLBACK_ARGS) ;
-void opt_general_small_axes_cb(CALLBACK_ARGS) ;
-void opt_general_fast_redraw_cb(CALLBACK_ARGS) ;
-void opt_general_display_lists_cb(CALLBACK_ARGS) ;
-void opt_general_alpha_blending_cb(CALLBACK_ARGS) ;
-void opt_general_trackball_cb(CALLBACK_ARGS) ;
-void opt_general_orthographic_cb(CALLBACK_ARGS) ;
-void opt_general_color_cb(CALLBACK_ARGS) ;
-void opt_general_shininess_cb(CALLBACK_ARGS) ;
-void opt_general_light_cb(CALLBACK_ARGS) ;
+void opt_general_ok_cb(CALLBACK_ARGS) ;
 
 // Option Geometry Menu
 
 void opt_geometry_cb(CALLBACK_ARGS) ;
-void opt_geometry_entity_cb(CALLBACK_ARGS) ;
-void opt_geometry_num_cb(CALLBACK_ARGS) ;
 void opt_geometry_show_by_entity_num_cb(CALLBACK_ARGS) ;
-void opt_geometry_normals_cb(CALLBACK_ARGS) ;
-void opt_geometry_tangents_cb(CALLBACK_ARGS) ;
+void opt_geometry_ok_cb(CALLBACK_ARGS) ;
 
 // Option Mesh Menu
 
 void opt_mesh_cb(CALLBACK_ARGS) ;
-void opt_mesh_entity_cb(CALLBACK_ARGS) ;
-void opt_mesh_num_cb(CALLBACK_ARGS) ;
 void opt_mesh_show_by_entity_num_cb(CALLBACK_ARGS) ;
-void opt_mesh_show_by_quality_cb(CALLBACK_ARGS) ;
-void opt_mesh_normals_cb(CALLBACK_ARGS) ;
-void opt_mesh_degree_cb(CALLBACK_ARGS) ;
-void opt_mesh_algo_cb(CALLBACK_ARGS) ;
-void opt_mesh_smoothing_cb(CALLBACK_ARGS) ;
-void opt_mesh_scaling_factor_cb(CALLBACK_ARGS) ;
-void opt_mesh_lc_factor_cb(CALLBACK_ARGS) ;
-void opt_mesh_rand_factor_cb(CALLBACK_ARGS) ;
-void opt_mesh_interactive_cb(CALLBACK_ARGS) ;
-void opt_mesh_explode_cb(CALLBACK_ARGS) ;
-void opt_mesh_aspect_cb(CALLBACK_ARGS) ;
+void opt_mesh_ok_cb(CALLBACK_ARGS) ;
 
 // Option Post Menu
 
 void opt_post_cb(CALLBACK_ARGS) ;
-void opt_post_link_cb(CALLBACK_ARGS) ;
-void opt_post_smooth_cb(CALLBACK_ARGS) ;
-void opt_post_anim_delay_cb(CALLBACK_ARGS) ;
+void opt_post_ok_cb(CALLBACK_ARGS) ;
 
 // Option Statistics Menu
 
@@ -213,35 +187,9 @@ void view_lighting_cb(CALLBACK_ARGS) ;
 void view_elements_cb(CALLBACK_ARGS) ;
 void view_applybgmesh_cb(CALLBACK_ARGS) ;
 void view_options_cb(CALLBACK_ARGS) ;
-void view_options_show_scale_cb(CALLBACK_ARGS) ;
-void view_options_show_time_cb(CALLBACK_ARGS) ;
-void view_options_transparent_scale_cb(CALLBACK_ARGS) ;
-void view_options_name_cb(CALLBACK_ARGS) ;
-void view_options_format_cb(CALLBACK_ARGS) ;
-void view_options_custom_range_cb(CALLBACK_ARGS) ;
-void view_options_custom_min_cb(CALLBACK_ARGS) ;
-void view_options_custom_max_cb(CALLBACK_ARGS) ;
-void view_options_linear_range_cb(CALLBACK_ARGS) ;
-void view_options_logarithmic_range_cb(CALLBACK_ARGS) ;
-void view_options_nbiso_cb(CALLBACK_ARGS) ;
-void view_options_iso_cb(CALLBACK_ARGS) ;
-void view_options_fillediso_cb(CALLBACK_ARGS) ;
-void view_options_continuousiso_cb(CALLBACK_ARGS) ;
-void view_options_numericiso_cb(CALLBACK_ARGS) ;
-void view_options_xoffset_cb(CALLBACK_ARGS) ;
-void view_options_yoffset_cb(CALLBACK_ARGS) ;
-void view_options_zoffset_cb(CALLBACK_ARGS) ;
-void view_options_xraise_cb(CALLBACK_ARGS) ;
-void view_options_yraise_cb(CALLBACK_ARGS) ;
-void view_options_zraise_cb(CALLBACK_ARGS) ;
+void view_options_custom_cb(CALLBACK_ARGS) ;
 void view_options_timestep_cb(CALLBACK_ARGS) ;
-void view_options_vector_line_cb(CALLBACK_ARGS) ;
-void view_options_vector_arrow_cb(CALLBACK_ARGS) ;
-void view_options_vector_cone_cb(CALLBACK_ARGS) ;
-void view_options_vector_displacement_cb(CALLBACK_ARGS) ;
-void view_options_vector_scale_cb(CALLBACK_ARGS) ;
-void view_options_vector_cog_cb(CALLBACK_ARGS) ;
-void view_options_vector_vertex_cb(CALLBACK_ARGS) ;
+void view_options_ok_cb(CALLBACK_ARGS) ;
 
 #endif
 

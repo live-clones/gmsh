@@ -1,404 +1,312 @@
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
-#include "Geo.h"
-#include "Mesh.h"
-#include "Draw.h"
-#include "Context.h"
+#define GMSH_SET       (1<<0)
+#define GMSH_GET       (1<<1)
+#define GMSH_GUI       (1<<2)
 
-extern Context_T   CTX ;
+#define OPT_ARGS_STR   int num, int action, char *val
+#define OPT_ARGS_NUM   int num, int action, double val
+#define OPT_ARGS_COL   int num, int action, unsigned int val
 
-// Option Database, with default values
+// Option Database (General, Geometry, Mesh, Post, View, Print), with
+// default values
 
 // STRINGS
 
-StringXString GeneralOptions_String[] = {
-  { "Display" , &CTX.display , "" },
-  { NULL , NULL , NULL }
-} ;
-
-StringXString GeometryOptions_String[] = {
-  { NULL , NULL ,  NULL }
-} ;
-
-StringXString MeshOptions_String[] = {
-  { NULL , NULL ,  NULL }
-} ;
-
-StringXString PostProcessingOptions_String[] = {
-  { NULL , NULL ,  NULL }
-} ;
-
-StringXString PrintOptions_String[] = {
-  { "Font" ,  &CTX.print.font , "Courier" },
-  { NULL , NULL , NULL }
-} ;
+char * opt_general_display(OPT_ARGS_STR);
+char * opt_view_name(OPT_ARGS_STR);
+char * opt_view_format(OPT_ARGS_STR);
+char * opt_view_filename(OPT_ARGS_STR);
+char * opt_print_font(OPT_ARGS_STR);
 
 // NUMBERS
 
-StringXNumber GeneralOptions_Number[] = {
-  { "Viewport0"            , GMSH_INT,    (void*)&CTX.viewport[0]    , 0. }, 
-  { "Viewport1"            , GMSH_INT,    (void*)&CTX.viewport[1]    , 0. }, 
-  { "Viewport2"            , GMSH_INT,    (void*)&CTX.viewport[2]    , 700. }, 
-  { "Viewport3"            , GMSH_INT,    (void*)&CTX.viewport[3]    , 500. }, 
-  { "GraphicsPosition0"    , GMSH_INT,    (void*)&CTX.gl_position[0] , 20. }, 
-  { "GraphicsPosition1"    , GMSH_INT,    (void*)&CTX.gl_position[1] , 30. }, 
-  { "GraphicsFontSize"     , GMSH_INT,    (void*)&CTX.gl_fontsize    , 11. }, 
-  { "MenuPosition0"        , GMSH_INT,    (void*)&CTX.position[0]    , 800. }, 
-  { "MenuPosition1"        , GMSH_INT,    (void*)&CTX.position[1]    , 50. }, 
-  { "MenuFontSize"         , GMSH_INT,    (void*)&CTX.fontsize       , 12. }, 
-  { "CenterWindows"        , GMSH_INT,    (void*)&CTX.center_windows , 1. }, 
-  { "Rotation0"            , GMSH_DOUBLE, (void*)&CTX.r[0]           , 0.0 }, 
-  { "Rotation1"            , GMSH_DOUBLE, (void*)&CTX.r[1]           , 0.0 }, 
-  { "Rotation2"            , GMSH_DOUBLE, (void*)&CTX.r[2]           , 0.0 }, 
-  { "TrackballQuaternion0" , GMSH_FLOAT,  (void*)&CTX.quaternion[0]  , 0.0 }, 
-  { "TrackballQuaternion1" , GMSH_FLOAT,  (void*)&CTX.quaternion[1]  , 0.0 }, 
-  { "TrackballQuaternion2" , GMSH_FLOAT,  (void*)&CTX.quaternion[2]  , 0.0 }, 
-  { "TrackballQuaternion3" , GMSH_FLOAT,  (void*)&CTX.quaternion[3]  , 1.0 }, 
-  { "Translation0"         , GMSH_DOUBLE, (void*)&CTX.t[0]           , 0.0 }, 
-  { "Translation1"         , GMSH_DOUBLE, (void*)&CTX.t[1]           , 0.0 }, 
-  { "Translation2"         , GMSH_DOUBLE, (void*)&CTX.t[2]           , 0.0 }, 
-  { "Scale0"               , GMSH_DOUBLE, (void*)&CTX.s[0]           , 1.0 }, 
-  { "Scale1"               , GMSH_DOUBLE, (void*)&CTX.s[1]           , 1.0 }, 
-  { "Scale2"               , GMSH_DOUBLE, (void*)&CTX.s[2]           , 1.0 }, 
-  { "Shininess"            , GMSH_FLOAT,  (void*)&CTX.shine          , 0.4 }, 
-  { "Verbosity"            , GMSH_INT,    (void*)&CTX.verbosity      , 2. },
-  { "Orthographic"         , GMSH_INT,    (void*)&CTX.ortho          , 1. }, 
-  { "FastRedraw"           , GMSH_INT,    (void*)&CTX.fast           , 1. },
-  { "Axes"                 , GMSH_INT,    (void*)&CTX.axes           , 1. },
-  { "SmallAxes"            , GMSH_INT,    (void*)&CTX.small_axes     , 1. },
-  { "DisplayLists"         , GMSH_INT,    (void*)&CTX.display_lists  , 0. },
-  { "SameVisual"           , GMSH_INT,    (void*)&CTX.same_visual    , 0. },
-  { "Flash"                , GMSH_INT,    (void*)&CTX.flash          , 0. },
-  { "AlphaBlending"        , GMSH_INT,    (void*)&CTX.alpha          , 0. },
-  { "Trackball"            , GMSH_INT,    (void*)&CTX.useTrackball   , 1. },
-  { "ZoomFactor"           , GMSH_DOUBLE, (void*)&CTX.zoom_factor    , 1.1 }, 
-  { "Clip0"                , GMSH_INT,    (void*)&CTX.clip[0]        , 0. },
-  { "Clip00"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[0][0] , 0.0 }, 
-  { "Clip01"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[0][1] , 0.0 }, 
-  { "Clip02"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[0][2] , 0.0 }, 
-  { "Clip03"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[0][3] , 0.0 }, 
-  { "Clip1"                , GMSH_INT,    (void*)&CTX.clip[1]          , 0. },
-  { "Clip10"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[1][0] , 0.0 }, 
-  { "Clip11"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[1][1] , 0.0 }, 
-  { "Clip12"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[1][2] , 0.0 }, 
-  { "Clip13"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[1][3] , 0.0 }, 
-  { "Clip2"                , GMSH_INT,    (void*)&CTX.clip[2]          , 0. },
-  { "Clip20"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[2][0] , 0.0 }, 
-  { "Clip21"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[2][1] , 0.0 }, 
-  { "Clip22"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[2][2] , 0.0 }, 
-  { "Clip23"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[2][3] , 0.0 }, 
-  { "Clip3"                , GMSH_INT,    (void*)&CTX.clip[3]          , 0. },
-  { "Clip30"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[3][0] , 0.0 }, 
-  { "Clip31"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[3][1] , 0.0 }, 
-  { "Clip32"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[3][2] , 0.0 }, 
-  { "Clip33"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[3][3] , 0.0 }, 
-  { "Clip4"                , GMSH_INT,    (void*)&CTX.clip[4]          , 0. },
-  { "Clip40"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[4][0] , 0.0 }, 
-  { "Clip41"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[4][1] , 0.0 }, 
-  { "Clip42"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[4][2] , 0.0 }, 
-  { "Clip43"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[4][3] , 0.0 }, 
-  { "Clip5"                , GMSH_INT,    (void*)&CTX.clip[5]          , 0. },
-  { "Clip50"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[5][0] , 0.0 }, 
-  { "Clip51"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[5][1] , 0.0 }, 
-  { "Clip52"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[5][2] , 0.0 }, 
-  { "Clip53"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[5][3] , 0.0 }, 
-  { "Light0"               , GMSH_INT,    (void*)&CTX.light[0]         , 1. },
-  { "Light00"              , GMSH_FLOAT,  (void*)&CTX.light_position[0][0] , 0.5 }, 
-  { "Light01"              , GMSH_FLOAT,  (void*)&CTX.light_position[0][1] , 0.3 }, 
-  { "Light02"              , GMSH_FLOAT,  (void*)&CTX.light_position[0][2] , 1.0 }, 
-  { "Light03"              , GMSH_FLOAT,  (void*)&CTX.light_position[0][3] , 0.0 }, 
-  { "Light1"               , GMSH_INT,    (void*)&CTX.light[1]             , 0. },
-  { "Light10"              , GMSH_FLOAT,  (void*)&CTX.light_position[1][0] , 0.0 }, 
-  { "Light11"              , GMSH_FLOAT,  (void*)&CTX.light_position[1][1] , 0.0 }, 
-  { "Light12"              , GMSH_FLOAT,  (void*)&CTX.light_position[1][2] , 0.0 }, 
-  { "Light13"              , GMSH_FLOAT,  (void*)&CTX.light_position[1][3] , 0.0 }, 
-  { "Light2"               , GMSH_INT,    (void*)&CTX.light[2]             , 0. },
-  { "Light20"              , GMSH_FLOAT,  (void*)&CTX.light_position[2][0] , 0.0 }, 
-  { "Light21"              , GMSH_FLOAT,  (void*)&CTX.light_position[2][1] , 0.0 }, 
-  { "Light22"              , GMSH_FLOAT,  (void*)&CTX.light_position[2][2] , 0.0 }, 
-  { "Light23"              , GMSH_FLOAT,  (void*)&CTX.light_position[2][3] , 0.0 }, 
-  { "Light3"               , GMSH_INT,    (void*)&CTX.light[3]             , 0. },
-  { "Light30"              , GMSH_FLOAT,  (void*)&CTX.light_position[3][0] , 0.0 }, 
-  { "Light31"              , GMSH_FLOAT,  (void*)&CTX.light_position[3][1] , 0.0 }, 
-  { "Light32"              , GMSH_FLOAT,  (void*)&CTX.light_position[3][2] , 0.0 }, 
-  { "Light33"              , GMSH_FLOAT,  (void*)&CTX.light_position[3][3] , 0.0 }, 
-  { "Light4"               , GMSH_INT,    (void*)&CTX.light[4]             , 0. },
-  { "Light40"              , GMSH_FLOAT,  (void*)&CTX.light_position[4][0] , 0.0 }, 
-  { "Light41"              , GMSH_FLOAT,  (void*)&CTX.light_position[4][1] , 0.0 }, 
-  { "Light42"              , GMSH_FLOAT,  (void*)&CTX.light_position[4][2] , 0.0 }, 
-  { "Light43"              , GMSH_FLOAT,  (void*)&CTX.light_position[4][3] , 0.0 }, 
-  { "Light5"               , GMSH_INT,    (void*)&CTX.light[5]             , 0. },
-  { "Light50"              , GMSH_FLOAT,  (void*)&CTX.light_position[5][0] , 0.0 }, 
-  { "Light51"              , GMSH_FLOAT,  (void*)&CTX.light_position[5][1] , 0.0 }, 
-  { "Light52"              , GMSH_FLOAT,  (void*)&CTX.light_position[5][2] , 0.0 }, 
-  { "Light53"              , GMSH_FLOAT,  (void*)&CTX.light_position[5][3] , 0.0 }, 
-  { NULL                   , GMSH_DOUBLE, NULL , 0. }
-} ;
-
-StringXNumber GeometryOptions_Number[] = {
-  { "Normals"         , GMSH_DOUBLE, (void*)&CTX.geom.normals      , 0. }, 
-  { "Tangents"        , GMSH_DOUBLE, (void*)&CTX.geom.tangents     , 0. }, 
-  { "Points"          , GMSH_INT,    (void*)&CTX.geom.points       , 1. }, 
-  { "Lines"           , GMSH_INT,    (void*)&CTX.geom.lines        , 1. }, 
-  { "Surfaces"        , GMSH_INT,    (void*)&CTX.geom.surfaces     , 0. }, 
-  { "Volumes"         , GMSH_INT,    (void*)&CTX.geom.volumes      , 0. }, 
-  { "PointsNumbers"   , GMSH_INT,    (void*)&CTX.geom.points_num   , 0. }, 
-  { "LinesNumbers"    , GMSH_INT,    (void*)&CTX.geom.lines_num    , 0. }, 
-  { "SurfacesNumbers" , GMSH_INT,    (void*)&CTX.geom.surfaces_num , 0. }, 
-  { "VolumesNumbers"  , GMSH_INT,    (void*)&CTX.geom.volumes_num  , 0. }, 
-  { "HiddenLines"     , GMSH_INT,    (void*)&CTX.geom.hidden       , 0. }, 
-  { "Shading"         , GMSH_INT,    (void*)&CTX.geom.shade        , 0. }, 
-  { "Highlight"       , GMSH_INT,    (void*)&CTX.geom.highlight    , 1. }, 
-  { "OldCircle"       , GMSH_INT,    (void*)&CTX.geom.old_circle   , 0. }, 
-  { "ScalingFactor"   , GMSH_DOUBLE, (void*)&CTX.geom.scaling_factor , 1.0 }, 
-  { NULL              , GMSH_DOUBLE, NULL , 0. }
-} ;
-
-StringXNumber MeshOptions_Number[] = {
-  { "Quality"         , GMSH_DOUBLE, (void*)&CTX.mesh.quality        , 0.0 }, 
-  { "Normals"         , GMSH_DOUBLE, (void*)&CTX.mesh.normals        , 0.0 }, 
-  { "Tangents"        , GMSH_DOUBLE, (void*)&CTX.mesh.tangents       , 0.0 }, 
-  { "Explode"         , GMSH_DOUBLE, (void*)&CTX.mesh.explode        , 1.0 }, 
-  { "ScalingFactor"   , GMSH_DOUBLE, (void*)&CTX.mesh.scaling_factor , 1.0 }, 
-  { "CharacteristicLengthFactor" , 
-                        GMSH_DOUBLE, (void*)&CTX.mesh.lc_factor      , 1.0 }, 
-  { "RandomFactor"    , GMSH_DOUBLE, (void*)&CTX.mesh.rand_factor    , 1.e-5 }, 
-  { "GammaLimit"      , GMSH_DOUBLE, (void*)&CTX.mesh.limit_gamma    , 0.0 }, 
-  { "EtaLimit"        , GMSH_DOUBLE, (void*)&CTX.mesh.limit_eta      , 0.0 }, 
-  { "RhoLimit"        , GMSH_DOUBLE, (void*)&CTX.mesh.limit_rho      , 0.0 }, 
-  { "Points"          , GMSH_INT,    (void*)&CTX.mesh.points         , 1. }, 
-  { "Lines"           , GMSH_INT,    (void*)&CTX.mesh.lines          , 1. }, 
-  { "Surfaces"        , GMSH_INT,    (void*)&CTX.mesh.surfaces       , 1. }, 
-  { "Volumes"         , GMSH_INT,    (void*)&CTX.mesh.volumes        , 1. }, 
-  { "PointsNumbers"   , GMSH_INT,    (void*)&CTX.mesh.points_num     , 0. }, 
-  { "LinesNumbers"    , GMSH_INT,    (void*)&CTX.mesh.lines_num      , 0. }, 
-  { "SurfacesNumbers" , GMSH_INT,    (void*)&CTX.mesh.surfaces_num   , 0. }, 
-  { "VolumesNumbers"  , GMSH_INT,    (void*)&CTX.mesh.volumes_num    , 0. }, 
-  { "HiddenLines"     , GMSH_INT,    (void*)&CTX.mesh.hidden         , 0. }, 
-  { "Shading"         , GMSH_INT,    (void*)&CTX.mesh.shade          , 0. }, 
-  { "Format"          , GMSH_INT,    (void*)&CTX.mesh.format         , FORMAT_MSH }, 
-  { "Smoothing"       , GMSH_INT,    (void*)&CTX.mesh.nb_smoothing   , 0. }, 
-  { "Algorithm"       , GMSH_INT,    (void*)&CTX.mesh.algo           , DELAUNAY_OLDALGO }, 
-  { "PointInsertion"  , GMSH_INT,    (void*)&CTX.mesh.point_insertion, CENTER_CIRCCIRC }, 
-  { "SpeedMax"        , GMSH_INT,    (void*)&CTX.mesh.speed_max      , 0. }, 
-  { "MinimumCirclePoints" ,
-                        GMSH_INT,    (void*)&CTX.mesh.min_circ_points, 7. }, 
-  { "Degree"          , GMSH_INT,    (void*)&CTX.mesh.degree         , 1. }, 
-  { "Dual"            , GMSH_INT,    (void*)&CTX.mesh.dual           , 0. }, 
-  { "Interactive"     , GMSH_INT,    (void*)&CTX.mesh.interactive    , 0. }, 
-  { "use_cut_plane"   , GMSH_INT,    (void*)&CTX.mesh.use_cut_plane  , 0  }, 
-  { "cut_planea"      , GMSH_DOUBLE, (void*)&CTX.mesh.cut_planea      , 1. }, 
-  { "cut_planeb"      , GMSH_DOUBLE, (void*)&CTX.mesh.cut_planeb      , 0. }, 
-  { "cut_planec"      , GMSH_DOUBLE, (void*)&CTX.mesh.cut_planec      , 0. }, 
-  { "cut_planed"      , GMSH_DOUBLE, (void*)&CTX.mesh.cut_planed      , 0. }, 
-  { NULL              , GMSH_DOUBLE, NULL , 0. }
-} ;
-
-StringXNumber PostProcessingOptions_Number[] = {
-  { "Scales"           , GMSH_INT,    (void*)&CTX.post.scales             , 1. }, 
-  { "Link"             , GMSH_INT,    (void*)&CTX.post.link               , 0. }, 
-  { "Smoothing"        , GMSH_INT,    (void*)&CTX.post.smooth             , 0. }, 
-  { "Visibility"       , GMSH_INT,    (void*)&CTX.post.initial_visibility , 1. }, 
-  { "IntervalsMode"    , GMSH_INT,    (void*)&CTX.post.initial_intervals  , DRAW_POST_ISO }, 
-  { "IntervalsNumber"  , GMSH_INT,    (void*)&CTX.post.initial_nbiso      , 15. }, 
-  { "AnimationDelay"   , GMSH_DOUBLE, (void*)&CTX.post.anim_delay         , 0.25 }, 
-  { "NbViews"          , GMSH_INT,    (void*)&CTX.post.nb_views           , 0. }, 
-  { NULL               , GMSH_DOUBLE, NULL , 0. }
-} ;
-
-StringXNumber PrintOptions_Number[] = {
-  { "Format"         , GMSH_INT,    (void*)&CTX.print.format         , FORMAT_AUTO }, 
-  { "EpsQuality"     , GMSH_INT,    (void*)&CTX.print.eps_quality    , 1 }, 
-  { "JpegQuality"    , GMSH_INT,    (void*)&CTX.print.jpeg_quality   , 85 }, 
-  { "GifDither"      , GMSH_INT,    (void*)&CTX.print.gif_dither     , 0 }, 
-  { "GifSort"        , GMSH_INT,    (void*)&CTX.print.gif_sort       , 1 }, 
-  { "GifInterlace"   , GMSH_INT,    (void*)&CTX.print.gif_interlace  , 0 }, 
-  { "GifTransparent" , GMSH_INT,    (void*)&CTX.print.gif_transparent, 0 }, 
-  { "FontSize"       , GMSH_INT,    (void*)&CTX.print.font_size      , 12. }, 
-  { NULL             , GMSH_DOUBLE, NULL , 0. }
-} ;
+double opt_general_viewport0(OPT_ARGS_NUM);
+double opt_general_viewport1(OPT_ARGS_NUM);
+double opt_general_viewport2(OPT_ARGS_NUM);
+double opt_general_viewport3(OPT_ARGS_NUM);
+double opt_general_graphics_position0(OPT_ARGS_NUM);
+double opt_general_graphics_position1(OPT_ARGS_NUM);
+double opt_general_graphics_fontsize(OPT_ARGS_NUM);
+double opt_general_menu_position0(OPT_ARGS_NUM);
+double opt_general_menu_position1(OPT_ARGS_NUM);
+double opt_general_menu_fontsize(OPT_ARGS_NUM);
+double opt_general_center_windows(OPT_ARGS_NUM);
+double opt_general_rotation0(OPT_ARGS_NUM);
+double opt_general_rotation1(OPT_ARGS_NUM);
+double opt_general_rotation2(OPT_ARGS_NUM);
+double opt_general_quaternion0(OPT_ARGS_NUM);
+double opt_general_quaternion1(OPT_ARGS_NUM);
+double opt_general_quaternion2(OPT_ARGS_NUM);
+double opt_general_quaternion3(OPT_ARGS_NUM);
+double opt_general_translation0(OPT_ARGS_NUM);
+double opt_general_translation1(OPT_ARGS_NUM);
+double opt_general_translation2(OPT_ARGS_NUM);
+double opt_general_scale0(OPT_ARGS_NUM);
+double opt_general_scale1(OPT_ARGS_NUM);
+double opt_general_scale2(OPT_ARGS_NUM);
+double opt_general_shine(OPT_ARGS_NUM);
+double opt_general_color_scheme(OPT_ARGS_NUM);
+double opt_general_verbosity(OPT_ARGS_NUM);
+double opt_general_terminal(OPT_ARGS_NUM);
+double opt_general_orthographic(OPT_ARGS_NUM);
+double opt_general_fast_redraw(OPT_ARGS_NUM);
+double opt_general_axes(OPT_ARGS_NUM);
+double opt_general_small_axes(OPT_ARGS_NUM);
+double opt_general_display_lists(OPT_ARGS_NUM);
+double opt_general_alpha_blending(OPT_ARGS_NUM);
+double opt_general_trackball(OPT_ARGS_NUM);
+double opt_general_zoom_factor(OPT_ARGS_NUM);
+double opt_general_clip0(OPT_ARGS_NUM);
+double opt_general_clip0a(OPT_ARGS_NUM);
+double opt_general_clip0b(OPT_ARGS_NUM);
+double opt_general_clip0c(OPT_ARGS_NUM);
+double opt_general_clip0d(OPT_ARGS_NUM);
+double opt_general_clip1(OPT_ARGS_NUM);
+double opt_general_clip1a(OPT_ARGS_NUM);
+double opt_general_clip1b(OPT_ARGS_NUM);
+double opt_general_clip1c(OPT_ARGS_NUM);
+double opt_general_clip1d(OPT_ARGS_NUM);
+double opt_general_clip2(OPT_ARGS_NUM);
+double opt_general_clip2a(OPT_ARGS_NUM);
+double opt_general_clip2b(OPT_ARGS_NUM);
+double opt_general_clip2c(OPT_ARGS_NUM);
+double opt_general_clip2d(OPT_ARGS_NUM);
+double opt_general_clip3(OPT_ARGS_NUM);
+double opt_general_clip3a(OPT_ARGS_NUM);
+double opt_general_clip3b(OPT_ARGS_NUM);
+double opt_general_clip3c(OPT_ARGS_NUM);
+double opt_general_clip3d(OPT_ARGS_NUM);
+double opt_general_clip4(OPT_ARGS_NUM);
+double opt_general_clip4a(OPT_ARGS_NUM);
+double opt_general_clip4b(OPT_ARGS_NUM);
+double opt_general_clip4c(OPT_ARGS_NUM);
+double opt_general_clip4d(OPT_ARGS_NUM);
+double opt_general_clip5(OPT_ARGS_NUM);
+double opt_general_clip5a(OPT_ARGS_NUM);
+double opt_general_clip5b(OPT_ARGS_NUM);
+double opt_general_clip5c(OPT_ARGS_NUM);
+double opt_general_clip5d(OPT_ARGS_NUM);
+double opt_general_light0(OPT_ARGS_NUM);
+double opt_general_light00(OPT_ARGS_NUM);
+double opt_general_light01(OPT_ARGS_NUM);
+double opt_general_light02(OPT_ARGS_NUM);
+double opt_general_light1(OPT_ARGS_NUM);
+double opt_general_light10(OPT_ARGS_NUM);
+double opt_general_light11(OPT_ARGS_NUM);
+double opt_general_light12(OPT_ARGS_NUM);
+double opt_general_light2(OPT_ARGS_NUM);
+double opt_general_light20(OPT_ARGS_NUM);
+double opt_general_light21(OPT_ARGS_NUM);
+double opt_general_light22(OPT_ARGS_NUM);
+double opt_general_light3(OPT_ARGS_NUM);
+double opt_general_light30(OPT_ARGS_NUM);
+double opt_general_light31(OPT_ARGS_NUM);
+double opt_general_light32(OPT_ARGS_NUM);
+double opt_general_light4(OPT_ARGS_NUM);
+double opt_general_light40(OPT_ARGS_NUM);
+double opt_general_light41(OPT_ARGS_NUM);
+double opt_general_light42(OPT_ARGS_NUM);
+double opt_general_light5(OPT_ARGS_NUM);
+double opt_general_light50(OPT_ARGS_NUM);
+double opt_general_light51(OPT_ARGS_NUM);
+double opt_general_light52(OPT_ARGS_NUM);
+double opt_geometry_normals(OPT_ARGS_NUM);
+double opt_geometry_tangents(OPT_ARGS_NUM);
+double opt_geometry_points(OPT_ARGS_NUM);
+double opt_geometry_lines(OPT_ARGS_NUM);
+double opt_geometry_surfaces(OPT_ARGS_NUM);
+double opt_geometry_volumes(OPT_ARGS_NUM);
+double opt_geometry_points_num(OPT_ARGS_NUM);
+double opt_geometry_lines_num(OPT_ARGS_NUM);
+double opt_geometry_surfaces_num(OPT_ARGS_NUM);
+double opt_geometry_volumes_num(OPT_ARGS_NUM);
+double opt_geometry_hidden(OPT_ARGS_NUM);
+double opt_geometry_shade(OPT_ARGS_NUM);
+double opt_geometry_highlight(OPT_ARGS_NUM);
+double opt_geometry_old_circle(OPT_ARGS_NUM);
+double opt_geometry_scaling_factor(OPT_ARGS_NUM);
+double opt_mesh_quality(OPT_ARGS_NUM);
+double opt_mesh_normals(OPT_ARGS_NUM);
+double opt_mesh_tangents(OPT_ARGS_NUM);
+double opt_mesh_explode(OPT_ARGS_NUM);
+double opt_mesh_scaling_factor(OPT_ARGS_NUM);
+double opt_mesh_lc_factor(OPT_ARGS_NUM);
+double opt_mesh_rand_factor(OPT_ARGS_NUM);
+double opt_mesh_limit_gamma(OPT_ARGS_NUM);
+double opt_mesh_limit_eta(OPT_ARGS_NUM);
+double opt_mesh_limit_rho(OPT_ARGS_NUM);
+double opt_mesh_points(OPT_ARGS_NUM);
+double opt_mesh_lines(OPT_ARGS_NUM);
+double opt_mesh_surfaces(OPT_ARGS_NUM);
+double opt_mesh_volumes(OPT_ARGS_NUM);
+double opt_mesh_points_num(OPT_ARGS_NUM);
+double opt_mesh_lines_num(OPT_ARGS_NUM);
+double opt_mesh_surfaces_num(OPT_ARGS_NUM);
+double opt_mesh_volumes_num(OPT_ARGS_NUM);
+double opt_mesh_hidden(OPT_ARGS_NUM);
+double opt_mesh_shade(OPT_ARGS_NUM);
+double opt_mesh_format(OPT_ARGS_NUM);
+double opt_mesh_nb_smoothing(OPT_ARGS_NUM);
+double opt_mesh_algo(OPT_ARGS_NUM);
+double opt_mesh_point_insertion(OPT_ARGS_NUM);
+double opt_mesh_speed_max(OPT_ARGS_NUM);
+double opt_mesh_min_circ_points(OPT_ARGS_NUM);
+double opt_mesh_degree(OPT_ARGS_NUM);
+double opt_mesh_dual(OPT_ARGS_NUM);
+double opt_mesh_interactive(OPT_ARGS_NUM);
+double opt_mesh_use_cut_plane(OPT_ARGS_NUM);
+double opt_mesh_cut_planea(OPT_ARGS_NUM);
+double opt_mesh_cut_planeb(OPT_ARGS_NUM);
+double opt_mesh_cut_planec(OPT_ARGS_NUM);
+double opt_mesh_cut_planed(OPT_ARGS_NUM);
+double opt_post_scales(OPT_ARGS_NUM);
+double opt_post_link(OPT_ARGS_NUM);
+double opt_post_smooth(OPT_ARGS_NUM);
+double opt_post_initial_visibility(OPT_ARGS_NUM);
+double opt_post_initial_intervals(OPT_ARGS_NUM);
+double opt_post_initial_nbiso(OPT_ARGS_NUM);
+double opt_post_anim_delay(OPT_ARGS_NUM);
+double opt_post_nb_views(OPT_ARGS_NUM);
+double opt_view_nb_timestep(OPT_ARGS_NUM);
+double opt_view_timestep(OPT_ARGS_NUM);
+double opt_view_min(OPT_ARGS_NUM);
+double opt_view_max(OPT_ARGS_NUM);
+double opt_view_custom_min(OPT_ARGS_NUM);
+double opt_view_custom_max(OPT_ARGS_NUM);
+double opt_view_offset0(OPT_ARGS_NUM);
+double opt_view_offset1(OPT_ARGS_NUM);
+double opt_view_offset2(OPT_ARGS_NUM);
+double opt_view_raise0(OPT_ARGS_NUM);
+double opt_view_raise1(OPT_ARGS_NUM);
+double opt_view_raise2(OPT_ARGS_NUM);
+double opt_view_arrow_scale(OPT_ARGS_NUM);
+double opt_view_visible(OPT_ARGS_NUM);
+double opt_view_intervals_type(OPT_ARGS_NUM);
+double opt_view_nb_iso(OPT_ARGS_NUM);
+double opt_view_light(OPT_ARGS_NUM);
+double opt_view_show_element(OPT_ARGS_NUM);
+double opt_view_show_time(OPT_ARGS_NUM);
+double opt_view_show_scale(OPT_ARGS_NUM);
+double opt_view_transparent_scale(OPT_ARGS_NUM);
+double opt_view_scale_type(OPT_ARGS_NUM);
+double opt_view_range_type(OPT_ARGS_NUM);
+double opt_view_arrow_type(OPT_ARGS_NUM);
+double opt_view_arrow_location(OPT_ARGS_NUM);
+double opt_print_format(OPT_ARGS_NUM);
+double opt_print_eps_quality(OPT_ARGS_NUM);
+double opt_print_jpeg_quality(OPT_ARGS_NUM);
+double opt_print_gif_dither(OPT_ARGS_NUM);
+double opt_print_gif_sort(OPT_ARGS_NUM);
+double opt_print_gif_interlace(OPT_ARGS_NUM);
+double opt_print_gif_transparent(OPT_ARGS_NUM);
+double opt_print_font_size(OPT_ARGS_NUM);
 
 // COLORS
 
-StringXColor GeneralOptions_Color[] = {
-  { "Background" , &CTX.color.bg ,
-    PACK_COLOR(0,   0,   0,   255), 
-    PACK_COLOR(255, 255, 255, 255), 
-    PACK_COLOR(255, 255, 255, 255) },
-  { "Foreground" , &CTX.color.fg ,
-    PACK_COLOR(255, 255, 255, 255),
-    PACK_COLOR(0,   0,   0,   255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "Text"       , &CTX.color.text ,
-    PACK_COLOR(255, 255, 255, 255),
-    PACK_COLOR(0,   0,   0,   255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "Axes"       , &CTX.color.axes ,
-    PACK_COLOR(255, 255, 0,   255),
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "SmallAxes"  , &CTX.color.small_axes ,
-    PACK_COLOR(255, 255, 255, 255),
-    PACK_COLOR(0,   0,   0,   255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { NULL         , NULL ,  0, 0, 0 }
-} ;
+unsigned int opt_general_color_background(OPT_ARGS_COL);
+unsigned int opt_general_color_foreground(OPT_ARGS_COL);
+unsigned int opt_general_color_text(OPT_ARGS_COL);
+unsigned int opt_general_color_axes(OPT_ARGS_COL);
+unsigned int opt_general_color_small_axes(OPT_ARGS_COL);
+unsigned int opt_geometry_color_points(OPT_ARGS_COL); 
+unsigned int opt_geometry_color_lines(OPT_ARGS_COL);
+unsigned int opt_geometry_color_surfaces(OPT_ARGS_COL);
+unsigned int opt_geometry_color_volumes(OPT_ARGS_COL);
+unsigned int opt_geometry_color_points_select(OPT_ARGS_COL);
+unsigned int opt_geometry_color_lines_select(OPT_ARGS_COL);
+unsigned int opt_geometry_color_surfaces_select(OPT_ARGS_COL);
+unsigned int opt_geometry_color_volumes_select(OPT_ARGS_COL);
+unsigned int opt_geometry_color_points_highlight(OPT_ARGS_COL);
+unsigned int opt_geometry_color_lines_highlight(OPT_ARGS_COL);
+unsigned int opt_geometry_color_surfaces_highlight(OPT_ARGS_COL);
+unsigned int opt_geometry_color_volumes_highlight(OPT_ARGS_COL);
+unsigned int opt_geometry_color_tangents(OPT_ARGS_COL);
+unsigned int opt_geometry_color_normals(OPT_ARGS_COL);
+unsigned int opt_mesh_color_points(OPT_ARGS_COL); 
+unsigned int opt_mesh_color_points_supp(OPT_ARGS_COL); 
+unsigned int opt_mesh_color_lines(OPT_ARGS_COL); 
+unsigned int opt_mesh_color_triangles(OPT_ARGS_COL);
+unsigned int opt_mesh_color_quadrangles(OPT_ARGS_COL);
+unsigned int opt_mesh_color_tetrahedra(OPT_ARGS_COL);
+unsigned int opt_mesh_color_hexahedra(OPT_ARGS_COL);
+unsigned int opt_mesh_color_prisms(OPT_ARGS_COL);
+unsigned int opt_mesh_color_pyramid(OPT_ARGS_COL);
+unsigned int opt_mesh_color_tangents(OPT_ARGS_COL);
+unsigned int opt_mesh_color_normals(OPT_ARGS_COL);
+unsigned int opt_mesh_color_1(OPT_ARGS_COL);
+unsigned int opt_mesh_color_2(OPT_ARGS_COL);
+unsigned int opt_mesh_color_3(OPT_ARGS_COL);
+unsigned int opt_mesh_color_4(OPT_ARGS_COL);
+unsigned int opt_mesh_color_5(OPT_ARGS_COL);
+unsigned int opt_mesh_color_6(OPT_ARGS_COL);
+unsigned int opt_mesh_color_7(OPT_ARGS_COL);
+unsigned int opt_mesh_color_8(OPT_ARGS_COL);
+unsigned int opt_mesh_color_9(OPT_ARGS_COL);
+unsigned int opt_mesh_color_10(OPT_ARGS_COL);
 
-StringXColor GeometryOptions_Color[] = {
-  { "Points"             , &CTX.color.geom.point , 
-    PACK_COLOR(178, 182, 129, 255) ,
-    PACK_COLOR(178, 182, 129, 255) ,
-    PACK_COLOR(0,   0,   0,   255) },
-  { "Lines"              , &CTX.color.geom.line ,
-    PACK_COLOR(0,   0,   255, 255),
-    PACK_COLOR(0,   0,   255, 255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "Surfaces"           , &CTX.color.geom.surface ,
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "Volumes"            , &CTX.color.geom.volume ,
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "PointsSelect"       , &CTX.color.geom.point_sel ,
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "LinesSelect"        , &CTX.color.geom.line_sel ,
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "SurfacesSelect"     , &CTX.color.geom.surface_sel ,
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "VolumesSelect"      , &CTX.color.geom.volume_sel ,
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "PointsHighlight"    , &CTX.color.geom.point_hlt ,
-    PACK_COLOR(0,   255, 0,   255),
-    PACK_COLOR(0,   255, 0,   255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "LinesHighlight"     , &CTX.color.geom.line_hlt ,
-    PACK_COLOR(0,   0,   255, 255),
-    PACK_COLOR(0,   0,   255, 255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "SurfacesHighlight"  , &CTX.color.geom.surface_hlt ,
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "VolumesHighlight"   , &CTX.color.geom.volume_hlt ,
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "Tangents"           , &CTX.color.geom.tangents ,
-    PACK_COLOR(255, 255, 0,   255),
-    PACK_COLOR(255, 255, 0,   255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "Normals"            , &CTX.color.geom.normals ,
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { NULL                 , NULL , 0, 0, 0  }
-} ;
 
-StringXColor MeshOptions_Color[] = {
-  { "Points"             , &CTX.color.mesh.vertex , 
-    PACK_COLOR(0  , 123, 59 , 255),
-    PACK_COLOR(0  , 123, 59 , 255),
-  },
-  { "PointsSupp"         , &CTX.color.mesh.vertex_supp , 
-    PACK_COLOR(255, 0,   255, 255),
-    PACK_COLOR(255, 0,   255, 255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "Lines"              , &CTX.color.mesh.line , 
-    PACK_COLOR(0,   255, 0,   255),
-    PACK_COLOR(0,   255, 0,   255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "Triangles"          , &CTX.color.mesh.triangle ,
-    PACK_COLOR(0,   255, 0,   255),
-    PACK_COLOR(0,   255, 0,   255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "Quadrangles"        , &CTX.color.mesh.quadrangle ,
-    PACK_COLOR(0,   255, 0,   255),
-    PACK_COLOR(0,   255, 0,   255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "Tetrahedra"         , &CTX.color.mesh.tetrahedron ,
-    PACK_COLOR(0,   255, 0,   255),
-    PACK_COLOR(0,   255, 0,   255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "Hexahedra"          , &CTX.color.mesh.hexahedron ,
-    PACK_COLOR(128, 255, 0,   255),
-    PACK_COLOR(128, 255, 0,   255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "Prisms"             , &CTX.color.mesh.prism ,
-    PACK_COLOR(0,   255, 128, 255),
-    PACK_COLOR(0,   255, 128, 255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "Pyramids"           , &CTX.color.mesh.pyramid ,
-    PACK_COLOR(128, 255, 128, 255),
-    PACK_COLOR(128, 255, 128, 255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "Tangents"           , &CTX.color.mesh.tangents ,
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "Normals"            , &CTX.color.mesh.normals ,
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(0,   0,   0,   255) },
-  { "One"                , &CTX.color.mesh.carousel[0] ,
-    PACK_COLOR(0  , 82 , 138, 255),
-    PACK_COLOR(0  , 82 , 138, 255),
-    PACK_COLOR(255, 255, 255, 255) },
-  { "Two"                , &CTX.color.mesh.carousel[1] ,
-    PACK_COLOR(255, 0  , 0  , 255),
-    PACK_COLOR(255, 0  , 0  , 255),
-    PACK_COLOR(255, 255, 255, 255) },
-  { "Three"              , &CTX.color.mesh.carousel[2] ,
-    PACK_COLOR(31 , 110, 171, 255),
-    PACK_COLOR(31 , 110, 171, 255),
-    PACK_COLOR(255, 255, 255, 255) },
-  { "Four"               , &CTX.color.mesh.carousel[3] ,
-    PACK_COLOR(255, 255, 0  , 255),
-    PACK_COLOR(255, 255, 0  , 255),
-    PACK_COLOR(255, 255, 255, 255) },
-  { "Five"               , &CTX.color.mesh.carousel[4] ,
-    PACK_COLOR(255, 0  , 255, 255),
-    PACK_COLOR(255, 0  , 255, 255),
-    PACK_COLOR(255, 255, 255, 255) },
-  { "Six"                , &CTX.color.mesh.carousel[5] ,
-    PACK_COLOR(128, 128, 0  , 255),
-    PACK_COLOR(128, 128, 0  , 255),
-    PACK_COLOR(255, 255, 255, 255) },
-  { "Seven"              , &CTX.color.mesh.carousel[6] ,
-    PACK_COLOR(128, 0  , 255, 255),
-    PACK_COLOR(128, 0  , 255, 255),
-    PACK_COLOR(255, 255, 255, 255) },
-  { "Eight"              , &CTX.color.mesh.carousel[7] ,
-    PACK_COLOR(128, 128, 255, 255),
-    PACK_COLOR(128, 128, 255, 255),
-    PACK_COLOR(255, 255, 255, 255) },
-  { "Nine"               , &CTX.color.mesh.carousel[8] ,
-    PACK_COLOR(128, 128, 255, 255),
-    PACK_COLOR(128, 128, 255, 255),
-    PACK_COLOR(255, 255, 255, 255) },
-  { "Ten"                , &CTX.color.mesh.carousel[9] ,
-    PACK_COLOR(0  , 0  , 255, 255),
-    PACK_COLOR(0  , 0  , 255, 255),
-    PACK_COLOR(255, 255, 255, 255) },
-  { NULL                 , NULL , 0, 0, 0  }
-} ;
+// Data structures and global functions
 
-StringXColor PostProcessingOptions_Color[] = {
-  { NULL         , NULL ,  0, 0, 0 }
-} ;
+typedef struct {
+  char *str ; 
+  int int1, int2, int3, int4 ;
+} StringX4Int;
 
-StringXColor PrintOptions_Color[] = {
-  { NULL         , NULL ,  0, 0, 0 }
-} ;
+typedef struct {
+  char *str ;
+  char * (*function)(int num, int action, char *val) ;
+  char *def ;
+} StringXString ;
+
+typedef struct {
+  char *str;
+  double (*function)(int num, int action, double val) ;
+  double def ;
+} StringXNumber ;
+
+typedef struct {
+  char *str ; 
+  unsigned int (*function)(int num, int action, unsigned int val) ;
+  unsigned int def1, def2, def3 ;
+} StringXColor ;
+
+StringXString * Get_StringOptionCategory(char * cat);
+StringXNumber * Get_NumberOptionCategory(char * cat);
+StringXColor * Get_ColorOptionCategory(char * cat);
+
+void Set_DefaultStringOptions(int num, StringXString s[]);
+void Set_DefaultNumberOptions(int num, StringXNumber s[]);
+void Set_DefaultColorOptions(int num, StringXColor s[], int scheme);
+
+void * Get_StringOption(char *str, StringXString s[]);
+void * Get_NumberOption(char *str, StringXNumber s[]);
+void * Get_ColorOption(char *str, StringXColor s[]);
+
+void Print_StringOptions(int num, StringXString s[], char *prefix, FILE *file);
+void Print_NumberOptions(int num, StringXNumber s[], char *prefix, FILE *file);
+void Print_ColorOptions(int num, StringXColor s[], char *prefix, FILE *file);
+
+extern StringXString GeneralOptions_String[] ;
+extern StringXString GeometryOptions_String[] ;
+extern StringXString MeshOptions_String[] ;
+extern StringXString PostProcessingOptions_String[] ;
+extern StringXString ViewOptions_String[] ;
+extern StringXString PrintOptions_String[] ;
+
+extern StringXNumber GeneralOptions_Number[] ;
+extern StringXNumber GeometryOptions_Number[] ;
+extern StringXNumber MeshOptions_Number[] ;
+extern StringXNumber PostProcessingOptions_Number[] ;
+extern StringXNumber ViewOptions_Number[] ;
+extern StringXNumber PrintOptions_Number[] ;
+
+extern StringXColor GeneralOptions_Color[] ;
+extern StringXColor GeometryOptions_Color[] ;
+extern StringXColor MeshOptions_Color[] ;
+extern StringXColor PostProcessingOptions_Color[] ;
+extern StringXColor ViewOptions_Color[] ;
+extern StringXColor PrintOptions_Color[] ;
 
 #endif

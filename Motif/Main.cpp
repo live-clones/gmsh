@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.8 2001-02-03 14:03:46 geuzaine Exp $
+// $Id: Main.cpp,v 1.9 2001-02-12 17:38:03 geuzaine Exp $
 
 #include <signal.h>
 
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]){
  
   /* Gmsh default context options */
   
-  Init_Context();
+  Init_Context(0);
 
   /* Command line options */
 

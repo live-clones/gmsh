@@ -59,9 +59,7 @@ extern    Context_Item menu_mesh_define[];
 extern        Context_Item menu_mesh_define_transfinite[]; 
 extern Context_Item menu_post[]; 
 
-// The GUI class contains only the important widgets. All these
-// widgets should stay private, and be accessed only by the public
-// member functions.
+// The GUI class contains only the important widgets (which can be set/queried).
 
 class GUI{
 
@@ -79,6 +77,8 @@ class GUI{
   Fl_Bitmap  *abort_bmp, *start_bmp, *stop_bmp, *about_bmp ;
 
   // We keep the following widgets for easy further reference
+
+public:
 
   // menu window
   int init_menu_window;
@@ -161,7 +161,6 @@ class GUI{
   Fl_Window        *context_mesh_window ;
   Fl_Input         *context_mesh_input[20] ;
 
-public:
 
   // the constructor
   GUI(int argc, char **argv);
@@ -173,8 +172,8 @@ public:
   void create_geometry_options_window();
   void create_mesh_options_window();
   void create_post_options_window();
+  void create_view_options_window(int numview);
   void create_statistics_window();
-  void create_view_window(int numview);
   void create_message_window();
   void create_help_window();
   void create_about_window();
@@ -201,7 +200,6 @@ public:
   void set_statistics();
   void update_view_window(int numview);
   void set_title(char *str);
-  void activate_custom(int val);
   void add_handler();
   int  global_shortcuts(int event);
   int  try_selection, quit_selection, end_selection;

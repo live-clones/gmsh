@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.5 2001-01-24 11:24:06 geuzaine Exp $
+// $Id: Message.cpp,v 1.6 2001-02-12 17:38:03 geuzaine Exp $
 
 #include <signal.h>
 #include <sys/resource.h>
@@ -67,6 +67,10 @@ void Msg(int level, char *fmt, ...){
   va_start (args, fmt);
 
   switch(level){
+  case DIRECT :
+    vfprintf(stderr, fmt, args); 
+    fprintf(stderr, "\n");
+    break;
   case FATAL :
     fprintf(stderr, FATAL_STR);
     vfprintf(stderr, fmt, args); 

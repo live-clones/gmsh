@@ -29,16 +29,16 @@ General.Axes = 0 ;
 
 // ...as well as some options for each post-processing view...
 
-PostProcessing.View[0].Name = "This is a very stupid demonstration..." ;
-PostProcessing.View[0].IntervalsType = 2 ;
-PostProcessing.View[0].Offset2 = 0.05 ;
-PostProcessing.View[0].Raise2 = 0 ;
-PostProcessing.View[0].Light = 1 ;
+View[0].Name = "This is a very stupid demonstration..." ;
+View[0].IntervalsType = 2 ;
+View[0].Offset2 = 0.05 ;
+View[0].Raise2 = 0 ;
+View[0].Light = 1 ;
 
-PostProcessing.View[1].Name = "...of Gmsh's scripting capabilities" ;
-PostProcessing.View[1].IntervalsType = 1 ;
-PostProcessing.View[1].Color = { Green, Blue } ;
-PostProcessing.View[1].NbIso = 10 ;
+View[1].Name = "...of Gmsh's scripting capabilities" ;
+View[1].IntervalsType = 1 ;
+View[1].ColorTable = { Green, Blue } ;
+View[1].NbIso = 10 ;
 
 // ...and loop from 1 to 255 with a step of 1 is performed (to use a
 // step different from 1, just add a third argument in the list,
@@ -49,12 +49,12 @@ t = 0 ;
 
 For num In {1:255}
 
-  PostProcessing.View[0].TimeStep = t ;
-  PostProcessing.View[1].TimeStep = t ;
+  View[0].TimeStep = t ;
+  View[1].TimeStep = t ;
 
-  t = (PostProcessing.View[0].TimeStep < PostProcessing.View[0].NbTimeStep-1) ? t+1 : 0 ;
+  t = (View[0].TimeStep < View[0].NbTimeStep-1) ? t+1 : 0 ;
   
-  PostProcessing.View[0].Raise2 += 0.001*t ;
+  View[0].Raise2 += 0.001*t ;
 
   If (num == 3)
     // We want to use mpeg_encode to create a nice 320x240 animation

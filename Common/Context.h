@@ -1,14 +1,7 @@
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
-// Interface-independant context 
-
 #include "Const.h"
-
-#define GMSH_INT     1
-#define GMSH_LONG    2
-#define GMSH_FLOAT   3
-#define GMSH_DOUBLE  4
 
 // How RGBA values are packed and unpacked into/from a 4-byte integer 
 
@@ -26,39 +19,18 @@
 #    define UNPACK_ALPHA(X)       ( (X) & 0xff )
 #  endif
 
-typedef struct{
-  int id;                       // the current rgbacolors id 
-  
-  // general colors 
-  unsigned int bg, fg, text, axes, small_axes;
-  
-  // geometry colors 
-  struct{
-    unsigned int point, line, surface, volume;
-    unsigned int point_sel, line_sel, surface_sel, volume_sel;
-    unsigned int point_hlt, line_hlt, surface_hlt, volume_hlt;
-    unsigned int tangents, normals;
-  }
-  geom;
-  
-  // mesh colors 
-  struct{
-    unsigned int vertex, vertex_supp, line, triangle, quadrangle;
-    unsigned int tetrahedron, hexahedron, prism, pyramid;
-    unsigned int carousel[10];
-    unsigned int tangents, normals;
-  }
-  mesh;
-  
-}rgbacolors;
+// Interface-independant context 
 
 class Context_T {
+
 public :
 
+  // general options
   char filename[NAME_STR_L];  // the name of the currently opened file
   char basefilename[NAME_STR_L]; // the same without the extension
   char *configfilename;       // the name of the configuration file
   char *display;              // forced display host:0.0 under X11 
+  int  terminal;              // show we print to the terminal console?
 
   int position[2];            // position of the menu window on the screen
   int gl_position[2];         // position of the graphic window on the screen
@@ -107,10 +79,8 @@ public :
   int gl_fontheight;          // font height
   int gl_fontascent;          // height of the font above the reference point
 
-  // OpenGL stuff 
   int viewport[4];            // current viewport 
-  double vxmin, vxmax, vymin, vymax;
-                              // current viewport in real coordinates 
+  double vxmin, vxmax, vymin, vymax; // current viewport in real coordinates 
   int light[6];               // status of light 
   float light_position[6][4]; // light sources positions 
   float shine;                // specular value 
@@ -119,9 +89,8 @@ public :
   double clip_plane[6][4];    // clip planes 
   double pixel_equiv_x, pixel_equiv_y ; 
                               // approximative equivalent model length of a pixel 
-  
-  rgbacolors color;           // all colors except postpro colormaps 
-  
+  int color_scheme ;
+
   // geometry options 
   struct{
     int vis_type;
@@ -177,53 +146,33 @@ public :
     int  font_size, gl_fonts;
   } print;
 
+  // color options
+  struct{
+    unsigned int bg, fg, text, axes, small_axes;
+    struct{
+      unsigned int point, line, surface, volume;
+      unsigned int point_sel, line_sel, surface_sel, volume_sel;
+      unsigned int point_hlt, line_hlt, surface_hlt, volume_hlt;
+      unsigned int tangents, normals;
+    } geom;
+    struct{
+      unsigned int vertex, vertex_supp, line, triangle, quadrangle;
+      unsigned int tetrahedron, hexahedron, prism, pyramid;
+      unsigned int carousel[10];
+      unsigned int tangents, normals;
+    } mesh;
+  } color;
+  
   // trackball functions 
   void buildRotmatrix(void);
   void setQuaternion (float p1x, float p1y, float p2x, float p2y);
   void addQuaternion (float p1x, float p1y, float p2x, float p2y);
 };
 
-typedef struct {
-  char *str ; 
-  int int1, int2, int3, int4 ;
-} StringX4Int;
-
-typedef struct {
-  char *str, **ptr, *def ;
-} StringXString ;
-
-typedef struct {
-  char *str;
-  int type;
-  void *ptr;
-  double def ;
-} StringXNumber ;
-
-typedef struct {
-  char *str ; 
-  unsigned int *ptr ;
-  unsigned int def1, def2, def3 ;
-} StringXColor ;
-
-StringXString * Get_StringOptionCategory(char * cat);
-StringXNumber * Get_NumberOptionCategory(char * cat);
-StringXColor * Get_ColorOptionCategory(char * cat);
-
-void Set_DefaultStringOptions(StringXString s[]);
-void Set_DefaultNumberOptions(StringXNumber s[]);
-void Set_DefaultColorOptions(StringXColor s[], int num);
-
-char ** Get_StringOption(char *str, StringXString s[]);
-void * Get_NumberOption(char *str, StringXNumber s[], int *type);
-unsigned int * Get_ColorOption(char *str, StringXColor s[]);
-
-void Print_StringOptions(StringXString s[], char *prefix, FILE *file);
-void Print_NumberOptions(StringXNumber s[], char *prefix, FILE *file);
-void Print_ColorOptions(StringXColor s[], char *prefix, FILE *file);
-
+void Init_Context (int num);
 void Init_Colors (int num);
-void Init_Context (void);
-void Print_Context(char *filename);
-void Print_Configuration(char *filename);
+void UpdateGUI_Context (int num);
+void Print_Context(int num, char *filename);
+void Print_Configuration(int num, char *filename);
 
 #endif

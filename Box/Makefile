@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2001-02-09 14:51:31 geuzaine Exp $
+# $Id: Makefile,v 1.6 2001-02-12 17:38:02 geuzaine Exp $
 #
 # Makefile for ".a"
 #
@@ -48,10 +48,11 @@ depend:
 	$(RM) $(RMFLAGS) Makefile.new
 
 # DO NOT DELETE THIS LINE
-box.o: box.cpp ../includes/msh_Include.h ../GmshDataStr/listman.h \
- ../GmshDataStr/treeman.h ../GmshDataStr/avl.h ../GmshDataStr/ualloc.h \
- ../GmshDataStr/outil.h ../base/base.h ../geo/geo.h \
- ../GmshUnix/message.h ../includes/msh_Const.h ../mesh/structure.h \
- ../includes/msh_Tree.h ../includes/msh_Proto.h \
- ../includes/msh_Version.h ../geo/context.h ../GmshGL/Draw_Post.h \
- ../GmshGL/colortable.h
+Box.o: Box.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../Common/GmshVersion.h ../Common/Const.h ../Geo/Geo.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Common/Views.h \
+  ../Common/ColorTable.h ../Parser/Parser.h ../Common/Context.h \
+  ../Parser/OpenFile.h ../Common/GetOptions.h ../Geo/MinMax.h \
+  ../Common/Static.h

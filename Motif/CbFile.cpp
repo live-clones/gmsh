@@ -1,4 +1,4 @@
-// $Id: CbFile.cpp,v 1.4 2001-02-08 16:32:15 geuzaine Exp $
+// $Id: CbFile.cpp,v 1.5 2001-02-12 17:38:03 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -62,7 +62,7 @@ void FileCb(Widget w, XtPointer client_data, XtPointer call_data){
   case FILE_LOAD_GEOM       : OpenProblem(c); Draw(); break;
   case FILE_LOAD_POST       : MergeProblem(c); ColorBarRedraw(); Draw(); break;
   case FILE_SAVE_AS         : SaveToDisk(c, WID.ED.saveAsDialog, CreateOutputFile); break;
-  case FILE_SAVE_OPTIONS_AS : Print_Context(c); break;
+  case FILE_SAVE_OPTIONS_AS : Print_Context(0,c); break;
   default :
     Msg(WARNING, "Unknown event in FileCb : %d", (long int)client_data); 
     break;

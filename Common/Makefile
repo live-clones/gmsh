@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2001-02-09 14:51:31 geuzaine Exp $
+# $Id: Makefile,v 1.12 2001-02-12 17:38:02 geuzaine Exp $
 #
 # Makefile for "libCommon.a"
 #
@@ -28,6 +28,7 @@ CFLAGS  = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
 
 SRC =  	Context.cpp\
         Views.cpp\
+        Options.cpp\
         GetOptions.cpp\
         Timer.cpp\
         ColorTable.cpp
@@ -63,13 +64,14 @@ Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   Const.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
   ../Graphics/Draw.h ../Common/Views.h ../Common/Const.h \
-  ../Common/ColorTable.h Context.h trackball.c trackball.h
+  ../Common/ColorTable.h Context.h Options.h DefaultOptions.h trackball.c \
+  trackball.h
 Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h Views.h Const.h \
-  ColorTable.h Context.h
+  ColorTable.h Context.h Options.h
 GetOptions.o: GetOptions.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  GmshVersion.h Const.h Context.h ../Geo/Geo.h ../Mesh/Mesh.h \
+  GmshUI.h GmshVersion.h Const.h Context.h ../Geo/Geo.h ../Mesh/Mesh.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h Views.h ColorTable.h \
   ../Parser/OpenFile.h ../Common/Const.h

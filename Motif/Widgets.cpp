@@ -1,4 +1,4 @@
-// $Id: Widgets.cpp,v 1.2 2001-02-03 14:03:46 geuzaine Exp $
+// $Id: Widgets.cpp,v 1.3 2001-02-12 17:38:03 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1334,7 +1334,7 @@ void CreateWidgets_OD(Widgets_T *w){
   XtSetArg(arg[i], XmNmaximum, 2); i++;
   XtSetArg(arg[i], XmNdecimalPoints, 0); i++;
   XtSetArg(arg[i], XmNshowValue, True); i++;
-  XtSetArg(arg[i], XmNvalue, CTX.color.id); i++;
+  XtSetArg(arg[i], XmNvalue, CTX.color_scheme); i++;
   XtSetArg(arg[i], XmNorientation, XmHORIZONTAL); i++;
   w->OD.miscColorSchemeScale = XmCreateScale(w->OD.miscColorSchemeFrameRowCol, "ODmiscColorSchemeScale", arg, i);
   XtManageChild(w->OD.miscColorSchemeScale);

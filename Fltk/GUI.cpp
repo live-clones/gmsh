@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.43 2001-02-09 12:32:59 geuzaine Exp $
+// $Id: GUI.cpp,v 1.44 2001-02-12 17:38:02 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -9,6 +9,7 @@
 #include "GmshUI.h"
 #include "GmshVersion.h"
 #include "Context.h"
+#include "Options.h"
 #include "Const.h"
 #include "Geo.h"
 #include "Mesh.h"
@@ -279,48 +280,34 @@ int GUI::global_shortcuts(int event){
     return 1;
   }
   else if(Fl::test_shortcut('s')){
-    CTX.post.anim_delay += 0.01 ;
-    post_value[0]->value(CTX.post.anim_delay);
-    post_value[0]->redraw();
+    opt_post_anim_delay(0,GMSH_SET|GMSH_GUI,opt_post_anim_delay(0,GMSH_GET,0) + 0.01);
     return 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT+'s')){
-    CTX.post.anim_delay -= 0.01 ;
-    if(CTX.post.anim_delay < 0.) CTX.post.anim_delay = 0. ;
-    post_value[0]->value(CTX.post.anim_delay);
-    post_value[0]->redraw();
+    opt_post_anim_delay(0,GMSH_SET|GMSH_GUI,opt_post_anim_delay(0,GMSH_GET,0) - 0.01);
     return 1;
   }
   else if(Fl::test_shortcut(FL_CTRL+'z')){
-    g_window->iconize();
+    g_window->iconize() ;
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+'f')){
-    CTX.fast = !CTX.fast; 
-    gen_butt[2]->value(CTX.fast);
-    gen_butt[2]->redraw();
+    opt_general_fast_redraw(0,GMSH_SET|GMSH_GUI,!opt_general_fast_redraw(0,GMSH_GET,0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+'b')){
-    CTX.post.scales = !CTX.post.scales; 
+    opt_post_scales(0,GMSH_SET|GMSH_GUI,!opt_post_scales(0,GMSH_GET,0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+'o')){
-    CTX.ortho = !CTX.ortho ;
-    gen_butt[6]->value(CTX.ortho);
-    gen_butt[6]->redraw();
-    gen_butt[7]->value(!CTX.ortho);
-    gen_butt[7]->redraw();
+    opt_general_orthographic(0,GMSH_SET|GMSH_GUI,!opt_general_orthographic(0,GMSH_GET,0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+'c')){
-    if(CTX.color.id==0) Init_Colors(1);
-    else if(CTX.color.id==1) Init_Colors(2);
-    else Init_Colors(0);
-    gen_value[0]->value(CTX.color.id);
+    opt_general_color_scheme(0,GMSH_SET|GMSH_GUI,opt_general_color_scheme(0,GMSH_GET,0)+1);
     redraw_opengl();
     return 1;
   }
@@ -332,12 +319,8 @@ int GUI::global_shortcuts(int event){
     else{
       CTX.mesh.hidden = 0; CTX.mesh.shade = 0; 
     }
-    mesh_butt[11]->value(!CTX.mesh.hidden);
-    mesh_butt[11]->redraw();
-    mesh_butt[12]->value(CTX.mesh.hidden);
-    mesh_butt[12]->redraw();
-    mesh_butt[13]->value(CTX.mesh.shade);
-    mesh_butt[13]->redraw();
+    opt_mesh_hidden(0,GMSH_GUI,0);
+    opt_mesh_shade(0,GMSH_GUI,0);
     redraw_opengl();
     return 1;
   }
@@ -354,102 +337,66 @@ int GUI::global_shortcuts(int event){
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+FL_SHIFT+'a')){
-    CTX.axes = !CTX.axes;
-    gen_butt[0]->value(CTX.axes);
-    gen_butt[0]->redraw();
+    opt_general_axes(0,GMSH_SET|GMSH_GUI,!opt_general_axes(0,GMSH_GET,0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+'a')){
-    CTX.small_axes = !CTX.small_axes;
-    gen_butt[1]->value(CTX.small_axes);
-    gen_butt[1]->redraw();
+    opt_general_small_axes(0,GMSH_SET|GMSH_GUI,!opt_general_small_axes(0,GMSH_GET,0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+'p')){
-    CTX.geom.points = !CTX.geom.points;
-    geo_butt[0]->value(CTX.geom.points);
-    geo_butt[0]->redraw();
+    opt_geometry_points(0,GMSH_SET|GMSH_GUI,!opt_geometry_points(0,GMSH_GET,0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+'l')){
-    CTX.geom.lines = !CTX.geom.lines;
-    geo_butt[1]->value(CTX.geom.lines);
-    geo_butt[1]->redraw();
+    opt_geometry_lines(0,GMSH_SET|GMSH_GUI,!opt_geometry_lines(0,GMSH_GET,0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+'s')){
-    CTX.geom.surfaces = !CTX.geom.surfaces;
-    geo_butt[2]->value(CTX.geom.surfaces);
-    geo_butt[2]->redraw();
+    opt_geometry_surfaces(0,GMSH_SET|GMSH_GUI,!opt_geometry_surfaces(0,GMSH_GET,0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+'v')){
-    CTX.geom.volumes = !CTX.geom.volumes;
-    geo_butt[3]->value(CTX.geom.volumes);
-    geo_butt[3]->redraw();
+    opt_geometry_volumes(0,GMSH_SET|GMSH_GUI,!opt_geometry_volumes(0,GMSH_GET,0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+FL_SHIFT+'p')){
-    CTX.mesh.points = !CTX.mesh.points;
-    mesh_butt[3]->value(CTX.mesh.points);
-    mesh_butt[3]->redraw();
+    opt_mesh_points(0,GMSH_SET|GMSH_GUI,!opt_mesh_points(0,GMSH_GET,0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+FL_SHIFT+'l')){
-    CTX.mesh.lines = !CTX.mesh.lines;
-    mesh_butt[4]->value(CTX.mesh.lines);
-    mesh_butt[4]->redraw();
+    opt_mesh_lines(0,GMSH_SET|GMSH_GUI,!opt_mesh_lines(0,GMSH_GET,0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+FL_SHIFT+'s')){
-    CTX.mesh.surfaces = !CTX.mesh.surfaces;
-    mesh_butt[5]->value(CTX.mesh.surfaces);
-    mesh_butt[5]->redraw();
+    opt_mesh_surfaces(0,GMSH_SET|GMSH_GUI,!opt_mesh_surfaces(0,GMSH_GET,0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+FL_SHIFT+'v')){
-    CTX.mesh.volumes = !CTX.mesh.volumes;
-    mesh_butt[6]->value(CTX.mesh.volumes);
-    mesh_butt[6]->redraw();
+    opt_mesh_volumes(0,GMSH_SET|GMSH_GUI,!opt_mesh_volumes(0,GMSH_GET,0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+'m')){
-    CTX.mesh.points   = !CTX.mesh.points;
-    CTX.mesh.lines    = !CTX.mesh.lines;
-    CTX.mesh.surfaces = !CTX.mesh.surfaces;
-    CTX.mesh.volumes  = !CTX.mesh.volumes;
-    mesh_butt[3]->value(CTX.mesh.points);
-    mesh_butt[3]->redraw();
-    mesh_butt[4]->value(CTX.mesh.lines);
-    mesh_butt[4]->redraw();
-    mesh_butt[5]->value(CTX.mesh.surfaces);
-    mesh_butt[5]->redraw();
-    mesh_butt[6]->value(CTX.mesh.volumes);
-    mesh_butt[6]->redraw();
+    opt_mesh_points(0,GMSH_SET|GMSH_GUI,!opt_mesh_points(0,GMSH_GET,0));
+    opt_mesh_lines(0,GMSH_SET|GMSH_GUI,!opt_mesh_lines(0,GMSH_GET,0));
+    opt_mesh_surfaces(0,GMSH_SET|GMSH_GUI,!opt_mesh_surfaces(0,GMSH_GET,0));
+    opt_mesh_volumes(0,GMSH_SET|GMSH_GUI,!opt_mesh_volumes(0,GMSH_GET,0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+'t')){
     MarkAllViewsChanged(1);
-    if(init_view_window){
-      Post_View *v = (Post_View*)List_Pointer(Post_ViewList, view_number);
-      view_butt[6]->value(v->IntervalsType==DRAW_POST_ISO);
-      view_butt[6]->redraw();
-      view_butt[7]->value(v->IntervalsType==DRAW_POST_DISCRETE);
-      view_butt[7]->redraw();
-      view_butt[8]->value(v->IntervalsType==DRAW_POST_CONTINUOUS);
-      view_butt[8]->redraw();
-    }
+    opt_view_intervals_type(view_number, GMSH_GUI, 0);
     redraw_opengl();
     return 1;
   }
@@ -517,6 +464,7 @@ GUI::GUI(int argc, char **argv) {
   create_geometry_options_window();
   create_mesh_options_window();
   create_post_options_window();
+  create_view_options_window(-1);
   create_message_window();
   create_help_window();
   create_about_window();
@@ -903,23 +851,11 @@ void GUI::create_general_options_window(){
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Display");
 	o->labelsize(CTX.fontsize);
         gen_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Show moving axes");
-	gen_butt[0]->callback(opt_general_moving_axes_cb);
-	gen_butt[0]->value(CTX.axes);
         gen_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Show small axes");
-	gen_butt[1]->callback(opt_general_small_axes_cb);
-	gen_butt[1]->value(CTX.small_axes);
         gen_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Enable fast redraw");
-	gen_butt[2]->callback(opt_general_fast_redraw_cb);
-	gen_butt[2]->value(CTX.fast);
         gen_butt[3] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Use display lists");
-	gen_butt[3]->callback(opt_general_display_lists_cb);
-	gen_butt[3]->value(CTX.display_lists);
         gen_butt[4] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Enable alpha blending");
-	gen_butt[4]->callback(opt_general_alpha_blending_cb);
-	gen_butt[4]->value(CTX.alpha);
         gen_butt[5] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW, BH, "Use trackball rotation mode");
-	gen_butt[5]->callback(opt_general_trackball_cb);
-	gen_butt[5]->value(CTX.useTrackball);
 	for(i=0 ; i<6 ; i++){
 	  gen_butt[i]->type(FL_TOGGLE_BUTTON);
 	  gen_butt[i]->down_box(FL_DOWN_BOX);
@@ -933,11 +869,7 @@ void GUI::create_general_options_window(){
 	o->labelsize(CTX.fontsize);
         o->hide();
         gen_butt[6] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Orthographic");
-	gen_butt[6]->callback(opt_general_orthographic_cb, (void*)1);
-	gen_butt[6]->value(CTX.ortho);
         gen_butt[7] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Perspective");
-	gen_butt[7]->callback(opt_general_orthographic_cb, (void*)0);
-	gen_butt[7]->value(!CTX.ortho);
 	for(i=6 ; i<8 ; i++){
 	  gen_butt[i]->type(FL_RADIO_BUTTON);
 	  gen_butt[i]->labelsize(CTX.fontsize);
@@ -953,32 +885,22 @@ void GUI::create_general_options_window(){
 	gen_value[0]->minimum(0); 
 	gen_value[0]->maximum(2); 
 	gen_value[0]->step(1);
-	gen_value[0]->value(CTX.color.id);
-	gen_value[0]->callback(opt_general_color_cb);
 	gen_value[1] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Material shininess");
 	gen_value[1]->minimum(0); 
 	gen_value[1]->maximum(10);
 	gen_value[1]->step(0.1);
-	gen_value[1]->value(CTX.shine);
-	gen_value[1]->callback(opt_general_shininess_cb);
         gen_value[2] = new Fl_Value_Input(2*WB, 2*WB+3*BH, IW, BH, "Light position X");
 	gen_value[2]->minimum(-1); 
 	gen_value[2]->maximum(1);
 	gen_value[2]->step(0.01);
-	gen_value[2]->value(CTX.light_position[0][0]);
-	gen_value[2]->callback(opt_general_light_cb, (void*)0);
         gen_value[3] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Light position Y");
 	gen_value[3]->minimum(-1); 
 	gen_value[3]->maximum(1); 
 	gen_value[3]->step(0.01);
-	gen_value[3]->value(CTX.light_position[0][1]);
-	gen_value[3]->callback(opt_general_light_cb, (void*)1);
         gen_value[4] = new Fl_Value_Input(2*WB, 2*WB+5*BH, IW, BH, "Light position Z");
 	gen_value[4]->minimum(-1); 
 	gen_value[4]->maximum(1); 
 	gen_value[4]->step(0.01);
-	gen_value[4]->value(CTX.light_position[0][2]);
-	gen_value[4]->callback(opt_general_light_cb, (void*)2);
 	for(i=0 ; i<5 ; i++){
 	  gen_value[i]->labelsize(CTX.fontsize);
 	  gen_value[i]->type(FL_HORIZONTAL);
@@ -993,7 +915,7 @@ void GUI::create_general_options_window(){
     { 
       Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
       o->labelsize(CTX.fontsize);
-      o->callback(ok_cb);
+      o->callback(opt_general_ok_cb);
     }
     { 
       Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
@@ -1036,29 +958,13 @@ void GUI::create_geometry_options_window(){
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Visibility");
 	o->labelsize(CTX.fontsize);
         geo_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, IW, BH, "Points");
-	geo_butt[0]->callback(opt_geometry_entity_cb, (void*)0);
-	geo_butt[0]->value(CTX.geom.points);
         geo_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, IW, BH, "Curves");
-	geo_butt[1]->callback(opt_geometry_entity_cb, (void*)1);
-	geo_butt[1]->value(CTX.geom.lines);
         geo_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, IW, BH, "Surfaces");
-	geo_butt[2]->callback(opt_geometry_entity_cb, (void*)2);
-	geo_butt[2]->value(CTX.geom.surfaces);
         geo_butt[3] = new Fl_Check_Button(2*WB, 2*WB+4*BH, IW, BH, "Volumes");
-	geo_butt[3]->callback(opt_geometry_entity_cb, (void*)3);
-	geo_butt[3]->value(CTX.geom.volumes);
         geo_butt[4] = new Fl_Check_Button(width/2, 2*WB+1*BH, IW, BH, "Point numbers");
-	geo_butt[4]->callback(opt_geometry_num_cb, (void*)0);
-	geo_butt[4]->value(CTX.geom.points_num);
         geo_butt[5] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Curve numbers");
-	geo_butt[5]->callback(opt_geometry_num_cb, (void*)1);
-	geo_butt[5]->value(CTX.geom.lines_num);
         geo_butt[6] = new Fl_Check_Button(width/2, 2*WB+3*BH, IW, BH, "Surface numbers");
-	geo_butt[6]->callback(opt_geometry_num_cb, (void*)2);
-	geo_butt[6]->value(CTX.geom.surfaces_num);
         geo_butt[7] = new Fl_Check_Button(width/2, 2*WB+4*BH, IW, BH, "Volume numbers");
-	geo_butt[7]->callback(opt_geometry_num_cb, (void*)3);
-	geo_butt[7]->value(CTX.geom.volumes_num);
 	for(i=0 ; i<8 ; i++){
 	  geo_butt[i]->type(FL_TOGGLE_BUTTON);
 	  geo_butt[i]->down_box(FL_DOWN_BOX);
@@ -1067,24 +973,19 @@ void GUI::create_geometry_options_window(){
 	}
 
         geo_input = new Fl_Input(2*WB, 2*WB+5*BH, IW, BH, "Show by entity number");
-	geo_input->callback(opt_geometry_show_by_entity_num_cb);
-	geo_input->when(FL_WHEN_ENTER_KEY|FL_WHEN_NOT_CHANGED);
 	geo_input->labelsize(CTX.fontsize);
 	geo_input->align(FL_ALIGN_RIGHT);
+	geo_input->callback(opt_geometry_show_by_entity_num_cb);
+	geo_input->when(FL_WHEN_ENTER_KEY|FL_WHEN_NOT_CHANGED);
 
 	geo_value[0] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Normals");
 	geo_value[0]->minimum(0); 
 	geo_value[0]->maximum(100);
 	geo_value[0]->step(0.1);
-	geo_value[0]->callback(opt_geometry_normals_cb);
-	geo_value[0]->value(CTX.geom.normals);
-
         geo_value[1] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW, BH, "Tangents");
 	geo_value[1]->minimum(0);
 	geo_value[1]->maximum(100);
 	geo_value[1]->step(0.1);
-	geo_value[1]->callback(opt_geometry_tangents_cb);
-	geo_value[1]->value(CTX.mesh.tangents);
 	for(i=0 ; i<2 ; i++){
 	  geo_value[i]->labelsize(CTX.fontsize);
 	  geo_value[i]->type(FL_HORIZONTAL);
@@ -1099,7 +1000,7 @@ void GUI::create_geometry_options_window(){
     { 
       Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
       o->labelsize(CTX.fontsize);
-      o->callback(ok_cb);
+      o->callback(opt_geometry_ok_cb);
     }
     { 
       Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
@@ -1143,14 +1044,8 @@ void GUI::create_mesh_options_window(){
 	o->labelsize(CTX.fontsize);
         o->hide();
         mesh_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Second order elements");
-	mesh_butt[0]->callback(opt_mesh_degree_cb, (void*)0);
-	mesh_butt[0]->value(CTX.mesh.degree==2);
         mesh_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Interactive");
-	mesh_butt[1]->callback(opt_mesh_interactive_cb, (void*)0);
-	mesh_butt[1]->value(CTX.mesh.interactive);
         mesh_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Anisotropic");
-	mesh_butt[2]->callback(opt_mesh_algo_cb, (void*)0);
-	mesh_butt[2]->value(CTX.mesh.algo==DELAUNAY_NEWALGO);
 	for(i=0 ; i<3 ; i++){
 	  mesh_butt[i]->type(FL_TOGGLE_BUTTON);
 	  mesh_butt[i]->down_box(FL_DOWN_BOX);
@@ -1161,62 +1056,36 @@ void GUI::create_mesh_options_window(){
 	mesh_value[0]->minimum(0);
 	mesh_value[0]->maximum(100); 
 	mesh_value[0]->step(1);
-	mesh_value[0]->callback(opt_mesh_smoothing_cb);
-	mesh_value[0]->value(CTX.mesh.nb_smoothing);
         mesh_value[1] = new Fl_Value_Input(2*WB, 2*WB+5*BH, IW, BH, "Mesh scaling factor");
 	mesh_value[1]->minimum(0);
 	mesh_value[1]->maximum(100); 
 	mesh_value[1]->step(0.001);
-	mesh_value[1]->callback(opt_mesh_scaling_factor_cb);
-	mesh_value[1]->value(CTX.mesh.scaling_factor);
         mesh_value[2] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Characteristic length scaling factor");
 	mesh_value[2]->minimum(0);
 	mesh_value[2]->maximum(100); 
 	mesh_value[2]->step(0.001);
-	mesh_value[2]->callback(opt_mesh_lc_factor_cb);
-	mesh_value[2]->value(CTX.mesh.lc_factor);
         mesh_value[3] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW, BH, "Random perturbation factor");
 	mesh_value[3]->minimum(1.e-6);
 	mesh_value[3]->maximum(1.e-1); 
 	mesh_value[3]->step(1.e-6);
-	mesh_value[3]->callback(opt_mesh_rand_factor_cb);
-	mesh_value[3]->value(CTX.mesh.rand_factor);
-
 	for(i = 0 ; i<4 ; i++){
 	  mesh_value[i]->labelsize(CTX.fontsize);
 	  mesh_value[i]->type(FL_HORIZONTAL);
 	  mesh_value[i]->align(FL_ALIGN_RIGHT);
 	}
-
         o->end();
       }
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Visibility");
 	o->labelsize(CTX.fontsize);
         mesh_butt[3] = new Fl_Check_Button(2*WB, 2*WB+1*BH, IW, BH, "Points");
-	mesh_butt[3]->callback(opt_mesh_entity_cb, (void*)0);
-	mesh_butt[3]->value(CTX.mesh.points);
         mesh_butt[4] = new Fl_Check_Button(2*WB, 2*WB+2*BH, IW, BH, "Curves");
-	mesh_butt[4]->callback(opt_mesh_entity_cb, (void*)1);
-	mesh_butt[4]->value(CTX.mesh.lines);
         mesh_butt[5] = new Fl_Check_Button(2*WB, 2*WB+3*BH, IW, BH, "Surfaces");
-	mesh_butt[5]->callback(opt_mesh_entity_cb, (void*)2);
-	mesh_butt[5]->value(CTX.mesh.surfaces);
         mesh_butt[6] = new Fl_Check_Button(2*WB, 2*WB+4*BH, IW, BH, "Volumes");
-	mesh_butt[6]->callback(opt_mesh_entity_cb, (void*)3);
-	mesh_butt[6]->value(CTX.mesh.volumes);
         mesh_butt[7] = new Fl_Check_Button(width/2, 2*WB+1*BH, IW, BH, "Point Numbers");
-	mesh_butt[7]->callback(opt_mesh_num_cb, (void*)0);
-	mesh_butt[7]->value(CTX.mesh.points_num);
         mesh_butt[8] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Curve Numbers");
-	mesh_butt[8]->callback(opt_mesh_num_cb, (void*)1);
-	mesh_butt[8]->value(CTX.mesh.lines_num);
         mesh_butt[9] = new Fl_Check_Button(width/2, 2*WB+3*BH, IW, BH, "Surface Numbers");
-	mesh_butt[9]->callback(opt_mesh_num_cb, (void*)2);
-	mesh_butt[9]->value(CTX.mesh.surfaces_num);
         mesh_butt[10] = new Fl_Check_Button(width/2, 2*WB+4*BH, IW, BH, "Volume Numbers");
-	mesh_butt[10]->callback(opt_mesh_num_cb, (void*)3);
-	mesh_butt[10]->value(CTX.mesh.volumes_num);
 	for(i=3 ; i<11 ; i++){
 	  mesh_butt[i]->type(FL_TOGGLE_BUTTON);
 	  mesh_butt[i]->down_box(FL_DOWN_BOX);
@@ -1224,24 +1093,20 @@ void GUI::create_mesh_options_window(){
 	  mesh_butt[i]->selection_color(FL_YELLOW);
 	}
         mesh_input = new Fl_Input(2*WB, 2*WB+5*BH, IW, BH, "Show by entity Number");
-	mesh_input->callback(opt_mesh_show_by_entity_num_cb);
-	mesh_input->when(FL_WHEN_ENTER_KEY|FL_WHEN_NOT_CHANGED);
 	mesh_input->labelsize(CTX.fontsize);
 	mesh_input->align(FL_ALIGN_RIGHT);
+	mesh_input->callback(opt_mesh_show_by_entity_num_cb);
+	mesh_input->when(FL_WHEN_ENTER_KEY|FL_WHEN_NOT_CHANGED);
 
-        mesh_value[1] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Show by element quality");
-	mesh_value[1]->minimum(0); 
-	mesh_value[1]->maximum(1);
-	mesh_value[1]->step(0.001);
-	mesh_value[1]->callback(opt_mesh_show_by_quality_cb);
-	mesh_value[1]->value(CTX.mesh.limit_gamma);
-	mesh_value[2] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW, BH, "Normals");
-	mesh_value[2]->minimum(0); 
-	mesh_value[2]->maximum(100);
-	mesh_value[2]->step(1);
-	mesh_value[2]->callback(opt_mesh_normals_cb);
-	mesh_value[2]->value(CTX.mesh.normals);
-	for(i=1 ; i<3 ; i++){
+        mesh_value[4] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Show by element quality");
+	mesh_value[4]->minimum(0); 
+	mesh_value[4]->maximum(1);
+	mesh_value[4]->step(0.001);
+	mesh_value[5] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW, BH, "Normals");
+	mesh_value[5]->minimum(0); 
+	mesh_value[5]->maximum(100);
+	mesh_value[5]->step(1);
+	for(i=4 ; i<6 ; i++){
 	  mesh_value[i]->labelsize(CTX.fontsize);
 	  mesh_value[i]->type(FL_HORIZONTAL);
 	  mesh_value[i]->align(FL_ALIGN_RIGHT);
@@ -1253,29 +1118,21 @@ void GUI::create_mesh_options_window(){
 	o->labelsize(CTX.fontsize);
         o->hide();
         mesh_butt[11] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Wireframe");
-	mesh_butt[11]->callback(opt_mesh_aspect_cb, (void*)0);
-	mesh_butt[11]->value(!CTX.mesh.hidden);
         mesh_butt[12] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Hidden lines");
-	mesh_butt[12]->callback(opt_mesh_aspect_cb, (void*)1);
-	mesh_butt[12]->value(CTX.mesh.hidden);
         mesh_butt[13] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Solid");
-	mesh_butt[13]->callback(opt_mesh_aspect_cb, (void*)2);
-	mesh_butt[13]->value(CTX.mesh.shade);
 	for(i=11 ; i<14 ; i++){
 	  mesh_butt[i]->type(FL_RADIO_BUTTON);
 	  mesh_butt[i]->down_box(FL_DOWN_BOX);
 	  mesh_butt[i]->labelsize(CTX.fontsize);
 	  mesh_butt[i]->selection_color(FL_YELLOW);
 	}
-        mesh_value[4] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Explode elements");
-	mesh_value[4]->minimum(0);
-	mesh_value[4]->maximum(1);
-	mesh_value[4]->step(0.01);
-	mesh_value[4]->callback(opt_mesh_explode_cb);
-	mesh_value[4]->value(CTX.mesh.explode);
-	mesh_value[4]->labelsize(CTX.fontsize);
-	mesh_value[4]->type(FL_HORIZONTAL);
-	mesh_value[4]->align(FL_ALIGN_RIGHT);
+        mesh_value[6] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Explode elements");
+	mesh_value[6]->minimum(0);
+	mesh_value[6]->maximum(1);
+	mesh_value[6]->step(0.01);
+	mesh_value[6]->labelsize(CTX.fontsize);
+	mesh_value[6]->type(FL_HORIZONTAL);
+	mesh_value[6]->align(FL_ALIGN_RIGHT);
         o->end();
       }
       o->end();
@@ -1284,7 +1141,7 @@ void GUI::create_mesh_options_window(){
     { 
       Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
       o->labelsize(CTX.fontsize);
-      o->callback(ok_cb);
+      o->callback(opt_mesh_ok_cb);
     }
     { 
       Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
@@ -1328,14 +1185,8 @@ void GUI::create_post_options_window(){
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Links");
 	o->labelsize(CTX.fontsize);
         post_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "No link between views");
-	post_butt[0]->callback(opt_post_link_cb, (void*)0);
-	post_butt[0]->value(CTX.post.link==0);
         post_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Link visible views");
-	post_butt[1]->callback(opt_post_link_cb, (void*)1);
-	post_butt[1]->value(CTX.post.link==1);
         post_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Link all views");
-	post_butt[2]->callback(opt_post_link_cb, (void*)2);
-	post_butt[2]->value(CTX.post.link==2);
 	for(i=0 ; i<3 ; i++){
 	  post_butt[i]->type(FL_RADIO_BUTTON);
 	  post_butt[i]->labelsize(CTX.fontsize);
@@ -1347,8 +1198,6 @@ void GUI::create_post_options_window(){
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Smoothing");
 	o->labelsize(CTX.fontsize);
         post_butt[3] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Smooth");
-	post_butt[3]->callback(opt_post_smooth_cb);
-	post_butt[3]->value(CTX.post.smooth);
 	post_butt[3]->type(FL_TOGGLE_BUTTON);
 	post_butt[3]->down_box(FL_DOWN_BOX);
 	post_butt[3]->labelsize(CTX.fontsize);
@@ -1363,8 +1212,6 @@ void GUI::create_post_options_window(){
 	post_value[0]->minimum(0);
 	post_value[0]->maximum(10); 
 	post_value[0]->step(0.01);
-	post_value[0]->callback(opt_post_anim_delay_cb);
-	post_value[0]->value(CTX.post.anim_delay);
 	post_value[0]->labelsize(CTX.fontsize);
 	post_value[0]->type(FL_HORIZONTAL);
 	post_value[0]->align(FL_ALIGN_RIGHT);
@@ -1376,7 +1223,7 @@ void GUI::create_post_options_window(){
     { 
       Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
       o->labelsize(CTX.fontsize);
-      o->callback(ok_cb);
+      o->callback(opt_post_ok_cb);
     }
     { 
       Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
@@ -1719,7 +1566,7 @@ void GUI::create_about_window(){
 
 //************************* Create the window for view options *************************
 
-void GUI::create_view_window(int num){
+void GUI::create_view_options_window(int num){
   int i;
 
   if(!init_view_window){
@@ -1757,7 +1604,7 @@ void GUI::create_view_window(int num){
 	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(FL_YELLOW);
 	}
-	view_input[0] = new Fl_Input(2*WB, 2*WB+4*BH, IW, BH, "Title");
+	view_input[0] = new Fl_Input(2*WB, 2*WB+4*BH, IW, BH, "Name");
 	view_input[1] = new Fl_Input(2*WB, 2*WB+5*BH, IW, BH, "Format");
 	for(i=0 ; i<2 ; i++){
 	  view_input[i]->labelsize(CTX.fontsize);
@@ -1775,6 +1622,7 @@ void GUI::create_view_window(int num){
 	view_butt[3]->down_box(FL_DOWN_BOX);
 	view_butt[3]->labelsize(CTX.fontsize);
 	view_butt[3]->selection_color(FL_YELLOW);
+	view_butt[3]->callback(view_options_custom_cb);
 
         view_value[0] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Minimum");
         view_value[1] = new Fl_Value_Input(2*WB, 2*WB+3*BH, IW, BH, "Maximum");
@@ -1896,7 +1744,7 @@ void GUI::create_view_window(int num){
     { 
       Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
       o->labelsize(CTX.fontsize);
-      o->callback(ok_cb);
+      o->callback(view_options_ok_cb);
     }
     { 
       Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
@@ -1911,13 +1759,13 @@ void GUI::create_view_window(int num){
     view_window->resizable(view_colorbar_window);
     view_window->end();
   }
-
-  update_view_window(num);
-  
-  if(view_window->shown())
-    view_window->redraw();
-  else
-    view_window->show();
+  else{
+    update_view_window(num);
+    if(view_window->shown())
+      view_window->redraw();
+    else
+      view_window->show();
+  }
 
 }
 
@@ -1933,66 +1781,40 @@ void GUI::update_view_window(int num){
   view_window->label(buffer);
 
   // colobar
-  view_butt[0]->callback(view_options_show_scale_cb, (void*)num);
-  view_butt[0]->value(v->ShowScale);
-  view_butt[1]->callback(view_options_show_time_cb, (void*)num);
-  view_butt[1]->value(v->ShowTime);
-  view_butt[2]->callback(view_options_transparent_scale_cb, (void*)num);
-  view_butt[2]->value(v->TransparentScale);
-  view_input[0]->callback(view_options_name_cb, (void*)num);
-  view_input[0]->value(v->Name);
-  view_input[1]->callback(view_options_format_cb, (void*)num);
-  view_input[1]->value(v->Format);
+  opt_view_show_scale(num, GMSH_GUI, 0);
+  opt_view_show_time(num, GMSH_GUI, 0);
+  opt_view_transparent_scale(num, GMSH_GUI, 0);
+  opt_view_name(num, GMSH_GUI, NULL);
+  opt_view_format(num, GMSH_GUI, NULL);
   view_colorbar_window->update(v->Name, v->Min, v->Max, &v->CT, &v->Changed);
 
   // range
-  if(v->RangeType==DRAW_POST_CUSTOM) activate_custom(1);
-  else activate_custom(0);
-  view_butt[3]->callback(view_options_custom_range_cb, (void*)num);
-  view_butt[3]->value(v->RangeType==DRAW_POST_CUSTOM);
-  view_value[0]->callback(view_options_custom_min_cb, (void*)num);
-  view_value[0]->value(v->CustomMin);
-  view_value[1]->callback(view_options_custom_max_cb, (void*)num);
-  view_value[1]->value(v->CustomMax);
+  opt_view_range_type(num, GMSH_GUI, 0);
+  view_options_custom_cb(0,0);
+  opt_view_custom_min(num, GMSH_GUI, 0);
+  opt_view_custom_max(num, GMSH_GUI, 0);
   val = v->CustomMax-v->CustomMin ;
   for(i=0 ; i<2 ; i++){
     view_value[i]->step(val,1000); 
     view_value[i]->minimum(v->CustomMin); 
     view_value[i]->maximum(v->CustomMax); 
   }
-  view_butt[4]->callback(view_options_linear_range_cb, (void*)num);
-  view_butt[4]->value(v->ScaleType==DRAW_POST_LINEAR);
-  view_butt[5]->callback(view_options_logarithmic_range_cb, (void*)num);
-  view_butt[5]->value(v->ScaleType==DRAW_POST_LOGARITHMIC);
+  opt_view_scale_type(num, GMSH_GUI, 0);
 
   // intervals
-  view_value[2]->callback(view_options_nbiso_cb, (void*)num);
-  view_value[2]->value(v->NbIso);
-  view_butt[6]->callback(view_options_iso_cb, (void*)num);
-  view_butt[6]->value(v->IntervalsType==DRAW_POST_ISO);
-  view_butt[7]->callback(view_options_fillediso_cb, (void*)num);
-  view_butt[7]->value(v->IntervalsType==DRAW_POST_DISCRETE);
-  view_butt[8]->callback(view_options_continuousiso_cb, (void*)num);
-  view_butt[8]->value(v->IntervalsType==DRAW_POST_CONTINUOUS);
-  view_butt[9]->callback(view_options_numericiso_cb, (void*)num);
-  view_butt[9]->value(v->IntervalsType==DRAW_POST_NUMERIC);
+  opt_view_nb_iso(num, GMSH_GUI, 0);
+  opt_view_intervals_type(num, GMSH_GUI, 0);
 
   // offset/raise
-  view_value[3]->callback(view_options_xoffset_cb, (void*)num);
-  view_value[3]->value(v->Offset[0]);
-  view_value[4]->callback(view_options_yoffset_cb, (void*)num);
-  view_value[4]->value(v->Offset[1]);
-  view_value[5]->callback(view_options_zoffset_cb, (void*)num);
-  view_value[5]->value(v->Offset[2]);
-  view_value[6]->callback(view_options_xraise_cb, (void*)num);
-  view_value[6]->value(v->Raise[0]);
-  view_value[7]->callback(view_options_yraise_cb, (void*)num);
-  view_value[7]->value(v->Raise[1]);
-  view_value[8]->callback(view_options_zraise_cb, (void*)num);
-  view_value[8]->value(v->Raise[2]);
+  opt_view_offset0(num, GMSH_GUI, 0);
+  opt_view_offset1(num, GMSH_GUI, 0);
+  opt_view_offset2(num, GMSH_GUI, 0);
+  opt_view_raise0(num, GMSH_GUI, 0);
+  opt_view_raise1(num, GMSH_GUI, 0);
+  opt_view_raise2(num, GMSH_GUI, 0);
   val = 10.*CTX.lc ;
   for(i=3 ; i<9 ; i++){
-    view_value[i]->step(val,10000); 
+    view_value[i]->step(val,1000); 
     view_value[i]->minimum(-val); 
     view_value[i]->maximum(val); 
   }
@@ -2001,40 +1823,15 @@ void GUI::update_view_window(int num){
   if(v->NbTimeStep==1) view_timestep->deactivate();
   else view_timestep->activate();
   view_value[9]->callback(view_options_timestep_cb, (void*)num);
-  view_value[9]->value(v->TimeStep);
-  view_value[9]->maximum(v->NbTimeStep-1); 
+  opt_view_timestep(num, GMSH_GUI, 0);
 
   // vector
   if(v->ScalarOnly) view_vector->deactivate();
   else view_vector->activate();
-  view_butt[10]->callback(view_options_vector_line_cb, (void*)num);
-  view_butt[10]->value(v->ArrowType==DRAW_POST_SEGMENT);
-  view_butt[11]->callback(view_options_vector_arrow_cb, (void*)num);
-  view_butt[11]->value(v->ArrowType==DRAW_POST_ARROW);
-  view_butt[12]->callback(view_options_vector_cone_cb, (void*)num);
-  view_butt[12]->value(v->ArrowType==DRAW_POST_CONE);
-  view_butt[13]->callback(view_options_vector_displacement_cb, (void*)num);
-  view_butt[13]->value(v->ArrowType==DRAW_POST_DISPLACEMENT);
-  view_value[10]->callback(view_options_vector_scale_cb, (void*)num);
-  view_value[10]->value(v->ArrowScale);
-  view_butt[14]->callback(view_options_vector_cog_cb, (void*)num);
-  view_butt[14]->value(v->ArrowLocation==DRAW_POST_LOCATE_COG);
-  view_butt[15]->callback(view_options_vector_vertex_cb, (void*)num);
-  view_butt[15]->value(v->ArrowLocation==DRAW_POST_LOCATE_VERTEX);
+  opt_view_arrow_type(num, GMSH_GUI, 0);
+  opt_view_arrow_scale(num, GMSH_GUI, 0);
+  opt_view_arrow_location(num, GMSH_GUI, 0);
 
-}
-
-// Handle activation of cutom min/max
-
-void GUI::activate_custom(int val){
-  if(val){
-    view_value[0]->activate();
-    view_value[1]->activate();
-  }
-  else{
-    view_value[0]->deactivate();
-    view_value[1]->deactivate();
-  }
 }
 
 //*************** Create the window for geometry context dependant definitions *********
@@ -2075,14 +1872,10 @@ void GUI::create_geometry_context_window(int num){
       { 
 	g[1] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Point");
 	g[1]->labelsize(CTX.fontsize);
-	context_geometry_input[2] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, 
-						  "X coordinate");
-	context_geometry_input[3] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, 
-						  "Y coordinate");
-	context_geometry_input[4] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, 
-						  "Z coordinate");
-	context_geometry_input[5] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, 
-						  "Characteristic length");
+	context_geometry_input[2] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "X coordinate");
+	context_geometry_input[3] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "Y coordinate");
+	context_geometry_input[4] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, "Z coordinate");
+	context_geometry_input[5] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, "Characteristic length");
 	for(i=2 ; i<6 ; i++){
 	  context_geometry_input[i]->labelsize(CTX.fontsize);
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
@@ -2116,20 +1909,13 @@ void GUI::create_geometry_context_window(int num){
       { 
 	g[3] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Rotation");
 	g[3]->labelsize(CTX.fontsize);
-	context_geometry_input[9]  = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, 
-						   "X coordinate of an axis point");
-	context_geometry_input[10] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, 
-						   "Y coordinate of an axis point");
-	context_geometry_input[11] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, 
-						   "Z coordinate of an axis point");
-	context_geometry_input[12] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, 
-						   "X component of direction");
-	context_geometry_input[13] = new Fl_Input (2*WB, 2*WB+5*BH, IW, BH, 
-						   "Y component of direction");
-	context_geometry_input[14] = new Fl_Input (2*WB, 2*WB+6*BH, IW, BH, 
-						   "Z component of direction");
-	context_geometry_input[15] = new Fl_Input (2*WB, 2*WB+7*BH, IW, BH, 
-						   "Angle in radians");
+	context_geometry_input[9]  = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "X coordinate of an axis point");
+	context_geometry_input[10] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "Y coordinate of an axis point");
+	context_geometry_input[11] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, "Z coordinate of an axis point");
+	context_geometry_input[12] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, "X component of direction");
+	context_geometry_input[13] = new Fl_Input (2*WB, 2*WB+5*BH, IW, BH, "Y component of direction");
+	context_geometry_input[14] = new Fl_Input (2*WB, 2*WB+6*BH, IW, BH, "Z component of direction");
+	context_geometry_input[15] = new Fl_Input (2*WB, 2*WB+7*BH, IW, BH, "Angle in radians");
 	for(i=9 ; i<16 ; i++){
 	  context_geometry_input[i]->labelsize(CTX.fontsize);
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
@@ -2145,14 +1931,10 @@ void GUI::create_geometry_context_window(int num){
       { 
 	g[4] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Scale");
 	g[4]->labelsize(CTX.fontsize);
-	context_geometry_input[16] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, 
-						   "X component of direction");
-	context_geometry_input[17] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, 
-						   "Y component of direction");
-	context_geometry_input[18] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, 
-						   "Z component of direction");
-	context_geometry_input[19] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, 
-						   "Factor");
+	context_geometry_input[16] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "X component of direction");
+	context_geometry_input[17] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "Y component of direction");
+	context_geometry_input[18] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, "Z component of direction");
+	context_geometry_input[19] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, "Factor");
 	for(i=16 ; i<20 ; i++){
 	  context_geometry_input[i]->labelsize(CTX.fontsize);
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
@@ -2168,14 +1950,10 @@ void GUI::create_geometry_context_window(int num){
       { 
 	g[5] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Symmetry");
 	g[5]->labelsize(CTX.fontsize);
-	context_geometry_input[20] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, 
-						   "1st plane equation coefficient");
-	context_geometry_input[21] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, 
-						   "2nd plane equation coefficient");
-	context_geometry_input[22] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH,
-						   "3rd plane equation coefficient");
-	context_geometry_input[23] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH,
-						   "4th plane equation coefficient");
+	context_geometry_input[20] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "1st plane equation coefficient");
+	context_geometry_input[21] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "2nd plane equation coefficient");
+	context_geometry_input[22] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, "3rd plane equation coefficient");
+	context_geometry_input[23] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, "4th plane equation coefficient");
 	for(i=20 ; i<24 ; i++){
 	  context_geometry_input[i]->labelsize(CTX.fontsize);
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);

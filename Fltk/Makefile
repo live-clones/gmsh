@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2001-02-09 14:51:31 geuzaine Exp $
+# $Id: Makefile,v 1.8 2001-02-12 17:38:03 geuzaine Exp $
 #
 # Makefile for "libFltk.a"
 #
@@ -78,11 +78,12 @@ Message.o: Message.cpp ../Common/Gmsh.h ../Common/Message.h \
 GUI.o: GUI.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Common/GmshUI.h ../Common/GmshVersion.h ../Common/Context.h \
-  ../Common/Const.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
-  ../Mesh/Metric.h ../Graphics/Draw.h ../Common/Views.h \
-  ../Common/ColorTable.h GUI.h Opengl_Window.h Colorbar_Window.h \
-  Callbacks.h ../Common/Bitmaps.h ../Common/GetOptions.h Help.h
+  ../Common/Const.h ../Common/Options.h ../Geo/Geo.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
+  ../Common/Views.h ../Common/ColorTable.h GUI.h Opengl_Window.h \
+  Colorbar_Window.h Callbacks.h ../Common/Bitmaps.h \
+  ../Common/GetOptions.h Help.h
 Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
@@ -90,8 +91,16 @@ Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
   ../Graphics/Draw.h ../Common/Views.h ../Common/Const.h \
   ../Common/ColorTable.h ../Common/Timer.h ../Geo/Visibility.h \
-  ../Graphics/CreateFile.h ../Parser/OpenFile.h ../Common/Context.h GUI.h \
-  Opengl_Window.h Colorbar_Window.h Callbacks.h
+  ../Graphics/CreateFile.h ../Parser/OpenFile.h ../Common/Context.h \
+  ../Common/Options.h GUI.h Opengl_Window.h Colorbar_Window.h Callbacks.h
+Options.o: Options.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h GUI.h \
+  Opengl_Window.h Colorbar_Window.h ../Common/ColorTable.h ../Geo/Geo.h \
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
+  ../Common/Views.h ../Common/Const.h ../Common/Context.h \
+  ../Common/Options.h
 Opengl.o: Opengl.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \

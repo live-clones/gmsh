@@ -40,6 +40,7 @@
 #define PARSER_INFO   28  // Info during syntax parsing
 #define LOG_INFO      29  // Info put only in the logfile
 
+#define DIRECT        30  // Direct message (no special formatting)
 
 #define FATAL_STR          "Fatal Error : "
 #define FATAL_NIL          "            : "

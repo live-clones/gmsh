@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.2 2001-01-08 08:05:40 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.3 2001-02-12 17:38:02 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "ColorTable.h"
@@ -183,16 +183,24 @@ void ColorTable_Paste(ColorTable *ct){
 
 void ColorTable_Print(ColorTable *ct, FILE *fp){
   int i, r, g, b, a;  
+  char tmp1[1024],tmp2[1024];
 
+  strcpy(tmp1, "");
   for (i=0;i<ct->size;i++) {
     r = UNPACK_RED( ct->table[i] );
     g = UNPACK_GREEN( ct->table[i] );
     b = UNPACK_BLUE( ct->table[i] );
     a = UNPACK_ALPHA( ct->table[i] );
-    if(!((i+1)%4)) fprintf(fp, "\n  ");
-    fprintf(fp, "{%d, %d, %d, %d}", r, g, b, a );
-    if(i!=ct->size-1) fprintf(fp, ", ");
+    if(i && !(i%4)){
+      if(fp) fprintf(fp, "%s\n", tmp1); else Msg(DIRECT, tmp1);
+      strcpy(tmp1, "");
+    }
+    sprintf(tmp2, "{%d, %d, %d, %d}", r, g, b, a);
+    strcat(tmp1, tmp2);
+    if(i!=ct->size-1) strcat(tmp1, ", ");
   }
+  if(fp) fprintf(fp, "%s\n", tmp1); else Msg(DIRECT, tmp1);
+
 }
 
 

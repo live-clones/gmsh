@@ -1,4 +1,4 @@
-// $Id: CbInput.cpp,v 1.5 2001-02-03 14:03:46 geuzaine Exp $
+// $Id: CbInput.cpp,v 1.6 2001-02-12 17:38:03 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -6,6 +6,7 @@
 #include "Draw.h"
 #include "Widgets.h"
 #include "Context.h"
+#include "Options.h"
 #include "XContext.h"
 #include "Register.h"
 
@@ -204,10 +205,8 @@ void KeyboardAccel(XEvent *event){
         Msg(INFO, "Highlight Disabled");
       break;
     case XK_c : case XK_C :
-      if(CTX.color.id==0) Init_Colors(1);
-      else if(CTX.color.id==1) Init_Colors(2);
-      else Init_Colors(0);
-      XtVaSetValues(WID.OD.miscColorSchemeScale,XmNvalue, CTX.color.id, NULL);
+      opt_general_color_scheme(0,GMSH_SET,opt_general_color_scheme(0,GMSH_GET,0)+1);
+      XtVaSetValues(WID.OD.miscColorSchemeScale,XmNvalue, CTX.color_scheme, NULL);
       XmUpdateDisplay(WID.OD.miscColorSchemeScale);  
       Draw();
       break;

@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.9 2001-02-05 20:32:32 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.10 2001-02-12 17:38:02 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -284,6 +284,9 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
           fprintf(stderr, ERROR_STR "Missing Number\n");
           exit(1);
         }
+      }
+      else if(!strcmp(argv[i]+1, "noterminal")){ 
+        CTX.terminal = 0; i++;
       }
       else if(!strcmp(argv[i]+1, "alpha")){ 
         CTX.alpha = 1; i++;

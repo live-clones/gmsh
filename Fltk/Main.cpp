@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.15 2001-02-04 10:23:56 geuzaine Exp $
+// $Id: Main.cpp,v 1.16 2001-02-12 17:38:03 geuzaine Exp $
 
 #include <signal.h>
 
@@ -25,7 +25,7 @@ int main(int argc, char *argv[]){
  
   // Gmsh default context options
   
-  Init_Context();
+  Init_Context(0);
 
   // This does not work with FLTK right now...
   CTX.overlay = 0 ;
@@ -35,7 +35,7 @@ int main(int argc, char *argv[]){
 
   Get_Options(argc, argv, &nbf);
 
-  if(CTX.verbosity)
+  if(CTX.verbosity && CTX.terminal)
     fprintf(stderr, "%s, Version %.2f\n", gmsh_progname, GMSH_VERSION);
 
   // Initialize the static Mesh
@@ -93,6 +93,10 @@ int main(int argc, char *argv[]){
   // Create the GUI
   
   WID = new GUI(argc, argv);
+
+  // Set all options in the GUI
+
+  UpdateGUI_Context(0);
 
   // The GUI is ready
   CTX.interactive = 0 ; 

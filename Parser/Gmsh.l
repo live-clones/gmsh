@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.25 2001-01-08 08:05:47 geuzaine Exp $
+// $Id: Gmsh.l,v 1.26 2001-02-12 17:38:03 geuzaine Exp $
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -110,6 +110,7 @@ Circle                  return tCircle;
 Coherence               return tCoherence;
 Complex                 return tComplex;
 Color                   return tColor;
+ColorTable              return tColorTable;
 CatmullRom		return tSpline;
 Call                    return tCall;
 
@@ -186,7 +187,6 @@ Trimmed			return tTrimmed;
 
 Using                   return tUsing;
 
-View                    return tView;
 Volume                  return tVolume;
 
 With			return tWith;

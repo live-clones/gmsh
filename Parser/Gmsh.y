@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.62 2001-02-08 16:32:15 geuzaine Exp $
+// $Id: Gmsh.y,v 1.63 2001-02-12 17:38:03 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -11,6 +11,7 @@
 #include "CAD.h"
 #include "DataBase.h"
 #include "Mesh.h"
+#include "Draw.h"
 #include "Create.h"
 #include "Views.h"
 #include "StepGeomDatabase.h"
@@ -27,11 +28,10 @@
 #include <alloca.h>
 #endif
 
-
-
 int     Force_ViewNumber = 0 ;
 List_T *Symbol_L;
 
+extern Context_T  CTX;
 extern Mesh      *THEM;
 extern Post_View *ActualView;
 
@@ -53,12 +53,12 @@ static ExtrudeParams  extr;
 static List_T         *ListOfDouble_L,*ListOfDouble2_L;
 static List_T         *ListOfListOfDouble_L, *ListOfColor_L=NULL;
 static char           *str;
-static void           *pNumOpt;
-static char          **pStrOpt, *pStrViewOpt;
-static unsigned int   *pColOpt;
 static StringXString  *pStrCat;
 static StringXNumber  *pNumCat;
 static StringXColor   *pColCat;
+static double         (*pNumOpt)(int num, int action, double value);
+static char*          (*pStrOpt)(int num, int action, char *value);
+static unsigned int   (*pColOpt)(int num, int action, unsigned int value);
 
 char *strsave(char *ptr);
 void  yyerror (char *s);
@@ -89,13 +89,13 @@ void  skip_until (char *skip, char *until);
 %token tUsing tBump tProgression
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
 %token tLoop tRecombine tDelete tCoherence tIntersect
-%token tView tAttractor tLayers
+%token tAttractor tLayers
 %token tScalarTetrahedron tVectorTetrahedron tTensorTetrahedron
 %token tScalarTriangle tVectorTriangle tTensorTriangle
 %token tScalarLine tVectorLine tTensorLine
 %token tScalarPoint tVectorPoint tTensorPoint
 %token tBSpline tNurbs tOrder tWith tBounds tKnots
-%token tColor tFor tIn tEndFor tIf tEndIf tExit
+%token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
 %token tReturn tCall tFunction tMesh
 
 %token tB_SPLINE_SURFACE_WITH_KNOTS
@@ -114,7 +114,7 @@ void  skip_until (char *skip, char *until);
 
 %type <d> FExpr FExpr_Single SignedDouble
 %type <v> VExpr VExpr_Single
-%type <i> BoolExpr
+%type <i> BoolExpr, NumericAffectation, NumericIncrement
 %type <u> ColorExpr
 %type <c> StringExpr
 %type <l> ListOfShapes Duplicata Transform MultipleShape
@@ -392,31 +392,29 @@ GeomFormat :
 Printf :
     tPrintf '(' tBIGSTR ')' tEND
     {
-      fprintf(stderr, $3); 
-      fprintf(stderr, "\n"); 
+      Msg(DIRECT, $3);
     }
   | tPrintf '(' tBIGSTR ',' RecursiveListOfDouble ')' tEND
     {
       for(i = 0 ; i<List_Nbr(ListOfDouble_L) ; i++){
 	if(!i){
 	  str = strtok($3, "%");
-	  fprintf(stderr, str); 
+	  strcpy(tmpstring, str); 
 	}
 	str = strtok(NULL, "%");
 	if(str){
-	  strcpy(tmpstring, "%");
-	  strcat(tmpstring, str);
-	  fprintf(stderr, tmpstring, *(double*)List_Pointer(ListOfDouble_L,i)); 
+	  strcpy(tmpstring2, "%");
+	  strcat(tmpstring2, str);
+	  sprintf(tmpstring3, tmpstring2, *(double*)List_Pointer(ListOfDouble_L,i)); 
+	  strcat(tmpstring, tmpstring3);
 	}
 	else{
-	  fprintf(stderr, "\n"); 
 	  vyyerror("Missing %d Parameter(s) in Printf Format",
 		   List_Nbr(ListOfDouble_L)-i);
 	  break ;
 	}
       }
-      if(!yyerrorstate)
-	fprintf(stderr, "\n"); 
+      Msg(DIRECT, tmpstring);
     }
 ;
 
@@ -425,20 +423,22 @@ Printf :
    ------------ */
 
 View :
-    tView tBIGSTR '{' Views '}' tEND
+    tSTRING tBIGSTR '{' Views '}' tEND
     { 
-      EndView(1, Force_ViewNumber,yyname,$2,0.,0.,0.); 
+      if(!strcmp($1, "View"))
+	EndView(1, Force_ViewNumber, yyname, $2); 
     }
-  | tView tBIGSTR tSTRING VExpr '{' Views '}' tEND
+  | tSTRING tBIGSTR tSTRING VExpr '{' Views '}' tEND
     {
-      EndView(1, Force_ViewNumber,yyname,$2,$4[0],$4[1],$4[2]);
+      if(!strcmp($1, "View"))
+	EndView(1, Force_ViewNumber, yyname, $2);
     }  
 ;
 
 Views :
     /* none */
     {
-      BeginView(1); 
+      BeginView(1, Force_ViewNumber); 
     }
   | Views ScalarPoint
   | Views VectorPoint
@@ -733,34 +733,82 @@ TensorTetrahedron :
     A F F E C T A T I O N
    ----------------------- */
 
+NumericAffectation :
+    tAFFECT        { $$ = 0 ; }
+  | tAFFECTPLUS    { $$ = 1 ; }
+  | tAFFECTMINUS   { $$ = 2 ; }
+  | tAFFECTTIMES   { $$ = 3 ; }
+  | tAFFECTDIVIDE  { $$ = 4 ; }
+
+NumericIncrement :
+    tPLUSPLUS      { $$ = 1 ; }
+  | tMINUSMINUS    { $$ = -1 ; }
+
 Affectation :
 
   /* -------- Variables -------- */ 
 
-    tSTRING tAFFECT FExpr tEND
+    tSTRING NumericAffectation FExpr tEND
     {
       TheSymbol.Name = $1;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
 	TheSymbol.val = List_Create(1,1,sizeof(double));
-	List_Put(TheSymbol.val, 0, &$3);
-	List_Add(Symbol_L, &TheSymbol);
+	if(!$2){
+	  List_Put(TheSymbol.val, 0, &$3);
+	  List_Add(Symbol_L, &TheSymbol);
+	}
+	else
+	  vyyerror("Unknown Variable '%s'", $1) ;
       }
       else{
-	List_Write(pSymbol->val, 0, &$3);
+	pd = (double*)List_Pointer_Fast(pSymbol->val, 0) ; 
+	switch($2){
+	case 0 : *pd = $3; break ;
+	case 1 : *pd += $3 ; break ;
+	case 2 : *pd -= $3 ; break ;
+	case 3 : *pd *= $3 ; break ;
+	case 4 : 
+	  if($3) *pd /= $3 ; 
+	  else vyyerror("Division by Zero in '%s /= %g'", $1, $3);
+	  break;
+	}
       }
     }
-  | tSTRING '[' FExpr ']' tAFFECT FExpr tEND
+
+  | tSTRING '[' FExpr ']' NumericAffectation FExpr tEND
     {
       TheSymbol.Name = $1;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
 	TheSymbol.val = List_Create(5,5,sizeof(double));
-	List_Put(TheSymbol.val, (int)$3, &$6);
-	List_Add(Symbol_L, &TheSymbol);
+	if(!$5){
+	  List_Put(TheSymbol.val, (int)$3, &$6);
+	  List_Add(Symbol_L, &TheSymbol);
+	}
+	else
+	  vyyerror("Unknown Variable '%s'", $1) ;
       }
       else{
-	List_Put(pSymbol->val, (int)$3, &$6);
+	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3))){
+	  switch($5){
+	  case 0 : *pd = $6; break ;
+	  case 1 : *pd += $6 ; break ;
+	  case 2 : *pd -= $6 ; break ;
+	  case 3 : *pd *= $6 ; break ;
+	  case 4 : 
+	    if($6) *pd /= $6 ; 
+	    else vyyerror("Division by Zero in '%s[%d] /= %g'", $1, (int)$3, $6);
+	    break;
+	  }
+	}
+	else{
+	  if(!$5)
+	    List_Put(pSymbol->val, (int)$3, &$6);
+	  else
+	    vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;	  
+	}
       }
     }
+
   | tSTRING '[' ']' tAFFECT ListOfDouble tEND
     {
       TheSymbol.Name = $1;
@@ -774,133 +822,26 @@ Affectation :
 	List_Copy($5, pSymbol->val);
       }
     }
-  | tSTRING tPLUSPLUS tEND
+
+  | tSTRING NumericIncrement tEND
     {
-      TheSymbol.Name = $1 ;
+      TheSymbol.Name = $1;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	vyyerror("Unknown Variable '%s'", $1) ;
-      else{
-	*(double*)List_Pointer_Fast(pSymbol->val, 0) += 1.0 ;
-      }
-    }
-  | tSTRING '[' FExpr ']' tPLUSPLUS tEND
-    {
-      TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	vyyerror("Unknown Variable '%s'", $1) ;
-      else{
-	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
-	  *pd += 1.0 ;
-	else
-	  vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
-      }
-    }
-  | tSTRING tMINUSMINUS tEND
-    {
-      TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	vyyerror("Unknown Variable '%s'", $1) ;
+	vyyerror("Unknown Variable '%s'", $1) ; 
       else
-	*(double*)List_Pointer_Fast(pSymbol->val, 0) -= 1. ;
+	*(double*)List_Pointer_Fast(pSymbol->val, 0) += $2; 
     }
-  | tSTRING '[' FExpr ']' tMINUSMINUS tEND
+
+  | tSTRING '[' FExpr ']' NumericIncrement tEND
     {
       TheSymbol.Name = $1 ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	vyyerror("Unknown Variable '%s'", $1) ;
+	vyyerror("Unknown Variable '%s'", $1) ; 
       else{
 	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
-	  *pd -= 1.0 ;
+	  *pd += $5 ;
 	else
 	  vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
-      }
-    }
-  | tSTRING tAFFECTPLUS FExpr tEND
-    {
-      TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	vyyerror("Unknown Variable '%s'", $1) ;
-      else
-	*(double*)List_Pointer_Fast(pSymbol->val, 0) += $3 ;
-    }
-  | tSTRING '[' FExpr ']' tAFFECTPLUS FExpr tEND
-    {
-      TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	vyyerror("Unknown Variable '%s'", $1) ;
-      else{
-	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
-	  *pd += $6 ;
-	else
-	  vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
-      }
-    }
-  | tSTRING tAFFECTMINUS FExpr tEND
-    {
-      TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	vyyerror("Unknown Variable '%s'", $1) ;
-      else
-	*(double*)List_Pointer_Fast(pSymbol->val, 0) -= $3 ;
-    }
-  | tSTRING '[' FExpr ']' tAFFECTMINUS FExpr tEND
-    {
-      TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	vyyerror("Unknown Variable '%s'", $1) ;
-      else{
-	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
-	  *pd -= $6 ;
-	else
-	  vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
-      }
-    }
-  | tSTRING tAFFECTTIMES FExpr tEND
-    {
-      TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	vyyerror("Unknown Variable '%s'", $1) ;
-      else
-	*(double*)List_Pointer_Fast(pSymbol->val, 0) *= $3 ;
-    }
-  | tSTRING '[' FExpr ']' tAFFECTTIMES FExpr tEND
-    {
-      TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	vyyerror("Unknown Variable '%s'", $1) ;
-      else{
-	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
-	  *pd *= $6 ;
-	else
-	  vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
-      }
-    }
-  | tSTRING tAFFECTDIVIDE FExpr tEND
-    {
-      if(!$3)
-	vyyerror("Division by Zero in '%s /= %g'", $1, $3);
-      else{
-	TheSymbol.Name = $1 ;
-	if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	  vyyerror("Unknown Variable '%s'", $1) ;
-	else
-	  *(double*)List_Pointer_Fast(pSymbol->val, 0) /= $3 ;
-      }
-    }
-  | tSTRING '[' FExpr ']' tAFFECTDIVIDE FExpr tEND
-    {
-      if(!$6)
-	vyyerror("Division by Zero in '%s[%d] /= %g'", $1, (int)$3, $6);
-      else{
-	TheSymbol.Name = $1 ;
-	if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	  vyyerror("Unknown Variable '%s'", $1) ;
-	else{
-	  if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
-	    *pd /= $6 ;
-	  else
-	    vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
-	}
       }
     }
 
@@ -911,304 +852,95 @@ Affectation :
       if(!(pStrCat = Get_StringOptionCategory($1)))
 	vyyerror("Unknown String Option Class '%s'", $1);
       else{
-	if(!(pStrOpt = Get_StringOption($3, pStrCat)))
+	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption($3, pStrCat)))
 	  vyyerror("Unknown String Option '%s.%s'", $1, $3);
-	else{
-	  *pStrOpt = $5 ;
-	}
+	else
+	  pStrOpt(0,GMSH_SET|GMSH_GUI,$5) ;
       }
     }
 
-  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECT tBIGSTR tEND 
-    {
-      if(strcmp($1, "PostProcessing"))
-	vyyerror("Unknown View Option Class '%s'", $1);
+  | tSTRING '[' FExpr ']' '.' tSTRING tAFFECT tBIGSTR tEND 
+    { 
+      if(!(pStrCat = Get_StringOptionCategory($1)))
+	vyyerror("Unknown String Option Class '%s'", $1);
       else{
-	if(!(pStrViewOpt = Get_StringViewOption((int)$5, $8, &i))){
-	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	  else	    vyyerror("Unknown String Option '%s.View[%d].%s'", 
-			     $1, (int)$5, $8);
-	}
-	else{
-	  strcpy(pStrViewOpt, $10) ;
-	}
+	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption($6, pStrCat)))
+	  vyyerror("Unknown String Option '%s[%d].%s'", $1, (int)$3, $6);
+	else
+	  pStrOpt((int)$3,GMSH_SET|GMSH_GUI,$8) ;
       }
     }
 
   /* -------- Option Numbers -------- */ 
 
-  | tSTRING '.' tSTRING tAFFECT FExpr tEND 
+  | tSTRING '.' tSTRING NumericAffectation FExpr tEND 
     {
       if(!(pNumCat = Get_NumberOptionCategory($1)))
 	vyyerror("Unknown Numeric Option Class '%s'", $1);
       else{
-	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
+	if(!(pNumOpt = (double (*) (int, int, double))Get_NumberOption($3, pNumCat)))
 	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
 	else{
-	  switch(i){
-	  case GMSH_DOUBLE : *(double*)pNumOpt = $5 ; break ;
-	  case GMSH_FLOAT : *(float*)pNumOpt = (float)$5 ; break ;
-	  case GMSH_LONG : *(long*)pNumOpt = (long)$5 ; break ;
-	  case GMSH_INT : *(int*)pNumOpt = (int)$5 ; break ;
+	  switch($4){
+	  case 0 : d = $5 ; break ;
+	  case 1 : d = pNumOpt(0,GMSH_GET,0) + $5 ; break ;
+	  case 2 : d = pNumOpt(0,GMSH_GET,0) - $5 ; break ;
+	  case 3 : d = pNumOpt(0,GMSH_GET,0) * $5 ; break ;
+	  case 4 : 
+	    if($5) d = pNumOpt(0,GMSH_GET,0) / $5 ; 
+	    else vyyerror("Division by Zero in '%s.%s /= %g'", $1, $3, $5);
+	    break;
 	  }
-	}
-      }
-    }
-  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECT FExpr tEND 
-    {
-      if(strcmp($1, "PostProcessing"))
-	vyyerror("Unknown View Option Class '%s'", $1);
-      else{
-	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
-	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
-			     $1, (int)$5, $8);
-	}
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE : *(double*)pNumOpt = $10 ; break ;
-	  case GMSH_FLOAT : *(float*)pNumOpt = (float)$10 ; break ;
-	  case GMSH_LONG : *(long*)pNumOpt = (long)$10 ; break ;
-	  case GMSH_INT : *(int*)pNumOpt = (int)$10 ; break ;
-	  }
+	  pNumOpt(0,GMSH_SET|GMSH_GUI, d) ;
 	}
       }
     }
 
-  | tSTRING '.' tSTRING tAFFECTPLUS FExpr tEND 
+  | tSTRING '[' FExpr ']' '.' tSTRING NumericAffectation FExpr tEND 
     {
       if(!(pNumCat = Get_NumberOptionCategory($1)))
 	vyyerror("Unknown Numeric Option Class '%s'", $1);
       else{
-	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
-	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($6, pNumCat)))
+	  vyyerror("Unknown Numeric Option '%s[%d].%s'", $1, (int)$3, $6);
 	else{
-	  switch(i){
-	  case GMSH_DOUBLE : *(double*)pNumOpt += $5 ; break ;
-	  case GMSH_FLOAT : *(float*)pNumOpt += (float)$5 ; break ;
-	  case GMSH_LONG : *(long*)pNumOpt += (long)$5 ; break ;
-	  case GMSH_INT : *(int*)pNumOpt += (int)$5 ; break ;
+	  switch($7){
+	  case 0 : d = $8; break ;
+	  case 1 : d = pNumOpt((int)$3,GMSH_GET,0) + $8 ; break ;
+	  case 2 : d = pNumOpt((int)$3,GMSH_GET,0) - $8 ; break ;
+	  case 3 : d = pNumOpt((int)$3,GMSH_GET,0) * $8 ; break ;
+	  case 4 : 
+	    if($8) d = pNumOpt((int)$3,GMSH_GET,0) / $8 ;
+	    else vyyerror("Division by Zero in '%s[%d].%s /= %g'", 
+			  $1, (int)$3, $6, $8);
+	    break;
 	  }
-	}
-      }
-    }
-  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTPLUS FExpr tEND 
-    {
-      if(strcmp($1, "PostProcessing"))
-	vyyerror("Unknown View Option Class '%s'", $1);
-      else{
-	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
-	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
-			     $1, (int)$5, $8);
-	}
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE : *(double*)pNumOpt += $10 ; break ;
-	  case GMSH_FLOAT : *(float*)pNumOpt += (float)$10 ; break ;
-	  case GMSH_LONG : *(long*)pNumOpt += (long)$10 ; break ;
-	  case GMSH_INT : *(int*)pNumOpt += (int)$10 ; break ;
-	  }
+	  pNumOpt((int)$3,GMSH_SET|GMSH_GUI,d) ;
 	}
       }
     }
 
-  | tSTRING '.' tSTRING tAFFECTMINUS FExpr tEND 
+  | tSTRING '.' tSTRING NumericIncrement tEND 
     {
       if(!(pNumCat = Get_NumberOptionCategory($1)))
 	vyyerror("Unknown Numeric Option Class '%s'", $1);
       else{
-	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
+	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($3, pNumCat)))
 	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE : *(double*)pNumOpt -= $5 ; break ;
-	  case GMSH_FLOAT : *(float*)pNumOpt -= (float)$5 ; break ;
-	  case GMSH_LONG : *(long*)pNumOpt -= (long)$5 ; break ;
-	  case GMSH_INT : *(int*)pNumOpt -= (int)$5 ; break ;
-	  }
-	}
-      }
-    }
-  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTMINUS FExpr tEND 
-    {
-      if(strcmp($1, "PostProcessing"))
-	vyyerror("Unknown View Option Class '%s'", $1);
-      else{
-	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
-	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
-			     $1, (int)$5, $8);
-	}
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE : *(double*)pNumOpt -= $10 ; break ;
-	  case GMSH_FLOAT : *(float*)pNumOpt -= (float)$10 ; break ;
-	  case GMSH_LONG : *(long*)pNumOpt -= (long)$10 ; break ;
-	  case GMSH_INT : *(int*)pNumOpt -= (int)$10 ; break ;
-	  }
-	}
+	else
+	  pNumOpt(0,GMSH_SET|GMSH_GUI,pNumOpt(0,GMSH_GET,0)+$4) ;
       }
     }
 
-  | tSTRING '.' tSTRING tAFFECTTIMES FExpr tEND 
+  | tSTRING '[' FExpr ']' '.' tSTRING NumericIncrement tEND 
     {
       if(!(pNumCat = Get_NumberOptionCategory($1)))
 	vyyerror("Unknown Numeric Option Class '%s'", $1);
       else{
-	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
-	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE : *(double*)pNumOpt *= $5 ; break ;
-	  case GMSH_FLOAT : *(float*)pNumOpt *= (float)$5 ; break ;
-	  case GMSH_LONG : *(long*)pNumOpt *= (long)$5 ; break ;
-	  case GMSH_INT : *(int*)pNumOpt *= (int)$5 ; break ;
-	  }
-	}
-      }
-    }
-  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTTIMES FExpr tEND 
-    {
-      if(strcmp($1, "PostProcessing"))
-	vyyerror("Unknown View Option Class '%s'", $1);
-      else{
-	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
-	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
-			     $1, (int)$5, $8);
-	}
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE : *(double*)pNumOpt *= $10 ; break ;
-	  case GMSH_FLOAT : *(float*)pNumOpt *= (float)$10 ; break ;
-	  case GMSH_LONG : *(long*)pNumOpt *= (long)$10 ; break ;
-	  case GMSH_INT : *(int*)pNumOpt *= (int)$10 ; break ;
-	  }
-	}
-      }
-    }
-
-  | tSTRING '.' tSTRING tAFFECTDIVIDE FExpr tEND 
-    {
-      if(!$5)
-	vyyerror("Division by Zero in '%s.%s /= %g'", $1, $3, $5);
-      else{
-	if(!(pNumCat = Get_NumberOptionCategory($1)))
-	  vyyerror("Unknown Numeric Option Class '%s'", $1);
-	else{
-	  if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
-	    vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
-	  else{
-	    switch(i){
-	    case GMSH_DOUBLE : *(double*)pNumOpt /= $5 ; break ;
-	    case GMSH_FLOAT : *(float*)pNumOpt /= (float)$5 ; break ;
-	    case GMSH_LONG : *(long*)pNumOpt /= (long)$5 ; break ;
-	    case GMSH_INT : *(int*)pNumOpt /= (int)$5 ; break ;
-	    }
-	  }
-	}
-      }
-    }
-  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTDIVIDE FExpr tEND 
-    {
-      if(!$10)
-	vyyerror("Division by Zero in '%s.View[%d].%s /= %g'", 
-		 $1, (int)$5, $8, $10);
-      else{
-	if(strcmp($1, "PostProcessing"))
-	  vyyerror("Unknown View Option Class '%s'", $1);
-	else{
-	  if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
-	    if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	    else      vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
-			       $1, (int)$5, $8);
-	  }
-	  else{
-	    switch(i){
-	    case GMSH_DOUBLE : *(double*)pNumOpt /= $10 ; break ;
-	    case GMSH_FLOAT : *(float*)pNumOpt /= (float)$10 ; break ;
-	    case GMSH_LONG : *(long*)pNumOpt /= (long)$10 ; break ;
-	    case GMSH_INT : *(int*)pNumOpt /= (int)$10 ; break ;
-	    }
-	  }
-	}
-      }
-    }
-
-  | tSTRING '.' tSTRING tPLUSPLUS tEND 
-    {
-      if(!(pNumCat = Get_NumberOptionCategory($1)))
-	vyyerror("Unknown Numeric Option Class '%s'", $1);
-      else{
-	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
-	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE : *(double*)pNumOpt += 1. ; break ;
-	  case GMSH_FLOAT : *(float*)pNumOpt += 1. ; break ;
-	  case GMSH_LONG : *(long*)pNumOpt += 1 ; break ;
-	  case GMSH_INT : *(int*)pNumOpt += 1 ; break ;
-	  }
-	}
-      }
-    }
-  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tPLUSPLUS FExpr tEND 
-    {
-      if(strcmp($1, "PostProcessing"))
-	vyyerror("Unknown View Option Class '%s'", $1);
-      else{
-	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
-	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
-			     $1, (int)$5, $8);
-	}
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE : *(double*)pNumOpt += 1. ; break ;
-	  case GMSH_FLOAT : *(float*)pNumOpt += 1. ; break ;
-	  case GMSH_LONG : *(long*)pNumOpt += 1 ; break ;
-	  case GMSH_INT : *(int*)pNumOpt += 1 ; break ;
-	  }
-	}
-      }
-    }
-
-  | tSTRING '.' tSTRING tMINUSMINUS tEND 
-    {
-      if(!(pNumCat = Get_NumberOptionCategory($1)))
-	vyyerror("Unknown Numeric Option Class '%s'", $1);
-      else{
-	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
-	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE : *(double*)pNumOpt -= 1. ; break ;
-	  case GMSH_FLOAT : *(float*)pNumOpt -= 1. ; break ;
-	  case GMSH_LONG : *(long*)pNumOpt -= 1 ; break ;
-	  case GMSH_INT : *(int*)pNumOpt -= 1 ; break ;
-	  }
-	}
-      }
-    }
-  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tMINUSMINUS FExpr tEND 
-    {
-      if(strcmp($1, "PostProcessing"))
-	vyyerror("Unknown View Option Class '%s'", $1);
-      else{
-	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
-	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
-			     $1, (int)$5, $8);
-	}
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE : *(double*)pNumOpt -= 1. ; break ;
-	  case GMSH_FLOAT : *(float*)pNumOpt -= 1. ; break ;
-	  case GMSH_LONG : *(long*)pNumOpt -= 1 ; break ;
-	  case GMSH_INT : *(int*)pNumOpt -= 1 ; break ;
-	  }
-	}
+	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($6, pNumCat)))
+	  vyyerror("Unknown Numeric Option '%s[%d].%s'", $1, (int)$3, $6);
+	else
+	  pNumOpt((int)$3,GMSH_SET|GMSH_GUI,pNumOpt((int)$3,GMSH_GET,0)+$7) ;
       }
     }
 
@@ -1219,30 +951,37 @@ Affectation :
       if(!(pColCat = Get_ColorOptionCategory($1)))
 	vyyerror("Unknown Color Option Class '%s'", $1);
       else{
-	if(!(pColOpt = Get_ColorOption($5, pColCat)))
-	  vyyerror("Unknown Color Option '%s.%s'", $1, $5);
-	else{
-	  *pColOpt = $7 ;
-	}
+	if(!(pColOpt =  (unsigned int (*) (int, int, unsigned int))Get_ColorOption($5, pColCat)))
+	  vyyerror("Unknown Color Option '%s.Color.%s'", $1, $5);
+	else
+	  pColOpt(0,GMSH_SET|GMSH_GUI,$7) ;
       }
     }
 
-  | tSTRING '.' tView '[' FExpr ']' '.' tColor tAFFECT ListOfColor tEND 
+  | tSTRING '[' FExpr ']' '.' tColor '.' tSTRING tAFFECT ColorExpr tEND 
     {
-      if(strcmp($1, "PostProcessing"))
-	vyyerror("Unknown View Option Class '%s'", $1);
+      if(!(pColCat = Get_ColorOptionCategory($1)))
+	vyyerror("Unknown Color Option Class '%s'", $1);
       else{
-	ColorTable *ct = Get_ColorTableViewOption((int)$5);
-	if(!ct)
-	  vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	else{
-	  ct->size = List_Nbr($10);
-	  if(ct->size > COLORTABLE_NBMAX_COLOR)
-	    vyyerror("Too Many (%d>%d) Colors in Post.View[%d].Color", 
-		     ct->size, COLORTABLE_NBMAX_COLOR, (int)$5);
-	  else
-	    for(i=0 ; i<ct->size ; i++) List_Read($10, i, &ct->table[i]);
-	}
+	if(!(pColOpt =  (unsigned int (*) (int, int, unsigned int))Get_ColorOption($8, pColCat)))
+	  vyyerror("Unknown Color Option '%s[%d].Color.%s'", $1, (int)$3, $8);
+	else
+	  pColOpt((int)$3,GMSH_SET|GMSH_GUI,$10) ;
+      }
+    }
+
+  | tSTRING '[' FExpr ']' '.' tColorTable tAFFECT ListOfColor tEND 
+    {
+      ColorTable *ct = Get_ColorTable((int)$3);
+      if(!ct)
+	vyyerror("View[%d] does not exist", (int)$3);
+      else{
+	ct->size = List_Nbr($8);
+	if(ct->size > COLORTABLE_NBMAX_COLOR)
+	  vyyerror("Too Many (%d>%d) Colors in View[%d].ColorTable", 
+		   ct->size, COLORTABLE_NBMAX_COLOR, (int)$3);
+	else
+	  for(i=0 ; i<ct->size ; i++) List_Read($8, i, &ct->table[i]);
       }
     }
 ;
@@ -1601,9 +1340,10 @@ Delete :
 	DeleteShape(TheShape.Type,TheShape.Num);
       }
     }
-    | tDelete tView '[' FExpr ']' tEND
+    | tDelete tSTRING '[' FExpr ']' tEND
       {
-	FreeView((int)$4);
+	if(!strcmp($2, "View"))
+	  FreeView((int)$4);
       }
     | tDelete tMesh tEND
     {
@@ -2178,11 +1918,10 @@ FExpr_Single :
 	vyyerror("Unknown Variable '%s'", $1) ;
 	$$ = 0. ;
       }
-      else{
+      else
 	$$ = *(double*)List_Pointer_Fast(pSymbol->val, 0) ;
-      }
-      //      Free($1);
     }
+
   | tSTRING '[' FExpr ']'
     {
       TheSymbol.Name = $1 ;
@@ -2198,22 +1937,20 @@ FExpr_Single :
 	  $$ = 0. ;
 	}
       }
-      //Free($1);
     }
 
-  | tSTRING tPLUSPLUS
+  | tSTRING NumericIncrement
     {
       TheSymbol.Name = $1 ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
 	vyyerror("Unknown Variable '%s'", $1) ;
 	$$ = 0. ;
       }
-      else{
-	$$ = (*(double*)List_Pointer_Fast(pSymbol->val, 0) += 1.0) ;
-      }
-      //Free($1);
+      else
+	$$ = (*(double*)List_Pointer_Fast(pSymbol->val, 0) += $2) ;
     }
-  | tSTRING '[' FExpr ']' tPLUSPLUS
+
+  | tSTRING '[' FExpr ']' NumericIncrement
     {
       TheSymbol.Name = $1 ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
@@ -2222,43 +1959,12 @@ FExpr_Single :
       }
       else{
 	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
-	  $$ = (*pd += 1.0) ;
+	  $$ = (*pd += $5) ;
 	else{
 	  vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
 	  $$ = 0. ;
 	}
       }
-      //Free($1);
-    }
-
-  | tSTRING tMINUSMINUS
-    {
-      TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", $1) ;
-	$$ = 0. ;
-      }
-      else{
-	$$ = (*(double*)List_Pointer_Fast(pSymbol->val, 0) -= 1.0) ;
-      }
-      //Free($1);
-    }
-  | tSTRING '[' FExpr ']' tMINUSMINUS
-    {
-      TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", $1) ;
-	$$ = 0. ;
-      }
-      else{
-	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
-	  $$ = (*pd -= 1.0) ;
-	else{
-	  vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
-	  $$ = 0. ;
-	}
-      }
-      //Free($1);
     }
 
   /* -------- Option Strings -------- */ 
@@ -2270,131 +1976,60 @@ FExpr_Single :
 	$$ = 0. ;
       }
       else{
-	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i))){
+	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($3, pNumCat))){
 	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
 	  $$ = 0. ;
 	}
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE : $$ = *(double*)pNumOpt ; break ;
-	  case GMSH_FLOAT : $$ = (double)(*(float*)pNumOpt) ; break ;
-	  case GMSH_LONG : $$ = (double)(*(long*)pNumOpt) ; break ;
-	  case GMSH_INT : $$ = (double)(*(int*)pNumOpt) ; break ;
-	  }
-	}
-      }
-    }
-  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING
-    {
-      if(strcmp($1, "PostProcessing")){
-	vyyerror("Unknown View Option Class '%s'", $1);
-	$$ = 0. ;
-      }
-      else{
-	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
-	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
-			     $1, (int)$5, $8);
-	  $$ = 0. ;
-	}
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE : $$ = *(double*)pNumOpt ; break ;
-	  case GMSH_FLOAT : $$ = (double)(*(float*)pNumOpt) ; break ;
-	  case GMSH_LONG : $$ = (double)(*(long*)pNumOpt) ; break ;
-	  case GMSH_INT : $$ = (double)(*(int*)pNumOpt) ; break ;
-	  }
-	}
+	else
+	  $$ = pNumOpt(0, GMSH_GET, 0);
       }
     }
 
-  | tSTRING '.' tSTRING tPLUSPLUS
+  | tSTRING '[' FExpr ']' '.' tSTRING 
     {
       if(!(pNumCat = Get_NumberOptionCategory($1))){
 	vyyerror("Unknown Numeric Option Class '%s'", $1);
 	$$ = 0. ;
       }
       else{
-	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i))){
-	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($6, pNumCat))){
+	  vyyerror("Unknown Numeric Option '%s[%d].%s'", $1, (int)$3, $6);
 	  $$ = 0. ;
 	}
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE : $$ = (*(double*)pNumOpt += 1.) ; break ;
-	  case GMSH_FLOAT : $$ = (double)(*(float*)pNumOpt += 1.) ; break ;
-	  case GMSH_LONG : $$ = (double)(*(long*)pNumOpt += 1) ; break ;
-	  case GMSH_INT : $$ = (double)(*(int*)pNumOpt += 1) ; break ;
-	  }
-	}
-      }
-    }
-  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tPLUSPLUS
-    {
-      if(strcmp($1, "PostProcessing")){
-	vyyerror("Unknown View Option Class '%s'", $1);
-	$$ = 0. ;
-      }
-      else{
-	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
-	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
-			     $1, (int)$5, $8);
-	  $$ = 0. ;
-	}
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE : $$ = (*(double*)pNumOpt += 1.) ; break ;
-	  case GMSH_FLOAT : $$ = (double)(*(float*)pNumOpt += 1.) ; break ;
-	  case GMSH_LONG : $$ = (double)(*(long*)pNumOpt += 1) ; break ;
-	  case GMSH_INT : $$ = (double)(*(int*)pNumOpt += 1) ; break ;
-	  }
-	}
+	else
+	  $$ = pNumOpt((int)$3, GMSH_GET, 0);
       }
     }
 
-  | tSTRING '.' tSTRING tMINUSMINUS
+  | tSTRING '.' tSTRING NumericIncrement
     {
       if(!(pNumCat = Get_NumberOptionCategory($1))){
 	vyyerror("Unknown Numeric Option Class '%s'", $1);
 	$$ = 0. ;
       }
       else{
-	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i))){
+	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($3, pNumCat))){
 	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
 	  $$ = 0. ;
 	}
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE : $$ = (*(double*)pNumOpt -= 1.) ; break ;
-	  case GMSH_FLOAT : $$ = (double)(*(float*)pNumOpt -= 1.) ; break ;
-	  case GMSH_LONG : $$ = (double)(*(long*)pNumOpt -= 1) ; break ;
-	  case GMSH_INT : $$ = (double)(*(int*)pNumOpt -= 1) ; break ;
-	  }
-	}
+	else
+	  $$ = pNumOpt(0, GMSH_SET|GMSH_GUI, pNumOpt(0, GMSH_GET, 0)+$4);
       }
     }
-  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tMINUSMINUS
+
+  | tSTRING '[' FExpr ']' '.' tSTRING NumericIncrement
     {
-      if(strcmp($1, "PostProcessing")){
-	vyyerror("Unknown View Option Class '%s'", $1);
+      if(!(pNumCat = Get_NumberOptionCategory($1))){
+	vyyerror("Unknown Numeric Option Class '%s'", $1);
 	$$ = 0. ;
       }
       else{
-	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
-	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
-			     $1, (int)$5, $8);
+	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($6, pNumCat))){
+	  vyyerror("Unknown Numeric Option '%s[%d].%s'", $1, (int)$3, $6);
 	  $$ = 0. ;
 	}
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE : $$ = (*(double*)pNumOpt -= 1.) ; break ;
-	  case GMSH_FLOAT : $$ = (double)(*(float*)pNumOpt -= 1.) ; break ;
-	  case GMSH_LONG : $$ = (double)(*(long*)pNumOpt -= 1) ; break ;
-	  case GMSH_INT : $$ = (double)(*(int*)pNumOpt -= 1) ; break ;
-	  }
-	}
+	else
+	  $$ = pNumOpt((int)$3, GMSH_SET|GMSH_GUI, pNumOpt((int)$3, GMSH_GET, 0)+$7);
       }
     }
 ;
@@ -2423,8 +2058,6 @@ VExpr :
     VExpr_Single
     {
       memcpy($$, $1, 5*sizeof(double)) ;
-      //??? Avec ce qui suit, bison se plante sur DEC
-      //for(i=0 ; i<5 ; i++) $$[i] = $1[i];
     }
   | '-' VExpr %prec UNARYPREC
     {
@@ -2616,12 +2249,12 @@ ColorExpr :
 	$$ = 0 ;
       }
       else{
-	if(!(pColOpt = Get_ColorOption($5, pColCat))){
-	  vyyerror("Unknown Color Option '%s.%s'", $1, $5);
+	if(!(pColOpt =  (unsigned int (*) (int, int, unsigned int))Get_ColorOption($5, pColCat))){
+	  vyyerror("Unknown Color Option '%s.Color.%s'", $1, $5);
 	  $$ = 0 ;
 	}
 	else{
-	  $$ = *pColOpt ;
+	  $$ = pColOpt(0,GMSH_GET,0) ;
 	}
       }
     }
@@ -2632,22 +2265,18 @@ ListOfColor :
     {
       $$ = ListOfColor_L;
     }
-  | tSTRING '.' tView '[' FExpr ']' '.' tColor
+  | tSTRING '[' FExpr ']' '.' tColorTable
     {
       if(!ListOfColor_L)
 	ListOfColor_L = List_Create(256,10,sizeof(unsigned int)) ;
       else
 	List_Reset(ListOfColor_L) ;
-      if(strcmp($1, "PostProcessing"))
-	vyyerror("Unknown View Option Class '%s'", $1);
+      ColorTable *ct = Get_ColorTable((int)$3);
+      if(!ct)
+	vyyerror("View[%d] does not exist", (int)$3);
       else{
-	ColorTable *ct = Get_ColorTableViewOption((int)$5);
-	if(!ct)
-	  vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	else{
-	  for(i=0 ; i<ct->size ; i++) 
-	    List_Add(ListOfColor_L, &ct->table[i]);
-	}
+	for(i=0 ; i<ct->size ; i++) 
+	  List_Add(ListOfColor_L, &ct->table[i]);
       }
       $$ = ListOfColor_L;
     }

@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.23 2001-02-08 16:32:15 geuzaine Exp $
+// $Id: Box.cpp,v 1.24 2001-02-12 17:38:02 geuzaine Exp $
 
 #include <signal.h>
 
@@ -60,7 +60,7 @@ void Info (int level, char *arg0){
 int main(int argc, char *argv[]){
   int     i, nbf;
 
-  Init_Context();
+  Init_Context(0);
   Get_Options(argc, argv, &nbf);
 
   signal(SIGINT,  Signal); 

@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.11 2001-02-04 10:23:56 geuzaine Exp $
+// $Id: Message.cpp,v 1.12 2001-02-12 17:38:03 geuzaine Exp $
 
 #include <signal.h>
 #ifndef WIN32
@@ -51,6 +51,8 @@ void Msg(int level, char *fmt, ...){
   char     *str = NULL;
 
   switch(level){
+  case DIRECT : verb = 2; break ;
+
   case STATUS1N : log = 0; //fallthrough
   case STATUS1  : verb = 1; window = 0; break ;
   case STATUS2N : log = 0; //fallthrough
@@ -112,7 +114,7 @@ void Msg(int level, char *fmt, ...){
       if(str) strcat(buff1, str);
       vsprintf(buff2, fmt, args); 
       strcat(buff1,buff2);
-      fprintf(stderr, "%s\n", &buff1[3]);
+      if(CTX.terminal) fprintf(stderr, "%s\n", &buff1[3]);
       if(WID && !CTX.interactive){
 	if(verb<2)
 	  WID->add_message(buff1);
@@ -138,7 +140,7 @@ void Msg(int level, char *fmt, ...){
 void Exit(int level){
   if(!CTX.interactive){
     WID->get_position(CTX.position, CTX.gl_position);
-    Print_Configuration(CTX.configfilename);
+    Print_Configuration(0, CTX.configfilename);
   }
   exit(level);
 }
@@ -161,8 +163,8 @@ void GetResources(long *s, long *us, long *mem){
 
 }
 
-void PrintResources(FILE *stream, char *fmt, long s, long us, long mem){
-  fprintf(stream, "Resources = %scpu %ld.%ld s / mem %ld kb\n", fmt, s, us, mem);
+void PrintResources(char *fmt, long s, long us, long mem){
+  Msg(DIRECT, "Resources = %scpu %ld.%ld s / mem %ld kb\n", fmt, s, us, mem);
 }
 
 double Cpu(void){

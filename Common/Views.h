@@ -86,9 +86,8 @@ extern List_T *Post_ViewList;
 int fcmpPostViewNum(const void *v1, const void *v2);
 int fcmpPostViewDuplicateOf(const void *v1, const void *v2);
 
-void BeginView (int alloc);
-void EndView (int AddInUI, int Number, char *FileName, char *Name, 
-              double XOffset, double YOffset, double ZOffset);
+void BeginView (int alloc, int Number);
+void EndView (int AddInUI, int Number, char *FileName, char *Name);
 void FreeView(Post_View *v);
 bool FreeView(int);
 void Read_View(FILE *file, char *filename);
@@ -99,13 +98,7 @@ int CreateBGM(Post_View *ErrView, int OptiMethod, double Degree,
               double OptiValue, double *ObjFunct, char *OutFile);
 double ErrorInView(Post_View * ErrView, int *n);
 
-char *Get_StringViewOption(int num, char *str, int *type);
-void *Get_NumberViewOption(int num, char *str, int *type);
-void *Get_ArrayViewOption(int num, char *str, int *type);
-ColorTable *Get_ColorTableViewOption(int num);
-
-void Print_StringViewOptions(int num, FILE *file);
-void Print_NumberViewOptions(int num, FILE *file);
-void Print_ArrayViewOptions(int num, FILE *file);
+ColorTable *Get_ColorTable(int num);
+void Print_ColorTable(int num, char *prefix, FILE *file);
 
 #endif

@@ -1,9 +1,10 @@
-// $Id: Views.cpp,v 1.28 2001-02-09 14:51:31 geuzaine Exp $
+// $Id: Views.cpp,v 1.29 2001-02-12 17:38:02 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
 #include "Views.h"
 #include "Context.h"
+#include "Options.h"
 #include "ColorTable.h"
 
 List_T  *Post_ViewList = NULL;
@@ -26,8 +27,23 @@ int fcmpPostViewDuplicateOf(const void *v1, const void *v2){
   return (((Post_View *)v1)->DuplicateOf - ((Post_View *)v2)->DuplicateOf);
 }
 
-void BeginView(int allocate){
-  ActualView = (Post_View*)Malloc(sizeof(Post_View));
+void BeginView(int allocate, int force_number){
+  Post_View v;
+
+  if(!Post_ViewList) Post_ViewList = List_Create(100,1,sizeof(Post_View));
+
+  if(!force_number){
+    v.Num = ++ActualViewNum;    
+    List_Add(Post_ViewList, &v);
+  }
+  else{
+    v.Num = force_number;    
+    List_Replace(Post_ViewList,&v,fcmpPostViewNum);
+  }
+
+  CTX.post.nb_views = List_Nbr(Post_ViewList);
+
+  ActualView = (Post_View*)List_PQuery(Post_ViewList, &v, fcmpPostViewNum);
 
   NbPoints = NbLines = NbTriangles = NbTetrahedra = 0;
 
@@ -68,30 +84,14 @@ void BeginView(int allocate){
   ActualView->Changed = 1;
   ActualView->Links = 0;
   ActualView->DuplicateOf = 0;
-  ActualView->Min = 1.e200;
-  ActualView->Max = -1.e200;
-  ActualView->NbIso = CTX.post.initial_nbiso;
-  ActualView->IntervalsType = CTX.post.initial_intervals;
-  ActualView->Light = 0;
-  ActualView->ShowElement = 0;
-  ActualView->ShowTime = 1;
-  ActualView->Visible = CTX.post.initial_visibility;
-  ActualView->TimeStep = 0;
-  ActualView->ArrowScale = 100.; 
-  ActualView->ArrowType = DRAW_POST_ARROW; 
-  ActualView->ArrowLocation = DRAW_POST_LOCATE_COG; 
-  ActualView->RangeType = DRAW_POST_DEFAULT; 
-  ActualView->ShowScale = 1;
-  ActualView->TransparentScale = 1;
-  ActualView->ScaleType = DRAW_POST_LINEAR; 
-  ActualView->Raise[0] = 0.0;
-  ActualView->Raise[1] = 0.0;
-  ActualView->Raise[2] = 0.0;
   ActualView->ScalarOnly = 1;
-  ActualView->NbTimeStep = 0;
+  ActualView->normals = NULL;
+
+  Set_DefaultStringOptions(ActualView->Num-1, ViewOptions_String);
+  Set_DefaultNumberOptions(ActualView->Num-1, ViewOptions_Number);
+  Set_DefaultColorOptions(ActualView->Num-1, ViewOptions_Color, 0);
   ActualView->CT.size = 255;
   ActualView->CT.ipar[COLORTABLE_MODE] = COLORTABLE_RGB;
-  ActualView->normals = 0;
   ColorTable_InitParam(1, &ActualView->CT, 1, 1);
   ColorTable_Recompute(&ActualView->CT, 1, 1);
 }
@@ -153,8 +153,8 @@ void Stat_TensorSimplex(int nbnod, int N, double *v){
   Msg(GERROR, "Tensor Field Views not Implemented Yet");
 }
 
-void EndView(int AddInUI, int Number, char *FileName, char *Name, 
-             double XOffset, double YOffset, double ZOffset){
+
+void EndView(int add_in_gui, int force_number, char *file_name, char *name){
   int i, nb;
   double d;
   extern int AddViewInUI(int , char *, int);
@@ -239,38 +239,24 @@ void EndView(int AddInUI, int Number, char *FileName, char *Name,
     }
   }
 
-  strcpy(ActualView->FileName,FileName);
-  strcpy(ActualView->Name,Name);
-  strcpy(ActualView->Format, "%.3e");
-  if(ActualView->Min > ActualView->Max)
-    ActualView->Min = ActualView->Max = 0.0 ;
-  ActualView->CustomMin = ActualView->Min;
-  ActualView->CustomMax = ActualView->Max;
-  ActualView->Offset[0] = XOffset*(CTX.range[0]?CTX.range[0]:CTX.lc)*1.e-3;
-  ActualView->Offset[1] = YOffset*(CTX.range[1]?CTX.range[1]:CTX.lc)*1.e-3;
-  ActualView->Offset[2] = ZOffset*(CTX.range[2]?CTX.range[2]:CTX.lc)*1.e-3;
-
-  /* j'en alloue directement le max pour eviter les problemes de
-     reallocation (avec CurrentView) */
-  if(!Post_ViewList) 
-    Post_ViewList = List_Create(100,1,sizeof(Post_View));
-
-  if(!Number){
-    ActualView->Num = ++ActualViewNum;    
-    List_Add(Post_ViewList,ActualView);
-    CTX.post.nb_views = List_Nbr(Post_ViewList);
-    if(AddInUI)
-      AddViewInUI(List_Nbr(Post_ViewList), ActualView->Name, ActualView->Num);
+  opt_view_name(ActualView->Num-1, GMSH_SET|GMSH_GUI, name);
+  opt_view_filename(ActualView->Num-1, GMSH_SET|GMSH_GUI, file_name);
+  opt_view_nb_timestep(ActualView->Num-1, GMSH_GUI, 0);
+  if(ActualView->Min > ActualView->Max){
+    opt_view_min(ActualView->Num-1, GMSH_SET|GMSH_GUI, 0.);
+    opt_view_max(ActualView->Num-1, GMSH_SET|GMSH_GUI, 0.);
   }
   else{
-    ActualView->Num = Number;    
-    List_Replace(Post_ViewList,ActualView,fcmpPostViewNum);
+    opt_view_min(ActualView->Num-1, GMSH_GUI, 0);
+    opt_view_max(ActualView->Num-1, GMSH_GUI, 0);
   }
+  opt_view_custom_min(ActualView->Num-1, GMSH_SET|GMSH_GUI, ActualView->Min);
+  opt_view_custom_max(ActualView->Num-1, GMSH_SET|GMSH_GUI, ActualView->Max);
 
-  // it's a test, smoothing views in the volume !!!
-  // in the future, we'll have normals smoothed
   if(CTX.post.smooth) ActualView->smooth();
-  ActualView = NULL;
+
+  if(!force_number && add_in_gui)
+    AddViewInUI(List_Nbr(Post_ViewList), ActualView->Name, ActualView->Num);
 }
 
 bool FreeView(int num){
@@ -357,119 +343,25 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   ColorTable_Paste(&dest->CT);
 }
 
-char *Get_StringViewOption(int num, char *str, int *type){
+ColorTable *Get_ColorTable(int num){
   Post_View *v;
-
-  if(num < 0 || num >= List_Nbr(Post_ViewList)){
-    *type = -1 ;
+  if((v = (Post_View*)List_Pointer_Test(Post_ViewList, num)))
+    return &v->CT ;
+  else
     return NULL ;
-  }
-  v = (Post_View*)List_Pointer(Post_ViewList, num);
-
-  if(!strcmp(str, "Format")) return v->Format ;
-  else if(!strcmp(str, "FileName")) return v->FileName ;
-  else if(!strcmp(str, "Name")) return v->Name ;
-  else return NULL ;
-
 }
 
-void Print_StringViewOptions(int num, FILE *file){
-  Post_View *v;
-
-  if(num < 0 || num >= List_Nbr(Post_ViewList))
-    return ;
-  v = (Post_View*)List_Pointer(Post_ViewList, num);
-
-  fprintf(file, "PostProcessing.View[%d].Format = \"%s\";\n", num, v->Format);
-  fprintf(file, "PostProcessing.View[%d].FileName = \"%s\";\n", num, v->FileName);
-  fprintf(file, "PostProcessing.View[%d].Name = \"%s\";\n", num, v->Name);
-}
-
-void *Get_NumberViewOption(int num, char *str, int *type){
-  Post_View *v;
-
-  if(num < 0 || num >= List_Nbr(Post_ViewList)){
-    *type = -1 ;
-    return NULL ;
-  }
-  v = (Post_View*)List_Pointer(Post_ViewList, num);
-
-  if(!strcmp(str, "NbTimeStep")) { *type = GMSH_INT; return (void*)&v->NbTimeStep; }
-  else if(!strcmp(str, "TimeStep")) { *type = GMSH_INT; return (void*)&v->TimeStep; }
-  else if(!strcmp(str, "Min")) { *type = GMSH_DOUBLE; return (void*)&v->Min ; }
-  else if(!strcmp(str, "Max")) { *type = GMSH_DOUBLE ; return (void*)&v->Max ; }
-  else if(!strcmp(str, "CustomMin")) { *type = GMSH_DOUBLE ; return (void*)&v->CustomMin ; }
-  else if(!strcmp(str, "CustomMax")) { *type = GMSH_DOUBLE ; return (void*)&v->CustomMax ; }
-  else if(!strcmp(str, "Offset0")) { *type = GMSH_DOUBLE ; return (void*)&v->Offset[0] ; }
-  else if(!strcmp(str, "Offset1")) { *type = GMSH_DOUBLE ; return (void*)&v->Offset[1] ; }
-  else if(!strcmp(str, "Offset2")) { *type = GMSH_DOUBLE ; return (void*)&v->Offset[2] ; }
-  else if(!strcmp(str, "Raise0")) { *type = GMSH_DOUBLE ; return (void*)&v->Raise[0] ; }
-  else if(!strcmp(str, "Raise1")) { *type = GMSH_DOUBLE ; return (void*)&v->Raise[1] ; }
-  else if(!strcmp(str, "Raise2")) { *type = GMSH_DOUBLE ; return (void*)&v->Raise[2] ; }
-  else if(!strcmp(str, "ArrowScale")) { *type = GMSH_DOUBLE ; return (void*)&v->ArrowScale ; }
-  else if(!strcmp(str, "Visible")) { *type = GMSH_INT ; return (void*)&v->Visible ; }
-  else if(!strcmp(str, "IntervalsType")) { *type = GMSH_INT ; return (void*)&v->IntervalsType ; }
-  else if(!strcmp(str, "NbIso")) { *type = GMSH_INT ; return (void*)&v->NbIso ; }
-  else if(!strcmp(str, "Light")) { *type = GMSH_INT ; return (void*)&v->Light ; }
-  else if(!strcmp(str, "ShowElement")) { *type = GMSH_INT ; return (void*)&v->ShowElement ; }
-  else if(!strcmp(str, "ShowTime")) { *type = GMSH_INT ; return (void*)&v->ShowTime ; }
-  else if(!strcmp(str, "ShowScale")) { *type = GMSH_INT ; return (void*)&v->ShowScale ; }
-  else if(!strcmp(str, "TransparentScale")) { *type = GMSH_INT ; return (void*)&v->TransparentScale ; }
-  else if(!strcmp(str, "ScaleType")) { *type = GMSH_INT ; return (void*)&v->ScaleType ; }
-  else if(!strcmp(str, "RangeType")) { *type = GMSH_INT ; return (void*)&v->RangeType ; }
-  else if(!strcmp(str, "ArrowType")) { *type = GMSH_INT ; return (void*)&v->ArrowType ; }
-  else if(!strcmp(str, "ArrowLocation")) { *type = GMSH_INT ; return (void*)&v->ArrowLocation ; }
-  else{
-    return NULL ;
-  }
-}
-
-void Print_NumberViewOptions(int num, FILE *file){
-  Post_View *v;
-
-  if(num < 0 || num >= List_Nbr(Post_ViewList))
-    return ;
-  v = (Post_View*)List_Pointer(Post_ViewList, num);
-
-  fprintf(file, "PostProcessing.View[%d].NbTimeStep = %d;\n", num, v->NbTimeStep);
-  fprintf(file, "PostProcessing.View[%d].TimeStep = %d;\n", num, v->TimeStep);
-  fprintf(file, "PostProcessing.View[%d].Min = %g;\n", num, v->Min);
-  fprintf(file, "PostProcessing.View[%d].Max = %g;\n", num, v->Max);
-  fprintf(file, "PostProcessing.View[%d].CustomMin = %g;\n", num, v->CustomMin);
-  fprintf(file, "PostProcessing.View[%d].CustomMax = %g;\n", num, v->CustomMax);
-  fprintf(file, "PostProcessing.View[%d].ArrowScale = %g;\n", num, v->ArrowScale);
-  fprintf(file, "PostProcessing.View[%d].Visible = %d;\n", num, v->Visible);
-  fprintf(file, "PostProcessing.View[%d].IntervalsType = %d;\n", num, v->IntervalsType);
-  fprintf(file, "PostProcessing.View[%d].NbIso = %d;\n", num, v->NbIso);
-  fprintf(file, "PostProcessing.View[%d].Light = %d;\n", num, v->Light);
-  fprintf(file, "PostProcessing.View[%d].ShowElement = %d;\n", num, v->ShowElement);
-  fprintf(file, "PostProcessing.View[%d].ShowTime = %d;\n", num, v->ShowTime);
-  fprintf(file, "PostProcessing.View[%d].ShowScale = %d;\n", num, v->ShowScale);
-  fprintf(file, "PostProcessing.View[%d].TransparentScale = %d;\n", num, v->TransparentScale);
-  fprintf(file, "PostProcessing.View[%d].ScaleType = %d;\n", num, v->ScaleType);
-  fprintf(file, "PostProcessing.View[%d].RangeType = %d;\n", num, v->RangeType);
-  fprintf(file, "PostProcessing.View[%d].ArrowType = %d;\n", num, v->ArrowType);
-  fprintf(file, "PostProcessing.View[%d].ArrowLocation = %d;\n", num, v->ArrowLocation);
-  fprintf(file, "PostProcessing.View[%d].Offset0 = %g;\n", num, v->Offset[0]);
-  fprintf(file, "PostProcessing.View[%d].Offset1 = %g;\n", num, v->Offset[1]);
-  fprintf(file, "PostProcessing.View[%d].Offset2 = %g;\n", num, v->Offset[2]);
-  fprintf(file, "PostProcessing.View[%d].Raise0 = %g;\n", num, v->Raise[0]);
-  fprintf(file, "PostProcessing.View[%d].Raise1 = %g;\n", num, v->Raise[1]);
-  fprintf(file, "PostProcessing.View[%d].Raise2 = %g;\n", num, v->Raise[2]);
-  fprintf(file, "PostProcessing.View[%d].Color = { ", num);
+void Print_ColorTable(int num, char *prefix, FILE *file){
+  char tmp[1024];
+  Post_View *v = (Post_View*)List_Pointer_Test(Post_ViewList, num);
+  if(!v) return;
+  sprintf(tmp, "%s = {", prefix);
+  if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, tmp);
   ColorTable_Print(&v->CT, file);
-  fprintf(file, " };\n");
-
+  sprintf(tmp, "};");
+  if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, tmp);
 }
 
-ColorTable *Get_ColorTableViewOption(int num){
-  Post_View *v;
-
-  if(num < 0 || num >= List_Nbr(Post_ViewList))
-    return NULL ;
-  v = (Post_View*)List_Pointer(Post_ViewList, num);
-  return &v->CT ;
-}
 
 /* ------------------------------------------------------------------------ */
 /*  R e a d _ V i e w                                                       */
@@ -522,7 +414,7 @@ void Read_View(FILE *file, char *filename){
 
     if (!strncmp(&str[1], "View", 4)) {
 
-      BeginView(0);
+      BeginView(0, Force_ViewNumber);
 
       fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
              name, &ActualView->NbTimeStep,
@@ -598,7 +490,7 @@ void Read_View(FILE *file, char *filename){
           List_Nbr(ActualView->ST), List_Nbr(ActualView->VT), List_Nbr(ActualView->TT), 
           List_Nbr(ActualView->SS), List_Nbr(ActualView->VS), List_Nbr(ActualView->TS));
 
-      EndView(1, Force_ViewNumber, filename, name, 0., 0., 0.); 
+      EndView(1, Force_ViewNumber, filename, name); 
     }
 
     do {

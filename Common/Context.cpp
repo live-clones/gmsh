@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.35 2001-01-29 08:43:44 geuzaine Exp $
+// $Id: Context.cpp,v 1.36 2001-02-12 17:38:02 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -6,28 +6,11 @@
 #include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"
+#include "Options.h"
+#include "DefaultOptions.h"
 #include "trackball.c"
 
 extern Context_T CTX ;
-
-extern StringXString GeneralOptions_String[] ;
-extern StringXString GeometryOptions_String[] ;
-extern StringXString MeshOptions_String[] ;
-extern StringXString PostProcessingOptions_String[] ;
-extern StringXString PrintOptions_String[] ;
-
-extern StringXNumber GeneralOptions_Number[] ;
-extern StringXNumber GeometryOptions_Number[] ;
-extern StringXNumber MeshOptions_Number[] ;
-extern StringXNumber PostProcessingOptions_Number[] ;
-extern StringXNumber PrintOptions_Number[] ;
-
-extern StringXColor GeneralOptions_Color[] ;
-extern StringXColor GeometryOptions_Color[] ;
-extern StringXColor MeshOptions_Color[] ;
-extern StringXColor PostProcessingOptions_Color[] ;
-extern StringXColor PrintOptions_Color[] ;
-
 
 // STRING OPTIONS
 
@@ -36,31 +19,36 @@ StringXString * Get_StringOptionCategory(char * cat){
   else if(!strcmp(cat,"Geometry"))       return GeometryOptions_String ;
   else if(!strcmp(cat,"Mesh"))           return MeshOptions_String ;
   else if(!strcmp(cat,"PostProcessing")) return PostProcessingOptions_String ;
+  else if(!strcmp(cat,"View"))           return ViewOptions_String ;
   else if(!strcmp(cat,"Print"))          return PrintOptions_String ;
   else                                   return NULL ;
 }
 
-void Set_DefaultStringOptions(StringXString s[]){
+void Set_DefaultStringOptions(int num, StringXString s[]){
   int i = 0;
-  while(s[i].str){
-    *s[i].ptr = s[i].def ;
-    i++;
-  }
+  while(s[i].str) s[i].function(num, GMSH_SET, s[i++].def) ;
 }
 
-char ** Get_StringOption(char *str, StringXString s[]){
+void UpdateGUI_StringOptions(int num, StringXString s[]){
+  int i = 0;
+  while(s[i].str) s[i++].function(num, GMSH_GUI, 0) ;
+}
+
+void * Get_StringOption(char *str, StringXString s[]){
   int i = 0;
   while ((s[i].str != NULL) && (strcmp(s[i].str, str))) i++ ;
   if(!s[i].str)
     return NULL;
   else
-    return s[i].ptr;
+    return (void*)s[i].function;
 }
 
-void Print_StringOptions(StringXString s[], char *prefix, FILE *file){
+void Print_StringOptions(int num, StringXString s[], char *prefix, FILE *file){
   int i = 0;
+  char tmp[1024];
   while(s[i].str){
-    fprintf(file, "%s%s = \"%s\";\n", prefix, s[i].str, *s[i].ptr) ;
+    sprintf(tmp, "%s%s = \"%s\";", prefix, s[i].str, s[i].function(num, GMSH_GET, NULL)) ;
+    if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, "%s", tmp);
     i++;
   }
 }
@@ -72,89 +60,87 @@ StringXNumber * Get_NumberOptionCategory(char * cat){
   else if(!strcmp(cat,"Geometry"))       return GeometryOptions_Number ;
   else if(!strcmp(cat,"Mesh"))           return MeshOptions_Number ;
   else if(!strcmp(cat,"PostProcessing")) return PostProcessingOptions_Number ;
+  else if(!strcmp(cat,"View"))           return ViewOptions_Number ;
   else if(!strcmp(cat,"Print"))          return PrintOptions_Number ;
   else                                   return NULL ;
 }
 
-void Set_DefaultNumberOptions(StringXNumber s[]){
+void Set_DefaultNumberOptions(int num, StringXNumber s[]){
   int i = 0;
-  while(s[i].str){
-    switch(s[i].type){
-    case GMSH_INT: *(int*)s[i].ptr = (int)s[i].def; break;
-    case GMSH_LONG: *(long*)s[i].ptr = (long)s[i].def; break;
-    case GMSH_FLOAT: *(float*)s[i].ptr = (float)s[i].def; break;
-    case GMSH_DOUBLE: *(double*)s[i].ptr = (double)s[i].def; break;
-    }
-    i++;
-  }
+  while(s[i].str) s[i].function(num, GMSH_SET, s[i++].def) ;
 }
 
-void * Get_NumberOption(char *str, StringXNumber s[], int *type){
+void UpdateGUI_NumberOptions(int num, StringXNumber s[]){
+  int i = 0;
+  while(s[i].str) s[i++].function(num, GMSH_GUI, 0) ;
+}
+
+void * Get_NumberOption(char *str, StringXNumber s[]){
   int i = 0;
 
   while ((s[i].str != NULL) && (strcmp(s[i].str, str))) i++ ;
   if(!s[i].str)
     return NULL;
   else{
-    *type = s[i].type ;
-    return s[i].ptr;
+    return (void*)s[i].function;
   }
 }
 
-void Print_NumberOptions(StringXNumber s[], char *prefix, FILE *file){
+void Print_NumberOptions(int num, StringXNumber s[], char *prefix, FILE *file){
   int i = 0;
+  char tmp[1024];
   while(s[i].str){
-    fprintf(file, "%s%s = ", prefix, s[i].str);
-    switch(s[i].type){
-    case GMSH_INT : fprintf(file, "%d;\n", *(int*)s[i].ptr); break;
-    case GMSH_LONG : fprintf(file, "%ld;\n", *(long*)s[i].ptr); break;
-    case GMSH_FLOAT : fprintf(file, "%g;\n", *(float*)s[i].ptr); break;
-    case GMSH_DOUBLE : fprintf(file, "%g;\n", *(double*)s[i].ptr); break;
-    }
+    sprintf(tmp, "%s%s = %g;", prefix, s[i].str, s[i].function(num, GMSH_GET, 0));
+    if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, tmp);
     i++;
   }
 }
 
-// COLORS
+// COLOR OPTIONS
 
 StringXColor * Get_ColorOptionCategory(char * cat){
   if     (!strcmp(cat,"General"))        return GeneralOptions_Color ;
   else if(!strcmp(cat,"Geometry"))       return GeometryOptions_Color ;
   else if(!strcmp(cat,"Mesh"))           return MeshOptions_Color ;
   else if(!strcmp(cat,"PostProcessing")) return PostProcessingOptions_Color ;
+  else if(!strcmp(cat,"View"))           return ViewOptions_Color ;
   else if(!strcmp(cat,"Print"))          return PrintOptions_Color ;
   else                                   return NULL ;
 }
 
-void Set_DefaultColorOptions(StringXColor s[], int num){
+void Set_DefaultColorOptions(int num, StringXColor s[], int scheme){
   int i = 0;
-  while(s[i].str){
-    switch(num){
-    case 0 : *s[i].ptr = s[i].def1; break;
-    case 1 : *s[i].ptr = s[i].def2; break;
-    case 2 : *s[i].ptr = s[i].def3; break;
-    }
-    i++;
+  switch(scheme){
+  case 0 : while(s[i].str) s[i].function(num, GMSH_SET, s[i++].def1) ; break;
+  case 1 : while(s[i].str) s[i].function(num, GMSH_SET, s[i++].def2) ; break;
+  case 2 : while(s[i].str) s[i].function(num, GMSH_SET, s[i++].def3) ; break;
   }
 }
 
-unsigned int * Get_ColorOption(char *str, StringXColor s[]) {
+void UpdateGUI_ColorOptions(int num, StringXColor s[]){
+  int i = 0;
+  while(s[i].str) s[i++].function(num, GMSH_GUI, 0) ;
+}
+
+void * Get_ColorOption(char *str, StringXColor s[]) {
   int i = 0;
   while ((s[i].str != NULL) && (strcmp(s[i].str, str))) i++ ;
   if(!s[i].str)
     return NULL;
   else
-    return s[i].ptr;
+    return (void*)s[i].function;
 }
 
-void Print_ColorOptions(StringXColor s[], char *prefix, FILE *file){
+void Print_ColorOptions(int num, StringXColor s[], char *prefix, FILE *file){
   int i = 0;
+  char tmp[1024];
   while(s[i].str){
-    fprintf(file, "%sColor.%s = {%d,%d,%d};\n", 
+    sprintf(tmp, "%sColor.%s = {%d,%d,%d};", 
 	    prefix, s[i].str,
-	    UNPACK_RED(*s[i].ptr),
-	    UNPACK_GREEN(*s[i].ptr),
-	    UNPACK_BLUE(*s[i].ptr));
+	    UNPACK_RED  (s[i].function(num, GMSH_GET, 0)),
+	    UNPACK_GREEN(s[i].function(num, GMSH_GET, 0)),
+	    UNPACK_BLUE (s[i].function(num, GMSH_GET, 0)));
+    if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, tmp);
     i++;
   }
 }
@@ -175,19 +161,7 @@ int Get_ColorForString(StringX4Int SX4I[], int alpha,
 /*  C o n t e x t                                                           */
 /* ------------------------------------------------------------------------ */
 
-void Init_Colors(int num){
-  if(num < 0 || num > 2){
-    return;
-  }
-  CTX.color.id = num ;
-  Set_DefaultColorOptions(GeneralOptions_Color, num);
-  Set_DefaultColorOptions(GeometryOptions_Color, num);
-  Set_DefaultColorOptions(MeshOptions_Color, num);
-  Set_DefaultColorOptions(PostProcessingOptions_Color, num);
-  Set_DefaultColorOptions(PrintOptions_Color, num);
-}
-
-void Init_Context(void){
+void Init_Context(int num){
 
   // Cannot be set by the user 
   CTX.expose       = 0 ;
@@ -226,26 +200,54 @@ void Init_Context(void){
   CTX.post.draw      = 1 ;
 
   // Default string options
-  Set_DefaultStringOptions(GeneralOptions_String);
-  Set_DefaultStringOptions(GeometryOptions_String);
-  Set_DefaultStringOptions(MeshOptions_String);
-  Set_DefaultStringOptions(PostProcessingOptions_String);
-  Set_DefaultStringOptions(PrintOptions_String);
+  Set_DefaultStringOptions(num, GeneralOptions_String);
+  Set_DefaultStringOptions(num, GeometryOptions_String);
+  Set_DefaultStringOptions(num, MeshOptions_String);
+  Set_DefaultStringOptions(num, PostProcessingOptions_String);
+  Set_DefaultStringOptions(num, PrintOptions_String);
 
   // Default number options
-  Set_DefaultNumberOptions(GeneralOptions_Number);
-  Set_DefaultNumberOptions(GeometryOptions_Number);
-  Set_DefaultNumberOptions(MeshOptions_Number);
-  Set_DefaultNumberOptions(PostProcessingOptions_Number);
-  Set_DefaultNumberOptions(PrintOptions_Number);
+  Set_DefaultNumberOptions(num, GeneralOptions_Number);
+  Set_DefaultNumberOptions(num, GeometryOptions_Number);
+  Set_DefaultNumberOptions(num, MeshOptions_Number);
+  Set_DefaultNumberOptions(num, PostProcessingOptions_Number);
+  Set_DefaultNumberOptions(num, PrintOptions_Number);
 
   // Default color options
-  Init_Colors(0);
-
+  Init_Colors(num);
 }
 
-void Print_Context(char *filename){
+void Init_Colors(int num){
+  Set_DefaultColorOptions(num, GeneralOptions_Color, CTX.color_scheme);
+  Set_DefaultColorOptions(num, GeometryOptions_Color, CTX.color_scheme);
+  Set_DefaultColorOptions(num, MeshOptions_Color, CTX.color_scheme);
+  Set_DefaultColorOptions(num, PostProcessingOptions_Color, CTX.color_scheme);
+  Set_DefaultColorOptions(num, PrintOptions_Color, CTX.color_scheme);
+}
+
+void UpdateGUI_Context(int num){
+  UpdateGUI_StringOptions(num, GeneralOptions_String);
+  UpdateGUI_StringOptions(num, GeometryOptions_String);
+  UpdateGUI_StringOptions(num, MeshOptions_String);
+  UpdateGUI_StringOptions(num, PostProcessingOptions_String);
+  UpdateGUI_StringOptions(num, PrintOptions_String);
+      
+  UpdateGUI_NumberOptions(num, GeneralOptions_Number);
+  UpdateGUI_NumberOptions(num, GeometryOptions_Number);
+  UpdateGUI_NumberOptions(num, MeshOptions_Number);
+  UpdateGUI_NumberOptions(num, PostProcessingOptions_Number);
+  UpdateGUI_NumberOptions(num, PrintOptions_Number);
+
+  UpdateGUI_ColorOptions(num, GeneralOptions_Color);
+  UpdateGUI_ColorOptions(num, GeometryOptions_Color);
+  UpdateGUI_ColorOptions(num, MeshOptions_Color);
+  UpdateGUI_ColorOptions(num, PostProcessingOptions_Color);
+  UpdateGUI_ColorOptions(num, PrintOptions_Color);
+}
+
+void Print_Context(int num, char *filename){
   FILE *file;
+  char tmp[256];
   int i ;
   
   if(filename){
@@ -256,31 +258,31 @@ void Print_Context(char *filename){
     }
   }
   else
-    file = stdout;
+    file = NULL ;
 
-  Print_StringOptions(GeneralOptions_String, "General.", file);
-  Print_NumberOptions(GeneralOptions_Number, "General.", file);
-  Print_ColorOptions(GeneralOptions_Color, "General.", file);
-  fprintf(file, "\n");
-  Print_StringOptions(GeometryOptions_String, "Geometry.", file);
-  Print_NumberOptions(GeometryOptions_Number, "Geometry.", file);
-  Print_ColorOptions(GeometryOptions_Color, "Geometry.", file);
-  fprintf(file, "\n");
-  Print_StringOptions(MeshOptions_String, "Mesh.", file);
-  Print_NumberOptions(MeshOptions_Number, "Mesh.", file);
-  Print_ColorOptions(MeshOptions_Color, "Mesh.", file);
-  fprintf(file, "\n");
-  Print_StringOptions(PostProcessingOptions_String, "PostProcessing.", file);
-  Print_NumberOptions(PostProcessingOptions_Number, "PostProcessing.", file);
-  Print_ColorOptions(PostProcessingOptions_Color, "PostProcessing.", file);
+  Print_StringOptions(num, GeneralOptions_String, "General.", file);
+  Print_NumberOptions(num, GeneralOptions_Number, "General.", file);
+  Print_ColorOptions(num, GeneralOptions_Color, "General.", file);
+  Print_StringOptions(num, GeometryOptions_String, "Geometry.", file);
+  Print_NumberOptions(num, GeometryOptions_Number, "Geometry.", file);
+  Print_ColorOptions(num, GeometryOptions_Color, "Geometry.", file);
+  Print_StringOptions(num, MeshOptions_String, "Mesh.", file);
+  Print_NumberOptions(num, MeshOptions_Number, "Mesh.", file);
+  Print_ColorOptions(num, MeshOptions_Color, "Mesh.", file);
+  Print_StringOptions(num, PostProcessingOptions_String, "PostProcessing.", file);
+  Print_NumberOptions(num, PostProcessingOptions_Number, "PostProcessing.", file);
+  Print_ColorOptions(num, PostProcessingOptions_Color, "PostProcessing.", file);
   for(i=0; i<List_Nbr(Post_ViewList) ; i++){
-    Print_StringViewOptions(i, file);
-    Print_NumberViewOptions(i, file);
+    sprintf(tmp, "View[%d].", i);
+    Print_StringOptions(i, ViewOptions_String, tmp, file);
+    Print_NumberOptions(i, ViewOptions_Number, tmp, file);
+    Print_ColorOptions(i, ViewOptions_Color, tmp, file);
+    strcat(tmp, "ColorTable");
+    Print_ColorTable(i, tmp, file);
   }
-  fprintf(file, "\n");
-  Print_StringOptions(PrintOptions_String, "Print.", file);
-  Print_NumberOptions(PrintOptions_Number, "Print.", file);
-  Print_ColorOptions(PrintOptions_Color, "Print.", file);
+  Print_StringOptions(num, PrintOptions_String, "Print.", file);
+  Print_NumberOptions(num, PrintOptions_Number, "Print.", file);
+  Print_ColorOptions(num, PrintOptions_Color, "Print.", file);
 
   if(filename){
     Msg(INFO, "Options Output Complete '%s'", filename);
@@ -289,7 +291,7 @@ void Print_Context(char *filename){
   }
 }
 
-void Print_Configuration(char *filename){
+void Print_Configuration(int num, char *filename){
   FILE *file;
   
   file = fopen(filename,"w");
@@ -317,6 +319,7 @@ void Print_Configuration(char *filename){
   fprintf(file, "General.MenuPosition1 = %d;\n", CTX.position[1]);
   fclose(file);
 }
+
 
 /*
   3 rotations successives autour de x, y et z:

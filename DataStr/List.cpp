@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.13 2001-01-09 19:40:56 remacle Exp $
+// $Id: List.cpp,v 1.14 2001-02-12 17:38:02 geuzaine Exp $
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -156,7 +156,7 @@ void *List_Pointer_Fast(List_T *liste, int index)
 
 void *List_Pointer_Test(List_T *liste, int index)
 {
-  if ((index < 0) || (index >= liste->n))
+  if (!liste || (index < 0) || (index >= liste->n))
     return NULL;
     
   liste->isorder = 0;
