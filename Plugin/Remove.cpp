@@ -1,4 +1,4 @@
-// $Id: Remove.cpp,v 1.1 2004-12-27 05:26:47 geuzaine Exp $
+// $Id: Remove.cpp,v 1.2 2004-12-28 03:40:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -161,7 +161,19 @@ Post_View *GMSH_RemovePlugin::execute(Post_View * v)
     if(tensor){ v1->NbTY = 0; List_Reset(v1->TY); }
   }
   v1->Changed = 1;
+
   // recompute min/max, etc.:
+  for(int i = 0; i < v1->NbTimeStep; i++){
+    v1->TimeStepMin[i] = VAL_INF;
+    v1->TimeStepMax[i] = -VAL_INF;
+  }
+  v1->Min = VAL_INF;
+  v1->Max = -VAL_INF;
+  for(int i = 0; i < 3; i++) {
+    v1->BBox[2 * i] = VAL_INF;
+    v1->BBox[2 * i + 1] = -VAL_INF;
+  }
   EndView(v1, 0, v1->FileName, v1->Name);
+
   return v1;
 }
