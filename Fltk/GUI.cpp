@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.171 2002-04-26 00:15:30 geuzaine Exp $
+// $Id: GUI.cpp,v 1.172 2002-05-15 04:37:47 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -2128,6 +2128,7 @@ void GUI::create_about_window(){
     sprintf(buffer, "@c@.Packaged by: %s", GMSH_PACKAGER); o->add(buffer);
     o->add("");
     o->add("@c@.Visit http://www.geuz.org/gmsh/ for more information");
+    o->add("");
   }
   
   { 
