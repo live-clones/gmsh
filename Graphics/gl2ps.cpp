@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.68 2003-07-04 14:12:28 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.69 2003-07-04 15:11:55 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -990,7 +990,8 @@ GLint gl2psAddInBspImageTree(GL2PSprimitive *prim, GL2PSbsptree2d **tree){
         gl2ps->zerosurfacearea = 0;
         if(ret) return ret;
       }
-      return 0;
+      if(prim->type == GL2PS_LINE) return 1;
+      else                         return 0;
     }
   }
   return 0;
