@@ -1,0 +1,20 @@
+// These options define 'postcsv.py' as the second solver in Gmsh's
+// solver module, under the name 'PostCSV'.
+Solver.Name1 = "PostCSV";
+Solver.Help1 = "A filter to read node or element 
+indexed, comma-separated-value results into Gmsh.
+Carl Osterwisch <osterwischc@asme.org>
+January 2005";
+Solver.Executable1 = "./postcsv.py";
+Solver.Extension1 = ".csv";
+Solver.MeshName1 = "";
+Solver.MeshCommand1 = "--mesh=%s";
+Solver.SocketCommand1 = "--socket=%s";
+Solver.NameCommand1 = "--results=%s";
+Solver.OptionCommand1 = "--options";
+Solver.FirstOption1 = "Option";
+Solver.FirstButton1 = "Import";
+Solver.FirstButtonCommand1 = "%s";
+Solver.ClientServer1 = 1;
+Solver.MergeViews1 = 1;
+Solver.PopupMessages1 = 1;

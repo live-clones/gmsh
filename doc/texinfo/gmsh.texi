@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.169 2005-01-18 16:13:35 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.170 2005-01-20 01:25:49 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -404,11 +404,13 @@ evaluated at the center of its circumscribed circle/sphere.
 @node Solver, Post-processing, Mesh, Overview
 @section Solver: external solver interface
 
-External solvers can be interfaced with Gmsh through Unix sockets, which
-permits to easily launch external computations and to collect and exploit
-the simulation results within Gmsh's post-processing module. The default
-solver interfaced with Gmsh is GetDP
-(@uref{http://www.geuz.org/getdp/}).
+External solvers can be interfaced with Gmsh through Unix or TCP/IP sockets,
+which permits to easily launch external computations and to collect and
+exploit the simulation results within Gmsh's post-processing module. The
+default solver interfaced with Gmsh is GetDP
+(@uref{http://www.geuz.org/getdp/}). Small examples of solvers written in C,
+C++, Perl and Python are available in the source distribution (in the
+@file{utils/solvers/} directory).
 
 @c -------------------------------------------------------------------------
 @c Post-processing: scalar, vector and tensor field visualization
