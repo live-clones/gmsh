@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.81 2003-11-08 03:52:10 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.82 2003-11-10 01:32:18 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -42,6 +42,7 @@
  *   Shahzad Muzaffar <Shahzad.Muzaffar@cern.ch>
  *   Lassi Tuura <lassi.tuura@cern.ch>
  *   Guy Barrand <barrand@lal.in2p3.fr>
+ *   Prabhu Ramachandran <prabhu@aero.iitm.ernet.in>
  *   Micha Bieber <bieber@traits.de>
  *
  * For the latest info about gl2ps, see http://www.geuz.org/gl2ps/.
