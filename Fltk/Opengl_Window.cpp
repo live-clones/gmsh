@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.27 2002-08-26 17:41:32 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.28 2002-08-28 07:14:55 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -46,6 +46,12 @@ static int    ZOOM = 0 ;
 static double ZOOM_X0, ZOOM_Y0, ZOOM_X1, ZOOM_Y1;
 
 void Opengl_Window::draw() {
+  static int locked=0;
+  if(locked) 
+    return;
+  else
+    locked=1;
+  Msg(DEBUG, "Opengl_Window->draw()");
   if(!valid()){
     valid(1);
     CTX.viewport[0] = 0 ; CTX.viewport[1] = 0 ;
@@ -109,6 +115,7 @@ void Opengl_Window::draw() {
     glMatrixMode(GL_MODELVIEW);
     ZOOM = 0;
   }
+  locked=0;
 }
 
 void Opengl_Window::draw_overlay() {

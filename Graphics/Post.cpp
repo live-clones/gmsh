@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.38 2002-08-28 03:16:09 geuzaine Exp $
+// $Id: Post.cpp,v 1.39 2002-08-28 07:14:55 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -138,7 +138,7 @@ void Get_Coords(double Explode, double *Offset, int nbnod,
   }
 }
 
-static double storedEye[3]={0,0,0};
+static double storedEye[3]={0.,0.,0.};
 
 int changedEye(){
   double zeye=100*CTX.lc, tmp[3];
@@ -151,6 +151,7 @@ int changedEye(){
     storedEye[0] = tmp[0];
     storedEye[1] = tmp[1];
     storedEye[2] = tmp[2];
+    Msg(DEBUG, "New eye = (%g %g %g)", tmp[0], tmp[1], tmp[2]);
     return 1;
   }
   return 0;
@@ -226,6 +227,18 @@ void Draw_Post (void) {
     v = (Post_View*)List_Pointer(CTX.post.list,iView);
 
     if(v->Visible && !v->Dirty){ 
+
+      // sort the data % eye for transparency
+
+      if(CTX.alpha && 
+	 v->NbST && v->DrawTriangles && v->DrawScalars &&
+	 ColorTable_IsAlpha(&v->CT) && 
+	 changedEye()){
+	Msg(DEBUG, "Sorting triangles in view %d", v->Num);
+	nb = List_Nbr(v->ST) / v->NbST ;
+	qsort(v->ST->array,v->NbST,nb*sizeof(double),compareTriangleEye);
+	v->Changed = 1; // force displaylist regeneration
+      }
 
       if(CTX.display_lists && !v->Changed && v->DisplayListNum>0){
 
@@ -386,15 +399,6 @@ void Draw_Post (void) {
 	
 	if(v->NbST && v->DrawTriangles && v->DrawScalars){
 	  nb = List_Nbr(v->ST) / v->NbST ;
-	  if(CTX.alpha){ // sort the triangles % eye
-	    if(ColorTable_IsAlpha(&v->CT) && changedEye()){
-	      Msg(INFO, "Resorting triangles (eye=%g %g %g)", 
-		  storedEye[0],storedEye[1],storedEye[2]);
-	      qsort(v->ST->array,v->NbST,nb*sizeof(double),compareTriangleEye);
-	      v->Changed = 1;
-	      Msg(INFO, "End sorting triangles");
-	    }
-	  }
 	  if(v->Light && v->SmoothNormals && v->Changed && v->IntervalsType != DRAW_POST_ISO){
 	    Msg(DEBUG, "Preprocessing of triangle normals in view %d", v->Num);
 	    for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb){

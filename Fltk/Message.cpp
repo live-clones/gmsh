@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.29 2002-06-15 21:25:27 geuzaine Exp $
+// $Id: Message.cpp,v 1.30 2002-08-28 07:14:55 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -127,7 +127,10 @@ void Msg(int level, char *fmt, ...){
   if(!WID)
     window = -1;
   else 
-    WID->check();
+    WID->check(); 
+  // this is pretty costly, but permits to keep the app
+  // responsive... the downside is that it can cause race
+  // conditions
 
   if(CTX.verbosity >= verb){
     va_start (args, fmt);
