@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.173 2005-04-06 16:30:52 geuzaine Exp $
+// $Id: Views.cpp,v 1.174 2005-04-06 19:03:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -345,6 +345,7 @@ void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
   Stat_Text(v, v->T3D, v->T3C, 5);
 
   // convert all curved (geometrically 2nd order) elements into linear
+  // elements *AND* free all the data associated with the curved
   // elements
   v->splitCurvedElements();
 
@@ -582,6 +583,7 @@ void FreeView(Post_View * v)
     List_Delete(v->SY); List_Delete(v->VY); List_Delete(v->TY);
     List_Delete(v->T2D); List_Delete(v->T2C);
     List_Delete(v->T3D); List_Delete(v->T3C);
+    // Note: all the second order elements have already been freed in xxxx
     if(v->normals) delete v->normals;
     if(v->TriVertexArray) delete v->TriVertexArray;
     if(v->adaptive) delete v->adaptive;
@@ -1380,35 +1382,36 @@ void WriteView(Post_View *v, char *filename, int format, int append)
 
 }
 
-// Transform curved elements into linear ones. This is a temporary
-// solution, until we can use an Adaptive_Post_View on curved
-// elements, too.
+// Transform curved elements into linear ones and delete all the
+// curved element data. This is a temporary solution, until we can use
+// an Adaptive_Post_View on curved elements, too.
 
 void splitCurvedElement(List_T **in, int *nbin, List_T *out, int *nbout, 
 			int nodin, int nodout, int nbcomp, int nbsplit, int split[][8],
 			int remove=1)
 {
-  if(*nbin == 0) return;
-  int nb = List_Nbr(*in) / *nbin;
-  int nbstep = (nb - 3 * nodin) / (nodin * nbcomp); // we don't know this yet for the view
-  for(int i = 0; i < List_Nbr(*in); i += nb) {
-    double *coord = (double *)List_Pointer_Fast(*in, i);
-    double *val = (double *)List_Pointer_Fast(*in, i + 3 * nodin);
-    for(int j = 0; j < nbsplit; j++){
-      for(int k = 0; k < nodout; k++)
-	List_Add(out, &coord[split[j][k]]);
-      for(int k = 0; k < nodout; k++)
-	List_Add(out, &coord[nodin + split[j][k]]);
-      for(int k = 0; k < nodout; k++)
-	List_Add(out, &coord[2 * nodin + split[j][k]]);
-      for(int ts = 0; ts < nbstep; ts++){
-	for(int k = 0; k < nodout; k++){
-	  for(int l = 0; l < nbcomp; l++){
-	    List_Add(out, &val[nodin * nbcomp * ts + nbcomp * split[j][k] + l]);
+  if(*nbin){
+    int nb = List_Nbr(*in) / *nbin;
+    int nbstep = (nb - 3 * nodin) / (nodin * nbcomp); // we don't know this yet for the view
+    for(int i = 0; i < List_Nbr(*in); i += nb) {
+      double *coord = (double *)List_Pointer_Fast(*in, i);
+      double *val = (double *)List_Pointer_Fast(*in, i + 3 * nodin);
+      for(int j = 0; j < nbsplit; j++){
+	for(int k = 0; k < nodout; k++)
+	  List_Add(out, &coord[split[j][k]]);
+	for(int k = 0; k < nodout; k++)
+	  List_Add(out, &coord[nodin + split[j][k]]);
+	for(int k = 0; k < nodout; k++)
+	  List_Add(out, &coord[2 * nodin + split[j][k]]);
+	for(int ts = 0; ts < nbstep; ts++){
+	  for(int k = 0; k < nodout; k++){
+	    for(int l = 0; l < nbcomp; l++){
+	      List_Add(out, &val[nodin * nbcomp * ts + nbcomp * split[j][k] + l]);
+	    }
 	  }
 	}
+	(*nbout)++;
       }
-      (*nbout)++;
     }
   }
 
