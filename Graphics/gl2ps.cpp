@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to Postscript Printing Library
  * Copyright (C) 1999-2001  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.20 2001-06-12 08:49:42 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.21 2001-06-12 10:50:11 geuzaine Exp $
  *
  * E-mail: Christophe.Geuzaine@AdValvas.be
  * URL: http://www.geuz.org/gl2ps/
@@ -1185,14 +1185,14 @@ GLvoid gl2psPrintPostscriptPrimitive(GLvoid *a, GLvoid *b){
 	      prim->verts[1].rgba[2], prim->verts[0].xyz[0],
 	      prim->verts[0].xyz[1], prim->verts[0].rgba[0],
 	      prim->verts[0].rgba[1], prim->verts[0].rgba[2],
-	      0.5*prim->width);
+	      0.35*prim->width);
     }
     else{
       fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g L\n",
 	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
 	      prim->verts[0].xyz[0], prim->verts[0].xyz[1],
 	      prim->verts[0].rgba[0], prim->verts[0].rgba[1], 
-	      prim->verts[0].rgba[2], 0.5*prim->width);
+	      prim->verts[0].rgba[2], 0.35*prim->width);
     }
     if(prim->dash)
       fprintf(gl2ps.stream, "[] 0 setdash\n");
