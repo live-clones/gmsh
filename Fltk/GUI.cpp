@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.42 2001-02-09 07:59:50 geuzaine Exp $
+// $Id: GUI.cpp,v 1.43 2001-02-09 12:32:59 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1992,7 +1992,7 @@ void GUI::update_view_window(int num){
   view_value[8]->value(v->Raise[2]);
   val = 10.*CTX.lc ;
   for(i=3 ; i<9 ; i++){
-    view_value[i]->step(val,1000); 
+    view_value[i]->step(val,10000); 
     view_value[i]->minimum(-val); 
     view_value[i]->maximum(val); 
   }
