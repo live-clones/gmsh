@@ -2,12 +2,12 @@
 If you want to use Jonathan Shewchuk's Triangle as an alternative
 isotropic 2D mesh generator in Gmsh, please download Triangle from the
 author's web site at http://www.cs.cmu.edu/~quake/triangle.html,
-unpack the archive and copy the two files triangle.c and triangle.h in
-this directory. Then run configure and rebuild Gmsh.
+unpack the archive and copy the two files 'triangle.c' and
+'triangle.h' in this directory. Then run configure and rebuild Gmsh.
 
-Note that by doing so, you agree to Triangle's licencing requirements
-stated below. (Most notably, you can only redistribute the software if
-no compensation is received.)
+Please note that by doing so, you agree to Triangle's licencing
+requirements (stated below). Most notably, you can only redistribute
+Gmsh if no compensation is received.
 
 ==============================================================================
 
@@ -24,13 +24,10 @@ Created as part of the Archimedes project (tools for parallel FEM).
 Supported in part by NSF Grant CMS-9318163 and an NSERC 1967 Scholarship.
 There is no warranty whatsoever.  Use at your own risk.
 
-
 Triangle generates exact Delaunay triangulations, exact constrained
 Delaunay triangulations, Voronoi diagrams, and quality conforming Delaunay
 triangulations.  The latter can be generated with no small angles or large,
-and are thus suitable for finite element analysis.  Show Me graphically
-displays the contents of the geometric files used by Triangle.  Show Me can
-also write images in PostScript form.
+and are thus suitable for finite element analysis.
 
 Information on the algorithms used by Triangle, including complete
 references, can be found in the comments at the beginning of the triangle.c
