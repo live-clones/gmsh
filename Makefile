@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.272 2003-03-05 16:51:15 geuzaine Exp $
+# $Id: Makefile,v 1.273 2003-03-07 23:35:01 geuzaine Exp $
 
 include variables
 
@@ -115,11 +115,21 @@ minizip:
 	tar jcvf gmsh-`date "+%Y.%m.%d"`.tar.bz2 \
         `ls Makefile */Makefile */*.[chyl] */*.[ch]pp */*.rc */*.res */*.ico`
 
-distrib-unix: clean all package-unix
+distrib-msg:
+	@echo "********************************************************************"
+	@echo "Remember to change -ljpeg, etc. to /usr/lib/libjpeg.a, etc. in"
+	@echo "./variables and relink if the list below contains non-standard"
+	@echo "dynamic libs and you want to distribute a portable binary:"
+	@echo "********************************************************************"
 
-distrib-windows: clean all package-windows
+distrib-unix: clean all package-unix distrib-msg
+	ldd bin/gmsh
 
-distrib-mac: clean all package-mac
+distrib-windows: clean all package-windows distrib-msg
+	objdump -p bin/gmsh.exe | grep DLL
+
+distrib-mac: clean all package-mac distrib-msg
+	otool -L bin/gmsh
 
 package-unix:
 	rm -rf gmsh-${GMSH_RELEASE}
@@ -138,12 +148,6 @@ package-unix:
 	mv gmsh-${GMSH_RELEASE}-${UNAME}.tar.gz gmsh-${GMSH_RELEASE}-${UNAME}.tgz
 
 package-windows:
-	@echo "********************************************************************"
-	@echo "Remember to change -ljpeg, etc. to /usr/lib/libjpeg.a, etc. in"
-	@echo "./variables and relink if the list below contains non-standard"
-	@echo "dynamic libs:"
-	objdump -p bin/gmsh.exe | grep DLL
-	@echo "********************************************************************"
 	rm -rf gmsh-${GMSH_RELEASE}
 	mkdir gmsh-${GMSH_RELEASE}
 	strip bin/gmsh.exe
@@ -166,12 +170,6 @@ package-windows:
 	mv gmsh-${GMSH_RELEASE}/gmsh-${GMSH_RELEASE}-Windows.zip .
 
 package-mac:
-	@echo "********************************************************************"
-	@echo "Remember to change -ljpeg, etc. to /usr/lib/libjpeg.a, etc. in"
-	@echo "./variables and relink if the list below contains non-standard"
-	@echo "dynamic libs:"
-	otool -L bin/gmsh
-	@echo "********************************************************************"
 	rm -rf gmsh-${GMSH_RELEASE}
 	mkdir gmsh-${GMSH_RELEASE}
 	mkdir gmsh-${GMSH_RELEASE}/Gmsh.app
