@@ -1,4 +1,4 @@
-/* $Id: Box.cpp,v 1.13 2000-12-09 22:26:12 geuzaine Exp $ */
+/* $Id: Box.cpp,v 1.14 2000-12-19 08:56:52 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -77,10 +77,10 @@ void Info (int level, char *arg0){
     fprintf(stderr, gmsh_help, arg0);
     exit(1);
   case 1:
-    fprintf(stderr, "%g\n", GMSH_VERSION);
+    fprintf(stderr, "%.3f\n", GMSH_VERSION);
     exit(1) ; 
   case 2:
-    fprintf(stderr, "%s%g\n", gmsh_version, GMSH_VERSION);
+    fprintf(stderr, "%s%.3f\n", gmsh_version, GMSH_VERSION);
     fprintf(stderr, "%s\n", gmsh_os);
     fprintf(stderr, "%s\n", gmsh_date);
     fprintf(stderr, "%s\n", gmsh_host);

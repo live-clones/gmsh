@@ -1,4 +1,4 @@
-/* $Id: Verif.cpp,v 1.4 2000-12-17 21:17:29 remacle Exp $ */
+/* $Id: Verif.cpp,v 1.5 2000-12-19 08:56:54 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -277,7 +277,7 @@ void PremierVolume(int iSurf, int *iVol){
         }
     }
   }
-  if(*iVol = 0)*iVol = iSurf;
+  if(*iVol == 0) *iVol = iSurf;
 
   List_Delete(temp);
 }
