@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.388 2004-12-23 03:19:58 geuzaine Exp $
+// $Id: GUI.cpp,v 1.389 2004-12-24 03:25:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1600,29 +1600,30 @@ void GUI::create_option_window()
       gen_butt[3]->down_box(TOGGLE_BOX);
       gen_butt[3]->selection_color(TOGGLE_COLOR);
 
-      gen_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Use fake transparency mode");
-      gen_butt[4]->type(FL_TOGGLE_BUTTON);
-      gen_butt[4]->down_box(TOGGLE_BOX);
-      gen_butt[4]->selection_color(TOGGLE_COLOR);
-
-      gen_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Use trackball rotation mode instead of Euler angles");
+      gen_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Use trackball rotation mode instead of Euler angles");
       gen_butt[5]->type(FL_TOGGLE_BUTTON);
       gen_butt[5]->down_box(TOGGLE_BOX);
       gen_butt[5]->selection_color(TOGGLE_COLOR);
 
-      gen_butt[15] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Rotate around pseudo center of mass");
+      gen_butt[15] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Rotate around pseudo center of mass");
       gen_butt[15]->type(FL_TOGGLE_BUTTON);
       gen_butt[15]->down_box(TOGGLE_BOX);
       gen_butt[15]->selection_color(TOGGLE_COLOR);
       gen_butt[15]->callback(general_options_rotation_center_cb);
 
-      gen_push_butt[0] = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 10 * BH, BB, BH, "Select");
+      gen_push_butt[0] = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 9 * BH, BB, BH, "Select");
       gen_push_butt[0]->callback(general_options_rotation_center_select_cb);
 
-      gen_value[8] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW / 3, BH);
-      gen_value[9] = new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 10 * BH, IW / 3, BH);
-      gen_value[10] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 10 * BH, IW / 3, BH, "Rotation center");
+      gen_value[8] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 3, BH);
+      gen_value[9] = new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 9 * BH, IW / 3, BH);
+      gen_value[10] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 9 * BH, IW / 3, BH, "Rotation center");
       gen_value[10]->align(FL_ALIGN_RIGHT);
+
+      gen_value[15] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Middle button zoom acceleration factor");
+      gen_value[15]->minimum(0.05);
+      gen_value[15]->maximum(20.);
+      gen_value[15]->step(0.05);
+      gen_value[15]->align(FL_ALIGN_RIGHT);
 
       o->end();
     }
@@ -1699,13 +1700,18 @@ void GUI::create_option_window()
       gen_value[11]->step(1);
       gen_value[11]->align(FL_ALIGN_RIGHT);
 
-      gen_value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Point size");
+      gen_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Use fake transparency mode");
+      gen_butt[4]->type(FL_TOGGLE_BUTTON);
+      gen_butt[4]->down_box(TOGGLE_BOX);
+      gen_butt[4]->selection_color(TOGGLE_COLOR);
+
+      gen_value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Point size");
       gen_value[6]->minimum(0.1);
       gen_value[6]->maximum(50);
       gen_value[6]->step(0.1);
       gen_value[6]->align(FL_ALIGN_RIGHT);
 
-      gen_value[7] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width");
+      gen_value[7] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Line width");
       gen_value[7]->minimum(0.1);
       gen_value[7]->maximum(50);
       gen_value[7]->step(0.1);
@@ -1718,18 +1724,18 @@ void GUI::create_option_window()
 	{"3D arrow", 0, 0, 0},
 	{0}
       };
-      gen_choice[0] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Vector display");
+      gen_choice[0] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Vector display");
       gen_choice[0]->menu(menu_genvectype);
       gen_choice[0]->align(FL_ALIGN_RIGHT);
 
-      Fl_Button *b = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 6 * BH, (int)(1.5*BB), BH, "Edit arrow shape");
+      Fl_Button *b = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 7 * BH, (int)(1.5*BB), BH, "Edit arrow shape");
       b->callback(general_arrow_param_cb);
 
-      gen_choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Font");
+      gen_choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Font");
       gen_choice[1]->menu(menu_font_names);
       gen_choice[1]->align(FL_ALIGN_RIGHT);
 
-      gen_value[12] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Font size");
+      gen_value[12] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Font size");
       gen_value[12]->minimum(5);
       gen_value[12]->maximum(40);
       gen_value[12]->step(1);

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.212 2004-12-23 22:26:34 geuzaine Exp $
+// $Id: Options.cpp,v 1.213 2004-12-24 03:25:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2639,6 +2639,10 @@ double opt_general_zoom_factor(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.zoom_factor = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_value[15]->value(CTX.zoom_factor);
+#endif
   return CTX.zoom_factor;
 }
 

@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.42 2004-11-15 20:15:33 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.43 2004-12-24 03:25:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -259,14 +259,13 @@ int Opengl_Window::handle(int event)
         }
       }
       else if(ibut == 2 || (ibut == 1 && Fl::event_state(FL_SHIFT))) {
-        if(!CTX.useTrackball)
-          set_r(2, CTX.r[2] + ((abs(ymov) > abs(xmov)) ? 
+	if(!CTX.useTrackball)
+          set_r(2, CTX.r[2] + (abs(ymov) > abs(xmov) ? 
 			       0 : -180 * (double)xmov / (double)w()));
-        set_s(0, CTX.s[0] * ((abs(ymov) > abs(xmov)) ? 
-			     ((ymov > 0) ? (double)(CTX.zoom_factor * (abs(ymov) + h())) /
-                              (double)h() : 
-			      (double)(h()) / (double)(CTX.zoom_factor * 
-						       (abs(ymov) + h()))) : 1.));
+	double zoomfact = (ymov > 0) ? 
+	  (double)(CTX.zoom_factor * abs(ymov) + h()) / (double)h() : 
+	  (double)(h()) / (double)(CTX.zoom_factor * abs(ymov) + h());
+	set_s(0, CTX.s[0] * (abs(ymov) > abs(xmov) ? zoomfact : 1.));
         set_s(1, CTX.s[0]);
         set_s(2, CTX.s[0]);
         if(abs(ymov) > abs(xmov)) {

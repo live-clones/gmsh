@@ -680,8 +680,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "VisibilityPositionY" , opt_general_visibility_position1 , 150. , 
     "Vertical position (in pixels) of the upper left corner of the visibility window" }, 
 
-  { F|O, "ZoomFactor" , opt_general_zoom_factor , 1.1 ,
-    "`Speed' of the middle mouse button zoom" },
+  { F|O, "ZoomFactor" , opt_general_zoom_factor , 4.0 ,
+    "Middle mouse button zoom acceleration factor" },
 
   { 0, NULL , NULL , 0. , NULL }
 } ;
