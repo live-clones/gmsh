@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.49 2002-06-21 21:09:11 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.50 2002-09-06 19:19:49 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -945,32 +945,41 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
 
   glGetIntegerv(GL_VIEWPORT, viewport);
 
+  if(gl2ps->format == GL2PS_PS)
+    fprintf(gl2ps->stream, "%%!PS-Adobe-3.0\n");
+  else if(gl2ps->format == GL2PS_EPS)
+    fprintf(gl2ps->stream, "%%!PS-Adobe-3.0 EPSF-3.0\n");
+  else
+    gl2psMsg(GL2PS_ERROR, "Unknown PostScript format");
+
   fprintf(gl2ps->stream, 
-	  "%%!PS-Adobe-3.0\n"
 	  "%%%%Title: %s\n"
 	  "%%%%Creator: GL2PS, an OpenGL to PostScript Printing Library, v. %g\n"
 	  "%%%%For: %s\n"
 	  "%%%%CreationDate: %s"
 	  "%%%%LanguageLevel: 3\n"
 	  "%%%%DocumentData: Clean7Bit\n"
-	  "%%%%Pages: 1\n"
-	  "%%%%PageOrder: Ascend\n"
-	  "%%%%Orientation: %s\n"
-	  "%%%%DocumentMedia: Default %d %d 0 () ()\n"
+	  "%%%%Pages: 1\n",
+	  gl2ps->title, GL2PS_VERSION, gl2ps->producer, ctime(&now));
+
+  if(gl2ps->format == GL2PS_PS)
+    fprintf(gl2ps->stream, 
+	    "%%%%Orientation: %s\n"
+	    "%%%%DocumentMedia: Default %d %d 0 () ()\n",
+	    (gl2ps->options & GL2PS_LANDSCAPE) ? "Landscape" : "Portrait",
+	    (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[3] : viewport[2],
+	    (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[2] : viewport[3]);
+
+  fprintf(gl2ps->stream,
 	  "%%%%BoundingBox: %d %d %d %d\n"
 	  "%%%%Copyright: GNU LGPL (C) 1999-2002 Christophe Geuzaine <geuz@geuz.org>\n"
 	  "%%%%EndComments\n",
-	  gl2ps->title, GL2PS_VERSION, gl2ps->producer, ctime(&now),
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? "Landscape" : "Portrait",
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[3] : viewport[2],
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[2] : viewport[3],
 	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[1] : viewport[0],
 	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[0] : viewport[1],
 	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[3] : viewport[2],
 	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[2] : viewport[3]);
 
-  /* 
-     RGB color: r g b C (replace C by G in output to change from rgb to gray)
+  /* RGB color: r g b C (replace C by G in output to change from rgb to gray)
      Grayscale: r g b G
      Font choose: size fontname FC
      String primitive: (string) x y size fontname S
@@ -979,8 +988,7 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
      Flat-shaded line: x2 y2 x1 y1 L
      Smooth-shaded line: x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 SL
      Flat-shaded triangle: x3 y3 x2 y2 x1 y1 T
-     Smooth-shaded triangle: x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 ST
-  */
+     Smooth-shaded triangle: x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 ST */
 
   fprintf(gl2ps->stream,
 	  "%%%%BeginProlog\n"
@@ -996,32 +1004,97 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
 	  "/P  { newpath 0.0 360.0 arc closepath fill } BD\n"
 	  "/L  { newpath moveto lineto stroke } BD\n"
 	  "/SL { C moveto C lineto stroke } BD\n"
-	  "/T  { newpath moveto lineto lineto closepath fill } BD\n"
-	  "/STshfill { /b1 exch def /g1 exch def /r1 exch def /y1 exch def /x1 exch def\n"
+	  "/T  { newpath moveto lineto lineto closepath fill } BD\n");
+
+  /* Smooth-shaded triangle with PostScript level 3 shfill operator:
+        x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 STshfill */
+
+  fprintf(gl2ps->stream,
+	  "/STshfill {\n"
+	  "      /b1 exch def /g1 exch def /r1 exch def /y1 exch def /x1 exch def\n"
 	  "      /b2 exch def /g2 exch def /r2 exch def /y2 exch def /x2 exch def\n"
 	  "      /b3 exch def /g3 exch def /r3 exch def /y3 exch def /x3 exch def\n"
 	  "      gsave << /ShadingType 4 /ColorSpace [/DeviceRGB]\n"
 	  "      /DataSource [ 0 x1 y1 r1 g1 b1 0 x2 y2 r2 g2 b2 0 x3 y3 r3 g3 b3 ] >>\n"
-	  "      shfill grestore } BD\n"
-	  "/STnoshfill {/b1 exch def /g1 exch def /r1 exch def /y1 exch def /x1 exch def\n"
-	  "      /b2 exch def /g2 exch def /r2 exch def /y2 exch def /x2 exch def\n"
-	  "      /b3 exch def /g3 exch def /r3 exch def /y3 exch def /x3 exch def\n"    
-	  "      b2 b1 sub abs 0.05 gt g2 g1 sub abs 0.017 gt r2 r1 sub abs 0.032 gt\n"
-	  "      b3 b1 sub abs 0.05 gt g3 g1 sub abs 0.017 gt r3 r1 sub abs 0.032 gt\n"
-	  "      b2 b3 sub abs 0.05 gt g2 g3 sub abs 0.017 gt r2 r3 sub abs 0.032 gt\n"
-	  "      or or or or or or or or { /b12 b1 b2 add 0.5 mul def /g12 g1 g2 add\n"
-	  "      0.5 mul def /r12 r1 r2 add 0.5 mul def /y12 y1 y2 add 0.5 mul def\n"
-	  "      /x12 x1 x2 add 0.5 mul def /b13 b1 b3 add 0.5 mul def /g13 g1 g3\n"
-	  "      add 0.5 mul def /r13 r1 r3 add 0.5 mul def /y13 y1 y3 add 0.5 mul\n"
-	  "      def /x13 x1 x3 add 0.5 mul def /b32 b3 b2 add 0.5 mul def\n"
-	  "      /g32 g3 g2 add 0.5 mul def /r32 r3 r2 add 0.5 mul def /y32 y3 y2\n"
-	  "      add 0.5 mul def /x32 x3 x2 add 0.5 mul def x1 y1 r1 g1 b1 x12 y12\n"
-	  "      r12 g12 b12 x13 y13 r13 g13 b13 x2 y2 r2 g2 b2 x12 y12 r12 g12 b12\n"
-	  "      x32 y32 r32 g32 b32 x3 y3 r3 g3 b3 x32 y32 r32 g32 b32 x13 y13 r13\n"
-	  "      g13 b13 x32 y32 r32 g32 b32 x12 y12 r12 g12 b12 x13 y13 r13 g13 b13\n"
-	  "      STnoshfill STnoshfill STnoshfill STnoshfill }\n" 
-	  "      { r1 g1 b1 C x1 y1 x2 y2 x3 y3 T } ifelse } def\n"
-	  "/shfill where { pop /ST { STshfill } BD } { /ST { STnoshfill } BD } ifelse\n"
+	  "      shfill grestore } BD\n");
+
+  /* Flat-shaded triangle with middle color:
+        x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 Tm */
+
+  fprintf(gl2ps->stream,
+          /* stack : x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 */
+          "/Tm { 3 -1 roll 8 -1 roll 13 -1 roll add add 3 div\n" /* r = (r1+r2+r3)/3 */
+          /* stack : x3 y3 g3 b3 x2 y2 g2 b2 x1 y1 g1 b1 r */
+          "      3 -1 roll 7 -1 roll 11 -1 roll add add 3 div\n" /* g = (g1+g2+g3)/3 */
+          /* stack : x3 y3 b3 x2 y2 b2 x1 y1 b1 r g b */
+          "      3 -1 roll 6 -1 roll 9 -1 roll add add 3 div" /* b = (b1+b2+b3)/3 */
+          /* stack : x3 y3 x2 y2 x1 y1 r g b */
+          " C T } BD\n");
+
+  /* Split triangle in four sub-triangles (at sides middle points) and call the
+     STnoshfill procedure on each, interpolating the colors in RGB space:
+        x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 STsplit
+     (in procedure comments key: (Vi) = xi yi ri gi bi) */
+
+  fprintf(gl2ps->stream,
+          "/STsplit {\n"
+          "      4 index 15 index add 0.5 mul\n" /* x13 = (x1+x3)/2 */
+          "      4 index 15 index add 0.5 mul\n" /* y13 = (y1+y3)/2 */
+          "      4 index 15 index add 0.5 mul\n" /* r13 = (r1+r3)/2 */
+          "      4 index 15 index add 0.5 mul\n" /* g13 = (g1+g3)/2 */
+          "      4 index 15 index add 0.5 mul\n" /* b13 = (b1+b3)/2 */
+          "      5 copy 5 copy 25 15 roll\n"
+          /* stack : (V3) (V13) (V13) (V13) (V2) (V1) */
+          "      9 index 30 index add 0.5 mul\n" /* x23 = (x2+x3)/2 */
+          "      9 index 30 index add 0.5 mul\n" /* y23 = (y2+y3)/2 */
+          "      9 index 30 index add 0.5 mul\n" /* r23 = (r2+r3)/2 */
+          "      9 index 30 index add 0.5 mul\n" /* g23 = (g2+g3)/2 */
+          "      9 index 30 index add 0.5 mul\n" /* b23 = (b2+b3)/2 */
+          "      5 copy 5 copy 35 5 roll 25 5 roll 15 5 roll\n"
+          /* stack : (V3) (V13) (V23) (V13) (V23) (V13) (V23) (V2) (V1) */
+          "      4 index 10 index add 0.5 mul\n" /* x12 = (x1+x2)/2 */
+          "      4 index 10 index add 0.5 mul\n" /* y12 = (y1+y2)/2 */
+          "      4 index 10 index add 0.5 mul\n" /* r12 = (r1+r2)/2 */
+          "      4 index 10 index add 0.5 mul\n" /* g12 = (g1+g2)/2 */
+          "      4 index 10 index add 0.5 mul\n" /* b12 = (b1+b2)/2 */
+          "      5 copy 5 copy 40 5 roll 25 5 roll 15 5 roll 25 5 roll\n"
+          /* stack : (V3) (V13) (V23) (V13) (V12) (V23) (V13) (V1) (V12) (V23) (V12) (V2) */
+          "      STnoshfill STnoshfill STnoshfill STnoshfill } BD\n");
+
+  /* Gourad shaded triangle using recursive subdivision until the difference
+     between corner colors does not exceed the thresholds:
+        x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 STnoshfill  */
+
+  fprintf(gl2ps->stream,
+          "/STnoshfill {\n"
+	  "      2 index 8 index sub abs %g gt { STsplit }\n" /* |r1-r2|>rth */
+          "      { 1 index 7 index sub abs %g gt { STsplit }\n" /* |g1-g2|>gth */
+          "        { dup 6 index sub abs %g gt { STsplit }\n" /* |b1-b2|>bth */
+          "          { 2 index 13 index sub abs %g gt { STsplit }\n" /* |r1-r3|>rht */
+          "            { 1 index 12 index sub abs %g gt { STsplit }\n" /* |g1-g3|>gth */
+          "              { dup 11 index sub abs %g gt { STsplit }\n" /* |b1-b3|>bth */
+          "                { 7 index 13 index sub abs %g gt { STsplit }\n" /* |r2-r3|>rht */
+          "                  { 6 index 12 index sub abs %g gt { STsplit }\n" /* |g2-g3|>gth */
+          "                    { 5 index 11 index sub abs %g gt { STsplit }\n" /* |b2-b3|>bth */
+          "                      { Tm\n" /* all colors sufficiently similar */
+          "                      } ifelse\n"
+          "                    } ifelse\n"
+          "                  } ifelse\n"
+          "                } ifelse\n"
+          "              } ifelse\n"
+          "            } ifelse\n"
+          "          } ifelse\n"
+          "        } ifelse\n"
+          "      } ifelse } BD\n",
+          gl2ps->threshold[0], gl2ps->threshold[1], gl2ps->threshold[2],
+          gl2ps->threshold[0], gl2ps->threshold[1], gl2ps->threshold[2],
+          gl2ps->threshold[0], gl2ps->threshold[1], gl2ps->threshold[2]);
+
+  fprintf(gl2ps->stream,
+	  (gl2ps->options & GL2PS_NO_PS3_SHADING) ? "/ST { STnoshfill } BD\n" :
+	  "/shfill where { pop /ST { STshfill } BD } { /ST { STnoshfill } BD } ifelse\n");
+
+  fprintf(gl2ps->stream,
 	  "end\n"
 	  "%%%%EndProlog\n"
 	  "%%%%BeginSetup\n"
@@ -1227,6 +1300,9 @@ GL2PSDLL_API GLvoid gl2psBeginPage(char *title, char *producer,
   gl2ps->filename = filename;
   gl2ps->sort = sort;
   gl2ps->options = options;
+  gl2ps->threshold[0] = 0.032;
+  gl2ps->threshold[1] = 0.017;
+  gl2ps->threshold[2] = 0.05;
   gl2ps->colormode = colormode;
   gl2ps->buffersize = buffersize > 0 ? buffersize : 2048 * 2048;
   gl2ps->feedback = (GLfloat*)gl2psMalloc(gl2ps->buffersize * sizeof(GLfloat));
@@ -1274,7 +1350,7 @@ GL2PSDLL_API GLint gl2psEndPage(GLvoid){
   glGetIntegerv(GL_SHADE_MODEL, &shademodel);
   gl2ps->shade = (shademodel == GL_SMOOTH);
 
-  if(gl2ps->format & GL2PS_TEX)
+  if(gl2ps->format == GL2PS_TEX)
     res = GL2PS_SUCCESS;
   else
     res = gl2psParseFeedbackBuffer();
@@ -1290,6 +1366,7 @@ GL2PSDLL_API GLint gl2psEndPage(GLvoid){
       pfoot = gl2psPrintTeXFooter;
       break;
     case GL2PS_PS :
+    case GL2PS_EPS :
       phead = gl2psPrintPostScriptHeader;
       pprim = gl2psPrintPostScriptPrimitive;
       pfoot = gl2psPrintPostScriptFooter;
@@ -1373,7 +1450,7 @@ GL2PSDLL_API GLvoid gl2psText(char *str, char *fontname, GLint fontsize){
   glGetFloatv(GL_CURRENT_RASTER_COLOR, prim->verts[0].rgba);
   prim->text = (GL2PSstring*)gl2psMalloc(sizeof(GL2PSstring));
   prim->text->str = (char*)gl2psMalloc((strlen(str)+1)*sizeof(char));
-  strcpy(prim->text->str, str);
+  strcpy(prim->text->str, str); 
   prim->text->fontname = (char*)gl2psMalloc((strlen(fontname)+1)*sizeof(char));
   strcpy(prim->text->fontname, fontname);
   prim->text->fontsize = fontsize;
@@ -1433,5 +1510,13 @@ GL2PSDLL_API GLvoid gl2psLineWidth(GLfloat value){
 
   glPassThrough(GL2PS_SET_LINE_WIDTH);
   glPassThrough(value);
+}
+
+GL2PSDLL_API GLvoid gl2psNumShadeColors(GLint nr, GLint ng, GLint nb){
+  if(!gl2ps) return;
+
+  gl2ps->threshold[0] = nr ? 1./(GLfloat)nr : 1.;
+  gl2ps->threshold[1] = ng ? 1./(GLfloat)ng : 1.;
+  gl2ps->threshold[2] = nb ? 1./(GLfloat)nb : 1.;
 }
 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.138 2002-09-01 21:54:10 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.139 2002-09-06 19:19:49 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -354,6 +354,18 @@ void _save_ps_accurate(char *name){
   CreateOutputFile(name, FORMAT_PS); 
   CTX.print.eps_quality = old; 
 }
+void _save_eps_simple(char *name){ 
+  int old = CTX.print.eps_quality;
+  CTX.print.eps_quality = 1; 
+  CreateOutputFile(name, FORMAT_EPS); 
+  CTX.print.eps_quality = old; 
+}
+void _save_eps_accurate(char *name){ 
+  int old = CTX.print.eps_quality;
+  CTX.print.eps_quality = 2; 
+  CreateOutputFile(name, FORMAT_EPS); 
+  CTX.print.eps_quality = old; 
+}
 void _save_pstex_simple(char *name){ 
   int old = CTX.print.eps_quality;
   CTX.print.eps_quality = 1; 
@@ -364,6 +376,18 @@ void _save_pstex_accurate(char *name){
   int old = CTX.print.eps_quality;
   CTX.print.eps_quality = 2; 
   CreateOutputFile(name, FORMAT_PSTEX); 
+  CTX.print.eps_quality = old; 
+}
+void _save_epstex_simple(char *name){ 
+  int old = CTX.print.eps_quality;
+  CTX.print.eps_quality = 1; 
+  CreateOutputFile(name, FORMAT_EPSTEX); 
+  CTX.print.eps_quality = old; 
+}
+void _save_epstex_accurate(char *name){     
+  int old = CTX.print.eps_quality;
+  CTX.print.eps_quality = 2; 
+  CreateOutputFile(name, FORMAT_EPSTEX); 
   CTX.print.eps_quality = old; 
 }
 void _save_jpegtex(char *name){     
@@ -436,11 +460,13 @@ void file_save_as_cb(CALLBACK_ARGS) {
     { "JPEG (*.jpg)", _save_jpeg },
     { "PostScript fast (*.ps)", _save_ps_simple },
     { "PostScript accurate (*.ps)", _save_ps_accurate },
+    { "Encapsulated PostScript fast (*.eps)", _save_eps_simple },
+    { "Encapsulated PostScript accurate (*.eps)", _save_eps_accurate },
     { "PPM (*.ppm)", _save_ppm },
-    { "LaTeX JPEG (*.jpg)", _save_jpegtex },
-    { "LaTeX PostScript fast (*.ps)", _save_pstex_simple },
-    { "LaTeX PostScript accurate (*.ps)", _save_pstex_accurate },
-    { "LaTeX TeX (*.tex)", _save_tex },
+    { "LaTeX JPEG part (*.jpg)", _save_jpegtex },
+    { "LaTeX EPS part fast (*.ps)", _save_epstex_simple },
+    { "LaTeX EPS part accurate (*.ps)", _save_epstex_accurate },
+    { "LaTeX TeX part (*.tex)", _save_tex },
     { "UCB YUV (*.yuv)", _save_yuv }
   };
 

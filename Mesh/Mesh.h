@@ -43,6 +43,8 @@
 #define FORMAT_JPEGTEX 17
 #define FORMAT_TEX     18
 #define FORMAT_VRML    19
+#define FORMAT_EPS     20
+#define FORMAT_EPSTEX  21
 
 #define CONV_VALUE    0.8
 

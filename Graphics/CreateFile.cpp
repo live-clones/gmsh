@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.32 2002-07-03 23:54:10 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.33 2002-09-06 19:19:49 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -47,7 +47,7 @@ void CreateOutputFile (char *name, int format) {
   FILE    *fp;
   GLint    size3d;
   char     ext[256];
-  int      res, i;
+  int      res, i, psformat, pssort, psoptions;
 
   if(!name || !strlen(name)) return;
 
@@ -72,9 +72,10 @@ void CreateOutputFile (char *name, int format) {
     else if(!strcmp(ext,".jpg")) CreateOutputFile(name, FORMAT_JPEG);
     else if(!strcmp(ext,".jpeg")) CreateOutputFile(name, FORMAT_JPEG);
     else if(!strcmp(ext,".ps")) CreateOutputFile(name, FORMAT_PS);
-    else if(!strcmp(ext,".eps")) CreateOutputFile(name, FORMAT_PS);
+    else if(!strcmp(ext,".eps")) CreateOutputFile(name, FORMAT_EPS);
     else if(!strcmp(ext,".tex")) CreateOutputFile(name, FORMAT_TEX);
     else if(!strcmp(ext,".pstex")) CreateOutputFile(name, FORMAT_PSTEX);
+    else if(!strcmp(ext,".epstex")) CreateOutputFile(name, FORMAT_EPSTEX);
     else if(!strcmp(ext,".jpegtex")) CreateOutputFile(name, FORMAT_JPEGTEX);
     else if(!strcmp(ext,".ppm")) CreateOutputFile(name, FORMAT_PPM);
     else if(!strcmp(ext,".yuv")) CreateOutputFile(name, FORMAT_YUV);
@@ -173,20 +174,25 @@ void CreateOutputFile (char *name, int format) {
 
   case FORMAT_PS :
   case FORMAT_PSTEX :
+  case FORMAT_EPS :
+  case FORMAT_EPSTEX :
     if(!(fp = fopen(name,"w"))) {
       Msg(GERROR, "Unable to open file '%s'", name); 
       return;
     }
+    psformat = (format==FORMAT_PS || format==FORMAT_PSTEX) ? GL2PS_PS : GL2PS_EPS;
+    pssort = (CTX.print.eps_quality==1) ? GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT;
+    psoptions = GL2PS_SIMPLE_LINE_OFFSET | GL2PS_SILENT |
+      (CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0) |
+      (format==FORMAT_PSTEX ? GL2PS_NO_TEXT : 0) |
+      (format==FORMAT_EPSTEX ? GL2PS_NO_TEXT : 0);
+
     size3d = 0 ;
     res = GL2PS_OVERFLOW ;
+
     while(res == GL2PS_OVERFLOW){
       size3d += 2048*2048 ;
-      gl2psBeginPage(CTX.base_filename, "Gmsh", 
-		     GL2PS_PS,
-		     (CTX.print.eps_quality == 1 ? GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT),
-		     GL2PS_SIMPLE_LINE_OFFSET | GL2PS_SILENT |
-		     (CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0) |
-		     (format==FORMAT_PSTEX ? GL2PS_NO_TEXT : 0),
+      gl2psBeginPage(CTX.base_filename, "Gmsh", psformat, pssort, psoptions,
 		     GL_RGBA, 0, NULL, size3d, fp, name);
       CTX.print.gl_fonts = 0;
       FillBuffer();
