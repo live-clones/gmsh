@@ -1023,7 +1023,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "Type" , opt_view_type , DRAW_POST_3D ,
     "Type of graph (1=3D, 2=2D-space, 3=2D-time)" },
 
-  { F|O, "VectorType" , opt_view_vector_type , DRAW_POST_ARROW ,
+  { F|O, "VectorType" , opt_view_vector_type , DRAW_POST_ARROW3D ,
     "Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement)" },
   { F,   "Visible" , opt_view_visible , 1. ,
     "Is the view visible?" },

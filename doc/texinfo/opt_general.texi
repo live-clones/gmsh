@@ -631,7 +631,7 @@ Saved in: @code{-}
 
 @item General.VectorType
 Default vector display type (for normals, etc.)@*
-Default value: @code{2}@*
+Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Verbosity

@@ -311,7 +311,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.VectorType
 Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement)@*
-Default value: @code{2}@*
+Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Visible
