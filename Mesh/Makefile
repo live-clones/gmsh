@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.44 2002-05-18 21:35:10 geuzaine Exp $
+# $Id: Makefile,v 1.45 2003-02-11 03:13:31 geuzaine Exp $
 #
 # Makefile for "libGmshMesh.a"
 #
@@ -17,7 +17,7 @@ OS_FLAGS      = -D_LITTLE_ENDIAN
 VERSION_FLAGS = 
 
 RMFLAGS = -f
-CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)
+CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) -DHAVE_TRIANGLE
 
 SRC = 1D_Mesh.cpp \
       2D_Mesh.cpp \
@@ -35,7 +35,7 @@ SRC = 1D_Mesh.cpp \
         2D_Cylindrical.cpp \
         2D_Parametric.cpp \
         2D_Mesh_Aniso.cpp \
-        2D_Mesh_Shewchuk.cpp \
+        2D_Mesh_Triangle.cpp \
         3D_Mesh.cpp \
         3D_SMesh.cpp \
         3D_BGMesh.cpp \
@@ -169,7 +169,7 @@ depend:
   ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   Mesh.h Interpolation.h Create.h ../Common/Context.h
-2D_Mesh_Shewchuk.o: 2D_Mesh_Shewchuk.cpp ../Common/Gmsh.h \
+2D_Mesh_Triangle.o: 2D_Mesh_Triangle.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h \
   Simplex.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \

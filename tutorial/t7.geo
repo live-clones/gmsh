@@ -6,7 +6,7 @@
  *
  *********************************************************************/
 
-// The new anisotropic 2D mesh generator can be selected with:
+// The anisotropic 2D mesh generator can be selected with:
 
 Mesh.Algorithm = 2 ;
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.38 2002-11-03 16:49:55 geuzaine Exp $
+# $Id: Makefile,v 1.39 2003-02-11 03:13:31 geuzaine Exp $
 #
 # Makefile for "libGmshFltk.a"
 #
@@ -18,7 +18,7 @@ VERSION_FLAGS = -D_FLTK
 
 RMFLAGS = -f
 CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
-          $(GUI_INCLUDE) $(GL_INCLUDE)
+          $(GUI_INCLUDE) $(GL_INCLUDE) -DHAVE_TRIANGLE
 
 SRC = Main.cpp \
       Message.cpp \
