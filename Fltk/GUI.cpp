@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.124 2001-10-31 08:34:19 geuzaine Exp $
+// $Id: GUI.cpp,v 1.125 2001-11-01 09:40:06 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -48,8 +48,8 @@ Fl_Menu_Item m_menubar_table[] = {
       {"GREF gref mesh format...",        0, (Fl_Callback *)file_save_as_gref_cb, 0},
       {"GEO flattened geometry...",       0, (Fl_Callback *)file_save_as_geo_cb, 0},
       {"GEO complete options...",         0, (Fl_Callback *)file_save_as_geo_options_cb, 0},
-      {"EPS simple sort postscript...",   0, (Fl_Callback *)file_save_as_eps_simple_cb, 0},
-      {"EPS accurate sort postscript...", 0, (Fl_Callback *)file_save_as_eps_accurate_cb, 0},
+      {"PS simple sort postscript...",   0, (Fl_Callback *)file_save_as_eps_simple_cb, 0},
+      {"PS accurate sort postscript...", 0, (Fl_Callback *)file_save_as_eps_accurate_cb, 0},
       {"JPEG...",                0, (Fl_Callback *)file_save_as_jpeg_cb, 0},
       {"GIF...",                 0, (Fl_Callback *)file_save_as_gif_cb, 0},
       {"GIF dithered...",        0, (Fl_Callback *)file_save_as_gif_dithered_cb, 0},
@@ -2069,7 +2069,7 @@ void GUI::create_view_options_window(int num){
 	  view_input[i]->align(FL_ALIGN_RIGHT);
 	  view_input[i]->callback(set_changed_cb, 0);
 	}
-        view_butt[4] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Show labels");	
+        view_butt[4] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Show scale");
         view_butt[5] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Show annotations");
         view_butt[6] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Transparent labels");
 	for(i=4 ; i<=6 ; i++){
