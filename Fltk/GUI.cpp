@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.427 2005-03-12 22:25:24 geuzaine Exp $
+// $Id: GUI.cpp,v 1.428 2005-03-13 05:32:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -396,6 +396,7 @@ static Fl_Menu_Item menu_axes_mode[] = {
   {"Box", 0, 0, 0},
   {"Full grid", 0, 0, 0},
   {"Open grid", 0, 0, 0},
+  {"Ruler", 0, 0, 0},
   {0}
 };
 

@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.59 2005-03-12 07:52:56 geuzaine Exp $
+// $Id: Entity.cpp,v 1.60 2005-03-13 05:32:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -604,7 +604,10 @@ int Draw_Tics(int comp, int n, char *format, char *label,
     }
 
     char str[256];
-    sprintf(str, format, p[comp]);
+    if(comp < 0) // display the length (ruler)
+      sprintf(str, format, d);
+    else // display the coordinate
+      sprintf(str, format, p[comp]);
     double winp[3], winr[3];
     World2Viewport(p, winp);
     World2Viewport(r, winr);
@@ -669,14 +672,34 @@ void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
   //      2: box
   //      3: full grid
   //      4: open grid
+  //      5: ruler
 
   if((mode < 1) || (bb[0] == bb[1] && bb[2] == bb[3] && bb[4] == bb[5]))
     return;
-  
+
   double xmin = bb[0], xmax = bb[1];
   double ymin = bb[2], ymax = bb[3];
   double zmin = bb[4], zmax = bb[5];
+  double orig[3] = {xmin, ymin, zmin};
 
+  if(mode == 5){ // draw ruler from xyz_min to xyz_max
+    glBegin(GL_LINES);
+    glVertex3d(xmin, ymin, zmin); glVertex3d(xmax, ymax, zmax);
+    glEnd();
+    double end[3] = {xmax, ymax, zmax};
+    double dir[3] = {xmax-xmin, ymax-ymin, zmax-zmin};
+    double perp[3];
+    if((fabs(dir[0]) >= fabs(dir[1]) && fabs(dir[0]) >= fabs(dir[2])) ||
+       (fabs(dir[1]) >= fabs(dir[0]) && fabs(dir[1]) >= fabs(dir[2]))){
+      perp[0] = dir[1]; perp[1] = -dir[0]; perp[2] = 0.;
+    }
+    else{
+      perp[0] = 0.; perp[1] = dir[2]; perp[2] = -dir[1];
+    }
+    Draw_Tics(-1, tics[0], format[0], label[0], orig, end, perp);
+    return;
+  }
+  
   glBegin(GL_LINES);
   // 3 axes
   glVertex3d(xmin, ymin, zmin); glVertex3d(xmax, ymin, zmin);
@@ -699,7 +722,6 @@ void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
   }
   glEnd();
 
-  double orig[3] = {xmin, ymin, zmin};
   double xx[3] = {xmax, ymin, zmin};
   double yy[3] = {xmin, ymax, zmin};
   double zz[3] = {xmin, ymin, zmax};

@@ -1,15 +1,15 @@
-$Id: VERSIONS,v 1.319 2005-03-12 00:59:42 geuzaine Exp $
+$Id: VERSIONS,v 1.320 2005-03-13 05:32:44 geuzaine Exp $
 
 New since 1.59: added support for discrete curves; new Window menu on
 Mac OS X; generalized all octree-based plugins (CutGrid, StreamLines,
 Probe, etc.) to handle all element types (and not only scalar and
 vector triangles+tetrahedra); generalized Plugin(Evaluate),
 Plugin(Extract) and Plugin(Annotate); enhanced clipping plane
-interface; new grid/axes for 3D post-processing views (+ renamed the
-AbscissaName, NbAbscissa and AbscissaFormat options in the process);
-better automatic positionning of 2D graphs; new manipulator dialog to
-specify rotations/translations/scalings "by hand"; various small
-enhancements and bug fixes.
+interface; new grid/axes/rulers for 3D post-processing views (renamed
+the AbscissaName, NbAbscissa and AbscissaFormat options to more
+general names in the process); better automatic positionning of 2D
+graphs; new manipulator dialog to specify rotations, translations and
+scalings "by hand"; various small enhancements and bug fixes.
 
 New in 1.59: added support for discrete (triangulated) surfaces,
 either in STL format or with the new "Discrete Surface" command; added

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.232 2005-03-12 20:17:41 geuzaine Exp $
+// $Id: Options.cpp,v 1.233 2005-03-13 05:32:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2640,7 +2640,7 @@ double opt_general_axes(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     CTX.axes = (int)val;
-    if(CTX.axes < 0 || CTX.axes > 4)
+    if(CTX.axes < 0 || CTX.axes > 5)
       CTX.axes = 0;
   }
 #if defined(HAVE_FLTK)
@@ -5395,7 +5395,7 @@ double opt_view_axes(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->Axes = (int)val;
-    if(v->Axes < 0 || v->Axes > 4)
+    if(v->Axes < 0 || v->Axes > 5)
       v->Axes = 0;
   }
 #if defined(HAVE_FLTK)
