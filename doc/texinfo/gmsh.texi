@@ -1,0 +1,1380 @@
+\input texinfo.tex @c -*-texinfo-*-
+@c $Id: gmsh.texi,v 1.1 2003-03-12 23:41:45 geuzaine Exp $
+@c =========================================================================
+@c
+@c This is the Gmsh documentation texinfo source file
+@c
+@c Things to do -> "Ctrl+s todo:" 
+@c
+@c Indexing: @cindex = concept index, e.g. "Numerical tools, overview"
+@c           @vindex = (metasyntactic) variable index, e.g.  "constraint-type"
+@c          /@tindex = type index (=frozen syntax ossature), e.g. "DefineGroup"
+@c          \@findex = function index (=all types in the objects), e.g. "Curl"
+@c
+@c Before release, run C-u C-c C-u C-a in GNU Emacs
+@c This updates all node pointers and menus
+@c 
+@c (to sort the contributors alphabetically: C-u 2 M-x sort-fields)
+@c
+@c info  : makeinfo gmsh.texi
+@c dvi   : texi2dvi gmsh.texi
+@c ps    : dvips gmsh.dvi -o
+@c pdf   : texi2pdf gmsh.texi
+@c html  : texi2html -init_file gmsh.t2h gmsh.texi
+@c nroff : texi2roff gmsh.texi
+@c
+@c =========================================================================
+@c
+@c For commercial releases, set the COMMERCIAL flag (uncomment the following
+@c line). This will prevent all references to "free software" and the like...
+@c
+@c      @set COMMERCIAL
+@c
+@c =========================================================================
+@c %**start of header
+@setfilename        gmsh.info
+@set EDITION        1.0
+@set GMSH-VERSION   1.41
+@set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
+@set COPYRIGHT      @copyright{} 1997-2003 Christophe Geuzaine, Jean-Francois Remacle
+@c
+@settitle Gmsh @value{GMSH-VERSION}
+@footnotestyle separate
+@setchapternewpage odd
+@paragraphindent 0
+@finalout
+@c %**end of header
+
+@c merge function index into type index
+@syncodeindex fn tp
+
+@c =========================================================================
+@c Info directives
+@c =========================================================================
+
+@ifinfo
+@dircategory Math
+@direntry
+* Gmsh: (gmsh).  3D finite element mesh generator with built-in pre- and
+post-processing facilities
+@end direntry
+@noindent
+This is edition @value{EDITION}/@today{} of the @cite{Gmsh Reference
+Manual}, for Gmsh @value{GMSH-VERSION}.
+@noindent
+Copyright @value{COPYRIGHT}
+@end ifinfo
+
+@c =========================================================================
+@c TeX directives
+@c =========================================================================
+
+@iftex
+@global@let@sl=@it
+@global@setfont@indit@itshape{9}{1000}
+@c @global@let@bullet=-
+@c @global@let@linkcolor=@Orange
+@c @parskip=5pt
+@c @parindent=1cm
+@end iftex
+
+@c =========================================================================
+@c Title page
+@c =========================================================================
+
+@shorttitlepage Gmsh
+
+@titlepage
+
+@title Gmsh Reference Manual
+
+@subtitle The documentation for Gmsh, Version @value{GMSH-VERSION}
+@subtitle A finite element mesh generator with built-in pre- and post-processing facilities
+@subtitle 
+@ifclear COMMERCIAL
+@subtitle Edition @value{EDITION}/@today{}
+@end ifclear
+@ifset COMMERCIAL
+@subtitle Commercial edition @value{EDITION}/@today{}
+@end ifset
+
+@author Christophe Geuzaine
+@author Jean-Francois Remacle
+
+@page
+@vskip 0pt plus 1filll
+Copyright @value{COPYRIGHT}
+@ifclear COMMERCIAL
+@sp 1
+Permission is granted to make and distribute verbatim copies of this manual
+provided the copyright notice and this permission notice are preserved on
+all copies.
+@end ifclear
+
+@end titlepage
+
+@c =========================================================================
+@c Table of contents
+@c =========================================================================
+
+@summarycontents
+@contents
+
+@c =========================================================================
+@c Top node (for all output, except TeX)
+@c =========================================================================
+
+@ifnottex
+@node Top, Copying conditions, (dir), (dir)
+@top Gmsh
+
+@chapheading The documentation for Gmsh, Version @value{GMSH-VERSION}
+@chapheading a finite element mesh generator with built-in pre- and post-processing facilities
+
+Christophe Geuzaine and Jean-Francois Remacle
+
+Gmsh is an automatic 3D finite element mesh generator with build-in pre- and
+post-processing facilities. This is edition @value{EDITION}/@today{} of the
+@cite{Gmsh Reference Manual} for Gmsh @value{GMSH-VERSION}.
+@end ifnottex
+
+@c =========================================================================
+@c Master menu
+@c =========================================================================
+
+@menu
+* Copying conditions::          Terms and conditions of use.
+* Introduction::                What is Gmsh?
+* Overview::                    Quick overview of the general philosophy of Gmsh.
+* Expressions::                 Definition of basic expressions in Gmsh.
+* Geometry module::             The Geometry module.
+* Mesh module::                 The Mesh module.
+* Solver module::               The Solver module.
+* Post-processing module::      The Post-processing module.
+* Short examples::              Simple object examples.
+* Running Gmsh::                How to run Gmsh on your operating system.
+* File formats::                Input and output file formats.
+* Programming comments::        
+* Bugs and versions::           Contact information, version history and list of contributors.
+* Tips and tricks::             Some tips to make your life easier with Gmsh.
+* GNU General Public License::  Copy of the GNU GPL.
+* Concept index::               Index of concepts.
+* Syntax index::                Index of reserved keywords in the Gmsh language.
+
+@detailmenu
+ --- The Detailed Node Listing ---
+
+Overview
+
+* Syntactic rules::             
+* Comments::                    
+* Includes::                    
+
+Expressions 
+
+* Expression definition::       
+* Constants::                   
+* Operators::                   
+* Functions::                   
+* Current values::              
+* Arguments::                   
+* Registers::                   
+* Fields::                      
+
+Definition
+
+* Operators::                   
+* Constants::                   
+* Functions::                   
+* Current values::              
+* Fields::                      
+
+Operators
+
+* Operator types::              
+* Evaluation order::            
+
+Bugs, versions and contributors
+
+* Bugs::                        
+* Version history::             
+* Contributors::                
+
+@end detailmenu
+@end menu
+
+@c =========================================================================
+@c Copying Conditions
+@c =========================================================================
+
+@ifclear COMMERCIAL
+
+@node Copying conditions, Introduction, Top, Top
+@unnumbered Copying conditions
+
+@cindex Copyright
+@cindex Web site
+@cindex Internet address
+@cindex Download
+
+Gmsh is ``free software''; this means that everyone is free to use it and
+to redistribute it on a free basis. Gmsh is not in the public domain; it is
+copyrighted and there are restrictions on its distribution, but these
+restrictions are designed to permit everything that a good cooperating
+citizen would want to do.  What is not allowed is to try to prevent others
+from further sharing any version of Gmsh that they might get from you.
+
+Specifically, we want to make sure that you have the right to give away
+copies of Gmsh, that you receive source code or else can get it if you want
+it, that you can change Gmsh or use pieces of Gmsh in new free programs,
+and that you know you can do these things.
+
+To make sure that everyone has such rights, we have to forbid you to deprive
+anyone else of these rights.  For example, if you distribute copies of
+Gmsh, you must give the recipients all the rights that you have.  You must
+make sure that they, too, receive or can get the source code.  And you must
+tell them their rights.
+
+Also, for our own protection, we must make certain that everyone finds out
+that there is no warranty for Gmsh.  If Gmsh is modified by someone else
+and passed on, we want their recipients to know that what they have is not
+what we distributed, so that any problems introduced by others will not
+reflect on our reputation.
+
+The precise conditions of the license for Gmsh are found in the General
+Public License that accompanies the source code (@pxref{GNU General Public
+License}). Further information about this license is available from the GNU
+Project webpage @uref{http://www.gnu.org/copyleft/gpl-faq.html}.
+
+The source code and various pre-compiled versions of Gmsh (for most of the
+classical UNIX platforms, for Windows and for Mac OS) can be downloaded from
+the web site @value{GMSH-WEB}.
+
+If you use Gmsh, we would appreciate that you mention it in your
+work. Published references, as well as the latest news about Gmsh
+developments and download information, are always available on
+@value{GMSH-WEB}.
+
+@end ifclear
+
+@c =========================================================================
+@c Introduction
+@c =========================================================================
+
+@node Introduction, Overview, Copying conditions, Top
+@unnumbered Introduction
+
+@cindex Introduction
+@cindex Reading, guidelines
+
+Gmsh is...
+
+The main feature of Gmsh is...
+
+How to Read this Manual...
+
+After reading @ref{Overview}, and @ref{Expressions}, which depict the
+general concepts and the way to construct simple expressions in Gmsh, you
+can safely directly go to @ref{Short examples}. This chapter gives simple
+examples of geometries built with Gmsh. For each example, you should then go
+back to @ref{Geometry} to get a detailed view of the syntax of the commands
+used. Note that indexes for many concepts and for all the syntax elements
+are available at the end of this manual.
+
+Once the examples presented in @ref{Short examples}, you might want to learn
+about Gmsh's meshing and post-processing capabilities in @ref{Mesh} and
+@ref{Post-processing}. If you plan to interface a solver with Gmsh, see
+@ref{Solver}. Some notes on how to run Gmsh on your computer are given in
+@ref{Running Gmsh}. 
+
+Tutorial...
+
+@c =========================================================================
+@c Overview
+@c =========================================================================
+
+@node Overview, Expressions, Introduction, Top
+@chapter Overview
+
+@cindex Overview
+
+Four modules...
+
+ASCII files...
+
+@menu
+* Syntactic rules::             
+* Comments::                    
+* Includes::                    
+@end menu
+
+@c -------------------------------------------------------------------------
+@c Syntactic Rules Used in this Document
+@c -------------------------------------------------------------------------
+
+@node Syntactic rules, Comments, Overview, Overview
+@section Syntactic rules used in this document
+
+@cindex Syntax, rules
+@cindex Rules, syntactic
+@cindex Document syntax
+
+@vindex @dots{}
+@vindex <, >
+@vindex |
+@vindex :
+@vindex @var{etc}
+
+Here are the rules we tried to follow when writing this user's guide. Note
+that metasyntactic variable definitions stay valid throughout all the manual
+(and not only in the sections where the definitions
+appear). @xref{Metasyntactic variable index}, for an index of all
+metasyntactic variables.
+
+@enumerate
+@item 
+Keywords and literal symbols are printed like @code{this}.
+@item 
+Metasyntactic variables (i.e.@: text bits that are not part of the syntax,
+but stand for other text bits) are printed like @var{this}.
+@item 
+A colon (@code{:}) after a metasyntactic variable separates the variable
+from its definition.
+@item 
+Optional rules are enclosed in @code{<} @code{>} pairs.
+@item 
+Multiple choices are separated by @code{|}.
+@item 
+Three dots (@dots{}) indicate a possible repetition of the preceding rule.
+@item 
+For conciseness, the notation @code{@var{rule} <, @var{rule} > @dots{}}
+is replaced by @code{@var{rule} <,@dots{}>}.
+@item 
+The @var{etc} symbol replaces nonlisted rules.
+@end enumerate
+
+@c -------------------------------------------------------------------------
+@c Comments
+@c -------------------------------------------------------------------------
+
+@node Comments, Includes, Syntactic rules, Overview
+@section Comments
+
+@cindex Comments
+@cindex File, comment
+
+@tindex /*, */
+@tindex //
+
+Both C and C++ style comments are supported and can be used in the input
+data file to comment selected text regions:
+
+@enumerate
+@item
+the text region comprised between @code{/*} and @code{*/} pairs is ignored;
+@item
+the rest of a line after a double slash @code{//} is ignored.
+@end enumerate
+
+These commands won't have the described effects inside double quotes or
+inside GetDP keywords.
+
+@c -------------------------------------------------------------------------
+@c Includes
+@c -------------------------------------------------------------------------
+
+@node Includes,  , Comments, Overview
+@section Includes
+
+@cindex Includes
+@cindex File, include
+
+@tindex Include
+@tindex #include
+
+Files can be included by placing one of the following commands
+(@var{expression-char} represents a file name) on a separate line, and
+outside any GetDP object.  Any text placed after an include command on the
+same line is ignored.
+
+@example
+@code{Include @var{expression-char}} 
+@code{#include @var{expression-char}} 
+@end example
+
+@xref{Constants}, for the definition of the character expression
+@var{expression-char}.
+
+@c =========================================================================
+@c Expressions
+@c =========================================================================
+
+@node Expressions, Geometry module, Overview, Top
+@chapter Expressions 
+
+@c -------------------------------------------------------------------------
+@c Definition
+@c -------------------------------------------------------------------------
+
+@menu
+* Expression definition::       
+* Constants::                   
+* Operators::                   
+* Functions::                   
+* Current values::              
+* Arguments::                   
+* Registers::                   
+* Fields::                      
+@end menu
+
+@node Expression definition, Constants, Expressions, Expressions
+@section Definition
+
+@cindex Expression, definition
+
+@vindex @var{expression}
+@vindex @var{expression-list}
+
+Expressions are the basic tool of GetDP. They cover a wide range of
+functional expressions, from constants to formal expressions containing
+functions (built-in or user-defined, depending on space and time, etc.),
+arguments, discrete quantities and their associated differential operators,
+etc. Note that `white space' (spaces, tabs, new line characters) is ignored
+inside expressions (as well as inside all GetDP objects).
+
+Expressions are denoted by the metasyntactic variable @var{expression}
+(remember the definition of the syntactic rules in @ref{Syntactic rules}):
+
+@example
+@var{expression}:
+  @var{integer} |
+  @var{real} |
+  @var{constant-id} |
+  @var{quantity} |
+  @var{argument} |
+  @var{current-value} |
+  @var{register-value-set} |
+  @var{register-value-get} |
+  @var{operator-unary} @var{expression} |
+  @var{expression} @var{operator-binary} @var{expression} |
+  @var{expression} @var{operator-ternary-left} @var{expression} @var{operator-ternary-right} @var{expression} |
+  @var{built-in-function-id} [ < @var{expression-list} > ] < @{ @var{expression-cst-list} @} > |
+  @var{function-id} [ < @var{expression-list} > ]
+@end example
+
+@noindent The following sections introduce the quantities that can appear in
+expressions, i.e.@: constant terminals (@var{integer}, @var{real}) and
+constant expression identifiers (@var{constant-id},
+@var{expression-cst-list}), discretized fields (@var{quantity}), arguments
+(@var{argument}), current values (@var{current-value}), register values
+(@var{register-value-set}, @var{register-value-get}), operators
+(@var{operator-unary}, @var{operator-binary}, @var{operator-ternary-left},
+@var{operator-ternary-right}) and built-in or user-defined functions
+(@var{built-in-function-id}, @var{function-id}). List of expressions are
+defined as:
+
+@example
+@var{expression-list}: 
+  @var{expression} <,@dots{}>
+@end example
+
+@menu
+* Operators::                   
+* Constants::                   
+* Functions::                   
+* Current values::              
+* Fields::                      
+@end menu
+
+@c -------------------------------------------------------------------------
+@c Constants
+@c -------------------------------------------------------------------------
+
+@node Constants, Operators, Expression definition, Expressions
+@section Constants
+
+@cindex Constant, definition
+@cindex Constant, evaluation
+@cindex Evaluation mechanism
+@cindex Integer numbers
+@cindex Real numbers
+@cindex Floating point numbers
+@cindex Numbers, real
+@cindex Numbers, integer
+@cindex String
+
+@tindex DefineConstant
+@tindex List
+@tindex ListAlt
+@tindex Pi
+@tindex 0D
+@tindex 1D
+@tindex 2D
+@tindex 3D
+@tindex =
+
+@vindex @var{integer}
+@vindex @var{real}
+@vindex @var{string}
+@vindex @var{expression-cst}
+@vindex @var{expression-cst-list}
+@vindex @var{expression-cst-list-item}
+@vindex @var{constant-id}
+@vindex @var{constant-def}
+@vindex @var{string-id}
+@vindex @var{expression-char}
+
+The three constant types used in GetDP are @var{integer}, @var{real} and
+@var{string}.  These types have the same meaning and syntax as in the C or
+C++ programming languages. Besides general expressions (@var{expression}),
+purely constant expressions, denoted by the metasyntactic variable
+@var{expression-cst}, are also used:
+
+@example
+@var{expression-cst}:
+  @var{integer} |
+  @var{real} |
+  @var{constant-id} |
+  @var{operator-unary} @var{expression-cst} |
+  @var{expression-cst} @var{operator-binary} @var{expression-cst} |
+  @var{expression-cst} @var{operator-ternary-left} @var{expression-cst} @var{operator-ternary-right} 
+      @var{expression-cst} |
+  @var{math-function-id} [ < @var{expression-cst-list} > ]
+@end example
+
+List of constant expressions are defined as:
+
+@example
+@var{expression-cst-list}:
+  @var{expression-cst-list-item} <,@dots{}>
+@end example
+
+@noindent with
+
+@example
+@var{expression-cst-list-item}:
+  @var{expression-cst} |
+  @var{expression-cst} : @var{expression-cst} |
+  @var{expression-cst} : @var{expression-cst} : @var{expression-cst} |
+  @var{constant-id} @{@} |
+  @var{constant-id} @{ @var{expression-cst-list} @} |
+  List[ @var{constant-id} ] |
+  ListAlt[ @var{constant-id}, @var{constant-id} ]
+@end example
+
+The second case in this last definition permits to create a list containing
+the range of numbers comprised between the two @var{expression-cst}, with a
+unit incrementation step. The third case also permits to create a list
+containing the range of numbers comprised between the two
+@var{expression-cst}, but with a positive or negative incrementation step
+equal to the third @var{expression-cst}. The fourth and fifth cases permit
+to reference constant identifiers (@var{constant-id}s) of lists of constants
+and constant identifiers of sublists of constants (see below for the
+definition of constant identifiers) . The sixth case is a synonym for the
+fourth. The last case permits to create alternate lists: the arguments of
+@code{ListAlt} must be @var{constant-id}s of lists of constants of the same
+dimension. The result is an alternate list of these constants: first
+constant of argument 1, first constant of argument 2, second constant of
+argument 1, etc. These kinds of lists of constants are for example often
+used for function parameters (@pxref{Functions}).
+
+Contrary to a general @var{expression} which is evaluated at runtime (thanks
+to an internal stack mechanism), an @var{expression-cst} is completely
+evaluated during the syntactic analysis of the problem (when GetDP reads the
+@file{.pro} file). The definition of such constants or lists of constants
+with identifiers can be made outside or inside any GetDP object. The syntax
+for the definition of constants is:
+
+@example
+DefineConstant [ @var{constant-id} < = @var{expression-cst} > <,@dots{}> ]; |
+@var{constant-id} = @var{constant-def};
+@end example
+
+@noindent with
+
+@example
+@var{constant-id}:
+  @var{string}
+
+@var{constant-def}:
+  @var{expression-cst-list-item} |
+  @{ @var{expression-cst-list} @}
+@end example
+
+@noindent Notes:
+@enumerate
+@item
+Five constants are predefined in GetDP: @code{Pi} (3.1415926535897932),
+@code{0D} (0), @code{1D} (1), @code{2D} (2) and @code{3D} (3).
+@item
+The assignment in @code{DefineConstant} (zero if no @var{expression-cst} is
+given) is performed only if @var{constant-id} has not yet been defined. This
+kind of explicit default definition mechanism is most useful in general
+problem definition structures making use of a large number of generic
+constants, functions or groups. When exploiting only a part of a complex
+problem definition structure, the default definition mechanism allows to
+define the quantities of interest only, the others being assigned a default
+value (that will not be used during the processing but that avoids the error
+messages produced when references to undefined quantities are made).
+@end enumerate
+
+@xref{Constant expression examples}, as well as @ref{Function examples}, for
+some examples.
+
+Constant character strings can also be defined. The syntax for their
+definition is the following:
+
+@example
+@var{string-id} = "@var{string}";
+@end example
+
+@noindent with
+
+@example
+@var{string-id}:
+  @var{string}
+@end example
+
+Character expressions can be defined, using these constant strings:
+
+@example
+@var{expression-char}:
+  "@var{string}" |
+  @var{string-id} |
+  StrCat[ @var{expression-char} , @var{expression-char} ]
+@end example
+
+@noindent The third case in this definition permits to concatenate two
+character expressions.
+
+@c -------------------------------------------------------------------------
+@c Operators
+@c -------------------------------------------------------------------------
+
+@node Operators, Functions, Constants, Expressions
+@section Operators
+
+@menu
+* Operator types::              
+* Evaluation order::            
+@end menu
+
+@c .........................................................................
+@c Types
+@c .........................................................................
+
+@node Operator types, Evaluation order, Operators, Operators
+@subsection Operator types
+
+The operators in GetDP are similar to the corresponding operators in the C
+or C++ programming languages.
+
+@cindex Operators, definition
+@cindex Unary operators
+@cindex Binary operators
+@cindex Ternary operators
+
+@vindex @var{operator-unary}
+@vindex @var{operator-binary}
+@vindex @var{operator-ternary-left}
+@vindex @var{operator-ternary-right}
+
+@tindex -
+@tindex !
+@tindex +
+@tindex -
+@tindex *
+@tindex /\
+@tindex /
+@tindex ^
+@tindex %
+@tindex >
+@tindex <
+@tindex >=
+@tindex <=
+@tindex ==
+@tindex !=
+@tindex ||
+@tindex &&
+@tindex ?:
+
+
+@noindent
+@var{operator-unary}:
+@table @code
+@item -
+Unary minus.
+@item !
+Logical not.
+@end table
+
+@noindent
+@var{operator-binary}:
+@table @code
+@item ^
+Exponentiation. The evaluation of the both arguments must result in a scalar
+value.
+@item *
+Multiplication or scalar product, depending on the type of the arguments. 
+@item /\
+Cross product. The evaluation of both arguments must result in vectors.
+@item /
+Division.
+@item %
+Modulo. The evaluation of the second argument must result in a scalar value.
+@item +
+Addition.
+@item -
+Subtraction.
+@item ==
+Equality.
+@item !=
+Inequality.
+@item >
+Greater. The evaluation of both arguments must result in scalar values.
+@item >=
+Greater or equality. The evaluation of both arguments must result in
+scalar values.
+@item <
+Less. The evaluation of both arguments must result in scalar values.
+@item <=
+Less or equality. The evaluation of both arguments must result in scalar values.
+@item &&
+Logical and. The evaluation of both arguments must result in scalar
+values. Warning: the logical and always (unlike in C or C++) implies the
+evaluation of both arguments. That is, the second operand of @code{&&} is
+evaluated even if the first one is false.
+@item ||
+Logical or. The evaluation of both arguments must result in floating point
+values. Warning: the logical or always (unlike in C or C++) implies the
+evaluation of both arguments.  That is, the second operand of @code{||} is
+evaluated even if the first one is true.
+@end table
+
+@noindent
+@var{operator-ternary-left}:
+@table @code
+@item ?
+@end table
+@var{operator-ternary-right}:
+@table @code
+@item :
+The only ternary operator, constituted of @var{operator-ternary-left} and
+@var{operator-ternary-right} is defined as in the C or C++ programming
+languages. The ternary operator first evaluates its first argument (the
+@var{expression-cst} located before the @code{?}), which must result in a
+scalar value. If it is true (non-zero) the second argument (located between
+@code{?} and @code{:}) is evaluated and returned; otherwise the third
+argument (located after @code{:}) is evaluated and returned.
+@end table
+
+
+@c .........................................................................
+@c Evaluation
+@c .........................................................................
+
+@node Evaluation order,  , Operator types, Operators
+@subsection Evaluation order
+
+@cindex Evaluation, order
+@cindex Order of evaluation
+@cindex Operation, priorities
+@cindex Priorities, operations
+
+@tindex ()
+
+The evaluation priorities are summarized below (from stronger to weaker,
+i.e.@: @code{^} has the highest evaluation priority). Parentheses
+@code{()} may be used anywhere to change the order of evaluation.
+
+@table @code
+@item ^
+@item - (unary), ! 
+@item /\
+@item *, /, %
+@item +, - 
+@item <, >, <=, >=
+@item !=, ==
+@item &&, ||
+@item ?:
+@end table
+
+
+@c -------------------------------------------------------------------------
+@c Functions
+@c -------------------------------------------------------------------------
+
+@node Functions, Current values, Operators, Expressions
+@section Functions
+
+@cindex Function, definition
+@cindex Built-in functions
+@cindex Piecewise functions
+@cindex Arguments
+@cindex Parameters
+
+@vindex @var{built-in-function-id}
+
+Two types of functions coexist in GetDP: user-defined functions
+(@var{function-id}, see @ref{Function}) and built-in functions
+(@var{built-in-function-id}, defined in this section). 
+
+Both types of functions are always followed by a pair of brackets @code{[]}
+that can possibly contain arguments (@pxref{Arguments}). This makes it
+simple to distinguish a @var{function-id} or a @var{built-in-function-id}
+from a @var{constant-id}. As shown below, built-in functions might also have
+parameters, given between braces @code{@{@}}, and which are completely
+evaluated during the analysis of the syntax (since they are of
+@var{expression-cst-list} type):
+
+@example
+@var{built-in-function-id} [ < @var{expression-list} > ] < @{ @var{expression-cst-list} @} >
+@end example
+
+@noindent with
+
+@example
+@var{built-in-function-id}:
+  @var{math-function-id} |
+  @var{extended-math-function-id} |
+  @var{green-function-id} |
+  @var{type-function-id} |
+  @var{coord-function-id} |
+  @var{misc-function-id}
+@end example
+
+@noindent Notes:
+@enumerate
+@item
+All possible values for @var{built-in-function-id} are listed in
+@ref{Types for Function}.  
+@item 
+Classical mathematical functions (@pxref{Math functions}) are
+the only functions allowed in a constant definition (see the definition of
+@var{expression-cst} in @ref{Constants}).
+@end enumerate
+
+
+@c -------------------------------------------------------------------------
+@c Current Values
+@c -------------------------------------------------------------------------
+
+@node Current values, Arguments, Functions, Expressions
+@section Current values
+
+@cindex Current values
+@cindex Values, current
+
+@tindex $Time
+@tindex $DTime
+@tindex $Theta
+@tindex $TimeStep
+@tindex $Iteration
+@tindex $X
+@tindex $XS
+@tindex $Y
+@tindex $YS
+@tindex $Z
+@tindex $ZS
+@tindex $A
+@tindex $B
+@tindex $C
+
+Current values are a special kind of arguments (@pxref{Arguments}) which
+return the current integer or floating point value of an internal GetDP
+variable:
+
+@table @code
+@item $Time
+Value of the current time. This value is set to zero for non time dependent 
+analyses.
+@item $DTime
+Value of the current time increment used in a time stepping algorithm.
+@item $Theta
+Current theta value in a theta time stepping algorithm.
+@item $TimeStep
+Number of the current time step in a time stepping algorithm.
+@item $Iteration
+Number of the current iteration in a nonlinear loop.
+@item $X, $XS
+Value of the current (destination or source) X-coordinate.
+@item $Y, $YS
+Value of the current (destination or source) Y-coordinate.
+@item $Z, $ZS
+Value of the current (destination or source) Z-coordinate.
+@item $A, $B, $C
+Value of the current parametric coordinates used in the parametric
+@code{OnGrid} @code{PostOperation} (@pxref{Types for PostOperation}).
+@end table
+
+@noindent Note:
+@enumerate
+@item
+The current X, Y and Z coordinates refer to the `physical world'
+coordinates, i.e.@: coordinates in which the mesh is expressed.
+@end enumerate
+
+
+@c -------------------------------------------------------------------------
+@c Arguments
+@c -------------------------------------------------------------------------
+
+@node Arguments, Registers, Current values, Expressions
+@section Arguments
+
+@cindex Arguments, definition
+
+@vindex @var{argument}
+
+@tindex $@var{integer}
+
+Function arguments can be used in expressions and have the following
+syntax (@var{integer} indicates the position of the argument in the
+@var{expression-list} of the function, starting from 1):
+
+@example
+@var{argument}:
+  $@var{integer}
+@end example
+
+@xref{Function}, and @ref{Function examples}, for more details.
+
+
+@c -------------------------------------------------------------------------
+@c Registers
+@c -------------------------------------------------------------------------
+
+@node Registers, Fields, Arguments, Expressions
+@section Registers
+
+@cindex Registers, definition
+
+@vindex @var{register-value-set}
+@vindex @var{register-value-get}
+
+@tindex #@var{integer}
+
+In many situations, identical parts of expressions are used more than
+once. If this is not a problem with constant expressions (since
+@var{expression-cst}s are evaluated only once during the analysis of the
+problem definition structure, cf.@: @ref{Constants}), it may introduce some
+important overhead while evaluating complex @var{expression}s (which are
+evaluated at runtime, thanks to an internal stack mechanism). In order to
+circumvent this problem, the evaluation result of any part of an
+@var{expression} can be saved in a register: a memory location where this
+partial result will be accessible without any costly reevaluation of the
+partial expression.
+
+Registers have the following syntax: 
+@example
+@var{register-value-set}:
+  @var{expression}#@var{integer}
+
+@var{register-value-get}:
+  #@var{integer}
+@end example
+
+@noindent Thus, to store any part of an expression in the register 5, one
+should add @code{#5} directly after the expression. To reuse the value
+stored in this register, one simply uses @code{#5} instead of the expression
+it should replace.
+
+@xref{Function examples}, for an example.
+
+
+@c -------------------------------------------------------------------------
+@c Fields
+@c -------------------------------------------------------------------------
+
+@node Fields,  , Registers, Expressions
+@section Fields
+
+@cindex Fields
+@cindex Operators, differential
+@cindex Differential operators
+@cindex Discrete quantities
+@cindex Quantities, discrete
+@cindex Interpolation
+@cindex Gradient
+@cindex Curl
+@cindex Divergence
+@cindex Exterior derivative
+@cindex Derivative, exterior
+
+@vindex @var{quantity}
+@vindex @var{quantity-id}
+@vindex @var{quantity-dof}
+@vindex @var{quantity-operator}
+
+A discretized quantity (defined in a function space, cf.@:
+@ref{FunctionSpace}) is represented between braces @code{@{@}}, and can only
+appear in well-defined expressions in @code{Formulation}
+(@pxref{Formulation}) and @code{PostProcessing} (@pxref{PostProcessing})
+objects:
+
+@example
+@var{quantity}:
+  < @var{quantity-dof} > @{ < @var{quantity-operator} > @var{quantity-id} @}
+@end example
+
+@noindent with 
+
+@example
+@var{quantity-id}:
+  @var{string}
+@end example
+
+@noindent and
+
+@noindent
+@var{quantity-dof}:
+@ftable @code
+
+@item Dof
+Defines a vector of discrete quantities (vector of @code{D}egrees @code{o}f
+@code{f}reedom), to be used only in @code{Equation} terms of formulations to
+define (elementary) matrices.  Roughly said, the @code{Dof} symbol in front
+of a discrete quantity indicates that this quantity is an unknown quantity,
+and should therefore not be considered as already computed.
+
+@item BF
+Indicates that only a basis function will be used (only valid with basis
+functions associated with regions).
+
+@end ftable
+
+@noindent
+@var{quantity-operator}:
+@ftable @code
+
+@item d
+Exterior derivative (d): applied to a @var{p}-form, gives a (@var{p+1})-form.
+
+@item Grad
+Gradient: applied to a scalar field, gives a vector.
+
+@item Curl
+@itemx Rot
+Curl: applied to a vector field, gives a vector.
+
+@item Div
+Divergence (div): applied to a vector field, gives a scalar.
+
+@item dInv
+d^(-1): applied to a p-form, gives a (p-1)-form.
+
+@item GradInv
+Inverse grad: applied to a gradient field, gives a scalar.
+
+@item CurlInv
+@itemx RotInv
+Inverse curl: applied to a curl field, gives a vector.
+
+@item DivInv
+Inverse div: applied to a divergence field.
+
+@end ftable
+
+
+@noindent Note:
+@enumerate
+@item
+While the operators @code{Grad}, @code{Curl} and @code{Div} can be applied
+to 0, 1 and 2-forms respectively, the exterior derivative operator @code{d}
+is usually preferred with such fields.
+@end enumerate
+
+
+@c =========================================================================
+@c Geometry module
+@c =========================================================================
+
+@node Geometry module, Mesh module, Expressions, Top
+@chapter Geometry module
+
+@cindex Geometry
+@cindex Module, Geometry
+
+
+@c =========================================================================
+@c Mesh module
+@c =========================================================================
+
+@node Mesh module, Solver module, Geometry module, Top
+@chapter Mesh module
+
+@cindex Mesh
+@cindex Module, Mesh
+
+
+@c =========================================================================
+@c Solver module
+@c =========================================================================
+
+@node Solver module, Post-processing module, Mesh module, Top
+@chapter Solver module
+
+@cindex Solver
+@cindex Module, Solver
+
+
+@c =========================================================================
+@c Post-processing module
+@c =========================================================================
+
+@node Post-processing module, Short examples, Solver module, Top
+@chapter Post-processing module
+
+@cindex Post-processing
+@cindex Module, Post-processing
+
+@c =========================================================================
+@c Short Examples
+@c =========================================================================
+
+@node Short examples, Running Gmsh, Post-processing module, Top
+@chapter Short examples
+
+@cindex Short examples
+@cindex Examples, short
+
+@c =========================================================================
+@c Running Gmsh
+@c =========================================================================
+
+@node Running Gmsh, File formats, Short examples, Top
+@chapter Running Gmsh
+
+@cindex Operating system
+@cindex Platforms
+@cindex Command line options
+@cindex Options, command line
+@cindex Running Gmsh
+
+@c =========================================================================
+@c File Formats
+@c =========================================================================
+
+@node File formats, Programming comments, Running Gmsh, Top
+@chapter File formats
+
+This chapter describes the file formats that cannot be modified by the
+user. 
+
+@cindex Input file format
+@cindex Gmsh, file format
+@cindex Mesh, file format
+@cindex File, mesh
+@cindex File, @file{.msh}
+@cindex @file{.msh} file
+
+The native mesh format read by GetDP is the mesh file format produced by
+Gmsh (@value{GMSH-WEB}). The file is divided into two sections, defining the
+nodes and the elements in the mesh.
+
+@example
+$NOD
+@var{number-of-nodes}
+@var{node-number} @var{x-coord} @var{y-coord} @var{z-coord}
+@dots{}
+$ENDNOD
+$ELM
+@var{number-of-elements}
+@var{elm-number} @var{elm-type} @var{elm-region} @var{unused} @var{number-of-nodes} @var{node-numbers}
+@dots{}
+$ENDELM
+@end example
+
+@noindent
+All the syntactic variables stand for integers except @var{x-coord},
+@var{y-coord} and @var{z-coord} which stand for floating point values.
+The @var{elm-type} value defines the geometrical type for the element:
+
+@noindent
+@var{elm-type}:
+
+@table @code
+@item 1
+Line (2 nodes, 1 edge).
+@item 2
+Triangle (3 nodes, 3 edges).
+@item 3
+Quadrangle (4 nodes, 4 edges).
+@item 4
+Tetrahedron (4 nodes, 6 edges, 4 facets).
+@item 5
+Hexahedron (8 nodes, 12 edges, 6 facets).
+@item 6
+Prism (6 nodes, 9 edges, 5 facets).
+@item 7
+Pyramid (5 nodes, 8 edges, 5 facets).
+@item 15
+Point (1 node).
+@end table
+
+@c =========================================================================
+@c Programming Comments
+@c =========================================================================
+
+@node Programming comments, Bugs and versions, File formats, Top
+@chapter Programming comments
+
+todo: ceci peut constituer une intro a un futur guide de programmation
+dans Gmsh...
+
+@cindex Programming comments
+@cindex Language
+@cindex C
+@cindex C++
+@cindex @code{lex}
+@cindex @code{flex}
+@cindex @code{yacc}
+@cindex @code{bison}
+
+The analysis of the syntax is performed by Lex and Yacc, the software being
+written in C++ (but most of it was initially written in C, which results in
+some hybrid code...).
+
+@c =========================================================================
+@c Bugs, versions and contributors
+@c =========================================================================
+
+@ifclear COMMERCIAL
+
+@node Bugs and versions, Tips and tricks, Programming comments, Top
+@chapter Bugs, versions and contributors
+
+@menu
+* Bugs::                        
+* Version history::             
+* Contributors::                
+@end menu
+
+@c -------------------------------------------------------------------------
+@c Bugs
+@c -------------------------------------------------------------------------
+
+@node Bugs, Version history, Bugs and versions, Bugs and versions
+@section Bugs
+
+@cindex Known bugs
+@cindex Bugs, known
+@cindex Bugs, reporting
+@cindex Reporting bugs
+@cindex Authors, e-mail
+@cindex E-mail, authors
+
+If you think you have found a bug in Gmsh, you can report it by electronic
+mail to the Gmsh mailing list at @email{gmsh@@geuz.org}.  Please send as
+precise a description of the problem as you can, including sample input
+files that produce the bug (problem definition and mesh files). Don't forget
+to mention both the version of Gmsh and the version of your operation
+system (@pxref{Running Gmsh} to see how to get this information).
+
+Here is the list of open bugs for version @value{GMSH-VERSION}:
+
+@example
+@include ../BUGS
+@end example
+
+@c -------------------------------------------------------------------------
+@c Versions
+@c -------------------------------------------------------------------------
+
+@node Version history, Contributors, Bugs, Bugs and versions
+@section Version history
+
+@cindex Versions
+@cindex History, versions
+@cindex Changelog
+
+@example
+@include ../VERSIONS
+@end example
+
+@c -------------------------------------------------------------------------
+@c Contributors
+@c -------------------------------------------------------------------------
+
+@node Contributors,  , Version history, Bugs and versions
+@section Contributors
+
+@cindex Acknowledgments
+@cindex Contributors, list
+@cindex Credits 
+
+@example
+@include ../CONTRIBUTORS
+@end example
+
+@end ifclear
+
+@c =========================================================================
+@c Tips ans Tricks
+@c =========================================================================
+
+@node Tips and tricks, GNU General Public License, Bugs and versions, Top
+@appendix Tips and tricks
+
+@cindex Tips
+@cindex Tricks
+@cindex Efficiency, tips
+
+@itemize @bullet
+@item
+Install the 'info' version of this user's guide! On your (Unix) system, this
+can be achieved by 1) copying all gmsh.info* files to the place where your
+info files live (usually /usr/info), and 2) issuing the command
+'install-info /usr/info/gmsh.info /usr/info/dir'. You will then be able to
+access the documentation with the command 'info gmsh'. Note that particular
+sections ("nodes") can be accessed directly. For example, 'info gmsh
+extrude' will take you directly to the definition of the Extrude command.
+@item
+Use emacs to edit your files, and load the C++ mode! This permits automatic
+syntax highlighting and easy indentation. Automatic loading of the C++ mode
+for @file{.pro} files can be achieved by adding the following command in
+your @code{.emacs} file: @code{(setq auto-mode-alist (append '(("\\.pro$"
+. c++-mode)) auto-mode-alist))}.
+@item
+Define common geometrical objects and options in separate files, reusable in
+all your problem definition structures (@pxref{Includes}).
+@end itemize
+
+@c =========================================================================
+@c GNU GPL
+@c =========================================================================
+
+@ifclear COMMERCIAL
+
+@node  GNU General Public License, Concept index, Tips and tricks, Top
+@appendix GNU General Public License
+@include gpl.texi
+
+@end ifclear
+
+@c =========================================================================
+@c Concept Index (cindex)
+@c =========================================================================
+
+@node Concept index, Syntax index, GNU General Public License, Top
+@unnumbered Concept index
+
+@cindex Index, concepts
+@cindex Concepts, index
+
+@printindex cp
+
+@c =========================================================================
+@c Syntax Index (tindex+findex)
+@c =========================================================================
+
+@node Syntax index,  , Concept index, Top
+@unnumbered Syntax index
+
+@cindex Index, syntax
+@cindex Syntax, index
+@cindex Keywords, index
+
+@printindex tp
+
+@bye

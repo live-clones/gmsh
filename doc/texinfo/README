@@ -1,0 +1,20 @@
+
+This directory contains the Texinfo source files for the Gmsh
+documentation. Various output formats can be created:
+
+To produce:                   Type:              Requirements:
+--------------------------------------------------------------------
+a dvi file (TeX device        make dvi           TeX, Texinfo
+independent file)
+
+a postscript file             make ps            TeX, Texinfo, dvips
+
+a pdf file                    make pdf           TeX, Texinfo
+
+a collection of html          make html          Perl
+files
+
+the interactive info          make info          Texinfo
+(GNU project-like) 
+documentation
+
