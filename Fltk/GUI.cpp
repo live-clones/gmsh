@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.177 2002-05-20 18:28:25 geuzaine Exp $
+// $Id: GUI.cpp,v 1.178 2002-05-21 16:36:13 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -708,7 +708,7 @@ void GUI::create_menu_window(int argc, char **argv){
   m_window->callback(file_quit_cb);
   
 #if defined(__APPLE__) && defined(APPLE_USE_SYS_MENU)
-  m_menu_bar = new Fl_Sys_Menu_Bar(); 
+  m_menu_bar = new Fl_Sys_Menu_Bar(0,0,width,BH); 
   m_menu_bar->menu(m_menubar_table);
   m_menu_bar->global();
   Fl_Box *o = new Fl_Box(0,0,width,BH+6);
