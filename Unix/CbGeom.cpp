@@ -1,4 +1,4 @@
-/* $Id: CbGeom.cpp,v 1.9 2000-12-13 13:57:00 geuzaine Exp $ */
+/* $Id: CbGeom.cpp,v 1.10 2000-12-13 14:08:12 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -564,12 +564,18 @@ void geom_event_handler (int event) {
     break;
 
   case GEOM_PHYS_ADD_VOLUME :  
+    Msg(WARNING, "Add Physical Volume not done Interactively (Please Edit File Manually)"); 
+    break;
+
   case GEOM_PHYS_DELETE_POINT :
   case GEOM_PHYS_DELETE_LINE :
   case GEOM_PHYS_DELETE_SURF :
   case GEOM_PHYS_DELETE_VOLUME :
+    Msg(WARNING, "Deletetion of Physical Entities not Done"); 
+    break;
+
   case GEOM_ELEM_ADD_NEW_NURBS_SURF :
-    Msg(WARNING, "Not done yet"); 
+    Msg(WARNING, "Add NURBS not not done Interactively (Please Edit File Manually)"); 
     break;
 
   default :
