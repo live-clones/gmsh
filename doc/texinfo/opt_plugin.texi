@@ -1,4 +1,37 @@
 @ftable @code
+@item Plugin(Annotate)
+Plugin(Annotate) adds a text string of size
+`FontSize' in the view `iView'. If `3D' is
+equal to 1, the plugin inserts the string
+in model coordinates at the position (`X',`Y',`Z').
+If `3D' is equal to 0, the plugin inserts the
+string in screen coordinates at the position
+(`X',`Y'). If `iView' < 0, the plugin is run on
+the current view.
+
+Plugin(Annotate) is executed in-place.
+
+String options:
+@table @code
+@item Text
+Default value: @code{"My Text"}
+@end table
+Numeric options:
+@table @code
+@item X
+Default value: @code{20}
+@item Y
+Default value: @code{20}
+@item Z
+Default value: @code{0}
+@item 3D
+Default value: @code{0}
+@item FontSize
+Default value: @code{14}
+@item iView
+Default value: @code{-1}
+@end table
+
 @item Plugin(CutGrid)
 Plugin(CutGrid) cuts a tetrahedron view with a
 rectangular grid defined by the 3 points (`X0',`Y0',`Z0')
@@ -317,6 +350,64 @@ Numeric options:
 Default value: @code{-1}
 @item computeLevelsetPositive
 Default value: @code{0}
+@end table
+
+@item Plugin(Probe)
+Plugin(Probe) gets the value of the simplectic view
+`iView' at the point (`X',`Y',`Z'). If `iView' < 0,
+the plugin is run on the current view.
+
+Plugin(Probe) creates one new view.
+
+Numeric options:
+@table @code
+@item X
+Default value: @code{0}
+@item Y
+Default value: @code{0}
+@item Z
+Default value: @code{0}
+@item iView
+Default value: @code{-1}
+@end table
+
+@item Plugin(Remove)
+Plugin(Remove) removes the marked items
+from the view `iView'. If `iView' < 0, the
+plugin is run on the current view.
+
+Plugin(Remove) is executed in-place.
+
+Numeric options:
+@table @code
+@item Text2D
+Default value: @code{1}
+@item Text3D
+Default value: @code{1}
+@item Points
+Default value: @code{0}
+@item Lines
+Default value: @code{0}
+@item Triangles
+Default value: @code{0}
+@item Quadrangles
+Default value: @code{0}
+@item Tetrahedra
+Default value: @code{0}
+@item Hexahedra
+Default value: @code{0}
+@item Prisms
+Default value: @code{0}
+@item Pyramids
+Default value: @code{0}
+@item Scalar
+Default value: @code{1}
+@item Vector
+Default value: @code{1}
+@item Tensor
+Default value: @code{1}
+@item iView
+Default value: @code{-1}
 @end table
 
 @item Plugin(Skin)
