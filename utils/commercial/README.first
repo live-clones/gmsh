@@ -1,0 +1,8 @@
+To distribute Gmsh under another license:
+
+1) Put the license in the COPYING file (in this directory, i.e.
+   in utils/commercial/COPYING)
+
+2) go to the base directory and "make source-nonfree"
+
+That's it!
