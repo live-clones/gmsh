@@ -62,7 +62,7 @@ smooth views
 @item -combine
 combine input views into multi time step ones
 @item -convert file file
-convert an ascii view into a binary one
+convert all views in a file into binary views
 @end ftable
 
 @sp 1 
