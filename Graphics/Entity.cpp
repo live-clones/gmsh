@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.54 2005-03-09 02:18:40 geuzaine Exp $
+// $Id: Entity.cpp,v 1.55 2005-03-09 08:07:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -102,6 +102,12 @@ void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
     {8, 9, 10, 11}
   };
   
+  double n[3] = {a,b,c};
+  norme(n);
+  n[0] *= 50 * CTX.pixel_equiv_x / CTX.s[0];
+  n[1] *= 50 * CTX.pixel_equiv_x / CTX.s[1];
+  n[2] *= 50 * CTX.pixel_equiv_x / CTX.s[2];
+  
   for(int i = 0; i < 6; i++){
     int nb = 0;
     point p[4];
@@ -112,8 +118,12 @@ void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
     if(nb > 1){
       glBegin(GL_LINE_STRIP);
       for(int j = 0; j < nb; j++)
-	glVertex3d(p[j].x, p[j].y, p[j].z);	
+	glVertex3d(p[j].x, p[j].y, p[j].z);
       glEnd();
+      for(int j = 0; j < nb; j++)
+	Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+		    CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
+		    p[j].x, p[j].y, p[j].z, n[0], n[1], n[2], 1);
     }
   }
 }
