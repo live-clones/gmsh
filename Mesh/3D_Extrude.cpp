@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.45 2001-08-30 08:55:49 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.46 2001-09-01 15:18:32 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -901,7 +901,7 @@ int Extrude_Mesh (Volume * v){
 }
 
 int Extrude_Mesh (Tree_T * Volumes){
-  int i, j, extrude=0, recombine=0;
+  int i, j, extrude=0;
   Surface *s;
   Vertex *v1;
   List_T *list;
@@ -916,7 +916,6 @@ int Extrude_Mesh (Tree_T * Volumes){
     ep = THEV->Extrude;
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY){
       extrude = 1;
-      if(ep->mesh.Recombine) recombine = 1;
       for (i = 0; i < List_Nbr (THEV->Surfaces); i++){
 	List_Read (THEV->Surfaces, i, &s);
 	list = Tree2List (s->Vertices);
@@ -945,28 +944,26 @@ int Extrude_Mesh (Tree_T * Volumes){
     }
   }
 
-  if(!recombine){
-    j = 0;
-    do{
-      TEST_IS_ALL_OK=0;
-      for (int ivol = 0; ivol < List_Nbr (vol); ivol++){
-	List_Read(vol, ivol, &THEV);
-	ep = THEV->Extrude;
-	NUM = THEV->Num;
-	if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY && 
-	   !ep->mesh.Recombine){
-	  s = FindSurface (ep->geo.Source, THEM);
-	  if(s) Extrude_Surface2 (s);
-	}
+  j = 0;
+  do{
+    TEST_IS_ALL_OK=0;
+    for (int ivol = 0; ivol < List_Nbr (vol); ivol++){
+      List_Read(vol, ivol, &THEV);
+      ep = THEV->Extrude;
+      NUM = THEV->Num;
+      if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY && 
+	 !ep->mesh.Recombine){
+	s = FindSurface (ep->geo.Source, THEM);
+	if(s) Extrude_Surface2 (s);
       }
-      Msg(STATUS3, "Swapping %d", TEST_IS_ALL_OK); 
-      if(TEST_IS_ALL_OK == j){
-	if(j) Msg(GERROR, "Unable to swap all edges: try Recombine...");
-	break;
-      }
-      j = TEST_IS_ALL_OK;
-    }while(TEST_IS_ALL_OK);
-  }
+    }
+    Msg(STATUS3, "Swapping %d", TEST_IS_ALL_OK); 
+    if(TEST_IS_ALL_OK == j){
+      if(j) Msg(GERROR, "Unable to swap all edges: try Recombine...");
+      break;
+    }
+    j = TEST_IS_ALL_OK;
+  }while(TEST_IS_ALL_OK);
 
   Msg(STATUS2, "Mesh 3D... (Final)"); 
 
