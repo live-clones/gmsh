@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.181 2002-06-21 06:47:07 geuzaine Exp $
+// $Id: GUI.cpp,v 1.182 2002-06-23 19:56:46 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -73,6 +73,7 @@ Fl_Menu_Item m_menubar_table[] = {
     {"Open...",          FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"Merge...",         FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0},
     {"Save",             FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
+  //{"Save as...",       FL_CTRL+'a', (Fl_Callback *)file_save_as_cb, 0},
     {"Save as",          0, 0, 0, FL_MENU_DIVIDER|FL_SUBMENU},
       {"By extension...",  FL_CTRL+'e', (Fl_Callback *)file_save_as_auto_cb, 0, FL_MENU_DIVIDER},
       {"Geometry",  0, 0, 0, FL_SUBMENU},

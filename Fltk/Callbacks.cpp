@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.129 2002-06-15 21:25:27 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.130 2002-06-23 19:56:46 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -76,6 +76,8 @@ char* file_chooser_get_name(int num){
 static Fl_File_Chooser *fc = NULL;
 
 int file_chooser(int multi, const char* message, const char* pat){
+  Fl_File_Chooser::show_label = "Format:";
+
   if (!fc) {
     fc = new Fl_File_Chooser(".", pat, Fl_File_Chooser::CREATE, message);
   }
@@ -308,6 +310,47 @@ void file_merge_cb(CALLBACK_ARGS) {
   if(n != List_Nbr(CTX.post.list))
     WID->set_context(menu_post, 0);
 }
+
+void file_save_as_cb(CALLBACK_ARGS) {
+  int i, nbformats;
+  static char *pat=NULL, *formats[] ={
+    "By extension (*)",
+    "Gmsh options (*.opt)",
+    "Gmsh unrolled geometry (*.geo)",
+    "Gmsh mesh (*.msh)",
+    "Gmsh mesh without physicals (*.msh)",
+    "GREF mesh (*.gref)",
+    "I-DEAS universal mesh format (*.unv)",
+    "VRML surface mesh (*.wrl)",
+    "GIF (*.gif)",
+    "GIF dithered (*.gif)",
+    "GIF transparent (*.gif)",
+    "JPEG (*.jpg)",
+    "PostScript fast (*.ps)",
+    "PostScript accurate (*.ps)",
+    "PPM (*.ppm)",
+    "LaTeX JPEG (*.jpg)",
+    "LaTeX PostScript fast (*.ps)",
+    "LaTeX PostScript accurate (*.ps)",
+    "LaTeX TeX (*.tex)",
+    "UCB YUV (*.yuv)"};
+
+  if(!pat){
+    nbformats = sizeof(formats)/sizeof(formats[0]);
+    pat = (char*)Malloc(nbformats*256*sizeof(char));
+    strcpy(pat, formats[0]);
+    for(i=1; i<nbformats; i++){
+      strcat(pat, "\t");
+      strcat(pat, formats[i]);
+    }
+  }
+
+  if(file_chooser(0,"Save file as", pat)){
+    // pas moyen de recuperer l'index du filtre...
+  }
+
+}
+
 
 void file_save_as_auto_cb(CALLBACK_ARGS) {
   if(file_chooser(0,"Save file by extension", "*"))
