@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.225 2002-05-30 15:53:06 geuzaine Exp $
+# $Id: Makefile,v 1.226 2002-06-12 01:58:41 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -489,7 +489,7 @@ compile-macosx: initialtag
            "GUI_INCLUDE=-I$(FLTK_DIR)" \
         ); done
 link-macosx:
-	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) -L../fltk/lib -lfltk_gl -lfltk \
+	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) -L$(FLTK_DIR)/lib -lfltk_gl -lfltk \
                -framework AGL -framework OpenGL -framework Carbon -framework ApplicationServices
 	/Developer/Tools/Rez -t APPL -o $(GMSH_BIN_DIR)/gmsh $(FLTK_DIR)/FL/mac.r
 macosx: compile-macosx link-macosx
