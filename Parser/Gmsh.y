@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.79 2001-07-08 15:45:48 geuzaine Exp $
+// $Id: Gmsh.y,v 1.80 2001-07-24 11:33:48 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -84,7 +84,7 @@ void  skip_until (char *skip, char *until);
 %token tEND tAFFECT tDOTS tPi
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
-%token tFmod tModulo tHypot tPrintf tSprintf tDraw
+%token tFmod tModulo tHypot tPrintf tSprintf tStrcat tStrdup tStrprefix tDraw
 %token tPoint tCircle tEllipsis tLine tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical
@@ -119,8 +119,7 @@ void  skip_until (char *skip, char *until);
 %type <i> BoolExpr NumericAffectation NumericIncrement
 %type <u> ColorExpr
 %type <c> StringExpr
-%type <l> FExpr_Range
-%type <l> ListOfDouble ListOfDoubleItem RecursiveListOfDouble
+%type <l> FExpr_Multi ListOfDouble RecursiveListOfDouble
 %type <l> ListOfListOfDouble RecursiveListOfListOfDouble 
 %type <l> ListOfColor RecursiveListOfColor 
 %type <l> ListOfShapes Duplicata Transform MultipleShape
@@ -907,7 +906,7 @@ Affectation :
 
   /* -------- Option Strings -------- */ 
 
-  | tSTRING '.' tSTRING tAFFECT tBIGSTR tEND 
+  | tSTRING '.' tSTRING tAFFECT StringExpr tEND 
     { 
       if(!(pStrCat = Get_StringOptionCategory($1)))
 	vyyerror("Unknown string option class '%s'", $1);
@@ -919,7 +918,7 @@ Affectation :
       }
     }
 
-  | tSTRING '[' FExpr ']' '.' tSTRING tAFFECT tBIGSTR tEND 
+  | tSTRING '[' FExpr ']' '.' tSTRING tAFFECT StringExpr tEND 
     { 
       if(!(pStrCat = Get_StringOptionCategory($1)))
 	vyyerror("Unknown string option class '%s'", $1);
@@ -2125,26 +2124,6 @@ FExpr_Single :
     }
 ;
 
-FExpr_Range :
-    FExpr tDOTS FExpr
-    { 
-      $$ = List_Create(2,1,sizeof(double)) ; 
-      for(d=$1 ; ($1<$3)?(d<=$3):(d>=$3) ; ($1<$3)?(d+=1.):(d-=1.)) 
-	List_Add($$, &d) ;
-    }
-  | FExpr tDOTS FExpr tDOTS FExpr
-   {
-      $$ = List_Create(2,1,sizeof(double)) ; 
-      if(!$5 || ($1<$3 && $5<0) || ($1>$3 && $5>0)){
-        vyyerror("Wrong increment in '%g:%g:%g'", $1, $3, $5) ;
-	List_Add($$, &($1)) ;
-      }
-      else
-	for(d=$1 ; ($5>0)?(d<=$3):(d>=$3) ; d+=$5)
-	  List_Add($$, &d) ;
-   }
-  ;
-
 VExpr :
     VExpr_Single
     {
@@ -2232,7 +2211,12 @@ RecursiveListOfListOfDouble :
 
 
 ListOfDouble :
-    ListOfDoubleItem
+    FExpr
+    {
+      $$ = List_Create(2,1,sizeof(double)) ;
+      List_Add($$, &($1)) ;
+    }
+  | FExpr_Multi
     {
       $$ = $1 ;
     }
@@ -2250,16 +2234,24 @@ ListOfDouble :
     }
 ;
 
-ListOfDoubleItem :
-    FExpr
-    {
-      $$ = List_Create(2,1,sizeof(double)) ;
-      List_Add($$, &($1)) ;
-    }
-  | FExpr_Range
+FExpr_Multi :
+    FExpr tDOTS FExpr
     { 
-      $$ = $1;
+      $$ = List_Create(2,1,sizeof(double)) ; 
+      for(d=$1 ; ($1<$3)?(d<=$3):(d>=$3) ; ($1<$3)?(d+=1.):(d-=1.)) 
+	List_Add($$, &d) ;
     }
+  | FExpr tDOTS FExpr tDOTS FExpr
+   {
+      $$ = List_Create(2,1,sizeof(double)) ; 
+      if(!$5 || ($1<$3 && $5<0) || ($1>$3 && $5>0)){
+        vyyerror("Wrong increment in '%g:%g:%g'", $1, $3, $5) ;
+	List_Add($$, &($1)) ;
+      }
+      else
+	for(d=$1 ; ($5>0)?(d<=$3):(d>=$3) ; d+=$5)
+	  List_Add($$, &d) ;
+   }
   | tSTRING '[' ']'
     {
       $$ = List_Create(2,1,sizeof(double)) ;
@@ -2335,7 +2327,12 @@ ListOfDoubleItem :
 ;
 
 RecursiveListOfDouble :
-    ListOfDoubleItem
+    FExpr
+    {
+      $$ = List_Create(2,1,sizeof(double)) ;
+      List_Add($$, &($1)) ;
+    }
+  | FExpr_Multi
     {
       $$ = $1 ;
     }
@@ -2343,72 +2340,13 @@ RecursiveListOfDouble :
     {
       List_Add($$, &($3)) ;
     }
-  | RecursiveListOfDouble ',' FExpr_Range
+  | RecursiveListOfDouble ',' FExpr_Multi
     {
       for(i=0 ; i<List_Nbr($3) ; i++){
 	List_Read($3, i, &d) ;
 	List_Add($$, &d) ;
       }
-    }
-  | RecursiveListOfDouble ',' tSTRING '[' ']'
-    {
-      TheSymbol.Name = $3 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown variable '%s'", $3) ;
-      }
-      else{
-	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++)
-	  List_Add($$, (double*)List_Pointer_Fast(pSymbol->val, i)) ;
-      }
-    }
-  | RecursiveListOfDouble ',' '-' tSTRING '[' ']'
-    {
-      TheSymbol.Name = $4 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown variable '%s'", $4) ;
-      }
-      else{
-	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++){
-	  d = - *(double*)List_Pointer_Fast(pSymbol->val, i);
-	  List_Add($$, &d) ;
-	}
-      }
-    }
-  | RecursiveListOfDouble ',' tSTRING '[' '{' RecursiveListOfDouble '}' ']'
-    {
-      TheSymbol.Name = $3 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown variable '%s'", $3) ;
-      }
-      else{
-	for(i = 0 ; i < List_Nbr($6) ; i++){
-	  j = (int)(*(double*)List_Pointer_Fast($6, i));
-	  if((pd = (double*)List_Pointer_Test(pSymbol->val, j)))
-	    List_Add($$, pd) ;
-	  else
-	    vyyerror("Uninitialized variable '%s[%d]'", $3, j) ;	  
-	}
-      }
-      List_Delete($6);
-    }
-  | RecursiveListOfDouble ',' '-' tSTRING '[' '{' RecursiveListOfDouble '}' ']'
-    {
-      TheSymbol.Name = $4 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown variable '%s'", $4) ;
-      }
-      else{
-	for(i = 0 ; i < List_Nbr($7) ; i++){
-	  j = (int)(*(double*)List_Pointer_Fast($7, i));
-	  if((pd = (double*)List_Pointer_Test(pSymbol->val, j))){
-	    d = - *pd ;
-	    List_Add($$, &d) ;
-	  }
-	  else
-	    vyyerror("Uninitialized variable '%s[%d]'", $4, j) ;	  
-	}
-      }
-      List_Delete($7);
+      List_Delete($3);
     }
 ;
 
@@ -2422,11 +2360,13 @@ ColorExpr :
     {
       $$ = PACK_COLOR((int)$2, (int)$4, (int)$6, 255);
     }
+/* shift/reduce conflict
   | '{' tSTRING ',' FExpr '}'
     {
       $$ = Get_ColorForString(ColorString, (int)$4, $2, &flag);
       if(flag) vyyerror("Unknown color '%s'", $2);
     }
+*/
   | tSTRING
     {
       $$ = Get_ColorForString(ColorString, -1, $1, &flag);
@@ -2485,11 +2425,32 @@ StringExpr :
     {
       $$ = $1;
     }
-  | tSprintf '(' tBIGSTR ')'
+  | tStrcat '(' StringExpr ',' StringExpr ')'
+    {
+      $$ = (char *)Malloc((strlen($3)+strlen($5)+1)*sizeof(char)) ;
+      strcpy($$, $3) ;  
+      strcat($$, $5) ;
+      Free($3);
+      Free($5);
+    }
+  | tStrprefix '(' StringExpr ')'
+    {
+      $$ = (char *)Malloc((strlen($3)+1)*sizeof(char)) ;
+      for(i=strlen($3)-1; i>=0; i--){
+	if($3[i] == '.'){
+	  strncpy($$,$3,i);
+	  $$[i]='\0';
+	  break;
+	}
+      }
+      if(i<=0) strcpy($$,$3);
+      Free($3);
+    }
+  | tSprintf '(' StringExpr ')'
     {
       $$ = $3;
     }
-  | tSprintf '(' tBIGSTR ',' RecursiveListOfDouble ')'
+  | tSprintf '(' StringExpr ',' RecursiveListOfDouble ')'
     {
       for(i = 0 ; i<List_Nbr($5) ; i++){
 	if(!i){
@@ -2509,9 +2470,42 @@ StringExpr :
 	  break ;
 	}
       }
-      $$ = (char*)Malloc(strlen(tmpstring)+1);
+      $$ = (char*)Malloc((strlen(tmpstring)+1)*sizeof(char));
       strcpy($$, tmpstring);
       List_Delete($5);
+      Free($3);
+    }
+  | tStrdup '(' StringExpr ')'
+    {
+      $$ = $3;
+    }
+  | tStrdup '(' tSTRING '.' tSTRING ')'
+    { 
+      if(!(pStrCat = Get_StringOptionCategory($3)))
+	vyyerror("Unknown string option class '%s'", $3);
+      else{
+	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption($5, pStrCat)))
+	  vyyerror("Unknown string option '%s.%s'", $3, $5);
+	else{
+	  str = pStrOpt(0,GMSH_GET,NULL) ;
+	  $$ = (char*)Malloc((strlen(str)+1)*sizeof(char));
+	  strcpy($$, str);
+	}
+      }
+    }
+  | tStrdup '('  tSTRING '[' FExpr ']' '.' tSTRING   ')'
+    { 
+      if(!(pStrCat = Get_StringOptionCategory($3)))
+	vyyerror("Unknown string option class '%s'", $3);
+      else{
+	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption($8, pStrCat)))
+	  vyyerror("Unknown string option '%s[%d].%s'", $3, (int)$5, $8);
+	else{
+	  str = pStrOpt((int)$5,GMSH_GET,NULL) ;
+	  $$ = (char*)Malloc((strlen(str)+1)*sizeof(char));
+	  strcpy($$, str);
+	}
+      }
     }
 ;
 
