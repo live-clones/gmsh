@@ -1,4 +1,4 @@
-// $Id: Tree.cpp,v 1.14 2003-03-16 21:23:17 geuzaine Exp $
+// $Id: Tree.cpp,v 1.15 2003-03-16 21:26:29 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -105,7 +105,6 @@ int Tree_Replace(Tree_T * tree, void *data)
   }
   else {
     memcpy(ptr, data, tree->size);
-    Msg(INFO, "memcpy in tree_repl");
     return (1);
   }
 }
