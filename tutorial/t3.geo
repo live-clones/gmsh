@@ -1,54 +1,56 @@
-/********************************************************************* 
+/*********************************************************************
  *
  *  Gmsh tutorial 3
  * 
- *  Extruded meshes, Options
+ *  Extruded meshes, options
  *
  *********************************************************************/
 
-// Again, the first tutorial example is included:
+// Again, we start by including the first tutorial:
 
-Include "t1.geo" ;
+Include "t1.geo";
 
-// As in 't2.geo', an extrusion along the z axis will be performed:
+// As in `t2.geo', we plan to perform an extrusion along the z axis.
+// But here, instead of only extruding the geometry, we also want to
+// extrude the 2D mesh. This is done with the same `Extrude' command,
+// but by specifying the number of layers (4 in this case, with 8, 4,
+// 2 and 1 subdivisions, respectively), with volume numbers 9000 to
+// 9003 and respective heights equal to h/4:
 
-h = 0.1 ;
-
-// But contrary to 't2.geo', not only the geometry will be extruded,
-// but also the 2D mesh. This is done with the same Extrude command,
-// but by specifying the number of layers (here, there will be four
-// layers, of respectively 8, 4, 2 and 1 elements in depth), with
-// volume numbers 9000 to 9003 and respective heights equal to h/4:
+h = 0.1;
 
 Extrude Surface { 6, {0,0,h} } { 
-  Layers { {8,4,2,1}, {9000:9003}, {0.25,0.5,0.75,1} } ; 
-} ;
-
-// The extrusion can also performed with a rotation instead of a
-// translation, and the resulting mesh can be recombined into prisms
-// (wedges) if the surface elements are triangles, or hexahedra if the
-// surface elements are quadrangles. All rotations are specified by an
-// axis direction ({0,1,0}), an axis point ({-0.1,0,0.1}) and a
-// rotation angle (-Pi/2):
-
-Extrude Surface { 122, {0,1,0} , {-0.1,0,0.1} , -Pi/2 } { 
-  Recombine ; Layers { 7, 9004, 1 } ; 
+  Layers { {8,4,2,1}, {9000:9003}, {0.25,0.5,0.75,1} }; 
 };
 
-// A translation ({-2*h,0,0}) and a rotation ({1,0,0} , {0,0.15,0.25},
-// Pi/2) can be combined:
+// The extrusion can also be performed with a rotation instead of a
+// translation, and the resulting mesh can be recombined into prisms
+// (wedges). All rotations are specified by an axis direction
+// ({0,1,0}), an axis point ({-0.1,0,0.1}) and a rotation angle
+// (-Pi/2):
+
+Extrude Surface { 122, {0,1,0} , {-0.1,0,0.1} , -Pi/2 } { 
+  Recombine; Layers { 7, 9004, 1 }; 
+};
+
+// Note that a translation ({-2*h,0,0}) and a rotation ({1,0,0},
+// {0,0.15,0.25}, Pi/2) can also be combined:
 
 Extrude Surface {news-1, {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , Pi/2}{ 
   Layers {10,9004,1}; Recombine; 
 };
 
+// We finally define a new physical volume to save all the tetrahedra
+// with a common region number (101):
+
 Physical Volume(101) = {9000:9004};
 
-// All interactive options can also be set directly in the input file.
-// For example, the following lines define a global characteristic
-// length factor, redefine some background colors, disable the display
-// of the axes, and select an initial viewpoint in XYZ mode (disabling
-// the interactive trackball-like rotation mode):
+// Let us now change some options... Since all interactive options are
+// accessible in Gmsh's scripting language, we can for example define
+// a global characteristic length factor, redefine some background
+// colors, disable the display of the axes, and select an initial
+// viewpoint in XYZ mode (disabling the interactive trackball-like
+// rotation mode) directly in the input file:
 
 Mesh.CharacteristicLengthFactor = 4;
 General.Color.Background = {120,120,120};
@@ -65,19 +67,18 @@ General.RotationX = 10;
 General.RotationY = 70;
 General.TranslationX = -0.2;
 
-// Note: all colors can be defined literally or numerically, i.e.
-// 'General.Color.Background = Red' is equivalent to
-// 'General.Color.Background = {255,0,0}'. As with user-defined
-// variables, the options can be used either as right hand or left
-// hand sides, so that
+// Note that all colors can be defined literally or numerically, i.e.
+// `General.Color.Background = Red' is equivalent to
+// `General.Color.Background = {255,0,0}'; and that, as with
+// user-defined variables, the options can be used either as right or
+// left hand sides, so that the following command will set the
+// surface color to the same color as the points:
 
 Geometry.Color.Surfaces = Geometry.Color.Points;
 
-// will assign the color of the surfaces in the geometry to the same
-// color as the points.
-
-// A click on the '?'  button in the status bar of the graphic window
-// will dump all current options to the terminal. To save all
-// available options to a file, use the 'File->Save as->Gmsh options'
+// You can click on the `?'  button in the status bar of the graphic
+// window to see the current values of all options. To save all the
+// options to a file, you can use the `File->Save as->Gmsh options'
 // menu. To save the current options as the default options for all
-// future Gmsh sessions, use the 'Tools->Options->Save' button.
+// future Gmsh sessions, you should use the `Tools->Options->Save'
+// button.

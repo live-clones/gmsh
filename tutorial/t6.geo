@@ -6,6 +6,9 @@
  *
  *********************************************************************/
 
+// We start by defining a more complex geometry, using the same
+// commands as in the previous examples:
+
 r_int  = 0.05 ;
 r_ext  = 0.051 ;
 r_far  = 0.125 ;
@@ -129,9 +132,12 @@ Volume(143) = {142}; // inf b
 Surface Loop(144) = {89,-119,71,103,115};
 Volume(145) = {144}; // inf h
 
-// Transfinite line commands explicitly specify the number of points
-// and their distribution. 'Progression 2' means that each line
-// element in the series will be twice as long as the preceding one.
+// Once the geometry is defined, we then add transfinite mesh commands
+// in order to explicitly define a structured mesh.
+
+// 1. Transfinite line commands specify the number of points on the
+// curves and their distribution (`Progression 2' means that each line
+// element in the series will be twice as long as the preceding one):
 
 Transfinite Line{35,21,22,23,24,38,17,18,19,20} = nbpt_phi ;
 Transfinite Line{31,26,48,44,42} = nbpt_int Using Progression 0.88;
@@ -141,9 +147,10 @@ Transfinite Line{32,27,49,45,43} = nbpt_shell ;
 Transfinite Line{33,28,46,50,52} = nbpt_far Using Progression 1.2 ;
 Transfinite Line{34,29,51,47,53} = nbpt_inf Using Progression 1.05;
 
-// 2D transfinite entities are defined in respect to points. The
-// ordering of the points defines the ordering of the mesh elements.
-// A transfinite surface can have either 3 or 4 sides.
+// 2. Transfinite surfaces are defined by an ordered list of their
+// vertices (the ordering of these vertices defines the ordering of
+// the mesh elements). Note that a transfinite surface can only have 3
+// or 4 sides:
 
 Transfinite Surface{55} = {1,14,16,18};
 Transfinite Surface{57} = {14,2,19,16};
@@ -183,16 +190,9 @@ Transfinite Surface{103} = {24,23,25,26};
 Transfinite Surface{119} = {9,26,25};
 Transfinite Surface{117} = {13,5,25,26};
 
-// As with Extruded meshes, the Recombine command tells Gmsh to
-// recombine the simplices into quadrangles, prisms or hexahedra when
-// possible. A colon in a list acts as in the 'For' loop: all surfaces
-// having numbers between 55 and 127 are considered.
-
-Recombine Surface {55:127};
-
-// 3D transfinite entities are defined in respect to points. The
-// ordering of the points defines the ordering of the mesh elements.
-// A transfinite volume can have either 6 or 8 faces.
+// 3. Transfinite volumes are also defined by an ordered list of their
+// vertices (the ordering defines the ordering of the mesh elements).
+// A transfinite volume can only have 6 or 8 faces:
 
 Transfinite Volume{129} = {1,14,15,18,16,17};
 Transfinite Volume{131} = {17,16,14,15,20,19,2,10};
@@ -204,27 +204,30 @@ Transfinite Volume{141} = {7,22,21,8,24,23};
 Transfinite Volume{143} = {12,4,5,13,24,23,25,26};
 Transfinite Volume{145} = {8,24,23,9,26,25};
 
+// As with Extruded meshes, the `Recombine' command tells Gmsh to
+// recombine the simplices into quadrangles, prisms or hexahedra when
+// possible:
+
+Recombine Surface {55:127};
+
+// We finish by defing some physical entities:
+
 VolInt           = 1000 ;
-SurfIntPhi0      = 1001 ;
-SurfIntPhi1      = 1002 ;
+SurfIntPhi0      = 1001 ;  SurfIntPhi1      = 1002 ;
 SurfIntZ0        = 1003 ;
 
 VolShell         = 2000 ;
-SurfShellInt     = 2001 ;
-SurfShellExt     = 2002 ;
-SurfShellPhi0    = 2003 ;
-SurfShellPhi1    = 2004 ;
+SurfShellInt     = 2001 ;  SurfShellExt     = 2002 ;
+SurfShellPhi0    = 2003 ;  SurfShellPhi1    = 2004 ;
 SurfShellZ0      = 2005 ;
 LineShellIntPhi0 = 2006 ;
-LineShellIntPhi1 = 2007 ;
-LineShellIntZ0   = 2008 ;
+LineShellIntPhi1 = 2007 ;  LineShellIntZ0   = 2008 ;
 PointShellInt    = 2009 ;
 
 VolExt           = 3000 ;
 VolInf           = 3001 ;
 SurfInf          = 3002 ;
-SurfExtInfPhi0   = 3003 ;
-SurfExtInfPhi1   = 3004 ;
+SurfExtInfPhi0   = 3003 ;  SurfExtInfPhi1   = 3004 ;
 SurfExtInfZ0     = 3005 ;
 SurfInfRight     = 3006 ;
 SurfInfTop       = 3007 ;

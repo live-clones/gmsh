@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.34 2003-04-19 22:11:42 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.35 2003-04-21 01:32:54 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -478,7 +478,7 @@ control the size of the elements in the final mesh: through interpolation
 from geometrical point characteristic lengths or geometrical attractors, or
 from user-defined background meshes (@pxref{Mesh commands});
 @item
-create simple extruded geometries and meshes (see @ref{Geometry commands}
+create simple extruded geometries and meshes (see @ref{Geometry commands},
 and @ref{Mesh commands});
 @item
 interact with external solvers. Gmsh provides C/C++ and Perl interfaces, and
@@ -1573,7 +1573,7 @@ volume.
 
 Lines, surfaces and volumes can also be created through extrusion of points,
 lines and surfaces, respectively. Here is the syntax of the geometrical
-extrusion commands (go to @ref{Structured grids} to see how these commands
+extrusion commands (go to @ref{Structured grids}, to see how these commands
 can be extended in order to also extrude the mesh):
 
 @ftable @code
@@ -1709,7 +1709,7 @@ the signification of the `Saved in:' field in the following list, see
 @cindex Mesh, module
 @cindex Module, Mesh
 
-Gmsh's mesh module regroups several 1D, 2D and 3D mesh generators, all
+Gmsh's mesh module regroups several 1D, 2D and 3D mesh algorithms, all
 producing grids conforming in the sense of finite elements (@pxref{Mesh}).
 
 @menu
@@ -1725,27 +1725,24 @@ producing grids conforming in the sense of finite elements (@pxref{Mesh}).
 @node Elementary vs physical entities, Mesh commands, Mesh module, Mesh module
 @section Elementary vs. physical entities
 
-The input to all Gmsh's mesh algorithms is a geometry described in the
-geometry module (@pxref{Geometry module}). 
-
-If only elementary geometrical entities are defined (or if the option
-@code{Mesh.SaveAll} is set; see @ref{Mesh options}), the grid produced by
-the mesh module will be saved ``as is''. That is, all the elements in the
-grid will be saved to disk using the identification number of the elementary
-region they discretize as their region number (@pxref{Gmsh mesh file
-format}). However, this can sometimes be impractical or even insufficient:
+If only elementary geometrical entities are defined (or if the
+@code{Mesh.SaveAll} option is set; see @ref{Mesh options}), the grid
+produced by the mesh module will be saved ``as is''. That is, all the
+elements in the grid will be saved to disk using the identification number
+of the elementary entities they discretize as their region number
+(@pxref{Gmsh mesh file format}). This can sometimes be impractical:
 
 @itemize @bullet
 @item
-mesh elements can only appear once in the mesh file;
+mesh elements cannot be duplicated;
 @item 
 the orientation of the mesh elements (the ordering of their nodes) is
 determined entirely by the orientation of their ``parent'' elementary
-entity, and cannot be modified;
+entities, and cannot be modified;
 @item
-it is impossible to group multiple elementary entities into larger groups
-carrying some common characteristic (e.g.@: `Left wing', `Metal', `Dirichlet
-boundary condition', @dots{}).
+elements belonging to differents elementary entities cannot be linked as
+being part of a larger group having a physical or mathematical meaning (like
+`Left wing', `Metallic part', `Dirichlet boundary condition', @dots{}).
 @end itemize
 
 To remedy these problems, the geometry module introduces the notion of
@@ -1772,9 +1769,8 @@ The mesh module commands mostly permit to modify the characteristic lengths
 and specify structured grid parameters. The actual mesh ``actions'' (i.e.,
 ``mesh the lines'', ``mesh the surfaces'' and ``mesh the volumes'') cannot
 be specified in the input ASCII text input files. They have to be given
-either in the GUI (using the `Mesh->1D|2D|3D' buttons; see @ref{Running
-Gmsh}) or on the command line (with the @code{-1}, @code{-2} or @code{-3}
-options; see @ref{Running Gmsh} and @ref{Command-line options}).
+either in the GUI or on the command line (see @ref{Running Gmsh}, and
+@ref{Command-line options}).
 
 @menu
 * Characteristic lengths::      
@@ -1795,8 +1791,10 @@ options; see @ref{Running Gmsh} and @ref{Command-line options}).
 @cindex Mesh, background
 @cindex Background mesh
 
-There are three main ways to specify the size of the mesh elements for a
-given geometry:
+The `size' of a mesh element is defined as the length of the segment for a
+line segment, the radius of the circumscribed circle for a triangle and the
+radius of the circumscribed sphere for a tetrahedron. There are three main
+ways to specify the size of the mesh elements for a given geometry:
 
 @enumerate
 @item
@@ -1805,32 +1803,36 @@ model (with the @code{Point} command: see @ref{Points}). The actual size of
 the mesh elements will be computed by linearly interpolating these
 characteristic lengths on the initial mesh (see @ref{Mesh}). This might
 sometimes lead to over-refinement in some areas, so that you may have to add
-some ``dummy'' geometrical points in the model in order to get the desired
+``dummy'' geometrical entities in the model in order to get the desired
 element sizes.
 
-This method works with all the algorithms implemented in the mesh module,
-but is constrained by the structured algorithms for which the element size
-is explicitly specified (e.g.@: transfinite and extrusion grids: see
-@ref{Structured grids}).
+This method works with all the algorithms implemented in the mesh
+module. The final element sizes are of course constrained by the structured
+algorithms for which the element sizes are explicitly specified (e.g.@:
+transfinite and extruded grids: see @ref{Structured grids}).
 @item
-You can use geometrical ``attractors'', an elaborated version of the
-previous solution: see the @code{Attractor} commands below.
+You can use geometrical ``attractors'', an elaborate version of the method
+described in the preceding item: see the definition of the @code{Attractor}
+command below.
 
-Attractors currently only work with the 2D anisotropic algorithm (see
-@code{Mesh.Algorithm} in @ref{Mesh options}).
+Attractors currently only work with the 2D anisotropic algorithm (see the
+@code{Mesh.Algorithm} option in @ref{Mesh options}).
 @item
-You can give Gmsh an explicit background mesh (in the form of a scalar
-post-processing view; see @ref{Post-processing commands} and @ref{File
+You can give Gmsh an explicit background mesh in the form of a scalar
+post-processing view (see @ref{Post-processing commands}, and @ref{File
 formats}) in which the nodal values are the target element sizes.  This
 method is very general but it requires a first (usually rough) mesh and a
 way to compute the target sizes on this mesh (usually through an error
-estimation procedure, in an iterative process of mesh adaptation).
+estimation procedure, in an iterative process of mesh adaptation). Note that
+the target element sizes can be constrained by the characteristic lengths
+defined in the geometrical model if the
+@code{Mesh.ConstrainedBackgroundMesh} option is set.
 
-This method only works with the isotropic 1D, 2D and 3D algorithm, and is not
-currently available with the Triangle algorithm (see @code{Mesh.Algorithm}
-in @ref{Mesh options}). To load a background mesh, use the @code{-bgm}
-command-line option (@pxref{Command-line options}) or select `Apply as
-background mesh' in the post-processing view option menu.
+This method only works with the isotropic 1D, 2D and 3D algorithm, and is
+not currently available with the Triangle algorithm. To load a background
+mesh, use the @code{-bgm} command-line option (@pxref{Command-line options})
+or select `Apply as background mesh' in the post-processing view option
+menu.
 @end enumerate
 
 Here are the mesh commands that are related to the specification of
@@ -1842,8 +1844,8 @@ Specifies a characteristic length attractor. The @var{expression-list}
 should contain the identification numbers of the elementary points or lines
 to serve as attractors; the two first @w{@var{expression}s} prescribe
 refinement factors in a coordinate system local to the entities, and the
-last @var{expression} a decay factor. this feature is still experimental,
-and only work with the 2D anisotropic algorithm (see @code{Mesh.Algorithm}
+last @var{expression} a decay factor. This feature is still experimental,
+and only works with the 2D anisotropic algorithm (see @code{Mesh.Algorithm}
 in @ref{Mesh options}).  An example of the use of attractors is given in
 @ref{t7.geo}.
 
@@ -1876,8 +1878,10 @@ extruded and has the following syntax:
 
 @example
 @var{layers}:
+@group
   Layer @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @} @}; |
   Recombine;
+@end group
 @end example
 
 The first @var{expression-list} defines how many elements should be created
@@ -1887,10 +1891,10 @@ height of each layer (the list should contain a sequence of @var{n} numbers
 0 < @var{h1} < @var{h2} < @dots{} < @var{hn} <= 1). See @ref{t3.geo}, for an
 example.
 
-For line extrusions, the @code{Recombine} option will recombine (as many as
-possible) triangles into quadrangles.  For surface extrusions, the
-@code{Recombine} option will recombine (as many as possible) tetrahedra
-into prisms, hexahedra or pyramids.
+For line extrusions, the @code{Recombine} option will recombine as many as
+possible triangles into quadrangles.  For surface extrusions, the
+@code{Recombine} option will recombine as many as possible tetrahedra into
+prisms, hexahedra or pyramids.
 
 @item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{layers}; @dots{} @};
 Extrudes both the geometry and the mesh using a rotation
@@ -1904,23 +1908,30 @@ above.
 @item Transfinite Line @{ @var{expression-list} @} = @var{expression} < Using Progression | Bump @var{expression} >
 Selects the lines in @var{expression-list} to be meshed with the 1D
 transfinite algorithm. The @var{expression} on the right hand side gives the
-number of points to be used (this overrides any characteristic length
-prescription---see @ref{Characteristic lengths}). The optional argument
-`@code{Using Progression @var{expression}}' instructs the transfinite
-algorithm to distribute the points following a geometric progression
-(@code{Progression 2} means that each line element in the series will be
-twice as long as the preceding one). The optional argument `@code{Using Bump
-@var{expression}}' instructs the transfinite algorithm to distribute the
-with a refinement at both ends of the line.  (A deprecated synonym for
-@code{Progression} is @code{Power}.)
+number of nodes that will be created on the line (this overrides any
+characteristic length prescription---see @ref{Characteristic lengths}). The
+optional argument `@code{Using Progression @var{expression}}' instructs the
+transfinite algorithm to distribute the nodes following a geometric
+progression (@code{Progression 2} meaning for example that each line element
+in the series will be twice as long as the preceding one). The optional
+argument `@code{Using Bump @var{expression}}' instructs the transfinite
+algorithm to distribute the nodes with a refinement at both ends of the
+line.  (A deprecated synonym for @code{Progression} is @code{Power}.)
 
 @item Transfinite Surface @{ @var{expression} @} = @{ @var{expression-list} @};
 Selects the surface @var{expression} to be meshed with the 2D transfinite
-algorithm. The @var{expression-list} ...
+algorithm. The @var{expression-list} should contain the identification
+numbers of the points on the boundary of the surface. The ordering of these
+point numbers defines the ordering and orientation of the mesh
+elements. Note that a transfinite surface can only have three or four sides.
 
 @item Transfinite Volume @{ @var{expression} @} = @{ @var{expression-list} @};
 Selects the volume @var{expression} to be meshed with the 3D transfinite
-algorithm.
+algorithm.  The @var{expression-list} should contain the identification
+numbers of the points on the boundary of the volume. The ordering of these
+point numbers defines the ordering and orientation of the mesh
+elements. Note that a transfinite volume can only have six or eight
+faces.
 @end ftable
 
 @c .........................................................................
@@ -1940,10 +1951,11 @@ Sets the mesh color of the entities listed in @var{expression-list} to @var{colo
 Deletes all currently loaded meshes.
 
 @item Recombine Surface @{ @var{expression-list} @} < = @var{expression} >;
-Recombines the triangular meshes of the surfaces @var{expression-list} into
-a mixed triangular/quadrangular mesh. The optional @var{expression} on the
-right hand side specifies the maximum recombination angle allowed (a large
-@var{expression} leading to more triangle recombinations).
+Recombines the triangular meshes of the surfaces listed in
+@var{expression-list} into mixed triangular/quadrangular meshes. The
+optional @var{expression} on the right hand side specifies the maximum
+recombination angle allowed (a large @var{expression} leading to more
+triangle recombinations).
 
 @item Save @var{char-expression};
 Saves the mesh in a file named @var{char-expression}, using the current
@@ -1990,11 +2002,11 @@ If you want the solver to interact with Gmsh (for error messages, option
 definitions, post-processing, etc.), you need to link your solver with the
 @file{GmshClient.c} file and add the appropriate function calls inside your
 program. You can then proceed as in the previous case, but this time you
-should set the client-server option to 1 (e.g.@: @code{Solver.ClientServer0 =
-1}), so that Gmsh and the solver can communicate through a Unix socket. See
-@ref{Solver example} for an example of how to interface a C solver. Bindings
-for solvers written in other languages (e.g.@: Perl) are available on
-@value{GMSH-WEB}.
+should set the client-server option to 1 (e.g.@: @code{Solver.ClientServer0
+= 1}), so that Gmsh and the solver can communicate through a Unix
+socket. See @ref{Solver example}, for an example of how to interface a C
+solver. Bindings for solvers written in other languages (e.g.@: Perl) are
+available on @value{GMSH-WEB}.
 
 @menu
 * Solver options::              
@@ -2062,11 +2074,12 @@ Gmsh's jargon, each data set is called a ``view'', and can arbitrarily mix
 all types of elements and fields. Each view is given a name, and can be
 manipulated either individually (each view has its own button in the GUI and
 can be referred to by its index in the scripting language) or globally (see
-the @code{PostProcessing.LinkView} option below).
+the @code{PostProcessing.LinkView} option in @ref{Post-processing
+options}).
 
-Though most of any visualization process is inherently interactive, Gmsh
-exposes all post-processing commands and options to the user to permit a
-complete scripting of the full post-processing process (see
+Although visualization is usually mostly an interactive task, Gmsh exposes
+all the post-processing commands and options to the user in its scripting
+language to permit a complete automation of the post-processing process (see
 e.g.@: @ref{t8.geo}, and @ref{t9.geo}).
 
 The two following sections summarize all available post-processing commands
@@ -2089,8 +2102,8 @@ and options.
 
 @ftable @code
 @item Delete View[@var{expression}];
-Deletes (removes) the @var{expression}-th post-processing view. The first
-view is given the number zero, the second the number one, and so on.
+Deletes (removes) the @var{expression}-th post-processing view. Note that
+post-processing view numbers start at 0.
 
 @item Duplicata View[@var{expression}];
 Duplicates the @var{expression}-th post-processing view.
@@ -2108,12 +2121,13 @@ example.
 Creates a new post-processing view, named @code{"@var{string}"}. This is the
 easiest way to create a post-processing view, but also the least efficient
 (the view is read through Gmsh's script parser, which can become quite slow
-if the view is large---e.g.@: with more than 100000 elements).  Though, this
-``parsed'' post-processing format (explained in detail in @ref{Gmsh parsed
-post-processing file format}) is very powerful for testing proposes, since
-all the values are @var{expressions}. Two other formats, better adapted for
-large data sets, are available described in @ref{Gmsh ASCII post-processing
-file format} and @ref{Gmsh binary post-processing file format}.
+if the view is large---e.g.@: with more than 100,000 elements).  Though,
+this ``parsed'' post-processing format (explained in detail in @ref{Gmsh
+parsed post-processing file format}) is very powerful for testing proposes,
+since all the values are @var{expressions}. Two other formats, better
+adapted for large data sets, are described in @ref{Gmsh ASCII
+post-processing file format} and @ref{Gmsh binary post-processing file
+format}.
 @end ftable
 
 @c -------------------------------------------------------------------------
@@ -2127,18 +2141,18 @@ file format} and @ref{Gmsh binary post-processing file format}.
 @cindex Options, post-processing
 
 General post-processing option names have the form
-@code{PostProcessing.@var{string}}. Options peculiar to post-processing
+`@code{PostProcessing.@var{string}}'. Options peculiar to post-processing
 views take two forms:
 
 @enumerate
 @item options that should apply to all views can be set through
-@code{View.@var{string}}, @emph{before any view is loaded};
+`@code{View.@var{string}}', @emph{before any view is loaded};
 @item options that should apply only to the @var{n}-th
-view take the form @code{View[@var{n}].@var{string}} (@var{n} = 0, 1, 2,
+view take the form `@code{View[@var{n}].@var{string}}' (@var{n} = 0, 1, 2,
 @dots{}), @emph{after the @var{n}-th view is loaded}.
 @end enumerate
 
-See @ref{t9.geo} for some examples.
+See @ref{t8.geo}, and @ref{t9.geo}, for some examples.
 
 @include opt_post.texi
 
@@ -2159,13 +2173,15 @@ See @ref{t9.geo} for some examples.
 @cindex Examples
 @cindex Tutorial
 
-Here are the examples in the Gmsh tutorial. These examples are commented and
-should introduce new features gradually, starting with @file{t1.geo}. The
-files corresponding to these examples are available in the @file{tutorial}
-directory of the Gmsh distribution.
+These nine following examples are commented and should introduce new
+features gradually, starting with @file{t1.geo}. The files corresponding to
+these examples are available in the @file{tutorial} directory of the Gmsh
+distribution.
 
-This tutorial does not explain the mesh and post-processing file
-formats. See @ref{File formats} for this.
+This tutorial does not explain the mesh and post-processing file formats:
+see @ref{File formats}, for this.
+
+To learn how to run Gmsh on your computer, see @ref{Running Gmsh}.
 
 @menu
 * t1.geo::                      
@@ -2287,12 +2303,11 @@ formats. See @ref{File formats} for this.
 @cindex Interactive mode
 @cindex Non-interactive mode
 
-There are several different ways to actually run Gmsh on your
-computer@footnote{Note that these operation modes can slightly vary
-depending on the operating system and/or shell you use.} The first working
-mode of Gmsh is the interactive graphical mode. To launch Gmsh in
-interactive mode, just click or double-click on the Gmsh icon (Windows and
-Mac), or type
+There are several ways to actually run Gmsh on your computer@footnote{Note
+that these operation modes can slightly vary depending on your operating
+system and/or command shell.}. The first working mode of Gmsh is the
+interactive graphical mode. To launch Gmsh in interactive mode, just click
+or double-click on the Gmsh icon (Windows and Mac), or type
 
 @example
 > gmsh
@@ -2315,7 +2330,7 @@ is based on the name of the first input file on the command line (or
 extension depending on the mesh format.
 
 Note that nearly all the interactive commands have shortcuts: see
-@ref{Keyboard shortcuts} or select `Help->Shortcuts' in the menu bar to
+@ref{Keyboard shortcuts}, or select `Help->Shortcuts' in the menu bar to
 learn about these.
 
 Instead of opening the tutorial with the `File->Open' menu, it is
@@ -2327,22 +2342,22 @@ example with:
 @end example
 
 Note that, even if it is often handy to define the variables and the points
-directly in the input files (you may use any text editor for this purpose,
-e.g.@: Wordpad on Windows, or Emacs on Unix), it is almost always more simple
-to define the lines, the surfaces and the volumes interactively. To do so,
-just follow the context dependent buttons in the Geometry module. For
+directly in the ASCII input files (you can use any text editor for this
+purpose, e.g.@: Wordpad on Windows, or Emacs on Unix), it is almost always
+simpler to define the lines, the surfaces and the volumes interactively. To
+do so, just follow the context dependent buttons in the Geometry module. For
 example, to create a spline, select `Geometry' in the module menu, and then
 select `Elementary, Add, New, Spline'. You will then be asked (in the status
-bar of the graphic window) to select a list of points, and to type @kbd{e} to
-finish the selection (or @kbd{q} to abort it). Once the interactive command is
-completed, a string is automatically added at the end of the currently
-opened project file.
+bar of the graphic window) to select a list of points, and to type @kbd{e}
+to finish the selection (or @kbd{q} to abort it). Once the interactive
+command is completed, a string is automatically added at the end of the
+currently opened project file.
 
-The second operating mode for Gmsh is the non-interactive mode. In this
-mode, there is no graphical user interface, and all operations are performed
+Gmsh's second operating mode is the non-interactive mode. In this mode,
+there is no graphical user interface, and all operations are performed
 without any user interaction@footnote{If you compile Gmsh without the
 graphical user interface, i.e.@: with @code{./configure --disable-gui}, this
-is the only mode you;ll have access to.}. To mesh the first tutorial in
+is the only mode you have access to.}. To mesh the first tutorial in
 non-interactive mode, just type:
 
 @example
@@ -2360,7 +2375,7 @@ You should read the notes in the file @file{bgmesh.pos} if you intend to use
 background meshes.
 
 Several files can be loaded simultaneously in Gmsh. The first one defines
-the project, while the others are appended (merged) to this project. You
+the project, while the others are appended (`merged') to this project. You
 can merge such files with the `File->Merge' menu, or by directly specifying
 the names of the files on the command line. This is most useful for
 post-processing purposes. For example, to merge the post-processing views
@@ -2371,9 +2386,9 @@ the first tutorial @file{t1.geo}, you can type the following command:
 > gmsh t1.geo view1.pos view2.pos
 @end example
 
-In the Post-Processing module (select `Post_Processing' in the module
-menu), two view buttons will appear, respectively labeled "a scalar
-map" and "a vector map". A mouse click on the name will toggle the
+In the Post-Processing module (select `Post-Processing' in the module
+menu), two view buttons will appear, respectively labeled `a scalar
+map' and `a vector map'. A mouse click on the name will toggle the
 visibility of the selected view, while a click on the arrow button on
 the right will provide access to the view's options. If you want the
 modifications made to one view to affect also all the other views,
@@ -2477,11 +2492,11 @@ pop up menu on post-processing view button
 @cindex File formats
 
 This chapter describes the file formats that cannot be modified by the
-user. These format have a version number (currently 1.2), independent of the
+user. These formats have a version number (currently 1.2), independent of the
 Gmsh version number (currently @value{GMSH-VERSION}).
 
 All non-parsed file formats have sections enclosed between @code{$KEY} and
-@code{$ENDKEY} symbol pairs.
+@code{$ENDKEY} tags.
 
 @menu
 * Gmsh mesh file format::       
@@ -2503,8 +2518,8 @@ All non-parsed file formats have sections enclosed between @code{$KEY} and
 @cindex @file{.msh} file
 
 The @file{.msh} file format is Gmsh's native mesh file format. The file is
-divided into two sections, defining the nodes (@code{NOD}-@code{ENDNOD}) and
-the elements (@code{ELM}-@code{ENDELM}) in the mesh:
+divided in two sections, defining the nodes (@code{NOD}-@code{ENDNOD}) and
+the elements (@code{$ELM}-@code{$ENDELM}) in the mesh:
 
 @example
 $NOD
@@ -2514,7 +2529,7 @@ $NOD
 $ENDNOD
 $ELM
 @var{number-of-elements}
-@var{elm-number} @var{elm-type} @var{reg-phys} @var{reg-elemem} @var{number-of-nodes} @var{node-number-list}
+@var{elm-number} @var{elm-type} @var{reg-phys} @var{reg-elem} @var{number-of-nodes} @var{node-number-list}
 @dots{}
 $ENDELM
 @end example
@@ -2526,26 +2541,24 @@ where
 is the number of nodes in the mesh
 
 @item @var{node-number}
-is the number (index) of the n-th node in the mesh. Note that the
-@w{@var{node-number}s} should not necessarily given in a consecutive (or
-even an ordered) way.
+is the number (index) of the @var{n}-th node in the mesh. Note that the
+@w{@var{node-number}s} do not have to be given in a consecutive (or even an
+ordered) way.
 
-@item @var{x-coord}
-@item @var{y-coord}
-@item @var{z-coord}
-are the floating point values giving the X, Y and Z coordinate of the n-th
-node.
+@item @var{x-coord} @var{y-coord} @var{z-coord}
+are the floating point values giving the X, Y and Z coordinate of the
+@var{n}-th node.
 
 @item @var{number-of-elements}
 is the number of elements in the mesh
 
 @item @var{elm-number}
-is the number (index) of the n-th element in the mesh. Note that the
-@w{@var{elm-number}s} should not necessarily given in a consecutive (or even
-an ordered) way.
+is the number (index) of the @var{n}-th element in the mesh. Note that the
+@w{@var{elm-number}s} do not have to be given in a consecutive (or even an
+ordered) way.
 
 @item @var{elm-type}
-defines the geometrical type for the n-th element:
+defines the geometrical type of the @var{n}-th element:
 @table @code
 @item 1
 Line (2 nodes, 1 edge).
@@ -2572,14 +2585,14 @@ is the number of the physical entity to which the element belongs.
 is the number of the elementary entity to which the element belongs.
 
 @item @var{number-of-nodes}
-is the number of nodes for the n-th element. This is redundant, but kept for
-backward compatibility reasons. The redundancy may disappear in the future
+is the number of nodes for the @var{n}-th element. This is redundant, but
+kept for backward compatibility. The redundancy may disappear in the future
 if higher order elements are implemented using the same @w{@var{elm-type}s}
 as the current ones.
 
 @item @var{node-number-list}
-is a list of @var{number-of-nodes} node numbers (separated by white space,
-without commas).
+is the list of the @var{number-of-nodes} node numbers of the @var{n}-th
+element (separated by white space, without commas).
 @end table
 
 @c -------------------------------------------------------------------------
@@ -2594,9 +2607,9 @@ without commas).
 @cindex @file{.pos} file
 
 The ASCII post-processing file is divided in several sections: one format
-section, enclosed between @code{$PostFormat}-@code{$EndPostFormat}, and one
-or more post-processing views, enclosed between @code{$View}-@code{$EndView}
-tags:
+section, enclosed between @code{$PostFormat}-@code{$EndPostFormat} tags, and
+one or more post-processing views, enclosed between
+@code{$View}-@code{$EndView} tags:
 
 @example
 $PostFormat
@@ -2651,13 +2664,13 @@ is an integer equal to 0 in the ASCII file format.
 
 @item @var{data-size}
 is an integer equal to the size of the floating point numbers used in the
-file (usually, data-size == sizeof(double)).
+file (usually, data-size = sizeof(double)).
 
 @item @var{view-name}
-is a string containing the name of the view (max. 256 characters)
+is a string containing the name of the view (max. 256 characters).
 
-@item @var{nb-time-step}
-is an integer giving the number of time steps in the view
+@item @var{nb-time-steps}
+is an integer giving the number of time steps in the view.
 
 @item @var{nb-scalar-points}
 @item @var{nb-vector-points}
@@ -2675,8 +2688,8 @@ view.
 are integers giving the total number of characters in the 2D and 3D strings.
 
 @item @var{time-step-values}
-is a list of nb-time-steps double precision numbers giving the value of the
-time (or any other variable) for which an evolution was saved.
+is a list of @var{nb-time-steps} double precision numbers giving the value
+of the time (or any other variable) for which an evolution was saved.
 
 @item @var{scalar-point-value}
 @item @var{vector-point-value}
@@ -2711,9 +2724,8 @@ starting index of the string in @var{text2d-chars} and @var{style} is
 currently unused.
 
 @item @var{text2d-chars}
-is a list of @item @var{nb-text2d-chars} characters. Substrings are
-separated with the @code{^} character (which is a forbidden character in
-regular strings).
+is a list of @var{nb-text2d-chars} characters. Substrings are separated with
+the `@code{^}' character (which is a forbidden character in regular strings).
 
 @item @var{text3d}
 is a list of 5 double precision numbers
@@ -2727,7 +2739,7 @@ the leftmost element of the 3D string in model (real world) coordinates,
 
 @item @var{text3d-chars}
 is a list of @var{nb-text3d-chars} chars. Substrings are separated with the
-@code{^} characted.
+`@code{^}' characted.
 @end table
 
 @c -------------------------------------------------------------------------
@@ -2752,9 +2764,9 @@ all lists of floating point numbers and characters are written in binary
 format
 @item
 there is an additional integer, of value 1, written before
-time-step-values. This integer is used for detecting if the computer on
-which the binary file was written and the computer on which the file is read
-are of the same type (little or big endian).
+@var{time-step-values}. This integer is used for detecting if the computer
+on which the binary file was written and the computer on which the file is
+read are of the same type (little or big endian).
 @end enumerate
 
 Here is a pseudo C code to write the beginning of a post-processing
@@ -2810,56 +2822,62 @@ the same for all other kinds of values.
 @cindex @file{.pos} file
 
 For relatively small data sets Gmsh provides an additional post-processing
-format, which is parsed by the same grammar analyzer as the Gmsh script
-language. You can thus, for example, embed small post-processing views
-directly into your geometrical descriptions (see e.g.@: @ref{t4.geo}). This
-format is also useful for testing purposes: its syntax is very permissive,
-and you can easily generate it by hand or on the fly. The format of the
-parsed post-processing file is the following:
+format, which is read by Gmsh's script parser. You can thus, for example,
+embed small post-processing views directly into your geometrical
+descriptions (see e.g.@: @ref{t4.geo}). This format is also useful for
+testing purposes: its syntax is very permissive, and you can easily generate
+it by hand or on the fly. The format of the parsed post-processing file is
+the following:
 
 @example
+@group
 View "@var{string}" @{
   @var{type} ( @var{list-of-coords} ) @{ @var{list-of-values} @};
   @dots{}
 @};
+@end group
 @end example
 
-The same 26 base objects can be displayed as in the ASCII or binary
+The 26 objects that can be displayed are the same as in the ASCII or binary
 post-processing file formats:
 
+@sp 1 
+
 @example
+@group
                     @var{type}  #@var{list-of-coords}  #@var{list-of-values}
 ------------------------------------------------------------
-scalar point        SP    3            1  * @var{nb-time-step}
-vector point        VP    3            3  * @var{nb-time-step}
-tensor point        TP    3            9  * @var{nb-time-step}
-scalar line         SL    6            2  * @var{nb-time-step}
-vector line         VL    6            6  * @var{nb-time-step}
-tensor line         TL    6            18 * @var{nb-time-step}
-scalar triangle     ST    9            3  * @var{nb-time-step}
-vector triangle     VT    9            9  * @var{nb-time-step}
-tensor triangle     TT    9            27 * @var{nb-time-step}
-scalar quadrangle   SQ    12           4  * @var{nb-time-step}
-vector quadrangle   VQ    12           12 * @var{nb-time-step}
-tensor quadrangle   TQ    12           36 * @var{nb-time-step}
-scalar tetrahedron  SS    12           4  * @var{nb-time-step}
-vector tetrahedron  VS    12           12 * @var{nb-time-step}
-tensor tetrahedron  TS    12           36 * @var{nb-time-step}
-scalar hexahedron   SH    24           8  * @var{nb-time-step}
-vector hexahedron   VH    24           24 * @var{nb-time-step}
-tensor hexahedron   TH    24           72 * @var{nb-time-step}
-scalar prism        SI    18           6  * @var{nb-time-step}
-vector prism        VI    18           18 * @var{nb-time-step}
-tensor prism        TI    18           54 * @var{nb-time-step}
-scalar pyramid      SY    15           5  * @var{nb-time-step}
-vector pyramid      VY    15           15 * @var{nb-time-step}
-tensor pyramid      TY    15           45 * @var{nb-time-step}
+scalar point        SP    3            1  * @var{nb-time-steps}
+vector point        VP    3            3  * @var{nb-time-steps}
+tensor point        TP    3            9  * @var{nb-time-steps}
+scalar line         SL    6            2  * @var{nb-time-steps}
+vector line         VL    6            6  * @var{nb-time-steps}
+tensor line         TL    6            18 * @var{nb-time-steps}
+scalar triangle     ST    9            3  * @var{nb-time-steps}
+vector triangle     VT    9            9  * @var{nb-time-steps}
+tensor triangle     TT    9            27 * @var{nb-time-steps}
+scalar quadrangle   SQ    12           4  * @var{nb-time-steps}
+vector quadrangle   VQ    12           12 * @var{nb-time-steps}
+tensor quadrangle   TQ    12           36 * @var{nb-time-steps}
+scalar tetrahedron  SS    12           4  * @var{nb-time-steps}
+vector tetrahedron  VS    12           12 * @var{nb-time-steps}
+tensor tetrahedron  TS    12           36 * @var{nb-time-steps}
+scalar hexahedron   SH    24           8  * @var{nb-time-steps}
+vector hexahedron   VH    24           24 * @var{nb-time-steps}
+tensor hexahedron   TH    24           72 * @var{nb-time-steps}
+scalar prism        SI    18           6  * @var{nb-time-steps}
+vector prism        VI    18           18 * @var{nb-time-steps}
+tensor prism        TI    18           54 * @var{nb-time-steps}
+scalar pyramid      SY    15           5  * @var{nb-time-steps}
+vector pyramid      VY    15           15 * @var{nb-time-steps}
+tensor pyramid      TY    15           45 * @var{nb-time-steps}
 text 2d             T2    4            arbitrary
 text 3d             T3    5            arbitrary
+@end group
 @end example
 
-But, for historical reasons, contrary to the ASCII and binary
-post-processing file formats, the coordinates are given by node, i.e.:
+For historical reasons, contrary to the ASCII and binary post-processing
+file formats, the coordinates are given `by node', i.e.:
 
 @itemize @bullet
 @item
@@ -2891,18 +2909,21 @@ post-processing file formats.
 For all mesh and post-processing file formats, the reference elements are
 defined as follows.
 
-Point:
 @example
+@group
+Point:
         v                            
         |                            
         |                            
    -----1-----u  
         |                            
         |                            
+@end group
 @end example
 
-Line:
 @example
+@group
+Line:
                   edge 1: nodes 1 -> 2  
         v                            
         |                            
@@ -2910,10 +2931,12 @@ Line:
    --1-----2--u  
         |                            
         |                            
+@end group
 @end example
 
-Triangle:
 @example
+@group
+Triangle:
                   edge 1: nodes 1 -> 2         
    v                   2:       1 -> 3                  
    |                   3:       2 -> 3                  
@@ -2924,10 +2947,12 @@ Triangle:
    |__\___u                    
    1   2                       
 
+@end group
 @end example
 
-Quadrangle:
 @example
+@group
+Quadrangle:
                   edge 1: nodes 1 -> 2 
         v              2:       1 -> 4                    
         |              3:       2 -> 3                    
@@ -2938,10 +2963,12 @@ Quadrangle:
      1--|--2      
         |         
 
+@end group
 @end example
 
-Tetrahedron:
 @example
+@group
+Tetrahedron:
                   edge 1: nodes 1 -> 2                
    v                   2:       1 -> 3                                            
    |                   3:       1 -> 4                
@@ -2955,10 +2982,12 @@ Tetrahedron:
      \4                4:        4 -5  6        2 3 4
       \          
        w         
+@end group
 @end example
 
-Hexahedron
 @example
+@group
+Hexahedron:
                   edge 1: nodes 1 -> 2
         v              2:       1 -> 4
         |              3:       1 -> 5
@@ -2979,10 +3008,12 @@ Hexahedron
                        5:        6 -7  8 -12         3 4 8 7
                        6:        9 -10 11 12         5 6 7 8
 
+@end group
 @end example
 
-Prism:
 @example
+@group
+Prism:
                   edge 1: nodes 1 -> 2
       v                2:       1 -> 3
     3 |                3:       1 -> 4
@@ -2998,10 +3029,12 @@ Prism:
            w           3:       -2  3 -6  8           1 4 6 3 
                        4:        4 -5  6 -9           2 3 6 5 
                        5:        7 -8  9              4 5 6   
+@end group
 @end example
 
-Pyramid:
 @example
+@group
+Pyramid:
                   edge 1: nodes 1 -> 2
         v              2:       1 -> 4 
         |              3:       1 -> 5
@@ -3016,7 +3049,8 @@ Pyramid:
              w         3:        3 -8 -2             1 5 4  
                        4:        4  7 -5             2 3 5  
                        5:        6  8 -7             3 4 5  
- @end example
+@end group
+@end example
 
 @c =========================================================================
 @c Programming notes
@@ -3029,8 +3063,8 @@ Pyramid:
 
 Gmsh was originally written in C, and later enhanced with various C++
 additions. The resulting code is a hybrid C/C++ beast, hopefully not too
-badly structured... The scripting language is parsed using lex and yacc
-(actually, flex and bison), while the GUI relies on OpenGL for the 3D
+badly structured... The scripting language is parsed using Lex and Yacc
+(actually, Flex and Bison), while the GUI relies on OpenGL for the 3D
 graphics and FLTK for the widget set. See @uref{http://www.opengl.org},
 @uref{http://www.mesa3d.org} and @uref{http://www.fltk.org} for more
 information.
@@ -3102,9 +3136,9 @@ with @file{utils/untabify}).
 If you think you have found a bug in Gmsh, you can report it by electronic
 mail to the Gmsh mailing list at @email{gmsh@@geuz.org}.  Please send as
 precise a description of the problem as you can, including sample input
-files that produce the bug (problem definition and mesh files). Don't forget
-to mention both the version of Gmsh and the version of your operation
-system (@pxref{Running Gmsh} to see how to get this information).
+files that produce the bug. Don't forget to mention both the version of Gmsh
+and the version of your operation system (@pxref{Command-line options} to
+see how to get this information).
 
 See the @file{TODO} file in the distribution to check the problems we
 already know about.
@@ -3151,12 +3185,18 @@ already know about.
 @itemize @bullet
 @item
 Install the `info' version of this user's guide! On your (Unix) system, this
-can be achieved by 1) copying all gmsh.info* files to the place where your
-info files live (usually /usr/info), and 2) issuing the command
-`install-info /usr/info/gmsh.info /usr/info/dir'. You will then be able to
-access the documentation with the command `info gmsh'. Note that particular
-sections ("nodes") can be accessed directly. For example, `info gmsh
-surfaces' or `info gmsh surf' will take you directly to @ref{Surfaces}.
+can be achieved by
+@enumerate
+@item
+copying all @file{gmsh.info*} files to the place where your info files live
+(usually @file{/usr/info}), and
+@item
+issuing the command @code{install-info /usr/info/gmsh.info /usr/info/dir}.
+@end enumerate
+You will then be able to access the documentation with the command
+@code{info gmsh}. Note that particular sections (`nodes') can be accessed
+directly. For example, @code{info gmsh surfaces} or @code{info gmsh surf}
+will take you directly to @ref{Surfaces}.
 @item
 Use emacs to edit your files, and load the C++ mode! This permits automatic
 syntax highlighting and easy indentation. Automatic loading of the C++ mode

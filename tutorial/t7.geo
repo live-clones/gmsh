@@ -2,7 +2,7 @@
  *
  *  Gmsh tutorial 7
  * 
- *  Anisotropic meshes, Attractors
+ *  Anisotropic meshes, attractors
  *
  *********************************************************************/
 

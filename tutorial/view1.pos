@@ -2,12 +2,12 @@
  *
  *  Gmsh tutorial 1 - appendix 1
  * 
- *  Scalar view
+ *  Scalar post-processing view
  *
  *********************************************************************/
 
-// In this view, there are only scalar triangles. There are 5 time
-// steps -> 3*5 = 15 values for each triangle.
+// This view contains scalar triangles. There are 5 time steps,
+// i.e. 3*5 = 15 values for each triangle.
 
 View "a scalar map" {
 ST(0.079090117,0.19794942,0,0.06966854,0.20076802,0,0.071449289,0.19423207,0){1206859.6,1570520.4,1594804.6,-2368529.7,-3162888.4,-3019964.8,1073015.3,1636334.6,1103926.4,1335740.9,1503948.1,2033518.7,-2359414.1,-3161601.9,-2921575.1};

@@ -2,21 +2,18 @@
  *
  *  Gmsh tutorial 8
  * 
- *  Post-Processing, Scripting, Animations, Options
+ *  Post-processing, scripting, animations, options
  *
  *********************************************************************/
 
-// The first example is included, as well as some post-processing maps:
+// We first include `t1.geo' as well as some post-processing views:
 
 Include "t1.geo" ;
 Include "view1.pos" ;
 Include "view1.pos" ;
 Include "view4.pos" ;
 
-// Some general options are set (all the options specified
-// interactively can be directly specified in the ascii input
-// files. The current options can be saved into a file by selecting
-// 'File->Save as->Gmsh options').
+// We then set some general options:
 
 General.Trackball = 0 ;
 General.RotationX = 0 ;
@@ -29,7 +26,7 @@ General.Orthographic = 0 ;
 General.Axes = 0 ;
 General.SmallAxes = 0 ;
 
-// Some options are also specified for each post-processing view:
+// We also set some options for each post-processing view:
 
 v0 = PostProcessing.NbViews-4;
 v1 = v0+1;
@@ -71,10 +68,10 @@ View[v3].PositionY = View[v2].PositionY;
 View[v3].Width = View[v2].Width;
 View[v3].Height = View[v2].Height;
 
-// We loop from 1 to 255 with a step of 1 (to use a step different
-// from 1, just add a third argument in the list. For example, 'For
-// num In {0.5:1.5:0.1}' would increment num from 0.5 to 1.5 with a
-// step of 0.1).
+// We then loop from 1 to 255 with a step of 1. (To use a step
+// different from 1, just add a third argument in the list. For
+// example, `For num In {0.5:1.5:0.1}' would increment num from 0.5 to
+// 1.5 with a step of 0.1.)
 
 t = 0 ;
 
@@ -90,7 +87,7 @@ For num In {1:255}
   View[v0].RaiseZ += 0.01*t ;
 
   If (num == 3)
-    // We want to create 320x240 frames when num==3:
+    // We want to create 320x240 frames when num == 3:
     General.GraphicsWidth = 320 ; 
     General.GraphicsHeight = 240 ;
   EndIf
@@ -106,10 +103,8 @@ For num In {1:255}
     Draw; // draw the scene
 
     If ((num == 3) && (num2 < 10))
-      // The Sprintf function permits to create complex strings using
-      // variables (since all Gmsh variables are treated internally as
-      // double precision numbers, the format should only contain valid
-      // double precision number format specifiers):
+      // The `Print' command saves the graphical window; the `Sprintf'
+      // function permits to create the file names on the fly:
       Print Sprintf("t8-0%g.gif", num2);
       Print Sprintf("t8-0%g.jpg", num2);
     EndIf
@@ -122,9 +117,9 @@ For num In {1:255}
   EndFor
 
   If(num == 3)
-    // We could make a system call to generate the mpeg (uncomment the
-    // following of mpeg_encode is installed on your computer)
-
+    // We could make a system call here to generate the mpeg animation
+    // (uncomment the following of mpeg_encode is installed on your
+    // computer):
     // System "mpeg_encode t8.par" ;
   EndIf
 

@@ -1,14 +1,14 @@
 /********************************************************************* 
  *
- *  Gmsh tutorial 1 - appendix 3
+ *  Gmsh tutorial 1 - appendix 0
  * 
  *  2D background mesh
  *
  *********************************************************************/
 
 // This post-processing view contains scalar triangles. The values
-// represent the target characteristic mesh sizes to be applied to the
-// first tutorial, t1.geo.
+// represent the target characteristic mesh element sizes to be
+// applied to the first tutorial, t1.geo.
 //
 // There are two ways to use this view as a background mesh:
 //

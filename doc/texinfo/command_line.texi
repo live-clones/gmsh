@@ -5,7 +5,10 @@
 parse input files, output unrolled geometry, and exit
 @end ftable
 
+@sp 1 
+
 @noindent Mesh options:
+
 @ftable @code
 @item -1, -2, -3
 perform batch 1D, 2D and 3D mesh generation
@@ -41,7 +44,10 @@ recombine meshes from old extrusion mesh generator
 display 2D mesh construction interactively
 @end ftable
 
+@sp 1 
+
 @noindent Post-processing options:
+
 @ftable @code
 @item -dl
 enable display lists
@@ -55,7 +61,10 @@ smooth views
 convert an ascii view into a binary one
 @end ftable
 
+@sp 1 
+
 @noindent Display options:
+
 @ftable @code
 @item -nodb
 disable double buffering
@@ -73,7 +82,10 @@ specify display
 set projection mode to perspective
 @end ftable
 
+@sp 1
+
 @noindent Other options:
+
 @ftable @code
 @item -a, -g, -m, -s, -p
 start in automatic, geometry, mesh, solver or post-processing mode (default:

@@ -2,63 +2,60 @@
  *
  *  Gmsh tutorial 2
  * 
- *  Includes, Geometrical transformations, Extruded geometries,
- *  Elementary entities (Volumes), Physical entities (Volumes)
+ *  Includes, geometrical transformations, extruded geometries,
+ *  elementary entities (volumes), physical entities (volumes)
  *
  *********************************************************************/
 
-// The first tutorial file will serve as a basis to construct this
-// one. It can be included with:
+// We first include the previous tutorial file, in order to use it as
+// a basis for this one:
 
-Include "t1.geo" ;
+Include "t1.geo";
 
-// There are several possibilities to build a more complex geometry
-// from the one previously defined in 't1.geo'.
-//
-// New points, lines and surfaces can first be directly defined in the
-// same way as in 't1.geo':
+// We can then add new points and lines and surfaces in the same way
+// as we did in `t1.geo':
 
-Point(5) = {0, .4, 0, lc} ;
-Line(5) = {4, 5} ;
+Point(5) = {0, .4, 0, lc};
+Line(5) = {4, 5};
 
-// But Gmsh also provides geometrical transformation mechanisms to
-// move (translate, rotate, ...), add (translate, rotate, ...) or
-// extrude (translate, rotate) elementary geometrical entities. For
-// example, the point 3 can be moved by 0.05 units on the left with:
+// But Gmsh also provides tools to tranform (translate, rotate, etc.)
+// elementary entities or copies of elementary entities. For example,
+// the point 3 can be moved by 0.05 units on the left with:
 
-Translate {-0.05,0,0} { Point{3} ; }
+Translate {-0.05,0,0} { Point{3}; }
 
 // The resulting point can also be duplicated and translated by 0.1
 // along the y axis:
 
-Translate {0,0.1,0} { Duplicata{ Point{3} ; } }
+Translate {0,0.1,0} { Duplicata{ Point{3}; } }
 
-// Of course, translation, rotation and extrusion commands not only
-// apply to points, but also to lines and surfaces. The following
-// command extrudes surface 6 defined in 't1.geo', as well as a new
-// surface 11, along the z axis by 'h':
+// Of course, these transformation commands not only apply to points,
+// but also to lines and surfaces. The following command extrudes the
+// surface 6 defined in `t1.geo', as well as a new surface 11, along
+// the z axis:
 
-h = 0.12 ;
-Extrude Surface { 6, {0, 0, h} } ;
+h = 0.12;
+Extrude Surface { 6, {0, 0, h} };
 
-Line(7) = {3, 6} ; Line(8) = {6,5} ; Line Loop(10) = {5,-8,-7,3};
+Line(7) = {3, 6};
+Line(8) = {6,5};
 
+Line Loop(10) = {5,-8,-7,3};
 Plane Surface(11) = {10};
 
-Extrude Surface { 11, {0, 0, h} } ;
+Extrude Surface { 11, {0, 0, h} };
 
 // All these geometrical transformations automatically generate new
-// elementary entities. The following commands permit to specify
-// manually a characteristic length for some of the automatically
-// created points:
+// elementary entities. The following command permits to specify
+// manually a characteristic length for some of the new points:
 
-Characteristic Length{6,22,2,3,16,12} = lc * 2 ;
+Characteristic Length {6, 22, 2, 3, 16, 12} = lc * 2;
 
-// If the transformation tools are handy to create complex geometries,
-// it is sometimes useful to generate the flat geometry, consisting
-// only of the explicit list elementary entities. This can be achieved
-// by selecting the 'File->Save as->Gmsh unrolled geometry' menu or by
-// typing
+// Note that, if the transformation tools are handy to create complex
+// geometries, it is also sometimes useful to generate the `flat'
+// geometry, with an explicit list of all elementary entities. This
+// can be achieved by selecting the `File->Save as->Gmsh unrolled
+// geometry' menu or by typing
 //
 // > gmsh t2.geo -0
 //
@@ -66,9 +63,9 @@ Characteristic Length{6,22,2,3,16,12} = lc * 2 ;
 
 // Volumes are the fourth type of elementary entities in Gmsh. In the
 // same way one defines line loops to build surfaces, one has to
-// define surface loops to build volumes. The following volumes are
-// very simple, without holes (and thus consist of only one surface
-// loop):
+// define surface loops (i.e. `shells') to build volumes. The
+// following volumes don't have holes and thus consist of single
+// surface loops:
 
 Surface Loop(145) = {121,11,131,135,139,144};
 Volume(146) = {145};
@@ -76,11 +73,8 @@ Volume(146) = {145};
 Surface Loop(146) = {121,6,109,113,117,122};
 Volume(147) = {146};
 
-// To save all volumic (tetrahedral) elements of volume 146 and 147
-// with the associate region number 1, a Physical Volume must be
-// defined:
+// To save all the tetrahedra discretizing the volumes 146 and 147
+// with a common region number, we finally define a physical
+// volume:
 
-Physical Volume (1) = {146,147} ;
-
-// Congratulations! You've created your first fully unstructured
-// tetrahedral 3D mesh!
+Physical Volume (1) = {146,147};
