@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.7 2000-11-26 18:43:48 geuzaine Exp $ */
+/* $Id: Context.h,v 1.8 2000-11-27 08:24:55 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -87,7 +87,7 @@ typedef struct {
                               /* current viewport in real coordinates */
   float light0[4];            /* light source position */
   float shine;                /* specular value */
-  int render_mode;            /* RENDER, SELECT, FEEDBACK */
+  int render_mode;            /* GMSH_RENDER, GMSH_SELECT, GMSH_FEEDBACK */
   int clip[6];                /* status of clip planes */
   double clip_plane0[4];      /* clip plane 0 */
   double clip_plane1[4];      /* clip plane 1 */
@@ -96,7 +96,7 @@ typedef struct {
   double clip_plane4[4];      /* clip plane 4 */
   double clip_plane5[4];      /* clip plane 5 */
   double pixel_equiv_x, pixel_equiv_y ; 
-                              /* approximative equivalent model lenght of a pixel */
+                              /* approximative equivalent model length of a pixel */
   
   rgbacolors color;           /* all colors except postpro colormaps */
   
