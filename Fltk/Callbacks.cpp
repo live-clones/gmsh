@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.229 2004-05-15 08:07:20 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.230 2004-05-15 08:35:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1304,7 +1304,9 @@ void message_copy_cb(CALLBACK_ARGS)
       strcat(buff, "\n");
     }
   }
+  // bof bof bof
   Fl::copy(buff, strlen(buff), 0);
+  Fl::copy(buff, strlen(buff), 1);
 #endif
 }
 
