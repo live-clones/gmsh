@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.38 2001-08-15 15:25:27 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.39 2001-08-17 11:58:05 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -42,21 +42,27 @@ List_T* getnxl(Vertex *v, Curve *c){
   nxl NXL;
   NXL.Dim = 1;
   NXL.Num = abs(c->Num);
-  return ((nxl*)List_PQuery(v->Extruded_Points, &NXL, compnxl))->List;
+  nxl *NXLP = (nxl*)List_PQuery(v->Extruded_Points, &NXL, compnxl);
+  if(NXLP) return NXLP->List;
+  return NULL;
 }
 
 List_T* getnxl(Vertex *v, Surface *s){
   nxl NXL;
   NXL.Dim = 2;
   NXL.Num = s->Num;
-  return ((nxl*)List_PQuery(v->Extruded_Points, &NXL, compnxl))->List;
+  nxl *NXLP = (nxl*)List_PQuery(v->Extruded_Points, &NXL, compnxl);
+  if(NXLP) return NXLP->List;
+  return NULL;
 }
 
 List_T* getnxl(Vertex *v, Volume *vol){
   nxl NXL;
   NXL.Dim = 3;
   NXL.Num = vol->Num;
-  return ((nxl*)List_PQuery(v->Extruded_Points, &NXL, compnxl))->List;
+  nxl *NXLP = (nxl*)List_PQuery(v->Extruded_Points, &NXL, compnxl);
+  if(NXLP) return NXLP->List;
+  return NULL;
 }
 
 List_T* getnxl(Vertex *v, int dim){
@@ -67,8 +73,10 @@ List_T* getnxl(Vertex *v, int dim){
   nxl NXL;
 
   NXL.Dim = dim;
-  if(dim==1)
-    return getnxl(v, THEC);
+  if(dim==1){
+    if((list = getnxl(v, THEC)))
+      return list;
+  }
   else if(dim==2){
     if((list = getnxl(v, THES)))
       return list;
