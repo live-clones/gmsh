@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.287 2004-04-21 04:26:45 geuzaine Exp $
+// $Id: GUI.cpp,v 1.288 2004-04-21 05:17:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1918,7 +1918,7 @@ void GUI::create_option_window()
       mesh_butt[16]->type(FL_TOGGLE_BUTTON);
       mesh_butt[16]->down_box(TOGGLE_BOX);
       mesh_butt[16]->selection_color(TOGGLE_COLOR);
-      mesh_butt[22] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Draw intersecting layer as surface");
+      mesh_butt[22] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Draw intersecting volume layer as surface");
       mesh_butt[22]->type(FL_TOGGLE_BUTTON);
       mesh_butt[22]->down_box(TOGGLE_BOX);
       mesh_butt[22]->selection_color(TOGGLE_COLOR);
