@@ -807,7 +807,7 @@ StringXNumber MeshOptions_Number[] = {
     "Ignore Physical definitions and save all elements" },
   { F|O, "ScalingFactor" , opt_mesh_scaling_factor , 1.0 ,
     "Global scaling factor applied to the saved mesh" },
-  { F|O, "Smoothing" , opt_mesh_nb_smoothing , 0. ,
+  { F|O, "Smoothing" , opt_mesh_nb_smoothing , 1. ,
     "Number of smoothing steps applied to the final mesh" },
   { F|O, "SpeedMax" , opt_mesh_speed_max , 0. ,
     "Disable dubious point insertion tests" },
