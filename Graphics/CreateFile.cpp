@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.43 2003-09-01 23:50:20 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.44 2003-09-01 23:53:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -50,7 +50,7 @@ void CreateOutputFile(char *name, int format)
   FILE *fp;
   GLint size3d, viewport[4];
   char ext[256];
-  int res, oldformat, psformat, pssort, psoptions;
+  int len, res, oldformat, psformat, pssort, psoptions;
 
   if(!name || !strlen(name))
     return;
@@ -63,13 +63,13 @@ void CreateOutputFile(char *name, int format)
   switch (format) {
 
   case FORMAT_AUTO:
-    for(int i = strlen(name) - 1; i >= 0; i--) {
-      if(name[i] == '.') {
-        strcpy(ext, &name[i]);
+    for(len = strlen(name) - 1; len >= 0; len--) {
+      if(name[len] == '.') {
+        strcpy(ext, &name[len]);
         break;
       }
     }
-    if(i <= 0)
+    if(len <= 0)
       strcpy(ext, "");
 
     if(!strcmp(ext, ".geo"))
