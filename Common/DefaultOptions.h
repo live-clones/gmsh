@@ -230,7 +230,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Y position of light source 5" },
   { F|O, "Light5Z" , opt_general_light52 , 1.0 , 
     "Z position of light source 5" },
-  { F|O, "LineWidth" , opt_general_line_width , 0.2 , 
+  { F|O, "LineWidth" , opt_general_line_width , 1.0 , 
     "Display width of lines (in pixels)" },
 
   { F|S, "MenuPositionX" , opt_general_menu_position0 , 800. , 
@@ -340,7 +340,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Display curve numbers?" },
   { F|O, "LineSelectWidth" , opt_geometry_line_sel_width , 2. , 
     "Display width of selected lines (in pixels)" },
-  { F|O, "LineWidth" , opt_geometry_line_width , 0.2 , 
+  { F|O, "LineWidth" , opt_geometry_line_width , 1.0 , 
     "Display width of lines (in pixels)" },
 
   { F|O, "Normals" , opt_geometry_normals , 0. , 
@@ -430,7 +430,7 @@ StringXNumber MeshOptions_Number[] = {
     "Display mesh vertices on curves?" },
   { F|O, "LinesNumbers" , opt_mesh_lines_num , 0. , 
     "Display mesh line numbers?" },
-  { F|O, "LineWidth" , opt_mesh_line_width , 0.2 , 
+  { F|O, "LineWidth" , opt_mesh_line_width , 1.0 , 
     "Display width of lines (in pixels)" },
 
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
@@ -574,7 +574,7 @@ StringXNumber ViewOptions_Number[] = {
 
   { F|O, "Light" , opt_view_light , 0. ,
     "Enable light sources?" },
-  { F|O, "LineWidth" , opt_view_line_width , 0.2 , 
+  { F|O, "LineWidth" , opt_view_line_width , 1.0 , 
     "Display width of lines (in pixels)" },
 
   { F,   "Max" , opt_view_max , -1.e200 , 
@@ -646,7 +646,7 @@ StringXNumber PrintOptions_Number[] = {
     "Save image background in postscript output" },
   { F|O, "EpsFontSize" , opt_print_eps_font_size , 12. ,
     "Font size used for postscript printing" },
-  { F|O, "EpsLineWidthFactor" , opt_print_eps_line_width_factor , 1. ,
+  { F|O, "EpsLineWidthFactor" , opt_print_eps_line_width_factor , 0.2 ,
     "Width factor for lines in postscript output" },
   { F|O, "EpsPointSizeFactor" , opt_print_eps_point_size_factor , 1. ,
     "Size factor for points in postscript output" },
