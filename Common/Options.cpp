@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.181 2004-09-03 19:00:51 geuzaine Exp $
+// $Id: Options.cpp,v 1.182 2004-09-12 17:02:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -5012,6 +5012,9 @@ double opt_view_vector_type(OPT_ARGS_NUM)
       break;
     case DRAW_POST_DISPLACEMENT:
       WID->view_choice[2]->value(4);
+      break;
+    case DRAW_POST_DISPLACEMENT_EXTERNAL:
+      WID->view_choice[2]->value(5);
       break;
     case DRAW_POST_ARROW3D:
     default:
