@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.119 2003-11-27 02:33:31 geuzaine Exp $
+// $Id: Options.cpp,v 1.120 2003-11-27 07:14:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -293,10 +293,8 @@ void Print_Options(int num, int level, char *filename)
   Print_ColorOptions(num, level, PrintOptions_Color, "Print.", file);
 
   if(filename) {
-    if((level & GMSH_OPTIONSRC) || (level & GMSH_FULLRC)) {
-      Msg(INFO, "Wrote option file '%s'", filename);
-      Msg(STATUS2N, "Wrote '%s'", filename);
-    }
+    Msg(INFO, "Wrote option file '%s'", filename);
+    Msg(STATUS2N, "Wrote '%s'", filename);
     fclose(file);
   }
 }
