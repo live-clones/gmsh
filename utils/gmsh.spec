@@ -1,7 +1,7 @@
 Summary: A 3D mesh generator with pre- and post-processing facilities
 Name: gmsh
-Version: 0.998
-Source: gmsh-0.998.tar.gz
+Version: 0.999
+Source: gmsh-0.999.tar.gz
 Release: 1
 Copyright: distributable
 Group: Applications/Engineering
@@ -27,7 +27,7 @@ Install Gmsh if you need a simple 3D finite element mesh generator.
 %setup -c -q
 
 %build
-make linux
+make linux-rpm
 make utils
 rm -rf CVS */CVS */*/CVS
 
