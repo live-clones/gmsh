@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.49 2000-12-20 20:17:27 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.50 2000-12-21 10:20:05 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -60,7 +60,7 @@ void CreateFile (char *name, int format);
 char *strsave(char *ptr);
 void  yyerror (char *s);
 void  vyyerror (char *fmt, ...);
-void skip_until (char *);
+void  skip_until (char *skip, char *until);
 %}
 
 %union {
@@ -390,6 +390,7 @@ Printf :
     tPrintf '(' tBIGSTR ')' tEND
     {
       fprintf(stderr, $3); 
+      fprintf(stderr, "\n"); 
     }
   | tPrintf '(' tBIGSTR ',' RecursiveListOfDouble ')' tEND
     {
@@ -1804,7 +1805,7 @@ Loop :
     {
       if(!FunctionManager::Instance()->createFunction($2,yyin,yylineno))
 	vyyerror("Redefinition of function %s",$2);
-      skip_until("Return");
+      skip_until(NULL, "Return");
     }
   | tReturn
     {
@@ -1818,7 +1819,7 @@ Loop :
     } 
   | tIf '(' FExpr ')'
     {
-      if(!$3) skip_until("EndIf");
+      if(!$3) skip_until("If", "EndIf");
     }
   | tEndIf
     {

@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.23 2000-12-19 08:59:59 geuzaine Exp $ */
+%{ /* $Id: Gmsh.l,v 1.24 2000-12-21 10:20:05 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,6 +6,7 @@
 #include <math.h>
 
 #include "Gmsh.h"
+#include "Const.h"
 #include "Geo.h"
 #include "CAD.h"
 #include "Gmsh.tab.cpp.h"
@@ -306,48 +307,61 @@ char *strsave(char *ptr){
   return((char*)strcpy((char*)malloc(strlen(ptr)+1),ptr));
 }
 
-void skipline(void)
-{
+void skipline(void){
    while (yyinput() != '\n') ;
 }
 
-void skip_until(char *until)
-{
-  int i;
-  int l = strlen(until);
+void skip_until(char *skip, char *until){
+  int i, nb_skip;
+  int l, l_skip, l_until;
   char chars[256];
-  while(1)
-    {
-      while (1)
-	{
-	  chars[0] = yyinput();
-	  if(chars[0] == EOF) 
-	    {
-	      fprintf(stderr, "Error, Unexpected End Of File\n") ;
-	      exit(1);
-	    }
-	  if(chars[0] == until[0])break;
-	}
-      
-      //printf("%c",chars[0]); 
-      for(i=1;i<l;i++)
-	{
-	  chars[i] = yyinput();
-	  if(chars[i] == EOF) 
-	    {
-	      fprintf(stderr, "Error, Unexpected End Of File\n") ;
-	      exit(1);
-	    }
-	}
-      chars[l] = '\0';
-      if(!strcmp(chars,until))
-	{
-	  return;
-	}
-      for(i=1;i<l-1;i++)
-	{
-	  unput(chars[l-i]);
-	}      
+
+  nb_skip = 0 ;
+
+  if(skip)
+    l_skip = strlen(skip);
+  else
+    l_skip = 0 ;
+
+  l_until = strlen(until);
+
+  while(1){
+    while (1){
+      chars[0] = yyinput();
+      if(chars[0] == (char)EOF){
+	fprintf(stderr, "Error: Unexpected End Of File\n") ;
+	exit(1);
+      }
+      if(chars[0] == until[0]) break;
+      if(skip && chars[0] == skip[0]) break;
     }
+
+    l = MAX(l_skip,l_until) ;
+    for(i=1 ; i<l ; i++){
+      chars[i] = yyinput();
+      if(chars[i] == (char)EOF){
+	l = i;
+	break;
+      }
+    }
+
+    if(!strncmp(chars,until,l_until)){
+      if(!nb_skip){
+	return;
+      }
+      else{
+	nb_skip--;
+      }
+    }
+    else if(skip && !strncmp(chars,skip,l_skip)){
+      nb_skip++;
+    }
+    else{
+      for(i=1;i<l-1;i++){
+	unput(chars[l-i]);
+      }
+    }
+
+  }
 }
 
