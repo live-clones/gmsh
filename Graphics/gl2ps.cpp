@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.37 2002-02-15 00:32:35 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.38 2002-03-08 22:12:41 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -34,14 +34,14 @@
 /* The static gl2ps context. gl2ps is not thread safe (we should
    create a local GL2PScontext during gl2psBeginPage). */
 
-static GL2PScontext gl2ps;
+static GL2PScontext *gl2ps=NULL;
 
 /* Some 'system' utility routines */
 
 GLvoid gl2psMsg(GLint level, char *fmt, ...){
   va_list args;
 
-  if(!(gl2ps.options & GL2PS_SILENT)){
+  if(!(gl2ps->options & GL2PS_SILENT)){
     switch(level){
     case GL2PS_INFO : fprintf(stderr, "GL2PS info: "); break;
     case GL2PS_WARNING : fprintf(stderr, "GL2PS warning: "); break;
@@ -457,7 +457,7 @@ GLint gl2psFindRoot(GL2PSlist *primitives, GL2PSprimitive **root){
   GL2PSprimitive *prim1, *prim2;
   GL2PSplane     plane;
 
-  if(gl2ps.options & GL2PS_BEST_ROOT){
+  if(gl2ps->options & GL2PS_BEST_ROOT){
     *root = *(GL2PSprimitive**)gl2psListPointer(primitives, 0);
     for(i=0 ; i<gl2psListNbr(primitives) ; i++){
       prim1 = *(GL2PSprimitive**)gl2psListPointer(primitives, i);
@@ -844,9 +844,9 @@ GLvoid gl2psAddPolyPrimitive(GLshort type, GLshort numverts,
   memcpy(prim->verts, verts, numverts * sizeof(GL2PSvertex));
   prim->boundary = boundary;
 
-  if(gl2ps.options & GL2PS_SIMPLE_LINE_OFFSET){
+  if(gl2ps->options & GL2PS_SIMPLE_LINE_OFFSET){
     if(type == GL2PS_LINE){
-      if(gl2ps.sort == GL2PS_SIMPLE_SORT){
+      if(gl2ps->sort == GL2PS_SIMPLE_SORT){
 	prim->verts[0].xyz[2] -= 1.;
 	prim->verts[1].xyz[2] -= 1.;
       }
@@ -858,13 +858,13 @@ GLvoid gl2psAddPolyPrimitive(GLshort type, GLshort numverts,
   }
   else if(offset && type == GL2PS_TRIANGLE){
 
-    if(gl2ps.sort == GL2PS_SIMPLE_SORT){    
-      factor = gl2ps.offset[0];
-      units = gl2ps.offset[1];
+    if(gl2ps->sort == GL2PS_SIMPLE_SORT){    
+      factor = gl2ps->offset[0];
+      units = gl2ps->offset[1];
     }
     else{
-      factor = gl2ps.offset[0] / 800.;
-      units = gl2ps.offset[1] / 800.;
+      factor = gl2ps->offset[0] / 800.;
+      units = gl2ps->offset[1] / 800.;
     }
 
     area = 
@@ -898,13 +898,13 @@ GLvoid gl2psAddPolyPrimitive(GLshort type, GLshort numverts,
   prim->dash = dash;
   prim->width = width;  /* we should maybe use floats */
 
-  if(gl2ps.sort == GL2PS_SIMPLE_SORT){
+  if(gl2ps->sort == GL2PS_SIMPLE_SORT){
     for(i = 0; i < numverts; i++) 
       prim->depth += prim->verts[i].xyz[2]; 
     prim->depth /= (GLfloat)numverts;
   }
   
-  gl2psListAdd(gl2ps.primitives, &prim);
+  gl2psListAdd(gl2ps->primitives, &prim);
 }
 
 GLint gl2psGetVertex(GL2PSvertex *v, GLfloat *p){
@@ -914,12 +914,12 @@ GLint gl2psGetVertex(GL2PSvertex *v, GLfloat *p){
   v->xyz[1] = p[1];
   v->xyz[2] = 1000. * p[2];
 
-  if(gl2ps.colormode == GL_COLOR_INDEX && gl2ps.colorsize > 0){
+  if(gl2ps->colormode == GL_COLOR_INDEX && gl2ps->colorsize > 0){
     i = (GLint)(p[3] + 0.5);
-    v->rgba[0] = gl2ps.colormap[i][0];
-    v->rgba[1] = gl2ps.colormap[i][1];
-    v->rgba[2] = gl2ps.colormap[i][2];
-    v->rgba[3] = gl2ps.colormap[i][3];
+    v->rgba[0] = gl2ps->colormap[i][0];
+    v->rgba[1] = gl2ps->colormap[i][1];
+    v->rgba[2] = gl2ps->colormap[i][2];
+    v->rgba[3] = gl2ps->colormap[i][3];
     return 4;
   }
   else{
@@ -950,12 +950,12 @@ GLint gl2psParseFeedbackBuffer(GLvoid){
     return GL2PS_NO_FEEDBACK;
   }
 
-  current = gl2ps.feedback;
-  boundary = gl2ps.boundary = 0;
+  current = gl2ps->feedback;
+  boundary = gl2ps->boundary = 0;
 
   while(used > 0){
 
-    if(boundary) gl2ps.boundary = 1;
+    if(boundary) gl2ps->boundary = 1;
     
     switch((GLint)*current){
     case GL_POINT_TOKEN :
@@ -1086,7 +1086,7 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
      Smooth-shaded triangle: x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 ST
   */
 
-  fprintf(gl2ps.stream, 
+  fprintf(gl2ps->stream, 
 	  "%%!PS-Adobe-3.0\n"
 	  "%%%%Title: %s\n"
 	  "%%%%Creator: GL2PS, an OpenGL to PostScript Printing Library, v. %g\n"
@@ -1148,35 +1148,35 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
 	  "%%%%EndSetup\n"
 	  "%%%%Page: 1 1\n"
 	  "%%%%BeginPageSetup\n",
-	  gl2ps.title, GL2PS_VERSION, gl2ps.producer, ctime(&now),
-	  (gl2ps.options & GL2PS_LANDSCAPE) ? "Landscape" : "Portrait",
-	  (gl2ps.options & GL2PS_LANDSCAPE) ? viewport[3] : viewport[2],
-	  (gl2ps.options & GL2PS_LANDSCAPE) ? viewport[2] : viewport[3],
-	  (gl2ps.options & GL2PS_LANDSCAPE) ? viewport[1] : viewport[0],
-	  (gl2ps.options & GL2PS_LANDSCAPE) ? viewport[0] : viewport[1],
-	  (gl2ps.options & GL2PS_LANDSCAPE) ? viewport[3] : viewport[2],
-	  (gl2ps.options & GL2PS_LANDSCAPE) ? viewport[2] : viewport[3]);
-  if (gl2ps.options & GL2PS_LANDSCAPE)
-    fprintf(gl2ps.stream,
+	  gl2ps->title, GL2PS_VERSION, gl2ps->producer, ctime(&now),
+	  (gl2ps->options & GL2PS_LANDSCAPE) ? "Landscape" : "Portrait",
+	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[3] : viewport[2],
+	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[2] : viewport[3],
+	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[1] : viewport[0],
+	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[0] : viewport[1],
+	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[3] : viewport[2],
+	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[2] : viewport[3]);
+  if (gl2ps->options & GL2PS_LANDSCAPE)
+    fprintf(gl2ps->stream,
 	    "%d 0 translate 90 rotate\n",
 	    viewport[3]);
-  fprintf(gl2ps.stream, 
+  fprintf(gl2ps->stream, 
 	  "%%%%EndPageSetup\n"
 	  "mark\n"
 	  "gsave\n"
 	  "1.0 1.0 scale\n");
 	  
-  if(gl2ps.options & GL2PS_DRAW_BACKGROUND){
-    if(gl2ps.colormode == GL_RGBA || gl2ps.colorsize == 0)
+  if(gl2ps->options & GL2PS_DRAW_BACKGROUND){
+    if(gl2ps->colormode == GL_RGBA || gl2ps->colorsize == 0)
       glGetFloatv(GL_COLOR_CLEAR_VALUE, rgba);
     else{
       glGetIntegerv(GL_INDEX_CLEAR_VALUE, &index);
-      rgba[0] = gl2ps.colormap[index][0];
-      rgba[1] = gl2ps.colormap[index][1];
-      rgba[2] = gl2ps.colormap[index][2];
+      rgba[0] = gl2ps->colormap[index][0];
+      rgba[1] = gl2ps->colormap[index][1];
+      rgba[2] = gl2ps->colormap[index][2];
       rgba[3] = 0.;
     }
-    fprintf(gl2ps.stream,
+    fprintf(gl2ps->stream,
 	    "%g %g %g C\n"
 	    "newpath %d %d moveto %d %d lineto %d %d lineto %d %d lineto\n"
 	    "closepath fill\n",
@@ -1193,7 +1193,7 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
     rgba[0] = prim->verts[0].rgba[0];					\
     rgba[1] = prim->verts[0].rgba[1];					\
     rgba[2] = prim->verts[0].rgba[2];      				\
-    fprintf(gl2ps.stream, "%g %g %g C\n", rgba[0], rgba[1], rgba[2]);	\
+    fprintf(gl2ps->stream, "%g %g %g C\n", rgba[0], rgba[1], rgba[2]);	\
   }
 
 #define CLEARCOLOR rgba[0] = rgba[1] = rgba[2] = -1.
@@ -1207,30 +1207,30 @@ GLvoid gl2psPrintPostScriptPrimitive(GLvoid *a, GLvoid *b){
 
   prim = *(GL2PSprimitive**) a;
 
-  if(gl2ps.options & GL2PS_OCCLUSION_CULL && prim->depth >= 0.) return;
+  if(gl2ps->options & GL2PS_OCCLUSION_CULL && prim->depth >= 0.) return;
 
   switch(prim->type){
   case GL2PS_TEXT :
     PRINTCOLOR;
-    fprintf(gl2ps.stream, "(%s) %g %g %d /%s S\n",
+    fprintf(gl2ps->stream, "(%s) %g %g %d /%s S\n",
 	    prim->text->str, prim->verts[0].xyz[0], prim->verts[0].xyz[1],
 	    prim->text->fontsize, prim->text->fontname);
     break;
   case GL2PS_POINT :
     PRINTCOLOR;
-    fprintf(gl2ps.stream, "%g %g %g P\n", 
+    fprintf(gl2ps->stream, "%g %g %g P\n", 
 	    prim->verts[0].xyz[0], prim->verts[0].xyz[1], 0.5*prim->width);
     break;
   case GL2PS_LINE :
     if(linewidth != prim->width){
       linewidth = prim->width;
-      fprintf(gl2ps.stream, "%g W\n", linewidth);
+      fprintf(gl2ps->stream, "%g W\n", linewidth);
     }
     if(prim->dash)
-      fprintf(gl2ps.stream, "[%d] 0 setdash\n", prim->dash);
-    if(gl2ps.shade && !gl2psVertsSameColor(prim)){
+      fprintf(gl2ps->stream, "[%d] 0 setdash\n", prim->dash);
+    if(gl2ps->shade && !gl2psVertsSameColor(prim)){
       CLEARCOLOR;
-      fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g %g %g SL\n",
+      fprintf(gl2ps->stream, "%g %g %g %g %g %g %g %g %g %g SL\n",
 	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
 	      prim->verts[1].rgba[0], prim->verts[1].rgba[1],
 	      prim->verts[1].rgba[2], prim->verts[0].xyz[0],
@@ -1239,17 +1239,17 @@ GLvoid gl2psPrintPostScriptPrimitive(GLvoid *a, GLvoid *b){
     }
     else{
       PRINTCOLOR;
-      fprintf(gl2ps.stream, "%g %g %g %g L\n",
+      fprintf(gl2ps->stream, "%g %g %g %g L\n",
 	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
 	      prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
     }
     if(prim->dash)
-      fprintf(gl2ps.stream, "[] 0 setdash\n");
+      fprintf(gl2ps->stream, "[] 0 setdash\n");
     break;
   case GL2PS_TRIANGLE :
-    if(gl2ps.shade && !gl2psVertsSameColor(prim)){
+    if(gl2ps->shade && !gl2psVertsSameColor(prim)){
       CLEARCOLOR;
-      fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g ST\n",
+      fprintf(gl2ps->stream, "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g ST\n",
 	      prim->verts[2].xyz[0], prim->verts[2].xyz[1],
 	      prim->verts[2].rgba[0], prim->verts[2].rgba[1],
 	      prim->verts[2].rgba[2], prim->verts[1].xyz[0],
@@ -1261,7 +1261,7 @@ GLvoid gl2psPrintPostScriptPrimitive(GLvoid *a, GLvoid *b){
     }
     else{
       PRINTCOLOR;
-      fprintf(gl2ps.stream, "%g %g %g %g %g %g T\n",
+      fprintf(gl2ps->stream, "%g %g %g %g %g %g T\n",
 	      prim->verts[2].xyz[0], prim->verts[2].xyz[1],
 	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
 	      prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
@@ -1277,7 +1277,7 @@ GLvoid gl2psPrintPostScriptPrimitive(GLvoid *a, GLvoid *b){
 }
 
 void gl2psPrintPostScriptFooter(GLvoid){
-  fprintf(gl2ps.stream,
+  fprintf(gl2ps->stream,
 	  "grestore\n"
 	  "showpage\n"
 	  "cleartomark\n"
@@ -1296,26 +1296,26 @@ GLvoid gl2psPrintTeXHeader(GLvoid){
 
   glGetIntegerv(GL_VIEWPORT, viewport);
 
-  if(gl2ps.filename && strlen(gl2ps.filename)<256){
-    for(i=strlen(gl2ps.filename)-1 ; i>=0 ; i--){
-      if(gl2ps.filename[i] == '.'){
-	strncpy(name, gl2ps.filename, i);
+  if(gl2ps->filename && strlen(gl2ps->filename)<256){
+    for(i=strlen(gl2ps->filename)-1 ; i>=0 ; i--){
+      if(gl2ps->filename[i] == '.'){
+	strncpy(name, gl2ps->filename, i);
 	name[i]='\0';
 	break;
       }
     }
-    if(i<=0) strcpy(name, gl2ps.filename);
+    if(i<=0) strcpy(name, gl2ps->filename);
   }
   else
     strcpy(name, "unnamed");
 
-  fprintf(gl2ps.stream, 
+  fprintf(gl2ps->stream, 
 	  "\\setlength{\\unitlength}{1pt}\n"
 	  "\\begin{picture}(0,0)\n"
 	  "\\includegraphics{%s}\n"
 	  "\\end{picture}%%\n"
 	  "%s\\begin{picture}(%d,%d)(0,0)\n",
-	  name, (gl2ps.options & GL2PS_LANDSCAPE) ? "\\rotatebox{90}{" : "",
+	  name, (gl2ps->options & GL2PS_LANDSCAPE) ? "\\rotatebox{90}{" : "",
 	  viewport[2],viewport[3]);
 }
 
@@ -1326,7 +1326,7 @@ GLvoid gl2psPrintTeXPrimitive(GLvoid *a, GLvoid *b){
 
   switch(prim->type){
   case GL2PS_TEXT :
-    fprintf(gl2ps.stream, "\\put(%g,%g){\\makebox(0,0)[lb]{%s}}\n",
+    fprintf(gl2ps->stream, "\\put(%g,%g){\\makebox(0,0)[lb]{%s}}\n",
 	    prim->verts[0].xyz[0], prim->verts[0].xyz[1], prim->text->str);
     break;
   default :
@@ -1335,55 +1335,54 @@ GLvoid gl2psPrintTeXPrimitive(GLvoid *a, GLvoid *b){
 }
 
 void gl2psPrintTeXFooter(GLvoid){
-  fprintf(gl2ps.stream, "\\end{picture}%s\n",
-	  (gl2ps.options & GL2PS_LANDSCAPE) ? "}" : "");
+  fprintf(gl2ps->stream, "\\end{picture}%s\n",
+	  (gl2ps->options & GL2PS_LANDSCAPE) ? "}" : "");
 }
 
 
 /* The public routines */
 
-GLvoid gl2psBeginPage(char *title, char *producer, 
-		      GLint format, GLint sort, GLint options, 
-		      GLint colormode, GLint colorsize, GL2PSrgba *colormap,
-		      GLint buffersize, FILE *stream, char *filename){
+GL2PSDLL_API GLvoid gl2psBeginPage(char *title, char *producer, 
+				   GLint format, GLint sort, GLint options, 
+				   GLint colormode, GLint colorsize, 
+				   GL2PSrgba *colormap, GLint buffersize, 
+				   FILE *stream, char *filename){
+  gl2ps = (GL2PScontext*)gl2psMalloc(sizeof(GL2PScontext));
+  gl2ps->format = format;
+  gl2ps->title = title;
+  gl2ps->producer = producer;
+  gl2ps->filename = filename;
+  gl2ps->sort = sort;
+  gl2ps->options = options;
+  gl2ps->colormode = colormode;
+  gl2ps->buffersize = buffersize > 0 ? buffersize : 2048 * 2048;
+  gl2ps->feedback = (GLfloat*)gl2psMalloc(gl2ps->buffersize * sizeof(GLfloat));
+  gl2ps->primitives = gl2psListCreate(500, 500, sizeof(GL2PSprimitive*));
 
-  gl2ps.format = format;
-  gl2ps.title = title;
-  gl2ps.producer = producer;
-  gl2ps.filename = filename;
-  gl2ps.sort = sort;
-  gl2ps.options = options;
-  gl2ps.colormode = colormode;
-  gl2ps.buffersize = buffersize > 0 ? buffersize : 2048 * 2048;
-  gl2ps.feedback = (GLfloat*)gl2psMalloc(gl2ps.buffersize * sizeof(GLfloat));
-  gl2ps.primitives = gl2psListCreate(500, 500, sizeof(GL2PSprimitive*));
-
-  if(gl2ps.colormode == GL_RGBA){
-    gl2ps.colorsize = 0;
-    gl2ps.colormap = NULL;
+  if(gl2ps->colormode == GL_RGBA){
+    gl2ps->colorsize = 0;
+    gl2ps->colormap = NULL;
   }
-  else if(gl2ps.colormode == GL_COLOR_INDEX){
+  else if(gl2ps->colormode == GL_COLOR_INDEX){
     if(!colorsize || !colormap)
       gl2psMsg(GL2PS_ERROR, "Missing colormap for GL_COLOR_INDEX rendering");
-    if(gl2ps.colormap) 
-      gl2psFree(gl2ps.colormap);
-    gl2ps.colorsize = colorsize;
-    gl2ps.colormap = (GL2PSrgba*)gl2psMalloc(gl2ps.colorsize * sizeof(GL2PSrgba));
-    memcpy(gl2ps.colormap, colormap, gl2ps.colorsize * sizeof(GL2PSrgba));
+    gl2ps->colorsize = colorsize;
+    gl2ps->colormap = (GL2PSrgba*)gl2psMalloc(gl2ps->colorsize * sizeof(GL2PSrgba));
+    memcpy(gl2ps->colormap, colormap, gl2ps->colorsize * sizeof(GL2PSrgba));
   }
   else
     gl2psMsg(GL2PS_ERROR, "Unknown color mode in gl2psBeginPage");
 
   if(stream)
-    gl2ps.stream = stream;
+    gl2ps->stream = stream;
   else
     gl2psMsg(GL2PS_ERROR, "Bad file pointer");
 
-  glFeedbackBuffer(gl2ps.buffersize, GL_3D_COLOR, gl2ps.feedback);
+  glFeedbackBuffer(gl2ps->buffersize, GL_3D_COLOR, gl2ps->feedback);
   glRenderMode(GL_FEEDBACK);  
 }
 
-GLint gl2psEndPage(GLvoid){
+GL2PSDLL_API GLint gl2psEndPage(GLvoid){
   GL2PSbsptree   *root;
   GL2PSxyz        eye={0., 0., 100000.};
   GLint           shademodel, res;
@@ -1391,19 +1390,22 @@ GLint gl2psEndPage(GLvoid){
   void          (*pprim)(GLvoid *a, GLvoid *b) = 0;
   void          (*pfoot)(GLvoid) = 0;
 
-  glGetIntegerv(GL_SHADE_MODEL, &shademodel);
-  gl2ps.shade = (shademodel == GL_SMOOTH);
+  if(!gl2ps) 
+    gl2psMsg(GL2PS_ERROR, "Uninitialized gl2ps context");
 
-  if(gl2ps.format & GL2PS_TEX)
+  glGetIntegerv(GL_SHADE_MODEL, &shademodel);
+  gl2ps->shade = (shademodel == GL_SMOOTH);
+
+  if(gl2ps->format & GL2PS_TEX)
     res = GL2PS_SUCCESS;
   else
     res = gl2psParseFeedbackBuffer();
 
-  if(gl2ps.feedback) gl2psFree(gl2ps.feedback);
+  if(gl2ps->feedback) gl2psFree(gl2ps->feedback);
 
   if(res == GL2PS_SUCCESS){
 
-    switch(gl2ps.format){
+    switch(gl2ps->format){
     case GL2PS_TEX :
       phead = gl2psPrintTeXHeader;
       pprim = gl2psPrintTeXPrimitive;
@@ -1420,25 +1422,25 @@ GLint gl2psEndPage(GLvoid){
     }
 
     phead();
-    switch(gl2ps.sort){
+    switch(gl2ps->sort){
     case GL2PS_NO_SORT :
-      gl2psListAction(gl2ps.primitives, pprim);
-      gl2psListAction(gl2ps.primitives, gl2psFreePrimitive);
-      gl2psListDelete(gl2ps.primitives);
+      gl2psListAction(gl2ps->primitives, pprim);
+      gl2psListAction(gl2ps->primitives, gl2psFreePrimitive);
+      gl2psListDelete(gl2ps->primitives);
       res = GL2PS_SUCCESS;
       break;
     case GL2PS_SIMPLE_SORT :
-      gl2psListSort(gl2ps.primitives, gl2psCompareDepth);
-      gl2psListActionInverse(gl2ps.primitives, pprim);
-      gl2psListAction(gl2ps.primitives, gl2psFreePrimitive);
-      gl2psListDelete(gl2ps.primitives);
+      gl2psListSort(gl2ps->primitives, gl2psCompareDepth);
+      gl2psListActionInverse(gl2ps->primitives, pprim);
+      gl2psListAction(gl2ps->primitives, gl2psFreePrimitive);
+      gl2psListDelete(gl2ps->primitives);
       res = GL2PS_SUCCESS;
       break;
     case GL2PS_BSP_SORT :
       root = (GL2PSbsptree*)gl2psMalloc(sizeof(GL2PSbsptree));
-      gl2psBuildBspTree(root, gl2ps.primitives);
-      if(gl2ps.boundary) gl2psBuildPolygonBoundary(root);
-      if(gl2ps.options & GL2PS_OCCLUSION_CULL){
+      gl2psBuildBspTree(root, gl2ps->primitives);
+      if(gl2ps->boundary) gl2psBuildPolygonBoundary(root);
+      if(gl2ps->options & GL2PS_OCCLUSION_CULL){
 	gl2psTraverseBspTree(root, eye, -(float)GL2PS_EPSILON, gl2psLess,
 			     gl2psAddInImage);
       }
@@ -1451,21 +1453,26 @@ GLint gl2psEndPage(GLvoid){
       gl2psMsg(GL2PS_ERROR, "Unknown sorting algorithm");
     }
     pfoot();
-    fflush(gl2ps.stream);
+    fflush(gl2ps->stream);
 
   }
 
-  if(gl2ps.colormap) gl2psFree(gl2ps.colormap);
+  if(gl2ps->colormap) gl2psFree(gl2ps->colormap);
+
+  gl2psFree(gl2ps);
+  gl2ps = NULL;
 
   return res;
 }
 
-GLvoid gl2psText(char *str, char *fontname, GLint fontsize){
+GL2PSDLL_API GLvoid gl2psText(char *str, char *fontname, GLint fontsize){
   GLfloat         pos[4];
   GL2PSprimitive  *prim;
   GLboolean       valid;
 
-  if(gl2ps.options & GL2PS_NO_TEXT) return;
+  if(!gl2ps) return;
+
+  if(gl2ps->options & GL2PS_NO_TEXT) return;
 
   glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
   if(!valid) return; /* the primitive is culled */
@@ -1490,18 +1497,20 @@ GLvoid gl2psText(char *str, char *fontname, GLint fontsize){
   prim->text->fontname = fontname;
   prim->text->fontsize = fontsize;
 
-  if(!gl2ps.primitives)
+  if(!gl2ps->primitives)
     gl2psMsg(GL2PS_ERROR, "gl2psText should be called inside gl2psBeginPage/gl2psEndPage");
   else
-    gl2psListAdd(gl2ps.primitives, &prim);
+    gl2psListAdd(gl2ps->primitives, &prim);
 }
 
-GLvoid gl2psEnable(GLint mode){
+GL2PSDLL_API GLvoid gl2psEnable(GLint mode){
+  if(!gl2ps) return;
+
   switch(mode){
   case GL2PS_POLYGON_OFFSET_FILL :
     glPassThrough(GL2PS_BEGIN_POLYGON_OFFSET_FILL);
-    glGetFloatv(GL_POLYGON_OFFSET_FACTOR, &gl2ps.offset[0]);
-    glGetFloatv(GL_POLYGON_OFFSET_UNITS, &gl2ps.offset[1]);
+    glGetFloatv(GL_POLYGON_OFFSET_FACTOR, &gl2ps->offset[0]);
+    glGetFloatv(GL_POLYGON_OFFSET_UNITS, &gl2ps->offset[1]);
     break;
   case GL2PS_POLYGON_BOUNDARY :
     glPassThrough(GL2PS_BEGIN_POLYGON_BOUNDARY);
@@ -1515,7 +1524,9 @@ GLvoid gl2psEnable(GLint mode){
   }
 }
 
-GLvoid gl2psDisable(GLint mode){
+GL2PSDLL_API GLvoid gl2psDisable(GLint mode){
+  if(!gl2ps) return;
+
   switch(mode){
   case GL2PS_POLYGON_OFFSET_FILL :
     glPassThrough(GL2PS_END_POLYGON_OFFSET_FILL);
@@ -1532,12 +1543,17 @@ GLvoid gl2psDisable(GLint mode){
   }
 }
 
-GLvoid gl2psPointSize(GLfloat value){
+GL2PSDLL_API GLvoid gl2psPointSize(GLfloat value){
+  if(!gl2ps) return;
+
   glPassThrough(GL2PS_SET_POINT_SIZE);
   glPassThrough(value);
 }
 
-GLvoid gl2psLineWidth(GLfloat value){
+GL2PSDLL_API GLvoid gl2psLineWidth(GLfloat value){
+  if(!gl2ps) return;
+
   glPassThrough(GL2PS_SET_LINE_WIDTH);
   glPassThrough(value);
 }
+

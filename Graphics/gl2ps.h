@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine
  *
- * $Id: gl2ps.h,v 1.19 2002-02-15 00:32:35 geuzaine Exp $
+ * $Id: gl2ps.h,v 1.20 2002-03-08 22:12:41 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -29,17 +29,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* To generate a Windows dll, you have to define GL2PSDLL at compile
+   time */
+
 #ifdef WIN32
 #include <windows.h>
-#endif
+#ifdef GL2PSDLL
+#ifdef GL2PSDLL_EXPORTS
+#define GL2PSDLL_API __declspec(dllexport)
+#else
+#define GL2PSDLL_API __declspec(dllimport)
+#endif /* GL2PSDLL_EXPORTS */
+#else
+#define GL2PSDLL_API
+#endif /* GL2PSDLL */
+#else
+#define GL2PSDLL_API
+#endif /* WIN32 */
 
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
 #else
 #include <GL/gl.h>
-#endif
+#endif /* __APPLE__ */
 
-#define GL2PS_VERSION                    0.52
+
+#define GL2PS_VERSION                    0.53
 #define GL2PS_NONE                       0
 
 /* Output file format */
@@ -171,19 +186,20 @@ typedef struct {
 extern "C" {
 #endif
 
-GLvoid gl2psBeginPage(char *title, char *producer, 
-		      GLint format, GLint sort, GLint options, 
-		      GLint colormode, GLint colorsize, GL2PSrgba *colormap, 
-		      GLint buffersize, FILE *stream, char *filename);
-GLint  gl2psEndPage(GLvoid);
-GLvoid gl2psText(char *str, char *fontname, GLint size);
-GLvoid gl2psEnable(GLint mode);
-GLvoid gl2psDisable(GLint mode);
-GLvoid gl2psPointSize(GLfloat value);
-GLvoid gl2psLineWidth(GLfloat value);
+GL2PSDLL_API GLvoid gl2psBeginPage(char *title, char *producer, 
+				   GLint format, GLint sort, GLint options, 
+				   GLint colormode, GLint colorsize, 
+				   GL2PSrgba *colormap, GLint buffersize, 
+				   FILE *stream, char *filename);
+GL2PSDLL_API GLint  gl2psEndPage(GLvoid);
+GL2PSDLL_API GLvoid gl2psText(char *str, char *fontname, GLint size);
+GL2PSDLL_API GLvoid gl2psEnable(GLint mode);
+GL2PSDLL_API GLvoid gl2psDisable(GLint mode);
+GL2PSDLL_API GLvoid gl2psPointSize(GLfloat value);
+GL2PSDLL_API GLvoid gl2psLineWidth(GLfloat value);
 
 #ifdef __cplusplus
 };
 #endif
 
-#endif
+#endif /* __GL2PS_H__ */
