@@ -241,7 +241,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Smoothing
 Number of smoothing steps applied to the final mesh@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SpeedMax
