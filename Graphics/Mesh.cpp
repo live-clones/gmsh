@@ -1,4 +1,4 @@
-/* $Id: Mesh.cpp,v 1.12 2000-12-17 21:17:29 remacle Exp $ */
+/* $Id: Mesh.cpp,v 1.13 2000-12-18 08:31:45 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -422,13 +422,13 @@ void Draw_Simplex_Surfaces (void *a, void *b){
     n[1] = m[1] = z1z0 * x2x0 - x1x0 * z2z0 ;
     n[2] = m[2] = x1x0 * y2y0 - y1y0 * x2x0;
     // norme(n); not necessary with glEnable(GL_NORMALIZE);
-    /* BOF BOF BOF */
+    /* BOF BOF BOF
     if(n[2] < -0.1){
       n[0] = -n[0];
       n[1] = -n[1];
       n[2] = -n[2];
     }
-    
+    */
   }
 
   if (CTX.mesh.hidden && CTX.mesh.shade){

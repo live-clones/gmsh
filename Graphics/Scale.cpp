@@ -1,4 +1,4 @@
-/* $Id: Scale.cpp,v 1.8 2000-12-10 00:06:50 geuzaine Exp $ */
+/* $Id: Scale.cpp,v 1.9 2000-12-18 08:31:45 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -26,7 +26,7 @@ extern XContext_T  XCTX;
 extern List_T   *Post_ViewList;
 
 /* ------------------------------------------------------------------------ */
-/*  D r a w _ S c a l e                                                     */
+/*  D r a w _ S t r i n g                                                   */
 /* ------------------------------------------------------------------------ */
 
 void Draw_String(char *s){
@@ -54,6 +54,10 @@ static XCharStruct  overall;
 #define CHECK_W  cv_w=200
 #endif
 
+
+/* ------------------------------------------------------------------------ */
+/*  D r a w _ S c a l e                                                     */
+/* ------------------------------------------------------------------------ */
 
 extern double GiveValueFromIndex_Lin(double ValMin, double ValMax, int NbIso, int Iso);
 extern double GiveValueFromIndex_Log(double ValMin, double ValMax, int NbIso, int Iso);
@@ -278,36 +282,6 @@ void Draw_Scales(void){
       if(i%2) totalwidth += DMAX(width,oldwidth);
     }
   }
-
-}
-
-
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ S m a l l A x e s                                             */
-/* ------------------------------------------------------------------------ */
-
-void Draw_SmallAxes(void){
-  double l,o,xx,xy,yx,yy,zx,zy,cx,cy;
-
-  l  = 30  ;
-  o  = 2  ;
-  cx = CTX.viewport[2] - 45;
-  cy = CTX.viewport[1] + 35;
-
-  xx = l*CTX.rot[0][0] ; xy = l*CTX.rot[0][1] ;
-  yx = l*CTX.rot[1][0] ; yy = l*CTX.rot[1][1] ;
-  zx = l*CTX.rot[2][0] ; zy = l*CTX.rot[2][1] ;
-
-  glColor4ubv((GLubyte*)&CTX.color.small_axes);
-
-  glBegin(GL_LINES);
-  glVertex2d(cx,cy); glVertex2d(cx+xx,cy+xy);
-  glVertex2d(cx,cy); glVertex2d(cx+yx,cy+yy);
-  glVertex2d(cx,cy); glVertex2d(cx+zx,cy+zy);  
-  glEnd();
-  glRasterPos2d(cx+xx+o,cy+xy+o); Draw_String("X");
-  glRasterPos2d(cx+yx+o,cy+yy+o); Draw_String("Y");
-  glRasterPos2d(cx+zx+o,cy+zy+o); Draw_String("Z");
 
 }
 

@@ -1,4 +1,4 @@
-/* $Id: PostSimplex.cpp,v 1.5 2000-11-27 10:58:54 geuzaine Exp $ */
+/* $Id: PostSimplex.cpp,v 1.6 2000-12-18 08:31:45 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -21,10 +21,9 @@ void Draw_ScalarPoint(Post_View *View,
 
   d = V[View->TimeStep];  
   if(d>=ValMin && d<=ValMax){      
+    RaiseFill(0, d, ValMin, Raise);
     Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));
-    glBegin(GL_POINTS);
-    glVertex3d(X[0], Y[0], Z[0]);
-    glEnd();
+    Draw_Point(X,Y,Z,View->Offset,Raise);
   }
 }
 
@@ -35,6 +34,7 @@ void Draw_VectorPoint(Post_View *View,
   double   d,dx,dy,dz,fact;
           
   if(View->ArrowType == DRAW_POST_DISPLACEMENT){
+
     fact = View->ArrowScale/100. ;
     glColor4ubv((GLubyte*)&CTX.color.fg);
     glBegin(GL_POINTS);
@@ -50,32 +50,30 @@ void Draw_VectorPoint(Post_View *View,
 		   fact*V[3*(View->TimeStep-i)+2]);
       glEnd();
     }
+
   }
   else{
+
     dx = V[3*View->TimeStep];  
     dy = V[3*View->TimeStep+1];
     dz = V[3*View->TimeStep+2];
     d = sqrt(dx*dx+dy*dy+dz*dz);
     
     if(d!=0.0 && d>=ValMin && d<=ValMax){
-      
       Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));
-      
       fact = 2.e-4 * CTX.lc * View->ArrowScale/View->Max ;
-      
       if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
         dx /= d ; dy /= d ; dz /= d ;
         d = log10(d/ValMin) ; 
         dx *= d ; dy *= d ; dz *= d ;
       }
-
       RaiseFill(0, d, ValMin, Raise);
-      
       Draw_Vector(View->ArrowType, View->IntervalsType!=DRAW_POST_ISO, 
                   X[0], Y[0], Z[0],
                   fact*d, fact*dx, fact*dy, fact*dz,
                   View->Offset, Raise);
     }
+
   }
 }
 
@@ -97,20 +95,22 @@ void Draw_ScalarLine(Post_View *View,
   double  Xp[5],Yp[5],Zp[5],value[5],thev;
   char    Num[100] ;
 
-  if(View->IntervalsType==DRAW_POST_NUMERIC){
+  if(View->IntervalsType == DRAW_POST_NUMERIC){
+
     d = (V[2*View->TimeStep]+V[2*View->TimeStep+1]) / 2.;
     if(d >= ValMin && d <= ValMax){
+      RaiseFill(0, d, ValMin, Raise);
+      Palette2(View,ValMin,ValMax,d);
       sprintf(Num, "%g", d);
-      glColor4ubv((GLubyte*)&CTX.color.fg);
       glRasterPos3d((X[0] + X[1])/2.,
 		    (Y[0] + Y[1])/2.,
 		    (Z[0] + Z[1])/2.);
       Draw_String(Num);
     }
+
   }
   else{
 
-    glDisable(GL_LINE_STIPPLE);
     for(k=0 ; k<2 ; k++) RaiseFill(k, V[2*View->TimeStep+k], ValMin, Raise);
     
     if(View->IntervalsType==DRAW_POST_CONTINUOUS){
@@ -228,25 +228,37 @@ void Draw_ScalarTriangle(Post_View *View,
   double  Xp[5],Yp[5],Zp[5],value[5],thev;
   char    Num[100] ;
 
-  if(View->ShowElement)
-    glEnable(GL_POLYGON_OFFSET_FILL);
 
-  if(View->IntervalsType==DRAW_POST_NUMERIC){
+  if(View->IntervalsType == DRAW_POST_NUMERIC){
+
     d = (V[3*View->TimeStep]+V[3*View->TimeStep+1]+V[3*View->TimeStep+2]) / 3.;
     if(d >= ValMin && d <= ValMax){
       sprintf(Num, "%g", d);
-      glColor4ubv((GLubyte*)&CTX.color.fg);
-      glRasterPos3d((X[0] + X[1] + X[2])/3.,
-		    (Y[0] + Y[1] + Y[2])/3.,
-		    (Z[0] + Z[1] + Z[2])/3.);
+      RaiseFill(0, d, ValMin, Raise);
+      Palette2(View,ValMin,ValMax,d);
+      glRasterPos3d((X[0] + X[1] + X[2])/3.+Raise[0][0],
+		    (Y[0] + Y[1] + Y[2])/3.+Raise[1][0],
+		    (Z[0] + Z[1] + Z[2])/3.+Raise[2][0]);
       Draw_String(Num);
     }
+
   }
   else{
 
-    if(View->IntervalsType!=DRAW_POST_ISO)
-      for(i=0;i<3;i++)RaiseFill(i, V[3*View->TimeStep+i], ValMin, Raise);
+    if(View->ShowElement ||
+       View->IntervalsType == DRAW_POST_CONTINUOUS)
+      for(i = 0 ; i<3 ; i++) RaiseFill(i, V[3*View->TimeStep+i], ValMin, Raise);
     
+    if(View->ShowElement){
+      glColor4ubv((GLubyte*)&CTX.color.fg);
+      glBegin(GL_LINE_LOOP);
+      for(i=0 ; i<3 ; i++) 
+	glVertex3d(X[i]+View->Offset[0]+Raise[0][i],
+		   Y[i]+View->Offset[1]+Raise[1][i],
+		   Z[i]+View->Offset[2]+Raise[2][i]);
+      glEnd();
+    }
+
     if(View->Light){
       x1x0 = (X[1]+Raise[0][1]) - (X[0]+Raise[0][0]); 
       y1y0 = (Y[1]+Raise[1][1]) - (Y[0]+Raise[1][0]);
@@ -257,18 +269,10 @@ void Draw_ScalarTriangle(Post_View *View,
       nn[0]  = y1y0 * z2z0 - z1z0 * y2y0 ;
       nn[1]  = z1z0 * x2x0 - x1x0 * z2z0 ;
       nn[2]  = x1x0 * y2y0 - y1y0 * x2x0 ;
-      //norme(nn); unnecessary with   glEnable(GL_NORMALIZE);
-      /* BOF BOF BOF 
-      if(nn[2] < -0.1){
-        nn[0] = -nn[0];
-        nn[1] = -nn[1];
-        nn[2] = -nn[2];
-      }
-      */
       glNormal3dv(nn);
     }
 
-    if(View->IntervalsType==DRAW_POST_CONTINUOUS){
+    if(View->IntervalsType == DRAW_POST_CONTINUOUS){
       if(V[3*View->TimeStep]  >=ValMin && V[3*View->TimeStep]  <=ValMax &&
          V[3*View->TimeStep+1]>=ValMin && V[3*View->TimeStep+1]<=ValMax &&
          V[3*View->TimeStep+2]>=ValMin && V[3*View->TimeStep+2]<=ValMax){
@@ -293,7 +297,7 @@ void Draw_ScalarTriangle(Post_View *View,
                       Xp,Yp,Zp,&nb,value);
         if(nb >= 3){      
           glBegin(GL_POLYGON);
-          for(i=0;i<nb;i++){
+          for(i=0 ; i<nb ; i++){
             Palette2(View,ValMin,ValMax,value[i]);
             RaiseFill(i,value[i],ValMin,Raise);
             glVertex3d(Xp[i]+View->Offset[0]+Raise[0][i],
@@ -306,7 +310,7 @@ void Draw_ScalarTriangle(Post_View *View,
     }
     else{
       for(k=0 ; k<View->NbIso ; k++){
-        if(View->IntervalsType==DRAW_POST_DISCRETE){
+        if(View->IntervalsType == DRAW_POST_DISCRETE){
           Palette(View,View->NbIso,k);
           CutTriangle2D(X,Y,Z,&V[3*View->TimeStep],
                         View->GVFI(ValMin,ValMax,View->NbIso+1,k),
@@ -314,18 +318,17 @@ void Draw_ScalarTriangle(Post_View *View,
                         ValMin,ValMax,
                         Xp,Yp,Zp,&nb,value);      
           if(nb >= 3){
-            for(i=0;i<nb;i++) RaiseFill(i,value[i],ValMin,Raise);    
+            for(i=0 ; i<nb ; i++) RaiseFill(i,value[i],ValMin,Raise);    
             Draw_Polygon(nb,Xp,Yp,Zp,View->Offset,Raise);  
           }
         }
         else{
           Palette(View,View->NbIso,k);
-
           thev = View->GVFI(ValMin,ValMax,View->NbIso,k);
           CutTriangle1D(X,Y,Z,&V[3*View->TimeStep],
                         thev, ValMin,ValMax,Xp,Yp,Zp,&nb);        
           if(nb == 2){
-            for(i=0;i<2;i++) RaiseFill(i,thev,ValMin,Raise);
+            for(i=0 ; i<2 ; i++) RaiseFill(i,thev,ValMin,Raise);
             Draw_Line(Xp,Yp,Zp,View->Offset,Raise);    
           }
         }
@@ -334,38 +337,24 @@ void Draw_ScalarTriangle(Post_View *View,
 
   }
     
-  if(View->ShowElement){
-    glDisable(GL_POLYGON_OFFSET_FILL) ;
-    glColor4ubv((GLubyte*)&CTX.color.fg);
-    glBegin(GL_LINE_LOOP);
-    for(i=0 ; i<3 ; i++) 
-      glVertex3d(X[i]+View->Offset[0]+Raise[0][i],
-                 Y[i]+View->Offset[1]+Raise[1][i],
-                 Z[i]+View->Offset[2]+Raise[2][i]);
-    glEnd();
-  }
-
 }
 
 void Draw_VectorTriangle(Post_View *View, 
 			 double ValMin, double ValMax, double Raise[3][5],
 			 double *X, double *Y, double *Z, double *V){
 
-  int     i, k, m;
+  int     k, m;
   double  d,dx,dy,dz,fact;
   double  xx[3],yy[3],zz[3];
 
-  if(View->ShowElement)
-    glEnable(GL_POLYGON_OFFSET_FILL);
-
   if(View->ArrowType == DRAW_POST_DISPLACEMENT){
+
     fact = View->ArrowScale/100. ;
-    for(m=0;m<3;m++){
+    for(m=0 ; m<3 ; m++){
       xx[m] = X[m] + fact * V[9*View->TimeStep + 3 * m ];
       yy[m] = Y[m] + fact * V[9*View->TimeStep + 3 * m + 1];
       zz[m] = Z[m] + fact * V[9*View->TimeStep + 3 * m + 2];
     }
-    glEnable(GL_POLYGON_OFFSET_FILL);
     glColor4ubv((GLubyte*)&CTX.color.bg);
     if(View->IntervalsType!=DRAW_POST_ISO)
       Draw_Polygon (3, xx, yy, zz, View->Offset, Raise);
@@ -373,7 +362,7 @@ void Draw_VectorTriangle(Post_View *View,
     glBegin(GL_LINE_LOOP);
     for(m=0 ; m<3 ; m++) glVertex3d(xx[m], yy[m], zz[m]);
     glEnd();
-    glDisable(GL_POLYGON_OFFSET_FILL);      
+
   }
   else{
     
@@ -424,17 +413,6 @@ void Draw_VectorTriangle(Post_View *View,
       }       
     }
 
-  }
-
-  if(View->ShowElement){
-    glDisable(GL_POLYGON_OFFSET_FILL) ;
-    glColor4ubv((GLubyte*)&CTX.color.fg);
-    glBegin(GL_LINE_LOOP);
-    for(i=0 ; i<3 ; i++) 
-      glVertex3d(X[i]+View->Offset[0]+Raise[0][i],
-                 Y[i]+View->Offset[1]+Raise[1][i],
-                 Z[i]+View->Offset[2]+Raise[2][i]);
-    glEnd();
   }
 
 }

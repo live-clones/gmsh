@@ -1,4 +1,4 @@
-/* $Id: Geom.cpp,v 1.5 2000-11-26 15:43:46 geuzaine Exp $ */
+/* $Id: Geom.cpp,v 1.6 2000-12-18 08:31:45 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -172,16 +172,14 @@ int isPointOnPlanarSurface (Surface *S, double X, double Y, double Z, double n[3
   V.Pos.Z = Z;
 
   for(i=0;i<List_Nbr(S->s.Generatrices);i++){
+
     List_Read(S->s.Generatrices,i,&C);
 
-    switch(C->Typ){
-    case MSH_SEGM_LINE:
+    if(C->Typ == MSH_SEGM_LINE)
       N = 1;
-      break;
-    default:
+    else
       N = 10;
-      break;
-    }
+
     for(j=0;j<N;j++){
       u1 = (double)j/(double)(N);
       u2 = (double)(j+1)/(double)(N);
@@ -189,9 +187,11 @@ int isPointOnPlanarSurface (Surface *S, double X, double Y, double Z, double n[3
       P2 = InterpolateCurve(C,u2,0);
       Angle += angle_plan(&V,&P1,&P2,n);
     }
+
   }
 
-  if(fabs(Angle) > 6.0 && fabs(Angle) < 7.)return 1;
+  if(fabs(Angle) > 6.0 && fabs(Angle) < 7.0)
+    return 1;
   return 0;
 
 }
@@ -209,23 +209,21 @@ void Plan_SurfPlane (void *data,void *dum){
   pS = (Surface**)data;
   s = *pS;
 
+  if(s->Typ != MSH_SURF_PLAN) return ;
+
   if(deb){
     points = List_Create(10,10,sizeof(Vertex*));
     deb = 0;
   }
+  else
+    List_Reset(points);
 
-  if(s->Typ == MSH_SURF_PLAN){
-    for(i=0;i<List_Nbr(s->s.Generatrices);i++){
-      List_Read(s->s.Generatrices,i,&pC);
-      for(j=0;j<List_Nbr(pC->Control_Points);j++){
-             List_Add(points,List_Pointer(pC->Control_Points,j));
-      }
-    }
+  for(i=0;i<List_Nbr(s->s.Generatrices);i++){
+    List_Read(s->s.Generatrices,i,&pC);
+    for(j=0;j<List_Nbr(pC->Control_Points);j++)
+      List_Add(points,List_Pointer(pC->Control_Points,j));
   }
-  else{
-    return;
-  }
-  
+
   N = List_Nbr(points);
 
   for(i=0;i<3;i++){
@@ -274,7 +272,6 @@ void Plan_SurfPlane (void *data,void *dum){
     s->d = X;
     res[0] = 1.;
     res[1] = res[2] = 0.0;
-
   }
 
   /* y = Y */
@@ -295,7 +292,7 @@ void Plan_SurfPlane (void *data,void *dum){
   
   /* by + cz = -x */
 
-  else if (!sys3x3(sys,b,res,&det) ){
+  else if (!sys3x3_with_tol(sys,b,res,&det) ){
     s->d = 0.0;
     s2s[0][0] = sys[1][1];
     s2s[0][1] = sys[1][2];
@@ -382,7 +379,7 @@ void Plan_SurfPlane (void *data,void *dum){
       s->invplan[i][j] = s->plan[j][i];
     }
   }
-  List_Reset(points);
+
 } 
 
 
@@ -394,6 +391,7 @@ void Draw_Plane_Surface (Surface *s){
   char Num[100];
 
   if(!s->Orientations){
+
     s->Orientations = List_Create(20,2,sizeof(Vertex));
     Plan_SurfPlane(&s,NULL); 
     k = 0;
@@ -406,7 +404,6 @@ void Draw_Plane_Surface (Surface *s){
       Projette(&P1,s->plan);
       Projette(&P2,s->plan);
       Projette(&P3,s->plan);
-
       if(!k){
         k = 1;
         minx = maxx = P1.Pos.X;
@@ -418,21 +415,16 @@ void Draw_Plane_Surface (Surface *s){
       maxy = DMAX(DMAX(DMAX(maxy,P1.Pos.Y),P2.Pos.Y),P3.Pos.Y);      
     }
 
-    V[0].Pos.X = minx;
-    V[0].Pos.Y = miny;
+    V[0].Pos.X = minx; V[0].Pos.Y = miny;
+    V[1].Pos.X = maxx; V[1].Pos.Y = miny;
+    V[2].Pos.X = maxx; V[2].Pos.Y = maxy;
+    V[3].Pos.X = minx; V[3].Pos.Y = maxy;
 
-    V[1].Pos.X = maxx;
-    V[1].Pos.Y = miny;
-    
-    V[2].Pos.X = maxx;
-    V[2].Pos.Y = maxy;
-    
-    V[3].Pos.X = minx;
-    V[3].Pos.Y = maxy;
     for(i=0;i<4;i++){
       V[i].Pos.Z = 0.0;
       put_Z(&V[i],s);
     }
+
     n[0] = s->plan[2][0];
     n[1] = s->plan[2][1];
     n[2] = s->plan[2][2];
@@ -464,7 +456,6 @@ void Draw_Plane_Surface (Surface *s){
     
     k = 0;
     for(i=0;i<100;i++){
-
       t = (double)i/(double)(100);
       vv.Pos.X = t*.5*(V[0].Pos.X+V[3].Pos.X)+(1.-t)*.5*(V[2].Pos.X+V[1].Pos.X); 
       vv.Pos.Y = t*.5*(V[0].Pos.Y+V[3].Pos.Y)+(1.-t)*.5*(V[2].Pos.Y+V[1].Pos.Y);
@@ -483,6 +474,7 @@ void Draw_Plane_Surface (Surface *s){
       }
     }
     if(k)List_Add(s->Orientations,&vv);
+
     Msg(INFO, "Surface %d (%d points)",s->Num,List_Nbr(s->Orientations)); 
   }
 
@@ -495,8 +487,6 @@ void Draw_Plane_Surface (Surface *s){
     glEnd();
   }
 
-  glDisable(GL_LINE_STIPPLE);
-
   if(CTX.geom.surfaces_num){
     List_Read(s->Orientations,0,&vv1);
     List_Read(s->Orientations,1,&vv2);
@@ -506,8 +496,9 @@ void Draw_Plane_Surface (Surface *s){
                   (vv2.Pos.Z+vv1.Pos.Z)/2. + 3*CTX.pixel_equiv_x/CTX.s[2]);
     Draw_String(Num);
   }
-
+  
   if(CTX.geom.normals) {
+    glDisable(GL_LINE_STIPPLE) ;
     List_Read(s->Orientations,0,&vv1);
     List_Read(s->Orientations,1,&vv2);
     n[0] = s->plan[2][0];
@@ -522,7 +513,6 @@ void Draw_Plane_Surface (Surface *s){
     Draw_Vector(DRAW_POST_ARROW, 0, (vv2.Pos.X+vv1.Pos.X)/2., (vv2.Pos.Y+vv1.Pos.Y)/2., 
                 (vv2.Pos.Z+vv1.Pos.Z)/2., nn, n[0],n[1],n[2],NULL,NULL);
   }
-
 }
 
 
@@ -535,20 +525,17 @@ void Draw_NonPlane_Surface (Surface *s){
   int kk;
   char Num[100];
 
-  u0 =v0= 0;
-  un =vn= 1;
+  u0 = v0 = 0;
+  un = vn = 1;
 
-  if(!s)return;
-
-  if((s->Typ == MSH_SURF_NURBS)){
+  if(s->Typ == MSH_SURF_NURBS){
     NbTics = 5;
     u0 = s->ku[0];
     un = s->ku[s->OrderU + s->Nu];
     v0 = s->kv[0];
     vn = s->kv[s->OrderV + s->Nv];
-    for(i=0;i<NbTics;i++){
+    for(i=0;i<NbTics;i++)
       tics[i] = v0 + ((double)(i+1)/(double)NbTics) * (vn - v0);
-    }
     if(CTX.geom.shade){
       GLUnurbsObj *nurb;
       nurb=gluNewNurbsRenderer();
@@ -567,9 +554,6 @@ void Draw_NonPlane_Surface (Surface *s){
     NbTics = 1;
     tics[0] = 0.5;
   }
-
-  glEnable(GL_LINE_STIPPLE);
-
 
   if(CTX.geom.surfaces){
     for(kk = 0;kk<NbTics;kk++){
@@ -602,10 +586,6 @@ void Draw_NonPlane_Surface (Surface *s){
     }
   }
 
-  if(s->Mat){
-    glLineWidth(1.);
-  }
-
   if(CTX.geom.surfaces_num){
     v = InterpolateSurface(s,0.5,0.5,0,0);
     sprintf(Num,"%d",s->Num);
@@ -635,7 +615,6 @@ void Draw_NonPlane_Surface (Surface *s){
     glColor4ubv((GLubyte*)&CTX.color.geom.normals);
     Draw_Vector(DRAW_POST_ARROW, 0, n1.Pos.X, n1.Pos.Y, n1.Pos.Z,
                 nn, n[0],n[1],n[2],NULL,NULL);
-    glEnable(GL_LINE_STIPPLE);
   }
 
 }
@@ -645,9 +624,7 @@ void Draw_Surface (void *a, void *b){
 
   s = *(Surface**)a;
 
-  if(!s->Support)return;
-
-  if(!EntiteEstElleVisible(s->Num)) return;
+  if(!s || !s->Support || !EntiteEstElleVisible(s->Num)) return;
 
   if(CTX.render_mode == GMSH_SELECT){
     glLoadName(2);
@@ -662,15 +639,13 @@ void Draw_Surface (void *a, void *b){
     else if (Highlighted){
       glLineWidth(2.);
       glColor4ubv((GLubyte*)&CTX.color.geom.surface_hlt);
-      glEnable(GL_LINE_STIPPLE);
-      glLineStipple(1,0x0F0F);
     }
     else{
       glLineWidth(1.);
       glColor4ubv((GLubyte*)&CTX.color.geom.surface);
-      glEnable(GL_LINE_STIPPLE);
-      glLineStipple(1,0x0F0F);
     }
+    glEnable(GL_LINE_STIPPLE);
+    glLineStipple(1,0x0F0F);
   }
   else{
     ColorSwitch(abs(s->Num));
@@ -687,10 +662,65 @@ void Draw_Surface (void *a, void *b){
 
   if(CTX.render_mode == GMSH_SELECT){
     glPopName ();
-    glDisable(GL_LINE_STIPPLE);
   }
 
   glDisable(GL_LINE_STIPPLE);
+
+}
+
+
+/* ------------------------------------------------------------------------ */
+/*  D r a w _ V o l u m e                                                   */
+/* ------------------------------------------------------------------------ */
+
+int TheVolume;
+
+void Draw_Curve_For_Volume (void *a, void *b){
+  int     i,N;
+  Curve  *c;
+  Vertex  v;
+
+  glLineWidth(2.);
+
+  c = *(Curve**)a;
+
+  if(CTX.render_mode == GMSH_SELECT){
+    glLoadName(3);
+    glPushName(TheVolume);
+  }
+
+  if(c->Typ == MSH_SEGM_LINE)
+    N = List_Nbr(c->Control_Points);
+  else
+    N = 10;
+
+  glBegin(GL_LINE_STRIP);
+  for(i=0;i<N;i++){
+    v = InterpolateCurve(c,0.2*(double)i/(double)(N-1),0);
+    glVertex3d(v.Pos.X,v.Pos.Y,v.Pos.Z);
+  }
+  glEnd();
+
+  glBegin(GL_LINE_STRIP);
+  for(i=N-1;i>=0;i--){
+    v = InterpolateCurve(c,1.-0.2*(double)i/(double)(N-1),0);
+    glVertex3d(v.Pos.X,v.Pos.Y,v.Pos.Z);
+  }
+  glEnd();
+
+
+  if(CTX.render_mode == GMSH_SELECT){
+    glPopName ();
+  }
+
+  if((c)->ipar[3]){
+    glLineWidth(1.);
+  }
+
+}
+
+
+void DrawVolumes (Mesh *m){
 
 
 }
@@ -701,8 +731,6 @@ void Draw_Surface (void *a, void *b){
 /* ------------------------------------------------------------------------ */
 /*  D r a w _ G e o m                                                       */
 /* ------------------------------------------------------------------------ */
-
-extern void DrawVolumes (Mesh *m);
 
 void Draw_Geom (Mesh *m) {
 
@@ -741,96 +769,6 @@ void ZeroHighlight(Mesh *m){
   Tree_Action(m->Points,ZeroPoint);
   Tree_Action(m->Curves,ZeroCurve);
   Tree_Action(m->Surfaces,ZeroSurface);
-}
-
-
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ A x e s                                                       */
-/* ------------------------------------------------------------------------ */
-
-void Draw_Axes (double s) {
-  double  f, g, b, c;
-  
-  if(s == 0.) return;
-
-  if(!CTX.range[0] && !CTX.range[1] && !CTX.range[2]) return ;
-
-  f = 0.666 * s;
-  g = 1.233 * s;
-  b = .1 * s;
-  c = 0.666 * b;
-
-  glLineWidth(1.);
-  glColor4ubv((GLubyte*)&CTX.color.axes);
-
-  glBegin(GL_LINES);
-  if(CTX.range[2] != 0.){
-    /* X */
-    glVertex3d(0.,   0.,   0.);  
-    glVertex3d(s,    0.,   0.);  
-    glVertex3d(g-b,  b,    0.);  
-    glVertex3d(g+b, -b,    0.);  
-    glVertex3d(g,   -b,    b);  
-    glVertex3d(g,    b,   -b);  
-    /* Y */
-    glVertex3d(0.,   0.,   0.);  
-    glVertex3d(0.,   s,    0.);  
-    glVertex3d(-b,   g+b,  0.);  
-    glVertex3d(0.,   g,    0.);  
-    glVertex3d(0.,   g,    0.);  
-    glVertex3d(0.,   g+b, -b);  
-    glVertex3d(0.,   g,    0.);  
-    glVertex3d(.5*b, g-b, .5*b);  
-    /* Z */
-    glVertex3d(0.,   0.,   0.);  
-    glVertex3d(0.,   0.,   s);  
-    glVertex3d(-b,   b,    g);  
-    glVertex3d(0.,   b,    g-b);  
-    glVertex3d(0.,   b,    g-b);  
-    glVertex3d(0.,  -b,    g+b);  
-    glVertex3d(0.,  -b,    g+b);  
-    glVertex3d(b,   -b,    g);  
-  }
-  else{
-    /* X */
-    glVertex3d(0.,   0.,   0.);  
-    glVertex3d(s,    0.,   0.);  
-    glVertex3d(g-c,  b,    0.);  
-    glVertex3d(g+c, -b,    0.);  
-    glVertex3d(g-c, -b,    0.);  
-    glVertex3d(g+c,  b,    0.);  
-    /* Y */
-    glVertex3d(0.,   0.,   0.);  
-    glVertex3d(0.,   s,    0.);  
-    glVertex3d(-c,   g+b,  0.);  
-    glVertex3d(0.,   g,    0.);  
-    glVertex3d(0.,   g,    0.);  
-    glVertex3d(c,    g+b,  0.);  
-    glVertex3d(0.,   g,    0.);  
-    glVertex3d(0.,   g-b,  0.);
-  }
-  glEnd();
-  
-  glEnable(GL_LINE_STIPPLE);
-  glLineStipple(2,0x0F0F);
-  glBegin(GL_LINES);
-  if(CTX.range[2] != 0.){
-    glVertex3d(f,  0., 0.);  
-    glVertex3d(f,  0., f );  
-    glVertex3d(f,  0., f );  
-    glVertex3d(0., 0., f );  
-    glVertex3d(0., 0., f );  
-    glVertex3d(0., f,  f );  
-    glVertex3d(0., f,  f );  
-    glVertex3d(0., f,  0.);  
-  }
-  glVertex3d(0., f,  0.);  
-  glVertex3d(f,  f,  0.);  
-  glVertex3d(f,  f,  0.);  
-  glVertex3d(f,  0., 0.);  
-  glEnd();
-  glDisable(GL_LINE_STIPPLE);
-
 }
 
 

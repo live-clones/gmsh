@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2000-12-08 10:56:42 geuzaine Exp $
+# $Id: Makefile,v 1.6 2000-12-18 08:31:45 geuzaine Exp $
 #
 # Makefile for "libGraphics.a"
 #
@@ -33,8 +33,9 @@ SRC = Draw.cpp \
       Iso.cpp \
       Entity.cpp \
       Scale.cpp \
-      Volume.cpp \
-      gl2ps.cpp gl2gif.cpp
+      Axes.cpp \
+      gl2ps.cpp\
+      gl2gif.cpp
 
 
 OBJ = $(SRC:.cpp=.o)
@@ -116,12 +117,11 @@ Scale.o: Scale.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h \
  ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h gl2ps.h \
  ../Unix/XContext.h
-Volume.o: Volume.cpp ../Common/Gmsh.h ../Common/Message.h \
+Axes.o: Axes.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
- ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
- ../Common/Const.h ../Common/ColorTable.h ../Mesh/Interpolation.h \
- ../Common/Context.h
+ ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
+ ../Common/Const.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+ ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h \
+ ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h
 gl2ps.o: gl2ps.cpp gl2ps.h
 gl2gif.o: gl2gif.cpp gl2gif.h

@@ -1,4 +1,4 @@
-/* $Id: Post.cpp,v 1.7 2000-12-08 12:16:51 geuzaine Exp $ */
+/* $Id: Post.cpp,v 1.8 2000-12-18 08:31:45 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -110,7 +110,10 @@ void Draw_Post (void) {
         else{
           InitNoShading();
         }
-        
+
+	if(v->ShowElement || v->ArrowType == DRAW_POST_DISPLACEMENT)
+	  glEnable(GL_POLYGON_OFFSET_FILL) ;
+
         // force this
         if(v->IntervalsType == DRAW_POST_CONTINUOUS)
           glShadeModel(GL_SMOOTH); 
@@ -264,6 +267,9 @@ void Draw_Post (void) {
           glEndList();
           v->Changed=0;
         }
+
+	if(v->ShowElement || v->ArrowType == DRAW_POST_DISPLACEMENT)
+	  glDisable(GL_POLYGON_OFFSET_FILL) ;
         
       }
       
