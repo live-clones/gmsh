@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.9 2001-01-10 10:40:23 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.10 2001-01-10 12:12:18 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -915,31 +915,33 @@ void view_options_custom_range_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     if(((Fl_Check_Button*)w)->value()){
       WID->activate_custom(1);
-      v->ScaleType = DRAW_POST_CUSTOM;
+      v->RangeType = DRAW_POST_CUSTOM;
     }
     else{
       WID->activate_custom(0);
-      v->ScaleType = DRAW_POST_DEFAULT;
+      v->RangeType = DRAW_POST_DEFAULT;
     }
   ENDVIEWMOD
 }
 void view_options_custom_min_cb(CALLBACK_ARGS){
   STARTVIEWMOD
+    //printf("set cust min %d %d %g\n", v->Num, i, ((Fl_Value_Input*)w)->value());
     v->CustomMin = ((Fl_Value_Input*)w)->value() ;
   ENDVIEWMOD
 }
 void view_options_custom_max_cb(CALLBACK_ARGS){
   STARTVIEWMOD
+    //printf("set cust max %d %d %g\n", v->Num, i, ((Fl_Value_Input*)w)->value());
     v->CustomMax = ((Fl_Value_Input*)w)->value() ;
   ENDVIEWMOD
 }
 void view_options_linear_range_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     if(((Fl_Check_Button*)w)->value()){
-      v->RangeType = DRAW_POST_LINEAR;
+      v->ScaleType = DRAW_POST_LINEAR;
     }
     else{
-      v->RangeType = DRAW_POST_LOGARITHMIC;
+      v->ScaleType = DRAW_POST_LOGARITHMIC;
     }
   ENDVIEWMOD
 }

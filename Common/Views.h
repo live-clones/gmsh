@@ -61,11 +61,11 @@ extern List_T *Post_ViewList;
 #define DRAW_POST_LOCATE_COG     1
 #define DRAW_POST_LOCATE_VERTEX  2
 
-// ScaleType
+// RangeType
 #define DRAW_POST_DEFAULT 1
 #define DRAW_POST_CUSTOM  2
 
-// RangeType
+// ScaleType
 #define DRAW_POST_LINEAR       1
 #define DRAW_POST_LOGARITHMIC  2
 

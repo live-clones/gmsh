@@ -1075,7 +1075,7 @@ void GUI::create_post_options_window(){
         post_value[0] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Delay");
 	post_value[0]->minimum(0);
 	post_value[0]->maximum(10); 
-	post_value[0]->step(0.1);
+	post_value[0]->step(0.01);
 	post_value[0]->callback(opt_post_anim_delay_cb);
 	post_value[0]->value(CTX.post.anim_delay);
 	post_value[0]->labelsize(CTX.fontsize);
@@ -1300,6 +1300,7 @@ void GUI::create_about_window(){
 void GUI::create_view_window(int num){
   static int init_view_window = 0;
   int i;
+  double val;
 
   if(!init_view_window){
     init_view_window = 1 ;
@@ -1411,7 +1412,8 @@ void GUI::create_view_window(int num){
 	view_value[9]->labelsize(CTX.fontsize);
 	view_value[9]->type(FL_HORIZONTAL);
 	view_value[9]->align(FL_ALIGN_RIGHT);
-	view_value[9]->minimum(1); 
+	view_value[9]->minimum(0); 
+	view_value[9]->maximum(0); 
 	view_value[9]->step(1);
 	view_timestep->end();
       }
@@ -1494,18 +1496,24 @@ void GUI::create_view_window(int num){
   view_input[1]->value(v->Format);
 
   // range
-  if(v->ScaleType==DRAW_POST_CUSTOM) activate_custom(1);
+  if(v->RangeType==DRAW_POST_CUSTOM) activate_custom(1);
   else activate_custom(0);
   view_butt[3]->callback(view_options_custom_range_cb, (void*)num);
-  view_butt[3]->value(v->ScaleType==DRAW_POST_CUSTOM);
+  view_butt[3]->value(v->RangeType==DRAW_POST_CUSTOM);
   view_value[0]->callback(view_options_custom_min_cb, (void*)num);
   view_value[0]->value(v->CustomMin);
   view_value[1]->callback(view_options_custom_max_cb, (void*)num);
   view_value[1]->value(v->CustomMax);
+  val = v->CustomMax-v->CustomMin ;
+  for(i=0 ; i<2 ; i++){
+    view_value[i]->step(val,1000); 
+    view_value[i]->minimum(v->CustomMin); 
+    view_value[i]->maximum(v->CustomMax); 
+  }
   view_butt[4]->callback(view_options_linear_range_cb, (void*)num);
-  view_butt[4]->value(v->RangeType==DRAW_POST_LINEAR);
+  view_butt[4]->value(v->ScaleType==DRAW_POST_LINEAR);
   view_butt[5]->callback(view_options_logarithmic_range_cb, (void*)num);
-  view_butt[5]->value(v->RangeType==DRAW_POST_LOGARITHMIC);
+  view_butt[5]->value(v->ScaleType==DRAW_POST_LOGARITHMIC);
 
   // intervals
   view_value[2]->callback(view_options_nbiso_cb, (void*)num);
@@ -1532,13 +1540,19 @@ void GUI::create_view_window(int num){
   view_value[7]->value(v->Raise[1]);
   view_value[8]->callback(view_options_zraise_cb, (void*)num);
   view_value[8]->value(v->Raise[2]);
+  val = 10.*CTX.lc ;
+  for(i=3 ; i<9 ; i++){
+    view_value[i]->step(val,1000); 
+    view_value[i]->minimum(-val); 
+    view_value[i]->maximum(val); 
+  }
 
   // timestep
   if(v->NbTimeStep==1) view_timestep->deactivate();
   else view_timestep->activate();
   view_value[9]->callback(view_options_timestep_cb, (void*)num);
   view_value[9]->value(v->TimeStep);
-  view_value[9]->maximum(v->NbTimeStep); 
+  view_value[9]->maximum(v->NbTimeStep-1); 
 
   // vector
   if(v->ScalarOnly) view_vector->deactivate();

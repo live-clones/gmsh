@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.28 2001-01-10 10:06:15 geuzaine Exp $
+// $Id: Context.cpp,v 1.29 2001-01-10 12:12:17 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -201,6 +201,7 @@ void Init_Context(void){
   CTX.font = "-*-helvetica-medium-r-*-*-*-*-*-*-*-*-*-*" ;
   CTX.fixed_font = "fixed" ;
 
+  CTX.lc = 1.0 ;
   CTX.min[0]   = CTX.min[1]   = CTX.min[2]   = 0.0 ;
   CTX.max[0]   = CTX.max[1]   = CTX.max[2]   = 1.0 ;
   CTX.range[0] = CTX.range[1] = CTX.range[2] = 1.0 ;
