@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.71 2001-03-23 15:50:33 geuzaine Exp $
+// $Id: Gmsh.y,v 1.72 2001-03-26 14:15:05 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -116,7 +116,7 @@ void  skip_until (char *skip, char *until);
 %type <u> ColorExpr
 %type <c> StringExpr
 %type <l> FExpr_Range
-%type <l> ListOfDouble RecursiveListOfDouble
+%type <l> ListOfDouble ListOfDoubleItem RecursiveListOfDouble
 %type <l> ListOfListOfDouble RecursiveListOfListOfDouble 
 %type <l> ListOfColor RecursiveListOfColor 
 %type <l> ListOfShapes Duplicata Transform MultipleShape
@@ -157,6 +157,11 @@ All :
 /*  ----------------------------------------------------------------------
     S T E R E O L I T H O G R A P H Y  ( S T L )
     ---------------------------------------------------------------------- */
+
+SignedDouble :
+    tDOUBLE     { $$ = $1; }
+  | '-' tDOUBLE { $$ = -$2; }
+;
 
 STLFormatItem : 
     tSolid
@@ -316,23 +321,23 @@ StepDataItem  :
   | tDOUBLE tAFFECT tMANIFOLD_SOLID_BREP '(' tBIGSTR ',' tDOUBLE ')' tEND
     {
     }
-  | tDOUBLE tAFFECT tCYLINDRICAL_SURFACE '(' tBIGSTR ',' tDOUBLE ','FExpr ')' tEND
+  | tDOUBLE tAFFECT tCYLINDRICAL_SURFACE '(' tBIGSTR ',' tDOUBLE ',' FExpr ')' tEND
     {
       Add_Cylinder ((int)$1, $5 , (int)$7, $9);
     }
-  | tDOUBLE tAFFECT tCONICAL_SURFACE '(' tBIGSTR ',' tDOUBLE ','FExpr ','FExpr ')' tEND
+  | tDOUBLE tAFFECT tCONICAL_SURFACE '(' tBIGSTR ',' tDOUBLE ',' FExpr ',' FExpr ')' tEND
     {
       Add_Cone ((int)$1, $5 , (int)$7, $9,$11);
     }
-  | tDOUBLE tAFFECT tTOROIDAL_SURFACE '(' tBIGSTR ',' tDOUBLE ','FExpr ','FExpr ')' tEND
+  | tDOUBLE tAFFECT tTOROIDAL_SURFACE '(' tBIGSTR ',' tDOUBLE ',' FExpr ',' FExpr ')' tEND
     {
       Add_Torus ((int)$1, $5 , (int)$7, $9,$11);
     }
-  | tDOUBLE tAFFECT tCIRCLE '(' tBIGSTR ',' tDOUBLE ','FExpr ')' tEND
+  | tDOUBLE tAFFECT tCIRCLE '(' tBIGSTR ',' tDOUBLE ',' FExpr ')' tEND
     {
       Add_Circle((int) $1, $5, (int) $7, $9);
     }
-  | tDOUBLE tAFFECT tELLIPSE '(' tBIGSTR ',' tDOUBLE ','FExpr ',' FExpr ')' tEND
+  | tDOUBLE tAFFECT tELLIPSE '(' tBIGSTR ',' tDOUBLE ',' FExpr ',' FExpr ')' tEND
     {
       Add_Ellipsis((int) $1, $5, (int) $7, $9, $11);
     }
@@ -1919,11 +1924,6 @@ Coherence :
     G E N E R A L
     --------------- */
 
-SignedDouble :
-    tDOUBLE     { $$ = $1; }
-  | '-' tDOUBLE { $$ = -$2; }
-;
-
 BoolExpr :
     tTRUE {$$ = 1;}
   | tFALSE {$$ = 0;}
@@ -2221,11 +2221,35 @@ RecursiveListOfListOfDouble :
     }
 ;
 
+
 ListOfDouble :
+    ListOfDoubleItem
+    {
+      $$ = $1 ;
+    }
+  | '{' RecursiveListOfDouble '}'
+    {
+      $$=$2;
+    }
+  | '-' '{' RecursiveListOfDouble '}'
+    {
+      $$=$3;
+      for(i=0 ; i<List_Nbr($$) ; i++){
+	pd = (double*)List_Pointer($$, i);
+	(*pd) = - (*pd);
+      }
+    }
+;
+
+ListOfDoubleItem :
     FExpr
     {
       $$ = List_Create(2,1,sizeof(double)) ;
       List_Add($$, &($1)) ;
+    }
+  | FExpr_Range
+    { 
+      $$ = $1;
     }
   | tSTRING '[' ']'
     {
@@ -2239,6 +2263,22 @@ ListOfDouble :
       else{
 	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++)
 	  List_Add($$, (double*)List_Pointer_Fast(pSymbol->val, i)) ;
+      }
+    }
+  | '-' tSTRING '[' ']'
+    {
+      $$ = List_Create(2,1,sizeof(double)) ;
+      TheSymbol.Name = $2 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+	vyyerror("Unknown Variable '%s'", $2) ;
+	d = 0.0 ;
+	List_Add($$, &d);
+      }
+      else{
+	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++){
+	  d = - *(double*)List_Pointer_Fast(pSymbol->val, i);
+	  List_Add($$, &d) ;
+	}
       }
     }
   | tSTRING '[' '{' RecursiveListOfDouble '}' ']'
@@ -2260,25 +2300,6 @@ ListOfDouble :
 	}
       }
       List_Delete($4);
-    }
-
-/* provisoire */
-
-  | '-' tSTRING '[' ']'
-    {
-      $$ = List_Create(2,1,sizeof(double)) ;
-      TheSymbol.Name = $2 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", $2) ;
-	d = 0.0 ;
-	List_Add($$, &d);
-      }
-      else{
-	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++){
-	  d = - *(double*)List_Pointer_Fast(pSymbol->val, i);
-	  List_Add($$, &d) ;
-	}
-      }
     }
   | '-' tSTRING '[' '{' RecursiveListOfDouble '}' ']'
     {
@@ -2302,113 +2323,13 @@ ListOfDouble :
       }
       List_Delete($5);
     }
-
-
-/* end provisoire */
-
-  | '{' RecursiveListOfDouble '}'
-    {
-      $$=$2;
-    }
-
-/* provisoire */
-  | '-' '{' RecursiveListOfDouble '}'
-    {
-      $$=$3;
-      for(i=0 ; i<List_Nbr($$) ; i++){
-	pd = (double*)List_Pointer($$, i);
-	(*pd) = - (*pd);
-      }
-    }
-/* end provisoire */
-
 ;
 
-
 RecursiveListOfDouble :
-    FExpr
+    ListOfDoubleItem
     {
-      $$ = List_Create(2,1,sizeof(double)) ;
-      List_Add($$, &($1)) ;
+      $$ = $1 ;
     }
-  | FExpr_Range
-    { 
-      $$ = $1;
-    }
-  | tSTRING '[' ']'
-    { 
-      $$ = List_Create(2,1,sizeof(double)) ;
-      TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", $1) ;
-      }
-      else{
-	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++)
-	  List_Add($$, (double*)List_Pointer_Fast(pSymbol->val, i)) ;
-      }
-    }
-  | tSTRING '[' '{' RecursiveListOfDouble '}' ']'
-    {
-      $$ = List_Create(2,1,sizeof(double)) ;
-      TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", $1) ;
-      }
-      else{
-	for(i = 0 ; i < List_Nbr($4) ; i++){
-	  j = (int)(*(double*)List_Pointer_Fast($4, i));
-	  if((pd = (double*)List_Pointer_Test(pSymbol->val, j)))
-	    List_Add($$, pd) ;
-	  else
-	    vyyerror("Uninitialized Variable '%s[%d]'", $1, j) ;	  
-	}
-      }
-      List_Delete($4);
-    }
-
-/* provisoire */
-
-  | '-' tSTRING '[' ']'
-    { 
-      $$ = List_Create(2,1,sizeof(double)) ;
-      TheSymbol.Name = $2 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", $2) ;
-      }
-      else{
-	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++){
-	  d = - *(double*)List_Pointer_Fast(pSymbol->val, i) ;
-	  List_Add($$, &d) ;
-	}
-      }
-    }
-  | '-' tSTRING '[' '{' RecursiveListOfDouble '}' ']'
-    {
-      $$ = List_Create(2,1,sizeof(double)) ;
-      TheSymbol.Name = $2 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", $2) ;
-      }
-      else{
-	for(i = 0 ; i < List_Nbr($5) ; i++){
-	  j = (int)(*(double*)List_Pointer_Fast($5, i));
-	  if((pd = (double*)List_Pointer_Test(pSymbol->val, j))){
-	    d = - *pd ;
-	    List_Add($$, &d) ;
-	  }
-	  else
-	    vyyerror("Uninitialized Variable '%s[%d]'", $2, j) ;	  
-	}
-      }
-      List_Delete($5);
-    }
-
-/* end provisoire */
-
-
-
-
-
   | RecursiveListOfDouble ',' FExpr
     {
       List_Add($$, &($3)) ;
@@ -2431,6 +2352,19 @@ RecursiveListOfDouble :
 	  List_Add($$, (double*)List_Pointer_Fast(pSymbol->val, i)) ;
       }
     }
+  | RecursiveListOfDouble ',' '-' tSTRING '[' ']'
+    {
+      TheSymbol.Name = $4 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+	vyyerror("Unknown Variable '%s'", $4) ;
+      }
+      else{
+	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++){
+	  d = - *(double*)List_Pointer_Fast(pSymbol->val, i);
+	  List_Add($$, &d) ;
+	}
+      }
+    }
   | RecursiveListOfDouble ',' tSTRING '[' '{' RecursiveListOfDouble '}' ']'
     {
       TheSymbol.Name = $3 ;
@@ -2448,23 +2382,7 @@ RecursiveListOfDouble :
       }
       List_Delete($6);
     }
-
-/*provisoire */
-
-  | '-' RecursiveListOfDouble ',' tSTRING '[' ']'
-    {
-      TheSymbol.Name = $4 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", $4) ;
-      }
-      else{
-	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++){
-	  d = - *(double*)List_Pointer_Fast(pSymbol->val, i);
-	  List_Add($$, &d) ;
-	}
-      }
-    }
-  | '-' RecursiveListOfDouble ',' tSTRING '[' '{' RecursiveListOfDouble '}' ']'
+  | RecursiveListOfDouble ',' '-' tSTRING '[' '{' RecursiveListOfDouble '}' ']'
     {
       TheSymbol.Name = $4 ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
@@ -2483,9 +2401,6 @@ RecursiveListOfDouble :
       }
       List_Delete($7);
     }
-
-/* end provisoire */
-
 ;
 
 ColorExpr :
