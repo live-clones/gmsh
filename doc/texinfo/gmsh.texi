@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.78 2003-07-24 20:56:12 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.79 2003-08-06 21:00:16 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -1183,9 +1183,9 @@ Returns the next available volume number.
 
 @item newreg
 Returns the next available region number. That is, @code{newreg} returns the
-maximum of @code{newp}, @code{newc}, @code{news}, @code{newv} and all
+maximum of @code{newp}, @code{newl}, @code{news}, @code{newv} and all
 physical entity numbers@footnote{For compatibility purposes, the behavior
-of @code{newc}, @code{news}, @code{newv} and @code{newreg} can be modified
+of @code{newl}, @code{news}, @code{newv} and @code{newreg} can be modified
 with the @code{Geometry.OldNewReg} option (@pxref{Geometry options}).}.
 @end ftable
 

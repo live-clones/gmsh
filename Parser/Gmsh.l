@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.47 2003-04-14 17:13:14 geuzaine Exp $
+// $Id: Gmsh.l,v 1.48 2003-08-06 21:00:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -89,6 +89,7 @@ stepid  {dieze}({digit})*
 "\'"			{parsestring('\''); return tBIGSTR;}
 "newreg"		{yylval.d = NEWREG(); return tDOUBLE;}
 "newp"  		{yylval.d = NEWPOINT(); return tDOUBLE;}
+"newl"  		{yylval.d = NEWLINE(); return tDOUBLE;}
 "newc"  		{yylval.d = NEWLINE(); return tDOUBLE;}
 "news"  		{yylval.d = NEWSURFACE(); return tDOUBLE;}
 "newv"  		{yylval.d = NEWVOLUME(); return tDOUBLE;}

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.295 2003-07-23 17:57:42 geuzaine Exp $
+# $Id: Makefile,v 1.296 2003-08-06 21:00:15 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -76,6 +76,7 @@ source-nonfree: source-common
 	cd gmsh-${GMSH_RELEASE} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}
 	tar zcvf gmsh-${GMSH_RELEASE}-source-nonfree.tgz gmsh-${GMSH_RELEASE}
 
+.PHONY: parser
 parser:
 	cd Parser && ${MAKE} parser
 
