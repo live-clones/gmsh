@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.12 2001-02-04 15:52:26 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.13 2001-02-05 07:56:57 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -216,8 +216,8 @@ int Opengl_Window::handle(int event) {
 	if(!CTX.useTrackball)
 	  set_r(2, CTX.r[2] + ((abs(ymov) > abs(xmov))?0:-180*(float)xmov/(float)w()));         
 	set_s(0, CTX.s[0] * ( (abs(ymov) > abs(xmov)) ?
-			      ( (ymov>0) ? (float)(1.04*(abs(ymov)+h()))/(float)h()
-				: (float)(h())/(float)(1.04*(abs(ymov)+h())) )
+			      ( (ymov>0) ? (float)(CTX.zoom_factor*(abs(ymov)+h()))/(float)h()
+				: (float)(h())/(float)(CTX.zoom_factor*(abs(ymov)+h())) )
 			      : 1.) );                    
 	set_s(1, CTX.s[0]);
 	set_s(2, CTX.s[0]);

@@ -94,6 +94,7 @@ public :
   int alpha;                  // enable alpha blending 
   int flash;                  // authorize colormap flashing (beek) 
   int same_visual;            // force same visual for GUI and Graphics 
+  double zoom_factor;         // mouse2 zoom coefficient
 
   //only used for Motif
   int font_base;              // display list index for the font 

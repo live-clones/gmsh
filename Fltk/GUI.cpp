@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.38 2001-02-04 15:52:26 geuzaine Exp $
+// $Id: GUI.cpp,v 1.39 2001-02-05 07:56:57 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -443,8 +443,8 @@ int GUI::global_shortcuts(int event){
   }
   else if(Fl::test_shortcut(FL_ALT+'t')){
     MarkAllViewsChanged(1);
-    Post_View *v = (Post_View*)List_Pointer(Post_ViewList, view_number);
     if(init_view_window){
+      Post_View *v = (Post_View*)List_Pointer(Post_ViewList, view_number);
       view_butt[6]->value(v->IntervalsType==DRAW_POST_ISO);
       view_butt[6]->redraw();
       view_butt[7]->value(v->IntervalsType==DRAW_POST_DISCRETE);
@@ -1587,6 +1587,7 @@ void GUI::create_message_window(){
 
 void GUI::add_message(char *msg){
   msg_browser->add(msg,0);
+  msg_browser->bottomline(msg_browser->size());
 }
 
 void GUI::save_message(char *name){
@@ -1596,8 +1597,11 @@ void GUI::save_message(char *name){
     Msg(WARNING, "Unable to Open File '%s'", name); 
     return;
   }
-  for(int i = 1 ; i<=msg_browser->size() ; i++)
-    fprintf(fp, "%s\n", msg_browser->text(i));
+  for(int i = 1 ; i<=msg_browser->size() ; i++){
+    const char *c=msg_browser->text(i);
+    if(c[0]=='@') fprintf(fp, "%s\n", &c[3]);
+    else fprintf(fp, "%s\n", c);
+  }
 
   Msg(INFO, "Log Creation Complete '%s'", name);
   Msg(STATUS2, "Wrote File '%s'", name);

@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.7 2001-02-03 14:03:46 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.8 2001-02-05 07:56:57 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -69,7 +69,9 @@ char gmsh_options[]   =
 #else
   "  -v                    be verbose\n"
 #endif
+#ifdef _MOTIF
   "  -nothreads            disable threads\n"
+#endif
   "  -path string          set path for included files\n"
   "  -version              show version number\n"
   "  -info                 show detailed version information\n"

@@ -72,6 +72,7 @@ StringXNumber GeneralOptions_Number[] = {
   { "Flash"                , GMSH_INT,    (void*)&CTX.flash          , 0. },
   { "AlphaBlending"        , GMSH_INT,    (void*)&CTX.alpha          , 0. },
   { "Trackball"            , GMSH_INT,    (void*)&CTX.useTrackball   , 1. },
+  { "ZoomFactor"           , GMSH_DOUBLE, (void*)&CTX.zoom_factor    , 1.1 }, 
   { "Clip0"                , GMSH_INT,    (void*)&CTX.clip[0]        , 0. },
   { "Clip00"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[0][0] , 0.0 }, 
   { "Clip01"               , GMSH_DOUBLE, (void*)&CTX.clip_plane[0][1] , 0.0 }, 
