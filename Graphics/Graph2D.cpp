@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.21 2002-10-19 18:56:12 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.22 2002-11-17 02:27:26 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -91,7 +91,7 @@ static void Draw_Graph2D(Post_View *v,
 			 double xx, double yy, double width, double height,
 			 double tic, double bb[4]){
   char label[1024] ;
-  int font_h, font_a ;
+  float font_h, font_a ;
   int i, i_inc, i_max, j, j_inc, j_max, k, nb;
   double dx, dy, dv;
   double xtop = xx;

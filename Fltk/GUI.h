@@ -48,7 +48,6 @@
 
 #if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
 #include <FL/Fl_Tooltip.H>
-#include <FL/Fl_Sys_Menu_Bar.H>
 #endif
 
 #include "Opengl_Window.h"
@@ -59,6 +58,10 @@
 
 // define this to get a true Mac menu (not inside gmsh as in Window/Unix)
 #undef APPLE_USE_SYS_MENU
+
+#ifdef APPLE_USE_SYS_MENU
+#include <FL/Fl_Sys_Menu_Bar.H>
+#endif
 
 // The dynamic contexts
 
