@@ -33,24 +33,23 @@ generator with built-in pre- and post-processing facilities</h1>
   <a href="#Documentation">Documentation</a> |
   <a href="#Mailing lists">Mailing lists</a> |
   <a href="#Download"><b>Download</b></a> |
-  <a href="#Credits">Credits</a> |
+  <a href="#Licensing">Copyright and Licensing</a> |
+  <a href="#Authors">Authors and credits</a> |
   <a href="#Screenshots">Screenshots</a> |
   <a href="#Links">Links</a>
 </center>
 
 <h2><a name="Description"></a>Description</h2>
 
-Gmsh (pronounced "<em>Gnu-mesh</em>") is a <a
-href="http://www.gnu.org/copyleft/gpl-faq.html">free</a> automatic
-three-dimensional finite element mesh generator, primarily Delaunay,
-with built-in pre- and post-processing facilities. Its primal design
-goal is to provide a simple meshing tool for academic test cases with
-parametric input and up to date visualization capabilities. One of the
-strengths of Gmsh is its ability to respect a characteristic length
-field for the generation of adapted meshes on lines, surfaces and
-volumes. These adapted meshes can be mixed with simple structured
-(transfinite, elliptic, etc.)  meshes in order to augment the
-flexibility.
+Gmsh is an automatic three-dimensional finite element mesh generator,
+primarily Delaunay, with built-in pre- and post-processing
+facilities. Its primal design goal is to provide a simple meshing tool
+for academic test cases with parametric input and up to date
+visualization capabilities. One of the strengths of Gmsh is its
+ability to respect a characteristic length field for the generation of
+adapted meshes on lines, surfaces and volumes. These adapted meshes
+can be mixed with simple structured (transfinite, elliptic, etc.)
+meshes in order to augment the flexibility.
 
 Gmsh is structured around four modules: <a
 href="#geometry">geometry</a>, <a href="#mesh">mesh</a>, <a
@@ -165,9 +164,6 @@ of complex animations).
   <li><a name="mysolver"></a>Interactive solver examples: 
       <a href="/gmsh/doc/mysolver.tgz">C solver</a>, 
       <a href="/gmsh/doc/myperlsolver.tgz">Perl solver</a>
-<!--
-  <li><a href="/gmsh/doc/BUGS">List of open bugs</a>
--->
 </ul>
 
 <form method=GET action="http://www.geuz.org/search/search-geuz.cgi">
@@ -195,28 +191,22 @@ of complex animations).
 
 <h2><a name="Download"></a>Download</h2>
 
-Gmsh is freely available under the terms of the <a
-href="/gmsh/doc/COPYING">GNU General Public License</a>. Pre-compiled
-binaries (dynamically linked with OpenGL<a href="#opengl-footnote"
-name="opengl-footmark"><sup>1</sup></a>) are available for Windows,
-Mac OS X and Linux. The tutorial and demo files are included in the
-archives.
+Gmsh is distributed under the terms of the <a
+href="http://www.gnu.org/copyleft/gpl.html">GNU General Public License
+(GPL)</a>. Pre-compiled binaries (dynamically linked with OpenGL<a
+href="#opengl-footnote" name="opengl-footmark"><sup>1</sup></a>) are
+available for Windows, Linux and Mac OS X. The tutorial and demo files
+are included in the archives.
 
 <ul>
-<li><a href="/gmsh/bin/gmsh-1.41.0-Windows.zip">Windows zip archive (95/98/NT/XP)</a>
+<li><a href="/gmsh/bin/gmsh-1.41.0-Windows.zip">Windows zip archive (95/98/NT/2000/XP)</a>
 <li><a href="/gmsh/bin/gmsh-1.41.0-1.i386.rpm">Linux RPM (i386, Red Hat >= 6.2 and compatible)</a>
 <li><a href="/gmsh/bin/gmsh-1.41.0-Linux.tgz">Linux tarball (i386, glibc 2.1)</a> 
 <li><a href="/gmsh/bin/gmsh-1.41.0-MacOSX.tgz">Mac OS X tarball (Mac OS X 10.2)</a>
-<li><a href="/gmsh/bin/gmsh-1.41.0-source.tgz">Source tarball</a>
+<li><a href="/gmsh/bin/gmsh-1.41.0-source.tgz">Source tarball (all platforms)</a>
     <a href="#build-footnote" name="build-footmark"><sup>2</sup></a>
-<!--
-<li><a href="/gmsh/bin/gmsh-1.41.0-OSF1.tgz">Compaq Tru64 tarball (OSF 4.0)</a>
-<li><a href="/gmsh/bin/gmsh-1.41.0-SunOS.tgz">Sun tarball (SunOS 5.8)</a>
-<li><a href="/gmsh/bin/gmsh-1.41.0-AIX.tgz">IBM tarball (AIX)</a>
-<li><a href="/gmsh/bin/gmsh-1.41.0-IRIX.tgz">SGI IRIX tarball (IRIX 6.5)</a>
-<li><a href="/gmsh/bin/gmsh-1.41.0-HP-UX.tgz">HP tarball (HPUX 10.20)</a>
--->
 </ul>
+
 <p>
 Older versions are still available <A href="/gmsh/bin/">here</a>.
 
@@ -232,22 +222,51 @@ variable in order for Gmsh to find the libraries.
 <p>
 <a name="build-footnote"></a><a
 href="#build-footmark"><sup>2</sup></a>You need the <a
-href="http://sources.redhat.com/gsl/">GSL</a> and <a
-href="http://www.fltk.org/">FLTK (1.1.x)</a> libraries and header
-files properly installed on your system in order to compile
-Gmsh. Non-graphical versions can be compiled without FLTK. Compiling
-the Windows version requires <a
-href="http://www.cygwin.com">Cygwin</a>.
+href="http://sources.redhat.com/gsl/">GSL (> 1.2)</a> and <a
+href="http://www.fltk.org/">FLTK (1.1.x)</a> libraries properly
+installed on your system in order to compile Gmsh. Non-graphical
+versions can be compiled without FLTK. Compiling the Windows version
+requires the <a href="http://www.cygwin.com">Cygwin</a> tools and
+compilers.
 
-<h2><a name="Credits"></a>Credits</h2>
+<h2><a name="Authors"></a>Authors and credits</h2>
 
-Gmsh is developed by <a HREF="mailto:remacle@gce.ucl.ac.be">Jean-François Remacle</a>
-(currently with the <a href="http://www.ucl.ac.be">Catholic University of Louvain</a>)
-and <a HREF="mailto:geuzaine@acm.caltech.edu">Christophe Geuzaine</a>
-(currently with the <a href="http://www.caltech.edu">California Institute of Technology</a>).
-Please use <a HREF="mailto:gmsh@geuz.org">gmsh@geuz.org</a> instead of our personal
-e-mails to send questions or bug reports.
+Gmsh is developed by <a
+HREF="mailto:remacle@gce.ucl.ac.be">Jean-François Remacle</a>
+(currently with the <a href="http://www.ucl.ac.be">Catholic University
+of Louvain</a>) and <a
+HREF="mailto:geuzaine@acm.caltech.edu">Christophe Geuzaine</a>
+(currently with the <a href="http://www.caltech.edu">California
+Institute of Technology</a>). The <a
+href="doc/CONTRIBUTORS">CONTRIBUTORS file</a> has more information.
+<p>
+Please use <a HREF="mailto:gmsh@geuz.org">gmsh@geuz.org</a> instead of
+our personal e-mails to send questions or bug reports. 
 
+<h2><a name="Licensing"></a>Copyright and licensing</h2>
+
+Gmsh is copyright (C) 1997-2003 by C. Geuzaine and J.-F. Remacle and
+is is distributed under the terms of the <a
+href="http://www.gnu.org/copyleft/gpl.html">GNU General Public License
+(GPL)</a>.
+
+<p>
+In short, this means that everyone is free to use Gmsh and to
+redistribute it on a free basis. Gmsh is not in the public domain,
+though. It is copyrighted and there are restrictions on its
+distribution (see the <a
+href="http://www.gnu.org/copyleft/gpl.html">license</a> and the <a
+href="http://www.gnu.org/copyleft/gpl-faq.html">FAQ</a>). For example,
+you cannot integrate this version of Gmsh (in full or in parts) in any
+closed-source software you plan to distribute (commercially or not).
+<!--
+<p>
+If you want to integrate Gmsh into a closed-source software, or want
+to sell a modified closed-source version of Gmsh, please contact us in
+person. We sell a version of Gmsh under a different license, with "no
+strings attached" (for example allowing you to take parts of Gmsh and
+integrate them into your own commercial, closed-source software).
+-->
 
 <h2><a name="Screenshots"></a>Screenshots</h2>
 
