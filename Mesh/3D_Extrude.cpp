@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.34 2001-08-15 07:00:44 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.35 2001-08-15 08:16:30 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -102,6 +102,15 @@ List_T* getnxl(Vertex *v, int dim){
 
   Msg(GERROR, "Could not find extruded list for vertex %d", v->Num);
   return 0;
+}
+
+void Free_ExtrudedPoints(List_T* Extruded_Points){
+  nxl *NXL;
+  for(int i=0; i<List_Nbr(Extruded_Points); i++){
+    NXL = (nxl*)List_Pointer(Extruded_Points, i);
+    List_Delete(NXL->List);
+  }
+  List_Delete(Extruded_Points);
 }
 
 typedef struct{
@@ -804,7 +813,7 @@ int Extrude_Mesh (Volume * v){
 }
 
 int Extrude_Mesh (Tree_T * Volumes){
-  int i, j, doit=0, reco=0;
+  int i, j, extrude=0, recombine=0;
   Surface *s;
   Vertex *v1;
   List_T *list;
@@ -812,14 +821,16 @@ int Extrude_Mesh (Tree_T * Volumes){
   InitExtrude ();
   DIM = 3;
 
+  Msg(STATUS2, "Mesh 3D... (initial)");
+
   List_T *vol = Tree2List(Volumes);
 
   for (int ivol = 0; ivol < List_Nbr(vol); ivol++){
     List_Read(vol, ivol, &THEV);
     ep = THEV->Extrude;
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY){
-      doit = 1;
-      if(ep->mesh.Recombine) reco = 1;
+      extrude = 1;
+      if(ep->mesh.Recombine) recombine = 1;
       for (i = 0; i < List_Nbr (THEV->Surfaces); i++){
 	List_Read (THEV->Surfaces, i, &s);
 	list = Tree2List (s->Vertices);
@@ -831,7 +842,7 @@ int Extrude_Mesh (Tree_T * Volumes){
       }
     }
   }
-  if(!doit) return false;
+  if(!extrude) return false;
 
   for (int ivol = 0; ivol < List_Nbr (vol); ivol++){
     List_Read(vol, ivol, &THEV);
@@ -839,11 +850,14 @@ int Extrude_Mesh (Tree_T * Volumes){
     NUM = THEV->Num;
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY){
       s = FindSurface (ep->geo.Source, THEM);
-      if(s) Extrude_Surface1 (s);
+      if(s){
+	Msg(STATUS3, "Meshing Volume %d", NUM);
+	Extrude_Surface1 (s);
+      }
     }
   }
-    
-  if(!reco){
+
+  if(!recombine){
     j = 0;
     do{
       TEST_IS_ALL_OK=0;
@@ -857,14 +871,16 @@ int Extrude_Mesh (Tree_T * Volumes){
 	  if(s) Extrude_Surface2 (s);
 	}
       }
-      Msg(INFO, "%d swaps", TEST_IS_ALL_OK);
+      Msg(STATUS3, "Swapping %d", TEST_IS_ALL_OK); 
       if(TEST_IS_ALL_OK == j){
-	Msg(GERROR, "Unable to swap all edges: try Recombine...");
+	if(j) Msg(GERROR, "Unable to swap all edges: try Recombine...");
 	break;
       }
       j = TEST_IS_ALL_OK;
     }while(TEST_IS_ALL_OK);
   }
+
+  Msg(STATUS2, "Mesh 3D... (Final)"); 
 
   for (int ivol = 0; ivol < List_Nbr (vol); ivol++){
     List_Read(vol, ivol, &THEV);
@@ -872,7 +888,10 @@ int Extrude_Mesh (Tree_T * Volumes){
     NUM = THEV->Num;
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY){
       s = FindSurface (ep->geo.Source, THEM);
-      if(s) Extrude_Surface3 (s);
+      if(s){
+	Msg(STATUS3, "Meshing Volume %d", NUM);
+	Extrude_Surface3 (s);
+      }
     }
   }
 
@@ -880,7 +899,8 @@ int Extrude_Mesh (Tree_T * Volumes){
   for (int ivol = 0; ivol < List_Nbr (vol); ivol++){
     List_Read(vol, ivol, &THEV);
     ep = THEV->Extrude;
-    if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY){
+    if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY && 
+       !ep->mesh.Recombine){
       for (i = 0; i < List_Nbr (THEV->Surfaces); i++){
 	List_Read(THEV->Surfaces, i, &s);
 	if(!List_Search(list, &s, compareSurface))
@@ -894,6 +914,7 @@ int Extrude_Mesh (Tree_T * Volumes){
     Tree_Action(s->Simplexes, Free_NegativeSimplex);
     Tree_Delete(s->Simplexes);
     s->Simplexes = tmp;
+    Msg(STATUS3, "Coherence Surface %d", s->Num);
     Extrude_Mesh(s);
   }
 

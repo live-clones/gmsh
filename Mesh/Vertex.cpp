@@ -1,4 +1,4 @@
-// $Id: Vertex.cpp,v 1.8 2001-06-06 15:30:18 remacle Exp $
+// $Id: Vertex.cpp,v 1.9 2001-08-15 08:16:30 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Vertex.h"
@@ -80,7 +80,12 @@ void Delete_Vertex ( Vertex *pV )
     {
       List_Delete(pV->ListSurf);
       List_Delete(pV->ListCurves);
-      List_Delete(pV->Extruded_Points);
+      if(CTX.mesh.oldxtrude){//old automatic extrusion algorithm
+	List_Delete(pV->Extruded_Points);
+      }
+      else{
+	Free_ExtrudedPoints(pV->Extruded_Points);
+      }
       delete pV;
     }
 }

@@ -420,7 +420,9 @@ void Maillage_Volume (void *data, void *dum);
 int Extrude_Mesh (Curve * c);
 int Extrude_Mesh (Surface * s);
 int Extrude_Mesh (Volume * v);
+int Extrude_Mesh (Tree_T * Volumes);
 void ExitExtrude();
+void Extrude_Mesh_Old(Mesh *M);
 
 int MeshTransfiniteSurface (Surface *sur);
 int MeshTransfiniteVolume (Volume *vol);

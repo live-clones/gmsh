@@ -35,5 +35,6 @@ int comparePosition (const void *a, const void *b);
 Vertex *Create_Vertex (int Num, double X, double Y, double Z, double lc, double u);
 void Delete_Vertex ( Vertex *pV );
 void Free_Vertex (void *a, void *b);
+void Free_ExtrudedPoints(List_T* Extruded_Points);
 
 #endif
