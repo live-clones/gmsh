@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Shewchuk.cpp,v 1.1 2001-08-20 07:38:30 geuzaine Exp $
+// $Id: 2D_Mesh_Shewchuk.cpp,v 1.2 2001-08-21 06:21:47 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -17,36 +17,42 @@ extern "C" {
 extern int         CurrentNodeNumber;
 extern Context_T   CTX;
 
-void AddInMesh(Surface *sur, struct triangulateio *io){
+void AddInMesh(Surface *sur, Vertex **vertexbound,
+	       struct triangulateio *in,
+	       struct triangulateio *out){
   int i;
   Vertex **vtable;
   Simplex *s;
 
   Msg(INFO, "Converting...");
 
-  vtable = (Vertex**) Malloc(io->numberofpoints*sizeof(Vertex*));
+  vtable = (Vertex**) Malloc(out->numberofpoints*sizeof(Vertex*));
 
-  for (i = 0; i < io->numberofpoints; i++) {
+  for (i = 0; i < in->numberofpoints; i++) vtable[i] = vertexbound[i];
+  Free(vertexbound);
+  
+  for (i = in->numberofpoints; i < out->numberofpoints; i++) {
     vtable[i] = Create_Vertex (++CurrentNodeNumber, 
-			       io->pointlist[i * 2], io->pointlist[i * 2 + 1], 0.0, 
-			       io->pointattributelist[i], 0.0);
+			       out->pointlist[i * 2], out->pointlist[i * 2 + 1], 0.0, 
+			       out->pointattributelist[i], 0.0);
     Tree_Add (sur->Vertices, &vtable[i]);
   }
 
-  Free(io->pointlist);
-  Free(io->pointattributelist);
+  Free(out->pointlist);
+  Free(out->pointattributelist);
 
-  for (i = 0; i < io->numberoftriangles; i++) {
-    s = Create_Simplex(vtable[io->trianglelist[i * io->numberofcorners + 0]],
-		       vtable[io->trianglelist[i * io->numberofcorners + 1]],		
-		       vtable[io->trianglelist[i * io->numberofcorners + 2]],
+  for (i = 0; i < out->numberoftriangles; i++) {
+    s = Create_Simplex(vtable[out->trianglelist[i * out->numberofcorners + 0]],
+		       vtable[out->trianglelist[i * out->numberofcorners + 1]],		
+		       vtable[out->trianglelist[i * out->numberofcorners + 2]],
 		       NULL);
+    s->iEnt = sur->Num;
     Tree_Add (sur->Simplexes, &s);
   }
   
   Free(vtable);
-  Free(io->trianglelist);
-  Free(io->triangleattributelist);
+  Free(out->trianglelist);
+  Free(out->triangleattributelist);
 
   Msg(INFO, "...Done");
 }
@@ -74,7 +80,7 @@ int Mesh_Shewchuk(Surface *s){
   int i, j, k, l, NbPts=0, first;
   double val;
   List_T *list;
-  Vertex *v;
+  Vertex *v, **vtable;
   struct triangulateio in, mid, out;
 
   for (i = 0; i < List_Nbr (s->Contours); i++){
@@ -84,6 +90,7 @@ int Mesh_Shewchuk(Surface *s){
 
   in.numberofpoints = NbPts;
   in.pointlist = (REAL *) Malloc(in.numberofpoints * 2 * sizeof(REAL));
+  vtable = (Vertex**) Malloc(in.numberofpoints*sizeof(Vertex*));
   in.numberofpointattributes = 1;
   in.pointattributelist = (REAL *) Malloc(in.numberofpoints *
                                           in.numberofpointattributes *
@@ -104,6 +111,7 @@ int Mesh_Shewchuk(Surface *s){
       in.pointlist[k] = v->Pos.X;
       in.pointlist[k+1] = v->Pos.Y;
       in.pointattributelist[l] = v->lc;
+      vtable[l] = v;
       in.segmentlist[k] = l;
       in.segmentlist[k+1] = (j==List_Nbr(list)-1)? (first) : (l+1);
       in.segmentmarkerlist[l] = i;
@@ -139,14 +147,6 @@ int Mesh_Shewchuk(Surface *s){
   // triangulate the points with minimum angle > 20 deg, with no boundary breaking
 
   triangulate("pqzY" OPT, &in, &mid, NULL);
-
-  Free(in.pointlist);
-  Free(in.pointattributelist);
-  Free(in.pointmarkerlist);
-  Free(in.regionlist);
-  Free(in.segmentlist);
-  Free(in.segmentmarkerlist);
-  Free(in.holelist);
 
   //AddInMesh(s, &mid); return 0;
 
@@ -189,7 +189,16 @@ int Mesh_Shewchuk(Surface *s){
   Free(mid.trianglearealist);
   Free(mid.segmentlist);
   Free(mid.segmentmarkerlist);
-  AddInMesh(s, &out);
+
+  AddInMesh(s, vtable, &in, &out);
+
+  Free(in.pointlist);
+  Free(in.pointattributelist);
+  Free(in.pointmarkerlist);
+  Free(in.regionlist);
+  Free(in.segmentlist);
+  Free(in.segmentmarkerlist);
+  Free(in.holelist);
 
   return 0;
 
