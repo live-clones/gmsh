@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.72 2005-03-01 17:47:54 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.73 2005-03-13 17:58:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -69,6 +69,19 @@ void FixWindowsPath(char *in, char *out){
 #else
   strcpy(out, in);
 #endif
+}
+
+void SplitFileName(char *name, char *base, char *ext)
+{
+  strcpy(base, name);
+  strcpy(ext, "");
+  for(int i = strlen(name)-1; i >= 0; i--){
+    if(name[i] == '.'){
+      strcpy(ext, &name[i]);
+      base[i] = '\0';
+      break;
+    }
+  }
 }
 
 void SetBoundingBox(double xmin, double xmax,
@@ -264,9 +277,24 @@ void ParseString(char *str)
   }
 }
 
+void SetProjectName(char *name)
+{
+  char base[356], ext[256];
+  SplitFileName(name, base, ext);
+
+  strncpy(CTX.filename, name, 255);
+  strncpy(CTX.base_filename, base, 255);
+  strncpy(THEM->name, CTX.base_filename, 255);
+
+#if defined(HAVE_FLTK)
+  if(!CTX.batch)
+    WID->set_title(CTX.filename);
+#endif
+}
+
 int MergeProblem(char *name, int warn_if_missing)
 {
-  char ext[5], tmp[256];
+  char ext[256], base[256], tmp[256];
   int status;
   FILE *fp;
 
@@ -276,13 +304,25 @@ int MergeProblem(char *name, int warn_if_missing)
     return 0;
   }
 
-  if(strlen(name) > 4) {
-    strncpy(ext, &name[strlen(name) - 4], 5);
-  }
-  else {
-    strcpy(ext, "");
-  }
+  SplitFileName(name, base, ext);
 
+#if defined(HAVE_FLTK)
+  if(!CTX.batch) {
+    if(!strcmp(ext, ".gz")) {
+      // the real solution would be to rewrite all our I/O functions in
+      // terms of gzFile, but until then, this is better than nothing
+      if(fl_ask("File '%s' is in gzip format.\n\nDo you want to uncompress it?", name)){
+	fclose(fp);
+	sprintf(tmp, "gunzip -c %s > %s", name, base);
+	SystemCall(tmp);
+	if(!strcmp(CTX.filename, name)) // this is the project file
+	  SetProjectName(base);
+	return MergeProblem(base);
+      }
+    }
+  }
+#endif
+  
   if(!strcmp(ext, ".ppm") || !strcmp(ext, ".pnm")) {
     // An image file is used as an input, we transform it onto a post
     // pro file that could be used as a background mesh. We should
@@ -335,8 +375,6 @@ int MergeProblem(char *name, int warn_if_missing)
 
 void OpenProblem(char *name)
 {
-  char ext[6];
-
   if(CTX.threads_lock) {
     Msg(INFO, "I'm busy! Ask me that later...");
     return;
@@ -349,34 +387,9 @@ void OpenProblem(char *name)
   // Initialize pseudo random mesh generator to the same seed
   srand(1);
 
-  strncpy(CTX.filename, name, 255);
-  strncpy(CTX.base_filename, name, 255);
+  SetProjectName(name);
 
-  if(strlen(name) > 4) {
-    strncpy(ext, &name[strlen(name) - 4], 5);
-  }
-  else {
-    strcpy(ext, "");
-  }
-
-  if(!strcmp(ext, ".geo") || !strcmp(ext, ".GEO") ||
-     !strcmp(ext, ".msh") || !strcmp(ext, ".MSH") ||
-     !strcmp(ext, ".stl") || !strcmp(ext, ".STL") ||
-     !strcmp(ext, ".sms") || !strcmp(ext, ".SMS") ||
-     !strcmp(ext, ".ppm") || !strcmp(ext, ".PPM") ||
-     !strcmp(ext, ".pnm") || !strcmp(ext, ".PNM") ||
-     !strcmp(ext, ".pos") || !strcmp(ext, ".POS")) {
-    CTX.base_filename[strlen(name) - 4] = '\0';
-  }
-
-  strncpy(THEM->name, CTX.base_filename, 255);
-
-#if defined(HAVE_FLTK)
-  if(!CTX.batch)
-    WID->set_title(CTX.filename);
-#endif
-
-  int status = MergeProblem(CTX.filename);
+  int status = MergeProblem(name);
 
   ApplyLcFactor(THEM);
 

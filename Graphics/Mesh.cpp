@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.122 2005-03-12 07:52:56 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.123 2005-03-13 17:58:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -140,11 +140,15 @@ void Draw_Mesh(Mesh * M)
   if(CTX.render_mode == GMSH_SELECT)
     return;
 
-  // draw the bounding box of the mesh if we are in fast redraw mode
-  // and there is no geometry
- 
-  if((CTX.draw_bbox && (Tree_Nbr(M->Vertices) || Tree_Nbr(M->Points))) ||
-     (!CTX.mesh.draw && Tree_Nbr(M->Vertices) && !Tree_Nbr(M->Points))) {
+  // draw the bounding box if we asked for it and we have a geometry
+  // or a mesh, or if we are in fast redraw mode and there is no
+  // geometry but there is a mesh
+  
+  int somegeo = 
+    Tree_Nbr(M->Points) || Tree_Nbr(M->Curves) || Tree_Nbr(M->Surfaces);
+
+  if((CTX.draw_bbox && (somegeo || Tree_Nbr(M->Vertices))) ||
+     (!CTX.mesh.draw && !somegeo && Tree_Nbr(M->Vertices))) {
     glColor4ubv((GLubyte *) & CTX.color.fg);
     glLineWidth(CTX.line_width);
     gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
@@ -198,6 +202,8 @@ void Draw_Mesh(Mesh * M)
 			      CTX.mesh.cut_planec, CTX.mesh.cut_planed);
   }
 
+  // draw the axes
+
   if(CTX.axes){
     glColor4ubv((GLubyte *) & CTX.color.axes);
     glLineWidth(CTX.line_width);
@@ -206,7 +212,7 @@ void Draw_Mesh(Mesh * M)
       Draw_Axes(CTX.axes, CTX.axes_tics, CTX.axes_format, CTX.axes_label, 
 		CTX.axes_position);
     }
-    else if(Tree_Nbr(M->Vertices) || Tree_Nbr(M->Points)){
+    else if(somegeo || Tree_Nbr(M->Vertices)){
       double bb[6] = { CTX.min[0], CTX.max[0],
 		       CTX.min[1], CTX.max[1],
 		       CTX.min[2], CTX.max[2] };

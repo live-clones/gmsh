@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.346 2005-03-12 20:17:41 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.347 2005-03-13 17:58:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -501,7 +501,7 @@ void file_new_cb(CALLBACK_ARGS)
     char *name = file_chooser_get_name(1);
     struct stat buf;
     if(!stat(name, &buf)){
-      if(fl_ask("%s already exists.\n\nDo you want to erase it?", name))
+      if(fl_ask("File '%s' already exists.\n\nDo you want to erase it?", name))
 	unlink(name);
       else
 	goto test;
@@ -740,7 +740,7 @@ void file_save_as_cb(CALLBACK_ARGS)
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(!fl_ask("%s already exists.\n\nDo you want to replace it?", name))
+        if(!fl_ask("File '%s' already exists.\n\nDo you want to replace it?", name))
           goto test;
     }
     i = file_chooser_get_filter();
@@ -761,7 +761,7 @@ void file_rename_cb(CALLBACK_ARGS)
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(!fl_ask("%s already exists.\n\nDo you want to replace it?", name))
+        if(!fl_ask("File '%s' already exists.\n\nDo you want to replace it?", name))
           goto test;
     }
     rename(CTX.filename, name);
@@ -1216,7 +1216,7 @@ void message_save_cb(CALLBACK_ARGS)
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(!fl_ask("%s already exists.\n\nDo you want to replace it?", name))
+        if(!fl_ask("File '%s' already exists.\n\nDo you want to replace it?", name))
           goto test;
     }
     WID->save_message(name);
@@ -3246,7 +3246,7 @@ static void _view_save_as(int view_num, char *title, int type)
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(!fl_ask("%s already exists.\n\nDo you want to replace it?", name))
+        if(!fl_ask("File '%s' already exists.\n\nDo you want to replace it?", name))
           goto test;
     }
     WriteView(v, name, type, 0);
