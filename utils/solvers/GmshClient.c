@@ -1,4 +1,4 @@
-/* $Id: GmshClient.c,v 1.6 2004-12-06 06:54:32 geuzaine Exp $ */
+/* $Id: GmshClient.c,v 1.7 2004-12-06 07:13:47 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
  *
@@ -25,6 +25,9 @@
  * OF THIS SOFTWARE.
  * 
  *  Please report all bugs and problems to <gmsh@geuz.org>.
+ *
+ * Contributor(s):
+ *   Christopher Stott
  */
 
 #include <stdio.h>

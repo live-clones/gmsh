@@ -1,4 +1,4 @@
-/* $Id: GmshServer.cpp,v 1.19 2004-12-06 06:54:32 geuzaine Exp $ */
+/* $Id: GmshServer.cpp,v 1.20 2004-12-06 07:13:47 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
  *
@@ -25,6 +25,9 @@
  * OF THIS SOFTWARE.
  * 
  *  Please report all bugs and problems to <gmsh@geuz.org>.
+ *
+ * Contributor(s):
+ *   Christopher Stott
  */
 
 // This is a hacked version using the Gmsh function SystemCall()
