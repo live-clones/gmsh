@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2003  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.59 2003-01-23 20:23:46 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.60 2003-01-30 18:22:37 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -791,7 +791,7 @@ GLint gl2psCheckPrimitive(GL2PSprimitive *prim, GL2PSplane plane){
 }
 
 GL2PSprimitive* gl2psCreateSplitPrimitive2D(GL2PSprimitive *parent,
-                                            GLint numverts,
+                                            GLshort numverts,
 					    GL2PSvertex *vertx){
   GLint i;
   GL2PSprimitive *child = (GL2PSprimitive*)gl2psMalloc(sizeof(GL2PSprimitive));
@@ -1029,8 +1029,8 @@ void gl2psBuildPolygonBoundary(GL2PSbsptree *tree){
 
 void gl2psAddPolyPrimitive(GLshort type, GLshort numverts, 
 			   GL2PSvertex *verts, GLint offset, 
-			   GLshort dash, GLfloat width,
-			   GLshort boundary){
+			   char dash, GLfloat width,
+			   char boundary){
   GLshort i;
   GLfloat factor, units, area, dZ, dZdX, dZdY, maxdZ;
   GL2PSprimitive *prim;
@@ -1133,8 +1133,9 @@ GLint gl2psGetVertex(GL2PSvertex *v, GLfloat *p){
 }
 
 GLint gl2psParseFeedbackBuffer(void){
+  char flag, dash = 0;
+  GLshort boundary;
   GLint i, used, count, v, vtot, offset = 0;
-  GLshort boundary, flag, dash = 0;
   GLfloat lwidth = 1., psize = 1.;
   GLfloat *current;
   GL2PSvertex vertices[3];
@@ -1501,7 +1502,7 @@ void gl2psPrintPostScriptColor(GL2PSrgba rgba){
   }
 }
 
-void gl2psResetPostScriptColor(){
+void gl2psResetPostScriptColor(void){
   gl2ps->lastrgba[0] = gl2ps->lastrgba[1] = gl2ps->lastrgba[2] = -1.;
 }
 
@@ -1794,7 +1795,7 @@ GL2PSDLL_API GLint gl2psEndPage(void){
   return res;
 }
 
-GL2PSDLL_API void gl2psText(const char *str, const char *fontname, GLint fontsize){
+GL2PSDLL_API void gl2psText(const char *str, const char *fontname, GLshort fontsize){
   GLfloat pos[4];
   GL2PSprimitive *prim;
   GLboolean valid;

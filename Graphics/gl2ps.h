@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2003  Christophe Geuzaine
  *
- * $Id: gl2ps.h,v 1.34 2003-01-23 20:23:46 geuzaine Exp $
+ * $Id: gl2ps.h,v 1.35 2003-01-30 18:22:38 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -55,7 +55,7 @@
 #endif
 
 
-#define GL2PS_VERSION                    0.72
+#define GL2PS_VERSION                    0.73
 #define GL2PS_NONE                       0
 
 /* Output file format */
@@ -207,7 +207,7 @@ GL2PSDLL_API void  gl2psBeginPage(const char *title, const char *producer,
 				  GL2PSrgba *colormap, GLint buffersize, 
 				  FILE *stream, const char *filename);
 GL2PSDLL_API GLint gl2psEndPage(void);
-GL2PSDLL_API void  gl2psText(const char *str, const char *fontname, GLint size);
+GL2PSDLL_API void  gl2psText(const char *str, const char *fontname, GLshort fontsize);
 GL2PSDLL_API void  gl2psEnable(GLint mode);
 GL2PSDLL_API void  gl2psDisable(GLint mode);
 GL2PSDLL_API void  gl2psPointSize(GLfloat value);
