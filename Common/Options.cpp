@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.41 2001-08-23 17:19:02 geuzaine Exp $
+// $Id: Options.cpp,v 1.42 2001-08-23 18:03:45 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1820,14 +1820,14 @@ double opt_view_smooth_normals(OPT_ARGS_NUM){
 double opt_view_angle_smooth_normals(OPT_ARGS_NUM){
   GET_VIEW(0.) ;
   if(action & GMSH_SET){
-    v->angle_smooth_normals = val;
+    v->AngleSmoothNormals = val;
     v->Changed = 1;
   }
-//  #ifdef _FLTK
-//    if(WID && (action & GMSH_GUI) && (num == WID->view_number))
-//      WID->view_butt[27]->value(v->SmoothNormals);
-//  #endif
-  return v->angle_smooth_normals;
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+    WID->view_value[13]->value(v->AngleSmoothNormals);
+#endif
+  return v->AngleSmoothNormals;
 }
 double opt_view_show_element(OPT_ARGS_NUM){
   GET_VIEW(0.) ;

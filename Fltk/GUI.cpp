@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.109 2001-08-20 07:38:29 geuzaine Exp $
+// $Id: GUI.cpp,v 1.110 2001-08-23 18:03:45 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1993,6 +1993,16 @@ void GUI::create_view_options_window(int num){
 	view_butt[27]->selection_color(FL_YELLOW);
 	view_butt[27]->callback(set_changed_cb, 0);
 
+	view_value[13] = new Fl_Value_Input(2*WB, 2*WB+9*BH, IW, BH, "Angle");
+	view_value[13]->labelsize(CTX.fontsize);
+	view_value[13]->textsize(CTX.fontsize);
+	view_value[13]->type(FL_HORIZONTAL);
+	view_value[13]->align(FL_ALIGN_RIGHT);
+	view_value[13]->minimum(0.); 
+	view_value[13]->step(1.); 
+	view_value[13]->maximum(180.); 
+	view_value[13]->callback(set_changed_cb, 0);
+
 	view_value[11] = new Fl_Value_Input(width/2, 2*WB+ 1*BH, IW, BH, "Boundary");
 	view_value[11]->labelsize(CTX.fontsize);
 	view_value[11]->textsize(CTX.fontsize);
@@ -2300,6 +2310,7 @@ void GUI::update_view_window(int num){
   // light
   opt_view_light(num, GMSH_GUI, 0);
   opt_view_smooth_normals(num, GMSH_GUI, 0);
+  opt_view_angle_smooth_normals(num, GMSH_GUI, 0);
 
   // OK
   view_ok->callback(view_options_ok_cb, (void*)num);

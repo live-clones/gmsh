@@ -30,7 +30,7 @@ class Post_View{
   double CustomMin, CustomMax;
   double Offset[3], Raise[3], ArrowScale, Explode;
   int Visible, IntervalsType, NbIso, Light, SmoothNormals ;
-  double angle_smooth_normals;
+  double AngleSmoothNormals;
   int SaturateValues;
   int ShowElement, ShowTime, ShowScale;
   int TransparentScale, ScaleType, RangeType;

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.52 2001-08-23 17:19:03 geuzaine Exp $
+// $Id: Views.cpp,v 1.53 2001-08-23 18:03:45 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -403,7 +403,7 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   dest->NbIso = src->NbIso;
   dest->Light = src->Light ;
   dest->SmoothNormals = src->SmoothNormals ;
-  dest->angle_smooth_normals = src->angle_smooth_normals ;
+  dest->AngleSmoothNormals = src->AngleSmoothNormals ;
   dest->ShowElement = src->ShowElement;
   dest->ShowTime = src->ShowTime;
   dest->ShowScale = src->ShowScale;
@@ -662,7 +662,6 @@ public:
   static double eps;
   void update (int nbVals, double *);
   xyzv(double x, double y, double z);
-  xyzv(double x, double y, double z, double* v);
   ~xyzv();
   xyzv & operator = ( const xyzv &);
   xyzv ( const xyzv &);
@@ -672,9 +671,6 @@ double xyzv::eps = 0.0;
 
 xyzv::xyzv (double xx, double yy, double zz) 
   : x(xx),y(yy),z(zz),vals(0),nbvals(0),nboccurences(0){}
-
-xyzv::xyzv (double xx, double yy, double zz, double *vv) 
-  : x(xx),y(yy),z(zz),vals(vv),nbvals(0),nboccurences(0){}
 
 xyzv::~xyzv(){
   if(vals)delete [] vals;
@@ -727,12 +723,6 @@ void xyzv::update (int n, double *v){
   //printf("val(%d,%f,%f,%f) = %f\n",nboccurences,x,y,z,vals[0]);
 }
 
-// trop simple... If faudrait coder une structure qui tient compte des
-// angles entres normales, qui ne smoothe que si p1.val est "proche"
-// (eps2) de p2.val, et qui renvoie le xyzv qui a le xyz dans eps ET
-// val eps2... Sinon, pour un smoothing de normales, les "coins"
-// deviennent de la bouillie.
-/*
 struct lessthanxyzv{
   bool operator () (const xyzv & p2, const xyzv &p1) const{
     if( p1.x - p2.x > xyzv::eps)return true;
@@ -741,37 +731,6 @@ struct lessthanxyzv{
     if( p1.y - p2.y <-xyzv::eps)return false;
     if( p1.z - p2.z > xyzv::eps)return true;
     return false;  
-  }
-};
-*/
-
-double angle_normals (double * aa, double * bb){ 
- double angplan, cosc, sinc, a[3],b[3],c[3];
-  if(!aa || !bb) return 0.;
-  a[0] = aa[0];
-  a[1] = aa[1];
-  a[2] = aa[2];
-  b[0] = bb[0];
-  b[1] = bb[1];
-  b[2] = bb[2];
-  norme (a);
-  norme (b);
-  prodve (a, b, c);
-  prosca (a, b, &cosc);
-  sinc = sqrt (c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
-  angplan = myatan2 (sinc, cosc);
-  return angplan*180./Pi;
-}
-
-struct lessthanxyzv{
-  bool operator () (const xyzv & p2, const xyzv &p1) const{
-    if( p1.x - p2.x > xyzv::eps)return true;
-    if( p1.x - p2.x <-xyzv::eps)return false;
-    if( p1.y - p2.y > xyzv::eps)return true;
-    if( p1.y - p2.y <-xyzv::eps)return false;
-    if( p1.z - p2.z > xyzv::eps)return true;
-    if( p1.z - p2.z <-xyzv::eps)return false;
-    return false;
   }
 };
 
@@ -884,6 +843,23 @@ void Post_View :: add_normal(double x, double y, double z,
   }
 }
 
+double get_angle (double * aa, double * bb){ 
+ double angplan, cosc, sinc, a[3],b[3],c[3];
+  if(!aa || !bb) return 0.;
+  a[0] = aa[0];
+  a[1] = aa[1];
+  a[2] = aa[2];
+  b[0] = bb[0];
+  b[1] = bb[1];
+  b[2] = bb[2];
+  norme (a);
+  norme (b);
+  prodve (a, b, c);
+  prosca (a, b, &cosc);
+  sinc = sqrt (c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
+  angplan = myatan2 (sinc, cosc);
+  return angplan*180./Pi;
+}
 
 bool Post_View :: get_normal(double x, double y, double z, 
 			     double &nx, double &ny, double &nz){
@@ -896,9 +872,9 @@ bool Post_View :: get_normal(double x, double y, double z,
 
   if(it == normals->c.end()) return false;
 
-  double angle = angle_normals ((*it).vals, n);
+  double angle = get_angle ((*it).vals, n);
 
-  if(fabs(angle) < angle_smooth_normals)
+  if(fabs(angle) < AngleSmoothNormals)
     {
       nx = (*it).vals[0];
       ny = (*it).vals[1];

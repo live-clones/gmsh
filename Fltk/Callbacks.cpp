@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.81 2001-08-20 07:38:29 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.82 2001-08-23 18:03:45 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1858,6 +1858,9 @@ void view_options_ok_cb(CALLBACK_ARGS){
 
       if(force || WID->view_value[12]->changed())
 	opt_view_explode(i, GMSH_SET, WID->view_value[12]->value());
+
+      if(force || WID->view_value[13]->changed())
+	opt_view_angle_smooth_normals(i,GMSH_SET,WID->view_value[13]->value());
 
       // view_inputs
 
