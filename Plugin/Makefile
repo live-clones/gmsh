@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.53 2004-08-03 15:22:18 remacle Exp $
+# $Id: Makefile,v 1.54 2004-08-09 10:32:33 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -72,7 +72,10 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   CutMap.h Levelset.h CutGrid.h StreamLines.h CutPlane.h CutParametric.h \
   CutSphere.h Skin.h ../DataStr/Tree.h ../DataStr/avl.h Extract.h \
   Harmonic2Time.h DecomposeInSimplex.h Smooth.h Transform.h Triangulate.h \
-  SphericalRaise.h DisplacementRaise.h Evaluate.h
+  SphericalRaise.h DisplacementRaise.h StructuralSolver.h ../Geo/Geo.h \
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
+  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h Evaluate.h
 Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
@@ -136,6 +139,14 @@ DisplacementRaise.o: DisplacementRaise.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
   DisplacementRaise.h ../Common/Context.h ../Numeric/Numeric.h
+StructuralSolver.o: StructuralSolver.cpp StructuralSolver.h ../Geo/Geo.h \
+  ../DataStr/List.h ../Mesh/Mesh.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h \
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
+  ../Mesh/Matrix.h Plugin.h ../Common/Options.h ../Common/Message.h \
+  ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h \
+  ../DataStr/Tools.h ../Graphics/Draw.h
 Skin.o: Skin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h Skin.h \

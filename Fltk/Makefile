@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.55 2004-07-16 18:59:51 geuzaine Exp $
+# $Id: Makefile,v 1.56 2004-08-09 10:32:32 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -85,12 +85,12 @@ GUI.o: GUI.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Common/SmoothNormals.h ../Common/Gmsh.h ../DataStr/Malloc.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Common/GmshUI.h ../Numeric/Numeric.h ../Common/GmshVersion.h \
-  ../Common/Context.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ../Graphics/Draw.h GUI.h Opengl_Window.h Colorbar_Window.h Callbacks.h \
-  Bitmaps.h Win32Icon.h ../Parser/OpenFile.h ../Common/CommandLine.h \
-  Solvers.h
+  ../Common/Context.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h \
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
+  ../Mesh/Matrix.h ../Graphics/Draw.h GUI.h Opengl_Window.h \
+  Colorbar_Window.h Callbacks.h Bitmaps.h Win32Icon.h \
+  ../Parser/OpenFile.h ../Common/CommandLine.h Solvers.h
 Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
@@ -102,7 +102,8 @@ Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/Timer.h ../Graphics/CreateFile.h ../Parser/OpenFile.h \
   ../Common/CommandLine.h ../Common/Context.h ../Common/Options.h GUI.h \
   Opengl_Window.h Colorbar_Window.h Callbacks.h ../Plugin/Plugin.h \
-  ../Common/Visibility.h ../Geo/MinMax.h Solvers.h
+  ../Plugin/PluginManager.h ../Common/Visibility.h ../Geo/MinMax.h \
+  Solvers.h
 Opengl.o: Opengl.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \

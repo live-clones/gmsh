@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.70 2004-07-16 18:59:52 geuzaine Exp $
+# $Id: Makefile,v 1.71 2004-08-09 10:32:32 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -371,7 +371,7 @@ Element.o: Element.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Element.h Simplex.h \
   Face.h Edge.h ../Geo/ExtrudeParams.h STL.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h Metric.h Matrix.h
+  ../Common/SmoothNormals.h Metric.h Matrix.h ../Numeric/Numeric.h
 Simplex.o: Simplex.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \

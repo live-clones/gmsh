@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.61 2004-08-06 14:48:33 remacle Exp $
+# $Id: Makefile,v 1.62 2004-08-09 10:32:32 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -93,6 +93,7 @@ Geom.o: Geom.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
   ../Mesh/Matrix.h ../Mesh/Utils.h Draw.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/Context.h ../Mesh/Interpolation.h \
+  ../Plugin/Plugin.h ../Common/Options.h ../Plugin/PluginManager.h \
   gl2ps.h
 Post.o: Post.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \

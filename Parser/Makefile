@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.60 2004-07-16 18:59:52 geuzaine Exp $
+# $Id: Makefile,v 1.61 2004-08-09 10:32:33 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -83,11 +83,12 @@ OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h \
   ../Common/Context.h Parser.h OpenFile.h ../Common/CommandLine.h \
-  ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
-  ../Mesh/STL.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Geo/MinMax.h ../Common/Visibility.h \
-  ../Graphics/ReadImg.h ../Common/GmshUI.h ../Graphics/Draw.h \
-  ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h
+  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
+  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+  ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
+  ../Geo/MinMax.h ../Common/Visibility.h ../Graphics/ReadImg.h \
+  ../Common/GmshUI.h ../Graphics/Draw.h ../Fltk/GUI.h \
+  ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h
 FunctionManager.o: FunctionManager.cpp FunctionManager.h
