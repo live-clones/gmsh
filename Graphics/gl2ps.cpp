@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.75 2003-10-29 19:51:43 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.76 2003-10-29 23:45:24 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -176,8 +176,10 @@ size_t gl2psWriteBigEndianCompress(unsigned long data, size_t bytes){
 }
 
 int gl2psDeflate(){
-  return compress2(gl2ps->compress->dest, &gl2ps->compress->destLen, 
-		   gl2ps->compress->start, gl2ps->compress->srcLen, Z_BEST_COMPRESSION);
+  /* For compatibility with older zlib versions, we use compress(...)
+     instead of compress2(..., Z_BEST_COMPRESSION) */
+  return compress(gl2ps->compress->dest, &gl2ps->compress->destLen, 
+		  gl2ps->compress->start, gl2ps->compress->srcLen);  
 }
 
 #endif
