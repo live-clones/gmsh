@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.32 2003-04-19 16:34:44 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.33 2003-04-19 17:24:28 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -1112,8 +1112,9 @@ The following commands can be used anywhere in a Gmsh ASCII text input file:
 
 @item @var{string} = @var{expression};
 Defines a new expression identifier @var{string}, or affects
-@var{expression} to an existing expression identifier. Note that eight
-expression identifiers are predefined (hard coded in Gmsh's parser):
+@var{expression} to an existing expression identifier. Eight expression
+identifiers are predefined (hard coded in Gmsh's parser):
+
 @ftable @code
 @item Pi
 Returns 3.1415926535897932.
@@ -1703,10 +1704,10 @@ geometry module (@pxref{Geometry module}).
 
 If only elementary geometrical entities are defined (or if the option
 @code{Mesh.SaveAll} is set; see @ref{Mesh options}), the grid produced by
-the mesh will be saved ``as is''. That is, all the elements in the grid are
-saved to disk using the number of the elementary region they discretize as
-their region number (@pxref{Gmsh mesh file format}). However, this can
-sometimes be impractical or even insufficient:
+the mesh module will be saved ``as is''. That is, all the elements in the
+grid will be saved to disk using the number of the elementary region they
+discretize as their region number (@pxref{Gmsh mesh file format}). However,
+this can sometimes be impractical or even insufficient:
 
 @itemize @bullet
 @item
@@ -1729,7 +1730,7 @@ groups. If physical entities are defined, the output mesh only contains
 those elements that belong to physical entities. The introduction of such
 physical entities in large models usually greatly facilitates the
 manipulation of the model (e.g. using `Tools->Visibility' in the GUI) and
-the interfacing with external solvers. See @ref{t1.geo}, for an example.
+the interfacing with external solvers.
 
 @c -------------------------------------------------------------------------
 @c Mesh commands
@@ -1770,6 +1771,7 @@ options; see @ref{Running Gmsh} and @ref{Command-line options}).
 
 There are three main ways to specify the size of the mesh elements for a
 given geometry:
+
 @enumerate
 @item
 You can specify characteristic lengths at the points of the geometrical
@@ -1848,8 +1850,8 @@ extruded and has the following syntax:
 
 @example
 @var{layers}:
-  Layer @{ @{ @var{expression-list} @}, @{ @var{expression-list} @},
-          @{ @var{expression-list} @} @}; | Recombine;
+  Layer @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @} @}; |
+  Recombine;
 @end example
 
 The first @var{expression-list} defines how many elements should be created
@@ -1866,11 +1868,11 @@ into prisms, hexahedra or pyramids.
 
 @item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{layers}; @dots{} @};
 Extrudes both the geometry and the mesh using a rotation
-(@pxref{Extrusions}). The @var{layers} parameters are defined as above.
+(@pxref{Extrusions}). The @var{layers} option is defined as above.
 
 @item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{layers}; @dots{} @};
 Extrudes both the geometry and the mesh using a combined translation and
-rotation (@pxref{Extrusions}). The @var{layers} parameters are defined as
+rotation (@pxref{Extrusions}). The @var{layers} option is defined as
 above.
 
 @item Transfinite Line @{ @var{expression-list} @} = @var{expression} < Using Progression | Bump @var{expression} >
@@ -2101,12 +2103,13 @@ file format} and @ref{Gmsh binary post-processing file format}.
 General post-processing option names have the form
 @code{PostProcessing.@var{string}}. Options peculiar to post-processing
 views take two forms:
+
 @enumerate
 @item options that should apply to all views can be set through
 @code{View.@var{string}}, @emph{before any view is loaded};
 @item options that should apply only to the @var{n}-th
 view take the form @code{View[@var{n}].@var{string}} (@var{n} = 0, 1, 2,
-@dots{}).
+@dots{}), @emph{after the @var{n}-th view is loaded}.
 @end enumerate
 
 See @ref{t9.geo} for some examples.
@@ -2130,10 +2133,10 @@ See @ref{t9.geo} for some examples.
 @cindex Examples
 @cindex Tutorial
 
-Here are the examples in the Gmsh tutorial. These examples are commented
-(both C and C++-style comments can be used in Gmsh input files: see
-@ref{Comments}) and should introduce new features gradually, starting with
-@file{t1.geo}.
+Here are the examples in the Gmsh tutorial. These examples are commented and
+should introduce new features gradually, starting with @file{t1.geo}. The
+files corresponding to these examples are available in the @file{tutorial}
+directory of the Gmsh distribution.
 
 This tutorial does not explain the mesh and post-processing file
 formats. See @ref{File formats} for this.

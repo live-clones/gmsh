@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2003-04-15 21:49:43 geuzaine Exp $
+# $Id: Makefile,v 1.5 2003-04-19 17:24:28 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -33,6 +33,9 @@ html:
 	rm -f index.html
 	ln -s gmsh.html index.html
 
+html1:
+	./texi2html -prefix gmsh-full -init_file gmsh-full.t2h gmsh.texi
+
 html2:
 	makeinfo --html gmsh.texi
 
@@ -47,9 +50,11 @@ infoz: info
 	gtar zcvf gmsh-info.tgz gmsh.info*
 
 txt:
-	makeinfo --no-headers gmsh.texi > gmsh.txt
+	makeinfo --no-headers gmsh.texi |\
+        sed -n '/...Table of Contents.../,$$p' |\
+        sed 's/...Table of Contents...//' > gmsh.txt
 
-all: ps pdf html infoz txt
+all: ps pdf html html1 infoz txt
 
 clean:
 	rm -f *.cp* *.fn* *.ky* *.pg* *.tp* *.vr* *.mv*\
