@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.27 2000-12-29 10:27:00 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.28 2000-12-29 14:04:29 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -669,13 +669,21 @@ void CreateWidgets_FD(Widgets_T *w){
   w->FD.saveAsButt[9] = XmCreatePushButton(w->FD.saveAsPane[0], "MsaveAsButt9", arg, i);
   XtManageChild(w->FD.saveAsButt[9]);
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("PPM")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("GIF Dithered")); i++;
   w->FD.saveAsButt[10] = XmCreatePushButton(w->FD.saveAsPane[0], "MsaveAsButt10", arg, i);
   XtManageChild(w->FD.saveAsButt[10]);
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("UCB YUV")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("GIF Transparent")); i++;
   w->FD.saveAsButt[11] = XmCreatePushButton(w->FD.saveAsPane[0], "MsaveAsButt11", arg, i);
   XtManageChild(w->FD.saveAsButt[11]);
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("PPM")); i++;
+  w->FD.saveAsButt[12] = XmCreatePushButton(w->FD.saveAsPane[0], "MsaveAsButt12", arg, i);
+  XtManageChild(w->FD.saveAsButt[12]);
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("UCB YUV")); i++;
+  w->FD.saveAsButt[13] = XmCreatePushButton(w->FD.saveAsPane[0], "MsaveAsButt13", arg, i);
+  XtManageChild(w->FD.saveAsButt[13]);
 
   i=0;
   XtSetArg(arg[i], XmNsubMenuId, w->FD.saveAsPane[0]); i++;

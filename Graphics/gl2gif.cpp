@@ -1,4 +1,4 @@
-/* $Id: gl2gif.cpp,v 1.6 2000-12-29 10:27:00 geuzaine Exp $ */
+/* $Id: gl2gif.cpp,v 1.7 2000-12-29 14:04:28 geuzaine Exp $ */
 /* 
  * gl2gif: an OpenGL to GIF printing library
  *
@@ -1123,6 +1123,8 @@ void create_gif(FILE *outfile, int width, int height,
   /* This is stupid, but I couldn't figure out how to pack the data
    directly from the OpenGL frame buffer into unsigned long pixel[][] */
 
+  //printf("read buff : %g \n", Cpu());
+
   glPixelStorei(GL_PACK_ALIGNMENT,1);
   glPixelStorei(GL_UNPACK_ALIGNMENT,1);
   RedBuffer = (unsigned char *)Malloc(height*width*sizeof(unsigned char));
@@ -1146,6 +1148,8 @@ void create_gif(FILE *outfile, int width, int height,
   Free(RedBuffer);
   Free(GreenBuffer);
   Free(BlueBuffer);
+
+  //printf("start gif : %g \n", Cpu());
 
   /* Try to compute color histogram */
 
@@ -1350,6 +1354,8 @@ void create_gif(FILE *outfile, int width, int height,
 
   }
 
+  //printf("ok with colormap : %g \n", Cpu());
+
   /* We now have a colormap of maximum 256 colors */
 
   for ( i = 0; i < static_nbcolors; ++i ){
@@ -1394,6 +1400,8 @@ void create_gif(FILE *outfile, int width, int height,
   else
     transparent = -1 ;
 
+  //printf("ok with sort : %g \n", Cpu());
+
   /* All set, let's do it. */
   GIFEncode(outfile, width, height, interlace, 0, transparent, BitsPerPixel,
 	    static_red, static_green, static_blue, GetPixel );
@@ -1401,6 +1409,8 @@ void create_gif(FILE *outfile, int width, int height,
   for(i = 0 ; i<height ; i++)
     Free(static_pixels[i]);
   Free(static_pixels);
+
+  //printf("finished gif : %g \n", Cpu());
 
 }
 
