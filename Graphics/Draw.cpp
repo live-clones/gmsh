@@ -1,4 +1,4 @@
-/* $Id: Draw.cpp,v 1.8 2000-12-05 16:59:11 remacle Exp $ */
+/* $Id: Draw.cpp,v 1.9 2000-12-05 23:01:06 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -203,8 +203,8 @@ void InitShading(void){
   glEnable(GL_NORMALIZE);
   for(i = 0 ; i < 6 ; i++){
     if(CTX.light[i]){
-      glLightfv(GL_LIGHT0 + i, GL_POSITION, CTX.light_position[i]);
-      glEnable(GL_LIGHT0 + i );
+      glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, CTX.light_position[i]);
+      glEnable((GLenum)(GL_LIGHT0 + i));
     }
   }
 

@@ -1,4 +1,4 @@
-/* $Id: Mesh.cpp,v 1.10 2000-12-04 09:51:51 geuzaine Exp $ */
+/* $Id: Mesh.cpp,v 1.11 2000-12-05 23:01:06 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -61,7 +61,7 @@ void Draw_Mesh (Mesh *M) {
 
   for(i = 0 ; i < 6 ; i++)
     if(CTX.clip[i])
-      glClipPlane(GL_CLIP_PLANE0 + i, CTX.clip_plane[i]);
+      glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), CTX.clip_plane[i]);
 
   glPointSize(2);
   glLineWidth(1);

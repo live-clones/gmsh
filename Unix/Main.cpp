@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.19 2000-12-05 19:38:25 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.20 2000-12-05 23:01:06 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -62,7 +62,7 @@ char gmsh_help[]      =
   "  -nodb                 disable double buffering\n"
   "  -noov                 disable overlay visual\n"
   "  -alpha                enable alpha blending\n"
-  "  -notrack              use old interactive rotation mode\n"
+  "  -notrack              don't use trackball mode for rotations\n"
   "  -geometry geom        specify main window geometry\n"
   "  -viewport 9*float     specify rotation, translation and scale\n"
   "  -display disp         specify display\n"
