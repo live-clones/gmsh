@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.44 2004-12-24 23:10:26 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.45 2004-12-26 18:37:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -248,25 +248,25 @@ void Colorbar_Window::redraw_range(int a, int b)
     fl_draw("toggle RGB/HSV mode", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("left, right", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("move colormap", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("translate abscissa", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("Ctrl+left, Ctrl+right", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("rotate colormap", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("rotate abscissa", xx1, yy0 + (i + 1) * font_height);
+    i++;
+    fl_draw("i, Ctrl+i", xx0, yy0 + (i + 1) * font_height);
+    fl_draw("invert abscissa or ordinate", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("up, down", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("modify color curvature", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("modify curvature of color channels", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("a, Ctrl+a", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("increase or decrease alpha", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("modify alpha coefficient", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("p, Ctrl+p", xx0, yy0 + (i + 1) * font_height);
     fl_draw("modify alpha channel power law", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("b, Ctrl+b", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("increase or decrease gamma", xx1, yy0 + (i + 1) * font_height);
-    i++;
-    fl_draw("i, Ctrl+i", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("invert x or y range", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("modify gamma correction", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("h", xx0, yy0 + (i + 1) * font_height);
     fl_draw("show this help message", xx1, yy0 + (i + 1) * font_height);
