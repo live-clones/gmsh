@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.51 2003-04-02 05:53:23 geuzaine Exp $
+# $Id: Makefile,v 1.52 2003-04-02 06:04:23 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -155,12 +155,15 @@ CreateFile.o: CreateFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   ../Parser/OpenFile.h Draw.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/Context.h ../Common/Options.h gl2ps.h gl2gif.h gl2jpeg.h \
-  gl2ppm.h gl2yuv.h gl2png.h
+  gl2png.h gl2ppm.h gl2yuv.h
 gl2ps.o: gl2ps.cpp gl2ps.h
 gl2gif.o: gl2gif.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h gl2gif.h
 gl2jpeg.o: gl2jpeg.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h
+gl2png.o: gl2png.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h
 gl2ppm.o: gl2ppm.cpp ../Common/Gmsh.h ../Common/Message.h \
