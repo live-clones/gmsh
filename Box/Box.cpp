@@ -1,4 +1,4 @@
-/* $Id: Box.cpp,v 1.10 2000-11-27 13:46:53 geuzaine Exp $ */
+/* $Id: Box.cpp,v 1.11 2000-12-05 19:38:22 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -28,8 +28,9 @@ char gmsh_os[]        = "Operating System : " GMSH_OS ;
 char gmsh_date[]      = "Build Date       : " GMSH_DATE ;
 char gmsh_host[]      = "Build Host       : " GMSH_HOST ;
 char gmsh_packager[]  = "Packager         : " GMSH_PACKAGER ;
-char gmsh_email[]     = "E-Mail           : " GMSH_EMAIL ;
-char gmsh_url[]       = "URL              : " GMSH_URL ;
+char gmsh_url[]       = "URL              : http://www.geuz.org/gmsh/" ;
+char gmsh_email[]     = "E-Mail           : Christophe.Geuzaine@ulg.ac.be\n"
+                        "                   Remacle@scorec.rpi.edu" ;
 char gmsh_help[]      = 
   "Usage: %s [options] [files]\n"
   "Geometry options:\n"
@@ -54,13 +55,14 @@ char gmsh_help[]      =
 
 /* dummy defs for link purposes */
 
-void ColorTable_InitParam (int number, ColorTable * ct, int rgb_flag, int alpha_flag){;}
-void ColorTable_Recompute (ColorTable * ct, int rgb_flag, int alpha_flag){;}
-void ColorTable_Copy(ColorTable *ct){;}
-void ColorTable_Paste(ColorTable *ct){;}
-void ZeroHighlight(Mesh *){;}
-void AddViewInUI(int, char *, int){;}
-void draw_polygon_2d (double, double, double, int, double *, double *, double *){;}
+void ColorTable_InitParam (int number, ColorTable * ct, int rgb_flag, int alpha_flag){}
+void ColorTable_Recompute (ColorTable * ct, int rgb_flag, int alpha_flag){}
+void ColorTable_Copy(ColorTable *ct){}
+void ColorTable_Paste(ColorTable *ct){}
+void ZeroHighlight(Mesh *){}
+void AddViewInUI(int, char *, int){}
+void draw_polygon_2d (double, double, double, int, double *, double *, double *){}
+void set_r(int i, double val){}
 
 /* ------------------------------------------------------------------------ */
 /*  I n f o                                                                 */
@@ -82,8 +84,8 @@ void Info (int level, char *arg0){
     fprintf(stderr, "%s\n", gmsh_date);
     fprintf(stderr, "%s\n", gmsh_host);
     fprintf(stderr, "%s\n", gmsh_packager);
-    fprintf(stderr, "%s\n", gmsh_email);
     fprintf(stderr, "%s\n", gmsh_url);
+    fprintf(stderr, "%s\n", gmsh_email);
     exit(1) ; 
   default :
     break;
@@ -314,7 +316,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 int main(int argc, char *argv[]){
   int     i, nbf;
 
-  InitContext(&CTX);
+  Init_Context();
   Get_Options(argc, argv, &nbf);
 
   signal(SIGINT,  Signal); 
