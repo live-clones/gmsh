@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.16 2004-05-08 00:36:00 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.17 2004-07-21 22:19:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -122,8 +122,7 @@ int sys2x2(double mat[2][2], double b[2], double res[2])
   double det, ud, norm;
   int i;
 
-  norm =
-    DSQR(mat[0][0]) + DSQR(mat[1][1]) + DSQR(mat[0][1]) + DSQR(mat[1][0]);
+  norm = DSQR(mat[0][0]) + DSQR(mat[1][1]) + DSQR(mat[0][1]) + DSQR(mat[1][0]);
   det = mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1];
 
 
@@ -146,14 +145,19 @@ int sys2x2(double mat[2][2], double b[2], double res[2])
   return (1);
 }
 
+double det3x3(double mat[3][3])
+{
+  return (mat[0][0] * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1]) -
+	  mat[0][1] * (mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0]) +
+	  mat[0][2] * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]));
+}
+
 int sys3x3(double mat[3][3], double b[3], double res[3], double *det)
 {
   double ud;
   int i;
 
-  *det = mat[0][0] * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1]) -
-    mat[0][1] * (mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0]) +
-    mat[0][2] * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]);
+  *det = det3x3(mat);
 
   if(*det == 0.0) {
     res[0] = res[1] = res[2] = 0.0;
@@ -203,21 +207,11 @@ int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det)
   return out;
 }
 
-int det3x3(double mat[3][3], double *det)
-{
-  *det = mat[0][0] * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1]) -
-    mat[0][1] * (mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0]) +
-    mat[0][2] * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]);
-  return 1;
-}
-
 int inv3x3(double mat[3][3], double inv[3][3], double *det)
 {
   double ud;
 
-  *det = mat[0][0] * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1]) -
-    mat[0][1] * (mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0]) +
-    mat[0][2] * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]);
+  *det = det3x3(mat);
 
   if(*det == 0.0)
     return (0);
@@ -234,7 +228,6 @@ int inv3x3(double mat[3][3], double inv[3][3], double *det)
   inv[2][1] = -ud * (mat[0][0] * mat[1][2] - mat[0][2] * mat[1][0]);
   inv[2][2] = ud * (mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0]);
   return (1);
-
 }
 
 double angle_02pi(double A3)

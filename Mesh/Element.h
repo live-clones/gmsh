@@ -49,6 +49,7 @@ class Hexahedron : public Element{
   Hexahedron(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4,
 	     Vertex *v5, Vertex *v6, Vertex *v7, Vertex *v8);
   ~Hexahedron();
+  double Orientation();
 };
 
 class Prism : public Element{
@@ -58,6 +59,7 @@ class Prism : public Element{
   Prism(Vertex *v1, Vertex *v2, Vertex *v3, 
 	Vertex *v4, Vertex *v5, Vertex *v6);
   ~Prism();
+  double Orientation();
 };
 
 class Pyramid : public Element{
@@ -66,6 +68,7 @@ class Pyramid : public Element{
   Pyramid();
   Pyramid(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4, Vertex *v5);
   ~Pyramid();
+  double Orientation();
 };
 
 // C interface

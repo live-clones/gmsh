@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.33 2004-05-25 23:16:27 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.34 2004-07-21 22:19:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -203,9 +203,7 @@ double Simplex::matsimpl(double mat[3][3])
   mat[2][0] = V[1]->Pos.Z - V[0]->Pos.Z;
   mat[2][1] = V[2]->Pos.Z - V[0]->Pos.Z;
   mat[2][2] = V[3]->Pos.Z - V[0]->Pos.Z;
-  return (mat[0][0] * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1]) -
-          mat[1][0] * (mat[0][1] * mat[2][2] - mat[2][1] * mat[0][2]) +
-          mat[2][0] * (mat[0][1] * mat[1][2] - mat[1][1] * mat[0][2]));
+  return det3x3(mat);
 }
 
 double Simplex::rhoin()

@@ -1,4 +1,4 @@
-// $Id: Element.cpp,v 1.1 2004-05-25 04:10:05 geuzaine Exp $
+// $Id: Element.cpp,v 1.2 2004-07-21 22:19:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -21,6 +21,7 @@
 
 #include "Gmsh.h"
 #include "Mesh.h"
+#include "Numeric.h"
 #include "Element.h"
 
 int Element::TotalNumber = 0;
@@ -107,6 +108,20 @@ Hexahedron::Hexahedron(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4,
   VSUP = NULL;
 }
 
+double Hexahedron::Orientation(){
+  double mat[3][3];
+  mat[0][0] = V[1]->Pos.X - V[0]->Pos.X;
+  mat[0][1] = V[3]->Pos.X - V[0]->Pos.X;
+  mat[0][2] = V[4]->Pos.X - V[0]->Pos.X;
+  mat[1][0] = V[1]->Pos.Y - V[0]->Pos.Y;
+  mat[1][1] = V[3]->Pos.Y - V[0]->Pos.Y;
+  mat[1][2] = V[4]->Pos.Y - V[0]->Pos.Y;
+  mat[2][0] = V[1]->Pos.Z - V[0]->Pos.Z;
+  mat[2][1] = V[3]->Pos.Z - V[0]->Pos.Z;
+  mat[2][2] = V[4]->Pos.Z - V[0]->Pos.Z;
+  return det3x3(mat);
+}
+
 Hexahedron::~Hexahedron()
 {
   if(VSUP) Free(VSUP);
@@ -160,6 +175,20 @@ Prism::Prism(Vertex *v1, Vertex *v2, Vertex *v3,
   VSUP = NULL;
 }
 
+double Prism::Orientation(){
+  double mat[3][3];
+  mat[0][0] = V[1]->Pos.X - V[0]->Pos.X;
+  mat[0][1] = V[2]->Pos.X - V[0]->Pos.X;
+  mat[0][2] = V[3]->Pos.X - V[0]->Pos.X;
+  mat[1][0] = V[1]->Pos.Y - V[0]->Pos.Y;
+  mat[1][1] = V[2]->Pos.Y - V[0]->Pos.Y;
+  mat[1][2] = V[3]->Pos.Y - V[0]->Pos.Y;
+  mat[2][0] = V[1]->Pos.Z - V[0]->Pos.Z;
+  mat[2][1] = V[2]->Pos.Z - V[0]->Pos.Z;
+  mat[2][2] = V[3]->Pos.Z - V[0]->Pos.Z;
+  return det3x3(mat);
+}
+
 Prism::~Prism()
 {
   if(VSUP) Free(VSUP);
@@ -198,6 +227,20 @@ Pyramid::Pyramid()
   Visible = VIS_MESH;
   for(int i = 0; i < 5; i++) V[i] = NULL;
   VSUP = NULL;
+}
+
+double Pyramid::Orientation(){
+  double mat[3][3];
+  mat[0][0] = V[1]->Pos.X - V[0]->Pos.X;
+  mat[0][1] = V[3]->Pos.X - V[0]->Pos.X;
+  mat[0][2] = V[4]->Pos.X - V[0]->Pos.X;
+  mat[1][0] = V[1]->Pos.Y - V[0]->Pos.Y;
+  mat[1][1] = V[3]->Pos.Y - V[0]->Pos.Y;
+  mat[1][2] = V[4]->Pos.Y - V[0]->Pos.Y;
+  mat[2][0] = V[1]->Pos.Z - V[0]->Pos.Z;
+  mat[2][1] = V[3]->Pos.Z - V[0]->Pos.Z;
+  mat[2][2] = V[4]->Pos.Z - V[0]->Pos.Z;
+  return det3x3(mat);
 }
 
 Pyramid::Pyramid(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4, Vertex *v5)
