@@ -26,5 +26,6 @@ int  ParseFile(char *filename, int silent);
 void ParseString(char *str);
 void OpenProblem(char *filename);
 void MergeProblem(char *filename);
+void MergeProblemWithBoundingBox(char *filename);
 
 #endif

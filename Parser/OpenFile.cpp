@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.31 2002-09-24 02:04:34 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.32 2002-10-11 01:38:13 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -109,9 +109,20 @@ void MergeProblem(char *name){
   ParseFile(name,0);  
 }
 
+void MergeProblemWithBoundingBox(char *name){
+  int nb = List_Nbr(CTX.post.list);
+  int status = ParseFile(name,0);
+  if(List_Nbr(CTX.post.list) > nb)
+    CalculateMinMax(NULL, ((Post_View*)List_Pointer
+			   (CTX.post.list,List_Nbr(CTX.post.list)-1))->BBox);
+  else if(!status) 
+    CalculateMinMax(THEM->Points,NULL);
+  else
+    CalculateMinMax(THEM->Vertices,NULL);
+}
+
 void OpenProblem(char *name){
   char ext[6];
-  int  status;
 
   if(CTX.threads_lock){
     Msg(INFO, "I'm busy! Ask me that later...");
@@ -150,7 +161,7 @@ void OpenProblem(char *name){
 
   int nb = List_Nbr(CTX.post.list);
 
-  status = ParseFile(CTX.filename,0);
+  int status = ParseFile(CTX.filename,0);
 
   ApplyLcFactor(THEM);
 
@@ -168,7 +179,7 @@ void OpenProblem(char *name){
 #ifndef _BLACKBOX
   ZeroHighlight(&M); 
 #endif
-  
+
   if(List_Nbr(CTX.post.list) > nb)
     CalculateMinMax(NULL, ((Post_View*)List_Pointer
 			   (CTX.post.list,List_Nbr(CTX.post.list)-1))->BBox);

@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.126 2002-10-04 21:14:18 geuzaine Exp $
+// $Id: Gmsh.y,v 1.127 2002-10-11 01:38:12 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2000,6 +2000,13 @@ Command :
 
 	FILE *ff = yyin;
 	MergeProblem($2);
+	yyin = ff;
+
+      }
+      else if(!strcmp($1, "MergeWithBoundingBox")){
+
+	FILE *ff = yyin;
+	MergeProblemWithBoundingBox($2);
 	yyin = ff;
 
       }
