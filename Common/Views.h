@@ -182,8 +182,6 @@ class Post_View{
   void transform(double mat[3][3]);
 
   // some generic access functions
-  int get_val(int list, int node, int timestep, double *value);
-  void add_val(int list, int node, int timestep, double value);
   int empty();
   void get_raw_data(int type, List_T **list, int **nbe, int *nbc, int *nbn);
 };

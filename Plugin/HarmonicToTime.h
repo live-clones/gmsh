@@ -24,13 +24,13 @@
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterHarmonic2TimePlugin();
+  GMSH_Plugin *GMSH_RegisterHarmonicToTimePlugin();
 }
 
-class GMSH_Harmonic2TimePlugin : public GMSH_Post_Plugin
+class GMSH_HarmonicToTimePlugin : public GMSH_Post_Plugin
 {
 public:
-  GMSH_Harmonic2TimePlugin();
+  GMSH_HarmonicToTimePlugin();
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *help_text) const;
   void catchErrorMessage(char *errorMessage) const;

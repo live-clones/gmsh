@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.57 2004-10-28 08:13:09 geuzaine Exp $
+# $Id: Makefile,v 1.58 2004-10-30 15:23:45 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -41,7 +41,7 @@ SRC = Plugin.cpp\
         Extract.cpp\
         DecomposeInSimplex.cpp\
         Evaluate.cpp\
-        Harmonic2Time.cpp
+        HarmonicToTime.cpp
 
 OBJ = ${SRC:.cpp=.o}
 
@@ -71,7 +71,7 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h PluginManager.h CutMap.h Levelset.h CutGrid.h \
   StreamLines.h CutPlane.h CutParametric.h CutSphere.h Skin.h \
-  ../DataStr/Tree.h ../DataStr/avl.h Extract.h Harmonic2Time.h \
+  ../DataStr/Tree.h ../DataStr/avl.h Extract.h HarmonicToTime.h \
   DecomposeInSimplex.h Smooth.h Transform.h Triangulate.h \
   SphericalRaise.h DisplacementRaise.h StructuralSolver.h ../Geo/Geo.h \
   ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
@@ -173,8 +173,8 @@ Evaluate.o: Evaluate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h Evaluate.h ../Common/Context.h \
   ../Numeric/Numeric.h
-Harmonic2Time.o: Harmonic2Time.cpp Plugin.h ../Common/Options.h \
+HarmonicToTime.o: HarmonicToTime.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h Harmonic2Time.h ../Common/Context.h \
+  ../Common/GmshMatrix.h HarmonicToTime.h ../Common/Context.h \
   ../Numeric/Numeric.h

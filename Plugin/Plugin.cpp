@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.61 2004-10-28 08:13:09 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.62 2004-10-30 15:23:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -40,7 +40,7 @@
 #include "CutSphere.h"
 #include "Skin.h"
 #include "Extract.h"
-#include "Harmonic2Time.h"
+#include "HarmonicToTime.h"
 #include "DecomposeInSimplex.h"
 #include "Smooth.h"
 #include "Transform.h"
@@ -187,6 +187,8 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		      ("SphericalRaise", GMSH_RegisterSphericalRaisePlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("DisplacementRaise", GMSH_RegisterDisplacementRaisePlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("HarmonicToTime", GMSH_RegisterHarmonicToTimePlugin()));
 #if defined(HAVE_TRIANGLE)
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Triangulate", GMSH_RegisterTriangulatePlugin()));

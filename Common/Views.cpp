@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.143 2004-10-26 00:43:22 geuzaine Exp $
+// $Id: Views.cpp,v 1.144 2004-10-30 15:23:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1556,16 +1556,6 @@ void CombineViews(int time, int how, int remove)
 }
 
 // generic access functions
-
-int Post_View::get_val(int list, int node, int timestep, double *value)
-{
-  return 0;
-}
-
-void Post_View::add_val(int list, int node, int timestep, double value)
-{
-  ;
-}
 
 int Post_View::empty(){
   if(NbSP || NbVP || NbTP ||
