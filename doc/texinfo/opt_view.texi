@@ -307,7 +307,7 @@ Saved in: @code{General.OptionsFileName}
 @item View.Grid
 Grid mode (this option is deprecated: use View.Axes instead)@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
+Saved in: @code{-}
 
 @item View.Height
 Height (in pixels) of the scale or 2D graph@*

@@ -1143,7 +1143,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "GeneralizedRaiseView" , opt_view_gen_raise_view , -1. ,
     "Index of the view used for generalized raise (-1=self)" },
   // for backward compatibility:
-  { F|O, "Grid" , opt_view_axes , 0 ,
+  { F,   "Grid" , opt_view_axes , 0 ,
     "Grid mode (this option is deprecated: use View.Axes instead)" },
 
   { F|O, "Height" , opt_view_size1 , 200. , 
