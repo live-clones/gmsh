@@ -30,7 +30,7 @@ extern "C"
 class GMSH_ProbePlugin : public GMSH_Post_Plugin
 {
   double levelset(double x, double y, double z, double val) const;
-  static void callback();
+  static double callback(int num, int action, double value, double *opt);
   static int iview;
 public:
   GMSH_ProbePlugin();

@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.15 2004-12-27 09:29:16 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.16 2004-12-27 16:13:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -33,16 +33,16 @@
 extern Context_T CTX;
 
 StringXNumber StreamLinesOptions_Number[] = {
-  {GMSH_FULLRC, "X0", GMSH_StreamLinesPlugin::callbackX0, 2.39},
-  {GMSH_FULLRC, "Y0", GMSH_StreamLinesPlugin::callbackY0, .445},
+  {GMSH_FULLRC, "X0", GMSH_StreamLinesPlugin::callbackX0, 0.},
+  {GMSH_FULLRC, "Y0", GMSH_StreamLinesPlugin::callbackY0, 0.},
   {GMSH_FULLRC, "Z0", GMSH_StreamLinesPlugin::callbackZ0, 0.},
-  {GMSH_FULLRC, "X1", GMSH_StreamLinesPlugin::callbackX1, 2.39},
-  {GMSH_FULLRC, "Y1", GMSH_StreamLinesPlugin::callbackY1, 0.94},
+  {GMSH_FULLRC, "X1", GMSH_StreamLinesPlugin::callbackX1, 1.},
+  {GMSH_FULLRC, "Y1", GMSH_StreamLinesPlugin::callbackY1, 0.},
   {GMSH_FULLRC, "Z1", GMSH_StreamLinesPlugin::callbackZ1, 0.},
-  {GMSH_FULLRC, "X2", GMSH_StreamLinesPlugin::callbackX2, 2.39},
-  {GMSH_FULLRC, "Y2", GMSH_StreamLinesPlugin::callbackY2, .445},
-  {GMSH_FULLRC, "Z2", GMSH_StreamLinesPlugin::callbackZ2, 1.},
-  {GMSH_FULLRC, "nPointsU", GMSH_StreamLinesPlugin::callbackU, 20},
+  {GMSH_FULLRC, "X2", GMSH_StreamLinesPlugin::callbackX2, 0.},
+  {GMSH_FULLRC, "Y2", GMSH_StreamLinesPlugin::callbackY2, 1.},
+  {GMSH_FULLRC, "Z2", GMSH_StreamLinesPlugin::callbackZ2, 0.},
+  {GMSH_FULLRC, "nPointsU", GMSH_StreamLinesPlugin::callbackU, 10},
   {GMSH_FULLRC, "nPointsV", GMSH_StreamLinesPlugin::callbackV, 1},
   {GMSH_FULLRC, "MaxIter", NULL, 100},
   {GMSH_FULLRC, "DT", NULL, .1},
@@ -77,104 +77,86 @@ void GMSH_StreamLinesPlugin::draw()
 #endif
 }
 
-void GMSH_StreamLinesPlugin::callback()
-{
-#if defined(HAVE_FLTK)
-  CTX.post.plugin_draw_function = draw;
-  if(CTX.fast_redraw){
-    CTX.post.draw = 0;
-    CTX.mesh.draw = 0;
-  }
-  if(!CTX.batch) 
-    Draw();
-  CTX.post.plugin_draw_function = NULL;
-  CTX.post.draw = 1;
-  CTX.mesh.draw = 1;
-#endif
-}
-
-double GMSH_StreamLinesPlugin::callbackXYZ(int num, int action, double value, double *opt)
+double GMSH_StreamLinesPlugin::callback(int num, int action, double value, double *opt,
+					double step, double min, double max)
 {
   switch(action){ // configure the input field
-  case 1: return CTX.lc/200.;
-  case 2: return -CTX.lc;
-  case 3: return CTX.lc;
+  case 1: return step;
+  case 2: return min;
+  case 3: return max;
   default: break;
   }
   *opt = value;
-  callback();
+#if defined(HAVE_FLTK)
+  DrawPlugin(draw);
+#endif
   return 0.;
 }
 
 double GMSH_StreamLinesPlugin::callbackX0(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[0].def);
+  return callback(num, action, value, &StreamLinesOptions_Number[0].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackY0(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[1].def);
+  return callback(num, action, value, &StreamLinesOptions_Number[1].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackZ0(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[2].def);
+  return callback(num, action, value, &StreamLinesOptions_Number[2].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackX1(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[3].def);
+  return callback(num, action, value, &StreamLinesOptions_Number[3].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackY1(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[4].def);
+  return callback(num, action, value, &StreamLinesOptions_Number[4].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackZ1(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[5].def);
+  return callback(num, action, value, &StreamLinesOptions_Number[5].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackX2(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[6].def);
+  return callback(num, action, value, &StreamLinesOptions_Number[6].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackY2(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[7].def);
+  return callback(num, action, value, &StreamLinesOptions_Number[7].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackZ2(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[8].def);
+  return callback(num, action, value, &StreamLinesOptions_Number[8].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackU(int num, int action, double value)
 {
-  switch(action){ // configure the input field
-  case 1: return 1;
-  case 2: return 1;
-  case 3: return 100;
-  default: break;
-  }
-  StreamLinesOptions_Number[9].def = value;
-  callback();
-  return 0.;
+  return callback(num, action, value, &StreamLinesOptions_Number[9].def,
+		  1, 1, 100);
 }
 
 double GMSH_StreamLinesPlugin::callbackV(int num, int action, double value)
 {
-  switch(action){ // configure the input field
-  case 1: return 1;
-  case 2: return 1;
-  case 3: return 100;
-  default: break;
-  }
-  StreamLinesOptions_Number[10].def = value;
-  callback();
-  return 0.;
+  return callback(num, action, value, &StreamLinesOptions_Number[10].def,
+		  1, 1, 100);
 }
 
 void GMSH_StreamLinesPlugin::getName(char *name) const

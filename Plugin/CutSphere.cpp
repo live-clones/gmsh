@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.36 2004-11-25 02:10:40 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.37 2004-12-27 16:13:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -76,72 +76,44 @@ void GMSH_CutSpherePlugin::draw()
 #endif
 }
 
-void GMSH_CutSpherePlugin::callback()
+double GMSH_CutSpherePlugin::callback(int num, int action, double value, double *opt,
+				      double step, double min, double max)
 {
-#if defined(HAVE_FLTK)
-  CTX.post.plugin_draw_function = draw;
-  if(CTX.fast_redraw){
-    CTX.post.draw = 0;
-    CTX.mesh.draw = 0;
+  switch(action){ // configure the input field
+  case 1: return step;
+  case 2: return min;
+  case 3: return max;
+  default: break;
   }
-  if(!CTX.batch) 
-    Draw();
-  CTX.post.plugin_draw_function = NULL;
-  CTX.post.draw = 1;
-  CTX.mesh.draw = 1;
+  *opt = value;
+#if defined(HAVE_FLTK)
+  DrawPlugin(draw);
 #endif
+  return 0.;
 }
 
 double GMSH_CutSpherePlugin::callbackX(int num, int action, double value)
 {
-  switch(action){ // configure the input field
-  case 1: return CTX.lc/200.;
-  case 2: return -CTX.lc;
-  case 3: return CTX.lc;
-  default: break;
-  }
-  CutSphereOptions_Number[0].def = value;
-  callback();
-  return 0.;
+  return callback(num, action, value, &CutSphereOptions_Number[0].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_CutSpherePlugin::callbackY(int num, int action, double value)
 {
-  switch(action){ // configure the input field
-  case 1: return CTX.lc/200.;
-  case 2: return -CTX.lc;
-  case 3: return CTX.lc;
-  default: break;
-  }
-  CutSphereOptions_Number[1].def = value;
-  callback();
-  return 0.;
+  return callback(num, action, value, &CutSphereOptions_Number[1].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_CutSpherePlugin::callbackZ(int num, int action, double value)
 {
-  switch(action){ // configure the input field
-  case 1: return CTX.lc/200.;
-  case 2: return -CTX.lc;
-  case 3: return CTX.lc;
-  default: break;
-  }
-  CutSphereOptions_Number[2].def = value;
-  callback();
-  return 0.;
+  return callback(num, action, value, &CutSphereOptions_Number[2].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_CutSpherePlugin::callbackR(int num, int action, double value)
 {
-  switch(action){
-  case 1: return CTX.lc/200.;
-  case 2: return 0.;
-  case 3: return 2*CTX.lc;
-  default: break;
-  }
-  CutSphereOptions_Number[3].def = value;
-  callback();
-  return 0.;
+  return callback(num, action, value, &CutSphereOptions_Number[3].def,
+		  CTX.lc/200., 0., 2 * CTX.lc);
 }
 
 void GMSH_CutSpherePlugin::getName(char *name) const

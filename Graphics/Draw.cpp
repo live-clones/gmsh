@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.66 2004-11-18 16:35:03 geuzaine Exp $
+// $Id: Draw.cpp,v 1.67 2004-12-27 16:13:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -70,6 +70,24 @@ void Draw2d(void)
   if(CTX.small_axes)
     Draw_SmallAxes();
   glPopMatrix();
+}
+
+void DrawPlugin(void (*draw)(void))
+{
+  CTX.post.plugin_draw_function = draw;
+  int old = CTX.draw_bbox;
+  CTX.draw_bbox = 1;
+  if(CTX.fast_redraw){
+    CTX.post.draw = 0;
+    CTX.mesh.draw = 0;
+  }
+  if(!CTX.batch) 
+    Draw();
+  // this is reset in each plugin run/cancel callback:
+  // CTX.post.plugin_draw_function = NULL;
+  CTX.draw_bbox = old;
+  CTX.post.draw = 1;
+  CTX.mesh.draw = 1;
 }
 
 // Ortho

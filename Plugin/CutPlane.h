@@ -30,7 +30,8 @@ extern "C"
 class GMSH_CutPlanePlugin : public GMSH_LevelsetPlugin
 {
   double levelset(double x, double y, double z, double val) const;
-  static void callback();
+  static double callback(int num, int action, double value, double *opt,
+			 double step, double min, double max);
   static int iview;
 public:
   GMSH_CutPlanePlugin();

@@ -1,4 +1,4 @@
-// $Id: Probe.cpp,v 1.2 2004-12-27 08:29:38 geuzaine Exp $
+// $Id: Probe.cpp,v 1.3 2004-12-27 16:13:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -89,65 +89,35 @@ void GMSH_ProbePlugin::draw()
 #endif
 }
 
-void GMSH_ProbePlugin::callback()
+double GMSH_ProbePlugin::callback(int num, int action, double value, double *opt)
 {
-#if defined(HAVE_FLTK)
-  CTX.post.plugin_draw_function = draw;
-  int old = CTX.draw_bbox;
-  CTX.draw_bbox = 1;
-  if(CTX.fast_redraw){
-    CTX.post.draw = 0;
-    CTX.mesh.draw = 0;
+  if(action > 0) iview = num;
+  switch(action){ // configure the input field
+  case 1: return CTX.lc/200.;
+  case 2: return -CTX.lc;
+  case 3: return CTX.lc;
+  default: break;
   }
-  if(!CTX.batch) 
-    Draw();
-  CTX.post.plugin_draw_function = NULL;
-  CTX.draw_bbox = old;
-  CTX.post.draw = 1;
-  CTX.mesh.draw = 1;
+  *opt = value;
+#if defined(HAVE_FLTK)
+  DrawPlugin(draw);
 #endif
+  return 0.;
 }
 
 double GMSH_ProbePlugin::callbackX(int num, int action, double value)
 {
-  if(action > 0) iview = num;
-  switch(action){
-  case 1: return CTX.lc/200.;
-  case 2: return -CTX.lc;
-  case 3: return CTX.lc;
-  default: break;
-  }
-  ProbeOptions_Number[0].def = value;
-  callback();
-  return 0.;
+  return callback(num, action, value, &ProbeOptions_Number[0].def);
 }
 
 double GMSH_ProbePlugin::callbackY(int num, int action, double value)
 {
-  if(action > 0) iview = num;
-  switch(action){
-  case 1: return CTX.lc/200.;
-  case 2: return -CTX.lc;
-  case 3: return CTX.lc;
-  default: break;
-  }
-  ProbeOptions_Number[1].def = value;
-  callback();
-  return 0.;
+  return callback(num, action, value, &ProbeOptions_Number[1].def);
 }
 
 double GMSH_ProbePlugin::callbackZ(int num, int action, double value)
 {
-  if(action > 0) iview = num;
-  switch(action){
-  case 1: return CTX.lc/200.;
-  case 2: return -CTX.lc;
-  case 3: return CTX.lc;
-  default: break;
-  }
-  ProbeOptions_Number[2].def = value;
-  callback();
-  return 0.;
+  return callback(num, action, value, &ProbeOptions_Number[2].def);
 }
 
 void GMSH_ProbePlugin::getName(char *name) const

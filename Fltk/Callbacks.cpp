@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.310 2004-12-27 05:26:47 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.311 2004-12-27 16:13:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3302,6 +3302,16 @@ void view_options_cb(CALLBACK_ARGS)
   WID->create_view_options_window((long int)data);
 }
 
+void view_plugin_cancel_cb(CALLBACK_ARGS)
+{
+  if(data)
+    ((Fl_Window *) data)->hide();
+  if(CTX.post.plugin_draw_function){
+    CTX.post.plugin_draw_function = NULL;
+    Draw();
+  }
+}
+
 void view_plugin_run_cb(CALLBACK_ARGS)
 {
   GMSH_Post_Plugin *p = (GMSH_Post_Plugin *) data;
@@ -3333,6 +3343,7 @@ void view_plugin_run_cb(CALLBACK_ARGS)
       p->execute(0);
     else
       p->execute(*vv);
+    CTX.post.plugin_draw_function = NULL;
     Draw();
   }
   catch(GMSH_Plugin * err) {

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.392 2004-12-27 05:26:47 geuzaine Exp $
+// $Id: GUI.cpp,v 1.393 2004-12-27 16:13:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3252,7 +3252,7 @@ PluginDialogBox *GUI::create_plugin_window(GMSH_Plugin * p)
   pdb->run_button = new Fl_Return_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Run");
 
   Fl_Button *cancel = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-  cancel->callback(cancel_cb, (void *)pdb->main_window);
+  cancel->callback(view_plugin_cancel_cb, (void *)pdb->main_window);
 
   //pdb->main_window->resizable(new Fl_Box(2 * WB, 2 * WB + BH, 10, 10));
   

@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.8 2004-11-25 02:10:40 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.9 2004-12-27 16:13:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -39,7 +39,7 @@ StringXNumber EvaluateOptions_Number[] = {
 };
 
 StringXString EvaluateOptions_String[] = {
-  {GMSH_FULLRC, "Expression", NULL, "0.01*(Fabs(Sin(30*y)*Fabs(Cos(30*x)))+0.3)"}
+  {GMSH_FULLRC, "Expression", NULL, "Fabs(Sin(x)*Cos(y))"}
 };
 
 extern "C"

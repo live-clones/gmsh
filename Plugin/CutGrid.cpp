@@ -1,4 +1,4 @@
-// $Id: CutGrid.cpp,v 1.11 2004-12-27 09:17:44 geuzaine Exp $
+// $Id: CutGrid.cpp,v 1.12 2004-12-27 16:13:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -32,14 +32,14 @@
 extern Context_T CTX;
 
 StringXNumber CutGridOptions_Number[] = {
-  {GMSH_FULLRC, "X0", GMSH_CutGridPlugin::callbackX0, -1.},
-  {GMSH_FULLRC, "Y0", GMSH_CutGridPlugin::callbackY0, -1.},
+  {GMSH_FULLRC, "X0", GMSH_CutGridPlugin::callbackX0, 0.},
+  {GMSH_FULLRC, "Y0", GMSH_CutGridPlugin::callbackY0, 0.},
   {GMSH_FULLRC, "Z0", GMSH_CutGridPlugin::callbackZ0, 0.},
-  {GMSH_FULLRC, "X1", GMSH_CutGridPlugin::callbackX1, -1.},
+  {GMSH_FULLRC, "X1", GMSH_CutGridPlugin::callbackX1, 1.},
   {GMSH_FULLRC, "Y1", GMSH_CutGridPlugin::callbackY1, 0.},
   {GMSH_FULLRC, "Z1", GMSH_CutGridPlugin::callbackZ1, 0.},
   {GMSH_FULLRC, "X2", GMSH_CutGridPlugin::callbackX2, 0.},
-  {GMSH_FULLRC, "Y2", GMSH_CutGridPlugin::callbackY2, -1.},
+  {GMSH_FULLRC, "Y2", GMSH_CutGridPlugin::callbackY2, 1.},
   {GMSH_FULLRC, "Z2", GMSH_CutGridPlugin::callbackZ2, 0.},
   {GMSH_FULLRC, "nPointsU", GMSH_CutGridPlugin::callbackU, 20},
   {GMSH_FULLRC, "nPointsV", GMSH_CutGridPlugin::callbackV, 20},
@@ -81,104 +81,86 @@ void GMSH_CutGridPlugin::draw()
 #endif
 }
 
-void GMSH_CutGridPlugin::callback()
-{
-#if defined(HAVE_FLTK)
-  CTX.post.plugin_draw_function = draw;
-  if(CTX.fast_redraw){
-    CTX.post.draw = 0;
-    CTX.mesh.draw = 0;
-  }
-  if(!CTX.batch) 
-    Draw();
-  CTX.post.plugin_draw_function = NULL;
-  CTX.post.draw = 1;
-  CTX.mesh.draw = 1;
-#endif
-}
-
-double GMSH_CutGridPlugin::callbackXYZ(int num, int action, double value, double *opt)
+double GMSH_CutGridPlugin::callback(int num, int action, double value, double *opt,
+				    double step, double min, double max)
 {
   switch(action){ // configure the input field
-  case 1: return CTX.lc/200.;
-  case 2: return -CTX.lc;
-  case 3: return CTX.lc;
+  case 1: return step;
+  case 2: return min;
+  case 3: return max;
   default: break;
   }
   *opt = value;
-  callback();
+#if defined(HAVE_FLTK)
+  DrawPlugin(draw);
+#endif
   return 0.;
 }
 
 double GMSH_CutGridPlugin::callbackX0(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &CutGridOptions_Number[0].def);
+  return callback(num, action, value, &CutGridOptions_Number[0].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackY0(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &CutGridOptions_Number[1].def);
+  return callback(num, action, value, &CutGridOptions_Number[1].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackZ0(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &CutGridOptions_Number[2].def);
+  return callback(num, action, value, &CutGridOptions_Number[2].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackX1(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &CutGridOptions_Number[3].def);
+  return callback(num, action, value, &CutGridOptions_Number[3].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackY1(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &CutGridOptions_Number[4].def);
+  return callback(num, action, value, &CutGridOptions_Number[4].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackZ1(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &CutGridOptions_Number[5].def);
+  return callback(num, action, value, &CutGridOptions_Number[5].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackX2(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &CutGridOptions_Number[6].def);
+  return callback(num, action, value, &CutGridOptions_Number[6].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackY2(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &CutGridOptions_Number[7].def);
+  return callback(num, action, value, &CutGridOptions_Number[7].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackZ2(int num, int action, double value)
 {
-  return callbackXYZ(num, action, value, &CutGridOptions_Number[8].def);
+  return callback(num, action, value, &CutGridOptions_Number[8].def,
+		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackU(int num, int action, double value)
 {
-  switch(action){ // configure the input field
-  case 1: return 1;
-  case 2: return 2;
-  case 3: return 100;
-  default: break;
-  }
-  CutGridOptions_Number[9].def = value;
-  callback();
-  return 0.;
+  return callback(num, action, value, &CutGridOptions_Number[9].def,
+		  1, 2, 100);
 }
 
 double GMSH_CutGridPlugin::callbackV(int num, int action, double value)
 {
-  switch(action){ // configure the input field
-  case 1: return 1;
-  case 2: return 2;
-  case 3: return 100;
-  default: break;
-  }
-  CutGridOptions_Number[10].def = value;
-  callback();
-  return 0.;
+  return callback(num, action, value, &CutGridOptions_Number[10].def,
+		  1, 2, 100);
 }
 
 void GMSH_CutGridPlugin::getName(char *name) const

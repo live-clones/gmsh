@@ -29,8 +29,8 @@ extern "C"
 
 class GMSH_StreamLinesPlugin : public GMSH_Post_Plugin
 {
-  static void callback();
-  static double callbackXYZ(int, int, double, double*);
+  static double callback(int num, int action, double value, double *opt,
+			 double step, double min, double max);
 public:
   GMSH_StreamLinesPlugin();
   void getName(char *name) const;
