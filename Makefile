@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.154 2001-09-25 08:21:14 geuzaine Exp $
+# $Id: Makefile,v 1.155 2001-10-05 14:47:39 geuzaine Exp $
 
 GMSH_RELEASE = 1.262
 
@@ -57,7 +57,7 @@ default: initialtag
         ); done
 
 gmsh:
-	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
+	$(CXX) $(FLAGS) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm
 
 static:
