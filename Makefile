@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.256 2003-02-11 17:58:44 geuzaine Exp $
+# $Id: Makefile,v 1.257 2003-02-11 22:50:41 geuzaine Exp $
 
 include variables
 
@@ -110,13 +110,17 @@ minizip:
 	tar jcvf gmsh-`date "+%Y.%m.%d"`.tar.bz2 \
         `ls Makefile */Makefile */*.[chyl] */*.[ch]pp */*.rc */*.res */*.ico`
 
-distrib-unix:
+distrib-unix: clean all package-unix
+
+distrib-windows: clean all package-windows
+
+distrib-mac: clean all package-mac
+
+package-unix:
 	rm -rf gmsh-${GMSH_RELEASE}
 	mkdir gmsh-${GMSH_RELEASE}
 	strip bin/gmsh
 	cp bin/gmsh gmsh-${GMSH_RELEASE}
-	strip bin/gmsh-batch
-	cp bin/gmsh-batch gmsh-${GMSH_RELEASE}
 	cp doc/COPYING doc/gmsh.1 doc/FORMATS doc/VERSIONS doc/FAQ doc/CONTRIBUTORS gmsh-${GMSH_RELEASE}
 	cp -R tutorial gmsh-${GMSH_RELEASE}
 	cp -R demos gmsh-${GMSH_RELEASE}
@@ -127,7 +131,7 @@ distrib-unix:
 	gzip gmsh-${GMSH_RELEASE}-${UNAME}.tar
 	mv gmsh-${GMSH_RELEASE}-${UNAME}.tar.gz gmsh-${GMSH_RELEASE}-${UNAME}.tgz
 
-distrib-windows:
+package-windows:
 	strip bin/gmsh.exe
 	cp bin/gmsh.exe ../gmsh-distrib
 	cp doc/README.txt ../gmsh-distrib
@@ -148,7 +152,7 @@ distrib-windows:
 	rm -rf ../gmsh-distrib/tutorial
 	rm -rf ../gmsh-distrib/demos
 
-distrib-mac:
+package-mac:
 	rm -rf gmsh-${GMSH_RELEASE}
 	mkdir gmsh-${GMSH_RELEASE}
 	mkdir gmsh-${GMSH_RELEASE}/Gmsh.app
@@ -188,10 +192,16 @@ distrib-mac:
                gmsh-${GMSH_RELEASE}/*/*.msh
 	tar zcvf gmsh-${GMSH_RELEASE}-MacOSX.tgz gmsh-${GMSH_RELEASE}
 
-rpm:
+rpmold:
 	tar zcvf gmsh-${GMSH_RELEASE}.tar.gz ${GMSH_SOURCES}
 	mv gmsh-${GMSH_RELEASE}.tar.gz /usr/src/redhat/SOURCES
 	rpm -bb --define 'gmshversion ${GMSH_RELEASE}' utils/gmsh.spec
 	cp /usr/src/redhat/RPMS/i386/gmsh-${GMSH_RELEASE}-?.i386.rpm .
 	cp /usr/src/redhat/BUILD/gmsh-${GMSH_RELEASE}/gmsh-${GMSH_RELEASE}-${UNAME}.tgz .
 
+rpm:
+	tar zcvf gmsh-${GMSH_RELEASE}.tar.gz ${GMSH_SOURCES}
+	mv gmsh-${GMSH_RELEASE}.tar.gz /usr/src/redhat/SOURCES
+	rpmbuild -bb --define 'gmshversion ${GMSH_RELEASE}' utils/gmsh.spec
+	cp /usr/src/redhat/RPMS/i386/gmsh-${GMSH_RELEASE}-?.i386.rpm .
+	cp /usr/src/redhat/BUILD/gmsh-${GMSH_RELEASE}/gmsh-${GMSH_RELEASE}-${UNAME}.tgz .

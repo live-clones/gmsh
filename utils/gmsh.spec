@@ -4,7 +4,7 @@ Name: gmsh
 Version: %{gmshversion}
 Source: gmsh-%{version}.tar.gz
 Release: 1
-Copyright: distributable
+Copyright: GPL
 Group: Applications/Engineering
 URL: http://www.geuz.org/gmsh/
 Packager: geuz@geuz.org
@@ -30,7 +30,7 @@ and/or post-processor.
 %setup -c -q
 
 %build
-make distrib-linux-gcc-2.95
+make distrib-unix
 make utilities
 rm -rf CVS */CVS */*/CVS
 

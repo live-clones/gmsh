@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.10 2003-02-11 08:54:59 geuzaine Exp $
+# $Id: Makefile,v 1.11 2003-02-11 22:50:41 geuzaine Exp $
 
-../include variables
+include ../variables
 
 dxf2geo: dxf2geo.c message.c 
 	${CXX} ${OPT_FLAGS} -o ../bin/dxf2geo -I../DataStr\
