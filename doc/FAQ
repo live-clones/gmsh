@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.53 2005-02-24 21:26:31 geuzaine Exp $
+$Id: FAQ,v 1.54 2005-03-03 15:07:29 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -276,11 +276,11 @@ view option panel, or use the up and down arrow keys.
 
 * 7.5 How do I visualize a deformed mesh?
 
-Load a vector view containing the displacement field, and select
-'Vector type->Displacement' in the view options. If the displacement
-is too small (or too large), you can scale it with the 'Displacement
-factor' option. (Remember that you can drag the mouse in all numeric
-input fields to slide the value!)
+Load a vector view containing the displacement field, and set 'Vector
+display' to 'Displacement' in View->Options->Aspect. If the
+displacement is too small (or too large), you can scale it with the
+'Displacement factor' option. (Remember that you can drag the mouse in
+all numeric input fields to slide the value!)
 
 Another option is to use the "general transformation expressions" (in
 View->Options->Offset) on a scalar view, with the displacement map
@@ -294,7 +294,7 @@ The easiest is to load two views: the first one containing a
 displacement field (a vector view that will be used to deform the
 mesh), and the second one containing the field you want to display
 (this view has to contain the same number of elements as the
-displacement view). You should then set 'Vector type' to
+displacement view). You should then set 'Vector display' to
 'Displacement' in the first view, as well as set 'Data source' to
 point to the second view. (You might want to make the second view
 invisible, too. If you want to amplify or decrease the amount of
