@@ -1,4 +1,6 @@
-$Date: 2003-02-12 20:41:52 $
+$Date: 2003-02-18 06:34:14 $
+
+New in 1.39: removed all non-free routines; more build system work;
 
 New in 1.38: fixed custom range selection for 3D iso graphs; New build
 system based on autoconf; New image reading code to import bitmaps as
