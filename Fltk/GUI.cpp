@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.378 2004-11-09 20:02:46 geuzaine Exp $
+// $Id: GUI.cpp,v 1.379 2004-11-10 01:45:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2566,19 +2566,18 @@ void GUI::create_option_window()
       view_butt[38]->down_box(TOGGLE_BOX);
       view_butt[38]->selection_color(TOGGLE_COLOR);
 
-      /// Adaptive views ...
-      view_value[33] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Maximal Recursion Level");
+      view_value[33] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Maximal recursion level");
       view_value[33]->align(FL_ALIGN_RIGHT);
       view_value[33]->minimum(0);
       view_value[33]->maximum(MAX_LEVEL_OF_ZOOM);
       view_value[33]->step(1);
       view_value[33]->value(0);
-      view_value[34] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Target Error");
+
+      view_value[34] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Target error");
       view_value[34]->align(FL_ALIGN_RIGHT);
       view_value[34]->minimum(0);
       view_value[34]->maximum(1);
       view_value[34]->value(1.e-2);
-      ///------------------
 
       view_range->end();
     }
