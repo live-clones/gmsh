@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.355 2004-06-26 21:39:10 geuzaine Exp $
+# $Id: Makefile,v 1.356 2004-06-26 21:46:38 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -131,9 +131,10 @@ etags:
 
 source-common:
 	rm -rf gmsh-${GMSH_VERSION}
-	tar zcvf gmsh.tgz `ls TODO README* */README* configure *.in *.spec Makefile\
-                           */Makefile */*.[chylr] */*.[ch]pp */*.rc */*.res */*.ico\
-                           */*.icns`\
+	tar zcvf gmsh.tgz `ls TODO README* */README* */COPYING* */VERSION*\
+                           configure *.in *.spec Makefile */Makefile\
+                           */*.[chylr] */*.[ch]pp */*/*/*.[chyli]*\
+                           */*.rc */*.res */*.ico */*.icns`\
                            doc demos tutorial utils
 	mkdir gmsh-${GMSH_VERSION}
 	cd gmsh-${GMSH_VERSION} && tar zxvf ../gmsh.tgz
