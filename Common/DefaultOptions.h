@@ -533,6 +533,8 @@ StringXNumber GeneralOptions_Number[] = {
     "X position of small axes (negative values for right alignment)" },
   { F|O, "SmallAxesPositionY" , opt_general_small_axes_position1 , -35. ,
     "Y position of small axes (negative values for bottom alignment)" },
+  { F|O, "SphereSubdivisions" , opt_general_sphere_subdivisions, 10. ,
+    "Number of subdivisions used to draw spheres (when drawing points as spheres)" },
 
 #ifdef _FLTK
   { F|O, "Terminal" , opt_general_terminal , 0. ,

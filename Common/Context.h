@@ -120,6 +120,7 @@ public :
   double pixel_equiv_x, pixel_equiv_y ; 
                               // approximative equivalent model length of a pixel 
   int color_scheme ;          // general color scheme
+  int sphere_subdivisions;    // nb subd to draw spheres, when drawing pts as 3D spheres
 
   // geometry options 
   struct{

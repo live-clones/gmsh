@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.22 2002-11-08 02:06:59 geuzaine Exp $
+// $Id: Entity.cpp,v 1.23 2002-11-08 07:27:57 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -48,7 +48,7 @@ void Draw_Sphere (double size, double x, double y, double z){
     qua = gluNewQuadric();
     listnum = glGenLists(1);
     glNewList(listnum, GL_COMPILE);
-    gluSphere(qua, 1, 20,20);
+    gluSphere(qua, 1, CTX.sphere_subdivisions, CTX.sphere_subdivisions);
     glEndList();
   }
   glPushMatrix(); 
