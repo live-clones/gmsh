@@ -17,10 +17,11 @@ to provide a simple meshing tool for academic test cases with
 parametric input and up to date visualization capabilities.  One of
 the strengths of Gmsh is its ability to respect a characteristic
 length field for the generation of adapted meshes on lines, surfaces
-and volumes. Gmsh requires OpenGL libraries to be installed on your
+and volumes. Gmsh requires OpenGL (or Mesa) to be installed on your
 system.
 
-Install Gmsh if you need a simple 3D finite element mesh generator.
+Install Gmsh if you need a 3D finite element mesh generator and/or
+post-processor.
 
 %prep
 

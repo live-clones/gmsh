@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.25 2001-02-03 14:03:46 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.26 2001-02-03 18:33:45 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -419,7 +419,7 @@ void opt_geometry_num_cb(CALLBACK_ARGS) {
   }
 }
 void opt_geometry_show_by_entity_num_cb(CALLBACK_ARGS) {
-  const char * c = ((Fl_Input*)w)->value(); 
+  char * c = (char*)((Fl_Input*)w)->value(); 
   if (!strcmp(c,"all") || !strcmp(c,"*")){
     if(SHOW_ALL_ENTITIES){ RemplirEntitesVisibles(0); SHOW_ALL_ENTITIES = 0; }
     else { RemplirEntitesVisibles(1); SHOW_ALL_ENTITIES = 1; }
@@ -429,6 +429,7 @@ void opt_geometry_show_by_entity_num_cb(CALLBACK_ARGS) {
     if(EntiteEstElleVisible(i)) ToutesLesEntitesRelatives(i,EntitesVisibles,0);
     else ToutesLesEntitesRelatives(i,EntitesVisibles,1);
   }
+  Draw();
 }
 
 void opt_geometry_normals_cb(CALLBACK_ARGS) {
@@ -1449,10 +1450,10 @@ void view_options_linear_range_cb(CALLBACK_ARGS){
 void view_options_logarithmic_range_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     if(((Fl_Check_Button*)w)->value()){
-      v->RangeType = DRAW_POST_LOGARITHMIC;
+      v->ScaleType = DRAW_POST_LOGARITHMIC;
     }
     else{
-      v->RangeType = DRAW_POST_LINEAR;
+      v->ScaleType = DRAW_POST_LINEAR;
     }
     v->Changed = 1;
   ENDVIEWMOD
@@ -1532,9 +1533,12 @@ void view_options_zraise_cb(CALLBACK_ARGS){
   ENDVIEWMOD
 }
 void view_options_timestep_cb(CALLBACK_ARGS){
+  int ii = (int)((Fl_Value_Input*)w)->value();
   STARTVIEWMOD
-    v->TimeStep = (int)((Fl_Value_Input*)w)->value() ;
-    v->Changed = 1;
+    if(ii>=0 && ii<v->NbTimeStep){
+      v->TimeStep = ii ;
+      v->Changed = 1;
+    }
   ENDVIEWMOD
   Draw();
 }
@@ -1579,7 +1583,7 @@ void view_options_vector_scale_cb(CALLBACK_ARGS){
 void view_options_vector_cog_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     if(((Fl_Check_Button*)w)->value()){
-      v->ArrowType = DRAW_POST_LOCATE_COG;
+      v->ArrowLocation = DRAW_POST_LOCATE_COG;
       v->Changed = 1;
     }
   ENDVIEWMOD
@@ -1587,7 +1591,7 @@ void view_options_vector_cog_cb(CALLBACK_ARGS){
 void view_options_vector_vertex_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     if(((Fl_Check_Button*)w)->value()){
-      v->ArrowType = DRAW_POST_LOCATE_VERTEX;
+      v->ArrowLocation = DRAW_POST_LOCATE_VERTEX;
       v->Changed = 1;
     }
   ENDVIEWMOD

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.34 2001-02-03 15:55:18 geuzaine Exp $
+// $Id: GUI.cpp,v 1.35 2001-02-03 18:33:45 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1060,8 +1060,10 @@ void GUI::create_geometry_options_window(){
 	  geo_butt[i]->labelsize(CTX.fontsize);
 	  geo_butt[i]->selection_color(FL_YELLOW);
 	}
+
         geo_input = new Fl_Input(2*WB, 2*WB+5*BH, IW, BH, "Show by entity number");
 	geo_input->callback(opt_geometry_show_by_entity_num_cb);
+	geo_input->when(FL_WHEN_ENTER_KEY|FL_WHEN_NOT_CHANGED);
 	geo_input->labelsize(CTX.fontsize);
 	geo_input->align(FL_ALIGN_RIGHT);
 
@@ -1083,6 +1085,7 @@ void GUI::create_geometry_options_window(){
 	  geo_value[i]->type(FL_HORIZONTAL);
 	  geo_value[i]->align(FL_ALIGN_RIGHT);
 	}
+
         o->end();
       }
       o->end();
@@ -1197,6 +1200,7 @@ void GUI::create_mesh_options_window(){
 	}
         mesh_input = new Fl_Input(2*WB, 2*WB+5*BH, IW, BH, "Show by entity Number");
 	mesh_input->callback(opt_mesh_show_by_entity_num_cb);
+	mesh_input->when(FL_WHEN_ENTER_KEY|FL_WHEN_NOT_CHANGED);
 	mesh_input->labelsize(CTX.fontsize);
 	mesh_input->align(FL_ALIGN_RIGHT);
 
@@ -1852,7 +1856,7 @@ void GUI::create_view_window(int num){
 	view_value[10]->type(FL_HORIZONTAL);
 	view_value[10]->align(FL_ALIGN_RIGHT);
 	view_value[10]->minimum(0); 
-	view_value[10]->maximum(1000); 
+	view_value[10]->maximum(100000); 
 	view_value[10]->step(1);
 
 	view_vector->end();

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.13 2001-01-29 08:43:44 geuzaine Exp $
+// $Id: Main.cpp,v 1.14 2001-02-03 18:33:45 geuzaine Exp $
 
 #include <signal.h>
 
@@ -19,6 +19,10 @@
 #include "GetOptions.h"
 
 GUI *WID = NULL;
+
+#ifdef __CYGWIN__
+ WinMainCRTStartup() { mainCRTStartup(); }
+#endif
 
 int main(int argc, char *argv[]){
   int     i, nbf;
