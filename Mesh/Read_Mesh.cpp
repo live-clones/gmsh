@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.38 2002-02-01 14:34:05 remacle Exp $
+// $Id: Read_Mesh.cpp,v 1.39 2002-02-05 20:18:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -121,136 +121,133 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 
         for (j = 0 ; j < Nbr_Nodes ; j++)
           fscanf(File_GEO, "%d", &verts[j].Num) ;
-        // why ????
-	if(1 || Elementary >= 0){
 
-	  switch(Type){
-	  case LGN1: case LGN2:
-	    c = &C; c->Num = abs(Elementary);
-	    if(!(cc = (Curve**)Tree_PQuery(M->Curves, &c))){
-	      c = Create_Curve(abs(Elementary), MSH_SEGM_LINE, 0, NULL,
-			       NULL, -1, -1, 0., 1.);
-	      c->Dirty=1;
-	      Tree_Add(M->Curves, &c);
-	    }
-	    else
-	      c = *cc;
-	    break;
-	  case TRI1: case QUA1: case TRI2: case QUA2:
-	    s = &S; s->Num = Elementary;
-	    if(!(ss = (Surface**)Tree_PQuery(M->Surfaces, &s))){
-	      s = Create_Surface(Elementary, MSH_SURF_PLAN);
-	      s->Dirty=1;
-	      Tree_Add(M->Surfaces, &s);
-	    }
-	    else
-	      s = *ss;
-	    break;
-	  case TET1: case HEX1: case PRI1: case PYR1:
-	  case TET2: case HEX2: case PRI2: case PYR2:
-	    v = &V; v->Num = Elementary;
-	    if(!(vv = (Volume**)Tree_PQuery(M->Volumes, &v))){
-	      v = Create_Volume(Elementary, MSH_VOLUME);
-	      v->Dirty=1;
-	      Tree_Add(M->Volumes, &v);
-	    }
-	    else
-	      v = *vv;
-	    break;
-	  default :
-	    break;
+	switch(Type){
+	case LGN1: case LGN2:
+	  c = &C; c->Num = abs(Elementary);
+	  if(!(cc = (Curve**)Tree_PQuery(M->Curves, &c))){
+	    c = Create_Curve(abs(Elementary), MSH_SEGM_LINE, 0, NULL,
+			     NULL, -1, -1, 0., 1.);
+	    c->Dirty=1;
+	    Tree_Add(M->Curves, &c);
 	  }
-	  
-	  for(i=0 ; i<Nbr_Nodes ; i++) {
-	    vertsp[i] = &verts[i];
-	    if(!(vertspp = (Vertex**)Tree_PQuery(M->Vertices, &vertsp[i])))
-	      Msg(GERROR, "Unknown vertex %d in element %d", verts[i].Num, Num);
-	    else
-	      vertsp[i] = *vertspp;
+	  else
+	    c = *cc;
+	  break;
+	case TRI1: case QUA1: case TRI2: case QUA2:
+	  s = &S; s->Num = Elementary;
+	  if(!(ss = (Surface**)Tree_PQuery(M->Surfaces, &s))){
+	    s = Create_Surface(Elementary, MSH_SURF_PLAN);
+	    s->Dirty=1;
+	    Tree_Add(M->Surfaces, &s);
 	  }
-	  
-	  if(CTX.mesh.check_duplicates){
-	    vert = Create_Vertex (Num, 0., 0., 0., 1.0 ,0.0);
-	    for(i=0 ; i<Nbr_Nodes ; i++){
-	      vert->Pos.X += vertsp[i]->Pos.X ;
-	      vert->Pos.Y += vertsp[i]->Pos.Y ;
-	      vert->Pos.Z += vertsp[i]->Pos.Z ;
-	    }
-	    vert->Pos.X /= (double) Nbr_Nodes;
-	    vert->Pos.Y /= (double) Nbr_Nodes;
-	    vert->Pos.Z /= (double) Nbr_Nodes;
-	    if((vertspp = (Vertex**)Tree_PQuery(Duplicates, &vert)))
-	      Msg(GERROR, "Elements %d and %d have identical barycenters", 
-		  Num, (*vertspp)->Num);
-	    else
-	      Tree_Add(Duplicates, &vert);
+	  else
+	    s = *ss;
+	  break;
+	case TET1: case HEX1: case PRI1: case PYR1:
+	case TET2: case HEX2: case PRI2: case PYR2:
+	  v = &V; v->Num = Elementary;
+	  if(!(vv = (Volume**)Tree_PQuery(M->Volumes, &v))){
+	    v = Create_Volume(Elementary, MSH_VOLUME);
+	    v->Dirty=1;
+	    Tree_Add(M->Volumes, &v);
 	  }
-	  
-	  switch(Type){
-	  case LGN1:
-	    simp = Create_Simplex(vertsp[0], vertsp[1], NULL , NULL);
-	    simp->Num = Num ;
-	    simp->iEnt = Elementary ;
-	    Tree_Replace(c->Simplexes, &simp) ;
-	    //NO!!! Tree_Replace(M->Simplexes, &simp) ; 
-	    break;
-	  case TRI1:
-	    simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], NULL);
-	    simp->Num = Num ;
-	    simp->iEnt = Elementary ;
-	    Tree_Replace(s->Simplexes, &simp) ;
-	    replace = Tree_Replace(M->Simplexes, &simp) ;
-	    if(!replace) M->Statistics[7]++;
-	    break;
-	  case QUA1:
-	    simp = Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
-	    simp->Num = Num ;
-	    simp->iEnt = Elementary ;
-	    Tree_Replace(s->Simplexes, &simp) ;
-	    replace = Tree_Replace(M->Simplexes, &simp) ;
-	    if(!replace) {
-	      M->Statistics[7]++;//since s->Simplexes holds quads, too :-(
-	      M->Statistics[8]++;
-	    }
-	    break;
-	  case TET1:
-	    simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
-	    simp->Num = Num ;
-	    simp->iEnt = Elementary ;
-	    Tree_Replace(v->Simplexes, &simp) ;
-	    replace = Tree_Replace(M->Simplexes, &simp) ;
-	    if(!replace) M->Statistics[9]++;
-	    break;
-	  case HEX1:
-	    hex = Create_Hexahedron(vertsp[0], vertsp[1], vertsp[2], vertsp[3],
-				    vertsp[4], vertsp[5], vertsp[6], vertsp[7]);
-	    hex->Num = Num ;
-	    hex->iEnt = Elementary ;
-	    replace = Tree_Replace(v->Hexahedra, &hex) ;
-	    if(!replace) M->Statistics[10]++;
-	    break;
-	  case PRI1:
-	    pri = Create_Prism(vertsp[0], vertsp[1], vertsp[2], 
-			       vertsp[3], vertsp[4], vertsp[5]);
-	    pri->Num = Num ;
-	    pri->iEnt = Elementary ;
-	    replace = Tree_Replace(v->Prisms, &pri) ;
-	    if(!replace) M->Statistics[11]++;
-	    break;
-	  case PYR1:
-	    pyr = Create_Pyramid(vertsp[0], vertsp[1], vertsp[2], 
-				 vertsp[3], vertsp[4]);
-	    pyr->Num = Num ;
-	    pyr->iEnt = Elementary ;
-	    replace = Tree_Replace(v->Pyramids, &pyr) ;
-	    if(!replace) M->Statistics[12]++;
-	    break;
-	  case PNT:
-	    break;
-	  default :
-	    Msg(WARNING, "Unknown type of element in Read_Mesh");
-	    break;
+	  else
+	    v = *vv;
+	  break;
+	default :
+	  break;
+	}
+	
+	for(i=0 ; i<Nbr_Nodes ; i++) {
+	  vertsp[i] = &verts[i];
+	  if(!(vertspp = (Vertex**)Tree_PQuery(M->Vertices, &vertsp[i])))
+	    Msg(GERROR, "Unknown vertex %d in element %d", verts[i].Num, Num);
+	  else
+	    vertsp[i] = *vertspp;
+	}
+	
+	if(CTX.mesh.check_duplicates){
+	  vert = Create_Vertex (Num, 0., 0., 0., 1.0 ,0.0);
+	  for(i=0 ; i<Nbr_Nodes ; i++){
+	    vert->Pos.X += vertsp[i]->Pos.X ;
+	    vert->Pos.Y += vertsp[i]->Pos.Y ;
+	    vert->Pos.Z += vertsp[i]->Pos.Z ;
 	  }
+	  vert->Pos.X /= (double) Nbr_Nodes;
+	  vert->Pos.Y /= (double) Nbr_Nodes;
+	  vert->Pos.Z /= (double) Nbr_Nodes;
+	  if((vertspp = (Vertex**)Tree_PQuery(Duplicates, &vert)))
+	    Msg(GERROR, "Elements %d and %d have identical barycenters", 
+		Num, (*vertspp)->Num);
+	  else
+	    Tree_Add(Duplicates, &vert);
+	}
+	
+	switch(Type){
+	case LGN1:
+	  simp = Create_Simplex(vertsp[0], vertsp[1], NULL , NULL);
+	  simp->Num = Num ;
+	  simp->iEnt = Elementary ;
+	  Tree_Replace(c->Simplexes, &simp) ;
+	  //NO!!! Tree_Replace(M->Simplexes, &simp) ; 
+	  break;
+	case TRI1:
+	  simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], NULL);
+	  simp->Num = Num ;
+	  simp->iEnt = Elementary ;
+	  Tree_Replace(s->Simplexes, &simp) ;
+	  replace = Tree_Replace(M->Simplexes, &simp) ;
+	  if(!replace) M->Statistics[7]++;
+	  break;
+	case QUA1:
+	  simp = Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
+	  simp->Num = Num ;
+	  simp->iEnt = Elementary ;
+	  Tree_Replace(s->Simplexes, &simp) ;
+	  replace = Tree_Replace(M->Simplexes, &simp) ;
+	  if(!replace) {
+	    M->Statistics[7]++;//since s->Simplexes holds quads, too :-(
+	    M->Statistics[8]++;
+	  }
+	  break;
+	case TET1:
+	  simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
+	  simp->Num = Num ;
+	  simp->iEnt = Elementary ;
+	  Tree_Replace(v->Simplexes, &simp) ;
+	  replace = Tree_Replace(M->Simplexes, &simp) ;
+	  if(!replace) M->Statistics[9]++;
+	  break;
+	case HEX1:
+	  hex = Create_Hexahedron(vertsp[0], vertsp[1], vertsp[2], vertsp[3],
+				  vertsp[4], vertsp[5], vertsp[6], vertsp[7]);
+	  hex->Num = Num ;
+	  hex->iEnt = Elementary ;
+	  replace = Tree_Replace(v->Hexahedra, &hex) ;
+	  if(!replace) M->Statistics[10]++;
+	  break;
+	case PRI1:
+	  pri = Create_Prism(vertsp[0], vertsp[1], vertsp[2], 
+			     vertsp[3], vertsp[4], vertsp[5]);
+	  pri->Num = Num ;
+	  pri->iEnt = Elementary ;
+	  replace = Tree_Replace(v->Prisms, &pri) ;
+	  if(!replace) M->Statistics[11]++;
+	  break;
+	case PYR1:
+	  pyr = Create_Pyramid(vertsp[0], vertsp[1], vertsp[2], 
+			       vertsp[3], vertsp[4]);
+	  pyr->Num = Num ;
+	  pyr->iEnt = Elementary ;
+	  replace = Tree_Replace(v->Pyramids, &pyr) ;
+	  if(!replace) M->Statistics[12]++;
+	  break;
+	case PNT:
+	  break;
+	default :
+	  Msg(WARNING, "Unknown type of element in Read_Mesh");
+	  break;
 	}
       }
 
