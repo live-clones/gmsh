@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.8 2004-06-13 20:26:23 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.9 2004-12-21 20:23:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -561,6 +561,7 @@ void SetVisibilityByNumber(int num, int type, int mode)
   Surface *s;
   Volume *V;
   Simplex SS, *S, **pS;
+  SimplexBase SSB, *SB, **pSB;
   Quadrangle QQ, *Q, **pQ;
   Hexahedron HH, *H, **pH;
   Prism PP, *P, **pP;
@@ -579,17 +580,14 @@ void SetVisibilityByNumber(int num, int type, int mode)
       Msg(WARNING, "Unknown node %d (use '*' to hide/show all nodes)", num);
     break;
   case 1:    //element
-    SS.Num = num;
-    S = &SS;
-    QQ.Num = num;
-    Q = &QQ;
-    HH.Num = num;
-    H = &HH;
-    PP.Num = num;
-    P = &PP;
-    YY.Num = num;
-    Y = &YY;
+    SS.Num = num; S = &SS;
+    SSB.Num = num; SB = &SSB;
+    QQ.Num = num; Q = &QQ;
+    HH.Num = num; H = &HH;
+    PP.Num = num; P = &PP;
+    YY.Num = num; Y = &YY;
     found = 0;
+    // in curves
     tmp = Tree2List(THEM->Curves);
     for(i = 0; i < List_Nbr(tmp); i++) {
       List_Read(tmp, i, &c);
@@ -598,54 +596,72 @@ void SetVisibilityByNumber(int num, int type, int mode)
 	found = 1;
 	break;
       }
+      if((pSB = (SimplexBase **) Tree_PQuery(c->SimplexesBase, &SB))) {
+	(*pSB)->Visible = mode;
+	found = 1;
+	break;
+      }
     }
     List_Delete(tmp);
-    if(!found) {
-      tmp = Tree2List(THEM->Surfaces);
-      for(i = 0; i < List_Nbr(tmp); i++) {
-	List_Read(tmp, i, &s);
-	if((pS = (Simplex **) Tree_PQuery(s->Simplexes, &S))) {
-	  (*pS)->Visible = mode;
-	  found = 1;
-	  break;
-	}
-	if((pQ = (Quadrangle **) Tree_PQuery(s->Quadrangles, &Q))) {
-	  (*pQ)->Visible = mode;
-	  found = 1;
-	  break;
-	}
+    if(found)
+      break;
+    // in surfaces
+    tmp = Tree2List(THEM->Surfaces);
+    for(i = 0; i < List_Nbr(tmp); i++) {
+      List_Read(tmp, i, &s);
+      if((pS = (Simplex **) Tree_PQuery(s->Simplexes, &S))) {
+	(*pS)->Visible = mode;
+	found = 1;
+	break;
       }
-      List_Delete(tmp);
-      if(!found) {
-	if((pS = (Simplex **) Tree_PQuery(THEM->Simplexes, &S))) {
-	  (*pS)->Visible = mode;
-	}
-	else {
-	  tmp = Tree2List(THEM->Volumes);
-	  for(i = 0; i < List_Nbr(tmp); i++) {
-	    List_Read(tmp, i, &V);
-	    if((pH = (Hexahedron **) Tree_PQuery(V->Hexahedra, &H))) {
-	      (*pH)->Visible = mode;
-	      found = 1;
-	      break;
-	    }
-	    if((pP = (Prism **) Tree_PQuery(V->Prisms, &P))) {
-	      (*pP)->Visible = mode;
-	      found = 1;
-	      break;
-	    }
-	    if((pY = (Pyramid **) Tree_PQuery(V->Pyramids, &Y))) {
-	      (*pY)->Visible = mode;
-	      found = 1;
-	      break;
-	    }
-	  }
-	  List_Delete(tmp);
-	  if(!found)
-	    Msg(WARNING, "Unknown element %d (use '*' to hide/show all elements)", num);
-	}
+      if((pSB = (SimplexBase **) Tree_PQuery(s->SimplexesBase, &SB))) {
+	(*pSB)->Visible = mode;
+	found = 1;
+	break;
+      }
+      if((pQ = (Quadrangle **) Tree_PQuery(s->Quadrangles, &Q))) {
+	(*pQ)->Visible = mode;
+	found = 1;
+	break;
       }
     }
+    List_Delete(tmp);
+    if(found)
+      break;
+    // in volumes (this tricky, since V->Simplexes contains the
+    // simplxes ordered by qualityad not by number; so we use the
+    // global tree of simplexes here)
+    if((pS = (Simplex **) Tree_PQuery(THEM->Simplexes, &S))) {
+      (*pS)->Visible = mode;
+      break;
+    }
+    tmp = Tree2List(THEM->Volumes);
+    for(i = 0; i < List_Nbr(tmp); i++) {
+      List_Read(tmp, i, &V);
+      if((pSB = (SimplexBase **) Tree_PQuery(V->SimplexesBase, &SB))) {
+	(*pSB)->Visible = mode;
+	found = 1;
+	break;
+      }
+      if((pH = (Hexahedron **) Tree_PQuery(V->Hexahedra, &H))) {
+	(*pH)->Visible = mode;
+	found = 1;
+	break;
+      }
+      if((pP = (Prism **) Tree_PQuery(V->Prisms, &P))) {
+	(*pP)->Visible = mode;
+	found = 1;
+	break;
+      }
+      if((pY = (Pyramid **) Tree_PQuery(V->Pyramids, &Y))) {
+	(*pY)->Visible = mode;
+	found = 1;
+	break;
+      }
+    }
+    List_Delete(tmp);
+    if(!found)
+      Msg(WARNING, "Unknown element %d (use '*' to hide/show all elements)", num);
     break;
   case 2:    //point
     if((v = FindPoint(num, THEM)))
@@ -682,7 +698,7 @@ static void vis_nod(void *a, void *b)
 }
 static void vis_sim(void *a, void *b)
 {
-  (*(Simplex **) a)->Visible = vmode;
+  (*(SimplexBase **) a)->Visible = vmode;
 }
 static void vis_qua(void *a, void *b)
 {
@@ -736,19 +752,22 @@ void SetVisibilityByNumber(char *str, int type, int mode)
       for(i = 0; i < List_Nbr(tmp); i++) {
         List_Read(tmp, i, &c);
         Tree_Action(c->Simplexes, vis_sim);
+        Tree_Action(c->SimplexesBase, vis_sim);
       }
       List_Delete(tmp);
       tmp = Tree2List(THEM->Surfaces);
       for(i = 0; i < List_Nbr(tmp); i++) {
         List_Read(tmp, i, &s);
         Tree_Action(s->Simplexes, vis_sim);
+        Tree_Action(s->SimplexesBase, vis_sim);
         Tree_Action(s->Quadrangles, vis_qua);
       }
       List_Delete(tmp);
-      Tree_Action(THEM->Simplexes, vis_sim);
       tmp = Tree2List(THEM->Volumes);
       for(i = 0; i < List_Nbr(tmp); i++) {
         List_Read(tmp, i, &V);
+        Tree_Action(V->Simplexes, vis_sim);
+        Tree_Action(V->SimplexesBase, vis_sim);
         Tree_Action(V->Hexahedra, vis_hex);
         Tree_Action(V->Prisms, vis_pri);
         Tree_Action(V->Pyramids, vis_pyr);
