@@ -1,4 +1,4 @@
-// $Id: MinMax.cpp,v 1.4 2001-01-08 08:05:42 geuzaine Exp $
+// $Id: MinMax.cpp,v 1.5 2001-04-17 06:55:47 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -22,24 +22,32 @@ void minmax(void *a , void*b){
   CTX.max[2] = (CTX.max[2] > v->Pos.Z) ? CTX.max[2] : v->Pos.Z;
 }
 
-void CalculateMinMax (Tree_T *t){
+void CalculateMinMax (Tree_T *t, double *bbox){
   Vertex   *v;
   double   frac;
   int      exp;
 
   if(!Tree_Nbr(t)){
-    CTX.min[0] = CTX.min[1] = CTX.min[2] = -1.;
-    CTX.max[0] = CTX.max[1] = CTX.max[2] =  1.;
-    CTX.range[0] = CTX.range[1] = CTX.range[2] = 0.;
-    CTX.lc = CTX.lc_middle = 1.;
-    return;
+    if(!bbox || (bbox[0] > bbox[1])){ //the bbox is wrong
+      CTX.min[0] = CTX.min[1] = CTX.min[2] = -1.;
+      CTX.max[0] = CTX.max[1] = CTX.max[2] =  1.;
+      CTX.range[0] = CTX.range[1] = CTX.range[2] = 0.;
+      CTX.lc = CTX.lc_middle = 1.;
+      return;
+    }
+    else{
+      CTX.min[0] = bbox[0] ; CTX.max[0] = bbox[1] ;
+      CTX.min[1] = bbox[2] ; CTX.max[1] = bbox[3] ;
+      CTX.min[2] = bbox[4] ; CTX.max[2] = bbox[5] ;
+    }
   }
-
-  Tree_Right(t,&v);
-  CTX.min[0] = CTX.max[0] = v->Pos.X;
-  CTX.min[1] = CTX.max[1] = v->Pos.Y;
-  CTX.min[2] = CTX.max[2] = v->Pos.Z;
-  Tree_Action(t,minmax);
+  else{
+    Tree_Right(t,&v);
+    CTX.min[0] = CTX.max[0] = v->Pos.X;
+    CTX.min[1] = CTX.max[1] = v->Pos.Y;
+    CTX.min[2] = CTX.max[2] = v->Pos.Z;
+    Tree_Action(t,minmax);
+  }
 
   CTX.range[0] = CTX.max[0]-CTX.min[0]; 
   CTX.range[1] = CTX.max[1]-CTX.min[1]; 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.42 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.43 2001-04-17 06:55:47 geuzaine Exp $
 
 #include <map>
 #include "Gmsh.h"
@@ -1315,7 +1315,6 @@ void view_reload_all_cb(CALLBACK_ARGS) {
 void view_reload_cb(CALLBACK_ARGS){
   Post_View tmp ;
   char filename[NAME_STR_L];
-  extern int Force_ViewNumber;
 
   if(!Post_ViewList) return;
 
@@ -1323,10 +1322,10 @@ void view_reload_cb(CALLBACK_ARGS){
   strcpy(filename, v->FileName);
   CopyViewOptions(v, &tmp);
 
-  Force_ViewNumber = v->Num ;
+  Post_ViewForceNumber = v->Num ;
   FreeView(v);
   MergeProblem(filename);
-  Force_ViewNumber = 0 ;
+  Post_ViewForceNumber = 0 ;
   
   v = (Post_View*)List_Pointer(Post_ViewList,(int)data);
   CopyViewOptions(&tmp, v);
@@ -1384,8 +1383,8 @@ static void _duplicate_view(int num, int options){
 
   v1 = (Post_View*)List_Pointer(Post_ViewList,num);
 
-  BeginView(0, 0);
-  EndView(0, 0, v1->FileName, v1->Name);
+  BeginView(0);
+  EndView(0, v1->FileName, v1->Name);
 
   v2 = (Post_View*)List_Pointer(Post_ViewList,List_Nbr(Post_ViewList)-1);
 

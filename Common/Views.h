@@ -24,7 +24,7 @@ class Post_View{
   int NbSS, NbVS, NbTS;
   List_T *SS, *VS, *TS; // tetrahedra
   int NbTimeStep, ScalarOnly;
-  double Min, Max;
+  double Min, Max, BBox[6];
 
   // options
   char   Format[NAME_STR_L];
@@ -56,9 +56,12 @@ class Post_View{
 
 extern List_T *Post_ViewList;
 
-// Reference view storing default options
+// Reference view storing default options and the static options
 
 extern Post_View *Post_ViewReference;
+extern int        Post_ViewForceNumber, Post_ViewComputeBBox;
+
+
 
 // IntervalsType
 #define DRAW_POST_ISO          1
@@ -91,8 +94,8 @@ extern Post_View *Post_ViewReference;
 int fcmpPostViewNum(const void *v1, const void *v2);
 int fcmpPostViewDuplicateOf(const void *v1, const void *v2);
 
-void BeginView (int alloc, int Number);
-void EndView (int AddInUI, int Number, char *FileName, char *Name);
+void BeginView (int alloc);
+void EndView (int AddInUI, char *FileName, char *Name);
 void FreeView(Post_View *v);
 bool FreeView(int);
 void Read_View(FILE *file, char *filename);

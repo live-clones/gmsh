@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.23 2001-02-23 19:51:11 geuzaine Exp $
+// $Id: Draw.cpp,v 1.24 2001-04-17 06:55:47 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -194,7 +194,7 @@ void InitPosition(void){
 /* n'est plus utilise que dans les cas ou des points peuvent etre
    ajoutes dans la base de donnee -> dans cb_geom */
 void Replot(void){
-  CalculateMinMax(M.Points);
+  CalculateMinMax(M.Points,NULL);
   Draw();
 }
 

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.34 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: Views.cpp,v 1.35 2001-04-17 06:55:47 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -7,8 +7,11 @@
 #include "Options.h"
 #include "ColorTable.h"
 
+// this static stuff should be removed
+int         Post_ViewForceNumber = 0, Post_ViewComputeBBox = 0;
 List_T     *Post_ViewList = NULL;
 Post_View  *Post_ViewReference = NULL, *ActualView;
+
 
 extern Context_T   CTX ;
 
@@ -27,18 +30,19 @@ int fcmpPostViewDuplicateOf(const void *v1, const void *v2){
   return (((Post_View *)v1)->DuplicateOf - ((Post_View *)v2)->DuplicateOf);
 }
 
-void BeginView(int allocate, int force_number){
+void BeginView(int allocate){
   Post_View v;
+  int i;
 
   if(!Post_ViewList) Post_ViewList = List_Create(100,1,sizeof(Post_View));
 
-  if(!force_number){
+  if(!Post_ViewForceNumber){
     // each view MUST have a unique, non-reattributable, number
     v.Num = ++ActualViewNum;
     List_Add(Post_ViewList, &v);
   }
   else{
-    v.Num = force_number;    
+    v.Num = Post_ViewForceNumber;    
     List_Replace(Post_ViewList,&v,fcmpPostViewNum);
   }
 
@@ -90,6 +94,10 @@ void BeginView(int allocate, int force_number){
   ActualView->DuplicateOf = 0;
   ActualView->ScalarOnly = 1;
   ActualView->normals = NULL;
+  for(i=0;i<3;i++){
+    ActualView->BBox[2*i] = 1.e200;
+    ActualView->BBox[2*i+1] = -1.e200;
+  }
   ActualView->CT.size = 255;
   ActualView->CT.ipar[COLORTABLE_MODE] = COLORTABLE_RGB;
   ColorTable_InitParam(1, &ActualView->CT, 1, 1);
@@ -97,7 +105,7 @@ void BeginView(int allocate, int force_number){
 
 }
 
-void Stat_ScalarSimplex(int nbnod, int N, double *V){
+void Stat_ScalarSimplex(int nbnod, int N, double *X, double *Y, double *Z, double *V){
   int i;
 
   if(!NbPoints && !NbLines && !NbTriangles && !NbTetrahedra){
@@ -113,6 +121,17 @@ void Stat_ScalarSimplex(int nbnod, int N, double *V){
     if(V[i] > ActualView->Max) ActualView->Max = V[i] ;
   }
 
+  if(Post_ViewComputeBBox){
+    for(i=0 ; i<nbnod ; i++){
+      if(X[i] < ActualView->BBox[0]) ActualView->BBox[0] = X[i] ;
+      if(X[i] > ActualView->BBox[1]) ActualView->BBox[1] = X[i] ;
+      if(Y[i] < ActualView->BBox[2]) ActualView->BBox[2] = Y[i] ;
+      if(Y[i] > ActualView->BBox[3]) ActualView->BBox[3] = Y[i] ;
+      if(Z[i] < ActualView->BBox[4]) ActualView->BBox[4] = Z[i] ;
+      if(Z[i] > ActualView->BBox[5]) ActualView->BBox[5] = Z[i] ;
+    }
+  }
+
   switch(nbnod){
   case 1 : NbPoints++; break;
   case 2 : NbLines++; break;
@@ -121,7 +140,7 @@ void Stat_ScalarSimplex(int nbnod, int N, double *V){
   }
 }
 
-void Stat_VectorSimplex(int nbnod, int N, double *V){
+void Stat_VectorSimplex(int nbnod, int N, double *X, double *Y, double *Z, double *V){
   double l0;
   int i;
 
@@ -140,6 +159,17 @@ void Stat_VectorSimplex(int nbnod, int N, double *V){
     if(l0 > ActualView->Max) ActualView->Max = l0 ;
   }
 
+  if(Post_ViewComputeBBox){
+    for(i=0 ; i<nbnod ; i++){
+      if(X[i] < ActualView->BBox[0]) ActualView->BBox[0] = X[i] ;
+      if(X[i] > ActualView->BBox[1]) ActualView->BBox[1] = X[i] ;
+      if(Y[i] < ActualView->BBox[2]) ActualView->BBox[2] = Y[i] ;
+      if(Y[i] > ActualView->BBox[3]) ActualView->BBox[3] = Y[i] ;
+      if(Z[i] < ActualView->BBox[4]) ActualView->BBox[4] = Z[i] ;
+      if(Z[i] > ActualView->BBox[5]) ActualView->BBox[5] = Z[i] ;
+    }
+  }
+
   ActualView->ScalarOnly = 0;
 
   switch(nbnod){
@@ -150,12 +180,12 @@ void Stat_VectorSimplex(int nbnod, int N, double *V){
   }
 }
 
-void Stat_TensorSimplex(int nbnod, int N, double *v){
+void Stat_TensorSimplex(int nbnod, int N, double *X, double *Y, double *Z, double *v){
   Msg(GERROR, "Tensor field views not implemented yet");
 }
 
 
-void EndView(int add_in_gui, int force_number, char *file_name, char *name){
+void EndView(int add_in_gui, char *file_name, char *name){
   int i, nb;
   double d;
   extern int AddViewInUI(int , char *, int);
@@ -165,17 +195,29 @@ void EndView(int add_in_gui, int force_number, char *file_name, char *name){
   if(ActualView->NbSP){
     nb = List_Nbr(ActualView->SP) / ActualView->NbSP ;
     for(i = 0 ; i < List_Nbr(ActualView->SP) ; i+=nb)
-      Stat_ScalarSimplex(1, nb-3, (double*)List_Pointer(ActualView->SP,i+3));
+      Stat_ScalarSimplex(1, nb-3, 
+			 (double*)List_Pointer_Fast(ActualView->SP,i),
+			 (double*)List_Pointer_Fast(ActualView->SP,i+1),
+			 (double*)List_Pointer_Fast(ActualView->SP,i+2),
+			 (double*)List_Pointer_Fast(ActualView->SP,i+3));
   }
   if(ActualView->NbVP){
     nb = List_Nbr(ActualView->VP) / ActualView->NbVP ;
     for(i = 0 ; i < List_Nbr(ActualView->VP) ; i+=nb)
-      Stat_VectorSimplex(1, nb-3, (double*)List_Pointer(ActualView->VP,i+3));
+      Stat_VectorSimplex(1, nb-3, 
+			 (double*)List_Pointer_Fast(ActualView->VP,i),
+			 (double*)List_Pointer_Fast(ActualView->VP,i+1),
+			 (double*)List_Pointer_Fast(ActualView->VP,i+2),
+			 (double*)List_Pointer_Fast(ActualView->VP,i+3));
   }
   if(ActualView->NbTP){
     nb = List_Nbr(ActualView->TP) / ActualView->NbTP ;
     for(i = 0 ; i < List_Nbr(ActualView->TP) ; i+=nb)
-      Stat_TensorSimplex(1, nb-3, (double*)List_Pointer(ActualView->TP,i+3));
+      Stat_TensorSimplex(1, nb-3, 
+			 (double*)List_Pointer_Fast(ActualView->TP,i),
+			 (double*)List_Pointer_Fast(ActualView->TP,i+1),
+			 (double*)List_Pointer_Fast(ActualView->TP,i+2),
+			 (double*)List_Pointer_Fast(ActualView->TP,i+3));
   }
 
   // Lines
@@ -183,17 +225,29 @@ void EndView(int add_in_gui, int force_number, char *file_name, char *name){
   if(ActualView->NbSL){
     nb = List_Nbr(ActualView->SL) / ActualView->NbSL ;
     for(i = 0 ; i < List_Nbr(ActualView->SL) ; i+=nb)
-      Stat_ScalarSimplex(2, nb-6, (double*)List_Pointer(ActualView->SL,i+6));
+      Stat_ScalarSimplex(2, nb-6,
+			 (double*)List_Pointer_Fast(ActualView->SL,i),
+			 (double*)List_Pointer_Fast(ActualView->SL,i+2),
+			 (double*)List_Pointer_Fast(ActualView->SL,i+4),
+			 (double*)List_Pointer_Fast(ActualView->SL,i+6));
   }
   if(ActualView->NbVL){
     nb = List_Nbr(ActualView->VL) / ActualView->NbVL ;
     for(i = 0 ; i < List_Nbr(ActualView->VL) ; i+=nb)
-      Stat_VectorSimplex(2, nb-6, (double*)List_Pointer(ActualView->VL,i+6));
+      Stat_VectorSimplex(2, nb-6, 
+			 (double*)List_Pointer_Fast(ActualView->VL,i),
+			 (double*)List_Pointer_Fast(ActualView->VL,i+2),
+			 (double*)List_Pointer_Fast(ActualView->VL,i+4),
+			 (double*)List_Pointer_Fast(ActualView->VL,i+6));
   }
   if(ActualView->NbTL){
     nb = List_Nbr(ActualView->TL) / ActualView->NbTL ;
     for(i = 0 ; i < List_Nbr(ActualView->TL) ; i+=nb)
-      Stat_TensorSimplex(2, nb-6, (double*)List_Pointer(ActualView->TL,i+6));
+      Stat_TensorSimplex(2, nb-6, 
+			 (double*)List_Pointer_Fast(ActualView->TL,i),
+			 (double*)List_Pointer_Fast(ActualView->TL,i+2),
+			 (double*)List_Pointer_Fast(ActualView->TL,i+4),
+			 (double*)List_Pointer_Fast(ActualView->TL,i+6));
   }
 
   // Triangles
@@ -201,17 +255,29 @@ void EndView(int add_in_gui, int force_number, char *file_name, char *name){
   if(ActualView->NbST){
     nb = List_Nbr(ActualView->ST) / ActualView->NbST ;
     for(i = 0 ; i < List_Nbr(ActualView->ST) ; i+=nb)
-      Stat_ScalarSimplex(3, nb-9, (double*)List_Pointer(ActualView->ST,i+9));
+      Stat_ScalarSimplex(3, nb-9, 
+			 (double*)List_Pointer_Fast(ActualView->ST,i),
+			 (double*)List_Pointer_Fast(ActualView->ST,i+3),
+			 (double*)List_Pointer_Fast(ActualView->ST,i+6),
+			 (double*)List_Pointer_Fast(ActualView->ST,i+9));
   }
   if(ActualView->NbVT){
     nb = List_Nbr(ActualView->VT) / ActualView->NbVT ;
     for(i = 0 ; i < List_Nbr(ActualView->VT) ; i+=nb)
-      Stat_VectorSimplex(3, nb-9, (double*)List_Pointer(ActualView->VT,i+9));
+      Stat_VectorSimplex(3, nb-9, 
+			 (double*)List_Pointer_Fast(ActualView->VT,i),
+			 (double*)List_Pointer_Fast(ActualView->VT,i+3),
+			 (double*)List_Pointer_Fast(ActualView->VT,i+6),
+			 (double*)List_Pointer_Fast(ActualView->VT,i+9));
   }
   if(ActualView->NbTT){
     nb = List_Nbr(ActualView->TT) / ActualView->NbTT ;
     for(i = 0 ; i < List_Nbr(ActualView->TT) ; i+=nb)
-      Stat_TensorSimplex(3, nb-9, (double*)List_Pointer(ActualView->TT,i+9));
+      Stat_TensorSimplex(3, nb-9,
+			 (double*)List_Pointer_Fast(ActualView->TT,i),
+			 (double*)List_Pointer_Fast(ActualView->TT,i+3),
+			 (double*)List_Pointer_Fast(ActualView->TT,i+6),
+			 (double*)List_Pointer_Fast(ActualView->TT,i+9));
   }
 
   // Tetrahedra
@@ -219,17 +285,29 @@ void EndView(int add_in_gui, int force_number, char *file_name, char *name){
   if(ActualView->NbSS){
     nb = List_Nbr(ActualView->SS) / ActualView->NbSS ;
     for(i = 0 ; i < List_Nbr(ActualView->SS) ; i+=nb)
-      Stat_ScalarSimplex(4, nb-12, (double*)List_Pointer(ActualView->SS,i+12));
+      Stat_ScalarSimplex(4, nb-12, 
+			 (double*)List_Pointer_Fast(ActualView->SS,i),
+			 (double*)List_Pointer_Fast(ActualView->SS,i+4),
+			 (double*)List_Pointer_Fast(ActualView->SS,i+8),
+			 (double*)List_Pointer_Fast(ActualView->SS,i+12));
   }
   if(ActualView->NbVS){
     nb = List_Nbr(ActualView->VS) / ActualView->NbVS ;
     for(i = 0 ; i < List_Nbr(ActualView->VS) ; i+=nb)
-      Stat_VectorSimplex(4, nb-12, (double*)List_Pointer(ActualView->VS,i+12));
+      Stat_VectorSimplex(4, nb-12,
+			 (double*)List_Pointer_Fast(ActualView->VS,i),
+			 (double*)List_Pointer_Fast(ActualView->VS,i+4),
+			 (double*)List_Pointer_Fast(ActualView->VS,i+8),
+			 (double*)List_Pointer_Fast(ActualView->VS,i+12));
   }
   if(ActualView->NbTS){
     nb = List_Nbr(ActualView->TS) / ActualView->NbTS ;
     for(i = 0 ; i < List_Nbr(ActualView->TS) ; i+=nb)
-      Stat_TensorSimplex(4, nb-12, (double*)List_Pointer(ActualView->TS,i+12));
+      Stat_TensorSimplex(4, nb-12, 
+			 (double*)List_Pointer_Fast(ActualView->TS,i),
+			 (double*)List_Pointer_Fast(ActualView->TS,i+4),
+			 (double*)List_Pointer_Fast(ActualView->TS,i+8),
+			 (double*)List_Pointer_Fast(ActualView->TS,i+12));
   }
 
   // Dummy time values if using old parsed format...
@@ -257,7 +335,7 @@ void EndView(int add_in_gui, int force_number, char *file_name, char *name){
 
   if(CTX.post.smooth) ActualView->smooth();
 
-  if(!force_number && add_in_gui)
+  if(!Post_ViewForceNumber && add_in_gui)
     AddViewInUI(List_Nbr(Post_ViewList), ActualView->Name, ActualView->Num);
 }
 
@@ -383,8 +461,6 @@ void Print_ColorTable(int num, char *prefix, FILE *file){
 /*  R e a d _ V i e w                                                       */
 /* ------------------------------------------------------------------------ */
 
-extern int Force_ViewNumber;
-
 void Read_View(FILE *file, char *filename){
   char   str[NAME_STR_L], name[NAME_STR_L];
   int    nb, format, size, testone, swap;
@@ -430,7 +506,7 @@ void Read_View(FILE *file, char *filename){
 
     if (!strncmp(&str[1], "View", 4)) {
 
-      BeginView(0, Force_ViewNumber);
+      BeginView(0);
 
       fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
              name, &ActualView->NbTimeStep,
@@ -506,7 +582,7 @@ void Read_View(FILE *file, char *filename){
           List_Nbr(ActualView->ST), List_Nbr(ActualView->VT), List_Nbr(ActualView->TT), 
           List_Nbr(ActualView->SS), List_Nbr(ActualView->VS), List_Nbr(ActualView->TS));
 
-      EndView(1, Force_ViewNumber, filename, name); 
+      EndView(1, filename, name); 
     }
 
     do {

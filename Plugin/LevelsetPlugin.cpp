@@ -16,7 +16,7 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
   //   for all scalar simplices 
   if(v->NbSS)
     {
-      BeginView(1,0);
+      BeginView(1);
       nb = List_Nbr(v->SS) / v->NbSS ;
       for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
 	{
@@ -68,7 +68,7 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
       char name[1024],filename[1024];
       sprintf(name,"cut-%s",v->Name);
       sprintf(filename,"cut-%s",v->FileName);
-      EndView(1, 0, filename, name);
+      EndView(1, filename, name);
       return ActualView;
     }
   return 0;

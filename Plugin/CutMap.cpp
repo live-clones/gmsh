@@ -2,6 +2,7 @@
 
 double opt_cut_map_A(OPT_ARGS_NUM)
 {
+  return 0;
 }
 
 StringXNumber CutMapOptions_Number[] = {
@@ -13,7 +14,7 @@ extern "C"
 {
   GMSH_Plugin *GMSH_RegisterCutMapPlugin ()
   {
-    return new GMSH_CutMapPlugin (1.0,1.);
+    return new GMSH_CutMapPlugin (1.0,1);
   }
 }
 

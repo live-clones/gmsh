@@ -1,4 +1,4 @@
-// $Id: CbPost.cpp,v 1.5 2001-02-12 17:38:03 geuzaine Exp $
+// $Id: CbPost.cpp,v 1.6 2001-04-17 06:55:47 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -21,7 +21,6 @@ extern Widgets_T  WID ;
 extern Context_T  CTX ;
 extern XContext_T XCTX ;
 extern Mesh       *THEM;
-extern int         Force_ViewNumber;
 
 static double      ADAPTATION_ERROR=10. ;
 static int         ADAPTATION_METHOD=3 ;
@@ -104,8 +103,8 @@ void DuplicateViewCb (Widget w, XtPointer client_data, XtPointer call_data){
 
   v1 = (Post_View*)List_Pointer(Post_ViewList,(long int)client_data-1);
 
-  BeginView(0, 0);
-  EndView(0, 0, v1->FileName, v1->Name);
+  BeginView(0);
+  EndView(0, v1->FileName, v1->Name);
 
   v2 = (Post_View*)List_Pointer(Post_ViewList,List_Nbr(Post_ViewList)-1);
 
@@ -161,10 +160,10 @@ void ReloadViewCb (Widget w, XtPointer client_data, XtPointer call_data){
   strcpy(filename, v->FileName);
   CopyViewOptions(v, &tmp);
 
-  Force_ViewNumber = v->Num ;
+  Post_ViewForceNumber = v->Num ;
   FreeView(v);
   MergeProblem(filename);
-  Force_ViewNumber = 0 ;
+  Post_ViewForceNumber = 0 ;
   
   v = (Post_View*)List_Pointer(Post_ViewList,(long int)client_data-1);
   CopyViewOptions(&tmp, v);

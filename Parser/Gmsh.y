@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.73 2001-04-08 20:36:50 geuzaine Exp $
+// $Id: Gmsh.y,v 1.74 2001-04-17 06:55:48 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -28,7 +28,6 @@
 #include <alloca.h>
 #endif
 
-int     Force_ViewNumber = 0 ;
 List_T *Symbol_L;
 
 extern Context_T  CTX;
@@ -434,19 +433,19 @@ View :
     tSTRING tBIGSTR '{' Views '}' tEND
     { 
       if(!strcmp($1, "View"))
-	EndView(1, Force_ViewNumber, yyname, $2); 
+	EndView(1, yyname, $2); 
     }
   | tSTRING tBIGSTR tSTRING VExpr '{' Views '}' tEND
     {
       if(!strcmp($1, "View"))
-	EndView(1, Force_ViewNumber, yyname, $2);
+	EndView(1, yyname, $2);
     }  
 ;
 
 Views :
     /* none */
     {
-      BeginView(1, Force_ViewNumber); 
+      BeginView(1); 
     }
   | Views ScalarPoint
   | Views VectorPoint

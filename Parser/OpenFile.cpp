@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.10 2001-04-14 06:55:15 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.11 2001-04-17 06:55:48 geuzaine Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -26,15 +26,16 @@ extern GUI *WID;
 extern Mesh      *THEM, M;
 extern Context_T  CTX;
 
-void ParseFile(char *f){
+int ParseFile(char *f){
   char String[256];
+  int status;
 
   strncpy(yyname,f,NAME_STR_L);
   yyerrorstate=0;
   yylineno=1;
 
   if(!(yyin = fopen(yyname,"r")))
-    return;
+    return 0;
   
   Msg(STATUS2, "Loading '%s'", yyname); 
 
@@ -48,22 +49,27 @@ void ParseFile(char *f){
      !strncmp(String, "$ELM", 4)){
     if(THEM->status < 0) mai3d(THEM, 0);
     Read_Mesh(THEM, yyin, FORMAT_MSH);
+    status = THEM->status;
   }
   else if(!strncmp(String, "sms", 3))
   {
     if(THEM->status < 0) mai3d(THEM, 0);
     Read_Mesh(THEM, yyin, FORMAT_SMS);
+    status = THEM->status;
   }
   else if(!strncmp(String, "$PostFormat", 11) ||
           !strncmp(String, "$View", 5)){
     Read_View(yyin, yyname);
+    status = 0;
   }
   else{
     while(!feof(yyin)) yyparse();
+    status = 0;
   }
   fclose(yyin);
 
   Msg(STATUS2, "Loaded '%s'", yyname); 
+  return status;
 }
 
 void MergeProblem(char *name){
@@ -81,6 +87,7 @@ void MergeProblem(char *name){
 
 void OpenProblem(char *name){
   char ext[6];
+  int status;
 
   if(CTX.threads_lock){
     Msg(INFO, "I'm busy! Ask me that later...");
@@ -96,7 +103,7 @@ void OpenProblem(char *name){
   strcpy(ext,name+(strlen(name)-4));
   if(!strcmp(ext,".GEO") || 
      !strcmp(ext,".geo") || 
-     //!strcmp(ext,".msh") || 
+     !strcmp(ext,".msh") || 
      !strcmp(ext,".pos")
      ){
     CTX.basefilename[strlen(name)-4] = '\0';
@@ -118,17 +125,30 @@ void OpenProblem(char *name){
 #endif
   }
 
-  ParseFile(CTX.filename);  
+  Post_ViewComputeBBox = 1;
+  int nb = List_Nbr(Post_ViewList);
+
+  status = ParseFile(CTX.filename);  
+
+  Post_ViewComputeBBox = 0;
 
   ApplyLcFactor(THEM);
-  mai3d(THEM,0);  
+
+  if(!status) mai3d(THEM,0);  
+
   Maillage_Dimension_0(&M);
 
 #ifndef _BLACKBOX
   ZeroHighlight(&M); 
 #endif
-
-  CalculateMinMax(THEM->Points);  
+  
+  if(List_Nbr(Post_ViewList) > nb)
+    CalculateMinMax(NULL, ((Post_View*)List_Pointer
+			   (Post_ViewList,List_Nbr(Post_ViewList)-1))->BBox);
+  else if(!status) 
+    CalculateMinMax(THEM->Points,NULL);
+  else
+    CalculateMinMax(THEM->Vertices,NULL);
 
 #ifndef _BLACKBOX
   if (!EntitesVisibles) {

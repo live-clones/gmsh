@@ -112,7 +112,7 @@ void Read_VTK_File (char *file, Mesh *m)
 void Read_Mesh_SMS (Mesh *m, FILE *in)
 {
   char line[1023];
-  int i,j,patch,nbPts;
+  int i,patch,nbPts;
   int NbRegions,NbFaces,NbEdges,NbVertices,NbPoints,
     GEntityType,GEntityId,EntityNbConnections,Dummy,
     Edge1,Edge2,Edge3,Edge4,Face1,Face2,Face3,Face4;
@@ -134,12 +134,12 @@ void Read_Mesh_SMS (Mesh *m, FILE *in)
       if(GEntityId)
 	{
 	  fscanf(in,"%d %d %lf %lf %lf",&GEntityType,&EntityNbConnections,&x,&y,&z); 
-	  Vertex *v = Create_Vertex(i,x,y,z,1.0,1.0);
-	  Tree_Add(m->Vertices,&v);
+	  Vertex *vert = Create_Vertex(i,x,y,z,1.0,1.0);
+	  Tree_Add(m->Vertices,&vert);
 	  switch(GEntityType)
 	    {
 	    case 0:
-	      Tree_Add(m->Points,&v);
+	      Tree_Add(m->Points,&vert);
 	      break;
 	    case 1:
 	      fscanf(in,"%le",&u);
@@ -160,8 +160,6 @@ void Read_Mesh_SMS (Mesh *m, FILE *in)
   for(int i=0;i<NbEdges;i++)
     {
       fscanf(in,"%d",&GEntityId);
-
-      int NbPts;
 
       if(GEntityId)
 	{
@@ -549,7 +547,7 @@ void Write_DMG_FILE (Mesh *m, char *filename)
   Vertex *v;
   Curve *c;
   Surface *s;
-  Volume *vol;
+  //Volume *vol;
   int k;
 
   l = Tree2List(m->Points);

@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.13 2001-04-14 06:55:15 geuzaine Exp $
+// $Id: Generator.cpp,v 1.14 2001-04-17 06:55:47 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -192,8 +192,6 @@ void mai3d (Mesh * M, int Asked){
     return;
   }
 
-  CTX.threads_lock = 1 ;
-
   M->MeshParams.DelaunayAlgorithm = CTX.mesh.algo ;
   M->MeshParams.NbSmoothing = CTX.mesh.nb_smoothing ;
   M->MeshParams.InteractiveDelaunay = CTX.mesh.interactive ;
@@ -207,6 +205,8 @@ void mai3d (Mesh * M, int Asked){
     OpenProblem (CTX.filename);
     M->status = 0;
   }
+
+  CTX.threads_lock = 1 ;
   
   /* Maillage 1-D */
   

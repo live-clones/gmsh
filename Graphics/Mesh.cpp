@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.21 2001-02-17 22:08:56 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.22 2001-04-17 06:55:47 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -26,7 +26,7 @@ void draw_polygon_2d (double r, double g, double b, int n,
                       double *x, double *y, double *z){
   int i ;
 
-  CalculateMinMax(THEM->Points);
+  CalculateMinMax(THEM->Points,NULL);
   InitOpengl();
   InitPosition();
 

@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.10 2001-04-08 20:36:50 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.11 2001-04-17 06:55:47 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -210,8 +210,6 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
   else
     M->status = -1 ;
 
-  CalculateMinMax(M->Points);
-  
 }
 
 /* ------------------------------------------------------------------------ */

@@ -4,6 +4,7 @@
 
 double opt_cut_sphere_Xc(OPT_ARGS_NUM)
 {
+  return 0;
 }
 
 StringXNumber CutSphereOptions_Number[] = {

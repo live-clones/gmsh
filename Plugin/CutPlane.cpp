@@ -8,6 +8,7 @@
 
 double opt_cut_plane_A(OPT_ARGS_NUM)
 {
+  return 0;
 }
 
 StringXNumber CutPlaneOptions_Number[] = {
