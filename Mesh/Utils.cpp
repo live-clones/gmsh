@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.8 2001-12-16 05:16:37 remacle Exp $
+// $Id: Utils.cpp,v 1.9 2002-02-12 20:11:34 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -178,7 +178,7 @@ end:
 
 
 #define  Precision 1.e-10
-#define  MaxIter 20
+#define  MaxIter 50
 
 void find_bestuv (Surface * s, double X, double Y,
                   double *U, double *V, double *Z, int N){
@@ -253,11 +253,24 @@ void invert_singular_matrix(double **M, int n, double **I){
   free_dvector(W,1,n);
 }
 
-void XYZtoUV (Surface *s, double X, double Y, double Z, double *U, double *V) {
+void XYZtoUV (Surface *s, double X, double Y, double Z, double *U, double *V,
+	      double relax) {
   double Unew,Vnew,err;
   int    iter;
   Vertex D_u,D_v,P;
   double **mat, **jac ;
+  double umin, umax, vmin, vmax;
+
+  if (s->Typ == MSH_SURF_NURBS){
+    umin = s->ku[0];
+    umax = s->ku[s->OrderU + s->Nu];
+    vmin = s->kv[0];
+    vmax = s->kv[s->OrderV + s->Nv];
+  }
+  else{
+    umin = vmin = 0.0;
+    umax = vmax = 1.0;
+  }
 
   mat = dmatrix(1,3,1,3);
   jac = dmatrix(1,3,1,3);
@@ -282,8 +295,10 @@ void XYZtoUV (Surface *s, double X, double Y, double Z, double *U, double *V) {
     mat[3][3] = 0.; 
     invert_singular_matrix(mat,3,jac);
 
-    Unew = *U + jac[1][1] * (X-P.Pos.X) + jac[2][1] * (Y-P.Pos.Y) + jac[3][1] * (Z-P.Pos.Z) ;
-    Vnew = *V + jac[1][2] * (X-P.Pos.X) + jac[2][2] * (Y-P.Pos.Y) + jac[3][2] * (Z-P.Pos.Z) ;
+    Unew = *U + relax * (jac[1][1] * (X-P.Pos.X) + jac[2][1] * (Y-P.Pos.Y) + 
+			 jac[3][1] * (Z-P.Pos.Z)) ;
+    Vnew = *V + relax * (jac[1][2] * (X-P.Pos.X) + jac[2][2] * (Y-P.Pos.Y) +
+			 jac[3][2] * (Z-P.Pos.Z)) ;
 
     err = DSQR(Unew - *U) + DSQR(Vnew - *V) ;
 
@@ -292,18 +307,23 @@ void XYZtoUV (Surface *s, double X, double Y, double Z, double *U, double *V) {
     *V = Vnew;
   }
 
-  if(iter > 10){
-    if(iter == MaxIter) Msg(WARNING, "Could not converge in XYZtoUV");
-    else Msg(WARNING, "Many (%d) iterations in XYZtoUV", iter);
-  }
-
   free_dmatrix(mat,1,3,1,3);
   free_dmatrix(jac,1,3,1,3);
+
+  if(iter == MaxIter ||
+     (Unew > umax || Vnew > vmax || Unew < umin || Vnew < vmin)){
+    if(relax < 1.e-12)
+      Msg(GERROR, "Could not converge: surface mesh will be wrong");
+    else{
+      Msg(INFO, "Relaxation factor = %g", 0.75*relax);
+      XYZtoUV (s, X, Y, Z, U, V, 0.75*relax);
+    }
+  }
 
 }
 
 void XYtoUV (Surface * s, double *X, double *Y,
-             double *U, double *V, double *Z){
+             double *U, double *V, double *Z, double relax){
 
   double det, Unew, Vnew, err, mat[2][2], jac[2][2];
   int iter;
@@ -345,8 +365,8 @@ void XYtoUV (Surface * s, double *X, double *Y,
     jac[1][0] = -mat[1][0] / det;
     jac[1][1] = mat[0][0] / det;
     
-    Unew = *U + 1.0 * (jac[0][0] * (*X - P.Pos.X) + jac[1][0] * (*Y - P.Pos.Y));
-    Vnew = *V + 1.0 * (jac[0][1] * (*X - P.Pos.X) + jac[1][1] * (*Y - P.Pos.Y));
+    Unew = *U + relax * (jac[0][0] * (*X - P.Pos.X) + jac[1][0] * (*Y - P.Pos.Y));
+    Vnew = *V + relax * (jac[0][1] * (*X - P.Pos.X) + jac[1][1] * (*Y - P.Pos.Y));
     
     err = DSQR (Unew - *U) + DSQR (Vnew - *V);
     
@@ -357,32 +377,29 @@ void XYtoUV (Surface * s, double *X, double *Y,
   
   *Z = P.Pos.Z;
 
-  if(iter > 10){
-    if(iter == MaxIter) Msg(WARNING, "Could not converge in XYtoUV");
-    else Msg(WARNING, "Many (%d) iterations in XYtoUV...", iter);
-  }
-
   int thresh = Unew > umax || Vnew > vmax || Unew < umin || Vnew < vmin;
 
-  if (thresh){
-    //Msg(WARNING, "(U,V) thresholded in XYtoUV (surface mesh may be wrong)");
-    if(Unew > umax) *U = umax;
-    if(Vnew > vmax) *V = vmax;
-    if(Unew < umin) *U = umin;
-    if(Vnew < vmin) *V = vmin;
+  if(iter == MaxIter || thresh){
+    if(relax < 1.e-6){
+      Msg(GERROR, "Could not converge: surface mesh will probably be wrong");
+      if(Unew > umax) *U = umax;
+      if(Vnew > vmax) *V = vmax;
+      if(Unew < umin) *U = umin;
+      if(Vnew < vmin) *V = vmin;
+      find_bestuv (s, *X, *Y, U, V, Z, 30);
+      P = InterpolateSurface (s, *U, *V, 0, 0);
+      *X = P.Pos.X;
+      *Y = P.Pos.Y;
+      *Z = P.Pos.Z;
+    }
+    else{
+      Msg(INFO, "Relaxation factor = %g", 0.75*relax);
+      XYtoUV (s, X, Y, U, V, Z, 0.75*relax);
+    }
   }
 
-#if 1
-  if (iter == MaxIter || thresh){
-    Msg(WARNING, "Entering rescue mode in XYtoUV: surface mesh may be wrong");
-    find_bestuv (s, *X, *Y, U, V, Z, 30);
-    P = InterpolateSurface (s, *U, *V, 0, 0);
-    *X = P.Pos.X;
-    *Y = P.Pos.Y;
-    *Z = P.Pos.Z;
-  }
-#endif
 }
+
 
 int Oriente (List_T * cu, double n[3]){
   int N, i, a, b, c;

@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.7 2001-10-29 08:52:20 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.8 2002-02-12 20:11:34 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -45,8 +45,8 @@ Vertex *middleface (Vertex * v1, Vertex * v2){
   if (THES->Typ == MSH_SURF_PLAN)
     return NULL;
 
-  XYZtoUV ( THES , v1->Pos.X , v1->Pos.Y , v1->Pos.Z, &U1 , &V1 );    
-  XYZtoUV ( THES , v2->Pos.X , v2->Pos.Y , v2->Pos.Z, &U2 , &V2 );    
+  XYZtoUV ( THES , v1->Pos.X , v1->Pos.Y , v1->Pos.Z, &U1 , &V1 , 1.0);    
+  XYZtoUV ( THES , v2->Pos.X , v2->Pos.Y , v2->Pos.Z, &U2 , &V2 , 1.0);    
 
   U = 0.5 *(U1+U2);
   V = 0.5 *(V1+V2);

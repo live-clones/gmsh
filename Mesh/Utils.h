@@ -7,8 +7,9 @@ void MeanPlane(List_T *point, Surface *s);
 void find_bestuv (Surface * s, double X, double Y,
                   double *U, double *V, double *Z, int N);
 void XYtoUV (Surface * s, double *X, double *Y,
-             double *U, double *V, double *Z);
-void XYZtoUV (Surface *s, double X, double Y, double Z, double *U, double *V);
+             double *U, double *V, double *Z, double relax);
+void XYZtoUV (Surface *s, double X, double Y, double Z, 
+	      double *U, double *V, double relax);
 int Oriente (List_T * cu, double n[3]);
 double angle_3p (Vertex * V, Vertex * P1, Vertex * P2);
 double angle_plan (Vertex * V, Vertex * P1, Vertex * P2, double n[3]);

@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.39 2002-02-01 14:34:05 remacle Exp $
+// $Id: 2D_Mesh.cpp,v 1.40 2002-02-12 20:11:34 geuzaine Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -145,7 +145,7 @@ void Calcule_Z (void *data, void *dum){
   if (v->Frozen || v->Num < 0)
     return;
 
-  XYtoUV (THESUPPORT, &v->Pos.X, &v->Pos.Y, &U, &V, &Z);
+  XYtoUV (THESUPPORT, &v->Pos.X, &v->Pos.Y, &U, &V, &Z, 1.0);
   v->Pos.Z = Z;
 }
 
