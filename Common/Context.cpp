@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.30 2001-01-10 21:20:38 geuzaine Exp $
+// $Id: Context.cpp,v 1.31 2001-01-11 12:53:57 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -202,6 +202,10 @@ void Init_Context(void){
   CTX.font = "-*-helvetica-medium-r-*-*-*-*-*-*-*-*-*-*" ;
   CTX.fixed_font = "fixed" ;
   // end(only used for motif)
+
+  // only for fltk
+  CTX.fontsize = 12;
+  // end(fltk)
 
   CTX.lc = 1.0 ;
   CTX.min[0]   = CTX.min[1]   = CTX.min[2]   = 0.0 ;

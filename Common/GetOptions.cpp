@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.2 2001-01-09 19:40:56 remacle Exp $
+// $Id: GetOptions.cpp,v 1.3 2001-01-11 12:53:57 geuzaine Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -47,6 +47,7 @@ char gmsh_options[]   =
   "Display options:\n"    
   "  -nodb                 disable double buffering\n"
   "  -noov                 disable overlay visual\n"
+  "  -fontsize int         size of the font for the user interface (default: 12)\n"
   "  -alpha                enable alpha blending\n"
   "  -notrack              don't use trackball mode for rotations\n"
   "  -display string       specify display\n"
@@ -347,6 +348,17 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "nodl")){ 
         CTX.display_lists = 0; i++;
+      }
+      else if(!strcmp(argv[i]+1, "fontsize")){
+        i++;
+        if(argv[i]!=NULL){
+	  CTX.fontsize = atoi(argv[i]);
+          i++;
+	}
+        else {    
+          fprintf(stderr, ERROR_STR "Missing Number\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "display")){
         i++;

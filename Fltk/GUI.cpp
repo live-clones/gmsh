@@ -257,6 +257,18 @@ int GUI::global_shortcuts(int event){
     quit_selection = 1;
     return 1;
   }
+  else if(Fl::test_shortcut('1')){
+    mesh_1d_cb(0,0);
+    return 1;
+  }
+  else if(Fl::test_shortcut('2')){
+    mesh_2d_cb(0,0);
+    return 1;
+  }
+  else if(Fl::test_shortcut('3')){
+    mesh_3d_cb(0,0);
+    return 1;
+  }
 
   return 0;
 }
@@ -852,28 +864,28 @@ void GUI::create_geometry_options_window(){
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Visibility");
 	o->labelsize(CTX.fontsize);
-        geo_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Points");
+        geo_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, IW, BH, "Points");
 	geo_butt[0]->callback(opt_geometry_entity_cb, (void*)0);
 	geo_butt[0]->value(CTX.geom.points);
-        geo_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Curves");
+        geo_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, IW, BH, "Curves");
 	geo_butt[1]->callback(opt_geometry_entity_cb, (void*)1);
 	geo_butt[1]->value(CTX.geom.lines);
-        geo_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Surfaces");
+        geo_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, IW, BH, "Surfaces");
 	geo_butt[2]->callback(opt_geometry_entity_cb, (void*)2);
 	geo_butt[2]->value(CTX.geom.surfaces);
-        geo_butt[3] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Volumes");
+        geo_butt[3] = new Fl_Check_Button(2*WB, 2*WB+4*BH, IW, BH, "Volumes");
 	geo_butt[3]->callback(opt_geometry_entity_cb, (void*)3);
 	geo_butt[3]->value(CTX.geom.volumes);
-        geo_butt[4] = new Fl_Check_Button(width/2, 2*WB+1*BH, BW, BH, "Point numbers");
+        geo_butt[4] = new Fl_Check_Button(width/2, 2*WB+1*BH, IW, BH, "Point numbers");
 	geo_butt[4]->callback(opt_geometry_num_cb, (void*)0);
 	geo_butt[4]->value(CTX.geom.points_num);
-        geo_butt[5] = new Fl_Check_Button(width/2, 2*WB+2*BH, BW, BH, "Curve numbers");
+        geo_butt[5] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Curve numbers");
 	geo_butt[5]->callback(opt_geometry_num_cb, (void*)1);
 	geo_butt[5]->value(CTX.geom.lines_num);
-        geo_butt[6] = new Fl_Check_Button(width/2, 2*WB+3*BH, BW, BH, "Surface numbers");
+        geo_butt[6] = new Fl_Check_Button(width/2, 2*WB+3*BH, IW, BH, "Surface numbers");
 	geo_butt[6]->callback(opt_geometry_num_cb, (void*)2);
 	geo_butt[6]->value(CTX.geom.surfaces_num);
-        geo_butt[7] = new Fl_Check_Button(width/2, 2*WB+4*BH, BW, BH, "Volume numbers");
+        geo_butt[7] = new Fl_Check_Button(width/2, 2*WB+4*BH, IW, BH, "Volume numbers");
 	geo_butt[7]->callback(opt_geometry_num_cb, (void*)3);
 	geo_butt[7]->value(CTX.geom.volumes_num);
 	for(i=0 ; i<8 ; i++){
@@ -984,28 +996,28 @@ void GUI::create_mesh_options_window(){
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Visibility");
 	o->labelsize(CTX.fontsize);
-        mesh_butt[3] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Points");
+        mesh_butt[3] = new Fl_Check_Button(2*WB, 2*WB+1*BH, IW, BH, "Points");
 	mesh_butt[3]->callback(opt_mesh_entity_cb, (void*)0);
 	mesh_butt[3]->value(CTX.mesh.points);
-        mesh_butt[4] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Curves");
+        mesh_butt[4] = new Fl_Check_Button(2*WB, 2*WB+2*BH, IW, BH, "Curves");
 	mesh_butt[4]->callback(opt_mesh_entity_cb, (void*)1);
 	mesh_butt[4]->value(CTX.mesh.lines);
-        mesh_butt[5] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Surfaces");
+        mesh_butt[5] = new Fl_Check_Button(2*WB, 2*WB+3*BH, IW, BH, "Surfaces");
 	mesh_butt[5]->callback(opt_mesh_entity_cb, (void*)2);
 	mesh_butt[5]->value(CTX.mesh.surfaces);
-        mesh_butt[6] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Volumes");
+        mesh_butt[6] = new Fl_Check_Button(2*WB, 2*WB+4*BH, IW, BH, "Volumes");
 	mesh_butt[6]->callback(opt_mesh_entity_cb, (void*)3);
 	mesh_butt[6]->value(CTX.mesh.volumes);
-        mesh_butt[7] = new Fl_Check_Button(width/2, 2*WB+1*BH, BW, BH, "Point Numbers");
+        mesh_butt[7] = new Fl_Check_Button(width/2, 2*WB+1*BH, IW, BH, "Point Numbers");
 	mesh_butt[7]->callback(opt_mesh_entity_cb, (void*)0);
 	mesh_butt[7]->value(CTX.mesh.points_num);
-        mesh_butt[8] = new Fl_Check_Button(width/2, 2*WB+2*BH, BW, BH, "Curve Numbers");
+        mesh_butt[8] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Curve Numbers");
 	mesh_butt[8]->callback(opt_mesh_entity_cb, (void*)1);
 	mesh_butt[8]->value(CTX.mesh.lines_num);
-        mesh_butt[9] = new Fl_Check_Button(width/2, 2*WB+3*BH, BW, BH, "Surface Numbers");
+        mesh_butt[9] = new Fl_Check_Button(width/2, 2*WB+3*BH, IW, BH, "Surface Numbers");
 	mesh_butt[9]->callback(opt_mesh_entity_cb, (void*)2);
 	mesh_butt[9]->value(CTX.mesh.surfaces_num);
-        mesh_butt[10] = new Fl_Check_Button(width/2, 2*WB+4*BH, BW, BH, "Volume Numbers");
+        mesh_butt[10] = new Fl_Check_Button(width/2, 2*WB+4*BH, IW, BH, "Volume Numbers");
 	mesh_butt[10]->callback(opt_mesh_entity_cb, (void*)3);
 	mesh_butt[10]->value(CTX.mesh.volumes_num);
 	for(i=3 ; i<11 ; i++){
