@@ -529,6 +529,16 @@ Display size of points (in pixels)@*
 Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.PolygonOffsetFactor
+Polygon offset factor (offset = factor * DZ + r * units)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.PolygonOffsetUnits
+Polygon offset units (offset = factor * DZ + r * units)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.QuadricSubdivisions
 Number of subdivisions used to draw points or lines as spheres or cylinders@*
 Default value: @code{8}@*

@@ -85,8 +85,8 @@ plugin uses, for each time step in `iView', the
 corresponding time step in `dView'. If `dView'
 < 0, the plugin uses `iView' as the value source.
 
-Plugin(CutMap) creates as many views as there are
-time steps in `iView'.
+Plugin(CutMap) creates as many views as there
+are time steps in `iView'.
 
 Numeric options:
 @table @code
