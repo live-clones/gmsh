@@ -1,4 +1,4 @@
-// $Id: DisplacementRaise.cpp,v 1.6 2003-11-18 21:04:41 geuzaine Exp $
+// $Id: DisplacementRaise.cpp,v 1.7 2003-11-19 01:52:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -102,9 +102,9 @@ static void displacementRaiseList(Post_View * iView, List_T * iList, int iNbElm,
   // should we treat multiple time steps by generating new views
   // (cf. time dependent CutMaps)?
   if(dTimeStep < 0 || dTimeStep > dView->NbTimeStep - 1){
-    dTimeStep = 0;
     Msg(WARNING, "Invalid TimeStep (%d) in View[%d]: choosing TimeStep 0",
 	dTimeStep, dView->Index);
+    dTimeStep = 0;
   }
 
   iView->Changed = 1;

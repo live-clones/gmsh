@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.7 2003-11-14 21:20:55 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.8 2003-11-19 01:52:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -33,6 +33,7 @@ StringXNumber SphericalRaiseOptions_Number[] = {
   {GMSH_FULLRC, "Yc", NULL, 0.},
   {GMSH_FULLRC, "Zc", NULL, 0.},
   {GMSH_FULLRC, "Raise", NULL, 1.},
+  {GMSH_FULLRC, "TimeStep", NULL, 0.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
@@ -61,15 +62,16 @@ void GMSH_SphericalRaisePlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(SphericalRaise) transforms the coordinates\n"
-         "of the elements in the view 'iView' according to\n"
-         "the elements' associated values. Instead of\n"
-         "elevating the nodes along the X, Y and Z axes\n"
-         "as in View['iView'].RaiseX, View['iView'].RaiseY\n"
+         "Plugin(SphericalRaise) transforms the\n"
+         "coordinates of the elements in the view 'iView'\n"
+         "using the values associated with the\n"
+         "'TimeStep'-th time step. Instead of elevating\n"
+         "the nodes along the X, Y and Z axes as in\n"
+	 "View['iView'].RaiseX, View['iView'].RaiseY\n"
 	 "and View['iView'].RaiseZ, the raise is applied\n"
 	 " along the radius of a sphere centered at ('Xc',\n"
-	 "'Yc', 'Zc'). If 'iView' < 0, the plugin is run on\n"
-	 "the current view.\n");
+	 "'Yc', 'Zc'). If 'iView' < 0, the plugin is run\n"
+	 "on the current view.\n");
 }
 
 int GMSH_SphericalRaisePlugin::getNbOptions() const
@@ -88,7 +90,8 @@ void GMSH_SphericalRaisePlugin::CatchErrorMessage(char *errorMessage) const
 }
 
 static void sphericalRaiseList(Post_View * v, List_T * list, int nbelm,
-                               int nbvert, double center[3], double raise)
+                               int nbvert, int timeStep, double center[3], 
+			       double raise)
 {
   double *x, *y, *z, *val, d[3], coef;
   int nb, i, j;
@@ -97,6 +100,12 @@ static void sphericalRaiseList(Post_View * v, List_T * list, int nbelm,
     v->Changed = 1;
   else
     return;
+
+  if(timeStep < 0 || timeStep > v->NbTimeStep - 1){
+    Msg(WARNING, "Invalid TimeStep (%d) in View[%d]: choosing TimeStep 0",
+	timeStep, v->Index);
+    timeStep = 0;
+  }
 
   // for each element
   //   for each node
@@ -116,7 +125,7 @@ static void sphericalRaiseList(Post_View * v, List_T * list, int nbelm,
       d[1] = y[j] - center[1];
       d[2] = z[j] - center[2];
       norme(d);
-      coef = raise * val[j];
+      coef = raise * val[nbvert * timeStep + j];
       x[j] += coef * d[0];
       y[j] += coef * d[1];
       z[j] += coef * d[2];
@@ -124,16 +133,17 @@ static void sphericalRaiseList(Post_View * v, List_T * list, int nbelm,
   }
 }
 
-static void sphericalRaise(Post_View * v, double center[3], double raise)
+static void sphericalRaise(Post_View * v, int timeStep, double center[3], 
+			   double raise)
 {
-  sphericalRaiseList(v, v->SP, v->NbSP, 1, center, raise);
-  sphericalRaiseList(v, v->SL, v->NbSL, 2, center, raise);
-  sphericalRaiseList(v, v->ST, v->NbST, 3, center, raise);
-  sphericalRaiseList(v, v->SQ, v->NbSQ, 4, center, raise);
-  sphericalRaiseList(v, v->SS, v->NbSS, 4, center, raise);
-  sphericalRaiseList(v, v->SH, v->NbSH, 8, center, raise);
-  sphericalRaiseList(v, v->SI, v->NbSI, 6, center, raise);
-  sphericalRaiseList(v, v->SY, v->NbSY, 5, center, raise);
+  sphericalRaiseList(v, v->SP, v->NbSP, 1, timeStep, center, raise);
+  sphericalRaiseList(v, v->SL, v->NbSL, 2, timeStep, center, raise);
+  sphericalRaiseList(v, v->ST, v->NbST, 3, timeStep, center, raise);
+  sphericalRaiseList(v, v->SQ, v->NbSQ, 4, timeStep, center, raise);
+  sphericalRaiseList(v, v->SS, v->NbSS, 4, timeStep, center, raise);
+  sphericalRaiseList(v, v->SH, v->NbSH, 8, timeStep, center, raise);
+  sphericalRaiseList(v, v->SI, v->NbSI, 6, timeStep, center, raise);
+  sphericalRaiseList(v, v->SY, v->NbSY, 5, timeStep, center, raise);
 }
 
 Post_View *GMSH_SphericalRaisePlugin::execute(Post_View * v)
@@ -145,8 +155,8 @@ Post_View *GMSH_SphericalRaisePlugin::execute(Post_View * v)
   center[1] = SphericalRaiseOptions_Number[1].def;
   center[2] = SphericalRaiseOptions_Number[2].def;
   raise = SphericalRaiseOptions_Number[3].def;
-
-  int iView = (int)SphericalRaiseOptions_Number[4].def;
+  int timeStep = (int)SphericalRaiseOptions_Number[4].def;
+  int iView = (int)SphericalRaiseOptions_Number[5].def;
 
   if(v && iView < 0)
     vv = v;
@@ -159,7 +169,7 @@ Post_View *GMSH_SphericalRaisePlugin::execute(Post_View * v)
     }
   }
 
-  sphericalRaise(vv, center, raise);
+  sphericalRaise(vv, timeStep, center, raise);
   return vv;
 }
 
