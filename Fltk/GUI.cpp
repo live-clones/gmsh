@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.71 2001-05-05 10:14:21 geuzaine Exp $
+// $Id: GUI.cpp,v 1.72 2001-05-07 06:25:26 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -69,6 +69,7 @@ Fl_Menu_Item m_menubar_table[] = {
   {"Help",0,0,0,FL_SUBMENU},
     {"Shortcuts...",             0, (Fl_Callback *)help_short_cb, 0},
     {"Command line options...",  0, (Fl_Callback *)help_command_line_cb, 0},
+    {"Current options...",       0, (Fl_Callback *)status_xyz1p_cb, (void*)4},
     {"About...",                 0, (Fl_Callback *)help_about_cb, 0},
     {0},
   {0}

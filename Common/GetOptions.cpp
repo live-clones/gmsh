@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.17 2001-03-08 21:06:35 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.18 2001-05-07 06:25:25 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -64,6 +64,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -perspective          set projection mode to perspective");
 #endif
   Msg(DIRECT, "Other options:");      
+  Msg(DIRECT, "  -a, -g, -m, -s, -p    start in auto, geometry, mesh, solver or post mode (default: auto)");
   Msg(DIRECT, "  -v int                set verbosity level (default: 2)");
 #ifdef _XMOTIF
   Msg(DIRECT, "  -nothreads            disable threads");
@@ -91,7 +92,22 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
     
     if (argv[i][0] == '-') {
       
-      if(!strcmp(argv[i]+1, "0")){ 
+      if(!strcmp(argv[i]+1, "a")){ 
+        CTX.initial_context = 0; i++;
+      }
+      else if(!strcmp(argv[i]+1, "g")){ 
+        CTX.initial_context = 1; i++;
+      }
+      else if(!strcmp(argv[i]+1, "m")){ 
+        CTX.initial_context = 2; i++;
+      }
+      else if(!strcmp(argv[i]+1, "s")){ 
+        CTX.initial_context = 3; i++;
+      }
+      else if(!strcmp(argv[i]+1, "p")){ 
+        CTX.initial_context = 4; i++;
+      }
+      else if(!strcmp(argv[i]+1, "0")){ 
         CTX.batch = -1; i++;
       }
       else if(!strcmp(argv[i]+1, "1")){ 

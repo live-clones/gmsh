@@ -1,11 +1,8 @@
-// $Id: Main.cpp,v 1.23 2001-04-17 11:22:00 geuzaine Exp $
+// $Id: Main.cpp,v 1.24 2001-05-07 06:25:26 geuzaine Exp $
 
 #include <signal.h>
 
-#ifndef _NOPLUGIN
 #include "PluginManager.h"
-#endif
-
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "GmshVersion.h"
@@ -49,11 +46,9 @@ int main(int argc, char *argv[]){
   if(CTX.verbosity && CTX.terminal)
     fprintf(stderr, "%s, Version %.2f\n", gmsh_progname, GMSH_VERSION);
 
-#ifndef _NOPLUGIN
   // Register Default Plugins (in test ...)
   if(CTX.default_plugins)
     GMSH_PluginManager::Instance()->RegisterDefaultPlugins();
-#endif
 
   // Initialize the static Mesh
 
@@ -122,6 +117,8 @@ int main(int argc, char *argv[]){
   Msg(STATUS3N, "Ready");
   Msg(STATUS1, "Gmsh %.2f", GMSH_VERSION);
 
+  // Log the following for bug reports
+  
   Msg(LOG_INFO, "-------------------------------------------------------");
   Msg(LOG_INFO, gmsh_os);
   Msg(LOG_INFO, gmsh_date);
@@ -129,7 +126,7 @@ int main(int argc, char *argv[]){
   Msg(LOG_INFO, gmsh_packager);
   Msg(LOG_INFO, "-------------------------------------------------------");
 
-  // Display the GUI to have a quick "a la Windows" launch time
+  // Display the GUI immediately to have a quick "a la Windows" launch time
 
   WID->check();
 
@@ -141,12 +138,28 @@ int main(int argc, char *argv[]){
 
   for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
   
-  // Init first context (geometry or post)
+  // Init first context
 
-  if(List_Nbr(Post_ViewList))
-    WID->set_context(menu_post, 0);
-  else
+  switch(CTX.initial_context){
+  case 1 :
     WID->set_context(menu_geometry, 0); 
+    break;
+  case 2 :
+    WID->set_context(menu_mesh, 0); 
+    break;
+  case 3 :
+    WID->set_context(menu_solver, 0); 
+    break;
+  case 4 :
+    WID->set_context(menu_post, 0); 
+    break;
+  default : // automatic
+    if(List_Nbr(Post_ViewList))
+      WID->set_context(menu_post, 0);
+    else
+      WID->set_context(menu_geometry, 0); 
+    break;
+  }    
 
   // Read background mesh on disk
 

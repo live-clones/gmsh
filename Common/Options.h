@@ -32,6 +32,7 @@ char * opt_print_font(OPT_ARGS_STR);
 
 // NUMBERS
 
+double opt_general_initial_context(OPT_ARGS_NUM);
 double opt_general_fontsize(OPT_ARGS_NUM);
 double opt_general_graphics_fontsize(OPT_ARGS_NUM);
 double opt_general_graphics_position0(OPT_ARGS_NUM);
@@ -287,6 +288,7 @@ typedef struct {
   char *str ;
   char * (*function)(int num, int action, char *val) ;
   char *def ;
+  char *help ;
 } StringXString ;
 
 typedef struct {
@@ -294,6 +296,7 @@ typedef struct {
   char *str;
   double (*function)(int num, int action, double val) ;
   double def ;
+  char *help ;
 } StringXNumber ;
 
 typedef struct {
@@ -301,6 +304,7 @@ typedef struct {
   char *str ; 
   unsigned int (*function)(int num, int action, unsigned int val) ;
   unsigned int def1, def2, def3 ;
+  char *help ;
 } StringXColor ;
 
 void Init_Options (int num);

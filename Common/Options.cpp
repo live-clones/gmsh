@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.17 2001-05-04 22:42:21 geuzaine Exp $
+// $Id: Options.cpp,v 1.18 2001-05-07 06:25:25 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -106,6 +106,20 @@ void Init_Options_GUI(int num){
   Set_ColorOptions_GUI(num, PrintOptions_Color);
 }
 
+void Print_OptionCategory(int level, char *cat, FILE *file){
+  if(level & GMSH_SESSIONRC) return ;
+  if(file){
+    fprintf(file, "//\n");
+    fprintf(file, "// %s\n", cat);
+    fprintf(file, "//\n");
+  }
+  else{
+    Msg(DIRECT, "//");
+    Msg(DIRECT, "// %s", cat);
+    Msg(DIRECT, "//");
+  }
+}
+
 void Print_Options(int num, int level, char *filename){
   FILE *file;
   char tmp[256];
@@ -142,21 +156,27 @@ void Print_Options(int num, int level, char *filename){
     fprintf(file, "// this file isn't found, defaults are used.\n");
   }
 
+  Print_OptionCategory(level, "General options", file);
   Print_StringOptions(num, level, GeneralOptions_String, "General.", file);
   Print_NumberOptions(num, level, GeneralOptions_Number, "General.", file);
   Print_ColorOptions(num, level, GeneralOptions_Color, "General.", file);
+  Print_OptionCategory(level, "Geometry options", file);
   Print_StringOptions(num, level, GeometryOptions_String, "Geometry.", file);
   Print_NumberOptions(num, level, GeometryOptions_Number, "Geometry.", file);
   Print_ColorOptions(num, level, GeometryOptions_Color, "Geometry.", file);
+  Print_OptionCategory(level, "Mesh options", file);
   Print_StringOptions(num, level, MeshOptions_String, "Mesh.", file);
   Print_NumberOptions(num, level, MeshOptions_Number, "Mesh.", file);
   Print_ColorOptions(num, level, MeshOptions_Color, "Mesh.", file);
+  Print_OptionCategory(level, "Solver options", file);
   Print_StringOptions(num, level, SolverOptions_String, "Solver.", file);
   Print_NumberOptions(num, level, SolverOptions_Number, "Solver.", file);
   Print_ColorOptions(num, level, SolverOptions_Color, "Solver.", file);
+  Print_OptionCategory(level, "Post-processing options", file);
   Print_StringOptions(num, level, PostProcessingOptions_String, "PostProcessing.", file);
   Print_NumberOptions(num, level, PostProcessingOptions_Number, "PostProcessing.", file);
   Print_ColorOptions(num, level, PostProcessingOptions_Color, "PostProcessing.", file);
+  Print_OptionCategory(level, "View options", file);
   if(level & GMSH_FULLRC){
     for(i=0; i<List_Nbr(Post_ViewList) ; i++){
       sprintf(tmp, "View[%d].", i);
@@ -173,6 +193,7 @@ void Print_Options(int num, int level, char *filename){
     Print_ColorOptions(num, level, ViewOptions_Color, "View.", file);
     Print_ColorTable(num, "View.ColorTable", file);
   }
+  Print_OptionCategory(level, "Print options", file);
   Print_StringOptions(num, level, PrintOptions_String, "Print.", file);
   Print_NumberOptions(num, level, PrintOptions_Number, "Print.", file);
   Print_ColorOptions(num, level, PrintOptions_Color, "Print.", file);
@@ -229,7 +250,8 @@ void Print_StringOptions(int num, int level, StringXString s[], char *prefix, FI
   char tmp[1024];
   while(s[i].str){
     if(s[i].level & level){
-      sprintf(tmp, "%s%s = \"%s\";", prefix, s[i].str, s[i].function(num, GMSH_GET, NULL)) ;
+      sprintf(tmp, "%s%s = \"%s\"; // %s", prefix, 
+	      s[i].str, s[i].function(num, GMSH_GET, NULL), s[i].help) ;
       if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, "%s", tmp);
     }
     i++;
@@ -281,7 +303,8 @@ void Print_NumberOptions(int num, int level, StringXNumber s[], char *prefix, FI
   char tmp[1024];
   while(s[i].str){
     if(s[i].level & level){
-      sprintf(tmp, "%s%s = %g;", prefix, s[i].str, s[i].function(num, GMSH_GET, 0));
+      sprintf(tmp, "%s%s = %g; // %s", prefix, 
+	      s[i].str, s[i].function(num, GMSH_GET, 0), s[i].help);
       if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, tmp);
     }
     i++;
@@ -347,11 +370,12 @@ void Print_ColorOptions(int num, int level, StringXColor s[], char *prefix, FILE
   char tmp[1024];
   while(s[i].str){
     if(s[i].level & level){
-      sprintf(tmp, "%sColor.%s = {%d,%d,%d};", 
+      sprintf(tmp, "%sColor.%s = {%d,%d,%d}; // %s", 
 	      prefix, s[i].str,
 	      UNPACK_RED  (s[i].function(num, GMSH_GET, 0)),
 	      UNPACK_GREEN(s[i].function(num, GMSH_GET, 0)),
-	      UNPACK_BLUE (s[i].function(num, GMSH_GET, 0)));
+	      UNPACK_BLUE (s[i].function(num, GMSH_GET, 0)),
+	      s[i].help);
       if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, tmp);
     }
     i++;
@@ -512,6 +536,10 @@ char * opt_print_font(OPT_ARGS_STR){
 // ************** Numeric option routines ****************************
 
 
+double opt_general_initial_context(OPT_ARGS_NUM){
+  if(action & GMSH_SET) CTX.initial_context = (int)val;
+  return CTX.initial_context;
+}
 double opt_general_fontsize(OPT_ARGS_NUM){
   if(action & GMSH_SET) CTX.fontsize = (int)val;
   return CTX.fontsize;
