@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2001-01-09 14:24:05 geuzaine Exp $
+# $Id: Makefile,v 1.10 2001-01-13 17:08:41 geuzaine Exp $
 #
 # Makefile for "libCommon.a"
 #
@@ -58,22 +58,21 @@ depend:
 
 # DO NOT DELETE THIS LINE
 Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
- ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
- ../DataStr/Tools.h Const.h ../Geo/Geo.h ../Mesh/Mesh.h \
- ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
- ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h Context.h \
- trackball.c trackball.h
-Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
- ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
- ../DataStr/Tools.h Views.h Const.h ColorTable.h Context.h
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  Const.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
+  ../Graphics/Draw.h ../Common/Views.h ../Common/Const.h \
+  ../Common/ColorTable.h Context.h trackball.c trackball.h
+Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h Views.h Const.h \
+  ColorTable.h Context.h
 GetOptions.o: GetOptions.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
- ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
- ../DataStr/Tools.h Const.h Context.h ../Geo/Geo.h ../Mesh/Mesh.h \
- ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h Views.h ColorTable.h \
- Version.h
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  GmshVersion.h Const.h Context.h ../Geo/Geo.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h Views.h ColorTable.h \
+  ../Parser/OpenFile.h ../Common/Const.h
 Timer.o: Timer.cpp
 ColorTable.o: ColorTable.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
- ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
- ../DataStr/Tools.h ColorTable.h Context.h Const.h
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ColorTable.h Context.h Const.h

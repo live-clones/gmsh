@@ -62,6 +62,7 @@ public :
 
   int position[2];            // position of the menu window on the screen
   int gl_position[2];         // position of the graphic window on the screen
+  int center_windows;         // center popup windows on the menu window
 
   int interactive;            // 0=full gfx; -1=just parse; 1,2,3=batch mesh 
   int verbosity;              // 0=silent -> 3=debug 

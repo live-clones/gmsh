@@ -66,6 +66,7 @@ class GUI{
 
   int BH; // check_button height
   int BW; // check_button width
+  int BB; // button width
   int WB; // borders
   int IW; // input field width
   int MH; // height of the unchangeable part of the menu window
@@ -183,6 +184,7 @@ public:
   void add_message(char *msg);
   void save_message(char *filename);
   void set_statistics();
+  void update_view_window(int numview);
   void set_title(char *str);
   void activate_custom(int val);
   void add_handler();

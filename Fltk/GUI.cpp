@@ -47,10 +47,10 @@ Fl_Menu_Item m_menubar_table[] = {
     {"Quit",             FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
     {0},
   {"Options",0,0,0,FL_SUBMENU},
+    {"General...",         FL_SHIFT+'o', (Fl_Callback *)opt_general_cb, 0},
     {"Geometry...",        FL_SHIFT+'g', (Fl_Callback *)opt_geometry_cb, 0},
     {"Mesh...",            FL_SHIFT+'m', (Fl_Callback *)opt_mesh_cb, 0},
     {"Post-Processing...", FL_SHIFT+'p', (Fl_Callback *)opt_post_cb, 0, FL_MENU_DIVIDER},
-    {"General...",         FL_SHIFT+'o', (Fl_Callback *)opt_general_cb, 0},
     {"Statistics...",      FL_SHIFT+'i', (Fl_Callback *)opt_statistics_cb, 0},
     {"Message log...",     FL_SHIFT+'l', (Fl_Callback *)opt_message_cb, 0},
     {0},
@@ -270,10 +270,12 @@ int GUI::global_shortcuts(int event){
 
 GUI::GUI() {
 
-  BH = 2*CTX.fontsize+2; // button height
-  WB = CTX.fontsize-6; // window border width
   IW = 10*CTX.fontsize; // input field width
   BW = 3*IW/2; // width of a button with external label
+  BB = 5*CTX.fontsize; // width of a button with internal label
+  BH = 2*CTX.fontsize+2; // button height
+  WB = CTX.fontsize-6; // window border
+
 
   if(strlen(CTX.display)) Fl::display(CTX.display);
 
@@ -288,8 +290,8 @@ GUI::GUI() {
   // All static windows are contructed (even if some are not
   // displayed) since the shortcuts should be valid even for hidden
   // windows
-  create_menu_window();  m_window->show();
-  create_graphic_window();  g_window->show();
+  create_menu_window(); m_window->show();
+  create_graphic_window(); g_window->show();
   create_general_options_window();
   create_geometry_options_window();
   create_mesh_options_window();
@@ -325,7 +327,7 @@ void GUI::create_menu_window(){
   if(!init_menu_window){
     init_menu_window = 1 ;
 
-    int width = 155 ;
+    int width = 13*CTX.fontsize ;
     MH = 2*BH+6 ; // this is the initial height: no dynamic button is shown!
 
     m_window = new Fl_Window(width,MH);
@@ -519,6 +521,7 @@ void GUI::create_graphic_window(){
     init_graphic_window = 1 ;
 
     int sh = 2*CTX.fontsize-4; // status bar height
+    int sw = CTX.fontsize+4; //status button width
     int width = CTX.viewport[2]-CTX.viewport[0];
     int glheight = CTX.viewport[3]-CTX.viewport[1];
     int height = glheight + sh;
@@ -533,25 +536,25 @@ void GUI::create_graphic_window(){
 
       x = 2;
       
-      g_status_butt[0] = new Fl_Button(x,glheight+2,15,sh-4,"X"); x+=15;
+      g_status_butt[0] = new Fl_Button(x,glheight+2,sw,sh-4,"X"); x+=sw;
       g_status_butt[0]->callback(status_xyz1p_cb, (void*)0);
       //g_status_butt[0]->tooltip("Set X view");
-      g_status_butt[1] = new Fl_Button(x,glheight+2,15,sh-4,"Y"); x+=15;
+      g_status_butt[1] = new Fl_Button(x,glheight+2,sw,sh-4,"Y"); x+=sw;
       g_status_butt[1]->callback(status_xyz1p_cb, (void*)1);
-      g_status_butt[2] = new Fl_Button(x,glheight+2,15,sh-4,"Z"); x+=15;
+      g_status_butt[2] = new Fl_Button(x,glheight+2,sw,sh-4,"Z"); x+=sw;
       g_status_butt[2]->callback(status_xyz1p_cb, (void*)2);
-      g_status_butt[3] = new Fl_Button(x,glheight+2,20,sh-4,"1:1"); x+=20;
+      g_status_butt[3] = new Fl_Button(x,glheight+2,2*CTX.fontsize,sh-4,"1:1"); x+=2*CTX.fontsize;
       g_status_butt[3]->callback(status_xyz1p_cb, (void*)3);
-      g_status_butt[4] = new Fl_Button(x,glheight+2,15,sh-4,"?"); x+=15;
+      g_status_butt[4] = new Fl_Button(x,glheight+2,sw,sh-4,"?"); x+=sw;
       g_status_butt[4]->callback(status_xyz1p_cb, (void*)4);
 
-      g_status_butt[5] = new Fl_Button(x,glheight+2,15,sh-4); x+=15;
+      g_status_butt[5] = new Fl_Button(x,glheight+2,sw,sh-4); x+=sw;
       g_status_butt[5]->callback(status_play_cb);
       start_bmp = new Fl_Bitmap(start_bits,start_width,start_height);
       start_bmp->label(g_status_butt[5]);
       stop_bmp = new Fl_Bitmap(stop_bits,stop_width,stop_height);
 
-      g_status_butt[6] = new Fl_Button(x,glheight+2,15,sh-4); x+=15;
+      g_status_butt[6] = new Fl_Button(x,glheight+2,sw,sh-4); x+=sw;
       g_status_butt[6]->callback(status_cancel_cb);
       abort_bmp = new Fl_Bitmap(abort_bits,abort_width,abort_height);
       abort_bmp->label(g_status_butt[6]);
@@ -669,7 +672,7 @@ void GUI::create_general_options_window(){
   if(!init_general_options_window){
     init_general_options_window = 1 ;
 
-    int width = 290;
+    int width = 25*CTX.fontsize;
     int height = 5*WB+8*BH ;
     
     gen_window = new Fl_Window(width,height);
@@ -769,16 +772,19 @@ void GUI::create_general_options_window(){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "close");
+      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)gen_window);
     }
     { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "apply");
+      Fl_Return_Button* o = new Fl_Return_Button(width-BB-WB, height-BH-WB, BB, BH, "OK");
       o->labelsize(CTX.fontsize);
       o->callback(ok_cb);
     }
 
+    if(CTX.center_windows)
+      gen_window->position(m_window->x()+m_window->w()/2-width/2,
+			   m_window->y()+2*MH);
     gen_window->end();
   }
   else{
@@ -800,7 +806,7 @@ void GUI::create_geometry_options_window(){
   if(!init_geometry_options_window){
     init_geometry_options_window = 1 ;
 
-    int width = 280;
+    int width = 24*CTX.fontsize;
     int height = 5*WB+9*BH ;
     
     geo_window = new Fl_Window(width,height);
@@ -870,16 +876,19 @@ void GUI::create_geometry_options_window(){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "close");
+      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)geo_window);
     }
     { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "apply");
+      Fl_Return_Button* o = new Fl_Return_Button(width-BB-WB, height-BH-WB, BB, BH, "OK");
       o->labelsize(CTX.fontsize);
       o->callback(ok_cb);
     }
 
+    if(CTX.center_windows)
+      geo_window->position(m_window->x()+m_window->w()/2-width/2,
+			   m_window->y()+2*MH);
     geo_window->end();
   }
   else{
@@ -901,7 +910,7 @@ void GUI::create_mesh_options_window(){
   if(!init_mesh_options_window){
     init_mesh_options_window = 1 ;
 
-    int width = 310;
+    int width = 26*CTX.fontsize;
     int height = 5*WB+9*BH ;
     
     mesh_window = new Fl_Window(width,height);
@@ -1032,16 +1041,19 @@ void GUI::create_mesh_options_window(){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "close");
+      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)mesh_window);
     }
     { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "apply");
+      Fl_Return_Button* o = new Fl_Return_Button(width-BB-WB, height-BH-WB, BB, BH, "OK");
       o->labelsize(CTX.fontsize);
       o->callback(ok_cb);
     }
 
+    if(CTX.center_windows)
+      mesh_window->position(m_window->x()+m_window->w()/2-width/2,
+			    m_window->y()+2*MH);
     mesh_window->end();
   }
   else{
@@ -1064,7 +1076,7 @@ void GUI::create_post_options_window(){
   if(!init_post_options_window){
     init_post_options_window = 1 ;
 
-    int width = 200;
+    int width = 17*CTX.fontsize;
     int height = 5*WB+5*BH ;
     
     post_window = new Fl_Window(width,height);
@@ -1110,16 +1122,19 @@ void GUI::create_post_options_window(){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "close");
+      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)post_window);
     }
     { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "apply");
+      Fl_Return_Button* o = new Fl_Return_Button(width-BB-WB, height-BH-WB, BB, BH, "OK");
       o->labelsize(CTX.fontsize);
       o->callback(ok_cb);
     }
 
+    if(CTX.center_windows)
+      post_window->position(m_window->x()+m_window->w()/2-width/2,
+			    m_window->y()+2*MH);
     post_window->end();
   }
   else{
@@ -1141,7 +1156,7 @@ void GUI::create_statistics_window(){
   if(!init_statistics_window){
     init_statistics_window = 1 ;
 
-    int width = 262;
+    int width = 22*CTX.fontsize;
     int height = 5*WB+16*BH ;
     
     stat_window = new Fl_Window(width,height);
@@ -1200,16 +1215,19 @@ void GUI::create_statistics_window(){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "close");
+      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)stat_window);
     }
     { 
-      Fl_Button* o = new Fl_Button(width-60-WB, height-BH-WB, 60, BH, "update");
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "update");
       o->labelsize(CTX.fontsize);
       o->callback(opt_statistics_update_cb);
     }
 
+    if(CTX.center_windows)
+      stat_window->position(m_window->x()+m_window->w()/2-width/2,
+			    m_window->y()+2*MH);
     stat_window->end();
     set_statistics();
     stat_window->show();
@@ -1293,8 +1311,8 @@ void GUI::create_message_window(){
   if(!init_message_window){
     init_message_window = 1 ;
 
-    int width = 400;
-    int height = 400 ;
+    int width = 35*CTX.fontsize;
+    int height = 35*CTX.fontsize;
     
     msg_window = new Fl_Window(width,height);
     msg_window->box(FL_THIN_UP_BOX);
@@ -1305,17 +1323,21 @@ void GUI::create_message_window(){
     msg_browser->textsize(CTX.fontsize);
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "close");
+      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)msg_window);
     }
     { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "save");
+      Fl_Return_Button* o = new Fl_Return_Button(width-BB-WB, height-BH-WB, BB, BH, "save");
       o->labelsize(CTX.fontsize);
       o->callback(opt_message_save_cb);
     }
 
     msg_window->resizable(msg_browser);
+
+    if(CTX.center_windows)
+      msg_window->position(m_window->x()+m_window->w()/2-width/2,
+			   m_window->y()+2*MH);
     msg_window->end();
   }
   else{
@@ -1356,8 +1378,8 @@ void GUI::create_help_window(){
   if(!init_help_window){
     init_help_window = 1 ;
 
-    int width = 450;
-    int height = 400 ;
+    int width = 38*CTX.fontsize;
+    int height = 34*CTX.fontsize ;
     
     help_window = new Fl_Window(width,height);
     help_window->box(FL_THIN_UP_BOX);
@@ -1365,7 +1387,7 @@ void GUI::create_help_window(){
 
     Fl_Scroll*o = new Fl_Scroll(WB, WB, width-2*WB, height-3*WB-BH);
     {
-      Fl_Multiline_Output* o = new Fl_Multiline_Output(WB, WB, 600, 1200);
+      Fl_Multiline_Output* o = new Fl_Multiline_Output(WB, WB, 2*width, 3*height);
       o->value(txt_help);
       o->textfont(FL_COURIER);
       o->textsize(CTX.fontsize);
@@ -1373,12 +1395,16 @@ void GUI::create_help_window(){
     o->end();
     
     { 
-      Fl_Button* o = new Fl_Button(width-60-WB, height-BH-WB, 60, BH, "close");
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)help_window);
     }
 
     help_window->resizable(o);
+
+    if(CTX.center_windows)
+      help_window->position(m_window->x()+m_window->w()/2-width/2,
+			    m_window->y()+2*MH);
     help_window->end();
   }
   else{
@@ -1399,8 +1425,8 @@ void GUI::create_about_window(){
   if(!init_about_window){
     init_about_window = 1 ;
 
-    int width = 470;
-    int height = 230;
+    int width = 40*CTX.fontsize;
+    int height = 20*CTX.fontsize;
     
     about_window = new Fl_Window(width,height);
     about_window->box(FL_THIN_UP_BOX);
@@ -1424,6 +1450,9 @@ void GUI::create_about_window(){
     o2->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
     o2->callback(cancel_cb, (void*)about_window);
 
+    if(CTX.center_windows)
+      about_window->position(m_window->x()+m_window->w()/2-width/2,
+			     m_window->y()+2*MH);
     about_window->end();
   }
   else{
@@ -1440,12 +1469,11 @@ void GUI::create_about_window(){
 void GUI::create_view_window(int num){
   static int init_view_window = 0;
   int i;
-  double val;
 
   if(!init_view_window){
     init_view_window = 1 ;
 
-    int width = 380;
+    int width = 32*CTX.fontsize;
     int height = 5*WB+7*BH ;
     
     view_window = new Fl_Window(width,height);
@@ -1602,20 +1630,33 @@ void GUI::create_view_window(int num){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "close");
+      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)view_window);
     }
     { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "apply");
+      Fl_Return_Button* o = new Fl_Return_Button(width-BB-WB, height-BH-WB, BB, BH, "OK");
       o->labelsize(CTX.fontsize);
       o->callback(ok_cb);
     }
 
+    if(CTX.center_windows)
+      view_window->position(m_window->x()+m_window->w()/2-width/2,
+			    m_window->y()+2*MH);
     view_window->end();
   }
   
-  // update all current parameters for the selected view
+  update_view_window(num);
+
+  if(view_window->shown())
+    view_window->redraw();
+  else
+    view_window->show();
+}
+
+void GUI::update_view_window(int num){
+  int i;
+  double val;
   Post_View *v = (Post_View*)List_Pointer(Post_ViewList, num);
 
   static char buffer[1024];
@@ -1710,11 +1751,6 @@ void GUI::create_view_window(int num){
   view_butt[14]->value(v->ArrowLocation==DRAW_POST_LOCATE_COG);
   view_butt[15]->callback(view_options_vector_vertex_cb, (void*)num);
   view_butt[15]->value(v->ArrowLocation==DRAW_POST_LOCATE_VERTEX);
-  
-  if(view_window->shown())
-    view_window->redraw();
-  else
-    view_window->show();
 }
 
 // Handle activation of cutom min/max
@@ -1740,7 +1776,7 @@ void GUI::create_geometry_context_window(int num){
   if(!init_geometry_context_window){
     init_geometry_context_window = 1 ;
 
-    int width = 370;
+    int width = 31*CTX.fontsize;
     int height = 5*WB+9*BH ;
     
     context_geometry_window = new Fl_Window(width,height);
@@ -1759,7 +1795,7 @@ void GUI::create_geometry_context_window(int num){
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-60-2*WB, 2*WB+7*BH, 60, BH, "add");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "add");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_geometry_define_parameter_cb);
 	}
@@ -1782,7 +1818,7 @@ void GUI::create_geometry_context_window(int num){
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-60-2*WB, 2*WB+7*BH, 60, BH, "add");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "add");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_geometry_define_point_cb);
 	}
@@ -1800,7 +1836,7 @@ void GUI::create_geometry_context_window(int num){
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-60-2*WB, 2*WB+7*BH, 60, BH, "set");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "set");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_geometry_define_translation_cb);
 	}
@@ -1829,7 +1865,7 @@ void GUI::create_geometry_context_window(int num){
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-60-2*WB, 2*WB+7*BH, 60, BH, "set");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "set");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_geometry_define_rotation_cb);
 	}
@@ -1852,7 +1888,7 @@ void GUI::create_geometry_context_window(int num){
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-60-2*WB, 2*WB+7*BH, 60, BH, "set");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "set");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_geometry_define_scale_cb);
 	}
@@ -1875,7 +1911,7 @@ void GUI::create_geometry_context_window(int num){
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-60-2*WB, 2*WB+7*BH, 60, BH, "set");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "set");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_geometry_define_symmetry_cb);
 	}
@@ -1885,13 +1921,17 @@ void GUI::create_geometry_context_window(int num){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-60-WB, height-BH-WB, 60, BH, "close");
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)context_geometry_window);
     }
 
     for(i=0 ; i<6 ; i++) g[i]->hide();
     g[num]->show();
+
+    if(CTX.center_windows)
+      context_geometry_window->position(m_window->x()+m_window->w()/2-width/2,
+					m_window->y()+2*MH);
     context_geometry_window->end();
     context_geometry_window->show();
   }
@@ -1945,7 +1985,7 @@ void GUI::create_mesh_context_window(int num){
   if(!init_mesh_context_window){
     init_mesh_context_window = 1 ;
 
-    int width = 370;
+    int width = 31*CTX.fontsize;
     int height = 5*WB+5*BH ;
     
     context_mesh_window = new Fl_Window(width,height);
@@ -1961,7 +2001,7 @@ void GUI::create_mesh_context_window(int num){
 	context_mesh_input[0]->labelsize(CTX.fontsize);
 	context_mesh_input[0]->align(FL_ALIGN_RIGHT);
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-60-2*WB, 2*WB+3*BH, 60, BH, "set");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+3*BH, BB, BH, "set");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_mesh_define_length_cb);
 	}
@@ -1978,7 +2018,7 @@ void GUI::create_mesh_context_window(int num){
 	  context_mesh_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-60-2*WB, 2*WB+3*BH, 60, BH, "set");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+3*BH, BB, BH, "set");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_mesh_define_transfinite_line_cb);
 	}
@@ -1992,7 +2032,7 @@ void GUI::create_mesh_context_window(int num){
 	context_mesh_input[3]->labelsize(CTX.fontsize);
 	context_mesh_input[3]->align(FL_ALIGN_RIGHT);
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-60-2*WB, 2*WB+3*BH, 60, BH, "set");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+3*BH, BB, BH, "set");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_mesh_define_transfinite_line_cb);
 	}
@@ -2002,13 +2042,17 @@ void GUI::create_mesh_context_window(int num){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-60-WB, height-BH-WB, 60, BH, "close");
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)context_mesh_window);
     }
 
     for(i=0 ; i<3 ; i++) g[i]->hide();
     g[num]->show();
+
+    if(CTX.center_windows)
+      context_mesh_window->position(m_window->x()+m_window->w()/2-width/2,
+				    m_window->y()+2*MH);
     context_mesh_window->end();
     context_mesh_window->show();
   }
