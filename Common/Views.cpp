@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.137 2004-10-16 16:13:34 geuzaine Exp $
+// $Id: Views.cpp,v 1.138 2004-10-20 05:46:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1212,6 +1212,7 @@ void smooth_list(List_T * list, int nbList, double *min, double *max,
 
 void Post_View::smooth()
 {
+  double old_eps = xyzv::eps;
   xyzv::eps = CTX.lc * 1.e-8;
 
   if(NbSL || NbST || NbSQ || NbSS || NbSH || NbSI || NbSY) {
@@ -1233,6 +1234,8 @@ void Post_View::smooth()
     smooth_list(SY, NbSY, &Min, &Max, NbTimeStep, 5, con);
     Changed = 1;
   }
+
+  xyzv::eps = old_eps;  
 }
 
 // Transformation
