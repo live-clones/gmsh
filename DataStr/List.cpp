@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.26 2003-03-18 07:37:20 geuzaine Exp $
+// $Id: List.cpp,v 1.27 2003-03-18 07:38:09 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -34,7 +34,6 @@
 #include "SafeIO.h"
 
 static char *startptr;
-
 
 List_T *List_Create(int n, int incr, int size)
 {
