@@ -1,4 +1,4 @@
-// $Id: Lambda2.cpp,v 1.5 2004-12-27 20:39:14 geuzaine Exp $
+// $Id: Lambda2.cpp,v 1.6 2004-12-27 21:08:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -104,7 +104,7 @@ static void eigen(List_T *inList, int inNb,
   int nb = List_Nbr(inList) / inNb;
   for(int i = 0; i < List_Nbr(inList); i += nb) {
 
-    // FIXME: there was this test in the old Plugin(Gradient)...
+    // FIXME: there was this test in the old Plugin(Gradient)
     // double *yy = (double *)List_Pointer_Fast(inList, i + nbNod);
     // if(yy[0] > 0){
 
@@ -122,8 +122,8 @@ static void eigen(List_T *inList, int inNb,
       double GradVel[3][3];
 
       if(nbComp == 9){ 
-	// val is the velocity gradient tensor, we assume that is is
-	// contant per element
+	// val is the velocity gradient tensor: we assume that it is
+	// constant per element
 	double *v = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + 
 						nbNod * nbComp * j + nbComp * 0);
 	GradVel[0][0] = v[0]; GradVel[0][1] = v[1]; GradVel[0][2] = v[2];
@@ -132,7 +132,7 @@ static void eigen(List_T *inList, int inNb,
       }
       else if(nbComp == 3){ 
 	// FIXME: the following could be greatly simplified and
-	// generalized by using the classes in ShapeFunctions.h!
+	// generalized by using the classes in ShapeFunctions.h
 
 	// val contains the velocities: compute the gradient tensor
 	// from them
@@ -164,7 +164,7 @@ static void eigen(List_T *inList, int inNb,
 	  GradPhi_ksi[1][0]=  1;  GradPhi_ksi[1][1]=  0;  GradPhi_ksi[1][2]= 0;
 	  GradPhi_ksi[2][0]=  0;  GradPhi_ksi[2][1]=  1;  GradPhi_ksi[2][2]= 0;
 	}
-	else if (nbNod == 4){ // tetraedre
+	else if (nbNod == 4){ // tetrahedra
 	  dx_dksi[0][0] = x[1] - x[0]; dx_dksi[0][1] = x[2]-x[0]; dx_dksi[0][2] = x[3]-x[0];
 	  dx_dksi[1][0] = y[1] - y[0]; dx_dksi[1][1] = y[2]-y[0]; dx_dksi[1][2] = y[3]-y[0];
 	  dx_dksi[2][0] = z[1] - z[0]; dx_dksi[2][1] = z[2]-z[0]; dx_dksi[2][2] = z[3]-z[0];   
@@ -224,7 +224,7 @@ static void eigen(List_T *inList, int inNb,
 
     (*outNb)++;
 
-    // FIXME: end of the yy[0]>0 test in the old Plugin(Gradient)...
+    // FIXME: end of the yy[0]>0 test in the old Plugin(Gradient)
     // }
     
   }
