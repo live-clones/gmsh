@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.17 2002-06-15 21:29:59 geuzaine Exp $
+// $Id: Entity.cpp,v 1.18 2002-06-15 23:51:02 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -29,14 +29,13 @@
 extern Context_T   CTX;
 
 void Draw_Point (int type, double size, double *x, double *y, double *z, double Raise[3][5]){
-  static GLUquadricObj *qua;
-  static int first=1;
-  if(first){
-    first=0;
-    qua = gluNewQuadric();
-  }
-
   if(type){
+    static GLUquadricObj *qua;
+    static int first=1;
+    if(first){
+      first=0;
+      qua = gluNewQuadric();
+    }
     glPushMatrix(); 
     glTranslatef(x[0]+Raise[0][0], y[0]+Raise[1][0], z[0]+Raise[2][0]); 
     gluSphere(qua, size*CTX.pixel_equiv_x/CTX.s[0], 20,20);
