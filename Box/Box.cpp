@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.18 2001-01-08 08:05:40 geuzaine Exp $
+// $Id: Box.cpp,v 1.19 2001-01-09 14:24:04 geuzaine Exp $
 
 #include <signal.h>
 
@@ -15,8 +15,6 @@
 #include "Version.h"
 
 #include "Static.h"
-
-extern List_T *Post_ViewList;
 
 /* dummy defs for link purposes */
 

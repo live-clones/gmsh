@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.9 2001-01-08 08:05:43 geuzaine Exp $
+// $Id: Post.cpp,v 1.10 2001-01-09 14:24:09 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -9,7 +9,6 @@
 #include "Context.h"
 
 extern Context_T   CTX;
-extern List_T     *Post_ViewList;
 
 static double      Raise[3][5];
 static double      RaiseFactor[3];

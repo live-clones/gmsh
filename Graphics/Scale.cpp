@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.12 2001-01-08 08:05:43 geuzaine Exp $
+// $Id: Scale.cpp,v 1.13 2001-01-09 14:24:09 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -6,6 +6,7 @@
 #include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"
+#include "Views.h"
 #include "gl2ps.h"
 
 extern Context_T   CTX;
@@ -22,8 +23,6 @@ extern XContext_T  XCTX;
 
 /* Even if all computations in these routines are made in window
    coordinates, double precision is used to work at subpixel accuracy */
-
-extern List_T   *Post_ViewList;
 
 /* ------------------------------------------------------------------------ */
 /*  D r a w _ S t r i n g                                                   */

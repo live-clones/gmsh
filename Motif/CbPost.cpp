@@ -1,4 +1,4 @@
-// $Id: CbPost.cpp,v 1.1 2001-01-08 08:20:10 geuzaine Exp $
+// $Id: CbPost.cpp,v 1.2 2001-01-09 14:24:11 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -21,7 +21,6 @@ extern Widgets_T  WID ;
 extern Context_T  CTX ;
 extern XContext_T XCTX ;
 extern Mesh       *THEM;
-extern List_T     *Post_ViewList;
 extern int         Force_ViewNumber;
 
 static double      ADAPTATION_ERROR=10. ;

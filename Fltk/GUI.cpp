@@ -18,7 +18,6 @@
 #include "GetOptions.h"
 
 extern Context_T  CTX;
-extern List_T    *Post_ViewList;
 
 // Definition of the static menus
 
@@ -51,7 +50,7 @@ Fl_Menu_Item m_menubar_table[] = {
     {"Mesh...",            FL_SHIFT+'m', (Fl_Callback *)opt_mesh_cb, 0},
     {"Post-Processing...", FL_SHIFT+'p', (Fl_Callback *)opt_post_cb, 0, FL_MENU_DIVIDER},
     {"General...",         FL_SHIFT+'o', (Fl_Callback *)opt_general_cb, 0},
-    {"Statistics...",      FL_SHIFT+'i', (Fl_Callback *)opt_stat_cb, 0},
+    {"Statistics...",      FL_SHIFT+'i', (Fl_Callback *)opt_statistics_cb, 0},
     {0},
   {"Help",0,0,0,FL_SUBMENU},
     {"Short Help...",   0, (Fl_Callback *)help_short_cb, 0, FL_MENU_DIVIDER},
@@ -699,26 +698,55 @@ void GUI::opt_geometry(){
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Visibility");
 	o->labelsize(CTX.fontsize);
         geo_butt[0] = new Fl_Check_Button(2*WB, 2*WB+BH, 100, BH, "Points");
+	geo_butt[0]->callback(opt_geometry_entity_cb, (void*)0);
+	geo_butt[0]->value(CTX.geom.points);
         geo_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, 100, BH, "Curves");
+	geo_butt[1]->callback(opt_geometry_entity_cb, (void*)1);
+	geo_butt[1]->value(CTX.geom.lines);
         geo_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, 100, BH, "Surfaces");
+	geo_butt[2]->callback(opt_geometry_entity_cb, (void*)2);
+	geo_butt[2]->value(CTX.geom.surfaces);
         geo_butt[3] = new Fl_Check_Button(2*WB, 2*WB+4*BH, 100, BH, "Volumes");
+	geo_butt[3]->callback(opt_geometry_entity_cb, (void*)3);
+	geo_butt[3]->value(CTX.geom.volumes);
         geo_butt[4] = new Fl_Check_Button(2*WB+120, 2*WB+BH, 100, BH, "Point Numbers");
+	geo_butt[4]->callback(opt_geometry_num_cb, (void*)0);
+	geo_butt[4]->value(CTX.geom.points_num);
         geo_butt[5] = new Fl_Check_Button(2*WB+120, 2*WB+2*BH, 100, BH, "Curve Numbers");
+	geo_butt[5]->callback(opt_geometry_num_cb, (void*)1);
+	geo_butt[5]->value(CTX.geom.lines_num);
         geo_butt[6] = new Fl_Check_Button(2*WB+120, 2*WB+3*BH, 100, BH, "Surface Numbers");
+	geo_butt[6]->callback(opt_geometry_num_cb, (void*)2);
+	geo_butt[6]->value(CTX.geom.surfaces_num);
         geo_butt[7] = new Fl_Check_Button(2*WB+120, 2*WB+4*BH, 100, BH, "Volume Numbers");
+	geo_butt[7]->callback(opt_geometry_num_cb, (void*)3);
+	geo_butt[7]->value(CTX.geom.volumes_num);
 	for(int i=0 ; i<8 ; i++){
 	  geo_butt[i]->type(FL_TOGGLE_BUTTON);
 	  geo_butt[i]->down_box(FL_DOWN_BOX);
 	  geo_butt[i]->labelsize(CTX.fontsize);
 	  geo_butt[i]->selection_color(FL_YELLOW);
 	}
-        geo_value[0] = new Fl_Value_Input(2*WB, 2*WB+5*BH, 100, BH, "Entity Number");
-	geo_value[0]->minimum(0); geo_value[0]->maximum(1000); geo_value[0]->step(1);
-	geo_value[1] = new Fl_Value_Input(2*WB, 2*WB+6*BH, 100, BH, "Normals");
-	geo_value[1]->minimum(0); geo_value[1]->maximum(100); geo_value[1]->step(1);
-        geo_value[2] = new Fl_Value_Input(2*WB, 2*WB+7*BH, 100, BH, "Tangents");
-	geo_value[2]->minimum(0); geo_value[2]->maximum(100); geo_value[2]->step(1);
-	for(int i=0 ; i<3 ; i++){
+        geo_input = new Fl_Input(2*WB, 2*WB+5*BH, 100, BH, "Entity Number (or *)");
+	geo_input->callback(opt_geometry_show_by_entity_num_cb);
+	geo_input->labelsize(CTX.fontsize);
+	geo_input->type(FL_HORIZONTAL);
+	geo_input->align(FL_ALIGN_RIGHT);
+
+	geo_value[0] = new Fl_Value_Input(2*WB, 2*WB+6*BH, 100, BH, "Normals");
+	geo_value[0]->minimum(0); 
+	geo_value[0]->maximum(100);
+	geo_value[0]->step(0.1);
+	geo_value[0]->callback(opt_geometry_normals_cb);
+	geo_value[0]->value(CTX.geom.normals);
+
+        geo_value[1] = new Fl_Value_Input(2*WB, 2*WB+7*BH, 100, BH, "Tangents");
+	geo_value[1]->minimum(0);
+	geo_value[1]->maximum(100);
+	geo_value[1]->step(0.1);
+	geo_value[1]->callback(opt_geometry_tangents_cb);
+	geo_value[1]->value(CTX.mesh.tangents);
+	for(int i=0 ; i<2 ; i++){
 	  geo_value[i]->labelsize(CTX.fontsize);
 	  geo_value[i]->type(FL_HORIZONTAL);
 	  geo_value[i]->align(FL_ALIGN_RIGHT);
@@ -941,11 +969,11 @@ void GUI::opt_post(){
 
 // Create the window for the statistics
 
-void GUI::opt_stat(){
-  static int init_opt_stat = 0;
+void GUI::opt_statistics(){
+  static int init_opt_statistics = 0;
 
-  if(!init_opt_stat){
-    init_opt_stat = 1 ;
+  if(!init_opt_statistics){
+    init_opt_statistics = 1 ;
 
     int width = 234;
     int height = 5*WB+16*BH ;
@@ -1055,7 +1083,7 @@ void GUI::help_short(){
     o->end();
     
     { 
-      Fl_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "cancel");
+      Fl_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "OK");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)help_window);
     }
@@ -1103,7 +1131,7 @@ void GUI::help_about(){
 	    gmsh_os, gmsh_date, gmsh_host, gmsh_packager, 
 	    gmsh_url, gmsh_email, gmsh_copyright);
     o2->label(buffer);
-    o2->box(FL_FLAT_BOX);
+    o2->box(FL_THIN_UP_BOX);
     o2->labelsize(CTX.fontsize);
     o2->labelfont(FL_COURIER);
     o2->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
@@ -1137,6 +1165,7 @@ void GUI::opt_view(){
     view_window->label("View Options");
     { 
       Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
+      // Color bar
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Color bar");
 	o->labelsize(CTX.fontsize);
@@ -1159,10 +1188,10 @@ void GUI::opt_view(){
 	}
         o->end();
       }
+      // Range
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Range");
 	o->labelsize(CTX.fontsize);
-
 	{
 	  Fl_Group* o = new Fl_Group(WB, 2*WB+BH, width-2*WB, 2*BH, 0);
 	  view_butt[4] = new Fl_Check_Button(2*WB, 2*WB+  BH, 100, BH, "Linear");
@@ -1174,7 +1203,6 @@ void GUI::opt_view(){
 	  }
 	  o->end();
 	}
-
         view_butt[3] = new Fl_Check_Button(2*WB, 2*WB+3*BH, 100, BH, "Custom");
 	view_butt[3]->type(FL_TOGGLE_BUTTON);
 	view_butt[3]->down_box(FL_DOWN_BOX);
@@ -1188,7 +1216,6 @@ void GUI::opt_view(){
 	  view_value[i]->type(FL_HORIZONTAL);
 	  view_value[i]->align(FL_ALIGN_LEFT);
 	}
-
 	{
 	  Fl_Group* o =  new Fl_Group       (WB,       2*WB+6*BH, width-2*WB, 2*BH, 0);
 	  view_butt[6] = new Fl_Check_Button(2*WB,     2*WB+6*BH, 100, BH, "Iso");
@@ -1202,7 +1229,6 @@ void GUI::opt_view(){
 	  }
 	  o->end();
 	}
-
 	view_value[2] = new Fl_Value_Input(2*WB, 2*WB+5*BH, 40, BH, "Intervals");
 	view_value[2]->labelsize(CTX.fontsize);
 	view_value[2]->type(FL_HORIZONTAL);
@@ -1212,6 +1238,7 @@ void GUI::opt_view(){
 	view_value[2]->step(1);
         o->end();
       }
+      // Offset
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Offset");
 	o->labelsize(CTX.fontsize);
@@ -1226,6 +1253,7 @@ void GUI::opt_view(){
 	}	
 	o->end();
       }
+      // Raise
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Raise");
 	o->labelsize(CTX.fontsize);

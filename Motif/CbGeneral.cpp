@@ -1,4 +1,4 @@
-// $Id: CbGeneral.cpp,v 1.1 2001-01-08 08:20:10 geuzaine Exp $
+// $Id: CbGeneral.cpp,v 1.2 2001-01-09 14:24:11 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -12,8 +12,6 @@
 extern Context_T   CTX;
 extern XContext_T  XCTX;
 extern Widgets_T   WID;
-
-extern List_T    *Post_ViewList;
 
 extern void GetStatistics(double s[50]);
 

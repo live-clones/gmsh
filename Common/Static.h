@@ -12,6 +12,4 @@ int         CurrentNodeNumber, CurrentSimplexNumber;
 Context_T   CTX ;
 Mesh        M, *THEM, *LOCAL;
 
-Tree_T     *EntitesVisibles = NULL;
-
 #endif

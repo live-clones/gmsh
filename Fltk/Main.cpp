@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.4 2001-01-09 09:52:16 geuzaine Exp $
+// $Id: Main.cpp,v 1.5 2001-01-09 14:24:06 geuzaine Exp $
 
 #include <signal.h>
 
@@ -17,9 +17,6 @@
 #include "GUI.h"
 #include "OpenFile.h"
 #include "GetOptions.h"
-
-extern List_T *Post_ViewList;
-int            SHOW_ALL_ENTITIES ;
 
 GUI *WID ;
 

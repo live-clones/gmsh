@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.14 2001-01-08 08:05:43 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.15 2001-01-09 14:24:09 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -10,6 +10,7 @@
 #include "gl2ps.h"
 #include "Verif.h"
 #include "Numeric.h"
+#include "Visibility.h"
 
 extern Mesh      *THEM;
 extern Context_T  CTX;

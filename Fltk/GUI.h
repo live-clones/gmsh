@@ -111,10 +111,12 @@ class GUI{
 
   // geometry options window
   Fl_Check_Button  *geo_butt[10] ;
+  Fl_Input         *geo_input ;
   Fl_Value_Input   *geo_value[10] ;
   
   // mesh options window
   Fl_Check_Button  *mesh_butt[20] ;
+  Fl_Input         *mesh_input ;
   Fl_Value_Input   *mesh_value[20] ;
 
   // post-processing options window
@@ -149,7 +151,7 @@ public:
   void opt_geometry();
   void opt_mesh();
   void opt_post();
-  void opt_stat();
+  void opt_statistics();
   void opt_view();
 
   // create help windows

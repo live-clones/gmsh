@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.2 2001-01-09 09:52:17 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.3 2001-01-09 14:24:13 geuzaine Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -8,13 +8,11 @@
 #include "Mesh.h"
 #include "Views.h"
 #include "MinMax.h"
+#include "Visibility.h"
 
 #ifndef _BLACKBOX
 #include "GmshUI.h"
 #include "Draw.h"
-extern int        SHOW_ALL_ENTITIES ;
-extern Tree_T    *EntitesVisibles;
-extern void RemplirEntitesVisibles (int add_rem);
 #endif
 
 #ifdef _XMOTIF

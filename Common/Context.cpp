@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.25 2001-01-08 08:05:40 geuzaine Exp $
+// $Id: Context.cpp,v 1.26 2001-01-09 14:24:05 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -234,8 +234,6 @@ void Init_Context(void){
   Init_Colors(0);
 
 }
-
-extern List_T  *Post_ViewList;
 
 void Print_Context(char *filename){
   FILE *file;

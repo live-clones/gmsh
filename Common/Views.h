@@ -5,11 +5,11 @@
 #include "ColorTable.h"
 
 typedef struct{
-  /* intrinsic to a view */
+  // intrinsic to a view
   int Num, Changed, DuplicateOf, Links;
   char FileName[NAME_STR_L], Name[NAME_STR_L];
 
-  /* the data */
+  // the data
   int datasize; // size(double) or sizeof(float)
   List_T *Time;
   int NbSP, NbVP, NbTP;
@@ -23,7 +23,7 @@ typedef struct{
   int NbTimeStep, ScalarOnly;
   double Min, Max;
 
-  /* options */
+  // options
   char   Format[NAME_STR_L];
   double CustomMin, CustomMax;
   double Offset[3], Raise[3], ArrowScale;
@@ -34,18 +34,22 @@ typedef struct{
   int TimeStep;
   ColorTable CT;
 
-  /* dynamic */
+  // dynamic
   double (*GVFI) (double min, double max, int nb, int index);
   int (*GIFV) (double min, double max, int nb, double value);
 }Post_View;
 
-/* IntervalsType */
+// The static list with pointers to all views
+
+extern List_T *Post_ViewList;
+
+// IntervalsType
 #define DRAW_POST_ISO          1
 #define DRAW_POST_CONTINUOUS   2
 #define DRAW_POST_DISCRETE     3
 #define DRAW_POST_NUMERIC      4
 
-/* ArrowType */
+// ArrowType
 #define DRAW_POST_SEGMENT      1
 #define DRAW_POST_ARROW        2
 #define DRAW_POST_PYRAMID      3
@@ -53,19 +57,19 @@ typedef struct{
 #define DRAW_POST_DISPLACEMENT 5
 #define DRAW_POST_ARROW_HEAD   6
 
-/* ArrowLocation */
+// ArrowLocation
 #define DRAW_POST_LOCATE_COG     1
 #define DRAW_POST_LOCATE_VERTEX  2
 
-/* ScaleType */
+// ScaleType
 #define DRAW_POST_DEFAULT 1
 #define DRAW_POST_CUSTOM  2
 
-/* RangeType */
+// RangeType
 #define DRAW_POST_LINEAR       1
 #define DRAW_POST_LOGARITHMIC  2
 
-/* Public functions */
+// Public functions
 
 int fcmpPostViewNum(const void *v1, const void *v2);
 int fcmpPostViewDuplicateOf(const void *v1, const void *v2);

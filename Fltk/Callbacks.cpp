@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.4 2001-01-09 13:28:44 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.5 2001-01-09 14:24:06 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -7,6 +7,7 @@
 #include "Draw.h"
 #include "Views.h"
 #include "Timer.h"
+#include "Visibility.h"
 #include "CreateFile.h"
 #include "OpenFile.h"
 #include "Context.h"
@@ -18,7 +19,6 @@
 extern GUI       *WID;
 extern Mesh       M;
 extern Context_T  CTX;
-extern List_T    *Post_ViewList;
 
 // Compatibility routines
 
@@ -318,12 +318,74 @@ void opt_general_light_cb(CALLBACK_ARGS){
 void opt_geometry_cb(CALLBACK_ARGS) {
   WID->opt_geometry();
 }
+void opt_geometry_entity_cb(CALLBACK_ARGS) {
+  switch((int)data){
+  case 0: CTX.geom.points = !CTX.geom.points; break;
+  case 1: CTX.geom.lines = !CTX.geom.lines; break;
+  case 2: CTX.geom.surfaces = !CTX.geom.surfaces; break;
+  case 3: CTX.geom.volumes = !CTX.geom.volumes; break;
+  }
+}
+void opt_geometry_num_cb(CALLBACK_ARGS) {
+  switch((int)data){
+  case 0: CTX.geom.points_num = !CTX.geom.points_num; break;
+  case 1: CTX.geom.lines_num = !CTX.geom.lines_num; break;
+  case 2: CTX.geom.surfaces_num = !CTX.geom.surfaces_num; break;
+  case 3: CTX.geom.volumes_num = !CTX.geom.volumes_num; break;
+  }
+}
+void opt_geometry_show_by_entity_num_cb(CALLBACK_ARGS) {
+  const char * c = ((Fl_Input*)w)->value(); 
+  if (!strcmp(c,"all") || !strcmp(c,"*")){
+    if(SHOW_ALL_ENTITIES){ RemplirEntitesVisibles(0); SHOW_ALL_ENTITIES = 0; }
+    else { RemplirEntitesVisibles(1); SHOW_ALL_ENTITIES = 1; }
+  }
+  else{ 
+    int i = atoi(c);
+    if(EntiteEstElleVisible(i)) ToutesLesEntitesRelatives(i,EntitesVisibles,0);
+    else ToutesLesEntitesRelatives(i,EntitesVisibles,1);
+  }
+}
+
+void opt_geometry_normals_cb(CALLBACK_ARGS) {
+  CTX.geom.normals = ((Fl_Value_Input*)w)->value();
+}
+void opt_geometry_tangents_cb(CALLBACK_ARGS) {
+  CTX.geom.tangents = ((Fl_Value_Input*)w)->value();
+}
 
 // Option Mesh Menu
 
 void opt_mesh_cb(CALLBACK_ARGS) {
   WID->opt_mesh();
 }
+void opt_mesh_entity_cb(CALLBACK_ARGS) {
+  switch((int)data){
+  case 0: CTX.mesh.points = !CTX.mesh.points; break;
+  case 1: CTX.mesh.lines = !CTX.mesh.lines; break;
+  case 2: CTX.mesh.surfaces = !CTX.mesh.surfaces; break;
+  case 3: CTX.mesh.volumes = !CTX.mesh.volumes; break;
+  }
+}
+void opt_mesh_num_cb(CALLBACK_ARGS) {
+  switch((int)data){
+  case 0: CTX.mesh.points_num = !CTX.mesh.points_num; break;
+  case 1: CTX.mesh.lines_num = !CTX.mesh.lines_num; break;
+  case 2: CTX.mesh.surfaces_num = !CTX.mesh.surfaces_num; break;
+  case 3: CTX.mesh.volumes_num = !CTX.mesh.volumes_num; break;
+  }
+}
+void opt_mesh_show_by_entity_num_cb(CALLBACK_ARGS) {
+  opt_geometry_show_by_entity_num_cb(w,data);
+}
+void opt_mesh_show_by_quality_cb(CALLBACK_ARGS) {
+  const char * c = ((Fl_Input*)w)->value(); 
+  if (!strcmp(c,"all") || !strcmp(c,"*"))
+    CTX.mesh.limit_gamma = 0.0 ;
+  else
+    CTX.mesh.limit_gamma = atof(c);
+}
+
 
 // Option Post Menu
 
@@ -333,8 +395,8 @@ void opt_post_cb(CALLBACK_ARGS) {
 
 // Option Statistics Menu
 
-void opt_stat_cb(CALLBACK_ARGS) {
-  WID->opt_stat();
+void opt_statistics_cb(CALLBACK_ARGS) {
+  WID->opt_statistics();
 }
 
 // Help Menu

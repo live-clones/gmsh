@@ -1,4 +1,4 @@
-// $Id: CbOptions.cpp,v 1.1 2001-01-08 08:20:10 geuzaine Exp $
+// $Id: CbOptions.cpp,v 1.2 2001-01-09 14:24:11 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -12,6 +12,7 @@
 #include "XContext.h"
 #include "Register.h"
 #include "Timer.h"
+#include "Visibility.h"
 
 #include "CbGeneral.h"
 #include "CbOptions.h"
@@ -24,10 +25,8 @@ extern XContext_T XCTX ;
 extern Widgets_T  WID;
 extern Pixmaps_T  PIX;
 extern Mesh       M;
-extern Tree_T    *EntitesVisibles;
 
-int SHOW_ALL_ENTITIES, SELECT_BY_NUMBER=OPTIONS_MESH_SELECT_ENTITY ;
-
+static int  select_by_number=OPTIONS_MESH_SELECT_ENTITY ;
 static int  stop_anim ;
 static long anim_time ;
 
@@ -305,8 +304,8 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_MESH_ABORT : 
     CancelMeshThread();
     break;
-  case OPTIONS_MESH_SELECT_ENTITY : SELECT_BY_NUMBER = OPTIONS_MESH_SELECT_ENTITY; break; 
-  case OPTIONS_MESH_SELECT_QUALITY : SELECT_BY_NUMBER = OPTIONS_MESH_SELECT_QUALITY; break; 
+  case OPTIONS_MESH_SELECT_ENTITY : select_by_number = OPTIONS_MESH_SELECT_ENTITY; break; 
+  case OPTIONS_MESH_SELECT_QUALITY : select_by_number = OPTIONS_MESH_SELECT_QUALITY; break; 
 
     /* post */
     
@@ -345,11 +344,11 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
 
     /* mesh + geom : a changer...*/
   case OPTIONS_GEOM_HIDE_SHOW :  
-    SELECT_BY_NUMBER=OPTIONS_MESH_SELECT_ENTITY;
+    select_by_number=OPTIONS_MESH_SELECT_ENTITY;
     /* Fal-through */
   case OPTIONS_MESH_HIDE_SHOW :  
     c = XmTextGetString(w); 
-    if(SELECT_BY_NUMBER == OPTIONS_MESH_SELECT_ENTITY){
+    if(select_by_number == OPTIONS_MESH_SELECT_ENTITY){
       if (!strcmp(c,"all") || !strcmp(c,"*")){
         if(SHOW_ALL_ENTITIES){ RemplirEntitesVisibles(0); SHOW_ALL_ENTITIES = 0; }
         else { RemplirEntitesVisibles(1); SHOW_ALL_ENTITIES = 1; }

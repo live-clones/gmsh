@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.1 2001-01-08 08:20:11 geuzaine Exp $
+// $Id: Main.cpp,v 1.2 2001-01-09 14:24:11 geuzaine Exp $
 
 #include <signal.h>
 
@@ -11,6 +11,7 @@
 #include "Context.h"
 #include "ColorTable.h"
 #include "Parser.h"
+#include "Views.h"
 
 #include "Widgets.h"
 #include "Pixmaps.h"
@@ -28,8 +29,6 @@
 #include "XStatic.h"
 
 #include "Version.h"
-
-extern List_T *Post_ViewList;
 
 char* ShowVisualClass(int cls){
   if(cls==TrueColor)   return "TrueColor";

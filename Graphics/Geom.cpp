@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.8 2001-01-08 08:05:43 geuzaine Exp $
+// $Id: Geom.cpp,v 1.9 2001-01-09 14:24:09 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -9,6 +9,7 @@
 #include "Verif.h"
 #include "Interpolation.h"
 #include "Numeric.h"
+#include "Visibility.h"
 
 extern Context_T  CTX;
 extern Mesh      *THEM;

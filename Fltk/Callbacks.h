@@ -54,10 +54,20 @@ void opt_general_light_cb(CALLBACK_ARGS) ;
 // Option Geometry Menu
 
 void opt_geometry_cb(CALLBACK_ARGS) ;
+void opt_geometry_entity_cb(CALLBACK_ARGS) ;
+void opt_geometry_num_cb(CALLBACK_ARGS) ;
+void opt_geometry_show_by_entity_num_cb(CALLBACK_ARGS) ;
+void opt_geometry_normals_cb(CALLBACK_ARGS) ;
+void opt_geometry_tangents_cb(CALLBACK_ARGS) ;
 
 // Option Mesh Menu
 
 void opt_mesh_cb(CALLBACK_ARGS) ;
+void opt_mesh_entity_cb(CALLBACK_ARGS) ;
+void opt_mesh_num_cb(CALLBACK_ARGS) ;
+void opt_mesh_show_by_entity_num_cb(CALLBACK_ARGS) ;
+void opt_mesh_show_by_quality_cb(CALLBACK_ARGS) ;
+void opt_mesh_normals_cb(CALLBACK_ARGS) ;
 
 // Option Post Menu
 
@@ -65,7 +75,7 @@ void opt_post_cb(CALLBACK_ARGS) ;
 
 // Option Statistics Menu
 
-void opt_stat_cb(CALLBACK_ARGS) ;
+void opt_statistics_cb(CALLBACK_ARGS) ;
 
 // Help Menu
 
