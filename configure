@@ -830,16 +830,18 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-gsl            use GSL as numerical toolkit (default=yes)
   --enable-gui            build the graphical user interface (default=yes)
   --enable-parallel       enable parallel version (default=no)
   --enable-triangle       compile Triangle if available (default=yes)
-  --enable-gsl            use GSL as numerical toolkit (default=yes)
+  --enable-static         GCC only: build a statically linked executable
+                          (default=no)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-gsl-prefix=PFX   prefix where GSL is installed
   --with-fltk-prefix=PFX  prefix where FLTK is installed
+  --with-gsl-prefix=PFX   prefix where GSL is installed
   --with-jpeg-prefix=PFX  prefix where the JPEG code is installed
 
 Some influential environment variables:
@@ -1203,20 +1205,20 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-# Check whether --with-gsl-prefix or --without-gsl-prefix was given.
-if test "${with_gsl_prefix+set}" = set; then
-  withval="$with_gsl_prefix"
-  GSL_PREFIX=$withval
-else
-  GSL_PREFIX="$GSL_DIR"
-fi;
-
 # Check whether --with-fltk-prefix or --without-fltk-prefix was given.
 if test "${with_fltk_prefix+set}" = set; then
   withval="$with_fltk_prefix"
   FLTK_PREFIX=$withval
 else
   FLTK_PREFIX="$FLTK_DIR"
+fi;
+
+# Check whether --with-gsl-prefix or --without-gsl-prefix was given.
+if test "${with_gsl_prefix+set}" = set; then
+  withval="$with_gsl_prefix"
+  GSL_PREFIX=$withval
+else
+  GSL_PREFIX="$GSL_DIR"
 fi;
 
 # Check whether --with-jpeg-prefix or --without-jpeg-prefix was given.
@@ -1227,6 +1229,11 @@ else
   JPEG_PREFIX="$JPEG_DIR"
 fi;
 
+# Check whether --enable-gsl or --disable-gsl was given.
+if test "${enable_gsl+set}" = set; then
+  enableval="$enable_gsl"
+
+fi;
 # Check whether --enable-gui or --disable-gui was given.
 if test "${enable_gui+set}" = set; then
   enableval="$enable_gui"
@@ -1242,9 +1249,9 @@ if test "${enable_triangle+set}" = set; then
   enableval="$enable_triangle"
 
 fi;
-# Check whether --enable-gsl or --disable-gsl was given.
-if test "${enable_gsl+set}" = set; then
-  enableval="$enable_gsl"
+# Check whether --enable-static or --disable-static was given.
+if test "${enable_static+set}" = set; then
+  enableval="$enable_static"
 
 fi;
 
@@ -3140,14 +3147,19 @@ echo "$as_me: error: " >&2;}
   fi
 fi
 
-GMSH_LIBS="${GMSH_LIBS} -lm"
-
 if test "x$enable_parallel" = "xyes"; then
   FLAGS="-DPARALLEL ${FLAGS}"
 fi
 
 LINKER="${CXX}"
 POSTBUILD=""
+
+if test "x$enable_static" = "xyes"; then
+  GMSH_LIBS="${GMSH_LIBS} -ldl -lpthread -lm"
+  LINKER="${LINKER} -static"
+else
+  GMSH_LIBS="${GMSH_LIBS} -lm"
+fi
 
 case "$UNAME" in
 
