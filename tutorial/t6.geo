@@ -34,38 +34,43 @@ Point(11) = {r_ext*Cos(phi1), r_ext*Sin(phi1), 0, lc1} ;
 Point(12) = {r_far*Cos(phi1), r_far*Sin(phi1), 0, lc2} ;
 Point(13) = {r_inf*Cos(phi1), r_inf*Sin(phi1), 0, lc2} ;
 
-Point(14) = {r_int/2,           0,   0,               lc2} ;
+Point(14) = {r_int/2, 0, 0, lc2} ;
 Point(15) = {r_int/2*Cos(phi1), r_int/2*Sin(phi1), 0, lc2} ;
-Point(16) = {r_int/2,           0,                 r_int/2, lc2} ;
+Point(16) = {r_int/2, 0, r_int/2, lc2} ;
 Point(17) = {r_int/2*Cos(phi1), r_int/2*Sin(phi1), r_int/2, lc2} ;
-Point(18) = {0, 0,  r_int/2, lc2} ;
-Point(19) = {r_int*Cos(angl),           0,                         r_int*Sin(angl), lc2} ;
-Point(20) = {r_int*Cos(angl)*Cos(phi1), r_int*Cos(angl)*Sin(phi1), r_int*Sin(angl), lc2} ;
-Point(21) = {r_ext*Cos(angl),           0,                         r_ext*Sin(angl), lc2} ;
-Point(22) = {r_ext*Cos(angl)*Cos(phi1), r_ext*Cos(angl)*Sin(phi1), r_ext*Sin(angl), lc2} ;
-Point(23) = {r_far*Cos(angl),           0,                         r_far*Sin(angl), lc2} ;
-Point(24) = {r_far*Cos(angl)*Cos(phi1), r_far*Cos(angl)*Sin(phi1), r_far*Sin(angl), lc2} ;
-Point(25) = {r_inf,           0,                r_inf, lc2} ;
+Point(18) = {0, 0, r_int/2, lc2} ;
+Point(19) = {r_int*Cos(angl), 0, r_int*Sin(angl), lc2} ;
+Point(20) = {r_int*Cos(angl)*Cos(phi1), r_int*Cos(angl)*Sin(phi1),
+	     r_int*Sin(angl), lc2} ;
+Point(21) = {r_ext*Cos(angl), 0, r_ext*Sin(angl), lc2} ;
+Point(22) = {r_ext*Cos(angl)*Cos(phi1), r_ext*Cos(angl)*Sin(phi1),
+	     r_ext*Sin(angl), lc2} ;
+Point(23) = {r_far*Cos(angl), 0, r_far*Sin(angl), lc2} ;
+Point(24) = {r_far*Cos(angl)*Cos(phi1), r_far*Cos(angl)*Sin(phi1),
+	     r_far*Sin(angl), lc2} ;
+Point(25) = {r_inf, 0, r_inf, lc2} ;
 Point(26) = {r_inf*Cos(phi1), r_inf*Sin(phi1),  r_inf, lc2} ;
 
-Circle(1) = {2,1,19};   Circle(2) = {19,1,6};   Circle(3) = {3,1,21};
-Circle(4) = {21,1,7};   Circle(5) = {4,1,23};   Circle(6) = {23,1,8};   
-Line(7) = {5,25};   Line(8) = {25,9};
-Circle(9) = {10,1,20};  Circle(10) = {20,1,6};  Circle(11) = {11,1,22};
-Circle(12) = {22,1,7};  Circle(13) = {12,1,24}; Circle(14) = {24,1,8};
-Line(15) = {13,26}; Line(16) = {26,9};
-Circle(17) = {19,1,20}; Circle(18) = {21,1,22}; Circle(19) = {23,1,24};
-Circle(20) = {25,1,26}; Circle(21) = {2,1,10};  Circle(22) = {3,1,11};  
-Circle(23) = {4,1,12};  Circle(24) = {5,1,13};
+Circle(1) = {2,1,19};  Circle(2) = {19,1,6};  Circle(3) = {3,1,21};
+Circle(4) = {21,1,7};  Circle(5) = {4,1,23};  Circle(6) = {23,1,8};   
+Line(7)   = {5,25};    Line(8)   = {25,9};
+Circle(9) = {10,1,20}; Circle(10)= {20,1,6};  Circle(11) = {11,1,22};
+Circle(12)= {22,1,7};  Circle(13)= {12,1,24}; Circle(14) = {24,1,8};
+Line(15)  = {13,26};   Line(16)  = {26,9};
+Circle(17)= {19,1,20}; Circle(18)= {21,1,22}; Circle(19) = {23,1,24};
+Circle(20)= {25,1,26}; Circle(21)= {2,1,10};  Circle(22) = {3,1,11};  
+Circle(23)= {4,1,12};  Circle(24)= {5,1,13};
 
-Line(25) = {1,14};  Line(26) = {14,2};  Line(27) = {2,3};   Line(28) = {3,4};
-Line(29) = {4,5};   Line(30) = {1,15};  Line(31) = {15,10}; Line(32) = {10,11};
-Line(33) = {11,12}; Line(34) = {12,13}; Line(35) = {14,15}; Line(36) = {14,16};
-Line(37) = {15,17}; Line(38) = {16,17}; Line(39) = {18,16}; Line(40) = {18,17};
-Line(41) = {1,18};  Line(42) = {18,6};  Line(43) = {6,7};   Line(44) = {16,19};
-Line(45) = {19,21}; Line(46) = {21,23}; Line(47) = {23,25}; Line(48) = {17,20};
-Line(49) = {20,22}; Line(50) = {22,24}; Line(51) = {24,26}; Line(52) = {7,8};
-Line(53) = {8,9};
+Line(25) = {1,14};  Line(26) = {14,2};  Line(27) = {2,3};
+Line(28) = {3,4};   Line(29) = {4,5};   Line(30) = {1,15};
+Line(31) = {15,10}; Line(32) = {10,11}; Line(33) = {11,12};
+Line(34) = {12,13}; Line(35) = {14,15}; Line(36) = {14,16};
+Line(37) = {15,17}; Line(38) = {16,17}; Line(39) = {18,16};
+Line(40) = {18,17}; Line(41) = {1,18};  Line(42) = {18,6};
+Line(43) = {6,7};   Line(44) = {16,19}; Line(45) = {19,21};
+Line(46) = {21,23}; Line(47) = {23,25}; Line(48) = {17,20};
+Line(49) = {20,22}; Line(50) = {22,24}; Line(51) = {24,26};
+Line(52) = {7,8};   Line(53) = {8,9};
 
 Line Loop(54) = {39,-36,-25,41};  Ruled Surface(55) = {54};
 Line Loop(56) = {44,-1,-26,36};   Ruled Surface(57) = {56};
@@ -105,27 +110,36 @@ Line Loop(122) = {32,-22,-27,21}; Ruled Surface(123) = {122};
 Line Loop(124) = {33,-23,-28,22}; Ruled Surface(125) = {124};
 Line Loop(126) = {34,-24,-29,23}; Ruled Surface(127) = {126};
 
-Surface Loop(128) = {93,-73,-55,95,-91};         Volume(129) = {128}; // int
-Surface Loop(130) = {107,-75,-97,95,57,121};     Volume(131) = {130}; // int b
-Surface Loop(132) = {105,-65,-97,-83,-93};       Volume(133) = {132}; // int h
-Surface Loop(134) = {99,-111,77,123,59,107};     Volume(135) = {134}; // shell b
-Surface Loop(136) = {99,-109,67,105,85};         Volume(137) = {136}; // shell h
-Surface Loop(138) = {113,79,-101,-111,-125,-61}; Volume(139) = {138}; // ext b
-Surface Loop(140) = {115,-69,-101,-87,-109};     Volume(141) = {140}; // ext h
-Surface Loop(142) = {103,-117,-81,113,127,63};   Volume(143) = {142}; // inf b
-Surface Loop(144) = {89,-119,71,103,115};        Volume(145) = {144}; // inf h
+Surface Loop(128) = {93,-73,-55,95,-91};
+Volume(129) = {128}; // int
+Surface Loop(130) = {107,-75,-97,95,57,121};
+Volume(131) = {130}; // int b
+Surface Loop(132) = {105,-65,-97,-83,-93};
+Volume(133) = {132}; // int h
+Surface Loop(134) = {99,-111,77,123,59,107};
+Volume(135) = {134}; // shell b
+Surface Loop(136) = {99,-109,67,105,85};
+Volume(137) = {136}; // shell h
+Surface Loop(138) = {113,79,-101,-111,-125,-61};
+Volume(139) = {138}; // ext b
+Surface Loop(140) = {115,-69,-101,-87,-109};
+Volume(141) = {140}; // ext h
+Surface Loop(142) = {103,-117,-81,113,127,63};
+Volume(143) = {142}; // inf b
+Surface Loop(144) = {89,-119,71,103,115};
+Volume(145) = {144}; // inf h
 
 // Transfinite line commands explicitly specify the number of points
 // and their distribution. 'Progression 2' means that each line
 // element in the series will be twice as long as the preceding one.
 
-Transfinite Line{35,21,22,23,24,38,17,18,19,20}   = nbpt_phi ;
-Transfinite Line{31,26,48,44,42}                  = nbpt_int Using Progression 0.88;
-Transfinite Line{41,37,36,9,11,1,3,13,5,15,7}     = nbpt_arc1 ;
+Transfinite Line{35,21,22,23,24,38,17,18,19,20} = nbpt_phi ;
+Transfinite Line{31,26,48,44,42} = nbpt_int Using Progression 0.88;
+Transfinite Line{41,37,36,9,11,1,3,13,5,15,7} = nbpt_arc1 ;
 Transfinite Line{30,25,40,39,10,2,12,4,14,6,16,8} = nbpt_arc2 ;
-Transfinite Line{32,27,49,45,43}                  = nbpt_shell ;
-Transfinite Line{33,28,46,50,52}                  = nbpt_far Using Progression 1.2 ;
-Transfinite Line{34,29,51,47,53}                  = nbpt_inf Using Progression 1.05;
+Transfinite Line{32,27,49,45,43} = nbpt_shell ;
+Transfinite Line{33,28,46,50,52} = nbpt_far Using Progression 1.2 ;
+Transfinite Line{34,29,51,47,53} = nbpt_inf Using Progression 1.05;
 
 // 2D transfinite entities are defined in respect to points. The
 // ordering of the points defines the ordering of the mesh elements.

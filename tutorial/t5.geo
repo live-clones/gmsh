@@ -115,7 +115,8 @@ Function CheeseHole
 
   theloops[t] = newreg ; 
 
-  Surface Loop(theloops[t]) = {l8+1, l5+1, l1+1, l2+1, -(l3+1), -(l7+1), l6+1, l4+1};
+  Surface Loop(theloops[t]) = {l8+1, l5+1, l1+1, l2+1, -(l3+1), -(l7+1),
+			       l6+1, l4+1};
 
   thehole = newreg ; 
   Volume(thehole) = theloops[t] ;
@@ -145,7 +146,7 @@ For t In {1:5}
 // The Printf function permits to print the value of variables on the
 // terminal, in a way similar to the 'printf' C function:
 
-  Printf("The cheese hole %g (center = {%g,%g,%g}, radius = %g) has number %g!",
+  Printf("Hole %g (center = {%g,%g,%g}, radius = %g) has number %g!",
 	 t, x, y, z, r, thehole) ;
 
 // Note: All Gmsh variables are treated internally as double precision

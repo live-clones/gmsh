@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.139 2003-04-02 05:56:15 geuzaine Exp $
+$Id: VERSIONS,v 1.140 2003-04-11 22:17:06 geuzaine Exp $
 
 New in 1.44: added support for PNG output;
 
@@ -185,10 +185,10 @@ Corrected several bugs for pixel output and enhanced GIF output
 (dithering, transparency); slightly changed the post-processing file
 format to allow both single and double precision numbers.
 
-New in 0.999: added JPEG output and easy MPEG generation (see t8.geo in the
-tutorial); clean up of export functions; small fixes; Linux versions
-are now compiled with gcc 2.95.2, which should fix the problems
-encountered with Mandrake 7.2;
+New in 0.999: added JPEG output and easy MPEG generation (see t8.geo
+in the tutorial); clean up of export functions; small fixes; Linux
+versions are now compiled with gcc 2.95.2, which should fix the
+problems encountered with Mandrake 7.2;
 
 New in 0.998: corrected bug introduced in 0.997 in the generation of
 the initial 3D mesh;
