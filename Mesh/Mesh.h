@@ -26,6 +26,9 @@
 
 #define CONV_VALUE    0.8
 
+#define VIS_GEO   (1<<0)
+#define VIS_MESH  (1<<1)
+
 #define NOTTOLINK 1
 #define TOLINK    2
 
@@ -168,6 +171,7 @@ class NXE{
 typedef struct{
   int Num;              /* Numero                                       */
   int iEnt;             /* Entite geometrique                           */
+  char Visible;         /* Visualization flag                           */
   Vertex *V[8];         /* 8 noeuds                                     */
   Vertex **VSUP;        /* noeuds supplem pour les elts de degre eleves */
 }Hexahedron;
@@ -175,6 +179,7 @@ typedef struct{
 typedef struct{
   int Num;              /* Numero                                       */
   int iEnt;             /* Entite geometrique                           */
+  char Visible;         /* Visualization flag                           */
   Vertex *V[6];         /* 6 noeuds                                     */
   Vertex **VSUP;        /* noeuds supplem pour les elts de degre eleves */
 }Prism;
@@ -182,6 +187,7 @@ typedef struct{
 typedef struct{
   int Num;              /* Numero                                       */
   int iEnt;             /* Entite geometrique                           */
+  char Visible;         /* Visualization flag                           */
   Vertex *V[5];         /* 5 noeuds                                     */
   Vertex **VSUP;        /* noeuds supplem pour les elts de degre eleves */
 }Pyramid;
@@ -210,14 +216,14 @@ typedef struct{
 struct _Surf{
   int Num;
   int Typ;
-  int Mat;
+  char Visible;
   int Method;
   int Recombine;
   double RecombineAngle;
-  int ipar[4];
+  int ipar[5];
   int Nu, Nv;
-  List_T *Generatrices;       /* Surface reglee    */
-  List_T *Control_Points;       /* Patchs bicubiques */
+  List_T *Generatrices; /* Surface reglee    */
+  List_T *Control_Points; /* Patchs bicubiques */
   double plan[3][3];
   double invplan[3][3];
   double a, b, c, d;
@@ -252,6 +258,7 @@ typedef struct{
 typedef struct{
   int Num;
   int Typ;
+  char Visible;
   List_T *Entities;
 }PhysicalGroup;
 
@@ -264,8 +271,8 @@ typedef struct{
 
 typedef struct {
   int Num;
-  int Mat;
   int Typ;
+  char Visible;
   int Method;
   int ipar[8];
   ExtrudeParams *Extrude;
@@ -324,6 +331,7 @@ typedef struct{
 typedef struct{
   int Num;
   int Typ;
+  char Visible;
   int Method;
   int ipar[4];
   double dpar[4];

@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.15 2001-11-22 11:23:52 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.16 2001-12-03 08:41:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -125,7 +125,7 @@ static void Draw_Graph2D(Post_View *v,
   
   // y tics + labels
 
-  nb = v->NbIso;
+  nb = v->NbIso?v->NbIso:1;
   if(v->ShowScale && (v->NbIso * font_h > height)) nb = (int)floor(height/font_h);
 
   dy = height/(double)nb;

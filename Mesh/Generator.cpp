@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.30 2001-11-07 09:33:51 geuzaine Exp $
+// $Id: Generator.cpp,v 1.31 2001-12-03 08:41:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -104,7 +104,7 @@ void Maillage_Dimension_3 (Mesh * M){
 
   t1 = Cpu();
 
-  v = Create_Volume (99999, 99999, 99999);
+  v = Create_Volume (99999, 99999);
 
   List_T *list = Tree2List (M->Volumes);
   for (int i = 0; i < List_Nbr (list); i++){

@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.26 2001-11-05 08:37:43 geuzaine Exp $
+// $Id: Scale.cpp,v 1.27 2001-12-03 08:41:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -36,7 +36,7 @@ void draw_scale(Post_View *v,
   gl_font(FL_HELVETICA,CTX.gl_fontsize);
   font_h  = gl_height() ;              // hauteur totale de la fonte
   font_a  = gl_height()-gl_descent() ; // hauteur de la fonte au dessus de pt de ref
-  cs_bh   = height/v->NbIso ; // colorscale box height
+  cs_bh   = height/(v->NbIso?v->NbIso:1) ; // colorscale box height
   cv_xmin = xmin+width+tic ;  // valuescale xmin
 
   glPointSize(v->PointSize); 
@@ -95,10 +95,10 @@ void draw_scale(Post_View *v,
     }
     else if (v->IntervalsType==DRAW_POST_CONTINUOUS){
       glBegin(GL_QUADS);
-      Palette2(v,ValMin,ValMax,ValMin+i*(ValMax-ValMin)/v->NbIso);
+      Palette2(v,ValMin,ValMax,ValMin+i*(ValMax-ValMin)/(v->NbIso?v->NbIso:1));
       glVertex2d(xmin,       ymin+i*cs_bh);
       glVertex2d(xmin+width, ymin+i*cs_bh);
-      Palette2(v,ValMin,ValMax,ValMin+(i+1)*(ValMax-ValMin)/v->NbIso);
+      Palette2(v,ValMin,ValMax,ValMin+(i+1)*(ValMax-ValMin)/(v->NbIso?v->NbIso:1));
       glVertex2d(xmin+width, ymin+(i+1)*cs_bh);
       glVertex2d(xmin,       ymin+(i+1)*cs_bh);
       glEnd();  

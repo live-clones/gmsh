@@ -1,4 +1,4 @@
-// $Id: Vertex.cpp,v 1.13 2001-11-28 16:39:42 geuzaine Exp $
+// $Id: Vertex.cpp,v 1.14 2001-12-03 08:41:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -11,6 +11,7 @@ extern Mesh *THEM ;
 
 Vertex::Vertex (){
   Frozen = 0;
+  Visible = VIS_GEO|VIS_MESH;
   Pos.X = 0.0;
   Pos.Y = 0.0;
   Pos.Z = 0.0;
@@ -23,6 +24,7 @@ Vertex::Vertex (){
 
 Vertex::Vertex (double X, double Y, double Z, double l, double W){
   Frozen = 0;
+  Visible = VIS_GEO|VIS_MESH;
   Pos.X = X;
   Pos.Y = Y;
   Pos.Z = Z;
@@ -82,24 +84,21 @@ Vertex *Create_Vertex (int Num, double X, double Y, double Z, double lc, double 
   return pV;
 }
 
-void Delete_Vertex ( Vertex *pV )
-{
-  if(pV)
-    {
-      List_Delete(pV->ListSurf);
-      List_Delete(pV->ListCurves);
-      if(CTX.mesh.oldxtrude){//old automatic extrusion algorithm
-	List_Delete(pV->Extruded_Points);
-      }
-      else{
-	Free_ExtrudedPoints(pV->Extruded_Points);
-      }
-      delete pV;
+void Delete_Vertex ( Vertex *pV ){
+  if(pV){
+    List_Delete(pV->ListSurf);
+    List_Delete(pV->ListCurves);
+    if(CTX.mesh.oldxtrude){//old automatic extrusion algorithm
+      List_Delete(pV->Extruded_Points);
     }
+    else{
+      Free_ExtrudedPoints(pV->Extruded_Points);
+    }
+    delete pV;
+  }
 }
 
-void Free_Vertex (void *a, void *b)
-{
+void Free_Vertex (void *a, void *b){
   Delete_Vertex ( *(Vertex**)a );
 }
 
@@ -139,13 +138,13 @@ int comparePosition (const void *a, const void *b){
     return (-1);
 
   if (i != j){
-      /*
-         *w = *q;
-         printf("Les points %d et %d sont a la meme position\n",i,j);
-         printf("%12.5E %12.5E %12.5E\n",(*w)->Pos.X,(*w)->Pos.Y,(*w)->Pos.Z);
-         printf("%12.5E %12.5E %12.5E\n",(*q)->Pos.X,(*q)->Pos.Y,(*q)->Pos.Z);
-       */
-    }
+    /*
+       *w = *q;
+       printf("Les points %d et %d sont a la meme position\n",i,j);
+       printf("%12.5E %12.5E %12.5E\n",(*w)->Pos.X,(*w)->Pos.Y,(*w)->Pos.Z);
+       printf("%12.5E %12.5E %12.5E\n",(*q)->Pos.X,(*q)->Pos.Y,(*q)->Pos.Z);
+    */
+  }
   return 0;
 
 }

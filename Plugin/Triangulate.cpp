@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.3 2001-11-05 08:37:43 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.4 2001-12-03 08:41:45 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Plugin.h"
@@ -88,7 +88,7 @@ void Triangulate(Post_View *vin, Post_View *vout){
     List_Add(points, &v);
   }
 
-  s = Create_Surface(1,MSH_SURF_PLAN,0);
+  s = Create_Surface(1,MSH_SURF_PLAN);
   MeanPlane(points, s);
 
   for(i=0;i<List_Nbr(points);i++){

@@ -1,4 +1,7 @@
-$Date: 2001-11-29 09:16:19 $
+$Date: 2001-12-03 08:41:45 $
+
+New in 1.32: New visibility browser; better floating point exception
+checks;
 
 New in 1.31: Corrected ellipses; PostScript output update (better
 shading, new combined PS/LaTeX output format); more interface polish;

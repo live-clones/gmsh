@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.28 2001-10-30 09:52:33 geuzaine Exp $
+# $Id: Makefile,v 1.29 2001-12-03 08:41:43 geuzaine Exp $
 #
 # Makefile for "libFltk.a"
 #
@@ -95,7 +95,7 @@ Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../Geo/Verif.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
  ../Mesh/Matrix.h ../Graphics/Draw.h ../Common/Views.h \
- ../Common/ColorTable.h ../Common/Timer.h ../Geo/Visibility.h \
+ ../Common/ColorTable.h ../Common/Timer.h \
  ../Graphics/CreateFile.h ../Parser/OpenFile.h ../Common/GetOptions.h \
  ../Common/Context.h ../Common/Options.h GUI.h Opengl_Window.h \
  Colorbar_Window.h Callbacks.h ../Plugin/Plugin.h Solvers.h

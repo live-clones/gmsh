@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.3 2001-02-12 17:38:02 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.4 2001-12-03 08:41:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "ColorTable.h"
@@ -40,13 +40,17 @@ void ColorTable_Recompute(ColorTable *ct, int rgb_flag, int alpha_flag){
   rotate = ct->ipar[COLORTABLE_ROTATE];
 
   for (i=0 ; i<ct->size ; i++) {
-    
-    if(i+rotate<0)
-      s = (float) (i+rotate+ct->size) / (float) (ct->size-1);
-    else if(i+rotate>ct->size-1)
-      s = (float) (i+rotate-ct->size) / (float) (ct->size-1);
+
+    if(ct->size>1){
+      if(i+rotate<0)
+	s = (float) (i+rotate+ct->size) / (float) (ct->size-1);
+      else if(i+rotate>ct->size-1)
+	s = (float) (i+rotate-ct->size) / (float) (ct->size-1);
+      else
+	s = (float) (i+rotate) / (float) (ct->size-1);
+    }
     else
-      s = (float) (i+rotate) / (float) (ct->size-1);
+      s = 0.;
 
     if(ct->ipar[COLORTABLE_SWAP]) s = 1.0 - s;
     
@@ -80,16 +84,20 @@ void ColorTable_Recompute(ColorTable *ct, int rgb_flag, int alpha_flag){
         if (s-bias<=0.00) {
           r = 0 ; g = 0 ; b = 255 ; 
         }
-        else if(s-bias<=0.25+curve){ 
+        else if(s-bias<=0.25+curve){
+	  curve = (curve == -0.25)? -0.26 : curve;
           r = 0 ; g = (int)((s-bias)*(255./(0.25+curve))) ; b = 255 ; 
         }
-        else if(s-bias<=0.50) { 
+        else if(s-bias<=0.50) {
+	  curve = (curve == 0.25)? 0.26 : curve;
           r = 0 ; g = 255 ; b = (int)(255.-(255./(0.25-curve))*(s-bias-0.25-curve)); 
         }
-        else if(s-bias<=0.75-curve){ 
+        else if(s-bias<=0.75-curve){
+	  curve = (curve == 0.25)? 0.26 : curve;
           r = (int)((s-bias-0.5)*(255./(0.25-curve))); g = 255 ; b = 0 ; 
         }
-        else if(s-bias<=1.00) { 
+        else if(s-bias<=1.00) {
+	  curve = (curve == -0.25)? -0.26 : curve;
           r = 255; g = (int)(255.-(255./(0.25+curve))*(s-bias-0.75+curve)) ; b = 0 ;
         }
         else { 
@@ -127,8 +135,8 @@ void ColorTable_Recompute(ColorTable *ct, int rgb_flag, int alpha_flag){
       if(ct->fpar[COLORTABLE_BETA]){
         if(ct->fpar[COLORTABLE_BETA] > 0.0)
           gamma = 1. - ct->fpar[COLORTABLE_BETA];
-        else
-          gamma = 1./(1.001 + ct->fpar[COLORTABLE_BETA]);
+	else 
+	  gamma = 1./(1.001 + ct->fpar[COLORTABLE_BETA]);//beta is thresholded to [-1,1]
         r = (int)( 255. * pow((double)r/255.,gamma) );
         g = (int)( 255. * pow((double)g/255.,gamma) );
         b = (int)( 255. * pow((double)b/255.,gamma) );

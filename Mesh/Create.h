@@ -28,10 +28,10 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
                      List_T * Knots, int p1, int p2, double u1, double u2);
 void Free_Curve(void *a, void *b);
 
-Surface * Create_Surface (int Num, int Typ, int Mat);
+Surface * Create_Surface (int Num, int Typ);
 void Free_Surface(void *a, void *b);
 
-Volume * Create_Volume (int Num, int Typ, int Mat);
+Volume * Create_Volume (int Num, int Typ);
 void Free_Volume(void *a, void *b);
 
 Hexahedron * Create_Hexahedron (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4,

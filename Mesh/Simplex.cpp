@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.19 2001-10-29 08:52:20 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.20 2001-12-03 08:41:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -26,6 +26,7 @@ Simplex::Simplex (){
   iEnt = -1;
   Quality = 0. ;
   Num = TotalNumber;
+  Visible = VIS_MESH;
 }
 
 Simplex::Simplex (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4){
@@ -38,6 +39,7 @@ Simplex::Simplex (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4){
   Num = TotalNumber;
   THEM->MaxSimplexNum = IMAX(THEM->MaxSimplexNum,Num);
   iEnt = -1;
+  Visible = VIS_MESH;
 }
 
 Simplex::~Simplex (){

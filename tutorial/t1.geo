@@ -91,7 +91,8 @@ Physical Point(1) = {1,2} ;
 // for line or surface elements:
 
 Physical Line(10) = {1,2,4} ;
-Physical Surface(100) = {6} ;
+MySurface = 100;
+Physical Surface(MySurface) = {6} ;
 
 // All the line elements which will be created during the mesh of
 // lines 1, 2 and 4 will be saved in the output file with the region

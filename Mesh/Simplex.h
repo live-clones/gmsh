@@ -12,6 +12,7 @@ class Simplex{
 public:
   int     Num;           /* Numero                                       */
   int     iEnt;          /* Entite geometrique                           */
+  char    Visible;       /* Visualization flag                           */
   Face    F[4];          /* 4 faces                                      */
   Vertex  **VSUP;        /* noeuds supplem pour les elts de degre eleves */
   Vertex  *V[4];         /* 4 noeuds                                     */

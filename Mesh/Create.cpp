@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.30 2001-11-30 14:15:10 geuzaine Exp $
+// $Id: Create.cpp,v 1.31 2001-12-03 08:41:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -11,8 +11,6 @@
 
 extern Mesh      *THEM;
 extern Context_T  CTX;
-
-//static double CIRC_GRAN = 2.2;
 
 int compareNXE (const void *a, const void *b){
   NXE *q, *w;
@@ -154,18 +152,19 @@ void Add_SurfaceLoop (int Num, List_T * intlist, Mesh * M){
 }
 
 void Add_PhysicalGroup (int Num, int typ, List_T * intlist, Mesh * M){
-  PhysicalGroup *pSL;
+  PhysicalGroup *p;
   int i, j;
-  pSL = (PhysicalGroup *) Malloc (sizeof (PhysicalGroup));
-  pSL->Entities = List_Create (List_Nbr (intlist), 1, sizeof (int));
-  pSL->Num = Num;
+  p = (PhysicalGroup *) Malloc (sizeof (PhysicalGroup));
+  p->Entities = List_Create (List_Nbr (intlist), 1, sizeof (int));
+  p->Num = Num;
   THEM->MaxPhysicalNum = IMAX(THEM->MaxPhysicalNum,Num);
-  pSL->Typ = typ;
+  p->Typ = typ;
+  p->Visible = VIS_GEO|VIS_MESH;
   for (i = 0; i < List_Nbr (intlist); i++){
     List_Read (intlist, i, &j);
-    List_Add (pSL->Entities, &j);
+    List_Add (p->Entities, &j);
   }
-  List_Add (M->PhysicalGroups, &pSL);
+  List_Add (M->PhysicalGroups, &p);
 }
 
 void Add_EdgeLoop (int Num, List_T * intlist, Mesh * M){
@@ -291,12 +290,9 @@ void End_Curve (Curve * c){
     R  = sqrt(v0.Pos.X * v0.Pos.X + v0.Pos.Y * v0.Pos.Y);
     R2 = sqrt(v2.Pos.X * v2.Pos.X + v2.Pos.Y * v2.Pos.Y);
 
-    // check radius
-    if(!R || !R2)
+    if(!R || !R2) // check radius
       Msg(GERROR, "Zero radius in Circle/Ellipsis %d", c->Num);
-
-    // check if circle is coherent (allow 10% error)
-    if(!v[3] && fabs((R-R2)/(R+R2))>0.1)
+    else if(!v[3] && fabs((R-R2)/(R+R2))>0.1) // check cocircular pts (allow 10% error)
       Msg(GERROR, "Control points of Circle %d are not cocircular %g %g", c->Num, R,R2);
 
     // A1 = angle first pt
@@ -317,18 +313,23 @@ void End_Curve (Curve * c){
       rhs[0] = 1;
       rhs[1] = 1;
       sys2x2 (sys, rhs, sol);
-      if(sol[0] <= 0 || sol[1] <= 0) 
+      if(sol[0] <= 0 || sol[1] <= 0){
 	Msg(GERROR, "Ellipsis %d is wrong", Curve->Num);	
-      f1 = sqrt(1./sol[0]);
-      f2 = sqrt(1./sol[1]);
-      if(x1 < 0) 
-	A1 = -asin(y1/f2) + A4 + Pi; 
-      else
-	A1 = asin(y1/f2) + A4; 
-      if(x3 < 0) 
-	A3 = -asin(y3/f2) + A4 + Pi; 
-      else
-	A3 = asin(y3/f2) + A4; 
+	A1 = A3 = 0.;
+	f1 = f2 = R ;
+      }
+      else{
+	f1 = sqrt(1./sol[0]);
+	f2 = sqrt(1./sol[1]);
+	if(x1 < 0) 
+	  A1 = -asin(y1/f2) + A4 + Pi; 
+	else
+	  A1 = asin(y1/f2) + A4; 
+	if(x3 < 0) 
+	  A3 = -asin(y3/f2) + A4 + Pi; 
+	else
+	  A3 = asin(y3/f2) + A4; 
+      }
     }
     else{
       A1 = myatan2(v0.Pos.Y, v0.Pos.X);
@@ -407,6 +408,7 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
 
   pC = (Curve *) Malloc (sizeof (Curve));
   pC->Dirty = 0;
+  pC->Visible = VIS_GEO|VIS_MESH;
   pC->cp = NULL;
   pC->Vertices = NULL;
   pC->Extrude = NULL;
@@ -506,22 +508,21 @@ void Free_Curve(void *a, void *b){
     List_Delete(pC->TrsfSimplexes);
     Free(pC->k);
     List_Delete(pC->Control_Points);
-    // MEMORY_LEAK (JF)
     Free(pC->cp);
     Free(pC);
     pC = NULL;
   }
 }
 
-Surface * Create_Surface (int Num, int Typ, int Mat){
+Surface * Create_Surface (int Num, int Typ){
   Surface *pS;
 
   pS = (Surface *) Malloc (sizeof (Surface));
   pS->Dirty = 0;
+  pS->Visible = VIS_GEO|VIS_MESH;
   pS->Num = Num;
   THEM->MaxSurfaceNum = IMAX(THEM->MaxSurfaceNum,Num);
   pS->Typ = Typ;
-  pS->Mat = Mat;
   pS->Method = LIBRE;
   pS->Recombine = 0;
   pS->RecombineAngle = 30;
@@ -551,26 +552,24 @@ void Free_Surface(void *a, void *b){
     List_Delete(pS->Contours);
     List_Delete(pS->Control_Points);
     List_Delete(pS->Generatrices);
-    // MEMORY LEAK (JF)
-    if(pS->Edges)
-      {
-	Tree_Action(pS->Edges,Free_Edge);
-	Tree_Delete(pS->Edges);
-      }
+    if(pS->Edges){
+      Tree_Action(pS->Edges,Free_Edge);
+      Tree_Delete(pS->Edges);
+    }
     Free(pS);
     pS = NULL;
   }
 }
 
-Volume * Create_Volume (int Num, int Typ, int Mat){
+Volume * Create_Volume (int Num, int Typ){
   Volume *pV;
 
   pV = (Volume *) Malloc (sizeof (Volume));
   pV->Dirty = 0;
+  pV->Visible = VIS_GEO|VIS_MESH;
   pV->Num = Num;
   THEM->MaxVolumeNum = IMAX(THEM->MaxVolumeNum,Num);
   pV->Typ = Typ;
-  pV->Mat = Mat;
   pV->Method = LIBRE;
   pV->Surfaces = List_Create (1, 2, sizeof (Surface *));
   pV->Simplexes = Tree_Create (sizeof (Simplex *), compareQuality);
@@ -615,6 +614,7 @@ Hexahedron * Create_Hexahedron (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * 
   h = (Hexahedron *) Malloc (sizeof (Hexahedron));
   h->iEnt = -1;
   h->Num = ++THEM->MaxSimplexNum;
+  h->Visible = VIS_MESH;
   h->V[0] = v1;
   h->V[1] = v2;
   h->V[2] = v3;
@@ -643,6 +643,7 @@ Prism * Create_Prism (Vertex * v1, Vertex * v2, Vertex * v3,
   p = (Prism *) Malloc (sizeof (Prism));
   p->iEnt = -1;
   p->Num = ++THEM->MaxSimplexNum;
+  p->Visible = VIS_MESH;
   p->V[0] = v1;
   p->V[1] = v2;
   p->V[2] = v3;
@@ -669,6 +670,7 @@ Pyramid * Create_Pyramid (Vertex * v1, Vertex * v2, Vertex * v3,
   p = (Pyramid *) Malloc (sizeof (Pyramid));
   p->iEnt = -1;
   p->Num = ++THEM->MaxSimplexNum;
+  p->Visible = VIS_MESH;
   p->V[0] = v1;
   p->V[1] = v2;
   p->V[2] = v3;

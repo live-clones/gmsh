@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.22 2001-10-30 08:18:50 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.23 2001-12-03 08:41:45 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -83,16 +83,8 @@ void ParseString(char *str){
 }
 
 void MergeProblem(char *name){
-
   ParseFile(name);  
   if (yyerrorstate) return;
-
-#ifndef _BLACKBOX
-  if (!EntitesVisibles) {
-    RemplirEntitesVisibles(1);
-    SHOW_ALL_ENTITIES = 1;
-  }
-#endif
 }
 
 void OpenProblem(char *name){
@@ -130,11 +122,9 @@ void OpenProblem(char *name){
 
   strncpy(THEM->name, CTX.base_filename,255);
 
-  if(!CTX.batch){
 #if _FLTK
-    WID->set_title(CTX.filename);
+  if(!CTX.batch) WID->set_title(CTX.filename);
 #endif
-  }
 
   int nb = List_Nbr(CTX.post.list);
 
@@ -151,6 +141,9 @@ void OpenProblem(char *name){
 
 #ifndef _BLACKBOX
   ZeroHighlight(&M); 
+#if _FLTK
+  if(!CTX.batch) WID->reset_visibility();
+#endif
 #endif
   
   if(List_Nbr(CTX.post.list) > nb)
@@ -165,12 +158,5 @@ void OpenProblem(char *name){
     Msg(INFO, "Got physical %d", 
 	(*(PhysicalGroup **)List_Pointer(THEM->PhysicalGroups,i))->Num);
   
-#ifndef _BLACKBOX
-  if (!EntitesVisibles) {
-    RemplirEntitesVisibles(1);
-    SHOW_ALL_ENTITIES = 1;
-  }
-#endif
-
 }
 

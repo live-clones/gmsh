@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.96 2001-11-19 18:40:58 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.97 2001-12-03 08:41:43 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -11,7 +11,6 @@
 #include "Draw.h"
 #include "Views.h"
 #include "Timer.h"
-#include "Visibility.h"
 #include "CreateFile.h"
 #include "OpenFile.h"
 #include "GetOptions.h"
@@ -20,6 +19,7 @@
 #include "GUI.h"
 #include "Callbacks.h"
 #include "Plugin.h"
+#include "Visibility.h"
 
 using namespace std;
 
@@ -32,7 +32,7 @@ using namespace std;
 #include <errno.h>
 
 extern GUI       *WID;
-extern Mesh       M;
+extern Mesh      *THEM;
 extern Context_T  CTX;
 
 // Compatibility/local routines
@@ -391,19 +391,6 @@ void opt_general_ok_cb(CALLBACK_ARGS){
 void opt_geometry_cb(CALLBACK_ARGS) {
   WID->create_geometry_options_window();
 }
-void opt_geometry_show_by_entity_num_cb(CALLBACK_ARGS) {
-  char * c = (char*)((Fl_Input*)w)->value(); 
-  if (!strcmp(c,"all") || !strcmp(c,"*")){
-    if(SHOW_ALL_ENTITIES){ RemplirEntitesVisibles(0); SHOW_ALL_ENTITIES = 0; }
-    else { RemplirEntitesVisibles(1); SHOW_ALL_ENTITIES = 1; }
-  }
-  else{ 
-    int i = atoi(c);
-    if(EntiteEstElleVisible(i)) ToutesLesEntitesRelatives(i,EntitesVisibles,0);
-    else ToutesLesEntitesRelatives(i,EntitesVisibles,1);
-  }
-  Draw();
-}
 void opt_geometry_color_scheme_cb(CALLBACK_ARGS){
   opt_geometry_color_scheme(0,GMSH_SET, WID->geo_value[2]->value());
   Draw();
@@ -430,9 +417,6 @@ void opt_geometry_ok_cb(CALLBACK_ARGS) {
 
 void opt_mesh_cb(CALLBACK_ARGS) {
   WID->create_mesh_options_window();
-}
-void opt_mesh_show_by_entity_num_cb(CALLBACK_ARGS) {
-  opt_geometry_show_by_entity_num_cb(w,data);
 }
 void opt_mesh_color_scheme_cb(CALLBACK_ARGS){
   opt_mesh_color_scheme(0,GMSH_SET, WID->mesh_value[12]->value());
@@ -513,13 +497,13 @@ void opt_statistics_update_cb(CALLBACK_ARGS) {
 void opt_statistics_histogram_cb(CALLBACK_ARGS) {
   int i, type=(long int)data;
 
-  Print_Histogram(M.Histogram[type]);
+  Print_Histogram(THEM->Histogram[type]);
 
   double *x=(double*)Malloc(NB_HISTOGRAM*sizeof(double));
   double *y=(double*)Malloc(NB_HISTOGRAM*sizeof(double));
   for(i=0;i<NB_HISTOGRAM;i++){
     x[i]=(double)(i+1)/(double)NB_HISTOGRAM;
-    y[i]=(double)M.Histogram[type][i];
+    y[i]=(double)THEM->Histogram[type][i];
   }
   char *name;
   if(type==0) name = "Gamma";
@@ -544,6 +528,199 @@ void opt_message_save_cb(CALLBACK_ARGS) {
 }
 void opt_save_cb(CALLBACK_ARGS) {
   Print_Options(0,GMSH_OPTIONSRC, CTX.optionsrc_filename); 
+}
+
+// Option Visibility Menu
+
+void select_vis_browser(int mode){
+  int i;
+  Entity *e;
+  for(i=1 ; i<=WID->vis_browser->size(); i++){
+    e = (Entity*)WID->vis_browser->data(i);
+    if((mode == VIS_GEO|VIS_MESH && e->Visible() == mode) ||
+       (mode == VIS_GEO          && e->Visible() & VIS_GEO) ||
+       (mode == VIS_MESH         && e->Visible() & VIS_MESH)) 
+      WID->vis_browser->select(i);
+  }
+}
+
+void opt_visibility_cb(CALLBACK_ARGS) {
+  int i, type, mode;
+  List_T *list;
+  Entity *e;
+
+  WID->create_visibility_window();
+  WID->vis_browser->clear();
+
+  switch(WID->vis_type->value()){
+  case 0 : type = ELEMENTARY; break;
+  default: type = PHYSICAL; break;
+  }
+  switch(WID->vis_browser_mode->value()){
+  case 0 : mode = VIS_GEO|VIS_MESH; break;
+  case 1 : mode = VIS_GEO; break;
+  default: mode = VIS_MESH; break;
+  }
+
+  list = GetVisibilityList(type);
+
+  for(i=0 ; i<List_Nbr(list); i++){
+    e = (Entity*)List_Pointer(list,i);
+    WID->vis_browser->add(e->BrowserLine(),e);
+  }
+  select_vis_browser(mode);
+}
+
+void opt_visibility_ok_cb(CALLBACK_ARGS) {
+  int i, mode;
+  Entity *e;
+
+  InitVisibilityThroughPhysical();
+
+  switch(WID->vis_type->value()){
+  case 0 : ClearVisibilityList(PHYSICAL); break;
+  default: ClearVisibilityList(ELEMENTARY); break;
+  }
+  switch(WID->vis_browser_mode->value()){
+  case 0 : mode = VIS_GEO|VIS_MESH; break;
+  case 1 : mode = VIS_GEO; break;
+  default: mode = VIS_MESH; break;
+  }
+
+  for(i=1 ; i<=WID->vis_browser->size(); i++){
+    e = (Entity*)WID->vis_browser->data(i);
+    if(WID->vis_browser->selected(i)){
+      e->Visible(e->Visible()|mode);
+    }
+    else{
+      switch(WID->vis_browser_mode->value()){
+      case 0 : 
+	e->Visible(0);
+	break;
+      case 1 :
+	if(e->Visible() & VIS_MESH) e->Visible(VIS_MESH);
+	else e->Visible(0);
+	break;
+      default :
+	if(e->Visible() & VIS_GEO) e->Visible(VIS_GEO);
+	else e->Visible(0);
+	break;
+      }
+    }
+  }
+
+  if(WID->vis_butt[0]->value()){
+    for(i=1 ; i<=WID->vis_browser->size(); i++){
+      e = (Entity*)WID->vis_browser->data(i);
+      e->RecurVisible();
+    }
+    select_vis_browser(mode);
+  }
+
+  Draw();
+}
+
+void opt_visibility_sort_cb(CALLBACK_ARGS){
+  int i, val = (long int)data, selectall;
+
+  if(!val){
+    selectall=0;
+    for(i=1 ; i<=WID->vis_browser->size(); i++)
+      if(!WID->vis_browser->selected(i)){
+	selectall=1;
+	break;
+      }
+    if(selectall)
+      for(i=1 ; i<=WID->vis_browser->size(); i++)
+	WID->vis_browser->select(i);
+    else
+      WID->vis_browser->deselect();
+  }
+  else{
+    SetVisibilitySort(val);
+    opt_visibility_cb(NULL,NULL);
+  }
+}
+
+static int vnod, velm;
+static void vis_nod(void *a, void *b){ (*(Vertex**)a)->Visible = vnod; }
+static void vis_sim(void *a, void *b){ (*(Simplex**)a)->Visible = velm; }
+static void vis_hex(void *a, void *b){ (*(Hexahedron**)a)->Visible = velm; }
+static void vis_pri(void *a, void *b){ (*(Prism**)a)->Visible = velm; }
+static void vis_pyr(void *a, void *b){ (*(Pyramid**)a)->Visible = velm; }
+
+void opt_visibility_number_cb(CALLBACK_ARGS){
+  static int allnod=1, allelm=1;
+  int i, type = WID->vis_input_mode->value(), found, num;
+  List_T *tmp;
+  Vertex vv,*v,**pv;
+  Volume *V;
+  Simplex SS, *S, **pS;
+  Hexahedron HH, *H, **pH;
+  Prism PP, *P, **pP;
+  Pyramid QQ, *Q, **pQ;
+  char *str = (char*)((Fl_Input*)w)->value(); 
+
+  if (!strcmp(str,"all") || !strcmp(str,"*")){
+    if(type==0){
+      allnod = !allnod;
+      vnod = allnod ? VIS_MESH : 0;
+      Tree_Action(THEM->Vertices, vis_nod);
+    }
+    else{
+      allelm = !allelm;
+      velm = allelm ? VIS_MESH : 0;
+      Tree_Action(THEM->Simplexes, vis_sim);
+      tmp = Tree2List(THEM->Volumes);
+      for(i=0; i<List_Nbr(tmp); i++){
+	List_Read(tmp, i, &V);
+	Tree_Action(V->Hexahedra, vis_hex);
+	Tree_Action(V->Prisms, vis_pri);
+	Tree_Action(V->Pyramids, vis_pyr);
+      }
+      List_Delete(tmp);
+    }
+  }
+  else{ 
+    num = atoi(str);
+
+    if(type==0){
+      vv.Num = num; v = &vv;
+      if((pv = (Vertex**)Tree_PQuery(THEM->Vertices, &v)))
+	(*pv)->Visible = (*pv)->Visible ? 0 : VIS_MESH;
+      else
+	Msg(WARNING, "Unknown node %d (use '*' to hide/show all nodes)", num);
+    }
+    else{
+      SS.Num = num; S = &SS;
+      HH.Num = num; H = &HH;
+      PP.Num = num; P = &PP;
+      QQ.Num = num; Q = &QQ;
+      if((pS = (Simplex**)Tree_PQuery(THEM->Simplexes, &S))){
+	(*pS)->Visible = (*pS)->Visible ? 0 : VIS_MESH;
+      }
+      else{
+	found = 0;
+	tmp = Tree2List(THEM->Volumes);
+	for(i=0; i<List_Nbr(tmp); i++){
+	  List_Read(tmp, i, &V);
+	  if((pH = (Hexahedron**)Tree_PQuery(V->Hexahedra, &H))){
+	    (*pH)->Visible = (*pH)->Visible ? 0 : VIS_MESH; found = 1; break;
+	  }
+	  if((pP = (Prism**)Tree_PQuery(V->Prisms, &P))){
+	    (*pP)->Visible = (*pP)->Visible ? 0 : VIS_MESH; found = 1; break;
+	  }
+	  if((pQ = (Pyramid**)Tree_PQuery(V->Pyramids, &Q))){
+	    (*pQ)->Visible = (*pQ)->Visible ? 0 : VIS_MESH; found = 1; break;
+	  }
+	}
+	List_Delete(tmp);
+	if(!found) 
+	  Msg(WARNING, "Unknown element %d (use '*' to hide/show all elements)", num);
+      }
+    }
+  }
+  Draw();
 }
 
 // Help Menu
@@ -708,12 +885,12 @@ static void _new_multiline(int type){
 	}
       }
       n=0;
-      ZeroHighlight(&M);
+      ZeroHighlight(THEM);
       Draw();
     }
     if(ib == 0){ /* 'q' */
       n=0 ;
-      ZeroHighlight(&M);
+      ZeroHighlight(THEM);
       Draw();
       break;
     }
@@ -748,13 +925,13 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS){
     }
     if(ib == 0) { /* 'q' */
       n=0 ;
-      ZeroHighlight(&M);
+      ZeroHighlight(THEM);
       Draw();
       break;
     }
     if(n == 2){
       add_multline(2,p,CTX.filename);
-      ZeroHighlight(&M);
+      ZeroHighlight(THEM);
       Draw();
       n=0;
     }
@@ -790,13 +967,13 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS){
     }
     if(ib == 0) { /* 'q' */
       n=0 ;
-      ZeroHighlight(&M);
+      ZeroHighlight(THEM);
       Draw();
       break;
     }
     if(n == 3){
       add_circ(p[0],p[1],p[2],CTX.filename); /* begin, center, end */
-      ZeroHighlight(&M);
+      ZeroHighlight(THEM);
       Draw();
       n=0;
     }
@@ -827,13 +1004,13 @@ void geometry_elementary_add_new_ellipsis_cb(CALLBACK_ARGS){
     }
     if(ib == 0){ /* 'q' */
       n=0 ;
-      ZeroHighlight(&M);
+      ZeroHighlight(THEM);
       Draw();
       break;
     }
     if(n == 4){
       add_ell(p[0],p[1],p[2],p[3],CTX.filename);
-      ZeroHighlight(&M);
+      ZeroHighlight(THEM);
       Draw();
       n=0;
     }
@@ -874,7 +1051,7 @@ static void _new_surface_volume(int mode){
       Msg(STATUS3N,"Select boundary ('q'=quit)");
       ib = SelectEntity(type, &v,&c,&s);
       if(ib <= 0){
-	ZeroHighlight(&M);
+	ZeroHighlight(THEM);
 	Draw();
 	goto stopall;
       }       
@@ -889,7 +1066,7 @@ static void _new_surface_volume(int mode){
 	  Msg(STATUS3N,"Select holes ('q'=quit)");
 	  ib = SelectEntity(type, &v,&c,&s); 
 	  if(ib <= 0){
-	    ZeroHighlight(&M);
+	    ZeroHighlight(THEM);
 	    Draw();
 	    break;
 	  }
@@ -908,7 +1085,7 @@ static void _new_surface_volume(int mode){
 	  case 1 : add_surf(Liste2,CTX.filename,0,1); break;
 	  case 2 : add_multvol(Liste2,CTX.filename); break;
 	  }
-	  ZeroHighlight(&M);
+	  ZeroHighlight(THEM);
 	  Draw();
 	  break;
 	}
@@ -962,7 +1139,7 @@ static void _transform_point_curve_surface(int transfo, int mode, char *what){
   while(1){
     Msg(STATUS3N,"Select %s ('q'=quit)", what);
     if(!SelectEntity(type, &v,&c,&s)){
-      ZeroHighlight(&M);
+      ZeroHighlight(THEM);
       Draw();
       break;
     }
@@ -980,7 +1157,7 @@ static void _transform_point_curve_surface(int transfo, int mode, char *what){
     case 5: protude(num,CTX.filename,what); break;
     case 6: delet(num,CTX.filename,what); break;
     }
-    ZeroHighlight(&M);
+    ZeroHighlight(THEM);
     Draw();
   }
   Msg(STATUS3N,"Ready");
@@ -1210,12 +1387,12 @@ static void _add_physical(char *what){
       if(List_Nbr(Liste1)){
 	add_physical(Liste1,CTX.filename,type,&zone);
 	List_Reset(Liste1);
-	ZeroHighlight(&M);
+	ZeroHighlight(THEM);
 	Draw();
       }
     }
     if(ib == 0){
-      ZeroHighlight(&M);
+      ZeroHighlight(THEM);
       Draw();
       break;
     }
@@ -1242,29 +1419,29 @@ void geometry_physical_add_volume_cb (CALLBACK_ARGS){
 // Dynamic Mesh Menus
 
 void mesh_save_cb(CALLBACK_ARGS) {
-  Print_Mesh(&M, CTX.output_filename, CTX.mesh.format);
+  Print_Mesh(THEM, CTX.output_filename, CTX.mesh.format);
 }
 void mesh_save_all_cb(CALLBACK_ARGS) {
   int all = CTX.mesh.save_all;
   CTX.mesh.save_all = 1;
-  Print_Mesh(&M, CTX.output_filename, CTX.mesh.format);
+  Print_Mesh(THEM, CTX.output_filename, CTX.mesh.format);
   CTX.mesh.save_all = all;
 }
 void mesh_define_cb(CALLBACK_ARGS){
   WID->set_context(menu_mesh_define, 0);
 }
 void mesh_1d_cb(CALLBACK_ARGS){
-  mai3d(&M, 1); 
+  mai3d(THEM, 1); 
   Draw();
   Msg(STATUS3N,"Ready");
 }
 void mesh_2d_cb(CALLBACK_ARGS){
-  mai3d(&M, 2);
+  mai3d(THEM, 2);
   Draw();
   Msg(STATUS3N,"Ready");
 } 
 void mesh_3d_cb(CALLBACK_ARGS){
-  mai3d(&M, 3); 
+  mai3d(THEM, 3); 
   Draw();
   Msg(STATUS3N,"Ready");
 } 
@@ -1292,14 +1469,14 @@ void mesh_define_length_cb (CALLBACK_ARGS){
       if(n >= 1) {
 	add_charlength(n,p,CTX.filename); 
 	n=0;
-	ZeroHighlight(&M);
+	ZeroHighlight(THEM);
 	Draw();
 	break;
       }
     }
     if(ib == 0){ /* 'q' */
       n=0 ;
-      ZeroHighlight(&M);
+      ZeroHighlight(THEM);
       Draw();
       break;
     }
@@ -1330,12 +1507,12 @@ void mesh_define_recombine_cb (CALLBACK_ARGS){
 	add_recosurf(n,p,CTX.filename); break;
       }
       n=0;
-      ZeroHighlight(&M);
+      ZeroHighlight(THEM);
       Draw();
     }
     if(ib == 0){ /* 'q' */
       n=0 ;
-      ZeroHighlight(&M);
+      ZeroHighlight(THEM);
       Draw();
       break;
     }
@@ -1421,13 +1598,13 @@ static void _add_transfinite(int dim){
 	      break;
 	    }
 	    n=0;
-	    ZeroHighlight(&M);
+	    ZeroHighlight(THEM);
 	    Draw();
 	    break;
 	  }
 	  if(ib == 0){ /* 'q' */
 	    n=0 ;
-	    ZeroHighlight(&M);
+	    ZeroHighlight(THEM);
 	    Draw();
 	    break;
 	  }
@@ -1440,12 +1617,12 @@ static void _add_transfinite(int dim){
 	if(n >= 1) add_trsfline(n,p,CTX.filename);
       }
       n=0;
-      ZeroHighlight(&M);
+      ZeroHighlight(THEM);
       Draw();
     }
     if(ib == 0){ /* 'q' */
       n=0 ;
-      ZeroHighlight(&M);
+      ZeroHighlight(THEM);
       Draw();
       break;
     }
@@ -1776,14 +1953,10 @@ void view_options_plugin_cb(CALLBACK_ARGS){
   std::pair<int,GMSH_Plugin*> *pair =  (std::pair<int,GMSH_Plugin*>*)data;
   GMSH_Plugin *p = pair->second;
 
-  if(!p->dialogBox)p->dialogBox = WID->create_plugin_window(p);
+  if(!p->dialogBox) p->dialogBox = WID->create_plugin_window(p);
 
   p->dialogBox->run_button->callback(view_plugin_cb, (void*)pair);
-
-  if(p->dialogBox->main_window->shown())
-    p->dialogBox->main_window->redraw();
-  else
-    p->dialogBox->main_window->show();    
+  p->dialogBox->main_window->show();    
 }
 
 void view_options_custom_cb(CALLBACK_ARGS){
@@ -2033,7 +2206,7 @@ void con_geometry_define_point_cb(CALLBACK_ARGS){
   strcpy(z_text, WID->context_geometry_input[4]->value());
   strcpy(l_text, WID->context_geometry_input[5]->value());
   add_point(CTX.filename);
-  ZeroHighlight(&M);
+  ZeroHighlight(THEM);
   Replot();
 }
 

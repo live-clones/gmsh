@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.138 2001-11-23 12:14:05 geuzaine Exp $
+// $Id: GUI.cpp,v 1.139 2001-12-03 08:41:43 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -78,6 +78,7 @@ Fl_Menu_Item m_menubar_table[] = {
          {"UCB YUV (yuv)...",          0, (Fl_Callback *)file_save_as_yuv_cb, 0},
          {0},
       {0},
+    {"Visibility...",    FL_SHIFT+'v', (Fl_Callback *)opt_visibility_cb, 0},
     {"Messages...",      FL_SHIFT+'l', (Fl_Callback *)opt_message_cb, 0},
     {"Statistics...",    FL_SHIFT+'i', (Fl_Callback *)opt_statistics_cb, 0, FL_MENU_DIVIDER},
     {"Quit",             FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
@@ -508,6 +509,7 @@ GUI::GUI(int argc, char **argv) {
   post_window = NULL;
   stat_window = NULL;
   msg_window = NULL;
+  vis_window = NULL;
   about_window = NULL;
   view_window = NULL;
   context_geometry_window = NULL;
@@ -548,6 +550,7 @@ GUI::GUI(int argc, char **argv) {
   create_post_options_window();
   create_view_options_window(-1);
   create_message_window();
+  create_visibility_window();
   create_about_window();
   create_getdp_window();
 
@@ -1118,7 +1121,7 @@ void GUI::create_geometry_options_window(){
   }
     
   int width = 25*CTX.fontsize;
-  int height = 5*WB+9*BH ;
+  int height = 5*WB+10*BH ;
   int BW = width-4*WB;
   
   geo_window = new Fl_Window(width,height);
@@ -1127,7 +1130,7 @@ void GUI::create_geometry_options_window(){
   { 
     Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
     { 
-      Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Algorithm");
+      Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "General");
       o->labelsize(CTX.fontsize);
       o->hide();
       geo_butt[8] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Auto coherence (suppress duplicates)");
@@ -1155,18 +1158,11 @@ void GUI::create_geometry_options_window(){
 	geo_butt[i]->selection_color(TOGGLE_COLOR);
       }
       
-      geo_input = new Fl_Input(2*WB, 2*WB+5*BH, IW, BH, "Show by entity number");
-      geo_input->labelsize(CTX.fontsize);
-      geo_input->textsize(CTX.fontsize);
-      geo_input->align(FL_ALIGN_RIGHT);
-      geo_input->callback(opt_geometry_show_by_entity_num_cb);
-      geo_input->when(FL_WHEN_ENTER_KEY|FL_WHEN_NOT_CHANGED);
-      
-      geo_value[0] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Normals");
+      geo_value[0] = new Fl_Value_Input(2*WB, 2*WB+5*BH, IW, BH, "Normals");
       geo_value[0]->minimum(0); 
       geo_value[0]->maximum(100);
       geo_value[0]->step(0.1);
-      geo_value[1] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW, BH, "Tangents");
+      geo_value[1] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Tangents");
       geo_value[1]->minimum(0);
       geo_value[1]->maximum(100);
       geo_value[1]->step(0.1);
@@ -1255,7 +1251,7 @@ void GUI::create_mesh_options_window(){
   }
     
   int width = 25*CTX.fontsize;
-  int height = 5*WB+12*BH ;
+  int height = 5*WB+10*BH ;
   int BW = width-4*WB;
   
   mesh_window = new Fl_Window(width,height);
@@ -1264,33 +1260,23 @@ void GUI::create_mesh_options_window(){
   { 
     Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
     { 
-      Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Algorithm");
+      Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "General");
       o->labelsize(CTX.fontsize);
       o->hide();
       
-      mesh_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Isotropic");
-      mesh_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Isotropic (Triangle)");
-      mesh_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Anisotropic");
-      for(i=0 ; i<3 ; i++){
-	mesh_butt[i]->type(FL_RADIO_BUTTON);
-	mesh_butt[i]->down_box(RADIO_BOX);
-	mesh_butt[i]->labelsize(CTX.fontsize);
-	mesh_butt[i]->selection_color(RADIO_COLOR);
-      }
-      
-      mesh_value[0] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Number of smoothing steps");
+      mesh_value[0] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Number of smoothing steps");
       mesh_value[0]->minimum(0);
       mesh_value[0]->maximum(100); 
       mesh_value[0]->step(1);
-      mesh_value[1] = new Fl_Value_Input(2*WB, 2*WB+5*BH, IW, BH, "Mesh scaling factor");
+      mesh_value[1] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Mesh scaling factor");
       mesh_value[1]->minimum(0.001);
       mesh_value[1]->maximum(1000); 
       mesh_value[1]->step(0.001);
-      mesh_value[2] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Characteristic length factor");
+      mesh_value[2] = new Fl_Value_Input(2*WB, 2*WB+3*BH, IW, BH, "Characteristic length factor");
       mesh_value[2]->minimum(0.001);
       mesh_value[2]->maximum(1000); 
       mesh_value[2]->step(0.001);
-      mesh_value[3] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW, BH, "Random perturbation factor");
+      mesh_value[3] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Random perturbation factor");
       mesh_value[3]->minimum(1.e-6);
       mesh_value[3]->maximum(1.e-1); 
       mesh_value[3]->step(1.e-6);
@@ -1301,16 +1287,41 @@ void GUI::create_mesh_options_window(){
 	mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
       
-      mesh_butt[3] = new Fl_Check_Button(2*WB, 2*WB+8*BH, BW, BH, "Second order elements");
+      mesh_butt[3] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Second order elements");
       mesh_butt[3]->deactivate();//2nd order elements do not work. Disable the graphical option.
-      mesh_butt[4] = new Fl_Check_Button(2*WB, 2*WB+9*BH, BW, BH, "Interactive");
-      mesh_butt[5] = new Fl_Check_Button(2*WB, 2*WB+10*BH, BW, BH, "Constrain background mesh");
-      for(i=3 ; i<6 ; i++){
-	mesh_butt[i]->type(FL_TOGGLE_BUTTON);
-	mesh_butt[i]->down_box(TOGGLE_BOX);
+      mesh_butt[3]->type(FL_TOGGLE_BUTTON);
+      mesh_butt[3]->down_box(TOGGLE_BOX);
+      mesh_butt[3]->labelsize(CTX.fontsize);
+      mesh_butt[3]->selection_color(TOGGLE_COLOR);
+
+      mesh_butt[5] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW, BH, "Constrain background mesh");
+      mesh_butt[5]->type(FL_TOGGLE_BUTTON);
+      mesh_butt[5]->down_box(TOGGLE_BOX);
+      mesh_butt[5]->labelsize(CTX.fontsize);
+      mesh_butt[5]->selection_color(TOGGLE_COLOR);
+
+      o->end();
+    }
+    { 
+      Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "2D");
+      o->labelsize(CTX.fontsize);
+      o->hide();
+      
+      mesh_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Old isotropic algorithm");
+      mesh_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "New isotropic algorithm");
+      mesh_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Anisotropic algorithm");
+      for(i=0 ; i<3 ; i++){
+	mesh_butt[i]->type(FL_RADIO_BUTTON);
+	mesh_butt[i]->down_box(RADIO_BOX);
 	mesh_butt[i]->labelsize(CTX.fontsize);
-	mesh_butt[i]->selection_color(TOGGLE_COLOR);
+	mesh_butt[i]->selection_color(RADIO_COLOR);
       }
+      mesh_butt[4] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Interactive");
+      mesh_butt[4]->type(FL_TOGGLE_BUTTON);
+      mesh_butt[4]->down_box(TOGGLE_BOX);
+      mesh_butt[4]->labelsize(CTX.fontsize);
+      mesh_butt[4]->selection_color(TOGGLE_COLOR);
+
       o->end();
     }
     { 
@@ -1330,26 +1341,19 @@ void GUI::create_mesh_options_window(){
 	mesh_butt[i]->labelsize(CTX.fontsize);
 	mesh_butt[i]->selection_color(TOGGLE_COLOR);
       }
-      mesh_input = new Fl_Input(2*WB, 2*WB+5*BH, IW, BH, "Show by entity Number");
-      mesh_input->labelsize(CTX.fontsize);
-      mesh_input->textsize(CTX.fontsize);
-      mesh_input->align(FL_ALIGN_RIGHT);
-      mesh_input->callback(opt_mesh_show_by_entity_num_cb);
-      mesh_input->when(FL_WHEN_ENTER_KEY|FL_WHEN_NOT_CHANGED);
-      
-      mesh_value[4] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW/2, BH);
+      mesh_value[4] = new Fl_Value_Input(2*WB, 2*WB+5*BH, IW/2, BH);
       mesh_value[4]->minimum(0); 
       mesh_value[4]->maximum(1);
       mesh_value[4]->step(0.001);
-      mesh_value[5] = new Fl_Value_Input(2*WB+IW/2, 2*WB+6*BH, IW/2, BH, "Quality range");
+      mesh_value[5] = new Fl_Value_Input(2*WB+IW/2, 2*WB+5*BH, IW/2, BH, "Quality range");
       mesh_value[5]->minimum(0); 
       mesh_value[5]->maximum(1);
       mesh_value[5]->step(0.001);
       
-      mesh_value[6] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW/2, BH);
-      mesh_value[7] = new Fl_Value_Input(2*WB+IW/2, 2*WB+7*BH, IW/2, BH, "Size range");
+      mesh_value[6] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW/2, BH);
+      mesh_value[7] = new Fl_Value_Input(2*WB+IW/2, 2*WB+6*BH, IW/2, BH, "Size range");
       
-      mesh_value[8] = new Fl_Value_Input(2*WB, 2*WB+8*BH, IW, BH, "Normals");
+      mesh_value[8] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW, BH, "Normals");
       mesh_value[8]->minimum(0); 
       mesh_value[8]->maximum(100);
       mesh_value[8]->step(1);
@@ -1504,7 +1508,7 @@ void GUI::create_post_options_window(){
     return;
   }
 
-  int width = 24*CTX.fontsize;
+  int width = 25*CTX.fontsize;
   int height = 5*WB+10*BH ;
   int BW = width-4*WB;
   
@@ -1591,7 +1595,7 @@ void GUI::create_statistics_window(){
     return;
   }
 
-  int width = 24*CTX.fontsize;
+  int width = 25*CTX.fontsize;
   int height = 5*WB+17*BH ;
   
   stat_window = new Fl_Window(width,height);
@@ -1933,6 +1937,121 @@ void GUI::save_message(char *filename){
 void GUI::fatal_error(char *filename){
   fl_alert("A fatal error has occurred, which will force Gmsh to exit "
 	   "(all messages have been saved in the error log file '%s')", filename);
+}
+
+//********************** Create the visibility window ****************************
+
+void GUI::reset_visibility(){
+  if(vis_window){
+    vis_browser->clear();
+    if(vis_window->shown()) 
+      opt_visibility_cb(NULL,NULL);
+  }
+}
+
+void GUI::create_visibility_window(){
+
+  if(vis_window){
+    vis_window->show();
+    return;
+  }
+
+  static int cols[5] = {15,100,100,200,0};  
+  static Fl_Menu_Item type_table[] = {
+    {"Elementary",  0, (Fl_Callback *)opt_visibility_cb},
+    {"Physical",    0, (Fl_Callback *)opt_visibility_cb},
+    {0}
+  };
+  static Fl_Menu_Item browser_mode_table[] = {
+    {"Geometry+Mesh",  0, (Fl_Callback *)opt_visibility_cb},
+    {"Geometry",       0, (Fl_Callback *)opt_visibility_cb},
+    {"Mesh",           0, (Fl_Callback *)opt_visibility_cb},
+    {0}
+  };
+  static Fl_Menu_Item input_mode_table[] = {
+    {"Node",     0, 0},
+    {"Element",  0, 0},
+    {0}
+  };
+
+  int width = cols[0]+cols[1]+cols[2]+cols[3]+2*WB;
+  int height = 15*BH ;
+  
+  vis_window = new Fl_Window(width,height);
+  vis_window->box(WINDOW_BOX);
+  vis_window->label("Visibility");
+  
+  int brw = width-2*WB;
+
+  vis_type = new Fl_Choice(1*WB,1*WB+0*BH,brw/3,BH);
+  vis_type->menu(type_table);
+  vis_type->textsize(CTX.fontsize);
+  
+  vis_browser_mode = new Fl_Choice(2*WB+brw/3,1*WB+0*BH,brw/3,BH);
+  vis_browser_mode->menu(browser_mode_table);
+  vis_browser_mode->textsize(CTX.fontsize);
+  
+  vis_butt[0] = new Fl_Check_Button(3*WB+2*brw/3, 1*WB+0*BH, brw/3, BH, "Recursive");
+  vis_butt[0]->type(FL_TOGGLE_BUTTON);
+  vis_butt[0]->down_box(TOGGLE_BOX);
+  vis_butt[0]->labelsize(CTX.fontsize);
+  vis_butt[0]->selection_color(TOGGLE_COLOR);
+  vis_butt[0]->value(1);
+
+  Fl_Button* o0 = new Fl_Button(1*WB, 2*WB+1*BH, cols[0], BH, "*");
+  o0->labelsize(CTX.fontsize);
+  o0->callback(opt_visibility_sort_cb, (void*)0);
+
+  Fl_Button* o1 = new Fl_Button(1*WB+cols[0], 2*WB+1*BH, cols[1], BH, "Type");
+  //Fl_Box *a = new Fl_Box(FL_NO_BOX, 1*WB+15+cols[0]-15-20, 2*WB+1*BH, 15, BH, "@#UpArrow");
+  //a->labeltype(FL_SYMBOL_LABEL);
+  o1->labelsize(CTX.fontsize);
+  o1->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
+  o1->callback(opt_visibility_sort_cb, (void*)1);
+
+  Fl_Button* o2 = new Fl_Button(1*WB+cols[0]+cols[1], 2*WB+1*BH, cols[2], BH, "Number");
+  o2->labelsize(CTX.fontsize);
+  o2->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
+  o2->callback(opt_visibility_sort_cb, (void*)2);
+
+  Fl_Button* o3 = new Fl_Button(1*WB+cols[0]+cols[1]+cols[2], 2*WB+1*BH, cols[3], BH, "Name");
+  o3->labelsize(CTX.fontsize);
+  o3->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
+  o3->callback(opt_visibility_sort_cb, (void*)3);
+
+  vis_browser = new Fl_Browser(1*WB, 2*WB+2*BH, brw, height-5*WB-4*BH);
+  vis_browser->textfont(FL_COURIER);
+  vis_browser->textsize(CTX.fontsize);
+  vis_browser->type(FL_MULTI_BROWSER);
+  vis_browser->column_widths(cols);
+
+  vis_window->resizable(new Fl_Box(width-3*WB-2*BB-10,height-5*WB-2*BH-10, 10,10));
+
+  vis_input = new Fl_Input(1*WB, height-2*WB-2*BH, brw/3, BH);
+  vis_input->labelsize(CTX.fontsize);
+  vis_input->textsize(CTX.fontsize);
+  vis_input->callback(opt_visibility_number_cb);
+  vis_input->when(FL_WHEN_ENTER_KEY|FL_WHEN_NOT_CHANGED);
+
+  vis_input_mode = new Fl_Choice(2*WB+brw/3, height-2*WB-2*BH, brw/3, BH);
+  vis_input_mode->menu(input_mode_table);
+  vis_input_mode->textsize(CTX.fontsize);
+  
+  { 
+    Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
+    o->labelsize(CTX.fontsize);
+    o->callback(opt_visibility_ok_cb);
+  }
+  { 
+    Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
+    o->labelsize(CTX.fontsize);
+    o->callback(cancel_cb, (void*)vis_window);
+  }
+
+  if(CTX.center_windows)
+    vis_window->position(m_window->x()+m_window->w()/2-width/2,
+			 m_window->y()+9*BH-height/2);
+  vis_window->end();
 }
 
 //******************************* Create the about window ******************************

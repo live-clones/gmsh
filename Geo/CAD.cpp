@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.44 2001-11-28 17:35:51 geuzaine Exp $
+// $Id: CAD.cpp,v 1.45 2001-12-03 08:41:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -259,7 +259,6 @@ Curve *DuplicateCurve (Curve *c){
 void CopySurface (Surface *s, Surface *ss){
   int i,j;
   ss->Typ = s->Typ;
-  ss->Mat = s->Mat;
   //We should not copy the meshing method: if the meshes are to
   //be copied, the meshing algorithm will take care of it
   //(e.g. ExtrudeMesh()).
@@ -288,7 +287,7 @@ Surface *DuplicateSurface (Surface *s){
   Vertex *v,*newv;
   int i;
 
-  ps = Create_Surface(NEWSURFACE(),0,0);
+  ps = Create_Surface(NEWSURFACE(),0);
   CopySurface(s,ps);
   for(i=0;i<List_Nbr(ps->Generatrices);i++){
     List_Read(ps->Generatrices,i,&c);
@@ -952,6 +951,7 @@ void Extrude_ProtudePoint(int type, int ip,
 
   case TRANSLATE_ROTATE :
     d = CTX.geom.extrude_spline_points;
+    d = d?d:1;
     c = Create_Curve(NEWLINE(),MSH_SEGM_SPLN,1,NULL,NULL,-1,-1,0.,1.);
     c->Control_Points = List_Create(CTX.geom.extrude_spline_points,1,sizeof(Vertex*));
     c->Extrude = new ExtrudeParams;
@@ -1085,9 +1085,9 @@ Surface *Extrude_ProtudeCurve(int type, int ic,
   if(!CurveBeg && !CurveEnd) return NULL;
 
   if(!CurveBeg || !CurveEnd)
-    s = Create_Surface(NEWSURFACE(),MSH_SURF_TRIC,0);
+    s = Create_Surface(NEWSURFACE(),MSH_SURF_TRIC);
   else
-    s = Create_Surface(NEWSURFACE(),MSH_SURF_REGL,0);
+    s = Create_Surface(NEWSURFACE(),MSH_SURF_REGL);
 
   s->Generatrices = List_Create(4,1,sizeof(Curve*));
   s->Extrude = new ExtrudeParams;
@@ -1164,7 +1164,7 @@ void Extrude_ProtudeSurface(int type, int is,
   }
   
   if(NewVolume){
-    pv = Create_Volume(NewVolume,0,0);
+    pv = Create_Volume(NewVolume,0);
     pv->Extrude = new ExtrudeParams;
     pv->Extrude->fill(type,T0,T1,T2,A0,A1,A2,X0,X1,X2,alpha);
     pv->Extrude->geo.Source = is;
@@ -1303,7 +1303,7 @@ void ReplaceDuplicatePoints(Mesh *m){
 
   List_T *points2delete = List_Create(100,100,sizeof(Vertex*));
 
-  /* Create unique points */
+  // Create unique points
 
   start = Tree_Nbr(m->Points);
 
@@ -1338,7 +1338,7 @@ void ReplaceDuplicatePoints(Mesh *m){
     Tree_Action(m->Vertices,MaxNumPoint);
   }
 
-  /* Replace old points in curves */
+  // Replace old points in curves
 
   All = Tree2List(m->Curves);
   for(i=0;i<List_Nbr(All);i++){
@@ -1357,7 +1357,7 @@ void ReplaceDuplicatePoints(Mesh *m){
   }
   List_Delete(All);
 
-  /* Replace old points in surfaces */
+  // Replace old points in surfaces
 
   All = Tree2List(m->Surfaces);
   for(i=0;i<List_Nbr(All);i++){
@@ -1389,7 +1389,7 @@ void ReplaceDuplicateCurves(Mesh *m){
   Surface *s;
   int i,j,start,end;
 
-  /* Create unique curves */
+  // Create unique curves
 
   start = Tree_Nbr(m->Curves);
 
@@ -1434,7 +1434,7 @@ void ReplaceDuplicateCurves(Mesh *m){
     Tree_Action(m->Curves,MaxNumCurve);
   }
 
-  /* Replace old curves in surfaces */
+  // Replace old curves in surfaces
 
   All = Tree2List(m->Surfaces);
   for(i=0;i<List_Nbr(All);i++){
@@ -1462,7 +1462,7 @@ void ReplaceDuplicateSurfaces(Mesh *m){
   Volume *vol;
   int i,j,start,end;
 
-  /* Create unique surfaces */
+  // Create unique surfaces
 
   start = Tree_Nbr(m->Surfaces);
 
@@ -1495,7 +1495,7 @@ void ReplaceDuplicateSurfaces(Mesh *m){
     Tree_Action(m->Surfaces,MaxNumSurface);
   }
 
-  /* Replace old surfaces in volumes */
+  // Replace old surfaces in volumes
 
   All = Tree2List(m->Volumes);
   for(i=0;i<List_Nbr(All);i++){

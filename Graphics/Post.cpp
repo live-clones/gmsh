@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.30 2001-11-16 10:57:31 geuzaine Exp $
+// $Id: Post.cpp,v 1.31 2001-12-03 08:41:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -34,8 +34,8 @@ double GiveValueFromIndex_DoubleLog(double ValMin, double ValMax, int NbIso, int
   if(NbIso==1) return (ValMax+ValMin)/2.;
   if(ValMin <= 0.) return 0. ;
 
-  double Iso2 = Iso/2;
-  double NbIso2 = NbIso/2;
+  double Iso2 = Iso/2.;
+  double NbIso2 = NbIso/2.;
 
   return pow(10.,log10(ValMin)+Iso2*(log10(ValMax)-log10(ValMin))/(NbIso2-1.)) ;
 

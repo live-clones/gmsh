@@ -23,7 +23,7 @@
 <H1>README 1/10</H1>
 [<A HREF="#top">top</A>][prev][<A HREF="#file2">next</A>]
 <PRE>
-$Id: tutorial.html,v 1.29 2001-11-13 09:37:32 geuzaine Exp $
+$Id: tutorial.html,v 1.30 2001-12-03 08:41:45 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -227,7 +227,8 @@ Physical Point(1) = {1,2} ;
 </FONT></I><I><FONT COLOR="#B22222">// for line or surface elements:
 </FONT></I>
 Physical Line(10) = {1,2,4} ;
-Physical Surface(100) = {6} ;
+MySurface = 100;
+Physical Surface(MySurface) = {6} ;
 
 <I><FONT COLOR="#B22222">// All the line elements which will be created during the mesh of
 </FONT></I><I><FONT COLOR="#B22222">// lines 1, 2 and 4 will be saved in the output file with the region

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.27 2001-10-30 09:52:34 geuzaine Exp $
+# $Id: Makefile,v 1.28 2001-12-03 08:41:43 geuzaine Exp $
 #
 # Makefile for "libGeo.a"
 #
@@ -28,7 +28,6 @@ SRC =  	CAD.cpp \
         Geo.cpp \
         StepGeomDatabase.cpp \
 	Verif.cpp \
-	Visibility.cpp \
         Print_Geo.cpp
 
 OBJ = $(SRC:.cpp=.o)
@@ -91,11 +90,6 @@ StepGeomDatabase.o: StepGeomDatabase.cpp ../Common/Gmsh.h \
  ../Common/Numeric.h Geo.h StepGeomDatabase.h DataBase.h \
  ../Common/Context.h
 Verif.o: Verif.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h Geo.h CAD.h ../Mesh/Mesh.h \
- ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h DataBase.h
-Visibility.o: Visibility.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h Geo.h CAD.h ../Mesh/Mesh.h \
  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \

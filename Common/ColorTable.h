@@ -6,7 +6,7 @@
 
 typedef struct{
   unsigned int table[COLORTABLE_NBMAX_COLOR];
-  int size;
+  int size; // must be >= 2
   int ipar[COLORTABLE_NBMAX_PARAM];
   float fpar[COLORTABLE_NBMAX_PARAM];
 }ColorTable;

@@ -1,8 +1,9 @@
-// $Id: Mesh.cpp,v 1.44 2001-11-13 08:07:50 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.45 2001-12-03 08:41:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Geo.h"
+#include "CAD.h"
 #include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"
@@ -10,7 +11,6 @@
 #include "gl2ps.h"
 #include "Verif.h"
 #include "Numeric.h"
-#include "Visibility.h"
 
 extern Mesh      *THEM;
 extern Context_T  CTX;
@@ -152,49 +152,57 @@ void Draw_Mesh (Mesh *M) {
 }
 
 void Draw_Mesh_Volumes(void *a, void *b){
-  Volume **v;
-  v = (Volume**)a;
+  Volume *v;
+  v = *(Volume**)a;
   iColor++;
-  Tree_Action((*v)->Simplexes, Draw_Simplex_Volume);
-  Tree_Action((*v)->Hexahedra, Draw_Hexahedron_Volume);
-  Tree_Action((*v)->Prisms, Draw_Prism_Volume);
-  Tree_Action((*v)->Pyramids, Draw_Pyramid_Volume);
+  // Ceci est la bonne methode, mais ne marchera que qd on aura une
+  // structure coherente poue les volumes
+  // if(!(v->Visible & VIS_MESH)) return;
+  Tree_Action(v->Simplexes, Draw_Simplex_Volume);
+  Tree_Action(v->Hexahedra, Draw_Hexahedron_Volume);
+  Tree_Action(v->Prisms, Draw_Prism_Volume);
+  Tree_Action(v->Pyramids, Draw_Pyramid_Volume);
 }
 
 void Draw_Mesh_Surfaces (void *a,void *b){
-  Surface **s;
-  s = (Surface**)a;
+  Surface *s;
+  s = *(Surface**)a;
   iColor++;
-  Tree_Action((*s)->Simplexes, Draw_Simplex_Surfaces);
+  if(!(s->Visible & VIS_MESH)) return;
+  Tree_Action(s->Simplexes, Draw_Simplex_Surfaces);
 }
 
 void Draw_Mesh_Extruded_Surfaces(void *a, void *b){
-  Volume **v;
-  v = (Volume**)a;
-  Tree_Action((*v)->Simp_Surf, Draw_Simplex_Surfaces);
+  Volume *v;
+  v = *(Volume**)a;
+  if(!(v->Visible & VIS_MESH)) return;
+  Tree_Action(v->Simp_Surf, Draw_Simplex_Surfaces);
 }
 
 void Draw_Mesh_Curves (void *a, void *b){
-  Curve **c;
-  c = (Curve**)a;
-  if((*c)->Num < 0)return;
+  Curve *c;
+  c = *(Curve**)a;
+  if(c->Num < 0) return;
   iColor++;
-  Tree_Action((*c)->Simplexes,Draw_Simplex_Curves);
+  if(!(c->Visible & VIS_MESH)) return;
+  Tree_Action(c->Simplexes,Draw_Simplex_Curves);
 }
 
 void Draw_Mesh_Points (void *a, void *b){
-  Vertex **v;
+  Vertex *v;
   char Num[100];
 
-  v = (Vertex**)a;
+  v = *(Vertex**)a;
+
+  if(!(v->Visible & VIS_MESH)) return;
 
   if(CTX.mesh.use_cut_plane){
-    if(CTX.mesh.evalCutPlane((*v)->Pos.X, (*v)->Pos.Y, (*v)->Pos.Z) < 0)return;
+    if(CTX.mesh.evalCutPlane(v->Pos.X, v->Pos.Y, v->Pos.Z) < 0) return;
   }
   
   if(CTX.render_mode == GMSH_SELECT){
     glLoadName(0);
-    glPushName((*v)->Num);
+    glPushName(v->Num);
   }
 
   if(DrawVertexSupp) 
@@ -204,15 +212,15 @@ void Draw_Mesh_Points (void *a, void *b){
 
   if(CTX.mesh.points){
     glBegin(GL_POINTS);
-    glVertex3d((*v)->Pos.X, (*v)->Pos.Y, (*v)->Pos.Z);
+    glVertex3d(v->Pos.X, v->Pos.Y, v->Pos.Z);
     glEnd();
   }
   
   if(CTX.mesh.points_num){
-    sprintf(Num,"%d",(*v)->Num);
-    glRasterPos3d((*v)->Pos.X+3*CTX.pixel_equiv_x/CTX.s[0],
-                  (*v)->Pos.Y+3*CTX.pixel_equiv_x/CTX.s[1], 
-                  (*v)->Pos.Z+3*CTX.pixel_equiv_x/CTX.s[2]);
+    sprintf(Num,"%d",v->Num);
+    glRasterPos3d(v->Pos.X+3*CTX.pixel_equiv_x/CTX.s[0],
+                  v->Pos.Y+3*CTX.pixel_equiv_x/CTX.s[1], 
+                  v->Pos.Z+3*CTX.pixel_equiv_x/CTX.s[2]);
     Draw_String(Num);
   }
   
@@ -226,35 +234,36 @@ void Draw_Mesh_Points (void *a, void *b){
 /* ------------------------------------------------------------------------ */
 
 void Draw_Simplex_Volume (void *a, void *b){
-  Simplex **s;
+  Simplex *s;
   char Num[100];
   int fulldraw = 0;
   double tmp, X[4],Y[4],Z[4];
 
-  s = (Simplex**)a;
+  s = *(Simplex**)a;
 
-  if(!(*s)->V[3]) return;
+  if(!s->V[3] || !(s->Visible & VIS_MESH)) return;
 
-  if(!EntiteEstElleVisible((*s)->iEnt)) return;
+  // a enlever des qu'on a une structure correcte pour les volumes
+  Volume *V; if((V = FindVolume(s->iEnt,THEM)) && !(V->Visible & VIS_MESH)) return;
 
   if(CTX.mesh.gamma_sup){
-    tmp = (*s)->GammaShapeMeasure();
+    tmp = s->GammaShapeMeasure();
     if(tmp < CTX.mesh.gamma_inf || tmp > CTX.mesh.gamma_sup) return;
     fulldraw = 1;
   }
 
   if(CTX.mesh.radius_sup){
-    if((*s)->Radius < CTX.mesh.radius_inf || (*s)->Radius > CTX.mesh.radius_sup) return;
+    if(s->Radius < CTX.mesh.radius_inf || s->Radius > CTX.mesh.radius_sup) return;
     fulldraw = 1;
   }
 
 
-  double Xc = .25 * ((*s)->V[0]->Pos.X + (*s)->V[1]->Pos.X + 
-                     (*s)->V[2]->Pos.X + (*s)->V[3]->Pos.X);
-  double Yc = .25 * ((*s)->V[0]->Pos.Y + (*s)->V[1]->Pos.Y + 
-                     (*s)->V[2]->Pos.Y + (*s)->V[3]->Pos.Y);
-  double Zc = .25 * ((*s)->V[0]->Pos.Z + (*s)->V[1]->Pos.Z + 
-                     (*s)->V[2]->Pos.Z + (*s)->V[3]->Pos.Z);
+  double Xc = .25 * (s->V[0]->Pos.X + s->V[1]->Pos.X + 
+                     s->V[2]->Pos.X + s->V[3]->Pos.X);
+  double Yc = .25 * (s->V[0]->Pos.Y + s->V[1]->Pos.Y + 
+                     s->V[2]->Pos.Y + s->V[3]->Pos.Y);
+  double Zc = .25 * (s->V[0]->Pos.Z + s->V[1]->Pos.Z + 
+                     s->V[2]->Pos.Z + s->V[3]->Pos.Z);
 
   if(CTX.mesh.use_cut_plane){
     if(CTX.mesh.evalCutPlane(Xc,Yc,Zc) < 0) return;
@@ -262,16 +271,16 @@ void Draw_Simplex_Volume (void *a, void *b){
   }
 
   if(CTX.mesh.color_carousel && !fulldraw)
-    ColorSwitch((*s)->iEnt);
+    ColorSwitch(s->iEnt);
   else if(fulldraw)
     glColor4ubv((GLubyte*)&CTX.color.mesh.line);
   else
     glColor4ubv((GLubyte*)&CTX.color.mesh.tetrahedron);
 
   for (int i=0 ; i<4 ; i++) {
-     X[i] = Xc + CTX.mesh.explode * ((*s)->V[i]->Pos.X - Xc);
-     Y[i] = Yc + CTX.mesh.explode * ((*s)->V[i]->Pos.Y - Yc);
-     Z[i] = Zc + CTX.mesh.explode * ((*s)->V[i]->Pos.Z - Zc);
+     X[i] = Xc + CTX.mesh.explode * (s->V[i]->Pos.X - Xc);
+     Y[i] = Yc + CTX.mesh.explode * (s->V[i]->Pos.Y - Yc);
+     Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
   }
 
   if(CTX.mesh.volumes && !(fulldraw && CTX.mesh.shade)){
@@ -300,7 +309,7 @@ void Draw_Simplex_Volume (void *a, void *b){
   }
 
   if(CTX.mesh.volumes_num){
-    sprintf(Num,"%d",(*s)->Num);
+    sprintf(Num,"%d",s->Num);
     glRasterPos3d(Xc,Yc,Zc);
     Draw_String(Num);
   }
@@ -330,7 +339,7 @@ void Draw_Simplex_Volume (void *a, void *b){
   double n[4], x1x0, y1y0, z1z0, x2x0, y2y0, z2z0;
 
   if(CTX.mesh.color_carousel)
-    ColorSwitch((*s)->iEnt);
+    ColorSwitch(s->iEnt);
   else
     glColor4ubv((GLubyte*)&CTX.color.mesh.tetrahedron);    
 
@@ -406,36 +415,33 @@ void Draw_Simplex_Volume (void *a, void *b){
 
 
 void Draw_Simplex_Surfaces (void *a, void *b){
-
-  Simplex **s;
+  Simplex *s;
   double X[4],Y[4],Z[4],Xc,Yc,Zc,pX[8],pY[8],pZ[8];
   double x1x0, y1y0, z1z0, x2x0, y2y0, z2z0, n[3], m[3], mm;
   int i,j,K,L,k;
   char Num[256];
   
-  s = (Simplex**)a;
+  s = *(Simplex**)a;
 
-  if(!(*s)->V[2]) return ;
+  if(!s->V[2] || !(s->Visible & VIS_MESH)) return ;
 
-  if(!EntiteEstElleVisible ((*s)->iEnt)) return;
-
-  if((*s)->VSUP) L=1;
+  if(s->VSUP) L=1;
   else L=0;
 
-  if ((*s)->V[3]) {
+  if (s->V[3]) {
     K = 4;
-    Xc = .25 * ((*s)->V[0]->Pos.X + (*s)->V[1]->Pos.X + 
-                (*s)->V[2]->Pos.X + (*s)->V[3]->Pos.X);
-    Yc = .25 * ((*s)->V[0]->Pos.Y + (*s)->V[1]->Pos.Y + 
-                (*s)->V[2]->Pos.Y + (*s)->V[3]->Pos.Y);
-    Zc = .25 * ((*s)->V[0]->Pos.Z + (*s)->V[1]->Pos.Z + 
-                (*s)->V[2]->Pos.Z + (*s)->V[3]->Pos.Z);
+    Xc = .25 * (s->V[0]->Pos.X + s->V[1]->Pos.X + 
+                s->V[2]->Pos.X + s->V[3]->Pos.X);
+    Yc = .25 * (s->V[0]->Pos.Y + s->V[1]->Pos.Y + 
+                s->V[2]->Pos.Y + s->V[3]->Pos.Y);
+    Zc = .25 * (s->V[0]->Pos.Z + s->V[1]->Pos.Z + 
+                s->V[2]->Pos.Z + s->V[3]->Pos.Z);
   }
   else {
     K = 3;
-    Xc = ((*s)->V[0]->Pos.X + (*s)->V[1]->Pos.X + (*s)->V[2]->Pos.X) / 3. ;
-    Yc = ((*s)->V[0]->Pos.Y + (*s)->V[1]->Pos.Y + (*s)->V[2]->Pos.Y) / 3. ;
-    Zc = ((*s)->V[0]->Pos.Z + (*s)->V[1]->Pos.Z + (*s)->V[2]->Pos.Z) / 3. ;
+    Xc = (s->V[0]->Pos.X + s->V[1]->Pos.X + s->V[2]->Pos.X) / 3. ;
+    Yc = (s->V[0]->Pos.Y + s->V[1]->Pos.Y + s->V[2]->Pos.Y) / 3. ;
+    Zc = (s->V[0]->Pos.Z + s->V[1]->Pos.Z + s->V[2]->Pos.Z) / 3. ;
   }
 
   if(CTX.mesh.use_cut_plane){
@@ -444,18 +450,18 @@ void Draw_Simplex_Surfaces (void *a, void *b){
 
   k=0;
   for (i=0 ; i<K ; i++) {
-    pX[k] = Xc + CTX.mesh.explode * ((*s)->V[i]->Pos.X - Xc);
-    pY[k] = Yc + CTX.mesh.explode * ((*s)->V[i]->Pos.Y - Yc);
-    pZ[k] = Zc + CTX.mesh.explode * ((*s)->V[i]->Pos.Z - Zc);
+    pX[k] = Xc + CTX.mesh.explode * (s->V[i]->Pos.X - Xc);
+    pY[k] = Yc + CTX.mesh.explode * (s->V[i]->Pos.Y - Yc);
+    pZ[k] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
     k+=(L+1);
   }
   
   if(L){
     k=1;
     for (i=0 ; i<K ; i++) {
-      pX[k] = Xc + CTX.mesh.explode * ((*s)->VSUP[i]->Pos.X - Xc);
-      pY[k] = Yc + CTX.mesh.explode * ((*s)->VSUP[i]->Pos.Y - Yc);
-      pZ[k] = Zc + CTX.mesh.explode * ((*s)->VSUP[i]->Pos.Z - Zc);      
+      pX[k] = Xc + CTX.mesh.explode * (s->VSUP[i]->Pos.X - Xc);
+      pY[k] = Yc + CTX.mesh.explode * (s->VSUP[i]->Pos.Y - Yc);
+      pZ[k] = Zc + CTX.mesh.explode * (s->VSUP[i]->Pos.Z - Zc);      
       k+=(L+1);
     }
   }
@@ -478,9 +484,9 @@ void Draw_Simplex_Surfaces (void *a, void *b){
 
   if (CTX.mesh.normals || CTX.mesh.shade){
     for (i=0 ; i<K ; i++) {
-     X[i] = Xc + CTX.mesh.explode * ((*s)->V[i]->Pos.X - Xc);
-     Y[i] = Yc + CTX.mesh.explode * ((*s)->V[i]->Pos.Y - Yc);
-     Z[i] = Zc + CTX.mesh.explode * ((*s)->V[i]->Pos.Z - Zc);
+     X[i] = Xc + CTX.mesh.explode * (s->V[i]->Pos.X - Xc);
+     Y[i] = Yc + CTX.mesh.explode * (s->V[i]->Pos.Y - Yc);
+     Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
     }
     x1x0 = X[1]-X[0]; y1y0 = Y[1]-Y[0];
     z1z0 = Z[1]-Z[0]; x2x0 = X[2]-X[0];
@@ -504,7 +510,7 @@ void Draw_Simplex_Surfaces (void *a, void *b){
   }
 
   if(CTX.mesh.surfaces_num){
-    sprintf(Num,"%d",(*s)->Num);
+    sprintf(Num,"%d",s->Num);
     glRasterPos3d(Xc,Yc,Zc);
     Draw_String(Num);
   }
@@ -553,7 +559,7 @@ void Draw_Simplex_Curves(void *a,void *b){
 
   s = *(Simplex**)a;
 
-  if(!EntiteEstElleVisible (s->iEnt)) return;
+  if(!(s->Visible & VIS_MESH)) return ;
 
   Xc = 0.5 * (s->V[0]->Pos.X + s->V[1]->Pos.X);
   Yc = 0.5 * (s->V[0]->Pos.Y + s->V[1]->Pos.Y);
@@ -611,19 +617,22 @@ void Draw_Simplex_Curves(void *a,void *b){
 /* ------------------------------------------------------------------------ */
 
 void Draw_Hexahedron_Volume (void *a, void *b){
-  Hexahedron **h;
+  Hexahedron *h;
   int i ;
   double Xc = 0.0 , Yc = 0.0, Zc = 0.0 , X[8],Y[8],Z[8];
   char Num[100];
 
-  h = (Hexahedron**)a;
+  h = *(Hexahedron**)a;
 
-  if(!EntiteEstElleVisible((*h)->iEnt)) return;
+  if(!(h->Visible & VIS_MESH)) return ;
+
+  // a enlever des qu'on a une structure correcte pour les volumes
+  Volume *V; if((V = FindVolume(h->iEnt,THEM)) && !(V->Visible & VIS_MESH)) return;
 
   for(i=0 ; i<8 ; i++){
-    Xc += (*h)->V[i]->Pos.X;
-    Yc += (*h)->V[i]->Pos.Y;
-    Zc += (*h)->V[i]->Pos.Z;
+    Xc += h->V[i]->Pos.X;
+    Yc += h->V[i]->Pos.Y;
+    Zc += h->V[i]->Pos.Z;
   }
   Xc *= .125 ; 
   Zc *= .125 ; 
@@ -634,14 +643,14 @@ void Draw_Hexahedron_Volume (void *a, void *b){
   }
 
   if(CTX.mesh.color_carousel)
-    ColorSwitch((*h)->iEnt);  
+    ColorSwitch(h->iEnt);  
   else
     glColor4ubv((GLubyte*)&CTX.color.mesh.hexahedron);
 
   for (i=0 ; i<8 ; i++) {
-    X[i] = Xc + CTX.mesh.explode * ((*h)->V[i]->Pos.X - Xc);
-    Y[i] = Yc + CTX.mesh.explode * ((*h)->V[i]->Pos.Y - Yc);
-    Z[i] = Zc + CTX.mesh.explode * ((*h)->V[i]->Pos.Z - Zc);
+    X[i] = Xc + CTX.mesh.explode * (h->V[i]->Pos.X - Xc);
+    Y[i] = Yc + CTX.mesh.explode * (h->V[i]->Pos.Y - Yc);
+    Z[i] = Zc + CTX.mesh.explode * (h->V[i]->Pos.Z - Zc);
   }
 
   glBegin(GL_LINE_LOOP);
@@ -670,7 +679,7 @@ void Draw_Hexahedron_Volume (void *a, void *b){
   glEnd();    
 
   if(CTX.mesh.volumes_num){
-    sprintf(Num,"%d",(*h)->Num);
+    sprintf(Num,"%d",h->Num);
     glRasterPos3d(Xc,Yc,Zc);
     Draw_String(Num);
   }
@@ -684,34 +693,34 @@ void Draw_Hexahedron_Volume (void *a, void *b){
     glBegin(GL_LINES);
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
-      ( ((*h)->V[0]->Pos.X+(*h)->V[1]->Pos.X+(*h)->V[5]->Pos.X+(*h)->V[4]->Pos.X)/4.,
-        ((*h)->V[0]->Pos.Y+(*h)->V[1]->Pos.Y+(*h)->V[5]->Pos.Y+(*h)->V[4]->Pos.Y)/4.,
-        ((*h)->V[0]->Pos.Z+(*h)->V[1]->Pos.Z+(*h)->V[5]->Pos.Z+(*h)->V[4]->Pos.Z)/4. );
+      ( (h->V[0]->Pos.X+h->V[1]->Pos.X+h->V[5]->Pos.X+h->V[4]->Pos.X)/4.,
+        (h->V[0]->Pos.Y+h->V[1]->Pos.Y+h->V[5]->Pos.Y+h->V[4]->Pos.Y)/4.,
+        (h->V[0]->Pos.Z+h->V[1]->Pos.Z+h->V[5]->Pos.Z+h->V[4]->Pos.Z)/4. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
-      ( ((*h)->V[0]->Pos.X+(*h)->V[3]->Pos.X+(*h)->V[2]->Pos.X+(*h)->V[1]->Pos.X)/4.,
-        ((*h)->V[0]->Pos.Y+(*h)->V[3]->Pos.Y+(*h)->V[2]->Pos.Y+(*h)->V[1]->Pos.Y)/4.,
-        ((*h)->V[0]->Pos.Z+(*h)->V[3]->Pos.Z+(*h)->V[2]->Pos.Z+(*h)->V[1]->Pos.Z)/4. );
+      ( (h->V[0]->Pos.X+h->V[3]->Pos.X+h->V[2]->Pos.X+h->V[1]->Pos.X)/4.,
+        (h->V[0]->Pos.Y+h->V[3]->Pos.Y+h->V[2]->Pos.Y+h->V[1]->Pos.Y)/4.,
+        (h->V[0]->Pos.Z+h->V[3]->Pos.Z+h->V[2]->Pos.Z+h->V[1]->Pos.Z)/4. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
-      ( ((*h)->V[0]->Pos.X+(*h)->V[4]->Pos.X+(*h)->V[7]->Pos.X+(*h)->V[3]->Pos.X)/4.,
-        ((*h)->V[0]->Pos.Y+(*h)->V[4]->Pos.Y+(*h)->V[7]->Pos.Y+(*h)->V[3]->Pos.Y)/4.,
-        ((*h)->V[0]->Pos.Z+(*h)->V[4]->Pos.Z+(*h)->V[7]->Pos.Z+(*h)->V[3]->Pos.Z)/4. );
+      ( (h->V[0]->Pos.X+h->V[4]->Pos.X+h->V[7]->Pos.X+h->V[3]->Pos.X)/4.,
+        (h->V[0]->Pos.Y+h->V[4]->Pos.Y+h->V[7]->Pos.Y+h->V[3]->Pos.Y)/4.,
+        (h->V[0]->Pos.Z+h->V[4]->Pos.Z+h->V[7]->Pos.Z+h->V[3]->Pos.Z)/4. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
-      ( ((*h)->V[1]->Pos.X+(*h)->V[2]->Pos.X+(*h)->V[6]->Pos.X+(*h)->V[5]->Pos.X)/4.,
-        ((*h)->V[1]->Pos.Y+(*h)->V[2]->Pos.Y+(*h)->V[6]->Pos.Y+(*h)->V[5]->Pos.Y)/4.,
-        ((*h)->V[1]->Pos.Z+(*h)->V[2]->Pos.Z+(*h)->V[6]->Pos.Z+(*h)->V[5]->Pos.Z)/4. );
+      ( (h->V[1]->Pos.X+h->V[2]->Pos.X+h->V[6]->Pos.X+h->V[5]->Pos.X)/4.,
+        (h->V[1]->Pos.Y+h->V[2]->Pos.Y+h->V[6]->Pos.Y+h->V[5]->Pos.Y)/4.,
+        (h->V[1]->Pos.Z+h->V[2]->Pos.Z+h->V[6]->Pos.Z+h->V[5]->Pos.Z)/4. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
-      ( ((*h)->V[2]->Pos.X+(*h)->V[3]->Pos.X+(*h)->V[7]->Pos.X+(*h)->V[6]->Pos.X)/4.,
-        ((*h)->V[2]->Pos.Y+(*h)->V[3]->Pos.Y+(*h)->V[7]->Pos.Y+(*h)->V[6]->Pos.Y)/4.,
-        ((*h)->V[2]->Pos.Z+(*h)->V[3]->Pos.Z+(*h)->V[7]->Pos.Z+(*h)->V[6]->Pos.Z)/4. );
+      ( (h->V[2]->Pos.X+h->V[3]->Pos.X+h->V[7]->Pos.X+h->V[6]->Pos.X)/4.,
+        (h->V[2]->Pos.Y+h->V[3]->Pos.Y+h->V[7]->Pos.Y+h->V[6]->Pos.Y)/4.,
+        (h->V[2]->Pos.Z+h->V[3]->Pos.Z+h->V[7]->Pos.Z+h->V[6]->Pos.Z)/4. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
-      ( ((*h)->V[4]->Pos.X+(*h)->V[5]->Pos.X+(*h)->V[6]->Pos.X+(*h)->V[7]->Pos.X)/4.,
-        ((*h)->V[4]->Pos.Y+(*h)->V[5]->Pos.Y+(*h)->V[6]->Pos.Y+(*h)->V[7]->Pos.Y)/4.,
-        ((*h)->V[4]->Pos.Z+(*h)->V[5]->Pos.Z+(*h)->V[6]->Pos.Z+(*h)->V[7]->Pos.Z)/4. );
+      ( (h->V[4]->Pos.X+h->V[5]->Pos.X+h->V[6]->Pos.X+h->V[7]->Pos.X)/4.,
+        (h->V[4]->Pos.Y+h->V[5]->Pos.Y+h->V[6]->Pos.Y+h->V[7]->Pos.Y)/4.,
+        (h->V[4]->Pos.Z+h->V[5]->Pos.Z+h->V[6]->Pos.Z+h->V[7]->Pos.Z)/4. );
     glEnd();
     glDisable(GL_LINE_STIPPLE);
     gl2psDisable(GL2PS_LINE_STIPPLE);
@@ -724,19 +733,22 @@ void Draw_Hexahedron_Volume (void *a, void *b){
 /* ------------------------------------------------------------------------ */
 
 void Draw_Prism_Volume (void *a, void *b){
-  Prism **p;
+  Prism *p;
   int i ;
   double Xc = 0.0 , Yc = 0.0, Zc = 0.0, X[6],Y[6],Z[6] ;
   char Num[100];
 
-  p = (Prism**)a;
+  p = *(Prism**)a;
 
-  if(!EntiteEstElleVisible((*p)->iEnt)) return;
+  if(!(p->Visible & VIS_MESH)) return ;
+
+  // a enlever des qu'on a une structure correcte pour les volumes
+  Volume *V; if((V = FindVolume(p->iEnt,THEM)) && !(V->Visible & VIS_MESH)) return;
 
   for(i=0 ; i<6 ; i++){
-    Xc += (*p)->V[i]->Pos.X;
-    Yc += (*p)->V[i]->Pos.Y;
-    Zc += (*p)->V[i]->Pos.Z;
+    Xc += p->V[i]->Pos.X;
+    Yc += p->V[i]->Pos.Y;
+    Zc += p->V[i]->Pos.Z;
   }
   Xc /= 6. ; 
   Zc /= 6. ; 
@@ -747,14 +759,14 @@ void Draw_Prism_Volume (void *a, void *b){
   }
 
   if(CTX.mesh.color_carousel)
-    ColorSwitch((*p)->iEnt);
+    ColorSwitch(p->iEnt);
   else
     glColor4ubv((GLubyte*)&CTX.color.mesh.prism);
 
   for (i=0 ; i<6 ; i++) {
-    X[i] = Xc + CTX.mesh.explode * ((*p)->V[i]->Pos.X - Xc);
-    Y[i] = Yc + CTX.mesh.explode * ((*p)->V[i]->Pos.Y - Yc);
-    Z[i] = Zc + CTX.mesh.explode * ((*p)->V[i]->Pos.Z - Zc);
+    X[i] = Xc + CTX.mesh.explode * (p->V[i]->Pos.X - Xc);
+    Y[i] = Yc + CTX.mesh.explode * (p->V[i]->Pos.Y - Yc);
+    Z[i] = Zc + CTX.mesh.explode * (p->V[i]->Pos.Z - Zc);
   }
   
   glBegin(GL_LINE_LOOP);
@@ -779,7 +791,7 @@ void Draw_Prism_Volume (void *a, void *b){
   glEnd();    
 
   if(CTX.mesh.volumes_num){
-    sprintf(Num,"%d",(*p)->Num);
+    sprintf(Num,"%d",p->Num);
     glRasterPos3d(Xc,Yc,Zc);
     Draw_String(Num);
   }
@@ -792,29 +804,29 @@ void Draw_Prism_Volume (void *a, void *b){
     glBegin(GL_LINES);
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
-      ( ((*p)->V[0]->Pos.X+(*p)->V[2]->Pos.X+(*p)->V[1]->Pos.X)/3.,
-	((*p)->V[0]->Pos.Y+(*p)->V[2]->Pos.Y+(*p)->V[1]->Pos.Y)/3.,
-	((*p)->V[0]->Pos.Z+(*p)->V[2]->Pos.Z+(*p)->V[1]->Pos.Z)/3. );
+      ( (p->V[0]->Pos.X+p->V[2]->Pos.X+p->V[1]->Pos.X)/3.,
+	(p->V[0]->Pos.Y+p->V[2]->Pos.Y+p->V[1]->Pos.Y)/3.,
+	(p->V[0]->Pos.Z+p->V[2]->Pos.Z+p->V[1]->Pos.Z)/3. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
-      ( ((*p)->V[3]->Pos.X+(*p)->V[4]->Pos.X+(*p)->V[5]->Pos.X)/3.,
-	((*p)->V[3]->Pos.Y+(*p)->V[4]->Pos.Y+(*p)->V[5]->Pos.Y)/3.,
-	((*p)->V[3]->Pos.Z+(*p)->V[4]->Pos.Z+(*p)->V[5]->Pos.Z)/3. );
+      ( (p->V[3]->Pos.X+p->V[4]->Pos.X+p->V[5]->Pos.X)/3.,
+	(p->V[3]->Pos.Y+p->V[4]->Pos.Y+p->V[5]->Pos.Y)/3.,
+	(p->V[3]->Pos.Z+p->V[4]->Pos.Z+p->V[5]->Pos.Z)/3. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
-      ( ((*p)->V[0]->Pos.X+(*p)->V[1]->Pos.X+(*p)->V[4]->Pos.X+(*p)->V[3]->Pos.X)/4.,
-	((*p)->V[0]->Pos.Y+(*p)->V[1]->Pos.Y+(*p)->V[4]->Pos.Y+(*p)->V[3]->Pos.Y)/4.,
-	((*p)->V[0]->Pos.Z+(*p)->V[1]->Pos.Z+(*p)->V[4]->Pos.Z+(*p)->V[3]->Pos.Z)/4. );
+      ( (p->V[0]->Pos.X+p->V[1]->Pos.X+p->V[4]->Pos.X+p->V[3]->Pos.X)/4.,
+	(p->V[0]->Pos.Y+p->V[1]->Pos.Y+p->V[4]->Pos.Y+p->V[3]->Pos.Y)/4.,
+	(p->V[0]->Pos.Z+p->V[1]->Pos.Z+p->V[4]->Pos.Z+p->V[3]->Pos.Z)/4. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
-      ( ((*p)->V[0]->Pos.X+(*p)->V[3]->Pos.X+(*p)->V[5]->Pos.X+(*p)->V[2]->Pos.X)/4.,
-	((*p)->V[0]->Pos.Y+(*p)->V[3]->Pos.Y+(*p)->V[5]->Pos.Y+(*p)->V[2]->Pos.Y)/4.,
-	((*p)->V[0]->Pos.Z+(*p)->V[3]->Pos.Z+(*p)->V[5]->Pos.Z+(*p)->V[2]->Pos.Z)/4. );
+      ( (p->V[0]->Pos.X+p->V[3]->Pos.X+p->V[5]->Pos.X+p->V[2]->Pos.X)/4.,
+	(p->V[0]->Pos.Y+p->V[3]->Pos.Y+p->V[5]->Pos.Y+p->V[2]->Pos.Y)/4.,
+	(p->V[0]->Pos.Z+p->V[3]->Pos.Z+p->V[5]->Pos.Z+p->V[2]->Pos.Z)/4. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
-      ( ((*p)->V[1]->Pos.X+(*p)->V[2]->Pos.X+(*p)->V[5]->Pos.X+(*p)->V[4]->Pos.X)/4.,
-	((*p)->V[1]->Pos.Y+(*p)->V[2]->Pos.Y+(*p)->V[5]->Pos.Y+(*p)->V[4]->Pos.Y)/4.,
-	((*p)->V[1]->Pos.Z+(*p)->V[2]->Pos.Z+(*p)->V[5]->Pos.Z+(*p)->V[4]->Pos.Z)/4. );
+      ( (p->V[1]->Pos.X+p->V[2]->Pos.X+p->V[5]->Pos.X+p->V[4]->Pos.X)/4.,
+	(p->V[1]->Pos.Y+p->V[2]->Pos.Y+p->V[5]->Pos.Y+p->V[4]->Pos.Y)/4.,
+	(p->V[1]->Pos.Z+p->V[2]->Pos.Z+p->V[5]->Pos.Z+p->V[4]->Pos.Z)/4. );
     glEnd();
     glDisable(GL_LINE_STIPPLE);
     gl2psDisable(GL2PS_LINE_STIPPLE);
@@ -827,19 +839,22 @@ void Draw_Prism_Volume (void *a, void *b){
 /* ------------------------------------------------------------------------ */
 
 void Draw_Pyramid_Volume (void *a, void *b){
-  Pyramid **p;
+  Pyramid *p;
   int i ;
   double Xc = 0.0 , Yc = 0.0, Zc = 0.0, X[5],Y[5],Z[5] ;
   char Num[100];
 
-  p = (Pyramid**)a;
+  p = *(Pyramid**)a;
 
-  if(!EntiteEstElleVisible((*p)->iEnt)) return;
+  if(!(p->Visible & VIS_MESH)) return ;
+
+  // a enlever des qu'on a une structure correcte pour les volumes
+  Volume *V; if((V = FindVolume(p->iEnt,THEM)) && !(V->Visible & VIS_MESH)) return;
 
   for(i=0 ; i<5 ; i++){
-    Xc += (*p)->V[i]->Pos.X;
-    Yc += (*p)->V[i]->Pos.Y;
-    Zc += (*p)->V[i]->Pos.Z;
+    Xc += p->V[i]->Pos.X;
+    Yc += p->V[i]->Pos.Y;
+    Zc += p->V[i]->Pos.Z;
   }
   Xc /= 5. ; 
   Zc /= 5. ; 
@@ -850,14 +865,14 @@ void Draw_Pyramid_Volume (void *a, void *b){
   }
 
   if(CTX.mesh.color_carousel)
-    ColorSwitch((*p)->iEnt);
+    ColorSwitch(p->iEnt);
   else
     glColor4ubv((GLubyte*)&CTX.color.mesh.pyramid);
 
   for (i=0 ; i<5 ; i++) {
-    X[i] = Xc + CTX.mesh.explode * ((*p)->V[i]->Pos.X - Xc);
-    Y[i] = Yc + CTX.mesh.explode * ((*p)->V[i]->Pos.Y - Yc);
-    Z[i] = Zc + CTX.mesh.explode * ((*p)->V[i]->Pos.Z - Zc);
+    X[i] = Xc + CTX.mesh.explode * (p->V[i]->Pos.X - Xc);
+    Y[i] = Yc + CTX.mesh.explode * (p->V[i]->Pos.Y - Yc);
+    Z[i] = Zc + CTX.mesh.explode * (p->V[i]->Pos.Z - Zc);
   }
   
   glBegin(GL_LINE_LOOP);
@@ -879,7 +894,7 @@ void Draw_Pyramid_Volume (void *a, void *b){
   glEnd();    
 
   if(CTX.mesh.volumes_num){
-    sprintf(Num,"%d",(*p)->Num);
+    sprintf(Num,"%d",p->Num);
     glRasterPos3d(Xc,Yc,Zc);
     Draw_String(Num);
   }

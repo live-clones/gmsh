@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.23 2001-10-29 08:52:20 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.24 2001-12-03 08:41:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -124,6 +124,11 @@ void Maillage_Curve (void *data, void *dummy){
   Points = List_Create (10, 10, sizeof (IntPoint));
   c->l = Integration (c->ubeg, c->uend, F_One, Points, 1.e-4);
   List_Delete (Points);
+
+  if(!c->l){
+    Msg(GERROR, "Zero length Curve %d", c->Num);
+    return;
+  }
 
   if (c->Method == TRANSFINI || !Extrude_Mesh (c)){
     if (c->Method == TRANSFINI){

@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.114 2001-11-14 15:31:00 geuzaine Exp $
+// $Id: Gmsh.y,v 1.115 2001-12-03 08:41:44 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -171,7 +171,7 @@ STLFormatItem :
     tSolid
     {
       Msg(PARSER_INFO,"STL file format");
-      STL_Surf = Create_Surface(1,MSH_SURF_STL,1);
+      STL_Surf = Create_Surface(1,MSH_SURF_STL);
       STL_Surf->STL = new STL_Data;
       return 1;
     }
@@ -1085,6 +1085,10 @@ Affectation :
 		   ct->size, COLORTABLE_NBMAX_COLOR, 0);
 	else
 	  for(i=0 ; i<ct->size ; i++) List_Read($5, i, &ct->table[i]);
+	if(ct->size == 1){
+	  ct->size = 2;
+	  ct->table[1] = ct->table[0];
+	}
       }
       List_Delete($5);
     }
@@ -1101,36 +1105,39 @@ Affectation :
 		   ct->size, COLORTABLE_NBMAX_COLOR, (int)$3);
 	else
 	  for(i=0 ; i<ct->size ; i++) List_Read($8, i, &ct->table[i]);
+	if(ct->size == 1){
+	  ct->size = 2;
+	  ct->table[1] = ct->table[0];
+	}
       }
       List_Delete($8);
     }
-    // P l u g i n s ...
+
+  /* -------- Plugins -------- */ 
+
   | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT FExpr tEND 
-  {
-#ifndef _NOPLUGIN
-    if(CTX.default_plugins){
-      try {
-	GMSH_PluginManager::Instance()->SetPluginOption($3,$6,$8); 
-      }
-      catch (...) {
-	Msg(WARNING,"Unknown option '%s' or plugin '%s'",$6,$3);
+    {
+      if(CTX.default_plugins){
+	try {
+	  GMSH_PluginManager::Instance()->SetPluginOption($3,$6,$8); 
+	}
+	catch (...) {
+	  Msg(WARNING,"Unknown option '%s' or plugin '%s'",$6,$3);
+	}
       }
     }
-#endif
-  }
+
   | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT StringExpr tEND 
-  {
-#ifndef _NOPLUGIN
-    if(CTX.default_plugins){
-      try {
-	GMSH_PluginManager::Instance()->SetPluginOption($3,$6,$8); 
-      }
-      catch (...) {
-	Msg(WARNING,"Unknown option '%s' or plugin '%s'",$6,$3);
+    {
+      if(CTX.default_plugins){
+	try {
+	  GMSH_PluginManager::Instance()->SetPluginOption($3,$6,$8); 
+	}
+	catch (...) {
+	  Msg(WARNING,"Unknown option '%s' or plugin '%s'",$6,$3);
+	}
       }
     }
-#endif
-  }
 ;
 
 
@@ -1667,7 +1674,6 @@ Loop :
 
     tFor '(' FExpr tDOTS FExpr ')'
     {
-      // here, we seek remember the position in yyin
       LoopControlVariablesTab[ImbricatedLoop][0] = $3 ;
       LoopControlVariablesTab[ImbricatedLoop][1] = $5 ;
       LoopControlVariablesTab[ImbricatedLoop][2] = 1.0 ;
@@ -1678,7 +1684,6 @@ Loop :
     }
   | tFor '(' FExpr tDOTS FExpr tDOTS FExpr ')'
     {
-      // here, we seek remember the position in yyin
       LoopControlVariablesTab[ImbricatedLoop][0] = $3 ;
       LoopControlVariablesTab[ImbricatedLoop][1] = $5 ;
       LoopControlVariablesTab[ImbricatedLoop][2] = $7 ;
@@ -1689,7 +1694,6 @@ Loop :
     }
   | tFor tSTRING tIn '{' FExpr tDOTS FExpr '}' 
     {
-      // here, we seek remember the position in yyin
       LoopControlVariablesTab[ImbricatedLoop][0] = $5 ;
       LoopControlVariablesTab[ImbricatedLoop][1] = $7 ;
       LoopControlVariablesTab[ImbricatedLoop][2] = 1.0 ;
@@ -1711,7 +1715,6 @@ Loop :
     }
   | tFor tSTRING tIn '{' FExpr tDOTS FExpr tDOTS FExpr '}' 
     {
-      // here, we seek remember the position in yyin
       LoopControlVariablesTab[ImbricatedLoop][0] = $5 ;
       LoopControlVariablesTab[ImbricatedLoop][1] = $7 ;
       LoopControlVariablesTab[ImbricatedLoop][2] = $9 ;
@@ -1928,7 +1931,7 @@ ExtrudeParameter :
 	extr.mesh.hLayer = (double*)Malloc(extr.mesh.NbLayer*sizeof(double));
 	for(int i=0;i<List_Nbr($3);i++){
 	  List_Read($3,i,&d);
-	  extr.mesh.NbElmLayer[i] = (int)d;
+	  extr.mesh.NbElmLayer[i] = (d>0)?(int)d:1;
 	  List_Read($5,i,&d);
 	  extr.mesh.ZonLayer[i] = (int)d;
 	  List_Read($7,i,&d);
@@ -1954,7 +1957,7 @@ ExtrudeParameter :
 	extr.mesh.hLayer = (double*)Malloc(extr.mesh.NbLayer*sizeof(double));
 	for(int i=0;i<List_Nbr($3);i++){
 	  List_Read($3,i,&d);
-	  extr.mesh.NbElmLayer[i] = (int)d;
+	  extr.mesh.NbElmLayer[i] = (d>0)?(int)d:1;
 	  extr.mesh.ZonLayer[i] = 0;
 	  List_Read($5,i,&d);
 	  extr.mesh.hLayer[i] = d;

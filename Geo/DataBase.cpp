@@ -1,4 +1,4 @@
-// $Id: DataBase.cpp,v 1.17 2001-10-29 08:52:19 geuzaine Exp $
+// $Id: DataBase.cpp,v 1.18 2001-12-03 08:41:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -105,7 +105,7 @@ void AddQuadricSurfaceInDataBase (int Typ, int NumQuadric, double zaxis[3],
   Curve *c;
   EdgeLoop *el;
   
-  s = Create_Surface(NumQuadric,Typ,0);
+  s = Create_Surface(NumQuadric,Typ);
   s->Method = LIBRE;
   for(i=0;i<3;i++)s->Cyl.xaxis[i] = xaxis[i];
   for(i=0;i<3;i++)s->Cyl.zaxis[i] = zaxis[i];
@@ -153,7 +153,7 @@ void CreateSurfaceFromOldCrappyDatabase (int izon, int typzon, int o1, int o2,
   Vertex V,*v;
   EdgeLoop *el;
 
-  s = Create_Surface(izon,typzon,0);
+  s = Create_Surface(izon,typzon);
   s->Method = LIBRE;
   
   NbLoop = List_Nbr(loops);
@@ -212,7 +212,7 @@ void CreateVolumeFromOldCrappyDatabase (int izon, List_T *loops, Mesh *M){
   Surface *s;
   Volume *v;
   
-  v = Create_Volume(izon,MSH_VOLUME,0);
+  v = Create_Volume(izon,MSH_VOLUME);
   v->Surfaces = List_Create(4, 1, sizeof(Surface*));
   for(i=0;i<List_Nbr(loops);i++){
     List_Read(loops,i,&iLoop);

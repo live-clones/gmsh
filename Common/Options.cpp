@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.65 2001-11-19 14:24:01 geuzaine Exp $
+// $Id: Options.cpp,v 1.66 2001-12-03 08:41:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -692,15 +692,15 @@ double opt_general_translation2(OPT_ARGS_NUM){
   return CTX.t[2];
 }
 double opt_general_scale0(OPT_ARGS_NUM){
-  if(action & GMSH_SET) CTX.s[0] = val;
+  if(action & GMSH_SET) CTX.s[0] = val?val:1.0;
   return CTX.s[0];
 }
 double opt_general_scale1(OPT_ARGS_NUM){
-  if(action & GMSH_SET) CTX.s[1] = val;
+  if(action & GMSH_SET) CTX.s[1] = val?val:1.0;
   return CTX.s[1];
 }
 double opt_general_scale2(OPT_ARGS_NUM){
-  if(action & GMSH_SET) CTX.s[2] = val;
+  if(action & GMSH_SET) CTX.s[2] = val?val:1.0;
   return CTX.s[2];
 }
 double opt_general_point_size(OPT_ARGS_NUM){

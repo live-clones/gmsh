@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.31 2001-11-05 08:37:43 geuzaine Exp $
+// $Id: Geom.cpp,v 1.32 2001-12-03 08:41:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -10,7 +10,6 @@
 #include "Context.h"
 #include "Verif.h"
 #include "Interpolation.h"
-#include "Visibility.h"
 #include "STL.h"
 #include "gl2ps.h"
 
@@ -24,17 +23,19 @@ extern Mesh      *THEM;
 static int   Highlighted = 0; 
 
 void Draw_GeoPoint (void *a, void *b){
-  Vertex **v;
+  Vertex *v;
   char Num[100];
 
-  v = (Vertex**)a;
+  v = *(Vertex**)a;
+
+  if(!(v->Visible & VIS_GEO)) return;
 
   if(CTX.render_mode == GMSH_SELECT){
     glLoadName(0);
-    glPushName((*v)->Num);
+    glPushName(v->Num);
   }
 
-  if((*v)->Frozen){
+  if(v->Frozen){
     glPointSize(CTX.geom.point_sel_size); 
     gl2psPointSize(CTX.geom.point_sel_size * CTX.print.eps_point_size_factor);
     glColor4ubv((GLubyte*)&CTX.color.geom.point_sel);
@@ -52,15 +53,15 @@ void Draw_GeoPoint (void *a, void *b){
 
   if(CTX.geom.points){
     glBegin(GL_POINTS);
-    glVertex3d((*v)->Pos.X, (*v)->Pos.Y, (*v)->Pos.Z);
+    glVertex3d(v->Pos.X, v->Pos.Y, v->Pos.Z);
     glEnd();
   }
 
   if(CTX.geom.points_num){
-    sprintf(Num,"%d",(*v)->Num);
-    glRasterPos3d((*v)->Pos.X+3*CTX.pixel_equiv_x/CTX.s[0],
-                  (*v)->Pos.Y+3*CTX.pixel_equiv_x/CTX.s[1], 
-                  (*v)->Pos.Z+3*CTX.pixel_equiv_x/CTX.s[2]);
+    sprintf(Num,"%d",v->Num);
+    glRasterPos3d(v->Pos.X+3*CTX.pixel_equiv_x/CTX.s[0],
+                  v->Pos.Y+3*CTX.pixel_equiv_x/CTX.s[1], 
+                  v->Pos.Z+3*CTX.pixel_equiv_x/CTX.s[2]);
     Draw_String(Num);
   }
 
@@ -84,7 +85,7 @@ void Draw_Curve (void *a, void *b){
 
   c = *(Curve**)a;
 
-  if(c->Dirty || c->Num<0 || !EntiteEstElleVisible(c->Num)) return;
+  if(c->Num<0 || !(c->Visible & VIS_GEO) || c->Dirty) return;
 
   if(CTX.render_mode == GMSH_SELECT){
     glLoadName(1);
@@ -493,7 +494,7 @@ void Draw_Surface (void *a, void *b){
 
   s = *(Surface**)a;
 
-  if(s->Dirty || !s || !s->Support || !EntiteEstElleVisible(s->Num)) return;
+  if(!s || !s->Support || !(s->Visible & VIS_GEO) || s->Dirty) return;
 
   if(CTX.render_mode == GMSH_SELECT){
     glLoadName(2);
@@ -501,7 +502,7 @@ void Draw_Surface (void *a, void *b){
   }
 
   if(!CTX.geom.shade){
-    if(s->Mat){
+    if(s->ipar[4]){
       glLineWidth(CTX.geom.line_sel_width); 
       gl2psLineWidth(CTX.geom.line_sel_width * CTX.print.eps_line_width_factor);
       glColor4ubv((GLubyte*)&CTX.color.geom.surface_sel);
@@ -635,7 +636,7 @@ void ZeroPoint(void *a,void *b){
 void ZeroSurface(void *a,void *b){
   Surface *s;
   s = *(Surface**)a;
-  s->Mat = 0;
+  s->ipar[4] = 0;
 }
 
 void ZeroHighlight(Mesh *m){
@@ -690,8 +691,8 @@ void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent){
     Msg(STATUS1N,"Curve %d  {%d->%d}",c->Num,c->beg->Num,c->end->Num);
   }
   else if(s){
-    if(permanent && s->Mat == 1) return;
-    if(permanent) s->Mat = 1;
+    if(permanent && s->ipar[4] == 1) return;
+    if(permanent) s->ipar[4] = 1;
     if(CTX.geom.highlight) Draw_Surface(&s,NULL);
     sprintf(Message,"Surface %d {",s->Num);
 

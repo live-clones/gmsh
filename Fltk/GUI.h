@@ -143,6 +143,13 @@ public:
   Fl_Window        *msg_window ;
   Fl_Browser       *msg_browser ;
 
+  // visibility window
+  Fl_Window        *vis_window ;
+  Fl_Choice        *vis_type, *vis_browser_mode, *vis_input_mode ;
+  Fl_Browser       *vis_browser ;
+  Fl_Check_Button  *vis_butt[20] ;
+  Fl_Input         *vis_input;
+
   // about window
   Fl_Window        *about_window ;
 
@@ -184,6 +191,7 @@ public:
   void create_post_options_window();
   PluginDialogBox *create_plugin_window(GMSH_Plugin *p);
   void create_view_options_window(int numview);
+  void create_visibility_window();
   void create_statistics_window();
   void create_message_window();
   void create_about_window();
@@ -213,6 +221,7 @@ public:
   void set_title(char *str);
   void add_handler();
   int  global_shortcuts(int event);
+  void reset_visibility();
   int  selection, try_selection, quit_selection, end_selection;
 
 };

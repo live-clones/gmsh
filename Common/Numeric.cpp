@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.2 2001-11-01 09:39:50 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.3 2001-12-03 08:41:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -49,7 +49,7 @@ int sys2x2 (double mat[2][2], double b[2], double res[2]){
 
   // TOLERANCE ! WARNING WARNING
   if (norm == 0.0 || fabs (det) / norm < 1.e-12){
-    Msg(DEBUG, "Assuming 2x2 matrix is singular (det/norm == %g)", fabs(det)/norm);
+    if(norm) Msg(DEBUG, "Assuming 2x2 matrix is singular (det/norm == %g)", fabs(det)/norm);
     res[0] = res[1] = 0.0 ;
     return 0;
   }
@@ -108,7 +108,7 @@ int sys3x3_with_tol (double mat[3][3], double b[3], double res[3], double *det){
 
   // TOLERANCE ! WARNING WARNING
   if (norm == 0.0 || fabs (*det) / norm < 1.e-12){
-    Msg(DEBUG, "Assuming 3x3 matrix is singular (det/norm == %g)", fabs(*det)/norm);
+    if(norm) Msg(DEBUG, "Assuming 3x3 matrix is singular (det/norm == %g)", fabs(*det)/norm);
     res[0] = res[1] = res[2] = 0.0 ;
     return 0;
   }

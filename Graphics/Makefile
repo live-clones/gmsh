@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.33 2001-10-30 09:52:36 geuzaine Exp $
+# $Id: Makefile,v 1.34 2001-12-03 08:41:43 geuzaine Exp $
 #
 # Makefile for "libGraphics.a"
 #
@@ -32,6 +32,7 @@ SRC = Draw.cpp \
       PostSimplex.cpp \
       IsoSimplex.cpp \
       Entity.cpp \
+      Visibility.cpp \
       Scale.cpp \
       Graph2D.cpp \
       Axes.cpp \
@@ -82,8 +83,7 @@ Mesh.o: Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h Draw.h \
  ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h \
- ../Geo/MinMax.h gl2ps.h ../Geo/Verif.h ../Common/Numeric.h \
- ../Geo/Visibility.h
+ ../Geo/MinMax.h gl2ps.h ../Geo/Verif.h ../Common/Numeric.h
 Geom.o: Geom.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
@@ -91,8 +91,7 @@ Geom.o: Geom.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
  ../Mesh/Metric.h ../Mesh/Matrix.h ../Mesh/Utils.h Draw.h \
  ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h \
- ../Geo/Verif.h ../Mesh/Interpolation.h ../Geo/Visibility.h \
- ../Mesh/STL.h gl2ps.h
+ ../Geo/Verif.h ../Mesh/Interpolation.h ../Mesh/STL.h gl2ps.h
 Post.o: Post.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \

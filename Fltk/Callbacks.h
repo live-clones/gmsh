@@ -52,14 +52,12 @@ void opt_general_ok_cb(CALLBACK_ARGS) ;
 // Option Geometry Menu
 
 void opt_geometry_cb(CALLBACK_ARGS) ;
-void opt_geometry_show_by_entity_num_cb(CALLBACK_ARGS) ;
 void opt_geometry_color_scheme_cb(CALLBACK_ARGS) ;
 void opt_geometry_ok_cb(CALLBACK_ARGS) ;
 
 // Option Mesh Menu
 
 void opt_mesh_cb(CALLBACK_ARGS) ;
-void opt_mesh_show_by_entity_num_cb(CALLBACK_ARGS) ;
 void opt_mesh_color_scheme_cb(CALLBACK_ARGS) ;
 void opt_mesh_ok_cb(CALLBACK_ARGS) ;
 
@@ -84,6 +82,13 @@ void opt_statistics_histogram_cb(CALLBACK_ARGS) ;
 void opt_message_cb(CALLBACK_ARGS) ;
 void opt_message_clear_cb(CALLBACK_ARGS) ;
 void opt_message_save_cb(CALLBACK_ARGS) ;
+
+// Option Visibility Menu
+
+void opt_visibility_cb(CALLBACK_ARGS) ;
+void opt_visibility_sort_cb(CALLBACK_ARGS) ;
+void opt_visibility_number_cb(CALLBACK_ARGS);
+void opt_visibility_ok_cb(CALLBACK_ARGS) ;
 
 void opt_save_cb(CALLBACK_ARGS) ;
 

@@ -50,7 +50,7 @@ void Read_VTK_File (char *file, Mesh *m)
   fgets(line,255,in);
   sscanf(line,"%s %d %s",dumline1,&NbVertices,dumline2);
 
-  Surface *surf = Create_Surface(1,MSH_SURF_DISCRETE,1);
+  Surface *surf = Create_Surface(1,MSH_SURF_DISCRETE);
   surf->Generatrices = List_Create(1,1,sizeof(Curve*));
   Tree_Add(m->Surfaces,&surf);
   
@@ -91,7 +91,7 @@ void Read_VTK_File (char *file, Mesh *m)
 	}
       else
 	{
-	  surf = Create_Surface(1,MSH_SURF_DISCRETE,1);
+	  surf = Create_Surface(1,MSH_SURF_DISCRETE);
 	  surf->Generatrices = List_Create(1,1,sizeof(Curve*));
 	  Tree_Add(m->Surfaces,&surf);
 	}
@@ -101,7 +101,7 @@ void Read_VTK_File (char *file, Mesh *m)
   Tree_Action (surf->Simplexes, TRIE_MON_GARS2);
   if(NbFaces)m->status = 2;
 
-  Volume *vol = Create_Volume(1,MSH_VOLUME,1);
+  Volume *vol = Create_Volume(1,MSH_VOLUME);
   vol->Surfaces = List_Create(1,1,sizeof(Surface*));
   List_Add(vol->Surfaces,&surf);
   Tree_Add(m->Volumes,&vol);
@@ -212,7 +212,7 @@ void Read_Mesh_SMS (Mesh *m, FILE *in)
   
   AllFaces = List_Create(NbFaces,1,sizeof(Simplex*));
 
-  Volume *vol = Create_Volume(1,MSH_VOLUME,1);
+  Volume *vol = Create_Volume(1,MSH_VOLUME);
   vol->Surfaces = List_Create(1,1,sizeof(Surface*));
   Tree_Add(m->Volumes,&vol);
   FACE_DIMENSION = 2;
@@ -300,7 +300,7 @@ void Read_Mesh_SMS (Mesh *m, FILE *in)
 		}
 	      else
 		{
-		  surf = Create_Surface(GEntityId+10000,MSH_SURF_DISCRETE,1);
+		  surf = Create_Surface(GEntityId+10000,MSH_SURF_DISCRETE);
 		  if(!NbRegions)List_Add(vol->Surfaces,&surf);
 		  surf->Generatrices = List_Create(1,1,sizeof(Curve*));
 		  Tree_Add(m->Surfaces,&surf);
@@ -350,7 +350,7 @@ void Read_Mesh_SMS (Mesh *m, FILE *in)
 	    }
 	  else
 	    {
-	      vol = Create_Volume(GEntityId,MSH_VOLUME,GEntityId);
+	      vol = Create_Volume(GEntityId,MSH_VOLUME);
 	      Tree_Add(m->Volumes,&vol);
 	    }
 	  s->iEnt = GEntityId;

@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.31 2001-10-30 08:18:50 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.32 2001-12-03 08:41:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -144,7 +144,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	  case TRI1: case QUA1: case TRI2: case QUA2:
 	    s = &S; s->Num = Elementary;
 	    if(!(ss = (Surface**)Tree_PQuery(M->Surfaces, &s))){
-	      s = Create_Surface(Elementary, MSH_SURF_PLAN, Elementary);
+	      s = Create_Surface(Elementary, MSH_SURF_PLAN);
 	      s->Dirty=1;
 	      Tree_Add(M->Surfaces, &s);
 	    }
@@ -155,7 +155,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	  case TET2: case HEX2: case PRI2: case PYR2:
 	    v = &V; v->Num = Elementary;
 	    if(!(vv = (Volume**)Tree_PQuery(M->Volumes, &v))){
-	      v = Create_Volume(Elementary, MSH_VOLUME, Elementary);
+	      v = Create_Volume(Elementary, MSH_VOLUME);
 	      v->Dirty=1;
 	      Tree_Add(M->Volumes, &v);
 	    }

@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.22 2001-10-29 08:52:20 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.23 2001-12-03 08:41:44 geuzaine Exp $
 
 /*
    Jean-Francois Remacle
@@ -236,7 +236,7 @@ void Box_2_Triangles (List_T * P, Surface * s){
         ps->S[j] = &MyNewBoundary;
     Tree_Replace (s->Simplexes, &ps);
   }
-  // MEMORY LEAK (JF)
+
   List_Delete(smp);
 
 }
