@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.101 2002-01-03 10:25:06 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.102 2002-01-26 01:25:20 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1770,6 +1770,17 @@ void view_remove_visible_cb(CALLBACK_ARGS) {
   REMOVE_ALL_VIEWS = 1;
   for(i=List_Nbr(CTX.post.list)-1 ; i>=0 ; i--)
     if(opt_view_visible(i, GMSH_GET, 0))
+      view_remove_cb(NULL, (void*)i);
+  REMOVE_ALL_VIEWS = 0;
+  Draw();
+}
+
+void view_remove_invisible_cb(CALLBACK_ARGS) {
+  int i;
+  if(!CTX.post.list) return;
+  REMOVE_ALL_VIEWS = 1;
+  for(i=List_Nbr(CTX.post.list)-1 ; i>=0 ; i--)
+    if(!opt_view_visible(i, GMSH_GET, 0))
       view_remove_cb(NULL, (void*)i);
   REMOVE_ALL_VIEWS = 0;
   Draw();

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.143 2002-01-21 18:49:17 geuzaine Exp $
+// $Id: GUI.cpp,v 1.144 2002-01-26 01:25:20 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -674,6 +674,8 @@ void GUI::create_menu_window(int argc, char **argv){
 			 (Fl_Callback *)view_remove_all_cb, (void*)i, 0);
     m_popup_butt[i]->add("Remove/All visible views", 0, 
 			 (Fl_Callback *)view_remove_visible_cb, (void*)i, 0);
+    m_popup_butt[i]->add("Remove/All invisible views", 0, 
+			 (Fl_Callback *)view_remove_invisible_cb, (void*)i, 0);
     m_popup_butt[i]->add("Duplicate/View without options", 0,
 			 (Fl_Callback *)view_duplicate_cb, (void*)i, 0) ;
     m_popup_butt[i]->add("Duplicate/View with options", 0,
