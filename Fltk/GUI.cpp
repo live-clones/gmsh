@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.116 2001-10-05 15:25:35 geuzaine Exp $
+// $Id: GUI.cpp,v 1.117 2001-10-10 19:28:09 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -592,11 +592,14 @@ void GUI::create_menu_window(int argc, char **argv){
     
     m_navig_butt[0] = new Fl_Button(1,y,18,BH/2,"@<");
     m_navig_butt[0]->labeltype(FL_SYMBOL_LABEL);
+    m_navig_butt[0]->labelsize(11);
     m_navig_butt[0]->box(FL_FLAT_BOX);
     m_navig_butt[0]->selection_color(FL_WHITE);
     m_navig_butt[0]->callback(mod_back_cb);
+
     m_navig_butt[1] = new Fl_Button(1,y+BH/2,18,BH/2,"@>");
     m_navig_butt[1]->labeltype(FL_SYMBOL_LABEL);
+    m_navig_butt[1]->labelsize(11);
     m_navig_butt[1]->box(FL_FLAT_BOX);
     m_navig_butt[1]->selection_color(FL_WHITE);
     m_navig_butt[1]->callback(mod_forward_cb);
@@ -1925,7 +1928,11 @@ void GUI::create_about_window(){
       o->add("@c@.Christophe Geuzaine and Jean-François Remacle");
       o->add("");
       o->add("@c@.Please send all questions and bug reports to");
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
+      o->add("@c@b@.gmsh@@geuz.org");
+#else
       o->add("@c@b@.gmsh@geuz.org");
+#endif
       o->add("");
       sprintf(buffer, "@c@.Version: %.2f", GMSH_VERSION); o->add(buffer);
       sprintf(buffer, "@c@.Build date: %s", GMSH_DATE); o->add(buffer);
