@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.75 2004-05-27 06:23:48 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.76 2004-05-31 01:54:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -818,6 +818,8 @@ void Read_Mesh(Mesh * M, FILE * fp, char *filename, int type)
     Msg(GERROR, "Unkown mesh file format");
     return;
   }
+
+  CTX.mesh.changed = 1;
 
   if(filename){
     Msg(INFO, "Read mesh file '%s'", filename);
