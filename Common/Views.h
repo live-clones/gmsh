@@ -106,6 +106,7 @@ class Post_View{
     unsigned int point, line, triangle, quadrangle;
     unsigned int tetrahedron, hexahedron, prism, pyramid;
     unsigned int tangents, normals;
+    unsigned int text2d, text3d;
   } color;
 
   // dynamic

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.218 2004-12-27 00:46:59 geuzaine Exp $
+// $Id: Options.cpp,v 1.219 2004-12-28 20:37:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -886,39 +886,15 @@ char *opt_general_scheme(OPT_ARGS_STR)
   return CTX.scheme;
 }
 
-#if defined(HAVE_FLTK)
-extern Fl_Menu_Item menu_font_names[];
-#endif
-
 char *opt_general_graphics_font(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.gl_font = val;
 #if defined(HAVE_FLTK)
-  int index = -1, i = 0;
-  if(CTX.gl_font){
-    while(menu_font_names[i].label()){
-      if(!strcmp(menu_font_names[i].label(), CTX.gl_font)){
-	index = i;
-	break;
-      }
-      i++;
-    }
-  }
+  int index = GetFontIndex(CTX.gl_font);
   if(action & GMSH_SET){
-    if(index < 0){
-      Msg(GERROR, "Unknown font \"%s\" (using \"Helvetica\" instead)", CTX.gl_font);
-      Msg(INFO, "Available fonts:");
-      i = 0;
-      while(menu_font_names[i].label()){
-	Msg(INFO, "  \"%s\"", menu_font_names[i].label());
-	i++;
-      }
-      CTX.gl_font = "Helvetica";
-      CTX.gl_font_enum = FL_HELVETICA;
-    }
-    else
-      CTX.gl_font_enum = (long)menu_font_names[index].user_data();
+    CTX.gl_font = GetFontName(index);
+    CTX.gl_font_enum = GetFontEnum(index);
   }
   if(WID && (action & GMSH_GUI)){
     WID->gen_choice[1]->value(index);
@@ -6356,5 +6332,33 @@ unsigned int opt_view_color_normals(OPT_ARGS_COL)
   }
 #endif
   return v->color.normals;
+}
+
+unsigned int opt_view_color_text2d(OPT_ARGS_COL)
+{
+  GET_VIEW(0);
+  if(action & GMSH_SET) {
+    v->color.text2d = val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    CCC(v->color.text2d, WID->view_col[10]);
+  }
+#endif
+  return v->color.text2d;
+}
+
+unsigned int opt_view_color_text3d(OPT_ARGS_COL)
+{
+  GET_VIEW(0);
+  if(action & GMSH_SET) {
+    v->color.text3d = val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    CCC(v->color.text3d, WID->view_col[11]);
+  }
+#endif
+  return v->color.text3d;
 }
 

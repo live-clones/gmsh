@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.44 2004-12-27 03:57:23 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.45 2004-12-28 20:37:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -82,13 +82,42 @@ void Draw_String(char *s)
 
 void Draw_String(char *s, double style)
 {
-  int size = (int)style, oldsize = CTX.gl_fontsize;
-  // extract the 8 lower bits of style to get the font size (and
-  // ignore if size==0):
-  size &= 0xff;
-  if(size) CTX.gl_fontsize = size;
+  unsigned int bits = (unsigned int)style;
+
+  if(!bits){ // use defaults
+    Draw_String(s);
+    return;
+  }
+
+  int size = (bits & 0xff);
+  int font = (bits>>8 & 0xff);
+  int align = (bits>>16 & 0xff);
+  
+  int oldsize = CTX.gl_fontsize;
+  int oldfont_enum = CTX.gl_font_enum;
+  char * oldfont = CTX.gl_font;
+  
+  CTX.gl_font_enum = GetFontEnum(font);
+  CTX.gl_font = GetFontName(font);
+  if(size)
+    CTX.gl_fontsize = size;
+  if(align > 0){
+    GLfloat pos[4];
+    glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
+    gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
+    float width = gl_width(s);
+    if(align == 1) // center
+      glRasterPos2d(pos[0]-width/2., pos[1]);
+    else if(align == 2) // right
+      glRasterPos2d(pos[0]-width, pos[1]);
+  }
+
   Draw_String(s);
-  if(size) CTX.gl_fontsize = oldsize;
+  
+  CTX.gl_font_enum = oldfont_enum;
+  CTX.gl_font = oldfont;
+  if(size)
+    CTX.gl_fontsize = oldsize;
 }
 
 void Draw_OnScreenMessages()

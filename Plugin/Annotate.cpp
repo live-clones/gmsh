@@ -1,4 +1,4 @@
-// $Id: Annotate.cpp,v 1.1 2004-12-27 03:57:23 geuzaine Exp $
+// $Id: Annotate.cpp,v 1.2 2004-12-28 20:37:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -26,11 +26,16 @@
 #include "Context.h"
 #include "Numeric.h"
 
+#if defined(HAVE_FLTK)
+#include "GmshUI.h"
+#include "GUI.h"
+#endif
+
 extern Context_T CTX;
 
 StringXNumber AnnotateOptions_Number[] = {
-  {GMSH_FULLRC, "X", NULL, 20.},
-  {GMSH_FULLRC, "Y", NULL, 20.},
+  {GMSH_FULLRC, "X", NULL, 50.},
+  {GMSH_FULLRC, "Y", NULL, 30.},
   {GMSH_FULLRC, "Z", NULL, 0.},
   {GMSH_FULLRC, "3D", NULL, 0.},
   {GMSH_FULLRC, "FontSize", NULL, 14.},
@@ -38,7 +43,9 @@ StringXNumber AnnotateOptions_Number[] = {
 };
 
 StringXString AnnotateOptions_String[] = {
-  {GMSH_FULLRC, "Text", NULL, "My Text"}
+  {GMSH_FULLRC, "Text", NULL, "My Text"},
+  {GMSH_FULLRC, "Font", NULL, "Helvetica"},
+  {GMSH_FULLRC, "Align", NULL, "Left"}
 };
 
 extern "C"
@@ -71,8 +78,9 @@ void GMSH_AnnotatePlugin::getInfos(char *author, char *copyright,
 	 "in model coordinates at the position (`X',`Y',`Z').\n"
 	 "If `3D' is equal to 0, the plugin inserts the\n"
 	 "string in screen coordinates at the position\n"
-	 "(`X',`Y'). If `iView' < 0, the plugin is run on\n"
-	 "the current view.\n"
+	 "(`X',`Y'), and aligns it according to `Align'.\n"
+	 "If `iView' < 0, the plugin is run on the current\n"
+	 "view.\n"
 	 "\n"
 	 "Plugin(Annotate) is executed in-place.\n");
 }
@@ -102,6 +110,10 @@ void GMSH_AnnotatePlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Annotate failed...");
 }
 
+#if defined(HAVE_FLTK)
+extern Fl_Menu_Item menu_font_names[];
+#endif
+
 Post_View *GMSH_AnnotatePlugin::execute(Post_View * v)
 {
   double X = AnnotateOptions_Number[0].def;
@@ -111,6 +123,8 @@ Post_View *GMSH_AnnotatePlugin::execute(Post_View * v)
   int fontsize = (int)AnnotateOptions_Number[4].def;
   int iView = (int)AnnotateOptions_Number[5].def;
   char *text = AnnotateOptions_String[0].def;
+  char *fontname = AnnotateOptions_String[1].def;
+  char *alignstr =  AnnotateOptions_String[2].def;
 
   if(iView < 0)
     iView = v ? v->Index : 0;
@@ -120,9 +134,17 @@ Post_View *GMSH_AnnotatePlugin::execute(Post_View * v)
     return v;
   }
 
+  int font = 0, align = 0;
+#if defined(HAVE_FLTK)
+  font = GetFontIndex(fontname);
+  // align only makes sense in screen coordinates at the moment:
+  if(!dim3)
+    align = GetFontAlign(alignstr);
+#endif
+
   Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-  
-  double style = (double)fontsize; // for now...
+
+  double style = (double)((align<<16)|(font<<8)|(fontsize));
 
   if(dim3){
     List_Add(v1->T3D, &X);

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.70 2004-12-27 19:18:12 geuzaine Exp $
+# $Id: Makefile,v 1.71 2004-12-28 20:37:19 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -22,7 +22,7 @@
 include ../variables
 
 LIB     = ../lib/libGmshPlugin.a
-INCLUDE = -I../Common -I../Graphics -I../DataStr -I../Geo\
+INCLUDE = -I../Common -I../Graphics -I../DataStr -I../Geo -I../Fltk\
             -I../Mesh -I../Numeric -I../Triangle -I../MathEval
 CFLAGS  = -DMPICH_SKIP_MPICXX ${OPTIM} ${FLAGS} ${INCLUDE}
 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.311 2004-12-27 16:13:45 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.312 2004-12-28 20:37:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -233,6 +233,18 @@ void color_cb(CALLBACK_ARGS)
   uchar b = UNPACK_BLUE(fct(0, GMSH_GET, 0));
   if(fl_color_chooser("Color Chooser", r, g, b))
     fct(0, GMSH_SET | GMSH_GUI, PACK_COLOR(r, g, b, 255));
+  Draw();
+}
+
+void view_color_cb(CALLBACK_ARGS)
+{
+  unsigned int (*fct) (int, int, unsigned int);
+  fct = (unsigned int (*)(int, int, unsigned int))data;
+  uchar r = UNPACK_RED(fct(WID->view_number, GMSH_GET, 0));
+  uchar g = UNPACK_GREEN(fct(WID->view_number, GMSH_GET, 0));
+  uchar b = UNPACK_BLUE(fct(WID->view_number, GMSH_GET, 0));
+  if(fl_color_chooser("Color Chooser", r, g, b))
+    fct(WID->view_number, GMSH_SET | GMSH_GUI, PACK_COLOR(r, g, b, 255));
   Draw();
 }
 
@@ -3409,7 +3421,7 @@ void view_options_timestep_cb(CALLBACK_ARGS)
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
-       (links == 0 && i == (long int)data)) {
+       (links == 0 && i == WID->view_number)) {
       opt_view_timestep(i, GMSH_SET, (long)((Fl_Value_Input *) w)->value());
     }
   }
@@ -3422,7 +3434,7 @@ void view_options_timestep_decr_cb(CALLBACK_ARGS)
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
-       (links == 0 && i == (long int)data)) {
+       (links == 0 && i == WID->view_number)) {
       opt_view_timestep(i, GMSH_SET | GMSH_GUI,
                         opt_view_timestep(i, GMSH_GET, 0) - 1);
     }
@@ -3436,7 +3448,7 @@ void view_options_timestep_incr_cb(CALLBACK_ARGS)
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
-       (links == 0 && i == (long int)data)) {
+       (links == 0 && i == WID->view_number)) {
       opt_view_timestep(i, GMSH_SET | GMSH_GUI,
                         opt_view_timestep(i, GMSH_GET, 0) + 1);
     }
@@ -3908,8 +3920,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
         opt_view_color_hexahedra(i, GMSH_SET, opt_view_color_hexahedra(current, GMSH_GET, 0));
         opt_view_color_prisms(i, GMSH_SET, opt_view_color_prisms(current, GMSH_GET, 0));
         opt_view_color_pyramids(i, GMSH_SET, opt_view_color_pyramids(current, GMSH_GET, 0));
-        opt_view_color_normals(i, GMSH_SET, opt_view_color_normals(current, GMSH_GET, 0));
         opt_view_color_tangents(i, GMSH_SET, opt_view_color_tangents(current, GMSH_GET, 0));
+        opt_view_color_normals(i, GMSH_SET, opt_view_color_normals(current, GMSH_GET, 0));
+        opt_view_color_text2d(i, GMSH_SET, opt_view_color_text2d(current, GMSH_GET, 0));
+        opt_view_color_text3d(i, GMSH_SET, opt_view_color_text3d(current, GMSH_GET, 0));
       }
 
       // colorbar window
@@ -3930,13 +3944,13 @@ void view_options_ok_cb(CALLBACK_ARGS)
 
 void view_arrow_param_cb(CALLBACK_ARGS)
 {
-  double a = opt_view_arrow_head_radius((long int)data, GMSH_GET, 0);
-  double b = opt_view_arrow_stem_length((long int)data, GMSH_GET, 0);
-  double c = opt_view_arrow_stem_radius((long int)data, GMSH_GET, 0);
+  double a = opt_view_arrow_head_radius(WID->view_number, GMSH_GET, 0);
+  double b = opt_view_arrow_stem_length(WID->view_number, GMSH_GET, 0);
+  double c = opt_view_arrow_stem_radius(WID->view_number, GMSH_GET, 0);
   while(arrow_editor("Arrow editor", a, b, c)){
-    opt_view_arrow_head_radius((long int)data, GMSH_SET, a);
-    opt_view_arrow_stem_length((long int)data, GMSH_SET, b);
-    opt_view_arrow_stem_radius((long int)data, GMSH_SET, c);
+    opt_view_arrow_head_radius(WID->view_number, GMSH_SET, a);
+    opt_view_arrow_stem_length(WID->view_number, GMSH_SET, b);
+    opt_view_arrow_stem_radius(WID->view_number, GMSH_SET, c);
     Draw();
   }
 }

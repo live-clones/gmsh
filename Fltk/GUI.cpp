@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.393 2004-12-27 16:13:45 geuzaine Exp $
+// $Id: GUI.cpp,v 1.394 2004-12-28 20:37:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -360,6 +360,8 @@ static Fl_Menu_Item menu_line_display_with_plugin[] = {
   {0}
 };
 
+#define NUM_FONTS 14
+
 Fl_Menu_Item menu_font_names[] = {
   {"Times-Roman",           0, 0, (void*)FL_TIMES},
   {"Times-Bold",            0, 0, (void*)FL_TIMES_BOLD},
@@ -377,6 +379,52 @@ Fl_Menu_Item menu_font_names[] = {
   {"ZapfDingbats",          0, 0, (void*)FL_ZAPF_DINGBATS},
   {0}
 };
+
+int GetFontIndex(char *fontname)
+{
+  if(fontname){
+    for(int i = 0; i < NUM_FONTS; i++)
+      if(!strcmp(menu_font_names[i].label(), fontname))
+	return i;
+  }
+  Msg(GERROR, "Unknown font \"%s\" (using \"Helvetica\" instead)", fontname);
+  Msg(INFO, "Available fonts:");
+  for(int i = 0; i < NUM_FONTS; i++)
+    Msg(INFO, "  \"%s\"", menu_font_names[i].label());
+  return 4;
+}
+
+int GetFontEnum(int index)
+{
+  if(index >= 0 && index < NUM_FONTS)
+    return (long)menu_font_names[index].user_data();
+  return FL_HELVETICA;
+}
+
+char *GetFontName(int index)
+{
+  if(index >= 0 && index < NUM_FONTS)
+    return (char*)menu_font_names[index].label();
+  return "Helvetica";
+}
+
+int GetFontAlign(char *alignstr)
+{
+  if(alignstr){
+    if(!strcmp(alignstr, "left") || !strcmp(alignstr, "Left"))
+      return 0;
+    else if(!strcmp(alignstr, "center") || !strcmp(alignstr, "Center"))
+      return 1;
+    else if(!strcmp(alignstr, "right") || !strcmp(alignstr, "Right"))
+      return 2;
+  }
+  Msg(GERROR, "Unknown font alignment \"%s\" (using \"Left\" instead)", alignstr);
+  Msg(INFO, "Available font alignments:");
+  Msg(INFO, "  \"Left\"");
+  Msg(INFO, "  \"Center\"");
+  Msg(INFO, "  \"Right\"");
+  return 0;
+}
 
 // Definition of global shortcuts
 
@@ -2374,8 +2422,11 @@ void GUI::create_option_window()
 
       int sw = (int)(1.5 * fontsize);
       view_butt_rep[0] = new Fl_Repeat_Button(L + 2 * WB, 2 * WB + 4 * BH, sw, BH, "-");
+      view_butt_rep[0]->callback(view_options_timestep_decr_cb);
       view_butt_rep[1] = new Fl_Repeat_Button(L + 2 * WB + IW - sw, 2 * WB + 4 * BH, sw, BH, "+");
+      view_butt_rep[1]->callback(view_options_timestep_incr_cb);
       view_value[50] = new Fl_Value_Input(L + 2 * WB + sw, 2 * WB + 4 * BH, IW - 2 * sw, BH);
+      view_value[50]->callback(view_options_timestep_cb);
       view_value[50]->align(FL_ALIGN_RIGHT);
       view_value[50]->minimum(0);
       view_value[50]->maximum(0);
@@ -2713,7 +2764,8 @@ void GUI::create_option_window()
         view_choice[2]->align(FL_ALIGN_RIGHT);
 
 	view_push_butt[0] = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 6 * BH, (int)(1.5*BB), BH, "Edit arrow shape");
-      
+        view_push_butt[0]->callback(view_arrow_param_cb);
+
         view_value[60] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Arrow size");
         view_value[60]->minimum(0);
         view_value[60]->maximum(500);
@@ -2799,7 +2851,7 @@ void GUI::create_option_window()
       int i = 0;
       while(ViewOptions_Color[i].str) {
         view_col[i] = new Fl_Button(L + 2 * WB, 3 * WB + (2 + i) * BH, IW, BH, ViewOptions_Color[i].str);
-        view_col[i]->callback(color_cb, (void *)ViewOptions_Color[i].function);
+        view_col[i]->callback(view_color_cb, (void *)ViewOptions_Color[i].function);
         i++;
       }
       s->end();
@@ -2961,10 +3013,7 @@ void GUI::update_view_window(int num)
     view_butt_rep[1]->activate();
     view_butt[8]->activate();
   }
-  view_value[50]->callback(view_options_timestep_cb, (void *)num);
   view_value[50]->maximum(v->NbTimeStep - 1);
-  view_butt_rep[0]->callback(view_options_timestep_decr_cb, (void *)num);
-  view_butt_rep[1]->callback(view_options_timestep_incr_cb, (void *)num);
   opt_view_timestep(num, GMSH_GUI, 0);
   opt_view_show_time(num, GMSH_GUI, 0);
 
@@ -2988,7 +3037,6 @@ void GUI::update_view_window(int num)
   opt_view_external_view(num, GMSH_GUI, 0);
   opt_view_arrow_location(num, GMSH_GUI, 0);
   //opt_view_tensor_type(num, GMSH_GUI, 0);
-  view_push_butt[0]->callback(view_arrow_param_cb, (void*)num);
 
   opt_view_fake_transparency(num, GMSH_GUI, 0);
   opt_view_color_points(num, GMSH_GUI, 0);
@@ -3001,6 +3049,8 @@ void GUI::update_view_window(int num)
   opt_view_color_pyramids(num, GMSH_GUI, 0);
   opt_view_color_tangents(num, GMSH_GUI, 0);
   opt_view_color_normals(num, GMSH_GUI, 0);
+  opt_view_color_text2d(num, GMSH_GUI, 0);
+  opt_view_color_text3d(num, GMSH_GUI, 0);
 
   view_colorbar_window->update(v->Name, v->Min, v->Max, &v->CT, &v->Changed);
 }

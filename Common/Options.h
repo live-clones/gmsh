@@ -607,6 +607,8 @@ unsigned int opt_view_color_prisms(OPT_ARGS_COL);
 unsigned int opt_view_color_pyramids(OPT_ARGS_COL);
 unsigned int opt_view_color_tangents(OPT_ARGS_COL);
 unsigned int opt_view_color_normals(OPT_ARGS_COL);
+unsigned int opt_view_color_text2d(OPT_ARGS_COL);
+unsigned int opt_view_color_text3d(OPT_ARGS_COL);
 
 // Data structures and global functions
 

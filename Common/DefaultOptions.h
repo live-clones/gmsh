@@ -1418,6 +1418,8 @@ StringXColor ViewOptions_Color[] = {
     PACK_COLOR(255, 0, 0, 255),
     PACK_COLOR(0,   0, 0, 255),
     "Normal vector color" },
+  { F|O, "Text2D" , opt_view_color_text2d , ELECOL, "2D text color" },
+  { F|O, "Text3D" , opt_view_color_text3d , ELECOL, "3D text color" },
   { 0, NULL , NULL , 0, 0, 0 , NULL }
 } ;
 

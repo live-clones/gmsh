@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.87 2004-12-24 23:10:27 geuzaine Exp $
+// $Id: Post.cpp,v 1.88 2004-12-28 20:37:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -728,7 +728,7 @@ void Draw_Post(void)
       }
 
       if(v->DrawStrings) {
-	glColor4ubv((GLubyte *) & CTX.color.text);
+	glColor4ubv((GLubyte *) & v->color.text3d);
 	Draw_Text2D3D(3, v->TimeStep, v->NbT3, v->T3D, v->T3C);
       }
 

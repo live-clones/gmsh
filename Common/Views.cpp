@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.155 2004-12-28 06:03:48 geuzaine Exp $
+// $Id: Views.cpp,v 1.156 2004-12-28 20:37:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -664,6 +664,8 @@ void CopyViewOptions(Post_View * src, Post_View * dest)
   dest->color.pyramid = src->color.pyramid;
   dest->color.tangents = src->color.tangents;
   dest->color.normals = src->color.normals;
+  dest->color.text2d = src->color.text2d;
+  dest->color.text3d = src->color.text3d;
   ColorTable_Copy(&src->CT);
   ColorTable_Paste(&dest->CT);
 }
