@@ -346,8 +346,6 @@ StringXString PrintOptions_String[] = {
 StringXNumber GeneralOptions_Number[] = {
   { F|O, "AlphaBlending" , opt_general_alpha_blending , 1. ,
     "Enable alpha blending (transparency) in post-processing views" },
-  { F|S, "SystemMenuBar" , opt_general_system_menu_bar , 1. , 
-    "Use the system menu bar on Mac OS X (if possible)?" }, 
   { F|O, "Axes" , opt_general_axes , 1. ,
     "Display the axes linked to the model" },
 
@@ -558,6 +556,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Horizontal position (in pixels) of the upper left corner of the statistic window" }, 
   { F|S, "StatisticsPositionY" , opt_general_statistics_position1 , 150. , 
     "Vertical position (in pixels) of the upper left corner of the statistic window" }, 
+  { F|S, "SystemMenuBar" , opt_general_system_menu_bar , 1. , 
+    "Use the system menu bar on Mac OS X?" }, 
 
 #if defined(HAVE_FLTK)
   { F|O, "Terminal" , opt_general_terminal , 0. ,

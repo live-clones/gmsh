@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.259 2003-12-02 22:57:41 geuzaine Exp $
+// $Id: GUI.cpp,v 1.260 2003-12-03 00:54:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -134,7 +134,6 @@ Fl_Menu_Item m_menubar_table[] = {
 #endif
     {"&Quit",             FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
     {0},
-
   {"&Tools",0,0,0,FL_SUBMENU},
     {"&Options...",       FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
     {"&Visibility...",    FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
@@ -146,6 +145,33 @@ Fl_Menu_Item m_menubar_table[] = {
     {"S&hortcuts...",             0, (Fl_Callback *)help_short_cb, 0},
     {"C&ommand line options...",  0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
     {"&About...",                 0, (Fl_Callback *)help_about_cb, 0},
+    {0},
+  {0}
+};
+
+// Alternative items for the MacOS system menu bar (removed '&'
+// shortcuts: they would cause spurious menu itmes to appear on the
+// menu window; removed File->Quit; changed capitalization to match
+// Apple's guidelines)
+
+Fl_Menu_Item m_sys_menubar_table[] = {
+  {"File", 0, 0, 0, FL_SUBMENU},
+    {"Open...",          FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
+    {"Merge...",         FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
+    {"Save Mesh",        FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
+    {"Save As...",       FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)file_save_as_cb, 0},
+    {0},
+  {"Tools",0,0,0,FL_SUBMENU},
+    {"Options...",       FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
+    {"Visibility...",    FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
+    {"Statistics...",    FL_SHIFT+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
+    {"Message Console...",       FL_SHIFT+'l', (Fl_Callback *)message_cb, 0},
+    {0},
+  {"Help",0,0,0,FL_SUBMENU},
+    {"Current Options...",       0, (Fl_Callback *)status_xyz1p_cb, (void*)4},
+    {"Shortcuts...",             0, (Fl_Callback *)help_short_cb, 0},
+    {"Command Line Options...",  0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
+    {"About Gmsh...",            0, (Fl_Callback *)help_about_cb, 0},
     {0},
   {0}
 };
@@ -370,6 +396,7 @@ int GUI::global_shortcuts(int event)
      Fl::test_shortcut(FL_ALT + FL_Escape)) {
     return 1;
   }
+
   if(Fl::test_shortcut('0') || Fl::test_shortcut(FL_Escape)) {
     geometry_reload_cb(0, 0);
     mod_geometry_cb(0, 0);
@@ -400,6 +427,12 @@ int GUI::global_shortcuts(int event)
 #endif
     mesh_3d_cb(0, 0);
     mod_mesh_cb(0, 0);
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_CTRL + 'q')){
+    // only necessary when using the system menu bar, but hey, it
+    // cannot hurt...
+    file_quit_cb(0, 0);
     return 1;
   }
   else if(Fl::test_shortcut('g')) {
@@ -805,7 +838,7 @@ void GUI::create_menu_window(int argc, char **argv)
 #if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
   if(CTX.system_menu_bar){
     m_sys_menu_bar = new Fl_Sys_Menu_Bar(0, 0, width, BH);
-    m_sys_menu_bar->menu(m_menubar_table);
+    m_sys_menu_bar->menu(m_sys_menubar_table);
     m_sys_menu_bar->global();
     Fl_Box *o = new Fl_Box(0, 0, width, BH + 6);
     o->box(FL_UP_BOX);
