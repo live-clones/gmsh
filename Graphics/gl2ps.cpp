@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.88 2004-11-22 07:46:32 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.89 2004-11-22 08:00:01 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2004 Christophe Geuzaine <geuz@geuz.org>
@@ -1315,8 +1315,8 @@ static void gl2psSetPrecisionAndApplyOffsets()
       prim = *(GL2PSprimitive**)gl2psListPointer(gl2ps->primitives, i);
       if(prim->type == GL2PS_LINE){
 	if(gl2ps->sort == GL2PS_SIMPLE_SORT){
-	  prim->verts[0].xyz[2] -= simple * 20.0F;
-	  prim->verts[1].xyz[2] -= simple * 20.0F;
+	  prim->verts[0].xyz[2] -= simple * 10.0F;
+	  prim->verts[1].xyz[2] -= simple * 10.0F;
 	}
 	else{
 	  prim->verts[0].xyz[2] -= simple;
