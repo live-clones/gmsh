@@ -15,6 +15,7 @@
 #include "GUI.h"
 #include "Callbacks.h"
 #include "Bitmaps.h"
+#include "GetOptions.h"
 
 extern Context_T  CTX;
 extern List_T    *Post_ViewList;
@@ -353,8 +354,8 @@ GUI::GUI() {
       }
 
       g_status_label[0] = new Fl_Box(x,502,(700-x)/3,16);
-      g_status_label[1] = new Fl_Box(x+(700-x)/3,5022,(700-x)/3,16);
-      g_status_label[2] = new Fl_Box(x+2*(700-x)/3,5022,(700-x)/3-2,16);
+      g_status_label[1] = new Fl_Box(x+(700-x)/3,502,(700-x)/3,16);
+      g_status_label[2] = new Fl_Box(x+2*(700-x)/3,502,(700-x)/3-2,16);
       for(i = 0 ; i<3 ; i++){
 	g_status_label[i]->box(FL_FLAT_BOX);
 	g_status_label[i]->labelsize(CTX.fontsize);
@@ -388,6 +389,13 @@ void GUI::set_anim(int mode){
     g_status_butt[5]->callback(status_pause_cb);
     stop_bmp->label(g_status_butt[5]);
   }
+}
+
+// Set the status messages
+
+void GUI::set_status(char *msg, int num){
+  g_status_label[num]->label(msg);
+  g_status_label[num]->redraw();
 }
 
 // Draw the opengl window
@@ -996,7 +1004,6 @@ void GUI::help_short(){
 
 void GUI::help_about(){
   static int init_help_about = 0;
-  extern char  TextAbout[1024];
 
   if(!init_help_about){
     init_help_about = 1 ;
@@ -1012,7 +1019,15 @@ void GUI::help_about(){
     about_bmp->label(o);
 
     Fl_Button *o2 = new Fl_Button(WB+80, WB, width-2*WB-80, height-2*WB);
-    o2->label(TextAbout);
+
+  // Text for about window
+    static char buffer[1024];
+    sprintf(buffer, " %s\n \n %s%.2f\n %s\n %s\n %s\n %s\n %s\n %s\n \n %s"
+	    "\n \n Type 'gmsh -help' for command line options",
+	    gmsh_progname, gmsh_version, GMSH_VERSION, 
+	    gmsh_os, gmsh_date, gmsh_host, gmsh_packager, 
+	    gmsh_url, gmsh_email, gmsh_copyright);
+    o2->label(buffer);
     o2->box(FL_FLAT_BOX);
     o2->labelsize(CTX.fontsize);
     o2->labelfont(FL_COURIER);

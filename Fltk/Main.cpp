@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.3 2001-01-09 08:58:38 geuzaine Exp $
+// $Id: Main.cpp,v 1.4 2001-01-09 09:52:16 geuzaine Exp $
 
 #include <signal.h>
 
@@ -25,7 +25,6 @@ GUI *WID ;
 
 int main(int argc, char *argv[]){
   int     i, nbf;
-  extern char  TextAbout[1024];
  
   // Gmsh default context options
   
@@ -89,14 +88,6 @@ int main(int argc, char *argv[]){
   // Interactive Gmsh
 
   CTX.interactive = -1 ; // The GUI is not ready yet for interactivity
-
-  // Text for about window
-
-  sprintf(TextAbout, " %s\n \n %s%.2f\n %s\n %s\n %s\n %s\n %s\n %s\n \n %s"
-	  "\n \n Type 'gmsh -help' for command line options",
-          gmsh_progname, gmsh_version, GMSH_VERSION, 
-          gmsh_os, gmsh_date, gmsh_host, gmsh_packager, 
-          gmsh_url, gmsh_email, gmsh_copyright);
 
   // Create the GUI
   

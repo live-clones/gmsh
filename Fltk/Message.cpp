@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.1 2001-01-08 08:16:27 geuzaine Exp $
+// $Id: Message.cpp,v 1.2 2001-01-09 09:52:16 geuzaine Exp $
 
 #include <signal.h>
 #include <sys/resource.h>
@@ -7,8 +7,10 @@
 #include "GmshUI.h"
 #include "Version.h"
 #include "Context.h"
+#include "GUI.h"
 
-extern Context_T   CTX;
+extern GUI       *WID;
+extern Context_T  CTX;
 
 /* ------------------------------------------------------------------------ */
 /*  S i g n a l                                                             */
@@ -41,12 +43,9 @@ void Signal (int sig_num){
 /*  M s g                                                                   */
 /* ------------------------------------------------------------------------ */
 
-char *TextBuffer, TextAbout[1024];
-
 #define PUT_IN_COMMAND_WIN			\
     vfprintf(stderr, fmt, args); 		\
     fprintf(stderr, "\n");
-
 
 void Msg(int level, char *fmt, ...){
   va_list  args;
@@ -108,13 +107,9 @@ void Msg(int level, char *fmt, ...){
       }
     }
     else{
-      PUT_IN_COMMAND_WIN ;
-      /*
-      vsprintf(TextBuffer, fmt, args);
-      XtVaSetValues(WID.G.infoLabel, XmNlabelString,
-                    XmStringCreateSimple(TextBuffer), NULL);
-      XmUpdateDisplay(WID.G.infoLabel);
-      */
+      static char buffer[128];
+      vsprintf(buffer, fmt, args);
+      WID->set_status(buffer, 1) ;
     }
     break;
   case SELECT :
@@ -126,13 +121,9 @@ void Msg(int level, char *fmt, ...){
       }
     }
     else{
-      PUT_IN_COMMAND_WIN ;
-      /*
-      vsprintf(TextBuffer, fmt, args);
-      XtVaSetValues(WID.G.selectLabel, XmNlabelString, 
-                    XmStringCreateSimple(TextBuffer), NULL);
-      XmUpdateDisplay(WID.G.selectLabel);
-      */
+      static char buffer[128];
+      vsprintf(buffer, fmt, args);
+      WID->set_status(buffer, 0) ;
     }
     break;
   case STATUS :
@@ -144,13 +135,9 @@ void Msg(int level, char *fmt, ...){
       }
     }
     else{
-      PUT_IN_COMMAND_WIN ;
-      /*
-      vsprintf(TextBuffer, fmt, args);
-      XtVaSetValues(WID.G.statusLabel, XmNlabelString,
-                    XmStringCreateSimple(TextBuffer), NULL);
-      XmUpdateDisplay(WID.G.statusLabel);
-      */
+      static char buffer[128];
+      vsprintf(buffer, fmt, args);
+      WID->set_status(buffer, 2) ;
     }
     break;
   case PARSER_ERROR :

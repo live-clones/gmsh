@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.1 2001-01-08 08:08:47 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.2 2001-01-09 09:52:17 geuzaine Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -33,7 +33,7 @@ void ParseFile(char *f){
   yylineno=1;
 
   if(!(yyin = fopen(yyname,"r"))){
-    Msg(INFO, "File '%s' Does not Exist", f);
+    //Msg(INFO, "File '%s' Does not Exist", f);
     return;
   }
   
