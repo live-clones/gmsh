@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.60 2004-05-18 19:22:08 geuzaine Exp $
+// $Id: Geom.cpp,v 1.61 2004-05-19 18:43:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -113,7 +113,7 @@ void Draw_Curve(void *a, void *b)
     glPushName(c->Num);
   }
 
-  if((c)->ipar[3]) {
+  if(c->ipar[3]) {
     glLineWidth(CTX.geom.line_sel_width);
     gl2psLineWidth(CTX.geom.line_sel_width * CTX.print.eps_line_width_factor);
     glColor4ubv((GLubyte *) & CTX.color.geom.line_sel);
@@ -163,7 +163,8 @@ void Draw_Curve(void *a, void *b)
           x[1] = dv.Pos.X;
           y[1] = dv.Pos.Y;
           z[1] = dv.Pos.Z;
-          Draw_Cylinder(CTX.geom.line_width, x, y, z, CTX.geom.light);
+          Draw_Cylinder(c->ipar[3] ? CTX.geom.line_sel_width : CTX.geom.line_width,
+			x, y, z, CTX.geom.light);
         }
       }
       else {

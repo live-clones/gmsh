@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.6 2004-05-12 02:02:30 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.7 2004-05-19 18:43:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -203,21 +203,17 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(Post_View * v) const
 
 Post_View *GMSH_StreamLinesPlugin::execute(Post_View * v)
 {
-  Post_View *vv;
-
   int iView = (int)StreamLinesOptions_Number[13].def;
 
-  if(v && iView < 0)
-    vv = v;
-  else {
-    if(!v && iView < 0)
-      iView = 0;
-    if(!(vv = (Post_View *) List_Pointer_Test(CTX.post.list, iView))) {
-      return 0;
-    }
+  if(iView < 0)
+    iView = v ? v->Index : 0;
+
+  if(!List_Pointer_Test(CTX.post.list, iView)) {
+    Msg(GERROR, "View[%d] does not exist", iView);
+    return v;
   }
-  
-  Post_View *newView = GenerateView(vv);
-  
-  return newView;
+
+  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
+
+  return GenerateView(v1);
 }
