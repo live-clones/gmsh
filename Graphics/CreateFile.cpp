@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.21 2001-10-29 08:52:19 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.22 2001-11-13 08:11:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -6,6 +6,7 @@
 #include "OpenFile.h"
 #include "Draw.h"
 #include "Context.h"
+#include "Options.h"
 
 extern Context_T   CTX;
 extern Mesh        M;
@@ -45,6 +46,7 @@ void CreateOutputFile (char *name, int format) {
     if(i<=0) strcpy(ext,"");
 
     if     (!strcmp(ext,".geo")) CreateOutputFile(name, FORMAT_GEO);
+    else if(!strcmp(ext,".opt")) CreateOutputFile(name, FORMAT_OPT);
     else if(!strcmp(ext,".msh")) CreateOutputFile(name, FORMAT_MSH);
     else if(!strcmp(ext,".unv")) CreateOutputFile(name, FORMAT_UNV);
     else if(!strcmp(ext,".gif")) CreateOutputFile(name, FORMAT_GIF);
@@ -52,7 +54,6 @@ void CreateOutputFile (char *name, int format) {
     else if(!strcmp(ext,".jpeg")) CreateOutputFile(name, FORMAT_JPEG);
     else if(!strcmp(ext,".ps")) CreateOutputFile(name, FORMAT_EPS);
     else if(!strcmp(ext,".eps")) CreateOutputFile(name, FORMAT_EPS);
-    else if(!strcmp(ext,".xpm")) CreateOutputFile(name, FORMAT_XPM);
     else if(!strcmp(ext,".ppm")) CreateOutputFile(name, FORMAT_PPM);
     else if(!strcmp(ext,".yuv")) CreateOutputFile(name, FORMAT_YUV);
     else if(!strcmp(ext,".gref")) CreateOutputFile(name, FORMAT_GREF);
@@ -63,7 +64,11 @@ void CreateOutputFile (char *name, int format) {
   case FORMAT_GEO :
     Print_Geo(&M, name);
     break;
-    
+
+  case FORMAT_OPT :
+    Print_Options(0,GMSH_FULLRC, name); 
+    break;
+
   case FORMAT_MSH :
     Print_Mesh(&M, name, FORMAT_MSH); 
     break;
