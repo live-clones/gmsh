@@ -10,6 +10,7 @@ URL: http://www.geuz.org/gmsh/
 Packager: geuz@geuz.org
 Buildroot: /var/tmp/%{name}-buildroot
 Requires: Mesa >= 3.2
+Prefix: /usr
 
 %description 
 Gmsh is an automatic three-dimensional finite element mesh generator,
