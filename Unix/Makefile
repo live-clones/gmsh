@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2000-11-25 15:26:12 geuzaine Exp $
+# $Id: Makefile,v 1.4 2000-11-27 17:13:50 geuzaine Exp $
 #
 # Makefile for "libUnix.a"
 #
@@ -80,7 +80,7 @@ Main.o: Main.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../Graphics/ColorTable.h ../Common/Context.h ../Parser/Parser.h \
  ../Geo/MinMax.h Widgets.h Pixmaps.h XColors.h XContext.h \
  XRessources.h CbContext.h CbGeom.h Register.h Geometry.h \
- ../Common/Static.h ../Common/Version.h XStatic.h
+ ../Common/Static.h XStatic.h ../Common/Version.h
 Widgets.o: Widgets.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Mesh/Mesh.h \

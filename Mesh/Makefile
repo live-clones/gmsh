@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2000-11-25 15:26:11 geuzaine Exp $
+# $Id: Makefile,v 1.5 2000-11-27 17:13:49 geuzaine Exp $
 #
 # Makefile for "libMesh.a"
 #
@@ -219,7 +219,7 @@ Print_Mesh.o: Print_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h ../Geo/Geo.h \
  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h Mesh.h \
- Create.h
+ Create.h ../Common/Context.h
 Read_Mesh.o: Read_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Geo/Geo.h Mesh.h Vertex.h \
@@ -269,7 +269,9 @@ CrossData.o: CrossData.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Simplex.h Edge.h \
  ../Geo/ExtrudeParams.h Metric.h
-Vertex.o: Vertex.cpp Vertex.h ../DataStr/List.h
+Vertex.o: Vertex.cpp ../Common/Gmsh.h ../Common/Message.h \
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h Vertex.h ../Common/Context.h
 Edge.o: Edge.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Simplex.h Edge.h \

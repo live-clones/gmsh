@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2000-11-25 15:26:10 geuzaine Exp $
+# $Id: Makefile,v 1.4 2000-11-27 17:13:48 geuzaine Exp $
 #
 # Makefile for "libGraphics.a"
 #
@@ -93,24 +93,6 @@ Post.o: Post.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
  ../Common/Const.h ../Graphics/ColorTable.h ../Common/Context.h
 PostSimplex.o: PostSimplex.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
- ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
- ../Common/Const.h ../Graphics/ColorTable.h Iso.h ../Common/Context.h
-PostTriangle.o: PostTriangle.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
- ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
- ../Common/Const.h ../Graphics/ColorTable.h Iso.h ../Common/Context.h
-PostLine.o: PostLine.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
- ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
- ../Common/Const.h ../Graphics/ColorTable.h Iso.h ../Common/Context.h
-PostPoint.o: PostPoint.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2000-11-25 15:26:10 geuzaine Exp $
+# $Id: Makefile,v 1.5 2000-11-27 17:13:45 geuzaine Exp $
 #
 # Makefile for "libGeo.a"
 #
@@ -60,7 +60,7 @@ CAD.o: CAD.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
  ../Geo/ExtrudeParams.h ../Mesh/Metric.h DataBase.h \
  ../Mesh/Interpolation.h ../Mesh/Numeric.h ../Common/Const.h \
- ../Mesh/Create.h CAD.h
+ ../Mesh/Create.h CAD.h ../Common/Context.h
 DataBase.o: DataBase.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h Geo.h \
@@ -83,8 +83,9 @@ Geo.o: Geo.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../Geo/ExtrudeParams.h ../Mesh/Metric.h DataBase.h ../Parser/Parser.h
 StepGeomDatabase.o: StepGeomDatabase.cpp ../Common/Gmsh.h \
  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
- ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h Geo.h \
- StepGeomDatabase.h DataBase.h
+ ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+ ../Common/Const.h Geo.h StepGeomDatabase.h DataBase.h \
+ ../Common/Context.h
 Verif.o: Verif.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h Geo.h CAD.h ../Mesh/Mesh.h \

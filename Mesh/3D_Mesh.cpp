@@ -1,4 +1,4 @@
-/* $Id: 3D_Mesh.cpp,v 1.7 2000-11-26 15:43:46 geuzaine Exp $ */
+/* $Id: 3D_Mesh.cpp,v 1.8 2000-11-27 17:13:49 geuzaine Exp $ */
 /*
  
   J-F Remacle 1995
@@ -605,18 +605,18 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
     if (!THES){
       Msg(WARNING, "Vertex (%g,%g,%g) in no Simplex",
           THEV->Pos.X,THEV->Pos.Y,THEV->Pos.Z); 
-      THEV->Pos.X += CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
-      THEV->Pos.Y += CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
-      THEV->Pos.Z += CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
+      THEV->Pos.X += 10 * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
+      THEV->Pos.Y += 10 * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
+      THEV->Pos.Z += 10 * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
       Tree_Action (m->Simplexes, Action_First_Simplexes);
     }
     bool  ca_marche = Bowyer_Watson (m, THEV, THES, 1);
     int count = 0;
     while(!ca_marche){
       count ++;
-      double dx = rand_sign() * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
-      double dy = rand_sign() * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
-      double dz = rand_sign() * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
+      double dx = rand_sign() * 10 * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
+      double dy = rand_sign() * 10 * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
+      double dz = rand_sign() * 10 * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
       THEV->Pos.X += dx;
       THEV->Pos.Y += dy;
       THEV->Pos.Z += dz;
