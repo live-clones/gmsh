@@ -1,10 +1,10 @@
-$Id: VERSIONS,v 1.217 2004-05-30 21:21:42 geuzaine Exp $
+$Id: VERSIONS,v 1.218 2004-05-31 06:34:52 geuzaine Exp $
 
 New in 1.53: completed support for second order elements (lines,
 triangles, quadrangles, tetrahedra, hexahedra, prisms and pyramids);
 various background mesh fixes and enhancements; major performance
-improvements in mesh and post-processing drawing routines (using
-OpenGL vertex arrays for triangles); new Plugin(Evaluate) to evaluate
+improvements in mesh and post-processing drawing routines (OpenGL
+vertex arrays for tri/quads); new Plugin(Evaluate) to evaluate
 arbitrary expressions on post-processing views; generalized
 Plugin(Extract) to handle any combination of components; generalized
 "Coherence" to handle transfinite surface/volume attributes; plugin
