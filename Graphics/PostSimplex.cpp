@@ -1,4 +1,4 @@
-/* $Id: PostSimplex.cpp,v 1.6 2000-12-18 08:31:45 geuzaine Exp $ */
+/* $Id: PostSimplex.cpp,v 1.7 2000-12-18 14:18:16 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -18,12 +18,18 @@ void Draw_ScalarPoint(Post_View *View,
 		      double ValMin, double ValMax, double Raise[3][5],
 		      double *X, double *Y, double *Z, double *V){
   double   d;
+  char Num[100];
 
   d = V[View->TimeStep];  
   if(d>=ValMin && d<=ValMax){      
     RaiseFill(0, d, ValMin, Raise);
     Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));
-    Draw_Point(X,Y,Z,View->Offset,Raise);
+    if(View->IntervalsType == DRAW_POST_NUMERIC){
+      glRasterPos3d(X[0],Y[0],Z[0]);
+      Draw_String(Num);
+    }
+    else
+      Draw_Point(X,Y,Z,View->Offset,Raise);
   }
 }
 
@@ -100,7 +106,7 @@ void Draw_ScalarLine(Post_View *View,
     d = (V[2*View->TimeStep]+V[2*View->TimeStep+1]) / 2.;
     if(d >= ValMin && d <= ValMax){
       RaiseFill(0, d, ValMin, Raise);
-      Palette2(View,ValMin,ValMax,d);
+      Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));
       sprintf(Num, "%g", d);
       glRasterPos3d((X[0] + X[1])/2.,
 		    (Y[0] + Y[1])/2.,
@@ -115,11 +121,11 @@ void Draw_ScalarLine(Post_View *View,
     
     if(View->IntervalsType==DRAW_POST_CONTINUOUS){
       glBegin(GL_LINES);
-      Palette2(View,ValMin,ValMax,V[2*View->TimeStep]);
+      Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,V[2*View->TimeStep]));
       glVertex3d(X[0]+View->Offset[0]+Raise[0][0],
 		 Y[0]+View->Offset[1]+Raise[1][0],
 		 Z[0]+View->Offset[2]+Raise[2][0]);
-      Palette2(View,ValMin,ValMax,V[2*View->TimeStep+1]);
+      Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,V[2*View->TimeStep+1]));
       glVertex3d(X[1]+View->Offset[0]+Raise[0][1],
 		 Y[1]+View->Offset[1]+Raise[1][1],
 		 Z[1]+View->Offset[2]+Raise[2][1]);
@@ -233,9 +239,9 @@ void Draw_ScalarTriangle(Post_View *View,
 
     d = (V[3*View->TimeStep]+V[3*View->TimeStep+1]+V[3*View->TimeStep+2]) / 3.;
     if(d >= ValMin && d <= ValMax){
-      sprintf(Num, "%g", d);
       RaiseFill(0, d, ValMin, Raise);
-      Palette2(View,ValMin,ValMax,d);
+      Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));
+      sprintf(Num, "%g", d);
       glRasterPos3d((X[0] + X[1] + X[2])/3.+Raise[0][0],
 		    (Y[0] + Y[1] + Y[2])/3.+Raise[1][0],
 		    (Z[0] + Z[1] + Z[2])/3.+Raise[2][0]);
@@ -277,15 +283,15 @@ void Draw_ScalarTriangle(Post_View *View,
          V[3*View->TimeStep+1]>=ValMin && V[3*View->TimeStep+1]<=ValMax &&
          V[3*View->TimeStep+2]>=ValMin && V[3*View->TimeStep+2]<=ValMax){
         glBegin(GL_TRIANGLES);
-        Palette2(View,ValMin,ValMax,V[3*View->TimeStep]);
+	Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,V[3*View->TimeStep]));
         glVertex3d(X[0]+View->Offset[0]+Raise[0][0],
                    Y[0]+View->Offset[1]+Raise[1][0],
                    Z[0]+View->Offset[2]+Raise[2][0]);
-        Palette2(View,ValMin,ValMax,V[3*View->TimeStep+1]);
+	Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,V[3*View->TimeStep+1]));
         glVertex3d(X[1]+View->Offset[0]+Raise[0][1],
                    Y[1]+View->Offset[1]+Raise[1][1],
                    Z[1]+View->Offset[2]+Raise[2][1]);
-        Palette2(View,ValMin,ValMax,V[3*View->TimeStep+2]);
+	Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,V[3*View->TimeStep+2]));
         glVertex3d(X[2]+View->Offset[0]+Raise[0][2],
                    Y[2]+View->Offset[1]+Raise[1][2],
                    Z[2]+View->Offset[2]+Raise[2][2]);
@@ -298,7 +304,7 @@ void Draw_ScalarTriangle(Post_View *View,
         if(nb >= 3){      
           glBegin(GL_POLYGON);
           for(i=0 ; i<nb ; i++){
-            Palette2(View,ValMin,ValMax,value[i]);
+            Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,value[i]));
             RaiseFill(i,value[i],ValMin,Raise);
             glVertex3d(Xp[i]+View->Offset[0]+Raise[0][i],
                        Yp[i]+View->Offset[1]+Raise[1][i],

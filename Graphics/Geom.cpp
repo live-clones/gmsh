@@ -1,4 +1,4 @@
-/* $Id: Geom.cpp,v 1.6 2000-12-18 08:31:45 geuzaine Exp $ */
+/* $Id: Geom.cpp,v 1.7 2000-12-18 14:18:16 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -190,7 +190,9 @@ int isPointOnPlanarSurface (Surface *S, double X, double Y, double Z, double n[3
 
   }
 
-  if(fabs(Angle) > 6.0 && fabs(Angle) < 7.0)
+  //printf(" %d -> angle %g\n", S->Num, fabs(Angle));
+
+  if(fabs(Angle) > 6.0 && fabs(Angle) < 7.0) // Should be 2 * Pi or 0
     return 1;
   return 0;
 
@@ -220,8 +222,9 @@ void Plan_SurfPlane (void *data,void *dum){
 
   for(i=0;i<List_Nbr(s->s.Generatrices);i++){
     List_Read(s->s.Generatrices,i,&pC);
-    for(j=0;j<List_Nbr(pC->Control_Points);j++)
+    for(j=0;j<List_Nbr(pC->Control_Points);j++){
       List_Add(points,List_Pointer(pC->Control_Points,j));
+    }
   }
 
   N = List_Nbr(points);
@@ -293,6 +296,7 @@ void Plan_SurfPlane (void *data,void *dum){
   /* by + cz = -x */
 
   else if (!sys3x3_with_tol(sys,b,res,&det) ){
+    
     s->d = 0.0;
     s2s[0][0] = sys[1][1];
     s2s[0][1] = sys[1][2];
@@ -439,6 +443,7 @@ void Draw_Plane_Surface (Surface *s){
         0.5 * (V[2].Pos.Y + V[3].Pos.Y); 
       vv.Pos.Z = t * 0.5 * (V[0].Pos.Z + V[1].Pos.Z) + (1.-t) * 
         0.5 * (V[2].Pos.Z + V[3].Pos.Z); 
+
       if(isPointOnPlanarSurface(s,vv.Pos.X,vv.Pos.Y,vv.Pos.Z,n)){
         if(!k){
           List_Add(s->Orientations,&vv);
@@ -475,7 +480,7 @@ void Draw_Plane_Surface (Surface *s){
     }
     if(k)List_Add(s->Orientations,&vv);
 
-    Msg(INFO, "Surface %d (%d points)",s->Num,List_Nbr(s->Orientations)); 
+    Msg(INFO, "Plane Surface %d (%d points)",s->Num,List_Nbr(s->Orientations)); 
   }
 
   if(CTX.geom.surfaces){
@@ -824,16 +829,17 @@ void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent){
 
     List_Read(c->Control_Points,0,&v1);
     List_Read(c->Control_Points,List_Nbr(c->Control_Points)-1,&v2);
-    Msg(SELECT,"Line %d  {%d->%d}",c->Num,v1->Num,v2->Num);
+    Msg(SELECT,"Curve %d  {%d->%d}",c->Num,v1->Num,v2->Num);
   }
   else if(s){
     if(permanent && s->Mat == 1) return;
     if(permanent) s->Mat = 1;
     if(CTX.geom.highlight) Draw_Surface(&s,NULL);
-
+    /*
     if(s->Typ == MSH_SURF_PLAN)sprintf(Message,"Plan Surf %d {",s->Num);
     else if(s->Typ == MSH_SURF_REGL)sprintf(Message,"Ruld Surf %d {",s->Num);
-    else sprintf(Message,"Surf %d {",s->Num);
+    else*/
+    sprintf(Message,"Surface %d {",s->Num);
 
     nbg = List_Nbr(s->s.Generatrices) ;
 
