@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.6 2001-08-08 15:36:09 remacle Exp $
+// $Id: Main.cpp,v 1.7 2001-08-08 17:51:14 remacle Exp $
 
 #include <signal.h>
 #include "ParUtil.h"
@@ -8,6 +8,7 @@
 #include <sys/resource.h>
 #endif
 
+#include "PluginManager.h"
 #include "Gmsh.h"
 #include "GmshVersion.h"
 #include "Const.h"
@@ -90,6 +91,9 @@ int main(int argc, char *argv[]){
   signal(SIGINT,  Signal);
   signal(SIGSEGV, Signal);
   signal(SIGFPE,  Signal);
+
+  if(CTX.default_plugins)
+    GMSH_PluginManager::Instance()->RegisterDefaultPlugins();
 
   OpenProblem(CTX.filename);
   if(yyerrorstate)

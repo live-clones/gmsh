@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2001-08-08 15:36:09 remacle Exp $
+# $Id: Makefile,v 1.9 2001-08-08 17:51:14 remacle Exp $
 #
 # Makefile for "libBox.a"
 #
@@ -11,7 +11,7 @@ RM       = rm
 RANLIB   = ranlib
 LIB      = ../lib/libBox.a
 INCLUDE  = -I../Common -I../DataStr -I../Geo\
-           -I../Graphics -I../Mesh -I../Parser -I../Motif -I../Fltk -I../Parallel
+           -I../Graphics -I../Mesh -I../Parser -I../Motif -I../Fltk -I../Plugin -I../Parallel
 
 C_FLAGS       = -g
 OS_FLAGS      = 
