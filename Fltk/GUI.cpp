@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.394 2004-12-28 20:37:18 geuzaine Exp $
+// $Id: GUI.cpp,v 1.395 2004-12-29 01:25:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -82,16 +82,16 @@ Fl_Menu_Item m_menubar_table[] = {
     {"&Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"M&erge...",   FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
     {"&Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0, FL_MENU_DIVIDER},
-    {"Sa&ve mesh",  FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
-    {"Save &as...", FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)file_save_as_cb, 0, FL_MENU_DIVIDER},
+    {"Save &as...", FL_CTRL+'s', (Fl_Callback *)file_save_as_cb, 0, FL_MENU_DIVIDER},
+    {"Sa&ve mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
     {"&Quit",       FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
     {0},
   {"&Tools", 0, 0, 0, FL_SUBMENU},
-    {"&Options...",         FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
-    {"&Visibility...",      FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"&Clipping planes...", FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
-    {"S&tatistics...",      FL_SHIFT+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
-    {"M&essage console...", FL_SHIFT+'l', (Fl_Callback *)message_cb, 0},
+    {"&Options...",         FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
+    {"&Visibility...",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
+    {"&Clipping planes...", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
+    {"S&tatistics...",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
+    {"M&essage console...", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
     {0},
   {"&Help", 0, 0, 0, FL_SUBMENU},
     {"&Current options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5, FL_MENU_DIVIDER},
@@ -116,15 +116,15 @@ Fl_Menu_Item m_sys_menubar_table[] = {
     {"Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"Merge...",   FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
     {"Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0, FL_MENU_DIVIDER},
-    {"Save Mesh",  FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
-    {"Save As...", FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)file_save_as_cb, 0},
+    {"Save As...", FL_CTRL+'s', (Fl_Callback *)file_save_as_cb, 0},
+    {"Save Mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
     {0},
   {"Tools",0,0,0,FL_SUBMENU},
-    {"Options...",         FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
-    {"Visibility...",      FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"Clipping Planes...", FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
-    {"Statistics...",      FL_SHIFT+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
-    {"Message Console...", FL_SHIFT+'l', (Fl_Callback *)message_cb, 0},
+    {"Options...",         FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
+    {"Visibility...",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
+    {"Clipping Planes...", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
+    {"Statistics...",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
+    {"Message Console...", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
     {0},
   {"Help",0,0,0,FL_SUBMENU},
     {"Current Options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5, FL_MENU_DIVIDER},
@@ -504,7 +504,7 @@ int GUI::global_shortcuts(int event)
     quit_selection = 1;
     return 0;   // trick: do as if we didn't use it
   }
-  else if(Fl::test_shortcut(FL_SHIFT + 'a')) { 
+  else if(Fl::test_shortcut(FL_CTRL + 'a')) { 
     // raise all open windows (graphics first, then options, then menu)
     if(g_window && g_window->shown()) g_window->show();
     if(opt_window && opt_window->shown()) opt_window->show();

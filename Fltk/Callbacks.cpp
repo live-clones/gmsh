@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.313 2004-12-28 20:46:30 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.314 2004-12-29 01:25:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1455,21 +1455,8 @@ void clip_reset_cb(CALLBACK_ARGS)
   Draw();
 }
 
-// Help Menu
-
-// The fltk guys still have to decide how to map apple keys. Let's
-// just keep the "Windows-Unix" style stuff at the moment. We might
-// want to change all occurences of FL_CTRL with FL_COMMAND in the
-// future. FL_COMMAND would get mapped to Ctrl on Windows/Unix and to
-// Cmd on Macs.
-#if 0
-#define XX "Cmd "
-#else
-#define XX "Ctrl"
-#endif
-
-// If you change the following, please also change the texinfo
-// documentation (doc/texinfo/shortcuts.texi)
+// Help Menu (if you change the following, please also change the
+// texinfo documentation in doc/texinfo/shortcuts.texi)
 
 void help_short_cb(CALLBACK_ARGS)
 {
@@ -1486,46 +1473,69 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  1 or F1       mesh lines");
   Msg(DIRECT, "  2 or F2       mesh surfaces");
   Msg(DIRECT, "  3 or F3       mesh volumes");
+
   Msg(DIRECT, "  Alt+a         hide/show small axes"); 
-  Msg(DIRECT, "  Shift+a       raise (show) all open windows");
   Msg(DIRECT, "  Alt+Shift+a   hide/show big moving axes"); 
+  Msg(DIRECT, "  Ctrl+a        raise (show) all open windows");
+
   Msg(DIRECT, "  Alt+b         hide/show all bounding boxes");
+
   Msg(DIRECT, "  Alt+c         loop through predefined color schemes");
+  Msg(DIRECT, "  Ctrl+Shift+c  show clipping plane window");
+
   Msg(DIRECT, "  Alt+d         change mesh display mode (solid/wireframe)");
   Msg(DIRECT, "  Shift+d       decrease animation delay");
-  Msg(DIRECT, "  "XX"+Shift+d  increase animation delay");
+  Msg(DIRECT, "  Ctrl+Shift+d  increase animation delay");
+
   Msg(DIRECT, "  Alt+f         change redraw mode (fast/full)"); 
+
   Msg(DIRECT, "  g             go to geometry module");
   Msg(DIRECT, "  Shift+g       show geometry options");
+
   Msg(DIRECT, "  Alt+h         hide/show all post-processing views"); 
+
   Msg(DIRECT, "  Alt+i         hide/show all post-processing scales");
-  Msg(DIRECT, "  Shift+i       show statistics window"); 
+  Msg(DIRECT, "  Ctrl+i        show statistics window"); 
+
   Msg(DIRECT, "  Alt+l         hide/show geometry lines");
   Msg(DIRECT, "  Alt+Shift+l   hide/show surface mesh edges");
+  Msg(DIRECT, "  Ctrl+l        show message console");
+
   Msg(DIRECT, "  m             go to mesh module");
   Msg(DIRECT, "  Alt+m         change visibility of all mesh entities");
   Msg(DIRECT, "  Shift+m       show mesh options");
-  Msg(DIRECT, "  "XX"+m        merge file"); 
+  Msg(DIRECT, "  Ctrl+m        merge file"); 
+
   Msg(DIRECT, "  Shift+n       show general options"); 
-  Msg(DIRECT, "  "XX"+n        new file"); 
+  Msg(DIRECT, "  Ctrl+n        new file"); 
+
   Msg(DIRECT, "  Alt+o         change projection mode (ortho/perspective)");
-  Msg(DIRECT, "  Shift+o       show option window"); 
-  Msg(DIRECT, "  "XX"+o        open file"); 
+  Msg(DIRECT, "  Ctrl+o        open file"); 
+  Msg(DIRECT, "  Ctrl+Shift+o  show option window"); 
+
   Msg(DIRECT, "  p             go to post-processor module");
   Msg(DIRECT, "  Alt+p         hide/show geometry points");
   Msg(DIRECT, "  Shift+p       show general post-processing options");
   Msg(DIRECT, "  Alt+Shift+p   hide/show mesh points");
-  Msg(DIRECT, "  "XX"+q        quit");
-  Msg(DIRECT, "  "XX"+r        rename current project file");
+
+  Msg(DIRECT, "  Ctrl+q        quit");
+
+  Msg(DIRECT, "  Ctrl+r        rename current project file");
+
   Msg(DIRECT, "  Alt+s         hide/show geometry surfaces");
   Msg(DIRECT, "  Alt+Shift+s   hide/show mesh surfaces");
-  Msg(DIRECT, "  "XX"+s        save mesh in default format");
-  Msg(DIRECT, "  "XX"+Shift+s  save file as");
+  Msg(DIRECT, "  Ctrl+s        save file as");
+  Msg(DIRECT, "  Ctrl+Shift+s  save mesh in default format");
+
   Msg(DIRECT, "  Alt+t         loop through interval modes for all post-processing views"); 
+
   Msg(DIRECT, "  Alt+v         hide/show geometry volumes");
   Msg(DIRECT, "  Alt+Shift+v   hide/show mesh volumes");
+  Msg(DIRECT, "  Ctrl+Shift+v  show visibility window");
+
   Msg(DIRECT, "  Alt+w         enable/disable all lighting");
   Msg(DIRECT, "  Shift+w       show current post-processing view options");
+
   Msg(DIRECT, "  Alt+x         set X view"); 
   Msg(DIRECT, "  Alt+y         set Y view"); 
   Msg(DIRECT, "  Alt+z         set Z view"); 
@@ -1541,25 +1551,23 @@ void help_mouse_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  move                - highlight the elementary geometrical entity");
   Msg(DIRECT, "                        currently under the mouse pointer and display");
   Msg(DIRECT, "                        its properties in the status bar");
-  Msg(DIRECT, "                      - size a rubber zoom started with "XX"+Left button");
+  Msg(DIRECT, "                      - size a rubber zoom started with Ctrl+Left button");
   Msg(DIRECT, "  Left button         - rotate");
-  Msg(DIRECT, "                      - accept a rubber zoom started with "XX"+Left button"); 
-  Msg(DIRECT, "  "XX"+Left button     start (anisotropic) rubber zoom"); 
+  Msg(DIRECT, "                      - accept a rubber zoom started with Ctrl+Left button"); 
+  Msg(DIRECT, "  Ctrl+Left button    start (anisotropic) rubber zoom"); 
   Msg(DIRECT, "  Middle button       - zoom (isotropic)");
   Msg(DIRECT, "                      - cancel a rubber zoom");
-  Msg(DIRECT, "  "XX"+Middle button  orthogonalize display"); 
+  Msg(DIRECT, "  Ctrl+Middle button  orthogonalize display"); 
   Msg(DIRECT, "  Right button        - pan");
   Msg(DIRECT, "                      - cancel a rubber zoom");
   Msg(DIRECT, "                      - pop up menu on post-processing view button");
-  Msg(DIRECT, "  "XX"+Right button   reset to default viewpoint");   
+  Msg(DIRECT, "  Ctrl+Right button   reset to default viewpoint");   
   Msg(DIRECT, " ");   
   Msg(DIRECT, "  For a 2 button mouse, Middle button = Shift+Left button");
   Msg(DIRECT, "  For a 1 button mouse, Middle button = Shift+Left button, Right button = Alt+Left button");
   Msg(DIRECT, " ");
   WID->create_message_window();
 }
-
-#undef XX
 
 void help_command_line_cb(CALLBACK_ARGS)
 {
