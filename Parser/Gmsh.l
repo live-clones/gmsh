@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.66 2005-01-13 05:45:41 geuzaine Exp $
+// $Id: Gmsh.l,v 1.67 2005-01-14 17:54:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -112,6 +112,7 @@ stepid  {dieze}({digit})+
 Acos                    return tAcos;
 ArcCos                  return tAcos;
 Alias                   return tAlias;
+AliasWithOptions        return tAliasWithOptions;
 Asin                    return tAsin;
 ArcSin                  return tAsin;
 Atan                    return tAtan;
