@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.139 2001-12-03 08:41:43 geuzaine Exp $
+// $Id: GUI.cpp,v 1.140 2001-12-04 12:06:49 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -1971,6 +1971,10 @@ void GUI::create_visibility_window(){
   static Fl_Menu_Item input_mode_table[] = {
     {"Node",     0, 0},
     {"Element",  0, 0},
+    {"Point",    0, 0},
+    {"Curve",    0, 0},
+    {"Surface",  0, 0},
+    {"Volume",   0, 0},
     {0}
   };
 

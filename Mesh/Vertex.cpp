@@ -1,4 +1,4 @@
-// $Id: Vertex.cpp,v 1.15 2001-12-04 09:30:42 geuzaine Exp $
+// $Id: Vertex.cpp,v 1.16 2001-12-04 12:06:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -11,7 +11,7 @@ extern Mesh *THEM ;
 
 Vertex::Vertex (){
   Frozen = 0;
-  Visible = VIS_GEO|VIS_MESH;
+  Visible = VIS_GEOM|VIS_MESH;
   Pos.X = 0.0;
   Pos.Y = 0.0;
   Pos.Z = 0.0;
@@ -24,7 +24,7 @@ Vertex::Vertex (){
 
 Vertex::Vertex (double X, double Y, double Z, double l, double W){
   Frozen = 0;
-  Visible = VIS_GEO|VIS_MESH;
+  Visible = VIS_GEOM|VIS_MESH;
   Pos.X = X;
   Pos.Y = Y;
   Pos.Z = Z;

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.97 2001-12-03 08:41:43 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.98 2001-12-04 12:06:49 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -6,6 +6,7 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Geo.h"
+#include "CAD.h"
 #include "Verif.h"
 #include "Mesh.h"
 #include "Draw.h"
@@ -537,9 +538,9 @@ void select_vis_browser(int mode){
   Entity *e;
   for(i=1 ; i<=WID->vis_browser->size(); i++){
     e = (Entity*)WID->vis_browser->data(i);
-    if((mode == VIS_GEO|VIS_MESH && e->Visible() == mode) ||
-       (mode == VIS_GEO          && e->Visible() & VIS_GEO) ||
-       (mode == VIS_MESH         && e->Visible() & VIS_MESH)) 
+    if((mode == VIS_GEOM|VIS_MESH && e->Visible() == mode) ||
+       (mode == VIS_GEOM          && e->Visible() & VIS_GEOM) ||
+       (mode == VIS_MESH          && e->Visible() & VIS_MESH)) 
       WID->vis_browser->select(i);
   }
 }
@@ -557,8 +558,8 @@ void opt_visibility_cb(CALLBACK_ARGS) {
   default: type = PHYSICAL; break;
   }
   switch(WID->vis_browser_mode->value()){
-  case 0 : mode = VIS_GEO|VIS_MESH; break;
-  case 1 : mode = VIS_GEO; break;
+  case 0 : mode = VIS_GEOM|VIS_MESH; break;
+  case 1 : mode = VIS_GEOM; break;
   default: mode = VIS_MESH; break;
   }
 
@@ -582,8 +583,8 @@ void opt_visibility_ok_cb(CALLBACK_ARGS) {
   default: ClearVisibilityList(ELEMENTARY); break;
   }
   switch(WID->vis_browser_mode->value()){
-  case 0 : mode = VIS_GEO|VIS_MESH; break;
-  case 1 : mode = VIS_GEO; break;
+  case 0 : mode = VIS_GEOM|VIS_MESH; break;
+  case 1 : mode = VIS_GEOM; break;
   default: mode = VIS_MESH; break;
   }
 
@@ -602,7 +603,7 @@ void opt_visibility_ok_cb(CALLBACK_ARGS) {
 	else e->Visible(0);
 	break;
       default :
-	if(e->Visible() & VIS_GEO) e->Visible(VIS_GEO);
+	if(e->Visible() & VIS_GEOM) e->Visible(VIS_GEOM);
 	else e->Visible(0);
 	break;
       }
@@ -642,18 +643,24 @@ void opt_visibility_sort_cb(CALLBACK_ARGS){
   }
 }
 
-static int vnod, velm;
+static int vnod, velm, vcur, vsur, vvol;
 static void vis_nod(void *a, void *b){ (*(Vertex**)a)->Visible = vnod; }
 static void vis_sim(void *a, void *b){ (*(Simplex**)a)->Visible = velm; }
 static void vis_hex(void *a, void *b){ (*(Hexahedron**)a)->Visible = velm; }
 static void vis_pri(void *a, void *b){ (*(Prism**)a)->Visible = velm; }
 static void vis_pyr(void *a, void *b){ (*(Pyramid**)a)->Visible = velm; }
+static void vis_cur(void *a, void *b){ (*(Curve**)a)->Visible = vcur; }
+static void vis_sur(void *a, void *b){ (*(Surface**)a)->Visible = vsur; }
+static void vis_vol(void *a, void *b){ (*(Volume**)a)->Visible = vvol; }
 
 void opt_visibility_number_cb(CALLBACK_ARGS){
-  static int allnod=1, allelm=1;
-  int i, type = WID->vis_input_mode->value(), found, num;
+  static int allnod=1, allelm=1, allpnt=1, allcur=1, allsur=1, allvol=1;
+  int i, found, num, mode;
+  int type = WID->vis_input_mode->value();
   List_T *tmp;
   Vertex vv,*v,**pv;
+  Curve *c;
+  Surface *s;
   Volume *V;
   Simplex SS, *S, **pS;
   Hexahedron HH, *H, **pH;
@@ -661,13 +668,20 @@ void opt_visibility_number_cb(CALLBACK_ARGS){
   Pyramid QQ, *Q, **pQ;
   char *str = (char*)((Fl_Input*)w)->value(); 
 
+  switch(WID->vis_browser_mode->value()){
+  case 0 : mode = VIS_GEOM|VIS_MESH; break;
+  case 1 : mode = VIS_GEOM; break;
+  default: mode = VIS_MESH; break;
+  }
+
   if (!strcmp(str,"all") || !strcmp(str,"*")){
-    if(type==0){
+    switch(type){
+    case 0: //node
       allnod = !allnod;
       vnod = allnod ? VIS_MESH : 0;
       Tree_Action(THEM->Vertices, vis_nod);
-    }
-    else{
+      break;
+    case 1: //element
       allelm = !allelm;
       velm = allelm ? VIS_MESH : 0;
       Tree_Action(THEM->Simplexes, vis_sim);
@@ -679,19 +693,40 @@ void opt_visibility_number_cb(CALLBACK_ARGS){
 	Tree_Action(V->Pyramids, vis_pyr);
       }
       List_Delete(tmp);
+    case 2: //point
+      allpnt = !allpnt;
+      vnod = allpnt ? VIS_MESH|VIS_GEOM : 0;
+      Tree_Action(THEM->Points, vis_nod);
+      break;
+    case 3: //curve
+      allcur = !allcur;
+      vcur = allcur ? VIS_MESH|VIS_GEOM : 0;
+      Tree_Action(THEM->Curves, vis_cur);
+      break;
+    case 4: //surface
+      allsur = !allsur;
+      vsur = allsur ? VIS_MESH|VIS_GEOM : 0;
+      Tree_Action(THEM->Surfaces, vis_sur);
+      break;
+    case 5: //volume
+      allvol= !allvol;
+      vvol = allvol ? VIS_MESH|VIS_GEOM : 0;
+      Tree_Action(THEM->Volumes, vis_vol);
+      break;
     }
   }
   else{ 
     num = atoi(str);
 
-    if(type==0){
+    switch(type){
+    case 0: //node
       vv.Num = num; v = &vv;
       if((pv = (Vertex**)Tree_PQuery(THEM->Vertices, &v)))
 	(*pv)->Visible = (*pv)->Visible ? 0 : VIS_MESH;
       else
 	Msg(WARNING, "Unknown node %d (use '*' to hide/show all nodes)", num);
-    }
-    else{
+      break;
+    case 1: //element
       SS.Num = num; S = &SS;
       HH.Num = num; H = &HH;
       PP.Num = num; P = &PP;
@@ -718,8 +753,27 @@ void opt_visibility_number_cb(CALLBACK_ARGS){
 	if(!found) 
 	  Msg(WARNING, "Unknown element %d (use '*' to hide/show all elements)", num);
       }
+      break;
+    case 2: //point
+      if((v=FindPoint(num,THEM))) v->Visible = v->Visible ? 0 : VIS_GEOM|VIS_MESH ;
+      else Msg(WARNING, "Unknown point %d (use '*' to hide/show all points)", num);
+      break;
+    case 3: //curve
+      if((c=FindCurve(num,THEM))) c->Visible = c->Visible ? 0 : VIS_GEOM|VIS_MESH ;
+      else Msg(WARNING, "Unknown curve %d (use '*' to hide/show all curves)", num);
+      break;
+    case 4: //surface
+      if((s=FindSurface(num,THEM))) s->Visible = s->Visible ? 0 : VIS_GEOM|VIS_MESH ;
+      else Msg(WARNING, "Unknown surface %d (use '*' to hide/show all surfaces)", num);
+      break;
+    case 5: //volume
+      if((V=FindVolume(num,THEM))) V->Visible = V->Visible ? 0 : VIS_GEOM|VIS_MESH ;
+      else Msg(WARNING, "Unknown volume %d (use '*' to hide/show all volumes)", num);
+      break;
     }
   }
+
+  opt_visibility_cb(NULL,NULL);
   Draw();
 }
 

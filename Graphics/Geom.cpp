@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.32 2001-12-03 08:41:43 geuzaine Exp $
+// $Id: Geom.cpp,v 1.33 2001-12-04 12:06:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -28,7 +28,7 @@ void Draw_GeoPoint (void *a, void *b){
 
   v = *(Vertex**)a;
 
-  if(!(v->Visible & VIS_GEO)) return;
+  if(!(v->Visible & VIS_GEOM)) return;
 
   if(CTX.render_mode == GMSH_SELECT){
     glLoadName(0);
@@ -85,7 +85,7 @@ void Draw_Curve (void *a, void *b){
 
   c = *(Curve**)a;
 
-  if(c->Num<0 || !(c->Visible & VIS_GEO) || c->Dirty) return;
+  if(c->Num<0 || !(c->Visible & VIS_GEOM) || c->Dirty) return;
 
   if(CTX.render_mode == GMSH_SELECT){
     glLoadName(1);
@@ -494,7 +494,7 @@ void Draw_Surface (void *a, void *b){
 
   s = *(Surface**)a;
 
-  if(!s || !s->Support || !(s->Visible & VIS_GEO) || s->Dirty) return;
+  if(!s || !s->Support || !(s->Visible & VIS_GEOM) || s->Dirty) return;
 
   if(CTX.render_mode == GMSH_SELECT){
     glLoadName(2);

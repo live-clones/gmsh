@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.31 2001-12-03 08:41:44 geuzaine Exp $
+// $Id: Create.cpp,v 1.32 2001-12-04 12:06:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -159,7 +159,7 @@ void Add_PhysicalGroup (int Num, int typ, List_T * intlist, Mesh * M){
   p->Num = Num;
   THEM->MaxPhysicalNum = IMAX(THEM->MaxPhysicalNum,Num);
   p->Typ = typ;
-  p->Visible = VIS_GEO|VIS_MESH;
+  p->Visible = VIS_GEOM|VIS_MESH;
   for (i = 0; i < List_Nbr (intlist); i++){
     List_Read (intlist, i, &j);
     List_Add (p->Entities, &j);
@@ -408,7 +408,7 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
 
   pC = (Curve *) Malloc (sizeof (Curve));
   pC->Dirty = 0;
-  pC->Visible = VIS_GEO|VIS_MESH;
+  pC->Visible = VIS_GEOM|VIS_MESH;
   pC->cp = NULL;
   pC->Vertices = NULL;
   pC->Extrude = NULL;
@@ -519,7 +519,7 @@ Surface * Create_Surface (int Num, int Typ){
 
   pS = (Surface *) Malloc (sizeof (Surface));
   pS->Dirty = 0;
-  pS->Visible = VIS_GEO|VIS_MESH;
+  pS->Visible = VIS_GEOM|VIS_MESH;
   pS->Num = Num;
   THEM->MaxSurfaceNum = IMAX(THEM->MaxSurfaceNum,Num);
   pS->Typ = Typ;
@@ -566,7 +566,7 @@ Volume * Create_Volume (int Num, int Typ){
 
   pV = (Volume *) Malloc (sizeof (Volume));
   pV->Dirty = 0;
-  pV->Visible = VIS_GEO|VIS_MESH;
+  pV->Visible = VIS_GEOM|VIS_MESH;
   pV->Num = Num;
   THEM->MaxVolumeNum = IMAX(THEM->MaxVolumeNum,Num);
   pV->Typ = Typ;
