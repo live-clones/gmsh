@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.18 2001-04-26 17:58:00 remacle Exp $
+// $Id: Geom.cpp,v 1.19 2001-06-02 16:24:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -188,9 +188,9 @@ int isPointOnPlanarSurface (Surface *S, double X, double Y, double Z, double n[3
   V.Pos.Y = Y;
   V.Pos.Z = Z;
 
-  for(i=0;i<List_Nbr(S->s.Generatrices);i++){
+  for(i=0;i<List_Nbr(S->Generatrices);i++){
 
-    List_Read(S->s.Generatrices,i,&C);
+    List_Read(S->Generatrices,i,&C);
 
     if(C->Typ == MSH_SEGM_LINE)
       N = 1;
@@ -237,8 +237,8 @@ void Plan_SurfPlane (void *data,void *dum){
   else
     List_Reset(points);
 
-  for(i=0;i<List_Nbr(s->s.Generatrices);i++){
-    List_Read(s->s.Generatrices,i,&pC);
+  for(i=0;i<List_Nbr(s->Generatrices);i++){
+    List_Read(s->Generatrices,i,&pC);
     for(j=0;j<List_Nbr(pC->Control_Points);j++){
       List_Add(points,List_Pointer(pC->Control_Points,j));
     }
@@ -420,8 +420,8 @@ void Draw_Plane_Surface (Surface *s){
     Plan_SurfPlane(&s,NULL); 
     k = 0;
     
-    for(i=0;i<List_Nbr(s->s.Generatrices);i++){
-      List_Read (s->s.Generatrices,i,&c);
+    for(i=0;i<List_Nbr(s->Generatrices);i++){
+      List_Read (s->Generatrices,i,&c);
       P1 = InterpolateCurve(c,0.0,0);
       P2 = InterpolateCurve(c,0.5,0);
       P3 = InterpolateCurve(c,1.0,0);
@@ -858,11 +858,11 @@ void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent){
     if(CTX.geom.highlight) Draw_Surface(&s,NULL);
     sprintf(Message,"Surface %d {",s->Num);
 
-    nbg = List_Nbr(s->s.Generatrices) ;
+    nbg = List_Nbr(s->Generatrices) ;
 
     if(nbg < 10){
       for(i=0;i<nbg;i++){
-        List_Read(s->s.Generatrices,i,&cc);
+        List_Read(s->Generatrices,i,&cc);
         if(!i)sprintf(temp,"%d",cc->Num);
         else sprintf(temp,",%d",cc->Num);
         strcat(Message,temp);

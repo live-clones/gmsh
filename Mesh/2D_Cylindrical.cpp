@@ -1,4 +1,4 @@
-// $Id: 2D_Cylindrical.cpp,v 1.5 2001-01-12 13:29:00 geuzaine Exp $
+// $Id: 2D_Cylindrical.cpp,v 1.6 2001-06-02 16:24:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -242,8 +242,8 @@ int MeshCylindricalSurface (Surface * s){
 
   SURF = s;
 
-  for (i = 0; i < List_Nbr (s->s.Generatrices); i++){
-    List_Read (s->s.Generatrices, i, &pC);
+  for (i = 0; i < List_Nbr (s->Generatrices); i++){
+    List_Read (s->Generatrices, i, &pC);
     for (j = 0; j < List_Nbr (pC->Vertices); j++){
       List_Read (pC->Vertices, j, &v);
       Tree_Insert (s->Vertices, List_Pointer (pC->Vertices, j));

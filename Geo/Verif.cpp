@@ -1,4 +1,4 @@
-// $Id: Verif.cpp,v 1.8 2001-05-21 20:19:07 geuzaine Exp $
+// $Id: Verif.cpp,v 1.9 2001-06-02 16:24:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -79,8 +79,8 @@ void recur_trouvevol(int ifac , int iedge, List_T *Liste, List_T *old ,
   Curve *c;
   Surface *s = FindSurface(abs(ifac),THEM);
 
-  for(l=0;l<List_Nbr(s->s.Generatrices);l++){
-    List_Read(s->s.Generatrices,l,&c);
+  for(l=0;l<List_Nbr(s->Generatrices);l++){
+    List_Read(s->Generatrices,l,&c);
     lk.n = abs(c->Num);
     is = lk.n;
     if(!Tree_Search(treeedges,&is)){
@@ -170,8 +170,8 @@ void CreeLiens2 ( void ) {
     List_Read(temp,i,&s);
     if(s->Num > 0)
       na.a = s->Num;
-    for(k=0;k<List_Nbr(s->s.Generatrices);k++){
-      List_Read(s->s.Generatrices,k,&c);
+    for(k=0;k<List_Nbr(s->Generatrices);k++){
+      List_Read(s->Generatrices,k,&c);
       li.n = abs(c->Num);
       if((pli = (lnk*)Tree_PQuery(treelink,&li))){
         List_Add(pli->l,&na);

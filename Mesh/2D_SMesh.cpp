@@ -1,4 +1,4 @@
-// $Id: 2D_SMesh.cpp,v 1.5 2001-01-08 08:05:44 geuzaine Exp $
+// $Id: 2D_SMesh.cpp,v 1.6 2001-06-02 16:24:51 geuzaine Exp $
 
 /*  
   Maillage transfini surfacique                                                 
@@ -60,7 +60,7 @@ int MeshTransfiniteSurface (Surface *sur) {
   case MSH_SURF_TRIC:
   case MSH_SURF_NURBS:
 
-    nb = List_Nbr(sur->s.Generatrices);
+    nb = List_Nbr(sur->Generatrices);
     if(nb != 3 && nb != 4) return(0);
 
     for(i=0;i<4;i++) G[i] = NULL ;
@@ -78,7 +78,7 @@ int MeshTransfiniteSurface (Surface *sur) {
       }
     }       
 
-    for(i=0;i<nb;i++) List_Read(sur->s.Generatrices,i,&GG[i]);
+    for(i=0;i<nb;i++) List_Read(sur->Generatrices,i,&GG[i]);
 
     for(i=0;i<nb;i++){      
       List_Read(GG[i]->Control_Points,0,&CP[0]);

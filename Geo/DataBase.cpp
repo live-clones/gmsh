@@ -1,4 +1,4 @@
-// $Id: DataBase.cpp,v 1.12 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: DataBase.cpp,v 1.13 2001-06-02 16:24:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -115,15 +115,15 @@ void AddQuadricSurfaceInDataBase (int Typ, int NumQuadric, double zaxis[3],
   for(i=0;i<3;i++)s->Cyl.center[i] = center[i];
   s->Cyl.radius1 = radius1;
   s->Cyl.radius2 = radius2;
-  s->s.Generatrices = List_Create(4, 1, sizeof(Curve*));
+  s->Generatrices = List_Create(4, 1, sizeof(Curve*));
 
   NbLoop = List_Nbr(loops);
-  s->s.Generatrices = List_Create(4, 1, sizeof(Curve*));
+  s->Generatrices = List_Create(4, 1, sizeof(Curve*));
   for(i=0;i<NbLoop;i++){
     List_Read(loops,i,&iLoop);
     if(!(el = FindEdgeLoop(iLoop,THEM))){
       Msg(GERROR, "Unknown Line Loop %d", iLoop);
-      List_Delete(s->s.Generatrices);
+      List_Delete(s->Generatrices);
       Free(s);
       return;
     }
@@ -132,12 +132,12 @@ void AddQuadricSurfaceInDataBase (int Typ, int NumQuadric, double zaxis[3],
         List_Read(el->Curves,j,&ic);
         if(!(c = FindCurve(ic,THEM))){
           Msg(GERROR, "Unknown Curve %d", ic);
-	  List_Delete(s->s.Generatrices);
+	  List_Delete(s->Generatrices);
 	  Free(s);
 	  return;
 	}
         else
-          List_Add (s->s.Generatrices, &c);
+          List_Add (s->Generatrices, &c);
       }
     }
   }
@@ -160,12 +160,12 @@ void CreateSurfaceFromOldCrappyDatabase (int izon, int typzon, int o1, int o2,
   s->Method = LIBRE;
   
   NbLoop = List_Nbr(loops);
-  s->s.Generatrices = List_Create(4, 1, sizeof(Curve*));
+  s->Generatrices = List_Create(4, 1, sizeof(Curve*));
   for(i=0;i<NbLoop;i++){
     List_Read(loops,i,&iLoop);
     if(!(el = FindEdgeLoop(iLoop,THEM))){
       Msg(GERROR, "Unknown Line Loop %d", iLoop);
-      List_Delete(s->s.Generatrices);
+      List_Delete(s->Generatrices);
       Free(s);
       return;
     }	  
@@ -174,12 +174,12 @@ void CreateSurfaceFromOldCrappyDatabase (int izon, int typzon, int o1, int o2,
         List_Read(el->Curves,j,&ic);
         if(!(c = FindCurve(ic,THEM))){
           Msg(GERROR, "Unknown Curve %d", ic);
-	  List_Delete(s->s.Generatrices);
+	  List_Delete(s->Generatrices);
 	  Free(s);
 	  return;
 	}
         else
-          List_Add (s->s.Generatrices, &c);
+          List_Add (s->Generatrices, &c);
       }
     }
   }

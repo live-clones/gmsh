@@ -1,4 +1,4 @@
-// $Id: 2D_Parametric.cpp,v 1.4 2001-01-08 08:05:44 geuzaine Exp $
+// $Id: 2D_Parametric.cpp,v 1.5 2001-06-02 16:24:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -88,10 +88,10 @@ int MeshParametricSurface (Surface * s){
     return 0;
 
   SURF = s;
-  if (!List_Nbr (s->s.Generatrices))
+  if (!List_Nbr (s->Generatrices))
     return 1;
-  for (i = 0; i < List_Nbr (s->s.Generatrices); i++){
-    List_Read (s->s.Generatrices, i, &pC);
+  for (i = 0; i < List_Nbr (s->Generatrices); i++){
+    List_Read (s->Generatrices, i, &pC);
     for (j = 0; j < List_Nbr (pC->Vertices); j++){
       List_Read (pC->Vertices, j, &v);
       Tree_Insert (s->Vertices, List_Pointer (pC->Vertices, j));

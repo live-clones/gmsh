@@ -1,4 +1,4 @@
-// $Id: 3D_SMesh.cpp,v 1.8 2001-04-08 20:36:50 geuzaine Exp $
+// $Id: 3D_SMesh.cpp,v 1.9 2001-06-02 16:24:51 geuzaine Exp $
 
 /*  
   Maillage transfini volumique
@@ -171,7 +171,7 @@ int MeshTransfiniteVolume (Volume *vol) {
   for(i=0;i<nbs;i++) List_Read(vol->Surfaces,i,&GG[i]);
   
   for(i=0;i<nbs;i++){
-    nbg = List_Nbr(GG[i]->s.Generatrices);
+    nbg = List_Nbr(GG[i]->Generatrices);
 
     for(j=0;j<nbg;j++){
       V.Num = GG[i]->ipar[j];

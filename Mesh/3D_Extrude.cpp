@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.7 2001-01-09 19:40:56 remacle Exp $
+// $Id: 3D_Extrude.cpp,v 1.8 2001-06-02 16:24:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -560,8 +560,8 @@ int Extrude_Mesh (Surface * s){
 
   ToAdd = s->Vertices;
 
-  for (i = 0; i < List_Nbr (s->s.Generatrices); i++){
-    List_Read (s->s.Generatrices, i, &cc);
+  for (i = 0; i < List_Nbr (s->Generatrices); i++){
+    List_Read (s->Generatrices, i, &cc);
     for (int j = 0; j < List_Nbr (cc->Vertices); j++){
       List_Read (cc->Vertices, j, &v1);
       Tree_Replace (Vertex_Bound, &v1);

@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.15 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.16 2001-06-02 16:24:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -107,8 +107,8 @@ void Print_Surface(void *a, void *b){
   if(s->Typ != MSH_SURF_NURBS){
     fprintf(FOUT,"Line Loop (%d) = ",NUMLOOP);
     
-    for(i=0;i<List_Nbr(s->s.Generatrices);i++){
-      List_Read(s->s.Generatrices,i,&c);
+    for(i=0;i<List_Nbr(s->Generatrices);i++){
+      List_Read(s->Generatrices,i,&c);
       if(i)
         fprintf(FOUT,", %d",c->Num);
       else

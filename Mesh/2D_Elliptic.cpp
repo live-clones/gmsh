@@ -1,4 +1,4 @@
-// $Id: 2D_Elliptic.cpp,v 1.5 2001-02-23 00:07:51 remacle Exp $
+// $Id: 2D_Elliptic.cpp,v 1.6 2001-06-02 16:24:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -22,12 +22,12 @@ int MeshEllipticSurface (Surface * sur){
   if (sur->Method != ELLIPTIC)
     return (0);
 
-  nb = List_Nbr (sur->s.Generatrices);
+  nb = List_Nbr (sur->Generatrices);
   if (nb < 4)
     return (0);
 
   for (i = 0; i < nb; i++){
-    List_Read (sur->s.Generatrices, i, &GG[i]);
+    List_Read (sur->Generatrices, i, &GG[i]);
   }
 
   if (!(S[0] = FindPoint (sur->ipar[0], THEM)))

@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.14 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.15 2001-06-02 16:24:51 geuzaine Exp $
 
 /*
    Jean-Francois Remacle
@@ -358,8 +358,8 @@ void missing_edges_2d (Surface * s){
 
   EdgesContainer EdgesOnSurface (s->Simplexes, false);
 
-  for (i = 0; i < List_Nbr (s->s.Generatrices); i++){
-    List_Read (s->s.Generatrices, i, &c);
+  for (i = 0; i < List_Nbr (s->Generatrices); i++){
+    List_Read (s->Generatrices, i, &c);
     for (j = 1; j < List_Nbr (c->Vertices); j++){
       List_Read (c->Vertices, j - 1, &v1);
       List_Read (c->Vertices, j, &v2);
@@ -723,8 +723,8 @@ void Trouve_Simplex_Bord_2D (void *a, void *b){
 void CourbesDansSurface (Surface * s, List_T * ListAllCurves){
   int i, iseg;
   Curve *c;
-  for (i = 0; i < List_Nbr (s->s.Generatrices); i++){
-    List_Read (s->s.Generatrices, i, &c);
+  for (i = 0; i < List_Nbr (s->Generatrices); i++){
+    List_Read (s->Generatrices, i, &c);
     iseg = abs (c->Num);
     List_Replace (ListAllCurves, &iseg, fcmp_int);
   }
@@ -736,8 +736,8 @@ int isListaSurface (List_T * ListSurf, Surface * s){
   Curve *c;
   NN = 0;
   found = true;
-  for (j = 0; j < List_Nbr (s->s.Generatrices); j++){
-    List_Read (s->s.Generatrices, j, &c);
+  for (j = 0; j < List_Nbr (s->Generatrices); j++){
+    List_Read (s->Generatrices, j, &c);
     srf = abs (c->Num);
     if (!List_Search (ListSurf, &srf, fcmp_int)){
       found = false;
@@ -1013,8 +1013,8 @@ int AlgorithmeMaillage2DAnisotropeModeJF (Surface * s){
   //  return 1;
 
   FacesTree = Tree_Create (sizeof (Simplex *), compareSimpSurf);
-  for (i = 0; i < List_Nbr (s->s.Generatrices); i++){
-    List_Read (s->s.Generatrices, i, &cur);
+  for (i = 0; i < List_Nbr (s->Generatrices); i++){
+    List_Read (s->Generatrices, i, &cur);
     curinv = FindCurve (abs (cur->Num), THEM);
     List_T *temp = Tree2List (curinv->Simplexes);
     for (j = 0; j < List_Nbr (temp); j++){

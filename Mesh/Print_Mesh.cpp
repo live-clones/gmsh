@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.20 2001-05-28 07:33:06 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.21 2001-06-02 16:24:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -486,8 +486,8 @@ int process_1D_elements (FILE * funv, Mesh * m){
 
   for (i = 0; i < List_Nbr (ListSurfaces); i++){
     List_Read (ListSurfaces, i, &surf);
-    for (j = 0; j < List_Nbr (surf->s.Generatrices); j++){
-      List_Read (surf->s.Generatrices, j, &c);
+    for (j = 0; j < List_Nbr (surf->Generatrices); j++){
+      List_Read (surf->Generatrices, j, &c);
       if (Tree_Nbr (c->Simplexes))
         List_Add (AllCurves, &c);
       c = FindCurve (-c->Num, m);

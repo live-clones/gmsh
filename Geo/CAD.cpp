@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.21 2001-05-22 07:11:14 geuzaine Exp $
+// $Id: CAD.cpp,v 1.22 2001-06-02 16:24:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -550,8 +550,8 @@ void CopySurface (Surface *s, Surface *ss){
   ss->a = s->a;ss->b = s->b;ss->c = s->c; ss->d = s->d;
   for(i=0;i<3;i++)for(j=0;j<3;j++)ss->plan[i][j] = s->plan[i][j];
   for(i=0;i<3;i++)for(j=0;j<3;j++)ss->invplan[i][j] = s->invplan[i][j];
-  ss->s.Generatrices = List_Create(List_Nbr(s->s.Generatrices),1,sizeof(Curve*));
-  List_Copy(s->s.Generatrices,ss->s.Generatrices);
+  ss->Generatrices = List_Create(List_Nbr(s->Generatrices),1,sizeof(Curve*));
+  List_Copy(s->Generatrices,ss->Generatrices);
   if( s->Control_Points ){
     ss->Control_Points = List_Create(List_Nbr(s->Control_Points),1,sizeof(Vertex*));
     List_Copy(s->Control_Points,ss->Control_Points);
@@ -568,10 +568,10 @@ Surface *DuplicateSurface (Surface *s, int addthesurf){
 
   ps = Create_Surface(addthesurf?MAXREG++:-MAXREG,0,0);
   CopySurface(s,ps);
-  for(i=0;i<List_Nbr(ps->s.Generatrices);i++){
-    List_Read(ps->s.Generatrices,i,&c);
+  for(i=0;i<List_Nbr(ps->Generatrices);i++){
+    List_Read(ps->Generatrices,i,&c);
     newc = DuplicateCurve(c);
-    List_Write(ps->s.Generatrices,i,&newc);
+    List_Write(ps->Generatrices,i,&newc);
   }
   
   for(i=0;i<List_Nbr(ps->Control_Points);i++){
@@ -806,11 +806,11 @@ void printCurve(Curve *c){
 
 void printSurface(Surface*s){
   Curve *c;
-  int N = List_Nbr(s->s.Generatrices);
+  int N = List_Nbr(s->Generatrices);
 
   Msg(DEBUG,"Surface %d, %d generatrices",s->Num,N);
   for(int i=0;i<N;i++){
-    List_Read(s->s.Generatrices,i,&c);
+    List_Read(s->Generatrices,i,&c);
     printCurve(c);
   }
 }
@@ -821,8 +821,8 @@ void ApplyTransformationToSurface (double matrix[4][4],Surface *s){
   Vertex *v;
   int i;
 
-  for(i=0;i<List_Nbr(s->s.Generatrices);i++){
-    List_Read(s->s.Generatrices,i,&c);
+  for(i=0;i<List_Nbr(s->Generatrices);i++){
+    List_Read(s->Generatrices,i,&c);
     ApplyTransformationToCurve (matrix,c);
   }
   for(i=0;i<List_Nbr(s->Control_Points);i++){
@@ -994,7 +994,7 @@ Surface *Extrude_ProtudeCurve(int ep, int ic,
   if(!CurveBeg && !CurveEnd) return NULL;
 
   s = Create_Surface(MAXREG++,MSH_SURF_REGL,0);
-  s->s.Generatrices = List_Create(4,1,sizeof(Curve*));
+  s->Generatrices = List_Create(4,1,sizeof(Curve*));
   
   // je me souviens
   s->Extrude = new ExtrudeParams;
@@ -1005,20 +1005,20 @@ Surface *Extrude_ProtudeCurve(int ep, int ic,
   ReverseChapeau = FindCurve(-chapeau->Num,THEM);
 
   if(!CurveBeg){
-    List_Add(s->s.Generatrices,&pc);
-    List_Add(s->s.Generatrices,&CurveEnd);
-    List_Add(s->s.Generatrices,&ReverseChapeau);
+    List_Add(s->Generatrices,&pc);
+    List_Add(s->Generatrices,&CurveEnd);
+    List_Add(s->Generatrices,&ReverseChapeau);
   }
   else if(!CurveEnd){
-    List_Add(s->s.Generatrices,&ReverseChapeau);
-    List_Add(s->s.Generatrices,&ReverseBeg);
-    List_Add(s->s.Generatrices,&pc);
+    List_Add(s->Generatrices,&ReverseChapeau);
+    List_Add(s->Generatrices,&ReverseBeg);
+    List_Add(s->Generatrices,&pc);
   }
   else{
-    List_Add(s->s.Generatrices,&pc);
-    List_Add(s->s.Generatrices,&CurveEnd);
-    List_Add(s->s.Generatrices,&ReverseChapeau);
-    List_Add(s->s.Generatrices,&ReverseBeg);
+    List_Add(s->Generatrices,&pc);
+    List_Add(s->Generatrices,&CurveEnd);
+    List_Add(s->Generatrices,&ReverseChapeau);
+    List_Add(s->Generatrices,&ReverseBeg);
   }
 
   End_Surface(s);
@@ -1059,9 +1059,9 @@ void Extrude_ProtudeSurface(int ep, int is,
   chapeau->Extrude->geo.Source = ps->Num;
   if(e) chapeau->Extrude->mesh = e->mesh;
   
-  for(i=0;i<List_Nbr(chapeau->s.Generatrices);i++) {
-    List_Read(ps->s.Generatrices,i,&c2);
-    List_Read(chapeau->s.Generatrices,i,&c);
+  for(i=0;i<List_Nbr(chapeau->Generatrices);i++) {
+    List_Read(ps->Generatrices,i,&c2);
+    List_Read(chapeau->Generatrices,i,&c);
     if(c->Num<0)
       if(!(c = FindCurve(-c->Num,THEM))){
          Msg(GERROR, "Unknown Curve %d", -c->Num);
@@ -1077,8 +1077,8 @@ void Extrude_ProtudeSurface(int ep, int is,
 
   // filling extrude params
   
-  for(i=0;i<List_Nbr(ps->s.Generatrices);i++){
-    List_Read(ps->s.Generatrices,i,&c);
+  for(i=0;i<List_Nbr(ps->Generatrices);i++){
+    List_Read(ps->Generatrices,i,&c);
     s = Extrude_ProtudeCurve(ep,c->Num,A,B,C,X,Y,Z,alpha,e);
     if(pv && s)List_Add(pv->Surfaces,&s);
     //printSurface(s);
@@ -1236,8 +1236,8 @@ int compareTwoSurfaces (const void *a, const void *b){
   Surface *s1, *s2;
   s1 = *(Surface**)a;
   s2 = *(Surface**)b;
-  return compare2Lists(s1->s.Generatrices,
-                       s2->s.Generatrices,
+  return compare2Lists(s1->Generatrices,
+                       s2->Generatrices,
                        compareAbsCurve);
 }
 
@@ -1351,13 +1351,13 @@ void ReplaceAllDuplicates ( Mesh *m ){
   All = Tree2List(m->Surfaces);
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&s);
-    for(j=0;j<List_Nbr(s->s.Generatrices);j++){
-      List_Write(s->s.Generatrices,j,
+    for(j=0;j<List_Nbr(s->Generatrices);j++){
+      List_Write(s->Generatrices,j,
                  Tree_PQuery( allNonDulpicatedCurves,
-                              List_Pointer(s->s.Generatrices,j)));
+                              List_Pointer(s->Generatrices,j)));
 
       // Arghhh. Revoir compareTwoCurves !
-      End_Curve(*(Curve**)List_Pointer(s->s.Generatrices,j));
+      End_Curve(*(Curve**)List_Pointer(s->Generatrices,j));
     }
   }
   
@@ -1562,8 +1562,8 @@ void DeleteCurve(int ip){
   for(int i=0;i<List_Nbr(Surfs);i++){
     Surface *s;
     List_Read(Surfs,i,&s);
-    for(int j=0;j<List_Nbr(s->s.Generatrices);j++){
-      if(!compareCurve(List_Pointer(s->s.Generatrices,j),&c))return;
+    for(int j=0;j<List_Nbr(s->Generatrices);j++){
+      if(!compareCurve(List_Pointer(s->Generatrices,j),&c))return;
     }
   }
   List_Delete(Surfs);

@@ -51,7 +51,7 @@ void Read_VTK_File (char *file, Mesh *m)
   sscanf(line,"%s %d %s",dumline1,&NbVertices,dumline2);
 
   Surface *surf = Create_Surface(1,MSH_SURF_DISCRETE,1);
-  surf->s.Generatrices = List_Create(1,1,sizeof(Curve*));
+  surf->Generatrices = List_Create(1,1,sizeof(Curve*));
   Tree_Add(m->Surfaces,&surf);
   
   for(i=0;i<NbVertices;i++)
@@ -92,7 +92,7 @@ void Read_VTK_File (char *file, Mesh *m)
       else
 	{
 	  surf = Create_Surface(1,MSH_SURF_DISCRETE,1);
-	  surf->s.Generatrices = List_Create(1,1,sizeof(Curve*));
+	  surf->Generatrices = List_Create(1,1,sizeof(Curve*));
 	  Tree_Add(m->Surfaces,&surf);
 	}
       Tree_Add(surf->Simplexes,&s);
@@ -302,7 +302,7 @@ void Read_Mesh_SMS (Mesh *m, FILE *in)
 		{
 		  surf = Create_Surface(GEntityId+10000,MSH_SURF_DISCRETE,1);
 		  if(!NbRegions)List_Add(vol->Surfaces,&surf);
-		  surf->s.Generatrices = List_Create(1,1,sizeof(Curve*));
+		  surf->Generatrices = List_Create(1,1,sizeof(Curve*));
 		  Tree_Add(m->Surfaces,&surf);
 		}
 	      Tree_Add(surf->Vertices,&s->V[0]);
@@ -622,9 +622,9 @@ void Write_DMG_FILE (Mesh *m, char *filename)
       Vertex *beg = NULL;
       numEdgeLoop[iLoop] = 0;
       int deb = 1;
-      for(j=0;j<List_Nbr(s->s.Generatrices);j++)
+      for(j=0;j<List_Nbr(s->Generatrices);j++)
 	{
-	  List_Read(s->s.Generatrices,j,&c);
+	  List_Read(s->Generatrices,j,&c);
 	  if(deb)
 	    {
 	      beg = c->beg;
@@ -649,7 +649,7 @@ void Write_DMG_FILE (Mesh *m, char *filename)
 	  fprintf(stdout,"%d ",numEdgeLoop[k]);    
 	  for(j=0;j<numEdgeLoop[k];j++)
 	    {
-	      List_Read(s->s.Generatrices,iEdge++,&c);
+	      List_Read(s->Generatrices,iEdge++,&c);
 	      fprintf(f,"%d %d ",abs(c->ipar[3]),(c->Num>0)?1:-1);    
 	      fprintf(stdout,"%d %d ",abs(c->ipar[3]),(c->Num>0)?1:-1);    
 	    }

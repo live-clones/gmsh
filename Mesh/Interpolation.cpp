@@ -1,4 +1,4 @@
-// $Id: Interpolation.cpp,v 1.8 2001-04-08 20:36:50 geuzaine Exp $
+// $Id: Interpolation.cpp,v 1.9 2001-06-02 16:24:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -387,7 +387,7 @@ Vertex InterpolateSurface (Surface * s, double u, double v,
   case MSH_SURF_REGL:
     issphere = 1;
     for (i = 0; i < 4; i++){
-      List_Read (s->s.Generatrices, i, &C[i]);
+      List_Read (s->Generatrices, i, &C[i]);
       if (C[i]->Typ != MSH_SEGM_CIRC && C[i]->Typ != MSH_SEGM_CIRC_INV){
         issphere = 0;
       }
@@ -431,7 +431,7 @@ Vertex InterpolateSurface (Surface * s, double u, double v,
   case MSH_SURF_TRIC:
     issphere = 1;
     for (i = 0; i < 3; i++){
-      List_Read (s->s.Generatrices, i, &C[i]);
+      List_Read (s->Generatrices, i, &C[i]);
       if (C[i]->Typ != MSH_SEGM_CIRC && C[i]->Typ != MSH_SEGM_CIRC_INV){
         issphere = 0;
       }

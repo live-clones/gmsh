@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.17 2001-06-02 13:09:14 geuzaine Exp $
+// $Id: Create.cpp,v 1.18 2001-06-02 16:24:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -422,11 +422,11 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
 
   pC = (Curve *) Malloc (sizeof (Curve));
   pC->Vertices = NULL;
+  pC->Extrude = NULL;
   pC->Typ = Typ;
   pC->Num = Num;
   pC->Simplexes = Tree_Create (sizeof (Simplex *), compareSimplex);
   pC->TrsfSimplexes = List_Create (1, 10, sizeof (Simplex *));
-  pC->ConnectedSurfaces = NULL;
   pC->Circle.done = 0;
   pC->Method = LIBRE;
   pC->degre = Order;
@@ -479,9 +479,7 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
     }
   }
   else {
-    //End_Curve(pC);
     pC->Control_Points = NULL;
-    pC->Extrude = NULL;
     return pC;
   }
 
@@ -507,9 +505,10 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
       Msg(GERROR, "Unknown control point %d in Curve %d", p2, pC->Num);
     }
   }
+
   End_Curve (pC);
-  pC->Extrude = NULL;
-  return (pC);
+
+  return pC;
 }
 
 void Free_Curve(void *a, void *b){
@@ -544,7 +543,7 @@ Surface * Create_Surface (int Num, int Typ, int Mat){
   pS->Orientations = NULL;
   pS->Support = pS;
   pS->Control_Points = List_Create (1, 10, sizeof (Vertex *));
-  pS->s.Generatrices = NULL;
+  pS->Generatrices = NULL;
   pS->Edges = NULL;
   pS->Extrude = NULL;
   pS->STL = NULL;
@@ -562,7 +561,7 @@ void Free_Surface(void *a, void *b){
     List_Delete(pS->TrsfVertices);
     List_Delete(pS->Contours);
     List_Delete(pS->Control_Points);
-    List_Delete(pS->s.Generatrices);
+    List_Delete(pS->Generatrices);
     Free(pS);
     pS = NULL;
   }

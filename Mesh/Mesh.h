@@ -208,9 +208,7 @@ struct _Surf{
   double RecombineAngle;
   int ipar[4];
   int Nu, Nv;
-  union{
-    List_T *Generatrices;       /* Surface reglee    */
-  }s;
+  List_T *Generatrices;       /* Surface reglee    */
   List_T *Control_Points;       /* Patchs bicubiques */
   double plan[3][3];
   double invplan[3][3];
@@ -323,9 +321,7 @@ typedef struct{
   Vertex *beg, *end;
   double ubeg, uend;
   List_T *Control_Points;
-  List_T *Knots;
   List_T *Vertices;
-  List_T *ConnectedSurfaces;
   Tree_T *Simplexes;
   List_T *TrsfSimplexes;
   ExtrudeParams *Extrude;

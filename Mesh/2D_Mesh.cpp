@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.23 2001-05-21 09:28:02 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.24 2001-06-02 16:24:51 geuzaine Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -80,8 +80,8 @@ void Plan_Moyen (void *data, void *dum){
   case MSH_SURF_REGL:
   case MSH_SURF_NURBS:
   case MSH_SURF_TRIMMED:
-    for (i = 0; i < List_Nbr (s->s.Generatrices); i++){
-      List_Read (s->s.Generatrices, i, &pC);
+    for (i = 0; i < List_Nbr (s->Generatrices); i++){
+      List_Read (s->Generatrices, i, &pC);
       for (j = 0; j < List_Nbr (pC->Vertices); j++){
         List_Read (pC->Vertices, j, &v);
         List_Add (points, &v);
@@ -291,8 +291,8 @@ int Calcule_Contours (Surface * s){
   double n[] = {0., 0., 1.};
 
   l = List_Create (10, 10, sizeof (Vertex *));
-  for (i = 0; i < List_Nbr (s->s.Generatrices); i++){
-    List_Read (s->s.Generatrices, i, &c);
+  for (i = 0; i < List_Nbr (s->Generatrices); i++){
+    List_Read (s->Generatrices, i, &c);
     if (!List_Nbr (l)){
       List_Read (c->Vertices, 0, &first);
     }

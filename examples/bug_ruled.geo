@@ -1,4 +1,7 @@
 
+// solved by setting the tolerance lower in sys3x3_with_tol (-> again,
+// this arised from a wrong mean plane computation)
+
 //lc = 0.00001;
 lc = 0.001;
 Point(61) = {0.058, -0.005, 0, lc};

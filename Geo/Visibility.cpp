@@ -43,8 +43,8 @@ void ToutesLesEntitesRelatives(int iEnt, Tree_T *Tree, int add_rem){
   if((c = FindCurve(iEnt,THEM))){
   }
   else if((s = FindSurface(iEnt,THEM))){
-    for(i=0;i<List_Nbr(s->s.Generatrices);i++){
-      List_Read(s->s.Generatrices,i,&c);
+    for(i=0;i<List_Nbr(s->Generatrices);i++){
+      List_Read(s->Generatrices,i,&c);
       e.Entite = abs(c->Num);
       e.Visible = add_rem;
       Tree_Replace(Tree,&e);
