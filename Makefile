@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.224 2002-05-20 16:06:46 geuzaine Exp $
+# $Id: Makefile,v 1.225 2002-05-30 15:53:06 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -107,7 +107,7 @@ compile-linux: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
-           "OPT_FLAGS=-g -O2 -Wall -Wno-uninitialized" \
+           "OPT_FLAGS=-g -Wall -Wno-uninitialized" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
