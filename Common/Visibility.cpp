@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.1 2003-12-01 21:51:19 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.2 2003-12-01 23:57:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -63,7 +63,7 @@ char *Entity::Type()
     return "Point";
   case 2:
   case 6:
-    return "Curve";
+    return "Line";
   case 3:
   case 7:
     return "Surface";
@@ -605,11 +605,11 @@ void SetVisibilityByNumber(int num, int type, int mode)
     else
       Msg(WARNING, "Unknown point %d (use '*' to hide/show all points)", num);
     break;
-  case 3:    //curve
+  case 3:    //line
     if((c = FindCurve(num, THEM)))
       c->Visible = mode;
     else
-      Msg(WARNING, "Unknown curve %d (use '*' to hide/show all curves)", num);
+      Msg(WARNING, "Unknown line %d (use '*' to hide/show all lines)", num);
     break;
   case 4:    //surface
     if((s = FindSurface(num, THEM)))
@@ -702,7 +702,7 @@ void SetVisibilityByNumber(char *str, int type, int mode)
     case 2:    //point
       Tree_Action(THEM->Points, vis_nod);
       break;
-    case 3:    //curve
+    case 3:    //line
       Tree_Action(THEM->Curves, vis_cur);
       break;
     case 4:    //surface
