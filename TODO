@@ -1,4 +1,4 @@
-$Id: TODO,v 1.25 2003-09-17 22:02:42 geuzaine Exp $
+$Id: TODO,v 1.26 2003-11-29 20:23:22 geuzaine Exp $
 
 Yves Krahenbuhl wrote:
 
@@ -75,15 +75,6 @@ then gmsh will fail.
 
 We should definitely use a better projection algorithm. See the work
 by Desbrun et al. in CS for this.
-
-********************************************************************
-
-Two-field plots <nicolas.moes@ec-nantes.fr>
-
-Imagine I would like to plot a temperature field on a deformed
-mesh. This requires two field : the temperature field and the
-displacement field to deform the mesh. Is there something done in gmsh
-done for this?
 
 ********************************************************************
 
