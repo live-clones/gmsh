@@ -1,4 +1,4 @@
-/* $Id: dxf2geo.c,v 1.1.1.1 2000-11-23 09:22:48 geuzaine Exp $ */
+/* $Id: dxf2geo.c,v 1.2 2001-04-23 07:01:50 geuzaine Exp $ */
 
 /* 
    AutoCAD DXF to Gmsh GEO Data File Converter
@@ -283,9 +283,9 @@ int getline(void){ /* read a group code and the next line from infile */
 int main(int argc, char *argv[]){
   char *index;
   
-  printf("dxf2geo, an AutoCad DXF to Gmsh GEO file translator\n");
+  printf("dxf2geo, a 2D AutoCad DXF to Gmsh GEO file translator\n");
   if (argc < 3){
-    printf("Usage: %s infile[.dxf] tol [rot] [xtrans] [ytrans]\n", argv[0]);
+    printf("Usage: %s file[.dxf] tolerance [rotation] [xoffset] [yoffset]\n", argv[0]);
     exit(1);
   }
 
