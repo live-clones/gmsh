@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.77 2004-09-01 20:23:50 geuzaine Exp $
+// $Id: Post.cpp,v 1.78 2004-09-12 04:13:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -396,19 +396,16 @@ void Draw_Post(void)
       // initialize alpha blending for transparency
       if(CTX.alpha && ColorTable_IsAlpha(&v->CT)){
 	if(CTX.fake_transparency){
-	  // simple additive blending "a la xpost"
-	  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	  glBlendEquation(GL_FUNC_ADD);
-	  // maximum intensity projection "a la volsuite"
-	  // glBlendFunc(GL_ONE, GL_ONE);
-	  // glBlendEquation(GL_MAX);
+	  // simple additive blending "a la xpost":
+	  glBlendFunc(GL_SRC_ALPHA, GL_ONE); // glBlendEquation(GL_FUNC_ADD);
+	  // maximum intensity projection "a la volsuite":
+	  // glBlendFunc(GL_ONE, GL_ONE); // glBlendEquation(GL_MAX);
 	  glEnable(GL_BLEND);
 	  glDisable(GL_DEPTH_TEST);
 	}
 	else{
 	  // real translucent blending (requires back-to-front traversal)
-	  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	  glBlendEquation(GL_FUNC_ADD);
+	  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // glBlendEquation(GL_FUNC_ADD);
 	  glEnable(GL_BLEND);
 	  // if we don't use vertex arrays, do the sorting here - it's
 	  // incorrect for hybrid views (use Plugin(DecomposeInSimplex)

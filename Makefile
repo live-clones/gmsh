@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.367 2004-09-11 06:38:22 geuzaine Exp $
+# $Id: Makefile,v 1.368 2004-09-12 04:13:59 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -85,6 +85,10 @@ purge:
 
 clean:
 	for i in doc lib ${GMSH_DIRS}; do (cd $$i && ${MAKE} clean); done
+	rm -f ${GMSH_VERSION_FILE}
+
+clean-most:
+	for i in doc lib ${GMSH_DIRS:Netgen=}; do (cd $$i && ${MAKE} clean); done
 	rm -f ${GMSH_VERSION_FILE}
 
 depend:

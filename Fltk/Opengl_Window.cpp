@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.38 2004-08-28 00:48:37 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.39 2004-09-12 04:13:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -91,8 +91,7 @@ void Opengl_Window::draw()
     glLoadIdentity();
     glDisable(GL_DEPTH_TEST);
     glColor3f(1., 1., 1.);
-    glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
-    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO); // glBlendEquation(GL_FUNC_ADD);
     glEnable(GL_BLEND);
     glLineWidth(0.2);
     glBegin(GL_LINE_STRIP);
