@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.51 2005-01-21 03:04:19 geuzaine Exp $
+// $Id: Entity.cpp,v 1.52 2005-01-21 05:31:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -285,21 +285,21 @@ void Draw_SimpleVector(int arrow, int fill,
 		 z + f2 * dz + b * (t[2]));
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       
-      glVertex3d(x + dx, y + dy, z + dz);
+      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       glVertex3d(x + f2 * dx + b * (-t[0]), y + f2 * dy + b * (-t[1]),
 		 z + f2 * dz + b * (-t[2]));
-      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
+      glVertex3d(x + dx, y + dy, z + dz);
       
       if(light) glNormal3dv(t);
       glVertex3d(x + dx, y + dy, z + dz);
       glVertex3d(x + f2 * dx + b * (-u[0]), y + f2 * dy + b * (-u[1]),
 		 z + f2 * dz + b * (-u[2]));
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
-      
-      glVertex3d(x + dx, y + dy, z + dz);
+
+      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);      
       glVertex3d(x + f2 * dx + b * (u[0]), y + f2 * dy + b * (u[1]),
 		 z + f2 * dz + b * (u[2]));
-      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
+      glVertex3d(x + dx, y + dy, z + dz);
       glEnd();
       glDisable(GL_LIGHTING);
     }
