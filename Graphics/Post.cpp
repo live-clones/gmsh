@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.66 2004-05-30 06:24:02 geuzaine Exp $
+// $Id: Post.cpp,v 1.67 2004-06-01 16:49:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -413,7 +413,7 @@ void Draw_Post(void)
       // this limitation)
       if(!CTX.post.vertex_arrays && CTX.alpha && ColorTable_IsAlpha(&v->CT) && 
 	 v->DrawScalars && (changedEye() || v->Changed)) {
-	Msg(DEBUG, "Sorting for transparency (NO vertex array)");
+	Msg(DEBUG, "Sorting View[%d] for transparency (NO vertex array)", v->Index);
 	if(v->NbST && v->DrawTriangles) {
 	  nb = List_Nbr(v->ST) / v->NbST;
 	  qsort(v->ST->array, v->NbST, nb * sizeof(double), compareEye3Nodes);
@@ -471,12 +471,12 @@ void Draw_Post(void)
 	  if(v->TriVertexArray){
 	    if(v->Boundary < 1 && !v->ShowElement &&
 	       v->IntervalsType != DRAW_POST_NUMERIC && v->IntervalsType != DRAW_POST_ISO){
-	      Msg(DEBUG, "Skiping 2D scalar pass alltogether!");
+	      Msg(DEBUG, "View[%d]: skiping 2D scalar pass alltogether", v->Index);
 	      skip_2d = 1;
 	    }
 	    if(v->Boundary < 2 && !v->ShowElement &&
 	       v->IntervalsType != DRAW_POST_NUMERIC && v->IntervalsType != DRAW_POST_ISO){
-	      Msg(DEBUG, "Skiping 3D scalar pass alltogether!");
+	      Msg(DEBUG, "View[%d]: skiping 3D scalar pass alltogether", v->Index);
 	      skip_3d = 1;
 	    }
 	  }
@@ -521,14 +521,16 @@ void Draw_Post(void)
 	}
 
       pass_1:
-	if(v->TriVertexArray)
+	if(v->TriVertexArray && v->TriVertexArray->fill){
+	  Msg(DEBUG, "View[%d]; %d tris in vertex array", v->Index, v->TriVertexArray->num);
 	  v->TriVertexArray->fill = 0;
+	}
       }
 
       if(v->TriVertexArray && v->TriVertexArray->num){
 
 	if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && (changedEye() || v->Changed)){
-	  Msg(DEBUG, "Sorting for transparency (WITH vertex array)");
+	  Msg(DEBUG, "Sorting View[%d] for transparency (WITH vertex array)", v->Index);
 	  v->TriVertexArray->sort(storedEye);
 	}
 

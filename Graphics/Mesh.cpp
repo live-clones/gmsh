@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.95 2004-05-31 18:36:20 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.96 2004-06-01 16:49:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -249,13 +249,19 @@ void Draw_Mesh_Surface(void *a, void *b)
       s->TriVertexArray = new VertexArray(3, Tree_Nbr(s->Simplexes));
       s->TriVertexArray->fill = 1;
       Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
-      if(s->TriVertexArray) s->TriVertexArray->fill = 0;
+      if(s->TriVertexArray){
+	Msg(DEBUG, "%d triangles in vertex array", s->TriVertexArray->num);
+	s->TriVertexArray->fill = 0;
+      }
       // quads
       if(s->QuadVertexArray) delete s->QuadVertexArray;
       s->QuadVertexArray = new VertexArray(4, Tree_Nbr(s->Quadrangles));
       s->QuadVertexArray->fill = 1;
       Tree_Action(s->Quadrangles, Draw_Mesh_Quadrangle);
-      if(s->QuadVertexArray) s->QuadVertexArray->fill = 0;
+      if(s->QuadVertexArray){
+	Msg(DEBUG, "%d quads in vertex array", s->QuadVertexArray->num);
+	s->QuadVertexArray->fill = 0;
+      }
     }
     if(s->TriVertexArray)
       Draw_Mesh_Array(s->TriVertexArray,
