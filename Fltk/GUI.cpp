@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.334 2004-08-15 02:27:48 geuzaine Exp $
+// $Id: GUI.cpp,v 1.335 2004-08-15 15:25:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1910,7 +1910,7 @@ void GUI::create_option_window()
       mesh_butt[3]->down_box(TOGGLE_BOX);
       mesh_butt[3]->selection_color(TOGGLE_COLOR);
 
-      mesh_butt[5] = new Fl_Check_Button(2 * WB, 2 * WB + 10 * BH, BW, BH, "Constrain background mesh");
+      mesh_butt[5] = new Fl_Check_Button(2 * WB, 2 * WB + 10 * BH, BW, BH, "Constrain background mesh with characteristic length field");
       mesh_butt[5]->type(FL_TOGGLE_BUTTON);
       mesh_butt[5]->down_box(TOGGLE_BOX);
       mesh_butt[5]->selection_color(TOGGLE_COLOR);
