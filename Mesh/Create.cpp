@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.68 2005-02-20 07:11:04 geuzaine Exp $
+// $Id: Create.cpp,v 1.69 2005-02-26 04:53:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -532,7 +532,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
   pC->Color.type = 0;
   pC->Visible = VIS_GEOM | VIS_MESH;
   pC->cp = NULL;
-  pC->Vertices = List_Create(10, 100, sizeof(Vertex *));
+  pC->Vertices = List_Create(2, 20, sizeof(Vertex *));
   pC->Extrude = NULL;
   pC->theSegmRep = 0;
   pC->Typ = Typ;
