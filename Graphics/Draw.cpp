@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.43 2003-03-26 20:14:01 geuzaine Exp $
+// $Id: Draw.cpp,v 1.44 2003-03-28 16:50:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -141,7 +141,8 @@ void Orthogonalize(int x, int y)
   // applications (I guess they normalize the scene to fit in a 1x1x1
   // box or something...). Here, we set up a large box around the
   // object, so that if we zoom a lot the resolution of the depth
-  // buffer might become insufficient...
+  // buffer might become insufficient (at least with Mesa on Linux; on
+  // WinXP everyhting seems to be fine).
   if(CTX.ortho) {
     double maxz = MAX(fabs(CTX.min[2]), fabs(CTX.max[2]));
     if(maxz < CTX.lc) maxz = CTX.lc;
