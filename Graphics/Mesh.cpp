@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.16 2001-01-10 20:14:35 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.17 2001-01-17 21:26:24 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -150,6 +150,12 @@ void Draw_Mesh_Points (void *a, void *b){
 
   v = (Vertex**)a;
 
+
+  if(CTX.mesh.use_cut_plane)
+    {
+      if(CTX.mesh.evalCutPlane((*v)->Pos.X, (*v)->Pos.Y, (*v)->Pos.Z) < 0)return;
+    }
+  
   if(CTX.render_mode == GMSH_SELECT){
     glLoadName(0);
     glPushName((*v)->Num);
@@ -193,6 +199,18 @@ void Draw_Simplex_Volume (void *a, void *b){
 
   if(!EntiteEstElleVisible((*s)->iEnt)) return;
 
+  double Xc = .25 * ((*s)->V[0]->Pos.X + (*s)->V[1]->Pos.X + 
+                     (*s)->V[2]->Pos.X + (*s)->V[3]->Pos.X);
+  double Yc = .25 * ((*s)->V[0]->Pos.Y + (*s)->V[1]->Pos.Y + 
+                     (*s)->V[2]->Pos.Y + (*s)->V[3]->Pos.Y);
+  double Zc = .25 * ((*s)->V[0]->Pos.Z + (*s)->V[1]->Pos.Z + 
+                     (*s)->V[2]->Pos.Z + (*s)->V[3]->Pos.Z);
+
+  if(CTX.mesh.use_cut_plane)
+    {
+      if(CTX.mesh.evalCutPlane(Xc,Yc,Zc) < 0)return;
+    }
+  
   if(!(*s)->V[3]) return;
 
   if(CTX.mesh.limit_gamma){
@@ -206,13 +224,6 @@ void Draw_Simplex_Volume (void *a, void *b){
   }
 
   ColorSwitch((*s)->iEnt+1);
-
-  double Xc = .25 * ((*s)->V[0]->Pos.X + (*s)->V[1]->Pos.X + 
-                     (*s)->V[2]->Pos.X + (*s)->V[3]->Pos.X);
-  double Yc = .25 * ((*s)->V[0]->Pos.Y + (*s)->V[1]->Pos.Y + 
-                     (*s)->V[2]->Pos.Y + (*s)->V[3]->Pos.Y);
-  double Zc = .25 * ((*s)->V[0]->Pos.Z + (*s)->V[1]->Pos.Z + 
-                     (*s)->V[2]->Pos.Z + (*s)->V[3]->Pos.Z);
 
   for (int i=0 ; i<4 ; i++) {
      X[i] = Xc + CTX.mesh.explode * ((*s)->V[i]->Pos.X - Xc);
@@ -376,6 +387,11 @@ void Draw_Simplex_Surfaces (void *a, void *b){
     Zc = ((*s)->V[0]->Pos.Z + (*s)->V[1]->Pos.Z + (*s)->V[2]->Pos.Z) / 3. ;
   }
 
+  if(CTX.mesh.use_cut_plane)
+    {
+      if(CTX.mesh.evalCutPlane(Xc,Yc,Zc) < 0)return;
+    }
+
   k=0;
   for (i=0 ; i<K ; i++) {
     pX[k] = Xc + CTX.mesh.explode * ((*s)->V[i]->Pos.X - Xc);
@@ -519,49 +535,61 @@ void Draw_Simplex_Points(void *a,void *b){
 void Draw_Hexahedron_Volume (void *a, void *b){
   Hexahedron **h;
   int i ;
-  double Xc = 0.0 , Yc = 0.0, Zc = 0.0 ;
+  double Xc = 0.0 , Yc = 0.0, Zc = 0.0 , X[8],Y[8],Z[8];
 
   h = (Hexahedron**)a;
 
   if(!EntiteEstElleVisible((*h)->iEnt)) return;
+
+  for(i=0 ; i<8 ; i++){
+    Xc += (*h)->V[i]->Pos.X;
+    Yc += (*h)->V[i]->Pos.Y;
+    Zc += (*h)->V[i]->Pos.Z;
+  }
+  Xc *= .125 ; 
+  Zc *= .125 ; 
+  Yc *= .125 ; 
+
+  if(CTX.mesh.use_cut_plane)
+    {
+      if(CTX.mesh.evalCutPlane(Xc,Yc,Zc) < 0)return;
+    }
   
   //glColor4ubv((GLubyte*)&CTX.color.mesh.hexahedron);
   ColorSwitch((*h)->iEnt+1);
 
+  for (int i=0 ; i<8 ; i++) {
+     X[i] = Xc + CTX.mesh.explode * 0.99 * ((*h)->V[i]->Pos.X - Xc);
+     Y[i] = Yc + CTX.mesh.explode * 0.99 * ((*h)->V[i]->Pos.Y - Yc);
+     Z[i] = Zc + CTX.mesh.explode * 0.99 * ((*h)->V[i]->Pos.Z - Zc);
+  }
+
   glBegin(GL_LINE_LOOP);
-  glVertex3d((*h)->V[0]->Pos.X, (*h)->V[0]->Pos.Y, (*h)->V[0]->Pos.Z);
-  glVertex3d((*h)->V[1]->Pos.X, (*h)->V[1]->Pos.Y, (*h)->V[1]->Pos.Z);
-  glVertex3d((*h)->V[2]->Pos.X, (*h)->V[2]->Pos.Y, (*h)->V[2]->Pos.Z);
-  glVertex3d((*h)->V[3]->Pos.X, (*h)->V[3]->Pos.Y, (*h)->V[3]->Pos.Z);
+  glVertex3d(X[0], Y[0], Z[0]);
+  glVertex3d(X[1], Y[1], Z[1]);
+  glVertex3d(X[2], Y[2], Z[2]);
+  glVertex3d(X[3], Y[3], Z[3]);
   glEnd();    
 
   glBegin(GL_LINE_LOOP);
-  glVertex3d((*h)->V[4]->Pos.X, (*h)->V[4]->Pos.Y, (*h)->V[4]->Pos.Z);
-  glVertex3d((*h)->V[5]->Pos.X, (*h)->V[5]->Pos.Y, (*h)->V[5]->Pos.Z);
-  glVertex3d((*h)->V[6]->Pos.X, (*h)->V[6]->Pos.Y, (*h)->V[6]->Pos.Z);
-  glVertex3d((*h)->V[7]->Pos.X, (*h)->V[7]->Pos.Y, (*h)->V[7]->Pos.Z);
+  glVertex3d(X[4], Y[4], Z[4]);
+  glVertex3d(X[5], Y[5], Z[5]);
+  glVertex3d(X[6], Y[6], Z[6]);
+  glVertex3d(X[7], Y[7], Z[7]);
   glEnd();    
 
   glBegin(GL_LINES);
-  glVertex3d((*h)->V[0]->Pos.X, (*h)->V[0]->Pos.Y, (*h)->V[0]->Pos.Z);
-  glVertex3d((*h)->V[4]->Pos.X, (*h)->V[4]->Pos.Y, (*h)->V[4]->Pos.Z);
-  glVertex3d((*h)->V[1]->Pos.X, (*h)->V[1]->Pos.Y, (*h)->V[1]->Pos.Z);
-  glVertex3d((*h)->V[5]->Pos.X, (*h)->V[5]->Pos.Y, (*h)->V[5]->Pos.Z);
-  glVertex3d((*h)->V[2]->Pos.X, (*h)->V[2]->Pos.Y, (*h)->V[2]->Pos.Z);
-  glVertex3d((*h)->V[6]->Pos.X, (*h)->V[6]->Pos.Y, (*h)->V[6]->Pos.Z);
-  glVertex3d((*h)->V[3]->Pos.X, (*h)->V[3]->Pos.Y, (*h)->V[3]->Pos.Z);
-  glVertex3d((*h)->V[7]->Pos.X, (*h)->V[7]->Pos.Y, (*h)->V[7]->Pos.Z);
+  glVertex3d(X[0], Y[0], Z[0]);
+  glVertex3d(X[4], Y[4], Z[4]);
+  glVertex3d(X[1], Y[1], Z[1]);
+  glVertex3d(X[5], Y[5], Z[5]);
+  glVertex3d(X[2], Y[2], Z[2]);
+  glVertex3d(X[6], Y[6], Z[6]);
+  glVertex3d(X[3], Y[3], Z[3]);
+  glVertex3d(X[7], Y[7], Z[7]);
   glEnd();    
 
   if (CTX.mesh.dual){
-    for(i=0 ; i<8 ; i++){
-      Xc += (*h)->V[i]->Pos.X;
-      Yc += (*h)->V[i]->Pos.Y;
-      Zc += (*h)->V[i]->Pos.Z;
-    }
-    Xc /= 8. ; 
-    Zc /= 8. ; 
-    Yc /= 8. ; 
 
     glColor4ubv((GLubyte*)&CTX.color.fg);
     glEnable(GL_LINE_STIPPLE);

@@ -186,6 +186,11 @@ StringXNumber MeshOptions_Number[] = {
   { "Degree"          , GMSH_INT,    (void*)&CTX.mesh.degree         , 1. }, 
   { "Dual"            , GMSH_INT,    (void*)&CTX.mesh.dual           , 0. }, 
   { "Interactive"     , GMSH_INT,    (void*)&CTX.mesh.interactive    , 0. }, 
+  { "use_cut_plane"   , GMSH_INT,    (void*)&CTX.mesh.use_cut_plane  , 0  }, 
+  { "cut_planea"      , GMSH_DOUBLE, (void*)&CTX.mesh.cut_planea      , 1. }, 
+  { "cut_planeb"      , GMSH_DOUBLE, (void*)&CTX.mesh.cut_planeb      , 0. }, 
+  { "cut_planec"      , GMSH_DOUBLE, (void*)&CTX.mesh.cut_planec      , 0. }, 
+  { "cut_planed"      , GMSH_DOUBLE, (void*)&CTX.mesh.cut_planed      , 0. }, 
   { NULL              , GMSH_DOUBLE, NULL , 0. }
 } ;
 

@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.7 2001-01-12 13:29:00 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.8 2001-01-17 21:26:24 remacle Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -95,96 +95,99 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
         for (j = 0 ; j < Nbr_Nodes ; j++)
           fscanf(File_GEO, "%d", &verts[j].Num) ;
         
-        switch(Type){
-        case LGN1: case LGN2:
-          c = &C; c->Num = Elementary;
-          if(!(cc = (Curve**)Tree_PQuery(M->Curves, &c))){
-            c = Create_Curve(Elementary, MSH_SEGM_LINE, 0, NULL,
-                             NULL, 0, 1, 0., 1.);
-            Tree_Add(M->Curves, &c);
-          }
-          else
-            c = *cc;
-          break;
-        case TRI1: case QUA1: case TRI2: case QUA2:
-          s = &S; s->Num = Elementary;
-          if(!(ss = (Surface**)Tree_PQuery(M->Surfaces, &s))){
-            s = Create_Surface(Elementary, MSH_SURF_PLAN, Elementary);
-            Tree_Add(M->Surfaces, &s);
-          }
-          else
-            s = *ss;
-          break;
-        case TET1: case HEX1: case PRI1: case TET2: case HEX2: case PRI2: 
-          v = &V; v->Num = Elementary;
-          if(!(vv = (Volume**)Tree_PQuery(M->Volumes, &v))){
-            v = Create_Volume(Elementary, MSH_VOLUME, Elementary);
-            Tree_Add(M->Volumes, &v);
-          }
-          else
-            v = *vv;
-          break;
-        default :
-          break;
-        }
+	if(Elementary >= 0)
+	  {
+	    switch(Type){
+	    case LGN1: case LGN2:
+	      c = &C; c->Num = Elementary;
+	      if(!(cc = (Curve**)Tree_PQuery(M->Curves, &c))){
+		c = Create_Curve(Elementary, MSH_SEGM_LINE, 0, NULL,
+				 NULL, 0, 1, 0., 1.);
+		Tree_Add(M->Curves, &c);
+	      }
+	      else
+		c = *cc;
+	      break;
+	    case TRI1: case QUA1: case TRI2: case QUA2:
+	      s = &S; s->Num = Elementary;
+	      if(!(ss = (Surface**)Tree_PQuery(M->Surfaces, &s))){
+		s = Create_Surface(Elementary, MSH_SURF_PLAN, Elementary);
+		Tree_Add(M->Surfaces, &s);
+	      }
+	      else
+		s = *ss;
+	      break;
+	    case TET1: case HEX1: case PRI1: case TET2: case HEX2: case PRI2: 
+	      v = &V; v->Num = Elementary;
+	      if(!(vv = (Volume**)Tree_PQuery(M->Volumes, &v))){
+		v = Create_Volume(Elementary, MSH_VOLUME, Elementary);
+		Tree_Add(M->Volumes, &v);
+	      }
+	      else
+		v = *vv;
+	      break;
+	    default :
+	      break;
+	    }
 
-        for(i=0 ; i<Nbr_Nodes ; i++) {
-          vertsp[i] = &verts[i];
-          if(!(vertspp = (Vertex**)Tree_PQuery(M->Vertices, &vertsp[i])))
-            Msg(GERROR, "Unknown Vertex %d in Element %d", verts[i].Num, Num);
-          else
-            vertsp[i] = *vertspp;
-        }
-
-        switch(Type){
-        case LGN1:
-          simp = Create_Simplex(vertsp[0], vertsp[1], NULL , NULL);
-          simp->Num = Num ;
-          simp->iEnt = Elementary ;
-          Tree_Insert(c->Simplexes, &simp) ;
-          Tree_Insert(M->Simplexes, &simp) ; 
-          break;
-        case TRI1:
-          simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], NULL);
-          simp->Num = Num ;
-          simp->iEnt = Elementary ;
-          Tree_Insert(s->Simplexes, &simp) ;
-          Tree_Insert(M->Simplexes, &simp) ;
-          break;
-        case QUA1:
-          simp = Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
-          simp->Num = Num ;
-          simp->iEnt = Elementary ;
-          Tree_Insert(s->Simplexes, &simp) ;
-          Tree_Insert(M->Simplexes, &simp) ;
-          break;
-        case TET1:
-          simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
-          simp->Num = Num ;
-          simp->iEnt = Elementary ;
-          Tree_Insert(v->Simplexes, &simp) ;
-          Tree_Insert(M->Simplexes, &simp) ;
-          break;
-        case HEX1:
-          hex = Create_Hexahedron(vertsp[0], vertsp[1], vertsp[2], vertsp[3],
-                                  vertsp[4], vertsp[5], vertsp[6], vertsp[7]);
-          hex->Num = Num ;
-          hex->iEnt = Elementary ;
-          Tree_Insert(v->Hexahedra, &hex) ;
-          break;
-        case PRI1:
-          pri = Create_Prism(vertsp[0], vertsp[1], vertsp[2], 
-                             vertsp[3], vertsp[4], vertsp[5]);
-          pri->Num = Num ;
-          pri->iEnt = Elementary ;
-          Tree_Insert(v->Prisms, &pri) ;
-          break;
-        case PNT:
-          break;
-        default :
-          Msg(WARNING, "Unknown Type of Element in Read_Mesh");
-          break;
-        }
+	    for(i=0 ; i<Nbr_Nodes ; i++) {
+	      vertsp[i] = &verts[i];
+	      if(!(vertspp = (Vertex**)Tree_PQuery(M->Vertices, &vertsp[i])))
+		Msg(GERROR, "Unknown Vertex %d in Element %d", verts[i].Num, Num);
+	      else
+		vertsp[i] = *vertspp;
+	    }
+	    
+	    switch(Type){
+	    case LGN1:
+	      simp = Create_Simplex(vertsp[0], vertsp[1], NULL , NULL);
+	      simp->Num = Num ;
+	      simp->iEnt = Elementary ;
+	      Tree_Insert(c->Simplexes, &simp) ;
+	      Tree_Insert(M->Simplexes, &simp) ; 
+	      break;
+	    case TRI1:
+	      simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], NULL);
+	      simp->Num = Num ;
+	      simp->iEnt = Elementary ;
+	      Tree_Insert(s->Simplexes, &simp) ;
+	      Tree_Insert(M->Simplexes, &simp) ;
+	      break;
+	    case QUA1:
+	      simp = Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
+	      simp->Num = Num ;
+	      simp->iEnt = Elementary ;
+	      Tree_Insert(s->Simplexes, &simp) ;
+	      Tree_Insert(M->Simplexes, &simp) ;
+	      break;
+	    case TET1:
+	      simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
+	      simp->Num = Num ;
+	      simp->iEnt = Elementary ;
+	      Tree_Insert(v->Simplexes, &simp) ;
+	      Tree_Insert(M->Simplexes, &simp) ;
+	      break;
+	    case HEX1:
+	      hex = Create_Hexahedron(vertsp[0], vertsp[1], vertsp[2], vertsp[3],
+				      vertsp[4], vertsp[5], vertsp[6], vertsp[7]);
+	      hex->Num = Num ;
+	      hex->iEnt = Elementary ;
+	      Tree_Insert(v->Hexahedra, &hex) ;
+	      break;
+	    case PRI1:
+	      pri = Create_Prism(vertsp[0], vertsp[1], vertsp[2], 
+				 vertsp[3], vertsp[4], vertsp[5]);
+	      pri->Num = Num ;
+	      pri->iEnt = Elementary ;
+	      Tree_Insert(v->Prisms, &pri) ;
+	      break;
+	    case PNT:
+	      break;
+	    default :
+	      Msg(WARNING, "Unknown Type of Element in Read_Mesh");
+	      break;
+	    }
+	  }
       }
 
     }

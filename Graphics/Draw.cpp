@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.16 2001-01-10 10:06:17 geuzaine Exp $
+// $Id: Draw.cpp,v 1.17 2001-01-17 21:26:24 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -145,11 +145,12 @@ void InitShading(void){
   }
 
   /* simple color commands will automatically create appropriate materials */
-  glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+  glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
   glEnable(GL_COLOR_MATERIAL);
 
   /* let's add some shininess to all these automatically created materials */
   glMaterialf(GL_FRONT, GL_SHININESS, 40.);
+  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
   specular[0] = CTX.shine;
   specular[1] = CTX.shine;
   specular[2] = CTX.shine;

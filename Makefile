@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.39 2001-01-13 15:41:35 geuzaine Exp $
+# $Id: Makefile,v 1.40 2001-01-17 21:26:24 remacle Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -29,6 +29,7 @@ MESA_MOTIF_STATIC_LIB = $(HOME)/SOURCES/Mesa-static/lib/libGLw.a
                    -L/usr/X11R6/lib -lXt -lX11 -lXext 
         FLTK_LIB = -L$(HOME)/SOURCES/fltk/lib -lfltk\
                    -L/usr/X11R6/lib -lXext -lX11
+
       THREAD_LIB = -L/usr/lib -lpthread
         JPEG_LIB = jpeg/libjpeg.a
 
@@ -256,7 +257,7 @@ linux-rpm: tag compile_little_endian_2952 link_mesa_2952 strip_bin compress_bin
 
 ibm: tag compile_big_endian link_mesa strip_bin compress_bin
 
-sun: tag compile_big_endian link_mesa strip_bin compress_bin
+sun: tag compile_big_endian link_opengl strip_bin compress_bin
 
 hp: tag compile_big_endian link_hp strip_bin compress_bin
 

@@ -44,13 +44,15 @@
 #define MSH_SURF_TORUS       1399
 #define MSH_SURF_CONE        1499
 #define MSH_SURF_TRIMMED     1599
-#define MSH_SURF_STL         1599
+#define MSH_SURF_STL         1699
+#define MSH_SURF_DISCRETE    1799
 
 #define MSH_VOLUME                   14
 #define MSH_SEGM_BSPLN       15
 #define MSH_SEGM_URBS        16
 #define MSH_SEGM_NURBS       17
 #define MSH_SEGM_BEZIER      18
+#define MSH_SEGM_DISCRETE    19
 
 #define MSH_PHYSICAL_POINT   300
 #define MSH_PHYSICAL_LINE    310

@@ -145,6 +145,15 @@ public :
     int format, nb_smoothing, algo, degree;
     int point_insertion, speed_max, min_circ_points;
     double normals, tangents, explode;
+    int use_cut_plane;
+    double cut_planea,cut_planeb,cut_planec,cut_planed;
+    double evalCutPlane (double x, double y, double z)
+    {
+      double val = cut_planea * x + 
+	cut_planeb * y + 
+	cut_planec * z + cut_planed; 
+      return val;
+    }
   } mesh;
 
   // post processing options 

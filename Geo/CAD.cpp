@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.15 2001-01-12 13:28:57 geuzaine Exp $
+// $Id: CAD.cpp,v 1.16 2001-01-17 21:26:24 remacle Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -9,6 +9,7 @@
 #include "Const.h"
 #include "Create.h"
 #include "CAD.h"
+#include "Edge.h"
 #include "Context.h"
                                     
 extern Mesh      *THEM;
