@@ -104,7 +104,8 @@ Function CheeseHole
 
 // Arrays of variables can be manipulated in the same way as classical
 // variables. Warning: accessing an uninitialized element in an array
-// will produce an unpredictable result.
+// will produce an unpredictable result. Note that whole arrays can
+// also be initialized on the fly (e.g. l[]={1,2,7} is valid).
 
   theloops[t] = newreg ; 
 
