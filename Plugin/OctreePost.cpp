@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.5 2004-04-24 05:27:06 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.6 2004-04-24 05:53:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -275,17 +275,17 @@ bool OctreePost::searchVector(double x,
     if(timestep < 0){
       for (int i = 0; i < theView->NbTimeStep; ++i){
 	values[3*i] = 
-	  V[9*i+3]   * U[0] + 
-	  V[9*i+6]   * U[1] + 
-	  V[9*i+0]   * (1-U[0]-U[1]); 
+	  V[9*i+3] * U[0] + 
+	  V[9*i+6] * U[1] + 
+	  V[9*i+0] * (1-U[0]-U[1]); 
 	values[3*i+1] = 
-	  V[9*i+4]   * U[0] + 
-	  V[9*i+7]   * U[1] + 
-	  V[9*i+1]   * (1-U[0]-U[1]); 
+	  V[9*i+4] * U[0] + 
+	  V[9*i+7] * U[1] + 
+	  V[9*i+1] * (1-U[0]-U[1]); 
 	values[3*i+2] = 
-	  V[9*i+5]   * U[0] + 
-	  V[9*i+8]   * U[1] + 
-	  V[9*i+2]   * (1-U[0]-U[1]); 
+	  V[9*i+5] * U[0] + 
+	  V[9*i+8] * U[1] + 
+	  V[9*i+2] * (1-U[0]-U[1]); 
       }
     }
     else{
@@ -325,38 +325,38 @@ bool OctreePost::searchVector(double x,
     if(timestep < 0){
       for (int i=0;i<theView->NbTimeStep;++i){
 	values[3*i] = 
-	  V[12*i+3]   * U[0] + 
-	  V[12*i+6]   * U[1] + 
-	  V[12*i+9]   * U[2] + 
-	  V[12*i+0]   * (1-U[0]-U[1]-U[2]); 
+	  V[12*i+3]  * U[0] + 
+	  V[12*i+6]  * U[1] + 
+	  V[12*i+9]  * U[2] + 
+	  V[12*i+0]  * (1-U[0]-U[1]-U[2]); 
 	values[3*i+1] = 
-	  V[12*i+4]   * U[0] + 
-	  V[12*i+9]   * U[1] + 
-	  V[12*i+10]  * U[2] + 
-	  V[12*i+1]   * (1-U[0]-U[1]-U[2]); 
+	  V[12*i+4]  * U[0] + 
+	  V[12*i+9]  * U[1] + 
+	  V[12*i+10] * U[2] + 
+	  V[12*i+1]  * (1-U[0]-U[1]-U[2]); 
 	values[3*i+2] = 
-	  V[12*i+5]   * U[0] + 
-	  V[12*i+7]   * U[1] + 
-	  V[12*i+11]  * U[2] + 
-	  V[12*i+2]   * (1-U[0]-U[1]-U[2]); 
+	  V[12*i+5]  * U[0] + 
+	  V[12*i+7]  * U[1] + 
+	  V[12*i+11] * U[2] + 
+	  V[12*i+2]  * (1-U[0]-U[1]-U[2]); 
       }
     }
     else{
       values[0] = 
-	V[12*timestep+3]   * U[0] + 
-	V[12*timestep+6]   * U[1] + 
-	V[12*timestep+9]   * U[2] + 
-	V[12*timestep+0]   * (1-U[0]-U[1]-U[2]); 
+	V[12*timestep+3]  * U[0] + 
+	V[12*timestep+6]  * U[1] + 
+	V[12*timestep+9]  * U[2] + 
+	V[12*timestep+0]  * (1-U[0]-U[1]-U[2]); 
       values[1] = 
-	V[12*timestep+4]   * U[0] + 
-	V[12*timestep+7]   * U[1] + 
-	V[12*timestep+10]  * U[2] + 
-	V[12*timestep+1 ]  * (1-U[0]-U[1]-U[2]); 
+	V[12*timestep+4]  * U[0] + 
+	V[12*timestep+7]  * U[1] + 
+	V[12*timestep+10] * U[2] + 
+	V[12*timestep+1 ] * (1-U[0]-U[1]-U[2]); 
       values[2] = 
-	V[12*timestep+5 ]  * U[0] + 
-	V[12*timestep+8 ]  * U[1] + 
-	V[12*timestep+11]  * U[2] + 
-	V[12*timestep+2 ]  * (1-U[0]-U[1]-U[2]); 
+	V[12*timestep+5 ] * U[0] + 
+	V[12*timestep+8 ] * U[1] + 
+	V[12*timestep+11] * U[2] + 
+	V[12*timestep+2 ] * (1-U[0]-U[1]-U[2]); 
     }
     return true;
   } 
@@ -419,7 +419,7 @@ bool OctreePost::searchScalar(double x,
     }
     else{
       values[0] = 
-	V[3*timestep+1]   * U[0] + 
+	V[3*timestep+1] * U[0] + 
 	V[3*timestep+2] * U[1] + 
 	V[3*timestep+3] * U[2] + 
 	V[3*timestep  ] * (1-U[0]-U[1]-U[2]); 
