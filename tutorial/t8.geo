@@ -52,7 +52,7 @@ View[2].AutoPosition = 0;
 View[2].PositionX = 85;
 View[2].PositionY = 50;
 View[2].Width = 200;
-View[2].Height = 150;
+View[2].Height = 130;
 
 View[3].Type = 3;
 View[3].RangeType = 2;

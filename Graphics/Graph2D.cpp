@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.20 2002-10-12 19:41:13 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.21 2002-10-19 18:56:12 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -390,24 +390,37 @@ void Draw_Graph2D(void){
   }
 }
 
-// 2D text strings
+// Text strings
 
-// T2(x,y,style){"str","str",...};
-// T2D : x,y,style,index,x,y,style,index,...
-// T2C : string\0,string\0,string\0,string\0,...
+// Parser format: T2(x,y,style){"str","str",...};
+// T2D list of double : x,y,style,index,x,y,style,index,...
+// T2C list of chars  : string\0,string\0,string\0,string\0,...
 
-// T3(x,y,z,style){"str","str",...};
-// T3D : x,y,z,style,index,x,y,z,style,index,...
-// T3C : string\0,string\0,string\0,string\0,...
+// Parser format: T3(x,y,z,style){"str","str",...};
+// T3D list of double: x,y,z,style,index,x,y,z,style,index,...
+// T3C list of chars: string\0,string\0,string\0,string\0,...
 
 void Draw_Text2D3D(int dim, int timestep, int nb, List_T *td, List_T *tc){
-  int j,k,l,nbd,index,stop;
+  int j,k,l,nbd,index,nbchar;
   char *c;
   double *d1, *d2, style, x, y, z;
 
   if(dim==2) nbd=4;
   else if(dim==3) nbd=5;
   else return;
+
+#if 0 //debug
+  if(nb){
+    for(j=0; j<List_Nbr(tc); j++){
+      c = (char*)List_Pointer(tc, j);
+      if(*c == '\0')
+	printf("|");
+      else
+	printf("%c", *c);
+    }
+    printf("\n");
+  }
+#endif
 
   for(j=0; j<nb; j++){
     d1 = (double*)List_Pointer(td, j*nbd);
@@ -420,8 +433,8 @@ void Draw_Text2D3D(int dim, int timestep, int nb, List_T *td, List_T *tc){
       z = 0.;
       style = d1[2];
       index = (int)d1[3];
-      if(d2) stop=(int)d2[3];
-      else stop=List_Nbr(tc)-index;
+      if(d2) nbchar=(int)d2[3]-index;
+      else nbchar=List_Nbr(tc)-index;
     }
     else{
       x = d1[0];
@@ -429,16 +442,16 @@ void Draw_Text2D3D(int dim, int timestep, int nb, List_T *td, List_T *tc){
       z = d1[2];
       style = d1[3];
       index = (int)d1[4];
-      if(d2) stop=(int)d2[4];
-      else stop=List_Nbr(tc)-index;
+      if(d2) nbchar=(int)d2[4]-index;
+      else nbchar=List_Nbr(tc)-index;
     }
     glRasterPos3d(x,y,z);
     c = (char*)List_Pointer(tc, index);
     k=l=0;
-    while(k<stop && l!=timestep){
+    while(k<nbchar && l!=timestep){
       if(c[k++]=='\0') l++;
     }
-    if(k<stop && l==timestep)
+    if(k<nbchar && l==timestep)
       Draw_String(&c[k]);
     else
       Draw_String(c);

@@ -103,4 +103,9 @@ SP(0.05,0.3,0){0,0,0,0,0};
 };
 View "e" {
 SP(0.05,0.2,0){1939799.2,-3879808.7,1939891.9,1939888.6,-3880387.9};
+T2(10,-12,0){"File created on Fri Oct 18 23:50:20 2002"};
+T2(220,-12,0){"First time step", "Second time step", "Third time step",
+              "Fourth time step", "Last time step!"};
+T3(0.1,0,0,0){"This is a 3D string, defined in model coordinates"};
+T3(0.1,0.3,0,0){"Test 1","Test 2","Test 3","Test 4","Test 5","Test 6","Test 7"};
 };
