@@ -71,10 +71,10 @@ Characteristic Length {tmp[0], 22, 2, 3, 16, 12} = lc * 4;
 // following volumes don't have holes and thus consist of single
 // surface loops:
 
-Surface Loop(145) = {121,11,131,135,139,144};
+Surface Loop(145) = {-121,11,-131,-135,-139,-144};
 Volume(146) = {145};
 
-Surface Loop(146) = {121,6,109,113,117,122};
+Surface Loop(146) = {121,-6,109,113,117,122};
 Volume(147) = {146};
 
 // To save all the tetrahedra discretizing the volumes 146 and 147

@@ -1,0 +1,20 @@
+#
+# Machine dependent make include file for gcc
+# 
+#
+CC=gcc
+CPLUSPLUS=$(CC)
+AR=ar
+LINK=$(CC)
+MAKE=make
+RM=rm
+RANLIB=ranlib
+#
+# Machine dependent flags:
+#
+CFLAGS2 =
+CPLUSPLUSFLAGS2 = -O2 -I/usr/X11R6/include -DLINUX -DOPENGL 
+#
+LINKFLAGS2 =  -L/usr/openwin/lib -L/usr/X11R6/lib
+
+SYSLIB2 = -lstdc++

@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.43 2004-06-20 23:25:31 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.44 2004-06-26 17:58:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -46,8 +46,6 @@ extern Mesh *THEM;
 char *TheFileNameTab[MAX_OPEN_FILES];
 char *TheBgmFileName = NULL, *TheOptString = NULL;
 
-// *INDENT-OFF*
-
 char gmsh_progname[]  = "Gmsh, a 3D mesh generator with pre- and post-processing facilities" ;
 char gmsh_copyright[] = "Copyright (C) 1997-2004 Christophe Geuzaine and Jean-Francois Remacle";
 char gmsh_version[]   = "Version        : " ;
@@ -74,7 +72,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -saveall              save all elements (discard physical group definitions)");
   Msg(DIRECT, "  -o file               specify mesh output file name");
   Msg(DIRECT, "  -format msh|unv|gref  set output mesh format (default: msh)");
-  Msg(DIRECT, "  -algo iso|tri|aniso   select 2D mesh algorithm (default: iso)");
+  Msg(DIRECT, "  -algo iso|tri|aniso   select mesh algorithm (default: iso)");
   Msg(DIRECT, "  -smooth int           set mesh smoothing (default: 0)");
   Msg(DIRECT, "  -order int            set mesh order (default: 1)");
   Msg(DIRECT, "  -scale float          set global scaling factor (default: 1.0)");
@@ -125,6 +123,9 @@ char *Get_BuildOptions(void)
 #if defined(HAVE_TRIANGLE)
     strcat(opt, "TRIANGLE ");
 #endif
+#if defined(HAVE_NETGEN)
+    strcat(opt, "NETGEN ");
+#endif
 #if defined(HAVE_LIBJPEG)
     strcat(opt, "JPEG ");
 #endif
@@ -141,8 +142,6 @@ char *Get_BuildOptions(void)
   }
   return opt;
 }
-
-// *INDENT-ON*
 
 void Get_Options(int argc, char *argv[], int *nbfiles)
 {
@@ -402,6 +401,8 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
             CTX.mesh.algo2d = DELAUNAY_TRIANGLE;
           else if(!strncmp(argv[i], "aniso", 5))
             CTX.mesh.algo2d = DELAUNAY_ANISO;
+          else if(!strncmp(argv[i], "netgen", 6))
+            CTX.mesh.algo3d = FRONTAL_NETGEN;
           else {
             fprintf(stderr, ERROR_STR "Unknown mesh algorithm\n");
             exit(1);

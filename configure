@@ -852,6 +852,7 @@ Optional Features:
   --enable-system-menubar use the system menu bar on MacOS X (default=no)
   --enable-parallel       enable parallel version (default=no)
   --enable-triangle       compile Triangle if available (default=yes)
+  --enable-netgen         compile Netgen if available (default=yes)
   --enable-matheval       compile MathEval if available (default=yes)
   --enable-jpeg           enable JPEG support (default=yes)
   --enable-z              enable ZLIB support (default=yes)
@@ -1353,6 +1354,11 @@ fi;
 # Check whether --enable-triangle or --disable-triangle was given.
 if test "${enable_triangle+set}" = set; then
   enableval="$enable_triangle"
+
+fi;
+# Check whether --enable-netgen or --disable-netgen was given.
+if test "${enable_netgen+set}" = set; then
+  enableval="$enable_netgen"
 
 fi;
 # Check whether --enable-matheval or --disable-matheval was given.
@@ -3539,6 +3545,58 @@ else
   fi
 fi
 
+
+echo "$as_me:$LINENO: checking for ./Netgen/libsrc/meshing/meshclass.cpp" >&5
+echo $ECHO_N "checking for ./Netgen/libsrc/meshing/meshclass.cpp... $ECHO_C" >&6
+if test "${ac_cv_file___Netgen_libsrc_meshing_meshclass_cpp+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "./Netgen/libsrc/meshing/meshclass.cpp"; then
+  ac_cv_file___Netgen_libsrc_meshing_meshclass_cpp=yes
+else
+  ac_cv_file___Netgen_libsrc_meshing_meshclass_cpp=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file___Netgen_libsrc_meshing_meshclass_cpp" >&5
+echo "${ECHO_T}$ac_cv_file___Netgen_libsrc_meshing_meshclass_cpp" >&6
+if test $ac_cv_file___Netgen_libsrc_meshing_meshclass_cpp = yes; then
+  NETGEN="yes"
+else
+  NETGEN="no"
+fi
+
+if test "x${NETGEN}" = "xyes"; then
+  if test "x$enable_netgen" != "xno"; then
+     GMSH_DIRS="${GMSH_DIRS} Netgen"
+     GMSH_LIBS="${GMSH_LIBS} -lGmshNetgen"
+     FLAGS="-DHAVE_NETGEN ${FLAGS}"
+     echo "********************************************************************"
+     echo "You are building a version of Gmsh that contains Joachim Schoberl's"
+     echo "Netgen as an alternative 3D mesh generator. Netgen is distributed"
+     echo "under the GNU LGPL: see ./Netgen/COPYING.LIB for more info."
+     echo "To disable Netgen, run configure again with the --disable-netgen"
+     echo "option."
+     echo "********************************************************************"
+  fi
+else
+  if test "x$enable_netgen" != "xno"; then
+     echo "********************************************************************"
+     echo "If you want to use Joachim Schoberl's Netgen as an alternative "
+     echo "3D mesh generator, please download Netgen from the project's"
+     echo "web site at http://www.hpfem.jku.at/netgen/, unpack the archive"
+     echo "and move the libsrc subdirectory in the ./Netgen subdirectory. Then"
+     echo "run ./configure again."
+     echo "Please note that by doing so, you agree with Netgen's licensing"
+     echo "requirements stated in ./Netgen/COPYING.LIB."
+     echo "********************************************************************"
+  fi
+fi
+
+
 echo "$as_me:$LINENO: checking for ./MathEval/matheval.cpp" >&5
 echo $ECHO_N "checking for ./MathEval/matheval.cpp... $ECHO_C" >&6
 if test "${ac_cv_file___MathEval_matheval_cpp+set}" = set; then
@@ -3569,6 +3627,7 @@ if test "x${MATHEVAL}" = "xyes"; then
      FLAGS="-DHAVE_MATH_EVAL ${FLAGS}"
   fi
 fi
+
 
 if test "x$enable_gsl" != "xno"; then
   if test "x${GSL_PREFIX}" != "x"; then

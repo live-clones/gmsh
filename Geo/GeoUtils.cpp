@@ -1,4 +1,4 @@
-// $Id: GeoUtils.cpp,v 1.2 2004-06-26 05:07:47 geuzaine Exp $
+// $Id: GeoUtils.cpp,v 1.3 2004-06-26 17:58:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -140,7 +140,7 @@ void setVolumeSurfaces(Volume *v, List_T * loops)
         }
         else{
           List_Add(v->Surfaces, &s);
-	  int tmp = (s->Num > 0) ? 1 : -1;
+	  int tmp = (is > 0) ? 1 : -1;
 	  List_Add(v->SurfacesOrientations, &tmp);
 	}
       }

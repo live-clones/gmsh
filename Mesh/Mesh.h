@@ -465,11 +465,12 @@ int MeshCylindricalSurface(Surface * s);
 int MeshParametricSurface(Surface * s);
 int MeshEllipticSurface(Surface * sur);
 
-int  AlgorithmeMaillage2DAnisotropeModeJF(Surface * s);
+int AlgorithmeMaillage2DAnisotropeModeJF(Surface * s);
 void Maillage_Automatique_VieuxCode(Surface * pS, Mesh * m, int ori);
-int  Mesh_Shewchuk(Surface *s);
+int Mesh_Shewchuk(Surface *s);
+int Mesh_Netgen(Volume * v);
 
-int  Calcule_Contours(Surface * s);
+int Calcule_Contours(Surface * s);
 void Link_Simplexes(List_T * Sim, Tree_T * Tim);
 void Calcule_Z(void *data, void *dum);
 void Calcule_Z_Plan(void *data, void *dum);
@@ -482,7 +483,7 @@ void ReOrientSurfaceMesh(Surface *s);
 double Lc_XYZ(double X, double Y, double Z, Mesh * m);
 void ActionLiss(void *data, void *dummy);
 void ActionLissSurf(void *data, void *dummy);
-int  Recombine(Tree_T *TreeAllVert, Tree_T *TreeAllSimp, Tree_T *TreeAllQuad,
+int Recombine(Tree_T *TreeAllVert, Tree_T *TreeAllSimp, Tree_T *TreeAllQuad,
 		double a);
 void ApplyLcFactor(Mesh *M);
 void ExportLcFieldOnVolume(Mesh * M, char *filename);

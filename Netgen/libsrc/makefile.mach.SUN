@@ -1,0 +1,16 @@
+#
+# Machine dependent make include file
+# 
+CC=CC
+CPLUSPLUS=$(CC)
+AR=ar
+LINK=$(CC)
+MAKE=make -k
+RM=rm
+RANLIB=ranlib
+#
+CFLAGS2 =
+#
+CPLUSPLUSFLAGS2 =  -fast -O2 -I/usr/openwin/share/include 
+LINKFLAGS2 = -L/usr/openwin/lib 
+

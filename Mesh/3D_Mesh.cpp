@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.60 2004-05-26 00:33:37 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.61 2004-06-26 17:58:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -897,8 +897,12 @@ void Maillage_Volume(void *data, void *dum)
   }
   else if(MeshTransfiniteVolume(v)) {
   }
-  else if(v->Typ == 99999) {
-
+  else if(v->Typ != 99999){
+    if (Mesh_Netgen(v)) {
+    }
+  }
+  else if((v->Typ == 99999) && (CTX.mesh.algo3d !=FRONTAL_NETGEN)) {
+    
     Simplexes_New = List_Create(10, 10, sizeof(Simplex *));
     Simplexes_Destroyed = List_Create(10, 10, sizeof(Simplex *));
 
@@ -910,6 +914,7 @@ void Maillage_Volume(void *data, void *dum)
     POINTS_LIST = List_Create(100, 100, sizeof(Vertex *));
     LOCAL->Simplexes = v->Simplexes;
     LOCAL->Vertices = v->Vertices;
+    
 
     for(i = 0; i < List_Nbr(v->Surfaces); i++) {
       List_Read(v->Surfaces, i, &s);

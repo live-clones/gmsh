@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.65 2004-05-29 10:11:12 geuzaine Exp $
+# $Id: Makefile,v 1.66 2004-06-26 17:58:14 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,8 @@ include ../variables
 
 LIB     = ../lib/libGmshMesh.a
 INCLUDE = -I../Numeric -I../NR -I../Common -I../DataStr -I../Geo -I../Mesh\
-          -I../Graphics -I../Parser -I../Fltk -I../Triangle
+          -I../Graphics -I../Parser -I../Fltk -I../Triangle\
+          -I../Netgen/libsrc/include  -I../Netgen/libsrc/interface
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = 1D_Mesh.cpp \
@@ -51,6 +52,7 @@ SRC = 1D_Mesh.cpp \
         3D_Coherence.cpp \
         3D_Divide.cpp \
         3D_Bricks.cpp \
+        3D_Mesh_Netgen.cpp \
       MeshQuality.cpp \
       Create.cpp \
       Generator.cpp \
@@ -84,7 +86,10 @@ ${LIB}: ${OBJ}
 
 # Don't optimize 3D_Mesh: it sometimes mysteriously crashes on Linux
 3D_Mesh.o:
-	${CXX} ${FLAGS} ${INCLUDE} -c $<
+	${CXX} ${OPTIM} ${FLAGS} ${INCLUDE} -c $<
+
+3D_Mesh_Netgen.o:
+	${CXX} ${OPTIM} ${FLAGS} ${INCLUDE} -c $<
 
 clean:
 	rm -f *.o
@@ -110,7 +115,7 @@ depend:
   ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
   ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
   ../Mesh/STL.h ../Common/VertexArray.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  Utils.h Create.h 2D_Mesh.h ../Common/Context.h
+  Utils.h Create.h 2D_Mesh.h ../Common/Context.h Interpolation.h
 2D_Transfinite.o: 2D_Transfinite.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Geo/Geo.h Mesh.h Vertex.h \
@@ -241,6 +246,11 @@ depend:
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
   Vertex.h Element.h Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h STL.h \
   ../Common/VertexArray.h Metric.h Matrix.h
+3D_Mesh_Netgen.o: 3D_Mesh_Netgen.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Element.h Simplex.h \
+  Face.h Edge.h ../Geo/ExtrudeParams.h STL.h ../Common/VertexArray.h \
+  Metric.h Matrix.h ../Numeric/Numeric.h ../Common/Context.h
 MeshQuality.o: MeshQuality.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
