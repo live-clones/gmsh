@@ -1,4 +1,4 @@
-GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2003-01-24 23:13:36 $)
+GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2003-01-26 18:25:00 $)
 
 1. GENERAL
 ==========
@@ -30,7 +30,7 @@ mailing list (<gmsh@geuz.org>) on this site.
 
 2.1) Which OSes does Gmsh run on?
 
-Windows 95/98/NT/2000, Linux (with glibc > 2.1), Mac OS X, Compaq
+Windows 95/98/NT/2000/XP, Linux (with glibc > 2.1), Mac OS X, Compaq
 Tru64 Unix (aka OSF1), Sun OS, IBM AIX, SGI IRIX, HP-UX.
 
 2.2) Are there additional requirements to run Gmsh?
