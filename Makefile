@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.204 2002-04-13 05:18:19 geuzaine Exp $
+# $Id: Makefile,v 1.205 2002-04-13 05:28:27 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -554,8 +554,8 @@ cygwin-laptopjf_tag: tag cygwin-laptopjf
 #
 compile-sun: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
-           "CXX=$(CXX)" \
-           "CC=$(CC)" \
+           "CXX=g++" \
+           "CC=gcc" \
            "OPT_FLAGS=-O2" \
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_FLTK -D_NODLL" \
@@ -563,7 +563,7 @@ compile-sun: initialtag
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
 link-sun:
-	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
+	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                  -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl\
                  -L$(HOME)/SOURCES/Mesa-3.1/lib -lGLU -lGL -lfltk\
                  -lX11 -lXext -lsocket -lnsl -ldl -lm
@@ -572,15 +572,15 @@ distrib-sun:
 	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
-           "CXX=$(CXX)" \
-           "CC=$(CC)" \
+           "CXX=g++" \
+           "CC=gcc" \
            "OPT_FLAGS=-O2" \
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_BLACKBOX -D_NODLL" \
            "GL_INCLUDE=" \
            "GUI_INCLUDE=" \
         ); done
-	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
+	g++ -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
 	make clean
 	make sun
 	make distrib
