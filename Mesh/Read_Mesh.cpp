@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.72 2004-05-25 04:10:05 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.73 2004-05-25 23:16:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -242,15 +242,15 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	  case TRI1: Nbr_Nodes = 3; break;
 	  case TRI2: Nbr_Nodes = 6; break;
 	  case QUA1: Nbr_Nodes = 4; break;
-	  case QUA2: Nbr_Nodes = 8; break;
+	  case QUA2: Nbr_Nodes = 8 + 1; break;
 	  case TET1: Nbr_Nodes = 4; break;
 	  case TET2: Nbr_Nodes = 10; break;
 	  case HEX1: Nbr_Nodes = 8; break;
-	  case HEX2: Nbr_Nodes = 20; break;
+	  case HEX2: Nbr_Nodes = 20 + 6; break;
 	  case PRI1: Nbr_Nodes = 6; break;
-	  case PRI2: Nbr_Nodes = 15; break;
+	  case PRI2: Nbr_Nodes = 15 + 3; break;
 	  case PYR1: Nbr_Nodes = 5; break;
-	  case PYR2: Nbr_Nodes = 13; break;
+	  case PYR2: Nbr_Nodes = 13 + 1; break;
 	  }
 	}
 
@@ -330,8 +330,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           quad->iEnt = Elementary;
           quad->iPart = Add_MeshPartition(Partition, M);
 	  if(Type == QUA2){
-	    quad->VSUP = (Vertex **) Malloc(4 * sizeof(Vertex *));
-	    for(i = 0; i < 4; i++){
+	    quad->VSUP = (Vertex **) Malloc((4 + 1) * sizeof(Vertex *));
+	    for(i = 0; i < 4 + 1; i++){
 	      quad->VSUP[i] = vertsp[i+4];
 	      quad->VSUP[i]->Degree = 2;
 	    }
@@ -371,8 +371,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           hex->iEnt = Elementary;
           hex->iPart = Add_MeshPartition(Partition, M);
 	  if(Type == HEX2){
-	    hex->VSUP = (Vertex **) Malloc(12 * sizeof(Vertex *));
-	    for(i = 0; i < 12; i++){
+	    hex->VSUP = (Vertex **) Malloc((12 + 6) * sizeof(Vertex *));
+	    for(i = 0; i < 12 + 6; i++){
 	      hex->VSUP[i] = vertsp[i+8];
 	      hex->VSUP[i]->Degree = 2;
 	    }
@@ -392,8 +392,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           pri->iEnt = Elementary;
           pri->iPart = Add_MeshPartition(Partition, M);
 	  if(Type == PRI2){
-	    pri->VSUP = (Vertex **) Malloc(9 * sizeof(Vertex *));
-	    for(i = 0; i < 9; i++){
+	    pri->VSUP = (Vertex **) Malloc((9 + 3) * sizeof(Vertex *));
+	    for(i = 0; i < 9 + 3; i++){
 	      pri->VSUP[i] = vertsp[i+6];
 	      pri->VSUP[i]->Degree = 2;
 	    }
@@ -413,8 +413,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           pyr->iEnt = Elementary;
           pyr->iPart = Add_MeshPartition(Partition, M);
 	  if(Type == PYR2){
-	    pyr->VSUP = (Vertex **) Malloc(8 * sizeof(Vertex *));
-	    for(i = 0; i < 8; i++){
+	    pyr->VSUP = (Vertex **) Malloc((8 + 1) * sizeof(Vertex *));
+	    for(i = 0; i < 8 + 1; i++){
 	      pyr->VSUP[i] = vertsp[i+5];
 	      pyr->VSUP[i]->Degree = 2;
 	    }

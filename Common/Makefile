@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.55 2004-04-24 03:51:59 geuzaine Exp $
+# $Id: Makefile,v 1.56 2004-05-25 23:16:25 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -62,7 +62,7 @@ depend:
 Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Numeric/Numeric.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h Context.h \
   Options.h DefaultOptions.h Trackball.h
@@ -74,15 +74,15 @@ Options.o: Options.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Common/ColorTable.h ../DataStr/List.h Gmsh.h ../DataStr/Malloc.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h GmshUI.h \
   ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h ../Graphics/Draw.h Context.h \
-  ../Fltk/Solvers.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
+  ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h ../Graphics/Draw.h \
+  Context.h ../Fltk/Solvers.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
   ../Fltk/Colorbar_Window.h
 CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   GmshUI.h GmshVersion.h CommandLine.h ../Numeric/Numeric.h Context.h \
   Options.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   Views.h ColorTable.h ../Parser/OpenFile.h ../Parser/Parser.h
 Timer.o: Timer.cpp
@@ -92,7 +92,7 @@ ColorTable.o: ColorTable.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
 Visibility.o: Visibility.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   ../Parser/Parser.h Visibility.h
 Trackball.o: Trackball.cpp Trackball.h

@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.51 2004-05-25 04:10:05 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.52 2004-05-25 23:16:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -202,7 +202,7 @@ static void _msh_print_quadrangle(void *a, void *b)
   nbn = 4;
   if(q->VSUP) {
     type = QUADRANGLE_2;
-    nbs = 4;
+    nbs = 4 + 1;
   }
   else
     type = QUADRANGLE;
@@ -226,8 +226,11 @@ static void _msh_print_quadrangle(void *a, void *b)
   else {
     for(i = 0; i < nbn; i++)
       fprintf(MSHFILE, " %d", q->V[nbn - i - 1]->Num);
-    for(i = 0; i < nbs; i++)
-      fprintf(MSHFILE, " %d", q->VSUP[nbs - i - 1]->Num);
+    if(nbs){
+      for(i = 0; i < nbs - 1; i++)
+	fprintf(MSHFILE, " %d", q->VSUP[nbs - i - 2]->Num);
+      fprintf(MSHFILE, " %d", q->VSUP[nbs - 1]->Num);
+    }
   }
 
   fprintf(MSHFILE, "\n");
@@ -250,7 +253,7 @@ static void _msh_print_hexahedron(void *a, void *b)
   nbn = 8;
   if(h->VSUP) {
     type = HEXAHEDRON_2;
-    nbs = 12;
+    nbs = 12 + 6;
   }
   else
     type = HEXAHEDRON;
@@ -290,7 +293,7 @@ static void _msh_print_prism(void *a, void *b)
   nbn = 6;
   if(p->VSUP) {
     type = PRISM_2;
-    nbs = 9;
+    nbs = 9 + 3;
   }
   else {
     type = PRISM;
@@ -331,7 +334,7 @@ static void _msh_print_pyramid(void *a, void *b)
   nbn = 5;
   if(p->VSUP) {
     type = PYRAMID_2;
-    nbs = 8;
+    nbs = 8 + 1;
   }
   else {
     type = PYRAMID;
@@ -743,7 +746,7 @@ static void _unv_process_2D_elements(Mesh *m)
       for(int j = 0; j < List_Nbr(Elements); j++) {
         List_Read(Elements, j, &qx);
 	if(qx->VSUP)
-	  _unv_print_record(abs(qx->Num), QUAD, s->Num, 4, 4, &qx->V[0], qx->VSUP);
+	  _unv_print_record(abs(qx->Num), QUAD, s->Num, 4, 4+1, &qx->V[0], qx->VSUP);
 	else
 	  _unv_print_record(abs(qx->Num), QUAD2, s->Num, 4, 0, &qx->V[0], NULL);
       }
@@ -797,7 +800,7 @@ static void _unv_process_3D_elements(Mesh *m)
     for(int j = 0; j < List_Nbr(Elements); j++) {
       List_Read(Elements, j, &px);
       if(px->VSUP)
-	_unv_print_record(ELEMENT_ID++, WEDGE, v->Num, 6, 9, &px->V[0], px->VSUP);
+	_unv_print_record(ELEMENT_ID++, WEDGE, v->Num, 6, 9+3, &px->V[0], px->VSUP);
       else
 	_unv_print_record(ELEMENT_ID++, WEDGE, v->Num, 6, 0, &px->V[0], NULL);
     }
@@ -808,7 +811,7 @@ static void _unv_process_3D_elements(Mesh *m)
     for(int j = 0; j < List_Nbr(Elements); j++) {
       List_Read(Elements, j, &hx);
       if(hx->VSUP)
-	_unv_print_record(ELEMENT_ID++, BRICK, v->Num, 8, 12, &hx->V[0], hx->VSUP);
+	_unv_print_record(ELEMENT_ID++, BRICK, v->Num, 8, 12+6, &hx->V[0], hx->VSUP);
       else
 	_unv_print_record(ELEMENT_ID++, BRICK, v->Num, 8, 0, &hx->V[0], NULL);
     }

@@ -76,8 +76,9 @@ class EdgesContainer
     void Print();
 };
 
-int compareedge(const void *a, const void *b);
-int compareedge_angle(const void *a, const void *b);
 void Free_Edge(void *a, void *b);
+
+int compareEdge(const void *a, const void *b);
+int compareEdgeAngle(const void *a, const void *b);
 
 #endif

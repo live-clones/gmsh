@@ -488,10 +488,6 @@ void Freeze_Vertex(void *a, void *b);
 void deFreeze_Vertex(void *a, void *b);
 
 double Lc_XYZ(double X, double Y, double Z, Mesh * m);
-void Degre1();
-void Degre2(int dim);
-void Degre2_Curve(void *a, void *b);
-void Degre2_Surface(void *a, void *b);
 void ActionLiss(void *data, void *dummy);
 void ActionLissSurf(void *data, void *dummy);
 int  Recombine(Tree_T *TreeAllVert, Tree_T *TreeAllSimp, Tree_T *TreeAllQuad,
@@ -499,6 +495,11 @@ int  Recombine(Tree_T *TreeAllVert, Tree_T *TreeAllSimp, Tree_T *TreeAllQuad,
 void ApplyLcFactor(Mesh *M);
 void ExportLcFieldOnVolume(Mesh * M, char *filename);
 void ExportLcFieldOnSurfaces(Mesh * M, char *filename);
+
+void Degre1();
+void Degre2(int dim);
+void Degre2_Curve(void *a, void *b);
+void Degre2_Surface(void *a, void *b);
 
 void Gamma_Maillage(Mesh * m, double *gamma, double *gammamax, double *gammamin);
 void Eta_Maillage(Mesh * m, double *gamma, double *gammamax, double *gammamin);

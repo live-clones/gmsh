@@ -1,4 +1,4 @@
-// $Id: 2D_Links.cpp,v 1.18 2004-03-03 22:26:33 geuzaine Exp $
+// $Id: 2D_Links.cpp,v 1.19 2004-05-25 23:16:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -139,7 +139,7 @@ int Conversion(DocPeek doc)
 }
 
 
-int compareEdge(const void *e1, const void *e2)
+int compareedge(const void *e1, const void *e2)
 {
   PointNumero tmp;
 
@@ -207,7 +207,7 @@ int CreateLinks(List_T * ListDelaunay, int NumDelaunay,
 
   }
 
-  qsort(ListEdges, 3 * NumDelaunay, sizeof(edge), compareEdge);
+  qsort(ListEdges, 3 * NumDelaunay, sizeof(edge), compareedge);
 
   i = 0;
 

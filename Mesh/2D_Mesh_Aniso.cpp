@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.39 2004-05-25 04:10:04 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.40 2004-05-25 23:16:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -291,7 +291,7 @@ int Intersect_Edges_2d(Edge * a, Edge * b)
   return 0;
 }
 
-int compareedgeptr(const void *a, const void *b)
+int compareEdgePtr(const void *a, const void *b)
 {
   int i1, i2, j1, j2;
   Edge *q, *w;
@@ -354,7 +354,7 @@ void Recover_Edge(Surface * s, Edge * e, EdgesContainer & Edges)
     List_Read(coquille, i, &me);
     v[0] = me->V[0];
     v[1] = me->V[1];
-    List_Suppress(coquille, &me, compareedgeptr);
+    List_Suppress(coquille, &me, compareEdgePtr);
     Edges.SwapEdge(v);
     if(Edges.Search(e->V[0], e->V[1]))
       break;

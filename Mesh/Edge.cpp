@@ -1,4 +1,4 @@
-// $Id: Edge.cpp,v 1.16 2004-05-25 04:10:05 geuzaine Exp $
+// $Id: Edge.cpp,v 1.17 2004-05-25 23:16:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -81,7 +81,7 @@ int edges_pyramid[8][2] = {
 
 int edges_non[3] = { 2, 0, 1 };
 
-int compareedge(const void *a, const void *b)
+int compareEdge(const void *a, const void *b)
 {
   int i1, i2, j1, j2;
   Edge *q, *w;
@@ -104,7 +104,7 @@ int compareedge(const void *a, const void *b)
   return 0;
 }
 
-int compareedge_angle(const void *a, const void *b)
+int compareEdgeAngle(const void *a, const void *b)
 {
   Edge *q, *w;
 
@@ -236,13 +236,13 @@ void EdgesContainer::AddEdges(Pyramid * p)
 
 EdgesContainer::EdgesContainer(Tree_T * Simplexes)
 {
-  AllEdges = Tree_Create(sizeof(Edge), compareedge);
+  AllEdges = Tree_Create(sizeof(Edge), compareEdge);
   AddSimplexTree(Simplexes);
 }
 
 EdgesContainer::EdgesContainer(List_T * Surfaces)
 {
-  AllEdges = Tree_Create(sizeof(Edge), compareedge);
+  AllEdges = Tree_Create(sizeof(Edge), compareEdge);
   Surface *s;
   for(int i = 0; i < List_Nbr(Surfaces); i++) {
     List_Read(Surfaces, i, &s);
@@ -252,7 +252,7 @@ EdgesContainer::EdgesContainer(List_T * Surfaces)
 
 EdgesContainer::EdgesContainer()
 {
-  AllEdges = Tree_Create(sizeof(Edge), compareedge);
+  AllEdges = Tree_Create(sizeof(Edge), compareEdge);
 }
 
 void EdgesContainer::AddSimplexTree(Tree_T * Simplexes)

@@ -1,4 +1,4 @@
-// $Id: 2D_Recombine.cpp,v 1.19 2004-05-25 04:10:04 geuzaine Exp $
+// $Id: 2D_Recombine.cpp,v 1.20 2004-05-25 23:16:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -34,8 +34,8 @@ static List_T *SimplexesToRemove;
 static double ALPHA;
 static int RECNUM;
 
-// Warning: these routines temporarily leave quads in the simplex
-// tree!
+// Note: these routines temporarily leave quads in the simplex tree,
+// and only remove them at the end...
 
 void addTriangles(void *a, void *b)
 {
@@ -88,7 +88,6 @@ void recombineFace(void *a, void *b)
       return;
     Tree_Add(RecSimplex, &s1);
     Tree_Suppress(TREEELM, &s1);
-    List_Add(SimplexesToRemove, &s1);
     s2->V[3] = ed->V[0];
     s2->V[2] = ed->O[0];
     s2->V[1] = ed->V[1];
@@ -118,10 +117,9 @@ int Recombine(Tree_T * Vertices, Tree_T * Simplexes, Tree_T * Quadrangles,
 
     // Initialization
     RECNUM = 0;
-    RecEdges = Tree_Create(sizeof(Edge), compareedge_angle);
+    RecEdges = Tree_Create(sizeof(Edge), compareEdgeAngle);
     RecSimplex = Tree_Create(sizeof(Simplex *), compareSimplex);
     Triangles = Tree_Create(sizeof(Simplex *), compareSimplex);
-    SimplexesToRemove = List_Create(100, 100, sizeof(Simplex*));
 
     // Recombination
     Tree_Action(Simplexes, addTriangles);
@@ -142,15 +140,9 @@ int Recombine(Tree_T * Vertices, Tree_T * Simplexes, Tree_T * Quadrangles,
 
     // Destruction
     Tree_Delete(RecEdges);
+    Tree_Action(RecSimplex, Free_Simplex);
     Tree_Delete(RecSimplex);
     Tree_Delete(Triangles);
-
-    for(int i = 0; i < List_Nbr(SimplexesToRemove); i++){
-      Simplex *s;
-      List_Read(SimplexesToRemove, i, &s); 
-      Free_Simplex(&s, NULL);
-    }
-    List_Delete(SimplexesToRemove);
 
     ntot += RECNUM;
     if(!RECNUM)

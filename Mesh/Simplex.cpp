@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.32 2004-05-25 04:10:05 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.33 2004-05-25 23:16:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -782,30 +782,3 @@ bool Simplex::SwapFace(int iFac, List_T * newsimp, List_T * delsimp)
   return true;
 }
 
-int compareFace(const void *a, const void *b)
-{
-  Face *q = (Face *) a;
-  Face *w = (Face *) b;
-
-  if(!q->V[0] || !w->V[0])
-    Msg(FATAL, "Bad face (are you trying to generate hexahedra with a Delaunay?!)");
-
-  if(q->V[0]->Num > w->V[0]->Num)
-    return (1);
-  if(q->V[0]->Num < w->V[0]->Num)
-    return (-1);
-
-  if(q->V[1]->Num > w->V[1]->Num)
-    return (1);
-  if(q->V[1]->Num < w->V[1]->Num)
-    return (-1);
-
-  if(FACE_DIMENSION == 1 || !q->V[2] || !w->V[2])
-    return 0;
-
-  if(q->V[2]->Num > w->V[2]->Num)
-    return (1);
-  if(q->V[2]->Num < w->V[2]->Num)
-    return (-1);
-  return (0);
-}

@@ -23,10 +23,7 @@
 #include "List.h"
 #include "Vertex.h"
 #include "Element.h"
-
-typedef struct {
-  Vertex *V[3];
-}Face;
+#include "Face.h"
 
 class Simplex : public Element {
  public:

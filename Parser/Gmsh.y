@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.167 2004-05-25 04:10:10 geuzaine Exp $
+// $Id: Gmsh.y,v 1.168 2004-05-25 23:16:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3208,7 +3208,6 @@ Transfinite :
         Surface *s = FindSurface(j, THEM);
 	if(s){
 	  s->Recombine = 1;
-	  s->RecombineAngle = 30.;
         }
       }
       List_Delete($3);

@@ -1,4 +1,4 @@
-// $Id: SwapEdge.cpp,v 1.15 2004-02-07 01:40:22 geuzaine Exp $
+// $Id: SwapEdge.cpp,v 1.16 2004-05-25 23:16:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -65,7 +65,7 @@ int TrouveCoquille(Simplex * s, Vertex * Ed[2],
   N = 0;
   Contour[N++] = E.V[0];
   Contour[N++] = E.V[1];
-  List_Suppress(Edges, &E, compareedge);
+  List_Suppress(Edges, &E, compareEdge);
   K = 0;
 
   while(List_Nbr(Edges)) {
@@ -76,13 +76,13 @@ int TrouveCoquille(Simplex * s, Vertex * Ed[2],
       if(!compareVertex(&Contour[N - 1], &E.V[0]) &&
          compareVertex(&Contour[N - 2], &E.V[1])) {
         Contour[N++] = E.V[1];
-        List_Suppress(Edges, &E, compareedge);
+        List_Suppress(Edges, &E, compareEdge);
         break;
       }
       if(!compareVertex(&Contour[N - 1], &E.V[1]) &&
          compareVertex(&Contour[N - 2], &E.V[0])) {
         Contour[N++] = E.V[0];
-        List_Suppress(Edges, &E, compareedge);
+        List_Suppress(Edges, &E, compareEdge);
         break;
       }
     }

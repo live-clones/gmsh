@@ -1,4 +1,4 @@
-// $Id: 3D_Coherence.cpp,v 1.33 2004-04-19 00:18:07 geuzaine Exp $
+// $Id: 3D_Coherence.cpp,v 1.34 2004-05-25 23:16:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -97,7 +97,7 @@ void find_quads(void *a, void *b)
   Simplex *s1, *s2;
   q = (Edge *) a;
 
-  if(!List_Search(Missing, q, compareedge))
+  if(!List_Search(Missing, q, compareEdge))
     return;
 
   if(List_Nbr(q->Simplexes) != 2)
@@ -174,7 +174,7 @@ void swap_quads(void *a, void *b)
   qsort(s1->F[0].V, 3, sizeof(Vertex *), compareVertex);
   qsort(s2->F[0].V, 3, sizeof(Vertex *), compareVertex);
 
-  List_Suppress(Missing, q, compareedge);
+  List_Suppress(Missing, q, compareEdge);
   q->V[0] = q->O[0];
   q->V[1] = q->O[1];
 
@@ -184,7 +184,7 @@ int create_Quads(Volume * V)
 {
   int i, n;
   Surface *S;
-  swaps = Tree_Create(sizeof(Edge), compareedge);
+  swaps = Tree_Create(sizeof(Edge), compareEdge);
   touchedvertex = Tree_Create(sizeof(Vertex *), compareVertex);
   for(i = 0; i < List_Nbr(V->Surfaces); i++) {
     List_Read(V->Surfaces, i, &S);
@@ -279,7 +279,7 @@ void create_Edges(Volume * V)
     Tree_Delete(V->Edges);
   }
 
-  V->Edges = Tree_Create(sizeof(Edge), compareedge);
+  V->Edges = Tree_Create(sizeof(Edge), compareEdge);
   EdgesTree = V->Edges;
 
   Tree_Action(V->Simplexes, create_Edge);
@@ -291,7 +291,7 @@ void create_Edges(Volume * V)
       //Tree_Action(S->Edges,Free_Edge);
       Tree_Delete(S->Edges);
     }
-    S->Edges = Tree_Create(sizeof(Edge), compareedge);
+    S->Edges = Tree_Create(sizeof(Edge), compareEdge);
     EdgesTree = S->Edges;
     Tree_Action(S->Simplexes, create_Edge);
   }
@@ -418,7 +418,7 @@ int compxNewv(const void *a, const void *b)
   if(q->ef != w->ef)
     return (q->ef - w->ef);
   if(q->ef == 1)
-    return compareedge(&q->e, &w->e);
+    return compareEdge(&q->e, &w->e);
   if(q->ef == 2)
     return compareFace(q->f, w->f);
   return 1;
@@ -1246,13 +1246,13 @@ int Coherence(Volume * v, Mesh * m)
         simp->F[0].V[1]->Num, simp->F[0].V[2]->Num);
     E.V[0] = simp->F[0].V[0];
     E.V[1] = simp->F[0].V[1];
-    pE1 = (Edge *) List_PQuery(Missing, &E, compareedge);
+    pE1 = (Edge *) List_PQuery(Missing, &E, compareEdge);
     E.V[0] = simp->F[0].V[1];
     E.V[1] = simp->F[0].V[2];
-    pE2 = (Edge *) List_PQuery(Missing, &E, compareedge);
+    pE2 = (Edge *) List_PQuery(Missing, &E, compareEdge);
     E.V[0] = simp->F[0].V[2];
     E.V[1] = simp->F[0].V[0];
-    pE3 = (Edge *) List_PQuery(Missing, &E, compareedge);
+    pE3 = (Edge *) List_PQuery(Missing, &E, compareEdge);
 
     /* On verifie si c'est simple c a d si les tetraedres
        couvrent entierement la face */

@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.55 2004-05-25 04:10:04 geuzaine Exp $
+// $Id: Create.cpp,v 1.56 2004-05-25 23:16:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -41,7 +41,7 @@ int compareNXE(const void *a, const void *b)
 
   q = (NXE *) a;
   w = (NXE *) b;
-  return (compareVertex(&q->v, &w->v));
+  return compareVertex(&q->v, &w->v);
 }
 
 int compareFxE(const void *a, const void *b)
@@ -50,7 +50,7 @@ int compareFxE(const void *a, const void *b)
 
   q = (FxE *) a;
   w = (FxE *) b;
-  return (compareFace(&q->Sorted, &w->Sorted));
+  return compareFace(&q->Sorted, &w->Sorted);
 }
 
 int compareSurfaceLoop(const void *a, const void *b)
