@@ -1,4 +1,4 @@
-$Date: 2001-10-31 08:34:19 $
+$Date: 2001-11-01 09:40:33 $
 
 New in 1.28: Corrected the 'Using Progression' attribute for
 tranfinite meshes to actually match a real progression; New
@@ -6,7 +6,7 @@ Triangulate plugin; New 2D graphs (space+time charts); Better
 performance of geometrical transformations (Warning: the automatic
 numbering of some automatically created entities has changed); New
 text primitives in post-processing views (file format updated to
-version 1.1);
+version 1.1); More robust mean plane computation and error checks;
 
 New in 1.27: Added ability to extrude curves with Layers/Recombine
 attributes; New PointSize/LineWidth options; Fixed For/EndFor loops in

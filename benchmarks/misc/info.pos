@@ -1,0 +1,4 @@
+View "phi info" {
+  T2(10,-24,0){"Wed Oct 31 07:53:53 2001"};
+  T2(10,-12,0){"Real part", "Imaginary part"};
+};
