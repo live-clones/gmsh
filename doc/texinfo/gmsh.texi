@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.35 2003-04-21 01:32:54 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.36 2003-04-21 03:00:08 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -1299,14 +1299,16 @@ extruding surfaces).
 
 These geometrical entities are called ``elementary'' in Gmsh's jargon, and
 are assigned identification numbers when they are created:
+
 @enumerate
 @item each elementary point must possess a unique identification number;
 @item each elementary line must possess a unique identification number;
 @item each elementary surface must possess a unique identification number;
 @item each elementary volume must possess a unique identification number.
 @end enumerate
-Elementary geometrical entities can then be manipulated in various ways, for
-example using the @code{Translate}, @code{Rotate}, @code{Scale} or
+
+@noindent Elementary geometrical entities can then be manipulated in various
+ways, for example using the @code{Translate}, @code{Rotate}, @code{Scale} or
 @code{Symmetry} commands.
 
 Compound groups of elementary geometrical entities can also be defined and
@@ -2892,7 +2894,8 @@ file formats, the coordinates are given `by node', i.e.:
 @item
 etc.
 @end itemize
-The values are given in the same order as for the ASCII and binary
+
+@noindent The values are given in the same order as for the ASCII and binary
 post-processing file formats.
 
 @c -------------------------------------------------------------------------
@@ -3186,6 +3189,7 @@ already know about.
 @item
 Install the `info' version of this user's guide! On your (Unix) system, this
 can be achieved by
+
 @enumerate
 @item
 copying all @file{gmsh.info*} files to the place where your info files live
@@ -3193,6 +3197,7 @@ copying all @file{gmsh.info*} files to the place where your info files live
 @item
 issuing the command @code{install-info /usr/info/gmsh.info /usr/info/dir}.
 @end enumerate
+
 You will then be able to access the documentation with the command
 @code{info gmsh}. Note that particular sections (`nodes') can be accessed
 directly. For example, @code{info gmsh surfaces} or @code{info gmsh surf}
