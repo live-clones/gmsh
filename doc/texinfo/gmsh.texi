@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.92 2003-12-07 05:37:00 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.93 2003-12-07 17:00:10 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -2708,11 +2708,10 @@ element (separated by white space, without commas).
 @node Version 2.0,  , Version 1.0, Gmsh mesh file format
 @subsection Version 2.0
 
-The version 2.0 of the @file{.msh} file format is the Gmsh's new native mesh
-file format. It will eventually become the new default mesh format generated
-by Gmsh. This new format is very similar to the old one, but is more
-general: it contains information about itself and allows to attach an
-arbitrary number of tags to each element.
+Version 2.0 of the @file{.msh} file format is Gmsh's new native mesh file
+format. It is very similar to the old one (@pxref{Version 1.0}), but is more
+general: it contains information about itself and allows to associate an
+arbitrary number of integer tags with each element.
 
 The @file{.msh} file format, version 2.0, is divided in three sections,
 defining the file format (@code{$MeshFormat}-@code{$EndMeshFormat}), the
@@ -2787,17 +2786,16 @@ Point (1 node).
 @end table
 
 @item @var{number-of-tags}
-gives the number of (integer) tags for the @var{n}-th element. By default,
-Gmsh generates meshes with two tags, but can read files with an arbitrary
-number of tags (and currently only interprets the three first ones: see
-below).
+gives the number of tags for the @var{n}-th element. By default, Gmsh
+generates meshes with two tags and reads files with an arbitrary number of
+tags: see below.
 
 @item @var{tag}
 is an integer tag associated with the @var{n}-th element. By default, the
 first tag is the number of the physical entity to which the element belongs;
-the second tag is the number of the elementary geometrical entity to which
-the element belongs; the third tag is the number of a mesh partition to
-which the element belongs.
+the second is the number of the elementary geometrical entity to which the
+element belongs; the third is the number of a mesh partition to which the
+element belongs.
 
 @item @var{node-number-list}
 is the list of the node numbers of the @var{n}-th element (separated by
