@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.38 2003-04-21 05:47:26 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.39 2003-04-21 19:26:13 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -1049,29 +1049,31 @@ Loops and conditionals are defined as follows, and can be imbricated:
 @item For ( @var{expression} : @var{expression} )
 Iterates from the value of the first @var{expression} to the value of the
 second @var{expression}, with a unit incrementation step. At each iteration,
-the commands comprised between the @code{For} and the matching @code{EndFor}
-tags are executed.
+the commands comprised between `@code{For ( @var{expression} :
+@var{expression} )}' and the matching @code{EndFor} are executed.
 
 @item For ( @var{expression} : @var{expression} : @var{expression} )
 Iterates from the value of the first @var{expression} to the value of the
 second @var{expression}, with a positive or negative incrementation step
 equal to the third @var{expression}. At each iteration, the commands
-comprised between the @code{For} and the matching @code{EndFor} tags are
-executed.
+comprised between `@code{For ( @var{expression} : @var{expression} :
+@var{expression} )}' and the matching @code{EndFor} are executed.
 
 @item For @var{string} In ( @var{expression} : @var{expression} )
 Iterates from the value of the first @var{expression} to the value of the
 second @var{expression}, with a unit incrementation step. At each iteration,
 the value of the iterate is affected to an expression named @var{string},
-and the commands comprised between the @code{For} and the matching
-@code{EndFor} tags are executed.
+and the commands comprised between `@code{For @var{string} In (
+@var{expression} : @var{expression} )}' and the matching @code{EndFor} are
+executed.
 
 @item For @var{string} In ( @var{expression} : @var{expression} : @var{expression} )
 Iterates from the value of the first @var{expression} to the value of the
 second @var{expression}, with a positive or negative incrementation step
 equal to the third @var{expression}. At each iteration, the value of the
 iterate is affected to an expression named @var{string}, and the commands
-comprised between the @code{For} and the matching @code{EndFor} tags are
+comprised between `@code{For @var{string} In ( @var{expression} :
+@var{expression} : @var{expression} )}' and the matching @code{EndFor} are
 executed.
 
 @item EndFor
