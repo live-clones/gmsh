@@ -265,15 +265,17 @@ elif cmdline.has_key('--options'):
     Gmsh.send('--noaverage', Gmsh.OPTION)
     Gmsh.send('--average', Gmsh.OPTION)
 else:
-    if not cmdline.has_key('--mesh'):
-        Gmsh.send("No mesh specified.", Gmsh.ERROR)
-        sys.exit(1)
     if not cmdline.has_key('--results'):
         Gmsh.send("No results specified.", Gmsh.ERROR)
         sys.exit(1)
 
+    if not cmdline.has_key('--mesh'):
+        mshname = cmdline['--results'].split('.')[0] + '.msh'
+    else:
+	mshname = cmdline['--mesh']
+
     try:
-        mshfile = open(cmdline['--mesh'])
+        mshfile = open(mshname)
         csvfile = open(cmdline['--results'])
     except:
         Gmsh.send(str(sys.exc_info()[1]), Gmsh.ERROR)
