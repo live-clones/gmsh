@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.44 2003-04-10 13:12:36 remacle Exp $
+// $Id: Create.cpp,v 1.45 2003-05-29 14:36:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -395,6 +395,15 @@ void End_Curve(Curve * c)
 
     for(i = 0; i < 4; i++)
       Curve->Circle.v[i] = v[i];
+
+    if(CTX.geom.circle_warning && Curve->Num > 0 && A3-A1 >= Pi){
+      Msg(GERROR1, "Circle or ellipse arc %d greater than/equal to Pi (angle=%g)",
+	  Curve->Num, A3-A1);
+      Msg(GERROR2, "(If you understand what this implies, you can disable this error");
+      Msg(GERROR2, "message by setting Geometry.CircleWarning to 0. Otherwise, please");
+      Msg(GERROR3, "subdivide the arc in smaller pieces)");
+    }
+
   }
 
   if(c->cp)

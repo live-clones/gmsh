@@ -604,6 +604,8 @@ StringXNumber GeometryOptions_Number[] = {
     "Number of points used to draw a circle/ellipse" },
   { F|O, "ColorScheme" , opt_geometry_color_scheme , 0. , 
     "Default geometry color scheme (0, 1 or 2)" },
+  { F|O, "CircleWarning" , opt_geometry_circle_warning, 1. ,
+    "Warn if circle arc is greater than Pi" },
 
   { F|O, "ExtrudeSplinePoints" , opt_geometry_extrude_spline_points, 5. ,
     "Number of control points for splines created during extrusion" },

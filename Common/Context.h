@@ -137,7 +137,8 @@ public :
     int point_type, line_type; // flat or 3D
     int hidden, shade;
     int highlight;
-    int level, old_circle, circle_points, extrude_spline_points, old_newreg;
+    int level, old_circle, circle_points, circle_warning;
+    int extrude_spline_points, old_newreg;
     double normals, tangents;
     double scaling_factor;
     int color_scheme ;

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.106 2003-04-15 18:32:01 geuzaine Exp $
+// $Id: Options.cpp,v 1.107 2003-05-29 14:36:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2838,6 +2838,13 @@ double opt_geometry_circle_points(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.geom.circle_points = (int)val;
   return CTX.geom.circle_points;
+}
+
+double opt_geometry_circle_warning(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.geom.circle_warning = (int)val;
+  return CTX.geom.circle_warning;
 }
 
 double opt_geometry_extrude_spline_points(OPT_ARGS_NUM)
