@@ -7,8 +7,8 @@ sed "s/<FONT COLOR=\"#BC8F8F\"><B>//g" | \
 sed "s/<B><FONT COLOR=\"#5F9EA0\">//g" | \
 sed "s/<B><FONT COLOR=\"#A020F0\">//g" | \
 sed "s/<B><FONT COLOR=\"#0000FF\">//g" | \
-sed "s/<\/FONT><\/B>//g" > ../doc/tutorial.html
+sed "s/<\/FONT><\/B>//g" > tutorial.html
 
 rm -f t.html
 
-echo output moved to ../doc/tutorial.html
+echo output moved to tutorial.html
