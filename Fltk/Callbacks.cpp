@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.79 2001-08-13 16:30:22 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.80 2001-08-17 08:36:33 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -598,7 +598,7 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(1);
 }
 
-static void _new_multiline_spline(int dim){
+static void _new_multiline(int type){
   Vertex   *v;
   Curve    *c;
   Surface  *s;
@@ -619,9 +619,11 @@ static void _new_multiline_spline(int dim){
     }
     if (ib == -1){ /* 'e' */
       if(n >= 2) {
-	switch(dim){
+	switch(type){
 	case 0 : add_multline(n,p,CTX.filename); break;
 	case 1 : add_spline(n,p,CTX.filename); break;
+	case 2 : add_bspline(n,p,CTX.filename); break;
+	case 3 : add_bezier(n,p,CTX.filename); break;
 	}
       }
       n=0;
@@ -642,7 +644,7 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS){
   // Disallow multiline selection at the moment, since multilines
   // dont't work so well...
   //
-  //_new_multiline_spline(0);
+  //_new_multiline(0);
   //
   Vertex   *v;
   Curve    *c;
@@ -679,7 +681,10 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS){
   Msg(STATUS3N,"Ready");
 }
 void geometry_elementary_add_new_spline_cb(CALLBACK_ARGS){
-  _new_multiline_spline(1);
+  _new_multiline(1);
+}
+void geometry_elementary_add_new_bspline_cb(CALLBACK_ARGS){
+  _new_multiline(2);
 }
 void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS){
   Vertex   *v;

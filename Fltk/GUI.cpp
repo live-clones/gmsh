@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.107 2001-08-12 14:23:36 geuzaine Exp $
+// $Id: GUI.cpp,v 1.108 2001-08-17 08:36:33 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -121,6 +121,7 @@ Context_Item menu_geometry[] =
 	      { "Point",         (Fl_Callback *)geometry_elementary_add_new_point_cb } ,
 	      { "Line",          (Fl_Callback *)geometry_elementary_add_new_line_cb } ,
 	      { "Spline",        (Fl_Callback *)geometry_elementary_add_new_spline_cb } ,
+	      { "B-Spline",      (Fl_Callback *)geometry_elementary_add_new_bspline_cb } ,
 	      { "Circle",        (Fl_Callback *)geometry_elementary_add_new_circle_cb } ,
 	      { "Ellipsis",      (Fl_Callback *)geometry_elementary_add_new_ellipsis_cb } ,
 	      { "Plane Surface", (Fl_Callback *)geometry_elementary_add_new_planesurface_cb } ,
