@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.84 2001-06-13 11:04:23 geuzaine Exp $
+// $Id: GUI.cpp,v 1.85 2001-06-26 16:47:23 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1969,6 +1969,13 @@ void GUI::create_view_options_window(int num){
 	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(FL_YELLOW);
 	}
+	view_value[11] = new Fl_Value_Input(2*WB, 2*WB+ 6*BH, IW, BH, "Boundary operator");
+	view_value[11]->labelsize(CTX.fontsize);
+	view_value[11]->textsize(CTX.fontsize);
+	view_value[11]->type(FL_HORIZONTAL);
+	view_value[11]->align(FL_ALIGN_RIGHT);
+	view_value[11]->minimum(0); 
+	view_value[11]->maximum(3); 
         o->end();
       }
       // Offset and Raise
@@ -2123,6 +2130,7 @@ void GUI::update_view_window(int num){
   // intervals
   opt_view_nb_iso(num, GMSH_GUI, 0);
   opt_view_intervals_type(num, GMSH_GUI, 0);
+  opt_view_boundary(num, GMSH_GUI, 0);
 
   // offset/raise
   opt_view_offset0(num, GMSH_GUI, 0);

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.28 2001-06-25 13:05:16 geuzaine Exp $
+// $Id: Options.cpp,v 1.29 2001-06-26 16:47:23 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1734,6 +1734,19 @@ double opt_view_nb_iso(OPT_ARGS_NUM){
     WID->view_value[2]->value(v->NbIso);
 #endif
   return v->NbIso;
+}
+double opt_view_boundary(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->Boundary = (int)val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
+    WID->view_value[11]->value(v->Boundary);
+  }
+#endif
+  return v->Boundary;
 }
 double opt_view_light(OPT_ARGS_NUM){
   GET_VIEW(0.) ;

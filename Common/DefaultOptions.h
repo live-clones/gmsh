@@ -449,6 +449,8 @@ StringXNumber ViewOptions_Number[] = {
     "Type of interval display (1=iso, 2=discrete, 3=continuous, 4=numeric)" },
   { F|O, "NbIso" , opt_view_nb_iso , 15. ,
     "Number of intervals" },
+  { F|O, "Boundary" , opt_view_boundary , 0 ,
+    "Draw the N-b dimensional boundary of the simplex (N=dimension, b=option value" },
   { F|O, "Light" , opt_view_light , 0. ,
     "Enable light sources?" },
   { F|O, "ShowElement" , opt_view_show_element , 0. ,

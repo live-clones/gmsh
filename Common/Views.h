@@ -37,6 +37,7 @@ class Post_View{
   int TimeStep;
   int DrawPoints, DrawLines, DrawTriangles, DrawTetrahedra;
   int DrawScalars, DrawVectors, DrawTensors;
+  int Boundary;
   ColorTable CT;
 
   // dynamic

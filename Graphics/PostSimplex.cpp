@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.16 2001-04-22 18:13:02 geuzaine Exp $
+// $Id: PostSimplex.cpp,v 1.17 2001-06-26 16:47:23 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -257,8 +257,27 @@ void Draw_ScalarTetrahedron(Post_View *View,
 			    double *V){
 
   int     k;
-  double  d, xx[4], yy[4], zz[4];
+  double  d, xx[4], yy[4], zz[4], vv[4];
   char Num[100];
+
+  if(View->Boundary == 2){
+    // boundary == 0 should draw the tet
+    // boundary == 1 should draw the faces
+    // boundary == 2 should draw the edges
+    // boundary == 3 should draw the vertices
+    Draw_ScalarLine(View, ValMin, ValMax, Raise, &X[0], &Y[0], &Z[0], &V[0]);//01
+    Draw_ScalarLine(View, ValMin, ValMax, Raise, &X[1], &Y[1], &Z[1], &V[1]);//12
+    Draw_ScalarLine(View, ValMin, ValMax, Raise, &X[2], &Y[2], &Z[2], &V[2]);//23
+    // beeek...
+    xx[0] = X[0]; yy[0] = Y[0]; zz[0] = Z[0]; vv[0] = V[0];
+    xx[1] = X[2]; yy[1] = Y[2]; zz[1] = Z[2]; vv[1] = V[2];
+    Draw_ScalarLine(View, ValMin, ValMax, Raise, xx, yy, zz, vv);//02
+    xx[1] = X[3]; yy[1] = Y[3]; zz[1] = Z[3]; vv[1] = V[3];
+    Draw_ScalarLine(View, ValMin, ValMax, Raise, xx, yy, zz, vv);//03
+    xx[0] = X[1]; yy[0] = Y[1]; zz[0] = Z[1]; vv[0] = V[1];
+    Draw_ScalarLine(View, ValMin, ValMax, Raise, xx, yy, zz, vv);//13
+    return;
+  }
 
   for(k=0 ; k<4 ; k++)
     RaiseFill(k, V[4*View->TimeStep+k], ValMin, Raise);
@@ -298,7 +317,6 @@ void Draw_ScalarTetrahedron(Post_View *View,
 
   }
   else{
-
     for(k=0 ; k<View->NbIso ; k++){
       if(!preproNormals)Palette(View,View->NbIso,k);
       IsoSimplex(View,preproNormals,

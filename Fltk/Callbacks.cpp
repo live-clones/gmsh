@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.62 2001-06-06 09:39:49 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.63 2001-06-26 16:47:23 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1691,6 +1691,7 @@ void view_options_ok_cb(CALLBACK_ARGS){
       opt_view_raise2(i, GMSH_SET, WID->view_value[8]->value());
       opt_view_timestep(i, GMSH_SET, WID->view_value[9]->value());
       opt_view_arrow_scale(i, GMSH_SET, WID->view_value[10]->value());
+      opt_view_boundary(i, GMSH_SET, WID->view_value[11]->value());
       
       opt_view_name(i, GMSH_SET, (char*)WID->view_input[0]->value());
       opt_view_format(i, GMSH_SET, (char*)WID->view_input[1]->value());
