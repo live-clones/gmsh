@@ -1149,7 +1149,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "SmoothNormals" , opt_view_smooth_normals , 0. ,
     "Smooth the normals?" },
 
-  { F|O, "Tangents" , opt_view_normals , 0. ,
+  { F|O, "Tangents" , opt_view_tangents , 0. ,
     "Display size of tangent vectors (in pixels)" }, 
   { F|O, "TensorType" , opt_view_tensor_type , 0. ,
     "Tensor Visualization Type" },
