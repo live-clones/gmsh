@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.426 2005-03-12 20:17:41 geuzaine Exp $
+// $Id: GUI.cpp,v 1.427 2005-03-12 22:25:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2529,41 +2529,38 @@ void GUI::create_option_window()
     {
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "General");
 
-      view_input[0] = new Fl_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Name");
+      view_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "3D plot");
+      view_butt[1]->type(FL_RADIO_BUTTON);
+      view_butt[1]->down_box(GMSH_RADIO_BOX);
+      view_butt[1]->selection_color(GMSH_RADIO_COLOR);
+
+      view_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "2D space plot");
+      view_butt[2]->type(FL_RADIO_BUTTON);
+      view_butt[2]->down_box(GMSH_RADIO_BOX);
+      view_butt[2]->selection_color(GMSH_RADIO_COLOR);
+
+      view_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "2D time plot");
+      view_butt[3]->type(FL_RADIO_BUTTON);
+      view_butt[3]->down_box(GMSH_RADIO_BOX);
+      view_butt[3]->selection_color(GMSH_RADIO_COLOR);
+
+      view_input[0] = new Fl_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Name");
       view_input[0]->align(FL_ALIGN_RIGHT);
 
       int sw = (int)(1.5 * fontsize);
-      view_butt_rep[0] = new Fl_Repeat_Button(L + 2 * WB, 2 * WB + 2 * BH, sw, BH, "-");
+      view_butt_rep[0] = new Fl_Repeat_Button(L + 2 * WB, 2 * WB + 5 * BH, sw, BH, "-");
       view_butt_rep[0]->callback(view_options_timestep_decr_cb);
-      view_butt_rep[1] = new Fl_Repeat_Button(L + 2 * WB + IW - sw, 2 * WB + 2 * BH, sw, BH, "+");
+      view_butt_rep[1] = new Fl_Repeat_Button(L + 2 * WB + IW - sw, 2 * WB + 5 * BH, sw, BH, "+");
       view_butt_rep[1]->callback(view_options_timestep_incr_cb);
-      view_value[50] = new Fl_Value_Input(L + 2 * WB + sw, 2 * WB + 2 * BH, IW - 2 * sw, BH);
+      view_value[50] = new Fl_Value_Input(L + 2 * WB + sw, 2 * WB + 5 * BH, IW - 2 * sw, BH);
       view_value[50]->callback(view_options_timestep_cb);
       view_value[50]->align(FL_ALIGN_RIGHT);
       view_value[50]->minimum(0);
       view_value[50]->maximum(0);
       view_value[50]->step(1);
-      Fl_Box *a = new Fl_Box(L + 2 * WB + IW, 2 * WB + 2 * BH, IW / 2, BH, "Step");
+      Fl_Box *a = new Fl_Box(L + 2 * WB + IW, 2 * WB + 5 * BH, IW / 2, BH, "Step");
       a->box(FL_NO_BOX);
       a->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-
-      Fl_Box *b = new Fl_Box(FL_EMBOSSED_FRAME, L + 2 * WB, 2 * WB + 4 * BH-WB/2, width/2-3*WB, 3*BH+WB, "Plot type");
-      b->align(FL_ALIGN_TOP|FL_ALIGN_CENTER);
-
-      view_butt[1] = new Fl_Check_Button(L + 3 * WB, 2 * WB + 4 * BH, BW/2-3*WB, BH, "3D");
-      view_butt[1]->type(FL_RADIO_BUTTON);
-      view_butt[1]->down_box(GMSH_RADIO_BOX);
-      view_butt[1]->selection_color(GMSH_RADIO_COLOR);
-
-      view_butt[2] = new Fl_Check_Button(L + 3 * WB, 2 * WB + 5 * BH, BW/2-3*WB, BH, "2D space");
-      view_butt[2]->type(FL_RADIO_BUTTON);
-      view_butt[2]->down_box(GMSH_RADIO_BOX);
-      view_butt[2]->selection_color(GMSH_RADIO_COLOR);
-
-      view_butt[3] = new Fl_Check_Button(L + 3 * WB, 2 * WB + 6 * BH, BW/2-3*WB, BH, "2D time");
-      view_butt[3]->type(FL_RADIO_BUTTON);
-      view_butt[3]->down_box(GMSH_RADIO_BOX);
-      view_butt[3]->selection_color(GMSH_RADIO_COLOR);
 
       view_choice[8] = new Fl_Choice(L + width / 2, 2 * WB + 1 * BH, IW, BH, "Axes");
       view_choice[8]->menu(menu_axes_mode);

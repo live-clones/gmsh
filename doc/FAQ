@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.54 2005-03-03 15:07:29 geuzaine Exp $
+$Id: FAQ,v 1.55 2005-03-12 22:25:24 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -207,6 +207,19 @@ Yes, either in the form of a STL triangulation, or by using the
 the surface mesh you provide in this way, so the surface mesh has to
 be conform (without gaps, hanging nodes, etc.) and must contain
 surface elements having the (final) desired sizes.
+
+* 5.11 How do I define boundary conditions or material properties in
+Gmsh?
+
+By design, Gmsh does not try to incorporate every possible definition
+of boundary conditions or material properties--this is a job best left
+to the solver. Instead, Gmsh provides a simple mechanism to tag groups
+of elements, and it is up to the solver to interpret these tags as
+boundary conditions, materials, etc. Associating tags with elements in
+Gmsh is done by defining Physical entities (Physical Points, Physical
+Lines, Physical Surfaces and Physical Volumes): see the reference
+manual as well as the tutorials (in particular tutorial/t1.geo) for a
+detailed description and some examples.
 
 ********************************************************************
 
