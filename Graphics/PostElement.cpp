@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.12 2003-03-18 07:37:20 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.13 2003-03-18 08:08:03 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1120,22 +1120,6 @@ void Draw_TensorLine(ARGS)
 
 void Draw_TensorTriangle(ARGS)
 {
-  /*
-     /// we want to compute "von mises" value i.e. max eigenvalue
-     /// this will simply call the scalar function
-     if(View->TensorType == DRAW_POST_VONMISES){
-     double V_VonMises [3];
-     for(int i=0;i<3;i++){
-     double xx = V[0+9*i];
-     double yy = V[4+9*i];
-     double xy = V[1+9*i];
-     V_VonMises[i] = sqrt (0.5 * ( (xx-yy) * (xx-yy) + 
-     (xx-xy) * (xx-xy) + 
-     (xy-yy) * (xy-yy) ) );
-     }
-     Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, X,Y,Z,V_VonMises);
-     }
-   */
   Draw_TensorElement(TRIANGLE, View, ValMin, ValMax, Raise, X, Y, Z, V);
 }
 
