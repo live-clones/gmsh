@@ -1,4 +1,4 @@
-// $Id: 3D_SMesh.cpp,v 1.23 2004-05-26 00:33:37 geuzaine Exp $
+// $Id: 3D_Transfinite.cpp,v 1.1 2004-05-27 20:49:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -200,7 +200,7 @@ int MeshTransfiniteVolume(Volume * vol)
 			0, 3, 2, 1 };
 
   if(vol->Method != TRANSFINI)
-    return (0);
+    return 0;
 
   nbs = List_Nbr(vol->Surfaces);
 
@@ -279,7 +279,7 @@ int MeshTransfiniteVolume(Volume * vol)
   if(nbs == 6 && NbFacesFound != 6) {
     Msg(WARNING, "Wrong definition of hexahedric Transfinite Volume %d",
         vol->Num);
-    return (0);
+    return 0;
   }
 
   if(nbs == 5 && NbFacesFound != 5) {
@@ -287,7 +287,7 @@ int MeshTransfiniteVolume(Volume * vol)
         vol->Num);
     Msg(WARNING2, "Possibly because the first and fourth points are not the");
     Msg(WARNING3, "degenerated ones");
-    return (0);
+    return 0;
   }
 
   if(nbs == 6) {
@@ -295,7 +295,7 @@ int MeshTransfiniteVolume(Volume * vol)
       if(G[i] == NULL) {
         Msg(WARNING, "Wrong definition of hexahedric Transfinite Volume %d",
             vol->Num);
-        return (0);
+        return 0;
       }
     }
   }
@@ -308,7 +308,7 @@ int MeshTransfiniteVolume(Volume * vol)
           Msg(WARNING2,
               "Possibly because the first and fourth points are not the");
           Msg(WARNING3, "degenerated ones");
-          return (0);
+          return 0;
         }
       }
     }
@@ -501,7 +501,7 @@ int MeshTransfiniteVolume(Volume * vol)
           else {
             Msg(WARNING, "Wrong surface recombining in Transfinite Volume %d",
                 vol->Num);
-            return (0);
+            return 0;
           }
         }
       }
@@ -553,7 +553,7 @@ int MeshTransfiniteVolume(Volume * vol)
         else {
           Msg(WARNING, "Wrong surface recombining in Transfinite Volume %d",
               vol->Num);
-          return (0);
+          return 0;
         }
       }
     }
@@ -605,13 +605,13 @@ int MeshTransfiniteVolume(Volume * vol)
           else {
             Msg(WARNING, "Wrong surface recombining in Transfinite Volume %d",
                 vol->Num);
-            return (0);
+            return 0;
           }
         }
       }
     }
   }
 
-  return (1);
+  return 1;
 
 }

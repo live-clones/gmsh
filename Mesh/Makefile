@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.63 2004-05-25 23:16:26 geuzaine Exp $
+# $Id: Makefile,v 1.64 2004-05-27 20:49:03 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -28,7 +28,7 @@ CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = 1D_Mesh.cpp \
       2D_Mesh.cpp \
-        2D_SMesh.cpp \
+        2D_Transfinite.cpp \
         2D_Elliptic.cpp \
         2D_BGMesh.cpp \
         2D_Recombine.cpp \
@@ -44,7 +44,7 @@ SRC = 1D_Mesh.cpp \
         2D_Mesh_Aniso.cpp \
         2D_Mesh_Triangle.cpp \
         3D_Mesh.cpp \
-        3D_SMesh.cpp \
+        3D_Transfinite.cpp \
         3D_BGMesh.cpp \
         3D_Extrude.cpp \
         3D_Extrude_Old.cpp \
@@ -111,7 +111,7 @@ depend:
   ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
   ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h Utils.h Create.h \
   2D_Mesh.h ../Common/Context.h
-2D_SMesh.o: 2D_SMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
+2D_Transfinite.o: 2D_Transfinite.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Geo/Geo.h Mesh.h Vertex.h \
   Element.h Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
@@ -195,7 +195,7 @@ depend:
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
   Vertex.h Element.h Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h STL.h \
   Metric.h Matrix.h 3D_Mesh.h Create.h ../Common/Context.h
-3D_SMesh.o: 3D_SMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
+3D_Transfinite.o: 3D_Transfinite.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Element.h Simplex.h \
   Face.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h \

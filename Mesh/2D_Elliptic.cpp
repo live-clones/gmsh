@@ -1,4 +1,4 @@
-// $Id: 2D_Elliptic.cpp,v 1.18 2004-05-25 04:10:04 geuzaine Exp $
+// $Id: 2D_Elliptic.cpp,v 1.19 2004-05-27 20:49:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,7 @@ int MeshEllipticSurface(Surface * sur)
   List_T *l1, *l2, *l3, *l4;
 
   if(sur->Method != ELLIPTIC)
-    return (0);
+    return 0;
 
   nb = List_Nbr(sur->Generatrices);
 
@@ -65,8 +65,11 @@ int MeshEllipticSurface(Surface * sur)
         for(k = 1; k < List_Nbr(GG[j]->Vertices); k++)
           List_Add(l1, List_Pointer(GG[j]->Vertices, k));
         j = (j + 1 < nb) ? j + 1 : 0;
-        if(j == i)
+        if(j == i){
+	  Msg(WARNING, "Wrong definition of Elliptic Surface %d", sur->Num);
+	  List_Delete(l1);
           return 0;
+	}
       }
       while(compareVertex(&GG[j]->beg, &S[1]));
     }
@@ -83,8 +86,12 @@ int MeshEllipticSurface(Surface * sur)
         for(k = 1; k < List_Nbr(GG[j]->Vertices); k++)
           List_Add(l2, List_Pointer(GG[j]->Vertices, k));
         j = (j + 1 < nb) ? j + 1 : 0;
-        if(j == i)
+        if(j == i){
+	  Msg(WARNING, "Wrong definition of Elliptic Surface %d", sur->Num);
+	  List_Delete(l1);
+	  List_Delete(l2);
           return 0;
+	}
       }
       while(compareVertex(&GG[j]->beg, &S[2]));
     }
@@ -101,8 +108,13 @@ int MeshEllipticSurface(Surface * sur)
         for(k = 1; k < List_Nbr(GG[j]->Vertices); k++)
           List_Add(l3, List_Pointer(GG[j]->Vertices, k));
         j = (j + 1 < nb) ? j + 1 : 0;
-        if(j == i)
+        if(j == i){
+	  Msg(WARNING, "Wrong definition of Elliptic Surface %d", sur->Num);
+	  List_Delete(l1);
+	  List_Delete(l2);
+	  List_Delete(l3);
           return 0;
+	}
       }
       while(compareVertex(&GG[j]->beg, &S[3]));
     }
@@ -119,8 +131,14 @@ int MeshEllipticSurface(Surface * sur)
         for(k = 1; k < List_Nbr(GG[j]->Vertices); k++)
           List_Add(l4, List_Pointer(GG[j]->Vertices, k));
         j = (j + 1 < nb) ? j + 1 : 0;
-        if(j == i)
+        if(j == i){
+	  Msg(WARNING, "Wrong definition of Elliptic Surface %d", sur->Num);
+	  List_Delete(l1);
+	  List_Delete(l2);
+	  List_Delete(l3);
+	  List_Delete(l4);
           return 0;
+	}
       }
       while(compareVertex(&GG[j]->beg, &S[0]));
     }
@@ -131,6 +149,7 @@ int MeshEllipticSurface(Surface * sur)
   N3 = List_Nbr(l3);
   N4 = List_Nbr(l4);
   if(N1 != N3 || N2 != N4) {
+    Msg(WARNING, "Wrong definition of Elliptic Surface %d", sur->Num);
     List_Delete(l1);
     List_Delete(l2);
     List_Delete(l3);
@@ -175,15 +194,19 @@ int MeshEllipticSurface(Surface * sur)
                      (S[1]->lc * (1 - u) * (1. + v)) +
                      (S[2]->lc * (1 - u) * (1. - v)) +
                      (S[3]->lc * (1 + u) * (1. - v)));
-
-        list[i + N1 * j] =
-          Create_Vertex(++THEM->MaxPointNum, x, y, z, lc, 0.0);
+        list[i + N1 * j] = Create_Vertex(++THEM->MaxPointNum, x, y, z, lc, 0.0);
+	Tree_Insert(sur->Vertices, &list[i + N1 * j]);
+        List_Add(sur->TrsfVertices, &list[i + N1 * j]);
       }
     }
   }
 
-  k = 0;
+  List_Delete(l1);
+  List_Delete(l2);
+  List_Delete(l3);
+  List_Delete(l4);
 
+  k = 0;
   while(1) {
     k++;
     if(k > 1000)
@@ -224,10 +247,8 @@ int MeshEllipticSurface(Surface * sur)
                             2. * beta * (v33->Pos.Z - v13->Pos.Z -
                                          v31->Pos.Z + v11->Pos.Z))
           / (alpha + gamma);
-
       }
     }
-
   }
   for(i = 0; i < N1 - 1; i++) {
     for(j = 0; j < N2 - 1; j++) {
@@ -252,6 +273,8 @@ int MeshEllipticSurface(Surface * sur)
       }
     }
   }
+
+  Free(list);
 
   return 1;
 }
