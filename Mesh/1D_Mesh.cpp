@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.37 2004-04-18 03:36:07 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.38 2004-05-07 22:49:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -108,15 +108,11 @@ double F_Lc(double t)
   Vertex der, point;
   double Lc, d;
 
-  if(CTX.mesh.algo == DELAUNAY_ISO && THEM->BGM.Typ == ONFILE) {
+  if(THEM->BGM.Typ == ONFILE) {
     der = InterpolateCurve(THEC, t, 1);
     point = InterpolateCurve(THEC, t, 0);
     Lc = Lc_XYZ(point.Pos.X, point.Pos.Y, point.Pos.Z, THEM);
     d = sqrt(DSQR(der.Pos.X) + DSQR(der.Pos.Y) + DSQR(der.Pos.Z));
-    if(!Lc) {
-      Msg(GERROR, "Null characteristic length in background mesh");
-      return d;
-    }
     if(CTX.mesh.constrained_bgmesh)
       return MAX(d / Lc, THEM->Metric->getLc(t, THEC));
     else

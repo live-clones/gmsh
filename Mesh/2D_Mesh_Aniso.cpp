@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.37 2004-03-23 02:14:34 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.38 2004-05-07 22:49:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -66,17 +66,12 @@ static double volume;
 static List_T *coquille;
 static Edge *THEEDGE;
 
-extern void LCBGM(double X, double Y, double Z, double *l);
-
 double Interpole_lcTriangle(Simplex * s, Vertex * vv)
 {
   double Xp, Yp, X[3], Y[3], det, u, v, q1, q2, q3;
 
-  if(THEM->BGM.Typ == ONFILE) {
-    double LL;
-    LCBGM(vv->Pos.X, vv->Pos.Y, 0.0, &LL);
-    return LL * CTX.mesh.lc_factor;
-  }
+  if(THEM->BGM.Typ == ONFILE)
+    return Lc_XYZ(vv->Pos.X, vv->Pos.Y, 0., THEM);
 
   Xp = vv->Pos.X;
   Yp = vv->Pos.Y;

@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.26 2004-05-07 18:42:48 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.27 2004-05-07 22:49:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -84,39 +84,16 @@ void ExportLcFieldOnSurfaces(Mesh * M)
   fclose(f);
 }
 
-static double XX, YY, ZZ, D, LL;
+static Mesh *TMPM = NULL;
+static double XX, YY, ZZ, DD, LL;
 
 void findcloser(void *a, void *b)
 {
-  Vertex *v;
-  double dd;
-  v = *(Vertex **) a;
-  dd = DSQR(v->Pos.X - XX) + DSQR(v->Pos.Y - YY) + DSQR(v->Pos.Z - ZZ);
-  if(dd < D) {
-    D = dd;
+  Vertex *v = *(Vertex **) a;
+  double d = DSQR(v->Pos.X - XX) + DSQR(v->Pos.Y - YY) + DSQR(v->Pos.Z - ZZ);
+  if(d < DD) {
+    DD = d;
     LL = v->lc;
-  }
-}
-
-static Mesh *TMPM = NULL;
-
-void LCBGM(double X, double Y, double Z, double *l)
-{
-  if(Pt_In_Volume(X, Y, Z, TMPM, l, .01));
-  else if(Pt_In_Volume(X, Y, Z, TMPM, l, .02));
-  else if(Pt_In_Volume(X, Y, Z, TMPM, l, .07));
-  else if(Pt_In_Volume(X, Y, Z, TMPM, l, .1));
-  else if(Pt_In_Volume(X, Y, Z, TMPM, l, .2));
-  else if(Pt_In_Volume(X, Y, Z, TMPM, l, .8));
-  else if(Pt_In_Volume(X, Y, Z, TMPM, l, 20.));
-  else {
-    XX = X;
-    YY = Y;
-    ZZ = Z;
-    D = 1.e24;
-    LL = 1;
-    Tree_Action(TMPM->Vertices, findcloser);
-    *l = LL;
   }
 }
 
@@ -124,29 +101,43 @@ double Lc_XYZ(double X, double Y, double Z, Mesh * m)
 {
   double l;
 
-  //l = 0.1 * fabs(cos(2 * 3.14159 * X) * cos( 2 * 3.14159 * Y))  + 0.01;
-  //return l;
-
   switch (m->BGM.Typ) {
   case FUNCTION:
+    // for testing...
+    l = 0.1 * fabs(cos(2 * 3.14159 * X) * cos( 2 * 3.14159 * Y))  + 0.01;
     break;
   case CONSTANT:
     l = m->BGM.lc;
     break;
   case ONFILE:
-    LCBGM(X, Y, Z, &l);
-    break;
-  case WITHPOINTS:
-    Msg(WARNING, "Send a mail to <gmsh@geuz.org> if you see this (Lc_XYZ)");
-    if(Pt_In_Volume(X, Y, Z, m, &l, 0.0));
-    else if(Pt_In_Volume(X, Y, Z, m, &l, 0.2));
-    else if(Pt_In_Volume(X, Y, Z, m, &l, 0.5));
+    if(Pt_In_Volume(X, Y, Z, TMPM, &l, .01));
+    else if(Pt_In_Volume(X, Y, Z, TMPM, &l, .02));
+    else if(Pt_In_Volume(X, Y, Z, TMPM, &l, .07));
+    else if(Pt_In_Volume(X, Y, Z, TMPM, &l, .1));
+    else if(Pt_In_Volume(X, Y, Z, TMPM, &l, .2));
+    else if(Pt_In_Volume(X, Y, Z, TMPM, &l, .8));
+    else if(Pt_In_Volume(X, Y, Z, TMPM, &l, 20.));
     else {
-      Msg(GERROR, "Exterior Point (%g,%g,%g)", X, Y, Z);
-      l = 1.e-25;
+      XX = X;
+      YY = Y;
+      ZZ = Z;
+      DD = 1.e24;
+      LL = 1;
+      Tree_Action(TMPM->Vertices, findcloser);
+      l = LL;
     }
     break;
+  case WITHPOINTS:
+    Msg(GERROR, "We should call Lc_XYZ with BGM.Typ == WITHPOINTS!");
+    l = 1.0;
+    break;
   }
+
+  if(l <= 0.){
+    Msg(GERROR, "Characteristic length <= 0: setting to 1.0");
+    l = 1.0;
+  }
+
   return CTX.mesh.lc_factor * l;
 }
 
