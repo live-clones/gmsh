@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.321 2004-06-30 17:49:51 geuzaine Exp $
+// $Id: GUI.cpp,v 1.322 2004-07-01 19:13:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -295,7 +295,7 @@ Context_Item menu_mesh[] = {
 };  
     Context_Item menu_mesh_define[] = {
       { "1Mesh > Define", NULL } ,
-      { "Length",      (Fl_Callback *)mesh_define_length_cb  } ,
+      { "Characteristic length", (Fl_Callback *)mesh_define_length_cb  } ,
       { "Recombine",   (Fl_Callback *)mesh_define_recombine_cb  } ,
       { "Transfinite", (Fl_Callback *)mesh_define_transfinite_cb  } , 
       { NULL } 
