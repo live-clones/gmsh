@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.7 2001-07-31 09:51:36 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.8 2001-07-31 10:24:56 geuzaine Exp $
 
 #include "CutPlane.h"
 #include "List.h"
@@ -8,7 +8,7 @@ StringXNumber CutPlaneOptions_Number[] = {
   { GMSH_FULLRC, "B" , NULL , 0. },
   { GMSH_FULLRC, "C" , NULL , 0. },
   { GMSH_FULLRC, "D" , NULL , 0.01 },
-  { GMSH_FULLRC, "View number" , NULL , 1. }
+  { GMSH_FULLRC, "ViewNumber" , NULL , 1. }
 };
 
 extern "C"

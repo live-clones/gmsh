@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.9 2001-07-31 10:24:56 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.10 2001-07-31 10:28:50 geuzaine Exp $
 
 #include "CutMap.h"
 #include "List.h"
@@ -25,7 +25,7 @@ GMSH_CutMapPlugin::GMSH_CutMapPlugin(double a, int I)
 
 void GMSH_CutMapPlugin::getName(char *name) const
 {
-  strcpy(name,"CutMap");
+  strcpy(name,"Cut Map");
 }
 
 void GMSH_CutMapPlugin::getInfos(char *author, char *copyright, char *help_text) const
