@@ -1,4 +1,4 @@
-$Id: TODO,v 1.48 2004-05-22 01:24:16 geuzaine Exp $
+$Id: TODO,v 1.49 2004-06-02 02:22:13 geuzaine Exp $
 
 add ternary operator and <,>,<=,>=,== tests in MathEval
 
@@ -26,6 +26,11 @@ labels (scales)
 ********************************************************************
 
 find a better way to display the time/timestep in the scale...
+
+********************************************************************
+
+make Recombine work the same as "Second order"? (i.e., allow for
+interactive use?)
 
 ********************************************************************
 
