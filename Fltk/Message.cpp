@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.22 2001-07-08 15:45:47 geuzaine Exp $
+// $Id: Message.cpp,v 1.23 2001-08-12 20:45:30 geuzaine Exp $
 
 #include <unistd.h>
 #include <signal.h>
@@ -47,6 +47,9 @@ void Signal (int sig_num){
 /* ------------------------------------------------------------------------ */
 /*  M s g                                                                   */
 /* ------------------------------------------------------------------------ */
+
+void Debug(){
+}
 
 void Msg(int level, char *fmt, ...){
   va_list  args;
@@ -130,6 +133,7 @@ void Msg(int level, char *fmt, ...){
   }
 
   if(abort){
+    Debug();
     if(WID){
       WID->save_message(CTX.error_filename);
       WID->fatal_error(CTX.error_filename);
