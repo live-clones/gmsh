@@ -107,7 +107,7 @@ identifier [a-zA-Z\_][a-zA-Z0-9\_]*
 
 #undef mewrap
 
-int mewrap() {return 1;}
+int mewrap() { return 1; }
 
 static int input_from_string (char *buffer, int max_size)
 {
@@ -124,3 +124,5 @@ static int input_from_string (char *buffer, int max_size)
 
   return count;
 }
+
+int force_buffer_flush() { YY_FLUSH_BUFFER; }
