@@ -82,7 +82,6 @@ class GUI{
   int MH ;
 
   // Bitmaps
-  Fl_Bitmap  *icon1_bmp, *icon2_bmp, *icon3_bmp;
   Fl_Bitmap  *abort_bmp, *start_bmp, *stop_bmp, *about_bmp ;
   void add_post_plugins ( Fl_Menu_Button *button , int iView);
 

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.72 2001-05-07 06:25:26 geuzaine Exp $
+// $Id: GUI.cpp,v 1.73 2001-05-08 11:34:19 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -464,12 +464,6 @@ GUI::GUI(int argc, char **argv) {
 
   Fl::add_handler(SetGlobalShortcut);
 
-  // Icons
-
-  icon1_bmp = new Fl_Bitmap(g1_bits,g1_width,g1_height);
-  icon2_bmp = new Fl_Bitmap(g2_bits,g2_width,g2_height);
-  icon3_bmp = new Fl_Bitmap(g3_bits,g3_width,g3_height);
-
   // All static windows are contructed (even if some are not
   // displayed) since the shortcuts should be valid even for hidden
   // windows, and we don't want to test for widget existence every time
@@ -477,7 +471,13 @@ GUI::GUI(int argc, char **argv) {
   create_menu_window(argc, argv);
   create_graphic_window(argc, argv);
 
-#ifndef WIN32
+#ifdef WIN32
+  HICON icon = CreateIcon(NULL, 32, 32, 1, 1,
+			  (CONST BYTE *)gmsh_and_bits,
+			  (CONST BYTE *)gmsh_xor_bits);
+  m_window->icon((char *)icon); 
+  g_window->icon((char *)icon);
+#else
   fl_open_display();
   Pixmap p1 = XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
 				    g1_bits, g1_width, g1_height);
