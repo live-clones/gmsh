@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.49 2004-09-18 02:44:18 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.50 2004-10-03 23:32:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -560,18 +560,19 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
         }
       }
 #endif
-      else {
 #if defined(__APPLE__)
-        // The Mac Finder launches programs with special command line
-        // arguments: just ignore them (and don't exit!)
-        fprintf(stderr, "Unknown option '%s'\n", argv[i]);
+      else if(!strncmp(argv[i] + 1, "psn", 3)) {
+        // The Mac Finder launches programs with a special command
+        // line argument of the form -psn_XXX: just ignore it silently
+        // (and don't exit!)
         i++;
-#else
+      }
+#endif
+      else {
         fprintf(stderr, "Unknown option '%s'\n", argv[i]);
         CTX.terminal = 1;
         Print_Usage(argv[0]);
         exit(1);
-#endif
       }
     }
 
