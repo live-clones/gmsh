@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.55 2004-04-08 18:12:10 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.56 2004-04-08 18:14:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -91,17 +91,17 @@ void CreateOutputFile(char *name, int format)
     else if(!strcmp(ext, ".png"))
       CreateOutputFile(name, FORMAT_PNG);
     else if(!strcmp(ext, ".ps"))
-      CreateOutputFile(name, FORMAT_PS_RASTER);
+      CreateOutputFile(name, FORMAT_PS);
     else if(!strcmp(ext, ".eps"))
-      CreateOutputFile(name, FORMAT_EPS_RASTER);
+      CreateOutputFile(name, FORMAT_EPS);
     else if(!strcmp(ext, ".pdf"))
-      CreateOutputFile(name, FORMAT_PDF_RASTER);
+      CreateOutputFile(name, FORMAT_PDF);
     else if(!strcmp(ext, ".tex"))
       CreateOutputFile(name, FORMAT_TEX);
     else if(!strcmp(ext, ".epstex"))
-      CreateOutputFile(name, FORMAT_EPSTEX_RASTER);
+      CreateOutputFile(name, FORMAT_EPSTEX);
     else if(!strcmp(ext, ".pdftex"))
-      CreateOutputFile(name, FORMAT_PDFTEX_RASTER);
+      CreateOutputFile(name, FORMAT_PDFTEX);
     else if(!strcmp(ext, ".jpegtex"))
       CreateOutputFile(name, FORMAT_JPEGTEX);
     else if(!strcmp(ext, ".ppm"))
