@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.59 2003-05-17 18:37:41 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.60 2003-05-22 16:13:32 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -1091,21 +1091,21 @@ equal to the third @var{expression}. At each iteration, the commands
 comprised between `@code{For ( @var{expression} : @var{expression} :
 @var{expression} )}' and the matching @code{EndFor} are executed.
 
-@item For @var{string} In ( @var{expression} : @var{expression} )
+@item For @var{string} In @{ @var{expression} : @var{expression} @}
 Iterates from the value of the first @var{expression} to the value of the
 second @var{expression}, with a unit incrementation step. At each iteration,
 the value of the iterate is affected to an expression named @var{string},
-and the commands comprised between `@code{For @var{string} In (
-@var{expression} : @var{expression} )}' and the matching @code{EndFor} are
+and the commands comprised between `@code{For @var{string} In @{
+@var{expression} : @var{expression} @}}' and the matching @code{EndFor} are
 executed.
 
-@item For @var{string} In ( @var{expression} : @var{expression} : @var{expression} )
+@item For @var{string} In @{ @var{expression} : @var{expression} : @var{expression} @}
 Iterates from the value of the first @var{expression} to the value of the
 second @var{expression}, with a positive or negative incrementation step
 equal to the third @var{expression}. At each iteration, the value of the
 iterate is affected to an expression named @var{string}, and the commands
-comprised between `@code{For @var{string} In ( @var{expression} :
-@var{expression} : @var{expression} )}' and the matching @code{EndFor} are
+comprised between `@code{For @var{string} In @{ @var{expression} :
+@var{expression} : @var{expression} @}}' and the matching @code{EndFor} are
 executed.
 
 @item EndFor
