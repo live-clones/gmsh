@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.135 2001-08-17 15:29:09 geuzaine Exp $
+# $Id: Makefile,v 1.136 2001-08-18 12:43:30 geuzaine Exp $
 
 GMSH_RELEASE = 1.24
 
@@ -54,6 +54,10 @@ default: initialtag
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
 
+gmsh:
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
+                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm
+
 static:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
@@ -68,35 +72,14 @@ static:
                  $(HOME)/SOURCES/Mesa-static/lib/libGL.a\
                  $(HOME)/SOURCES/fltk-static/lib/libfltk.a -lX11 -lm
 
-win: initialtag
-	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
-           "CC=g++" \
-           "C_FLAGS=-g -Wall -DWIN32" \
-           "OS_FLAGS=-D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_FLTK" \
-           "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
-        ); done
-	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) \
-            $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
-
 purify:
 	purify -cache-dir=/space g++ -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libfltk-gcc.a\
                  -L/usr/X11R6/lib -lX11 -lm -ldl -lsocket
 
-gmsh:
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm
-
 efence:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lefence -lm
-
-gmsh2:
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -lfltk_gl\
-                 -L/usr/X11R6/lib $(X11_LIB) -lpthread -lm
 
 # ----------------------------------------------------------------------
 # Utilities
@@ -247,7 +230,7 @@ bb-mingw: tag
 compile_linux:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
-           "C_FLAGS=-O2" \
+           "C_FLAGS=-g -O2 -Wall" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
@@ -257,6 +240,27 @@ link_linux:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
 linux: tag compile_linux link_linux strip_bin
+
+#
+# Test for fltk 2.0
+#
+compile_fltk2:
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(CC)" \
+           "C_FLAGS=-g -Wall" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-2.0" \
+        ); done
+link_fltk2:
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
+                 $(HOME)/SOURCES/fltk-2.0/lib/libfltk_gl.so.2\
+                 $(OPENGL_LIB) \
+                 $(HOME)/SOURCES/fltk-2.0/lib/libfltk_forms.so.2 \
+                 $(HOME)/SOURCES/fltk-2.0/lib/libfltk.so.2 \
+                 -L/usr/X11R6/lib $(X11_LIB) -lm
+fltk2: compile_fltk2 link_fltk2
 
 #
 # Linux, gcc-2.95.x (optimized build is still buggy)
