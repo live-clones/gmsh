@@ -9,6 +9,7 @@ int SetGlobalShortcut(int event);
 
 void cancel_cb(CALLBACK_ARGS) ;
 void color_cb(CALLBACK_ARGS) ;
+void set_changed_cb(CALLBACK_ARGS);
 
 // Graphical window
 

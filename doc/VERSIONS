@@ -1,7 +1,8 @@
-$Id: VERSIONS,v 1.47 2001-08-03 21:28:56 geuzaine Exp $
+$Id: VERSIONS,v 1.48 2001-08-04 00:37:57 geuzaine Exp $
 
 New in 1.23: Better display of displacement maps; boundary operator
 generalization; new explode option for post-processing views;
+corrected link view behaviour (to update only the changed items);
 
 New in 1.22: Fixed (yet another) bug for 2D mesh in the mean plane;
 fixed surface coherence bug in extruded meshes; new double logarithmic

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.101 2001-08-03 21:27:20 geuzaine Exp $
+// $Id: GUI.cpp,v 1.102 2001-08-04 00:37:57 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1927,11 +1927,20 @@ void GUI::create_about_window(){
 
 //************************* Create the window for view options *************************
 
+// WARNING! Don't forget to add the set_changed_cb() callback to any new widget!
+
 void GUI::create_view_options_window(int num){
   int i;
 
   if(!init_view_window){
     init_view_window = 1 ;
+
+    // initialise all buttons to NULL (see the clear_changed() in opt_view_options_bd)
+    for(i=0; i<VIEW_OPT_BUTT; i++){
+      view_butt[i] = NULL;
+      view_value[i] = NULL;
+      view_input[i] = NULL;
+    }
 
     int width = 32*CTX.fontsize;
     int height = 5*WB+11*BH;
@@ -1953,6 +1962,7 @@ void GUI::create_view_options_window(int num){
 	  view_input[i]->labelsize(CTX.fontsize);
 	  view_input[i]->textsize(CTX.fontsize);
 	  view_input[i]->align(FL_ALIGN_RIGHT);
+	  view_input[i]->callback(set_changed_cb, 0);
 	}
 
         view_butt[13] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Show elements");
@@ -1966,6 +1976,7 @@ void GUI::create_view_options_window(int num){
 	view_butt[27]->down_box(FL_DOWN_BOX);
 	view_butt[27]->labelsize(CTX.fontsize);
 	view_butt[27]->selection_color(FL_YELLOW);
+	view_butt[27]->callback(set_changed_cb, 0);
 
 	view_value[11] = new Fl_Value_Input(width/2, 2*WB+ 1*BH, IW, BH, "Boundary");
 	view_value[11]->labelsize(CTX.fontsize);
@@ -1975,6 +1986,7 @@ void GUI::create_view_options_window(int num){
 	view_value[11]->minimum(0); 
 	view_value[11]->step(1); 
 	view_value[11]->maximum(3); 
+	view_value[11]->callback(set_changed_cb, 0);
 
 	view_value[12] = new Fl_Value_Input(width/2, 2*WB+ 2*BH, IW, BH, "Explode");
 	view_value[12]->labelsize(CTX.fontsize);
@@ -1984,6 +1996,7 @@ void GUI::create_view_options_window(int num){
 	view_value[12]->minimum(0.); 
 	view_value[12]->step(0.01); 
 	view_value[12]->maximum(1.); 
+	view_value[12]->callback(set_changed_cb, 0);
 
         view_butt[18] = new Fl_Check_Button(width/2, 2*WB+3*BH, BW, BH, "Draw points");
         view_butt[19] = new Fl_Check_Button(width/2, 2*WB+4*BH, BW, BH, "Draw lines");
@@ -1997,6 +2010,7 @@ void GUI::create_view_options_window(int num){
 	  view_butt[i]->down_box(FL_DOWN_BOX);
 	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(FL_YELLOW);
+	  view_butt[i]->callback(set_changed_cb, 0);
 	}
 
         o->end();
@@ -2011,6 +2025,7 @@ void GUI::create_view_options_window(int num){
 	view_butt[0]->down_box(FL_DOWN_BOX);
 	view_butt[0]->labelsize(CTX.fontsize);
 	view_butt[0]->selection_color(FL_YELLOW);
+	//no set_changed since customrange has its own callback
 
         view_value[0] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Minimum");
         view_value[1] = new Fl_Value_Input(2*WB, 2*WB+3*BH, IW, BH, "Maximum");
@@ -2019,25 +2034,30 @@ void GUI::create_view_options_window(int num){
 	  view_value[i]->textsize(CTX.fontsize);
 	  view_value[i]->type(FL_HORIZONTAL);
 	  view_value[i]->align(FL_ALIGN_RIGHT);
+	  view_value[i]->callback(set_changed_cb, 0);
 	}
+
 	view_butt[1] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Linear");
 	view_butt[2] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Logarithmic");
-
 	for(i=1 ; i<3 ; i++){
 	  view_butt[i]->type(FL_RADIO_BUTTON);
 	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(FL_YELLOW);
+	  view_butt[i]->callback(set_changed_cb, 0);
 	}
+
 	view_butt[26] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW, BH, "Double logarithmic");
 	view_butt[26]->type(FL_RADIO_BUTTON);
 	view_butt[26]->labelsize(CTX.fontsize);
 	view_butt[26]->selection_color(FL_YELLOW);
+	view_butt[26]->callback(set_changed_cb, 0);
 
         view_butt[25] = new Fl_Check_Button(2*WB, 2*WB+7*BH, BW, BH, "Saturate values");
 	view_butt[25]->type(FL_TOGGLE_BUTTON);
 	view_butt[25]->down_box(FL_DOWN_BOX);
 	view_butt[25]->labelsize(CTX.fontsize);
 	view_butt[25]->selection_color(FL_YELLOW);
+	view_butt[25]->callback(set_changed_cb, 0);
 
 	o->end();
       }
@@ -2054,6 +2074,7 @@ void GUI::create_view_options_window(int num){
 	view_value[2]->minimum(1); 
 	view_value[2]->maximum(256); 
 	view_value[2]->step(1);
+	view_value[2]->callback(set_changed_cb, 0);
 
 	view_butt[3] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Iso-values");
 	view_butt[4] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Filled iso-values");
@@ -2063,6 +2084,7 @@ void GUI::create_view_options_window(int num){
 	  view_butt[i]->type(FL_RADIO_BUTTON);
 	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(FL_YELLOW);
+	  view_butt[i]->callback(set_changed_cb, 0);
 	}
         o->end();
       }
@@ -2082,6 +2104,7 @@ void GUI::create_view_options_window(int num){
 	  view_value[i]->textsize(CTX.fontsize);
 	  view_value[i]->type(FL_HORIZONTAL);
 	  view_value[i]->align(FL_ALIGN_RIGHT);
+	  view_value[i]->callback(set_changed_cb, 0);
 	}	
 	o->end();
       }
@@ -2099,6 +2122,7 @@ void GUI::create_view_options_window(int num){
 	view_value[9]->maximum(0); 
 	view_value[9]->step(1);
 	view_timestep->end();
+	//no set_changed since timestep has its own callback
       }
       // Vector display
       { 
@@ -2116,6 +2140,7 @@ void GUI::create_view_options_window(int num){
 	    view_butt[i]->type(FL_RADIO_BUTTON);
 	    view_butt[i]->labelsize(CTX.fontsize);
 	    view_butt[i]->selection_color(FL_YELLOW);
+	    view_butt[i]->callback(set_changed_cb, 0);
 	  }
 	  o->end();
 	}
@@ -2127,6 +2152,7 @@ void GUI::create_view_options_window(int num){
 	    view_butt[i]->type(FL_RADIO_BUTTON);
 	    view_butt[i]->labelsize(CTX.fontsize);
 	    view_butt[i]->selection_color(FL_YELLOW);
+	    view_butt[i]->callback(set_changed_cb, 0);
 	  }
 	  o->end();
 	}
@@ -2136,6 +2162,7 @@ void GUI::create_view_options_window(int num){
 	view_value[10]->type(FL_HORIZONTAL);
 	view_value[10]->align(FL_ALIGN_RIGHT);
 	view_value[10]->minimum(0); 
+	view_value[10]->callback(set_changed_cb, 0);
 	view_vector->end();
       }
       // Colors
@@ -2146,6 +2173,7 @@ void GUI::create_view_options_window(int num){
 	view_colorbar_window = new Colorbar_Window(2*WB, 2*WB+1*BH,
 						   width-4*WB, height-5*WB-2*BH);
 	view_colorbar_window->end();
+	//no set_changed since colorbarwindow has its own callbacks
         o->end();
       }
       o->end();
@@ -2207,6 +2235,7 @@ void GUI::update_view_window(int num){
   opt_view_range_type(num, GMSH_GUI, 0);
   view_butt[0]->callback(view_options_custom_cb, (void*)num);
   view_options_custom_cb(0,0);
+  view_butt[0]->clear_changed();
   opt_view_custom_min(num, GMSH_GUI, 0);
   opt_view_custom_max(num, GMSH_GUI, 0);
   for(i=0 ; i<2 ; i++){

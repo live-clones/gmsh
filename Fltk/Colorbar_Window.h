@@ -27,7 +27,6 @@ class Colorbar_Window : public Fl_Window {
   
   ColorTable *ct;  // pointer to the color table (allocated in Post_View)
   int *viewchanged;// pointer to changed bit in view
-
   Fl_Color color_bg;
 
 public:

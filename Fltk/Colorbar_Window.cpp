@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.10 2001-05-01 18:58:24 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.11 2001-08-04 00:37:57 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -465,6 +465,7 @@ int Colorbar_Window::handle(int event){
       ColorTable_Recompute(ct, 1, 1);
       draw();
       *viewchanged = 1;
+      set_changed();
     }
     // discard the event for other uses
     return 1;
@@ -536,7 +537,8 @@ int Colorbar_Window::handle(int event){
       int a, b, value;
 
       *viewchanged = 1;
-      
+      set_changed();
+
       value = y_to_intensity(ypos);
       
       if (pentry<=entry) {
