@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.7 2004-02-28 00:48:48 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.8 2004-06-13 20:26:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -561,9 +561,10 @@ void SetVisibilityByNumber(int num, int type, int mode)
   Surface *s;
   Volume *V;
   Simplex SS, *S, **pS;
+  Quadrangle QQ, *Q, **pQ;
   Hexahedron HH, *H, **pH;
   Prism PP, *P, **pP;
-  Pyramid QQ, *Q, **pQ;
+  Pyramid YY, *Y, **pY;
 
   if(!THEM)
     return;
@@ -580,12 +581,14 @@ void SetVisibilityByNumber(int num, int type, int mode)
   case 1:    //element
     SS.Num = num;
     S = &SS;
+    QQ.Num = num;
+    Q = &QQ;
     HH.Num = num;
     H = &HH;
     PP.Num = num;
     P = &PP;
-    QQ.Num = num;
-    Q = &QQ;
+    YY.Num = num;
+    Y = &YY;
     found = 0;
     tmp = Tree2List(THEM->Curves);
     for(i = 0; i < List_Nbr(tmp); i++) {
@@ -603,6 +606,11 @@ void SetVisibilityByNumber(int num, int type, int mode)
 	List_Read(tmp, i, &s);
 	if((pS = (Simplex **) Tree_PQuery(s->Simplexes, &S))) {
 	  (*pS)->Visible = mode;
+	  found = 1;
+	  break;
+	}
+	if((pQ = (Quadrangle **) Tree_PQuery(s->Quadrangles, &Q))) {
+	  (*pQ)->Visible = mode;
 	  found = 1;
 	  break;
 	}
@@ -626,8 +634,8 @@ void SetVisibilityByNumber(int num, int type, int mode)
 	      found = 1;
 	      break;
 	    }
-	    if((pQ = (Pyramid **) Tree_PQuery(V->Pyramids, &Q))) {
-	      (*pQ)->Visible = mode;
+	    if((pY = (Pyramid **) Tree_PQuery(V->Pyramids, &Y))) {
+	      (*pY)->Visible = mode;
 	      found = 1;
 	      break;
 	    }
@@ -675,6 +683,10 @@ static void vis_nod(void *a, void *b)
 static void vis_sim(void *a, void *b)
 {
   (*(Simplex **) a)->Visible = vmode;
+}
+static void vis_qua(void *a, void *b)
+{
+  (*(Quadrangle **) a)->Visible = vmode;
 }
 static void vis_hex(void *a, void *b)
 {
@@ -730,6 +742,7 @@ void SetVisibilityByNumber(char *str, int type, int mode)
       for(i = 0; i < List_Nbr(tmp); i++) {
         List_Read(tmp, i, &s);
         Tree_Action(s->Simplexes, vis_sim);
+        Tree_Action(s->Quadrangles, vis_qua);
       }
       List_Delete(tmp);
       Tree_Action(THEM->Simplexes, vis_sim);
