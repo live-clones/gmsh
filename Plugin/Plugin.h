@@ -9,9 +9,7 @@
     catch the exception.
 */
 
-class PluginContainer;
 class Post_View;
-
 class GMSH_Plugin
 {
 public :
@@ -48,25 +46,6 @@ public:
   virtual Post_View *execute (Post_View *) = 0;
 };
 
-class GMSH_PluginManager
-{
-  GMSH_PluginManager();
-  virtual ~GMSH_PluginManager();
-  static GMSH_PluginManager *instance;
-  PluginContainer* allPlugins;
-public :
-/**
-  Registering all default plugins that are in $(GMSHPLUGINSHOME)
-  In fact, we will load all .so files in dir $(GMSHPLUGINSHOME)
-*/
-  void RegisterDefaultPlugins();
-  static GMSH_PluginManager *Instance();
-  /** Dynamically add a plugin pluginName.so in dirName*/
-  void AddPlugin(char *dirName, char *pluginName);
-  void CallPlugin (char *name);
-  void DestroyPlugin (char *name);
-  void SetPluginOption (char *pluginName, char *option, void *value);
-};
 #endif
 
 

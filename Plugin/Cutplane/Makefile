@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2001-03-04 22:57:36 remacle Exp $
+# $Id: Makefile,v 1.3 2001-03-05 23:14:57 remacle Exp $
 #
 # Makefile for "libAdapt.a"
 #
@@ -47,3 +47,4 @@ depend:
 	$(RM) $(RMFLAGS) Makefile.new
 
 # DO NOT DELETE THIS LINE
+CutPlane.o: CutPlane.cpp CutPlane.h ../Plugin.h

@@ -1,10 +1,12 @@
-// $Id: GUI.cpp,v 1.54 2001-03-03 08:44:32 geuzaine Exp $
+// $Id: GUI.cpp,v 1.55 2001-03-05 23:14:57 remacle Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
 // - use CTX.fontsize for font sizes
 // - examine what's already done before adding something new...
 
+#include "PluginManager.h"
+#include "Plugin.h"
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "GmshVersion.h"
@@ -18,6 +20,7 @@
 #include "Callbacks.h"
 #include "Bitmaps.h"
 #include "GetOptions.h"
+
 
 #define WINDOW_BOX FL_FLAT_BOX
 
@@ -425,7 +428,7 @@ int GUI::global_shortcuts(int event){
 //***************************** The GUI constructor ************************************
 
 GUI::GUI(int argc, char **argv) {
-
+  
   init_menu_window = 0;
   init_graphic_window = 0;
   init_general_options_window = 0;
@@ -478,7 +481,6 @@ GUI::GUI(int argc, char **argv) {
   create_about_window();
 
   // Draw the scene
-
   g_opengl_window->redraw();
 
 }
@@ -502,6 +504,23 @@ void GUI::wait(){
 }
 
 //********************************* Create the menu window *****************************
+
+void add_post_plugins ( Fl_Menu_Button *button )
+{
+  char name[256],menuname[256];
+  for(GMSH_PluginManager::iter it = GMSH_PluginManager::Instance()->begin();
+      it != GMSH_PluginManager::Instance()->end();
+      ++it)
+    {
+      GMSH_Plugin *p = (*it).second;
+      if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN)
+	{
+	  p->getName(name);
+	  sprintf(menuname,"Plugins/%s",name);
+	  button->add(menuname, 0,(Fl_Callback *)view_plugin_cb, (void*)p, 0);
+	}
+    }
+}
 
 void GUI::create_menu_window(int argc, char **argv){
   int i, y;
@@ -576,6 +595,7 @@ void GUI::create_menu_window(int argc, char **argv){
 			   (Fl_Callback *)view_applybgmesh_cb, (void*)i, FL_MENU_DIVIDER);
       m_popup_butt[i]->add("Options...", 0,
 			   (Fl_Callback *)view_options_cb, (void*)i, 0);
+      add_post_plugins ( m_popup_butt[i] );
       m_popup_butt[i]->textsize(CTX.fontsize);
       m_popup_butt[i]->hide();
     }

@@ -1,7 +1,8 @@
-// $Id: Main.cpp,v 1.19 2001-03-04 22:58:01 remacle Exp $
+// $Id: Main.cpp,v 1.20 2001-03-05 23:14:57 remacle Exp $
 
 #include <signal.h>
 
+#include "PluginManager.h"
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "GmshVersion.h"
@@ -18,7 +19,6 @@
 #include "GUI.h"
 #include "OpenFile.h"
 #include "GetOptions.h"
-#include "Plugin.h"
 
 GUI *WID = NULL;
 
@@ -46,6 +46,8 @@ int main(int argc, char *argv[]){
   if(CTX.verbosity && CTX.terminal)
     fprintf(stderr, "%s, Version %.2f\n", gmsh_progname, GMSH_VERSION);
 
+  // Register Default Plugins (in test ...)
+  GMSH_PluginManager::Instance()->RegisterDefaultPlugins();
 
   // Initialize the static Mesh
 
@@ -124,9 +126,6 @@ int main(int argc, char *argv[]){
   // Display the GUI to have a quick "a la Windows" launch time
 
   WID->check();
-
-  // Register Default Plugins (in test ...)
-  GMSH_PluginManager::Instance()->RegisterDefaultPlugins();
 
   // Open project file
 

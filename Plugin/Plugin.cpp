@@ -2,6 +2,7 @@
 #include <dlfcn.h>
 #include <map>
 #include "Plugin.h"
+#include "PluginManager.h"
 #include "Message.h"
 #include <FL/filename.H>
 using namespace std;
@@ -14,37 +15,18 @@ const char *GMSH_PluginEntry = "GMSH_RegisterPlugin";
 #define SLASH "/"
 #endif
 
-struct ltstr
-{
-  bool operator()(const char* s1, const char* s2) const
-  {
-    return strcmp(s1, s2) < 0;
-  }
-};
-
-class PluginContainer
-{
-public :
-  typedef map<char*,GMSH_Plugin*,ltstr>::iterator iter;
-  map<char*,GMSH_Plugin*,ltstr> m;
-  iter begin() {return m.begin();}
-  iter end() {return m.end();}
-  iter find(char *c) {return m.find(c);}
-};
 
 GMSH_PluginManager *GMSH_PluginManager::instance = 0;
 
 GMSH_PluginManager::GMSH_PluginManager()
 {
-  allPlugins = new PluginContainer;
 }
 
 GMSH_PluginManager::~GMSH_PluginManager()
 {
-  for(PluginContainer::iter it = allPlugins->begin();
-      it != allPlugins->end();
+  for(iter it = allPlugins.begin();
+      it != allPlugins.end();
       ++it)delete (*it).second;
-  delete allPlugins;
 }
 
 GMSH_PluginManager* GMSH_PluginManager::Instance()
@@ -115,12 +97,12 @@ void GMSH_PluginManager::AddPlugin( char *dirName, char *pluginName)
   p->hlib = hlib;
   p->getName(plugin_name);
   p->getInfos(plugin_author,plugin_copyright,plugin_help);
-  if(allPlugins->find(plugin_name) != allPlugins->end())
+  if(allPlugins.find(plugin_name) != allPlugins.end())
     {
       Msg(WARNING,"Plugin %s Multiply defined",pluginName);
       return;
     }
-  allPlugins->m[plugin_name] = p;
+  allPlugins.insert(std::pair<char*,GMSH_Plugin*>(plugin_name,p));
   Msg(INFO,"Plugin name : %s",plugin_name);
   Msg(INFO,"Plugin author : %s",plugin_author);
   Msg(INFO,"Plugin copyright : %s",plugin_copyright);

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.37 2001-02-23 08:18:50 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.38 2001-03-05 23:14:57 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -16,6 +16,7 @@
 #include "Options.h"
 #include "GUI.h"
 #include "Callbacks.h"
+#include "Plugin.h"
 
 #include <FL/fl_file_chooser.H>
 #include <errno.h>
@@ -1442,6 +1443,13 @@ void view_applybgmesh_cb(CALLBACK_ARGS){
 }
 void view_options_cb(CALLBACK_ARGS){
   WID->create_view_options_window((int)data);
+}
+
+void view_plugin_cb(CALLBACK_ARGS){
+  char name[256];
+  GMSH_Plugin *p = (GMSH_Plugin*)data;
+  p->getName(name);
+  Msg(INFO,"Plugin %s called",name);
 }
 
 void view_options_custom_cb(CALLBACK_ARGS){
