@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.34 2001-08-24 06:58:19 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.35 2001-09-05 09:06:36 geuzaine Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -317,10 +317,16 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
 
   for(i= 0;i<doc->numTriangles;i++){
     del_P = &doc->delaunay[i] ;
-    List_Add(del_L, &del_P);
+    if((del_P->t.a == del_P->t.b) &&
+       (del_P->t.a == del_P->t.c)){
+      Msg(GERROR, "Initial mesh is wrong. Try the new isotropic algorithm.");
+    }
+    else
+      List_Add(del_L, &del_P);
   }
+  doc->numTriangles = List_Nbr(del_L);
   
-  verify_edges (del_L, ListContours, numcontours, doc->numTriangles);
+  verify_edges (del_L, ListContours, numcontours);
   verify_inside (doc->delaunay, doc->numTriangles);
 
   /* creation des liens ( triangles voisins ) */

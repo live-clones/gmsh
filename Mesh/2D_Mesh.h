@@ -48,7 +48,7 @@ int CreateLinks(List_T * ListDelaunay , int NumDelaunay,
 
 void makepermut (int numpoints);
 void verify_edges (List_T *ListDelaunay, ContourRecord **ListContour, 
-                   int NumContours , int NumDelaunay);
+                   int NumContours);
 void verify_inside (Delaunay * ListDelaunay ,  int NumDelaunay );
 
 void PushgPointArray(PointRecord *ptr);

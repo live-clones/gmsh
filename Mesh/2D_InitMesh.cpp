@@ -1,4 +1,4 @@
-// $Id: 2D_InitMesh.cpp,v 1.9 2001-08-13 09:38:14 geuzaine Exp $
+// $Id: 2D_InitMesh.cpp,v 1.10 2001-09-05 09:06:36 geuzaine Exp $
 
 /*
  
@@ -60,7 +60,7 @@
 #include "2D_Mesh.h"
 
 static int            pointA,pointB,Counter,Stagnant,StopNow;
-static Tree_T        *ETree,*EDToSwap;
+static Tree_T        *ETree=NULL,*EDToSwap=NULL;
 
 extern PointRecord   *gPointArray;
 
@@ -126,6 +126,9 @@ int crossED ( ED * e ){
 
   if(t>1. || t<0.)return(0);
   if(q>1. || q<0.)return(0);
+
+  //printf("t=%g  q=%g  det=%g\n", t, q, det);
+
   return(1);
 }
  
@@ -184,6 +187,11 @@ void SwapED ( void *data , void *dummy){
 
   if(Stagnant && Counter <= StopNow)return;
   else if(Stagnant)Counter++;
+
+  if(!e->Liste[0] || !e->Liste[1]){
+    Msg(GERROR, "Initial mesh is wrong. Try new isotropic algorithm.");
+    return;
+  }
 
   if(e->from != e->Liste[0]->t.a && e->from != e->Liste[0]->t.b &&
      e->from != e->Liste[0]->t.c )
@@ -270,7 +278,7 @@ int verifie_cas_scabreux (int pa, int pb, ContourRecord **ListContours, int Nc){
 }
 
 void verify_edges (List_T *ListDelaunay, ContourRecord **ListContour, 
-                   int NumContours , int NumDelaunay){
+                   int NumContours){
 
   ED   *pEdge;
   ED   Edge; 
@@ -285,7 +293,7 @@ void verify_edges (List_T *ListDelaunay, ContourRecord **ListContour,
     c++;
     if(c>max)break;
     ETree = Tree_Create ( sizeof (Edge) , compareED );
-    for (i=0;i< NumDelaunay;i++) {
+    for (i=0;i< List_Nbr(ListDelaunay);i++) {
 
       del_P = *(Delaunay**)List_Pointer(ListDelaunay, i);
 
@@ -298,6 +306,7 @@ void verify_edges (List_T *ListDelaunay, ContourRecord **ListContour,
       }
       else {
         Edge.Liste[0] = del_P;
+        Edge.Liste[1] = NULL;
         Tree_Add (ETree,&Edge);
       }
       
@@ -309,6 +318,7 @@ void verify_edges (List_T *ListDelaunay, ContourRecord **ListContour,
       }
       else {
         Edge.Liste[0] = del_P;
+        Edge.Liste[1] = NULL;
         Tree_Add (ETree,&Edge);
       }
       
@@ -320,6 +330,7 @@ void verify_edges (List_T *ListDelaunay, ContourRecord **ListContour,
       }
       else {
         Edge.Liste[0] = del_P;
+        Edge.Liste[1] = NULL;
         Tree_Add (ETree,&Edge);
       }
     }
@@ -348,9 +359,10 @@ void verify_edges (List_T *ListDelaunay, ContourRecord **ListContour,
     if(!ok){
       return;
     }
+    
     Msg(INFO, "Swapping (%d missing edges)", ok); 
     
-    EDToSwap = NULL;
+    //EDToSwap = NULL;
     if(EDToSwap)Tree_Delete(EDToSwap);
     EDToSwap = Tree_Create (sizeof(ED),compareED2);
     for(k=0;k<NumContours;k++){
@@ -379,10 +391,10 @@ void verify_edges (List_T *ListDelaunay, ContourRecord **ListContour,
     Tree_Action (EDToSwap , SwapED);
     Tree_Action (EDToSwap , AddInETree);
   }while(Tree_Nbr(EDToSwap));
-/*
+
   Tree_Delete(EDToSwap);
   Tree_Delete(ETree);
-*/
+
 }
 
 
