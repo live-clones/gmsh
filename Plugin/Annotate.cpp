@@ -1,4 +1,4 @@
-// $Id: Annotate.cpp,v 1.10 2005-03-11 17:25:07 geuzaine Exp $
+// $Id: Annotate.cpp,v 1.11 2005-03-13 09:10:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -103,7 +103,7 @@ void GMSH_AnnotatePlugin::draw()
 	    (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    FixText2DCoordinates(&X, &Y);
+    Fix2DCoordinates(&X, &Y);
     glRasterPos2d(X, Y);
     Draw_String(AnnotateOptions_String[0].def, style);
     // draw 10-pixel marker

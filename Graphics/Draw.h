@@ -66,7 +66,7 @@ void Draw_Post(void);
 void Draw_Graph2D(void);
 void Draw_Text2D(void);
 void Draw_Text2D3D(int dim, int timestep, int nb, List_T *td, List_T *tc);
-void FixText2DCoordinates(double *x, double *y);
+int Fix2DCoordinates(double *x, double *y);
 void Draw_OnScreenMessages(void);
 void Draw_Scales(void);
 void Draw_Disk(double size, double rint, double x, double y, double z, int light);

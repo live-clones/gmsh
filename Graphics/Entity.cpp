@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.60 2005-03-13 05:32:44 geuzaine Exp $
+// $Id: Entity.cpp,v 1.61 2005-03-13 09:10:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -505,27 +505,19 @@ void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
 
 void Draw_SmallAxes()
 {
-  double l, o, xx, xy, yx, yy, zx, zy, cx, cy;
+  double l = CTX.small_axes_size;
+  double o = 2;
 
-  l = CTX.small_axes_size;
-  o = 2;
+  double cx = CTX.small_axes_pos[0];
+  double cy = CTX.small_axes_pos[1];
+  Fix2DCoordinates(&cx, &cy);
 
-  if(CTX.small_axes_pos[0] > 0)
-    cx = CTX.viewport[0] + CTX.small_axes_pos[0];
-  else
-    cx = CTX.viewport[2] + CTX.small_axes_pos[0];
-
-  if(CTX.small_axes_pos[1] > 0)
-    cy = CTX.viewport[3] - CTX.small_axes_pos[1];
-  else
-    cy = CTX.viewport[1] - CTX.small_axes_pos[1];
-
-  xx = l * CTX.rot[0];
-  xy = l * CTX.rot[1];
-  yx = l * CTX.rot[4];
-  yy = l * CTX.rot[5];
-  zx = l * CTX.rot[8];
-  zy = l * CTX.rot[9];
+  double xx = l * CTX.rot[0];
+  double xy = l * CTX.rot[1];
+  double yx = l * CTX.rot[4];
+  double yy = l * CTX.rot[5];
+  double zx = l * CTX.rot[8];
+  double zy = l * CTX.rot[9];
 
   glLineWidth(CTX.line_width);
   gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);

@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.49 2005-03-12 20:17:41 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.50 2005-03-13 09:10:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -92,15 +92,13 @@ static void addval(Post_View * v, double Abs, double Val,
 }
 
 
-static void Draw_Graph2D(Post_View * v, double xx, double yy, 
+static void Draw_Graph2D(Post_View * v, double xtop, double ytop, 
 			 double width, double height, double tic)
 {
   char label[1024];
   float font_h, font_a;
   int i, i_inc, i_max, j, j_inc, j_max, k, nb;
   double dx, dy, dv;
-  double xtop = xx;
-  double ytop = CTX.viewport[3] - yy;
   double ybot = ytop - height;
   double Abs, Val, ValMin = 0., ValMax = 0., AbsMin, AbsMax;
   double p1[3], p2[3];
@@ -385,7 +383,12 @@ void Draw_Graph2D(void)
     Post_View *v = *(Post_View **) List_Pointer(todraw, i);
 
     if(!v->AutoPosition) {
-      Draw_Graph2D(v, v->Position[0], v->Position[1], v->Size[0], v->Size[1], tic);
+      double x = v->Position[0], y = v->Position[1];
+      int center = Fix2DCoordinates(&x, &y);
+      Draw_Graph2D(v, 
+		   x - (center & 1 ? v->Size[0]/2. : 0), 
+		   y + (center & 2 ? v->Size[1]/2. : 0), 
+		   v->Size[0], v->Size[1], tic);
     }
     else{
       double winw = CTX.viewport[2] - CTX.viewport[0];
@@ -396,7 +399,7 @@ void Draw_Graph2D(void)
 	double h = frach * winh - ysep;
 	double xmin = CTX.viewport[0] + (1-fracw)/2. * winw;
 	double ymin = CTX.viewport[1] + (1-frach)/2. * winh;
-	Draw_Graph2D(v, xmin + 0.95*xsep, ymin + 0.4*ysep, w, h, tic);
+	Draw_Graph2D(v, xmin + 0.95*xsep, CTX.viewport[3] - (ymin + 0.4*ysep), w, h, tic);
       }
       else if(List_Nbr(todraw) == 2){
 	double fracw = 0.75, frach = 0.85;
@@ -405,7 +408,7 @@ void Draw_Graph2D(void)
 	double xmin = CTX.viewport[0] + (1-fracw)/2. * winw;
 	double ymin = CTX.viewport[1] + (1-frach)/3. * winh;
 	if(num == 1) ymin += (h + ysep + (1-frach)/3. * winh);
-	Draw_Graph2D(v, xmin + 0.95*xsep, ymin + 0.4*ysep, w, h, tic);
+	Draw_Graph2D(v, xmin + 0.95*xsep, CTX.viewport[3] - (ymin + 0.4*ysep), w, h, tic);
 	num++;
       }
       else{
@@ -416,7 +419,7 @@ void Draw_Graph2D(void)
 	if(num == 1 || num == 3) xmin += (w + xsep + (1-fracw)/3. * winw);
 	double ymin = CTX.viewport[1] + (1-frach)/3. * winh;
 	if(num == 2 || num == 3) ymin += (h + ysep + (1-frach)/3. * winh);
-	Draw_Graph2D(v, xmin + 0.95*xsep, ymin + 0.4*ysep, w, h, tic);
+	Draw_Graph2D(v, xmin + 0.95*xsep, CTX.viewport[3] - (ymin + 0.4*ysep), w, h, tic);
 	num++;
       }
     }
@@ -425,8 +428,10 @@ void Draw_Graph2D(void)
 
 // Text strings
 
-void FixText2DCoordinates(double *x, double *y)
+int Fix2DCoordinates(double *x, double *y)
 {
+  int ret = (*x > 99999 && *y > 99999) ? 3 : (*y > 99999) ? 2 : (*x > 99999) ? 1 : 0;
+
   if(*x < 0) // measure from right border
     *x = CTX.viewport[2] + *x;
   else if(*x > 99999) // by convention, x-centered
@@ -438,6 +443,7 @@ void FixText2DCoordinates(double *x, double *y)
     *y = CTX.viewport[3]/2.;
   else
     *y = CTX.viewport[3] - *y;
+  return ret;
 }
 
 // Parser format: T2(x,y,style){"str","str",...};
@@ -481,7 +487,7 @@ void Draw_Text2D3D(int dim, int timestep, int nb, List_T * td, List_T * tc)
       x = d1[0];
       y = d1[1];
       z = 0.;
-      FixText2DCoordinates(&x, &y);
+      Fix2DCoordinates(&x, &y);
       style = d1[2];
       index = (int)d1[3];
       if(d2)

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.428 2005-03-13 05:32:43 geuzaine Exp $
+// $Id: GUI.cpp,v 1.429 2005-03-13 09:10:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2616,12 +2616,12 @@ void GUI::create_option_window()
       view_butt[7]->callback(activate_cb, (void*)"view_axes_auto_2d");
       
       view_value[20] = new Fl_Value_Input(L + width / 2, 2 * WB + 9 * BH, IW / 2, BH);
-      view_value[20]->minimum(0);
+      view_value[20]->minimum(-1024);
       view_value[20]->maximum(1024);
       view_value[20]->step(1);
       view_value[21] = new Fl_Value_Input(L + width / 2 + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "Position");
       view_value[21]->align(FL_ALIGN_RIGHT);
-      view_value[21]->minimum(0);
+      view_value[21]->minimum(-1024);
       view_value[21]->maximum(1024);
       view_value[21]->step(1);
 
