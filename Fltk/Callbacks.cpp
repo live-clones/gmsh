@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.162 2003-01-25 00:05:49 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.163 2003-01-25 20:31:54 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -113,12 +113,10 @@ int file_chooser(int multi, const char* message, const char* pat, int patindex){
 }
 
 char* file_chooser_get_name(int num){
-  //we could use this the ease the pain on windows
-  //(/c/cygdrive/... absolute paths are not recognized by windows)
-
-  //static char retname[1024];
-  //fl_filename_relative(retname, sizeof(retname), fc->value(num));
-  //return retname;
+  // to get the relative path:
+  // static char retname[1024];
+  // fl_filename_relative(retname, sizeof(retname), fc->value(num));
+  // return retname;
 
   return (char*)fc->value(num);
 }
@@ -1995,7 +1993,6 @@ void solver_file_edit_cb(CALLBACK_ARGS){
   char cmd[1000];
   int num = (int)data;
   sprintf(cmd, CTX.editor, WID->solver[num].input[0]->value());
-  Msg(INFO, "Starting text editor '%s'", cmd);
   SystemCall(cmd);
 }
 void solver_choose_mesh_cb(CALLBACK_ARGS){
@@ -2253,7 +2250,7 @@ void view_plugin_cb(CALLBACK_ARGS){
 
   if(p->dialogBox){//Get the values from the GUI
     int n = p->getNbOptions();
-    if(n > 20)Msg(GERROR,"Plugin has too much parameters");
+    if(n > 20) Msg(GERROR,"Plugin has too many parameters");
     for(int i=0;i<n;i++){
       StringXNumber *sxn;
       sxn = p->GetOption(i);

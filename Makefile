@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.250 2003-01-25 01:04:57 geuzaine Exp $
+# $Id: Makefile,v 1.251 2003-01-25 20:31:54 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 37
@@ -671,7 +671,7 @@ distrib-mac:
         "    <key>CFBundleIconFile</key><string>gmsh.icns</string>\n"\
         "    <key>CFBundleSignature</key><string>GMSH</string>\n"\
         "    <key>CFBundleGetInfoString</key><string>Gmsh $(GMSH_RELEASE),"\
-              "(c) C. Geuzaine and J.-F. Remacle, 1997-2002</string>\n"\
+              "(c) C. Geuzaine and J.-F. Remacle, 1997-2003</string>\n"\
         "    <key>CFBundleIdentifier</key><string>org.geuz.Gmsh</string>\n"\
         "    <key>NSHelpFile</key><string>tutorial.html</string>\n"\
         "  </dict>\n"\
