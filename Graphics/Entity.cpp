@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.50 2005-01-09 02:18:59 geuzaine Exp $
+// $Id: Entity.cpp,v 1.51 2005-01-21 03:04:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -235,8 +235,6 @@ void Draw_SimpleVector(int arrow, int fill,
 {
   double n[3], t[3], u[3];
 
-  if(light && fill) glEnable(GL_LIGHTING);
-
   n[0] = dx / d;
   n[1] = dy / d;
   n[2] = dz / d;
@@ -279,9 +277,9 @@ void Draw_SimpleVector(int arrow, int fill,
       glVertex3d(x + dx, y + dy, z + dz);
       glEnd();
       
+      if(light && fill) glEnable(GL_LIGHTING);
       glBegin(GL_TRIANGLES);
       if(light) glNormal3dv(u);
-
       glVertex3d(x + dx, y + dy, z + dz);
       glVertex3d(x + f2 * dx + b * (t[0]), y + f2 * dy + b * (t[1]),
 		 z + f2 * dz + b * (t[2]));
@@ -303,6 +301,7 @@ void Draw_SimpleVector(int arrow, int fill,
 		 z + f2 * dz + b * (u[2]));
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       glEnd();
+      glDisable(GL_LIGHTING);
     }
     else {
       glBegin(GL_LINE_STRIP);
@@ -325,23 +324,52 @@ void Draw_SimpleVector(int arrow, int fill,
   }
   else{ // simple pyramid
     if(fill){
+      double top[3] = { x+dx,      y+dy,      z+dz };
+      double tp[3]  = { x+b*t[0],  y+b*t[1],  z+b*t[2] };
+      double tm[3]  = { x-b*t[0],  y-b*t[1],  z-b*t[2] };
+      double up[3]  = { x+b*u[0],  y+b*u[1],  z+b*u[2] };
+      double um[3]  = { x-b*u[0],  y-b*u[1],  z-b*u[2] };
+      double nn[3];
+
+      if(light && fill) glEnable(GL_LIGHTING);
       glBegin(GL_TRIANGLES);
-      glVertex3d(x+dx,        y+dy,        z+dz);
-      glVertex3d(x+b*(t[0]),  y+b*(t[1]),  z+b*(t[2]));
-      glVertex3d(x+b*(-u[0]), y+b*(-u[1]), z+b*(-u[2]));
-      
-      glVertex3d(x+dx,        y+dy,        z+dz);
-      glVertex3d(x+b*(-u[0]), y+b*(-u[1]), z+b*(-u[2]));
-      glVertex3d(x+b*(-t[0]), y+b*(-t[1]), z+b*(-t[2]));
-      
-      glVertex3d(x+dx,        y+dy,        z+dz);
-      glVertex3d(x+b*(-t[0]), y+b*(-t[1]), z+b*(-t[2]));
-      glVertex3d(x+b*(u[0]),  y+b*(u[1]),  z+b*(u[2]));
-      
-      glVertex3d(x+dx,        y+dy,        z+dz);
-      glVertex3d(x+b*(u[0]),  y+b*(u[1]),  z+b*(u[2]));
-      glVertex3d(x+b*(t[0]),  y+b*(t[1]),  z+b*(t[2]));
+      if(light){
+	normal3points(tm[0], tm[1], tm[2], um[0], um[1], um[2],
+		      top[0], top[1], top[2], nn);
+	glNormal3dv(nn);
+      }
+      glVertex3d(tm[0], tm[1], tm[2]);
+      glVertex3d(um[0], um[1], um[2]);
+      glVertex3d(top[0], top[1], top[2]);
+
+      if(light){
+	normal3points(um[0], um[1], um[2], tp[0], tp[1], tp[2],
+		      top[0], top[1], top[2], nn);
+	glNormal3dv(nn);
+      }
+      glVertex3d(um[0], um[1], um[2]);
+      glVertex3d(tp[0], tp[1], tp[2]);
+      glVertex3d(top[0], top[1], top[2]);
+
+      if(light){
+	normal3points(tp[0], tp[1], tp[2], up[0], up[1], up[2],
+		      top[0], top[1], top[2], nn);
+	glNormal3dv(nn);
+      }
+      glVertex3d(tp[0], tp[1], tp[2]);
+      glVertex3d(up[0], up[1], up[2]);
+      glVertex3d(top[0], top[1], top[2]);
+
+      if(light){
+	normal3points(up[0], up[1], up[2], tm[0], tm[1], tm[2],
+		      top[0], top[1], top[2], nn);
+	glNormal3dv(nn);
+      }
+      glVertex3d(up[0], up[1], up[2]);
+      glVertex3d(tm[0], tm[1], tm[2]);
+      glVertex3d(top[0], top[1], top[2]);
       glEnd();
+      glDisable(GL_LIGHTING);
     }
     else{
       glBegin(GL_LINE_LOOP);
@@ -367,7 +395,6 @@ void Draw_SimpleVector(int arrow, int fill,
     }
   }
 
-  glDisable(GL_LIGHTING);
 }
 
 
