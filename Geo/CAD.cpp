@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.33 2001-10-29 08:52:19 geuzaine Exp $
+// $Id: CAD.cpp,v 1.34 2001-11-07 07:13:45 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -1203,6 +1203,21 @@ int compareTwoSurfaces (const void *a, const void *b){
 /* Fonction eliminant les doublons dans une
    geometrie*/
 
+void MaxNumPoint(void *a, void *b){
+  Vertex *v = *(Vertex**)a;
+  THEM->MaxPointNum = MAX(THEM->MaxPointNum,v->Num);
+}
+
+void MaxNumCurve(void *a, void *b){
+  Curve *c = *(Curve**)a;
+  THEM->MaxLineNum = MAX(THEM->MaxLineNum,c->Num);
+}
+
+void MaxNumSurface(void *a, void *b){
+  Surface *s = *(Surface**)a;
+  THEM->MaxSurfaceNum = MAX(THEM->MaxSurfaceNum,s->Num);
+}
+
 void Coherence_PS(void){
   ReplaceAllDuplicates (THEM);
 }
@@ -1239,8 +1254,12 @@ void ReplaceAllDuplicates ( Mesh *m ){
   List_Delete(All);
 
   end = Tree_Nbr(m->Points);
-
   if(start-end) Msg(DEBUG, "Removed %d duplicate points", start-end);
+  if(CTX.geom.old_newreg){
+    m->MaxPointNum=0;
+    Tree_Action(m->Points,MaxNumPoint);
+    Tree_Action(m->Vertices,MaxNumPoint);
+  }
 
   /* Replace old points in curves */
 
@@ -1307,6 +1326,10 @@ void ReplaceAllDuplicates ( Mesh *m ){
   end = Tree_Nbr(m->Curves);
 
   if(start-end) Msg(DEBUG, "Removed %d duplicate curves", start-end);
+  if(CTX.geom.old_newreg){
+    m->MaxLineNum=0;
+    Tree_Action(m->Curves,MaxNumCurve);
+  }
 
   /* Replace old curves in surfaces */
 
@@ -1345,6 +1368,10 @@ void ReplaceAllDuplicates ( Mesh *m ){
   end = Tree_Nbr(m->Surfaces);
 
   if(start-end) Msg(DEBUG, "Removed %d duplicate surfaces", start-end);
+  if(CTX.geom.old_newreg){
+    m->MaxSurfaceNum=0;
+    Tree_Action(m->Surfaces,MaxNumSurface);
+  }
 
   /* Replace old surfaces in volumes */
 
@@ -1522,6 +1549,7 @@ void DeletePoint(int ip){
     }
   }
   List_Delete(Curves);
+  if(v->Num == THEM->MaxPointNum) THEM->MaxPointNum--;
   Tree_Suppress(THEM->Points,&v);
 }
 
@@ -1537,6 +1565,7 @@ void DeleteCurve(int ip){
     }
   }
   List_Delete(Surfs);
+  if(c->Num == THEM->MaxLineNum) THEM->MaxLineNum--;
   Tree_Suppress(THEM->Curves,&c);
 }
 
@@ -1555,11 +1584,10 @@ void DeleteSurf( int is ){
     }
   }
   List_Delete(Vols);
+  if(s->Num == THEM->MaxSurfaceNum) THEM->MaxSurfaceNum--;
   //s->Num = 1000000000;
   Tree_Suppress(THEM->Surfaces,&s);
 }
-
-void DeleteLine(int ip, int i){DeleteCurve(ip);}
 
 void DeleteShape(int Type, int Num){
 

@@ -2,7 +2,7 @@ Summary: A 3D mesh generator with pre- and post-processing facilities
 Name: gmsh
 Version: 1.28
 Source: gmsh-1.28.tar.gz
-Release: 1
+Release: 2
 Copyright: distributable
 Group: Applications/Engineering
 URL: http://www.geuz.org/gmsh/
