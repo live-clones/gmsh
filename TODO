@@ -1,4 +1,4 @@
-$Id: TODO,v 1.37 2004-03-13 19:24:12 geuzaine Exp $
+$Id: TODO,v 1.38 2004-03-21 21:01:11 geuzaine Exp $
 
 add some code to make the node/element list ordered+dense (with no
 gaps)? this seems to be one common problem users have with our mesh
@@ -89,6 +89,8 @@ etc.
 
 Include Tetgen (the same way we did it with Triangle--the license is
 the same).
+
+Include the 3D frontal algo from netgen? (it's LGPL now)
 
 ********************************************************************
 
