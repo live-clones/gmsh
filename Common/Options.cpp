@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.225 2005-01-08 20:15:10 geuzaine Exp $
+// $Id: Options.cpp,v 1.226 2005-01-10 01:06:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2627,6 +2627,12 @@ double opt_general_color_scheme(OPT_ARGS_NUM)
     for(int i = 0; i < List_Nbr(CTX.post.list); i++)
       Set_ColorOptions_GUI(i, ViewOptions_Color);
     Set_ColorOptions_GUI(0, PrintOptions_Color);
+
+    // horrible trick so that the opt_view_XXX will act on the reference view
+    List_T *l = CTX.post.list;
+    CTX.post.list = NULL; 
+    Set_DefaultColorOptions(0, ViewOptions_Color);
+    CTX.post.list = l;
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
