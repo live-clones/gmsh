@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.10 2004-02-03 22:36:39 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.11 2004-02-05 22:52:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -348,6 +348,8 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
     w = v;
   }
 
+  // FIXME: this is not secure: if BeginView forces a post.list
+  // reallocation, w and v are wrong
   if(_valueIndependent) {
     out.push_back(BeginView(1));
   }

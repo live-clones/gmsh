@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.112 2004-02-05 16:53:58 geuzaine Exp $
+// $Id: Views.cpp,v 1.113 2004-02-05 22:52:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -58,7 +58,7 @@ Post_View *BeginView(int allocate)
   int i;
 
   if(!CTX.post.list)
-    CTX.post.list = List_Create(100, 1, sizeof(Post_View));
+    CTX.post.list = List_Create(100, 100, sizeof(Post_View));
 
   if(!CTX.post.force_num) {
     vv.Num = ++UniqueNum;       // each view _must_ have a unique number
@@ -415,16 +415,14 @@ void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
 
 void DuplicateView(int num, int withoptions)
 {
-  if(!CTX.post.list || num < 0 || num >= List_Nbr(CTX.post.list))
-    return;
-  DuplicateView((Post_View *) List_Pointer(CTX.post.list, num), withoptions);
-}
-
-void DuplicateView(Post_View * v1, int withoptions)
-{
   Post_View v, *v2, *v3;
 
+  // Create the new view before getting a pointer to the old one: in
+  // case post.list got reallocated, the pointer to the old one could
+  // have changed!
   v2 = BeginView(0);
+
+  Post_View *v1 = (Post_View *) List_Pointer_Test(CTX.post.list, num);
   EndView(v2, 0, v1->FileName, v1->Name);
 
   if(!v1->DuplicateOf) {

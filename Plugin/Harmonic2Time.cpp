@@ -1,4 +1,4 @@
-// $Id: Harmonic2Time.cpp,v 1.9 2004-02-03 22:36:39 geuzaine Exp $
+// $Id: Harmonic2Time.cpp,v 1.10 2004-02-05 22:52:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -129,6 +129,8 @@ Post_View *GMSH_Harmonic2TimePlugin::execute(Post_View * v)
   }
 
   if(MIN(rIndex, iIndex) >= 0 && vv->NbTimeStep >= MAX(rIndex, iIndex)) {
+    // FIXME: this is not secure: if BeginView forces a post.list
+    // reallocation, vv is wrong
     View = BeginView(1);
     harmonic2time(vv, View, rIndex, iIndex, nbSteps);
     // create time data

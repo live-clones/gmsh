@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.131 2004-01-25 09:32:30 geuzaine Exp $
+// $Id: Options.cpp,v 1.132 2004-02-05 22:52:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1601,14 +1601,21 @@ char *opt_solver_fifth_button_command4(OPT_ARGS_STR)
   return opt_solver_fifth_button_command(4, action, val);
 }
 
+int _gui_action_valid(int action, int num)
+{
+  return ((WID) &&
+	  (num < NB_BUTT_MAX) &&
+	  (action & GMSH_GUI) && 
+	  (num == WID->view_number));
+}
 
 char *opt_view_name(OPT_ARGS_STR)
 {
-  GET_VIEW(NULL);
+  GET_VIEW(NULL); 
   if(action & GMSH_SET) {
     strcpy(v->Name, val);
 #if defined(HAVE_FLTK)
-    if(WID && num < NB_BUTT_MAX) {
+    if(WID && (num < NB_BUTT_MAX)) {
       // this is OK even if v->Name is not static or allocated, since
       // we reset it correctly in the main GUI routines when the view
       // associated with the button changes (i.e., when views are
@@ -1619,7 +1626,7 @@ char *opt_view_name(OPT_ARGS_STR)
 #endif
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
+  if(_gui_action_valid(action, num)) {
     WID->view_input[0]->value(v->Name);
   }
 #endif
@@ -1633,7 +1640,7 @@ char *opt_view_format(OPT_ARGS_STR)
     strcpy(v->Format, val);
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_input[1]->value(v->Format);
 #endif
   return v->Format;
@@ -1655,7 +1662,7 @@ char *opt_view_abscissa_name(OPT_ARGS_STR)
     strcpy(v->AbscissaName, val);
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_input[2]->value(v->AbscissaName);
 #endif
   return v->AbscissaName;
@@ -1668,7 +1675,7 @@ char *opt_view_abscissa_format(OPT_ARGS_STR)
     strcpy(v->AbscissaFormat, val);
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_input[3]->value(v->AbscissaFormat);
 #endif
   return v->AbscissaFormat;
@@ -3696,7 +3703,7 @@ double opt_view_nb_timestep(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     v->NbTimeStep = (int)val;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[50]->maximum(v->NbTimeStep - 1);
   if(WID)
     WID->check_anim_buttons();
@@ -3716,7 +3723,7 @@ double opt_view_timestep(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[50]->value(v->TimeStep);
 #endif
   return v->TimeStep;
@@ -3750,7 +3757,7 @@ double opt_view_custom_min(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
+  if(_gui_action_valid(action, num)) {
     WID->view_value[31]->value(v->CustomMin);
   }
 #endif
@@ -3765,7 +3772,7 @@ double opt_view_custom_max(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[32]->value(v->CustomMax);
 #endif
   return v->CustomMax;
@@ -3779,7 +3786,7 @@ double opt_view_offset0(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[40]->value(v->Offset[0]);
 #endif
   return v->Offset[0];
@@ -3793,7 +3800,7 @@ double opt_view_offset1(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[41]->value(v->Offset[1]);
 #endif
   return v->Offset[1];
@@ -3807,7 +3814,7 @@ double opt_view_offset2(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[42]->value(v->Offset[2]);
 #endif
   return v->Offset[2];
@@ -3821,7 +3828,7 @@ double opt_view_raise0(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[43]->value(v->Raise[0]);
 #endif
   return v->Raise[0];
@@ -3835,7 +3842,7 @@ double opt_view_raise1(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[44]->value(v->Raise[1]);
 #endif
   return v->Raise[1];
@@ -3849,7 +3856,7 @@ double opt_view_raise2(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[45]->value(v->Raise[2]);
 #endif
   return v->Raise[2];
@@ -3863,7 +3870,7 @@ double opt_view_arrow_size(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[60]->value(v->ArrowSize);
 #endif
   return v->ArrowSize;
@@ -3877,7 +3884,7 @@ double opt_view_displacement_factor(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[63]->value(v->DisplacementFactor);
 #endif
   return v->DisplacementFactor;
@@ -3891,7 +3898,7 @@ double opt_view_explode(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[12]->value(v->Explode);
 #endif
   return v->Explode;
@@ -3904,7 +3911,7 @@ double opt_view_visible(OPT_ARGS_NUM)
     v->Visible = (int)val;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && num < NB_BUTT_MAX)
+  if(WID && (action & GMSH_GUI) && (num < NB_BUTT_MAX))
     WID->m_toggle_butt[num]->value(v->Visible);
 #endif
   Msg(DEBUG1, "View %d", v->Num);
@@ -3932,7 +3939,7 @@ double opt_view_intervals_type(OPT_ARGS_NUM)
     }
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
+  if(_gui_action_valid(action, num)) {
     switch (v->IntervalsType) {
     case DRAW_POST_ISO:
       WID->view_choice[0]->value(0);
@@ -3960,7 +3967,7 @@ double opt_view_saturate_values(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
+  if(_gui_action_valid(action, num)) {
     WID->view_butt[38]->value(v->SaturateValues);
   }
 #endif
@@ -3983,7 +3990,7 @@ double opt_view_type(OPT_ARGS_NUM)
     }
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
+  if(_gui_action_valid(action, num)) {
     WID->view_butt[1]->value(v->Type == DRAW_POST_3D);
     WID->view_butt[2]->value(v->Type == DRAW_POST_2D_SPACE);
     WID->view_butt[3]->value(v->Type == DRAW_POST_2D_TIME);
@@ -4000,7 +4007,7 @@ double opt_view_position0(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[20]->value(v->Position[0]);
 #endif
   return v->Position[0];
@@ -4014,7 +4021,7 @@ double opt_view_position1(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[21]->value(v->Position[1]);
 #endif
   return v->Position[1];
@@ -4028,7 +4035,7 @@ double opt_view_auto_position(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
+  if(_gui_action_valid(action, num)) {
     WID->view_butt[7]->value(v->AutoPosition);
   }
 #endif
@@ -4043,7 +4050,7 @@ double opt_view_size0(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[22]->value(v->Size[0]);
 #endif
   return v->Size[0];
@@ -4057,7 +4064,7 @@ double opt_view_size1(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[23]->value(v->Size[1]);
 #endif
   return v->Size[1];
@@ -4071,7 +4078,7 @@ double opt_view_grid(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
+  if(_gui_action_valid(action, num)) {
     WID->view_value[26]->value(v->Grid);
   }
 #endif
@@ -4086,7 +4093,7 @@ double opt_view_nb_abscissa(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
+  if(_gui_action_valid(action, num)) {
     WID->view_value[25]->value(v->NbAbscissa);
   }
 #endif
@@ -4101,7 +4108,7 @@ double opt_view_nb_iso(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[30]->value(v->NbIso);
 #endif
   return v->NbIso;
@@ -4115,7 +4122,7 @@ double opt_view_boundary(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
+  if(_gui_action_valid(action, num)) {
     WID->view_value[11]->value(v->Boundary);
   }
 #endif
@@ -4130,7 +4137,7 @@ double opt_view_light(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[11]->value(v->Light);
 #endif
   return v->Light;
@@ -4144,7 +4151,7 @@ double opt_view_smooth_normals(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[12]->value(v->SmoothNormals);
 #endif
   return v->SmoothNormals;
@@ -4158,7 +4165,7 @@ double opt_view_angle_smooth_normals(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[10]->value(v->AngleSmoothNormals);
 #endif
   return v->AngleSmoothNormals;
@@ -4172,7 +4179,7 @@ double opt_view_show_element(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[10]->value(v->ShowElement);
 #endif
   return v->ShowElement;
@@ -4185,7 +4192,7 @@ double opt_view_show_time(OPT_ARGS_NUM)
     v->ShowTime = (int)val;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[8]->value(v->ShowTime);
 #endif
   return v->ShowTime;
@@ -4198,7 +4205,7 @@ double opt_view_show_scale(OPT_ARGS_NUM)
     v->ShowScale = (int)val;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[4]->value(v->ShowScale);
 #endif
   return v->ShowScale;
@@ -4212,7 +4219,7 @@ double opt_view_draw_strings(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[5]->value(v->DrawStrings);
 #endif
   return v->DrawStrings;
@@ -4226,7 +4233,7 @@ double opt_view_draw_points(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[13]->value(v->DrawPoints);
 #endif
   return v->DrawPoints;
@@ -4240,7 +4247,7 @@ double opt_view_draw_lines(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[14]->value(v->DrawLines);
 #endif
   return v->DrawLines;
@@ -4254,7 +4261,7 @@ double opt_view_draw_triangles(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[15]->value(v->DrawTriangles);
 #endif
   return v->DrawTriangles;
@@ -4268,7 +4275,7 @@ double opt_view_draw_quadrangles(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[16]->value(v->DrawQuadrangles);
 #endif
   return v->DrawQuadrangles;
@@ -4282,7 +4289,7 @@ double opt_view_draw_tetrahedra(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[17]->value(v->DrawTetrahedra);
 #endif
   return v->DrawTetrahedra;
@@ -4296,7 +4303,7 @@ double opt_view_draw_hexahedra(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[18]->value(v->DrawHexahedra);
 #endif
   return v->DrawHexahedra;
@@ -4310,7 +4317,7 @@ double opt_view_draw_prisms(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[19]->value(v->DrawPrisms);
 #endif
   return v->DrawPrisms;
@@ -4324,7 +4331,7 @@ double opt_view_draw_pyramids(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[20]->value(v->DrawPyramids);
 #endif
   return v->DrawPyramids;
@@ -4338,7 +4345,7 @@ double opt_view_draw_scalars(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[21]->value(v->DrawScalars);
 #endif
   return v->DrawScalars;
@@ -4352,7 +4359,7 @@ double opt_view_draw_vectors(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[22]->value(v->DrawVectors);
 #endif
   return v->DrawVectors;
@@ -4366,7 +4373,7 @@ double opt_view_draw_tensors(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[23]->value(v->DrawTensors);
 #endif
   return v->DrawTensors;
@@ -4379,7 +4386,7 @@ double opt_view_transparent_scale(OPT_ARGS_NUM)
     v->TransparentScale = (int)val;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_butt[6]->value(v->TransparentScale);
 #endif
   return v->TransparentScale;
@@ -4401,7 +4408,7 @@ double opt_view_scale_type(OPT_ARGS_NUM)
     }
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
+  if(_gui_action_valid(action, num)) {
     switch (v->ScaleType) {
     case DRAW_POST_LINEAR:
       WID->view_choice[1]->value(0);
@@ -4426,7 +4433,7 @@ double opt_view_range_type(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
+  if(_gui_action_valid(action, num)){
     switch(v->RangeType){
     case DRAW_POST_RANGE_DEFAULT:
       WID->view_choice[7]->value(0);
@@ -4451,7 +4458,7 @@ double opt_view_tensor_type(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
+  if(_gui_action_valid(action, num)) {
     switch (v->TensorType) {
     case DRAW_POST_VONMISES:
       WID->view_choice[4]->value(0);
@@ -4473,7 +4480,7 @@ double opt_view_vector_type(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
+  if(_gui_action_valid(action, num)) {
     switch (v->VectorType) {
     case DRAW_POST_SEGMENT:
       WID->view_choice[2]->value(0);
@@ -4504,7 +4511,7 @@ double opt_view_arrow_location(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
+  if(_gui_action_valid(action, num)) {
     switch (v->ArrowLocation) {
     case DRAW_POST_LOCATE_COG:
       WID->view_choice[3]->value(0);
@@ -4526,7 +4533,7 @@ double opt_view_point_size(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[61]->value(v->PointSize);
 #endif
   return v->PointSize;
@@ -4540,7 +4547,7 @@ double opt_view_line_width(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(_gui_action_valid(action, num))
     WID->view_value[62]->value(v->LineWidth);
 #endif
   return v->LineWidth;
@@ -4554,7 +4561,7 @@ double opt_view_point_type(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
+  if(_gui_action_valid(action, num)) {
     WID->view_choice[5]->value(v->PointType ? 1 : 0);
   }
 #endif
@@ -4569,7 +4576,7 @@ double opt_view_line_type(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
+  if(_gui_action_valid(action, num)) {
     WID->view_choice[6]->value(v->LineType ? 1 : 0);
   }
 #endif

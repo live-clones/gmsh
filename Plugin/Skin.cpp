@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.22 2004-02-03 22:36:39 geuzaine Exp $
+// $Id: Skin.cpp,v 1.23 2004-02-05 22:52:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -187,6 +187,8 @@ Post_View *GMSH_SkinPlugin::execute(Post_View * v)
 
   _nbTimeStep = vv->NbTimeStep;
 
+  // FIXME: this is not secure: if BeginView forces a post.list
+  // reallocation, vv is wrong
   Post_View *view = BeginView(1);
 
   int skinTri[6][4] = {{0,1,-1,-1}, {1,2,-1,-1}, {2,0,-1,-1}};

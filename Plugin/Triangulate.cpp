@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.16 2004-02-03 22:36:39 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.17 2004-02-05 22:52:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -218,6 +218,8 @@ Post_View *GMSH_TriangulatePlugin::execute(Post_View * v)
   }
 
   if(vv->NbSP > 2) {
+    // FIXME: this is not secure: if BeginView forces a post.list
+    // reallocation, vv is wrong
     View = BeginView(1);
     Triangulate(vv, View);
     // copy time data
