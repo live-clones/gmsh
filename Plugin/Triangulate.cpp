@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.8 2003-01-23 20:19:26 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.9 2003-02-12 00:52:39 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -81,6 +81,13 @@ void GMSH_TriangulatePlugin::CatchErrorMessage (char *errorMessage) const
   strcpy(errorMessage,"Triangulate failed...");
 }
 
+#if !defined(HAVE_TRIANGLE)
+
+void Triangulate(Post_View *vin, Post_View *vout){
+  Msg(GERROR, "Triangle is not compiled in this version of Gmsh");
+}
+
+#else
 
 #define ANSI_DECLARATORS
 #define REAL double
@@ -183,6 +190,7 @@ void Triangulate(Post_View *vin, Post_View *vout){
 
 }
 
+#endif // !HAVE_TRIANGLE
 
 Post_View *GMSH_TriangulatePlugin::execute (Post_View *v)
 {
