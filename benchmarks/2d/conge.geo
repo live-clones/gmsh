@@ -72,9 +72,4 @@ Line Loop(21) = {17,-15,18,19,-20,16};
 Plane Surface(22) = {21};
 Line Loop(23) = {11,-12,13,14,1,2,-3,4,5,6,7,-8,9,10};
 Plane Surface(24) = {23,21};
-Recombine Surface{24,21};
-
-
-
-
-
+Recombine Surface{24};
