@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.13 2001-02-04 10:23:56 geuzaine Exp $
+// $Id: Post.cpp,v 1.14 2001-03-18 10:40:54 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -148,7 +148,7 @@ void Draw_Post (void) {
 
 	// Points
 
-	if(v->NbSP){
+	if(v->NbSP && v->DrawPoints){
 	  nb = List_Nbr(v->SP) / v->NbSP ;
 	  for(i = 0 ; i < List_Nbr(v->SP) ; i+=nb)
 	    Draw_ScalarPoint(v, ValMin, ValMax, Raise,
@@ -157,7 +157,7 @@ void Draw_Post (void) {
 			     (double*)List_Pointer_Fast(v->SP,i+2),
 			     (double*)List_Pointer_Fast(v->SP,i+3));
 	}
-	if(v->NbVP){
+	if(v->NbVP && v->DrawPoints){
 	  nb = List_Nbr(v->VP) / v->NbVP ;
 	  for(i = 0 ; i < List_Nbr(v->VP) ; i+=nb)
 	    Draw_VectorPoint(v, ValMin, ValMax, Raise,
@@ -166,7 +166,7 @@ void Draw_Post (void) {
 			     (double*)List_Pointer_Fast(v->VP,i+2),
 			     (double*)List_Pointer_Fast(v->VP,i+3));
 	}
-	if(v->NbTP){
+	if(v->NbTP && v->DrawPoints){
 	  nb = List_Nbr(v->TP) / v->NbTP ;
 	  for(i = 0 ; i < List_Nbr(v->TP) ; i+=nb)
 	    Draw_TensorPoint(v, ValMin, ValMax, Raise,
@@ -178,7 +178,7 @@ void Draw_Post (void) {
 
 	// Lines
 	
-	if(v->NbSL){
+	if(v->NbSL && v->DrawLines){
 	  nb = List_Nbr(v->SL) / v->NbSL ;
 	  for(i = 0 ; i < List_Nbr(v->SL) ; i+=nb)
 	    Draw_ScalarLine(v, ValMin, ValMax, Raise,
@@ -187,7 +187,7 @@ void Draw_Post (void) {
 			    (double*)List_Pointer_Fast(v->SL,i+4),
 			    (double*)List_Pointer_Fast(v->SL,i+6));
 	}
-	if(v->NbVL){
+	if(v->NbVL && v->DrawLines){
 	  nb = List_Nbr(v->VL) / v->NbVL ;
 	  for(i = 0 ; i < List_Nbr(v->VL) ; i+=nb)
 	    Draw_VectorLine(v, ValMin, ValMax, Raise,
@@ -196,7 +196,7 @@ void Draw_Post (void) {
 			    (double*)List_Pointer_Fast(v->VL,i+4),
 			    (double*)List_Pointer_Fast(v->VL,i+6));
 	}
-	if(v->NbTL){
+	if(v->NbTL && v->DrawLines){
 	  nb = List_Nbr(v->TL) / v->NbTL ;
 	  for(i = 0 ; i < List_Nbr(v->TL) ; i+=nb)
 	    Draw_VectorLine(v, ValMin, ValMax, Raise,
@@ -208,7 +208,7 @@ void Draw_Post (void) {
 	
 	// Triangles
 	
-	if(v->NbST){
+	if(v->NbST && v->DrawTriangles){
 	  nb = List_Nbr(v->ST) / v->NbST ;
 	  for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb)
 	    Draw_ScalarTriangle(v, ValMin, ValMax, Raise,
@@ -217,7 +217,7 @@ void Draw_Post (void) {
 				(double*)List_Pointer_Fast(v->ST,i+6),
 				(double*)List_Pointer_Fast(v->ST,i+9));
 	}
-	if(v->NbVT){
+	if(v->NbVT && v->DrawTriangles){
 	  nb = List_Nbr(v->VT) / v->NbVT ;
 	  for(i = 0 ; i < List_Nbr(v->VT) ; i+=nb)
 	    Draw_VectorTriangle(v, ValMin, ValMax, Raise,
@@ -226,7 +226,7 @@ void Draw_Post (void) {
 				(double*)List_Pointer_Fast(v->VT,i+6),
 				(double*)List_Pointer_Fast(v->VT,i+9));
 	}
-	if(v->NbTT){
+	if(v->NbTT && v->DrawTriangles){
 	  nb = List_Nbr(v->TT) / v->NbTT ;
 	  for(i = 0 ; i < List_Nbr(v->TT) ; i+=nb)
 	    Draw_TensorTriangle(v, ValMin, ValMax, Raise,
@@ -247,7 +247,7 @@ void Draw_Post (void) {
 	     the number of iso-surfaces is changed.
 	 */
 	
-	if(v->NbSS){
+	if(v->NbSS && v->DrawTetrahedra){
 	  nb = List_Nbr(v->SS) / v->NbSS ;
 	  for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
 	    Draw_ScalarTetrahedron(v, 1, ValMin, ValMax, Raise,
@@ -262,7 +262,7 @@ void Draw_Post (void) {
 				   (double*)List_Pointer_Fast(v->SS,i+8),
 				   (double*)List_Pointer_Fast(v->SS,i+12));
 	}
-	if(v->NbVS){
+	if(v->NbVS && v->DrawTetrahedra){
 	  nb = List_Nbr(v->VS) / v->NbVS ;
 	  for(i = 0 ; i < List_Nbr(v->VS) ; i+=nb)
 	    Draw_VectorTetrahedron(v, ValMin, ValMax, Raise,
@@ -271,7 +271,7 @@ void Draw_Post (void) {
 				   (double*)List_Pointer_Fast(v->VS,i+8),
 				   (double*)List_Pointer_Fast(v->VS,i+12));
 	}
-	if(v->NbTS){
+	if(v->NbTS && v->DrawTetrahedra){
 	  nb = List_Nbr(v->TS) / v->NbTS ;
 	  for(i = 0 ; i < List_Nbr(v->TS) ; i+=nb)
 	    Draw_TensorTetrahedron(v, ValMin, ValMax, Raise,

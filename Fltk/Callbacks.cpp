@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.40 2001-03-10 19:55:06 remacle Exp $
+// $Id: Callbacks.cpp,v 1.41 2001-03-18 10:40:54 geuzaine Exp $
 
 #include <map>
 #include "Gmsh.h"
@@ -1538,6 +1538,10 @@ void view_options_ok_cb(CALLBACK_ARGS){
       opt_view_show_time(i, GMSH_SET, WID->view_butt[15]->value());
       opt_view_transparent_scale(i, GMSH_SET, WID->view_butt[16]->value());
       opt_view_light(i,GMSH_SET,WID->view_butt[17]->value());
+      opt_view_draw_points(i, GMSH_SET, WID->view_butt[18]->value());
+      opt_view_draw_lines(i, GMSH_SET, WID->view_butt[19]->value());
+      opt_view_draw_triangles(i, GMSH_SET, WID->view_butt[20]->value());
+      opt_view_draw_tetrahedra(i, GMSH_SET, WID->view_butt[21]->value());
       
       opt_view_custom_min(i, GMSH_SET, WID->view_value[0]->value());
       opt_view_custom_max(i, GMSH_SET, WID->view_value[1]->value());

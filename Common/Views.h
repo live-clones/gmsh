@@ -35,6 +35,7 @@ class Post_View{
   int TransparentScale, ScaleType, RangeType;
   int ArrowType, ArrowLocation;
   int TimeStep;
+  int DrawPoints, DrawLines, DrawTriangles, DrawTetrahedra;
   ColorTable CT;
 
   // dynamic

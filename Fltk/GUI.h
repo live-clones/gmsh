@@ -152,7 +152,7 @@ public:
   int init_view_window, view_number ;
   Fl_Window        *view_window ;
   Fl_Group         *view_timestep, *view_vector ;
-  Fl_Check_Button  *view_butt[20] ;
+  Fl_Check_Button  *view_butt[30] ;
   Fl_Value_Input   *view_value[20] ;
   Fl_Input         *view_input[20] ;
   Colorbar_Window  *view_colorbar_window ;

@@ -191,8 +191,6 @@ void view_save_ascii_cb(CALLBACK_ARGS) ;
 void view_save_binary_cb(CALLBACK_ARGS) ;
 void view_duplicate_cb(CALLBACK_ARGS) ;
 void view_duplicate_with_options_cb(CALLBACK_ARGS) ;
-void view_lighting_cb(CALLBACK_ARGS) ;
-void view_elements_cb(CALLBACK_ARGS) ;
 void view_applybgmesh_cb(CALLBACK_ARGS) ;
 void view_options_cb(CALLBACK_ARGS) ;
 void view_plugin_cb(CALLBACK_ARGS) ;

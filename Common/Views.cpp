@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.32 2001-02-27 13:23:52 geuzaine Exp $
+// $Id: Views.cpp,v 1.33 2001-03-18 10:40:54 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -336,6 +336,10 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   dest->ShowElement = src->ShowElement;
   dest->ShowTime = src->ShowTime;
   dest->ShowScale = src->ShowScale;
+  dest->DrawPoints = src->DrawPoints;
+  dest->DrawLines = src->DrawLines;
+  dest->DrawTriangles = src->DrawTriangles;
+  dest->DrawTetrahedra = src->DrawTetrahedra;
   dest->TransparentScale = src->TransparentScale;
   dest->ScaleType = src->ScaleType;
   dest->RangeType = src->RangeType;
