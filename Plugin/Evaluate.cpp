@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.10 2004-12-28 03:55:48 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.11 2004-12-31 17:50:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -110,7 +110,7 @@ void GMSH_EvaluatePlugin::catchErrorMessage(char *errorMessage) const
 
 static void evaluate(Post_View * v, List_T * list, int nbElm,
 		     int nbNod, int nbComp, int comp, int timeStep,
-		     char *expression)
+		     char *expression, double *min, double *max)
 {
 #if !defined(HAVE_MATH_EVAL)
 
@@ -140,9 +140,6 @@ static void evaluate(Post_View * v, List_T * list, int nbElm,
 
   v->Changed = 1;
 
-  double min = VAL_INF;
-  double max = -VAL_INF;
-
   int nb = List_Nbr(list) / nbElm;
   for(int i = 0; i < List_Nbr(list); i += nb) {
     double *x = (double *)List_Pointer_Fast(list, i);
@@ -167,21 +164,12 @@ static void evaluate(Post_View * v, List_T * list, int nbElm,
 	res = sqrt(DSQR(val[0]) + DSQR(val[1]) + DSQR(val[2]));
       else if(nbComp == 9)
 	res = ComputeVonMises(val);
-      if(res < min) min = res;
-      if(res > max) max = res;
+      if(res < *min) *min = res;
+      if(res > *max) *max = res;
     }
   }
 
   evaluator_destroy(f);
-  
-  v->TimeStepMin[timeStep] = min;
-  v->TimeStepMax[timeStep] = max;
-  v->Min = v->TimeStepMin[0];
-  v->Max = v->TimeStepMax[0];
-  for(int i = 1; i < v->NbTimeStep; i++){
-    if(v->TimeStepMin[i] < v->Min) v->Min = v->TimeStepMin[i];
-    if(v->TimeStepMax[i] > v->Max) v->Max = v->TimeStepMax[i];
-  }
 
 #endif
 }
@@ -203,37 +191,49 @@ Post_View *GMSH_EvaluatePlugin::execute(Post_View * v)
 
   Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
 
-  evaluate(v1, v1->SP, v1->NbSP, 1, 1, comp, timeStep, expr);
-  evaluate(v1, v1->VP, v1->NbVP, 1, 3, comp, timeStep, expr);
-  evaluate(v1, v1->TP, v1->NbTP, 1, 9, comp, timeStep, expr);
+  double min = VAL_INF;
+  double max = -VAL_INF;
 
-  evaluate(v1, v1->SL, v1->NbSL, 2, 1, comp, timeStep, expr);
-  evaluate(v1, v1->VL, v1->NbVL, 2, 3, comp, timeStep, expr);
-  evaluate(v1, v1->TL, v1->NbTL, 2, 9, comp, timeStep, expr);
+  evaluate(v1, v1->SP, v1->NbSP, 1, 1, comp, timeStep, expr, &min, &max);
+  evaluate(v1, v1->VP, v1->NbVP, 1, 3, comp, timeStep, expr, &min, &max);
+  evaluate(v1, v1->TP, v1->NbTP, 1, 9, comp, timeStep, expr, &min, &max);
 
-  evaluate(v1, v1->ST, v1->NbST, 3, 1, comp, timeStep, expr);
-  evaluate(v1, v1->VT, v1->NbVT, 3, 3, comp, timeStep, expr);
-  evaluate(v1, v1->TT, v1->NbTT, 3, 9, comp, timeStep, expr);
+  evaluate(v1, v1->SL, v1->NbSL, 2, 1, comp, timeStep, expr, &min, &max);
+  evaluate(v1, v1->VL, v1->NbVL, 2, 3, comp, timeStep, expr, &min, &max);
+  evaluate(v1, v1->TL, v1->NbTL, 2, 9, comp, timeStep, expr, &min, &max);
 
-  evaluate(v1, v1->SQ, v1->NbSQ, 4, 1, comp, timeStep, expr);
-  evaluate(v1, v1->VQ, v1->NbVQ, 4, 3, comp, timeStep, expr);
-  evaluate(v1, v1->TQ, v1->NbTQ, 4, 9, comp, timeStep, expr);
+  evaluate(v1, v1->ST, v1->NbST, 3, 1, comp, timeStep, expr, &min, &max);
+  evaluate(v1, v1->VT, v1->NbVT, 3, 3, comp, timeStep, expr, &min, &max);
+  evaluate(v1, v1->TT, v1->NbTT, 3, 9, comp, timeStep, expr, &min, &max);
 
-  evaluate(v1, v1->SS, v1->NbSS, 4, 1, comp, timeStep, expr);
-  evaluate(v1, v1->VS, v1->NbVS, 4, 3, comp, timeStep, expr);
-  evaluate(v1, v1->TS, v1->NbTS, 4, 9, comp, timeStep, expr);
+  evaluate(v1, v1->SQ, v1->NbSQ, 4, 1, comp, timeStep, expr, &min, &max);
+  evaluate(v1, v1->VQ, v1->NbVQ, 4, 3, comp, timeStep, expr, &min, &max);
+  evaluate(v1, v1->TQ, v1->NbTQ, 4, 9, comp, timeStep, expr, &min, &max);
 
-  evaluate(v1, v1->SH, v1->NbSH, 8, 1, comp, timeStep, expr);
-  evaluate(v1, v1->VH, v1->NbVH, 8, 3, comp, timeStep, expr);
-  evaluate(v1, v1->TH, v1->NbTH, 8, 9, comp, timeStep, expr);
+  evaluate(v1, v1->SS, v1->NbSS, 4, 1, comp, timeStep, expr, &min, &max);
+  evaluate(v1, v1->VS, v1->NbVS, 4, 3, comp, timeStep, expr, &min, &max);
+  evaluate(v1, v1->TS, v1->NbTS, 4, 9, comp, timeStep, expr, &min, &max);
 
-  evaluate(v1, v1->SI, v1->NbSI, 6, 1, comp, timeStep, expr);
-  evaluate(v1, v1->VI, v1->NbVI, 6, 3, comp, timeStep, expr);
-  evaluate(v1, v1->TI, v1->NbTI, 6, 9, comp, timeStep, expr);
+  evaluate(v1, v1->SH, v1->NbSH, 8, 1, comp, timeStep, expr, &min, &max);
+  evaluate(v1, v1->VH, v1->NbVH, 8, 3, comp, timeStep, expr, &min, &max);
+  evaluate(v1, v1->TH, v1->NbTH, 8, 9, comp, timeStep, expr, &min, &max);
 
-  evaluate(v1, v1->SY, v1->NbSY, 5, 1, comp, timeStep, expr);
-  evaluate(v1, v1->VY, v1->NbVY, 5, 3, comp, timeStep, expr);
-  evaluate(v1, v1->TY, v1->NbTY, 5, 9, comp, timeStep, expr);
+  evaluate(v1, v1->SI, v1->NbSI, 6, 1, comp, timeStep, expr, &min, &max);
+  evaluate(v1, v1->VI, v1->NbVI, 6, 3, comp, timeStep, expr, &min, &max);
+  evaluate(v1, v1->TI, v1->NbTI, 6, 9, comp, timeStep, expr, &min, &max);
+
+  evaluate(v1, v1->SY, v1->NbSY, 5, 1, comp, timeStep, expr, &min, &max);
+  evaluate(v1, v1->VY, v1->NbVY, 5, 3, comp, timeStep, expr, &min, &max);
+  evaluate(v1, v1->TY, v1->NbTY, 5, 9, comp, timeStep, expr, &min, &max);
+
+  v1->TimeStepMin[timeStep] = min;
+  v1->TimeStepMax[timeStep] = max;
+  v1->Min = v1->TimeStepMin[0];
+  v1->Max = v1->TimeStepMax[0];
+  for(int i = 1; i < v1->NbTimeStep; i++){
+    if(v1->TimeStepMin[i] < v1->Min) v1->Min = v1->TimeStepMin[i];
+    if(v1->TimeStepMax[i] > v1->Max) v1->Max = v1->TimeStepMax[i];
+  }
 
   return v1;
 }
