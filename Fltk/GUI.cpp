@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.83 2001-06-06 09:39:49 geuzaine Exp $
+// $Id: GUI.cpp,v 1.84 2001-06-13 11:04:23 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -2041,8 +2041,6 @@ void GUI::create_view_options_window(int num){
 	view_value[10]->type(FL_HORIZONTAL);
 	view_value[10]->align(FL_ALIGN_RIGHT);
 	view_value[10]->minimum(0); 
-	view_value[10]->maximum(1000); 
-	view_value[10]->step(0.1);
 	view_vector->end();
       }
       // Colors
@@ -2116,9 +2114,7 @@ void GUI::update_view_window(int num){
   view_options_custom_cb(0,0);
   opt_view_custom_min(num, GMSH_GUI, 0);
   opt_view_custom_max(num, GMSH_GUI, 0);
-  val = v->CustomMax-v->CustomMin ;
   for(i=0 ; i<2 ; i++){
-    view_value[i]->step(val,1000); 
     view_value[i]->minimum(v->CustomMin); 
     view_value[i]->maximum(v->CustomMax); 
   }
