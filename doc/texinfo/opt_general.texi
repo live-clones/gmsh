@@ -356,7 +356,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.FastRedraw
 Draw simplified model while rotating, panning and zooming@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.FileChooserPositionX

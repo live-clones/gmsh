@@ -333,7 +333,7 @@ component of the field in `iView' at the
 
 - the symbol w, to retrieve the `Component'-th
 component of the field in `ExternalView' at the
-`ExternalTimeStep'-th time step. if `ExternalView'
+`ExternalTimeStep'-th time step. If `ExternalView'
 and `iView' are based on different spatial grids,
 or if their data types are different, `ExternalView'
 is interpolated onto `iView';

@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.19 2005-03-04 19:08:38 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.20 2005-04-01 22:14:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -93,7 +93,7 @@ void GMSH_EvaluatePlugin::getInfos(char *author, char *copyright,
 	 "\n"
 	 "- the symbol w, to retrieve the `Component'-th\n"
 	 "component of the field in `ExternalView' at the\n"
-	 "`ExternalTimeStep'-th time step. if `ExternalView'\n"
+	 "`ExternalTimeStep'-th time step. If `ExternalView'\n"
 	 "and `iView' are based on different spatial grids,\n"
 	 "or if their data types are different, `ExternalView'\n"
 	 "is interpolated onto `iView';\n"

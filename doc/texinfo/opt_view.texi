@@ -76,7 +76,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.Stipple3
 Fourth stippling pattern@*
-Default value: @code{"1*0xFCCC"}@*
+Default value: @code{"1*0xCCCF"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Stipple4
@@ -86,12 +86,12 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.Stipple5
 Sixth stippling pattern@*
-Default value: @code{"2*0xF0F0"}@*
+Default value: @code{"2*0x0F0F"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Stipple6
 Seventh stippling pattern@*
-Default value: @code{"1*0xFFFC"}@*
+Default value: @code{"1*0xCFFF"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Stipple7
