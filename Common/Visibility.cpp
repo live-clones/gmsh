@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.5 2004-02-07 01:40:17 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.6 2004-02-20 19:28:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -688,10 +688,6 @@ static void vis_pri(void *a, void *b)
 static void vis_pyr(void *a, void *b)
 {
   (*(Pyramid **) a)->Visible = vmode;
-}
-static void vis_part(void *a, void *b)
-{
-  (*(MeshPartition **) a)->Visible = vmode;
 }
 static void vis_cur(void *a, void *b)
 {

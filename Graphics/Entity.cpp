@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.30 2004-02-20 17:58:00 geuzaine Exp $
+// $Id: Entity.cpp,v 1.31 2004-02-20 19:28:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -357,17 +357,11 @@ void Draw_3DArrow(double relHeadRadius, double relStemLength, double relStemRadi
   double stem_l = relStemLength * length;
 
   static int first = 1;
-  static GLUquadricObj *hat;
-  static GLUquadricObj *disk;
-  static GLUquadricObj *stem;
-  static GLUquadricObj *bottom;
+  static GLUquadricObj *qua;
 
   if(first){
     first = 0;
-    hat = gluNewQuadric();
-    disk = gluNewQuadric();;
-    stem = gluNewQuadric();;
-    bottom = gluNewQuadric();;
+    qua = gluNewQuadric();
   }
 
   glPushMatrix();
@@ -385,14 +379,14 @@ void Draw_3DArrow(double relHeadRadius, double relStemLength, double relStemRadi
   
   if(head_l && head_r){
     glTranslatef(0., 0., stem_l);
-    gluCylinder(hat, head_r, 0., head_l, subdiv, 1);
-    gluDisk(disk, stem_r, head_r, subdiv, 1);
+    gluCylinder(qua, head_r, 0., head_l, subdiv, 1);
+    gluDisk(qua, stem_r, head_r, subdiv, 1);
     glTranslatef(0., 0., -stem_l);
   }
 
   if(stem_l && stem_r){
-    gluCylinder(stem, stem_r, stem_r, stem_l, subdiv, 1);
-    gluDisk(disk, 0, stem_r, subdiv, 1);
+    gluCylinder(qua, stem_r, stem_r, stem_l, subdiv, 1);
+    gluDisk(qua, 0, stem_r, subdiv, 1);
   }
 
   glPopMatrix();
