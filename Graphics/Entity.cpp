@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.41 2004-05-29 10:11:12 geuzaine Exp $
+// $Id: Entity.cpp,v 1.42 2004-05-30 19:17:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -178,7 +178,7 @@ void Draw_SimpleVector(int arrow, int fill,
       glEnd();
       
       glBegin(GL_TRIANGLES);
-      glNormal3dv(u);
+      if(light) glNormal3dv(u);
 
       glVertex3d(x + dx, y + dy, z + dz);
       glVertex3d(x + f2 * dx + b * (t[0]), y + f2 * dy + b * (t[1]),
@@ -190,7 +190,7 @@ void Draw_SimpleVector(int arrow, int fill,
 		 z + f2 * dz + b * (-t[2]));
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       
-      glNormal3dv(t);
+      if(light) glNormal3dv(t);
       glVertex3d(x + dx, y + dy, z + dz);
       glVertex3d(x + f2 * dx + b * (-u[0]), y + f2 * dy + b * (-u[1]),
 		 z + f2 * dz + b * (-u[2]));

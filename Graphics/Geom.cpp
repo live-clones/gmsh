@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.63 2004-05-25 04:10:04 geuzaine Exp $
+// $Id: Geom.cpp,v 1.64 2004-05-30 19:17:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -279,11 +279,11 @@ void Draw_Triangulated_Surface(Surface * s)
 	p1 = (double*)List_Pointer(s->thePolyRep->points_and_normals, 6*(int)points[1]);
 	p2 = (double*)List_Pointer(s->thePolyRep->points_and_normals, 6*(int)points[2]);
 	p3 = (double*)List_Pointer(s->thePolyRep->points_and_normals, 6*(int)points[3]);
-	glNormal3dv(&p1[3]);
+	if(CTX.geom.light) glNormal3dv(&p1[3]);
 	glVertex3d(p1[0],p1[1],p1[2]);
-	glNormal3dv(&p2[3]);
+	if(CTX.geom.light) glNormal3dv(&p2[3]);
 	glVertex3d(p2[0],p2[1],p2[2]);
-	glNormal3dv(&p3[3]);
+	if(CTX.geom.light) glNormal3dv(&p3[3]);
 	glVertex3d(p3[0],p3[1],p3[2]);
       }
     }

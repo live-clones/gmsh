@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.34 2004-05-30 06:24:02 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.35 2004-05-30 19:17:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -476,13 +476,13 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glBegin(GL_TRIANGLES);
 	PaletteContinuous(View, ValMin, ValMax, Val[0]);
-	glNormal3dv(&norms[0]);
+	if(View->Light) glNormal3dv(&norms[0]);
 	glVertex3d(X[0] + Raise[0][0], Y[0] + Raise[1][0], Z[0] + Raise[2][0]);
 	PaletteContinuous(View, ValMin, ValMax, Val[1]);
-	glNormal3dv(&norms[3]);
+	if(View->Light) glNormal3dv(&norms[3]);
 	glVertex3d(X[1] + Raise[0][1], Y[1] + Raise[1][1], Z[1] + Raise[2][1]);
 	PaletteContinuous(View, ValMin, ValMax, Val[2]);
-	glNormal3dv(&norms[6]);
+	if(View->Light) glNormal3dv(&norms[6]);
 	glVertex3d(X[2] + Raise[0][2], Y[2] + Raise[1][2], Z[2] + Raise[2][2]);
 	glEnd();
 	glDisable(GL_POLYGON_OFFSET_FILL);

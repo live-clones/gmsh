@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.55 2004-05-30 06:24:02 geuzaine Exp $
+// $Id: Draw.cpp,v 1.56 2004-05-30 19:17:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -44,9 +44,8 @@ void Draw3d(void)
   glDepthFunc(GL_LESS);
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
-  for(int i = 0; i < 6; i++)
-    if(CTX.clip[i])
-      glEnable((GLenum) (GL_CLIP_PLANE0 + i));
+
+  InitRenderModel();
 
   glPushMatrix();
   Draw_Mesh(&M);
@@ -55,15 +54,17 @@ void Draw3d(void)
 
 void Draw2d(void)
 {
+  GLenum clip[6] = { GL_CLIP_PLANE0, GL_CLIP_PLANE1, GL_CLIP_PLANE2, 
+		     GL_CLIP_PLANE3, GL_CLIP_PLANE4, GL_CLIP_PLANE5 };
+
   glDisable(GL_DEPTH_TEST);
   for(int i = 0; i < 6; i++)
-    glDisable((GLenum) (GL_CLIP_PLANE0 + i));
+    glDisable(clip[i]);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   // to draw directly in screen coords
-  glOrtho((double)CTX.viewport[0],
-          (double)CTX.viewport[2],
+  glOrtho((double)CTX.viewport[0], (double)CTX.viewport[2],
           (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -154,27 +155,30 @@ void Orthogonalize(int x, int y)
 
 void InitRenderModel(void)
 {
+  GLenum light[6] = {GL_LIGHT0, GL_LIGHT1, GL_LIGHT2, 
+		     GL_LIGHT3, GL_LIGHT4, GL_LIGHT5};
+  GLfloat pos[4] = {0., 0., 0., 0.};
+  GLfloat spec[4] = {CTX.shine, CTX.shine, CTX.shine, 1.0};
+
   for(int i = 0; i < 6; i++) {
     if(CTX.light[i]) {
-      GLfloat tmp[4];
-      for(int j = 0; j < 4; j++) 
-	tmp[j] = (GLfloat)CTX.light_position[i][j];
-      glLightfv((GLenum) (GL_LIGHT0 + i), GL_POSITION, tmp);
-      glEnable((GLenum) (GL_LIGHT0 + i));
+      for(int j = 0; j < 3; j++) 
+	pos[j] = (GLfloat)CTX.light_position[i][j];
+      glEnable(light[i]);
+      glLightfv(light[i], GL_POSITION, pos);
     }
     else{
-      glDisable((GLenum) (GL_LIGHT0 + i));
+      glDisable(light[i]);
     }
   }
+
   glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
   glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 40.);
   glShadeModel(GL_SMOOTH);
-  float specular[4] = {CTX.shine, CTX.shine, CTX.shine, 1.0};
-  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
   glEnable(GL_RESCALE_NORMAL);
   glEnable(GL_COLOR_MATERIAL);
-  // disable lighting by default (we enable it for each particular
-  // case in the drawing routines)
+  // lighting is enabled/disabled for each particular primitive later
   glDisable(GL_LIGHTING);
 }
 

@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.93 2004-05-30 06:24:02 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.94 2004-05-30 19:17:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -105,14 +105,20 @@ double intersectCutPlane(int num, Vertex **v)
 
 void Draw_Mesh(Mesh * M)
 {
-  int i;
+  GLenum clip[6] = { GL_CLIP_PLANE0, GL_CLIP_PLANE1, GL_CLIP_PLANE2, 
+		     GL_CLIP_PLANE3, GL_CLIP_PLANE4, GL_CLIP_PLANE5 };
 
-  InitRenderModel();
   InitPosition();
 
-  for(i = 0; i < 6; i++)
-    if(CTX.clip[i])
-      glClipPlane((GLenum) (GL_CLIP_PLANE0 + i), CTX.clip_plane[i]);
+  for(int i = 0; i < 6; i++){
+    if(CTX.clip[i]){
+      glClipPlane(clip[i], CTX.clip_plane[i]);
+      glEnable(clip[i]);
+    }
+    else{
+      glDisable(clip[i]);
+    }
+  }
 
   // draw the geometry
 

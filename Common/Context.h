@@ -120,7 +120,7 @@ public :
   int viewport[4];            // current viewport 
   double vxmin, vxmax, vymin, vymax; // current viewport in real coordinates 
   int light[6];               // status of light 
-  double light_position[6][4]; // light sources positions 
+  double light_position[6][3]; // light sources positions 
   double shine;                // specular value 
   int render_mode;            // GMSH_RENDER, GMSH_SELECT, GMSH_FEEDBACK 
   int clip[6];                // status of clip planes 
