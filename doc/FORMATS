@@ -1,4 +1,4 @@
-$Id: FORMATS,v 1.12 2002-09-01 21:54:13 geuzaine Exp $
+$Id: FORMATS,v 1.13 2002-11-21 11:34:24 colignon Exp $
 
 This document describes the version 1.2 of Gmsh's mesh and
 post-processing file formats
@@ -63,6 +63,9 @@ pairs).
     nb-scalar-lines nb-vector-lines nb-tensor-lines
     nb-scalar-triangles nb-vector-triangles nb-tensor-triangles
     nb-scalar-tetrahedra nb-vector-tetrahedra nb-tensor-tetrahedra
+    nb-scalar-hexahedra nb-vector-hexahedra nb-tensor-hexahedra
+    nb-scalar-prisms nb-vector-prisms nb-tensor-prisms
+    nb-scalar-pyramids nb-vector-pyramids nb-tensor-pyramids
     nb-text2d nb-text2d-chars nb-test3d nb-text3d-chars
     time-step-values
     scalar-point-value ...
