@@ -41,14 +41,14 @@ Plugin(Annotate).Text = "A nice title" ;
 // By convention, a value greater than 99999 represents the center (we
 // could also use `General.GraphicsWidth/2', but that would only center
 // the string for the current window size):
-Plugin(Annotate).X = 1.e6;
+Plugin(Annotate).X = 1.e5;
 Plugin(Annotate).Y = 50 ; 
 Plugin(Annotate).Font = "Times-BoldItalic" ; 
 Plugin(Annotate).FontSize = 28 ; 
 Plugin(Annotate).Align = "Center" ; 
 Plugin(Annotate).Run ; 
 
-Plugin(Annotate).Text = "(small subtitle)" ; 
+Plugin(Annotate).Text = "(and a small subtitle)" ; 
 Plugin(Annotate).Y = 70 ; 
 Plugin(Annotate).Font = "Times-Roman" ; 
 Plugin(Annotate).FontSize = 12 ; 
