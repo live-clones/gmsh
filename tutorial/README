@@ -1,4 +1,4 @@
-$Id: README,v 1.17 2002-11-16 21:53:24 geuzaine Exp $
+$Id: README,v 1.18 2002-11-17 02:30:13 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -29,7 +29,7 @@ curves if '1D' was not called before; '3D' will mesh all the volumes
 resulting mesh in the current mesh format, choose 'Save' in the
 context-dependent buttons, or select the appropriate format with the
 'File->Save as' menu. The default mesh file name is based on the name
-of the first input file on the command line (or 'unnamed' if there
+of the first input file on the command line (or 'untitled' if there
 wasn't any input file given), with an appended extension depending on
 the mesh format.
 

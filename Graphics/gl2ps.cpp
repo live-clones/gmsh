@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.51 2002-11-12 19:11:50 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.52 2002-11-17 02:30:13 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -1269,7 +1269,7 @@ void gl2psPrintTeXHeader(void){
     if(i<=0) strcpy(name, gl2ps->filename);
   }
   else
-    strcpy(name, "unnamed");
+    strcpy(name, "untitled");
 
   fprintf(gl2ps->stream, 
 	  "\\setlength{\\unitlength}{1pt}\n"

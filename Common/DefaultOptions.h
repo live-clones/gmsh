@@ -36,7 +36,7 @@
 // STRINGS
 
 StringXString GeneralOptions_String[] = {
-  { F|S, "DefaultFileName" , opt_general_default_filename , "unnamed.geo" ,
+  { F|S, "DefaultFileName" , opt_general_default_filename , "untitled.geo" ,
     "Default project file name" },
   { F,   "Display" , opt_general_display , "" ,
     "X server to use (only for Unix versions)" },

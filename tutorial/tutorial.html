@@ -23,7 +23,7 @@
 <H1>README 1/10</H1>
 [<A HREF="#top">top</A>][prev][<A HREF="#file2">next</A>]
 <PRE>
-$Id: tutorial.html,v 1.35 2002-10-20 04:48:31 geuzaine Exp $
+$Id: tutorial.html,v 1.36 2002-11-17 02:30:13 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -54,7 +54,7 @@ curves if '1D' was not called before; '3D' will mesh all the volumes
 resulting mesh in the current mesh format, choose 'Save' in the
 context-dependent buttons, or select the appropriate format with the
 'File-&gt;Save as' menu. The default mesh file name is based on the name
-of the first input file on the command line (or 'unnamed' if there
+of the first input file on the command line (or 'untitled' if there
 wasn't any input file given), with an appended extension depending on
 the mesh format.
 
@@ -110,20 +110,19 @@ the following command:
 
 In the Post-Processing module (select 'Post_Processing' in the module
 menu), two view buttons will appear, respectively labeled &quot;a scalar
-map&quot; and &quot;a vector map&quot;. A left mouse click toggles the visibility of
-the selected view. A right mouse click provides access to the view's
-options. If you want the modifications made to one view to affect also
-all the other views, select the 'Apply next changes to all views' or
-'Force same options for all views' option in the
-'Options-&gt;Post-processing' menu.
+map&quot; and &quot;a vector map&quot;. A mouse click on the name will toggle the
+visibility of the selected view, while a click on the arrow button on
+the right will provide access to the view's options. If you want the
+modifications made to one view to affect also all the other views,
+select the 'Apply next changes to all views' or 'Force same options
+for all views' option in the 'Tools-&gt;Options-&gt;Post-processing' menu.
 
 [NOTE: All the options specified interactively can also be directly
 specified in the ascii input files. All available options, with their
 current values, can be saved into a file by selecting 'File-&gt;Save
 as-&gt;Gmsh options', or simply viewed by pressing the '?' button in the
 status bar. To save the current options as your default preferences
-for all future Gmsh sessions, use the 'Options-&gt;Save options now'
-menu.]
+for all future Gmsh sessions, use the 'Tools-&gt;Options-&gt;Save' button.]
 
 
 OK, that's all, folks. Enjoy the tutorial.
@@ -415,7 +414,7 @@ Geometry.Color.Surfaces = Geometry.Color.Points;
 </FONT></I><I><FONT COLOR="#B22222">// will dump all current options to the terminal. To save all
 </FONT></I><I><FONT COLOR="#B22222">// available options to a file, use the 'File-&gt;Save as-&gt;Gmsh options'
 </FONT></I><I><FONT COLOR="#B22222">// menu. To save the current options as the default options for all
-</FONT></I><I><FONT COLOR="#B22222">// future Gmsh sessions, use the 'Options-&gt;Save options now' menu.
+</FONT></I><I><FONT COLOR="#B22222">// future Gmsh sessions, use the 'Tools-&gt;Options-&gt;Save' button.
 </FONT></I></PRE>
 <HR>
 <A NAME="file5">
