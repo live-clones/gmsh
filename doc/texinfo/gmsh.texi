@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.86 2003-11-23 04:40:23 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.87 2003-11-26 22:48:41 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -2616,13 +2616,13 @@ Triangle (3 nodes, 3 edges).
 @item 3
 Quadrangle (4 nodes, 4 edges).
 @item 4
-Tetrahedron (4 nodes, 6 edges, 4 facets).
+Tetrahedron (4 nodes, 6 edges, 4 faces).
 @item 5
-Hexahedron (8 nodes, 12 edges, 6 facets).
+Hexahedron (8 nodes, 12 edges, 6 faces).
 @item 6
-Prism (6 nodes, 9 edges, 5 facets).
+Prism (6 nodes, 9 edges, 5 faces).
 @item 7
-Pyramid (5 nodes, 8 edges, 5 facets).
+Pyramid (5 nodes, 8 edges, 5 faces).
 @item 15
 Point (1 node).
 @end table
@@ -3094,7 +3094,7 @@ Pyramid:
     |  \ -/-|---u      7:       3 -> 5
     |  / 5\ |          8:       4 -> 5
     1/----\-2              
-           \     facet 1: edges  1  5 -3       nodes 1 2 5  
+           \      face 1: edges  1  5 -3       nodes 1 2 5  
             \          2:        2 -6 -4 -1          1 4 3 2
              w         3:        3 -8 -2             1 5 4  
                        4:        4  7 -5             2 3 5  
