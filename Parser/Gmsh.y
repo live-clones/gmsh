@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.110 2001-11-12 11:25:22 geuzaine Exp $
+// $Id: Gmsh.y,v 1.111 2001-11-12 13:33:57 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -1185,11 +1185,6 @@ Shape :
 	  v->lc = $5;
       }
     }  
-  | tPoint '{' FExpr '}' tEND
-    {
-      $$.Type = MSH_POINT;
-      $$.Num  = (int)$3;
-    }
 
   /* -------- Lines -------- */ 
 
@@ -1315,15 +1310,6 @@ Shape :
 	List_Delete(Temp);
       }
     }
-  | tLine '{' FExpr '}' tEND
-    {
-      $$.Num = (int)$3;
-      Curve *c = FindCurve($$.Num,THEM);
-      if(!c)
-	vyyerror("Unkown Curve %d", $$.Num);
-      else
-	$$.Type = c->Typ;
-    }
 
   /* -------- Surfaces -------- */ 
 
@@ -1399,15 +1385,6 @@ Shape :
       $$.Type = MSH_SURF_LOOP;
       $$.Num  = (int)$4;
     }
-  | tSurface '{' FExpr '}' tEND
-    {
-      $$.Num = (int)$3;
-      Surface *s = FindSurface($$.Num,THEM);
-      if(!s)
-	vyyerror("Unknown Surface %d", $$.Num);
-      else
-	$$.Type = s->Typ;
-     }
 
   /* -------- Volumes -------- */ 
 
@@ -1472,6 +1449,51 @@ ListOfShapes :
   | ListOfShapes Shape
     {
       List_Add($$,&$2);
+      $$ = $1;
+    }
+  | ListOfShapes tPoint '{' RecursiveListOfDouble '}' tEND
+    {
+      for(i=0;i<List_Nbr($4);i++){
+	List_Read($4, i, &d);
+	TheShape.Num = (int)d;
+	Vertex *v = FindPoint(TheShape.Num,THEM);
+	if(!v)
+	  vyyerror("Unknown Point %d", TheShape.Num);
+	else{
+	  TheShape.Type = MSH_POINT;
+	  List_Add($$,&TheShape);
+	}
+      }
+      $$ = $1;
+    }
+  | ListOfShapes tLine '{' RecursiveListOfDouble '}' tEND
+    {
+      for(i=0;i<List_Nbr($4);i++){
+	List_Read($4, i, &d);
+	TheShape.Num = (int)d;
+	Curve *c = FindCurve(TheShape.Num,THEM);
+	if(!c)
+	  vyyerror("Unknown Curve %d", TheShape.Num);
+	else{
+	  TheShape.Type = c->Typ;
+	  List_Add($$,&TheShape);
+	}
+      }
+      $$ = $1;
+    }
+  | ListOfShapes tSurface '{' RecursiveListOfDouble '}' tEND
+    {
+      for(i=0;i<List_Nbr($4);i++){
+	List_Read($4, i, &d);
+	TheShape.Num = (int)d;
+	Surface *s = FindSurface(TheShape.Num,THEM);
+	if(!s)
+	  vyyerror("Unknown Surface %d", TheShape.Num);
+	else{
+	  TheShape.Type = s->Typ;
+	  List_Add($$,&TheShape);
+	}
+      }
       $$ = $1;
     }
 ;

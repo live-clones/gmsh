@@ -9,6 +9,9 @@ Function CopySlot
     ll_ = newreg; Line Loop(newreg) = {KK_[{0:NbrLines_-1}]};
     lll_= newreg; Plane Surface(newreg) = {ll_};
     Physical Surface(PhysNum_+(t_-1)*dPhysNum_) = {lll_};
+
+    geuz[t_-1]=lll_;
+
   EndFor
 
 Return

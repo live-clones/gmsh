@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.37 2001-11-12 11:25:22 geuzaine Exp $
+// $Id: CAD.cpp,v 1.38 2001-11-12 13:33:57 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -16,6 +16,8 @@ extern Context_T  CTX;
 
 static List_T  *ListOfTransformedPoints=NULL;
 
+/////////////////////////////////////////////////////////////////////////////////////
+// BASIC FUNCTIONS
 
 int NEWPOINT(void){
   return (THEM->MaxPointNum + 1);
@@ -197,299 +199,6 @@ SurfaceLoop *FindSurfaceLoop(int inum, Mesh *M){
   return NULL;
 }
 
-/*
-  S = (sx(u,v),sy(u,v),sz(u,v))
-  C = (cx(w),cy(w),cz(w))
-
-  sx - cx = 0
-  sy - cy = 0
-  sz - cz = 0
-  
-  3eqs 3incs
-*/
-
-static Curve *CURVE, *CURVE_2;
-static Surface *SURFACE;
-static Vertex *VERTEX;
-extern double min1d (int, double (*funct)(double), double *xmin);
-extern void newt(float x[], int n, int *check,
-                 void (*vecfunc)(int, float [], float []));
-
-static void intersectCS (int N, float x[], float res[]){
-  //x[1] = u x[2] = v x[3] = w
-  Vertex s,c;
-  s = InterpolateSurface(SURFACE,x[1],x[2],0,0);
-  c = InterpolateCurve (CURVE,x[3],0);
-  res[1] = s.Pos.X - c.Pos.X;
-  res[2] = s.Pos.Y - c.Pos.Y;
-  res[3] = s.Pos.Z - c.Pos.Z;
-}
-
-static void intersectCC (int N, float x[], float res[]){
-  //x[1] = u x[2] = v
-  Vertex c2,c;
-  c2 = InterpolateCurve(CURVE_2,x[2],0);
-  c = InterpolateCurve (CURVE,x[1],0);
-  res[1] = c2.Pos.X - c.Pos.X;
-  res[2] = c2.Pos.Y - c.Pos.Y;
-}
-
-static void projectPS (int N, float x[], float res[]){
-  //x[1] = u x[2] = v
-  Vertex du,dv,c;
-  c  = InterpolateSurface(SURFACE,x[1],x[2],0,0);
-  du = InterpolateSurface(SURFACE,x[1],x[2],1,1);
-  dv = InterpolateSurface(SURFACE,x[1],x[2],1,2);
-  res[1] =
-    (c.Pos.X - VERTEX->Pos.X)*du.Pos.X +
-    (c.Pos.Y - VERTEX->Pos.Y)*du.Pos.Y +
-    (c.Pos.Z - VERTEX->Pos.Z)*du.Pos.Z;
-  res[2] = 
-    (c.Pos.X - VERTEX->Pos.X)*dv.Pos.X +
-    (c.Pos.Y - VERTEX->Pos.Y)*dv.Pos.Y +
-    (c.Pos.Z - VERTEX->Pos.Z)*dv.Pos.Z;
-}
-
-static double projectPC (double u){
-  //x[1] = u x[2] = v
-  if(u<CURVE->ubeg)u = CURVE->ubeg;
-  if(u<CURVE->ubeg)u = CURVE->ubeg;
-  Vertex c;
-  c = InterpolateCurve(CURVE,u,0);
-  return sqrt(  DSQR(c.Pos.X -VERTEX->Pos.X)+
-                DSQR(c.Pos.Y -VERTEX->Pos.Y)+
-                DSQR(c.Pos.Z -VERTEX->Pos.Z));
-}
-
-static int UFIXED=0;
-static double FIX;
-static double projectPCS (double u){
-  //x[1] = u x[2] = v
-  double tmin,tmax;
-  if(UFIXED){
-    tmin = SURFACE->kv[0];
-    tmax = SURFACE->kv[SURFACE->Nv+SURFACE->OrderV];
-  }
-  else{
-    tmin = SURFACE->ku[0];
-    tmax = SURFACE->ku[SURFACE->Nu+SURFACE->OrderU];
-  }
-  
-  if(u<tmin)u = tmin;
-  if(u>tmax)u = tmax;
-  Vertex c;
-  if(UFIXED)
-    c = InterpolateSurface(SURFACE,FIX,u,0,0);
-  else
-    c = InterpolateSurface(SURFACE,u,FIX,0,0);
-  return sqrt(DSQR(c.Pos.X -VERTEX->Pos.X)+
-              DSQR(c.Pos.Y -VERTEX->Pos.Y)+
-              DSQR(c.Pos.Z -VERTEX->Pos.Z));
-}
-
-bool ProjectPointOnCurve (Curve *c, Vertex *v, Vertex *RES, Vertex *DER){
-  double xmin;
-  CURVE = c;
-  VERTEX = v;
-  min1d (0, projectPC, &xmin);
-  *RES = InterpolateCurve(CURVE,xmin,0);
-  *DER = InterpolateCurve(CURVE,xmin,1);
-  if(xmin > c->uend){
-    *RES = InterpolateCurve(CURVE,c->uend,0);
-    *DER = InterpolateCurve(CURVE,c->uend,1);
-  }
-  else if(xmin < c->ubeg){
-    *RES = InterpolateCurve(CURVE,c->ubeg,0);
-    *DER = InterpolateCurve(CURVE,c->ubeg,1);
-  }
-  return true;
-}
-
-bool search_in_boundary ( Surface *s, Vertex *p, double t, int Fixu, 
-                          double *uu, double *vv){
-  double l,umin,vmin,lmin = 1.e24;
-  int i,N;
-  Vertex vr;
-  double tmin, tmax,u,v;
-  
-  if(Fixu){
-    tmin = s->kv[0];
-    tmax = s->kv[s->Nv+s->OrderV];
-    N = 3*s->Nu;
-  }
-  else{
-    tmin = s->ku[0];
-    tmax = s->ku[s->Nu+s->OrderU];
-    N = 3*s->Nv;
-  }
-  for(i=0;i<N;i++){
-    if(Fixu){
-      u = t;
-      v = tmin + (tmax-tmin)*(double)(i)/(double)(N-1);
-    }
-    else {
-      v = t;
-      u = tmin + (tmax-tmin)*(double)(i)/(double)(N-1);
-    }
-    vr = InterpolateSurface(SURFACE,u,v,0,0);
-    l =  sqrt(DSQR(vr.Pos.X - p->Pos.X) +  
-              DSQR(vr.Pos.Y - p->Pos.Y) +
-              DSQR(vr.Pos.Z - p->Pos.Z));
-    if(l<lmin){
-      lmin = l;
-      umin = u;
-      vmin = v;
-    }
-  }
-
-  FIX = t;
-  UFIXED = Fixu;
-  double xm;
-  if(Fixu)xm = vmin;
-  else xm = umin;
-  if(lmin > 1.e-3) min1d (0, projectPCS, &xm);
-  if(Fixu){
-    *uu = t;
-    *vv = xm;
-  }
-  else{
-    *vv = t;
-    *uu = xm;
-  }
-  vr = InterpolateSurface(SURFACE,*uu,*vv,0,0);
-  l =  sqrt(DSQR(vr.Pos.X - p->Pos.X) +
-            DSQR(vr.Pos.Y - p->Pos.Y) +
-            DSQR(vr.Pos.Z - p->Pos.Z));
-  if(l<1.e-3)return true;
-  return false;
-}
-
-bool try_a_value(Surface *s, Vertex *p, double u, double v,double *uu, double *vv){
-  Vertex vr = InterpolateSurface(s,u,v,0,0);
-  double l =  sqrt(DSQR(vr.Pos.X - p->Pos.X) +  
-                   DSQR(vr.Pos.Y - p->Pos.Y) + 
-                   DSQR(vr.Pos.Z - p->Pos.Z));
-  *uu = u;*vv=v;
-  if(l<1.e-3)return true;
-  return false;
-}
-
-bool ProjectPointOnSurface (Surface *s, Vertex &p){
-  float x[3] = {0.5,0.5,0.5};
-  Vertex vv;
-  int check;
-  SURFACE = s;
-  VERTEX = &p;
-  double UMIN = 0.;
-  double UMAX = 1.;
-  double VMIN = 0.;
-  double VMAX = 1.;
-  while(1){
-    newt(x,2,&check,projectPS);
-    vv = InterpolateSurface(s,x[1],x[2],0,0);
-    if(x[1] >= UMIN && x[1] <= UMAX && x[2] >=VMIN && x[2] <= VMAX)break;
-    x[1] = UMIN + (UMAX-UMIN)*((rand() % 10000)/10000.);
-    x[2] = VMIN + (VMAX-VMIN)*((rand() % 10000)/10000.);
-  }
-  p.Pos.X = vv.Pos.X;
-  p.Pos.Y = vv.Pos.Y;
-  p.Pos.Z = vv.Pos.Z;
-  if(!check){
-    return false;
-  }
-  return true;
-}
-
-bool ProjectPointOnSurface (Surface *s, Vertex *p,double *u, double *v){
-  static float x[3];
-  int check;
-  static int deb = 1;
-  double VMIN,VMAX,UMIN,UMAX,l, lmin;
-  Vertex vv;
-
-  SURFACE = s;
-  VERTEX = p;
-  lmin = 1.e24;
-  UMAX = s->ku[s->Nu + s->OrderU];
-  UMIN = s->ku[0];
-  VMAX = s->kv[s->Nv + s->OrderV];
-  VMIN = s->kv[0];
-  if(deb){
-    x[1] = UMIN + (UMAX-UMIN)*((rand() % 10000)/10000.);
-    x[2] = VMIN + (VMAX-VMIN)*((rand() % 10000)/10000.);
-    deb = 0;
-  }
-
-  if(p->Num == 160){
-    lmin += 1.e90;
-    if(p->Num == 133)UMAX = s->ku[s->Nu + s->OrderU];
-  }
-  
-  if(try_a_value(SURFACE,VERTEX,SURFACE->ku[0]+VERTEX->u,
-                 SURFACE->kv[0],u,v))
-    return true;
-  if(try_a_value(SURFACE,VERTEX,SURFACE->ku[0]+VERTEX->u,
-                 SURFACE->kv[SURFACE->Nv+SURFACE->OrderV],u,v))
-    return true;
-  if(try_a_value(SURFACE,VERTEX,SURFACE->ku[SURFACE->Nu+SURFACE->OrderU]-VERTEX->u,
-                 SURFACE->kv[0],u,v))
-    return true;
-  if(try_a_value(SURFACE,VERTEX,SURFACE->ku[SURFACE->Nu+SURFACE->OrderU]-VERTEX->u,
-                 SURFACE->kv[SURFACE->Nv+SURFACE->OrderV],u,v))
-    return true;
-  if(try_a_value(SURFACE,VERTEX,SURFACE->ku[0],SURFACE->kv[0]+VERTEX->u,u,v))
-    return true;
-  if(try_a_value(SURFACE,VERTEX,SURFACE->ku[0],
-                 SURFACE->kv[SURFACE->Nv+SURFACE->OrderV]-VERTEX->u,u,v))
-    return true;
-  if(try_a_value(SURFACE,VERTEX,SURFACE->ku[SURFACE->Nu+SURFACE->OrderU],
-                 SURFACE->kv[0]+VERTEX->u,u,v))
-    return true;
-  if(try_a_value(SURFACE,VERTEX,SURFACE->ku[SURFACE->Nu+SURFACE->OrderU],
-                 SURFACE->kv[SURFACE->Nv+SURFACE->OrderV]-VERTEX->u,u,v))
-    return true;
- 
-  
-  if(search_in_boundary(SURFACE,VERTEX,SURFACE->kv[0],0,u,v))
-    return true;
-  if(search_in_boundary(SURFACE,VERTEX,SURFACE->kv[SURFACE->Nv+SURFACE->OrderV],0,u,v))
-    return true;
-  if(search_in_boundary(SURFACE,VERTEX,SURFACE->ku[0],1,u,v))
-    return true;
-  if(search_in_boundary(SURFACE,VERTEX,SURFACE->ku[SURFACE->Nu+SURFACE->OrderU],1,u,v))
-    return true;
-  
-  while(1){
-    newt(x,2,&check,projectPS);
-    vv = InterpolateSurface(s,x[1],x[2],0,0);
-    l =  sqrt(DSQR(vv.Pos.X - p->Pos.X) +
-              DSQR(vv.Pos.Y - p->Pos.Y) +
-              DSQR(vv.Pos.Z - p->Pos.Z));
-    if(l < 1.e-1)break;
-    else {
-      x[1] = UMIN + (UMAX-UMIN)*((rand() % 10000)/10000.);
-      x[2] = VMIN + (VMAX-VMIN)*((rand() % 10000)/10000.);
-    }
-  }
-  *u = x[1];
-  *v = x[2];
-  
-  if(!check){
-    return false;
-  }
-  return true;
-}
-
-bool IntersectCurveSurface (Curve *c, Surface *s){
-  float x[4];
-  int check;
-  SURFACE = s;
-  CURVE = c;
-  newt(x,3,&check,intersectCS);
-  if(!check)return false;
-  return true;
-}
-
 void CopyVertex (Vertex *v, Vertex *vv){
   vv->lc = v->lc;
   vv->u = v->u;
@@ -596,40 +305,248 @@ Surface *DuplicateSurface (Surface *s){
   return ps;
 }
 
-static void vecmat4x4(double mat[4][4],double vec[4], double res[4]){
-  int i,j;
-  for(i=0;i<4;i++){
-    res[i] = 0.0;
-    for(j=0;j<4;j++){
-      res[i] += mat[i][j] * vec[j];
+void CopyShape(int Type, int Num, int *New){
+  Surface *s,*news;
+  Curve *c, *newc;
+  Vertex *v,*newv;
+  
+  switch(Type){
+  case MSH_POINT:
+    if(!(v = FindPoint(Num,THEM))){
+      Msg(GERROR, "Unknown Vertex %d", Num);
+      return;
+    }
+    newv = DuplicateVertex(v);
+    *New = newv->Num;
+    break;
+  case MSH_SEGM_LINE:
+  case MSH_SEGM_SPLN:
+  case MSH_SEGM_BSPLN:
+  case MSH_SEGM_BEZIER:
+  case MSH_SEGM_CIRC:
+  case MSH_SEGM_ELLI:
+  case MSH_SEGM_NURBS:
+    if(!(c = FindCurve(Num,THEM))){
+      Msg(GERROR, "Unknown Curve %d", Num);
+      return;
+    }
+    newc = DuplicateCurve(c);
+    *New = newc->Num;
+    break;
+  case MSH_SURF_NURBS:
+  case MSH_SURF_TRIC:
+  case MSH_SURF_REGL:
+  case MSH_SURF_PLAN:
+    if(!(s = FindSurface(Num,THEM))){
+      Msg(GERROR, "Unknown Surface %d", Num);
+      return;
+    }
+    news = DuplicateSurface(s);
+    *New = news->Num;
+    break;
+  default:
+    Msg(GERROR, "Impossible to copy entity %d (of type %d)", Num, Type);
+    break;
+  }
+}
+
+void DeletePoint(int ip){
+  Vertex *v = FindPoint(ip,THEM);
+  if(!v) return;
+  List_T *Curves = Tree2List(THEM->Curves);
+  for(int i=0;i<List_Nbr(Curves);i++){
+    Curve *c;
+    List_Read(Curves,i,&c);
+    for(int j=0;j<List_Nbr(c->Control_Points);j++){
+      if(!compareVertex(List_Pointer(c->Control_Points,j),&v))return;
     }
   }
+  List_Delete(Curves);
+  if(v->Num == THEM->MaxPointNum) THEM->MaxPointNum--;
+  Tree_Suppress(THEM->Points,&v);
 }
 
-void ApplyTransformationToPoint(double matrix[4][4], Vertex *v){
-  double pos[4],vec[4];
+void DeleteCurve(int ip){
+  Curve *c = FindCurve(ip,THEM);
+  if(!c) return;
+  List_T *Surfs = Tree2List(THEM->Surfaces);
+  for(int i=0;i<List_Nbr(Surfs);i++){
+    Surface *s;
+    List_Read(Surfs,i,&s);
+    for(int j=0;j<List_Nbr(s->Generatrices);j++){
+      if(!compareCurve(List_Pointer(s->Generatrices,j),&c))return;
+    }
+  }
+  List_Delete(Surfs);
+  if(c->Num == THEM->MaxLineNum) THEM->MaxLineNum--;
+  Tree_Suppress(THEM->Curves,&c);
+}
 
-  if(!ListOfTransformedPoints)
-    ListOfTransformedPoints = List_Create(50,50,sizeof(int));
-  
-  if(!List_Search(ListOfTransformedPoints,&v->Num,fcmp_absint)){
-    List_Add(ListOfTransformedPoints,&v->Num);
+void DeleteSurface(int is){
+  // Il faut absolument coder une
+  // structure coherente pour les volumes.
+  Surface *s = FindSurface(is,THEM);
+  if(!s) return;
+  List_T *Vols = Tree2List(THEM->Volumes);
+  for(int i=0;i<List_Nbr(Vols);i++){
+    Volume *v;
+    List_Read(Vols,i,&v);
+    for(int j=0;j<List_Nbr(v->Surfaces);j++){
+      if(!compareCurve(List_Pointer(v->Surfaces,j),&s))return;
+    }
+  }
+  List_Delete(Vols);
+  if(s->Num == THEM->MaxSurfaceNum) THEM->MaxSurfaceNum--;
+  Tree_Suppress(THEM->Surfaces,&s);
+}
+
+void DeleteShape(int Type, int Num){
+
+  switch(Type){
+  case MSH_POINT:
+    DeletePoint(Num);
+    break;
+  case MSH_SEGM_LINE:
+  case MSH_SEGM_SPLN:
+  case MSH_SEGM_BSPLN:
+  case MSH_SEGM_BEZIER:
+  case MSH_SEGM_CIRC:
+  case MSH_SEGM_ELLI:
+  case MSH_SEGM_NURBS:
+    DeleteCurve(Num);
+    break;
+  case MSH_SURF_NURBS:
+  case MSH_SURF_TRIC:
+  case MSH_SURF_REGL:
+  case MSH_SURF_PLAN:
+    DeleteSurface(Num);
+    break;
+  default:
+    Msg(GERROR, "Impossible to delete entity %d (of type %d)", Num, Type);
+    break;
+  }
+}
+
+Curve * CreateReversedCurve (Mesh *M,Curve *c){
+  Curve *newc;
+  Vertex *e1,*e2,*e3,*e4;
+  int i;
+  newc = Create_Curve(-c->Num, c->Typ,1,NULL,NULL,-1,-1,0.,1.);
+  newc->Control_Points = List_Create(List_Nbr(c->Control_Points), 1, sizeof(Vertex*));
+  if (c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV){
+    List_Read(c->Control_Points,0,&e1);
+    List_Read(c->Control_Points,1,&e2);
+    List_Read(c->Control_Points,2,&e3);
+    List_Read(c->Control_Points,3,&e4);
+    List_Add(newc->Control_Points,&e4);
+    List_Add(newc->Control_Points,&e2);
+    List_Add(newc->Control_Points,&e3);
+    List_Add(newc->Control_Points,&e1);
   }
   else
-    return;
+    List_Invert(c->Control_Points, newc->Control_Points);
   
-  vec[0] = v->Pos.X;
-  vec[1] = v->Pos.Y;
-  vec[2] = v->Pos.Z;
-  vec[3] = v->w;
-  vecmat4x4(matrix,vec,pos);
-  v->Pos.X = pos[0];
-  v->Pos.Y = pos[1];
-  v->Pos.Z = pos[2];
-  v->w = pos[3];
+  if (c->Typ == MSH_SEGM_NURBS && c->k){
+    newc->k = (float*)malloc((c->degre + List_Nbr(c->Control_Points)+1)*sizeof(float));
+    for(i=0;i<c->degre + List_Nbr(c->Control_Points)+1;i++)
+      newc->k[c->degre + List_Nbr(c->Control_Points)-i] = c->k[i];
+  }
+  
+  if (c->Typ == MSH_SEGM_CIRC) newc->Typ =  MSH_SEGM_CIRC_INV;
+  if (c->Typ == MSH_SEGM_CIRC_INV) newc->Typ =  MSH_SEGM_CIRC;
+  if (c->Typ == MSH_SEGM_ELLI) newc->Typ =  MSH_SEGM_ELLI_INV;
+  if (c->Typ == MSH_SEGM_ELLI_INV) newc->Typ =  MSH_SEGM_ELLI;
+  newc->Vertices = List_Create(10 ,1 ,sizeof(Vertex*));
+  newc->Method = c->Method;
+  newc->degre  = c->degre;
+  newc->beg = c->end;
+  newc->end = c->beg;
+  newc->ubeg = 1. - c->uend;
+  newc->uend = 1. - c->ubeg;
+  End_Curve(newc);
+  
+  Curve **pc;
+
+  if((pc = (Curve**)Tree_PQuery(M->Curves,&newc)))
+    {
+      Free_Curve(&newc,0);
+      return *pc;
+    }
+  else Tree_Insert(M->Curves, &newc);
+  return newc;
 }
 
-/* Linear Applications */
+
+
+void ModifyLcPoint(int ip, double lc){
+  Vertex *v = FindPoint(ip,THEM);
+  if(v) v->lc = lc;
+}
+
+
+int recognize_seg(int typ, List_T * liste, int *seg){
+  int i,beg,end;
+  Curve *pc;
+
+  List_T *temp = Tree2List(THEM->Curves);
+  List_Read(liste,0,&beg);
+  List_Read(liste,List_Nbr(liste)-1,&end);
+  for(i=0;i<List_Nbr(temp);i++){
+    List_Read(temp,i,&pc);
+    if(pc->Typ == typ &&
+       pc->beg->Num == beg &&
+       pc->end->Num == end){
+      List_Delete(temp);
+      *seg = pc->Num;
+      return 1;
+    }
+  }
+  List_Delete(temp);
+  return 0;
+}
+
+
+
+int recognize_loop(List_T * liste, int *loop){
+  int i,res;
+  EdgeLoop *pe;
+
+  res = 0;
+  *loop = 0;
+  List_T *temp = Tree2List(THEM->EdgeLoops);
+  for(i=0;i<List_Nbr(temp);i++){
+    List_Read(temp,i,&pe);
+    if(!compare2Lists(pe->Curves,liste,fcmp_absint)){
+      res = 1;
+      *loop = pe->Num;
+      break;
+    }
+  }
+  List_Delete(temp);
+  return res;
+}
+
+int recognize_surfloop(List_T * liste, int *loop){
+  int i,res;
+  EdgeLoop *pe;
+
+  res = 0;
+  *loop = 0;
+  List_T *temp = Tree2List(THEM->SurfaceLoops);
+  for(i=0;i<List_Nbr(temp);i++){
+    List_Read(temp,i,&pe);
+    if(!compare2Lists(pe->Curves,liste,fcmp_absint)){
+      res = 1;
+      *loop = pe->Num;
+      break;
+    }
+  }
+  List_Delete(temp);
+  return res;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+// LINEAR APPLICATIONS
 
 void SetTranslationMatrix (double matrix[4][4],double T[3]){
   int i, j;
@@ -681,7 +598,7 @@ void SetDilatationMatrix (double matrix[4][4],double T[3],double A){
   matrix[3][3] = 1.0;
 }
 
-void GramSchmidt (double v1[3], double v2[3], double v3[3]){
+static void GramSchmidt (double v1[3], double v2[3], double v3[3]){
   double tmp[3];
   norme(v1);
   prodve(v3,v1,tmp);
@@ -739,6 +656,39 @@ void SetRotationMatrix( double matrix[4][4],double Axe[3], double alpha){
   matrix[3][3] = 1.0;
 }
 
+static void vecmat4x4(double mat[4][4],double vec[4], double res[4]){
+  int i,j;
+  for(i=0;i<4;i++){
+    res[i] = 0.0;
+    for(j=0;j<4;j++){
+      res[i] += mat[i][j] * vec[j];
+    }
+  }
+}
+
+void ApplyTransformationToPoint(double matrix[4][4], Vertex *v){
+  double pos[4],vec[4];
+
+  if(!ListOfTransformedPoints)
+    ListOfTransformedPoints = List_Create(50,50,sizeof(int));
+  
+  if(!List_Search(ListOfTransformedPoints,&v->Num,fcmp_absint)){
+    List_Add(ListOfTransformedPoints,&v->Num);
+  }
+  else
+    return;
+  
+  vec[0] = v->Pos.X;
+  vec[1] = v->Pos.Y;
+  vec[2] = v->Pos.Z;
+  vec[3] = v->w;
+  vecmat4x4(matrix,vec,pos);
+  v->Pos.X = pos[0];
+  v->Pos.Y = pos[1];
+  v->Pos.Z = pos[2];
+  v->w = pos[3];
+}
+
 void ApplyTransformationToCurve (double matrix[4][4],Curve *c){
   Vertex *v;
   
@@ -789,6 +739,109 @@ void printSurface(Surface*s){
   }
 }
 
+void ApplicationOnShapes(double matrix[4][4], List_T *ListShapes){
+  int i;
+  Shape O;
+  Vertex *v;
+  Curve *c;
+  Surface *s;
+  
+  List_Reset(ListOfTransformedPoints);
+
+  for(i=0;i<List_Nbr(ListShapes);i++){
+    List_Read(ListShapes,i,&O);
+    switch(O.Type){
+    case MSH_POINT:
+      v = FindPoint(O.Num,THEM);
+      if(v) ApplyTransformationToPoint(matrix, v);
+      else Msg(GERROR, "Unknown Point %d", O.Num); 
+      break;
+    case MSH_SEGM_LINE:
+    case MSH_SEGM_SPLN:
+    case MSH_SEGM_BSPLN:
+    case MSH_SEGM_BEZIER:
+    case MSH_SEGM_CIRC:
+    case MSH_SEGM_ELLI:
+    case MSH_SEGM_NURBS:
+      c = FindCurve(O.Num,THEM);
+      if(c) ApplyTransformationToCurve(matrix, c);
+      else Msg(GERROR, "Unknown Curve %d", O.Num); 
+      break;
+    case MSH_SURF_NURBS :
+    case MSH_SURF_REGL :
+    case MSH_SURF_TRIC :
+    case MSH_SURF_PLAN :
+      s = FindSurface(O.Num,THEM);
+      if(s) ApplyTransformationToSurface(matrix, s);
+      else Msg(GERROR, "Unknown Surface %d", O.Num); 
+      break;
+    default:
+      Msg(GERROR, "Impossible to transform entity %d (of type %d)", O.Num, O.Type);
+      break;
+    }
+  }
+
+  List_Reset(ListOfTransformedPoints);
+}
+
+void TranslateShapes(double X,double Y,double Z,
+                     List_T *ListShapes, int isFinal){
+  double T[3],matrix[4][4];
+
+  T[0] = X; T[1] = Y; T[2] = Z;
+  SetTranslationMatrix(matrix,T);
+  ApplicationOnShapes(matrix,ListShapes);
+
+  if(CTX.geom.auto_coherence && isFinal) ReplaceAllDuplicates(THEM);
+}
+
+void DilatShapes(double X,double Y,double Z, double A,
+                 List_T *ListShapes, int isFinal){
+  double T[3],matrix[4][4];
+
+  T[0] = X; T[1] = Y; T[2] = Z;
+  SetDilatationMatrix(matrix,T,A);
+  ApplicationOnShapes(matrix,ListShapes);
+
+  if(CTX.geom.auto_coherence) ReplaceAllDuplicates(THEM);
+}
+
+
+void RotateShapes (double Ax,double Ay,double Az,
+                   double Px,double Py, double Pz,
+                   double alpha, List_T *ListShapes){
+  double A[3], T[3], matrix[4][4];
+
+  T[0] = -Px; T[1] = -Py; T[2] = -Pz;
+  SetTranslationMatrix(matrix,T);
+  ApplicationOnShapes(matrix,ListShapes);
+
+  A[0] = Ax; A[1] = Ay; A[2] = Az;
+  SetRotationMatrix(matrix,A,alpha);
+  ApplicationOnShapes(matrix,ListShapes);
+
+  T[0] = Px; T[1] = Py; T[2] = Pz;
+  SetTranslationMatrix(matrix,T);
+  ApplicationOnShapes(matrix,ListShapes);
+
+  if(CTX.geom.auto_coherence) ReplaceAllDuplicates(THEM);
+}
+
+void SymmetryShapes (double A,double B,double C,
+                     double D, List_T *ListShapes, int x){
+  double matrix[4][4];
+
+  SetSymmetryMatrix(matrix,A,B,C,D);
+  ApplicationOnShapes(matrix,ListShapes);
+
+  if(CTX.geom.auto_coherence) ReplaceAllDuplicates(THEM);
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+// EXTRUSION 
+
 void ProtudeXYZ (double &x, double &y, double &z, ExtrudeParams *e){
   double matrix[4][4];
   double T[3];
@@ -816,6 +869,7 @@ void ProtudeXYZ (double &x, double &y, double &z, ExtrudeParams *e){
 
   List_Reset(ListOfTransformedPoints);
 }
+
 
 void Extrude_ProtudePoint(int type, int ip, 
 			  double T0, double T1, double T2,
@@ -1187,94 +1241,8 @@ void Extrude_ProtudeSurface(int type, int is,
   List_Reset(ListOfTransformedPoints);
 }
 
-void DivideCurve (Curve *c , double u, Vertex *v, Curve **c1, Curve **c2){
-  (*c1) = Create_Curve(NEWLINE(),c->Typ,1,NULL,NULL,-1,-1,0.,1.);
-  (*c2) = Create_Curve(NEWLINE(),c->Typ,1,NULL,NULL,-1,-1,0.,1.);
-  CopyCurve(c,*c1);
-  CopyCurve(c,*c2);
-  (*c1)->uend = u;
-  (*c2)->ubeg = u;
-  (*c1)->end = v;
-  (*c2)->beg = v;
-}
-
-bool IntersectCurves (Curve *c1, Curve *c2,
-                      Curve **c11, Curve **c12,
-                      Curve **c21, Curve **c22, Vertex **v){
-  float x[3];
-  Vertex v1,v2;
-  int check;
-  
-  if(!compareVertex(&c1->beg,&c2->beg))return false;
-  if(!compareVertex(&c1->end,&c2->end))return false;
-  if(!compareVertex(&c1->beg,&c2->end))return false;
-  if(!compareVertex(&c2->beg,&c1->end))return false;
-
-  CURVE_2 = c2;
-  CURVE = c1;
-  x[1] = x[2] =  0.0;
-  newt(x,2,&check,intersectCC);
-  if(check)return false;
-  v1 = InterpolateCurve(c1,x[1],0);
-  v2 = InterpolateCurve(c2,x[2],0);
-  if(x[1] <= c1->ubeg)return false;
-  if(x[1] >= c1->uend)return false;
-  if(x[2] <= c2->ubeg)return false;
-  if(x[2] >= c2->uend)return false;
-  if(fabs(v1.Pos.Z - v2.Pos.Z) > 1.e-06 * CTX.lc)return false;
-  *v = Create_Vertex(NEWPOINT(), v1.Pos.X,v1.Pos.Y,v1.Pos.Z,v1.lc,x[1]);
-  Tree_Insert(THEM->Points,v);
-  DivideCurve(c1,x[1],*v,c11,c12);
-  DivideCurve(c2,x[2],*v,c21,c22);
-  return true;
-}
-
-bool IntersectAllSegmentsTogether (void) {
-  bool intersectionfound = true;
-  List_T *TempList;
-  Curve *c1,*c2,*c11,*c12,*c21,*c22;
-  Vertex *v;
-  int i,j;
-
-  while(intersectionfound){
-    TempList = Tree2List(THEM->Curves);
-    if(!List_Nbr(TempList))return true;
-    for(i=0;i<List_Nbr(TempList);i++){
-      List_Read(TempList,i,&c1);
-      intersectionfound = false;
-      for(j=0;j<List_Nbr(TempList);j++){
-        List_Read(TempList,j,&c2);
-        if(c1->Num > 0 && c2->Num >0 && i!=j && intersectionfound == false){
-          if(IntersectCurves(c1,c2,&c11,&c12,&c21,&c22,&v)){
-            Msg(INFO, "Intersection Curve %d->%d",c1->Num,c2->Num);
-            intersectionfound = true;
-            DeleteCurve(c1->Num);
-            DeleteCurve(c2->Num);
-            Tree_Add(THEM->Curves,&c11);
-            Tree_Add(THEM->Curves,&c12);
-            Tree_Add(THEM->Curves,&c21);
-            Tree_Add(THEM->Curves,&c22);
-            
-            CreateReversedCurve(THEM,c11);
-            CreateReversedCurve(THEM,c12);
-            CreateReversedCurve(THEM,c21);
-            CreateReversedCurve(THEM,c22);
-            return true;
-          }
-        }
-      }
-      if(intersectionfound) break;
-    }
-    List_Delete(TempList);
-  }
-  return false;
-
-}
-
-void IntersectSurfaces (Surface *s1, Surface *s2){
-
-
-}
+/////////////////////////////////////////////////////////////////////////////////////
+// REMOVE DUPLICATES
 
 int compareTwoCurves (const void *a, const void *b){
   Curve *c1, *c2;
@@ -1308,10 +1276,6 @@ int compareTwoSurfaces (const void *a, const void *b){
                        s2->Generatrices,
                        compareAbsCurve);
 }
-
-
-/* Fonction eliminant les doublons dans une
-   geometrie*/
 
 void MaxNumPoint(void *a, void *b){
   Vertex *v = *(Vertex**)a;
@@ -1520,339 +1484,388 @@ void ReplaceAllDuplicates(Mesh *m){
 }
 
 
-void ModifyLcPoint(int ip, double lc){
-  Vertex *v = FindPoint(ip,THEM);
-  if(v) v->lc = lc;
-}
+/////////////////////////////////////////////////////////////////////////////////////
+// INTERSECTIONS
 
-void ApplicationOnShapes(double matrix[4][4], List_T *ListShapes){
-  int i;
-  Shape O;
-  Vertex *v;
-  Curve *c;
-  Surface *s;
+/*
+  S = (sx(u,v),sy(u,v),sz(u,v))
+  C = (cx(w),cy(w),cz(w))
+
+  sx - cx = 0
+  sy - cy = 0
+  sz - cz = 0
   
-  List_Reset(ListOfTransformedPoints);
+  3eqs 3incs
+*/
 
-  for(i=0;i<List_Nbr(ListShapes);i++){
-    List_Read(ListShapes,i,&O);
-    switch(O.Type){
-    case MSH_POINT:
-      v = FindPoint(O.Num,THEM);
-      if(v) ApplyTransformationToPoint(matrix, v);
-      break;
-    case MSH_SEGM_LINE:
-    case MSH_SEGM_SPLN:
-    case MSH_SEGM_BSPLN:
-    case MSH_SEGM_BEZIER:
-    case MSH_SEGM_CIRC:
-    case MSH_SEGM_ELLI:
-    case MSH_SEGM_NURBS:
-      c = FindCurve(O.Num,THEM);
-      if(c) ApplyTransformationToCurve(matrix, c);
-      break;
-    case MSH_SURF_NURBS :
-    case MSH_SURF_REGL :
-    case MSH_SURF_TRIC :
-    case MSH_SURF_PLAN :
-      s = FindSurface(O.Num,THEM);
-      if(s) ApplyTransformationToSurface(matrix, s);
-      break;
-    default:
-      Msg(GERROR, "Impossible to apply transformation on entity %d (of type %d)", 
-          O.Num, O.Type);
-      break;
-    }
+static Curve *CURVE, *CURVE_2;
+static Surface *SURFACE;
+static Vertex *VERTEX;
+extern double min1d (int, double (*funct)(double), double *xmin);
+extern void newt(float x[], int n, int *check,
+                 void (*vecfunc)(int, float [], float []));
+
+static void intersectCS (int N, float x[], float res[]){
+  //x[1] = u x[2] = v x[3] = w
+  Vertex s,c;
+  s = InterpolateSurface(SURFACE,x[1],x[2],0,0);
+  c = InterpolateCurve (CURVE,x[3],0);
+  res[1] = s.Pos.X - c.Pos.X;
+  res[2] = s.Pos.Y - c.Pos.Y;
+  res[3] = s.Pos.Z - c.Pos.Z;
+}
+
+static void intersectCC (int N, float x[], float res[]){
+  //x[1] = u x[2] = v
+  Vertex c2,c;
+  c2 = InterpolateCurve(CURVE_2,x[2],0);
+  c = InterpolateCurve (CURVE,x[1],0);
+  res[1] = c2.Pos.X - c.Pos.X;
+  res[2] = c2.Pos.Y - c.Pos.Y;
+}
+
+static void projectPS (int N, float x[], float res[]){
+  //x[1] = u x[2] = v
+  Vertex du,dv,c;
+  c  = InterpolateSurface(SURFACE,x[1],x[2],0,0);
+  du = InterpolateSurface(SURFACE,x[1],x[2],1,1);
+  dv = InterpolateSurface(SURFACE,x[1],x[2],1,2);
+  res[1] =
+    (c.Pos.X - VERTEX->Pos.X)*du.Pos.X +
+    (c.Pos.Y - VERTEX->Pos.Y)*du.Pos.Y +
+    (c.Pos.Z - VERTEX->Pos.Z)*du.Pos.Z;
+  res[2] = 
+    (c.Pos.X - VERTEX->Pos.X)*dv.Pos.X +
+    (c.Pos.Y - VERTEX->Pos.Y)*dv.Pos.Y +
+    (c.Pos.Z - VERTEX->Pos.Z)*dv.Pos.Z;
+}
+
+static double projectPC (double u){
+  //x[1] = u x[2] = v
+  if(u<CURVE->ubeg)u = CURVE->ubeg;
+  if(u<CURVE->ubeg)u = CURVE->ubeg;
+  Vertex c;
+  c = InterpolateCurve(CURVE,u,0);
+  return sqrt(  DSQR(c.Pos.X -VERTEX->Pos.X)+
+                DSQR(c.Pos.Y -VERTEX->Pos.Y)+
+                DSQR(c.Pos.Z -VERTEX->Pos.Z));
+}
+
+static int UFIXED=0;
+static double FIX;
+static double projectPCS (double u){
+  //x[1] = u x[2] = v
+  double tmin,tmax;
+  if(UFIXED){
+    tmin = SURFACE->kv[0];
+    tmax = SURFACE->kv[SURFACE->Nv+SURFACE->OrderV];
   }
-
-  List_Reset(ListOfTransformedPoints);
-}
-
-void TranslateShapes(double X,double Y,double Z,
-                     List_T *ListShapes, int isFinal){
-  double T[3],matrix[4][4];
-
-  T[0] = X; T[1] = Y; T[2] = Z;
-  SetTranslationMatrix(matrix,T);
-  ApplicationOnShapes(matrix,ListShapes);
-
-  if(CTX.geom.auto_coherence && isFinal) ReplaceAllDuplicates(THEM);
-}
-
-void DilatShapes(double X,double Y,double Z, double A,
-                 List_T *ListShapes, int isFinal){
-  double T[3],matrix[4][4];
-
-  T[0] = X; T[1] = Y; T[2] = Z;
-  SetDilatationMatrix(matrix,T,A);
-  ApplicationOnShapes(matrix,ListShapes);
-
-  if(CTX.geom.auto_coherence) ReplaceAllDuplicates(THEM);
-}
-
-
-void RotateShapes (double Ax,double Ay,double Az,
-                   double Px,double Py, double Pz,
-                   double alpha, List_T *ListShapes){
-  double A[3], T[3], matrix[4][4];
-
-  T[0] = -Px; T[1] = -Py; T[2] = -Pz;
-  SetTranslationMatrix(matrix,T);
-  ApplicationOnShapes(matrix,ListShapes);
-
-  A[0] = Ax; A[1] = Ay; A[2] = Az;
-  SetRotationMatrix(matrix,A,alpha);
-  ApplicationOnShapes(matrix,ListShapes);
-
-  T[0] = Px; T[1] = Py; T[2] = Pz;
-  SetTranslationMatrix(matrix,T);
-  ApplicationOnShapes(matrix,ListShapes);
-
-  if(CTX.geom.auto_coherence) ReplaceAllDuplicates(THEM);
-}
-
-void SymmetryShapes (double A,double B,double C,
-                     double D, List_T *ListShapes, int x){
-  double matrix[4][4];
-
-  SetSymmetryMatrix(matrix,A,B,C,D);
-  ApplicationOnShapes(matrix,ListShapes);
-
-  if(CTX.geom.auto_coherence) ReplaceAllDuplicates(THEM);
-}
-
-
-void CopyShape(int Type, int Num, int *New){
-  Surface *s,*news;
-  Curve *c, *newc;
-  Vertex *v,*newv;
+  else{
+    tmin = SURFACE->ku[0];
+    tmax = SURFACE->ku[SURFACE->Nu+SURFACE->OrderU];
+  }
   
-  switch(Type){
-  case MSH_POINT:
-    if(!(v = FindPoint(Num,THEM))){
-      Msg(GERROR, "Unknown Vertex %d", Num);
-      return;
-    }
-    newv = DuplicateVertex(v);
-    *New = newv->Num;
-    break;
-  case MSH_SEGM_LINE:
-  case MSH_SEGM_SPLN:
-  case MSH_SEGM_BSPLN:
-  case MSH_SEGM_BEZIER:
-  case MSH_SEGM_CIRC:
-  case MSH_SEGM_ELLI:
-  case MSH_SEGM_NURBS:
-    if(!(c = FindCurve(Num,THEM))){
-      Msg(GERROR, "Unknown Curve %d", Num);
-      return;
-    }
-    newc = DuplicateCurve(c);
-    *New = newc->Num;
-    break;
-  case MSH_SURF_NURBS:
-  case MSH_SURF_TRIC:
-  case MSH_SURF_REGL:
-  case MSH_SURF_PLAN:
-    if(!(s = FindSurface(Num,THEM))){
-      Msg(GERROR, "Unknown Surface %d", Num);
-      return;
-    }
-    news = DuplicateSurface(s);
-    *New = news->Num;
-    break;
-  default:
-    Msg(GERROR, "Impossible to copy entity %d (of type %d)", Num, Type);
-    break;
-  }
-}
-
-void DeletePoint(int ip){
-  Vertex *v = FindPoint(ip,THEM);
-  if(!v) return;
-  List_T *Curves = Tree2List(THEM->Curves);
-  for(int i=0;i<List_Nbr(Curves);i++){
-    Curve *c;
-    List_Read(Curves,i,&c);
-    for(int j=0;j<List_Nbr(c->Control_Points);j++){
-      if(!compareVertex(List_Pointer(c->Control_Points,j),&v))return;
-    }
-  }
-  List_Delete(Curves);
-  if(v->Num == THEM->MaxPointNum) THEM->MaxPointNum--;
-  Tree_Suppress(THEM->Points,&v);
-}
-
-void DeleteCurve(int ip){
-  Curve *c = FindCurve(ip,THEM);
-  if(!c) return;
-  List_T *Surfs = Tree2List(THEM->Surfaces);
-  for(int i=0;i<List_Nbr(Surfs);i++){
-    Surface *s;
-    List_Read(Surfs,i,&s);
-    for(int j=0;j<List_Nbr(s->Generatrices);j++){
-      if(!compareCurve(List_Pointer(s->Generatrices,j),&c))return;
-    }
-  }
-  List_Delete(Surfs);
-  if(c->Num == THEM->MaxLineNum) THEM->MaxLineNum--;
-  Tree_Suppress(THEM->Curves,&c);
-}
-
-void DeleteSurf( int is ){
-
-  // Il faut absolument coder une
-  // structure coherente pour les volumes.
-  Surface *s = FindSurface(is,THEM);
-  if(!s) return;
-  List_T *Vols = Tree2List(THEM->Volumes);
-  for(int i=0;i<List_Nbr(Vols);i++){
-    Volume *v;
-    List_Read(Vols,i,&v);
-    for(int j=0;j<List_Nbr(v->Surfaces);j++){
-      if(!compareCurve(List_Pointer(v->Surfaces,j),&s))return;
-    }
-  }
-  List_Delete(Vols);
-  if(s->Num == THEM->MaxSurfaceNum) THEM->MaxSurfaceNum--;
-  //s->Num = 1000000000;
-  Tree_Suppress(THEM->Surfaces,&s);
-}
-
-void DeleteShape(int Type, int Num){
-
-  switch(Type){
-  case MSH_POINT:
-    DeletePoint(Num);
-    break;
-  case MSH_SEGM_LINE:
-  case MSH_SEGM_SPLN:
-  case MSH_SEGM_BSPLN:
-  case MSH_SEGM_BEZIER:
-  case MSH_SEGM_CIRC:
-  case MSH_SEGM_ELLI:
-  case MSH_SEGM_NURBS:
-    DeleteCurve(Num);
-    break;
-  case MSH_SURF_NURBS:
-  case MSH_SURF_TRIC:
-  case MSH_SURF_REGL:
-  case MSH_SURF_PLAN:
-    DeleteSurf(Num);
-    break;
-  default:
-    Msg(GERROR, "Impossible to delete entity %d (of type %d)", Num, Type);
-    break;
-  }
-}
-
-Curve * CreateReversedCurve (Mesh *M,Curve *c){
-  Curve *newc;
-  Vertex *e1,*e2,*e3,*e4;
-  int i;
-  newc = Create_Curve(-c->Num, c->Typ,1,NULL,NULL,-1,-1,0.,1.);
-  newc->Control_Points = List_Create(List_Nbr(c->Control_Points), 1, sizeof(Vertex*));
-  if (c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV){
-    List_Read(c->Control_Points,0,&e1);
-    List_Read(c->Control_Points,1,&e2);
-    List_Read(c->Control_Points,2,&e3);
-    List_Read(c->Control_Points,3,&e4);
-    List_Add(newc->Control_Points,&e4);
-    List_Add(newc->Control_Points,&e2);
-    List_Add(newc->Control_Points,&e3);
-    List_Add(newc->Control_Points,&e1);
-  }
+  if(u<tmin)u = tmin;
+  if(u>tmax)u = tmax;
+  Vertex c;
+  if(UFIXED)
+    c = InterpolateSurface(SURFACE,FIX,u,0,0);
   else
-    List_Invert(c->Control_Points, newc->Control_Points);
+    c = InterpolateSurface(SURFACE,u,FIX,0,0);
+  return sqrt(DSQR(c.Pos.X -VERTEX->Pos.X)+
+              DSQR(c.Pos.Y -VERTEX->Pos.Y)+
+              DSQR(c.Pos.Z -VERTEX->Pos.Z));
+}
+
+bool ProjectPointOnCurve (Curve *c, Vertex *v, Vertex *RES, Vertex *DER){
+  double xmin;
+  CURVE = c;
+  VERTEX = v;
+  min1d (0, projectPC, &xmin);
+  *RES = InterpolateCurve(CURVE,xmin,0);
+  *DER = InterpolateCurve(CURVE,xmin,1);
+  if(xmin > c->uend){
+    *RES = InterpolateCurve(CURVE,c->uend,0);
+    *DER = InterpolateCurve(CURVE,c->uend,1);
+  }
+  else if(xmin < c->ubeg){
+    *RES = InterpolateCurve(CURVE,c->ubeg,0);
+    *DER = InterpolateCurve(CURVE,c->ubeg,1);
+  }
+  return true;
+}
+
+bool search_in_boundary ( Surface *s, Vertex *p, double t, int Fixu, 
+                          double *uu, double *vv){
+  double l,umin,vmin,lmin = 1.e24;
+  int i,N;
+  Vertex vr;
+  double tmin, tmax,u,v;
   
-  if (c->Typ == MSH_SEGM_NURBS && c->k){
-    newc->k = (float*)malloc((c->degre + List_Nbr(c->Control_Points)+1)*sizeof(float));
-    for(i=0;i<c->degre + List_Nbr(c->Control_Points)+1;i++)
-      newc->k[c->degre + List_Nbr(c->Control_Points)-i] = c->k[i];
+  if(Fixu){
+    tmin = s->kv[0];
+    tmax = s->kv[s->Nv+s->OrderV];
+    N = 3*s->Nu;
+  }
+  else{
+    tmin = s->ku[0];
+    tmax = s->ku[s->Nu+s->OrderU];
+    N = 3*s->Nv;
+  }
+  for(i=0;i<N;i++){
+    if(Fixu){
+      u = t;
+      v = tmin + (tmax-tmin)*(double)(i)/(double)(N-1);
+    }
+    else {
+      v = t;
+      u = tmin + (tmax-tmin)*(double)(i)/(double)(N-1);
+    }
+    vr = InterpolateSurface(SURFACE,u,v,0,0);
+    l =  sqrt(DSQR(vr.Pos.X - p->Pos.X) +  
+              DSQR(vr.Pos.Y - p->Pos.Y) +
+              DSQR(vr.Pos.Z - p->Pos.Z));
+    if(l<lmin){
+      lmin = l;
+      umin = u;
+      vmin = v;
+    }
+  }
+
+  FIX = t;
+  UFIXED = Fixu;
+  double xm;
+  if(Fixu)xm = vmin;
+  else xm = umin;
+  if(lmin > 1.e-3) min1d (0, projectPCS, &xm);
+  if(Fixu){
+    *uu = t;
+    *vv = xm;
+  }
+  else{
+    *vv = t;
+    *uu = xm;
+  }
+  vr = InterpolateSurface(SURFACE,*uu,*vv,0,0);
+  l =  sqrt(DSQR(vr.Pos.X - p->Pos.X) +
+            DSQR(vr.Pos.Y - p->Pos.Y) +
+            DSQR(vr.Pos.Z - p->Pos.Z));
+  if(l<1.e-3)return true;
+  return false;
+}
+
+bool try_a_value(Surface *s, Vertex *p, double u, double v,double *uu, double *vv){
+  Vertex vr = InterpolateSurface(s,u,v,0,0);
+  double l =  sqrt(DSQR(vr.Pos.X - p->Pos.X) +  
+                   DSQR(vr.Pos.Y - p->Pos.Y) + 
+                   DSQR(vr.Pos.Z - p->Pos.Z));
+  *uu = u;*vv=v;
+  if(l<1.e-3)return true;
+  return false;
+}
+
+bool ProjectPointOnSurface (Surface *s, Vertex &p){
+  float x[3] = {0.5,0.5,0.5};
+  Vertex vv;
+  int check;
+  SURFACE = s;
+  VERTEX = &p;
+  double UMIN = 0.;
+  double UMAX = 1.;
+  double VMIN = 0.;
+  double VMAX = 1.;
+  while(1){
+    newt(x,2,&check,projectPS);
+    vv = InterpolateSurface(s,x[1],x[2],0,0);
+    if(x[1] >= UMIN && x[1] <= UMAX && x[2] >=VMIN && x[2] <= VMAX)break;
+    x[1] = UMIN + (UMAX-UMIN)*((rand() % 10000)/10000.);
+    x[2] = VMIN + (VMAX-VMIN)*((rand() % 10000)/10000.);
+  }
+  p.Pos.X = vv.Pos.X;
+  p.Pos.Y = vv.Pos.Y;
+  p.Pos.Z = vv.Pos.Z;
+  if(!check){
+    return false;
+  }
+  return true;
+}
+
+bool ProjectPointOnSurface (Surface *s, Vertex *p,double *u, double *v){
+  static float x[3];
+  int check;
+  static int deb = 1;
+  double VMIN,VMAX,UMIN,UMAX,l, lmin;
+  Vertex vv;
+
+  SURFACE = s;
+  VERTEX = p;
+  lmin = 1.e24;
+  UMAX = s->ku[s->Nu + s->OrderU];
+  UMIN = s->ku[0];
+  VMAX = s->kv[s->Nv + s->OrderV];
+  VMIN = s->kv[0];
+  if(deb){
+    x[1] = UMIN + (UMAX-UMIN)*((rand() % 10000)/10000.);
+    x[2] = VMIN + (VMAX-VMIN)*((rand() % 10000)/10000.);
+    deb = 0;
+  }
+
+  if(p->Num == 160){
+    lmin += 1.e90;
+    if(p->Num == 133)UMAX = s->ku[s->Nu + s->OrderU];
   }
   
-  if (c->Typ == MSH_SEGM_CIRC) newc->Typ =  MSH_SEGM_CIRC_INV;
-  if (c->Typ == MSH_SEGM_CIRC_INV) newc->Typ =  MSH_SEGM_CIRC;
-  if (c->Typ == MSH_SEGM_ELLI) newc->Typ =  MSH_SEGM_ELLI_INV;
-  if (c->Typ == MSH_SEGM_ELLI_INV) newc->Typ =  MSH_SEGM_ELLI;
-  newc->Vertices = List_Create(10 ,1 ,sizeof(Vertex*));
-  newc->Method = c->Method;
-  newc->degre  = c->degre;
-  newc->beg = c->end;
-  newc->end = c->beg;
-  newc->ubeg = 1. - c->uend;
-  newc->uend = 1. - c->ubeg;
-  End_Curve(newc);
+  if(try_a_value(SURFACE,VERTEX,SURFACE->ku[0]+VERTEX->u,
+                 SURFACE->kv[0],u,v))
+    return true;
+  if(try_a_value(SURFACE,VERTEX,SURFACE->ku[0]+VERTEX->u,
+                 SURFACE->kv[SURFACE->Nv+SURFACE->OrderV],u,v))
+    return true;
+  if(try_a_value(SURFACE,VERTEX,SURFACE->ku[SURFACE->Nu+SURFACE->OrderU]-VERTEX->u,
+                 SURFACE->kv[0],u,v))
+    return true;
+  if(try_a_value(SURFACE,VERTEX,SURFACE->ku[SURFACE->Nu+SURFACE->OrderU]-VERTEX->u,
+                 SURFACE->kv[SURFACE->Nv+SURFACE->OrderV],u,v))
+    return true;
+  if(try_a_value(SURFACE,VERTEX,SURFACE->ku[0],SURFACE->kv[0]+VERTEX->u,u,v))
+    return true;
+  if(try_a_value(SURFACE,VERTEX,SURFACE->ku[0],
+                 SURFACE->kv[SURFACE->Nv+SURFACE->OrderV]-VERTEX->u,u,v))
+    return true;
+  if(try_a_value(SURFACE,VERTEX,SURFACE->ku[SURFACE->Nu+SURFACE->OrderU],
+                 SURFACE->kv[0]+VERTEX->u,u,v))
+    return true;
+  if(try_a_value(SURFACE,VERTEX,SURFACE->ku[SURFACE->Nu+SURFACE->OrderU],
+                 SURFACE->kv[SURFACE->Nv+SURFACE->OrderV]-VERTEX->u,u,v))
+    return true;
+ 
   
-  Curve **pc;
-
-  if((pc = (Curve**)Tree_PQuery(M->Curves,&newc)))
-    {
-      Free_Curve(&newc,0);
-      return *pc;
-    }
-  else Tree_Insert(M->Curves, &newc);
-  return newc;
-}
-
-int recognize_seg(int typ, List_T * liste, int *seg){
-  int i,beg,end;
-  Curve *pc;
-
-  List_T *temp = Tree2List(THEM->Curves);
-  List_Read(liste,0,&beg);
-  List_Read(liste,List_Nbr(liste)-1,&end);
-  for(i=0;i<List_Nbr(temp);i++){
-    List_Read(temp,i,&pc);
-    if(pc->Typ == typ &&
-       pc->beg->Num == beg &&
-       pc->end->Num == end){
-      List_Delete(temp);
-      *seg = pc->Num;
-      return 1;
+  if(search_in_boundary(SURFACE,VERTEX,SURFACE->kv[0],0,u,v))
+    return true;
+  if(search_in_boundary(SURFACE,VERTEX,SURFACE->kv[SURFACE->Nv+SURFACE->OrderV],0,u,v))
+    return true;
+  if(search_in_boundary(SURFACE,VERTEX,SURFACE->ku[0],1,u,v))
+    return true;
+  if(search_in_boundary(SURFACE,VERTEX,SURFACE->ku[SURFACE->Nu+SURFACE->OrderU],1,u,v))
+    return true;
+  
+  while(1){
+    newt(x,2,&check,projectPS);
+    vv = InterpolateSurface(s,x[1],x[2],0,0);
+    l =  sqrt(DSQR(vv.Pos.X - p->Pos.X) +
+              DSQR(vv.Pos.Y - p->Pos.Y) +
+              DSQR(vv.Pos.Z - p->Pos.Z));
+    if(l < 1.e-1)break;
+    else {
+      x[1] = UMIN + (UMAX-UMIN)*((rand() % 10000)/10000.);
+      x[2] = VMIN + (VMAX-VMIN)*((rand() % 10000)/10000.);
     }
   }
-  List_Delete(temp);
-  return 0;
-}
-
-
-
-int recognize_loop(List_T * liste, int *loop){
-  int i,res;
-  EdgeLoop *pe;
-
-  res = 0;
-  *loop = 0;
-  List_T *temp = Tree2List(THEM->EdgeLoops);
-  for(i=0;i<List_Nbr(temp);i++){
-    List_Read(temp,i,&pe);
-    if(!compare2Lists(pe->Curves,liste,fcmp_absint)){
-      res = 1;
-      *loop = pe->Num;
-      break;
-    }
+  *u = x[1];
+  *v = x[2];
+  
+  if(!check){
+    return false;
   }
-  List_Delete(temp);
-  return res;
+  return true;
 }
 
-int recognize_surfloop(List_T * liste, int *loop){
-  int i,res;
-  EdgeLoop *pe;
+bool IntersectCurveSurface (Curve *c, Surface *s){
+  float x[4];
+  int check;
+  SURFACE = s;
+  CURVE = c;
+  newt(x,3,&check,intersectCS);
+  if(!check)return false;
+  return true;
+}
 
-  res = 0;
-  *loop = 0;
-  List_T *temp = Tree2List(THEM->SurfaceLoops);
-  for(i=0;i<List_Nbr(temp);i++){
-    List_Read(temp,i,&pe);
-    if(!compare2Lists(pe->Curves,liste,fcmp_absint)){
-      res = 1;
-      *loop = pe->Num;
-      break;
+
+void DivideCurve (Curve *c , double u, Vertex *v, Curve **c1, Curve **c2){
+  (*c1) = Create_Curve(NEWLINE(),c->Typ,1,NULL,NULL,-1,-1,0.,1.);
+  (*c2) = Create_Curve(NEWLINE(),c->Typ,1,NULL,NULL,-1,-1,0.,1.);
+  CopyCurve(c,*c1);
+  CopyCurve(c,*c2);
+  (*c1)->uend = u;
+  (*c2)->ubeg = u;
+  (*c1)->end = v;
+  (*c2)->beg = v;
+}
+
+bool IntersectCurves (Curve *c1, Curve *c2,
+                      Curve **c11, Curve **c12,
+                      Curve **c21, Curve **c22, Vertex **v){
+  float x[3];
+  Vertex v1,v2;
+  int check;
+  
+  if(!compareVertex(&c1->beg,&c2->beg))return false;
+  if(!compareVertex(&c1->end,&c2->end))return false;
+  if(!compareVertex(&c1->beg,&c2->end))return false;
+  if(!compareVertex(&c2->beg,&c1->end))return false;
+
+  CURVE_2 = c2;
+  CURVE = c1;
+  x[1] = x[2] =  0.0;
+  newt(x,2,&check,intersectCC);
+  if(check)return false;
+  v1 = InterpolateCurve(c1,x[1],0);
+  v2 = InterpolateCurve(c2,x[2],0);
+  if(x[1] <= c1->ubeg)return false;
+  if(x[1] >= c1->uend)return false;
+  if(x[2] <= c2->ubeg)return false;
+  if(x[2] >= c2->uend)return false;
+  if(fabs(v1.Pos.Z - v2.Pos.Z) > 1.e-06 * CTX.lc)return false;
+  *v = Create_Vertex(NEWPOINT(), v1.Pos.X,v1.Pos.Y,v1.Pos.Z,v1.lc,x[1]);
+  Tree_Insert(THEM->Points,v);
+  DivideCurve(c1,x[1],*v,c11,c12);
+  DivideCurve(c2,x[2],*v,c21,c22);
+  return true;
+}
+
+bool IntersectAllSegmentsTogether (void) {
+  bool intersectionfound = true;
+  List_T *TempList;
+  Curve *c1,*c2,*c11,*c12,*c21,*c22;
+  Vertex *v;
+  int i,j;
+
+  while(intersectionfound){
+    TempList = Tree2List(THEM->Curves);
+    if(!List_Nbr(TempList))return true;
+    for(i=0;i<List_Nbr(TempList);i++){
+      List_Read(TempList,i,&c1);
+      intersectionfound = false;
+      for(j=0;j<List_Nbr(TempList);j++){
+        List_Read(TempList,j,&c2);
+        if(c1->Num > 0 && c2->Num >0 && i!=j && intersectionfound == false){
+          if(IntersectCurves(c1,c2,&c11,&c12,&c21,&c22,&v)){
+            Msg(INFO, "Intersection Curve %d->%d",c1->Num,c2->Num);
+            intersectionfound = true;
+            DeleteCurve(c1->Num);
+            DeleteCurve(c2->Num);
+            Tree_Add(THEM->Curves,&c11);
+            Tree_Add(THEM->Curves,&c12);
+            Tree_Add(THEM->Curves,&c21);
+            Tree_Add(THEM->Curves,&c22);
+            
+            CreateReversedCurve(THEM,c11);
+            CreateReversedCurve(THEM,c12);
+            CreateReversedCurve(THEM,c21);
+            CreateReversedCurve(THEM,c22);
+            return true;
+          }
+        }
+      }
+      if(intersectionfound) break;
     }
+    List_Delete(TempList);
   }
-  List_Delete(temp);
-  return res;
+  return false;
+
 }
 
+void IntersectSurfaces (Surface *s1, Surface *s2){
+
+
+}

@@ -9,6 +9,7 @@ LineLoop_[] = LineLoop3[] ; NbrLines_ = NbrLines3; PhysNum_ = RotorSlotOpening; 
 Printf("Rotor slot openings : physical surface %g", PhysNum_);
 Call CopySlot;
 
+geuz1[{0:NbrSect_-1}] = geuz[{0:NbrSect_-1}];
 
 
 LineLoop_[] = LineLoop2[] ; NbrLines_ = NbrLines2; PhysNum_ = RotorConductor; dPhysNum_ = 1; 
@@ -46,7 +47,11 @@ Printf("RotorIron : physical surface %g", RotorIron);
 mmm = newreg; Plane Surface(mmm) = {InnerRotor,OuterShaft_};
 Physical Surface(RotorIron) = {mmm};
 
-
+Rotate{ {0,0,1},{0,0,0}, 5*Pi/180 }{
+  Surface{ mmm };
+  Surface{ geuz1[{0:NbrSect_-1}] };
+  Surface{ geuz[{0:NbrSect_-1}] };
+}
 
 
 
