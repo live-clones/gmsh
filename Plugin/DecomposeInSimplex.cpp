@@ -1,4 +1,4 @@
-// $Id: DecomposeInSimplex.cpp,v 1.18 2005-01-13 05:45:45 geuzaine Exp $
+// $Id: DecomposeInSimplex.cpp,v 1.19 2005-03-14 22:46:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -235,7 +235,7 @@ void DecomposeInSimplex::decompose(int num,
 				   double *xn, double *yn, double *zn, double *valn)
 {
   int quadTri[2][4] = {{0,1,2,-1}, {0,2,3,-1}};
-  int hexaTet[6][4] = {{0,1,2,5}, {0,2,5,6}, {0,4,5,6}, {0,2,3,6}, {0,4,6,7}, {0,3,6,7}};
+  int hexaTet[6][4] = {{0,1,3,7}, {0,4,1,7}, {1,4,5,7}, {1,2,3,7}, {1,6,2,7}, {1,5,6,7}};
   int prisTet[3][4] = {{0,1,2,4}, {0,2,4,5}, {0,3,4,5}};
   int pyraTet[2][4] = {{0,1,3,4}, {1,2,3,4}};
 
