@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.19 2001-08-02 17:35:34 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.20 2001-08-06 11:39:22 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -701,10 +701,10 @@ int Extrude_Mesh (Volume * v){
     // so that now, the surface mesh is ok (edge swapping is easy in 2d).
     // cretainly not the most efficient way to do it but it seems to work
 
-    // j'ai rajoute un truc assez horrible pour ne pas supprimer les
-    // tri/qua qui ne doivent pas l'etre, i.e. tous ceux qui ne sont
-    // pas crees par l'extrusion. Je les tagge avec un numero negatif
-    // (qu'ils garderont toute leur vie, pour permettre a des volumes
+    // j'ai rajoute un truc assez horrible pour ne supprimer que les
+    // tri/qua qui doivent l'etre, i.e. tous ceux qui sont crees par
+    // l'extrusion. Je les tagge avec un numero negatif (qu'ils
+    // garderont toute leur vie, pour permettre a des volumes
     // adjacents de respecter les frontieres communes).
 
     for (i = 0; i < List_Nbr (v->Surfaces); i++){

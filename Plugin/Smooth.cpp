@@ -1,4 +1,4 @@
-// $Id: Smooth.cpp,v 1.5 2001-08-06 11:13:25 geuzaine Exp $
+// $Id: Smooth.cpp,v 1.6 2001-08-06 11:39:22 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Smooth.h"
@@ -63,7 +63,7 @@ Post_View *GMSH_SmoothPlugin::execute (Post_View *v)
   else{
     if(!v && iView < 0) iView = 0;
     if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
-      Msg(WARNING,"Plugin Smooth: View[%d] does not exist",iView);
+      Msg(WARNING,"View[%d] does not exist",iView);
       return 0;
     }
   }
