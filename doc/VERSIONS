@@ -1,6 +1,6 @@
-$Id: VERSIONS,v 1.302 2005-01-14 01:40:49 geuzaine Exp $
+$Id: VERSIONS,v 1.303 2005-01-14 22:53:21 geuzaine Exp $
 
-New since 1.58: added support for discrete (triangulated) surfaces,
+New since 1.58: better support for discrete (triangulated) surfaces,
 either in STL format or with the new "Discrete Surface" command; added
 STL and Text output format for post-processing views and STL output
 format for surface meshes; all levelset-based plugins can now also
@@ -10,8 +10,8 @@ Plugin(CutGrid); new plugins (Eigenvalues, Gradient, Curl,
 Divergence); changed default colormap to match Matlab's "Jet"
 colormap; new transformation matrix option for views (for
 non-destructive rotations, symmetries, etc.); improved solver
-interface to keep the GUI responsive during solver calls; the fixed
-small bugs.
+interface to keep the GUI responsive during solver calls; fixed small
+bugs.
 
 New in 1.58: fixed UNIX socket interface on Windows (broken by the TCP
 solver patch in 1.57); bumped version number of default

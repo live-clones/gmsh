@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.93 2005-01-13 05:45:41 geuzaine Exp $
+// $Id: Post.cpp,v 1.94 2005-01-14 22:53:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -225,18 +225,16 @@ void Get_Coords(Post_View *v, int type, int nbnod, int nbcomp,
                 double *x2, double *y2, double *z2,
 		int offset, int raise, int transform)
 {
-  int i;
-  double xc = 0., yc = 0., zc = 0.;
-
   if(v->Explode == 1.) {
-    for(i = 0; i < nbnod; i++) {
+    for(int i = 0; i < nbnod; i++) {
       x2[i] = x1[i];
       y2[i] = y1[i];
       z2[i] = z1[i];
     }
   }
   else {
-    for(i = 0; i < nbnod; i++) {
+    double xc = 0., yc = 0., zc = 0.;
+    for(int i = 0; i < nbnod; i++) {
       xc += x1[i];
       yc += y1[i];
       zc += z1[i];
@@ -244,7 +242,7 @@ void Get_Coords(Post_View *v, int type, int nbnod, int nbcomp,
     xc /= (double)nbnod;
     yc /= (double)nbnod;
     zc /= (double)nbnod;
-    for(i = 0; i < nbnod; i++) {
+    for(int i = 0; i < nbnod; i++) {
       x2[i] = xc + v->Explode * (x1[i] - xc);
       y2[i] = yc + v->Explode * (y1[i] - yc);
       z2[i] = zc + v->Explode * (z1[i] - zc);
@@ -252,7 +250,7 @@ void Get_Coords(Post_View *v, int type, int nbnod, int nbcomp,
   }
 
   if(transform){
-    for(i = 0; i < nbnod; i++) {
+    for(int i = 0; i < nbnod; i++) {
       double x = x2[i], y = y2[i], z = z2[i];
       x2[i] = v->Transform[0][0] * x + v->Transform[0][1] * y + v->Transform[0][2] * z;
       y2[i] = v->Transform[1][0] * x + v->Transform[1][1] * y + v->Transform[1][2] * z;
@@ -261,7 +259,7 @@ void Get_Coords(Post_View *v, int type, int nbnod, int nbcomp,
   }
   
   if(offset){
-    for(i = 0; i < nbnod; i++) {
+    for(int i = 0; i < nbnod; i++) {
       x2[i] += v->Offset[0];
       y2[i] += v->Offset[1];
       z2[i] += v->Offset[2];
@@ -269,19 +267,19 @@ void Get_Coords(Post_View *v, int type, int nbnod, int nbcomp,
   }
 
   if(raise){
-    for(int k = 0; k < nbnod; k++){
+    for(int i = 0; i < nbnod; i++){
       double norm = 0.;
       if(nbcomp == 1)
-	norm = vals[k];
+	norm = vals[i];
       else if(nbcomp == 3)
-	norm = sqrt(vals[3*k] * vals[3*k] + 
-		    vals[3*k+1] * vals[3*k+1] + 
-		    vals[3*k+2] * vals[3*k+2]);
+	norm = sqrt(vals[3*i] * vals[3*i] + 
+		    vals[3*i+1] * vals[3*i+1] + 
+		    vals[3*i+2] * vals[3*i+2]);
       else if(nbcomp == 9)
-	norm = ComputeVonMises(vals + 9*k);
-      x2[k] += v->Raise[0] * norm;
-      y2[k] += v->Raise[1] * norm;
-      z2[k] += v->Raise[2] * norm;
+	norm = ComputeVonMises(vals + 9*i);
+      x2[i] += v->Raise[0] * norm;
+      y2[i] += v->Raise[1] * norm;
+      z2[i] += v->Raise[2] * norm;
     }
   }
 
