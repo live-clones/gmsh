@@ -1,9 +1,0 @@
-
-- Ecrire une vraie base de donnee des options, avec un fonction pour
-chaque option. Cette fonction devrait modifier la GUI s'il y a lieu
-
-- PostProcesing.NbViews est bugge si on fait 
-gmsh cartes.pos  au lieu de 
-gmsh aa.geo cartes.pos
-avec un script qui suit directement
-

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.30 2001-02-17 21:56:58 geuzaine Exp $
+// $Id: Views.cpp,v 1.31 2001-02-17 22:25:46 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -533,7 +533,7 @@ void Write_View(int Flag_BIN, Post_View *v, char *filename){
  
   fprintf(file, "$PostFormat /* Gmsh 1.0, %s */\n",
 	  Flag_BIN ? "binary" : "ascii") ;
-  fprintf(file, "1.0 %d %d\n", Flag_BIN, sizeof(double)) ;
+  fprintf(file, "1.0 %d %d\n", Flag_BIN, (int)sizeof(double)) ;
   fprintf(file, "$EndPostFormat\n") ;
   for(i=0;i<(int)strlen(v->Name);i++)
     if(v->Name[i]==' ') v->Name[i]='_'; 
