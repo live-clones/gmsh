@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.23 2001-08-03 19:18:15 geuzaine Exp $
+// $Id: PostSimplex.cpp,v 1.24 2001-08-03 19:23:38 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -537,7 +537,7 @@ void Draw_VectorSimplex(int nbnod, Post_View *View,
 	RaiseFill(0, d[k], ValMin, Raise);         
 	Draw_Vector(View->ArrowType, View->IntervalsType!=DRAW_POST_ISO,
 		    X[k], Y[k], Z[k],
-		    fact*d[k], fact*Val[k][0], fact*Val[k][1], fact*Val[k][1],
+		    fact*d[k], fact*Val[k][0], fact*Val[k][1], fact*Val[k][2],
 		    View->Offset, Raise);
       }               
     }       
