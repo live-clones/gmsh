@@ -7,7 +7,9 @@
 CC        = c++
 C_FLAGS   = -g -Wall
 
-RANLIB   = /usr/bin/ranlib
+RM       = rm
+RMFLAGS  = -f
+RANLIB   = ranlib
 
 LIB      = ../lib/libDataStr.a
 INCLUDE  = -I../Common

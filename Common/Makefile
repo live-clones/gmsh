@@ -9,7 +9,7 @@ C_FLAGS   = -g -Wall
 
 OS_FLAGS  = -D_UNIX
 
-RANLIB   = /usr/bin/ranlib
+RANLIB   = ranlib
 RM       = rm
 RMFLAGS  = -f
 

@@ -11,7 +11,7 @@ OS_FLAGS = -D_UNIX
 
 RM       = rm
 RMFLAGS  = -f
-RANLIB  = /usr/bin/ranlib
+RANLIB  = ranlib
 
 LIB     = ../lib/libMesh.a
 INCLUDE = -I../Adapt -I../Common -I../DataStr -I../Geo -I../Mesh\

@@ -9,12 +9,11 @@ C_FLAGS   = -g -Wall
 
 OS_FLAGS  = -D_UNIX
 
-RANLIB   = /usr/bin/ranlib
+RANLIB   = ranlib
 RM       = rm
+RMFLAGS  = -f
 YACC     = bison
 LEX      = flex
-
-RMFLAGS  = -f
 
 LIB      = ../lib/libParser.a
 INCLUDE  = -I../includes -I../Common -I../DataStr -I../Geo -I../Graphics\
