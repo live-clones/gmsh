@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.8 2005-02-05 21:49:00 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.9 2005-02-05 22:20:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -60,20 +60,18 @@ int file_chooser(int multi, int create, const char *message,
     fc->position(CTX.file_chooser_position[0], CTX.file_chooser_position[1]);
   }
 
-  fc->label(message);
-
-  if(fname)
-    fc->value(fname);
-
-  fc->filter(thefilter);
-  fc->filter_value(thefilterindex);
-
   if(multi)
     fc->type(Fl_File_Chooser::MULTI);
   else if(create)
     fc->type(Fl_File_Chooser::CREATE);
   else
     fc->type(Fl_File_Chooser::SINGLE);
+
+  fc->label(message);
+  fc->filter(thefilter);
+  fc->filter_value(thefilterindex);
+  if(fname)
+    fc->value(fname);
 
   fc->show();
 
