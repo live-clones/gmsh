@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.102 2001-10-04 11:41:20 gyselinc Exp $
+// $Id: Gmsh.y,v 1.103 2001-10-04 12:07:02 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -40,6 +40,7 @@ extern Mesh      *THEM;
 static FILE          *yyinTab[MAX_OPEN_FILES];
 static int            yylinenoTab[MAX_OPEN_FILES];
 static fpos_t         yyposImbricatedLoopsTab[MAX_OPEN_FILES];
+static int            yylinenoImbricatedLoopsTab[MAX_OPEN_FILES];
 static double         LoopControlVariablesTab[MAX_OPEN_FILES][3];
 static char*          LoopControlVariablesNameTab[MAX_OPEN_FILES];
 static char           yynameTab[MAX_OPEN_FILES][256];
@@ -1605,7 +1606,9 @@ Loop :
       LoopControlVariablesTab[ImbricatedLoop][1] = $5 ;
       LoopControlVariablesTab[ImbricatedLoop][2] = 1.0 ;
       LoopControlVariablesNameTab[ImbricatedLoop] = "" ;
-      fgetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
+      fgetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      yylinenoImbricatedLoopsTab[ImbricatedLoop] = yylineno;
+      ImbricatedLoop++;
     }
   | tFor '(' FExpr tDOTS FExpr tDOTS FExpr ')'
     {
@@ -1614,7 +1617,9 @@ Loop :
       LoopControlVariablesTab[ImbricatedLoop][1] = $5 ;
       LoopControlVariablesTab[ImbricatedLoop][2] = $7 ;
       LoopControlVariablesNameTab[ImbricatedLoop] = "" ;
-      fgetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
+      fgetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      yylinenoImbricatedLoopsTab[ImbricatedLoop] = yylineno;
+      ImbricatedLoop++;
     }
   | tFor tSTRING tIn '{' FExpr tDOTS FExpr '}' 
     {
@@ -1634,7 +1639,9 @@ Loop :
 	List_Write(pSymbol->val, 0, &$5);
       }
       
-      fgetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
+      fgetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      yylinenoImbricatedLoopsTab[ImbricatedLoop] = yylineno;
+      ImbricatedLoop++;
     }
   | tFor tSTRING tIn '{' FExpr tDOTS FExpr tDOTS FExpr '}' 
     {
@@ -1654,7 +1661,9 @@ Loop :
 	List_Write(pSymbol->val, 0, &$5);
       }
       
-      fgetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
+      fgetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      yylinenoImbricatedLoopsTab[ImbricatedLoop] = yylineno;
+      ImbricatedLoop++;
     }
   | tEndFor 
     {
@@ -1671,6 +1680,7 @@ Loop :
 	}
 	
 	fsetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop-1]);
+	yylineno = yylinenoImbricatedLoopsTab[ImbricatedLoop-1];
       }
       else{
 	ImbricatedLoop--;

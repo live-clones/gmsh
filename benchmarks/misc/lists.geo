@@ -24,3 +24,9 @@ Printf("c = %g %g %g %g", c[]);
 c[{b[]}] = {8,9,10} ;
 
 Printf("c = %g %g %g %g", c[]);
+
+Include "errcheck.geo" ;
+
+undefined = 999;
+
+Include "errcheck.geo" ;
