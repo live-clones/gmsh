@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.67 2003-10-26 16:53:12 geuzaine Exp $
+// $Id: CAD.cpp,v 1.68 2003-11-22 01:41:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -259,9 +259,9 @@ void CopyCurve(Curve * c, Curve * cc)
 {
   int i, j;
   cc->Typ = c->Typ;
-  //We should not copy the meshing method : if the meshes are to
-  //be copied, the meshing algorithm will take care of it
-  //(e.g. ExtrudeMesh()).
+  // We should not copy the meshing method : if the meshes are to be
+  // copied, the meshing algorithm will take care of it
+  // (e.g. ExtrudeMesh()).
   //cc->Method = c->Method; 
   for(i = 0; i < 4; i++)
     cc->ipar[i] = c->ipar[i];
@@ -304,12 +304,12 @@ void CopySurface(Surface * s, Surface * ss)
 {
   int i, j;
   ss->Typ = s->Typ;
-  //We should not copy the meshing method: if the meshes are to
-  //be copied, the meshing algorithm will take care of it
-  //(e.g. ExtrudeMesh()).
+  // We should not copy the meshing method (or the recombination
+  // status): if the meshes are to be copied, the meshing algorithm
+  // will take care of it (e.g. ExtrudeMesh()).
   //ss->Method = s->Method;
-  ss->Recombine = s->Recombine;
-  ss->RecombineAngle = s->RecombineAngle;
+  //ss->Recombine = s->Recombine;
+  //ss->RecombineAngle = s->RecombineAngle;
   for(i = 0; i < 4; i++)
     ss->ipar[i] = s->ipar[i];
   ss->Nu = s->Nu;
