@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.156 2001-10-05 19:26:24 geuzaine Exp $
+# $Id: Makefile,v 1.157 2001-10-10 11:15:38 geuzaine Exp $
 
 GMSH_RELEASE = 1.27
 
@@ -267,13 +267,13 @@ compile_fltk1:
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1.0b1" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1.0b3" \
         ); done
 link_fltk1:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                 $(HOME)/SOURCES/fltk-1.1.0b1/lib/libfltkgl.a\
+                 $(HOME)/SOURCES/fltk-1.1.0b3/lib/libfltk_gl.a\
                  $(OPENGL_LIB) \
-                 $(HOME)/SOURCES/fltk-1.1.0b1/lib/libfltk.a \
+                 $(HOME)/SOURCES/fltk-1.1.0b3/lib/libfltk.a \
                  -L/usr/X11R6/lib $(X11_LIB) -lm
 fltk1: compile_fltk1 link_fltk1
 

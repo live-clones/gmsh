@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.84 2001-10-05 15:25:35 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.85 2001-10-10 11:15:38 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -23,7 +23,12 @@
 
 using namespace std;
 
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
+#include <FL/Fl_File_Chooser.H>
+#else
 #include <FL/fl_file_chooser.H>
+#endif
+
 #include <errno.h>
 
 extern GUI       *WID;
