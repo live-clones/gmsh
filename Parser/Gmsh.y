@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.205 2005-03-26 04:09:20 geuzaine Exp $
+// $Id: Gmsh.y,v 1.206 2005-04-04 15:41:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2146,8 +2146,19 @@ Command :
      }
    | tCombine tSTRING tEND
     {
-      // for backward compatibility
-      if(!strcmp($2, "Views"))
+      if(!strcmp($2, "ElementsFromAllViews"))
+	CombineViews(0, 1, CTX.post.combine_remove_orig);
+      else if(!strcmp($2, "ElementsFromVisibleViews"))
+	CombineViews(0, 0, CTX.post.combine_remove_orig);
+      else if(!strcmp($2, "ElementsByViewName"))
+	CombineViews(0, 2, CTX.post.combine_remove_orig);
+      else if(!strcmp($2, "TimeStepsFromAllViews"))
+	CombineViews(1, 1, CTX.post.combine_remove_orig);
+      else if(!strcmp($2, "TimeStepsFromVisibleViews"))
+	CombineViews(1, 0, CTX.post.combine_remove_orig);
+      else if(!strcmp($2, "TimeStepsByViewName"))
+	CombineViews(1, 2, CTX.post.combine_remove_orig);
+      else if(!strcmp($2, "Views"))
 	CombineViews(0, 1, CTX.post.combine_remove_orig);
       else if(!strcmp($2, "TimeSteps"))
 	CombineViews(1, 2, CTX.post.combine_remove_orig);

@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.181 2005-03-26 21:24:23 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.182 2005-04-04 15:41:45 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -2356,12 +2356,26 @@ just merge the file containing the post-processing view multiple times.
 Creates an alias of the @var{expression}-th post-processing view and copies
 all the options of the @var{expression}-th view to the new aliased view.
 
-@item Combine TimeSteps;
+@item Combine ElementsByViewName;
+Combines all the post-processing views having the same name into new views.
+
+@item Combine ElementsFromAllViews | Combine Views;
+Combines all the post-processing views into a single new view.
+
+@item Combine ElementsFromVisibleViews;
+Combines all the visible post-processing views into a single new view.
+
+@item Combine TimeStepsByViewName | Combine TimeSteps;
 Combines the data from all the post-processing views having the same name
 into new multi-time-step views.
 
-@item Combine Views;
-Combines all post-processing views in a single new view.
+@item Combine TimeStepsFromAllViews;
+Combines the data from all the post-processing views into a new
+multi-time-step view.
+
+@item Combine TimeStepsFromVisibleViews;
+Combines the data from all the visible post-processing views into a new
+multi-time-step view.
 
 @item Delete View[@var{expression}];
 Deletes (removes) the @var{expression}-th post-processing view. Note that
