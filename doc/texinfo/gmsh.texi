@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.15 2003-04-15 05:05:10 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.16 2003-04-15 05:12:01 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -168,8 +168,8 @@ Overview
 * Mesh::                        
 * Solver::                      
 * Post-processing::             
-* What Gmsh is pretty good at...::  
-* ... and what it is not so good at::  
+* What Gmsh is pretty good at::  
+* and what it is not so good at::  
 * Syntactic rules::             
 
 General tools
@@ -329,8 +329,8 @@ module. A brief description of these four modules is given hereafter.
 * Mesh::                        
 * Solver::                      
 * Post-processing::             
-* What Gmsh is pretty good at...::  
-* ... and what it is not so good at::  
+* What Gmsh is pretty good at::  
+* and what it is not so good at::  
 * Syntactic rules::             
 @end menu
 
@@ -422,7 +422,7 @@ your own solver.
 @c Post-processing: scalar and vector field visualization
 @c -------------------------------------------------------------------------
 
-@node Post-processing, What Gmsh is pretty good at..., Solver, Overview
+@node Post-processing, What Gmsh is pretty good at, Solver, Overview
 @section Post-processing: scalar and vector field visualization
 
 Multiple post-processing scalar or vector maps can be loaded and manipulated
@@ -438,11 +438,11 @@ complex animations). User-defined operations can also be performed on
 post-proessing views through to dynamically loadable modules (plug-ins).
 
 @c -------------------------------------------------------------------------
-@c What Gmsh is pretty good at
+@c What Gmsh is pretty good at...
 @c -------------------------------------------------------------------------
 
-@node What Gmsh is pretty good at..., ... and what it is not so good at, Post-processing, Overview
-@section What Gmsh is pretty good at...
+@node What Gmsh is pretty good at, and what it is not so good at, Post-processing, Overview
+@section What Gmsh is pretty good at @dots{}
 
 @itemize @bullet
 @item
@@ -497,8 +497,8 @@ per-user configuration files, or specified on the command-line
 @c ... and what it is not so good at
 @c -------------------------------------------------------------------------
 
-@node ... and what it is not so good at, Syntactic rules, What Gmsh is pretty good at..., Overview
-@section ... and what it is not so good at
+@node and what it is not so good at, Syntactic rules, What Gmsh is pretty good at, Overview
+@section @dots{} and what it is not so good at
 
 @itemize @bullet
 @item
@@ -530,7 +530,7 @@ elements).
 @c Syntactic Rules Used in this Document
 @c -------------------------------------------------------------------------
 
-@node Syntactic rules,  , ... and what it is not so good at, Overview
+@node Syntactic rules,  , and what it is not so good at, Overview
 @section Syntactic rules used in this document
 
 @cindex Syntax, rules
