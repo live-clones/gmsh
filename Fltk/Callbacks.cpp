@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.181 2003-06-23 16:52:17 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.182 2003-07-21 23:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1348,6 +1348,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "");
   Msg(DIRECT, "  <             go back to previous context");
   Msg(DIRECT, "  >             go forward to next context");
+  Msg(DIRECT, "  Shift+a       raise (show) all open windows");
   Msg(DIRECT, "  g             go to geometry module");
   Msg(DIRECT, "  Shift+g       show geometry options");
   Msg(DIRECT, "  Shift+i       show statistics window"); 
@@ -1355,6 +1356,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Shift+m       show mesh options");
   Msg(DIRECT, "  "XX"+m        merge file"); 
   Msg(DIRECT, "  Shift+n       show general options"); 
+  Msg(DIRECT, "  Shift+o       show option window"); 
   Msg(DIRECT, "  "XX"+o        open file"); 
   Msg(DIRECT, "  p             go to post-processor module");
   Msg(DIRECT, "  Shift+p       show post-processing general options");

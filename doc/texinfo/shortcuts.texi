@@ -7,6 +7,9 @@ go back to previous context
 @item >
 go forward to next context
 
+@item Shift+a
+raise (show) all open windows
+
 @item g
 go to geometry module
 
@@ -27,6 +30,9 @@ merge file
 
 @item Shift+n
 show general options
+
+@item Shift+o
+show option window
 
 @item Ctrl+o
 open file

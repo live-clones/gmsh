@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.244 2003-06-23 17:26:23 geuzaine Exp $
+// $Id: GUI.cpp,v 1.245 2003-07-21 23:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -433,6 +433,15 @@ int GUI::global_shortcuts(int event)
   else if(Fl::test_shortcut('q')) {
     quit_selection = 1;
     return 0;   // trick: do as if we didn't use it
+  }
+  else if(Fl::test_shortcut(FL_SHIFT + 'a')) { // raise all open windows
+    if(m_window && m_window->shown()) m_window->show();
+    if(g_window && g_window->shown()) g_window->show();
+    if(opt_window && opt_window->shown()) opt_window->show();
+    if(vis_window && vis_window->shown()) vis_window->show();
+    if(stat_window && stat_window->shown()) stat_window->show();
+    if(msg_window && msg_window->shown()) msg_window->show();
+    return 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'n')) {
     general_options_cb(0, 0);
