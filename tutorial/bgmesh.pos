@@ -6,17 +6,18 @@
  *
  *********************************************************************/
 
-// This post-processing view contains only scalar triangles. The values
+// This post-processing view contains scalar triangles. The values
 // represent the target characteristic mesh sizes to be applied to the
 // first tutorial, t1.geo.
 //
-// There are two ways to use this background mesh:
+// There are two ways to use this view as a background mesh:
 //
 // 1) open t1.geo, merge bgmesh.pos, select 'Apply as background mesh'
-//    in the view's options (i.e. by right mouse clicking on the view's
-//    button), and mesh the problem
+//    in the view's options (by right mouse clicking on the view's
+//    button), and mesh the problem.
+//
 // 2) launch Gmsh with 'gmsh t1.geo -bgm bgmesh.pos' and mesh the 
-//    problem
+//    problem.
 
 View "a funny background mesh" {
 ST(0.077999455,0.23524011,0,0.068887619,0.23816425,0,0.069899638,0.22912552,0){0.01189957,0.011832084,0.0079913397};

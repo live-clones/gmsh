@@ -1,10 +1,10 @@
-/* 
-   Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
-
-   2D Scalar map
-
-   All important comments are marked with "README"
-*/
+/********************************************************************* 
+ *
+ *  Gmsh tutorial 1 - appendix 1
+ * 
+ *  Scalar view
+ *
+ *********************************************************************/
 
 // In this view, there are only scalar triangles.
 // There are 5 time steps -> 3*5 = 15 values for each triangle.

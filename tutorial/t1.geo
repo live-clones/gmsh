@@ -3,7 +3,7 @@
  *  Gmsh tutorial 1
  * 
  *  Variables, Elementary entities (Points, Lines, Surfaces), Physical
- *  entities (Points, Lines, Surfaces)
+ *  entities (Points, Lines, Surfaces), Background mesh
  *
  *********************************************************************/
 
@@ -95,3 +95,4 @@ Physical Surface(100) = {6} ;
 // is the msh format (the native mesh file format for Gmsh). For a
 // description of the mesh and post-processing formats, see the
 // FORMATS file.
+
