@@ -1,4 +1,4 @@
-// $Id: gsl_brent.cpp,v 1.3 2003-02-21 09:39:01 remacle Exp $
+// $Id: gsl_brent.cpp,v 1.4 2003-03-01 22:22:27 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -18,10 +18,6 @@
 // USA.
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
-
-// This implements a Newton method using the GSL.
-//
-// Author: Nicolas Tardiey <nicolas.tardieu@der.edf.fr>
 
 #if defined(HAVE_GSL)
 
@@ -87,89 +83,89 @@ double brent(double ax, double bx, double cx,
     b = gsl_min_fminimizer_x_minimum(s);
     a = gsl_min_fminimizer_x_lower(s);
     c = gsl_min_fminimizer_x_upper(s);
-    
     status = gsl_min_test_interval(a, c, tol, 0.0);
-    
-    //if(status == GSL_SUCCESS) printf ("Converged\n");
   }
   while(status == GSL_CONTINUE && iter < MAXITER);
-  if(status != GSL_SUCCESS)Msg(GERROR, "MIN1D NOT CONVERGED : f(%lf) = %lf \n",b,fn1(b,NULL));  
+
+  if(status != GSL_SUCCESS)
+    Msg(GERROR, "MIN1D not converged: f(%g) = %g",b,fn1(b,NULL));  
+
   *xmin = b;
   gsl_min_fminimizer_free (s);
   return fn1(b, NULL);
 }
 
 
-// mnbrak finds an initial bracketting of the minimum of funct.  You
-// give 2 initial points, ax and xx. The algo checks in which
-// direction func decreases, and takes some steps in that direction,
-// until the function increases. It then returns ax, xx (possibibly
-// switched) and bx, and we know that there is a minimum between ax
-// and bx.
+// Find an initial bracketting of the minimum of func. Given 2 initial
+// points ax and bx, mnbrak checks in which direction func decreases,
+// and takes some steps in that direction, until the function
+// increases--at cx. mnbrak returns ax and cx (possibly switched),
+// bracketting a minimum.
 
-#define MYGOLD__ 1.618034
-#define GLIMIT 100.0
-#define TINY 1.0e-12
-#define SHFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
+#define MYGOLD_  1.618034
+#define MYLIMIT_ 100.0
+#define MYTINY_  1.0e-20
 
 void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb, double *fc,
 	    double (*func)(double))
 {
-  double ulim,u,r,q,fu,dum;
-  //  Msg(INFO, "--MNBRAK1 : ax %12.5E bx = %12.5E\n",*ax,*bx);  
+  double ulim,u,r,q,fu;
+
+  //Msg(INFO, "--MNBRAK1 : ax %12.5E bx = %12.5E",*ax,*bx);  
 
   *fa=(*func)(*ax);
   *fb=(*func)(*bx);
   if (*fb > *fa) {
-    SHFT(dum,*ax,*bx,dum);
-    SHFT(dum,*fb,*fa,dum);
+    double tmp;
+    tmp = *ax; *ax = *bx; *bx = tmp;
+    tmp = *fb; *fb = *fa; *fa = tmp;
   }
-  //  Msg(INFO, "--MNBRAK2 : ax %12.5E  bx = %12.5E\n",*ax,*bx);  
-  *cx=(*bx)+MYGOLD__*(*bx-*ax);
-  *fc=(*func)(*cx);
+
+  //Msg(INFO, "--MNBRAK2 : ax %12.5E  bx = %12.5E",*ax,*bx);  
+
+  *cx = *bx + MYGOLD_*(*bx-*ax);
+  *fc = (*func)(*cx);
   while (*fb > *fc) {
     r=(*bx-*ax)*(*fb-*fc);
     q=(*bx-*cx)*(*fb-*fa);
-    u=(*bx)-((*bx-*cx)*q-(*bx-*ax)*r)/
-      (2.0*SIGN(FMAX(fabs(q-r),TINY),q-r));
-    //    Msg(INFO, "--MNBRAK : %12.5E %12.5E %12.5E %12.5E %12.5E\n",*ax,*fa,*fb,*fc,u);  
-    ulim=(*bx)+GLIMIT*(*cx-*bx);
+    u=(*bx)-((*bx-*cx)*q-(*bx-*ax)*r)/(2.0*SIGN(MAX(fabs(q-r),MYTINY_),q-r));
+
+    //Msg(INFO, "--MNBRAK : %12.5E %12.5E %12.5E %12.5E %12.5E",*ax,*fa,*fb,*fc,u);  
+
+    ulim = *bx + MYLIMIT_*(*cx-*bx);
     if ((*bx-u)*(u-*cx) > 0.0) {
       fu=(*func)(u);
       if (fu < *fc) {
-	*ax=(*bx);
-	*bx=u;
-	*fa=(*fb);
-	*fb=fu;
+	*ax = *bx;
+	*bx = u;
+	*fa = *fb;
+	*fb = fu;
 	return;
       } else if (fu > *fb) {
-	*cx=u;
-	*fc=fu;
+	*cx = u;
+	*fc = fu;
 	return;
       }
-      u=(*cx)+MYGOLD__*(*cx-*bx);
-      fu=(*func)(u);
+      u = *cx + MYGOLD_*(*cx-*bx);
+      fu = (*func)(u);
     } else if ((*cx-u)*(u-ulim) > 0.0) {
       fu=(*func)(u);
       if (fu < *fc) {
-	SHFT(*bx,*cx,u,*cx+MYGOLD__*(*cx-*bx))
-	  SHFT(*fb,*fc,fu,(*func)(u))
-	  }
+        *bx = *cx; *cx = u; u = *cx + MYGOLD_*(*cx-*bx);
+	*fb = *fc; *fc = fu; fu = (*func)(u);
+      }
     } else if ((u-ulim)*(ulim-*cx) >= 0.0) {
-      u=ulim;
-      fu=(*func)(u);
+      u = ulim;
+      fu = (*func)(u);
     } else {
-      u=(*cx)+MYGOLD__*(*cx-*bx);
-      fu=(*func)(u);
+      u = *cx + MYGOLD_*(*cx-*bx);
+      fu = (*func)(u);
     }
-    SHFT(*ax,*bx,*cx,u)
-    SHFT(*fa,*fb,*fc,fu)
-      //      Msg(INFO, "MNBRAK : %12.5E %12.5E %12.5E \n",*ax,*bx,*cx);  
+    *ax = *bx; *bx = *cx; *cx = u;
+    *fa = *fb; *fb = *fc; *fc = fu;
+
+    //Msg(INFO, "MNBRAK : %12.5E %12.5E %12.5E",*ax,*bx,*cx);  
   }
 }
-#undef MYGOLD__
-#undef GLIMIT
-#undef TINY
-#undef SHFT
 
 #endif
