@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $Id: solver.pl,v 1.1 2005-01-16 20:41:42 geuzaine Exp $
+# $Id: solver.pl,v 1.2 2005-01-17 18:52:49 geuzaine Exp $
 #
 # Copyright (c) 2002 Laurent CHAMPANEY <laurent.champaney@meca.uvsq.fr>. 
 #
@@ -9,7 +9,7 @@
 # to interact with the Gmsh solver module.
 #   
 # To test this solver, copy the solver.opt file into your default
-# Gmsh option file, or lauch Gmsh with the command:
+# Gmsh option file, or launch Gmsh with the command:
 #   
 # gmsh -option solver.opt 
 #

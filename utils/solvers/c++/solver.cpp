@@ -1,4 +1,4 @@
-// $Id: solver.cpp,v 1.2 2005-01-16 20:41:42 geuzaine Exp $
+// $Id: solver.cpp,v 1.3 2005-01-17 18:52:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -35,7 +35,7 @@
 // g++ solver.cpp -o solver.exe
 //
 // To run it, merge the contents of the file solver.opt into your
-// default Gmsh option file, or lauch Gmsh with the command:
+// default Gmsh option file, or launch Gmsh with the command:
 //
 // gmsh -option solver.opt 
 //
