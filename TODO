@@ -1,4 +1,10 @@
-$Id: TODO,v 1.33 2004-02-28 00:48:47 geuzaine Exp $
+$Id: TODO,v 1.34 2004-03-07 02:35:44 geuzaine Exp $
+
+********************************************************************
+
+ability to plot a single component of vector and tensor fields
+
+********************************************************************
 
 should save only those options that differ from the default values (or
 at least make this behaviour optional)
