@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.89 2001-07-26 08:27:08 geuzaine Exp $
+// $Id: GUI.cpp,v 1.90 2001-07-26 10:01:31 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -2156,6 +2156,7 @@ void GUI::update_view_window(int num){
   if(v->NbTimeStep==1) view_timestep->deactivate();
   else view_timestep->activate();
   view_value[9]->callback(view_options_timestep_cb, (void*)num);
+  view_value[9]->maximum(v->NbTimeStep-1); 
   opt_view_timestep(num, GMSH_GUI, 0);
 
   // vector
