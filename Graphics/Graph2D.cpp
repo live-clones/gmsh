@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.2 2001-10-29 09:44:29 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.3 2001-10-29 14:27:40 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -13,11 +13,45 @@ extern Context_T   CTX;
 
 #define TIC 3
 
+void addval(Post_View *v, double min, double max, 
+	    int i, int j, int j_inc, 
+	    double xtop, double dx, double ybot,
+	    int numeric){
+  char label[256];
+  double d, x, y;
+
+  if(v->GraphType==DRAW_POST_2D_SPACE){
+    d = ((double*)List_Pointer_Fast(v->SP,j+3))[v->TimeStep];
+    x = xtop+j/j_inc*dx;
+  }
+  else{
+    d = ((double*)List_Pointer_Fast(v->SP,i+3))[j];
+    x = xtop+j*dx;
+  }
+  y = ybot+(d-min)/(max-min)*v->GraphSize[1];
+
+  if(v->SaturateValues){
+    if(d > max) d = max;
+    else if(d < min) d = min;
+  }
+  if(d>=min && d<=max){      
+    Palette2(v,min,max,d);
+    if(numeric){
+      glRasterPos2d(x+3,y+3);
+      sprintf(label, v->Format, d);
+      Draw_String(label);
+    }
+    else
+      glVertex2d(x,y);
+  }
+}
+
+
 void Draw_Graph2D(Post_View *v){
+  char label[1024] ;
   int font_h = gl_height() ; // hauteur totale de la fonte
   int font_a = gl_height()-gl_descent() ; // hauteur de la fonte au dessus de pt de ref
-  char label[1024] ;
-  int i;
+  int i, i_inc, i_max, j, j_inc, j_max, k, nb;
   double dx, dy, dv;
   double xtop = v->GraphPosition[0];
   double ytop = CTX.viewport[3]-v->GraphPosition[1];
@@ -38,6 +72,8 @@ void Draw_Graph2D(Post_View *v){
     glVertex2d(xtop,ybot);
     glEnd();    
   }
+
+  // The axes + labels
   
   if(v->ShowScale){
     glPointSize(CTX.geom.point_size); 
@@ -62,7 +98,7 @@ void Draw_Graph2D(Post_View *v){
       glVertex2d(xtop,ytop-i*dy);
       glVertex2d(xtop+TIC,ytop-i*dy);
       glEnd();
-      sprintf(label, v->Format, ValMax-i*dv);
+      sprintf(label, v->Format, (i==v->NbIso)?ValMin:(ValMax-i*dv));
       glRasterPos2d(xtop-gl_width(label)-TIC,ytop-i*dy-font_a/3.);
       Draw_String(label);
     }
@@ -76,31 +112,45 @@ void Draw_Graph2D(Post_View *v){
 
     // x tics + labels
     if(v->GraphType==DRAW_POST_2D_SPACE){
-      dx = v->GraphSize[0]/(double)v->NbIso;
-      for(i=0; i<v->NbIso+1; i++){
-	glBegin(GL_LINES);
-	glVertex2d(xtop+i*dx,ybot);
-	glVertex2d(xtop+i*dx,ybot+TIC);
-	glEnd();
-	sprintf(label, v->Format, 1.);
-	glRasterPos2d(xtop+i*dx-gl_width(label)/2.,ybot-1.5*font_h);
-	Draw_String(label);
-      }
+      dx = v->GraphSize[0]/(double)(v->NbSP-1);
+      nb = v->NbSP;
+    }
+    else if(v->NbTimeStep>1){
+      dx = v->GraphSize[0]/(double)(v->NbTimeStep-1);
+      nb = v->NbTimeStep;
     }
     else{
-      dx = v->GraphSize[0]/(double)(v->NbTimeStep-1);
-      for(i=0; i<v->NbTimeStep; i++){
-	glBegin(GL_LINES);
-	glVertex2d(xtop+i*dx,ybot);
-	glVertex2d(xtop+i*dx,ybot+TIC);
-	glEnd();
-	sprintf(label, v->Format, *(double*)List_Pointer(v->Time,i));
-	glRasterPos2d(xtop+i*dx-gl_width(label)/2.,ybot-1.5*font_h);
-	Draw_String(label);
+      nb = 0;
+    }
+
+    double dist=0., p1[3]={0.,0.,0.}, p2[3];
+    j=0;
+
+    for(i=0; i<nb; i++){
+      glBegin(GL_LINES);
+      glVertex2d(xtop+i*dx,ybot);
+      glVertex2d(xtop+i*dx,ybot+TIC);
+      glEnd();
+      if(v->GraphType==DRAW_POST_2D_SPACE){
+	for(k=0;k<3;k++){
+	  List_Read(v->SP,j+k,&p2[k]);
+	  p1[k] = p2[k]-p1[k];
+	}
+	dist += sqrt (p1[0] * p1[0] + p1[1] * p1[1] + p1[2] * p1[2]);
+	sprintf(label, v->Format, dist);
+	for(k=0;k<3;k++){
+	  p1[k] = p2[k];
+	}	    
+	j += List_Nbr(v->SP) / v->NbSP;
       }
+      else
+	sprintf(label, v->Format, *(double*)List_Pointer(v->Time,i));
+      glRasterPos2d(xtop+i*dx-gl_width(label)/2.,ybot-1.5*font_h);
+      Draw_String(label);
     }
   }
 
+  // The curve(s)
 
   glPointSize(v->PointSize); 
   gl2psPointSize(v->PointSize * CTX.print.eps_point_size_factor);
@@ -108,35 +158,46 @@ void Draw_Graph2D(Post_View *v){
   glLineWidth(v->LineWidth); 
   gl2psLineWidth(v->LineWidth * CTX.print.eps_line_width_factor);
 
-  // curve
   if(v->GraphType==DRAW_POST_2D_SPACE){
-    int nb = List_Nbr(v->SP) / v->NbSP ;
-    if(v->IntervalsType == DRAW_POST_ISO)
-      glBegin(GL_POINTS);
-    else
-      glBegin(GL_LINE_STRIP);
-    for(i=0; i<v->NbIso+1; i++){
-      double *V = (double*)List_Pointer_Fast(v->SP,i*nb+3);
-      double d = V[v->TimeStep];
-      if(v->SaturateValues){
-	if(d > ValMax) d = ValMax;
-	else if(d < ValMin) d = ValMin;
-      }
-      if(d>=ValMin && d<=ValMax){      
-	Palette2(v,ValMin,ValMax,d);
-	glVertex2d(xtop+i*dx,ybot+(d-ValMin)/(ValMax-ValMin)*v->GraphSize[1]);
-	if(v->IntervalsType == DRAW_POST_NUMERIC){
-	  glRasterPos2d(xtop+i*dx+2,ybot+(d-ValMin)/(ValMax-ValMin)*v->GraphSize[1]+2);
-	  sprintf(label, v->Format, d);
-	  Draw_String(label);
-	}
-      }
-    }
-    glEnd();
+    i_inc = 1;
+    i_max = 1;
+    dx = v->GraphSize[0]/(double)(v->NbSP-1);
+    j_inc = List_Nbr(v->SP) / v->NbSP ;
+    j_max = List_Nbr(v->SP);
+  }
+  else if(v->NbTimeStep>1){
+    i_inc = List_Nbr(v->SP) / v->NbSP ;
+    i_max = List_Nbr(v->SP) ;
+    dx = v->GraphSize[0]/(double)(v->NbTimeStep-1);
+    j_inc = 1;
+    j_max = v->TimeStep+1;
   }
   else{
-    
-    
+    i_max = 0;
+  }
+  
+  for(i=0; i<i_max; i+=i_inc){
+    if(v->IntervalsType == DRAW_POST_ISO || 
+       v->IntervalsType == DRAW_POST_DISCRETE ||
+       v->IntervalsType == DRAW_POST_NUMERIC){
+      glBegin(GL_POINTS); 
+      for(j=0; j<j_max; j+=j_inc) 
+	addval(v,ValMin,ValMax,i,j,j_inc,xtop,dx,ybot,0);
+      glEnd();
+    }
+    if(v->IntervalsType == DRAW_POST_NUMERIC){
+      for(j=0; j<j_max; j+=j_inc){
+	addval(v,ValMin,ValMax,i,j,j_inc,xtop,dx,ybot,1);
+      }
+    }
+    if(v->IntervalsType == DRAW_POST_DISCRETE || 
+       v->IntervalsType == DRAW_POST_CONTINUOUS){
+      glBegin(GL_LINE_STRIP); 
+      for(j=0; j<j_max; j+=j_inc)
+	addval(v,ValMin,ValMax,i,j,j_inc,xtop,dx,ybot,0);
+      glEnd();
+    }
+  
   }
   
 }
