@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.24 2001-04-17 06:55:47 geuzaine Exp $
+// $Id: Draw.cpp,v 1.25 2001-08-06 16:47:57 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -137,22 +137,11 @@ void Orthogonalize(int x, int y){
 void InitRenderModel(void)
 {
   int i;
-  float ambient[] = {0.5, 0.5, 0.5};
-  float diffuse[] = {0.4, 0.4, 0.4};
   float specular[4];
-
-  if(CTX.post.smooth){//temporaire
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
-  }
 
   for(i = 0 ; i < 6 ; i++){
     if(CTX.light[i]){
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, CTX.light_position[i]);
-      if(CTX.post.smooth){//temporaire
-	glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
-	glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
-      }
       glEnable((GLenum)(GL_LIGHT0 + i));
     }
   }

@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.10 2001-08-03 21:27:20 geuzaine Exp $
+// $Id: Entity.cpp,v 1.11 2001-08-06 16:47:57 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -77,11 +77,6 @@ void Draw_Triangle (double *x, double *y, double *z, double *n,
 
 void Draw_Quadrangle (double *x, double *y, double *z, double *n,
                       double Raise[3][5], int shade){
-
-  /*
-    I think this gives better results
-  */
-  
   double x2[3]={x[2],x[3],x[0]};
   double y2[3]={y[2],y[3],y[0]};
   double z2[3]={z[2],z[3],z[0]};
