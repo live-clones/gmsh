@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.83 2005-02-20 07:11:04 geuzaine Exp $
+// $Id: CAD.cpp,v 1.84 2005-02-28 23:57:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -240,8 +240,8 @@ void CopyVertex(Vertex * v, Vertex * vv)
 
 Vertex *DuplicateVertex(Vertex * v)
 {
-  Vertex *pv;
-  pv = Create_Vertex(NEWPOINT(), 0, 0, 0, 0, 0);
+  if(!v) return NULL;
+  Vertex *pv = Create_Vertex(NEWPOINT(), 0, 0, 0, 0, 0);
   CopyVertex(v, pv);
   Tree_Insert(THEM->Points, &pv);
   return pv;
@@ -900,6 +900,11 @@ void ApplyTransformationToCurve(double matrix[4][4], Curve * c)
 {
   Vertex *v;
 
+  if(!c->beg || !c->end){
+    Msg(GERROR, "Cannot transform curve with no begin/end points");
+    return;
+  }
+
   ApplyTransformationToPoint(matrix, c->beg);
   ApplyTransformationToPoint(matrix, c->end);
 
@@ -1297,6 +1302,11 @@ int Extrude_ProtudeCurve(int type, int ic,
     return 0;
   }
 
+  if(!pc->beg || !pc->end){
+    Msg(GERROR, "Cannot extrude curve with no begin/end points");
+    return;
+  }
+
   Msg(DEBUG, "Extrude Curve %d", ic);
 
   chapeau = DuplicateCurve(pc);
@@ -1614,9 +1624,13 @@ int compareTwoCurves(const void *a, const void *b)
     return List_Nbr(c1->Control_Points) - List_Nbr(c2->Control_Points);
   
   if(!List_Nbr(c1->Control_Points)){
+    if(!c1->beg || !c2->beg)
+      return 1;
     comp = compareVertex(&c1->beg, &c2->beg);
     if(comp)
       return comp;
+    if(!c1->end || !c2->end)
+      return 1;
     comp = compareVertex(&c1->end, &c2->end);
     if(comp)
       return comp;
