@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.55 2003-06-14 16:41:12 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.56 2003-06-20 00:07:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -60,9 +60,7 @@ int Alerte_Point_Scabreux;
 
 inline void cgsmpl(Simplex * s, double &x, double &y, double &z)
 {
-  //compiler sous linux avec -O2 et faire tourner bench/3d/sphere2.geo
-  //->boum. Ne se produit pas si on accede a V[3] avant!
-  //if(!s->V[3]) Msg(GERROR, "oups");
+  // this inlining crashes with gcc -O2...
 
   x = 0.25 * (s->V[0]->Pos.X +
               s->V[1]->Pos.X + s->V[2]->Pos.X + s->V[3]->Pos.X);

@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Triangle.cpp,v 1.3 2003-03-21 00:52:41 geuzaine Exp $
+// $Id: 2D_Mesh_Triangle.cpp,v 1.4 2003-06-20 00:07:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -211,7 +211,7 @@ int Mesh_Shewchuk(Surface * s)
       val += mid.pointattributelist[k];
     }
     val /= mid.numberofcorners;
-    val = val * val / 2.;       // we generate isotropic meshes
+    val = val * val / 1.5; // approx (we want isotropic meshes)
     mid.trianglearealist[i] = val;
   }
 
