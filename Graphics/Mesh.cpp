@@ -1,4 +1,4 @@
-/* $Id: Mesh.cpp,v 1.6 2000-11-26 15:43:46 geuzaine Exp $ */
+/* $Id: Mesh.cpp,v 1.7 2000-11-28 08:35:03 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -51,14 +51,12 @@ static int DrawVertexSupp ;
 
 void Draw_Mesh (Mesh *M) {
 
-  InitPosition();
-
-  if(CTX.mesh.shade){ 
+  if(CTX.mesh.shade)
     InitShading();
-  }
-  else{ 
+  else
     InitNoShading();
-  }
+
+  InitPosition();
 
   if(CTX.clip[0]) glClipPlane(GL_CLIP_PLANE0, CTX.clip_plane0);
   if(CTX.clip[1]) glClipPlane(GL_CLIP_PLANE1, CTX.clip_plane1);
