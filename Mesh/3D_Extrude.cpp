@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.71 2003-12-16 20:22:35 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.72 2003-12-16 22:17:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -32,7 +32,7 @@ extern Mesh *THEM;
 
 static int DIM, NUM;            // current dimension of parent entity
 static int TEST_IS_ALL_OK;
-static double RANDOM_SWAP_FACT = 0.0;
+//static double RANDOM_SWAP_FACT = 0.0;
 static Tree_T *Tree_Ares = NULL, *Tree_Swaps = NULL;
 static Curve *THEC = NULL;
 static Surface *THES = NULL;
@@ -233,6 +233,13 @@ void are_cree(Vertex * v1, Vertex * v2, Tree_T * t)
   n.a = IMAX(v1->Num, v2->Num);
   n.b = IMIN(v1->Num, v2->Num);
   Tree_Replace(t, &n);
+
+#if 0
+  if(!comparePosition(&v1, &v2)){
+    Msg(GERROR, "Created zero-length edge!");
+  }
+#endif
+
 }
 
 void are_del(Vertex * v1, Vertex * v2, Tree_T * t)
@@ -517,10 +524,12 @@ void Extrude_Simplex_Phase2(void *data, void *dum)
       List_Read(L1, k + 1, &v5);
       List_Read(L2, k + 1, &v6);
       k++;
+      /*
       if(RANDOM_SWAP_FACT){
 	if((double)rand()/(double)RAND_MAX < RANDOM_SWAP_FACT)
 	  break;
       }
+      */
       if(are_exist(v4, v2, Tree_Ares) &&
          are_exist(v5, v3, Tree_Ares) && 
 	 are_exist(v1, v6, Tree_Ares)) {
@@ -1073,7 +1082,7 @@ int Extrude_Mesh(Tree_T * Volumes)
   }
 
   j = 0;
-  RANDOM_SWAP_FACT = 0.0;
+  //RANDOM_SWAP_FACT = 0.0;
   do {
     TEST_IS_ALL_OK = 0;
     for(int ivol = 0; ivol < List_Nbr(vol); ivol++) {
@@ -1089,6 +1098,9 @@ int Extrude_Mesh(Tree_T * Volumes)
     }
     Msg(STATUS3, "Swapping %d", TEST_IS_ALL_OK);
     if(TEST_IS_ALL_OK == j && j != 0) {
+      Msg(GERROR, "Unable to swap all edges (output mesh will be incorrect): use 'Recombine'");
+      break;
+      /*
       if(RANDOM_SWAP_FACT > 0.8){
 	Msg(GERROR, "Unable to swap all edges (output mesh will be incorrect): use 'Recombine'");
 	break;
@@ -1097,6 +1109,7 @@ int Extrude_Mesh(Tree_T * Volumes)
 	RANDOM_SWAP_FACT += 0.05;
 	Msg(INFO, "Setting random swapping factor to %g", RANDOM_SWAP_FACT);
       }
+      */
     }
     j = TEST_IS_ALL_OK;
   } while(TEST_IS_ALL_OK);
