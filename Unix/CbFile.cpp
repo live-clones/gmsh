@@ -1,4 +1,4 @@
-/* $Id: CbFile.cpp,v 1.16 2000-12-21 14:53:10 geuzaine Exp $ */
+/* $Id: CbFile.cpp,v 1.17 2000-12-26 17:40:18 geuzaine Exp $ */
 
 #include <unistd.h>
 
@@ -19,6 +19,7 @@
 #include "gl2gif.h"
 #include "gl2jpeg.h"
 #include "gl2ppm.h"
+#include "gl2yuv.h"
 
 extern Context_T   CTX;
 extern XContext_T  XCTX;
@@ -74,6 +75,7 @@ void CreateFile (char *name, int format) {
       else if(!strcmp(ext,".eps")) CreateFile(name, FORMAT_EPS);
       else if(!strcmp(ext,".xpm")) CreateFile(name, FORMAT_XPM);
       else if(!strcmp(ext,".ppm")) CreateFile(name, FORMAT_PPM);
+      else if(!strcmp(ext,".yuv")) CreateFile(name, FORMAT_YUV);
       else {
 	if(strlen(name) < 5)
 	  Msg(ERROR, "Unknown Extension for Automatic Format Detection");
@@ -151,6 +153,19 @@ void CreateFile (char *name, int format) {
     create_ppm(fp, CTX.viewport[2]-CTX.viewport[0],
 	       CTX.viewport[3]-CTX.viewport[1]);
     Msg(INFOS, "PPM Creation Complete '%s'", name);
+    Msg (INFO, "Wrote File '%s'", name);
+    fclose(fp);
+    break;
+
+  case FORMAT_YUV :
+    if(!(fp = fopen(name,"wb"))) {
+      Msg(WARNING, "Unable to Open File '%s'", name); 
+      return;
+    }
+    Replot();
+    create_yuv(fp, CTX.viewport[2]-CTX.viewport[0],
+	       CTX.viewport[3]-CTX.viewport[1]);
+    Msg(INFOS, "YUV Creation Complete '%s'", name);
     Msg (INFO, "Wrote File '%s'", name);
     fclose(fp);
     break;

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2000-12-21 08:02:05 geuzaine Exp $
+# $Id: Makefile,v 1.9 2000-12-26 17:40:18 geuzaine Exp $
 #
 # Makefile for "libGraphics.a"
 #
@@ -37,7 +37,8 @@ SRC = Draw.cpp \
       gl2ps.cpp\
       gl2gif.cpp\
       gl2jpeg.cpp\
-      gl2ppm.cpp
+      gl2ppm.cpp\
+      gl2yuv.cpp
 
 
 OBJ = $(SRC:.cpp=.o)
@@ -66,64 +67,73 @@ depend:
 	$(RM) $(RMFLAGS) Makefile.new
 
 # DO NOT DELETE THIS LINE
-Draw.o: Draw.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
- ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
- ../Common/Const.h ../Common/ColorTable.h ../Common/Context.h \
- ../Geo/MinMax.h ../Unix/CbGeneral.h ../Unix/Widgets.h \
- ../Unix/XContext.h
-Mesh.o: Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
- ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
- ../Common/Const.h ../Common/ColorTable.h ../Common/Context.h \
- ../Geo/MinMax.h gl2ps.h ../Geo/Verif.h ../Mesh/Numeric.h
-Geom.o: Geom.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
- ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
- ../Common/Const.h ../Common/ColorTable.h ../Common/Context.h \
- ../Geo/Verif.h ../Mesh/Interpolation.h ../Mesh/Numeric.h
-Post.o: Post.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
- ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
- ../Common/Const.h ../Common/ColorTable.h ../Common/Context.h
+Draw.o: Draw.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../Common/GmshUI.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/Metric.h Draw.h ../Common/Views.h ../Common/Const.h \
+  ../Common/ColorTable.h ../Common/Context.h ../Geo/MinMax.h \
+  ../Unix/CbGeneral.h ../Unix/Widgets.h ../Unix/XContext.h
+Mesh.o: Mesh.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../Common/GmshUI.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/Metric.h Draw.h ../Common/Views.h ../Common/Const.h \
+  ../Common/ColorTable.h ../Common/Context.h ../Geo/MinMax.h gl2ps.h \
+  ../Geo/Verif.h ../Mesh/Numeric.h
+Geom.o: Geom.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../Common/GmshUI.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/Metric.h Draw.h ../Common/Views.h ../Common/Const.h \
+  ../Common/ColorTable.h ../Common/Context.h ../Geo/Verif.h \
+  ../Mesh/Interpolation.h ../Mesh/Numeric.h
+Post.o: Post.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../Common/GmshUI.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/Metric.h Draw.h ../Common/Views.h ../Common/Const.h \
+  ../Common/ColorTable.h ../Common/Context.h
 PostSimplex.o: PostSimplex.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
- ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
- ../Common/Const.h ../Common/ColorTable.h Iso.h ../Common/Context.h
-Iso.o: Iso.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
- ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
- ../Mesh/Metric.h Draw.h ../Common/Views.h ../Common/Const.h \
- ../Common/ColorTable.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
+  ../Common/Const.h ../Common/ColorTable.h Iso.h ../Common/Context.h
+Iso.o: Iso.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
+  ../Common/Const.h ../Common/ColorTable.h
 Entity.o: Entity.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Mesh/Mesh.h \
- ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
- ../Common/Const.h ../Common/ColorTable.h ../Common/Context.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
+  ../Common/Const.h ../Common/ColorTable.h ../Common/Context.h
 Scale.o: Scale.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
- ../Common/Const.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
- ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h \
- ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h gl2ps.h \
- ../Unix/XContext.h
-Axes.o: Axes.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
- ../Common/Const.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
- ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h \
- ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
+  ../Common/Const.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h \
+  ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h gl2ps.h \
+  ../Unix/XContext.h
+Axes.o: Axes.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../Common/GmshUI.h ../Common/Const.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/Metric.h Draw.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/Context.h
 gl2ps.o: gl2ps.cpp gl2ps.h
 gl2gif.o: gl2gif.cpp gl2gif.h
+gl2jpeg.o: gl2jpeg.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
+  ../Common/Context.h ../jpeg/jpeglib.h ../jpeg/jconfig.h \
+  ../jpeg/jmorecfg.h ../jpeg/jerror.h
+gl2ppm.o: gl2ppm.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h
+gl2yuv.o: gl2yuv.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h

@@ -1,4 +1,4 @@
-/* $Id: Register.cpp,v 1.17 2000-12-21 14:53:10 geuzaine Exp $ */
+/* $Id: Register.cpp,v 1.18 2000-12-26 17:40:18 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -147,6 +147,7 @@ void RegisterCallbacks_FD(Widgets_T *w){
   register_activate_cb (w->FD.saveAsButt[8],  OptionsCb, OPTIONS_SAVE_JPEG);
   register_activate_cb (w->FD.saveAsButt[9],  OptionsCb, OPTIONS_SAVE_GIF);
   register_activate_cb (w->FD.saveAsButt[10], OptionsCb, OPTIONS_SAVE_PPM);
+  register_activate_cb (w->FD.saveAsButt[11], OptionsCb, OPTIONS_SAVE_YUV);
 
   register_ok_cb       (w->FD.saveOptionsAsDialog,   FileCb,    FILE_SAVE_OPTIONS_AS);
   register_cancel_cb   (w->FD.saveOptionsAsDialog,   ManageCb,  w->FD.saveOptionsAsDialog);

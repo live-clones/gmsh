@@ -1,4 +1,4 @@
-/* $Id: CbOptions.cpp,v 1.17 2000-12-22 20:08:20 geuzaine Exp $ */
+/* $Id: CbOptions.cpp,v 1.18 2000-12-26 17:40:18 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -140,6 +140,7 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_SAVE_GIF        : CTX.print.format = FORMAT_GIF; break;
   case OPTIONS_SAVE_JPEG       : CTX.print.format = FORMAT_JPEG; break;
   case OPTIONS_SAVE_PPM        : CTX.print.format = FORMAT_PPM; break;
+  case OPTIONS_SAVE_YUV        : CTX.print.format = FORMAT_YUV; break;
   case OPTIONS_SAVE_EPS_SIMPLE : CTX.print.format = FORMAT_EPS; 
                                  CTX.print.eps_quality = 1; break;
   case OPTIONS_SAVE_EPS_COMPLEX: CTX.print.format = FORMAT_EPS; 

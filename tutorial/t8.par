@@ -1,12 +1,17 @@
 #
-# parameter file fpr mpeg_encode 
+# parameter file for mpeg_encode 
 #
 
 PATTERN          I
+# PATTERN          IB
 # PATTERN          IBBBP
 # PATTERN          IBBPBBPBBPBBPBB
+
 BASE_FILE_FORMAT JPEG
 # BASE_FILE_FORMAT PPM
+# BASE_FILE_FORMAT YUV
+# YUV_SIZE         320x240
+
 GOP_SIZE         30
 SLICES_PER_FRAME 1
 PIXEL            HALF
@@ -26,5 +31,6 @@ INPUT_DIR       .
 INPUT
 t8-*.jpg [01-50]
 # t8-*.ppm [01-50]
+# t8-*.yuv [01-50]
 END_INPUT
 
