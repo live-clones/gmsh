@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.171 2005-02-02 18:48:00 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.172 2005-02-06 06:29:27 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -467,8 +467,8 @@ from user-defined background meshes (@pxref{Mesh commands});
 create simple extruded geometries and meshes (see @ref{Geometry commands},
 and @ref{Mesh commands});
 @item
-interact with external solvers. Gmsh provides C/C++ and Perl interfaces, and
-others can be easily added (@pxref{Solver module});
+interact with external solvers. Gmsh provides C, C++, Perl and Python
+interfaces, and others can be easily added (@pxref{Solver module});
 @item
 visualize computational results in a great variety of ways. Gmsh can display
 scalar, vector and tensor data sets, and can perform various operations on
@@ -2188,11 +2188,11 @@ If you want the solver to interact with Gmsh (for error messages, option
 definitions, post-processing, etc.), you need to link your solver with the
 @file{GmshClient.c} file and add the appropriate function calls inside your
 program. You can then proceed as in the previous case, but this time you
-should set the client-server option to 1 (e.g., @code{Solver.ClientServer0
-= 1}), so that Gmsh and the solver can communicate through a Unix
-socket. See @ref{Solver example}, for an example of how to interface a C
-solver. Bindings for solvers written in other languages (e.g., Perl) are
-available on @value{GMSH-WEB}.
+should set the client-server option to 1 (e.g., @code{Solver.ClientServer0 =
+1}), so that Gmsh and the solver can communicate through a Unix socket. See
+@ref{Solver example}, for an example of how to interface a C++
+solver. Bindings for solvers written in other languages (C, Perl and Python)
+are available on @value{GMSH-WEB}.
 
 @menu
 * Solver options::              
@@ -2223,7 +2223,8 @@ available on @value{GMSH-WEB}.
 
 Here is a small example of how to interface a C++ solver with Gmsh. The
 following listing reproduces the @file{utils/solvers/c++/solver.cpp} file
-from the Gmsh source distribution (C and Perl examples are also available).
+from the Gmsh source distribution (C, Perl and Python examples are also
+available).
 
 @sp 1
 
