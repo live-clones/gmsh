@@ -1,4 +1,4 @@
-// $Id: gsl_brent.cpp,v 1.1 2003-02-18 05:50:07 geuzaine Exp $
+// $Id: gsl_brent.cpp,v 1.2 2003-02-19 00:17:01 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -40,15 +40,36 @@ double fn1 (double x, void * params){
 
 #define MAXITER 100
 
+// Returns the minimum betwen ax and bx to a given tol using brent's
+// method.
+
 double brent(double ax, double xx, double bx, 
 	     double (*f)(double), double tol, double *xmin){
   int status;
   int iter = 0;
-  double m = xx, a = ax, b = bx;
+  double m, a, b;
   const gsl_min_fminimizer_type *T;
   gsl_min_fminimizer *s;
   gsl_function F;
-  
+
+  m = xx;
+
+  // gsl wants a<b
+  if(ax < bx){
+    a = ax;
+    b = bx;
+  }
+  else{
+    a = bx;
+    b = bx;
+  }
+
+  // if a-b < tol, return func(a)
+  if(fabs(b-a) < tol){
+    *xmin = ax;
+    return(f(*xmin));
+  }
+ 
   nrfunc = f;
   
   F.function = &fn1;
@@ -66,7 +87,7 @@ double brent(double ax, double xx, double bx,
     a = gsl_min_fminimizer_x_lower(s);
     b = gsl_min_fminimizer_x_upper(s);
     
-    status = gsl_min_test_interval(a, b, 0.001, 0.0);
+    status = gsl_min_test_interval(a, b, tol, 0.0);
     
     //if(status == GSL_SUCCESS) printf ("Converged\n");
   }
@@ -75,6 +96,14 @@ double brent(double ax, double xx, double bx,
   *xmin = m;
   return fn1(m, NULL);
 }
+
+
+// mnbrak finds an initial bracketting of the minimum of funct.  You
+// give 2 initial points, ax and xx. The algo checks in which
+// direction func decreases, and takes some steps in that direction,
+// until the function increases. It then returns ax, xx (possibibly
+// switched) and bx, and we know that there is a minimum between ax
+// and bx.
 
 #define GOLD 1.618034
 #define GLIMIT 100.0
