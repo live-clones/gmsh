@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.66 2005-01-08 20:15:11 geuzaine Exp $
+# $Id: Makefile,v 1.67 2005-01-13 23:39:10 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -153,12 +153,11 @@ Colorbar_Window.o: Colorbar_Window.cpp ../Common/Gmsh.h \
 GmshServer.o: GmshServer.cpp ../Common/Context.h ../DataStr/List.h
 Solvers.o: Solvers.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../utils/solvers/GmshClient.h \
-  GmshServer.h ../Parser/OpenFile.h Solvers.h ../Common/GmshUI.h GUI.h \
-  Opengl_Window.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
-  ../Mesh/DiscreteSurface.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  Colorbar_Window.h ../Common/ColorTable.h ../Graphics/Draw.h \
-  ../Common/Views.h ../Common/GmshMatrix.h ../Common/AdaptiveViews.h \
-  ../Common/Context.h
+  ../DataStr/avl.h ../DataStr/Tools.h GmshServer.h ../Parser/OpenFile.h \
+  Solvers.h ../Common/GmshUI.h GUI.h Opengl_Window.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h \
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/DiscreteSurface.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
+  ../Mesh/Matrix.h Colorbar_Window.h ../Common/ColorTable.h \
+  ../Graphics/Draw.h ../Common/Views.h ../Common/GmshMatrix.h \
+  ../Common/AdaptiveViews.h ../Common/Context.h
