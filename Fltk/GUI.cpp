@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.358 2004-10-11 17:22:57 geuzaine Exp $
+// $Id: GUI.cpp,v 1.359 2004-10-11 19:27:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2283,7 +2283,7 @@ void GUI::create_option_window()
       post_butt[1]->down_box(TOGGLE_BOX);
       post_butt[1]->selection_color(TOGGLE_COLOR);
 
-      post_butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, BW, BH, "Draw horizontal scales");
+      post_butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, BW, BH, "Draw value scales horizontally");
       post_butt[2]->type(FL_TOGGLE_BUTTON);
       post_butt[2]->down_box(TOGGLE_BOX);
       post_butt[2]->selection_color(TOGGLE_COLOR);
