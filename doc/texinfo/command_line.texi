@@ -99,7 +99,7 @@ parse string before project file
 @item -option file
 parse option file before GUI creation
 @item -convert file file
-perform batch conversion of view(s)/mesh into new file formats
+perform batch conversion of view(s)/mesh into latest file formats
 @item -version
 show version number
 @item -info
