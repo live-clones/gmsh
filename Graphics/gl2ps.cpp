@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.57 2003-01-22 04:08:49 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.58 2003-01-22 04:19:44 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -517,18 +517,12 @@ void gl2psAddPrimitiveInList(GL2PSprimitive *prim, GL2PSlist *list){
 
 void gl2psFreeBspTree(GL2PSbsptree **tree){
   if(*tree){
-    if((*tree)->back){
-      gl2psFreeBspTree(&(*tree)->back);
-      gl2psFree((*tree)->back);
-    }
+    if((*tree)->back) gl2psFreeBspTree(&(*tree)->back);
     if((*tree)->primitives){
       gl2psListAction((*tree)->primitives, gl2psFreePrimitive);
       gl2psListDelete((*tree)->primitives);
     }
-    if((*tree)->front){
-      gl2psFreeBspTree(&(*tree)->front);
-      gl2psFree((*tree)->front);
-    }
+    if((*tree)->front) gl2psFreeBspTree(&(*tree)->front);
     gl2psFree(*tree);
     *tree = NULL;
   }
