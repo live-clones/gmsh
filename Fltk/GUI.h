@@ -46,7 +46,7 @@
 #include <FL/Fl_Color_Chooser.H>
 #include <FL/fl_ask.H>
 #include <FL/Fl_Tooltip.H>
-#if defined(__APPLE__)
+#if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
 #include <FL/Fl_Sys_Menu_Bar.H>
 #endif
 
@@ -135,7 +135,7 @@ public:
 
   // menu window
   Fl_Window        *m_window ;
-#if defined(__APPLE__)
+#if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
   Fl_Sys_Menu_Bar  *m_sys_menu_bar ;
 #endif
   Fl_Menu_Bar      *m_menu_bar ;

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.354 2004-09-28 17:13:48 geuzaine Exp $
+// $Id: GUI.cpp,v 1.355 2004-09-28 22:45:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -108,7 +108,7 @@ Fl_Menu_Item m_menubar_table[] = {
 // menu window; removed File->Quit; changed capitalization to match
 // Apple's guidelines)
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
 Fl_Menu_Item m_sys_menubar_table[] = {
   {"File", 0, 0, 0, FL_SUBMENU},
     {"New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
@@ -748,7 +748,7 @@ GUI::GUI(int argc, char **argv)
 
   // add callback to respond to the Mac Finder (when you click on a
   // document)
-#if defined(__APPLE__)
+#if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
   fl_open_callback(OpenProblemMacFinder);
 #endif
 
@@ -848,14 +848,14 @@ void GUI::create_menu_window(int argc, char **argv)
   int width = 14 * fontsize;
 
   // this is the initial height: no dynamic button is shown!
-#if defined(__APPLE__)
+#if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
   if(CTX.system_menu_bar){
     MH = BH + 6;  // the menu bar is not in the application!
   }
   else{
 #endif
     MH = BH + BH + 6;
-#if defined(__APPLE__)
+#if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
   }
 #endif
 
@@ -863,7 +863,7 @@ void GUI::create_menu_window(int argc, char **argv)
   m_window->box(WINDOW_BOX);
   m_window->callback(file_quit_cb);
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
   if(CTX.system_menu_bar){
     // the system menubar is kind of a hack in fltk--it still creates
     // a real (invisible) menubar. So we make it a 1x1 pixel rectangle
@@ -886,7 +886,7 @@ void GUI::create_menu_window(int argc, char **argv)
     Fl_Box *o = new Fl_Box(0, BH, width, BH + 6);
     o->box(FL_UP_BOX);
     y = BH + 3;
-#if defined(__APPLE__)
+#if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
   }
 #endif
 
@@ -997,7 +997,31 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
   Msg(STATUS2N, menu[0].label + 1);
 
   // free all the children (m_push*, m_toggle*, m_pop*)
+#if defined(HAVE_FLTK_1_1_5_OR_ABOVE)
   m_scroll->clear();
+#else
+  for(int i = 0; i < m_push_butt.size(); i++){
+    m_scroll->remove(m_push_butt[i]);
+    delete m_push_butt[i];
+  }
+  for(int i = 0; i < m_toggle_butt.size(); i++){
+    m_scroll->remove(m_toggle_butt[i]);
+    delete m_toggle_butt[i];
+  }
+  for(int i = 0; i < m_toggle2_butt.size(); i++){
+    m_scroll->remove(m_toggle2_butt[i]);
+    delete m_toggle2_butt[i];
+  }
+  for(int i = 0; i < m_popup_butt.size(); i++){
+    m_scroll->remove(m_popup_butt[i]);
+    delete m_popup_butt[i];
+  }
+  for(int i = 0; i < m_popup2_butt.size(); i++){
+    m_scroll->remove(m_popup2_butt[i]);
+    delete m_popup2_butt[i];
+  }
+#endif
+
   // reset the vectors
   m_push_butt.clear();
   m_toggle_butt.clear();
