@@ -1,4 +1,4 @@
-/* $Id: Simplex.cpp,v 1.2 2000-11-23 14:11:35 geuzaine Exp $ */
+/* $Id: Simplex.cpp,v 1.3 2000-11-23 16:07:12 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -220,7 +220,7 @@ double Simplex::EtaShapeMeasure (){
       lij2 += DSQR (lij (i, j));
     }
   }
-  return 12. * pow (9. * DSQR (fabs (Volume_Simplexe ())), 0.33333333) / (lij2);
+  return 12. * pow (9. * DSQR (fabs (Volume_Simplexe ())), 1./3.) / (lij2);
 }
 
 double Simplex::RhoShapeMeasure (){

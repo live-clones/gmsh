@@ -1,6 +1,8 @@
-/* $Id: Const.h,v 1.2 2000-11-23 14:11:27 geuzaine Exp $ */
+/* $Id: Const.h,v 1.3 2000-11-23 16:07:07 geuzaine Exp $ */
 #ifndef _CONSTS_H_
 #define _CONSTS_H_
+
+#include <stdlib.h>
 
 //#define RAND_LONG    LC * ((rand()%1000)/1.E08)
 //#define RAND_LONG    LC * ((rand()%1000)/1.E08)/10.
@@ -11,19 +13,17 @@
 //EPSILON_LONG in [0, LC/1.e12]
 #define EPSILON_LC   (LC/1.e12*rand()/RAND_MAX)
 
-#define RADTODEG      57.29578
-
 #define TEXT_BUFFER_SIZE       1024
 #define SELECTION_BUFFER_SIZE  1024
 #define LABEL_STR_L            16
 #define NAME_STR_L             256
 #define MAX_OPEN_FILES         20
 
-#define RacineDeDeux  1.41421356237
-#define RacineDeTrois 1.73205080757
-#define Pi            3.14159265359
-#define Deux_Pi       6.28318530718
-#define UnTiers       0.33333333333
+#define RADTODEG      57.295779513082321
+#define RacineDeDeux  1.4142135623730950
+#define RacineDeTrois 1.7320508075688773
+#define Pi            3.1415926535897932
+#define Deux_Pi       6.2831853071795865
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)<(b))?(b):(a))
@@ -45,10 +45,9 @@
 #define THRESHOLD(a,b,c) (((a)>(c))?(c):((a)<(b)?(b):(a)))
 
 #define myhypot(a,b) (sqrt((a)*(a)+(b)*(b)))
-
-#define sign(x)   (((x)>=0)?1:-1)
-#define Pred(x)   ((x)->prev)
-#define Succ(x)   ((x)->next)
-#define square(x) ((x)*(x))
+#define sign(x)      (((x)>=0)?1:-1)
+#define Pred(x)      ((x)->prev)
+#define Succ(x)      ((x)->next)
+#define square(x)    ((x)*(x))
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: 2D_Mesh_Aniso.cpp,v 1.4 2000-11-23 15:05:59 geuzaine Exp $ */
+/* $Id: 2D_Mesh_Aniso.cpp,v 1.5 2000-11-23 16:07:12 geuzaine Exp $ */
 /*
    Jean-Francois Remacle
 
@@ -867,7 +867,7 @@ void suppress_simplex_2D (void *data, void *dum){
 Vertex * NewVertex_2D (Simplex * s){
   Vertex *v;
   double lc;
-  lc = 0.333333333 * (s->V[0]->lc + s->V[1]->lc + s->V[2]->lc);
+  lc = (s->V[0]->lc + s->V[1]->lc + s->V[2]->lc) / 3. ;
 
   //lc = DMIN(MAXIMUM_LC_FOR_SURFACE,lc);
 

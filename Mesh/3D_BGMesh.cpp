@@ -1,4 +1,4 @@
-/* $Id: 3D_BGMesh.cpp,v 1.3 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 3D_BGMesh.cpp,v 1.4 2000-11-23 16:07:12 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -226,7 +226,7 @@ double ErrorInView (Post_View * ErrView, int *n){
 
   for (i = 0; i < List_Nbr (ErrView->Triangles); i++){
     List_Read (ErrView->Triangles, i, &t);
-    e = (t.V[0] + t.V[1] + t.V[2]) * 0.33333333333;
+    e = (t.V[0] + t.V[1] + t.V[2]) / 3. ;
     tot += e * e;
     j++;
   }
@@ -286,7 +286,7 @@ int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
     h[j + 1] = sqrt ((xc - t.X[0]) * (xc - t.X[0]) +
 		     (yc - t.Y[0]) * (yc - t.Y[0]));
     p[j + 1] = Degree;
-    e[j + 1] = (t.V[0] + t.V[1] + t.V[2]) * 0.33333333333;
+    e[j + 1] = (t.V[0] + t.V[1] + t.V[2]) / 3. ;
     j++;
   }
 

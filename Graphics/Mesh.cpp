@@ -1,4 +1,4 @@
-/* $Id: Mesh.cpp,v 1.3 2000-11-23 14:11:32 geuzaine Exp $ */
+/* $Id: Mesh.cpp,v 1.4 2000-11-23 16:07:11 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -362,9 +362,9 @@ void Draw_Simplex_Surfaces (void *a, void *b){
   }
   else {
     K = 3;
-    Xc = .333333333333 * ((*s)->V[0]->Pos.X + (*s)->V[1]->Pos.X + (*s)->V[2]->Pos.X);
-    Yc = .333333333333 * ((*s)->V[0]->Pos.Y + (*s)->V[1]->Pos.Y + (*s)->V[2]->Pos.Y);
-    Zc = .333333333333 * ((*s)->V[0]->Pos.Z + (*s)->V[1]->Pos.Z + (*s)->V[2]->Pos.Z);
+    Xc = ((*s)->V[0]->Pos.X + (*s)->V[1]->Pos.X + (*s)->V[2]->Pos.X) / 3. ;
+    Yc = ((*s)->V[0]->Pos.Y + (*s)->V[1]->Pos.Y + (*s)->V[2]->Pos.Y) / 3. ;
+    Zc = ((*s)->V[0]->Pos.Z + (*s)->V[1]->Pos.Z + (*s)->V[2]->Pos.Z) / 3. ;
   }
 
   k=0;

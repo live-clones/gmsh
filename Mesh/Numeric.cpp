@@ -1,4 +1,4 @@
-/* $Id: Numeric.cpp,v 1.2 2000-11-23 14:11:35 geuzaine Exp $ */
+/* $Id: Numeric.cpp,v 1.3 2000-11-23 16:07:12 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -423,7 +423,7 @@ double angle_3pts (Vertex * a, Vertex * b, Vertex * c){
   prosca = ((a->Pos.X - b->Pos.X) * (c->Pos.X - b->Pos.X) +
 	    (a->Pos.Y - b->Pos.Y) * (c->Pos.Y - b->Pos.Y)) / L;
 
-  angle = acos (prosca) * 180. / (3.1415926);
+  angle = acos (prosca) * 180. / Pi ;
   return (angle);
 }
 
