@@ -189,6 +189,11 @@ Display size of normal vectors (in pixels)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Optimize
+Optimize the mesh using Netgen to improve the quality of tetrahedral elements@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Points
 Display mesh vertices (nodes)?@*
 Default value: @code{1}@*
@@ -211,11 +216,6 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PointType
 Display mesh vertices as solid color dots (0) or 3D spheres (1)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.Quality
-Target quality for tetrahedral elements (not fully functional)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
