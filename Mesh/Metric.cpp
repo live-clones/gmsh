@@ -1,4 +1,4 @@
-/* $Id: Metric.cpp,v 1.3 2000-11-26 15:43:47 geuzaine Exp $ */
+/* $Id: Metric.cpp,v 1.4 2000-11-28 11:28:32 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -314,6 +314,9 @@ double GMSHMetric::getLc (double u, Curve * c){
   Vertex du = InterpolateCurve (c, u, 1);
   Local_Metric_Of_Attractors (v.Pos.X, v.Pos.Y, v.Pos.Z, NULL);
   l = LengthVector (&du);
+
+  //printf("GetLC : u = %g l=%g  lc=%g  return=%g  ", u, l, v.lc, l/v.lc);
+
   return l / v.lc;
 }
 

@@ -1,4 +1,4 @@
-/* $Id: Numeric.cpp,v 1.6 2000-11-26 15:43:47 geuzaine Exp $ */
+/* $Id: Numeric.cpp,v 1.7 2000-11-28 11:28:32 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -469,22 +469,19 @@ void RecursiveIntegration (IntPoint * from, IntPoint * to, double (*f) (double X
 
 double Integration (double t1, double t2, double (*f) (double X),
                     List_T * pPoints, double Prec){
-  int depth, i;
+  int depth;
   IntPoint from, to;
 
   depth = 0;
+
   from.t = t1;
-  from.lc = f (from.t);
+  from.lc = f(from.t);
   from.p = 0.0;
+  List_Add (pPoints, &from);
 
   to.t = t2;
-  to.lc = f (to.t);
-
-  List_Add (pPoints, &from);
+  to.lc = f(to.t);
   RecursiveIntegration (&from, &to, f, pPoints, Prec, &depth);
-  for (i = 0; i < List_Nbr (pPoints); i++){
-    List_Read (pPoints, i, &to);
-  }
   
   List_Read (pPoints, List_Nbr (pPoints) - 1, &to);
   return (to.p);

@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.7 2000-11-25 15:26:11 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.8 2000-11-28 11:28:35 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -1171,7 +1171,7 @@ Transfini :
 	}
       }
     }
-  | tTransfinite tLine ListOfDouble tAFFECT FExpr tUsing tPower FExpr tEND
+  | tTransfinite tLine ListOfDouble tAFFECT FExpr tUsing tProgression FExpr tEND
     {
       Curve *c;
       for(i=0;i<List_Nbr($3);i++){
@@ -1183,8 +1183,8 @@ Transfini :
 	else{
 	  c->Method = TRANSFINI;
 	  c->ipar[0] = (int)$5;
-	  c->ipar[1] = sign(d); /* Power : code 1 ou -1 */
-	  c->dpar[0] = $8;
+	  c->ipar[1] = sign(d); /* Progresion : code 1 ou -1 */
+	  c->dpar[0] = fabs($8);
 	}
       }
     }
@@ -1201,24 +1201,7 @@ Transfini :
 	  c->Method = TRANSFINI;
 	  c->ipar[0] = (int)$5;
 	  c->ipar[1] = 2*sign(d); /* Bump : code 2 ou -2 */
-	  c->dpar[0] = $8;
-	}
-      }
-    }
-  | tTransfinite tLine ListOfDouble tAFFECT FExpr tUsing tProgression FExpr tEND
-    {
-      Curve *c;
-      for(i=0;i<List_Nbr($3);i++){
-	List_Read($3,i,&d);
-	j = (int)fabs(d);
-        c = FindCurve(j,THEM);
-	if(!c)
-	  vyyerror("Unkown Curve %d", j);
-	else{
-	  c->Method = TRANSFINI;
-	  c->ipar[0] = (int)$5;
-	  c->ipar[1] = 3*sign(d); /* Progresion : code 3 ou -3 */
-	  c->dpar[0] = $8;
+	  c->dpar[0] = fabs($8);
 	}
       }
     }
@@ -1290,8 +1273,10 @@ Transfini :
 	List_Read($3,i,&d);
 	j = (int)d;
 	s = FindSurface(j,THEM);
-	if(!s)
-	  vyyerror("Unkown Surface %d", j);
+	if(!s){
+	  /* Allow generic lists, even if the surfaces don't exist
+	     vyyerror("Unkown Surface %d", j); */
+	}
 	else{
 	  s->Recombine = 1;
 	  s->RecombineAngle = $5;
@@ -1305,8 +1290,10 @@ Transfini :
 	List_Read($3,i,&d);
 	j = (int)d;
         s = FindSurface(j,THEM);
-	if(!s)
-	  vyyerror("Unkown Surface %d", j);
+	if(!s){
+	  /* Allow generic lists, even if the surfaces don't exist
+	     vyyerror("Unkown Surface %d", j); */
+	}
 	else{
 	  s->Recombine = 1;
 	  s->RecombineAngle = 30.;

@@ -1,4 +1,4 @@
-/* $Id: 1D_Mesh.cpp,v 1.6 2000-11-26 15:43:46 geuzaine Exp $ */
+/* $Id: 1D_Mesh.cpp,v 1.7 2000-11-28 11:28:31 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -14,6 +14,11 @@ extern int        CurrentNodeNumber;
 
 Curve *THEC;
 
+// ipar[0] = nbpoints
+// abs(ipar[1]) = method
+// sign(ipar[1]) = orientation
+// dpar[0] = parameter
+
 double F_One (double t){
   Vertex der;
   double d;
@@ -21,6 +26,7 @@ double F_One (double t){
   d = sqrt (der.Pos.X * der.Pos.X + der.Pos.Y * der.Pos.Y + der.Pos.Z * der.Pos.Z);
   return (d);
 }
+
 
 double F_Transfini (double t){
   Vertex der;
@@ -36,17 +42,17 @@ double F_Transfini (double t){
   else{
     switch (abs (THEC->ipar[1])){
 
-    case 2:
+    case 1: // progression
       if (sign (THEC->ipar[1]) == -1)
-        ZePauwer = 1. / THEC->dpar[0];
+	ZePauwer = 1. / THEC->dpar[0];
       else
-        ZePauwer = THEC->dpar[0];
+	ZePauwer = THEC->dpar[0];
       b = log (1. / ZePauwer) / THEC->l;
       a = (1. - exp (-b * THEC->l)) / (b * (double) THEC->ipar[0]);
-      val =d / (a * exp (b * (t * THEC->l))) ;
+      val = d / (a * exp (b * (t * THEC->l))) ;
       break ;
 
-    case 1:
+    case 2: //bump
       if (THEC->dpar[0] > 1.0){
         a = -4. * sqrt (THEC->dpar[0] - 1.) * 
           atan2 (1., sqrt (THEC->dpar[0] - 1.)) / 
@@ -66,7 +72,6 @@ double F_Transfini (double t){
       Msg(WARNING, "Unknown Case in Transfinite Mesh Line");
       val = 1. ;
     }
-    
   }
 
   return val ;
@@ -96,16 +101,11 @@ void Maillage_Curve (void *data, void *dummy){
 
   Msg(STATUS, "Meshing Curve %d", c->Num);
 
-  if (c->Method != TRANSFINI && Extrude_Mesh (c)){
-    Points = List_Create (10, 10, sizeof (IntPoint));
-    c->l = Integration (c->ubeg, c->uend, F_One, Points, 1.e-5);
-    List_Delete (Points);
-  }
-  else{
-    Points = List_Create (10, 10, sizeof (IntPoint));
-    c->l = Integration (c->ubeg, c->uend, F_One, Points, 1.e-5);
-    List_Delete (Points);
-    
+  Points = List_Create (10, 10, sizeof (IntPoint));
+  c->l = Integration (c->ubeg, c->uend, F_One, Points, 1.e-5);
+  List_Delete (Points);
+
+  if (c->Method == TRANSFINI || !Extrude_Mesh (c)){
     if (c->Method == TRANSFINI){
       Points = List_Create (10, 10, sizeof (IntPoint));
       a = Integration (c->ubeg, c->uend, F_Transfini, Points, 1.e-7);
@@ -115,6 +115,7 @@ void Maillage_Curve (void *data, void *dummy){
       Points = List_Create (10, 10, sizeof (IntPoint));
       a = Integration (c->ubeg, c->uend, F_Lc, Points, 1.e-5);
       N = IMAX (2, (int) (a + 1.));
+
       if (c->Typ == MSH_SEGM_CIRC ||
           c->Typ == MSH_SEGM_CIRC_INV ||
           c->Typ == MSH_SEGM_ELLI ||
@@ -151,6 +152,7 @@ void Maillage_Curve (void *data, void *dummy){
       List_Read (Points, count - 1, &P1);
       List_Read (Points, count, &P2);
       d = (double) NUMP *b;
+
       if ((fabs (P2.p) >= fabs (d)) && (fabs (P1.p) < fabs (d))){
         dt = P2.t - P1.t;
         dp = P2.p - P1.p;
@@ -187,6 +189,7 @@ void Maillage_Curve (void *data, void *dummy){
       List_Add (c->Vertices, &pV);
     }
   }
+
   for (i = 0; i < List_Nbr (c->Vertices) - 1; i++){
     List_Read (c->Vertices, i, &v1);
     List_Read (c->Vertices, i + 1, &v2);

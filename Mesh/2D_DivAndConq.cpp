@@ -1,4 +1,4 @@
-/* $Id: 2D_DivAndConq.cpp,v 1.5 2000-11-26 15:43:46 geuzaine Exp $ */
+/* $Id: 2D_DivAndConq.cpp,v 1.6 2000-11-28 11:28:31 geuzaine Exp $ */
 /*
 
    A L G O R I T H M E    D I V I D E    A N D     C O N Q U E R   
@@ -352,7 +352,7 @@ int CircumCircle(double x1,double y1,double x2,double y2,double x3,double y3,
   *xc = (double) ((a1*(y3-y2) + a2*(y1-y3) + a3*(y2-y1)) / d);
   *yc = (double) ((a1*(x2-x3) + a2*(x3-x1) + a3*(x1-x2)) / d);
   
-  if(fabs(d) < 1.e-12 * LC2D)
+  if(fabs(d) < 1.e-12 * DSQR(LC2D))
     Msg(WARNING, "Points Almost Colinear in CircumCircle (d = %g)", d); 
 
   return(1);

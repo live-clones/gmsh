@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.4 2000-11-25 15:26:11 geuzaine Exp $ */
+%{ /* $Id: Gmsh.l,v 1.5 2000-11-28 11:28:35 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -139,7 +139,7 @@ Physical                return tPhysical;
 Pi                      return tPi;
 Plane                   return tPlane;
 Point                   return tPoint;
-Power                   return tPower;
+Power                   return tProgression;
 Progression             return tProgression;
 Parametric		return tParametric;
 
