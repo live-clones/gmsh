@@ -95,3 +95,4 @@ Surface Loop(373) = {90,371,359,78,82,363,367,86,325,329,317,
 Volume(374) = {373};
 
 Physical Volume(1) = 374 ;
+Physical Surface(2) = {1:1000};
