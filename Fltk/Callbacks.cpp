@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.108 2002-02-20 16:44:25 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.109 2002-02-20 16:45:33 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -196,12 +196,8 @@ void status_rewind_cb(CALLBACK_ARGS){
   }
   else{
     view_in_cycle = 0;
-    for(i=0 ; i<List_Nbr(CTX.post.list) ; i++){
-      if(!i)
-	opt_view_visible(i, GMSH_SET|GMSH_GUI, 1);
-      else
-	opt_view_visible(i, GMSH_SET|GMSH_GUI, 0);
-    }
+    for(i=0 ; i<List_Nbr(CTX.post.list) ; i++)
+      opt_view_visible(i, GMSH_SET|GMSH_GUI, !i);
   }
   Draw();
 }
