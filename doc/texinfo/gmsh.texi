@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.37 2003-04-21 05:42:25 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.38 2003-04-21 05:47:26 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -2175,9 +2175,9 @@ See @ref{t8.geo}, and @ref{t9.geo}, for some examples.
 @cindex Examples
 @cindex Tutorial
 
-These nine following examples are commented and should introduce new
-features gradually, starting with @file{t1.geo}. The files corresponding to
-these examples are available in the @file{tutorial} directory of the Gmsh
+The nine following examples are commented and should introduce new features
+gradually, starting with @file{t1.geo}. The files corresponding to these
+examples are available in the @file{tutorial} directory of the Gmsh
 distribution.
 
 This tutorial does not explain the mesh and post-processing file formats:
