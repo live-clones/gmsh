@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.72 2001-09-25 08:21:14 geuzaine Exp $
+$Date: 2001-09-25 13:06:57 $
 
 New in 1.27: Added ability to extrude curves with Layers/Recombine
 attributes; New PointSize/LineWidth options;
