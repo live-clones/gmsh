@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.87 2003-02-12 20:27:12 geuzaine Exp $
+// $Id: Views.cpp,v 1.88 2003-02-25 16:49:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -122,16 +122,16 @@ Post_View * BeginView(int allocate){
   }
   else{
     v->Time = NULL;
-    v->SP = NULL; v->VP = NULL; v->TP = NULL;
-    v->SL = NULL; v->VL = NULL; v->TL = NULL;
-    v->ST = NULL; v->VT = NULL; v->TT = NULL;
-    v->SQ = NULL; v->VQ = NULL; v->TQ = NULL;
-    v->SS = NULL; v->VS = NULL; v->TS = NULL;
-    v->SH = NULL; v->VH = NULL; v->TH = NULL;
-    v->SI = NULL; v->VI = NULL; v->TI = NULL;
-    v->SY = NULL; v->VY = NULL; v->TY = NULL;
-    v->T2D = NULL; v->T2C = NULL;
-    v->T3D = NULL; v->T3C = NULL;
+    v->SP = v->VP = v->TP = NULL;
+    v->SL = v->VL = v->TL = NULL;
+    v->ST = v->VT = v->TT = NULL;
+    v->SQ = v->VQ = v->TQ = NULL;
+    v->SS = v->VS = v->TS = NULL;
+    v->SH = v->VH = v->TH = NULL;
+    v->SI = v->VI = v->TI = NULL;
+    v->SY = v->VY = v->TY = NULL;
+    v->T2D = v->T2C = NULL;
+    v->T3D = v->T3C = NULL;
   }
 
   // Copy all options from the reference view initialized in InitOptions()
@@ -345,6 +345,7 @@ void DuplicateView(Post_View *v1, int withoptions){
 
   // When we duplicate a view, we just point to a reference view: we
   // DON'T allocate a new data set!
+  // *INDENT-OFF*
 
   v2->Time = v1->Time;
 
@@ -392,6 +393,8 @@ void DuplicateView(Post_View *v1, int withoptions){
   for(int i=0 ; i<6 ; i++)
     v2->BBox[i]   = v1->BBox[i];
 
+  // *INDENT-ON*
+  
   if(withoptions) CopyViewOptions(v1, v2);
 
 #if defined(HAVE_FLTK)
@@ -448,6 +451,7 @@ void FreeView(Post_View *v){
   if(free && !v->Links){
     Msg(DEBUG, "FREEING VIEW");
     List_Delete(v->Time);
+    // *INDENT-OFF*
     List_Delete(v->SP); List_Delete(v->VP); List_Delete(v->TP);
     List_Delete(v->SL); List_Delete(v->VL); List_Delete(v->TL);
     List_Delete(v->ST); List_Delete(v->VT); List_Delete(v->TT);
@@ -458,6 +462,7 @@ void FreeView(Post_View *v){
     List_Delete(v->SY); List_Delete(v->VY); List_Delete(v->TY);
     List_Delete(v->T2D); List_Delete(v->T2C);
     List_Delete(v->T3D); List_Delete(v->T3C);
+    // *INDENT-ON*
     //set to NULL in case we don't free v (e.g. when doing a 'reload')
     //+ the reload does not work (e.g. the file is gone). This way,
     //the next Free stuff will still work gracefully.
@@ -1246,6 +1251,7 @@ void MergeViews(int all){
     Post_View *v = (Post_View*)List_Pointer(CTX.post.list, i);
     if(all || v->Visible){
       Msg(DEBUG, "Merging view %d", i);
+      // *INDENT-OFF*
       merge(v->SP,vm->SP); vm->NbSP += v->NbSP;
       merge(v->VP,vm->VP); vm->NbVP += v->NbVP; 
       merge(v->TP,vm->TP); vm->NbTP += v->NbTP;
@@ -1270,6 +1276,7 @@ void MergeViews(int all){
       merge(v->SY,vm->SY); vm->NbSY += v->NbSY;
       merge(v->VY,vm->VY); vm->NbVY += v->NbVY;
       merge(v->TY,vm->TY); vm->NbTY += v->NbTY;
+      // *INDENT-ON*
       /* this more complicated: have to change the indices
 	 merge(v->T2D,vm->T2D);
 	 merge(v->T2C,vm->T2C); v->NbT2 += vm->NbT2;

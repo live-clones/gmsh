@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.35 2003-01-24 23:13:35 geuzaine Exp $
+// $Id: Message.cpp,v 1.36 2003-02-25 16:49:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -75,6 +75,7 @@ void Msg(int level, char *fmt, ...){
   int      abort = 0, verb = 0, window = -1, log = 1;
   char     *str = NULL;
 
+  // *INDENT-OFF*
   switch(level){
   case DIRECT   : verb = 2; break ;
 
@@ -114,6 +115,7 @@ void Msg(int level, char *fmt, ...){
 
   default : return;
   }
+  // *INDENT-ON*
 
   static char buff1[1024], buff2[1024], buff[4][1024];
 

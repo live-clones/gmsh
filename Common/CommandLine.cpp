@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.7 2003-02-12 20:27:12 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.8 2003-02-25 16:49:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -43,6 +43,8 @@ extern Context_T  CTX;
 
 char  *TheFileNameTab[MAX_OPEN_FILES];
 char  *TheBgmFileName=NULL, *TheOptString=NULL;
+
+// *INDENT-OFF*
 
 char gmsh_progname[]  = "This is Gmsh" ;
 char gmsh_copyright[] = "Copyright (C) 1997-2003 Jean-Francois Remacle and Christophe Geuzaine";
@@ -106,6 +108,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -help                 show this message");
 }
 
+// *INDENT-ON*
 
 void Get_Options (int argc, char *argv[], int *nbfiles) {
   int i=1;

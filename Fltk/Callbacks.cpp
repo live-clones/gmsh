@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.164 2003-02-25 04:02:50 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.165 2003-02-25 16:49:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1025,6 +1025,7 @@ void visibility_number_cb(CALLBACK_ARGS){
 #endif
 
 void help_short_cb(CALLBACK_ARGS){
+  // *INDENT-OFF*
   Msg(DIRECT, "");
   Msg(DIRECT, "Mouse:");
   Msg(DIRECT, "");
@@ -1098,6 +1099,7 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "  Up arrow      previous view"); 
   Msg(DIRECT, "  Down arrow    next view"); 
   Msg(DIRECT, "");
+  // *INDENT-ON*
   WID->create_message_window();
 }
 
