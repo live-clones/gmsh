@@ -1,4 +1,4 @@
-/* $Id: Options.h,v 1.6 2000-12-11 22:09:42 geuzaine Exp $ */
+/* $Id: Options.h,v 1.7 2000-12-20 10:40:49 geuzaine Exp $ */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
@@ -190,10 +190,11 @@ StringXNumber PostProcessingOptions_Number[] = {
 } ;
 
 StringXNumber PrintOptions_Number[] = {
-  { "Type"     , GMSH_INT,    (void*)&CTX.print.type      , PRINT_GL2PS_SIMPLE }, 
-  { "Format"   , GMSH_INT,    (void*)&CTX.print.format    , FORMAT_EPS }, 
-  { "FontSize" , GMSH_INT,    (void*)&CTX.print.font_size , 12. }, 
-  { NULL       , GMSH_DOUBLE, NULL , 0. }
+  { "Format"      , GMSH_INT,    (void*)&CTX.print.format       , FORMAT_AUTO }, 
+  { "EpsQuality"  , GMSH_INT,    (void*)&CTX.print.eps_quality  , 1 }, 
+  { "JpegQuality" , GMSH_INT,    (void*)&CTX.print.jpeg_quality , 100 }, 
+  { "FontSize"    , GMSH_INT,    (void*)&CTX.print.font_size    , 12. }, 
+  { NULL          , GMSH_DOUBLE, NULL , 0. }
 } ;
 
 // COLORS

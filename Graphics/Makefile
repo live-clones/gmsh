@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2000-12-18 08:31:45 geuzaine Exp $
+# $Id: Makefile,v 1.7 2000-12-20 10:40:52 geuzaine Exp $
 #
 # Makefile for "libGraphics.a"
 #
@@ -20,7 +20,7 @@ RM       = rm
 RMFLAGS  = -f
 
 LIB      = ../lib/libGraphics.a
-INCLUDE  = -I../Common -I../DataStr -I../Geo -I../Graphics -I../Unix -I../Mesh
+INCLUDE  = -I../Common -I../DataStr -I../Geo -I../Graphics -I../Unix -I../Mesh -I../jpeg
 
 CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
            $(GL_INCLUDE) $(MOTIF_INCLUDE)
@@ -35,7 +35,8 @@ SRC = Draw.cpp \
       Scale.cpp \
       Axes.cpp \
       gl2ps.cpp\
-      gl2gif.cpp
+      gl2gif.cpp\
+      gl2jpeg.cpp
 
 
 OBJ = $(SRC:.cpp=.o)

@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.46 2000-12-18 08:32:08 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.47 2000-12-20 10:40:56 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -1626,31 +1626,8 @@ Command :
       else if(!strcmp($1, "Print")){
 
 	if(!CTX.interactive){ // we're in interactive mode
-	  char ext[6];
-	  strcpy(ext,$2+(strlen($2)-4));
-	  Replot();
-	  extern void CreateImage (char *name, FILE *fp);
-	  FILE *fp = 0;
-	  if(!strcmp(ext,".gif")){
-	    fp = fopen($2,"wb");
-	    CTX.print.type = PRINT_GL2GIF;
-	  }
-	  else if(!strcmp(ext,".eps")){
-	    fp = fopen($2,"w");
-	    CTX.print.type =  PRINT_GL2PS_RECURSIVE;
-	  } 
-	  else if(!strcmp(ext,".xpm")){
-	    fp = fopen($2,"wb");
-	    CTX.print.type =  PRINT_XDUMP;
-	    CTX.print.format = FORMAT_XPM;
-	  } 
-	  if(fp){
-	    CreateImage($2,fp);
-	    fclose(fp);
-	  }
-	  else{
-	    vyyerror("Unable to Open File '%s'", $2);
-	  }
+	  void CreateImage (char *name, int format);
+	  CreateImage($2, CTX.print.format);
 	}
 	
       }
@@ -1664,6 +1641,12 @@ Command :
       else if(!strcmp($1, "Save")){
 
 	Print_Mesh(THEM, $2, CTX.mesh.format);
+
+      }
+      else if(!strcmp($1, "System")){
+	
+	Msg(PARSER_INFO, "Executing System Call \"%s\"");
+	system($2);
 
       }
       else

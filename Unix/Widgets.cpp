@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.18 2000-12-13 13:57:00 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.19 2000-12-20 10:40:58 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -655,7 +655,7 @@ void CreateWidgets_FD(Widgets_T *w){
 
   /* print */
   i=0 ;
-  XtSetArg(arg[i], XmNdialogTitle, XmStringCreateSimple("Print Image to File")); i++;
+  XtSetArg(arg[i], XmNdialogTitle, XmStringCreateSimple("Print to File")); i++;
   XtSetArg(arg[i], XmNnoMatchString, XmStringCreateSimple("[ NONE ]")); i++;
   XtSetArg(arg[i], XmNdirMask, XmStringCreateSimple("*")); i++;
   XtSetArg(arg[i], XmNautoUnmanage, False); i++; /* + pratique qd on sauve des animations */
@@ -683,25 +683,33 @@ void CreateWidgets_FD(Widgets_T *w){
   w->FD.printPane[0] = XmCreatePulldownMenu(w->FD.printRowCol, "FDprintPane0", arg, i);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("EPS (fast)")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("By Extension")); i++;
   w->FD.printButt[0] = XmCreatePushButton(w->FD.printPane[0], "MprintButt0", arg, i);
   XtManageChild(w->FD.printButt[0]);
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("EPS (accurate)")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("EPS Simple Sort")); i++;
   w->FD.printButt[1] = XmCreatePushButton(w->FD.printPane[0], "MprintButt1", arg, i);
   XtManageChild(w->FD.printButt[1]);
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("XPM")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("EPS Accurate Sort")); i++;
   w->FD.printButt[2] = XmCreatePushButton(w->FD.printPane[0], "MprintButt2", arg, i);
   XtManageChild(w->FD.printButt[2]);
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("GIF")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("XPM")); i++;
   w->FD.printButt[3] = XmCreatePushButton(w->FD.printPane[0], "MprintButt3", arg, i);
   XtManageChild(w->FD.printButt[3]);
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("GEO")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("JPEG")); i++;
   w->FD.printButt[4] = XmCreatePushButton(w->FD.printPane[0], "MprintButt4", arg, i);
   XtManageChild(w->FD.printButt[4]);
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("GIF")); i++;
+  w->FD.printButt[5] = XmCreatePushButton(w->FD.printPane[0], "MprintButt5", arg, i);
+  XtManageChild(w->FD.printButt[5]);
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("GEO")); i++;
+  w->FD.printButt[6] = XmCreatePushButton(w->FD.printPane[0], "MprintButt6", arg, i);
+  XtManageChild(w->FD.printButt[6]);
 
   i=0;
   XtSetArg(arg[i], XmNsubMenuId, w->FD.printPane[0]); i++;

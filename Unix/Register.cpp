@@ -1,4 +1,4 @@
-/* $Id: Register.cpp,v 1.13 2000-12-13 13:57:00 geuzaine Exp $ */
+/* $Id: Register.cpp,v 1.14 2000-12-20 10:40:58 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -147,11 +147,13 @@ void RegisterCallbacks_FD(Widgets_T *w){
 
   register_ok_cb       (w->FD.printDialog,     FileCb,    FILE_PRINT);
   register_cancel_cb   (w->FD.printDialog,     ManageCb,  w->FD.printDialog);
-  register_activate_cb (w->FD.printButt[0],    OptionsCb, OPTIONS_PRINT_GL2PS_SIMPLE);
-  register_activate_cb (w->FD.printButt[1],    OptionsCb, OPTIONS_PRINT_GL2PS_COMPLEX);
-  register_activate_cb (w->FD.printButt[2],    OptionsCb, OPTIONS_PRINT_XDUMP);
-  register_activate_cb (w->FD.printButt[3],    OptionsCb, OPTIONS_PRINT_GL2GIF);
-  register_activate_cb (w->FD.printButt[4],    OptionsCb, OPTIONS_PRINT_GEO);
+  register_activate_cb (w->FD.printButt[0],    OptionsCb, OPTIONS_PRINT_AUTO);
+  register_activate_cb (w->FD.printButt[1],    OptionsCb, OPTIONS_PRINT_GL2PS_SIMPLE);
+  register_activate_cb (w->FD.printButt[2],    OptionsCb, OPTIONS_PRINT_GL2PS_COMPLEX);
+  register_activate_cb (w->FD.printButt[3],    OptionsCb, OPTIONS_PRINT_XDUMP);
+  register_activate_cb (w->FD.printButt[4],    OptionsCb, OPTIONS_PRINT_GL2JPEG);
+  register_activate_cb (w->FD.printButt[5],    OptionsCb, OPTIONS_PRINT_GL2GIF);
+  register_activate_cb (w->FD.printButt[6],    OptionsCb, OPTIONS_PRINT_GEO);
 }
 
 void RegisterCallbacks_OD(Widgets_T *w){

@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.20 2000-12-11 22:09:42 geuzaine Exp $ */
+/* $Id: Context.h,v 1.21 2000-12-20 10:40:49 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -140,9 +140,10 @@ class Context_T {
 
   /* print options */
   struct{
-    int format, type;
+    int format;
+    int eps_quality, jpeg_quality;
     char *font;
-    int  font_size;
+    int  font_size, gl_fonts;
   } print;
 
   // trackball functions 
