@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.226 2002-06-12 01:58:41 geuzaine Exp $
+# $Id: Makefile,v 1.227 2002-09-09 17:24:02 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -597,6 +597,8 @@ tgz:
 
 minizip:
 	tar jcvf gmsh-`date "+%Y.%m.%d"`.tar.bz2 `ls Makefile */Makefile */*.[chyl] */*.cpp`
+
+# Add doc/COPYING as soon as we are GPL'ed
 
 distrib:
 	mkdir gmsh-$(GMSH_RELEASE)
