@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.37 2003-04-16 16:00:59 geuzaine Exp $
+dnl $Id: configure.in,v 1.38 2003-04-16 16:06:19 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 dnl
@@ -313,6 +313,12 @@ case "$UNAME" in
     FLAGS="-mips3 -n32 -LANG:std -OPT:Olimit=0 ${FLAGS}"
     AR="CC -mips3 -n32 -ar -o"
     LINKER="CC -O2 -mips3 -n32"
+    ;;
+
+  OSF1*)
+    if test "x${CXX}" = "xcxx" ; then
+      FLAGS="-D__USE_STD_IOSTREAM ${FLAGS}"
+    fi
     ;;
 
   SunOS*)

@@ -3405,6 +3405,12 @@ case "$UNAME" in
     LINKER="CC -O2 -mips3 -n32"
     ;;
 
+  OSF1*)
+    if test "x${CXX}" = "xcxx" ; then
+      FLAGS="-D__USE_STD_IOSTREAM ${FLAGS}"
+    fi
+    ;;
+
   SunOS*)
     FLAGS="-D_NO_DLL ${FLAGS}"
     GMSH_LIBS="${GMSH_LIBS} -lsocket -lnsl -ldl"
