@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.125 2001-08-08 14:30:33 remacle Exp $
+# $Id: Makefile,v 1.126 2001-08-13 07:53:30 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -416,10 +416,13 @@ motif_link_hp:
 # Ready to compile for some platforms with FLTK
 # ----------------------------------------------------------------------
 
+# Warning: -O3 is known to produce incorrect code with gcc-2.95.2 on
+# linux. Let's stick to -O2 for all public releases...
+
 fltk_compile_little_endian:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
-           "C_FLAGS=-O3" \
+           "C_FLAGS=-O2" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=$(OPENGL_INC)" \
@@ -429,7 +432,7 @@ fltk_compile_little_endian:
 fltk_compile_little_endian_2952:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(HOME)/gcc-2.95.2/bin/g++" \
-           "C_FLAGS=-O3" \
+           "C_FLAGS=-O2" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=$(OPENGL_INC)" \
