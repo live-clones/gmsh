@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.24 2001-08-13 20:05:42 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.25 2001-08-14 08:03:34 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -9,6 +9,9 @@
 #include "Context.h"
 
 extern Context_T CTX;
+
+//test for hanging nodes
+//#define MOES
 
 /* ------------------------------------------------------------------------ */
 /*  M S H    F O R M A T                                                    */
@@ -111,7 +114,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	Duplicates = Tree_Create (sizeof (Vertex *), comparePosition);
 
 #ifdef MOES
-      Tree_T Duplicates2 = Tree_Create (sizeof (Vertex *), comparePosition);
+      Tree_T *Duplicates2 = Tree_Create (sizeof (Vertex *), compareVertex);
 #endif
 
       for (i_Element = 0 ; i_Element < Nbr_Elements ; i_Element++) {
