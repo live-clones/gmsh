@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.15 2003-03-01 22:36:36 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.16 2003-03-18 07:37:20 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -18,10 +18,15 @@
 // USA.
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
+//
+// Contributor(s):
+//   David Colignon
+//
 
-// These routines are loosely based on code from the Vis5d program for
-// visualizing five dimensional gridded data sets Copyright (C) 1990 -
-// 1995 Bill Hibbard, Brian Paul, Dave Santek, and Andre Battaiola.
+// These routines are loosely based on the colortable routines from
+// the Vis5d program for visualizing five dimensional gridded data
+// sets Copyright (C) 1990 - 1995 Bill Hibbard, Brian Paul, Dave
+// Santek, and Andre Battaiola.
 
 #include "Gmsh.h"
 #include "ColorTable.h"

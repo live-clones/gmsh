@@ -1,4 +1,4 @@
-// $Id: gsl_newt.cpp,v 1.8 2003-03-01 22:36:42 geuzaine Exp $
+// $Id: gsl_newt.cpp,v 1.9 2003-03-18 07:37:20 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -18,10 +18,12 @@
 // USA.
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
+//
+// Contributor(s):
+//   Nicolas Tardieu
+//
 
 // This implements a Newton method using the GSL.
-//
-// Original author: Nicolas Tardieu <nicolas.tardieu@der.edf.fr>
 
 #if defined(HAVE_GSL)
 

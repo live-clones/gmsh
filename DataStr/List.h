@@ -19,6 +19,10 @@
 // USA.
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
+//
+// Contributor(s):
+//   Marc Ume
+//
 
 #include <stdio.h>
 

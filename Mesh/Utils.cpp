@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.18 2003-03-18 00:15:43 geuzaine Exp $
+// $Id: Utils.cpp,v 1.19 2003-03-18 07:37:20 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -18,6 +18,10 @@
 // USA.
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
+//
+// Contributor(s):
+//   Pierre Badel
+//
 
 #include "Gmsh.h"
 #include "Numeric.h"

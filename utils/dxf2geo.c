@@ -1,4 +1,4 @@
-// $Id: dxf2geo.c,v 1.5 2003-03-01 23:03:23 geuzaine Exp $
+// $Id: dxf2geo.c,v 1.6 2003-03-18 07:37:20 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -18,6 +18,10 @@
 // USA.
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
+//
+// Contributor(s):
+//   David Colignon
+//
 
 // This is a simple AutoCAD DXF to Gmsh GEO Data File Converter
 //   

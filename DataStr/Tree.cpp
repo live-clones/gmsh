@@ -1,4 +1,4 @@
-// $Id: Tree.cpp,v 1.15 2003-03-16 21:26:29 geuzaine Exp $
+// $Id: Tree.cpp,v 1.16 2003-03-18 07:37:20 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -18,6 +18,10 @@
 // USA.
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
+//
+// Contributor(s):
+//   Marc Ume
+//
 
 #include <stdlib.h>
 #include <string.h>

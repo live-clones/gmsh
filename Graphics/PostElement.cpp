@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.11 2003-03-01 22:36:40 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.12 2003-03-18 07:37:20 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -18,6 +18,10 @@
 // USA.
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
+//
+// Contributor(s):
+//   Laurent Stainier
+//
 
 
 // OK, I understand why the Cut2D stuff does not work correctly with a

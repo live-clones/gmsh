@@ -1,4 +1,4 @@
-// $Id: 3D_SMesh.cpp,v 1.18 2003-03-16 21:23:18 geuzaine Exp $
+// $Id: 3D_SMesh.cpp,v 1.19 2003-03-18 07:37:20 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -18,6 +18,10 @@
 // USA.
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
+//
+// Contributor(s):
+//   Patrick Dular
+//
 
 /*  
   Maillage transfini volumique
