@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.189 2004-12-27 00:47:03 geuzaine Exp $
+// $Id: Gmsh.y,v 1.190 2004-12-27 01:13:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2387,8 +2387,8 @@ Delete :
     | tDelete tSTRING tSTRING tEND
     {
       if(!strcmp($2, "Empty") && !strcmp($3, "Views")){
-	for(int i = 0; i < List_Nbr(CTX.post.list); i++){
-	  Post_View *v = *(Post_View **)List_Pointer_Test(CTX.post.list, i);
+	for(int i = List_Nbr(CTX.post.list) - 1; i >= 0; i--){
+	  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, i);
 	  if(v->empty())
 	    RemoveViewByIndex(i);
 	}

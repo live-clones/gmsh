@@ -195,7 +195,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.217 2004-12-27 00:59:15 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.218 2004-12-27 01:13:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -7017,8 +7017,8 @@ case 284:
 #line 2388 "Gmsh.y"
 {
       if(!strcmp(yyvsp[-2].c, "Empty") && !strcmp(yyvsp[-1].c, "Views")){
-	for(int i = 0; i < List_Nbr(CTX.post.list); i++){
-	  Post_View *v = *(Post_View **)List_Pointer_Test(CTX.post.list, i);
+	for(int i = List_Nbr(CTX.post.list) - 1; i >= 0; i--){
+	  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, i);
 	  if(v->empty())
 	    RemoveViewByIndex(i);
 	}
