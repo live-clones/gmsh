@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.31 2001-02-02 15:05:03 geuzaine Exp $
+// $Id: GUI.cpp,v 1.32 2001-02-03 13:10:26 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -241,8 +241,36 @@ int GUI::global_shortcuts(int event){
   // we only handle shortcuts here
   if(event != FL_SHORTCUT) return 0 ;
 
-  // test...
-  if(Fl::test_shortcut('e')){
+
+  if(Fl::test_shortcut('0') || Fl::test_shortcut(FL_Escape)){
+    geometry_reload_cb(0,0);
+    return 1;
+  }
+  else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F+1)){
+    mesh_1d_cb(0,0);
+    return 1;
+  }
+  else if(Fl::test_shortcut('2') || Fl::test_shortcut(FL_F+2)){
+    mesh_2d_cb(0,0);
+    return 1;
+  }
+  else if(Fl::test_shortcut('3') || Fl::test_shortcut(FL_F+3)){
+    mesh_3d_cb(0,0);
+    return 1;
+  }
+  else if(Fl::test_shortcut('g')){
+    mod_geometry_cb(0,0);
+    return 1;
+  }
+  else if(Fl::test_shortcut('m')){
+    mod_mesh_cb(0,0);
+    return 1;
+  }
+  else if(Fl::test_shortcut('p')){
+    mod_post_cb(0,0);
+    return 1;
+  }
+  else if(Fl::test_shortcut('e')){
     end_selection = 1;
     return 1;
   }
@@ -250,25 +278,180 @@ int GUI::global_shortcuts(int event){
     quit_selection = 1;
     return 1;
   }
-  else if(Fl::test_shortcut('1')){
-    mesh_1d_cb(0,0);
+  else if(Fl::test_shortcut('s')){
+    CTX.post.anim_delay += 100000 ;
+    post_value[0]->value(1.e-6*CTX.post.anim_delay);
+    post_value[0]->redraw();
     return 1;
   }
-  else if(Fl::test_shortcut('2')){
-    mesh_2d_cb(0,0);
-    return 1;
-  }
-  else if(Fl::test_shortcut('3')){
-    mesh_3d_cb(0,0);
+  else if(Fl::test_shortcut(FL_SHIFT+'s')){
+    CTX.post.anim_delay -= 100000 ;
+    if(CTX.post.anim_delay < 0) CTX.post.anim_delay = 0 ;
+    post_value[0]->value(1.e-6*CTX.post.anim_delay);
+    post_value[0]->redraw();
     return 1;
   }
   else if(Fl::test_shortcut(FL_CTRL+'z')){
     g_window->iconize();
     return 1;
   }
-  else if(Fl::test_shortcut(FL_Escape)){
+  else if(Fl::test_shortcut(FL_ALT+'f')){
+    CTX.fast = !CTX.fast; 
+    gen_butt[2]->value(CTX.fast);
+    gen_butt[2]->redraw();
+    redraw_opengl();
     return 1;
   }
+  else if(Fl::test_shortcut(FL_ALT+'b')){
+    CTX.post.scales = !CTX.post.scales; 
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+'o')){
+    CTX.ortho = !CTX.ortho ;
+    gen_butt[6]->value(CTX.ortho);
+    gen_butt[6]->redraw();
+    gen_butt[7]->value(!CTX.ortho);
+    gen_butt[7]->redraw();
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+'c')){
+    if(CTX.color.id==0) Init_Colors(1);
+    else if(CTX.color.id==1) Init_Colors(2);
+    else Init_Colors(0);
+    gen_value[0]->value(CTX.color.id);
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+'d')){
+    if(!CTX.mesh.hidden && !CTX.mesh.shade)
+      CTX.mesh.hidden = 1;
+    else if(CTX.mesh.hidden && !CTX.mesh.shade)  
+      CTX.mesh.shade = 1;
+    else{
+      CTX.mesh.hidden = 0; CTX.mesh.shade = 0; 
+    }
+    mesh_butt[11]->value(!CTX.mesh.hidden);
+    mesh_butt[11]->redraw();
+    mesh_butt[12]->value(CTX.mesh.hidden);
+    mesh_butt[12]->redraw();
+    mesh_butt[13]->value(CTX.mesh.shade);
+    mesh_butt[13]->redraw();
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+'x')){
+    status_xyz1p_cb(0,(void*)0);
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+'y')){
+    status_xyz1p_cb(0,(void*)1);
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+'z')){
+    status_xyz1p_cb(0,(void*)2);
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+FL_SHIFT+'a')){
+    CTX.axes = !CTX.axes;
+    gen_butt[0]->value(CTX.axes);
+    gen_butt[0]->redraw();
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+'a')){
+    CTX.small_axes = !CTX.small_axes;
+    gen_butt[1]->value(CTX.small_axes);
+    gen_butt[1]->redraw();
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+'p')){
+    CTX.geom.points = !CTX.geom.points;
+    geo_butt[0]->value(CTX.geom.points);
+    geo_butt[0]->redraw();
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+'l')){
+    CTX.geom.lines = !CTX.geom.lines;
+    geo_butt[1]->value(CTX.geom.lines);
+    geo_butt[1]->redraw();
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+'s')){
+    CTX.geom.surfaces = !CTX.geom.surfaces;
+    geo_butt[2]->value(CTX.geom.surfaces);
+    geo_butt[2]->redraw();
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+'v')){
+    CTX.geom.volumes = !CTX.geom.volumes;
+    geo_butt[3]->value(CTX.geom.volumes);
+    geo_butt[3]->redraw();
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+FL_SHIFT+'p')){
+    CTX.mesh.points = !CTX.mesh.points;
+    mesh_butt[3]->value(CTX.mesh.points);
+    mesh_butt[3]->redraw();
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+FL_SHIFT+'l')){
+    CTX.mesh.lines = !CTX.mesh.lines;
+    mesh_butt[4]->value(CTX.mesh.lines);
+    mesh_butt[4]->redraw();
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+FL_SHIFT+'s')){
+    CTX.mesh.surfaces = !CTX.mesh.surfaces;
+    mesh_butt[5]->value(CTX.mesh.surfaces);
+    mesh_butt[5]->redraw();
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+FL_SHIFT+'v')){
+    CTX.mesh.volumes = !CTX.mesh.volumes;
+    mesh_butt[6]->value(CTX.mesh.volumes);
+    mesh_butt[6]->redraw();
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+'m')){
+    CTX.mesh.points   = !CTX.mesh.points;
+    CTX.mesh.lines    = !CTX.mesh.lines;
+    CTX.mesh.surfaces = !CTX.mesh.surfaces;
+    CTX.mesh.volumes  = !CTX.mesh.volumes;
+    mesh_butt[3]->value(CTX.mesh.points);
+    mesh_butt[3]->redraw();
+    mesh_butt[4]->value(CTX.mesh.lines);
+    mesh_butt[4]->redraw();
+    mesh_butt[5]->value(CTX.mesh.surfaces);
+    mesh_butt[5]->redraw();
+    mesh_butt[6]->value(CTX.mesh.volumes);
+    mesh_butt[6]->redraw();
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+'t')){
+    MarkAllViewsChanged(1);
+    Post_View *v = (Post_View*)List_Pointer(Post_ViewList, view_number);
+    view_butt[6]->value(v->IntervalsType==DRAW_POST_ISO);
+    view_butt[6]->redraw();
+    view_butt[7]->value(v->IntervalsType==DRAW_POST_DISCRETE);
+    view_butt[7]->redraw();
+    view_butt[8]->value(v->IntervalsType==DRAW_POST_CONTINUOUS);
+    view_butt[8]->redraw();
+    redraw_opengl();
+    return 1;
+  }
+
 
   return 0;
 }
@@ -750,10 +933,10 @@ void GUI::create_general_options_window(){
 	o->labelsize(CTX.fontsize);
         o->hide();
         gen_value[0] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Predefined color scheme");
-	gen_value[0]->minimum(1); 
-	gen_value[0]->maximum(3); 
+	gen_value[0]->minimum(0); 
+	gen_value[0]->maximum(2); 
 	gen_value[0]->step(1);
-	gen_value[0]->value(0);
+	gen_value[0]->value(CTX.color.id);
 	gen_value[0]->callback(opt_general_color_cb);
 	gen_value[1] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Material shininess");
 	gen_value[1]->minimum(0); 
@@ -1143,7 +1326,7 @@ void GUI::create_post_options_window(){
 	post_value[0]->maximum(10); 
 	post_value[0]->step(0.01);
 	post_value[0]->callback(opt_post_anim_delay_cb);
-	post_value[0]->value(CTX.post.anim_delay);
+	post_value[0]->value(1.e-6*CTX.post.anim_delay);
 	post_value[0]->labelsize(CTX.fontsize);
 	post_value[0]->type(FL_HORIZONTAL);
 	post_value[0]->align(FL_ALIGN_RIGHT);
@@ -1516,7 +1699,7 @@ void GUI::create_view_window(int num){
       { 
 	view_colors = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Colors");
 	view_colors->labelsize(CTX.fontsize);
-        //view_colorbar->hide();
+        view_colors->hide();
 	view_colorbar_window = new Colorbar_Window(2*WB, 2*WB+1*BH,
 						   width-4*WB, height-5*WB-2*BH);
 	view_colorbar_window->end();
@@ -1575,7 +1758,7 @@ void GUI::create_view_window(int num){
       {
 	view_intervals = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Intervals");
 	view_intervals->labelsize(CTX.fontsize);
-	view_intervals->hide();
+	//view_intervals->hide();
 	view_value[2] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Number of intervals");
 	view_value[2]->labelsize(CTX.fontsize);
 	view_value[2]->type(FL_HORIZONTAL);
@@ -1703,6 +1886,8 @@ void GUI::create_view_window(int num){
 void GUI::update_view_window(int num){
   int i;
   double val;
+
+  view_number = num ;
   Post_View *v = (Post_View*)List_Pointer(Post_ViewList, num);
 
   static char buffer[1024];

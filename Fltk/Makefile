@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2001-01-13 17:08:41 geuzaine Exp $
+# $Id: Makefile,v 1.6 2001-02-03 13:10:26 geuzaine Exp $
 #
 # Makefile for "libFltk.a"
 #
@@ -81,7 +81,7 @@ GUI.o: GUI.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
   ../Mesh/Metric.h ../Graphics/Draw.h ../Common/Views.h \
   ../Common/ColorTable.h GUI.h Opengl_Window.h Colorbar_Window.h \
-  Callbacks.h ../Common/Bitmaps.h ../Common/GetOptions.h ../Common/Help.h
+  Callbacks.h ../Common/Bitmaps.h ../Common/GetOptions.h Help.h
 Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
@@ -107,4 +107,8 @@ Opengl_Window.o: Opengl_Window.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
   ../Common/Views.h ../Common/ColorTable.h GUI.h Opengl_Window.h \
   Colorbar_Window.h
-Colorbar_Window.o: Colorbar_Window.cpp
+Colorbar_Window.o: Colorbar_Window.cpp ../Common/Gmsh.h \
+  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../Common/GmshUI.h GUI.h Opengl_Window.h Colorbar_Window.h \
+  ../Common/ColorTable.h ../Common/Context.h ../Common/Const.h

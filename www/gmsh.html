@@ -47,7 +47,7 @@ cat << EOM
 page requests since<br>1998/05/24<p>
 ENDSCRIPT--->
 
-<!---BEGINDATE$Date: 2001-01-04 09:24:05 $ENDDATE--->
+<!---BEGINDATE$Date: 2001-02-03 13:10:26 $ENDDATE--->
 
 Copyright &copy; 1998-2001<br>
 J.-F. Remacle<br>
@@ -61,10 +61,8 @@ C. Geuzaine<br>
   <td><font face="Helvetica, Arial">
     <font size="+3"><b>Gmsh</b></font>
     <p>
-    <b>a three-dimensional finite element mesh generator with pre- and
+    <b>A three-dimensional finite element mesh generator with pre- and
        post-processing facilities</b>
-    <p>
-    <b>Version 1.00</b>
      
   </font></td>
 
@@ -257,7 +255,7 @@ description.
 
 <b>Stable Release: Version 1.00 (January 1, 2001)</b>
 <p>
-The stable release of GMSH is available for most classical UNIX
+The stable release of Gmsh is available for most classical UNIX
 platforms. All executables (no source distribution is available
 for the moment) are dynamically linked with OpenGL and Motif. You
 should have these libraries installed on your system, and in the
@@ -277,24 +275,26 @@ in order for Gmsh to find these libraries.
 <ul>
 <li>Red Hat package with man page and examples
   <ul>
-    <li><A href="/gmsh/latest/gmsh-1.00-1.i386.rpm">Linux RPM for Red Hat
+    <li><A href="/gmsh/1.00/gmsh-1.00-1.i386.rpm">Linux RPM for Red Hat
            6.2 and compatible (i386, glibc 2.1)</A> 
   </ul>
 <li>Tarballs
   <ul>
-    <li><A href="/gmsh/latest/gmsh-Linux.tgz" >Gmsh for Linux (i386, glibc 2.1)</A>
-    <li><A href="/gmsh/latest/gmsh-OSF1.tgz"  >Gmsh for Digital OSF 4.0/Compaq Tru64</A>
-    <li><A href="/gmsh/latest/gmsh-SunOS.tgz" >Gmsh for Sun OS 5.5.1</A>
-    <li><A href="/gmsh/latest/gmsh-AIX.tgz"   >Gmsh for IBM AIX</A>
-    <li><A href="/gmsh/latest/gmsh-HP-UX.tgz" >Gmsh for HP-UX 10.20</A>
-    <li><A href="/gmsh/latest/gmsh-IRIX.tgz"  >Gmsh for SGI IRIX 6.5</A>
+    <li><A href="/gmsh/1.00/gmsh-Linux.tgz" >Gmsh for Linux (i386, glibc 2.1)</A>
+    <li><A href="/gmsh/1.00/gmsh-OSF1.tgz"  >Gmsh for Digital OSF 4.0/Compaq Tru64</A>
+    <li><A href="/gmsh/1.00/gmsh-SunOS.tgz" >Gmsh for Sun OS 5.5.1</A>
+    <li><A href="/gmsh/1.00/gmsh-AIX.tgz"   >Gmsh for IBM AIX</A>
+    <li><A href="/gmsh/1.00/gmsh-HP-UX.tgz" >Gmsh for HP-UX 10.20</A>
+    <li><A href="/gmsh/1.00/gmsh-IRIX.tgz"  >Gmsh for SGI IRIX 6.5</A>
   </ul>
 <li>Tutorial and demos
   <ul>
-    <li><A href="/gmsh/latest/gmsh-tutorial.tgz">Gmsh tutorial</A>
-    <li><A href="/gmsh/latest/gmsh-demos.tgz">Gmsh demo files</A>
+    <li><A href="/gmsh/1.00/gmsh-tutorial.tgz">Gmsh tutorial</A>
+    <li><A href="/gmsh/1.00/gmsh-demos.tgz">Gmsh demo files</A>
   </ul>
 </ul>
+
+
 
     </td>
 
@@ -303,17 +303,38 @@ in order for Gmsh to find these libraries.
 
     <td width="45%"> <font face="Helvetica, Arial" size=-1>
 
-<b>Development Release: --</b>
+
+
+<b>Development Release: 1.10 (February 5, 2001)</b>
 <p>
-Short term: exact arithmetic in critical sections of the code to
-improve stability; replacement of Motif by <a
-href="http://www.fltk.org">FLTK</a> to unify Unix/Windows development;
-<p>
-Middle term: further uncoupling of geometry and mesh code;
-<p>
-Long term: encapsulation of proprietary algorithms into dynamically
-loadable modules and release of source code for all other parts;
-standardize API with these modules; STEP parser?
+The development release of Gmsh is available for Linux and
+Windows. All executables (no source distribution is available for the
+moment) are dynamically linked with OpenGL. You should thus have the
+OpenGL libraries installed on your system, and in the path of the
+library loader. A free replacement for OpenGL can be found at <A
+target="_top"
+href="http://mesa3d.sourceforge.net">http://mesa3d.sourceforge.net</A>.
+<ul>
+<li>Red Hat package with man page and examples
+  <ul>
+    <li><A href="/gmsh/latst/gmsh-1.10-1.i386.rpm">Linux RPM for Red Hat
+           6.2 and compatible (i386, glibc 2.1)</A> 
+  </ul>
+<li>Tarballs
+  <ul>
+    <li><A href="/gmsh/latest/gmsh-Linux.tgz">Gmsh for Linux (i386, glibc 2.1)</A>
+    <li><A href="/gmsh/latest/gmsh-Windows.zip">Gmsh for Windows 95/98/NT</A>
+  </ul>
+<li>Tutorial and demos
+  <ul>
+    <li><A href="/gmsh/latest/gmsh-tutorial.tgz">Gmsh tutorial</A>
+    <li><A href="/gmsh/latest/gmsh-demos.tgz">Gmsh demo files</A>
+  </ul>
+</ul>
+
+
+
+
 
     </td>
 
@@ -338,6 +359,9 @@ standardize API with these modules; STEP parser?
 
   <td><font face="Helvetica, Arial" size=-1> 
 
+New in 1.10: Switched from Motif to FLTK for the GUI. Many small
+tweaks.
+<p>
 New in 1.00: Added PPM and YUV output; Corrected nested If/Endif;
 Corrected several bugs for pixel output and enhanced GIF output
 (dithering, transparency); Slightly changed the post-processing file

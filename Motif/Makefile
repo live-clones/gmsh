@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2001-01-13 17:08:41 geuzaine Exp $
+# $Id: Makefile,v 1.5 2001-02-03 13:10:26 geuzaine Exp $
 #
 # Makefile for "libMotif.a"
 #
@@ -85,7 +85,7 @@ Widgets.o: Widgets.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Mesh/Mesh.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Common/Context.h \
-  ../Common/Const.h XContext.h Info.h Widgets.h ../Common/Help.h
+  ../Common/Const.h XContext.h Info.h Widgets.h Help.h
 Geometry.o: Geometry.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \

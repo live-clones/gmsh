@@ -1,4 +1,4 @@
-$Id: README,v 1.2 2000-12-10 14:16:34 geuzaine Exp $
+$Id: README,v 1.3 2001-02-03 13:10:26 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -21,8 +21,8 @@ graphic window (with a status bar at the bottom) and the menu window
 (with a menu bar and some context dependent buttons). To open the
 first tutorial file, you have to select the 'File->Open' menu, and
 choose 't1.geo' in the input field. To perform the mesh generation,
-you have to go to the mesh module (by selecting 'Module->Mesh' in the
-menu bar) and choose the required dimension in the context-dependent
+you have to go to the mesh module (by selecting 'Mesh' in the module
+menu) and choose the required dimension in the context-dependent
 buttons ('1D' will mesh all the curves; '2D' will mesh all the
 surfaces ---as well as all the curves if '1D' was not called before;
 '3D' will mesh all the volumes ---and all the surfaces if '2D' was not
@@ -33,7 +33,7 @@ any input file given), with an appended extension depending on the
 mesh format.
 
 Note: nearly all the interactive commands have shortcuts. Select
-'?->Short_Help' in the menu bar to learn about these shortcuts.
+'Help->Short_Help' in the menu bar to learn about these shortcuts.
 
 Instead of opening the tutorial with the 'File->Open' menu, it is
 often more convenient to put the file name on the command line, here
@@ -47,11 +47,11 @@ Note: to define new geometries, if it is often handy to define the
 variables and the points directly in the input files, it is almost
 always simpler to define the curves, the surfaces and the volumes
 interactively. To do so, just follow the context dependent buttons in
-the Geometry module. For example, to create a line, select
-'Module->Geometry' in the menu bar, and then select 'Elementary, Add,
-Create, Line'. You will then be asked (in the status bar of the
-graphic window) to select a list of points, and to click 'e' when
-you're done. Once the interactive command is completed, a string is
+the Geometry module. For example, to create a line, select 'Geometry'
+in the module menu, and then select 'Elementary, Add, Create,
+Line'. You will then be asked (in the status bar of the graphic
+window) to select a list of points, and to click 'e' when you're
+done. Once the interactive command is completed, a string is
 automatically added at the end of the currently opened project file.
 
 
@@ -73,38 +73,18 @@ the following line on the command line:
 
 > gmsh t1.geo view1.pos view2.pos
 
-In the Post-Processing module (select 'Module->Post_Processing'), two
-view buttons will appear, respectively labeled "a scalar map" and "a
-vector map". A left mouse click will toggle the visibility of the
-selected view. A right mouse click provides access to the view's
-options:
-- Reload: reloads the file from which the view was loaded 
-- Remove: removes the view 
-- Duplicate: makes a copy of the view (without duplicating the data) 
-- Lighting: activates/deactivates lighting for the view 
-- Scale: gives access to the scale menu (range definition, iso-value
-  choice, ...)
-- Color: defines the color map for the view
-- Offset: permits to move the view around, and to make elevation 
-  maps
-- Vector display: changes vector attributes
-- Time step: selects the displayed time step
-- Export as background mesh: exports the map, considered as an
-  error map, as a background mesh, i.e. as a characteristic length map
-- Apply as current bg mesh: applies the view as the current background 
-  mesh.  
-If you want the modifications made to one view to affect also all other
-views, select the 'Link all views' option in the
+In the Post-Processing module (select 'Post_Processing' in the module
+menu), two view buttons will appear, respectively labeled "a scalar
+map" and "a vector map". A left mouse click will toggle the visibility
+of the selected view. A right mouse click provides access to the
+view's options. If you want the modifications made to one view to
+affect also all other views, select the 'Link all views' option in the
 'Options->Post-Processing' menu.
 
 Note: all the options specified interactively can also be directly
 specified in the ascii input files. The current options can be saved
-into a file by selecting 'File->Save_Options_as'. For UNIX versions,
-all user interface options can be changed in a standard X resource file
-('.gmshrc' in your home directory or app-defaults directory, or
-'.Xdefaults'). Use 'editres' to get the full widget tree and
-associated resources.
-
+into a file by selecting 'File->Save_as', or simply viewed by pressing
+the '?' button in the status bar.
 
 
 OK, that's all, folks. Enjoy the tutorial.

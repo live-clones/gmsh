@@ -4,6 +4,7 @@
 #define CALLBACK_ARGS   Fl_Widget* w, void* data
 
 int SetGlobalShortcut(int event);
+void MarkAllViewsChanged(int action);
 
 // Common callbacks
 

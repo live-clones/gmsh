@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.8 2001-01-29 08:43:44 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.9 2001-02-03 13:10:26 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -47,75 +47,39 @@ void Opengl_Window::draw() {
   Draw2d();
 }
 
-void Opengl_Window::clear_overlay() {
-  if(CTX.overlay) {}
-}
+static double O1,O2,O3,O4;
 
-void Opengl_Window::draw_overlay_zoom() {
+void Opengl_Window::draw_overlay() {
   /*
-  if (!valid()) {
+  if(!valid()){
     valid(1);
-    CTX.viewport[0] = 0 ;
-    CTX.viewport[1] = 0 ;
-    CTX.viewport[2] = w() ;
-    CTX.viewport[3] = h() ;
-    glViewport(CTX.viewport[0],
-	       CTX.viewport[1],
-	       CTX.viewport[2],
-	       CTX.viewport[3]);
+    CTX.viewport[0] = 0 ; CTX.viewport[1] = 0 ;
+    CTX.viewport[2] = w() ; CTX.viewport[3] = h() ;
+    glViewport(CTX.viewport[0], CTX.viewport[1],
+	       CTX.viewport[2], CTX.viewport[3]);
   }
   Orthogonalize(0,0);
   glClearIndex(0);
   glClear(GL_COLOR_BUFFER_BIT);  
-
   glLineWidth(1.);
   glClearIndex(0);
   glClear(GL_COLOR_BUFFER_BIT);  
   glIndexi((CTX.color.bg<CTX.color.fg)?FL_WHITE:FL_BLACK);
   glBegin(GL_LINE_STRIP);
-  glVertex2d(xb,yb);
-  glVertex2d(xb+movzx,yb);
-  glVertex2d(xb+movzx,yb+movzy);
-  glVertex2d(xb,yb+movzy);
-  glVertex2d(xb,yb);
+  glVertex2d(O1, O2);
+  glVertex2d(O1+O3, O2);
+  glVertex2d(O1+O3, O2+O4);
+  glVertex2d(O1, O2+O4);
+  glVertex2d(O1, O2);
   glEnd();
   */
 }
 
-void Opengl_Window::draw_overlay_highlight(){
-  /*
-  if(CTX.overlay){
-    glXMakeCurrent(XtDisplay(WID.G.glo), XtWindow(WID.G.glo), XCTX.glo.context);
-    if(ov != v || oc != c || os != s) { 
-      glClearIndex(0);
-      glClear(GL_COLOR_BUFFER_BIT);  
-      glIndexi((CTX.color.bg<CTX.color.fg)?XCTX.xcolor.ovwhite:XCTX.xcolor.ovblack);
-      BeginHighlight();
-      HighlightEntity(v,c,s,0);
-      EndHighlight(0);
-    }
-    glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);
-  }
-  else{
-    if(ov != v || oc != c || os != s) { 
-      if(CTX.geom.highlight){
-	Draw();
-      }
-      BeginHighlight();
-      HighlightEntity(v,c,s,0);
-      EndHighlight(0);
-    }
-  }
-  */
-}
-
-void Opengl_Window::draw_overlay() {
+void Opengl_Window::clear_overlay() {
 }
 
 
-static int Modifier=0;
-
-// le principe de FLTK est assez diffrent des autres toolkits: les
+// le principe de FLTK est assez different des autres toolkits: les
 // events sont passes au handle du widget qui a le focus. Si ce handle
 // revoie 1, alors l'event est considere comme traite, et est
 // supprime. Si le handle retourne 0, l'event est passe au handle du
@@ -141,15 +105,13 @@ int Opengl_Window::handle(int event) {
     xpos = Fl::event_x();
     ypos = Fl::event_y();
 
-    switch(ibut){
-    case 1:
-      if(!ZoomClick && Modifier){
+    if(ibut == 1 && !Fl::event_state(FL_SHIFT)){
+      if(!ZoomClick && Fl::event_state(FL_CTRL)){
         xb = CTX.vxmin + ((double)xpos/(double)w()) * (CTX.vxmax - CTX.vxmin);
         yb = CTX.vymax - ((double)ypos/(double)h()) * (CTX.vymax - CTX.vymin);
         xc1 = xb/CTX.s[0] - CTX.t[0];
         yc1 = yb/CTX.s[1] - CTX.t[1];
         ZoomClick = 1;
-        Modifier = 0;
       }
       else if(ZoomClick){
         xe = CTX.vxmin + ((double)xpos/(double)w()) * (CTX.vxmax - CTX.vxmin);
@@ -163,10 +125,9 @@ int Opengl_Window::handle(int event) {
       else{
 	WID->try_selection = 1 ;
       }
-      break;
-    case 2:
-      if(Modifier && !ZoomClick){
-        Modifier = 0;
+    }
+    else if(ibut == 2 || (ibut == 1 && Fl::event_state(FL_SHIFT))){
+      if(Fl::event_state(FL_CTRL) && !ZoomClick){
         set_s(1, CTX.s[0]);
         set_s(2, CTX.s[0]);
         redraw();
@@ -175,10 +136,9 @@ int Opengl_Window::handle(int event) {
         ZoomClick = 0;
         clear_overlay();
       }
-      break;      
-    case 3:
-      if(Modifier && !ZoomClick){
-        Modifier = 0;
+    }
+    else{
+      if(Fl::event_state(FL_CTRL) && !ZoomClick){
 	if(CTX.useTrackball)
 	  CTX.setQuaternion(0.,0.,0.,1.);
 	else{
@@ -192,7 +152,6 @@ int Opengl_Window::handle(int event) {
         ZoomClick = 0;
         clear_overlay();
       }
-      break;
     }
     return 1;
 
@@ -207,58 +166,20 @@ int Opengl_Window::handle(int event) {
     }
     return 1;
 
-      
   case FL_DRAG:
     xmov = Fl::event_x() - xpos;
     ymov = Fl::event_y() - ypos;
 
     if(ZoomClick) {
       printf("should draw the zoom... %d %d %d %d\n", xpos, ypos, xmov, ymov);
-
       xz = CTX.vxmin + ((double)Fl::event_x()/(double)w()) * (CTX.vxmax - CTX.vxmin);
       yz = CTX.vymax - ((double)Fl::event_y()/(double)h()) * (CTX.vymax - CTX.vymin);
       movzx = xz - xb; movzy = yz - yb;
-
-      WID->make_opengl_current();
-      glPopMatrix();
-      glDisable(GL_DEPTH_TEST);
-      glDisable(GL_LIGHTING);
-      glMatrixMode(GL_PROJECTION);
-      glPushMatrix();
-      glLoadIdentity();
-      gluOrtho2D(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax);
-      glMatrixMode(GL_MODELVIEW);
-      glPushMatrix();
-      glLoadIdentity();
-      if(CTX.db) glDrawBuffer(GL_BACK);
-      glDisable(GL_DEPTH_TEST);
-      glColor3f(1.,1.,1.);
-      glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
-      glEnable(GL_BLEND);
-      glBegin(GL_LINE_STRIP);
-      glVertex2d(xb,yb);
-      glVertex2d(xb+movzx,yb);
-      glVertex2d(xb+movzx,yb+movzy);
-      glVertex2d(xb,yb+movzy);
-      glVertex2d(xb,yb);
-      glEnd();
-      movzx = xz - xb; movzy = yz - yb;
-      glBegin(GL_LINE_STRIP);
-      glVertex2d(xb,yb);
-      glVertex2d(xb+movzx,yb);
-      glVertex2d(xb+movzx,yb+movzy);
-      glVertex2d(xb,yb+movzy);
-      glVertex2d(xb,yb);
-      glEnd();
-      glDisable(GL_BLEND);
-      glEnable(GL_DEPTH_TEST);
-      glPopMatrix();
-      glMatrixMode(GL_PROJECTION);
-      glPopMatrix();
-      glMatrixMode(GL_MODELVIEW);
-      if(CTX.db) swap_buffers();
-      else glFlush();
-
+      O1 = xb;
+      O2 = yb;
+      O3 = movzx;
+      O4 = movzx;
+      redraw_overlay();
     }
     else {
       clear_overlay();
@@ -275,8 +196,7 @@ int Opengl_Window::handle(int event) {
 	FirstClick=0;
       }
 
-      switch(ibut){
-      case 1:
+      if(ibut == 1 && !Fl::event_state(FL_SHIFT)){
 	if(CTX.useTrackball)
 	  CTX.addQuaternion((2.0*xpos - w()) / w(),
 			    (h() - 2.0*ypos) / h(),
@@ -286,8 +206,8 @@ int Opengl_Window::handle(int event) {
 	  set_r(1, CTX.r[1] + ((abs(xmov) > abs(ymov))?180*(float)xmov/(float)w():0));
 	  set_r(0, CTX.r[0] + ((abs(xmov) > abs(ymov))?0:180*(float)ymov/(float)h()));
 	}
-	break;
-      case 2:
+      }
+      else if(ibut == 2 || (ibut == 1 && Fl::event_state(FL_SHIFT))){
 	if(!CTX.useTrackball)
 	  set_r(2, CTX.r[2] + ((abs(ymov) > abs(xmov))?0:-180*(float)xmov/(float)w()));         
 	set_s(0, CTX.s[0] * ( (abs(ymov) > abs(xmov)) ?
@@ -300,8 +220,8 @@ int Opengl_Window::handle(int event) {
 	  set_t(0, xt1*(xscale1/CTX.s[0])-xc1*(1.-(xscale1/CTX.s[0])));
 	  set_t(1, yt1*(yscale1/CTX.s[1])-yc1*(1.-(yscale1/CTX.s[1])));
 	}
-	break;
-      case 3:
+      }
+      else{
 	xc = ( ((double)xpos/(double)w()) * (CTX.vxmax - CTX.vxmin) + CTX.vxmin )
 	  / CTX.s[0];
 	yc = ( CTX.vymax - ((double)ypos/(double)h()) * (CTX.vymax - CTX.vymin))
@@ -309,13 +229,13 @@ int Opengl_Window::handle(int event) {
 	set_t(0, xc-xc1);
 	set_t(1, yc-yc1);
 	set_t(2, 0.);
-	break;
       }
 
       if(CTX.fast){
 	CTX.mesh.draw = 0 ;
 	CTX.post.draw = 0;
       }
+      
       redraw();
 
     }

@@ -5,7 +5,7 @@
 .\" Copyright (c) 2000-2001 J.-F. Remacle, C. Geuzaine
 .\" 
 .\" ======================================================================
-.TH Gmsh 1.00 "1 January 2001"
+.TH Gmsh 1.10 "5 February 2001"
 .UC 4
 .\" ======================================================================
 .SH NAME
@@ -116,6 +116,9 @@ set output mesh format (default: msh)
 .B \-algo iso|aniso
 select the two-dimensional mesh algorithm (default: iso)
 .TP 4
+.B \-rand float
+set random perturbation factor (default: 1.e-5)
+.TP 4
 .B \-smooth int
 set the number of smoothing passes (default value is 3).
 .TP 4
@@ -125,6 +128,9 @@ set the degree of the generated elements (default value is 1).
 .B \-scale float
 apply a global scaling factor to the generated mesh (default value is
 1.0).
+.TP 4
+.B \-meshscale float
+apply a global scaling factor to all generated elements (default value is 1.0).
 .TP 4
 .B \-clscale float
 apply a global scaling factor to all the characteristic lengths in the
@@ -152,11 +158,11 @@ views) at startup.
 .SH DISPLAY OPTIONS
 .TP 4
 .B \-nodb
-suppress the double buffer. Use this options if you use \fIGmsh\fR on
-a remote host without GLX.
+(Motif versions only) suppress the double buffer. Use this options if
+you use \fIGmsh\fR on a remote host without GLX.
 .TP 4
 .B \-noov
-suppress overlay visual.
+(Motif versions only) suppress overlay visual.
 .TP 4
 .B \-alpha
 enable alpha blending.
@@ -168,7 +174,7 @@ don't use trackball mode for rotations.
 specify main window geometry.
 .TP 4
 .B \-viewport 9*float.
-specify rotation, translation and scale
+(Motif versions only) specify rotation, translation and scale
 .TP 4
 .B \-display disp.
 specify display.
@@ -180,15 +186,15 @@ use perspective instead of orthographic projection.
 allow colormap flashing.
 .TP 4
 .B \-samevisual
-force same visual for OpenGL and GUI.
+(Motif versions only) force same visual for OpenGL and GUI.
 .\" ======================================================================
 .SH OTHER OPTIONS
 .TP 4
 .B \-v int
-set verbosity level (0=quiet, 3=debug; default:2).
+set verbosity level (default:2).
 .TP 4
 .B \-nothreads
-disable threads.
+(Motif versions only) disable threads.
 .TP 4
 .B \-path string
 set the path for included files.
@@ -209,7 +215,7 @@ Remacle (Remacle@scorec.rpi.edu).
 .SH SEE ALSO
 Gmsh homepage at \fIhttp://www.geuz.org/gmsh/\fR
 .PP
-Gmsh example files in \fI/usr/doc/gmsh-1.00/\fR
+Gmsh example files in \fI/usr/doc/gmsh-1.10/\fR
 .PP
 GetDP (a scientific computation software for the numerical solution of
 integro-differential equations, using finite element and integral type

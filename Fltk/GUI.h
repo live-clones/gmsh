@@ -132,6 +132,7 @@ class GUI{
   Fl_Window        *about_window ;
 
   // view options window
+  int               view_number ;
   Fl_Window        *view_window ;
   Fl_Group         *view_colors, *view_colorbar, *view_range, *view_intervals ;
   Fl_Group         *view_offsetraise, *view_timestep, *view_vector ;

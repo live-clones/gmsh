@@ -7,10 +7,7 @@ class Opengl_Window : public Fl_Gl_Window {
   int handle(int);
 
   // new
-  void draw_highlight();
   void clear_overlay();
-  void draw_overlay_zoom();
-  void draw_overlay_highlight();
 
 public:
   Opengl_Window(int x,int y,int w,int h,const char *l=0)

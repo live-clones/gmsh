@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.23 2001-02-02 15:05:03 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.24 2001-02-03 13:10:26 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -387,7 +387,7 @@ void opt_general_orthographic_cb(CALLBACK_ARGS){
   else CTX.ortho = 0;
 }
 void opt_general_color_cb(CALLBACK_ARGS){
-  Init_Colors((int)((Fl_Value_Input*)w)->value()-1);
+  Init_Colors((int)((Fl_Value_Input*)w)->value());
   Draw();
 }
 void opt_general_shininess_cb(CALLBACK_ARGS){

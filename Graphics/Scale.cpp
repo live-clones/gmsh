@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.16 2001-01-29 08:43:44 geuzaine Exp $
+// $Id: Scale.cpp,v 1.17 2001-02-03 13:10:26 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -174,6 +174,8 @@ void draw_scale(Post_View *v, double xmin, double ymin, double *width, double he
       for(i=0 ; i<nbv+1 ; i++){
         Val = v->GVFI(ValMin,ValMax,nbv+1,i); 
         sprintf(label, v->Format, Val);
+	/* suppressing the 2 following lines improves fltk performance
+           a lot on linux. and only on linux.  Why? */
         glRasterPos2d(cv_xmin,cv_ymin+i*cv_bh-font_a/3.);
         Draw_String(label); CHECK_W;
       }

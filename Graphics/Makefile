@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2001-01-29 22:33:41 remacle Exp $
+# $Id: Makefile,v 1.16 2001-02-03 13:10:26 geuzaine Exp $
 #
 # Makefile for "libGraphics.a"
 #
@@ -100,12 +100,20 @@ PostSimplex.o: PostSimplex.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
   ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
-  ../Common/Const.h ../Common/ColorTable.h Iso.h ../Common/Context.h
+  ../Common/Const.h ../Common/ColorTable.h Iso.h IsoSimplex.h \
+  ../Common/Context.h
 Iso.o: Iso.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
-  ../Common/Const.h ../Common/ColorTable.h
+  ../Common/Const.h ../Common/ColorTable.h ../Mesh/Numeric.h
+IsoSimplex.o: IsoSimplex.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
+  ../Common/Const.h ../Common/ColorTable.h Iso.h ../Common/Context.h \
+  ../Mesh/Numeric.h
 Entity.o: Entity.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Mesh/Mesh.h \
