@@ -1,4 +1,4 @@
-// $Id: Interpolation.cpp,v 1.12 2001-08-17 07:41:58 geuzaine Exp $
+// $Id: Interpolation.cpp,v 1.13 2001-08-17 09:53:23 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -49,21 +49,19 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
     t = (u - t1) / (t2 - t1);
     List_Read (Curve->Control_Points, i, &v[1]);
     List_Read (Curve->Control_Points, i + 1, &v[2]);
-    
-    V.lc = t * v[2]->lc + (1. - t) * v[1]->lc; // ?????
     V.Pos.X = v[1]->Pos.X + t * (v[2]->Pos.X - v[1]->Pos.X);
     V.Pos.Y = v[1]->Pos.Y + t * (v[2]->Pos.Y - v[1]->Pos.Y);
     V.Pos.Z = v[1]->Pos.Z + t * (v[2]->Pos.Z - v[1]->Pos.Z);
-    V.w = v[1]->w + t * (v[2]->w - v[1]->w);
+    V.w = (1. - t) * v[1]->w + t * v[2]->w;
+    V.lc = (1. - t) * v[1]->lc + t * v[2]->lc;
     return V;
 
   case MSH_SEGM_PARAMETRIC:
     V.Pos.X = evaluate_scalarfunction ("t", u, Curve->functu);
     V.Pos.Y = evaluate_scalarfunction ("t", u, Curve->functv);
     V.Pos.Z = evaluate_scalarfunction ("t", u, Curve->functw);
-
-    V.lc = (u * Curve->end->lc + (1. - u) * Curve->beg->lc);// ?????
-    V.w = (u * Curve->beg->w + (1. - u) * Curve->end->w);
+    V.w = (1. - u) * Curve->beg->w + u * Curve->end->w;
+    V.lc = (1. - u) * Curve->beg->lc + u * Curve->end->lc;
     return V;
     
   case MSH_SEGM_CIRC:
@@ -90,8 +88,8 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
     V.Pos.X += Curve->Circle.v[2]->Pos.X;
     V.Pos.Y += Curve->Circle.v[2]->Pos.Y;
     V.Pos.Z += Curve->Circle.v[2]->Pos.Z;
-    V.w = (u * Curve->beg->w + (1. - u) * Curve->end->w);
-    V.lc = (u * Curve->end->lc + (1. - u) * Curve->beg->lc);// ?????
+    V.w = (1. - u) * Curve->beg->w + u * Curve->end->w ;
+    V.lc = (1. - u) * Curve->beg->lc + u * Curve->end->lc ;
     return V;
     
   case MSH_SEGM_BSPLN:
@@ -134,7 +132,8 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
     List_Read (Curve->Control_Points, i, &v[1]);
     List_Read (Curve->Control_Points, i + 1, &v[2]);
     
-    V.lc = t * v[2]->lc + (1. - t) * v[1]->lc; //?????
+    V.lc = (1. - t) * v[1]->lc + t * v[2]->lc ;
+    V.w = (1. - t) * v[1]->w + t * v[2]->w ;
     
     if (!i){
       v[0] = &temp1;
@@ -220,14 +219,14 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
     }
 
     if (derivee){
-      V.Pos.X /= ((t2 - t1));
-      V.Pos.Y /= ((t2 - t1));
-      V.Pos.Z /= ((t2 - t1));
+      V.Pos.X /= (t2 - t1);
+      V.Pos.Y /= (t2 - t1);
+      V.Pos.Z /= (t2 - t1);
     }
     else{
-      // V.Pos.X /= ((W));
-      // V.Pos.Y /= ((W));
-      // V.Pos.Z /= ((W));
+      // V.Pos.X /= W;
+      // V.Pos.Y /= W;
+      // V.Pos.Z /= W;
     }
     return V;
 
