@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.66 2004-02-28 00:48:49 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.67 2004-03-04 23:08:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -315,9 +315,12 @@ void Draw_Simplex_Volume(void *a, void *b)
 
   // FIXME: move this in Draw_Mesh_Volumes as soon as a coherent
   // structure exists for volumes
-  Volume *V;
-  if((V = FindVolume(s->iEnt, THEM)) && !(V->Visible & VIS_MESH))
-    return;
+  Volume *v = FindVolume(s->iEnt, THEM);
+  if(v){
+    if(!(v->Visible & VIS_MESH))
+      return;
+    theColor = v->Color;
+  }
   if(CTX.mesh.color_carousel == 2)
     thePhysical = getFirstPhysical(MSH_PHYSICAL_VOLUME, s->iEnt);
 
@@ -869,9 +872,12 @@ void Draw_Hexahedron_Volume(void *a, void *b)
 
   // FIXME: move this in Draw_Mesh_Volumes as soon as a coherent
   // structure exists for volumes
-  Volume *V;
-  if((V = FindVolume(h->iEnt, THEM)) && !(V->Visible & VIS_MESH))
-    return;
+  Volume *v = FindVolume(h->iEnt, THEM);
+  if(v){
+    if(!(v->Visible & VIS_MESH))
+      return;
+    theColor = v->Color;
+  }
   if(CTX.mesh.color_carousel == 2)
     thePhysical = getFirstPhysical(MSH_PHYSICAL_VOLUME, h->iEnt);
 
@@ -1016,9 +1022,12 @@ void Draw_Prism_Volume(void *a, void *b)
 
   // FIXME: move this in Draw_Mesh_Volumes as soon as a coherent
   // structure exists for volumes
-  Volume *V;
-  if((V = FindVolume(p->iEnt, THEM)) && !(V->Visible & VIS_MESH))
-    return;
+  Volume *v = FindVolume(p->iEnt, THEM);
+  if(v){
+    if(!(v->Visible & VIS_MESH))
+      return;
+    theColor = v->Color;
+  }
   if(CTX.mesh.color_carousel == 2)
     thePhysical = getFirstPhysical(MSH_PHYSICAL_VOLUME, p->iEnt);
 
@@ -1144,9 +1153,12 @@ void Draw_Pyramid_Volume(void *a, void *b)
 
   // FIXME: move this in Draw_Mesh_Volumes as soon as a coherent
   // structure exists for volumes
-  Volume *V;
-  if((V = FindVolume(p->iEnt, THEM)) && !(V->Visible & VIS_MESH))
-    return;
+  Volume *v = FindVolume(p->iEnt, THEM);
+  if(v){
+    if(!(v->Visible & VIS_MESH))
+      return;
+    theColor = v->Color;
+  }
   if(CTX.mesh.color_carousel == 2)
     thePhysical = getFirstPhysical(MSH_PHYSICAL_VOLUME, p->iEnt);
 
