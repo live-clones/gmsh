@@ -1,4 +1,4 @@
-// $Id: LevelsetPlugin.cpp,v 1.14 2001-08-09 21:15:30 remacle Exp $
+// $Id: LevelsetPlugin.cpp,v 1.15 2001-08-09 22:05:51 remacle Exp $
 
 #include "LevelsetPlugin.h"
 #include "List.h"
@@ -40,7 +40,7 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
     a cut of the actual view with a levelset.
    */
   int k,i,nb,edtet[6][2] = {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
-  double Xpi[6],Ypi[6],Zpi[6];
+  double Xpi[6],Ypi[6],Zpi[6],myValsi[6];
   Post_View *View;
 
   //   for all scalar simplices 
@@ -69,7 +69,7 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 		  nx++;
 		}
 	    }
-	  /*
+	  
 	  if(nx == 4)
 	    {
 	      double xx =  Xp[3];
@@ -85,7 +85,7 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	      Zp[2] = zz;
 	      myVals[2] = vv;
 	    }
-	  */
+	  
 	  double v1[3] = {Xp[2]-Xp[0],Yp[2]-Yp[0],Zp[2]-Zp[0]};
 	  double v2[3] = {Xp[1]-Xp[0],Yp[1]-Yp[0],Zp[1]-Zp[0]};
 	  double gr[3];
@@ -95,16 +95,18 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	  gradSimplex(X,Y,Z,VAL,gr);      
 	  prosca(gr,n,&xx);
 	  
-	  if(xx > 0){
+	  if(n[0] + n[1] + n[2] > 0){
 	    for(k=0;k<nx;k++){
 	      Xpi[k] = Xp[k];
 	      Ypi[k] = Yp[k];
 	      Zpi[k] = Zp[k];
+	      myValsi[k] = myVals[k];
 	    }
 	    for(k=0;k<nx;k++){
 	      Xp[k] = Xpi[nx-k-1];
 	      Yp[k] = Ypi[nx-k-1];
 	      Zp[k] = Zpi[nx-k-1];	      
+	      myVals[k] = myValsi[nx-k-1];	      
 	    }
 	  }
 	  
@@ -118,10 +120,10 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	    }
 	  if(nx == 4)
 	    {	  
-	      for(k=1;k<4;k++)List_Add(View->ST, &Xp[k %4]);
-	      for(k=1;k<4;k++)List_Add(View->ST, &Yp[k % 4]);
-	      for(k=1;k<4;k++)List_Add(View->ST, &Zp[k % 4]);
-	      for(k=1;k<4;k++)List_Add(View->ST, &myVals[k %4]);
+	      for(k=2;k<5;k++)List_Add(View->ST, &Xp[k %4]);
+	      for(k=2;k<5;k++)List_Add(View->ST, &Yp[k % 4]);
+	      for(k=2;k<5;k++)List_Add(View->ST, &Zp[k % 4]);
+	      for(k=2;k<5;k++)List_Add(View->ST, &myVals[k %4]);
 	      View->NbST++;
 	    }
 	}
