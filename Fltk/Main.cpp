@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.62 2004-04-21 23:14:47 geuzaine Exp $
+// $Id: Main.cpp,v 1.63 2004-04-21 23:33:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -109,8 +109,7 @@ int main(int argc, char *argv[])
     CTX.terminal = 1;
 
   if(CTX.verbosity && CTX.terminal)
-    fprintf(stderr, "%s, version %s, started %s\n",
-            gmsh_progname, GMSH_VERSION, currtime);
+    fprintf(stderr, "Gmsh %s, started %s\n", GMSH_VERSION, currtime);
 
   // Register Default Plugins
   if(CTX.default_plugins)
