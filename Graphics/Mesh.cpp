@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.98 2004-06-28 19:00:22 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.99 2004-07-01 19:07:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -323,11 +323,6 @@ void Draw_Mesh_Point(void *a, void *b)
   if(intersectCutPlane(1, &v) < 0)
     return;
 
-  if(CTX.render_mode == GMSH_SELECT) {
-    glLoadName(0);
-    glPushName(v->Num);
-  }
-
   if(v->Degree == 2)
     glColor4ubv((GLubyte *) & CTX.color.mesh.vertex_deg2);
   else
@@ -352,10 +347,6 @@ void Draw_Mesh_Point(void *a, void *b)
                   v->Pos.Y + offset / CTX.s[1],
                   v->Pos.Z + offset / CTX.s[2]);
     Draw_String(Num);
-  }
-
-  if(CTX.render_mode == GMSH_SELECT) {
-    glPopName();
   }
 }
 
