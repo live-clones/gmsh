@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.136 2001-11-23 08:27:37 geuzaine Exp $
+// $Id: GUI.cpp,v 1.137 2001-11-23 08:42:33 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -2341,7 +2341,7 @@ void GUI::create_view_options_window(int num){
       o->hide();
       view_colorbar_window = new Colorbar_Window(2*WB, 2*WB+1*BH,
 						 width-4*WB, height-5*WB-2*BH);
-      view_colorbar_window->take_focus(); //necessary for fltk >= 1.1.0
+      //view_colorbar_window->take_focus(); // fltk >= 1.1.0
       view_colorbar_window->end();
       //no set_changed since colorbarwindow has its own callbacks
       o->end();
