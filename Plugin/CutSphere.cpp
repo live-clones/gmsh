@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.13 2001-08-06 10:35:47 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.14 2001-08-06 10:52:52 geuzaine Exp $
 
 #include <string.h>
 #include "CutSphere.h"
@@ -77,17 +77,14 @@ Post_View *GMSH_CutSpherePlugin::execute (Post_View *v)
 
   if(v && iView < 0)
     vv = v;
-  else if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
-    Msg(WARNING,"Plugin CutSphere: View[%d] does not exist",iView);
-    return 0;
+  else{
+    if(!v && iView < 0) iView = 0;
+    if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
+      Msg(WARNING,"Plugin CutSphere: View[%d] does not exist",iView);
+      return 0;
+    }
   }
 
   return GMSH_LevelsetPlugin::execute(vv);
 }
 
-void GMSH_CutSpherePlugin::Run () 
-{ 
-  int iView = (int)CutSphereOptions_Number[4].def;
-  if(iView < 0) CutSphereOptions_Number[4].def = 0;
-  execute (0);
-}

@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.14 2001-08-06 10:35:47 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.15 2001-08-06 10:52:52 geuzaine Exp $
 
 #include "CutPlane.h"
 #include "List.h"
@@ -76,20 +76,14 @@ Post_View *GMSH_CutPlanePlugin::execute (Post_View *v)
 
   if(v && iView < 0)
     vv = v;
-  else if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
-    Msg(WARNING,"Plugin CutPlane: View[%d] does not exist",iView);
-    return 0;
+  else{
+    if(!v && iView < 0) iView = 0;
+    if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
+      Msg(WARNING,"Plugin CutPlane: View[%d] does not exist",iView);
+      return 0;
+    }
   }
 
   return GMSH_LevelsetPlugin::execute(vv);
 }
-
-void GMSH_CutPlanePlugin::Run () 
-{ 
-  int iView = (int)CutPlaneOptions_Number[4].def;
-  if(iView < 0) CutPlaneOptions_Number[4].def = 0;
-  execute (0);
-}
-
-
 

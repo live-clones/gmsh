@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.3 2001-08-06 10:35:47 geuzaine Exp $
+// $Id: Skin.cpp,v 1.4 2001-08-06 10:52:52 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Skin.h"
@@ -117,9 +117,12 @@ Post_View *GMSH_SkinPlugin::execute (Post_View *v)
 
   if(v && iView < 0)
     vv = v;
-  else if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
-    Msg(WARNING,"Plugin Skin: View[%d] does not exist",iView);
-    return 0;
+  else{
+    if(!v && iView < 0) iView = 0;
+    if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
+      Msg(WARNING,"Plugin Skin: View[%d] does not exist",iView);
+      return 0;
+    }
   }
 
   if(vv->NbSS){
@@ -156,8 +159,6 @@ Post_View *GMSH_SkinPlugin::execute (Post_View *v)
 
 void GMSH_SkinPlugin::Run ()
 {
-  int iView = (int)SkinOptions_Number[0].def;
-  if(iView < 0) SkinOptions_Number[0].def = 0;
   execute(0);
 }
 

@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.3 2001-08-06 10:35:47 geuzaine Exp $
+// $Id: Transform.cpp,v 1.4 2001-08-06 10:52:52 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Transform.h"
@@ -95,9 +95,12 @@ Post_View *GMSH_TransformPlugin::execute (Post_View *v)
 
   if(v && iView < 0)
     vv = v;
-  else if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
-    Msg(WARNING,"Plugin Transform: View[%d] does not exist",iView);
-    return 0;
+  else{
+    if(!v && iView < 0) iView = 0;
+    if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
+      Msg(WARNING,"Plugin Transform: View[%d] does not exist",iView);
+      return 0;
+    }
   }
   
   vv->transform(mat);
@@ -106,8 +109,6 @@ Post_View *GMSH_TransformPlugin::execute (Post_View *v)
 
 void GMSH_TransformPlugin::Run ()
 {
-  int iView = (int)TransformOptions_Number[9].def;
-  if(iView < 0) TransformOptions_Number[9].def = 0;
   execute(0);
 }
 
