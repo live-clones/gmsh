@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.36 2000-12-10 13:21:31 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.37 2000-12-10 13:28:49 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -2321,8 +2321,8 @@ FExpr_Range :
 VExpr :
     VExpr_Single
     {
-      $$ = $1 ;
-      //??? Avec ce qui siut (qui est correct), bison se plante sur DEC
+      memcpy($$, $1, 5*sizeof(double)) ;
+      //??? Avec ce qui suit, bison se plante sur DEC
       //for(i=0 ; i<6 ; i++) $$[i] = $1[i];
     }
   | '-' VExpr %prec UNARYPREC

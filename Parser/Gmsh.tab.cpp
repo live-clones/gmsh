@@ -167,7 +167,7 @@
 #define	tMINUSMINUS	417
 
 #line 1 "Gmsh.y"
- /* $Id: Gmsh.tab.cpp,v 1.40 2000-12-10 13:21:31 geuzaine Exp $ */
+ /* $Id: Gmsh.tab.cpp,v 1.41 2000-12-10 13:28:49 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -598,11 +598,11 @@ static const short yyrline[] = { 0,
   2151,  2152,  2153,  2154,  2155,  2156,  2157,  2158,  2159,  2160,
   2161,  2162,  2163,  2164,  2165,  2166,  2167,  2168,  2169,  2170,
   2171,  2174,  2176,  2177,  2186,  2203,  2224,  2241,  2262,  2279,
-  2301,  2308,  2321,  2327,  2331,  2335,  2339,  2344,  2349,  2353,
-  2357,  2361,  2387,  2419,  2423,  2428,  2432,  2437,  2441,  2445,
-  2451,  2457,  2463,  2467,  2473,  2480,  2486,  2495,  2499,  2509,
-  2514,  2518,  2523,  2528,  2543,  2548,  2569,  2578,  2584,  2589,
-  2593
+  2301,  2308,  2321,  2328,  2332,  2336,  2340,  2345,  2350,  2354,
+  2358,  2362,  2388,  2420,  2424,  2429,  2433,  2438,  2442,  2446,
+  2452,  2458,  2464,  2468,  2474,  2481,  2487,  2496,  2500,  2510,
+  2515,  2519,  2524,  2529,  2544,  2549,  2570,  2579,  2585,  2590,
+  2594
 };
 #endif
 
@@ -5607,60 +5607,61 @@ case 292:
 case 293:
 #line 2323 "Gmsh.y"
 {
-      yyval.v = yyvsp[0].v ;
+      memcpy(yyval.v, yyvsp[0].v, 5*sizeof(double)) ;
+      //??? Avec ce qui suit, bison se plante sur DEC
       //for(i=0 ; i<6 ; i++) $$[i] = $1[i];
     ;
     break;}
 case 294:
-#line 2328 "Gmsh.y"
+#line 2329 "Gmsh.y"
 {
       for(i=0 ; i<6 ; i++) yyval.v[i] = -yyvsp[0].v[i] ;
     ;
     break;}
 case 295:
-#line 2332 "Gmsh.y"
+#line 2333 "Gmsh.y"
 { 
       for(i=0 ; i<6 ; i++) yyval.v[i] = yyvsp[0].v[i];
     ;
     break;}
 case 296:
-#line 2336 "Gmsh.y"
+#line 2337 "Gmsh.y"
 { 
       for(i=0 ; i<6 ; i++) yyval.v[i] = yyvsp[-2].v[i] - yyvsp[0].v[i] ;
     ;
     break;}
 case 297:
-#line 2340 "Gmsh.y"
+#line 2341 "Gmsh.y"
 {
       for(i=0 ; i<6 ; i++) yyval.v[i] = yyvsp[-2].v[i] + yyvsp[0].v[i] ;
     ;
     break;}
 case 298:
-#line 2346 "Gmsh.y"
+#line 2347 "Gmsh.y"
 { 
       yyval.v[0]=yyvsp[-9].d;  yyval.v[1]=yyvsp[-7].d;  yyval.v[2]=yyvsp[-5].d;  yyval.v[3]=yyvsp[-3].d; yyval.v[4]=yyvsp[-1].d;
     ;
     break;}
 case 299:
-#line 2350 "Gmsh.y"
+#line 2351 "Gmsh.y"
 { 
       yyval.v[0]=yyvsp[-7].d;  yyval.v[1]=yyvsp[-5].d;  yyval.v[2]=yyvsp[-3].d;  yyval.v[3]=yyvsp[-1].d; yyval.v[4]=1.0;
     ;
     break;}
 case 300:
-#line 2354 "Gmsh.y"
+#line 2355 "Gmsh.y"
 {
       yyval.v[0]=yyvsp[-5].d;  yyval.v[1]=yyvsp[-3].d;  yyval.v[2]=yyvsp[-1].d;  yyval.v[3]=0.0; yyval.v[4]=1.0;
     ;
     break;}
 case 301:
-#line 2358 "Gmsh.y"
+#line 2359 "Gmsh.y"
 {
       yyval.v[0]=yyvsp[-5].d;  yyval.v[1]=yyvsp[-3].d;  yyval.v[2]=yyvsp[-1].d;  yyval.v[3]=0.0; yyval.v[4]=1.0;
     ;
     break;}
 case 302:
-#line 2362 "Gmsh.y"
+#line 2363 "Gmsh.y"
 {
       if(!(pArrCat = Get_ArrayOptionCategory(yyvsp[-2].c)))
 	vyyerror("Unknown Array Option Class '%s'", yyvsp[-2].c);
@@ -5688,7 +5689,7 @@ case 302:
     ;
     break;}
 case 303:
-#line 2388 "Gmsh.y"
+#line 2389 "Gmsh.y"
 {
       if(strcmp(yyvsp[-7].c, "PostProcessing"))
 	vyyerror("Unknown View Option Class '%s'", yyvsp[-7].c);
@@ -5720,62 +5721,62 @@ case 303:
     ;
     break;}
 case 304:
-#line 2421 "Gmsh.y"
+#line 2422 "Gmsh.y"
 {
     ;
     break;}
 case 305:
-#line 2424 "Gmsh.y"
+#line 2425 "Gmsh.y"
 {
     ;
     break;}
 case 306:
-#line 2430 "Gmsh.y"
+#line 2431 "Gmsh.y"
 {
     ;
     break;}
 case 307:
-#line 2433 "Gmsh.y"
+#line 2434 "Gmsh.y"
 {
     ;
     break;}
 case 308:
-#line 2439 "Gmsh.y"
+#line 2440 "Gmsh.y"
 {
     ;
     break;}
 case 309:
-#line 2442 "Gmsh.y"
+#line 2443 "Gmsh.y"
 {
        yyval.l=ListOfListOfDouble_L;
     ;
     break;}
 case 310:
-#line 2446 "Gmsh.y"
+#line 2447 "Gmsh.y"
 {
        yyval.l=ListOfListOfDouble_L;
     ;
     break;}
 case 311:
-#line 2453 "Gmsh.y"
+#line 2454 "Gmsh.y"
 {
       ListOfListOfDouble_L = List_Create(2,1,sizeof(List_T*)) ;
       List_Add(ListOfListOfDouble_L, &(yyvsp[0].l)) ;
     ;
     break;}
 case 312:
-#line 2458 "Gmsh.y"
+#line 2459 "Gmsh.y"
 {
       List_Add(ListOfListOfDouble_L, &(yyvsp[0].l)) ;
     ;
     break;}
 case 313:
-#line 2465 "Gmsh.y"
+#line 2466 "Gmsh.y"
 {
     ;
     break;}
 case 314:
-#line 2468 "Gmsh.y"
+#line 2469 "Gmsh.y"
 {
       ListOfDouble_L = List_Create(2,1,sizeof(double)) ;
       List_Add(ListOfDouble_L, &(yyvsp[0].d)) ;
@@ -5783,20 +5784,20 @@ case 314:
     ;
     break;}
 case 315:
-#line 2474 "Gmsh.y"
+#line 2475 "Gmsh.y"
 {
       yyval.l=ListOfDouble_L;
     ;
     break;}
 case 316:
-#line 2482 "Gmsh.y"
+#line 2483 "Gmsh.y"
 {
       ListOfDouble_L = List_Create(2,1,sizeof(double)) ;
       List_Add(ListOfDouble_L, &(yyvsp[0].d)) ;
     ;
     break;}
 case 317:
-#line 2487 "Gmsh.y"
+#line 2488 "Gmsh.y"
 { 
       ListOfDouble_L = List_Create(2,1,sizeof(double)) ;
       for(i=0 ; i<List_Nbr(ListOfDouble2_L) ; i++){
@@ -5807,13 +5808,13 @@ case 317:
     ;
     break;}
 case 318:
-#line 2496 "Gmsh.y"
+#line 2497 "Gmsh.y"
 {
       List_Add(ListOfDouble_L, &(yyvsp[0].d)) ;
     ;
     break;}
 case 319:
-#line 2500 "Gmsh.y"
+#line 2501 "Gmsh.y"
 {
       for(i=0 ; i<List_Nbr(ListOfDouble2_L) ; i++){
 	List_Read(ListOfDouble2_L, i, &d) ;
@@ -5823,33 +5824,33 @@ case 319:
     ;
     break;}
 case 320:
-#line 2511 "Gmsh.y"
+#line 2512 "Gmsh.y"
 {
       yyval.u = PACK_COLOR((int)yyvsp[-7].d, (int)yyvsp[-5].d, (int)yyvsp[-3].d, (int)yyvsp[-1].d);
     ;
     break;}
 case 321:
-#line 2515 "Gmsh.y"
+#line 2516 "Gmsh.y"
 {
       yyval.u = PACK_COLOR((int)yyvsp[-5].d, (int)yyvsp[-3].d, (int)yyvsp[-1].d, 255);
     ;
     break;}
 case 322:
-#line 2519 "Gmsh.y"
+#line 2520 "Gmsh.y"
 {
       yyval.u = Get_ColorForString(ColorString, (int)yyvsp[-1].d, yyvsp[-3].c, &flag);
       if(flag) vyyerror("Unknown Color '%s'", yyvsp[-3].c);
     ;
     break;}
 case 323:
-#line 2524 "Gmsh.y"
+#line 2525 "Gmsh.y"
 {
       yyval.u = Get_ColorForString(ColorString, -1, yyvsp[0].c, &flag);
       if(flag) vyyerror("Unknown Color '%s'", yyvsp[0].c);
     ;
     break;}
 case 324:
-#line 2529 "Gmsh.y"
+#line 2530 "Gmsh.y"
 {
       if(!(pColCat = Get_ColorOptionCategory(yyvsp[-4].c)))
 	vyyerror("Unknown Color Option Class '%s'", yyvsp[-4].c);
@@ -5863,13 +5864,13 @@ case 324:
     ;
     break;}
 case 325:
-#line 2545 "Gmsh.y"
+#line 2546 "Gmsh.y"
 {
       yyval.l = ListOfColor_L;
     ;
     break;}
 case 326:
-#line 2549 "Gmsh.y"
+#line 2550 "Gmsh.y"
 {
       if(!ListOfColor_L)
 	ListOfColor_L = List_Create(256,10,sizeof(unsigned int)) ;
@@ -5890,7 +5891,7 @@ case 326:
     ;
     break;}
 case 327:
-#line 2571 "Gmsh.y"
+#line 2572 "Gmsh.y"
 {
       if(!ListOfColor_L)
 	ListOfColor_L = List_Create(256,10,sizeof(unsigned int)) ;
@@ -5900,25 +5901,25 @@ case 327:
     ;
     break;}
 case 328:
-#line 2579 "Gmsh.y"
+#line 2580 "Gmsh.y"
 {
       List_Add(ListOfColor_L, &(yyvsp[0].u)) ;
     ;
     break;}
 case 329:
-#line 2586 "Gmsh.y"
+#line 2587 "Gmsh.y"
 {
       yyval.c = yyvsp[0].c;
     ;
     break;}
 case 330:
-#line 2590 "Gmsh.y"
+#line 2591 "Gmsh.y"
 {
       yyval.c = yyvsp[-1].c;
     ;
     break;}
 case 331:
-#line 2594 "Gmsh.y"
+#line 2595 "Gmsh.y"
 {
       sprintf(tmpstring, yyvsp[-3].c, yyvsp[-1].d);
       yyval.c = (char*)Malloc(strlen(tmpstring));
@@ -6123,7 +6124,7 @@ yyerrhandle:
   yystate = yyn;
   goto yynewstate;
 }
-#line 2601 "Gmsh.y"
+#line 2602 "Gmsh.y"
 
 
 void InitSymbols(void){
