@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.163 2002-04-12 18:43:23 geuzaine Exp $
+// $Id: GUI.cpp,v 1.164 2002-04-12 23:59:22 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -46,12 +46,15 @@ extern Context_T  CTX;
 
 //******************* Definition of the static menus ***********************************
 
+// Don't define shortcuts for FL_CTRL+'n', FL_CTRL+'p', FL_CTRL+'f', FL_CTRL+'b'
+// these are used by fltk for widget navigation (in the same way as the 4 arrow keys)
+
 Fl_Menu_Item m_menubar_table[] = {
   {"File", 0, 0, 0, FL_SUBMENU},
     {"Open...",          FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"Merge...",         FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0},
     {"Save as",          0, 0, 0, FL_MENU_DIVIDER|FL_SUBMENU},
-      {"By extension...",  FL_CTRL+'p', (Fl_Callback *)file_save_as_auto_cb, 0, FL_MENU_DIVIDER},
+      {"By extension...",  FL_CTRL+'e', (Fl_Callback *)file_save_as_auto_cb, 0, FL_MENU_DIVIDER},
       {"Geometry",  0, 0, 0, FL_SUBMENU},
          {"Gmsh flattened geometry (geo)...", 0, (Fl_Callback *)file_save_as_geo_cb, 0},
          {"Gmsh current options (opt)...",    0, (Fl_Callback *)file_save_as_geo_options_cb, 0},
@@ -961,7 +964,7 @@ void GUI::create_graphic_window(int argc, char **argv){
   g_status_butt[6]->tooltip("Play/pause animation");
 #endif
   
-  g_window->resizable(new Fl_Box(x,0,width-x,glheight));
+  g_window->resizable(new Dummy_Box(x,0,width-x,glheight));
   
   g_window->position(CTX.gl_position[0],CTX.gl_position[1]);
   g_window->end();   

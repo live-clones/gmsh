@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.20 2002-02-22 17:40:58 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.21 2002-04-12 23:59:22 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -110,6 +110,8 @@ int Opengl_Window::handle(int event) {
   static Curve    *c=NULL, *oc;
   static Surface  *s=NULL, *os;
 
+  //printf("gmsh handle\n");
+
   GLuint  ii[SELECTION_BUFFER_SIZE], jj[SELECTION_BUFFER_SIZE];
 
   switch (event) {
@@ -119,7 +121,11 @@ int Opengl_Window::handle(int event) {
     return 1;
 
   case FL_LEAVE :
+    return 1;
+
   case FL_FOCUS : 
+    return 1;
+
   case FL_UNFOCUS : 
     return 1;
 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.115 2002-04-12 18:43:23 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.116 2002-04-12 23:59:22 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -776,7 +776,7 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "  Ctrl+o        open file"); 
   Msg(DIRECT, "  p             go to post-processor module");
   Msg(DIRECT, "  Shift+p       show post-processing general options");
-  Msg(DIRECT, "  Ctrl+p        save file by extension");
+  Msg(DIRECT, "  Ctrl+e        save file by extension");
   Msg(DIRECT, "  Ctrl+q        quit");
   Msg(DIRECT, "  Ctrl+s        save mesh in default format");
   Msg(DIRECT, "");
