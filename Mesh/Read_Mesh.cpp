@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.46 2002-08-06 21:14:35 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.47 2002-11-14 05:45:20 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -291,6 +291,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	  if(!replace) M->Statistics[12]++;
 	  break;
 	case PNT:
+	  Tree_Replace(M->Points, &vertsp[0]) ;
 	  break;
 	default :
 	  Msg(WARNING, "Unknown type of element in Read_Mesh");
