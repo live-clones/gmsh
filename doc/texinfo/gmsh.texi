@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.49 2003-04-28 06:45:11 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.50 2003-04-28 06:47:35 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -2556,7 +2556,7 @@ is the number (index) of the @var{n}-th node in the mesh. Note that the
 ordered) way.
 
 @item @var{x-coord} @var{y-coord} @var{z-coord}
-are the floating point values giving the X, Y and Z coordinate of the
+are the floating point values giving the X, Y and Z coordinates of the
 @var{n}-th node.
 
 @item @var{number-of-elements}
