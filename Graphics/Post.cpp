@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.72 2004-07-17 22:46:30 geuzaine Exp $
+// $Id: Post.cpp,v 1.73 2004-07-18 16:42:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -377,12 +377,11 @@ void Draw_Post(void)
       else
 	glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
-      for(int i = 0; i < 6; i++){
+      for(int i = 0; i < 6; i++)
 	if(CTX.clip[i] & (1<<(2+iView))) 
 	  glEnable((GLenum)(GL_CLIP_PLANE0 + i));
 	else
 	  glDisable((GLenum)(GL_CLIP_PLANE0 + i));
-      }
       
       switch (v->RangeType) {
       case DRAW_POST_RANGE_DEFAULT:

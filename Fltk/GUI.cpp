@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.324 2004-07-17 22:46:29 geuzaine Exp $
+// $Id: GUI.cpp,v 1.325 2004-07-18 16:42:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2959,12 +2959,11 @@ void GUI::create_visibility_window()
 
 void GUI::reset_clip_browser()
 {
-  int i;
   char str[128];
   clip_browser->clear();
   clip_browser->add("Geometry");
   clip_browser->add("Mesh");
-  for(i = 0; i < List_Nbr(CTX.post.list); i++) {
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     if(i == NB_BUTT_MAX)
       break;
     sprintf(str, "View [%d]", i);
@@ -2972,10 +2971,10 @@ void GUI::reset_clip_browser()
   }
   int idx = clip_choice->value();
   clip_browser->deselect();
-  for(i = 0; i < clip_browser->size(); i++)
+  for(int i = 0; i < clip_browser->size(); i++)
     if(CTX.clip[idx] & (1<<i))
       clip_browser->select(i+1);
-  for(i = 0; i < 4; i++)
+  for(int i = 0; i < 4; i++)
     clip_value[i]->value(CTX.clip_plane[idx][i]);
 }
 
@@ -2996,32 +2995,37 @@ void GUI::create_clip_window()
     {0}
   };
 
-  int BW = 105;
-  int width = 2 * BW + 3 * WB;
+  int width = 3 * BB + 4 * WB;
   int height = 6 * BH + 3 * WB;
+  int brw = 105;
+  int BW = width - brw - 3 * WB - 3 * fontsize / 2;
+
 
   clip_window = new Fl_Window(width, height, "Clipping Planes");
   clip_window->box(WINDOW_BOX);
 
-  clip_browser = new Fl_Multi_Browser(1 * WB, 1 * WB, BW, 5 * BH);
+  clip_browser = new Fl_Multi_Browser(1 * WB, 1 * WB, brw, 5 * BH);
 
-  clip_choice = new Fl_Choice(2 * WB + BW, 1 * WB + 0 * BH, BW, BH);
+  clip_choice = new Fl_Choice(2 * WB + brw, 1 * WB + 0 * BH, BW, BH);
   clip_choice->menu(plane_number);
   clip_choice->callback(clip_num_cb);
 
-  int BW2 = BW - 3 * fontsize / 2;
-  clip_value[0] = new Fl_Value_Input(2 * WB + BW, 1 * WB + 1 * BH, BW2, BH, "A");
-  clip_value[1] = new Fl_Value_Input(2 * WB + BW, 1 * WB + 2 * BH, BW2, BH, "B");
-  clip_value[2] = new Fl_Value_Input(2 * WB + BW, 1 * WB + 3 * BH, BW2, BH, "C");
-  clip_value[3] = new Fl_Value_Input(2 * WB + BW, 1 * WB + 4 * BH, BW2, BH, "D");
+  clip_value[0] = new Fl_Value_Input(2 * WB + brw, 1 * WB + 1 * BH, BW, BH, "A");
+  clip_value[1] = new Fl_Value_Input(2 * WB + brw, 1 * WB + 2 * BH, BW, BH, "B");
+  clip_value[2] = new Fl_Value_Input(2 * WB + brw, 1 * WB + 3 * BH, BW, BH, "C");
+  clip_value[3] = new Fl_Value_Input(2 * WB + brw, 1 * WB + 4 * BH, BW, BH, "D");
   for(int i = 0; i < 4; i++)
     clip_value[i]->align(FL_ALIGN_RIGHT);
 
   reset_clip_browser();
 
   {
-    Fl_Return_Button *o = new Fl_Return_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Apply");
+    Fl_Return_Button *o = new Fl_Return_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Apply");
     o->callback(clip_ok_cb);
+  }
+  {
+    Fl_Button *o = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Reset");
+    o->callback(clip_reset_cb);
   }
   {
     Fl_Button *o = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.255 2004-07-17 22:46:28 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.256 2004-07-18 16:42:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1331,6 +1331,17 @@ void clip_cb(CALLBACK_ARGS)
 void clip_num_cb(CALLBACK_ARGS)
 {
   WID->reset_clip_browser();
+}
+
+void clip_reset_cb(CALLBACK_ARGS)
+{
+  for(int i = 0; i < 6; i++){
+    CTX.clip[i] = 0;
+    for(int j = 0; j < 4; j++)
+      CTX.clip_plane[i][j] = 0.;
+  }
+  WID->reset_clip_browser();
+  Draw();
 }
 
 void clip_ok_cb(CALLBACK_ARGS)

@@ -155,6 +155,7 @@ void visibility_ok_cb(CALLBACK_ARGS) ;
 
 void clip_cb(CALLBACK_ARGS) ;
 void clip_num_cb(CALLBACK_ARGS) ;
+void clip_reset_cb(CALLBACK_ARGS) ;
 void clip_ok_cb(CALLBACK_ARGS) ;
 
 // Help Menu
