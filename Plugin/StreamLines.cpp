@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.3 2004-04-24 04:08:39 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.4 2004-04-24 04:46:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -147,11 +147,11 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(Post_View * v) const
   const double b1=1./3.,b2=2./3.,b3=1./3.,b4=1./6.,a1=0.5,a2=0.5,a3=1.0,a4=1.0;
   OctreePost o(v);
 
-  const double DT  = StreamLinesOptions_Number[12].def;
-  for (int i = 0 ; i < getNbU(); ++i){
-    for (int j = 0 ; j < getNbV(); ++j){
-      getPoint (i, j, XINIT);
-      getPoint (i, j, X);
+  const double DT = StreamLinesOptions_Number[12].def;
+  for(int i = 0; i < getNbU(); ++i){
+    for(int j = 0; j < getNbV(); ++j){
+      getPoint(i, j, XINIT);
+      getPoint(i, j, X);
 	  
       int ITER = 0;
       
@@ -169,23 +169,23 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(Post_View * v) const
 	// X4 = X + a4 * DT * V ( X3 )
 	// X = X + b1 X1 + b2 X2 + b3 X3 + b4 x4
 	double sizeElem = 0.033;
-	o.searchVector ( X[0],X[1],X[2] , VALUES , &sizeElem, 0 );	      
+	o.searchVector(X[0], X[1], X[2], VALUES, &sizeElem, 0);
 	// sizeElem = 0.1;
 	//double normV = sqrt(VALUES[0]*VALUES[0]+
 	//		      VALUES[1]*VALUES[1]+
 	//		      VALUES[2]*VALUES[2]);	     
 	// if (normV==0.0) normV = 1.0;
 	// double DT = sizeElem / normV ; /// CFL = 1 ==> secure 
-	for (int k=0;k<3;k++) X1[k] = X[k] + DT * VALUES[k] * a1;
-	o.searchVector ( X1[0],X1[1],X1[2] , VALUES , &sizeElem,0 );
-	for (int k=0;k<3;k++) X2[k] = X[k] + DT * VALUES[k] * a2;
-	o.searchVector ( X2[0],X2[1],X2[2] , VALUES , &sizeElem,0 );
-	for (int k=0;k<3;k++) X3[k] = X[k] + DT * VALUES[k] * a3;
-	o.searchVector ( X3[0],X3[1],X3[2] , VALUES , &sizeElem,0);
-	for (int k=0;k<3;k++) X4[k] = X[k] + DT * VALUES[k] * a4;
-	for (int k=0;k<3;k++) X[k] += (b1*(X1[k]-X[k]) + b2*(X2[k]-X[k]) + 
-				       b3*(X3[k]-X[k]) + b4*(X4[k]-X[k])) ;
-	for (int k=0;k<3;k++) DX[k] = X[k] - XINIT[k];
+	for(int k = 0; k < 3; k++) X1[k] = X[k] + DT * VALUES[k] * a1;
+	o.searchVector(X1[0], X1[1], X1[2], VALUES, &sizeElem, 0);
+	for(int k = 0; k < 3; k++) X2[k] = X[k] + DT * VALUES[k] * a2;
+	o.searchVector(X2[0], X2[1], X2[2], VALUES, &sizeElem, 0);
+	for(int k = 0; k < 3; k++) X3[k] = X[k] + DT * VALUES[k] * a3;
+	o.searchVector(X3[0], X3[1], X3[2], VALUES, &sizeElem, 0);
+	for(int k = 0; k < 3; k++) X4[k] = X[k] + DT * VALUES[k] * a4;
+	for(int k = 0; k < 3; k++) X[k] += (b1*(X1[k]-X[k]) + b2*(X2[k]-X[k]) + 
+					    b3*(X3[k]-X[k]) + b4*(X4[k]-X[k])) ;
+	for(int k = 0; k < 3; k++) DX[k] = X[k] - XINIT[k];
 	List_Add(View->VP, &DX[0]);
 	List_Add(View->VP, &DX[1]);
 	List_Add(View->VP, &DX[2]);	      

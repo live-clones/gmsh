@@ -1,4 +1,4 @@
-// $Id: CutGrid.cpp,v 1.3 2004-04-24 04:08:39 geuzaine Exp $
+// $Id: CutGrid.cpp,v 1.4 2004-04-24 04:46:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -129,8 +129,8 @@ Post_View * GMSH_CutGridPlugin::GenerateView(Post_View * v) const
 
   OctreePost o(v);
 
-  for (int i = 0; i < getNbU()-1; ++i){
-    for (int j = 0; j < getNbV()-1; ++j){
+  for(int i = 0; i < getNbU()-1; ++i){
+    for(int j = 0; j < getNbV()-1; ++j){
       getPoint(i  , j  , X1);
       getPoint(i+1, j  , X2);
       getPoint(i+1, j+1, X3);
