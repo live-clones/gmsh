@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.36 2003-03-02 18:44:16 geuzaine Exp $
+# $Id: Makefile,v 1.37 2003-03-18 00:15:43 geuzaine Exp $
 
 include ../variables
 
@@ -44,8 +44,7 @@ CAD.o: CAD.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Numeric/Numeric.h Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
   ../Mesh/Metric.h ../Mesh/Matrix.h DataBase.h ../Mesh/Interpolation.h \
-  ../Mesh/Create.h CAD.h ExtrudeParams.h ../Common/Context.h \
-  ../Numeric/gsl_newt.h ../Numeric/gsl_brent.h
+  ../Mesh/Create.h CAD.h ExtrudeParams.h ../Common/Context.h
 DataBase.o: DataBase.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Geo.h \

@@ -74,4 +74,15 @@ double InterpolateIso(double *X, double *Y, double *Z,
 void gradSimplex (double *x, double *y, double *z, double *v, double *grad);
 
 
+/* Numerical routines implemented using either Numerical Recipes or
+   the GSL */
+
+void dsvdcmp(double **a, int m, int n, double w[], double **v);
+double brent(double ax, double bx, double cx,
+	     double (*f)(double), double tol, double *xmin);
+void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb,
+	    double *fc, double (*func)(double));
+void newt(double x[], int n, int *check,
+	  void (*vecfunc)(int, double [], double []));
+
 #endif

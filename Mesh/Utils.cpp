@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.17 2003-03-01 22:36:42 geuzaine Exp $
+// $Id: Utils.cpp,v 1.18 2003-03-18 00:15:43 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -31,7 +31,7 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_linalg.h>
 #else
-#include "NR.h"
+#include "nrutil.h"
 #endif
 
 extern Context_T CTX;

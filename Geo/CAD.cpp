@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.61 2003-03-11 05:57:06 geuzaine Exp $
+// $Id: CAD.cpp,v 1.62 2003-03-18 00:15:43 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -29,13 +29,6 @@
 #include "CAD.h"
 #include "Edge.h"
 #include "Context.h"
-
-#if defined(HAVE_GSL)
-#include "gsl_newt.h"
-#include "gsl_brent.h"
-#else
-#include "NR.h"
-#endif
 
 extern Mesh *THEM;
 extern Context_T CTX;
