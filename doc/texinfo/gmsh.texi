@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.20 2003-04-15 18:32:01 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.21 2003-04-15 18:35:46 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -118,8 +118,6 @@ all copies.
 @ifnottex
 @node Top, Copying conditions, (dir), (dir)
 @top Gmsh
-
-@chapheading Gmsh Reference Manual
 
 Christophe Geuzaine and Jean-Francois Remacle
 
