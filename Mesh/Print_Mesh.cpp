@@ -1,4 +1,4 @@
-/* $Id: Print_Mesh.cpp,v 1.4 2000-11-24 00:45:53 geuzaine Exp $ */
+/* $Id: Print_Mesh.cpp,v 1.5 2000-11-24 01:03:53 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -971,6 +971,7 @@ void ConsecutiveNodes (Mesh * M, Tree_T * ConsecutiveNTree, Tree_T * Consecutive
   }
   nbedges = -newnum - nbnod;
   nbdof = nbnod + nbedges;
+  Msg(INFOS, "%d Dofs", nbdof);
 }
 
 void EndConsecutiveNodes (Mesh * M){
