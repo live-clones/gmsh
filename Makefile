@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.278 2003-03-26 16:57:06 geuzaine Exp $
+# $Id: Makefile,v 1.279 2003-03-28 02:43:19 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -92,7 +92,7 @@ clean:
 	rm -f ${GMSH_VERSION_FILE}
 
 depend:
-	for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE} depend "FLAGS=-DHAVE_GSL"); done
+	for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE} depend "FLAGS=-DHAVE_GSL -DHAVE_FLTK"); done
 
 nodepend:
 	for i in ${GMSH_DIRS} ; do \
