@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.42 2004-09-01 21:03:16 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.43 2004-09-17 02:11:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1092,12 +1092,10 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
           dy *= dd;
           dz *= dd;
         }
-	for(int i = 0; i < 3; i++)
-	  Raise[i][0] = View->Raise[i] * dd;
         Draw_Vector(View->VectorType, View->IntervalsType != DRAW_POST_ISO,
 		    View->ArrowRelHeadRadius, View->ArrowRelStemLength,
 		    View->ArrowRelStemRadius, xc, yc, zc, 
-		    fact * dx, fact * dy, fact * dz, Raise, View->Light);
+		    fact * dx, fact * dy, fact * dz, NULL, View->Light);
       }
     }
   }
