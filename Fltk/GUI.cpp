@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.190 2002-08-12 06:58:21 geuzaine Exp $
+// $Id: GUI.cpp,v 1.191 2002-08-15 18:02:26 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -937,11 +937,6 @@ void GUI::create_graphic_window(int argc, char **argv){
   g_window = new Fl_Window(width, height);
   g_window->callback(file_quit_cb);
   
-  // dummy box has to be created before the glwindow (stupid, since
-  // the handle of the Dummy_Box always returns 0, but required by
-  // fltk 1.1...)
-  g_window->resizable(new Dummy_Box(x,0,width-x,glheight));
-
   g_opengl_window = new Opengl_Window(0,0,width,glheight);
   if(!opt_general_double_buffer(0,GMSH_GET,0)){
     Msg(INFO, "Setting OpenGL visual to single buffered");
@@ -1007,6 +1002,10 @@ void GUI::create_graphic_window(int argc, char **argv){
   g_status_butt[5]->tooltip("Rewind animation");
   g_status_butt[6]->tooltip("Play/pause animation");
 #endif
+
+  Dummy_Box *b = new Dummy_Box(x,0,width-x,glheight);
+  g_window->resizable(b);
+  b->hide();
   
   g_window->position(CTX.gl_position[0],CTX.gl_position[1]);
   g_window->end();   
