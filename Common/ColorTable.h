@@ -21,7 +21,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #define COLORTABLE_NBMAX_PARAM 10
-#define COLORTABLE_NBMAX_COLOR 255
+#define COLORTABLE_NBMAX_COLOR 1024
 
 typedef struct{
   unsigned int table[COLORTABLE_NBMAX_COLOR];

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.146 2004-11-25 02:10:31 geuzaine Exp $
+// $Id: Views.cpp,v 1.147 2004-11-25 22:07:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -662,6 +662,7 @@ GmshColorTable *Get_ColorTable(int num)
     if(!vv) return NULL;
     v = *vv;
   }
+  v->Changed = 1; // let's assume that if we get the ct we change it
   return &v->CT;
 }
 
