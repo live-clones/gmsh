@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.8 2001-02-17 22:02:17 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.9 2001-02-18 18:04:03 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -239,40 +239,41 @@ void Colorbar_Window::redraw_range(int a, int b){
    // print colortable mode and help
    fl_font(FL_HELVETICA, font_height);
    fl_color(contrast(FL_BLACK,color_bg));
+   int xx0=10, xx1=12*font_height, yy0=10;
    if (help_flag){
-     int i=0, xx=13*font_height;
-     fl_draw("1, 2, ..., 6", 10,10+(i+1)*font_height); 
-     fl_draw(    "select predefined colormap", xx,10+(i+1)*font_height); i++;
-     fl_draw("mouse1", 10,10+(i+1)*font_height); 
-     fl_draw(    "draw red or hue channel", xx,10+(i+1)*font_height); i++;
-     fl_draw("mouse2 or Shift+mouse1", 10,10+(i+1)*font_height); 
-     fl_draw(    "draw green or saturation channel", xx,10+(i+1)*font_height); i++;
-     fl_draw("mouse3", 10,10+(i+1)*font_height); 
-     fl_draw(    "draw blue or value channel", xx,10+(i+1)*font_height); i++;
-     fl_draw("Ctrl+mouse1", 10,10+(i+1)*font_height); 
-     fl_draw(    "draw alpha channel", xx,10+(i+1)*font_height); i++;
-     fl_draw("c, p, r", 10,10+(i+1)*font_height); 
-     fl_draw(    "copy, paste or reset current colormap", xx,10+(i+1)*font_height); i++;
-     fl_draw("m", 10,10+(i+1)*font_height); 
-     fl_draw(    "toggle RGB/HSV mode", xx,10+(i+1)*font_height); i++;
-     fl_draw("left, right", 10,10+(i+1)*font_height); 
-     fl_draw(    "move or rotate colormap", xx,10+(i+1)*font_height); i++;
-     fl_draw("up, down", 10,10+(i+1)*font_height); 
-     fl_draw(    "modify color curvature", xx,10+(i+1)*font_height); i++;
-     //fl_draw("Ctrl+up, Ctrl+down", 10,10+(i+1)*font_height); 
-     //fl_draw(    "modify alpha curvature", xx,10+(i+1)*font_height); i++;
-     fl_draw("i, Ctrl+i", 10,10+(i+1)*font_height); 
-     fl_draw(    "invert x or y range", xx,10+(i+1)*font_height); i++;
-     fl_draw("b, Ctrl+b", 10,10+(i+1)*font_height); 
-     fl_draw(    "increase or decrease gamma", xx,10+(i+1)*font_height); i++;
-     fl_draw("h", 10,10+(i+1)*font_height); 
-     fl_draw(    "show this help message", xx,10+(i+1)*font_height); i++;
+     i = 0;
+     fl_draw("1, 2, ..., 6", xx0,yy0+(i+1)*font_height); 
+     fl_draw(    "select predefined colormap", xx1,yy0+(i+1)*font_height); i++;
+     fl_draw("mouse1", xx0,yy0+(i+1)*font_height); 
+     fl_draw(    "draw red or hue channel", xx1,yy0+(i+1)*font_height); i++;
+     fl_draw("mouse2 or Shift+mouse1", xx0,yy0+(i+1)*font_height); 
+     fl_draw(    "draw green or saturation channel", xx1,yy0+(i+1)*font_height); i++;
+     fl_draw("mouse3", xx0,yy0+(i+1)*font_height); 
+     fl_draw(    "draw blue or value channel", xx1,yy0+(i+1)*font_height); i++;
+     fl_draw("Ctrl+mouse1", xx0,yy0+(i+1)*font_height); 
+     fl_draw(    "draw alpha channel", xx1,yy0+(i+1)*font_height); i++;
+     fl_draw("c, p, r", xx0,yy0+(i+1)*font_height); 
+     fl_draw(    "copy, paste or reset current colormap", xx1,yy0+(i+1)*font_height); i++;
+     fl_draw("m", xx0,yy0+(i+1)*font_height); 
+     fl_draw(    "toggle RGB/HSV mode", xx1,yy0+(i+1)*font_height); i++;
+     fl_draw("left, right", xx0,yy0+(i+1)*font_height); 
+     fl_draw(    "move or rotate colormap", xx1,yy0+(i+1)*font_height); i++;
+     fl_draw("up, down", xx0,yy0+(i+1)*font_height); 
+     fl_draw(    "modify color curvature", xx1,yy0+(i+1)*font_height); i++;
+     //fl_draw("Ctrl+up, Ctrl+down", xx0,yy0+(i+1)*font_height); 
+     //fl_draw(    "modify alpha curvature", xx1,yy0+(i+1)*font_height); i++;
+     fl_draw("i, Ctrl+i", xx0,yy0+(i+1)*font_height); 
+     fl_draw(    "invert x or y range", xx1,yy0+(i+1)*font_height); i++;
+     fl_draw("b, Ctrl+b", xx0,yy0+(i+1)*font_height); 
+     fl_draw(    "increase or decrease gamma", xx1,yy0+(i+1)*font_height); i++;
+     fl_draw("h", xx0,yy0+(i+1)*font_height); 
+     fl_draw(    "show this help message", xx1,yy0+(i+1)*font_height); i++;
    }
    else
      if(ct->ipar[COLORTABLE_MODE] == COLORTABLE_RGB)
-       fl_draw("RGB", 10, 10+font_height);
+       fl_draw("RGB", xx0, yy0+font_height);
      else if(ct->ipar[COLORTABLE_MODE] == COLORTABLE_HSV)
-       fl_draw("HSV", 10, 10+font_height);
+       fl_draw("HSV", xx0, yy0+font_height);
 }
 
 

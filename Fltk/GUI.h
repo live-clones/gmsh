@@ -64,20 +64,11 @@ extern Context_Item menu_post[];
 
 class GUI{
 
-  int BH; // check_button height
-  int BW; // check_button width
-  int BB; // button width
-  int WB; // borders
-  int IW; // input field width
-  int MH; // height of the unchangeable part of the menu window
+  int MH ;
 
-  // All other diemnsions are automatic, or governed by CTX
-  
   // Bitmaps
   Fl_Bitmap  *icon1_bmp, *icon2_bmp, *icon3_bmp;
   Fl_Bitmap  *abort_bmp, *start_bmp, *stop_bmp, *about_bmp ;
-
-  // We keep the following widgets for easy further reference
 
 public:
 

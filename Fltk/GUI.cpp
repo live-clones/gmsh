@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.46 2001-02-17 22:02:17 geuzaine Exp $
+// $Id: GUI.cpp,v 1.47 2001-02-18 18:04:03 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -20,6 +20,12 @@
 #include "GetOptions.h"
 
 #define WINDOW_BOX FL_FLAT_BOX
+
+#define IW  (10*CTX.fontsize) // input field width
+#define BW  (3*IW/2) // width of a button with external label
+#define BB  (5*CTX.fontsize-2) // width of a button with internal label
+#define BH  (2*CTX.fontsize) // button height
+#define WB  (5) // window border
 
 extern Context_T  CTX;
 
@@ -412,12 +418,6 @@ int GUI::global_shortcuts(int event){
 
 GUI::GUI(int argc, char **argv) {
 
-  IW = 10*CTX.fontsize; // input field width
-  BW = 3*IW/2; // width of a button with external label
-  BB = 5*CTX.fontsize; // width of a button with internal label
-  BH = 2*CTX.fontsize+2; // button height
-  WB = 4; // window border
-  
   init_menu_window = 0;
   init_graphic_window = 0;
   init_general_options_window = 0;
@@ -970,7 +970,7 @@ void GUI::create_general_options_window(){
       o->callback(opt_general_ok_cb);
     }
     { 
-      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)gen_window);
     }
@@ -1081,7 +1081,7 @@ void GUI::create_geometry_options_window(){
       o->callback(opt_geometry_ok_cb);
     }
     { 
-      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)geo_window);
     }
@@ -1257,7 +1257,7 @@ void GUI::create_mesh_options_window(){
       o->callback(opt_mesh_ok_cb);
     }
     { 
-      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)mesh_window);
     }
@@ -1340,7 +1340,7 @@ void GUI::create_post_options_window(){
       o->callback(opt_post_ok_cb);
     }
     { 
-      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)post_window);
     }
@@ -1428,12 +1428,12 @@ void GUI::create_statistics_window(){
     }
 
     { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-BB/3-2*WB, height-BH-WB, BB+BB/3, BH, "update");
+      Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-BB/3-2*WB, height-BH-WB, BB+BB/3, BH, "Update");
       o->labelsize(CTX.fontsize);
       o->callback(opt_statistics_update_cb);
     }
     { 
-      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)stat_window);
     }
@@ -1531,17 +1531,17 @@ void GUI::create_message_window(){
     msg_browser->textsize(CTX.fontsize);
 
     { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-3*BB-3*WB, height-BH-WB, BB, BH, "save");
+      Fl_Return_Button* o = new Fl_Return_Button(width-3*BB-3*WB, height-BH-WB, BB, BH, "Save");
       o->labelsize(CTX.fontsize);
       o->callback(opt_message_save_cb);
     }
     { 
-      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "clear");
+      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Clear");
       o->labelsize(CTX.fontsize);
       o->callback(opt_message_clear_cb);
     }
     { 
-      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)msg_window);
     }
@@ -1662,7 +1662,7 @@ void GUI::create_view_options_window(int num){
     init_view_window = 1 ;
 
     int width = 32*CTX.fontsize;
-    int height = 5*WB+10*BH;
+    int height = 5*WB+11*BH;
     
     view_window = new Fl_Window(width,height);
     view_window->box(WINDOW_BOX);
@@ -1838,7 +1838,7 @@ void GUI::create_view_options_window(int num){
       view_ok->labelsize(CTX.fontsize);
     }
     { 
-      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)view_window);
     }
@@ -1964,7 +1964,7 @@ void GUI::create_geometry_context_window(int num){
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "add");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "Add");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_geometry_define_parameter_cb);
 	}
@@ -1984,7 +1984,7 @@ void GUI::create_geometry_context_window(int num){
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "add");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "Add");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_geometry_define_point_cb);
 	}
@@ -2003,7 +2003,7 @@ void GUI::create_geometry_context_window(int num){
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "set");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "Set");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_geometry_define_translation_cb);
 	}
@@ -2026,7 +2026,7 @@ void GUI::create_geometry_context_window(int num){
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "set");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "Set");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_geometry_define_rotation_cb);
 	}
@@ -2046,7 +2046,7 @@ void GUI::create_geometry_context_window(int num){
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "set");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "Set");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_geometry_define_scale_cb);
 	}
@@ -2066,7 +2066,7 @@ void GUI::create_geometry_context_window(int num){
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "set");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "Set");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_geometry_define_symmetry_cb);
 	}
@@ -2076,7 +2076,7 @@ void GUI::create_geometry_context_window(int num){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)context_geometry_window);
     }
@@ -2131,7 +2131,7 @@ void GUI::create_mesh_context_window(int num){
 	context_mesh_input[0]->textsize(CTX.fontsize);
 	context_mesh_input[0]->align(FL_ALIGN_RIGHT);
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+3*BH, BB, BH, "set");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+3*BH, BB, BH, "Set");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_mesh_define_length_cb);
 	}
@@ -2149,7 +2149,7 @@ void GUI::create_mesh_context_window(int num){
 	  context_mesh_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+3*BH, BB, BH, "set");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+3*BH, BB, BH, "Set");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_mesh_define_transfinite_line_cb);
 	}
@@ -2164,7 +2164,7 @@ void GUI::create_mesh_context_window(int num){
 	context_mesh_input[3]->textsize(CTX.fontsize);
 	context_mesh_input[3]->align(FL_ALIGN_RIGHT);
 	{ 
-	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+3*BH, BB, BH, "set");
+	  Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+3*BH, BB, BH, "Set");
 	  o->labelsize(CTX.fontsize);
 	  o->callback(con_mesh_define_transfinite_line_cb);
 	}
@@ -2174,7 +2174,7 @@ void GUI::create_mesh_context_window(int num){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)context_mesh_window);
     }
