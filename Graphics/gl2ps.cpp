@@ -5,7 +5,7 @@
  * GL2PS, an OpenGL to Postscript Printing Library
  * Copyright (C) 1999-2001  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.25 2001-08-06 12:26:26 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.26 2001-08-14 13:23:40 geuzaine Exp $
  *
  * E-mail: Christophe.Geuzaine@AdValvas.be
  * URL: http://www.geuz.org/gl2ps/
@@ -133,7 +133,7 @@ GLvoid *gl2psListPointer(GL2PSlist *list, GLint index){
 }
 
 GLvoid gl2psListSort(GL2PSlist *list,
-		     GLint (*fcmp)(const GLvoid *a, const GLvoid *b)){
+		     int (*fcmp)(const void *a, const void *b)){
   qsort(list->array, list->n, list->size, fcmp);
 }
 
@@ -433,7 +433,7 @@ GLvoid gl2psDivideQuad(GL2PSprimitive *quad,
   (*t1)->boundary = ((quad->boundary & 4) ? 2 : 0) | ((quad->boundary & 4) ? 2 : 0);
 }
 
-int gl2psCompareDepth(const GLvoid *a, const GLvoid *b){
+int gl2psCompareDepth(const void *a, const void *b){
   GL2PSprimitive *q,*w;
   GLfloat        diff;
 
@@ -448,7 +448,7 @@ int gl2psCompareDepth(const GLvoid *a, const GLvoid *b){
     return 0;
 }
 
-GLint gl2psTrianglesFirst(const GLvoid *a, const GLvoid *b){
+int gl2psTrianglesFirst(const void *a, const void *b){
   GL2PSprimitive *q,*w;
 
   q = *(GL2PSprimitive**)a;

@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.25 2001-08-06 16:47:57 geuzaine Exp $
+// $Id: Draw.cpp,v 1.26 2001-08-14 13:23:40 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -87,7 +87,7 @@ void Orthogonalize(int x, int y){
                    (GLdouble)(CTX.viewport[3]-y),
                    5.0,
                    5.0,
-                   CTX.viewport);
+                   (GLint*)CTX.viewport);
 
   Va = (GLdouble)(CTX.viewport[3]-CTX.viewport[1]) / 
        (GLdouble)(CTX.viewport[2]-CTX.viewport[0]) ;
