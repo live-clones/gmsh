@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.135 2002-07-31 23:22:59 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.136 2002-08-06 06:39:30 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -965,7 +965,6 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "");
   Msg(DIRECT, "Menu bar shortcuts:");
   Msg(DIRECT, "");
-  Msg(DIRECT, "  "XX"+a        save file as");
   Msg(DIRECT, "  b             go back to previous context");
   Msg(DIRECT, "  f             go forward to next context");
   Msg(DIRECT, "  g             go to geometry module");
@@ -980,6 +979,7 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "  Shift+p       show post-processing general options");
   Msg(DIRECT, "  "XX"+q        quit");
   Msg(DIRECT, "  "XX"+s        save mesh in default format");
+  Msg(DIRECT, "  "XX"+Shift+s  save file as");
   Msg(DIRECT, "");
   Msg(DIRECT, "Other shortcuts");
   Msg(DIRECT, "");

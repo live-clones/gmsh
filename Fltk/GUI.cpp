@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.186 2002-08-02 16:57:00 geuzaine Exp $
+// $Id: GUI.cpp,v 1.187 2002-08-06 06:39:30 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -103,7 +103,7 @@ Fl_Menu_Item m_menubar_table[] = {
          {0},
       {0},
 #else
-    {"Save as...",       FL_CTRL+'a', (Fl_Callback *)file_save_as_cb, 0, FL_MENU_DIVIDER},
+    {"Save as...",       FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)file_save_as_cb, 0, FL_MENU_DIVIDER},
 #endif
     {"Visibility...",    FL_SHIFT+'v', (Fl_Callback *)opt_visibility_cb, 0},
     {"Messages...",      FL_SHIFT+'l', (Fl_Callback *)opt_message_cb, 0},
@@ -393,12 +393,6 @@ int GUI::global_shortcuts(int event){
     quit_selection = 1;
     return 1;
   }
-/* I made this one more visible, as File->Save
-  else if(Fl::test_shortcut(FL_CTRL+'s')){
-    mesh_save_cb(0,0);
-    return 1;
-  }
-*/
   else if(Fl::test_shortcut(FL_CTRL+FL_SHIFT+'d')){
     opt_post_anim_delay(0,GMSH_SET|GMSH_GUI,opt_post_anim_delay(0,GMSH_GET,0) + 0.01);
     return 1;
