@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.351 2004-09-19 16:44:57 geuzaine Exp $
+// $Id: GUI.cpp,v 1.352 2004-09-23 23:13:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -93,7 +93,7 @@ Fl_Menu_Item m_menubar_table[] = {
     {"M&essage console...", FL_SHIFT+'l', (Fl_Callback *)message_cb, 0},
     {0},
   {"&Help", 0, 0, 0, FL_SUBMENU},
-    {"&Current options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5},
+    {"&Current options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5, FL_MENU_DIVIDER},
     {"M&ouse actions...",        0, (Fl_Callback *)help_mouse_cb, 0},
     {"&Keyboard shortcuts...",   0, (Fl_Callback *)help_short_cb, 0},
     {"C&ommand line options...", 0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
@@ -125,7 +125,7 @@ Fl_Menu_Item m_sys_menubar_table[] = {
     {"Message Console...", FL_SHIFT+'l', (Fl_Callback *)message_cb, 0},
     {0},
   {"Help",0,0,0,FL_SUBMENU},
-    {"Current Options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5},
+    {"Current Options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5, FL_MENU_DIVIDER},
     {"Mouse Actions...",        0, (Fl_Callback *)help_mouse_cb, 0},
     {"Keyboard Shortcuts...",   0, (Fl_Callback *)help_short_cb, 0},
     {"Command Line Options...", 0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
