@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.128 2004-09-16 21:26:30 geuzaine Exp $
+// $Id: Views.cpp,v 1.129 2004-09-17 17:35:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1283,7 +1283,7 @@ void CombineViews(int all, int remove)
        */
     }
   }
-  EndView(vm, 0, "combined.pos", "combined");
+  EndView(vm, 0, "Combine.pos", "Combine");
 
   // remove original views?
   if(remove){
@@ -1369,8 +1369,8 @@ void combine_time(struct nameidx *id, List_T *to_remove)
   }
   // finalize
   char name[256], filename[256];
-  sprintf(name, "combined-%s", id->name);
-  sprintf(filename, "combined-%s.pos", id->name);
+  sprintf(name, "%s_Combine", id->name);
+  sprintf(filename, "%s_Combine.pos", id->name);
   EndView(vm, 0, filename, name);
 }
 
