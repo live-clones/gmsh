@@ -64,11 +64,6 @@ Fourth cut plane equation coefficient (`D' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item Mesh.Degree
-Element order@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.DisplayLists
 Use OpenGL display lists for drawing meshes@*
 Default value: @code{0}@*
@@ -77,6 +72,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Dual
 Display the dual mesh obtained by barycentric subdivision@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ElementOrder
+Element order (1=linear elements, 2=quadratic elements)@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Explode
@@ -262,11 +262,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Color.Points
 Mesh vertex color@*
 Default value: @code{@{0,123,59@}}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.Color.PointsSupp
-Mesh high order vertex color@*
-Default value: @code{@{255,0,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Lines

@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.61 2003-06-14 17:28:02 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.62 2003-06-15 16:37:20 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -46,7 +46,7 @@
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
-@set EDITION        1.7
+@set EDITION        1.8
 @set GMSH-VERSION   1.45
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
 @set COPYRIGHT      @copyright{} 1997-2003 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
@@ -1220,10 +1220,6 @@ or to a real option.
 @item @var{string} | @var{real-option} /= @var{expression};
 Divides and affects @var{expression} to an existing expression identifier
 or to a real option.
-
-@item @var{string} [ @{ @var{expression-list} @} ] = @{ @var{expression-list} @};
-Affects, item per item, the right hand side @var{expression-list} to an
-existing expression list identifier.
 
 @item @var{string} [ @{ @var{expression-list} @} ] += @{ @var{expression-list} @};
 Adds and affects, item per item, the right hand side @var{expression-list}

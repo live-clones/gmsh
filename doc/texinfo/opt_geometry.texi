@@ -19,6 +19,11 @@ Default geometry color scheme (0, 1 or 2)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.CircleWarning
+Warn if circle arc is greater than Pi@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.ExtrudeSplinePoints
 Number of control points for splines created during extrusion@*
 Default value: @code{5}@*
