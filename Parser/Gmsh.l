@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.69 2005-02-02 18:47:56 geuzaine Exp $
+// $Id: Gmsh.l,v 1.70 2005-03-13 07:16:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -215,6 +215,7 @@ Symmetry                return tSymmetry;
 Sprintf                 return tSprintf;
 StrCat                  return tStrCat;
 StrPrefix               return tStrPrefix;
+StrRelative             return tStrRelative;
 Show                    return tShow;
 
 Triangulation           return tTriangulation;

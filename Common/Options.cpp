@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.233 2005-03-13 05:32:43 geuzaine Exp $
+// $Id: Options.cpp,v 1.234 2005-03-13 07:16:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -869,6 +869,11 @@ char *opt_general_display(OPT_ARGS_STR)
   if(action & GMSH_SET)
     CTX.display = val;
   return CTX.display;
+}
+
+char *opt_general_filename(OPT_ARGS_STR)
+{
+  return CTX.filename;
 }
 
 char *opt_general_default_filename(OPT_ARGS_STR)

@@ -43,6 +43,7 @@ char * opt_general_axes_format0(OPT_ARGS_STR);
 char * opt_general_axes_format1(OPT_ARGS_STR);
 char * opt_general_axes_format2(OPT_ARGS_STR);
 char * opt_general_display(OPT_ARGS_STR);
+char * opt_general_filename(OPT_ARGS_STR);
 char * opt_general_default_filename(OPT_ARGS_STR);
 char * opt_general_tmp_filename(OPT_ARGS_STR);
 char * opt_general_error_filename(OPT_ARGS_STR);

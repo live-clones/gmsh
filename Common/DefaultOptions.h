@@ -61,6 +61,9 @@ StringXString GeneralOptions_String[] = {
   { F|O, "ErrorFileName" , opt_general_error_filename , ".gmsh-errors" ,
     "File into which the log is saved if a fatal error occurs" },
 
+  { F,   "FileName" , opt_general_filename , "" , 
+    "Current project file name (read-only)" },
+
   { F|O, "GraphicsFont" , opt_general_graphics_font , "Helvetica" ,
     "Font used in the graphic window" }, 
 

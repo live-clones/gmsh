@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.203 2005-02-20 06:36:58 geuzaine Exp $
+// $Id: Gmsh.y,v 1.204 2005-03-13 07:16:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -88,7 +88,8 @@ int CheckViewErrorFlags(Post_View *v);
 %token tEND tAFFECT tDOTS tPi tMPI_Rank tMPI_Size
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
-%token tFmod tModulo tHypot tPrintf tSprintf tStrCat tStrPrefix
+%token tFmod tModulo tHypot 
+%token tPrintf tSprintf tStrCat tStrPrefix tStrRelative
 %token tBoundingBox tDraw tToday
 %token tPoint tCircle tEllipse tLine tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
@@ -4152,6 +4153,20 @@ StringExpr :
       if(i <= 0) strcpy($$, $3);
       Free($3);
     }
+  | tStrRelative '(' StringExpr ')'
+    {
+      $$ = (char *)Malloc((strlen($3)+1)*sizeof(char));
+      int i;
+      for(i = strlen($3)-1; i >= 0; i--){
+	if($3[i] == '/' || $3[i] == '\\')
+	  break;
+      }
+      if(i <= 0)
+	strcpy($$, $3);
+      else
+	strcpy($$, &$3[i+1]);
+      Free($3);
+    }
   | tSprintf '(' StringExpr ')'
     {
       $$ = $3;
@@ -4179,11 +4194,17 @@ StringExpr :
     { 
       char* (*pStrOpt)(int num, int action, char *value);
       StringXString *pStrCat;
-      if(!(pStrCat = Get_StringOptionCategory($3)))
+      if(!(pStrCat = Get_StringOptionCategory($3))){
 	yymsg(GERROR, "Unknown string option class '%s'", $3);
+	$$ = (char*)Malloc(sizeof(char));
+	$$[0] = '\0';
+      }
       else{
-	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption($5, pStrCat)))
+	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption($5, pStrCat))){
 	  yymsg(GERROR, "Unknown string option '%s.%s'", $3, $5);
+	  $$ = (char*)Malloc(sizeof(char));
+	  $$[0] = '\0';
+	}
 	else{
 	  char *str = pStrOpt(0, GMSH_GET, NULL);
 	  $$ = (char*)Malloc((strlen(str)+1)*sizeof(char));
@@ -4191,15 +4212,21 @@ StringExpr :
 	}
       }
     }
-  | tSprintf '('  tSTRING '[' FExpr ']' '.' tSTRING   ')'
+  | tSprintf '(' tSTRING '[' FExpr ']' '.' tSTRING ')'
     { 
       char* (*pStrOpt)(int num, int action, char *value);
       StringXString *pStrCat;
-      if(!(pStrCat = Get_StringOptionCategory($3)))
+      if(!(pStrCat = Get_StringOptionCategory($3))){
 	yymsg(GERROR, "Unknown string option class '%s'", $3);
+	$$ = (char*)Malloc(sizeof(char));
+	$$[0] = '\0';
+      }
       else{
-	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption($8, pStrCat)))
+	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption($8, pStrCat))){
 	  yymsg(GERROR, "Unknown string option '%s[%d].%s'", $3, (int)$5, $8);
+	  $$ = (char*)Malloc(sizeof(char));
+	  $$[0] = '\0';
+	}
 	else{
 	  char *str = pStrOpt((int)$5, GMSH_GET, NULL);
 	  $$ = (char*)Malloc((strlen(str)+1)*sizeof(char));

@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.175 2005-03-12 20:17:41 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.176 2005-03-13 07:16:17 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -767,16 +767,17 @@ Character expressions are defined as:
   "@var{string}" |
   Today |
   StrPrefix ( @var{char-expression} ) |
+  StrRelative ( @var{char-expression} ) |
   StrCat ( @var{char-expression} , @var{char-expression} ) |
   Sprintf ( @var{char-expression} , @var{expression-list} ) |
   Sprintf ( @var{char-expression} )
   Sprintf ( @var{char-option} )
 @end example
 
-@noindent The third case in this definition permits to take the
-prefix of a string (e.g., for removing the extension from a file name). The
-fourth case permits to concatenate two character expressions, and the fifth
-is an equivalent of the @code{sprintf} C function (where
+@noindent The third and fourth cases in this definition permit to take the
+prefix (e.g. to remove the extension) or the relative path of a string. The
+fifth case permits to concatenate two character expressions, and the sixth
+and seveth are equivalent to the @code{sprintf} C function (where
 @var{char-expression} is a format string that can contain floating point
 formatting characters: @code{%e}, @code{%g}, etc.). The last case permits to
 use the value of a @var{char-option} as a @var{char-expression}.  The

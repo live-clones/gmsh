@@ -44,6 +44,11 @@ File into which the log is saved if a fatal error occurs@*
 Default value: @code{".gmsh-errors"}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.FileName
+Current project file name (read-only)@*
+Default value: @code{""}@*
+Saved in: @code{-}
+
 @item General.GraphicsFont
 Font used in the graphic window@*
 Default value: @code{"Helvetica"}@*
