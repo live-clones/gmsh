@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.47 2000-12-20 10:40:56 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.48 2000-12-20 12:17:10 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -54,6 +54,8 @@ static unsigned int   *pColOpt;
 static StringXString  *pStrCat;
 static StringXNumber  *pNumCat;
 static StringXColor   *pColCat;
+
+void CreateFile (char *name, int format);
 
 char *strsave(char *ptr);
 void  yyerror (char *s);
@@ -1625,22 +1627,19 @@ Command :
       }
       else if(!strcmp($1, "Print")){
 
-	if(!CTX.interactive){ // we're in interactive mode
-	  void CreateImage (char *name, int format);
-	  CreateImage($2, CTX.print.format);
-	}
-	
+	if(!CTX.interactive) CreateFile($2, CTX.print.format);
+
+      }
+      else if(!strcmp($1, "Save")){
+
+	CreateFile($2, CTX.mesh.format);
+
       }
       else if(!strcmp($1, "Merge")){
 
 	FILE *ff = yyin;
 	MergeProblem($2);
 	yyin = ff;
-
-      }
-      else if(!strcmp($1, "Save")){
-
-	Print_Mesh(THEM, $2, CTX.mesh.format);
 
       }
       else if(!strcmp($1, "System")){

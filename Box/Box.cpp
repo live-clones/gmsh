@@ -1,4 +1,4 @@
-/* $Id: Box.cpp,v 1.14 2000-12-19 08:56:52 geuzaine Exp $ */
+/* $Id: Box.cpp,v 1.15 2000-12-20 12:17:03 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -63,7 +63,7 @@ void Init(void){}
 void Draw(void){}
 void Replot(void){}
 void Get_AnimTime(void){}
-void CreateImage(char *, FILE*){}
+void CreateFile(char *, int){}
 
 /* ------------------------------------------------------------------------ */
 /*  I n f o                                                                 */

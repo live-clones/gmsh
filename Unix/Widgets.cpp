@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.19 2000-12-20 10:40:58 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.20 2000-12-20 12:17:13 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -82,13 +82,14 @@ void CreateWidgets_M(Widgets_T *w){
   i=0;
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Save Mesh")); i++;
   XtSetArg(arg[i], XmNacceleratorText, XmStringCreateSimple("(C-s)")); i++;
+  XtSetArg(arg[i], XmNaccelerator, "Ctrl<Key>s:"); i++;
   w->M.fileButt[2] = XmCreatePushButton(w->M.filePane, "MfileButt2", arg, i);
   XtManageChild(w->M.fileButt[2]);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Save Mesh as")); i++;
-  XtSetArg(arg[i], XmNacceleratorText, XmStringCreateSimple("(C-S-s)")); i++;
-  XtSetArg(arg[i], XmNaccelerator, "Ctrl<Key>s:"); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Save as")); i++;
+  XtSetArg(arg[i], XmNacceleratorText, XmStringCreateSimple("(C-p)")); i++;
+  XtSetArg(arg[i], XmNaccelerator, "Ctrl<Key>p:"); i++;
   w->M.fileButt[3] = XmCreatePushButton(w->M.filePane, "MfileButt3", arg, i);
   XtManageChild(w->M.fileButt[3]);
 
@@ -98,13 +99,6 @@ void CreateWidgets_M(Widgets_T *w){
   XtManageChild(w->M.fileButt[4]);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Print")); i++;
-  XtSetArg(arg[i], XmNacceleratorText, XmStringCreateSimple("(C-p)")); i++;
-  XtSetArg(arg[i], XmNaccelerator, "Ctrl<Key>p:"); i++;
-  w->M.fileButt[5] = XmCreatePushButton(w->M.filePane, "MfileButt5", arg, i);
-  XtManageChild(w->M.fileButt[5]);
-
-  i=0;
   w->M.fileSep[1] = XmCreateSeparator(w->M.filePane, "MfileSep1", arg, i);
   XtManageChild(w->M.fileSep[1]);
 
@@ -112,15 +106,15 @@ void CreateWidgets_M(Widgets_T *w){
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Reload All Views")); i++;
   XtSetArg(arg[i], XmNacceleratorText, XmStringCreateSimple("(C-l)")); i++;
   XtSetArg(arg[i], XmNaccelerator, "Ctrl<Key>l:"); i++;
-  w->M.fileButt[6] = XmCreatePushButton(w->M.filePane, "MfileButt6", arg, i);
-  XtManageChild(w->M.fileButt[6]);
+  w->M.fileButt[5] = XmCreatePushButton(w->M.filePane, "MfileButt6", arg, i);
+  XtManageChild(w->M.fileButt[5]);
 
   i=0;
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Remove All Views")); i++;
   XtSetArg(arg[i], XmNacceleratorText, XmStringCreateSimple("(C-r)")); i++;
   XtSetArg(arg[i], XmNaccelerator, "Ctrl<Key>r:"); i++;
-  w->M.fileButt[7] = XmCreatePushButton(w->M.filePane, "MfileButt7", arg, i);
-  XtManageChild(w->M.fileButt[7]);
+  w->M.fileButt[6] = XmCreatePushButton(w->M.filePane, "MfileButt7", arg, i);
+  XtManageChild(w->M.fileButt[6]);
 
   i=0;
   w->M.fileSep[2] = XmCreateSeparator(w->M.filePane, "MfileSep2", arg, i);
@@ -130,8 +124,8 @@ void CreateWidgets_M(Widgets_T *w){
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Quit")); i++;
   XtSetArg(arg[i], XmNacceleratorText, XmStringCreateSimple("(C-q)")); i++;
   XtSetArg(arg[i], XmNaccelerator, "Ctrl<Key>q:"); i++;
-  w->M.fileButt[8] = XmCreatePushButton(w->M.filePane, "MfileButt8", arg, i);
-  XtManageChild(w->M.fileButt[8]);
+  w->M.fileButt[7] = XmCreatePushButton(w->M.filePane, "MfileButt8", arg, i);
+  XtManageChild(w->M.fileButt[7]);
 
   i=0;
   XtSetArg(arg[i], XmNsubMenuId, w->M.filePane); i++;
@@ -564,9 +558,9 @@ void CreateWidgets_ED(Widgets_T *w){
   i=0 ;
   XtSetArg(arg[i], XmNdialogTitle, XmStringCreateSimple("Warning")); i++;
   XtSetArg(arg[i], XmNmessageString, XmStringCreateSimple("File exists")); i++;
-  w->ED.printDialog = XmCreateWarningDialog(w->M.shell, "EDprintDialog", arg, i);
+  w->ED.saveAsDialog = XmCreateWarningDialog(w->M.shell, "EDsaveAsDialog", arg, i);
 
-  tmp = XmMessageBoxGetChild(w->ED.printDialog, XmDIALOG_HELP_BUTTON); 
+  tmp = XmMessageBoxGetChild(w->ED.saveAsDialog, XmDIALOG_HELP_BUTTON); 
   XtUnmanageChild(tmp);
 
 }
@@ -599,50 +593,82 @@ void CreateWidgets_FD(Widgets_T *w){
   w->FD.mergeDialog = XmCreateFileSelectionDialog(w->M.shell, "FDmergeDialog", arg, i);
   XtUnmanageChild(w->FD.mergeDialog);
 
-  /* save mesh as */
+  /* save as */
+
   i=0 ;
   XtSetArg(arg[i], XmNdialogTitle, XmStringCreateSimple("Save")); i++;
   XtSetArg(arg[i], XmNnoMatchString, XmStringCreateSimple("[ NONE ]")); i++;
   XtSetArg(arg[i], XmNdirMask, XmStringCreateSimple("*")); i++;
-  XtSetArg(arg[i], XmNautoUnmanage, True); i++;
-  w->FD.saveMeshAsDialog = XmCreateFileSelectionDialog(w->M.shell, "FDsaveMeshAsDialog", arg, i);
-  XtUnmanageChild(w->FD.saveMeshAsDialog);
+  XtSetArg(arg[i], XmNautoUnmanage, False); i++; /* + pratique qd on sauve des animations */
+  w->FD.saveAsDialog = XmCreateFileSelectionDialog(w->M.shell, "FDsaveAsDialog", arg, i);
+  XtUnmanageChild(w->FD.saveAsDialog);
 
   i=0;
-  w->FD.saveMeshAsFrame[0] = XmCreateFrame(w->FD.saveMeshAsDialog, "FDsaveFrame0", arg, i);
-  XtManageChild(w->FD.saveMeshAsFrame[0]);
+  w->FD.saveAsFrame[0] = XmCreateFrame(w->FD.saveAsDialog, "FDsaveAsFrame0", arg, i);
+  XtManageChild(w->FD.saveAsFrame[0]);
 
   i=0;
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Format")); i++;
   XtSetArg(arg[i], XmNchildType, XmFRAME_TITLE_CHILD); i++;
-  w->FD.saveMeshAsFrame[1] = XmCreateLabel(w->FD.saveMeshAsFrame[0], "FDsaveMeshAsFrame1", arg, i);
-  XtManageChild(w->FD.saveMeshAsFrame[1]);
+  w->FD.saveAsFrame[1] = XmCreateLabel(w->FD.saveAsFrame[0], "FDsaveAsFrame1", arg, i);
+  XtManageChild(w->FD.saveAsFrame[1]);
 
   i=0 ;
   XtSetArg(arg[i], XmNorientation, XmHORIZONTAL); i++;
   XtSetArg(arg[i], XmNspacing, 0); i++;
-  w->FD.saveMeshAsRowCol = XmCreateRowColumn(w->FD.saveMeshAsFrame[0], "FDsaveMeshAsRowCol", arg, i);
-  XtManageChild(w->FD.saveMeshAsRowCol);
+  w->FD.saveAsRowCol = XmCreateRowColumn(w->FD.saveAsFrame[0], "FDsaveAsRowCol", arg, i);
+  XtManageChild(w->FD.saveAsRowCol);
+
+  /* save as - type */ 
+  i=0;
+  w->FD.saveAsPane[0] = XmCreatePulldownMenu(w->FD.saveAsRowCol, "FDsaveAsPane0", arg, i);
 
   i=0;
-  w->FD.saveMeshAsPane = XmCreatePulldownMenu(w->FD.saveMeshAsRowCol, "FDsaveMeshAsPane", arg, i);
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("By Extension")); i++;
+  w->FD.saveAsButt[0] = XmCreatePushButton(w->FD.saveAsPane[0], "MsaveAsButt0", arg, i);
+  XtManageChild(w->FD.saveAsButt[0]);
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Gmsh [.msh]")); i++;
-  w->FD.saveMeshAsButt[0] = XmCreatePushButton(w->FD.saveMeshAsPane, "MsaveMeshAsButt0", arg, i);
-  XtManageChild(w->FD.saveMeshAsButt[0]);
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("GEO")); i++;
+  w->FD.saveAsButt[1] = XmCreatePushButton(w->FD.saveAsPane[0], "MsaveAsButt1", arg, i);
+  XtManageChild(w->FD.saveAsButt[1]);
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Ideas universal [.unv]")); i++;
-  w->FD.saveMeshAsButt[1] = XmCreatePushButton(w->FD.saveMeshAsPane, "MsaveMeshAsButt1", arg, i);
-  XtManageChild(w->FD.saveMeshAsButt[1]);
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("MSH")); i++;
+  w->FD.saveAsButt[2] = XmCreatePushButton(w->FD.saveAsPane[0], "MsaveAsButt2", arg, i);
+  XtManageChild(w->FD.saveAsButt[2]);
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Gref [.Gref]")); i++;
-  w->FD.saveMeshAsButt[2] = XmCreatePushButton(w->FD.saveMeshAsPane, "MsaveMeshAsButt2", arg, i);
-  XtManageChild(w->FD.saveMeshAsButt[2]);
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("UNV")); i++;
+  w->FD.saveAsButt[3] = XmCreatePushButton(w->FD.saveAsPane[0], "MsaveAsButt3", arg, i);
+  XtManageChild(w->FD.saveAsButt[3]);
   i=0;
-  XtSetArg(arg[i], XmNsubMenuId, w->FD.saveMeshAsPane); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("GREF")); i++;
+  w->FD.saveAsButt[4] = XmCreatePushButton(w->FD.saveAsPane[0], "MsaveAsButt4", arg, i);
+  XtManageChild(w->FD.saveAsButt[4]);
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("EPS Simple Sort")); i++;
+  w->FD.saveAsButt[5] = XmCreatePushButton(w->FD.saveAsPane[0], "MsaveAsButt5", arg, i);
+  XtManageChild(w->FD.saveAsButt[5]);
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("EPS Accurate Sort")); i++;
+  w->FD.saveAsButt[6] = XmCreatePushButton(w->FD.saveAsPane[0], "MsaveAsButt6", arg, i);
+  XtManageChild(w->FD.saveAsButt[6]);
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("XPM")); i++;
+  w->FD.saveAsButt[7] = XmCreatePushButton(w->FD.saveAsPane[0], "MsaveAsButt7", arg, i);
+  XtManageChild(w->FD.saveAsButt[7]);
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("JPEG")); i++;
+  w->FD.saveAsButt[8] = XmCreatePushButton(w->FD.saveAsPane[0], "MsaveAsButt8", arg, i);
+  XtManageChild(w->FD.saveAsButt[8]);
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("GIF")); i++;
+  w->FD.saveAsButt[9] = XmCreatePushButton(w->FD.saveAsPane[0], "MsaveAsButt9", arg, i);
+  XtManageChild(w->FD.saveAsButt[9]);
+
+  i=0;
+  XtSetArg(arg[i], XmNsubMenuId, w->FD.saveAsPane[0]); i++;
   XtSetArg(arg[i], XmNspacing, 0); i++;
-  w->FD.saveMeshAsMenu = XmCreateOptionMenu(w->FD.saveMeshAsRowCol, "FDsaveMeshAsMenu", arg, i);
-  XtManageChild(w->FD.saveMeshAsMenu);
+  w->FD.saveAsMenu[0] = XmCreateOptionMenu(w->FD.saveAsRowCol, "FDsaveAsMenu0", arg, i);
+  XtManageChild(w->FD.saveAsMenu[0]);
 
   /* save options as */
   i=0 ;
@@ -653,79 +679,13 @@ void CreateWidgets_FD(Widgets_T *w){
   w->FD.saveOptionsAsDialog = XmCreateFileSelectionDialog(w->M.shell, "FDsaveOptionsAsDialog", arg, i);
   XtUnmanageChild(w->FD.saveOptionsAsDialog);
 
-  /* print */
-  i=0 ;
-  XtSetArg(arg[i], XmNdialogTitle, XmStringCreateSimple("Print to File")); i++;
-  XtSetArg(arg[i], XmNnoMatchString, XmStringCreateSimple("[ NONE ]")); i++;
-  XtSetArg(arg[i], XmNdirMask, XmStringCreateSimple("*")); i++;
-  XtSetArg(arg[i], XmNautoUnmanage, False); i++; /* + pratique qd on sauve des animations */
-  w->FD.printDialog = XmCreateFileSelectionDialog(w->M.shell, "FDprintDialog", arg, i);
-  XtUnmanageChild(w->FD.printDialog);
-
-  i=0;
-  w->FD.printFrame[0] = XmCreateFrame(w->FD.printDialog, "FDprintFrame0", arg, i);
-  XtManageChild(w->FD.printFrame[0]);
-
-  i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Format")); i++;
-  XtSetArg(arg[i], XmNchildType, XmFRAME_TITLE_CHILD); i++;
-  w->FD.printFrame[1] = XmCreateLabel(w->FD.printFrame[0], "FDprintFrame1", arg, i);
-  XtManageChild(w->FD.printFrame[1]);
-
-  i=0 ;
-  XtSetArg(arg[i], XmNorientation, XmHORIZONTAL); i++;
-  XtSetArg(arg[i], XmNspacing, 0); i++;
-  w->FD.printRowCol = XmCreateRowColumn(w->FD.printFrame[0], "FDprintRowCol", arg, i);
-  XtManageChild(w->FD.printRowCol);
-
-  /* print - type */ 
-  i=0;
-  w->FD.printPane[0] = XmCreatePulldownMenu(w->FD.printRowCol, "FDprintPane0", arg, i);
-
-  i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("By Extension")); i++;
-  w->FD.printButt[0] = XmCreatePushButton(w->FD.printPane[0], "MprintButt0", arg, i);
-  XtManageChild(w->FD.printButt[0]);
-  i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("EPS Simple Sort")); i++;
-  w->FD.printButt[1] = XmCreatePushButton(w->FD.printPane[0], "MprintButt1", arg, i);
-  XtManageChild(w->FD.printButt[1]);
-  i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("EPS Accurate Sort")); i++;
-  w->FD.printButt[2] = XmCreatePushButton(w->FD.printPane[0], "MprintButt2", arg, i);
-  XtManageChild(w->FD.printButt[2]);
-  i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("XPM")); i++;
-  w->FD.printButt[3] = XmCreatePushButton(w->FD.printPane[0], "MprintButt3", arg, i);
-  XtManageChild(w->FD.printButt[3]);
-  i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("JPEG")); i++;
-  w->FD.printButt[4] = XmCreatePushButton(w->FD.printPane[0], "MprintButt4", arg, i);
-  XtManageChild(w->FD.printButt[4]);
-  i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("GIF")); i++;
-  w->FD.printButt[5] = XmCreatePushButton(w->FD.printPane[0], "MprintButt5", arg, i);
-  XtManageChild(w->FD.printButt[5]);
-  i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("GEO")); i++;
-  w->FD.printButt[6] = XmCreatePushButton(w->FD.printPane[0], "MprintButt6", arg, i);
-  XtManageChild(w->FD.printButt[6]);
-
-  i=0;
-  XtSetArg(arg[i], XmNsubMenuId, w->FD.printPane[0]); i++;
-  XtSetArg(arg[i], XmNspacing, 0); i++;
-  w->FD.printMenu[0] = XmCreateOptionMenu(w->FD.printRowCol, "FDprintMenu0", arg, i);
-  XtManageChild(w->FD.printMenu[0]);
-
   tmp = XmFileSelectionBoxGetChild(w->FD.openDialog, XmDIALOG_HELP_BUTTON); 
   XtUnmanageChild(tmp);
   tmp = XmFileSelectionBoxGetChild(w->FD.mergeDialog, XmDIALOG_HELP_BUTTON);
   XtUnmanageChild(tmp);
-  tmp = XmFileSelectionBoxGetChild(w->FD.saveMeshAsDialog, XmDIALOG_HELP_BUTTON);
+  tmp = XmFileSelectionBoxGetChild(w->FD.saveAsDialog, XmDIALOG_HELP_BUTTON);
   XtUnmanageChild(tmp);
   tmp = XmFileSelectionBoxGetChild(w->FD.saveOptionsAsDialog, XmDIALOG_HELP_BUTTON);
-  XtUnmanageChild(tmp);
-  tmp = XmFileSelectionBoxGetChild(w->FD.printDialog, XmDIALOG_HELP_BUTTON);
   XtUnmanageChild(tmp);
 
 }

@@ -1,4 +1,4 @@
-/* $Id: Geometry.cpp,v 1.6 2000-12-13 13:57:00 geuzaine Exp $ */
+/* $Id: Geometry.cpp,v 1.7 2000-12-20 12:17:13 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -261,47 +261,28 @@ void ForceGeometry_FD (Widgets_T *w){
                 XmNmarginWidth, DIALOG_W,
                 NULL);
 
-  XtVaSetValues(w->FD.saveMeshAsDialog,
+  XtVaSetValues(w->FD.saveAsDialog,
                 XmNmarginHeight, DIALOG_H,
                 XmNmarginWidth, DIALOG_W,
                 NULL);
 
-  XtVaSetValues(w->FD.saveMeshAsFrame[0],
+  XtVaSetValues(w->FD.saveAsFrame[0],
                 XmNshadowType, IN_FRAME_TYPE,
                 XmNshadowThickness, IN_FRAME_SHADOW,
                 NULL);
 
-  XtVaSetValues(w->FD.saveMeshAsFrame[1],
+  XtVaSetValues(w->FD.saveAsFrame[1],
                 XmNchildHorizontalSpacing, TITLE_SPACE,
                 XmNchildVerticalAlignment, TITLE_ALIGN,
                 NULL);
 
-  XtVaSetValues(w->FD.saveMeshAsRowCol,
+  XtVaSetValues(w->FD.saveAsRowCol,
                 XmNmarginWidth, 0,
                 NULL);
 
   XtVaSetValues(w->FD.saveOptionsAsDialog,
                 XmNmarginHeight, DIALOG_H,
                 XmNmarginWidth, DIALOG_W,
-                NULL);
-
-  XtVaSetValues(w->FD.printDialog,
-                XmNmarginHeight, DIALOG_H,
-                XmNmarginWidth, DIALOG_W,
-                NULL);
-
-  XtVaSetValues(w->FD.printFrame[0],
-                XmNshadowType, IN_FRAME_TYPE,
-                XmNshadowThickness, IN_FRAME_SHADOW,
-                NULL);
-
-  XtVaSetValues(w->FD.printFrame[1],
-                XmNchildHorizontalSpacing, TITLE_SPACE,
-                XmNchildVerticalAlignment, TITLE_ALIGN,
-                NULL);
-
-  XtVaSetValues(w->FD.printRowCol,
-                XmNmarginWidth, 0,
                 NULL);
 
 }

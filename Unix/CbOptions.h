@@ -1,4 +1,4 @@
-/* $Id: CbOptions.h,v 1.9 2000-12-20 10:40:58 geuzaine Exp $ */
+/* $Id: CbOptions.h,v 1.10 2000-12-20 12:17:13 geuzaine Exp $ */
 #ifndef _CB_OPTIONS_H_
 #define _CB_OPTIONS_H_
 
@@ -72,9 +72,6 @@
 #define  OPTIONS_MESH_TANGENTS_TEXT             210
 #define  OPTIONS_MESH_EXPLODE_SCALE             211
 #define  OPTIONS_MESH_EXPLODE_TEXT              212
-#define  OPTIONS_MESH_FORMAT_MSH                213
-#define  OPTIONS_MESH_FORMAT_UNV                214
-#define  OPTIONS_MESH_FORMAT_GREF               215
 #define  OPTIONS_MESH_HIDE_SHOW                 216
 #define  OPTIONS_MESH_ABORT                     217
 #define  OPTIONS_MESH_SMOOTHING_SCALE           218
@@ -96,16 +93,19 @@
 #define  OPTIONS_POST_ANIM_STOP                 304
 #define  OPTIONS_POST_ANIM_DELAY                305
 
-/* options print */
+/* options save */
 
-#define  OPTIONS_PRINT_AUTO                     400
-#define  OPTIONS_PRINT_XDUMP                    401
-#define  OPTIONS_PRINT_GL2PS_SIMPLE             402
-#define  OPTIONS_PRINT_GL2PS_COMPLEX            403
-#define  OPTIONS_PRINT_GL2PS_IMAGE              404
-#define  OPTIONS_PRINT_GL2GIF                   405
-#define  OPTIONS_PRINT_GEO                      406
-#define  OPTIONS_PRINT_GL2JPEG                  407
+#define  OPTIONS_SAVE_AUTO                     400
+#define  OPTIONS_SAVE_MSH                      401
+#define  OPTIONS_SAVE_UNV                      402
+#define  OPTIONS_SAVE_GREF                     403
+#define  OPTIONS_SAVE_XDUMP                    404
+#define  OPTIONS_SAVE_GL2PS_SIMPLE             405
+#define  OPTIONS_SAVE_GL2PS_COMPLEX            406
+#define  OPTIONS_SAVE_GL2PS_IMAGE              407
+#define  OPTIONS_SAVE_GL2GIF                   408
+#define  OPTIONS_SAVE_GEO                      409
+#define  OPTIONS_SAVE_GL2JPEG                  410
 
 
 

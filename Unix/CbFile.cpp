@@ -1,4 +1,4 @@
-/* $Id: CbFile.cpp,v 1.13 2000-12-20 10:40:58 geuzaine Exp $ */
+/* $Id: CbFile.cpp,v 1.14 2000-12-20 12:17:13 geuzaine Exp $ */
 
 #include <unistd.h>
 
@@ -54,10 +54,10 @@ void SaveToDisk (char *FileName, Widget warning,
   WARNING_OVERRIDE = 0;
 }
 
-void CreateImage (char *name, int format) {
+void CreateFile (char *name, int format) {
   FILE    *tmp, *fp;
   GLint    size3d;
-  char     cmd[1000], ext[6];
+  char     cmd[1000], ext[10];
   char     *tmpFileName="tmp.xwd";
   int      res;
 
@@ -66,13 +66,45 @@ void CreateImage (char *name, int format) {
   switch(format){
 
   case FORMAT_AUTO :
-    strcpy(ext,name+(strlen(name)-4));
-    if     (!strcmp(ext,".gif")) CreateImage(name, FORMAT_GIF);
-    else if(!strcmp(ext,".jpg")) CreateImage(name, FORMAT_JPEG);
-    else if(!strcmp(ext,".eps")) CreateImage(name, FORMAT_EPS);
-    else if(!strcmp(ext,".xpm")) CreateImage(name, FORMAT_XPM);
-    else if(!strcmp(ext,".geo")) CreateImage(name, FORMAT_GEO);
-    else Msg(ERROR, "Unknown Extension \"%s\" for Automatic Format Detection");
+    if(strlen(name) < 4)
+      Msg(ERROR, "Unknown Extension for Automatic Format Detection");
+    else{
+      strcpy(ext,name+(strlen(name)-4));
+      if(!strcmp(ext,".geo")) CreateFile(name, FORMAT_GEO);
+      else if(!strcmp(ext,".msh")) CreateFile(name, FORMAT_MSH);
+      else if(!strcmp(ext,".unv")) CreateFile(name, FORMAT_UNV);
+      else if(!strcmp(ext,".gif")) CreateFile(name, FORMAT_GIF);
+      else if(!strcmp(ext,".jpg")) CreateFile(name, FORMAT_JPEG);
+      else if(!strcmp(ext,".eps")) CreateFile(name, FORMAT_EPS);
+      else if(!strcmp(ext,".xpm")) CreateFile(name, FORMAT_XPM);
+      else {
+	if(strlen(name) < 5)
+	  Msg(ERROR, "Unknown Extension for Automatic Format Detection");
+	else{
+	  strcpy(ext,name+(strlen(name)-5));
+	  if(!strcmp(ext,".jpeg")) CreateFile(name, FORMAT_JPEG);
+	  else if(!strcmp(ext,".gref")) CreateFile(name, FORMAT_GREF);
+	  else if(!strcmp(ext,".Gref")) CreateFile(name, FORMAT_GREF);
+	  else Msg(ERROR, "Unknown Extension \"%s\" for Automatic Format Detection", ext);
+	}
+      }
+    }
+    break;
+
+  case FORMAT_GEO :
+    Print_Geo(&M, name);
+    break;
+    
+  case FORMAT_MSH :
+    Print_Mesh(&M, name, FORMAT_MSH); 
+    break;
+
+  case FORMAT_UNV :
+    Print_Mesh(&M, name, FORMAT_UNV); 
+    break;
+    
+  case FORMAT_GREF :
+    Print_Mesh(&M, name, FORMAT_GREF); 
     break;
 
   case FORMAT_XPM :
@@ -171,10 +203,6 @@ void CreateImage (char *name, int format) {
     }
     break ;
     
-  case FORMAT_GEO :
-    Print_Geo(&M, name);
-    break;
-    
   default :
     Msg(WARNING, "Unknown Print Format");
     break;
@@ -201,15 +229,11 @@ void FileCb(Widget w, XtPointer client_data, XtPointer call_data){
   XmStringFree(xms);
   
   switch ((long int)client_data) {
-  case FILE_LOAD_GEOM          : OpenProblem(c); Init(); Draw(); break;
-  case FILE_LOAD_POST          : MergeProblem(c); ColorBarRedraw(); Init(); Draw(); break;
-  case FILE_SAVE_MESH_AS       : Print_Mesh(&M, c, CTX.mesh.format); break;
-  case FILE_SAVE_OPTIONS_AS    : Print_Context(c); break;
-  case FILE_CANCEL             : WARNING_OVERRIDE = 0; break;
-  case FILE_PRINT              : 
-    SaveToDisk(c, WID.ED.printDialog, CreateImage); 
-    Init(); Draw(); 
-    break;
+  case FILE_LOAD_GEOM       : OpenProblem(c); Init(); Draw(); break;
+  case FILE_LOAD_POST       : MergeProblem(c); ColorBarRedraw(); Init(); Draw(); break;
+  case FILE_CANCEL          : WARNING_OVERRIDE = 0; break;
+  case FILE_SAVE_AS         : SaveToDisk(c, WID.ED.saveAsDialog, CreateFile); break;
+  case FILE_SAVE_OPTIONS_AS : Print_Context(c); break;
   default :
     Msg(WARNING, "Unknown event in FileCb : %d", (long int)client_data); 
     break;

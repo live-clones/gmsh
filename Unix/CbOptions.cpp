@@ -1,4 +1,4 @@
-/* $Id: CbOptions.cpp,v 1.13 2000-12-20 10:40:58 geuzaine Exp $ */
+/* $Id: CbOptions.cpp,v 1.14 2000-12-20 12:17:13 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -129,19 +129,22 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
     Print_Context(NULL);
     break ;
 
-    /* print */
+    /* save */
 
-  case OPTIONS_PRINT_AUTO         : CTX.print.format = FORMAT_AUTO; break;
-  case OPTIONS_PRINT_XDUMP        : CTX.print.format = FORMAT_XPM; break;
-  case OPTIONS_PRINT_GL2GIF       : CTX.print.format = FORMAT_GIF; break;
-  case OPTIONS_PRINT_GL2JPEG      : CTX.print.format = FORMAT_JPEG; break;
-  case OPTIONS_PRINT_GL2PS_SIMPLE : CTX.print.format = FORMAT_EPS; 
+  case OPTIONS_SAVE_MSH          : CTX.print.format = CTX.mesh.format = FORMAT_MSH; break;
+  case OPTIONS_SAVE_UNV          : CTX.print.format = CTX.mesh.format = FORMAT_UNV; break;
+  case OPTIONS_SAVE_GREF         : CTX.print.format = CTX.mesh.format = FORMAT_GREF; break;
+  case OPTIONS_SAVE_GEO          : CTX.print.format = FORMAT_GEO; break;
+  case OPTIONS_SAVE_AUTO         : CTX.print.format = FORMAT_AUTO; break;
+  case OPTIONS_SAVE_XDUMP        : CTX.print.format = FORMAT_XPM; break;
+  case OPTIONS_SAVE_GL2GIF       : CTX.print.format = FORMAT_GIF; break;
+  case OPTIONS_SAVE_GL2JPEG      : CTX.print.format = FORMAT_JPEG; break;
+  case OPTIONS_SAVE_GL2PS_SIMPLE : CTX.print.format = FORMAT_EPS; 
                                     CTX.print.eps_quality = 1; break;
-  case OPTIONS_PRINT_GL2PS_COMPLEX: CTX.print.format = FORMAT_EPS; 
+  case OPTIONS_SAVE_GL2PS_COMPLEX: CTX.print.format = FORMAT_EPS; 
                                     CTX.print.eps_quality = 2; break;
-  case OPTIONS_PRINT_GL2PS_IMAGE  : CTX.print.format = FORMAT_EPS; 
+  case OPTIONS_SAVE_GL2PS_IMAGE  : CTX.print.format = FORMAT_EPS; 
                                     CTX.print.eps_quality = 0; break;
-  case OPTIONS_PRINT_GEO          : CTX.print.format = FORMAT_GEO; break;
 
     /* geometrie */
 
@@ -229,9 +232,6 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_MESH_VOLUMES    :
     if(!CTX.mesh.vis_type) CTX.mesh.volumes = !CTX.mesh.volumes;
     else                   CTX.mesh.volumes_num = !CTX.mesh.volumes_num; break; 
-  case OPTIONS_MESH_FORMAT_MSH   : CTX.mesh.format = FORMAT_MSH ; break ;
-  case OPTIONS_MESH_FORMAT_UNV   : CTX.mesh.format = FORMAT_UNV ; break ;
-  case OPTIONS_MESH_FORMAT_GREF  : CTX.mesh.format = FORMAT_GREF ; break ;
   case OPTIONS_MESH_DEGRE2       : 
     (CTX.mesh.degree==2) ? CTX.mesh.degree=1 : CTX.mesh.degree=2; break ;
   case OPTIONS_MESH_ANISOTROPIC  : 

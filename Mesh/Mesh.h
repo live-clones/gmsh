@@ -1,4 +1,4 @@
-/* $Id: Mesh.h,v 1.8 2000-12-20 10:40:54 geuzaine Exp $ */
+/* $Id: Mesh.h,v 1.9 2000-12-20 12:17:08 geuzaine Exp $ */
 #ifndef _MESH_H_
 #define _MESH_H_
 
@@ -7,16 +7,16 @@
 #include "Edge.h"
 #include "ExtrudeParams.h"
 
-#define FORMAT_MSH  1
-#define FORMAT_UNV  2
-#define FORMAT_GREF 3
-#define FORMAT_XPM  4
-#define FORMAT_EPS  5
-#define FORMAT_BMP  6
-#define FORMAT_GIF  7
-#define FORMAT_GEO  8
-#define FORMAT_JPEG 9
-#define FORMAT_AUTO 10
+#define FORMAT_MSH     1
+#define FORMAT_UNV     2
+#define FORMAT_GREF    3
+#define FORMAT_XPM     4
+#define FORMAT_EPS     5
+#define FORMAT_BMP     6
+#define FORMAT_GIF     7
+#define FORMAT_GEO     8
+#define FORMAT_JPEG    9
+#define FORMAT_AUTO    10
 
 #define CONV_VALUE    0.8
 
