@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.41 2003-06-18 20:47:41 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.42 2003-11-13 17:39:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -42,6 +42,7 @@
 #include "Transform.h"
 #include "Triangulate.h"
 #include "SphericalRaise.h"
+#include "DisplacementRaise.h"
 
 using namespace std;
 
@@ -155,6 +156,8 @@ void GMSH_PluginManager::RegisterDefaultPlugins()
 #endif
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("SphericalRaise", GMSH_RegisterSphericalRaisePlugin()));
+  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		    ("DisplacementRaise", GMSH_RegisterDisplacementRaisePlugin()));
 
 #if defined(HAVE_FLTK)
   struct dirent **list;
