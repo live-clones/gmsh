@@ -373,6 +373,7 @@ typedef struct{
   char functu[256], functv[256], functw[256];
   int Dirty; // flag to prevent any meshing
   DrawingColor Color;
+  SEGM_rep *theSegmRep;
 }Curve;
 
 typedef struct{
@@ -437,7 +438,7 @@ void mai3d(Mesh *M, int Asked);
 
 void Init_Mesh(Mesh *M);
 void Create_BgMesh(int i, double d, Mesh *m);
-void Print_Geo(Mesh *M, char *c, int discrete_surf=0);
+void Print_Geo(Mesh *M, char *c, int discrete_curves=0, int discrete_surf=0);
 void Print_Mesh(Mesh *M, char *c, int Type);
 void Read_Mesh(Mesh *M, FILE *fp, char *filename, int Type);
 void GetStatistics(double s[50]);
@@ -463,6 +464,7 @@ int MeshCylindricalSurface(Surface *s);
 int MeshParametricSurface(Surface *s);
 int MeshEllipticSurface(Surface *sur);
 int MeshDiscreteSurface(Surface *sur);
+int MeshDiscreteCurve(Curve *c);
 
 int AlgorithmeMaillage2DAnisotropeModeJF(Surface *s);
 void Maillage_Automatique_VieuxCode(Surface *pS, Mesh *m, int ori);
@@ -499,7 +501,5 @@ void Eta_Maillage(Mesh *m, double *gamma, double *gammamax, double *gammamin);
 void R_Maillage(Mesh *m, double *gamma, double *gammamax, double *gammamin);
 void Mesh_Quality(Mesh *m);
 void Print_Histogram(int *h);
-
-void POLY_rep_To_Mesh(POLY_rep *prep, Surface *s);
 
 #endif

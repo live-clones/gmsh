@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.80 2005-01-08 20:15:12 geuzaine Exp $
+// $Id: Geom.cpp,v 1.81 2005-02-20 06:36:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -149,12 +149,20 @@ void Draw_Curve(void *a, void *b)
       N = 10 * n;
       break;
     }
-    if(c->Typ == MSH_SEGM_DISCRETE) {
+    if(c->theSegmRep) {
+      glBegin(GL_LINE_STRIP);
+      for(int i = 0; i < List_Nbr(c->theSegmRep->points); i+=3) {
+        double *p = (double*)List_Pointer(c->theSegmRep->points, i);
+        glVertex3d(p[0], p[1], p[2]);
+      }
+      glEnd();
+    }
+    else if(c->Typ == MSH_SEGM_DISCRETE) {
       Simplex *s;
       List_T *temp = Tree2List(c->Simplexes);
       for(int i = 0; i < List_Nbr(temp); i++) {
         List_Read(temp, i, &s);
-        glBegin(GL_LINE_STRIP);
+        glBegin(GL_LINES);
         glVertex3d(s->V[0]->Pos.X, s->V[0]->Pos.Y, s->V[0]->Pos.Z);
         glVertex3d(s->V[1]->Pos.X, s->V[1]->Pos.Y, s->V[1]->Pos.Z);
         glEnd();
@@ -295,17 +303,19 @@ void getPlaneSurfaceNormal(Surface *s, double x, double y, double z, double n[3]
 
   if(List_Nbr(s->Generatrices) > 1){
     List_Read(s->Generatrices, 0, &c);
-    t1[0] = x - c->beg->Pos.X;
-    t1[1] = y - c->beg->Pos.Y;
-    t1[2] = z - c->beg->Pos.Z;
-    for(int i = 1; i < List_Nbr(s->Generatrices); i++){
-      List_Read(s->Generatrices, i, &c);
-      t2[0] = x - c->beg->Pos.X;
-      t2[1] = y - c->beg->Pos.Y;
-      t2[2] = z - c->beg->Pos.Z;
-      prodve(t1, t2, n);
-      if(norme(n))
-	break;
+    if(c->beg){
+      t1[0] = x - c->beg->Pos.X;
+      t1[1] = y - c->beg->Pos.Y;
+      t1[2] = z - c->beg->Pos.Z;
+      for(int i = 1; i < List_Nbr(s->Generatrices); i++){
+	List_Read(s->Generatrices, i, &c);
+	t2[0] = x - c->beg->Pos.X;
+	t2[1] = y - c->beg->Pos.Y;
+	t2[2] = z - c->beg->Pos.Z;
+	prodve(t1, t2, n);
+	if(norme(n))
+	  break;
+      }
     }
   }
   if(List_Nbr(s->Generatrices) < 2 || !norme(n)){
@@ -373,6 +383,12 @@ void Draw_Plane_Surface(Surface * s)
       for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
         List_Add(points, List_Pointer(c->Control_Points, j));
       }
+    }
+
+    if(!List_Nbr(points)){
+      List_Delete(points);      
+      CTX.threads_lock = 0;
+      return;
     }
     MeanPlane(points, s);
     List_Delete(points);
@@ -678,7 +694,10 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
       Draw_Curve(&c,NULL);
     }
     else{
-      Msg(STATUS1N, "Curve %d  {%d->%d}", c->Num, c->beg->Num, c->end->Num);
+      if(c->beg && c->end)
+	Msg(STATUS1N, "Curve %d {%d->%d}", c->Num, c->beg->Num, c->end->Num);
+      else
+	Msg(STATUS1N, "Curve %d", c->Num);
     }
   }
   else if(s) {
@@ -687,23 +706,28 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
       Draw_Surface(&s,NULL);
     }
     else{
-      sprintf(Message, "Surface %d {", s->Num);
       int nbg = List_Nbr(s->Generatrices);
-      if(nbg < 10) {
-	for(int i = 0; i < nbg; i++) {
-	  List_Read(s->Generatrices, i, &cc);
-	  if(!i)
-	    sprintf(temp, "%d", cc->Num);
-	  else
-	    sprintf(temp, ",%d", cc->Num);
-	  strcat(Message, temp);
+      if(nbg){
+	sprintf(Message, "Surface %d {", s->Num);
+	if(nbg < 10) {
+	  for(int i = 0; i < nbg; i++) {
+	    List_Read(s->Generatrices, i, &cc);
+	    if(!i)
+	      sprintf(temp, "%d", cc->Num);
+	    else
+	      sprintf(temp, ",%d", cc->Num);
+	    strcat(Message, temp);
+	  }
 	}
+	else {
+	  strcat(Message, "...");
+	}
+	strcat(Message, "}");
+	Msg(STATUS1N, Message);
       }
-      else {
-	strcat(Message, "...");
+      else{
+	Msg(STATUS1N, "Surface %d", s->Num);
       }
-      strcat(Message, "}");
-      Msg(STATUS1N, Message);
     }
   }
   else{

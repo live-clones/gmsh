@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.70 2005-01-08 20:15:17 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.71 2005-02-20 06:36:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -91,6 +91,38 @@ void SetBoundingBox(void)
   else if(Tree_Nbr(THEM->Points)) { 
     // else, if we have geometry points, use them
     CalculateMinMax(THEM->Points, NULL);
+  }
+  else if(Tree_Nbr(THEM->Curves)) { 
+    // else, if we have (discrete) curves, use them
+    List_T *l = Tree2List(THEM->Curves);
+    int first = 1;
+    double bbox[6];
+    for(int i = 0; i < List_Nbr(l); i++){
+      Curve *c = *(Curve**)List_Pointer(l, i);
+      if(c->theSegmRep){
+	if(first){
+	  first = 0;
+	  for(int j = 0; j < 6; j++)
+	    bbox[j] = c->theSegmRep->bounding_box[j];
+	}
+	else{
+	  if(c->theSegmRep->bounding_box[0] < bbox[0])
+	    bbox[0] = c->theSegmRep->bounding_box[0];
+	  if(c->theSegmRep->bounding_box[1] > bbox[1])
+	    bbox[1] = c->theSegmRep->bounding_box[1];
+	  if(c->theSegmRep->bounding_box[2] < bbox[2])
+	    bbox[2] = c->theSegmRep->bounding_box[2];
+	  if(c->theSegmRep->bounding_box[3] > bbox[3])
+	    bbox[3] = c->theSegmRep->bounding_box[3];
+	  if(c->theSegmRep->bounding_box[4] < bbox[4])
+	    bbox[4] = c->theSegmRep->bounding_box[4];
+	  if(c->theSegmRep->bounding_box[5] > bbox[5])
+	    bbox[5] = c->theSegmRep->bounding_box[5];
+	}
+      }
+    }
+    CalculateMinMax(NULL, bbox);
+    List_Delete(l);
   }
   else if(Tree_Nbr(THEM->Surfaces)) { 
     // else, if we have (discrete) surfaces, use them

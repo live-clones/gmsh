@@ -58,8 +58,6 @@ Show post-processing view options
 Show statistics window 
 @item Ctrl+l
 Show message console
-@item Ctrl+m
-Merge file(s)
 @item Ctrl+n
 Create new project file 
 @item Ctrl+o
@@ -75,8 +73,10 @@ Save file
 
 @item Shift+Ctrl+c
 Show clipping plane window
-@item Shift+Ctrl+o
+@item Shift+Ctrl+n
 Show option window 
+@item Shift+Ctrl+o
+Merge file(s)
 @item Shift+Ctrl+s
 Save mesh in default format
 @item Shift+Ctrl+v

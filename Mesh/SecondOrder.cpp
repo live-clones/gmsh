@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.29 2005-01-01 19:35:31 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.30 2005-02-20 06:36:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -59,6 +59,9 @@ Vertex *onCurve(Vertex * v1, Vertex * v2)
 
   int ok1 = 1, ok2 = 1;
   double u1 = 0., u2 = 0.;
+
+  if(!THEC->beg || !THEC->end)
+    ok1 = ok2 = 0;
 
   if(List_Nbr(v1->ListCurves) == 1){
     u1 = v1->u;

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.335 2005-02-12 20:22:08 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.336 2005-02-20 06:36:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1264,7 +1264,9 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, " ");
   Msg(DIRECT, "  Ctrl+i        Show statistics window"); 
   Msg(DIRECT, "  Ctrl+l        Show message console");
-  Msg(DIRECT, "  Ctrl+m        Merge file"); 
+#if defined(__APPLE__)
+  Msg(DIRECT, "  Ctrl+m        Minimize window"); 
+#endif
   Msg(DIRECT, "  Ctrl+n        Create new project file"); 
   Msg(DIRECT, "  Ctrl+o        Open project file"); 
   Msg(DIRECT, "  Ctrl+q        Quit");
@@ -1272,7 +1274,8 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Ctrl+s        Save file as");
   Msg(DIRECT, " ");
   Msg(DIRECT, "  Shift+Ctrl+c  Show clipping plane window");
-  Msg(DIRECT, "  Shift+Ctrl+o  Show option window"); 
+  Msg(DIRECT, "  Shift+Ctrl+n  Show option window"); 
+  Msg(DIRECT, "  Shift+Ctrl+o  Merge file(s)"); 
   Msg(DIRECT, "  Shift+Ctrl+s  Save mesh in default format");
   Msg(DIRECT, "  Shift+Ctrl+v  Show visibility window");
   Msg(DIRECT, " ");

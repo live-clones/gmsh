@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.66 2005-01-08 20:15:12 geuzaine Exp $
+// $Id: Create.cpp,v 1.67 2005-02-20 06:36:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -467,17 +467,21 @@ void End_Curve(Curve * c)
 
   }
 
-  if(c->cp)
+  if(c->cp){
     Free(c->cp);
-  c->cp = (float *)Malloc(4 * List_Nbr(c->Control_Points) * sizeof(float));
-  for(i = 0; i < List_Nbr(c->Control_Points); i++) {
-    List_Read(c->Control_Points, i, &v[0]);
-    c->cp[4 * i] = v[0]->Pos.X;
-    c->cp[4 * i + 1] = v[0]->Pos.Y;
-    c->cp[4 * i + 2] = v[0]->Pos.Z;
-    c->cp[4 * i + 3] = v[0]->w;
+    c->cp = NULL;
   }
 
+  if(List_Nbr(c->Control_Points)){
+    c->cp = (float *)Malloc(4 * List_Nbr(c->Control_Points) * sizeof(float));
+    for(i = 0; i < List_Nbr(c->Control_Points); i++) {
+      List_Read(c->Control_Points, i, &v[0]);
+      c->cp[4 * i] = v[0]->Pos.X;
+      c->cp[4 * i + 1] = v[0]->Pos.Y;
+      c->cp[4 * i + 2] = v[0]->Pos.Z;
+      c->cp[4 * i + 3] = v[0]->w;
+    }
+  }
 }
 
 void End_Surface(Surface * s, int reset_orientations)
@@ -530,6 +534,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
   pC->cp = NULL;
   pC->Vertices = NULL;
   pC->Extrude = NULL;
+  pC->theSegmRep = 0;
   pC->Typ = Typ;
   pC->Num = Num;
   THEM->MaxLineNum = IMAX(THEM->MaxLineNum, Num);
@@ -593,6 +598,8 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
   }
   else {
     pC->Control_Points = NULL;
+    pC->beg = NULL;
+    pC->end = NULL;
     return pC;
   }
 
@@ -636,6 +643,8 @@ void Free_Curve(void *a, void *b)
     Free(pC->k);
     List_Delete(pC->Control_Points);
     Free(pC->cp);
+    if(pC->theSegmRep)
+      delete pC->theSegmRep;
     Free(pC);
     pC = NULL;
   }
@@ -705,6 +714,8 @@ void Free_Surface(void *a, void *b)
       delete pS->QuadVertexArray;
     if(pS->normals)
       delete pS->normals;
+    if(pS->thePolyRep)
+      delete pS->thePolyRep;
     Free(pS);
     pS = NULL;
   }

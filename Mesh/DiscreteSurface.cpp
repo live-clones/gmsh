@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.1 2005-01-08 20:15:12 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.2 2005-02-20 06:36:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -36,6 +36,8 @@
 extern Mesh *THEM;
 extern Context_T CTX;
 
+#define VAL_INF 1.e200
+
 static Tree_T * VertexBound = NULL;
 
 static void InsertInVertexBound(void *a, void *b)
@@ -43,30 +45,7 @@ static void InsertInVertexBound(void *a, void *b)
   Tree_Insert(VertexBound, a);
 }
 
-int MeshDiscreteSurface(Surface *s)
-{
-  if(s->thePolyRep){
-    // Use the polygonal representation as the surface mesh. Most of
-    // the time we should of course remesh/enhance/refine this (as
-    // there is no guarantee that a polygonal CAD mesh is conform,
-    // that it respects the boundaries, etc.), but we don't have any
-    // routines to do that at the moment--so let's just use it and
-    // hope for the best.
-    POLY_rep_To_Mesh(s->thePolyRep, s);
-    return 1;
-  }
-  else if(s->Typ == MSH_SURF_DISCRETE){
-    // nothing else to do: we assume that the elements have alreay
-    // been created
-    return 1;
-  }
-  else
-    return 0;
-}
-
 // Polygonal representation of discrete surfaces
-
-#define VAL_INF 1.e200
 
 POLY_rep::POLY_rep()
   : num_points(0), num_polys(0)
@@ -464,4 +443,149 @@ void STLAddFacet(double x1, double y1, double z1,
     List_Add(pol, &num); num += 1.;
     List_Add(pol, &num);
   }
+}
+
+// Representation of discrete surfaces
+
+SEGM_rep::SEGM_rep()
+  : num_points(0)
+{
+  points = List_Create(100, 100, sizeof(double));
+  bounding_box[0] = bounding_box[2] = bounding_box[4] = VAL_INF;
+  bounding_box[1] = bounding_box[3] = bounding_box[5] = -VAL_INF;
+}
+
+SEGM_rep::SEGM_rep(int _num_points, List_T *_p)
+  : num_points(_num_points), points(_p)
+{
+  bounding_box[0] = bounding_box[2] = bounding_box[4] = VAL_INF;
+  bounding_box[1] = bounding_box[3] = bounding_box[5] = -VAL_INF;
+
+  // check num points
+  if(List_Nbr(points) != num_points * 3){
+    Msg(GERROR, "Wrong number of points in discrete curve");
+    if(points){
+      List_Delete(points);
+      points = 0;
+    }
+    return;
+  }
+
+  // compute the bbox
+  compute_bounding_box();
+}
+
+void SEGM_rep::compute_bounding_box()
+{
+  for(int i = 0; i < List_Nbr(points); i+=3){
+    double *p = (double*)List_Pointer(points, i);
+    if(p[0] < bounding_box[0]) bounding_box[0] = p[0];
+    if(p[0] > bounding_box[1]) bounding_box[1] = p[0];
+    if(p[1] < bounding_box[2]) bounding_box[2] = p[1];
+    if(p[1] > bounding_box[3]) bounding_box[3] = p[1];
+    if(p[2] < bounding_box[4]) bounding_box[4] = p[2];
+    if(p[2] > bounding_box[5]) bounding_box[5] = p[2];
+  }
+}
+
+SEGM_rep::~SEGM_rep()
+{
+  if(points) List_Delete(points);
+}
+
+double SetLC(Vertex *v1, Vertex *v2, double factor)
+{ 
+  double lc = sqrt((v1->Pos.X - v2->Pos.X) * (v1->Pos.X - v2->Pos.X) +
+		   (v1->Pos.Y - v2->Pos.Y) * (v1->Pos.Y - v2->Pos.Y) +
+		   (v1->Pos.Z - v2->Pos.Z) * (v1->Pos.Z - v2->Pos.Z));
+  v1->lc = v2->lc = lc;
+  return lc;
+}
+
+void SEGM_rep_To_Mesh(SEGM_rep *srep, Curve *c)
+{  
+  VertexBound = Tree_Create(sizeof(Vertex *), comparePosition);
+  Tree_Action(THEM->Vertices, InsertInVertexBound);
+
+  int N = List_Nbr(srep->points)/3;
+
+  Vertex **verts = new Vertex*[N];
+
+  c->Vertices = List_Create(N, 2, sizeof(Vertex *));
+
+  for(int i = 0; i < List_Nbr(srep->points); i+=3){
+    double *point = (double*)List_Pointer(srep->points, i);
+    Vertex *v = Create_Vertex(++THEM->MaxPointNum, point[0], point[1], point[2], 1.0, 0.0);
+    Vertex **pv;
+    if(!(pv = (Vertex**)Tree_PQuery(VertexBound, &v))){
+      Tree_Add(VertexBound, &v);
+      List_Add(c->Vertices, &v);
+      v->ListCurves = List_Create(1, 1, sizeof(Curve *));
+      List_Add(v->ListCurves, &c);
+      Tree_Add(THEM->Vertices, &v);
+      verts[i/3] = v;
+    }
+    else{
+      Free_Vertex(&v, NULL);
+      List_Add(c->Vertices, pv);
+      if((*pv)->ListCurves)
+	List_Add((*pv)->ListCurves, &c);
+      verts[i/3] = *pv;
+    }
+  }
+  
+  for(int i = 0; i < N-1; i++){
+    Vertex *v1 = verts[i];
+    Vertex *v2 = verts[i+1];
+    SetLC(v1, v2, CTX.mesh.lc_factor);
+    Simplex *simp = Create_Simplex(v1, v2, NULL, NULL);
+    simp->iEnt = c->Num;
+    Tree_Add(c->Simplexes, &simp);
+  }
+
+  Tree_Delete(VertexBound);
+  delete [] verts;
+}
+
+// Public interface for discrete surface/curve mesh algo
+
+int MeshDiscreteSurface(Surface *s)
+{
+  if(s->thePolyRep){
+    // Use the polygonal representation as the surface mesh. Most of
+    // the time we should of course remesh/enhance/refine this (as
+    // there is no guarantee that a polygonal CAD mesh is conform,
+    // that it respects the boundaries, etc.), but we don't have any
+    // routines to do that at the moment--so let's just use it and
+    // hope for the best.
+    POLY_rep_To_Mesh(s->thePolyRep, s);
+    return 1;
+  }
+  else if(s->Typ == MSH_SURF_DISCRETE){
+    // nothing else to do: we assume that the elements have alreay
+    // been created
+    return 1;
+  }
+  else
+    return 0;
+}
+
+int MeshDiscreteCurve(Curve *c)
+{
+  if(c->theSegmRep){
+    // Use the discrete representation as the curve mesh. Most of the
+    // time we should of course remesh/enhance/refine this (as there
+    // is no guarantee that this mesh fits at interfaces, etc.), but
+    // we don't have any routines to do that at the moment--so let's
+    // just use it and hope for the best.
+    SEGM_rep_To_Mesh(c->theSegmRep, c);
+    return 1;
+  }
+  else if(c->Typ == MSH_SURF_DISCRETE){
+    // nothing else to do: we assume that the elements have alreay
+    // been created
+    return 1;
+  }
+  else
+    return 0;
 }

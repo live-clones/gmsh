@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.202 2005-02-02 18:47:59 geuzaine Exp $
+// $Id: Gmsh.y,v 1.203 2005-02-20 06:36:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1941,6 +1941,39 @@ Shape :
       List_Delete($6);
       List_Delete($8);
       $$.Type = MSH_SEGM_NURBS;
+      $$.Num = num;
+    }
+  | tDiscrete tLine '(' FExpr ')' tAFFECT '{' FExpr '}' ListOfDouble tEND
+    {
+      // define a new line
+      int num = (int)$4;
+      if(FindCurve(num, THEM)){
+	yymsg(GERROR, "Curve %d already exists", num);
+	List_Delete($10);
+      }
+      else{
+	Curve *c = Create_Curve(num, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0, 1);
+	c->theSegmRep = new SEGM_rep((int)$8, $10);
+	Tree_Add(THEM->Curves, &c);
+	CreateReversedCurve(THEM, c);
+      }
+      $$.Type = MSH_SEGM_DISCRETE;
+      $$.Num = num;
+    }
+  | tDiscrete tLine '{' FExpr '}' tAFFECT '{' FExpr '}' ListOfDouble tEND
+    {
+      // add a poly rep to an existing line
+      int num = (int)$4, type = 0;
+      Curve *c = FindCurve(num, THEM);
+      if(!c) {
+	yymsg(GERROR, "Unknown curve %d", num);
+	List_Delete($10);
+      }
+      else{
+	c->theSegmRep = new SEGM_rep((int)$8, $10);
+	type = c->Typ;
+      }
+      $$.Type = type;
       $$.Num = num;
     }
   | tLine tLoop '(' FExpr ')' tAFFECT ListOfDouble tEND

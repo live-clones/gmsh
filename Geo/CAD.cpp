@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.81 2005-02-11 02:27:12 geuzaine Exp $
+// $Id: CAD.cpp,v 1.82 2005-02-20 06:36:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -601,20 +601,23 @@ Curve *CreateReversedCurve(Mesh * M, Curve * c)
   Vertex *e1, *e2, *e3, *e4;
   int i;
   newc = Create_Curve(-c->Num, c->Typ, 1, NULL, NULL, -1, -1, 0., 1.);
-  newc->Control_Points =
-    List_Create(List_Nbr(c->Control_Points), 1, sizeof(Vertex *));
-  if(c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV) {
-    List_Read(c->Control_Points, 0, &e1);
-    List_Read(c->Control_Points, 1, &e2);
-    List_Read(c->Control_Points, 2, &e3);
-    List_Read(c->Control_Points, 3, &e4);
-    List_Add(newc->Control_Points, &e4);
-    List_Add(newc->Control_Points, &e2);
-    List_Add(newc->Control_Points, &e3);
-    List_Add(newc->Control_Points, &e1);
+
+  if(List_Nbr(c->Control_Points)){
+    newc->Control_Points =
+      List_Create(List_Nbr(c->Control_Points), 1, sizeof(Vertex *));
+    if(c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV) {
+      List_Read(c->Control_Points, 0, &e1);
+      List_Read(c->Control_Points, 1, &e2);
+      List_Read(c->Control_Points, 2, &e3);
+      List_Read(c->Control_Points, 3, &e4);
+      List_Add(newc->Control_Points, &e4);
+      List_Add(newc->Control_Points, &e2);
+      List_Add(newc->Control_Points, &e3);
+      List_Add(newc->Control_Points, &e1);
+    }
+    else
+      List_Invert(c->Control_Points, newc->Control_Points);
   }
-  else
-    List_Invert(c->Control_Points, newc->Control_Points);
 
   if(c->Typ == MSH_SEGM_NURBS && c->k) {
     newc->k =

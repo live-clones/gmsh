@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.9 2005-02-05 22:20:51 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.10 2005-02-20 06:36:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -515,22 +515,27 @@ int geo_dialog(char *name)
 {
   struct _geo_dialog{
     Fl_Window *window;
-    Fl_Check_Button *b;
+    Fl_Check_Button *b[2];
     Fl_Button *ok, *cancel;
   };
   static _geo_dialog *dialog = NULL;
 
   if(!dialog){
     dialog = new _geo_dialog;
-    int h = 3*10 + 25 + 1*25, y = 0;
+    int h = 3*10 + 25 + 2*25, y = 0;
     // not a "Dialog_Window" since it is modal 
     dialog->window = new Fl_Double_Window(200, h, "GEO options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->b = new Fl_Check_Button(10, y, 180, 25, "Save discrete surfaces"); y += 25;
-    dialog->b->value(1);
-    dialog->b->type(FL_TOGGLE_BUTTON);
-    dialog->b->down_box(GMSH_TOGGLE_BOX);
-    dialog->b->selection_color(GMSH_TOGGLE_COLOR);
+    dialog->b[0] = new Fl_Check_Button(10, y, 180, 25, "Save discrete curves"); y += 25;
+    dialog->b[0]->value(1);
+    dialog->b[0]->type(FL_TOGGLE_BUTTON);
+    dialog->b[0]->down_box(GMSH_TOGGLE_BOX);
+    dialog->b[0]->selection_color(GMSH_TOGGLE_COLOR);
+    dialog->b[1] = new Fl_Check_Button(10, y, 180, 25, "Save discrete surfaces"); y += 25;
+    dialog->b[1]->value(1);
+    dialog->b[1]->type(FL_TOGGLE_BUTTON);
+    dialog->b[1]->down_box(GMSH_TOGGLE_BOX);
+    dialog->b[1]->selection_color(GMSH_TOGGLE_COLOR);
     dialog->ok = new Fl_Return_Button(10, y+10, 85, 25, "OK");
     dialog->cancel = new Fl_Button(105, y+10, 85, 25, "Cancel");
     dialog->window->set_modal();
@@ -548,7 +553,7 @@ int geo_dialog(char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	Print_Geo(THEM, name, dialog->b->value());
+	Print_Geo(THEM, name, dialog->b[0]->value(), dialog->b[1]->value());
 	dialog->window->hide();
 	return 1;
       }

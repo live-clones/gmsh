@@ -1,6 +1,7 @@
-$Id: VERSIONS,v 1.309 2005-02-12 18:43:10 geuzaine Exp $
+$Id: VERSIONS,v 1.310 2005-02-20 06:36:58 geuzaine Exp $
 
-New since 1.59: new Window menu on Mac OS X; fixed small bugs.
+New since 1.59: added support for discrete curves; new Window menu on
+Mac OS X; fixed small bugs.
 
 New in 1.59: added support for discrete (triangulated) surfaces,
 either in STL format or with the new "Discrete Surface" command; added

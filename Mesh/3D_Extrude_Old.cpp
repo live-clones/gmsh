@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.29 2005-01-01 19:35:30 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.30 2005-02-20 06:36:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -19,17 +19,17 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-// This is the old extrusion mesh generator -> only available through
-// the command line option -extrude (w/o -recombine). This mesh
+// This is the old extrusion mesh generator, only available through
+// the command line option -extrude (w/ or w/o -recombine). This mesh
 // generator pre-supposes a definition of surfaces in the XY plane,
 // and will extrude everything along the Z axis, taking parameters
-// interactively from standard input, e.g.
+// interactively from standard input, e.g.,
 //
 // gmsh test -extrude -recombine < params.ext
 //
 // The progression ratio defines a geometric progression for the
 // definition of the elements heights: a factor of 2 means that the
-// next element will be twice as high than the preceding one.
+// next element will be twice as high as the previous one.
 //
 // All geometrical entities are automatically numbered:
 //
@@ -56,23 +56,19 @@ extern Context_T CTX;
 extern Mesh *LOCAL, *THEM;
 
 static Tree_T *Tree_Ares, *Tree_Swaps;
+static Surface *THES;
+static Volume *THEV;
+static int TEST_IS_ALL_OK, NbLayer;
+static int NbElmLayer[MAXLAYERS];
+static int ZonLayer[MAXLAYERS];
+static int LineLayer[MAXLAYERS + 1];
+static int SurfLayer[MAXLAYERS + 1];
+static double hLayer[MAXLAYERS];
+static double parLayer[MAXLAYERS];
 
-Surface *THES;
-Volume *THEV;
-int TEST_IS_ALL_OK, NbLayer;
-int NbElmLayer[MAXLAYERS];
-int ZonLayer[MAXLAYERS];
-int LineLayer[MAXLAYERS + 1];
-int SurfLayer[MAXLAYERS + 1];
-double hLayer[MAXLAYERS];
-double parLayer[MAXLAYERS];
-
-
-typedef struct
-{
+typedef struct{
   int a, b;
-}
-nxn;
+} nxn;
 
 static int compnxn(const void *a, const void *b)
 {
@@ -92,33 +88,49 @@ static int compnxn(const void *a, const void *b)
 
 static void InitExtrudeParams(void)
 {
-  FILE *file;
-  int i;
+  char str[256];
 
-  printf("Number of layers: ");
-  scanf("%d", &NbLayer);
+  printf("Number of layers (default=1): ");
+  fgets(str, sizeof(str), stdin);
+  if(!strlen(str) || !strcmp(str, "\n"))
+    NbLayer = 1;
+  else
+    NbLayer = atoi(str);
+  
   if(NbLayer > MAXLAYERS){
     Msg(GERROR, "Max number of layer (%d) exceeded", MAXLAYERS);
     NbLayer = MAXLAYERS;
   }
 
-  file = fopen("xtrude", "w");
+  FILE *file = fopen(".gmsh-extrude", "w");
 
   if(file)
     fprintf(file, "%d\n", NbLayer);
-  for(i = 0; i < NbLayer; i++) {
-    printf("Number of elements in layer %d: ", i + 1);
-    scanf("%d", &NbElmLayer[i]);
+  for(int i = 0; i < NbLayer; i++) {
+    printf("Number of elements in layer %d (default=1): ", i + 1);
+    fgets(str, sizeof(str), stdin);
+    if(!strlen(str) || !strcmp(str, "\n"))
+      NbElmLayer[i] = 1;
+    else
+      NbElmLayer[i] = atoi(str);
     if(file)
       fprintf(file, "%d\n", NbElmLayer[i]);
 
-    printf("Depth of layer %d: ", i + 1);
-    scanf("%lf", &hLayer[i]);
+    printf("Depth of layer %d (default=1.0): ", i + 1);
+    fgets(str, sizeof(str), stdin);
+    if(!strlen(str) || !strcmp(str, "\n"))
+      hLayer[i] = 1.0;
+    else
+      hLayer[i] = atof(str);
     if(file)
       fprintf(file, "%g\n", hLayer[i]);
 
-    printf("Progresion ratio for layer %d: ", i + 1);
-    scanf("%lf", &parLayer[i]);
+    printf("Progression ratio for layer %d (default=1.0): ", i + 1);
+    fgets(str, sizeof(str), stdin);
+    if(!strlen(str) || !strcmp(str, "\n"))
+      parLayer[i] = 1.0;
+    else
+      parLayer[i] = atof(str);
     if(file)
       fprintf(file, "%g\n", parLayer[i]);
   }
@@ -127,9 +139,6 @@ static void InitExtrudeParams(void)
     fflush(file);
     fclose(file);
   }
-
-  Tree_Ares = Tree_Create(sizeof(nxn), compnxn);
-  Tree_Swaps = Tree_Create(sizeof(nxn), compnxn);
 }
 
 static int are_exist(Vertex * v1, Vertex * v2, Tree_T * t)
@@ -155,7 +164,6 @@ static void are_del(Vertex * v1, Vertex * v2, Tree_T * t)
   n.b = IMIN(v1->Num, v2->Num);
   Tree_Suppress(t, &n);
 }
-
 
 static void Extrude_Simplex_Phase1(void *data, void *dum)
 {
@@ -227,7 +235,8 @@ static void Extrude_Simplex_Phase3(void *data, void *dum)
         }
         else {
           if(are_exist(v4, v2, Tree_Ares) &&
-             are_exist(v5, v3, Tree_Ares) && are_exist(v4, v3, Tree_Ares)) {
+             are_exist(v5, v3, Tree_Ares) && 
+	     are_exist(v4, v3, Tree_Ares)) {
             news = Create_Simplex(v1, v2, v3, v4);
             news->iEnt = ZonLayer[i];
             Tree_Add(THEV->Simplexes, &news);
@@ -239,7 +248,8 @@ static void Extrude_Simplex_Phase3(void *data, void *dum)
             Tree_Add(THEV->Simplexes, &news);
           }
           if(are_exist(v4, v2, Tree_Ares) &&
-             are_exist(v2, v6, Tree_Ares) && are_exist(v4, v3, Tree_Ares)) {
+             are_exist(v2, v6, Tree_Ares) && 
+	     are_exist(v4, v3, Tree_Ares)) {
             news = Create_Simplex(v1, v2, v3, v4);
             news->iEnt = ZonLayer[i];
             Tree_Add(THEV->Simplexes, &news);
@@ -251,7 +261,8 @@ static void Extrude_Simplex_Phase3(void *data, void *dum)
             Tree_Add(THEV->Simplexes, &news);
           }
           if(are_exist(v4, v2, Tree_Ares) &&
-             are_exist(v2, v6, Tree_Ares) && are_exist(v6, v1, Tree_Ares)) {
+             are_exist(v2, v6, Tree_Ares) && 
+	     are_exist(v6, v1, Tree_Ares)) {
             news = Create_Simplex(v1, v2, v3, v6);
             news->iEnt = ZonLayer[i];
             Tree_Add(THEV->Simplexes, &news);
@@ -263,7 +274,8 @@ static void Extrude_Simplex_Phase3(void *data, void *dum)
             Tree_Add(THEV->Simplexes, &news);
           }
           if(are_exist(v5, v1, Tree_Ares) &&
-             are_exist(v5, v3, Tree_Ares) && are_exist(v4, v3, Tree_Ares)) {
+             are_exist(v5, v3, Tree_Ares) && 
+	     are_exist(v4, v3, Tree_Ares)) {
             news = Create_Simplex(v1, v2, v3, v5);
             news->iEnt = ZonLayer[i];
             Tree_Add(THEV->Simplexes, &news);
@@ -275,7 +287,8 @@ static void Extrude_Simplex_Phase3(void *data, void *dum)
             Tree_Add(THEV->Simplexes, &news);
           }
           if(are_exist(v5, v1, Tree_Ares) &&
-             are_exist(v5, v3, Tree_Ares) && are_exist(v6, v1, Tree_Ares)) {
+             are_exist(v5, v3, Tree_Ares) && 
+	     are_exist(v6, v1, Tree_Ares)) {
             news = Create_Simplex(v1, v2, v3, v5);
             news->iEnt = ZonLayer[i];
             Tree_Add(THEV->Simplexes, &news);
@@ -287,7 +300,8 @@ static void Extrude_Simplex_Phase3(void *data, void *dum)
             Tree_Add(THEV->Simplexes, &news);
           }
           if(are_exist(v5, v1, Tree_Ares) &&
-             are_exist(v2, v6, Tree_Ares) && are_exist(v6, v1, Tree_Ares)) {
+             are_exist(v2, v6, Tree_Ares) && 
+	     are_exist(v6, v1, Tree_Ares)) {
             news = Create_Simplex(v1, v2, v3, v6);
             news->iEnt = ZonLayer[i];
             Tree_Add(THEV->Simplexes, &news);
@@ -439,29 +453,26 @@ static void Extrude_Vertex(void *data, void *dum)
 
     // Geometric progression ar^i
     // Sum of n (=NbElmLayer[i]) terms = hLayer[i] = a (r^n-1)/(r-1)
-
+    
     if(parLayer[i] == 1.)
       a = hLayer[i] / (double)NbElmLayer[i];
     else
-      a =
-        hLayer[i] * (parLayer[i] - 1.) / (pow(parLayer[i], NbElmLayer[i]) -
-                                          1.);
-
+      a = hLayer[i] * (parLayer[i] - 1.) / 
+	(pow(parLayer[i], NbElmLayer[i]) - 1.);
+    
     for(j = 0; j < NbElmLayer[i]; j++) {
-
+     
       //h += hLayer[i]/(double)NbElmLayer[i];
 
       h += a * pow(parLayer[i], j);
 
-      newv =
-        Create_Vertex(++THEM->MaxPointNum, v->Pos.X, v->Pos.Y, v->Pos.Z + h,
-                      v->lc, v->u);
+      newv = Create_Vertex(++THEM->MaxPointNum, v->Pos.X, v->Pos.Y, 
+			   v->Pos.Z + h, v->lc, v->u);
       Tree_Add(THEM->Vertices, &newv);
       List_Add(v->Extruded_Points, &newv);
     }
   }
 }
-
 
 static void Extrude_Surface1(void *data, void *dum)
 {
@@ -485,7 +496,6 @@ static void Extrude_Surface2(void *data, void *dum)
   Tree_Action(s->Simplexes, Extrude_Simplex_Phase2);
 }
 
-
 static void Extrude_Surface3(void *data, void *dum)
 {
   int i;
@@ -495,7 +505,6 @@ static void Extrude_Surface3(void *data, void *dum)
   Surface *s = *(Surface **) data;
   THES = s;
 
-  /* Numerotation automatique des entites physiques */
   Msg(INFO, "Extruding Surface %d", s->Num);
   for(i = 0; i < NbLayer; i++) {
     ZonLayer[i] = (int)(3 * K1) + (int)((i + 1) * K2) + s->Num;
@@ -508,7 +517,6 @@ static void Extrude_Surface3(void *data, void *dum)
   Tree_Action(s->Simplexes, Extrude_Simplex_Phase3);
   Tree_Action(s->Quadrangles, Extrude_Quadrangle_Phase3);
 }
-
 
 static void Extrude_Seg(Vertex * V1, Vertex * V2)
 {
@@ -584,7 +592,6 @@ static void Extrude_Curve(void *data, void *dum)
   if(c->Num < 0)
     return;
 
-  /* Numerotation automatique des entites physiques */
   Msg(INFO, "Extruding Curve %d", c->Num);
 
   LineLayer[0] = c->Num;
@@ -632,7 +639,6 @@ static void Extrude_Point(void *data, void *dum)
   pV = (Vertex **) data;
   v = *pV;
 
-  /* Numerotation automatique des entites physiques */
   Msg(INFO, "Extruding Vertex %d", v->Num);
   for(i = 0; i < NbLayer; i++) {
     LineLayer[i] = (int)(4 * K1) + (int)((i + 1) * K2) + v->Num;
@@ -658,11 +664,14 @@ void Extrude_Mesh_Old(Mesh * M)
   Mesh MM;
 
   InitExtrudeParams();
+  Tree_Ares = Tree_Create(sizeof(nxn), compnxn);
+  Tree_Swaps = Tree_Create(sizeof(nxn), compnxn);
+
   LOCAL = &MM;
   THEM = M;
 
-  //clean up Extruded_Points stuff (in case another extrusion was
-  //performed before)
+  // clean up Extruded_Points stuff (in case another extrusion was
+  // performed before)
   Tree_Action(THEM->Vertices, FreeEP);
 
   Create_BgMesh(WITHPOINTS, .2, LOCAL);
@@ -686,4 +695,7 @@ void Extrude_Mesh_Old(Mesh * M)
   Tree_Action(M->Surfaces, Extrude_Surface3);
   Tree_Action(M->Curves, Extrude_Curve);
   Tree_Action(M->Points, Extrude_Point);
+
+  Tree_Delete(Tree_Ares);
+  Tree_Delete(Tree_Swaps);
 }

@@ -36,7 +36,7 @@ class POLY_rep
 {
 public :
   int num_points, num_polys;
-  List_T *points_and_normals;  // 6 * nbrPoints 
+  List_T *points_and_normals;  // 6 * num_points 
   List_T *polygons; // first integer gives the number of point of the polygon
                     // then next ones are the points id's of the polygon
   POLY_rep(int num_points, int num_polys, List_T *_p, List_T *_pol);
@@ -54,5 +54,19 @@ void STLAddFacet(double x1, double y1, double z1,
 		 double x2, double y2, double z2,
 		 double x3, double y3, double z3,
 		 double n1, double n2, double n3);
+
+// Same thing for discrete curves
+
+class SEGM_rep 
+{
+public :
+  int num_points;
+  List_T *points;  // 3 * num_points 
+  SEGM_rep(int num_points, List_T *_p);
+  SEGM_rep();
+  ~SEGM_rep();
+  double bounding_box[6];
+  void compute_bounding_box();
+};
 
 #endif

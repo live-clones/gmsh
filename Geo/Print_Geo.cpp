@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.34 2005-01-08 20:15:12 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.35 2005-02-20 06:36:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -131,6 +131,59 @@ void Print_Curve(void *a, void *b)
     break;
   }
 
+}
+
+void Print_Discrete_Curve(void *a, void *b)
+{
+  Curve *c = *(Curve **) a;
+  
+  if(c->Num < 0) return;
+  
+  // if we have a SEGM_rep, print it:
+
+  if(c->theSegmRep){
+    if(!List_Nbr(c->Control_Points))
+      fprintf(FOUT, "Discrete Line (%d) = {%d}\n", 
+	      c->Num, c->theSegmRep->num_points);
+    else
+      fprintf(FOUT, "Discrete Line {%d} = {%d}\n", 
+	      c->Num, c->theSegmRep->num_points);
+    
+    fprintf(FOUT, "{\n");
+    for(int i = 0; i < List_Nbr(c->theSegmRep->points); i++){
+      if(i){
+	fprintf(FOUT, ",");
+	if(!(i%3)) fprintf(FOUT, "\n");
+      }
+      fprintf(FOUT, "%.16g", 
+	      *(double*)List_Pointer_Fast(c->theSegmRep->points, i));
+    }
+    fprintf(FOUT, "};\n");
+    return;
+  }
+
+  // else, print the mesh:
+
+  if(c->Dirty || !List_Nbr(c->Vertices))
+    return;
+
+  if(!List_Nbr(c->Control_Points))
+    fprintf(FOUT, "Discrete Line (%d) = {%d}\n", 
+	    c->Num, List_Nbr(c->Vertices));
+  else
+    fprintf(FOUT, "Discrete Line {%d} = {%d}\n", 
+	    c->Num, List_Nbr(c->Vertices));
+
+  fprintf(FOUT, "{\n");
+  for(int i = 0; i < List_Nbr(c->Vertices); i++){
+    Vertex *v = *(Vertex**)List_Pointer(c->Vertices, i);
+    fprintf(FOUT, "  %.16g,%.16g,%.16g", v->Pos.X, v->Pos.Y, v->Pos.Z);
+    if(i != List_Nbr(c->Vertices) - 1) 
+      fprintf(FOUT, ",\n");
+    else
+      fprintf(FOUT, "\n");
+  }
+  fprintf(FOUT, "};\n");
 }
 
 void Print_Surface(void *a, void *b)
@@ -399,7 +452,7 @@ void Print_PhysicalGroups(void *a, void *b)
 
 }
 
-void Print_Geo(Mesh * M, char *filename, int discrete_surf)
+void Print_Geo(Mesh * M, char *filename, int discrete_curves, int discrete_surf)
 {
   if(filename) {
     FOUT = fopen(filename, "w");
@@ -414,7 +467,9 @@ void Print_Geo(Mesh * M, char *filename, int discrete_surf)
 
   Tree_Action(M->Points, Print_Point);
   Tree_Action(M->Curves, Print_Curve);
-  Tree_Action(M->Surfaces, Print_Surface);
+  Tree_Action(M->Surfaces, Print_Surface); 
+  if(discrete_curves)
+    Tree_Action(M->Curves, Print_Discrete_Curve);
   if(discrete_surf)
     Tree_Action(M->Surfaces, Print_Discrete_Surface);
   Tree_Action(M->Volumes, Print_Volume);
