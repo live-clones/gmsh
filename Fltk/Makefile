@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.41 2003-02-18 05:50:04 geuzaine Exp $
+# $Id: Makefile,v 1.42 2003-02-23 05:51:27 geuzaine Exp $
 
 include ../variables
 
@@ -53,7 +53,7 @@ Main.o: Main.cpp ../Plugin/PluginManager.h ../Common/Gmsh.h \
   ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/Context.h ../Common/Options.h ../Parser/Parser.h GUI.h \
   Opengl_Window.h Colorbar_Window.h ../Parser/OpenFile.h \
-  ../Common/CommandLine.h
+  ../Common/CommandLine.h ../Numeric/Numeric.h
 Message.o: Message.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
@@ -67,7 +67,7 @@ GUI.o: GUI.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h GUI.h \
-  Opengl_Window.h Colorbar_Window.h Callbacks.h Bitmaps.h \
+  Opengl_Window.h Colorbar_Window.h Callbacks.h Bitmaps.h Win32Icon.h \
   ../Parser/OpenFile.h ../Common/CommandLine.h Solvers.h
 Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \

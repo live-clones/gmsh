@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.47 2003-02-18 05:50:05 geuzaine Exp $
+# $Id: Makefile,v 1.48 2003-02-23 05:51:27 geuzaine Exp $
 
 include ../variables
 
@@ -161,7 +161,7 @@ depend:
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h \
   Simplex.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \
-  ../Numeric/Numeric.h ../Common/Context.h ../Triangle/triangle.h
+  ../Numeric/Numeric.h ../Common/Context.h
 3D_Mesh.o: 3D_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \

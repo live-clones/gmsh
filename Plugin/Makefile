@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.31 2003-02-18 05:50:09 geuzaine Exp $
+# $Id: Makefile,v 1.32 2003-02-23 05:51:28 geuzaine Exp $
 
 include ../variables
 
@@ -46,7 +46,7 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
 LevelsetPlugin.o: LevelsetPlugin.cpp LevelsetPlugin.h Plugin.h \
   ../Common/Options.h ../Common/Message.h ../DataStr/List.h \
   ../Common/Views.h ../Common/ColorTable.h ../Graphics/Iso.h \
-  ../Numeric/Numeric.h
+  ../Numeric/Numeric.h ../DataStr/Malloc.h
 CutPlane.o: CutPlane.cpp CutPlane.h LevelsetPlugin.h Plugin.h \
   ../Common/Options.h ../Common/Message.h ../DataStr/List.h \
   ../Common/Context.h
@@ -68,8 +68,7 @@ Triangulate.o: Triangulate.cpp ../Common/Gmsh.h ../Common/Message.h \
   Triangulate.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/Context.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h ../Mesh/Utils.h ../Mesh/Create.h \
-  ../Triangle/triangle.h
+  ../Mesh/Metric.h ../Mesh/Matrix.h ../Mesh/Utils.h ../Mesh/Create.h
 SphericalRaise.o: SphericalRaise.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h SphericalRaise.h ../DataStr/List.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.45 2003-02-18 05:50:04 geuzaine Exp $
+# $Id: Makefile,v 1.46 2003-02-23 05:51:27 geuzaine Exp $
 
 include ../variables
 
@@ -96,6 +96,10 @@ Entity.o: Entity.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Numeric/Numeric.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   Draw.h ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h
+ReadImg.o: ReadImg.cpp ReadImg.h ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
+  ../Common/Views.h ../Common/ColorTable.h
 Visibility.o: Visibility.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Geo/Geo.h ../Geo/CAD.h \

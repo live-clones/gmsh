@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.44 2003-02-18 05:50:09 geuzaine Exp $
+# $Id: Makefile,v 1.45 2003-02-23 05:51:28 geuzaine Exp $
 
 include ../variables
 
@@ -66,5 +66,5 @@ OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   ../Common/Views.h ../Common/ColorTable.h ../Geo/MinMax.h \
-  ../Graphics/Visibility.h ../Common/GmshUI.h ../Graphics/Draw.h
+  ../Graphics/Visibility.h ../Graphics/ReadImg.h
 FunctionManager.o: FunctionManager.cpp FunctionManager.h

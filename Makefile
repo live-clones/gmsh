@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.264 2003-02-20 17:52:38 geuzaine Exp $
+# $Id: Makefile,v 1.265 2003-02-23 05:51:26 geuzaine Exp $
 
 include variables
 
@@ -73,7 +73,7 @@ clean:
 	rm -f ${GMSH_VERSION_FILE}
 
 depend:
-	for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE} depend ); done
+	for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE} depend "FLAGS=-DHAVE_GSL"); done
 
 nodepend:
 	for i in ${GMSH_DIRS} ; do \

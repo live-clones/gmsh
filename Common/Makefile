@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.38 2003-02-18 05:50:04 geuzaine Exp $
+# $Id: Makefile,v 1.39 2003-02-23 05:51:27 geuzaine Exp $
 
 include ../variables
 
@@ -52,8 +52,7 @@ Options.o: Options.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   GmshUI.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h Context.h \
-  Options.h ../Fltk/Solvers.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
-  ../Fltk/Colorbar_Window.h
+  Options.h
 CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   GmshUI.h GmshVersion.h ../Numeric/Numeric.h Context.h Options.h \

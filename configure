@@ -2737,7 +2737,7 @@ if test "x$enable_gui" != "xno"; then
 
   GMSH_DIRS="${GMSH_DIRS} Graphics Fltk"
   GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo -lGmshNumeric -lGmshCommon -lGmshDataStr -lGmshPlugin -lGmshParallel"
-  FLAGS="${FLAGS} -DHAVE_FLTK"
+  FLAGS="-DHAVE_FLTK ${FLAGS}"
 
   if test "x${FLTK_PREFIX}" != "x" ; then
     # Extract the first word of "fltk-config", so it can be a program name with args.
@@ -2781,7 +2781,7 @@ echo "${ECHO_T}no" >&6
 fi
 
         GMSH_LIBS="${GMSH_LIBS} -L${FLTK_PREFIX}/lib"
-    FLAGS="${FLAGS} -I${FLTK_PREFIX}"
+    INCLS="${INCLS} -I${FLTK_PREFIX}"
   else
     # Extract the first word of "fltk-config", so it can be a program name with args.
 set dummy fltk-config; ac_word=$2
@@ -2890,7 +2890,7 @@ else
 fi
 
   if test "x${JPEG}" = "xyes"; then
-    FLAGS="${FLAGS} -DHAVE_LIBJPEG"
+    FLAGS="-DHAVE_LIBJPEG ${FLAGS}"
     if test "x${JPEG_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -ljpeg"
     else
@@ -2933,7 +2933,7 @@ if test "x${TRIANGLE}" = "xyes"; then
   if test "x$enable_triangle" != "xno"; then
      GMSH_DIRS="${GMSH_DIRS} Triangle"
      GMSH_LIBS="${GMSH_LIBS} -lGmshTriangle"
-     FLAGS="${FLAGS} -DHAVE_TRIANGLE"
+     FLAGS="-DHAVE_TRIANGLE ${FLAGS}"
      echo "********************************************************************"
      echo "You are building a version of Gmsh that contains Jonathan"
      echo "Shewchuk's Triangle as an alternative isotropic 2D mesh generator."
@@ -2960,7 +2960,7 @@ else
   fi
 fi
 
-if test "x$enable_gsl" = "xyes"; then
+if test "x$enable_gsl" != "xno"; then
   if test "x${GSL_PREFIX}" != "x"; then
     LDFLAGS="-L${GSL_PREFIX}/lib ${LDFLAGS}"
   fi
@@ -3079,7 +3079,7 @@ else
 fi
 
   if test "x${GSL}" = "xyes"; then
-    FLAGS="${FLAGS} -DHAVE_GSL"
+    FLAGS="-DHAVE_GSL ${FLAGS}"
     if test "x${GSL_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lgsl -lgslcblas"
     else
@@ -3143,7 +3143,7 @@ fi
 GMSH_LIBS="${GMSH_LIBS} -lm"
 
 if test "x$enable_parallel" = "xyes"; then
-  FLAGS="${FLAGS} -DPARALLEL"
+  FLAGS="-DPARALLEL ${FLAGS}"
 fi
 
 LINKER="${CXX}"
@@ -3159,30 +3159,30 @@ case "$UNAME" in
     ;;
 
   Darwin*)
-    FLAGS="${FLAGS} -D_NO_DLL"
+    FLAGS="-D_NO_DLL ${FLAGS}"
     POSTBUILD="/Developer/Tools/Rez -t APPL -o bin/gmsh Fltk/MacRes.r"
     ;;
 
   AIX*)
-    FLAGS="${FLAGS} -D_BSD -D_NO_DLL"
+    FLAGS="-D_BSD -D_NO_DLL ${FLAGS}"
     ;;
 
   IRIX*)
     CXX="CC"
     CC="cc"
     OPTIM="-O2"
-    FLAGS="${FLAGS} -mips3 -n32 -LANG:std -OPT:Olimit=0"
+    FLAGS="-mips3 -n32 -LANG:std -OPT:Olimit=0 ${FLAGS}"
     AR="CC -mips3 -n32 -ar -o"
     LINKER="CC -O2 -mips3 -n32"
     ;;
 
   SunOS*)
-    FLAGS="${FLAGS} -D_NO_DLL"
+    FLAGS="-D_NO_DLL ${FLAGS}"
     GMSH_LIBS="${GMSH_LIBS} -lsocket -lnsl -ldl"
     ;;
 
   HP-UX*)
-    FLAGS="${FLAGS} -D_NO_DLL"
+    FLAGS="-D_NO_DLL ${FLAGS}"
     ;;
 
 esac
@@ -3374,7 +3374,7 @@ echo "$as_me:$LINENO: result: $ac_cv_c_bigendian" >&5
 echo "${ECHO_T}$ac_cv_c_bigendian" >&6
 case $ac_cv_c_bigendian in
   yes)
-    FLAGS="${FLAGS} -D_BIG_ENDIAN" ;;
+    FLAGS="-D_BIG_ENDIAN ${FLAGS}" ;;
   no)
      ;;
   *)

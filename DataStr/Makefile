@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.19 2003-02-18 05:50:04 geuzaine Exp $
+# $Id: Makefile,v 1.20 2003-02-23 05:51:27 geuzaine Exp $
 
 include ../variables
 
@@ -36,7 +36,7 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-List.o: List.cpp Malloc.h List.h SafeIO.h ../Common/Message.h
+List.o: List.cpp Malloc.h List.h ../Common/Message.h SafeIO.h
 Malloc.o: Malloc.cpp Malloc.h ../Common/Message.h
 SafeIO.o: SafeIO.cpp SafeIO.h ../Common/Message.h
 Tree.o: Tree.cpp Malloc.h Tree.h avl.h ../Common/Message.h

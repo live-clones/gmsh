@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2003-02-18 06:26:02 geuzaine Exp $
+# $Id: Makefile,v 1.9 2003-02-23 05:51:27 geuzaine Exp $
 
 include ../variables
 
@@ -34,5 +34,11 @@ depend:
 
 # DO NOT DELETE THIS LINE
 Numeric.o: Numeric.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h Numeric.h
+gsl_newt.o: gsl_newt.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h Numeric.h
+gsl_brent.o: gsl_brent.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Numeric.h
