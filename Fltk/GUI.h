@@ -18,34 +18,38 @@
 #include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Value_Input.H>
+#include <FL/Fl_Value_Output.H>
+#include <FL/Fl_Multiline_Output.H>
+#include <FL/Fl_Browser.H>
+#include <FL/Fl_Bitmap.H>
 
 #define NB_BUTT_MAX    100
 #define NB_HISTORY_MAX 1000
 
-// The dynamic menus
+// The dynamic contexts
 
 typedef struct{
   char *label;
-  void (*callback)(Fl_Widget* w, void* data);
+  Fl_Callback* callback;
 } Context_Item;
 
-extern Context_Item menu_geom[]; 
-extern    Context_Item menu_geom_elementary[]; 
-extern        Context_Item menu_geom_elementary_add[]; 
-extern            Context_Item menu_geom_elementary_add_new[]; 
-extern            Context_Item menu_geom_elementary_add_translate[]; 
-extern            Context_Item menu_geom_elementary_add_rotate[]; 
-extern            Context_Item menu_geom_elementary_add_dilate[]; 
-extern            Context_Item menu_geom_elementary_add_symmetry[]; 
-extern        Context_Item menu_geom_elementary_translate[]; 
-extern        Context_Item menu_geom_elementary_rotate[]; 
-extern        Context_Item menu_geom_elementary_dilate[]; 
-extern        Context_Item menu_geom_elementary_symmetry[]; 
-extern        Context_Item menu_geom_elementary_extrude[]; 
-extern        Context_Item menu_geom_elementary_delete[]; 
-extern    Context_Item menu_geom_physical[]; 
-extern        Context_Item menu_geom_physical_add[]; 
-extern        Context_Item menu_geom_physical_delete[]; 
+extern Context_Item menu_geometry[]; 
+extern    Context_Item menu_geometry_elementary[]; 
+extern        Context_Item menu_geometry_elementary_add[]; 
+extern            Context_Item menu_geometry_elementary_add_new[]; 
+extern            Context_Item menu_geometry_elementary_add_translate[]; 
+extern            Context_Item menu_geometry_elementary_add_rotate[]; 
+extern            Context_Item menu_geometry_elementary_add_dilate[]; 
+extern            Context_Item menu_geometry_elementary_add_symmetry[]; 
+extern        Context_Item menu_geometry_elementary_translate[]; 
+extern        Context_Item menu_geometry_elementary_rotate[]; 
+extern        Context_Item menu_geometry_elementary_dilate[]; 
+extern        Context_Item menu_geometry_elementary_symmetry[]; 
+extern        Context_Item menu_geometry_elementary_extrude[]; 
+extern        Context_Item menu_geometry_elementary_delete[]; 
+extern    Context_Item menu_geometry_physical[]; 
+extern        Context_Item menu_geometry_physical_add[]; 
+extern        Context_Item menu_geometry_physical_delete[]; 
 extern Context_Item menu_mesh[]; 
 extern    Context_Item menu_mesh_define[]; 
 extern        Context_Item menu_mesh_define_transfinite[]; 
@@ -81,9 +85,13 @@ class GUI{
   // Windows
   Fl_Window  *m_window, *g_window, *gen_window, *geo_window ;
   Fl_Window  *mesh_window, *post_window, *stat_window ;
-  Fl_Window  *view_window ;
+  Fl_Window  *help_window, *about_window, *view_window ;
   Opengl_Window *g_opengl_window ;
   
+  // Bitmaps
+  Fl_Bitmap  *icon1_bmp, *icon2_bmp, *icon3_bmp;
+  Fl_Bitmap  *abort_bmp, *start_bmp, *stop_bmp, *about_bmp ;
+
   // We keep the following widgets for easy further reference
 
   // menu window
@@ -95,19 +103,26 @@ class GUI{
 
   // graphic window
   Fl_Button        *g_status_butt[7] ;
-  Fl_Box           *g_status_box[3] ;
+  Fl_Box           *g_status_label[3] ;
 
   // general options window
   Fl_Check_Button  *gen_butt[10] ;
   Fl_Value_Input   *gen_value[10] ;
 
   // geometry options window
+  Fl_Check_Button  *geo_butt[10] ;
+  Fl_Value_Input   *geo_value[10] ;
   
   // mesh options window
+  Fl_Check_Button  *mesh_butt[20] ;
+  Fl_Value_Input   *mesh_value[20] ;
 
   // post-processing options window
+  Fl_Check_Button  *post_butt[20] ;
+  Fl_Value_Input   *post_value[20] ;
 
   // statistics window
+  Fl_Value_Output  *stat_value[40] ;
 
   // view options window
 
@@ -118,15 +133,23 @@ public:
   void check();
   void draw_gl();
   void draw_gl_overlay();
-  void set_size(int w, int h);
+  void set_gl_size(int w, int h);
   void set_menu_size(int nb_butt);
   void set_context(Context_Item menu[], int flag);
+  int  get_context();
+  void set_anim(int mode);
+  void set_status(char *msg, int num);
 
+  // create option windows
   void opt_general();
   void opt_geometry();
   void opt_mesh();
   void opt_post();
   void opt_stat();
+
+  // create help windows
+  void help_short();
+  void help_about();
 
 };
 

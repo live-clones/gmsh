@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.2 2001-01-08 14:51:30 geuzaine Exp $
+// $Id: Main.cpp,v 1.3 2001-01-09 08:58:38 geuzaine Exp $
 
 #include <signal.h>
 
@@ -20,8 +20,6 @@
 
 extern List_T *Post_ViewList;
 int            SHOW_ALL_ENTITIES ;
-
-void AddViewInUI(int, char *, int){}
 
 GUI *WID ;
 
@@ -94,8 +92,8 @@ int main(int argc, char *argv[]){
 
   // Text for about window
 
-  sprintf(TextAbout, "%s\n \n%s%.2f\n%s\n%s\n%s\n%s\n%s\n%s\n \n%s\n \n"
-          "Type 'gmsh -help' for command line options",
+  sprintf(TextAbout, " %s\n \n %s%.2f\n %s\n %s\n %s\n %s\n %s\n %s\n \n %s"
+	  "\n \n Type 'gmsh -help' for command line options",
           gmsh_progname, gmsh_version, GMSH_VERSION, 
           gmsh_os, gmsh_date, gmsh_host, gmsh_packager, 
           gmsh_url, gmsh_email, gmsh_copyright);
@@ -125,10 +123,10 @@ int main(int argc, char *argv[]){
 
   if(nbf > 1){
     for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
-    WID->set_context(menu_post,0);
+    WID->set_context(menu_post, 0);
   }
   else {
-    WID->set_context(menu_geom,0); 
+    WID->set_context(menu_geometry, 0); 
   }
 
   // Read background mesh on disk

@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.1 2001-01-08 08:16:27 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.2 2001-01-09 08:58:38 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -30,8 +30,6 @@ void InitOverlay(void){
 }
 
 void Draw(void){
-  WID->set_size(CTX.viewport[2]-CTX.viewport[0],
-	       CTX.viewport[3]-CTX.viewport[1]);
   WID->draw_gl();
 }
 
@@ -125,6 +123,16 @@ void Opengl_Window::draw() {
 	       CTX.viewport[2],
 	       CTX.viewport[3]);
   }
+  if((w() != CTX.viewport[2]-CTX.viewport[0]) ||
+     (h() != CTX.viewport[3]-CTX.viewport[1])){
+    WID->set_gl_size(CTX.viewport[2]-CTX.viewport[0],
+		     CTX.viewport[3]-CTX.viewport[1]);
+    glViewport(CTX.viewport[0],
+	       CTX.viewport[1],
+	       CTX.viewport[2],
+	       CTX.viewport[3]);
+  }
+
   Orthogonalize(0,0);
   glClearColor(UNPACK_RED(CTX.color.bg)/255.,
                UNPACK_GREEN(CTX.color.bg)/255.,
