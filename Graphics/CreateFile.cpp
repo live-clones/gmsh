@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.33 2002-09-06 19:19:49 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.34 2002-09-09 18:30:27 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -199,7 +199,7 @@ void CreateOutputFile (char *name, int format) {
       CTX.print.gl_fonts = 1;
       res = gl2psEndPage();
     }
-    Msg(INFO, "EPS creation complete '%s'", name);
+    Msg(INFO, "PS/EPS creation complete '%s'", name);
     Msg(STATUS2, "Wrote '%s'", name);
     fclose(fp);
     break ;
