@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.28 2001-05-30 13:53:50 geuzaine Exp $
+// $Id: Main.cpp,v 1.29 2001-05-30 15:22:41 geuzaine Exp $
 
 #include <signal.h>
 #include <time.h>
@@ -25,12 +25,16 @@ GUI *WID = NULL;
 
 int main(int argc, char *argv[]){
   int     i, nbf;
-  char    tmp[1000]="";
+  char    cmdline[1000]="";
   time_t  now;
  
-  // log the starting time
+  // log some info
   
   time(&now);
+  for(i=0;i<argc;i++){ 
+    if(i) strcat(cmdline, " "); 
+    strcat(cmdline, argv[i]);
+  }
 
   // Gmsh default options
   
@@ -81,10 +85,7 @@ int main(int argc, char *argv[]){
   // Non-interactive Gmsh
 
   if(CTX.batch){
-    for(i=0;i<argc;i++){ 
-      strcat(tmp, argv[i]); strcat(tmp, " "); 
-    }
-    Msg(DIRECT, "Command line : %s", tmp);
+    Msg(DIRECT, "Command line : %s", cmdline);
     OpenProblem(CTX.filename);
     if(yyerrorstate)
       exit(1);
@@ -139,6 +140,8 @@ int main(int argc, char *argv[]){
   Msg(LOG_INFO, gmsh_host);
   Msg(LOG_INFO, gmsh_packager);
   Msg(LOG_INFO, "Home directory   : '%s'", CTX.home_dir);
+  Msg(LOG_INFO, "Launch date      : %s", ctime(&now));
+  Msg(LOG_INFO, "Command line     : '%s'", cmdline);
   Msg(LOG_INFO, "-------------------------------------------------------");
 
   // Display the GUI immediately to have a quick "a la Windows" launch time
