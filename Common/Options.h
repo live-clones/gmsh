@@ -430,6 +430,7 @@ double opt_post_link(OPT_ARGS_NUM);
 double opt_post_smooth(OPT_ARGS_NUM);
 double opt_post_anim_delay(OPT_ARGS_NUM);
 double opt_post_anim_cycle(OPT_ARGS_NUM);
+double opt_post_combine_remove_orig(OPT_ARGS_NUM);
 double opt_post_nb_views(OPT_ARGS_NUM);
 double opt_view_nb_timestep(OPT_ARGS_NUM);
 double opt_view_timestep(OPT_ARGS_NUM);

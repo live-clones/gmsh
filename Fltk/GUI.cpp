@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.344 2004-09-17 21:36:19 geuzaine Exp $
+// $Id: GUI.cpp,v 1.345 2004-09-18 01:12:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1064,24 +1064,14 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 		  (Fl_Callback *) view_duplicate_with_options_cb, (void *)nb, 0);
 	p[j]->add("Combine/Elements/From all views", 0, 
 		  (Fl_Callback *) view_combine_all_cb, (void *)nb, 0);
-	p[j]->add("Combine/Elements/From all views (and remove originals)", 0, 
-		  (Fl_Callback *) view_combine_all_and_remove_cb, (void *)nb, 0);
 	p[j]->add("Combine/Elements/From visible views", 0, 
 		  (Fl_Callback *) view_combine_visible_cb, (void *)nb, 0);
-	p[j]->add("Combine/Elements/From visible views (and remove originals)", 0, 
-		  (Fl_Callback *) view_combine_visible_and_remove_cb, (void *)nb, 0);
 	p[j]->add("Combine/Time steps/From all views", 0, 
 		  (Fl_Callback *) view_combine_time_all_cb, (void *)nb, 0);
-	p[j]->add("Combine/Time steps/From all views (and remove originals)", 0, 
-		  (Fl_Callback *) view_combine_time_all_and_remove_cb, (void *)nb, 0);
 	p[j]->add("Combine/Time steps/From visible views", 0, 
 		  (Fl_Callback *) view_combine_time_visible_cb, (void *)nb, 0);
-	p[j]->add("Combine/Time steps/From visible views (and remove originals)", 0, 
-		  (Fl_Callback *) view_combine_time_visible_and_remove_cb, (void *)nb, 0);
 	p[j]->add("Combine/Time steps/By view name", 0, 
 		 (Fl_Callback *) view_combine_time_by_name_cb, (void *)nb, 0);
-	p[j]->add("Combine/Time steps/By view name (and remove originals)", 0, 
-		  (Fl_Callback *) view_combine_time_by_name_and_remove_cb, (void *)nb, 0);
 	p[j]->add("Save as/ASCII view...", 0, 
 		  (Fl_Callback *) view_save_ascii_cb, (void *)nb, 0);
 	p[j]->add("Save as/Binary view...", 0, 
@@ -2256,6 +2246,11 @@ void GUI::create_option_window()
       post_butt[0]->type(FL_TOGGLE_BUTTON);
       post_butt[0]->down_box(TOGGLE_BOX);
       post_butt[0]->selection_color(TOGGLE_COLOR);
+
+      post_butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, BW, BH, "Remove original views after combination");
+      post_butt[1]->type(FL_TOGGLE_BUTTON);
+      post_butt[1]->down_box(TOGGLE_BOX);
+      post_butt[1]->selection_color(TOGGLE_COLOR);
 
       o->end();
     }

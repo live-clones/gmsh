@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.183 2004-09-16 19:15:26 geuzaine Exp $
+// $Id: Options.cpp,v 1.184 2004-09-18 01:12:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -4171,6 +4171,17 @@ double opt_post_anim_cycle(OPT_ARGS_NUM)
     WID->check_anim_buttons();
 #endif
   return CTX.post.anim_cycle;
+}
+
+double opt_post_combine_remove_orig(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.post.combine_remove_orig = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->post_butt[1]->value(CTX.post.combine_remove_orig);
+#endif
+  return CTX.post.combine_remove_orig;
 }
 
 double opt_post_nb_views(OPT_ARGS_NUM)

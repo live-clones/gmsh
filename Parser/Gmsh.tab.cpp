@@ -192,7 +192,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.201 2004-09-16 21:26:30 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.202 2004-09-18 01:12:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -7156,9 +7156,9 @@ case 287:
 #line 2535 "Gmsh.y"
 {
       if(!strcmp(yyvsp[-1].c, "Views"))
-	CombineViews(1, 0);
+	CombineViews(1, CTX.post.combine_remove_orig);
       else if(!strcmp(yyvsp[-1].c, "TimeSteps"))
-	CombineViews_Time(2, 0);
+	CombineViews_Time(2, CTX.post.combine_remove_orig);
       else
 	yymsg(GERROR, "Unknown 'Combine' command");
     ;

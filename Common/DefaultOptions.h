@@ -908,6 +908,9 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "AnimationCycle" , opt_post_anim_cycle , 0. ,
     "Cycle through views instead of time steps in automatic animation mode" },
 
+  { F|O, "CombineRemoveOriginal" , opt_post_combine_remove_orig , 1. ,
+    "Remove original views after a Combine operation" },
+
   { F|O, "Link" , opt_post_link , 0. ,
     "Link post-processing views (0=none, 1,2=changes in visible/all, 3,4=everything in visible/all)" },
 

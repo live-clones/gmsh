@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.270 2004-09-16 21:26:30 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.271 2004-09-18 01:12:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1064,6 +1064,7 @@ void post_options_cb(CALLBACK_ARGS)
 void post_options_ok_cb(CALLBACK_ARGS)
 {
   opt_post_anim_cycle(0, GMSH_SET, WID->post_butt[0]->value());
+  opt_post_combine_remove_orig(0, GMSH_SET, WID->post_butt[1]->value());
 
   opt_post_anim_delay(0, GMSH_SET, WID->post_value[0]->value());
 
@@ -3177,61 +3178,31 @@ void view_duplicate_with_options_cb(CALLBACK_ARGS)
 
 void view_combine_all_cb(CALLBACK_ARGS)
 {
-  CombineViews(1, 0);
-  Draw();
-}
-
-void view_combine_all_and_remove_cb(CALLBACK_ARGS)
-{
-  CombineViews(1, 1);
+  CombineViews(1, CTX.post.combine_remove_orig);
   Draw();
 }
 
 void view_combine_visible_cb(CALLBACK_ARGS)
 {
-  CombineViews(0, 0);
-  Draw();
-}
-
-void view_combine_visible_and_remove_cb(CALLBACK_ARGS)
-{
-  CombineViews(0, 1);
+  CombineViews(0, CTX.post.combine_remove_orig);
   Draw();
 }
 
 void view_combine_time_all_cb(CALLBACK_ARGS)
 {
-  CombineViews_Time(1, 0);
-  Draw();
-}
-
-void view_combine_time_all_and_remove_cb(CALLBACK_ARGS)
-{
-  CombineViews_Time(1, 1);
+  CombineViews_Time(1, CTX.post.combine_remove_orig);
   Draw();
 }
 
 void view_combine_time_visible_cb(CALLBACK_ARGS)
 {
-  CombineViews_Time(0, 0);
-  Draw();
-}
-
-void view_combine_time_visible_and_remove_cb(CALLBACK_ARGS)
-{
-  CombineViews_Time(0, 1);
+  CombineViews_Time(0, CTX.post.combine_remove_orig);
   Draw();
 }
 
 void view_combine_time_by_name_cb(CALLBACK_ARGS)
 {
-  CombineViews_Time(2, 0);
-  Draw();
-}
-
-void view_combine_time_by_name_and_remove_cb(CALLBACK_ARGS)
-{
-  CombineViews_Time(2, 1);
+  CombineViews_Time(2, CTX.post.combine_remove_orig);
   Draw();
 }
 

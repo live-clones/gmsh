@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.69 2004-05-17 18:04:54 geuzaine Exp $
+// $Id: Main.cpp,v 1.70 2004-09-18 01:12:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
       for(i = 1; i < nbf; i++)
         MergeProblem(TheFileNameTab[i]);
       if(CTX.post.combine_time)
-	CombineViews_Time(2, 1);
+	CombineViews_Time(2, CTX.post.combine_remove_orig);
       if(TheBgmFileName) {
         MergeProblem(TheBgmFileName);
         if(List_Nbr(CTX.post.list))
@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
   for(i = 1; i < nbf; i++)
     MergeProblem(TheFileNameTab[i]);
   if(CTX.post.combine_time)
-    CombineViews_Time(2, 1);
+    CombineViews_Time(2, CTX.post.combine_remove_orig);
   
   // Init first context
 
