@@ -23,6 +23,7 @@
 #define FORMAT_PSTEX   16
 #define FORMAT_JPEGTEX 17
 #define FORMAT_TEX     18
+#define FORMAT_VRML    19
 
 #define CONV_VALUE    0.8
 

@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.26 2001-11-19 13:48:19 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.27 2002-04-23 23:07:23 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -59,6 +59,7 @@ void CreateOutputFile (char *name, int format) {
     else if(!strcmp(ext,".yuv")) CreateOutputFile(name, FORMAT_YUV);
     else if(!strcmp(ext,".gref")) CreateOutputFile(name, FORMAT_GREF);
     else if(!strcmp(ext,".Gref")) CreateOutputFile(name, FORMAT_GREF);
+    else if(!strcmp(ext,".wrl")) CreateOutputFile(name, FORMAT_VRML);
     else Msg(GERROR, "Unknown extension '%s' for automatic format detection", ext);
     break;
 
@@ -80,6 +81,10 @@ void CreateOutputFile (char *name, int format) {
     
   case FORMAT_GREF :
     Print_Mesh(&M, name, FORMAT_GREF); 
+    break;
+
+  case FORMAT_VRML :
+    Print_Mesh(&M, name, FORMAT_VRML); 
     break;
 
   case FORMAT_JPEG :

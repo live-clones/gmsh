@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.164 2002-04-12 23:59:22 geuzaine Exp $
+// $Id: GUI.cpp,v 1.165 2002-04-23 23:07:23 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -64,6 +64,7 @@ Fl_Menu_Item m_menubar_table[] = {
          {"Gmsh mesh format, all elements...", 0, (Fl_Callback *)file_save_as_msh_all_cb, 0},
          {"Universal mesh format (unv)...",    0, (Fl_Callback *)file_save_as_unv_cb, 0},
          {"Gref mesh format (gref)...",        0, (Fl_Callback *)file_save_as_gref_cb, 0},
+         {"Vrml surface mesh (wrl)...",        0, (Fl_Callback *)file_save_as_vrml_cb, 0},
          {0},
       {"Image",  0, 0, 0, FL_SUBMENU},
          {"PostScript, fast (ps)...",  0, (Fl_Callback *)file_save_as_ps_simple_cb, 0},

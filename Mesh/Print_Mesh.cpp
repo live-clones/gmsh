@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.33 2001-11-29 09:15:30 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.34 2002-04-23 23:07:23 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -1206,6 +1206,78 @@ void EndConsecutiveNodes (Mesh * M){
 }
 
 /* ------------------------------------------------------------------------ */
+/*  V R M L 1    F O R M A T                                                */
+/* ------------------------------------------------------------------------ */
+
+static FILE *wrlfile;
+static List_T *wrlnodes=NULL;
+
+void print_wrl_node (void *a, void *b){
+  Vertex *V = *(Vertex **) a;
+  fprintf(wrlfile, "%.16g %.16g %.16g,\n",
+	  V->Pos.X * CTX.mesh.scaling_factor, 
+	  V->Pos.Y * CTX.mesh.scaling_factor, 
+	  V->Pos.Z * CTX.mesh.scaling_factor);
+  List_Add(wrlnodes, &V->Num);
+}
+
+void process_wrl_nodes (Mesh * M){
+  if(!wrlnodes)
+    wrlnodes = List_Create(Tree_Size(M->Vertices),100,sizeof(int));
+  else
+    List_Reset(wrlnodes);
+  fprintf (wrlfile, "#VRML V1.0 ascii\n");
+  fprintf (wrlfile, "#created by Gmsh\n");
+  fprintf (wrlfile, "Coordinate3 {\n");
+  fprintf (wrlfile, "  point [\n");
+  Tree_Action(M->Vertices, print_wrl_node);
+  fprintf (wrlfile, "  ]\n");
+  fprintf (wrlfile, "}\n");
+}
+
+void print_wrl_simplex (void *a, void *b){
+  Simplex *S = *(Simplex **) a;
+  int i=0, j;
+  while(S->V[i]){
+    j = List_ISearch(wrlnodes,&S->V[i]->Num,fcmp_int);
+    if(j < 0) 
+      Msg(GERROR, "Unknown node %d in simplex %d", S->V[i]->Num, S->Num);
+    else 
+      fprintf(wrlfile, "%d,", j);
+    i++;
+  }
+  fprintf(wrlfile, "-1,\n");
+}
+
+void print_all_wrl_curves (void *a, void *b){
+  Curve *c = *(Curve**)a;
+  if(c->Num<0) return;
+  fprintf(wrlfile, "DEF Curve%d IndexedLineSet {\n", c->Num);
+  fprintf(wrlfile, "  coordIndex [\n");
+  Tree_Action (c->Simplexes, print_wrl_simplex);
+  fprintf(wrlfile, "  ]\n");
+  fprintf(wrlfile, "}\n");
+}
+
+void print_all_wrl_surfaces (void *a, void *b){
+  Surface *s = *(Surface**)a;
+  fprintf(wrlfile, "DEF Surface%d IndexedFaceSet {\n", s->Num);
+  fprintf(wrlfile, "  coordIndex [\n");
+  Tree_Action (s->Simplexes, print_wrl_simplex);
+  fprintf(wrlfile, "  ]\n");
+  fprintf(wrlfile, "}\n");
+}
+
+void process_wrl_elements (Mesh * M){
+  if(!wrlnodes)
+    Msg(GERROR, "VRML node list does not exist");
+  else{
+    Tree_Action(M->Curves, print_all_wrl_curves);
+    Tree_Action(M->Surfaces, print_all_wrl_surfaces);
+  }
+}
+
+/* ------------------------------------------------------------------------ */
 /*  P r i n t _ M e s h                                                     */
 /* ------------------------------------------------------------------------ */
 
@@ -1227,6 +1299,20 @@ void Print_Mesh (Mesh * M, char *c, int Type){
          name, MSH_NODE_NUM, MSH_ELEMENT_NUM - 1);
     Msg(STATUS2, "Wrote '%s'", name);
     fclose (mshfile);
+  }
+  else if (Type == FORMAT_VRML){
+    c ? strcpy (name, c) : strcat (name, ".wrl");
+    wrlfile = fopen (name, "w");
+    if (!wrlfile){
+      Msg(GERROR, "Unable to open file '%s'", name);
+      return;
+    }
+    Msg(INFO, "Writing file '%s'", name);
+    process_wrl_nodes (M);
+    process_wrl_elements (M);
+    Msg(INFO, "VRML ouput complete '%s'", name);
+    Msg(STATUS2, "Wrote '%s'", name);
+    fclose (wrlfile);
   }
   else if (Type == FORMAT_UNV){
     c ? strcpy (name, c) : strcat (name, ".unv");

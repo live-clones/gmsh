@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.117 2002-04-13 05:49:50 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.118 2002-04-23 23:07:23 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -321,6 +321,11 @@ void file_save_as_gref_cb(CALLBACK_ARGS) {
   if(file_chooser(0,"Save GREF file", "*"))
     CreateOutputFile(file_chooser_get_name(1),
 		     CTX.print.format = CTX.mesh.format = FORMAT_GREF); 
+}
+void file_save_as_vrml_cb(CALLBACK_ARGS) {
+  if(file_chooser(0,"Save VRML file", "*"))
+    CreateOutputFile(file_chooser_get_name(1),
+		     CTX.print.format = CTX.mesh.format = FORMAT_VRML); 
 }
 void file_save_as_ps_simple_cb(CALLBACK_ARGS) {
   if(file_chooser(0,"Save PS file", "*")){

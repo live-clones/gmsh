@@ -31,6 +31,7 @@ void file_save_as_msh_cb(CALLBACK_ARGS) ;
 void file_save_as_msh_all_cb(CALLBACK_ARGS) ;
 void file_save_as_unv_cb(CALLBACK_ARGS) ;
 void file_save_as_gref_cb(CALLBACK_ARGS) ;
+void file_save_as_vrml_cb(CALLBACK_ARGS) ;
 void file_save_as_ps_simple_cb(CALLBACK_ARGS) ;
 void file_save_as_ps_accurate_cb(CALLBACK_ARGS) ;
 void file_save_as_pstex_simple_cb(CALLBACK_ARGS) ;
