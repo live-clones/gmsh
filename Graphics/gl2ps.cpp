@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to Postscript Printing Library
  * Copyright (C) 1999-2001  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.18 2001-06-12 07:32:23 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.19 2001-06-12 08:29:52 geuzaine Exp $
  *
  * E-mail: Christophe.Geuzaine@AdValvas.be
  * URL: http://www.geuz.org/gl2ps/
@@ -897,7 +897,7 @@ GLvoid gl2psAddPolyPrimitive(GLshort type, GLshort numverts,
 
   prim->depth = 0.;
   prim->dash = dash;
-  prim->width = width;
+  prim->width = width;  /* we should maybe use floats */
 
   if(gl2ps.sort == GL2PS_SIMPLE_SORT){
     for(i = 0; i < numverts; i++) 
@@ -1026,12 +1026,12 @@ GLint gl2psParseFeedbackBuffer(GLvoid){
       case GL2PS_SET_POINT_SIZE : 
 	current+=2; 
 	used-=2; 
-	psize=(GLint)current[1]; 
+	psize=(GLint)current[1];
 	break;
       case GL2PS_SET_LINE_WIDTH : 
 	current+=2; 
 	used-=2; 
-	lwidth=(GLint)current[1]; 
+	lwidth=(GLint)current[1];
 	break;
       }
       current += 2; 
@@ -1172,7 +1172,7 @@ GLvoid gl2psPrintPostscriptPrimitive(GLvoid *a, GLvoid *b){
     break;
   case GL2PS_POINT :
     fprintf(gl2ps.stream, "%g %g %g %g %g %g P\n", 
-	    prim->verts[0].xyz[0], prim->verts[0].xyz[1], 1.0*prim->width, 
+	    prim->verts[0].xyz[0], prim->verts[0].xyz[1], 0.5*prim->width, 
 	    prim->verts[0].rgba[0], prim->verts[0].rgba[1], prim->verts[0].rgba[2]);
     break;
   case GL2PS_LINE :
@@ -1185,14 +1185,14 @@ GLvoid gl2psPrintPostscriptPrimitive(GLvoid *a, GLvoid *b){
 	      prim->verts[1].rgba[2], prim->verts[0].xyz[0],
 	      prim->verts[0].xyz[1], prim->verts[0].rgba[0],
 	      prim->verts[0].rgba[1], prim->verts[0].rgba[2],
-	      0.2*prim->width);
+	      0.5*prim->width);
     }
     else{
       fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g L\n",
 	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
 	      prim->verts[0].xyz[0], prim->verts[0].xyz[1],
 	      prim->verts[0].rgba[0], prim->verts[0].rgba[1], 
-	      prim->verts[0].rgba[2], 0.2*prim->width);
+	      prim->verts[0].rgba[2], 0.5*prim->width);
     }
     if(prim->dash)
       fprintf(gl2ps.stream, "[] 0 setdash\n");
@@ -1414,12 +1414,12 @@ GLvoid gl2psDisable(GLint mode){
   }
 }
 
-GLvoid gl2psPointSize(GLint value){
+GLvoid gl2psPointSize(GLfloat value){
   glPassThrough(GL2PS_SET_POINT_SIZE);
   glPassThrough(value);
 }
 
-GLvoid gl2psLineWidth(GLint value){
+GLvoid gl2psLineWidth(GLfloat value){
   glPassThrough(GL2PS_SET_LINE_WIDTH);
   glPassThrough(value);
 }

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.20 2001-06-11 12:05:02 geuzaine Exp $
+// $Id: Geom.cpp,v 1.21 2001-06-12 08:29:52 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -11,6 +11,7 @@
 #include "Numeric.h"
 #include "Visibility.h"
 #include "STL.h"
+#include "gl2ps.h"
 
 extern Context_T  CTX;
 extern Mesh      *THEM;
@@ -33,15 +34,15 @@ void Draw_GeoPoint (void *a, void *b){
   }
 
   if((*v)->Frozen){
-    glPointSize(5);
+    glPointSize(5); gl2psPointSize(5);
     glColor4ubv((GLubyte*)&CTX.color.geom.point_sel);
   }
   else if(Highlighted){
-    glPointSize(5);
+    glPointSize(5); gl2psPointSize(5);
     glColor4ubv((GLubyte*)&CTX.color.geom.point_hlt);
   }
   else{
-    glPointSize(3);
+    glPointSize(3); gl2psPointSize(3);
     glColor4ubv((GLubyte*)&CTX.color.geom.point);
   }
 
@@ -87,15 +88,15 @@ void Draw_Curve (void *a, void *b){
   }
 
   if((c)->ipar[3]){
-    glLineWidth(2.);
+    glLineWidth(2.); gl2psLineWidth(2.);
     glColor4ubv((GLubyte*)&CTX.color.geom.line_sel);
   }
   else if(Highlighted){
-    glLineWidth(2.);
+    glLineWidth(2.); gl2psLineWidth(2.);
     glColor4ubv((GLubyte*)&CTX.color.geom.line_hlt);
   }
   else{
-    glLineWidth(1.);
+    glLineWidth(1.); gl2psLineWidth(1.);
     glColor4ubv((GLubyte*)&CTX.color.geom.line);
   }
 
@@ -659,15 +660,15 @@ void Draw_Surface (void *a, void *b){
 
   if(!CTX.geom.shade){
     if(s->Mat){
-      glLineWidth(2.);
+      glLineWidth(2.); gl2psLineWidth(2.);
       glColor4ubv((GLubyte*)&CTX.color.geom.surface_sel);
     }
     else if (Highlighted){
-      glLineWidth(2.);
+      glLineWidth(2.); gl2psLineWidth(2.);
       glColor4ubv((GLubyte*)&CTX.color.geom.surface_hlt);
     }
     else{
-      glLineWidth(1.);
+      glLineWidth(1.); gl2psLineWidth(1.);
       glColor4ubv((GLubyte*)&CTX.color.geom.surface);
     }
     glEnable(GL_LINE_STIPPLE);
@@ -711,7 +712,7 @@ void Draw_Curve_For_Volume (void *a, void *b){
   Curve  *c;
   Vertex  v;
 
-  glLineWidth(2.);
+  glLineWidth(2.); gl2psLineWidth(2.);
 
   c = *(Curve**)a;
 
@@ -745,7 +746,7 @@ void Draw_Curve_For_Volume (void *a, void *b){
   }
 
   if((c)->ipar[3]){
-    glLineWidth(1.);
+    glLineWidth(1.); gl2psLineWidth(1.);
   }
 
 }

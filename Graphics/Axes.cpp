@@ -1,10 +1,12 @@
-// $Id: Axes.cpp,v 1.3 2001-01-09 19:40:56 remacle Exp $
+// $Id: Axes.cpp,v 1.4 2001-06-12 08:29:52 geuzaine Exp $
+
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Const.h"
 #include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"
+#include "gl2ps.h"
 
 extern Context_T   CTX;
 
@@ -21,7 +23,7 @@ void Draw_Axes (double s) {
   b = .1 * s;
   c = 0.666 * b;
 
-  glLineWidth(1.);
+  glLineWidth(1.); gl2psLineWidth(1.);
   glColor4ubv((GLubyte*)&CTX.color.axes);
 
   glBegin(GL_LINES);
