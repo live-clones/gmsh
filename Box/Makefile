@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2001-08-08 17:51:14 remacle Exp $
+# $Id: Makefile,v 1.10 2001-08-12 13:08:20 geuzaine Exp $
 #
 # Makefile for "libBox.a"
 #
@@ -51,7 +51,7 @@ depend:
 Main.o: Main.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshVersion.h \
- ../Common/Const.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+ ../Common/Numeric.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
  ../Mesh/Metric.h ../Common/Views.h ../Common/ColorTable.h \
  ../Parser/Parser.h ../Common/Context.h ../Parser/OpenFile.h \

@@ -1,7 +1,8 @@
-// $Id: CbOptions.cpp,v 1.10 2001-07-17 07:00:37 geuzaine Exp $
+// $Id: CbOptions.cpp,v 1.11 2001-08-12 13:08:20 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "Verif.h"
 #include "Mesh.h"

@@ -1,7 +1,8 @@
-// $Id: CbPost.cpp,v 1.7 2001-08-11 23:28:33 geuzaine Exp $
+// $Id: CbPost.cpp,v 1.8 2001-08-12 13:08:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "Mesh.h"
 #include "Draw.h"
