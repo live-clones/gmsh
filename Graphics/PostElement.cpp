@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.6 2003-01-23 20:19:21 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.7 2003-02-05 01:35:08 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -300,7 +300,7 @@ void Draw_ScalarLine(Post_View *View, int preproNormals,
 	  CutLine1D(X,Y,Z,&Val[0],
 		    View->GVFI(ValMin,ValMax,View->NbIso+1,k),
 		    View->GVFI(ValMin,ValMax,View->NbIso+1,k+1),
-		    ValMin,ValMax,Xp,Yp,Zp,&nb,value);    
+		    Xp,Yp,Zp,&nb,value);    
 	  if(nb == 2){
 	    for(i=0;i<2;i++) RaiseFill(i,value[i],ValMin,Raise);    
 	    Draw_Line(View->LineType,View->LineWidth,Xp,Yp,Zp,Raise);  
@@ -308,8 +308,7 @@ void Draw_ScalarLine(Post_View *View, int preproNormals,
 	}
 	else{
 	  thev = View->GVFI(ValMin,ValMax,View->NbIso,k);
-	  CutLine0D(X,Y,Z,&Val[0],
-		    thev, ValMin,ValMax,Xp,Yp,Zp,&nb);    
+	  CutLine0D(X,Y,Z,&Val[0],thev,Xp,Yp,Zp,&nb);    
 	  if(nb){
 	    RaiseFill(0,thev,ValMin,Raise);
 	    Draw_Point(View->PointType,View->PointSize,Xp,Yp,Zp,Raise);    
@@ -433,8 +432,7 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
         glEnd();
       }
       else{
-        CutTriangle2D(X,Y,Z,Val,
-                      ValMin,ValMax,ValMin,ValMax,
+        CutTriangle2D(X,Y,Z,Val,ValMin,ValMax,
                       Xp,Yp,Zp,&nb,value);
         if(nb >= 3){      
           glBegin(GL_POLYGON);
@@ -454,7 +452,6 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
           CutTriangle2D(X,Y,Z,Val,
                         View->GVFI(ValMin,ValMax,View->NbIso+1,k),
                         View->GVFI(ValMin,ValMax,View->NbIso+1,k+1),
-                        ValMin,ValMax,
                         Xp,Yp,Zp,&nb,value);      
           if(nb >= 3){
             for(i=0 ; i<nb ; i++) RaiseFill(i,value[i],ValMin,Raise);    
@@ -468,8 +465,7 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
         else{
           Palette1(View,View->NbIso,k);
           thev = View->GVFI(ValMin,ValMax,View->NbIso,k);
-          CutTriangle1D(X,Y,Z,Val,
-                        thev, ValMin,ValMax,Xp,Yp,Zp,&nb);        
+          CutTriangle1D(X,Y,Z,Val,thev,Xp,Yp,Zp,&nb);        
           if(nb == 2){
             for(i=0 ; i<2 ; i++) RaiseFill(i,thev,ValMin,Raise);
             Draw_Line(View->LineType,View->LineWidth,Xp,Yp,Zp,Raise);    
@@ -534,8 +530,7 @@ void Draw_ScalarTetrahedron(Post_View *View, int preproNormals,
     for(k=0 ; k<View->NbIso ; k++){
       if(!preproNormals) Palette1(View,View->NbIso,k);
       IsoSimplex(View, preproNormals, X, Y, Z, Val,
-		 View->GVFI(ValMin,ValMax,View->NbIso,k), 
-		 ValMin, ValMax, Raise);
+		 View->GVFI(ValMin,ValMax,View->NbIso,k), Raise);
     }
 
   }

@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.16 2003-01-23 20:19:20 geuzaine Exp $
+// $Id: Iso.cpp,v 1.17 2003-02-05 01:35:08 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -35,32 +35,17 @@ void RaiseFill(int i, double Val, double ValMin, double Raise[3][8]);
 // Iso line computation for triangles.
 
 void CutTriangle1D(double *X, double *Y, double *Z, double *Val, 
-                   double V, double Vmin, double Vmax,
-                   double *Xp, double *Yp, double *Zp, int *nb){
+                   double V, double *Xp, double *Yp, double *Zp, int *nb){
   
-  if(V != Vmax){
-    *nb = 0;
-    if((Val[0] > V && Val[1] <= V) || (Val[1] > V && Val[0] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,1,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
-    }
-    if((Val[0] > V && Val[2] <= V) || (Val[2] > V && Val[0] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,2,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
-    }
-    if((Val[1] > V && Val[2] <= V) || (Val[2] > V && Val[1] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,1,2,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
-    }
+  *nb = 0;
+  if((Val[0] >= V && Val[1] <= V) || (Val[1] >= V && Val[0] <= V)){
+    InterpolateIso(X,Y,Z,Val,V,0,1,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
   }
-  else{
-    *nb = 0;
-    if((Val[0] < V && Val[1] >= V) || (Val[1] < V && Val[0] >= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,1,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
-    }
-    if((Val[0] < V && Val[2] >= V) || (Val[2] < V && Val[0] >= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,2,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
-    }       
-    if((Val[1] < V && Val[2] >= V) || (Val[2] < V && Val[1] >= V)){
-      InterpolateIso(X,Y,Z,Val,V,1,2,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
-    }
+  if((Val[0] >= V && Val[2] <= V) || (Val[2] >= V && Val[0] <= V)){
+    InterpolateIso(X,Y,Z,Val,V,0,2,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
+  }
+  if((Val[1] >= V && Val[2] <= V) || (Val[2] >= V && Val[1] <= V)){
+    InterpolateIso(X,Y,Z,Val,V,1,2,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
   }
 
 }
@@ -69,8 +54,8 @@ void CutTriangle1D(double *X, double *Y, double *Z, double *Val,
 // newly created polygons is wrong.
 
 void CutTriangle2D(double *X, double *Y, double *Z, double *Val, 
-                   double V1, double V2, double Vmin, double Vmax,
-                   double *Xp2, double *Yp2, double *Zp2, int *Np2, double *Vp2){
+                   double V1, double V2, double *Xp2, double *Yp2, double *Zp2, 
+		   int *Np2, double *Vp2){
 
   int     i, io[3],j,iot,Np,Fl;
   double  Xp[5],Yp[5],Zp[5],Vp[5];
@@ -188,26 +173,18 @@ void CutTriangle2D(double *X, double *Y, double *Z, double *Val,
 // Iso for lines
 
 void CutLine0D(double *X, double *Y, double *Z, double *Val, 
-               double V, double Vmin, double Vmax,
-               double *Xp, double *Yp, double *Zp, int *nb){
+               double V, double *Xp, double *Yp, double *Zp, int *nb){
   
   *nb = 0;
 
-  if(V != Vmax){
-    if((Val[0] > V && Val[1] <= V) || (Val[1] > V && Val[0] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,1,Xp,Yp,Zp); *nb = 1;
-    }
-  }
-  else{
-    if((Val[0] < V && Val[1] >= V) || (Val[1] < V && Val[0] >= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,1,Xp,Yp,Zp); *nb = 1;
-    }
+  if((Val[0] >= V && Val[1] <= V) || (Val[1] >= V && Val[0] <= V)){
+    InterpolateIso(X,Y,Z,Val,V,0,1,Xp,Yp,Zp); *nb = 1;
   }
 }
 
 void CutLine1D(double *X, double *Y, double *Z, double *Val, 
-               double V1, double V2, double Vmin, double Vmax,
-               double *Xp2, double *Yp2, double *Zp2, int *Np2, double *Vp2){
+               double V1, double V2, double *Xp2, double *Yp2, double *Zp2,
+	       int *Np2, double *Vp2){
 
   int i, io[2];
 
@@ -370,53 +347,29 @@ void EnhanceSimplexPolygon (Post_View *View,
 void IsoSimplex( Post_View *View, 
 		 int preproNormals,
 		 double *X, double *Y, double *Z, double *Val, 
-		 double V, double Vmin, double Vmax, 
-		 double Raise[3][8]){
+		 double V, double Raise[3][8]){
   int    nb;
   double Xp[6],Yp[6],Zp[6],PVals[6];
   double norms[12];
 
-  if(V != Vmax){
-    nb = 0;
-    if((Val[0] > V && Val[1] <= V) || (Val[1] > V && Val[0] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,1,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[0] > V && Val[2] <= V) || (Val[2] > V && Val[0] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[0] > V && Val[3] <= V) || (Val[3] > V && Val[0] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[1] > V && Val[2] <= V) || (Val[2] > V && Val[1] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,1,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[1] > V && Val[3] <= V) || (Val[3] > V && Val[1] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,1,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[2] > V && Val[3] <= V) || (Val[3] > V && Val[2] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,2,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
+  nb = 0;
+  if((Val[0] >= V && Val[1] <= V) || (Val[1] >= V && Val[0] <= V)){
+    InterpolateIso(X,Y,Z,Val,V,0,1,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
   }
-  else{
-    nb=0;
-    if((Val[0] < V && Val[1] <= V) || (Val[1] < V && Val[0] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,1,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[0] < V && Val[2] <= V) || (Val[2] < V && Val[0] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[0] < V && Val[3] <= V) || (Val[3] < V && Val[0] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,0,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[1] < V && Val[2] <= V) || (Val[2] < V && Val[1] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,1,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[1] < V && Val[3] <= V) || (Val[3] < V && Val[1] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,1,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
-    if((Val[2] < V && Val[3] <= V) || (Val[3] < V && Val[2] <= V)){
-      InterpolateIso(X,Y,Z,Val,V,2,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
-    }
+  if((Val[0] >= V && Val[2] <= V) || (Val[2] >= V && Val[0] <= V)){
+    InterpolateIso(X,Y,Z,Val,V,0,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+  }
+  if((Val[0] >= V && Val[3] <= V) || (Val[3] >= V && Val[0] <= V)){
+    InterpolateIso(X,Y,Z,Val,V,0,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+  }
+  if((Val[1] >= V && Val[2] <= V) || (Val[2] >= V && Val[1] <= V)){
+    InterpolateIso(X,Y,Z,Val,V,1,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+  }
+  if((Val[1] >= V && Val[3] <= V) || (Val[3] >= V && Val[1] <= V)){
+    InterpolateIso(X,Y,Z,Val,V,1,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
+  }
+  if((Val[2] >= V && Val[3] <= V) || (Val[3] >= V && Val[2] <= V)){
+    InterpolateIso(X,Y,Z,Val,V,2,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
   }
 
   if(nb < 3 || nb > 4) return;
