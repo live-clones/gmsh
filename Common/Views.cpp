@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.77 2002-10-04 21:14:17 geuzaine Exp $
+// $Id: Views.cpp,v 1.78 2002-10-04 21:28:16 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -79,7 +79,7 @@ Post_View * BeginView(int allocate){
   v->NbT2 = v->NbT3 = 0;
 
   if(allocate){
-    v->datasize = sizeof(double);
+    v->DataSize = sizeof(double);
 
     v->Time = List_Create(100,1000,sizeof(double));
 
@@ -343,6 +343,9 @@ void DuplicateView(Post_View *v1, int withoptions){
     }
   }
 
+  // When we duplicate a view, we just point to a reference view: we
+  // DON'T allocate a new data set!
+
   v2->Time = v1->Time;
 
   v2->NbSP = v1->NbSP; v2->SP = v1->SP; 
@@ -380,13 +383,14 @@ void DuplicateView(Post_View *v1, int withoptions){
   v2->NbT2 = v1->NbT2; v2->T2D = v1->T2D; v2->T2C = v1->T2C;
   v2->NbT3 = v1->NbT3; v2->T3D = v1->T3D; v2->T3C = v1->T3C;
 
+  v2->DataSize    = v1->DataSize;
   v2->ScalarOnly  = v1->ScalarOnly;
   v2->TextOnly    = v1->TextOnly;
   v2->Min         = v1->Min;       
   v2->Max         = v1->Max;      
   v2->NbTimeStep  = v1->NbTimeStep;
-
-  for(int i=0 ; i<6 ; i++) v2->BBox[i] = v1->BBox[i];
+  for(int i=0 ; i<6 ; i++)
+    v2->BBox[i]   = v1->BBox[i];
 
   if(withoptions) CopyViewOptions(v1, v2);
 
@@ -682,7 +686,7 @@ void Read_View(FILE *file, char *filename){
 	}
       }
 
-      v->datasize = size ;
+      v->DataSize = size ;
 
       // Time values
       v->Time = List_CreateFromFile(v->NbTimeStep, size, file, format, swap);

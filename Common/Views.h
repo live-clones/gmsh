@@ -31,7 +31,7 @@ class Post_View{
   char FileName[256], Name[256], AbscissaName[256];
 
   // the data
-  int datasize; // size(double) or sizeof(float)
+  int DataSize; // size(double) or sizeof(float)
   int NbTimeStep, ScalarOnly, TextOnly;
   double Min, Max, BBox[6];
   List_T *Time;
