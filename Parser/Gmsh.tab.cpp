@@ -170,7 +170,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.60 2001-01-11 16:00:28 colignon Exp $
+// $Id: Gmsh.tab.cpp,v 1.61 2001-01-11 16:03:26 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -2500,7 +2500,7 @@ static const short yycheck[] = {    23,
    166,   167,    -1,    -1,    -1,    -1,    -1,   173,    -1,   175
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/share/bison.simple"
+#line 3 "/usr/local/share/bison.simple"
 
 /* Skeleton output parser for bison,
    Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
@@ -2693,7 +2693,7 @@ __yy_memcpy (char *to, char *from, int count)
 #endif
 #endif
 
-#line 196 "/usr/share/bison.simple"
+#line 196 "/usr/local/share/bison.simple"
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
    into yyparse.  The argument should have type void *.
@@ -4595,12 +4595,12 @@ case 203:
       }
       else if(!strcmp(yyvsp[-2].c, "Print")){
 
-	//if(!CTX.interactive) CreateFile($2, CTX.print.format);
+	if(!CTX.interactive) CreateFile(yyvsp[-1].c, CTX.print.format);
 
       }
       else if(!strcmp(yyvsp[-2].c, "Save")){
 
-	//CreateFile($2, CTX.mesh.format);
+	CreateFile(yyvsp[-1].c, CTX.mesh.format);
 
       }
       else if(!strcmp(yyvsp[-2].c, "Merge")){
@@ -5871,7 +5871,7 @@ case 342:
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 498 "/usr/share/bison.simple"
+#line 498 "/usr/local/share/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;
