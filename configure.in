@@ -1,4 +1,4 @@
-dnl "$Id: configure.in,v 1.1 2003-02-11 08:00:45 geuzaine Exp $"
+dnl "$Id: configure.in,v 1.2 2003-02-11 08:07:49 geuzaine Exp $"
 dnl
 dnl Machine independent configuration script for Gmsh.
 dnl
@@ -91,7 +91,7 @@ else
 fi
 
 dnl Check if Triangle is installed
-AC_CHECK_FILES(./Triangle/triangle.c ./Triangle/triangle.h, HAVE_TRIANGLE="yes", HAVE_TRIANGLE="no")
+AC_CHECK_FILE(./Triangle/triangle.c, HAVE_TRIANGLE="yes", HAVE_TRIANGLE="no")
 if test "x${HAVE_TRIANGLE}" = "xyes"; then
   GMSH_DIRS="${GMSH_DIRS} Triangle"
   GMSH_LIBS="${GMSH_LIBS} -lGmshTriangle"
@@ -253,8 +253,8 @@ if test "x${HAVE_TRIANGLE}" = "xno"; then
   echo "again."
   echo ""
   echo "Please note that by doing so, you agree to Triangle's licencing"
-  echo "requirements stated in ./Triangle/README. (Most notably, you can"
-  echo "only redistribute Gmsh if no compensation is received.)"
+  echo "requirements stated in ./Triangle/README. (Most notably, you may"
+  echo "then only redistribute Gmsh if no compensation is received.)"
   echo "*******************************************************************"
 fi
 

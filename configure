@@ -2690,39 +2690,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_file___Triangle_triangle_c" >&5
 echo "${ECHO_T}$ac_cv_file___Triangle_triangle_c" >&6
 if test $ac_cv_file___Triangle_triangle_c = yes; then
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE___TRIANGLE_TRIANGLE_C 1
-_ACEOF
-
-HAVE_TRIANGLE="yes"
-else
-  HAVE_TRIANGLE="no"
-fi
-echo "$as_me:$LINENO: checking for ./Triangle/triangle.h" >&5
-echo $ECHO_N "checking for ./Triangle/triangle.h... $ECHO_C" >&6
-if test "${ac_cv_file___Triangle_triangle_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "./Triangle/triangle.h"; then
-  ac_cv_file___Triangle_triangle_h=yes
-else
-  ac_cv_file___Triangle_triangle_h=no
-fi
-fi
-echo "$as_me:$LINENO: result: $ac_cv_file___Triangle_triangle_h" >&5
-echo "${ECHO_T}$ac_cv_file___Triangle_triangle_h" >&6
-if test $ac_cv_file___Triangle_triangle_h = yes; then
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE___TRIANGLE_TRIANGLE_H 1
-_ACEOF
-
-HAVE_TRIANGLE="yes"
+  HAVE_TRIANGLE="yes"
 else
   HAVE_TRIANGLE="no"
 fi
