@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.30 2005-02-20 06:36:54 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.31 2005-02-20 16:41:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -60,40 +60,42 @@ Vertex *onCurve(Vertex * v1, Vertex * v2)
   int ok1 = 1, ok2 = 1;
   double u1 = 0., u2 = 0.;
 
-  if(!THEC->beg || !THEC->end)
+  if(!THEC->beg || !THEC->end){
     ok1 = ok2 = 0;
-
-  if(List_Nbr(v1->ListCurves) == 1){
-    u1 = v1->u;
-  }
-  else if(v1->Num == THEC->beg->Num){
-    u1 = THEC->ubeg;
-  }
-  else if(v1->Num == THEC->end->Num){
-    u1 = THEC->uend;
   }
   else{
-    ok1 = 0;
-  }
+    if(List_Nbr(v1->ListCurves) == 1){
+      u1 = v1->u;
+    }
+    else if(v1->Num == THEC->beg->Num){
+      u1 = THEC->ubeg;
+    }
+    else if(v1->Num == THEC->end->Num){
+      u1 = THEC->uend;
+    }
+    else{
+      ok1 = 0;
+    }
+    
+    if(List_Nbr(v2->ListCurves) == 1){
+      u2 = v2->u;
+    }
+    else if(v2->Num == THEC->beg->Num){
+      u2 = THEC->ubeg;
+    }
+    else if(v2->Num == THEC->end->Num){
+      u2 = THEC->uend;
+    }
+    else{
+      ok2 = 0;
+    }
 
-  if(List_Nbr(v2->ListCurves) == 1){
-    u2 = v2->u;
-  }
-  else if(v2->Num == THEC->beg->Num){
-    u2 = THEC->ubeg;
-  }
-  else if(v2->Num == THEC->end->Num){
-    u2 = THEC->uend;
-  }
-  else{
-    ok2 = 0;
-  }
-
-  // Ugly fix for closed curves
-  if((THEC->beg->Num == THEC->end->Num) &&
-     (u1 == THEC->ubeg || u1 == THEC->uend ||
-      u2 == THEC->ubeg || u2 == THEC->uend)){
-    ok1 = ok2 = 0;
+    // Ugly fix for closed curves
+    if((THEC->beg->Num == THEC->end->Num) &&
+       (u1 == THEC->ubeg || u1 == THEC->uend ||
+	u2 == THEC->ubeg || u2 == THEC->uend)){
+      ok1 = ok2 = 0;
+    }
   }
 
   if(ok1 && ok2){
@@ -122,7 +124,7 @@ Vertex *onSurface(Vertex * v1, Vertex * v2)
 
   if(!THES)
     return NULL;
-  if(THES->Typ == MSH_SURF_PLAN)
+  if(THES->Typ == MSH_SURF_PLAN || THES->Typ == MSH_SURF_DISCRETE)
     return NULL;
 
   XYZtoUV(THES, v1->Pos.X, v1->Pos.Y, v1->Pos.Z, &U1, &V1, 1.0);
@@ -144,7 +146,7 @@ Vertex *onSurface(Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)
 
   if(!THES)
     return NULL;
-  if(THES->Typ == MSH_SURF_PLAN)
+  if(THES->Typ == MSH_SURF_PLAN || THES->Typ == MSH_SURF_DISCRETE)
     return NULL;
 
   XYZtoUV(THES, v1->Pos.X, v1->Pos.Y, v1->Pos.Z, &U1, &V1, 1.0);
