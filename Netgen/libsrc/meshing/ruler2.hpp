@@ -42,6 +42,8 @@ private:
   ///
   DenseMatrix oldutonewu, oldutofreearea, oldutofreearealimit;
   ///
+  ARRAY<DenseMatrix*> oldutofreearea_i;
+  ///
   MatrixFixWidth<3> freesetinequ;
 
   ///
@@ -95,21 +97,36 @@ public:
   ///
   void GetFreeZone (ARRAY<Point2d> & afreearea);
   ///
-  float CalcPointDist (int pi, const Point2d & p) const;
+
+  double CalcPointDist (int pi, const Point2d & p) const
+  {
+    double dx = p.X() - points.Get(pi).X();
+    double dy = p.Y() - points.Get(pi).Y();
+    const threefloat * tf = &tolerances.Get(pi);
+    return tf->f1 * dx * dx + tf->f2 * dx * dy + tf->f3 * dy * dy;
+  }
+
   ///
   float CalcLineError (int li, const Vec2d & v) const;
 
   ///
   void SetFreeZoneTransformation (const Vector & u, int tolclass);
+
   ///
-  int IsInFreeZone (const Point2d & p) const
+  bool IsInFreeZone (const Point2d & p) const
   {
     if (p.X() < fzminx || p.X() > fzmaxx ||
 	p.Y() < fzminy || p.Y() > fzmaxy) return 0;
-    return IsInFreeZone2 (p);
+
+    for (int i = 0; i < transfreezone.Size(); i++)
+      {
+	if (freesetinequ(i, 0) * p.X() + 
+	    freesetinequ(i, 1) * p.Y() +
+	    freesetinequ(i, 2) > 0) return 0;
+      }
+    return 1;
   }
-  ///
-  int IsInFreeZone2 (const Point2d & p) const;
+
   ///
   int IsLineInFreeZone (const Point2d & p1, const Point2d & p2) const
   {

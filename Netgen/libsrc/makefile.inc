@@ -7,10 +7,10 @@
 CPP_DIR=../..
 LIBSRC_DIR=$(CPP_DIR)/libsrc
 LIB_DIR=$(CPP_DIR)/lib/$(MACHINE)
+
 OCC_DIR=../../occ
-# OCC_DIR=/opt/OpenCASCADE5.1/ros
 OCCINC_DIR=$(OCC_DIR)/inc
-# OCCLIB_DIR=$(OCC_DIR)/lib
+OCCLIB_DIR=$(OCC_DIR)/lib
 #
 include $(LIBSRC_DIR)/makefile.mach.$(MACHINE)
 #
@@ -20,10 +20,12 @@ ARFLAGS = r
 #
 LIBB=$(LIB_DIR)/lib$(lib).a
 #
-.PRECIOUS: .cpp .hh 
-.SUFFIXES: .cpp .o 
+.PRECIOUS: .cpp .c
+.SUFFIXES: .cpp .c .o 
 #
 .cpp.o:
+	$(CPLUSPLUS) $(CPLUSPLUSFLAGS1) $(CPLUSPLUSFLAGS2) $(CPLUSPLUSFLAGSLIBRARY) $<
+.c.o:
 	$(CPLUSPLUS) $(CPLUSPLUSFLAGS1) $(CPLUSPLUSFLAGS2) $(CPLUSPLUSFLAGSLIBRARY) $<
 #
 #

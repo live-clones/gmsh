@@ -41,14 +41,15 @@ void DefaultStringErrHandler()
 }
 
 void (*MyStr::ErrHandler)() = DefaultStringErrHandler;
-     
+
+  /*     
 MyStr::MyStr()
 {
   length = 0;
-  // str = new char[1];
   str = shortstr;
   str[0] = 0;
 }
+  */
 
 MyStr::MyStr(const char *s)
 {
@@ -61,6 +62,7 @@ MyStr::MyStr(const char *s)
   strcpy(str, s);
 }
 
+/*
 MyStr::MyStr(char s)
 {
   length = 1;
@@ -68,6 +70,7 @@ MyStr::MyStr(char s)
   str[0] = s;
   str[1] = (char)0;
 }
+*/
 
 MyStr::MyStr(const MyStr& s)
 {

@@ -48,6 +48,12 @@ public:
 				   const Vec<3> & v,
 				   double eps) const;
 
+  // checks if lim s->0 lim t->0  p + t(v1 + s v2) in solid
+  virtual INSOLID_TYPE VecInSolid2 (const Point<3> & p,
+				    const Vec<3> & v1,
+				    const Vec<3> & v2,
+				    double eps) const;
+
   virtual int GetNSurfaces() const 
     { return planes.Size(); }
   virtual Surface & GetSurface (int i) 

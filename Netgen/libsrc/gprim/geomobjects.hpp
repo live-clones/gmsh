@@ -74,6 +74,10 @@ public:
   explicit Vec (const Point<D> & p)
   { for (int i = 0; i < D; i++) x[i] = p(i); }
 
+  Vec (const Vec<D> & p1, const Vec<D> & p2)
+  { for(int i=0; i<D; i++) x[i] = p2(i)-p1(1); }
+  
+
 
   Vec & operator= (const Vec<D> & p2)
   {
@@ -150,6 +154,8 @@ public:
 
   double & operator() (int i, int j) { return x[i*W+j]; }
   const double & operator() (int i, int j) const { return x[i*W+j]; }
+  double & operator() (int i) { return x[i]; }
+  const double & operator() (int i) const { return x[i]; }
 
   Vec<H> Col (int i) const
   {
@@ -273,6 +279,13 @@ protected:
 public:
   ///
   BoxSphere () { };
+ ///
+  BoxSphere (const Box<D> & box) 
+  : Box<D> (box) 
+  { 
+    CalcDiamCenter();
+  };
+
   ///
   BoxSphere ( Point<D> pmin, Point<D> pmax )
     : Box<D> (pmin, pmax)

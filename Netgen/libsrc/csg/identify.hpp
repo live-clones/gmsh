@@ -95,10 +95,12 @@ public:
 
 
 ///
+class TopLevelObject;
 class CloseSurfaceIdentification : public Identification
 {
   const Surface * s1;
   const Surface * s2;
+  const TopLevelObject * domain;
   /// number of refinement levels (in Z-refinement)
   int ref_levels;
   /// number of refinement levels for layer next to s1 (in Z-refinement)
@@ -108,11 +110,16 @@ class CloseSurfaceIdentification : public Identification
   ///
   double eps_n;
   ARRAY<double> slices;
+  /// used only for domain-local identification:
+  ARRAY<int> domain_surfaces;
+  ///
+  bool dom_surf_valid;
 public:
   CloseSurfaceIdentification (int anr, 
 			      const CSGeometry & ageom,
 			      const Surface * as1,
 			      const Surface * as2,
+			      const TopLevelObject * adomain,
 			      const Flags & flags);
   virtual ~CloseSurfaceIdentification ();
 

@@ -102,33 +102,33 @@ void VisualSceneSTLMeshing :: DrawScene ()
   glMaterialf (GL_FRONT_AND_BACK, GL_SHININESS, shine);
   glLogicOp (GL_COPY);
 
-  float mat_colred[] = { 0.9, 0.0, 0.0, 1 };
-  float mat_colgreen[] = { 0.0, 0.9, 0.0, 1 };
-  float mat_colblue[] = { 0.1, 0.1, 1., 1 };
+  float mat_colred[]    = { 0.9f, 0.0f, 0.0f, 1.0f };
+  float mat_colgreen[]  = { 0.0f, 0.9f, 0.0f, 1.0f };
+  float mat_colblue[]   = { 0.1f, 0.1f, 1.0f, 1.0f };
 
-  float mat_colbluegreen[] = { 0.1, 0.5, 0.9, 1 };
-  float mat_colpink[] = { 1., 0.1, 0.5, 1 };
-  float mat_colviolet[] = { 1., 0.1, 1., 1 };
-  float mat_colbrown[] = { 0.8, 0.6, 0.1, 1 };
-  float mat_colorange[] = { 0.9, 0.7, 0.1, 1 };
-  float mat_colturquis[] = { 0.0, 1., 0.8, 1 };
+  float mat_colbluegreen[] = { 0.1f, 0.5f, 0.9f, 1.0f };
+  float mat_colpink[]      = { 1.0f, 0.1f, 0.5f, 1.0f };
+  float mat_colviolet[]    = { 1.0f, 0.1f, 1.0f, 1.0f };
+  float mat_colbrown[]     = { 0.8f, 0.6f, 0.1f, 1.0f };
+  float mat_colorange[]    = { 0.9f, 0.7f, 0.1f, 1.0f };
+  float mat_colturquis[]   = { 0.0f, 1.0f, 0.8f, 1.0f };
 
-  float mat_colgrey[] = { 0.3, 0.3, 0.3, 1 };
+  float mat_colgrey[] = { 0.3f, 0.3f, 0.3f, 1.0f };
 
-  float mat_collred[] = { 1., 0.5, 0.5, 1 };
-  float mat_collgreen[] = { 0.2, 1., 0.2, 1 };
-  float mat_collbrown[] = { 1., 0.8, 0.3, 1 };
+  float mat_collred[]   = { 1.0f, 0.5f, 0.5f, 1.0f };
+  float mat_collgreen[] = { 0.2f, 1.9f, 0.2f, 1.0f };
+  float mat_collbrown[] = { 1.0f, 0.8f, 0.3f, 1.0f };
 
-  float mat_collgrey[] = { 0.8, 0.8, 0.8, 1 };
-  float mat_colmgrey[] = { 0.4, 0.4, 0.4, 1 };
+  float mat_collgrey[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+  float mat_colmgrey[] = { 0.4f, 0.4f, 0.4f, 1.0f };
 
-  float mat_colstlbody[] = { 0., 0., 0.8, 1 };
-  float mat_colseltrig[] = { 0.7, 0.7, 0.3, 1 };
-  float mat_colseledge[] = { 0.7, 0.7, 1., 1 };
+  float mat_colstlbody[] = { 0.0f, 0.0f, 0.8f, 1.0f };
+  float mat_colseltrig[] = { 0.7f, 0.7f, 0.3f, 1.0f };
+  float mat_colseledge[] = { 0.7f, 0.7f, 1.0f, 1.0f };
 
   glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, mat_colblue);
 
-  float pgoff = 0.5;
+  float pgoff = 0.5f;
 
   glPolygonOffset (pgoff*1, pgoff*1);
   glEnable (GL_POLYGON_OFFSET_FILL);
@@ -809,14 +809,11 @@ void VisualSceneSTLMeshing :: DrawScene ()
 
 void VisualSceneSTLMeshing :: BuildScene (int zoomall)
 {
-  int i, j, k;
-
   if (selecttrig && zoomall == 2)
-    {
-      center = stlgeometry -> GetPoint ( stlgeometry->GetTriangle(selecttrig).PNum(nodeofseltrig));
-    }
+    center = stlgeometry -> GetPoint ( stlgeometry->GetTriangle(selecttrig).PNum(nodeofseltrig));
   else
     center = stlgeometry -> GetBoundingBox().Center();
+
   rad = stlgeometry -> GetBoundingBox().Diam() / 2;
 
   CalcTransformationMatrices();
@@ -1063,9 +1060,6 @@ void VisualSceneSTLMeshing :: MouseDblClick (int px, int py)
     }
   
 }
-
-
-
 
 
 

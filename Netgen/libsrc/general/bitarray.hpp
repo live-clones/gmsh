@@ -194,10 +194,10 @@ private:
 template <int BASE>
 inline ostream & operator<< (ostream & s, const BitArrayChar<BASE> & a)
 {
-  for (int i = 0; i < a.Size(); i++)
+  for (int i = BASE; i < a.Size()+BASE; i++)
     {
       s << a.Test(i);
-      if (i % 40 == 0) s << "\n";
+      if ( (i-BASE) % 40 == 39) s << "\n";
     }
   if (a.Size() % 40 != 0) s << "\n";
   return s;

@@ -1,12 +1,4 @@
-/*
 // find inner point
-
-#include <mystdlib.h>
-#include "meshing.hpp"
-
-namespace netgen
-{
-*/
 
 template <typename POINTARRAY, typename FACEARRAY>
 inline int FindInnerPoint (POINTARRAY & points,

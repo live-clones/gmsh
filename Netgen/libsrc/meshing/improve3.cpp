@@ -21,22 +21,10 @@ namespace netgen
 void MeshOptimize3d :: CombineImprove (Mesh & mesh,
 				       OPTIMIZEGOAL goal)
 {
-  int j, k, l;
-
-  ElementIndex ei;
-  PointIndex pi1, pi2;
-
-  Point3d p1, p2, pnew;
-
-  double bad1, bad2;
-  
   int np = mesh.GetNP();
   int ne = mesh.GetNE();
 
   TABLE<ElementIndex, PointIndex::BASE> elementsonnode(np); 
-  ARRAY<Element*> hasonepoint;
-  ARRAY<Element*> hasbothpoints;
-
   ARRAY<ElementIndex> hasonepi, hasbothpi;
 
   ARRAY<double> oneperr;
@@ -46,35 +34,35 @@ void MeshOptimize3d :: CombineImprove (Mesh & mesh,
   (*testout)  << "Start CombineImprove" << "\n";
 
   //  mesh.CalcSurfacesOfNode ();
-
   char * savetask = multithread.task;
   multithread.task = "Combine Improve";
 
-  int cnt = 0;
 
-  bad1 = 0;
-  for (ei = 0; ei < ne; ei++)
+  double totalbad = 0;
+  for (ElementIndex ei = 0; ei < ne; ei++)
     {
       double elerr = CalcBad (mesh.Points(), mesh[ei], 0);
-      bad1 += elerr;
+      totalbad += elerr;
       elerrs[ei] = elerr;
     }
 
   if (goal == OPT_QUALITY)
     {
-      bad1 = CalcTotalBad (mesh.Points(), mesh.VolumeElements());
-      (*testout) << "Total badness = " << bad1 << endl;
-      PrintMessage (5, "Total badness = ", bad1);
+      totalbad = CalcTotalBad (mesh.Points(), mesh.VolumeElements());
+      (*testout) << "Total badness = " << totalbad << endl;
+      PrintMessage (5, "Total badness = ", totalbad);
     }
 
-  for (ei = 0; ei < ne; ei++)
-    for (j = 0; j < mesh[ei].GetNP(); j++)
-      elementsonnode.Add (mesh[ei][j], ei);
+  for (ElementIndex ei = 0; ei < ne; ei++)
+    if (!mesh[ei].IsDeleted())
+      for (int j = 0; j < mesh[ei].GetNP(); j++)
+	elementsonnode.Add (mesh[ei][j], ei);
   
-  INDEX_2_HASHTABLE<int> edgetested (np);
+  INDEX_2_HASHTABLE<int> edgetested (np+1);
 
+  int cnt = 0;
 
-  for (ei = 0; ei < ne; ei++)
+  for (ElementIndex ei = 0; ei < ne; ei++)
     {
       if (multithread.terminate)
 	break;
@@ -84,7 +72,7 @@ void MeshOptimize3d :: CombineImprove (Mesh & mesh,
       if (mesh.ElementType(ei) == FIXEDELEMENT)
 	continue;
 
-      for (j = 0; j < 6; j++)
+      for (int j = 0; j < 6; j++)
 	{
 	  Element & elemi = mesh[ei];
 	  if (elemi.IsDeleted()) continue;
@@ -93,8 +81,8 @@ void MeshOptimize3d :: CombineImprove (Mesh & mesh,
 	    { { 0, 1 }, { 0, 2 }, { 0, 3 },
 	      { 1, 2 }, { 1, 3 }, { 2, 3 } };
 
-	  pi1 = elemi[tetedges[j][0]];
-	  pi2 = elemi[tetedges[j][1]];
+	  PointIndex pi1 = elemi[tetedges[j][0]];
+	  PointIndex pi2 = elemi[tetedges[j][1]];
 
 	  if (pi2 < pi1) Swap (pi1, pi2);
 	  
@@ -105,13 +93,13 @@ void MeshOptimize3d :: CombineImprove (Mesh & mesh,
 	  edgetested.Set (si2, 1);
 
 
-	  hasonepoint.SetSize(0);
-	  hasbothpoints.SetSize(0);
+	  // hasonepoint.SetSize(0);
+	  //	  hasbothpoints.SetSize(0);
 	  hasonepi.SetSize(0);
 	  hasbothpi.SetSize(0);
 
 	  FlatArray<ElementIndex> row1 = elementsonnode[pi1];
-	  for (k = 0; k < row1.Size(); k++)
+	  for (int k = 0; k < row1.Size(); k++)
 	    {
 	      Element & elem = mesh[row1[k]];
 	      if (elem.IsDeleted()) continue;
@@ -119,18 +107,16 @@ void MeshOptimize3d :: CombineImprove (Mesh & mesh,
 	      if (elem[0] == pi2 || elem[1] == pi2 ||
 		  elem[2] == pi2 || elem[3] == pi2)
 		{
-		  hasbothpoints.Append (&elem);
 		  hasbothpi.Append (row1[k]);
 		}
 	      else
 		{
-		  hasonepoint.Append (&elem);    
 		  hasonepi.Append (row1[k]);
 		}
 	    } 
 	  
 	  FlatArray<ElementIndex> row2 = elementsonnode[pi2];	  
-	  for (k = 0; k < row2.Size(); k++)
+	  for (int k = 0; k < row2.Size(); k++)
 	    {
 	      Element & elem = mesh[row2[k]];
 	      if (elem.IsDeleted()) continue;
@@ -140,25 +126,26 @@ void MeshOptimize3d :: CombineImprove (Mesh & mesh,
 		;
 	      else
 		{
-		  hasonepoint.Append (&elem);    
 		  hasonepi.Append (row2[k]);
 		}
 	    } 
 	  
-	  bad1 = 0;
-	  for (k = 0; k < hasonepoint.Size(); k++)
+	  double bad1 = 0;
+	  for (int k = 0; k < hasonepi.Size(); k++)
 	    bad1 += elerrs[hasonepi[k]];
-	  
-	  for (k = 0; k < hasbothpoints.Size(); k++)
+	  for (int k = 0; k < hasbothpi.Size(); k++)
 	    bad1 += elerrs[hasbothpi[k]];
 	  
-	  p1 = mesh[pi1];
-	  p2 = mesh[pi2];
+	  MeshPoint p1 = mesh[pi1];
+	  MeshPoint p2 = mesh[pi2];
 	  
-	  if (mesh.PointType(pi2) != INNERPOINT)
+	  // if (mesh.PointType(pi2) != INNERPOINT)
+	  if (p2.Type() != INNERPOINT)
 	    continue;
 	  
-	  if (mesh.PointType(pi1) != INNERPOINT)
+	  MeshPoint pnew;
+	  // if (mesh.PointType(pi1) != INNERPOINT)
+	  if (p1.Type() != INNERPOINT)
 	    pnew = p1;
 	  else
 	    pnew = Center (p1, p2);
@@ -166,11 +153,12 @@ void MeshOptimize3d :: CombineImprove (Mesh & mesh,
 	  mesh[pi1] = pnew;
 	  mesh[pi2] = pnew;
 
-	  oneperr.SetSize (hasonepoint.Size());
-	  bad2 = 0;
-	  for (k = 0; k < hasonepoint.Size(); k++)
+	  oneperr.SetSize (hasonepi.Size());
+
+	  double bad2 = 0;
+	  for (int k = 0; k < hasonepi.Size(); k++)
 	    {
-	      const Element & elem = *hasonepoint[k];
+	      const Element & elem = mesh[hasonepi[k]];
 	      double err = CalcTetBadness (mesh[elem[0]], mesh[elem[1]],  
 					   mesh[elem[2]], mesh[elem[3]], 0);
 	      bad2 += err;
@@ -181,11 +169,13 @@ void MeshOptimize3d :: CombineImprove (Mesh & mesh,
 	  mesh[pi2] = p2;
 
 
-	  if (mesh.PointType(pi1) != INNERPOINT)
+	  // if (mesh.PointType(pi1) != INNERPOINT)
+	  if (p1.Type() != INNERPOINT)
 	    {
-	      for (k = 0; k < hasonepoint.Size(); k++)
+	      for (int k = 0; k < hasonepi.Size(); k++)
 		{
-		  Element & elem = *hasonepoint[k];
+		  Element & elem = mesh[hasonepi[k]];
+		  int l;
 		  for (l = 0; l < 4; l++)
 		    if (elem[l] == pi2)
 		      {
@@ -205,33 +195,35 @@ void MeshOptimize3d :: CombineImprove (Mesh & mesh,
 		}
 	    }
 
-	  if (bad2 / hasonepoint.Size()  < 
-	      bad1 / (hasonepoint.Size()+hasbothpoints.Size())  )
+	  if (bad2 / hasonepi.Size()  < 
+	      bad1 / (hasonepi.Size()+hasbothpi.Size()))
 	    {
 	      mesh[pi1] = pnew;
 	      cnt++;
 
 	      FlatArray<ElementIndex> row = elementsonnode[pi2];
-	      for (k = 0; k < row.Size(); k++)
+	      for (int k = 0; k < row.Size(); k++)
 		{
 		  Element & elem = mesh[row[k]];
+		  if (elem.IsDeleted()) continue;
+
 		  elementsonnode.Add (pi1, row[k]);
-		  for (l = 0; l < elem.GetNP(); l++)
+		  for (int l = 0; l < elem.GetNP(); l++)
 		    if (elem[l] == pi2)
 		      elem[l] = pi1;
 		  
 		  elem.flags.illegal_valid = 0;
 		  if (!mesh.LegalTet (elem))
-		    (*testout) << "illegal tet " << elementsonnode.Get (pi2, k) << endl;
+		    (*testout) << "illegal tet " << elementsonnode[pi2][k] << endl;
 		}
 
-	      for (k = 0; k < hasonepoint.Size(); k++)
+	      for (int k = 0; k < hasonepi.Size(); k++)
 		elerrs[hasonepi[k]] = oneperr[k];
 	      
-	      for (k = 0; k < hasbothpoints.Size(); k++)
+	      for (int k = 0; k < hasbothpi.Size(); k++)
 		{
-		  hasbothpoints[k] -> flags.illegal_valid = 0;
-		  hasbothpoints[k] -> Delete();
+		  mesh[hasbothpi[k]].flags.illegal_valid = 0;
+		  mesh[hasbothpi[k]].Delete();
 		}
 	    }
 	}
@@ -243,18 +235,18 @@ void MeshOptimize3d :: CombineImprove (Mesh & mesh,
   PrintMessage (5, cnt, " elements combined");
   (*testout) << "CombineImprove done" << "\n";
 
-  bad1 = 0;
-  for (ei = 0; ei < mesh.GetNE(); ei++)
-    bad1 += CalcBad (mesh.Points(), mesh[ei], 0);
+  totalbad = 0;
+  for (ElementIndex ei = 0; ei < mesh.GetNE(); ei++)
+    totalbad += CalcBad (mesh.Points(), mesh[ei], 0);
 
   if (goal == OPT_QUALITY)
     {
-      bad1 = CalcTotalBad (mesh.Points(), mesh.VolumeElements());
-      (*testout) << "Total badness = " << bad1 << endl;
+      totalbad = CalcTotalBad (mesh.Points(), mesh.VolumeElements());
+      (*testout) << "Total badness = " << totalbad << endl;
 
       int cntill = 0;
       int ne = mesh.GetNE();
-      for (ei = 0; ei < ne; ei++)
+      for (ElementIndex ei = 0; ei < ne; ei++)
 	if (!mesh.LegalTet (mesh[ei]))
 	  cntill++;
 
@@ -529,7 +521,7 @@ void MeshOptimize3d :: SplitImprove (Mesh & mesh,
 	      if (!mesh.LegalTet (newel2)) bad2 += 1e6;
 	    }	  
 	  
-	  mesh.PointTypes().DeleteLast();
+	  // mesh.PointTypes().DeleteLast();
 	  mesh.Points().DeleteLast();
 
 	  if (bad2 < bad1) 
@@ -594,12 +586,9 @@ void MeshOptimize3d :: SwapImprove (Mesh & mesh, OPTIMIZEGOAL goal)
 {
   int j, k, l;
 
-  (*testout) << "swapimprove" << endl;
-  
   ElementIndex ei;
   SurfaceElementIndex sei;
 
-  int mattyp;
   PointIndex pi1, pi2, pi3, pi4, pi5, pi6;
   int cnt = 0;
 
@@ -710,7 +699,10 @@ void MeshOptimize3d :: SwapImprove (Mesh & mesh, OPTIMIZEGOAL goal)
 	  const Element & elemi = mesh[ei];
 	  if (elemi.IsDeleted()) continue;
 
-	  mattyp = elemi.GetIndex();
+
+	  //	  (*testout) << "check element " << elemi << endl;
+
+	  int mattyp = elemi.GetIndex();
 	  
 	  static const int tetedges[6][2] =
 	    { { 0, 1 }, { 0, 2 }, { 0, 3 },
@@ -860,8 +852,8 @@ void MeshOptimize3d :: SwapImprove (Mesh & mesh, OPTIMIZEGOAL goal)
 		  face.Sort();
 		  if (faces.Used(face))
 		    {
-		      (*testout) << "3->2 swap, could improve conformity, bad1 = " << bad1
-				 << ", bad2 = " << bad2 << endl;
+		      // (*testout) << "3->2 swap, could improve conformity, bad1 = " << bad1
+		      //				 << ", bad2 = " << bad2 << endl;
 		      if (bad2 < 1e4)
 			bad1 = 2 * bad2;
 		    }
@@ -890,6 +882,7 @@ void MeshOptimize3d :: SwapImprove (Mesh & mesh, OPTIMIZEGOAL goal)
 		  cnt++;
 		  
 
+		  /*
 		  (*testout) << "3->2 swap, old els = " << endl
 			     << mesh[hasbothpoints[0]] << endl
 			     << mesh[hasbothpoints[1]] << endl
@@ -897,7 +890,7 @@ void MeshOptimize3d :: SwapImprove (Mesh & mesh, OPTIMIZEGOAL goal)
 			     << "new els = " << endl
 			     << el21 << endl
 			     << el22 << endl;
-
+		  */
 
 
 		  el21.flags.illegal_valid = 0;
@@ -1157,6 +1150,7 @@ void MeshOptimize3d :: SwapImprove (Mesh & mesh, OPTIMIZEGOAL goal)
 		  //		  (*mycout) << "bad1 = " << bad1 << " bad2 = " << bad2 << "\n";
 
 
+		  /*
 		  (*testout) << "4->4 swap A, old els = " << endl
 			     << mesh[hasbothpoints[0]] << endl
 			     << mesh[hasbothpoints[1]] << endl
@@ -1167,7 +1161,7 @@ void MeshOptimize3d :: SwapImprove (Mesh & mesh, OPTIMIZEGOAL goal)
 			     << el2 << endl
 			     << el3 << endl
 			     << el4 << endl;
-
+		  */
 
 
 
@@ -1194,7 +1188,7 @@ void MeshOptimize3d :: SwapImprove (Mesh & mesh, OPTIMIZEGOAL goal)
 		  el4b.flags.illegal_valid = 0;
 
 
-
+		  /*
 		  (*testout) << "4->4 swap A, old els = " << endl
 			     << mesh[hasbothpoints[0]] << endl
 			     << mesh[hasbothpoints[1]] << endl
@@ -1205,7 +1199,7 @@ void MeshOptimize3d :: SwapImprove (Mesh & mesh, OPTIMIZEGOAL goal)
 			     << el2b << endl
 			     << el3b << endl
 			     << el4b << endl;
-
+		  */
 
 
 		  mesh[hasbothpoints[0]] = el1b;
@@ -1349,8 +1343,8 @@ void MeshOptimize3d :: SwapImprove (Mesh & mesh, OPTIMIZEGOAL goal)
 			  hi3.Sort();
 			  if (faces.Used(hi3))
 			    {
-			      (*testout) << "could improve face conformity, bad1 = " << bad1
-				   << ", bad 2 = " << bad2 << ", nottoobad = " << nottoobad << endl;
+			      // (*testout) << "could improve face conformity, bad1 = " << bad1
+			      // << ", bad 2 = " << bad2 << ", nottoobad = " << nottoobad << endl;
 			      if (nottoobad)
 				confface = l;
 			    }
@@ -1361,8 +1355,10 @@ void MeshOptimize3d :: SwapImprove (Mesh & mesh, OPTIMIZEGOAL goal)
 			  if (mesh.BoundaryEdge (suroundpts[l],
 						 suroundpts[k % nsuround]))
 			    {
+			      /*
 			      *testout << "could improve edge conformity, bad1 = " << bad1
 				   << ", bad 2 = " << bad2 << ", nottoobad = " << nottoobad << endl;
+			      */
 			      if (nottoobad)
 				confedge = l;
 			    }
@@ -1390,9 +1386,10 @@ void MeshOptimize3d :: SwapImprove (Mesh & mesh, OPTIMIZEGOAL goal)
 		      hel[3] = pi2;
 		      hel.flags.illegal_valid = 0;
 
+		      /*
 		      (*testout) << nsuround << "-swap, new el,top = "
 				 << hel << endl;
-
+		      */
 		      mesh.AddVolumeElement (hel);
 		      for (k1 = 0; k1 < 4; k1++)
 			elementsonnode.Add (hel[k1], mesh.GetNE()-1);
@@ -1402,10 +1399,10 @@ void MeshOptimize3d :: SwapImprove (Mesh & mesh, OPTIMIZEGOAL goal)
 		      hel[1] = suroundpts[(k+1) % nsuround];
 		      hel[3] = pi1;
 
-
+		      /*
 		      (*testout) << nsuround << "-swap, new el,bot = "
 				 << hel << endl;
-
+		      */
 
 		      mesh.AddVolumeElement (hel);
 		      for (k1 = 0; k1 < 4; k1++)
@@ -1415,10 +1412,10 @@ void MeshOptimize3d :: SwapImprove (Mesh & mesh, OPTIMIZEGOAL goal)
 		  for (k = 0; k < nsuround; k++)
 		    {
 		      Element & rel = mesh[hasbothpoints[k]];
-
+		      /*
 		      (*testout) << nsuround << "-swap, old el = "
 				 << rel << endl;
-
+		      */
 		      rel.Delete();
 		      for (int k1 = 0; k1 < 4; k1++)
 			rel[k1] = 0;
@@ -1451,11 +1448,13 @@ void MeshOptimize3d :: SwapImprove (Mesh & mesh, OPTIMIZEGOAL goal)
 
   mesh.Compress ();
 
+  /*
   if (goal == OPT_QUALITY)
     {
       bad1 = CalcTotalBad (mesh.Points(), mesh.VolumeElements());
-      (*testout) << "Total badness = " << bad1 << endl;
+      //      (*testout) << "Total badness = " << bad1 << endl;
     }
+  */
 
   /*
     for (i = 1; i <= GetNE(); i++)
@@ -1486,12 +1485,10 @@ void MeshOptimize3d :: SwapImprove (Mesh & mesh, OPTIMIZEGOAL goal)
 void MeshOptimize3d :: SwapImprove2 (Mesh & mesh, OPTIMIZEGOAL goal)
 {
   int j, k, l;
-  //  INDEX_2 i2;
   ElementIndex ei, eli1, eli2, elnr;
   SurfaceElementIndex sei;
   PointIndex pi1, pi2, pi3, pi4, pi5;
 
-  int mattyp;
   int cnt = 0;
 
   Element el21(TET), el22(TET), el31(TET), el32(TET), el33(TET);
@@ -1530,6 +1527,7 @@ void MeshOptimize3d :: SwapImprove2 (Mesh & mesh, OPTIMIZEGOAL goal)
 
   bad1 = CalcTotalBad (mesh.Points(), mesh.VolumeElements());
   (*testout) << "Total badness = " << bad1 << endl;
+  //  cout << "tot bad = " << bad1 << endl;
 
   // find elements on node
 
@@ -1541,9 +1539,7 @@ void MeshOptimize3d :: SwapImprove2 (Mesh & mesh, OPTIMIZEGOAL goal)
     for (j = 0; j < 3; j++)
       belementsonnode.Add (mesh[sei][j], sei);
 
-  // cout << "main loop" << endl;
-
-  for (eli1 = 0; eli1 < mesh.GetNE(); eli1++)
+  for (eli1 = 0; eli1 < ne; eli1++)
     {
       if (multithread.terminate)
 	break;
@@ -1559,7 +1555,8 @@ void MeshOptimize3d :: SwapImprove2 (Mesh & mesh, OPTIMIZEGOAL goal)
 	  CalcBad (mesh.Points(), mesh[eli1], 0) < 1e3)
 	continue;
 
-
+      // cout << "eli = " << eli1 << endl;
+      //      (*testout) << "swapimp2, eli = " << eli1 << "; el = " << mesh[eli1] << endl;
 
       for (j = 0; j < 4; j++)
 	{
@@ -1569,7 +1566,7 @@ void MeshOptimize3d :: SwapImprove2 (Mesh & mesh, OPTIMIZEGOAL goal)
 	  // if (elem[0] < PointIndex::BASE) continue;
 	  if (elem.IsDeleted()) continue;
 
-	  mattyp = elem.GetIndex();
+	  int mattyp = elem.GetIndex();
 	  
 	  switch (j)
 	    {
@@ -1694,6 +1691,7 @@ void MeshOptimize3d :: SwapImprove2 (Mesh & mesh, OPTIMIZEGOAL goal)
 			   
 		      if (do_swap)
 			{
+			  //			  cout << "do swap, eli1 = " << eli1 << "; eli2 = " << eli2 << endl;
 			  //			  (*mycout) << "2->3 " << flush;
 			  cnt++;
 
@@ -1730,7 +1728,6 @@ void MeshOptimize3d :: SwapImprove2 (Mesh & mesh, OPTIMIZEGOAL goal)
 	}
     }
 
-  //  cout << "loop done" << endl;
 
   PrintMessage (5, cnt, " swaps performed");
 

@@ -19,6 +19,7 @@ class GeomPoint2d : public Point<2>
 public:
   /// refinement to point
   double refatpoint;
+  bool hpref;
 
   GeomPoint2d ()
   { ; }
@@ -44,14 +45,16 @@ public:
   int bc;
   /// copy spline mesh from other spline (-1.. do not copy)
   int copyfrom;
-
+  /// perfrom anisotropic refinement (hp-refinement) to edge
+  bool hpref_left;
+  bool hpref_right;
   /// calculates length of curve
   virtual double Length () const;
   /// returns point at curve, 0 <= t <= 1
   virtual Point<2> GetPoint (double t) const = 0;
   /// partitionizes curve
   void Partition (double h, double elto0,
-		  Mesh & mesh, int segnr) const;
+		  Mesh & mesh, Point3dTree & searchtree, int segnr) const;
   /// returns initial point on curve
   virtual const GeomPoint2d & StartPI () const = 0;
   /// returns terminal point on curve
@@ -64,6 +67,8 @@ public:
   virtual void PrintCoeff (ostream & ost) const = 0;
 
   virtual void GetPoints (int n, ARRAY<Point<2> > & points);
+
+  virtual string GetType(void) const {return "splinebase";}
 };
 
 
@@ -85,6 +90,8 @@ public:
   virtual const GeomPoint2d & EndPI () const { return p2; }
   ///
   virtual void PrintCoeff (ostream & ost) const;
+
+  virtual string GetType(void) const {return "line";}
 };
 
 
@@ -106,6 +113,8 @@ public:
   virtual const GeomPoint2d & EndPI () const { return p3; }
   ///
   virtual void PrintCoeff (ostream & ost) const;
+
+  virtual string GetType(void) const {return "spline3";}
 };
 
 
@@ -137,6 +146,8 @@ public:
   double StartAngle() const { return w1; }
   ///
   double EndAngle() const { return w3; }
+
+  virtual string GetType(void) const {return "circle";}
 };
 
 
@@ -160,6 +171,32 @@ public:
   virtual void PrintCoeff (ostream & ost) const;
 };
 */
+
+
+
+
+
+
+/// 
+class DiscretePointsSegment : public SplineSegment
+{
+  ARRAY<Point<2> > pts;
+  GeomPoint2d p1, p2;
+public:
+  ///
+  DiscretePointsSegment (const ARRAY<Point<2> > & apts);
+  ///
+  virtual ~DiscretePointsSegment ();
+  ///
+  virtual Point<2> GetPoint (double t) const;
+  ///
+  virtual const GeomPoint2d & StartPI () const { return p1; };
+  ///
+  virtual const GeomPoint2d & EndPI () const { return p2; }
+  ///
+  virtual void PrintCoeff (ostream & /* ost */) const { ; }
+};
+
 
 
 

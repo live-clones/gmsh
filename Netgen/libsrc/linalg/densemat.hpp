@@ -39,6 +39,8 @@ public:
 
   double & operator() (int i, int j) { return data[i*width+j]; }
   double operator() (int i, int j) const { return data[i*width+j]; }
+  double & operator() (int i) { return data[i]; }
+  double operator() (int i) const { return data[i]; }
 
   ///
   DenseMatrix & operator= (const DenseMatrix & m2);
@@ -59,6 +61,7 @@ public:
     const double * mp, * sp;
     double * dp;
     
+#ifdef DEBUG
     if (prod.Size() != height)
       {
 	cerr << "Mult: wrong vector size " << endl;
@@ -66,7 +69,7 @@ public:
 	// prod.SetSize (height);
       }
     
-#ifdef DEBUG
+
     if (!height) 
       {
 	cout << "DenseMatrix::Mult height = 0" << endl;
@@ -183,21 +186,18 @@ public:
       }
   }
 
+  ///
   int Height() const { return height; }
-  int Width() const { return WIDTH; }
 
-  /*
   ///
-  virtual double & operator() (INDEX i, INDEX j);
-  ///
-  virtual double operator() (INDEX i, INDEX j) const;
-  */
+  int Width() const { return WIDTH; }
 
   ///
   MatrixFixWidth & operator= (double v)
   {
     for (int i = 0; i < height*WIDTH; i++)
-      data[i] = 0; 
+      data[i] = v; 
+    return *this;
   }
 
   ///

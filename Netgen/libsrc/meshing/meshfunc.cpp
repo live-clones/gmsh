@@ -3,7 +3,8 @@
 
 namespace netgen
 {
-  extern const char * tetrules2[];
+  extern const char * tetrules[];
+  // extern const char * tetrules2[];
   extern const char * prismrules2[];
   extern const char * pyramidrules[];
   extern const char * pyramidrules2[];
@@ -12,15 +13,11 @@ namespace netgen
   extern double teterrpow; 
   MESHING3_RESULT MeshVolume (MeshingParameters & mp, Mesh& mesh3d)
   {
-    int i, k, oldne;
+    int i, oldne;
     PointIndex pi;
 
     int meshed;
     int cntsteps; 
-
-
-    //  PlotStatistics3d * pstat;
-    //  pstat = new TerminalPlotStatistics3d;
 
 
     ARRAY<INDEX_2> connectednodes;
@@ -29,21 +26,29 @@ namespace netgen
 
     //  mesh3d.PrintMemInfo (cout);
 
+
+
+    if (mesh3d.CheckOverlappingBoundary())
+      throw NgException ("Stop meshing since boundary mesh is overlapping");
+
+
     int nonconsist = 0;
-    for (k = 1; k <= mesh3d.GetNDomains(); k++)
+    for (int k = 1; k <= mesh3d.GetNDomains(); k++)
       {
 	PrintMessage (3, "Check subdomain ", k, " / ", mesh3d.GetNDomains());
 
 	mesh3d.FindOpenElements(k);
 
-	int res = 0; // mesh3d.CheckOverlappingBoundary();
+	/*
+	bool res = mesh3d.CheckOverlappingBoundary();
 	if (res)
 	  {
 	    PrintError ("Surface is overlapping !!");
 	    nonconsist = 1;
 	  }
+	*/
 
-	res = mesh3d.CheckConsistentBoundary();
+	bool res = mesh3d.CheckConsistentBoundary();
 	if (res)
 	  {
 	    PrintError ("Surface mesh not consistent");
@@ -59,7 +64,7 @@ namespace netgen
 
     double globmaxh = mp.maxh;
 
-    for (k = 1; k <= mesh3d.GetNDomains(); k++)
+    for (int k = 1; k <= mesh3d.GetNDomains(); k++)
       {
 	if (multithread.terminate)
 	  break;
@@ -72,21 +77,6 @@ namespace netgen
 	mesh3d.CalcSurfacesOfNode();
 	mesh3d.FindOpenElements(k);
 
-	/*
-	  if (mesh3d.CheckOverlappingBoundary())
-	  {
-	  (*mycout) << "overlapping" << endl;
-	  (*testout) << "overlapping !!!" << endl;
-	  continue;
-	  }
-	  if (mesh3d.CheckConsistentBoundary())
-	  {
-	  (*mycout) << "boundary not consistent" << endl;
-	  (*testout) << "boundary not consistent !!!" << endl;
-	  continue;
-	  }
-	*/
-
 	if (!mesh3d.GetNOpenElements())
 	  continue;
 
@@ -96,32 +86,26 @@ namespace netgen
 	    if (mesh3d.HasOpenQuads())
 	      {
 		string rulefile = ngdir;
-		/*
-		  char rulefile[255];
-		  strcpy (rulefile, ngdir);
-		*/
+
 		const char ** rulep = NULL;
 		switch (qstep)
 		  {
 		  case 1:
-		    //		  strcat (rulefile, "/rules/prisms2.rls");
 		    rulefile += "/rules/prisms2.rls";
 		    rulep = prismrules2;
 		    break;
 		  case 2: // connect pyramid to triangle
-		    //		  strcat (rulefile, "/rules/pyramids2.rls");
 		    rulefile += "/rules/pyramids2.rls";
 		    rulep = pyramidrules2;
 		    break;
 		  case 3: // connect to vis-a-vis point
-		    //		  strcat (rulefile, "/rules/pyramids.rls");
 		    rulefile += "/rules/pyramids.rls";
 		    rulep = pyramidrules;
 		    break;
 		  }
 	      
-		//	      Meshing3 meshing(rulefile.c_str(), pstat);
-		Meshing3 meshing(NULL, rulep); 
+		//		Meshing3 meshing(rulefile);
+		Meshing3 meshing(rulep); 
 	      
 		MeshingParameters mpquad = mp;
 	      
@@ -168,7 +152,7 @@ namespace netgen
 
 	if (mp.delaunay && mesh3d.GetNOpenElements())
 	  {
-	    Meshing3 meshing(NULL);
+	    Meshing3 meshing((const char**)NULL);
 	 
 	    mesh3d.FindOpenElements(k);
 	  
@@ -182,21 +166,8 @@ namespace netgen
 	      meshing.AddBoundaryElement (mesh3d.OpenElement(i));
 	  
 	    oldne = mesh3d.GetNE();
-	    /*
-	      if (globflags.GetDefineFlag ("blockfill"))
-	      {
-	      if (!globflags.GetDefineFlag ("localh"))
-	      meshing.BlockFill 
-	      (mesh3d, mp.h * globflags.GetNumFlag ("relblockfillh", 1));
-	      else
-	      meshing.BlockFillLocalH (mesh3d);
-	      }
-	    */
 
-	  
-	    //	  mp.blockfill = globflags.GetDefineFlag ("blockfill");
 	    meshing.Delaunay (mesh3d, mp);
-	    //	  return MESHING3_OK;
 
 	    for (i = oldne + 1; i <= mesh3d.GetNE(); i++)
 	      mesh3d.VolumeElement(i).SetIndex (k);
@@ -212,49 +183,23 @@ namespace netgen
 	    if (multithread.terminate)
 	      break;
 
-	    //	  mesh3d.CalcSurfacesOfNode();
 	    mesh3d.FindOpenElements(k);
 	    PrintMessage (5, mesh3d.GetNOpenElements(), " open faces");
 	    cntsteps++;
+
 	    if (cntsteps > mp.maxoutersteps) 
 	      throw NgException ("Stop meshing since too many attempts");
-	    // return MESHING3_OUTERSTEPSEXCEEDED;
 
-	    /*
-	      if (mesh3d.CheckOverlappingBoundary())
-	      {
-	      (*mycout) << "overlapping" << endl;
-	      (*testout) << "overlapping !!!!" << endl;
-	      break;
-	      }
-	      if (mesh3d.CheckConsistentBoundary())
-	      {
-	      (*mycout) << "boundary not consistent" << endl;
-	      (*testout) << "boundary not consistent !!!" << endl;
-	      //	      break;
-	      }
-	    */
-
-
-	    /*
-	      char rulefile[255];
-	      strcpy (rulefile, ngdir);
-	      strcat (rulefile, "/tetra.rls");
-	    */
 	    string rulefile = ngdir + "/tetra.rls";
 	    PrintMessage (1, "start tetmeshing");
 
-	    //	  Meshing3 meshing(rulefile, pstat);
-	    Meshing3 meshing(NULL);
+	    //	  Meshing3 meshing(rulefile);
+	    Meshing3 meshing(tetrules);
       
-#ifdef MYGRAPH	  
-	    Point3d pmin, pmax;
-	    mesh3d.GetBox (pmin, pmax, k);
-	    rot.SetCenter (Center (pmin, pmax));
-#endif
 
-	    for (i = 1; i <= mesh3d.GetNP(); i++)
-	      meshing.AddPoint (mesh3d.Point(i), i);
+	    for (PointIndex pi = PointIndex::BASE; 
+		 pi < mesh3d.GetNP()+PointIndex::BASE; pi++)
+	      meshing.AddPoint (mesh3d[pi], pi);
 
 	    for (i = 1; i <= mesh3d.GetNOpenElements(); i++)
 	      meshing.AddBoundaryElement (mesh3d.OpenElement(i));
@@ -262,12 +207,12 @@ namespace netgen
 
 	    oldne = mesh3d.GetNE();
 
-	    mp.giveuptol = 15; // int(globflags.GetNumFlag ("giveuptol", 15));
+	    mp.giveuptol = 15; 
 	    mp.sloppy = 5;
 	    meshing.GenerateMesh (mesh3d, mp);
 
-	    for (i = oldne + 1; i <= mesh3d.GetNE(); i++)
-	      mesh3d.VolumeElement(i).SetIndex (k);
+	    for (ElementIndex ei = oldne; ei < mesh3d.GetNE(); ei++)
+	      mesh3d[ei].SetIndex (k);
 	  
 	  
 	    mesh3d.CalcSurfacesOfNode();
@@ -322,8 +267,6 @@ namespace netgen
     mp.maxh = globmaxh;
 
     MeshQuality3d (mesh3d);
-
-    //  delete pstat;
 
     return MESHING3_OK;
   }  
@@ -646,8 +589,8 @@ namespace netgen
 
 
   MESHING3_RESULT OptimizeVolume (MeshingParameters & mp, 
-				  Mesh & mesh3d,
-				  const CSGeometry * geometry)
+				  Mesh & mesh3d)
+    //				  const CSGeometry * geometry)
   {
     int i, j;
 

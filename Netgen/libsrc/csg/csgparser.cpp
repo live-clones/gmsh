@@ -16,7 +16,7 @@ namespace netgen
       TOK_EQU = '=', TOK_COMMA = ',', TOK_SEMICOLON = ';',
       TOK_NUM = 100, TOK_STRING, TOK_NAMED_SOLID, TOK_PRIMITIVE, 
       TOK_OR, TOK_AND, TOK_NOT, 
-      TOK_SINGULAR, TOK_EDGE, TOK_POINT, TOK_IDENTIFY, TOK_CLOSESURFACES,
+      TOK_SINGULAR, TOK_EDGE, TOK_POINT, TOK_FACE, TOK_IDENTIFY, TOK_CLOSESURFACES,
       TOK_CLOSEEDGES, TOK_PERIODIC,
       TOK_SOLID, TOK_RECO, TOK_TLO, TOK_BOUNDINGBOX, TOK_BOUNDARYCONDITION,
       TOK_END };
@@ -38,6 +38,7 @@ namespace netgen
       { TOK_NOT,     "not" },
       { TOK_SINGULAR, "singular" },
       { TOK_EDGE,     "edge" },
+      { TOK_FACE,     "face" },
       { TOK_POINT,    "point" },
       { TOK_IDENTIFY, "identify" },
       { TOK_CLOSESURFACES, "closesurfaces" },
@@ -48,10 +49,13 @@ namespace netgen
     };
 
   enum PRIMITIVE_TYPE
-    { TOK_SPHERE = 1, TOK_CYLINDER, TOK_PLANE, TOK_ELLIPTICCYLINDER, 
-      TOK_ELLIPSOID,
-      TOK_CONE, TOK_TUBE,
-      TOK_GENCYL, TOK_ORTHOBRICK, TOK_POLYHEDRON, TOK_EXTRUSION, TOK_REVOLUTION,
+    {
+      TOK_SPHERE = 1, TOK_CYLINDER, TOK_PLANE, TOK_ELLIPTICCYLINDER, 
+      TOK_ELLIPSOID, TOK_CONE, 
+      TOK_ORTHOBRICK, TOK_POLYHEDRON, 
+      
+      TOK_TUBE, TOK_GENCYL, TOK_EXTRUSION, TOK_REVOLUTION,    // currently, out of order
+
       TOK_TRANSLATE, TOK_MULTITRANSLATE, TOK_ROTATE, TOK_MULTIROTATE
     };
 
@@ -69,10 +73,11 @@ namespace netgen
       { TOK_CONE,      "cone" },
       { TOK_ELLIPTICCYLINDER, "ellipticcylinder" },
       { TOK_ELLIPSOID, "ellipsoid" },
-      { TOK_TUBE,      "tube" },
-      { TOK_GENCYL,    "gencyl" },
       { TOK_ORTHOBRICK, "orthobrick" },
       { TOK_POLYHEDRON, "polyhedron" },
+
+      { TOK_TUBE,      "tube" },
+      { TOK_GENCYL,    "gencyl" },
       { TOK_EXTRUSION,  "extrusion" },
       { TOK_REVOLUTION, "revolution" },
 
@@ -83,23 +88,7 @@ namespace netgen
       { PRIMITIVE_TYPE(0) }
     };
 
-
-
   static CSGeometry * geom;
-
-  /*
-%token <solidtype> TOK_SPHERE TOK_CYLINDER TOK_CONE TOK_PLAIN TOK_TUBE TOK_GENCYL TOK_ORTHOBRICK TOK_POLYHEDRON TOK_REVOLUTION
-%left <solidtype> TOK_OR TOK_AND TOK_NOT
-%token <solidtype> TOK_TRANSLATE TOK_MULTITRANSLATE TOK_ROTATE TOK_MULTIROTATE
-%type <solidtype> solid solidprimitive 
-%type <void> splinesegmentlist splinesegment readbspline bsplinepointlist
-%type <chptr> anyident
-%token TOK_SINGULAR TOK_EDGE TOK_POINT
-%token TOK_IDENTIFY TOK_CLOSESURFACES TOK_CLOSEEDGES TOK_PERIODIC
-%token TOK_BOUNDARYCONDITION
-%type <void> polyhedronpoints polyhedronfaces polyhedronpoint polyhedronface
-%type <void> revolutionpoints revolutionpoint
-  */
 
 
   
@@ -133,6 +122,14 @@ namespace netgen
     { return prim_token; }
   
     void ReadNext();
+
+    /*
+    CSGScanner & Parse (char ch);
+    CSGScanner & Parse (int & i);
+    CSGScanner & Parse (double & d);
+    CSGScanner & Parse (Point<3> & p);
+    CSGScanner & Parse (Vec<3> & p);
+    */
     void Error (const string & err);
   };
 
@@ -151,7 +148,7 @@ namespace netgen
     char ch;
   
 
-    // whitespaces ueberspringen
+    // scan whitespaces
     do
       { 
 	scanin->get(ch);
@@ -208,17 +205,14 @@ namespace netgen
 	    {
 	      string_value = string (1, ch);
 	      scanin->get(ch);
-	      while (isalnum(ch))
+	      while (isalnum(ch) || ch == '_')
 		{
 		  string_value += ch;
 		  scanin->get(ch);
 		}
 	      scanin->putback (ch);
 	    }
-	  /*
-	  (*scanin).putback (ch);
-	  (*scanin) >> string_value;
-	  */
+
 	  int nr = 0;
 	  while (defkw[nr].kw)
 	    {
@@ -259,15 +253,12 @@ namespace netgen
     Solid = Term { OR Term }
     Term  = Primary { AND Primary }
     Primary = PRIM | IDENT | ( Solid ) | NOT Primary
-   */
+  */
 
   void ParseChar (CSGScanner & scan, char ch)
   {
-    char str[2];
-    str[0] = ch;
-    str[1] = 0;
     if (scan.GetToken() != TOKEN_TYPE(ch)) 
-      scan.Error (string ("token '") + string(str) + string("' expected"));
+      scan.Error (string ("token '") + string(1, ch) + string("' expected"));
     scan.ReadNext();
   }
   
@@ -284,6 +275,50 @@ namespace netgen
     return val;
   }
 
+  Vec<3> ParseVector (CSGScanner & scan)
+  {
+    Vec<3> v;
+    v(0) = ParseNumber (scan);
+    ParseChar (scan, ',');
+    v(1) = ParseNumber (scan);
+    ParseChar (scan, ',');
+    v(2) = ParseNumber (scan);
+    return v;
+  }
+
+
+  CSGScanner & operator>> (CSGScanner & scan, char ch)
+  {
+    if (scan.GetToken() != TOKEN_TYPE(ch)) 
+      scan.Error (string ("token '") + string(1, ch) + string("' expected"));
+    scan.ReadNext();
+    return scan;
+  }
+
+  CSGScanner & operator>> (CSGScanner & scan, double & d)
+  {
+    d = ParseNumber (scan);
+    return scan;
+  }
+
+  CSGScanner & operator>> (CSGScanner & scan, int & i)
+  {
+    i = int (ParseNumber (scan));
+    return scan;
+  }
+
+  CSGScanner & operator>> (CSGScanner & scan, Point<3> & p)
+  {
+    scan >> p(0) >> ',' >> p(1) >> ',' >> p(2);
+    return scan;
+  }
+
+  CSGScanner & operator>> (CSGScanner & scan, Vec<3> & v)
+  {
+    scan >> v(0) >> ',' >> v(1) >> ',' >> v(2);
+    return scan;
+  }
+
 
   Solid * ParseSolid (CSGScanner & scan);
   Solid * ParseTerm (CSGScanner & scan);
@@ -294,7 +329,6 @@ namespace netgen
   {
     if (scan.GetToken() == TOK_PRIMITIVE)
       {
-	//	cout << "prim token = " << int (scan.GetPrimitiveToken()) << endl;
 	switch (scan.GetPrimitiveToken())
 	  {
 	  case TOK_PLANE:
@@ -303,57 +337,23 @@ namespace netgen
 	      Vec<3> v;
 	      
 	      scan.ReadNext();
-	      
-	      ParseChar (scan, '(');
-	      p(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      p(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      p(2) = ParseNumber (scan);
-	      ParseChar (scan, ';');
-	      v(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      v(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      v(2) = ParseNumber (scan);
-	      ParseChar (scan, ')');
+	      scan >> '(' >> p >> ';' >> v >> ')';
 
-	      // cout << "define plane, p = " << p << "; v = " << v << endl;
 	      OneSurfacePrimitive * surf = new Plane ( p, v );
-
-	      geom->AddSurface (surf);
-	      surf->SetSurfaceId (0, geom->GetNSurf()-1);
-
+	      geom->AddSurfaces (surf);
 	      return new Solid (surf);
 	    }
+
 	  case TOK_CYLINDER:
 	    {
 	      Point<3> pa, pb;
 	      double r;
 	      
 	      scan.ReadNext();
-	      
-	      ParseChar (scan, '(');
-	      pa(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      pa(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      pa(2) = ParseNumber (scan);
-	      ParseChar (scan, ';');
-	      pb(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      pb(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      pb(2) = ParseNumber (scan);
-	      ParseChar (scan, ';');
-	      r = ParseNumber (scan);
-	      ParseChar (scan, ')');
-	      
+	      scan >> '(' >> pa >> ';' >> pb >> ';' >> r >> ')';
+
 	      OneSurfacePrimitive * surf = new Cylinder ( pa, pb, r );
-
-	      geom->AddSurface (surf);
-	      surf->SetSurfaceId (0, geom->GetNSurf()-1);
-
+	      geom->AddSurfaces (surf);
 	      return new Solid (surf);
 	    }
 
@@ -363,34 +363,10 @@ namespace netgen
 	      Vec<3> vl, vs;
 	      
 	      scan.ReadNext();
-	      
-	      ParseChar (scan, '(');
-	      pa(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      pa(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      pa(2) = ParseNumber (scan);
-	      ParseChar (scan, ';');
+	      scan >> '(' >> pa >> ';' >> vl >> ';' >> vs >> ')';
 
-	      vl(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      vl(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      vl(2) = ParseNumber (scan);
-	      ParseChar (scan, ';');
-
-	      vs(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      vs(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      vs(2) = ParseNumber (scan);
-	      ParseChar (scan, ')');
-	      
 	      OneSurfacePrimitive * surf = new EllipticCylinder ( pa, vl, vs);
-
-	      geom->AddSurface (surf);
-	      surf->SetSurfaceId (0, geom->GetNSurf()-1);
-
+	      geom->AddSurfaces (surf);
 	      return new Solid (surf);
 	    }
 
@@ -401,41 +377,10 @@ namespace netgen
 	      Vec<3> v1, v2, v3;
 	      
 	      scan.ReadNext();
-	      
-	      ParseChar (scan, '(');
-	      pa(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      pa(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      pa(2) = ParseNumber (scan);
-	      ParseChar (scan, ';');
+	      scan >> '(' >> pa >> ';' >> v1 >> ';' >> v2 >> ';' >> v3 >> ')';
 
-	      v1(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      v1(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      v1(2) = ParseNumber (scan);
-	      ParseChar (scan, ';');
-
-	      v2(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      v2(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      v2(2) = ParseNumber (scan);
-	      ParseChar (scan, ';');
-
-	      v3(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      v3(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      v3(2) = ParseNumber (scan);
-	      ParseChar (scan, ')');
-	      
 	      OneSurfacePrimitive * surf = new Ellipsoid ( pa, v1, v2, v3);
-
-	      geom->AddSurface (surf);
-	      surf->SetSurfaceId (0, geom->GetNSurf()-1);
-
+	      geom->AddSurfaces (surf);
 	      return new Solid (surf);
 	    }
 
@@ -446,33 +391,12 @@ namespace netgen
 	      double ra, rb;
 	      
 	      scan.ReadNext();
-	      
-	      ParseChar (scan, '(');
-	      pa(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      pa(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      pa(2) = ParseNumber (scan);
-	      ParseChar (scan, ';');
-	      ra = ParseNumber (scan);
-	      ParseChar (scan, ';');
-	      pb(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      pb(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      pb(2) = ParseNumber (scan);
-	      ParseChar (scan, ';');
-	      rb = ParseNumber (scan);
-	      ParseChar (scan, ')');
-	      
-	      OneSurfacePrimitive * surf = new Cone ( pa, pb, ra, rb);
+	      scan >> '(' >> pa >> ';' >> ra >> ';' >> pb >> ';' >> rb >> ')';
 
-	      geom->AddSurface (surf);
-	      surf->SetSurfaceId (0, geom->GetNSurf()-1);
-
+	      OneSurfacePrimitive * surf = new Cone ( pa, pb, ra, rb );
+	      geom->AddSurfaces (surf);
 	      return new Solid (surf);
 	    }
-
 
 
 
@@ -482,23 +406,10 @@ namespace netgen
 	      double r;
 	      
 	      scan.ReadNext();
-	      
-	      ParseChar (scan, '(');
-	      p(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      p(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      p(2) = ParseNumber (scan);
-	      ParseChar (scan, ';');
-	      r = ParseNumber (scan);
-	      ParseChar (scan, ')');
-	      
-	      // cout << "define sphere, c = " << p << ", rad = " << r << endl;
+	      scan >> '(' >> p >> ';' >> r >> ')';
+
 	      OneSurfacePrimitive * surf = new Sphere ( p, r );
-
-	      geom->AddSurface (surf);
-	      surf->SetSurfaceId (0, geom->GetNSurf()-1);
-
+	      geom->AddSurfaces (surf);
 	      return new Solid (surf);
 	    }
 
@@ -507,35 +418,12 @@ namespace netgen
 	      Point<3> pa, pb;
 	      
 	      scan.ReadNext();
+	      scan >> '(' >> pa >> ';' >> pb >> ')';
 	      
-	      ParseChar (scan, '(');
-	      pa(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      pa(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      pa(2) = ParseNumber (scan);
-	      ParseChar (scan, ';');
-	      pb(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      pb(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      pb(2) = ParseNumber (scan);
-	      ParseChar (scan, ')');
-	      
-	      // cout << "define orthobrick, p1 = " << pa << "; p2 = " << pb << endl;
-
 	      Primitive * nprim = new OrthoBrick (pa, pb);
-	      
-	      for (int j = 0; j < nprim->GetNSurfaces(); j++)
-		{
-		  geom->AddSurface (&nprim->GetSurface(j));
-		  nprim->SetSurfaceId (j, geom->GetNSurf()-1);
-		}
+	      geom->AddSurfaces (nprim);
 	      return new Solid (nprim);
 	    } 
-
-
-	    
 
 	  case TOK_POLYHEDRON:
 	    {
@@ -552,14 +440,8 @@ namespace netgen
 	      // scanning the points
 	      while (1)
 		{
-		  p(0) = ParseNumber (scan);
-		  ParseChar (scan, ',');
-		  p(1) = ParseNumber (scan);
-		  ParseChar (scan, ',');
-		  p(2) = ParseNumber (scan);
+		  p = Point<3> (ParseVector (scan));
 		  ParseChar (scan, ';');
-
-		  // cout << "point = " << p << endl;
 
 		  polyhedron->AddPoint(p);
 
@@ -595,19 +477,14 @@ namespace netgen
 		    }
 		  scan.ReadNext();
 		}
-	      
-	      for (int j = 0; j < polyhedron->GetNSurfaces(); j++)
-		{
-		  geom->AddSurface (&polyhedron->GetSurface(j));
-		  polyhedron->SetSurfaceId (j, geom->GetNSurf()-1);
-		}
 
+	      geom->AddSurfaces (polyhedron);
 	      return new Solid (polyhedron);
 	    }
 
 
-	  case TOK_EXTRUSION:
-	    {
+	  case TOK_EXTRUSION:     // not functional
+	    {   
 	      Point<3> p0;
 	      Vec<3> ex, ey;
 	      ARRAY<Point<2> > points;
@@ -638,8 +515,8 @@ namespace netgen
 
 	      cout << "p0 = " << p0 << endl;
 
-	      int npseg = 0;
-	      int nseg = 0;
+	      // int npseg = 0;
+	      // int nseg = 0;
 	      while (1)
 		{
 		  Point<2> p1, p2, p3;
@@ -658,45 +535,45 @@ namespace netgen
 
 
 	      /*
-	      while (1)
+		while (1)
 		{
-		  Point<2> p1, p2, p3;
+		Point<2> p1, p2, p3;
 		  
-		  p3 = p2;
-		  p2 = p1;
-		  p1(0) = ParseNumber(scan);
-		  ParseChar (scan, ',');
-		  p1(1) = ParseNumber(scan);
-		  npseg++;
+		p3 = p2;
+		p2 = p1;
+		p1(0) = ParseNumber(scan);
+		ParseChar (scan, ',');
+		p1(1) = ParseNumber(scan);
+		npseg++;
 		  
-		  cout << "p1 = " << p1 << endl;
+		cout << "p1 = " << p1 << endl;
 
-		  if (scan.GetToken() == ';' || scan.GetToken() == ')')
-		    {
-		      if (npseg == 2)
-			{
-			  p3 = p2;
-			  p2 = Center (p1, p3);
-			}
-		      if (nseg == 0)
-			points.Append (p3);
-		      points.Append (p2);
-		      points.Append (p1);
-		      npseg = 1;
-		      nseg++;
+		if (scan.GetToken() == ';' || scan.GetToken() == ')')
+		{
+		if (npseg == 2)
+		{
+		p3 = p2;
+		p2 = Center (p1, p3);
+		}
+		if (nseg == 0)
+		points.Append (p3);
+		points.Append (p2);
+		points.Append (p1);
+		npseg = 1;
+		nseg++;
 
-		      cout << "p1, = " << p1 << ", p2 = " << p2 << ", p3 = " << p3 << endl;
-		    }
+		cout << "p1, = " << p1 << ", p2 = " << p2 << ", p3 = " << p3 << endl;
+		}
 		  
-		  if (scan.GetToken() == ')')
-		    {
-		      scan.ReadNext();
-		      break;
-		    }
-		  if (scan.GetToken() == ';' || scan.GetToken() == ',')
-		    {
-		      scan.ReadNext();
-		    }
+		if (scan.GetToken() == ')')
+		{
+		scan.ReadNext();
+		break;
+		}
+		if (scan.GetToken() == ';' || scan.GetToken() == ',')
+		{
+		scan.ReadNext();
+		}
 		}
 	      */
 	      cout << "p0 = " << p0 << endl;
@@ -705,13 +582,9 @@ namespace netgen
 	      
 	      Extrusion * extrusion = new Extrusion (p0, ex, ey, points);
 	      
-	      for (int i = 0; i < extrusion->GetNSurfaces(); i++)
-		{
-		  geom->AddSurface (&extrusion->GetSurface(i));
-		  extrusion->SetSurfaceId(i, geom->GetNSurf()-1);
-		}
+	      geom->AddSurfaces (extrusion);
 	      return new Solid (extrusion);
-		    
+	      
 	      /*
 	      // cout << "define cylinder, pa = " << pa << "; pb = " << pb
 	      // << ", rad = " << r << endl;
@@ -732,12 +605,9 @@ namespace netgen
 	    {
 	      Vec<3> v;
 	      scan.ReadNext();
+
 	      ParseChar (scan, '(');
-	      v(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      v(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      v(2) = ParseNumber (scan);
+	      v = ParseVector (scan);
 	      ParseChar (scan, ';');
 	      
 	      Solid * sol1 = ParseSolid (scan);
@@ -757,30 +627,52 @@ namespace netgen
 	      int n;
 	      
 	      scan.ReadNext();
-	      ParseChar (scan, '(');
-	      v(0) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      v(1) = ParseNumber (scan);
-	      ParseChar (scan, ',');
-	      v(2) = ParseNumber (scan);
-	      ParseChar (scan, ';');
-	      
-	      n = int (ParseNumber (scan));
-	      ParseChar (scan, ';');
-	      
+
+	      scan >> '(' >> v >> ';' >> n >> ';';
+
 	      Solid * sol1 = ParseSolid (scan);
 	      
-	      ParseChar (scan, ')');
+	      scan >> ')';
 	      
-	      int i;
 	      Solid * hsol = sol1;
-	      for (i = 1; i <= n; i++)
+	      for (int i = 1; i <= n; i++)
 		{
 		  Solid * nsol = sol1 -> Copy(*geom);
 		  Transformation<3> trans(double(i) * v);
 		  
 		  nsol -> Transform (trans);
 		  hsol = new Solid (Solid::UNION, hsol, nsol); 
+		}
+	      return hsol;
+	    }
+
+
+	  case TOK_MULTIROTATE: 
+	    {
+	      Point<3> c;
+	      Vec<3> v;
+	      int n;
+	      
+	      scan.ReadNext();
+
+	      scan >> '(' >> c >> ';' >> v >> ';' >> n >> ';';
+	      Solid * sol1 = ParseSolid (scan);
+	      scan >> ')';
+
+	      Transformation<3> trans(c, v(0), v(1), v(2));
+	      Transformation<3> multi(Vec<3>(0,0,0));
+	      Transformation<3> ht;
+
+	      Solid * hsol = sol1;
+	      for (int i = 1; i <= n; i++)
+		{
+		  Solid * nsol = sol1 -> Copy(*geom);
+
+		  nsol -> Transform (multi);
+		  hsol = new Solid (Solid::UNION, hsol, nsol); 
+
+		  ht=multi;
+		  multi.Combine (trans, ht);
 		}
 	      return hsol;
 	    }
@@ -826,6 +718,7 @@ namespace netgen
   }
 
 
+
   Solid * ParseTerm (CSGScanner & scan)
   {
     Solid * sol = ParsePrimary(scan);
@@ -837,6 +730,7 @@ namespace netgen
       }
     return sol;
   }
+
 
   Solid * ParseSolid (CSGScanner & scan)
   {
@@ -896,7 +790,7 @@ namespace netgen
 
   /*
     Main parsing function for CSG geometry
-   */
+  */
   CSGeometry * ParseCSG (istream & istr)
   {
     CSGScanner scan(istr);
@@ -905,9 +799,8 @@ namespace netgen
 
     scan.ReadNext();
     if (scan.GetToken() != TOK_RECO)  // keyword 'algebraic3d'
-      {
-	return 0;
-      }
+      return 0;
+
     scan.ReadNext();
 
     try
@@ -956,10 +849,13 @@ namespace netgen
 		    ParseFlags (scan, flags);
 		    
 		    ParseChar (scan, ';');
+		    if (!geom->GetSolid (name))
+		      scan.Error ("Top-Level-Object "+name+" not defined");
 
 		    int tlonr = 
 		      geom->SetTopLevelObject ((Solid*)geom->GetSolid(name));
 		    TopLevelObject * tlo = geom->GetTopLevelObject (tlonr);
+
 		    if (flags.NumListFlagDefined ("col"))
 		      {
 			const ARRAY<double> & col =
@@ -1025,7 +921,7 @@ namespace netgen
 		      
 		      string name2 = scan.GetStringValue();
 		      scan.ReadNext();
-		      
+
 		      Flags flags;
 		      ParseFlags (scan, flags);
 		      
@@ -1035,12 +931,17 @@ namespace netgen
 		      ARRAY<int> si1, si2;
 		      geom->GetSolid(name1)->GetSurfaceIndices(si1);
 		      geom->GetSolid(name2)->GetSurfaceIndices(si2);
-		      
+
+		      const TopLevelObject * domain = 
+			geom->GetTopLevelObject (geom->GetSolid(flags.GetStringFlag ("tlo","")));
+
 		      geom->AddIdentification 
 			(new CloseSurfaceIdentification 
 			 (geom->GetNIdentifications()+1, *geom, 
 			  geom->GetSurface (si1[0]), geom->GetSurface (si2[0]),
+			  domain,
 			  flags));
+
 		      break;
 		    }
 		    
@@ -1075,6 +976,86 @@ namespace netgen
 		  }
 		
 	      }
+
+	    else if (scan.GetToken() == TOK_SINGULAR)
+
+	      {
+		
+		scan.ReadNext();
+		switch (scan.GetToken())
+		  {
+		  case TOK_FACE:
+		    {
+		      scan.ReadNext();
+		      
+		      string name1 = scan.GetStringValue();  // tlo
+		      scan.ReadNext();
+		      
+		      string name2 = scan.GetStringValue();
+		      scan.ReadNext();
+		      
+		      Flags flags;
+		      ParseFlags (scan, flags);
+		      
+		      ParseChar (scan, ';');
+		      
+		      const Solid * sol = geom->GetSolid(name2);
+
+		      for (int i = 0; i < geom->GetNTopLevelObjects(); i++)
+			if (name1 == geom->GetTopLevelObject (i)->GetSolid()->Name())
+			  geom->singfaces.Append (new SingularFace (i+1, sol));
+
+		      break;
+		    }
+
+		  case TOK_EDGE:
+		    {
+		      scan.ReadNext();
+		      
+		      string name1 = scan.GetStringValue();
+		      scan.ReadNext();
+		      
+		      string name2 = scan.GetStringValue();
+		      scan.ReadNext();
+		      
+		      Flags flags;
+		      ParseFlags (scan, flags);
+		      
+		      ParseChar (scan, ';');
+		      
+		      const Solid * s1 = geom->GetSolid(name1);
+		      const Solid * s2 = geom->GetSolid(name2);
+		      geom->singedges.Append (new SingularEdge (1, s1, s2));
+		      break;
+		    }
+
+		  case TOK_POINT:
+		    {
+		      scan.ReadNext();
+		      
+		      string name1 = scan.GetStringValue();
+		      scan.ReadNext();
+		      string name2 = scan.GetStringValue();
+		      scan.ReadNext();
+		      string name3 = scan.GetStringValue();
+		      scan.ReadNext();
+		      
+		      Flags flags;
+		      ParseFlags (scan, flags);
+		      
+		      ParseChar (scan, ';');
+		      
+		      const Solid * s1 = geom->GetSolid(name1);
+		      const Solid * s2 = geom->GetSolid(name2);
+		      const Solid * s3 = geom->GetSolid(name3);
+		      geom->singpoints.Append (new SingularPoint (1, s1, s2, s3));
+		      break;
+		    }
+		  default:
+		    scan.Error ("keyword 'face' or 'edge' or 'point' expected");
+		  }
+	      }
+
 	    
 	    else if (scan.GetToken() == TOK_POINT)
 	      {
@@ -1082,11 +1063,7 @@ namespace netgen
 
 		scan.ReadNext();
 		ParseChar (scan, '(');
-		p(0) = ParseNumber (scan);
-		ParseChar (scan, ',');
-		p(1) = ParseNumber (scan);
-		ParseChar (scan, ',');
-		p(2) = ParseNumber (scan);
+		p = Point<3> (ParseVector (scan));
 		ParseChar (scan, ')');
 		ParseChar (scan, ';');
 
@@ -1099,17 +1076,9 @@ namespace netgen
 		
 		scan.ReadNext();
 		ParseChar (scan, '(');
-		p1(0) = ParseNumber (scan);
-		ParseChar (scan, ',');
-		p1(1) = ParseNumber (scan);
-		ParseChar (scan, ',');
-		p1(2) = ParseNumber (scan);
+		p1 = Point<3> (ParseVector (scan));
 		ParseChar (scan, ';');
-		p2(0) = ParseNumber (scan);
-		ParseChar (scan, ',');
-		p2(1) = ParseNumber (scan);
-		ParseChar (scan, ',');
-		p2(2) = ParseNumber (scan);
+		p2 = Point<3> (ParseVector (scan));
 		ParseChar (scan, ')');
 		ParseChar (scan, ';');
 
@@ -1164,20 +1133,21 @@ namespace netgen
     catch (string errstr)
       {
 	cout << "caught error " << errstr << endl;
+	throw NgException (errstr);
       }
 
 
     return geom;
     /*
-    do
+      do
       {
-	scan.ReadNext();
-	if (scan.GetToken() == TOK_STRING)
-	  cout << "found string " << scan.GetStringValue() << endl;
-	else
-	  cout << "token = " << int(scan.GetToken()) << endl;
+      scan.ReadNext();
+      if (scan.GetToken() == TOK_STRING)
+      cout << "found string " << scan.GetStringValue() << endl;
+      else
+      cout << "token = " << int(scan.GetToken()) << endl;
       }
-    while (scan.GetToken() != TOK_END);
+      while (scan.GetToken() != TOK_END);
     */
   }
 

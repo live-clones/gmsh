@@ -11,27 +11,6 @@ double minwithoutother;
 
 
 
-
-
-/*
-MeshingParameters3 ::   MeshingParameters3()
-{
-  h = 1;
-  giveuptol = 10;
-  maxoutersteps = 5;
-  baseelnp = 0;
-  starshapeclass = 5;
-  blockfill = 0;
-  sloppy = 1;
-  optsteps = 2;
-  optstr = "cmsmdm";
-}
-*/
-
-
-
-
-  
 MeshingStat3d :: MeshingStat3d ()
 {
   cntsucc = cnttrials = cntelem = qualclass = 0;
@@ -40,16 +19,11 @@ MeshingStat3d :: MeshingStat3d ()
 }  
   
 
- 
-
-
-Meshing3 :: Meshing3 (const char * rulefilename) //, const PlotStatistics3d * aplotstat)
-  //  : plotstat(aplotstat)
+Meshing3 :: Meshing3 (const string & rulefilename) 
 {
-  int i;
   tolfak = 1;
 
-  LoadRules (rulefilename, NULL);
+  LoadRules (rulefilename.c_str(), NULL);
   adfront = new AdFront3;
 
   problems.SetSize (rules.Size());
@@ -57,7 +31,7 @@ Meshing3 :: Meshing3 (const char * rulefilename) //, const PlotStatistics3d * ap
   canuse.SetSize (rules.Size());
   ruleused.SetSize (rules.Size());
 
-  for (i = 1; i <= rules.Size(); i++)
+  for (int i = 1; i <= rules.Size(); i++)
     {
       problems.Elem(i) = new char[255];
       foundmap.Elem(i) = 0;
@@ -66,9 +40,8 @@ Meshing3 :: Meshing3 (const char * rulefilename) //, const PlotStatistics3d * ap
     }
 }
 
-Meshing3 :: Meshing3 (const char * rulefilename, const char ** rulep)
-  //		      const PlotStatistics3d * aplotstat)
-  //  : plotstat(aplotstat)
+
+Meshing3 :: Meshing3 (const char ** rulep)
 {
   tolfak = 1;
 
@@ -94,34 +67,11 @@ Meshing3 :: ~Meshing3 ()
   delete adfront;
   for (int i = 0; i < rules.Size(); i++)
     {
-      delete problems[i];
+      delete [] problems[i];
       delete rules[i];
     }
 }
 
-
-#ifdef ABC
-TerminalPlotStatistics3d :: TerminalPlotStatistics3d()
-{
-  oldne = -1;
-}
-
-void TerminalPlotStatistics3d :: Plot (const MeshingStat3d & stat) const
-{
-  if (stat.cntelem == oldne)
-    return;
-  
-  ((int&)oldne) = stat.cntelem;
-
-  PrintMessageCR (5, "El: ", stat.cntelem,
-		//	    << " trials: " << stat.cnttrials
-		" faces: ", stat.nff,
-		" vol = ", float(100 * stat.vol / stat.vol0));
-  
-  multithread.percent = 100 -  100.0 * stat.vol / stat.vol0;
-}
-
-#endif
 
 
 static double CalcLocH (const ARRAY<Point3d> & locpoints,
@@ -190,7 +140,7 @@ static double CalcLocH (const ARRAY<Point3d> & locpoints,
 }
 
 
-int Meshing3 :: AddPoint (const Point3d & p, INDEX globind)
+PointIndex Meshing3 :: AddPoint (const Point3d & p, PointIndex globind)
 {
   return adfront -> AddPoint (p, globind);  
 }  
@@ -209,8 +159,8 @@ MESHING3_RESULT Meshing3 ::
 GenerateMesh (Mesh & mesh, const MeshingParameters & mp)
 {
   ARRAY<Point3d> locpoints;      // local points
-  ARRAY<Element2d> locfaces;    // local faces
-  ARRAY<PointIndex> pindex;           // mapping from local to front point numbering
+  ARRAY<Element2d> locfaces;     // local faces
+  ARRAY<PointIndex> pindex;      // mapping from local to front point numbering
   ARRAY<int> allowpoint;         // point is allowd ?
   ARRAY<INDEX> findex;           // mapping from local to front face numbering
   INDEX_2_HASHTABLE<int> connectedpairs(100);  // connecgted pairs for prism meshing
@@ -272,10 +222,7 @@ GenerateMesh (Mesh & mesh, const MeshingParameters & mp)
     {
       if (multithread.terminate)
 	throw NgException ("Meshing stopped");
-      /*
-      if (multithread.terminate)
-	break;
-      */
+
       if (giveup)
 	break;
 
@@ -295,7 +242,7 @@ GenerateMesh (Mesh & mesh, const MeshingParameters & mp)
       pindex.SetSize(0);
       findex.SetSize(0);
 
-      INDEX_2_HASHTABLE<int> connectedpairs(100);  // connecgted pairs for prism meshing
+      INDEX_2_HASHTABLE<int> connectedpairs(100);  // connected pairs for prism meshing
       
       // select base-element (will be locface[1])
       // and get local environment of radius (safety * h)
@@ -312,6 +259,9 @@ GenerateMesh (Mesh & mesh, const MeshingParameters & mp)
       const Point3d & p1 = adfront->GetPoint (bel.PNum(1));
       const Point3d & p2 = adfront->GetPoint (bel.PNum(2));
       const Point3d & p3 = adfront->GetPoint (bel.PNum(3));
+
+      (*testout) << endl << "base = " << bel << endl;
+
 
       Point3d pmid = Center (p1, p2, p3);
 
@@ -336,9 +286,9 @@ GenerateMesh (Mesh & mesh, const MeshingParameters & mp)
 			      locfacesplit);
 
 
-      int pi1 = pindex.Get(locfaces.Elem(1).PNum(1));
-      int pi2 = pindex.Get(locfaces.Elem(1).PNum(2));
-      int pi3 = pindex.Get(locfaces.Elem(1).PNum(3));
+      int pi1 = pindex.Get(locfaces[0].PNum(1));
+      int pi2 = pindex.Get(locfaces[0].PNum(2));
+      int pi3 = pindex.Get(locfaces[0].PNum(3));
 
       /*      
       (*testout) << "baseel = " << baseelem << ", ind = " << findex.Get(1) << endl;
@@ -346,23 +296,17 @@ GenerateMesh (Mesh & mesh, const MeshingParameters & mp)
       */
 
       loktestmode = 0;
-      /*
-      // 1085, 1084, 1491 
-      if ( (pi1 == 1085 || pi1 == 1084 || pi1 == 1491) &&
-	   (pi2 == 1085 || pi2 == 1084 || pi2 == 1491) &&
-	   (pi3 == 1085 || pi3 == 1084 || pi3 == 1491) )
-	//      if (findex.Get(1) == 7551)
-	{
-	  (*testout) << "baseel = " << findex.Get(1) << ", points: ";
-	  for (i = 1; i <= pindex.Size(); i++)
-	    (*testout) << pindex.Get(i) << " ";
-	  (*testout) << endl;
-	  loktestmode = 1;
-	}
-      */
       //      testmode = loktestmode;
+      // loktestmode = testmode =  (adfront->GetFace (baseelem).GetNP() == 4) && (rules.Size() == 5);
 
-      //      cout << "baseelem = " << baseelem << " qualclass = " << stat.qualclass << endl;
+      if (testmode)
+	{
+	  (*testout) << "baseelem = " << baseelem << " qualclass = " << stat.qualclass << endl;
+	  (*testout) << "locpoints = " << endl << locpoints << endl;
+	  (*testout) << "connected = " << endl << connectedpairs << endl;
+	}
+
+
 
       // loch = CalcLocH (locpoints, locfaces, h);
       
@@ -384,6 +328,8 @@ GenerateMesh (Mesh & mesh, const MeshingParameters & mp)
       else
 	for (i = 1; i <= allowpoint.Size(); i++)	
 	  allowpoint.Elem(i) = 1;
+
+      
 
 
       
@@ -488,7 +434,18 @@ GenerateMesh (Mesh & mesh, const MeshingParameters & mp)
 	    }
 
 	  trans.ToPlain (locpoints, plainpoints);
+
+
+	  for (i = 1; i <= allowpoint.Size(); i++)
+	    {
+	      if (plainpoints.Get(i).Z() > 0)
+		allowpoint.Elem(i) = 0;
+	    }
+
 	  
+	  if (loktestmode)
+	    (*testout) << "plainpoints = " << endl << plainpoints << endl;
+
 	  stat.cnttrials++;
 
 

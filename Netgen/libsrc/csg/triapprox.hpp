@@ -25,9 +25,6 @@ public:
   int SurfaceIndex() const { return surfind; }
   int & SurfaceIndex() { return surfind; }
 
-  //  int PNum (int i) const { return pi[i-1]; }
-  //  int & PNum (int i) { return pi[i-1]; }
-
   int & operator[] (int i) { return pi[i]; }
   const int & operator[] (int i) const { return pi[i]; }
 };
@@ -37,19 +34,19 @@ class TriangleApproximation
 {
   ARRAY<Point<3> > points;
   ARRAY<Vec<3> > normals;
-  ARRAY<TATriangle> trias;
+  ARRAY<TATriangle> trigs;
 
 public:
   TriangleApproximation();
   int GetNP () const { return points.Size(); }
-  int GetNT () const { return trias.Size(); }
+  int GetNT () const { return trigs.Size(); }
 
   int AddPoint (const Point<3> & p) { points.Append (p); return points.Size()-1; }
   int AddNormal (const Vec<3> & n) { normals.Append (n); return normals.Size()-1; }
   int AddTriangle (const TATriangle & tri, bool invert = 0);
 
   const Point<3> & GetPoint (int i) const { return points[i]; }
-  const TATriangle & GetTriangle (int i) const { return trias[i]; }
+  const TATriangle & GetTriangle (int i) const { return trigs[i]; }
   const Vec<3> & GetNormal (int i) const { return normals[i]; }
 
   void RemoveUnusedPoints ();

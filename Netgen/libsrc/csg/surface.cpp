@@ -61,11 +61,19 @@ void Surface :: CalcHesse (const Point<3> & point, Mat<3> & hesse) const
     }
 }
   
+/*
 void Surface :: GetNormalVector (const Point<3> & p, Vec<3> & n) const
 {
   CalcGradient (p, n);
   n.Normalize();
-  //  if (Inverse()) n *= -1;
+}
+*/
+Vec<3> Surface :: GetNormalVector (const Point<3> & p) const
+{
+  Vec<3> n;
+  CalcGradient (p, n);
+  n.Normalize();
+  return n;
 }
 
 void Surface :: DefineTangentialPlane (const Point<3> & ap1, 
@@ -74,7 +82,7 @@ void Surface :: DefineTangentialPlane (const Point<3> & ap1,
   p1 = ap1;
   p2 = ap2;
   
-  GetNormalVector (p1, ez);
+  ez = GetNormalVector (p1);
   ex = p2 - p1;
   ex -= (ex * ez) * ez;
   ex.Normalize();
@@ -86,7 +94,7 @@ void Surface :: ToPlane (const Point<3> & p3d, Point<2> & pplane,
 {
   Vec<3> p1p, n;
 
-  GetNormalVector (p3d, n);
+  n = GetNormalVector (p3d);
   if (n * ez < 0)
     {
       zone = -1;
@@ -254,7 +262,11 @@ VecInSolid2 (const Point<3> & p,
 	     double eps) const
 {
   Point<3> hp = p + 1e-3 * v1 + 1e-5 * v2;
-  return PointInSolid (hp, eps);
+
+  INSOLID_TYPE res = PointInSolid (hp, eps);
+  //  (*testout) << "vectorin2, type = " << typeid(*this).name() << ", res = " << res << endl;
+
+  return res;
 }
 
 

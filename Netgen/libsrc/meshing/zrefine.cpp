@@ -28,7 +28,7 @@ namespace netgen
     for (i = 1; i <= mesh.GetNSeg(); i++)
       {
 	const Segment & seg = mesh.LineSegment(i);
-	if (seg.singedge)
+	if (seg.singedge_left || seg.singedge_right)
 	  {
 	    INDEX_2 i2(seg.p1, seg.p2);
 	    i2.Sort();

@@ -132,18 +132,24 @@ namespace netgen
 	vdshape[0] = 1;
 	vdshape[1] = -1;
 
+	/*
 	if (edgeorient == -1)
 	{
 	    Swap (vshape[0], vshape[1]);
 	    Swap (vdshape[0], vdshape[1]);
 	}
+	*/
+	
     }
 
 
     void BaseFiniteElement1D :: CalcEdgeShapes ()
     {
 	b.SetOrder (edgeorder);
-	b.CalcFDf( 1-xi(0) );
+	if (edgeorient == 1)
+	  b.CalcFDf( 1-xi(0) );
+	else
+	  b.CalcFDf( xi(0) );
 
 	for (int k = 2; k <= edgeorder; k++)
 	{
@@ -156,7 +162,10 @@ namespace netgen
     void BaseFiniteElement1D :: CalcEdgeLaplaceShapes ()
     {
         b.SetOrder (edgeorder);
-	b.CalcDDf( 1-xi(0) );
+	if (edgeorient == 1)
+	  b.CalcDDf( 1-xi(0) );
+	else
+	  b.CalcDDf( xi(0) );
 
 	for (int k = 2; k <= edgeorder; k++)
 	    eddshape[k-2] = b.GetDDf(k);
@@ -175,7 +184,7 @@ namespace netgen
 	int locmaxedgeorder = -1;
 	
 	BaseFiniteElement<2> :: SetElementNumber (aelnr);
-	Element2d elem = mesh[(SurfaceElementIndex) (elnr-1)]; 
+	const Element2d & elem = mesh[(SurfaceElementIndex) (elnr-1)]; 
 	top.GetSurfaceElementEdges (elnr, &(edgenr[0]), &(edgeorient[0]));
 	facenr = top.GetSurfaceElementFace (elnr);
 	faceorient = top.GetSurfaceElementFaceOrientation (elnr);
@@ -233,19 +242,19 @@ namespace netgen
 	for (f = 0; f < nfaces; f++)
 	{
 	    surfacenr[f] = top.GetFace2SurfaceElement (facenr[f]);
-	    surfaceorient[f] = top.GetSurfaceElementFaceOrientation (surfacenr[f]);
+	    // surfaceorient[f] = top.GetSurfaceElementFaceOrientation (surfacenr[f]);
 	}
 	
 	for (e = 0; e < nedges; e++)
 	{
 	    edgeorder[e] = curv.GetEdgeOrder (edgenr[e]-1); // 1-based
-	    locmaxedgeorder = max2 (edgeorder[e], locmaxedgeorder);
+	    locmaxedgeorder = max (edgeorder[e], locmaxedgeorder);
 	}
 	
 	for (f = 0; f < nfaces; f++)
 	{
 	    faceorder[f] = curv.GetFaceOrder (facenr[f]-1); // 1-based
-	    locmaxfaceorder = max2 (faceorder[f], locmaxfaceorder);
+	    locmaxfaceorder = max (faceorder[f], locmaxfaceorder);
 	}
 	
 	CalcNFaceShapes ();
@@ -333,6 +342,8 @@ namespace netgen
 	int index = 0;
 	for (int e = 0; e < nedges; e++)
 	{
+	  if (edgeorder[e] <= 1) continue;
+
 	    int i0 = eledge[e][0]-1;
 	    int i1 = eledge[e][1]-1;
 
@@ -382,6 +393,8 @@ namespace netgen
 	    }
 	}
 	// (*testout) << "eshape = " << eshape << ", edshape = " << edshape << endl;
+
+
 	/*
 	index = 0;
 	for (int e = 0; e < nedges; e++)
@@ -916,6 +929,8 @@ namespace netgen
 
 	for (int f = 0; f < nfaces; f++)
 	{
+	  if (faceorder[f] <= 2) continue;
+
 	    int i0 = elface[f][0]-1;
 	    int i1 = elface[f][1]-1;
 	    int i2 = elface[f][2]-1;
@@ -1562,6 +1577,17 @@ namespace netgen
 
   int CurvedElements :: IsSurfaceElementCurved (int elnr) const
   {
+    if (mesh.coarsemesh)
+      {
+	const HPRefElement & hpref_el =
+	  (*mesh.hpelements) [ mesh[(SurfaceElementIndex) elnr].hp_elnr];
+
+	return mesh.coarsemesh->GetCurvedElements().IsSurfaceElementCurved (hpref_el.coarse_elnr);
+      }
+
+
+
+
     Element2d elem = mesh[(SurfaceElementIndex) elnr];
 
     switch (elem.GetType())
@@ -1590,6 +1616,16 @@ namespace netgen
 
   int CurvedElements :: IsElementCurved (int elnr) const
   {
+    if (mesh.coarsemesh)
+      {
+	const HPRefElement & hpref_el =
+	  (*mesh.hpelements) [ mesh[(ElementIndex) elnr].hp_elnr];
+
+	return mesh.coarsemesh->GetCurvedElements().IsElementCurved (hpref_el.coarse_elnr);
+      }
+
+
+
     Element elem = mesh[(ElementIndex) elnr];
 
     switch (elem.GetType())
@@ -1682,9 +1718,50 @@ namespace netgen
     void CurvedElements :: CalcSurfaceTransformation (Point<2> xi, int elnr,
 						      Point<3> * x, Mat<3,2> * dxdxi)
     {
-	Element2d elem = mesh[(SurfaceElementIndex) elnr];
 
-	BaseFiniteElement2D * fe2d;
+      if (mesh.coarsemesh)
+	{
+	  const HPRefElement & hpref_el =
+	    (*mesh.hpelements) [ mesh[(SurfaceElementIndex) elnr].hp_elnr];
+	  
+	  // xi umrechnen
+	  double lami[4];
+	  switch (mesh[(SurfaceElementIndex) elnr].GetType())
+	    {
+	    case TRIG: 
+	      {
+		lami[0] = xi(0);
+		lami[1] = xi(1);
+		lami[2] = 1-xi(0)-xi(1);
+		lami[3] = 0;
+		break;
+	      }
+	    case QUAD: 
+	      {
+		lami[0] = (1-xi(0))*(1-xi(1));
+		lami[1] = xi(0) * (1-xi(1));
+		lami[2] = xi(0) * xi(1);
+		lami[3] = (1-xi(0))*xi(1);
+		break;
+	      }
+	    }
+	  Point<2> coarse_xi(0,0);
+	  for (int i = 0; i < 4; i++)
+	    {
+	      coarse_xi(0) += hpref_el.param[i][0] * lami[i];
+	      coarse_xi(1) += hpref_el.param[i][1] * lami[i];
+	    }
+	  mesh.coarsemesh->GetCurvedElements().CalcSurfaceTransformation (coarse_xi, hpref_el.coarse_elnr, x, dxdxi);
+
+	  return;
+	}
+
+
+
+
+      const Element2d & elem = mesh[(SurfaceElementIndex) elnr];
+
+      BaseFiniteElement2D * fe2d;
 
 	// char locmem[max2(sizeof(FEQuad), sizeof(FETrig))];
 	char locmemtrig[sizeof(FETrig)];
@@ -1798,8 +1875,58 @@ namespace netgen
 
 
     void CurvedElements :: CalcElementTransformation (Point<3> xi, int elnr,
-				    Point<3> * x, Mat<3,3> * dxdxi)
+						      Point<3> * x, Mat<3,3> * dxdxi)
     {
+
+     if (mesh.coarsemesh)
+	{
+	  const HPRefElement & hpref_el =
+	    (*mesh.hpelements) [ mesh[(ElementIndex) elnr].hp_elnr];
+	  
+
+	  double lami[8];
+	  FlatVector vlami(8, lami);
+	  vlami = 0;
+	  mesh[(ElementIndex) elnr] . GetShapeNew (xi, vlami);
+
+	  Point<3> coarse_xi(0,0,0);
+	  for (int i = 0; i < 8; i++)
+	    for (int l = 0; l < 3; l++)
+	      coarse_xi(l) += hpref_el.param[i][l] * lami[i];
+	  
+	  Mat<3,3> trans, dxdxic;
+	  if (dxdxi)
+	    {
+	      MatrixFixWidth<3> dlami(8);
+	      dlami = 0;
+	      mesh[(ElementIndex) elnr] . GetDShapeNew (xi, dlami);	  
+	      
+	      trans = 0;
+	      for (int k = 0; k < 3; k++)
+		for (int l = 0; l < 3; l++)
+		  {
+		    double sum = 0;
+		    for (int i = 0; i < 8; i++)
+		      sum += hpref_el.param[i][l] * dlami(i, k);
+		    trans(l,k) = sum;
+		  }
+	    }
+	  
+	  mesh.coarsemesh->GetCurvedElements().CalcElementTransformation (coarse_xi, hpref_el.coarse_elnr, x, &dxdxic);
+
+	  if (dxdxi)
+	    *dxdxi = dxdxic * trans;
+	  return;
+	}
+
+
+
+
+
+
+
+
+
 	Element elem = mesh[(ElementIndex) elnr];
 	BaseFiniteElement3D * fe3d;
 

@@ -34,12 +34,12 @@ BaseDynamicMem :: ~BaseDynamicMem ()
   if (prev) prev->next = next;
   else first = next;
 
-  delete name;
+  delete [] name;
 }
 
 void BaseDynamicMem :: SetName (const char * aname)
 {
-  delete name;
+  delete [] name;
   if (aname)
     {
       name = new char[strlen(aname)+1];

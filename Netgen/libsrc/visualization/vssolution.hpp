@@ -36,6 +36,7 @@ class VisualSceneSolution : public VisualScene
   int linelist;
   int clipplanelist;
   int isolinelist;
+  int clipplane_isolinelist;
   int surface_vector_list;
   int cone_list;
 
@@ -46,6 +47,7 @@ class VisualSceneSolution : public VisualScene
   int num_fieldlineslists;
 
   int surfeltimestamp, clipplanetimestamp, solutiontimestamp;
+  int surfellinetimestamp;
   int fieldlinestimestamp, surface_vector_timestamp;
   double minval, maxval;
 
@@ -78,6 +80,9 @@ public:
   class SolData
   {
   public:
+    SolData ();
+    ~SolData ();
+    
     char * name;
     double * data;
     int components;
@@ -101,6 +106,7 @@ public:
   int clipsolution;  // 0..no, 1..scal, 2..vec
   int scalfunction, scalcomp, vecfunction;
   int gridsize;
+  double xoffset, yoffset;
 
   int autoscale, logscale;
   double mminval, mmaxval;
@@ -111,6 +117,8 @@ public:
   bool showsurfacesolution;
   bool lineartexture;
   int numtexturecols;
+
+  int multidimcomponent;
 
   // bool fieldlineplot;
   double time;
@@ -146,16 +154,16 @@ private:
 
 
   // Get Function Value, local coordinates lam1, lam2, lam3, 
-  double GetValue (const SolData * data, ElementIndex elnr, 
+  bool GetValue (const SolData * data, ElementIndex elnr, 
 		   double lam1, double lam2, double lam3,
-		   int comp) const;
-  double GetSurfValue (const SolData * data, SurfaceElementIndex elnr,
-		       double lam1, double lam2, 
-		       int comp) const;
-  void GetValues (const SolData * data, ElementIndex elnr, 
+		   int comp, double & val) const;
+  bool GetSurfValue (const SolData * data, SurfaceElementIndex elnr,
+		     double lam1, double lam2, 
+		     int comp, double & val) const;
+  bool GetValues (const SolData * data, ElementIndex elnr, 
 		  double lam1, double lam2, double lam3,
 		  double * values) const;
-  void GetSurfValues (const SolData * data, SurfaceElementIndex elnr,
+  bool GetSurfValues (const SolData * data, SurfaceElementIndex elnr,
 		      double lam1, double lam2, 
 		      double * values) const;
 

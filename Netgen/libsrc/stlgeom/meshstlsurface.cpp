@@ -24,9 +24,7 @@ static void STLFindEdges (STLGeometry & geom,
   // mark edge points:
   int ngp = geom.GetNP();
 
-  cout << "h1(0,0,0) = " << mesh.LocalHFunction().GetH (Point3d (0,0,0)) << endl;
   geom.RestrictLocalH(mesh, h);
-  cout << "h2(0,0,0) = " << mesh.LocalHFunction().GetH (Point3d (0,0,0)) << endl;
 
   PushStatusF("Mesh Lines");
 
@@ -324,6 +322,7 @@ int STLSurfaceMeshing (STLGeometry & geom,
 		  optmesh.ImproveMesh (mesh);
 		}
 
+	      mesh.Compress();
 	      mesh.FindOpenSegments();
 	      nopen = mesh.GetNOpenSegments();
 
@@ -707,6 +706,8 @@ void STLSurfaceOptimization (STLGeometry & geom,
 	if (multithread.terminate)
 	  break;
 
+	(*testout) << "optimize, before, step = " << mparam.optimize2d[j-1] << mesh.Point (3679) << endl;
+
 	mesh.CalcSurfacesOfNode();
 	switch (mparam.optimize2d[j-1])
 	  {
@@ -731,6 +732,7 @@ void STLSurfaceOptimization (STLGeometry & geom,
 	      break;
 	    }
 	  }
+	(*testout) << "optimize, after, step = " << mparam.optimize2d[j-1] << mesh.Point (3679) << endl;
       }
 
   geom.surfaceoptimized = 1;
@@ -1112,6 +1114,16 @@ PointBetween (const Point3d & p1, const Point3d & p2, double secpoint,
 void RefinementSTLGeometry :: ProjectToSurface (Point<3> & p, int surfi)
 {
   cout << "RefinementSTLGeometry :: ProjectToSurface not implemented!" << endl;
+};
+
+
+void RefinementSTLGeometry :: ProjectToSurface (Point<3> & p, int surfi,
+						PointGeomInfo & gi)
+{
+  ((STLGeometry&)geom).SelectChartOfTriangle (gi.trignum);
+  gi.trignum = geom.Project (p);
+  //  if (!gi.trignum) 
+  //    cout << "projectSTL failed" << endl;
 };
 
  

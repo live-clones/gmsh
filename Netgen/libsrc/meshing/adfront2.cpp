@@ -142,6 +142,8 @@ INDEX AdFront2 :: AddLine (INDEX pi1, INDEX pi2,
   FrontPoint2 & p1 = points.Elem(pi1);
   FrontPoint2 & p2 = points.Elem(pi2);
 
+
+
   nfl++;
 
   p1.AddLine();
@@ -265,7 +267,8 @@ void AdFront2 :: ResetClass (INDEX li)
 
 int AdFront2 :: SelectBaseLine (Point3d & p1, Point3d & p2, 
 				const PointGeomInfo *& geominfo1,
-				const PointGeomInfo *& geominfo2)
+				const PointGeomInfo *& geominfo2,
+				int & qualclass)
 {
   int i, hi;
 
@@ -315,7 +318,7 @@ int AdFront2 :: SelectBaseLine (Point3d & p1, Point3d & p2,
   
   if (!baselineindex)
     {
-      (*testout) << "nfl = " << nfl << " tot l = " << lines.Size() << endl;
+      // (*testotu) << "nfl = " << nfl << " tot l = " << lines.Size() << endl;
       minval = INT_MAX;
       for (i = 1; i <= lines.Size(); i++)
 	if (lines.Get(i).Valid())
@@ -339,6 +342,9 @@ int AdFront2 :: SelectBaseLine (Point3d & p1, Point3d & p2,
   p2 = points.Get(lines.Get(baselineindex).L().I2()).P();
   geominfo1 = &lines.Get(baselineindex).GetGeomInfo(1);
   geominfo2 = &lines.Get(baselineindex).GetGeomInfo(2);
+
+  qualclass = lines.Get(baselineindex).LineClass();
+
   return baselineindex;
 }
 
@@ -367,24 +373,22 @@ int AdFront2 :: GetLocals (int baselineindex,
   static ARRAY<int> nearlines;
 
   nearlines.SetSize(0);
-  double dist = xh;
-  linesearchtree.GetIntersecting (p0 - Vec3d(dist, dist, dist),
-				  p0 + Vec3d(dist, dist, dist),
+
+  linesearchtree.GetIntersecting (p0 - Vec3d(xh, xh, xh),
+				  p0 + Vec3d(xh, xh, xh),
 				  nearlines);
 
-  //  for (i = 1; i <= lines.Size(); i++)
   for (ii = 1; ii <= nearlines.Size(); ii++)
     {
       i = nearlines.Get(ii);
 
       if (lines.Get(i).Valid() && i != baselineindex)
 	{
-	  const Point3d & p1 = points.Get(lines.Get(i).L().I1()).P();
-	  const Point3d & p2 = points.Get(lines.Get(i).L().I2()).P();
+	  // const Point3d & p1 = points.Get(lines.Get(i).L().I1()).P();
+	  // const Point3d & p2 = points.Get(lines.Get(i).L().I2()).P();
 
-	  midp = Center (p1, p2);
-	  
-	  if (Dist (midp, p0) <= xh + 0.5 * Dist (p1, p2))
+	  //	  midp = Center (p1, p2);
+	  //	  if (Dist (midp, p0) <= xh + 0.5 * Dist (p1, p2))
 	    {
 	      loclines.Append(lines.Get(i).L());
 	      lindex.Append(i);
@@ -396,8 +400,10 @@ int AdFront2 :: GetLocals (int baselineindex,
 
   invpindex.SetSize (points.Size());
   for (i = 1; i <= loclines.Size(); i++)
-    for (j = 1; j <= 2; j++)
-      invpindex.Elem(loclines.Get(i).I(j)) = 0;
+    {
+      invpindex.Elem(loclines.Get(i).I1()) = 0;
+      invpindex.Elem(loclines.Get(i).I2()) = 0;
+    }
 
   for (i = 1; i <= loclines.Size(); i++)
     {
@@ -454,22 +460,10 @@ int AdFront2 :: GetLocals (int baselineindex,
   for (i = 1; i <= locpoints.Size(); i++)
     {
       int pi = pindex.Get(i);
-
-
       
       if (points.Get(pi).mgi)
 	for (j = 1; j <= points.Get(pi).mgi->GetNPGI(); j++)
 	  pgeominfo.Elem(i).AddPointGeomInfo (points.Get(pi).mgi->GetPGI(j));
-/*
-	{
-	  for (j = 0; j < points.Get(pi).mgi->cnt; j++)
-	    {
-	      pgeominfo.Elem(i).mgi[pgeominfo.Elem(i).cnt] = 
-		points.Get(pi).mgi->mgi[j];
-	      pgeominfo.Elem(i).cnt++;
-	    }
-	}
-*/
     }
 	
   
@@ -485,7 +479,6 @@ int AdFront2 :: GetLocals (int baselineindex,
       }
   */
 
-
   if (loclines.Size() == 1)
     {
       cout << "loclines.Size = 1" << endl;
@@ -494,8 +487,6 @@ int AdFront2 :: GetLocals (int baselineindex,
 		 << " nearline.size = " << nearlines.Size() << endl
 		 << " p0 = " << p0 << endl;
     }
-
-
 
   return lines.Get(baselineindex).LineClass();
 }

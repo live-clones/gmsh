@@ -62,12 +62,11 @@ namespace netgen
   
   void BASE_TABLE :: SetSize (int size)
   {
-    int i;
-    for (i = 0; i < data.Size(); i++)
+    for (int i = 0; i < data.Size(); i++)
       delete [] (char*)data[i].col;
     
     data.SetSize(size);
-    for (i = 0; i < size; i++)
+    for (int i = 0; i < size; i++)
       {
 	data[i].maxsize = 0;
 	data[i].size = 0;
@@ -77,37 +76,22 @@ namespace netgen
 
   void BASE_TABLE :: IncSize2 (int i, int elsize)
   {
-    if (i < 1 || i > data.Size())
+#ifdef DEBUG
+    if (i < 0 || i >= data.Size())
       {
 	MyError ("BASE_TABLE::Inc: Out of range");
 	return;
       }
-  
-    linestruct & line = data.Elem (i);
-  
+#endif
+    
+    linestruct & line = data[i];
     if (line.size == line.maxsize)
       {
-	/*
-	  static int totalloc = 0, cnt = 0;
-	  totalloc += (line.maxsize+5) * elsize;
-	  cnt ++;
-
-	  if (cnt % 100000 == 0)
-	  cout << "base_table: total alloc = " << totalloc << endl;
-	*/
-
 	void * p = new char [(line.maxsize+5) * elsize];
-	// mem_total_alloc_table += (line.maxsize+5) * elsize;
-
-
-	if (!p)
-	  {
-	    MyError ("BASE_TABLE::Inc: Out of memory");
-	    return;
-	  }
       
 	memcpy (p, line.col, line.maxsize * elsize);
 	delete [] (char*)line.col;
+
 	line.col = p;
 	line.maxsize += 5;
       }
@@ -115,61 +99,52 @@ namespace netgen
     line.size++;
   }
 
+
+
+  /*
   void BASE_TABLE :: DecSize (int i)
   {
-    if (i < 1 || i > data.Size())
+#ifdef DEBUG
+    if (i < 0 || i >= data.Size())
       {
 	MyError ("BASE_TABLE::Dec: Out of range");
 	return;
       }
+#endif
+
+    linestruct & line = data[i];
   
-    linestruct & line = data.Elem (i);
-  
+#ifdef DEBUG
     if (line.size == 0)
       {
 	MyError ("BASE_TABLE::Dec: EntrySize < 0");
 	return;      
       }
+#endif
   
     line.size--;
-  }
-
-
-  /*
-  void BASE_TABLE :: IncSizePrepare (int i)
-  {
-    data.Elem(i).maxsize++;
   }
   */
 
 
+
   void BASE_TABLE :: AllocateElementsOneBlock (int elemsize)
   {
-    int i, cnt = 0;
+    int cnt = 0;
     int n = data.Size();
 
-    for (i = 1; i <= n; i++)
-      cnt += data.Get(i).maxsize;
+    for (int i = 0; i < n; i++)
+      cnt += data[i].maxsize;
     oneblock = new char[elemsize * cnt];
-    // mem_total_alloc_table += elemsize * cnt;
-
-    //  cout << "Allocate oneblock, mem = " << (elemsize * cnt) << endl;
 
     cnt = 0;
-    for (i = 1; i <= n; i++)
+    for (int i = 0; i < n; i++)
       {
-	data.Elem(i).size = 0;
-
-	data.Elem(i).col = &oneblock[elemsize * cnt];
-	cnt += data.Elem(i).maxsize;
+	data[i].size = 0;
+	data[i].col = &oneblock[elemsize * cnt];
+	cnt += data[i].maxsize;
       }
-  
   }
-
-
-
-
-
 
 
 
@@ -180,7 +155,7 @@ namespace netgen
       els += data[i].maxsize;
     return els;
   }
-
+  
   int BASE_TABLE :: UsedElements () const
   {
     int els = 0;

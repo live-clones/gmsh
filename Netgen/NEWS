@@ -1,9 +1,0 @@
-New features and improvements in NG4.3:
-
-- support for high order curved elements
-- new, hand written CSG parser
-- CSG primitives 'ellipticcylinder' and 'ellipsoid'
-- improvements for Delaunay meshing
-- improvements in surface optimization
-- mesh interface with full topology (element-face-edge-vertex)
-

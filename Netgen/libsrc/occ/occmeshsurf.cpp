@@ -10,12 +10,24 @@ namespace netgen
 {
 #include "occmeshsurf.hpp"
 
+
 void OCCSurface :: GetNormalVector (const Point<3> & p, 
 				    const PointGeomInfo & geominfo,
 				    Vec<3> & n) const
 {
   gp_Pnt pnt;
   gp_Vec du, dv;
+
+  /*
+  double gu = geominfo.u;
+  double gv = geominfo.v;
+
+  if (fabs (gu) < 1e-3) gu = 0;
+  if (fabs (gv) < 1e-3) gv = 0;
+
+  occface->D1(gu,gv,pnt,du,dv);
+  */
+
   occface->D1(geominfo.u,geominfo.v,pnt,du,dv);
 
   n = Cross (Vec<3>(du.X(), du.Y(), du.Z()),
@@ -23,6 +35,7 @@ void OCCSurface :: GetNormalVector (const Point<3> & p,
   n.Normalize();
 
   if (orient == TopAbs_REVERSED) n = -1*n;
+  //  (*testout) << "GetNormalVector" << endl;
 }
 
 
@@ -31,40 +44,127 @@ void OCCSurface :: DefineTangentialPlane (const Point<3> & ap1,
 					  const Point<3> & ap2,
 					  const PointGeomInfo & geominfo2)
 {
-  p1 = ap1; p2 = ap2;
+  if (projecttype == PLANESPACE)
+    {
+      p1 = ap1; p2 = ap2;
+
+      //      cout << "p1 = " << p1 << endl;
+      //      cout << "p2 = " << p2 << endl;
+      
+      GetNormalVector (p1, geominfo1, ez);
+      
+      ex = p2 - p1;
+      ex -= (ex * ez) * ez;
+      ex.Normalize();
+      ey = Cross (ez, ex); 
+
+      GetNormalVector (p2, geominfo2, n2);
   
-  GetNormalVector (p1, geominfo1, ez);
+      nmid = 0.5*(n2+ez);
+      
+      ez = nmid;
+      ez.Normalize(); 
+      
+      ex = (p2 - p1).Normalize();
+      ez -= (ez * ex) * ex;
+      ez.Normalize();
+      ey = Cross (ez, ex);
+      nmid = ez;
+    }
+  else
+    {
+      if ( (geominfo1.u < umin) ||
+	   (geominfo1.u > umax) ||
+	   (geominfo2.u < umin) ||
+	   (geominfo2.u > umax) ||
+	   (geominfo1.v < vmin) ||
+	   (geominfo1.v > vmax) ||
+	   (geominfo2.v < vmin) ||
+	   (geominfo2.v > vmax) ) throw UVBoundsException();
+	  
 
-  ex = p2 - p1;
-  ex -= (ex * ez) * ez;
-  ex.Normalize();
-  ey = Cross (ez, ex); 
+      p1 = ap1; p2 = ap2;
+      psp1 = Point<2>(geominfo1.u, geominfo1.v);
+      psp2 = Point<2>(geominfo2.u, geominfo2.v);
+      
+      Vec<3> n;
+      GetNormalVector (p1, geominfo1, n);
 
-  /*
-  double u, v;
-  gp_Vec du, dv;
-  gp_Pnt pnt(ap2(0), ap2(1), ap2(2));
-  GeomAPI_ProjectPointOnSurf proj(pnt, occface);
-  proj.LowerDistanceParameters (u, v);
-  occface->D1(u, v, pnt, du, dv);
-  n2 = Cross (Vec<3>(du.X(), du.Y(), du.Z()),
-	      Vec<3>(dv.X(), dv.Y(), dv.Z()));
-  n2.Normalize();
-  if (orient == TopAbs_REVERSED) n2 = -1*n2;
-  */
+      gp_Pnt pnt;
+      gp_Vec du, dv;
+      occface->D1 (geominfo1.u, geominfo1.v, pnt, du, dv);
 
-  GetNormalVector (p2, geominfo2, n2);
- 
-  nmid = 0.5*(n2+ez);
+      DenseMatrix D1(3,2), D1T(2,3), DDTinv(2,2);
+      D1(0,0) = du.X(); D1(1,0) = du.Y(); D1(2,0) = du.Z();
+      D1(0,1) = dv.X(); D1(1,1) = dv.Y(); D1(2,1) = dv.Z();
 
-  ez = nmid;
-  ez.Normalize(); 
+      /*
+      (*testout) << "DefineTangentialPlane" << endl
+		 << "---------------------" << endl;
+      (*testout) << "D1 = " << endl << D1 << endl;
+      */
 
-  ex = (p2 - p1).Normalize();
-  ez -= (ez * ex) * ex;
-  ez.Normalize();
-  ey = Cross (ez, ex);
-  nmid = ez;
+      Transpose (D1, D1T);
+      DenseMatrix D1TD1(3,3);
+
+      D1TD1 = D1T*D1;
+      if (D1TD1.Det() == 0) throw SingularMatrixException();
+      
+      CalcInverse (D1TD1, DDTinv);
+      DenseMatrix Y(3,2);
+      Vec<3> y1 = (ap2-ap1).Normalize();
+      Vec<3> y2 = Cross(n, y1).Normalize();
+      for (int i = 0; i < 3; i++)
+	{
+	  Y(i,0) = y1(i);
+	  Y(i,1) = y2(i);
+	}
+
+      DenseMatrix A(2,2);
+      A = DDTinv * D1T * Y;
+      DenseMatrix Ainv(2,2);
+
+      if (A.Det() == 0) throw SingularMatrixException();
+
+      CalcInverse (A, Ainv);
+
+      for (int i = 0; i < 2; i++)
+	for (int j = 0; j < 2; j++)
+	  {
+	    Amat(i,j) = A(i,j);
+	    Amatinv(i,j) = Ainv(i,j);
+	  }
+
+      Vec<2> temp = Amatinv * (psp2-psp1);
+      
+
+      double r = temp.Length();
+      //      double alpha = -acos (temp(0)/r);
+      double alpha = -atan2 (temp(1),temp(0));
+      DenseMatrix R(2,2);
+      R(0,0) = cos (alpha);
+      R(1,0) = -sin (alpha);
+      R(0,1) = sin (alpha);
+      R(1,1) = cos (alpha);
+
+
+      A = A*R;
+
+      if (A.Det() == 0) throw SingularMatrixException();
+
+      CalcInverse (A, Ainv);
+    
+
+      for (int i = 0; i < 2; i++)
+	for (int j = 0; j < 2; j++)
+	  {
+	    Amat(i,j) = A(i,j);
+	    Amatinv(i,j) = Ainv(i,j);
+	  }
+
+      temp = Amatinv * (psp2-psp1);
+      
+    };
  
 }
 
@@ -74,42 +174,30 @@ void OCCSurface :: ToPlane (const Point<3> & p3d,
 			    Point<2> & pplane, 
 			    double h, int & zone) const
 {
-  Vec<3> p1p, n;
-  GetNormalVector (p3d, geominfo, n);
-
-  p1p = p3d - p1;
-  pplane(0) = (p1p * ex) / h;
-  pplane(1) = (p1p * ey) / h;
-
-  if (n * nmid < 0)
-    zone = -1;
-  else
-    zone = 0;
-  
-  /*
-  Vec<3> v = p3d - p1;
-  Vec<3> n;
-  GetNormalVector (p3d, geominfo, n);
-
-  if (n * nmid < 0)
-    zone = -1;
+  if (projecttype == PLANESPACE)
+    {
+      Vec<3> p1p, n;
+      GetNormalVector (p3d, geominfo, n);
+      
+      p1p = p3d - p1;
+      pplane(0) = (p1p * ex) / h;
+      pplane(1) = (p1p * ey) / h;
+      
+      if (n * nmid < 0)
+	zone = -1;
+      else
+	zone = 0;
+    }
   else
     {
-      double nom = h*(n(0)*(ex(1)*ey(2)-ex(2)*ey(1)) + 
-		      n(1)*(ex(2)*ey(0)-ex(0)*ey(2)) +
-		      n(2)*(ex(0)*ey(1)-ex(1)*ey(0)));
+      pplane = Point<2>(geominfo.u, geominfo.v);
+      //      (*testout) << "(u,v) = " << geominfo.u << ", " << geominfo.v << endl;
+      pplane = Point<2> (1/h * (Amatinv * (pplane-psp1)));
+      //      pplane = Point<2> (h * (Amatinv * (pplane-psp1)));
+      //      pplane = Point<2> (1/h * ((pplane-psp1)));
 
-      pplane(0) = (n(0)*(ey(2)*v(1)-ey(1)*v(2)) +
-		   n(1)*(ey(0)*v(2)-ey(2)*v(0)) +
-		   n(2)*(ey(1)*v(0)-ey(0)*v(1)))/nom;
-
-      pplane(1) = (n(0)*(ex(1)*v(2)-ex(2)*v(1)) +
-		   n(1)*(ex(2)*v(0)-ex(0)*v(2)) +
-		   n(2)*(ex(0)*v(1)-ex(1)*v(0)))/nom;
-      
       zone = 0;
-    }
-  */
+    };
 }	
 
 
@@ -118,8 +206,25 @@ void OCCSurface :: FromPlane (const Point<2> & pplane,
 			      PointGeomInfo & gi,
 			      double h) 
 { 
-  p3d = p1 + (h * pplane(0)) * ex + (h * pplane(1)) * ey;
-  Project (p3d, gi);  
+  if (projecttype == PLANESPACE)
+    {
+      //      cout << "2d   : " << pplane << endl;
+      p3d = p1 + (h * pplane(0)) * ex + (h * pplane(1)) * ey;
+      //      cout << "3d   : " << p3d << endl;
+      Project (p3d, gi);  
+      //      cout << "proj : " << p3d << endl;
+    }
+  else
+    {
+      //      Point<2> pspnew = Point<2>(1/h * (Amat * Vec<2>(pplane)) + Vec<2>(psp1));
+      Point<2> pspnew = Point<2>(h * (Amat * Vec<2>(pplane)) + Vec<2>(psp1));
+      //      Point<2> pspnew = Point<2>(h * (Vec<2>(pplane)) + Vec<2>(psp1));
+      gi.u = pspnew(0);
+      gi.v = pspnew(1);
+      gi.trignum = 1;
+      gp_Pnt val = occface->Value (gi.u, gi.v);
+      p3d = Point<3> (val.X(), val.Y(), val.Z());
+    };
 }
 
 
@@ -130,7 +235,28 @@ void OCCSurface :: Project (Point<3> & p, PointGeomInfo & gi)
   //  if (cnt++ % 1000 == 0) cout << "********************************************** OCCSurfce :: Project, cnt = " << cnt << endl;
   
   gp_Pnt pnt(p(0), p(1), p(2));
-  GeomAPI_ProjectPointOnSurf proj(pnt, occface);
+
+  //  cout << "pnt = " << pnt.X() << ", " << pnt.Y() << ", " << pnt.Z() << endl;
+
+  GeomAPI_ProjectPointOnSurf proj(pnt, occface, umin, umax, vmin, vmax);
+
+  if (!proj.NbPoints())
+    {
+      cout << "Project Point on Surface FAIL" << endl;
+      throw UVBoundsException();
+    }
+
+  
+  /*
+  cout << "NP = " << proj.NbPoints() << endl;
+
+  for (int i = 1; i <= proj.NbPoints(); i++)
+    {
+      gp_Pnt pnt2 = proj.Point(i);
+      Point<3> p2 = Point<3> (pnt2.X(), pnt2.Y(), pnt2.Z());
+      cout << i << ". p = " << p2 << ", dist = " << (p2-p).Length() << endl;
+    }
+  */
 
   pnt = proj.NearestPoint();
   proj.LowerDistanceParameters (gi.u, gi.v);
@@ -141,8 +267,8 @@ void OCCSurface :: Project (Point<3> & p, PointGeomInfo & gi)
 
 
 Meshing2OCCSurfaces :: Meshing2OCCSurfaces (const TopoDS_Shape & asurf,
-					    const Box<3> & abb)
-  : Meshing2(Box3d(abb.PMin(), abb.PMax())), surface(TopoDS::Face(asurf))
+					    const Box<3> & abb, int aprojecttype)
+  : Meshing2(Box3d(abb.PMin(), abb.PMax())), surface(TopoDS::Face(asurf), aprojecttype)
 {
   ;
 }
@@ -154,7 +280,7 @@ void Meshing2OCCSurfaces :: DefineTransformation (Point3d & p1, Point3d & p2,
 {
   ((OCCSurface&)surface).DefineTangentialPlane (p1, *geominfo1, p2, *geominfo2);
 }
-
+ 
 void Meshing2OCCSurfaces :: TransformToPlain (const Point3d & locpoint, 
 					   const MultiPointGeomInfo & geominfo,
 					   Point2d & planepoint, 
@@ -208,7 +334,7 @@ void MeshOptimize2dOCCSurfaces :: ProjectPoint2 (INDEX surfind, INDEX surfind2,
 					      Point3d & p) const
 {
   TopExp_Explorer exp0, exp1;
-  int done = 0;
+  bool done = false;
   Handle(Geom_Curve) c;
 
   for (exp0.Init(geometry.fmap(surfind), TopAbs_EDGE); !done && exp0.More(); exp0.Next())
@@ -216,7 +342,7 @@ void MeshOptimize2dOCCSurfaces :: ProjectPoint2 (INDEX surfind, INDEX surfind2,
       {
 	if (TopoDS::Edge(exp0.Current()).IsSame(TopoDS::Edge(exp1.Current())))
 	  {
-	    done = 1;
+	    done = true;
 	    double s0, s1;
 	    c = BRep_Tool::Curve(TopoDS::Edge(exp0.Current()), s0, s1);
 	  }
@@ -334,7 +460,66 @@ OCCRefinementSurfaces :: ~OCCRefinementSurfaces ()
 {
   ;
 }
+
+/*
+inline double Det3 (double a00, double a01, double a02,
+		    double a10, double a11, double a12,
+		    double a20, double a21, double a22)
+{
+  return a00*a11*a22 + a01*a12*a20 + a10*a21*a02 - a20*a11*a02 - a10*a01*a22 - a21*a12*a00;
+}
+
+bool ProjectToSurface (gp_Pnt & p, Handle(Geom_Surface) surface, double& u, double& v)
+{
+  gp_Pnt x = surface->Value (u,v);
+
+  if (p.SquareDistance(x) <= sqr(PROJECTION_TOLERANCE)) return true;
+
+  gp_Vec du, dv;
+
+  surface->D1(u,v,x,du,dv);
+
+  int count = 0;
+
+  gp_Pnt xold;
+  gp_Vec n;
+  double det, lambda, mu;
+
+  do {
+    count++;
+
+    n = du^dv;
+
+    det = Det3 (n.X(), du.X(), dv.X(),
+		n.Y(), du.Y(), dv.Y(),
+		n.Z(), du.Z(), dv.Z());
+
+    if (det < 1e-15) return false; 
+
+    lambda = Det3 (n.X(), p.X()-x.X(), dv.X(),
+	           n.Y(), p.Y()-x.Y(), dv.Y(),
+		   n.Z(), p.Z()-x.Z(), dv.Z())/det;
+
+    mu     = Det3 (n.X(), du.X(), p.X()-x.X(),
+		   n.Y(), du.Y(), p.Y()-x.Y(),
+		   n.Z(), du.Z(), p.Z()-x.Z())/det;
   
+    u += lambda;
+    v += mu;
+
+    xold = x;
+    surface->D1(u,v,x,du,dv);
+
+  } while (xold.SquareDistance(x) > sqr(PROJECTION_TOLERANCE) || count > 50);
+
+  if (count > 50) return false;
+
+  p = x;
+
+  return true;
+}
+*/
+
 void OCCRefinementSurfaces :: 
 PointBetween (const Point3d & p1, const Point3d & p2, double secpoint,
 	      int surfi, 
@@ -347,7 +532,16 @@ PointBetween (const Point3d & p1, const Point3d & p2, double secpoint,
 
   if (surfi > 0)
     {
-      geometry.Project (surfi, hnewp);
+      
+      double u = gi1.u+secpoint*(gi2.u-gi1.u);
+      double v = gi1.v+secpoint*(gi2.v-gi1.v);
+ 
+      if (!geometry.FastProject (surfi, hnewp, u, v))
+	{
+	  cout << "Fast projection to surface fails! Using OCC projection" << endl;
+          geometry.Project (surfi, hnewp);
+	}
+
       newgi.trignum = 1;
     }
   
@@ -370,6 +564,7 @@ PointBetween (const Point3d & p1, const Point3d & p2, double secpoint,
   pnt = proj.NearestPoint();
   hnewp = Point<3> (pnt.X(), pnt.Y(), pnt.Z());
   newp = hnewp;
+  newgi = ap1;
 };
 
 
@@ -377,6 +572,16 @@ void OCCRefinementSurfaces :: ProjectToSurface (Point<3> & p, int surfi)
 {
   if (surfi > 0)
     geometry.Project (surfi, p);
+};
+
+void OCCRefinementSurfaces :: ProjectToSurface (Point<3> & p, int surfi, PointGeomInfo & gi)
+{
+  if (surfi > 0)
+    if (!geometry.FastProject (surfi, p, gi.u, gi.v))
+      {
+	cout << "Fast projection to surface fails! Using OCC projection" << endl;
+        geometry.Project (surfi, p);
+      }
 };
 
 

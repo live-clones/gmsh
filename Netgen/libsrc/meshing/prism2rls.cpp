@@ -53,6 +53,11 @@ const char * prismrules2[] = {
 "{ 0.25 P1, 0 P2, 0 P3, 0.25 P4, 0.25 P5, 0.25 P6 };\n",\
 "{ 0 P1, 0.25 P2, 0.25 P3, 0 P4, 0.25 P5, 0.25 P6 };\n",\
 "\n",\
+"freeset\n",\
+"1 2 4 5 6 7;\n",\
+"\n",\
+"freeset\n",\
+"2 3 4 5 6 8;\n",\
 "\n",\
 "endrule\n",\
 "\n",\
@@ -109,6 +114,12 @@ const char * prismrules2[] = {
 "{ 1 P6 };\n",\
 "{ 0.25 P1, 0 P2, 0 P3, 0.25 P4, 0.25 P5, 0.25 P6 };\n",\
 "{ 0 P1, 0.25 P2, 0.25 P3, 0 P4, 0.25 P5, 0.25 P6 };\n",\
+"\n",\
+"freeset\n",\
+"1 2 4 5 6 7;\n",\
+"\n",\
+"freeset\n",\
+"2 3 4 5 6 8;\n",\
 "\n",\
 "\n",\
 "endrule\n",\
@@ -405,7 +416,7 @@ const char * prismrules2[] = {
 "\n",\
 "rule \"flat prism\"\n",\
 "\n",\
-"quality 1\n",\
+"quality 100\n",\
 "\n",\
 "mappoints\n",\
 "(0, 0, 0);\n",\

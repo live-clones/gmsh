@@ -5,7 +5,16 @@
 
 #include "occgeom.hpp"
 
+#define PARAMETERSPACE -1
+#define PLANESPACE     1
+
 class OCCGeometry;
+
+class SingularMatrixException
+{};
+
+class UVBoundsException
+{};
 
 class OCCSurface
 {
@@ -13,6 +22,7 @@ public:
   TopoDS_Face topods_face;
   Handle(Geom_Surface) occface;
   TopAbs_Orientation orient;
+  int projecttype;
 
 protected:
   Point<3> p1;
@@ -38,12 +48,22 @@ protected:
   Vec<2> psey;
   Mat<2,2> Amat, Amatinv;
 
+  // UV Bounds
+  double umin, umax, vmin, vmax;
+
 public:
-  OCCSurface (const TopoDS_Face & aface)
+  OCCSurface (const TopoDS_Face & aface, int aprojecttype)
   {
     topods_face = aface;
     occface = BRep_Tool::Surface(topods_face);
     orient = topods_face.Orientation();
+    projecttype = aprojecttype;
+    ShapeAnalysis::GetFaceUVBounds (topods_face, umin, umax, vmin, vmax);
+    umin -= fabs(umax-umin)/100.0;
+    vmin -= fabs(vmax-vmin)/100.0;
+    umax += fabs(umax-umin)/100.0;
+    vmax += fabs(vmax-vmin)/100.0;
+    // projecttype = PLANESPACE;
     /*
     TopExp_Explorer exp1;
     exp1.Init (topods_face, TopAbs_WIRE);
@@ -90,7 +110,11 @@ class Meshing2OCCSurfaces : public Meshing2
    
 public:
   ///
-  Meshing2OCCSurfaces (const TopoDS_Shape & asurf, const Box<3> & aboundingbox);
+  Meshing2OCCSurfaces (const TopoDS_Shape & asurf, const Box<3> & aboundingbox, int aprojecttype);
+
+  ///
+  int GetProjectionType ()
+  { return surface.projecttype; }
 
 protected:
   ///
@@ -164,6 +188,8 @@ public:
 			     Point3d & newp, EdgePointGeomInfo & newgi);
 
   virtual void ProjectToSurface (Point<3> & p, int surfi);
+
+  virtual void ProjectToSurface (Point<3> & p, int surfi, PointGeomInfo & gi);
 };
 
 

@@ -142,15 +142,28 @@ public:
     { return i[0] == in2.i[0] && i[1] == in2.i[1]; }
 
   ///
-  void Sort ()
-    {
-      if (i[0] > i[1]) 
-	{
-	  INDEX hi = i[0];
-	  i[0] = i[1];
-	  i[1] = hi;
-	}
-    }
+
+
+  INDEX_2 Sort ()
+  {
+    if (i[0] > i[1]) 
+      {
+	INDEX hi = i[0];
+	i[0] = i[1];
+	i[1] = hi;
+      }
+    return *this;
+  }
+
+  static INDEX_2 Sort (int i1, int i2)
+  {
+    if (i1 > i2)
+      return INDEX_2 (i2,i1);
+    else
+      return INDEX_2 (i1,i2);
+  }
+
+
   ///
   INDEX & I1 () { return i[0]; }
   ///
@@ -189,12 +202,25 @@ public:
   INDEX_3 (const INDEX_3 & in2)
     { i[0] = in2.i[0]; i[1] = in2.i[1]; i[2] = in2.i[2]; }
 
+
+  static INDEX_3 Sort (INDEX_3 i3)
+  {
+    return i3.Sort();
+  }
+
+  static INDEX_3 Sort (int i1, int i2, int i3)
+  {
+    INDEX_3 i(i1, i2, i3);
+    return i.Sort();
+  }
+
   ///
-  void Sort ()
+  INDEX_3 Sort ()
   {
     if (i[0] > i[1]) Swap (i[0], i[1]);
     if (i[1] > i[2]) Swap (i[1], i[2]);
     if (i[0] > i[1]) Swap (i[0], i[1]);
+    return *this;
   }
 
   ///

@@ -4,47 +4,6 @@
 
 
 
-// class PlotStatistics3d;
-
-
-/*
-///
-class MeshingParameters3
-{
-public:
-  /// global h
-  double h;
-
-  /// give up quality class
-  int giveuptol;
-
-  /// maximal outer steps
-  int maxoutersteps;   
-
-  /// if non-zero, baseelement must have baseelnp points
-  int baseelnp;        
-
-  /// class starting star-shape filling
-  int starshapeclass;
-
-  /// call blockfill function
-  int blockfill;
-
-  /// quality tolerances are handled less careful
-  double sloppy;
-
-  /// number of optimizationsteps
-  int optsteps;
-
-  ///
-  char * optstr;
-
-  ///
-  MeshingParameters3();
-};
-*/
-
-
 enum MESHING3_RESULT
 {
   MESHING3_OK = 0,
@@ -71,9 +30,9 @@ class Meshing3
   double tolfak;
 public:
   /// 
-  Meshing3 (const char * rulefilename); 
+  Meshing3 (const string & rulefilename); 
   /// 
-  Meshing3 (const char * rulefilename, const char ** rulep);
+  Meshing3 (const char ** rulep);
   ///
   virtual ~Meshing3 ();
   
@@ -92,7 +51,7 @@ public:
 		  float & retminerr);
   
   ///
-  int AddPoint (const Point3d & p, INDEX globind);
+  PointIndex AddPoint (const Point3d & p, PointIndex globind);
   ///
   void AddBoundaryElement (const Element2d & elem);
   ///
@@ -141,29 +100,6 @@ public:
 };
 
 
-/*
-///
-class PlotStatistics3d
-{
-public:
-  ///
-  PlotStatistics3d () { }
-  ///
-  virtual void Plot (const MeshingStat3d & stat) const = 0;
-};
-
-
-///
-class TerminalPlotStatistics3d : public PlotStatistics3d
-{
-  int oldne;
-public:
-  ///
-  TerminalPlotStatistics3d ();
-  ///
-  virtual void Plot (const MeshingStat3d & stat) const;
-};
-*/
 
 
 

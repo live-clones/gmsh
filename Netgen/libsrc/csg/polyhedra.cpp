@@ -23,18 +23,16 @@ Polyhedra::Face::Face (int pi1, int pi2, int pi3, const ARRAY<Point<3> > & point
   nn = n;
   nn.Normalize();
   //  PseudoInverse (v1, v2, w1, w2);
-
   
   Mat<2,3> mat;
   Mat<3,2> inv;
-  int i, j;
-  for (i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++)
     {
       mat(0,i) = v1(i);
       mat(1,i) = v2(i);
     }
   CalcInverse (mat, inv);
-  for (i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++)
     {
       w1(i) = inv(i,0);
       w2(i) = inv(i,1);
@@ -79,10 +77,7 @@ INSOLID_TYPE Polyhedra :: BoxInSolid (const BoxSphere<3> & box) const
 
       double dist2 = MinDistTP2 (p1, p2, p3, box.Center());
       if (dist2 < sqr (box.Diam()/2))
-	{
-	  //	  (*testout) << "intersect" << endl;
-	  return DOES_INTERSECT;
-	}
+	return DOES_INTERSECT;
     };
 
   return PointInSolid (box.Center(), 1e-3 * box.Diam());
@@ -92,10 +87,9 @@ INSOLID_TYPE Polyhedra :: BoxInSolid (const BoxSphere<3> & box) const
 INSOLID_TYPE Polyhedra :: PointInSolid (const Point<3> & p,
 					double eps) const
 {
-  //  (*testout) << "Point in Sol, p = " << p << " " << flush;
   Vec<3> n, v1, v2;
 
-  // "random numbers":
+  // random (?) numbers:
   n(0) = 0.123871;
   n(1) = 0.15432;
   n(2) = 0.43989;
@@ -124,13 +118,10 @@ INSOLID_TYPE Polyhedra :: PointInSolid (const Point<3> & p,
       if (lam3 < eps)
 	{
 	  if (lam1 >= -eps && lam2 >= -eps && lam1+lam2 <= 1+eps)
-	    {
-	      return DOES_INTERSECT;
-	    }
+	    return DOES_INTERSECT;
 	}
       else if (lam1 >= 0 && lam2 >= 0 && lam1+lam2 <= 1)
-	//	  lam3 > 0)
-	{
+	{  // lam3 > 0
 	  cnt++;
 	}
 
@@ -146,9 +137,99 @@ INSOLID_TYPE Polyhedra :: VecInSolid (const Point<3> & p,
 				      const Vec<3> & v,
 				      double eps) const
 {
+  int point_on_n_faces = 0;
+  INSOLID_TYPE res;
+
+  Vec<3> vn = v;
+  vn.Normalize();
+  for (int i = 0; i < faces.Size(); i++)
+    {
+      const Point<3> & p1 = points[faces[i].pnums[0]];
+      
+      Vec<3> v0 = p - p1;
+      double lam3 = -(faces[i].n * v0);
+
+      if (fabs (lam3) > eps) continue;
+
+      double lam1 = (faces[i].w1 * v0);
+      double lam2 = (faces[i].w2 * v0);
+
+      if (lam1 >= -eps && lam2 >= -eps && lam1+lam2 <= 1+eps)
+	{
+	  point_on_n_faces++;
+
+	  double scal = vn * faces[i].n;
+	
+	  res = DOES_INTERSECT;
+	  if (scal > eps) res = IS_OUTSIDE;
+	  if (scal < -eps) res = IS_INSIDE;
+	}
+    }
+
+  if (point_on_n_faces == 1)
+    return res;
+
+  
   Point<3> p2 = p + (1e-3/(v.Length()+1e-16)) * v;
-  return PointInSolid (p2, eps);
+  res = PointInSolid (p2, eps);
+  //  (*testout) << "p = " << p << " v = " << v << " p2 = " << p2 << endl;
+  //  (*testout) << "polyeder::vecinsolid = " << int(res) << endl;
+  return res;
 }
+
+
+INSOLID_TYPE Polyhedra :: VecInSolid2 (const Point<3> & p,
+				       const Vec<3> & v1,
+				       const Vec<3> & v2,
+				       double eps) const
+{
+  int point_on_n_faces = 0;
+  INSOLID_TYPE res;
+
+  Vec<3> v1n = v1;
+  v1n.Normalize();
+  Vec<3> v2n = v2;
+  v2n.Normalize();
+
+
+  for (int i = 0; i < faces.Size(); i++)
+    {
+      const Point<3> & p1 = points[faces[i].pnums[0]];
+      
+      Vec<3> v0 = p - p1;
+      double lam3 = -(faces[i].n * v0);
+
+      if (fabs (lam3) > eps) continue;
+
+      double lam1 = (faces[i].w1 * v0);
+      double lam2 = (faces[i].w2 * v0);
+
+      if (lam1 >= -eps && lam2 >= -eps && lam1+lam2 <= 1+eps)
+	{
+	  double scal1 = v1n * faces[i].n;
+	  if (fabs (scal1) > eps) continue;
+
+
+	  point_on_n_faces++;
+
+	  double scal2 = v2n * faces[i].n;
+	  res = DOES_INTERSECT;
+	  if (scal2 > eps) res = IS_OUTSIDE;
+	  if (scal2 < -eps) res = IS_INSIDE;
+	}
+    }
+
+  if (point_on_n_faces == 1)
+    return res;
+
+
+
+
+  return Primitive :: VecInSolid2 (p, v1, v2, eps);
+}
+
+
+
 
 void Polyhedra :: GetPrimitiveData (char *& classname, 
 				    ARRAY<double> & coeffs) const
@@ -182,19 +263,10 @@ void Polyhedra :: SetPrimitiveData (ARRAY<double> & coeffs)
 
 void Polyhedra :: Reduce (const BoxSphere<3> & box)
 {
-  int i;
-
-  for (i = 0; i < planes.Size(); i++)
+  for (int i = 0; i < planes.Size(); i++)
     surfaceactive[i] = 0;
 
-  /*
-  for (i = 1; i <= faces.Size(); i++)
-    if (FaceBoxIntersection (i, box))
-      surfaceactive.Elem (faces.Get(i).planenr) = 1;
-  */
-
-  for (i = 0; i < faces.Size(); i++)
-    //    if (faces.Get(i).bbox.Intersect (box))
+  for (int i = 0; i < faces.Size(); i++)
     if (FaceBoxIntersection (i, box))
       surfaceactive[faces[i].planenr] = 1;
 }
@@ -212,8 +284,6 @@ int Polyhedra :: AddPoint (const Point<3> & p)
 
 int Polyhedra :: AddFace (int pi1, int pi2, int pi3)
 {
-  int i;
-
   faces.Append (Face (pi1, pi2, pi3, points));
   
   Point<3> p1 = points[pi1];
@@ -229,7 +299,7 @@ int Polyhedra :: AddFace (int pi1, int pi2, int pi3)
   Plane pl (p1, n);
   int inverse;
   int identicto = -1;
-  for (i = 0; i < planes.Size(); i++)
+  for (int i = 0; i < planes.Size(); i++)
     if (pl.IsIdentic (*planes[i], inverse, 1e-6))
       {
 	if (!inverse)

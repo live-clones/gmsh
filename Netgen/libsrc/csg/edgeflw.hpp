@@ -31,21 +31,26 @@ extern void CalcEdges (const CSGeometry & geometry,
 class EdgeCalculation
 {
   const CSGeometry & geometry;
-  const ARRAY<SpecialPoint> & specpoints;
+  ARRAY<SpecialPoint> & specpoints;
+  Point3dTree * searchtree;
+  Point3dTree * meshpoint_tree;
   int cntedge;
 public:
   EdgeCalculation (const CSGeometry & ageometry,
-		   const ARRAY<SpecialPoint> & aspecpoints);
+		   ARRAY<SpecialPoint> & aspecpoints);
+
+  ~EdgeCalculation();
 
   void Calc(double h, Mesh & mesh);
 
 
 private:
   void CalcEdges1 (double h, Mesh & mesh);
-
+  
 
   void FollowEdge (int pi1, int & ep, int & pos,
-		   const ARRAY<SpecialPoint> & hsp,
+		   // const ARRAY<SpecialPoint> & hsp,
+		   const ARRAY<int> & hsp,
 		   double h, const Mesh & mesh,
 		   ARRAY<Point<3> > & edgepoints,
 		   ARRAY<double> & curvelength);
@@ -54,24 +59,24 @@ private:
   void AnalyzeEdge (int s1, int s2, int pos, int layer,
 		    const ARRAY<Point<3> > & edgepoints,
 		    ARRAY<Segment> & refedges,
-		    ARRAY<int> & refedgesinv);
+		    ARRAY<bool> & refedgesinv);
 
   void StoreEdge (const ARRAY<Segment> & refedges,
-		  const ARRAY<int> & refedgesinv,
+		  const ARRAY<bool> & refedgesinv,
 		  const ARRAY<Point<3> > & edgepoints,
 		  const ARRAY<double> & curvelength,
 		  int layer,
 		  Mesh & mesh);
 
   void StoreShortEdge (const ARRAY<Segment> & refedges,
-		       const ARRAY<int> & refedgesinv,
+		       const ARRAY<bool> & refedgesinv,
 		       const ARRAY<Point<3> > & edgepoints,
 		       const ARRAY<double> & curvelength,
 		       int layer,
 		       Mesh & mesh);
 
   void CopyEdge (const ARRAY<Segment> & refedges,
-		 const ARRAY<int> & refedgesinv,
+		 const ARRAY<bool> & refedgesinv,
 		 int copyfromedge, 
 		 const Point<3> & fromstart, const Point<3> & fromend,
 		 const Point<3> & tostart, const Point<3> & toend,
@@ -82,6 +87,10 @@ private:
   
   void SplitEqualOneSegEdges (Mesh & mesh);
   void FindClosedSurfaces (double h, Mesh & mesh);
+
+
+public:
+  bool point_on_edge_problem;
 
 };
 

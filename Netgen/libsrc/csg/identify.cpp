@@ -208,7 +208,7 @@ Identifyable (const SpecialPoint & sp1, const SpecialPoint & sp2) const
 	continue;
 
       Vec<3> n1;
-      s1->GetNormalVector (hsp1.p, n1);
+      n1 = s1->GetNormalVector (hsp1.p);
       n1 /= n1.Length();
       if ( fabs(n1 * hsp1.v) > 1e-3)
 	continue;
@@ -218,7 +218,7 @@ Identifyable (const SpecialPoint & sp1, const SpecialPoint & sp2) const
 	continue;
 
       Vec<3> n2;
-      s2->GetNormalVector (hsp2.p, n2);
+      n2 = s2->GetNormalVector (hsp2.p);
       n2 /= n2.Length();
       if ( fabs(n2 * hsp2.v) > 1e-3)
 	continue;
@@ -475,7 +475,7 @@ BuildSurfaceElements (ARRAY<Segment> & segs,
 				 Point<3> (mesh.Point (newel.PNum(1))));
 	      
 	      Vec<3> nsurf;
-	      geom.GetSurface (surfnr)->GetNormalVector (mesh.Point(newel.PNum(1)), nsurf);
+	      nsurf = geom.GetSurface (surfnr)->GetNormalVector (mesh.Point(newel.PNum(1)));
 	      if (nsurf * nt < 0)
 		Swap (newel.PNum(2), newel.PNum(3));
 				
@@ -525,17 +525,21 @@ CloseSurfaceIdentification (int anr,
 			    const CSGeometry & ageom,
 			    const Surface * as1,
 			    const Surface * as2,
+			    const TopLevelObject * adomain,
 			    const Flags & flags)
   : Identification(anr, ageom)
 {
   s1 = as1;
   s2 = as2;
+  domain = adomain;
   ref_levels = int (flags.GetNumFlag ("reflevels", 2));
   ref_levels_s1 = int (flags.GetNumFlag ("reflevels1", 0));
   ref_levels_s2 = int (flags.GetNumFlag ("reflevels2", 0));
   slices = flags.GetNumListFlag ("slices");
   // eps_n = 1e-3;
   eps_n = 1e-6;
+
+  dom_surf_valid = 0;
 }
 
 CloseSurfaceIdentification :: ~CloseSurfaceIdentification ()
@@ -575,7 +579,7 @@ void CloseSurfaceIdentification :: IdentifySpecialPoints
       if (!s1->PointOnSurface (p1))
 	continue;
 
-      s1->GetNormalVector (p1, n1);
+	s1->GetNormalVector (p1, n1);
       n1 /= n1.Length();
       if ( fabs(n1 * points.Get(i).v) > 1e-3)
 	continue;
@@ -622,65 +626,71 @@ void CloseSurfaceIdentification :: IdentifySpecialPoints
 int CloseSurfaceIdentification :: 
 Identifyable (const SpecialPoint & sp1, const SpecialPoint & sp2) const
 {
-  int i;
-  double val;
 
-  for (i = 1; i <= 1; i++)
+  if (!dom_surf_valid)
     {
-      if (!s1->PointOnSurface (sp1.p))
-	continue;
+      const_cast<bool&> (dom_surf_valid) = 1;
+      ARRAY<int> & hsurf = const_cast<ARRAY<int>&> (domain_surfaces);
 
-      Vec<3> n1;
-      s1->GetNormalVector (sp1.p, n1);
-      n1.Normalize();
-      if ( fabs(n1 * sp1.v) > eps_n)
-	continue;
-
-      if (!s2->PointOnSurface(sp2.p))
-	continue;
-
-      Vec<3> n2;
-      s2->GetNormalVector (sp2.p, n2);
-      n2.Normalize();
-      if ( fabs(n2 * sp2.v) > eps_n)
-	continue;
-
-      // must have joint surface 
-      bool joint = 0;
-      for (int j = 0; j < geom.GetNSurf(); j++)
+      if (domain)
 	{
-	  if (geom.GetSurface(j) -> PointOnSurface(sp1.p) &&
-	      geom.GetSurface(j) -> PointOnSurface(sp2.p) )
-	    {
-	      Vec<3> hn1, hn2;
-	      geom.GetSurface(j)->GetNormalVector (sp1.p, hn1);
-	      geom.GetSurface(j)->GetNormalVector (sp2.p, hn2);
+	  BoxSphere<3> hbox (geom.BoundingBox());
+	  geom.GetIndependentSurfaceIndices (domain->GetSolid(), hbox,
+					     hsurf);
+	}
+      else
+	{
+	  hsurf.SetSize (geom.GetNSurf());
+	  for (int j = 0; j < hsurf.Size(); j++)
+	    hsurf[j] = j;
+	}
+    }
 
-	      if (hn1 * hn2 > 0)
-		{
-		  joint = 1;
-		  break;
-		}
+
+
+  if (!s1->PointOnSurface (sp1.p))
+    return 0;
+  
+  Vec<3> n1 = s1->GetNormalVector (sp1.p);
+  n1.Normalize();
+  if ( fabs(n1 * sp1.v) > eps_n)
+    return 0;
+  
+  if (!s2->PointOnSurface(sp2.p))
+    return 0;
+  
+  Vec<3> n2 = s2->GetNormalVector (sp2.p);
+  n2.Normalize();
+  if ( fabs(n2 * sp2.v) > eps_n)
+    return 0;
+  
+  // must have joint surface 
+  bool joint = 0;
+  //  for (int j = 0; j < geom.GetNSurf(); j++)
+  for (int jj = 0; jj < domain_surfaces.Size(); jj++)
+    {
+      int j = domain_surfaces[jj];
+      if (geom.GetSurface(j) -> PointOnSurface(sp1.p) &&
+	  geom.GetSurface(j) -> PointOnSurface(sp2.p) )
+	{
+	  Vec<3> hn1 = geom.GetSurface(j)->GetNormalVector (sp1.p);
+	  Vec<3> hn2 = geom.GetSurface(j)->GetNormalVector (sp2.p);
+	  
+	  if (hn1 * hn2 > 0)
+	    {
+	      joint = 1;
+	      break;
 	    }
 	}
-      if (!joint) continue;
-
-      Vec<3> v = sp2.p - sp1.p;
-      double vl = v.Length();
-      double cl = fabs (v*n1);
-      
-      /*
-      val = 1 - cl*cl/(vl*vl);
-      val += (sp1.v - sp2.v).Length();
-    
-      if (val < 1e-3)
-	{
-	  return 1;
-	}
-      */
-      if (cl > (1-eps_n*eps_n) * vl && (sp1.v - sp2.v).Length() < 0.1)
-	return 1;
     }
+  if (!joint) return 0;
+  
+  Vec<3> v = sp2.p - sp1.p;
+  double vl = v.Length();
+  double cl = fabs (v*n1);
+      
+  if (cl > (1-eps_n*eps_n) * vl && (sp1.v - sp2.v).Length() < 0.1)
+    return 1;
 
   return 0;
 }
@@ -688,8 +698,7 @@ Identifyable (const SpecialPoint & sp1, const SpecialPoint & sp2) const
 int CloseSurfaceIdentification :: 
 Identifyable (const Point<3> & p1, const Point<3> & p2) const
 {
-  return (s1->PointOnSurface (p1) &&
-	  s2->PointOnSurface (p2));
+  return (s1->PointOnSurface (p1) && s2->PointOnSurface (p2));
 }
   
 
@@ -701,7 +710,7 @@ IdentifyableCandidate (const SpecialPoint & sp1) const
   if (s1->PointOnSurface (sp1.p))
     {
       Vec<3> n1;
-      s1->GetNormalVector (sp1.p, n1);
+      n1 = s1->GetNormalVector (sp1.p);
       n1.Normalize();
       if ( fabs(n1 * sp1.v) > eps_n)
 	return 0;
@@ -711,7 +720,7 @@ IdentifyableCandidate (const SpecialPoint & sp1) const
   if (s2->PointOnSurface (sp1.p))
     {
       Vec<3> n1;
-      s2->GetNormalVector (sp1.p, n1);
+      n1 = s2->GetNormalVector (sp1.p);
       n1.Normalize();
       if ( fabs(n1 * sp1.v) > eps_n)
 	return 0;
@@ -725,14 +734,8 @@ IdentifyableCandidate (const SpecialPoint & sp1) const
 int CloseSurfaceIdentification :: 
 ShortEdge (const SpecialPoint & sp1, const SpecialPoint & sp2) const
 {
-  int i;
-  double val;
-  
-  SpecialPoint hsp1 = sp1;
-  SpecialPoint hsp2 = sp2;
-
-  if ( (s1->PointOnSurface (hsp1.p) && s2->PointOnSurface (hsp2.p)) ||
-       (s1->PointOnSurface (hsp2.p) && s2->PointOnSurface (hsp1.p)) )
+  if ( (s1->PointOnSurface (sp1.p) && s2->PointOnSurface (sp2.p)) ||
+       (s1->PointOnSurface (sp2.p) && s2->PointOnSurface (sp1.p)) )
     {
       return 1;
     }
@@ -833,7 +836,7 @@ void CloseSurfaceIdentification :: IdentifyPoints (Mesh & mesh)
 	  double mindist = 1e10;
 
 	  Vec<3> n1;
-	  s1->GetNormalVector (p1, n1);
+	  n1 = s1->GetNormalVector (p1);
 	  n1.Normalize();
 
 	  for (i2 = 1; i2 <= np; i2++)
@@ -852,6 +855,28 @@ void CloseSurfaceIdentification :: IdentifyPoints (Mesh & mesh)
 	      Vec<3> n = p2 - p1;
 	      n.Normalize();
 	      
+	      
+	      bool joint = 0;
+	      for (int jj = 0; jj < domain_surfaces.Size(); jj++)
+		{
+		  int j = domain_surfaces[jj];
+		  if (geom.GetSurface(j) -> PointOnSurface(p1) &&
+		      geom.GetSurface(j) -> PointOnSurface(p2) )
+		    {
+		      Vec<3> hn1 = geom.GetSurface(j)->GetNormalVector (p1);
+		      Vec<3> hn2 = geom.GetSurface(j)->GetNormalVector (p2);
+		      
+		      if (hn1 * hn2 > 0)
+			{
+			  joint = 1;
+			  break;
+			}
+		    }
+		}
+	      if (!joint) continue;
+	      
+
+
 
 	      if (fabs (n * n1) > 0.9 &&
 		  Dist (p1, p2) < mindist)
@@ -1026,7 +1051,7 @@ BuildSurfaceElements (ARRAY<Segment> & segs,
 			      Point<3> (mesh.Point(el.PNum(1))));
 
 	    Vec<3> ns;
-	    surf->GetNormalVector (mesh.Point(el.PNum(1)), ns);
+	    ns = surf->GetNormalVector (mesh.Point(el.PNum(1)));
 	    // (*testout) << "n = " << n << " ns = " << ns << endl;
 	    if (n * ns < 0)
 	      {
@@ -1102,7 +1127,7 @@ BuildSurfaceElements (ARRAY<Segment> & segs,
 		  Vec<3> nt = Cross (Vec<3> (mesh.Point (newel.PNum(1)), mesh.Point (newel.PNum(2))),
 				    Vec<3> (mesh.Point (newel.PNum(1)), mesh.Point (newel.PNum(3))));
 		  Vec<3> nsurf;
-		  geom.GetSurface (surfnr)->GetNormalVector (mesh.Point(newel.PNum(1)), nsurf);
+		  nsurf = geom.GetSurface (surfnr)->GetNormalVector (mesh.Point(newel.PNum(1)));
 		  if (nsurf * nt < 0)
 		    Swap (newel.PNum(2), newel.PNum(3));
 		  
@@ -1183,7 +1208,7 @@ BuildSurfaceElements2 (ARRAY<Segment> & segs,
 				 Point<3> (mesh.Point (newel.PNum(3)))- 
 				 Point<3> (mesh.Point (newel.PNum(1))));
 	      Vec<3> nsurf;
-	      geom.GetSurface (surfnr)->GetNormalVector (mesh.Point(newel.PNum(1)), nsurf);
+	      nsurf = geom.GetSurface (surfnr)->GetNormalVector (mesh.Point(newel.PNum(1)));
 	      if (nsurf * nt < 0)
 		Swap (newel.PNum(2), newel.PNum(3));
 	      
@@ -1288,7 +1313,7 @@ void CloseEdgesIdentification :: IdentifySpecialPoints
       if (!s1->PointOnSurface (p1))
 	continue;
 
-      s1->GetNormalVector (p1, n1);
+	s1->GetNormalVector (p1, n1);
       n1 /= n1.Length();
       if ( fabs(n1 * points.Get(i).v) > 1e-3)
 	continue;
@@ -1347,7 +1372,7 @@ Identifyable (const SpecialPoint & sp1, const SpecialPoint & sp2) const
 	continue;
 
       Vec<3> n1;
-      s1->GetNormalVector (hsp1.p, n1);
+      n1 = s1->GetNormalVector (hsp1.p);
       n1 /= n1.Length();
       if ( fabs(n1 * hsp1.v) > 1e-3)
 	continue;
@@ -1357,7 +1382,7 @@ Identifyable (const SpecialPoint & sp1, const SpecialPoint & sp2) const
 	continue;
 
       Vec<3> n2;
-      s2->GetNormalVector (hsp2.p, n2);
+      n2 = s2->GetNormalVector (hsp2.p);
       n2 /= n2.Length();
       if ( fabs(n2 * hsp2.v) > 1e-3)
 	continue;
@@ -1412,8 +1437,8 @@ void CloseEdgesIdentification :: IdentifyPoints (Mesh & mesh)
 	Vec<3> n = p2 - p1;
 	n.Normalize();
 
-	s1->GetNormalVector (p1, n1);
-	facet->GetNormalVector (p1, nf);
+	n1 = s1->GetNormalVector (p1);
+	nf = facet->GetNormalVector (p1);
 	t = Cross (n1, nf);
 	t /= t.Length();
 
@@ -1455,7 +1480,7 @@ BuildSurfaceElements (ARRAY<Segment> & segs,
 			      Point<3> (mesh.Point(el.PNum(3)))-
 			      Point<3> (mesh.Point(el.PNum(1))));
 	    Vec<3> ns;
-	    surf->GetNormalVector (mesh.Point(el.PNum(1)), ns);
+	    ns = surf->GetNormalVector (mesh.Point(el.PNum(1)));
 	    (*testout) << "n = " << n << " ns = " << ns << endl;
 	    if (n * ns < 0)
 	      {

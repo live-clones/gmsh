@@ -6,12 +6,18 @@
 #include <geometry2d.hpp>
 #include <stlgeom.hpp>
 
-#include <visual.hpp>
+#ifdef OCCGEOMETRY
+#include <occgeom.hpp>
+#endif
+
+
+//#include <visual.hpp>
 
 #include "nginterface.h"
 // #include <FlexLexer.h>
 
 
+// #include <mystdlib.h>
 
 
 namespace netgen
@@ -20,12 +26,16 @@ namespace netgen
   extern VisualSceneMesh vsmesh;
   extern Tcl_Interp * tcl_interp;
 
-  extern SplineGeometry2d * geometry2d;
-  extern CSGeometry * parsegeom;
-  extern CSGeometry * geometry;
+  extern AutoPtr<SplineGeometry2d> geometry2d;
+  extern AutoPtr<CSGeometry> geometry;
   extern STLGeometry * stlgeometry;
+#ifdef OCCGEOMETRY
+  extern OCCGeometry * occgeometry;
+#endif
 
+#ifdef OPENGL
   extern VisualSceneSolution vssolution;
+#endif
   extern CSGeometry * ParseCSG (istream & istr);
 }
 
@@ -47,50 +57,81 @@ void Ng_LoadGeometry (char * filename)
 {
   ifstream infile (filename);
 
-  if (geometry) 
-    delete geometry;
+  geometry.Reset ();
+  geometry2d.Reset ();
 
-  if (strcmp (&filename[strlen(filename)-3], "geo") == 0)
+#ifdef OCCGEOMETRY
+  delete occgeometry;
+  occgeometry = 0;
+#endif
+
+  if ((strcmp (&filename[strlen(filename)-3], "geo") == 0) ||
+      (strcmp (&filename[strlen(filename)-3], "GEO") == 0) ||
+      (strcmp (&filename[strlen(filename)-3], "Geo") == 0))
     {
-      /*
-      geometry = new CSGeometry(filename);
-      
-      parsegeom = geometry;
-      
-      lexer = new yyFlexLexer (&infile);
-      
-      extern int yyparse ();
-      yyparse ();
-      delete lexer; 
-      */
-
-      geometry = netgen::ParseCSG (infile);
+      geometry.Reset (netgen::ParseCSG (infile));
 
       if (!geometry)
-	throw NgException ("input file not found");
+	{
+	  geometry.Reset (new CSGeometry ());
+	  throw NgException ("input file not found");
+	}
 
       geometry -> FindIdenticSurfaces(1e-6);
-      Box<3> box (geometry->BoundingBox());
 
-      geometry->CalcTriangleApproximation (box, 0.01, 10);
+      double detail = atof (Tcl_GetVar (tcl_interp, "geooptions.detail", 0));
+      double facets = atof (Tcl_GetVar (tcl_interp, "geooptions.facets", 0));
+      Box<3> box (geometry->BoundingBox());
+      
+      if (atoi (Tcl_GetVar (tcl_interp, "geooptions.drawcsg", 0)))
+	geometry->CalcTriangleApproximation(box, detail, facets);
+
+      //      geometry->CalcTriangleApproximation (box, 0.01, 10);
     }
+
+  else if (strcmp (&filename[strlen(filename)-4], "in2d") == 0)
+    {
+      geometry2d.Reset (new SplineGeometry2d());
+      geometry2d -> Load (filename);
+    }
+
+  else if ((strcmp (&filename[strlen(filename)-3], "stl") == 0) ||
+	   (strcmp (&filename[strlen(filename)-3], "STL") == 0) ||
+	   (strcmp (&filename[strlen(filename)-3], "Stl") == 0))
+    {
+      ifstream infile(filename);
+      stlgeometry = STLGeometry :: Load (infile);
+      stlgeometry->edgesfound = 0;
+      Mesh meshdummy;
+      stlgeometry->Clear();
+      stlgeometry->BuildEdges();
+      stlgeometry->MakeAtlas(meshdummy);
+      stlgeometry->CalcFaceNums();
+      stlgeometry->AddFaceEdges();
+      stlgeometry->LinkEdges();
+    }
+
+#ifdef OCCGEOMETRY
+  else if ((strcmp (&filename[strlen(filename)-4], "iges") == 0) ||
+	   (strcmp (&filename[strlen(filename)-3], "igs") == 0) ||
+	   (strcmp (&filename[strlen(filename)-3], "IGS") == 0) ||
+	   (strcmp (&filename[strlen(filename)-4], "IGES") == 0))
+    {
+      PrintMessage (1, "Load IGES geometry file ", filename);
+      occgeometry = LoadOCC_IGES (filename);
+    }
+  else if ((strcmp (&filename[strlen(filename)-4], "step") == 0) ||
+	   (strcmp (&filename[strlen(filename)-3], "stp") == 0) ||
+	   (strcmp (&filename[strlen(filename)-3], "STP") == 0) ||
+	   (strcmp (&filename[strlen(filename)-4], "STEP") == 0))
+    {
+      PrintMessage (1, "Load STEP geometry file ", filename);
+      occgeometry = LoadOCC_STEP (filename);
+    }
+#endif
   else
     {
-      geometry = new CSGeometry("");
-
-      if (strcmp (&filename[strlen(filename)-4], "in2d") == 0)
-	{
-
-	  if (geometry2d)
-	    delete geometry2d;
-	  geometry2d = new SplineGeometry2d();
-	  geometry2d -> Load (filename);
-	}
-
-      else
-	{
-	  cerr << "Unknown geometry extension!!" << endl;
-	}
+      cerr << "Unknown geometry extension!!" << endl;
     }
 }                          
 
@@ -293,7 +334,7 @@ NG_ELEMENT_TYPE Ng_GetSurfaceElement (int ei, int * epi, int * np)
     {
       const Segment & seg = mesh->LineSegment (ei);
 
-      if (!seg.pmid)
+      if (seg.pmid < 0)
 	{
 	  epi[0] = seg.p1;
 	  epi[1] = seg.p2;
@@ -329,6 +370,8 @@ void Ng_GetNormalVector (int sei, int locpi, double * nv)
   nv[0] = 0; 
   nv[1] = 0;
   nv[2] = 1;
+
+  (*testout) << "Ng_GetNormalVector (sei = " << sei << ", locpi = " << locpi << ")" << endl;
   
   if (mesh->GetDimension() == 3)
     {
@@ -337,9 +380,24 @@ void Ng_GetNormalVector (int sei, int locpi, double * nv)
       p = mesh->Point (mesh->SurfaceElement(sei).PNum(locpi));
 
       int surfi = mesh->GetFaceDescriptor(mesh->SurfaceElement(sei).GetIndex()).SurfNr();
+
+      (*testout) << "surfi = " << surfi << endl;
+#ifdef OCCGEOMETRY
+      if (occgeometry)
+	{
+	  PointGeomInfo gi = mesh->SurfaceElement(sei).GeomInfoPi(locpi);
+	  occgeometry->GetSurface (surfi).GetNormalVector(p, gi, n);
+	  nv[0] = n(0);
+	  nv[1] = n(1);
+	  nv[2] = n(2);
+	}
+      else
+#endif
       if (geometry)
 	{
-	  geometry->GetSurface (surfi) -> GetNormalVector(p, n);
+	  (*testout) << "geometry defined" << endl;
+	  n = geometry->GetSurface (surfi) -> GetNormalVector(p);
+	  (*testout) << "aus is" << endl;
 	  nv[0] = n(0);
 	  nv[1] = n(1);
 	  nv[2] = n(2);
@@ -348,13 +406,13 @@ void Ng_GetNormalVector (int sei, int locpi, double * nv)
 }
 
 
-int Ng_FindElementOfPoint (double * p, double * lami)
+int Ng_FindElementOfPoint (double * p, double * lami, int build_searchtree, int index)
 {
   if (mesh->GetDimension() == 3)
     {
       Point3d p3d(p[0], p[1], p[2]);
       int ind = 
-	mesh->GetElementOfPoint(p3d, lami);
+	mesh->GetElementOfPoint(p3d, lami, build_searchtree != 0, index);
       return ind;
     }
   else
@@ -362,7 +420,7 @@ int Ng_FindElementOfPoint (double * p, double * lami)
       double lam3[3];
       Point3d p2d(p[0], p[1], 0);
       int ind = 
-	mesh->GetElementOfPoint(p2d, lam3);
+	mesh->GetElementOfPoint(p2d, lam3, build_searchtree != 0, index);
       lami[0] = lam3[0];
       lami[1] = lam3[1];
       return ind;
@@ -382,7 +440,6 @@ void Ng_GetElementTransformation (int ei, const double * xi,
 
       mesh->GetCurvedElements().CalcSurfaceTransformation (xl, ei-1, xg, dx);
 
-      // still 1-based arrays
       if (x)
 	{
 	  for (int i = 0; i < 2; i++)
@@ -471,6 +528,12 @@ void Ng_GetSurfaceElementTransformation (int sei, const double * xi,
 
 
 
+void Ng_GetSurfaceElementNeighbouringDomains(const int selnr, int & in, int & out)
+{
+  in = mesh->GetFaceDescriptor((*mesh)[static_cast<SurfaceElementIndex>(selnr)].GetIndex()).DomainIn();
+  out = mesh->GetFaceDescriptor((*mesh)[static_cast<SurfaceElementIndex>(selnr)].GetIndex()).DomainOut();
+}
+
 
 void Ng_SetRefinementFlag (int ei, int flag)
 {
@@ -491,33 +554,34 @@ void Ng_Refine (NG_REFINEMENT_TYPE reftype)
 {
   BisectionOptions biopt;
   biopt.usemarkedelements = 1;
+  biopt.refine_p = 0;
   biopt.refine_hp = 0;
-  if (reftype == NG_REFINE_P || reftype == NG_REFINE_HP)
+  if (reftype == NG_REFINE_P)
+    biopt.refine_p = 1;
+  if (reftype == NG_REFINE_HP)
     biopt.refine_hp = 1;
+  Refinement * ref;
 
-  if (geometry && mesh->GetDimension() == 3)
-    {
-      RefinementSurfaces ref (*geometry);
-      ref.Bisect (*mesh, biopt);
-    }
+  if (geometry2d)
+    ref = new Refinement2d(*geometry2d);
   else if (stlgeometry)
-    {
-      RefinementSTLGeometry ref (*stlgeometry);
-      ref.Bisect (*mesh, biopt);
-    }
-  else if (geometry2d)
-    {
-      Refinement2d ref (*geometry2d);
-      ref.Bisect (*mesh, biopt);
-    }
+    ref = new RefinementSTLGeometry(*stlgeometry);
+#ifdef OCCGEOMETRY
+  else if (occgeometry)
+    ref = new OCCRefinementSurfaces (*occgeometry);
+#endif
+  else if (geometry && mesh->GetDimension() == 3)
+    ref = new RefinementSurfaces(*geometry);
   else
     {
-      cout << "No geometry available" << endl;
-      Refinement ref;
-      ref.Bisect (*mesh, biopt);
+      ref = new Refinement();
     }
 
+  ref -> Bisect (*mesh, biopt);
+
   mesh -> UpdateTopology();
+  // mesh -> GetCurvedElements().BuildCurvedElements (ref, mparam.elementorder);
+  delete ref;
 }
 
 void Ng_SecondOrder ()
@@ -552,7 +616,17 @@ void Ng_SecondOrder ()
 
 void Ng_HPRefinement (int levels)
 {
-  HPRefinement (*mesh, levels);
+  Refinement * ref;
+
+  if (stlgeometry)
+    ref = new RefinementSTLGeometry (*stlgeometry);
+  else if (geometry2d)
+    ref = new Refinement2d (*geometry2d);
+  else
+    ref = new RefinementSurfaces (*geometry);
+
+
+  HPRefinement (*mesh, ref, levels);
 }
 
 
@@ -562,6 +636,10 @@ void Ng_HighOrder (int order)
 
   if (stlgeometry)
     ref = new RefinementSTLGeometry (*stlgeometry);
+#ifdef OCCGEOMETRY
+  else if (occgeometry)
+    ref = new OCCRefinementSurfaces (*occgeometry);
+#endif
   else if (geometry2d)
     ref = new Refinement2d (*geometry2d);
   else
@@ -1019,6 +1097,26 @@ void Ng_GetEdge_Vertices (int ednr, int * vert)
 }
 
 
+int Ng_GetNVertexElements (int vnr)
+{
+  if (mesh->GetDimension() == 3)
+    return mesh->GetTopology().GetVertexElements(vnr).Size();
+  else
+    return mesh->GetTopology().GetVertexSurfaceElements(vnr).Size();
+}
+
+void Ng_GetVertexElements (int vnr, int * els)
+{
+  FlatArray<int> ia(0,0);
+  if (mesh->GetDimension() == 3)
+    ia = mesh->GetTopology().GetVertexElements(vnr);
+  else
+    ia = mesh->GetTopology().GetVertexSurfaceElements(vnr);
+  for (int i = 0; i < ia.Size(); i++)
+    els[i] = ia[i];
+}
+
+
 int Ng_GetElementOrder (int enr)
 {
   if (mesh->GetDimension() == 3)
@@ -1122,6 +1220,7 @@ void Ng_InitSolutionData (Ng_SolutionData * soldata)
 
 void Ng_SetSolutionData (Ng_SolutionData * soldata)
 {
+#ifdef OPENGL
   //   vssolution.ClearSolutionData ();
   VisualSceneSolution::SolData * vss = new VisualSceneSolution::SolData;
 
@@ -1140,24 +1239,35 @@ void Ng_SetSolutionData (Ng_SolutionData * soldata)
   vss->soltype = VisualSceneSolution::SolType (soldata->soltype);
   vss->solclass = soldata->solclass;
   vssolution.AddSolutionData (vss);
+#endif
 }
+
+void Ng_ClearSolutionData ()
+{
+  vssolution.ClearSolutionData();
+}
+
 
 
 void Ng_Redraw ()
 {
+#ifdef OPENGL
   vssolution.UpdateSolutionTimeStamp();
   Render();
+#endif
 }
 
 
 void Ng_SetVisualizationParameter (const char * name, const char * value)
 {
+#ifdef OPENGL
   char buf[100];
   sprintf (buf, "visoptions.%s", name);
   cout << "name = " << name << ", value = " << value << endl;
   cout << "set tcl-variable " << buf << " to " << value << endl;
   Tcl_SetVar (tcl_interp, buf, const_cast<char*> (value), 0);
   Tcl_Eval (tcl_interp, "Ng_Vis_Set parameters;");
+#endif
 }
 
 
@@ -1198,7 +1308,7 @@ void PlayAnimFile(const char* name, int speed, int maxcnt)
   for (i = 1; i <= ne; i++)
     {
       int j;
-      Element2d tri(3);
+      Element2d tri(TRIG);
       tri.SetIndex(1); //faceind
       
       for (j = 1; j <= 3; j++)
@@ -1240,62 +1350,127 @@ void Ng_GetPeriodicVertices (int * pairs)
       pairs[2*i+1] = apairs[i].I2();
     }
       
-	/*<<<<<< nginterface.cpp
-      infile >> np;
-      for (i = 1; i <= np; i++)
+}
+
+
+
+int Ng_GetNPeriodicEdges ()
+{
+  ARRAY<INDEX,PointIndex::BASE> map;
+  const MeshTopology & top = mesh->GetTopology();
+  int nse = mesh->GetNSeg();
+
+  int cnt = 0;
+  //  for (int id = 1; id <= mesh->GetIdentifications().GetMaxNr(); id++)
+    {
+      mesh->GetIdentifications().GetMap(0, map);
+      //(*testout) << "ident-map " << id << ":" << endl << map << endl;
+
+      for (SegmentIndex si = 0; si < nse; si++)
 	{
-	  Point3d p;
-	  infile >> p.X() >> p.Y() >> p.Z();
-	  if (firsttime)
-	    mesh->AddPoint (p);
-	  else
-	    mesh->Point(i)=p;
+	  PointIndex other1 = map[(*mesh)[si].p1];
+	  PointIndex other2 = map[(*mesh)[si].p2];
+	  //  (*testout) << "seg = " << (*mesh)[si] << "; other = " 
+	  //     << other1 << "-" << other2 << endl;
+	  if (other1 && other2 && mesh->IsSegment (other1, other2))
+	    {
+	      cnt++;
+	    }
 	}
-
-      //firsttime = 0;
-      Ng_Redraw();
-      //}
+    }
+  return cnt;
 }
 
-		
-int Ng_GetNPeriodicVertices ()
+void Ng_GetPeriodicEdges (int * pairs)
 {
-  ARRAY<INDEX_2> apairs;
-  mesh->GetIdentifications().GetPairs (0, apairs);
-  return apairs.Size();
+  ARRAY<INDEX,PointIndex::BASE> map;
+  const MeshTopology & top = mesh->GetTopology();
+  int nse = mesh->GetNSeg();
+
+  int cnt = 0;
+  //  for (int id = 1; id <= mesh->GetIdentifications().GetMaxNr(); id++)
+    {
+      mesh->GetIdentifications().GetMap(0, map);
+      
+      //(*testout) << "map = " << map << endl;
+
+      for (SegmentIndex si = 0; si < nse; si++)
+	{
+	  PointIndex other1 = map[(*mesh)[si].p1];
+	  PointIndex other2 = map[(*mesh)[si].p2];
+	  if (other1 && other2 && mesh->IsSegment (other1, other2))
+	    {
+	      SegmentIndex otherseg = mesh->SegmentNr (other1, other2);
+	      pairs[cnt++] = top.GetSegmentEdge (si+1);
+	      pairs[cnt++] = top.GetSegmentEdge (otherseg+1);
+	    }
+	}
+    }
 }
 
 
-// pairs should be an integer array of 2*npairs
-void Ng_GetPeriodicVertices (int * pairs)
+
+void Ng_PushStatus (const char * str)
 {
-  ARRAY<INDEX_2> apairs;
-  mesh->GetIdentifications().GetPairs (0, apairs);
-  for (int i = 0; i < apairs.Size(); i++)
-    {
-      pairs[2*i] = apairs[i].I1();
-      pairs[2*i+1] = apairs[i].I2();
-    }
-=======
-      if (firsttime)
-	mesh->AddSurfaceElement (tri);
-    }
-  
-  infile >> np;
-  for (i = 1; i <= np; i++)
-    {
-      Point3d p;
-      infile >> p.X() >> p.Y() >> p.Z();
-      if (firsttime)
-	mesh->AddPoint (p);
-      else
-	mesh->Point(i)=p;
-    }
-  
-  //firsttime = 0;
-  Ng_Redraw();
->>>>>>> 1.9 
-*/
+  PushStatus (MyStr (str));
 }
+
+void Ng_PopStatus ()
+{
+  PopStatus ();
+}
+
+void Ng_SetThreadPercentage (double percent)
+{
+  SetThreadPercent (percent);
+}
+
+
+///// Added by Roman Stainko ....
+int Ng_GetVertex_Elements( int vnr, int* elems )
+{
+  const MeshTopology& topology = mesh->GetTopology();
+  ArrayMem<int,4> indexArray;
+  topology.GetVertexElements( vnr, indexArray );
+  
+  for( int i=0; i<indexArray.Size(); i++ )
+    elems[i] = indexArray[i];
+  
+  return indexArray.Size();
+}
+
+///// Added by Roman Stainko ....
+int Ng_GetVertex_SurfaceElements( int vnr, int* elems )
+{
+  const MeshTopology& topology = mesh->GetTopology();
+  ArrayMem<int,4> indexArray;
+  topology.GetVertexSurfaceElements( vnr, indexArray );
+  
+  for( int i=0; i<indexArray.Size(); i++ )
+    elems[i] = indexArray[i];
+  
+  return indexArray.Size();
+}
+
+///// Added by Roman Stainko ....
+int Ng_GetVertex_NElements( int vnr )
+{
+  const MeshTopology& topology = mesh->GetTopology();
+  ArrayMem<int,4> indexArray;
+  topology.GetVertexElements( vnr, indexArray );
+  
+  return indexArray.Size();
+}
+
+///// Added by Roman Stainko ....
+int Ng_GetVertex_NSurfaceElements( int vnr )
+{
+  const MeshTopology& topology = mesh->GetTopology();
+  ArrayMem<int,4> indexArray;
+  topology.GetVertexSurfaceElements( vnr, indexArray );
+
+  return indexArray.Size();
+}
+
 
 

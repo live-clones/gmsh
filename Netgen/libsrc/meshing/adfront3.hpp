@@ -110,23 +110,24 @@ public:
     }
   
   ///
-  int Valid () const
-  { 
-    return !f.IsDeleted(); // PNum(1) != 0; 
-  }
+  bool Valid () const
+  { return !f.IsDeleted(); }
 
   ///
   void Invalidate ();
+
   ///
-  int HashValue() const {return hashvalue;}
+  int HashValue() const 
+  { return hashvalue; }
+
   ///
-  void SetHashValue(int hv) {hashvalue = hv;}
+  void SetHashValue(int hv) 
+  { hashvalue = hv; }
 
   ///
   friend class AdFront3;
 
   int Cluster () const { return cluster; }
-      
 };  
 
 
@@ -136,14 +137,14 @@ public:
 class AdFront3
 {
   ///
-  ARRAY<FrontPoint3,PointIndex::BASE> points;
+  ARRAY<FrontPoint3, PointIndex::BASE> points;
   ///
   ARRAY<FrontFace> faces;
   ///
   ARRAY<PointIndex> delpointl;
 
   /// which points are connected to pi ?
-  TABLE<int> * connectedpairs;
+  TABLE<int, PointIndex::BASE> * connectedpairs;
   
   /// number of total front faces;
   int nff;
@@ -194,10 +195,10 @@ public:
   ///
   void Print () const;
   ///
-  int Empty () const
+  bool Empty () const
     { return nff == 0; }
   ///
-  int Empty (int elnp) const
+  bool Empty (int elnp) const
     {
       if (elnp == 4)
 	return (nff4 == 0);
@@ -238,7 +239,7 @@ public:
   ///
   void DeleteFace (INDEX fi);
   ///
-  INDEX AddPoint (const Point3d & p, PointIndex globind);
+  PointIndex AddPoint (const Point3d & p, PointIndex globind);
   ///
   INDEX AddFace (const Element2d & e);
   ///
@@ -253,7 +254,8 @@ public:
   /// is Point p inside Surface ?
   int Inside (const Point3d & p) const;
   /// both points on same side ?
-  int SameSide (const Point3d & lp1, const Point3d & lp2, const ARRAY<int> * testfaces = NULL) const;
+  int SameSide (const Point3d & lp1, const Point3d & lp2, 
+		const ARRAY<int> * testfaces = NULL) const;
 
 
   ///

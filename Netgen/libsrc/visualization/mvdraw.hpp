@@ -1,6 +1,10 @@
 #ifndef FILE_MVDRAW
 #define FILE_MVDRAW
 
+#include "vispar.hpp"
+
+/*
+
 class VisualizationParameters
 {
 public:
@@ -61,6 +65,13 @@ public:
   int stlchartnumber;
   int stlchartnumberoffset;
 
+  // occ:
+  int occshowvolumenr;
+  bool occshowsurfaces;
+  bool occshowedges;
+  bool occvisproblemfaces;
+  bool occzoomtohighlightedentity;
+
   bool whitebackground;
   int stereo;
   bool usedispllists;
@@ -73,6 +84,10 @@ public:
   VisualizationParameters();
 };
 extern VisualizationParameters vispar;
+*/
+
+
+
 
 
 
@@ -100,7 +115,7 @@ protected:
   GLdouble clipplane[4];
 
   int changeval;
-  static double backcolor;
+  static GLdouble backcolor;
 
 public:
   static GLuint fontbase;
@@ -120,6 +135,8 @@ public:
   
   void CalcTransformationMatrices();
   void StandardRotation (const char * dir);
+  void ArbitraryRotation (const ARRAY<double> & alpha, const ARRAY<Vec3d> & vec);
+  void ArbitraryRotation (const double alpha, const Vec3d & vec);
 
   void MouseMove(int oldx, int oldy,
 		 int newx, int newy,
@@ -136,8 +153,8 @@ public:
   static void SetBackGroundColor (double col)
     { backcolor = col; }
 
-  void CreateTexture (int ncols, int linear);
-  void DrawColorBar (double minval, double maxval, int logscale = 0);
+  void CreateTexture (int ncols, int linear, int typ = GL_DECAL);
+  void DrawColorBar (double minval, double maxval, int logscale = 0, bool linear = 1);
   void DrawCoordinateCross ();
   void DrawNetgenLogo ();
   void SetOpenGlColor(double val, double valmin, double valmax, int logscale = 0);
@@ -195,6 +212,7 @@ public:
 
   virtual void BuildScene (int zoomall = 0);
   virtual void DrawScene ();
+  virtual void MouseDblClick (int px, int py);
 };
 #endif
 

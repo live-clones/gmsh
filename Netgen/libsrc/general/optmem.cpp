@@ -32,10 +32,10 @@ namespace netgen
       delete [] bablocks[i];
   }
 
-  void * BlockAllocator :: Alloc ()
+  void BlockAllocator :: Alloc2 ()
   {
     //  return new char[size];
-    if (!freelist)
+    //    if (!freelist)
       {
 	// cout << "BlockAlloc: " << size*blocks << endl;
 	char * hcp = new char [size * blocks];
@@ -46,14 +46,18 @@ namespace netgen
 	*(void**)&(hcp[(blocks-1)*size]) = NULL;
 	freelist = hcp;
       }
+      /*
     void * p = freelist;
     freelist = *(void**)freelist;
     return p;
+      */
   }
 
+  /*
   void BlockAllocator :: Free (void * p)
   {
     *(void**)p = freelist;
     freelist = p;
   }
+  */
 }

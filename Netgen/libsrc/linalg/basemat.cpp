@@ -1,3 +1,5 @@
+#ifdef ABC
+
 #include <mystdlib.h>
 #include <linalg.hpp>
 
@@ -71,8 +73,8 @@ ostream & BaseMatrix :: Print (ostream & s) const
   }
 
 
-
-TempVector BaseMatrix :: operator* (const BaseVector & v) const
+  /*
+TempVector BaseMatrix :: operator* (const Vector & v) const
   {
   Vector * prod = new Vector(Height());
 
@@ -91,7 +93,7 @@ TempVector BaseMatrix :: operator* (const BaseVector & v) const
 
   return *prod;
   }
-
+  */
 
 
 DenseMatrix operator* (const BaseMatrix & m1, const BaseMatrix & m2)
@@ -147,14 +149,17 @@ DenseMatrix operator+ (const BaseMatrix & m1, const BaseMatrix & m2)
   }
 
 
-void BaseMatrix :: Mult (const BaseVector & /* v */,
-      BaseVector & /* prod */) const
+void BaseMatrix :: Mult (const FlatVector & /* v */,
+			 FlatVector & /* prod */) const
   {
-  (*myerr) << "BaseMatrix :: Mult called" << endl;
+    (*myerr) << "BaseMatrix :: Mult called" << endl;
+    double * x = 0;
+    *x = 1;
+    assert (1);
   }
 
-void BaseMatrix :: MultTrans (const BaseVector &  v,
-      BaseVector & prod) const
+void BaseMatrix :: MultTrans (const Vector &  v,
+      Vector & prod) const
   {
   if (Symmetric())
     Mult (v, prod);
@@ -162,16 +167,16 @@ void BaseMatrix :: MultTrans (const BaseVector &  v,
     (*myerr) << "BaseMatrix :: MultTrans called for non symmetric matrix" << endl;
   }
 
-void BaseMatrix :: Residuum (const BaseVector &  x,
-      const BaseVector & b, BaseVector & res) const
+void BaseMatrix :: Residuum (const Vector &  x,
+      const Vector & b, Vector & res) const
   {
   Mult (x, res);
   res *= -1;
   res.Add (1, b);
   }
 
-void BaseMatrix :: ResiduumTrans (const BaseVector & x,
-      const BaseVector & b, BaseVector & res) const
+void BaseMatrix :: ResiduumTrans (const Vector & x,
+      const Vector & b, Vector & res) const
   {
   MultTrans (x, res);
   res *= -1;
@@ -185,7 +190,7 @@ BaseMatrix * BaseMatrix :: Copy () const
   }
 
 
-BaseVector * BaseMatrix :: CreateVector () const
+Vector * BaseMatrix :: CreateVector () const
   {
   return new Vector (Height());
   }
@@ -296,14 +301,14 @@ void BaseMatrix :: SolveDestroy (const Vector & v, Vector & sol)
     (*myerr) << "SolveDestroy: Matrix not square";
     return;
     }
-  if (Width() != v.Length())
+  if (Width() != v.Size())
     {
     (*myerr) << "SolveDestroy: Matrix and Vector don't fit";
     return;
     }
 
   sol = v;
-  if (Height() != sol.Length())
+  if (Height() != sol.Size())
     {
     (*myerr) << "SolveDestroy: Solution Vector not ok";
     return;
@@ -324,12 +329,12 @@ void BaseMatrix :: SolveDestroy (const Vector & v, Vector & sol)
 
   for (i = Height(); i >= 1; i--)
     {
-    q = sol(i);
+    q = sol.Elem(i);
     for (j = i+1; j <= Height(); j++)
       {
       q -= (*this)(i,j) * sol.Get(j);
       }
-    sol.Set(i, q / (*this)(i,i));
+    sol.Elem(i) = q / (*this)(i,i);
     }
   }
 
@@ -349,28 +354,29 @@ void BaseMatrix :: Solve (const Vector & v, Vector & sol) const
   }
 
 
-Vector BaseMatrix :: SolveDestroyFunc (const Vector & /* b */) const
+  /*
+Vector BaseMatrix :: SolveDestroyFunc (const Vector & b) const
 {
   return Vector(0);
 }
-
+*/
 
 
 Vector BaseMatrix :: Solve (const Vector & v) const
   {
-  Vector sol (v.Length());
+  Vector sol (v.Size());
 
   if (Width() != Height())
     {
     (*myerr) << "Solve: Matrix not square";
     return v;
     }
-  if (Width() != v.Length())
+  if (Width() != v.Size())
     {
     (*myerr) << "Solve: Matrix and Vector don't fit";
     return v;
     }
-  if (Width() != sol.Length())
+  if (Width() != sol.Size())
     {
     (*myerr) << "Solve: Vector sol not allocated" << endl;
     }
@@ -463,3 +469,4 @@ BaseMatrix * BaseMatrix :: InverseMatrix (const BitArray * /* inner */) const
 
 
 }
+#endif

@@ -124,7 +124,7 @@ public:
 };
 
 
-
+/*
 
 // divide each direction
 #define ADTN_DIV 10
@@ -320,7 +320,7 @@ public:
 
 
 
-
+*/
 
 
 
@@ -380,7 +380,7 @@ public:
 
 
 
-
+/*
 
 class ADTreeNode6F
 {
@@ -436,7 +436,7 @@ public:
 
 
 
-
+*/
 
 
 

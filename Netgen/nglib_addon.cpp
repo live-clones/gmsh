@@ -2,12 +2,18 @@
 
 #include "meshing.hpp"
 #include "mystdlib.h"
+
+namespace nglib {
 #include "nglib.h"
+}
 
 using namespace netgen;
 
 #include <iostream>
 #include "Message.h"
+
+namespace nglib
+{
 
 class mystreambuf: public streambuf
 {
@@ -73,7 +79,7 @@ Ng_Result NgAddOn_GenerateVolumeMesh (Ng_Mesh * mesh, Ng_Meshing_Parameters * mp
 
   MeshVolume (mparam, *m);
   //RemoveIllegalElements (*m);
-  //OptimizeVolume (mparam, *m, NULL);
+  //OptimizeVolume (mparam, *m);
 
   return NG_OK;
 }
@@ -91,7 +97,9 @@ Ng_Result NgAddOn_OptimizeVolumeMesh (Ng_Mesh * mesh, Ng_Meshing_Parameters * mp
 
   //MeshVolume (mparam, *m);
   RemoveIllegalElements (*m);
-  OptimizeVolume (mparam, *m, NULL);
+  OptimizeVolume (mparam, *m);
 
   return NG_OK;
+}
+
 }

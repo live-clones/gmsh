@@ -3,9 +3,9 @@
 #include "meshing.hpp"
 #include <opti.hpp>
 
-//removed for gmsh
+#ifndef SMALLLIB
 //#include <visual.hpp>
-
+#endif
 
 namespace netgen
 {
@@ -44,6 +44,8 @@ public:
  
 void MeshOptimize2d :: EdgeSwapping (Mesh & mesh, int usemetric)
 {
+  //  return; 
+
   if (!faceindex)
     {
       if (usemetric)
@@ -60,8 +62,10 @@ void MeshOptimize2d :: EdgeSwapping (Mesh & mesh, int usemetric)
 	}
 
       faceindex = 0;
+      mesh.CalcSurfacesOfNode();
       return;
     }
+
 
   int i, i2, j, k, j2;
   bool should;
@@ -247,21 +251,25 @@ void MeshOptimize2d :: EdgeSwapping (Mesh & mesh, int usemetric)
 	      gi3 = mesh[t1].GeomInfoPiMod(o1);
 	      gi4 = mesh[t2].GeomInfoPiMod(o2);
 	      
-	      // normal of old
+	      // normal of old   (new ?????)
 	      nv1 = Cross (mesh.Point(pi3)-mesh.Point(pi4), 
 			   mesh.Point(pi1)-mesh.Point(pi4));
 	      nv2 = Cross (mesh.Point(pi4)-mesh.Point(pi3), 
 			   mesh.Point(pi2)-mesh.Point(pi3));
 
 	      
-	      // normals of swapped
+	      // normals of swapped  original (???JS)
 	      Vec3d nv3, nv4;
 	      nv3 = Cross (mesh.Point(pi1)-mesh.Point(pi4), 
 			   mesh.Point(pi2)-mesh.Point(pi4));
 	      nv4 = Cross (mesh.Point(pi2)-mesh.Point(pi3), 
 			   mesh.Point(pi1)-mesh.Point(pi3));
 	      
-	      
+	      nv3 *= -1;
+	      nv4 *= -1;
+	      nv3.Normalize();
+	      nv4.Normalize();
+
 	      nv1.Normalize();
 	      nv2.Normalize();
 	    
@@ -287,8 +295,9 @@ void MeshOptimize2d :: EdgeSwapping (Mesh & mesh, int usemetric)
 		(nvp3 * nv3 > critval) && 
 		(nvp4 * nv4 > critval);
 	      
+
 	      horder = Dist (mesh.Point(pi1), mesh.Point(pi2));
-	      
+
 	      if ( // nv1 * nv2 >= 0 &&
 		  nv1.Length() > 1e-3 * horder * horder &&
 		  nv2.Length() > 1e-3 * horder * horder &&
@@ -314,13 +323,14 @@ void MeshOptimize2d :: EdgeSwapping (Mesh & mesh, int usemetric)
 					     metricweight, loch) +
 			CalcTriangleBadness (mesh.Point(pi2), mesh.Point(pi1), mesh.Point(pi4), 
 					     metricweight, loch);
+
 		    }
 
 		  
 		  if (allowswap)
 		    {
 		      Element2d sw1 (pi4, pi3, pi1);
-		      Element2d sw2 (pi4, pi4, pi2);
+		      Element2d sw2 (pi3, pi4, pi2);
 
 		      int legal1 = 
 			mesh.LegalTrig (mesh.SurfaceElement (t1)) + 
@@ -336,6 +346,8 @@ void MeshOptimize2d :: EdgeSwapping (Mesh & mesh, int usemetric)
 		    {
 		      // do swapping !
 		      
+		      // cout << "swap " << endl;
+
 		      nswaps ++;
 		      
 		    //            testout << "nv1 = " << nv1 << "   nv2 = " << nv2 << endl;
@@ -363,8 +375,8 @@ void MeshOptimize2d :: EdgeSwapping (Mesh & mesh, int usemetric)
 		      pdef[pi3]++;
 		      pdef[pi4]++;
 		      
-		      swapped.Elem(t1) = 1;
-		      swapped.Elem(t2) = 1;
+		      swapped[t1] = 1;
+		      swapped[t2] = 1;
 		    }
 		}
 	    }
@@ -422,7 +434,7 @@ void MeshOptimize2d :: CombineImprove (Mesh & mesh)
 
   int should;
   PointIndex pi1, pi2;
-  Point3d p1, p2, pnew;
+  MeshPoint p1, p2, pnew;
   double bad1, bad2;
   Vec3d nv;
 
@@ -436,8 +448,11 @@ void MeshOptimize2d :: CombineImprove (Mesh & mesh)
     {
       Element2d & el = mesh[seia[i]];
       for (j = 0; j < el.GetNP(); j++)
-	elementsonnode.Add (el[j], seia[i]);
+	{
+	  elementsonnode.Add (el[j], seia[i]);
+	}      
     }
+
 
   ARRAY<int,PointIndex::BASE> fixed(np);
   fixed = 0;
@@ -472,10 +487,11 @@ void MeshOptimize2d :: CombineImprove (Mesh & mesh)
 	    }
 	}
     }
-	
+
 
   for (i = 0; i < seia.Size(); i++)
     {
+
       sei = seia[i];
       Element2d & elem = mesh[sei];
       if (elem.IsDeleted()) continue;
@@ -508,7 +524,7 @@ void MeshOptimize2d :: CombineImprove (Mesh & mesh)
 	  // save version:
 	  if (fixed.Get(pi1) || fixed.Get(pi2)) 
 	    continue;
-	  if (pi2 < pi1) Swap (pi1, pi2);
+	  if (pi2 < pi1) swap (pi1, pi2);
 	  */
 
 	  // more general 
@@ -550,6 +566,7 @@ void MeshOptimize2d :: CombineImprove (Mesh & mesh)
 		}
 	    } 
 
+
 	  Element2d & hel = mesh[hasbothpi[0]];
 	  for (k = 0; k < 3; k++)
 	    if (hel[k] == pi1)
@@ -566,6 +583,7 @@ void MeshOptimize2d :: CombineImprove (Mesh & mesh)
 
 
 	  //	  nv = normals.Get(pi1);
+
 
 
 	  for (k = 0; k < elementsonnode[pi2].Size(); k++)
@@ -632,6 +650,7 @@ void MeshOptimize2d :: CombineImprove (Mesh & mesh)
 	  mesh[pi1] = p1;
 	  mesh[pi2] = p2;
 	  
+       
 	  if (debugflag)
 	    {
 	      (*testout) << "bad1 = " << bad1 << ", bad2 = " << bad2 << endl;
@@ -654,17 +673,29 @@ void MeshOptimize2d :: CombineImprove (Mesh & mesh)
 
 	      mesh[pi1] = pnew;
 	      PointGeomInfo gi;
+	      bool gi_set(false);
 	      
-	      Element2d & el1 = mesh[elementsonnode[pi1][0]];
-	      for (l = 0; l < el1.GetNP(); l++)
-		if (el1[l] == pi1)
-		  gi = el1.GeomInfoPi (l+1);
-		  
+	      
+	      Element2d *el1p;
+	      l=0;
+	      while(mesh[elementsonnode[pi1][l]].IsDeleted() && l<elementsonnode.EntrySize(pi1)) l++;
+	      if(l<elementsonnode.EntrySize(pi1))
+		el1p = &mesh[elementsonnode[pi1][l]];
+	      else
+		cerr << "OOPS!" << endl;
+
+	      for (l = 0; l < el1p->GetNP(); l++)
+		if ((*el1p)[l] == pi1)
+		  {
+		    gi = el1p->GeomInfoPi (l+1);
+		    gi_set = true;
+		  }
 
 	      // (*testout) << "Connect point " << pi2 << " to " << pi1 << "\n";
 	      for (k = 0; k < elementsonnode[pi2].Size(); k++)
 		{
 		  Element2d & el = mesh[elementsonnode[pi2][k]];
+		  if(el.IsDeleted()) continue;
 		  elementsonnode.Add (pi1, elementsonnode[pi2][k]);
 
 		  bool haspi1 = 0;
@@ -703,6 +734,7 @@ void MeshOptimize2d :: CombineImprove (Mesh & mesh)
 		    mesh[hasbothpi[k]][l] = PointIndex::BASE-1;
 		  */
 		}
+
 	    }
 	}
     }

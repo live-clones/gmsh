@@ -38,7 +38,9 @@ public:
     const { return DOES_INTERSECT; }
 */
   virtual double HesseNorm () const { return cxx + cyy + czz; }
+
   virtual Point<3> GetSurfacePoint () const;
+
 
   virtual void Print (ostream & ist) const;
   virtual void Read (istream & ist);
@@ -86,7 +88,8 @@ public:
   virtual INSOLID_TYPE BoxInSolid (const BoxSphere<3> & box) const;
 
   ///
-  virtual double CalcFunctionValue (const Point<3> & point) const;
+  inline virtual double CalcFunctionValue (const Point<3> & p3d) const
+  {return cx * p3d(0) + cy * p3d(1) + cz * p3d(2) + c1;}
   ///
   virtual void CalcGradient (const Point<3> & point, 
 			     Vec<3> & grad) const;
@@ -316,6 +319,10 @@ public:
   virtual INSOLID_TYPE BoxInSolid (const BoxSphere<3> & box) const;
   ///
   virtual double HesseNorm () const;
+
+  virtual double LocH (const Point<3> & p, double x, 
+		       double c, double hmax) const;
+
   ///
   virtual Point<3> GetSurfacePoint () const;
 

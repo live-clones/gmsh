@@ -57,8 +57,8 @@ int Meshing2 ::ApplyRules (ARRAY<Point2d> & lpoints,
   double minelerr = 2 + 0.5 * tolerance * tolerance;
 
 
-  int ok, found;
-  netrule * rule;
+  bool ok;
+  int found;   // rule number
   Vector oldu, newu;
   Point2d np;
   Vec2d linevec;
@@ -172,18 +172,9 @@ int Meshing2 ::ApplyRules (ARRAY<Point2d> & lpoints,
     }
 
 
-
-#ifdef MARK
-  MARK (applyrules2m1);
-#endif
-
   for (ri = 1; ri <= rules.Size(); ri++)
     {
-#ifdef MARK
-      MARK (applyrules2m1a);
-#endif
-
-      rule = rules.Get(ri);
+      netrule * rule = rules.Get(ri);
 
       if (loctestmode)
 	(*testout) << "Rule " << rule->Name() << endl;
@@ -192,7 +183,12 @@ int Meshing2 ::ApplyRules (ARRAY<Point2d> & lpoints,
 
       pmap.SetSize (rule->GetNP());
       lmap.SetSize (rule->GetNL());
-
+      
+      lused = 0;
+      pused = 0;
+      pmap = 0;
+      lmap = 0;
+      /*
       for (i = 1; i <= lused.Size(); i++)
 	lused.Set (i, 0);
       for (i = 1; i <= pused.Size(); i++)
@@ -201,9 +197,10 @@ int Meshing2 ::ApplyRules (ARRAY<Point2d> & lpoints,
 	pmap.Set(i, 0);
       for (i = 1; i <= lmap.Size(); i++)
 	lmap.Set(i, 0);
+      */
 
-      lused.Set (1, 1);
-      lmap.Set (1, 1);
+      lused[0] = 1;   // .Set (1, 1);
+      lmap[0] = 1;    // .Set (1, 1);
 
       for (j = 1; j <= 2; j++)
 	{
@@ -216,11 +213,6 @@ int Meshing2 ::ApplyRules (ARRAY<Point2d> & lpoints,
 
       while (nlok >= 2)
 	{
-
-#ifdef MARK
-      MARK (applyrules2m2b);
-#endif
-
 
 	  if (nlok <= rule->GetNOldL())
 
@@ -244,7 +236,7 @@ int Meshing2 ::ApplyRules (ARRAY<Point2d> & lpoints,
 			lpoints.Get (loclin.I1()).Y();
 
 		      if (rule->CalcLineError (nlok, linevec) > maxerr)
-			ok = 0;
+			  ok = 0;
 
 		      for (j = 1; j <= 2 && ok; j++)
 			{
@@ -259,8 +251,7 @@ int Meshing2 ::ApplyRules (ARRAY<Point2d> & lpoints,
 			    {
 			      if (rule->CalcPointDist (refpi, lpoints.Get(loclin.I(j))) > maxerr
 				  || !legalpoints.Get(loclin.I(j))
-				  || pused.Get(loclin.I(j)))
-				ok = 0;
+				  || pused.Get(loclin.I(j))) ok = 0;
 			    }
 			}
 		    }
@@ -296,11 +287,6 @@ int Meshing2 ::ApplyRules (ARRAY<Point2d> & lpoints,
 
 	    {
 
-#ifdef MARK
-      MARK (applyrules2mc);
-#endif
-
-
 	      // all lines are mapped !!
 
 	      // map also all points:
@@ -335,7 +321,7 @@ int Meshing2 ::ApplyRules (ARRAY<Point2d> & lpoints,
 			  if (pmap.Get(npok))
 			    pused.Elem(pmap.Get(npok))--;
 
-			  while (!ok && pmap.Get(npok) < maxlegalpoint /* lpoints.Size() */)
+			  while (!ok && pmap.Get(npok) < maxlegalpoint)
 			    {
 			      ok = 1;
 
@@ -349,8 +335,7 @@ int Meshing2 ::ApplyRules (ARRAY<Point2d> & lpoints,
 				{
 				  if (rule->CalcPointDist (npok, lpoints.Get(pmap.Get(npok))) > maxerr 
 				      || !legalpoints.Get(pmap.Get(npok)) 
-				      )
-				    ok = 0;
+				      ) ok = 0;
 				}
 			    }
 
@@ -374,36 +359,61 @@ int Meshing2 ::ApplyRules (ARRAY<Point2d> & lpoints,
 		  else
 
 		    {
-#ifdef MARK
-      MARK (applyrules2m2d);
-#endif
-
 		      if (ok)
-			{
-			  foundmap.Elem(ri)++;
-			}
+			foundmap.Elem(ri)++; 
 
 		      if (loctestmode)
 			(*testout) << "lines and points mapped" << endl;
 
-		      oldu.SetSize (2 * rule->GetNOldP());
-
-		      for (i = 1; i <= rule->GetNOldP(); i++)
-			{
-			  //			  ui = lpoints.Get(pmap.Get(i)) - rule->GetPoint(i);
-			  Vec2d ui(rule->GetPoint(i), lpoints.Get(pmap.Get(i)));
-			  oldu.Set (2*i-1, ui.X());
-			  oldu.Set (2*i  , ui.Y());
-			}
-
-		      rule -> SetFreeZoneTransformation (oldu, tolerance);
 
 		      ok = 1;
 
-		      if (!rule->ConvexFreeZone())
+		      // check orientations
+
+		      for (i = 1; i <= rule->GetNOrientations() && ok; i++)
+			{
+			  if (CW (lpoints.Get(pmap.Get(rule->GetOrientation(i).i1)),
+				  lpoints.Get(pmap.Get(rule->GetOrientation(i).i2)),
+				  lpoints.Get(pmap.Get(rule->GetOrientation(i).i3))) )
+			    {
+			      ok = 0;
+			      if (loctestmode)
+				(*testout) << "Orientation " << i << " not ok" << endl;
+			    }
+			}
+
+		      if (ok)
+			{
+			  oldu.SetSize (2 * rule->GetNOldP());
+			  
+			  for (i = 1; i <= rule->GetNOldP(); i++)
+			    {
+			      Vec2d ui(rule->GetPoint(i), lpoints.Get(pmap.Get(i)));
+			      oldu.Set (2*i-1, ui.X());
+			      oldu.Set (2*i  , ui.Y());
+			    }
+			  
+			  rule -> SetFreeZoneTransformation (oldu, tolerance);
+			}
+		      
+
+		      if (ok && !rule->ConvexFreeZone())
 			{
 			  ok = 0;
 			  if (loctestmode) (*testout) << "freezone not convex" << endl;
+
+			  /*
+			  static int cnt = 0;
+			  cnt++;
+			  if (cnt % 100 == 0)
+			    {
+			      cout << "freezone not convex, cnt = " << cnt << "; rule = " << rule->Name() << endl;
+			      (*testout) << "freezone not convex, cnt = " << cnt << "; rule = " << rule->Name() << endl;
+			      (*testout) << "tol = " << tolerance << endl;
+			      (*testout) << "maxerr = " << maxerr << "; minerr = " << minelerr << endl;
+			      (*testout) << "freezone = " << rule->GetTransFreeZone() << endl;
+			    }
+			  */
 			}
 
 		      // check freezone:
@@ -455,7 +465,7 @@ int Meshing2 ::ApplyRules (ARRAY<Point2d> & lpoints,
 			}
 
 
-
+		      /*
 		      // check orientations
 
 		      for (i = 1; i <= rule->GetNOrientations() && ok; i++)
@@ -469,7 +479,7 @@ int Meshing2 ::ApplyRules (ARRAY<Point2d> & lpoints,
 				(*testout) << "Orientation " << i << " not ok" << endl;
 			    }
 			}
-
+		      */
 
 
 		      if (ok)
@@ -542,7 +552,7 @@ int Meshing2 ::ApplyRules (ARRAY<Point2d> & lpoints,
 			  if (elerr < minelerr)
 			    {
 
-			      if (testmode)
+			      if (loctestmode)
 				{
 				  (*testout) << "rule = " << rule->Name() << endl;
 				  (*testout) << "class = " << tolerance << endl;
@@ -613,24 +623,18 @@ int Meshing2 ::ApplyRules (ARRAY<Point2d> & lpoints,
     }
 
 
-#ifdef MARK
-  MARK (applyrules2m3);
-#endif
-
-
   if (found)
     {
-      for (i = 1; i <= tempnewpoints.Size(); i++)
-	lpoints.Append (tempnewpoints.Get(i));
-      for (i = 1; i <= tempnewlines.Size(); i++)
-	llines.Append (tempnewlines.Get(i));
-      for (i = 1; i <= tempdellines.Size(); i++)
-	dellines.Append (tempdellines.Get(i));
-      for (i = 1; i <= tempelements.Size(); i++)
-	elements.Append (tempelements.Get(i));
-
-      //    (*testout) << "minelerr = " << minelerr << endl;
+      for (i = 0; i < tempnewpoints.Size(); i++)
+	lpoints.Append (tempnewpoints[i]);
+      for (i = 0; i < tempnewlines.Size(); i++)
+	llines.Append (tempnewlines[i]);
+      for (i = 0; i < tempdellines.Size(); i++)
+	dellines.Append (tempdellines[i]);
+      for (i = 0; i < tempelements.Size(); i++)
+	elements.Append (tempelements[i]);
     }
+
 
   return found;
 }

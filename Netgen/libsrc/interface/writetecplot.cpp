@@ -85,7 +85,7 @@ void WriteTecPlotFormat (const Mesh & mesh,
       for (i = 1; i <= np; i++)
 	if (sn.Elem(i) != 0)
 	  {
-	    geom.GetSurface(j) -> GetNormalVector ( mesh.Point(i), n );
+	    n = geom.GetSurface(j) -> GetNormalVector ( mesh.Point(i) );
 		
 	    outfile << mesh.Point(i).X() << " " /* Knoten Koordinaten */
 		    << mesh.Point(i).Y() << " "

@@ -65,6 +65,7 @@ void QuadraticSurface :: PrintCoeff (ostream & ost) const
 }
 
 
+
 Point<3> QuadraticSurface :: GetSurfacePoint () const
 {
   MyError ("GetSurfacePoint called for QuadraticSurface");
@@ -152,8 +153,8 @@ int Plane :: IsIdentic (const Surface & s2, int & inv, double eps) const
   if (fabs (s2.CalcFunctionValue(hp)) > eps) return 0;
 
   Vec<3> n1, n2;
-  GetNormalVector (p, n1);
-  s2.GetNormalVector (p, n2);
+  n1 = GetNormalVector (p);
+  n2 = s2.GetNormalVector (p);
   inv = (n1 * n2 < 0);
   return 1;
 }
@@ -195,7 +196,7 @@ void Plane :: FromPlane (const Point<2> & pplane, Point<3> & p3d, double h) cons
 
 void Plane :: Project (Point<3> & p3d) const
 {
-  double val = CalcFunctionValue (p3d);
+  double val = Plane::CalcFunctionValue (p3d);
   p3d -= val * n;
 }
 
@@ -205,7 +206,7 @@ INSOLID_TYPE Plane :: BoxInSolid (const BoxSphere<3> & box) const
   double val;
   Point<3> p;
 
-  val = CalcFunctionValue (box.Center());
+  val = Plane::CalcFunctionValue (box.Center());
   if (val > box.Diam() / 2) return IS_OUTSIDE;
   if (val < -box.Diam() / 2) return IS_INSIDE;
 
@@ -230,7 +231,7 @@ INSOLID_TYPE Plane :: BoxInSolid (const BoxSphere<3> & box) const
       for (i = 0; i < 8; i++)
 	{
 	  p = box.GetPointNr (i);
-	  val = CalcFunctionValue (p);
+	  val = Plane::CalcFunctionValue (p);
 	  if (val < 0) 
 	    return DOES_INTERSECT;
 	}
@@ -257,7 +258,7 @@ INSOLID_TYPE Plane :: BoxInSolid (const BoxSphere<3> & box) const
       for (i = 0; i < 8; i++)
 	{
 	  p = box.GetPointNr (i);
-	  val = CalcFunctionValue (p);
+	  val = Plane::CalcFunctionValue (p);
 	  if (val > 0) 
 	    return DOES_INTERSECT;
 	}
@@ -283,10 +284,10 @@ INSOLID_TYPE Plane :: BoxInSolid (const BoxSphere<3> & box) const
 
 
 
-double Plane :: CalcFunctionValue (const Point<3> & p3d) const
-{
-  return cx * p3d(0) + cy * p3d(1) + cz * p3d(2) + c1;
-}
+// double Plane :: CalcFunctionValue (const Point<3> & p3d) const
+// {
+//   return cx * p3d(0) + cy * p3d(1) + cz * p3d(2) + c1;
+// }
 
 void Plane :: CalcGradient (const Point<3> & /* p */, Vec<3> & grad) const
 {
@@ -583,7 +584,6 @@ Ellipsoid (const Point<3> & aa,
   v2 = av2;
   v3 = av3;
 
-  cout << "orhtogonal ? " << (v1*v2) << ", " << (v1*v3) << ", " << (v2*v3) << endl;
   CalcData();
 }
 
@@ -595,11 +595,11 @@ void Ellipsoid :: CalcData ()
   
   Vec<3> hv1, hv2, hv3;
   double lv1 = v1.Length2 ();
-  if (!lv1) lv1 = 1;
+  if (lv1 < 1e-32) lv1 = 1;
   double lv2 = v2.Length2 ();
-  if (!lv2) lv2 = 1;
+  if (lv2 < 1e-32) lv2 = 1;
   double lv3 = v3.Length2 ();
-  if (!lv3) lv3 = 1;
+  if (lv3 < 1e-32) lv3 = 1;
 
   rmin = sqrt (min3 (lv1, lv2, lv3));
 
@@ -888,15 +888,6 @@ void Cylinder :: DefineTangentialPlane (const Point<3> & ap1, const Point<3> & a
   ex /= ex.Length();
 
   ey = Cross (ez, ex);
-
-  /*
-    ez = p1 - a;
-    ez -= (ez * vab) * vap;
-    ez /= ez.Length();
-  
-    ezt = Cross (vab, ez);
-    */
-  
 }
 
 
@@ -1107,9 +1098,9 @@ void EllipticCylinder :: CalcData ()
 
   Vec<3> hvl, hvs;
   double lvl = vl.Length2 ();
-  if (!lvl) lvl = 1;
+  if (lvl < 1e-32) lvl = 1;
   double lvs = vs.Length2 ();
-  if (!lvs) lvs = 1;
+  if (lvs < 1e-32) lvs = 1;
 
   hvl = (1.0 / lvl) * vl;
   hvs = (1.0 / lvs) * vs;
@@ -1255,7 +1246,7 @@ void Cone :: CalcData ()
 
   minr = (ra < rb) ? ra : rb;
 
-  vab = (b - a);
+  vab = b - a;
   vabl = vab.Length();
 
   Vec<3> va (a);
@@ -1265,7 +1256,7 @@ void Cone :: CalcData ()
   //
   //   z(P) = t0vec * P + t0 = (P-a, b-a)/(b-a,b-a)
   //   R(z(P)) = t1vec * P + t1 = rb * z + ra * (1-z)
-  //   r(P)^2 =||P-a||^2 - ||a-b||^2 z^2
+  //   r(P)^2 =||P-a||^2 - ||a-b||^2 z^2k
 
 
   t0vec = vab;
@@ -1293,9 +1284,9 @@ void Cone :: CalcData ()
 
   c1 = va.Length2() - (vab * vab) * t0 * t0 - t1 * t1;
 
-  (*testout) << "t0vec = " << t0vec << " t0 = " << t0 << endl;
-  (*testout) << "t1vec = " << t1vec << " t1 = " << t1 << endl;
-  PrintCoeff (*testout);
+  // (*testout) << "t0vec = " << t0vec << " t0 = " << t0 << endl;
+  // (*testout) << "t1vec = " << t1vec << " t1 = " << t1 << endl;
+  // PrintCoeff (*testout);
 }
 
 
@@ -1316,8 +1307,35 @@ INSOLID_TYPE Cone :: BoxInSolid (const BoxSphere<3> & box) const
 
 double Cone :: HesseNorm () const
 {
-  return 2 / minr;   // old: 2 / minr
+  return 2 / minr;
 }
+
+
+double Cone ::  LocH (const Point<3> & p, double x, 
+				  double c, double hmax) const
+{
+  double bloch = Surface::LocH (p, x, c, hmax);
+  Vec<3> g;
+  CalcGradient (p, g);
+
+  double lam = Abs(g);
+  double meancurv = 
+    -( 2  * g(0)*g(1)*cxy - 2 * czz * (g(0)*g(0)+g(1)*g(1))
+       +2 * g(1)*g(2)*cyz - 2 * cxx * (g(1)*g(1)+g(2)*g(2))
+       +2 * g(0)*g(2)*cxz - 2 * cyy * (g(0)*g(0)+g(2)*g(2))) / (3*lam*lam*lam);
+
+  // cout << "type = " << typeid(*this).name() << ", baseh = " << bloch << ", meancurv = " << meancurv << endl;
+  // return bloch;
+  
+  meancurv = fabs (meancurv);
+  if (meancurv < 1e-20) meancurv = 1e-20;
+
+  // cout << "c = " << c << ", safety = " << mparam.curvaturesafety << endl;
+  double hcurv = 1.0/(3*meancurv*mparam.curvaturesafety);
+
+  return min2 (hmax, hcurv);
+}
+
 
 Point<3> Cone :: GetSurfacePoint () const
 {

@@ -78,6 +78,8 @@ public:
 
   bool IsHighOrder() const
   { return isHighOrder; };
+  void SetHighOrder () { isHighOrder = 1; }
+
 
   int GetNVisualSubsecs() const
   { return nvisualsubsecs; };
@@ -547,7 +549,7 @@ public:
     virtual ~FEQuad()
 	{};
 
-  virtual void SetVertexSingularity (int v, int exponent)
+  virtual void SetVertexSingularity (int /* v */, int /* exponent */)
 	{};
 
   virtual void CalcVertexShapes();
@@ -580,7 +582,7 @@ protected:
   int faceorient[6];
   int faceorder[6];
   int surfacenr[6];
-  int surfaceorient[6];
+  // int surfaceorient[6];
 
   int nfaceshapes[6];
 

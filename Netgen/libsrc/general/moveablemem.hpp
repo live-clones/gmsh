@@ -90,8 +90,8 @@ public:
     BaseMoveableMem::Swap (m2);
   }
 protected:
-  MoveableMem (const MoveableMem & m);
-  MoveableMem & operator= (const MoveableMem & m);
+  MoveableMem (const MoveableMem & m) { ; }
+  MoveableMem & operator= (const MoveableMem & m) { ; }
 };
 
 #endif

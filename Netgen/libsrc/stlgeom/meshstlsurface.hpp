@@ -112,6 +112,7 @@ public:
 			     Point3d & newp, EdgePointGeomInfo & newgi);
 
   virtual void ProjectToSurface (Point<3> & p, int surfi);
+  virtual void ProjectToSurface (Point<3> & p, int surfi, PointGeomInfo & gi);
 };
 
 

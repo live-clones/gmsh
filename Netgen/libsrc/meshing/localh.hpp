@@ -74,6 +74,8 @@ public:
   ///
   void Delete();
   ///
+  void SetGrading (double agrading) { grading = agrading; }
+  ///
   void SetH (const Point3d & x, double h);
   ///
   double GetH (const Point3d & x) const;

@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Netgen.cpp,v 1.11 2004-07-14 22:42:26 geuzaine Exp $
+// $Id: 3D_Mesh_Netgen.cpp,v 1.12 2004-12-08 20:01:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -53,8 +53,12 @@ void Optimize_Netgen(Mesh * m)
 
 #else
 
+namespace nglib {
 #include "nglib.h"
 #include "nglib_addon.h"
+}
+
+using namespace nglib;
 
 class Netgen{
  private:

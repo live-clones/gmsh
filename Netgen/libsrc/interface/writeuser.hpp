@@ -20,7 +20,7 @@ void WriteFile (int typ,
 
 extern 
 void ReadFile (Mesh & mesh,
-	       const char * filename);
+	       const string & filename);
 
 extern 
 void ImportSolution (const char * filename);
@@ -55,11 +55,13 @@ void WriteFEPPFormat (const Mesh & mesh,
 		      const string & filename);
 
 extern
+void WriteGmshFormat (const Mesh & mesh,
+                         const CSGeometry & geom,
+                         const string & filename);
+
+extern
 void WriteUserChemnitz (const Mesh & mesh,
 			const string & filename);
-
-
-
 
 
 extern 
@@ -91,6 +93,17 @@ void WritePermasFormat (const Mesh & mesh,
 extern
 void WriteFEAPFormat (const Mesh & mesh,
 		      const string & filename);
+
+extern
+void WriteElmerFormat (const Mesh & mesh,
+		       const string & filename);
+
+
+extern
+void WriteEdgeElementFormat (const Mesh & mesh,
+			     const CSGeometry & geom,
+			     const string & filename);
+
 
 
 extern void RegisterUserFormats (ARRAY<const char*> & names);

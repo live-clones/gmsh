@@ -3,7 +3,7 @@
 
 
 /**************************************************************************/
-/* File:   specpoin.hh                                                    */
+/* File:   specpoin.hpp                                                   */
 /* Author: Joachim Schoeberl                                              */
 /* Date:   01. Okt. 95                                                    */
 /**************************************************************************/
@@ -21,7 +21,6 @@ class Solid;
 class SpecialPoint
 {
 public:
-  
   /// coordinates
   Point<3> p;
   /// tangential to edge
@@ -35,7 +34,7 @@ public:
   int s1, s2;        
 
   ///
-  SpecialPoint () : p(), v(), layer(0)
+  SpecialPoint () : p(0,0,0), v(0,0,0), layer(0), unconditional(0), s1(0), s2(0)
   { ; }
 
   ///
@@ -51,7 +50,10 @@ public:
   int GetLayer() const { return layer; }
 
   ///
-  bool HasSurfaces (int as1, int as2) const;
+  bool HasSurfaces (int as1, int as2) const
+  {
+    return (s1 == as1 && s2 == as2 || s1 == as2 && s2 == as1);
+  }
 };
 
 
@@ -119,7 +121,7 @@ protected:
 
 
 
-
+  /*
   ///
   bool ExtremalPointPossible (const Surface * f1, const Surface * f2, 
 			      int dir, const BoxSphere<3> & box);
@@ -129,6 +131,7 @@ protected:
   ///
   bool ExtremalPointNewtonConvergence (const Surface * f1, const Surface * f2, 
 				       int dir, const BoxSphere<3> & box);
+  */
   ///
   void ExtremalPointNewton (const Surface * f1, const Surface * f2, 
 			    int dir, Point<3> & p);
@@ -136,6 +139,10 @@ protected:
 
   ///
   bool AddPoint (const Point<3> & p, int layer);
+
+  void ComputeExtremalPoints (const Plane * plane, 
+			      const QuadraticSurface * quadric, 
+			      ARRAY<Point<3> > & pts);
 };
 
 #endif

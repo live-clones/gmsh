@@ -21,8 +21,8 @@ class Solid;
 class SolidIterator
 {
 public:
-  SolidIterator ();
-  virtual ~SolidIterator ();
+  SolidIterator () { ; }
+  virtual ~SolidIterator () { ; }
   virtual void Do (Solid * sol) = 0;
 };
 
@@ -32,7 +32,7 @@ class Solid
 {
 public:
   
-  typedef enum optyp1 { TERM, SECTION, UNION, SUB, ROOT, DUMMY } optyp;
+  typedef enum optyp1 { TERM, TERM_REF, SECTION, UNION, SUB, ROOT, DUMMY } optyp;
   
 private:
   char * name;
@@ -40,15 +40,15 @@ private:
   Solid * s1, * s2;
   
   optyp op;
-  int visited;
+  bool visited;
   double maxh;
 
-  static int cntnames;
+  // static int cntnames;
 
 public:
   Solid (Primitive * aprim);
   Solid (optyp aop, Solid * as1, Solid * as2 = NULL);
-  virtual ~Solid ();
+  ~Solid ();
 
   const char * Name () const { return name; }
   void SetName (const char * aname);
@@ -57,7 +57,7 @@ public:
   void Transform (Transformation<3> & trans);
 
   
-  void IterateSolid (SolidIterator & it, int only_once = 0);
+  void IterateSolid (SolidIterator & it, bool only_once = 0);
 
   
   void Boundaries (const Point<3> & p, ARRAY<int> & bounds) const;
@@ -66,21 +66,24 @@ public:
   void GetSurfaceIndices (IndexSet & iset) const;
 
   Primitive * GetPrimitive ()
-    { return (op == TERM) ? prim : NULL; }
+    { return (op == TERM || op == TERM_REF) ? prim : NULL; }
   const Primitive * GetPrimitive () const
-    { return (op == TERM) ? prim : NULL; }
+    { return (op == TERM || op == TERM_REF) ? prim : NULL; }
+
+  Solid * S1() { return s1; }
+  Solid * S2() { return s2; }
 
   // geometric tests
 
-  int IsIn (const Point<3> & p, double eps = 1e-6) const;
-  int IsStrictIn (const Point<3> & p, double eps = 1e-6) const;
-  int VectorIn (const Point<3> & p, const Vec<3> & v, double eps = 1e-6) const;
-  int VectorStrictIn (const Point<3> & p, const Vec<3> & v, double eps = 1e-6) const;
+  bool IsIn (const Point<3> & p, double eps = 1e-6) const;
+  bool IsStrictIn (const Point<3> & p, double eps = 1e-6) const;
+  bool VectorIn (const Point<3> & p, const Vec<3> & v, double eps = 1e-6) const;
+  bool VectorStrictIn (const Point<3> & p, const Vec<3> & v, double eps = 1e-6) const;
   
-  int VectorIn2 (const Point<3> & p, const Vec<3> & v1, const Vec<3> & v2,
-		 double eps = 1e-6) const;
-  int VectorIn2Rec (const Point<3> & p, const Vec<3> & v1, const Vec<3> & v2,
-		    double eps = 1e-6) const;
+  bool VectorIn2 (const Point<3> & p, const Vec<3> & v1, const Vec<3> & v2,
+		  double eps = 1e-6) const;
+  bool VectorIn2Rec (const Point<3> & p, const Vec<3> & v1, const Vec<3> & v2,
+		     double eps = 1e-6) const;
 
 
   ///
@@ -93,7 +96,7 @@ public:
   ///
   int OnFace (const Point<3> & p, const Vec<3> & v) const;
   ///
-  virtual void Print (ostream & str) const;
+  void Print (ostream & str) const;
   ///
   void CalcSurfaceInverse ();
   ///
@@ -110,8 +113,16 @@ public:
 
 
   static BlockAllocator ball;
-  void * operator new(size_t);
-  void operator delete (void *);
+  void * operator new(size_t /* s */) 
+  {
+    return ball.Alloc();
+  }
+
+  void operator delete (void * p)
+  {
+    ball.Free (p);
+  }
+
 
 protected:
   ///
@@ -130,7 +141,7 @@ protected:
   ///
   void CalcSurfaceInverseRec (int inv);
   ///
-  Solid * RecGetReducedSolid (const BoxSphere<3> & box, int & in) const;
+  Solid * RecGetReducedSolid (const BoxSphere<3> & box, INSOLID_TYPE & in) const;
   ///
   void RecGetSurfaceIndices (ARRAY<int> & surfind) const;
   void RecGetSurfaceIndices (IndexSet & iset) const;
@@ -142,22 +153,43 @@ protected:
 };
 
 
+inline ostream & operator<< (ostream & ost, const Solid & sol)
+{
+  sol.Print (ost);
+  return ost;
+}
+
+
+
+
+
+
 class ReducePrimitiveIterator : public SolidIterator
 {
   const BoxSphere<3> & box;
 public:
-  ReducePrimitiveIterator (const BoxSphere<3> & abox);
-  virtual ~ReducePrimitiveIterator ();
-  virtual void Do (Solid * sol);  
+  ReducePrimitiveIterator (const BoxSphere<3> & abox)
+    : SolidIterator(), box(abox) { ; }
+  virtual ~ReducePrimitiveIterator () { ; }
+  virtual void Do (Solid * sol)
+  {
+    if (sol -> GetPrimitive())
+      sol -> GetPrimitive() -> Reduce (box);
+  }
 };
 
 
 class UnReducePrimitiveIterator : public SolidIterator
 {
 public:
-  UnReducePrimitiveIterator ();
-  virtual ~UnReducePrimitiveIterator ();
-  virtual void Do (Solid * sol);  
+  UnReducePrimitiveIterator () { ; }
+  virtual ~UnReducePrimitiveIterator () { ; }
+  virtual void Do (Solid * sol)
+  {
+    if (sol -> GetPrimitive())
+      sol -> GetPrimitive() -> UnReduce ();
+  }
 };
+
 
 #endif

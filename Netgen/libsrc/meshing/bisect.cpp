@@ -4,7 +4,7 @@
 
 namespace netgen
 {
-#include "../interface/writeuser.hpp"
+//#include "../interface/writeuser.hpp"
 
   class MarkedTet;
   class MarkedPrism;
@@ -1491,6 +1491,49 @@ void Refinement :: Bisect (Mesh & mesh,
   */
 
 
+
+  if (opt.refine_p)
+    {
+      int ne = mesh.GetNE();
+      int nse = mesh.GetNSE();
+      int ii = 0;
+      for (ElementIndex ei = 0; ei < ne; ei++)
+        if (mesh[ei].TestRefinementFlag())
+	  mesh[ei].SetOrder (mesh[ei].GetOrder()+1);
+
+      for (SurfaceElementIndex sei = 0; sei < nse; sei++)
+        if (mesh[sei].TestRefinementFlag())
+	  mesh[sei].SetOrder (mesh[sei].GetOrder()+1);
+
+
+      ARRAY<int,PointIndex::BASE> v_order (mesh.GetNP());
+      v_order = 0;
+
+      for (ElementIndex ei = 0; ei < ne; ei++)
+	for (j = 0; j < mesh[ei].GetNP(); j++)
+	  if (mesh[ei].GetOrder() > v_order[mesh[ei][j]])
+	    v_order[mesh[ei][j]] = mesh[ei].GetOrder();
+
+      for (SurfaceElementIndex sei = 0; sei < nse; sei++)
+	for (j = 0; j < mesh[sei].GetNP(); j++)
+	  if (mesh[sei].GetOrder() > v_order[mesh[sei][j]])
+	    v_order[mesh[sei][j]] = mesh[sei].GetOrder();
+
+      for (ElementIndex ei = 0; ei < ne; ei++)
+	for (j = 0; j < mesh[ei].GetNP(); j++)
+	  if (mesh[ei].GetOrder() < v_order[mesh[ei][j]]-1)
+	    mesh[ei].SetOrder(v_order[mesh[ei][j]]-1);
+
+      for (SurfaceElementIndex sei = 0; sei < nse; sei++)
+	for (j = 0; j < mesh[sei].GetNP(); j++)
+	  if (mesh[sei].GetOrder() < v_order[mesh[sei][j]]-1)
+	    mesh[sei].SetOrder(v_order[mesh[sei][j]]-1);
+
+      return;
+    }
+
+
+
   // INDEX_2_HASHTABLE<int> cutedges(10 + 5 * (mtets.Size()+mprisms.Size()+mtris.Size()+mquads.Size()));
   INDEX_2_CLOSED_HASHTABLE<int> cutedges(10 + 9 * (mtets.Size()+mprisms.Size()+mtris.Size()+mquads.Size()));
 
@@ -1526,7 +1569,7 @@ void Refinement :: Bisect (Mesh & mesh,
 		      mesh.VolumeElement(i).GetType() == TET10)
 		    {
 		      cnttet++;
-		      mtets.Elem(cnttet).marked = 
+		      mtets.Elem(cnttet).marked =
 			3 * mesh.VolumeElement(i).TestRefinementFlag();
 		      if (mtets.Elem(cnttet).marked)
 			cntm++;
@@ -1534,18 +1577,18 @@ void Refinement :: Bisect (Mesh & mesh,
 		  else
 		    {
 		      cntprism++;
-		      mprisms.Elem(cntprism).marked = 
+		      mprisms.Elem(cntprism).marked =
 			2 * mesh.VolumeElement(i).TestRefinementFlag();
 		      if (mprisms.Elem(cntprism).marked)
-			cntm++; 
+			cntm++;
 		    }
-		    
+
 		}
 	    }
 	  else
 	    for (i = 1; i <= mtets.Size(); i++)
 	      {
-		mtets.Elem(i).marked = 
+		mtets.Elem(i).marked =
 		  3 * mesh.VolumeElement(i).TestRefinementFlag();
 		if (mtets.Elem(i).marked)
 		  cntm++;
@@ -1570,8 +1613,8 @@ void Refinement :: Bisect (Mesh & mesh,
 		  mesh.SurfaceElement(i).GetType() == TRIG6)
 		{
 		  cnttrig++;
-		  mtris.Elem(cnttrig).marked = 
-		    2*mesh.SurfaceElement(i).TestRefinementFlag();
+		  mtris.Elem(cnttrig).marked =
+		    mesh.SurfaceElement(i).TestRefinementFlag() ? 2 : 0;
 		  // mtris.Elem(cnttrig).marked = 0;
 		  if (mtris.Elem(cnttrig).marked)
 		    cntm++;
@@ -1579,7 +1622,7 @@ void Refinement :: Bisect (Mesh & mesh,
 	      else
 		{
 		  cntquad++;
-		  mquads.Elem(cntquad).marked = 
+		  mquads.Elem(cntquad).marked =
 		    mesh.SurfaceElement(i).TestRefinementFlag();
 		  // mquads.Elem(cntquad).marked = 0;
 		  if (mquads.Elem(cntquad).marked)
@@ -1594,13 +1637,13 @@ void Refinement :: Bisect (Mesh & mesh,
 	      cntm = 0;
 	      for (i = 1; i <= mtris.Size(); i++)
 		{
-		  mtris.Elem(i).marked = 
+		  mtris.Elem(i).marked =
 		    2 * mesh.SurfaceElement(i).TestRefinementFlag();
 		  //		  mtris.Elem(i).marked = 2;
 		  if (mtris.Elem(i).marked)
 		    cntm++;
 		}
-	      
+
 	      if (!cntm)
 		{
 		  for (i = 1; i <= mtris.Size(); i++)
@@ -1623,13 +1666,42 @@ void Refinement :: Bisect (Mesh & mesh,
       if (!marked) break;
 
 
+	  if (opt.refine_p)
+	    {
+	      cout << "refine p" << endl;
+
+	      for (i = 1; i <= mtets.Size(); i++)
+		mtets.Elem(i).incorder = mtets.Elem(i).marked ? 1 : 0;
+
+	      for (i = 1; i <= mtets.Size(); i++)
+		if (mtets.Elem(i).incorder)
+		  mtets.Elem(i).marked = 0;
+
+
+	      for (i = 1; i <= mprisms.Size(); i++)
+		mprisms.Elem(i).incorder = mprisms.Elem(i).marked ? 1 : 0;
+
+	      for (i = 1; i <= mprisms.Size(); i++)
+		if (mprisms.Elem(i).incorder)
+		  mprisms.Elem(i).marked = 0;
+
+
+	      for (i = 1; i <= mtris.Size(); i++)
+		mtris.Elem(i).incorder = mtris.Elem(i).marked ? 1 : 0;
+
+	      for (i = 1; i <= mtris.Size(); i++)
+		{
+		  if (mtris.Elem(i).incorder)
+		    mtris.Elem(i).marked = 0;
+		}
+	    }
 
 	  if (opt.refine_hp)
 	    {
 	      cout << "refine hp" << endl;
 	      BitArray singv(np);
 	      singv.Clear();
-	      
+
 	      if (mesh.GetDimension() == 3)
 		for (i = 1; i <= mesh.GetNSeg(); i++)
 		  {
@@ -1655,7 +1727,7 @@ void Refinement :: Bisect (Mesh & mesh,
 			}
 		    }
 		}
-		
+
 
 
 	      for (i = 1; i <= mtets.Size(); i++)
@@ -2267,6 +2339,7 @@ BisectionOptions :: BisectionOptions ()
   maxlevel = 50;
   usemarkedelements = 0;
   refine_hp = 0;
+  refine_p = 0;
 }
 
 

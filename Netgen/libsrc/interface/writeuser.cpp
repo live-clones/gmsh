@@ -28,9 +28,10 @@ void RegisterUserFormats (ARRAY<const char*> & names)
       "Fluent Format",
       "Permas Format",
       "FEAP Format",
+      "Elmer Format",
       "STL Format",
       "VRML Format",
-      "Fepp Format",
+      "Gmsh Format",
       //      { "Chemnitz Format" },
       0
     };
@@ -46,7 +47,8 @@ bool WriteUserFormat (const string & format,
 		      const CSGeometry & geom,
 		      const string & filename)
 {
-  cout << "Write user format " << format << endl;
+  PrintMessage (1, "Export mesh to file ", filename, 
+		", format is ", format);
 
   if (format == "Neutral Format")
     WriteNeutralFormat (mesh, geom, filename);
@@ -76,6 +78,9 @@ bool WriteUserFormat (const string & format,
   else if (format == "FEAP Format")
     WriteFEAPFormat (mesh, filename);
 
+  else if (format == "Elmer Format")
+    WriteElmerFormat (mesh, filename);
+
   else if (format == "STL Format")
     WriteSTLFormat (mesh, filename);
 
@@ -85,9 +90,15 @@ bool WriteUserFormat (const string & format,
   else if (format == "Fepp Format")
     WriteFEPPFormat (mesh, geom, filename);
 
+  else if (format ==  "EdgeElement Format")
+    WriteEdgeElementFormat (mesh, geom, filename);
+
   else if (format == "Chemnitz Format")
     WriteUserChemnitz (mesh, filename);
-  
+
+  else if (format == "Gmsh Format")
+    WriteGmshFormat (mesh, geom, filename);
+ 
   else 
     {
       return 1;
@@ -112,6 +123,7 @@ void WriteNeutralFormat (const Mesh & mesh,
   int np = mesh.GetNP();
   int ne = mesh.GetNE();
   int nse = mesh.GetNSE();
+  int nseg = mesh.GetNSeg();
   int i, j;
   
   int inverttets = mparam.inverttets;
@@ -133,25 +145,32 @@ void WriteNeutralFormat (const Mesh & mesh,
       outfile << p.X() << " ";
       outfile.width(9);
       outfile << p.Y() << " ";
-      outfile.width(9);
-      outfile << p.Z() << "\n";
+      if (mesh.GetDimension() == 3)
+	{
+	  outfile.width(9);
+	  outfile << p.Z();
+	  }
+      outfile << "\n";
     }
 
-  outfile << ne << "\n";
-  for (i = 1; i <= ne; i++)
+  if (mesh.GetDimension() == 3)
     {
-      Element el = mesh.VolumeElement(i);
-      if (inverttets)
-	el.Invert();
-      outfile.width(4);
-      outfile << el.GetIndex() << "  ";
-      for (j = 1; j <= el.GetNP(); j++)
+      outfile << ne << "\n";
+      for (i = 1; i <= ne; i++)
 	{
-	  outfile << " ";
-	  outfile.width(8);
-	  outfile << el.PNum(j);
+	  Element el = mesh.VolumeElement(i);
+	  if (inverttets)
+	    el.Invert();
+	  outfile.width(4);
+	  outfile << el.GetIndex() << "  ";
+	  for (j = 1; j <= el.GetNP(); j++)
+	    {
+	      outfile << " ";
+	      outfile.width(8);
+	      outfile << el.PNum(j);
+	    }
+	  outfile << "\n";
 	}
-      outfile << "\n";
     }
 
   outfile << nse << "\n";
@@ -169,6 +188,27 @@ void WriteNeutralFormat (const Mesh & mesh,
 	  outfile << el.PNum(j);
 	}
       outfile << "\n";
+    }
+
+
+  if (mesh.GetDimension() == 2)
+    {
+      outfile << nseg << "\n";
+      for (i = 1; i <= nseg; i++)
+	{
+	  const Segment & seg = mesh.LineSegment(i);
+	  outfile.width(4);
+	  outfile << seg.si << "    ";
+
+	  outfile << " ";
+	  outfile.width(8);
+	  outfile << seg.p1;
+	  outfile << " ";
+	  outfile.width(8);
+	  outfile << seg.p2;
+
+	  outfile << "\n";
+	}
     }
 }
 
@@ -561,6 +601,136 @@ void WriteFEPPFormat (const Mesh & mesh,
 
 
 
+/*
+ *  Edge element mesh format
+ *  points, elements, edges
+ */
+
+void WriteEdgeElementFormat (const Mesh & mesh,
+			     const CSGeometry & geom,
+			     const string & filename)
+{
+  cout << "write edge element format" << endl;
+
+  const MeshTopology * top = &mesh.GetTopology();
+  int npoints = mesh.GetNP();
+  int nelements = mesh.GetNE();
+  int nsurfelem = mesh.GetNSE();
+  int nedges = top->GetNEdges();
+  int i, j;
+  
+  int inverttets = mparam.inverttets;
+  int invertsurf = mparam.inverttrigs;
+  ARRAY<int> edges;
+
+  ofstream outfile (filename.c_str());
+
+  outfile.precision(6);
+  outfile.setf (ios::fixed, ios::floatfield);
+  outfile.setf (ios::showpoint);
+
+
+  // vertices with coordinates  
+  outfile << npoints << "\n";
+  for (i = 1; i <= npoints; i++)
+    {
+      const Point3d & p = mesh.Point(i);
+      
+      outfile.width(10);
+      outfile << p.X() << " ";
+      outfile.width(9);
+      outfile << p.Y() << " ";
+      outfile.width(9);
+      outfile << p.Z() << "\n";
+    }
+
+  // element - edge - list
+  outfile << nelements << " " << nedges << "\n";
+  for (i = 1; i <= nelements; i++)
+    {
+      Element el = mesh.VolumeElement(i);
+      if (inverttets)
+      	el.Invert();
+      outfile.width(4);
+      outfile << el.GetIndex() << "  ";
+      outfile.width(8);
+      outfile << el.GetNP();
+      for (j = 1; j <= el.GetNP(); j++)
+	{
+	  outfile << " ";
+	  outfile.width(8);
+	  outfile << el.PNum(j);
+	}
+
+      top->GetElementEdges(i,edges);
+      outfile << endl << "      ";
+      outfile.width(8);
+      outfile << edges.Size();
+      for (j=1; j <= edges.Size(); j++)
+	{
+	  outfile << " ";
+	  outfile.width(8);
+	  outfile << edges[j-1];
+	}
+      outfile << "\n";
+
+      // orientation:
+      top->GetElementEdgeOrientations(i,edges);
+      outfile << "              ";
+      for (j=1; j <= edges.Size(); j++)
+	{
+	  outfile << " ";
+	  outfile.width(8);
+	  outfile << edges[j-1];
+	}
+      outfile << "\n";
+    }
+
+  // surface element - edge - list (with boundary conditions)
+  outfile << nsurfelem << "\n";
+  for (i = 1; i <= nsurfelem; i++)
+    {
+      Element2d el = mesh.SurfaceElement(i);
+      if (invertsurf)
+	el.Invert();
+      outfile.width(4);
+      outfile << mesh.GetFaceDescriptor (el.GetIndex()).BCProperty() << "  ";
+      outfile.width(8);
+      outfile << el.GetNP();
+      for (j = 1; j <= el.GetNP(); j++)
+	{
+	  outfile << " ";
+	  outfile.width(8);
+	  outfile << el.PNum(j);
+	}
+
+      top->GetSurfaceElementEdges(i,edges);
+      outfile << endl << "      ";
+      outfile.width(8);
+      outfile << edges.Size();
+      for (j=1; j <= edges.Size(); j++)
+	{
+	  outfile << " ";
+	  outfile.width(8);
+	  outfile << edges[j-1];
+	}
+      outfile << "\n";
+    }
+
+
+  int v1, v2;
+  // edge - vertex - list
+  outfile << nedges << "\n";
+  for (i=1; i <= nedges; i++)
+    {
+      top->GetEdgeVertices(i,v1,v2);
+      outfile.width(4);
+      outfile << v1;
+      outfile << " ";
+      outfile.width(8);
+      outfile << v2 << endl;
+    }
+}
 
 
 

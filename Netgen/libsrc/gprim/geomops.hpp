@@ -287,6 +287,23 @@ inline Mat<3,2> operator* (const Mat<3,2> & a, const Mat<2,2> & b)
   return m;
 }
 
+
+
+inline Mat<2,3> operator* (const Mat<2,2> & a, const Mat<2,3> & b)
+{
+  Mat<2,3> m;
+  for (int i = 0; i < 2; i++)
+    for (int j = 0; j < 3; j++)
+      {
+	double sum = 0;
+	for (int k = 0; k < 2; k++)
+	  sum += a(i,k) * b(k, j);
+	m(i,j) = sum; 
+      }
+  return m;
+}
+
+
 inline Mat<3,3> operator* (const Mat<3,3> & a, const Mat<3,3> & b)
 {
   Mat<3,3> m;

@@ -1,3 +1,5 @@
+#ifdef NONE
+
 #ifndef FILE_BASEMAT
 #define FILE_BASEMAT
 
@@ -55,32 +57,32 @@ public:
   virtual ostream & Print (ostream & s) const;
 
   ///
-  TempVector operator* (const BaseVector & v) const;
+  // TempVector operator* (const Vector & v) const;
 
 
   ///
-  virtual void Mult (const BaseVector & v, BaseVector & prod) const;
+  virtual void Mult (const FlatVector & v, FlatVector & prod) const;
   ///
-  virtual void MultTrans (const BaseVector & v, BaseVector & prod) const;
+  virtual void MultTrans (const Vector & v, Vector & prod) const;
   ///
-  virtual void Residuum (const BaseVector & x, const BaseVector & b, BaseVector & res) const;
+  virtual void Residuum (const Vector & x, const Vector & b, Vector & res) const;
   ///
-  virtual void ResiduumTrans (const BaseVector & x, const BaseVector & b, BaseVector & res) const;
-  //  virtual double EvaluateBilinearform (const BaseVector & x);
+  virtual void ResiduumTrans (const Vector & x, const Vector & b, Vector & res) const;
+  //  virtual double EvaluateBilinearform (const Vector & x);
 
   virtual BaseMatrix * Copy () const;
   ///
-  virtual BaseVector * CreateVector () const;
+  virtual Vector * CreateVector () const;
 
   ///
   virtual void AddElementMatrix (const ARRAY<INDEX> & /* pnum */, 
 				 const BaseMatrix & /* elemmat */) { };
   ///
   virtual void MultElementMatrix (const ARRAY<INDEX> & /* pnum */, 
-				  const BaseVector & /* x */, BaseVector & /* y */) { };
+				  const Vector & /* x */, Vector & /* y */) { };
   ///
   virtual void MultTransElementMatrix (const ARRAY<INDEX> & /* pnum */, 
-				       const BaseVector & /* x */, BaseVector & /* y */) { };
+				       const Vector & /* x */, Vector & /* y */) { };
 
 
   ///
@@ -94,12 +96,14 @@ public:
   ///
   void Solve (const Vector & b, Vector & x) const;
   ///
-  virtual Vector SolveDestroyFunc (const Vector & b) const;
+  // virtual Vector SolveDestroyFunc (const Vector & b) const;
   ///
   Vector Solve (const Vector & b) const;
   ///
   virtual void LU_Decomposition (DenseMatrix & l, DenseMatrix & u) const;
 };
 
+
+#endif
 
 #endif

@@ -48,7 +48,7 @@ public:
   ///
   inline const T & Get (const INDEX & ahash) const;
   ///
-  inline int Used (const INDEX & ahash) const;
+  inline bool Used (const INDEX & ahash) const;
   ///
   inline int GetNBags () const;
   ///
@@ -112,13 +112,21 @@ class INDEX_2_HASHTABLE : public BASE_INDEX_2_HASHTABLE
   
 public:
   ///
-  inline INDEX_2_HASHTABLE (int size);
+ INDEX_2_HASHTABLE (int size)
+   : BASE_INDEX_2_HASHTABLE (size), cont(size)
+  { ; }  
+
   ///
-  void SetSize(int s) {cont.SetSize(s); BaseSetSize(s);}
+  void SetSize(int s) 
+  { 
+    cont.SetSize(s); 
+    BaseSetSize(s);
+  }
+
   ///
-  inline void Set (const INDEX_2 & ahash, const T & acont)
-    {
-      int bnr = HashValue (ahash);
+  void Set (const INDEX_2 & ahash, const T & acont)
+  {
+    int bnr = HashValue (ahash);
       int pos = Position (bnr, ahash);
       if (pos)
 	cont.Set (bnr, pos, acont);
@@ -127,21 +135,137 @@ public:
 	  hash.Add1 (bnr, ahash);
 	  cont.Add1 (bnr, acont);
 	}    
+  }
+  
+  ///
+  const T & Get (const INDEX_2 & ahash) const
+  {
+    int bnr = HashValue (ahash);
+    int pos = Position (bnr, ahash);
+    return cont.Get (bnr, pos);
+  }
+  
+  ///
+  bool Used (const INDEX_2 & ahash) const
+  {
+    return (Position (HashValue (ahash), ahash)) ? 1 : 0;
+  }
+
+  ///
+  int GetNBags () const
+  {
+    return cont.Size();
+  }
+  
+  ///
+  int GetBagSize (int bnr) const
+  {
+    return cont.EntrySize (bnr);
+  }
+    
+  ///
+  void GetData (int bnr, int colnr, 
+		INDEX_2 & ahash, T & acont) const
+  {
+    ahash = hash.Get(bnr, colnr);
+    acont = cont.Get(bnr, colnr);
+  }
+
+  ///
+  void SetData (int bnr, int colnr, 
+		const INDEX_2 & ahash, const T & acont) 
+  {
+    hash.Set(bnr, colnr, ahash);
+    cont.Set(bnr, colnr, acont);
+  }
+  
+  ///
+  void PrintMemInfo (ostream & ost) const
+  {
+    ost << "Hash: " << endl;
+    hash.PrintMemInfo (ost);
+    ost << "Cont: " << endl;
+    cont.PrintMemInfo (ost);
+  }
+
+
+
+  class Iterator
+  {
+    const INDEX_2_HASHTABLE & ht;    
+    int bagnr, pos;
+  public:
+    Iterator (const INDEX_2_HASHTABLE & aht,
+	      int abagnr, int apos)
+      : ht(aht), bagnr(abagnr), pos(apos)
+    { ; }
+
+    int BagNr() const { return bagnr; }
+    int Pos() const { return pos; }
+
+    void operator++ (int)
+    {
+      // cout << "begin Operator ++: bagnr = " << bagnr << " -  pos = " << pos << endl;
+      pos++;
+      while (bagnr < ht.GetNBags() && 
+	     pos == ht.GetBagSize(bagnr+1))
+	{
+	  pos = 0;
+	  bagnr++;
+	}
+      // cout << "end Operator ++: bagnr = " << bagnr << " - pos = " << pos << endl;
     }
-  ///
-  inline const T & Get (const INDEX_2 & ahash) const;
-  ///
-  inline int Used (const INDEX_2 & ahash) const;
-  ///
-  inline int GetNBags () const;
-  ///
-  inline int GetBagSize (int bnr) const;
-  ///
-  inline void GetData (int bnr, int colnr, 
-		       INDEX_2 & ahash, T & acont) const;
-  ///
-  inline void PrintMemInfo (ostream & ost) const;
+
+    bool operator != (int i) const
+    {
+      return bagnr != i;
+    }
+
+  };
+  
+  Iterator Begin () const
+  {
+    Iterator it(*this, 0, -1);
+    it++;
+    return it;
+  }
+
+  int End() const
+  {
+    return GetNBags();
+  }
+
+  void GetData (const Iterator & it,
+		INDEX_2 & ahash, T & acont) const
+  {
+    ahash = hash[it.BagNr()][it.Pos()];
+    acont = cont[it.BagNr()][it.Pos()];
+  }
+
+  const INDEX_2 & GetHash (const Iterator & it) const
+  { return hash[it.BagNr()][it.Pos()]; }
+
+  const T & GetData (const Iterator & it) const
+  { return cont[it.BagNr()][it.Pos()]; }
 };
+
+
+
+template <typename T> 
+inline ostream & operator<< (ostream & ost, const INDEX_2_HASHTABLE<T> & ht)
+{
+  for (typename INDEX_2_HASHTABLE<T>::Iterator it = ht.Begin();
+       it != ht.End(); it++)
+    {
+      ost << ht.GetHash(it) << ": " << ht.GetData(it) << endl;
+    }
+
+  return ost;
+}
+
+
+
+
 
 
 
@@ -197,7 +321,7 @@ public:
   ///
   inline const T & Get (const INDEX_3 & ahash) const;
   ///
-  inline int Used (const INDEX_3 & ahash) const;
+  inline bool Used (const INDEX_3 & ahash) const;
   ///
   inline int GetNBags () const;
   ///
@@ -311,7 +435,7 @@ public:
   ///
   inline const T & Get (const INDEX_2 & ahash) const;
   ///
-  inline int Used (const INDEX_2 & ahash) const;
+  inline bool Used (const INDEX_2 & ahash) const;
   ///
   inline void SetData (int pos, const INDEX_2 & ahash, const T & acont);
   ///
@@ -320,6 +444,8 @@ public:
   inline void SetData (int pos, const T & acont);
   ///
   inline void GetData (int pos, T & acont) const;
+  ///
+  const T & GetData (int pos) { return cont.Get(pos); }
   ///
   inline void SetSize (int size);
   ///
@@ -359,20 +485,30 @@ public:
   BASE_INDEX_3_CLOSED_HASHTABLE (int size);
 
   int Size() const { return hash.Size(); }
-  int UsedPos (int pos) const { return ! (hash.Get(pos).I1() == invalid); }
+  bool UsedPos (int pos) const { return ! (hash.Get(pos).I1() == invalid); }
   int UsedElements () const;
 
   ///
   int HashValue (const INDEX_3 & ind) const
-    {
-      return (ind.I1() + 15 * ind.I2() + 41 * ind.I3()) % hash.Size() + 1;
-    }
-
+  {
+    return (ind.I1() + 15 * ind.I2() + 41 * ind.I3()) % hash.Size() + 1;
+  }
+  
   int Position (const INDEX_3 & ind) const
   {
+    int i = HashValue(ind);
+    while (1)
+      {
+	if (hash.Get(i) == ind) return i;
+	if (hash.Get(i).I1() == invalid) return 0;
+	i++;
+	if (i > hash.Size()) i = 1;
+      }
+    /*
     int pos = HashValue (ind);
     if (hash.Get(pos) == ind) return pos;
     return Position2 (ind);
+    */
   }
 
   // returns 1, if new postion is created
@@ -417,7 +553,7 @@ public:
   ///
   inline const T & Get (const INDEX_3 & ahash) const;
   ///
-  inline int Used (const INDEX_3 & ahash) const;
+  inline bool Used (const INDEX_3 & ahash) const;
   ///
   inline void SetData (int pos, const INDEX_3 & ahash, const T & acont);
   ///
@@ -426,6 +562,8 @@ public:
   inline void SetData (int pos, const T & acont);
   ///
   inline void GetData (int pos, T & acont) const;
+  ///
+  inline const T & GetData (int pos) const;
   ///
   inline void SetSize (int size);
   ///
@@ -502,7 +640,7 @@ inline const T & INDEX_3_HASHTABLE<T> :: Get (const INDEX_3 & ahash) const
 }
 
 template<class T>
-inline int INDEX_3_HASHTABLE<T> :: Used (const INDEX_3 & ahash) const
+inline bool INDEX_3_HASHTABLE<T> :: Used (const INDEX_3 & ahash) const
 {
   return (Position (HashValue (ahash), ahash)) ? 1 : 0;
 }
@@ -609,7 +747,7 @@ inline const T & INDEX_HASHTABLE<T> :: Get (const INDEX & ahash) const
     }
 
 template<class T>
-inline int INDEX_HASHTABLE<T> :: Used (const INDEX & ahash) const
+inline bool INDEX_HASHTABLE<T> :: Used (const INDEX & ahash) const
     {
     return (Position (HashValue (ahash), ahash)) ? 1 : 0;
     }
@@ -648,82 +786,6 @@ inline void INDEX_HASHTABLE<T> :: PrintMemInfo (ostream & ost) const
     
     
     
-    
-    
-/****************** INDEX_2_HASHTABLE ****************************/    
-    
-    
-template<class T>
-inline INDEX_2_HASHTABLE<T> :: INDEX_2_HASHTABLE (int size)
-    : BASE_INDEX_2_HASHTABLE (size), cont(size)
-    {
-      ;
-    }
-
-/*
-template<class T>
-inline void INDEX_2_HASHTABLE<T> :: Set (const INDEX_2 & ahash, const T & acont)
-    {
-    int bnr = HashValue (ahash);
-    int pos = Position (bnr, ahash);
-    if (pos)
-      cont.Set (bnr, pos, acont);
-    else
-      {
-      hash.Add (bnr, ahash);
-      cont.Add (bnr, acont);
-      }
-    }
-*/
-
-template<class T>
-inline const T & INDEX_2_HASHTABLE<T> :: Get (const INDEX_2 & ahash) const
-    {
-    int bnr = HashValue (ahash);
-    int pos = Position (bnr, ahash);
-    return cont.Get (bnr, pos);
-    }
-
-template<class T>
-inline int INDEX_2_HASHTABLE<T> :: Used (const INDEX_2 & ahash) const
-    {
-    return (Position (HashValue (ahash), ahash)) ? 1 : 0;
-    }
-
-template<class T>
-inline int INDEX_2_HASHTABLE<T> :: GetNBags () const
-    {
-    return cont.Size();
-    }
-
-template<class T>
-inline int INDEX_2_HASHTABLE<T> :: GetBagSize (int bnr) const
-    {
-    return cont.EntrySize (bnr);
-    }
-
-template<class T>
-inline void INDEX_2_HASHTABLE<T> :: GetData (int bnr, int colnr, INDEX_2 & ahash, T & acont) const
-    {
-    ahash = hash.Get(bnr, colnr);
-    acont = cont.Get(bnr, colnr);
-    }
-
-
-
-template<class T>
-inline void INDEX_2_HASHTABLE<T> :: PrintMemInfo (ostream & ost) const
-  {
-    ost << "Hash: " << endl;
-    hash.PrintMemInfo (ost);
-    ost << "Cont: " << endl;
-    cont.PrintMemInfo (ost);
-  }
-
-
-
-
-
 
 
 
@@ -764,7 +826,7 @@ Get (const INDEX_2 & ahash) const
 }
 
 template<class T>
-inline int INDEX_2_CLOSED_HASHTABLE<T> :: 
+inline bool INDEX_2_CLOSED_HASHTABLE<T> :: 
 Used (const INDEX_2 & ahash) const
 {
   int pos = Position (ahash);
@@ -866,7 +928,7 @@ Get (const INDEX_3 & ahash) const
 }
 
 template<class T>
-inline int INDEX_3_CLOSED_HASHTABLE<T> :: 
+inline bool INDEX_3_CLOSED_HASHTABLE<T> :: 
 Used (const INDEX_3 & ahash) const
 {
   int pos = Position (ahash);
@@ -901,6 +963,13 @@ inline void INDEX_3_CLOSED_HASHTABLE<T> ::
 GetData (int pos, T & acont) const
 {
   acont = cont.Get(pos);
+}
+
+template<class T>
+inline const T & INDEX_3_CLOSED_HASHTABLE<T> :: 
+GetData (int pos) const
+{
+  return cont.Get(pos);
 }
 
 

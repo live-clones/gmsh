@@ -52,7 +52,7 @@ IsIdentic (const Surface & s2, int & inv, double eps) const
   if (id)
     {
       Vec<3> n2;
-      s2.GetNormalVector(p1, n2);
+      n2 = s2.GetNormalVector(p1);
       inv = (n * n2) < 0;
     }
   return id;

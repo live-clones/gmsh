@@ -1,3 +1,6 @@
+//#include <algorithm>
+#ifdef ABC
+
 #include <mystdlib.h>
  
 #include <linalg.hpp>
@@ -165,7 +168,7 @@ SparseMatrix :: SparseMatrix (INDEX h, INDEX w)
 
 
 
-void SparseMatrix :: Mult (const BaseVector & bv, BaseVector & bprod) const
+void SparseMatrix :: Mult (const Vector & v, Vector & prod) const
   {
   double sum, vi;
   INDEX i, j, n;
@@ -173,13 +176,13 @@ void SparseMatrix :: Mult (const BaseVector & bv, BaseVector & bprod) const
   const INDEX * col;
   const double * valp;
 
-  const Vector & v = bv.CastToVector();
-  Vector & prod = bprod.CastToVector();
+  //  const Vector & v = bv.CastToVector();
+  //  Vector & prod = bprod.CastToVector();
 
-  prod.SetLength (Height());
+  prod.SetSize (Height());
 
   /*
-  if (prod.Length() != Height() || v.Length() != Width())
+  if (prod.Size() != Height() || v.Size() != Width())
     {
     (*myerr) << "SparseMatrix::Mult: Dimensions don't fit" << endl;
     return;
@@ -229,7 +232,7 @@ void SparseMatrix :: Mult (const BaseVector & bv, BaseVector & bprod) const
 
 	  
 	  linep++;
-	  prod.Set (i, sum);
+	  prod.Elem(i) = sum;
 	}
 
     }
@@ -261,18 +264,18 @@ void SparseMatrix :: Mult (const BaseVector & bv, BaseVector & bprod) const
     }
   }
 
-void SparseMatrix :: MultTrans (const BaseVector & bv, BaseVector & bprod) const
+void SparseMatrix :: MultTrans (const Vector & v, Vector & prod) const
   {
   INDEX i, j, n, coln;
-  const Vector & v = bv.CastToVector();
-  Vector & prod = bprod.CastToVector();
+  //  const Vector & v = bv.CastToVector();
+  //  Vector & prod = bprod.CastToVector();
   const INDEX * col;
   const double * valp;
   double val;
 
-  prod.SetLength (Width());
+  prod.SetSize (Width());
 
-  if (prod.Length() != Width() || v.Length() != Height())
+  if (prod.Size() != Width() || v.Size() != Height())
     {
     (*myerr) << "SparseMatrix::Mult: Dimensions don't fit" << endl;
     return;
@@ -307,8 +310,8 @@ void SparseMatrix :: MultTrans (const BaseVector & bv, BaseVector & bprod) const
 
 
 
-void SparseMatrix :: Residuum (const BaseVector & bx, const BaseVector & bb,
-      BaseVector & bres) const
+void SparseMatrix :: Residuum (const Vector & bx, const Vector & bb,
+      Vector & bres) const
   {
     BaseMatrix :: Residuum (bx, bb, bres);
     /*
@@ -320,10 +323,10 @@ void SparseMatrix :: Residuum (const BaseVector & bx, const BaseVector & bb,
   const Vector & b = bb.CastToVector();
   Vector & res = bres.CastToVector();
 
-  res.SetLength (b.Length());
+  res.SetSize (b.Size());
 
-  if (res.Length() != b.Length() || b.Length() != Height() ||
-      x.Length() != Width())
+  if (res.Size() != b.Size() || b.Size() != Height() ||
+      x.Size() != Width())
     {
     (*myerr) << "SparseMatrix::Residuum: Dimensions don't fit" << endl;
     return;
@@ -368,9 +371,9 @@ void SparseMatrix :: Residuum (const BaseVector & bx, const BaseVector & bb,
   }
 
 
-void SparseMatrix :: ResiduumTrans (const BaseVector & /* bx */, 
-				    const BaseVector & /* bb */,
-				    BaseVector & /* bres */) const
+void SparseMatrix :: ResiduumTrans (const Vector & /* bx */, 
+				    const Vector & /* bb */,
+				    Vector & /* bres */) const
   {
     cerr << "SparseMastrix :: Residuumtrans called, but not implemented" << endl;
 
@@ -383,10 +386,10 @@ void SparseMatrix :: ResiduumTrans (const BaseVector & /* bx */,
   Vector & res = bres.CastToVector();
 
 
-  res.SetLength (Width());
+  res.SetSize (Width());
 
-  if (res.Length() != b.Length() || b.Length() != Width() ||
-      x.Length() != Height())
+  if (res.Size() != b.Size() || b.Size() != Width() ||
+      x.Size() != Height())
     {
     (*myerr) << "SparseMatrix::ResiduumTrans: Dimensions don't fit" << endl;
     return;
@@ -534,7 +537,7 @@ double SparseMatrix :: RowTimesVector (INDEX i, const Vector & v) const
   int j;
 
   /*
-  if (Width() > v.Length())
+  if (Width() > v.Size())
     {
     cerr << "SparseMatrix::RowTimesVector: Size doesn't fit" << endl;
     return 0;
@@ -578,10 +581,10 @@ void SparseMatrix :: AddRowToVector (INDEX i, double s, Vector & v) const
   int coln, j;
   
 #ifdef debug  
-  if (Width() > v.Length())
+  if (Width() > v.Size())
     {
       cerr << "SparseMatrix::AddRowToVector: Size doesn't fit" 
-	   << "w = " << Width() << " len = " << v.Length() << endl;
+	   << "w = " << Width() << " len = " << v.Size() << endl;
       return;
     }
 #endif    
@@ -1550,7 +1553,7 @@ double SparseMatrix :: RowTimesVector (INDEX i, const Vector & v) const
   double sum;
   int j;
 
-  if (Width() > v.Length())
+  if (Width() > v.Size())
     {
     cerr << "SparseMatrix::RowTimesVector: Size doesn't fit" << endl;
     return 0;
@@ -1572,10 +1575,10 @@ void SparseMatrix :: AddRowToVector (INDEX i, double s, Vector & v) const
   const colstruct * col;
   int j;
 
-  if (Width() > v.Length())
+  if (Width() > v.Size())
     {
     cerr << "SparseMatrix::AddRowToVector: Size doesn't fit" 
-    	 << "w = " << Width() << " len = " << v.Length() << endl;
+    	 << "w = " << Width() << " len = " << v.Size() << endl;
     return;
     }
 
@@ -1701,3 +1704,4 @@ void SparseMatrix :: SetGraph (const class TABLE<INDEX> & graph)
 
 #endif
 }
+#endif

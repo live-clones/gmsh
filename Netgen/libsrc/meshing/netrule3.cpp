@@ -17,16 +17,14 @@ vnetrule :: vnetrule ()
 
 vnetrule :: ~vnetrule ()
 {
-  int i;
-  if (strlen(name))
-    delete name;
-  for (i = 1; i <= freefaces.Size(); i++)
+  if (strlen(name)) delete [] name;
+  for (int i = 1; i <= freefaces.Size(); i++)
     delete freefaces.Elem(i);
-  for (i = 1; i <= freesets.Size(); i++)
+  for (int i = 1; i <= freesets.Size(); i++)
     delete freesets.Elem(i);
-  for (i = 1; i <= freeedges.Size(); i++)
+  for (int i = 1; i <= freeedges.Size(); i++)
     delete freeedges.Elem(i);
-  for (i = 1; i <= freefaceinequ.Size(); i++)
+  for (int i = 1; i <= freefaceinequ.Size(); i++)
     delete freefaceinequ.Elem(i);
   delete oldutofreezone;
   delete oldutofreezonelimit;
@@ -34,8 +32,7 @@ vnetrule :: ~vnetrule ()
 
 int vnetrule :: TestFlag (char flag) const
 {
-  int i;
-  for (i = 1; i <= flags.Size(); i++)
+  for (int i = 1; i <= flags.Size(); i++)
     if (flags.Get(i) == flag) return 1;
   return 0;
 }
@@ -51,8 +48,6 @@ void vnetrule :: SetFreeZoneTransformation (const Vector & allp, int tolclass)
 
   double lam1 = 1.0/(2 * tolclass - 1);
   double lam2 = 1-lam1;
-
-  //  MARK (setfz1);
 
   transfreezone.SetSize (freezone.Size());
   

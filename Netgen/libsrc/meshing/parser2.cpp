@@ -53,7 +53,7 @@ void netrule :: LoadRule (istream & ist)
   ist.get (buf, sizeof(buf), '"');
   ist.get (ch);
 
-  delete name;
+  if(name != NULL) delete [] name;
   name = new char[strlen (buf) + 1];
   strcpy (name, buf);
   //  (*mycout) << "Rule " << name << " found." << endl;
@@ -83,9 +83,9 @@ void netrule :: LoadRule (istream & ist)
 	      noldp++;
 
 	      tolerances.SetSize (noldp);
-	      tolerances.Elem(noldp).f1 = 0;
+	      tolerances.Elem(noldp).f1 = 1.0;
 	      tolerances.Elem(noldp).f2 = 0;
-	      tolerances.Elem(noldp).f3 = 0;
+	      tolerances.Elem(noldp).f3 = 1.0;
 
 	      ist >> ch;
 	      while (ch != ';')
@@ -449,6 +449,15 @@ void netrule :: LoadRule (istream & ist)
       }
   }
 
+  oldutofreearea_i.SetSize (10);
+  for (i = 0; i < oldutofreearea_i.Size(); i++)
+    {
+      oldutofreearea_i[i] = new DenseMatrix (oldutofreearea.Height(), oldutofreearea.Width());
+      DenseMatrix & mati = *oldutofreearea_i[i];
+      for (int j = 0; j < oldutofreearea.Height(); j++)
+	for (int k = 0; k < oldutofreearea.Width(); k++)
+	  mati(j,k) = 1.0 / (i+1) * oldutofreearea(j,k) + (1 - 1.0/(i+1)) * oldutofreearealimit(j,k);
+    }
 }
 
 

@@ -225,7 +225,7 @@ void Convert ()
           i2.I2() = faces.Get(i).p2;
           break;
         }
-      if (i2.I1() > i2.I2()) Swap (i2.I1(), i2.I2());
+      if (i2.I1() > i2.I2()) swap (i2.I1(), i2.I2());
       if (edgeindex.Used (i2)) 
         edgei = edgeindex.Get(i2);
       else

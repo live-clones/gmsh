@@ -8,6 +8,7 @@
    Abstract data type HASHTABLE
 */
 
+#include <algorithm>
 #include <mystdlib.h>
 #include <myadt.hpp>
 

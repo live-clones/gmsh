@@ -13,6 +13,28 @@
 
 
 
+/**
+   Singular Face.
+   Causes a bounday layer mesh refinement.
+   All elements in subdomain domnr will get a boundary layer
+   on faces sharing the solid sol
+ */
+class SingularFace 
+{
+public:
+  int domnr;
+  const Solid *sol;
+  // ARRAY<Point<3> > points;
+  // ARRAY<INDEX_2> segms;
+public:
+  SingularFace (int adomnr, const Solid * asol)
+    : domnr(adomnr), sol(asol) { ; }
+  const Solid * GetSolid() const { return sol; }
+  int GetDomainNr () const { return domnr; }
+};
+
+
+///
 class SingularEdge 
 {
 public:
@@ -27,6 +49,7 @@ public:
 };
 
 
+///
 class SingularPoint
 {
 public:

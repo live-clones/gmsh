@@ -1,7 +1,7 @@
 #
 # Makefile for visualization library
 #
-src = stlmeshing.cpp mvdraw.cpp vscsg.cpp vsmesh.cpp vssolution.cpp meshdoc.cpp
+src = stlmeshing.cpp mvdraw.cpp vscsg.cpp vsmesh.cpp vsocc.cpp vssolution.cpp meshdoc.cpp
 #
 lib = vis
 libpath = libsrc/visualization

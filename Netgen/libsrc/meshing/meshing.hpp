@@ -10,8 +10,8 @@ namespace netgen
 {
 
   class CSGeometry;
-
-
+  
+  
 #include "msghandler.hpp"
 
 #include "meshtype.hpp"
@@ -30,15 +30,27 @@ namespace netgen
 #include "geomsearch.hpp"
 #include "adfront3.hpp"
 #include "ruler3.hpp"
+
+#ifndef SMALLLIB
+#define _INCLUDE_MORE
+#endif
+#ifdef LINUX
+#define _INCLUDE_MORE
+#endif
+
+#ifdef _INCLUDE_MORE
 #include "meshing3.hpp"
 #include "improve3.hpp"
+#endif
 #include "findip.hpp"
 
 #include "topology.hpp"
 #include "curvedelems.hpp"
 #include "clusters.hpp"
 
+#ifdef _INCLUDE_MORE
 #include "meshfunc.hpp"
+#endif
 #include "bisect.hpp"
 #include "hprefinement.hpp"
 #include "boundarylayer.hpp"

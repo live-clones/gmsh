@@ -417,11 +417,13 @@ inline Vec3d & Vec3d :: operator/= (double s)
       x[1] /= s;
       x[2] /= s;
     }
+#ifdef DEBUG
   else
     {
       cerr << "Vec div by 0, v = " << (*this) << endl;
       //      MyError ("Vec3d::operator /=: Divisioin by zero");
     }
+#endif
   return *this;
 }
 
@@ -570,6 +572,8 @@ public:
   Box3d ( const Box3d & b2 );
   ///
   Box3d (const Point3d& p1, const Point3d& p2);
+  ///
+  Box3d (const Box<3> & b2);
   ///
   double MinX () const { return minx[0]; }
   ///

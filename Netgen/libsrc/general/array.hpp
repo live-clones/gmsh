@@ -27,15 +27,15 @@ protected:
 public:
 
   /// provide size and memory
-  FlatArray (int asize, T * adata) 
+  inline FlatArray (int asize, T * adata) 
     : size(asize), data(adata) { ; }
 
   /// the size
-  int Size() const { return size; }
+  inline int Size() const { return size; }
 
 
   /// access array. 
-  T & operator[] (int i) 
+  inline T & operator[] (int i) 
   { 
 #ifdef DEBUG
     if (i-BASE < 0 || i-BASE >= size)
@@ -47,7 +47,7 @@ public:
 
 
   /// Access array. 
-  const T & operator[] (int i) const
+  inline const T & operator[] (int i) const
   {
 #ifdef DEBUG
     if (i-BASE < 0 || i-BASE >= size)
@@ -215,7 +215,13 @@ public:
   /// Delete element i (0-based). Move last element to position i.
   void Delete (int i)
   {
-    DeleteElement (i+1);
+#ifdef CHECK_ARRAY_RANGE
+    RangeCheck (i+1);
+#endif
+
+    this->data[i] = this->data[this->size-1];
+    this->size--;
+    //    DeleteElement (i+1);
   }
 
 
@@ -297,7 +303,8 @@ template <class T, int S>
 class ArrayMem : public ARRAY<T>
 {
   // T mem[S];
-  char mem[S*sizeof(T)];
+  // char mem[S*sizeof(T)];
+  double mem[(S*sizeof(T)+7) / 8];
 public:
   /// Generate array of logical and physical size asize
   explicit ArrayMem(int asize = 0)

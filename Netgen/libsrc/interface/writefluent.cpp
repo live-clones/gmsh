@@ -17,21 +17,10 @@ namespace netgen
 
 
 
-static char* CHex(int i)
-{
-  static char str[100];
-  sprintf(str,"%x",i); //hex
-  return str;
-}
-
-
-
-
 void WriteFluentFormat (const Mesh & mesh,
 			const string & filename)
 
 {
-  // Simple output 
   cout << "start writing fluent export" << endl;
       
   int np = mesh.GetNP();
@@ -46,7 +35,7 @@ void WriteFluentFormat (const Mesh & mesh,
   //outfile.setf (ios::fixed, ios::floatfield);
   //outfile.setf (ios::showpoint);
       
-  outfile << "(0 \"Exported file from NETGEN (c) Joachim Schoeberl and Johannes Gerstmayr\")" << endl;
+  outfile << "(0 \"Exported file from NETGEN \")" << endl;
   outfile << "(0 \"Dimension:\")" << endl;
   outfile << "(2 3)" << endl << endl;
 
@@ -129,7 +118,6 @@ void WriteFluentFormat (const Mesh & mesh,
 	  int eli2 = 0;
 	  int stopsig = 0;
 	      
-
 	  for (i2 = 1; i2 <= nel; i2++)
 	    {
 	      locind = locels.Get(i2);
@@ -153,8 +141,11 @@ void WriteFluentFormat (const Mesh & mesh,
 	  if (eli2 > i) //dont write faces two times!
 	    {
 	      //i: left cell, eli: right cell
-	      outfile << CHex(face.PNum(2)) << " " << CHex(face.PNum(1)) << " " << CHex(face.PNum(3)) << " ";
-	      outfile << CHex(i) << " " << CHex(eli2) << "\n";
+	      outfile << hex << face.PNum(2) << " "
+		<< hex << face.PNum(1) << " "
+		<< hex << face.PNum(3) << " "
+		<< hex << i  << " "
+		<< hex << eli2 << "\n";
 	    }
 	  if (eli2 == 0) 
 	    {
@@ -170,8 +161,10 @@ void WriteFluentFormat (const Mesh & mesh,
 
   for (i = 1; i <= surfaceelp.Size(); i++)
     {
-      outfile << CHex(surfaceelp.Get(i).I1()) << " " << CHex(surfaceelp.Get(i).I2()) << " " << CHex(surfaceelp.Get(i).I3()) << " ";
-      outfile << CHex(surfaceeli.Get(i)) << " " << 0 << "\n";
+      outfile << hex << surfaceelp.Get(i).I1() << " "
+	      << hex << surfaceelp.Get(i).I2() << " "
+	      << hex << surfaceelp.Get(i).I3() << " "
+	      << hex << surfaceeli.Get(i) << " " << 0 << "\n";
     }
 
   outfile << "))" << endl << endl;

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2004-07-03 02:28:46 geuzaine Exp $
+# $Id: Makefile,v 1.7 2004-12-08 20:01:21 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -68,6 +68,7 @@ SRC = libsrc/opti/linopt.cpp \
 	libsrc/meshing/clusters.cpp \
 	libsrc/meshing/curvedelems.cpp \
 	libsrc/meshing/curvedelems2.cpp \
+	libsrc/meshing/hprefinement.cpp \
 	libsrc/interface/nglib.cpp \
 	libsrc/gprim/geomtest3d.cpp \
 	libsrc/gprim/geom2d.cpp \
@@ -257,7 +258,7 @@ bisect.o: libsrc/meshing/bisect.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
-  libsrc/meshing/specials.hpp libsrc/interface/writeuser.hpp
+  libsrc/meshing/specials.hpp
 meshtool.o: libsrc/meshing/meshtool.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
   libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
@@ -2169,10 +2170,7 @@ genmesh.o: libsrc/csg/genmesh.cpp libsrc/include/mystdlib.h \
   libsrc/csg/explicitcurve2d.hpp libsrc/csg/gencyl.hpp \
   libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
   libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
-  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp \
-  libsrc/include/stlgeom.hpp libsrc/stlgeom/stlgeom.hpp \
-  libsrc/stlgeom/stltopology.hpp libsrc/stlgeom/stltool.hpp \
-  libsrc/stlgeom/stlline.hpp libsrc/stlgeom/meshstlsurface.hpp
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 spline3d.o: libsrc/csg/spline3d.cpp libsrc/include/mystdlib.h \
   libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
   libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \

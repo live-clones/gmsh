@@ -4,7 +4,7 @@ Sch\"oberl's NETGEN mesh generator:
 
 - only the libsrc directory was kept from the original distribution
 
-- the file meshing/improve2d.cpp was slightly modified to fix build
+- the file meshing/improve2.cpp was slightly modified to fix build
   problems on machines without TCL/TK
 
 **IMPORTANT NOTICE** 

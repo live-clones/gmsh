@@ -1,4 +1,4 @@
-// $Header: /cvsroot/gmsh/Netgen/libsrc/include/FlexLexer.h,v 1.1 2004-06-26 18:03:24 geuzaine Exp $
+// $Header: /cvsroot/gmsh/Netgen/libsrc/include/FlexLexer.h,v 1.2 2004-12-08 20:01:21 geuzaine Exp $
 
 // FlexLexer.h -- define interfaces for lexical analyzer classes generated
 //		  by flex

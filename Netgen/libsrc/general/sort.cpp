@@ -9,6 +9,7 @@
 */
 
 
+#include <algorithm>
 #include <mystdlib.h>
 #include <myadt.hpp>
 

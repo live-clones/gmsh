@@ -37,18 +37,19 @@ public:
   ~BASE_TABLE ();
   ///
   void SetSize (int size);
-  ///
+
+  /// increment size of entry i by one, i is 0-based
   void IncSize (int i, int elsize)
   {
-    if (data.Elem(i).size < data.Elem(i).maxsize)
-      data.Elem(i).size++;
+    if (data[i].size < data[i].maxsize)
+      data[i].size++;
     else
       IncSize2 (i, elsize);
   }
   ///
   void IncSize2 (int i, int elsize);
 
-  void DecSize (int i);
+  //  void DecSize (int i);
 
   ///
   void AllocateElementsOneBlock (int elemsize);
@@ -92,13 +93,21 @@ public:
   }
 
 
-  /// Inserts element acont into row i, 1-based. Does not test if already used.
+  /// Inserts element acont into row i, BASE-based. Does not test if already used.
   inline void Add (int i, const T & acont)
   {
-    IncSize (i-BASE+1, sizeof (T));
+    IncSize (i-BASE, sizeof (T));
     ((T*)data[i-BASE].col)[data[i-BASE].size-1] = acont;
   }
 
+
+  /// Inserts element acont into row i, 1-based. Does not test if already used.
+  inline void Add1 (int i, const T & acont)
+  {
+    IncSize (i-1, sizeof (T));
+    ((T*)data.Elem(i).col)[data.Elem(i).size-1] = acont;
+  }
+  
   ///
   void IncSizePrepare (int i)
   {
@@ -106,15 +115,15 @@ public:
   }
 
 
-  /// Inserts element acont into row i, 1-based. Does not test if already used.
-  inline void Add1 (int i, const T & acont)
-  {
-    IncSize (i, sizeof (T));
-    ((T*)data.Elem(i).col)[data.Elem(i).size-1] = acont;
-  }
-  
-  /// Inserts element acont into row i. Does not test if already used, assumes to have mem
+  /// Inserts element acont into row i. BASE-based. Does not test if already used, assumes to have mem
   inline void AddSave (int i, const T & acont)
+    {
+      ((T*)data[i-BASE].col)[data[i-BASE].size] = acont;
+      data[i-BASE].size++;
+    }
+
+  /// Inserts element acont into row i. 1-based. Does not test if already used, assumes to have mem
+  inline void AddSave1 (int i, const T & acont)
     {
       ((T*)data.Elem(i).col)[data.Elem(i).size] = acont;
       data.Elem(i).size++;
@@ -123,7 +132,7 @@ public:
   /// Inserts element acont into row i. Does not test if already used.
   inline void AddEmpty (int i)
   {
-    IncSize (i, sizeof (T));
+    IncSize (i-BASE, sizeof (T));
   }
 
   /** Set the nr-th element in the i-th row to acont.
@@ -153,9 +162,10 @@ public:
   inline int EntrySize (int i) const
     { return data.Get(i).size; }
 
+  /*
   inline void DecEntrySize (int i)
     { DecSize(i); }
-
+  */
   void AllocateElementsOneBlock ()
     { BASE_TABLE::AllocateElementsOneBlock (sizeof(T)); }
 

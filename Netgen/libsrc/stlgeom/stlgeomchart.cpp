@@ -17,7 +17,7 @@ int chartdebug = 0;
 
 
 
-void STLGeometry :: MakeAtlas(class Mesh & mesh)
+void STLGeometry :: MakeAtlas(Mesh & mesh)
 {
 
   double h, h2;

@@ -16,7 +16,7 @@ namespace netgen
 
 
 
-extern CSGeometry * geometry;
+extern AutoPtr<CSGeometry> geometry;
 
 
 VisualSceneGeometry :: VisualSceneGeometry ()

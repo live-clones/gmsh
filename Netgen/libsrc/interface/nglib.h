@@ -13,8 +13,6 @@
   
 */
 
-
-
 /// Data type for NETGEN mesh
 typedef void * Ng_Mesh;
 
@@ -34,7 +32,7 @@ typedef void * Ng_STL_Geometry;
 
 // implemented element types:
 enum Ng_Volume_Element_Type { NG_TET = 1, NG_PYRAMID = 2, NG_PRISM = 3,
-			      NG_TET10 = 4 };
+				 NG_TET10 = 4 };
 
 // max number of nodes per surface element
 #define NG_SURFACE_ELEMENT_MAXPOINTS 6
@@ -53,6 +51,7 @@ class Ng_Meshing_Parameters
   double fineness;   // 0 .. coarse, 1 .. fine
   int secondorder;
   char * meshsize_filename;
+  int quad_dominated;
 
   Ng_Meshing_Parameters();
 };
@@ -69,10 +68,10 @@ enum Ng_Result { NG_OK = 0,
 
 
 
-#ifdef __cplusplus
-extern "C" 
-{
-#endif
+// #ifdef __cplusplus
+// extern "C" 
+// {
+// #endif
   
   // initialize, deconstruct Netgen library:
   void Ng_Init ();
@@ -115,7 +114,8 @@ extern "C"
   // generates volume mesh from surface mesh
   Ng_Result Ng_GenerateVolumeMesh (Ng_Mesh * mesh, Ng_Meshing_Parameters * mp);
 
-  void Ng_SaveMesh(Ng_Mesh * mesh, char* filename);
+  void Ng_SaveMesh(Ng_Mesh * mesh, const char* filename);
+  Ng_Mesh * Ng_LoadMesh(const char* filename);
 
 
 
@@ -147,14 +147,16 @@ extern "C"
 
 
   // load 2d netgen spline geometry
-  Ng_Geometry_2D * Ng_LoadGeometry_2D (char * filename);
+  Ng_Geometry_2D * Ng_LoadGeometry_2D (const char * filename);
 
   // generate 2d mesh, mesh is allocated by function
   Ng_Result Ng_GenerateMesh_2D (Ng_Geometry_2D * geom,
 				Ng_Mesh ** mesh,
 				Ng_Meshing_Parameters * mp);
   
-
+  void Ng_HP_Refinement (Ng_Geometry_2D * geom,
+			 Ng_Mesh * mesh,
+			 int levels);
   
 
 
@@ -166,7 +168,7 @@ extern "C"
 
 
   // loads geometry from STL file
-  Ng_STL_Geometry * Ng_STL_LoadGeometry (char * filename, int binary = 0);
+  Ng_STL_Geometry * Ng_STL_LoadGeometry (const char * filename, int binary = 0);
 
 
   // generate new STL Geometry
@@ -198,9 +200,9 @@ extern "C"
 					Ng_Mesh * mesh,
 					Ng_Meshing_Parameters * mp);
 
-#ifdef __cplusplus
-  }
-#endif
+// #ifdef __cplusplus
+//  }
+// #endif
 
 
 #endif

@@ -115,8 +115,15 @@ inline void CalcInverse (const Mat<2,3> & m, Mat<3,2> & inv)
   inv = Trans (m) * ainv;
 }
 
-// void CalcInverse (const Mat<3,2> & m, Mat<2,3> & inv);
+void CalcInverse (const Mat<3,2> & m, Mat<2,3> & inv);
 
+inline void CalcInverse (const Mat<3,2> & m, Mat<2,3> & inv)
+{
+  Mat<2,2> a = Trans (m) * m;
+  Mat<2,2> ainv;
+  CalcInverse (a, ainv);
+  inv = ainv * Trans (m);
+}
 
 
 double Det (const Mat<2,2> & m);

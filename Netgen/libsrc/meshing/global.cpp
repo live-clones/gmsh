@@ -3,10 +3,10 @@
 
 namespace netgen
 {
-  ostream * testout;
+  ostream * testout = &cout;
 
-  ostream * mycout;
-  ostream * myerr;
+  ostream * mycout = &cout;
+  ostream * myerr = &cerr;
 
 
   // Flags globflags; // not used anymoure

@@ -20,14 +20,32 @@
 #include <geometry2d.hpp>
 #include <meshing.hpp>
 
+
+
 // #include <FlexLexer.h>
 
+namespace netgen {
+  extern void MeshFromSpline2D (SplineGeometry2d & geometry,
+				Mesh *& mesh, 
+				MeshingParameters & mp);
+}
+
+
+
+
+
+
+
+namespace nglib {
 #include "nglib.h"
+}
 
 using namespace netgen;
 
 // constants and types:
 
+namespace nglib
+{
 // initialize, deconstruct Netgen library:
 void Ng_Init ()
 {
@@ -164,7 +182,7 @@ Ng_Result Ng_GenerateVolumeMesh (Ng_Mesh * mesh, Ng_Meshing_Parameters * mp)
 
   MeshVolume (mparam, *m);
   RemoveIllegalElements (*m);
-  OptimizeVolume (mparam, *m, NULL);
+  OptimizeVolume (mparam, *m);
 
   return NG_OK;
 }
@@ -242,27 +260,23 @@ void Ng_GetSegment_2D (Ng_Mesh * mesh, int num, int * pi, int * matnum)
 
 
 
-Ng_Geometry_2D * Ng_LoadGeometry_2D (char * filename)
+
+Ng_Geometry_2D * Ng_LoadGeometry_2D (const char * filename)
 {
   SplineGeometry2d * geom = new SplineGeometry2d();
   geom -> Load (filename);
   return (Ng_Geometry_2D *)geom;
 }
 
-namespace netgen {
-  extern void MeshFromSpline2D (SplineGeometry2d & geometry,
-				Mesh *& mesh, 
-				MeshingParameters & mp);
-}
-
-
 Ng_Result Ng_GenerateMesh_2D (Ng_Geometry_2D * geom,
 			      Ng_Mesh ** mesh,
 			      Ng_Meshing_Parameters * mp)
 {
-  MeshingParameters mparam;
+  // use global variable mparam
+  //  MeshingParameters mparam;  
   mparam.maxh = mp->maxh;
   mparam.meshsizefilename = mp->meshsize_filename;
+  mparam.quad = mp->quad_dominated;
 
   Mesh * m;
   MeshFromSpline2D (*(SplineGeometry2d*)geom, m, mparam);
@@ -270,8 +284,18 @@ Ng_Result Ng_GenerateMesh_2D (Ng_Geometry_2D * geom,
   cout << m->GetNSE() << " elements, " << m->GetNP() << " points" << endl;
   
   *mesh = (Ng_Mesh*)m;
+  return NG_OK;
 }
 
+
+
+void Ng_HP_Refinement (Ng_Geometry_2D * geom,
+		       Ng_Mesh * mesh,
+		       int levels)
+{
+  Refinement2d ref(*(SplineGeometry2d*)geom);
+  HPRefinement (*(Mesh*)mesh, &ref, levels);
+}
 
 
 
@@ -288,13 +312,20 @@ Ng_Result Ng_GenerateMesh_2D (Ng_Geometry_2D * geom,
 ARRAY<STLReadTriangle> readtrias; //only before initstlgeometry
 ARRAY<Point<3> > readedges; //only before init stlgeometry
  
-void Ng_SaveMesh(Ng_Mesh * mesh, char* filename)
+void Ng_SaveMesh(Ng_Mesh * mesh, const char* filename)
 {
   ((Mesh*)mesh)->Save(filename);
 }
 
+Ng_Mesh * Ng_LoadMesh(const char* filename)
+{
+  Mesh * mesh = new Mesh;
+  mesh->Load(filename);
+  return ( (Ng_Mesh*)mesh );
+}
+
 // loads geometry from STL file
-Ng_STL_Geometry * Ng_STL_LoadGeometry (char * filename, int binary)
+Ng_STL_Geometry * Ng_STL_LoadGeometry (const char * filename, int binary)
 {
   int i;
   STLGeometry geom;
@@ -387,12 +418,15 @@ Ng_Result Ng_STL_MakeEdges (Ng_STL_Geometry * geom,
 		   stlgeometry->GetBoundingBox().PMax() + Vec3d(10, 10, 10),
 		   0.3);
 
+  me -> LoadLocalMeshSize (mp->meshsize_filename);
+  /*
   if (mp->meshsize_filename)
     {
       ifstream infile (mp->meshsize_filename);
       if (!infile.good()) return NG_FILE_NOT_FOUND;
       me -> LoadLocalMeshSize (infile);
     }
+  */
 
   STLMeshing (*stlgeometry, *me);
   
@@ -496,10 +530,11 @@ Ng_Meshing_Parameters :: Ng_Meshing_Parameters()
   fineness = 0.5;
   secondorder = 0;
   meshsize_filename = 0;
+  quad_dominated = 0;
 }
 
 
-
+}
 
 
 // compatibility functions:

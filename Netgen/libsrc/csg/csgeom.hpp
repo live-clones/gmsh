@@ -104,6 +104,9 @@ private:
   /// bounding box of geometry
   Box<3> boundingbox;
 
+  /// bounding box, if not set by input file
+  static Box<3> default_boundingbox;
+
   /// identic surfaces are stored by pair of indizes, val = inverse
   INDEX_2_HASHTABLE<int> identicsurfaces;
   ARRAY<int> isidenticto;
@@ -130,10 +133,12 @@ public:
 
   void AddSurface (Surface * surf);
   void AddSurface (char * name, Surface * surf);
+  void AddSurfaces (Primitive * prim);
 
   int GetNSurf () const { return surfaces.Size(); }
   const Surface * GetSurface (const char * name) const;
-  const Surface * GetSurface (int i) const;
+  const Surface * GetSurface (int i) const
+  { return surfaces[i]; }
 
   void SetSolid (const char * name, Solid * sol);
   const Solid * GetSolid (const char * name) const;
@@ -145,22 +150,21 @@ public:
 
   void SetFlags (const char * solidname, const Flags & flags);
 
-  /*
-  ///
-  void FindMainSolids ();
-  ///
-  int GetNMainSolids () const
-    { return mainsolids.Size(); }
-  ///
-  const Solid* MainSolid(int i) const
-    { return mainsolids.Get(i); }
-  */
 
-
-  int GetNTopLevelObjects () const { return toplevelobjects.Size(); }
+  int GetNTopLevelObjects () const
+  { return toplevelobjects.Size(); }
   int SetTopLevelObject (Solid * sol, Surface * surf = NULL);
-  void GetTopLevelObject (int nr, Solid *& sol, Surface *& surf);
-  void GetTopLevelObject (int nr, const Solid *& sol, const Surface *& surf) const;
+  void GetTopLevelObject (int nr, Solid *& sol, Surface *& surf)
+  {
+    sol = toplevelobjects[nr]->GetSolid();
+    surf = toplevelobjects[nr]->GetSurface();
+  }
+  void GetTopLevelObject (int nr, const Solid *& sol, const Surface *& surf) const
+  {
+    sol = toplevelobjects[nr]->GetSolid();
+    surf = toplevelobjects[nr]->GetSurface();
+  }
+
   TopLevelObject * GetTopLevelObject (const Solid * sol, const Surface * surf = NULL);
   TopLevelObject * GetTopLevelObject (int nr)
   { return toplevelobjects[nr]; }
@@ -178,6 +182,7 @@ public:
   
 
   // quick implementations:
+  ARRAY<SingularFace*> singfaces;
   ARRAY<SingularEdge*> singedges;
   ARRAY<SingularPoint*> singpoints;
   ARRAY<Identification*> identifications;
@@ -203,6 +208,7 @@ public:
   ///
   int GetSurfaceClassRepresentant (int si) const
     { return isidenticto[si]; }
+
   ///
   const TriangleApproximation * GetTriApprox (int msnr)
   {
@@ -222,7 +228,17 @@ public:
 			     TriangleApproximation & tams);
 
   const Box<3> & BoundingBox () const { return boundingbox; }
-  void SetBoundingBox (const Box<3> & abox);
+
+  void SetBoundingBox (const Box<3> & abox)
+  {
+    boundingbox = abox;
+  }
+
+
+  static void SetDefaultBoundingBox (const Box<3> & abox)
+  {
+    default_boundingbox = abox;
+  }
 
   double MaxSize () const;
 

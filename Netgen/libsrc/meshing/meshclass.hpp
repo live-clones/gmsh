@@ -16,6 +16,9 @@
 enum resthtype { RESTRICTH_FACE, RESTRICTH_EDGE, 
 		 RESTRICTH_SURFACEELEMENT, RESTRICTH_POINT, RESTRICTH_SEGMENT };
 
+class HPRefElement;
+
+
 /// 2d/3d mesh
 class Mesh
 {
@@ -33,7 +36,7 @@ private:
   /// point coordinates
   T_POINTS points;
   /// type of point, is set in calcsurfacesofnode
-  ARRAY<POINTTYPE,PointIndex::BASE> ptyps;
+  //  ARRAY<POINTTYPE,PointIndex::BASE> ptyps;
   /// type of element, set in calcsurfacesofnode
   ARRAY<ELEMENTTYPE> eltyps;
 
@@ -52,9 +55,10 @@ private:
   /// boundary edges  (1..normal bedge, 2..segment)
   INDEX_2_CLOSED_HASHTABLE<int> * boundaryedges;
   ///
-  INDEX_2_HASHTABLE<int> * segmentht;
+  INDEX_2_CLOSED_HASHTABLE<int> * segmentht;
   ///
-  INDEX_3_HASHTABLE<int> * surfelementht;
+  INDEX_3_CLOSED_HASHTABLE<int> * surfelementht;
+
   /// faces of rest-solid
   ARRAY<Element2d> openelements;
   /// open segmenets for surface meshing  
@@ -81,7 +85,7 @@ private:
   ARRAY<char*> materials;
 
   /// Periodic surface, close surface, etc. identifications
-  Identifications ident;
+  Identifications * ident;
 
 
   /// number of vertices (if < 0, use np)
@@ -112,6 +116,10 @@ private:
 
 
 public:
+
+  // store coarse mesh before hp-refinement
+  ARRAY<HPRefElement> * hpelements;
+  Mesh * coarsemesh;
   
   
   /// number of refinement levels
@@ -130,6 +138,8 @@ public:
   ///
   ~Mesh();
 
+  Mesh & operator= (const Mesh & mesh2);
+  
   ///
   void DeleteMesh();
   
@@ -170,12 +180,17 @@ public:
   const MeshPoint & operator[] (PointIndex pi) const { return points[pi]; }
   MeshPoint & operator[] (PointIndex pi) { return points[pi]; }
 
+  /*
   POINTTYPE PointType (int i) const { return ptyps.Get(i); }
   POINTTYPE PointType (PointIndex pi) const { return ptyps[pi]; }
+  */
+  POINTTYPE PointType (int i) const { return points.Get(i).Type(); }
+  POINTTYPE PointType (PointIndex pi) const { return points[pi].Type(); }
+
 
   const T_POINTS & Points() const { return points; }
   T_POINTS & Points() { return points; }
-  ARRAY<POINTTYPE,PointIndex::BASE> & PointTypes() { return ptyps; }
+  // ARRAY<POINTTYPE,PointIndex::BASE> & PointTypes() { return ptyps; }
 
 
 
@@ -192,11 +207,11 @@ public:
   int GetNSeg () const { return segments.Size(); }
   Segment & LineSegment(int i) { return segments.Elem(i); }
   const Segment & LineSegment(int i) const { return segments.Get(i); }
-  
-  const Segment & operator[] (SegmentIndex si) const
-  { return segments[si]; }
-  Segment & operator[] (SegmentIndex si)
-  { return segments[si]; }
+
+  Segment & LineSegment(SegmentIndex si) { return segments[si]; }
+  const Segment & LineSegment(SegmentIndex si) const { return segments[si]; }
+  const Segment & operator[] (SegmentIndex si) const { return segments[si]; }
+  Segment & operator[] (SegmentIndex si) { return segments[si]; }
 
 
 
@@ -344,9 +359,11 @@ public:
   /// number of elements per radius
   void CalcLocalHFromSurfaceCurvature(double elperr);
   ///
+  void CalcLocalHFromPointDistances(void);
+  ///
   void RestrictLocalH (resthtype rht, int nr, double loch);
   ///
-  void LoadLocalMeshSize (istream & ist);
+  void LoadLocalMeshSize (const char * meshsizefilename);
   ///
   void SetGlobalH (double h);
   ///
@@ -401,15 +418,25 @@ public:
     return segmentht->Used (i2);
   }
 
+  SegmentIndex SegmentNr (PointIndex pi1, PointIndex pi2) const
+  {
+    INDEX_2 i2 (pi1, pi2);
+    i2.Sort();
+    return segmentht->Get (i2);
+  }
+
+
   /**
      Remove unused points. etc.
   */
   void Compress ();
 
   ///
-  void Save (const char * filename) const;
+  void Save (const string & filename) const;
   ///
-  void Load (const char * filename);
+  void Load (const string & filename);
+  ///
+  void Merge (const string & filename);
 
 
   ///
@@ -470,7 +497,9 @@ public:
   void BuildElementSearchTree ();
   /// gives element of point, barycentric coordinates
   int GetElementOfPoint (const Point3d & p,
-			 double * lami) const;
+			 double * lami,
+			 bool build_searchtree = 0,
+			 const int index = -1) const;
 
   /// give list of vol elements which are int the box(p1,p2)
   void GetIntersectingVolEls(const Point3d& p1, const Point3d& p2, 
@@ -529,9 +558,9 @@ public:
 #endif
 
   /// return periodic, close surface etc. identifications
-  Identifications & GetIdentifications () { return ident; }
+  Identifications & GetIdentifications () { return *ident; }
   /// return periodic, close surface etc. identifications
-  const Identifications & GetIdentifications () const { return ident; }
+  const Identifications & GetIdentifications () const { return *ident; }
 
 
 

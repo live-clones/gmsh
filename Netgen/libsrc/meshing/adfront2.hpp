@@ -192,7 +192,8 @@ public:
   ///
   int SelectBaseLine (Point3d & p1, Point3d & p2, 
 		      const PointGeomInfo *& geominfo1,
-		      const PointGeomInfo *& geominfo2);
+		      const PointGeomInfo *& geominfo2,
+		      int & qualclass);
 
   ///
   int GetLocals (int baseline, 

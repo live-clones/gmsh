@@ -41,7 +41,7 @@ public:
   virtual int CalcPointGeomInfo(PointGeomInfo& gi, const Point3d& /*p3*/) const
     { gi.trignum = 1; return 1;};
 
-  virtual int CalcPointGeomInfo(int surfind, PointGeomInfo& gi, const Point3d& p3) const
+  virtual int CalcPointGeomInfo(int /* surfind */, PointGeomInfo& gi, const Point3d& p3) const
     { return CalcPointGeomInfo (gi, p3); }
 
   ///

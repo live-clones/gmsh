@@ -35,6 +35,7 @@
 #include "TopExp.hxx"
 #include "gp_Pnt.hxx"
 #include "TopoDS.hxx"
+#include "TopoDS_Solid.hxx"
 #include "TopExp_Explorer.hxx"
 #include "BRep_Tool.hxx"
 #include "Geom_Curve.hxx"
@@ -51,8 +52,10 @@
 #include "BRepBuilderAPI_MakeShell.hxx"
 #include "BRepBuilderAPI_MakeSolid.hxx"
 #include "BRepOffsetAPI_Sewing.hxx"
+#include "BRepLProp_CLProps.hxx"
 #include "BRepLProp_SLProps.hxx"
 #include "BRepAdaptor_Surface.hxx"
+#include "BRepAdaptor_Curve.hxx"
 #include "Poly_Triangulation.hxx"
 #include "Poly_Array1OfTriangle.hxx"
 #include "TColgp_Array1OfPnt2d.hxx"
@@ -63,114 +66,209 @@
 #include "STEPControl_Reader.hxx"
 #include "TopoDS_Shape.hxx"
 #include "TopoDS_Face.hxx"
-
-
+#include "IGESToBRep_Reader.hxx"
+#include "Interface_Static.hxx"
+#include "GeomAPI_ExtremaCurveCurve.hxx"
+#include "Standard_ErrorHandler.hxx"
+#include "Standard_Failure.hxx"
+#include "ShapeUpgrade_ShellSewing.hxx"
+#include "ShapeFix_Shape.hxx"
+#include "ShapeFix_Wireframe.hxx"
+#include "BRepMesh.hxx"
+#include "BRepMesh_IncrementalMesh.hxx"
+#include "BRepBndLib.hxx"
+#include "Bnd_Box.hxx"
+#include "ShapeAnalysis.hxx"
+#include "ShapeBuild_ReShape.hxx"
+#include "IGESControl_Writer.hxx"
+#include "STEPControl_Writer.hxx"
+#include "StlAPI_Writer.hxx"
+#include "STEPControl_StepModelType.hxx"
 
 namespace netgen
 {
 
+#include "../visualization/vispar.hpp"
+  //  class VisualizationParameters;
+  //  extern VisualizationParameters vispar;
+
+
 #include "occmeshsurf.hpp"
 
+#define PROJECTION_TOLERANCE 1e-10
+
+
+#define ENTITYISVISIBLE 1
+#define ENTITYISHIGHLIGHTED 2
+#define ENTITYISDRAWABLE 4
+
+class EntityVisualizationCode
+{
+  int code;
+
+public:
+
+  EntityVisualizationCode()
+  { code = ENTITYISVISIBLE + !ENTITYISHIGHLIGHTED + ENTITYISDRAWABLE; }
+
+  int IsVisible ()
+  { return code & ENTITYISVISIBLE; }
+
+  int IsHighlighted ()
+  { return code & ENTITYISHIGHLIGHTED; }
+
+  int IsDrawable ()
+  { return code & ENTITYISDRAWABLE; }
+
+  void Show ()
+  { code |= ENTITYISVISIBLE; }
+
+  void Hide ()
+  { code &= ~ENTITYISVISIBLE; }
+
+  void Highlight ()
+  { code |= ENTITYISHIGHLIGHTED; }
+
+  void Lowlight ()
+  { code &= ~ENTITYISHIGHLIGHTED; }
+
+  void SetDrawable ()
+  { code |= ENTITYISDRAWABLE; }
+
+  void SetNotDrawable ()
+  { code &= ~ENTITYISDRAWABLE; }
+};
+
+
+
+inline double Det3 (double a00, double a01, double a02,
+		    double a10, double a11, double a12,
+		    double a20, double a21, double a22)
+{
+  return a00*a11*a22 + a01*a12*a20 + a10*a21*a02 - a20*a11*a02 - a10*a01*a22 - a21*a12*a00;
+}
+
+
+
+#define OCCGEOMETRYVISUALIZATIONNOCHANGE   0
+#define OCCGEOMETRYVISUALIZATIONFULLCHANGE 1
+  // == compute transformation matrices and redraw
+#define OCCGEOMETRYVISUALIZATIONHALFCHANGE 2
+  // == redraw
 
 class OCCGeometry
 {
+  Point<3> center;
+
 public:
   TopoDS_Shape shape;
-  TopTools_IndexedMapOfShape fmap, emap, vmap;
-  double maxsize;
+  TopTools_IndexedMapOfShape fmap, emap, vmap, somap, shmap, wmap;
+  Box<3> boundingbox;
 
-  bool changed;
+  int changed; 
+  ARRAY<int> facemeshstatus;
+
+  ARRAY<EntityVisualizationCode> fvispar, evispar, vvispar;
+
+  double tolerance;
+  bool fixsmalledges;
+  bool fixspotstripfaces;
+  bool sewfaces;
+  bool makesolids;
 
 
   OCCGeometry()
   {
+    somap.Clear();
+    shmap.Clear();
     fmap.Clear();
+    wmap.Clear();
     emap.Clear();
     vmap.Clear();
   }
 
 
-  void BuildFMap()
-  {
-    TopExp_Explorer exp0, exp1, exp2, exp3;
-    maxsize = 0;
+  void BuildFMap();
 
-    /*    
-    for (exp3.Init(shape, TopAbs_EDGE); exp3.More(); exp3.Next())
-      {
-	TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
-	(*testout) << edge.Orientation() << endl;
-	if (emap.FindIndex(edge) < 1)
-	  emap.Add (edge);
-      }
-    */
-   
+  Box<3> GetBoundingBox()
+  { return boundingbox; }
 
-    for (exp0.Init(shape, TopAbs_SOLID); exp0.More(); exp0.Next())
-      for (exp1.Init(exp0.Current(), TopAbs_SHELL); exp1.More(); exp1.Next())
-	{
-	  TopoDS_Shape shell = exp1.Current().Composed (exp0.Current().Orientation());
+  int NrSolids()
+  { return somap.Extent(); }
 
-	  for (exp2.Init(shell, TopAbs_FACE); exp2.More(); exp2.Next())
-	    {
-	      fmap.Add (exp2.Current().Composed(shell.Orientation()));
-	      
-	      for (exp3.Init(exp2.Current(), TopAbs_EDGE); exp3.More(); exp3.Next())
-		{
-		  TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
-		  if (emap.FindIndex(edge) < 1)
-		    emap.Add (edge);
-		  /*
-		  else
-		    {
-		      cout << edge.Orientation() << " = " << emap(emap.FindIndex(edge)).Orientation() << endl;
-		    }
-		  */
-		}
-	      
-	      for (exp3.Init(exp2.Current(), TopAbs_VERTEX); exp3.More(); exp3.Next())
-		{
-		  TopoDS_Vertex vertex = TopoDS::Vertex(exp3.Current());
-		  if (vmap.FindIndex(vertex) < 1)
-		    {
-		      vmap.Add (vertex);
-		      
-		      gp_Pnt p = BRep_Tool::Pnt(vertex);
-		      maxsize = max (maxsize, fabs(p.X()));
-		      maxsize = max (maxsize, fabs(p.Y()));
-		      maxsize = max (maxsize, fabs(p.Y()));
-		    }
-		}
-	    }
-	}
-    maxsize *= 2;
-  }
+  void SetCenter()
+  { center = boundingbox.Center(); }
 
-
-  double MaxSize()
-  {
-    return maxsize;
-  }
-
-
+  Point<3> Center()
+  { return center; }
 
   void Project (int surfi, Point<3> & p) const
   {
     static int cnt = 0;
-    if (cnt++ % 1000 == 0) cout << "Project cnt = " << cnt << endl;
+    if (++cnt % 1000 == 0) cout << "Project cnt = " << cnt << endl;
 
     gp_Pnt pnt(p(0), p(1), p(2));
 
     GeomAPI_ProjectPointOnSurf proj(pnt, BRep_Tool::Surface(TopoDS::Face(fmap(surfi))));
-    pnt = proj.NearestPoint();
-    p = Point<3> (pnt.X(), pnt.Y(), pnt.Z());
+    if (proj.NbPoints() == 0)
+      {
+	cout << "Projection fails" << endl;
+      }
+    else
+      {
+	pnt = proj.NearestPoint();
+	p = Point<3> (pnt.X(), pnt.Y(), pnt.Z());
+      }
   }
 
+  bool FastProject (int surfi, Point<3> & ap, double& u, double& v) const;
+
+ 
+  OCCSurface GetSurface (int surfi)
+  {
+    cout << "OCCGeometry::GetSurface using PLANESPACE" << endl;
+    return OCCSurface (TopoDS::Face(fmap(surfi)), PLANESPACE);
+  }
+  
+
+  void BuildVisualizationMesh ();
+
+  void RecursiveTopologyTree (const TopoDS_Shape & sh,
+			      stringstream & str,
+			      TopAbs_ShapeEnum l,
+			      bool free,
+			      const char * lname);
+
+  void GetTopologyTree (stringstream & str);
+
+  void PrintNrShapes ();
+
+  void CheckIrregularEntities (stringstream & str);
+
+  void SewFaces();
+
+  void MakeSolid();
+
+  void HealGeometry();
+
+  void LowLightAll()
+  {
+    for (int i = 1; i <= fmap.Extent(); i++)
+      fvispar[i-1].Lowlight();
+    for (int i = 1; i <= emap.Extent(); i++)
+      evispar[i-1].Lowlight();
+    for (int i = 1; i <= vmap.Extent(); i++)
+      vvispar[i-1].Lowlight();
+  }
+
+  void GetUnmeshedFaceInfo (stringstream & str);
+  void GetNotDrawableFaces (stringstream & str);
+  bool ErrorInSurfaceMeshing ();
 };
 
 
 void PrintContents (OCCGeometry * geom);
-void HealGeometry (OCCGeometry * geom);
+
 OCCGeometry * LoadOCC_IGES (const char * filename);
 OCCGeometry * LoadOCC_STEP (const char * filename);
 

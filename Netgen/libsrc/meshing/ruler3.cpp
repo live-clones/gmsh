@@ -65,7 +65,6 @@ int Meshing3 :: ApplyRules
  )
 
 {
-  //  const int rotsym = 3;
   int i, j, k, ri, nfok, npok, incnpok, refpi, locpi, locfi, locfr;
   int hi, minn, hpi;
   float hf, err, minerr, teterr, minteterr;

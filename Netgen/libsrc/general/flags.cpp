@@ -27,10 +27,10 @@ namespace netgen
   
   void Flags :: DeleteFlags ()
   {
-    int i;
-
-    for (i = 1; i <= strflags.Size(); i++)
-      delete strflags.Elem(i);
+    for (int i = 0; i < strflags.Size(); i++)
+      delete [] strflags[i];
+    for (int i = 0; i < numlistflags.Size(); i++)
+      delete numlistflags[i];
     strflags.DeleteAll();
     numflags.DeleteAll();
     defflags.DeleteAll();

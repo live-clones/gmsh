@@ -90,8 +90,8 @@ public:
   virtual void Project (Point<3> & p) const;
 
 
-  virtual int IsIdentic (const Surface & s2, int & inv, 
-			 double eps) const
+  virtual int IsIdentic (const Surface & /* s2 */, int & /* inv */, 
+			 double /* eps */) const
   { return 0; }
   
   ///
@@ -120,7 +120,8 @@ public:
   /**
     Returns outer normal vector.
    */
-  virtual void GetNormalVector (const Point<3> & p, Vec<3> & n) const;
+  // virtual void GetNormalVector (const Point<3> & p, Vec<3> & n) const;
+  virtual Vec<3> GetNormalVector (const Point<3> & p) const;
 
   /**
     Upper bound for spectral norm of Hesse-matrix
@@ -181,9 +182,9 @@ public:
      Gets Approximation by triangles,
      where qual is about the number of triangles per radius
   */
-  virtual void GetTriangleApproximation (TriangleApproximation & tas, 
-					 const Box<3> & boundingbox, 
-					 double facets) const { };
+  virtual void GetTriangleApproximation (TriangleApproximation & /* tas */, 
+					 const Box<3> & /* boundingbox */, 
+					 double /* facets */ ) const { };
 
 #ifdef MYGRAPH  
   ///

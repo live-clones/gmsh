@@ -1,3 +1,5 @@
+#ifdef NONE
+
 #ifndef FILE_SPARSMAT
 #define FILE_SPARSMAT
 
@@ -86,15 +88,15 @@ public:
 
 
   /// prod = matrix x v
-  virtual void Mult (const BaseVector & v, BaseVector & prod) const;
+  virtual void Mult (const Vector & v, Vector & prod) const;
   /// prod = matrix^T x v
-  virtual void MultTrans (const BaseVector & v, BaseVector & prod) const;
+  virtual void MultTrans (const Vector & v, Vector & prod) const;
   /// res = b - mat x x
-  virtual void Residuum (const BaseVector & x, const BaseVector & b, 
-			 BaseVector & res) const;
+  virtual void Residuum (const Vector & x, const Vector & b, 
+			 Vector & res) const;
   /// res = b - mat^T x x
-  virtual void ResiduumTrans (const BaseVector & x, const BaseVector & b,
-			      BaseVector & res) const;
+  virtual void ResiduumTrans (const Vector & x, const Vector & b,
+			      Vector & res) const;
 
 
   /**
@@ -257,5 +259,7 @@ protected:
   virtual int CreatePosition (INDEX i, INDEX j);
 };
 
+
+#endif
 
 #endif

@@ -17,15 +17,21 @@ namespace netgen
 #include "solid.hpp"
 #include "identify.hpp"
 #include "singularref.hpp"
-
 #include "csgeom.hpp"
-#include "triapprox.hpp"
 
+#ifndef SMALLLIB
+#define _INCLUDE_MORE
+#endif
+#ifdef LINUX
+#define _INCLUDE_MORE
+#endif
+
+#ifdef _INCLUDE_MORE
+#include "triapprox.hpp"
 
 #include "algprim.hpp"
 #include "brick.hpp"
 #include "spline3d.hpp"
-// #include "spline2d.hpp"
 #include "manifold.hpp"
 #include "curve2d.hpp"
 #include "explicitcurve2d.hpp"
@@ -33,11 +39,10 @@ namespace netgen
 #include "polyhedra.hpp"
 #include "extrusion.hpp"
 #include "revolution.hpp"
-
-// #include "geom2dmesh.hpp"
 #include "specpoin.hpp"
 #include "edgeflw.hpp"
-#include "meshsurf.hpp" 
+#include "meshsurf.hpp"
+#endif
 }
 
 #endif

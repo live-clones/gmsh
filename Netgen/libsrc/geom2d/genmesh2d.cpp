@@ -22,6 +22,8 @@ namespace netgen
     int i, j, domnr;
     double elto0, minx, miny, maxx, maxy;
 
+    //    mp.Print(*testout);
+
     PointIndex pi;
     SegmentIndex si;
     SurfaceElementIndex sei;
@@ -43,13 +45,30 @@ namespace netgen
 
     geometry.PartitionBoundary (h, *mesh);
 
+    for (i = 0; i < geometry.GetNP(); i++)
+      if (geometry.GetPoint(i).hpref)
+	{
+	  double mindist = 1e99;
+	  PointIndex mpi;
+	  Point<2> gp = geometry.GetPoint(i);
+	  Point<3> gp3(gp(0), gp(1), 0);
+	  for (PointIndex pi = PointIndex::BASE; 
+	       pi < mesh->GetNP()+PointIndex::BASE; pi++)
+	    if (Dist2(gp3, (*mesh)[pi]) < mindist)
+	      {
+		mpi = pi;
+		mindist = Dist2(gp3, (*mesh)[pi]);
+	      }
+	  (*mesh)[mpi].SetSingular();
+	}
+
+
     int maxdomnr = 0;
     for (si = 0; si < mesh->GetNSeg(); si++)
       {
 	if ( (*mesh)[si].domin > maxdomnr) maxdomnr = (*mesh)[si].domin;
 	if ( (*mesh)[si].domout > maxdomnr) maxdomnr = (*mesh)[si].domout;
       }
-  
 
     mesh->ClearFaceDescriptors();
     for (i = 1; i <= maxdomnr; i++)
@@ -111,10 +130,15 @@ namespace netgen
 
     mp.optsteps2d = hsteps;
 
-
-
     mesh->Compress();
     mesh -> SetNextMajorTimeStamp();
+
+
+#ifdef OPENGL
+    extern void Render();
+    Render();
+#endif
+
   }
 
 

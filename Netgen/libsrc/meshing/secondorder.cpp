@@ -19,24 +19,30 @@ namespace netgen
   
   void Refinement :: MakeSecondOrder (Mesh & mesh)
   {
-    int i, j;
+    int nseg, nse, ne;
+
+    mesh.ComputeNVertices();
+    mesh.SetNP(mesh.GetNV());
   
     INDEX_2_HASHTABLE<int> between(mesh.GetNP() + 5);
 
-    int nseg, nse, ne;
 
+    bool thinlayers = 0;
+    for (ElementIndex ei = 0; ei < mesh.GetNE(); ei++)
+      if (mesh[ei].GetType() == PRISM ||
+	  mesh[ei].GetType() == PRISM12)
+	thinlayers = 1;
+    
 
     nseg = mesh.GetNSeg();
-    for (i = 1; i <= nseg; i++)
+    for (SegmentIndex si = 0; si < nseg; si++)
       {
-	Segment & el = mesh.LineSegment(i);
-      
-	INDEX_2 i2 (el.p1, el.p2);
-	i2.Sort();
-      
-	int pnew;
+	Segment & el = mesh.LineSegment(si);
+
+	INDEX_2 i2 = INDEX_2::Sort (el.p1, el.p2);
+
 	if (between.Used(i2))
-	  pnew = between.Get(i2);
+	  el.pmid = between.Get(i2);
 	else
 	  {
 	    Point3d pb;
@@ -47,31 +53,35 @@ namespace netgen
 			  el.epgeominfo[0], el.epgeominfo[1],
 			  pb, ngi);
 	  
-	    pnew = mesh.AddPoint (pb);
-	    between.Set (i2, pnew);
+	    el.pmid = mesh.AddPoint (pb);
+	    between.Set (i2, el.pmid);
 	  }
-	el.pmid = pnew;
       }
 
     // refine surface elements
     nse = mesh.GetNSE();
-    for (i = 1; i <= nse; i++)
+    for (SurfaceElementIndex sei = 0; sei < nse; sei++)
       {
 	int j;
-	const Element2d & el = mesh.SurfaceElement(i);
+	const Element2d & el = mesh.SurfaceElement(sei);
 
-	int onp = el.GetNP();
+	int onp;
       
 	Element2d newel;
 	newel.SetIndex (el.GetIndex());
 
 	static int betw_trig[3][3] =
-	  { { 2, 3, 4 },
-	    { 1, 3, 5 },
-	    { 1, 2, 6 } };
+	  { { 1, 2, 3 },
+	    { 0, 2, 4 },
+	    { 0, 1, 5 } };
 	static int betw_quad6[2][3] =
-	  { { 1, 2, 5 },
-	    { 4, 3, 6 } };
+	  { { 0, 1, 4 },
+	    { 3, 2, 5 } };
+	static int betw_quad8[4][3] =
+	  { { 0, 1, 4 },
+	    { 3, 2, 5 },
+	    { 0, 3, 6 },
+	    { 1, 2, 7 } };
 	int (*betw)[3];
       
 	switch (el.GetType())
@@ -81,34 +91,43 @@ namespace netgen
 	    {
 	      betw = betw_trig;
 	      newel.SetType (TRIG6);
+	      onp = 3;
 	      break;
 	    }
 	  case QUAD:
-	  case QUAD6:
+	  case QUAD6: 
 	  case QUAD8:
 	    {
-	      betw = betw_quad6;
-	      newel.SetType (QUAD6);
+	      if (thinlayers)
+		{
+		  betw = betw_quad6;
+		  newel.SetType (QUAD6);
+		}
+	      else
+		{
+		  betw = betw_quad8;
+		  newel.SetType (QUAD8);
+		}
+	      onp = 4;
 	      break;
 	    }
 	  default:
 	    PrintSysError ("Unhandled element in secondorder:", int(el.GetType()));
 	  }
 
-	for (j = 1; j <= onp; j++)
-	  newel.PNum(j) = el.PNum(j);
+	for (j = 0; j < onp; j++)
+	  newel[j] = el[j];
       
 	int nnp = newel.GetNP();
 	for (j = 0; j < nnp-onp; j++)
 	  {
-	    int pi1 = newel.PNum(betw[j][0]);
-	    int pi2 = newel.PNum(betw[j][1]);
+	    int pi1 = newel[betw[j][0]];
+	    int pi2 = newel[betw[j][1]];
 	  
-	    INDEX_2 i2 (pi1, pi2);
-	    i2.Sort();
+	    INDEX_2 i2 = INDEX_2::Sort (pi1, pi2);
 	  
 	    if (between.Used(i2))
-	      newel.PNum(onp+1+j) = between.Get(i2);
+	      newel[onp+j] = between.Get(i2);
 	    else
 	      {
 		Point3d pb;
@@ -116,32 +135,30 @@ namespace netgen
 		PointBetween (mesh.Point (pi1),
 			      mesh.Point (pi2), 0.5, 
 			      mesh.GetFaceDescriptor(el.GetIndex ()).SurfNr(),
-			      el.GeomInfoPi (betw[j][0]),
-			      el.GeomInfoPi (betw[j][1]),
+			      el.GeomInfoPi (betw[j][0]+1),
+			      el.GeomInfoPi (betw[j][1]+1),
 			      pb, newgi);
 
-		newel.PNum(onp+1+j) = mesh.AddPoint (pb);
-		between.Set (i2, newel.PNum(onp+1+j));
+		newel[onp+j] = mesh.AddPoint (pb);
+		between.Set (i2, newel[onp+j]);
 	      }
 	  }
       
-	mesh.SurfaceElement(i) = newel;
+	mesh.SurfaceElement(sei) = newel;
       }
 
  
+    //    int i, j;
+
 
 
     // refine volume elements
     ne = mesh.GetNE();
-    for (i = 1; i <= ne; i++)
+    for (int i = 1; i <= ne; i++)
       {
 	int j;
 	const Element & el = mesh.VolumeElement(i);
-
-	if (el.GetType() != TET && el.GetType() != PRISM)
-	  continue;
-
-	int onp = el.GetNP();
+	int onp;
 
 	Element newel;
 	newel.SetIndex (el.GetIndex());
@@ -171,6 +188,7 @@ namespace netgen
 	    {
 	      betw = betw_tet;
 	      newel.SetType (TET10);
+	      onp = 4;
 	      break;
 	    }
 	  case PRISM:
@@ -178,6 +196,7 @@ namespace netgen
 	    {
 	      betw = betw_prism;
 	      newel.SetType (PRISM12);
+	      onp = 6;
 	      break;
 	    }
 	  default:
@@ -185,11 +204,11 @@ namespace netgen
 	  }
 
 
-	for (j = 1; j <= onp; j++)
+	for (int j = 1; j <= onp; j++)
 	  newel.PNum(j) = el.PNum(j);
 	int nnp = newel.GetNP();
 
-	for (j = 0; j < nnp-onp; j++)
+	for (int j = 0; j < nnp-onp; j++)
 	  {
 	    INDEX_2 i2(newel.PNum(betw[j][0]),
 		       newel.PNum(betw[j][1]));
@@ -209,42 +228,58 @@ namespace netgen
 	mesh.VolumeElement (i) = newel;
       }
 
-    /*
+
     // makes problems after linear mesh refinement, since
     // 2nd order identifications are not removed
     // update identification tables
-    for (i = 1; i <= mesh.GetIdentifications().GetMaxNr(); i++)
-    {
-    ARRAY<int> identmap;
-    mesh.GetIdentifications().GetMap (i, identmap);
+    for (int i = 1; i <= mesh.GetIdentifications().GetMaxNr(); i++)
+      {
+	ARRAY<int,PointIndex::BASE> identmap;
+	mesh.GetIdentifications().GetMap (i, identmap);
 
-    for (j = 1; j <= between.GetNBags(); j++)
-    for (k = 1; k <= between.GetBagSize(j); k++)
-    {
-    INDEX_2 i2;
-    int newpi;
-    between.GetData (j, k, i2, newpi);
-    INDEX_2 oi2(identmap.Get(i2.I1()),
-    identmap.Get(i2.I2()));
-    oi2.Sort();
-    if (between.Used (oi2))
-    {
-    int onewpi = between.Get(oi2);
-    mesh.GetIdentifications().Add (newpi, onewpi, i);
-    }
-    }
+	for (INDEX_2_HASHTABLE<int>::Iterator it = between.Begin();
+	     it != between.End(); it++)
+	  {
+	      INDEX_2 i2;
+	      int newpi;
+	      between.GetData (it, i2, newpi);
+	      INDEX_2 oi2(identmap.Get(i2.I1()),
+			  identmap.Get(i2.I2()));
+	      oi2.Sort();
+	      if (between.Used (oi2))
+		{
+		  int onewpi = between.Get(oi2);
+		  mesh.GetIdentifications().Add (newpi, onewpi, i);
+		}
+	  }
 
-    }
-    */
+	/*
+	for (int j = 1; j <= between.GetNBags(); j++)
+	  for (int k = 1; k <= between.GetBagSize(j); k++)
+	    {
+	      INDEX_2 i2;
+	      int newpi;
+	      between.GetData (j, k, i2, newpi);
+	      INDEX_2 oi2(identmap.Get(i2.I1()),
+			  identmap.Get(i2.I2()));
+	      oi2.Sort();
+	      if (between.Used (oi2))
+		{
+		  int onewpi = between.Get(oi2);
+		  mesh.GetIdentifications().Add (newpi, onewpi, i);
+		}
+	    }
+	*/
+      }
+
 
     //  mesh.mglevels++;
     int oldsize = mesh.mlbetweennodes.Size();
     mesh.mlbetweennodes.SetSize(mesh.GetNP());
-    for (i = oldsize+1; i <= mesh.GetNP(); i++)
-      {
-	mesh.mlbetweennodes.Elem(i).I1() = 0;
-	mesh.mlbetweennodes.Elem(i).I2() = 0;
-      }
+    for (int i = oldsize; i < mesh.GetNP(); i++)
+      mesh.mlbetweennodes[i] = INDEX_2(0,0);
+
+    /*
     for (i = 1; i <= between.GetNBags(); i++)
       for (j = 1; j <= between.GetBagSize(i); j++)
 	{
@@ -253,6 +288,13 @@ namespace netgen
 	  between.GetData (i, j, oldp, newp);
 	  mesh.mlbetweennodes.Elem(newp) = oldp;
 	}
+    */
+
+    for (INDEX_2_HASHTABLE<int>::Iterator it = between.Begin();
+	 it != between.End(); it++)
+      {
+	mesh.mlbetweennodes[between.GetData (it)] = between.GetHash(it);
+      }
 
     mesh.ComputeNVertices();
   
@@ -265,13 +307,13 @@ namespace netgen
     PrintMessage (3, "Validate mesh");
     int np = mesh.GetNP();
     int ne = mesh.GetNE();
-    int i, j;
+    // int i, j;
     ARRAY<INDEX_2> parents(np);
   
-    for (i = 1; i <= np; i++)
+    for (int i = 1; i <= np; i++)
       parents.Elem(i) = INDEX_2(0,0);
 
-    for (i = 1; i <= ne; i++)
+    for (int i = 1; i <= ne; i++)
       {
 	const Element & el = mesh.VolumeElement(i);
 	if (el.GetType() == TET10)
@@ -283,7 +325,7 @@ namespace netgen
 		{ 2, 3, 8 },
 		{ 2, 4, 9 },
 		{ 3, 4, 10 } };
-	    for (j = 0; j < 6; j++)
+	    for (int j = 0; j < 6; j++)
 	      {
 		int f1 = el.PNum (betweentab[j][0]);
 		int f2 = el.PNum (betweentab[j][1]);
@@ -302,7 +344,7 @@ namespace netgen
   ValidateRefinedMesh (Mesh & mesh, 
 		       ARRAY<INDEX_2> & parents)
   {
-    int i, j, k;
+    // int i, j, k;
   
     // homotopy method
 
@@ -310,7 +352,7 @@ namespace netgen
 
     int cnttrials = 100;
     int wrongels = 0;
-    for (i = 1; i <= ne; i++)
+    for (int i = 1; i <= ne; i++)
       if (mesh.VolumeElement(i).CalcJacobianBadness (mesh.Points()) > 1e10)
 	{
 	  wrongels++;
@@ -334,12 +376,12 @@ namespace netgen
 	ARRAY<Point3d> should(np);
 	ARRAY<Point3d> can(np);
 
-	for (i = 1; i <= np; i++)
+	for (int i = 1; i <= np; i++)
 	  {
 	    should.Elem(i) = can.Elem(i) = mesh.Point(i);
 	  }
 
-	for (i = 1; i <= parents.Size(); i++)
+	for (int i = 1; i <= parents.Size(); i++)
 	  {
 	    if (parents.Get(i).I1())
 	      can.Elem(i) = Center (can.Elem(parents.Get(i).I1()),
@@ -348,16 +390,16 @@ namespace netgen
 
 	BitArray boundp(np);
 	boundp.Clear();
-	for (i = 1; i <= mesh.GetNSE(); i++)
+	for (int i = 1; i <= mesh.GetNSE(); i++)
 	  {
 	    const Element2d & sel = mesh.SurfaceElement(i);
-	    for (j = 1; j <= sel.GetNP(); j++)
+	    for (int j = 1; j <= sel.GetNP(); j++)
 	      boundp.Set(sel.PNum(j));
 	  }
 
 
 	(*testout) << "bpoints:" << endl;
-	for (i = 1; i <= np; i++)
+	for (int i = 1; i <= np; i++)
 	  if (boundp.Test(i))
 	    (*testout) << i << endl;
 
@@ -379,10 +421,10 @@ namespace netgen
 		factry = lam + (1-lam) * facok;
 		cout << "trying: " << factry << endl;
 
-		for (i = 1; i <= np; i++)
+		for (int i = 1; i <= np; i++)
 		  if (boundp.Test(i))
 		    {
-		      for (j = 1; j <= 3; j++)
+		      for (int j = 1; j <= 3; j++)
 			mesh.Point(i).X(j) = 
 			  lam * should.Get(i).X(j) +
 			  (1-lam) * can.Get(i).X(j);
@@ -392,7 +434,7 @@ namespace netgen
 	      
 		//	      (*testout) << "bad els: " << endl;
 		wrongels = 0;
-		for (i = 1; i <= ne; i++)
+		for (int i = 1; i <= ne; i++)
 		  {
 		    if (!illegalels.Test(i) && 
 			mesh.VolumeElement(i).
@@ -425,14 +467,14 @@ namespace netgen
 	    mesh.ImproveMeshJacobian (OPT_WORSTCASE);	      
 	  
 	    facok = factry;
-	    for (i = 1; i <= np; i++)
+	    for (int i = 1; i <= np; i++)
 	      can.Elem(i) = mesh.Point(i);
 	  }
       }
 
 
       
-    for (i = 1; i <= ne; i++)
+    for (int i = 1; i <= ne; i++)
       {
 	if (illegalels.Test(i))
 	  {

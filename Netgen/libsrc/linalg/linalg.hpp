@@ -25,7 +25,9 @@
 namespace netgen
 {
 #include "vector.hpp"
+  // #include "basemat.hpp"
 #include "densemat.hpp"
+  // #include "sparsmat.hpp"
 #include "polynomial.hpp"
 }
 #endif

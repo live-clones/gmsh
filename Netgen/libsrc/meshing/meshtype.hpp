@@ -1,6 +1,8 @@
 #ifndef MESHTYPE
 #define MESHTYPE
 
+//#include <algorithm>
+
 /**************************************************************************/
 /* File:   meshtype.hpp                                                   */
 /* Author: Joachim Schoeberl                                              */
@@ -25,7 +27,7 @@ typedef int ELEMENT_FACE[4];      // points, last one is -1 for trig
 
 
 #define ELEMENT_MAXPOINTS 12
-#define ELEMENT2D_MAXPOINTS 6
+#define ELEMENT2D_MAXPOINTS 8
 
 
 enum POINTTYPE { FIXEDPOINT = 1, EDGEPOINT = 2, SURFACEPOINT = 3, INNERPOINT = 4 };
@@ -40,10 +42,14 @@ enum OPTIMIZEGOAL { OPT_QUALITY, OPT_CONFORM, OPT_REST, OPT_WORSTCASE, OPT_LEGAL
 extern int GetTimeStamp();
 extern int NextTimeStamp();
 
-struct PointGeomInfo
+class PointGeomInfo
 {
+public:
   int trignum;   // for STL Meshing
   double u, v;   // for OCC Meshing
+
+  PointGeomInfo () 
+    : trignum(-1), u(0), v(0) { ; }
 };
 
 inline ostream & operator<< (ostream & ost, const PointGeomInfo & gi)
@@ -69,7 +75,7 @@ public:
 };
 
 
-struct EdgePointGeomInfo
+class EdgePointGeomInfo
 {
 public:
   int edgenr;
@@ -77,14 +83,20 @@ public:
   double u, v; // for OCC Meshing
 
   EdgePointGeomInfo ()
-  { edgenr = 0; dist = 0; u = v = 0; }
+    : edgenr(0), dist(0.0), u(0.0), v(0.0) { ; }
+
+  EdgePointGeomInfo & operator= (const EdgePointGeomInfo & gi2)
+  {
+    edgenr = gi2.edgenr;  dist = gi2.dist;
+    u = gi2.u; v = gi2.v;
+    return *this;
+  }
 };
 
 inline ostream & operator<< (ostream & ost, const EdgePointGeomInfo & gi)
 {
   return (ost << gi.edgenr);
 }
-
 
 
 
@@ -103,7 +115,11 @@ public:
   PointIndex operator++ (int) { int hi = i; i++; return hi; }
   PointIndex operator-- (int) { int hi = i; i--; return hi; }
 
+#ifdef BASE0
+  enum { BASE = 0 };
+#else
   enum { BASE = 1 };
+#endif  
 };
 
 inline istream & operator>> (istream & ist, PointIndex & pi)
@@ -132,7 +148,15 @@ public:
   ElementIndex & operator-- (int) { i--; return *this; }
 };
 
+inline istream & operator>> (istream & ist, ElementIndex & pi)
+{
+  int i; ist >> i; pi = i; return ist;
+}
 
+inline ostream & operator<< (ostream & ost, const ElementIndex & pi)
+{
+  return (ost << int(pi));
+}
 
 
 class SurfaceElementIndex
@@ -149,7 +173,15 @@ public:
   SurfaceElementIndex & operator-- (int) { i--; return *this; }
 };
 
+inline istream & operator>> (istream & ist, SurfaceElementIndex & pi)
+{
+  int i; ist >> i; pi = i; return ist;
+}
 
+inline ostream & operator<< (ostream & ost, const SurfaceElementIndex & pi)
+{
+  return (ost << int(pi));
+}
 
 class SegmentIndex
 {
@@ -165,7 +197,15 @@ public:
   SegmentIndex & operator-- (int) { i--; return *this; }
 };
 
+inline istream & operator>> (istream & ist, SegmentIndex & pi)
+{
+  int i; ist >> i; pi = i; return ist;
+}
 
+inline ostream & operator<< (ostream & ost, const SegmentIndex & pi)
+{
+  return (ost << int(pi));
+}
 
 
 
@@ -178,14 +218,22 @@ public:
 class MeshPoint : public Point3d
 {
   int layer;
+  bool singular;
+  POINTTYPE type;
 public:
-  MeshPoint () { ; }
-  MeshPoint (const Point3d & ap, int alayer = 1)
-    : Point3d (ap), layer(alayer) { ; }
+  MeshPoint () : layer(1), singular(0), type(INNERPOINT) { ; }
+  MeshPoint (const Point3d & ap, int alayer = 1, POINTTYPE apt = INNERPOINT)
+    : Point3d (ap), layer(alayer), singular(0), type(apt) { ; }
   
   void SetPoint (const Point3d & ap)
   { Point3d::operator= (ap); }
   int GetLayer() const { return layer; }
+
+  bool IsSingular() const { return singular; }
+  void SetSingular(bool s = 1) { singular = s; }
+
+  POINTTYPE Type() const { return type; }
+  void SetType(POINTTYPE at) { type = at; }
 };
 
 
@@ -212,13 +260,15 @@ class Element2d
   ///
   ELEMENT_TYPE typ:6;
   /// number of points
-  unsigned int np:3;
+  unsigned int np:4;
   bool badel:1;
   bool refflag:1;  // marked for refinement
   bool deleted:1;  // element is deleted
 
   /// order for hp-FEM
   unsigned int order:6;
+
+
 public:
   ///
   Element2d (int anp = 3);
@@ -231,7 +281,20 @@ public:
   ///
   ELEMENT_TYPE GetType () const { return typ; }
   /// 
-  void SetType (ELEMENT_TYPE atyp);
+  void SetType (ELEMENT_TYPE atyp)
+  {
+    typ = atyp;
+    switch (typ)
+      {
+      case TRIG: np = 3; break;
+      case QUAD: np = 4; break;
+      case TRIG6: np = 6; break;
+      case QUAD6: np = 6; break;
+      case QUAD8: np = 8; break;
+      default:
+	PrintSysError ("Element2d::SetType, illegal type ", typ);
+      }
+  }
   ///
   int GetNP() const { return np; }
   ///
@@ -339,7 +402,7 @@ public:
     return deleted; 
   }
 
-  void SetRefinementFlag (int rflag = 1) 
+  void SetRefinementFlag (bool rflag = 1) 
   { refflag = rflag; }
   bool TestRefinementFlag () const
   { return refflag; }
@@ -347,6 +410,8 @@ public:
   int HasFace(const Element2d& el) const;
   ///
   int meshdocval;
+  ///
+  int hp_elnr;
 };
 
 
@@ -382,7 +447,8 @@ private:
   /// number of points (4..tet, 5..pyramid, 6..prism, 8..hex, 10..quad tet, 12..quad prism)
   int np:5;
   ///
-  struct flagstruct {
+  class flagstruct { 
+  public:
     bool marked:1;  // marked for refinement
     bool badel:1;   // angles worse then limit
     bool reverse:1; // for refinement a la Bey
@@ -398,6 +464,9 @@ private:
   unsigned int order:6;
   /// stored shape-badness of element
   float badness;
+  /// number of partition for parallel compution 
+  short int partitionNumber;
+  ///
   
 public:
   flagstruct flags;
@@ -425,9 +494,10 @@ public:
       case TET: return 4;
       case TET10: return 4;
       case PRISM12: return 6;
+      case PRISM: return 6; //SZ 
       default:
 #ifdef DEBUG
-	PrintSysError ("Element3d::GetNV not implemented for typ", typ)
+	PrintSysError ("Element3d::GetNV not implemented for typ ", typ)
 #endif
 	  ;
       }
@@ -513,8 +583,10 @@ public:
 			  class DenseMatrix & trans) const;
 
   void GetShape (const Point3d & p, class Vector & shape) const;
+  void GetShapeNew (const Point<3> & p, class FlatVector & shape) const;
   /// matrix 2 * np
   void GetDShape (const Point3d & p, class DenseMatrix & dshape) const;
+  void GetDShapeNew (const Point<3> & p, class MatrixFixWidth<3> & dshape) const;
   /// matrix 3 * np
   void GetPointMatrix (const T_POINTS & points,
 		       class DenseMatrix & pmat) const; 
@@ -529,7 +601,7 @@ public:
   ///
   friend ostream & operator<<(ostream  & s, const Element & el);
 
-  void SetRefinementFlag (int rflag = 1) 
+  void SetRefinementFlag (bool rflag = 1) 
   { flags.refflag = rflag; }
   int TestRefinementFlag () const
   { return flags.refflag; }
@@ -559,6 +631,11 @@ public:
 
     return flags.deleted; 
   }
+
+  int GetPartition () const { return partitionNumber; }
+  void SetPartition (int nr) { partitionNumber = nr; }; 
+
+  int hp_elnr;
 };
 
 
@@ -584,9 +661,12 @@ public:
   /// edge nr
   int edgenr;
   ///
-  unsigned int singedge:1;
+  unsigned int singedge_left:1;
+  unsigned int singedge_right:1;
+
   /// 0.. not first segment of segs, 1..first of class, 2..first of class, inverse
   unsigned int seginfo:2;
+
   /// surface decoding index
   int si;          
   /// domain number inner side
@@ -597,6 +677,7 @@ public:
   int tlosurf;
   ///
   PointGeomInfo geominfo[2];
+
   /// surfaces describing edge
   int surfnr1, surfnr2;
   ///
@@ -605,6 +686,18 @@ public:
   int pmid; // for second order
   ///
   int meshdocval;
+
+
+  PointIndex operator[] (int i) const
+  { return (i == 0) ? p1 : p2; }
+
+  PointIndex & operator[] (int i) 
+  { return (i == 0) ? p1 : p2; }
+
+  Segment& operator=(const Segment & other);
+
+  
+  int hp_elnr;
 };
 
 
@@ -644,6 +737,13 @@ public:
   void SetBCProperty (int bc) { bcprop = bc; }
 
   friend ostream & operator<<(ostream  & s, const FaceDescriptor & fd);
+
+
+  ///
+  bool domin_singular;
+  bool domout_singular;
+
+
 };
 
  
@@ -683,7 +783,7 @@ public:
   int optsteps2d;
   /// power of error (to approximate max err optimization)
   double opterrpow;
-  /// do block filling ?
+  /// do block filling ?  
   int blockfill;
   /// block filling up to distance
   double filldist;
@@ -747,6 +847,8 @@ public:
   MeshingParameters ();
   ///
   void Print (ostream & ost) const;
+
+  void CopyFrom(const MeshingParameters & other);
 };
 
 class DebugParameters 
@@ -760,6 +862,8 @@ public:
   int haltsuccess;
   ///
   int haltnosuccess;
+  ///
+  int haltlargequalclass;
   ///
   int haltsegment;
   ///
@@ -908,6 +1012,8 @@ public:
   ///
   int GetMaxNr () const { return maxidentnr; }  
 
+  /// remove secondorder
+  void SetMaxPointNr (int maxpnum);
 };
 
 

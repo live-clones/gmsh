@@ -36,7 +36,7 @@ namespace netgen
     pos = 0;
 
   ptr = 0;
-  name = 0;
+  name = NULL;
 
   if (s) Alloc(s);
 }
@@ -50,12 +50,20 @@ BaseMoveableMem :: ~BaseMoveableMem () throw()
   if (prev) prev->next = next;
   else first = next;
 
-  delete name;
+  if(name != NULL)
+    {
+      delete [] name;
+      name = NULL;
+    }
 }
 
 void BaseMoveableMem :: SetName (const char * aname)
 {
-  delete name;
+  if(name != NULL)
+    {
+      delete [] name;
+      name = NULL;
+    }
   if (aname)
     {
       name = new char[strlen(aname)+1];
@@ -192,7 +200,7 @@ void BaseMoveableMem :: Free () throw()
 void BaseMoveableMem :: Swap (BaseMoveableMem & m2) throw()
 {
   int hi;
-  BaseMoveableMem * hp;
+  // BaseMoveableMem * hp;
   char * cp;
   hi = size; size  = m2.size; m2.size = hi;
   hi = pos; pos = m2.pos; m2.pos = hi;

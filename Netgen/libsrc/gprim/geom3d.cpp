@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <mystdlib.h>
 
 #include <myadt.hpp>
@@ -172,6 +173,15 @@ Box3d :: Box3d ( const Box3d & b2 )
     {
       minx[i] = b2.minx[i];
       maxx[i] = b2.maxx[i];
+    }
+}
+
+Box3d :: Box3d ( const Box<3> & b2 )
+{
+  for (int i = 0; i < 3; i++)
+    {
+      minx[i] = b2.PMin()(i);
+      maxx[i] = b2.PMax()(i);
     }
 }
 

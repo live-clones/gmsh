@@ -15,8 +15,13 @@ extern void PrintDot(char ch = '.');
 
 //importance: importance of message: 1=very important, 3=middle, 5=low, 7=unimportant
 extern void PrintMessage(int importance, 
-			 const MyStr& s1, const MyStr& s2="", const MyStr& s3="", const MyStr& s4="", 
-			 const MyStr& s5="", const MyStr& s6="", const MyStr& s7="", const MyStr& s8="");
+			 const MyStr& s1, const MyStr& s2=MyStr());
+extern void PrintMessage(int importance, 
+			 const MyStr& s1, const MyStr& s2, const MyStr& s3, const MyStr& s4=MyStr());
+extern void PrintMessage(int importance, 
+			 const MyStr& s1, const MyStr& s2, const MyStr& s3, const MyStr& s4, 
+			 const MyStr& s5, const MyStr& s6=MyStr(), const MyStr& s7=MyStr(), const MyStr& s8=MyStr());
+
 // CR without line-feed
 extern void PrintMessageCR(int importance, 
 			   const MyStr& s1, const MyStr& s2="", const MyStr& s3="", const MyStr& s4="", 

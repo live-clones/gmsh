@@ -27,6 +27,15 @@ namespace netgen
 
     void CurvedElements :: BuildCurvedElements(Refinement * ref, int polydeg)
     {
+      if (mesh.coarsemesh)
+	{
+	  mesh.coarsemesh->GetCurvedElements().BuildCurvedElements (ref, polydeg);
+	  SetHighOrder();
+	  return;
+	}
+
+      PrintMessage (2, "Build curved elements, order = ", polydeg);
+
       NgLock lock(const_cast<Mesh&>(mesh).Mutex(), 1);
       isHighOrder = 0;
       lock.UnLock();
@@ -51,7 +60,7 @@ namespace netgen
 	edgeorder.SetSize (top.GetNEdges());
 	faceorder.SetSize (top.GetNFaces());
 
-	int nedgestocurve = top.GetNEdges();
+	int nedgestocurve = mesh.GetNSeg();
 
 	edgedone = 0;
 	edgeorder = 1;
@@ -174,13 +183,12 @@ namespace netgen
 		segm.CalcEdgeLaplaceShapes ();
 		
 		Point<3> xv(0,0,0);
+
 		for (int v = 0; v < 2; v++)
 		  xv = xv + segm.GetVertexShape(v) * mesh.Point(segm.GetVertexNr(v));
-		
+		  		
 		double secpoint = xi[l];
 
-		if (segm.GetEdgeOrientation() == -1) secpoint = 1. - secpoint; // reverse orientation
-		
 		ref->PointBetween (mesh.Point(segm.GetVertexNr(1)),
 				   mesh.Point(segm.GetVertexNr(0)), secpoint,
 				   s.surfnr2, s.surfnr1,
@@ -207,11 +215,12 @@ namespace netgen
 	
 	if (mesh.GetDimension() == 3)
 	  {
+	    int nedgescurved = mesh.GetNSeg();
 	    for (int i=0; i<mesh.GetNSE(); i++) 
 	      {
 		if (multithread.terminate) return;
 		
-		SetThreadPercent( double(100*(mesh.GetNSeg()+i)/nedgestocurve) );
+		//		SetThreadPercent( double(100*(mesh.GetNSeg()+i)/nedgestocurve) );
 		Element2d elem = mesh[(SurfaceElementIndex) i];
 		const ELEMENT_EDGE * eledges = MeshTopology::GetEdges(elem.GetType());
 		
@@ -219,12 +228,18 @@ namespace netgen
 		ARRAY<int> orient;
 		top.GetSurfaceElementEdges(i+1, edgenrs);
 		top.GetSurfaceElementEdgeOrientations(i+1, orient);
-		
+
 		for (int e = 0; e < top.GetNEdges(elem.GetType()); e++)
 		  {
+//		    cout << "e = " << e << "/" << top.GetNEdges(elem.GetType()) <<  endl;
+
+		    nedgescurved++;
+
 		    if (edgedone[edgenrs[e]-1]) continue;
 		    
 		    edgedone[edgenrs[e]-1] = 1;
+
+		    SetThreadPercent( double(100*(nedgescurved)/nedgestocurve) );
 
 		    edge.SetElementNumber (edgenrs[e]);
 
@@ -233,6 +248,7 @@ namespace netgen
 
 		    for (int l = 0; l < nIntegrationPoints; l++)
 		      {
+//			cout << "." << flush;
 			edge.SetReferencePoint (Point<1>(xi[l]));
 			edge.CalcVertexShapes ();
 			edge.CalcEdgeLaplaceShapes ();
@@ -243,18 +259,26 @@ namespace netgen
 
 			double secpoint = xi[l];
 
-			ref->PointBetween (mesh.Point(edge.GetVertexNr(1)),
-					   mesh.Point(edge.GetVertexNr(0)), secpoint,
-					   mesh.GetFaceDescriptor(elem.GetIndex()).SurfNr(),
-					   elem.GeomInfoPi(eledges[e][1]),
-					   elem.GeomInfoPi(eledges[e][0]),
-					   xexact, newgi);
+			if (orient[e] == 1)
+			  ref->PointBetween (mesh.Point(edge.GetVertexNr(1)),
+					     mesh.Point(edge.GetVertexNr(0)), secpoint,
+					     mesh.GetFaceDescriptor(elem.GetIndex()).SurfNr(),
+					     elem.GeomInfoPi(eledges[e][1]),
+					     elem.GeomInfoPi(eledges[e][0]),
+					     xexact, newgi);
+			else
+			  ref->PointBetween (mesh.Point(edge.GetVertexNr(1)),
+					     mesh.Point(edge.GetVertexNr(0)), secpoint,
+					     mesh.GetFaceDescriptor(elem.GetIndex()).SurfNr(),
+					     elem.GeomInfoPi(eledges[e][0]),
+					     elem.GeomInfoPi(eledges[e][1]),
+					     xexact, newgi);
 
 			for (k = 2; k <= edge.GetEdgeOrder(); k++)
 			  edgecoeffs[edgecoeffsindex[edgenrs[e]-1]+k-2] -=
 			    wi[l] * edge.GetEdgeLaplaceShape(k-2) * Vec<3>(xexact - xv);
 		      }	
-
+//		    cout << endl;
 		    for (k = 2; k <= edge.GetEdgeOrder(); k++)
 		      edgecoeffs[edgecoeffsindex[edgenrs[e]-1]+k-2] =
 			(2.0*(k-1.0)+1.0)*edgecoeffs[edgecoeffsindex[edgenrs[e]-1]+k-2];
@@ -512,11 +536,20 @@ namespace netgen
 			// integration over the difference between the exact geometry and the one
 			// defined by vertex and edge shape functions times face shape
 
+			// double giu = 0, giv = 0;
+			PointGeomInfo gi;
+			gi.trignum = elem.GeomInfoPi(1).trignum;
+			gi.u = 0.0;
+			gi.v = 0.0;
 			Point<3> xve(0.,0.,0.);
 
 			// vertex shape functions
 			for (int v = 0; v < fe2d->GetNVertices(); v++)
-			  xve = xve + fe2d->GetVertexShape(v) * mesh.Point(fe2d->GetVertexNr(v));
+			  {
+			    xve = xve + fe2d->GetVertexShape(v) * mesh.Point(fe2d->GetVertexNr(v));
+			    gi.u += fe2d->GetVertexShape(v) * elem.GeomInfoPi(v+1).u;
+			    gi.v += fe2d->GetVertexShape(v) * elem.GeomInfoPi(v+1).v;
+			  }
 
 			// edge shape functions
 			int index = 0;
@@ -530,7 +563,7 @@ namespace netgen
 			// exact point
 
 			Point<3> xexact = xve;
-			ref->ProjectToSurface (xexact, mesh.GetFaceDescriptor(elem.GetIndex()).SurfNr());
+			ref->ProjectToSurface (xexact, mesh.GetFaceDescriptor(elem.GetIndex()).SurfNr(), gi);
 
 			Vec<3> v2 = w*(Vec<3>(xexact)-Vec<3>(xve));
 
@@ -704,7 +737,7 @@ namespace netgen
 	  double maxcoeff = 0.;
 
 	  for (i = facecoeffsindex[f]; i < facecoeffsindex[f+1]; i++)
-	    maxcoeff = max2 (maxcoeff, facecoeffs[i].Length());
+	    maxcoeff = max (maxcoeff, facecoeffs[i].Length());
 
 	  if (maxcoeff < 1e-12) faceorder[f] = 1;
 	}

@@ -11,6 +11,7 @@ namespace netgen
   public:
     ARRAY<Element2d> oldels;
     ARRAY<Element2d> newels;
+    ARRAY<INDEX_2> deledges;
     ARRAY<int> incelsonnode;
     ARRAY<int> reused;
     int bonus;
@@ -31,10 +32,10 @@ namespace netgen
 	faceindex = 0;
       }
 
-    int j, k, l, ri;
+    // int j, k, l, ri;
     int np = mesh.GetNP();
     int ne = mesh.GetNSE();
-    SurfaceElementIndex sei;
+    //    SurfaceElementIndex sei;
 
     bool ok;
     int olddef, newdef;
@@ -54,6 +55,7 @@ namespace netgen
     r1->oldels.Append (Element2d (1, 2, 3));
     r1->oldels.Append (Element2d (3, 2, 4));
     r1->newels.Append (Element2d (1, 2, 4, 3));
+    r1->deledges.Append (INDEX_2 (2,3));
     r1->onp = 4;
     r1->bonus = 2;
     rules.Append (r1);
@@ -63,6 +65,8 @@ namespace netgen
     r1->oldels.Append (Element2d (1, 2, 3, 4));
     r1->oldels.Append (Element2d (4, 3, 2, 5));
     r1->newels.Append (Element2d (1, 2, 5, 4));
+    r1->deledges.Append (INDEX_2 (2, 3));
+    r1->deledges.Append (INDEX_2 (3, 4));
     r1->onp = 5;
     r1->bonus = 0;
     rules.Append (r1);
@@ -73,6 +77,7 @@ namespace netgen
     r1->oldels.Append (Element2d (3, 2, 5, 6));
     r1->newels.Append (Element2d (1, 6, 3, 4));
     r1->newels.Append (Element2d (1, 2, 5, 6));
+    r1->deledges.Append (INDEX_2 (2, 3));
     r1->onp = 6;
     r1->bonus = 0;
     rules.Append (r1);
@@ -84,6 +89,9 @@ namespace netgen
     r1->oldels.Append (Element2d (3, 6, 7, 4));
     r1->newels.Append (Element2d (1, 2, 5, 4));
     r1->newels.Append (Element2d (4, 5, 6, 7));
+    r1->deledges.Append (INDEX_2 (2, 3));
+    r1->deledges.Append (INDEX_2 (3, 4));
+    r1->deledges.Append (INDEX_2 (3, 6));
     r1->onp = 7;
     r1->bonus = -1;
     rules.Append (r1);
@@ -94,6 +102,9 @@ namespace netgen
     r1->oldels.Append (Element2d (2, 5, 3));
     r1->oldels.Append (Element2d (3, 5, 4));
     r1->newels.Append (Element2d (1, 2, 5, 4));
+    r1->deledges.Append (INDEX_2 (2, 3));
+    r1->deledges.Append (INDEX_2 (3, 4));
+    r1->deledges.Append (INDEX_2 (3, 5));
     r1->onp = 5;
     r1->bonus = 0;
     rules.Append (r1);
@@ -105,6 +116,8 @@ namespace netgen
     r1->oldels.Append (Element2d (1, 4, 5));
     r1->newels.Append (Element2d (1, 3, 4, 5));
     r1->newels.Append (Element2d (1, 2, 6, 3));
+    r1->deledges.Append (INDEX_2 (1, 4));
+    r1->deledges.Append (INDEX_2 (2, 3));
     r1->onp = 6;
     r1->bonus = 0;
     rules.Append (r1);
@@ -115,6 +128,8 @@ namespace netgen
     r1->oldels.Append (Element2d (1, 4, 5));
     r1->newels.Append (Element2d (1, 2, 4, 5));
     r1->newels.Append (Element2d (4, 2, 6, 3));
+    r1->deledges.Append (INDEX_2 (1, 4));
+    r1->deledges.Append (INDEX_2 (2, 3));
     r1->onp = 6;
     r1->bonus = 0;
     rules.Append (r1);
@@ -126,6 +141,9 @@ namespace netgen
     r1->oldels.Append (Element2d (4, 3, 6));
     r1->newels.Append (Element2d (1, 2, 6, 4));
     r1->newels.Append (Element2d (2, 5, 6));
+    r1->deledges.Append (INDEX_2 (2, 3));
+    r1->deledges.Append (INDEX_2 (3, 4));
+    r1->deledges.Append (INDEX_2 (3, 6));
     r1->onp = 6;
     r1->bonus = -1;
     rules.Append (r1);
@@ -136,6 +154,7 @@ namespace netgen
     r1->oldels.Append (Element2d (2, 5, 3));
     r1->newels.Append (Element2d (2, 5, 3, 4));
     r1->newels.Append (Element2d (1, 2, 4));
+    r1->deledges.Append (INDEX_2 (2, 3));
     r1->onp = 5;
     r1->bonus = 0;
     rules.Append (r1);
@@ -145,9 +164,23 @@ namespace netgen
     r1->oldels.Append (Element2d (2, 5, 3));
     r1->newels.Append (Element2d (1, 2, 5, 3));
     r1->newels.Append (Element2d (1, 3, 4));
+    r1->deledges.Append (INDEX_2 (2, 3));
     r1->onp = 5;
     r1->bonus = 0;
     rules.Append (r1);
+
+
+    // 2 quads to quad + 2 trigs
+    r1 = new ImprovementRule;
+    r1->oldels.Append (Element2d (1, 2, 3, 4));
+    r1->oldels.Append (Element2d (3, 2, 5, 6));
+    r1->newels.Append (Element2d (1, 5, 6, 4));
+    r1->newels.Append (Element2d (1, 2, 5));
+    r1->newels.Append (Element2d (4, 6, 3));
+    r1->deledges.Append (INDEX_2 (2, 3));
+    r1->onp = 6;
+    r1->bonus = 0;
+    //    rules.Append (r1);
 
 
 
@@ -159,29 +192,29 @@ namespace netgen
 
   
 
-    for (ri = 0; ri < rules.Size(); ri++)
+    for (int ri = 0; ri < rules.Size(); ri++)
       {
 	ImprovementRule & rule = *rules[ri];
 	rule.incelsonnode.SetSize (rule.onp);
 	rule.reused.SetSize (rule.onp);
 
-	for (j = 1; j <= rule.onp; j++)
+	for (int j = 1; j <= rule.onp; j++)
 	  {
 	    rule.incelsonnode.Elem(j) = 0;
 	    rule.reused.Elem(j) = 0;
 	  }
 
-	for (j = 1; j <= rule.oldels.Size(); j++)
+	for (int j = 1; j <= rule.oldels.Size(); j++)
 	  {
 	    const Element2d & el = rule.oldels.Elem(j);
-	    for (k = 1; k <= el.GetNP(); k++)
+	    for (int k = 1; k <= el.GetNP(); k++)
 	      rule.incelsonnode.Elem(el.PNum(k))--;
 	  }
 
-	for (j = 1; j <= rule.newels.Size(); j++)
+	for (int j = 1; j <= rule.newels.Size(); j++)
 	  {
 	    const Element2d & el = rule.newels.Elem(j);
-	    for (k = 1; k <= el.GetNP(); k++)
+	    for (int k = 1; k <= el.GetNP(); k++)
 	      {
 		rule.incelsonnode.Elem(el.PNum(k))++;
 		rule.reused.Elem(el.PNum(k)) = 1;
@@ -194,34 +227,34 @@ namespace netgen
   
     TABLE<int,PointIndex::BASE> elonnode(np);
     ARRAY<int,PointIndex::BASE> nelonnode(np);
-    TABLE<int> nbels(ne);
+    TABLE<SurfaceElementIndex> nbels(ne);
 
     nelonnode = -4;
 
-    for (sei = 0; sei < ne; sei++)
+    for (SurfaceElementIndex sei = 0; sei < ne; sei++)
       {
 	const Element2d & el = mesh[sei];
-	if (el.GetIndex() == faceindex)
+	if (el.GetIndex() == faceindex && !el.IsDeleted())
 	  {
-	    for (j = 0; j < el.GetNP(); j++)
+	    for (int j = 0; j < el.GetNP(); j++)
 	      elonnode.Add (el[j], sei);
 	  }
-	for (j = 0; j < el.GetNP(); j++)
+	for (int j = 0; j < el.GetNP(); j++)
 	  nelonnode[el[j]]++;
       }
 
-    for (sei = 0; sei < ne; sei++)
+    for (SurfaceElementIndex sei = 0; sei < ne; sei++)
       {
 	const Element2d & el = mesh[sei];
-	if (el.GetIndex() == faceindex)
+	if (el.GetIndex() == faceindex && !el.IsDeleted())
 	  {
-	    for (j = 0; j < el.GetNP(); j++)
+	    for (int j = 0; j < el.GetNP(); j++)
 	      {
-		for (k = 0; k < elonnode[el[j]].Size(); k++)
+		for (int k = 0; k < elonnode[el[j]].Size(); k++)
 		  {
 		    int nbel = elonnode[el[j]] [k];
 		    int used = 0;
-		    for (l = 0; l < nbels[sei].Size(); l++)
+		    for (int l = 0; l < nbels[sei].Size(); l++)
 		      if (nbels[sei][l] == nbel)
 			used = 1;
 		    if (!used)
@@ -232,7 +265,7 @@ namespace netgen
       }
 
 
-    for (ri = 0; ri < rules.Size(); ri++)
+    for (int ri = 0; ri < rules.Size(); ri++)
       {
 	const ImprovementRule & rule = *rules[ri];
       
@@ -242,221 +275,164 @@ namespace netgen
 	pgi.SetSize (rule.onp);
 
 
-	// loop over elements and rotations:
-	/*
-	  int nt = int (pow (ne, elmap.Size()));
-	  for (i = 1; i <= nt; i++)
-	  {
-	  int hi = i-1;
-	  for (j = 1; j <= elmap.Size(); j++)
-	  {
-	  elmap.Elem (j) = hi % ne + 1;
-	  hi /= ne;
-	  }
-	*/
-
-	for (sei = 0; sei < ne; sei++)
+	for (SurfaceElementIndex sei = 0; sei < ne; sei++)
 	  {
 	    if (multithread.terminate)
 	      break;
+	    if (mesh[sei].IsDeleted()) continue;
 
 	    elmap[0] = sei;
-
-	    int nnb = nbels[sei].Size();
-	    int nt = int (pow (double(nnb), double(elmap.Size()-1)));
-
-	    for (int i = 1; i <= nt; i++)
+	    FlatArray<SurfaceElementIndex> neighbours = nbels[sei];
+	    
+	    for (elrot[0] = 0; elrot[0] < mesh[sei].GetNP(); elrot[0]++)
 	      {
-		int hi = i-1;
-		for (j = 1; j < elmap.Size(); j++)
+		const Element2d & el0 = mesh[sei];
+		const Element2d & rel0 = rule.oldels[0];
+
+		if (el0.GetIndex() != faceindex) continue;
+		if (el0.IsDeleted()) continue;
+		if (el0.GetNP() != rel0.GetNP()) continue;
+
+
+		pmap = -1;
+ 
+		for (int k = 0; k < el0.GetNP(); k++)
 		  {
-		    elmap[j] = nbels[sei][hi % nnb];
-		    hi /= nnb;
+		    pmap.Elem(rel0[k]) = el0.PNumMod(k+elrot[0]+1);
+		    pgi.Elem(rel0[k]) = el0.GeomInfoPiMod(k+elrot[0]+1);
+		  }
+		
+		ok = 1;
+		for (int i = 1; i < elmap.Size(); i++)
+		  {
+		    // try to find a mapping for reference-element i
+
+		    const Element2d & rel = rule.oldels[i];
+		    bool possible = 0;
+
+		    for (elmap[i] = 0; elmap[i] < neighbours.Size(); elmap[i]++)
+		      {
+			const Element2d & el = mesh[neighbours[elmap[i]]];
+			if (el.IsDeleted()) continue;
+			if (el.GetNP() != rel.GetNP()) continue;
+
+			for (elrot[i] = 0; elrot[i] < rel.GetNP(); elrot[i]++)
+			  {
+			    possible = 1;
+
+			    for (int k = 0; k < rel.GetNP(); k++)
+			      if (pmap.Elem(rel[k]) != -1 &&
+				  pmap.Elem(rel[k]) != el.PNumMod (k+elrot[i]+1))
+				possible = 0;
+
+			    if (possible) 
+			      {
+				for (int k = 0; k < el.GetNP(); k++)
+				  {
+				    pmap.Elem(rel[k]) = el.PNumMod(k+elrot[i]+1);
+				    pgi.Elem(rel[k]) = el.GeomInfoPiMod(k+elrot[i]+1);
+				  }
+				break;
+			      }
+			  }
+			if (possible) break;
+		      }
+
+		    if (!possible) 
+		      {
+			ok = 0;
+			break;
+		      }
+
+		    elmap[i] = neighbours[elmap[i]];
 		  }
 
-		ok = 1;
-		for (j = 0; j < elmap.Size(); j++)
+		for(int i=0; ok && i<rule.deledges.Size(); i++)
 		  {
-		    const Element2d & el = mesh.SurfaceElement(elmap[j]);
-		    const Element2d & rel = rule.oldels[j];
-		   
-		    if (el.GetNP() != rel.GetNP()) { ok = 0; break; }
-		    if (el.IsDeleted()) { ok = 0; break; }
+		    ok = !mesh.IsSegment(pmap.Elem(rule.deledges[i].I1()),
+					 pmap.Elem(rule.deledges[i].I2()));
 		  }
+								    
+								    
+		
 		
 		if (!ok) continue;
 
+		mapped[ri]++;
 
-		int nr = int (pow (4.0, elmap.Size()));
-		for (int i2 = 1; i2 <= nr; i2++)
+		olddef = 0;
+		for (int j = 1; j <= pmap.Size(); j++)
+		  olddef += sqr (nelonnode[pmap.Get(j)]);
+		olddef += rule.bonus;
+
+		newdef = 0;
+		for (int j = 1; j <= pmap.Size(); j++)
+		  if (rule.reused.Get(j))
+		    newdef += sqr (nelonnode[pmap.Get(j)] + 
+				   rule.incelsonnode.Get(j));
+
+		if (newdef > olddef)
+		  continue;
+
+		// calc metric badness
+		double bad1 = 0, bad2 = 0;
+		Vec3d n;
+
+		SelectSurfaceOfPoint (mesh.Point(pmap.Get(1)), pgi.Get(1));
+		GetNormalVector (surfnr, mesh.Point(pmap.Get(1)), pgi.Elem(1), n);
+		  
+		for (int j = 1; j <= rule.oldels.Size(); j++)
+		  bad1 += mesh.SurfaceElement(elmap.Get(j)).CalcJacobianBadness (mesh.Points(), n);
+		  
+		// check new element:
+		for (int j = 1; j <= rule.newels.Size(); j++)
 		  {
-		    int hi2 = i2-1;
-		    for (j = 1; j <= elmap.Size(); j++)
-		      {
-			elrot.Elem (j) = hi2 % 4 + 1;
-			hi2 /= 4;
-		      }
-		  
-		  
-		    // check applicable 
-		  
-		    ok = 1;
+		    const Element2d & rnel = rule.newels.Get(j);
+		    Element2d nel(rnel.GetNP());
+		    for (int k = 1; k <= rnel.GetNP(); k++)
+		      nel.PNum(k) = pmap.Get(rnel.PNum(k));
 
-		    // set mapped points
-		    for (j = 1; j <= elmap.Size(); j++)
-		      {
-			const Element2d & el = mesh.SurfaceElement(elmap.Get(j));
-			const Element2d & rel = rule.oldels.Get(j);
-		      
-			/*
-			if (el.GetNP() != rel.GetNP())
-			  {
-			    ok = 0; 
-			    break;
-			  }
-			*/
-
-			for (k = 1; k <= el.GetNP(); k++)
-			  {
-			    /*
-			    if (el.PNum(k) < PointIndex::BASE)
-			      {
-				ok = 0;
-				break;
-			      }
-			    */
-			    pmap.Elem(rel.PNum(k)) =
-			      el.PNumMod(k+elrot.Get(j));
-			    pgi.Elem(rel.PNum(k)) = 
-			      el.GeomInfoPiMod(k+elrot.Get(j));
-			  }
-		      }
-		    if (!ok) continue;
-
-		    /*
-		      (*testout) << "candidates found: " << endl;
-		      for (j = 1; j <= elmap.Size(); j++)
-		      {
-		      const Element2d & el = mesh.SurfaceElement(elmap.Get(j));
-		      (*testout) << "el " << elmap.Get(j) 
-		      << ", rot = " << elrot.Get(j) << " "
-		      << el << endl;
-		      }
-		    */
-		  
-	      
-		    // check consistently mapped points:
-		    for (j = 1; j <= elmap.Size(); j++)
-		      {
-			const Element2d & el = mesh.SurfaceElement(elmap.Get(j));
-			const Element2d & rel = rule.oldels.Get(j);
-		      
-			for (k = 1; k <= el.GetNP(); k++)
-			  {
-			    if (pmap.Elem(rel.PNum(k)) != el.PNumMod(k+elrot.Get(j)))
-			      ok = 0;
-			  }
-		      }  
-
-		    if (!ok) continue;
-
-		  
-		    mapped[ri]++;
-		  
-		    /*
-		      (*testout) << "application found: " << endl;
-		      for (j = 1; j <= elmap.Size(); j++)
-		      {
-		      const Element2d & el = mesh.SurfaceElement(elmap.Get(j));
-		      (*testout) << "el " << elmap.Get(j) 
-		      << ", rot = " << elrot.Get(j) << " "
-		      << el << endl;
-		      }
-		      (*testout) << "points:";
-		      for (j = 1; j <= pmap.Size(); j++)
-		      (*testout) << " " << pmap.Get(j);
-		      (*testout) << endl;
-		    */
-
-		    olddef = 0;
-		    for (j = 1; j <= pmap.Size(); j++)
-		      olddef += sqr (nelonnode[pmap.Get(j)]);
-		    olddef += rule.bonus;
-
-		    newdef = 0;
-		    for (j = 1; j <= pmap.Size(); j++)
-		      if (rule.reused.Get(j))
-			newdef += sqr (nelonnode[pmap.Get(j)] + 
-				       rule.incelsonnode.Get(j));
-
-		    if (newdef > olddef)
-		      continue;
-
-		    // calc metric badness
-		    double bad1 = 0, bad2 = 0;
-		    Vec3d n;
-
-		    SelectSurfaceOfPoint (mesh.Point(pmap.Get(1)), pgi.Get(1));
-		    GetNormalVector (surfnr, mesh.Point(pmap.Get(1)), pgi.Elem(1), n);
-		  
-		    for (j = 1; j <= rule.oldels.Size(); j++)
-		      bad1 += mesh.SurfaceElement(elmap.Get(j)).CalcJacobianBadness (mesh.Points(), n);
-		  
-		    // check new element:
-		    for (j = 1; j <= rule.newels.Size(); j++)
-		      {
-			const Element2d & rnel = rule.newels.Get(j);
-			Element2d nel(rnel.GetNP());
-			for (k = 1; k <= rnel.GetNP(); k++)
-			  nel.PNum(k) = pmap.Get(rnel.PNum(k));
-
-			bad2 += nel.CalcJacobianBadness (mesh.Points(), n);
-		      }
-
-		    if (bad2 > 1e3) continue;
-
-		    if (newdef == olddef && bad2 > bad1) continue;
-		  
-	  
-		    // generate new element:
-		    for (j = 1; j <= rule.newels.Size(); j++)
-		      {
-			const Element2d & rnel = rule.newels.Get(j);
-			Element2d nel(rnel.GetNP());
-			nel.SetIndex (faceindex);
-			for (k = 1; k <= rnel.GetNP(); k++)
-			  {
-			    nel.PNum(k) = pmap.Get(rnel.PNum(k));
-			    nel.GeomInfoPi(k) = pgi.Get(rnel.PNum(k));
-			  }
-		      
-			mesh.AddSurfaceElement(nel);
-		      }
-		  
-		    for (j = 1; j <= rule.oldels.Size(); j++)
-		      mesh.DeleteSurfaceElement (elmap.Get(j));
-
-		    for (j = 1; j <= pmap.Size(); j++)
-		      nelonnode[pmap.Get(j)] += rule.incelsonnode.Get(j);
-
-		    used[ri]++;
-		    break;
+		    bad2 += nel.CalcJacobianBadness (mesh.Points(), n);
 		  }
+
+		if (bad2 > 1e3) continue;
+
+		if (newdef == olddef && bad2 > bad1) continue;
+		  
+
+		// generate new element:
+		for (int j = 1; j <= rule.newels.Size(); j++)
+		  {
+		    const Element2d & rnel = rule.newels.Get(j);
+		    Element2d nel(rnel.GetNP());
+		    nel.SetIndex (faceindex);
+		    for (int k = 1; k <= rnel.GetNP(); k++)
+		      {
+			nel.PNum(k) = pmap.Get(rnel.PNum(k));
+			nel.GeomInfoPi(k) = pgi.Get(rnel.PNum(k));
+		      }
+		      
+		    mesh.AddSurfaceElement(nel);
+		  }
+		  
+		for (int j = 0; j < rule.oldels.Size(); j++)
+		  mesh.DeleteSurfaceElement ( elmap[j] );
+
+		for (int j = 1; j <= pmap.Size(); j++)
+		  nelonnode[pmap.Get(j)] += rule.incelsonnode.Get(j);
+
+		used[ri]++;
 	      }
 	  }
       }
 
     mesh.Compress();
 
-    for (ri = 0; ri < rules.Size(); ri++)
+    for (int ri = 0; ri < rules.Size(); ri++)
       {
 	PrintMessage (5, "rule ", ri+1, " ",
 		      mapped[ri], "/", used[ri], " mapped/used");
       }
-
-    int sum = 0;
-    for (int i = 0; i < used.Size(); i++)
-      sum += used[i];
   }
 
 

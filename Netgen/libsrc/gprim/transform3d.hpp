@@ -93,7 +93,27 @@ public:
   // rotation with ...
   Transformation (const Point<D> & c, double alpha, double beta, double gamma)
   {
-    ;
+    // total = T_c x Rot_0 x T_c^{-1}
+    // Use Euler angles, see many books from tech mech, e.g. 
+    // Shabana "multibody systems"
+    
+    Vec<D> vc(c);
+    Transformation<D> tc(vc);
+    Transformation<D> tcinv(-vc);
+    // tc.CalcInverse (tcinv);
+    
+    Transformation<D> r1, r2, r3, ht, ht2;
+    r1.SetAxisRotation (3, alpha);
+    r2.SetAxisRotation (1, beta);
+    r3.SetAxisRotation (3, gamma);
+    
+    ht.Combine (tc, r3);
+    ht2.Combine (ht, r2);
+    ht.Combine (ht2, r1);
+    Combine (ht, tcinv);
+    
+    // cout << "Rotation - Transformation:" << (*this) << endl;
+    //  (*testout) << "Rotation - Transformation:" << (*this) << endl;
   }
 
   /// 
@@ -106,8 +126,31 @@ public:
     m = ta.m * tb.m;
   }
 
+
+
   /// dir = 1..3 (== x..z)
-  void SetAxisRotation (int dir, double alpha);
+  void SetAxisRotation (int dir, double alpha)
+  {
+    double co = cos(alpha);
+    double si = sin(alpha);
+    dir--;
+    int pos1 = (dir+1) % 3;
+    int pos2 = (dir+2) % 3;
+    
+    int i, j;
+    for (i = 0; i <= 2; i++)
+    {
+      v(i) = 0;
+      for (j = 0; j <= 2; j++)
+	m(i,j) = 0;
+    }
+    
+    m(dir,dir) = 1;
+    m(pos1, pos1) = co;
+    m(pos2, pos2) = co;
+    m(pos1, pos2) = si;
+    m(pos2, pos1) = -si;
+  }
 
   ///
   void Transform (const Point<D> & from, Point<D> & to) const

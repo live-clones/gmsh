@@ -19,7 +19,7 @@
 #define NG_ELEMENT_MAXPOINTS 12
 
 // max number of nodes per surface element
-#define NG_SURFACE_ELEMENT_MAXPOINTS 6
+#define NG_SURFACE_ELEMENT_MAXPOINTS 8
 
 
 
@@ -89,7 +89,8 @@ extern "C" {
   
 
   // Find element of point, returns local coordinates
-  int Ng_FindElementOfPoint (double * p, double * lami);
+  int Ng_FindElementOfPoint (double * p, double * lami,
+			     int build_searchtrees = 0, int index = -1);
   
 
   /// Curved Elemens:
@@ -140,9 +141,14 @@ extern "C" {
   int Ng_GetSurfaceElement_Edges (int selnr, int * edges, int * orient = 0);
   int Ng_GetSurfaceElement_Face (int selnr, int * orient = 0);
 
+  void Ng_GetSurfaceElementNeighbouringDomains(const int selnr, int & in, int & out);
+       
   int Ng_GetFace_Vertices (int fnr, int * vert);
   void Ng_GetEdge_Vertices (int ednr, int * vert);
   int Ng_GetFace_Edges (int fnr, int * edge);
+
+  int Ng_GetNVertexElements (int vnr);
+  void Ng_GetVertexElements (int vnr, int * els);
 
   int Ng_GetElementOrder (int enr);
 
@@ -202,6 +208,8 @@ namespace netgen {
   void Ng_InitSolutionData (Ng_SolutionData * soldata);
   // set solution data
   void Ng_SetSolutionData (Ng_SolutionData * soldata);
+  /// delete gridfunctions
+  void Ng_ClearSolutionData();
   // redraw 
   void Ng_Redraw();
   //
@@ -212,8 +220,23 @@ namespace netgen {
   // number of periodic vertices  
   int Ng_GetNPeriodicVertices ();
   // pairs should be an integer array of 2*npairs
-  void Ng_GetPeriodicVertices (int * pairs);
+  void Ng_GetPeriodicVertices (int * pairs); 
 
+  // number of periodic edges  
+  int Ng_GetNPeriodicEdges ();
+  // pairs should be an integer array of 2*npairs
+  void Ng_GetPeriodicEdges (int * pairs); 
+
+
+  void Ng_PushStatus (const char * str);
+  void Ng_PopStatus ();
+  void Ng_SetThreadPercentage (double percent);
+  
+  //// added by Roman Stainko ....
+  int Ng_GetVertex_Elements( int vnr, int* elems);
+  int Ng_GetVertex_SurfaceElements( int vnr, int* elems );
+  int Ng_GetVertex_NElements( int vnr );
+  int Ng_GetVertex_NSurfaceElements( int vnr );
 
 #ifdef __cplusplus
 }

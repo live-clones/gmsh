@@ -11,6 +11,7 @@ public:
   int maxlevel;
   int usemarkedelements;
   bool refine_hp;
+  bool refine_p;
   BisectionOptions ();
 };
 
@@ -43,7 +44,7 @@ public:
   Refinement ();
   virtual ~Refinement ();
   
-  void Refine (Mesh & mesh, int levels);
+  void Refine (Mesh & mesh);
   void Bisect (Mesh & mesh, class BisectionOptions & opt);
   void MakeSecondOrder (Mesh & mesh);
 
@@ -60,6 +61,11 @@ public:
 			     Point3d & newp, EdgePointGeomInfo & newgi);
 
   virtual void ProjectToSurface (Point<3> & p, int surfi);
+
+  virtual void ProjectToSurface (Point<3> & p, int surfi, PointGeomInfo & /* gi */)
+  {
+    ProjectToSurface (p, surfi);
+  }
 
 
   void ValidateSecondOrder (Mesh & mesh);

@@ -28,12 +28,13 @@ class MeshTopology
   MoveableArray<int> surffaces;
   MoveableArray<INDEX_2> surf2volelement;
   MoveableArray<int> face2surfel;
-  TABLE<int> *vert2element;
-  TABLE<int> *vert2surfelement;
-  TABLE<int> *vert2segment;
+  TABLE<int,PointIndex::BASE> *vert2element;
+  TABLE<int,PointIndex::BASE> *vert2surfelement;
+  TABLE<int,PointIndex::BASE> *vert2segment;
   int timestamp;
 public:
   MeshTopology (const Mesh & amesh);
+  ~MeshTopology ();
 
   void SetBuildEdges (int be)
   { buildedges = be; }
@@ -104,6 +105,9 @@ public:
   
   void GetVertexElements (int vnr, ARRAY<int> & elements) const;
   FlatArray<int> GetVertexElements (int vnr) const;
+
+  void GetVertexSurfaceElements( int vnr, ARRAY<int>& elements ) const;
+  FlatArray<int> GetVertexSurfaceElements (int vnr) const;
 };
 
 #endif

@@ -54,7 +54,7 @@ class Brick : public Primitive
 
 public:
   Brick (Point<3> ap1, Point<3> ap2, Point<3> ap3, Point<3> ap4);
-  ~Brick ();
+  virtual ~Brick ();
   static Primitive * CreateDefault ();
 
 
@@ -90,6 +90,7 @@ protected:
   Point<3> pmin, pmax;
 public:
   OrthoBrick (const Point<3> & ap1, const Point<3> & ap2);
+  
   virtual INSOLID_TYPE BoxInSolid (const BoxSphere<3> & box) const;
   virtual void Reduce (const BoxSphere<3> & box);
 };

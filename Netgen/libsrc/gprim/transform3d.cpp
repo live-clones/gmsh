@@ -54,6 +54,7 @@ Transformation3d (const Point3d & c, double alpha,
   ht.Combine (ht2, r1);
   Combine (ht, tcinv);
 
+ cout << "Rotation - Transformation:" << (*this) << endl;
   //  (*testout) << "Rotation - Transformation:" << (*this) << endl;
 }
 

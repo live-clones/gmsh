@@ -982,6 +982,6 @@ void Meshing3 :: LoadRules (const char * filename, const char ** prules)
 	}
     }
   delete ist;
-  delete tr1;
+  delete [] tr1;
 }
 }

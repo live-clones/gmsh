@@ -93,6 +93,22 @@ private:
   static void(*ErrHandler)();
 };
 
+
+inline MyStr::MyStr()
+{
+  length = 0;
+  str = shortstr;
+  str[0] = 0;
+}
+
+inline MyStr::MyStr(char s)
+{
+  length = 1;
+  str = shortstr;
+  str[0] = s;
+  str[1] = (char)0;
+}
+
 inline MyStr::~MyStr()
 {
   if (length > SHORTLEN)

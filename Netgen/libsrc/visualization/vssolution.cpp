@@ -15,6 +15,18 @@ namespace netgen
 
   extern AutoPtr<Mesh> mesh;
 
+
+  VisualSceneSolution :: SolData :: SolData ()
+    : name (0), data (0), solclass(0)
+  { ; }
+
+  VisualSceneSolution :: SolData :: ~SolData ()
+  {
+    delete [] name;
+    delete data;
+    delete solclass;
+  }
+
   
   VisualSceneSolution :: VisualSceneSolution ()
     : VisualScene()
@@ -23,10 +35,12 @@ namespace netgen
     linelist = 0;
     clipplanelist = 0;
     isolinelist = 0;
+    clipplane_isolinelist = 0;
     surface_vector_list = 0;
     cone_list = 0;
 
     surfeltimestamp = GetTimeStamp();
+    surfellinetimestamp = GetTimeStamp();
     clipplanetimestamp = GetTimeStamp();
     solutiontimestamp = GetTimeStamp();
     fieldlinestimestamp = GetTimeStamp();
@@ -36,22 +50,23 @@ namespace netgen
   
   VisualSceneSolution :: ~VisualSceneSolution ()
   {
-    ;
+    ClearSolutionData();
   }
 
   void VisualSceneSolution :: AddSolutionData (SolData * sd)
   {
-    int i, funcnr = -1;
-    
-    for (i = 0; i < soldata.Size(); i++)
+    int funcnr = -1;
+    for (int i = 0; i < soldata.Size(); i++)
       {
 	if (strcmp (soldata[i]->name, sd->name) == 0)
 	  {
+	    delete soldata[i];
 	    soldata[i] = sd;
 	    funcnr = i;
 	    break;
 	  }
       }
+
     if (funcnr == -1)
       {
 	soldata.Append (sd);
@@ -91,18 +106,13 @@ namespace netgen
 	  }
 	solutiontimestamp = NextTimeStamp();
       }
-    
-    /*
-      (*testout) << "set sol-data " << nsd->name
-      << ", size = " << nsd->size << endl;
-      if (nsd->data)
-      for (i = 0; i < nsd->size; i++)
-      (*testout) << i << ": " << nsd->data[i] << endl;
-    */
   }
+
   
   void VisualSceneSolution :: ClearSolutionData ()
   {
+    for (int i = 0; i < soldata.Size(); i++)
+      delete soldata[i];
     soldata.SetSize (0);
   }
 
@@ -110,8 +120,6 @@ namespace netgen
   {
     solutiontimestamp = NextTimeStamp();
   }
-  
-
     
   VisualSceneSolution::SolData * VisualSceneSolution :: GetSolData (int i)
   { 
@@ -124,7 +132,7 @@ namespace netgen
 
 
 
-  void VisualSceneSolution :: SaveSolutionData (const char * filename)
+  void VisualSceneSolution :: SaveSolutionData (const char * filename) 
   {
     PrintMessage (1, "Write solution data to file ", filename);
     int i, j, k;
@@ -171,15 +179,6 @@ namespace netgen
 
   void VisualSceneSolution :: DrawScene ()
   {
-    /*
-    if (multithread.running) 
-      {
-	VisualScene::DrawScene();      
-	return;
-      }
-    */
-    int i, j, k;
-    
     if (!mesh) 
       {
 	VisualScene::DrawScene();      
@@ -189,23 +188,14 @@ namespace netgen
     static NgLock mem_lock(mem_mutex);
     mem_lock.Lock();
 
-    /*    
-    lock = NULL;
-    if (!lock)
-      {
-	lock = new NgLock (mesh->Mutex());
-	lock -> Lock();
-      }
-    */
+    NgLock meshlock (mesh->Mutex(), 1);
 
     BuildScene();
 
-    // either continuous, or discrete coloring
-    CreateTexture (numtexturecols, lineartexture);
+    CreateTexture (numtexturecols, lineartexture, GL_MODULATE);
 
-    glClearColor(backcolor, backcolor, backcolor, 1.0);
+    glClearColor(backcolor, backcolor, backcolor, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 
     SetLight();
     
@@ -218,7 +208,8 @@ namespace netgen
     
     glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
     
-    glPolygonOffset (1, 1);
+    // glPolygonOffset (1, 1);
+    glPolygonOffset (2, 10);
     glEnable (GL_POLYGON_OFFSET_FILL);
 
     glEnable (GL_COLOR_MATERIAL);
@@ -228,7 +219,7 @@ namespace netgen
       glEnable (GL_TEXTURE_1D);
 
 
-    if (vispar.drawfilledtrigs)
+    if (vispar.drawfilledtrigs || vispar.drawtetsdomain > 0 || vispar.drawdomainsurf > 0)
       {
 	SetClippingPlane ();
 	
@@ -240,7 +231,7 @@ namespace netgen
 
     if (showclipsolution)
       glCallList (clipplanelist);
-  
+
 
     if (draw_fieldlines)
       {
@@ -249,7 +240,7 @@ namespace netgen
 	if (num_fieldlineslists <= 1)
 	  glCallList (fieldlineslist);
 	else
-	  {
+	  {  // animated
 	    int start = int (time / 10 * num_fieldlineslists);
 	    for (int ln = 0; ln < 10; ln++)
 	      {
@@ -278,43 +269,37 @@ namespace netgen
     glLineWidth (1.0f);
     glColor3f (0.0f, 0.0f, 0.0f);
     glDisable (GL_LINE_SMOOTH);
-    
-    if (vispar.drawoutline || numisolines)
+
+
+    if (vispar.drawoutline && !numisolines)
       {
 	SetClippingPlane ();
-	
-	if (numisolines)
-	  {
-	    glCallList (isolinelist);
-	  }
-	else
-	  {
-	    glCallList (linelist);
-	  }
-	
-	glDisable(GL_CLIP_PLANE0);
+	glCallList (linelist);
+       	glDisable(GL_CLIP_PLANE0);
       }
-    
-   
+
+    if (numisolines)
+      {
+	SetClippingPlane ();
+	glCallList (isolinelist);
+
+	glDisable(GL_CLIP_PLANE0);
+	glCallList (clipplane_isolinelist);
+      }
 
     glPopMatrix();
     
     glDisable(GL_CLIP_PLANE0);
-    DrawColorBar (minval, maxval, logscale);
+    DrawColorBar (minval, maxval, logscale, lineartexture);
     
     if (vispar.drawcoordinatecross)
       DrawCoordinateCross ();
     DrawNetgenLogo ();
     
     glFinish();  
+
     
-    /*
-    if (lock)
-      {
-	lock -> UnLock();
-	delete lock;
-      }
-    */
+    // delete lock;
     mem_lock.UnLock();
   }
   
@@ -384,8 +369,6 @@ namespace netgen
 	glEndList();
       }
 
-
-
     
     vispar.colormeshsize = 1;
     
@@ -394,19 +377,23 @@ namespace netgen
     glDisable(GL_CLIP_PLANE0);
     
     
-    const SolData * sol = NULL;
-    const SolData * vsol = NULL;
+    SolData * sol = NULL;
+    SolData * vsol = NULL;
   
     if (scalfunction != -1) 
       sol = soldata[scalfunction];
     if (vecfunction != -1)
       vsol = soldata[vecfunction];
-    
+
   if (mesh->GetTimeStamp () > solutiontimestamp)
     {
       sol = NULL;
       vsol = NULL;
     }
+
+
+  if (sol && sol->solclass) sol->solclass->SetMultiDimComponent (multidimcomponent);
+  if (vsol && vsol->solclass) vsol->solclass->SetMultiDimComponent (multidimcomponent);
 
   if (!autoscale || scalfunction == -1)
     {
@@ -425,7 +412,7 @@ namespace netgen
  
 
   if (mesh->GetTimeStamp() > surfeltimestamp ||
-      solutiontimestamp > surfeltimestamp ||
+      solutiontimestamp > surfeltimestamp || 
       zoomall)
     {
       if (mesh->GetTimeStamp() > surfeltimestamp ||
@@ -451,18 +438,24 @@ namespace netgen
 	    }
 	}
 
-      
       if (surfellist)
 	glDeleteLists (surfellist, 1);
       
       surfellist = glGenLists (1);
       glNewList (surfellist, GL_COMPILE);
       
-      DrawSurfaceElements();
+	  DrawSurfaceElements();
       
       glEndList ();
       
-      
+      surfeltimestamp = max2 (solutiontimestamp, mesh->GetTimeStamp());
+    }
+
+
+  if (mesh->GetTimeStamp() > surfellinetimestamp ||
+      solutiontimestamp > surfellinetimestamp || 
+      zoomall)
+    {
       if (linelist)
 	glDeleteLists (linelist, 1);
       
@@ -472,15 +465,12 @@ namespace netgen
       DrawSurfaceElementLines();
       
       glEndList ();
-
-      surfeltimestamp = max2 (solutiontimestamp, mesh->GetTimeStamp());
-
-      //      cout << "minval = " << minval << " maxval = " << maxval << endl;
+      
+      surfellinetimestamp = max2 (solutiontimestamp, mesh->GetTimeStamp());
     }
-  
-
 
   
+
   if (mesh->GetTimeStamp() > surface_vector_timestamp ||
       solutiontimestamp > surface_vector_timestamp ||
       zoomall)
@@ -509,7 +499,11 @@ namespace netgen
       if (vispar.clipenable && clipsolution)      
 	{
 	  // lock->UnLock();
+	  NgLock mlock (mesh->Mutex(), 0);
+	  mlock.UnLock();
 	  mesh->BuildElementSearchTree();
+	  mlock.Lock();
+
 	  // lock->Lock();
 	}
 
@@ -531,7 +525,7 @@ namespace netgen
 	  
 	  glBegin (GL_TRIANGLES);
 	  for (i = 0; i < cpt.Size(); i++)
-	    DrawClipPlaneTrig (sol, scalcomp, cpt[i], 2*subdivisions);
+	    DrawClipPlaneTrig (sol, scalcomp, cpt[i], 0); // 2*subdivisions);
 	  glEnd();
 
 	  glEnable(GL_CLIP_PLANE0);
@@ -544,6 +538,7 @@ namespace netgen
 	    GetMinMax (vecfunction, 0, minval, maxval);
 
 
+	  bool drawelem;
 	  ARRAY<ClipPlanePoint> cpp;
 	  GetClippingPlaneGrid (cpp);
 
@@ -553,12 +548,13 @@ namespace netgen
 	      double values[6];
 	      Vec3d v;
 
-	      GetValues (vsol, p.elnr, p.lam1, p.lam2, p.lam3, values);
+	      drawelem = GetValues (vsol, p.elnr, p.lam1, p.lam2, p.lam3, values);
 	      RealVec3d (values, v, vsol->iscomplex, imag_part);
 
 	      double val = v.Length();
 
-	      if (val > 1e-10 * maxval)
+	      // "drawelem": added 07.04.2004 (FB)
+	      if (drawelem && val > 1e-10 * maxval)
 		{
 		  v *= (rad / val / gridsize * 0.5);
 		  
@@ -570,9 +566,6 @@ namespace netgen
 
       glEndList ();
     }
-
-  
-  
 
   if (
       numisolines && 
@@ -588,116 +581,162 @@ namespace netgen
       Point<3> points[1100];
       double values[1100];
       
-      SurfaceElementIndex sei;
-      glBegin (GL_LINES);
       int nse = mesh->GetNSE();
+
       if (sol)
-	for (sei = 0; sei <= nse; sei++)
-	  {
-	    const Element2d & el = (*mesh)[sei];
-	    
-	    if (el.GetType() == TRIG || el.GetType() == TRIG6)
-	      {
-		Point<3> lp1, lp2, lp3;
-		if (!mesh->GetCurvedElements().IsHighOrder())
-		  {
-		    GetPointDeformation (el[0]-1, lp1);
-		    GetPointDeformation (el[1]-1, lp2);
-		    GetPointDeformation (el[2]-1, lp3);
-		  }
-
-
-		
-		int n = 1 << subdivisions;
-		int ii = 0;
-		int ix, iy;
-		for (iy = 0; iy <= n; iy++)
-		  for (ix = 0; ix <= n-iy; ix++)
+	{
+	  glBegin (GL_LINES);
+	  
+	  for (SurfaceElementIndex sei = 0; sei < nse; sei++)
+	    {
+	      const Element2d & el = (*mesh)[sei];
+	      
+	      if (el.GetType() == TRIG || el.GetType() == TRIG6)
+		{
+		  Point<3> lp1, lp2, lp3;
+		  if (!mesh->GetCurvedElements().IsHighOrder())
 		    {
-		      double x = double(ix) / n;
-		      double y = double(iy) / n;
-		  
-		      values[ii] = GetSurfValue (sol, sei, x, y, scalcomp);
-		      Point<2> xref(x,y);
-		      
-		      if (mesh->GetCurvedElements().IsHighOrder())
-			mesh->GetCurvedElements().
-			  CalcSurfaceTransformation (xref, sei, points[ii]);
-		      else
-			points[ii] = lp3 + x * (lp1-lp3) + y * (lp2-lp3);
-		  
-		      if (deform)
-			{
-			  Vec<3> def;
-			  GetSurfDeformation (sei, x, y, def);
-			  points[ii] += def;
-			}
-		      ii++;
+		      GetPointDeformation (el[0]-1, lp1);
+		      GetPointDeformation (el[1]-1, lp2);
+		      GetPointDeformation (el[2]-1, lp3);
 		    }
-
-		ii = 0;
-		for (iy = 0; iy < n; iy++)
-		  {
-		    for (ix = 0; ix < n-iy; ix++)
+		  
+		  int n = 1 << subdivisions;
+		  int ii = 0;
+		  int ix, iy;
+		  for (iy = 0; iy <= n; iy++)
+		    for (ix = 0; ix <= n-iy; ix++)
 		      {
 			double x = double(ix) / n;
 			double y = double(iy) / n;
 			
+			// TODO: consider return value (bool: draw/don't draw element)
+			GetSurfValue (sol, sei, x, y, scalcomp, values[ii]);
+			Point<2> xref(x,y);
+			
+			if (mesh->GetCurvedElements().IsHighOrder())
+			  mesh->GetCurvedElements().
+			    CalcSurfaceTransformation (xref, sei, points[ii]);
+			else
+			  points[ii] = lp3 + x * (lp1-lp3) + y * (lp2-lp3);
+			
+			if (deform)
+			  {
+			    Vec<3> def;
+			    GetSurfDeformation (sei, x, y, def);
+			    points[ii] += def;
+			  }
+			ii++;
+		      }
+		  
+		  ii = 0;
+		  for (iy = 0; iy < n; iy++, ii++)
+		    for (ix = 0; ix < n-iy; ix++, ii++)
+		      {
 			int index[] = { ii, ii+1, ii+n-iy+1,
 					ii+1, ii+n-iy+2, ii+n-iy+1 };
 			
-			int np = (ix == n-iy-1) ? 3 : 6;
-
 			DrawIsoLines (points[index[0]], points[index[1]], points[index[2]],
 				      values[index[0]], values[index[1]], values[index[2]],
 				      minval, maxval, numisolines);
-			if (np == 6)
+			if (ix < n-iy-1) 
 			  DrawIsoLines (points[index[3]], points[index[4]], points[index[5]],
-					values[index[3]], values[index[4]], values[index[5]],
+				      values[index[3]], values[index[4]], values[index[5]],
 					minval, maxval, numisolines);
-			ii++;
+		      }    
+		}
+	      
+	      
+	      if (el.GetType() == QUAD || el.GetType() == QUAD6 || el.GetType() == QUAD8 )
+		{
+		  Point<3> lpi[4];
+		  Vec<3> vx, vy, vtwist, def;
+		  if (!mesh->GetCurvedElements().IsHighOrder())
+		    {
+		      for (int j = 0; j < 4; j++)
+			GetPointDeformation (el[j]-1, lpi[j]);
+		      vx = lpi[1]-lpi[0];
+		      vy = lpi[3]-lpi[0];
+		      vtwist = (lpi[0]-lpi[1]) + (lpi[2]-lpi[3]);
+		    }
+
+		  int n = 1 << subdivisions;
+		  int ix, iy, ii = 0;
+		  for (iy = 0; iy <= n; iy++)
+		    for (ix = 0; ix <= n; ix++, ii++)
+		      {
+			double x = double(ix) / n;
+			double y = double(iy) / n;
+			
+			// TODO: consider return value (bool: draw/don't draw element)
+			GetSurfValue (sol, sei, x, y, scalcomp, values[ii]);
+			Point<2> xref(x,y);
+			
+			if (mesh->GetCurvedElements().IsHighOrder())
+			  mesh->GetCurvedElements().
+			    CalcSurfaceTransformation (xref, sei, points[ii]);
+			else
+			  points[ii] = lpi[0] + x * vx + y * vy + x*y * vtwist;
+			
+			if (deform)
+			  {
+			    GetSurfDeformation (sei, x, y, def);
+			    points[ii] += def;
+			  }
+		      }
+		  
+		  ii = 0;
+		  for (iy = 0; iy < n; iy++, ii++)
+		    for (ix = 0; ix < n; ix++, ii++)
+		      {
+			DrawIsoLines (points[ii], points[ii+1], points[ii+n+1],
+				      values[ii], values[ii+1], values[ii+n+1],
+				      minval, maxval, numisolines);
+			DrawIsoLines (points[ii+1], points[ii+n+2], points[ii+n+1],
+				      values[ii+1], values[ii+n+2], values[ii+n+1],
+				      minval, maxval, numisolines);
 		      }	
-		    ii++;
-		  }    
-		/*
-		double val1, val2, val3;
-		val1 = GetSurfValue (sol, sei, 1, 0, scalcomp);
-		val2 = GetSurfValue (sol, sei, 0, 1, scalcomp);
-		val3 = GetSurfValue (sol, sei, 0, 0, scalcomp);
-		*/
-	      }
-	  }
-      
+		}
+	    }
+	  glEnd();
+	}
+      glEndList ();
+
+      if (clipplane_isolinelist) glDeleteLists (clipplane_isolinelist, 1);
+            
       if (vispar.clipenable && clipsolution == 1 && sol)
 	{
-	  glDisable(GL_CLIP_PLANE0);
-	  
+	  clipplane_isolinelist = glGenLists (1);
+	  glNewList (clipplane_isolinelist, GL_COMPILE);
+
 	  ARRAY<ClipPlaneTrig> cpt;
 	  GetClippingPlaneTrigs (cpt);
+	  bool drawelem;
 	  
 	  glNormal3d (-clipplane[0], -clipplane[1], -clipplane[2]);
 	  
 	  if (numisolines)
-	  for (i = 0; i < cpt.Size(); i++)
-	    {
-	      const ClipPlaneTrig & trig = cpt[i];
-	      double vali[3];
-	      for (j = 0; j < 3; j++)
-		vali[j] = GetValue (sol, trig.elnr, 
-				    trig.points[j].lami(0),
-				    trig.points[j].lami(1),
-				    trig.points[j].lami(2), scalcomp);
-	      
-	      DrawIsoLines (trig.points[0].p,
-			    trig.points[1].p,
-			    trig.points[2].p,
-			    vali[0], vali[1], vali[2], minval, maxval, numisolines);
-	    }
-	  glEnable(GL_CLIP_PLANE0);
+	    for (i = 0; i < cpt.Size(); i++)
+	      {
+		const ClipPlaneTrig & trig = cpt[i];
+		double vali[3];
+		for (j = 0; j < 3; j++)
+		  drawelem = GetValue (sol, trig.elnr, 
+				       trig.points[j].lami(0),
+				       trig.points[j].lami(1),
+				     trig.points[j].lami(2), scalcomp, vali[j]);
+		
+		if ( drawelem )
+		  DrawIsoLines (trig.points[0].p,
+				trig.points[1].p,
+				trig.points[2].p,
+				vali[0], vali[1], vali[2], minval, maxval, numisolines);
+	      }
+	  glEndList ();
 	}
       glEnd();
       
-      glEndList ();
+
     }
   
   clipplanetimestamp = max2 (vispar.clipplanetimestamp, solutiontimestamp);
@@ -726,7 +765,7 @@ namespace netgen
     mesh->GetBox (pmin, pmax);
     double lami[3];
     int i;
-
+    bool drawelem;
 
     fieldlineslist = glGenLists (num_fieldlineslists);
 
@@ -750,7 +789,7 @@ namespace netgen
 	      {
 		Vec3d v;
 		double values[6];
-		GetValues (vsol, elnr, lami[0], lami[1], lami[2], values);
+		drawelem = GetValues (vsol, elnr, lami[0], lami[1], lami[2], values);
 		RealVec3d (values, v, vsol->iscomplex, phaser, phasei);
 		
 		double val = v.Length();
@@ -765,7 +804,8 @@ namespace netgen
 		    
 		    Point3d p2 = p + v; 
 		    cout << " p " << p << endl; 
-		    DrawCylinder (p, p2, rad * 0.003);
+		    // "drawelem": added 07.04.2004 (FB)
+		    if ( drawelem ) DrawCylinder (p, p2, rad * 0.003);
 		    p = p2;  		
 		    
 		    for(i=0;i<20;i++) 
@@ -774,14 +814,15 @@ namespace netgen
 			
 			if (elnr != -1)
 			  {
-			    GetValues (vsol, elnr, lami[0], lami[1], lami[2], values);
+			    drawelem = GetValues (vsol, elnr, lami[0], lami[1], lami[2], values);
 			    RealVec3d (values, v, vsol->iscomplex, phaser, phasei);
 			    val = v.Length();
 			    v *= (rad / val * 0.02);
 			    
 			    SetOpenGlColor  (val, minval, maxval, logscale);
 			    p2 = p +v; 
-			    DrawCylinder (p, p2, rad * 0.003);
+			    // "drawelem": added 07.04.2004 (FB)
+			    if ( drawelem ) DrawCylinder (p, p2, rad * 0.003);
 			    p = p2;  	
 			  }
 			else break; 
@@ -793,7 +834,7 @@ namespace netgen
 
 			if (elnr != -1)
 			  {
-			    GetValues (vsol, elnr, lami[0], lami[1], lami[2], values);
+			    drawelem = GetValues (vsol, elnr, lami[0], lami[1], lami[2], values);
 			    RealVec3d (values, v, vsol->iscomplex, phaser, phasei);
 			    
 			    val = v.Length();
@@ -801,7 +842,8 @@ namespace netgen
 			    
 			    SetOpenGlColor  (val, minval, maxval, logscale);
 			    p2 = p - v; 
-			    DrawCylinder (p, p2, rad * 0.003);
+			    // "drawelem": added 07.04.2004 (FB)
+			    if ( drawelem ) DrawCylinder (p, p2, rad * 0.003);
 			    p = p2;  	
 			  }
 			else break; 
@@ -815,13 +857,12 @@ namespace netgen
   
 
 
+
   void  VisualSceneSolution :: DrawSurfaceElements ()
   {
-    int j, k;
-    SurfaceElementIndex sei;
-
     const SolData * sol = NULL;
     const SolData * vsol = NULL;
+    bool drawelem = 0;
     
     if (scalfunction != -1)
       sol = soldata[scalfunction];
@@ -833,27 +874,36 @@ namespace netgen
 	sol = NULL;
 	vsol = NULL;
       }
-    
+
     glLineWidth (1.0f);
 
     if (!sol || !sol->draw_surface)
       glDisable (GL_TEXTURE_1D);
-
-    
+        
     Point<3> points[1100];
     Vec<3> nvs[1100];
     double values[1100];
 
-    glBegin (GL_TRIANGLES);
     int nse = mesh->GetNSE();
 
-    glColor3f (0.4, 0.4, 0.4);
+    glBegin (GL_TRIANGLES);
 
-    for (sei = 0; sei < nse; sei++)
+    // glColor3f (0.4, 0.4, 0.4);
+    // glColor3d (0.8, 0.8, 0.8);
+    glColor3d (1.0, 1.0, 1.0);
+
+    for(SurfaceElementIndex sei = 0; sei < nse; sei++)
       {
-	Element2d & el = (*mesh)[sei];
+	const Element2d & el = (*mesh)[sei];
 
-	if (el.GetType() == TRIG || el.GetType() == TRIG6)
+	if(vispar.drawdomainsurf > 0 &&
+	   ((mesh->GetDimension() == 3 && 
+	     vispar.drawdomainsurf != mesh->GetFaceDescriptor(el.GetIndex()).DomainIn() &&
+	     vispar.drawdomainsurf != mesh->GetFaceDescriptor(el.GetIndex()).DomainOut()) ||
+	    (mesh->GetDimension() == 2 && el.GetIndex() != vispar.drawdomainsurf))) continue;
+	
+	
+	if ( el.GetType() == TRIG || el.GetType() == TRIG6 )
 	  {
 	    Point<3> p1, p2, p3;
 	    if (!mesh->GetCurvedElements().IsHighOrder())
@@ -865,15 +915,14 @@ namespace netgen
 	    
 	    int n = 1 << subdivisions;
 	    int ii = 0;
-	    int ix, iy;
-	    for (iy = 0; iy <= n; iy++)
-	      for (ix = 0; ix <= n-iy; ix++)
+	    for (int iy = 0; iy <= n; iy++)
+	      for (int ix = 0; ix <= n-iy; ix++)
 		{
 		  double x = double(ix) / n;
 		  double y = double(iy) / n;
 		  
 		  if (sol && sol->draw_surface) 
-		    values[ii] = GetSurfValue (sol, sei, x, y, scalcomp);
+		    drawelem = GetSurfValue (sol, sei, x, y, scalcomp, values[ii]);
 
 		  Point<2> xref(x,y);
 		  Mat<3,2> dxdxi;
@@ -902,125 +951,129 @@ namespace netgen
 		}
 
 	    ii = 0;
-	    
-	    for (iy = 0; iy < n; iy++)
-	      {
-		for (ix = 0; ix < n-iy; ix++)
-		  {
-		    double x = double(ix) / n;
-		    double y = double(iy) / n;
-		    
-		    int index[] = { ii, ii+1, ii+n-iy+1,
-				    ii+1, ii+n-iy+2, ii+n-iy+1 };
-		    
-		    int np = (ix == n-iy-1) ? 3 : 6;
-		    for (int j = 0; j < np; j++)
-		      {
-			if (sol && sol->draw_surface)
-			  SetOpenGlColor  (values[index[j]], minval, maxval, logscale);
-			glNormal3dv (&nvs[index[j]](0));
-			glVertex3dv (points[index[j]]);
-		      }
-		    ii++;
-		  }	
-		ii++;
-	      }    
+	    for (int iy = 0; iy < n; iy++, ii++)
+	      for (int ix = 0; ix < n-iy; ix++, ii++)
+		{
+		  double x = double(ix) / n;
+		  double y = double(iy) / n;
+		  
+		  int index[] = { ii, ii+1, ii+n-iy+1,
+				  ii+1, ii+n-iy+2, ii+n-iy+1 };
+		  
+		  int np = (ix == n-iy-1) ? 3 : 6;
+		  for (int j = 0; j < np; j++)
+		    {
+		      if (sol && sol->draw_surface && drawelem)
+			SetOpenGlColor  (values[index[j]], minval, maxval, logscale);
+		      else
+			glColor3f (0.4f, 0.4f, 0.4f);
+		      
+		      glNormal3dv (nvs[index[j]]);
+		      glVertex3dv (points[index[j]]);
+		    }
+		}	
 	  }
       }
     glEnd ();
     
-    
-  
+      
     
   
     
     glBegin (GL_QUADS);
-    for (sei = 0; sei < nse; sei++)
-    {
-      const Element2d & el = (*mesh)[sei];
-      
-      if (el.GetType() == QUAD || el.GetType() == QUAD6)
-	{
-	  Point<3> lpi[4];
-	  for (k = 0; k < 4; k++)
-	    GetPointDeformation (el[k]-1, lpi[k]);
-	  Vec<3> vx = lpi[1]-lpi[0];
-	  Vec<3> vy = lpi[3]-lpi[0];
-	  Vec<3> vtwist = (lpi[0]-lpi[1]) + (lpi[2]-lpi[3]);
-	  Vec<3> nv = Cross (lpi[1]-lpi[0], Center (lpi[2],lpi[3]) - lpi[0]);
-	  nv.Normalize();
-	  glNormal3dv (nv);
-	  
+    for (SurfaceElementIndex sei = 0; sei < nse; sei++)
+      {
+	const Element2d & el = (*mesh)[sei];
 
-	  int n = 1 << subdivisions;
-	  int ii = 0;
-	  int ix, iy;
-	  for (iy = 0; iy <= n; iy++)
-	    for (ix = 0; ix <= n; ix++)
+	if(vispar.drawdomainsurf > 0 &&
+	   ((mesh->GetDimension() == 3 && 
+	     vispar.drawdomainsurf != mesh->GetFaceDescriptor(el.GetIndex()).DomainIn() &&
+	     vispar.drawdomainsurf != mesh->GetFaceDescriptor(el.GetIndex()).DomainOut()) ||
+	    (mesh->GetDimension() == 2 && el.GetIndex() != vispar.drawdomainsurf))) continue;
+
+	if ( el.GetType() == QUAD || el.GetType() == QUAD6 )
+	  {
+	    Point<3> lpi[4];
+	    Vec<3> vx, vy, vtwist;
+	    
+	    if (!mesh->GetCurvedElements().IsHighOrder())
 	      {
-		double x = double(ix) / n;
-		double y = double(iy) / n;
+		for (int k = 0; k < 4; k++)
+		  GetPointDeformation (el[k]-1, lpi[k]);
 		
-		Point<2> xref(x,y);
-		Mat<3,2> dxdxi;
-
-		if (sol && sol->draw_surface) 
-		  values[ii] = GetSurfValue (sol, sei, x, y, scalcomp);
-
-
-		if (mesh->GetCurvedElements().IsHighOrder())
-		  {
-		    mesh->GetCurvedElements().
-		      CalcSurfaceTransformation (xref, sei, points[ii], dxdxi);
-		    nvs[ii] = Cross (dxdxi.Col(0), dxdxi.Col(1));
-		    nvs[ii].Normalize();
-		  }
-		else
-		  {
-		    points[ii] = lpi[0] + x * vx + y * vy + x*y * vtwist;
-		    nvs[ii] = Cross (vx, vy);
-		    nvs[ii].Normalize();
-		  }
-		  
-		if (deform)
-		  {
-		    Vec<3> def;
-		    GetSurfDeformation (sei, x, y, def);
-		    points[ii] += def;
-		  }
-
-		// points[ii] = lpi[0] + x * vx + y * vy;
-		ii++;
+		vx = lpi[1]-lpi[0];
+		vy = lpi[3]-lpi[0];
+		vtwist = (lpi[0]-lpi[1]) + (lpi[2]-lpi[3]);
 	      }
-	  
-	  ii = 0;
-	  for (iy = 0; iy < n; iy++)
-	    {
-	      for (ix = 0; ix < n; ix++)
+	    Vec<3> nv = Cross (lpi[1]-lpi[0], Center (lpi[2],lpi[3]) - lpi[0]);
+	    nv.Normalize();
+	    glNormal3dv (nv);
+
+	    int n = 1 << subdivisions;
+	    int ii = 0;
+	    int ix, iy;
+	    for (iy = 0; iy <= n; iy++)
+	      for (ix = 0; ix <= n; ix++)
 		{
 		  double x = double(ix) / n;
 		  double y = double(iy) / n;
-		    
-		  int index[] = { ii, ii+1, ii+n+2, ii+n+1 };
+		
+		  Point<2> xref(x,y);
+		  Mat<3,2> dxdxi;
 
+		  if (sol && sol->draw_surface) 
+		    drawelem = GetSurfValue (sol, sei, x, y, scalcomp, values[ii]);
+
+		  if (mesh->GetCurvedElements().IsHighOrder())
+		    {
+		      mesh->GetCurvedElements().
+			CalcSurfaceTransformation (xref, sei, points[ii], dxdxi);
+		      nvs[ii] = Cross (dxdxi.Col(0), dxdxi.Col(1));
+		      nvs[ii].Normalize();
+		    }
+		  else
+		    {
+		      points[ii] = lpi[0] + x * vx + y * vy + x*y * vtwist;
+		      nvs[ii] = Cross (vx, vy);
+		      nvs[ii].Normalize();
+		    }
+		  
+		  if (deform)
+		    {
+		      Vec<3> def;
+		      GetSurfDeformation (sei, x, y, def);
+		      points[ii] += def;
+		    }
+
+		  ii++;
+		}
+	  
+	    ii = 0;
+	    for (iy = 0; iy < n; iy++, ii++)
+	      for (ix = 0; ix < n; ix++, ii++)
+		{
+		  double x = double(ix) / n;
+		  double y = double(iy) / n;
+		  
+		  int index[] = { ii, ii+1, ii+n+2, ii+n+1 };
+		  
 		  for (int j = 0; j < 4; j++)
 		    {
-		      if (sol && sol->draw_surface)
+		      if (sol && sol->draw_surface && drawelem)
 			SetOpenGlColor  (values[index[j]], minval, maxval, logscale);
-		      glNormal3dv (&nvs[index[j]](0));
+		      else
+			glColor3f (0.4f, 0.4f, 0.4f);
+		      
+		      glNormal3dv (nvs[index[j]]);
 		      glVertex3dv (points[index[j]]);
 		    }
-		  ii++;
 		}	
-	      ii++;
-	    }    
-	}
-    }
-  glEnd();
-
-  if (usetexture)
-    glEnable (GL_TEXTURE_1D);
-
+	  }
+      }
+    glEnd();
+    
+    if (usetexture)
+      glEnable (GL_TEXTURE_1D);
   }
 
 
@@ -1069,21 +1122,21 @@ nverse (mat, invmat);
 	  nv = 4;
 	
 	Point<3> p1, p2, p3, p4;
-	GetPointDeformation (el[0]-1, p1, sei);
-	GetPointDeformation (el[1]-1, p2, sei);
-	GetPointDeformation (el[2]-1, p3, sei);
-	if (nv == 4)
-	  GetPointDeformation (el[3]-1, p4, sei);
+	if (!mesh->GetCurvedElements().IsHighOrder())
+	  {
+	    p1 = (*mesh)[el[0]];
+	    p2 = (*mesh)[el[1]];
+	    p3 = (*mesh)[el[2]];
+	    if (nv == 4)
+	      p4 = (*mesh)[el[3]];
+	  }
 
 
 	// glBegin (GL_LINE_LOOP);
 	int n = 1 << subdivisions;
 	// n = p;
 
-	int ii = 0;
-	int ix, iy;
 	Point<3> pnt;
-	
 	for (k = 0; k < nv; k++)
 	  {
 	    Point<2> p0;
@@ -1130,16 +1183,15 @@ nverse (mat, invmat);
 	    Point<3> pts[33], pts2[33];
 	    if (n > 32) cerr << "too many subdivisions, code 433425" << endl;
 
-	    for (ix = 0; ix <= n; ix++)
+	    for (int ix = 0; ix <= n; ix++)
 	      {
 		Point<2> p = p0 + (double(ix) / n) * vtau;
 		double x = p(0);
 		double y = p(1);
-		Point<2> xref(x,y);
 
 		if (mesh->GetCurvedElements().IsHighOrder())
 		  mesh->GetCurvedElements().
-		    CalcSurfaceTransformation (xref, sei, pnt);
+		    CalcSurfaceTransformation (p, sei, pnt);
 		else
 		  {
 		    if (nv == 3)
@@ -1160,6 +1212,8 @@ nverse (mat, invmat);
 		pts[ix] = pnt;
 	      }
 	    glEnd ();
+
+
 
 
 
@@ -1220,6 +1274,7 @@ void  VisualSceneSolution :: DrawSurfaceVectors ()
   SurfaceElementIndex sei;
 
   const SolData * vsol = NULL;
+  bool drawelem;
 
   if (vecfunction != -1)
     vsol = soldata[vecfunction];
@@ -1244,6 +1299,7 @@ void  VisualSceneSolution :: DrawSurfaceVectors ()
       vsol->soltype==SOL_SURFACE_NONCONTINUOUS ||
       vsol->soltype==SOL_VIRTUALFUNCTION)
   */
+
   if (vsol->draw_surface && showsurfacesolution)
     {
       int nse = mesh->GetNSE();
@@ -1304,11 +1360,12 @@ void  VisualSceneSolution :: DrawSurfaceVectors ()
 	  double inv12 = -mat12/det;
 	  double inv22 = mat11/det;
 	  
-      
+	  //	  cout << "drawsurfacevectors. xoffset = " << xoffset << ", yoffset = ";
+	  //	  cout << yoffset << endl;
 	  
-	  for (s = 0; s <= 1; s += 1.0 / gridsize)
+	  for (s = xoffset/gridsize; s <= 1+xoffset/gridsize; s += 1.0 / gridsize)
 	    if (s >= minx2d && s <= maxx2d)
-	      for (t = 0; t <= 1; t += 1.0 / gridsize)
+	      for (t = yoffset/gridsize; t <= 1+yoffset/gridsize; t += 1.0 / gridsize)
 		if (t >= miny2d && t <= maxy2d)
 		  {
 		    double lam1 = inv11 * (s - p2d[0](0)) + inv12 * (t-p2d[0](1));
@@ -1324,7 +1381,7 @@ void  VisualSceneSolution :: DrawSurfaceVectors ()
 
 			Vec<3> v;
 			double values[6];
-			GetSurfValues (vsol, sei, lam1, lam2, values);
+			drawelem = GetSurfValues (vsol, sei, lam1, lam2, values);
 
 			if (!vsol->iscomplex)
 			  for (k = 0; k < 3; k++)
@@ -1340,14 +1397,18 @@ void  VisualSceneSolution :: DrawSurfaceVectors ()
 			  }
 			
 			if (mesh->GetDimension() == 2)
-			  v(2) = 0;
+			  if ( (!vsol->iscomplex && vsol->components != 3) ||
+			       (vsol->iscomplex && vsol->components != 6) )
+			    v(2) = 0;
 			
 			double val = v.Length();
 			SetOpenGlColor  (val, minval, maxval, logscale);
 
 			if (val > 1e-10 * maxval)
 			  v *= (rad / val / gridsize * 0.5);
-			DrawCone (cp, cp+4*v, 0.8*rad / gridsize);
+			// "drawelem": added 07.04.2004 (FB)
+			if ( drawelem ) DrawCone (cp, cp+4*v, 0.8*rad / gridsize);
+
 
 			/*
 			v /= val;
@@ -1440,8 +1501,9 @@ GetMinMax (int funcnr, int comp, double & minv, double & maxv) const
   int i, j;
   const SolData * sol;
   double val;
+  bool considerElem;
 
-  bool hasit = 0;
+  bool hasit = false;
   minv = 0; maxv = 1;
   if (funcnr != -1)
     {
@@ -1451,12 +1513,16 @@ GetMinMax (int funcnr, int comp, double & minv, double & maxv) const
 	  int ne = mesh->GetNE();
 	  for (int i = 0; i < ne; i++)
 	    {
-	      double val = GetValue (sol, i, 0.333, 0.333, 0.333, comp);
-	      if (val > maxv || !hasit)
-		maxv = val;
-	      if (val < minv || !hasit)
-		minv = val;
-	      hasit = 1;
+	      // "considerElem": added 07.04.2004 (FB)
+	      considerElem = GetValue (sol, i, 0.333, 0.333, 0.333, comp, val);
+	      if (considerElem)
+		{
+		  if (val > maxv || !hasit)
+		    maxv = val;
+		  if (val < minv || !hasit)
+		    minv = val;
+		  hasit = true;
+		}
 	    }
 	}
       if (sol->draw_surface)
@@ -1464,12 +1530,16 @@ GetMinMax (int funcnr, int comp, double & minv, double & maxv) const
 	  int nse = mesh->GetNSE();
 	  for (int i = 0; i < nse; i++)
 	    {
-	      double val = GetSurfValue (sol, i, 0.333, 0.333, comp);
-	      if (val > maxv || !hasit)
-		maxv = val;
-	      if (val < minv || !hasit)
-		minv = val;
-	      hasit = 1;
+	      // "considerElem": added 07.04.2004 (FB)
+	      considerElem = GetSurfValue (sol, i, 0.333, 0.333, comp, val);
+	      if (considerElem)
+		{
+		  if (val > maxv || !hasit)
+		    maxv = val;
+		  if (val < minv || !hasit)
+		    minv = val;
+		  hasit = true;
+		}
 	    }
 	}
     }
@@ -1479,38 +1549,41 @@ GetMinMax (int funcnr, int comp, double & minv, double & maxv) const
 
 
 
-void VisualSceneSolution :: 
+bool VisualSceneSolution :: 
 GetValues (const SolData * data, ElementIndex elnr, 
 	   double lam1, double lam2, double lam3,
 	   double * values) const
 {
+  bool ok;
   switch (data->soltype)
     {
     case SOL_VIRTUALFUNCTION:
       {
-	bool ok =
-	  data->solclass->GetValue (elnr, lam1, lam2, lam3, values);
+	ok = data->solclass->GetValue (elnr, lam1, lam2, lam3, values);
 	break;
       }
     default:
       {
 	for (int i = 0; i < data->components; i++)
-	  values[i] = GetValue (data, elnr, lam1, lam2, lam3, i+1);
+	  ok = GetValue (data, elnr, lam1, lam2, lam3, i+1, values[i]);
       }
     }
+  return ok;
 }
 
 
-double VisualSceneSolution :: 
+bool VisualSceneSolution :: 
 GetValue (const SolData * data, ElementIndex elnr, 
 	  double lam1, double lam2, double lam3,
-	  int comp) const
+	  int comp, double & val) const
 {
+  val = 0;
+  bool ok = 0;
+
   if (comp == 0)
     {
-      double val = 0;
       ArrayMem<double,20> values(data->components);
-      GetValues (data, elnr, lam1, lam2, lam3, &values[0]);
+      ok = GetValues (data, elnr, lam1, lam2, lam3, &values[0]);
 
       switch (evalfunc)
 	{
@@ -1596,7 +1669,7 @@ GetValue (const SolData * data, ElementIndex elnr,
          }
       }
 
-      return val;	
+      return ok;	
     }
 
 
@@ -1605,12 +1678,10 @@ GetValue (const SolData * data, ElementIndex elnr,
     case SOL_VIRTUALFUNCTION:
       {
 	double values[20];
-	bool ok = data->solclass->GetValue (elnr, lam1, lam2, lam3, values);
+	ok = data->solclass->GetValue (elnr, lam1, lam2, lam3, values);
 
-	if (ok) 
-	  return values[comp-1];
-	else
-	  return 0;
+	val = values[comp-1];
+	return ok;
       }
     case SOL_NODAL:
       {
@@ -1618,7 +1689,6 @@ GetValue (const SolData * data, ElementIndex elnr,
 
 	double lami[8];
 	int np, i;
-	double val = 0;
 	
 	switch (el.GetType())
 	  {
@@ -1649,12 +1719,13 @@ GetValue (const SolData * data, ElementIndex elnr,
 	for (i = 0; i < np; i++)
 	  val += lami[i] * data->data[(el[i]-1) * data->dist + comp-1];
 
-	return val;
+	return 1;
       }
 
     case SOL_ELEMENT:
       {
-	return data->data[elnr * data->dist + comp-1];
+	val = data->data[elnr * data->dist + comp-1];
+	return 1;
       }
 
     case SOL_SURFACE_ELEMENT:
@@ -1666,7 +1737,6 @@ GetValue (const SolData * data, ElementIndex elnr,
 
 	double lami[8];
 	int np, i;
-	double val = 0;
 
 	switch (el.GetType())
 	  {
@@ -1726,14 +1796,20 @@ GetValue (const SolData * data, ElementIndex elnr,
 	for (i = 0; i < np; i++)
 	  val += lami[i] * data->data[(base+i) * data->dist + comp-1];
 
-	return val;
+	return 1;
       }
 
     case SOL_MARKED_ELEMENTS:
-      return (*mesh)[elnr].TestRefinementFlag();
+      {
+	val = (*mesh)[elnr].TestRefinementFlag();
+	return 1;
+      }
       
     case SOL_ELEMENT_ORDER:
-      return (*mesh)[elnr].GetOrder();
+      {
+	val = (*mesh)[elnr].GetOrder();
+	return 1;
+      }
     }
   return 0;
 }
@@ -1741,39 +1817,41 @@ GetValue (const SolData * data, ElementIndex elnr,
 
 
 
-void VisualSceneSolution :: 
+bool VisualSceneSolution :: 
 GetSurfValues (const SolData * data, SurfaceElementIndex selnr, 
 	       double lam1, double lam2, 
 	       double * values) const
 {
+  bool ok;
   switch (data->soltype)
     {
     case SOL_VIRTUALFUNCTION:
       {
-	bool ok =
-	  data->solclass->GetSurfValue (selnr, lam1, lam2, values);
+	ok = data->solclass->GetSurfValue (selnr, lam1, lam2, values);
 	break;
       }
     default:
       {
 	for (int i = 0; i < data->components; i++)
-	  values[i] = GetSurfValue (data, selnr, lam1, lam2, i+1);
+	  ok = GetSurfValue (data, selnr, lam1, lam2, i+1, values[i]);
       }
     }
+  return ok;
 }
 
 
 
-double VisualSceneSolution :: 
+bool VisualSceneSolution :: 
 GetSurfValue (const SolData * data, SurfaceElementIndex selnr, 
 	      double lam1, double lam2, 
-	      int comp) const
+	      int comp, double & val) const
 {
+  bool ok;
   if (comp == 0)
     {
-      double val = 0;
+      val = 0;
       ArrayMem<double,20> values(data->components);
-      GetSurfValues (data, selnr, lam1, lam2, &values[0]);
+      ok = GetSurfValues (data, selnr, lam1, lam2, &values[0]);
 
       switch (evalfunc)
 	{
@@ -1859,7 +1937,7 @@ GetSurfValue (const SolData * data, SurfaceElementIndex selnr,
          }
       }
 
-      return val;	
+      return ok;	
 
 
       /*
@@ -1876,13 +1954,23 @@ GetSurfValue (const SolData * data, SurfaceElementIndex selnr,
     {
    case SOL_VIRTUALFUNCTION:
       {
-	double values[20];
-	bool ok =
-	  data->solclass->GetSurfValue (selnr, lam1, lam2, values);
+	ArrayMem<double,20> values(data->components);
+	bool ok;
+
+	ok = data->solclass->GetSurfValue (selnr, lam1, lam2, &values[0]);
+
 	if (ok)
-	  return values[comp-1];
-	else 
-	  return 0;
+	  {
+	    if (!data->iscomplex)
+	      val =  values[comp-1];
+	    else
+	      {
+		// cout << "time = " << time << ", cos = " << cos(time) << endl;
+		val = values[comp-1]*cos(3*time) + values[comp]*sin(3*time);
+	      }
+	  }
+
+	return ok;
       }
 
 
@@ -1892,7 +1980,7 @@ GetSurfValue (const SolData * data, SurfaceElementIndex selnr,
 
 	double lami[8];
 	int np, i;
-	double val = 0;
+	val = 0;
 	double lam3 = 1-lam1-lam2;
 
 	switch (el.GetType())
@@ -1941,7 +2029,7 @@ GetSurfValue (const SolData * data, SurfaceElementIndex selnr,
 	for (i = 0; i < np; i++)
 	  val += lami[i] * data->data[(el[i]-1) * data->dist + comp-1];
 
-	return val;
+	return 1;
       }
 
     case SOL_ELEMENT:
@@ -1950,17 +2038,21 @@ GetSurfValue (const SolData * data, SurfaceElementIndex selnr,
 	mesh->GetTopology().GetSurface2VolumeElement (selnr+1, el1, el2);
 	el1--;
 
-	return data->data[el1 * data->dist+comp-1];
+	val = data->data[el1 * data->dist+comp-1];
+	return 1;
       }
 
     case SOL_NONCONTINUOUS:
       {
+	val = 0;
+	// ?????
 	return 0;
       }
 
     case SOL_SURFACE_ELEMENT:
       {
-	return data->data[selnr * data->dist + comp-1];
+	val = data->data[selnr * data->dist + comp-1];
+	return 1;
       }
 
     case SOL_SURFACE_NONCONTINUOUS:
@@ -1969,7 +2061,7 @@ GetSurfValue (const SolData * data, SurfaceElementIndex selnr,
 
 	double lami[8];
 	int np, i;
-	double val = 0;
+	val = 0;
 	int order = data->order;
 
 	switch (order)
@@ -2031,14 +2123,20 @@ GetSurfValue (const SolData * data, SurfaceElementIndex selnr,
 	  {
 	    val += lami[i] * data->data[(base+i) * data->dist + comp-1];
 	  }
-	return val;
+	return 1;
       }
 
     case SOL_MARKED_ELEMENTS:
-      return (*mesh)[selnr].TestRefinementFlag();
+      {
+	val = (*mesh)[selnr].TestRefinementFlag();
+	return 1;
+      }
       
     case SOL_ELEMENT_ORDER:
-      return (*mesh)[selnr].GetOrder();
+      {
+	val = (*mesh)[selnr].GetOrder();
+	return 1;
+      }
 
     }
   return 0;
@@ -2125,7 +2223,7 @@ void VisualSceneSolution :: GetClippingPlaneTrigs (ARRAY<ClipPlaneTrig> & trigs)
 
   int ii, j, k, l;
   ElementIndex ei;
-  // int np = mesh->GetNV();
+
   int np = mesh->GetNP();
   int ne = mesh->GetNE();
 
@@ -2162,8 +2260,151 @@ void VisualSceneSolution :: GetClippingPlaneTrigs (ARRAY<ClipPlaneTrig> & trigs)
   ARRAY<Element> loctetsloc;
   ARRAY<Point3d> pointsloc;
 
+
+  int n = 1 << subdivisions;
+  ARRAY<Point<3> > grid((n+1)*(n+1)*(n+1));
+  ARRAY<Point<3> > locgrid((n+1)*(n+1)*(n+1));
+  ARRAY<double> val((n+1)*(n+1)*(n+1));
+
+
   for (ei = 0; ei < ne; ei++)
     {
+      ELEMENT_TYPE type = (*mesh)[ei].GetType();
+      if (type == HEX || type == PRISM || type == TET || type == PYRAMID)
+	{
+	  const Element & el = (*mesh)[ei];
+
+	  Vector shape(el.GetNP());
+
+	  int ii = 0;
+	  for (int ix = 0; ix <= n; ix++)
+	    for (int iy = 0; iy <= n; iy++)
+	      for (int iz = 0; iz <= n; iz++, ii++)
+		{
+		  Point<3> ploc;
+		  if (type == PRISM)
+		    ploc = Point<3> (double(ix) / n * (1-double(iy)/n), double(iy) / n, double(iz) / n);
+		  if (type == TET)
+		    ploc = Point<3> (double(ix) / n * (1-double(iy)/n) * (1-double(iz)/n), 
+				     double(iy) / n * (1-double(iz)/n), 
+				     double(iz) / n);
+		  if (type == HEX)
+		    ploc = Point<3> (double(ix) / n, double(iy) / n, double(iz) / n);
+		  if (type == PYRAMID)
+		    ploc = Point<3> (double(ix) / n * (1-double(iz)/n),
+				     double(iy) / n * (1-double(iz)/n),
+				     double(iz)/n);
+
+		  Point<3> pglob;
+		  
+		  if (mesh->GetCurvedElements().IsHighOrder())
+		    {
+		      mesh->GetCurvedElements().
+			CalcElementTransformation (ploc, ei, pglob);
+		    }
+		  else
+		    {
+		      el.GetShapeNew (ploc, shape);
+		      for (int j = 0; j < 3; j++)
+			{
+			  pglob(j) = 0;
+			  for (int k = 0; k < el.GetNP(); k++)
+			    pglob(j) += shape(k) * (*mesh)[el[k]].X(j+1);
+			}
+		    }
+		  
+		  locgrid[ii] = ploc;
+		  grid[ii] = pglob;
+		  val[ii] = 
+		    pglob(0) * clipplane[0] + 
+		    pglob(1) * clipplane[1] + 
+		    pglob(2) * clipplane[2] + 
+		    clipplane[3];
+		}
+	  
+	  for (int ix = 0; ix < n; ix++)
+	    for (int iy = 0; iy < n; iy++)
+	      for (int iz = 0; iz < n; iz++)
+		{
+		  int base = iz + (n+1)*iy + (n+1)*(n+1)*ix;
+		  int pi[8] = 
+		    { base, base+(n+1)*(n+1), base+(n+1)*(n+1)+(n+1), base+(n+1),
+		      base+1, base+(n+1)*(n+1)+1, base+(n+1)*(n+1)+(n+1)+1, base+(n+1)+1 };
+		  
+		  int tets[6][4] = 
+		    { { 1, 7, 2, 3 },
+		      { 1, 7, 3, 4 },
+		      { 1, 7, 4, 8 },
+		      { 1, 7, 8, 5 },
+		      { 1, 7, 5, 6 },
+		      { 1, 7, 6, 2 }
+		    };
+		  
+
+		  for (int ii = 0; ii < 6; ii++)
+		    {
+		      int teti[4];
+		      for (int k = 0; k < 4; k++)
+			teti[k] = pi[tets[ii][k]-1];
+
+		      for (j = 0; j < 4; j++)
+			nodevali[j] = val[teti[j]];
+	  
+		      cntce = 0;
+		      for (j = 0; j < 6; j++)
+			{
+			  int lpi1 = edgei[j][0];
+			  int lpi2 = edgei[j][1];
+			  if ( (nodevali[lpi1] > 0) !=
+			       (nodevali[lpi2] > 0) )
+			    {
+			      edgelam[j] = nodevali[lpi2] / (nodevali[lpi2] - nodevali[lpi1]);
+			      Point<3> p1 = grid[teti[lpi1]];
+			      Point<3> p2 = grid[teti[lpi2]];
+		  
+			      edgep[j] = p1 + (1-edgelam[j]) * (p2-p1);
+		  
+			      cntce++;
+			      cpe3 = cpe2;
+			      cpe2 = cpe1;
+			      cpe1 = j;
+			      if (cntce >= 3)
+				{
+				  ClipPlaneTrig cpt;
+				  cpt.elnr = ei;
+				  
+				  for (int k = 0; k < 3; k++)
+				    {
+				      int ednr;
+				      switch (k)
+					{
+					case 0: ednr = cpe1; break;
+					case 1: ednr = cpe2; break;
+					case 2: ednr = cpe3; break;
+					}
+				      cpt.points[k].p = edgep[ednr];
+				      
+				      int pi1 = edgei[ednr][0];
+				      int pi2 = edgei[ednr][1];
+				      Point<3> p1 = locgrid[teti[pi1]];
+				      Point<3> p2 = locgrid[teti[pi2]];
+				      for (l = 0; l < 3; l++)
+					cpt.points[k].lami(l) = 
+					  edgelam[ednr]     * p1(l) + 
+					  (1-edgelam[ednr]) * p2(l);
+				    }
+				  
+				  trigs.Append (cpt);
+				}
+			    }
+			}
+		    }
+		}
+	}
+
+      else
+	{
+
       // const Element & el = mesh->VolumeElement(i);
 
       (*mesh)[ei].GetTets (loctets);
@@ -2228,6 +2469,7 @@ void VisualSceneSolution :: GetClippingPlaneTrigs (ARRAY<ClipPlaneTrig> & trigs)
 		}
 	    }
 	}
+	}
       
     }
 }
@@ -2258,8 +2500,13 @@ void VisualSceneSolution :: GetClippingPlaneGrid (ARRAY<ClipPlanePoint> & pts)
   int elnr;
   double lami[3];
 
-  for (xi1 = xi1mid-rad; xi1 <= xi1mid+rad; xi1 += rad / gridsize)
-    for (xi2 = xi2mid-rad; xi2 <= xi2mid+rad; xi2 += rad / gridsize)
+  //  cout << "getclippingplanegrid. xoffset = " << xoffset << ", yoffset = ";
+  //  cout << yoffset << endl;
+
+  for (xi1 = xi1mid-rad+xoffset/gridsize; xi1 <= xi1mid+rad+xoffset/gridsize; xi1 += rad / gridsize)
+    for (xi2 = xi2mid-rad+yoffset/gridsize; xi2 <= xi2mid+rad+yoffset/gridsize; xi2 += rad / gridsize)
+      //  for (xi1 = xi1mid-rad; xi1 <= xi1mid+rad; xi1 += rad / gridsize)
+      //    for (xi2 = xi2mid-rad; xi2 <= xi2mid+rad; xi2 += rad / gridsize)
       {
 	Point3d hp = p + xi1 * t1 + xi2 * t2;
 
@@ -2308,7 +2555,7 @@ SetOpenGlColor(double h, double hmin, double hmax, int logscale)
 
   value *= 4;
 
-  const double colp[][3] =
+  static const double colp[][3] =
   {
     { 1, 0, 0 },
     { 1, 1, 0 },
@@ -2323,8 +2570,7 @@ SetOpenGlColor(double h, double hmin, double hmax, int logscale)
   double r = value - i;
 
   GLdouble col[3];
-  int j;
-  for (j = 0; j < 3; j++)
+  for (int j = 0; j < 3; j++)
     col[j] = (1-r) * colp[i][j] + r * colp[i+1][j];
   
   glColor3d (col[0], col[1], col[2]);
@@ -2472,6 +2718,7 @@ DrawClipPlaneTrig (const SolData * sol,
 		   int level)
 {
   int j;
+  double val;
   if (level <= 0)
     for (j = 0; j < 3; j++)
       {
@@ -2494,11 +2741,12 @@ DrawClipPlaneTrig (const SolData * sol,
 	    p += def;
 	  }
 
-	double val = 
-	  GetValue (sol, trig.elnr, 
-		    trig.points[j].lami(0),
-		    trig.points[j].lami(1),
-		    trig.points[j].lami(2), scalcomp);
+	
+	// TODO: consider return value (bool: draw/don't draw element)
+	GetValue (sol, trig.elnr, 
+		  trig.points[j].lami(0),
+		  trig.points[j].lami(1),
+		  trig.points[j].lami(2), scalcomp, val);
       
 	SetOpenGlColor  (val, minval, maxval, logscale);
 	glVertex3dv (p);
@@ -2552,30 +2800,37 @@ int Ng_Vis_Set (ClientData clientData,
 		      "vec") == 0)
 	    vssolution.clipsolution = 2;
 	    
-	  const char * scalname = 
+	  // SZ const -> tcl_const
+	  tcl_const char * scalname =  
 	    Tcl_GetVar (interp, "visoptions.scalfunction", 0);
-	  const char * vecname = 
+	  // SZ const -> tcl_const 
+	  tcl_const char * vecname = 
 	    Tcl_GetVar (interp, "visoptions.vecfunction", 0);
 	  
 	  vssolution.scalfunction = -1;
 	  vssolution.vecfunction = -1;
 
+	  int pointpos; // SZ 
+	  char * pch;
+	  pch=strchr(scalname,'.');
+	  pointpos = int(pch-scalname+1);
+
 	  for (i = 0; i < vssolution.soldata.Size(); i++)
 	    {
 	      if (strlen (vssolution.soldata[i]->name) ==
-		  strlen (scalname)-2 &&
+		  pointpos-1 &&
 		  strncmp (vssolution.soldata[i]->name, scalname,
-			   strlen (scalname)-2) == 0)
+			   pointpos-1) == 0)
 		{
 		  vssolution.scalfunction = i;
-		  vssolution.scalcomp = atoi (scalname + strlen(scalname)-1);
+		  vssolution.scalcomp = atoi (scalname + pointpos);
 		}
 	      if (strcmp (vssolution.soldata[i]->name, vecname) == 0)
 		vssolution.vecfunction = i;
 	    }
 
-
-	  const char * evalname = 
+	  
+	  tcl_const char * evalname = 
 	    Tcl_GetVar (interp, "visoptions.evaluate", 0);
 	  
 	  if (strcmp(evalname, "abs") == 0) vssolution.evalfunc = VisualSceneSolution::FUNC_ABS;
@@ -2585,6 +2840,14 @@ int Ng_Vis_Set (ClientData clientData,
 
 	  vssolution.gridsize = 
 	    atoi (Tcl_GetVar (interp, "visoptions.gridsize", 0));
+
+	  vssolution.xoffset = 
+	    atof (Tcl_GetVar (interp, "visoptions.xoffset", 0));
+
+	  //	  cout << "x-offset:" << vssolution.xoffset << endl;
+
+	  vssolution.yoffset = 
+	    atof (Tcl_GetVar (interp, "visoptions.yoffset", 0));
 
 	  vssolution.autoscale = 
 	    atoi (Tcl_GetVar (interp, "visoptions.autoscale", 0));
@@ -2609,6 +2872,9 @@ int Ng_Vis_Set (ClientData clientData,
 	    atoi (Tcl_GetVar (interp, "visoptions.lineartexture", 0));
 	  vssolution.numtexturecols = 
 	    atoi (Tcl_GetVar (interp, "visoptions.numtexturecols", 0));
+
+	  vssolution.multidimcomponent = 
+	    atoi (Tcl_GetVar (interp, "visoptions.multidimcomponent", 0));
 
 	  vssolution.draw_fieldlines = 
 	    atoi (Tcl_GetVar (interp, "visoptions.drawfieldlines", 0));
@@ -2638,6 +2904,7 @@ int Ng_Vis_Set (ClientData clientData,
       if (argc >= 3 && strcmp (argv[1], "time") == 0)
 	{
 	  vssolution.time = double (atoi (argv[2])) / 1000;
+	  vssolution.solutiontimestamp = NextTimeStamp();
 	  // cout << "time = " << vssolution.time << endl;
 	}
 

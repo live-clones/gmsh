@@ -54,7 +54,7 @@ namespace netgen
     void Store ();
     void Restore ();
 
-    void SetSize(int size) { };
+    void SetSize(int /* size */) { };
     void Clear() { };
     int Size() const { return geom.GetNTE(); }
     const STLTopEdge & Get(int i) const { return geom.GetTopEdge(i); }

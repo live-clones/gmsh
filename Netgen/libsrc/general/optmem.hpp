@@ -26,9 +26,25 @@ public:
   ///
   ~BlockAllocator ();
   ///
-  void * Alloc ();
+  void * Alloc ()
+  {
+    if (!freelist)
+      Alloc2();
+
+    void * p = freelist;
+    freelist = *(void**)freelist;
+    return p;
+  }
   ///
-  void Free (void * p);
+  void Free (void * p)
+  {
+    *(void**)p = freelist;
+    freelist = p;
+  }
+  
+
+private:
+  void Alloc2 ();
 };
 
 

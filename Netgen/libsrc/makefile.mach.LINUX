@@ -1,7 +1,9 @@
 #
-# Machine dependent make include file for gcc
+# Machine dependent make include file
 # 
 #
+# CC=/opt/gcc-dev/bin/gcc 
+# CC=/usr/local/bin/gcc
 CC=gcc
 CPLUSPLUS=$(CC)
 AR=ar
@@ -13,8 +15,17 @@ RANLIB=ranlib
 # Machine dependent flags:
 #
 CFLAGS2 =
-CPLUSPLUSFLAGS2 = -O2 -I/usr/X11R6/include -DLINUX -DOPENGL 
-#
-LINKFLAGS2 =  -L/usr/openwin/lib -L/usr/X11R6/lib
 
-SYSLIB2 = -lstdc++
+CPLUSPLUSFLAGS2 = -O2 -I/usr/include/GL3.5 -DLINUX -DOPENGL \
+	-ftemplate-depth-99 -finline-limit=20000 \
+	-funroll-loops  -DNGSOLVE
+
+LINKFLAGS2 =   -L/usr/openwin/lib -L/usr/X11R6/lib -L/usr/lib/GL3.5 -lstdc++ 
+
+
+goalngs=goalngs
+
+# lapack =  -llapack  -lblas -lgmp -lg2c
+
+
+appngs =  lib/$(MACHINE)/*.o -lngsolvebasic

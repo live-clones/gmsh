@@ -19,62 +19,107 @@ namespace netgen
 
 
 
-
+SplineGeometry2d :: ~SplineGeometry2d()
+{
+  for(int i=0; i<splines.Size(); i++)
+    {
+      delete splines[i];
+    }
+  splines.DeleteAll();
+  geompoints.DeleteAll();
+}
 
 void SplineGeometry2d :: Load (const char * filename)
 {
   ifstream infile;
-  int nump, numseg, nelp, i, leftdom, rightdom;
+  int nump, numseg, leftdom, rightdom;
   double x, y;
   int hi1, hi2, hi3;
   double hd;
-  char reco[50], ch;
+  char buf[50], ch;
 
   infile.open (filename);
 
-  infile >> reco;
+  if (! infile.good() )
+    throw NgException(string ("2D Input file '") + 
+		      string (filename) +
+		      string ("' not available!"));
+
+  infile >> buf;   // file recognition
   infile >> elto0;
 
   infile >> nump;
-  for (i = 0; i < nump; i++)
+  for (int i = 0; i < nump; i++)
     {
       infile >> x >> y >> hd;
+
+      Flags flags;
+
+      ch = 'a';
+      // infile >> ch;
+      do {
+	infile.get (ch);
+      } while (isspace(ch) && ch != '\n');
+      while (ch == '-')
+	{
+	  char flag[100];
+	  flag[0]='-';
+	  infile >> (flag+1);
+	  flags.SetCommandLineFlag (flag);
+	  ch = 'a';
+	  do {
+	    infile.get (ch);
+	  } while (isspace(ch) && ch != '\n');
+	}
+    
+      if (infile.good())
+	infile.putback (ch);
+
       geompoints.Append (GeomPoint2d(x, y, hd));
+      geompoints.Last().hpref = flags.GetDefineFlag ("hpref");
     }
 
   infile >> numseg;
-
   SplineSegment * spline = 0;
-  for (i = 0; i < numseg; i++)
+  for (int i = 0; i < numseg; i++)
     {
       infile >> leftdom >> rightdom;
 
-      infile >> nelp;  
-      switch (nelp)
-	{ // type of spline segement
-	case 2:
-	  { // a line
-	    infile >> hi1 >> hi2;
-	    spline = new LineSegment(geompoints[hi1-1],
-				     geompoints[hi2-1]);
-	    break;
-	  }
-	case 3:
-	  { // a rational spline
-	    infile >> hi1 >> hi2 >> hi3;
-	    spline = new SplineSegment3 (geompoints[hi1-1],
-					 geompoints[hi2-1],
-					 geompoints[hi3-1]);
-	    break;
-	  }
-	case 4:
-	  { // an arc
-	    infile >> hi1 >> hi2 >> hi3;
-	    splines.Append (new CircleSegment (geompoints[hi1-1],
-					       geompoints[hi2-1],
-					       geompoints[hi3-1]));
-	    break;
-	  }
+      // cout << "add spline " << i << ", left = " << leftdom << endl;
+
+      infile >> buf;
+      // type of spline segement
+      if (strcmp (buf, "2") == 0)
+	{ // a line
+	  infile >> hi1 >> hi2;
+	  spline = new LineSegment(geompoints[hi1-1],
+				   geompoints[hi2-1]);
+	}
+      else if (strcmp (buf, "3") == 0)
+	{ // a rational spline
+	  infile >> hi1 >> hi2 >> hi3;
+	  spline = new SplineSegment3 (geompoints[hi1-1],
+				       geompoints[hi2-1],
+				       geompoints[hi3-1]);
+	}
+      else if (strcmp (buf, "4") == 0)
+	{ // an arc
+	  infile >> hi1 >> hi2 >> hi3;
+	  spline = new CircleSegment (geompoints[hi1-1],
+				      geompoints[hi2-1],
+				      geompoints[hi3-1]);
+	  break;
+	}
+      else if (strcmp (buf, "discretepoints") == 0)
+	{
+	  int npts;
+	  infile >> npts;
+	  ARRAY<Point<2> > pts(npts);
+	  for (int j = 0; j < npts; j++)
+	    infile >> pts[j](0) >> pts[j](1);
+
+	  spline = new DiscretePointsSegment (pts);
+	  cout << "pts = " << pts << endl;
 	}
     
       infile >> spline->reffak;
@@ -82,7 +127,6 @@ void SplineGeometry2d :: Load (const char * filename)
       spline -> rightdom = rightdom;
       splines.Append (spline);
 
-    
 
       Flags flags;
       ch = 'a';
@@ -101,13 +145,15 @@ void SplineGeometry2d :: Load (const char * filename)
 	infile.putback (ch);
     
       splines.Last()->bc = int (flags.GetNumFlag ("bc", i+1));
+      splines.Last()->hpref_left = int (flags.GetDefineFlag ("hpref")) || 
+	int (flags.GetDefineFlag ("hprefleft"));
+      splines.Last()->hpref_right = int (flags.GetDefineFlag ("hpref")) || 
+	int (flags.GetDefineFlag ("hprefright"));
       splines.Last()->copyfrom = int (flags.GetNumFlag ("copy", -1));
     }
 
 
-  Box<2> bbox;
-  GetBoundingBox (bbox);
-  // cout << "bbox = " << bbox << endl;
+  infile.close();
 }
 
 
@@ -115,20 +161,29 @@ void SplineGeometry2d :: Load (const char * filename)
 void SplineGeometry2d :: 
 PartitionBoundary (double h, Mesh & mesh2d)
 {
+  Box<2> bbox;
+  GetBoundingBox (bbox);
+  double dist = Dist (bbox.PMin(), bbox.PMax());
+  Point<3> pmin(bbox.PMin()(0), bbox.PMin()(1), -dist);
+  Point<3> pmax(bbox.PMax()(0), bbox.PMax()(1), dist);
+
+  cout << "searchtree from " << pmin << " to " << pmax << endl;
+  Point3dTree searchtree (pmin, pmax);
+  
   for (int i = 0; i < splines.Size(); i++)
     if (splines[i]->copyfrom == -1)
-      splines[i]->Partition(h, elto0, mesh2d, i+1);
+      splines[i]->Partition(h, elto0, mesh2d, searchtree, i+1);
     else
-      CopyEdgeMesh (splines[i]->copyfrom, i+1, mesh2d);
+      CopyEdgeMesh (splines[i]->copyfrom, i+1, mesh2d, searchtree);
 }
 
 
-void SplineGeometry2d :: CopyEdgeMesh (int from, int to, Mesh & mesh)
+void SplineGeometry2d :: CopyEdgeMesh (int from, int to, Mesh & mesh, Point3dTree & searchtree)
 {
   int i, j, k;
 
-  ARRAY<int> mappoints (mesh.GetNP());
-  ARRAY<double> param (mesh.GetNP());
+  ARRAY<int, PointIndex::BASE> mappoints (mesh.GetNP());
+  ARRAY<double, PointIndex::BASE> param (mesh.GetNP());
   mappoints = -1;
   param = 0;
 
@@ -168,8 +223,9 @@ void SplineGeometry2d :: CopyEdgeMesh (int from, int to, Mesh & mesh)
 	  if (npi == -1)
 	    {
 	      npi = mesh.AddPoint (newp3);
+	      searchtree.Insert (newp3, npi);
 	    }
-	  
+
 	  mappoints.Elem(i) = npi;
 
 	  mesh.GetIdentifications().Add (i, npi, to);
@@ -219,6 +275,72 @@ GetBoundingBox (Box<2> & box) const
       for (int j = 0; j < points.Size(); j++)
 	box.Add (points[j]);
     }
+}
+
+void SplineGeometry2d :: 
+SetGrading (const double grading)
+{ elto0 = grading;}
+
+void SplineGeometry2d :: 
+AppendPoint (const double x, const double y, const double reffac, const bool hpref)
+{
+  geompoints.Append (GeomPoint2d(x, y, reffac));
+  geompoints.Last().hpref = hpref;
+}
+
+
+void SplineGeometry2d :: 
+AppendSegment(SplineSegment * spline, const int leftdomain, const int rightdomain, 
+	      const int bc, 
+	      const double reffac, const bool hprefleft, const bool hprefright,
+	      const int copyfrom)
+{
+  spline -> leftdom = leftdomain;
+  spline -> rightdom = rightdomain;
+  spline -> bc = (bc >= 0) ? bc : (splines.Size()+1);
+  spline -> reffak = reffac;
+  spline -> hpref_left = hprefleft;
+  spline -> hpref_right = hprefright;
+  spline -> copyfrom = copyfrom;
+  
+  splines.Append(spline);
+}
+
+void SplineGeometry2d :: 
+AppendLineSegment (const int n1, const int n2, const int leftdomain, const int rightdomain,
+		   const int bc, 
+		   const double reffac, const bool hprefleft, const bool hprefright,
+		   const int copyfrom)
+{
+  SplineSegment * spline = new LineSegment(geompoints[n1],geompoints[n2]);
+  AppendSegment(spline,leftdomain,rightdomain,bc,reffac,hprefleft,hprefright,copyfrom);  
+}
+void SplineGeometry2d :: 
+AppendSplineSegment (const int n1, const int n2, const int n3, const int leftdomain, const int rightdomain, 
+		     const int bc,
+		     const double reffac, const bool hprefleft, const bool hprefright,
+		     const int copyfrom)
+{
+  SplineSegment * spline = new SplineSegment3(geompoints[n1],geompoints[n2],geompoints[n3]);
+  AppendSegment(spline,leftdomain,rightdomain,bc,reffac,hprefleft,hprefright,copyfrom);
+}
+void SplineGeometry2d :: 
+AppendCircleSegment (const int n1, const int n2, const int n3, const int leftdomain, const int rightdomain,
+		     const int bc,  
+		     const double reffac, const bool hprefleft, const bool hprefright,
+		     const int copyfrom)
+{
+  SplineSegment * spline = new CircleSegment(geompoints[n1],geompoints[n2],geompoints[n3]);
+  AppendSegment(spline,leftdomain,rightdomain,bc,reffac,hprefleft,hprefright,copyfrom);
+}
+void SplineGeometry2d :: 
+AppendDiscretePointsSegment (const ARRAY< Point<2> > & points, const int leftdomain, const int rightdomain, 
+			     const int bc, 
+			     const double reffac, const bool hprefleft, const bool hprefright,
+			     const int copyfrom)
+{
+  SplineSegment * spline = new DiscretePointsSegment(points);
+  AppendSegment(spline,leftdomain,rightdomain,bc,reffac,hprefleft,hprefright,copyfrom);
 }
 
 }

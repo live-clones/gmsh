@@ -26,6 +26,24 @@ void PrintDot(char ch)
 }
 
 void PrintMessage(int importance, 
+		  const MyStr& s1, const MyStr& s2)
+{
+  if (importance <= printmessage_importance)
+    {
+      Ng_PrintDest(MyStr(" ")+s1+s2+MyStr("\n"));
+    }
+}
+
+void PrintMessage(int importance, 
+		  const MyStr& s1, const MyStr& s2, const MyStr& s3, const MyStr& s4)
+{
+  if (importance <= printmessage_importance)
+    {
+      Ng_PrintDest(MyStr(" ")+s1+s2+s3+s4+MyStr("\n"));
+    }
+}
+
+void PrintMessage(int importance, 
 		  const MyStr& s1, const MyStr& s2, const MyStr& s3, const MyStr& s4, 
 		  const MyStr& s5, const MyStr& s6, const MyStr& s7, const MyStr& s8)
 {
@@ -93,52 +111,35 @@ void PrintTime(const MyStr& s1, const MyStr& s2, const MyStr& s3, const MyStr& s
     Ng_PrintDest(MyStr(" Time = ")+s1+s2+s3+s4+s5+s6+s7+s8+MyStr("\n"));
 }
 
-ARRAY<MyStr*> msgstatus_stack(0);
-MyStr* msgstatus = NULL;
+
+static ARRAY<MyStr*> msgstatus_stack(0);
+static MyStr msgstatus = "";
+
+
+
 
 void ResetStatus()
 {
   SetStatMsg("idle");
 
-  if (msgstatus != NULL)
-    {
-      delete msgstatus;
-    } 
-  int i;
-  for (i = 1; i <= msgstatus_stack.Size(); i++)
-    {
-      delete msgstatus_stack.Get(i);
-    }
-  
+  for (int i = 0; i < msgstatus_stack.Size(); i++)
+    delete msgstatus_stack[i];
   msgstatus_stack.SetSize(0);
-  msgstatus = NULL;
-  multithread.task = "";
+
+  // multithread.task = "";
   multithread.percent = 100.;
 }
 
 void PushStatus(const MyStr& s)
 {
-  if (msgstatus == NULL)
-    {
-      SetStatMsg("idle");
-    } 
-  msgstatus_stack.Append(msgstatus);
-  msgstatus = NULL;
-
+  msgstatus_stack.Append(new MyStr (s));
   SetStatMsg(s);
-  //  multithread.task = "";
 }
+
 void PushStatusF(const MyStr& s)
 {
-  if (msgstatus == NULL)
-    {
-      SetStatMsg("idle");
-    } 
-  msgstatus_stack.Append(msgstatus);
-  msgstatus = NULL;
-
+  msgstatus_stack.Append(new MyStr (s));
   SetStatMsg(s);
-  //  multithread.task = "";
   PrintFnStart(s);
 }
 
@@ -147,13 +148,12 @@ void PopStatus()
   SetThreadPercent(100.);
   if (msgstatus_stack.Size())
     {
-      if (msgstatus != NULL) 
-	{
-	  delete msgstatus;
-	}
-      msgstatus = msgstatus_stack.Get(msgstatus_stack.Size());
+      if (msgstatus_stack.Size() > 1)
+	SetStatMsg (*msgstatus_stack.Last());
+      else
+	SetStatMsg ("");
+      delete msgstatus_stack.Last();
       msgstatus_stack.SetSize(msgstatus_stack.Size()-1);
-      multithread.task = msgstatus->c_str();
     }
   else
     {
@@ -167,14 +167,11 @@ void SetStatMsgF(const MyStr& s)
   SetStatMsg(s);
 }
 */
+
 void SetStatMsg(const MyStr& s)
 {
-  if (msgstatus != NULL)
-    {
-      delete msgstatus;
-    }
-  msgstatus = new MyStr(s);
-  multithread.task = msgstatus->c_str();  
+  msgstatus = s;
+  multithread.task = msgstatus.c_str();  
 }
 
 void SetThreadPercent(double percent)
@@ -182,5 +179,15 @@ void SetThreadPercent(double percent)
   multithread.percent = percent;
 }
 
+
+
+#ifdef SMALLLIB
+void Ng_PrintDest(const char * s){cout << s <<flush;}
+double GetTime(){return 0;}
+void MyError(const char * ch)
+{
+  cerr << ch << endl;
+}
+#endif
 
 }

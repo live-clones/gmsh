@@ -30,14 +30,13 @@ bool BSplineCurve2d :: Inside (const Point<2> & p, double & dist) const
   dist = Dist (p, hp);
   double scal = (hp-p) * n;
   cout << "scal = " << scal << endl;
-  char ch;
-  //  cin >> ch;
+
   return scal >= 0;
 }
   
 double BSplineCurve2d :: ProjectParam (const Point<2> & p) const
 {
-  double t, dt, mindist, mint;
+  double t, dt, mindist, mint = 0.0;
   int n1;
   
   mindist = 1e10;
@@ -148,11 +147,11 @@ Vec<2> BSplineCurve2d :: EvalPrime (double t) const
 Vec<2> BSplineCurve2d :: EvalPrimePrime (double t) const
 {
   int n, n1, n2, n3, n4;
-  double loct, ddb1, ddb2, ddb3, ddb4;
+  double ddb1, ddb2, ddb3, ddb4;
   Vec<2> hv;
   
   n = int(t);   
-  //  loct = t - n;
+  //  double loct = t - n;
   
   ddb1 = 0.5;
   ddb4 = 0.5;

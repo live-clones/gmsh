@@ -14,7 +14,7 @@ namespace netgen
 {
 int EdgeUsed(int p1, int p2, ARRAY<INDEX_2>& edges, INDEX_2_HASHTABLE<int>& hashtab)
 {
-  if (p1 > p2) {Swap (p1,p2);}
+  if (p1 > p2) {swap (p1,p2);}
 
   if (hashtab.Used(INDEX_2(p1,p2))) 
     {return hashtab.Get(INDEX_2(p1,p2));}
@@ -75,7 +75,7 @@ Point<3> STLGeometry :: PointBetween(const Point<3> & p1, int t1,
       int ptn1 = GetTriangle(t1).PNum(i);
       int ptn2 = GetTriangle(t1).PNumMod(i+1);
 
-      if (ptn1 > ptn2) {Swap(ptn1,ptn2);}
+      if (ptn1 > ptn2) {swap(ptn1,ptn2);}
 
       Point3d pt1 = GetPoint(ptn1);
       Point3d pt2 = GetPoint(ptn2);
@@ -131,7 +131,7 @@ Point<3> STLGeometry :: PointBetween(const Point<3> & p1, int t1,
 		  int pnt1 = GetTriangle(tn).PNum(k);
 		  int pnt2 = GetTriangle(tn).PNumMod(k+1);
 		      
-		  if (pnt1 > pnt2) {Swap(pnt1,pnt2);}
+		  if (pnt1 > pnt2) {swap(pnt1,pnt2);}
 
 		  Point3d pt1 = GetPoint(pnt1);
 		  Point3d pt2 = GetPoint(pnt2);
@@ -1351,8 +1351,8 @@ int STLMeshingDummy (STLGeometry* stlgeometry, Mesh*& mesh,
       mesh -> SetLocalH (stlgeometry->GetBoundingBox().PMin() - Vec3d(10, 10, 10),
 			 stlgeometry->GetBoundingBox().PMax() + Vec3d(10, 10, 10),
 			 mparam.grading);
+      mesh -> LoadLocalMeshSize (mparam.meshsizefilename);
       
-      int i;
       success = 0;
   
       //mesh->DeleteMesh();
@@ -1451,7 +1451,7 @@ int STLMeshingDummy (STLGeometry* stlgeometry, Mesh*& mesh,
 	      mesh -> SetLocalH (stlgeometry->GetBoundingBox().PMin() - Vec3d(10, 10, 10),
 				 stlgeometry->GetBoundingBox().PMax() + Vec3d(10, 10, 10),
 				 mparam.grading);
-	      
+	      mesh -> LoadLocalMeshSize (mparam.meshsizefilename);	      
 	      mesh -> CalcLocalHFromSurfaceCurvature (stlparam.resthsurfmeshcurvfac);
 	      mparam.optimize2d = "cmsmSm";
 	      STLSurfaceOptimization (*stlgeometry, *mesh, mparam);
@@ -1502,6 +1502,7 @@ int STLMeshingDummy (STLGeometry* stlgeometry, Mesh*& mesh,
 	      mesh -> SetLocalH (stlgeometry->GetBoundingBox().PMin() - Vec3d(10, 10, 10),
 				 stlgeometry->GetBoundingBox().PMax() + Vec3d(10, 10, 10),
 				 mparam.grading);	  
+	      mesh -> LoadLocalMeshSize (mparam.meshsizefilename);
 	      mesh -> CalcLocalH ();
 	    }
 	  
@@ -1566,7 +1567,7 @@ int STLMeshingDummy (STLGeometry* stlgeometry, Mesh*& mesh,
 	    }
 
 
-	  OptimizeVolume (mparam, *mesh, NULL);
+	  OptimizeVolume (mparam, *mesh);
 	  
 #ifdef STAT_STREAM
 	  (*statout) << GetTime() << " & " << endl;

@@ -16,9 +16,11 @@ namespace netgen
 #include "writeuser.hpp"
 
 void ReadFile (Mesh & mesh,
-	       const char * filename)
+	       const string & hfilename)
 {
   cout << "Read User File" << endl;
+
+  const char * filename = hfilename.c_str();
 
   int i, j;
 
@@ -70,7 +72,7 @@ void ReadFile (Mesh & mesh,
 	  
 	  /*
 	    if (invert)
-	    Swap (el.PNum(2), el.PNum(3));
+	    swap (el.PNum(2), el.PNum(3));
 	  */
 	  
 	  mesh.AddSurfaceElement (el);
@@ -154,7 +156,7 @@ void ReadFile (Mesh & mesh,
 		  in >> el.PNum(1) >> el.PNum(2) >> el.PNum(3);
 	      
 		  if (invert)
-		    Swap (el.PNum(2), el.PNum(3));
+		    swap (el.PNum(2), el.PNum(3));
 		  mesh.AddSurfaceElement (el);	  
 	      
 		  for (j = 1; j <= 5; j++)
@@ -200,7 +202,7 @@ void ReadFile (Mesh & mesh,
 	{
 	  int mat, nelp;
 	  in >> mat >> nelp;
-	  Element2d el (nelp);
+	  Element2d el (nelp == 3 ? TRIG : QUAD);
 	  el.SetIndex (mat);
 	  for (j = 1; j <= nelp; j++)
 	    in >> el.PNum(j);
@@ -222,42 +224,62 @@ void ReadFile (Mesh & mesh,
     {
       cout << "Reading Neutral Format" << endl;
       
-      char buf[100];
       int np, ne, nse, i, j;
 
       ifstream in (filename);
 
       in >> np;
-      for (i = 1; i <= np; i++)
+
+      if (in.good())
 	{
-	  Point3d p(0,0,0);
-	  in >> p.X() >> p.Y() >> p.Z();
-	  mesh.AddPoint (p);
+	  // file starts with an integer
+
+	  for (i = 1; i <= np; i++)
+	    {
+	      Point3d p(0,0,0);
+	      in >> p.X() >> p.Y() >> p.Z();
+	      mesh.AddPoint (p);
+	    }
+	  
+	  in >> ne;
+	  for (i = 1; i <= ne; i++)
+	    {
+	      int mat;
+	      in >> mat;
+	      Element el (4);
+	      el.SetIndex (mat);
+	      for (j = 1; j <= 4; j++)
+		in >> el.PNum(j);
+	      mesh.AddVolumeElement (el);
+	    }
+	  
+	  in >> nse;
+	  for (i = 1; i <= nse; i++)
+	    {
+	      int mat, nelp;
+	      in >> mat;
+	      Element2d el (TRIG);
+	      el.SetIndex (mat);
+	      for (j = 1; j <= 3; j++)
+		in >> el.PNum(j);
+	      mesh.AddSurfaceElement (el);
+	    }
 	}
-
-      in >> ne;
-      for (i = 1; i <= ne; i++)
+      else
 	{
-	  int mat;
-	  in >> mat;
-	  Element el (4);
-	  el.SetIndex (mat);
-	  for (j = 1; j <= 4; j++)
-	    in >> el.PNum(j);
-	  mesh.AddVolumeElement (el);
-	}
-
-
-      in >> nse;
-      for (i = 1; i <= nse; i++)
-	{
-	  int mat, nelp;
-	  in >> mat;
-	  Element2d el (3);
-	  el.SetIndex (mat);
-	  for (j = 1; j <= 3; j++)
-	    in >> el.PNum(j);
-	  mesh.AddSurfaceElement (el);
+	  char buf[100];
+	  in.clear();
+	  do
+	    {
+	      in >> buf;
+	      cout << "buf = " << buf << endl;
+	      if (strcmp (buf, "points") == 0)
+		{
+		  in >> np;
+		  cout << "np = " << np << endl;
+		}
+	    }
+	  while (in.good());
 	}
     }
 
@@ -306,7 +328,7 @@ void ReadFile (Mesh & mesh,
 	{
 	  inemt >> p1 >> p2 >> p3 >> bcprop >> value;
 
-	  if (bcprop < 1 >> bcprop > 4)
+	  if (bcprop < 1 || bcprop > 4)
 	    cerr << "bcprop out of range, bcprop = " << bcprop << endl;
 	  p1++;
 	  p2++;

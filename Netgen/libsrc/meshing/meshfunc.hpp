@@ -13,8 +13,7 @@
  */
 
 class Mesh;
-class MeshingParameters3;
-class CSGeometry;
+// class CSGeometry;
 
 /// Build tet-mesh
 MESHING3_RESULT MeshVolume(MeshingParameters & mp, Mesh& mesh3d);
@@ -23,8 +22,8 @@ MESHING3_RESULT MeshVolume(MeshingParameters & mp, Mesh& mesh3d);
 MESHING3_RESULT MeshMixedVolume(MeshingParameters & mp, Mesh& mesh3d);
 
 /// Optimize tet-mesh
-MESHING3_RESULT OptimizeVolume(MeshingParameters & mp, Mesh& mesh3d,
-			       const CSGeometry * geometry = NULL);
+MESHING3_RESULT OptimizeVolume(MeshingParameters & mp, Mesh& mesh3d);
+//			       const CSGeometry * geometry = NULL);
 
 void RemoveIllegalElements (Mesh & mesh3d);
 

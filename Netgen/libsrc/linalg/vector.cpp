@@ -1,6 +1,7 @@
 #ifdef abc
 #include <mystdlib.h>
 #include <linalg.hpp>
+#include <algorithm>
 
 namespace netgen
 {

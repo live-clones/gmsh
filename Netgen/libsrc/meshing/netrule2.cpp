@@ -13,7 +13,9 @@ netrule :: netrule ()
 
 netrule ::  ~netrule()
 {
-  delete name;
+  if(name != NULL) delete [] name;
+  for(int i=0; i<oldutofreearea_i.Size(); i++)
+    delete oldutofreearea_i[i];
 }
 
 
@@ -31,9 +33,8 @@ void netrule :: GetFreeArea (ARRAY<Point2d> & afreearea)
 
 void netrule :: SetFreeZoneTransformation (const Vector & devp, int tolclass)
 {
-  int i;
   double lam1 = 1.0/tolclass;
-  double lam2 = 1-lam1;
+  double lam2 = 1.-lam1;
 
   double mem1[100], mem2[100], mem3[100];
 
@@ -42,14 +43,20 @@ void netrule :: SetFreeZoneTransformation (const Vector & devp, int tolclass)
   FlatVector devfree1(vs, mem2);
   FlatVector devfree2(vs, mem3);
 
-  oldutofreearea.Mult (devp, devfree1);
-  oldutofreearealimit.Mult (devp, devfree2);
-  devfree.Set2 (lam1, devfree1, lam2, devfree2);
+  if (tolclass <= oldutofreearea_i.Size())
+    {
+      oldutofreearea_i[tolclass-1] -> Mult (devp, devfree);
+    }
+  else
+    {
+      oldutofreearea.Mult (devp, devfree1);
+      oldutofreearealimit.Mult (devp, devfree2);
+      devfree.Set2 (lam1, devfree1, lam2, devfree2);
+    }
 
-  transfreezone.SetSize (freezone.Size());
-
-
-  int fzs = transfreezone.Size();
+  
+  int fzs = freezone.Size();
+  transfreezone.SetSize (fzs);
 
   if (fzs > 0)
     {
@@ -59,7 +66,7 @@ void netrule :: SetFreeZoneTransformation (const Vector & devp, int tolclass)
       fzmaxy = fzminy = transfreezone[0].Y();
     }
 
-  for (i = 1; i < fzs; i++)
+  for (int i = 1; i < fzs; i++)
     {
       transfreezone[i].X() = lam1 * freezone[i].X() + lam2 * freezonelimit[i].X() + devfree[2*i];
       transfreezone[i].Y() = lam1 * freezone[i].Y() + lam2 * freezonelimit[i].Y() + devfree[2*i+1];
@@ -70,12 +77,13 @@ void netrule :: SetFreeZoneTransformation (const Vector & devp, int tolclass)
       if (transfreezone[i].Y() < fzminy) fzminy = transfreezone[i].Y();
     }
 
-  for (i = 0; i < fzs; i++)
+  for (int i = 0; i < fzs; i++)
     {
       Point2d p1 = transfreezone[i];
       Point2d p2 = transfreezone[(i+1) % fzs];
 
       Vec2d vn (p2.Y() - p1.Y(), p1.X() - p2.X());
+
       double len2 = vn.Length2();
 
       if (len2 < 1e-10)
@@ -86,27 +94,34 @@ void netrule :: SetFreeZoneTransformation (const Vector & devp, int tolclass)
 	}
       else
 	{
-	  vn *= 1/sqrt (len2);
+	  vn /= sqrt (len2);    // should not be necessary
 
 	  freesetinequ(i,0) = vn.X(); 
 	  freesetinequ(i,1) = vn.Y(); 
 	  freesetinequ(i,2) = -(p1.X() * vn.X() + p1.Y() * vn.Y());
 	}
+
+      /*
+      freesetinequ(i,0) = vn.X(); 
+      freesetinequ(i,1) = vn.Y(); 
+      freesetinequ(i,2) = -(p1.X() * vn.X() + p1.Y() * vn.Y());
+      */
     }
 }
 
 
+/*
 int netrule :: IsInFreeZone2 (const Point2d & p) const
 {
-  int i;
-
-  for (i = 1; i <= transfreezone.Size(); i++)
+  for (int i = 0; i < transfreezone.Size(); i++)
     {
-      if (freesetinequ.Get(i, 1) * p.X() + freesetinequ.Get(i, 2) * p.Y() +
-	  freesetinequ.Get(i, 3) > 0) return 0;
+      if (freesetinequ(i, 0) * p.X() + 
+	  freesetinequ(i, 1) * p.Y() +
+	  freesetinequ(i, 2) > 0) return 0;
     }
   return 1;
 }
+*/
 
 int netrule :: IsLineInFreeZone2 (const Point2d & p1, const Point2d & p2) const
 {
@@ -122,9 +137,9 @@ int netrule :: IsLineInFreeZone2 (const Point2d & p1, const Point2d & p2) const
   for (i = 1; i <= transfreezone.Size(); i++)
     {
       if (freesetinequ.Get(i, 1) * p1.X() + freesetinequ.Get(i, 2) * p1.Y() +
-	  freesetinequ.Get(i, 3) > -1e-5 &&
+	  freesetinequ.Get(i, 3) > -1e-6 &&
 	  freesetinequ.Get(i, 1) * p2.X() + freesetinequ.Get(i, 2) * p2.Y() +
-	  freesetinequ.Get(i, 3) > -1e-5
+	  freesetinequ.Get(i, 3) > -1e-6
 	  ) return 0;
     }
 
@@ -156,9 +171,8 @@ int netrule :: IsLineInFreeZone2 (const Point2d & p1, const Point2d & p2) const
 
 int netrule :: ConvexFreeZone () const
 {
-  int i, n;
-  n = transfreezone.Size();
-  for (i = 1; i <= n; i++)
+  int n = transfreezone.Size();
+  for (int i = 1; i <= n; i++)
     {
       if (! CCW (transfreezone.Get(i), 
 		 transfreezone.Get(i % n + 1),
@@ -169,7 +183,7 @@ int netrule :: ConvexFreeZone () const
 }
 
 
-
+/*
 float netrule :: CalcPointDist (int pi, const Point2d & p) const
 {
   float dx = p.X() - points.Get(pi).X();
@@ -178,7 +192,7 @@ float netrule :: CalcPointDist (int pi, const Point2d & p) const
 
   return tf->f1 * dx * dx + tf->f2 * dx * dy + tf->f3 * dy * dy;
 }
-
+*/
 
 float netrule :: CalcLineError (int li, const Vec2d & v) const
 {

@@ -91,9 +91,13 @@ void AnisotropicClusters ::  Update()
 	cluster_reps.Elem(nnums[j]) = nnums[j];
     }
 
-
-
-
+  static const int hex_cluster[] =
+    { 
+      1, 2, 3, 4, 1, 2, 3, 4, 
+      5, 6, 7, 8, 5, 6, 7, 8, 1, 2, 3, 4, 
+      9, 9, 5, 8, 6, 7, 
+      9
+    };
 
   static const int prism_cluster[] =
     { 
@@ -162,6 +166,9 @@ void AnisotropicClusters ::  Update()
 	    case PRISM12:
 	      clustertab = prism_cluster;
 	      break;
+	    case HEX: 
+	      clustertab = hex_cluster; 
+	      break; 
 	    case PYRAMID:
 	      clustertab = pyramid_cluster;
 	      break;

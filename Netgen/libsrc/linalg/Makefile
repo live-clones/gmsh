@@ -1,7 +1,7 @@
 #
 # Makefile for linear algebra library
 #
-src = densemat.cpp vector.cpp polynomial.cpp
+src = basemat.cpp densemat.cpp vector.cpp sparsmat.cpp polynomial.cpp
 #
 lib = la
 libpath = libsrc/linalg
