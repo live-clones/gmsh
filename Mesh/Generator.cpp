@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.55 2004-06-28 19:00:22 geuzaine Exp $
+// $Id: Generator.cpp,v 1.56 2004-06-28 20:36:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -302,11 +302,12 @@ void Maillage_Dimension_3(Mesh * M)
   Free_Volume_But_Not_Elements(&v, NULL);
 
   // optimize quality
-  //if(CTX.mesh.quality) {
-  //for(int i = 0; i < List_Nbr(list); i++){
-  //  List_Read(list, i, &v);
-  //  Optimize_Netgen(v);
-  // }
+  if(CTX.mesh.quality) {
+    for(int i = 0; i < List_Nbr(list); i++){
+      List_Read(list, i, &v);
+      Optimize_Netgen(v);
+    }
+  }
 
   List_Delete(list);
 

@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.62 2004-06-26 21:34:50 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.63 2004-06-28 20:36:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1024,6 +1024,7 @@ void Maillage_Volume(void *data, void *dum)
     POINTS_TREE = THEM->Simplexes;
     Tree_Action(v->Simplexes, add_points);
 
+#if 0 // this is full of bugs :-)
     if(CTX.mesh.quality) {
       extern void SwapEdges3D(Mesh * M, Volume * v, double GammaPrescribed,
                               bool order);
@@ -1034,8 +1035,9 @@ void Maillage_Volume(void *data, void *dum)
       Msg(STATUS3, "Swapping edges (last pass)");
       SwapEdges3D(THEM, v, CTX.mesh.quality, true);
     }
+#endif
 
-#if 0 // this is wrong
+#if 0 // this is full of bugs, too :-)
     if(CTX.mesh.nb_smoothing) {
       Msg(STATUS3, "Smoothing volume %d", v->Num);
       tnxe = Tree_Create (sizeof (NXE), compareNXE);

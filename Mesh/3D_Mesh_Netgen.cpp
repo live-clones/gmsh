@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Netgen.cpp,v 1.5 2004-06-28 19:00:22 geuzaine Exp $
+// $Id: 3D_Mesh_Netgen.cpp,v 1.6 2004-06-28 20:36:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -168,8 +168,11 @@ void Netgen::MeshVolume()
   Vertex **vtable = (Vertex **)Malloc(nbv * sizeof(Vertex*));
   
   // Get existing vertices
-  for(int i = 0; i < List_Nbr(_vertices); i++)
+  for(int i = 0; i < List_Nbr(_vertices); i++){
     List_Read(_vertices, i, &vtable[i]);
+    Tree_Insert(_vol->Vertices, &vtable[i]);
+    Tree_Insert(THEM->Vertices, &vtable[i]);
+  }
 
   // Create new volume vertices
   for(int i = List_Nbr(_vertices); i < nbv; i++) {
