@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.37 2001-02-17 21:56:58 geuzaine Exp $
+// $Id: Context.cpp,v 1.38 2001-02-19 11:54:28 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -26,12 +26,18 @@ StringXString * Get_StringOptionCategory(char * cat){
 
 void Set_DefaultStringOptions(int num, StringXString s[]){
   int i = 0;
-  while(s[i].str) s[i].function(num, GMSH_SET, s[i++].def) ;
+  while(s[i].str){
+    s[i].function(num, GMSH_SET, s[i].def) ;
+    i++;
+  }
 }
 
 void Set_StringOptions_GUI(int num, StringXString s[]){
   int i = 0;
-  while(s[i].str) s[i++].function(num, GMSH_GUI, 0) ;
+  while(s[i].str){
+    s[i].function(num, GMSH_GUI, 0) ;
+    i++;
+  }
 }
 
 void * Get_StringOption(char *str, StringXString s[]){
@@ -69,12 +75,18 @@ StringXNumber * Get_NumberOptionCategory(char * cat){
 
 void Set_DefaultNumberOptions(int num, StringXNumber s[]){
   int i = 0;
-  while(s[i].str) s[i].function(num, GMSH_SET, s[i++].def) ;
+  while(s[i].str){
+    s[i].function(num, GMSH_SET, s[i].def) ;
+    i++;
+  }
 }
 
 void Set_NumberOptions_GUI(int num, StringXNumber s[]){
   int i = 0;
-  while(s[i].str) s[i++].function(num, GMSH_GUI, 0) ;
+  while(s[i].str){
+    s[i].function(num, GMSH_GUI, 0) ;
+    i++ ;
+  }
 }
 
 void * Get_NumberOption(char *str, StringXNumber s[]){
@@ -115,15 +127,33 @@ StringXColor * Get_ColorOptionCategory(char * cat){
 void Set_DefaultColorOptions(int num, StringXColor s[], int scheme){
   int i = 0;
   switch(scheme){
-  case 0 : while(s[i].str) s[i].function(num, GMSH_SET, s[i++].def1) ; break;
-  case 1 : while(s[i].str) s[i].function(num, GMSH_SET, s[i++].def2) ; break;
-  case 2 : while(s[i].str) s[i].function(num, GMSH_SET, s[i++].def3) ; break;
+  case 0 : 
+    while(s[i].str){
+      s[i].function(num, GMSH_SET, s[i].def1) ; 
+      i++;
+    }
+    break;
+  case 1 : 
+    while(s[i].str){ 
+      s[i].function(num, GMSH_SET, s[i].def2) ;
+      i++;
+    }
+    break;
+  case 2 : 
+    while(s[i].str){ 
+      s[i].function(num, GMSH_SET, s[i].def3) ; 
+      i++;
+    }
+    break;
   }
 }
 
 void Set_ColorOptions_GUI(int num, StringXColor s[]){
   int i = 0;
-  while(s[i].str) s[i++].function(num, GMSH_GUI, 0) ;
+  while(s[i].str){
+    s[i].function(num, GMSH_GUI, 0) ;
+    i++;
+  }
 }
 
 void * Get_ColorOption(char *str, StringXColor s[]) {
