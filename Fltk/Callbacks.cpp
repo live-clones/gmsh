@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.237 2004-05-18 20:51:50 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.238 2004-05-19 03:56:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -222,46 +222,25 @@ int SetGlobalShortcut(int event)
   return WID->global_shortcuts(event);
 }
 
-int SelectContour(int type, int num, List_T * List1)
+int SelectContour(int type, int num, List_T * List)
 {
-  int k = 0, ip, i;
+  int k = 0, ip;
 
-  if(!List_Nbr(List1)) {
-    switch (type) {
-    case ENT_LINE:
-      k = alledgeslinked(num, List1, (List_T *) NULL);
-      break;
-    case ENT_SURFACE:
-      k = allfaceslinked(num, List1, (List_T *) NULL);
-      break;
-    }
-  }
-  else {
-    List_T *List2 = List_Create(1, 1, sizeof(int));
-    for(i = 0; i < List_Nbr(List1); i++)
-      List_Add(List2, List_Pointer(List1, i));
-    List_Reset(List1);
-    switch (type) {
-    case ENT_LINE:
-      k = alledgeslinked(num, List1, List2);
-      break;
-    case ENT_SURFACE:
-      k = allfaceslinked(num, List1, List2);
-      break;
-    }
-    List_Delete(List2);
-  }
-
-  for(i = 0; i < List_Nbr(List1); i++) {
-    List_Read(List1, i, &ip);
-    switch (type) {
-    case ENT_LINE:
+  switch (type) {
+  case ENT_LINE:
+    k = allEdgesLinked(num, List);
+    for(int i = 0; i < List_Nbr(List); i++) {
+      List_Read(List, i, &ip);
       HighlightEntityNum(0, abs(ip), 0, 1);
-      break;
-    case ENT_SURFACE:
-      HighlightEntityNum(0, 0, abs(ip), 1);
-      break;
     }
+    break;
+  case ENT_SURFACE:
+    k = allFacesLinked(num, List);
+    for(int i = 0; i < List_Nbr(List); i++) {
+      List_Read(List, i, &ip);
+      HighlightEntityNum(0, 0, abs(ip), 1);
+    }
+    break;
   }
 
   return k;
@@ -2003,7 +1982,6 @@ static void _new_surface_volume(int mode)
 
   List_T *List1 = List_Create(10, 10, sizeof(int));
   List_T *List2 = List_Create(10, 10, sizeof(int));
-  List_T *ListUnsorted = List_Create(10, 10, sizeof(int));
 
   if(mode == 2) {
     type = ENT_SURFACE;
@@ -2023,7 +2001,6 @@ static void _new_surface_volume(int mode)
   while(1) {
     List_Reset(List1);
     List_Reset(List2);
-    List_Reset(ListUnsorted);
 
     while(1) {
       if(type == ENT_LINE){
@@ -2044,35 +2021,23 @@ static void _new_surface_volume(int mode)
         goto stopall;
       }
       if(ib == 'u') {
-	if(List_Nbr(ListUnsorted) > 0){
-	  for(int i = 0; i < List_Nbr(List1); i++){
-	    List_Read(List1, i, &num);	    
-	    ZeroHighlightEntityNum(0,
-				   (type == ENT_LINE) ? abs(num) : 0, 
-				   (type != ENT_LINE) ? abs(num) : 0);
-	  }
-	  List_Reset(List1);
-	  List_Pop(ListUnsorted);
-	  for(int i = 0; i < List_Nbr(ListUnsorted); i++){
-	    List_Read(ListUnsorted, i, &num);
-	    List_Add(List1, &num);
-	    HighlightEntityNum(0, 
-			       (type == ENT_LINE) ? abs(num) : 0, 
-			       (type != ENT_LINE) ? abs(num) : 0, 1);
-	  }
+	if(List_Nbr(List1) > 0){
+	  List_Read(List1, List_Nbr(List1)-1, &num);	    
+	  ZeroHighlightEntityNum(0,
+				 (type == ENT_LINE) ? abs(num) : 0, 
+				 (type != ENT_LINE) ? abs(num) : 0);
+	  List_Pop(List1);
 	  Draw();
 	}
       }
       if(ib == 'l') {
 	int num = (type == ENT_LINE) ? c->Num : s->Num;
-	List_Add(ListUnsorted, &num);
 	if(SelectContour(type, num, List1)) {
 	  if(type == ENT_LINE)
 	    add_loop(List1, CTX.filename, &num);
 	  else
 	    add_vol(List1, CTX.filename, &num);
 	  List_Reset(List1);
-	  List_Reset(ListUnsorted);
 	  List_Add(List2, &num);
 	  while(1) {
 	    Msg(ONSCREEN, "Select hole boundaries (if none, press 'e')\n"
@@ -2087,39 +2052,26 @@ static void _new_surface_volume(int mode)
 	      ZeroHighlight(THEM);
 	      Draw();
 	      List_Reset(List1);
-	      List_Reset(ListUnsorted);
 	      break;
 	    }
 	    if(ib == 'u') {
-	      if(List_Nbr(ListUnsorted) > 0){
-		for(int i = 0; i < List_Nbr(List1); i++){
-		  List_Read(List1, i, &num);	    
-		  ZeroHighlightEntityNum(0,
-					 (type == ENT_LINE) ? abs(num) : 0, 
-					 (type != ENT_LINE) ? abs(num) : 0);
-		}
-		List_Reset(List1);
-		List_Pop(ListUnsorted);
-		for(int i = 0; i < List_Nbr(ListUnsorted); i++){
-		  List_Read(ListUnsorted, i, &num);
-		  List_Add(List1, &num);
-		  HighlightEntityNum(0, 
-				     (type == ENT_LINE) ? abs(num) : 0, 
-				     (type != ENT_LINE) ? abs(num) : 0, 1);
-		}
+	      if(List_Nbr(List1) > 0){
+		List_Read(List1, List_Nbr(List1)-1, &num);	    
+		ZeroHighlightEntityNum(0,
+				       (type == ENT_LINE) ? abs(num) : 0, 
+				       (type != ENT_LINE) ? abs(num) : 0);
+		List_Pop(List1);
 		Draw();
 	      }
 	    }
 	    if(ib == 'l') {
 	      num = (type == ENT_LINE) ? c->Num : s->Num;
-	      List_Add(ListUnsorted, &num);
 	      if(SelectContour(type, num, List1)) {
 		if(type == ENT_LINE)
 		  add_loop(List1, CTX.filename, &num);
 		else
 		  add_vol(List1, CTX.filename, &num);
 		List_Reset(List1);
-		List_Reset(ListUnsorted);
 		List_Add(List2, &num);
 	      }
 	    }
@@ -2142,7 +2094,6 @@ static void _new_surface_volume(int mode)
 stopall:;
   List_Delete(List1);
   List_Delete(List2);
-  List_Delete(ListUnsorted);
   Msg(STATUS3N, "Ready");
   Msg(ONSCREEN, "");
 }

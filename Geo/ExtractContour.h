@@ -22,7 +22,7 @@
 
 #include "List.h"
 
-int alledgeslinked(int ed, List_T * Liste, List_T * old);
-int allfaceslinked(int iz, List_T * Liste, List_T * old);
+int allEdgesLinked(int ed, List_T * Liste);
+int allFacesLinked(int iz, List_T * Liste);
 
 #endif

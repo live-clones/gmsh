@@ -1,4 +1,4 @@
-// $Id: ExtractContour.cpp,v 1.1 2004-02-28 00:48:49 geuzaine Exp $
+// $Id: ExtractContour.cpp,v 1.2 2004-05-19 03:56:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -21,23 +21,22 @@
 
 #include "Gmsh.h"
 #include "Geo.h"
+#include "GeoUtils.h"
 #include "CAD.h"
 #include "Mesh.h"
 
+// Note: we use List_ISearchSeq so that the input lists don't get
+// sorted: it's less efficient, but it allows us to do multi-level
+// user-friendly "undo"s...
+
 extern Mesh *THEM;
 
-// Contour extraction by a tree method
-
-static Tree_T *treelink;
-static Tree_T *treeedges;
-static Tree_T *treefaces;
-
 typedef struct{
-  int n, a, arbre;
+  int n, a;
 }nxa;
 
 typedef struct{
-  int n, visited;
+  int n;
   List_T *l;
 }lnk;
 
@@ -49,237 +48,254 @@ int complink(const void *a, const void *b)
   return (q->n - w->n);
 }
 
-static int POINT_FINAL;
-static int CONTOUR_TROUVE;
-static List_T *VisitedNodes;
+// Find all linked edges
 
-void recur_trouvecont(int ip, int ed, List_T * Liste, int gauche,
-                      List_T * old)
+void recurFindLinkedEdges(int ed, List_T * edges, Tree_T * points, Tree_T * links)
 {
   lnk lk;
-  nxa a;
-  int i, rev;
+  nxa na;
+  int ip[2];
+  Curve *c = FindCurve(ed, THEM);
 
-  lk.n = ip;
-  Tree_Query(treelink, &lk);
-  if(List_Nbr(lk.l) != 2 && !old)
-    return;
-  for(i = 0; i < List_Nbr(lk.l); i++) {
-    List_Read(lk.l, i, &a);
-    if(abs(a.a) != abs(ed)) {
-      if(!old || List_Search(old, &a.a, fcmp_absint) || List_Nbr(lk.l) == 2) {
-        if(!gauche) {
-          List_Add(Liste, &a.a);
-          if(List_Search(VisitedNodes, &a.n, fcmp_absint)) {
-            CONTOUR_TROUVE = 1;
-            return;
-          }
-        }
-        if(a.n == POINT_FINAL) {
-          CONTOUR_TROUVE = 1;
-        }
-        else {
-          recur_trouvecont(a.n, abs(a.a), Liste, gauche, old);
-        }
-        if(gauche) {
-          rev = -a.a;
-          List_Add(Liste, &rev);
-          List_Add(VisitedNodes, &a.n);
-        }
+  ip[0] = c->beg->Num;
+  ip[1] = c->end->Num;
+
+  for(int l = 0; l < 2; l++) {
+    lk.n = ip[l];
+    if(!Tree_Search(points, &lk.n))
+      Tree_Add(points, &lk.n);
+    else
+      Tree_Suppress(points, &lk.n);
+    Tree_Query(links, &lk);
+    if(List_Nbr(lk.l) == 2) {
+      for(int i = 0; i < 2; i++) {
+	List_Read(lk.l, i, &na);
+	if(na.a != ed) {
+	  if(List_ISearchSeq(edges, &na.a, fcmp_absint) < 0){
+	    List_Add(edges, &na.a);
+	    recurFindLinkedEdges(na.a, edges, points, links);
+	  }
+	}
       }
     }
   }
 }
 
-
-void recur_trouvevol(int ifac, int iedge, List_T * Liste, List_T * old,
-                     Tree_T * treeedges, Tree_T * treefaces)
+void createEdgeLinks(Tree_T *links)
 {
-  lnk lk;
-  nxa a;
-  int i, is, rev, l;
-  Curve *c;
-  Surface *s = FindSurface(abs(ifac), THEM);
-
-  for(l = 0; l < List_Nbr(s->Generatrices); l++) {
-    List_Read(s->Generatrices, l, &c);
-    lk.n = abs(c->Num);
-    is = lk.n;
-    if(!Tree_Search(treeedges, &is)) {
-      Tree_Add(treeedges, &is);
-    }
-    else {
-      Tree_Suppress(treeedges, &is);
-    }
-    Tree_Query(treelink, &lk);
-    if(List_Nbr(lk.l) == 2 || old) {
-      for(i = 0; i < List_Nbr(lk.l); i++) {
-        List_Read(lk.l, i, &a);
-        if(abs(a.a) != abs(ifac)) {
-          if(!Tree_Search(treefaces, &a.a)) {
-            Tree_Add(treefaces, &a.a);
-            if(!old || List_Search(old, &a.a, fcmp_absint)
-               || List_Nbr(lk.l) == 2) {
-              rev = abs(a.a);
-              List_Add(Liste, &rev);
-              recur_trouvevol(rev, is, Liste, old, treeedges, treefaces);
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-
-void BegEndCurve(Curve * c, int *ip1, int *ip2)
-{
-  *ip1 = c->beg->Num;
-  *ip2 = c->end->Num;
-}
-
-void CreeLiens(void)
-{
-  int i, is, ip1, ip2;
-  lnk li, *pli;
-  nxa na1, na2;
-  Curve *ic;
-
-  treelink = Tree_Create(sizeof(lnk), complink);
-
-  List_T *temp = Tree2List(THEM->Curves);
-  for(i = 0; i < List_Nbr(temp); i++) {
-    List_Read(temp, i, &ic);
-    if(ic->Num > 0) {
-      is = ic->Num;
-      BegEndCurve(ic, &ip1, &ip2);
-
-      na1.a = -is;
-      na2.a = is;
-      na2.arbre = na1.arbre = li.visited = 0;
-      na1.n = li.n = ip1;
-      na2.n = ip2;
-      if((pli = (lnk *) Tree_PQuery(treelink, &li))) {
-        List_Add(pli->l, &na2);
-      }
-      else {
-        li.l = List_Create(20, 1, sizeof(nxa));
-        List_Add(li.l, &na2);
-        Tree_Add(treelink, &li);
-      }
-      li.n = ip2;
-      if((pli = (lnk *) Tree_PQuery(treelink, &li))) {
-        List_Add(pli->l, &na1);
-      }
-      else {
-        li.l = List_Create(20, 1, sizeof(nxa));
-        List_Add(li.l, &na1);
-        Tree_Add(treelink, &li);
-      }
-    }
-  }
-}
-
-
-void CreeLiens2(void)
-{
-  int i, k;
   lnk li, *pli;
   nxa na;
-  Surface *s;
   Curve *c;
 
-  treelink = Tree_Create(sizeof(lnk), complink);
-  List_T *temp = Tree2List(THEM->Surfaces);
+  List_T *temp = Tree2List(THEM->Curves);
 
-  for(i = 0; i < List_Nbr(temp); i++) {
-    List_Read(temp, i, &s);
-    if(s->Num > 0)
-      na.a = s->Num;
-    for(k = 0; k < List_Nbr(s->Generatrices); k++) {
-      List_Read(s->Generatrices, k, &c);
-      li.n = abs(c->Num);
-      if((pli = (lnk *) Tree_PQuery(treelink, &li))) {
-        List_Add(pli->l, &na);
-      }
-      else {
-        li.l = List_Create(20, 1, sizeof(nxa));
-        List_Add(li.l, &na);
-        Tree_Add(treelink, &li);
+  for(int i = 0; i < List_Nbr(temp); i++) {
+    List_Read(temp, i, &c);
+    if(c->Num > 0) {
+      na.a = c->Num;
+      int ip[2];
+      ip[0] = c->beg->Num;
+      ip[1] = c->end->Num;
+      for(int k = 0; k < 2; k++){
+	li.n = ip[k];
+	if((pli = (lnk *) Tree_PQuery(links, &li))) {
+	  List_Add(pli->l, &na);
+	}
+	else {
+	  li.l = List_Create(20, 1, sizeof(nxa));
+	  List_Add(li.l, &na);
+	  Tree_Add(links, &li);
+	}
       }
     }
   }
   List_Delete(temp);
 }
 
-
-int alledgeslinked(int ed, List_T * Liste, List_T * old)
+void orientAndSortEdges(List_T *edges, Tree_T *links)
 {
-  int ip1, ip2, i, rev;
+  int num;
   lnk lk;
-  nxa a;
+  nxa na;
 
-  VisitedNodes = List_Create(20, 20, sizeof(int));
+  List_T *temp = List_Create(List_Nbr(edges), 1, sizeof(int));
+  List_Copy(edges, temp);
+  List_Reset(edges);
+  
+  List_Read(temp, 0, &num);
+  List_Add(edges, &num);
+  Curve *c0 = FindCurve(abs(num), THEM);
 
-  CreeLiens();
-
-  Curve *c, C;
-  c = &C;
-  c->Num = ed;
-  Tree_Query(THEM->Curves, &c);
-
-  BegEndCurve(c, &ip1, &ip2);
-
-  CONTOUR_TROUVE = 0;
-
-  POINT_FINAL = ip2;
-  recur_trouvecont(ip1, ed, Liste, 1, old);
-
-  if(old) {
-    List_Sort(old, fcmp_absint);
+  int sign = 1;
+  while(List_Nbr(edges) < List_Nbr(temp)){
+    if(sign > 0)
+      lk.n = c0->end->Num;
+    else
+      lk.n = c0->beg->Num;
+    Tree_Query(links, &lk);
+    for(int j = 0; j < List_Nbr(lk.l); j++){
+      List_Read(lk.l, j, &na);
+      if(c0->Num != na.a && List_Search(temp, &na.a, fcmp_absint)){
+	Curve *c1 = FindCurve(abs(na.a), THEM);
+	if(lk.n == c1->beg->Num){
+	  sign = 1;
+	  num = na.a;
+	}
+	else{
+	  sign = -1;
+	  num = -na.a;
+	}
+	List_Add(edges, &num);
+	c0 = c1;
+	break;
+      }
+    }
   }
+  
+  List_Delete(temp);
+}
 
-  lk.n = ip2;
-  Tree_Query(treelink, &lk);
-  for(i = 0; i < List_Nbr(lk.l); i++) {
-    List_Read(lk.l, i, &a);
-    if(abs(a.a) == abs(ed)) {
-      rev = -a.a;
-      List_Add(Liste, &rev);
+int allEdgesLinked(int ed, List_T * edges)
+{
+  Tree_T *links = Tree_Create(sizeof(lnk), complink);
+  Tree_T *points = Tree_Create(sizeof(int), fcmp_int);
+
+  createEdgeLinks(links);
+
+  // initialize point tree with all hanging points
+  for(int i = 0; i < List_Nbr(edges); i++){
+    int num;
+    List_Read(edges, i, &num);
+    Curve *c = FindCurve(abs(num), THEM);
+    int ip[2];
+    ip[0] = c->beg->Num;
+    ip[1] = c->end->Num;
+    for(int k = 0; k < 2; k++){
+      if(!Tree_Search(points, &ip[k]))
+	Tree_Add(points, &ip[k]);
+      else
+	Tree_Suppress(points, &ip[k]);
     }
   }
 
-
-  if(!CONTOUR_TROUVE) {
-    POINT_FINAL = ip1;
-    recur_trouvecont(ip2, ed, Liste, 0, old);
+  if(List_ISearchSeq(edges, &ed, fcmp_absint) < 0){
+    List_Add(edges, &ed);
+    recurFindLinkedEdges(ed, edges, points, links);
   }
 
-  List_Delete(VisitedNodes);
+  int found = 0;
 
-  return (CONTOUR_TROUVE);
+  if(!Tree_Nbr(points))
+    found = 1;
+
+  if(found)
+    orientAndSortEdges(edges, links);
+
+  Tree_Delete(links);
+  Tree_Delete(points);
+
+  return found;
 }
 
+// Find all linked faces
 
-int allfaceslinked(int iz, List_T * Liste, List_T * old)
+void recurFindLinkedFaces(int fac, List_T * faces, Tree_T * edges, Tree_T * links)
 {
-  CreeLiens2();
-  treeedges = Tree_Create(sizeof(int), fcmp_absint);
-  treefaces = Tree_Create(sizeof(int), fcmp_absint);
+  lnk lk;
+  nxa na;
+  Curve *c;
+  Surface *s = FindSurface(abs(fac), THEM);
 
-  Tree_Add(treefaces, &iz);
-  List_Add(Liste, &iz);
-  recur_trouvevol(iz, 0, Liste, old, treeedges, treefaces);
-
-  if(!Tree_Nbr(treeedges)) {
-    CONTOUR_TROUVE = 1;
+  for(int l = 0; l < List_Nbr(s->Generatrices); l++) {
+    List_Read(s->Generatrices, l, &c);
+    lk.n = abs(c->Num);
+    if(!Tree_Search(edges, &lk.n))
+      Tree_Add(edges, &lk.n);
+    else
+      Tree_Suppress(edges, &lk.n);
+    Tree_Query(links, &lk);
+    if(List_Nbr(lk.l) == 2) {
+      for(int i = 0; i < 2; i++) {
+        List_Read(lk.l, i, &na);
+        if(na.a != fac) {
+          if(List_ISearchSeq(faces, &na.a, fcmp_absint) < 0){
+	    List_Add(faces, &na.a);
+	    recurFindLinkedFaces(na.a, faces, edges, links);
+	  }
+	}
+      }
+    }
   }
-  else {
-    CONTOUR_TROUVE = 0;
+}
+
+void createFaceLinks(Tree_T * links)
+{
+  lnk li, *pli;
+  nxa na;
+  Surface *s;
+  Curve *c;
+
+  List_T *temp = Tree2List(THEM->Surfaces);
+
+  for(int i = 0; i < List_Nbr(temp); i++) {
+    List_Read(temp, i, &s);
+    if(s->Num > 0){
+      na.a = s->Num;
+      for(int k = 0; k < List_Nbr(s->Generatrices); k++) {
+	List_Read(s->Generatrices, k, &c);
+	li.n = abs(c->Num);
+	if((pli = (lnk *) Tree_PQuery(links, &li))) {
+	  List_Add(pli->l, &na);
+	}
+	else {
+	  li.l = List_Create(20, 1, sizeof(nxa));
+	  List_Add(li.l, &na);
+	  Tree_Add(links, &li);
+	}
+      }
+    }
+  }
+  List_Delete(temp);
+}
+
+int allFacesLinked(int fac, List_T * faces)
+{
+  Tree_T *links = Tree_Create(sizeof(lnk), complink);
+  Tree_T *edges = Tree_Create(sizeof(int), fcmp_int);
+  
+  createFaceLinks(links);
+
+  // initialize edge tree with all boundary edges
+  for(int i = 0; i < List_Nbr(faces); i++){
+    int num;
+    List_Read(faces, i, &num);
+    Surface *s = FindSurface(abs(num), THEM);
+    
+    for(int k = 0; k < List_Nbr(s->Generatrices); k++) {
+      Curve *c;
+      List_Read(s->Generatrices, k, &c);
+      int ic = abs(c->Num);
+      if(!Tree_Search(edges, &ic)) {
+	Tree_Add(edges, &ic);
+      }
+      else {
+	Tree_Suppress(edges, &ic);
+      }
+    }
   }
 
-  Tree_Delete(treeedges);
-  Tree_Delete(treefaces);
+  if(List_ISearchSeq(faces, &fac, fcmp_absint) < 0){
+    List_Add(faces, &fac);
+    recurFindLinkedFaces(fac, faces, edges, links);
+  }
 
-  return (CONTOUR_TROUVE);
+  int found = 0;
+
+  if(!Tree_Nbr(edges))
+    found = 1;
+
+  Tree_Delete(links);
+  Tree_Delete(edges);
+
+  return found;
 }
