@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.89 2003-12-01 21:51:24 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.90 2003-12-02 04:10:38 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -37,7 +37,7 @@
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
-@set EDITION        1.15
+@set EDITION        1.16
 @set GMSH-VERSION   1.49
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
 @set COPYRIGHT      @copyright{} 1997-2003 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
@@ -1677,6 +1677,24 @@ automatically after each geometrical transformation, unless
 Deletes all elementary entities (points, lines or surfaces) whose
 identification numbers are given in @var{expression-list}.
 
+@item Hide @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
+Hide the entities listed in @var{expression-list}, if
+@code{General.VisibilityMode} is set to @code{0} or @code{1}.
+
+@item Hide @var{char-expression};
+Hide the entity @var{char-expression}, if @code{General.VisibilityMode} is
+set to @code{0} or @code{1} (@var{char-expression} can for example be
+@code{"*"}).
+
+@item Show @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
+Show the entities listed in @var{expression-list}, if
+@code{General.VisibilityMode} is set to @code{0} or @code{1}.
+
+@item Show @var{char-expression};
+Show the entity @var{char-expression}, if @code{General.VisibilityMode} is
+set to @code{0} or @code{1} (@var{char-expression} can for example be
+@code{"*"}).
+
 @c todo:
 @c @item Intersect;
 @c Intersects all lines.
@@ -1965,11 +1983,13 @@ Sets the mesh color of the entities listed in @var{expression-list} to @var{colo
 Deletes all currently loaded meshes.
 
 @item Hide @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
-Hide the entities listed in @var{expression-list}.
+Hide the mesh of the entities listed in @var{expression-list}, if
+@code{General.VisibilityMode} is set to @code{0} or @code{2}.
 
 @item Hide @var{char-expression};
-Hide the entity @var{char-expression} (@var{char-expression} can for example
-be @code{"*"}).
+Hide the mesh of the entity @var{char-expression}, if
+@code{General.VisibilityMode} is set to @code{0} or @code{2}
+(@var{char-expression} can for example be @code{"*"}).
 
 @item Recombine Surface @{ @var{expression-list} @} < = @var{expression} >;
 Recombines the triangular meshes of the surfaces listed in
@@ -1983,11 +2003,13 @@ Saves the mesh in a file named @var{char-expression}, using the current
 @code{Mesh.Format} (@pxref{Mesh options}).
 
 @item Show @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
-Show the entities listed in @var{expression-list}.
+Show the mesh of the entities listed in @var{expression-list}, if
+@code{General.VisibilityMode} is set to @code{0} or @code{2}.
 
 @item Show @var{char-expression};
-Show the entity @var{char-expression} (@var{char-expression} can for example
-be @code{"*"}).
+Show the mesh of the entity @var{char-expression}, if
+@code{General.VisibilityMode} is set to @code{0} or @code{2}
+(@var{char-expression} can for example be @code{"*"}).
 @end ftable
 
 @c -------------------------------------------------------------------------

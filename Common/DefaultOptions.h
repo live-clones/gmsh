@@ -587,12 +587,12 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|O, "Verbosity" , opt_general_verbosity , 2. ,
     "Level of information printed during processing (0=no information)" },
+  { F|S, "VisibilityMode" , opt_general_visibility_mode , 0. , 
+    "Default mode for the visibility browser (0=Geometry+Mesh, 1=Geometry, 2=Mesh)" }, 
   { F|S, "VisibilityPositionX" , opt_general_visibility_position0 , 650. , 
     "Horizontal position (in pixels) of the upper left corner of the visibility window" }, 
   { F|S, "VisibilityPositionY" , opt_general_visibility_position1 , 150. , 
     "Vertical position (in pixels) of the upper left corner of the visibility window" }, 
-  { F|S, "VisibilityMode" , opt_general_visibility_mode , 0. , 
-    "Default Visibility mode for visibility browser (Geometry+Mesh, Geometry or Mesh)" }, 
 
   { F|O, "ZoomFactor" , opt_general_zoom_factor , 1.1 ,
     "`Speed' of the middle mouse button zoom" },
