@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.58 2003-05-17 17:01:45 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.59 2003-05-17 18:37:41 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -402,12 +402,12 @@ itself part of the boundary of a volume...
 @end itemize
 }. This automatically assures the conformity of the mesh when, for example,
 two surfaces share a common line. But this also implies that the
-discretization of an ``isolated'' (@var{n}-1)-th entity inside an @var{n}-th
-dimensional entity does @emph{not} constrain the @var{n}-th dimensional
-mesh.  Every meshing step is constrained by the characteristic length field,
-which can be uniform, specified by characteristic lengths associated with
-elementary geometrical entities, or associated with another mesh (the
-background mesh).
+discretization of an ``isolated'' (@var{n}-1)-th dimensional entity inside
+an @var{n}-th dimensional entity does @emph{not} constrain the @var{n}-th
+dimensional mesh.  Every meshing step is constrained by the characteristic
+length field, which can be uniform, specified by characteristic lengths
+associated with elementary geometrical entities, or associated with another
+mesh (the background mesh).
 
 For each meshing step, all structured mesh directives are executed first,
 and serve as additional constraints for the unstructured parts. The
