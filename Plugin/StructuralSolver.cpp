@@ -45,9 +45,11 @@ Structural_BeamSection:: Structural_BeamSection( const char *direct, std::string
   m.BGM.bgm = NULL;
   m.Grid.init = 0;
   Init_Mesh(&m);
+  //  THEM=&m;
 
   char temp[256];
   sprintf(temp, "%s/%s", direct,name.c_str());
+  //  printf("%s/%s\n", direct,name.c_str());
   // read the section (msh format)
   FILE *f = fopen (temp,"r");  
   Read_Mesh (&m, f, temp,FORMAT_MSH);
@@ -70,11 +72,13 @@ void Structural_BeamSection :: computeGeometricalProperties ()
 		    {.5,1,.5},
 		    {.5,.5,1}};
 
+  //  printf("%d surfaces\n",List_Nbr(surfaces));
   for (int i=0;i<List_Nbr(surfaces);++i)
     {
       Surface *s;
       List_Read(surfaces,i,&s);
-      List_T *triangles = Tree2List(s->Simplexes);
+      List_T *triangles = Tree2List(s->SimplexesBase);
+      //      printf("surface %d %d triangles\n",s->Num,List_Nbr(triangles));
       for(int j=0;j<List_Nbr(triangles);++j)
 	{
 	  Simplex *simp;
@@ -82,6 +86,7 @@ void Structural_BeamSection :: computeGeometricalProperties ()
 	  Vertex v = (*simp->V[0]+*simp->V[1]+*simp->V[2])*0.333333333333333333;
 	  double A = simp->surfsimpl();
 	  area+=A;
+	  //	  printf("triangle %d aire %g\n",i,A);
 	  xc += v.Pos.X*A;
 	  yc += v.Pos.Y*A;
 	}
@@ -110,7 +115,7 @@ void Structural_BeamSection :: computeGeometricalProperties ()
       List_Delete(triangles);
     }
   List_Delete(surfaces);  
-  printf("%s %g %g %g %g %g\n",name.c_str(),area,xc,yc,Iy,Iz);
+  //  printf("%s %g %g %g %g %g\n",name.c_str(),area,xc,yc,Iy,Iz);
 }
 
 void Structural_Texture::setup ()
@@ -160,7 +165,9 @@ void Structural_BeamSection ::  GL_DrawBeam (double pinit[3], double dir[3], con
       texture.setup();
     }
 
-  double X[3] = {dir[0],dir[1],dir[2]};
+  const double LL = sqrt(dir[0]*dir[0]+dir[1]*dir[1]+dir[2]*dir[2]);
+
+  double X[3] = {dir[0]/LL,dir[1]/LL,dir[2]/LL};
   double Z[3] = {dirz[0],dirz[1],dirz[2]};
   double Y[3];
   prodve(X,Z,Y);
@@ -172,6 +179,9 @@ void Structural_BeamSection ::  GL_DrawBeam (double pinit[3], double dir[3], con
   double invrot[3][3] = {{Z[0],Z[1],Z[2]},
 			 {Y[0],Y[1],Y[2]},
 			 {X[0],X[1],X[2]}};
+  //  printf("%g %g %g\n",invrot[0][0], invrot[0][1], invrot[0][2]);
+  //  printf("%g %g %g\n",invrot[1][0], invrot[1][1], invrot[1][2]);
+  //  printf("%g %g %g\n",invrot[2][0], invrot[2][1], invrot[2][2]);
   
   List_T *vertices = Tree2List (m.Vertices);
   Vertex *vert;
@@ -198,8 +208,8 @@ void Structural_BeamSection ::  GL_DrawBeam (double pinit[3], double dir[3], con
     {
       Surface *s;
       List_Read(surfaces,i,&s);
-      List_T *triangles = Tree2List(s->Simplexes);
-      //      printf("%g %g %d %d\n",xc,yc,List_Nbr(vertices),List_Nbr(triangles));
+      List_T *triangles = Tree2List(s->SimplexesBase);
+      //printf("%g %g %d %d\n",xc,yc,List_Nbr(vertices),List_Nbr(triangles));
       for(int j=0;j<List_Nbr(triangles);++j)
 	{
 	  Simplex *simp;
@@ -223,7 +233,7 @@ void Structural_BeamSection ::  GL_DrawBeam (double pinit[3], double dir[3], con
     {
       Curve *c;
       List_Read(curves,i,&c);
-      List_T *lines = Tree2List(c->Simplexes);
+      List_T *lines = Tree2List(c->SimplexesBase);
       //      printf("%g %g %d %d\n",xc,yc,List_Nbr(vertices),List_Nbr(triangles));
       for(int j=0;j<List_Nbr(lines);++j)
 	{
@@ -413,6 +423,13 @@ Structural_BeamSection * StructuralSolver :: GetBeamSection (const std::string &
     }
   return 0;
 }
+int  GetModel (const std::string & name)
+{
+  if (!strcmp(name.c_str(),"Beam"))return 1;
+  if (!strcmp(name.c_str(),"Bar"))return 2;
+  return 3;
+}
+
 Structural_Material StructuralSolver :: GetMaterial (const std::string & name) const 
 {
   std::list<struct Structural_Material > :: const_iterator it  = materials.begin();
@@ -431,6 +448,7 @@ Structural_Material StructuralSolver :: GetMaterial (const std::string & name) c
 
 #define BEAM_SECTION_ 3
 #define BEAM_MATERIAL_ 4
+#define BEAM_MODEL_ 5
 #define POINT_ALONG_ 0
 #define POINT_ACROSS_ 1
 #define POINT_AROUND_ 2
@@ -476,7 +494,7 @@ void StructuralSolver ::popupPropertiesForPhysicalEntity (int dim)
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
     // 0: 
     {
-      g[0] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Physical Point");
+      g[0] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Nodal Constraint");
       
       static Fl_Menu_Item _type[] = {
 	{"Displacement fixed (mm)", 0, 0, 0},
@@ -516,7 +534,14 @@ void StructuralSolver ::popupPropertiesForPhysicalEntity (int dim)
     }
     // 2: Physical Line
     {
-      g[1] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Physical Line");
+      g[1] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Beam");
+
+      static Fl_Menu_Item _model[] = {
+	{"Beam", 0, 0, 0},
+	{"Bar", 0, 0, 0},
+	{0}
+      };
+
       {
 	_choice[BEAM_SECTION_] = new Fl_Choice(2 * WB, 2 * WB + 1 * BH, IW, BH, "Beam Section");      
 	std::list<struct Structural_BeamSection* > :: iterator it  = beam_sections.begin();
@@ -538,37 +563,45 @@ void StructuralSolver ::popupPropertiesForPhysicalEntity (int dim)
 	_choice[BEAM_MATERIAL_]->align(FL_ALIGN_RIGHT);
       }
 
-      _value[6] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW/2, BH,       "");
+      {
+	_choice[BEAM_MODEL_] = new Fl_Choice(2 * WB, 2 * WB + 3 * BH, IW, BH, "Kinematic Model");      
+	_choice[BEAM_MODEL_]->menu(_model);
+	_choice[BEAM_MODEL_]->align(FL_ALIGN_RIGHT);
+      }
+
+      _value[6] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW/2, BH,       "");
       _value[6]->value(0.0);
       _value[6]->align(FL_ALIGN_RIGHT);
-      _value[7] = new Fl_Value_Input(2 * WB+IW/2, 2 * WB + 3 * BH, IW/2, BH, "X-Load");
+      _value[7] = new Fl_Value_Input(2 * WB+IW/2, 2 * WB + 4 * BH, IW/2, BH, "X-Load");
       _value[7]->value(0.0);
       _value[7]->align(FL_ALIGN_RIGHT);
-      _value[8] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW/2, BH,       "");
+      _value[8] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW/2, BH,       "");
       _value[8]->value(0.0);
       _value[8]->align(FL_ALIGN_RIGHT);
-      _value[9] = new Fl_Value_Input(2 * WB+IW/2, 2 * WB + 4 * BH, IW/2, BH, "Y-Load");
+      _value[9] = new Fl_Value_Input(2 * WB+IW/2, 2 * WB + 5 * BH, IW/2, BH, "Y-Load");
       _value[9]->value(0.0);
       _value[9]->align(FL_ALIGN_RIGHT);
-      _value[10] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW/2, BH,       "");
+      _value[10] = new Fl_Value_Input(2 * WB, 2 * WB + 6 * BH, IW/2, BH,       "");
       _value[10]->value(0.0);
       _value[10]->align(FL_ALIGN_RIGHT);
-      _value[11] = new Fl_Value_Input(2 * WB+IW/2, 2 * WB + 5 * BH, IW/2, BH, "Z-Load");
+      _value[11] = new Fl_Value_Input(2 * WB+IW/2, 2 * WB + 6 * BH, IW/2, BH, "Z-Load");
       _value[11]->value(0.0);
       _value[11]->align(FL_ALIGN_RIGHT);
       
-      _value[12] = new Fl_Value_Input(2 * WB, 2 * WB + 6 * BH, IW/3, BH,       "");
+      _value[12] = new Fl_Value_Input(2 * WB, 2 * WB + 7 * BH, IW/3, BH,       "");
       _value[12]->value(0.0);
       _value[12]->align(FL_ALIGN_RIGHT);
-      _value[13] = new Fl_Value_Input(2 * WB+IW/3, 2 * WB + 6 * BH, IW/3, BH,       "");
+      _value[13] = new Fl_Value_Input(2 * WB+IW/3, 2 * WB + 7* BH, IW/3, BH,       "");
       _value[13]->value(0.0);
       _value[13]->align(FL_ALIGN_RIGHT);
-      _value[14] = new Fl_Value_Input(2 * WB+2*IW/3, 2 * WB + 6 * BH, IW/3, BH, "Y-Direction");
+      _value[14] = new Fl_Value_Input(2 * WB+2*IW/3, 2 * WB + 7 * BH, IW/3, BH, "Y-Direction");
       _value[14]->value(1.0);
       _value[14]->align(FL_ALIGN_RIGHT);
       
       g[1]->end();
     }
+
+
     o->end();
 
     {
@@ -588,10 +621,24 @@ void StructuralSolver :: addPhysicalLine (int id)
   PhysicalLineInfo info;  
   info.section = std::string(_choice[BEAM_SECTION_] ->mvalue()->text);  
   info.material= std::string(_choice[BEAM_MATERIAL_]->mvalue()->text);
+  info.model= std::string(_choice[BEAM_MODEL_]->mvalue()->text);
   info.dirz[0]  = _value[12]->value();
   info.dirz[1]  = _value[13]->value();
   info.dirz[2]  = _value[14]->value();
+  info.fx1      = _value[6]->value();
+  info.fx2      = _value[7]->value();
+  info.fy1      = _value[8]->value();
+  info.fy2      = _value[8]->value();
+  info.fz1      = _value[10]->value();
+  info.fz2      = _value[11]->value();
   lines[id] = info;
+
+  double f1 = sqrt (info.fx1*info.fx1+info.fy1*info.fy1+info.fz1*info.fz1);
+  double f2 = sqrt (info.fx2*info.fx2+info.fy2*info.fy2+info.fz2*info.fz2);
+
+  MAX_FORCE = (MAX_FORCE>f1)?MAX_FORCE:f1;
+  MAX_FORCE = (MAX_FORCE>f2)?MAX_FORCE:f2;
+
 #endif  
 }
 
@@ -648,8 +695,8 @@ void StructuralSolver :: writeSolverFile ( const char *geom_file ) const
 	int id = (*it).first;
 	if (getPhysical ( id , 1 ))
 	  {
-	    fprintf(f,"BEAM PHYSICAL %d SECTION %s MATERIAL %s LOADS %g %g %g %g %g %g %g %g %g \n",
-		    id,i.section.c_str(),i.material.c_str(),i.fx1,i.fy1,i.fx2,i.fy2,i.fz1,i.fz2,i.dirz[0],i.dirz[1],i.dirz[2]);
+	    fprintf(f,"BEAM PHYSICAL %d SECTION %s MATERIAL %s MODEL %s LOADS %g %g %g %g %g %g %g %g %g \n",
+		    id,i.section.c_str(),i.material.c_str(),i.model.c_str(),i.fx1,i.fy1,i.fx2,i.fy2,i.fz1,i.fz2,i.dirz[0],i.dirz[1],i.dirz[2]);
 	  }
       }
   }
@@ -680,8 +727,10 @@ void StructuralSolver :: writeSolverFile ( const char *geom_file ) const
 	  {
 	    Structural_BeamSection* bs = GetBeamSection (i.section);
 	    Structural_Material    mt = GetMaterial    (i.material);
-	    fprintf(f,"111 %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    int model = GetModel (i.model);
+	    fprintf(f,"111 %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 		    id,                             // physical id
+		    model,                             // model 
 		    bs->area, bs->Iy, bs->Iz, bs->J,// section info
 		    mt.par[0],mt.par[1],mt.par[2],// material info
 		    i.fx1,i.fy1,i.fx2,i.fy2,i.fz1,i.fz2,// lineic loads
@@ -707,7 +756,7 @@ void StructuralSolver :: writeSolverFile ( const char *geom_file ) const
 
 void StructuralSolver :: readSolverFile ( const char *geom_file ) 
 {
-  char name[256],line[256],a1[24],a2[24],a3[24],a4[240],a5[24],a6[240],a7[24];
+  char name[256],line[256],a1[24],a2[24],a3[24],a4[240],a5[24],a6[240],a7[24],a8[24],a9[24];
   sprintf(name,"%s.str",geom_file);
   FILE *f = fopen(name,"r");  
   if (!f)return;
@@ -720,11 +769,19 @@ void StructuralSolver :: readSolverFile ( const char *geom_file )
 	{
 	  int id;
 	  PhysicalLineInfo info;
-	  sscanf(line,"%s %s %d %s %s %s %s %s %lf %lf %lf %lf %lf %lf %lf %lf %lf \n",
-		 a1,a2,&id,a3,a4,a5,a6,a7,&info.fx1,&info.fy1,&info.fx2,&info.fy2,&info.fz1,&info.fz2,&info.dirz[0],&info.dirz[1],&info.dirz[2]);
+	  sscanf(line,"%s %s %d %s %s %s %s %s %s %s %lf %lf %lf %lf %lf %lf %lf %lf %lf \n",
+		 a1,a2,&id,a3,a4,a5,a6,a7,a8,a9,&info.fx1,&info.fy1,&info.fx2,&info.fy2,&info.fz1,&info.fz2,&info.dirz[0],&info.dirz[1],&info.dirz[2]);
+	  info.model = std::string(a8);
 	  info.material = std::string(a6);
 	  info.section  = std::string(a4);
-	  lines[id] = info;
+	  lines[id] = info;       
+
+	  double f1 = sqrt (info.fx1*info.fx1+info.fy1*info.fy1+info.fz1*info.fz1);
+	  double f2 = sqrt (info.fx2*info.fx2+info.fy2*info.fy2+info.fz2*info.fz2);
+
+	  MAX_FORCE = (MAX_FORCE>f1)?MAX_FORCE:f1;
+	  MAX_FORCE = (MAX_FORCE>f2)?MAX_FORCE:f2;
+
 	}
       if (!strcmp(name,"NODE"))
 	{
@@ -743,7 +800,7 @@ void StructuralSolver :: readSolverFile ( const char *geom_file )
 	}
       if (feof(f) )break;
     }
-  printf("max force = %g\n",MAX_FORCE);
+  //  printf("max force = %g\n",MAX_FORCE);
   fclose(f);
 }
 
@@ -968,24 +1025,67 @@ bool StructuralSolver :: GL_enhancePoint ( Vertex *v)
 bool StructuralSolver :: GL_enhanceLine ( int CurveId, Vertex *v1, Vertex *v2) 
 {
 #ifdef HAVE_FLTK  
-  //  return true;
   PhysicalGroup *p;
+  //  printf("%d physical groups \n",List_Nbr(THEM->PhysicalGroups));
   for(int i = 0; i < List_Nbr(THEM->PhysicalGroups); i++) 
     { 
       List_Read(THEM->PhysicalGroups, i, &p);
       if(p->Typ == MSH_PHYSICAL_LINE) {
+	//	printf("physical line found ... curve Id is %d\n",CurveId);
 	if(List_Search(p->Entities, &CurveId, fcmp_absint)) { 
 	  std::map<int,struct PhysicalLineInfo>::const_iterator it = lines.find(p->Num);
+	  //	  printf("curve found in physical line %d \n",p->Num);
 	  if (it !=lines.end())
 	    {	      
 	      double pinit [3] = {v1->Pos.X,v1->Pos.Y,v1->Pos.Z};
 	      double dir [3] = {v2->Pos.X-v1->Pos.X,v2->Pos.Y-v1->Pos.Y,v2->Pos.Z-v1->Pos.Z};
 	      Structural_BeamSection *section =  GetBeamSection (it->second.section);
-
 	      //	      printf ("%g,%g,%g\n",it->second.dirz[0],it->second.dirz[1],it->second.dirz[2]);
 
+	      const int nbArrow = 10;
+	      const double kk = (CTX.max[0]-CTX.min[0])*.1 / (MAX_FORCE);
+	      glColor4ubv((GLubyte *) & CTX.color.text);
+	      double X1,Y1,Z1,X2,Y2,Z2;
+	      for (int iArrow = 0 ; iArrow < nbArrow ; iArrow++)
+		{
+		  
+		  const double xi = (double)iArrow/(double)(nbArrow-1);
+		  const double X = v1->Pos.X + xi * ( v2->Pos.X - v1->Pos.X );
+		  const double Y = v1->Pos.Y + xi * ( v2->Pos.Y - v1->Pos.Y );
+		  const double Z = v1->Pos.Z + xi * ( v2->Pos.Z - v1->Pos.Z );
+		  double dv[3] = 
+		    {
+		      it->second.fx1 + xi* (it->second.fx2 - it->second.fx1), 
+		      it->second.fy1 + xi* (it->second.fy2 - it->second.fy1), 
+		      it->second.fz1 + xi* (it->second.fz2 - it->second.fz1) 
+		    };		  
+		  Draw_Vector (CTX.vector_type,  0, CTX.arrow_rel_head_radius, 
+			       CTX.arrow_rel_stem_length, 0.5*CTX.arrow_rel_stem_radius,
+			       X-dv[0]*kk, Y-dv[1]*kk, Z-dv[2]*kk,
+			       dv[0]*kk, dv[1]*kk, dv[2]*kk, CTX.geom.light);		  
+		  
+		  if (iArrow==0)
+		    {
+		      X1 =  X-dv[0]*kk;
+		      Y1 =  Y-dv[1]*kk;
+		      Z1 =  Z-dv[2]*kk;
+		    }
+		  if (iArrow==nbArrow-1)
+		    {
+		      X2 =  X-dv[0]*kk;
+		      Y2 =  Y-dv[1]*kk;
+		      Z2 =  Z-dv[2]*kk;
+		    }
+		}
+
+	      glBegin(GL_LINES);
+	      glVertex3d ( X1,Y1,Z1);
+	      glVertex3d ( X2,Y2,Z2);
+	      glEnd  ();
+	      
 	      if (section)
 		{
+		  //		  printf("section found\n");
 		  section -> GL_DrawBeam (pinit,dir,it->second.dirz,textures[it->second.material]);
 		  return true;
 		}

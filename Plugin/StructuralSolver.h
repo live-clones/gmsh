@@ -81,7 +81,7 @@ struct PhysicalPointInfo
 struct PhysicalLineInfo 
 {
   PhysicalLineInfo() : fx1(0),fx2(0),fy1(0),fy2(0),fz1(0),fz2(0){dirz[0]=0;dirz[1]=0;dirz[2]=1;}
-  std::string material, section;
+  std::string material, section, model;
   double fx1,fx2,fy1,fy2,fz1,fz2;
   double dirz[3];
 };
