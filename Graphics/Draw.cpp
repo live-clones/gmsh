@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.38 2003-03-24 18:14:10 geuzaine Exp $
+// $Id: Draw.cpp,v 1.39 2003-03-24 18:35:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,7 @@ void Draw3d(void)
     glEnable(GL_ALPHA);
 #endif
   }
-  glPolygonOffset(1.0, 1);
+  glPolygonOffset(1.0, 1.0);
 
   for(i = 0; i < 6; i++)
     if(CTX.clip[i])
@@ -138,14 +138,15 @@ void Orthogonalize(int x, int y)
 
   // We should have a look at how the scaling is done in "real" opengl
   // applications (I guess they normalize the scene to fit in a 1x1x1
-  // box or something...). Nevertheless, this definition of the
-  // clipping planes should be OK in most cases (do we really zoom in
-  // more than 500 times the characteristic length of the structure?):
+  // box or something...):
   if(CTX.ortho) {
-    glOrtho(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, 0, 1000 * CTX.lc);
+    // Warning: for large s (i.e. big zooms) the PolygonOffset will
+    // degrade...
+    double clip = CTX.s[0] * 30;
+    glOrtho(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, 0, clip * CTX.lc);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslated(0.0, 0.0, -500 * CTX.lc);
+    glTranslated(0.0, 0.0, -clip/2 * CTX.lc);
   }
   else {
     glFrustum(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, CTX.lc,
