@@ -1,19 +1,9 @@
-<!---BEGINSCRIPT#!/bin/sh
-
-BASEDIR=/usr/local/cgi-bin
-
-echo Content-type: text/html
-echo
-cat << EOM 
-ENDSCRIPT--->
-
 <HTML>
-
-<!--- PLEASE DO NOT EDIT the BEGINSCRIPT and ENDSCRIPT comments --->
 
 <HEAD>
 
-<TITLE>Gmsh homepage</TITLE>
+<TITLE>Gmsh: A three-dimensional finite element mesh generator with
+built-in pre- and post-processing facilities</TITLE>
 
 <meta name="description" content="Gmsh is a free automatic
 three-dimensional finite element mesh generator with pre- and
@@ -29,64 +19,17 @@ adaptation de maillages, mesh adaptation, modeling">
 
 </HEAD>
 
-<body text="#000000" bgcolor="#ffffff" background="/gmsh/images/background.gif">
+<body bgcolor="#ffffff">
 
-<!------------------------------------------------------------------>
+<h1 align="center">Gmsh: a three-dimensional finite element mesh
+generator with built-in pre- and post-processing facilities</h1>
+<p>
+<h3 align="center">Christophe Geuzaine and Jean-François Remacle</h3>
+<p>
+<h3 align=center>Version <a href="doc/VERSIONS">1.27</a>, 9 October 2001</h3>
+<p>
 
-<table width="100%" border=0 cellspacing=10 cellpadding=5>
-
-<tr valign=bottom>
-
-  <td width="130" align="right" valign=top><font size=-2  face="Helvetica, Arial" color="#fffff">
-
-<!---BEGINSCRIPT
-EOM
-${BASEDIR}/n2l ${BASEDIR}/counter.gmsh
-cat << EOM
-page requests since<br>1998/05/24<p>
-ENDSCRIPT--->
-
-<!---BEGINDATE$Date: 2001-10-09 07:35:03 $ENDDATE--->
-
-Copyright &copy; 1998-2001<br>
-Jean-François Remacle and
-Christophe Geuzaine<br>
-
-  </font></td>
-
-  <td width="60">
-  </td>
-
-  <td><font face="Helvetica, Arial">
-    <font size="+3"><b>Gmsh</b></font>
-    <p>
-    <b>A three-dimensional finite element mesh generator with built-in pre- and
-       post-processing facilities</b>
-     
-  </font></td>
-
-</tr>
-
-<!------------------------------------------------------------------>
-
-<tr valign=bottom>
-
-  <td><spacer type="vertical" size=20>
-  </td>
-
-</tr>
-
-<!------------------------------------------------------------------>
-
-<tr valign=top>
-
-  <td width="130" align="right">
-    <font color="#ffffff" face="Helvetica, Arial"><b>General Description</b></font></td>
-
-  <td width="60">
-  </td>
-
-  <td><font face="Helvetica, Arial" size=-1>
+<h2>Description</h2>
 
 Gmsh is an automatic three-dimensional finite element mesh generator,
 primarily Delaunay, with built-in pre- and post-processing
@@ -98,17 +41,7 @@ lines, surfaces and volumes. These adapted meshes can be mixed with
 simple structured (transfinite, elliptic, etc.)  meshes in order to
 augment the flexibility.
 
-<!------------------------------------------------------------------>
-
-<tr valign=top>
-
-  <td width="130" align="right">
-    <font color="#ffffff" face="Helvetica, Arial"><b>Geometrical Entity Definition</b></font></td>
-
-  <td width="60">
-  </td>
-
-  <td><font face="Helvetica, Arial" size=-1>
+<h3>Geometrical Entity Definition</h3>
 
 Parameterized geometries are created by successively defining points,
 oriented curves (segments, circles, ellipsis, splines, etc.), oriented
@@ -118,33 +51,19 @@ elementary parameterized geometric entities. Data can be defined
 either interactively thanks to the menu system, or directly in the ASCII 
 input files.
 
-  </td>
+<h3>Mesh Generation</h3>
 
-</tr>
-
-<!------------------------------------------------------------------>
-
-<tr valign=top>
-
-  <td width="130" align="right">
-    <font color="#ffffff" face="Helvetica, Arial"><b>Mesh Generation</b></font></td>
-
-  <td width="60">
-  </td>
-
-  <td><font face="Helvetica, Arial" size=-1>
-
-A finite element mesh is a tessellation of a given subset of R^3 by
-elementary geometrical elements of various shapes (in this case lines,
-triangles, quadrangles, tetrahedra, prisms and hexahedra), arranged in
-such a way that two of them intersect, if they do, along a common
-face, edge or node, and never otherwise. All the finite element meshes
-produced by Gmsh as unstructured, even if they were generated in
-a structured way. This implies that the elementary geometrical
-elements are defined only by an ordered list of their vertices (which
-allows the orientation of all their lower order geometrical entities)
-but no predefined relation is assumed between any two elementary
-elements.
+A finite element mesh is a tessellation of a given subset of
+R<sup>3</sup> by elementary geometrical elements of various shapes (in
+this case lines, triangles, quadrangles, tetrahedra, prisms and
+hexahedra), arranged in such a way that two of them intersect, if they
+do, along a common face, edge or node, and never otherwise. All the
+finite element meshes produced by Gmsh as unstructured, even if they
+were generated in a structured way. This implies that the elementary
+geometrical elements are defined only by an ordered list of their
+vertices (which allows the orientation of all their lower order
+geometrical entities) but no predefined relation is assumed between
+any two elementary elements.
 <p>
 The procedure follows the same order as for the geometry creation:
 curves are discretized first; the mesh of the curves is then used to
@@ -184,21 +103,7 @@ circumscribed circle/sphere.
 </ol>
 
 
-  </td>
-
-</tr>
-
-<!------------------------------------------------------------------>
-
-<tr valign=top>
-
-  <td width="130" align="right">
-    <font color="#ffffff" face="Helvetica, Arial"><b>Scalar and Vector Field Visualization</b></font></td>
-
-  <td width="60">
-  </td>
-
-  <td><font face="Helvetica, Arial" size=-1>
+<h3>Scalar and Vector Field Visualization</h3>
 
 Multiple post-processing scalar or vector maps can be loaded and
 manipulated (globally or individually) along with the geometry and the
@@ -210,112 +115,48 @@ animation, vector postscript output, etc. All post-processing options
 can be accessed either interactively or through the the input ascii
 files.
 
-  </td>
+<h2>Documentation</h2>
 
-</tr>
-
-<!------------------------------------------------------------------>
-
-<tr valign=top>
-
-  <td width="130" align="right">
-    <font color="#ffffff" face="Helvetica, Arial"><b>Documentation</b></font></td>
-
-  <td width="60">
-  </td>
-
-  <td><font face="Helvetica, Arial" size=-1>
-
-    <ul>
-      <li><A target="_top" href="/gmsh/doc/tutorial.html">Online tutorial</A>
-          (Please <b>read</b> this tutorial before sending any question to the mailing list!)
-      <li><A target="_top" href="/gmsh/doc/FORMATS">Mesh and post-processing file formats</A>
-      <li><A target="_top" href="/gmsh/doc/VERSIONS">Version history</A>
-      <li><a target="_top" href="/gmsh/doc/FAQ">Frequently asked questions</a>
-      <li><a target="_top" href="/gmsh/doc/KEYWORDS">List of all reserved keywords</a>
-      <li><a target="_top" href="/gmsh/doc/README.txt">For Windows versions only</a>
+<ul>
+  <li><A target="_top" href="/gmsh/doc/tutorial.html">Online tutorial</A>
+      (Please <b>read</b> this tutorial before sending any question to the mailing list!)
+  <li><A target="_top" href="/gmsh/doc/FORMATS">Mesh and post-processing file formats</A>
+  <li><A target="_top" href="/gmsh/doc/VERSIONS">Version history</A>
+  <li><a target="_top" href="/gmsh/doc/FAQ">Frequently asked questions</a>
+  <li><a target="_top" href="/gmsh/doc/KEYWORDS">List of all reserved keywords</a>
+  <li><a target="_top" href="/gmsh/doc/README.txt">For Windows versions only</a>
 <!------------
-      <li><a target="_top" href="/gmsh/doc/BUGS">List of open bugs</a>
-      <li><a target="_top" href="/gmsh/doc/CONTRIBUTORS">List of contributors</a>
+  <li><a target="_top" href="/gmsh/doc/BUGS">List of open bugs</a>
+  <li><a target="_top" href="/gmsh/doc/CONTRIBUTORS">List of contributors</a>
 ----------->
-    </ul>
+</ul>
 
-  </td>
+<FORM METHOD=GET ACTION="http://www.geuz.org/search/search-geuz.cgi" TARGET="_top">
+<INPUT SIZE=30 NAME="q" VALUE="">
+<INPUT TYPE="submit" VALUE="Search!">
+<INPUT TYPE=HIDDEN NAME="ul" VALUE="/gmsh/">
+</FORM>
 
-</tr>
+<h2>Mailing lists</h2>
 
-<!------------------------------------------------------------------>
-
-<!---BEGINSCRIPT
-
-<tr valign=top>
-
-  <td width="130" align="right">
-    <font color="#ffffff" face="Helvetica, Arial"><b>Mailing lists</b></font></td>
-
-  <td width="60">
-  </td>
-
-  <td align="left" colspan=2><font face="Helvetica, Arial" size=-1>
-
-     <ul>
-     <li><a target="_top" href="/mailman/listinfo/gmsh/">gmsh</a> is
+<ul>
+  <li><a target="_top" href="/mailman/listinfo/gmsh/">gmsh</a> is
      the public mailing list for Gmsh users. You should send all
      questions, bug reports, requests or pleas for changes related to
      Gmsh to this list. The list is archived <a target="_top"
      href="/pipermail/gmsh/">here</a>
 
-     <li><a target="_top"
+  <li><a target="_top"
      href="/mailman/listinfo/gmsh-announce/">gmsh-announce</a> is a
      moderated (i.e. "read-only") list for announcements about
      significant Gmsh events. You should subscribe to this list to get
      information about software releases, important bug fixes and
      other Gmsh-specific news. The list is archived <a target="_top"
      href="/pipermail/gmsh-announce/">here</a>.
-     </ul>
+</ul>
 
-  </font></td>
+<h2>Download</h2>
 
-</tr>
-
-<!------------------------------------------------------------------>
-
-<tr valign=top>
-
-  <td width="130" align="right">
-    <font color="#ffffff" face="Helvetica, Arial"><b>Search documentation</b></font></td>
-
-  <td width="60">
-  </td>
-
-  <td align="left" colspan=2><font face="Helvetica, Arial" size=-1>
-
-<FORM METHOD=GET ACTION="http://www.geuz.org/search/search-geuz.cgi" TARGET="_top">
-<INPUT SIZE=30 NAME="q" VALUE="">
-<INPUT TYPE="submit" VALUE="Search">
-<INPUT TYPE=HIDDEN NAME="ul" VALUE="/gmsh/">
-</FORM>
-
-  </font></td>
-
-</tr>
-
-ENDSCRIPT--->
-
-<!------------------------------------------------------------------>
-
-<tr valign=top>
-
-  <td width="130" align="right"> 
-    <font color="#ffffff" face="Helvetica, Arial"><b>Download</b></font></td>
-
-  <td width="60">
-  </td>
-
-  <td bgcolor="#ededed"><font face="Helvetica, Arial" size=-1>
-
-<b>Version 1.27 (October 9, 2001)</b>
-<p>
 Executable versions of Gmsh are available for Windows and for most of
 the classical UNIX platforms. These versions are free, and are all
 dynamically linked with OpenGL<a href="#opengl-footnote"
@@ -331,49 +172,36 @@ files are included in the archives.
 <li><A href="/gmsh/bin/gmsh-1.27-AIX.tgz">IBM tarball (AIX)</A> 
 <li><A href="/gmsh/bin/gmsh-1.27-IRIX.tgz">SGI IRIX tarball (IRIX 6.5)</A> 
 <li><A href="/gmsh/bin/gmsh-1.27-HP-UX.tgz">HP tarball (HPUX 10.20)</A>
-
 </ul>
 
-  </td>
+<p>
+<a name="opengl-footnote"></a><a
+href="#opengl-footmark"><sup>1</sup></a>For Unix versions only: you
+should have the OpenGL libraries installed on your system, and in the
+path of the library loader. A free replacement for OpenGL can be found
+at <A target="_top"
+href="http://mesa3d.sourceforge.net">http://mesa3d.sourceforge.net</A>
+(a Linux RPM is directly available <A
+href="/gmsh/thirdparty/Mesa-3.2-2.i386.rpm">here</A>).  Remember that
+you may have to reconfigure the loader (ldconfig under Linux) or
+modify the LD_LIBRARY_PATH (or SHLIB_PATH on HP) environment variable
+in order for Gmsh to find the libraries.
 
-</tr>
 
-
-<!------------------------------------------------------------------>
-
-<tr valign=top>
-
-  <td width="130" align="right">
-    <font color="#ffffff" face="Helvetica, Arial"><b>Authors</b></font></td>
-
-  <td width="60">
-  </td>
-
-  <td><font face="Helvetica, Arial" size=-1> 
+<h2>Credits</h2>
 
 Gmsh is developed by <A
 HREF="mailto:Remacle@scorec.rpi.edu">Jean-François Remacle</A>
-(currently with the <a target="_top" href="http://www.rpi.edu">Rensselaer Polytechnic Institute</a>) 
-and <A HREF="mailto:Christophe.Geuzaine@ulg.ac.be">Christophe Geuzaine</A> 
-(currently with the <a target="_top" href="http://www.ulg.ac.be">University of Liège</a>).
-Please use <A HREF="mailto:gmsh@geuz.org">gmsh@geuz.org</A> instead of
-our personnal e-mails to send questions or bug reports!
+(currently with the <a target="_top"
+href="http://www.rpi.edu">Rensselaer Polytechnic Institute</a>) and <A
+HREF="mailto:Christophe.Geuzaine@ulg.ac.be">Christophe Geuzaine</A>
+(currently with the <a target="_top"
+href="http://www.ulg.ac.be">University of Liège</a>).  Please use <A
+HREF="mailto:gmsh@geuz.org">gmsh@geuz.org</A> instead of our personnal
+e-mails to send questions or bug reports!
 
-  </td>
 
-</tr>
-
-<!------------------------------------------------------------------>
-
-<tr valign=top>
-
-  <td width="130" align="right">
-    <font color="#ffffff" face="Helvetica, Arial"><b>Gallery</b></font></td>
-
-  <td width="60">
-  </td>
-
-  <td><font face="Helvetica, Arial" size=-1>
+<h2>Gallery</h2>
 
 Some pictures made with Gmsh:
 <ul>
@@ -406,56 +234,18 @@ Some pictures made with Gmsh:
      <A target="_top" href="http://elap.montefiore.ulg.ac.be/elm/demos_en.html">ELAP</A>.
 </ul>
 
-  </td>
 
-</tr>
-
-<!------------------------------------------------------------------>
-
-<tr valign=top>
-
-  <td width="130" align="right">
-    <font color="#ffffff" face="Helvetica, Arial"><b>Links</b></font></td>
-
-  <td width="60">
-  </td>
-
-  <td><font face="Helvetica, Arial" size=-1>
+<h2>Links</h2>
 
 Check out <A TARGET="_top" HREF="/getdp/">GetDP</A>, a scientific
 computation software for the numerical solution of
 integro-differential equations, using finite element and integral type
 methods.
 
-<p>
-<br>
-<p>
-<a name="opengl-footnote"></a><a
-href="#opengl-footmark"><sup>1</sup></a>For Unix versions only: you
-should have the OpenGL libraries installed on your system, and in the
-path of the library loader. A free replacement for OpenGL can be found
-at <A target="_top"
-href="http://mesa3d.sourceforge.net">http://mesa3d.sourceforge.net</A>
-(a Linux RPM is directly available <A
-href="/gmsh/thirdparty/Mesa-3.2-2.i386.rpm">here</A>).  Remember that
-you may have to reconfigure the loader (ldconfig under Linux) or
-modify the LD_LIBRARY_PATH (or SHLIB_PATH on HP) environment variable
-in order for Gmsh to find the libraries.
-
-
-  </font></td>
-
-</tr>
-
-<!------------------------------------------------------------------>
-
-</table>
 
 <p>
+
+$Date: 2001-10-12 16:32:34 $
 
 </BODY>
 </HTML>
-
-<!---BEGINSCRIPT
-EOM
-ENDSCRIPT--->

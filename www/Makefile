@@ -1,4 +1,7 @@
 
+default:
+	@echo "Nothin' tada..."
+
 cgi:
 	cat gmsh.html |\
         sed "s/<!---BEGINSCRIPT//g" |\
