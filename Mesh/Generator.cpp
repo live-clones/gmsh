@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.16 2001-05-23 07:29:42 geuzaine Exp $
+// $Id: Generator.cpp,v 1.17 2001-05-29 13:31:04 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -121,6 +121,7 @@ void Maillage_Dimension_3 (Mesh * M){
   M->Statistics[14] = t2 - t1;
 }
 
+
 void Init_Mesh (Mesh * M, int all){
   THEM = M;
   
@@ -133,36 +134,35 @@ void Init_Mesh (Mesh * M, int all){
     Tree_Delete (M->VertexEdges);
   }
   if (M->Simplexes){
-    Tree_Action (M->Simplexes, Free_Simplex);
+    //Tree_Action (M->Simplexes, Free_Simplex);//produit des crashes innatendus...
     Tree_Delete (M->Simplexes);
   }
-  
   if (M->Points){
-    //Tree_Action (M->Points, Free_Vertex);
+    Tree_Action (M->Points, Free_Vertex);
     Tree_Delete (M->Points);
   }
   if (M->Curves){
-    //Tree_Action (M->Vertices, Free_Curve);
+    Tree_Action (M->Curves, Free_Curve);
     Tree_Delete (M->Curves);
   }
   if (M->SurfaceLoops){
-    //Tree_Action (M->Vertices, Free_SurfaceLoop);
+    //Tree_Action (M->SurfaceLoops, Free_SurfaceLoop);
     Tree_Delete (M->SurfaceLoops);
   }
   if (M->EdgeLoops){
-    //Tree_Action (M->Vertices, Free_EdgeLoop);
+    //Tree_Action (M->EdgeLoops, Free_EdgeLoop);
     Tree_Delete (M->EdgeLoops);
   }
   if (M->Surfaces){
-    //Tree_Action (M->Vertices, Free_Surface);
+    Tree_Action (M->Surfaces, Free_Surface);
     Tree_Delete (M->Surfaces);
   }
   if (M->Volumes){
-    //Tree_Action (M->Vertices, Free_Volume);
+    //Tree_Action (M->Volumes, Free_Volume);//produit des crashes innatendus...
     Tree_Delete (M->Volumes);
   }
   if (M->PhysicalGroups){
-    //Tree_Action (M->Vertices, Free_PhysicalGroup);
+    //Tree_Action (M->PhysicalGroups, Free_PhysicalGroup);
     List_Delete (M->PhysicalGroups);
   }
   if (M->Metric){

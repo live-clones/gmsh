@@ -25,11 +25,20 @@ void End_Surface (Surface * s);
 
 Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
                      List_T * Knots, int p1, int p2, double u1, double u2);
+void Free_Curve(void *a, void *b);
+
 Surface * Create_Surface (int Num, int Typ, int Mat);
+void Free_Surface(void *a, void *b);
+
 Volume * Create_Volume (int Num, int Typ, int Mat);
+void Free_Volume(void *a, void *b);
+
 Hexahedron * Create_Hexahedron (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4,
                               Vertex * v5, Vertex * v6, Vertex * v7, Vertex * v8);
+void Free_Hexahedron(void *a, void *b);
+
 Prism * Create_Prism (Vertex * v1, Vertex * v2, Vertex * v3,
                       Vertex * v4, Vertex * v5, Vertex * v6);
+void Free_Prism(void *a, void *b);
 
 #endif
