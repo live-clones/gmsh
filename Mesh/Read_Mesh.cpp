@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.35 2001-12-03 15:34:42 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.36 2001-12-04 09:31:18 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -292,12 +292,6 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
     M->status = 0 ;
   else
     M->status = -1 ;
-
-  for(i=0;i<List_Nbr(Physicals);i++){
-    List_Read(Physicals, i, &Physical);
-    Msg(INFO, "Got physical %d", Physical);
-  }
-
 }
 
 /* ------------------------------------------------------------------------ */

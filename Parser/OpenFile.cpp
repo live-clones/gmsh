@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.24 2001-12-03 09:07:46 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.25 2001-12-04 09:31:18 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -92,7 +92,7 @@ void MergeProblem(char *name){
 
 void OpenProblem(char *name){
   char ext[6];
-  int i, status;
+  int  status;
 
   if(CTX.threads_lock){
     Msg(INFO, "I'm busy! Ask me that later...");
@@ -157,9 +157,5 @@ void OpenProblem(char *name){
   else
     CalculateMinMax(THEM->Vertices,NULL);
 
-  for(i=0;i<List_Nbr(THEM->PhysicalGroups);i++)
-    Msg(INFO, "Got physical %d", 
-	(*(PhysicalGroup **)List_Pointer(THEM->PhysicalGroups,i))->Num);
-  
 }
 
