@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.25 2003-04-16 08:23:28 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.26 2003-04-16 08:32:46 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -2492,12 +2492,19 @@ contributors' will take you directly to @ref{Contributors}.
 @item
 Use emacs to edit your files, and load the C++ mode! This permits automatic
 syntax highlighting and easy indentation. Automatic loading of the C++ mode
-for @file{.pro} files can be achieved by adding the following command in
-your @code{.emacs} file: @code{(setq auto-mode-alist (append '(("\\.pro$"
+for @file{.geo} files can be achieved by adding the following command in
+your @code{.emacs} file: @code{(setq auto-mode-alist (append '(("\\.geo$"
 . c++-mode)) auto-mode-alist))}.
 @item
 Define common geometrical objects and options in separate files, reusable in
 all your problem definition structures.
+@item
+Save your preferred options with `Tools->Options->Save'. To reset default
+options, erase the @code{General.OptionsFileName} (usually
+@file{.gmsh-options} in your home directory) or use the `Restore default
+options' button in `Tools->Options->General->Output'.
+@item
+Read the @file{FAQ}...
 @end itemize
 
 @c =========================================================================
