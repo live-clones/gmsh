@@ -1,4 +1,4 @@
-/* $Id: GmshClient.c,v 1.8 2004-12-06 07:59:59 geuzaine Exp $ */
+/* $Id: GmshClient.c,v 1.9 2005-01-01 02:14:31 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
  *
@@ -93,10 +93,15 @@ int Gmsh_Connect(char *sockname)
      server before we attempt to connect to it... */
   Socket_Idle(0.1);
 
-  if(!(port = strstr(sockname, ":"))){ /* UNIX socket */
+  if(strstr(sockname, "/") || strstr(sockname, "\\") || !strstr(sockname, ":")){
+    /* UNIX socket (testing ":" is not enough with Windows paths) */
     portno = -1;
   }
-  else{ /* INET socket */
+  else{
+    /* INET socket */
+    port = strstr(sockname, ":");
+    if(!port)
+      return -1; /* Error: Couldn't create socket */
     portno = atoi(port+1);
     remotelen = strlen(sockname) - strlen(port);
     if(remotelen > 0)
