@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.63 2001-06-26 16:47:23 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.64 2001-07-18 07:36:36 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -72,6 +72,7 @@ int SelectContour (int type, int num, List_T *Liste1){
     }
   }
 
+  Draw();//added July 18 2001 to overcome missing refreshes... Is this OK ?
   List_Delete(Liste2);
   return k;
 }

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.22 2001-06-28 15:16:09 geuzaine Exp $
+// $Id: Geom.cpp,v 1.23 2001-07-18 07:36:36 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -879,7 +879,7 @@ void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent){
   else{
     Msg(STATUS1N," ");
   }
-
+  glFlush();
 }
 
 
@@ -908,6 +908,5 @@ void HighlightEntityNum(int v, int c, int s, int permanant){
       HighlightEntity(NULL,NULL,ps,permanant);
     }
   }
-  glFlush();
 }
 
