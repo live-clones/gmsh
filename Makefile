@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.347 2004-06-01 00:48:53 geuzaine Exp $
+# $Id: Makefile,v 1.348 2004-06-01 00:50:26 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -49,10 +49,10 @@ link: variables
 
 install: variables
 	mkdir -p ${bindir}
-	cp bin/gmsh${EXEEXT} ${bindir}
+	cp -f bin/gmsh${EXEEXT} ${bindir}
 	chmod 755 ${bindir}/gmsh${EXEEXT}
 	mkdir -p ${mandir}/man1
-	cp doc/gmsh.1 ${mandir}/man1
+	cp -f doc/gmsh.1 ${mandir}/man1
 
 install-mac: variables package-mac
 	cp -rf gmsh-${GMSH_VERSION}/Gmsh.app /Applications
