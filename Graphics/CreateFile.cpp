@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.58 2004-05-08 00:19:47 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.59 2004-05-09 19:00:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -254,7 +254,7 @@ void CreateOutputFile(char *name, int format)
       
       pssort = (CTX.print.eps_quality == 1) ? GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT;
       psoptions =
-	GL2PS_SIMPLE_LINE_OFFSET | GL2PS_SILENT | 
+	GL2PS_SIMPLE_LINE_OFFSET | GL2PS_SILENT | GL2PS_NO_BLENDING |
 	(CTX.print.eps_occlusion_culling ? GL2PS_OCCLUSION_CULL : 0) |
 	(CTX.print.eps_best_root ? GL2PS_BEST_ROOT : 0) |
 	(CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0) |
