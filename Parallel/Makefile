@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.2 2001-08-08 14:30:33 remacle Exp $
+# $Id: Makefile,v 1.3 2001-08-13 07:19:02 geuzaine Exp $
 #
-# Makefile for "libBox.a"
+# Makefile for "libParallel.a"
 #
 
 .IGNORE:
@@ -8,14 +8,13 @@ AR       = ar ruvs
 RM       = rm
 RANLIB   = ranlib
 LIB      = ../lib/libParallel.a
-INCLUDE  := $(INCLUDE) -I/usr/local/mpich/latest/include/
 
 C_FLAGS       = -g
 OS_FLAGS      = 
 VERSION_FLAGS = 
 
 RMFLAGS  = -f
-CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) 
+CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) -I/usr/local/mpich/latest/include/
 
 SRC = ParUtil.cpp
 
@@ -27,7 +26,7 @@ $(LIB): $(OBJ)
 	$(AR) $(LIB) $(OBJ) 
 	$(RANLIB) $(LIB)
 
-.cc.o:
+.cpp.o:
 	$(CC) $(CFLAGS) -c $<
 
 clean:

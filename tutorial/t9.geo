@@ -38,7 +38,7 @@ Plugin(CutPlane).C = 1 ;
 Plugin(CutPlane).D = 0 ; 
 Plugin(CutPlane).Run ; 
 
-View[0].Light = 1;
+View[0].Light = 0;
 View[0].IntervalsType = 2;
 View[0].NbIso = 6;
 View[0].SmoothNormals = 1;
