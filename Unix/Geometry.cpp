@@ -1,4 +1,4 @@
-/* $Id: Geometry.cpp,v 1.7 2000-12-20 12:17:13 geuzaine Exp $ */
+/* $Id: Geometry.cpp,v 1.8 2000-12-20 15:28:48 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -214,7 +214,6 @@ void ForceGeometry_G (Widgets_T *w){
                 XmNrightPosition, 298,
                 XmNmarginHeight, 0,
                 NULL);
-
 
 }
 

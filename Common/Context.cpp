@@ -1,4 +1,4 @@
-/* $Id: Context.cpp,v 1.22 2000-12-11 22:09:42 geuzaine Exp $ */
+/* $Id: Context.cpp,v 1.23 2000-12-20 15:28:42 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -205,9 +205,6 @@ void Init_Context(void){
   CTX.min[0]   = CTX.min[1]   = CTX.min[2]   = 0.0 ;
   CTX.max[0]   = CTX.max[1]   = CTX.max[2]   = 1.0 ;
   CTX.range[0] = CTX.range[1] = CTX.range[2] = 1.0 ;
-
-  CTX.viewport[0] = CTX.viewport[1] = 0 ;
-  CTX.viewport[2] = CTX.viewport[3] = 1 ;
 
   CTX.vxmin = CTX.vymin = CTX.vxmax = CTX.vymax = 0. ;
 

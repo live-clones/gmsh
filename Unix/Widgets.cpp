@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.20 2000-12-20 12:17:13 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.21 2000-12-20 15:28:48 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -417,8 +417,11 @@ void CreateWidgets_G(Widgets_T *w){
   
   /* container form */
   i=0;
-  XtSetArg(arg[i], XmNresizable, False); i++;  
-  XtSetArg(arg[i], XmNresizePolicy, XmRESIZE_NONE); i++;
+  // We want glw to be able to force the size of the container win
+  //XtSetArg(arg[i], XmNresizable, False); i++;  
+  //XtSetArg(arg[i], XmNresizePolicy, XmRESIZE_NONE); i++;
+  XtSetArg(arg[i], XmNwidth, 700); i++;  
+  XtSetArg(arg[i], XmNheight, 525); i++;
   w->G.containerForm = XmCreateForm(w->G.shell, "GcontainerForm", arg, i);
   XtManageChild(w->G.containerForm);
 
@@ -427,6 +430,7 @@ void CreateWidgets_G(Widgets_T *w){
   XtSetArg(arg[i], XmNcolormap, XCTX.glw.colormap); i++;
   XtSetArg(arg[i], GLwNvisualInfo, XCTX.glw.visinfo); i++;
   XtSetArg(arg[i], GLwNinstallColormap, True); i++;
+
   w->G.glw = GLwCreateMDrawingArea(w->G.containerForm, "glw", arg, i);
   XtManageChild(w->G.glw);
 
@@ -496,8 +500,8 @@ void CreateWidgets_G(Widgets_T *w){
   /* 3 textes au milieu */
 
   i=0;
-  XtSetArg(arg[i], XmNresizable, False); i++;  
-  XtSetArg(arg[i], XmNresizePolicy, XmRESIZE_NONE); i++;
+  //XtSetArg(arg[i], XmNresizable, False); i++;  
+  //XtSetArg(arg[i], XmNresizePolicy, XmRESIZE_NONE); i++;
   w->G.textForm = XmCreateForm(w->G.bottomForm, "GtextForm", arg, i);
   XtManageChild(w->G.textForm);
 

@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.30 2000-12-19 08:56:56 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.31 2000-12-20 15:28:48 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -157,11 +157,12 @@ void OpenProblem(char *name){
 
   strncpy(THEM->name, TheBaseFileName,NAME_STR_L);
 
-  if(!CTX.interactive)
+  if(!CTX.interactive){
     XtVaSetValues(WID.G.shell,
                   XmNtitle, TheFileName,
                   XmNiconName, TheBaseFileName,
                   NULL);
+  }
 
   Msg(INFOS, "Opening '%s'", TheFileName); 
 

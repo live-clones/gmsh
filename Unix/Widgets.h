@@ -1,4 +1,4 @@
-/* $Id: Widgets.h,v 1.10 2000-12-20 12:17:13 geuzaine Exp $ */
+/* $Id: Widgets.h,v 1.11 2000-12-20 15:28:48 geuzaine Exp $ */
 #ifndef _WIDGETS_H_
 #define _WIDGETS_H_
 
@@ -49,8 +49,7 @@ typedef struct {
 
   struct {
     Widget   shell, containerForm ;
-    Widget   drawForm ;
-    Widget     glw, glo ; 
+    Widget   glw, glo ; 
     Widget   bottomForm ;
     Widget     Butt[7] ;
     Widget     textForm, infoLabel, selectLabel, statusLabel ;

@@ -1,4 +1,4 @@
-/* $Id: Draw.cpp,v 1.11 2000-12-10 23:31:45 geuzaine Exp $ */
+/* $Id: Draw.cpp,v 1.12 2000-12-20 15:28:44 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -171,13 +171,21 @@ void Orthogonalize(int x, int y){
 /*  i n i t                                                                 */
 /* ------------------------------------------------------------------------ */
 
-void Init(void){
-  /* 
-     Attention:
-     X11 interdit de changer le contexte (GLX) en mode GL_FEEDBACK ou GL_SELECT,
-     ce qui serait le cas pour les sorties postscript...
-  */
 #ifdef _UNIX
+#include <X11/IntrinsicP.h>
+#endif
+
+void Init(void){
+#ifdef _UNIX
+  /* Resize Graphical Window if told to do it */
+  XWindowAttributes  xattrib;
+  XGetWindowAttributes(XtDisplay(WID.G.bottomForm),XtWindow(WID.G.bottomForm),&xattrib);
+  XtResizeWidget(WID.G.shell,
+		 CTX.viewport[2]-CTX.viewport[0],
+		 xattrib.height+CTX.viewport[3]-CTX.viewport[1],
+		 0);
+  /* X11 forbids to change the context (GLX) in GL_FEEDBACK or GL_SELECT mode,
+     which would happen for postcript output */
   if(CTX.stream == TO_SCREEN)
     glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);
 #endif

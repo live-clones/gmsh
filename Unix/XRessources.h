@@ -1,4 +1,4 @@
-/* $Id: XRessources.h,v 1.3 2000-11-25 15:26:12 geuzaine Exp $ */
+/* $Id: XRessources.h,v 1.4 2000-12-20 15:28:48 geuzaine Exp $ */
 
 /* 
    Les resources ci-dessous sont prises en compte par defaut. Toutre 
@@ -55,7 +55,8 @@ String FallbackResources[] = {
   "gmshMW*HDaboutDialog*fontList: fixed",
 
   /* geometrie */
-  "gmshGW*geometry: 700x525+20+30",
+  //"gmshGW*geometry: 700x525+20+30", Dont't force the dimension this way !!!
+  "gmshGW*geometry: +20+30",
   "gmshMW*geometry: x420+800+80",
   "gmshCW*geometry: 440x130+30+570",
 

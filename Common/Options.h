@@ -1,4 +1,4 @@
-/* $Id: Options.h,v 1.7 2000-12-20 10:40:49 geuzaine Exp $ */
+/* $Id: Options.h,v 1.8 2000-12-20 15:28:42 geuzaine Exp $ */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
@@ -37,6 +37,10 @@ StringXString PrintOptions_String[] = {
 // NUMBERS
 
 StringXNumber GeneralOptions_Number[] = {
+  { "Viewport0"    , GMSH_INT,    (void*)&CTX.viewport[0]    , 0. }, 
+  { "Viewport1"    , GMSH_INT,    (void*)&CTX.viewport[1]    , 0. }, 
+  { "Viewport2"    , GMSH_INT,    (void*)&CTX.viewport[2]    , 1. }, 
+  { "Viewport3"    , GMSH_INT,    (void*)&CTX.viewport[3]    , 1. }, 
   { "Rotation0"    , GMSH_DOUBLE, (void*)&CTX.r[0]          , 0.0 }, 
   { "Rotation1"    , GMSH_DOUBLE, (void*)&CTX.r[1]          , 0.0 }, 
   { "Rotation2"    , GMSH_DOUBLE, (void*)&CTX.r[2]          , 0.0 }, 
