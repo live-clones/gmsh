@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.52 2004-02-28 00:48:49 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.53 2004-03-03 22:26:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -19,21 +19,6 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-/*
-   Maillage Delaunay d'une surface (Point insertion Technique)
-
-   3 types de maillages sont proposes
-   - Center of circum circle point insertion
-   - Voronoi Point Insertion (la meilleure en general)
-   - G Point insertion (intermediaire)
-
-   Le maillage surfacique passe par la determination d'un plan
-   dont on minimise l'ecart au sens des moindes carres par rap-
-   port a la surface :
-     plan ax + bx + cz = 1
-     tangeante = t = (a,b,c)
-*/
-
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Geo.h"
@@ -49,7 +34,7 @@ extern Context_T CTX;
 
 PointRecord *gPointArray;
 DocRecord *BGMESH, *FGMESH;
-int LocalNewPoint, is_3D = 0;
+int is_3D = 0;
 double LC2D;
 
 static Surface *THESURFACE, *THESUPPORT;
@@ -234,35 +219,21 @@ void PutVertex_OnSurf(void *a, void *b)
 
 /* remplis la structure Delaunay d'un triangle cree */
 
-Delaunay *testconv(avlptr * root, int *conv, DocRecord * ptr)
+Delaunay *testconv(avlptr *root, int *conv, DocRecord * ptr)
 {
-  avlptr *proot;
   double qual;
-  Delaunay *pdel;
-
-  proot = root;
-
-  pdel = NULL;
+  Delaunay *pdel = NULL;
 
   *conv = 0;
   if(*root == NULL)
     *conv = 1;
   else {
-    pdel = findrightest(*proot, ptr);
+    pdel = findrightest(*root, ptr);
     qual = pdel->t.quality_value;
-    switch (LocalNewPoint) {
-    case CENTER_CIRCCIRC:
-    case BARYCENTER:
-      if(qual < CONV_VALUE)
-        *conv = 1;
-      break;
-    case VORONOI_INSERT:
-      if((*root) == NULL)
-        *conv = 1;
-      break;
-    }
+    if(qual < CONV_VALUE)
+      *conv = 1;
   }
-  return (pdel);
+  return pdel;
 }
 
 
@@ -274,15 +245,14 @@ int mesh_domain(ContourPeek * ListContours, int numcontours,
   DocRecord docm, *doc;
   int conv, i, j, nump, numact, numlink, numkil, numaloc, numtri, numtrr,
     numtrwait;
-  Delaunay *del, *del_P, *deladd, **listdel;
+  Delaunay *del, *del_P, *deladd;
   PointNumero aa, bb, cc, a, b, c;
   DListPeek list, p, q;
-  avlptr *root, *proot, *root_w, *root_acc;
+  avlptr *root, *root_w;
   double volume_old, volume_new;
 
   root = (avlptr *) Malloc(sizeof(avlptr));
   root_w = (avlptr *) Malloc(sizeof(avlptr));
-  root_acc = (avlptr *) Malloc(sizeof(avlptr));
 
   nump = 0;
   for(i = 0; i < numcontours; i++)
@@ -364,7 +334,7 @@ int mesh_domain(ContourPeek * ListContours, int numcontours,
 
   /* initialisation de l'arbre  */
 
-  (*root) = (*root_w) = (*root_acc) = NULL;
+  (*root) = (*root_w) = NULL;
 
   int onlyinit = OnlyTheInitialMesh;
 
@@ -377,28 +347,9 @@ int mesh_domain(ContourPeek * ListContours, int numcontours,
   for(i = 0; i < doc->numTriangles; i++) {
     if(doc->delaunay[i].t.position != EXTERN) {
       del = &doc->delaunay[i];
-      switch (LocalNewPoint) {
-      case CENTER_CIRCCIRC:
-      case BARYCENTER:
-        Insert_Triangle(root, del);
-        break;
-      case VORONOI_INSERT:
-        switch (del->t.position) {
-        case ACTIF:
-        case INTERN:
-          Insert_Triangle(root, del);
-          break;
-        case WAITING:
-          Insert_Triangle(root_w, del);
-          break;
-        case ACCEPTED:
-          Insert_Triangle(root_acc, del);
-          break;
-        }
-      }
+      Insert_Triangle(root, del);
     }
   }
-
 
   /* maillage proprement dit :
      1) Les triangles sont tries dans l'arbre suivant leur qualite
@@ -430,17 +381,7 @@ int mesh_domain(ContourPeek * ListContours, int numcontours,
       Delete_Triangle(root, del);
       Delete_Triangle(root_w, del);
       del->t.quality_value /= 10.;
-      switch (LocalNewPoint) {
-      case CENTER_CIRCCIRC:
-      case BARYCENTER:
-        Insert_Triangle(root, del);
-        break;
-      case VORONOI_INSERT:
-        del->t.position = ACCEPTED;
-        Insert_Triangle(root_acc, del);
-        break;
-      }
-
+      Insert_Triangle(root, del);
       numlink = numkil = 0;
       if(list != NULL) {
         p = list;
@@ -489,17 +430,7 @@ int mesh_domain(ContourPeek * ListContours, int numcontours,
       Delete_Triangle(root, del);
       Delete_Triangle(root_w, del);
       del->t.quality_value /= 10.;
-      switch (LocalNewPoint) {
-      case CENTER_CIRCCIRC:
-      case BARYCENTER:
-        Insert_Triangle(root, del);
-        break;
-      case VORONOI_INSERT:
-        del->t.position = ACCEPTED;
-        Insert_Triangle(root_acc, del);
-        break;
-      }
-
+      Insert_Triangle(root, del);
       numlink = numkil = 0;
       if(list != NULL) {
         p = list;
@@ -518,28 +449,9 @@ int mesh_domain(ContourPeek * ListContours, int numcontours,
 
     for(i = 0; i < numkil; i++) {
       del_P = *(Delaunay **) List_Pointer(kill_L, i);
-
-      switch (LocalNewPoint) {
-      case CENTER_CIRCCIRC:
-      case BARYCENTER:
-        Delete_Triangle(root, del_P);
-        break;
-      case VORONOI_INSERT:
-        switch (del_P->t.position) {
-        case WAITING:
-          Delete_Triangle(root_w, del_P);
-          break;
-        case ACTIF:
-        case INTERN:
-          Delete_Triangle(root, del_P);
-          break;
-        case ACCEPTED:
-          Delete_Triangle(root_acc, del_P);
-          break;
-        }
-      }
+      Delete_Triangle(root, del_P);
       // MEMORY_LEAK -JF
-      //      Free(del_P);
+      // Free(del_P);
     }
 
     *numpoints = doc->numPoints;
@@ -579,25 +491,7 @@ int mesh_domain(ContourPeek * ListContours, int numcontours,
 
     for(j = 0; j < i; j++) {
       del_P = *(Delaunay **) List_Pointer(del_L, j + numlink);
-      switch (LocalNewPoint) {
-      case CENTER_CIRCCIRC:
-      case BARYCENTER:
-        Insert_Triangle(root, del_P);
-        break;
-      case VORONOI_INSERT:
-        switch (del_P->t.position) {
-        case ACTIF:
-        case INTERN:
-          Insert_Triangle(root, del_P);
-          break;
-        case WAITING:
-          Insert_Triangle(root_w, del_P);
-          break;
-        case ACCEPTED:
-          Insert_Triangle(root_acc, del_P);
-          break;
-        }
-      }
+      Insert_Triangle(root, del_P);
     }
 
     del = testconv(root, &conv, doc);
@@ -606,29 +500,17 @@ int mesh_domain(ContourPeek * ListContours, int numcontours,
 
   List_Delete(kill_L);
 
-  numtri = 0;
   numtrwait = 0;
-
-  if(*root_w != NULL) {
-    proot = root_w;
-    avltree_count(*proot, &numtrwait);
-  }
+  if(*root_w != NULL)
+    avltree_count(*root_w, &numtrwait);
 
   numtrr = 0;
+  avltree_count(*root, &numtrr);
 
-  proot = root;
-  switch (LocalNewPoint) {
-  case VORONOI_INSERT:
-    proot = root_acc;
-    break;
-  }
-  avltree_count(*proot, &numtrr);
+  mai->listdel = (delpeek *) Malloc((numtrr + numtrwait + 1) * sizeof(delpeek));
 
-  alloue_Mai_Del(mai, numtrr + numtrwait + 1, 100);
-
-  listdel = mai->listdel;
   numtri = 0;
-  avltree_print(*proot, listdel, &numtri);
+  avltree_print(*root, mai->listdel, &numtri);
   if(numtrwait != 0) {
     numtri = 0;
     avltree_print(*root_w, (Delaunay **) del_L->array, &numtri);
@@ -770,9 +652,7 @@ void Maillage_Automatique_VieuxCode(Surface * pS, Mesh * m, int ori)
     ver[2]->Num = gPointArray[d].initial;
     err = 0;
     for(j = 0; j < 3; j++) {
-      if((pp[j] = (Vertex **) Tree_PQuery(pS->Vertices, &ver[j]))) {
-      }
-      else {
+      if(!(pp[j] = (Vertex **) Tree_PQuery(pS->Vertices, &ver[j]))) {
         err = 1;
         Msg(GERROR, "Unknown vertex %d", ver[j]->Num);
       }
@@ -797,7 +677,9 @@ void Maillage_Automatique_VieuxCode(Surface * pS, Mesh * m, int ori)
     }
 
     // MEMORY LEAK (JF)
-    //    Free(M.listdel[i]);
+    //printf("%d %d %d\n", M.listdel[i]->t.a, M.listdel[i]->t.b, M.listdel[i]->t.c);
+    //xxxxFree(M.listdel[i]);
+
   }
   Free(M.listdel);
   Free(gPointArray);
@@ -819,8 +701,8 @@ void Make_Mesh_With_Points(DocRecord * ptr, PointRecord * Liste,
 void filldel(Delaunay * deladd, int aa, int bb, int cc,
              PointRecord * points, DocRecord * mesh)
 {
-  double qual, newqual, L;
-  MPoint pt2, pt4;
+  double qual, newqual;
+  MPoint pt2;
   Vertex *v, *dum;
 
   deladd->t.a = aa;
@@ -875,31 +757,13 @@ void filldel(Delaunay * deladd, int aa, int bb, int cc,
     Free_Vertex(&v, 0);
   }
 
-  switch (LocalNewPoint) {
-  case CENTER_CIRCCIRC:
-  case BARYCENTER:
-    deladd->t.quality_value =
-      sqrt((deladd->t.xc - points[cc].where.h) * (deladd->t.xc -
-                                                  points[cc].where.h) +
-           (deladd->t.yc - points[cc].where.v) * (deladd->t.yc -
-                                                  points[cc].where.v)
-      ) / newqual;
-    deladd->t.position = INTERN;
-    break;
-
-  case VORONOI_INSERT:
-    pt4.h = points[bb].where.h;
-    pt4.v = points[bb].where.v;
-    //pt3.h = .5 * (points[bb].where.h + points[cc].where.h);
-    //pt3.v = .5 * (points[bb].where.v + points[cc].where.v);
-    deladd->t.quality_value = myhypot(pt2.h - pt4.h, pt2.v - pt4.v);
-    L = newqual / deladd->t.quality_value;
-    if(L > 1.5)
-      deladd->t.position = ACCEPTED;
-    else
-      deladd->t.position = NONACCEPTED;
-    break;
-  }
+  deladd->t.quality_value =
+    sqrt((deladd->t.xc - points[cc].where.h) * (deladd->t.xc -
+						points[cc].where.h) +
+	 (deladd->t.yc - points[cc].where.v) * (deladd->t.yc -
+						points[cc].where.v)
+	 ) / newqual;
+  deladd->t.position = INTERN;
 }
 
 void ActionEndTheCurve(void *a, void *b)
@@ -932,8 +796,6 @@ void Maillage_Surface(void *data, void *dum)
 
   THESUPPORT = s->Support;
   THESURFACE = s;
-
-  LocalNewPoint = CTX.mesh.point_insertion;
 
   if(Tree_Nbr(s->Simplexes))
     Tree_Delete(s->Simplexes);

@@ -1,4 +1,4 @@
-// $Id: 2D_Links.cpp,v 1.17 2004-02-07 01:40:20 geuzaine Exp $
+// $Id: 2D_Links.cpp,v 1.18 2004-03-03 22:26:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -23,9 +23,10 @@
 #include "Numeric.h"
 #include "Mesh.h"
 #include "2D_Mesh.h"
+#include "Context.h"
 
+extern Context_T CTX;
 extern PointRecord *gPointArray;
-extern int LocalNewPoint;
 extern DocRecord *FGMESH;
 
 extern PointNumero First(PointNumero x);
@@ -63,7 +64,7 @@ PointNumero *ConvertDlistToArray(DListPeek * dlist, int *n)
     max++;
     p = Pred(p);
   } while(p != *dlist);
-  ptr = (PointNumero *) Malloc((int)((max + 1) * sizeof(PointNumero)));
+  ptr = (PointNumero *) Malloc((max + 1) * sizeof(PointNumero));
   if(ptr == NULL)
     return NULL;
   p = *dlist;
@@ -96,7 +97,7 @@ int Conversion(DocPeek doc)
   gPointArray = doc->points;
 
   n = doc->numPoints;
-  striangle = (Striangle *) Malloc((int)(n * sizeof(Striangle)));
+  striangle = (Striangle *) Malloc(n * sizeof(Striangle));
   count2 = (int)CountPointsOnHull(n, doc->points);
 
   /* nombre de triangles que l'on doit obtenir */
@@ -259,36 +260,7 @@ int CreateLinks(List_T * ListDelaunay, int NumDelaunay,
 
       if(!PtInTriangle(pt, del_Pi->t.a, del_Pi->t.b, del_Pi->t.c)) {
         if(!Find_Triangle(pt, FGMESH, A_TOUT_PRIX)) {
-          if(LocalNewPoint == VORONOI_INSERT) {
-            del_Pi->t.position = ACCEPTED;
-          }
           del_Pi->t.quality_value /= 1000.;
-        }
-      }
-    }
-  }
-
-  if((LocalNewPoint == VORONOI_INSERT)) {
-    for(i = 0; i < NumDelaunay; i++) {
-      del_Pi = *(Delaunay **) List_Pointer(ListDelaunay, i);
-      if(((del_Pi->t.position == NONACCEPTED)
-          || (del_Pi->t.position == INTERN)) && (del_Pi->t.info == TOLINK)) {
-        if((del_Pi->v.voisin1 == NULL) || (del_Pi->v.voisin2 == NULL)
-           || (del_Pi->v.voisin3 == NULL)) {
-          del_Pi->t.position = ACTIF;
-        }
-        else if((del_Pi->v.voisin1->t.position == ACCEPTED) &&
-                (del_Pi->v.voisin2->t.position == ACCEPTED) &&
-                (del_Pi->v.voisin3->t.position == ACCEPTED)) {
-          del_Pi->t.position = ACCEPTED;
-        }
-        else if((del_Pi->v.voisin1->t.position == ACCEPTED) ||
-                (del_Pi->v.voisin2->t.position == ACCEPTED) ||
-                (del_Pi->v.voisin3->t.position == ACCEPTED)) {
-          del_Pi->t.position = ACTIF;
-        }
-        else {
-          del_Pi->t.position = WAITING;
         }
       }
     }

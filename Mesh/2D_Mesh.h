@@ -58,8 +58,6 @@ int Delete_Triangle ( avlstruct **root, Delaunay * del );
 int Insert_Point (MPoint pt, int *numpoints, int *numalloc, 
                   DocRecord *doc, DocRecord *BGM, int is3d);
 MPoint Localize (Delaunay * del , DocRecord *MESH);
-void alloue_Mai_Pts(maillage *mai , int Nballoc , int incrAlloc);
-void alloue_Mai_Del(maillage *mai , int Nballoc , int incrAlloc);
 
 void InitBricks (DocRecord *MESH);
 int PtInTriangle(MPoint p , PointNumero a , PointNumero b , PointNumero c);

@@ -1,4 +1,4 @@
-// $Id: 2D_Tree.cpp,v 1.12 2004-02-07 01:40:21 geuzaine Exp $
+// $Id: 2D_Tree.cpp,v 1.13 2004-03-03 22:26:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,7 @@
 #include "Mesh.h"
 #include "2D_Mesh.h"
 
-/* BOUSILLE L'ARBRE TOTALEMENT (pas les donnees mais les liens) */
+// deletes the tree (*not* the data! only the links)
 
 int avltree_remove(avlstruct ** root)
 {
@@ -51,8 +51,7 @@ int avltree_remove(avlstruct ** root)
   return delete_this_node;
 }
 
-
-/* INSERE UN NOEUD */
+// inserts a node
 
 int avltree_insert(avlstruct ** root, void *item,
                    int (*fcmp) (void *a, void *b))
@@ -75,9 +74,7 @@ int avltree_insert(avlstruct ** root, void *item,
   return (1);
 }
 
-
-
-/* EFFACE UN NOEUD */
+// deletes a node
 
 int avltree_delete(avlstruct ** root, void *item,
                    int (*fcmp) (void *a, void *b))
@@ -100,6 +97,7 @@ int avltree_delete(avlstruct ** root, void *item,
   else if((cmpresult == 0)) {
     if(((*root)->right == NULL) && (&(*root)->left == NULL)) {
       Free(*root);
+      *root = NULL;
       return (1);
     }
     else if((*root)->right == NULL) {
@@ -130,7 +128,7 @@ int avltree_delete(avlstruct ** root, void *item,
 
 }
 
-/* compte le nombre d'elements d'un arbre */
+// counts the number of nodes
 
 void avltree_count(avlptr root, int *numtri)
 {
@@ -143,8 +141,7 @@ void avltree_count(avlptr root, int *numtri)
   }
 }
 
-
-/* deroule l'arbre dans un vecteur */
+// unrolls the tree into a vector
 
 void avltree_print(avlptr root, Delaunay ** listdel, int *numtri)
 {

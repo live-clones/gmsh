@@ -1,4 +1,4 @@
-// $Id: 2D_Util.cpp,v 1.21 2004-02-07 01:40:21 geuzaine Exp $
+// $Id: 2D_Util.cpp,v 1.22 2004-03-03 22:26:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,6 @@
 #include "Context.h"
 
 extern Context_T CTX;
-extern int LocalNewPoint;
 extern PointRecord *gPointArray;
 extern Mesh *THEM;
 
@@ -141,7 +140,6 @@ void findtree(avlptr root, double *qualm, Delaunay ** delf, DocRecord * MESH)
   }
 }
 
-
 Delaunay *findrightest(avlptr root, DocRecord * MESH)
 {
   Delaunay *del, **dee;
@@ -158,8 +156,6 @@ Delaunay *findrightest(avlptr root, DocRecord * MESH)
   del = (Delaunay *) (exroot)->treedata;
   pt.h = del->t.xc;
   pt.v = del->t.yc;
-  if((LocalNewPoint == VORONOI_INSERT) || (LocalNewPoint == SQUARE_TRI))
-    return del;
 
   if(Find_Triangle(pt, MESH, A_TOUT_PRIX) != NULL)
     return del;
@@ -174,247 +170,21 @@ Delaunay *findrightest(avlptr root, DocRecord * MESH)
   return (del);
 }
 
-double lengthseg(MPoint a, MPoint b)
-{
-  return (pow(DSQR(a.h - b.h) + DSQR(a.v - b.v), 0.5));
-}
-
-
 MPoint Localize(Delaunay * del, DocRecord * MESH)
 {
-  /*
-     Routine de localisation du point a inserer.
-     Variable globale LocalNewPoint :
-     - CENTER_CIRCCIRC : au centre du cercle circonscrit
-     - VORONOI_INSERT  : sur une branche de voronoi
-     - BARYCENTER      : au centre de gravite 
-     - SQUARE_TRI      : essaie de creer des triangles rectangles isoceles
-     dans le but de mailler avec des quadrangles
-   */
+  MPoint pt;
 
-  MPoint pt, pta, ptb, ptc, ptm;
-  PointNumero a = 0, b = 0;
-  double p, q, val, vec[2], ro, rm;
-  Delaunay *v1, *v2, *v3, *del2 = NULL;
-
-  switch (LocalNewPoint) {
-
-  case (CENTER_CIRCCIRC):
-
-    pt.h = del->t.xc;
-    pt.v = del->t.yc;
-
-    return (pt);
-
-  case (BARYCENTER):
-
+  switch (CTX.mesh.point_insertion) {
+  case BARYCENTER:
     pt.h = (gPointArray[del->t.a].where.h + gPointArray[del->t.b].where.h
             + gPointArray[del->t.c].where.h) / 3.;
     pt.v = (gPointArray[del->t.a].where.v + gPointArray[del->t.b].where.v
             + gPointArray[del->t.c].where.v) / 3.;
-
-    return (pt);
-
-  case (VORONOI_INSERT):
-  case (SQUARE_TRI):
-
-    /* 
-       si le triangle est pres d'un bord -> ce bord est l'arete choisie
-     */
-    if((v1 = del->v.voisin1) == NULL) {
-      /* v1 == NULL; */
-      v2 = del->v.voisin2;
-      v3 = del->v.voisin3;
-    }
-    else if((v2 = del->v.voisin2) == NULL) {
-      v1 = NULL;
-      v2 = del->v.voisin1;
-      v3 = del->v.voisin3;
-    }
-    else if((v3 = del->v.voisin3) == NULL) {
-      v1 = NULL;
-      v2 = del->v.voisin1;
-      v3 = del->v.voisin2;
-    }
-    else {
-      v1 = del->v.voisin1;
-      v2 = del->v.voisin2;
-      v3 = del->v.voisin3;
-    }
-
-    /* 
-       Si l'arete est un bord -> 
-     */
-    if(v1 == NULL) {
-
-      if((v2 != NULL) && (v3 != NULL)) {
-
-        if(((del->t.a == v2->t.a) || (del->t.a == v2->t.b)
-            || (del->t.a == v2->t.c)) && ((del->t.a == v3->t.a)
-                                          || (del->t.a == v3->t.b)
-                                          || (del->t.a == v3->t.c))) {
-          a = del->t.b;
-          b = del->t.c;
-        }
-        else
-          if(((del->t.b == v2->t.a) || (del->t.b == v2->t.b)
-              || (del->t.b == v2->t.c)) && ((del->t.b == v3->t.a)
-                                            || (del->t.b == v3->t.b)
-                                            || (del->t.b == v3->t.c))) {
-          a = del->t.a;
-          b = del->t.c;
-        }
-        else
-          if(((del->t.c == v2->t.a) || (del->t.c == v2->t.b)
-              || (del->t.c == v2->t.c)) && ((del->t.c == v3->t.a)
-                                            || (del->t.c == v3->t.b)
-                                            || (del->t.c == v3->t.c))) {
-          a = del->t.a;
-          b = del->t.b;
-        }
-        else {
-          Msg(GERROR, "Voronoi insert 1");
-        }
-      }
-      else if(v2 != NULL) {
-        if((del->t.a != v2->t.c) && (del->t.a != v2->t.c)
-           && (del->t.a != v2->t.c)) {
-          a = del->t.a;
-          b = del->t.b;
-        }
-        else if((del->t.b != v2->t.c) && (del->t.b != v2->t.c)
-                && (del->t.b != v2->t.c)) {
-          a = del->t.b;
-          b = del->t.c;
-        }
-        else if((del->t.c != v2->t.c) && (del->t.c != v2->t.c)
-                && (del->t.c != v2->t.c)) {
-          a = del->t.a;
-          b = del->t.c;
-        }
-        else {
-          Msg(GERROR, "Voronoi insert 2");
-        }
-      }
-      else if(v3 != NULL) {
-        if((del->t.a != v3->t.c) && (del->t.a != v3->t.c)
-           && (del->t.a != v3->t.c)) {
-          a = del->t.a;
-          b = del->t.b;
-        }
-        else if((del->t.b != v3->t.c) && (del->t.b != v3->t.c)
-                && (del->t.b != v3->t.c)) {
-          a = del->t.b;
-          b = del->t.c;
-        }
-        else if((del->t.c != v3->t.c) && (del->t.c != v3->t.c)
-                && (del->t.c != v3->t.c)) {
-          a = del->t.a;
-          b = del->t.c;
-        }
-        else {
-          Msg(GERROR, "Voronoi insert 3");
-        }
-      }
-    }
-    else {
-      if(v1->t.position == ACCEPTED)
-        del2 = v1;
-      else if(v2->t.position == ACCEPTED)
-        del2 = v2;
-      else if(v3->t.position == ACCEPTED)
-        del2 = v3;
-      else {
-        Msg(GERROR, "Coherence in Localize");
-      }
-
-      if((del->t.a != del2->t.a) && (del->t.a != del2->t.b)
-         && (del->t.a != del2->t.c)) {
-        a = del->t.b;
-        b = del->t.c;
-      }
-      else if((del->t.b != del2->t.a) && (del->t.b != del2->t.b)
-              && (del->t.b != del2->t.c)) {
-        a = del->t.a;
-        b = del->t.c;
-      }
-      else if((del->t.c != del2->t.a) && (del->t.c != del2->t.b)
-              && (del->t.c != del2->t.c)) {
-        a = del->t.a;
-        b = del->t.b;
-      }
-      else {
-        Msg(GERROR, "Voronoi insert");
-      }
-    }
-
-    /* 
-       On sait que l'arete du nouveau triangle est a b 
-     */
-
-    pta.h = gPointArray[a].where.h;
-    ptb.h = gPointArray[b].where.h;
-    pta.v = gPointArray[a].where.v;
-    ptb.v = gPointArray[b].where.v;
-
-    /*
-       pte.h = gPointArray[c].where.h;
-       pte.v = gPointArray[c].where.v;
-     */
-
-    p = 0.5 * lengthseg(pta, ptb);
-
-    ptc.h = del->t.xc;
-    ptc.v = del->t.yc;
-
-    ptm.h = 0.5 * (pta.h + ptb.h);
-    ptm.v = 0.5 * (pta.v + ptb.v);
-
-    q = lengthseg(ptm, ptc);
-
-    vec[0] = (ptc.h - ptm.h) / q;
-    vec[1] = (ptc.v - ptm.v) / q;
-
-    val = (p * p + q * q) / (2. * q);
-
-    ro = find_quality(ptm, MESH) / RacineDeTrois;
-
-    rm = ((ro > q) ? ro : ro);
-    rm = ((rm < val) ? rm : val);
-
-    // WARNING RANDOM
-
-    pt.h = ptm.h + vec[0] * (rm + pow(rm * rm - p * p, 0.5));
-    //+ (double) (rand() % 1000) / 1.e8;
-    pt.v = ptm.v + vec[1] * (rm + pow(rm * rm - p * p, 0.5));
-    //+ (double) (rand() % 1000) / 1.e8;
-
-    return (pt);
+    return pt;
+  case CENTER_CIRCCIRC:
+  default:
+    pt.h = del->t.xc;
+    pt.v = del->t.yc;
+    return pt;
   }
-
-  pt.h = 0.0;
-  pt.v = 0.0;
-  return pt;
-
-}
-
-
-void alloue_Mai_Pts(maillage * mai, int Nballoc, int incrAlloc)
-{
-  int i;
-
-  mai->points = (PointRecord *) Malloc(Nballoc * sizeof(PointRecord));
-  for(i = 0; i < Nballoc; i++) {
-    mai->points[i].where.h = 0.0;
-    mai->points[i].where.v = 0.0;
-  }
-  mai->IncrAllocPoints = incrAlloc;
-  mai->NumAllocPoints = Nballoc;
-}
-
-void alloue_Mai_Del(maillage * mai, int Nballoc, int incrAlloc)
-{
-  mai->listdel = (delpeek *) Malloc(Nballoc * sizeof(delpeek));
-  mai->IncrAllocTri = incrAlloc;
-  mai->NumAllocTri = Nballoc;
 }

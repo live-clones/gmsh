@@ -65,16 +65,10 @@
 #define A_TOUT_PRIX 2
 
 #define CENTER_CIRCCIRC 1
-#define VORONOI_INSERT  2
-#define BARYCENTER      3
-#define SQUARE_TRI      4
+#define BARYCENTER      2
 
 #define EXTERN      1
 #define INTERN      2
-#define ACTIF       3
-#define WAITING     4
-#define ACCEPTED    5
-#define NONACCEPTED 6
 
 #define CONSTANT    1
 #define ONFILE      2
@@ -183,8 +177,6 @@ struct _MAILLAGE{
   delpeek *listdel;
   edge *listedges;
   int numedges, numtriangles, numpoints;
-  int IncrAllocPoints, IncrAllocTri, IncrAllocEdges;
-  int NumAllocPoints, NumAllocTri, NumAllocEdges;
   int zone;
 };
 
