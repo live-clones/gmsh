@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.205 2002-04-13 05:28:27 geuzaine Exp $
+# $Id: Makefile,v 1.206 2002-04-13 05:30:45 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -222,7 +222,6 @@ bb: initialtag
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-bb $(GMSH_BOX_LIB) -lm
 
 bb-parallel: initialtag
-	PARALLEL=1
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=mpiCC" \
            "CC=mpicc" \
