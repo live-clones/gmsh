@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.325 2004-03-04 23:11:06 geuzaine Exp $
+# $Id: Makefile,v 1.326 2004-03-04 23:31:18 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -73,6 +73,10 @@ source: source-common
 	cd gmsh-${GMSH_RELEASE} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
            NR Triangle/triangle.* utils/commercial
 	tar zcvf gmsh-${GMSH_RELEASE}-source.tgz gmsh-${GMSH_RELEASE}
+
+nightly: source
+	rm -rf gmsh-${GMSH_RELEASE}
+	mv gmsh-${GMSH_RELEASE}-source.tgz gmsh-nightly-source.tgz
 
 source-commercial: source-common
 	cd gmsh-${GMSH_RELEASE} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
