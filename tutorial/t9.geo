@@ -15,7 +15,7 @@
 
 // Let's load a three dimension scalar view
 
-Merge "view3.pos" ;
+Include "view3.pos" ;
 
 // Plugins can be controlled as other options in Gmsh. For example,
 // the CutMap plugin extracts an isovalue surface from a 3D scalar
