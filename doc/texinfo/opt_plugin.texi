@@ -376,19 +376,22 @@ Default value: @code{-1}
 
 @item Plugin(Extract)
 Plugin(Extract) extracts a combination of
-components from the view `iView'. If
-`Expression1' or `Expression2' is empty, the
-plugin creates a scalar view using
-`Expression0'; otherwise the plugin creates
-a vector view. In addition to the usual
-mathematical functions (Exp, Log, Sqrt, Sin,
-Cos, Fabs, etc.) and operators (+, -, *, /, ^),
-the expressions can contain the symbols v0,
-v1, v2, ..., vn, which represent the n
-components of the field, and the symbols x, y
-and z, which represent the three spatial
-coordinates. If `iView' < 0, the plugin is
-run on the current view.
+components from the view `iView'. If only
+`Expression0' is given (and `Expression1',
+..., `Expression8' are all empty), the plugin
+creates a scalar view. If `Expression0',
+`Expression1' and/or `Expression2' are given
+(and `Expression3', ..., `Expression8' are all
+empty) the plugin creates a vector view.
+Otherwise the plugin creates a tensor view.
+In addition to the usual mathematical functions
+(Exp, Log, Sqrt, Sin, Cos, Fabs, etc.) and
+operators (+, -, *, /, ^), all expressions
+can contain the symbols v0, v1, v2, ..., vn,
+which represent the n components of the field,
+and the symbols x, y and z, which represent
+the three spatial coordinates. If `iView' < 0,
+the plugin is run on the current view.
 
 Plugin(Extract) creates one new view.
 
@@ -399,6 +402,18 @@ Default value: @code{"v0"}
 @item Expression1
 Default value: @code{""}
 @item Expression2
+Default value: @code{""}
+@item Expression3
+Default value: @code{""}
+@item Expression4
+Default value: @code{""}
+@item Expression5
+Default value: @code{""}
+@item Expression6
+Default value: @code{""}
+@item Expression7
+Default value: @code{""}
+@item Expression8
 Default value: @code{""}
 @end table
 Numeric options:

@@ -1,9 +1,10 @@
-$Id: VERSIONS,v 1.312 2005-03-03 15:07:29 geuzaine Exp $
+$Id: VERSIONS,v 1.313 2005-03-03 22:06:06 geuzaine Exp $
 
 New since 1.59: added support for discrete curves; new Window menu on
 Mac OS X; generalized all octree-based plugins (CutGrid, StreamLines,
 Probe, etc.) to handle all element types (and not only scalar and
-vector triangles+tetrahedra); fixed various small bugs.
+vector triangles+tetrahedra); generalized Plugin(Evaluate) and
+Plugin(Extract); fixed various small bugs.
 
 New in 1.59: added support for discrete (triangulated) surfaces,
 either in STL format or with the new "Discrete Surface" command; added
