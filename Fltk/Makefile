@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.57 2004-09-25 06:16:13 geuzaine Exp $
+# $Id: Makefile,v 1.58 2004-10-16 22:15:17 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -131,7 +131,7 @@ Colorbar_Window.o: Colorbar_Window.cpp ../Common/Gmsh.h \
   ../Common/GmshUI.h ../Numeric/Numeric.h GUI.h Opengl_Window.h \
   Colorbar_Window.h ../Common/ColorTable.h File_Picker.h \
   ../Common/Context.h
-GmshServer.o: GmshServer.cpp
+GmshServer.o: GmshServer.cpp ../Common/Context.h ../DataStr/List.h
 Solvers.o: Solvers.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../utils/solvers/GmshClient.h \

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.189 2004-10-15 02:30:50 geuzaine Exp $
+// $Id: Options.cpp,v 1.190 2004-10-16 22:15:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -4022,6 +4022,17 @@ double opt_mesh_cpu_time(OPT_ARGS_NUM)
   double s[50];
   GetStatistics(s);
   return s[13] + s[14] + s[15];
+}
+
+double opt_solver_max_delay(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.solver.max_delay = (val >= 0) ? (int)val : 0;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->solver_value[0]->value(CTX.solver.max_delay);
+#endif
+  return CTX.solver.max_delay;
 }
 
 double opt_solver_client_server(OPT_ARGS_NUM)

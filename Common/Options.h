@@ -409,6 +409,7 @@ double opt_mesh_nb_hexahedra(OPT_ARGS_NUM);
 double opt_mesh_nb_prisms(OPT_ARGS_NUM);
 double opt_mesh_nb_pyramids(OPT_ARGS_NUM);
 double opt_mesh_cpu_time(OPT_ARGS_NUM);
+double opt_solver_max_delay(OPT_ARGS_NUM);
 double opt_solver_client_server(OPT_ARGS_NUM);
 double opt_solver_client_server0(OPT_ARGS_NUM);
 double opt_solver_client_server1(OPT_ARGS_NUM);

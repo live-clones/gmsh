@@ -865,6 +865,9 @@ StringXNumber MeshOptions_Number[] = {
 } ;
 
 StringXNumber SolverOptions_Number[] = {
+  { F|O, "MaximumDelay" , opt_solver_max_delay , 4.0 ,
+    "Maximum delay allowed for solver response (in seconds)" },
+
   { F|O, "ClientServer0" , opt_solver_client_server0 , 1. ,
     "Connect solver 0 to the Gmsh server" },
   { F|O, "MergeViews0" , opt_solver_merge_views0 , 1. , 

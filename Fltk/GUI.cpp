@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.362 2004-10-16 19:24:18 geuzaine Exp $
+// $Id: GUI.cpp,v 1.363 2004-10-16 22:15:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2226,11 +2226,12 @@ void GUI::create_option_window()
     {
       {
 	Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "General");
-	
-	Fl_Box *text = new Fl_Box(FL_NO_BOX, L + 2 * WB, 3 * WB + 1 * BH, width - 4 * WB, 2 * BH,
-				  "There are no global solver options available yet.\n\n"
-				  "To define your own solver interface, you have to edit the option file.");
-	text->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
+
+	solver_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Maximum delay for solver response");
+	solver_value[0]->minimum(0);
+	solver_value[0]->maximum(10);
+	solver_value[0]->step(1);
+	solver_value[0]->align(FL_ALIGN_RIGHT);
 	
 	o->end();
       }

@@ -199,6 +199,11 @@ public :
     double anim_delay ;
   }post;
 
+  // solver options 
+  struct{
+    int max_delay ;
+  }solver;
+
   // print options 
   struct{
     int format;

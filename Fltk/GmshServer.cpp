@@ -1,4 +1,4 @@
-/* $Id: GmshServer.cpp,v 1.17 2004-05-22 01:24:17 geuzaine Exp $ */
+/* $Id: GmshServer.cpp,v 1.18 2004-10-16 22:15:17 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
  *
@@ -28,7 +28,9 @@
  */
 
 // This is a hacked version using the Gmsh function SystemCall()
-// instead system()
+// instead system() and using CTX.solver.max_delay in select()
+#include "Context.h"
+extern Context_T CTX;
 void SystemCall(char *str);
 
 #include <stdio.h>
@@ -127,7 +129,8 @@ int Gmsh_StartClient(char *command, char *sockname)
 
   /* Watch s to see when it has input. */
   /* Wait up to 4 seconds */
-  tv.tv_sec = 4;
+  //tv.tv_sec = 4;
+  tv.tv_sec = CTX.solver.max_delay;
   tv.tv_usec = 0;
   FD_ZERO(&rfds);
   FD_SET(s, &rfds);
