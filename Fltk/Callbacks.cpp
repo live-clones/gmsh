@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.67 2001-07-31 09:51:36 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.68 2001-07-31 10:19:11 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1604,7 +1604,7 @@ void view_plugin_cb(CALLBACK_ARGS){
     Post_View *v = (Post_View*)List_Pointer(Post_ViewList,iView);
     p->execute(v);
     Draw();
-    Msg(INFO,"Plugin %s was called win = %p",name,p->dialogBox);
+    Msg(DEBUG, "Plugin %s was called win = %p",name,p->dialogBox);
   }
   catch (GMSH_Plugin *err){
     p->CatchErrorMessage(name);
