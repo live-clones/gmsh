@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.66 2004-05-15 08:07:20 geuzaine Exp $
+// $Id: Main.cpp,v 1.67 2004-05-15 08:18:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 
   if(CTX.batch) {
     check_gsl();
-    Msg(INFO, "Running '%s'", cmdline);
+    Msg(INFO, "'%s' started on %s", cmdline, currtime);
     OpenProblem(CTX.filename);
     if(yyerrorstate)
       exit(1);
