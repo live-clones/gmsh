@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.56 2004-06-28 20:36:14 geuzaine Exp $
+// $Id: Generator.cpp,v 1.57 2004-06-29 04:31:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -251,8 +251,7 @@ void TransferData(void *a, void *b)
   Simplex *s = *(Simplex**)a;
   if(s->iEnt == IVOL->Num){
     if(s->Volume_Simplexe() < 0) {
-      Vertex *temp;
-      temp = s->V[0];
+      Vertex *temp = s->V[0];
       s->V[0] = s->V[1];
       s->V[1] = temp;
     }
