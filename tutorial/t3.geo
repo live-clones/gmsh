@@ -31,13 +31,17 @@ Extrude Surface { 122, {0,1,0} , {-0.1,0,0.1} , -Pi/2 } {
   Recombine ; Layers { {7}, {9002}, {1} } ; 
 };
 
-// All interactive options can also be set directly in the input file.
-// For example, the following lines redefine the background color of
-// the graphic window, redefine the color of the points of the
-// geometry, disable the display of the axes, and select an initial
-// viewpoint in XYZ mode (disabling the interactive trackball-like
-// rotation mode):
+Physical Volume(101) = {9000,9001,9002};
 
+// All interactive options can also be set directly in the input file.
+// For example, the following lines define a global characteristic
+// length factor, redefine the background color of the graphic window,
+// redefine the color of the points of the geometry, disable the
+// display of the axes, and select an initial viewpoint in XYZ mode
+// (disabling the interactive trackball-like rotation mode):
+
+Mesh.CharacteristicLengthFactor = 4;
+General.Color.Background = Red;
 General.Color.Background = Red;
 Geometry.Color.Points = Orange;
 General.Axes = 0;
