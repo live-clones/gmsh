@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.44 2001-08-29 07:27:51 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.45 2001-08-30 08:55:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -812,7 +812,7 @@ void copy_mesh (Surface * from, Surface * to){
 	ep->Extrude (ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
 		     vi[j]->Pos.X, vi[j]->Pos.Y, vi[j]->Pos.Z);
 	if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &vi[j]))){
-	  Free_Vertex(&vi[j],0);
+	  //Crash gcc2.95! Free_Vertex(&vi[j],0);
 	  vi[j] = *pV;
 	}
 	else{

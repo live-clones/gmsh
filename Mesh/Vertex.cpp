@@ -1,4 +1,4 @@
-// $Id: Vertex.cpp,v 1.9 2001-08-15 08:16:30 geuzaine Exp $
+// $Id: Vertex.cpp,v 1.10 2001-08-30 08:55:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Vertex.h"
@@ -13,7 +13,9 @@ Vertex::Vertex (){
   Pos.Z = 0.0;
   lc = 1.0;
   Mov = NULL;
-  ListSurf = ListCurves = Extruded_Points = NULL;
+  ListSurf = NULL;
+  ListCurves = NULL;
+  Extruded_Points = NULL;
 }
 
 Vertex::Vertex (double X, double Y, double Z, double l, double W){
@@ -24,7 +26,9 @@ Vertex::Vertex (double X, double Y, double Z, double l, double W){
   w = W;
   lc = l;
   Mov = NULL;
-  ListSurf = ListCurves = Extruded_Points = NULL;
+  ListSurf = NULL;
+  ListCurves = NULL;
+  Extruded_Points = NULL;
 }
 
 void Vertex::norme (){

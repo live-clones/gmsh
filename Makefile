@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.142 2001-08-30 08:05:36 geuzaine Exp $
+# $Id: Makefile,v 1.143 2001-08-30 08:57:09 geuzaine Exp $
 
 GMSH_RELEASE = 1.24
 
@@ -312,7 +312,7 @@ linux_gcc-2.95: tag compile_linux_gcc-2.95 link_linux_gcc-2.95 strip_bin
 rpm: src
 	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
 	rpm -bb utils/gmsh_fltk.spec
-	cp /usr/src/redhat/RPMS/i386/$(GMSH_SRCRPM)-1.i386.rpm .
+	cp /usr/src/redhat/RPMS/i386/$(GMSH_SRCRPM)-?.i386.rpm .
 	cp /usr/src/redhat/BUILD/$(GMSH_SRCRPM)/gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tgz .
 
 #
