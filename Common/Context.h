@@ -72,7 +72,6 @@ public :
 
   int db;                     // double buffer? 
   int overlay;                // overlay graphic window? 
-  int stream;                 // output stream: TO_SCREEN or TO_FILE 
   int ortho;                  // orthogonal projection? 
   int fast;                   // inhibit mesh and postpro drawing when changing r,s,t 
   int command_win;            // command window? 

@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.25 2001-11-19 13:43:33 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.26 2001-11-19 13:48:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -162,11 +162,9 @@ void CreateOutputFile (char *name, int format) {
 		     (CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0) |
 		     (format==FORMAT_PSTEX ? GL2PS_NO_TEXT : 0),
 		     GL_RGBA, 0, NULL, size3d, fp, name);
-      CTX.stream = TO_FILE ;
       CTX.print.gl_fonts = 0;
       FillBuffer();
       CTX.print.gl_fonts = 1;
-      CTX.stream = TO_SCREEN ;
       res = gl2psEndPage();
     }
     Msg(INFO, "EPS creation complete '%s'", name);
@@ -182,11 +180,9 @@ void CreateOutputFile (char *name, int format) {
     gl2psBeginPage(CTX.base_filename, "Gmsh", 
 		   GL2PS_TEX, GL2PS_NO_SORT, 0, 
 		   GL_RGBA, 0, NULL, 1, fp, name);
-    CTX.stream = TO_FILE ;
     CTX.print.gl_fonts = 0;
     FillBuffer();
     CTX.print.gl_fonts = 1;
-    CTX.stream = TO_SCREEN ;
     res = gl2psEndPage();
     Msg(INFO, "TEX creation complete '%s'", name);
     Msg(STATUS2, "Wrote '%s'", name);

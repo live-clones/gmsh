@@ -9,9 +9,6 @@
 
 #define SELECTION_BUFFER_SIZE  1024
 
-#define TO_SCREEN  1
-#define TO_FILE    2
-
 void InitOpengl(void);
 void InitOverlay(void);
 void InitShading(void);

@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.25 2001-11-19 13:43:33 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.26 2001-11-19 13:48:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -57,6 +57,7 @@ void Draw_String(char *s){
     gl_draw(s);
   }
   else{ // ps, pstex or jpegtex output
+    if(CTX.print.format == FORMAT_JPEGTEX) return;
     gl2psText(s,CTX.print.eps_font,CTX.print.eps_font_size);
   }
 }

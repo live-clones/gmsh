@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.63 2001-11-19 13:43:33 geuzaine Exp $
+// $Id: Options.cpp,v 1.64 2001-11-19 13:48:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -78,7 +78,6 @@ void Init_Options(int num){
   CTX.mesh.initial_only = 0 ;
   CTX.output_filename = NULL ;
   CTX.expose = 0 ;
-  CTX.stream = TO_SCREEN ;
   CTX.lc = 1.0 ;
   CTX.viewport[0] = CTX.viewport[1] = 0 ;
   CTX.min[0] = CTX.min[1] = CTX.min[2] = 0.0 ;
