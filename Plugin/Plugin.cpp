@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.74 2005-03-17 22:40:48 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.75 2005-03-18 19:04:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -291,9 +291,6 @@ void GMSH_PluginManager::addPlugin(char *dirName, char *pluginName)
     return;
   }
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >(plugin_name, p));
-  Msg(INFO, "Plugin name      : %s", plugin_name);
-  Msg(INFO, "Plugin author    : %s", plugin_author);
-  Msg(INFO, "Plugin copyright : %s", plugin_copyright);
-  Msg(INFO, "Plugin help      : %s", plugin_help);
+  Msg(INFO, "Loaded Plugin '%s' (%s)", plugin_name, plugin_author);
 #endif
 }
