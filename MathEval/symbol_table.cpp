@@ -31,10 +31,10 @@
  * Type definition for function accepting single argument of double type and
  * returning double value.
  */
-typedef double  (*function_type) (double);
+typedef double (*function_type) (double);
 
 /* Calculate hash value for given name and hash table length.  */
-static int      hash(char *name, int length);
+static int hash(char *name, int length);
 
 SymbolTable *
 symbol_table_create(int length)
@@ -43,9 +43,10 @@ symbol_table_create(int length)
   static char    *names[] = {"Exp", "Log", "Sqrt", "Sin", "Cos", "Tan", "Ctan", 
 			     "Asin", "Acos", "Atan", "Actan", "Sinh", "Cosh", "Tanh",
 			     "Ctanh", "Asinh", "Acosh", "Atanh", "Actanh", "Fabs" };
-  static double   (*functions[]) (double) = { exp, log, sqrt, sin, cos, tan, ctan, 
-					      asin, acos, atan, actan, sinh, cosh, tanh, 
-					      ctanh, asinh, acosh, atanh, actanh, fabs};
+  static double   (*functions[]) (double) = { exp, log, sqrt, sin, cos, tan, x_ctan, 
+					      asin, acos, atan, x_actan, sinh, cosh, tanh, 
+					      x_ctanh, x_asinh, x_acosh, x_atanh, x_actanh,
+					      fabs};
   unsigned int i;
   
   /*

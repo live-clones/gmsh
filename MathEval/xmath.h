@@ -23,27 +23,12 @@
 #ifndef XMATH_H
 #define XMATH_H
 
-#include <math.h>
-
-/* Calculate cotangent of value x.  */
-double ctan(double x);
-
-/* Calculate inverse cotangent of value x.  */
-double actan(double x);
-
-/* Calculate hyperbolical cotangent of value x.  */
-double ctanh(double x);
-
-/* Calculate inverse hyperbolical sine of value x.  */
-double asinh(double x);
-
-/* Calculate inverse hyperbolical cosine of value x.  */
-double acosh(double x);
-
-/* Calculate inverse hyperbolical tangent of value x.  */
-double atanh(double x);
-
-/* Calculate inverse hyperbolical cotangent of value x.  */
-double actanh(double x);
+double x_ctan(double x);
+double x_actan(double x);
+double x_ctanh(double x);
+double x_asinh(double x);
+double x_acosh(double x);
+double x_atanh(double x);
+double x_actanh(double x);
 
 #endif

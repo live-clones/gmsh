@@ -51,7 +51,7 @@ typedef struct {
   SymbolTable    *symbol_table;	/* Evalutor symbol table.  */
 } Evaluator;
 
-void           *
+void *
 evaluator_create(char *string)
 {
   Evaluator      *evaluator;	/* Evaluator representing function given
