@@ -36,13 +36,13 @@ If(nbelm && nbnod)
   Plugin(Annotate).Text = Sprintf("Mesh: %g nodes/%g elements", nbelm, nbnod);
   Plugin(Annotate).Font = "Helvetica-Oblique" ; 
   Plugin(Annotate).FontSize = 12 ; 
-  Plugin(Annotate).Y = 95 ; 
+  Plugin(Annotate).Y = y;
   Plugin(Annotate).Run ; 
 EndIf
 
 // if we have some post-processing views, add the variable names
-y += 20;
 If(num > 0)
+  y += 20;
   For i In {0:num-1}
     Plugin(Annotate).Text = StrCat(Sprintf("Variable %g: ", i), Sprintf(View[i].Name));
     Plugin(Annotate).Font = "Helvetica-Oblique";
