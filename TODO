@@ -1,4 +1,9 @@
-$Id: TODO,v 1.35 2004-03-07 22:24:48 geuzaine Exp $
+$Id: TODO,v 1.36 2004-03-10 15:31:46 geuzaine Exp $
+
+********************************************************************
+
+add an option to plot the bounding box of views, with or without
+labels (scales)
 
 ********************************************************************
 
