@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.51 2001-12-03 15:30:03 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.52 2001-12-04 09:30:12 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -12,14 +12,12 @@ extern Context_T  CTX ;
 extern Mesh      *THEM;
 
 static int DIM, NUM; // current dimension of parent entity
-
-static Tree_T *Tree_Ares = NULL, *Tree_Swaps = NULL;
 static int TEST_IS_ALL_OK;
+static Tree_T *Tree_Ares = NULL, *Tree_Swaps = NULL, *Vertex_Bound = NULL;
 static Curve *THEC=NULL;
 static Surface *THES=NULL;
 static Volume *THEV=NULL;
 static ExtrudeParams *ep;
-static Tree_T *Vertex_Bound = NULL;
 
 // Vertex_Bound contains the vertices on the boundary (on the curves
 // for extrude_mesh(surface) and on the surfaces for
@@ -142,30 +140,31 @@ static int compnxn (const void *a, const void *b){
   return 0;
 }
 
+void ReplaceInVertexBound(void *a, void *b){
+  //Warning! We must do a 'replace', and not an 'add'/'insert'!
+  //Otherwise, we get 'Points' mixed up with 'Vertices'. The old
+  //extrusion (applied to a 2D extruded mesh) would then crash since
+  //only the Vertices are extruded and correctly handled (e.g. for
+  //beg/end curves).
+  Tree_Replace(Vertex_Bound, a);
+}
+
 void InitExtrude (){
-  if (!Tree_Ares)
-    Tree_Ares = Tree_Create (sizeof (nxn), compnxn);
-  if (!Tree_Swaps)
-    Tree_Swaps = Tree_Create (sizeof (nxn), compnxn);
-  if(Vertex_Bound)
-    Tree_Delete(Vertex_Bound);
+  if(!Tree_Ares) Tree_Ares = Tree_Create (sizeof (nxn), compnxn);
+  if(!Tree_Swaps) Tree_Swaps = Tree_Create (sizeof (nxn), compnxn);
+
+  if(Vertex_Bound) Tree_Delete(Vertex_Bound);
   Vertex_Bound = Tree_Create (sizeof (Vertex *), comparePosition);
-  List_T *l1 = Tree2List (THEM->Points);
-  List_T *l2 = Tree2List (THEM->Vertices);
 
-  for(int i=0;i<List_Nbr(l1);i++)Tree_Insert(Vertex_Bound,List_Pointer(l1,i));
-  for(int i=0;i<List_Nbr(l2);i++)Tree_Insert(Vertex_Bound,List_Pointer(l2,i));
-
-  List_Delete(l1);
-  List_Delete(l2);
+  Tree_Action(THEM->Points, ReplaceInVertexBound);
+  Tree_Action(THEM->Vertices, ReplaceInVertexBound);
 }
 
 void ExitExtrude (){
-  if (Tree_Ares)Tree_Delete(Tree_Ares);
-  if (Tree_Swaps)Tree_Delete(Tree_Swaps);
-  if(Vertex_Bound)Tree_Delete (Vertex_Bound);
-  Tree_Ares = Tree_Swaps = NULL;
-  Vertex_Bound = NULL;
+  if(Tree_Ares) Tree_Delete(Tree_Ares);
+  if(Tree_Swaps) Tree_Delete(Tree_Swaps);
+  if(Vertex_Bound) Tree_Delete (Vertex_Bound);
+  Tree_Ares = Tree_Swaps = Vertex_Bound = NULL;
 }
 
 int are_exist (Vertex * v1, Vertex * v2, Tree_T * t){
@@ -536,13 +535,11 @@ void Extrude_Simplex_Phase2 (void *data, void *dum){
 
 
 void Extrude_Vertex (void *data, void *dum){
-
   Vertex **pV, *v, *newv;
   int i, j;
   nxl NXL;
 
-  pV = (Vertex **) data;
-  v = *pV;
+  v = *((Vertex**)data);
 
   if(!v->Extruded_Points)
     v->Extruded_Points = List_Create (1, 1, sizeof (nxl));
@@ -587,7 +584,6 @@ void Extrude_Surface2 (Surface * s){
   THES = s;
   Tree_Action (s->Simplexes, Extrude_Simplex_Phase2);
 }
-
 
 void Extrude_Surface3 (Surface * s){
   THES = s;
@@ -675,7 +671,7 @@ void Extrude_Curve (void *data, void *dum){
 
 void copy_mesh (Curve * from, Curve * to, int direction){
   List_T *list = from->Vertices;
-  Vertex *vi, *v, **vv, **vexist;
+  Vertex *vi, *v, **vexist;
 
   int nb = List_Nbr(to->Vertices);
   if(nb){
@@ -687,21 +683,18 @@ void copy_mesh (Curve * from, Curve * to, int direction){
 
   to->Vertices =  List_Create (List_Nbr(from->Vertices), 2, sizeof (Vertex *));
 
-  vv = &to->beg;
-  if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, vv))){
+  v = to->beg;
+  if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, &v))){
     (*vexist)->u = to->ubeg;
-    //Tree_Insert (THEM->Vertices, vexist);
-    if ((*vexist)->ListCurves)
-      List_Add ((*vexist)->ListCurves, &to);
+    if ((*vexist)->ListCurves) List_Add ((*vexist)->ListCurves, &to);
     List_Add (to->Vertices, vexist);
   }
   else{
-    vi = Create_Vertex ((*vv)->Num, (*vv)->Pos.X, (*vv)->Pos.Y, (*vv)->Pos.Z,
-			(*vv)->lc, to->ubeg);
-    Tree_Insert (THEM->Vertices, &vi);
+    vi = Create_Vertex(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, to->ubeg);
+    Tree_Insert(THEM->Vertices, &vi);
     vi->ListCurves = List_Create (1, 1, sizeof (Curve *));
-    List_Add (vi->ListCurves, &to);
-    List_Add (to->Vertices, &vi);
+    List_Add(vi->ListCurves, &to);
+    List_Add(to->Vertices, &vi);
   }
 
   for (int i = 1; i < List_Nbr(list)-1; i++){
@@ -718,23 +711,19 @@ void copy_mesh (Curve * from, Curve * to, int direction){
       vi = v;
     }
     Tree_Insert (THEM->Vertices, &vi);
-    if(!vi->ListCurves)
-      vi->ListCurves = List_Create (1, 1, sizeof (Curve *));
-    List_Add (vi->ListCurves, &to);
-    List_Add (to->Vertices, &vi);
+    if(!vi->ListCurves) vi->ListCurves = List_Create (1, 1, sizeof (Curve *));
+    List_Add(vi->ListCurves, &to);
+    List_Add(to->Vertices, &vi);
   }
 
-  vv = &to->end;
-  if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, vv))){
+  v = to->end;
+  if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, &v))){
     (*vexist)->u = to->uend;
-    //Tree_Insert (THEM->Vertices, vexist);
-    if ((*vexist)->ListCurves)
-      List_Add ((*vexist)->ListCurves, &to);
+    if ((*vexist)->ListCurves) List_Add ((*vexist)->ListCurves, &to);
     List_Add (to->Vertices, vexist);
   }
   else{
-    vi = Create_Vertex ((*vv)->Num, (*vv)->Pos.X, (*vv)->Pos.Y, (*vv)->Pos.Z, 
-			(*vv)->lc, to->uend);
+    vi = Create_Vertex (v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, to->uend);
     Tree_Insert (THEM->Vertices, &vi);
     vi->ListCurves = List_Create (1, 1, sizeof (Curve *));
     List_Add (vi->ListCurves, &to);
@@ -745,7 +734,7 @@ void copy_mesh (Curve * from, Curve * to, int direction){
 
 int Extrude_Mesh (Curve * c){
   int i;
-  Vertex **v, *pV, **vexist, *v1;
+  Vertex *v, *pV, **vexist;
   List_T *L;
 
   if (!c->Extrude || !c->Extrude->mesh.ExtrudeMesh) return false;
@@ -759,54 +748,50 @@ int Extrude_Mesh (Curve * c){
   if (ep->geo.Mode == EXTRUDED_ENTITY){
     Extrude_Vertex (&c->beg, NULL);
     L = getnxl(c->beg,DIM);
-
     c->Vertices = List_Create (List_Nbr(L), 2, sizeof (Vertex *));
-    v = &c->beg;
-    if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, v))){
+
+    v = c->beg;
+    if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, &v))){
       (*vexist)->u = c->ubeg;
-      Tree_Insert (THEM->Vertices, vexist);
-      if ((*vexist)->ListCurves)
-        List_Add ((*vexist)->ListCurves, &c);
+      if ((*vexist)->ListCurves) List_Add ((*vexist)->ListCurves, &c);
       List_Add (c->Vertices, vexist);
     }
     else{
-      pV = Create_Vertex ((*v)->Num, (*v)->Pos.X, (*v)->Pos.Y, (*v)->Pos.Z, (*v)->lc, 0.0);
+      pV = Create_Vertex (v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, 0.0);
       pV->ListCurves = List_Create (1, 1, sizeof (Curve *));
       List_Add (pV->ListCurves, &c);
-      Tree_Insert (THEM->Vertices, &pV);
-      List_Add (c->Vertices, &pV);
+      Tree_Insert(THEM->Vertices, &pV);
+      List_Add(c->Vertices, &pV);
     }
 
-    for (i = 1; i < List_Nbr(L) - 1; i++){
-      List_Read (L, i, &v1);
-      if (!v1->ListCurves) v1->ListCurves = List_Create (1, 1, sizeof (Curve *));
-      List_Add(v1->ListCurves, &c);
-      Tree_Insert (THEM->Vertices, &v1);
-      v1->u = (double) i / (double) List_Nbr(L);
-      List_Add (c->Vertices, &v1);
+    for (i = 1; i < List_Nbr(L)-1; i++){
+      List_Read (L, i, &v);
+      if (!v->ListCurves) v->ListCurves = List_Create(1, 1, sizeof (Curve *));
+      List_Add(v->ListCurves, &c);
+      Tree_Insert(THEM->Vertices, &v);
+      v->u = (double)i / (double)List_Nbr(L);
+      List_Add (c->Vertices, &v);
     }
 
-    v = &c->end;
-    if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, v))){
+    v = c->end;
+    if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, &v))){
       (*vexist)->u = c->uend;
-      Tree_Insert (THEM->Vertices, vexist);
-      if ((*vexist)->ListCurves)
-        List_Add ((*vexist)->ListCurves, &c);
+      if ((*vexist)->ListCurves) List_Add ((*vexist)->ListCurves, &c);
       List_Add (c->Vertices, vexist);
     }
     else{
-      pV = Create_Vertex ((*v)->Num, (*v)->Pos.X, (*v)->Pos.Y, (*v)->Pos.Z, (*v)->lc, 0.0);
+      pV = Create_Vertex (v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, 0.0);
       pV->ListCurves = List_Create (1, 1, sizeof (Curve *));
       List_Add (pV->ListCurves, &c);
-      Tree_Insert (THEM->Vertices, &pV);
-      List_Add (c->Vertices, &pV);
+      Tree_Insert(THEM->Vertices, &pV);
+      List_Add(c->Vertices, &pV);
     }
     return true;
   }
   else{
-    Curve *cc = FindCurve (abs(ep->geo.Source), THEM);
-    if (!cc) return false;
-    copy_mesh (cc, c, sign(ep->geo.Source));
+    Curve *cc = FindCurve(abs(ep->geo.Source), THEM);
+    if(!cc) return false;
+    copy_mesh(cc, c, sign(ep->geo.Source));
     return true;
   }
 }
@@ -866,7 +851,7 @@ void AddVertsInSurf(void *a, void *b){
 }
 
 int Extrude_Mesh (Surface * s){
-  int i, j;
+  int i;
   Vertex *v1;
   Curve *c;
   extern int FACE_DIMENSION;
@@ -878,16 +863,8 @@ int Extrude_Mesh (Surface * s){
   DIM = 2;
   NUM = s->Num;
   ep = s->Extrude;
-
   FACE_DIMENSION = 2;
 
-  for (i = 0; i < List_Nbr (s->Generatrices); i++){
-    List_Read (s->Generatrices, i, &c);
-    for (j = 0; j < List_Nbr (c->Vertices); j++){
-      List_Read (c->Vertices, j, &v1);
-      Tree_Insert (Vertex_Bound, &v1);
-    }
-  }
   if (ep->geo.Mode == EXTRUDED_ENTITY){
     c = FindCurve (abs(ep->geo.Source), THEM);
     if (!c) return false;
@@ -932,7 +909,6 @@ int Extrude_Mesh (Volume * v){
 int Extrude_Mesh (Tree_T * Volumes){
   int i, j, extrude=0;
   Surface *s;
-  Vertex *v1;
   List_T *list;
 
   InitExtrude ();
@@ -943,18 +919,7 @@ int Extrude_Mesh (Tree_T * Volumes){
   for (int ivol = 0; ivol < List_Nbr(vol); ivol++){
     List_Read(vol, ivol, &THEV);
     ep = THEV->Extrude;
-    if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY){
-      extrude = 1;
-      for (i = 0; i < List_Nbr (THEV->Surfaces); i++){
-	List_Read (THEV->Surfaces, i, &s);
-	list = Tree2List (s->Vertices);
-	for (int j = 0; j < List_Nbr (list); j++){
-	  List_Read (list, j, &v1);
-	  Tree_Insert (Vertex_Bound, &v1);
-	}
-	List_Delete (list);
-      }
-    }
+    if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) extrude = 1;
   }
   if(!extrude) return false;
 
