@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.12 2005-01-01 19:35:39 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.13 2005-01-02 18:09:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -74,9 +74,11 @@ void GMSH_EvaluatePlugin::getInfos(char *author, char *copyright,
 	 "mathematical functions (Exp, Log, Sqrt, Sin,\n"
 	 "Cos, Fabs, etc.) and operators (+, -, *, /, ^),\n"
 	 "`Expression' can contain the symbols x, y, z\n"
-	 "and v, which represent the three spatial\n"
-	 "coordinates and the value of the `TimeStep'-th\n"
-	 "component of the field, respectively. If\n"
+	 "(which represent the current position), v (which\n"
+	 "represents the `Component'-th component of\n"
+	 "the field at the `TimeStep'-th time step), and v0,\n"
+	 "v1, v2, ..., vn (which represent the n components\n"
+	 "of the field at the `TimeStep'-th time step). If\n"
 	 "`iView' < 0, the plugin is run on the current\n"
 	 "view.\n"
 	 "\n"
@@ -149,13 +151,14 @@ static void evaluate(Post_View * v, List_T * list, int nbElm,
       double *val = (double *)List_Pointer_Fast(list, 
 						i + 3 * nbNod + 
 						nbNod * nbComp * timeStep + nbComp * j);
-      double xx = x[j];
-      double yy = y[j];
-      double zz = z[j];
-      double vv = val[comp];
 
-      char *names[] = { "x", "y" , "z", "v" };
-      double values[] = { xx , yy, zz, vv };
+      double v[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
+      for(int k = 0; k < nbComp; k++) v[k] = val[k];
+
+      char *names[] = { "x", "y" , "z", "v",
+			"v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" };
+      double values[] = { x[j] , y[j], z[j], v[comp], 
+			  v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8] };
       double res = evaluator_evaluate(f, sizeof(names)/sizeof(names[0]), names, values);
 
       val[comp] = res;
