@@ -1,4 +1,4 @@
-/* $Id: CAD.cpp,v 1.9 2000-12-09 22:26:12 geuzaine Exp $ */
+/* $Id: CAD.cpp,v 1.10 2000-12-13 15:26:21 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -800,10 +800,10 @@ void ApplyTransformationToSurface (double matrix[4][4],Surface *s){
 void printCurve(Curve *c){
   Vertex *v;
   int N = List_Nbr(c->Control_Points);
-  Msg(INFOS,"Curve %d %d cp (%d->%d)",c->Num,N,c->beg->Num,c->end->Num);
+  Msg(DEBUG,"Curve %d %d cp (%d->%d)",c->Num,N,c->beg->Num,c->end->Num);
   for(int i=0;i<N;i++){
     List_Read(c->Control_Points,i,&v);
-    Msg(INFOS,"Vertex %d (%g,%g,%g,%g)",v->Num,v->Pos.X,v->Pos.Y,v->Pos.Z,v->lc);
+    Msg(DEBUG,"Vertex %d (%g,%g,%g,%g)",v->Num,v->Pos.X,v->Pos.Y,v->Pos.Z,v->lc);
   }
 }
 
@@ -866,7 +866,7 @@ void Extrude_ProtudePoint(int ep, int ip, double A, double B, double C,
     SetTranslationMatrix(matrix,T);
     ApplyTransformationToPoint(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
-    Msg(INFOS,"Angle %g Point (%g,%g,%g) Axis (%g,%g,%g)",alpha,X,Y,Z,A,B,C);
+    Msg(DEBUG,"Angle %g Point (%g,%g,%g) Axis (%g,%g,%g)",alpha,X,Y,Z,A,B,C);
   }
 
   c = Create_Curve(MAXREG++,(ep)?MSH_SEGM_LINE:MSH_SEGM_CIRC,1,NULL,NULL,-1,-1,0.,1.);
@@ -911,7 +911,7 @@ void printSurface(Surface*s){
   Curve *c;
   int N = List_Nbr(s->s.Generatrices);
 
-  Msg(INFOS,"Surface %d, %d generatrices",s->Num,N);
+  Msg(DEBUG,"Surface %d, %d generatrices",s->Num,N);
   for(int i=0;i<N;i++){
     List_Read(s->s.Generatrices,i,&c);
     printCurve(c);
