@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.68 2004-12-27 05:26:47 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.69 2004-12-27 07:31:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -53,6 +53,7 @@
 #include "StructuralSolver.h"
 #include "Eigenvectors.h"
 #include "Evaluate.h"
+#include "Probe.h"
 #include "Context.h"
 
 using namespace std;
@@ -203,6 +204,8 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		      ("Remove", GMSH_RegisterRemovePlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Eigenvectors", GMSH_RegisterEigenvectorsPlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("Probe", GMSH_RegisterProbePlugin()));
 #if defined(HAVE_TRIANGLE)
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Triangulate", GMSH_RegisterTriangulatePlugin()));
