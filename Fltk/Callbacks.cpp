@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.289 2004-10-25 19:19:30 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.290 2004-10-26 00:43:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -181,6 +181,7 @@ void UpdateViewsInGUI()
       WID->set_context(menu_post, 0);
     WID->reset_option_browser();
     WID->reset_clip_browser();
+    WID->reset_external_view_list();
   }
 }
 
@@ -3470,7 +3471,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double arrow_size = opt_view_arrow_size(current, GMSH_GET, 0);
   double arrow_size_proportional = opt_view_arrow_size_proportional(current, GMSH_GET, 0);
   double displacement_factor = opt_view_displacement_factor(current, GMSH_GET, 0);
-  double raised_view = opt_view_raised_view(current, GMSH_GET, 0);
+  double external_view = opt_view_external_view(current, GMSH_GET, 0);
   double point_size = opt_view_point_size(current, GMSH_GET, 0);
   double line_width = opt_view_line_width(current, GMSH_GET, 0);
   double explode = opt_view_explode(current, GMSH_GET, 0);
@@ -3608,6 +3609,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
       val = WID->view_choice[9]->value();
       if(force || (val != boundary))
         opt_view_boundary(i, GMSH_SET, val);
+
+      val = WID->view_choice[10]->value()-1;
+      if(force || (val != external_view))
+        opt_view_external_view(i, GMSH_SET, val);
 
       // view_butts
 
@@ -3753,10 +3758,6 @@ void view_options_ok_cb(CALLBACK_ARGS)
       val = WID->view_value[63]->value();
       if(force || (val != displacement_factor))
         opt_view_displacement_factor(i, GMSH_SET, val);
-
-      val = WID->view_value[64]->value();
-      if(force || (val != raised_view))
-        opt_view_raised_view(i, GMSH_SET, val);
 
       val = WID->view_value[61]->value();
       if(force || (val != point_size))

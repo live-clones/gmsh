@@ -1020,6 +1020,8 @@ StringXNumber ViewOptions_Number[] = {
 
   { F|O, "Explode" , opt_view_explode , 1. , 
     "Explode elements (0: reduced to point; 1: not transformed)" },
+  { F|O, "ExternalView" , opt_view_external_view , -1. ,
+    "Index of the view raised by a vector field or used to color a vector field (-1=self)" },
 
   { F|O, "Grid" , opt_view_grid , 2 ,
     "Grid mode for 2D graphs (0=none, 1=simple, 2=frame, 3=grid)" },
@@ -1067,8 +1069,6 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "PositionY" , opt_view_position1 , 50. , 
     "Vertical position (in pixels) of the upper left corner of the scale or 2D graph" }, 
 
-  { F|O, "RaisedView" , opt_view_raised_view , 0. ,
-    "Index of the view raised by the displacement field" },
   { F,   "RaiseX" , opt_view_raise0 , 0. , 
     "Elevation of the view along X-axis (in model coordinates)" },
   { F,   "RaiseY" , opt_view_raise1 , 0. , 

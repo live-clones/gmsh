@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.368 2004-10-25 19:19:30 geuzaine Exp $
+// $Id: GUI.cpp,v 1.369 2004-10-26 00:43:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1429,21 +1429,36 @@ void GUI::create_view_options_window(int num)
 
 void GUI::reset_option_browser()
 {
-  int i, select;
   char str[128];
-  select = opt_browser->value();
+  int select = opt_browser->value();
   opt_browser->clear();
   opt_browser->add("General");
   opt_browser->add("Geometry");
   opt_browser->add("Mesh");
   opt_browser->add("Solver");
   opt_browser->add("Post-processing");
-  for(i = 0; i < List_Nbr(CTX.post.list); i++) {
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     sprintf(str, "View [%d]", i);
     opt_browser->add(str);
   }
   if(select <= opt_browser->size())
     opt_browser->value(select);
+}
+
+void GUI::reset_external_view_list()
+{
+  char str[32];
+  int select = view_choice[10]->value();
+  view_choice[10]->clear();
+  view_choice[10]->add("Self");
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+    sprintf(str, "View [%d]", i);
+    view_choice[10]->add(str, 0, NULL);
+  }
+  if(select <= view_choice[10]->size())
+    view_choice[10]->value(select);
+  else
+    view_choice[10]->value(0);
 }
 
 void GUI::check_rotation_center_button()
@@ -2638,11 +2653,8 @@ void GUI::create_option_window()
         view_value[63]->step(0.01);
         view_value[63]->align(FL_ALIGN_RIGHT);
 
-        view_value[64] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Raised view number");
-        view_value[64]->minimum(0);
-        view_value[64]->maximum(10);
-        view_value[64]->step(1);
-        view_value[64]->align(FL_ALIGN_RIGHT);
+        view_choice[10] = new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "External data source");
+        view_choice[10]->align(FL_ALIGN_RIGHT);
 
         static Fl_Menu_Item menu_vecloc[] = {
           {"Cell centered", 0, 0, 0},
@@ -2856,7 +2868,7 @@ void GUI::update_view_window(int num)
   view_value[63]->step(val3/100.);
   view_value[63]->maximum(val3);
 
-  opt_view_raised_view(num, GMSH_GUI, 0);
+  opt_view_external_view(num, GMSH_GUI, 0);
   opt_view_arrow_location(num, GMSH_GUI, 0);
   //opt_view_tensor_type(num, GMSH_GUI, 0);
   view_push_butt[0]->callback(view_arrow_param_cb, (void*)num);

@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.48 2004-10-25 19:19:30 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.49 2004-10-26 00:43:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -898,12 +898,12 @@ int GetDataFromOtherView(int type, int nbnod, Post_View *v, int *nbcomp,
 {
   static int error1 = -1;
   static int error2 = -1;
-  Post_View *v2 = v->ViewForDisplacement;
-  int num = v->ElementForDisplacement;
+  Post_View *v2 = v->ExternalView;
+  int num = v->ExternalElementIndex;
 
   if(!v2){
     if(error1 != v->Num){
-      Msg(GERROR, "Non-existent view for displacement plot");
+      Msg(GERROR, "Nonexistent external view");
       error1 = v->Num;
     }
     return 0;
@@ -956,7 +956,7 @@ int GetDataFromOtherView(int type, int nbnod, Post_View *v, int *nbcomp,
 
   if(!nbelm || num < 0 || v2->NbTimeStep != v->NbTimeStep){
     if(error2 != v->Num){
-      Msg(GERROR, "Incompatible view for displacement plot");
+      Msg(GERROR, "Incompatible external view");
       error2 = v->Num;
     }
     return 0;
@@ -980,21 +980,21 @@ int GetDataFromOtherView(int type, int nbnod, Post_View *v, int *nbcomp,
   
   switch (v->RangeType) {
   case DRAW_POST_RANGE_DEFAULT:
-    v->MinForDisplacement = v2->Min;
-    v->MaxForDisplacement = v2->Max;
+    v->ExternalMin = v2->Min;
+    v->ExternalMax = v2->Max;
     break;
   case DRAW_POST_RANGE_CUSTOM: // yes, take the values from v!
-    v->MinForDisplacement = v->CustomMin;
-    v->MaxForDisplacement = v->CustomMax;
+    v->ExternalMin = v->CustomMin;
+    v->ExternalMax = v->CustomMax;
     break;
   case DRAW_POST_RANGE_PER_STEP:
     if(v->TimeStepMin && v->TimeStepMax){
-      v->MinForDisplacement = v2->TimeStepMin[v->TimeStep];
-      v->MaxForDisplacement = v2->TimeStepMax[v->TimeStep];
+      v->ExternalMin = v2->TimeStepMin[v->TimeStep];
+      v->ExternalMax = v2->TimeStepMax[v->TimeStep];
     }
     else{
-      v->MinForDisplacement = v2->Min;
-      v->MaxForDisplacement = v2->Max;
+      v->ExternalMin = v2->Min;
+      v->ExternalMax = v2->Max;
     }
     break;
   }
@@ -1018,11 +1018,6 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
                         double *X, double *Y, double *Z, double *V)
 {
   int nbnod = 0;
-  double fact, xx[8], yy[8], zz[8], xc = 0., yc = 0., zc = 0.;
-  double Val[8][3], norm[8];
-  double dx = 0., dy = 0., dz = 0., dd;
-  char Num[100];
-
   switch (type) {
   case POINT: nbnod = 1; break;
   case LINE: nbnod = 2; break;
@@ -1034,6 +1029,7 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
   case PYRAMID: nbnod = 5; break;
   }
 
+  double Val[8][3], norm[8];
   for(int k = 0; k < nbnod; k++) {
     Val[k][0] = V[3 * nbnod * View->TimeStep + 3 * k];
     Val[k][1] = V[3 * nbnod * View->TimeStep + 3 * k + 1];
@@ -1041,12 +1037,16 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
     norm[k] = sqrt(Val[k][0] * Val[k][0] + Val[k][1] * Val[k][1] + Val[k][2] * Val[k][2]);
   }
 
-  double *ext_vals = NULL;
-  int nbcomp = 1, ext_vectype = 0;
-  if(View->VectorType == DRAW_POST_DISPLACEMENT_EXTERNAL){
-    GetDataFromOtherView(type, nbnod, View, &nbcomp, norm, &ext_vals, &ext_vectype);
-    ValMin = View->MinForDisplacement;
-    ValMax = View->MaxForDisplacement;
+  int ext_nbcomp = 3, ext_vectype = DRAW_POST_ARROW3D;
+  double *ext_vals = &V[3 * nbnod * View->TimeStep];
+  double ext_min = ValMin, ext_max = ValMax, ext_norm[8];
+  for(int k = 0; k < nbnod; k++)
+    ext_norm[k] = norm[k];
+  
+  if(View->ExternalViewIndex >= 0){
+    GetDataFromOtherView(type, nbnod, View, &ext_nbcomp, ext_norm, &ext_vals, &ext_vectype);
+    ext_min = View->ExternalMin;
+    ext_max = View->ExternalMax;
   }
 
   double Raise[3][8];
@@ -1056,8 +1056,12 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
 
   if(View->VectorType == DRAW_POST_DISPLACEMENT ||
      View->VectorType == DRAW_POST_DISPLACEMENT_EXTERNAL){
-    
-    fact = View->DisplacementFactor;
+
+    if(View->VectorType == DRAW_POST_DISPLACEMENT)
+      ext_nbcomp = 1;
+
+    double fact = View->DisplacementFactor;
+    double xx[8], yy[8], zz[8];
     for(int k = 0; k < nbnod; k++) {
       xx[k] = X[k] + fact * Val[k][0] + Raise[0][k];
       yy[k] = Y[k] + fact * Val[k][1] + Raise[1][k];
@@ -1069,11 +1073,11 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
     int vt = View->VectorType;
     View->VectorType = ext_vectype;
     
-    if(nbcomp == 1){
-      Draw_ScalarElement(type, View, preproNormals, ValMin, ValMax, xx, yy, zz, norm);
+    if(ext_nbcomp == 1){
+      Draw_ScalarElement(type, View, preproNormals, ext_min, ext_max, xx, yy, zz, ext_norm);
       if(type == POINT && ts > 0) {  // draw point "trajectory"
 	if(View->LineType) {
-	  double dx2, dy2, dz2, XX[2], YY[2], ZZ[2];
+	  double dx, dy, dz, dx2, dy2, dz2, XX[2], YY[2], ZZ[2];
 	  // warning, warning...
 	  Raise[0][1] = Raise[0][0];
 	  Raise[1][1] = Raise[1][0];
@@ -1085,7 +1089,7 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
 	    dx2 = V[3 * (ts - j - 1)];
 	    dy2 = V[3 * (ts - j - 1) + 1];
 	    dz2 = V[3 * (ts - j - 1) + 2];
-	    dd = sqrt(dx * dx + dy * dy + dz * dz);
+	    double dd = sqrt(dx * dx + dy * dy + dz * dz);
 	    // not perfect...
 	    PaletteContinuous(View, ValMin, ValMax, dd);
 	    XX[0] = X[0] + fact * dx;
@@ -1100,10 +1104,10 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
 	else {
 	  glBegin(GL_LINE_STRIP);
 	  for(int j = 0; j < ts + 1; j++) {
-	    dx = V[3 * (ts - j)];
-	    dy = V[3 * (ts - j) + 1];
-	    dz = V[3 * (ts - j) + 2];
-	    dd = sqrt(dx * dx + dy * dy + dz * dz);
+	    double dx = V[3 * (ts - j)];
+	    double dy = V[3 * (ts - j) + 1];
+	    double dz = V[3 * (ts - j) + 2];
+	    double dd = sqrt(dx * dx + dy * dy + dz * dz);
 	    PaletteContinuous(View, ValMin, ValMax, dd);
 	    glVertex3d(X[0] + fact * dx + Raise[0][0],
 		       Y[0] + fact * dy + Raise[1][0],
@@ -1113,11 +1117,11 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
 	}
       }
     }
-    else if(nbcomp == 3){
-      Draw_VectorElement(type, View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
+    else if(ext_nbcomp == 3){
+      Draw_VectorElement(type, View, preproNormals, ext_min, ext_max, xx, yy, zz, ext_vals);
     }
-    else if(nbcomp == 9){
-      Draw_TensorElement(type, View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
+    else if(ext_nbcomp == 9){
+      Draw_TensorElement(type, View, preproNormals, ext_min, ext_max, xx, yy, zz, ext_vals);
     }
 
     View->TimeStep = ts;
@@ -1133,36 +1137,44 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
 
   if(View->ArrowLocation == DRAW_POST_LOCATE_COG ||
      View->IntervalsType == DRAW_POST_NUMERIC) {
+    double dd = 0., ext_dd = 0., dx = 0., dy = 0., dz = 0.;
+    double xc = 0., yc = 0., zc = 0.;
     for(int k = 0; k < nbnod; k++) {
+      dd += norm[k];
+      ext_dd += ext_norm[k];
       dx += Val[k][0];
-      xc += X[k] + Raise[0][k];
       dy += Val[k][1];
-      yc += Y[k] + Raise[1][k];
       dz += Val[k][2];
+      xc += X[k] + Raise[0][k];
+      yc += Y[k] + Raise[1][k];
       zc += Z[k] + Raise[2][k];
     }
+    dd /= (double)nbnod;
+    ext_dd /= (double)nbnod;
     dx /= (double)nbnod;
-    xc /= (double)nbnod;
     dy /= (double)nbnod;
-    yc /= (double)nbnod;
     dz /= (double)nbnod;
+    xc /= (double)nbnod;
+    yc /= (double)nbnod;
     zc /= (double)nbnod;
-    dd = sqrt(dx * dx + dy * dy + dz * dz);
 
     // allow for some roundoff error due to the computation at the barycenter
-    if(dd != 0.0 && dd >= ValMin * (1. - 1.e-15) && dd <= ValMax * (1. + 1.e-15)) {
+    if(ext_dd != 0.0 && 
+       ext_dd >= ext_min * (1. - 1.e-15) && 
+       ext_dd <= ext_max * (1. + 1.e-15)) {
       if(View->IntervalsType == DRAW_POST_CONTINUOUS)
-	PaletteContinuous(View, ValMin, ValMax, dd);
+	PaletteContinuous(View, ext_min, ext_max, ext_dd);
       else
 	PaletteDiscrete(View, View->NbIso,
-			View->GIFV(ValMin, ValMax, View->NbIso, dd));
+			View->GIFV(ext_min, ext_max, View->NbIso, ext_dd));
       if(View->IntervalsType == DRAW_POST_NUMERIC) {
+	char Num[100];
         glRasterPos3d(xc, yc, zc);
-        sprintf(Num, View->Format, dd);
+        sprintf(Num, View->Format, ext_dd);
         Draw_String(Num);
       }
       else {
-        fact = CTX.pixel_equiv_x / CTX.s[0] * View->ArrowSize / 
+        double fact = CTX.pixel_equiv_x / CTX.s[0] * View->ArrowSize / 
 	  (View->ArrowSizeProportional ? ValMax : dd);
         if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin > 0) {
           dx /= dd;
@@ -1182,13 +1194,13 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
   }
   else {
     for(int k = 0; k < nbnod; k++) {
-      if(norm[k] != 0.0 && norm[k] >= ValMin && norm[k] <= ValMax) {
+      if(ext_norm[k] != 0.0 && ext_norm[k] >= ext_min && ext_norm[k] <= ext_max) {
 	if(View->IntervalsType == DRAW_POST_CONTINUOUS)
-	  PaletteContinuous(View, ValMin, ValMax, norm[k]);
+	  PaletteContinuous(View, ext_min, ext_max, ext_norm[k]);
 	else
 	  PaletteDiscrete(View, View->NbIso,
-			  View->GIFV(ValMin, ValMax, View->NbIso, norm[k]));
-        fact = CTX.pixel_equiv_x / CTX.s[0] * View->ArrowSize /
+			  View->GIFV(ext_min, ext_max, View->NbIso, ext_norm[k]));
+        double fact = CTX.pixel_equiv_x / CTX.s[0] * View->ArrowSize /
 	  (View->ArrowSizeProportional ? ValMax : norm[k]);
         if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin > 0) {
           Val[k][0] /= norm[k];

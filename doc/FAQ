@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.40 2004-10-23 23:53:31 geuzaine Exp $
+$Id: FAQ,v 1.41 2004-10-26 00:43:23 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -263,19 +263,31 @@ displacement field (a vector view that will be used to deform the
 mesh), and the second one containing the field you want to display
 (this view has to contain the same number of elements as the
 displacement view). You should then set 'Vector type' to 'Raised view'
-in the first view, as well as set the 'Raised view number' to the
-actual number of the second view. (You might want to make the second
-view invisible, too. If you want to amplify or decrease the amount of
-deformation, just modify the 'Displacement factor' option.)
+in the first view, as well as set 'External data source' to the second
+view. (You might want to make the second view invisible, too. If you
+want to amplify or decrease the amount of deformation, just modify the
+'Displacement factor' option.)
 
 Another solution is to use the DiplacementRaise plugin.
 
-* 7.4 Is there a way to save animations?
+* 7.4 Can I color the arrows representing a vector field with data
+from a scalar field?
+
+Yes: load both the vector and the scalar fields (the two views must
+have the same number of elements) and, in the vector field options,
+set 'External data source' to the scalar view.
+
+* 7.5 Can I color iso-value surfaces with data from another scalar
+view?
+
+Yes, using the CutMap plugin.
+
+* 7.6 Is there a way to save animations?
 
 Yes. For example, have a look at tutorial/t8.geo or
 demos/anim-seq.script.
 
-* 7.5 Is there a way to visualize only certain components of
+* 7.7 Is there a way to visualize only certain components of
 vector/tensor fields?
 
 Yes: use 'View->Plugin->Extract'.

@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.51 2004-10-11 22:52:43 geuzaine Exp $
+// $Id: Scale.cpp,v 1.52 2004-10-26 00:43:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -56,9 +56,9 @@ void draw_scale(Post_View * v,
   gl2psLineWidth(v->LineWidth * CTX.print.eps_line_width_factor);
 
   double ValMin, ValMax;
-  if(v->VectorType == DRAW_POST_DISPLACEMENT_EXTERNAL){
-    ValMin = v->MinForDisplacement;
-    ValMax = v->MaxForDisplacement;
+  if(v->ExternalViewIndex >= 0){
+    ValMin = v->ExternalMin;
+    ValMax = v->ExternalMax;
   }
   else{
     switch(v->RangeType){

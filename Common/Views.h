@@ -165,14 +165,14 @@ class Post_View{
   int Boundary, Grid, PointType, LineType;
   double PointSize, LineWidth;
   GmshColorTable CT;
-  int RaisedView;
+  int ExternalViewIndex;
 
   // dynamic
   double (*GVFI) (double min, double max, int nb, int index);
   int (*GIFV) (double min, double max, int nb, double value);
-  int ElementForDisplacement;
-  Post_View *ViewForDisplacement;
-  double MinForDisplacement, MaxForDisplacement;
+  int ExternalElementIndex;
+  Post_View *ExternalView;
+  double ExternalMin, ExternalMax;
 
   // smooth the view
   void smooth();

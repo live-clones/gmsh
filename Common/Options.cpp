@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.194 2004-10-25 19:19:29 geuzaine Exp $
+// $Id: Options.cpp,v 1.195 2004-10-26 00:43:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -5278,18 +5278,22 @@ double opt_view_alpha_channel(OPT_ARGS_NUM)
   return v->AlphaChannel;
 }
 
-double opt_view_raised_view(OPT_ARGS_NUM)
+double opt_view_external_view(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->RaisedView = (int)val;
+    v->ExternalViewIndex = (int)val;
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    WID->view_value[64]->value(v->RaisedView);
+  if(_gui_action_valid(action, num)){
+    if(v->ExternalViewIndex <= -2 ||
+       v->ExternalViewIndex >= WID->view_choice[10]->size()-1)
+      WID->view_choice[10]->value(0);
+    WID->view_choice[10]->value(v->ExternalViewIndex+1);
+  }
 #endif
-  return v->RaisedView;
+  return v->ExternalViewIndex;
 }
 
 double opt_print_format(OPT_ARGS_NUM)

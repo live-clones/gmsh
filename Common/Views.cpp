@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.142 2004-10-25 19:19:29 geuzaine Exp $
+// $Id: Views.cpp,v 1.143 2004-10-26 00:43:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -663,7 +663,7 @@ void CopyViewOptions(Post_View * src, Post_View * dest)
   dest->PointType = src->PointType;
   dest->LineType = src->LineType;
   dest->Grid = src->Grid;
-  dest->RaisedView = src->RaisedView;
+  dest->ExternalViewIndex = src->ExternalViewIndex;
   ColorTable_Copy(&src->CT);
   ColorTable_Paste(&dest->CT);
 }

@@ -296,6 +296,7 @@ public:
   void reset_visibility();
   void reset_option_browser();
   void reset_clip_browser();
+  void reset_external_view_list();
   int  selection, try_selection, quit_selection, end_selection, undo_selection;
 
 };

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.80 2004-10-21 17:02:26 geuzaine Exp $
+// $Id: Post.cpp,v 1.81 2004-10-26 00:43:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -242,12 +242,12 @@ void Draw_List(Post_View * v, double ValMin, double ValMax,
   if(nbelm) {
     nb = List_Nbr(list) / nbelm;
 
-    v->ViewForDisplacement = 
-      (Post_View*)List_Pointer_Test(CTX.post.list, v->RaisedView);
+    v->ExternalView = 
+      (Post_View*)List_Pointer_Test(CTX.post.list, v->ExternalViewIndex);
 
     if(v->Light && v->SmoothNormals && v->Changed) {
       Msg(DEBUG, "Preprocessing of normals in View[%d]", v->Index);
-      v->ElementForDisplacement = 0;
+      v->ExternalElementIndex = 0;
       for(i = 0; i < List_Nbr(list); i += nb) {
         Get_Coords(v->Explode, v->Offset, nbnod,
                    (double *)List_Pointer_Fast(list, i),
@@ -255,11 +255,11 @@ void Draw_List(Post_View * v, double ValMin, double ValMax,
                    (double *)List_Pointer_Fast(list, i + 2 * nbnod), X, Y, Z);
         draw(v, 1, ValMin, ValMax, X, Y, Z,
              (double *)List_Pointer_Fast(list, i + 3 * nbnod));
-	v->ElementForDisplacement++;
+	v->ExternalElementIndex++;
       }
     }
 
-    v->ElementForDisplacement = 0;
+    v->ExternalElementIndex = 0;
     for(i = 0; i < List_Nbr(list); i += nb) {
       Get_Coords(v->Explode, v->Offset, nbnod,
                  (double *)List_Pointer_Fast(list, i),
@@ -267,7 +267,7 @@ void Draw_List(Post_View * v, double ValMin, double ValMax,
                  (double *)List_Pointer_Fast(list, i + 2 * nbnod), X, Y, Z);
       draw(v, 0, ValMin, ValMax, X, Y, Z,
            (double *)List_Pointer_Fast(list, i + 3 * nbnod));
-      v->ElementForDisplacement++;
+      v->ExternalElementIndex++;
     }
   }
 }
@@ -378,8 +378,8 @@ void Draw_Post(void)
 	}
 	break;
       }
-      v->MinForDisplacement = ValMin;
-      v->MaxForDisplacement = ValMax;
+      v->ExternalMin = ValMin;
+      v->ExternalMax = ValMax;
       
       switch (v->ScaleType) {
       case DRAW_POST_LINEAR:
