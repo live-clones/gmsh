@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.174 2004-07-02 02:40:47 geuzaine Exp $
+// $Id: Gmsh.y,v 1.175 2004-08-27 18:06:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2445,10 +2445,13 @@ Command :
       if(!strcmp($1, "Include")){
 	char tmpstring[1024];
 	FixRelativePath($2, tmpstring);
-	// Warning: we *don't* close included files. If you need to
-	// include many files, use "Merge" instead: some OSes limit
-	// the number of files a process can open simultaneously (500
-	// for OS X)
+	// Warning: we *don't* close included files (to allow user
+	// functions in these files). If you need to include many many
+	// files and don't have functions in the files, use "Merge"
+	// instead: some OSes limit the number of files a process can
+	// open simultaneously. The right solution would be of course
+	// to modify FunctionManager to reopen the files instead of
+	// using the FILE pointer, but hey, I'm lazy...
 	ParseFile(tmpstring, 0, 0, 1);
       }
       else if(!strcmp($1, "Print")){
