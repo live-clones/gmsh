@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.29 2001-08-13 15:16:38 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.30 2001-08-13 20:18:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -17,6 +17,10 @@ static Surface *THES;
 static Volume *THEV;
 static ExtrudeParams *ep;
 static Tree_T *Vertex_Bound = NULL, *ToAdd = NULL;
+
+// Vertex_Bound contains the vertices on the boundary (on the curves
+// for extrude_mesh(surface) and on the surfaces for
+// extrude_mesh(volume))
 
 typedef struct{
   int a, b;
@@ -467,7 +471,6 @@ void copy_mesh (Curve * from, Curve * to, int direction){
   if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, vv))){
     (*vexist)->u = to->ubeg;
     Tree_Insert (THEM->Vertices, vexist);
-    Tree_Insert (Vertex_Bound, vexist);
     if ((*vexist)->ListCurves)
       List_Add ((*vexist)->ListCurves, &to);
     List_Add (to->Vertices, vexist);
@@ -476,7 +479,6 @@ void copy_mesh (Curve * from, Curve * to, int direction){
     vi = Create_Vertex ((*vv)->Num, (*vv)->Pos.X, (*vv)->Pos.Y, (*vv)->Pos.Z,
 			(*vv)->lc, to->ubeg);
     Tree_Insert (THEM->Vertices, &vi);
-    Tree_Insert (Vertex_Bound, &vi);
     vi->ListCurves = List_Create (1, 1, sizeof (Curve *));
     List_Add (vi->ListCurves, &to);
     List_Add (to->Vertices, &vi);
@@ -492,7 +494,6 @@ void copy_mesh (Curve * from, Curve * to, int direction){
     ep->Extrude (ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
 		 vi->Pos.X, vi->Pos.Y, vi->Pos.Z);
     Tree_Insert (THEM->Vertices, &vi);
-    Tree_Insert (Vertex_Bound, &vi);
     if(!vi->ListCurves)
       vi->ListCurves = List_Create (1, 1, sizeof (Curve *));
     List_Add (vi->ListCurves, &to);
@@ -503,7 +504,6 @@ void copy_mesh (Curve * from, Curve * to, int direction){
   if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, vv))){
     (*vexist)->u = to->uend;
     Tree_Insert (THEM->Vertices, vexist);
-    Tree_Insert (Vertex_Bound, vexist);
     if ((*vexist)->ListCurves)
       List_Add ((*vexist)->ListCurves, &to);
     List_Add (to->Vertices, vexist);
@@ -512,7 +512,6 @@ void copy_mesh (Curve * from, Curve * to, int direction){
     vi = Create_Vertex ((*vv)->Num, (*vv)->Pos.X, (*vv)->Pos.Y, (*vv)->Pos.Z, 
 			(*vv)->lc, to->uend);
     Tree_Insert (THEM->Vertices, &vi);
-    Tree_Insert (Vertex_Bound, &vi);
     vi->ListCurves = List_Create (1, 1, sizeof (Curve *));
     List_Add (vi->ListCurves, &to);
     List_Add (to->Vertices, &vi);
