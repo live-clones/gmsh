@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.119 2004-06-08 04:57:06 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.120 2004-06-21 20:53:38 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -2172,7 +2172,7 @@ Gmsh's jargon, each data set is called a ``view'', and can arbitrarily mix
 all types of elements and fields. Each view is given a name, and can be
 manipulated either individually (each view has its own button in the GUI and
 can be referred to by its index in the scripting language) or globally (see
-the @code{PostProcessing.LinkView} option in @ref{Post-processing
+the @code{PostProcessing.Link} option in @ref{Post-processing
 options}).
 
 By default, Gmsh treats all post-processing views as three-dimensional
