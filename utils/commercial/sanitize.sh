@@ -21,22 +21,22 @@ for A in $files; do
       -e '/\/\/ Copyright (C).*Remacle/a\
 //\
 // This software is provided "as is" without express or implied warranty.\
-// See the file "COPYING" for the licensing terms.'\
+// See the file "doc/LICENSE" for the licensing terms.'\
       -e "/# This program is free software; you can redistribute/,/USA./D"\
       -e '/# Copyright (C).*Remacle/a\
 #\
 # This software is provided "as is" without express or implied warranty.\
-# See the file "COPYING" for the licensing terms.'\
+# See the file "doc/LICENSE" for the licensing terms.'\
       -e "/@c This program is free software; you can redistribute/,/USA./D"\
       -e '/@c Copyright (C).*Remacle/a\
 @c\
 @c This software is provided "as is" without express or implied warranty.\
-@c See the file "COPYING" for the licensing terms.'\
+@c See the file "doc/LICENSE" for the licensing terms.'\
       -e "/dnl This program is free software; you can redistribute/,/USA./D"\
       -e '/dnl Copyright (C).*Remacle/a\
 dnl\
 dnl This software is provided "as is" without express or implied warranty.\
-dnl See the file "COPYING" for the licensing terms.'\
+dnl See the file "doc/LICENSE" for the licensing terms.'\
   $A.old > $A
   rm -f $A.old
 done

@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.30 2003-04-21 22:29:09 geuzaine Exp $
+$Id: FAQ,v 1.31 2003-10-30 02:00:01 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -19,7 +19,7 @@ adapted meshes on lines, surfaces and volumes.
 * 1.2 What are the terms and conditions of use?
 
 Gmsh is distributed under the terms of the GNU General Public
-License. See the file doc/COPYING for more information, or go to the
+License. See the file doc/LICENSE for more information, or go to the
 GNU foundation's web site at http://www.gnu.org.
 
 * 1.3 What does 'Gmsh' mean?

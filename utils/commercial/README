@@ -24,7 +24,7 @@ For a description of all other configuration options, type
 
 ./configure --help
 
-See doc/COPYING and doc/CREDITS for licensing and copyright
+See doc/LICENSE and doc/CREDITS for licensing and copyright
 information.
 
 See the doc/ and tutorial/ directories for documentation. The

@@ -1,2 +1,2 @@
 
-@verbatiminclude ../COPYING
+@verbatiminclude ../LICENSE

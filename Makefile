@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.303 2003-10-29 23:25:59 geuzaine Exp $
+# $Id: Makefile,v 1.304 2003-10-30 02:00:01 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -79,7 +79,7 @@ source-nonfree: source-common
            Triangle/triangle.* TODO doc/gmsh.html doc/FAQ doc/README.cvs\
            utils/commercial
 	cp -f utils/commercial/README gmsh-${GMSH_RELEASE}/README
-	cp -f utils/commercial/COPYING gmsh-${GMSH_RELEASE}/doc/COPYING
+	cp -f utils/commercial/LICENSE gmsh-${GMSH_RELEASE}/doc/LICENSE
 	cp -f utils/commercial/License.cpp gmsh-${GMSH_RELEASE}/Common/License.cpp
 	cp -f utils/commercial/license.texi gmsh-${GMSH_RELEASE}/doc/texinfo/license.texi
 	cp -f utils/commercial/copying.texi gmsh-${GMSH_RELEASE}/doc/texinfo/copying.texi
@@ -178,7 +178,7 @@ package-unix:
 	mkdir gmsh-${GMSH_RELEASE}
 	strip bin/gmsh
 	cp bin/gmsh gmsh-${GMSH_RELEASE}
-	cp doc/gmsh.1 doc/COPYING doc/VERSIONS doc/FAQ doc/CREDITS gmsh-${GMSH_RELEASE}
+	cp doc/gmsh.1 doc/LICENSE doc/VERSIONS doc/FAQ doc/CREDITS gmsh-${GMSH_RELEASE}
 	cp -R tutorial gmsh-${GMSH_RELEASE}
 	cp -R demos gmsh-${GMSH_RELEASE}
 	rm -rf gmsh-${GMSH_RELEASE}/*/CVS
@@ -198,7 +198,7 @@ package-win:
 	cp doc/VERSIONS gmsh-${GMSH_RELEASE}/VERSIONS.txt
 	cp doc/FAQ gmsh-${GMSH_RELEASE}/FAQ.txt
 	cp doc/CREDITS gmsh-${GMSH_RELEASE}/CREDITS.txt
-	cp doc/COPYING gmsh-${GMSH_RELEASE}/COPYING.txt
+	cp doc/LICENSE gmsh-${GMSH_RELEASE}/LICENSE.txt
 	cd utils/misc && unix2dos.bash ../../gmsh-${GMSH_RELEASE}/*.txt
 	cp -R tutorial gmsh-${GMSH_RELEASE}
 	cp -R demos gmsh-${GMSH_RELEASE}
@@ -242,7 +242,7 @@ package-mac:
 	cp doc/VERSIONS gmsh-${GMSH_RELEASE}/VERSIONS.txt
 	cp doc/FAQ gmsh-${GMSH_RELEASE}/FAQ.txt
 	cp doc/CREDITS gmsh-${GMSH_RELEASE}/CREDITS.txt
-	cp doc/COPYING gmsh-${GMSH_RELEASE}/COPYING.txt
+	cp doc/LICENSE gmsh-${GMSH_RELEASE}/LICENSE.txt
 	rm -rf gmsh-${GMSH_RELEASE}/*/CVS\
                gmsh-${GMSH_RELEASE}/*/*~\
                gmsh-${GMSH_RELEASE}/*/*.msh
