@@ -16,13 +16,14 @@
   <LI><A HREF="#file7">t6.geo</A>
   <LI><A HREF="#file8">t7.geo</A>
   <LI><A HREF="#file9">t8.geo</A>
+  <LI><A HREF="#file10">t9.geo</A>
 </OL>
 <HR>
 <A NAME="file1">
-<H1>README 1/9</H1>
+<H1>README 1/10</H1>
 [<A HREF="#top">top</A>][prev][<A HREF="#file2">next</A>]
 <PRE>
-$Id: tutorial.html,v 1.11 2001-05-24 10:11:29 geuzaine Exp $
+$Id: tutorial.html,v 1.12 2001-08-03 07:53:12 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -129,7 +130,7 @@ OK, that's all, folks. Enjoy the tutorial.
 </PRE>
 <HR>
 <A NAME="file2">
-<H1>t1.geo 2/9</H1>
+<H1>t1.geo 2/10</H1>
 [<A HREF="#top">top</A>][<A HREF="#file1">prev</A>][<A HREF="#file3">next</A>]
 <PRE>
 <I><FONT COLOR="#B22222">/********************************************************************* 
@@ -233,7 +234,7 @@ Physical Surface(100) = {6} ;
 </PRE>
 <HR>
 <A NAME="file3">
-<H1>t2.geo 3/9</H1>
+<H1>t2.geo 3/10</H1>
 [<A HREF="#top">top</A>][<A HREF="#file2">prev</A>][<A HREF="#file4">next</A>]
 <PRE>
 <I><FONT COLOR="#B22222">/********************************************************************* 
@@ -325,7 +326,7 @@ Physical Volume (1) = {146,147} ;
 </FONT></I></PRE>
 <HR>
 <A NAME="file4">
-<H1>t3.geo 4/9</H1>
+<H1>t3.geo 4/10</H1>
 [<A HREF="#top">top</A>][<A HREF="#file3">prev</A>][<A HREF="#file5">next</A>]
 <PRE>
 <I><FONT COLOR="#B22222">/********************************************************************* 
@@ -346,11 +347,13 @@ h = 0.1 ;
 
 <I><FONT COLOR="#B22222">// But contrary to 't2.geo', not only the geometry will be extruded,
 </FONT></I><I><FONT COLOR="#B22222">// but also the 2D mesh. This is done with the same Extrude command,
-</FONT></I><I><FONT COLOR="#B22222">// but by specifying the number of layers (here, there will be two
-</FONT></I><I><FONT COLOR="#B22222">// layers, of respectively 2 and 4 elements in depth), with volume
-</FONT></I><I><FONT COLOR="#B22222">// numbers 9000 and 9001 and respective heights of 0.33*h and 0.67*h:
+</FONT></I><I><FONT COLOR="#B22222">// but by specifying the number of layers (here, there will be four
+</FONT></I><I><FONT COLOR="#B22222">// layers, of respectively 8, 4, 2 and 1 elements in depth), with
+</FONT></I><I><FONT COLOR="#B22222">// volume numbers 9000 to 9003 and respective heights equal to h/4:
 </FONT></I>
-Extrude Surface { 6, {0,0,h} } { Layers { {2,4}, {9000,9001}, {0.33,1} } ; } ;
+Extrude Surface { 6, {0,0,h} } { 
+  Layers { {8,4,2,1}, {9000:9003}, {0.25,0.5,0.75,1} } ; 
+} ;
 
 <I><FONT COLOR="#B22222">// The extrusion can also be combined with a rotation, and the
 </FONT></I><I><FONT COLOR="#B22222">// extruded 3D mesh can be recombined into prisms (wedges). All
@@ -358,16 +361,20 @@ Extrude Surface { 6, {0,0,h} } { Layers { {2,4}, {9000,9001}, {0.33,1} } ; } ;
 </FONT></I><I><FONT COLOR="#B22222">// point ({0,0,0}) and a rotation angle (Pi/2):
 </FONT></I>
 Extrude Surface { 122, {0,1,0} , {-0.1,0,0.1} , -Pi/2 } { 
-  Recombine ; Layers { {7}, {9002}, {1} } ; 
+  Recombine ; Layers { 7, 9004, 1 } ; 
 };
 
+Physical Volume(101) = {9000:9004};
+
 <I><FONT COLOR="#B22222">// All interactive options can also be set directly in the input file.
-</FONT></I><I><FONT COLOR="#B22222">// For example, the following lines redefine the background color of
-</FONT></I><I><FONT COLOR="#B22222">// the graphic window, redefine the color of the points of the
-</FONT></I><I><FONT COLOR="#B22222">// geometry, disable the display of the axes, and select an initial
-</FONT></I><I><FONT COLOR="#B22222">// viewpoint in XYZ mode (disabling the interactive trackball-like
-</FONT></I><I><FONT COLOR="#B22222">// rotation mode):
+</FONT></I><I><FONT COLOR="#B22222">// For example, the following lines define a global characteristic
+</FONT></I><I><FONT COLOR="#B22222">// length factor, redefine the background color of the graphic window,
+</FONT></I><I><FONT COLOR="#B22222">// redefine the color of the points of the geometry, disable the
+</FONT></I><I><FONT COLOR="#B22222">// display of the axes, and select an initial viewpoint in XYZ mode
+</FONT></I><I><FONT COLOR="#B22222">// (disabling the interactive trackball-like rotation mode):
 </FONT></I>
+Mesh.CharacteristicLengthFactor = 4;
+General.Color.Background = Red;
 General.Color.Background = Red;
 Geometry.Color.Points = Orange;
 General.Axes = 0;
@@ -397,7 +404,7 @@ Geometry.Color.Surfaces = Geometry.Color.Points;
 </FONT></I></PRE>
 <HR>
 <A NAME="file5">
-<H1>t4.geo 5/9</H1>
+<H1>t4.geo 5/10</H1>
 [<A HREF="#top">top</A>][<A HREF="#file4">prev</A>][<A HREF="#file6">next</A>]
 <PRE>
 <I><FONT COLOR="#B22222">/********************************************************************* 
@@ -547,7 +554,7 @@ Physical Surface(2) = {24};
 </PRE>
 <HR>
 <A NAME="file6">
-<H1>t5.geo 6/9</H1>
+<H1>t5.geo 6/10</H1>
 [<A HREF="#top">top</A>][<A HREF="#file5">prev</A>][<A HREF="#file7">next</A>]
 <PRE>
 <I><FONT COLOR="#B22222">/********************************************************************* 
@@ -723,7 +730,7 @@ Physical Volume (10) = 186 ;
 </PRE>
 <HR>
 <A NAME="file7">
-<H1>t6.geo 7/9</H1>
+<H1>t6.geo 7/10</H1>
 [<A HREF="#top">top</A>][<A HREF="#file6">prev</A>][<A HREF="#file8">next</A>]
 <PRE>
 <I><FONT COLOR="#B22222">/********************************************************************* 
@@ -969,7 +976,7 @@ Physical Surface (SurfInfTop)       = {119} ;
 </PRE>
 <HR>
 <A NAME="file8">
-<H1>t7.geo 8/9</H1>
+<H1>t7.geo 8/10</H1>
 [<A HREF="#top">top</A>][<A HREF="#file7">prev</A>][<A HREF="#file9">next</A>]
 <PRE>
 <I><FONT COLOR="#B22222">/********************************************************************* 
@@ -1011,14 +1018,14 @@ Line(5) = {11,22};
 
 <I><FONT COLOR="#B22222">// Anisotropic attractors can be defined on points and lines:
 </FONT></I>
-Attractor Line{5} = {1, 0.1, 7};
+Attractor Line{5} = {.1, 0.01, 17};
 
-Attractor Point{5} = {0.1, 0.5, 3};
+Attractor Line{1,2} = {0.1, 0.005, 3};
 </PRE>
 <HR>
 <A NAME="file9">
-<H1>t8.geo 9/9</H1>
-[<A HREF="#top">top</A>][<A HREF="#file8">prev</A>][next]
+<H1>t8.geo 9/10</H1>
+[<A HREF="#top">top</A>][<A HREF="#file8">prev</A>][<A HREF="#file10">next</A>]
 <PRE>
 <I><FONT COLOR="#B22222">/********************************************************************* 
  *
@@ -1130,6 +1137,49 @@ EndFor
 </FONT></I><I><FONT COLOR="#B22222">//  Delete Meshes;    (to free all meshes)
 </FONT></I><I><FONT COLOR="#B22222">//  System string;    (to execute a system call)
 </FONT></I></PRE>
+<HR>
+<A NAME="file10">
+<H1>t9.geo 10/10</H1>
+[<A HREF="#top">top</A>][<A HREF="#file9">prev</A>][next]
+<PRE>
+<I><FONT COLOR="#B22222">/********************************************************************* 
+ *
+ *  Gmsh tutorial 9
+ * 
+ *  Post-Processing, Plugins
+ *
+ *********************************************************************/</FONT></I>
+
+<I><FONT COLOR="#B22222">// Plugins can be added to Gmsh in order to extend its
+</FONT></I><I><FONT COLOR="#B22222">// capabilities. For example, post-processing plugins can modify a
+</FONT></I><I><FONT COLOR="#B22222">// view, or create a new view based on previously loaded views. Three
+</FONT></I><I><FONT COLOR="#B22222">// default plugins are available at the time of writing: CutMap,
+</FONT></I><I><FONT COLOR="#B22222">// CutPlane and CutSphere. These plugins are just examples of how
+</FONT></I><I><FONT COLOR="#B22222">// plugins (will) work.
+</FONT></I>
+<I><FONT COLOR="#B22222">// Let's load a three dimension scalar view
+</FONT></I>
+Merge &quot;view3.pos&quot; ;
+
+<I><FONT COLOR="#B22222">// Plugins can be controlled as other options in Gmsh. For example,
+</FONT></I><I><FONT COLOR="#B22222">// the CutMap plugin extracts an isovalue surface from a 3D scalar
+</FONT></I><I><FONT COLOR="#B22222">// view. The plugin can either be called from the graphical interface
+</FONT></I><I><FONT COLOR="#B22222">// (right click on the view button, then Plugins-&gt;CutMap), or from
+</FONT></I><I><FONT COLOR="#B22222">// the command file, as is shown below.
+</FONT></I>
+<I><FONT COLOR="#B22222">// This sets the optional parameter A of the CutMap plugin to the
+</FONT></I><I><FONT COLOR="#B22222">// value 0.34 (see the About in the graphical interface for the
+</FONT></I><I><FONT COLOR="#B22222">// documentation of each plugin), and runs the plugin:
+</FONT></I>
+Plugin(CutMap).A = 0.67 ; 
+Plugin(CutMap).Run ; 
+
+Plugin(CutPlane).A = 0 ; 
+Plugin(CutPlane).B = 0.2 ; 
+Plugin(CutPlane).C = 1 ; 
+Plugin(CutPlane).D = 0 ; 
+Plugin(CutPlane).Run ; 
+</PRE>
 <HR>
 <ADDRESS>Generated by <A HREF="http://www.iki.fi/~mtr/genscript/">GNU enscript 1.6.1</A>.</ADDRESS>
 </BODY>

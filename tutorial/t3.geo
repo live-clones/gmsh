@@ -16,11 +16,13 @@ h = 0.1 ;
 
 // But contrary to 't2.geo', not only the geometry will be extruded,
 // but also the 2D mesh. This is done with the same Extrude command,
-// but by specifying the number of layers (here, there will be two
-// layers, of respectively 2 and 4 elements in depth), with volume
-// numbers 9000 and 9001 and respective heights of 0.33*h and 0.67*h:
+// but by specifying the number of layers (here, there will be four
+// layers, of respectively 8, 4, 2 and 1 elements in depth), with
+// volume numbers 9000 to 9003 and respective heights equal to h/4:
 
-Extrude Surface { 6, {0,0,h} } { Layers { {2,4}, {9000,9001}, {0.33,1} } ; } ;
+Extrude Surface { 6, {0,0,h} } { 
+  Layers { {8,4,2,1}, {9000:9003}, {0.25,0.5,0.75,1} } ; 
+} ;
 
 // The extrusion can also be combined with a rotation, and the
 // extruded 3D mesh can be recombined into prisms (wedges). All
@@ -28,10 +30,10 @@ Extrude Surface { 6, {0,0,h} } { Layers { {2,4}, {9000,9001}, {0.33,1} } ; } ;
 // point ({0,0,0}) and a rotation angle (Pi/2):
 
 Extrude Surface { 122, {0,1,0} , {-0.1,0,0.1} , -Pi/2 } { 
-  Recombine ; Layers { {7}, {9002}, {1} } ; 
+  Recombine ; Layers { 7, 9004, 1 } ; 
 };
 
-Physical Volume(101) = {9000,9001,9002};
+Physical Volume(101) = {9000:9004};
 
 // All interactive options can also be set directly in the input file.
 // For example, the following lines define a global characteristic
