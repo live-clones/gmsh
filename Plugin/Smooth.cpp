@@ -1,4 +1,4 @@
-// $Id: Smooth.cpp,v 1.2 2001-08-06 09:44:22 geuzaine Exp $
+// $Id: Smooth.cpp,v 1.3 2001-08-06 10:35:47 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Smooth.h"
@@ -6,7 +6,7 @@
 #include "Views.h"
 
 StringXNumber SmoothOptions_Number[] = {
-  { GMSH_FULLRC, "iView" , NULL , 1. }
+  { GMSH_FULLRC, "iView" , NULL , -1. }
 };
 
 extern "C"
@@ -59,23 +59,21 @@ Post_View *GMSH_SmoothPlugin::execute (Post_View *v)
   Post_View *vv;
   int iView = (int)SmoothOptions_Number[0].def;
 
-  if(v)
+  if(v && iView < 0)
     vv = v;
-  else{
-    if(List_Nbr(Post_ViewList) < iView){
-      Msg(WARNING,"Plugin Smooth, view %d not loaded",iView);
-      return 0;
-    }
-    vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView-1);
+  else if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
+    Msg(WARNING,"Plugin Smooth: View[%d] does not exist",iView);
+    return 0;
   }
 
-  Msg(INFO, "Executing Smooth on View num %d", vv->Num);
   vv->smooth();
   return vv;
 }
 
 void GMSH_SmoothPlugin::Run ()
 {
+  int iView = (int)SmoothOptions_Number[0].def;
+  if(iView < 0) SmoothOptions_Number[0].def = 0;
   execute(0);
 }
 

@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.2 2001-08-06 09:44:22 geuzaine Exp $
+// $Id: Transform.cpp,v 1.3 2001-08-06 10:35:47 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Transform.h"
@@ -15,7 +15,7 @@ StringXNumber TransformOptions_Number[] = {
   { GMSH_FULLRC, "A31" , NULL , 0. },
   { GMSH_FULLRC, "A32" , NULL , 0. },
   { GMSH_FULLRC, "A33" , NULL , 1. },
-  { GMSH_FULLRC, "iView" , NULL , 1. }
+  { GMSH_FULLRC, "iView" , NULL , -1. }
 };
 
 extern "C"
@@ -93,14 +93,11 @@ Post_View *GMSH_TransformPlugin::execute (Post_View *v)
   mat[2][2] = TransformOptions_Number[8].def;
   int iView = (int)TransformOptions_Number[9].def;
 
-  if(v)
+  if(v && iView < 0)
     vv = v;
-  else{
-    if(List_Nbr(Post_ViewList) < iView){
-      Msg(WARNING,"Plugin CutTransform, view %d not loaded",iView);
-      return 0;
-    }
-    vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView-1);
+  else if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
+    Msg(WARNING,"Plugin Transform: View[%d] does not exist",iView);
+    return 0;
   }
   
   vv->transform(mat);
@@ -109,6 +106,8 @@ Post_View *GMSH_TransformPlugin::execute (Post_View *v)
 
 void GMSH_TransformPlugin::Run ()
 {
+  int iView = (int)TransformOptions_Number[9].def;
+  if(iView < 0) TransformOptions_Number[9].def = 0;
   execute(0);
 }
 

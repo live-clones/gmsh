@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.48 2001-08-06 08:09:51 geuzaine Exp $
+// $Id: Views.cpp,v 1.49 2001-08-06 10:35:47 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -793,8 +793,6 @@ void smooth_list (List_T *SS ,
     }
   }   
   
-  Msg(DEBUG, "Smotthing phase 2");
-      
   for(i = 0 ; i < List_Nbr(SS) ; i+=nb){
     x = (double*)List_Pointer_Fast(SS,i);
     y = (double*)List_Pointer_Fast(SS,i+nbvert);
@@ -821,14 +819,14 @@ void Post_View :: smooth (){
   
   if(NbSS){
     mycont conSS;
-    Msg(INFO,"Smoothing SS vector in a view ...");
+    Msg(INFO,"Smoothing scalar tetrahedra in view...");
     nb = List_Nbr(SS) / NbSS ;
     smooth_list (SS , &Min, &Max, NbTimeStep, 4, nb, conSS);
     Msg(INFO,"...done");
   }
   if(NbST){
     mycont conST;
-    Msg(INFO,"Smoothing ST vector in a view ...");
+    Msg(INFO,"Smoothing scalar triangles in view...");
     nb = List_Nbr(ST) / NbST ;
     smooth_list (ST , &Min, &Max, NbTimeStep, 3, nb, conST);
     Msg(INFO,"...done");

@@ -28,6 +28,7 @@ Include "view3.pos" ;
 // documentation of each plugin), and runs the plugin:
 
 Plugin(CutMap).A = 0.67 ; 
+Plugin(CutMap).iView = 0 ; //select View[0] as the working view
 Plugin(CutMap).Run ; 
 
 Plugin(CutPlane).A = 0 ; 

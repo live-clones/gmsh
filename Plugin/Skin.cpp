@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.2 2001-08-06 09:44:22 geuzaine Exp $
+// $Id: Skin.cpp,v 1.3 2001-08-06 10:35:47 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Skin.h"
@@ -10,7 +10,7 @@
 extern Context_T CTX;
 
 StringXNumber SkinOptions_Number[] = {
-  { GMSH_FULLRC, "iView" , NULL , 1. }
+  { GMSH_FULLRC, "iView" , NULL , -1. }
 };
 
 extern "C"
@@ -115,15 +115,11 @@ Post_View *GMSH_SkinPlugin::execute (Post_View *v)
   struct elm elm;
   int iView = (int)SkinOptions_Number[0].def;
 
-
-  if(v)
+  if(v && iView < 0)
     vv = v;
-  else{
-    if(List_Nbr(Post_ViewList) < iView){
-      Msg(WARNING,"Plugin CutPlane, view %d not loaded",iView);
-      return 0;
-    }
-    vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView-1);
+  else if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
+    Msg(WARNING,"Plugin Skin: View[%d] does not exist",iView);
+    return 0;
   }
 
   if(vv->NbSS){
@@ -151,8 +147,7 @@ Post_View *GMSH_SkinPlugin::execute (Post_View *v)
     sprintf(name,"skin-%s",vv->Name);
     sprintf(filename,"skin-%s",vv->FileName);
     EndView(1, filename, name);
-    Msg(INFO, "Skin plugin OK: created view '%s' (%d triangles)",
-	name, View->NbST);
+    Msg(INFO, "Skin: created view '%s' (%d triangles)", name, View->NbST);
     return View;
   }
 
@@ -161,6 +156,8 @@ Post_View *GMSH_SkinPlugin::execute (Post_View *v)
 
 void GMSH_SkinPlugin::Run ()
 {
+  int iView = (int)SkinOptions_Number[0].def;
+  if(iView < 0) SkinOptions_Number[0].def = 0;
   execute(0);
 }
 

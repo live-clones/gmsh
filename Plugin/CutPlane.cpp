@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.13 2001-08-06 09:44:22 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.14 2001-08-06 10:35:47 geuzaine Exp $
 
 #include "CutPlane.h"
 #include "List.h"
@@ -8,7 +8,7 @@ StringXNumber CutPlaneOptions_Number[] = {
   { GMSH_FULLRC, "B" , NULL , 0. },
   { GMSH_FULLRC, "C" , NULL , 0. },
   { GMSH_FULLRC, "D" , NULL , 0.01 },
-  { GMSH_FULLRC, "iView" , NULL , 1. }
+  { GMSH_FULLRC, "iView" , NULL , -1. }
 };
 
 extern "C"
@@ -67,24 +67,29 @@ extern List_T *Post_ViewList;
 
 Post_View *GMSH_CutPlanePlugin::execute (Post_View *v)
 {
-
+  Post_View *vv;
   a = CutPlaneOptions_Number[0].def;
   b = CutPlaneOptions_Number[1].def;
   c = CutPlaneOptions_Number[2].def;
   d = CutPlaneOptions_Number[3].def;
   int iView = (int)CutPlaneOptions_Number[4].def;
 
-  if(v)
-    return GMSH_LevelsetPlugin::execute(v);
-  else{
-    if(List_Nbr(Post_ViewList) < iView){
-      Msg(WARNING,"Plugin CutPlane, view %d not loaded",iView);
-      return 0;
-    }
-    return GMSH_LevelsetPlugin::execute((Post_View*)List_Pointer_Test(Post_ViewList,iView-1));
+  if(v && iView < 0)
+    vv = v;
+  else if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
+    Msg(WARNING,"Plugin CutPlane: View[%d] does not exist",iView);
+    return 0;
   }
+
+  return GMSH_LevelsetPlugin::execute(vv);
 }
 
+void GMSH_CutPlanePlugin::Run () 
+{ 
+  int iView = (int)CutPlaneOptions_Number[4].def;
+  if(iView < 0) CutPlaneOptions_Number[4].def = 0;
+  execute (0);
+}
 
 
 

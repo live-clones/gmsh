@@ -1,11 +1,11 @@
-// $Id: CutMap.cpp,v 1.15 2001-08-06 09:44:22 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.16 2001-08-06 10:35:47 geuzaine Exp $
 
 #include "CutMap.h"
 #include "List.h"
 
 StringXNumber CutMapOptions_Number[] = {
   { GMSH_FULLRC, "A" , NULL , 1. },
-  { GMSH_FULLRC, "iView" , NULL , 1. }
+  { GMSH_FULLRC, "iView" , NULL , -1. }
 };
 
 extern "C"
@@ -64,25 +64,23 @@ extern List_T *Post_ViewList;
 
 Post_View *GMSH_CutMapPlugin::execute (Post_View *v)
 {
-
+  Post_View *vv;
   A = CutMapOptions_Number[0].def;
   iView = (int)CutMapOptions_Number[1].def;
   
-  Msg(INFO, "View %d -> iso %g",iView, A);
-
-  if(v)
-    return GMSH_LevelsetPlugin::execute(v);
-  else{
-    if(List_Nbr(Post_ViewList) < iView){
-      Msg(WARNING,"Plugin CutMap, view %d not loaded",iView);
-      return 0;
-    }
-    return GMSH_LevelsetPlugin::execute((Post_View*)List_Pointer_Test(Post_ViewList,iView-1));
+  if(v && iView < 0)
+    vv = v;
+  else if(!(vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView))){
+    Msg(WARNING,"Plugin CutMap: View[%d] does not exist",iView);
+    return 0;
   }
+
+  return GMSH_LevelsetPlugin::execute(vv);
 }
 
-
-
-
-
-
+void GMSH_CutMapPlugin::Run () 
+{ 
+  int iView = (int)CutMapOptions_Number[1].def;
+  if(iView < 0) CutMapOptions_Number[1].def = 0;
+  execute (0);
+}

@@ -23,6 +23,7 @@ public:
   virtual int getNbOptions() const;
   virtual StringXNumber *GetOption (int iopt);  
   virtual Post_View *execute (Post_View *);
+  virtual void Run();
 };
 
 #endif
