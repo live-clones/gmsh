@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.146 2004-10-30 16:03:34 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.147 2004-11-08 17:05:24 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -2547,11 +2547,10 @@ volumes interactively.
 Several files can be loaded simultaneously in Gmsh. The first one defines
 the project, while the others are appended (`merged') to this project. You
 can merge such files with the `File->Merge' menu, or by directly specifying
-the names of the files on the command line. This is most useful for
-post-processing purposes. For example, to merge the post-processing views
-contained in the files @file{view1.pos} and @file{view2.pos} together with
-the geometry of the first tutorial @file{t1.geo}, you can type the following
-command:
+the names of the files on the command line. For example, to merge the
+post-processing views contained in the files @file{view1.pos} and
+@file{view2.pos} together with the geometry of the first tutorial
+@file{t1.geo}, you can type the following command:
 
 @example
 > gmsh t1.geo view1.pos view2.pos
