@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.171 2001-12-05 09:22:01 geuzaine Exp $
+# $Id: Makefile,v 1.172 2001-12-05 09:23:42 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 32
@@ -325,6 +325,7 @@ link-linux_gcc-2.95:
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
 linux_gcc-2.95: tag compile-linux_gcc-2.95 link-linux_gcc-2.95 strip-bin
 linux_gcc-2.95-distrib:
+	make clean
 	make linux_gcc-2.95
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
@@ -382,6 +383,7 @@ link-dec:
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
 dec: tag compile-dec link-dec strip-bin
 dec-distrib:
+	make clean
 	make dec
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
@@ -415,6 +417,7 @@ link-hp:
                       -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
 hp: tag compile-hp link-hp strip-bin
 hp-distrib:
+	make clean
 	make hp
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
@@ -447,6 +450,7 @@ link-ibm:
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
 ibm: tag compile-ibm link-ibm strip-bin
 ibm-distrib:
+	make clean
 	make ibm
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
@@ -481,6 +485,7 @@ link-sgi:
                -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) $(OPENGL_LIB) -lm
 sgi: tag compile-sgi link-sgi strip-bin
 sgi-distrib:
+	make clean
 	make sgi
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
@@ -614,6 +619,7 @@ link-sun:
                  $(X11_LIB) -lXext -lsocket -lnsl -ldl -lm
 sun: tag compile-sun link-sun strip-bin
 sun-distrib:
+	make clean
 	make sun
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
