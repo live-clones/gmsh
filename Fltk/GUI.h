@@ -44,6 +44,7 @@
 
 #if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
 #include <FL/Fl_Tooltip.H>
+#include <FL/Fl_Sys_Menu_Bar.H>
 #endif
 
 #include "Opengl_Window.h"
@@ -51,6 +52,9 @@
 
 #define NB_BUTT_MAX    100
 #define NB_HISTORY_MAX 1000
+
+// Undefine this to get the menu inside Gmsh (like in Window/Unix)
+#define APPLE_USE_SYS_MENU
 
 // The dynamic contexts
 
@@ -124,7 +128,11 @@ public:
 
   // menu window
   Fl_Window        *m_window ;
+#if defined(__APPLE__) && defined(APPLE_USE_SYS_MENU)
+  Fl_Sys_Menu_Bar  *m_menu_bar ;
+#else
   Fl_Menu_Bar      *m_menu_bar ;
+#endif
   Fl_Choice        *m_module_butt ;
   Fl_Button        *m_navig_butt  [2] ;
   Fl_Button        *m_push_butt   [NB_BUTT_MAX] ;

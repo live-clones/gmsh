@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.175 2002-05-18 23:07:42 geuzaine Exp $
+// $Id: GUI.cpp,v 1.176 2002-05-19 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -691,23 +691,36 @@ void GUI::create_menu_window(int argc, char **argv){
   }
 
   int width = 13*CTX.fontsize-CTX.fontsize/2-2 ;
-  MH = BH + BH+6 ; // this is the initial height: no dynamic button is shown!
-  
+
+ // this is the initial height: no dynamic button is shown!
+#if defined(__APPLE__) && defined(APPLE_USE_SYS_MENU)
+  MH = BH+6 ; // the menu bar is not in the application!
+#else
+  MH = BH + BH+6 ;
+#endif
+
   m_window = new Fl_Window(width,MH);
   m_window->box(WINDOW_BOX);
   m_window->label("Gmsh");
   m_window->callback(file_quit_cb);
   
+#if defined(__APPLE__) && defined(APPLE_USE_SYS_MENU)
+  m_menu_bar = new Fl_Sys_Menu_Bar(); 
+  m_menu_bar->menu(m_menubar_table);
+  m_menu_bar->global();
+  Fl_Box *o = new Fl_Box(0,0,width,BH+6);
+  o->box(FL_UP_BOX);
+  y = 3;
+#else
   m_menu_bar = new Fl_Menu_Bar(0,0,width,BH); 
   m_menu_bar->menu(m_menubar_table);
   m_menu_bar->box(FL_UP_BOX);
   m_menu_bar->global();
-  
   Fl_Box *o = new Fl_Box(0,BH,width,BH+6);
   o->box(FL_UP_BOX);
-  
   y = BH + 3;
-  
+#endif
+
   m_navig_butt[0] = new Fl_Button(1,y,18,BH/2,"@<");
   m_navig_butt[0]->labeltype(FL_SYMBOL_LABEL);
   m_navig_butt[0]->labelsize(11);
