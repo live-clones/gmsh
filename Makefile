@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.65 2001-02-21 10:47:41 geuzaine Exp $
+# $Id: Makefile,v 1.66 2001-02-21 11:01:20 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -190,6 +190,8 @@ compress_bin:
 	cp -R tutorial gmsh-$(GMSH_RELEASE)
 	cp -R demos gmsh-$(GMSH_RELEASE)
 	rm -rf gmsh-$(GMSH_RELEASE)/*/CVS
+	rm -f gmsh-$(GMSH_RELEASE)/*/*.msh
+	rm -f gmsh-$(GMSH_RELEASE)/*/*~
 	tar cvf gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tar gmsh-$(GMSH_RELEASE)
 	gzip gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tar
 	mv gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tar.gz gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tgz
