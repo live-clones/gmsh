@@ -3737,6 +3737,9 @@ case "$UNAME" in
 
   Darwin*)
     FLAGS="-D_NO_DLL ${FLAGS}"
+    if test "x$enable_gui" = "xno"; then
+      GMSH_LIBS="${GMSH_LIBS} -framework ApplicationServices"
+    fi
     POSTBUILD="/Developer/Tools/Rez -t APPL -o bin/gmsh Fltk/MacRes.r"
     ;;
 
