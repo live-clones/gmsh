@@ -1,4 +1,4 @@
-// $Id: DisplacementRaise.cpp,v 1.2 2003-11-13 19:16:24 geuzaine Exp $
+// $Id: DisplacementRaise.cpp,v 1.3 2003-11-13 19:42:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -112,8 +112,7 @@ static void displacementRaiseList(Post_View * iView, List_T * iList, int iNbElm,
 
   int iNb = List_Nbr(iList) / iNbElm;
   int dNb = List_Nbr(dList) / dNbElm;
-  int j = 0;
-  for(int i = 0; i < List_Nbr(iList); i += iNb) {
+  for(int i = 0, j = 0; i < List_Nbr(iList); i += iNb, j += dNb) {
     double *x = (double *)List_Pointer_Fast(iList, i);
     double *y = (double *)List_Pointer_Fast(iList, i + nbVert);
     double *z = (double *)List_Pointer_Fast(iList, i + 2 * nbVert);
@@ -123,7 +122,6 @@ static void displacementRaiseList(Post_View * iView, List_T * iList, int iNbElm,
       y[k] += factor * val[3 * nbVert * dTimeStep + 3 * k + 1];
       z[k] += factor * val[3 * nbVert * dTimeStep + 3 * k + 2];
     }
-    j += dNb;
   }
 
 }
