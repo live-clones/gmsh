@@ -86,13 +86,13 @@ Default value: -1
 
 @item Plugin(DisplacementRaise)
 Plugin(DisplacementRaise) transforms the
-coordinates of the elements in the view 'iView'
+coordinates of the elements in the view `iView'
 using the vectorial values (the displacements)
-stored in the 'dTimeStep'-th time step of the
-view 'dView'. If 'iView' < 0, the plugin is
-run on the current view. If 'dView' < 0, the
+stored in the `dTimeStep'-th time step of the
+view `dView'. If `iView' < 0, the plugin is
+run on the current view. If `dView' < 0, the
 plugin looks for the displacements in the
-view located just after 'iView' in the view
+view located just after `iView' in the view
 list.
 
 Plugin(DisplacementRaise) is executed in-place.
