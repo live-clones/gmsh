@@ -14,11 +14,6 @@ Allow the generation of degenerated hexahedra or prisms during extrusion@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item Mesh.Aspect
-Mesh aspect (0=wireframe, 1=hidden lines, 2=solid)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.CharacteristicLengthFactor
 Factor applied to all characteristic lengths (and background meshes)@*
 Default value: @code{1}@*
@@ -106,6 +101,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Interactive
 Show the construction of the 2D mesh in real time (only with the 2D anisotropic algorithm)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Light
+Enable lighting for the mesh@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -236,6 +236,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Smoothing
 Number of smoothing steps applied to the final mesh@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Solid
+Draw mesh as solid (1) or wireframe (0)?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

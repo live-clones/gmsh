@@ -363,6 +363,12 @@ StringXString PrintOptions_String[] = {
 StringXNumber GeneralOptions_Number[] = {
   { F|O, "AlphaBlending" , opt_general_alpha_blending , 1. ,
     "Enable alpha blending (transparency) in post-processing views" },
+  { F|O, "ArrowHeadRadius" , opt_general_arrow_head_radius , 0.12 ,
+    "Relative radius of arrow head" },
+  { F|O, "ArrowStemLength" , opt_general_arrow_stem_length , 0.56 ,
+    "Relative length of arrow stem" },
+  { F|O, "ArrowStemRadius" , opt_general_arrow_stem_radius , 0.02 ,
+    "Relative radius of arrow stem" },
   { F|O, "Axes" , opt_general_axes , 1. ,
     "Display the axes linked to the model" },
 
@@ -535,7 +541,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "PointSize" , opt_general_point_size , 3. , 
     "Display size of points (in pixels)" },
 
-  { F|O, "QuadricSubdivisions" , opt_general_quadric_subdivisions, 10. ,
+  { F|O, "QuadricSubdivisions" , opt_general_quadric_subdivisions, 8. ,
     "Number of subdivisions used to draw points or lines as spheres or cylinders" },
 
   { F,   "RotationX" , opt_general_rotation0 , 0.0 , 
@@ -608,7 +614,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F,   "TranslationZ" , opt_general_translation2 , 0.0 , 
     "Z-axis translation (in model units)" },
 
-
+  { F|O, "VectorType" , opt_general_vector_type , DRAW_POST_ARROW ,
+    "Default vector display type (for normals, etc.)" },
   { F|O, "Verbosity" , opt_general_verbosity , 2. ,
     "Level of information printed during processing (0=no information)" },
   { F|S, "VisibilityMode" , opt_general_visibility_mode , 0. , 
@@ -625,8 +632,6 @@ StringXNumber GeneralOptions_Number[] = {
 } ;
 
 StringXNumber GeometryOptions_Number[] = {
-  { F|O, "Aspect" , opt_geometry_aspect , 0. , 
-    "Not used" },
   { F|O, "AutoCoherence" , opt_geometry_auto_coherence , 1. , 
     "Should all duplicate entities be automatically removed?" }, 
 
@@ -643,6 +648,8 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "Highlight" , opt_geometry_highlight , 1. , 
     "Not used" },
 
+  { F|O, "Light" , opt_geometry_light , 0. , 
+    "Enable lighting for the geometry" },
   { F|O, "Lines" , opt_geometry_lines , 1. , 
     "Display geometry curves?" },
   { F|O, "LinesNumbers" , opt_geometry_lines_num , 0. , 
@@ -696,8 +703,6 @@ StringXNumber MeshOptions_Number[] = {
     "2D mesh algorithm (1=isotropic, 2=anisotropic, 3=triangle)" }, 
   { F,   "AllowDegeneratedExtrude" , opt_mesh_allow_degenerated_extrude , 0. , 
     "Allow the generation of degenerated hexahedra or prisms during extrusion" },
-  { F|O, "Aspect" , opt_mesh_aspect , 0. , 
-    "Mesh aspect (0=wireframe, 1=hidden lines, 2=solid)" },
 
   { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
     "Factor applied to all characteristic lengths (and background meshes)" },
@@ -741,6 +746,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Interactive" , opt_mesh_interactive , 0. ,
     "Show the construction of the 2D mesh in real time (only with the 2D anisotropic algorithm)" },
 
+  { F|O, "Light" , opt_mesh_light , 0. , 
+    "Enable lighting for the mesh" },
   { F|O, "Lines" , opt_mesh_lines , 1. , 
     "Display mesh vertices on curves?" },
   { F|O, "LinesNumbers" , opt_mesh_lines_num , 0. , 
@@ -799,6 +806,8 @@ StringXNumber MeshOptions_Number[] = {
     "Global scaling factor applied to the saved mesh" },
   { F|O, "Smoothing" , opt_mesh_nb_smoothing , 0. ,
     "Number of smoothing steps applied to the final mesh" },
+  { F|O, "Solid" , opt_mesh_solid , 0. , 
+    "Draw mesh as solid (1) or wireframe (0)?" },
   { F|O, "SpeedMax" , opt_mesh_speed_max , 0. ,
     "Disable dubious point insertion tests" },
   { F|O, "Surfaces" , opt_mesh_surfaces , 1. , 
@@ -889,10 +898,16 @@ StringXNumber ViewOptions_Number[] = {
     "Global alpha channel value (used only if != 1)" },
   { F|O, "AngleSmoothNormals" , opt_view_angle_smooth_normals , 15. ,
     "Threshold angle below which normals are not smoothed" },
+  { F|O, "ArrowHeadRadius" , opt_view_arrow_head_radius , 0.12 ,
+    "Relative radius of arrow head" },
   { F|O, "ArrowLocation" , opt_view_arrow_location , DRAW_POST_LOCATE_COG , 
     "Arrow location (1=cog, 2=vertex)" },
   { F|O, "ArrowSize" , opt_view_arrow_size , 50. ,
     "Size of vectors arrows (in pixels)" },
+  { F|O, "ArrowStemLength" , opt_view_arrow_stem_length , 0.56 ,
+    "Relative length of arrow stem" },
+  { F|O, "ArrowStemRadius" , opt_view_arrow_stem_radius , 0.02 ,
+    "Relative radius of arrow stem" },
   { F|O, "AutoPosition" , opt_view_auto_position , 1. , 
     "Position the scale or the 2D graph automatically to avoid overlaps" }, 
 
@@ -944,7 +959,7 @@ StringXNumber ViewOptions_Number[] = {
     "Type of interval display (1=iso, 2=continuous, 3=discrete, 4=numeric)" },
 
   { F|O, "Light" , opt_view_light , 0. ,
-    "Enable light sources?" },
+    "Enable lighting for the view" },
   { F|O, "LineType" , opt_view_line_type , 0. , 
     "Display lines as solid color segments (0) or 3D cylinders (1)" },
   { F|O, "LineWidth" , opt_view_line_width , 1.0 , 
@@ -1009,7 +1024,7 @@ StringXNumber ViewOptions_Number[] = {
     "Type of graph (1=3D, 2=2D-space, 3=2D-time)" },
 
   { F|O, "VectorType" , opt_view_vector_type , DRAW_POST_ARROW ,
-    "Vector display type (1=segment, 2=arrow, 3=pyramid, 4=cone, 5=displacement)" },
+    "Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement)" },
   { F,   "Visible" , opt_view_visible , 1. ,
     "Is the view visible?" },
 

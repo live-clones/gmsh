@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.32 2004-02-07 01:40:17 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.33 2004-02-20 17:57:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -82,7 +82,6 @@ void Opengl_Window::draw()
   else {
     glPopMatrix();
     glDisable(GL_DEPTH_TEST);
-    glDisable(GL_LIGHTING);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();

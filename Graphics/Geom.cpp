@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.48 2004-02-07 01:40:19 geuzaine Exp $
+// $Id: Geom.cpp,v 1.49 2004-02-20 17:58:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -71,12 +71,13 @@ void Draw_GeoPoint(void *a, void *b)
   }
 
   if(CTX.geom.points) {
-
     if(CTX.geom.point_type) {
       if(v->Frozen || Highlighted)
-        Draw_Sphere(CTX.geom.point_sel_size, v->Pos.X, v->Pos.Y, v->Pos.Z);
+        Draw_Sphere(CTX.geom.point_sel_size, v->Pos.X, v->Pos.Y, v->Pos.Z, 
+		    CTX.geom.light);
       else
-        Draw_Sphere(CTX.geom.point_size, v->Pos.X, v->Pos.Y, v->Pos.Z);
+        Draw_Sphere(CTX.geom.point_size, v->Pos.X, v->Pos.Y, v->Pos.Z,
+		    CTX.geom.light);
     }
     else {
       glBegin(GL_POINTS);
@@ -96,7 +97,6 @@ void Draw_GeoPoint(void *a, void *b)
   if(CTX.render_mode == GMSH_SELECT) {
     glPopName();
   }
-
 }
 
 // Curves
@@ -104,7 +104,7 @@ void Draw_GeoPoint(void *a, void *b)
 void Draw_Curve(void *a, void *b)
 {
   int i, N;
-  double mod, dd, x[2], y[2], z[2];
+  double mod, x[2], y[2], z[2];
   char Num[100];
   Curve *c;
   Vertex v, dv;
@@ -136,7 +136,6 @@ void Draw_Curve(void *a, void *b)
   }
 
   if(CTX.geom.lines) {
-
     int n = List_Nbr(c->Control_Points);
     switch (c->Typ) {
     case MSH_SEGM_LINE:
@@ -175,7 +174,7 @@ void Draw_Curve(void *a, void *b)
           x[1] = dv.Pos.X;
           y[1] = dv.Pos.Y;
           z[1] = dv.Pos.Z;
-          Draw_Cylinder(CTX.geom.line_width, x, y, z);
+          Draw_Cylinder(CTX.geom.line_width, x, y, z, CTX.geom.light);
         }
       }
       else {
@@ -201,25 +200,20 @@ void Draw_Curve(void *a, void *b)
   if(CTX.geom.tangents) {
     v = InterpolateCurve(c, 0.5, 0);
     dv = InterpolateCurve(c, 0.5, 1);
-    mod =
-      sqrt(dv.Pos.X * dv.Pos.X + dv.Pos.Y * dv.Pos.Y + dv.Pos.Z * dv.Pos.Z);
-    dv.Pos.X =
-      dv.Pos.X / mod * CTX.geom.tangents * CTX.pixel_equiv_x / CTX.s[0];
-    dv.Pos.Y =
-      dv.Pos.Y / mod * CTX.geom.tangents * CTX.pixel_equiv_x / CTX.s[1];
-    dv.Pos.Z =
-      dv.Pos.Z / mod * CTX.geom.tangents * CTX.pixel_equiv_x / CTX.s[2];
-    dd =
-      sqrt(dv.Pos.X * dv.Pos.X + dv.Pos.Y * dv.Pos.Y + dv.Pos.Z * dv.Pos.Z);
+    mod = sqrt(dv.Pos.X * dv.Pos.X + dv.Pos.Y * dv.Pos.Y + dv.Pos.Z * dv.Pos.Z);
+    dv.Pos.X = dv.Pos.X / mod * CTX.geom.tangents * CTX.pixel_equiv_x / CTX.s[0];
+    dv.Pos.Y = dv.Pos.Y / mod * CTX.geom.tangents * CTX.pixel_equiv_x / CTX.s[1];
+    dv.Pos.Z = dv.Pos.Z / mod * CTX.geom.tangents * CTX.pixel_equiv_x / CTX.s[2];
     glColor4ubv((GLubyte *) & CTX.color.geom.tangents);
-    Draw_Vector(DRAW_POST_ARROW, 0, v.Pos.X, v.Pos.Y, v.Pos.Z,
-                dd, dv.Pos.X, dv.Pos.Y, dv.Pos.Z, NULL);
+    Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
+		v.Pos.X, v.Pos.Y, v.Pos.Z,
+                dv.Pos.X, dv.Pos.Y, dv.Pos.Z, NULL, CTX.geom.light);
   }
 
   if(CTX.render_mode == GMSH_SELECT) {
     glPopName();
   }
-
 }
 
 // Surfaces
@@ -276,43 +270,37 @@ int isPointOnPlanarSurface(Surface * S, double X, double Y, double Z,
   if(fabs(Angle) > 6.0 && fabs(Angle) < 7.0)    // Should be 2 * Pi or 0
     return 1;
   return 0;
-
 }
 
 void Draw_Triangulated_Surface(Surface * s)
 {
-  int k=0;
-  double *points;
-  double *p1,*p2,*p3;
-
-  if(!CTX.moving_light)
-    InitRenderModel();
-  InitShading();
-  glEnable(GL_POLYGON_OFFSET_FILL);
+  int k = 0;
+  double *points, *p1, *p2, *p3;
 
   if(CTX.geom.surfaces) {
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    if(CTX.geom.light) glEnable(GL_LIGHTING);
     glBegin(GL_TRIANGLES);
-    while (k < List_Nbr(s->thePolyRep->polygons))
-      {
-	points = (double*)List_Pointer (s->thePolyRep->polygons,k);
-	k+= ((int)points[0] + 1);
-
-	if (points[0] == 3)
-	  {
-	    p1 = (double*)List_Pointer (s->thePolyRep->points_and_normals,6*(int)points[1]);
-	    p2 = (double*)List_Pointer (s->thePolyRep->points_and_normals,6*(int)points[2]);
-	    p3 = (double*)List_Pointer (s->thePolyRep->points_and_normals,6*(int)points[3]);	    
-	    glNormal3dv(&p1[3]);
-	    glVertex3d(p1[0],p1[1],p1[2]);
-	    glNormal3dv(&p2[3]);
-	    glVertex3d(p2[0],p2[1],p2[2]);
-	    glNormal3dv(&p3[3]);
-	    glVertex3d(p3[0],p3[1],p3[2]);
-	  }
+    while (k < List_Nbr(s->thePolyRep->polygons)){
+      points = (double*)List_Pointer (s->thePolyRep->polygons,k);
+      k+= ((int)points[0] + 1);
+      
+      if (points[0] == 3){
+	p1 = (double*)List_Pointer (s->thePolyRep->points_and_normals,6*(int)points[1]);
+	p2 = (double*)List_Pointer (s->thePolyRep->points_and_normals,6*(int)points[2]);
+	p3 = (double*)List_Pointer (s->thePolyRep->points_and_normals,6*(int)points[3]);
+	glNormal3dv(&p1[3]);
+	glVertex3d(p1[0],p1[1],p1[2]);
+	glNormal3dv(&p2[3]);
+	glVertex3d(p2[0],p2[1],p2[2]);
+	glNormal3dv(&p3[3]);
+	glVertex3d(p3[0],p3[1],p3[2]);
       }
+    }
     glEnd();
+    glDisable(GL_POLYGON_OFFSET_FILL); 
+    glDisable(GL_LIGHTING);
   }  
-  glDisable(GL_POLYGON_OFFSET_FILL); 
 }
 
 
@@ -320,15 +308,14 @@ void Draw_Plane_Surface(Surface * s)
 {
   int i, j, k;
   Curve *c;
-  double minx = 0., miny = 0., maxx = 0., maxy = 0., t, n[3], nn;
+  double minx = 0., miny = 0., maxx = 0., maxy = 0., t, n[3];
   Vertex P1, P2, P3, V[4], vv, vv1, vv2;
   char Num[100];
 
-  if (s->thePolyRep)
-    {
-      Draw_Triangulated_Surface(s);
-      return;
-    }
+  if (s->thePolyRep) {
+    Draw_Triangulated_Surface(s);
+    return;
+  }
 
   static List_T *points;
   static int deb = 1;
@@ -486,24 +473,22 @@ void Draw_Plane_Surface(Surface * s)
       n[0] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[0];
       n[1] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[1];
       n[2] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[2];
-      nn = sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
       glColor4ubv((GLubyte *) & CTX.color.geom.normals);
-      Draw_Vector(DRAW_POST_ARROW, 0, (vv2.Pos.X + vv1.Pos.X) / 2.,
-                  (vv2.Pos.Y + vv1.Pos.Y) / 2., (vv2.Pos.Z + vv1.Pos.Z) / 2.,
-                  nn, n[0], n[1], n[2], NULL);
+      Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+		  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
+		  (vv2.Pos.X + vv1.Pos.X) / 2., (vv2.Pos.Y + vv1.Pos.Y) / 2., 
+		  (vv2.Pos.Z + vv1.Pos.Z) / 2., n[0], n[1], n[2], NULL, 
+		  CTX.geom.light);
     }
 
   }
-
 }
-
-
 
 void Draw_NonPlane_Surface(Surface * s)
 {
   Vertex v, n1, n2, n3;
   int i, NbTics, N = 0;
-  double u, n[3], nn, nx[3], ny[3];
+  double u, n[3], nx[3], ny[3];
   double tics[20];
   double u0, un, v0, vn;
   int kk;
@@ -520,19 +505,19 @@ void Draw_NonPlane_Surface(Surface * s)
     vn = s->kv[s->OrderV + s->Nv];
     for(i = 0; i < NbTics; i++)
       tics[i] = v0 + ((double)(i + 1) / (double)NbTics) * (vn - v0);
-    if(CTX.geom.shade) {
-      GLUnurbsObj *nurb;
-      nurb = gluNewNurbsRenderer();
-      gluNurbsProperty(nurb, (GLenum) GLU_SAMPLING_TOLERANCE, 50.0);
-      gluNurbsProperty(nurb, (GLenum) GLU_DISPLAY_MODE, GLU_FILL);
-      gluBeginSurface(nurb);
-      gluNurbsSurface(nurb, s->Nu + s->OrderU + 1, s->ku,
-                      s->Nv + s->OrderV + 1, s->kv, 4, 4 * s->Nu, s->cp,
-                      s->OrderU + 1, s->OrderV + 1, GL_MAP2_VERTEX_4);
-      gluEndSurface(nurb);
-      gluDeleteNurbsRenderer(nurb);
-      return;
-    }
+    if(CTX.geom.light) glEnable(GL_LIGHTING);
+    GLUnurbsObj *nurb;
+    nurb = gluNewNurbsRenderer();
+    gluNurbsProperty(nurb, (GLenum) GLU_SAMPLING_TOLERANCE, 50.0);
+    gluNurbsProperty(nurb, (GLenum) GLU_DISPLAY_MODE, GLU_FILL);
+    gluBeginSurface(nurb);
+    gluNurbsSurface(nurb, s->Nu + s->OrderU + 1, s->ku,
+		    s->Nv + s->OrderV + 1, s->kv, 4, 4 * s->Nu, s->cp,
+		    s->OrderU + 1, s->OrderV + 1, GL_MAP2_VERTEX_4);
+    gluEndSurface(nurb);
+    gluDeleteNurbsRenderer(nurb);
+    glDisable(GL_LIGHTING);
+    return;
   }
   else {
     NbTics = 1;
@@ -595,12 +580,12 @@ void Draw_NonPlane_Surface(Surface * s)
     n[0] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[0];
     n[1] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[1];
     n[2] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[2];
-    nn = sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
     glColor4ubv((GLubyte *) & CTX.color.geom.normals);
-    Draw_Vector(DRAW_POST_ARROW, 0, n1.Pos.X, n1.Pos.Y, n1.Pos.Z,
-                nn, n[0], n[1], n[2], NULL);
+    Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
+		n1.Pos.X, n1.Pos.Y, n1.Pos.Z, n[0], n[1], n[2], NULL,
+		CTX.geom.light);
   }
-
 }
 
 void Draw_Surface(void *a, void *b)
@@ -617,30 +602,25 @@ void Draw_Surface(void *a, void *b)
     glPushName(s->Num);
   }
 
-  if(!CTX.geom.shade) {
-    if(s->ipar[4]) {
-      glLineWidth(CTX.geom.line_sel_width);
-      gl2psLineWidth(CTX.geom.line_sel_width *
-                     CTX.print.eps_line_width_factor);
-      glColor4ubv((GLubyte *) & CTX.color.geom.surface_sel);
-    }
-    else if(Highlighted) {
-      glLineWidth(CTX.geom.line_sel_width);
-      gl2psLineWidth(CTX.geom.line_sel_width *
-                     CTX.print.eps_line_width_factor);
-      glColor4ubv((GLubyte *) & CTX.color.geom.surface_hlt);
-    }
-    else {
-      glLineWidth(CTX.geom.line_width);
-      gl2psLineWidth(CTX.geom.line_width * CTX.print.eps_line_width_factor);
-      glColor4ubv((GLubyte *) & CTX.color.geom.surface);
-    }
-    glEnable(GL_LINE_STIPPLE);
-    glLineStipple(1, 0x0F0F);
+  if(s->ipar[4]) {
+    glLineWidth(CTX.geom.line_sel_width);
+    gl2psLineWidth(CTX.geom.line_sel_width *
+		   CTX.print.eps_line_width_factor);
+    glColor4ubv((GLubyte *) & CTX.color.geom.surface_sel);
+  }
+  else if(Highlighted) {
+    glLineWidth(CTX.geom.line_sel_width);
+    gl2psLineWidth(CTX.geom.line_sel_width *
+		   CTX.print.eps_line_width_factor);
+    glColor4ubv((GLubyte *) & CTX.color.geom.surface_hlt);
   }
   else {
-    ColorSwitch(abs(s->Num));
+    glLineWidth(CTX.geom.line_width);
+    gl2psLineWidth(CTX.geom.line_width * CTX.print.eps_line_width_factor);
+    glColor4ubv((GLubyte *) & CTX.color.geom.surface);
   }
+  glEnable(GL_LINE_STIPPLE);
+  glLineStipple(1, 0x0F0F);
 
   if(s->Typ == MSH_SURF_STL) {
     glDisable(GL_LINE_STIPPLE);
@@ -660,7 +640,6 @@ void Draw_Surface(void *a, void *b)
   }
 
   glDisable(GL_LINE_STIPPLE);
-
 }
 
 // Volumes
@@ -706,13 +685,11 @@ void Draw_Curve_For_Volume(void *a, void *b)
   if(CTX.render_mode == GMSH_SELECT) {
     glPopName();
   }
-
 }
 
 
 void DrawVolumes(Mesh * m)
 {
-
 }
 
 // Draw geometry
@@ -722,25 +699,14 @@ void Draw_Geom(Mesh * m)
   if(m->status == -1)
     return;
 
-  if(CTX.geom.points || CTX.geom.points_num) {
-    if(CTX.geom.point_type)
-      InitShading();
+  if(CTX.geom.points || CTX.geom.points_num)
     Tree_Action(m->Points, Draw_GeoPoint);
-    if(CTX.geom.point_type && !CTX.geom.shade)
-      InitNoShading();
-  }
-  if(CTX.geom.lines || CTX.geom.lines_num) {
-    if(CTX.geom.line_type)
-      InitShading();
+  if(CTX.geom.lines || CTX.geom.lines_num)
     Tree_Action(m->Curves, Draw_Curve);
-    if(CTX.geom.line_type && !CTX.geom.shade)
-      InitNoShading();
-  }
   if(CTX.geom.surfaces || CTX.geom.surfaces_num)
     Tree_Action(m->Surfaces, Draw_Surface);
   if(CTX.geom.volumes || CTX.geom.volumes_num)
     DrawVolumes(m);
-
 }
 
 void ZeroCurve(void *a, void *b)

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.114 2004-02-07 01:40:17 geuzaine Exp $
+// $Id: Views.cpp,v 1.115 2004-02-20 17:57:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -620,6 +620,9 @@ void CopyViewOptions(Post_View * src, Post_View * dest)
   dest->Raise[1] = src->Raise[1];
   dest->Raise[2] = src->Raise[2];
   dest->ArrowSize = src->ArrowSize;
+  dest->ArrowRelHeadRadius = src->ArrowRelHeadRadius;
+  dest->ArrowRelStemLength = src->ArrowRelStemLength;
+  dest->ArrowRelStemRadius = src->ArrowRelStemRadius;
   dest->DisplacementFactor = src->DisplacementFactor;
   dest->Explode = src->Explode;
   dest->Visible = src->Visible;

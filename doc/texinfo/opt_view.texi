@@ -34,6 +34,11 @@ Threshold angle below which normals are not smoothed@*
 Default value: @code{15}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.ArrowHeadRadius
+Relative radius of arrow head@*
+Default value: @code{0.12}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.ArrowLocation
 Arrow location (1=cog, 2=vertex)@*
 Default value: @code{1}@*
@@ -42,6 +47,16 @@ Saved in: @code{General.OptionsFileName}
 @item View.ArrowSize
 Size of vectors arrows (in pixels)@*
 Default value: @code{50}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ArrowStemLength
+Relative length of arrow stem@*
+Default value: @code{0.56}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ArrowStemRadius
+Relative radius of arrow stem@*
+Default value: @code{0.02}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AutoPosition
@@ -150,7 +165,7 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Light
-Enable light sources?@*
+Enable lighting for the view@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -295,7 +310,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.VectorType
-Vector display type (1=segment, 2=arrow, 3=pyramid, 4=cone, 5=displacement)@*
+Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 

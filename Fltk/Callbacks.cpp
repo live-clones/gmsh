@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.203 2004-02-07 01:28:50 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.204 2004-02-20 17:57:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -984,6 +984,23 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_options_filename(0, GMSH_SET, (char *)WID->gen_input[3]->value());
   opt_general_editor(0, GMSH_SET, (char *)WID->gen_input[4]->value());
   opt_general_web_browser(0, GMSH_SET, (char *)WID->gen_input[5]->value());
+
+  int val;
+  switch (WID->gen_choice[0]->value()) {
+  case 0:
+    val = DRAW_POST_SEGMENT;
+    break;
+  case 1:
+    val = DRAW_POST_ARROW;
+    break;
+  case 2:
+    val = DRAW_POST_PYRAMID;
+    break;
+  default:
+    val = DRAW_POST_ARROW3D;
+    break;
+  }
+  opt_general_vector_type(0, GMSH_SET, val);
 }
 
 // Geometry options
@@ -1010,6 +1027,7 @@ void geometry_options_ok_cb(CALLBACK_ARGS)
   opt_geometry_surfaces_num(0, GMSH_SET, WID->geo_butt[6]->value());
   opt_geometry_volumes_num(0, GMSH_SET, WID->geo_butt[7]->value());
   opt_geometry_auto_coherence(0, GMSH_SET, WID->geo_butt[8]->value());
+  opt_geometry_light(0, GMSH_SET, WID->geo_butt[9]->value());
 
   opt_geometry_normals(0, GMSH_SET, WID->geo_value[0]->value());
   opt_geometry_tangents(0, GMSH_SET, WID->geo_value[1]->value());
@@ -1051,9 +1069,8 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_lines_num(0, GMSH_SET, WID->mesh_butt[11]->value());
   opt_mesh_surfaces_num(0, GMSH_SET, WID->mesh_butt[12]->value());
   opt_mesh_volumes_num(0, GMSH_SET, WID->mesh_butt[13]->value());
-  opt_mesh_aspect(0, GMSH_SET,
-                  WID->mesh_butt[14]->value()? 0 :
-                  WID->mesh_butt[15]->value()? 1 : 2);
+  opt_mesh_solid(0, GMSH_SET, WID->mesh_butt[14]->value());
+  opt_mesh_light(0, GMSH_SET, WID->mesh_butt[15]->value());
   opt_mesh_color_carousel(0, GMSH_SET,
 			  WID->mesh_butt[17]->value()? 0 :
 			  WID->mesh_butt[18]->value()? 1 : 2);
@@ -1469,30 +1486,31 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Alt+a         hide/show small axes"); 
   Msg(DIRECT, "  Alt+Shift+a   hide/show big moving axes"); 
   Msg(DIRECT, "  Alt+b         hide/show all post-processing scales");
-  Msg(DIRECT, "  Alt+c         alternate between predefined color schemes");
-  Msg(DIRECT, "  Alt+d         alternate between mesh wire frame, hidden lines and shading modes");
+  Msg(DIRECT, "  Alt+c         loop through predefined color schemes");
+  Msg(DIRECT, "  Alt+d         change mesh display mode (solid/wireframe)");
   Msg(DIRECT, "  Shift+d       decrease animation delay");
   Msg(DIRECT, "  "XX"+Shift+d  increase animation delay");
-  Msg(DIRECT, "  Alt+f         toggle redraw mode (fast/full)"); 
+  Msg(DIRECT, "  Alt+f         change redraw mode (fast/full)"); 
   Msg(DIRECT, "  Alt+h         hide/show all post-processing views"); 
   Msg(DIRECT, "  Alt+l         hide/show geometry lines");
   Msg(DIRECT, "  Alt+Shift+l   hide/show mesh lines");
-  Msg(DIRECT, "  Alt+m         toggle visibility of all mesh entities");
-  Msg(DIRECT, "  Alt+o         change projection mode");
+  Msg(DIRECT, "  Alt+m         change visibility of all mesh entities");
+  Msg(DIRECT, "  Alt+o         change projection mode (ortho/perspective)");
   Msg(DIRECT, "  Alt+p         hide/show geometry points");
   Msg(DIRECT, "  Alt+Shift+p   hide/show mesh points");
   Msg(DIRECT, "  Alt+s         hide/show geometry surfaces");
   Msg(DIRECT, "  Alt+Shift+s   hide/show mesh surfaces");
-  Msg(DIRECT, "  Alt+t         alternate intervals mode for visible post-processing views"); 
+  Msg(DIRECT, "  Alt+t         loop through interval modes for all post-processing views"); 
   Msg(DIRECT, "  Alt+v         hide/show geometry volumes");
   Msg(DIRECT, "  Alt+Shift+v   hide/show mesh volumes");
+  Msg(DIRECT, "  Alt+w         enable/disable all lighting");
   Msg(DIRECT, "  Alt+x         set X view"); 
   Msg(DIRECT, "  Alt+y         set Y view"); 
   Msg(DIRECT, "  Alt+z         set Z view"); 
-  Msg(DIRECT, "  Left arrow    previous time step"); 
-  Msg(DIRECT, "  Right arrow   next time step"); 
-  Msg(DIRECT, "  Up arrow      previous view"); 
-  Msg(DIRECT, "  Down arrow    next view"); 
+  Msg(DIRECT, "  Left arrow    go to previous time step"); 
+  Msg(DIRECT, "  Right arrow   go to next time step"); 
+  Msg(DIRECT, "  Up arrow      make previous view visible"); 
+  Msg(DIRECT, "  Down arrow    make next view visible"); 
   Msg(DIRECT, "");
   // *INDENT-ON*
   WID->create_message_window();
@@ -3194,11 +3212,11 @@ void view_options_ok_cb(CALLBACK_ARGS)
         case 2:
           val = DRAW_POST_PYRAMID;
           break;
-        case 3:
-          val = DRAW_POST_CONE;
-          break;
-        default:
+        case 4:
           val = DRAW_POST_DISPLACEMENT;
+	  break;
+	default: // 3
+          val = DRAW_POST_ARROW3D;
           break;
         }
         opt_view_vector_type(i, GMSH_SET, val);

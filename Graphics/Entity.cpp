@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.29 2004-02-07 01:40:19 geuzaine Exp $
+// $Id: Entity.cpp,v 1.30 2004-02-20 17:58:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -29,12 +29,11 @@
 extern Context_T CTX;
 
 void Draw_Point(int type, double size, double *x, double *y, double *z,
-                double Raise[3][8])
+                double Raise[3][8], int light)
 {
-  if(type) {
+  if(type)
     Draw_Sphere(size, x[0] + Raise[0][0], y[0] + Raise[1][0],
-                z[0] + Raise[2][0]);
-  }
+                z[0] + Raise[2][0], light);
   else {
     glBegin(GL_POINTS);
     glVertex3d(x[0] + Raise[0][0], y[0] + Raise[1][0], z[0] + Raise[2][0]);
@@ -42,8 +41,9 @@ void Draw_Point(int type, double size, double *x, double *y, double *z,
   }
 }
 
-void Draw_Sphere(double size, double x, double y, double z)
+void Draw_Sphere(double size, double x, double y, double z, int light)
 {
+  if(light) glEnable(GL_LIGHTING);
   static GLUquadricObj *qua;
   static int first = 1, listnum;
   float s = size * CTX.pixel_equiv_x / CTX.s[0];        // size is in pixels
@@ -60,10 +60,13 @@ void Draw_Sphere(double size, double x, double y, double z)
   glScalef(s, s, s);
   glCallList(listnum);
   glPopMatrix();
+  glDisable(GL_LIGHTING);
 }
 
-void Draw_Cylinder(double width, double *x, double *y, double *z)
+void Draw_Cylinder(double width, double *x, double *y, double *z, int light)
 {
+  if(light) glEnable(GL_LIGHTING);
+
   double mat[4][4], r[3];
   static GLUquadricObj *qua;
   static int first = 1;
@@ -111,10 +114,12 @@ void Draw_Cylinder(double width, double *x, double *y, double *z)
   //glCallList(listnum);
   gluCylinder(qua, 1, 1, 1, CTX.quadric_subdivisions, 1);
   glPopMatrix();
+  
+  glDisable(GL_LIGHTING);
 }
 
 void Draw_Line(int type, double width, double *x, double *y, double *z,
-               double Raise[3][8])
+               double Raise[3][8], int light)
 {
   double X[2], Y[2], Z[2];
 
@@ -127,7 +132,7 @@ void Draw_Line(int type, double width, double *x, double *y, double *z,
   Z[1] = z[1] + Raise[2][1];
 
   if(type)
-    Draw_Cylinder(width, X, Y, Z);
+    Draw_Cylinder(width, X, Y, Z, light);
   else {
     glBegin(GL_LINES);
     glVertex3d(X[0], Y[0], Z[0]);
@@ -137,12 +142,14 @@ void Draw_Line(int type, double width, double *x, double *y, double *z,
 }
 
 void Draw_Triangle(double *x, double *y, double *z, double *n,
-                   double Raise[3][8], int shade)
+                   double Raise[3][8], int light)
 {
   double x1x0, y1y0, z1z0, x2x0, y2y0, z2z0, nn[3];
 
+  if(light) glEnable(GL_LIGHTING);
+
   glBegin(GL_TRIANGLES);
-  if(shade) {
+  if(light) {
     if(!n) {
       x1x0 = (x[1] + Raise[0][1]) - (x[0] + Raise[0][0]);
       y1y0 = (y[1] + Raise[1][1]) - (y[0] + Raise[1][0]);
@@ -162,27 +169,28 @@ void Draw_Triangle(double *x, double *y, double *z, double *n,
 
   glVertex3d(x[0] + Raise[0][0], y[0] + Raise[1][0], z[0] + Raise[2][0]);
 
-  if(shade && n)
+  if(light && n)
     glNormal3dv(&n[3]);
 
   glVertex3d(x[1] + Raise[0][1], y[1] + Raise[1][1], z[1] + Raise[2][1]);
 
-  if(shade && n)
+  if(light && n)
     glNormal3dv(&n[6]);
 
   glVertex3d(x[2] + Raise[0][2], y[2] + Raise[1][2], z[2] + Raise[2][2]);
   glEnd();
 
+  glDisable(GL_LIGHTING);
 }
 
 void Draw_Quadrangle(double *x, double *y, double *z, double *n,
-                     double Raise[3][8], int shade)
+                     double Raise[3][8], int light)
 {
   double x2[3] = { x[2], x[3], x[0] };
   double y2[3] = { y[2], y[3], y[0] };
   double z2[3] = { z[2], z[3], z[0] };
 
-  Draw_Triangle(x, y, z, n, Raise, shade);
+  Draw_Triangle(x, y, z, n, Raise, light);
   if(n) {
     double n2[9];
     n2[0] = n[6];
@@ -194,37 +202,19 @@ void Draw_Quadrangle(double *x, double *y, double *z, double *n,
     n2[6] = n[0];
     n2[7] = n[1];
     n2[8] = n[2];
-    Draw_Triangle(x2, y2, z2, n2, Raise, shade);
+    Draw_Triangle(x2, y2, z2, n2, Raise, light);
   }
   else
-    Draw_Triangle(x2, y2, z2, n, Raise, shade);
-
+    Draw_Triangle(x2, y2, z2, n, Raise, light);
 }
 
-void Draw_Vector(int Type, int Fill,
-                 double x, double y, double z,
-                 double d, double dx, double dy, double dz,
-                 double Raise[3][8])
+void Draw_SimpleVector(int arrow, int fill,
+		       double relHeadRadius, double relStemLength, double relStemRadius,
+		       double x, double y, double z,
+		       double dx, double dy, double dz, 
+		       double d)
 {
   double n[3], t[3], u[3];
-  double l, b, c, f1, f2;
-
-  if(d == 0.0)
-    return;
-
-  if(Raise != NULL) {
-    x += Raise[0][0];
-    y += Raise[1][0];
-    z += Raise[2][0];
-  }
-
-  if(Type == DRAW_POST_SEGMENT) {
-    glBegin(GL_LINES);
-    glVertex3d(x, y, z);
-    glVertex3d(x + dx, y + dy, z + dz);
-    glEnd();
-    return;
-  }
 
   n[0] = dx / d;
   n[1] = dy / d;
@@ -242,7 +232,7 @@ void Draw_Vector(int Type, int Fill,
     t[2] = -n[1];
   }
 
-  l = sqrt(t[0] * t[0] + t[1] * t[1] + t[2] * t[2]);
+  double l = sqrt(t[0] * t[0] + t[1] * t[1] + t[2] * t[2]);
   t[0] /= l;
   t[1] /= l;
   t[2] /= l;
@@ -256,189 +246,37 @@ void Draw_Vector(int Type, int Fill,
   u[1] /= l;
   u[2] /= l;
 
-  switch (Type) {
+  double b = relHeadRadius * d;
 
-  case DRAW_POST_PYRAMID:
+  if(arrow){
+    double f1 = relStemLength;
+    double f2 = (1-2.*relStemRadius) * f1; // hack :-)
 
-    b = .1333 * d;
-
-    if(Fill) {
-      glBegin(GL_TRIANGLES);
-      glVertex3d(x + dx, y + dy, z + dz);
-      glVertex3d(x + b * (t[0]), y + b * (t[1]), z + b * (t[2]));
-      glVertex3d(x + b * (-u[0]), y + b * (-u[1]), z + b * (-u[2]));
-
-      glVertex3d(x + dx, y + dy, z + dz);
-      glVertex3d(x + b * (-u[0]), y + b * (-u[1]), z + b * (-u[2]));
-      glVertex3d(x + b * (-t[0]), y + b * (-t[1]), z + b * (-t[2]));
-
-      glVertex3d(x + dx, y + dy, z + dz);
-      glVertex3d(x + b * (-t[0]), y + b * (-t[1]), z + b * (-t[2]));
-      glVertex3d(x + b * (u[0]), y + b * (u[1]), z + b * (u[2]));
-
-      glVertex3d(x + dx, y + dy, z + dz);
-      glVertex3d(x + b * (u[0]), y + b * (u[1]), z + b * (u[2]));
-      glVertex3d(x + b * (t[0]), y + b * (t[1]), z + b * (t[2]));
-      glEnd();
-    }
-    else {
-      glBegin(GL_LINE_LOOP);
-      glVertex3d(x + b * (t[0]), y + b * (t[1]), z + b * (t[2]));
-      glVertex3d(x + b * (-u[0]), y + b * (-u[1]), z + b * (-u[2]));
-      glVertex3d(x + b * (-t[0]), y + b * (-t[1]), z + b * (-t[2]));
-      glVertex3d(x + b * (u[0]), y + b * (u[1]), z + b * (u[2]));
-      glEnd();
-
-      glBegin(GL_LINES);
-      glVertex3d(x + b * (t[0]), y + b * (t[1]), z + b * (t[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-
-      glVertex3d(x + b * (-u[0]), y + b * (-u[1]), z + b * (-u[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-
-      glVertex3d(x + b * (-t[0]), y + b * (-t[1]), z + b * (-t[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-
-      glVertex3d(x + b * (u[0]), y + b * (u[1]), z + b * (u[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-      glEnd();
-    }
-    break;
-
-  case DRAW_POST_CONE:
-
-    b = .1333 * d;
-    c = .7071 * b;
-
-    if(Fill) {
-      glBegin(GL_TRIANGLES);
-      glVertex3d(x + b * (t[0]), y + b * (t[1]), z + b * (t[2]));
-      glVertex3d(x + c * (t[0] - u[0]), y + c * (t[1] - u[1]),
-                 z + c * (t[2] - u[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-
-      glVertex3d(x + c * (t[0] - u[0]), y + c * (t[1] - u[1]),
-                 z + c * (t[2] - u[2]));
-      glVertex3d(x + b * (-u[0]), y + b * (-u[1]), z + b * (-u[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-
-      glVertex3d(x + b * (-u[0]), y + b * (-u[1]), z + b * (-u[2]));
-      glVertex3d(x + c * (-t[0] - u[0]), y + c * (-t[1] - u[1]),
-                 z + c * (-t[2] - u[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-
-      glVertex3d(x + c * (-t[0] - u[0]), y + c * (-t[1] - u[1]),
-                 z + c * (-t[2] - u[2]));
-      glVertex3d(x + b * (-t[0]), y + b * (-t[1]), z + b * (-t[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-
-      glVertex3d(x + b * (-t[0]), y + b * (-t[1]), z + b * (-t[2]));
-      glVertex3d(x + c * (u[0] - t[0]), y + c * (u[1] - t[1]),
-                 z + c * (u[2] - t[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-
-      glVertex3d(x + c * (u[0] - t[0]), y + c * (u[1] - t[1]),
-                 z + c * (u[2] - t[2]));
-      glVertex3d(x + b * (u[0]), y + b * (u[1]), z + b * (u[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-
-      glVertex3d(x + b * (u[0]), y + b * (u[1]), z + b * (u[2]));
-      glVertex3d(x + c * (t[0] + u[0]), y + c * (t[1] + u[1]),
-                 z + c * (t[2] + u[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-
-      glVertex3d(x + c * (t[0] + u[0]), y + c * (t[1] + u[1]),
-                 z + c * (t[2] + u[2]));
-      glVertex3d(x + b * (t[0]), y + b * (t[1]), z + b * (t[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-      glEnd();
-    }
-    else {
-      glBegin(GL_LINE_LOOP);
-      glVertex3d(x + b * (t[0]), y + b * (t[1]), z + b * (t[2]));
-      glVertex3d(x + c * (t[0] - u[0]), y + c * (t[1] - u[1]),
-                 z + c * (t[2] - u[2]));
-      glVertex3d(x + b * (-u[0]), y + b * (-u[1]), z + b * (-u[2]));
-      glVertex3d(x + c * (-t[0] - u[0]), y + c * (-t[1] - u[1]),
-                 z + c * (-t[2] - u[2]));
-      glVertex3d(x + b * (-t[0]), y + b * (-t[1]), z + b * (-t[2]));
-      glVertex3d(x + c * (u[0] - t[0]), y + c * (u[1] - t[1]),
-                 z + c * (u[2] - t[2]));
-      glVertex3d(x + b * (u[0]), y + b * (u[1]), z + b * (u[2]));
-      glVertex3d(x + c * (t[0] + u[0]), y + c * (t[1] + u[1]),
-                 z + c * (t[2] + u[2]));
-      glEnd();
-
-      glBegin(GL_LINES);
-      glVertex3d(x + b * (t[0]), y + b * (t[1]), z + b * (t[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-
-      glVertex3d(x + c * (t[0] - u[0]), y + c * (t[1] - u[1]),
-                 z + c * (t[2] - u[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-
-      glVertex3d(x + b * (-u[0]), y + b * (-u[1]), z + b * (-u[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-
-      glVertex3d(x + c * (-t[0] - u[0]), y + c * (-t[1] - u[1]),
-                 z + c * (-t[2] - u[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-
-      glVertex3d(x + b * (-t[0]), y + b * (-t[1]), z + b * (-t[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-
-      glVertex3d(x + c * (u[0] - t[0]), y + c * (u[1] - t[1]),
-                 z + c * (u[2] - t[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-
-      glVertex3d(x + b * (u[0]), y + b * (u[1]), z + b * (u[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-
-      glVertex3d(x + c * (t[0] + u[0]), y + c * (t[1] + u[1]),
-                 z + c * (t[2] + u[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-      glEnd();
-    }
-    break;
-
-  case DRAW_POST_ARROW:
-  default:
-
-    b = 0.0666 * d;
-
-    f1 = 0.85;
-    f2 = 0.8;
-
-
-    b *= 2;
-    f1 /= 1.5;
-    f2 /= 1.5;
-
-    if(Fill) {
+    if(fill) {
       glBegin(GL_LINES);
       glVertex3d(x, y, z);
       glVertex3d(x + dx, y + dy, z + dz);
       glEnd();
-
+      
       glBegin(GL_TRIANGLES);
       glVertex3d(x + dx, y + dy, z + dz);
       glVertex3d(x + f2 * dx + b * (t[0]), y + f2 * dy + b * (t[1]),
-                 z + f2 * dz + b * (t[2]));
+		 z + f2 * dz + b * (t[2]));
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
-
+      
       glVertex3d(x + dx, y + dy, z + dz);
       glVertex3d(x + f2 * dx + b * (-t[0]), y + f2 * dy + b * (-t[1]),
-                 z + f2 * dz + b * (-t[2]));
+		 z + f2 * dz + b * (-t[2]));
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
-
+      
       glVertex3d(x + dx, y + dy, z + dz);
       glVertex3d(x + f2 * dx + b * (-u[0]), y + f2 * dy + b * (-u[1]),
-                 z + f2 * dz + b * (-u[2]));
+		 z + f2 * dz + b * (-u[2]));
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
-
+      
       glVertex3d(x + dx, y + dy, z + dz);
       glVertex3d(x + f2 * dx + b * (u[0]), y + f2 * dy + b * (u[1]),
-                 z + f2 * dz + b * (u[2]));
+		 z + f2 * dz + b * (u[2]));
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       glEnd();
     }
@@ -447,19 +285,156 @@ void Draw_Vector(int Type, int Fill,
       glVertex3d(x, y, z);
       glVertex3d(x + dx, y + dy, z + dz);
       glVertex3d(x + f2 * dx + b * (t[0]), y + f2 * dy + b * (t[1]),
-                 z + f2 * dz + b * (t[2]));
+		 z + f2 * dz + b * (t[2]));
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       glVertex3d(x + f2 * dx + b * (-t[0]), y + f2 * dy + b * (-t[1]),
-                 z + f2 * dz + b * (-t[2]));
+		 z + f2 * dz + b * (-t[2]));
       glVertex3d(x + dx, y + dy, z + dz);
       glVertex3d(x + f2 * dx + b * (-u[0]), y + f2 * dy + b * (-u[1]),
-                 z + f2 * dz + b * (-u[2]));
+		 z + f2 * dz + b * (-u[2]));
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       glVertex3d(x + f2 * dx + b * (u[0]), y + f2 * dy + b * (u[1]),
-                 z + f2 * dz + b * (u[2]));
+		 z + f2 * dz + b * (u[2]));
       glVertex3d(x + dx, y + dy, z + dz);
       glEnd();
     }
+  }
+  else{ // simple pyramid
+    if(fill){
+      glBegin(GL_TRIANGLES);
+      glVertex3d(x+dx,        y+dy,        z+dz);
+      glVertex3d(x+b*(t[0]),  y+b*(t[1]),  z+b*(t[2]));
+      glVertex3d(x+b*(-u[0]), y+b*(-u[1]), z+b*(-u[2]));
+      
+      glVertex3d(x+dx,        y+dy,        z+dz);
+      glVertex3d(x+b*(-u[0]), y+b*(-u[1]), z+b*(-u[2]));
+      glVertex3d(x+b*(-t[0]), y+b*(-t[1]), z+b*(-t[2]));
+      
+      glVertex3d(x+dx,        y+dy,        z+dz);
+      glVertex3d(x+b*(-t[0]), y+b*(-t[1]), z+b*(-t[2]));
+      glVertex3d(x+b*(u[0]),  y+b*(u[1]),  z+b*(u[2]));
+      
+      glVertex3d(x+dx,        y+dy,        z+dz);
+      glVertex3d(x+b*(u[0]),  y+b*(u[1]),  z+b*(u[2]));
+      glVertex3d(x+b*(t[0]),  y+b*(t[1]),  z+b*(t[2]));
+      glEnd();
+    }
+    else{
+      glBegin(GL_LINE_LOOP);
+      glVertex3d(x+b*(t[0]),  y+b*(t[1]),  z+b*(t[2]));
+      glVertex3d(x+b*(-u[0]), y+b*(-u[1]), z+b*(-u[2]));
+      glVertex3d(x+b*(-t[0]), y+b*(-t[1]), z+b*(-t[2]));
+      glVertex3d(x+b*(u[0]),  y+b*(u[1]),  z+b*(u[2]));
+      glEnd();
+      
+      glBegin(GL_LINES);
+      glVertex3d(x+b*(t[0]),  y+b*(t[1]),  z+b*(t[2]));
+      glVertex3d(x+dx,        y+dy,        z+dz);
+      
+      glVertex3d(x+b*(-u[0]), y+b*(-u[1]), z+b*(-u[2]));
+      glVertex3d(x+dx,        y+dy,        z+dz);
+      
+      glVertex3d(x+b*(-t[0]), y+b*(-t[1]), z+b*(-t[2]));
+      glVertex3d(x+dx,        y+dy,        z+dz);
+      
+      glVertex3d (x+b*(u[0]), y+b*(u[1]),  z+b*(u[2]));
+      glVertex3d(x+dx,        y+dy,        z+dz);
+      glEnd();
+    }
+  }
+}
+
+void Draw_3DArrow(double relHeadRadius, double relStemLength, double relStemRadius,
+		  double x, double y, double z, double dx, double dy, double dz,
+		  double length, int light)
+{
+  if(light) glEnable(GL_LIGHTING);
+
+  int subdiv = CTX.quadric_subdivisions;
+  double head_r = relHeadRadius * length;
+  double head_l = (1. - relStemLength) * length;
+  double stem_r = relStemRadius * length;
+  double stem_l = relStemLength * length;
+
+  static int first = 1;
+  static GLUquadricObj *hat;
+  static GLUquadricObj *disk;
+  static GLUquadricObj *stem;
+  static GLUquadricObj *bottom;
+
+  if(first){
+    first = 0;
+    hat = gluNewQuadric();
+    disk = gluNewQuadric();;
+    stem = gluNewQuadric();;
+    bottom = gluNewQuadric();;
+  }
+
+  glPushMatrix();
+
+  double zdir[3] = {0., 0., 1.};
+  double vdir[3] = {dx/length, dy/length, dz/length};
+  double axis[3], cosphi, phi;
+  prodve(zdir, vdir, axis);
+  norme(axis);
+  prosca(zdir, vdir, &cosphi);
+  phi = 180. * acos(cosphi) / M_PI;
+
+  glTranslatef(x, y, z);
+  glRotatef(phi, axis[0], axis[1], axis[2]);
+  
+  if(head_l && head_r){
+    glTranslatef(0., 0., stem_l);
+    gluCylinder(hat, head_r, 0., head_l, subdiv, 1);
+    gluDisk(disk, stem_r, head_r, subdiv, 1);
+    glTranslatef(0., 0., -stem_l);
+  }
+
+  if(stem_l && stem_r){
+    gluCylinder(stem, stem_r, stem_r, stem_l, subdiv, 1);
+    gluDisk(disk, 0, stem_r, subdiv, 1);
+  }
+
+  glPopMatrix();
+
+  glDisable(GL_LIGHTING);
+}
+
+void Draw_Vector(int Type, int Fill,
+		 double relHeadRadius, double relStemLength, double relStemRadius,
+                 double x, double y, double z, double dx, double dy, double dz,
+                 double Raise[3][8], int light)
+{
+  double length = sqrt(dx * dx + dy * dy + dz * dz);
+
+  if(length == 0.0)
+    return;
+
+  if(Raise != NULL) {
+    x += Raise[0][0];
+    y += Raise[1][0];
+    z += Raise[2][0];
+  }
+
+  switch(Type){
+  case DRAW_POST_SEGMENT:
+    glBegin(GL_LINES);
+    glVertex3d(x, y, z);
+    glVertex3d(x + dx, y + dy, z + dz);
+    glEnd();
+    break;
+  case DRAW_POST_ARROW:
+    Draw_SimpleVector(1, Fill, relHeadRadius, relStemLength, relStemRadius,
+		      x, y, z, dx, dy, dz, length);
+    break;
+  case DRAW_POST_PYRAMID:
+    Draw_SimpleVector(0, Fill, relHeadRadius, relStemLength, relStemRadius,
+		      x, y, z, dx, dy, dz, length);
+    break;
+  case DRAW_POST_ARROW3D:
+  default:
+    Draw_3DArrow(relHeadRadius, relStemLength, relStemRadius,
+		 x, y, z, dx, dy, dz, length, light);
     break;
   }
 

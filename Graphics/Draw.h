@@ -32,9 +32,7 @@
 
 void InitOpengl(void);
 void InitOverlay(void);
-void InitShading(void);
 void InitRenderModel(void);
-void InitNoShading(void);
 void InitPosition(void);
 
 void Orthogonalize(int x, int y);
@@ -73,18 +71,18 @@ void Draw_Text2D3D(int dim, int timestep, int nb, List_T *td, List_T *tc);
 void Draw_Scales(void);
 void Draw_Axes (double s);
 void Draw_SmallAxes(void);
-void Draw_Sphere(double size, double x, double y, double z);
-void Draw_Cylinder (double width, double *x, double *y, double *z);
-void Draw_Point(int type, double size, double *x, double *y, double *z, double Raise[3][8]);
-void Draw_Line (int type, double width, double *x, double *y, double *z, double Raise[3][8]);
+void Draw_Sphere(double size, double x, double y, double z, int light);
+void Draw_Cylinder (double width, double *x, double *y, double *z, int light);
+void Draw_Point(int type, double size, double *x, double *y, double *z, double Raise[3][8], int light);
+void Draw_Line (int type, double width, double *x, double *y, double *z, double Raise[3][8], int light);
 void Draw_Triangle (double *x, double *y, double *z,double *n,
-                    double Raise[3][8], int shade);
+                    double Raise[3][8], int light);
 void Draw_Quadrangle (double *x, double *y, double *z, double *n,
-                      double Raise[3][8], int shade);
+                      double Raise[3][8], int light);
 void Draw_Vector (int Type, int Fill,
-                  double x, double y, double z,
-                  double d, double dx, double dy, double dz,
-                  double Raise[3][8]);
+		  double relHeadRadius, double relStemLength, double relStemRadius,
+                  double x, double y, double z, double dx, double dy, double dz,
+                  double Raise[3][8], int light);
 
 void Draw_Mesh_Volumes(void *a, void *b);
 void Draw_Mesh_Surfaces(void *a, void *b);

@@ -62,7 +62,8 @@ class Post_View{
   int Type, Position[2], AutoPosition, Size[2];
   char   Format[256], AbscissaFormat[256];
   double CustomMin, CustomMax;
-  double Offset[3], Raise[3], ArrowSize, DisplacementFactor, Explode;
+  double Offset[3], Raise[3], DisplacementFactor, Explode;
+  double ArrowSize, ArrowRelHeadRadius, ArrowRelStemRadius, ArrowRelStemLength;
   int Visible, IntervalsType, NbIso, NbAbscissa, Light, SmoothNormals ;
   double AngleSmoothNormals, AlphaChannel;
   int SaturateValues;
@@ -115,10 +116,8 @@ class Post_View{
 #define DRAW_POST_SEGMENT      1
 #define DRAW_POST_ARROW        2
 #define DRAW_POST_PYRAMID      3
-#define DRAW_POST_CONE         4
+#define DRAW_POST_ARROW3D      4
 #define DRAW_POST_DISPLACEMENT 5
-#define DRAW_POST_ARROW3D      6
-#define DRAW_POST_CONE3D       7
 
 // ArrowLocation
 #define DRAW_POST_LOCATE_COG     1

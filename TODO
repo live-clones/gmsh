@@ -1,4 +1,4 @@
-$Id: TODO,v 1.31 2004-01-29 02:52:40 geuzaine Exp $
+$Id: TODO,v 1.32 2004-02-20 17:57:58 geuzaine Exp $
 
 degre2: remove from after each 1d/2d/3d step, and add a global
 "add_degre2_nodes" and "remove_degre2_nodes" menu
@@ -10,10 +10,6 @@ find a better way to dsicplay the time/timestep in the scale...
 ********************************************************************
 
 fix drawing of 2nd oder surface elements (subdivide?)
-
-********************************************************************
-
-add nicer 3d drawing code for arrows (cylinder+cone, with lights)
 
 ********************************************************************
 

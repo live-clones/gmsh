@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.46 2004-02-07 01:40:19 geuzaine Exp $
+// $Id: Draw.cpp,v 1.47 2004-02-20 17:58:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -35,8 +35,6 @@ extern Mesh M;
 
 void Draw3d(void)
 {
-  int i;
-
   if(CTX.alpha) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
@@ -48,7 +46,7 @@ void Draw3d(void)
   }
   glPolygonOffset(1.0, 1.0);
 
-  for(i = 0; i < 6; i++)
+  for(int i = 0; i < 6; i++)
     if(CTX.clip[i])
       glEnable((GLenum) (GL_CLIP_PLANE0 + i));
 
@@ -64,13 +62,11 @@ void Draw3d(void)
 
 void Draw2d(void)
 {
-  int i;
-
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_LIGHTING);
   glShadeModel(GL_FLAT);
 
-  for(i = 0; i < 6; i++)
+  for(int i = 0; i < 6; i++)
     glDisable((GLenum) (GL_CLIP_PLANE0 + i));
 
   glMatrixMode(GL_PROJECTION);
@@ -185,18 +181,10 @@ void InitRenderModel(void)
   specular[2] = CTX.shine;
   specular[3] = 1.0;
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
-}
-
-void InitShading()
-{
-  glEnable(GL_LIGHTING);
   glEnable(GL_NORMALIZE);
   glEnable(GL_COLOR_MATERIAL);
-}
-
-
-void InitNoShading(void)
-{
+  // disable lighting by default (we enable it for each particular
+  // case in the drawing routines)
   glDisable(GL_LIGHTING);
 }
 

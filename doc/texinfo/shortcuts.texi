@@ -85,10 +85,10 @@ hide/show big moving axes
 hide/show all post-processing scales
 
 @item Alt+c
-alternate between predefined color schemes
+loop through predefined color schemes
 
 @item Alt+d
-alternate between mesh wire frame, hidden lines and shading modes
+change mesh display mode (solid/wireframe)
 
 @item Shift+d
 decrease animation delay
@@ -97,7 +97,7 @@ decrease animation delay
 increase animation delay
 
 @item Alt+f
-toggle redraw mode (fast/full)
+change redraw mode (fast/full)
 
 @item Alt+h
 hide/show all post-processing views
@@ -109,10 +109,10 @@ hide/show geometry lines
 hide/show mesh lines
 
 @item Alt+m
-toggle visibility of all mesh entities
+change visibility of all mesh entities
 
 @item Alt+o
-change projection mode
+change projection mode (ortho/perspective)
 
 @item Alt+p
 hide/show geometry points
@@ -127,13 +127,16 @@ hide/show geometry surfaces
 hide/show mesh surfaces
 
 @item Alt+t
-alternate intervals mode for visible post-processing views
+loop through interval modes for all post-processing views
 
 @item Alt+v
 hide/show geometry volumes
 
 @item Alt+Shift+v
 hide/show mesh volumes
+
+@item Alt+w
+enable/disable all lighting
 
 @item Alt+x
 set X view
@@ -145,15 +148,15 @@ set Y view
 set Z view
 
 @item Left arrow
-previous time step
+go to previous time step
 
 @item Right arrow
-next time step
+go to next time step
 
 @item Up arrow
-previous view
+make previous view visible
 
 @item Down arrow
-next view
+make next view visible
 
 @end table

@@ -1,9 +1,4 @@
 @ftable @code
-@item Geometry.Aspect
-Not used@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Geometry.AutoCoherence
 Should all duplicate entities be automatically removed?@*
 Default value: @code{1}@*
@@ -32,6 +27,11 @@ Saved in: @code{General.OptionsFileName}
 @item Geometry.Highlight
 Not used@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.Light
+Enable lighting for the geometry@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Lines

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.134 2004-02-07 01:28:50 geuzaine Exp $
+// $Id: Options.cpp,v 1.135 2004-02-20 17:57:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2214,6 +2214,62 @@ double opt_general_alpha_blending(OPT_ARGS_NUM)
   return CTX.alpha;
 }
 
+double opt_general_vector_type(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.vector_type = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)){
+    switch (CTX.vector_type) {
+    case DRAW_POST_SEGMENT:
+      WID->gen_choice[0]->value(0);
+      break;
+    case DRAW_POST_ARROW:
+      WID->gen_choice[0]->value(1);
+      break;
+    case DRAW_POST_PYRAMID:
+      WID->gen_choice[0]->value(2);
+      break;
+    case DRAW_POST_ARROW3D:
+    default:
+      WID->gen_choice[0]->value(3);
+      break;
+    }
+  }
+#endif
+  return CTX.vector_type;
+}
+
+double opt_general_arrow_head_radius(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    if(val < 0.) val = 0.;
+    if(val > 1.) val = 1.;
+    CTX.arrow_rel_head_radius = val;
+  }
+  return CTX.arrow_rel_head_radius;
+}
+
+double opt_general_arrow_stem_length(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    if(val < 0.) val = 0.;
+    if(val > 1.) val = 1.;
+    CTX.arrow_rel_stem_length = val;
+  }
+  return CTX.arrow_rel_stem_length;
+}
+
+double opt_general_arrow_stem_radius(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    if(val < 0.) val = 0.;
+    if(val > 1.) val = 1.;
+    CTX.arrow_rel_stem_radius = val;
+  }
+  return CTX.arrow_rel_stem_radius;
+}
+
 double opt_general_color_scheme(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -2856,29 +2912,16 @@ double opt_geometry_line_type(OPT_ARGS_NUM)
   return CTX.geom.line_type;
 }
 
-double opt_geometry_aspect(OPT_ARGS_NUM)
+double opt_geometry_light(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) {
-    switch ((int)val) {
-    case 1:
-      CTX.geom.hidden = 1;
-      CTX.geom.shade = 0;
-      break;
-    case 2:
-      CTX.geom.hidden = 1;
-      CTX.geom.shade = 1;
-      break;
-    default:
-      CTX.geom.hidden = CTX.geom.shade = 0;
-      break;
-    }
+  if(action & GMSH_SET)
+    CTX.geom.light = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)) {
+    WID->geo_butt[9]->value(CTX.geom.light);
   }
-  if(CTX.geom.hidden && !CTX.geom.shade)
-    return 1;
-  else if(CTX.geom.hidden && CTX.geom.shade)
-    return 2;
-  else
-    return 0;
+#endif
+  return CTX.geom.light;
 }
 
 double opt_geometry_highlight(OPT_ARGS_NUM)
@@ -3236,37 +3279,28 @@ double opt_mesh_line_type(OPT_ARGS_NUM)
   return CTX.mesh.line_type;
 }
 
-double opt_mesh_aspect(OPT_ARGS_NUM)
+double opt_mesh_solid(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    switch ((int)val) {
-    case 1:
-      CTX.mesh.hidden = 1;
-      CTX.mesh.shade = 0;
-      break;
-    case 2:
-      CTX.mesh.hidden = 1;
-      CTX.mesh.shade = 1;
-      break;
-    default:
-      CTX.mesh.hidden = CTX.mesh.shade = 0;
-      break;
-    }
+    CTX.mesh.solid = (int)val;
     CTX.mesh.changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI)) {
-    WID->mesh_butt[14]->value(!CTX.mesh.hidden && !CTX.mesh.shade);
-    WID->mesh_butt[15]->value(CTX.mesh.hidden && !CTX.mesh.shade);
-    WID->mesh_butt[16]->value(CTX.mesh.hidden && CTX.mesh.shade);
-  }
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[14]->value(CTX.mesh.solid);
 #endif
-  if(CTX.mesh.hidden && !CTX.mesh.shade)
-    return 1;
-  else if(CTX.mesh.hidden && CTX.mesh.shade)
-    return 2;
-  else
-    return 0;
+  return CTX.mesh.solid;
+}
+
+double opt_mesh_light(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.light = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[15]->value(CTX.mesh.light);
+#endif
+  return CTX.mesh.light;
 }
 
 double opt_mesh_format(OPT_ARGS_NUM)
@@ -3903,6 +3937,42 @@ double opt_view_arrow_size(OPT_ARGS_NUM)
   return v->ArrowSize;
 }
 
+double opt_view_arrow_head_radius(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET){
+    if(val < 0.) val = 0.;
+    if(val > 1.) val = 1.;
+    v->ArrowRelHeadRadius = val;
+    v->Changed = 1;
+  }
+  return v->ArrowRelHeadRadius;
+}
+
+double opt_view_arrow_stem_length(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET){
+    if(val < 0.) val = 0.;
+    if(val > 1.) val = 1.;
+    v->ArrowRelStemLength = val;
+    v->Changed = 1;
+  }
+  return v->ArrowRelStemLength;
+}
+
+double opt_view_arrow_stem_radius(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET){
+    if(val < 0.) val = 0.;
+    if(val > 1.) val = 1.;
+    v->ArrowRelStemRadius = val;
+    v->Changed = 1;
+  }
+  return v->ArrowRelStemRadius;
+}
+
 double opt_view_displacement_factor(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
@@ -4518,11 +4588,12 @@ double opt_view_vector_type(OPT_ARGS_NUM)
     case DRAW_POST_PYRAMID:
       WID->view_choice[2]->value(2);
       break;
-    case DRAW_POST_CONE:
-      WID->view_choice[2]->value(3);
-      break;
     case DRAW_POST_DISPLACEMENT:
       WID->view_choice[2]->value(4);
+      break;
+    case DRAW_POST_ARROW3D:
+    default:
+      WID->view_choice[2]->value(3);
       break;
     }
   }

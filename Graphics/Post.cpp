@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.51 2004-02-07 01:40:20 geuzaine Exp $
+// $Id: Post.cpp,v 1.52 2004-02-20 17:58:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -70,7 +70,6 @@ double GiveValueFromIndex_DoubleLog(double ValMin, double ValMax, int NbIso,
   return pow(10.,
              log10(ValMin) + Iso2 * (log10(ValMax) -
                                      log10(ValMin)) / (NbIso2 - 1.));
-
 }
 
 // Give Index From Value
@@ -468,11 +467,6 @@ void Draw_Post(void)
         glLineWidth(v->LineWidth);
         gl2psLineWidth(v->LineWidth * CTX.print.eps_line_width_factor);
 
-        if(v->Light)
-          InitShading();
-        else
-          InitNoShading();
-
         if(v->ShowElement)
           glEnable(GL_POLYGON_OFFSET_FILL);
 
@@ -624,8 +618,4 @@ void Draw_Post(void)
     }
 
   }
-
-  // go back to default shading for the scale
-  InitNoShading();
-
 }

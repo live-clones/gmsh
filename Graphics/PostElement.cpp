@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.21 2004-02-07 01:40:20 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.22 2004-02-20 17:58:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -55,16 +55,13 @@ void Draw_ElementBoundary(int type, Post_View * View, double *X, double *Y,
   int k;
   double xx[8], yy[8], zz[8];
 
-  if(View->Light)
-    glDisable(GL_LIGHTING);
-
   glColor4ubv((GLubyte *) & CTX.color.fg);
   switch (type) {
   case POINT:
-    Draw_Point(View->PointType, View->PointSize, X, Y, Z, Raise);
+    Draw_Point(View->PointType, View->PointSize, X, Y, Z, Raise, View->Light);
     break;
   case LINE:
-    Draw_Line(0, View->LineWidth, X, Y, Z, Raise);
+    Draw_Line(0, View->LineWidth, X, Y, Z, Raise, View->Light);
     break;
   case TRIANGLE:
     glBegin(GL_LINE_LOOP);
@@ -185,9 +182,6 @@ void Draw_ElementBoundary(int type, Post_View * View, double *X, double *Y,
     glEnd();
     break;
   }
-
-  if(View->Light)
-    glEnable(GL_LIGHTING);
 }
 
 void SaturateValues(int saturate, double min, double max,
@@ -269,7 +263,7 @@ void Draw_ScalarPoint(Post_View * View, int preproNormals,
       Draw_String(Num);
     }
     else
-      Draw_Point(View->PointType, View->PointSize, X, Y, Z, Raise);
+      Draw_Point(View->PointType, View->PointSize, X, Y, Z, Raise, View->Light);
   }
 }
 
@@ -326,7 +320,7 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
         if(View->LineType) {
           // not perfect...
           Palette2(View, ValMin, ValMax, Val[0]);
-          Draw_Line(View->LineType, View->LineWidth, X, Y, Z, Raise);
+          Draw_Line(View->LineType, View->LineWidth, X, Y, Z, Raise, View->Light);
         }
         else {
           glBegin(GL_LINES);
@@ -355,7 +349,7 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
           if(nb == 2) {
             for(i = 0; i < 2; i++)
               RaiseFill(i, value[i], ValMin, Raise);
-            Draw_Line(View->LineType, View->LineWidth, Xp, Yp, Zp, Raise);
+            Draw_Line(View->LineType, View->LineWidth, Xp, Yp, Zp, Raise, View->Light);
           }
         }
         else {
@@ -363,14 +357,13 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
           CutLine0D(X, Y, Z, &Val[0], thev, Xp, Yp, Zp, &nb);
           if(nb) {
             RaiseFill(0, thev, ValMin, Raise);
-            Draw_Point(View->PointType, View->PointSize, Xp, Yp, Zp, Raise);
+            Draw_Point(View->PointType, View->PointSize, Xp, Yp, Zp, Raise, View->Light);
           }
         }
       }
     }
 
   }
-
 }
 
 void Draw_ScalarTriangle(Post_View * View, int preproNormals,
@@ -475,6 +468,8 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
   }
   else {
 
+    if(View->Light) glEnable(GL_LIGHTING);
+
     if(View->IntervalsType == DRAW_POST_CONTINUOUS) {
       if(Val[0] >= ValMin && Val[0] <= ValMax &&
          Val[1] >= ValMin && Val[1] <= ValMax &&
@@ -533,14 +528,14 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
           if(nb == 2) {
             for(i = 0; i < 2; i++)
               RaiseFill(i, thev, ValMin, Raise);
-            Draw_Line(View->LineType, View->LineWidth, Xp, Yp, Zp, Raise);
+            Draw_Line(View->LineType, View->LineWidth, Xp, Yp, Zp, Raise, View->Light);
           }
         }
       }
     }
-
+    
+    glDisable(GL_LIGHTING);
   }
-
 }
 
 void Draw_ScalarTetrahedron(Post_View * View, int preproNormals,
@@ -605,7 +600,6 @@ void Draw_ScalarTetrahedron(Post_View * View, int preproNormals,
     }
 
   }
-
 }
 
 void Draw_ScalarQuadrangle(Post_View * View, int preproNormals,
@@ -840,7 +834,7 @@ void Draw_VectorElement(int type, Post_View * View,
             YY[1] = Y[1] + fact * dy2;
             ZZ[0] = Z[0] + fact * dz;
             ZZ[1] = Z[1] + fact * dz2;
-            Draw_Line(View->LineType, View->LineWidth, XX, YY, ZZ, Raise);
+            Draw_Line(View->LineType, View->LineWidth, XX, YY, ZZ, Raise, View->Light);
           }
         }
         else {
@@ -929,8 +923,9 @@ void Draw_VectorElement(int type, Post_View * View,
         }
         RaiseFill(0, dd, ValMin, Raise);
         Draw_Vector(View->VectorType, View->IntervalsType != DRAW_POST_ISO,
-                    xc, yc, zc, fact * dd, fact * dx, fact * dy, fact * dz,
-                    Raise);
+		    View->ArrowRelHeadRadius, View->ArrowRelStemLength,
+		    View->ArrowRelStemRadius, xc, yc, zc, 
+		    fact * dx, fact * dy, fact * dz, Raise, View->Light);
       }
     }
   }
@@ -951,13 +946,13 @@ void Draw_VectorElement(int type, Post_View * View,
         }
         RaiseFill(0, d[k], ValMin, Raise);
         Draw_Vector(View->VectorType, View->IntervalsType != DRAW_POST_ISO,
-                    X[k], Y[k], Z[k],
-                    fact * d[k], fact * Val[k][0], fact * Val[k][1],
-                    fact * Val[k][2], Raise);
+		    View->ArrowRelHeadRadius, View->ArrowRelStemLength,
+		    View->ArrowRelStemRadius, X[k], Y[k], Z[k], 
+		    fact * Val[k][0], fact * Val[k][1], fact * Val[k][2], 
+		    Raise, View->Light);
       }
     }
   }
-
 }
 
 #define ARGS Post_View *View, 					\
@@ -1078,7 +1073,6 @@ void Draw_TensorElement(int type, Post_View * View,
     Draw_ScalarPyramid(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
     break;
   }
-
 }
 
 #define ARGS Post_View *View, 					\

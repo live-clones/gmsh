@@ -133,6 +133,10 @@ public :
   int color_scheme ;          // general color scheme
   int quadric_subdivisions;   // nb of subdivisions for gluQuadrics (spheres/cylinders)
   int visibility_mode ;       // VIS_GEOM, VIS_MESH, ...
+  int vector_type;            // default vector display type (for normals, etc.)
+  double arrow_rel_head_radius;  // relative radius of arrow head
+  double arrow_rel_stem_radius;  // relative radius of arrow stem
+  double arrow_rel_stem_length;  // relative length of arrow stem
 
   // geometry options 
   struct{
@@ -141,7 +145,7 @@ public :
     int points_num, lines_num, surfaces_num, volumes_num;
     double point_size, line_width, point_sel_size, line_sel_width;
     int point_type, line_type; // flat or 3D
-    int hidden, shade;
+    int light;
     int highlight;
     int level, old_circle, circle_points, circle_warning;
     int extrude_spline_points, old_newreg;
@@ -164,7 +168,7 @@ public :
     double gamma_inf, gamma_sup, radius_inf, radius_sup;
     double scaling_factor, lc_factor, rand_factor;
     int dual, interactive;
-    int hidden, shade;
+    int solid, light;
     int format, nb_smoothing, algo, order;
     int point_insertion, speed_max, min_circ_points, constrained_bgmesh;
     int histogram, initial_only;

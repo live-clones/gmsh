@@ -49,6 +49,21 @@ Enable alpha blending (transparency) in post-processing views@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.ArrowHeadRadius
+Relative radius of arrow head@*
+Default value: @code{0.12}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.ArrowStemLength
+Relative length of arrow stem@*
+Default value: @code{0.56}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.ArrowStemRadius
+Relative radius of arrow stem@*
+Default value: @code{0.02}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.Axes
 Display the axes linked to the model@*
 Default value: @code{1}@*
@@ -456,7 +471,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.QuadricSubdivisions
 Number of subdivisions used to draw points or lines as spheres or cylinders@*
-Default value: @code{10}@*
+Default value: @code{8}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.RotationX
@@ -613,6 +628,11 @@ Saved in: @code{-}
 Z-axis translation (in model units)@*
 Default value: @code{0}@*
 Saved in: @code{-}
+
+@item General.VectorType
+Default vector display type (for normals, etc.)@*
+Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
 
 @item General.Verbosity
 Level of information printed during processing (0=no information)@*

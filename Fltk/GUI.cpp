@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.270 2004-02-07 01:39:37 geuzaine Exp $
+// $Id: GUI.cpp,v 1.271 2004-02-20 17:57:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -544,8 +544,19 @@ int GUI::global_shortcuts(int event)
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'd')) {
-    opt_mesh_aspect(0, GMSH_SET | GMSH_GUI,
-                    opt_mesh_aspect(0, GMSH_GET, 0) + 1);
+    opt_mesh_solid(0, GMSH_SET | GMSH_GUI,
+		   !opt_mesh_solid(0, GMSH_GET, 0));
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT + 'w')) {
+    opt_geometry_light(0, GMSH_SET | GMSH_GUI,
+		       !opt_geometry_light(0, GMSH_GET, 0));
+    opt_mesh_light(0, GMSH_SET | GMSH_GUI,
+		   !opt_mesh_light(0, GMSH_GET, 0));
+    for(i = 0; i < List_Nbr(CTX.post.list); i++)
+      opt_view_light(i, GMSH_SET | GMSH_GUI,
+		     !opt_view_light(i, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
@@ -1539,6 +1550,19 @@ void GUI::create_option_window()
       for(i = 6; i <= 7; i++) {
         gen_value[i]->align(FL_ALIGN_RIGHT);
       }
+
+      static Fl_Menu_Item menu_genvectype[] = {
+	{"Line", 0, 0, 0},
+	{"Arrow", 0, 0, 0},
+	{"Pyramid", 0, 0, 0},
+	{"3D Arrow", 0, 0, 0},
+	{0}
+      };
+      gen_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 5 * BH, IW, BH, "Vector display");
+      gen_choice[0]->menu(menu_genvectype);
+      gen_choice[0]->align(FL_ALIGN_RIGHT);
+      gen_choice[0]->callback(set_changed_cb, 0);
+
       o->end();
     }
     {
@@ -1639,25 +1663,32 @@ void GUI::create_option_window()
     {
       Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Aspect");
       o->hide();
-      geo_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 1 * BH, IW, BH, "Point display");
+
+      geo_butt[9] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable lighting");
+      geo_butt[9]->type(FL_TOGGLE_BUTTON);
+      geo_butt[9]->down_box(TOGGLE_BOX);
+      geo_butt[9]->selection_color(TOGGLE_COLOR);
+      geo_butt[9]->callback(set_changed_cb, 0);
+
+      geo_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 2 * BH, IW, BH, "Point display");
       geo_choice[0]->menu(menu_point_display);
       geo_choice[0]->align(FL_ALIGN_RIGHT);
 
-      geo_value[3] = new Fl_Value_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Point size");
+      geo_value[3] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Point size");
       geo_value[3]->minimum(0.1);
       geo_value[3]->maximum(50);
       geo_value[3]->step(0.1);
 
-      geo_value[5] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Highlighted point size");
+      geo_value[5] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Highlighted point size");
       geo_value[5]->minimum(0.1);
       geo_value[5]->maximum(50);
       geo_value[5]->step(0.1);
 
-      geo_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display");
+      geo_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 5 * BH, IW, BH, "Line display");
       geo_choice[1]->menu(menu_line_display);
       geo_choice[1]->align(FL_ALIGN_RIGHT);
 
-      geo_value[4] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width");
+      geo_value[4] = new Fl_Value_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Line width");
       geo_value[4]->minimum(0.1);
       geo_value[4]->maximum(50);
       geo_value[4]->step(0.1);
@@ -1805,23 +1836,23 @@ void GUI::create_option_window()
     {
       Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Aspect");
       o->hide();
-      mesh_butt[14] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Wireframe");
-      mesh_butt[15] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Hidden lines");
-      mesh_butt[16] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW, BH, "Solid");
-      for(i = 14; i < 17; i++) {
-        mesh_butt[i]->type(FL_RADIO_BUTTON);
-        mesh_butt[i]->down_box(RADIO_BOX);
+      mesh_butt[14] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Draw as solid (hidden surfaces)");
+      mesh_butt[15] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Enable lighting");
+      for(i = 14; i < 16; i++) {
+        mesh_butt[i]->type(FL_TOGGLE_BUTTON);
+        mesh_butt[i]->down_box(TOGGLE_BOX);
+	mesh_butt[i]->selection_color(TOGGLE_COLOR);
         mesh_butt[i]->selection_color(RADIO_COLOR);
       }
-      mesh_value[9] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Explode elements");
+      mesh_value[9] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Explode elements");
       mesh_value[9]->minimum(0);
       mesh_value[9]->maximum(1);
       mesh_value[9]->step(0.01);
-      mesh_value[10] = new Fl_Value_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Point size");
+      mesh_value[10] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Point size");
       mesh_value[10]->minimum(0.1);
       mesh_value[10]->maximum(50);
       mesh_value[10]->step(0.1);
-      mesh_value[11] = new Fl_Value_Input(2 * WB, 2 * WB + 8 * BH, IW, BH, "Line width");
+      mesh_value[11] = new Fl_Value_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Line width");
       mesh_value[11]->minimum(0.1);
       mesh_value[11]->maximum(50);
       mesh_value[11]->step(0.1);
@@ -1829,13 +1860,14 @@ void GUI::create_option_window()
         mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
 
-      mesh_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 5 * BH, IW, BH, "Point display");
+      mesh_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 4 * BH, IW, BH, "Point display");
       mesh_choice[0]->menu(menu_point_display);
       mesh_choice[0]->align(FL_ALIGN_RIGHT);
 
-      mesh_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 7 * BH, IW, BH, "Line display");
+      mesh_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 6 * BH, IW, BH, "Line display");
       mesh_choice[1]->menu(menu_line_display);
       mesh_choice[1]->align(FL_ALIGN_RIGHT);
+      mesh_choice[1]->deactivate(); // don't give false hopes, as it's not used anywhere right now
 
       o->end();
     }
@@ -2206,7 +2238,7 @@ void GUI::create_option_window()
           {"Line", 0, 0, 0},
           {"Arrow", 0, 0, 0},
           {"Pyramid", 0, 0, 0},
-          {"Cone", 0, 0, 0},
+          {"3D Arrow", 0, 0, 0},
           {"Displacement", 0, 0, 0},
           {0}
         };

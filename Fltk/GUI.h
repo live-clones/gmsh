@@ -160,6 +160,7 @@ public:
   Fl_Value_Input   *gen_value[20] ;
   Fl_Button        *gen_col[50] ;
   Fl_Input         *gen_input[20] ;
+  Fl_Choice        *gen_choice[20] ;
 
   // geometry options
   Fl_Window        *geo_window ;
