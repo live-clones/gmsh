@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.44 2003-03-28 16:50:43 geuzaine Exp $
+// $Id: Draw.cpp,v 1.45 2003-03-28 18:24:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -141,8 +141,9 @@ void Orthogonalize(int x, int y)
   // applications (I guess they normalize the scene to fit in a 1x1x1
   // box or something...). Here, we set up a large box around the
   // object, so that if we zoom a lot the resolution of the depth
-  // buffer might become insufficient (at least with Mesa on Linux; on
-  // WinXP everyhting seems to be fine).
+  // buffer might become insufficient (at least with the "software"
+  // Mesa on Linux; with hardware acceleration or on Windows
+  // everyhting seems to be fine).
   if(CTX.ortho) {
     double maxz = MAX(fabs(CTX.min[2]), fabs(CTX.max[2]));
     if(maxz < CTX.lc) maxz = CTX.lc;
@@ -159,7 +160,6 @@ void Orthogonalize(int x, int y)
     glTranslated(0.0, 0.0, -10 * CTX.lc);
     glScaled(10., 10., 10.);
   }
-
 
 }
 
