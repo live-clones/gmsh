@@ -1,4 +1,4 @@
-/* $Id: 3D_Mesh.cpp,v 1.9 2000-11-28 12:59:24 geuzaine Exp $ */
+/* $Id: 3D_Mesh.cpp,v 1.10 2000-11-28 17:18:33 geuzaine Exp $ */
 /*
  
   J-F Remacle 1995
@@ -158,7 +158,7 @@ int Pt_In_Circum (Simplex * s, Vertex * v){
   eps = fabs (d1 - d2) / (d1 + d2);
 
   if (eps < 1.e-12){
-    return (1); 
+    return (0); // return 1 ? 0 ?
   }
       
   if (d2 < d1)
@@ -535,7 +535,7 @@ bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
       List_Reset (Simplexes_New);
       Tree_Delete (Sim_Sur_Le_Bord);
       Tree_Delete (Tsd);
-      printf(" Aie Aie Aie volume changed %g -> %g\n",volumeold,volumenew);
+      //printf(" Aie Aie Aie volume changed %g -> %g\n",volumeold,volumenew);
       return false;
     }
   }
@@ -566,7 +566,8 @@ bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
 }
 
 double rand_sign(){
-  return (rand()/RAND_MAX < 0.5)?-1.0:1.0;
+  double d = ((double)rand()/(double)RAND_MAX) ;
+  return (d < 0.5)?-1.0:1.0;
 }
 
 void Convex_Hull_Mesh (List_T * Points, Mesh * m){
@@ -606,20 +607,23 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
     if (!THES){
       Msg(WARNING, "Vertex (%g,%g,%g) in no Simplex",
           THEV->Pos.X,THEV->Pos.Y,THEV->Pos.Z); 
-      THEV->Pos.X += 10 * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
-      THEV->Pos.Y += 10 * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
-      THEV->Pos.Z += 10 * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
+      THEV->Pos.X += 10 * CTX.mesh.rand_factor * LC3D * (double)rand()/(double)RAND_MAX;
+      THEV->Pos.Y += 10 * CTX.mesh.rand_factor * LC3D * (double)rand()/(double)RAND_MAX;
+      THEV->Pos.Z += 10 * CTX.mesh.rand_factor * LC3D * (double)rand()/(double)RAND_MAX;
       Tree_Action (m->Simplexes, Action_First_Simplexes);
     }
     bool  ca_marche = Bowyer_Watson (m, THEV, THES, 1);
     int count = 0;
     while(!ca_marche){
-      Msg(INFOS, "Unable to Add Point %d (%g,%g,%g)",
-	  THEV->Num, THEV->Pos.X,THEV->Pos.Y,THEV->Pos.Z );
+      //Msg(INFOS, "Unable to Add Point %d (%g,%g,%g)",
+      //	  THEV->Num, THEV->Pos.X,THEV->Pos.Y,THEV->Pos.Z );
       count ++;
-      double dx = rand_sign() * 10 * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
-      double dy = rand_sign() * 10 * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
-      double dz = rand_sign() * 10 * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
+      double dx = rand_sign() * 1000 * CTX.mesh.rand_factor * LC3D *
+	(double)rand()/(double)RAND_MAX;
+      double dy = rand_sign() * 1000 * CTX.mesh.rand_factor * LC3D *
+	(double)rand()/(double)RAND_MAX;
+      double dz = rand_sign() * 1000 * CTX.mesh.rand_factor * LC3D *
+	(double)rand()/(double)RAND_MAX;
       THEV->Pos.X += dx;
       THEV->Pos.Y += dy;
       THEV->Pos.Z += dz;

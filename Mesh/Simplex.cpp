@@ -1,4 +1,4 @@
-/* $Id: Simplex.cpp,v 1.8 2000-11-28 12:59:24 geuzaine Exp $ */
+/* $Id: Simplex.cpp,v 1.9 2000-11-28 17:18:33 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -120,7 +120,7 @@ int Simplex::Pt_In_Ellipsis (Vertex * v, double Metric[3][3]){
   eps = fabs (d1 - d2) / (d1 + d2);
   if (eps < 1.e-12)
     {
-      return (1);
+      return (1); // Ou Zero ???
     }
   if (d2 < d1)
     return 1;
@@ -162,7 +162,9 @@ void Simplex::center_tet (double X[4], double Y[4], double Z[4], double res[3]){
   mat[2][2] = Z[3] - Z[2];
 
   if (!sys3x3 (mat, b, res, &dum)){
-    Msg(WARNING, "Coplanar Points in CircumCircle"); 
+    Msg(WARNING, "Coplanar Points in Circum Sphere"); 
+    Msg(WARNING, "(%g,%g,%g) (%g,%g,%g) (%g,%g,%g) (%g,%g,%g)", 
+	X[0],Y[0],Z[0],  X[1],Y[1],Z[1], X[2],Y[2],Z[2], X[3],Y[3],Z[3] );
     res[0] = res[1] = res[2] = 10.0e10;
   }
   

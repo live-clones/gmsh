@@ -1,4 +1,4 @@
-/* $Id: Geo.cpp,v 1.5 2000-11-28 14:42:42 geuzaine Exp $ */
+/* $Id: Geo.cpp,v 1.6 2000-11-28 17:18:30 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -394,7 +394,7 @@ void add_multvol(List_T *list, char *fich){
 
   if((i= recognize_zone(MSH_VOLUME,list)))return;
   
-  sprintf(text,"Complex Volume(%d) = {",NEWREG());
+  sprintf(text,"Volume(%d) = {",NEWREG());
   for(i=0;i<List_Nbr(list);i++){
     List_Read(list,i,&seg);
     if(i != List_Nbr(list)-1)
