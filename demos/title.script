@@ -1,6 +1,6 @@
 // This scripts adds a title using Plugin(Annotate)
 
-// create an exmpty view
+// create an empty view
 View "Title" {};
 
 num = PostProcessing.NbViews-1;
