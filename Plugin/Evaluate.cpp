@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.15 2005-01-09 04:47:58 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.16 2005-01-12 19:38:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -93,9 +93,11 @@ void GMSH_EvaluatePlugin::getInfos(char *author, char *copyright,
 	 "\n"
 	 "- the symbol w, to retrieve the `Component'-th\n"
 	 "component of the field in `ExternalView' at the\n"
-	 "`ExternalTimeStep'-th time step. If `ExternalView'\n"
-	 "and `iView' are not based on the same spatial\n"
-	 "grid, `ExternalView' is interpolated onto `iView';\n"
+	 "`ExternalTimeStep'-th time step. `ExternalView' and\n"
+	 "`iView' must be of the same type (scalar, vector\n"
+	 "or tensor); if `ExternalView' and `iView' are not\n"
+	 "based on the same spatial grid, `ExternalView' is\n"
+	 "interpolated onto `iView';\n"
 	 "\n"
 	 "- the symbols w0, w1, w2, ..., w8, to retrieve each\n"
 	 "component of the field in `ExternalView' at the\n"
