@@ -6,7 +6,7 @@ oldh = General.GraphicsHeight;
 all = GetValue("Animate one view at a time, or all views together (0=one, 1=all)?", 1) ;
 General.GraphicsWidth = GetValue("Width of animation?", 320); 
 General.GraphicsHeight = GetValue("Height of animation?", 240) ;
-format = GetValue("Animation format? (0=mpeg, 1=gif)?", 1) ;
+format = GetValue("Animation format? (0=mpeg, 1=gif)?", 0) ;
 MPEG = 0;
 GIF = 1;
 
@@ -26,8 +26,8 @@ If(all)
     If(format == MPEG)
       Print Sprintf("/tmp/tmp%03g.jpg", index);
     EndIf
-    For j In {1:PostProcessing.NbViews}
-      View[j-1].TimeStep++;
+    For i In {1:PostProcessing.NbViews}
+      View[i-1].TimeStep++;
     EndFor
   EndFor
 EndIf
@@ -81,7 +81,7 @@ If(format == MPEG)
   System 'echo "REFERENCE_FRAME  DECODED"         >> /tmp/tmp.par' ;
   System 'echo "OUTPUT      /tmp/animation.mpg"   >> /tmp/tmp.par' ;
   System 'echo "INPUT_CONVERT    *"               >> /tmp/tmp.par' ;
-  System 'echo "INPUT_DIR        /tmp"               >> /tmp/tmp.par' ;
+  System 'echo "INPUT_DIR        /tmp"            >> /tmp/tmp.par' ;
   System 'echo "INPUT"                            >> /tmp/tmp.par' ;
   System Sprintf('echo "tmp*.jpg [001-%03g]" >> /tmp/tmp.par', index) ;
   System 'echo "END_INPUT"                        >> /tmp/tmp.par' ;
