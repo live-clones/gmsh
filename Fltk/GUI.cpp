@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.155 2002-02-22 16:44:09 geuzaine Exp $
+// $Id: GUI.cpp,v 1.156 2002-02-22 17:40:58 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -506,7 +506,19 @@ int GUI::global_shortcuts(int event){
     show = !show;
     return 1;
   }
-  else if(Fl::test_shortcut(FL_Left)){
+  else if(arrow_shortcuts()){
+    return 1;
+  }
+
+  return 0;
+}
+
+// Test the arrow shortcuts (this is not in the global_shortcuts)
+// since it is used elsewhere (where we want to override widget
+// navigation: necessary since FLTK>=1.1)
+
+int GUI::arrow_shortcuts(){
+  if(Fl::test_shortcut(FL_Left)){
     ManualPlay(1,-1);
     return 1;
   }
@@ -522,8 +534,6 @@ int GUI::global_shortcuts(int event){
     ManualPlay(0,1);
     return 1;
   }
-  
-
   return 0;
 }
 

@@ -234,6 +234,7 @@ public:
   void set_title(char *str);
   void add_handler();
   int  global_shortcuts(int event);
+  int  arrow_shortcuts();
   void reset_visibility();
   int  selection, try_selection, quit_selection, end_selection;
 

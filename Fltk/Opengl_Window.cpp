@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.19 2001-11-19 14:24:02 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.20 2002-02-22 17:40:58 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -113,6 +113,23 @@ int Opengl_Window::handle(int event) {
   GLuint  ii[SELECTION_BUFFER_SIZE], jj[SELECTION_BUFFER_SIZE];
 
   switch (event) {
+
+  case FL_ENTER : 
+    take_focus(); //force keyboard focus on the Opengl_Window
+    return 1;
+
+  case FL_LEAVE :
+  case FL_FOCUS : 
+  case FL_UNFOCUS : 
+    return 1;
+
+  case FL_SHORTCUT :
+  case FL_KEYBOARD : 
+    // this overrides the default navigation
+    if(WID->arrow_shortcuts()){
+      return 1;
+    }
+    return Fl_Gl_Window::handle(event);
 
   case FL_PUSH:
     FirstClick = 1;
