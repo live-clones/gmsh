@@ -1,4 +1,4 @@
-/* $Id: Widgets.h,v 1.5 2000-11-25 23:10:37 geuzaine Exp $ */
+/* $Id: Widgets.h,v 1.6 2000-12-05 18:45:13 geuzaine Exp $ */
 #ifndef _WIDGETS_H_
 #define _WIDGETS_H_
 
@@ -124,7 +124,7 @@ typedef struct {
 
     Widget   miscDialog, miscRowCol ; 
     Widget   miscMiscFrame[2] ;
-    Widget     miscMiscCheck, miscMiscButt[5] ;
+    Widget     miscMiscCheck, miscMiscButt[6] ;
     Widget   miscColorSchemeFrame[2] ;
     Widget     miscColorSchemeFrameRowCol, miscColorSchemeScale ;
     Widget   miscProjFrame[2] ;

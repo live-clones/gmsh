@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.13 2000-12-05 15:23:59 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.14 2000-12-05 18:45:13 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1329,21 +1329,26 @@ void CreateWidgets_OD(Widgets_T *w){
   i=0;
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Enable Fast Redraw")); i++;
   XtSetArg(arg[i], XmNset, CTX.fast?True:False); i++;
-  w->OD.miscMiscButt[2] = XmCreateToggleButton(w->OD.miscMiscCheck, "ODmiscMiscButt3", arg, i);
+  w->OD.miscMiscButt[2] = XmCreateToggleButton(w->OD.miscMiscCheck, "ODmiscMiscButt2", arg, i);
   XtManageChild(w->OD.miscMiscButt[2]);
 
   i=0;
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Use Display Lists")); i++;
   XtSetArg(arg[i], XmNset, CTX.display_lists?True:False); i++;
-  w->OD.miscMiscButt[3] = XmCreateToggleButton(w->OD.miscMiscCheck, "ODmiscMiscButt4", arg, i);
+  w->OD.miscMiscButt[3] = XmCreateToggleButton(w->OD.miscMiscCheck, "ODmiscMiscButt3", arg, i);
   XtManageChild(w->OD.miscMiscButt[3]);
 
   i=0;
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Enable Alpha Blending")); i++;
   XtSetArg(arg[i], XmNset, CTX.alpha?True:False); i++;
-  w->OD.miscMiscButt[4] = XmCreateToggleButton(w->OD.miscMiscCheck, "ODmiscMiscButt2", arg, i);
+  w->OD.miscMiscButt[4] = XmCreateToggleButton(w->OD.miscMiscCheck, "ODmiscMiscButt4", arg, i);
   XtManageChild(w->OD.miscMiscButt[4]);
 
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Trackball Rotation Mode")); i++;
+  XtSetArg(arg[i], XmNset, CTX.useTrackball?True:False); i++;
+  w->OD.miscMiscButt[5] = XmCreateToggleButton(w->OD.miscMiscCheck, "ODmiscMiscButt5", arg, i);
+  XtManageChild(w->OD.miscMiscButt[5]);
 
   /* misc - colorscheme */
 
