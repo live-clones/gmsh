@@ -34,6 +34,7 @@ and/or post-processor.
 make distrib-unix
 make converters
 make doc-info
+strip bin/gmsh
 rm -rf CVS */CVS */*/CVS
 
 %install
