@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.302 2004-12-07 04:52:25 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.303 2004-12-09 03:20:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3911,8 +3911,11 @@ void view_options_ok_cb(CALLBACK_ARGS)
       // colorbar window
 
       if(force || (WID->view_colorbar_window->changed() && i != current)) {
-        ColorTable_Copy(&(*(Post_View **)List_Pointer(CTX.post.list, current))->CT);
-        ColorTable_Paste(&(*(Post_View **)List_Pointer(CTX.post.list, i))->CT);
+	Post_View *src = *(Post_View **)List_Pointer(CTX.post.list, current);
+	Post_View *dest = *(Post_View **)List_Pointer(CTX.post.list, i);
+        ColorTable_Copy(&src->CT);
+        ColorTable_Paste(&dest->CT);
+	dest->Changed = 1;
       }
     }
   }
