@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2004-02-07 01:40:34 geuzaine Exp $
+# $Id: Makefile,v 1.8 2004-03-25 07:55:51 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -29,12 +29,12 @@ pdf:
 	texi2pdf gmsh.texi 
 
 html:
-	./texi2html -init_file gmsh.t2h gmsh.texi
+	perl texi2html -init_file gmsh.t2h gmsh.texi
 	rm -f index.html
 	ln -s gmsh.html index.html
 
 html1:
-	./texi2html -prefix gmsh-full -init_file gmsh-full.t2h gmsh.texi
+	perl texi2html -prefix gmsh-full -init_file gmsh-full.t2h gmsh.texi
 
 html2:
 	makeinfo --html gmsh.texi
@@ -47,7 +47,7 @@ install-info:
 	install-info gmsh.info /usr/info/dir
 
 infoz: info
-	gtar zcvf gmsh-info.tgz gmsh.info*
+	tar zcvf gmsh-info.tgz gmsh.info*
 
 txt:
 	makeinfo --no-headers gmsh.texi |\

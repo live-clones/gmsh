@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2004-02-07 01:40:35 geuzaine Exp $
+# $Id: Makefile,v 1.4 2004-03-25 07:55:51 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -25,8 +25,8 @@ mysolver: mysolver.c GmshClient.c
 	${CXX} ${OPTIM} -o mysolver.exe mysolver.c GmshClient.c
 
 tgz:
-	gtar zcvf mysolver.tgz mysolver.c mysolver.opt GmshClient.c GmshClient.h
-	gtar zcvf myperlsolver.tgz myperlsolver.pl myperlsolver.opt GMSH_CLIENT.pm
+	tar zcvf mysolver.tgz mysolver.c mysolver.opt GmshClient.c GmshClient.h
+	tar zcvf myperlsolver.tgz myperlsolver.pl myperlsolver.opt GMSH_CLIENT.pm
 
 clean:
 	rm -f *.o *.exe
