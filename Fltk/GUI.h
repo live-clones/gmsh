@@ -169,6 +169,12 @@ public:
   Fl_Window        *context_mesh_window ;
   Fl_Input         *context_mesh_input[20] ;
 
+  // solver windows
+  int init_getdp_window;
+  Fl_Window        *getdp_window ;
+  Fl_Output        *getdp_value[50] ;
+  Fl_Choice        *getdp_choice[10] ;
+  Fl_Button        *getdp_butt[10] ;
 
   // the constructor
   GUI(int argc, char **argv);
@@ -187,6 +193,7 @@ public:
   void create_about_window();
   void create_geometry_context_window(int num);
   void create_mesh_context_window(int num);
+  void create_getdp_window();
 
   // general purpose interaction
   void run();

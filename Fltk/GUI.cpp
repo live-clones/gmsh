@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.63 2001-05-01 18:58:24 geuzaine Exp $
+// $Id: GUI.cpp,v 1.64 2001-05-03 00:09:42 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -246,6 +246,7 @@ Context_Item menu_mesh[] =
 
 Context_Item menu_solver[] = 
 { { "2Solver", NULL } ,
+  { "GetDP", (Fl_Callback *)getdp_cb } ,
   { NULL } };
 
 Context_Item menu_post[] = 
@@ -456,6 +457,7 @@ GUI::GUI(int argc, char **argv) {
   init_view_window = 0;
   init_geometry_context_window = 0;
   init_mesh_context_window = 0;
+  init_getdp_window = 0;
 
   if(strlen(CTX.display)) Fl::display(CTX.display);
 
@@ -494,6 +496,7 @@ GUI::GUI(int argc, char **argv) {
   create_view_options_window(-1);
   create_message_window();
   create_about_window();
+  create_getdp_window();
 
   // Draw the scene
   g_opengl_window->redraw();
@@ -717,9 +720,7 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
       m_popup_butt[i]->hide();
     }
     break;
-  case 2 : // solver contexts
-    break;
-  default : // geometry or mesh contexts
+  default : // geometry, mesh, solver contexts
     for(i=0 ; i < NB_BUTT_MAX ; i++){
       m_toggle_butt[i]->hide();
       m_popup_butt[i]->hide();
@@ -2333,6 +2334,98 @@ void GUI::create_mesh_context_window(int num){
       context_mesh_window->show();
     }
     
+  }
+}
+
+
+//************** Create the window for the getdp solver **************
+
+void GUI::create_getdp_window(){
+  int i;
+  static Fl_Group *g[10];
+
+  if(!init_getdp_window){
+    init_getdp_window = 1 ;
+
+    int width = 25*CTX.fontsize;
+    int height = 5*WB+9*BH  + WB;
+    
+    getdp_window = new Fl_Window(width,height);
+    getdp_window->box(WINDOW_BOX);
+    getdp_window->label("GetDP Solver");
+    { 
+      Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
+      { 
+	g[0] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "General");
+	g[0]->labelsize(CTX.fontsize);
+
+	getdp_value[0] = new Fl_Output(8*CTX.fontsize, 2*WB+1*BH, BW, BH, "Problem");
+	getdp_butt[0]  = new Fl_Button(8*CTX.fontsize+BW-2*BB-WB, 3*WB+2*BH, BB, BH, "Edit");
+	getdp_butt[0]->callback(getdp_file_edit_cb);
+	getdp_butt[1]  = new Fl_Button(8*CTX.fontsize+BW-BB, 3*WB+2*BH, BB, BH, "Choose");
+	getdp_butt[1]->callback(getdp_file_open_cb);
+
+	getdp_choice[0] = new Fl_Choice(8*CTX.fontsize, 4*WB+3*BH, BW, BH,"Resolution");
+	getdp_choice[1] = new Fl_Choice(8*CTX.fontsize, 5*WB+4*BH, BW, BH,"PostOperation");
+
+	getdp_value[1] = new Fl_Output(8*CTX.fontsize, 6*WB+5*BH, BW, BH, "Mesh");
+	getdp_butt[2]  = new Fl_Button(8*CTX.fontsize+BW-BB, 7*WB+6*BH, BB, BH, "Choose");
+	getdp_butt[2]->callback(getdp_choose_mesh_cb);
+
+	for(i=0 ; i<2 ; i++){
+	  getdp_value[i]->labelsize(CTX.fontsize);
+	  getdp_value[i]->textsize(CTX.fontsize);
+	  getdp_value[i]->type(FL_HORIZONTAL);
+	  getdp_value[i]->align(FL_ALIGN_LEFT);
+	  getdp_value[i]->value(0);
+	}
+
+	for(i=0 ; i<3 ; i++){
+	  getdp_butt[i]->labelsize(CTX.fontsize);
+	}
+
+	for(i=0 ; i<2 ; i++){
+	  getdp_choice[i]->textsize(CTX.fontsize);
+	  getdp_choice[i]->labelsize(CTX.fontsize);
+	}
+
+        g[0]->end();
+      }
+      o->end();
+    }
+
+    { 
+      Fl_Button* o = new Fl_Button(width-4*BB-4*WB, height-BH-WB, BB, BH, "Pre");
+      o->labelsize(CTX.fontsize);
+      o->callback(getdp_pre_cb);
+    }
+    { 
+      Fl_Button* o = new Fl_Button(width-3*BB-3*WB, height-BH-WB, BB, BH, "Cal");
+      o->labelsize(CTX.fontsize);
+      o->callback(getdp_cal_cb);
+    }
+    { 
+      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Post");
+      o->labelsize(CTX.fontsize);
+      o->callback(getdp_post_cb);
+    }
+    { 
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
+      o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)getdp_window);
+    }
+
+
+    if(CTX.center_windows)
+      getdp_window->position(m_window->x()+m_window->w()/2-width/2,
+			     m_window->y()+9*BH-height/2);
+    getdp_window->end();
+  }
+  else{
+    if(getdp_window->shown())
+      getdp_window->redraw();
+    else
+      getdp_window->show();
   }
 }
 

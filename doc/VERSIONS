@@ -1,7 +1,7 @@
-$Id: VERSIONS,v 1.11 2001-05-01 18:59:37 geuzaine Exp $
+$Id: VERSIONS,v 1.12 2001-05-03 00:09:42 geuzaine Exp $
 
 New in 1.19: Fixed seg. fault scalar simplex post-processing; new
-"Solver" menu; 
+"Solver" menu; Sockets; fixed small scale display problems;
 
 New in 1.18: Fixed many small bugs and incoherences in
 post-processing; fixed broken background mesh in 1D mesh generation.

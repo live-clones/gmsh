@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.94 2001-04-26 17:58:00 remacle Exp $
+# $Id: Makefile,v 1.95 2001-05-03 00:09:42 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -184,7 +184,7 @@ tag:
 	echo "#define GMSH_VERSION  $(GMSH_RELEASE)" >  Common/GmshVersion.h
 	echo "#define GMSH_DATE     \"`date`\""      >> Common/GmshVersion.h
 	echo "#define GMSH_HOST     \"`hostname`\""  >> Common/GmshVersion.h
-	echo "#define GMSH_PACKAGER \"`hostname`\""    >> Common/GmshVersion.h
+	echo "#define GMSH_PACKAGER \"`whoami`\""    >> Common/GmshVersion.h
 	echo "#define GMSH_OS       \"`uname -sr`\"" >> Common/GmshVersion.h
 
 initialtag:

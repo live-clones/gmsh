@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.46 2001-05-01 18:58:24 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.47 2001-05-03 00:09:42 geuzaine Exp $
 
 #include <map>
 #include "Gmsh.h"
@@ -1300,6 +1300,73 @@ void mesh_define_transfinite_volume_cb(CALLBACK_ARGS){
   WID->create_mesh_context_window(2);
   _add_transfinite(3);
 } 
+
+// Dynamic Solver Menus
+
+#include "Solvers.h"
+
+void getdp_cb(CALLBACK_ARGS){
+  static int first=1;
+  if(first){
+    first = 0;
+    strcpy(GetDP_Info.file,CTX.basefilename);
+    strcat(GetDP_Info.file,".pro");
+    strcpy(GetDP_Info.mesh,"");
+  }
+  WID->getdp_value[0]->value(GetDP_Info.file);
+  GetDP(GetDP_Info.file);
+  WID->create_getdp_window();
+}
+void getdp_file_open_cb(CALLBACK_ARGS){
+  char *newfile;
+  newfile = fl_file_chooser("Open Problem Definition File", "*", NULL);
+  if (newfile != NULL) strcpy(GetDP_Info.file,newfile); 
+  WID->getdp_value[0]->value(GetDP_Info.file);
+  GetDP(GetDP_Info.file);
+}
+void getdp_file_edit_cb(CALLBACK_ARGS){
+  Msg(WARNING, "Should lauch a file editor");
+}
+void getdp_choose_mesh_cb(CALLBACK_ARGS){
+  char *newfile;
+  newfile = fl_file_chooser("Open Mesh File", "*", NULL);
+  if (newfile != NULL) strcpy(GetDP_Info.mesh,newfile); 
+  WID->getdp_value[1]->value(GetDP_Info.mesh);
+}
+void getdp_pre_cb(CALLBACK_ARGS){
+  char arg[256];
+  if(strlen(GetDP_Info.mesh))
+    sprintf(arg, "%s -msh %s -pre %s", 
+	    GetDP_Info.file, GetDP_Info.mesh,
+	    GetDP_Info.res[WID->getdp_choice[0]->value()]);
+  else
+    sprintf(arg, "%s -pre %s", 
+	    GetDP_Info.file, 
+	    GetDP_Info.res[WID->getdp_choice[0]->value()]);
+
+  GetDP(arg);
+}
+void getdp_cal_cb(CALLBACK_ARGS){
+  char arg[256];
+  if(strlen(GetDP_Info.mesh))
+    sprintf(arg, "%s -msh %s -cal", GetDP_Info.file, GetDP_Info.mesh);
+  else
+    sprintf(arg, "%s -cal", GetDP_Info.file);
+  GetDP(arg);
+}
+void getdp_post_cb(CALLBACK_ARGS){
+  char arg[256];
+  if(strlen(GetDP_Info.mesh))
+    sprintf(arg, "%s -msh %s -bin -pos %s",
+	    GetDP_Info.file, GetDP_Info.mesh,
+	    GetDP_Info.postop[WID->getdp_choice[1]->value()]);
+  else
+    sprintf(arg, "%s -bin -pos %s",
+	    GetDP_Info.file,
+	    GetDP_Info.postop[WID->getdp_choice[1]->value()]);
+  GetDP(arg);
+}
+
 
 // Dynamic Post Menus
 

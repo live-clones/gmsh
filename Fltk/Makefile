@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2001-04-23 10:38:08 geuzaine Exp $
+# $Id: Makefile,v 1.17 2001-05-03 00:09:42 geuzaine Exp $
 #
 # Makefile for "libFltk.a"
 #
@@ -32,7 +32,9 @@ SRC = Main.cpp \
       Callbacks.cpp\
       Opengl.cpp\
       Opengl_Window.cpp\
-      Colorbar_Window.cpp
+      Colorbar_Window.cpp\
+      Socket.cpp\
+      Solvers.cpp
 
 
 OBJ = $(SRC:.cpp=.o)

@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.18 2001-04-22 18:13:02 geuzaine Exp $
+// $Id: Scale.cpp,v 1.19 2001-05-03 00:09:42 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -21,8 +21,8 @@ static XCharStruct  overall;
   if(overall.width > cv_w) cv_w=overall.width
 
 #elif _FLTK
-
-#define CHECK_W  cv_w=gl_width(label)
+static double overall ; 
+#define CHECK_W  overall=gl_width(label) ; if(overall > cv_w) cv_w=overall
 
 #else
 
