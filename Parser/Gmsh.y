@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.109 2001-11-12 10:26:33 geuzaine Exp $
+// $Id: Gmsh.y,v 1.110 2001-11-12 11:25:22 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -1788,17 +1788,17 @@ Extrude :
   | tExtrude tLine '{' FExpr ',' VExpr '}' tEND
     {
       Extrude_ProtudeCurve(TRANSLATE,(int)$4,$6[0],$6[1],$6[2],
-			   0.,0.,0.,0.,0.,0.,0.,NULL);
+			   0.,0.,0.,0.,0.,0.,0.,1,NULL);
     }
   | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
     {
       Extrude_ProtudeCurve(ROTATE,(int)$4,0.,0.,0.,
-			   $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,NULL);
+			   $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,1,NULL);
     }
   | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
     {
       Extrude_ProtudeCurve(TRANSLATE_ROTATE,(int)$4,$6[0],$6[1],$6[2],
-			   $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,NULL);
+			   $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,1,NULL);
     }
   | tExtrude tLine '{' FExpr ',' VExpr '}'
     {
@@ -1808,7 +1808,7 @@ Extrude :
                    '{' ExtrudeParameters '}' tEND
     {
       Extrude_ProtudeCurve(TRANSLATE,(int)$4,$6[0],$6[1],$6[2],
-			   0.,0.,0.,0.,0.,0.,0.,&extr);
+			   0.,0.,0.,0.,0.,0.,0.,1,&extr);
     }
   | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
@@ -1818,7 +1818,7 @@ Extrude :
                    '{' ExtrudeParameters '}' tEND
     {
       Extrude_ProtudeCurve(ROTATE,(int)$4,0.,0.,0.,
-			   $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,&extr);
+			   $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,1,&extr);
     }
   | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
@@ -1828,7 +1828,7 @@ Extrude :
                    '{' ExtrudeParameters '}' tEND
     {
       Extrude_ProtudeCurve(TRANSLATE_ROTATE,(int)$4,$6[0],$6[1],$6[2],
-			   $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,&extr);
+			   $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,1,&extr);
     }
 
   /* -------- Surfaces -------- */ 

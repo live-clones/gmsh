@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.36 2001-11-12 10:26:33 geuzaine Exp $
+// $Id: CAD.cpp,v 1.37 2001-11-12 11:25:22 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -146,8 +146,6 @@ Vertex *FindVertex(int inum, Mesh *M){
   }
   return NULL;
 }
-
-
 
 Curve *FindCurve(int inum, Mesh *M){
   Curve C,*pc;
@@ -608,11 +606,11 @@ static void vecmat4x4(double mat[4][4],double vec[4], double res[4]){
   }
 }
 
-void ApplyTransformationToPoint ( double matrix[4][4], Vertex *v ){
+void ApplyTransformationToPoint(double matrix[4][4], Vertex *v){
   double pos[4],vec[4];
 
   if(!ListOfTransformedPoints)
-    ListOfTransformedPoints = List_Create(2,2,sizeof(int));
+    ListOfTransformedPoints = List_Create(50,50,sizeof(int));
   
   if(!List_Search(ListOfTransformedPoints,&v->Num,fcmp_absint)){
     List_Add(ListOfTransformedPoints,&v->Num);
@@ -795,23 +793,28 @@ void ProtudeXYZ (double &x, double &y, double &z, ExtrudeParams *e){
   double matrix[4][4];
   double T[3];
   Vertex v(x,y,z);
+
   T[0] = -e->geo.pt[0];
   T[1] = -e->geo.pt[1];
   T[2] = -e->geo.pt[2];
-  List_Reset(ListOfTransformedPoints);
   SetTranslationMatrix(matrix,T);
-  ApplyTransformationToPoint(matrix,&v);
   List_Reset(ListOfTransformedPoints);
+  ApplyTransformationToPoint(matrix,&v);
+
   SetRotationMatrix(matrix,e->geo.axe,e->geo.angle);
-  ApplyTransformationToPoint(matrix,&v);
   List_Reset(ListOfTransformedPoints);
+  ApplyTransformationToPoint(matrix,&v);
+
   T[0] = -T[0]; T[1] = -T[1]; T[2] = -T[2];
   SetTranslationMatrix(matrix,T);
-  ApplyTransformationToPoint(matrix,&v);
   List_Reset(ListOfTransformedPoints);
+  ApplyTransformationToPoint(matrix,&v);
+
   x = v.Pos.X;
   y = v.Pos.Y;
   z = v.Pos.Z;
+
+  List_Reset(ListOfTransformedPoints);
 }
 
 void Extrude_ProtudePoint(int type, int ip, 
@@ -839,8 +842,8 @@ void Extrude_ProtudePoint(int type, int ip,
   case TRANSLATE :
     T[0] = T0; T[1] = T1; T[2] = T2;
     SetTranslationMatrix(matrix,T);
-    ApplyTransformationToPoint(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToPoint(matrix,chapeau);
 
     if(!comparePosition(&pv,&chapeau)) return ;
     c = Create_Curve(NEWLINE(),MSH_SEGM_LINE,1,NULL,NULL,-1,-1,0.,1.);
@@ -858,18 +861,18 @@ void Extrude_ProtudePoint(int type, int ip,
   case ROTATE :
     T[0] = -X0; T[1] = -X1; T[2] = -X2;
     SetTranslationMatrix(matrix,T);
-    ApplyTransformationToPoint(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToPoint(matrix,chapeau);
 
     Ax[0] = A0; Ax[1] = A1; Ax[2] = A2;
     SetRotationMatrix(matrix,Ax,alpha);
-    ApplyTransformationToPoint(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToPoint(matrix,chapeau);
 
     T[0] = X0; T[1] = X1; T[2] = X2;
     SetTranslationMatrix(matrix,T);
-    ApplyTransformationToPoint(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToPoint(matrix,chapeau);
 
     if(!comparePosition(&pv,&chapeau)) return ;
     c = Create_Curve(NEWLINE(),MSH_SEGM_CIRC,1,NULL,NULL,-1,-1,0.,1.);
@@ -906,23 +909,23 @@ void Extrude_ProtudePoint(int type, int ip,
 
       T[0] = -X0; T[1] = -X1; T[2] = -X2;
       SetTranslationMatrix(matrix,T);
-      ApplyTransformationToPoint(matrix,pv);
       List_Reset(ListOfTransformedPoints);
+      ApplyTransformationToPoint(matrix,pv);
 
       Ax[0] = A0; Ax[1] = A1; Ax[2] = A2;
       SetRotationMatrix(matrix,Ax,alpha/d);
-      ApplyTransformationToPoint(matrix,pv);
       List_Reset(ListOfTransformedPoints);
+      ApplyTransformationToPoint(matrix,pv);
 
       T[0] = X0; T[1] = X1; T[2] = X2;
       SetTranslationMatrix(matrix,T);
-      ApplyTransformationToPoint(matrix,pv);
       List_Reset(ListOfTransformedPoints);
+      ApplyTransformationToPoint(matrix,pv);
 
       T[0] = T0/d; T[1] = T1/d; T[2] = T2/d;
       SetTranslationMatrix(matrix,T);
-      ApplyTransformationToPoint(matrix,pv);
       List_Reset(ListOfTransformedPoints);
+      ApplyTransformationToPoint(matrix,pv);
 
       List_Add(c->Control_Points,&pv);
     }
@@ -940,13 +943,14 @@ void Extrude_ProtudePoint(int type, int ip,
   *pc = c;
   *prc = FindCurve(-c->Num,THEM);
 
+  List_Reset(ListOfTransformedPoints);
 }
 
 Surface *Extrude_ProtudeCurve(int type, int ic,
                               double T0, double T1, double T2,
                               double A0, double A1, double A2,
-                              double X0, double X1, double X2,
-                              double alpha, ExtrudeParams *e){
+                              double X0, double X1, double X2, double alpha, 
+			      int final, ExtrudeParams *e){
   double matrix[4][4],T[3],Ax[3];
   Curve *CurveBeg,*CurveEnd;
   Curve *ReverseChapeau,*ReverseBeg,*ReverseEnd;
@@ -971,45 +975,45 @@ Surface *Extrude_ProtudeCurve(int type, int ic,
   case TRANSLATE :
     T[0] = T0; T[1] = T1; T[2] = T2;
     SetTranslationMatrix(matrix,T);
-    ApplyTransformationToCurve(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToCurve(matrix,chapeau);
     break;
   case ROTATE :
     T[0] = -X0; T[1] = -X1; T[2] = -X2;
     SetTranslationMatrix(matrix,T);
-    ApplyTransformationToCurve(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToCurve(matrix,chapeau);
     
     Ax[0] = A0; Ax[1] = A1; Ax[2] = A2;
     SetRotationMatrix(matrix,Ax,alpha);
-    ApplyTransformationToCurve(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToCurve(matrix,chapeau);
     
     T[0] = X0; T[1] = X1; T[2] = X2;
     SetTranslationMatrix(matrix,T);
-    ApplyTransformationToCurve(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToCurve(matrix,chapeau);
     break;
   case TRANSLATE_ROTATE :
     T[0] = -X0; T[1] = -X1; T[2] = -X2;
     SetTranslationMatrix(matrix,T);
-    ApplyTransformationToCurve(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToCurve(matrix,chapeau);
     
     Ax[0] = A0; Ax[1] = A1; Ax[2] = A2;
     SetRotationMatrix(matrix,Ax,alpha);
-    ApplyTransformationToCurve(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToCurve(matrix,chapeau);
     
     T[0] = X0; T[1] = X1; T[2] = X2;
     SetTranslationMatrix(matrix,T);
-    ApplyTransformationToCurve(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToCurve(matrix,chapeau);
 
     T[0] = T0; T[1] = T1; T[2] = T2;
     SetTranslationMatrix(matrix,T);
-    ApplyTransformationToCurve(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToCurve(matrix,chapeau);
     break;
   default :
     Msg(GERROR, "Unknown extrusion type");
@@ -1022,7 +1026,6 @@ Surface *Extrude_ProtudeCurve(int type, int ic,
   Extrude_ProtudePoint(type,pc->end->Num,T0,T1,T2,
 		       A0,A1,A2,X0,X1,X2,alpha,
                        &CurveEnd,&ReverseEnd,e);
-  List_Reset(ListOfTransformedPoints);
   
   if(!CurveBeg && !CurveEnd) return NULL;
 
@@ -1059,7 +1062,14 @@ Surface *Extrude_ProtudeCurve(int type, int ic,
   End_Surface(s);
   Tree_Add(THEM->Surfaces,&s);
 
-  return s;
+  List_Reset(ListOfTransformedPoints);
+
+  if(final && CTX.geom.auto_coherence){
+    ReplaceAllDuplicates(THEM);
+    return NULL;
+  }
+  else
+    return s;
 }
 
 void Extrude_ProtudeSurface(int type, int is,
@@ -1110,7 +1120,7 @@ void Extrude_ProtudeSurface(int type, int is,
 
   for(i=0;i<List_Nbr(ps->Generatrices);i++){
     List_Read(ps->Generatrices,i,&c);
-    s = Extrude_ProtudeCurve(type,c->Num,T0,T1,T2,A0,A1,A2,X0,X1,X2,alpha,e);
+    s = Extrude_ProtudeCurve(type,c->Num,T0,T1,T2,A0,A1,A2,X0,X1,X2,alpha,0,e);
     if(pv && s) List_Add(pv->Surfaces,&s);
   }
 
@@ -1118,45 +1128,45 @@ void Extrude_ProtudeSurface(int type, int is,
   case TRANSLATE :
     T[0] = T0; T[1] = T1; T[2] = T2;
     SetTranslationMatrix(matrix,T);
-    ApplyTransformationToSurface(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToSurface(matrix,chapeau);
     break;
   case ROTATE :
     T[0] = -X0; T[1] = -X1; T[2] = -X2;
     SetTranslationMatrix(matrix,T);
-    ApplyTransformationToSurface(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToSurface(matrix,chapeau);
     
     Ax[0] = A0; Ax[1] = A1; Ax[2] = A2;
     SetRotationMatrix(matrix,Ax,alpha);
-    ApplyTransformationToSurface(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToSurface(matrix,chapeau);
     
     T[0] = X0; T[1] = X1; T[2] = X2;
     SetTranslationMatrix(matrix,T);
-    ApplyTransformationToSurface(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToSurface(matrix,chapeau);
     break;
   case TRANSLATE_ROTATE :
     T[0] = -X0; T[1] = -X1; T[2] = -X2;
     SetTranslationMatrix(matrix,T);
-    ApplyTransformationToSurface(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToSurface(matrix,chapeau);
     
     Ax[0] = A0; Ax[1] = A1; Ax[2] = A2;
     SetRotationMatrix(matrix,Ax,alpha);
-    ApplyTransformationToSurface(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToSurface(matrix,chapeau);
     
     T[0] = X0; T[1] = X1; T[2] = X2;
     SetTranslationMatrix(matrix,T);
-    ApplyTransformationToSurface(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToSurface(matrix,chapeau);
 
     T[0] = T0; T[1] = T1; T[2] = T2;
     SetTranslationMatrix(matrix,T);
-    ApplyTransformationToSurface(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+    ApplyTransformationToSurface(matrix,chapeau);
     break;
   default :
     Msg(GERROR, "Unknown extrusion type");
@@ -1172,9 +1182,9 @@ void Extrude_ProtudeSurface(int type, int is,
   
   if(pv) Tree_Add(THEM->Volumes,&pv);
   
-  if(CTX.geom.auto_coherence) ReplaceAllDuplicates ( THEM );
-  List_Reset(ListOfTransformedPoints);
+  if(CTX.geom.auto_coherence) ReplaceAllDuplicates(THEM);
 
+  List_Reset(ListOfTransformedPoints);
 }
 
 void DivideCurve (Curve *c , double u, Vertex *v, Curve **c1, Curve **c2){
@@ -1318,7 +1328,7 @@ void MaxNumSurface(void *a, void *b){
   THEM->MaxSurfaceNum = MAX(THEM->MaxSurfaceNum,s->Num);
 }
 
-void ReplaceDuplicatePoints (Mesh *m){
+void ReplaceDuplicatePoints(Mesh *m){
   List_T *All;
   Tree_T *allNonDulpicatedPoints;
   Vertex *v;
@@ -1394,7 +1404,7 @@ void ReplaceDuplicatePoints (Mesh *m){
 
 }
 
-void ReplaceDuplicateCurves (Mesh *m){
+void ReplaceDuplicateCurves(Mesh *m){
   List_T *All;
   Curve *c,*c2;
   Surface *s;
@@ -1455,7 +1465,7 @@ void ReplaceDuplicateCurves (Mesh *m){
   
 }
 
-void ReplaceDuplicateSurfaces (Mesh *m){
+void ReplaceDuplicateSurfaces(Mesh *m){
   List_T *All;
   Surface *s;
   Volume *vol;
@@ -1503,43 +1513,33 @@ void ReplaceDuplicateSurfaces (Mesh *m){
 
 }
 
-void ReplaceAllDuplicates (Mesh *m){
+void ReplaceAllDuplicates(Mesh *m){
   ReplaceDuplicatePoints(m);
   ReplaceDuplicateCurves(m);
   ReplaceDuplicateSurfaces(m);
 }
 
-/* NEW CAD FUNCTIONS */
 
 void ModifyLcPoint(int ip, double lc){
   Vertex *v = FindPoint(ip,THEM);
-  if(v)v->lc = lc;
-}
-
-void ApplicationOnPoint(int ip,double matrix[4][4]){
-  Vertex *v = FindPoint(ip,THEM);
-  if(v)ApplyTransformationToPoint ( matrix, v );
-}
-
-void ApplicationOnLine(int ip, double matrix[4][4]){
-  Curve *c = FindCurve(ip,THEM);
-  if(c)ApplyTransformationToCurve ( matrix, c );
-}
-
-void ApplicationOnSurface(int ip, double matrix[4][4]){
-  Surface *s = FindSurface(ip,THEM);
-  if(s)ApplyTransformationToSurface ( matrix, s );
+  if(v) v->lc = lc;
 }
 
 void ApplicationOnShapes(double matrix[4][4], List_T *ListShapes){
   int i;
   Shape O;
+  Vertex *v;
+  Curve *c;
+  Surface *s;
   
+  List_Reset(ListOfTransformedPoints);
+
   for(i=0;i<List_Nbr(ListShapes);i++){
     List_Read(ListShapes,i,&O);
     switch(O.Type){
     case MSH_POINT:
-      ApplicationOnPoint(O.Num,matrix);
+      v = FindPoint(O.Num,THEM);
+      if(v) ApplyTransformationToPoint(matrix, v);
       break;
     case MSH_SEGM_LINE:
     case MSH_SEGM_SPLN:
@@ -1548,13 +1548,15 @@ void ApplicationOnShapes(double matrix[4][4], List_T *ListShapes){
     case MSH_SEGM_CIRC:
     case MSH_SEGM_ELLI:
     case MSH_SEGM_NURBS:
-      ApplicationOnLine(O.Num,matrix);
+      c = FindCurve(O.Num,THEM);
+      if(c) ApplyTransformationToCurve(matrix, c);
       break;
     case MSH_SURF_NURBS :
     case MSH_SURF_REGL :
     case MSH_SURF_TRIC :
     case MSH_SURF_PLAN :
-      ApplicationOnSurface(O.Num,matrix);
+      s = FindSurface(O.Num,THEM);
+      if(s) ApplyTransformationToSurface(matrix, s);
       break;
     default:
       Msg(GERROR, "Impossible to apply transformation on entity %d (of type %d)", 
@@ -1562,48 +1564,61 @@ void ApplicationOnShapes(double matrix[4][4], List_T *ListShapes){
       break;
     }
   }
+
   List_Reset(ListOfTransformedPoints);
 }
 
 void TranslateShapes(double X,double Y,double Z,
                      List_T *ListShapes, int isFinal){
   double T[3],matrix[4][4];
-  T[0] = X;T[1] = Y;T[2] = Z;
+
+  T[0] = X; T[1] = Y; T[2] = Z;
   SetTranslationMatrix(matrix,T);
   ApplicationOnShapes(matrix,ListShapes);
-  if(CTX.geom.auto_coherence && isFinal) ReplaceAllDuplicates ( THEM );
+
+  if(CTX.geom.auto_coherence && isFinal) ReplaceAllDuplicates(THEM);
 }
 
 void DilatShapes(double X,double Y,double Z, double A,
                  List_T *ListShapes, int isFinal){
   double T[3],matrix[4][4];
-  T[0] = X;T[1] = Y;T[2] = Z;
+
+  T[0] = X; T[1] = Y; T[2] = Z;
   SetDilatationMatrix(matrix,T,A);
   ApplicationOnShapes(matrix,ListShapes);
-  if(CTX.geom.auto_coherence) ReplaceAllDuplicates ( THEM );
+
+  if(CTX.geom.auto_coherence) ReplaceAllDuplicates(THEM);
 }
 
 
 void RotateShapes (double Ax,double Ay,double Az,
                    double Px,double Py, double Pz,
                    double alpha, List_T *ListShapes){
-  double A[3],matrix[4][4];
-  A[0] = Ax;A[1] = Ay;A[2] = Az;
-  TranslateShapes(-Px,-Py,-Pz,ListShapes,0);
-  List_Reset(ListOfTransformedPoints);
+  double A[3], T[3], matrix[4][4];
+
+  T[0] = -Px; T[1] = -Py; T[2] = -Pz;
+  SetTranslationMatrix(matrix,T);
+  ApplicationOnShapes(matrix,ListShapes);
+
+  A[0] = Ax; A[1] = Ay; A[2] = Az;
   SetRotationMatrix(matrix,A,alpha);
   ApplicationOnShapes(matrix,ListShapes);
-  TranslateShapes(Px,Py,Pz,ListShapes,0);
-  List_Reset(ListOfTransformedPoints);
-  if(CTX.geom.auto_coherence) ReplaceAllDuplicates ( THEM );
+
+  T[0] = Px; T[1] = Py; T[2] = Pz;
+  SetTranslationMatrix(matrix,T);
+  ApplicationOnShapes(matrix,ListShapes);
+
+  if(CTX.geom.auto_coherence) ReplaceAllDuplicates(THEM);
 }
 
 void SymmetryShapes (double A,double B,double C,
                      double D, List_T *ListShapes, int x){
   double matrix[4][4];
+
   SetSymmetryMatrix(matrix,A,B,C,D);
   ApplicationOnShapes(matrix,ListShapes);
-  if(CTX.geom.auto_coherence) ReplaceAllDuplicates ( THEM );
+
+  if(CTX.geom.auto_coherence) ReplaceAllDuplicates(THEM);
 }
 
 

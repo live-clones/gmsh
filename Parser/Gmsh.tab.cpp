@@ -177,7 +177,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.124 2001-11-12 10:26:33 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.125 2001-11-12 11:25:22 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -4989,21 +4989,21 @@ case 227:
 #line 1789 "Gmsh.y"
 {
       Extrude_ProtudeCurve(TRANSLATE,(int)yyvsp[-4].d,yyvsp[-2].v[0],yyvsp[-2].v[1],yyvsp[-2].v[2],
-			   0.,0.,0.,0.,0.,0.,0.,NULL);
+			   0.,0.,0.,0.,0.,0.,0.,1,NULL);
     ;
     break;}
 case 228:
 #line 1794 "Gmsh.y"
 {
       Extrude_ProtudeCurve(ROTATE,(int)yyvsp[-8].d,0.,0.,0.,
-			   yyvsp[-6].v[0],yyvsp[-6].v[1],yyvsp[-6].v[2],yyvsp[-4].v[0],yyvsp[-4].v[1],yyvsp[-4].v[2],yyvsp[-2].d,NULL);
+			   yyvsp[-6].v[0],yyvsp[-6].v[1],yyvsp[-6].v[2],yyvsp[-4].v[0],yyvsp[-4].v[1],yyvsp[-4].v[2],yyvsp[-2].d,1,NULL);
     ;
     break;}
 case 229:
 #line 1799 "Gmsh.y"
 {
       Extrude_ProtudeCurve(TRANSLATE_ROTATE,(int)yyvsp[-10].d,yyvsp[-8].v[0],yyvsp[-8].v[1],yyvsp[-8].v[2],
-			   yyvsp[-6].v[0],yyvsp[-6].v[1],yyvsp[-6].v[2],yyvsp[-4].v[0],yyvsp[-4].v[1],yyvsp[-4].v[2],yyvsp[-2].d,NULL);
+			   yyvsp[-6].v[0],yyvsp[-6].v[1],yyvsp[-6].v[2],yyvsp[-4].v[0],yyvsp[-4].v[1],yyvsp[-4].v[2],yyvsp[-2].d,1,NULL);
     ;
     break;}
 case 230:
@@ -5017,7 +5017,7 @@ case 231:
 #line 1809 "Gmsh.y"
 {
       Extrude_ProtudeCurve(TRANSLATE,(int)yyvsp[-8].d,yyvsp[-6].v[0],yyvsp[-6].v[1],yyvsp[-6].v[2],
-			   0.,0.,0.,0.,0.,0.,0.,&extr);
+			   0.,0.,0.,0.,0.,0.,0.,1,&extr);
     ;
     break;}
 case 232:
@@ -5031,7 +5031,7 @@ case 233:
 #line 1819 "Gmsh.y"
 {
       Extrude_ProtudeCurve(ROTATE,(int)yyvsp[-12].d,0.,0.,0.,
-			   yyvsp[-10].v[0],yyvsp[-10].v[1],yyvsp[-10].v[2],yyvsp[-8].v[0],yyvsp[-8].v[1],yyvsp[-8].v[2],yyvsp[-6].d,&extr);
+			   yyvsp[-10].v[0],yyvsp[-10].v[1],yyvsp[-10].v[2],yyvsp[-8].v[0],yyvsp[-8].v[1],yyvsp[-8].v[2],yyvsp[-6].d,1,&extr);
     ;
     break;}
 case 234:
@@ -5045,7 +5045,7 @@ case 235:
 #line 1829 "Gmsh.y"
 {
       Extrude_ProtudeCurve(TRANSLATE_ROTATE,(int)yyvsp[-14].d,yyvsp[-12].v[0],yyvsp[-12].v[1],yyvsp[-12].v[2],
-			   yyvsp[-10].v[0],yyvsp[-10].v[1],yyvsp[-10].v[2],yyvsp[-8].v[0],yyvsp[-8].v[1],yyvsp[-8].v[2],yyvsp[-6].d,&extr);
+			   yyvsp[-10].v[0],yyvsp[-10].v[1],yyvsp[-10].v[2],yyvsp[-8].v[0],yyvsp[-8].v[1],yyvsp[-8].v[2],yyvsp[-6].d,1,&extr);
     ;
     break;}
 case 236:
