@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.90 2002-11-08 07:27:57 geuzaine Exp $
+// $Id: Options.cpp,v 1.91 2002-11-08 18:56:21 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1171,20 +1171,6 @@ double opt_general_sphere_subdivisions(OPT_ARGS_NUM){
     CTX.sphere_subdivisions = (int)val;
   return CTX.sphere_subdivisions;
 }
-double opt_general_display_lists(OPT_ARGS_NUM){
-  int i;
-  if(action & GMSH_SET){
-    CTX.display_lists = (int)val;
-    if(CTX.display_lists)
-      for(i=0 ; i<List_Nbr(CTX.post.list) ; i++)
-	((Post_View*)List_Pointer_Test(CTX.post.list, i))->Changed = 1;
-  }
-#ifdef _FLTK
-  if(WID && (action & GMSH_GUI))
-    WID->gen_butt[4]->value(CTX.display_lists);
-#endif
-  return CTX.display_lists;
-}
 double opt_general_double_buffer(OPT_ARGS_NUM){
   if(action & GMSH_SET){
     CTX.db = (int)val;
@@ -1690,8 +1676,10 @@ double opt_mesh_quality(OPT_ARGS_NUM){
   return CTX.mesh.quality;
 }
 double opt_mesh_normals(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.mesh.normals = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_value[8]->value(CTX.mesh.normals);
@@ -1699,8 +1687,10 @@ double opt_mesh_normals(OPT_ARGS_NUM){
   return CTX.mesh.normals;
 }
 double opt_mesh_tangents(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.mesh.tangents = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_value[13]->value(CTX.mesh.tangents);
@@ -1708,8 +1698,10 @@ double opt_mesh_tangents(OPT_ARGS_NUM){
   return CTX.mesh.tangents;
 }
 double opt_mesh_explode(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.mesh.explode = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_value[9]->value(CTX.mesh.explode);
@@ -1744,8 +1736,10 @@ double opt_mesh_rand_factor(OPT_ARGS_NUM){
   return CTX.mesh.rand_factor;
 }
 double opt_mesh_gamma_inf(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.mesh.gamma_inf = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_value[4]->value(CTX.mesh.gamma_inf);
@@ -1753,8 +1747,10 @@ double opt_mesh_gamma_inf(OPT_ARGS_NUM){
   return CTX.mesh.gamma_inf;
 }
 double opt_mesh_gamma_sup(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.mesh.gamma_sup = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_value[5]->value(CTX.mesh.gamma_sup);
@@ -1762,8 +1758,10 @@ double opt_mesh_gamma_sup(OPT_ARGS_NUM){
   return CTX.mesh.gamma_sup;
 }
 double opt_mesh_radius_inf(OPT_ARGS_NUM){
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
     CTX.mesh.radius_inf = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_value[6]->value(CTX.mesh.radius_inf);
@@ -1771,8 +1769,10 @@ double opt_mesh_radius_inf(OPT_ARGS_NUM){
   return CTX.mesh.radius_inf;
 }
 double opt_mesh_radius_sup(OPT_ARGS_NUM){
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
     CTX.mesh.radius_sup = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_value[7]->value(CTX.mesh.radius_sup);
@@ -1780,8 +1780,10 @@ double opt_mesh_radius_sup(OPT_ARGS_NUM){
   return CTX.mesh.radius_sup;
 }
 double opt_mesh_points(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.mesh.points = (int)val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_butt[6]->value(CTX.mesh.points);
@@ -1789,8 +1791,10 @@ double opt_mesh_points(OPT_ARGS_NUM){
   return CTX.mesh.points;
 }
 double opt_mesh_lines(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.mesh.lines = (int)val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_butt[7]->value(CTX.mesh.lines);
@@ -1798,8 +1802,10 @@ double opt_mesh_lines(OPT_ARGS_NUM){
   return CTX.mesh.lines;
 }
 double opt_mesh_surfaces(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.mesh.surfaces = (int)val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_butt[8]->value(CTX.mesh.surfaces);
@@ -1807,8 +1813,10 @@ double opt_mesh_surfaces(OPT_ARGS_NUM){
   return CTX.mesh.surfaces;
 }
 double opt_mesh_volumes(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.mesh.volumes = (int)val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_butt[9]->value(CTX.mesh.volumes);
@@ -1816,8 +1824,10 @@ double opt_mesh_volumes(OPT_ARGS_NUM){
   return CTX.mesh.volumes;
 }
 double opt_mesh_points_num(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.mesh.points_num = (int)val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_butt[10]->value(CTX.mesh.points_num);
@@ -1825,8 +1835,10 @@ double opt_mesh_points_num(OPT_ARGS_NUM){
   return CTX.mesh.points_num;
 }
 double opt_mesh_lines_num(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.mesh.lines_num = (int)val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_butt[11]->value(CTX.mesh.lines_num);
@@ -1834,8 +1846,10 @@ double opt_mesh_lines_num(OPT_ARGS_NUM){
   return CTX.mesh.lines_num;
 }
 double opt_mesh_surfaces_num(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.mesh.surfaces_num = (int)val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_butt[12]->value(CTX.mesh.surfaces_num);
@@ -1843,8 +1857,10 @@ double opt_mesh_surfaces_num(OPT_ARGS_NUM){
   return CTX.mesh.surfaces_num;
 }
 double opt_mesh_volumes_num(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.mesh.volumes_num = (int)val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_butt[13]->value(CTX.mesh.volumes_num);
@@ -1852,8 +1868,10 @@ double opt_mesh_volumes_num(OPT_ARGS_NUM){
   return CTX.mesh.volumes_num;
 }
 double opt_mesh_point_size(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.mesh.point_size = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_value[10]->value(CTX.mesh.point_size);
@@ -1863,6 +1881,7 @@ double opt_mesh_point_size(OPT_ARGS_NUM){
 double opt_mesh_point_type(OPT_ARGS_NUM){
   if(action & GMSH_SET){
     CTX.mesh.point_type = (int)val;
+    CTX.mesh.changed = 1;
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI)){
@@ -1872,8 +1891,10 @@ double opt_mesh_point_type(OPT_ARGS_NUM){
   return CTX.mesh.point_type;
 }
 double opt_mesh_line_width(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.mesh.line_width = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_value[11]->value(CTX.mesh.line_width);
@@ -1887,6 +1908,7 @@ double opt_mesh_aspect(OPT_ARGS_NUM){
     case 2  : CTX.mesh.hidden = 1; CTX.mesh.shade = 1; break ;
     default : CTX.mesh.hidden = CTX.mesh.shade = 0; break ;
     }
+    CTX.mesh.changed = 1;
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI)){
@@ -1959,8 +1981,10 @@ double opt_mesh_degree(OPT_ARGS_NUM){
   return CTX.mesh.degree;
 }
 double opt_mesh_dual(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.mesh.dual = (int)val;
+    CTX.mesh.changed = 1;
+  }
   return CTX.mesh.dual;
 }
 double opt_mesh_interactive(OPT_ARGS_NUM){
@@ -2021,8 +2045,10 @@ double opt_mesh_color_scheme(OPT_ARGS_NUM){
   return CTX.mesh.color_scheme;
 }
 double opt_mesh_color_carousel(OPT_ARGS_NUM){
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
     CTX.mesh.color_carousel = (int)val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_butt[17]->value(CTX.mesh.color_carousel);
@@ -2068,6 +2094,18 @@ double opt_mesh_cpu_time(OPT_ARGS_NUM){
   double  s[50];
   GetStatistics(s);
   return s[13]+s[14]+s[15];
+}
+double opt_mesh_display_lists(OPT_ARGS_NUM){
+  int i;
+  if(action & GMSH_SET){
+    CTX.mesh.display_lists = (int)val;
+    CTX.mesh.changed = 1;
+  }
+#ifdef _FLTK
+  //if(WID && (action & GMSH_GUI))
+  //WID->mesh_butt[??]->value(CTX.mesh.display_lists);
+#endif
+  return CTX.mesh.display_lists;
 }
 
 
@@ -2122,6 +2160,20 @@ double opt_solver_merge_views2(OPT_ARGS_NUM){ return opt_solver_merge_views(2,ac
 double opt_solver_merge_views3(OPT_ARGS_NUM){ return opt_solver_merge_views(3,action,val); }
 double opt_solver_merge_views4(OPT_ARGS_NUM){ return opt_solver_merge_views(4,action,val); }
 
+double opt_post_display_lists(OPT_ARGS_NUM){
+  int i;
+  if(action & GMSH_SET){
+    CTX.post.display_lists = (int)val;
+    if(CTX.post.display_lists)
+      for(i=0 ; i<List_Nbr(CTX.post.list) ; i++)
+	((Post_View*)List_Pointer_Test(CTX.post.list, i))->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI))
+    WID->gen_butt[4]->value(CTX.post.display_lists);
+#endif
+  return CTX.post.display_lists;
+}
 double opt_post_scales(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.post.scales = (int)val;
@@ -3103,168 +3155,210 @@ unsigned int opt_geometry_color_normals(OPT_ARGS_COL){
   return CTX.color.geom.normals;
 }
 unsigned int opt_mesh_color_points(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.vertex = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.vertex,WID->mesh_col[0]);
 #endif
   return CTX.color.mesh.vertex;
 } 
 unsigned int opt_mesh_color_points_supp(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.vertex_supp = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.vertex_supp,WID->mesh_col[1]);
 #endif
   return CTX.color.mesh.vertex_supp;
 } 
 unsigned int opt_mesh_color_lines(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.line = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.line,WID->mesh_col[2]);
 #endif
   return CTX.color.mesh.line;
 } 
 unsigned int opt_mesh_color_triangles(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.triangle = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.triangle,WID->mesh_col[3]);
 #endif
   return CTX.color.mesh.triangle;
 }
 unsigned int opt_mesh_color_quadrangles(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.quadrangle = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.quadrangle,WID->mesh_col[4]);
 #endif
   return CTX.color.mesh.quadrangle;
 }
 unsigned int opt_mesh_color_tetrahedra(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.tetrahedron = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.tetrahedron,WID->mesh_col[5]);
 #endif
   return CTX.color.mesh.tetrahedron;
 }
 unsigned int opt_mesh_color_hexahedra(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.hexahedron = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.hexahedron,WID->mesh_col[6]);
 #endif
   return CTX.color.mesh.hexahedron;
 }
 unsigned int opt_mesh_color_prisms(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.prism = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.prism,WID->mesh_col[7]);
 #endif
   return CTX.color.mesh.prism;
 }
 unsigned int opt_mesh_color_pyramid(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.pyramid = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.pyramid,WID->mesh_col[8]);
 #endif
   return CTX.color.mesh.pyramid;
 }
 unsigned int opt_mesh_color_tangents(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.tangents = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.tangents,WID->mesh_col[9]);
 #endif
   return CTX.color.mesh.tangents;
 }
 unsigned int opt_mesh_color_normals(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.normals = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.normals,WID->mesh_col[10]);
 #endif
   return CTX.color.mesh.normals;
 }
 unsigned int opt_mesh_color_1(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.carousel[0] = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.carousel[0],WID->mesh_col[11]);
 #endif
   return CTX.color.mesh.carousel[0];
 }
 unsigned int opt_mesh_color_2(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.carousel[1] = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.carousel[1],WID->mesh_col[12]);
 #endif
   return CTX.color.mesh.carousel[1];
 }
 unsigned int opt_mesh_color_3(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.carousel[2] = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.carousel[2],WID->mesh_col[13]);
 #endif
   return CTX.color.mesh.carousel[2];
 }
 unsigned int opt_mesh_color_4(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.carousel[3] = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.carousel[3],WID->mesh_col[14]);
 #endif
   return CTX.color.mesh.carousel[3];
 }
 unsigned int opt_mesh_color_5(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.carousel[4] = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.carousel[4],WID->mesh_col[15]);
 #endif
   return CTX.color.mesh.carousel[4];
 }
 unsigned int opt_mesh_color_6(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.carousel[5] = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.carousel[5],WID->mesh_col[16]);
 #endif
   return CTX.color.mesh.carousel[5];
 }
 unsigned int opt_mesh_color_7(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.carousel[6] = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.carousel[6],WID->mesh_col[17]);
 #endif
   return CTX.color.mesh.carousel[6];
 }
 unsigned int opt_mesh_color_8(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.carousel[7] = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.carousel[7],WID->mesh_col[18]);
 #endif
   return CTX.color.mesh.carousel[7];
 }
 unsigned int opt_mesh_color_9(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.carousel[8] = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.carousel[8],WID->mesh_col[19]);
 #endif
   return CTX.color.mesh.carousel[8];
 }
 unsigned int opt_mesh_color_10(OPT_ARGS_COL){
-  if(action & GMSH_SET) 
+  if(action & GMSH_SET){
     CTX.color.mesh.carousel[9] = val;
+    CTX.mesh.changed = 1;
+  }
 #ifdef _FLTK
   CCC(CTX.color.mesh.carousel[9],WID->mesh_col[20]);
 #endif

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.42 2002-11-06 02:52:37 geuzaine Exp $
+// $Id: Post.cpp,v 1.43 2002-11-08 18:56:21 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -377,7 +377,7 @@ void Draw_Post(void){
 
       }
 
-      if(CTX.display_lists && !v->Changed && v->DisplayListNum>0){
+      if(CTX.post.display_lists && !v->Changed && v->DisplayListNum>0){
 
 	Msg(DEBUG, "Call display List %d", v->DisplayListNum);
         glCallList(v->DisplayListNum);
@@ -385,7 +385,7 @@ void Draw_Post(void){
       }
       else{
 
-        if(CTX.display_lists){
+        if(CTX.post.display_lists){
           if(v->DisplayListNum>0){
 	    Msg(DEBUG, "Delete display List %d", v->DisplayListNum);
 	    glDeleteLists(v->DisplayListNum,1);
@@ -517,7 +517,7 @@ void Draw_Post(void){
 	  Draw_Text2D3D(3, v->TimeStep, v->NbT3, v->T3D, v->T3C);
 	}
 
-        if(CTX.display_lists) glEndList();
+        if(CTX.post.display_lists) glEndList();
 
 	v->Changed=0;
 

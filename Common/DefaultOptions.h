@@ -412,8 +412,6 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|O, "DefaultPlugins" , opt_general_default_plugins , 1. ,
     "Load default plugins on startup" },
-  { F|O, "DisplayLists" , opt_general_display_lists , 0. ,
-    "Use OpenGL display lists (useful with real time manipulation of 'big' post-processing views)" },
   { F|O, "DoubleBuffer" , opt_general_double_buffer , 1. ,
     "Use a double buffered graphic window (on Unix, should be set to 0 when working on a remote host without GLX)" },
 
@@ -665,6 +663,8 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "Degree" , opt_mesh_degree , 1. ,
     "Element order" },
+  { F|O, "DisplayLists" , opt_mesh_display_lists , 0. ,
+    "Use OpenGL display lists for drawing meshes" },
   { F|O, "Dual" , opt_mesh_dual , 0. ,
     "Display the dual mesh obtained by barycentric subdivision" },
 
@@ -798,6 +798,9 @@ StringXNumber PostProcessingOptions_Number[] = {
     "Delay (in seconds) between to animation frames" },
   { F|O, "AnimationCycle" , opt_post_anim_cycle , 0. ,
     "Cycle through views instead of time steps for the animation" },
+
+  { F|O, "DisplayLists" , opt_post_display_lists , 0. ,
+    "Use OpenGL display lists for drawing post-processing views" },
 
   { F|O, "Link" , opt_post_link , 0. ,
     "Link post-processing views (0=none, 1,2=changes in visible/all, 3,4=everything in visible/all)" },

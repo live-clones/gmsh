@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.4 2002-11-05 19:52:06 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.5 2002-11-08 18:56:21 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -475,10 +475,10 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         CTX.db = 0; CTX.geom.highlight = 0; i++;
       }
       else if(!strcmp(argv[i]+1, "dl")){ 
-        CTX.display_lists = 1; i++;
+        CTX.post.display_lists = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "nodl")){ 
-        CTX.display_lists = 0; i++;
+        CTX.post.display_lists = 0; i++;
       }
       else if(!strcmp(argv[i]+1, "fontsize")){
         i++;

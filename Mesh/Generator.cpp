@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.36 2002-05-20 18:28:27 geuzaine Exp $
+// $Id: Generator.cpp,v 1.37 2002-11-08 18:56:22 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -231,6 +231,8 @@ void Init_Mesh (Mesh * M, int all){
   M->BGM.bgm = NULL;
 
   M->status = 0;
+
+  CTX.mesh.changed = 1;
 }
 
 void mai3d (Mesh * M, int Asked){
@@ -306,5 +308,7 @@ void mai3d (Mesh * M, int Asked){
     Msg(STATUS2, "Mesh 3D complete (%g s)", t2 - t1);
     M->status = 3;
   }
+
   CTX.threads_lock = 0 ;
+  CTX.mesh.changed = 1;
 }

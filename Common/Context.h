@@ -97,7 +97,6 @@ public :
   int ortho;                  // orthogonal projection? 
   int fast;                   // inhibit mesh and postpro drawing when changing r,s,t 
   int command_win;            // command window? 
-  int display_lists;          // use display lists? 
   int axes, small_axes;       // draw axes? 
   int small_axes_pos[2];      // small axes position 
   int threads, threads_lock;  // threads?, lock (should be a mutex...) 
@@ -140,7 +139,7 @@ public :
 
   // mesh options 
   struct {
-    int vis_type;
+    int vis_type, changed, display_lists;
     int draw;
     int points, lines, surfaces, volumes;
     int points_num, lines_num, surfaces_num, volumes_num;
@@ -171,7 +170,7 @@ public :
   // post processing options 
   struct{
     List_T *list ;
-    int force_num, compute_bb;
+    int force_num, compute_bb, display_lists;
     int draw, scales, link ;
     int smooth, anim_cycle ;
     double anim_delay ;

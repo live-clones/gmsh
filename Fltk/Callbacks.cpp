@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.149 2002-11-08 02:06:59 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.150 2002-11-08 18:56:21 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -611,7 +611,7 @@ void opt_general_ok_cb(CALLBACK_ARGS){
   opt_general_fast_redraw(0, GMSH_SET, WID->gen_butt[2]->value());
   if(opt_general_double_buffer(0, GMSH_GET, 0) != WID->gen_butt[3]->value())
     opt_general_double_buffer(0, GMSH_SET, WID->gen_butt[3]->value());
-  opt_general_display_lists(0, GMSH_SET, WID->gen_butt[4]->value());
+  opt_post_display_lists(0, GMSH_SET, WID->gen_butt[4]->value());//this has to move
   opt_general_alpha_blending(0, GMSH_SET, WID->gen_butt[5]->value());
   opt_general_trackball(0, GMSH_SET, WID->gen_butt[6]->value());
   opt_general_terminal(0, GMSH_SET, WID->gen_butt[7]->value());
