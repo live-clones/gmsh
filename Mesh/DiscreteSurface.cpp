@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.4 2005-02-20 16:41:02 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.5 2005-02-25 01:45:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -513,7 +513,18 @@ void SEGM_rep_To_Mesh(SEGM_rep *srep, Curve *c)
 
   for(int i = 0; i < List_Nbr(srep->points); i+=3){
     double *point = (double*)List_Pointer(srep->points, i);
-    Vertex *v = Create_Vertex(++THEM->MaxPointNum, point[0], point[1], point[2], 1.0, 0.0);
+    // if the curve's end points exist, use their identification
+    // numbers (that's how we do things in 1D_Mesh, and it makes
+    // things easier for point extrusions in the old extrusion
+    // algorithm)
+    int num;
+    if(i == 0 && c->beg)
+      num = c->beg->Num;
+    else if(i/3 == N-1 && c->end)
+      num = c->end->Num;
+    else
+      num = ++THEM->MaxPointNum;
+    Vertex *v = Create_Vertex(num, point[0], point[1], point[2], 1.0, 0.0);
     Vertex **pv;
     if(!(pv = (Vertex**)Tree_PQuery(VertexBound, &v))){
       Tree_Add(VertexBound, &v);

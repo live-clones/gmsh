@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.30 2005-02-20 06:36:54 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.31 2005-02-25 01:45:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -644,6 +644,8 @@ static void Extrude_Point(void *data, void *dum)
     LineLayer[i] = (int)(4 * K1) + (int)((i + 1) * K2) + v->Num;
   }
 
+  // only extrude points for which a mesh vertex exists with the same
+  // number (i.e., start & end points of curves)
   if((pV2 = (Vertex **) Tree_PQuery(THEM->Vertices, pV))) {
     Extrude_Vertex(pV2, NULL);
     Extrude_Pnt(*pV2);
