@@ -1,6 +1,12 @@
-$Id: TODO,v 1.42 2004-04-21 00:11:01 geuzaine Exp $
+$Id: TODO,v 1.43 2004-05-01 06:45:10 geuzaine Exp $
 
 generalize Plugin(Triangulate) to vector and tensor points
+
+********************************************************************
+
+gerard.fleury@inrs.fr: add the capability to mesh some entities using
+1st order and some other using 2nd order elements (in the same
+geometry)?
 
 ********************************************************************
 
