@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.44 2005-01-09 21:36:47 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.45 2005-01-18 06:22:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -199,8 +199,11 @@ static void Draw_Graph2D(Post_View * v,
     glColor4ubv((GLubyte *) & CTX.color.text);
     if(v->Type == DRAW_POST_2D_SPACE &&
        ((v->ShowTime == 1 && List_Nbr(v->Time) > 1) ||
-	(v->ShowTime == 2 && List_Nbr(v->Time) > 0)))
-      sprintf(label, "%s (%g)", v->Name, *(double *)List_Pointer(v->Time, v->TimeStep));
+	(v->ShowTime == 2 && List_Nbr(v->Time) > 0))){
+      char tmp[256];
+      sprintf(tmp, v->Format, *(double *)List_Pointer(v->Time, v->TimeStep));
+      sprintf(label, "%s (%s)", v->Name, tmp);
+    }
     else
       sprintf(label, "%s", v->Name);
     glRasterPos2d(xtop, ytop + font_h + tic);
