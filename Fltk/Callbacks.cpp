@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.273 2004-09-18 15:39:17 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.274 2004-09-18 20:25:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3212,14 +3212,11 @@ void view_combine_time_by_name_cb(CALLBACK_ARGS)
   Draw();
 }
 
-void view_sort_by_name_cb(CALLBACK_ARGS)
+void view_all_visible_cb(CALLBACK_ARGS)
 {
-  SortViews(0);
-}
-
-void view_sort_by_visibility_cb(CALLBACK_ARGS)
-{
-  SortViews(1);
+  for(int i = 0; i < List_Nbr(CTX.post.list); i ++)
+    opt_view_visible(i, GMSH_SET | GMSH_GUI, (long int)data ? 1 : 0);
+  Draw();
 }
 
 void view_applybgmesh_cb(CALLBACK_ARGS)

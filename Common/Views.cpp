@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.133 2004-09-18 15:39:17 geuzaine Exp $
+// $Id: Views.cpp,v 1.134 2004-09-18 20:25:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -69,8 +69,12 @@ Post_View *BeginView(int allocate)
   if(!CTX.post.list)
     CTX.post.list = List_Create(100, 100, sizeof(Post_View));
 
+  // Important notes:
+  // - each view *must* have a unique number
+  // - the view list is assumned to be sorted with increasing nums
+
   if(!CTX.post.force_num) {
-    vv.Num = ++UniqueNum;       // each view _must_ have a unique number
+    vv.Num = ++UniqueNum;
     List_Add(CTX.post.list, &vv);
   }
   else {
@@ -592,30 +596,6 @@ void FreeView(Post_View * v)
     v->TriVertexArray = NULL;
   }
 
-}
-
-void SortViews(int how)
-{
-  // how==0: by name
-  // how==1: by visibility
-
-  if(!List_Nbr(CTX.post.list)) 
-    return;
-
-  if(how == 0)
-    List_Sort(CTX.post.list, fcmpPostViewName);
-  else
-    List_Sort(CTX.post.list, fcmpPostViewVisibility);
-
-  // recalculate the indices
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++){
-    Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
-    v->Index = i;
-  }
-
-#if defined(HAVE_FLTK)
-  UpdateViewsInGUI();
-#endif
 }
 
 void CopyViewOptions(Post_View * src, Post_View * dest)
