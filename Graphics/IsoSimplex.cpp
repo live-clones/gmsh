@@ -168,7 +168,7 @@ void IsoSimplex( Post_View *View,
     }
   }
 
-  if(nb < 3)return;
+  if(nb < 3 || nb > 4)return;
 
   EnhanceSimplexPolygon (View, nb, Xp, Yp, Zp, PVals, X, Y, Z, Val, norms, preproNormals);
 
