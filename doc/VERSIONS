@@ -1,7 +1,7 @@
-$Id: VERSIONS,v 1.45 2001-08-03 17:46:48 geuzaine Exp $
+$Id: VERSIONS,v 1.46 2001-08-03 19:19:09 geuzaine Exp $
 
-New in 1.23: Better display of displacement maps and enhanced boundary
-operator;
+New in 1.23: Better display of displacement maps; boundary operator
+generalization;
 
 New in 1.22: Fixed (yet another) bug for 2D mesh in the mean plane;
 fixed surface coherence bug in extruded meshes; new double logarithmic
