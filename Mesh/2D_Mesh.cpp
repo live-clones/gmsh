@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.60 2004-06-22 00:58:20 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.61 2004-06-22 17:34:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -789,6 +789,62 @@ void ActionInvertTriQua(void *a, void *b)
   }
 }
 
+void Get_SurfaceNormal(Surface *s, double n[3])
+{
+  double t1[3], t2[3];
+
+  if(s->Typ == MSH_SURF_PLAN){
+    // don't use s->plan and co.: these are computed in MeanPlane,
+    // which borks the orientation...  we cannot use
+    // InterpolateSurface euther, since we use Calcule_Z_plan in
+    // there, which relies in the MeanPlane stuff too.
+    List_T *points = List_Create(10, 10, sizeof(Vertex *));
+    for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
+      Curve *c;
+      List_Read(s->Generatrices, i, &c);
+      // no need to play with beg/end: negative curves are already inverted
+      List_Add(points, &c->beg);
+    }
+    if(List_Nbr(points) > 2){
+      Vertex *v1 = *(Vertex**)List_Pointer(points, 0);
+      Vertex *v2 = *(Vertex**)List_Pointer(points, 1);
+      t1[0] = v2->Pos.X - v1->Pos.X;
+      t1[1] = v2->Pos.Y - v1->Pos.Y;
+      t1[2] = v2->Pos.Z - v1->Pos.Z;
+      for(int i = 2; i < List_Nbr(points); i++){
+	Vertex *v3 = *(Vertex**)List_Pointer(points, i);
+	t2[0] = v3->Pos.X - v1->Pos.X;
+	t2[1] = v3->Pos.Y - v1->Pos.Y;
+	t2[2] = v3->Pos.Z - v1->Pos.Z;
+	prodve(t1, t2, n);
+	if(norme(n))
+	  break;
+      }
+    }
+    if(List_Nbr(points) <= 2 || !norme(n)){
+      Msg(WARNING, "Couldn't compute normal to Surface %d using control points: "
+	  "reverting to mean plane", s->Num);
+      n[0] = s->a;
+      n[1] = s->b;
+      n[2] = s->c;
+    }
+    List_Delete(points);
+  }
+  else{
+    Vertex v1 = InterpolateSurface(s, 0.5, 0.5, 0, 0);
+    Vertex v2 = InterpolateSurface(s, 0.6, 0.5, 0, 0);
+    Vertex v3 = InterpolateSurface(s, 0.5, 0.6, 0, 0);
+    t1[0] = v2.Pos.X - v1.Pos.X;
+    t1[1] = v2.Pos.Y - v1.Pos.Y;
+    t1[2] = v2.Pos.Z - v1.Pos.Z;
+    t2[0] = v3.Pos.X - v1.Pos.X;
+    t2[1] = v3.Pos.Y - v1.Pos.Y;
+    t2[2] = v3.Pos.Z - v1.Pos.Z;
+    prodve(t1, t2, n);
+    norme(n);
+  }
+}
+
 void Maillage_Surface(void *data, void *dum)
 {
   Surface **pS, *s;
@@ -892,30 +948,13 @@ void Maillage_Surface(void *data, void *dum)
     End_Surface(s->Support, 0);
     End_Surface(s, 0);
 
-    // Horrible (tm) hack to orient the elements correctly. This
+    // Horrible (tm) hack to orient the elements correctly. This is
     // *definitely* not the best way to do it, but I don't have time
     // to look into this issue right now.
     Simplex *simp;
     if(Tree_Right(s->Simplexes, &simp)){
       double t1[3], t2[3], n1[3], n2[3], res;
-      if(s->Typ == MSH_SURF_PLAN){
-	n1[0] = s->plan[2][0];
-	n1[1] = s->plan[2][1];
-	n1[2] = s->plan[2][2];
-      }
-      else{
-	Vertex v1 = InterpolateSurface(s, 0.5, 0.5, 0, 0);
-	Vertex v2 = InterpolateSurface(s, 0.6, 0.5, 0, 0);
-	Vertex v3 = InterpolateSurface(s, 0.5, 0.6, 0, 0);
-	t1[0] = v2.Pos.X - v1.Pos.X;
-	t1[1] = v2.Pos.Y - v1.Pos.Y;
-	t1[2] = v2.Pos.Z - v1.Pos.Z;
-	t2[0] = v3.Pos.X - v1.Pos.X;
-	t2[1] = v3.Pos.Y - v1.Pos.Y;
-	t2[2] = v3.Pos.Z - v1.Pos.Z;
-	prodve(t1, t2, n1);
-      }
-      norme(n1);
+      Get_SurfaceNormal(s, n1);
       t1[0] = simp->V[1]->Pos.X - simp->V[0]->Pos.X;
       t1[1] = simp->V[1]->Pos.Y - simp->V[0]->Pos.Y;
       t1[2] = simp->V[1]->Pos.Z - simp->V[0]->Pos.Z;
@@ -942,3 +981,4 @@ void Maillage_Surface(void *data, void *dum)
   }
 
 }
+

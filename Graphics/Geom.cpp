@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.65 2004-05-31 18:36:20 geuzaine Exp $
+// $Id: Geom.cpp,v 1.66 2004-06-22 17:34:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -285,6 +285,8 @@ void Draw_Triangulated_Surface(Surface * s)
   }  
 }
 
+void Get_SurfaceNormal(Surface *s, double n[3]);
+
 void Draw_Plane_Surface(Surface * s)
 {
   int i, j, k;
@@ -441,10 +443,12 @@ void Draw_Plane_Surface(Surface * s)
     if(CTX.geom.normals) {
       List_Read(s->Orientations, 0, &vv1);
       List_Read(s->Orientations, 1, &vv2);
-      n[0] = s->plan[2][0];
-      n[1] = s->plan[2][1];
-      n[2] = s->plan[2][2];
-      norme(n);
+      // don't rely on MeanPlane: teh orientation is arbotrary
+      //n[0] = s->plan[2][0];
+      //n[1] = s->plan[2][1];
+      //n[2] = s->plan[2][2];
+      //norme(n);
+      Get_SurfaceNormal(s, n);
       n[0] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[0];
       n[1] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[1];
       n[2] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[2];
@@ -516,25 +520,16 @@ void Draw_NonPlane_Surface(Surface * s)
   }
 
   if(CTX.geom.normals) {
-    Vertex n1 = InterpolateSurface(s, 0.5, 0.5, 0, 0);
-    Vertex n2 = InterpolateSurface(s, 0.6, 0.5, 0, 0);
-    Vertex n3 = InterpolateSurface(s, 0.5, 0.6, 0, 0);
-    double nx[3], ny[3], n[3];
-    nx[0] = n2.Pos.X - n1.Pos.X;
-    nx[1] = n2.Pos.Y - n1.Pos.Y;
-    nx[2] = n2.Pos.Z - n1.Pos.Z;
-    ny[0] = n3.Pos.X - n1.Pos.X;
-    ny[1] = n3.Pos.Y - n1.Pos.Y;
-    ny[2] = n3.Pos.Z - n1.Pos.Z;
-    prodve(nx, ny, n);
-    norme(n);
+    Vertex v = InterpolateSurface(s, 0.5, 0.5, 0, 0);
+    double n[3];
+    Get_SurfaceNormal(s, n);
     n[0] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[0];
     n[1] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[1];
     n[2] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[2];
     glColor4ubv((GLubyte *) & CTX.color.geom.normals);
     Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-		n1.Pos.X, n1.Pos.Y, n1.Pos.Z, n[0], n[1], n[2], NULL,
+		v.Pos.X, v.Pos.Y, v.Pos.Z, n[0], n[1], n[2], NULL,
 		CTX.geom.light);
   }
 }
