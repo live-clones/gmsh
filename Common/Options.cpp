@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.198 2004-10-30 03:07:29 geuzaine Exp $
+// $Id: Options.cpp,v 1.199 2004-11-02 17:55:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -5299,10 +5299,11 @@ double opt_view_external_view(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    if(v->ExternalViewIndex <= -2 ||
-       v->ExternalViewIndex >= WID->view_choice[10]->size()-1)
+    if(v->ExternalViewIndex > -2 &&
+       v->ExternalViewIndex < WID->view_choice[10]->size()-1)
+      WID->view_choice[10]->value(v->ExternalViewIndex+1);
+    else if(WID->view_choice[10]->size() > 0)
       WID->view_choice[10]->value(0);
-    WID->view_choice[10]->value(v->ExternalViewIndex+1);
   }
 #endif
   return v->ExternalViewIndex;

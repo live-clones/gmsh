@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.373 2004-10-28 03:59:10 geuzaine Exp $
+// $Id: GUI.cpp,v 1.374 2004-11-02 17:55:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2654,6 +2654,7 @@ void GUI::create_option_window()
 
         view_choice[10] = new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Data source");
         view_choice[10]->align(FL_ALIGN_RIGHT);
+	reset_external_view_list();
 
         static Fl_Menu_Item menu_vecloc[] = {
           {"Cell centered", 0, 0, 0},
