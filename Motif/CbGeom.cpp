@@ -1,4 +1,4 @@
-// $Id: CbGeom.cpp,v 1.4 2001-01-12 13:29:02 geuzaine Exp $
+// $Id: CbGeom.cpp,v 1.5 2001-01-29 08:43:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -73,7 +73,6 @@ void geom_event_handler (int event) {
 
   case GEOM_PARSE :
     OpenProblem(CTX.filename);
-    Init();
     Draw();
     break;
 

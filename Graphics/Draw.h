@@ -10,7 +10,7 @@
 #define TO_SCREEN  1
 #define TO_FILE    2
 
-void Init(void);
+void InitOpengl(void);
 void InitOverlay(void);
 void InitShading(void);
 void InitNoShading(void);
@@ -38,9 +38,7 @@ void HighlightEntityNum(int v, int c, int s, int permanant);
 void Draw3d(void);
 void Draw2d(void);
 void DrawUI(void);
-void DrawOverlay(void);
 void Draw(void);
-void DrawUpdate(void);
 
 void Draw_String(char *s);
 void Draw_Geom (Mesh *m);

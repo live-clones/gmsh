@@ -1,4 +1,4 @@
-// $Id: CbMesh.cpp,v 1.3 2001-01-12 13:29:02 geuzaine Exp $
+// $Id: CbMesh.cpp,v 1.4 2001-01-29 08:43:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -35,7 +35,6 @@ void* StartMeshThread(void * data){
   CTX.mesh.draw = 1;
   CTX.threads_lock = 0;
   XtSetSensitive(WID.G.Butt[6], 0);
-  Init();
   Draw();
   pthread_exit(NULL);
   return NULL ;
@@ -54,7 +53,6 @@ void CancelMeshThread(void){
     Msg(STATUS2,"Mesh Aborted");
     mesh_event_handler(MESH_DELETE);
     Msg(STATUS3,"Ready");
-    Init();
     Draw();
   }
 }
@@ -266,7 +264,6 @@ void mesh_event_handler (int event) {
 
   if(!CTX.threads){
     Msg(STATUS3,"Ready");
-    Init();
     Draw();
   }
 }

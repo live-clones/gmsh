@@ -1,4 +1,4 @@
-// $Id: CbPost.cpp,v 1.3 2001-01-11 22:27:55 geuzaine Exp $
+// $Id: CbPost.cpp,v 1.4 2001-01-29 08:43:45 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -91,7 +91,6 @@ void SwapViewCb (Widget w, XtPointer client_data, XtPointer call_data){
 
   v->Visible = !v->Visible;
 
-  Init();
   Draw();
 }
 
@@ -147,7 +146,6 @@ void DuplicateViewCb (Widget w, XtPointer client_data, XtPointer call_data){
   CopyViewOptions(v1, v2);
 
   AddViewInUI(List_Nbr(Post_ViewList), v2->Name, v2->Num);
-  Init();
   Draw();
 }
 
@@ -172,7 +170,6 @@ void ReloadViewCb (Widget w, XtPointer client_data, XtPointer call_data){
   CopyViewOptions(&tmp, v);
 
   if(!All){
-    Init();
     Draw();
   }
 }
@@ -184,7 +181,6 @@ void ReloadAllViewsCb(Widget w, XtPointer client_data, XtPointer call_data){
   for(i = 1 ; i<=List_Nbr(Post_ViewList) ; i++)
     ReloadViewCb(NULL, (XtPointer)i, NULL);
   All = 0;
-  Init();
   Draw();
 }
 
@@ -216,7 +212,6 @@ void PostDialogCb (Widget w, XtPointer client_data, XtPointer call_data){
   case POST_LIGHT:     
     v->Light = !v->Light;
     v->Changed = 1;
-    Init() ;
     Draw() ;
     break;
 
@@ -224,7 +219,6 @@ void PostDialogCb (Widget w, XtPointer client_data, XtPointer call_data){
   case POST_ELEMENT:     
     v->ShowElement = !v->ShowElement;
     v->Changed = 1;
-    Init() ;
     Draw() ;
     break;
 
@@ -387,7 +381,6 @@ void PostCb (Widget w, XtPointer client_data, XtPointer call_data){
     XmStringFree(xms);
     CreateBGM(v, ADAPTATION_METHOD, 1.0, ADAPTATION_ERROR, &d, c); 
     MergeProblem(c);     
-    Init(); 
     Draw();
     return;
   case POST_COLOR_REPLOT : 
@@ -410,7 +403,6 @@ void PostCb (Widget w, XtPointer client_data, XtPointer call_data){
         }
       }
     }
-    Init();
     Draw();
     return;
   }
@@ -477,7 +469,6 @@ void PostCb (Widget w, XtPointer client_data, XtPointer call_data){
   if((long int)client_data == POST_TIME_STEP_SCALE){
     if(LastTimeStep != v->TimeStep){
       LastTimeStep = v->TimeStep;
-      Init();
       Draw();
     }
   }

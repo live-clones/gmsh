@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.13 2001-01-13 15:41:35 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.14 2001-01-29 08:43:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -21,43 +21,25 @@ void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
             GLdouble Xc1, GLdouble Xc2, GLdouble Yc1, GLdouble Yc2);
 
 /* ------------------------------------------------------------------------ */
-/*  Init/Draw                                                               */
+/*  Draw                                                               */
 /* ------------------------------------------------------------------------ */
 
-void Init(void){
+void InitOpengl(void){
+  WID->make_opengl_current();
+  Orthogonalize(0,0);
 }
 
 void InitOverlay(void){
   WID->make_overlay_current();
+  Orthogonalize(0,0);
 }
 
 void Draw(void){
-  WID->draw();
-}
-
-void DrawOverlay(void){
-  WID->draw_overlay();
+  WID->redraw_opengl();
 }
 
 void DrawUI(void){
   WID->check();
-}
-
-// Opengl_Window::draw() from the handle(), but
-// rather the following:
-
-void DrawUpdate(){
-  if(!CTX.expose) return ;
-  WID->make_current();
-  Orthogonalize(0,0);
-  glClearColor(UNPACK_RED(CTX.color.bg)/255.,
-               UNPACK_GREEN(CTX.color.bg)/255.,
-               UNPACK_BLUE(CTX.color.bg)/255.,
-               0.);
-  glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
-  Draw3d();
-  Draw2d();
-  WID->swap_buffers();
 }
 
 void Draw_String(char *s){
@@ -70,6 +52,8 @@ void Draw_String(char *s){
   }
 
   gl_font(FL_HELVETICA, CTX.gl_fontsize);
+  CTX.gl_fontheight = gl_height() ;
+  CTX.gl_fontascent = gl_height()-gl_descent() ;
   gl_draw(s);
 
 }

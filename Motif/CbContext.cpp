@@ -1,4 +1,4 @@
-// $Id: CbContext.cpp,v 1.4 2001-01-12 13:29:02 geuzaine Exp $
+// $Id: CbContext.cpp,v 1.5 2001-01-29 08:43:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -637,10 +637,8 @@ void RemoveViewCb(Widget w, XtPointer client_data, XtPointer call_data){
   if(actual_global_context == CONTEXT_POST)
     ActualizeContextCb(NULL,(XtPointer)actual_global_context,NULL);  
 
-  if(!All){
-    Init();
-    Draw();
-  }
+  if(!All) Draw();
+
 }
 
 void RemoveAllViewsCb(Widget w, XtPointer client_data, XtPointer call_data){
@@ -650,7 +648,6 @@ void RemoveAllViewsCb(Widget w, XtPointer client_data, XtPointer call_data){
   while(List_Nbr(Post_ViewList))
     RemoveViewCb(NULL, (XtPointer)i, NULL);
   All = 0;
-  Init();
   Draw();
 }
 

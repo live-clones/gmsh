@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.6 2001-01-13 15:41:35 geuzaine Exp $
+// $Id: Main.cpp,v 1.7 2001-01-29 08:43:45 geuzaine Exp $
 
 #include <signal.h>
 
@@ -324,6 +324,10 @@ int main(int argc, char *argv[]){
   XCTX.xfont.fixed_a = XCTX.xfont.fixed->max_bounds.ascent;
   XCTX.xfont.fixed_w = XCTX.xfont.fixed->max_bounds.width;
 
+  CTX.gl_fontheight = XCTX.xfont.helve_h ;
+  CTX.gl_fontascent = XCTX.xfont.helve_a ;
+
+
   /* X color initialisation (set the pixel format and allocate some colors in XCTX) */
 
   XColorInitialize();
@@ -401,7 +405,6 @@ int main(int argc, char *argv[]){
   }
   
   /* Draw the actual scene */
-  Init();
   Draw();
 
   /* Loop until were done */

@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.15 2001-01-10 21:20:39 geuzaine Exp $
+// $Id: Scale.cpp,v 1.16 2001-01-29 08:43:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -19,20 +19,14 @@ static XCharStruct  overall;
 #define CHECK_W                                                                         \
   XTextExtents(XCTX.xfont.helve, label, strlen(label), &dir,&ascent,&descent,&overall); \
   if(overall.width > cv_w) cv_w=overall.width
-#define FONTHEIGHT XCTX.xfont.helve_h
-#define FONTASCENT XCTX.xfont.helve_a
 
 #elif _FLTK
 
-#define CHECK_W     cv_w=gl_width(label)
-#define FONTHEIGHT  gl_height()
-#define FONTASCENT (gl_height()-gl_descent())
+#define CHECK_W  cv_w=gl_width(label)
 
 #else
 
 #define CHECK_W  cv_w=200
-#define FONTHEIGHT 21
-#define FONTASCENT 21
 
 #endif
 
@@ -56,16 +50,8 @@ void draw_scale(Post_View *v, double xmin, double ymin, double *width, double he
   char      label[128] ;
   double    Val, ValMin, ValMax;
 
-#ifdef _XMOTIF
-  font_h  = FONTHEIGHT ;      /* hauteur totale de la fonte */
-  font_a  = FONTASCENT ;      /* hauteur de la fonte au dessus de pt de ref */
-#else
-  font_h  = 21 ;
-  font_a  = 21 ;
-#endif
-
-  font_h  = FONTHEIGHT ;              /* hauteur totale de la fonte */
-  font_a  = FONTASCENT ;              /* hauteur de la fonte au dessus de pt de ref */
+  font_h  = CTX.gl_fontheight ;       /* hauteur totale de la fonte */
+  font_a  = CTX.gl_fontascent ;       /* hauteur de la fonte au dessus de pt de ref */
   label_h = 1.8*font_h ;              /* hauteur du label */
 
   cs_xmin = xmin ;                    /* colorscale xmin */

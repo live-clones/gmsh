@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.3 2001-01-10 20:23:38 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.4 2001-01-29 08:43:45 geuzaine Exp $
 
 #include <X11/IntrinsicP.h>
 
@@ -28,8 +28,7 @@ void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
 /*  Init/Draw                                                               */
 /* ------------------------------------------------------------------------ */
 
-void Init(void){
-
+void InitOpengl(void){
   /* Resize Graphical Window if told to do it */
   XWindowAttributes  xattrib;
   XGetWindowAttributes(XtDisplay(WID.G.bottomForm),XtWindow(WID.G.bottomForm),&xattrib);
@@ -37,12 +36,10 @@ void Init(void){
 		 CTX.viewport[2]-CTX.viewport[0],
 		 xattrib.height+CTX.viewport[3]-CTX.viewport[1],
 		 0);
-
   /* X11 forbids to change the context (GLX) in GL_FEEDBACK or GL_SELECT mode,
      which would happen for postscript output */
   if(CTX.stream == TO_SCREEN)
     glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);
-
   Orthogonalize(0,0);
 }
 
@@ -52,6 +49,7 @@ void InitOverlay(void){
 }
 
 void Draw(void){
+  InitOpengl();
   glClearColor(UNPACK_RED(CTX.color.bg)/255.,
                UNPACK_GREEN(CTX.color.bg)/255.,
                UNPACK_BLUE(CTX.color.bg)/255.,
@@ -62,14 +60,6 @@ void Draw(void){
   Draw2d();
   glFlush();
   if(CTX.db) glXSwapBuffers(XCTX.display,XtWindow(WID.G.glw));
-}
-
-void DrawUpdate(void){
-  Init();
-  Draw();
-}
-
-void DrawOverlay(void){
 }
 
 void DrawUI(void){
@@ -158,7 +148,6 @@ void ResizeCb(Widget w,XtPointer client_data, GLwDrawingAreaCallbackStruct *cb){
              CTX.viewport[1],
              CTX.viewport[2],
              CTX.viewport[3]);
-  Init();
   Draw();
   if(CTX.overlay) InitOverlay();
 }
@@ -171,7 +160,6 @@ void ExposeCb(Widget w,XtPointer client_data, GLwDrawingAreaCallbackStruct *cb){
   }
 
   if(!CTX.expose) return;
-  Init();
   Draw(); 
 
 }

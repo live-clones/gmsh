@@ -1,4 +1,4 @@
-// $Id: CbInput.cpp,v 1.3 2001-01-12 13:29:02 geuzaine Exp $
+// $Id: CbInput.cpp,v 1.4 2001-01-29 08:43:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -53,12 +53,12 @@ void KeyboardAccel(XEvent *event){
     case XK_Up :
       CTX.clip_plane0[2] = 1. ;
       if(fabs(CTX.clip_plane0[3]-CTX.lc/20. <1.)) CTX.clip_plane0[3] -= CTX.lc/20. ;
-      Init(); Draw();
+      Draw();
       break;
     case XK_Down :
       CTX.clip_plane0[2] = 1. ;
       if(fabs(CTX.clip_plane0[3]+CTX.lc/20 <1.)) CTX.clip_plane0[3] += CTX.lc/20. ;
-      Init(); Draw();
+      Draw();
       break;
       */
 
@@ -192,14 +192,14 @@ void KeyboardAccel(XEvent *event){
       break;
     case XK_b : case XK_B :
       CTX.post.scales = !CTX.post.scales;
-      Init(); Draw();
+      Draw();
       break;
     case XK_o : case XK_O :
       CTX.ortho = !CTX.ortho; 
       XtVaSetValues(WID.OD.miscProjButt[0], XmNset, CTX.ortho, NULL);
       XtVaSetValues(WID.OD.miscProjButt[1], XmNset, !CTX.ortho, NULL);
       XmUpdateDisplay(WID.OD.miscProjCheck);
-      Init(); Draw();
+      Draw();
       break;
     case XK_h : case XK_H :
       CTX.geom.highlight = !CTX.geom.highlight;
@@ -212,7 +212,7 @@ void KeyboardAccel(XEvent *event){
       else Init_Colors(0);
       XtVaSetValues(WID.OD.miscColorSchemeScale,XmNvalue, CTX.color.id, NULL);
       XmUpdateDisplay(WID.OD.miscColorSchemeScale);  
-      Init(); Draw();
+      Draw();
       break;
     case XK_d : case XK_D :
       if(!CTX.mesh.hidden && !CTX.mesh.shade)
@@ -226,34 +226,34 @@ void KeyboardAccel(XEvent *event){
       XtVaSetValues(WID.OD.meshAspectButt[1],XmNset,CTX.mesh.hidden&&!CTX.mesh.shade, NULL);
       XtVaSetValues(WID.OD.meshAspectButt[0],XmNset,!CTX.mesh.hidden&&!CTX.mesh.shade, NULL);
       XmUpdateDisplay(WID.OD.meshAspectCheck);  
-      Init(); Draw();
+      Draw();
       break;
     case XK_x : case XK_X :
       if(CTX.useTrackball)
 	CTX.setQuaternion(0.,-1./sqrt(2.),0.,1./sqrt(2.));
-      set_r(0,0.);  set_r(1,90.);set_r(2,0.); Init(); Draw(); 
+      set_r(0,0.);  set_r(1,90.);set_r(2,0.); Draw(); 
       break;
     case XK_y : case XK_Y : 
       if(CTX.useTrackball)
 	CTX.setQuaternion(1./sqrt(2.),0.,0.,1./sqrt(2.));
-      set_r(0,-90.);set_r(1,0.); set_r(2,0.); Init(); Draw(); 
+      set_r(0,-90.);set_r(1,0.); set_r(2,0.); Draw(); 
       break;
     case XK_z : case XK_Z : 
       if(CTX.useTrackball)
 	CTX.setQuaternion(0.,0.,0.,1.);
-      set_r(0,0.);  set_r(1,0.); set_r(2,0.); Init(); Draw(); 
+      set_r(0,0.);  set_r(1,0.); set_r(2,0.); Draw(); 
       break;
     case XK_a :
       CTX.small_axes = !CTX.small_axes;
       XtVaSetValues(WID.OD.miscMiscButt[1], XmNset, CTX.small_axes, NULL);
       XmUpdateDisplay(WID.OD.miscMiscCheck);
-      Init(); Draw();
+      Draw();
       break;
     case XK_A :
       CTX.axes = !CTX.axes;
       XtVaSetValues(WID.OD.miscMiscButt[0], XmNset, CTX.axes, NULL);
       XmUpdateDisplay(WID.OD.miscMiscCheck);
-      Init(); Draw();
+      Draw();
       break;
     case XK_p :
       CTX.geom.points = !CTX.geom.points;
@@ -261,7 +261,7 @@ void KeyboardAccel(XEvent *event){
         XtVaSetValues(WID.OD.geomVisibleButt[0], XmNset, CTX.geom.points, NULL);
         XmUpdateDisplay(WID.OD.geomVisibleButt[0]); 
       }
-      Init(); Draw();
+      Draw();
       break;
     case XK_P :
       CTX.mesh.points = !CTX.mesh.points;
@@ -269,7 +269,7 @@ void KeyboardAccel(XEvent *event){
         XtVaSetValues(WID.OD.meshVisibleButt[0], XmNset, CTX.mesh.points, NULL);
         XmUpdateDisplay(WID.OD.meshVisibleButt[0]); 
       }
-      Init(); Draw();
+      Draw();
       break;
     case XK_l :
       CTX.geom.lines = !CTX.geom.lines;
@@ -277,7 +277,7 @@ void KeyboardAccel(XEvent *event){
         XtVaSetValues(WID.OD.geomVisibleButt[1], XmNset, CTX.geom.lines, NULL);
         XmUpdateDisplay(WID.OD.geomVisibleButt[1]); 
       }
-      Init(); Draw();
+      Draw();
       break;
     case XK_L :
       CTX.mesh.lines = !CTX.mesh.lines;
@@ -285,7 +285,7 @@ void KeyboardAccel(XEvent *event){
         XtVaSetValues(WID.OD.meshVisibleButt[1], XmNset, CTX.mesh.lines, NULL);
         XmUpdateDisplay(WID.OD.meshVisibleButt[1]); 
       }
-      Init(); Draw();
+      Draw();
       break;
     case XK_s :
       CTX.geom.surfaces = !CTX.geom.surfaces;
@@ -293,7 +293,7 @@ void KeyboardAccel(XEvent *event){
         XtVaSetValues(WID.OD.geomVisibleButt[2], XmNset, CTX.geom.surfaces, NULL);
         XmUpdateDisplay(WID.OD.geomVisibleButt[2]); 
       }
-      Init(); Draw();
+      Draw();
       break;
     case XK_S :
       CTX.mesh.surfaces = !CTX.mesh.surfaces;
@@ -301,7 +301,7 @@ void KeyboardAccel(XEvent *event){
         XtVaSetValues(WID.OD.meshVisibleButt[2], XmNset, CTX.mesh.surfaces, NULL);
         XmUpdateDisplay(WID.OD.meshVisibleButt[2]); 
       }
-      Init(); Draw();
+      Draw();
       break;
     case XK_v :
       CTX.geom.volumes = !CTX.geom.volumes;
@@ -309,7 +309,7 @@ void KeyboardAccel(XEvent *event){
         XtVaSetValues(WID.OD.geomVisibleButt[3], XmNset, CTX.geom.volumes, NULL);
         XmUpdateDisplay(WID.OD.geomVisibleButt[3]); 
       }
-      Init(); Draw();
+      Draw();
       break;
     case XK_V :
       CTX.mesh.volumes = !CTX.mesh.volumes;
@@ -317,7 +317,7 @@ void KeyboardAccel(XEvent *event){
         XtVaSetValues(WID.OD.meshVisibleButt[3], XmNset, CTX.mesh.volumes, NULL);
         XmUpdateDisplay(WID.OD.meshVisibleButt[3]); 
       }
-      Init(); Draw();
+      Draw();
       break;
     case XK_m : case XK_M :
       CTX.mesh.points   = !CTX.mesh.points;
@@ -329,11 +329,11 @@ void KeyboardAccel(XEvent *event){
       XtVaSetValues(WID.OD.meshVisibleButt[2], XmNset, CTX.mesh.surfaces, NULL);
       XtVaSetValues(WID.OD.meshVisibleButt[3], XmNset, CTX.mesh.volumes, NULL);
       XmUpdateDisplay(WID.OD.meshVisibleCheck); 
-      Init(); Draw();
+      Draw();
       break;
     case XK_t : case XK_T :
       MarkAllViewsChanged(1);
-      Init(); Draw();
+      Draw();
       break;
     }
     break ;
@@ -441,7 +441,6 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
         Modifier = 0;
         set_s(1, CTX.s[0]);
         set_s(2, CTX.s[0]);
-        Init();
         Draw();
       }
       else{
@@ -465,7 +464,6 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
 	}
         set_t(0,0.); set_t(1,0.); set_t(2,0.);
         set_s(0,1.); set_s(1,1.); set_s(2,1.);
-        Init();
         Draw();
       }
       else{
@@ -493,7 +491,6 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
       y    = event->xbutton.y;
     }
     if(!ZoomClick){
-      Init();
       previous_mesh_draw = CTX.mesh.draw ;
       previous_post_draw = CTX.post.draw ;
       if(ButtonPressed>0){
@@ -681,7 +678,6 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
           set_t(2, 0.);
           break;
         }
-        Init();
         previous_mesh_draw = CTX.mesh.draw ;
         previous_post_draw = CTX.post.draw ;
         if(CTX.fast) CTX.mesh.draw = CTX.post.draw = 0;
@@ -709,10 +705,7 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
         }
         else{
           if(ov != v || oc != c || os != s) { 
-            if(CTX.geom.highlight){
-              Init();
-              Draw();
-            }
+            if(CTX.geom.highlight) Draw();
             BeginHighlight();
             HighlightEntity(v,c,s,0);
             EndHighlight(0);

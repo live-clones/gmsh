@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.18 2001-01-25 21:36:59 remacle Exp $
+// $Id: Draw.cpp,v 1.19 2001-01-29 08:43:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -185,7 +185,6 @@ void InitPosition(void){
    ajoutes dans la base de donnee -> dans cb_geom */
 void Replot(void){
   CalculateMinMax(M.Points);
-  Init();
   Draw();
 }
 
@@ -284,7 +283,6 @@ void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
   set_s(2, 0.5*(CTX.s[0]+CTX.s[1]));
   set_t(0, CTX.t[0] * (xscale1/CTX.s[0]) - ((Xc1+Xc2)/2.)*(1.-(xscale1/CTX.s[0])));
   set_t(1, CTX.t[1] * (yscale1/CTX.s[1]) - ((Yc1+Yc2)/2.)*(1.-(yscale1/CTX.s[1])));
-  Init();
   Draw();
 }
 

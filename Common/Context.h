@@ -103,6 +103,8 @@ public :
 
   int fontsize;               // font size for fltk UI
   int gl_fontsize;            // font size for opengl graphics
+  int gl_fontheight;          // font height
+  int gl_fontascent;          // height of the font above the reference point
 
   // OpenGL stuff 
   int viewport[4];            // current viewport 

@@ -133,11 +133,12 @@ class GUI{
 
   // view options window
   Fl_Window        *view_window ;
-  Fl_Group         *view_colorbar, *view_range, *view_intervals ;
+  Fl_Group         *view_colors, *view_colorbar, *view_range, *view_intervals ;
   Fl_Group         *view_offsetraise, *view_timestep, *view_vector ;
   Fl_Check_Button  *view_butt[20] ;
   Fl_Value_Input   *view_value[20] ;
   Fl_Input         *view_input[20] ;
+  Colorbar_Window  *view_colorbar_window ;
   
   // geometry context window
   Fl_Window        *context_geometry_window ;
@@ -170,11 +171,11 @@ public:
   // general purpose interaction
   void run();
   void check();
-  void make_current();
+  void make_opengl_current();
+  void make_colorbar_current();
   void make_overlay_current();
-  void swap_buffers();
-  void draw();
-  void draw_overlay();
+  void redraw_opengl();
+  void redraw_overlay();
   void set_size(int w, int h);
   void set_menu_size(int nb_butt);
   void get_position(int m[2], int g[2]);

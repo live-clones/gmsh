@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.12 2001-01-24 09:28:03 geuzaine Exp $
+// $Id: Main.cpp,v 1.13 2001-01-29 08:43:44 geuzaine Exp $
 
 #include <signal.h>
 
@@ -26,6 +26,10 @@ int main(int argc, char *argv[]){
   // Gmsh default context options
   
   Init_Context();
+
+  // This does not work with FLTK right now...
+  CTX.overlay = 0 ;
+  CTX.geom.highlight = 0 ;
 
   // Configuration file and command line options
 
@@ -132,7 +136,6 @@ int main(int argc, char *argv[]){
   }
 
   // Draw the actual scene
-  Init();
   Draw();
   CTX.expose = 1 ;
 

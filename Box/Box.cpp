@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.20 2001-01-13 15:41:35 geuzaine Exp $
+// $Id: Box.cpp,v 1.21 2001-01-29 08:43:44 geuzaine Exp $
 
 #include <signal.h>
 
@@ -20,7 +20,6 @@
 void AddViewInUI(int, char *, int){}
 void draw_polygon_2d (double, double, double, int, double *, double *, double *){}
 void set_r(int, double){}
-void Init(void){}
 void Draw(void){}
 void DrawUI(void){}
 void Replot(void){}

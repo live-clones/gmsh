@@ -1,4 +1,4 @@
-// $Id: CbFile.cpp,v 1.2 2001-01-09 13:28:47 geuzaine Exp $
+// $Id: CbFile.cpp,v 1.3 2001-01-29 08:43:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -59,8 +59,8 @@ void FileCb(Widget w, XtPointer client_data, XtPointer call_data){
   XmStringFree(xms);
   
   switch ((long int)client_data) {
-  case FILE_LOAD_GEOM       : OpenProblem(c); Init(); Draw(); break;
-  case FILE_LOAD_POST       : MergeProblem(c); ColorBarRedraw(); Init(); Draw(); break;
+  case FILE_LOAD_GEOM       : OpenProblem(c); Draw(); break;
+  case FILE_LOAD_POST       : MergeProblem(c); ColorBarRedraw(); Draw(); break;
   case FILE_SAVE_AS         : SaveToDisk(c, WID.ED.saveAsDialog, CreateFile); break;
   case FILE_SAVE_OPTIONS_AS : Print_Context(c); break;
   default :

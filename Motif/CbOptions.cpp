@@ -1,4 +1,4 @@
-// $Id: CbOptions.cpp,v 1.3 2001-01-10 10:06:18 geuzaine Exp $
+// $Id: CbOptions.cpp,v 1.4 2001-01-29 08:43:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -43,7 +43,7 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
 
     /* globales */
     
-  case OPTIONS_REPLOT        : Init(); Draw(); break;
+  case OPTIONS_REPLOT        : Draw(); break;
   case OPTIONS_AXES          : CTX.axes = !CTX.axes; break;
   case OPTIONS_LITTLE_AXES   : CTX.small_axes = !CTX.small_axes; break;
   case OPTIONS_FAST_REDRAW   : CTX.fast = !CTX.fast ; break ;
@@ -52,7 +52,7 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_TRACKBALL     : CTX.useTrackball = !CTX.useTrackball; break;
   case OPTIONS_COLOR_SCHEME_SCALE: 
     XmScaleGetValue(WID.OD.miscColorSchemeScale, &e); Init_Colors(e);
-    Init(); Draw();
+    Draw();
     break ;
   case OPTIONS_ORTHOGRAPHIC  : CTX.ortho = 1; break;
   case OPTIONS_PERSPECTIVE   : CTX.ortho = 0; break;
@@ -90,24 +90,24 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
     if(CTX.useTrackball)
       CTX.setQuaternion(0.,-1./sqrt(2.),0.,1./sqrt(2.));
     set_r(0,0.);  set_r(1,90.);set_r(2,0.); 
-    Init(); Draw(); 
+    Draw(); 
     break;
   case OPTIONS_YVIEW : 
     if(CTX.useTrackball)
       CTX.setQuaternion(1./sqrt(2.),0.,0.,1./sqrt(2.));
     set_r(0,-90.);set_r(1,0.); set_r(2,0.); 
-    Init(); Draw(); 
+    Draw(); 
     break;
   case OPTIONS_ZVIEW :
     if(CTX.useTrackball)
       CTX.setQuaternion(0.,0.,0.,1.);
     set_r(0,0.);  set_r(1,0.); set_r(2,0.); 
-    Init(); Draw(); 
+    Draw(); 
     break;
   case OPTIONS_CVIEW : 
     set_t(0,0.);  set_t(1,0.); set_t(2,0.); 
     set_s(0,1.);  set_s(1,1.); set_s(2,1.); 
-    Init(); Draw(); 
+    Draw(); 
     break;
   case OPTIONS_PVIEW :
     XGetWindowAttributes(XtDisplay(WID.G.shell),XtWindow(WID.G.shell),&xattrib);
@@ -326,7 +326,7 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
         if(GetTime() - anim_time > CTX.post.anim_delay){
           anim_time = GetTime();
           MarkAllViewsChanged(2);
-          Init(); Draw();
+          Draw();
         }
       }
     }

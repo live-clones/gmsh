@@ -1,3 +1,4 @@
+// $Id: GUI.cpp,v 1.30 2001-01-29 08:43:44 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -322,7 +323,7 @@ GUI::GUI(int argc, char **argv) {
   create_help_window();
   create_about_window();
 
-  // Draw the actual scene
+  // Draw the scene
 
   g_opengl_window->redraw();
 
@@ -423,6 +424,7 @@ void GUI::create_menu_window(int argc, char **argv){
       m_window->show(1, argv);
     
   }
+
 }
 
 // Dynamically set the height of the menu window
@@ -549,7 +551,8 @@ void GUI::create_graphic_window(int argc, char **argv){
 
     g_window = new Fl_Window(width, height);
     g_opengl_window = new Opengl_Window(0,0,width,glheight);
-    
+    g_opengl_window->end();
+
     {
       Fl_Group *o = new Fl_Group(0,glheight,width,sh);
       o->box(FL_THIN_UP_BOX);
@@ -653,33 +656,29 @@ void GUI::set_status(char *msg, int num){
   g_status_label[num]->redraw();
 }
 
-// set the current drawing context to the main opengl window
+// set the current drawing context 
 
-void GUI::make_current(){
+void GUI::make_opengl_current(){
   g_opengl_window->make_current();
 }
-
-// set the current drawing context to the overlay opengl window
 
 void GUI::make_overlay_current(){
   g_opengl_window->make_overlay_current();
 }
 
-// swap buffer
-
-void GUI::swap_buffers(){
-  g_opengl_window->swap_buffers();
+void GUI::make_colorbar_current(){
+  view_colorbar_window->make_current();
 }
 
 // Draw the opengl window
 
-void GUI::draw(){
+void GUI::redraw_opengl(){
   g_opengl_window->redraw();
 }
 
 // Draw the opengl overlay window
 
-void GUI::draw_overlay(){
+void GUI::redraw_overlay(){
   g_opengl_window->redraw_overlay();
 }
 
@@ -1048,8 +1047,8 @@ void GUI::create_mesh_options_window(){
 	}
         mesh_value[4] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Explode elements");
 	mesh_value[4]->minimum(0);
-	mesh_value[4]->maximum(100);
-	mesh_value[4]->step(1);
+	mesh_value[4]->maximum(1);
+	mesh_value[4]->step(0.01);
 	mesh_value[4]->callback(opt_mesh_explode_cb);
 	mesh_value[4]->value(CTX.mesh.explode);
 	mesh_value[4]->labelsize(CTX.fontsize);
@@ -1494,12 +1493,23 @@ void GUI::create_view_window(int num){
     init_view_window = 1 ;
 
     int width = 32*CTX.fontsize;
-    int height = 5*WB+7*BH ;
+    int height = 5*WB+7*BH + 7*CTX.fontsize;
     
     view_window = new Fl_Window(width,height);
     view_window->box(FL_THIN_UP_BOX);
+
     { 
       Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
+      // Colors
+      { 
+	view_colors = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Colors");
+	view_colors->labelsize(CTX.fontsize);
+        //view_colorbar->hide();
+	view_colorbar_window = new Colorbar_Window(2*WB, 2*WB+1*BH,
+						   width-4*WB, height-5*WB-2*BH);
+	view_colorbar_window->end();
+        view_colors->end();
+      }
       // Color bar
       { 
 	view_colorbar = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Color bar");
@@ -1514,8 +1524,8 @@ void GUI::create_view_window(int num){
 	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(FL_YELLOW);
 	}
-	view_input[0] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, "Title");
-	view_input[1] = new Fl_Input (2*WB, 2*WB+5*BH, IW, BH, "Format");
+	view_input[0] = new Fl_Input(2*WB, 2*WB+4*BH, IW, BH, "Title");
+	view_input[1] = new Fl_Input(2*WB, 2*WB+5*BH, IW, BH, "Format");
 	for(i=0 ; i<2 ; i++){
 	  view_input[i]->labelsize(CTX.fontsize);
 	  view_input[i]->align(FL_ALIGN_RIGHT);
@@ -1553,6 +1563,7 @@ void GUI::create_view_window(int num){
       {
 	view_intervals = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Intervals");
 	view_intervals->labelsize(CTX.fontsize);
+	view_intervals->hide();
 	view_value[2] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Number of intervals");
 	view_value[2]->labelsize(CTX.fontsize);
 	view_value[2]->type(FL_HORIZONTAL);
@@ -1574,7 +1585,7 @@ void GUI::create_view_window(int num){
       }
       // Offset and Raise
       { 
-	view_offsetraise = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Offset/Raise");
+	view_offsetraise = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Offset");
 	view_offsetraise->labelsize(CTX.fontsize);
         view_offsetraise->hide();
 	view_value[3] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "X offset");
@@ -1663,15 +1674,18 @@ void GUI::create_view_window(int num){
     if(CTX.center_windows)
       view_window->position(m_window->x()+m_window->w()/2-width/2,
 			    m_window->y()+2*MH);
+
+    view_window->resizable(view_colorbar_window);
     view_window->end();
   }
-  
-  update_view_window(num);
 
+  update_view_window(num);
+  
   if(view_window->shown())
     view_window->redraw();
   else
     view_window->show();
+
 }
 
 void GUI::update_view_window(int num){
@@ -1683,7 +1697,7 @@ void GUI::update_view_window(int num){
   sprintf(buffer, "Options for \"%s\" (\"%s\")", v->Name, v->FileName);
   view_window->label(buffer);
 
-  // colorbar
+  // colobar
   view_butt[0]->callback(view_options_show_scale_cb, (void*)num);
   view_butt[0]->value(v->ShowScale);
   view_butt[1]->callback(view_options_show_time_cb, (void*)num);
@@ -1694,6 +1708,7 @@ void GUI::update_view_window(int num){
   view_input[0]->value(v->Name);
   view_input[1]->callback(view_options_format_cb, (void*)num);
   view_input[1]->value(v->Format);
+  view_colorbar_window->update(v->Name, v->Min, v->Max, &v->CT);
 
   // range
   if(v->RangeType==DRAW_POST_CUSTOM) activate_custom(1);
@@ -1771,6 +1786,7 @@ void GUI::update_view_window(int num){
   view_butt[14]->value(v->ArrowLocation==DRAW_POST_LOCATE_COG);
   view_butt[15]->callback(view_options_vector_vertex_cb, (void*)num);
   view_butt[15]->value(v->ArrowLocation==DRAW_POST_LOCATE_VERTEX);
+
 }
 
 // Handle activation of cutom min/max

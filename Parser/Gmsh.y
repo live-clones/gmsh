@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.56 2001-01-11 22:27:56 geuzaine Exp $
+// $Id: Gmsh.y,v 1.57 2001-01-29 08:43:45 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -1686,7 +1686,6 @@ Command :
 	  DrawUI();
 	}
 	else{
-	  Init();
 	  Draw();
 	  DrawUI();
 	}

@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.5 2001-01-24 09:28:03 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.6 2001-01-29 08:43:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshVersion.h"
@@ -334,6 +334,9 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       else if(!strcmp(argv[i]+1, "nooverlay") ||
               !strcmp(argv[i]+1, "noov")){ 
         CTX.overlay = CTX.geom.highlight = 0; i++;
+      }
+      else if(!strcmp(argv[i]+1, "hh")){ 
+        CTX.overlay = 0 ; CTX.geom.highlight = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "perspective") ||
               !strcmp(argv[i]+1, "p")){ 
