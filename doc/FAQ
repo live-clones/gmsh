@@ -1,4 +1,4 @@
-GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2002-04-24 22:12:43 $)
+GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2002-05-19 19:56:19 $)
 
 1. GENERAL
 ==========
@@ -15,6 +15,9 @@ for the generation of adapted meshes on lines, surfaces and volumes.
 1.2) What does 'Gmsh' mean?
 
 Nothing ;-)
+
+But now that it is distributed under the GNU GPL, you can at least
+pronounce it "Gnu-mesh". Yeah.
 
 1.3) Where can I find more information?
 

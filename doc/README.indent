@@ -1,4 +1,4 @@
 
-On pourrait appliquer ceci?
+Should we apply this?
 
-indent -br -cdb -sc */*
+indent -br -cdb -sc */*.cpp */*.h
