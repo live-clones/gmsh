@@ -1,4 +1,4 @@
-$Id: TODO,v 1.57 2004-07-05 15:20:06 geuzaine Exp $
+$Id: TODO,v 1.58 2004-07-15 02:43:32 geuzaine Exp $
 
 add an interactive way to choose the orientation of surfaces in
 surface loops and lines in line loops
@@ -9,19 +9,31 @@ normals...)
 
 ********************************************************************
 
+add parameter to transformation operations to copy the meshes
+
+********************************************************************
+
+add transformations on volumes
+
+********************************************************************
+
+add/restore Parametric curve type (use MathEval!)
+
+********************************************************************
+
 add ternary operator and <,>,<=,>=,== tests in MathEval
 
 ********************************************************************
 
-On Macs, datasets with a bounding box < 1.e06 don't display properly
+on Macs, datasets with a bounding box < 1.e06 don't display properly
 (probably because all OpenGL stuff is done inetrnally in single
-precision...)
+precision...). Rescale?
 
 ********************************************************************
 
-gerard.fleury@inrs.fr: add the capability to mesh some entities using
-1st order and some other using 2nd order elements (in the same
-geometry)?
+add the capability to mesh some entities using 1st order and some
+other using 2nd order elements (in the same geometry)?
+<gerard.fleury@inrs.fr>
 
 ********************************************************************
 
@@ -42,17 +54,6 @@ find a better way to display the time/timestep in the scale...
 
 make Recombine work the same as "Second order"? (i.e., allow for
 interactive use?)
-
-********************************************************************
-
-Yves Krahenbuhl wrote:
-
-> Lors de la creation des elements du 2eme ordre, et selon la courbure
-> du contour exterieur, le jacobien de l'element peut devenir negatif.
-> Cependant le programme genere le maillage sans protester. Il
-> faudrait peut-etre faire apparaitre un message d'erreurs / ou se
-> restreindre (automatiquement ou non) a une interpolation lineaire
-> entre les points en question.
 
 ********************************************************************
 
@@ -94,17 +95,14 @@ Rewrite the View interface in C++
 
 ********************************************************************
 
-Improve Triangle integration: bgmesh on file, 2nd intermediate mesh?,
-etc.
-
-********************************************************************
-
 Include Tetgen (the same way we did it with Triangle--the license is
 the same).
 
 ********************************************************************
 
-Include the 2D and 3D frontal algos from Netgen (it's LGPL now...)
+Include the 2D Netgen algorithms and improve the integration of the 3D
+algorithm (would be nice to have automatic exterior orientation of
+surfaces...)
 
 ********************************************************************
 
@@ -114,6 +112,17 @@ then gmsh will fail.
 
 We should definitely use a better projection algorithm. See the work
 by Desbrun et al. in CS for this.
+
+********************************************************************
+
+Yves Krahenbuhl wrote:
+
+> Lors de la creation des elements du 2eme ordre, et selon la courbure
+> du contour exterieur, le jacobien de l'element peut devenir negatif.
+> Cependant le programme genere le maillage sans protester. Il
+> faudrait peut-etre faire apparaitre un message d'erreurs / ou se
+> restreindre (automatiquement ou non) a une interpolation lineaire
+> entre les points en question.
 
 ********************************************************************
 
