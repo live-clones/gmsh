@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.26 2004-07-16 18:02:20 geuzaine Exp $
+// $Id: Utils.cpp,v 1.27 2004-10-28 07:43:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -530,6 +530,14 @@ int Oriente(List_T * cu, double n[3])
   Vertex *ver[3];
 
   N = List_Nbr(cu);
+
+  if(N < 3){
+    Msg(GERROR, "Unable to orient contour with less than 3 vertices");
+    n[0] = 0.;
+    n[1] = 0.;
+    n[2] = 1.;
+    return 0;
+  }
 
   sum = 0.0;
   for(i = 0; i < N; i++) {
