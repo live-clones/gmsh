@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.1 2004-12-30 22:43:22 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.2 2004-12-30 23:25:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -404,7 +404,7 @@ int options_dialog(char *name)
   if(!dialog){
     dialog = new _options_dialog;
     int h = 3*10 + 25 + 1*25, y = 0;
-    dialog->window = new Fl_Window(200, h, "Gmsh Options"); y = 10;
+    dialog->window = new Fl_Window(200, h, "Options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->b = new Fl_Check_Button(10, y, 180, 25, "Save only modified options"); y += 25;
     dialog->b->value(1);
