@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2004-11-09 19:53:47 geuzaine Exp $
+# $Id: Makefile,v 1.15 2004-12-08 03:09:03 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -26,6 +26,7 @@ INCLUDE = -I../Common -I../DataStr
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
 
 SRC = Numeric.cpp\
+      EigenSolve3x3.cpp\
       gsl_newt.cpp\
       gsl_brent.cpp
 
@@ -53,6 +54,9 @@ depend:
 
 # DO NOT DELETE THIS LINE
 Numeric.o: Numeric.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h Numeric.h
+EigenSolve3x3.o: EigenSolve3x3.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Numeric.h
 gsl_newt.o: gsl_newt.cpp ../Common/Gmsh.h ../Common/Message.h \
