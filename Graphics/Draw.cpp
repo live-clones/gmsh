@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.47 2004-02-20 17:58:00 geuzaine Exp $
+// $Id: Draw.cpp,v 1.48 2004-03-30 18:17:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -209,14 +209,6 @@ void InitPosition(void)
     glTranslated(-CTX.rotation_center[0],
 		 -CTX.rotation_center[1],
 		 -CTX.rotation_center[2]);
-}
-
-// Replot
-// this should only be used when some new points get added in the db
-void Replot(void)
-{
-  CalculateMinMax(M.Points, NULL);
-  Draw();
 }
 
 // Entity selection

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.138 2004-03-13 21:00:19 geuzaine Exp $
+// $Id: Options.cpp,v 1.139 2004-03-30 18:17:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -103,7 +103,6 @@ void Init_Options(int num)
   CTX.batch = 0;
   CTX.mesh.initial_only = 0;
   CTX.output_filename = NULL;
-  CTX.expose = 0;
   CTX.lc = 1.0;
   CTX.viewport[0] = CTX.viewport[1] = 0;
   CTX.min[0] = CTX.min[1] = CTX.min[2] = 0.0;

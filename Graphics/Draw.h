@@ -42,8 +42,6 @@ void set_r(int i, double val);
 void set_t(int i, double val);
 void set_s(int i, double val);
 
-void Replot(void);
-
 void RaiseFill (int i, double Val, double ValMin, double Raise[3][8]);
 void Palette1 (Post_View * View, int nbi, int i);
 void Palette2 (Post_View * View, double min, double max, double val);

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.58 2004-03-13 21:00:19 geuzaine Exp $
+// $Id: Main.cpp,v 1.59 2004-03-30 18:17:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -249,7 +249,6 @@ int main(int argc, char *argv[])
 
   // Draw the actual scene
   Draw();
-  CTX.expose = 1;
 
   // loop
   return WID->run();

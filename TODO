@@ -1,4 +1,10 @@
-$Id: TODO,v 1.38 2004-03-21 21:01:11 geuzaine Exp $
+$Id: TODO,v 1.39 2004-03-30 18:17:06 geuzaine Exp $
+
+lighting of the new 3D arrows seems to behave in a weird way for
+"negative" vectors on Linux (as if the cone surface has an interior
+normal)
+
+********************************************************************
 
 add some code to make the node/element list ordered+dense (with no
 gaps)? this seems to be one common problem users have with our mesh
@@ -40,12 +46,6 @@ Yves Krahenbuhl wrote:
 > faudrait peut-etre faire apparaitre un message d'erreurs / ou se
 > restreindre (automatiquement ou non) a une interpolation lineaire
 > entre les points en question.
-
-********************************************************************
-
-cleanup the Draw; command in the parser: it calls CalculateMinMax if
-the nb points changed. Try make something more intelligent during
-OpenFile?
 
 ********************************************************************
 

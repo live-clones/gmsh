@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.100 2004-03-13 21:00:19 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.101 2004-03-30 18:17:11 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -1228,11 +1228,21 @@ that only valid floating point formatting characters make sense in
 Merges a file named @var{char-expression}. This command is equivalent to the
 `File->Merge' menu in the graphical user interface.
 
-@item MergeWithBoundingBox @var{char-expression};
-Merges a file and forces the recalculation of the scene's bounding box.
-
 @item Draw;
-Redraws the scene.
+Redraws the scene. The bounding box of the scene is computed as follows:
+@enumerate
+@item
+If there is a geometry (i.e., at least one geometrical point), the bounding
+box is taken as the box enclosing all the geometrical points;
+@item
+If there is no geometry but there is a mesh (i.e., at least one mesh
+vertex), the bounding box is taken as the box enclosing all the mesh
+vertices;
+@item
+If there is no geometry and no mesh, but there are some post-processing
+views, the bounding box is taken as the box enclosing all the primitives of
+the last post-processing view.
+@end enumerate
 
 @item Delete All;
 Deletes all geometrical entities and all currently loaded meshes.

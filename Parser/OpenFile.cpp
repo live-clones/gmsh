@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.50 2004-03-01 23:19:51 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.51 2004-03-30 18:17:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -57,6 +57,31 @@ void FixRelativePath(char *in, char *out){
   }
 }
 
+void SetBoundingBox(void)
+{
+  if(!THEM) 
+    return;
+
+  if(Tree_Nbr(THEM->Points)) { 
+    // if we have a geometry, use it
+    CalculateMinMax(THEM->Points, NULL);
+  }
+  else if(Tree_Nbr(THEM->Vertices)) {
+    // else, if we have a mesh, use it
+    CalculateMinMax(THEM->Vertices, NULL);
+  }
+  else if(List_Nbr(CTX.post.list)) {
+    // else, if we have views, use the last one
+    CalculateMinMax(NULL, ((Post_View *) List_Pointer
+                           (CTX.post.list,
+                            List_Nbr(CTX.post.list) - 1))->BBox);
+  }
+  else {
+    // else, use a default bbox
+    CalculateMinMax(NULL, NULL);
+  }
+}
+
 int ParseFile(char *f, int silent, int close)
 {
   char yyname_old[256], tmp[256];
@@ -99,6 +124,8 @@ int ParseFile(char *f, int silent, int close)
     Msg(INFO, "Parsed file '%s'", yyname);
     Msg(STATUS2N, "Read '%s'", yyname);
   }
+
+  SetBoundingBox();
 
   strncpy(yyname, yyname_old, 255);
   yyin = yyin_old;
@@ -146,6 +173,7 @@ int MergeProblem(char *name)
     // determine the file type.
 #if defined(HAVE_FLTK)
     read_pnm(name);
+    SetBoundingBox();
 #endif
     status = 0;
   }
@@ -162,17 +190,20 @@ int MergeProblem(char *name)
       if(THEM->status < 0)
 	mai3d(THEM, 0);
       Read_Mesh(THEM, fp, name, FORMAT_MSH);
+      SetBoundingBox();
       status = THEM->status;
     }
     else if(!strncmp(tmp, "sms", 3)) {
       if(THEM->status < 0)
 	mai3d(THEM, 0);
       Read_Mesh(THEM, fp, name, FORMAT_SMS);
+      SetBoundingBox();
       status = THEM->status;
     }
     else if(!strncmp(tmp, "$PostFormat", 11) ||
 	    !strncmp(tmp, "$View", 5)) {
       ReadView(fp, name);
+      SetBoundingBox();
       status = 0;
     }
     else {
@@ -181,27 +212,8 @@ int MergeProblem(char *name)
   }
 
   fclose(fp);
-  return status;
-}
 
-void MergeProblemWithBoundingBox(char *name)
-{
-  int nb = List_Nbr(CTX.post.list);
-  int status = MergeProblem(name);
-  if(List_Nbr(CTX.post.list) > nb) {
-    // if we merged a view, use it
-    CalculateMinMax(NULL, ((Post_View *) List_Pointer
-                           (CTX.post.list,
-                            List_Nbr(CTX.post.list) - 1))->BBox);
-  }
-  else if(!status) {
-    // else, if we did not read a mesh, use the geomnetry
-    CalculateMinMax(THEM->Points, NULL);
-  }
-  else {
-    // else, use the mesh
-    CalculateMinMax(THEM->Vertices, NULL);
-  }
+  return status;
 }
 
 void OpenProblem(char *name)
@@ -265,23 +277,6 @@ void OpenProblem(char *name)
     WID->reset_visibility();
   ZeroHighlight(&M);
 #endif
-
-  if(!Tree_Nbr(THEM->Points) && !Tree_Nbr(THEM->Vertices) && 
-     List_Nbr(CTX.post.list)) {
-    // if there are no points or vertices and there is a view, use it
-    CalculateMinMax(NULL, ((Post_View *) List_Pointer
-                           (CTX.post.list,
-                            List_Nbr(CTX.post.list) - 1))->BBox);
-  }
-  else if(!status) {
-    // else, if we don't have a mesh, use the geometry
-    CalculateMinMax(THEM->Points, NULL);
-  }
-  else {
-    // else, suppose we have a mesh (or use a default bbox if empty)
-    CalculateMinMax(THEM->Vertices, NULL);
-  }
-
 }
 
 // replace "/cygwin/x/" with "x:/"

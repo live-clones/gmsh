@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.210 2004-03-13 19:24:12 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.211 2004-03-30 18:17:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -43,6 +43,7 @@
 #include "Callbacks.h"
 #include "Plugin.h"
 #include "Visibility.h"
+#include "MinMax.h"
 
 using namespace std;
 
@@ -3485,7 +3486,8 @@ void con_geometry_define_point_cb(CALLBACK_ARGS)
   strcpy(l_text, WID->context_geometry_input[5]->value());
   add_point(CTX.filename);
   ZeroHighlight(THEM);
-  Replot();
+  CalculateMinMax(THEM->Points, NULL);
+  Draw();
 }
 
 void con_geometry_define_translation_cb(CALLBACK_ARGS)

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.161 2004-02-28 00:48:52 geuzaine Exp $
+// $Id: Gmsh.y,v 1.162 2004-03-30 18:17:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -54,7 +54,6 @@ Tree_T *Symbol_T = NULL;
 extern Context_T CTX;
 extern Mesh *THEM;
 
-static int Last_NumberOfPoints = 0;
 static Surface *STL_Surf;
 static ExtrudeParams extr;
 static Post_View *View;
@@ -2349,15 +2348,11 @@ Command :
 	CreateOutputFile(tmpstring, CTX.mesh.format);
 #endif
       }
-      else if(!strcmp($1, "Merge")){
+      else if(!strcmp($1, "Merge") || !strcmp($1, "MergeWithBoundingBox")){
+	// MergeWithBoundingBox is deprecated
 	char tmpstring[1024];
 	FixRelativePath($2, tmpstring);
 	MergeProblem(tmpstring);
-      }
-      else if(!strcmp($1, "MergeWithBoundingBox")){
-	char tmpstring[1024];
-	FixRelativePath($2, tmpstring);
-	MergeProblemWithBoundingBox(tmpstring);
       }
       else if(!strcmp($1, "System")){
 	SystemCall($2);
@@ -2421,15 +2416,8 @@ Command :
     {
 #if defined(HAVE_FLTK)
       if(!CTX.batch){ // we're in interactive mode
-	if(Tree_Nbr(THEM->Points) != Last_NumberOfPoints){
-	  Last_NumberOfPoints = Tree_Nbr(THEM->Points);
-	  Replot();
-	  DrawUI();
-	}
-	else{
-	  Draw();
-	  DrawUI();
-	}
+	Draw();
+	DrawUI();
       }
 #endif
     }

@@ -246,7 +246,7 @@ Physical Surface (SurfShellZ0)      = {123} ;
 Physical Line    (LineShellIntPhi0) = {1,2} ;
 Physical Line    (LineShellIntPhi1) = {9,10} ;
 Physical Line    (LineShellIntZ0)   = 21 ;
-Physical Point   (PointShellInt)    = 6 ;
+//Physical Point   (PointShellInt)    = 6 ;
 
 Physical Volume  (VolExt)           = {139,141} ;
 Physical Volume  (VolInf)           = {143,145} ;
