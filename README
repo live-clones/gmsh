@@ -9,13 +9,13 @@ make
 make install
 
 This requires GSL 1.2 or higher (freely available from
-http://sources.redhat.com/gsl/) and FLTK version 1.1.x (configured
-with OpenGL support; freely available from http://www.fltk.org). You
-can use the --with-fltk-prefix and --with-gsl-prefix configure options
-(or define the FLTK_DIR and GSL_DIR environment variables) if the
-libraries are not installed in their default locations. Please note
-that compiling the Windows version requires the Cygwin tools (freely
-available from http://www.cygwin.com).
+http://sources.redhat.com/gsl/) and FLTK 1.1.x (configured with OpenGL
+support; freely available from http://www.fltk.org). You can use the
+--with-fltk-prefix and --with-gsl-prefix configure options (or define
+the FLTK_DIR and GSL_DIR environment variables) if the libraries are
+not installed in their default locations. Please note that compiling
+the Windows version requires the Cygwin tools (freely available from
+http://www.cygwin.com).
 
 To install a non-graphical version of Gmsh (that does not require FLTK
 nor OpenGL), type
