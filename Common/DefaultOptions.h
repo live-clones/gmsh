@@ -1053,6 +1053,8 @@ StringXNumber PrintOptions_Number[] = {
     "Cull occluded primitives (to reduce PostScript/PDF file size)" },
   { F|O, "EpsPointSizeFactor" , opt_print_eps_point_size_factor , 1.0 ,
     "Size factor for points in PostScript/PDF output" },
+  { F|O, "EpsPS3Shading" , opt_print_eps_ps3shading , 0. ,
+    "Enable PostScript Level 3 shading" },
   { F|O, "EpsQuality" , opt_print_eps_quality , 1. ,
     "PostScript/PDF quality (1=simple sort, 2=BSP tree sort)" },
 

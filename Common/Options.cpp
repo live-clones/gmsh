@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.139 2004-03-30 18:17:06 geuzaine Exp $
+// $Id: Options.cpp,v 1.140 2004-04-08 18:12:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -4752,6 +4752,13 @@ double opt_print_eps_compress(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.print.eps_compress = (int)val;
   return CTX.print.eps_compress;
+}
+
+double opt_print_eps_ps3shading(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.print.eps_ps3shading = (int)val;
+  return CTX.print.eps_ps3shading;
 }
 
 double opt_print_eps_quality(OPT_ARGS_NUM)
