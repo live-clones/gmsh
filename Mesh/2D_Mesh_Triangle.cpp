@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Shewchuk.cpp,v 1.11 2003-01-23 20:19:21 geuzaine Exp $
+// $Id: 2D_Mesh_Triangle.cpp,v 1.1 2003-02-11 03:14:51 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,15 @@
 #include "Mesh.h"
 #include "Numeric.h"
 #include "Context.h"
+
+#if !defined(HAVE_TRIANGLE)
+
+int Mesh_Shewchuk(Surface *s){
+  Msg(GERROR, "Triangle is not compiled in this version of Gmsh");
+  return 1;
+}
+
+#else
 
 #define ANSI_DECLARATORS
 #define REAL double
@@ -227,3 +236,5 @@ int Mesh_Shewchuk(Surface *s){
   return 0;
 
 }
+
+#endif // !HAVE_TRIANGLE
