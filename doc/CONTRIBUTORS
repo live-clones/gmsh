@@ -1,4 +1,4 @@
-$Id: CONTRIBUTORS,v 1.10 2002-02-14 17:09:45 geuzaine Exp $
+$Id: CONTRIBUTORS,v 1.11 2002-03-11 17:59:21 geuzaine Exp $
 
 Gmsh is copyright (c) 1997-2002 by
 
@@ -8,9 +8,13 @@ Gmsh is copyright (c) 1997-2002 by
 Parts of the code have been contributed by
 
     David Colignon <david.colignon@ulg.ac.be>
+      - New colormaps
     Patrick Dular <patrick.dular@ulg.ac.be>
+      - Transfinite mesh fixes
     Marc Umé <Marc.Ume@digitalgraphics.be>
+      - Original list code
     Laurent Stainier <l.stainier@ulg.ac.be>
+      - Mac OS port
 
 Special thanks to the following folks who have greatly contributed by
 providing fresh ideas on theoretical or programming topics, or who

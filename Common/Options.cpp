@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.74 2002-03-10 23:23:33 remacle Exp $
+// $Id: Options.cpp,v 1.75 2002-03-11 17:59:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -2084,10 +2084,10 @@ double opt_view_nb_timestep(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     v->NbTimeStep = (int)val;
 #ifdef _FLTK
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
     WID->view_value[50]->maximum(v->NbTimeStep-1);
+  if(WID)
     WID->check_anim_buttons();
-  }
 #endif
   return v->NbTimeStep;
 }
@@ -2634,7 +2634,6 @@ double opt_view_range_type(OPT_ARGS_NUM){
 double opt_view_tensor_type(OPT_ARGS_NUM){
   GET_VIEW(0.) ;
   if(action & GMSH_SET){
-    printf("type = %d\n",(int)val);
     v->TensorType = (int)val;
     v->Changed = 1;
   }
@@ -2644,7 +2643,7 @@ double opt_view_tensor_type(OPT_ARGS_NUM){
     WID->view_butt[71]->value(v->TensorType==DRAW_POST_EIGENVECTORS);
   }
 #endif
-  return v->RangeType;
+  return v->TensorType;
 }
 double opt_view_arrow_type(OPT_ARGS_NUM){
   GET_VIEW(0.) ;

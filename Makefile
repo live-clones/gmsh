@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.191 2002-03-10 23:23:33 remacle Exp $
+# $Id: Makefile,v 1.192 2002-03-11 17:59:21 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 34
@@ -136,7 +136,7 @@ tag:
 	echo "              0.0001 * (double)GMSH_PATCH_VERSION)"     >> Common/GmshVersion.h
 	echo "#define GMSH_DATE     \"`date`\""      >> Common/GmshVersion.h
 	echo "#define GMSH_HOST     \"`hostname`\""  >> Common/GmshVersion.h
-	echo "#define GMSH_PACKAGER \"`who -m`\""    >> Common/GmshVersion.h
+	echo "#define GMSH_PACKAGER \"`whoami`\""    >> Common/GmshVersion.h
 	echo "#define GMSH_OS       \"`uname -sr`\"" >> Common/GmshVersion.h
 
 initialtag:
