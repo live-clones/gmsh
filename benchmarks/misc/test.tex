@@ -1,0 +1,15 @@
+% dvips -E objects-wrap -o objects-wrap.eps
+
+\documentclass[12pt]{article}
+
+\RequirePackage[latin1]{inputenc}
+\usepackage{graphicx,color}
+
+\pagestyle{empty}
+\thispagestyle{empty}
+
+\begin{document}
+
+\scalebox{0.5}{\input{aa.tex}}
+
+\end{document}
