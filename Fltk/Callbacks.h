@@ -275,5 +275,10 @@ void solver_kill_cb(CALLBACK_ARGS);
 void solver_choose_executable_cb(CALLBACK_ARGS);
 void solver_ok_cb(CALLBACK_ARGS);
 
+// Arrow editor windows
+
+void general_arrow_param_cb(CALLBACK_ARGS);
+void view_arrow_param_cb(CALLBACK_ARGS);
+
 #endif
 

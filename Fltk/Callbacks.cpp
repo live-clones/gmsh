@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.218 2004-04-21 04:26:44 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.219 2004-04-23 17:44:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -147,6 +147,63 @@ int file_chooser_get_filter()
 }
 
 #endif
+
+// arrow editor
+
+#include <FL/Fl_Value_Slider.H>
+
+int arrow_editor(char *title, double &a, double &b, double &c)
+{
+  struct _editor{
+    Fl_Window *window;
+    Fl_Value_Slider *sa, *sb, *sc;
+    Fl_Button *apply, *cancel;
+  };
+  static _editor *editor = NULL;
+
+  if(!editor){
+    editor = new _editor;
+    editor->window = new Fl_Window(200, 140);
+    editor->sa = new Fl_Value_Slider(10, 10, 100, 25, "Head radius");
+    editor->sa->type(FL_HOR_SLIDER);
+    editor->sa->align(FL_ALIGN_RIGHT);
+    editor->sb = new Fl_Value_Slider(10, 40, 100, 25, "Stem length");
+    editor->sb->type(FL_HOR_SLIDER);
+    editor->sb->align(FL_ALIGN_RIGHT);
+    editor->sc = new Fl_Value_Slider(10, 70, 100, 25, "Stem radius");
+    editor->sc->type(FL_HOR_SLIDER);
+    editor->sc->align(FL_ALIGN_RIGHT);
+    editor->apply = new Fl_Return_Button(10, 105, 85, 25, "Apply");
+    editor->cancel = new Fl_Button(105, 105, 85, 25, "Cancel");
+    editor->window->end();
+    editor->window->hotspot(editor->window);
+  }
+  
+  editor->window->label(title);
+  editor->sa->value(a);
+  editor->sb->value(b);
+  editor->sc->value(c);
+  editor->window->show();
+
+  while(editor->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == editor->apply) {
+	a = editor->sa->value();
+	b = editor->sb->value();
+	c = editor->sc->value();
+	return 1;
+      }
+      if (o == editor->window || o == editor->cancel){
+	editor->window->hide();
+	return 0;
+      }
+    }
+  }
+  return 0;
+}
 
 // Compatibility/local routines
 
@@ -1017,6 +1074,19 @@ void general_options_ok_cb(CALLBACK_ARGS)
     break;
   }
   opt_general_vector_type(0, GMSH_SET, val);
+}
+
+void general_arrow_param_cb(CALLBACK_ARGS)
+{
+  double a = opt_general_arrow_head_radius(0, GMSH_GET, 0);
+  double b = opt_general_arrow_stem_length(0, GMSH_GET, 0);
+  double c = opt_general_arrow_stem_radius(0, GMSH_GET, 0);
+  while(arrow_editor("Edit General 3D Arrow", a, b, c)){
+    opt_general_arrow_head_radius(0, GMSH_SET, a);
+    opt_general_arrow_stem_length(0, GMSH_SET, b);
+    opt_general_arrow_stem_radius(0, GMSH_SET, c);
+    Draw();
+  }
 }
 
 // Geometry options
@@ -3491,6 +3561,19 @@ void view_options_ok_cb(CALLBACK_ARGS)
     if(WID->view_choice[i])
       WID->view_choice[i]->clear_changed();
     WID->view_colorbar_window->clear_changed();
+  }
+}
+
+void view_arrow_param_cb(CALLBACK_ARGS)
+{
+  double a = opt_view_arrow_head_radius((long int)data, GMSH_GET, 0);
+  double b = opt_view_arrow_stem_length((long int)data, GMSH_GET, 0);
+  double c = opt_view_arrow_stem_radius((long int)data, GMSH_GET, 0);
+  while(arrow_editor("Edit View 3D Arrow", a, b, c)){
+    opt_view_arrow_head_radius((long int)data, GMSH_SET, a);
+    opt_view_arrow_stem_length((long int)data, GMSH_SET, b);
+    opt_view_arrow_stem_radius((long int)data, GMSH_SET, c);
+    Draw();
   }
 }
 

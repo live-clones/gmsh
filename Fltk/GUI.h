@@ -196,6 +196,7 @@ public:
   Fl_Value_Input   *view_value[VIEW_OPT_BUTT] ;
   Fl_Input         *view_input[VIEW_OPT_BUTT] ;
   Fl_Repeat_Button *view_butt_rep[VIEW_OPT_BUTT] ;
+  Fl_Button        *view_push_butt[VIEW_OPT_BUTT] ;
   Fl_Choice        *view_choice[VIEW_OPT_BUTT] ;
 
   Colorbar_Window  *view_colorbar_window ;
@@ -284,7 +285,6 @@ public:
   int  selection, try_selection, quit_selection, end_selection;
 
 };
-
 
 #endif
 

@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.35 2004-04-20 01:26:13 geuzaine Exp $
+// $Id: Entity.cpp,v 1.36 2004-04-23 17:44:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -367,12 +367,14 @@ void Draw_3DArrow(double relHeadRadius, double relStemLength, double relStemRadi
   glTranslated(x, y, z);
   glRotated(phi, axis[0], axis[1], axis[2]);
   
-  if(head_l && head_r){
-    glTranslated(0., 0., stem_l);
+  glTranslated(0., 0., stem_l);
+  if(head_l && head_r)
     gluCylinder(qua, head_r, 0., head_l, subdiv, 1);
+  if(head_r > stem_r)
     gluDisk(qua, stem_r, head_r, subdiv, 1);
-    glTranslated(0., 0., -stem_l);
-  }
+  else
+    gluDisk(qua, head_r, stem_r, subdiv, 1);      
+  glTranslated(0., 0., -stem_l);
 
   if(stem_l && stem_r){
     gluCylinder(qua, stem_r, stem_r, stem_l, subdiv, 1);

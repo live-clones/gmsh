@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.289 2004-04-22 05:45:14 geuzaine Exp $
+// $Id: GUI.cpp,v 1.290 2004-04-23 17:44:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1596,13 +1596,16 @@ void GUI::create_option_window()
 	{"Line", 0, 0, 0},
 	{"Arrow", 0, 0, 0},
 	{"Pyramid", 0, 0, 0},
-	{"3D Arrow", 0, 0, 0},
+	{"3D arrow", 0, 0, 0},
 	{0}
       };
       gen_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 8 * BH, IW, BH, "Vector display");
       gen_choice[0]->menu(menu_genvectype);
       gen_choice[0]->align(FL_ALIGN_RIGHT);
       gen_choice[0]->callback(set_changed_cb, 0);
+
+      Fl_Button *b = new Fl_Button(2 * IW - 2 * WB, 2 * WB + 5 * BH, (int)(1.5*BB), BH, "Edit 3D arrow");
+      b->callback(general_arrow_param_cb);
 
       o->end();
     }
@@ -2264,13 +2267,13 @@ void GUI::create_option_window()
       view_value[62]->callback(set_changed_cb, 0);
 
       {
-        view_vector = new Fl_Group(2 * WB, 2 * WB + 4 * BH, width / 2, 6 * BH, 0);
+        view_vector = new Fl_Group(2 * WB, 2 * WB + 4 * BH, width - 2 * WB, 6 * BH, 0);
 
         static Fl_Menu_Item menu_vectype[] = {
           {"Line", 0, 0, 0},
           {"Arrow", 0, 0, 0},
           {"Pyramid", 0, 0, 0},
-          {"3D Arrow", 0, 0, 0},
+          {"3D arrow", 0, 0, 0},
           {"Displacement", 0, 0, 0},
           {0}
         };
@@ -2279,6 +2282,8 @@ void GUI::create_option_window()
         view_choice[2]->align(FL_ALIGN_RIGHT);
         view_choice[2]->callback(set_changed_cb, 0);
 
+	view_push_butt[0] = new Fl_Button(2 * IW - 2 * WB, 2 * WB + 5 * BH, (int)(1.5*BB), BH, "Edit 3D arrow");
+      
         view_value[60] = new Fl_Value_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Arrow size");
         view_value[60]->minimum(0);
         view_value[60]->maximum(500);
@@ -2469,6 +2474,7 @@ void GUI::update_view_window(int num)
   opt_view_displacement_factor(num, GMSH_GUI, 0);
   opt_view_arrow_location(num, GMSH_GUI, 0);
   opt_view_tensor_type(num, GMSH_GUI, 0);
+  view_push_butt[0]->callback(view_arrow_param_cb, (void*)num);
 
   // colors
   view_colorbar_window->update(v->Name, v->Min, v->Max, &v->CT, &v->Changed);
@@ -3429,3 +3435,4 @@ void GUI::create_solver_window(int num)
   solver[num].window->position(CTX.solver_position[0], CTX.solver_position[1]);
   solver[num].window->end();
 }
+
