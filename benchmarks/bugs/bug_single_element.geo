@@ -12,6 +12,6 @@ Line (9) = {1, 7};
 Line (11) = {3, 7};
 
 Line Loop (1) = {9, -11, -1}; // this is bad
-// Line Loop (1000030) = {-11, -1, 9}; // this is OK
+// Line Loop (1) = {-11, -1, 9}; // this is OK
 
 Ruled Surface (2) = {1};
