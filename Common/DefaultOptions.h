@@ -611,6 +611,8 @@ StringXNumber GeometryOptions_Number[] = {
     "Display size of selected points (in pixels)" },
   { F|O, "PointSize" , opt_geometry_point_size , 3. , 
     "Display size of points (in pixels)" },
+  { F|O, "PointType" , opt_geometry_point_type , 0. , 
+    "Display points as solid color dots or 3D spheres" },
 
   { F|O, "ScalingFactor" , opt_geometry_scaling_factor , 1.0 , 
     "Global geometry scaling factor" },

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.38 2002-09-20 19:53:08 geuzaine Exp $
+// $Id: Geom.cpp,v 1.39 2002-11-01 22:27:33 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -69,9 +69,27 @@ void Draw_GeoPoint (void *a, void *b){
   }
 
   if(CTX.geom.points){
-    glBegin(GL_POINTS);
-    glVertex3d(v->Pos.X, v->Pos.Y, v->Pos.Z);
-    glEnd();
+
+    if(CTX.geom.point_type){
+      static GLUquadricObj *qua;
+      static int first=1;
+      if(first){
+	first=0;
+	qua = gluNewQuadric();
+      }
+      glPushMatrix(); 
+      glTranslatef(v->Pos.X, v->Pos.Y, v->Pos.Z);
+      if(v->Frozen || Highlighted)
+	gluSphere(qua, CTX.geom.point_sel_size*CTX.pixel_equiv_x/CTX.s[0], 20,20);
+      else
+	gluSphere(qua, CTX.geom.point_size*CTX.pixel_equiv_x/CTX.s[0], 20,20);
+      glPopMatrix();
+    }
+    else{
+      glBegin(GL_POINTS);
+      glVertex3d(v->Pos.X, v->Pos.Y, v->Pos.Z);
+      glEnd();
+    }
   }
 
   if(CTX.geom.points_num){
@@ -616,8 +634,11 @@ void Draw_Geom (Mesh *m) {
 
   if(m->status == -1) return;
 
-  if(CTX.geom.points || CTX.geom.points_num)
+  if(CTX.geom.points || CTX.geom.points_num){
+    if(CTX.geom.point_type) InitShading();
     Tree_Action(m->Points, Draw_GeoPoint);
+    if(CTX.geom.point_type && !CTX.geom.shade) InitNoShading();
+  }
   if(CTX.geom.lines || CTX.geom.lines_num)
     Tree_Action(m->Curves,  Draw_Curve  );
   if(CTX.geom.surfaces || CTX.geom.surfaces_num)

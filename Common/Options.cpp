@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.87 2002-10-12 19:41:13 geuzaine Exp $
+// $Id: Options.cpp,v 1.88 2002-11-01 22:27:33 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1591,7 +1591,22 @@ double opt_geometry_point_size(OPT_ARGS_NUM){
 double opt_geometry_point_sel_size(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.geom.point_sel_size = val;
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI))
+    WID->geo_value[5]->value(CTX.geom.point_sel_size);
+#endif
   return CTX.geom.point_sel_size;
+}
+double opt_geometry_point_type(OPT_ARGS_NUM){
+  if(action & GMSH_SET){
+    CTX.geom.point_type = (int)val;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI)){
+    WID->geo_choice[0]->value(CTX.geom.point_type);
+  }
+#endif
+  return CTX.geom.point_type;
 }
 double opt_geometry_line_width(OPT_ARGS_NUM){
   if(action & GMSH_SET) 

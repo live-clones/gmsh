@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.202 2002-11-01 19:00:29 geuzaine Exp $
+// $Id: GUI.cpp,v 1.203 2002-11-01 22:27:33 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1320,11 +1320,27 @@ void GUI::create_geometry_options_window(){
       geo_value[3]->minimum(0.1);
       geo_value[3]->maximum(50);
       geo_value[3]->step(0.1);
-      geo_value[4] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Line width");
+
+      geo_value[5] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Highlighted point size");
+      geo_value[5]->minimum(0.1);
+      geo_value[5]->maximum(50);
+      geo_value[5]->step(0.1);
+
+      static Fl_Menu_Item menu_geopointtype[] = {
+	{"Color dot",   0, 0, 0},
+	{"3D sphere",   0, 0, 0},
+	{0}
+      };
+      geo_choice[0] = new Fl_Choice(2*WB, 2*WB+3*BH, IW, BH, "Point display");
+      geo_choice[0]->menu(menu_geopointtype);
+      geo_choice[0]->align(FL_ALIGN_RIGHT);
+
+      geo_value[4] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Line width");
       geo_value[4]->minimum(0.1);
       geo_value[4]->maximum(50);
       geo_value[4]->step(0.1);
-      for(i=3 ; i<= 4 ; i++){
+
+      for(i=3 ; i<= 5 ; i++){
 	geo_value[i]->align(FL_ALIGN_RIGHT);
       }
       o->end();

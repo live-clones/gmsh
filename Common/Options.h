@@ -302,6 +302,7 @@ double opt_geometry_surfaces_num(OPT_ARGS_NUM);
 double opt_geometry_volumes_num(OPT_ARGS_NUM);
 double opt_geometry_point_size(OPT_ARGS_NUM);
 double opt_geometry_point_sel_size(OPT_ARGS_NUM);
+double opt_geometry_point_type(OPT_ARGS_NUM);
 double opt_geometry_line_width(OPT_ARGS_NUM);
 double opt_geometry_line_sel_width(OPT_ARGS_NUM);
 double opt_geometry_aspect(OPT_ARGS_NUM);
