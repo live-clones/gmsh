@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.33 2001-08-14 16:25:11 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.34 2001-08-15 07:00:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -11,8 +11,11 @@
 extern Mesh      *THEM;
 extern int        CurrentNodeNumber;
 
+static int DIM, NUM; // current dimension of parent entity
+
 static Tree_T *Tree_Ares = NULL, *Tree_Swaps = NULL;
 static int TEST_IS_ALL_OK;
+static Curve *THEC;
 static Surface *THES;
 static Volume *THEV;
 static ExtrudeParams *ep;
@@ -21,6 +24,85 @@ static Tree_T *Vertex_Bound = NULL, *ToAdd = NULL;
 // Vertex_Bound contains the vertices on the boundary (on the curves
 // for extrude_mesh(surface) and on the surfaces for
 // extrude_mesh(volume))
+
+typedef struct{
+  int Dim, Num;
+  List_T * List;
+}nxl;
+
+static int compnxl (const void *a, const void *b){
+  int val ;
+  nxl *q = (nxl *)a, *w = (nxl *)b;
+
+  if ((val = q->Dim - w->Dim) != 0) return val;
+  return q->Num - w->Num;
+}
+
+List_T* getnxl(Vertex *v, Curve *c){
+  nxl NXL;
+  NXL.Dim = 1;
+  NXL.Num = abs(c->Num);
+  return ((nxl*)List_PQuery(v->Extruded_Points, &NXL, compnxl))->List;
+}
+
+List_T* getnxl(Vertex *v, Surface *s){
+  nxl NXL;
+  NXL.Dim = 2;
+  NXL.Num = s->Num;
+  return ((nxl*)List_PQuery(v->Extruded_Points, &NXL, compnxl))->List;
+}
+
+List_T* getnxl(Vertex *v, Volume *vol){
+  nxl NXL;
+  NXL.Dim = 3;
+  NXL.Num = vol->Num;
+  return ((nxl*)List_PQuery(v->Extruded_Points, &NXL, compnxl))->List;
+}
+
+List_T* getnxl(Vertex *v, int dim){
+  int i, j;
+  Curve *c;
+  Surface *s;
+  List_T *list;
+  nxl NXL;
+
+  NXL.Dim = dim;
+  if(dim==1)
+    return getnxl(v, THEC);
+  else if(dim==2){
+    if((list = getnxl(v, THES)))
+      return list;
+    else{
+      for(i=0; i<List_Nbr(THES->Generatrices); i++){
+	List_Read(THES->Generatrices, i, &c);
+	if((list = getnxl(v, c))) 
+	  return list;
+      }
+    }
+  }
+  else if(dim==3){
+    if((list = getnxl(v, THEV))) 
+      return list;
+    else{
+      for(i=0; i<List_Nbr(THEV->Surfaces); i++){
+	List_Read(THEV->Surfaces, i, &s);
+	if((list = getnxl(v, s))) 
+	  return list;
+      }
+      for(i=0; i<List_Nbr(THEV->Surfaces); i++){
+	List_Read(THEV->Surfaces, i, &s);
+	for(j=0; j<List_Nbr(s->Generatrices); j++){
+	  List_Read(s->Generatrices, j, &c);
+	  if((list = getnxl(v, c))) 
+	    return list;
+	}
+      }
+    }
+  }
+
+  Msg(GERROR, "Could not find extruded list for vertex %d", v->Num);
+  return 0;
+}
 
 typedef struct{
   int a, b;
@@ -93,19 +175,24 @@ void Extrude_Simplex_Phase1 (void *data, void *dum){
   Simplex **pS, *s;
   int i, j, k;
   Vertex *v1, *v2, *v3, *v4, *v5, *v6;
+  List_T *L0, *L1, *L2;
 
   pS = (Simplex **) data;
   s = *pS;
 
+  L0 = getnxl(s->V[0],DIM);
+  L1 = getnxl(s->V[1],DIM);
+  L2 = getnxl(s->V[2],DIM);
+
   k = 0;
   for (i = 0; i < ep->mesh.NbLayer; i++){
     for (j = 0; j < ep->mesh.NbElmLayer[i]; j++){
-      List_Read (s->V[0]->Extruded_Points, k, &v1);
-      List_Read (s->V[1]->Extruded_Points, k, &v2);
-      List_Read (s->V[2]->Extruded_Points, k, &v3);
-      List_Read (s->V[0]->Extruded_Points, k + 1, &v4);
-      List_Read (s->V[1]->Extruded_Points, k + 1, &v5);
-      List_Read (s->V[2]->Extruded_Points, k + 1, &v6);
+      List_Read (L0, k, &v1);
+      List_Read (L1, k, &v2);
+      List_Read (L2, k, &v3);
+      List_Read (L0, k + 1, &v4);
+      List_Read (L1, k + 1, &v5);
+      List_Read (L2, k + 1, &v6);
       k++;
       if (!are_exist (v1, v5, Tree_Ares))
 	are_cree (v2, v4, Tree_Ares);
@@ -124,6 +211,7 @@ void Extrude_Simplex_Phase3 (void *data, void *dum){
   Prism *newp;
   int i, j, k;
   Vertex *v1, *v2, *v3, *v4, *v5, *v6, *v7, *v8;
+  List_T *L0, *L1, *L2, *L3;
 
   pS = (Simplex **) data;
   s = *pS;
@@ -133,27 +221,32 @@ void Extrude_Simplex_Phase3 (void *data, void *dum){
     return;
   }
 
+  L0 = getnxl(s->V[0],DIM);
+  L1 = getnxl(s->V[1],DIM);
+  L2 = getnxl(s->V[2],DIM);
+  if(s->V[3]) L3 = getnxl(s->V[3],DIM);
+
   k = 0;
   for (i = 0; i < ep->mesh.NbLayer; i++){
     for (j = 0; j < ep->mesh.NbElmLayer[i]; j++){
 
       if(s->V[3]){
-        List_Read(s->V[0]->Extruded_Points,k,&v1);
-        List_Read(s->V[1]->Extruded_Points,k,&v2);
-        List_Read(s->V[2]->Extruded_Points,k,&v3);
-        List_Read(s->V[3]->Extruded_Points,k,&v4);
-        List_Read(s->V[0]->Extruded_Points,k+1,&v5);
-        List_Read(s->V[1]->Extruded_Points,k+1,&v6);
-        List_Read(s->V[2]->Extruded_Points,k+1,&v7);
-        List_Read(s->V[3]->Extruded_Points,k+1,&v8);
-      }
-      else{
-        List_Read (s->V[0]->Extruded_Points, k, &v1);
-        List_Read (s->V[1]->Extruded_Points, k, &v2);
-        List_Read (s->V[2]->Extruded_Points, k, &v3);
-        List_Read (s->V[0]->Extruded_Points, k + 1, &v4);
-        List_Read (s->V[1]->Extruded_Points, k + 1, &v5);
-        List_Read (s->V[2]->Extruded_Points, k + 1, &v6);
+        List_Read(L0,k,&v1);
+        List_Read(L1,k,&v2);
+        List_Read(L2,k,&v3);
+        List_Read(L3,k,&v4);
+        List_Read(L0,k+1,&v5);
+        List_Read(L1,k+1,&v6);
+        List_Read(L2,k+1,&v7);
+        List_Read(L3,k+1,&v8);
+      }		    
+      else{	    
+        List_Read(L0, k, &v1);
+        List_Read(L1, k, &v2);
+        List_Read(L2, k, &v3);
+        List_Read(L0, k + 1, &v4);
+        List_Read(L1, k + 1, &v5);
+        List_Read(L2, k + 1, &v6);
       }
 
       k++;
@@ -262,20 +355,26 @@ void Extrude_Simplex_Phase2 (void *data, void *dum){
   Simplex **pS, *s;
   int i, j, k;
   Vertex *v1, *v2, *v3, *v4, *v5, *v6;
+  List_T *L0, *L1, *L2;
 
   pS = (Simplex **) data;
   s = *pS;
 
+  L0 = getnxl(s->V[0],DIM);
+  L1 = getnxl(s->V[1],DIM);
+  L2 = getnxl(s->V[2],DIM);
+
   k = 0;
   for (i = 0; i < ep->mesh.NbLayer; i++){
     for (j = 0; j < ep->mesh.NbElmLayer[i]; j++){
-      List_Read (s->V[0]->Extruded_Points, k, &v1);
-      List_Read (s->V[1]->Extruded_Points, k, &v2);
-      List_Read (s->V[2]->Extruded_Points, k, &v3);
-      List_Read (s->V[0]->Extruded_Points, k + 1, &v4);
-      List_Read (s->V[1]->Extruded_Points, k + 1, &v5);
-      List_Read (s->V[2]->Extruded_Points, k + 1, &v6);
+      List_Read (L0, k, &v1);
+      List_Read (L1, k, &v2);
+      List_Read (L2, k, &v3);
+      List_Read (L0, k + 1, &v4);
+      List_Read (L1, k + 1, &v5);
+      List_Read (L2, k + 1, &v6);
       k++;
+      //if((double)rand()/(double)RAND_MAX < 0.1) break;
       if (are_exist (v4, v2, Tree_Ares) &&
           are_exist (v5, v3, Tree_Ares) &&
           are_exist (v1, v6, Tree_Ares)){
@@ -331,18 +430,22 @@ void Extrude_Vertex (void *data, void *dum){
 
   Vertex **pV, *v, *newv;
   int i, j;
+  nxl NXL;
 
   pV = (Vertex **) data;
   v = *pV;
 
-  // We should _not_ return here, since 1 point can be extruded along
-  // several directions (this was of course not the case in the old
-  // extrusion generator...)
-  if (v->Extruded_Points) // return;
-    List_Delete (v->Extruded_Points);
+  if(!v->Extruded_Points)
+    v->Extruded_Points = List_Create (1, 1, sizeof (nxl));
 
-  v->Extruded_Points = List_Create (ep->mesh.NbLayer, 1, sizeof (Vertex *));
-  List_Add (v->Extruded_Points, &v);
+  NXL.Num = NUM;
+  NXL.Dim = DIM;
+  if(List_Search(v->Extruded_Points, &NXL, compnxl))
+    return;
+  else
+    NXL.List = List_Create(ep->mesh.NbLayer, 1, sizeof (Vertex *));
+
+  List_Add (NXL.List, &v);
 
   for (i = 0; i < ep->mesh.NbLayer; i++){
     for (j = 0; j < ep->mesh.NbElmLayer[i]; j++){
@@ -352,12 +455,12 @@ void Extrude_Vertex (void *data, void *dum){
 
       if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &newv))){
 	Free_Vertex (&newv,0);
-        List_Add (v->Extruded_Points, pV);
+        List_Add (NXL.List, pV);
         if (ToAdd)
           Tree_Insert (ToAdd, pV);
       }
       else{
-        List_Add (v->Extruded_Points, &newv);
+        List_Add (NXL.List, &newv);
         Tree_Insert (THEM->Vertices, &newv);
         Tree_Insert (Vertex_Bound, &newv);
         if (ToAdd)
@@ -365,6 +468,8 @@ void Extrude_Vertex (void *data, void *dum){
       }
     }
   }
+
+  List_Add(v->Extruded_Points, &NXL); 
 }
 
 void Extrude_Surface1 (Surface * s){
@@ -389,14 +494,18 @@ void Extrude_Seg (Vertex * V1, Vertex * V2){
   int i, j, k;
   Vertex *v1, *v2, *v3, *v4;
   Simplex *s;
+  List_T *L1, *L2;
+
+  L1 = getnxl(V1,DIM);
+  L2 = getnxl(V2,DIM);
 
   k = 0;
   for (i = 0; i < ep->mesh.NbLayer; i++){
     for (j = 0; j < ep->mesh.NbElmLayer[i]; j++){
-      List_Read (V1->Extruded_Points, k, &v1);
-      List_Read (V2->Extruded_Points, k, &v2);
-      List_Read (V1->Extruded_Points, k + 1, &v3);
-      List_Read (V2->Extruded_Points, k + 1, &v4);
+      List_Read (L1, k, &v1);
+      List_Read (L2, k, &v2);
+      List_Read (L1, k + 1, &v3);
+      List_Read (L2, k + 1, &v4);
       if(ep->mesh.Recombine){
         s = Create_Quadrangle(v1,v2,v4,v3);
         s->iEnt = THES->Num; 
@@ -517,16 +626,21 @@ void copy_mesh (Curve * from, Curve * to, int direction){
 int Extrude_Mesh (Curve * c){
   int i;
   Vertex **v, *pV, **vexist, *v1;
+  List_T *L;
 
   if (!c->Extrude || !c->Extrude->mesh.ExtrudeMesh) return false;
 
   InitExtrude();
-
+  THEC = c;
+  DIM = 1;
+  NUM = c->Num;
   ep = c->Extrude;
 
   if (ep->geo.Mode == EXTRUDED_ENTITY){
     Extrude_Vertex (&c->beg, NULL);
-    c->Vertices = List_Create (List_Nbr (c->beg->Extruded_Points), 2, sizeof (Vertex *));
+    L = getnxl(c->beg,DIM);
+
+    c->Vertices = List_Create (List_Nbr(L), 2, sizeof (Vertex *));
     v = &c->beg;
     if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, v))){
       (*vexist)->u = c->ubeg;
@@ -543,12 +657,12 @@ int Extrude_Mesh (Curve * c){
       List_Add (c->Vertices, &pV);
     }
 
-    for (i = 1; i < List_Nbr (c->beg->Extruded_Points) - 1; i++){
-      List_Read (c->beg->Extruded_Points, i, &v1);
+    for (i = 1; i < List_Nbr(L) - 1; i++){
+      List_Read (L, i, &v1);
       if (!v1->ListCurves) v1->ListCurves = List_Create (1, 1, sizeof (Curve *));
-      List_Add (v1->ListCurves, &c);
+      List_Add(v1->ListCurves, &c);
       Tree_Insert (THEM->Vertices, &v1);
-      v1->u = (double) i / (double) List_Nbr (c->beg->Extruded_Points);
+      v1->u = (double) i / (double) List_Nbr(L);
       List_Add (c->Vertices, &v1);
     }
 
@@ -633,11 +747,12 @@ int Extrude_Mesh (Surface * s){
   if (!s->Extrude || !s->Extrude->mesh.ExtrudeMesh) return false;
 
   InitExtrude ();
+  THES = s;
+  DIM = 2;
+  NUM = s->Num;
+  ep = s->Extrude;
 
   FACE_DIMENSION = 2;
-
-  ep = s->Extrude;
-  THES = s;
 
   ToAdd = s->Vertices;
 
@@ -683,74 +798,106 @@ void Free_NegativeSimplex (void *a, void *b){
 }
 
 int Extrude_Mesh (Volume * v){
-  int i, j;
-  Surface *ss;
-  Vertex *v1;
+  ep = v->Extrude;
+  if (ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return true;
+  else return false;
+}
 
-  if (!v->Extrude || !v->Extrude->mesh.ExtrudeMesh) return false;
+int Extrude_Mesh (Tree_T * Volumes){
+  int i, j, doit=0, reco=0;
+  Surface *s;
+  Vertex *v1;
+  List_T *list;
 
   InitExtrude ();
+  DIM = 3;
 
-  Msg(STATUS3, "Meshing Volume %d", v->Num);
+  List_T *vol = Tree2List(Volumes);
 
-  ep = v->Extrude;
-  THEV = v;
-  if (ep->geo.Mode == EXTRUDED_ENTITY){
-    Surface *s = FindSurface (ep->geo.Source, THEM);
-    if (!s) return false;
-
-    List_T *list;
-    for (i = 0; i < List_Nbr (v->Surfaces); i++){
-      List_Read (v->Surfaces, i, &ss);
-      list = Tree2List (ss->Vertices);
-      for (int j = 0; j < List_Nbr (list); j++){
-        List_Read (list, j, &v1);
-        Tree_Insert (Vertex_Bound, &v1);
+  for (int ivol = 0; ivol < List_Nbr(vol); ivol++){
+    List_Read(vol, ivol, &THEV);
+    ep = THEV->Extrude;
+    if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY){
+      doit = 1;
+      if(ep->mesh.Recombine) reco = 1;
+      for (i = 0; i < List_Nbr (THEV->Surfaces); i++){
+	List_Read (THEV->Surfaces, i, &s);
+	list = Tree2List (s->Vertices);
+	for (int j = 0; j < List_Nbr (list); j++){
+	  List_Read (list, j, &v1);
+	  Tree_Insert (Vertex_Bound, &v1);
+	}
+	List_Delete (list);
       }
-      List_Delete (list);
     }
+  }
+  if(!doit) return false;
 
-    Extrude_Surface1 (s);
+  for (int ivol = 0; ivol < List_Nbr (vol); ivol++){
+    List_Read(vol, ivol, &THEV);
+    ep = THEV->Extrude;
+    NUM = THEV->Num;
+    if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY){
+      s = FindSurface (ep->geo.Source, THEM);
+      if(s) Extrude_Surface1 (s);
+    }
+  }
     
-    if(!ep->mesh.Recombine){
-      j = 0;
-      do{
-        TEST_IS_ALL_OK = 0;
-        Extrude_Surface2 (s);
-	Msg(INFO, "Swapping %d",TEST_IS_ALL_OK);
-        if (TEST_IS_ALL_OK == j)
-          break;
-        j = TEST_IS_ALL_OK;
+  if(!reco){
+    j = 0;
+    do{
+      TEST_IS_ALL_OK=0;
+      for (int ivol = 0; ivol < List_Nbr (vol); ivol++){
+	List_Read(vol, ivol, &THEV);
+	ep = THEV->Extrude;
+	NUM = THEV->Num;
+	if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY && 
+	   !ep->mesh.Recombine){
+	  s = FindSurface (ep->geo.Source, THEM);
+	  if(s) Extrude_Surface2 (s);
+	}
       }
-      while (TEST_IS_ALL_OK);
-    }
-
-    Extrude_Surface3 (s);
-
-    // Well well ... I think I fixed the bug in extrude meshes.
-    // Volume mesh cannot always comply with surface mesh, so I delete the
-    // surface mesh and create a new one. Edges were stored in Tree_Ares
-    // so that now, the surface mesh is ok (edge swapping is easy in 2d).
-    // cretainly not the most efficient way to do it but it seems to work
-    //
-    // In order to suppress only the tri/qua that have to, i.e. all
-    // those created by extrude_seg(), we tag tag them with a negative
-    // number. These elts will keep this negative number during their
-    // whole lives in order for adjacent volumes to respect the
-    // coherence of their common boundaries.
-    
-    for (i = 0; i < List_Nbr (v->Surfaces); i++){
-      List_Read (v->Surfaces, i, &ss);
-      tmp = Tree_Create (sizeof (Simplex *), compareQuality);
-      Tree_Action(ss->Simplexes, Free_NegativeSimplex);
-      Tree_Delete(ss->Simplexes);
-      ss->Simplexes = tmp;
-      Extrude_Mesh(ss);
-    }
-    
-    return true;
+      Msg(INFO, "%d swaps", TEST_IS_ALL_OK);
+      if(TEST_IS_ALL_OK == j){
+	Msg(GERROR, "Unable to swap all edges: try Recombine...");
+	break;
+      }
+      j = TEST_IS_ALL_OK;
+    }while(TEST_IS_ALL_OK);
   }
-  else{
-    return false;
+
+  for (int ivol = 0; ivol < List_Nbr (vol); ivol++){
+    List_Read(vol, ivol, &THEV);
+    ep = THEV->Extrude;
+    NUM = THEV->Num;
+    if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY){
+      s = FindSurface (ep->geo.Source, THEM);
+      if(s) Extrude_Surface3 (s);
+    }
   }
+
+  list= List_Create(100,100,sizeof(Surface*));
+  for (int ivol = 0; ivol < List_Nbr (vol); ivol++){
+    List_Read(vol, ivol, &THEV);
+    ep = THEV->Extrude;
+    if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY){
+      for (i = 0; i < List_Nbr (THEV->Surfaces); i++){
+	List_Read(THEV->Surfaces, i, &s);
+	if(!List_Search(list, &s, compareSurface))
+	  List_Add(list, &s);
+      }
+    }
+  }
+  for(i = 0; i<List_Nbr(list); i++){
+    List_Read (list, i, &s);
+    tmp = Tree_Create (sizeof (Simplex *), compareQuality);
+    Tree_Action(s->Simplexes, Free_NegativeSimplex);
+    Tree_Delete(s->Simplexes);
+    s->Simplexes = tmp;
+    Extrude_Mesh(s);
+  }
+
+  return true;
+
 }
+

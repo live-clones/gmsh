@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.24 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: Generator.cpp,v 1.25 2001-08-15 07:00:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -120,6 +120,8 @@ void Maillage_Dimension_3 (Mesh * M){
     Extrude_Mesh_Old(M);
   }
   else{
+    int Extrude_Mesh (Tree_T * Volumes);
+    Extrude_Mesh(M->Volumes);
     Tree_Action (M->Volumes, Maillage_Volume);
   }
 
