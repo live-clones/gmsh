@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.77 2004-07-02 02:40:43 geuzaine Exp $
+// $Id: CAD.cpp,v 1.78 2004-08-12 16:55:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1595,9 +1595,17 @@ int compareTwoCurves(const void *a, const void *b)
   c2 = *(Curve **) b;
   int comp;
 
-  if(c1->Typ != c2->Typ)
-    return c1->Typ - c2->Typ;
-  
+  if(c1->Typ != c2->Typ){
+    if((c1->Typ == MSH_SEGM_CIRC && c2->Typ == MSH_SEGM_CIRC_INV) ||
+       (c1->Typ == MSH_SEGM_CIRC_INV && c2->Typ == MSH_SEGM_CIRC) ||
+       (c1->Typ == MSH_SEGM_ELLI && c2->Typ == MSH_SEGM_ELLI_INV) ||
+       (c1->Typ == MSH_SEGM_ELLI_INV && c2->Typ == MSH_SEGM_ELLI)){
+      // this is still ok
+    }
+    else
+      return c1->Typ - c2->Typ;
+  }
+
   if(List_Nbr(c1->Control_Points) != List_Nbr(c2->Control_Points))
     return List_Nbr(c1->Control_Points) - List_Nbr(c2->Control_Points);
   
