@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.45 2003-03-21 00:52:43 geuzaine Exp $
+// $Id: Gmsh.l,v 1.46 2003-04-10 13:12:36 remacle Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -208,6 +208,7 @@ Sprintf                 return tSprintf ;
 StrCat                  return tStrCat ;
 StrPrefix               return tStrPrefix ;
 
+Triangulation           return tTriangulation;
 Transfinite             return tTransfinite;
 Translate               return tTranslate;
 Tanh                    return tTanh ;

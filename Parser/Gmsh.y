@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.135 2003-03-21 00:52:44 geuzaine Exp $
+// $Id: Gmsh.y,v 1.136 2003-04-10 13:12:37 remacle Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -101,7 +101,7 @@ int PrintListOfDouble (char *format, List_T *list, char *buffer);
 %token tFmod tModulo tHypot tPrintf tSprintf tStrCat tStrPrefix tDraw
 %token tPoint tCircle tEllipse tLine tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
-%token tPlane tRuled tTransfinite tComplex tPhysical
+%token tPlane tRuled tTriangulation tTransfinite tComplex tPhysical
 %token tUsing tBump tProgression tPlugin
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
 %token tLoop tRecombine tDelete tCoherence tIntersect
@@ -1754,6 +1754,13 @@ Shape :
 	$$.Num = (int)$4;
       }
     }
+
+  | tTriangulation tSurface '(' FExpr ')' tAFFECT '(' FExpr ',' FExpr ')' ListOfDouble ListOfDouble tEND
+  {
+    AddTriangulationToSurface ((int) $4, (int) $8, (int) $10,$12,$13);
+    $$.Num = (int)$4;
+  }
+
   | tNurbs tSurface tWith tBounds '(' FExpr ')' tAFFECT 
     ListOfListOfDouble tKnots  '{' ListOfDouble ',' ListOfDouble '}'
     tOrder '{' FExpr ',' FExpr '}' tEND

@@ -10,7 +10,7 @@
 
 lcar1 = .1;
 lcar2 = .0005;
-lcar3 = .075;
+lcar3 = .015;
 
 // In order to change these lengths globally (without changing the
 // file), a global scaling factor for all characteristic lengths can

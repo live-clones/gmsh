@@ -270,10 +270,14 @@ struct _Surf{
   CylParam Cyl;
   Grid_T Grid;          /* Grille de recherches rapides */
   ExtrudeParams *Extrude;
-  STL_Data *STL;
+  STL_Data *STL; // stl representation of the surface
+  POLY_rep *thePolyRep;
   int Dirty; //flag to prevent any meshing
   DrawingColor Color;
+  /// a pointer to a solid model entity
+  void * aSolidModelEntity;
 };
+
 typedef struct _Surf Surface;
 
 typedef struct{

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.45 2003-03-21 00:52:39 geuzaine Exp $
+// $Id: Geom.cpp,v 1.46 2003-04-10 13:12:36 remacle Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -279,6 +279,44 @@ int isPointOnPlanarSurface(Surface * S, double X, double Y, double Z,
 
 }
 
+void Draw_Triangulated_Surface(Surface * s)
+{
+  int k=0;
+  double *points;
+  double *p1,*p2,*p3;
+
+  if(!CTX.moving_light)
+    InitRenderModel();
+  InitShading();
+  glEnable(GL_POLYGON_OFFSET_FILL);
+
+  if(CTX.geom.surfaces) {
+    glBegin(GL_TRIANGLES);
+    while (k < List_Nbr(s->thePolyRep->polygons))
+      {
+	points = (double*)List_Pointer (s->thePolyRep->polygons,k);
+	k+= ((int)points[0] + 1);
+
+	if (points[0] == 3)
+	  {
+	    p1 = (double*)List_Pointer (s->thePolyRep->points_and_normals,6*(int)points[1]);
+	    p2 = (double*)List_Pointer (s->thePolyRep->points_and_normals,6*(int)points[2]);
+	    p3 = (double*)List_Pointer (s->thePolyRep->points_and_normals,6*(int)points[3]);	    
+	    glNormal3dv(&p1[3]);
+	    glVertex3d(p1[0],p1[1],p1[2]);
+	    glNormal3dv(&p2[3]);
+	    glVertex3d(p2[0],p2[1],p2[2]);
+	    glNormal3dv(&p3[3]);
+	    glVertex3d(p3[0],p3[1],p3[2]);
+	  }
+      }
+    glEnd();
+    printf("coucou %d %d\n",List_Nbr(s->thePolyRep->polygons),k);
+  }  
+  glDisable(GL_POLYGON_OFFSET_FILL); 
+}
+
+
 void Draw_Plane_Surface(Surface * s)
 {
   int i, j, k;
@@ -286,6 +324,12 @@ void Draw_Plane_Surface(Surface * s)
   double minx = 0., miny = 0., maxx = 0., maxy = 0., t, n[3], nn;
   Vertex P1, P2, P3, V[4], vv, vv1, vv2;
   char Num[100];
+
+  if (s->thePolyRep)
+    {
+      Draw_Triangulated_Surface(s);
+      return;
+    }
 
   static List_T *points;
   static int deb = 1;

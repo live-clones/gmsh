@@ -1,4 +1,4 @@
-// $Id: DataBase.cpp,v 1.25 2003-03-21 00:52:38 geuzaine Exp $
+// $Id: DataBase.cpp,v 1.26 2003-04-10 13:12:36 remacle Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,7 @@
 #include "Geo.h"
 #include "Mesh.h"
 #include "CAD.h"
+#include "STL.h"
 #include "Create.h"
 #include "Verif.h"
 #include "Context.h"
@@ -601,4 +602,30 @@ void CreateNurbsSurface(int Num, int Order1, int Order2, List_T * List,
           Listint);
   List_Delete(Listint);
   List_Delete(ListCP);
+}
+
+
+// This function takes a surfaces defined by edge loops that may
+// be initially planar or anything else and adds a triangulation
+// to in in order to represent the shape of the surface. This 
+// triangulation may be a STL triangulation (polygons are triangle)
+// but anything else is okay. Solid modelers like parasolid or proE
+// are able to provide such representations. I have written a translator
+// from ideas to gmsh that does that. 
+void AddTriangulationToSurface (int iSurface, int iNbPnt, int iNbrPolygons, 
+				List_T *points, List_T *polygons)
+{
+  Surface * s = FindSurface(iSurface, THEM);
+  
+  POLY_rep *rep = new POLY_rep (points,polygons);
+  
+  if (!s)
+    {
+      Msg(GERROR, "Unknown Surface %d", iSurface);
+      delete rep;
+      return;
+    }
+
+  s->thePolyRep = rep;
+
 }

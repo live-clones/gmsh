@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.43 2003-03-21 00:52:41 geuzaine Exp $
+// $Id: Create.cpp,v 1.44 2003-04-10 13:12:36 remacle Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -573,10 +573,11 @@ void Free_Curve(void *a, void *b)
 Surface *Create_Surface(int Num, int Typ)
 {
   Surface *pS;
-  int i;
+  int i;  
 
   pS = (Surface *) Malloc(sizeof(Surface));
   pS->Dirty = 0;
+  pS->thePolyRep = 0;
   pS->Color.type = 0;
   pS->Visible = VIS_GEOM | VIS_MESH;
   pS->Num = Num;

@@ -48,5 +48,7 @@ void AddQuadricSurfaceInDataBase (int Typ, int NumCyl, double zaxis[3],
                                   double xaxis[3], double center[3],
                                   double radius1, double radius2,
                                   List_T * loops);
+void AddTriangulationToSurface (int iSurface, int iNbPnt, int iNbrPolygons, 
+				List_T *points, List_T *polygons);
 
 #endif

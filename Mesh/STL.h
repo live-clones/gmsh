@@ -45,4 +45,15 @@ class STL_Data
   ~STL_Data ();
 };
 
+// more convenient representation
+class POLY_rep 
+{
+public :
+  List_T *points_and_normals;  // 6 * nbrPoints 
+  List_T *polygons; // first integer gives the number of point of the polygon
+                   // then next ones are the points id's of the polygon
+  POLY_rep (List_T *_p, List_T *_pol) : points_and_normals (_p),polygons(_pol){}
+  ~POLY_rep(){if(polygons)List_Delete(polygons);if(points_and_normals)List_Delete(points_and_normals);}
+};
+
 #endif
