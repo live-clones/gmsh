@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.36 2004-03-13 21:00:19 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.37 2004-05-16 20:04:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -94,25 +94,21 @@ double GMSH_CutMapPlugin::levelset(double x, double y, double z, double val) con
 
 Post_View *GMSH_CutMapPlugin::execute(Post_View * v)
 {
-  Post_View *vv;
-
   int iView = (int)CutMapOptions_Number[3].def;
   _valueIndependent = 0;
   _valueView = (int)CutMapOptions_Number[2].def;
   _valueTimeStep = (int)CutMapOptions_Number[1].def;
   _orientation = GMSH_LevelsetPlugin::MAP;
 
+  if(iView < 0)
+    iView = v ? v->Index : 0;
 
-  if(v && iView < 0)
-    vv = v;
-  else {
-    if(!v && iView < 0)
-      iView = 0;
-    if(!(vv = (Post_View *) List_Pointer_Test(CTX.post.list, iView))) {
-      Msg(WARNING, "View[%d] does not exist", iView);
-      return 0;
-    }
+  if(!List_Pointer_Test(CTX.post.list, iView)) {
+    Msg(GERROR, "View[%d] does not exist", iView);
+    return v;
   }
 
-  return GMSH_LevelsetPlugin::execute(vv);
+  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
+
+  return GMSH_LevelsetPlugin::execute(v1);
 }

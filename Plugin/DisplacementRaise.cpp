@@ -1,4 +1,4 @@
-// $Id: DisplacementRaise.cpp,v 1.14 2004-05-13 17:48:56 geuzaine Exp $
+// $Id: DisplacementRaise.cpp,v 1.15 2004-05-16 20:04:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -162,34 +162,32 @@ static void displacementRaise(Post_View * v, Post_View * w, double factor, int t
 
 Post_View *GMSH_DisplacementRaisePlugin::execute(Post_View * v)
 {
-  Post_View *vv, *ww;
-
   double factor = DisplacementRaiseOptions_Number[0].def;
   int dTimeStep = (int)DisplacementRaiseOptions_Number[1].def;
   int dView = (int)DisplacementRaiseOptions_Number[2].def;
   int iView = (int)DisplacementRaiseOptions_Number[3].def;
 
-  if(v && iView < 0)
-    vv = v;
-  else {
-    if(!v && iView < 0)
-      iView = 0;
-    if(!(vv = (Post_View *) List_Pointer_Test(CTX.post.list, iView))) {
-      Msg(GERROR, "View[%d] does not exist", iView);
-      return 0;
-    }
+  if(iView < 0)
+    iView = v ? v->Index : 0;
+
+  if(!List_Pointer_Test(CTX.post.list, iView)) {
+    Msg(GERROR, "View[%d] does not exist", iView);
+    return v;
   }
 
-  if(dView < 0){
-    dView = vv->Index + 1; // by default, try to use the next view
-  }
-  if(!(ww = (Post_View *) List_Pointer_Test(CTX.post.list, dView))) {
+  if(dView < 0)
+    dView = iView + 1; // by default, try to use the next view
+
+  if(!List_Pointer_Test(CTX.post.list, dView)) {
     Msg(GERROR, "View[%d] does not exist", dView);
-    return 0;
+    return v;
   }
 
-  displacementRaise(vv, ww, factor, dTimeStep);
+  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
+  Post_View *v2 = (Post_View*)List_Pointer(CTX.post.list, dView);
 
-  return vv;
+  displacementRaise(v1, v2, factor, dTimeStep);
+
+  return v1;
 }
 

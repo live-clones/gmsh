@@ -1,4 +1,4 @@
-// $Id: DecomposeInSimplex.cpp,v 1.10 2004-05-13 17:48:56 geuzaine Exp $
+// $Id: DecomposeInSimplex.cpp,v 1.11 2004-05-16 20:04:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -123,48 +123,45 @@ static void decomposeList(Post_View *v, int nbNod, int nbComp,
 
 Post_View *GMSH_DecomposeInSimplexPlugin::execute(Post_View * v)
 {
-  Post_View *vv;
-
   int iView = (int)DecomposeInSimplexOptions_Number[0].def;
 
-  if(v && iView < 0)
-    vv = v;
-  else {
-    if(!v && iView < 0)
-      iView = 0;
-    if(!(vv = (Post_View *) List_Pointer_Test(CTX.post.list, iView))) {
-      Msg(WARNING, "View[%d] does not exist", iView);
-      return 0;
-    }
+  if(iView < 0)
+    iView = v ? v->Index : 0;
+
+  if(!List_Pointer_Test(CTX.post.list, iView)) {
+    Msg(GERROR, "View[%d] does not exist", iView);
+    return v;
   }
 
+  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
+
   // Bail out if the view is a duplicate or if other views duplicate it
-  if(vv->DuplicateOf || vv->Links) {
+  if(v1->DuplicateOf || v1->Links) {
     Msg(GERROR, "DecomposeInSimplex cannot be applied to a duplicated view");
     return 0;
   }
 
   // quads
-  decomposeList(vv, 4, 1, &vv->SQ, &vv->NbSQ, vv->ST, &vv->NbST);
-  decomposeList(vv, 4, 3, &vv->VQ, &vv->NbVQ, vv->VT, &vv->NbVT);
-  decomposeList(vv, 4, 9, &vv->TQ, &vv->NbTQ, vv->TT, &vv->NbTT);
+  decomposeList(v1, 4, 1, &v1->SQ, &v1->NbSQ, v1->ST, &v1->NbST);
+  decomposeList(v1, 4, 3, &v1->VQ, &v1->NbVQ, v1->VT, &v1->NbVT);
+  decomposeList(v1, 4, 9, &v1->TQ, &v1->NbTQ, v1->TT, &v1->NbTT);
 		          
   // hexas	          
-  decomposeList(vv, 8, 1, &vv->SH, &vv->NbSH, vv->SS, &vv->NbSS);
-  decomposeList(vv, 8, 3, &vv->VH, &vv->NbVH, vv->VS, &vv->NbVS);
-  decomposeList(vv, 8, 9, &vv->TH, &vv->NbTH, vv->TS, &vv->NbTS);
+  decomposeList(v1, 8, 1, &v1->SH, &v1->NbSH, v1->SS, &v1->NbSS);
+  decomposeList(v1, 8, 3, &v1->VH, &v1->NbVH, v1->VS, &v1->NbVS);
+  decomposeList(v1, 8, 9, &v1->TH, &v1->NbTH, v1->TS, &v1->NbTS);
 		          
   // prisms	          
-  decomposeList(vv, 6, 1, &vv->SI, &vv->NbSI, vv->SS, &vv->NbSS);
-  decomposeList(vv, 6, 3, &vv->VI, &vv->NbVI, vv->VS, &vv->NbVS);
-  decomposeList(vv, 6, 9, &vv->TI, &vv->NbTI, vv->TS, &vv->NbTS);
+  decomposeList(v1, 6, 1, &v1->SI, &v1->NbSI, v1->SS, &v1->NbSS);
+  decomposeList(v1, 6, 3, &v1->VI, &v1->NbVI, v1->VS, &v1->NbVS);
+  decomposeList(v1, 6, 9, &v1->TI, &v1->NbTI, v1->TS, &v1->NbTS);
 		          
   // pyramids	          
-  decomposeList(vv, 5, 1, &vv->SY, &vv->NbSY, vv->SS, &vv->NbSS);
-  decomposeList(vv, 5, 3, &vv->VY, &vv->NbVY, vv->VS, &vv->NbVS);
-  decomposeList(vv, 5, 9, &vv->TY, &vv->NbTY, vv->TS, &vv->NbTS);
+  decomposeList(v1, 5, 1, &v1->SY, &v1->NbSY, v1->SS, &v1->NbSS);
+  decomposeList(v1, 5, 3, &v1->VY, &v1->NbVY, v1->VS, &v1->NbVS);
+  decomposeList(v1, 5, 9, &v1->TY, &v1->NbTY, v1->TS, &v1->NbTS);
 
-  return vv;
+  return v1;
 }
 
 // Utility class 

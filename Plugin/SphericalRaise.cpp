@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.16 2004-05-13 17:48:56 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.17 2004-05-16 20:04:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -149,7 +149,6 @@ static void sphericalRaise(Post_View * v, int timeStep, double center[3],
 
 Post_View *GMSH_SphericalRaisePlugin::execute(Post_View * v)
 {
-  Post_View *vv;
   double center[3], raise;
 
   center[0] = SphericalRaiseOptions_Number[0].def;
@@ -159,18 +158,17 @@ Post_View *GMSH_SphericalRaisePlugin::execute(Post_View * v)
   int timeStep = (int)SphericalRaiseOptions_Number[4].def;
   int iView = (int)SphericalRaiseOptions_Number[5].def;
 
-  if(v && iView < 0)
-    vv = v;
-  else {
-    if(!v && iView < 0)
-      iView = 0;
-    if(!(vv = (Post_View *) List_Pointer_Test(CTX.post.list, iView))) {
-      Msg(WARNING, "View[%d] does not exist", iView);
-      return 0;
-    }
+  if(iView < 0)
+    iView = v ? v->Index : 0;
+
+  if(!List_Pointer_Test(CTX.post.list, iView)) {
+    Msg(GERROR, "View[%d] does not exist", iView);
+    return v;
   }
 
-  sphericalRaise(vv, timeStep, center, raise);
-  return vv;
+  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
+
+  sphericalRaise(v1, timeStep, center, raise);
+  return v1;
 }
 

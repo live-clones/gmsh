@@ -1,4 +1,4 @@
-// $Id: Extract.cpp,v 1.10 2004-05-13 15:54:56 geuzaine Exp $
+// $Id: Extract.cpp,v 1.11 2004-05-16 20:04:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -197,70 +197,66 @@ Post_View *GMSH_ExtractPlugin::execute(Post_View * v)
   char *expr[3] = { ExtractOptions_String[0].def, 
 		    ExtractOptions_String[1].def,
 		    ExtractOptions_String[2].def };
-  Post_View *vv;
 
-  if(v && iView < 0)
-    vv = v;
-  else {
-    if(!v && iView < 0)
-      iView = 0;
-    if(!(vv = (Post_View *) List_Pointer_Test(CTX.post.list, iView))) {
-      Msg(WARNING, "View[%d] does not exist", iView);
-      return 0;
-    }
+  if(iView < 0)
+    iView = v ? v->Index : 0;
+
+  if(!List_Pointer_Test(CTX.post.list, iView)) {
+    Msg(GERROR, "View[%d] does not exist", iView);
+    return v;
   }
 
-  // FIXME: this is not secure: if BeginView forces a post.list
-  // reallocation, vv is wrong
-  Post_View *view = BeginView(1);
-  Post_View *z = view;
+  Post_View *v2 = BeginView(1);
+
+  // get v1 after BeginView: this is ok even if post.list got reallocated
+  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
 
   // points
-  extract(expr, vv->SP, vv->NbSP, z->SP, &z->NbSP, z->VP, &z->NbVP, vv->NbTimeStep, 1, 1);
-  extract(expr, vv->VP, vv->NbVP, z->SP, &z->NbSP, z->VP, &z->NbVP, vv->NbTimeStep, 1, 3);
-  extract(expr, vv->TP, vv->NbTP, z->SP, &z->NbSP, z->VP, &z->NbVP, vv->NbTimeStep, 1, 9);
+  extract(expr, v1->SP, v1->NbSP, v2->SP, &v2->NbSP, v2->VP, &v2->NbVP, v1->NbTimeStep, 1, 1);
+  extract(expr, v1->VP, v1->NbVP, v2->SP, &v2->NbSP, v2->VP, &v2->NbVP, v1->NbTimeStep, 1, 3);
+  extract(expr, v1->TP, v1->NbTP, v2->SP, &v2->NbSP, v2->VP, &v2->NbVP, v1->NbTimeStep, 1, 9);
   // lines			                                  
-  extract(expr, vv->SL, vv->NbSL, z->SL, &z->NbSL, z->VL, &z->NbVL, vv->NbTimeStep, 2, 1);
-  extract(expr, vv->VL, vv->NbVL, z->SL, &z->NbSL, z->VL, &z->NbVL, vv->NbTimeStep, 2, 3);
-  extract(expr, vv->TL, vv->NbTL, z->SL, &z->NbSL, z->VL, &z->NbVL, vv->NbTimeStep, 2, 9);
+  extract(expr, v1->SL, v1->NbSL, v2->SL, &v2->NbSL, v2->VL, &v2->NbVL, v1->NbTimeStep, 2, 1);
+  extract(expr, v1->VL, v1->NbVL, v2->SL, &v2->NbSL, v2->VL, &v2->NbVL, v1->NbTimeStep, 2, 3);
+  extract(expr, v1->TL, v1->NbTL, v2->SL, &v2->NbSL, v2->VL, &v2->NbVL, v1->NbTimeStep, 2, 9);
   // triangles			                                  
-  extract(expr, vv->ST, vv->NbST, z->ST, &z->NbST, z->VT, &z->NbVT, vv->NbTimeStep, 3, 1);
-  extract(expr, vv->VT, vv->NbVT, z->ST, &z->NbST, z->VT, &z->NbVT, vv->NbTimeStep, 3, 3);
-  extract(expr, vv->TT, vv->NbTT, z->ST, &z->NbST, z->VT, &z->NbVT, vv->NbTimeStep, 3, 9);
+  extract(expr, v1->ST, v1->NbST, v2->ST, &v2->NbST, v2->VT, &v2->NbVT, v1->NbTimeStep, 3, 1);
+  extract(expr, v1->VT, v1->NbVT, v2->ST, &v2->NbST, v2->VT, &v2->NbVT, v1->NbTimeStep, 3, 3);
+  extract(expr, v1->TT, v1->NbTT, v2->ST, &v2->NbST, v2->VT, &v2->NbVT, v1->NbTimeStep, 3, 9);
   // quadrangles		                                  
-  extract(expr, vv->SQ, vv->NbSQ, z->SQ, &z->NbSQ, z->VQ, &z->NbVQ, vv->NbTimeStep, 4, 1);
-  extract(expr, vv->VQ, vv->NbVQ, z->SQ, &z->NbSQ, z->VQ, &z->NbVQ, vv->NbTimeStep, 4, 3);
-  extract(expr, vv->TQ, vv->NbTQ, z->SQ, &z->NbSQ, z->VQ, &z->NbVQ, vv->NbTimeStep, 4, 9);
+  extract(expr, v1->SQ, v1->NbSQ, v2->SQ, &v2->NbSQ, v2->VQ, &v2->NbVQ, v1->NbTimeStep, 4, 1);
+  extract(expr, v1->VQ, v1->NbVQ, v2->SQ, &v2->NbSQ, v2->VQ, &v2->NbVQ, v1->NbTimeStep, 4, 3);
+  extract(expr, v1->TQ, v1->NbTQ, v2->SQ, &v2->NbSQ, v2->VQ, &v2->NbVQ, v1->NbTimeStep, 4, 9);
   // tets			                                  
-  extract(expr, vv->SS, vv->NbSS, z->SS, &z->NbSS, z->VS, &z->NbVS, vv->NbTimeStep, 4, 1);
-  extract(expr, vv->VS, vv->NbVS, z->SS, &z->NbSS, z->VS, &z->NbVS, vv->NbTimeStep, 4, 3);
-  extract(expr, vv->TS, vv->NbTS, z->SS, &z->NbSS, z->VS, &z->NbVS, vv->NbTimeStep, 4, 9);
+  extract(expr, v1->SS, v1->NbSS, v2->SS, &v2->NbSS, v2->VS, &v2->NbVS, v1->NbTimeStep, 4, 1);
+  extract(expr, v1->VS, v1->NbVS, v2->SS, &v2->NbSS, v2->VS, &v2->NbVS, v1->NbTimeStep, 4, 3);
+  extract(expr, v1->TS, v1->NbTS, v2->SS, &v2->NbSS, v2->VS, &v2->NbVS, v1->NbTimeStep, 4, 9);
   // hexas			                                  
-  extract(expr, vv->SH, vv->NbSH, z->SH, &z->NbSH, z->VH, &z->NbVH, vv->NbTimeStep, 8, 1);
-  extract(expr, vv->VH, vv->NbVH, z->SH, &z->NbSH, z->VH, &z->NbVH, vv->NbTimeStep, 8, 3);
-  extract(expr, vv->TH, vv->NbTH, z->SH, &z->NbSH, z->VH, &z->NbVH, vv->NbTimeStep, 8, 9);
+  extract(expr, v1->SH, v1->NbSH, v2->SH, &v2->NbSH, v2->VH, &v2->NbVH, v1->NbTimeStep, 8, 1);
+  extract(expr, v1->VH, v1->NbVH, v2->SH, &v2->NbSH, v2->VH, &v2->NbVH, v1->NbTimeStep, 8, 3);
+  extract(expr, v1->TH, v1->NbTH, v2->SH, &v2->NbSH, v2->VH, &v2->NbVH, v1->NbTimeStep, 8, 9);
   // prisms			                                  
-  extract(expr, vv->SI, vv->NbSI, z->SI, &z->NbSI, z->VI, &z->NbVI, vv->NbTimeStep, 6, 1);
-  extract(expr, vv->VI, vv->NbVI, z->SI, &z->NbSI, z->VI, &z->NbVI, vv->NbTimeStep, 6, 3);
-  extract(expr, vv->TI, vv->NbTI, z->SI, &z->NbSI, z->VI, &z->NbVI, vv->NbTimeStep, 6, 9);
+  extract(expr, v1->SI, v1->NbSI, v2->SI, &v2->NbSI, v2->VI, &v2->NbVI, v1->NbTimeStep, 6, 1);
+  extract(expr, v1->VI, v1->NbVI, v2->SI, &v2->NbSI, v2->VI, &v2->NbVI, v1->NbTimeStep, 6, 3);
+  extract(expr, v1->TI, v1->NbTI, v2->SI, &v2->NbSI, v2->VI, &v2->NbVI, v1->NbTimeStep, 6, 9);
   // pyramids			                                  
-  extract(expr, vv->SY, vv->NbSY, z->SY, &z->NbSY, z->VY, &z->NbVY, vv->NbTimeStep, 5, 1);
-  extract(expr, vv->VY, vv->NbVY, z->SY, &z->NbSY, z->VY, &z->NbVY, vv->NbTimeStep, 5, 3);
-  extract(expr, vv->TY, vv->NbTY, z->SY, &z->NbSY, z->VY, &z->NbVY, vv->NbTimeStep, 5, 9);
+  extract(expr, v1->SY, v1->NbSY, v2->SY, &v2->NbSY, v2->VY, &v2->NbVY, v1->NbTimeStep, 5, 1);
+  extract(expr, v1->VY, v1->NbVY, v2->SY, &v2->NbSY, v2->VY, &v2->NbVY, v1->NbTimeStep, 5, 3);
+  extract(expr, v1->TY, v1->NbTY, v2->SY, &v2->NbSY, v2->VY, &v2->NbVY, v1->NbTimeStep, 5, 9);
 
-  if(view->empty()) {
-    RemoveViewByNumber(view->Num);
+  if(v2->empty()) {
+    RemoveViewByNumber(v2->Num);
+    return v1;
   }
   else{
     // copy time data
-    for(int i = 0; i < List_Nbr(vv->Time); i++)
-      List_Add(view->Time, List_Pointer(vv->Time, i));
+    for(int i = 0; i < List_Nbr(v1->Time); i++)
+      List_Add(v2->Time, List_Pointer(v1->Time, i));
     // finalize
     char name[1024], filename[1024];
-    sprintf(name, "%s_Extract", vv->Name);
-    sprintf(filename, "%s_Extract.pos", vv->Name);
-    EndView(view, 1, filename, name);
+    sprintf(name, "%s_Extract", v1->Name);
+    sprintf(filename, "%s_Extract.pos", v1->Name);
+    EndView(v2, 1, filename, name);
+    return v2;
   }
-
-  return 0;
 }

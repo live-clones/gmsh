@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.33 2004-03-13 21:00:19 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.34 2004-05-16 20:04:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -90,8 +90,6 @@ double GMSH_CutPlanePlugin::levelset(double x, double y, double z, double val) c
 
 Post_View *GMSH_CutPlanePlugin::execute(Post_View * v)
 {
-  Post_View *vv;
-
   int iView = (int)CutPlaneOptions_Number[4].def;
   _ref[0] = CutPlaneOptions_Number[0].def;
   _ref[1] = CutPlaneOptions_Number[1].def;
@@ -101,16 +99,15 @@ Post_View *GMSH_CutPlanePlugin::execute(Post_View * v)
   _valueTimeStep = -1;
   _orientation = GMSH_LevelsetPlugin::PLANE;
 
-  if(v && iView < 0)
-    vv = v;
-  else {
-    if(!v && iView < 0)
-      iView = 0;
-    if(!(vv = (Post_View *) List_Pointer_Test(CTX.post.list, iView))) {
-      Msg(WARNING, "View[%d] does not exist", iView);
-      return 0;
-    }
+  if(iView < 0)
+    iView = v ? v->Index : 0;
+
+  if(!List_Pointer_Test(CTX.post.list, iView)) {
+    Msg(GERROR, "View[%d] does not exist", iView);
+    return v;
   }
 
-  return GMSH_LevelsetPlugin::execute(vv);
+  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
+
+  return GMSH_LevelsetPlugin::execute(v1);
 }

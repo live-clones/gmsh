@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.20 2004-03-13 21:00:19 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.21 2004-05-16 20:04:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -202,36 +202,34 @@ void Triangulate(Post_View * vin, Post_View * vout)
 
 Post_View *GMSH_TriangulatePlugin::execute(Post_View * v)
 {
-  Post_View *vv, *View;
-
   int iView = (int)TriangulateOptions_Number[0].def;
 
-  if(v && iView < 0)
-    vv = v;
-  else {
-    if(!v && iView < 0)
-      iView = 0;
-    if(!(vv = (Post_View *) List_Pointer_Test(CTX.post.list, iView))) {
-      Msg(WARNING, "View[%d] does not exist", iView);
-      return 0;
-    }
+  if(iView < 0)
+    iView = v ? v->Index : 0;
+
+  if(!List_Pointer_Test(CTX.post.list, iView)) {
+    Msg(GERROR, "View[%d] does not exist", iView);
+    return v;
   }
 
-  if(vv->NbSP > 2) {
+  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
+  
+  if(v1->NbSP > 2) {
     // FIXME: this is not secure: if BeginView forces a post.list
-    // reallocation, vv is wrong
-    View = BeginView(1);
-    Triangulate(vv, View);
+    // reallocation, v1 could be wrong
+    Post_View *v2 = BeginView(1);
+    Triangulate(v1, v2);
     // copy time data
-    for(int i = 0; i < List_Nbr(vv->Time); i++)
-      List_Add(View->Time, List_Pointer(vv->Time, i));
+    for(int i = 0; i < List_Nbr(v1->Time); i++)
+      List_Add(v2->Time, List_Pointer(v1->Time, i));
     // finalize
     char name[1024], filename[1024];
-    sprintf(name, "%s_Triangulate", vv->Name);
-    sprintf(filename, "%s_Triangulate.pos", vv->Name);
-    EndView(View, 1, filename, name);
+    sprintf(name, "%s_Triangulate", v1->Name);
+    sprintf(filename, "%s_Triangulate.pos", v1->Name);
+    EndView(v2, 1, filename, name);
+    return v2;
   }
 
-  return 0;
+  return v1;
 }
 

@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.6 2004-05-13 17:48:56 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.7 2004-05-16 20:04:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -187,56 +187,53 @@ static void evaluate(Post_View * v, List_T * list, int nbElm,
 
 Post_View *GMSH_EvaluatePlugin::execute(Post_View * v)
 {
-  Post_View *vv;
-
   int timeStep = (int)EvaluateOptions_Number[0].def;
   int comp = (int)EvaluateOptions_Number[1].def;
   int iView = (int)EvaluateOptions_Number[2].def;
   char *expr = EvaluateOptions_String[0].def;
 
-  if(v && iView < 0)
-    vv = v;
-  else {
-    if(!v && iView < 0)
-      iView = 0;
-    if(!(vv = (Post_View *) List_Pointer_Test(CTX.post.list, iView))) {
-      Msg(WARNING, "View[%d] does not exist", iView);
-      return 0;
-    }
+  if(iView < 0)
+    iView = v ? v->Index : 0;
+
+  if(!List_Pointer_Test(CTX.post.list, iView)) {
+    Msg(GERROR, "View[%d] does not exist", iView);
+    return v;
   }
 
-  evaluate(vv, vv->SP, vv->NbSP, 1, 1, comp, timeStep, expr);
-  evaluate(vv, vv->VP, vv->NbVP, 1, 3, comp, timeStep, expr);
-  evaluate(vv, vv->TP, vv->NbTP, 1, 9, comp, timeStep, expr);
+  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
 
-  evaluate(vv, vv->SL, vv->NbSL, 2, 1, comp, timeStep, expr);
-  evaluate(vv, vv->VL, vv->NbVL, 2, 3, comp, timeStep, expr);
-  evaluate(vv, vv->TL, vv->NbTL, 2, 9, comp, timeStep, expr);
+  evaluate(v1, v1->SP, v1->NbSP, 1, 1, comp, timeStep, expr);
+  evaluate(v1, v1->VP, v1->NbVP, 1, 3, comp, timeStep, expr);
+  evaluate(v1, v1->TP, v1->NbTP, 1, 9, comp, timeStep, expr);
 
-  evaluate(vv, vv->ST, vv->NbST, 3, 1, comp, timeStep, expr);
-  evaluate(vv, vv->VT, vv->NbVT, 3, 3, comp, timeStep, expr);
-  evaluate(vv, vv->TT, vv->NbTT, 3, 9, comp, timeStep, expr);
+  evaluate(v1, v1->SL, v1->NbSL, 2, 1, comp, timeStep, expr);
+  evaluate(v1, v1->VL, v1->NbVL, 2, 3, comp, timeStep, expr);
+  evaluate(v1, v1->TL, v1->NbTL, 2, 9, comp, timeStep, expr);
 
-  evaluate(vv, vv->SQ, vv->NbSQ, 4, 1, comp, timeStep, expr);
-  evaluate(vv, vv->VQ, vv->NbVQ, 4, 3, comp, timeStep, expr);
-  evaluate(vv, vv->TQ, vv->NbTQ, 4, 9, comp, timeStep, expr);
+  evaluate(v1, v1->ST, v1->NbST, 3, 1, comp, timeStep, expr);
+  evaluate(v1, v1->VT, v1->NbVT, 3, 3, comp, timeStep, expr);
+  evaluate(v1, v1->TT, v1->NbTT, 3, 9, comp, timeStep, expr);
 
-  evaluate(vv, vv->SS, vv->NbSS, 4, 1, comp, timeStep, expr);
-  evaluate(vv, vv->VS, vv->NbVS, 4, 3, comp, timeStep, expr);
-  evaluate(vv, vv->TS, vv->NbTS, 4, 9, comp, timeStep, expr);
+  evaluate(v1, v1->SQ, v1->NbSQ, 4, 1, comp, timeStep, expr);
+  evaluate(v1, v1->VQ, v1->NbVQ, 4, 3, comp, timeStep, expr);
+  evaluate(v1, v1->TQ, v1->NbTQ, 4, 9, comp, timeStep, expr);
 
-  evaluate(vv, vv->SH, vv->NbSH, 8, 1, comp, timeStep, expr);
-  evaluate(vv, vv->VH, vv->NbVH, 8, 3, comp, timeStep, expr);
-  evaluate(vv, vv->TH, vv->NbTH, 8, 9, comp, timeStep, expr);
+  evaluate(v1, v1->SS, v1->NbSS, 4, 1, comp, timeStep, expr);
+  evaluate(v1, v1->VS, v1->NbVS, 4, 3, comp, timeStep, expr);
+  evaluate(v1, v1->TS, v1->NbTS, 4, 9, comp, timeStep, expr);
 
-  evaluate(vv, vv->SI, vv->NbSI, 6, 1, comp, timeStep, expr);
-  evaluate(vv, vv->VI, vv->NbVI, 6, 3, comp, timeStep, expr);
-  evaluate(vv, vv->TI, vv->NbTI, 6, 9, comp, timeStep, expr);
+  evaluate(v1, v1->SH, v1->NbSH, 8, 1, comp, timeStep, expr);
+  evaluate(v1, v1->VH, v1->NbVH, 8, 3, comp, timeStep, expr);
+  evaluate(v1, v1->TH, v1->NbTH, 8, 9, comp, timeStep, expr);
 
-  evaluate(vv, vv->SY, vv->NbSY, 5, 1, comp, timeStep, expr);
-  evaluate(vv, vv->VY, vv->NbVY, 5, 3, comp, timeStep, expr);
-  evaluate(vv, vv->TY, vv->NbTY, 5, 9, comp, timeStep, expr);
+  evaluate(v1, v1->SI, v1->NbSI, 6, 1, comp, timeStep, expr);
+  evaluate(v1, v1->VI, v1->NbVI, 6, 3, comp, timeStep, expr);
+  evaluate(v1, v1->TI, v1->NbTI, 6, 9, comp, timeStep, expr);
 
-  return vv;
+  evaluate(v1, v1->SY, v1->NbSY, 5, 1, comp, timeStep, expr);
+  evaluate(v1, v1->VY, v1->NbVY, 5, 3, comp, timeStep, expr);
+  evaluate(v1, v1->TY, v1->NbTY, 5, 9, comp, timeStep, expr);
+
+  return v1;
 }
 

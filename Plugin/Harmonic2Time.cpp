@@ -1,4 +1,4 @@
-// $Id: Harmonic2Time.cpp,v 1.13 2004-03-13 21:00:19 geuzaine Exp $
+// $Id: Harmonic2Time.cpp,v 1.14 2004-05-16 20:04:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -109,7 +109,6 @@ static void harmonic2time(Post_View * vv, Post_View * View,
 
 Post_View *GMSH_Harmonic2TimePlugin::execute(Post_View * v)
 {
-  Post_View *vv, *View;
   int rIndex, iIndex, nbSteps, iView;
 
   rIndex = (int)Harmonic2TimeOptions_Number[0].def;
@@ -117,31 +116,31 @@ Post_View *GMSH_Harmonic2TimePlugin::execute(Post_View * v)
   nbSteps = (int)Harmonic2TimeOptions_Number[2].def;
   iView = (int)Harmonic2TimeOptions_Number[3].def;
 
-  if(v && iView < 0)
-    vv = v;
-  else {
-    if(!v && iView < 0)
-      iView = 0;
-    if(!(vv = (Post_View *) List_Pointer_Test(CTX.post.list, iView))) {
-      Msg(WARNING, "View[%d] does not exist", iView);
-      return 0;
-    }
+  if(iView < 0)
+    iView = v ? v->Index : 0;
+
+  if(!List_Pointer_Test(CTX.post.list, iView)) {
+    Msg(GERROR, "View[%d] does not exist", iView);
+    return v;
   }
 
-  if(MIN(rIndex, iIndex) >= 0 && vv->NbTimeStep >= MAX(rIndex, iIndex)) {
+  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
+
+  if(MIN(rIndex, iIndex) >= 0 && v1->NbTimeStep >= MAX(rIndex, iIndex)) {
     // FIXME: this is not secure: if BeginView forces a post.list
-    // reallocation, vv is wrong
-    View = BeginView(1);
-    harmonic2time(vv, View, rIndex, iIndex, nbSteps);
+    // reallocation, v1 could be wrong
+    Post_View *v2 = BeginView(1);
+    harmonic2time(v1, v2, rIndex, iIndex, nbSteps);
     // create time data
     // FIXME: todo
     // finalize
     char name[1024], filename[1024];
-    sprintf(name, "%s_Harmonic2Time", vv->Name);
-    sprintf(filename, "%s_Harmonic2Time.pos", vv->Name);
-    EndView(View, 1, filename, name);
+    sprintf(name, "%s_Harmonic2Time", v1->Name);
+    sprintf(filename, "%s_Harmonic2Time.pos", v1->Name);
+    EndView(v2, 1, filename, name);
+    return v2;
   }
 
-  return 0;
+  return v1;
 }
 

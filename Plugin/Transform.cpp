@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.23 2004-03-13 21:00:19 geuzaine Exp $
+// $Id: Transform.cpp,v 1.24 2004-05-16 20:04:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -93,7 +93,6 @@ void GMSH_TransformPlugin::catchErrorMessage(char *errorMessage) const
 
 Post_View *GMSH_TransformPlugin::execute(Post_View * v)
 {
-  Post_View *vv;
   double mat[3][3];
 
   mat[0][0] = TransformOptions_Number[0].def;
@@ -108,19 +107,18 @@ Post_View *GMSH_TransformPlugin::execute(Post_View * v)
 
   int iView = (int)TransformOptions_Number[9].def;
 
-  if(v && iView < 0)
-    vv = v;
-  else {
-    if(!v && iView < 0)
-      iView = 0;
-    if(!(vv = (Post_View *) List_Pointer_Test(CTX.post.list, iView))) {
-      Msg(WARNING, "View[%d] does not exist", iView);
-      return 0;
-    }
+  if(iView < 0)
+    iView = v ? v->Index : 0;
+
+  if(!List_Pointer_Test(CTX.post.list, iView)) {
+    Msg(GERROR, "View[%d] does not exist", iView);
+    return v;
   }
 
-  vv->transform(mat);
+  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
 
-  return 0;
+  v1->transform(mat);
+
+  return v1;
 }
 
