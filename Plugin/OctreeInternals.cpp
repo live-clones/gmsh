@@ -1,4 +1,4 @@
-// $Id: OctreeInternals.cpp,v 1.2 2004-04-24 05:22:50 geuzaine Exp $
+// $Id: OctreeInternals.cpp,v 1.3 2004-04-24 15:04:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -18,6 +18,10 @@
 // USA.
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
+//
+// Contributor(s): 
+//   We lost track of the origin of this octree code. If you happen to
+//   know the author of the original routines, please send us an email.
 
 #include <iostream>
 #include <stdio.h>
@@ -99,12 +103,12 @@ int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
   for (k = 0; k < tmp1; k++) {
     for (j = 0; j < tmp1; j++) {
       for (i = 0; i < tmp1; i++) {
-	buckets[i+j*tmp1+k*tmp1*tmp1].minPt[0] =(* buckets_head)->minPt[0] + tmp[0]*i;
-	buckets[i+j*tmp1+k*tmp1*tmp1].minPt[1] =(* buckets_head)->minPt[1] + tmp[1]*j;
-	buckets[i+j*tmp1+k*tmp1*tmp1].minPt[2] =(* buckets_head)->minPt[2]  + tmp[2]*k;
-	buckets[i+j*tmp1+k*tmp1*tmp1].maxPt[0] =(* buckets_head)->minPt[0]  + tmp[0]*(i+1);
-	buckets[i+j*tmp1+k*tmp1*tmp1].maxPt[1] =(* buckets_head)->minPt[1]  + tmp[1]*(j+1);
-	buckets[i+j*tmp1+k*tmp1*tmp1].maxPt[2] =(* buckets_head)->minPt[2]  + tmp[2]*(k+1);
+	buckets[i+j*tmp1+k*tmp1*tmp1].minPt[0] = (*buckets_head)->minPt[0] + tmp[0]*i;
+	buckets[i+j*tmp1+k*tmp1*tmp1].minPt[1] = (*buckets_head)->minPt[1] + tmp[1]*j;
+	buckets[i+j*tmp1+k*tmp1*tmp1].minPt[2] = (*buckets_head)->minPt[2] + tmp[2]*k;
+	buckets[i+j*tmp1+k*tmp1*tmp1].maxPt[0] = (*buckets_head)->minPt[0] + tmp[0]*(i+1);
+	buckets[i+j*tmp1+k*tmp1*tmp1].maxPt[1] = (*buckets_head)->minPt[1] + tmp[1]*(j+1);
+	buckets[i+j*tmp1+k*tmp1*tmp1].maxPt[2] = (*buckets_head)->minPt[2] + tmp[2]*(k+1);
       }
     }
   }
