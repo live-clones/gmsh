@@ -129,12 +129,15 @@ EndFor
 
 // Here is the list of available scripting commands:
 //  
-//  Merge string;       (to merge a file)
-//  Draw;               (to draw the scene)
-//  Save string;        (to save the mesh)
-//  Print string;       (to print the graphic window)
-//  Sleep expr;         (to sleep during expr seconds)
-//  Delete View[int];   (to free the view int)
-//  Delete Meshes;      (to free all meshes)
-//  Duplicata View[int];(to duplicate the view int)
-//  System string;      (to execute a system call)
+//  Merge string;                (to merge a file)
+//  MergeWithBoundingBox string; (to merge a file and force the recalculation
+//                                of the scene's bounding box)
+//  Draw;                        (to redraw the scene)
+//  Save string;                 (to save the mesh)
+//  Print string;                (to print the graphic window in the format
+//                                defined in Print.Format)
+//  Sleep expr;                  (to sleep during expr seconds)
+//  Delete View[int];            (to free the view int)
+//  Delete Meshes;               (to free all meshes)
+//  Duplicata View[int];         (to duplicate the view int)
+//  System string;               (to execute a system call)
