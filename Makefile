@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.120 2001-08-06 17:34:10 geuzaine Exp $
+# $Id: Makefile,v 1.121 2001-08-06 18:14:26 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -122,7 +122,7 @@ motif: initialtag
 	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
            "C_FLAGS=$(FLAGS)" \
-           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN -D_NOPLUGIN" \
            "VERSION_FLAGS=-D_XMOTIF" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(MOTIF_INC)" \
@@ -268,7 +268,7 @@ bb: tag
            "CC=$(CC)" \
            "C_FLAGS=-O3" \
            "OS_FLAGS=" \
-           "VERSION_FLAGS=-D_BLACKBOX" \
+           "VERSION_FLAGS=-D_BLACKBOX -D_NOPLUGIN" \
            "GL_INCLUDE=" \
            "GUI_INCLUDE=" \
         ); done
@@ -279,7 +279,7 @@ bbn: tag
            "CC=g++ -mno-cygwin -I/mingw/include" \
            "C_FLAGS=-O3" \
            "OS_FLAGS=" \
-           "VERSION_FLAGS=-D_BLACKBOX" \
+           "VERSION_FLAGS=-D_BLACKBOX -D_NOPLUGIN" \
            "GL_INCLUDE=" \
            "GUI_INCLUDE=" \
         ); done
@@ -316,7 +316,7 @@ motif_compile_little_endian:
            "CC=g++" \
            "C_FLAGS=-O3" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_XMOTIF" \
+           "VERSION_FLAGS=-D_XMOTIF -D_NOPLUGIN" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
@@ -326,7 +326,7 @@ motif_compile_little_endian_2952:
            "CC=$(HOME)/gcc-2.95.2/bin/g++" \
            "C_FLAGS=-O3" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_XMOTIF" \
+           "VERSION_FLAGS=-D_XMOTIF -D_NOPLUGIN" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
@@ -336,7 +336,7 @@ motif_compile_little_endian_threads:
            "CC=g++" \
            "C_FLAGS=-D_REENTRANT -O3" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_XMOTIF -D_USETHREADS" \
+           "VERSION_FLAGS=-D_XMOTIF -D_NOPLUGIN -D_USETHREADS" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
@@ -346,7 +346,7 @@ motif_compile_big_endian:
            "CC=g++" \
            "C_FLAGS=-O3" \
            "OS_FLAGS=" \
-           "VERSION_FLAGS=-D_XMOTIF" \
+           "VERSION_FLAGS=-D_XMOTIF -D_NOPLUGIN" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
@@ -359,7 +359,7 @@ motif_compile_sgi:
            "RANLIB=true"\
            "AR=CC -o32 -ar -o"\
            "OS_FLAGS=" \
-           "VERSION_FLAGS=-D_XMOTIF" \
+           "VERSION_FLAGS=-D_XMOTIF -D_NOPLUGIN" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
@@ -369,7 +369,7 @@ motif_compile_sgi:
            "AR=CC -o32 -ar -o"\
            "RANLIB=true"\
            "OS_FLAGS=" \
-           "VERSION_FLAGS=-D_XMOTIF" \
+           "VERSION_FLAGS=-D_XMOTIF -D_NOPLUGIN" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
