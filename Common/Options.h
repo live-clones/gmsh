@@ -484,6 +484,7 @@ double opt_view_saturate_values(OPT_ARGS_NUM);
 double opt_view_max_recursion_level(OPT_ARGS_NUM);
 double opt_view_target_error(OPT_ARGS_NUM);
 double opt_view_colormap_alpha(OPT_ARGS_NUM);
+double opt_view_colormap_alpha_power(OPT_ARGS_NUM);
 double opt_view_colormap_beta(OPT_ARGS_NUM);
 double opt_view_colormap_bias(OPT_ARGS_NUM);
 double opt_view_colormap_curvature(OPT_ARGS_NUM);

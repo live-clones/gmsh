@@ -1005,6 +1005,8 @@ StringXNumber ViewOptions_Number[] = {
 
   { F|O, "ColormapAlpha" , opt_view_colormap_alpha , 1.0 ,
     "Colormap alpha channel value (used only if != 1)" },
+  { F|O, "ColormapAlphaPower" , opt_view_colormap_alpha_power , 0.0 ,
+    "Colormap alpha channel power" },
   { F|O, "ColormapBeta" , opt_view_colormap_beta , 0.0 ,
     "Colormap beta parameter (gamma = 1-beta)" },
   { F|O, "ColormapBias" , opt_view_colormap_bias , 0.0 ,

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.214 2004-12-24 04:58:20 geuzaine Exp $
+// $Id: Options.cpp,v 1.215 2004-12-24 20:25:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -5416,6 +5416,22 @@ double opt_view_colormap_alpha(OPT_ARGS_NUM)
   }
 #endif
   return v->CT.dpar[COLORTABLE_ALPHA];
+}
+
+double opt_view_colormap_alpha_power(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->CT.dpar[COLORTABLE_ALPHAPOW] = val;
+    ColorTable_Recompute(&v->CT);
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_colorbar_window->redraw();
+  }
+#endif
+  return v->CT.dpar[COLORTABLE_ALPHAPOW];
 }
 
 double opt_view_colormap_beta(OPT_ARGS_NUM)

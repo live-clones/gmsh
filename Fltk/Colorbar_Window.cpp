@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.42 2004-12-24 18:12:22 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.43 2004-12-24 20:25:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -223,7 +223,7 @@ void Colorbar_Window::redraw_range(int a, int b)
   // print colortable mode and help
   fl_font(FL_HELVETICA, font_height);
   fl_color(fl_contrast(FL_BLACK, color_bg));
-  int xx0 = 10, xx1 = 12 * font_height, yy0 = 10;
+  int xx0 = 8, xx1 = 12 * font_height, yy0 = 8;
   if(help_flag) {
     i = 0;
     fl_draw("0, 1, 2, 3, ...", xx0, yy0 + (i + 1) * font_height);
@@ -244,7 +244,7 @@ void Colorbar_Window::redraw_range(int a, int b)
     fl_draw("Ctrl+mouse1", xx0, yy0 + (i + 1) * font_height);
     fl_draw("draw alpha channel", xx1, yy0 + (i + 1) * font_height);
     i++;
-    fl_draw("c, p, r", xx0, yy0 + (i + 1) * font_height);
+    fl_draw("Ctrl+c, Ctrl+v, r", xx0, yy0 + (i + 1) * font_height);
     fl_draw("copy, paste or reset colormap", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("m", xx0, yy0 + (i + 1) * font_height);
@@ -261,6 +261,9 @@ void Colorbar_Window::redraw_range(int a, int b)
     i++;
     fl_draw("a, Ctrl+a", xx0, yy0 + (i + 1) * font_height);
     fl_draw("increase or decrease alpha", xx1, yy0 + (i + 1) * font_height);
+    i++;
+    fl_draw("p, Ctrl+p", xx0, yy0 + (i + 1) * font_height);
+    fl_draw("modify alpha channel power law", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("b, Ctrl+b", xx0, yy0 + (i + 1) * font_height);
     fl_draw("increase or decrease gamma", xx1, yy0 + (i + 1) * font_height);
@@ -443,10 +446,10 @@ int Colorbar_Window::handle(int event)
       ColorTable_InitParam(19, ct);
       compute = 1;
     }
-    else if(Fl::test_shortcut('c')) {
+    else if(Fl::test_shortcut(FL_CTRL + 'c')) {
       ColorTable_Copy(ct);
     }
-    else if(Fl::test_shortcut('p')) {
+    else if(Fl::test_shortcut(FL_CTRL + 'v')) {
       ColorTable_Paste(ct);
       draw();
       *viewchanged = 1;
@@ -496,6 +499,14 @@ int Colorbar_Window::handle(int event)
       ct->dpar[COLORTABLE_ALPHA] += 0.05;
       if(ct->dpar[COLORTABLE_ALPHA] > 1.0)
         ct->dpar[COLORTABLE_ALPHA] = 1.0;
+      compute = 1;
+    }
+    else if(Fl::test_shortcut('p')) {
+      ct->dpar[COLORTABLE_ALPHAPOW] += 0.05;
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_CTRL + 'p')) {
+      ct->dpar[COLORTABLE_ALPHAPOW] -= 0.05;
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_Left)) {

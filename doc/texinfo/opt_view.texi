@@ -89,6 +89,11 @@ Colormap alpha channel value (used only if != 1)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.ColormapAlphaPower
+Colormap alpha channel power@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.ColormapBeta
 Colormap beta parameter (gamma = 1-beta)@*
 Default value: @code{0}@*

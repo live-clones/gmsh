@@ -49,6 +49,7 @@ typedef struct{
 #define COLORTABLE_BIAS      1  // offset
 #define COLORTABLE_ALPHA     2  // alpha channel value
 #define COLORTABLE_BETA      3  // beta coeff for brighten
+#define COLORTABLE_ALPHAPOW  4  // alpha channel power value
 
 void ColorTable_InitParam(int number, GmshColorTable *ct);
 void ColorTable_Recompute(GmshColorTable *ct);
