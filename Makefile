@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.19 2000-12-10 14:44:58 geuzaine Exp $
+# $Id: Makefile,v 1.20 2000-12-11 08:54:04 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -185,9 +185,65 @@ bbn: tag
 # Ready to compile for somes platforms
 # ----------------------------------------------------------------------
 
-#### -O2 merde dans 3d_smesh.c sur TransfiniteHex()
+dec: tag compile_little_endian link_opengl strip_bin compress_bin
 
-sgi: tag
+linux: tag compile_little_endian link_mesa strip_bin compress_bin
+
+ibm: tag compile_big_endian link_mesa strip_bin compress_bin
+
+sun: tag compile_big_endian link_mesa strip_bin compress_bin
+
+hp: tag compile_big_endian link_hp strip_bin compress_bin
+
+sgi: tag compile_sgi link_sgi strip_bin compress_bin
+
+rpm: src
+	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
+	rpm -bb utils/gmsh.spec
+	cp /usr/src/redhat/RPMS/i386/$(GMSH_SRCRPM)-1.i386.rpm .
+	cp /usr/src/redhat/BUILD/$(GMSH_SRCRPM)/bin/gmsh .
+	gtar zcvf gmsh-$(GMSH_UNAME).tgz gmsh
+
+compress_bin:
+	cd $(GMSH_BIN_DIR) && tar cvf gmsh-$(GMSH_UNAME).tar gmsh
+	gzip $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME).tar
+	mv $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME).tar.gz gmsh-$(GMSH_UNAME).tgz
+
+strip_bin:
+	strip $(GMSH_BIN_DIR)/gmsh
+
+compile_little_endian:
+	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
+           "CC=g++" \
+           "C_FLAGS=-O3" \
+           "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "MOTIF_INCLUDE=$(MOTIF_INC)" \
+        ); done
+
+compile_little_endian_threads:
+	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
+           "CC=g++" \
+           "C_FLAGS=-D_REENTRANT -O3" \
+           "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_USETHREADS" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "MOTIF_INCLUDE=$(MOTIF_INC)" \
+        ); done
+
+compile_big_endian:
+	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
+           "CC=g++" \
+           "C_FLAGS=-O3" \
+           "OS_FLAGS=-D_UNIX" \
+           "VERSION_FLAGS=" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "MOTIF_INCLUDE=$(MOTIF_INC)" \
+        ); done
+
+# special car -O2 merde dans 3d_smesh.c sur TransfiniteHex()
+compile_sgi:
 	@for i in $(GMSH_DIR); do (cd $$i && $(MAKE) \
            "CC=CC" \
            "C_FLAGS=-O2 -o32 -Olimit 3000" \
@@ -206,67 +262,25 @@ sgi: tag
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
         ); done
-	CC -O2 -o32 -o $(GMSH_BIN_DIR)/gmsh-IRIX $(GMSH_LIB) $(OPENGL_LIB) \
+
+link_sgi:
+	CC -O2 -o32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_LIB) $(OPENGL_LIB) \
               $(MOTIF_LIB) $(X_LIB) -lm
-	strip $(GMSH_BIN_DIR)/gmsh-IRIX
 
-little_endian: tag
-	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
-           "CC=g++" \
-           "C_FLAGS=-O3" \
-           "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "MOTIF_INCLUDE=$(MOTIF_INC)" \
-        ); done
-
-little_endian_threads: tag
-	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
-           "CC=g++" \
-           "C_FLAGS=-D_REENTRANT -O3" \
-           "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_USETHREADS" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "MOTIF_INCLUDE=$(MOTIF_INC)" \
-        ); done
-
-big_endian: tag
-	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
-           "CC=g++" \
-           "C_FLAGS=-O3" \
-           "OS_FLAGS=-D_UNIX" \
-           "VERSION_FLAGS=" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "MOTIF_INCLUDE=$(MOTIF_INC)" \
-        ); done
-
-
-ogl:
-	g++ -o $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME) $(GMSH_LIB)\
+link_opengl:
+	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_LIB)\
                $(OPENGL_LIB) $(MOTIF_LIB) $(X_LIB) -lm
-	strip $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME)
 
-mesa:
-	g++ -o $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME) $(GMSH_LIB)\
+link_mesa:
+	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_LIB)\
                $(MESA_LIB) $(MOTIF_LIB) $(X_LIB) -lm
-	strip $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME)
 
-mesa_threads:
-	g++ -o $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME) $(GMSH_LIB)\
+link_mesa_threads:
+	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_LIB)\
                $(MESA_LIB) $(MOTIF_LIB) $(X_LIB) $(THREAD_LIB) -lm
-	strip $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME)
 
-dec: little_endian ogl
-
-linux: little_endian mesa
-
-ibm: big_endian mesa
-
-sun: big_endian mesa
-
-# HP : special linker option is necessary (+s) + set the SHLIB_PATH variable.
-hp: big_endian
-	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME) $(GMSH_LIB)\
+# special car +s necessaire pour shared libs avec SHLIB_PATH variable.
+link_hp:
+	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh $(GMSH_LIB)\
                       $(MESA_LIB) $(MOTIF_LIB) $(X_LIB) -lm
-	strip $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME)
 
