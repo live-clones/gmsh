@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.33 2001-12-04 12:06:49 geuzaine Exp $
+// $Id: Geom.cpp,v 1.34 2002-02-08 18:07:01 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -356,34 +356,39 @@ void Draw_Plane_Surface (Surface *s){
     glEnd();
   }
 
-                              //BUG JapanDef.geo
-  if(CTX.geom.surfaces_num && List_Nbr(s->Orientations)>1){
-    List_Read(s->Orientations,0,&vv1);
-    List_Read(s->Orientations,1,&vv2);
-    sprintf(Num,"%d",s->Num);
-    glRasterPos3d((vv2.Pos.X+vv1.Pos.X)/2. + 3*CTX.pixel_equiv_x/CTX.s[0],
-                  (vv2.Pos.Y+vv1.Pos.Y)/2. + 3*CTX.pixel_equiv_x/CTX.s[1], 
-                  (vv2.Pos.Z+vv1.Pos.Z)/2. + 3*CTX.pixel_equiv_x/CTX.s[2]);
-    Draw_String(Num);
+  if(List_Nbr(s->Orientations)>1){//draw_surface can get called during the computation...
+                              
+    if(CTX.geom.surfaces_num){
+      List_Read(s->Orientations,0,&vv1);
+      List_Read(s->Orientations,1,&vv2);
+      sprintf(Num,"%d",s->Num);
+      glRasterPos3d((vv2.Pos.X+vv1.Pos.X)/2. + 3*CTX.pixel_equiv_x/CTX.s[0],
+		    (vv2.Pos.Y+vv1.Pos.Y)/2. + 3*CTX.pixel_equiv_x/CTX.s[1], 
+		    (vv2.Pos.Z+vv1.Pos.Z)/2. + 3*CTX.pixel_equiv_x/CTX.s[2]);
+      Draw_String(Num);
+    }
+    
+    if(CTX.geom.normals) {
+      glDisable(GL_LINE_STIPPLE) ;
+      List_Read(s->Orientations,0,&vv1);
+      List_Read(s->Orientations,1,&vv2);
+      n[0] = s->plan[2][0];
+      n[1] = s->plan[2][1];
+      n[2] = s->plan[2][2];
+      norme(n);
+      n[0] *= CTX.geom.normals * CTX.pixel_equiv_x/CTX.s[0] ;
+      n[1] *= CTX.geom.normals * CTX.pixel_equiv_x/CTX.s[1] ;
+      n[2] *= CTX.geom.normals * CTX.pixel_equiv_x/CTX.s[2] ;
+      nn = sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]);
+      glColor4ubv((GLubyte*)&CTX.color.geom.normals);
+      Draw_Vector(DRAW_POST_ARROW, 0, (vv2.Pos.X+vv1.Pos.X)/2., (vv2.Pos.Y+vv1.Pos.Y)/2., 
+		  (vv2.Pos.Z+vv1.Pos.Z)/2., nn, n[0],n[1],n[2],NULL);
+    }
+    
   }
-  
-  if(CTX.geom.normals) {
-    glDisable(GL_LINE_STIPPLE) ;
-    List_Read(s->Orientations,0,&vv1);
-    List_Read(s->Orientations,1,&vv2);
-    n[0] = s->plan[2][0];
-    n[1] = s->plan[2][1];
-    n[2] = s->plan[2][2];
-    norme(n);
-    n[0] *= CTX.geom.normals * CTX.pixel_equiv_x/CTX.s[0] ;
-    n[1] *= CTX.geom.normals * CTX.pixel_equiv_x/CTX.s[1] ;
-    n[2] *= CTX.geom.normals * CTX.pixel_equiv_x/CTX.s[2] ;
-    nn = sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]);
-    glColor4ubv((GLubyte*)&CTX.color.geom.normals);
-    Draw_Vector(DRAW_POST_ARROW, 0, (vv2.Pos.X+vv1.Pos.X)/2., (vv2.Pos.Y+vv1.Pos.Y)/2., 
-                (vv2.Pos.Z+vv1.Pos.Z)/2., nn, n[0],n[1],n[2],NULL);
-  }
+
 }
+
 
 
 void Draw_NonPlane_Surface (Surface *s){
