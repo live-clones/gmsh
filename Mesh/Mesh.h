@@ -476,6 +476,9 @@ void Projette_Plan_Moyen(void *a, void *b);
 void Projette_Inverse(void *a, void *b);
 void Freeze_Vertex(void *a, void *b);
 void deFreeze_Vertex(void *a, void *b);
+int isPointOnPlanarSurface(Surface * S, double X, double Y, double Z, double n[3]);
+void Get_SurfaceNormal(Surface *s, double n[3]);
+void ReOrientSurfaceMesh(Surface *s);
 
 double Lc_XYZ(double X, double Y, double Z, Mesh * m);
 void ActionLiss(void *data, void *dummy);

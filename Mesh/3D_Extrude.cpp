@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.80 2004-06-08 02:10:32 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.81 2004-06-23 03:57:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1045,6 +1045,9 @@ int Extrude_Mesh(Surface * s)
 
   Tree_Action(s->Simplexes, AddSimVertsInSurf);
   Tree_Action(s->Quadrangles, AddQuadVertsInSurf);
+
+  // FIXME: big hack
+  ReOrientSurfaceMesh(s);
 
   return true;
 }

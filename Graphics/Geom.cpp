@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.66 2004-06-22 17:34:10 geuzaine Exp $
+// $Id: Geom.cpp,v 1.67 2004-06-23 03:57:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -284,8 +284,6 @@ void Draw_Triangulated_Surface(Surface * s)
     glDisable(GL_LIGHTING);
   }  
 }
-
-void Get_SurfaceNormal(Surface *s, double n[3]);
 
 void Draw_Plane_Surface(Surface * s)
 {

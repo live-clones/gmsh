@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.63 2004-06-22 22:10:11 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.64 2004-06-23 03:57:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -773,23 +773,21 @@ void ActionEndTheCurve(void *a, void *b)
   End_Curve(c);
 }
 
-void ActionInvertTriQua(void *a, void *b)
+void ActionInvertTri(void *a, void *b)
 {
   Simplex *s = *(Simplex **) a;
-  Vertex *tmp;
-  if(s->V[3]){
-    tmp = s->V[1];
-    s->V[1] = s->V[3];
-    s->V[3] = tmp;
-  }
-  else if(s->V[2]){
-    tmp = s->V[1];
-    s->V[1] = s->V[2];
-    s->V[2] = tmp;
-  }
+  Vertex *tmp = s->V[1];
+  s->V[1] = s->V[2];
+  s->V[2] = tmp;
 }
 
-int isPointOnPlanarSurface(Surface * S, double X, double Y, double Z, double n[3]);
+void ActionInvertQua(void *a, void *b)
+{
+  Quadrangle *q = *(Quadrangle **) a;
+  Vertex *tmp = q->V[1];
+  q->V[1] = q->V[3];
+  q->V[3] = tmp;
+}
 
 int isMiddlePointOnPlanarSurface(Surface *s, Vertex *v1, Vertex *v2)
 {
@@ -858,15 +856,19 @@ void Get_SurfaceNormal(Surface *s, double n[3])
   }
 }
 
+// Horrible (tm) hack to orient the elements correctly. This is
+// *definitely* not the best way to do it, but I don't have time to
+// look into the issue right now.
+
 void ReOrientSurfaceMesh(Surface *s)
 {
-  // Horrible (tm) hack to orient the elements correctly. This is
-  // *definitely* not the best way to do it, but I don't have time
-  // to look into the issue right now.
+  double t1[3], t2[3], n1[3], n2[3], res;
   Simplex *simp;
+  Quadrangle *quad;
+
+  Get_SurfaceNormal(s, n1);
+
   if(Tree_Right(s->Simplexes, &simp)){
-    double t1[3], t2[3], n1[3], n2[3], res;
-    Get_SurfaceNormal(s, n1);
     t1[0] = simp->V[1]->Pos.X - simp->V[0]->Pos.X;
     t1[1] = simp->V[1]->Pos.Y - simp->V[0]->Pos.Y;
     t1[2] = simp->V[1]->Pos.Z - simp->V[0]->Pos.Z;
@@ -875,19 +877,28 @@ void ReOrientSurfaceMesh(Surface *s)
     t2[2] = simp->V[2]->Pos.Z - simp->V[0]->Pos.Z;
     prodve(t1, t2, n2);
     norme(n2);
-    /*
-      printf("n1=%g %g %g\n", n1[0], n1[1], n1[2]);
-      printf("n2=%g %g %g (elt: (%g,%g,%g) (%g,%g,%g) (%g,%g,%g))\n", 
-	     n2[0], n2[1], n2[2],
-	     simp->V[0]->Pos.X, simp->V[0]->Pos.Y, simp->V[0]->Pos.Z,
-	     simp->V[1]->Pos.X, simp->V[1]->Pos.Y, simp->V[1]->Pos.Z,
-	     simp->V[2]->Pos.X, simp->V[2]->Pos.Y, simp->V[2]->Pos.Z);
-    */
     prosca(n1, n2, &res);
     if(res < 0.0){
-      Msg(DEBUG, "Inverting orientation of elements in %s surface %d (res = %g)",
+      Msg(DEBUG, "Inverting triangles in %s surface %d (res = %g)",
 	  (s->Typ == MSH_SURF_PLAN) ? "Plane" : "NonPlane", s->Num, res);
-      Tree_Action(s->Simplexes, ActionInvertTriQua);
+      Tree_Action(s->Simplexes, ActionInvertTri);
+    }
+  }
+
+  if(Tree_Right(s->Quadrangles, &quad)){
+    t1[0] = quad->V[1]->Pos.X - quad->V[0]->Pos.X;
+    t1[1] = quad->V[1]->Pos.Y - quad->V[0]->Pos.Y;
+    t1[2] = quad->V[1]->Pos.Z - quad->V[0]->Pos.Z;
+    t2[0] = quad->V[2]->Pos.X - quad->V[0]->Pos.X;
+    t2[1] = quad->V[2]->Pos.Y - quad->V[0]->Pos.Y;
+    t2[2] = quad->V[2]->Pos.Z - quad->V[0]->Pos.Z;
+    prodve(t1, t2, n2);
+    norme(n2);
+    prosca(n1, n2, &res);
+    if(res < 0.0){
+      Msg(DEBUG, "Inverting quads in %s surface %d (res = %g)",
+	  (s->Typ == MSH_SURF_PLAN) ? "Plane" : "NonPlane", s->Num, res);
+      Tree_Action(s->Quadrangles, ActionInvertQua);
     }
   }
 }
@@ -929,17 +940,11 @@ void Maillage_Surface(void *data, void *dum)
   if(MeshTransfiniteSurface(s) ||
      MeshEllipticSurface(s) ||
      MeshCylindricalSurface(s) ||
-     MeshParametricSurface(s)) {
+     MeshParametricSurface(s) ||
+     Extrude_Mesh(s)) {
     Tree_Action(THEM->Points, PutVertex_OnSurf);
     Tree_Action(s->Vertices, PutVertex_OnSurf);
     Tree_Action(s->Vertices, Add_In_Mesh);
-  }
-  else if(Extrude_Mesh(s)) {
-    Tree_Action(THEM->Points, PutVertex_OnSurf);
-    Tree_Action(s->Vertices, PutVertex_OnSurf);
-    Tree_Action(s->Vertices, Add_In_Mesh);
-    // FIXME: big hack
-    //ReOrientSurfaceMesh(s);
   }
   else{
     int TypSurface = s->Typ;
