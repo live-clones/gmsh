@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.19 2001-06-06 21:29:58 remacle Exp $
+// $Id: Generator.cpp,v 1.20 2001-06-07 14:20:08 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -136,7 +136,11 @@ void Init_Mesh (Mesh * M, int all){
     Tree_Delete (M->VertexEdges);
   }
   if (M->Simplexes){
-    Tree_Action (M->Simplexes, Free_Simplex);//produit des crashes innatendus...
+    // Tree_Action (M->Simplexes, Free_Simplex);
+    //produit des crashes innatendus...
+    // normal, cette memoire est dupliquee 
+    // dans les volumes. Je crois qu'on a besoin
+    // des 2, ce truc ne provoque pas de leaks.
     Tree_Delete (M->Simplexes);
   }
   if (M->Points){
@@ -160,7 +164,7 @@ void Init_Mesh (Mesh * M, int all){
     Tree_Delete (M->Surfaces);
   }
   if (M->Volumes){
-    //Tree_Action (M->Volumes, Free_Volume);//produit des crashes innatendus...
+    Tree_Action (M->Volumes, Free_Volume);//produit des crashes innatendus...
     Tree_Delete (M->Volumes);
   }
   if (M->PhysicalGroups){

@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.9 2001-06-06 21:29:58 remacle Exp $
+// $Id: 3D_Extrude.cpp,v 1.10 2001-06-07 14:20:08 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -337,6 +337,8 @@ void Extrude_Vertex (void *data, void *dum){
       ep->Extrude (i, j + 1, newv->Pos.X, newv->Pos.Y, newv->Pos.Z);
 
       if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &newv))){
+	// MEMORY LEAK (JF)
+	Free_Vertex (&newv,0);
         List_Add (v->Extruded_Points, pV);
         if (ToAdd)
           Tree_Insert (ToAdd, pV);
@@ -505,7 +507,11 @@ void copy_mesh (Surface * from, Surface * to){
                  v1->Pos.X, v1->Pos.Y, v1->Pos.Z);
     
     if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &v1)))
-      v1 = *pV;
+      {
+	// MEMORY LEAK (JF)
+	Free_Vertex(&v1,0);
+	v1 = *pV;
+      }
     else{
       Tree_Insert (THEM->Vertices, &v1);
       Tree_Insert (Vertex_Bound, &v1);
@@ -520,7 +526,11 @@ void copy_mesh (Surface * from, Surface * to){
                  v2->Pos.X, v2->Pos.Y, v2->Pos.Z);
     
     if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &v2)))
-      v2 = *pV;
+      {
+	// MEMORY LEAK (JF)
+	Free_Vertex(&v2,0);
+	v2 = *pV;
+      }
     else{
       Tree_Insert (THEM->Vertices, &v2);
       Tree_Insert (Vertex_Bound, &v2);
@@ -535,7 +545,11 @@ void copy_mesh (Surface * from, Surface * to){
                  v3->Pos.X, v3->Pos.Y, v3->Pos.Z);
     
     if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &v3)))
-      v3 = *pV;
+      {
+	// MEMORY LEAK (JF)
+	Free_Vertex(&v3,0);
+	v3 = *pV;
+      }
     else{
       Tree_Insert (THEM->Vertices, &v3);
       Tree_Insert (Vertex_Bound, &v3);

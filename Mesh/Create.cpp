@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.19 2001-06-06 21:29:58 remacle Exp $
+// $Id: Create.cpp,v 1.20 2001-06-07 14:20:08 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -561,12 +561,17 @@ void Free_Surface(void *a, void *b){
     Tree_Action(pS->Simplexes, Free_Simplex);
     Tree_Delete(pS->Simplexes);
     List_Delete(pS->TrsfSimplexes);
-    Tree_Delete(pS->Vertices);//fait planter l'extrusion (1D-2D-1D boum)
-                      //the vertices are freed globally before
+    Tree_Delete(pS->Vertices);
     List_Delete(pS->TrsfVertices);
     List_Delete(pS->Contours);
     List_Delete(pS->Control_Points);
     List_Delete(pS->Generatrices);
+    // MEMORY LEAK (JF)
+    if(pS->Edges)
+      {
+	Tree_Action(pS->Edges,Free_Edge);
+	Tree_Delete(pS->Edges);
+      }
     Free(pS);
     pS = NULL;
   }
@@ -586,11 +591,13 @@ Volume * Create_Volume (int Num, int Typ, int Mat){
   pV->Hexahedra = Tree_Create (sizeof (Hexahedron *), compareHexahedron);
   pV->Prisms = Tree_Create (sizeof (Prism *), comparePrism);
   pV->Extrude = NULL;
+  pV->Edges = NULL;
+  pV->Faces = NULL;
   return pV;
 }
 
 void Free_Volume(void *a, void *b){
-  /*
+  
   Volume *pV = *(Volume**)a;
   if(pV){
     List_Delete(pV->Surfaces); //surfaces freed elsewhere
@@ -601,10 +608,19 @@ void Free_Volume(void *a, void *b){
     Tree_Delete(pV->Hexahedra);
     Tree_Action(pV->Prisms, Free_Prism);
     Tree_Delete(pV->Prisms);
+    // MEMORY LEAK (JF)
+    if(pV->Edges)
+      {
+	Tree_Action(pV->Edges,Free_Edge);
+	Tree_Delete(pV->Edges);
+      }
+    if(pV->Faces)
+      {
+	Tree_Delete(pV->Faces);
+      }
     Free(pV);
     pV = NULL;
-  }
-  */
+  }  
 }
 
 Hexahedron * Create_Hexahedron (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4,

@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.22 2001-06-02 16:24:51 geuzaine Exp $
+// $Id: CAD.cpp,v 1.23 2001-06-07 14:20:08 remacle Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -1653,7 +1653,15 @@ Curve * CreateReversedCurve (Mesh *M,Curve *c){
   newc->ubeg = 1. - c->uend;
   newc->uend = 1. - c->ubeg;
   End_Curve(newc);
-  Tree_Insert(M->Curves, &newc);
+  
+  Curve **pc;
+
+  if(pc = (Curve**)Tree_PQuery(M->Curves,&newc))
+    {
+      Free_Curve(&newc,0);
+      return *pc;
+    }
+  else Tree_Insert(M->Curves, &newc);
   return newc;
 }
 

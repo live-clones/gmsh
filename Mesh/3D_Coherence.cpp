@@ -1,4 +1,4 @@
-// $Id: 3D_Coherence.cpp,v 1.14 2001-04-08 20:36:50 geuzaine Exp $
+// $Id: 3D_Coherence.cpp,v 1.15 2001-06-07 14:20:08 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -232,6 +232,10 @@ void create_Fac (void *a, void *b){
 
 
 void create_Faces (Volume * V){
+  if(V->Faces)
+    {
+      Tree_Delete (V->Faces);
+    }
   V->Faces = Tree_Create (sizeof (Face), compareFace);
   FacesTree = V->Faces;
   Tree_Action (V->Simplexes, create_Fac);
@@ -294,12 +298,27 @@ void create_Edge (void *a, void *b){
 void create_Edges (Volume * V){
   int i;
   Surface *S;
+
+  // MEMORY LEAK (JF)
+  if(V->Edges)
+    {
+      Tree_Action(V->Edges,Free_Edge);
+      Tree_Delete(V->Edges);
+    }
+
   V->Edges = Tree_Create (sizeof (Edge), compareedge);
   EdgesTree = V->Edges;
 
   Tree_Action (V->Simplexes, create_Edge);
   for (i = 0; i < List_Nbr (V->Surfaces); i++){
     List_Read (V->Surfaces, i, &S);
+    // MEMORY LEAK (JF)
+    if(S->Edges)
+      {
+	// BUG BUG BUG (This causes crash)
+	//Tree_Action(S->Edges,Free_Edge);
+	Tree_Delete(S->Edges);
+      }
     S->Edges = Tree_Create (sizeof (Edge), compareedge);
     EdgesTree = S->Edges;
     Tree_Action (S->Simplexes, create_Edge);
