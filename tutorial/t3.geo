@@ -37,17 +37,16 @@ Physical Volume(101) = {9000:9004};
 
 // All interactive options can also be set directly in the input file.
 // For example, the following lines define a global characteristic
-// length factor, redefine the background color of the graphic window,
-// redefine the color of the points of the geometry, disable the
-// display of the axes, and select an initial viewpoint in XYZ mode
-// (disabling the interactive trackball-like rotation mode):
+// length factor, redefine some background colors, disable the display
+// of the axes, and select an initial viewpoint in XYZ mode (disabling
+// the interactive trackball-like rotation mode):
 
 Mesh.CharacteristicLengthFactor = 4;
-General.Color.Background = Red;
-General.Color.Background = Red;
+General.Color.Background = {120,120,120};
+General.Color.Foreground = {255,255,255};
+General.Color.Text = White;
 Geometry.Color.Points = Orange;
 General.Axes = 0;
-
 General.Trackball = 0;
 General.RotationX = 10;
 General.RotationY = 70;
