@@ -2,10 +2,6 @@
 #define _H_ParUtil
 #include <stdio.h>
 
-#ifdef PARALLEL
-#include "mpi.h"
-#endif
-
 /**
    ParUtil is a Singleton. It gives some
    general services for parallel implementation.
@@ -15,8 +11,6 @@ class ParUtil {
   ParUtil();
   ~ParUtil();
 public:
-  /// Message severity level
-  typedef enum MessageLevel {DEBUG1,DEBUG2,INFO,WARNING,ERROR};
   /// returne the only instance
   static ParUtil* Instance();
   /// initialization, needed for mpi and autopack
@@ -27,10 +21,6 @@ public:
   double wTime () const;
   /// gets the processor name
   void processorName(char *name) const;
-  /// set the verbosity level (0,1,2,3)
-  inline void setVertbosityLevel(int i){vl = i;}
-  /// prints a message, same format as printf
-  void Msg(MessageLevel lev, char *fmt, ...);
   /// abort a calculation
   void Abort();
 #ifdef PARALLEL
@@ -47,14 +37,10 @@ public:
 #endif
 private:
   static ParUtil *instance;
-  FILE *log;
-  int vl;
-  int procSpeed;
   char *procName;
 #ifdef PARALLEL
   int myrank;
   int mysize;
-  MPI_Comm seq_local_comm;
 #endif
 };
 

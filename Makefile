@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.124 2001-08-08 14:05:26 remacle Exp $
+# $Id: Makefile,v 1.125 2001-08-08 14:30:33 remacle Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -53,10 +53,10 @@ FLTK_LIB_SOLARIS_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libf
 # ----------------------------------------------------------------------
 
                GMSH_DIR = Adapt Common DataStr Geo Graphics Mesh Parser\
-                          Motif Fltk Plugin jpeg utils
-        GMSH_XMOTIF_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif jpeg
-          GMSH_FLTK_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Fltk jpeg Plugin
-           GMSH_BOX_DIR = Adapt Box Common DataStr Geo Mesh Parser Plugin
+                          Motif Fltk Plugin jpeg utils Parallel
+        GMSH_XMOTIF_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif jpeg Parallel
+          GMSH_FLTK_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Fltk jpeg Plugin Parallel
+           GMSH_BOX_DIR = Adapt Box Common DataStr Geo Mesh Parser Plugin Parallel
            GMSH_BIN_DIR = bin
            GMSH_LIB_DIR = lib
            GMSH_DOC_DIR = doc
@@ -273,6 +273,18 @@ bb: tag
            "GUI_INCLUDE=" \
         ); done
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh-bb $(GMSH_BOX_LIB) -lm
+
+bb-parallel: tag
+	PARALLEL=1
+	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
+           "CC=mpiCC" \
+           "C_FLAGS=-O3" \
+           "OS_FLAGS=" \
+           "VERSION_FLAGS=-D_BLACKBOX -DPARALLEL" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=" \
+        ); done
+	mpiCC -o $(GMSH_BIN_DIR)/gmsh-bb $(GMSH_BOX_LIB) -lm
 
 bbn: tag
 	@for i in $(GMSH_BOX_DIR) ; do (cd $$i && $(MAKE) \

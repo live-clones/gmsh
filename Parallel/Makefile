@@ -1,19 +1,14 @@
-# $Id: Makefile,v 1.1 2001-08-08 14:06:07 remacle Exp $
+# $Id: Makefile,v 1.2 2001-08-08 14:30:33 remacle Exp $
 #
 # Makefile for "libBox.a"
 #
 
 .IGNORE:
-ifeq ($(PARALLEL),1)
-CC       = mpiCC
-else
-CC       = c++
-endif
 AR       = ar ruvs
 RM       = rm
 RANLIB   = ranlib
 LIB      = ../lib/libParallel.a
-INCLUDE  = 
+INCLUDE  := $(INCLUDE) -I/usr/local/mpich/latest/include/
 
 C_FLAGS       = -g
 OS_FLAGS      = 
@@ -32,7 +27,7 @@ $(LIB): $(OBJ)
 	$(AR) $(LIB) $(OBJ) 
 	$(RANLIB) $(LIB)
 
-.cpp.o:
+.cc.o:
 	$(CC) $(CFLAGS) -c $<
 
 clean:
