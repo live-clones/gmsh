@@ -609,6 +609,22 @@ StringXColor GeometryOptions_Color[] = {
   { 0, NULL , NULL , 0, 0, 0 , NULL }
 } ;
 
+#define COL1  PACK_COLOR( 232, 210, 23, 255  )
+#define COL2  PACK_COLOR( 226, 167, 29, 255  )
+#define COL3  PACK_COLOR( 217, 113, 38, 255  )
+#define COL4  PACK_COLOR( 201, 54, 54, 255   )
+#define COL5  PACK_COLOR( 169, 12, 86, 255   )
+#define COL6  PACK_COLOR( 114, 2, 141, 255   )
+#define COL7  PACK_COLOR( 67, 30, 188, 255   )
+#define COL8  PACK_COLOR( 44, 86, 211, 255   )
+#define COL9  PACK_COLOR( 32, 145, 223, 255  )
+#define COL10 PACK_COLOR( 25, 193, 230, 255  )
+#define COLW  PACK_COLOR( 255, 255, 255, 255 )
+#define COLT  PACK_COLOR( 160, 150, 255, 255 )
+#define COLQ  PACK_COLOR( 130, 120, 225, 255 )
+#define COLP  PACK_COLOR( 100,  90, 195, 255 )
+#define COLY  PACK_COLOR(  70,  60, 165, 255 )
+
 StringXColor MeshOptions_Color[] = {
   { F|O, "Points" , opt_mesh_color_points , 
     PACK_COLOR(0  , 123, 59 , 255),
@@ -625,36 +641,18 @@ StringXColor MeshOptions_Color[] = {
     PACK_COLOR(0,   255, 0,   255),
     PACK_COLOR(0,   0,   0,   255),
     "Mesh line color" },
-  { F|O, "Triangles" , opt_mesh_color_triangles ,
-    PACK_COLOR(60,116,164, 255),
-    PACK_COLOR(60,116,164, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    "Mesh triangle color (if ColorCarousel=0)" },
+  { F|O, "Triangles" , opt_mesh_color_triangles , 
+    COLT, COLT, COLW, "Mesh triangle color (if ColorCarousel=0)" },
   { F|O, "Quadrangles" , opt_mesh_color_quadrangles ,
-    PACK_COLOR(112, 136, 188, 255),
-    PACK_COLOR(112, 136, 188, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    "Mesh quadrangle color (if ColorCarousel=0)" },
+    COLQ, COLQ, COLW, "Mesh quadrangle color (if ColorCarousel=0)" },
   { F|O, "Tetrahedra" , opt_mesh_color_tetrahedra ,
-    PACK_COLOR(164, 160, 212, 255),
-    PACK_COLOR(164, 160, 212, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    "Mesh tetrahedron color (if ColorCarousel=0)" },
+    COLT, COLT, COLW, "Mesh tetrahedron color (if ColorCarousel=0)" },
   { F|O, "Hexahedra" , opt_mesh_color_hexahedra ,
-    PACK_COLOR(220, 184, 240, 255),
-    PACK_COLOR(220, 184, 240, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    "Mesh hexahedron color (if ColorCarousel=0)" },
+    COLQ, COLQ, COLW, "Mesh hexahedron color (if ColorCarousel=0)" },
   { F|O, "Prisms" , opt_mesh_color_prisms ,
-    PACK_COLOR(108,  88, 128, 255),
-    PACK_COLOR(108,  88, 128, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    "Mesh prism color (if ColorCarousel=0)" },
+    COLP, COLP, COLW, "Mesh prism color (if ColorCarousel=0)" },
   { F|O, "Pyramids" , opt_mesh_color_pyramid ,
-    PACK_COLOR(80,  100, 140, 255),
-    PACK_COLOR(80,  100, 140, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    "Mesh pyramid color (if ColorCarousel=0)" },
+    COLY, COLY, COLW, "Mesh pyramid color (if ColorCarousel=0)" },
   { F|O, "Normals" , opt_mesh_color_normals ,
     PACK_COLOR(128, 128, 128, 255),
     PACK_COLOR(128, 128, 128, 255),
@@ -665,58 +663,30 @@ StringXColor MeshOptions_Color[] = {
     PACK_COLOR(128, 128, 128, 255),
     PACK_COLOR(0,   0,   0,   255),
     "Tangent mesh vector color" },
-  { F|O, "One" , opt_mesh_color_1 ,
-    PACK_COLOR(0, 0, 255, 255),
-    PACK_COLOR(0, 0, 255, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    "First color in color carousel" },
-  { F|O, "Two" , opt_mesh_color_2 ,
-    PACK_COLOR(0, 142, 255, 255),
-    PACK_COLOR(0, 142, 255, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    "Second color in color carousel" },
-  { F|O, "Three" , opt_mesh_color_3 ,
-    PACK_COLOR(0, 213, 255, 255),
-    PACK_COLOR(0, 213, 255, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    "Third color in color carousel" },
-  { F|O, "Four" , opt_mesh_color_4 ,
-    PACK_COLOR(0, 255, 226, 255),
-    PACK_COLOR(0, 255, 226, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    "Fourth color in color carousel" },
-  { F|O, "Five" , opt_mesh_color_5 ,
-    PACK_COLOR(0, 255, 117, 255),
-    PACK_COLOR(0, 255, 117, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    "Fifth color in color carousel" },
-  { F|O, "Six" , opt_mesh_color_6 ,
-    PACK_COLOR(117, 255, 0, 255),
-    PACK_COLOR(117, 255, 0, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    "Sixth color in color carousel" },
-  { F|O, "Seven" , opt_mesh_color_7 ,
-    PACK_COLOR(226, 255, 0, 255),
-    PACK_COLOR(226, 255, 0, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    "Seventh color in color carousel" },
-  { F|O, "Eight" , opt_mesh_color_8 ,
-    PACK_COLOR(255, 211, 0, 255),
-    PACK_COLOR(255, 211, 0, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    "Eighth color in color carousel" },
-  { F|O, "Nine" , opt_mesh_color_9 ,
-    PACK_COLOR(255, 139, 0, 255),
-    PACK_COLOR(255, 139, 0, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    "Nitnth color in color carousel" },
-  { F|O, "Ten" , opt_mesh_color_10 ,
-    PACK_COLOR(255, 0, 0, 255),
-    PACK_COLOR(255, 0, 0, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    "tenth color in color carousel" },
+  { F|O, "One" , opt_mesh_color_1   , COL1, COL1, COLW, "First color in color carousel" },
+  { F|O, "Two" , opt_mesh_color_2   , COL2, COL2, COLW, "Second color in color carousel" },
+  { F|O, "Three" , opt_mesh_color_3 , COL3, COL3, COLW, "Third color in color carousel" },
+  { F|O, "Four" , opt_mesh_color_4  , COL4, COL4, COLW, "Fourth color in color carousel" },
+  { F|O, "Five" , opt_mesh_color_5  , COL5, COL5, COLW, "Fifth color in color carousel" },
+  { F|O, "Six" , opt_mesh_color_6   , COL6, COL6, COLW, "Sixth color in color carousel" },
+  { F|O, "Seven" , opt_mesh_color_7 , COL7, COL7, COLW, "Seventh color in color carousel" },
+  { F|O, "Eight" , opt_mesh_color_8 , COL8, COL8, COLW, "Eighth color in color carousel" },
+  { F|O, "Nine" , opt_mesh_color_9  , COL9, COL9, COLW, "Nitnth color in color carousel" },
+  { F|O, "Ten" , opt_mesh_color_10  , COL10, COL10, COLW,  "tenth color in color carousel" },
   { 0, NULL , NULL , 0, 0, 0 , NULL }
 } ;
+
+#undef COL1
+#undef COL2
+#undef COL3
+#undef COL4
+#undef COL5
+#undef COL6
+#undef COL7
+#undef COL8
+#undef COL9
+#undef COL10
+#undef COLW
 
 StringXColor SolverOptions_Color[] = {
   { 0, NULL , NULL , 0, 0, 0 , NULL }
