@@ -1,7 +1,4 @@
-# $Id: Makefile,v 1.3 2001-10-29 16:08:05 geuzaine Exp $
-
-RM      = rm
-RMFLAGS = -f
+# $Id: Makefile,v 1.4 2003-02-11 09:31:40 geuzaine Exp $
 
 dvi:
 	texi2dvi gmsh.texi 
@@ -34,9 +31,7 @@ install:
 	install-info gmsh.info /usr/local/info/dir
 
 clean:
-	$(RM) $(RMFLAGS) *.cp* *.fn* *.ky* *.pg* *.tp* *.vr* *.mv* \
-                         *.log *.toc *.aux \
-                         *.dvi *.ps gmsh.pdf \
-                         *.info* gmsh-info.tgz*
+	rm -f *.cp* *.fn* *.ky* *.pg* *.tp* *.vr* *.mv* *.log *.toc\
+              *.aux *.dvi *.ps gmsh.pdf *.info* gmsh-info.tgz*
 
 
