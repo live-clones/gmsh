@@ -1,4 +1,4 @@
-/* $Id: 2D_Mesh.cpp,v 1.12 2000-12-13 20:21:48 geuzaine Exp $ */
+/* $Id: 2D_Mesh.cpp,v 1.13 2000-12-18 08:31:58 geuzaine Exp $ */
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
 
@@ -168,7 +168,7 @@ void Plan_Moyen (void *data, void *dum){
 
   /* by + cz = -x */
 
-  else if (!sys3x3 (sys, b, res, &det)){
+  else if (!sys3x3_with_tol (sys, b, res, &det)){
     s->d = 0.0;
     s2s[0][0] = sys[1][1];
     s2s[0][1] = sys[1][2];
