@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.23 2001-08-12 20:45:30 geuzaine Exp $
+// $Id: Message.cpp,v 1.24 2001-11-20 09:04:54 geuzaine Exp $
 
 #include <unistd.h>
 #include <signal.h>
@@ -21,6 +21,9 @@ extern Context_T  CTX;
 /* ------------------------------------------------------------------------ */
 
 void Signal (int sig_num){
+
+  /* It is VERY wrong to call stdio functions in a signal handler. But
+     who cares? ;-) */
 
   switch (sig_num){
   case SIGSEGV : 
