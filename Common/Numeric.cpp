@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.3 2001-12-03 08:41:43 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.4 2002-01-24 17:48:28 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -18,6 +18,12 @@ double myacos (double a){
   if (a == 1)
     return 0.0;
   return acos (a);
+}
+
+double myasin(double a){
+  if(a<=-1.) return -Pi/2.;
+  else if(a>=1.) return Pi/2.;
+  else return asin(a);
 }
 
 void prodve (double a[3], double b[3], double c[3]){

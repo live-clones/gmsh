@@ -36,6 +36,7 @@
 
 double myatan2 (double a, double b);
 double myacos (double a);
+double myasin (double a);
 void prodve (double a[3], double b[3], double c[3]);
 void prosca (double a[3], double b[3], double *c);
 void norme (double a[3]);

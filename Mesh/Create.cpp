@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.33 2002-01-23 16:28:00 geuzaine Exp $
+// $Id: Create.cpp,v 1.34 2002-01-24 17:48:28 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -318,17 +318,20 @@ void End_Curve (Curve * c){
 	A1 = A3 = 0.;
 	f1 = f2 = R ;
       }
-      else{
+      else{ 
 	f1 = sqrt(1./sol[0]);
 	f2 = sqrt(1./sol[1]);
+	// myasin() permet de contourner les problemes de precision
+	// sur y1/f2 ou y3/f2, qui peuvent legerement etre hors de
+	// [-1,1]
 	if(x1 < 0) 
-	  A1 = -asin(y1/f2) + A4 + Pi; 
+	  A1 = -myasin(y1/f2) + A4 + Pi; 
 	else
-	  A1 = asin(y1/f2) + A4; 
+	  A1 = myasin(y1/f2) + A4; 
 	if(x3 < 0) 
-	  A3 = -asin(y3/f2) + A4 + Pi; 
+	  A3 = -myasin(y3/f2) + A4 + Pi; 
 	else
-	  A3 = asin(y3/f2) + A4; 
+	  A3 = myasin(y3/f2) + A4; 
       }
     }
     else{
