@@ -70,7 +70,7 @@ class Vector3
 
 	  double m = zero;
 	  for(int i=0;i<_TAILLE_;i++)
-	    m + mat[i] * autre.mat[i];
+	    m += mat[i] * autre.mat[i];
 	  return m;
       }
 };
