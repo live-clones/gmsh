@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.13 2001-08-01 13:34:00 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.14 2001-08-01 15:52:33 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -338,9 +338,14 @@ void Extrude_Vertex (void *data, void *dum){
 
   pV = (Vertex **) data;
   v = *pV;
-  // BUG FOR MULTIPLE POINTS IN EXTRUSION
-  if (v->Extruded_Points)return;
-  //    List_Delete (v->Extruded_Points);
+
+  // BUG FOR MULTIPLE POINTS IN EXTRUSION No: 1 point can be extruded
+  // along several directions
+  // (cf. benchmarks/3d/Torus-ExtrMesh.geo). The return was OK for the
+  // old mesh generator (only 1 extrusion)
+  if (v->Extruded_Points) //return;
+    List_Delete (v->Extruded_Points);
+
   v->Extruded_Points = List_Create (ep->mesh.NbLayer, 1, sizeof (Vertex *));
   List_Add (v->Extruded_Points, &v);
 
