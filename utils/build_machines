@@ -10,5 +10,5 @@ AIX     sp2s.ulg.ac.be
 Where to change the version number?
 1) Makfile
 2) doc/VERSIONS
-3) www/gmsh.html
+3) doc/gmsh.html
 
