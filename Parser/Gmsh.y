@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.179 2004-10-15 02:30:51 geuzaine Exp $
+// $Id: Gmsh.y,v 1.180 2004-10-20 14:38:59 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -109,7 +109,7 @@ int PrintListOfDouble (char *format, List_T *list, char *buffer);
 %token tScalarHexahedron tVectorHexahedron tTensorHexahedron
 %token tScalarPrism tVectorPrism tTensorPrism
 %token tScalarPyramid tVectorPyramid tTensorPyramid
-%token tText2D tText3D tCombine
+%token tText2D tText3D tInterpolationMatrix tCombine
 %token tBSpline tBezier tNurbs tOrder tWith tBounds tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
 %token tReturn tCall tFunction tTrimmed tShow tHide
@@ -477,6 +477,7 @@ Views :
   | Views TensorPyramid
   | Views Text2D
   | Views Text3D
+  | Views InterpolationMatrix
 ;
 
 ScalarPointValues :
@@ -1267,6 +1268,12 @@ Text3D :
     }
 ;
 
+InterpolationMatrix :
+    tInterpolationMatrix ListOfListOfDouble tEND
+    {
+      View -> adaptive = new Adaptive_Post_View ( View , $2 );
+    }
+;
 
 //  A F F E C T A T I O N
 

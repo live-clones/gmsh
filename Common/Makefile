@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.61 2004-09-25 06:16:12 geuzaine Exp $
+# $Id: Makefile,v 1.62 2004-10-20 14:38:56 remacle Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -27,6 +27,7 @@ INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics\
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Context.cpp\
+      AdaptiveViews.cpp\
       Views.cpp\
       Options.cpp\
       CommandLine.cpp\

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.138 2004-10-20 05:46:47 geuzaine Exp $
+// $Id: Views.cpp,v 1.139 2004-10-20 14:38:57 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -159,7 +159,7 @@ Post_View *BeginView(int allocate)
 
   // Copy all options from the reference view initialized in InitOptions()
   CopyViewOptions(Post_ViewReference, v);
-
+  
   v->Changed = 1;
   v->Links = 0;
   v->DuplicateOf = 0;
@@ -168,6 +168,7 @@ Post_View *BeginView(int allocate)
   v->normals = new smooth_normals;
   v->Min = VAL_INF;
   v->Max = -VAL_INF;
+  v->adaptive = 0;
   for(i = 0; i < 3; i++) {
     v->BBox[2 * i] = VAL_INF;
     v->BBox[2 * i + 1] = -VAL_INF;
@@ -595,6 +596,8 @@ void FreeView(Post_View * v)
     if(v->TriVertexArray) delete v->TriVertexArray;
     v->TriVertexArray = NULL;
   }
+
+  if (v->adaptive) delete v->adaptive;
 
 }
 

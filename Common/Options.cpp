@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.190 2004-10-16 22:15:16 geuzaine Exp $
+// $Id: Options.cpp,v 1.191 2004-10-20 14:38:56 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -4553,6 +4553,27 @@ double opt_view_saturate_values(OPT_ARGS_NUM)
 #endif
   return v->SaturateValues;
 }
+
+
+double opt_view_global_zoom(OPT_ARGS_NUM)
+{
+   GET_VIEW(0.);
+  if(action & GMSH_SET) {
+     if (v->adaptive)
+      v->adaptive->setGlobalResolutionLevel(v,(int)val);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    if (v->adaptive){
+      WID->view_value[33]->value(v->adaptive->getGlobalResolutionLevel());
+    }
+  }
+#endif
+  if (v->adaptive)
+    return v->adaptive->getGlobalResolutionLevel();
+  return 1;
+}
+
 
 double opt_view_type(OPT_ARGS_NUM)
 {

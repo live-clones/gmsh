@@ -54,7 +54,7 @@ struct Structural_Texture
 struct Structural_BeamSection
 {
   Mesh m;
-  double xc,yc,area,Iy,Iz;
+  double xc,yc,area,Iy,Iz,J;
   std::string name;
   Structural_BeamSection ( const char *direct, std::string _name );
   ~Structural_BeamSection();
@@ -104,7 +104,8 @@ class StructuralSolver : public GMSH_Solve_Plugin
 #endif
   double MAX_FORCE;
   double MAX_DISPLACEMENT;
-  Structural_BeamSection* GetBeamSection (const std::string & name);
+  Structural_BeamSection* GetBeamSection (const std::string & name) const ;
+  Structural_Material    GetMaterial    (const std::string & name) const ;
 public:
   StructuralSolver();
   virtual ~StructuralSolver();

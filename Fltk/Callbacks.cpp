@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.284 2004-10-17 01:53:49 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.285 2004-10-20 14:38:57 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3394,6 +3394,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
 
   double type = opt_view_type(current, GMSH_GET, 0);
   double saturate_values = opt_view_saturate_values(current, GMSH_GET, 0);
+  double global_zoom = opt_view_global_zoom(current, GMSH_GET, 0);
   double show_element = opt_view_show_element(current, GMSH_GET, 0);
   double show_scale = opt_view_show_scale(current, GMSH_GET, 0);
   double auto_position = opt_view_auto_position(current, GMSH_GET, 0);
@@ -3575,6 +3576,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
       val = WID->view_butt[38]->value();
       if(force || (val != saturate_values))
         opt_view_saturate_values(i, GMSH_SET, val);
+
+      val = WID->view_value[33]->value();
+      if(force || (val != global_zoom))
+        opt_view_global_zoom(i, GMSH_SET, val);
 
       val = WID->view_butt[10]->value();
       if(force || (val != show_element))

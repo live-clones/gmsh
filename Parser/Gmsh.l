@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.57 2004-07-02 20:48:42 geuzaine Exp $
+// $Id: Gmsh.l,v 1.58 2004-10-20 14:38:57 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -248,6 +248,7 @@ VY                      return tVectorPyramid;
 TY                      return tTensorPyramid;
 T2                      return tText2D;
 T3                      return tText3D;
+INTERPOLATION_MATRIX    return tInterpolationMatrix;
 
 
 CARTESIAN_POINT         	   return tCARTESIAN_POINT;

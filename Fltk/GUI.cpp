@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.364 2004-10-18 20:39:56 geuzaine Exp $
+// $Id: GUI.cpp,v 1.365 2004-10-20 14:38:57 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2388,6 +2388,9 @@ void GUI::create_option_window()
       view_value[23]->maximum(1024);
       view_value[23]->step(1);
 
+
+      
+
       o->end();
     }
     {
@@ -2536,6 +2539,13 @@ void GUI::create_option_window()
       view_butt[38]->type(FL_TOGGLE_BUTTON);
       view_butt[38]->down_box(TOGGLE_BOX);
       view_butt[38]->selection_color(TOGGLE_COLOR);
+
+      view_value[33] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Global Resolution Level");
+      view_value[33]->align(FL_ALIGN_RIGHT);
+      view_value[33]->minimum(1);
+      view_value[33]->maximum(MAX_LEVEL_OF_ZOOM);
+      view_value[33]->step(1);
+      view_value[33]->value(1);
 
       view_range->end();
     }
@@ -2714,6 +2724,10 @@ void GUI::update_view_window(int num)
   opt_view_show_scale(num, GMSH_GUI, 0);
   opt_view_draw_strings(num, GMSH_GUI, 0);
   opt_view_auto_position(num, GMSH_GUI, 0);
+
+  if (!v->adaptive)
+    view_value[33]->deactivate();
+
   if(v->NbSP) {
     view_butt[2]->activate();
     view_butt[3]->activate();

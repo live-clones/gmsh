@@ -59,8 +59,13 @@ Structural_BeamSection:: Structural_BeamSection( const char *direct, std::string
 
 void Structural_BeamSection :: computeGeometricalProperties ()
 {
-  xc=yc=area=0.0;
+  xc=yc=area=Iy=Iz=0.0;
   List_T *surfaces = Tree2List (m.Surfaces);
+
+  double M[3][3] = {{1,.5,.5},
+		    {.5,1,.5},
+		    {.5,.5,1}};
+
   for (int i=0;i<List_Nbr(surfaces);++i)
     {
       Surface *s;
@@ -70,7 +75,7 @@ void Structural_BeamSection :: computeGeometricalProperties ()
 	{
 	  Simplex *simp;
 	  List_Read(triangles,j,&simp);
-	  Vertex v = *simp->V[0]+*simp->V[1]+*simp->V[2];
+	  Vertex v = (*simp->V[0]+*simp->V[1]+*simp->V[2])*0.333333333333333333;
 	  double A = simp->surfsimpl();
 	  area+=A;
 	  xc += v.Pos.X*A;
@@ -78,10 +83,30 @@ void Structural_BeamSection :: computeGeometricalProperties ()
 	}
       xc/=area;
       yc/=area;
+      for(int j=0;j<List_Nbr(triangles);++j)
+	{
+	  Simplex *simp;
+	  List_Read(triangles,j,&simp);
+	  double A = simp->surfsimpl();
+	  {
+	    double dy[3] = {simp->V[0]->Pos.Y-yc,simp->V[1]->Pos.Y-yc,simp->V[2]->Pos.Y-yc};
+	    Iy+= A *
+	      dy[0] * (M[0][0] * dy[0] + M[0][1] * dy[1] + M[0][2] * dy[2]) +
+	      dy[1] * (M[1][0] * dy[0] + M[1][1] * dy[1] + M[1][2] * dy[2]) +
+	      dy[2] * (M[2][0] * dy[0] + M[2][1] * dy[1] + M[2][2] * dy[2]);
+	  }
+	  {
+	    double dy[3] = {simp->V[0]->Pos.X-xc,simp->V[1]->Pos.X-xc,simp->V[2]->Pos.X-xc};
+	    Iz+= A * 
+	      dy[0] * (M[0][0] * dy[0] + M[0][1] * dy[1] + M[0][2] * dy[2]) +
+	      dy[1] * (M[1][0] * dy[0] + M[1][1] * dy[1] + M[1][2] * dy[2]) +
+	      dy[2] * (M[2][0] * dy[0] + M[2][1] * dy[1] + M[2][2] * dy[2]);
+	  }
+	}
       List_Delete(triangles);
     }
   List_Delete(surfaces);  
-  printf("%s %g %g %g\n",name.c_str(),area,xc,yc);
+  printf("%s %g %g %g %g %g\n",name.c_str(),area,xc,yc,Iy,Iz);
 }
 
 void Structural_Texture::setup ()
@@ -367,10 +392,10 @@ StructuralSolver :: ~StructuralSolver ()
 #endif
 }
 
-Structural_BeamSection * StructuralSolver :: GetBeamSection (const std::string & name)
+Structural_BeamSection * StructuralSolver :: GetBeamSection (const std::string & name) const
 {
-  std::list<struct Structural_BeamSection* > :: iterator it  = beam_sections.begin();
-  std::list<struct Structural_BeamSection* > :: iterator ite = beam_sections.end();
+  std::list<struct Structural_BeamSection* > :: const_iterator it  = beam_sections.begin();
+  std::list<struct Structural_BeamSection* > :: const_iterator ite = beam_sections.end();
 
   for (;it!=ite;++it)
     {
@@ -378,6 +403,17 @@ Structural_BeamSection * StructuralSolver :: GetBeamSection (const std::string &
 	return *it;
     }
   return 0;
+}
+Structural_Material StructuralSolver :: GetMaterial (const std::string & name) const 
+{
+  std::list<struct Structural_Material > :: const_iterator it  = materials.begin();
+  std::list<struct Structural_Material > :: const_iterator ite = materials.end();
+
+  for (;it!=ite;++it)
+    {
+      if ((*it).name == name)
+	return *it;
+    }
 }
 
 
@@ -557,6 +593,20 @@ void StructuralSolver :: addPhysicalPoint (int id)
 #endif
 }
 
+static PhysicalGroup * getPhysical ( int Num , int Dim )
+{
+  PhysicalGroup *p;
+  for(int i = 0; i < List_Nbr(THEM->PhysicalGroups); i++) 
+    { 
+      List_Read(THEM->PhysicalGroups, i, &p);
+      if(p->Typ == MSH_PHYSICAL_POINT    && Dim == 0 && p->Num == Num) return p;
+      if(p->Typ == MSH_PHYSICAL_LINE     && Dim == 1 && p->Num == Num) return p;
+      if(p->Typ == MSH_PHYSICAL_SURFACE  && Dim == 2 && p->Num == Num) return p;
+      if(p->Typ == MSH_PHYSICAL_VOLUME  && Dim == 3 && p->Num == Num) return p;
+    }
+  return 0;
+}
+
 void StructuralSolver :: writeSolverFile ( const char *geom_file ) const
 {
   char name[256];
@@ -569,8 +619,11 @@ void StructuralSolver :: writeSolverFile ( const char *geom_file ) const
       {
 	const PhysicalLineInfo &i = (*it).second;
 	int id = (*it).first;
-	fprintf(f,"BEAM PHYSICAL %d SECTION %s MATERIAL %s LOADS %g %g %g %g %g %g %g %g %g \n",
-		id,i.section.c_str(),i.material.c_str(),i.fx1,i.fy1,i.fx2,i.fy2,i.fz1,i.fz2,i.dirz[0],i.dirz[1],i.dirz[2]);
+	if (getPhysical ( id , 1 ))
+	  {
+	    fprintf(f,"BEAM PHYSICAL %d SECTION %s MATERIAL %s LOADS %g %g %g %g %g %g %g %g %g \n",
+		    id,i.section.c_str(),i.material.c_str(),i.fx1,i.fy1,i.fx2,i.fy2,i.fz1,i.fz2,i.dirz[0],i.dirz[1],i.dirz[2]);
+	  }
       }
   }
   {
@@ -580,7 +633,46 @@ void StructuralSolver :: writeSolverFile ( const char *geom_file ) const
       {
 	const PhysicalPointInfo &i = (*it).second;
 	int id = (*it).first;
-	fprintf(f,"NODE %d %g %d %g %d %g %d %g \n",id,i.angle,i.disp[0],i.val[0],i.disp[1],i.val[1],i.disp[2],i.val[2]);
+	if (getPhysical ( id , 0 ))
+	  {
+	    fprintf(f,"NODE %d %g %d %g %d %g %d %g \n",id,i.angle,i.disp[0],i.val[0],i.disp[1],i.val[1],i.disp[2],i.val[2]);
+	  }
+      }
+  }
+  fclose(f);  
+  sprintf(name,"%s.m",geom_file);
+  f = fopen(name,"w");  
+  {
+    std::map<int,struct PhysicalLineInfo>  :: const_iterator it  = lines.begin();
+    std::map<int,struct PhysicalLineInfo > :: const_iterator ite = lines.end();      
+    for (;it!=ite;++it)
+      {
+	const PhysicalLineInfo &i = (*it).second;
+	int id = (*it).first;
+	if (getPhysical ( id , 1 ))
+	  {
+	    Structural_BeamSection* bs = GetBeamSection (i.section);
+	    Structural_Material    mt = GetMaterial    (i.material);
+	    fprintf(f,"111 %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+		    id,                             // physical id
+		    bs->area, bs->Iy, bs->Iz, bs->J,// section info
+		    mt.par[0],mt.par[1],mt.par[2],// material info
+		    i.fx1,i.fy1,i.fx2,i.fy2,i.fz1,i.fz2,// lineic loads
+		    i.dirz[0],i.dirz[1],i.dirz[2]); // direction
+	  }
+      }
+  }
+  {
+    std::map<int,struct PhysicalPointInfo>  :: const_iterator it  = points.begin();
+    std::map<int,struct PhysicalPointInfo > :: const_iterator ite = points.end();      
+    for (;it!=ite;++it)
+      {
+	const PhysicalPointInfo &i = (*it).second;
+	int id = (*it).first;
+	if (getPhysical ( id , 0 ))
+	  {
+	    fprintf(f,"222 %d %g %d %g %d %g %d %g \n",id,i.angle,i.disp[0],i.val[0],i.disp[1],i.val[1],i.disp[2],i.val[2]);
+	  }
       }
   }
   fclose(f);  
@@ -823,11 +915,11 @@ bool StructuralSolver :: GL_enhancePoint ( Vertex *v)
 
 	      const double offset = 0.3 * CTX.gl_fontsize * CTX.pixel_equiv_x;
 	      const double l = sqrt (dv[0]*dv[0]+dv[1]*dv[1]);
-	      const double kk = (CTX.max[0]-CTX.min[0])*.1*l / (MAX_FORCE);
+	      const double kk = (CTX.max[0]-CTX.min[0])*.1 / (MAX_FORCE);
 	      if (l != 0.0)
 		{
 		  glColor4ubv((GLubyte *) & CTX.color.text);
-		  Draw_Vector (CTX.vector_type,  0, 0.5*CTX.arrow_rel_head_radius, 
+		  Draw_Vector (CTX.vector_type,  0, CTX.arrow_rel_head_radius, 
 			       CTX.arrow_rel_stem_length, 0.5*CTX.arrow_rel_stem_radius,
 			       v->Pos.X-dv[0]*kk, v->Pos.Y-dv[1]*kk, v->Pos.Z-dv[2]*kk,
 			       dv[0]*kk, dv[1]*kk, dv[2]*kk, NULL, CTX.geom.light);

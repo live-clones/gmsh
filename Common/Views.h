@@ -24,13 +24,95 @@
 #include "List.h"
 #include "VertexArray.h"
 #include "SmoothNormals.h"
+#include "GmshMatrix.h"
 
 #define VIEW_NB_ELEMENT_TYPES  (8*3)
 #define VIEW_MAX_ELEMENT_NODES  8
 #define VAL_INF 1.e200
 
+class Post_View;
+
+#define MAX_LEVEL_OF_ZOOM 40
+
+// On a triangle, we suppose that there exists an
+// interpolation scheme such that u = \sum_i u_i \phi_i
+// phi_i being polynomials of order p, i goes from 1...(p+1)(p+2)/2
+// and phi_i = \sum_j coeffs_{ij} monomials_j and
+// monomials are 1,x,y,x^2,xy,y^2,x^3,x^2y,xy^2,y^3...
+
+/// A zoom is a triangulation in reference coordinates
+class Post_Zoom
+{
+public:
+  Post_Zoom( int level , Double_Matrix *coeffs);
+  ~Post_Zoom()
+  {
+    delete M;
+    delete MGeom;
+    delete Points;
+    delete Simplices;
+  }
+  Double_Matrix *M;
+  Double_Matrix *MGeom;
+  Double_Matrix *Points;
+  Int_Matrix *Simplices;
+  void interpolate ( Double_Matrix *coefs , double u, double v, double *sf);
+};
+
+class Adaptive_Post_View 
+{
+  Post_Zoom* ZOOMS [MAX_LEVEL_OF_ZOOM+1];
+  double tol;
+  int presentZoomLevel;
+  Double_Matrix * _coefs;
+  Double_Matrix * _coefs_L2;
+  Double_Matrix * _STposX;
+  Double_Matrix * _STposY;
+  Double_Matrix * _STposZ;
+  Double_Matrix * _STval;
+public:
+  Adaptive_Post_View (Post_View *view, List_T *_coeffs);
+  ~Adaptive_Post_View()
+  {
+    delete _coefs;
+    delete _STposX;
+    delete _STposY;
+    delete _STposZ;
+    delete _STval;
+    for (int i=0;i<MAX_LEVEL_OF_ZOOM+1;i++)
+      if (ZOOMS[i]) delete ZOOMS[i];
+  }
+  int getGlobalResolutionLevel ( ) const {return presentZoomLevel;}
+  void setGlobalResolutionLevel ( Post_View * view , int level );
+  void setAdaptiveResolutionLevel ( Post_View * view , int levelmax = MAX_LEVEL_OF_ZOOM );
+  void initWithLowResolution (Post_View *view);
+  void setTolerance (const double eps) {tol=eps;}
+  void zoomElement (Post_View * view ,
+		    int ielem ,
+		    Post_Zoom *zoom);
+
+};
+
 class Post_View{
   public :
+  // The view may be high order, coeffs are then interpreated as
+  // coefficients of a high order interpolation. So, a pre-pro
+  // is done at the end of the view that sets the view to the
+  // minimal resolution. Then, we can interactively modify the
+  // resolution.
+  
+  Adaptive_Post_View *adaptive;
+  void setGlobalResolutionLevel (int level)
+  {
+    if ( adaptive )
+      adaptive->setGlobalResolutionLevel(this, level);
+  }
+  void setAdaptiveResolutionLevel (int level)
+  {
+    if ( adaptive )
+      adaptive->setAdaptiveResolutionLevel(this, level);
+  }
+
   // intrinsic to a view
   int Num, Index, Changed, DuplicateOf, Links, Dirty;
   char FileName[256], Name[256], AbscissaName[256];
@@ -106,6 +188,14 @@ class Post_View{
   int empty();
   void get_raw_data(int type, List_T **list, int **nbe, int *nbc, int *nbn);
 };
+
+
+// We have here a post processing map that is the solution of a high order
+// interpolation. The principle is that we are able to produce adaptive 
+// visualizations i.e. we can Zoom on the picture and generate automatically
+// levels of accuracy. 
+
+
 
 // Type
 #define DRAW_POST_3D       1
