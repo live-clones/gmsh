@@ -1,4 +1,4 @@
-/* $Id: 3D_BGMesh.cpp,v 1.10 2000-11-27 10:58:56 geuzaine Exp $ */
+/* $Id: 3D_BGMesh.cpp,v 1.11 2000-11-27 17:34:00 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -221,7 +221,7 @@ int BGMWithView (Post_View * ErrView){
 
 
 double ErrorInView (Post_View * ErrView, int *n){
-  double e, tot=0.0, *X, *Y, *Z, *Val;
+  double e, tot=0.0, *Val;
   int i, j=0, nb;
 
   if(ErrView == NULL){
@@ -232,9 +232,6 @@ double ErrorInView (Post_View * ErrView, int *n){
   if(ErrView->NbST){
     nb = List_Nbr(ErrView->ST) / ErrView->NbST ;
     for(i = 0 ; i < List_Nbr(ErrView->ST) ; i+=nb){
-      X = (double*)List_Pointer_Fast(ErrView->ST,i);
-      Y = (double*)List_Pointer_Fast(ErrView->ST,i+3);
-      Z = (double*)List_Pointer_Fast(ErrView->ST,i+6);
       Val = (double*)List_Pointer_Fast(ErrView->ST,i+9);
       e = (Val[0] + Val[1] + Val[2]) / 3. ;
       tot += e * e;
@@ -245,9 +242,6 @@ double ErrorInView (Post_View * ErrView, int *n){
   if(ErrView->NbSS){
     nb = List_Nbr(ErrView->SS) / ErrView->NbSS ;
     for(i = 0 ; i < List_Nbr(ErrView->SS) ; i+=nb){
-      X = (double*)List_Pointer_Fast(ErrView->SS,i);
-      Y = (double*)List_Pointer_Fast(ErrView->SS,i+3);
-      Z = (double*)List_Pointer_Fast(ErrView->SS,i+8);
       Val = (double*)List_Pointer_Fast(ErrView->SS,i+12);
       e = (Val[0] + Val[1] + Val[2] + Val[3]) * 0.25 ;
       tot += e * e;

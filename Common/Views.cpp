@@ -1,4 +1,4 @@
-/* $Id: Views.cpp,v 1.10 2000-11-27 17:13:39 geuzaine Exp $ */
+/* $Id: Views.cpp,v 1.11 2000-11-27 17:34:00 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Views.h"
@@ -103,20 +103,17 @@ void EndView(int AddInUI, int Number, char *FileName, char *Name,
   if(ActualView->NbSP){
     nb = List_Nbr(ActualView->SP) / ActualView->NbSP ;
     for(i = 0 ; i < List_Nbr(ActualView->SP) ; i+=nb)
-      Stat_ScalarSimplex(1, (double*)List_Pointer(ActualView->SP,i),
-			 nb-3, (double*)List_Pointer(ActualView->SP,i+3));
+      Stat_ScalarSimplex(1, nb-3, (double*)List_Pointer(ActualView->SP,i+3));
   }
   if(ActualView->NbVP){
     nb = List_Nbr(ActualView->VP) / ActualView->NbVP ;
     for(i = 0 ; i < List_Nbr(ActualView->VP) ; i+=nb)
-      Stat_VectorSimplex(1, (double*)List_Pointer(ActualView->VP,i),
-			 nb-3, (double*)List_Pointer(ActualView->VP,i+3));
+      Stat_VectorSimplex(1, nb-3, (double*)List_Pointer(ActualView->VP,i+3));
   }
   if(ActualView->NbTP){
     nb = List_Nbr(ActualView->TP) / ActualView->NbTP ;
     for(i = 0 ; i < List_Nbr(ActualView->TP) ; i+=nb)
-      Stat_TensorSimplex(1, (double*)List_Pointer(ActualView->TP,i),
-			 nb-3, (double*)List_Pointer(ActualView->TP,i+3));
+      Stat_TensorSimplex(1, nb-3, (double*)List_Pointer(ActualView->TP,i+3));
   }
 
   // Lines
@@ -124,20 +121,17 @@ void EndView(int AddInUI, int Number, char *FileName, char *Name,
   if(ActualView->NbSL){
     nb = List_Nbr(ActualView->SL) / ActualView->NbSL ;
     for(i = 0 ; i < List_Nbr(ActualView->SL) ; i+=nb)
-      Stat_ScalarSimplex(2, (double*)List_Pointer(ActualView->SL,i),
-			 nb-6, (double*)List_Pointer(ActualView->SL,i+6));
+      Stat_ScalarSimplex(2, nb-6, (double*)List_Pointer(ActualView->SL,i+6));
   }
   if(ActualView->NbVL){
     nb = List_Nbr(ActualView->VL) / ActualView->NbVL ;
     for(i = 0 ; i < List_Nbr(ActualView->VL) ; i+=nb)
-      Stat_VectorSimplex(2, (double*)List_Pointer(ActualView->VL,i),
-			 nb-6, (double*)List_Pointer(ActualView->VL,i+6));
+      Stat_VectorSimplex(2, nb-6, (double*)List_Pointer(ActualView->VL,i+6));
   }
   if(ActualView->NbTL){
     nb = List_Nbr(ActualView->TL) / ActualView->NbTL ;
     for(i = 0 ; i < List_Nbr(ActualView->TL) ; i+=nb)
-      Stat_TensorSimplex(2, (double*)List_Pointer(ActualView->TL,i),
-			 nb-6, (double*)List_Pointer(ActualView->TL,i+6));
+      Stat_TensorSimplex(2, nb-6, (double*)List_Pointer(ActualView->TL,i+6));
   }
 
   // Triangles
@@ -145,20 +139,17 @@ void EndView(int AddInUI, int Number, char *FileName, char *Name,
   if(ActualView->NbST){
     nb = List_Nbr(ActualView->ST) / ActualView->NbST ;
     for(i = 0 ; i < List_Nbr(ActualView->ST) ; i+=nb)
-      Stat_ScalarSimplex(3, (double*)List_Pointer(ActualView->ST,i),
-			 nb-9, (double*)List_Pointer(ActualView->ST,i+9));
+      Stat_ScalarSimplex(3, nb-9, (double*)List_Pointer(ActualView->ST,i+9));
   }
   if(ActualView->NbVT){
     nb = List_Nbr(ActualView->VT) / ActualView->NbVT ;
     for(i = 0 ; i < List_Nbr(ActualView->VT) ; i+=nb)
-      Stat_VectorSimplex(3, (double*)List_Pointer(ActualView->VT,i),
-			 nb-9, (double*)List_Pointer(ActualView->VT,i+9));
+      Stat_VectorSimplex(3, nb-9, (double*)List_Pointer(ActualView->VT,i+9));
   }
   if(ActualView->NbTT){
     nb = List_Nbr(ActualView->TT) / ActualView->NbTT ;
     for(i = 0 ; i < List_Nbr(ActualView->TT) ; i+=nb)
-      Stat_TensorSimplex(3, (double*)List_Pointer(ActualView->TT,i),
-			 nb-9, (double*)List_Pointer(ActualView->TT,i+9));
+      Stat_TensorSimplex(3, nb-9, (double*)List_Pointer(ActualView->TT,i+9));
   }
 
   // Tetrahedra
@@ -166,20 +157,17 @@ void EndView(int AddInUI, int Number, char *FileName, char *Name,
   if(ActualView->NbSS){
     nb = List_Nbr(ActualView->SS) / ActualView->NbSS ;
     for(i = 0 ; i < List_Nbr(ActualView->SS) ; i+=nb)
-      Stat_ScalarSimplex(4, (double*)List_Pointer(ActualView->SS,i),
-			 nb-12, (double*)List_Pointer(ActualView->SS,i+12));
+      Stat_ScalarSimplex(4, nb-12, (double*)List_Pointer(ActualView->SS,i+12));
   }
   if(ActualView->NbVS){
     nb = List_Nbr(ActualView->VS) / ActualView->NbVS ;
     for(i = 0 ; i < List_Nbr(ActualView->VS) ; i+=nb)
-      Stat_VectorSimplex(4, (double*)List_Pointer(ActualView->VS,i),
-			 nb-12, (double*)List_Pointer(ActualView->VS,i+12));
+      Stat_VectorSimplex(4, nb-12, (double*)List_Pointer(ActualView->VS,i+12));
   }
   if(ActualView->NbTS){
     nb = List_Nbr(ActualView->TS) / ActualView->NbTS ;
     for(i = 0 ; i < List_Nbr(ActualView->TS) ; i+=nb)
-      Stat_TensorSimplex(4, (double*)List_Pointer(ActualView->TS,i),
-			 nb-12, (double*)List_Pointer(ActualView->TS,i+12));
+      Stat_TensorSimplex(4, nb-12, (double*)List_Pointer(ActualView->TS,i+12));
   }
 
   // Dummy time values if using old parsed format...
@@ -290,11 +278,8 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
 /*  S t a t _ X X X  S i m p l e x                                          */
 /* ------------------------------------------------------------------------ */
 
-void Stat_ScalarSimplex(int nbnod, double *coord, int N, double *V){
+void Stat_ScalarSimplex(int nbnod, int N, double *V){
   int i;
-  double *X, *Y, *Z;
-  
-  X = &coord[0] ; Y = &coord[nbnod] ; Z = &coord[2*nbnod] ;
 
   if(!NbPoints && !NbLines && !NbTriangles && !NbTetrahedra){
     ActualView->Min = V[0];
@@ -317,12 +302,9 @@ void Stat_ScalarSimplex(int nbnod, double *coord, int N, double *V){
   }
 }
 
-void Stat_VectorSimplex(int nbnod, double *coord, int N, double *V){
+void Stat_VectorSimplex(int nbnod, int N, double *V){
   double l0;
   int i;
-  double *X, *Y, *Z;
-
-  X = &coord[0] ; Y = &coord[nbnod] ; Z = &coord[2*nbnod] ;
 
   if(!NbPoints && !NbLines && !NbTriangles && !NbTetrahedra){
     l0 = sqrt(DSQR(V[0])+DSQR(V[1])+DSQR(V[2]));
@@ -349,7 +331,7 @@ void Stat_VectorSimplex(int nbnod, double *coord, int N, double *V){
   }
 }
 
-void Stat_TensorSimplex(int nbnod, double *coord, int N, double *v){
+void Stat_TensorSimplex(int nbnod, int N, double *v){
   Msg(ERROR, "Tensor Field Views not Implemented Yet");
 }
 
