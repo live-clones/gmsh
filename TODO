@@ -1,4 +1,4 @@
-$Id: TODO,v 1.82 2005-02-02 18:47:55 geuzaine Exp $
+$Id: TODO,v 1.83 2005-02-02 18:56:49 geuzaine Exp $
 
 ********************************************************************
 
@@ -218,7 +218,7 @@ Pb avec View->Reload si plusieurs vues dans le meme fichier
 > > fichier ? Car 'reload' relit simplement le fichier duquel provient la
 > > vue (et il le relit entierement).
 > 
-> Tout à fait, toutes les vues sont dans un fichier unique.
+> Tout a fait, toutes les vues sont dans un fichier unique.
 
 C'est de la que vient le probleme. Le 'reload' recharge en fait le
 fichier duquel provient la vue, en *forcant* sa position dans la liste
