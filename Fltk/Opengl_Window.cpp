@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.26 2002-05-20 18:28:25 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.27 2002-08-26 17:41:32 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -53,13 +53,16 @@ void Opengl_Window::draw() {
     glViewport(CTX.viewport[0], CTX.viewport[1],
 	       CTX.viewport[2], CTX.viewport[3]);
   }
-  if((w() != CTX.viewport[2]-CTX.viewport[0]) ||
-     (h() != CTX.viewport[3]-CTX.viewport[1])){
-    WID->set_size(CTX.viewport[2]-CTX.viewport[0],
-		  CTX.viewport[3]-CTX.viewport[1]);
-    glViewport(CTX.viewport[0], CTX.viewport[1],
-	       CTX.viewport[2], CTX.viewport[3]);
+  else{
+    if((w() != CTX.viewport[2]-CTX.viewport[0]) ||
+       (h() != CTX.viewport[3]-CTX.viewport[1])){
+      WID->set_size(CTX.viewport[2]-CTX.viewport[0],
+		    CTX.viewport[3]-CTX.viewport[1]);
+      glViewport(CTX.viewport[0], CTX.viewport[1],
+		 CTX.viewport[2], CTX.viewport[3]);
+    }
   }
+
   if(!ZOOM){
     Orthogonalize(0,0);
     ClearOpengl();

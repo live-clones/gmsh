@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.192 2002-08-15 22:36:18 geuzaine Exp $
+// $Id: GUI.cpp,v 1.193 2002-08-26 17:41:32 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -993,6 +993,7 @@ void GUI::create_graphic_window(int argc, char **argv){
   // dummy resizable box
 
   Dummy_Box *resize_box = new Dummy_Box(x,0,width-x,glheight);
+  g_window->resizable(resize_box);
 
   // opengl window
 
@@ -1003,8 +1004,6 @@ void GUI::create_graphic_window(int argc, char **argv){
   }
   g_opengl_window->end();
 
-
-  g_window->resizable(resize_box);
   g_window->position(CTX.gl_position[0],CTX.gl_position[1]);
   g_window->end();   
 }
