@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.337 2004-04-15 17:16:41 geuzaine Exp $
+# $Id: Makefile,v 1.338 2004-05-01 14:42:41 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -231,7 +231,7 @@ package-mac:
 
 package-rpm:
 	tar zcvf /usr/src/redhat/SOURCES/gmsh-${GMSH_VERSION}.tar.gz ${GMSH_SOURCES}
-	rpmbuild -bb --define 'gmshversion ${GMSH_VERSION}' gmsh.spec
+	rpmbuild -ba --define 'gmshversion ${GMSH_VERSION}' gmsh.spec
 	cp /usr/src/redhat/RPMS/i386/gmsh-${GMSH_VERSION}-?.i386.rpm .
 	cp /usr/src/redhat/BUILD/gmsh-${GMSH_VERSION}/gmsh-${GMSH_VERSION}-${UNAME}.tgz .
 
