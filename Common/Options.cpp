@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.85 2002-09-01 21:54:10 geuzaine Exp $
+// $Id: Options.cpp,v 1.86 2002-09-02 22:38:57 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2718,9 +2718,9 @@ double opt_view_scale_type(OPT_ARGS_NUM){
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
     switch(v->ScaleType){
-    case DRAW_POST_LINEAR: WID->view_choice[0]->value(0); break;
-    case DRAW_POST_LOGARITHMIC: WID->view_choice[0]->value(1); break;
-    case DRAW_POST_DOUBLELOGARITHMIC: WID->view_choice[0]->value(2); break;
+    case DRAW_POST_LINEAR: WID->view_choice[1]->value(0); break;
+    case DRAW_POST_LOGARITHMIC: WID->view_choice[1]->value(1); break;
+    case DRAW_POST_DOUBLELOGARITHMIC: WID->view_choice[1]->value(2); break;
     }
   }
 #endif
