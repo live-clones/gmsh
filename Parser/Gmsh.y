@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.103 2001-10-04 12:07:02 geuzaine Exp $
+// $Id: Gmsh.y,v 1.104 2001-10-04 14:32:11 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -1688,18 +1688,18 @@ Loop :
     }
   | tFunction tSTRING
     {
-      if(!FunctionManager::Instance()->createFunction($2,yyin,yylineno))
+      if(!FunctionManager::Instance()->createFunction($2,yyin,yyname,yylineno))
 	vyyerror("Redefinition of function %s",$2);
       skip_until(NULL, "Return");
     }
   | tReturn
     {
-      if(!FunctionManager::Instance()->leaveFunction(&yyin,yylineno))
+      if(!FunctionManager::Instance()->leaveFunction(&yyin,yyname,yylineno))
 	vyyerror("Error while exiting function");
     } 
   | tCall tSTRING tEND
     {
-      if(!FunctionManager::Instance()->enterFunction($2,&yyin,yylineno))
+      if(!FunctionManager::Instance()->enterFunction($2,&yyin,yyname,yylineno))
 	vyyerror("Unknown function %s",$2);
     } 
   | tIf '(' FExpr ')'

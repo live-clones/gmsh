@@ -1,4 +1,4 @@
-// $Id: FunctionManager.cpp,v 1.12 2001-08-17 12:19:34 geuzaine Exp $
+// $Id: FunctionManager.cpp,v 1.13 2001-10-04 14:32:11 geuzaine Exp $
 
 #include <map>
 #include <stdio.h>
@@ -21,6 +21,7 @@ class File_Position
     int lineno;
     fpos_t position;
     FILE *file;
+    char filename[256];
 };
 
 // Pour utiliser un namespace global sur SGI, il faut compiler avec
@@ -55,22 +56,24 @@ FunctionManager* FunctionManager::Instance()
   return instance;
 }
 
-int FunctionManager::enterFunction(char *name, FILE **f, int &lno) const
+int FunctionManager::enterFunction(char *name, FILE **f, char *filename, int &lno) const
 {
   if(functions->m.find(name) == functions->m.end())return 0;
   File_Position fpold;
   fpold.lineno = lno;
+  strcpy(fpold.filename,filename);
   fpold.file = *f;
   fgetpos(fpold.file,&fpold.position);
   calls->s.push(fpold);
   File_Position fp = (functions->m)[name];
   fsetpos(fp.file,&fp.position);
   *f = fp.file;
+  strcpy(filename, fp.filename);
   lno = fp.lineno;
   return 1;
 }
 
-int FunctionManager::leaveFunction(FILE **f,int &lno)
+int FunctionManager::leaveFunction(FILE **f, char *filename, int &lno)
 {
   if(!calls->s.size())return 0;
   File_Position fp;
@@ -78,14 +81,16 @@ int FunctionManager::leaveFunction(FILE **f,int &lno)
   calls->s.pop();
   fsetpos(fp.file,&fp.position);
   *f = fp.file;
+  strcpy(filename, fp.filename);
   lno = fp.lineno;
   return 1;
 }
 
-int FunctionManager::createFunction(char *name, FILE *f, int lno)
+int FunctionManager::createFunction(char *name, FILE *f, char *filename, int lno)
 {
   File_Position fp;
   fp.file = f;
+  strcpy(fp.filename, filename);
   fp.lineno = lno;
   fgetpos(fp.file,&fp.position);
   (functions->m)[name] = fp;

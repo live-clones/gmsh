@@ -175,7 +175,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.117 2001-10-04 12:07:01 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.118 2001-10-04 14:32:11 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -4792,7 +4792,7 @@ case 208:
 case 209:
 #line 1690 "Gmsh.y"
 {
-      if(!FunctionManager::Instance()->createFunction(yyvsp[0].c,yyin,yylineno))
+      if(!FunctionManager::Instance()->createFunction(yyvsp[0].c,yyin,yyname,yylineno))
 	vyyerror("Redefinition of function %s",yyvsp[0].c);
       skip_until(NULL, "Return");
     ;
@@ -4800,14 +4800,14 @@ case 209:
 case 210:
 #line 1696 "Gmsh.y"
 {
-      if(!FunctionManager::Instance()->leaveFunction(&yyin,yylineno))
+      if(!FunctionManager::Instance()->leaveFunction(&yyin,yyname,yylineno))
 	vyyerror("Error while exiting function");
     ;
     break;}
 case 211:
 #line 1701 "Gmsh.y"
 {
-      if(!FunctionManager::Instance()->enterFunction(yyvsp[-1].c,&yyin,yylineno))
+      if(!FunctionManager::Instance()->enterFunction(yyvsp[-1].c,&yyin,yyname,yylineno))
 	vyyerror("Unknown function %s",yyvsp[-1].c);
     ;
     break;}
