@@ -5,7 +5,8 @@
 #include "PluginManager.h"
 #include "Message.h"
 #include <FL/filename.H>
-#include "CutPlane/CutPlane.h"
+#include "CutPlane.h"
+#include "CutSphere.h"
 
 using namespace std;
 
@@ -46,6 +47,7 @@ void GMSH_PluginManager::RegisterDefaultPlugins()
   char ext[6];
 
   allPlugins.insert(std::pair<char*,GMSH_Plugin*>("Cut Plane" ,GMSH_RegisterCutPlanePlugin()));
+  allPlugins.insert(std::pair<char*,GMSH_Plugin*>("Cut Sphere" ,GMSH_RegisterCutSpherePlugin()));
 
 
   char *homeplugins = getenv ("GMSHPLUGINSHOME");
