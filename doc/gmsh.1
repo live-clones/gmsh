@@ -1,5 +1,5 @@
-.\" $Id: gmsh.1,v 1.46 2003-03-06 23:01:17 geuzaine Exp $
-.TH Gmsh 1 "12 November 2001" "Gmsh > 1.30" "Gmsh Manual Pages"
+.\" $Id: gmsh.1,v 1.47 2003-06-14 17:44:36 geuzaine Exp $
+.TH Gmsh 1 "14 June 2003" "Gmsh 1.45" "Gmsh Manual Pages"
 .UC 4
 .\" ********************************************************************
 .SH NAME
@@ -11,85 +11,18 @@ with built-in pre- and post-processing facilities
 .\" ********************************************************************
 .SH DESCRIPTION
 \fIGmsh\fR is an automatic three-dimensional finite element mesh
-generator, primarily Delaunay, with built-in pre- and post-processing
+generator (primarily Delaunay) with build-in CAD and post-processing
 facilities. Its primal design goal is to provide a simple meshing tool
 for academic test cases with parametric input and up to date
-visualization capabilities. One of the strengths of \fIGmsh\fR is its
-ability to respect a characteristic length field for the generation of
-adapted meshes on lines, surfaces and volumes. These adapted meshes
-can be mixed with simple structured (transfinite, elliptic, etc.)
-meshes in order to augment the flexibility.
-.SS Geometrical entity definition
-Parameterized geometries are created by successively defining points,
-oriented curves (segments, circles, ellipsis, splines, etc.), oriented
-surfaces (plane surfaces, ruled surfaces, etc.)  and volumes. Compound
-groups of geometrical entities can be defined, based on these elementary
-parameterized and scriptable geometric entities.
-.SS Mesh generation
-A finite element mesh is a tessellation of a given subset of R^3 by
-elementary geometrical elements of various shapes (in this case lines,
-triangles, quadrangles, tetrahedra, prisms and hexahedra), arranged in
-such a way that two of them intersect, if they do, along a common
-face, edge or node, and never otherwise. All the finite element meshes
-produced by \fIGmsh\fR as unstructured, even if they were generated in
-a structured way. This implies that the elementary geometrical
-elements are defined only by an ordered list of their vertices (which
-allows the orientation of all their lower order geometrical entities)
-but no predefined relation is assumed between any two elementary
-elements.
+visualization capabilities. One of its strengths is the ability to
+respect a characteristic length field for the generation of adapted
+meshes on lines, surfaces and volumes, and to mix these meshes with
+simple structured grids.  
 .PP
-The procedure follows the same order as for the geometry creation:
-curves are discretized first; the mesh of the curves is then used to
-mesh the surfaces; then the mesh of the surfaces is used to mesh the
-volumes. This automatically assures the continuity of the mesh when,
-for example, two surfaces share a common curve. Every meshing step is
-constrained by the characteristic length field, which can be uniform,
-specified by characteristic length associated to elementary
-geometrical entities, or associated to another mesh (the background
-mesh).
-.PP
-For each meshing step (i.e. the discretization of lines, surfaces and
-volumes), all structured mesh directives are executed first, and serve
-as additional constraints for the unstructured parts. The implemented
-Delaunay algorithm is subdivided in the following five steps for
-surface/volume discretization:
-.TP 4
-.B 1.
-trivial meshing of a box including the convex polygon/polyhedron
-defined by the boundary nodes resulting from the discretization of the
-curves/surfaces; 
-.TP 4
-.B 2.
-creation of the initial mesh by insertion of all the nodes on the
-curves/surfaces thanks to the Bowyer algorithm; 
-.TP 4
-.B 3.
-boundary restoration to force all the edges/faces of the
-curves/surfaces to be present in the initial mesh;
-.TP 4
-.B 4.
-suppression of all the unwanted triangles/tetrahedra (in
-particular those containing the nodes of the initial box); 
-.TP 4
-.B 5.
-insertion of new nodes by the Bowyer algorithm until the
-characteristic size of each simplex is lower or equal to the
-characteristic length field evaluated at the center of its
-circumscribed circle/sphere.
-.SS External solver interface
-External solvers can be interfaced with Gmsh through a socket
-mechanism, which permits to easily launch computations either locally
-or on remote computers, and to collect and exploit the simulation
-results within Gmsh.
-.SS Scalar, vector and tensor field visualization
-Multiple post-processing scalar or vector maps can be loaded and
-manipulated (globally or individually) along with the geometry and the
-mesh. Scalar fields are represented by iso-value curves or color maps
-and vector fields by three-dimensional arrows or displacement
-maps. Post-processor functions include offsets, elevation, interactive
-color map modification, range clamping, interactive animation, vector
-postscript output, etc. All post-processing options can be accessed
-either interactively or through the input ascii files.
+\fIGmsh\fR is built around four modules: geometry, mesh, solver and
+post-processing. The specification of any input to these modules is
+done either interactively using the graphical user interface or in
+ASCII text files using \fIGmsh\fR's own scripting language.
 .\" ********************************************************************
 .SH GEOMETRY OPTIONS
 .TP 4
@@ -124,9 +57,9 @@ select the two-dimensional mesh algorithm (default: iso).
 .TP 4
 .B \-smooth int
 set the number of smoothing steps (default value is 0).
-.\"   .TP 4
-.\"   .B \-degree int
-.\"   set the degree of the generated elements (default value is 1).
+.TP 4
+.B \-order int
+set the order of the generated elements (default value is 1).
 .TP 4
 .B \-scale float
 apply a global scaling factor to the model (default value is 1.0).
@@ -151,15 +84,15 @@ model.
 .B \-histogram
 print mesh quality histogram.
 .TP 4
-.B \-interactive
-display the 2D mesh construction interactively if the anisotropic mesh
-algorithm is selected.
-.TP 4
 .B \-extrude
 use the old extrusion mesh generator.
 .TP 4
 .B \-recombine
 recombine meshes from the old extrusion mesh generator.
+.TP 4
+.B \-interactive
+display the 2D mesh construction interactively if the anisotropic mesh
+algorithm is selected.
 .\" ********************************************************************
 .SH POST-PROCESSING OPTIONS
 .TP 4
@@ -184,13 +117,19 @@ convert an ascii view into a binary one.
 suppress the double buffer. Use this options if you use \fIGmsh\fR on
 a remote host without GLX.
 .TP 4
+.B \-fontsize int
+specify the font size for the GUI (default: 12)
+.TP 4
+.B \-scheme string
+specify FLTK scheme
+.TP 4
 .B \-alpha
 enable alpha blending.
 .TP 4
 .B \-notrack
 don't use trackball mode for rotations.
 .TP 4
-.B \-display disp
+.B \-display string
 specify display.
 .TP 4
 .B \-perspective
@@ -202,14 +141,14 @@ use perspective instead of orthographic projection.
 start in automatic, geometry, mesh, solver or post-processing mode
 (default: automatic).
 .TP 4
-.B \-string string
+.B \-v int
+set verbosity level (default: 2).
+.TP 4
+.B \-string "string"
 parse string before project file.
 .TP 4
 .B \-option file
 parse option file before GUI creation.
-.TP 4
-.B \-v int
-set verbosity level (default: 2).
 .TP 4
 .B \-version
 show version number.
@@ -230,3 +169,14 @@ Remacle (Remacle@scorec.rpi.edu).
 Gmsh examples (\fI/usr/doc/gmsh-*/\fR),
 .br
 Gmsh homepage (\fIhttp://www.geuz.org/gmsh/\fR).
+.PP
+The full documentation for Gmsh is maintained as a Texinfo manual.  If
+the
+.B info
+and
+.B gmsh
+programs are properly installed at your site, the command
+.IP
+.B info gmsh
+.PP
+should give you access to the complete manual.
