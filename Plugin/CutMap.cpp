@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.6 2001-07-30 13:22:21 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.7 2001-07-30 13:47:18 remacle Exp $
 
 #include "CutMap.h"
 #include "List.h"
@@ -24,7 +24,7 @@ GMSH_CutMapPlugin::GMSH_CutMapPlugin(double a, int I)
 
 void GMSH_CutMapPlugin::getName(char *name) const
 {
-  strcpy(name,"Cut Map");
+  strcpy(name,"CutMap");
 }
 
 void GMSH_CutMapPlugin::getInfos(char *author, char *copyright, char *help_text) const
@@ -79,7 +79,7 @@ Post_View *GMSH_CutMapPlugin::execute (Post_View *v)
 	  return 0;
 	}
 
-      return GMSH_LevelsetPlugin::execute((Post_View*)List_Pointer_Test(Post_ViewList,iView));
+      return GMSH_LevelsetPlugin::execute((Post_View*)List_Pointer_Test(Post_ViewList,iView-1));
     }
 }
 

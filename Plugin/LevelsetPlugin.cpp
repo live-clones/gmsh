@@ -34,8 +34,6 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
   int k,i,nb,edtet[6][2] = {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
   //   for all scalar simplices 
 
-  printf("processing view with %d tets\n",v->NbSS);
-
   if(v->NbSS)
     {
       BeginView(1);
@@ -74,12 +72,15 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	      double xx =  Xp[3];
 	      double yy =  Yp[3];
 	      double zz =  Zp[3];
+	      double vv =  myVals[3];
 	      Xp[3] = Xp[2]; 
 	      Yp[3] = Yp[2]; 
 	      Zp[3] = Zp[2];
+	      myVals[3] = myVals[2];
 	      Xp[2] = xx;
 	      Yp[2] = yy;
 	      Zp[2] = zz;
+	      myVals[2] = vv;
 	      for(k=1;k<4;k++)List_Add(ActualView->ST, &Xp[k %4]);
 	      for(k=1;k<4;k++)List_Add(ActualView->ST, &Yp[k % 4]);
 	      for(k=1;k<4;k++)List_Add(ActualView->ST, &Zp[k % 4]);

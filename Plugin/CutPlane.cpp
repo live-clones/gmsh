@@ -1,5 +1,3 @@
-// $Id: CutPlane.cpp,v 1.5 2001-07-30 13:22:21 geuzaine Exp $
-
 #include "CutPlane.h"
 #include "List.h"
 
@@ -39,7 +37,7 @@ void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright, char *help_tex
 
 int GMSH_CutPlanePlugin::getNbOptions() const
 {
-  return 4;
+  return 5;
 }
 
 StringXNumber* GMSH_CutPlanePlugin:: GetOption (int iopt)
@@ -66,7 +64,7 @@ Post_View *GMSH_CutPlanePlugin::execute (Post_View *v)
   c = CutPlaneOptions_Number[2].def;
   d = CutPlaneOptions_Number[3].def;
   int iView = (int)CutPlaneOptions_Number[4].def;
-  
+
   if(v)return GMSH_LevelsetPlugin::execute(v);
   else
     {
@@ -75,7 +73,7 @@ Post_View *GMSH_CutPlanePlugin::execute (Post_View *v)
 	  Msg(WARNING,"Plugin CutPlane, view %d not loaded\n",iView);
 	  return 0;
 	}
-      return GMSH_LevelsetPlugin::execute((Post_View*)List_Pointer_Test(Post_ViewList,iView));
+      return GMSH_LevelsetPlugin::execute((Post_View*)List_Pointer_Test(Post_ViewList,iView-1));
     }
 }
 
