@@ -1,8 +1,9 @@
-$Date: 2001-11-28 16:47:31 $
+$Date: 2001-11-29 09:16:19 $
 
 New in 1.31: Corrected ellipses; PostScript output update (better
 shading, new combined PS/LaTeX output format); more interface polish;
-fixed extra memory allocation in 2D meshes; various small fixes;
+fixed extra memory allocation in 2D meshes; Physical Volume handling
+in unv format; various small fixes;
 
 New in 1.30: Interface polish; fix crash when extruding quadrangles;
 
