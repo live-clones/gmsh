@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.80 2001-08-17 08:36:33 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.81 2001-08-20 07:38:29 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -377,23 +377,26 @@ void opt_mesh_color_scheme_cb(CALLBACK_ARGS){
   Draw();
 }
 void opt_mesh_ok_cb(CALLBACK_ARGS) {
-  opt_mesh_degree(0, GMSH_SET, WID->mesh_butt[0]->value()?2:1);
-  opt_mesh_interactive(0, GMSH_SET, WID->mesh_butt[1]->value());
-  opt_mesh_algo(0, GMSH_SET, WID->mesh_butt[2]->value()?DELAUNAY_NEWALGO:DELAUNAY_OLDALGO);
-  opt_mesh_constrained_bgmesh(0, GMSH_SET, WID->mesh_butt[3]->value());
-  opt_mesh_points(0, GMSH_SET, WID->mesh_butt[4]->value());
-  opt_mesh_lines(0, GMSH_SET, WID->mesh_butt[5]->value());
-  opt_mesh_surfaces(0, GMSH_SET, WID->mesh_butt[6]->value());
-  opt_mesh_volumes(0, GMSH_SET, WID->mesh_butt[7]->value());
-  opt_mesh_points_num(0, GMSH_SET, WID->mesh_butt[8]->value());
-  opt_mesh_lines_num(0, GMSH_SET, WID->mesh_butt[9]->value());
-  opt_mesh_surfaces_num(0, GMSH_SET, WID->mesh_butt[10]->value());
-  opt_mesh_volumes_num(0, GMSH_SET, WID->mesh_butt[11]->value());
+  opt_mesh_algo(0, GMSH_SET, 
+		WID->mesh_butt[0]->value()?DELAUNAY_ISO:
+		WID->mesh_butt[1]->value()?DELAUNAY_SHEWCHUK:
+		DELAUNAY_ANISO);
+  opt_mesh_degree(0, GMSH_SET, WID->mesh_butt[3]->value()?2:1);
+  opt_mesh_interactive(0, GMSH_SET, WID->mesh_butt[4]->value());
+  opt_mesh_constrained_bgmesh(0, GMSH_SET, WID->mesh_butt[5]->value());
+  opt_mesh_points(0, GMSH_SET, WID->mesh_butt[6]->value());
+  opt_mesh_lines(0, GMSH_SET, WID->mesh_butt[7]->value());
+  opt_mesh_surfaces(0, GMSH_SET, WID->mesh_butt[8]->value());
+  opt_mesh_volumes(0, GMSH_SET, WID->mesh_butt[9]->value());
+  opt_mesh_points_num(0, GMSH_SET, WID->mesh_butt[10]->value());
+  opt_mesh_lines_num(0, GMSH_SET, WID->mesh_butt[11]->value());
+  opt_mesh_surfaces_num(0, GMSH_SET, WID->mesh_butt[12]->value());
+  opt_mesh_volumes_num(0, GMSH_SET, WID->mesh_butt[13]->value());
   opt_mesh_aspect(0, GMSH_SET, 
-		  WID->mesh_butt[12]->value()?0:
-		  WID->mesh_butt[13]->value()?1:
+		  WID->mesh_butt[14]->value()?0:
+		  WID->mesh_butt[15]->value()?1:
 		  2);
-  opt_mesh_color_carousel(0, GMSH_SET, WID->mesh_butt[15]->value());
+  opt_mesh_color_carousel(0, GMSH_SET, WID->mesh_butt[17]->value());
 
   opt_mesh_nb_smoothing(0, GMSH_SET, WID->mesh_value[0]->value());
   opt_mesh_scaling_factor(0, GMSH_SET, WID->mesh_value[1]->value());

@@ -1,4 +1,4 @@
-// $Id: 2D_Cylindrical.cpp,v 1.7 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: 2D_Cylindrical.cpp,v 1.8 2001-08-20 07:38:29 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -266,10 +266,12 @@ int MeshCylindricalSurface (Surface * s){
   ori = Calcule_Contours (s);
   MAXIMUM_LC_FOR_SURFACE = SURF->Cyl.radius1 / 3.;
 
-  if (CTX.mesh.algo == DELAUNAY_OLDALGO)
+  if (CTX.mesh.algo == DELAUNAY_ISO)
     Maillage_Automatique_VieuxCode (s, THEM, ori);
-  else
+  else if (CTX.mesh.algo == DELAUNAY_ANISO)
     AlgorithmeMaillage2DAnisotropeModeJF (s);
+  else
+    Mesh_Shewchuk(s);
 
   for(i = 0 ; i < CTX.mesh.nb_smoothing ; i++){
     tnxe = Tree_Create (sizeof (NXE), compareNXE);

@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.35 2001-08-11 23:28:31 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.36 2001-08-20 07:38:29 geuzaine Exp $
 
 #include <unistd.h>
 #include "Gmsh.h"
@@ -37,7 +37,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -1, -2, -3            perform batch 1D, 2D and 3D mesh generation");
   Msg(DIRECT, "  -o file               specify mesh output file name");
   Msg(DIRECT, "  -format msh|unv|gref  set output mesh format (default: msh)");
-  Msg(DIRECT, "  -algo iso|aniso       select 2D mesh algorithm (default: iso)");
+  Msg(DIRECT, "  -algo iso|aniso|tri   select 2D mesh algorithm (default: iso)");
   Msg(DIRECT, "  -smooth int           set mesh smoothing (default: 0)");
   Msg(DIRECT, "  -degree int           set mesh degree (default: 1)");
   Msg(DIRECT, "  -scale float          set global scaling factor (default: 1.0)");
@@ -292,10 +292,12 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       else if(!strcmp(argv[i]+1, "algo")){  
         i++;
         if(argv[i]!=NULL){
-          if(!strcmp(argv[i],"iso"))
-            CTX.mesh.algo = DELAUNAY_OLDALGO ;
-          else if(!strcmp(argv[i],"aniso"))
-            CTX.mesh.algo = DELAUNAY_NEWALGO ;
+          if(!strncmp(argv[i],"iso",3))
+            CTX.mesh.algo = DELAUNAY_ISO ;
+          else if(!strncmp(argv[i],"aniso",5))
+            CTX.mesh.algo = DELAUNAY_ANISO ;
+          else if(!strncmp(argv[i],"tri",3))
+            CTX.mesh.algo = DELAUNAY_SHEWCHUK ;
           else{
             fprintf(stderr, ERROR_STR "Unknown mesh algorithm\n");
             exit(1);

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.28 2001-08-11 23:32:22 geuzaine Exp $
+# $Id: Makefile,v 1.29 2001-08-20 07:38:30 geuzaine Exp $
 #
 # Makefile for "libMesh.a"
 #
@@ -12,7 +12,7 @@ RANLIB  = ranlib
 
 LIB     = ../lib/libMesh.a
 INCLUDE = -I../Adapt -I../Common -I../DataStr -I../Geo -I../Mesh\
-          -I../Graphics -I../Motif -I../Parser -I../Fltk
+          -I../Graphics -I../Motif -I../Parser -I../Fltk -I../Triangle
 
 C_FLAGS       = -g -Wall
 OS_FLAGS      = -D_LITTLE_ENDIAN
@@ -37,6 +37,7 @@ SRC = 1D_Mesh.cpp \
         2D_Cylindrical.cpp \
         2D_Parametric.cpp \
         2D_Mesh_Aniso.cpp \
+        2D_Mesh_Shewchuk.cpp \
       3D_Mesh.cpp \
         3D_SMesh.cpp \
         3D_BGMesh.cpp \

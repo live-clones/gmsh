@@ -1,4 +1,4 @@
-// $Id: CbOptions.cpp,v 1.11 2001-08-12 13:08:20 geuzaine Exp $
+// $Id: CbOptions.cpp,v 1.12 2001-08-20 07:38:30 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -270,9 +270,9 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_MESH_DEGRE2       : 
     (CTX.mesh.degree==2) ? CTX.mesh.degree=1 : CTX.mesh.degree=2; break ;
   case OPTIONS_MESH_ANISOTROPIC  : 
-    (CTX.mesh.algo==DELAUNAY_OLDALGO) ?
-      CTX.mesh.algo=DELAUNAY_NEWALGO :
-        CTX.mesh.algo=DELAUNAY_OLDALGO; break ;
+    (CTX.mesh.algo==DELAUNAY_ISO) ?
+      CTX.mesh.algo=DELAUNAY_ANISO :
+        CTX.mesh.algo=DELAUNAY_ISO; break ;
   case OPTIONS_MESH_INTERACTIVE : 
     CTX.mesh.interactive = !CTX.mesh.interactive; break ;
   case OPTIONS_MESH_SMOOTHING_SCALE : 

@@ -1,4 +1,4 @@
-// $Id: Widgets.cpp,v 1.3 2001-02-12 17:38:03 geuzaine Exp $
+// $Id: Widgets.cpp,v 1.4 2001-08-20 07:38:30 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -927,7 +927,7 @@ void CreateWidgets_OD(Widgets_T *w){
 
   i=0;
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Anisotropic")); i++;
-  XtSetArg(arg[i], XmNset, (CTX.mesh.algo==DELAUNAY_NEWALGO)?True:False); i++;
+  XtSetArg(arg[i], XmNset, (CTX.mesh.algo==DELAUNAY_ANISO)?True:False); i++;
   w->OD.meshAlgoButt[1] = XmCreateToggleButton(w->OD.meshAlgoCheck, "ODmeshAlgoButt1", arg, i);
   XtManageChild(w->OD.meshAlgoButt[1]);
 

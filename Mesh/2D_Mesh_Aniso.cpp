@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.19 2001-08-13 09:38:14 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.20 2001-08-20 07:38:30 geuzaine Exp $
 
 /*
    Jean-Francois Remacle
@@ -24,10 +24,9 @@ void draw_polygon_2d (double r, double g, double b, int n,
 
 MeshParameters:: MeshParameters ():
   NbSmoothing (3),
-  DelaunayAlgorithm (DELAUNAY_NEWALGO),
+  DelaunayAlgorithm (DELAUNAY_ANISO),
   DelaunayInsertionMethod (INSERTION_CENTROID),
   DelaunayQuality (QUALITY_EDGES_BASED),
-  DelaunayKernel (DELAUNAY_KERANISO),
   InteractiveDelaunay (false)
 {
 }

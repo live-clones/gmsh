@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.136 2001-08-18 12:43:30 geuzaine Exp $
+# $Id: Makefile,v 1.137 2001-08-20 07:38:29 geuzaine Exp $
 
 GMSH_RELEASE = 1.24
 
@@ -15,7 +15,7 @@ X11_LIB = -lX11
 #  Gmsh definitions
 # ----------------------------------------------------------------------
 
-GMSH_COMMON_DIR = Adapt Common DataStr Geo Mesh Parallel Parser Plugin
+GMSH_COMMON_DIR = Adapt Common DataStr Geo Mesh Parallel Parser Plugin Triangle
 GMSH_BOX_DIR =$(GMSH_COMMON_DIR) Box
 GMSH_FLTK_DIR = $(GMSH_COMMON_DIR) Graphics Fltk jpeg
 GMSH_DIR = $(GMSH_COMMON_DIR) Box Graphics Motif Fltk jpeg utils
@@ -27,9 +27,9 @@ GMSH_TUTORIAL_DIR = tutorial
 GMSH_ARCHIVE_DIR = archives
 
 GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lBox -lParser -lMesh -lGeo -lAdapt\
-               -lPlugin -lCommon -lDataStr -lParallel
+               -lPlugin -lCommon -lDataStr -lParallel -lTriangle
 GMSH_FLTK_LIB = -L$(GMSH_LIB_DIR) -lFltk -lParser -lGraphics -lMesh\
-                -lGeo -lAdapt -lCommon -lDataStr -lJpeg -lPlugin -lParallel
+                -lGeo -lAdapt -lCommon -lDataStr -lJpeg -lPlugin -lParallel -lTriangle
 
 GMSH_ARCHIVE = $(GMSH_ARCHIVE_DIR)/gmsh-`date "+%Y.%m.%d"`
 GMSH_SRCRPM = gmsh-$(GMSH_RELEASE)

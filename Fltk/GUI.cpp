@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.108 2001-08-17 08:36:33 geuzaine Exp $
+// $Id: GUI.cpp,v 1.109 2001-08-20 07:38:29 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1192,7 +1192,7 @@ void GUI::create_mesh_options_window(){
     init_mesh_options_window = 1 ;
     
     int width = 25*CTX.fontsize;
-    int height = 5*WB+10*BH ;
+    int height = 5*WB+12*BH ;
     
     mesh_window = new Fl_Window(width,height);
     mesh_window->box(WINDOW_BOX);
@@ -1203,30 +1203,40 @@ void GUI::create_mesh_options_window(){
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Algorithm");
 	o->labelsize(CTX.fontsize);
 	o->hide();
-	mesh_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Second order elements");
-	mesh_butt[0]->deactivate();//2nd order elements do not work. Disable the graphical option.
-	mesh_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Interactive");
+
+	mesh_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Isotropic");
+	mesh_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Triangle");
 	mesh_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Anisotropic");
-	mesh_butt[3] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Constrained background mesh");
-	for(i=0 ; i<4 ; i++){
+	for(i=0 ; i<3 ; i++){
+	  mesh_butt[i]->type(FL_RADIO_BUTTON);
+	  mesh_butt[i]->down_box(FL_DOWN_BOX);
+	  mesh_butt[i]->labelsize(CTX.fontsize);
+	  mesh_butt[i]->selection_color(FL_YELLOW);
+	}
+
+	mesh_butt[3] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Second order elements");
+	mesh_butt[3]->deactivate();//2nd order elements do not work. Disable the graphical option.
+	mesh_butt[4] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Interactive");
+	mesh_butt[5] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW, BH, "Constrained background mesh");
+	for(i=3 ; i<6 ; i++){
 	  mesh_butt[i]->type(FL_TOGGLE_BUTTON);
 	  mesh_butt[i]->down_box(FL_DOWN_BOX);
 	  mesh_butt[i]->labelsize(CTX.fontsize);
 	  mesh_butt[i]->selection_color(FL_YELLOW);
 	}
-	mesh_value[0] = new Fl_Value_Input(2*WB, 2*WB+5*BH, IW, BH, "Number of smoothing steps");
+	mesh_value[0] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW, BH, "Number of smoothing steps");
 	mesh_value[0]->minimum(0);
 	mesh_value[0]->maximum(100); 
 	mesh_value[0]->step(1);
-	mesh_value[1] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Mesh scaling factor");
+	mesh_value[1] = new Fl_Value_Input(2*WB, 2*WB+8*BH, IW, BH, "Mesh scaling factor");
 	mesh_value[1]->minimum(0.001);
 	mesh_value[1]->maximum(1000); 
 	mesh_value[1]->step(0.001);
-	mesh_value[2] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW, BH, "Characteristic length factor");
+	mesh_value[2] = new Fl_Value_Input(2*WB, 2*WB+9*BH, IW, BH, "Characteristic length factor");
 	mesh_value[2]->minimum(0.001);
 	mesh_value[2]->maximum(1000); 
 	mesh_value[2]->step(0.001);
-	mesh_value[3] = new Fl_Value_Input(2*WB, 2*WB+8*BH, IW, BH, "Random perturbation factor");
+	mesh_value[3] = new Fl_Value_Input(2*WB, 2*WB+10*BH, IW, BH, "Random perturbation factor");
 	mesh_value[3]->minimum(1.e-6);
 	mesh_value[3]->maximum(1.e-1); 
 	mesh_value[3]->step(1.e-6);
@@ -1241,15 +1251,15 @@ void GUI::create_mesh_options_window(){
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Visibility");
 	o->labelsize(CTX.fontsize);
-	mesh_butt[4] = new Fl_Check_Button(2*WB, 2*WB+1*BH, IW, BH, "Points");
-	mesh_butt[5] = new Fl_Check_Button(2*WB, 2*WB+2*BH, IW, BH, "Curves");
-	mesh_butt[6] = new Fl_Check_Button(2*WB, 2*WB+3*BH, IW, BH, "Surfaces");
-	mesh_butt[7] = new Fl_Check_Button(2*WB, 2*WB+4*BH, IW, BH, "Volumes");
-	mesh_butt[8] = new Fl_Check_Button(width/2, 2*WB+1*BH, IW, BH, "Point numbers");
-	mesh_butt[9] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Curve numbers");
-	mesh_butt[10] = new Fl_Check_Button(width/2, 2*WB+3*BH, IW, BH, "Surface numbers");
-	mesh_butt[11] = new Fl_Check_Button(width/2, 2*WB+4*BH, IW, BH, "Volume numbers");
-	for(i=4 ; i<12 ; i++){
+	mesh_butt[6] = new Fl_Check_Button(2*WB, 2*WB+1*BH, IW, BH, "Points");
+	mesh_butt[7] = new Fl_Check_Button(2*WB, 2*WB+2*BH, IW, BH, "Curves");
+	mesh_butt[8] = new Fl_Check_Button(2*WB, 2*WB+3*BH, IW, BH, "Surfaces");
+	mesh_butt[9] = new Fl_Check_Button(2*WB, 2*WB+4*BH, IW, BH, "Volumes");
+	mesh_butt[10] = new Fl_Check_Button(width/2, 2*WB+1*BH, IW, BH, "Point numbers");
+	mesh_butt[11] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Curve numbers");
+	mesh_butt[12] = new Fl_Check_Button(width/2, 2*WB+3*BH, IW, BH, "Surface numbers");
+	mesh_butt[13] = new Fl_Check_Button(width/2, 2*WB+4*BH, IW, BH, "Volume numbers");
+	for(i=6 ; i<14 ; i++){
 	  mesh_butt[i]->type(FL_TOGGLE_BUTTON);
 	  mesh_butt[i]->down_box(FL_DOWN_BOX);
 	  mesh_butt[i]->labelsize(CTX.fontsize);
@@ -1290,10 +1300,10 @@ void GUI::create_mesh_options_window(){
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Aspect");
 	o->labelsize(CTX.fontsize);
 	o->hide();
-	mesh_butt[12] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Wireframe");
-	mesh_butt[13] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Hidden lines");
-	mesh_butt[14] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Solid");
-	for(i=12 ; i<15 ; i++){
+	mesh_butt[14] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Wireframe");
+	mesh_butt[15] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Hidden lines");
+	mesh_butt[16] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Solid");
+	for(i=14 ; i<17 ; i++){
 	  mesh_butt[i]->type(FL_RADIO_BUTTON);
 	  mesh_butt[i]->down_box(FL_DOWN_BOX);
 	  mesh_butt[i]->labelsize(CTX.fontsize);
@@ -1313,11 +1323,11 @@ void GUI::create_mesh_options_window(){
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Colors");
 	o->labelsize(CTX.fontsize);
 	o->hide();
-	mesh_butt[15] = new Fl_Check_Button(2*WB, 2*WB+1*BH, IW, BH, "Switch color by entity");
-	mesh_butt[15]->type(FL_TOGGLE_BUTTON);
-	mesh_butt[15]->down_box(FL_DOWN_BOX);
-	mesh_butt[15]->labelsize(CTX.fontsize);
-	mesh_butt[15]->selection_color(FL_YELLOW);
+	mesh_butt[17] = new Fl_Check_Button(2*WB, 2*WB+1*BH, IW, BH, "Switch color by entity");
+	mesh_butt[17]->type(FL_TOGGLE_BUTTON);
+	mesh_butt[17]->down_box(FL_DOWN_BOX);
+	mesh_butt[17]->labelsize(CTX.fontsize);
+	mesh_butt[17]->selection_color(FL_YELLOW);
 
 	mesh_value[10] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Predefined color scheme");
 	mesh_value[10]->minimum(0); 

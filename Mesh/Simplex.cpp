@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.16 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.17 2001-08-20 07:38:30 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -326,7 +326,7 @@ void Simplex::Fourre_Simplexe (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v
 
   /*
   extern Mesh *THEM, *LOCAL;
-  if (LOCAL && N == 4 && CTX.mesh.algo == DELAUNAY_OLDALGO && THEM->BGM.Typ == ONFILE){
+  if (LOCAL && N == 4 && CTX.mesh.algo == DELAUNAY_ISO && THEM->BGM.Typ == ONFILE){
     Quality = fabs(Radius) / Lc_XYZ(Center.X, Center.Y, Center.Z, LOCAL);
     if(Quality < 0.){
       Msg(WARNING, "Negative simplex quality !?");
@@ -359,9 +359,9 @@ void Free_Simplex (void *a, void *b){
   }
 }
 
+// to avoid the renumbering of the nodes and all the 'Fourre_Simplex' stuff
 Simplex *Create_Quadrangle (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4){
   Simplex *s;
-  /* pour eviter le reordonnement des noeuds */
   s = new Simplex ();
   s->V[0] = v1 ;
   s->V[1] = v2 ;

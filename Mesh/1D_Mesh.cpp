@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.20 2001-08-12 12:32:41 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.21 2001-08-20 07:38:29 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -81,7 +81,7 @@ double F_Lc (double t){
   Vertex  der, point;
   double  Lc, d;
 
-  if (CTX.mesh.algo == DELAUNAY_OLDALGO && THEM->BGM.Typ == ONFILE){
+  if (CTX.mesh.algo == DELAUNAY_ISO && THEM->BGM.Typ == ONFILE){
     der = InterpolateCurve(THEC, t, 1);
     point = InterpolateCurve(THEC, t, 0);  
     Lc = Lc_XYZ(point.Pos.X, point.Pos.Y, point.Pos.Z, THEM);

@@ -348,10 +348,9 @@ typedef struct{
 #define QUALITY_SIMPLEX_BASED 2
 #define INSERTION_CENTROID 1
 #define INSERTION_EDGE 2
-#define DELAUNAY_OLDALGO 1
-#define DELAUNAY_NEWALGO 2
-#define DELAUNAY_KERISO 1
-#define DELAUNAY_KERANISO 2
+#define DELAUNAY_ISO 1
+#define DELAUNAY_ANISO 2
+#define DELAUNAY_SHEWCHUK 3
 
 class MeshParameters{
  public:
@@ -359,7 +358,6 @@ class MeshParameters{
   int DelaunayAlgorithm;
   int DelaunayInsertionMethod;
   int DelaunayQuality;
-  int DelaunayKernel;
   bool InteractiveDelaunay;
   MeshParameters ();
 };
@@ -432,6 +430,7 @@ int MeshEllipticSurface (Surface * sur);
 
 int  AlgorithmeMaillage2DAnisotropeModeJF (Surface * s);
 void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori);
+int  Mesh_Shewchuk(Surface *s);
 
 int  Calcule_Contours (Surface * s);
 void Link_Simplexes (List_T * Sim, Tree_T * Tim);

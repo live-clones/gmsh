@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.39 2001-08-04 01:16:58 geuzaine Exp $
+// $Id: Options.cpp,v 1.40 2001-08-20 07:38:29 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1280,7 +1280,7 @@ double opt_mesh_points(OPT_ARGS_NUM){
     CTX.mesh.points = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[4]->value(CTX.mesh.points);
+    WID->mesh_butt[6]->value(CTX.mesh.points);
 #endif
   return CTX.mesh.points;
 }
@@ -1289,7 +1289,7 @@ double opt_mesh_lines(OPT_ARGS_NUM){
     CTX.mesh.lines = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[5]->value(CTX.mesh.lines);
+    WID->mesh_butt[7]->value(CTX.mesh.lines);
 #endif
   return CTX.mesh.lines;
 }
@@ -1298,7 +1298,7 @@ double opt_mesh_surfaces(OPT_ARGS_NUM){
     CTX.mesh.surfaces = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[6]->value(CTX.mesh.surfaces);
+    WID->mesh_butt[8]->value(CTX.mesh.surfaces);
 #endif
   return CTX.mesh.surfaces;
 }
@@ -1307,7 +1307,7 @@ double opt_mesh_volumes(OPT_ARGS_NUM){
     CTX.mesh.volumes = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[7]->value(CTX.mesh.volumes);
+    WID->mesh_butt[9]->value(CTX.mesh.volumes);
 #endif
   return CTX.mesh.volumes;
 }
@@ -1316,7 +1316,7 @@ double opt_mesh_points_num(OPT_ARGS_NUM){
     CTX.mesh.points_num = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[8]->value(CTX.mesh.points_num);
+    WID->mesh_butt[10]->value(CTX.mesh.points_num);
 #endif
   return CTX.mesh.points_num;
 }
@@ -1325,7 +1325,7 @@ double opt_mesh_lines_num(OPT_ARGS_NUM){
     CTX.mesh.lines_num = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[9]->value(CTX.mesh.lines_num);
+    WID->mesh_butt[11]->value(CTX.mesh.lines_num);
 #endif
   return CTX.mesh.lines_num;
 }
@@ -1334,7 +1334,7 @@ double opt_mesh_surfaces_num(OPT_ARGS_NUM){
     CTX.mesh.surfaces_num = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[10]->value(CTX.mesh.surfaces_num);
+    WID->mesh_butt[12]->value(CTX.mesh.surfaces_num);
 #endif
   return CTX.mesh.surfaces_num;
 }
@@ -1343,7 +1343,7 @@ double opt_mesh_volumes_num(OPT_ARGS_NUM){
     CTX.mesh.volumes_num = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[11]->value(CTX.mesh.volumes_num);
+    WID->mesh_butt[13]->value(CTX.mesh.volumes_num);
 #endif
   return CTX.mesh.volumes_num;
 }
@@ -1357,9 +1357,9 @@ double opt_mesh_aspect(OPT_ARGS_NUM){
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI)){
-    WID->mesh_butt[12]->value(!CTX.mesh.hidden && !CTX.mesh.shade);
-    WID->mesh_butt[13]->value(CTX.mesh.hidden && !CTX.mesh.shade);
-    WID->mesh_butt[14]->value(CTX.mesh.hidden && CTX.mesh.shade);
+    WID->mesh_butt[14]->value(!CTX.mesh.hidden && !CTX.mesh.shade);
+    WID->mesh_butt[15]->value(CTX.mesh.hidden && !CTX.mesh.shade);
+    WID->mesh_butt[16]->value(CTX.mesh.hidden && CTX.mesh.shade);
   }
 #endif
   if(CTX.mesh.hidden && !CTX.mesh.shade) return 1;
@@ -1384,8 +1384,11 @@ double opt_mesh_algo(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.mesh.algo = (int)val;
 #ifdef _FLTK
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[2]->value(CTX.mesh.algo==DELAUNAY_NEWALGO);
+  if(WID && (action & GMSH_GUI)){
+    WID->mesh_butt[0]->value(CTX.mesh.algo==DELAUNAY_ISO);
+    WID->mesh_butt[1]->value(CTX.mesh.algo==DELAUNAY_SHEWCHUK);
+    WID->mesh_butt[2]->value(CTX.mesh.algo==DELAUNAY_ANISO);
+  }
 #endif
   return CTX.mesh.algo;
 }
@@ -1409,7 +1412,7 @@ double opt_mesh_constrained_bgmesh(OPT_ARGS_NUM){
     CTX.mesh.constrained_bgmesh = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[3]->value(CTX.mesh.constrained_bgmesh);
+    WID->mesh_butt[5]->value(CTX.mesh.constrained_bgmesh);
 #endif
   return CTX.mesh.constrained_bgmesh;
 }
@@ -1418,7 +1421,7 @@ double opt_mesh_degree(OPT_ARGS_NUM){
     CTX.mesh.degree = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[0]->value(CTX.mesh.degree==2);
+    WID->mesh_butt[3]->value(CTX.mesh.degree==2);
 #endif
   return CTX.mesh.degree;
 }
@@ -1432,7 +1435,7 @@ double opt_mesh_interactive(OPT_ARGS_NUM){
     CTX.mesh.interactive = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[1]->value(CTX.mesh.interactive);
+    WID->mesh_butt[4]->value(CTX.mesh.interactive);
 #endif
   return CTX.mesh.interactive;
 }
@@ -1479,7 +1482,7 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM){
     CTX.mesh.color_carousel = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[15]->value(CTX.mesh.color_carousel);
+    WID->mesh_butt[17]->value(CTX.mesh.color_carousel);
 #endif
   return CTX.mesh.color_carousel;
 }
