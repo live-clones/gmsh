@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.51 2003-04-30 21:30:05 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.52 2003-05-05 23:00:44 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -690,7 +690,9 @@ parsing of the data file:
   @var{real} |
   @var{string} |
   @var{string} [ @var{expression} ] |
-  @var{operator-unary} @var{expression} |
+  ( @var{expression} ) |
+  @var{operator-unary-left} @var{expression} |
+  @var{expression} @var{operator-unary-right} |
   @var{expression} @var{operator-binary} @var{expression} |
   @var{expression} @var{operator-ternary-left} @var{expression} @var{operator-ternary-right} @var{expression} |
   @var{built-in-function} |
@@ -698,12 +700,13 @@ parsing of the data file:
 @end example
 
 Such @w{@var{expression}s} are used in most of Gmsh's commands.  The
-operators @var{operator-unary}, @var{operator-binary} and
-@var{operator-ternary-left}/@var{operator-ternary-right} are defined in
-@ref{Operators}. For the definition of @w{@var{built-in-function}s}, see
-@ref{Built-in functions}. The various @w{@var{real-option}s} are listed in
-@ref{General options}, @ref{Geometry options}, @ref{Mesh options},
-@ref{Solver options}, and @ref{Post-processing options}.
+operators @var{operator-unary-left}, @var{operator-unary-right},
+@var{operator-binary}, @var{operator-ternary-left} and
+@var{operator-ternary-right} are defined in @ref{Operators}. For the
+definition of @w{@var{built-in-function}s}, see @ref{Built-in
+functions}. The various @w{@var{real-option}s} are listed in @ref{General
+options}, @ref{Geometry options}, @ref{Mesh options}, @ref{Solver options},
+and @ref{Post-processing options}.
 
 @cindex Expressions, lists
 
@@ -828,16 +831,21 @@ C++. Here is the list of the unary, binary and ternary operators currently
 implemented.
 
 @noindent
-@var{operator-unary}:
+@var{operator-unary-left}:
 @ftable @code
 @item -
 Unary minus.
 @item !
 Logical not.
+@end ftable
+
+@noindent
+@var{operator-unary-right}:
+@ftable @code
 @item ++
-Post-incrementation. (Pre-incrementation is not supported.)
+Post-incrementation.
 @item --
-Post-decrementation. (Pre-decrementation is not supported.)
+Post-decrementation.
 @end ftable
 
 @noindent
@@ -903,7 +911,7 @@ Parentheses @code{()} may be used anywhere to change the order of
 evaluation:
 
 @enumerate
-@item @code{.}
+@item @code{()}, @code{[]}, @code{.}
 @item @code{^}
 @item @code{!}, @code{++}, @code{--}, @code{-} (unary)
 @item @code{*}, @code{/}, @code{%}
