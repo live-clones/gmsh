@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.106 2001-11-05 08:36:49 geuzaine Exp $
+// $Id: Gmsh.y,v 1.107 2001-11-07 09:30:26 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -45,7 +45,6 @@ static double         LoopControlVariablesTab[MAX_OPEN_FILES][3];
 static char*          LoopControlVariablesNameTab[MAX_OPEN_FILES];
 static char           yynameTab[MAX_OPEN_FILES][256];
 static char           tmpstring[256];
-static char           tmpstring2[256], tmpstring3[256];
 static Symbol         TheSymbol, *pSymbol;
 static Surface       *STL_Surf;
 static Shape          TheShape;
@@ -66,6 +65,7 @@ char *strsave(char *ptr);
 void  yyerror (char *s);
 void  vyyerror (char *fmt, ...);
 void  skip_until (char *skip, char *until);
+int PrintListOfDouble(char *format, List_T *list, char *buffer);
 %}
 
 %union {
@@ -407,25 +407,13 @@ Printf :
     }
   | tPrintf '(' tBIGSTR ',' RecursiveListOfDouble ')' tEND
     {
-      for(i = 0 ; i<List_Nbr($5) ; i++){
-	if(!i){
-	  str = strtok($3, "%");
-	  strcpy(tmpstring, str); 
-	}
-	str = strtok(NULL, "%");
-	if(str){
-	  strcpy(tmpstring2, "%");
-	  strcat(tmpstring2, str);
-	  sprintf(tmpstring3, tmpstring2, *(double*)List_Pointer($5,i)); 
-	  strcat(tmpstring, tmpstring3);
-	}
-	else{
-	  vyyerror("Missing %d parameter(s) in Printf format",
-		   List_Nbr($5)-i);
-	  break ;
-	}
-      }
-      Msg(DIRECT, tmpstring);
+      i = PrintListOfDouble($3,$5,tmpstring);
+      if(i<0) 
+	vyyerror("Too few arguments in Printf");
+      else if(i>0)
+	vyyerror("Too many arguments (%d) in Printf", i);
+      else
+	Msg(DIRECT, tmpstring);
       List_Delete($5);
     }
 ;
@@ -2632,28 +2620,21 @@ StringExpr :
     }
   | tSprintf '(' StringExpr ',' RecursiveListOfDouble ')'
     {
-      for(i = 0 ; i<List_Nbr($5) ; i++){
-	if(!i){
-	  str = strtok($3, "%");
-	  strcpy(tmpstring, str);
-	}
-	str = strtok(NULL, "%");
-	if(str){
-	  strcpy(tmpstring2, "%");
-	  strcat(tmpstring2, str);
-	  sprintf(tmpstring3, tmpstring2, *(double*)List_Pointer($5,i)); 
-	  strcat(tmpstring, tmpstring3);
-	}
-	else{
-	  vyyerror("Missing %d parameter(s) in Sprintf format",
-		   List_Nbr($5)-i);
-	  break ;
-	}
+      i = PrintListOfDouble($3,$5,tmpstring);
+      if(i<0){
+	vyyerror("Too few arguments in Sprintf");
+	$$ = "";
       }
-      $$ = (char*)Malloc((strlen(tmpstring)+1)*sizeof(char));
-      strcpy($$, tmpstring);
-      List_Delete($5);
+      else if(i>0){
+	vyyerror("Too many arguments (%d) in Sprintf", i);
+	$$ = "";
+      }
+      else{
+	$$ = (char*)Malloc((strlen(tmpstring)+1)*sizeof(char));
+	strcpy($$, tmpstring);
+      }
       Free($3);
+      List_Delete($5);
     }
   | tSprintf '(' tSTRING '.' tSTRING ')'
     { 
@@ -2703,6 +2684,40 @@ void DeleteSymbols(void){
 
 int CompareSymbols (const void *a, const void *b){
   return(strcmp(((Symbol*)a)->Name,((Symbol*)b)->Name));
+}
+
+int PrintListOfDouble(char *format, List_T *list, char *buffer){
+  int i, j, k;
+  char tmp1[256], tmp2[256];
+
+  j=0;
+  while(format[j]!='%') j++;
+  strncpy(buffer, format, j); 
+  buffer[j]='\0'; 
+  for(i = 0 ; i<List_Nbr(list) ; i++){
+    k = j;
+    j++;
+    if(j<(int)strlen(format)){
+      if(format[j]=='%'){
+	strcat(buffer, "%");
+	j++;
+      }
+      while(format[j]!='%' && j<(int)strlen(format)) j++;
+      if(k != j){
+	strncpy(tmp1, &(format[k]),j-k);
+	tmp1[j-k]='\0';
+	sprintf(tmp2, tmp1, *(double*)List_Pointer(list,i)); 
+	strcat(buffer, tmp2);
+      }
+    }
+    else{
+      return List_Nbr(list)-i;
+      break ;
+    }
+  }
+  if(j != (int)strlen(format))
+    return -1;
+  return 0;
 }
   
 void yyerror(char *s){
