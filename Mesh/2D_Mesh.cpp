@@ -1,4 +1,4 @@
-/* $Id: 2D_Mesh.cpp,v 1.9 2000-11-28 17:18:33 geuzaine Exp $ */
+/* $Id: 2D_Mesh.cpp,v 1.10 2000-12-06 18:28:30 remacle Exp $ */
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
 
@@ -1081,8 +1081,10 @@ void Maillage_Surface (void *data, void *dum){
   if (CTX.mesh.algo == DELAUNAY_OLDALGO)
     Maillage_Automatique_VieuxCode (s, THEM, ori);
   else
-    AlgorithmeMaillage2DAnisotropeModeJF (s);
-
+    {
+      printf("coucou\n");
+      AlgorithmeMaillage2DAnisotropeModeJF (s);
+    }
   if(CTX.mesh.nb_smoothing){
     Msg(STATUS, "Mesh Smoothing");
     tnxe = Tree_Create (sizeof (NXE), compareNXE);

@@ -1,4 +1,4 @@
-/* $Id: Context.cpp,v 1.12 2000-12-05 18:38:08 geuzaine Exp $ */
+/* $Id: Context.cpp,v 1.13 2000-12-06 18:28:30 remacle Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -292,8 +292,8 @@ void Init_Colors(int num){
 
 void Init_Context(void){
 
-  // Cannot be set by the user
-  CTX.interactive  = 0 ;
+  // Cannot be set by the user 
+  CTX.script       = 0 ;
   CTX.expose       = 0 ;
   CTX.db           = 1 ;
   CTX.overlay      = 1 ;

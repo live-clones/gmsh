@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.20 2000-12-05 23:01:06 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.21 2000-12-06 18:28:30 remacle Exp $ */
 
 #include <signal.h>
 
@@ -46,6 +46,7 @@ char gmsh_help[]      =
   "  -0                    output current options, flattened geometry and exit\n"
   "Mesh options:\n"
   "  -1, -2, -3            perform batch 1D, 2D and 3D mesh generation\n"
+  "  -script               gmsh in script mode\n"
   "  -format msh|unv|gref  set output mesh format (default: msh)\n"
   "  -algo iso|aniso       select mesh algorithm (default: iso)\n"
   "  -smooth int           set mesh smoothing (default: 0)\n"
@@ -99,10 +100,14 @@ void ParseFile(char *f){
     Msg(INFO, "File '%s' Does not Exist", f);
     return;
   }
-
+  
+  fpos_t position;
+  fgetpos(yyin, &position);
   fgets(String, sizeof(String), yyin) ; 
-  rewind(yyin);
+  fsetpos(yyin, &position);
 
+  printf("String :: %s",String);
+  
   if(!strncmp(String, "$PTS", 4) || 
      !strncmp(String, "$NO", 3) || 
      !strncmp(String, "$ELM", 4)){
@@ -213,6 +218,9 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "3")){ 
         CTX.interactive = 3; i++;
+      }
+      else if(!strcmp(argv[i]+1, "script")){ 
+        CTX.script = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "path")){ 
         i++;
@@ -571,7 +579,7 @@ int main(int argc, char *argv[]){
     OpenProblem(TheFileName);
     if(yyerrorstate)
       exit(1);
-    else{
+    else {
       if(nbf > 1){
         for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
       }
@@ -862,6 +870,11 @@ int main(int argc, char *argv[]){
   Msg(STATUS, "Ready");
   Msg(SELECT, "Gmsh %g", GMSH_VERSION);
 
+  /* Compute viewport and Draw */
+  CTX.expose = 1 ;
+  Init();
+  Draw();
+
   /* Open input file */
 
   OpenProblem(TheFileName);
@@ -886,10 +899,7 @@ int main(int argc, char *argv[]){
       Msg(ERROR, "Invalid Background Mesh (no View)");
   }
   
-  /* Compute viewport and Draw */
-  CTX.expose = 1 ;
-  Init();
-  Draw();
+  Replot();
   
   /* Loop until were done */
   

@@ -1,4 +1,4 @@
-/* $Id: 1D_Mesh.cpp,v 1.8 2000-12-05 20:02:16 geuzaine Exp $ */
+/* $Id: 1D_Mesh.cpp,v 1.9 2000-12-06 18:28:30 remacle Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -100,7 +100,7 @@ void Maillage_Curve (void *data, void *dummy){
   Msg(STATUS, "Meshing Curve %d", c->Num);
 
   Points = List_Create (10, 10, sizeof (IntPoint));
-  c->l = Integration (c->ubeg, c->uend, F_One, Points, 1.e-5);
+  c->l = Integration (c->ubeg, c->uend, F_One, Points, 1.e-4);
   List_Delete (Points);
 
   if (c->Method == TRANSFINI || !Extrude_Mesh (c)){
@@ -111,7 +111,7 @@ void Maillage_Curve (void *data, void *dummy){
     }
     else{
       Points = List_Create (10, 10, sizeof (IntPoint));
-      a = Integration (c->ubeg, c->uend, F_Lc, Points, 1.e-5);
+      a = Integration (c->ubeg, c->uend, F_Lc, Points, 1.e-4);
       N = IMAX (2, (int) (a + 1.));
 
       if (c->Typ == MSH_SEGM_CIRC ||

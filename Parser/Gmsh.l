@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.7 2000-12-05 15:23:57 geuzaine Exp $ */
+%{ /* $Id: Gmsh.l,v 1.8 2000-12-06 18:28:30 remacle Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -171,6 +171,11 @@ Volume                  return tVolume;
 
 With			return tWith;
 
+For                     return tFor;
+EndFor                  return tEndFor;
+Script                  return tScript;
+Exit                    return tExit;
+Merge                   return tMerge;
 
 SS                      return tScalarTetrahedron;
 VS                      return tVectorTetrahedron;

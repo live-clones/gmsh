@@ -1,4 +1,4 @@
-/* $Id: CbFile.cpp,v 1.7 2000-11-26 15:43:47 geuzaine Exp $ */
+/* $Id: CbFile.cpp,v 1.8 2000-12-06 18:28:30 remacle Exp $ */
 
 #include <unistd.h>
 
@@ -91,6 +91,8 @@ void CreateImage (FILE *fp) {
     break ;
 
   case PRINT_GL2GIF :
+    // have to replot for filling again buffer ...
+    Replot();
     create_gif(fp, CTX.viewport[2]-CTX.viewport[0],
                CTX.viewport[3]-CTX.viewport[1]);
     Msg(INFOS, "GIF Dump Complete '%s'", KeepFileName);

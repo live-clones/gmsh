@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.15 2000-12-05 19:19:54 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.16 2000-12-06 18:28:30 remacle Exp $ */
 
 #include <stdarg.h>
 
@@ -15,6 +15,7 @@
 #include "Options.h"
 #include "Colors.h"
 #include "Parser.h"
+#include "Main.h"
 
 #ifdef __DECCXX // bug in bison
 #include <alloca.h>
@@ -29,12 +30,14 @@ extern char      ThePathForIncludes[NAME_STR_L];
 
 static FILE          *yyinTab[MAX_OPEN_FILES];
 static int            yylinenoTab[MAX_OPEN_FILES];
+static fpos_t         yyposImbricatedLoopsTab[MAX_OPEN_FILES];
+static int            LoopControlVariablesTab[MAX_OPEN_FILES][3];
 static char           yynameTab[MAX_OPEN_FILES][NAME_STR_L];
 static char           tmpstring[NAME_STR_L];
 static Symbol         TheSymbol;
 static Surface       *STL_Surf;
 static Shape          TheShape;
-static int            i,j,k,flag,RecursionLevel=0;
+static int            i,j,k,flag,RecursionLevel=0,ImbricatedLoop = 0;
 static double         d;
 static ExtrudeParams  extr;
 static StringXColor   *ColorField ;
@@ -73,7 +76,7 @@ void  vyyerror (char *fmt, ...);
 %token tScalarLine tVectorLine tTensorLine
 %token tScalarPoint tVectorPoint tTensorPoint
 %token tBSpline tNurbs tOrder tWith tBounds tKnots
-%token tColor tOptions
+%token tColor tOptions tFor tEndFor tScript tExit tMerge
 %token tGeneral tGeometry tMesh tPostProcessing tPrint
 
 %token tB_SPLINE_SURFACE_WITH_KNOTS
@@ -328,8 +331,10 @@ StepDataItem  :
 
 GeomFormatList : 
     /* none*/
+  {
+  }  
   | GeomFormatList GeomFormat
-    {
+  {
       Msg(PARSER_INFO,"Gmsh File Format Read");
     }
 ;
@@ -345,6 +350,9 @@ GeomFormat :
   | Transfini   { return 1; }
   | Coherence   { return 1; }
   | Macro       { return 1; }
+  | Loop        {return 1;}
+/*  | Script      { return 1; }*/
+  | Command     { return 1; }
   | tOptions '{' Options '}' { return 1; }
   | error tEND  { yyerrok; return 1;}
 ;
@@ -1055,8 +1063,118 @@ Macro :
 	yyin = yyinTab[--RecursionLevel];
       }
     }
-
 ;
+/* -----------------
+    C O M M A N D  
+   ----------------- */
+
+Command :
+   tPrint tBIGSTR tEND
+   {
+     char ext[6];
+     strcpy(ext,$2+(strlen($2)-4));
+     Replot();
+     extern void CreateImage (FILE *fp);
+     FILE *fp = 0;
+     if(!strcmp(ext,".gif"))
+       {
+	 fp = fopen($2,"wb");
+	 CTX.print.type = PRINT_GL2GIF;
+       }
+     else if(!strcmp(ext,".eps"))
+       {
+	 fp = fopen($2,"w");
+	 CTX.print.type =  PRINT_GL2PS_RECURSIVE;
+       } 
+     else if(!strcmp(ext,".xpm"))
+       {
+	 fp = fopen($2,"wb");
+	 CTX.print.type =  PRINT_XDUMP;
+	 CTX.print.format = FORMAT_XPM;
+       } 
+
+     if(fp)
+       {
+	 CreateImage(fp);
+	 fclose(fp);
+       }
+   } 
+   | tExit tEND
+   {
+     exit(0);
+   } 
+   | tMerge tBIGSTR tEND
+   {
+     FILE *ff = yyin;
+     MergeProblem($2);
+     yyin = ff;
+   }
+;
+
+/* ---------------
+    L O O P  
+   --------------- */
+
+Loop :   
+
+  tFor '(' FExpr ':' FExpr ')' 
+  {
+    FILE* ff;
+    if(RecursionLevel)
+      ff = yyinTab[RecursionLevel-1];
+    else
+      ff = yyin;
+    // here, we seek remember the position in yyin
+    LoopControlVariablesTab[ImbricatedLoop][0] = (int)$3 ;
+    LoopControlVariablesTab[ImbricatedLoop][1] = (int)$5 ;
+    LoopControlVariablesTab[ImbricatedLoop][2] = 1 ;
+    fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
+  }
+  | tFor '(' FExpr ':' FExpr ':' FExpr ')' 
+  {
+    FILE* ff;
+    if(RecursionLevel)
+      ff = yyinTab[RecursionLevel-1];
+    else
+      ff = yyin;
+    // here, we seek remember the position in yyin
+    LoopControlVariablesTab[ImbricatedLoop][0] = (int)$3 ;
+    LoopControlVariablesTab[ImbricatedLoop][1] = (int)$5 ;
+    LoopControlVariablesTab[ImbricatedLoop][2] = (int)$7 ;
+    fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
+  }
+  | tEndFor 
+  {
+    if(LoopControlVariablesTab[ImbricatedLoop-1][1] >  
+       LoopControlVariablesTab[ImbricatedLoop-1][0])
+      {
+	FILE* ff;
+	if(RecursionLevel)
+	  ff = yyinTab[RecursionLevel-1];
+	else
+	  ff = yyin;
+        LoopControlVariablesTab[ImbricatedLoop-1][0] +=
+	  LoopControlVariablesTab[ImbricatedLoop-1][2];
+        fsetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop-1]);
+      }
+    else
+      {
+	ImbricatedLoop--;
+      }
+  }
+
+/* ---------------
+    S C R I P T 
+   --------------- 
+
+Script :
+  tScript '(' FExpr ')' '{' GeomFormatList '}' tEND
+   {
+     // here put something to close the script which 
+     // number is (int) $3
+   }
+;
+*/
 
 
 /* ---------------
