@@ -1,7 +1,6 @@
 
-
-
-NbrSect = 32; // number of rotor teeth
+//NbrSect = 32; // number of rotor teeth
+NbrSect = GetValue("number of rotor teeth", 32);
 
 u=1e-3; // scale factor
 

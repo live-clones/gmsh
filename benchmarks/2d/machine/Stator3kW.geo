@@ -1,5 +1,6 @@
 
-NbrSect = 36; // number of stator teeth
+//NbrSect = 36; // number of stator teeth
+NbrSect = GetValue("number of stator teeth", 36);
 
 u=1e-3;
 
