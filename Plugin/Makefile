@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2001-03-04 20:57:03 remacle Exp $
+# $Id: Makefile,v 1.3 2001-03-05 02:02:41 remacle Exp $
 #
 # Makefile for "libAdapt.a"
 #
@@ -18,7 +18,7 @@ OS_FLAGS      =
 VERSION_FLAGS = 
 
 RMFLAGS   = -f
-CFLAGS    = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) 
+CFLAGS    = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) $(GUI_INCLUDE) 
 
 SRC = Plugin.cpp
 

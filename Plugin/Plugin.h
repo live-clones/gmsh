@@ -51,7 +51,7 @@ public:
 class GMSH_PluginManager
 {
   GMSH_PluginManager();
-  ~GMSH_PluginManager();
+  virtual ~GMSH_PluginManager();
   static GMSH_PluginManager *instance;
   PluginContainer* allPlugins;
 public :

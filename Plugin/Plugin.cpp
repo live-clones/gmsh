@@ -3,6 +3,7 @@
 #include <map>
 #include "Plugin.h"
 #include "Message.h"
+#include <FL/filename.H>
 using namespace std;
 
 const char *GMSH_PluginEntry = "GMSH_RegisterPlugin";
@@ -57,13 +58,28 @@ GMSH_PluginManager* GMSH_PluginManager::Instance()
 
 void GMSH_PluginManager::RegisterDefaultPlugins()
 {
-  // For testing
+  struct dirent **list;
+  char ext[6];
 
-  AddPlugin ("/cygdrive/c/develop/gmsh/Plugin/lib","libCutPlane");
-  return;
   char *homeplugins = getenv ("GMSHPLUGINSHOME");
-  if(!homeplugins)return;
-  
+  if(!homeplugins)
+    homeplugins = "./Plugin/lib";
+  int nbFiles = filename_list(homeplugins,&list);
+  if(nbFiles <= 0)  return;
+  for(int i=0;i<nbFiles;i++)
+    {
+      char *name = list[i]->d_name;
+      if(strlen(name) > 3)
+	{
+	  strcpy(ext,name+(strlen(name)-3));
+	  if(!strcmp(ext,".so"))
+	  {
+	    AddPlugin(homeplugins,name);
+	  }
+	}
+    }
+  for(int i=0;i<nbFiles;i++)free(list[i]);
+  free (list);
 }
 
 void GMSH_PluginManager::AddPlugin( char *dirName, char *pluginName)
@@ -78,9 +94,9 @@ void GMSH_PluginManager::AddPlugin( char *dirName, char *pluginName)
   char plugin_copyright[256];
   char plugin_help[256];
   class GMSH_Plugin* (*RegisterPlugin)(void);
-  sprintf(dynamic_lib,"%s%s%s.so",dirName,SLASH,pluginName);
+  sprintf(dynamic_lib,"%s%s%s",dirName,SLASH,pluginName);
   Msg(INFO,"Opening Plugin %s",dynamic_lib);
-  void *hlib = dlopen (dynamic_lib,RTLD_LAZY);
+  void *hlib = dlopen (dynamic_lib,RTLD_NOW);
   char *err = dlerror();
   if(hlib == NULL)
     {
