@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.69 2003-06-23 21:33:22 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.70 2003-06-24 01:39:02 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -2234,9 +2234,8 @@ See @ref{t8.geo}, and @ref{t9.geo}, for some examples.
 
 @include opt_view.texi
 
-@sp 1
-
 @c todo:
+@c @sp 1
 @c The @code{ColorTable} is defined as a list...
 
 @c =========================================================================
