@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.11 2003-04-14 21:34:53 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.12 2003-04-14 21:41:25 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -143,8 +143,7 @@ the @cite{Gmsh Reference Manual}, for Gmsh @value{GMSH-VERSION}.
 
 @menu
 * Copying conditions::          Terms and conditions of use.
-* Introduction::                What is Gmsh?
-* Overview::                    Quick overview of the general philosophy of Gmsh.
+* Overview::                    What is Gmsh?
 * General tools::               Description of general commands and options.
 * Geometry module::             Description of all Geometry commands.
 * Mesh module::                 Description of all Mesh commands.
@@ -163,18 +162,15 @@ the @cite{Gmsh Reference Manual}, for Gmsh @value{GMSH-VERSION}.
 @detailmenu
  --- The Detailed Node Listing ---
 
-Introduction
-
-* What Gmsh is pretty good at...::  
-* ... and what it is not so good at::  
-* Syntactic rules::             
-
 Overview
 
 * Geometry::                    
 * Mesh::                        
 * Solver::                      
 * Post-processing::             
+* What Gmsh is pretty good at...::  
+* ... and what it is not so good at::  
+* Syntactic rules::             
 
 General tools
 
@@ -238,7 +234,7 @@ Bugs, versions and contributors
 
 @ifclear COMMERCIAL
 
-@node Copying conditions, Introduction, Top, Top
+@node Copying conditions, Overview, Top, Top
 @unnumbered Copying conditions
 
 @cindex Copyright
@@ -287,11 +283,11 @@ developments and download information, are always available on
 @end ifclear
 
 @c =========================================================================
-@c Introduction
+@c Overview
 @c =========================================================================
 
-@node Introduction, Overview, Copying conditions, Top
-@unnumbered Introduction
+@node Overview, General tools, Copying conditions, Top
+@chapter Overview
 
 @cindex Introduction
 @cindex Overview
@@ -308,150 +304,6 @@ All geometrical, mesh, solver and post-processing instructions are
 prescribed either interactively using the graphical user interface or in
 ASCII data files using Gmsh's own scripting language.
 
-@menu
-* What Gmsh is pretty good at...::  
-* ... and what it is not so good at::  
-* Syntactic rules::             
-@end menu
-
-@c -------------------------------------------------------------------------
-@c What Gmsh is pretty good at
-@c -------------------------------------------------------------------------
-
-@node What Gmsh is pretty good at..., ... and what it is not so good at, Introduction, Introduction
-@section What Gmsh is pretty good at...
-
-@itemize @bullet
-@item
-Describe quickly simple and/or ``repetitive'' geometries. Models are
-constructed by defining successively points, curves, surfaces and volumes
-(@pxref{Geometry}). Loops and includes can be used to perform repetitive
-tasks (@pxref{Loops and tests}, @pxref{General commands}).
-@item
-Parameterize these geometries: the model is described in Gmsh's own
-language, where all commands and command arguments can depend on previous
-calculations.
-@item
-Generate 1D, 2D and 3D simplicial (i.e. using line segments, triangles and
-tetrahedra) finite element meshes. The 1D and 2D algorithms should have
-pretty good performance in most cases. The 3D algorithm is still more
-experimental.
-@item
-Specify target element sizes: Gmsh provides several mechanisms to control
-the size of the elements in the final (interpolation from geometrical point
-characteristic lengths, explicit background mesh, attractors).
-@item
-Create simple extruded geometries and meshes.
-@item
-Interact with your solver: Gmsh provides C/C++ and perl interfaces, and
-others can be easily added (@pxref{Solver}).
-@item
-Visualize computational results in a great variety of ways. Gmsh can
-display scalar, vector and tensor data sets in many different ways.
-@item
-Perform various operations on the post-processing views using plugins
-(@pxref{Post-processing}).
-@item
-Exports plots in many different formats (vector PostScript or encapsulated
-PostScript, LaTeX, PNG, JPEG, GIF, etc.).
-@item
-Generate complex animations.
-@item
-Run on low end machines and/or machines without graphic systems: Gmsh can be
-compiled with or without the graphical user interface; graphical versions
-can be used either interactively or without graphicak output, directly from
-the command-line.
-@item
-Configure your preferred options for all subsequent operations: Gmsh has a
-large number of configurations options that can be set interactively,
-scattered inside command files (and changed on the fly in scripts), set in
-per-user configuration files, or specified on the command-line
-(@pxref{General options}, @pxref{Geometry options}, @pxref{Mesh options},
-@pxref{Post-processing options}, @pxref{Running Gmsh}).
-@end itemize
-
-@c -------------------------------------------------------------------------
-@c ... and what it is not so good at
-@c -------------------------------------------------------------------------
-
-@node ... and what it is not so good at, Syntactic rules, What Gmsh is pretty good at..., Introduction
-@section ... and what it is not so good at
-
-@itemize @bullet
-@item
-The bottom-up approach for describing geometries can become tedious for
-complex structures.
-@item
-There is no support for NURBS and only very limited support for trimmed
-surfaces.
-@item
-Gmsh is not primarily a structured mesh generator: no automatic
-quadrilateral or hexahedral meshing algorithm is provided. If you want
-quadrangles, you have to use transfinite or extruded meshes (@pxref{Mesh})
-or recombine unstructured triangular meshes. For hexahedra, your only choice
-is transfinite or extruded meshes.
-@item
-Gmsh is not a multibloc generator: all meshes produced by Gmsh are
-conforming in the sense of finite element meshes (@pxref{Mesh})
-@item
-There is not support for curved mesh elements as of this writing (Gmsh
-1.44).
-@item
-Gmsh is designed for solving academic test-cases, not industrial-size
-problems. You may find that Gmsh is too slow for large problems (with
-thousands of geometric primitives; or millions of mesh/post-processing
-elements).
-@end itemize
-
-@c -------------------------------------------------------------------------
-@c Syntactic Rules Used in this Document
-@c -------------------------------------------------------------------------
-
-@node Syntactic rules,  , ... and what it is not so good at, Introduction
-@section Syntactic rules used in this document
-
-@cindex Syntax, rules
-@cindex Rules, syntactic
-@cindex Document syntax
-
-@vindex @dots{}
-@vindex <, >
-@vindex |
-@c forbidden @vindex :
-@vindex @var{etc}
-
-Here are the rules we tried to follow when writing this user's guide. Note
-that metasyntactic variable definitions stay valid throughout all the manual
-(and not only in the sections where the definitions appear).
-
-@enumerate
-@item 
-Keywords and literal symbols are printed like @code{this}.
-@item 
-Metasyntactic variables (i.e.@: text bits that are not part of the syntax,
-but stand for other text bits) are printed like @var{this}.
-@item 
-A colon (@code{:}) after a metasyntactic variable separates the variable
-from its definition.
-@item 
-Optional rules are enclosed in @code{<} @code{>} pairs.
-@item 
-Multiple choices are separated by @code{|}.
-@item 
-Three dots (@dots{}) indicate a possible repetition of the preceding rule.
-@item 
-The @var{etc} symbol replaces nonlisted rules.
-@end enumerate
-
-@c =========================================================================
-@c Overview
-@c =========================================================================
-
-@node Overview, General tools, Introduction, Top
-@chapter Overview
-
-@cindex Overview
-
 Gmsh is structured around four modules: geometry, mesh, solver and
 post-processing. The specification of any input to these modules is done
 either interactively, or in text data files (interactive specifications
@@ -467,6 +319,9 @@ module. A brief description of these four modules is given hereafter.
 * Mesh::                        
 * Solver::                      
 * Post-processing::             
+* What Gmsh is pretty good at...::  
+* ... and what it is not so good at::  
+* Syntactic rules::             
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -557,7 +412,7 @@ your own solver.
 @c Post-processing: scalar and vector field visualization
 @c -------------------------------------------------------------------------
 
-@node Post-processing,  , Solver, Overview
+@node Post-processing, What Gmsh is pretty good at..., Solver, Overview
 @section Post-processing: scalar and vector field visualization
 
 Multiple post-processing scalar or vector maps can be loaded and manipulated
@@ -571,6 +426,135 @@ interactively or through the input ASCII text files. Scripting permits to
 automate all the post-processing operations (e.g. for the creation of
 complex animations). User-defined operations can also be performed on
 post-proessing views through to dynamically loadable modules (plug-ins).
+
+@c -------------------------------------------------------------------------
+@c What Gmsh is pretty good at
+@c -------------------------------------------------------------------------
+
+@node What Gmsh is pretty good at..., ... and what it is not so good at, Post-processing, Overview
+@section What Gmsh is pretty good at...
+
+@itemize @bullet
+@item
+Describe quickly simple and/or ``repetitive'' geometries. Models are
+constructed by defining successively points, curves, surfaces and volumes
+(@pxref{Geometry}). Loops and includes can be used to perform repetitive
+tasks (@pxref{Loops and tests}, @pxref{General commands}).
+@item
+Parameterize these geometries: the model is described in Gmsh's own
+language, where all commands and command arguments can depend on previous
+calculations.
+@item
+Generate 1D, 2D and 3D simplicial (i.e. using line segments, triangles and
+tetrahedra) finite element meshes. The 1D and 2D algorithms should have
+pretty good performance in most cases. The 3D algorithm is still more
+experimental.
+@item
+Specify target element sizes: Gmsh provides several mechanisms to control
+the size of the elements in the final (interpolation from geometrical point
+characteristic lengths, explicit background mesh, attractors).
+@item
+Create simple extruded geometries and meshes.
+@item
+Interact with your solver: Gmsh provides C/C++ and perl interfaces, and
+others can be easily added (@pxref{Solver}).
+@item
+Visualize computational results in a great variety of ways. Gmsh can
+display scalar, vector and tensor data sets in many different ways.
+@item
+Perform various operations on the post-processing views using plugins
+(@pxref{Post-processing}).
+@item
+Exports plots in many different formats (vector PostScript or encapsulated
+PostScript, LaTeX, PNG, JPEG, GIF, etc.).
+@item
+Generate complex animations.
+@item
+Run on low end machines and/or machines without graphic systems: Gmsh can be
+compiled with or without the graphical user interface; graphical versions
+can be used either interactively or without graphicak output, directly from
+the command-line.
+@item
+Configure your preferred options for all subsequent operations: Gmsh has a
+large number of configurations options that can be set interactively,
+scattered inside command files (and changed on the fly in scripts), set in
+per-user configuration files, or specified on the command-line
+(@pxref{General options}, @pxref{Geometry options}, @pxref{Mesh options},
+@pxref{Post-processing options}, @pxref{Running Gmsh}).
+@end itemize
+
+@c -------------------------------------------------------------------------
+@c ... and what it is not so good at
+@c -------------------------------------------------------------------------
+
+@node ... and what it is not so good at, Syntactic rules, What Gmsh is pretty good at..., Overview
+@section ... and what it is not so good at
+
+@itemize @bullet
+@item
+The bottom-up approach for describing geometries can become tedious for
+complex structures.
+@item
+There is no support for NURBS and only very limited support for trimmed
+surfaces.
+@item
+Gmsh is not primarily a structured mesh generator: no automatic
+quadrilateral or hexahedral meshing algorithm is provided. If you want
+quadrangles, you have to use transfinite or extruded meshes (@pxref{Mesh})
+or recombine unstructured triangular meshes. For hexahedra, your only choice
+is transfinite or extruded meshes.
+@item
+Gmsh is not a multibloc generator: all meshes produced by Gmsh are
+conforming in the sense of finite element meshes (@pxref{Mesh})
+@item
+There is not support for curved mesh elements as of this writing (Gmsh
+1.44).
+@item
+Gmsh is designed for solving academic test-cases, not industrial-size
+problems. You may find that Gmsh is too slow for large problems (with
+thousands of geometric primitives; or millions of mesh/post-processing
+elements).
+@end itemize
+
+@c -------------------------------------------------------------------------
+@c Syntactic Rules Used in this Document
+@c -------------------------------------------------------------------------
+
+@node Syntactic rules,  , ... and what it is not so good at, Overview
+@section Syntactic rules used in this document
+
+@cindex Syntax, rules
+@cindex Rules, syntactic
+@cindex Document syntax
+
+@vindex @dots{}
+@vindex <, >
+@vindex |
+@c forbidden @vindex :
+@vindex @var{etc}
+
+Here are the rules we tried to follow when writing this user's guide. Note
+that metasyntactic variable definitions stay valid throughout all the manual
+(and not only in the sections where the definitions appear).
+
+@enumerate
+@item 
+Keywords and literal symbols are printed like @code{this}.
+@item 
+Metasyntactic variables (i.e.@: text bits that are not part of the syntax,
+but stand for other text bits) are printed like @var{this}.
+@item 
+A colon (@code{:}) after a metasyntactic variable separates the variable
+from its definition.
+@item 
+Optional rules are enclosed in @code{<} @code{>} pairs.
+@item 
+Multiple choices are separated by @code{|}.
+@item 
+Three dots (@dots{}) indicate a possible repetition of the preceding rule.
+@item 
+The @var{etc} symbol replaces nonlisted rules.
+@end enumerate
 
 @c =========================================================================
 @c General tools
