@@ -22,26 +22,38 @@
 
 #include <FL/Fl_File_Chooser.H>
 #include <FL/Fl_Window.H>
+#include <FL/Fl_File_Input.H>
 
 // The FLTK team doesn't want to add a position() method to the file
 // chooser, so we have to derive our own. To make things worse, the 
 // original file chooser doesn't expose its window to the world, so
-// we need to use a cheap hack to get to it. Even worse, there is no
-// way we can call get_focus() on the file input widget, which is also
-// private. Sigh...
+// we need to use a cheap hack to get to it. Even worse is the hack
+// used to get the focus on the file input widget. Sigh...
 
 class File_Picker : public Fl_File_Chooser {
 private:
   Fl_Window *_win;
+  Fl_File_Input *_in;
 public:
   File_Picker(const char *d, const char *p, int t, const char *title)
     : Fl_File_Chooser(d, p, t, title) { 
-    _win = (Fl_Window*)newButton->parent()->parent(); 
+    _win = dynamic_cast<Fl_Window*>(newButton->parent()->parent()); 
+    _in = dynamic_cast<Fl_File_Input *>(previewButton->parent()->parent()->resizable());
   }
-  void show(){ _win->show(); _win->take_focus();}
-  void position(int x, int y){ _win->position(x,y);}
-  int x(){ return _win->x();}
-  int y(){ return _win->y();}
+  void show(){
+    if(_win){
+      _win->show();
+      if(_in)
+	_in->take_focus();
+      else
+	_win->take_focus();	
+    }
+    else
+      Fl_File_Chooser::show();
+  }
+  void position(int x, int y){ if(_win) _win->position(x,y); }
+  int x(){ if(_win) return _win->x(); else return 100; }
+  int y(){ if(_win) return _win->y(); else return 100; }
 };
 
 #endif
