@@ -1,4 +1,4 @@
-// $Id: Annotate.cpp,v 1.7 2005-03-09 02:19:09 geuzaine Exp $
+// $Id: Annotate.cpp,v 1.8 2005-03-09 07:35:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -83,7 +83,7 @@ void GMSH_AnnotatePlugin::draw()
   double style = getStyle();
 
   glColor4ubv((GLubyte *) & CTX.color.fg);
-  if(AnnotateOptions_Number[3].def == 1){ // 3D
+  if(AnnotateOptions_Number[3].def){ // 3D
     glRasterPos3d(X, Y, Z);
     Draw_String(AnnotateOptions_String[0].def, style);
     // draw 10-pixel marker
