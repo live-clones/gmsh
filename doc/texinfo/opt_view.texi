@@ -260,7 +260,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ShowTime
-Show time value (or time step) if NbTimeStep > 1?@*
+Show time value (or time step number) in the scale? (1=only if NbTimeStep>1, 2=always)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

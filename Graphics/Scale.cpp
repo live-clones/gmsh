@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.35 2003-03-21 00:52:39 geuzaine Exp $
+// $Id: Scale.cpp,v 1.36 2003-11-28 19:15:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -189,9 +189,9 @@ void draw_scale(Post_View * v,
   // the label
 
   glRasterPos2d(cv_xmin, ymin - 2 * font_h);
-  if(List_Nbr(v->Time) > 1 && v->ShowTime)
-    sprintf(label, "%s (%g)", v->Name,
-            *(double *)List_Pointer(v->Time, v->TimeStep));
+  if((v->ShowTime == 1 && List_Nbr(v->Time) > 1) ||
+     (v->ShowTime == 2 && List_Nbr(v->Time) > 0))
+    sprintf(label, "%s (%g)", v->Name, *(double *)List_Pointer(v->Time, v->TimeStep));
   else
     sprintf(label, "%s", v->Name);
   Draw_String(label);

@@ -965,7 +965,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "ShowScale" , opt_view_show_scale , 1. ,
     "Show value scale?" },
   { F|O, "ShowTime" , opt_view_show_time , 1. ,
-    "Show time value (or time step) if NbTimeStep > 1?" },
+    "Show time value (or time step number) in the scale? (1=only if NbTimeStep>1, 2=always)" },
   { F|O, "SmoothNormals" , opt_view_smooth_normals , 0. ,
     "Smooth the normals?" },
   { F|O, "TensorType" , opt_view_tensor_type , 0. ,

@@ -45,7 +45,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.AppleMenuBar
-Use Apple-style menu bar?@*
+Use Apple-style menu bar on Mac OS X?@*
 Default value: @code{0}@*
 Saved in: @code{General.SessionFileName}
 
