@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to Postscript Printing Library
  * Copyright (C) 1999-2001  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.14 2001-06-11 11:21:56 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.15 2001-06-11 12:05:02 geuzaine Exp $
  *
  * E-mail: Christophe.Geuzaine@AdValvas.be
  * URL: http://www.geuz.org/gl2ps/
@@ -23,8 +23,6 @@
  *
  */
 
-#include "GmshUI.h"
-
 #include <string.h>
 #include <sys/types.h>
 #include <malloc.h>
@@ -35,7 +33,7 @@
 #include "gl2ps.h"
 
 /* The static gl2ps structure. gl2ps is not thread safe (we should
-   allocate this structure when doing gl2psBeginPage). */
+   create a local GL2PScontext when doing gl2psBeginPage). */
 
 static GL2PScontext gl2ps;
 
@@ -1088,12 +1086,12 @@ GLvoid gl2psPrintPostscriptHeader(GLvoid){
 	  "/G { 0.082 mul exch 0.6094 mul add exch 0.3086 mul add neg 1.0 add\n"
 	  "setgray } bd /C { setrgbcolor } bd /FC { findfont exch scalefont\n"
 	  "setfont } bd /S { FC C moveto show } bd /P { C newpath 0.0 360.0\n"
-	  "arc closepath fill } bd /L { setlinewidth C newpath moveto lineto stroke } bd\n"
-	  "/T { C newpath moveto lineto lineto closepath fill } bd /SL { /lw exch def /b1\n"
-	  "exch def /g1 exch def /r1 exch def /y1 exch def /x1 exch def\n"
-	  "/b2 exch def /g2 exch def /r2 exch def /y2 exch def /x2 exch def\n"
-	  "b2 b1 sub abs 0.01 gt g2 g1 sub abs 0.005 gt r2 r1 sub abs 0.008 gt\n"
-	  "or or { /bm b1 b2 add 0.5 mul def /gm g1 g2 add 0.5 mul def\n"
+	  "arc closepath fill } bd /L { setlinewidth C newpath moveto lineto\n"
+	  "stroke } bd /T { C newpath moveto lineto lineto closepath fill } bd\n"
+	  "/SL { /lw exch def /b1 exch def /g1 exch def /r1 exch def /y1 exch def\n"
+	  "/x1 exch def /b2 exch def /g2 exch def /r2 exch def /y2 exch def\n"
+	  "/x2 exch def b2 b1 sub abs 0.01 gt g2 g1 sub abs 0.005 gt r2 r1 sub\n"
+	  "abs 0.008 gt or or { /bm b1 b2 add 0.5 mul def /gm g1 g2 add 0.5 mul def\n"
 	  "/rm r1 r2 add 0.5 mul def /ym y1 y2 add 0.5 mul def /xm x1 x2 add\n"
 	  "0.5 mul def x1 y1 r1 g1 b1 xm ym rm gm bm lw SL xm ym rm gm bm x2 y2 r2\n"
 	  "g2 b2 lw SL } { x1 y1 x2 y2 r1 g1 b1 lw L } ifelse } bd /ST {/b1 exch\n"

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.19 2001-06-02 16:24:51 geuzaine Exp $
+// $Id: Geom.cpp,v 1.20 2001-06-11 12:05:02 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -512,7 +512,8 @@ void Draw_Plane_Surface (Surface *s){
     glEnd();
   }
 
-  if(CTX.geom.surfaces_num){
+                              //BUG JapanDef.geo
+  if(CTX.geom.surfaces_num && List_Nbr(s->Orientations)>1){
     List_Read(s->Orientations,0,&vv1);
     List_Read(s->Orientations,1,&vv2);
     sprintf(Num,"%d",s->Num);
