@@ -1,9 +1,4 @@
 @ftable @code
-@item Print.EpsFont
-Font used in PostScript/PDF output@*
-Default value: @code{"Courier"}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Print.EpsBackground
 Save image background in PostScript/PDF output@*
 Default value: @code{1}@*
@@ -19,11 +14,6 @@ Compress PostScript/PDF output using zlib@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Print.EpsFontSize
-Font size used in PostScript/PDF output@*
-Default value: @code{12}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Print.EpsLineWidthFactor
 Width factor for lines in PostScript/PDF output@*
 Default value: @code{0.5}@*
@@ -37,6 +27,11 @@ Saved in: @code{General.OptionsFileName}
 @item Print.EpsPointSizeFactor
 Size factor for points in PostScript/PDF output@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.EpsPS3Shading
+Enable PostScript Level 3 shading@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Print.EpsQuality

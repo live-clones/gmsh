@@ -40,13 +40,13 @@ Default value: @code{0.12}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ArrowLocation
-Arrow location (1=cog, 2=vertex)@*
+Arrow location (1=cog, 2=node)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ArrowSize
-Size of vectors arrows (in pixels)@*
-Default value: @code{50}@*
+Display size of arrows (in pixels)@*
+Default value: @code{60}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ArrowStemLength
@@ -221,7 +221,7 @@ Saved in: @code{-}
 
 @item View.PointSize
 Display size of points (in pixels)@*
-Default value: @code{2}@*
+Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.PointType

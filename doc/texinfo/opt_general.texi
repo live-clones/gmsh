@@ -14,6 +14,11 @@ File into which the log is saved if a fatal error occurs@*
 Default value: @code{".gmsh-errors"}@*
 Saved in: @code{General.SessionFileName}
 
+@item General.GraphicsFont
+Font used in the graphic window@*
+Default value: @code{"Helvetica"}@*
+Saved in: @code{General.SessionFileName}
+
 @item General.OptionsFileName
 Option file created with `Tools->Options->Save'; automatically read on startup@*
 Default value: @code{".gmsh-options"}@*
@@ -66,7 +71,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.Axes
 Display the axes linked to the model@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Clip0
@@ -261,7 +266,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.GraphicsFontSize
 Size of the font in the graphic window@*
-Default value: @code{11}@*
+Default value: @code{14}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.GraphicsHeight
@@ -546,12 +551,12 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.SmallAxesPositionX
 X position of small axes (use negative values for right alignment)@*
-Default value: @code{-45}@*
+Default value: @code{-60}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.SmallAxesPositionY
 Y position of small axes (use negative values for bottom alignment)@*
-Default value: @code{-35}@*
+Default value: @code{-40}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.SolverPositionX

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.45 2004-04-22 09:35:01 remacle Exp $
+# $Id: Makefile,v 1.46 2004-04-24 03:52:00 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -30,7 +30,8 @@ SRC = Plugin.cpp\
         Levelset.cpp\
           CutPlane.cpp CutSphere.cpp CutMap.cpp\
         Smooth.cpp\
-	CutGrid.cpp OctreeSrc.cpp o_internals.cpp OctreePost.cpp StreamLines.cpp\
+	Octree.cpp OctreeInternals.cpp OctreePost.cpp\
+          StreamLines.cpp CutGrid.cpp\
         Transform.cpp\
         Triangulate.cpp\
         SphericalRaise.cpp\
@@ -65,9 +66,9 @@ depend:
 # DO NOT DELETE THIS LINE
 Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
-  PluginManager.h CutMap.h Levelset.h CutPlane.h CutSphere.h Skin.h \
-  ../DataStr/Tree.h ../DataStr/avl.h Extract.h Harmonic2Time.h \
-  DecomposeInSimplex.h Smooth.h Transform.h Triangulate.h \
+  PluginManager.h CutMap.h Levelset.h CutGrid.h StreamLines.h CutPlane.h \
+  CutSphere.h Skin.h ../DataStr/Tree.h ../DataStr/avl.h Extract.h \
+  Harmonic2Time.h DecomposeInSimplex.h Smooth.h Transform.h Triangulate.h \
   SphericalRaise.h DisplacementRaise.h
 Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
@@ -86,14 +87,19 @@ CutMap.o: CutMap.cpp CutMap.h Levelset.h Plugin.h ../Common/Options.h \
 Smooth.o: Smooth.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h Smooth.h \
   ../Common/Context.h
-CutGrid.o: CutGrid.cpp OctreePost.h Octree.h o_internals.h CutGrid.h \
+Octree.o: Octree.cpp Octree.h OctreeInternals.h
+OctreeInternals.o: OctreeInternals.cpp ../Common/Message.h \
+  OctreeInternals.h
+OctreePost.o: OctreePost.cpp Octree.h OctreeInternals.h OctreePost.h \
+  ../DataStr/List.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Numeric/Numeric.h ../Common/Message.h
+StreamLines.o: StreamLines.cpp OctreePost.h Octree.h OctreeInternals.h \
+  StreamLines.h Plugin.h ../Common/Options.h ../Common/Message.h \
+  ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
+  ../Common/Context.h
+CutGrid.o: CutGrid.cpp OctreePost.h Octree.h OctreeInternals.h CutGrid.h \
   Plugin.h ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/Context.h
-OctreeSrc.o: OctreeSrc.cpp o_internals.h Octree.h
-o_internals.o: o_internals.cpp o_internals.h
-OctreePost.o: OctreePost.cpp Octree.h o_internals.h OctreePost.h \
-  ../DataStr/List.h ../Common/Views.h ../Common/ColorTable.h \
-  ../Numeric/Numeric.h
 Transform.o: Transform.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h Transform.h ../Common/Context.h

@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.13 2004-03-13 21:00:19 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.14 2004-04-24 03:52:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -69,8 +69,8 @@ void GMSH_SphericalRaisePlugin::getInfos(char *author, char *copyright,
          "the nodes along the X, Y and Z axes as in\n"
 	 "View[`iView'].RaiseX, View[`iView'].RaiseY\n"
 	 "and View[`iView'].RaiseZ, the raise is applied\n"
-	 " along the radius of a sphere centered at (`Xc',\n"
-	 "`Yc', `Zc'). If `iView' < 0, the plugin is run\n"
+	 " along the radius of a sphere centered at {`Xc',\n"
+	 "`Yc', `Zc'}. If `iView' < 0, the plugin is run\n"
 	 "on the current view.\n"
 	 "\n"
 	 "Plugin(SphericalRaise) is executed in-place.\n");

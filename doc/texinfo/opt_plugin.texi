@@ -1,4 +1,42 @@
 @ftable @code
+@item Plugin(CutGrid)
+Plugin(CutGrid) cuts a 3D view with a rectangular
+grid defined by the 3 points {`X0',`Y0',`Z0'} (origin)
+{`X1',`Y1',`Z1'} (axis of U) and {`X2',`Y2',`Z2'} (axis
+of V). The number of points along U and V is set
+with the options `nPointsU' and `nPointsV'. If
+`iView' < 0, the plugin is run on the current view.
+
+Plugin(CutGrid) creates one new view.
+
+Numeric options:
+@table @code
+@item X0
+Default value: -1
+@item Y0
+Default value: -1
+@item Z0
+Default value: 0
+@item X1
+Default value: -1
+@item Y1
+Default value: 0
+@item Z1
+Default value: 0
+@item X2
+Default value: 0
+@item Y2
+Default value: -1
+@item Z2
+Default value: 0
+@item nPointsU
+Default value: 20
+@item nPointsV
+Default value: 20
+@item iView
+Default value: -1
+@end table
+
 @item Plugin(CutMap)
 Plugin(CutMap) extracts the isovalue surface of
 value `A' from the view `iView' and draws the
@@ -158,8 +196,8 @@ using the values associated with the
 the nodes along the X, Y and Z axes as in
 View[`iView'].RaiseX, View[`iView'].RaiseY
 and View[`iView'].RaiseZ, the raise is applied
- along the radius of a sphere centered at (`Xc',
-`Yc', `Zc'). If `iView' < 0, the plugin is run
+ along the radius of a sphere centered at {`Xc',
+`Yc', `Zc'}. If `iView' < 0, the plugin is run
 on the current view.
 
 Plugin(SphericalRaise) is executed in-place.
@@ -176,6 +214,58 @@ Default value: 0
 Default value: 1
 @item TimeStep
 Default value: 0
+@item iView
+Default value: -1
+@end table
+
+@item Plugin(StreamLines)
+Plugin(StreamLines) computes stream lines
+from a vector view `iView'. It takes as input a
+grid defined by the 3 points {`X0',`Y0',`Z0'}
+(origin), {`X1',`Y1',`Z1'} (axis of U) and
+{`X2',`Y2',`Z2'} (axis of V). The number of points
+that are going to be transported along U and V is
+set with the options `nPointsU' and `nPointsV'.
+Then, we solve the equation DX(t)/dt = V(x,y,z)
+with X(t=0) chosen as the grid and V(x,y,z)
+interpolated on the vector view. The timestep and
+the maximum number of iterations are set with
+the options `MaxIter' and `DT'. The time stepping
+scheme is a RK44. If `iView' < 0, the plugin is run
+on the current view.
+
+Plugin(StreamLines) creates one new view. It is
+nice to choose the displacement mode to see
+vectors and to animate the view ;-)
+
+Numeric options:
+@table @code
+@item X0
+Default value: 2.39
+@item Y0
+Default value: 0.445
+@item Z0
+Default value: 0
+@item X1
+Default value: 2.39
+@item Y1
+Default value: 0.94
+@item Z1
+Default value: 0
+@item X2
+Default value: 2.39
+@item Y2
+Default value: 0.445
+@item Z2
+Default value: 1
+@item nPointsU
+Default value: 20
+@item nPointsV
+Default value: 1
+@item MaxIter
+Default value: 100
+@item DT
+Default value: 0.1
 @item iView
 Default value: -1
 @end table
@@ -214,28 +304,6 @@ Default value: 1
 @item iView
 Default value: -1
 @end table
-
-
-@item Plugin(Streamlines)
-Plugin(Streamlines) computes streamlines
-from a vector view 'iView' . It takes as input
-a grid of points defined by 3 points XYZ0 (origin)
-XYZ1 (axis of U) and XYZ2 (axis of V). The user
-can choose how many points are going to be 
-transported along U and V. Then, we solve 
-the equation DX(t)/dt = V (x,y,z) with X(0)
-chosen on the grid and V(x,y,z) interpolated on the
-vector view. The user has to choose the timestep as
-well as the maximum number of iterations. The time
-stepping scheme is a RK44.
-
-If `iView' < 0, the plugin is
-run on the current view. 
-
-Plugin(Streamlines) creates one new view. It is
-nice to choose the displacement mode to see vectors
-and to animate the view ;-)
-
 
 @item Plugin(Triangulate)
 Plugin(Triangulate) triangulates the points

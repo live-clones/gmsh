@@ -1,7 +1,7 @@
-#ifndef _CUTGRID_H_
-#define _CUTGRID_H
+#ifndef _CUT_GRID_H_
+#define _CUT_GRID_H
 
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to "gmsh@geuz.org".
+// Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Plugin.h"
 
@@ -39,8 +39,6 @@ public:
   int getNbOptions() const;
   StringXNumber *getOption (int iopt);  
   Post_View *execute (Post_View *);
-  virtual void Run();
-  virtual void Save();
   virtual int getNbU () const ;
   virtual int getNbV () const ;
   virtual void getPoint(int iU, int iV, double *X ) const  ;

@@ -44,6 +44,11 @@ Enable mesh cut plane@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item Mesh.CutPlaneAsSurface
+Draw the intersection volume layer as a surface@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
 @item Mesh.CutPlaneA
 First cut plane equation coefficient (`A' in `AX+BY+CZ+D=0')@*
 Default value: @code{1}@*
@@ -110,22 +115,22 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Lines
-Display mesh vertices on curves?@*
-Default value: @code{1}@*
+Display mesh lines (1D elements)?@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.LinesNumbers
+@item Mesh.LineNumbers
 Display mesh line numbers?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LineType
-Display lines as solid color segments (0) or 3D cylinders (1)@*
+Display mesh lines as solid color segments (0) or 3D cylinders (1)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LineWidth
-Display width of lines (in pixels)@*
+Display width of mesh lines (in pixels)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -175,32 +180,32 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.Normals
-Size of the normal vectors@*
+Display size of normal vectors (in pixels)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Points
-Display mesh vertices?@*
+Display mesh vertices (nodes)?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PointInsertion
-Point insertion method for isotropic 2D algorithm (1=center of circumscribed circle, 2=voronoi, 3=cog)@*
+Point insertion method for isotropic 2D algorithm (1=center of circumscribed circle, 2=cog)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.PointsNumbers
-Display mesh vertex numbers?@*
+@item Mesh.PointNumbers
+Display mesh node numbers?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PointSize
-Display size of points (in pixels)@*
-Default value: @code{2}@*
+Display size of mesh vertices (in pixels)@*
+Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PointType
-Display points as solid color dots (0) or 3D spheres (1)@*
+Display mesh vertices as solid color dots (0) or 3D spheres (1)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -239,44 +244,54 @@ Number of smoothing steps applied to the final mesh@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Solid
-Draw mesh as solid (1) or wireframe (0)?@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.SpeedMax
 Disable dubious point insertion tests@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Surfaces
-Display surface mesh?@*
+@item Mesh.SurfaceEdges
+Display edges of surface mesh?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.SurfacesNumbers
-Display mesh surface numbers?@*
+@item Mesh.SurfaceFaces
+Display faces of surface mesh?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.SurfaceNumbers
+Display surface mesh element numbers?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Tangents
-Size of the tangent vectors@*
+Display size of tangent vectors (in pixels)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Volumes
-Display volume mesh?@*
+@item Mesh.VolumeEdges
+Display edges of volume mesh?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.VolumesNumbers
-Display mesh elements numbers?@*
+@item Mesh.VolumeFaces
+Display faces of volume mesh?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.VolumeNumbers
+Display volume mesh element numbers?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Points
-Mesh vertex color@*
-Default value: @code{@{0,123,59@}}@*
+Mesh node color@*
+Default value: @code{@{0,255,0@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.PointsSup
+Second order mesh node color@*
+Default value: @code{@{255,0,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Lines
@@ -316,12 +331,12 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Tangents
 Tangent mesh vector color@*
-Default value: @code{@{128,128,128@}}@*
+Default value: @code{@{255,255,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Normals
 Normal mesh vector color@*
-Default value: @code{@{128,128,128@}}@*
+Default value: @code{@{255,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.One

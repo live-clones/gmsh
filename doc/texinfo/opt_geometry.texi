@@ -39,7 +39,7 @@ Display geometry curves?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.LinesNumbers
+@item Geometry.LineNumbers
 Display curve numbers?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
@@ -56,11 +56,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LineWidth
 Display width of lines (in pixels)@*
-Default value: @code{1}@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Normals
-Size of the vectors normal to the surfaces@*
+Display size of normal vectors (in pixels)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -79,7 +79,7 @@ Display geometry points?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.PointsNumbers
+@item Geometry.PointNumbers
 Display points numbers?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
@@ -91,7 +91,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.PointSize
 Display size of points (in pixels)@*
-Default value: @code{3}@*
+Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.PointType
@@ -119,13 +119,13 @@ Display geometry surfaces?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.SurfacesNumbers
+@item Geometry.SurfaceNumbers
 Display surface numbers?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Tangents
-Size of the vectors tangent to the curves@*
+Display size of tangent vectors (in pixels)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -134,7 +134,7 @@ Display geometry volumes? (not implemented yet)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.VolumesNumbers
+@item Geometry.VolumeNumbers
 Display volume numbers? (not implemented yet)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}

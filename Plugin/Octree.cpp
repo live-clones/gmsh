@@ -1,17 +1,37 @@
+// $Id: Octree.cpp,v 1.1 2004-04-24 03:52:00 geuzaine Exp $
+//
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA.
+// 
+// Please report all bugs and problems to <gmsh@geuz.org>.
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <list>
-#include "o_internals.h"
 #include "Octree.h"
 
 using std::list;
 
 void free_buckets(octantBucket *);
 
-Octree* Octree_Create (int maxElements, double origin[3], double size[3],   
-                       void  (*BB)(void *, double*, double*),
-                       void  (*Centroid)(void *, double *),
-                       int   (*InEle)(void *, double *))
+Octree* Octree_Create(int maxElements, double origin[3], double size[3],   
+		      void  (*BB)(void *, double*, double*),
+		      void  (*Centroid)(void *, double *),
+		      int   (*InEle)(void *, double *))
 {
   Octree *myOctree = new Octree;
   initializeOctantBuckets (origin, size, maxElements,
@@ -22,13 +42,11 @@ Octree* Octree_Create (int maxElements, double origin[3], double size[3],
   return myOctree;
 }
 
-
 void Octree_Delete(Octree *myOctree)
 {
   delete myOctree->info;
   free_buckets(myOctree->root);
   delete myOctree->root;
-  return;
 }
 
 void Octree_Insert(void * element, Octree *myOctree)
@@ -37,16 +55,9 @@ void Octree_Insert(void * element, Octree *myOctree)
   octantBucket *bucket;
   (*(myOctree->function_BB))(element, minBB, maxBB);
   (*(myOctree->function_centroid))(element, centroid);
-
-// for test 
-/* printf("The centroid of the insert element is %f, %f, %f\n",centroid[0], centroid[1], centroid[2]); */
-//end of test
-
   bucket = findElementBucket(myOctree->root, centroid);
   addElement2Bucket (bucket, element, minBB, maxBB,
                             centroid,myOctree->info);	
-   // printf("Ready to return from Octree_Insert\n");
-  return;
 }
 
 void Octree_Arrange(Octree *myOctree)
@@ -59,18 +70,13 @@ void Octree_Arrange(Octree *myOctree)
     insertOneBB(*iter, minPt, maxPt, myOctree->root);
   }
   myOctree->info->listAllElements.clear();
-  return;
 }   
-
-
-
 
 void * Octree_Search(double *pt, Octree *myOctree)
 {
   return searchElement(myOctree->root, pt, myOctree->info, 
 		       myOctree->function_BB, myOctree->function_inElement);
 }
-
 
 void free_buckets(octantBucket * bucket)
 {
@@ -94,8 +100,7 @@ void free_buckets(octantBucket * bucket)
   return;
 }
 
-
-void  Octree_SearchAll (double * pt, Octree * myOctree, list<void *> * output)
+void Octree_SearchAll(double * pt, Octree * myOctree, list<void *> * output)
 {
   searchAllElements(myOctree->root, pt, myOctree->info, myOctree->function_BB,
                     myOctree->function_inElement, output);	
