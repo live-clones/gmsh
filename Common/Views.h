@@ -37,6 +37,8 @@ typedef struct{
   // dynamic
   double (*GVFI) (double min, double max, int nb, int index);
   int (*GIFV) (double min, double max, int nb, double value);
+  // smooth the view
+  void smooth();
 }Post_View;
 
 // The static list with pointers to all views

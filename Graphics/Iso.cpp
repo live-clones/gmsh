@@ -1,8 +1,9 @@
-// $Id: Iso.cpp,v 1.4 2001-01-08 08:05:43 geuzaine Exp $
+// $Id: Iso.cpp,v 1.5 2001-01-19 22:32:31 remacle Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
 #include "Draw.h"
+#include "Numeric.h"
 
 void RaiseFill(int i, double Val, double ValMin, double Raise[3][5]);
 
@@ -33,8 +34,9 @@ void Interpolate(double *X, double *Y, double *Z,
 void IsoSimplex(double *X, double *Y, double *Z, double *Val, 
                 double V, double Vmin, double Vmax, 
                 double *Offset, double Raise[3][5], int shade){
-  int    nb;
+  int    nb,i;
   double Xp[6],Yp[6],Zp[6];
+  double Xpi[6],Ypi[6],Zpi[6];
 
   if(V != Vmax){
     nb = 0;
@@ -78,6 +80,57 @@ void IsoSimplex(double *X, double *Y, double *Z, double *Val,
       Interpolate(X,Y,Z,Val,V,2,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;
     }
   }
+
+  /*
+    for having a nice isosurface, we should have n . grad v > 0
+    n = normal to the polygon
+    v = unknown field we wanna draw
+   */
+
+  if(nb > 2)
+    {
+      double v1[3] = {Xp[2]-Xp[0],Yp[2]-Yp[0],Zp[2]-Zp[0]};
+      double v2[3] = {Xp[1]-Xp[0],Yp[1]-Yp[0],Zp[1]-Zp[0]};
+      double n[3];
+      prodve(v1,v2,n);
+      //test 
+
+      // now get the gradient (simplified version of course)
+      
+      double xx = 0.0;
+      if(Val[2] != Val[1])
+	{
+	  double gr[3] = {X[2]-X[1],Y[2]-Y[1],Z[2]-Z[1]};
+	  double xx = gr[0] * n[0] + gr[1] * n[1] + gr[2] + n[2];
+	  if(Val[2] > Val[1]) xx = -xx;
+	}
+      if(Val[2] != Val[0])
+	{
+	  double gr[3] = {X[2]-X[0],Y[2]-Y[0],Z[2]-Z[0]};
+	  double xx = gr[0] * n[0] + gr[1] * n[1] + gr[2] + n[2];
+	  if(Val[2] > Val[0]) xx = -xx;
+	}
+
+      
+
+      if(xx > 0)
+	{
+	  for(i=0;i<nb;i++)
+	    {
+	      Xpi[i] = Xp[i];
+	      Ypi[i] = Yp[i];
+	      Zpi[i] = Zp[i];
+	    }
+	  for(i=0;i<nb;i++)
+	    {
+	      Xp[i] = Xpi[nb-i-1];
+	      Yp[i] = Ypi[nb-i-1];
+	      Zp[i] = Zpi[nb-i-1];
+	    }
+	}
+    }
+
+
 
   if(nb == 3) 
     Draw_Triangle(Xp,Yp,Zp,Offset,Raise,shade);

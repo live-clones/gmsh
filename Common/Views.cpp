@@ -1,5 +1,6 @@
-// $Id: Views.cpp,v 1.23 2001-01-12 13:28:54 geuzaine Exp $
+// $Id: Views.cpp,v 1.24 2001-01-19 22:32:31 remacle Exp $
 
+#include <set>
 #include "Gmsh.h"
 #include "Views.h"
 #include "Context.h"
@@ -265,6 +266,9 @@ void EndView(int AddInUI, int Number, char *FileName, char *Name,
     List_Replace(Post_ViewList,ActualView,fcmpPostViewNum);
   }
 
+  // it's a test, smoothing views in the volume !!!
+  // in the future, we'll have normals smoothed
+  ActualView->smooth();
   ActualView = NULL;
 }
 
@@ -605,3 +609,173 @@ void Read_View(FILE *file, char *filename){
 
 }
 
+
+/*
+  A little util for smoothing a view.
+*/
+
+using namespace std;
+struct xyzv
+{
+private:
+public:
+  double x,y,z,*vals;
+  int nbvals;
+  int nboccurences;
+  static double eps;
+  void update (int nbVals, double *);
+  xyzv(double x, double y, double z);
+  ~xyzv();
+  xyzv & operator = ( const xyzv &);
+  xyzv ( const xyzv &);
+};
+
+double xyzv::eps = 0.0;
+
+xyzv::xyzv (double xx, double yy, double zz) : x(xx),y(yy),z(zz),vals(0),nbvals(0),nboccurences(0){}
+xyzv::~xyzv()
+{
+  if(vals)delete [] vals;
+}
+xyzv::xyzv(const xyzv &other)
+{
+  x = other.x;
+  y = other.y;
+  z = other.z;
+  nbvals = other.nbvals;
+  nboccurences = other.nboccurences;
+  if(other.vals && other.nbvals)
+    {
+      vals = new double[other.nbvals];
+      for(int i=0;i<nbvals;i++)vals[i] = other.vals[i];
+    }
+}
+xyzv & xyzv::operator = (const xyzv &other)
+{
+  if(this != &other)
+    { 
+      x = other.x;
+      y = other.y;
+      z = other.z;
+      nbvals = other.nbvals;
+      nboccurences = other.nboccurences;
+      if(other.vals && other.nbvals)
+	{
+	  vals = new double[other.nbvals];
+	  for(int i=0;i<nbvals;i++)vals[i] = other.vals[i];
+	}
+    }
+  return *this;
+}
+
+void xyzv::update (int n, double *v)
+{
+  int i;
+  if(!vals)
+    {
+      vals = new double[n];
+      for(i=0;i<nbvals;i++)vals[i] = 0.0;
+      nbvals = n;
+      nboccurences = 0;
+    }
+  else if (nbvals != n)
+    {
+      throw n;
+    }
+  double x1 = (double)(nboccurences)/ (double)(nboccurences + 1);
+  double x2 = 1./(double)(nboccurences + 1);
+  for(i=0;i<nbvals;i++)vals[i] = (x1 * vals[i] + x2 * v[i]);
+  nboccurences++;
+}
+
+
+struct lessthanxyzv
+{
+  bool operator () (const xyzv & p2, const xyzv &p1) const
+  {
+    if( p1.x - p2.x > xyzv::eps)return true;  
+    if( p1.x - p2.x <-xyzv::eps)return false;  
+    if( p1.y - p2.y > xyzv::eps)return true;  
+    if( p1.y - p2.y <-xyzv::eps)return false;  
+    if( p1.z - p2.z > xyzv::eps)return true;  
+    return false;  
+  }
+};
+
+
+void Post_View :: smooth ()
+{
+  int i,nb,j;
+  xyzv::eps = CTX.lc * 1.e-6;
+
+  typedef set<xyzv,lessthanxyzv> mycont;
+  typedef mycont::const_iterator iter;
+
+  mycont connectivities;
+
+  double *x,*y,*z,*v;
+  if(NbSS){
+    Msg(INFO,"Smoothing the view (%d) ...",NbTimeStep);
+    nb = List_Nbr(SS) / NbSS ;
+
+    double *vals = new double[NbTimeStep];
+
+    for(i = 0 ; i < List_Nbr(SS) ; i+=nb)
+      {
+	x = (double*)List_Pointer_Fast(SS,i);
+	y = (double*)List_Pointer_Fast(SS,i+4);
+	z = (double*)List_Pointer_Fast(SS,i+8);
+	v = (double*)List_Pointer_Fast(SS,i+12);
+	
+	for(j=0;j<4;j++)
+	  {
+	    for(int k=0;k<NbTimeStep;k++)vals[k] = v[j+k*8];
+	    xyzv x(x[j],y[j],z[j]);
+	    iter it = connectivities.find(x);
+	    if(it == connectivities.end())
+	      {
+		x.update(NbTimeStep,vals);
+		connectivities.insert(x);
+	      }
+	    else
+	      {
+		xyzv *xx = (xyzv*) &(*it); // a little weird ... becaus we know that 
+		                           // this will not destroy the set ordering
+		xx->update(NbTimeStep,vals);
+	      }
+	  }
+      } 
+
+    int n1 = 0;
+    int n2 = 0;
+    int n3 = 0;
+    for(i = 0 ; i < List_Nbr(SS) ; i+=nb)
+      {
+	x = (double*)List_Pointer_Fast(SS,i);
+	y = (double*)List_Pointer_Fast(SS,i+4);
+	z = (double*)List_Pointer_Fast(SS,i+8);
+	v = (double*)List_Pointer_Fast(SS,i+12);
+	for(j=0;j<4;j++)
+	  {
+	    xyzv xyz(x[j],y[j],z[j]);
+	    iter it = connectivities.find(xyz);
+	    if(it == connectivities.end())
+	      {
+		n3++;
+	      }
+	    else
+	      {
+		n1++;
+		n2 += (*it).nboccurences;
+		// test
+		//double val = sqrt (x[j] * x[j] + y[j] * y[j] + z[j] * z[j]);
+		//for(int k=0;k<NbTimeStep;k++)v[j+k*8] = val;
+				for(int k=0;k<NbTimeStep;k++)v[j+k*8] = (*it).vals[k];
+	      }
+	  }
+      } 
+
+    Msg(INFO,"nbpoints = %d  mean = %d size = %d miss %d\n",n1,n2/n1,connectivities.size(),n3);
+    delete [] vals;
+  }
+}
