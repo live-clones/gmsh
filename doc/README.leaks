@@ -1,6 +1,10 @@
 * LIBNJAMD
 
-export LD_PRELOAD=libnjamd.so
+  export LD_PRELOAD=libnjamd.so
+  kill -USR1
 
- kill -USR1
+* valgrind
 
+* purify
+
+* memprof

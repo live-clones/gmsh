@@ -1,33 +1,28 @@
+
 This is Gmsh, an automatic three-dimensional finite element mesh
 generator, primarily Delaunay, with built-in pre- and post-processing
 facilities.
 
+To install Gmsh, type
 
-./configure --with-fltk-prefix=/path/to/fltk
+./configure --with-fltk-prefix=/path/to/fltk-1.1.x
 make
 make install
 
-This requires FLTK 1.1, GSL and OPENGL to be installed... If not in
-default locations, use the --with-...-prefix. You can also ...
-Also possible to define FLTK_DIR, GSL_DIR, GL_DIR
+This requires the Fast Light Tool Kit (FLTK, http://www.fltk.org)
+version 1.1 or above, the GNU Scientific Library (GSL,
+http://sources.redhat.com/gsl/) and OpenGL (for a free implementation,
+see http://www.mesa3d.org) to be installed on your system. If not in
+default locations, you can either use the --with-fltk-prefix,
+--with-gsl-prefix and --with-gl-prefix configure options, or you can
+set the environment variables FLTK_DIR, GSL_DIR and GL_DIR.
 
-To build a non-graphical version...
+To install a non-graphical version of Gmsh (that does not require
+FLTK nor OpenGL), type
 
 ./configure --disable-gui
-
-
-
-
-
-
-Gmsh is free software. See the file doc/COPYING for copying
-permission. Parts of Gmsh are distributed with additional license
-requirements. Check individual files for more information. Most
-notably, if you incorporate the Triangle/ library, Gmsh can only be
-redistributed if no compensation is received.
-
-Type 'make' to build Gmsh. This requires FLTK version 1.1.x to be
-installed in $(HOME)/SOURCES/fltk-1.1
+make
+make install
 
 See the doc/ and tutorial/ directories for documentation.
 
