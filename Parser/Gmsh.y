@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.48 2000-12-20 12:17:10 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.49 2000-12-20 20:17:27 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -1644,7 +1644,7 @@ Command :
       }
       else if(!strcmp($1, "System")){
 	
-	Msg(PARSER_INFO, "Executing System Call \"%s\"");
+	Msg(PARSER_INFO, "Executing System Call \"%s\"", $2);
 	system($2);
 
       }
