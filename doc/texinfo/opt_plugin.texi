@@ -62,6 +62,36 @@ Default value: @code{-1}
 Default value: @code{-1}
 @end table
 
+@item Plugin(CutParametric)
+Plugin(CutParametric) cuts the scalar view `iView'
+with the parametric function (`X'(u), `Y'(u), `Z'(u)),
+using `nPointsU' values of the parameter u in
+[`minU', `maxU']. If `iView' < 0, the plugin is run
+on the current view.
+
+Plugin(CutParametric) creates one new view.
+
+String options:
+@table @code
+@item X
+Default value: @code{"0 + 1 * Cos(u)"}
+@item Y
+Default value: @code{"0 + 1 * Sin(u)"}
+@item Z
+Default value: @code{"0"}
+@end table
+Numeric options:
+@table @code
+@item minU
+Default value: @code{0}
+@item maxU
+Default value: @code{6.28319}
+@item nPointsU
+Default value: @code{360}
+@item iView
+Default value: @code{-1}
+@end table
+
 @item Plugin(CutPlane)
 Plugin(CutPlane) cuts the view `iView' with
 the plane `A'*X + `B'*Y + `C'*Z + `D' = 0. If
