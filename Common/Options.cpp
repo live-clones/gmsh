@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.128 2003-12-07 05:37:00 geuzaine Exp $
+// $Id: Options.cpp,v 1.129 2003-12-08 19:18:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -41,10 +41,8 @@ extern Post_View *Post_ViewReference;
 
 void Init_Options_Safe(int num)
 {
-  Post_ViewReference->CT.size = 255;
-  Post_ViewReference->CT.ipar[COLORTABLE_MODE] = COLORTABLE_RGB;
-  ColorTable_InitParam(1, &Post_ViewReference->CT, 1, 1);
-  ColorTable_Recompute(&Post_ViewReference->CT, 1, 1);
+  ColorTable_InitParam(1, &Post_ViewReference->CT);
+  ColorTable_Recompute(&Post_ViewReference->CT);
 
   // Default string options
   Set_DefaultStringOptions(num, GeneralOptions_String);

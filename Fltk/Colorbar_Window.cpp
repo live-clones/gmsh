@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.35 2003-10-29 15:18:30 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.36 2003-12-08 19:18:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -426,43 +426,43 @@ int Colorbar_Window::handle(int event)
   case FL_SHORTCUT:
   case FL_KEYBOARD:
     if(Fl::test_shortcut('0')) {
-      ColorTable_InitParam(0, ct, 1, 1);
+      ColorTable_InitParam(0, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('1')) {
-      ColorTable_InitParam(1, ct, 1, 1);
+      ColorTable_InitParam(1, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('2')) {
-      ColorTable_InitParam(2, ct, 1, 1);
+      ColorTable_InitParam(2, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('3')) {
-      ColorTable_InitParam(3, ct, 1, 1);
+      ColorTable_InitParam(3, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('4')) {
-      ColorTable_InitParam(4, ct, 1, 1);
+      ColorTable_InitParam(4, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('5')) {
-      ColorTable_InitParam(5, ct, 1, 1);
+      ColorTable_InitParam(5, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('6')) {
-      ColorTable_InitParam(6, ct, 1, 1);
+      ColorTable_InitParam(6, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('7')) {
-      ColorTable_InitParam(7, ct, 1, 1);
+      ColorTable_InitParam(7, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('8')) {
-      ColorTable_InitParam(8, ct, 1, 1);
+      ColorTable_InitParam(8, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('9')) {
-      ColorTable_InitParam(9, ct, 1, 1);
+      ColorTable_InitParam(9, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('c')) {
@@ -477,7 +477,7 @@ int Colorbar_Window::handle(int event)
       draw();
     }
     else if(Fl::test_shortcut('r')) {
-      ColorTable_InitParam(ct->ipar[COLORTABLE_NUMBER], ct, 1, 1);
+      ColorTable_InitParam(ct->ipar[COLORTABLE_NUMBER], ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('m')) {
@@ -552,7 +552,7 @@ int Colorbar_Window::handle(int event)
     }
 
     if(compute) {
-      ColorTable_Recompute(ct, 1, 1);
+      ColorTable_Recompute(ct);
       draw();
       *viewchanged = 1;
       set_changed();

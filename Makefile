@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.317 2003-12-07 20:55:51 geuzaine Exp $
+# $Id: Makefile,v 1.318 2003-12-08 19:18:13 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -74,7 +74,7 @@ source: source-common
            NR Triangle/triangle.* utils/commercial
 	tar zcvf gmsh-${GMSH_RELEASE}-source.tgz gmsh-${GMSH_RELEASE}
 
-source-nonfree: source-common
+source-commercial: source-common
 	cd gmsh-${GMSH_RELEASE} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
            Triangle/triangle.* TODO doc/gmsh.html doc/FAQ doc/README.cvs\
            utils/commercial
@@ -84,7 +84,7 @@ source-nonfree: source-common
 	cp -f utils/commercial/license.texi gmsh-${GMSH_RELEASE}/doc/texinfo/license.texi
 	cp -f utils/commercial/copying.texi gmsh-${GMSH_RELEASE}/doc/texinfo/copying.texi
 	utils/commercial/sanitize.sh gmsh-${GMSH_RELEASE}
-	tar zcvf gmsh-${GMSH_RELEASE}-source-nonfree.tgz gmsh-${GMSH_RELEASE}
+	tar zcvf gmsh-${GMSH_RELEASE}-source-commercial.tgz gmsh-${GMSH_RELEASE}
 
 .PHONY: parser
 parser:
