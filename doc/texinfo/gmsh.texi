@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.160 2005-01-01 19:35:40 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.161 2005-01-02 17:38:26 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -766,7 +766,8 @@ Character expressions are defined as:
   StrPrefix ( @var{char-expression} ) |
   StrCat ( @var{char-expression} , @var{char-expression} ) |
   Sprintf ( @var{char-expression} , @var{expression-list} ) |
-  @var{char-option}
+  Sprintf ( @var{char-expression} )
+  Sprintf ( @var{char-option} )
 @end example
 
 @noindent The second case in this definition permits to take the
