@@ -1,4 +1,4 @@
-// $Id: 3D_Coherence.cpp,v 1.18 2001-08-28 15:09:47 geuzaine Exp $
+// $Id: 3D_Coherence.cpp,v 1.19 2001-08-28 22:15:15 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -1235,19 +1235,19 @@ int Coherence (Volume * v, Mesh * m){
     /* il reste des intersections */
     
     if (List_Nbr (ListFaces) != Nh - 2){
-      /*
-        printf("Recherche des intersections\n");
-        printf("La face initiale comprend %d faces existantes\n",List_Nbr(ListFaces));
-        printf("La face est divisee en %d points\n",List_Nbr(NewPoints));
-      */
+      
+      Msg(INFO, "Intersections left");
+      Msg(INFO, "   Initial face contains %d existing faces", List_Nbr(ListFaces));
+      Msg(INFO, "   Face divided in %d points",List_Nbr(NewPoints));
+      
       TreexNewv = Tree_Create (sizeof (xNewv), compxNewv);
       TetAdd = Tree_Create (sizeof (Simplex *), compareSimplex);
       TetDel = Tree_Create (sizeof (Simplex *), compareSimplex);
       Tree_Action (v->Simplexes, Recover_Face);
-      /*
-        printf("La face est divisee en %d points %d %d \n",
-               List_Nbr(NewPoints),Tree_Nbr(TetAdd),Tree_Nbr(TetDel));
-      */
+
+      Msg(INFO, "The face is divided in %d points %d %d",
+	  List_Nbr(NewPoints),Tree_Nbr(TetAdd),Tree_Nbr(TetDel));
+
       Actual_Tree = v->Simplexes;
       Tree_Action (TetAdd, _Add);
       Tree_Action (TetDel, _Del);
@@ -1258,6 +1258,7 @@ int Coherence (Volume * v, Mesh * m){
     Np = List_Nbr (NewPoints);
 
     if (1 || List_Nbr (ListFaces) == 2 * (Np - 1) - Nh){
+      // on passe tjs ici pour le moment, meme si ca ne marche pas...
       
       Msg(INFO, "Recoverable face (%d <--> %d=2*(%d-1)-%d)",
           List_Nbr (ListFaces), 2 * (Np - 1) - Nh, Np, Nh);
@@ -1265,14 +1266,6 @@ int Coherence (Volume * v, Mesh * m){
       for (j = 0; j < List_Nbr (v->Surfaces); j++){
         List_Read (v->Surfaces, j, &s);
         if (Tree_Search (s->Simplexes, &simp)){
-	  /*
-	  if(List_Nbr(ListFaces)>2){
-	    printf("suppressed tri %d\n", simp->Num);
-	    printf(" (%g %g %g)\n", simp->V[0]->Pos.X, simp->V[0]->Pos.Y,simp->V[0]->Pos.Z);
-	    printf(" (%g %g %g)\n", simp->V[1]->Pos.X, simp->V[1]->Pos.Y,simp->V[1]->Pos.Z);
-	    printf(" (%g %g %g)\n", simp->V[2]->Pos.X, simp->V[2]->Pos.Y,simp->V[2]->Pos.Z);
-	  }
-	  */
           for (k = 0; k < List_Nbr (ListFaces); k++){
             List_Read (ListFaces, k, &Face);
             simp1 = Create_Simplex_MemeSens (simp, Face.V[0], Face.V[1], Face.V[2]);
@@ -1283,14 +1276,6 @@ int Coherence (Volume * v, Mesh * m){
             Tree_Replace (v->Vertices, &Face.V[0]);
             Tree_Replace (v->Vertices, &Face.V[1]);
             Tree_Replace (v->Vertices, &Face.V[2]);
-	    /*
-	    if(List_Nbr(ListFaces)>2){
-	      printf("replaced by tri %d\n", simp1->Num);
-	      printf(" (%g %g %g)\n", simp1->V[0]->Pos.X, simp1->V[0]->Pos.Y,simp1->V[0]->Pos.Z);
-	      printf(" (%g %g %g)\n", simp1->V[1]->Pos.X, simp1->V[1]->Pos.Y,simp1->V[1]->Pos.Z);
-	      printf(" (%g %g %g)\n", simp1->V[2]->Pos.X, simp1->V[2]->Pos.Y,simp1->V[2]->Pos.Z);
-	    }
-	    */
           }
           Tree_Suppress (s->Simplexes, &simp);
         }

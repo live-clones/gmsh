@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.28 2001-08-24 06:58:19 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.29 2001-08-28 22:15:15 geuzaine Exp $
 
 /*
  
@@ -470,7 +470,6 @@ int recur_bowyer (Simplex * s){
 bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
   int i;
   Simplex *s;
-  //  static int init = 1;
   double volumeold, volumenew;
 
   THEV = v;
@@ -486,12 +485,8 @@ bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
 
   Tsd = Tree_Create (sizeof (Simplex *), compareSimplex);
   Sim_Sur_Le_Bord = Tree_Create (sizeof (Simplex *), compareSimplex);
-  //  if (init){
-    //    init = 0;
-    //  }
   List_Reset (Simplexes_Destroyed);
   List_Reset (Simplexes_New);
-
 
   if (Methode){
     Tree_Action (m->Simplexes, Fill_Sim_Des);
@@ -550,7 +545,6 @@ bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
       List_Read (Simplexes_Destroyed, i, &s);
       if (!Tree_Suppress (m->Simplexes, &s))
         Msg(GERROR, "Impossible to delete simplex");
-      // CORRECTION FROM Free(s) to that
       Free_Simplex (&s,0);
     }
     
@@ -563,11 +557,6 @@ bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
   Tree_Delete (Sim_Sur_Le_Bord);
   Tree_Delete (Tsd);
   return true;
-}
-
-double rand_sign(){
-  double d = ((double)rand()/(double)RAND_MAX) ;
-  return (d < 0.5)?-1.0:1.0;
 }
 
 void Convex_Hull_Mesh (List_T * Points, Mesh * m){
@@ -603,25 +592,19 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
       Msg(STATUS1, "Vol=%g",volume); 
     }
     if (!THES){
-      Msg(WARNING, "Vertex (%g,%g,%g) in no simplex",
-          THEV->Pos.X,THEV->Pos.Y,THEV->Pos.Z); 
-      THEV->Pos.X += 10 * CTX.mesh.rand_factor * LC3D * (double)rand()/(double)RAND_MAX;
-      THEV->Pos.Y += 10 * CTX.mesh.rand_factor * LC3D * (double)rand()/(double)RAND_MAX;
-      THEV->Pos.Z += 10 * CTX.mesh.rand_factor * LC3D * (double)rand()/(double)RAND_MAX;
+      Msg(WARNING, "Vertex (%g,%g,%g) in no simplex", THEV->Pos.X,THEV->Pos.Y,THEV->Pos.Z); 
+      THEV->Pos.X += CTX.mesh.rand_factor * LC3D * (1.-(double)rand()/(double)RAND_MAX);
+      THEV->Pos.Y += CTX.mesh.rand_factor * LC3D * (1.-(double)rand()/(double)RAND_MAX);
+      THEV->Pos.Z += CTX.mesh.rand_factor * LC3D * (1.-(double)rand()/(double)RAND_MAX);
       Tree_Action (m->Simplexes, Action_First_Simplexes);
     }
-    bool  ca_marche = Bowyer_Watson (m, THEV, THES, 1);
+    bool ca_marche = Bowyer_Watson (m, THEV, THES, 1);
     int count = 0;
     while(!ca_marche){
-      //Msg(INFO, "Unable to add point %d (%g,%g,%g)",
-      //	  THEV->Num, THEV->Pos.X,THEV->Pos.Y,THEV->Pos.Z );
       count ++;
-      double dx = rand_sign() * 1000 * CTX.mesh.rand_factor * LC3D *
-	(double)rand()/(double)RAND_MAX;
-      double dy = rand_sign() * 1000 * CTX.mesh.rand_factor * LC3D *
-	(double)rand()/(double)RAND_MAX;
-      double dz = rand_sign() * 1000 * CTX.mesh.rand_factor * LC3D *
-	(double)rand()/(double)RAND_MAX;
+      double dx = CTX.mesh.rand_factor * LC3D * (1.-(double)rand()/(double)RAND_MAX);
+      double dy = CTX.mesh.rand_factor * LC3D * (1.-(double)rand()/(double)RAND_MAX);
+      double dz = CTX.mesh.rand_factor * LC3D * (1.-(double)rand()/(double)RAND_MAX);
       THEV->Pos.X += dx;
       THEV->Pos.Y += dy;
       THEV->Pos.Z += dz;
@@ -634,8 +617,7 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
       if(count > 5){
         N++;
         List_Add(POINTS,&THEV);
-        Msg(WARNING, "Unable to add point %d (will do it later)",
-            THEV->Num);
+        Msg(WARNING, "Unable to add point %d (will try it later)", THEV->Num);
         break;
       }
     }
@@ -654,16 +636,7 @@ void suppress_simplex (void *data, void *dum){
   Simplex **pv;
 
   pv = (Simplex **) data;
-  if ((*pv)->iEnt == 0)
-    List_Add (Suppress, pv);
-
-  /*
-  else{
-    for(i=0;i<List_Nbr(TrsfVolNum);i++)
-      if((*pv)->iEnt == (*(int*)List_Pointer(TrsfVolNum,i))->Num)
-        List_Add(Suppress,pv);
-  }
-  */
+  if ((*pv)->iEnt == 0) List_Add (Suppress, pv);
 }
 
 void add_in_bgm (void *a, void *b){

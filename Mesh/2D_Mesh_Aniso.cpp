@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.20 2001-08-20 07:38:30 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.21 2001-08-28 22:15:15 geuzaine Exp $
 
 /*
    Jean-Francois Remacle
@@ -666,17 +666,16 @@ void Convex_Hull_Mesh_2D (List_T * Points, Surface * s){
       } 
     */
     if (!THES){
-      Msg(GERROR, "Vertex (%g,%g,%g) in no simplex",
-          THEV->Pos.X, THEV->Pos.Y, THEV->Pos.Z);
-      THEV->Pos.X += CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;
-      THEV->Pos.Y += CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;
-      THEV->Pos.Z += CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;
+      Msg(GERROR, "Vertex (%g,%g,%g) in no simplex", THEV->Pos.X, THEV->Pos.Y, THEV->Pos.Z);
+      THEV->Pos.X += CTX.mesh.rand_factor * LC2D * (1.-(double)rand()/(double)RAND_MAX);
+      THEV->Pos.Y += CTX.mesh.rand_factor * LC2D * (1.-(double)rand()/(double)RAND_MAX);
+      THEV->Pos.Z += CTX.mesh.rand_factor * LC2D * (1.-(double)rand()/(double)RAND_MAX);
       Tree_Action (s->Simplexes, Action_First_Simplexes_2D);
     }
-    bool  ca_marche = Bowyer_Watson_2D (s, THEV, THES, 1);
+    bool ca_marche = Bowyer_Watson_2D (s, THEV, THES, 1);
     while(!ca_marche){
-      double dx = CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;
-      double dy = CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;
+      double dx = CTX.mesh.rand_factor * LC2D * (1.-(double)rand()/(double)RAND_MAX);
+      double dy = CTX.mesh.rand_factor * LC2D * (1.-(double)rand()/(double)RAND_MAX);
       THEV->Pos.X += dx;
       THEV->Pos.Y += dy;
       ca_marche = Bowyer_Watson_2D (s, THEV, THES, 1);
