@@ -1,4 +1,4 @@
-/* $Id: Views.cpp,v 1.13 2000-12-07 00:55:16 geuzaine Exp $ */
+/* $Id: Views.cpp,v 1.14 2000-12-07 19:03:56 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Views.h"
@@ -347,11 +347,23 @@ char **Get_StringViewOption(int num, char *str, int *type){
     return (char**)&v->FileName ;
   }
   else if(!strcmp(str, "Name")){
-    return (char**)&v->FileName ;
+    return (char**)&v->Name ;
   }
   else{
     return NULL ;
   }
+}
+
+void Print_StringViewOptions(int num, FILE *file){
+  Post_View *v;
+
+  if(num < 0 || num >= List_Nbr(Post_ViewList))
+    return ;
+  v = (Post_View*)List_Pointer(Post_ViewList, num);
+
+  fprintf(file, "Post.View[%d].Format = \"%s\";\n", num, v->Format);
+  fprintf(file, "Post.View[%d].FileName = \"%s\";\n", num, v->FileName);
+  fprintf(file, "Post.View[%d].Name = \"%s\";\n", num, v->Name);
 }
 
 void *Get_NumberViewOption(int num, char *str, int *type){
@@ -366,6 +378,10 @@ void *Get_NumberViewOption(int num, char *str, int *type){
   if(!strcmp(str, "NbTimeStep")){
     *type = GMSH_INT ;
     return (void*)&v->NbTimeStep ;
+  }
+  else if(!strcmp(str, "TimeStep")){
+    *type = GMSH_INT ;
+    return (void*)&v->TimeStep ;
   }
   else if(!strcmp(str, "Min")){
     *type = GMSH_DOUBLE ;
@@ -435,13 +451,37 @@ void *Get_NumberViewOption(int num, char *str, int *type){
     *type = GMSH_INT ;
     return (void*)&v->ArrowLocation ;
   }
-  else if(!strcmp(str, "TimeStep")){
-    *type = GMSH_INT ;
-    return (void*)&v->TimeStep ;
-  }
   else{
     return NULL ;
   }
+}
+
+void Print_NumberViewOptions(int num, FILE *file){
+  Post_View *v;
+
+  if(num < 0 || num >= List_Nbr(Post_ViewList))
+    return ;
+  v = (Post_View*)List_Pointer(Post_ViewList, num);
+
+  fprintf(file, "Post.View[%d].NbTimeStep = %d;\n", num, v->NbTimeStep);
+  fprintf(file, "Post.View[%d].TimeStep = %d;\n", num, v->TimeStep);
+  fprintf(file, "Post.View[%d].Min = %g;\n", num, v->Min);
+  fprintf(file, "Post.View[%d].Max = %g;\n", num, v->Max);
+  fprintf(file, "Post.View[%d].CustomMin = %g;\n", num, v->CustomMin);
+  fprintf(file, "Post.View[%d].CustomMax = %g;\n", num, v->CustomMax);
+  fprintf(file, "Post.View[%d].ArrowScale = %g;\n", num, v->ArrowScale);
+  fprintf(file, "Post.View[%d].Visible = %d;\n", num, v->Visible);
+  fprintf(file, "Post.View[%d].IntervalsType = %d;\n", num, v->IntervalsType);
+  fprintf(file, "Post.View[%d].NbIso = %d;\n", num, v->NbIso);
+  fprintf(file, "Post.View[%d].Light = %d;\n", num, v->Light);
+  fprintf(file, "Post.View[%d].ShowElement = %d;\n", num, v->ShowElement);
+  fprintf(file, "Post.View[%d].ShowTime = %d;\n", num, v->ShowTime);
+  fprintf(file, "Post.View[%d].ShowScale = %d;\n", num, v->ShowScale);
+  fprintf(file, "Post.View[%d].TransparentScale = %d;\n", num, v->TransparentScale);
+  fprintf(file, "Post.View[%d].ScaleType = %d;\n", num, v->ScaleType);
+  fprintf(file, "Post.View[%d].RangeType = %d;\n", num, v->RangeType);
+  fprintf(file, "Post.View[%d].ArrowType = %d;\n", num, v->ArrowType);
+  fprintf(file, "Post.View[%d].ArrowLocation = %d;\n", num, v->ArrowLocation);
 }
 
 void *Get_ArrayViewOption(int num, char *str, int *type){
@@ -465,6 +505,21 @@ void *Get_ArrayViewOption(int num, char *str, int *type){
     return NULL ;
   }
 }
+
+void Print_ArrayViewOptions(int num, FILE *file){
+  Post_View *v;
+
+  if(num < 0 || num >= List_Nbr(Post_ViewList))
+    return ;
+  v = (Post_View*)List_Pointer(Post_ViewList, num);
+
+  fprintf(file, "Post.View[%d].Offset = {%g,%g,%g};\n", 
+	  num, v->Offset[0], v->Offset[1], v->Offset[2]);
+  fprintf(file, "Post.View[%d].Raise = {%g,%g,%g};\n", 
+	  num, v->Raise[0], v->Raise[1], v->Raise[2]);
+
+}
+
 
 
 /* ------------------------------------------------------------------------ */

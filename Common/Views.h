@@ -1,4 +1,4 @@
-/* $Id: Views.h,v 1.11 2000-12-07 00:55:16 geuzaine Exp $ */
+/* $Id: Views.h,v 1.12 2000-12-07 19:03:56 geuzaine Exp $ */
 #ifndef _VIEWS_H_
 #define _VIEWS_H_
 
@@ -85,5 +85,9 @@ double ErrorInView(Post_View * ErrView, int *n);
 char **Get_StringViewOption(int num, char *str, int *type);
 void *Get_NumberViewOption(int num, char *str, int *type);
 void *Get_ArrayViewOption(int num, char *str, int *type);
+
+void Print_StringViewOptions(int num, FILE *file);
+void Print_NumberViewOptions(int num, FILE *file);
+void Print_ArrayViewOptions(int num, FILE *file);
 
 #endif

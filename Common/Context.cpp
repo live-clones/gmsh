@@ -1,4 +1,4 @@
-/* $Id: Context.cpp,v 1.15 2000-12-07 08:46:09 geuzaine Exp $ */
+/* $Id: Context.cpp,v 1.16 2000-12-07 19:03:56 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -340,7 +340,11 @@ void Init_Context(void){
 
 }
 
+extern List_T  *Post_ViewList;
+
 void Print_Context(FILE *file){
+  int i ;
+
   Print_StringOptions(GeneralOptions_String, "General.", file);
   Print_NumberOptions(GeneralOptions_Number, "General.", file);
   Print_ArrayOptions(GeneralOptions_Array, "General.", file);
@@ -365,6 +369,12 @@ void Print_Context(FILE *file){
   Print_NumberOptions(PrintOptions_Number, "Print.", file);
   Print_ArrayOptions(PrintOptions_Array, "Print.", file);
   Print_ColorOptions(PrintOptions_Color, "Print.", file);
+  for(i=0; i<List_Nbr(Post_ViewList) ; i++){
+    fprintf(file, "\n");
+    Print_StringViewOptions(i, file);
+    Print_NumberViewOptions(i, file);
+    Print_ArrayViewOptions(i, file);
+  }
 }
 
 void Context_T::buildRotmatrix(float m[4][4])
