@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.415 2005-01-18 06:48:28 geuzaine Exp $
+// $Id: GUI.cpp,v 1.416 2005-01-18 19:03:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3508,7 +3508,7 @@ void GUI::create_visibility_window()
   };
 
   int width = cols[0] + cols[1] + cols[2] + cols[3] + 4 * WB;
-  int height = 16 * BH;
+  int height = 18 * BH;
 
   vis_window = new Dialog_Window(width, height, "Visibility");
   vis_window->box(GMSH_WINDOW_BOX);
@@ -3566,7 +3566,7 @@ void GUI::create_visibility_window()
     Fl_Group::current()->resizable(o);
   }
   {
-    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - BH, "Direct Numeric Input");
+    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - BH, "Numeric Input");
     o->resizable(NULL);
 
     for(int i = 0; i < 6; i++){
@@ -3722,7 +3722,7 @@ void GUI::create_about_window()
   int height = 15 * BH;
 
   // not a "Dialog_Window" since it is modal 
-  about_window = new Fl_Window(width, height, "About Gmsh");
+  about_window = new Fl_Double_Window(width, height, "About Gmsh");
   about_window->box(GMSH_WINDOW_BOX);
 
   {

@@ -23,6 +23,8 @@
 #include "GmshUI.h"
 #include "ColorTable.h"
 
+#include <FL/Fl_Window.H>
+
 class Colorbar_Window : public Fl_Window {
   void draw();
   int  handle(int);

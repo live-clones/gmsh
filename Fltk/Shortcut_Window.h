@@ -22,13 +22,13 @@
 
 #include "GmshUI.h"
 
-#include <FL/Fl_Window.H>
+#include <FL/Fl_Double_Window.H>
 #include <FL/fl_ask.H>
 
-// Derive special windows from Fl_Window to correctly process the
-// OS-specific shorcuts (Cmd-w on Mac, Alt+F4 on Windows)
+// Derive special windows from Fl_Double_Window to correctly process
+// the OS-specific shorcuts (Cmd-w on Mac, Alt+F4 on Windows)
 
-class Dialog_Window : public Fl_Window {
+class Dialog_Window : public Fl_Double_Window {
   int  handle(int event){
     switch (event) {
     case FL_SHORTCUT:
@@ -46,16 +46,16 @@ class Dialog_Window : public Fl_Window {
 #endif
       break;
     }
-    return Fl_Window::handle(event);
+    return Fl_Double_Window::handle(event);
   }
  public:
   Dialog_Window(int x,int y,int w,int h,const char *l=0) :
-    Fl_Window(x, y, w, h, l) {}
+    Fl_Double_Window(x, y, w, h, l) {}
   Dialog_Window(int w,int h,const char *l=0) :
-    Fl_Window(w, h, l) {}
+    Fl_Double_Window(w, h, l) {}
 };
 
-class Main_Window : public Fl_Window {
+class Main_Window : public Fl_Double_Window {
   int  handle(int event){
     switch (event) {
     case FL_SHORTCUT:
@@ -75,13 +75,13 @@ class Main_Window : public Fl_Window {
 #endif
       break;
     }
-    return Fl_Window::handle(event);
+    return Fl_Double_Window::handle(event);
   }
  public:
   Main_Window(int x,int y,int w,int h,const char *l=0) :
-    Fl_Window(x, y, w, h, l) {}
+    Fl_Double_Window(x, y, w, h, l) {}
   Main_Window(int w,int h,const char *l=0) :
-    Fl_Window(w, h, l) {}
+    Fl_Double_Window(w, h, l) {}
 };
 
 #endif

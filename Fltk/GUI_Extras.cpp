@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.6 2005-01-08 20:15:11 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.7 2005-01-18 19:03:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -175,7 +175,7 @@ int jpeg_dialog(char *name, int TeX)
     dialog = new _jpeg_dialog;
     int h = 3*10 + 25 + 2*25, y = 0;
     // not a "Dialog_Window" since it is modal 
-    dialog->window = new Fl_Window(200, h, "JPEG Options"); y = 10;
+    dialog->window = new Fl_Double_Window(200, h, "JPEG Options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->s[0] = new Fl_Value_Slider(10, y, 100, 25, "Quality"); y += 25;
     dialog->s[0]->type(FL_HOR_SLIDER);
@@ -236,7 +236,7 @@ int gif_dialog(char *name)
     dialog = new _gif_dialog;
     int h = 3*10 + 25 + 4*25, y = 0;
     // not a "Dialog_Window" since it is modal 
-    dialog->window = new Fl_Window(200, h, "GIF Options"); y = 10;
+    dialog->window = new Fl_Double_Window(200, h, "GIF Options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->b[0] = new Fl_Check_Button(10, y, 180, 25, "Dither"); y += 25;
     dialog->b[1] = new Fl_Check_Button(10, y, 180, 25, "Interlace"); y += 25;
@@ -329,7 +329,7 @@ int gl2ps_dialog(char *name, char *title, int format, int TeX)
     dialog = new _gl2ps_dialog;
     int h = 3*10 + 25 + 6*25, y = 0;
     // not a "Dialog_Window" since it is modal 
-    dialog->window = new Fl_Window(200, h); y = 10;
+    dialog->window = new Fl_Double_Window(200, h); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->c = new Fl_Choice(10, y, 145, 25, "Type"); y+= 25;
     dialog->c->menu(sortmenu);
@@ -408,7 +408,7 @@ int options_dialog(char *name)
     dialog = new _options_dialog;
     int h = 3*10 + 25 + 1*25, y = 0;
     // not a "Dialog_Window" since it is modal 
-    dialog->window = new Fl_Window(200, h, "Options"); y = 10;
+    dialog->window = new Fl_Double_Window(200, h, "Options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->b = new Fl_Check_Button(10, y, 180, 25, "Save only modified options"); y += 25;
     dialog->b->value(1);
@@ -465,7 +465,7 @@ int msh_dialog(char *name)
     dialog = new _msh_dialog;
     int h = 3*10 + 25 + 2*25, y = 0;
     // not a "Dialog_Window" since it is modal 
-    dialog->window = new Fl_Window(200, h, "MSH Options"); y = 10;
+    dialog->window = new Fl_Double_Window(200, h, "MSH Options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->c = new Fl_Choice(10, y, 130, 25, "Format"); y+= 25;
     dialog->c->menu(versionmenu);
@@ -521,7 +521,7 @@ int geo_dialog(char *name)
     dialog = new _geo_dialog;
     int h = 3*10 + 25 + 1*25, y = 0;
     // not a "Dialog_Window" since it is modal 
-    dialog->window = new Fl_Window(200, h, "GEO options"); y = 10;
+    dialog->window = new Fl_Double_Window(200, h, "GEO options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->b = new Fl_Check_Button(10, y, 180, 25, "Save discrete surfaces"); y += 25;
     dialog->b->value(1);
