@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.126 2001-08-13 07:53:30 geuzaine Exp $
+# $Id: Makefile,v 1.127 2001-08-13 14:51:12 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -416,9 +416,6 @@ motif_link_hp:
 # Ready to compile for some platforms with FLTK
 # ----------------------------------------------------------------------
 
-# Warning: -O3 is known to produce incorrect code with gcc-2.95.2 on
-# linux. Let's stick to -O2 for all public releases...
-
 fltk_compile_little_endian:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
@@ -429,15 +426,26 @@ fltk_compile_little_endian:
            "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
 
+# optimized gcc fucks up with 3D_Extrude on old linux boxes...
 fltk_compile_little_endian_2952:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
-           "CC=$(HOME)/gcc-2.95.2/bin/g++" \
+           "CC=$(HOME)/gcc-2.95.3/bin/g++" \
            "C_FLAGS=-O2" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
+	rm -f Mesh/3D_Extrude.o
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(HOME)/gcc-2.95.3/bin/g++" \
+           "C_FLAGS=-O0" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "GUI_INCLUDE=$(FLTK_INC)" \
+        ); done
+
 
 fltk_compile_big_endian:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
