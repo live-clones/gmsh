@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.1 2002-08-14 17:47:48 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.2 2002-09-02 04:13:38 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -84,9 +84,13 @@ void GMSH_SphericalRaisePlugin::CatchErrorMessage (char *errorMessage) const
   strcpy(errorMessage,"SphericalRaise failed...");
 }
 
-static void sphericalRaise(Post_View *v, double center[3], double raise){
+static void sphericalRaiseList(Post_View *v, List_T *list, int nbelm, int nbvert,
+			       double center[3], double raise){
   double *x,*y,*z,*val,d[3],coef;
-  int nb, nbvert, i, j;
+  int nb, i, j;
+
+  if(nbelm) v->Changed=1;
+  else return;
 
   // for each element
   //   for each node
@@ -95,33 +99,35 @@ static void sphericalRaise(Post_View *v, double center[3], double raise){
   //      get nodal value val at xyz
   //      compute (x,y,z)_new = (x,y,z)_old + raise*val*(dx,dy,dz)
 
-  if(v->NbST){
-    nb = List_Nbr(v->ST) / v->NbST ;
-    nbvert = 3;
-    for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb){
-      x = (double*)List_Pointer_Fast(v->ST,i);
-      y = (double*)List_Pointer_Fast(v->ST,i+nbvert);
-      z = (double*)List_Pointer_Fast(v->ST,i+2*nbvert);
-      val = (double*)List_Pointer_Fast(v->ST,i+3*nbvert);
-      for(j=0; j<nbvert; j++){
-	d[0] = x[j]-center[0];
-	d[1] = y[j]-center[1];
-	d[2] = z[j]-center[2];
-	norme(d);
-	coef = raise*val[j];
-	x[j] += coef*d[0];
-	y[j] += coef*d[1];
-	z[j] += coef*d[2];
-      }
+  nb = List_Nbr(list) / nbelm ; 
+  for(i = 0 ; i < List_Nbr(list) ; i+=nb){
+    x = (double*)List_Pointer_Fast(list,i);
+    y = (double*)List_Pointer_Fast(list,i+nbvert);
+    z = (double*)List_Pointer_Fast(list,i+2*nbvert);
+    val = (double*)List_Pointer_Fast(list,i+3*nbvert);
+    for(j=0; j<nbvert; j++){
+      d[0] = x[j]-center[0];
+      d[1] = y[j]-center[1];
+      d[2] = z[j]-center[2];
+      norme(d);
+      coef = raise*val[j];
+      x[j] += coef*d[0];
+      y[j] += coef*d[1];
+      z[j] += coef*d[2];
     }
-    v->Changed=1;
   }
-  else{
-    Msg(WARNING, "No scalar triangles to transform");
-  }
-
 }
 
+static void sphericalRaise(Post_View *v, double center[3], double raise){
+  sphericalRaiseList(v, v->SP, v->NbSP, 1, center, raise);
+  sphericalRaiseList(v, v->SL, v->NbSL, 2, center, raise);
+  sphericalRaiseList(v, v->ST, v->NbST, 3, center, raise);
+  sphericalRaiseList(v, v->SQ, v->NbSQ, 4, center, raise);
+  sphericalRaiseList(v, v->SS, v->NbSS, 4, center, raise);
+  sphericalRaiseList(v, v->SH, v->NbSH, 8, center, raise);
+  sphericalRaiseList(v, v->SI, v->NbSI, 6, center, raise);
+  sphericalRaiseList(v, v->SY, v->NbSY, 5, center, raise);
+}
 
 Post_View *GMSH_SphericalRaisePlugin::execute (Post_View *v)
 {
