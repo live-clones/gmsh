@@ -1,14 +1,11 @@
-$Id: BUGS,v 1.4 2001-08-17 12:02:39 geuzaine Exp $
+$Id: BUGS,v 1.5 2001-09-06 05:25:28 geuzaine Exp $
 
 * All surface meshes are made in a mean plane. If your surface cannot
 be projected into a plane with a 1-to-1 correspondance between the
 nodes, then gmsh will fail. We should mesh in the parametric plane in
 these cases...
 
-* Si la coherence des surfaces n'est pas recouvree en une etape, et
-qu'on fait une seconde passe qui marche, les volumes ne sont pas
-retrouves-< pas de maillage final.
+* Il faudrait completer l'integration de Triangle (bgmesh on file,
+2eme maillage intermediare ?), puis virer l'ancien mailleur 2D.
 
-* Comme le code se stabilise, je pense qu'il serait grand temps de
-penser a desallouer les structures. On pourrait alors cloturer une
-version 1 "stable".
+* Refaire tourner purify...

@@ -111,20 +111,23 @@ the geometry.
 perform the three-dimensional mesh, i.e. discretize all the volumes in
 the geometry.
 .TP 4
+.B \-saveall
+save all elements (and discards all physical group definitions).
+.TP 4
 .B \-o file
 specify mesh output file name.
 .TP 4
 .B \-format msh|unv|gref
 set output mesh format (default: msh).
 .TP 4
-.B \-algo iso|aniso
+.B \-algo iso|aniso|tri
 select the two-dimensional mesh algorithm (default: iso).
 .TP 4
 .B \-smooth int
 set the number of smoothing passes (default value is 3).
-.TP 4
-.B \-degree int
-set the degree of the generated elements (default value is 1).
+.\"   .TP 4
+.\"   .B \-degree int
+.\"   set the degree of the generated elements (default value is 1).
 .TP 4
 .B \-scale float
 apply a global scaling factor to the generated mesh (default value is
@@ -167,9 +170,11 @@ enable OpenGL display lists.
 .B \-noview
 hide all views at startup.
 .TP 4
-.B \-link
-link all views (all interactive option modifications will apply to all
-views) at startup.
+.B \-link int
+choose link mode between post-processing views (default: 0).
+.TP 4
+.B \-smoothview
+smooth views at startup.
 .TP 4
 .B \-convert file file
 convert an ascii view into a binary one.
