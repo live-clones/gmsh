@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.157 2002-03-05 19:40:47 geuzaine Exp $
+// $Id: GUI.cpp,v 1.158 2002-03-10 23:23:33 remacle Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -2552,6 +2552,20 @@ void GUI::create_view_options_window(int num){
 	view_value[i]->callback(set_changed_cb, 0);
       }
       
+      {
+	Fl_Group *o = new Fl_Group(2*WB, 2*WB+4*BH, width-4*WB, 2*BH, 0);
+	view_butt[70] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW/2-WB, BH, "Von-Mises");
+	view_butt[71] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW/2-WB, BH, "Eigenvectors");
+	for(i=70 ; i<=71 ; i++){
+	  view_butt[i]->type(FL_RADIO_BUTTON);
+	  view_butt[i]->down_box(RADIO_BOX);
+	  view_butt[i]->labelsize(CTX.fontsize);
+	  view_butt[i]->selection_color(RADIO_COLOR);
+	  view_butt[i]->callback(set_changed_cb, 0);
+	}
+	o->end();
+      }
+
       o->end();
     }
     // Colors
@@ -2710,6 +2724,7 @@ void GUI::update_view_window(int num){
   opt_view_arrow_type(num, GMSH_GUI, 0);
   opt_view_arrow_scale(num, GMSH_GUI, 0);
   opt_view_arrow_location(num, GMSH_GUI, 0);
+  opt_view_tensor_type(num, GMSH_GUI, 0);
 
   // colors
   view_colorbar_window->update(v->Name, v->Min, v->Max, &v->CT, &v->Changed);

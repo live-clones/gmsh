@@ -879,7 +879,8 @@ StringXNumber ViewOptions_Number[] = {
     "Show time value (or time step) if NbTimeStep > 1?" },
   { F|O, "SmoothNormals" , opt_view_smooth_normals , 0. ,
     "Smooth the normals?" },
-
+  { F|O,   "TensorType" , opt_view_tensor_type , 0. ,
+    "Tensor Visualization Type" },
   { F,   "TimeStep" , opt_view_timestep , 0. ,
     "Current time step displayed" },
   { F|O, "TransparentScale" , opt_view_transparent_scale , 1. ,

@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.32 2002-02-13 09:20:41 stainier Exp $
+// $Id: PostSimplex.cpp,v 1.33 2002-03-10 23:23:33 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -573,6 +573,7 @@ static int TensorError = 0 ;
 void Draw_TensorSimplex(int nbnod, Post_View *View, 
 			double ValMin, double ValMax, double Raise[3][5],
 			double *X, double *Y, double *Z, double *V){
+
   if(!TensorError){
     TensorError = 1;
     Msg(GERROR, "Tensor field visualization is not implemented");
@@ -597,7 +598,26 @@ void Draw_TensorLine(Post_View *View,
 void Draw_TensorTriangle(Post_View *View, 
 			 double ValMin, double ValMax, double Raise[3][5],
 			 double *X, double *Y, double *Z, double *V){
-  Draw_TensorSimplex(3, View, ValMin, ValMax, Raise, X, Y, Z, V);
+
+  /// we want to compute "von mises" value i.e. max eigenvalue
+  /// this will simply call the scalar function
+
+  if(View->TensorType == DRAW_POST_VONMISES)
+    {
+      double V_VonMises [3];
+      
+      for(int i=0;i<3;i++)
+	{
+	  double xx = V[0+9*i];
+	  double yy = V[4+9*i];
+	  double xy = V[1+9*i];
+	  V_VonMises[i] = sqrt (0.5 * ( 
+				       (xx-yy) * (xx-yy) + 
+				       (xx-xy) * (xx-xy) + 
+				       (xy-yy) * (xy-yy) ) );
+	}
+      Draw_ScalarTriangle(View, 0,ValMin, ValMax, Raise, X,Y,Z,V_VonMises);
+    }
 }
 
 void Draw_TensorTetrahedron(Post_View *View, 

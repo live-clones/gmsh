@@ -28,7 +28,7 @@ class Post_View{
   List_T *T2D, *T2C, *T3D, *T3C; // 2D and 3D text strings
 
   // options
-  int Type, Position[2], AutoPosition, Size[2];
+  int Type, Position[2], AutoPosition, Size[2],TensorType;
   char   Format[256];
   double CustomMin, CustomMax;
   double Offset[3], Raise[3], ArrowScale, Explode;
@@ -84,6 +84,10 @@ class Post_View{
 // ArrowLocation
 #define DRAW_POST_LOCATE_COG     1
 #define DRAW_POST_LOCATE_VERTEX  2
+
+// Tensor Type
+#define DRAW_POST_VONMISES      0
+#define DRAW_POST_EIGENVECTORS  1
 
 // RangeType
 #define DRAW_POST_DEFAULT 1

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.73 2002-02-22 23:07:01 geuzaine Exp $
+// $Id: Options.cpp,v 1.74 2002-03-10 23:23:33 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -2628,6 +2628,21 @@ double opt_view_range_type(OPT_ARGS_NUM){
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number))
     WID->view_butt[34]->value(v->RangeType==DRAW_POST_CUSTOM);
+#endif
+  return v->RangeType;
+}
+double opt_view_tensor_type(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    printf("type = %d\n",(int)val);
+    v->TensorType = (int)val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
+    WID->view_butt[70]->value(v->TensorType==DRAW_POST_VONMISES);
+    WID->view_butt[71]->value(v->TensorType==DRAW_POST_EIGENVECTORS);
+  }
 #endif
   return v->RangeType;
 }

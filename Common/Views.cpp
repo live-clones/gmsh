@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.64 2002-02-13 09:20:41 stainier Exp $
+// $Id: Views.cpp,v 1.65 2002-03-10 23:23:33 remacle Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -174,7 +174,34 @@ void Stat_VectorSimplex(Post_View *v, int nbnod, int N,
 
 void Stat_TensorSimplex(Post_View *v, int nbnod, int N, 
 			double *X, double *Y, double *Z, double *V){
-  Msg(GERROR, "Tensor field views not implemented yet");
+  double l0;
+  int i;
+
+  if(v->Min == INFINITY || v->Max == -INFINITY){
+    l0 = sqrt(DSQR(V[0])+DSQR(V[1])+DSQR(V[2]));
+    v->Min = l0;
+    v->Max = l0;
+    v->NbTimeStep = N/(3*nbnod) ;
+  }
+  else if(N/(3*nbnod) < v->NbTimeStep)
+    v->NbTimeStep = N/(3*nbnod) ;
+
+  for(i=0 ; i<N ; i+=3){
+    l0 = sqrt(DSQR(V[i])+DSQR(V[i+1])+DSQR(V[i+2]));
+    if(l0 < v->Min) v->Min = l0 ;
+    if(l0 > v->Max) v->Max = l0 ;
+  }
+
+  for(i=0 ; i<nbnod ; i++){
+    if(X[i] < v->BBox[0]) v->BBox[0] = X[i] ;
+    if(X[i] > v->BBox[1]) v->BBox[1] = X[i] ;
+    if(Y[i] < v->BBox[2]) v->BBox[2] = Y[i] ;
+    if(Y[i] > v->BBox[3]) v->BBox[3] = Y[i] ;
+    if(Z[i] < v->BBox[4]) v->BBox[4] = Z[i] ;
+    if(Z[i] > v->BBox[5]) v->BBox[5] = Z[i] ;
+  }
+
+  v->TextOnly = 0;
 }
 
 
