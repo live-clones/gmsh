@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.3 2004-12-31 04:04:51 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.4 2004-12-31 06:09:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -19,19 +19,19 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <FL/Fl_Window.H>
-#include <FL/Fl_Button.H>
-#include <FL/Fl_Return_Button.H>
-#include <FL/Fl_Value_Slider.H>
-#include <errno.h>
-
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Mesh.h"
 #include "File_Picker.h"
+#include "Shortcut_Window.h"
 #include "CreateFile.h"
 #include "Options.h"
 #include "Context.h"
+
+#include <FL/Fl_Button.H>
+#include <FL/Fl_Return_Button.H>
+#include <FL/Fl_Value_Slider.H>
+#include <errno.h>
 
 extern Context_T CTX;
 
@@ -118,7 +118,7 @@ int arrow_editor(char *title, double &a, double &b, double &c)
 
   if(!editor){
     editor = new _editor;
-    editor->window = new Fl_Window(200, 140);
+    editor->window = new Dialog_Window(200, 140);
     editor->sa = new Fl_Value_Slider(10, 10, 100, 25, "Head radius");
     editor->sa->type(FL_HOR_SLIDER);
     editor->sa->align(FL_ALIGN_RIGHT);
@@ -174,6 +174,7 @@ int jpeg_dialog(char *name, int TeX)
   if(!dialog){
     dialog = new _jpeg_dialog;
     int h = 3*10 + 25 + 2*25, y = 0;
+    // not a "Dialog_Window" since it is modal 
     dialog->window = new Fl_Window(200, h, "JPEG Options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->s[0] = new Fl_Value_Slider(10, y, 100, 25, "Quality"); y += 25;
@@ -234,6 +235,7 @@ int gif_dialog(char *name)
   if(!dialog){
     dialog = new _gif_dialog;
     int h = 3*10 + 25 + 4*25, y = 0;
+    // not a "Dialog_Window" since it is modal 
     dialog->window = new Fl_Window(200, h, "GIF Options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->b[0] = new Fl_Check_Button(10, y, 180, 25, "Dither"); y += 25;
@@ -326,6 +328,7 @@ int gl2ps_dialog(char *name, char *title, int format, int TeX)
   if(!dialog){
     dialog = new _gl2ps_dialog;
     int h = 3*10 + 25 + 6*25, y = 0;
+    // not a "Dialog_Window" since it is modal 
     dialog->window = new Fl_Window(200, h); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->c = new Fl_Choice(10, y, 145, 25, "Type"); y+= 25;
@@ -404,6 +407,7 @@ int options_dialog(char *name)
   if(!dialog){
     dialog = new _options_dialog;
     int h = 3*10 + 25 + 1*25, y = 0;
+    // not a "Dialog_Window" since it is modal 
     dialog->window = new Fl_Window(200, h, "Options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->b = new Fl_Check_Button(10, y, 180, 25, "Save only modified options"); y += 25;
@@ -460,6 +464,7 @@ int msh_dialog(char *name)
   if(!dialog){
     dialog = new _msh_dialog;
     int h = 3*10 + 25 + 2*25, y = 0;
+    // not a "Dialog_Window" since it is modal 
     dialog->window = new Fl_Window(200, h, "MSH Options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->c = new Fl_Choice(10, y, 130, 25, "Format"); y+= 25;

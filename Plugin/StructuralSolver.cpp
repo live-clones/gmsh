@@ -4,6 +4,7 @@
 #include "Draw.h"
 #include "Utils.h"
 #include "Numeric.h"
+#include "Shortcut_Window.h"
 
 extern Mesh *THEM;
 extern Context_T CTX;
@@ -466,7 +467,7 @@ void StructuralSolver ::popupPropertiesForPhysicalEntity (int dim)
   int width = 31 * fontsize;
   int height = 5 * WB + 9 * BH;
 
-  _window = new Fl_Window(width, height, "Structural Solver");
+  _window = new Dialog_Window(width, height, "Structural Solver");
   _window->box(WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.63 2004-12-30 22:43:22 geuzaine Exp $
+# $Id: Makefile,v 1.64 2004-12-31 06:09:31 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -96,15 +96,16 @@ GUI.o: GUI.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
   ../Mesh/Matrix.h ../Graphics/Draw.h GUI.h Opengl_Window.h \
   Colorbar_Window.h Callbacks.h Bitmaps.h Win32Icon.h \
-  ../Parser/OpenFile.h ../Common/CommandLine.h Solvers.h
+  ../Parser/OpenFile.h ../Common/CommandLine.h Solvers.h \
+  Shortcut_Window.h
 GUI_Extras.o: GUI_Extras.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Mesh/Mesh.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h File_Picker.h ../Graphics/CreateFile.h \
-  ../Common/Options.h ../Common/Context.h
+  ../Mesh/Matrix.h File_Picker.h Shortcut_Window.h \
+  ../Graphics/CreateFile.h ../Common/Options.h ../Common/Context.h
 Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \

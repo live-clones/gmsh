@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.73 2004-12-30 22:43:22 geuzaine Exp $
+# $Id: Makefile,v 1.74 2004-12-31 06:09:31 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -193,7 +193,7 @@ StructuralSolver.o: StructuralSolver.cpp StructuralSolver.h ../Geo/Geo.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/GmshMatrix.h \
   ../Common/AdaptiveViews.h ../Common/GmshUI.h ../Common/Context.h \
   ../DataStr/Tools.h ../Graphics/Draw.h ../Mesh/Utils.h \
-  ../Numeric/Numeric.h
+  ../Numeric/Numeric.h ../Fltk/Shortcut_Window.h
 Skin.o: Skin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
