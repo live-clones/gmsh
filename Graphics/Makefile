@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.22 2001-04-23 10:38:12 geuzaine Exp $
+# $Id: Makefile,v 1.23 2001-05-11 09:13:16 geuzaine Exp $
 #
 # Makefile for "libGraphics.a"
 #
@@ -92,7 +92,7 @@ Geom.o: Geom.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
  ../Common/Const.h ../Common/ColorTable.h ../Common/Context.h \
  ../Geo/Verif.h ../Mesh/Interpolation.h ../Mesh/Numeric.h \
- ../Geo/Visibility.h
+ ../Geo/Visibility.h ../Mesh/STL.h
 Post.o: Post.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.19 2001-05-08 16:53:03 geuzaine Exp $
+# $Id: Makefile,v 1.20 2001-05-11 09:13:13 geuzaine Exp $
 #
 # Makefile for "libCommon.a"
 #
@@ -78,8 +78,8 @@ Options.o: Options.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
  ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h Context.h \
- Const.h Options.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
- ../Fltk/Colorbar_Window.h
+ Const.h Options.h ../Fltk/Solvers.h ../Fltk/GUI.h \
+ ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h
 GetOptions.o: GetOptions.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
  ../DataStr/Tools.h GmshUI.h GmshVersion.h Const.h Context.h Options.h \

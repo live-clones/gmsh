@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.19 2001-04-23 10:38:14 geuzaine Exp $
+# $Id: Makefile,v 1.20 2001-05-11 09:13:17 geuzaine Exp $
 #
 # Makefile for "libMesh.a"
 #
@@ -180,7 +180,8 @@ depend:
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Simplex.h Edge.h \
  ../Geo/ExtrudeParams.h Metric.h 2D_Mesh.h 3D_Mesh.h ../Adapt/Adapt.h \
- ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h Numeric.h
+ ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h Numeric.h \
+ ../Common/Context.h
 3D_Extrude.o: 3D_Extrude.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h ../Geo/Geo.h \
@@ -229,7 +230,7 @@ Read_Mesh.o: Read_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
 STL.o: STL.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Simplex.h Edge.h \
- ../Geo/ExtrudeParams.h Metric.h
+ ../Geo/ExtrudeParams.h Metric.h STL.h
 SMS.o: SMS.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Geo/Geo.h Mesh.h Vertex.h \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2001-05-03 00:09:42 geuzaine Exp $
+# $Id: Makefile,v 1.18 2001-05-11 09:13:15 geuzaine Exp $
 #
 # Makefile for "libFltk.a"
 #
@@ -88,7 +88,7 @@ GUI.o: GUI.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
  ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h GUI.h \
  Opengl_Window.h Colorbar_Window.h Callbacks.h ../Common/Bitmaps.h \
- ../Common/GetOptions.h
+ ../Common/Icon.h ../Common/GetOptions.h
 Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
@@ -98,7 +98,7 @@ Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../Common/ColorTable.h ../Common/Timer.h ../Geo/Visibility.h \
  ../Graphics/CreateFile.h ../Parser/OpenFile.h ../Common/GetOptions.h \
  ../Common/Context.h ../Common/Options.h GUI.h Opengl_Window.h \
- Colorbar_Window.h Callbacks.h ../Plugin/Plugin.h
+ Colorbar_Window.h Callbacks.h ../Plugin/Plugin.h Solvers.h
 Opengl.o: Opengl.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
@@ -120,3 +120,12 @@ Colorbar_Window.o: Colorbar_Window.cpp ../Common/Gmsh.h \
  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
  ../Common/GmshUI.h GUI.h Opengl_Window.h Colorbar_Window.h \
  ../Common/ColorTable.h ../Common/Context.h ../Common/Const.h
+Socket.o: Socket.cpp ../Common/Message.h
+Solvers.o: Solvers.cpp ../Common/Gmsh.h ../Common/Message.h \
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h Socket.h ../Parser/OpenFile.h \
+ ../Common/Const.h Solvers.h ../Common/GmshUI.h GUI.h Opengl_Window.h \
+ Colorbar_Window.h ../Common/ColorTable.h ../Mesh/Mesh.h \
+ ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+ ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
+ ../Common/Views.h
