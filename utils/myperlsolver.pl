@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 #
-# $Id: myperlsolver.pl,v 1.1 2002-01-25 17:09:22 geuzaine Exp $
+# $Id: myperlsolver.pl,v 1.2 2002-01-25 18:32:35 geuzaine Exp $
+#
 # Copyright (c) 2002 Laurent CHAMPANEY <laurent.champaney@meca.uvsq.fr>. 
 #
 # This file contains a dummy perl client solver for Gmsh. It does not

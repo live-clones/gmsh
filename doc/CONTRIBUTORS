@@ -1,4 +1,4 @@
-$Id: CONTRIBUTORS,v 1.7 2002-01-21 19:23:18 geuzaine Exp $
+$Id: CONTRIBUTORS,v 1.8 2002-01-25 18:32:35 geuzaine Exp $
 
 Gmsh is copyright (c) 1997-2002 by
 
@@ -20,6 +20,7 @@ will be added to the list!
 
     Olivier Adam <o.adam@ulg.ac.be>
     Éric Bechet <eric.bechet@epost.de>
+    Laurent Champaney <laurent.champaney@meca.uvsq.fr>
     David Colignon <david.colignon@ulg.ac.be>
     Philippe Geuzaine <geuzaine@gnat.colorado.edu>
     Johan Gyselinck <johan.gyselinck@ulg.ac.be>
