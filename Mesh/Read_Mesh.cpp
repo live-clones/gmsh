@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.53 2003-03-21 00:52:41 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.54 2003-04-14 22:55:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -90,7 +90,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
 {
   char String[256];
   int Nbr_Nodes, Nbr_Elements, i_Node, i_Element;
-  int Num, Type, Physical, Elementary, i, j, replace;
+  int Num, Type, Physical, Elementary, i, j;
   double x, y, z, lc1, lc2;
   Vertex *vert, verts[NB_NOD_MAX_ELM], *vertsp[NB_NOD_MAX_ELM], **vertspp;
   Simplex *simp;
