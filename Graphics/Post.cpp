@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.52 2004-02-20 17:58:00 geuzaine Exp $
+// $Id: Post.cpp,v 1.53 2004-04-20 01:26:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -467,9 +467,6 @@ void Draw_Post(void)
         glLineWidth(v->LineWidth);
         gl2psLineWidth(v->LineWidth * CTX.print.eps_line_width_factor);
 
-        if(v->ShowElement)
-          glEnable(GL_POLYGON_OFFSET_FILL);
-
         // force this
         if(v->IntervalsType == DRAW_POST_CONTINUOUS) {
           glShadeModel(GL_SMOOTH);
@@ -609,10 +606,6 @@ void Draw_Post(void)
           glEndList();
 
         v->Changed = 0;
-
-        if(v->ShowElement || v->VectorType == DRAW_POST_DISPLACEMENT)
-          glDisable(GL_POLYGON_OFFSET_FILL);
-
       }
 
     }

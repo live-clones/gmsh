@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.23 2004-02-28 00:48:49 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.24 2004-04-20 01:26:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -469,6 +469,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
   else {
 
     if(View->Light) glEnable(GL_LIGHTING);
+    glEnable(GL_POLYGON_OFFSET_FILL);
 
     if(View->IntervalsType == DRAW_POST_CONTINUOUS) {
       if(Val[0] >= ValMin && Val[0] <= ValMax &&
@@ -534,6 +535,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
       }
     }
     
+    glDisable(GL_POLYGON_OFFSET_FILL);
     glDisable(GL_LIGHTING);
   }
 }

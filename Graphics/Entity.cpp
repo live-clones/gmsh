@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.34 2004-04-13 19:27:09 geuzaine Exp $
+// $Id: Entity.cpp,v 1.35 2004-04-20 01:26:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -131,6 +131,7 @@ void Draw_Triangle(double *x, double *y, double *z, double *n,
   double x1x0, y1y0, z1z0, x2x0, y2y0, z2z0, nn[3];
 
   if(light) glEnable(GL_LIGHTING);
+  glEnable(GL_POLYGON_OFFSET_FILL);
 
   glBegin(GL_TRIANGLES);
   if(light) {
@@ -164,6 +165,7 @@ void Draw_Triangle(double *x, double *y, double *z, double *n,
   glVertex3d(x[2] + Raise[0][2], y[2] + Raise[1][2], z[2] + Raise[2][2]);
   glEnd();
 
+  glDisable(GL_POLYGON_OFFSET_FILL);
   glDisable(GL_LIGHTING);
 }
 

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.52 2004-04-19 19:04:15 geuzaine Exp $
+// $Id: Geom.cpp,v 1.53 2004-04-20 01:26:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -279,8 +279,8 @@ void Draw_Triangulated_Surface(Surface * s)
   double *points, *p1, *p2, *p3;
 
   if(CTX.geom.surfaces) {
-    glEnable(GL_POLYGON_OFFSET_FILL);
     if(CTX.geom.light) glEnable(GL_LIGHTING);
+    glEnable(GL_POLYGON_OFFSET_FILL);
     glBegin(GL_TRIANGLES);
     while (k < List_Nbr(s->thePolyRep->polygons)){
       points = (double*)List_Pointer(s->thePolyRep->polygons,k);
@@ -298,7 +298,7 @@ void Draw_Triangulated_Surface(Surface * s)
       }
     }
     glEnd();
-    glDisable(GL_POLYGON_OFFSET_FILL); 
+    glDisable(GL_POLYGON_OFFSET_FILL);
     glDisable(GL_LIGHTING);
   }  
 }
@@ -504,6 +504,7 @@ void Draw_NonPlane_Surface(Surface * s)
     for(i = 0; i < NbTics; i++)
       tics[i] = v0 + ((double)(i + 1) / (double)NbTics) * (vn - v0);
     if(CTX.geom.light) glEnable(GL_LIGHTING);
+    glEnable(GL_POLYGON_OFFSET_FILL);
     GLUnurbsObj *nurb;
     nurb = gluNewNurbsRenderer();
 #if defined(GLU_VERSION_1_3)
@@ -516,6 +517,7 @@ void Draw_NonPlane_Surface(Surface * s)
 		    s->OrderU + 1, s->OrderV + 1, GL_MAP2_VERTEX_4);
     gluEndSurface(nurb);
     gluDeleteNurbsRenderer(nurb);
+    glDisable(GL_POLYGON_OFFSET_FILL);
     glDisable(GL_LIGHTING);
     return;
   }

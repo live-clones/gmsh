@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.71 2004-04-19 23:52:12 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.72 2004-04-20 01:26:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -91,16 +91,15 @@ void Draw_Mesh(Mesh * M)
     if(CTX.clip[i])
       glClipPlane((GLenum) (GL_CLIP_PLANE0 + i), CTX.clip_plane[i]);
 
-  glPointSize(CTX.mesh.point_size);
-  gl2psPointSize(CTX.mesh.point_size * CTX.print.eps_point_size_factor);
+  // draw the geometry
 
-  glLineWidth(CTX.mesh.line_width);
-  gl2psLineWidth(CTX.mesh.line_width * CTX.print.eps_line_width_factor);
+  if(M->status >= 0)
+    Draw_Geom(M);
 
-  if(CTX.mesh.solid)
-    glEnable(GL_POLYGON_OFFSET_FILL);
-
-  // draw the bbox of the mesh in fast redraw mode if there is no geometry
+  // draw the bounding box of the mesh if we are in fast redraw mode
+  // and there is no geometry
+  
+  glLineWidth(CTX.line_width);
   if(!CTX.mesh.draw && Tree_Nbr(M->Vertices) && !Tree_Nbr(M->Points)) {
     glColor4ubv((GLubyte *) & CTX.color.fg);
     glBegin(GL_LINE_LOOP);
@@ -127,6 +126,14 @@ void Draw_Mesh(Mesh * M)
     glEnd();
   }
 
+  // draw the mesh
+  
+  glPointSize(CTX.mesh.point_size);
+  gl2psPointSize(CTX.mesh.point_size * CTX.print.eps_point_size_factor);
+
+  glLineWidth(CTX.mesh.line_width);
+  gl2psLineWidth(CTX.mesh.line_width * CTX.print.eps_line_width_factor);
+
   if(CTX.mesh.draw && CTX.render_mode != GMSH_SELECT) {
 
     static int first = 1, listnum;
@@ -139,8 +146,7 @@ void Draw_Mesh(Mesh * M)
       glNewList(listnum, GL_COMPILE_AND_EXECUTE);
     }
 
-    if(!CTX.mesh.display_lists
-       || (CTX.mesh.display_lists && CTX.mesh.changed)) {
+    if(!CTX.mesh.display_lists || (CTX.mesh.display_lists && CTX.mesh.changed)) {
 
       //printf("normal mesh drawing\n");
 
@@ -150,13 +156,14 @@ void Draw_Mesh(Mesh * M)
       }
 
       if(M->status >= 2 && (CTX.mesh.surfaces_faces || CTX.mesh.surfaces_edges ||
-			    CTX.mesh.surfaces_num)) {
+			    CTX.mesh.surfaces_num || CTX.mesh.normals)) {
         Tree_Action(M->Surfaces, Draw_Mesh_Surfaces);
         if(CTX.mesh.oldxtrude)  //old extrusion algo
           Tree_Action(M->Volumes, Draw_Mesh_Extruded_Surfaces);
       }
 
-      if(M->status >= 1 && (CTX.mesh.lines || CTX.mesh.lines_num)) {
+      if(M->status >= 1 && (CTX.mesh.lines || CTX.mesh.lines_num || 
+			    CTX.mesh.tangents)) {
         Tree_Action(M->Curves, Draw_Mesh_Curves);
       }
 
@@ -181,11 +188,7 @@ void Draw_Mesh(Mesh * M)
 
   }
 
-  if(M->status >= 0)
-    Draw_Geom(M);
-
-  if(CTX.mesh.solid)
-    glDisable(GL_POLYGON_OFFSET_FILL);
+  // draw the post-processing views
 
   if(CTX.render_mode != GMSH_SELECT) {
     if(CTX.axes)
@@ -471,6 +474,7 @@ void Draw_Simplex_Volume(void *a, void *b)
     double n[3];
     // FIXME: should subdivide if s->VSUP
     if(CTX.mesh.light) glEnable(GL_LIGHTING);
+    glEnable(GL_POLYGON_OFFSET_FILL);
     glBegin(GL_TRIANGLES);
     if(CTX.mesh.light) glNormal3verts(s->V[0], s->V[2], s->V[1], n);
     glVertex3d(X[0], Y[0], Z[0]);
@@ -489,6 +493,7 @@ void Draw_Simplex_Volume(void *a, void *b)
     glVertex3d(X[1], Y[1], Z[1]);
     glVertex3d(X[2], Y[2], Z[2]);
     glEnd();
+    glDisable(GL_POLYGON_OFFSET_FILL);
     glDisable(GL_LIGHTING);
   }
 }
@@ -543,6 +548,7 @@ void Draw_Simplex_Surface_Common(Simplex * s, int L, int K,
       glColor4ubv((GLubyte *) & CTX.color.mesh.quadrangle);
 
     if(CTX.mesh.light) glEnable(GL_LIGHTING);
+    glEnable(GL_POLYGON_OFFSET_FILL);
 
     if(!L) { // first order elements
       if(K == 3) {
@@ -590,6 +596,7 @@ void Draw_Simplex_Surface_Common(Simplex * s, int L, int K,
 	glEnd();
       }
     }
+    glDisable(GL_POLYGON_OFFSET_FILL);
     glDisable(GL_LIGHTING);
   }
 }
@@ -872,8 +879,8 @@ void Draw_Hexahedron_Volume(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (h->V[i]->Pos.Z - Zc);
   }
 
-  // FIXME: remove "1" when we add the face drawing code
-  if(1 || CTX.mesh.volumes_edges){
+  // FIXME: change this when we add the face drawing code
+  if(CTX.mesh.volumes_edges || CTX.mesh.volumes_faces){
     glBegin(GL_LINE_LOOP);
     glVertex3d(X[0], Y[0], Z[0]);
     glVertex3d(X[1], Y[1], Z[1]);
@@ -1026,8 +1033,8 @@ void Draw_Prism_Volume(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (p->V[i]->Pos.Z - Zc);
   }
 
-  // FIXME: remove "1" when we add the face drawing code
-  if(1 || CTX.mesh.volumes_edges){
+  // FIXME: change this when we add the face drawing code
+  if(CTX.mesh.volumes_edges || CTX.mesh.volumes_faces){
     glBegin(GL_LINE_LOOP);
     glVertex3d(X[0], Y[0], Z[0]);
     glVertex3d(X[1], Y[1], Z[1]);
@@ -1162,8 +1169,8 @@ void Draw_Pyramid_Volume(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (p->V[i]->Pos.Z - Zc);
   }
 
-  // FIXME: remove "1" when we add the face drawing code
-  if(1 || CTX.mesh.volumes_edges){
+  // FIXME: change this when we add the face drawing code
+  if(CTX.mesh.volumes_edges || CTX.mesh.volumes_faces){
     glBegin(GL_LINE_LOOP);
     glVertex3d(X[0], Y[0], Z[0]);
     glVertex3d(X[1], Y[1], Z[1]);
