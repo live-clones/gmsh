@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.67 2005-01-14 17:54:25 geuzaine Exp $
+// $Id: Gmsh.l,v 1.68 2005-01-16 20:41:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -347,10 +347,12 @@ void skipcomments(void){
 }
 
 void parsestring(char endchar){
-  int c, i;
+  int c;
   char tmp[1024];
-
-  i = 0;
+  
+  // Note that we keep special characters (end-of-line \n, tabs \t,
+  // etc.) "as is" in the output string: see yyinput() above
+  int i = 0;
   while ((c = yyinput()) != endchar) {
     if(c == EOF){
       Msg(GERROR, "End of file in string");

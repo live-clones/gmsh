@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $Id: myperlsolver.pl,v 1.1 2005-01-13 20:36:54 geuzaine Exp $
+# $Id: solver.pl,v 1.1 2005-01-16 20:41:42 geuzaine Exp $
 #
 # Copyright (c) 2002 Laurent CHAMPANEY <laurent.champaney@meca.uvsq.fr>. 
 #
@@ -8,10 +8,10 @@
 # solve anything, but shows how to program your own perl solver 
 # to interact with the Gmsh solver module.
 #   
-# To test this solver, copy the myperlsolver.opt file into your default
+# To test this solver, copy the solver.opt file into your default
 # Gmsh option file, or lauch Gmsh with the command:
 #   
-# gmsh -option myperlsolver.opt 
+# gmsh -option solver.opt 
 #
 #
 use Getopt::Long;
@@ -86,13 +86,13 @@ if ($opt_run) {
 	$mess = "Done with $problem!"; 
 	GMSH_CLIENT::SendString(CLIENT, $GMSH_CLIENT::INFO, $mess);
 #
-	open (POSFIC, ">mysolver.pos")
+	open (POSFIC, ">solver.pos")
 		or die "Unable to open output file";
 	print POSFIC ("View \"$opt_run\"{\n");
 	print POSFIC "ST(0,0,0,1,0,0,0,1,0){0,1,2};\n";
 	print POSFIC "};\n";
 	close POSFIC;
-	GMSH_CLIENT::SendString(CLIENT, $GMSH_CLIENT::VIEW, "mysolver.pos");
+	GMSH_CLIENT::SendString(CLIENT, $GMSH_CLIENT::VIEW, "solver.pos");
 };
 #
 #   3.3. We can now disconnect the solver from Gmsh:

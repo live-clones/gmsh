@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.68 2005-01-08 20:15:17 geuzaine Exp $
+# $Id: Makefile,v 1.69 2005-01-16 20:41:41 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -26,8 +26,8 @@ INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics\
           -I../Mesh -I../Numeric -I../Fltk -I../Plugin -I../Parallel
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
-SRC = Gmsh.yy.cpp\
-      Gmsh.tab.cpp\
+SRC = Gmsh.tab.cpp\
+      Gmsh.yy.cpp\
       OpenFile.cpp\
       FunctionManager.cpp
 
@@ -47,10 +47,14 @@ ${LIB}: ${OBJ}
 Gmsh.tab.o:
 	${CXX} ${FLAGS} ${INCLUDE} -c $<
 
-parser:
+Gmsh.tab.cpp: Gmsh.y
 	bison --output Gmsh.tab.cpp -d Gmsh.y 
-	flex  -oGmsh.yy.cpp Gmsh.l
 	if [ -r Gmsh.tab.cpp.h ]; then mv Gmsh.tab.cpp.h Gmsh.tab.hpp ; fi
+
+Gmsh.yy.cpp: Gmsh.l
+	flex -oGmsh.yy.cpp Gmsh.l
+
+parser: Gmsh.yy.cpp Gmsh.tab.cpp
 
 clean:
 	rm -f *.o
@@ -64,14 +68,6 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
-  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
-  ../Mesh/DiscreteSurface.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  Gmsh.tab.hpp
 Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
@@ -86,6 +82,14 @@ Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Mesh/Create.h ../Geo/StepGeomDatabase.h ../Common/Colors.h Parser.h \
   OpenFile.h ../Common/CommandLine.h FunctionManager.h ../Common/Timer.h \
   ../Graphics/CreateFile.h ../Common/Visibility.h
+Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
+  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/DiscreteSurface.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Matrix.h \
+  Gmsh.tab.hpp
 OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h \

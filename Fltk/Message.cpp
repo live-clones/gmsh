@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.61 2005-01-01 19:35:28 geuzaine Exp $
+// $Id: Message.cpp,v 1.62 2005-01-16 20:41:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -288,7 +288,7 @@ double GetValue(char *text, double defaultval)
   if(WID && !CTX.batch){ // pop up GUI dialog
     char defaultstr[256];
     sprintf(defaultstr, "%.16g", defaultval);
-    const char *ret = fl_input("%s", defaultstr, text);
+    const char *ret = fl_input(text, defaultstr);
     if(!ret)
       return defaultval;
     else

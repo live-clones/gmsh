@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.199 2005-01-14 17:54:26 geuzaine Exp $
+// $Id: Gmsh.y,v 1.200 2005-01-16 20:41:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2207,6 +2207,7 @@ Shape :
 
   // Volumes
 
+  // for backward compatibility:
   | tComplex tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
@@ -2415,7 +2416,7 @@ Delete :
       }
       List_Delete($3);
     }
-    | tDelete tSTRING '[' FExpr ']' tEND
+  | tDelete tSTRING '[' FExpr ']' tEND
     {
       if(!strcmp($2, "View")){
 	RemoveViewByIndex((int)$4);
@@ -2425,7 +2426,7 @@ Delete :
       }
       Free($2);
     }
-    | tDelete tSTRING tEND
+  | tDelete tSTRING tEND
     {
       if(!strcmp($2, "Meshes") || !strcmp($2, "All")){
 	Init_Mesh(THEM);
@@ -2435,7 +2436,7 @@ Delete :
       }
       Free($2);
     }
-    | tDelete tSTRING tSTRING tEND
+  | tDelete tSTRING tSTRING tEND
     {
       if(!strcmp($2, "Empty") && !strcmp($3, "Views")){
 	for(int i = List_Nbr(CTX.post.list) - 1; i >= 0; i--){

@@ -1,4 +1,4 @@
-# $Id: GMSH_CLIENT.pm,v 1.1 2005-01-13 20:36:54 geuzaine Exp $
+# $Id: GMSH_CLIENT.pm,v 1.2 2005-01-16 20:41:42 geuzaine Exp $
 #
 # Copyright (c) 2002 Laurent CHAMPANEY <laurent.champaney@meca.uvsq.fr>. 
 # All rights reserved.
@@ -50,6 +50,7 @@ sub SendString (*$;$$) {
 sub Disconnect (*) {
 	$socket = @_;
 	close $socket;
+	return;
 };
 
 sub Connect (*$;$$) {

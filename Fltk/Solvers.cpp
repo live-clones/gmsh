@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.34 2005-01-14 04:50:48 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.35 2005-01-16 20:41:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -22,21 +22,6 @@
 #include "Gmsh.h"
 #include "GmshServer.h"
 
-// This should match what's in GmshClient.h
-#define GMSH_CLIENT_START       1
-#define GMSH_CLIENT_STOP        2
-#define GMSH_CLIENT_INFO        10
-#define GMSH_CLIENT_WARNING     11
-#define GMSH_CLIENT_ERROR       12
-#define GMSH_CLIENT_PROGRESS    13
-#define GMSH_CLIENT_VIEW        20
-#define GMSH_CLIENT_OPTION      100
-#define GMSH_CLIENT_OPTION_1    (GMSH_CLIENT_OPTION+0)
-#define GMSH_CLIENT_OPTION_2    (GMSH_CLIENT_OPTION+1)
-#define GMSH_CLIENT_OPTION_3    (GMSH_CLIENT_OPTION+2)
-#define GMSH_CLIENT_OPTION_4    (GMSH_CLIENT_OPTION+3)
-#define GMSH_CLIENT_OPTION_5    (GMSH_CLIENT_OPTION+4)
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -59,9 +44,9 @@ SolverInfo SINFO[MAXSOLVERS];
 
 int Solver(int num, char *args)
 {
-  int sock, type, stop = 0, i, j, n;
-  char command[1024], socket_name[1024], str[1024], prog[1024];
-  char buffer[1024];
+  char command[1024], sockname[1024], str[1024], prog[1024], buf[1024];
+
+  GmshServer server(CTX.solver.max_delay);
 
   FixWindowsPath(SINFO[num].executable_name, prog);
 
@@ -70,59 +55,59 @@ int Solver(int num, char *args)
 #if !defined(WIN32)
     strcat(command, " &");
 #endif
-    Gmsh_StartClient(command, NULL, CTX.solver.max_delay);
+    server.StartClient(command);
     return 1;
   }
 
   if(!strstr(CTX.solver.socket_name, ":")){
     // file socket
     sprintf(str, "%s%s-%d", CTX.home_dir, CTX.solver.socket_name, num);
-    FixWindowsPath(str, socket_name);
+    FixWindowsPath(str, sockname);
   }
   else
-    strcpy(socket_name, CTX.solver.socket_name);
+    strcpy(sockname, CTX.solver.socket_name);
 
-  sprintf(str, "\"%s\"", socket_name);
-  sprintf(buffer, SINFO[num].socket_command, str);
+  sprintf(str, "\"%s\"", sockname);
+  sprintf(buf, SINFO[num].socket_command, str);
   
-  sprintf(command, "%s %s %s", prog, args, buffer);
+  sprintf(command, "%s %s %s", prog, args, buf);
 #if !defined(WIN32)
   strcat(command, " &");
 #endif
 
-  sock = Gmsh_StartClient(command, socket_name, CTX.solver.max_delay);
+  int sock = server.StartClient(command, sockname);
   if(sock < 0) {
     switch (sock) {
     case -1:
-      Msg(GERROR, "Couldn't create socket '%s'", socket_name);
+      Msg(GERROR, "Couldn't create socket '%s'", sockname);
       break;
     case -2:
-      Msg(GERROR, "Couldn't bind socket to name '%s'", socket_name);
+      Msg(GERROR, "Couldn't bind socket to name '%s'", sockname);
       break;
     case -3:
-      Msg(GERROR, "Socket listen failed on '%s'", socket_name);
+      Msg(GERROR, "Socket listen failed on '%s'", sockname);
       break;
     case -4:
-      Msg(GERROR, "Socket listen timeout on '%s'", socket_name);
+      Msg(GERROR, "Socket listen timeout on '%s'", sockname);
       Msg(GERROR, "Is '%s' correctly installed?", prog);
       break;
     case -5:
-      Msg(GERROR, "Socket accept failed on '%s'", socket_name);
+      Msg(GERROR, "Socket accept failed on '%s'", sockname);
       break;
     }
-    for(i = 0; i < SINFO[num].nboptions; i++)
+    for(int i = 0; i < SINFO[num].nboptions; i++)
       WID->solver[num].choice[i]->clear();
     return 0;
   }
 
-  for(i = 0; i < SINFO[num].nboptions; i++)
+  for(int i = 0; i < SINFO[num].nboptions; i++)
     SINFO[num].nbval[i] = 0;
   SINFO[num].pid = 0;
 
   struct pollfd pfd;
   pfd.fd = sock;
-  pfd.events = POLLIN|POLLPRI;
-  
+  pfd.events = POLLIN;
+
   while(1) {
     // poll the socket file descriptor every 10 milliseconds until
     // data is avalable; when nothing is available, just tend to
@@ -132,7 +117,6 @@ int Solver(int num, char *args)
     // way on all the platforms.)
     while(1){
       if(SINFO[num].pid < 0){ // process has been killed
-	stop = 1;
 	break;
       }
       int ret = poll(&pfd, 1, 10);
@@ -143,48 +127,55 @@ int Solver(int num, char *args)
         break;
       }
       else{ // error
-        stop = 1;
+        SINFO[num].pid = -1;
         break;
       }
     }
-  
-    if(stop)
+
+    if(SINFO[num].pid < 0)
       break;
 
-    if(Gmsh_ReceiveString(sock, &type, str)){
+    int type;
+    if(server.ReceiveString(&type, str)){
       switch (type) {
-      case GMSH_CLIENT_START:
+      case GmshServer::CLIENT_START:
 	SINFO[num].pid = atoi(str);
 	break;
-      case GMSH_CLIENT_STOP:
+      case GmshServer::CLIENT_STOP:
 	SINFO[num].pid = -1;
-	stop = 1;
 	break;
-      case GMSH_CLIENT_PROGRESS:
+      case GmshServer::CLIENT_PROGRESS:
 	Msg(STATUS3N, "%s %s", SINFO[num].name, str);
 	break;
-      case GMSH_CLIENT_OPTION_1:
-      case GMSH_CLIENT_OPTION_2:
-      case GMSH_CLIENT_OPTION_3:
-      case GMSH_CLIENT_OPTION_4:
-      case GMSH_CLIENT_OPTION_5:
-	i = type - GMSH_CLIENT_OPTION;
-	strcpy(SINFO[num].option[i][SINFO[num].nbval[i]++], str);
+      case GmshServer::CLIENT_OPTION_1:
+	strcpy(SINFO[num].option[0][SINFO[num].nbval[0]++], str);
 	break;
-      case GMSH_CLIENT_VIEW:
+      case GmshServer::CLIENT_OPTION_2:
+	strcpy(SINFO[num].option[1][SINFO[num].nbval[1]++], str);
+	break;
+      case GmshServer::CLIENT_OPTION_3:
+	strcpy(SINFO[num].option[2][SINFO[num].nbval[2]++], str);
+	break;
+      case GmshServer::CLIENT_OPTION_4:
+	strcpy(SINFO[num].option[3][SINFO[num].nbval[3]++], str);
+	break;
+      case GmshServer::CLIENT_OPTION_5:
+	strcpy(SINFO[num].option[4][SINFO[num].nbval[4]++], str);
+	break;
+      case GmshServer::CLIENT_VIEW:
 	if(SINFO[num].merge_views) {
-	  n = List_Nbr(CTX.post.list);
+	  int n = List_Nbr(CTX.post.list);
 	  MergeProblem(str);
 	  Draw();
 	  if(n != List_Nbr(CTX.post.list))
 	    WID->set_context(menu_post, 0);
 	}
 	break;
-      case GMSH_CLIENT_INFO:
+      case GmshServer::CLIENT_INFO:
 	Msg(SOLVER, "%-8.8s: %s", SINFO[num].name, str);
 	break;
-      case GMSH_CLIENT_WARNING:
-      case GMSH_CLIENT_ERROR:
+      case GmshServer::CLIENT_WARNING:
+      case GmshServer::CLIENT_ERROR:
 	Msg(SOLVERR, "%-8.8s: %s", SINFO[num].name, str);
 	break;
       default:
@@ -195,15 +186,12 @@ int Solver(int num, char *args)
       }
       WID->check();
     }
-
-    if(stop)
-      break;
   }
   
-  for(i = 0; i < SINFO[num].nboptions; i++) {
+  for(int i = 0; i < SINFO[num].nboptions; i++) {
     if(SINFO[num].nbval[i]) {
       WID->solver[num].choice[i]->clear();
-      for(j = 0; j < SINFO[num].nbval[i]; j++)
+      for(int j = 0; j < SINFO[num].nbval[i]; j++)
         WID->solver[num].choice[i]->add(SINFO[num].option[i][j]);
       WID->solver[num].choice[i]->value(0);
     }
@@ -211,8 +199,8 @@ int Solver(int num, char *args)
 
   Msg(STATUS3N, "Ready");
 
-  if(Gmsh_StopClient(socket_name, sock) < 0)
-    Msg(WARNING, "Impossible to unlink the socket '%s'", socket_name);
+  if(server.StopClient() < 0)
+    Msg(WARNING, "Impossible to unlink the socket '%s'", sockname);
 
   return 1;
 }

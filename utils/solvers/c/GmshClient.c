@@ -1,6 +1,6 @@
-/* $Id: GmshClient.c,v 1.1 2005-01-13 20:36:54 geuzaine Exp $ */
+/* $Id: GmshClient.c,v 1.2 2005-01-16 20:41:42 geuzaine Exp $ */
 /*
- * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
+ * Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -24,7 +24,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
  * 
- *  Please report all bugs and problems to <gmsh@geuz.org>.
+ * Please report all bugs and problems to <gmsh@geuz.org>.
  *
  * Contributor(s):
  *   Christopher Stott
@@ -83,7 +83,7 @@ int Gmsh_Connect(char *sockname)
 {
   struct sockaddr_un addr_un;
   struct sockaddr_in addr_in;
-  int len, sock;
+  int sock;
   int tries;
   struct hostent *server;
   int portno, remotelen;
@@ -112,13 +112,12 @@ int Gmsh_Connect(char *sockname)
   if(portno < 0){
     sock = socket(PF_UNIX, SOCK_STREAM, 0);
     if(sock < 0)
-      return -1;  /* Error: Couldn't create socket */
+      return -1; /* Error: Couldn't create socket */
     /* try to connect socket to given name */
     strcpy(addr_un.sun_path, sockname);
     addr_un.sun_family = AF_UNIX;
-    len = strlen(addr_un.sun_path) + sizeof(addr_un.sun_family);
     for(tries = 0; tries < 5; tries++) {
-      if(connect(sock, (struct sockaddr *)&addr_un, len) >= 0)
+      if(connect(sock, (struct sockaddr *)&addr_un, sizeof(addr_un)) >= 0)
 	return sock;
       Socket_Idle(0.1);
     }
@@ -127,7 +126,7 @@ int Gmsh_Connect(char *sockname)
     /* try to connect socket to given name */
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if(sock < 0)
-      return -1;  /* Error: Couldn't create socket */
+      return -1; /* Error: Couldn't create socket */
     if(!(server = gethostbyname(remote)))
       return -3; /* Error: No such host */
     memset((char *) &addr_in, 0, sizeof(addr_in));
@@ -142,7 +141,7 @@ int Gmsh_Connect(char *sockname)
     }
   }
 
-  return -2;    /* Error: Couldn't connect */
+  return -2; /* Error: Couldn't connect */
 }
 
 void Gmsh_SendString(int socket, int type, char str[])

@@ -1,6 +1,6 @@
-/* $Id: mysolver.c,v 1.1 2005-01-13 20:36:54 geuzaine Exp $ */
+/* $Id: solver.c,v 1.1 2005-01-16 20:41:42 geuzaine Exp $ */
 /*
- * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
+ * Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -33,12 +33,12 @@
    
    To compile this solver, type something like:
 
-   gcc -o mysolver.exe mysolver.c GmshClient.c
+   gcc -o solver.exe solver.c GmshClient.c
    
-   To run it, merge the contents of the file mysolver.opt into your
+   To run it, merge the contents of the file solver.opt into your
    default Gmsh option file, or lauch Gmsh with the command:
    
-   gmsh -option mysolver.opt 
+   gmsh -option solver.opt 
 
    You will then see a new button labeled "My C solver" in Gmsh's
    solver menu.
@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
       }
       sprintf(tmp, "Done with %s!", name);
       Gmsh_SendString(s, GMSH_CLIENT_INFO, tmp);
-      file = fopen("mysolver.pos", "wb");
+      file = fopen("solver.pos", "wb");
       if(!file) {
         Gmsh_SendString(s, GMSH_CLIENT_ERROR, "Unable to open output file");
       }
@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
 	fprintf(file, "ST(0,0,0,1,0,0,0,1,0){0,1,2};\n");
         fprintf(file, "};\n");
         fclose(file);
-        Gmsh_SendString(s, GMSH_CLIENT_VIEW, "mysolver.pos");
+        Gmsh_SendString(s, GMSH_CLIENT_VIEW, "solver.pos");
       }
       break;
     }
@@ -206,5 +206,5 @@ int main(int argc, char *argv[])
   }
 
   /* 4. That's it! */
-
+  return 0;
 }
