@@ -1,4 +1,4 @@
-dnl "$Id: configure.in,v 1.17 2003-02-15 23:22:17 geuzaine Exp $"
+dnl "$Id: configure.in,v 1.18 2003-02-17 01:43:21 geuzaine Exp $"
 dnl
 dnl Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 dnl
@@ -33,6 +33,10 @@ AC_ARG_WITH(fltk-prefix,
             AC_HELP_STRING([--with-fltk-prefix=PFX],
                            [prefix where FLTK is installed]),
             [FLTK_PREFIX=$withval],[FLTK_PREFIX="$FLTK_DIR"])
+AC_ARG_WITH(jpeg-prefix,
+            AC_HELP_STRING([--with-jpeg-prefix=PFX],
+                           [prefix where the JPEG code is installed]),
+            [JPEG_PREFIX=$withval],[JPEG_PREFIX="$JPEG_DIR"])
 
 dnl Parse '--enable' command line options
 AC_ARG_ENABLE(gui,
@@ -96,9 +100,18 @@ if test "x$enable_gui" != "xno"; then
   GUI_INCLUDE="${GUI_INCLUDE} `$FLTKCONFIG --use-gl --use-images --cxxflags`"
 
   dnl Check if libjpeg is available (in case fltk didn't find it) to enable/disable gl2jpg
-  AC_CHECK_HEADER(jpeglib.h,
+  if test "x${JPEG_PREFIX}" = "x"; then
+    AC_CHECK_HEADER(jpeglib.h,
+      AC_CHECK_LIB(jpeg, jpeg_destroy_decompress,
+                   VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_LIBJPEG"
+                   GUI_LIBS="${GUI_LIBS} -ljpeg"))
+  else
+    dnl Find the libs/includes even if jpeg is _not_ properly installed (ugly hack!)
     AC_CHECK_LIB(jpeg, jpeg_destroy_decompress,
-      VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_LIBJPEG" GUI_LIBS="${GUI_LIBS} -ljpeg"))
+                 VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_LIBJPEG"
+                 GUI_INCLUDE="${GUI_INCLUDE} -I${JPEG_PREFIX} -I${JPEG_PREFIX}/include"
+                 GUI_LIBS="${GUI_LIBS} -L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib -ljpeg")
+  fi 
 
 else
 
