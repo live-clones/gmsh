@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.55 2004-12-07 04:52:27 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.56 2004-12-08 18:03:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1029,19 +1029,21 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
      View->IntervalsType == DRAW_POST_NUMERIC) {
     double dd = 0., ext_dd = 0., dx = 0., dy = 0., dz = 0.;
     for(int k = 0; k < nbnod; k++) {
-      dd += norm[k];
-      ext_dd += ext_norm[k];
       dx += Val[k][0];
       dy += Val[k][1];
       dz += Val[k][2];
+      // Warning: in the case of a vector view, ext_dd represents the
+      // average of the magnitudes of the vectors at the nodes, NOT
+      // the magnitude of the vector average.
+      ext_dd += ext_norm[k];
     }
-    dd /= (double)nbnod;
-    ext_dd /= (double)nbnod;
     dx /= (double)nbnod;
     dy /= (double)nbnod;
     dz /= (double)nbnod;
+    ext_dd /= (double)nbnod;
+    dd = sqrt(dx*dx + dy*dy + dz*dz);
     // allow for some roundoff error due to the computation at the barycenter
-    if(ext_dd != 0.0 && 
+    if(dd != 0.0 && ext_dd != 0.0 && 
        ext_dd >= ext_min * (1. - 1.e-15) && 
        ext_dd <= ext_max * (1. + 1.e-15)) {
       if(View->IntervalsType == DRAW_POST_CONTINUOUS)
