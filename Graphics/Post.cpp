@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.35 2002-05-20 18:28:26 geuzaine Exp $
+// $Id: Post.cpp,v 1.36 2002-06-15 21:29:59 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -108,14 +108,6 @@ void RaiseFill(int i, double Val, double ValMin, double Raise[3][5]){
 
 // Draw Post routines
 
-void Free_DisplayLists(void){
-  Post_View     *v;
-  for(int iView=0 ; iView<List_Nbr(CTX.post.list) ; iView++){
-    v = (Post_View*)List_Pointer(CTX.post.list,iView);
-    if(glIsList(v->Num)) glDeleteLists(v->Num,1);
-  }
-}
-
 void Get_Coords(double Explode, double *Offset, int nbnod, 
 		double *x1, double *y1, double *z1, 
 		double *x2, double *y2, double *z2){
@@ -192,17 +184,30 @@ void Draw_Post (void) {
 
     if(v->Visible && !v->Dirty){ 
 
-      if(CTX.display_lists && !v->Changed && glIsList(v->Num)){
+      if(CTX.display_lists && !v->Changed && v->DisplayListNum>0){
 
-        glCallList(v->Num);
+	Msg(DEBUG, "Call display List %d", v->DisplayListNum);
+        glCallList(v->DisplayListNum);
 
       }
       else{
 
         if(CTX.display_lists){
-          if(glIsList(v->Num)) glDeleteLists(v->Num,1);
-          Msg(DEBUG, "New Display List");
-          glNewList(v->Num, GL_COMPILE_AND_EXECUTE);
+          if(v->DisplayListNum>0){
+	    Msg(DEBUG, "Delete display List %d", v->DisplayListNum);
+	    glDeleteLists(v->DisplayListNum,1);
+	  }
+	  else{
+	    v->DisplayListNum = glGenLists(1);
+	    Msg(DEBUG, "Gen display list -> %d", v->DisplayListNum);
+	  }
+
+	  if(v->DisplayListNum>0){
+	    Msg(DEBUG, "New display List %d", v->DisplayListNum);
+	    glNewList(v->DisplayListNum, GL_COMPILE_AND_EXECUTE);
+	  }
+	  else
+	    Msg(GERROR, "Unable to create display list");
         }
 
 	glPointSize(v->PointSize); 

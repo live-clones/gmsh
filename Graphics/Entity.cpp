@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.16 2002-06-15 17:41:35 geuzaine Exp $
+// $Id: Entity.cpp,v 1.17 2002-06-15 21:29:59 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -28,7 +28,7 @@
 
 extern Context_T   CTX;
 
-void Draw_Point (int size, int type, double *x, double *y, double *z, double Raise[3][5]){
+void Draw_Point (int type, double size, double *x, double *y, double *z, double Raise[3][5]){
   static GLUquadricObj *qua;
   static int first=1;
   if(first){
@@ -229,10 +229,6 @@ void Draw_Vector (int Type, int Fill,
     }
     break ;
     
-  case DRAW_POST_ARROW_HEAD :
-    Msg(GERROR, "Arrow Head not done");
-    break ;
-
   case DRAW_POST_PYRAMID :
 
     b = .1333 * d;
