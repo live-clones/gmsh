@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.16 2001-11-23 12:14:05 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.17 2001-11-23 13:32:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -349,15 +349,17 @@ int Colorbar_Window::handle(int event){
 
   switch(event){
 
-  case FL_FOCUS : 
+  case FL_ENTER : 
+    take_focus(); //force keyboard focus on the ColorbarWindow    
     return 1;
 
+  case FL_LEAVE :
+  case FL_FOCUS : 
   case FL_UNFOCUS : 
     return 1;
 
   case FL_SHORTCUT :
   case FL_KEYBOARD : 
-
     if(Fl::test_shortcut('0')){
       ColorTable_InitParam(0, ct, 1, 1); compute=1;
     }
@@ -479,11 +481,9 @@ int Colorbar_Window::handle(int event){
       *viewchanged = 1;
       set_changed();
     }
-    // discard the event for other uses
     return 1;
 
   case FL_PUSH :
-    take_focus(); //force keyboard focus on the ColorbarWindow
     ibut = Fl::event_button();
     xpos = Fl::event_x();
     ypos = Fl::event_y();
