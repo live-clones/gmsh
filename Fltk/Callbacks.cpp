@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.211 2004-03-30 18:17:06 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.212 2004-04-01 22:21:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1436,11 +1436,11 @@ void visibility_number_cb(CALLBACK_ARGS)
 
 // Help Menu
 
- // fltk guys still have to decode how to map apple keys. Let's just
- // keep the "Windows-Unix" style stuff at the moment. We might want
- // to change all occurences of FL_CTRL with FL_COMMAND in the
- // future. FL_COMMAND would get mapped to Ctrl on Windows/Unix and to
- // Cmd on Macs.
+// The fltk guys still have to decide how to map apple keys. Let's
+// just keep the "Windows-Unix" style stuff at the moment. We might
+// want to change all occurences of FL_CTRL with FL_COMMAND in the
+// future. FL_COMMAND would get mapped to Ctrl on Windows/Unix and to
+// Cmd on Macs.
 #ifdef __APPLE__NOT_USED_ANYMORE
 #define XX "Cmd "
 #else
