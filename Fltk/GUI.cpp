@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.191 2002-08-15 18:02:26 geuzaine Exp $
+// $Id: GUI.cpp,v 1.192 2002-08-15 22:36:18 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -936,13 +936,8 @@ void GUI::create_graphic_window(int argc, char **argv){
   
   g_window = new Fl_Window(width, height);
   g_window->callback(file_quit_cb);
-  
-  g_opengl_window = new Opengl_Window(0,0,width,glheight);
-  if(!opt_general_double_buffer(0,GMSH_GET,0)){
-    Msg(INFO, "Setting OpenGL visual to single buffered");
-    g_opengl_window->mode(FL_RGB | FL_DEPTH | FL_SINGLE);
-  }
-  g_opengl_window->end();
+
+  // bottom button bar
 
   Fl_Box *bottom = new Fl_Box(0,glheight,width,sh);
   bottom->box(FL_THIN_UP_BOX);
@@ -970,14 +965,6 @@ void GUI::create_graphic_window(int argc, char **argv){
   start_bmp->label(g_status_butt[6]);
   stop_bmp = new Fl_Bitmap(stop_bits,stop_width,stop_height);
   g_status_butt[6]->deactivate();
-
-  /*
-  g_status_butt[7] = new Fl_Button(x,glheight+2,sw,sh-4); x+=sw;
-  g_status_butt[7]->callback(status_cancel_cb);
-  abort_bmp = new Fl_Bitmap(abort_bits,abort_width,abort_height);
-  abort_bmp->label(g_status_butt[7]);
-  g_status_butt[7]->deactivate();
-  */
   for(i = 0 ; i<7 ; i++){
     g_status_butt[i]->box(FL_FLAT_BOX);
     g_status_butt[i]->selection_color(FL_WHITE);
@@ -1003,10 +990,21 @@ void GUI::create_graphic_window(int argc, char **argv){
   g_status_butt[6]->tooltip("Play/pause animation");
 #endif
 
-  Dummy_Box *b = new Dummy_Box(x,0,width-x,glheight);
-  g_window->resizable(b);
-  b->hide();
-  
+  // dummy resizable box
+
+  Dummy_Box *resize_box = new Dummy_Box(x,0,width-x,glheight);
+
+  // opengl window
+
+  g_opengl_window = new Opengl_Window(0,0,width,glheight);
+  if(!opt_general_double_buffer(0,GMSH_GET,0)){
+    Msg(INFO, "Setting OpenGL visual to single buffered");
+    g_opengl_window->mode(FL_RGB | FL_DEPTH | FL_SINGLE);
+  }
+  g_opengl_window->end();
+
+
+  g_window->resizable(resize_box);
   g_window->position(CTX.gl_position[0],CTX.gl_position[1]);
   g_window->end();   
 }
