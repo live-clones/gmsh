@@ -160,7 +160,7 @@ public:
   Fl_Hold_Browser  *opt_browser ;
 
   // general options
-  Fl_Window        *gen_window ;
+  Fl_Group         *gen_group ;
   Fl_Check_Button  *gen_butt[20] ;
   Fl_Button        *gen_push_butt[20] ;
   Fl_Value_Input   *gen_value[20] ;
@@ -169,14 +169,14 @@ public:
   Fl_Choice        *gen_choice[20] ;
 
   // geometry options
-  Fl_Window        *geo_window ;
+  Fl_Group         *geo_group ;
   Fl_Check_Button  *geo_butt[20] ;
   Fl_Value_Input   *geo_value[20] ;
   Fl_Button        *geo_col[50] ;
   Fl_Choice        *geo_choice[20] ;
   
   // mesh options
-  Fl_Window        *mesh_window ;
+  Fl_Group         *mesh_group ;
   Fl_Check_Button  *mesh_butt[50] ;
   Fl_Input         *mesh_input[20] ;
   Fl_Value_Input   *mesh_value[20] ;
@@ -184,19 +184,19 @@ public:
   Fl_Choice        *mesh_choice[20] ;
 
   // solver options
-  Fl_Window        *solver_window ;
+  Fl_Group         *solver_group ;
   Fl_Check_Button  *solver_butt[20] ;
   Fl_Value_Input   *solver_value[20] ;
 
   // post-processing options
-  Fl_Window        *post_window ;
+  Fl_Group         *post_group ;
   Fl_Check_Button  *post_butt[20] ;
   Fl_Value_Input   *post_value[20] ;
   Fl_Choice        *post_choice[20] ;
 
   // view options
   int view_number ;
-  Fl_Window        *view_window ;
+  Fl_Group         *view_group ;
   Fl_Group         *view_2d, *view_range, *view_vector ;
   Fl_Check_Button  *view_butt[100] ;
   Fl_Value_Input   *view_value[100] ;
@@ -204,7 +204,6 @@ public:
   Fl_Repeat_Button *view_butt_rep[100] ;
   Fl_Button        *view_push_butt[100] ;
   Fl_Choice        *view_choice[100] ;
-
   Colorbar_Window  *view_colorbar_window ;
   Fl_Return_Button *view_ok ;
 
@@ -254,7 +253,7 @@ public:
   void create_menu_window(int argc, char **argv);
   void create_graphic_window(int argc, char **argv);
   void create_option_window();
-  void hide_option_subwindows();
+  void hide_all_option_groups();
   void create_general_options_window();
   void create_geometry_options_window();
   void create_mesh_options_window();
