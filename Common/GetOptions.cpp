@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.43 2001-12-06 10:10:42 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.44 2002-01-03 10:25:06 geuzaine Exp $
 
 #include <unistd.h>
 #include "Gmsh.h"
@@ -79,7 +79,8 @@ void Print_Usage(char *name){
   Msg(DIRECT, "                        post-processing mode (default: automatic)");
 #endif
   Msg(DIRECT, "  -v int                set verbosity level (default: 2)");
-  Msg(DIRECT, "  -opt \"string\"         parse string before project file");
+  Msg(DIRECT, "  -string \"string\"      parse string before project file");
+  Msg(DIRECT, "  -option file          parse option file before GUI creation");
   Msg(DIRECT, "  -version              show version number");
   Msg(DIRECT, "  -info                 show detailed version information");
   Msg(DIRECT, "  -help                 show this message");
@@ -106,7 +107,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
     
     if (argv[i][0] == '-') {
       
-      if(!strcmp(argv[i]+1, "opt")){
+      if(!strcmp(argv[i]+1, "string")){
 	i++;
         if(argv[i]!=NULL) TheOptString = argv[i++];
 	else{
@@ -155,6 +156,14 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "histogram")){ 
         CTX.mesh.histogram = 1; i++;
+      }
+      else if(!strcmp(argv[i]+1, "option")){ 
+        i++;
+        if(argv[i] != NULL) ParseFile(argv[i++],1);
+        else {    
+          fprintf(stderr, ERROR_STR "Missing file name\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "o")){ 
         i++;

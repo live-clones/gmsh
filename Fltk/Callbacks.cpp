@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.100 2001-12-06 08:10:59 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.101 2002-01-03 10:25:06 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1584,104 +1584,121 @@ void mesh_define_transfinite_volume_cb(CALLBACK_ARGS){
 
 #include "Solvers.h"
 
-void getdp_cb(CALLBACK_ARGS){
-  char file[256];
-  static int first=1;
-  if(first){
-    first = 0;
+void solver_cb(CALLBACK_ARGS){
+  char file[256], tmp[256];
+  static int first[5]={1,1,1,1,1};
+  int num = (int)data;
+
+  if(first[num]){
+    first[num] = 0;
     strcpy(file,CTX.base_filename);
-    strcat(file,".pro");
-    WID->getdp_input[0]->value(file);
+    strcat(file,SINFO[num].extension);
+    WID->solver[num].input[0]->value(file);
   }
-  GetDP((char*)WID->getdp_input[0]->value());
-  WID->create_getdp_window();
+  if(SINFO[num].nboptions){
+    sprintf(tmp, "%s %s", SINFO[num].option_command,
+	    (char*)WID->solver[num].input[0]->value());
+    Solver(num, tmp);
+  }
+  WID->create_solver_window(num);
 }
-void getdp_file_open_cb(CALLBACK_ARGS){
-  char *newfile;
-  newfile = fl_file_chooser("Open problem definition file", "*.[Pp][Rr][Oo]", NULL);
+void solver_file_open_cb(CALLBACK_ARGS){
+  char *newfile, tmp[256];
+  int num = (int)data;
+  sprintf(tmp, "*%s", SINFO[num].extension);
+  newfile = fl_file_chooser("Open problem definition file", tmp, NULL);
   if (newfile != NULL){
-    WID->getdp_input[0]->value(newfile);
-    GetDP(newfile);
+    WID->solver[num].input[0]->value(newfile);
+    if(SINFO[num].nboptions){
+      sprintf(tmp, "%s %s", SINFO[num].option_command, newfile);
+      Solver(num, tmp);
+    }
   }
 }
-void getdp_file_edit_cb(CALLBACK_ARGS){
+void solver_file_edit_cb(CALLBACK_ARGS){
   char cmd[1000];
-  sprintf(cmd, CTX.editor, WID->getdp_input[0]->value());
+  int num = (int)data;
+  sprintf(cmd, CTX.editor, WID->solver[num].input[0]->value());
   Msg(INFO, "Starting text editor '%s'", cmd);
   system(cmd);
 }
-void getdp_choose_mesh_cb(CALLBACK_ARGS){
+void solver_choose_mesh_cb(CALLBACK_ARGS){
   char *newfile;
+  int num = (int)data;
   newfile = fl_file_chooser("Open mesh file", "*.[Mm][Ss][Hh]", NULL);
-  if (newfile != NULL) WID->getdp_input[1]->value(newfile);
+  if (newfile != NULL) WID->solver[num].input[1]->value(newfile);
 }
-void getdp_pre_cb(CALLBACK_ARGS){
-  char arg[256];
-  if(GetDP_Info.popupmessages) WID->create_message_window();
-  if(strlen(WID->getdp_input[1]->value()))
-    sprintf(arg, "%s -msh %s -pre %s", 
-	    WID->getdp_input[0]->value(),
-	    WID->getdp_input[1]->value(),
-	    GetDP_Info.res[WID->getdp_choice[0]->value()]);
-  else
-    sprintf(arg, "%s -pre %s", 
-	    WID->getdp_input[0]->value(), 
-	    GetDP_Info.res[WID->getdp_choice[0]->value()]);
-
-  GetDP(arg);
-}
-void getdp_cal_cb(CALLBACK_ARGS){
-  char arg[256];
-  if(GetDP_Info.popupmessages) WID->create_message_window();
-  if(strlen(WID->getdp_input[1]->value()))
-    sprintf(arg, "%s -msh %s -cal", 
-	    WID->getdp_input[0]->value(),
-	    WID->getdp_input[1]->value());
-  else
-    sprintf(arg, "%s -cal", WID->getdp_input[0]->value());
-  GetDP(arg);
-}
-void getdp_post_cb(CALLBACK_ARGS){
-  char arg[256];
-  if(GetDP_Info.popupmessages) WID->create_message_window();
-  if(strlen(WID->getdp_input[1]->value()))
-    sprintf(arg, "%s -msh %s -bin -pos %s",
-	    WID->getdp_input[0]->value(),
-	    WID->getdp_input[1]->value(),
-	    GetDP_Info.postop[WID->getdp_choice[1]->value()]);
-  else
-    sprintf(arg, "%s -bin -pos %s",
-	    WID->getdp_input[0]->value(),
-	    GetDP_Info.postop[WID->getdp_choice[1]->value()]);
-  GetDP(arg);
-}
-void getdp_kill_cb(CALLBACK_ARGS){
-  if(GetDP_Info.pid > 0){
-    kill(GetDP_Info.pid, 9);
-    Msg(INFO, "Killed GetDP pid %d", GetDP_Info.pid);
+int nbs(char *str){
+  int i, nb=0;
+  for(i=0; i<(int)strlen(str)-1; i++){
+    if(str[i]=='%' && str[i+1]=='s'){
+      nb++; i++;
+    }
   }
-  GetDP_Info.pid = -1;
+  return nb;
 }
-void getdp_choose_command_cb(CALLBACK_ARGS){
+void solver_command_cb(CALLBACK_ARGS){
+  char arg[512], mesh[256], command[256];
+  int num = ((int*)data)[0];
+  int idx = ((int*)data)[1];
+  int i, usedopts = 0;
+
+  if(SINFO[num].popup_messages) WID->create_message_window();
+
+  if(strlen(WID->solver[num].input[1]->value()))
+    sprintf(mesh, SINFO[num].mesh_command, WID->solver[num].input[1]->value());
+  else 
+    strcpy(mesh, "");
+
+  //printf("num%d idx%d %s -> %d\n", 
+  //	 num, idx, SINFO[num].button_command[idx], nbs(SINFO[num].button_command[idx]));
+
+  if(nbs(SINFO[num].button_command[idx])){
+    for(i=0; i<idx; i++) usedopts += nbs(SINFO[num].button_command[i]);
+    if(usedopts > SINFO[num].nboptions){
+      Msg(GERROR, "Missing options to execute command");
+      return;
+    }
+    sprintf(command, SINFO[num].button_command[idx], 
+	    SINFO[num].option[usedopts][WID->solver[num].choice[usedopts]->value()]);
+  }
+  else{
+    strcpy(command, SINFO[num].button_command[idx]);
+  }
+
+  sprintf(arg, "%s %s %s", WID->solver[num].input[0]->value(), mesh, command);
+
+  Solver(num, arg);
+}
+void solver_kill_cb(CALLBACK_ARGS){
+  int num = (int)data;
+  if(SINFO[num].pid > 0){
+    kill(SINFO[num].pid, 9);
+    Msg(INFO, "Killed %s pid %d", SINFO[num].name, SINFO[num].pid);
+  }
+  SINFO[num].pid = -1;
+}
+void solver_choose_executable_cb(CALLBACK_ARGS){
   char *newfile;
+  int num = (int)data;
 #if defined(WIN32)
   newfile = fl_file_chooser("Choose executable", "*.[Ee][Xx][Ee]", NULL);
 #else
   newfile = fl_file_chooser("Choose executable", "*", NULL);
 #endif
-  if (newfile != NULL) WID->getdp_input[2]->value(newfile);
+  if (newfile != NULL) WID->solver[num].input[2]->value(newfile);
 }
-void getdp_ok_cb(CALLBACK_ARGS){
-  opt_solver_getdp_popupmessages(0, GMSH_SET, WID->getdp_butt[0]->value());
-  opt_solver_getdp_mergeviews(0, GMSH_SET, WID->getdp_butt[1]->value());
-
+void solver_ok_cb(CALLBACK_ARGS){
+  int num = (int)data;
   int retry=0;
-  if(strcmp(opt_solver_getdp_command(0, GMSH_GET, NULL), 
-	    WID->getdp_input[2]->value())) retry=1;
-  opt_solver_getdp_command(0, GMSH_SET, (char*)WID->getdp_input[2]->value());
-  if(retry) getdp_cb(NULL,NULL);
+  opt_solver_popup_messages(num, GMSH_SET, WID->solver[num].butt[0]->value());
+  opt_solver_merge_views(num, GMSH_SET, WID->solver[num].butt[1]->value());
+  opt_solver_client_server(num, GMSH_SET, WID->solver[num].butt[2]->value());
+  if(strcmp(opt_solver_executable(num, GMSH_GET, NULL),
+	    WID->solver[num].input[2]->value())) retry=1;
+  opt_solver_executable(num, GMSH_SET, (char*)WID->solver[num].input[2]->value());
+  if(retry) solver_cb(NULL,data);
 }
-
 
 // Dynamic Post Menus
 

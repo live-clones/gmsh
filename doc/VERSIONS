@@ -1,4 +1,8 @@
-$Date: 2001-12-04 09:31:27 $
+$Date: 2002-01-03 10:25:06 $
+
+New in 1.33: New parameterizable solver interface (allowing up to 5
+user-defined solvers); enhanced 2D aniso algorithm; 3D initial mesh
+speedup;
 
 New in 1.32: New visibility browser; better floating point exception
 checks; fixed infinite looping when merging meshes in project files;

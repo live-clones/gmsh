@@ -1,4 +1,4 @@
-GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2001-12-03 08:41:45 $)
+GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2002-01-03 10:25:06 $)
 
 1. GENERAL
 ==========
@@ -139,7 +139,23 @@ hexahedra.
 6. SOLVER PROBLEMS
 ==================
 
-6.1) On Windows, Gmsh does not seem to find the solver
+6.1) How do I integrate my own solver with Gmsh?
+
+If you want to simply launch a program from withing Gmsh, just edit
+the options to define your solver commands (e.g. Solver.Name0,
+Solver.Executable0, etc.), and set the ClientServer option to zero
+(e.g. Solver.ClientServer0 = 0). 
+
+If you want your solver to interact with Gmsh (for error messages,
+option definitions, post-processing, etc.), you will need to link your
+solver with the 'GmshClient.c' file and add the appropriate function
+calls inside your program. You will of course also need to define your
+solver commands in an option file, but this time you should set the
+ClientServer variable to 1 (e.g. Solver.ClientServer = 1). A complete
+example on how to build a solver that interacts with Gmsh is available
+at http://www.geuz.org/gmsh/doc/mysolver.tgz.
+
+6.2) On Windows, Gmsh does not seem to find the solver
 executable. What's wrong?
 
 - the shell executable 'sh.exe' has to be in your path;

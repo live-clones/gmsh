@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.34 2001-12-16 05:16:37 remacle Exp $
+// $Id: 3D_Mesh.cpp,v 1.35 2002-01-03 10:25:06 geuzaine Exp $
 
 /*
  
@@ -661,7 +661,7 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
   N = List_Nbr (Points);
   n = IMAX (N / 20, 1);
 
-  clock_t t1 = clock();
+  //clock_t t1 = clock();
 
   Box_6_Tetraedron (Points, m);
   List_Sort (Points, comparePosition);
@@ -741,10 +741,10 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
       }
     }
   }
-  clock_t t2 = clock();
+  //clock_t t2 = clock();
 
-  Msg(STATUS3,"Nb1 = %d Nb2 = %d Nb3 = %d N = %d t = %lf\n",Nb1,Nb2,Nb3
-      ,N,(double)(t2-t1)/CLOCKS_PER_SEC);
+  //Msg(STATUS3,"Nb1 = %d Nb2 = %d Nb3 = %d N = %d t = %lf",Nb1,Nb2,Nb3
+  //    ,N,(double)(t2-t1)/CLOCKS_PER_SEC);
 }
 
 void suppress_vertex (void *data, void *dum){

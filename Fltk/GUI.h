@@ -36,6 +36,7 @@
 typedef struct{
   char *label;
   Fl_Callback* callback;
+  void *arg;
 } Context_Item;
 
 extern Context_Item menu_geometry[]; 
@@ -74,6 +75,17 @@ struct PluginDialogBox
   Fl_Return_Button *run_button;
   int nb_viewvalue;
   Fl_Value_Input *view_value[20];
+};
+
+// The dialog for solvers
+
+struct SolverDialogBox
+{
+  Fl_Window *window;
+  Fl_Input *input[50] ;
+  Fl_Choice *choice[10] ;
+  Fl_Check_Button *butt[10] ;
+  Fl_Button *command[10] ;
 };
 
 // The GUI class contains only the important widgets (which can be set/queried).
@@ -173,10 +185,7 @@ public:
   Fl_Input         *context_mesh_input[20] ;
 
   // solver windows
-  Fl_Window        *getdp_window ;
-  Fl_Input         *getdp_input[50] ;
-  Fl_Choice        *getdp_choice[10] ;
-  Fl_Check_Button  *getdp_butt[10] ;
+  SolverDialogBox  solver[5] ;
 
   // the constructor
   GUI(int argc, char **argv);
@@ -197,7 +206,7 @@ public:
   void create_about_window();
   void create_geometry_context_window(int num);
   void create_mesh_context_window(int num);
-  void create_getdp_window();
+  void create_solver_window(int num);
 
   // general purpose interaction
   void run();

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.67 2001-12-16 05:16:37 remacle Exp $
+// $Id: Options.cpp,v 1.68 2002-01-03 10:25:06 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -511,16 +511,320 @@ char * opt_general_editor(OPT_ARGS_STR){
   return CTX.editor;
 }
 
-char * opt_solver_getdp_command(OPT_ARGS_STR){
+char * opt_solver_name(OPT_ARGS_STR){
 #ifdef _FLTK
-  if(action & GMSH_SET) strcpy(GetDP_Info.command, val);
+  if(action & GMSH_SET) strcpy(SINFO[num].name, val);
   if(WID && (action & GMSH_GUI))
-    WID->getdp_input[2]->value(GetDP_Info.command);
-  return GetDP_Info.command;
+    WID->solver[num].window->label(SINFO[num].name);
+  return SINFO[num].name;
 #else
-  return "getdp";
+  return "undefined";
 #endif
 }
+char * opt_solver_name0(OPT_ARGS_STR){ return opt_solver_name(0,action,val); }
+char * opt_solver_name1(OPT_ARGS_STR){ return opt_solver_name(1,action,val); }
+char * opt_solver_name2(OPT_ARGS_STR){ return opt_solver_name(2,action,val); }
+char * opt_solver_name3(OPT_ARGS_STR){ return opt_solver_name(3,action,val); }
+char * opt_solver_name4(OPT_ARGS_STR){ return opt_solver_name(4,action,val); }
+
+char * opt_solver_executable(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].executable_name, val);
+  if(WID && (action & GMSH_GUI))
+    WID->solver[num].input[2]->value(SINFO[num].executable_name);
+  return SINFO[num].executable_name;
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_executable0(OPT_ARGS_STR){ return opt_solver_executable(0,action,val); }
+char * opt_solver_executable1(OPT_ARGS_STR){ return opt_solver_executable(1,action,val); }
+char * opt_solver_executable2(OPT_ARGS_STR){ return opt_solver_executable(2,action,val); }
+char * opt_solver_executable3(OPT_ARGS_STR){ return opt_solver_executable(3,action,val); }
+char * opt_solver_executable4(OPT_ARGS_STR){ return opt_solver_executable(4,action,val); }
+
+char * opt_solver_help(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) SINFO[num].help = val;
+  return SINFO[num].help;
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_help0(OPT_ARGS_STR){ return opt_solver_help(0,action,val); }
+char * opt_solver_help1(OPT_ARGS_STR){ return opt_solver_help(1,action,val); }
+char * opt_solver_help2(OPT_ARGS_STR){ return opt_solver_help(2,action,val); }
+char * opt_solver_help3(OPT_ARGS_STR){ return opt_solver_help(3,action,val); }
+char * opt_solver_help4(OPT_ARGS_STR){ return opt_solver_help(4,action,val); }
+
+char * opt_solver_extension(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].extension, val);
+  return SINFO[num].extension;
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_extension0(OPT_ARGS_STR){ return opt_solver_extension(0,action,val); }
+char * opt_solver_extension1(OPT_ARGS_STR){ return opt_solver_extension(1,action,val); }
+char * opt_solver_extension2(OPT_ARGS_STR){ return opt_solver_extension(2,action,val); }
+char * opt_solver_extension3(OPT_ARGS_STR){ return opt_solver_extension(3,action,val); }
+char * opt_solver_extension4(OPT_ARGS_STR){ return opt_solver_extension(4,action,val); }
+
+char * opt_solver_mesh_name(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].mesh_name, val);
+  return SINFO[num].mesh_name;
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_mesh_name0(OPT_ARGS_STR){ return opt_solver_mesh_name(0,action,val); }
+char * opt_solver_mesh_name1(OPT_ARGS_STR){ return opt_solver_mesh_name(1,action,val); }
+char * opt_solver_mesh_name2(OPT_ARGS_STR){ return opt_solver_mesh_name(2,action,val); }
+char * opt_solver_mesh_name3(OPT_ARGS_STR){ return opt_solver_mesh_name(3,action,val); }
+char * opt_solver_mesh_name4(OPT_ARGS_STR){ return opt_solver_mesh_name(4,action,val); }
+
+char * opt_solver_mesh_command(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].mesh_command, val);
+  if(WID && (action & GMSH_GUI))
+    WID->solver[num].input[1]->value(SINFO[num].mesh_name);
+  return SINFO[num].mesh_command;
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_mesh_command0(OPT_ARGS_STR){ return opt_solver_mesh_command(0,action,val); }
+char * opt_solver_mesh_command1(OPT_ARGS_STR){ return opt_solver_mesh_command(1,action,val); }
+char * opt_solver_mesh_command2(OPT_ARGS_STR){ return opt_solver_mesh_command(2,action,val); }
+char * opt_solver_mesh_command3(OPT_ARGS_STR){ return opt_solver_mesh_command(3,action,val); }
+char * opt_solver_mesh_command4(OPT_ARGS_STR){ return opt_solver_mesh_command(4,action,val); }
+
+char * opt_solver_option_command(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].option_command, val);
+  return SINFO[num].option_command;
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_option_command0(OPT_ARGS_STR){ return opt_solver_option_command(0,action,val); }
+char * opt_solver_option_command1(OPT_ARGS_STR){ return opt_solver_option_command(1,action,val); }
+char * opt_solver_option_command2(OPT_ARGS_STR){ return opt_solver_option_command(2,action,val); }
+char * opt_solver_option_command3(OPT_ARGS_STR){ return opt_solver_option_command(3,action,val); }
+char * opt_solver_option_command4(OPT_ARGS_STR){ return opt_solver_option_command(4,action,val); }
+
+char * opt_solver_first_option(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].option_name[0], val);
+  return SINFO[num].option_name[0];
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_first_option0(OPT_ARGS_STR){ return opt_solver_first_option(0,action,val); }
+char * opt_solver_first_option1(OPT_ARGS_STR){ return opt_solver_first_option(1,action,val); }
+char * opt_solver_first_option2(OPT_ARGS_STR){ return opt_solver_first_option(2,action,val); }
+char * opt_solver_first_option3(OPT_ARGS_STR){ return opt_solver_first_option(3,action,val); }
+char * opt_solver_first_option4(OPT_ARGS_STR){ return opt_solver_first_option(4,action,val); }
+
+char * opt_solver_second_option(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].option_name[1], val);
+  return SINFO[num].option_name[1];
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_second_option0(OPT_ARGS_STR){ return opt_solver_second_option(0,action,val); }
+char * opt_solver_second_option1(OPT_ARGS_STR){ return opt_solver_second_option(1,action,val); }
+char * opt_solver_second_option2(OPT_ARGS_STR){ return opt_solver_second_option(2,action,val); }
+char * opt_solver_second_option3(OPT_ARGS_STR){ return opt_solver_second_option(3,action,val); }
+char * opt_solver_second_option4(OPT_ARGS_STR){ return opt_solver_second_option(4,action,val); }
+
+char * opt_solver_third_option(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].option_name[2], val);
+  return SINFO[num].option_name[2];
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_third_option0(OPT_ARGS_STR){ return opt_solver_third_option(0,action,val); }
+char * opt_solver_third_option1(OPT_ARGS_STR){ return opt_solver_third_option(1,action,val); }
+char * opt_solver_third_option2(OPT_ARGS_STR){ return opt_solver_third_option(2,action,val); }
+char * opt_solver_third_option3(OPT_ARGS_STR){ return opt_solver_third_option(3,action,val); }
+char * opt_solver_third_option4(OPT_ARGS_STR){ return opt_solver_third_option(4,action,val); }
+
+char * opt_solver_fourth_option(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].option_name[3], val);
+  return SINFO[num].option_name[3];
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_fourth_option0(OPT_ARGS_STR){ return opt_solver_fourth_option(0,action,val); }
+char * opt_solver_fourth_option1(OPT_ARGS_STR){ return opt_solver_fourth_option(1,action,val); }
+char * opt_solver_fourth_option2(OPT_ARGS_STR){ return opt_solver_fourth_option(2,action,val); }
+char * opt_solver_fourth_option3(OPT_ARGS_STR){ return opt_solver_fourth_option(3,action,val); }
+char * opt_solver_fourth_option4(OPT_ARGS_STR){ return opt_solver_fourth_option(4,action,val); }
+
+char * opt_solver_fifth_option(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].option_name[4], val);
+  return SINFO[num].option_name[4];
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_fifth_option0(OPT_ARGS_STR){ return opt_solver_fifth_option(0,action,val); }
+char * opt_solver_fifth_option1(OPT_ARGS_STR){ return opt_solver_fifth_option(1,action,val); }
+char * opt_solver_fifth_option2(OPT_ARGS_STR){ return opt_solver_fifth_option(2,action,val); }
+char * opt_solver_fifth_option3(OPT_ARGS_STR){ return opt_solver_fifth_option(3,action,val); }
+char * opt_solver_fifth_option4(OPT_ARGS_STR){ return opt_solver_fifth_option(4,action,val); }
+
+char * opt_solver_first_button(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].button_name[0], val);
+  return SINFO[num].button_name[0];
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_first_button0(OPT_ARGS_STR){ return opt_solver_first_button(0,action,val); }
+char * opt_solver_first_button1(OPT_ARGS_STR){ return opt_solver_first_button(1,action,val); }
+char * opt_solver_first_button2(OPT_ARGS_STR){ return opt_solver_first_button(2,action,val); }
+char * opt_solver_first_button3(OPT_ARGS_STR){ return opt_solver_first_button(3,action,val); }
+char * opt_solver_first_button4(OPT_ARGS_STR){ return opt_solver_first_button(4,action,val); }
+
+char * opt_solver_first_button_command(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].button_command[0], val);
+  return SINFO[num].button_command[0];
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_first_button_command0(OPT_ARGS_STR){ return opt_solver_first_button_command(0,action,val); }
+char * opt_solver_first_button_command1(OPT_ARGS_STR){ return opt_solver_first_button_command(1,action,val); }
+char * opt_solver_first_button_command2(OPT_ARGS_STR){ return opt_solver_first_button_command(2,action,val); }
+char * opt_solver_first_button_command3(OPT_ARGS_STR){ return opt_solver_first_button_command(3,action,val); }
+char * opt_solver_first_button_command4(OPT_ARGS_STR){ return opt_solver_first_button_command(4,action,val); }
+
+char * opt_solver_second_button(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].button_name[1], val);
+  return SINFO[num].button_name[1];
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_second_button0(OPT_ARGS_STR){ return opt_solver_second_button(0,action,val); }
+char * opt_solver_second_button1(OPT_ARGS_STR){ return opt_solver_second_button(1,action,val); }
+char * opt_solver_second_button2(OPT_ARGS_STR){ return opt_solver_second_button(2,action,val); }
+char * opt_solver_second_button3(OPT_ARGS_STR){ return opt_solver_second_button(3,action,val); }
+char * opt_solver_second_button4(OPT_ARGS_STR){ return opt_solver_second_button(4,action,val); }
+
+char * opt_solver_second_button_command(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].button_command[1], val);
+  return SINFO[num].button_command[1];
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_second_button_command0(OPT_ARGS_STR){ return opt_solver_second_button_command(0,action,val); }
+char * opt_solver_second_button_command1(OPT_ARGS_STR){ return opt_solver_second_button_command(1,action,val); }
+char * opt_solver_second_button_command2(OPT_ARGS_STR){ return opt_solver_second_button_command(2,action,val); }
+char * opt_solver_second_button_command3(OPT_ARGS_STR){ return opt_solver_second_button_command(3,action,val); }
+char * opt_solver_second_button_command4(OPT_ARGS_STR){ return opt_solver_second_button_command(4,action,val); }
+
+char * opt_solver_third_button(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].button_name[2], val);
+  return SINFO[num].button_name[2];
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_third_button0(OPT_ARGS_STR){ return opt_solver_third_button(0,action,val); }
+char * opt_solver_third_button1(OPT_ARGS_STR){ return opt_solver_third_button(1,action,val); }
+char * opt_solver_third_button2(OPT_ARGS_STR){ return opt_solver_third_button(2,action,val); }
+char * opt_solver_third_button3(OPT_ARGS_STR){ return opt_solver_third_button(3,action,val); }
+char * opt_solver_third_button4(OPT_ARGS_STR){ return opt_solver_third_button(4,action,val); }
+
+char * opt_solver_third_button_command(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].button_command[2], val);
+  return SINFO[num].button_command[2];
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_third_button_command0(OPT_ARGS_STR){ return opt_solver_third_button_command(0,action,val); }
+char * opt_solver_third_button_command1(OPT_ARGS_STR){ return opt_solver_third_button_command(1,action,val); }
+char * opt_solver_third_button_command2(OPT_ARGS_STR){ return opt_solver_third_button_command(2,action,val); }
+char * opt_solver_third_button_command3(OPT_ARGS_STR){ return opt_solver_third_button_command(3,action,val); }
+char * opt_solver_third_button_command4(OPT_ARGS_STR){ return opt_solver_third_button_command(4,action,val); }
+
+char * opt_solver_fourth_button(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].button_name[3], val);
+  return SINFO[num].button_name[3];
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_fourth_button0(OPT_ARGS_STR){ return opt_solver_fourth_button(0,action,val); }
+char * opt_solver_fourth_button1(OPT_ARGS_STR){ return opt_solver_fourth_button(1,action,val); }
+char * opt_solver_fourth_button2(OPT_ARGS_STR){ return opt_solver_fourth_button(2,action,val); }
+char * opt_solver_fourth_button3(OPT_ARGS_STR){ return opt_solver_fourth_button(3,action,val); }
+char * opt_solver_fourth_button4(OPT_ARGS_STR){ return opt_solver_fourth_button(4,action,val); }
+
+char * opt_solver_fourth_button_command(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].button_command[3], val);
+  return SINFO[num].button_command[3];
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_fourth_button_command0(OPT_ARGS_STR){ return opt_solver_fourth_button_command(0,action,val); }
+char * opt_solver_fourth_button_command1(OPT_ARGS_STR){ return opt_solver_fourth_button_command(1,action,val); }
+char * opt_solver_fourth_button_command2(OPT_ARGS_STR){ return opt_solver_fourth_button_command(2,action,val); }
+char * opt_solver_fourth_button_command3(OPT_ARGS_STR){ return opt_solver_fourth_button_command(3,action,val); }
+char * opt_solver_fourth_button_command4(OPT_ARGS_STR){ return opt_solver_fourth_button_command(4,action,val); }
+
+char * opt_solver_fifth_button(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].button_name[4], val);
+  return SINFO[num].button_name[4];
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_fifth_button0(OPT_ARGS_STR){ return opt_solver_fifth_button(0,action,val); }
+char * opt_solver_fifth_button1(OPT_ARGS_STR){ return opt_solver_fifth_button(1,action,val); }
+char * opt_solver_fifth_button2(OPT_ARGS_STR){ return opt_solver_fifth_button(2,action,val); }
+char * opt_solver_fifth_button3(OPT_ARGS_STR){ return opt_solver_fifth_button(3,action,val); }
+char * opt_solver_fifth_button4(OPT_ARGS_STR){ return opt_solver_fifth_button(4,action,val); }
+
+char * opt_solver_fifth_button_command(OPT_ARGS_STR){
+#ifdef _FLTK
+  if(action & GMSH_SET) strcpy(SINFO[num].button_command[4], val);
+  return SINFO[num].button_command[4];
+#else
+  return "undefined";
+#endif
+}
+char * opt_solver_fifth_button_command0(OPT_ARGS_STR){ return opt_solver_fifth_button_command(0,action,val); }
+char * opt_solver_fifth_button_command1(OPT_ARGS_STR){ return opt_solver_fifth_button_command(1,action,val); }
+char * opt_solver_fifth_button_command2(OPT_ARGS_STR){ return opt_solver_fifth_button_command(2,action,val); }
+char * opt_solver_fifth_button_command3(OPT_ARGS_STR){ return opt_solver_fifth_button_command(3,action,val); }
+char * opt_solver_fifth_button_command4(OPT_ARGS_STR){ return opt_solver_fifth_button_command(4,action,val); }
+
 
 char * opt_view_name(OPT_ARGS_STR){
   GET_VIEW(NULL) ;
@@ -1546,7 +1850,7 @@ double opt_mesh_constrained_bgmesh(OPT_ARGS_NUM){
 }
 double opt_mesh_degree(OPT_ARGS_NUM){
   if(action & GMSH_SET)
-    CTX.mesh.degree = (int)val; // INTERDIT POUR LE MOMENT !!!
+    CTX.mesh.degree = 1; //(int)val; // INTERDIT POUR LE MOMENT !!!
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_butt[3]->value(CTX.mesh.degree==2);
@@ -1666,30 +1970,56 @@ double opt_mesh_cpu_time(OPT_ARGS_NUM){
 }
 
 
-
-double opt_solver_getdp_popupmessages(OPT_ARGS_NUM){
+double opt_solver_client_server(OPT_ARGS_NUM){
 #ifdef _FLTK
   if(action & GMSH_SET)
-    GetDP_Info.popupmessages = (int)val;
+    SINFO[num].client_server = (int)val;
   if(WID && (action & GMSH_GUI))
-    WID->getdp_butt[0]->value(GetDP_Info.popupmessages);
-  return GetDP_Info.popupmessages;
+    WID->solver[num].butt[2]->value(SINFO[num].client_server);
+  return SINFO[num].client_server;
+#else
+  return 0.;
+#endif
+}
+double opt_solver_client_server0(OPT_ARGS_NUM){ return opt_solver_client_server(0,action,val); }
+double opt_solver_client_server1(OPT_ARGS_NUM){ return opt_solver_client_server(1,action,val); }
+double opt_solver_client_server2(OPT_ARGS_NUM){ return opt_solver_client_server(2,action,val); }
+double opt_solver_client_server3(OPT_ARGS_NUM){ return opt_solver_client_server(3,action,val); }
+double opt_solver_client_server4(OPT_ARGS_NUM){ return opt_solver_client_server(4,action,val); }
+
+double opt_solver_popup_messages(OPT_ARGS_NUM){
+#ifdef _FLTK
+  if(action & GMSH_SET)
+    SINFO[num].popup_messages = (int)val;
+  if(WID && (action & GMSH_GUI))
+    WID->solver[num].butt[0]->value(SINFO[num].popup_messages);
+  return SINFO[num].popup_messages;
 #else
   return 1.;
 #endif
 }
-double opt_solver_getdp_mergeviews(OPT_ARGS_NUM){
+double opt_solver_popup_messages0(OPT_ARGS_NUM){ return opt_solver_popup_messages(0,action,val); }
+double opt_solver_popup_messages1(OPT_ARGS_NUM){ return opt_solver_popup_messages(1,action,val); }
+double opt_solver_popup_messages2(OPT_ARGS_NUM){ return opt_solver_popup_messages(2,action,val); }
+double opt_solver_popup_messages3(OPT_ARGS_NUM){ return opt_solver_popup_messages(3,action,val); }
+double opt_solver_popup_messages4(OPT_ARGS_NUM){ return opt_solver_popup_messages(4,action,val); }
+
+double opt_solver_merge_views(OPT_ARGS_NUM){
 #ifdef _FLTK
   if(action & GMSH_SET)
-    GetDP_Info.mergeviews = (int)val;
+    SINFO[num].merge_views = (int)val;
   if(WID && (action & GMSH_GUI))
-    WID->getdp_butt[1]->value(GetDP_Info.mergeviews);
-  return GetDP_Info.mergeviews;
+    WID->solver[num].butt[1]->value(SINFO[num].merge_views);
+  return SINFO[num].merge_views;
 #else
   return 1.;
 #endif
 }
-
+double opt_solver_merge_views0(OPT_ARGS_NUM){ return opt_solver_merge_views(0,action,val); }
+double opt_solver_merge_views1(OPT_ARGS_NUM){ return opt_solver_merge_views(1,action,val); }
+double opt_solver_merge_views2(OPT_ARGS_NUM){ return opt_solver_merge_views(2,action,val); }
+double opt_solver_merge_views3(OPT_ARGS_NUM){ return opt_solver_merge_views(3,action,val); }
+double opt_solver_merge_views4(OPT_ARGS_NUM){ return opt_solver_merge_views(4,action,val); }
 
 double opt_post_scales(OPT_ARGS_NUM){
   if(action & GMSH_SET) 

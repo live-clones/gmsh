@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.30 2001-12-04 10:47:39 geuzaine Exp $
+# $Id: Makefile,v 1.31 2002-01-03 10:25:06 geuzaine Exp $
 #
 # Makefile for "libFltk.a"
 #
@@ -12,7 +12,7 @@ RANLIB   = ranlib
 
 LIB      = ../lib/libFltk.a
 INCLUDE  = -I../Common -I../DataStr -I../Graphics -I../Geo\
-           -I../Mesh -I../Parser -I../Fltk -I../Plugin
+           -I../Mesh -I../Parser -I../Fltk -I../Plugin -I../utils
 
 OPT_FLAGS     = -g -Wall
 OS_FLAGS      = -D_LITTLE_ENDIAN
@@ -33,7 +33,7 @@ SRC = Main.cpp \
       Opengl.cpp\
       Opengl_Window.cpp\
       Colorbar_Window.cpp\
-      Socket.cpp\
+      GmshServer.cpp\
       Solvers.cpp
 
 
@@ -120,10 +120,9 @@ Colorbar_Window.o: Colorbar_Window.cpp ../Common/Gmsh.h \
  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
  ../Common/GmshUI.h ../Common/Numeric.h GUI.h Opengl_Window.h \
  Colorbar_Window.h ../Common/ColorTable.h ../Common/Context.h
-Socket.o: Socket.cpp ../Common/Message.h
 Solvers.o: Solvers.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h Socket.h ../Parser/OpenFile.h \
+ ../DataStr/avl.h ../DataStr/Tools.h ../Parser/OpenFile.h \
  Solvers.h ../Common/GmshUI.h GUI.h Opengl_Window.h Colorbar_Window.h \
  ../Common/ColorTable.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \

@@ -1,6 +1,8 @@
-// $Id: Solvers.cpp,v 1.8 2001-10-29 08:52:19 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.9 2002-01-03 10:25:06 geuzaine Exp $
 
 #include "Gmsh.h"
+#include "GmshClient.h"
+#include "GmshServer.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -8,7 +10,6 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-#include "Socket.h"
 #include "OpenFile.h"
 #include "Solvers.h"
 #include "GmshUI.h"
@@ -20,55 +21,66 @@
 extern Context_T  CTX;
 extern GUI       *WID;
 
+SolverInfo SINFO[5] ;
 
-// interface to GetDP
+int Solver(int num, char *args){
+  int sock, type, stop=0, i, j, n;
+  char command[1000], socket_name[1000], str[1000];
+  
+  if(!SINFO[num].client_server){
+    sprintf(command, "%s %s &", SINFO[num].executable_name, args);
+    Gmsh_StartClient(command, NULL);
+    Msg(INFO, "%s start (%s)", SINFO[num].name, command);
+    return 1;
+  }
 
-_GetDP_Info GetDP_Info ;
-
-int GetDP(char *args){
-  int sock, type, i, n;
-  char progname[1000], sockname[1000], str[1000];
-
-  strcpy(sockname, CTX.home_dir);
-  strcat(sockname, ".gmshsock");
-
-  sprintf(progname, "%s %s", GetDP_Info.command, args);
-  sock = Socket_StartProgram(progname, sockname);
+  sprintf(socket_name, "%s.gmshsock-%d", CTX.home_dir, num);
+  sprintf(command, "%s %s -socket %s &", SINFO[num].executable_name, 
+	  args, socket_name);
+  sock = Gmsh_StartClient(command, socket_name);
   if(sock<0){
-    Msg(GERROR, "Could not execute '%s'", progname);
-    WID->getdp_choice[0]->clear();
-    WID->getdp_choice[1]->clear();
+    switch(sock){
+    case -1 : Msg(GERROR, "Couldn't create socket '%s'", socket_name); break;
+    case -2 : Msg(GERROR, "Couldn't bin socket to name '%s'", socket_name); break;
+    case -3 : Msg(GERROR, "Socket listen failed on '%s'", socket_name); break;
+    case -4 : Msg(GERROR, "Solver '%s' not responding on socket '%s'", 
+		  SINFO[num].name, socket_name); break;
+    case -5 : Msg(GERROR, "Socket accept failed on '%s'", socket_name); break;
+    }
+    for(i=0 ; i<SINFO[num].nboptions ; i++)
+      WID->solver[num].choice[i]->clear();
     return 0;
   }
 
-  Socket_ReceiveInt(sock, &GetDP_Info.pid);
+  Msg(INFO, "%s start (%s)", SINFO[num].name, command);
 
-  Msg(INFO, "GetDP start (%s)", progname);
-
-  GetDP_Info.nbres = 0;
-  GetDP_Info.nbpostop = 0;
+  for(i=0 ; i<SINFO[num].nboptions ; i++) SINFO[num].nbval[i] = 0;
+  SINFO[num].pid = 0;
 
   while(1){
-    if(GetDP_Info.pid < 0) break;
-
-    Socket_ReceiveInt(sock, &type);
-
-    if(type == GETDP_END) break;
-
-    Socket_ReceiveString(sock, str);
-
+    if(SINFO[num].pid < 0) break;
+    Gmsh_ReceiveString(sock, &type, str);
     switch(type){
-    case GETDP_PROGRESS :
-      Msg(STATUS3N, "GetDP %s", str);
+    case GMSH_CLIENT_START :
+      SINFO[num].pid = atoi(str);
+      break;
+    case GMSH_CLIENT_STOP :
+      SINFO[num].pid = -1;
+      stop = 1;
+      break;
+    case GMSH_CLIENT_PROGRESS :
+      Msg(STATUS3N, "%s %s", SINFO[num].name, str);
       break ;
-    case GETDP_RESOLUTION_NAME :
-      strcpy(GetDP_Info.res[GetDP_Info.nbres++],str);
+    case GMSH_CLIENT_OPTION_1 :
+    case GMSH_CLIENT_OPTION_2 :
+    case GMSH_CLIENT_OPTION_3 :
+    case GMSH_CLIENT_OPTION_4 :
+    case GMSH_CLIENT_OPTION_5 :
+      i = type-GMSH_CLIENT_OPTION;
+      strcpy(SINFO[num].option[i][SINFO[num].nbval[i]++],str);
       break ;
-    case GETDP_POSTOPERATION_NAME :
-      strcpy(GetDP_Info.postop[GetDP_Info.nbpostop++],str);
-      break ;
-    case GETDP_LOAD_VIEW :
-      if(GetDP_Info.mergeviews){
+    case GMSH_CLIENT_VIEW :
+      if(SINFO[num].merge_views){
 	n = List_Nbr(CTX.post.list);
 	MergeProblem(str);
 	Draw(); 
@@ -76,38 +88,34 @@ int GetDP(char *args){
 	  WID->set_context(menu_post, 0);
       }
       break ;
-    case GETDP_INFO :
-      Msg(DIRECT, "GetDP > %s", str);
+    case GMSH_CLIENT_INFO :
+    case GMSH_CLIENT_WARNING :
+    case GMSH_CLIENT_ERROR :
+      Msg(DIRECT, "%s : %s", SINFO[num].name, str);
       break;
     default :
-      Msg(WARNING, "Unknown type of message received from GetDP");
-      Msg(DIRECT, "GetDP > %s", str);
+      Msg(WARNING, "Unknown type of message received from %s", SINFO[num].name);
+      Msg(DIRECT, "%s : %s", SINFO[num].name, str);
       break ;
     }
-
+    if(stop) break;
   }
 
-  if(GetDP_Info.nbres){
-    WID->getdp_choice[0]->clear();
-    for(i=0;i<GetDP_Info.nbres;i++) 
-      WID->getdp_choice[0]->add(GetDP_Info.res[i]);
-    WID->getdp_choice[0]->value(0);
-  }
-
-  if(GetDP_Info.nbpostop){
-    WID->getdp_choice[1]->clear();
-    for(i=0;i<GetDP_Info.nbpostop;i++) 
-      WID->getdp_choice[1]->add(GetDP_Info.postop[i]);
-    WID->getdp_choice[1]->value(0);
+  for(i=0 ; i<SINFO[num].nboptions ; i++){
+    if(SINFO[num].nbval[i]){
+      WID->solver[num].choice[i]->clear();
+      for(j=0;j<SINFO[num].nbval[i];j++) 
+	WID->solver[num].choice[i]->add(SINFO[num].option[i][j]);
+      WID->solver[num].choice[i]->value(0);
+    }
   }
 
   Msg(STATUS3N, "Ready");
 
-  Socket_StopProgram(progname, sockname, sock);
+  if(Gmsh_StopClient(socket_name, sock) < 0)
+    Msg(WARNING, "Impossible to unlink the socket '%s'", socket_name);
 
-  GetDP_Info.pid = -1;
-
-  Msg(INFO, "GetDP stop (%s)", progname);
+  Msg(INFO, "%s stop (%s)", SINFO[num].name, command);
 
   return 1;
 }

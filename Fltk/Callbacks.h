@@ -204,16 +204,14 @@ void con_mesh_define_transfinite_volume_cb(CALLBACK_ARGS) ;
 
 // Dynamic Solver Menus
 
-void getdp_cb(CALLBACK_ARGS);
-void getdp_file_open_cb(CALLBACK_ARGS);
-void getdp_file_edit_cb(CALLBACK_ARGS);
-void getdp_choose_mesh_cb(CALLBACK_ARGS);
-void getdp_pre_cb(CALLBACK_ARGS);
-void getdp_cal_cb(CALLBACK_ARGS);
-void getdp_post_cb(CALLBACK_ARGS);
-void getdp_kill_cb(CALLBACK_ARGS);
-void getdp_choose_command_cb(CALLBACK_ARGS);
-void getdp_ok_cb(CALLBACK_ARGS);
+void solver_cb(CALLBACK_ARGS);
+void solver_file_open_cb(CALLBACK_ARGS);
+void solver_file_edit_cb(CALLBACK_ARGS);
+void solver_choose_mesh_cb(CALLBACK_ARGS);
+void solver_command_cb(CALLBACK_ARGS);
+void solver_kill_cb(CALLBACK_ARGS);
+void solver_choose_executable_cb(CALLBACK_ARGS);
+void solver_ok_cb(CALLBACK_ARGS);
 
 // Dynamic post menus
 

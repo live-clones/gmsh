@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.141 2001-12-06 08:10:59 geuzaine Exp $
+// $Id: GUI.cpp,v 1.142 2002-01-03 10:25:06 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -276,7 +276,11 @@ Context_Item menu_mesh[] =
 
 Context_Item menu_solver[] = 
 { { "2Solver", NULL } ,
-  { "GetDP", (Fl_Callback *)getdp_cb } ,
+  { "Solver 0", (Fl_Callback *)solver_cb , (void*)0} ,
+  { "Solver 1", (Fl_Callback *)solver_cb , (void*)1} ,
+  { "Solver 2", (Fl_Callback *)solver_cb , (void*)2} ,
+  { "Solver 3", (Fl_Callback *)solver_cb , (void*)3} ,
+  { "Solver 4", (Fl_Callback *)solver_cb , (void*)4} ,
   { NULL } };
 
 Context_Item menu_post[] = 
@@ -499,7 +503,8 @@ int GUI::global_shortcuts(int event){
 //***************************** The GUI constructor ************************************
 
 GUI::GUI(int argc, char **argv) {
-  
+  int i;
+
   m_window = NULL;
   g_window = NULL;
   gen_window = NULL;
@@ -514,7 +519,6 @@ GUI::GUI(int argc, char **argv) {
   view_window = NULL;
   context_geometry_window = NULL;
   context_mesh_window = NULL;
-  getdp_window = NULL;
 
   if(strlen(CTX.display)) Fl::display(CTX.display);
 
@@ -552,7 +556,11 @@ GUI::GUI(int argc, char **argv) {
   create_message_window();
   create_visibility_window();
   create_about_window();
-  create_getdp_window();
+
+  for(i=0; i<5; i++){
+    solver[i].window = NULL;
+    create_solver_window(i);
+  }
 
   // Draw the scene
   g_opengl_window->redraw();
@@ -768,12 +776,22 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
     }
     break;
   default : // geometry, mesh, solver contexts
+    if(m_module_butt->value() == 2){ //solver
+      menu[1].label = opt_solver_name0(0,GMSH_GET,0);
+      menu[2].label = opt_solver_name1(0,GMSH_GET,0);
+      menu[3].label = opt_solver_name2(0,GMSH_GET,0);
+      menu[4].label = opt_solver_name3(0,GMSH_GET,0);
+      menu[5].label = opt_solver_name4(0,GMSH_GET,0);
+      for(i=0 ; i<5 ; i++){
+	if(!strlen(menu[i+1].label)) menu[i+1].label = NULL;
+      }
+    }
     for(i=0 ; i < NB_BUTT_MAX ; i++){
       m_toggle_butt[i]->hide();
       m_popup_butt[i]->hide();
       if(menu[i+1].label){
 	m_push_butt[i]->label(menu[i+1].label);
-	m_push_butt[i]->callback(menu[i+1].callback);
+	m_push_butt[i]->callback(menu[i+1].callback,menu[i+1].arg);
 	m_push_butt[i]->redraw();
 	m_push_butt[i]->show();
 	nb++;
@@ -1461,7 +1479,7 @@ void GUI::create_solver_options_window(){
 
   int width = 20*CTX.fontsize;
   int height = 5*WB+8*BH ;
-  
+
   solver_window = new Fl_Window(width,height);
   solver_window->box(WINDOW_BOX);
   solver_window->label("Solver options");
@@ -1470,10 +1488,20 @@ void GUI::create_solver_options_window(){
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Solvers");
       o->labelsize(CTX.fontsize);
+
       Fl_Box *text =  new Fl_Box(FL_NO_BOX, 2*WB, 3*WB+1*BH, width-4*WB, 2*BH,
-				 "There are no global solver options available yet");
+				 "There are no global solver options available yet.\n\n"
+				 "To define your own solver interface, edit the option file.");
       text->align(FL_ALIGN_LEFT|FL_ALIGN_TOP|FL_ALIGN_INSIDE|FL_ALIGN_WRAP);
       text->labelsize(CTX.fontsize);
+      /*
+	int BW = width-4*WB;
+	solver_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Use Unix sockets");
+	solver_butt[0]->type(FL_TOGGLE_BUTTON);
+	solver_butt[0]->down_box(TOGGLE_BOX);
+	solver_butt[0]->labelsize(CTX.fontsize);
+	solver_butt[0]->selection_color(TOGGLE_COLOR);
+      */
       o->end();
     }
     o->end();
@@ -1766,7 +1794,7 @@ void GUI::set_statistics(){
 void GUI::add_multiline_in_browser(Fl_Browser *o, char* prefix, char *str){
   int start = 0, len;
   char *buff;
-  if(!strlen(str) || !strcmp(str, "\n")){
+  if(!str || !strlen(str) || !strcmp(str, "\n")){
     o->add("");
     return;
   }
@@ -1912,6 +1940,7 @@ void GUI::create_message_window(){
 }
 
 void GUI::add_message(char *msg){
+  for(int i=0 ; i<(int)strlen(msg) ; i++) if(msg[i]=='\n') msg[i] = ' ';
   msg_browser->add(msg,0);
   msg_browser->bottomline(msg_browser->size());
 }
@@ -2860,140 +2889,151 @@ void GUI::create_mesh_context_window(int num){
 }
 
 
-//************** Create the window for the getdp solver **************
+//************** Create the windows for the solvers **************
 
-void GUI::create_getdp_window(){
-  int i;
+#include "Solvers.h"
+
+void GUI::create_solver_window(int num){
+  int i, nbbutts=0, newrow=0;
   static Fl_Group *g[10];
 
   int LL = (int)(1.75*IW);
 
-  if(getdp_window){
-    getdp_window->show();
+  if(solver[num].window){
+    solver[num].window->show();
     return;
   }
-  
+
+  for(i=0; i<5; i++)
+    if(strlen(SINFO[num].option_name[i])) SINFO[num].nboptions = i+1;
+
+  for(i=0; i<5; i++)
+    if(strlen(SINFO[num].button_name[i])) nbbutts++ ;
+  if(nbbutts > 3) newrow = 1;
+
   int width = 5*BB+6*WB;
-  int height = 10*WB+ 8*BH  ;
+  int height = (8+SINFO[num].nboptions+newrow)*WB+ (6+SINFO[num].nboptions+newrow)*BH  ;
+  if(height < 7*WB+7*BH) height = 7*WB+7*BH; //minimum height required by Options tab
   
-  getdp_window = new Fl_Window(width,height);
-  getdp_window->box(WINDOW_BOX);
-  getdp_window->label("GetDP solver");
+  solver[num].window = new Fl_Window(width,height);
+  solver[num].window->box(WINDOW_BOX);
   { 
-    Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-1*BH);
+    Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-(3+newrow)*WB-(1+newrow)*BH);
     { 
-      g[0] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "General");
+      g[0] = new Fl_Group(WB, WB+BH, width-2*WB, height-(3+newrow)*WB-(2+newrow)*BH, "General");
       g[0]->labelsize(CTX.fontsize);
       
-      getdp_input[0] = new Fl_Input(2*WB, 2*WB+1*BH, LL, BH, "Problem");
+      solver[num].input[0] = new Fl_Input(2*WB, 2*WB+1*BH, LL, BH, "Problem");
       Fl_Button *b1 = new Fl_Button(2*WB, 3*WB+2*BH, BB, BH, "Choose");
-      b1->callback(getdp_file_open_cb);
+      b1->callback(solver_file_open_cb, (void*)num);
       b1->labelsize(CTX.fontsize);
       Fl_Button *b2 = new Fl_Button(3*WB+BB, 3*WB+2*BH, BB, BH, "Edit");
-      b2->callback(getdp_file_edit_cb);
+      b2->callback(solver_file_edit_cb, (void*)num);
       b2->labelsize(CTX.fontsize);
-      
-      getdp_choice[0] = new Fl_Choice(2*WB, 4*WB+3*BH, LL, BH,"Resolution");
-      getdp_choice[1] = new Fl_Choice(2*WB, 5*WB+4*BH, LL, BH,"Post operation");
-      
-      getdp_input[1] = new Fl_Input(2*WB, 6*WB+5*BH, LL, BH, "Mesh");
-      Fl_Button *b3 = new Fl_Button(2*WB, 7*WB+6*BH, BB, BH, "Choose");
-      b3->callback(getdp_choose_mesh_cb);
+
+      solver[num].input[1] = new Fl_Input(2*WB, 4*WB+3*BH, LL, BH, "Mesh");
+      Fl_Button *b3 = new Fl_Button(2*WB, 5*WB+4*BH, BB, BH, "Choose");
+      b3->callback(solver_choose_mesh_cb, (void*)num);
       b3->labelsize(CTX.fontsize);
-      
+
       for(i=0 ; i<2 ; i++){
-	getdp_input[i]->labelsize(CTX.fontsize);
-	getdp_input[i]->textsize(CTX.fontsize);
-	getdp_input[i]->align(FL_ALIGN_RIGHT);
+	solver[num].input[i]->labelsize(CTX.fontsize);
+	solver[num].input[i]->textsize(CTX.fontsize);
+	solver[num].input[i]->align(FL_ALIGN_RIGHT);
       }
-      for(i=0 ; i<2 ; i++){
-	getdp_choice[i]->textsize(CTX.fontsize);
-	getdp_choice[i]->labelsize(CTX.fontsize);
-	getdp_choice[i]->align(FL_ALIGN_RIGHT);
+
+      for(i=0; i<SINFO[num].nboptions; i++){
+	solver[num].choice[i] = new Fl_Choice(2*WB, (6+i)*WB+(5+i)*BH, LL, BH,
+					      SINFO[num].option_name[i]);
+	solver[num].choice[i]->textsize(CTX.fontsize);
+	solver[num].choice[i]->labelsize(CTX.fontsize);
+	solver[num].choice[i]->align(FL_ALIGN_RIGHT);
       }
-      
+
       g[0]->end();
     }
     { 
-      g[1] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Options");
+      g[1] = new Fl_Group(WB, WB+BH, width-2*WB, height-(3+newrow)*WB-(2+newrow)*BH, "Options");
       g[1]->labelsize(CTX.fontsize);
       
-      getdp_input[2] = new Fl_Input(2*WB, 2*WB+1*BH, LL, BH, "Command");
+      solver[num].input[2] = new Fl_Input(2*WB, 2*WB+1*BH, LL, BH, "Executable");
+      solver[num].input[2]->labelsize(CTX.fontsize);
+      solver[num].input[2]->textsize(CTX.fontsize);
+      solver[num].input[2]->align(FL_ALIGN_RIGHT);
       Fl_Button *b = new Fl_Button(2*WB, 3*WB+2*BH, BB, BH, "Choose");
-      b->callback(getdp_choose_command_cb);
+      b->callback(solver_choose_executable_cb, (void*)num);
       b->labelsize(CTX.fontsize);
       
-      getdp_butt[0] = new Fl_Check_Button(2*WB, 4*WB+3*BH, LL, BH, 
-					  "Automatic message display");
-      getdp_butt[1] = new Fl_Check_Button(2*WB, 4*WB+4*BH, LL, BH, 
-					  "Automatic view merge");
-      
-      getdp_input[2]->labelsize(CTX.fontsize);
-      getdp_input[2]->textsize(CTX.fontsize);
-      getdp_input[2]->align(FL_ALIGN_RIGHT);
-      for(i=0 ; i<2 ; i++){
-	getdp_butt[i]->type(FL_TOGGLE_BUTTON);
-	getdp_butt[i]->down_box(TOGGLE_BOX);
-	getdp_butt[i]->labelsize(CTX.fontsize);
-	getdp_butt[i]->selection_color(TOGGLE_COLOR);
+      solver[num].butt[2] = new Fl_Check_Button(2*WB, 4*WB+3*BH, LL, BH, 
+						"Client/server connection");
+      solver[num].butt[0] = new Fl_Check_Button(2*WB, 4*WB+4*BH, LL, BH, 
+						"Automatic message display");
+      solver[num].butt[1] = new Fl_Check_Button(2*WB, 4*WB+5*BH, LL, BH, 
+						"Automatic view merge");
+      for(i=0 ; i<3 ; i++){
+	solver[num].butt[i]->type(FL_TOGGLE_BUTTON);
+	solver[num].butt[i]->down_box(TOGGLE_BOX);
+	solver[num].butt[i]->labelsize(CTX.fontsize);
+	solver[num].butt[i]->selection_color(TOGGLE_COLOR);
       }
       
-      Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "OK");
+      Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 
+						 height-(3+newrow)*WB-(2+newrow)*BH, BB, BH, "OK");
       o->labelsize(CTX.fontsize);
-      o->callback(getdp_ok_cb);
+      o->callback(solver_ok_cb, (void*)num);
       
       g[1]->end();
     }
     { 
-      g[2] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "About");
+      g[2] = new Fl_Group(WB, WB+BH, width-2*WB, height-(3+newrow)*WB-(2+newrow)*BH, "About");
       g[2]->labelsize(CTX.fontsize);
       
-      Fl_Browser *o = new Fl_Browser(2*WB, 2*WB+1*BH, width-4*WB, height-5*WB-2*BH);
-      o->add("");
-      o->add("@c@b@.GetDP");
-      o->add("@c@.A General environment for the treatment");
-      o->add("@c@.of Discrete Problems");
-      o->add("");
-      o->add("@c@.Experimental solver plugin for Gmsh");
-      o->add("");
-      o->add("@c@.Visit http://www.geuz.org/getdp/ for more info");
+      Fl_Browser *o = new Fl_Browser(2*WB, 2*WB+1*BH, width-4*WB,
+				     height-(5+newrow)*WB-(2+newrow)*BH);
       o->textsize(CTX.fontsize);
+      o->add("");
+      add_multiline_in_browser(o, "@c@b@.", SINFO[num].name);
+      o->add("");
+      add_multiline_in_browser(o, "@c@. ", SINFO[num].help);
       
       g[2]->end();
     }
     o->end();
   }
+
+  static int arg[5][5][2];
+  int nb=0;
+  for(i=4; i>=0; i--){
+    if(strlen(SINFO[num].button_name[i])){
+      arg[num][i][0]=num;
+      arg[num][i][1]=i;
+      solver[num].command[nb] = new Fl_Button(width-(1+nb+2*!newrow)*BB-(1+nb+2*!newrow)*WB, 
+					      height-(1+newrow)*BH-(1+newrow)*WB, 
+					      BB, BH,
+					      SINFO[num].button_name[i]);
+      solver[num].command[nb]->callback(solver_command_cb,(void*)arg[num][i]);
+      solver[num].command[nb]->labelsize(CTX.fontsize);
+      nb++;
+    }
+  }
   
-  { 
-    Fl_Button* o = new Fl_Button(width-5*BB-5*WB, height-BH-WB, BB, BH, "Pre");
-    o->labelsize(CTX.fontsize);
-    o->callback(getdp_pre_cb);
-  }
-  { 
-    Fl_Button* o = new Fl_Button(width-4*BB-4*WB, height-BH-WB, BB, BH, "Cal");
-    o->labelsize(CTX.fontsize);
-    o->callback(getdp_cal_cb);
-  }
-  { 
-    Fl_Button* o = new Fl_Button(width-3*BB-3*WB, height-BH-WB, BB, BH, "Post");
-    o->labelsize(CTX.fontsize);
-    o->callback(getdp_post_cb);
-  }
   { 
     Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Kill");
     o->labelsize(CTX.fontsize);
-    o->callback(getdp_kill_cb);
+    o->callback(solver_kill_cb, (void*)num);
   }
   { 
     Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
     o->labelsize(CTX.fontsize);
-    o->callback(cancel_cb, (void*)getdp_window);
+    o->callback(cancel_cb, (void*)solver[num].window);
   }
   
   
   if(CTX.center_windows)
-    getdp_window->position(m_window->x()+m_window->w()/2-width/2,
-			   m_window->y()+9*BH-height/2);
-  getdp_window->end();
+    solver[num].window->position(m_window->x()+m_window->w()/2-width/2,
+				 m_window->y()+9*BH-height/2);
+  solver[num].window->end();
 }
+
+
 

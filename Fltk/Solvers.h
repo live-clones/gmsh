@@ -1,28 +1,21 @@
 #ifndef _SOLVERS_H_
 #define _SOLVERS_H_
 
-// Message protocol for GetDP
-
-#define GETDP_END                 -1
-#define GETDP_INFO                 1
-#define GETDP_PROGRESS             2
-#define GETDP_RESOLUTION_NAME      3
-#define GETDP_POSTOPERATION_NAME   4
-#define GETDP_LOAD_VIEW            5
-
 typedef struct{
-  char command[256];
-  int popupmessages, mergeviews;
+  char name[256], extension[32], executable_name[256];
+  char mesh_name[256], mesh_command[256];
+  char button_name[5][32], button_command[5][256];
+  char option_name[5][256], option_command[256];
+  char option[5][100][256];
+  int  nboptions, nbval[5];
+  char *help;
+  int client_server, popup_messages, merge_views;
   int pid;
-  int nbres, nbpostop;
-  char res[100][100];
-  char postop[100][100];
-} _GetDP_Info ;
+} SolverInfo ;
 
-extern _GetDP_Info GetDP_Info ;
+extern SolverInfo SINFO[5] ;
 
-int GetDP(char *args);
-
+int Solver(int num, char *args);
 
 #endif
 
