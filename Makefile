@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.185 2002-01-27 20:49:10 geuzaine Exp $
+# $Id: Makefile,v 1.186 2002-01-30 22:24:11 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 33
@@ -157,7 +157,7 @@ tgz:
 	chmod 640 $(GMSH_ARCHIVE).tar.gz
 
 minizip:
-	tar jcvf gmsh.tar.bz2 `ls Makefile */Makefile */*.[chyl] */*.cpp`
+	tar jcvf gmsh-`date "+%Y.%m.%d"`.tar.bz2 `ls Makefile */Makefile */*.[chyl] */*.cpp`
 
 src:
 	tar cvf $(GMSH_SRCRPM).tar $(GMSH_SOURCES)
