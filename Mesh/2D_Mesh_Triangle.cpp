@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Triangle.cpp,v 1.4 2003-06-20 00:07:34 geuzaine Exp $
+// $Id: 2D_Mesh_Triangle.cpp,v 1.5 2003-06-23 05:34:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -228,7 +228,8 @@ int Mesh_Shewchuk(Surface * s)
 
   // refine the triangulation according to the triangle area constraints
 
-  strcpy(opts, "praqzBPY");
+  //strcpy(opts, "praqzBPY");
+  strcpy(opts, CTX.mesh.triangle_options);
   if(CTX.verbosity < 3)
     strcat(opts, "Q");
   triangulate(opts, &mid, &out, NULL);

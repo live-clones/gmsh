@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.110 2003-06-14 04:37:42 geuzaine Exp $
+// $Id: Options.cpp,v 1.111 2003-06-23 05:34:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -781,6 +781,16 @@ char *opt_general_theme(OPT_ARGS_STR)
   if(action & GMSH_SET)
     CTX.theme = val;
   return CTX.theme;
+}
+
+char *opt_mesh_triangle_options(OPT_ARGS_STR){
+  if(action & GMSH_SET)
+    CTX.mesh.triangle_options = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_input[0]->value(CTX.mesh.triangle_options);
+#endif
+  return CTX.mesh.triangle_options;
 }
 
 char *opt_solver_name(OPT_ARGS_STR)

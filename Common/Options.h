@@ -44,6 +44,7 @@ char * opt_general_session_filename(OPT_ARGS_STR);
 char * opt_general_options_filename(OPT_ARGS_STR);
 char * opt_general_editor(OPT_ARGS_STR);
 char * opt_general_theme(OPT_ARGS_STR);
+char * opt_mesh_triangle_options(OPT_ARGS_STR);
 char * opt_solver_name(OPT_ARGS_STR);
 char * opt_solver_name0(OPT_ARGS_STR);
 char * opt_solver_name1(OPT_ARGS_STR);

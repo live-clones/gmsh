@@ -166,13 +166,12 @@ public :
     int use_cut_plane;
     double cut_planea,cut_planeb,cut_planec,cut_planed;
     double evalCutPlane (double x, double y, double z){
-      double val = cut_planea * x + 
-	cut_planeb * y + 
-	cut_planec * z + cut_planed; 
+      double val = cut_planea * x + cut_planeb * y + cut_planec * z + cut_planed; 
       return val;
     }
     int oldxtrude, oldxtrude_recombine, check_duplicates;
     int allow_degenerated_extrude, save_all;
+    char *triangle_options;
   } mesh;
 
   // post processing options 

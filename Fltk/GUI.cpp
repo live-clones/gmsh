@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.241 2003-06-19 16:48:49 geuzaine Exp $
+// $Id: GUI.cpp,v 1.242 2003-06-23 05:34:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1651,15 +1651,19 @@ void GUI::create_option_window()
       o->hide();
 
       mesh_butt[0] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Isotropic algorithm");
-      mesh_butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Isotropic algorithm (Triangle)");
+      mesh_butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW - 8 * fontsize - WB, BH, "Isotropic algorithm: Triangle, with options ");
       mesh_butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW, BH, "Anisotropic algorithm");
       for(i = 0; i < 3; i++) {
         mesh_butt[i]->type(FL_RADIO_BUTTON);
         mesh_butt[i]->down_box(RADIO_BOX);
         mesh_butt[i]->selection_color(RADIO_COLOR);
       }
+
+      mesh_input[0] = new Fl_Input(width - 2 * WB - 8 * fontsize, 2 * WB + 2 * BH, 8 * fontsize, BH);
+
 #if !defined(HAVE_TRIANGLE)
       mesh_butt[1]->deactivate();
+      mesh_input[0]->deactivate();
 #endif
       mesh_butt[4] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, BW, BH, "Interactive");
       mesh_butt[4]->type(FL_TOGGLE_BUTTON);

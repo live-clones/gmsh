@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.179 2003-06-19 16:52:38 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.180 2003-06-23 05:34:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -896,12 +896,10 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_rotation_center1(0, GMSH_SET, WID->gen_value[9]->value());
   opt_general_rotation_center2(0, GMSH_SET, WID->gen_value[10]->value());
 
-  opt_general_default_filename(0, GMSH_SET,
-                               (char *)WID->gen_input[0]->value());
+  opt_general_default_filename(0, GMSH_SET, (char *)WID->gen_input[0]->value());
   opt_general_tmp_filename(0, GMSH_SET, (char *)WID->gen_input[1]->value());
   opt_general_error_filename(0, GMSH_SET, (char *)WID->gen_input[2]->value());
-  opt_general_options_filename(0, GMSH_SET,
-                               (char *)WID->gen_input[3]->value());
+  opt_general_options_filename(0, GMSH_SET, (char *)WID->gen_input[3]->value());
   opt_general_editor(0, GMSH_SET, (char *)WID->gen_input[4]->value());
 }
 
@@ -991,6 +989,8 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
 
   opt_mesh_point_type(0, GMSH_SET, WID->mesh_choice[0]->value());
   opt_mesh_line_type(0, GMSH_SET, WID->mesh_choice[1]->value());
+
+  opt_mesh_triangle_options(0, GMSH_SET, (char *)WID->mesh_input[0]->value());
 }
 
 // Solver options

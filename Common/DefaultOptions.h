@@ -73,6 +73,8 @@ StringXString GeometryOptions_String[] = {
 } ;
 
 StringXString MeshOptions_String[] = {
+  { F|O, "TriangleOptions" , opt_mesh_triangle_options , "praqzBPY" , 
+    "Options for Jonathan Shewchuk's Triangle isotropic algorithm" },
   { 0, NULL , NULL , NULL , NULL }
 } ;
 

@@ -168,7 +168,6 @@ public:
   // geometry options
   Fl_Window        *geo_window ;
   Fl_Check_Button  *geo_butt[20] ;
-  Fl_Input         *geo_input ;
   Fl_Value_Input   *geo_value[20] ;
   Fl_Button        *geo_col[50] ;
   Fl_Choice        *geo_choice[20] ;
@@ -176,7 +175,7 @@ public:
   // mesh options
   Fl_Window        *mesh_window ;
   Fl_Check_Button  *mesh_butt[20] ;
-  Fl_Input         *mesh_input ;
+  Fl_Input         *mesh_input[20] ;
   Fl_Value_Input   *mesh_value[20] ;
   Fl_Button        *mesh_col[50] ;
   Fl_Choice        *mesh_choice[20] ;
