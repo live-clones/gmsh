@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.10 2001-01-12 13:28:58 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.11 2001-01-24 09:28:03 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -63,13 +63,15 @@ void CreateFile (char *name, int format) {
       else if(!strcmp(ext,".yuv")) CreateFile(name, FORMAT_YUV);
       else {
 	if(strlen(name) < 5)
-	  Msg(GERROR, "Unknown Extension for Automatic Format Detection");
+	  Msg(GERROR, "Unknown Extension in \"%s\" for Automatic Format Detection",
+	      name);
 	else{
 	  strcpy(ext,name+(strlen(name)-5));
 	  if(!strcmp(ext,".jpeg")) CreateFile(name, FORMAT_JPEG);
 	  else if(!strcmp(ext,".gref")) CreateFile(name, FORMAT_GREF);
 	  else if(!strcmp(ext,".Gref")) CreateFile(name, FORMAT_GREF);
-	  else Msg(GERROR, "Unknown Extension \"%s\" for Automatic Format Detection", ext);
+	  else Msg(GERROR, "Unknown Extension in \"%s\" for Automatic Format Detection",
+		   name);
 	}
       }
     }

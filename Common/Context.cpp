@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.33 2001-01-13 15:41:35 geuzaine Exp $
+// $Id: Context.cpp,v 1.34 2001-01-24 09:28:03 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -295,8 +295,13 @@ void Print_Configuration(char *filename){
     return;
   }
 
-  fprintf(file, "// Default Gmsh Configuration\n");
-  fprintf(file, "// This is an automatically generated file: Do not edit!\n");
+  fprintf(file, "// Gmsh sessionrc\n");
+  fprintf(file, "// This file takes session-specific info (that is info\n");
+  fprintf(file, "// you want to keep between two Gmsh sessions). You are\n");
+  fprintf(file, "// not supposed to edit it manually, but of course you\n");
+  fprintf(file, "// can do. This file will be entirely rewritten every time\n");
+  fprintf(file, "// you quit Gmsh. If this file isn't found, defaults\n");
+  fprintf(file, "// are used.\n");
   fprintf(file, "General.Viewport0 = %d;\n", CTX.viewport[0]);
   fprintf(file, "General.Viewport1 = %d;\n", CTX.viewport[1]);
   fprintf(file, "General.Viewport2 = %d;\n", CTX.viewport[2]);

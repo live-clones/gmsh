@@ -261,6 +261,13 @@ int GUI::global_shortcuts(int event){
     mesh_3d_cb(0,0);
     return 1;
   }
+  else if(Fl::test_shortcut(FL_CTRL+'z')){
+    g_window->iconize();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_Escape)){
+    return 1;
+  }
 
   return 0;
 }
@@ -268,7 +275,7 @@ int GUI::global_shortcuts(int event){
 
 //***************************** The GUI constructor ************************************
 
-GUI::GUI() {
+GUI::GUI(int argc, char **argv) {
 
   IW = 10*CTX.fontsize; // input field width
   BW = 3*IW/2; // width of a button with external label
@@ -290,8 +297,23 @@ GUI::GUI() {
   // All static windows are contructed (even if some are not
   // displayed) since the shortcuts should be valid even for hidden
   // windows
-  create_menu_window(); m_window->show();
-  create_graphic_window(); g_window->show();
+
+  create_menu_window(argc, argv);
+  create_graphic_window(argc, argv);
+
+#ifndef WIN32
+  fl_open_display();
+  Pixmap p1 = XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
+				    g1_bits, g1_width, g1_height);
+  Pixmap p2 = XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
+				    g2_bits, g2_width, g2_height);
+  m_window->icon((char *)p1); 
+  g_window->icon((char *)p2);
+#endif
+
+  m_window->show(1, argv);
+  g_window->show(1, argv);
+
   create_general_options_window();
   create_geometry_options_window();
   create_mesh_options_window();
@@ -320,7 +342,7 @@ void GUI::check(){
 
 //********************************* Create the menu window *****************************
 
-void GUI::create_menu_window(){
+void GUI::create_menu_window(int argc, char **argv){
   static int init_menu_window = 0;
   int i, y;
 
@@ -398,7 +420,7 @@ void GUI::create_menu_window(){
     if(m_window->shown())
       m_window->redraw();
     else
-      m_window->show();
+      m_window->show(1, argv);
     
   }
 }
@@ -457,7 +479,7 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
   else if(menu[0].label[0] == '1') m_module_butt->value(1);
   else if(menu[0].label[0] == '2') m_module_butt->value(2);
   else {
-    Msg(WARNING, "Something Wrong in your Context Definition");
+    Msg(WARNING, "Something Wrong in your Dynamic Context Definition");
     return;
   }
 
@@ -471,8 +493,6 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
       m_toggle_butt[i]->value(v->Visible);
       m_toggle_butt[i]->label(v->Name);
       m_popup_butt[i]->show();
-      // v->NbTimeStep>1 : sensitive timestep
-      // v->ScalarOnly : sensitive vector, apply bgmesh
     }
     for(i = List_Nbr(Post_ViewList) ; i < NB_BUTT_MAX ; i++) {
       m_push_butt[i]->hide();
@@ -513,7 +533,7 @@ int GUI::get_context(){
 
 //******************************** Create the graphic window ***************************
 
-void GUI::create_graphic_window(){
+void GUI::create_graphic_window(int argc, char **argv){
   static int init_graphic_window = 0;
   int i, x;
 
@@ -587,7 +607,7 @@ void GUI::create_graphic_window(){
     if(g_window->shown())
       g_window->redraw();
     else
-      g_window->show();
+      g_window->show(1, argv);
     
   }
 }
@@ -772,14 +792,14 @@ void GUI::create_general_options_window(){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "cancel");
-      o->labelsize(CTX.fontsize);
-      o->callback(cancel_cb, (void*)gen_window);
-    }
-    { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-BB-WB, height-BH-WB, BB, BH, "OK");
+      Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
       o->labelsize(CTX.fontsize);
       o->callback(ok_cb);
+    }
+    { 
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
+      o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)gen_window);
     }
 
     if(CTX.center_windows)
@@ -876,14 +896,14 @@ void GUI::create_geometry_options_window(){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "cancel");
-      o->labelsize(CTX.fontsize);
-      o->callback(cancel_cb, (void*)geo_window);
-    }
-    { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-BB-WB, height-BH-WB, BB, BH, "OK");
+      Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
       o->labelsize(CTX.fontsize);
       o->callback(ok_cb);
+    }
+    { 
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
+      o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)geo_window);
     }
 
     if(CTX.center_windows)
@@ -1041,14 +1061,14 @@ void GUI::create_mesh_options_window(){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "cancel");
-      o->labelsize(CTX.fontsize);
-      o->callback(cancel_cb, (void*)mesh_window);
-    }
-    { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-BB-WB, height-BH-WB, BB, BH, "OK");
+      Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
       o->labelsize(CTX.fontsize);
       o->callback(ok_cb);
+    }
+    { 
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
+      o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)mesh_window);
     }
 
     if(CTX.center_windows)
@@ -1122,14 +1142,14 @@ void GUI::create_post_options_window(){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "cancel");
-      o->labelsize(CTX.fontsize);
-      o->callback(cancel_cb, (void*)post_window);
-    }
-    { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-BB-WB, height-BH-WB, BB, BH, "OK");
+      Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
       o->labelsize(CTX.fontsize);
       o->callback(ok_cb);
+    }
+    { 
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
+      o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)post_window);
     }
 
     if(CTX.center_windows)
@@ -1215,14 +1235,14 @@ void GUI::create_statistics_window(){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "cancel");
-      o->labelsize(CTX.fontsize);
-      o->callback(cancel_cb, (void*)stat_window);
-    }
-    { 
-      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "update");
+      Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-BB/3-2*WB, height-BH-WB, BB+BB/3, BH, "update");
       o->labelsize(CTX.fontsize);
       o->callback(opt_statistics_update_cb);
+    }
+    { 
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
+      o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)stat_window);
     }
 
     if(CTX.center_windows)
@@ -1323,14 +1343,14 @@ void GUI::create_message_window(){
     msg_browser->textsize(CTX.fontsize);
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "cancel");
-      o->labelsize(CTX.fontsize);
-      o->callback(cancel_cb, (void*)msg_window);
-    }
-    { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-BB-WB, height-BH-WB, BB, BH, "save");
+      Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "save");
       o->labelsize(CTX.fontsize);
       o->callback(opt_message_save_cb);
+    }
+    { 
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
+      o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)msg_window);
     }
 
     msg_window->resizable(msg_browser);
@@ -1630,14 +1650,14 @@ void GUI::create_view_window(int num){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "cancel");
-      o->labelsize(CTX.fontsize);
-      o->callback(cancel_cb, (void*)view_window);
-    }
-    { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-BB-WB, height-BH-WB, BB, BH, "OK");
+      Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
       o->labelsize(CTX.fontsize);
       o->callback(ok_cb);
+    }
+    { 
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "cancel");
+      o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)view_window);
     }
 
     if(CTX.center_windows)

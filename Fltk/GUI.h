@@ -21,6 +21,7 @@
 #include <FL/Fl_Multiline_Output.H>
 #include <FL/Fl_Bitmap.H>
 #include <FL/Fl_Browser.H>
+#include <FL/x.H>
 
 #include "Opengl_Window.h"
 #include "Colorbar_Window.h"
@@ -149,11 +150,11 @@ class GUI{
 public:
 
   // the constructor
-  GUI();
+  GUI(int argc, char **argv);
 
   // create the windows
-  void create_menu_window();
-  void create_graphic_window();
+  void create_menu_window(int argc, char **argv);
+  void create_graphic_window(int argc, char **argv);
   void create_general_options_window();
   void create_geometry_options_window();
   void create_mesh_options_window();

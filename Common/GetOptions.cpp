@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.4 2001-01-13 15:41:35 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.5 2001-01-24 09:28:03 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshVersion.h"
@@ -47,15 +47,18 @@ char gmsh_options[]   =
   "  -noview               hide all views on startup\n"
   "  -link                 link all views on startup\n"
   "Display options:\n"    
+#ifdef _MOTIF
   "  -nodb                 disable double buffering\n"
   "  -noov                 disable overlay visual\n"
+  "  -flash                allow colormap flashing\n"
+  "  -samevisual           force same visual for graphics and UI\n"
+#else
   "  -fontsize int         size of the font for the user interface (default: 12)\n"
+#endif
   "  -alpha                enable alpha blending\n"
   "  -notrack              don't use trackball mode for rotations\n"
   "  -display string       specify display\n"
   "  -perspective          set projection mode to perspective\n"
-  "  -flash                allow colormap flashing\n"
-  "  -samevisual           force same visual for graphics and UI\n"
 #endif
   "Other options:\n"      
 #ifndef _BLACKBOX

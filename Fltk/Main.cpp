@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.11 2001-01-13 15:48:31 geuzaine Exp $
+// $Id: Main.cpp,v 1.12 2001-01-24 09:28:03 geuzaine Exp $
 
 #include <signal.h>
 
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]){
 
   // Create the GUI
   
-  WID = new GUI();
+  WID = new GUI(argc, argv);
 
   // The GUI is ready
   CTX.interactive = 0 ; 

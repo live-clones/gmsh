@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.20 2001-01-13 15:41:35 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.21 2001-01-24 09:28:03 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1450,16 +1450,19 @@ void view_options_custom_range_cb(CALLBACK_ARGS){
       WID->activate_custom(0);
       v->RangeType = DRAW_POST_DEFAULT;
     }
+    v->Changed = 1;
   ENDVIEWMOD
 }
 void view_options_custom_min_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     v->CustomMin = ((Fl_Value_Input*)w)->value() ;
+    v->Changed = 1;
   ENDVIEWMOD
 }
 void view_options_custom_max_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     v->CustomMax = ((Fl_Value_Input*)w)->value() ;
+    v->Changed = 1;
   ENDVIEWMOD
 }
 void view_options_linear_range_cb(CALLBACK_ARGS){
@@ -1470,6 +1473,7 @@ void view_options_linear_range_cb(CALLBACK_ARGS){
     else{
       v->ScaleType = DRAW_POST_LOGARITHMIC;
     }
+    v->Changed = 1;
   ENDVIEWMOD
 }
 void view_options_logarithmic_range_cb(CALLBACK_ARGS){
@@ -1480,17 +1484,20 @@ void view_options_logarithmic_range_cb(CALLBACK_ARGS){
     else{
       v->RangeType = DRAW_POST_LINEAR;
     }
+    v->Changed = 1;
   ENDVIEWMOD
 }
 void view_options_nbiso_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     v->NbIso = (int)((Fl_Value_Input*)w)->value() ;
+    v->Changed = 1;
   ENDVIEWMOD
 }
 void view_options_iso_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     if(((Fl_Check_Button*)w)->value()){
       v->IntervalsType = DRAW_POST_ISO;
+      v->Changed = 1;
     }
   ENDVIEWMOD
 }
@@ -1498,6 +1505,7 @@ void view_options_fillediso_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     if(((Fl_Check_Button*)w)->value()){
       v->IntervalsType = DRAW_POST_DISCRETE;
+      v->Changed = 1;
     }
   ENDVIEWMOD
 }
@@ -1505,6 +1513,7 @@ void view_options_continuousiso_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     if(((Fl_Check_Button*)w)->value()){
       v->IntervalsType = DRAW_POST_CONTINUOUS;
+      v->Changed = 1;
     }
   ENDVIEWMOD
 }
@@ -1512,42 +1521,50 @@ void view_options_numericiso_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     if(((Fl_Check_Button*)w)->value()){
       v->IntervalsType = DRAW_POST_NUMERIC;
+      v->Changed = 1;
     }
   ENDVIEWMOD
 }
 void view_options_xoffset_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     v->Offset[0] = ((Fl_Value_Input*)w)->value() ;
+    v->Changed = 1;
   ENDVIEWMOD
 }
 void view_options_yoffset_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     v->Offset[1] = ((Fl_Value_Input*)w)->value() ;
+    v->Changed = 1;
   ENDVIEWMOD
 }
 void view_options_zoffset_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     v->Offset[2] = ((Fl_Value_Input*)w)->value() ;
+    v->Changed = 1;
   ENDVIEWMOD
 }
 void view_options_xraise_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     v->Raise[0] = ((Fl_Value_Input*)w)->value() ;
+    v->Changed = 1;
   ENDVIEWMOD
 }
 void view_options_yraise_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     v->Raise[1] = ((Fl_Value_Input*)w)->value() ;
+    v->Changed = 1;
   ENDVIEWMOD
 }
 void view_options_zraise_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     v->Raise[2] = ((Fl_Value_Input*)w)->value() ;
+    v->Changed = 1;
   ENDVIEWMOD
 }
 void view_options_timestep_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     v->TimeStep = (int)((Fl_Value_Input*)w)->value() ;
+    v->Changed = 1;
   ENDVIEWMOD
   Init();
   Draw();
@@ -1556,6 +1573,7 @@ void view_options_vector_line_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     if(((Fl_Check_Button*)w)->value()){
       v->ArrowType = DRAW_POST_SEGMENT;
+      v->Changed = 1;
     }
   ENDVIEWMOD
 }
@@ -1563,6 +1581,7 @@ void view_options_vector_arrow_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     if(((Fl_Check_Button*)w)->value()){
       v->ArrowType = DRAW_POST_ARROW;
+      v->Changed = 1;
     }
   ENDVIEWMOD
 }
@@ -1570,6 +1589,7 @@ void view_options_vector_cone_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     if(((Fl_Check_Button*)w)->value()){
       v->ArrowType = DRAW_POST_CONE;
+      v->Changed = 1;
     }
   ENDVIEWMOD
 }
@@ -1577,18 +1597,21 @@ void view_options_vector_displacement_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     if(((Fl_Check_Button*)w)->value()){
       v->ArrowType = DRAW_POST_DISPLACEMENT;
+      v->Changed = 1;
     }
   ENDVIEWMOD
 }
 void view_options_vector_scale_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     v->ArrowScale = ((Fl_Value_Input*)w)->value() ;
+    v->Changed = 1;
   ENDVIEWMOD
 }
 void view_options_vector_cog_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     if(((Fl_Check_Button*)w)->value()){
       v->ArrowType = DRAW_POST_LOCATE_COG;
+      v->Changed = 1;
     }
   ENDVIEWMOD
 }
@@ -1596,6 +1619,7 @@ void view_options_vector_vertex_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     if(((Fl_Check_Button*)w)->value()){
       v->ArrowType = DRAW_POST_LOCATE_VERTEX;
+      v->Changed = 1;
     }
   ENDVIEWMOD
 }
