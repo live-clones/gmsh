@@ -1,4 +1,4 @@
-/* $Id: gl2jpeg.cpp,v 1.22 2004-12-30 22:43:22 geuzaine Exp $ */
+/* $Id: gl2jpeg.cpp,v 1.23 2005-01-09 21:36:19 geuzaine Exp $ */
 /*
  * GL2JPEG, an OpenGL to JPEG Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -34,7 +34,8 @@
 
 #if !defined(HAVE_LIBJPEG)
 
-void create_jpeg(FILE * outfile, int width, int height, int quality)
+void create_jpeg(FILE * outfile, int width, int height,
+		 int quality, int smoothing)
 {
   Msg(GERROR, "This version of Gmsh was compiled without JPEG support");
 }
