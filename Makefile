@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.318 2003-12-08 19:18:13 geuzaine Exp $
+# $Id: Makefile,v 1.319 2004-01-13 12:39:44 geuzaine Exp $
 #
-# Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+# Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ include variables
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 50
-GMSH_PATCH_VERSION = 1
+GMSH_PATCH_VERSION = 2
 
 GMSH_SHORT_LICENSE = "GNU General Public License"
 
@@ -232,7 +232,7 @@ package-mac:
         "    <key>CFBundleIconFile</key><string>gmsh.icns</string>\n"\
         "    <key>CFBundleSignature</key><string>GMSH</string>\n"\
         "    <key>CFBundleGetInfoString</key><string>Gmsh version ${GMSH_RELEASE}, "\
-              "Copyright (C) 1997-2003 C. Geuzaine and J.-F. Remacle</string>\n"\
+              "Copyright (C) 1997-2004 C. Geuzaine and J.-F. Remacle</string>\n"\
         "    <key>CFBundleIdentifier</key><string>org.geuz.Gmsh</string>\n"\
         "  </dict>\n"\
         "</plist>" > gmsh-${GMSH_RELEASE}/Gmsh.app/Contents/Info.plist

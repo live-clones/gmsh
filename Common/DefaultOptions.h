@@ -1,7 +1,7 @@
 #ifndef _DEFAULT_OPTIONS_H_
 #define _DEFAULT_OPTIONS_H_
 
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -978,8 +978,8 @@ StringXNumber ViewOptions_Number[] = {
     "Elevation of the view along Y-axis (in model coordinates)" },
   { F,   "RaiseZ" , opt_view_raise2 , 0. , 
     "Elevation of the view along Z-axis (in model coordinates)" },
-  { F|O, "RangeType" , opt_view_range_type , DRAW_POST_DEFAULT ,
-    "Value scale range type (1=default, 2=custom)" },
+  { F|O, "RangeType" , opt_view_range_type , DRAW_POST_RANGE_DEFAULT ,
+    "Value scale range type (1=default, 2=custom, 3=per time step)" },
 
   { F|O, "SaturateValues" , opt_view_saturate_values , 0. ,
     "Saturate the view values to custom min and max (1=true, 0=false)" },

@@ -1,6 +1,6 @@
-// $Id: PostElement.cpp,v 1.19 2003-11-22 01:43:18 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.20 2004-01-13 12:39:45 geuzaine Exp $
 //
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@
 // Contributor(s):
 //   Laurent Stainier
 //
-
 
 // OK, I understand why the Cut2D stuff does not work correctly with a
 // TWO_FACE light: the normal has too be coherent with the vertex

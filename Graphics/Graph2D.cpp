@@ -1,6 +1,6 @@
-// $Id: Graph2D.cpp,v 1.29 2003-11-28 19:15:29 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.30 2004-01-13 12:39:45 geuzaine Exp $
 //
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -121,13 +121,17 @@ static void Draw_Graph2D(Post_View * v,
   font_a = gl_height() - gl_descent();  // height above ref pt
 
   switch (v->RangeType) {
-  case DRAW_POST_DEFAULT:
+  case DRAW_POST_RANGE_DEFAULT:
     ValMin = v->Min;
     ValMax = v->Max;
     break;
-  case DRAW_POST_CUSTOM:
+  case DRAW_POST_RANGE_CUSTOM:
     ValMin = v->CustomMin;
     ValMax = v->CustomMax;
+    break;
+  case DRAW_POST_RANGE_PER_STEP:
+    ValMin = v->TimeStepMin[v->TimeStep];
+    ValMax = v->TimeStepMax[v->TimeStep];
     break;
   }
 

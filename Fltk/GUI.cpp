@@ -1,6 +1,6 @@
-// $Id: GUI.cpp,v 1.265 2003-12-07 00:23:07 geuzaine Exp $
+// $Id: GUI.cpp,v 1.266 2004-01-13 12:39:45 geuzaine Exp $
 //
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -2100,14 +2100,21 @@ void GUI::create_option_window()
       view_choice[0]->align(FL_ALIGN_RIGHT);
       view_choice[0]->callback(set_changed_cb, 0);
 
-      view_butt[34] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, IW, BH, "Custom range");
-      view_butt[34]->type(FL_TOGGLE_BUTTON);
-      view_butt[34]->down_box(TOGGLE_BOX);
-      view_butt[34]->selection_color(TOGGLE_COLOR);
-      //no set_changed since customrange has its own callback
+      static Fl_Menu_Item menu_range[] = {
+        {"Default", 0, (Fl_Callback *)view_options_custom_cb, (void*)0},
+        {"Per time step", 0, (Fl_Callback *)view_options_custom_cb, (void*)0},
+        {"Custom", 0, (Fl_Callback *)view_options_custom_cb, (void*)1},
+        {0}
+      };
+      view_choice[7] = new Fl_Choice(2 * WB, 2 * WB + 3 * BH, IW, BH, "Range type");
+      view_choice[7]->menu(menu_range);
+      view_choice[7]->align(FL_ALIGN_RIGHT);
+      // won't work, since the items have their own callbaks; the
+      // changed flag has to be set in view_options_custom_cb!
+      //view_choice[7]->callback(set_changed_cb, 0);
 
-      view_value[31] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Minimum");
-      view_value[32] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Maximum");
+      view_value[31] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Custom minimum");
+      view_value[32] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Custom maximum");
       for(i = 31; i <= 32; i++) {
         view_value[i]->align(FL_ALIGN_RIGHT);
         view_value[i]->callback(set_changed_cb, 0);
@@ -2318,15 +2325,16 @@ void GUI::update_view_window(int num)
   // range
   opt_view_nb_iso(num, GMSH_GUI, 0);
   opt_view_intervals_type(num, GMSH_GUI, 0);
-  opt_view_range_type(num, GMSH_GUI, 0);
-  view_butt[34]->callback(view_options_custom_cb, (void *)num);
-  view_options_custom_cb(0, 0);
-  view_butt[34]->clear_changed();
+  int range_type = (int)opt_view_range_type(num, GMSH_GUI, 0);
   opt_view_custom_min(num, GMSH_GUI, 0);
   opt_view_custom_max(num, GMSH_GUI, 0);
   for(i = 31; i <= 32; i++) {
     view_value[i]->minimum(v->CustomMin);
     view_value[i]->maximum(v->CustomMax);
+    if(range_type == DRAW_POST_RANGE_CUSTOM)
+      view_options_custom_cb(NULL, (void*)1);
+    else
+      view_options_custom_cb(NULL, (void*)0);
   }
   opt_view_scale_type(num, GMSH_GUI, 0);
   opt_view_saturate_values(num, GMSH_GUI, 0);

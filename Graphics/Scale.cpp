@@ -1,6 +1,6 @@
-// $Id: Scale.cpp,v 1.36 2003-11-28 19:15:29 geuzaine Exp $
+// $Id: Scale.cpp,v 1.37 2004-01-13 12:39:46 geuzaine Exp $
 //
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -82,13 +82,20 @@ void draw_scale(Post_View * v,
   else
     glShadeModel(GL_FLAT);
 
-  if(v->RangeType == DRAW_POST_CUSTOM) {
+  switch(v->RangeType){
+  case DRAW_POST_RANGE_CUSTOM:
     ValMin = v->CustomMin;
     ValMax = v->CustomMax;
-  }
-  else {
+    break;
+  case DRAW_POST_RANGE_PER_STEP:
+    ValMin = v->TimeStepMin[v->TimeStep];
+    ValMax = v->TimeStepMax[v->TimeStep];
+    break;
+  case DRAW_POST_RANGE_DEFAULT:
+  default:
     ValMin = v->Min;
     ValMax = v->Max;
+    break;
   }
 
   switch (v->ScaleType) {

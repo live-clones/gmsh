@@ -1,7 +1,7 @@
 #ifndef _VIEWS_H_
 #define _VIEWS_H_
 
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ class Post_View{
   // the data
   int DataSize; // size(double) or sizeof(float)
   int NbTimeStep, ScalarOnly, TextOnly;
-  double Min, Max, BBox[6];
+  double Min, Max, BBox[6], *TimeStepMin, *TimeStepMax;
   List_T *Time;
   int NbSP, NbVP, NbTP;
   List_T *SP, *VP, *TP; // points
@@ -128,8 +128,9 @@ class Post_View{
 #define DRAW_POST_EIGENVECTORS  1
 
 // RangeType
-#define DRAW_POST_DEFAULT 1
-#define DRAW_POST_CUSTOM  2
+#define DRAW_POST_RANGE_DEFAULT  1
+#define DRAW_POST_RANGE_CUSTOM   2
+#define DRAW_POST_RANGE_PER_STEP 3
 
 // ScaleType
 #define DRAW_POST_LINEAR             1

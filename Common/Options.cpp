@@ -1,6 +1,6 @@
-// $Id: Options.cpp,v 1.129 2003-12-08 19:18:13 geuzaine Exp $
+// $Id: Options.cpp,v 1.130 2004-01-13 12:39:44 geuzaine Exp $
 //
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -4425,8 +4425,19 @@ double opt_view_range_type(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
-    WID->view_butt[34]->value(v->RangeType == DRAW_POST_CUSTOM);
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
+    switch(v->RangeType){
+    case DRAW_POST_RANGE_DEFAULT:
+      WID->view_choice[7]->value(0);
+      break;
+    case DRAW_POST_RANGE_PER_STEP:
+      WID->view_choice[7]->value(1);
+      break;
+    case DRAW_POST_RANGE_CUSTOM:
+      WID->view_choice[7]->value(2);
+      break;
+    }
+  }
 #endif
   return v->RangeType;
 }

@@ -1,6 +1,6 @@
-// $Id: Message.cpp,v 1.43 2003-11-27 02:33:31 geuzaine Exp $
+// $Id: Message.cpp,v 1.44 2004-01-13 12:39:45 geuzaine Exp $
 //
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

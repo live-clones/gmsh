@@ -1,6 +1,6 @@
-// $Id: Callbacks.cpp,v 1.198 2003-12-07 15:30:59 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.199 2004-01-13 12:39:45 geuzaine Exp $
 //
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -3008,7 +3008,9 @@ void view_options_plugin_cb(CALLBACK_ARGS)
 
 void view_options_custom_cb(CALLBACK_ARGS)
 {
-  if(WID->view_butt[34]->value()) {
+  int custom = (int)data;
+    
+  if(custom){
     WID->view_value[31]->activate();
     WID->view_value[32]->activate();
   }
@@ -3016,6 +3018,8 @@ void view_options_custom_cb(CALLBACK_ARGS)
     WID->view_value[31]->deactivate();
     WID->view_value[32]->deactivate();
   }
+
+  if(w) w->set_changed();
 }
 
 void view_options_timestep_cb(CALLBACK_ARGS)
@@ -3076,19 +3080,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
       if(links == 3 || links == 4)
         force = 1;
 
-      // view_butts
-
-      //not this one. if(WID->view_butt[34]->changed())
-      opt_view_range_type(i, GMSH_SET,
-                          WID->view_butt[34]->value()? DRAW_POST_CUSTOM :
-                          DRAW_POST_DEFAULT);
-
-      if(force || WID->view_butt[1]->changed() ||
-         WID->view_butt[2]->changed() || WID->view_butt[3]->changed())
-        opt_view_type(i, GMSH_SET,
-                      WID->view_butt[1]->value()? DRAW_POST_3D :
-                      WID->view_butt[2]->value()? DRAW_POST_2D_SPACE :
-                      DRAW_POST_2D_TIME);
+      // view_choice
 
       if(force || WID->view_choice[1]->changed()) {
         int val;
@@ -3105,9 +3097,6 @@ void view_options_ok_cb(CALLBACK_ARGS)
         }
         opt_view_scale_type(i, GMSH_SET, val);
       }
-
-      if(force || WID->view_butt[38]->changed())
-        opt_view_saturate_values(i, GMSH_SET, WID->view_butt[38]->value());
 
       if(force || WID->view_choice[0]->changed()) {
         int val;
@@ -3201,6 +3190,34 @@ void view_options_ok_cb(CALLBACK_ARGS)
         }
         opt_view_tensor_type(i, GMSH_SET, val);
       }
+
+      if(force || WID->view_choice[7]->changed()) {
+        int val;
+        switch (WID->view_choice[7]->value()) {
+        case 0:
+          val = DRAW_POST_RANGE_DEFAULT;
+          break;
+        case 1:
+          val = DRAW_POST_RANGE_PER_STEP;
+          break;
+        default:
+          val = DRAW_POST_RANGE_CUSTOM;
+          break;
+        }
+        opt_view_range_type(i, GMSH_SET, val);
+      }
+
+      // view_butts
+
+      if(force || WID->view_butt[1]->changed() ||
+         WID->view_butt[2]->changed() || WID->view_butt[3]->changed())
+        opt_view_type(i, GMSH_SET,
+                      WID->view_butt[1]->value()? DRAW_POST_3D :
+                      WID->view_butt[2]->value()? DRAW_POST_2D_SPACE :
+                      DRAW_POST_2D_TIME);
+
+      if(force || WID->view_butt[38]->changed())
+        opt_view_saturate_values(i, GMSH_SET, WID->view_butt[38]->value());
 
       if(force || WID->view_butt[10]->changed())
         opt_view_show_element(i, GMSH_SET, WID->view_butt[10]->value());

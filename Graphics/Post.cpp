@@ -1,6 +1,6 @@
-// $Id: Post.cpp,v 1.49 2003-11-29 01:38:50 geuzaine Exp $
+// $Id: Post.cpp,v 1.50 2004-01-13 12:39:45 geuzaine Exp $
 //
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -259,10 +259,10 @@ void Draw_ScalarList(Post_View * v, double ValMin, double ValMax,
     nb = List_Nbr(list) / nbelm;
     if(smoothnormals && v->Light && v->SmoothNormals && v->Changed &&
        v->IntervalsType != DRAW_POST_ISO) {
-      v->reset_normals();       // we might save some normal stuff by
-      // checking if the change actually changed
-      // the "geometry"... Should put
-      // e.g. Change=2 if timestep chnaged, etc.
+      v->reset_normals(); 
+      // we might save some normal stuff by checking if the change
+      // actually changed the "geometry"... Should put e.g. Change=2
+      // if timestep changed, etc.
       Msg(DEBUG, "Preprocessing of normals in view %d", v->Num);
       for(i = 0; i < List_Nbr(list); i += nb) {
         Get_Coords(v->Explode, v->Offset, nbnod,
@@ -486,13 +486,17 @@ void Draw_Post(void)
         }
 
         switch (v->RangeType) {
-        case DRAW_POST_DEFAULT:
+        case DRAW_POST_RANGE_DEFAULT:
           ValMin = v->Min;
           ValMax = v->Max;
           break;
-        case DRAW_POST_CUSTOM:
+        case DRAW_POST_RANGE_CUSTOM:
           ValMin = v->CustomMin;
           ValMax = v->CustomMax;
+          break;
+        case DRAW_POST_RANGE_PER_STEP:
+          ValMin = v->TimeStepMin[v->TimeStep];
+          ValMax = v->TimeStepMax[v->TimeStep];
           break;
         }
 

@@ -1,6 +1,6 @@
-// $Id: Views.cpp,v 1.106 2003-11-29 03:15:04 geuzaine Exp $
+// $Id: Views.cpp,v 1.107 2004-01-13 12:39:44 geuzaine Exp $
 //
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -77,6 +77,8 @@ Post_View *BeginView(int allocate)
   v->Dirty = 1;
   v->DisplayListNum = -1;
   v->NbTimeStep = 0;
+  v->TimeStepMin = NULL;
+  v->TimeStepMax = NULL;
   v->NbSP = v->NbVP = v->NbTP = 0;
   v->NbSL = v->NbVL = v->NbTL = 0;
   v->NbST = v->NbVT = v->NbTT = 0;
@@ -193,15 +195,31 @@ void Stat_Element(Post_View * v, int type, int nbnod, int N,
       v->Min = V[0];
       v->Max = V[0];
       v->NbTimeStep = N / nbnod;
+      v->TimeStepMin = (double*)Malloc(v->NbTimeStep * sizeof(double));
+      v->TimeStepMax = (double*)Malloc(v->NbTimeStep * sizeof(double));
+      for(i = 0; i < v->NbTimeStep; i++){
+	v->TimeStepMin[i] = V[0];
+	v->TimeStepMax[i] = V[0];
+      }
     }
-    else if(N / nbnod < v->NbTimeStep)
+    else if(N / nbnod < v->NbTimeStep){
+      // if some elts have less steps, reduce the total number!
       v->NbTimeStep = N / nbnod;
+    }
 
     for(i = 0; i < N; i++) {
-      if(V[i] < v->Min)
-        v->Min = V[i];
-      if(V[i] > v->Max)
-        v->Max = V[i];
+      l0 = V[i];
+      if(l0 < v->Min)
+        v->Min = l0;
+      if(l0 > v->Max)
+        v->Max = l0;
+      int ts = i / nbnod;
+      if(ts < v->NbTimeStep){ // security
+	if(l0 < v->TimeStepMin[ts])
+	  v->TimeStepMin[ts] = l0;
+	if(l0 > v->TimeStepMax[ts])
+	  v->TimeStepMax[ts] = l0;
+      }
     }
     break;
 
@@ -211,9 +229,16 @@ void Stat_Element(Post_View * v, int type, int nbnod, int N,
       v->Min = l0;
       v->Max = l0;
       v->NbTimeStep = N / (3 * nbnod);
+      v->TimeStepMin = (double*)Malloc(v->NbTimeStep * sizeof(double));
+      v->TimeStepMax = (double*)Malloc(v->NbTimeStep * sizeof(double));
+      for(i = 0; i < v->NbTimeStep; i++){
+	v->TimeStepMin[i] = l0;
+	v->TimeStepMax[i] = l0;
+      }
     }
-    else if(N / (3 * nbnod) < v->NbTimeStep)
+    else if(N / (3 * nbnod) < v->NbTimeStep){
       v->NbTimeStep = N / (3 * nbnod);
+    }
 
     for(i = 0; i < N; i += 3) {
       l0 = sqrt(DSQR(V[i]) + DSQR(V[i + 1]) + DSQR(V[i + 2]));
@@ -221,6 +246,13 @@ void Stat_Element(Post_View * v, int type, int nbnod, int N,
         v->Min = l0;
       if(l0 > v->Max)
         v->Max = l0;
+      int ts = i / (3 * nbnod);
+      if(ts < v->NbTimeStep){ // security
+	if(l0 < v->TimeStepMin[ts])
+	  v->TimeStepMin[ts] = l0;
+	if(l0 > v->TimeStepMax[ts])
+	  v->TimeStepMax[ts] = l0;
+      }
     }
     v->ScalarOnly = 0;
     break;
@@ -234,9 +266,16 @@ void Stat_Element(Post_View * v, int type, int nbnod, int N,
       v->Min = l0;
       v->Max = l0;
       v->NbTimeStep = N / (9 * nbnod);
+      v->TimeStepMin = (double*)Malloc(v->NbTimeStep * sizeof(double));
+      v->TimeStepMax = (double*)Malloc(v->NbTimeStep * sizeof(double));
+      for(i = 0; i < v->NbTimeStep; i++){
+	v->TimeStepMin[i] = l0;
+	v->TimeStepMax[i] = l0;
+      }
     }
-    else if(N / (9 * nbnod) < v->NbTimeStep)
+    else if(N / (9 * nbnod) < v->NbTimeStep){
       v->NbTimeStep = N / (9 * nbnod);
+    }
 
     for(i = 0; i < N; i += 9) {
       l0 = ComputeVonMises(V+i);
@@ -244,6 +283,13 @@ void Stat_Element(Post_View * v, int type, int nbnod, int N,
         v->Min = l0;
       if(l0 > v->Max)
         v->Max = l0;
+      int ts = i / (9 * nbnod);
+      if(ts < v->NbTimeStep){ // security
+	if(l0 < v->TimeStepMin[ts])
+	  v->TimeStepMin[ts] = l0;
+	if(l0 > v->TimeStepMax[ts])
+	  v->TimeStepMax[ts] = l0;
+      }
     }
     v->ScalarOnly = 0;
     break;
@@ -336,6 +382,10 @@ void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
     }
   }
 
+  //for(i = 0; i < v->NbTimeStep; i++) {
+  //  printf("step %d, min %g, max %g\n", i, v->TimeStepMin[i], v->TimeStepMax[i]);
+  //}
+
   opt_view_name(v->Index, GMSH_SET | GMSH_GUI, name);
   opt_view_filename(v->Index, GMSH_SET | GMSH_GUI, file_name);
   opt_view_nb_timestep(v->Index, GMSH_GUI, 0);
@@ -399,6 +449,8 @@ void DuplicateView(Post_View * v1, int withoptions)
   // *INDENT-OFF*
 
   v2->Time = v1->Time;
+  v2->TimeStepMin = v1->TimeStepMin;
+  v2->TimeStepMax = v1->TimeStepMax;
 
   v2->NbSP = v1->NbSP; v2->SP = v1->SP; 
   v2->NbVP = v1->NbVP; v2->VP = v1->VP; 
@@ -522,6 +574,8 @@ void FreeView(Post_View * v)
   if(free && !v->Links) {
     Msg(DEBUG, "Freeing View!");
     List_Delete(v->Time);
+    Free(v->TimeStepMin);
+    Free(v->TimeStepMax);
     // *INDENT-OFF*
     List_Delete(v->SP); List_Delete(v->VP); List_Delete(v->TP);
     List_Delete(v->SL); List_Delete(v->VL); List_Delete(v->TL);
@@ -538,6 +592,8 @@ void FreeView(Post_View * v)
     //+ the reload does not work (e.g. the file is gone). This way,
     //the next Free stuff will still work gracefully.
     v->Time = NULL;
+    v->TimeStepMin = NULL;
+    v->TimeStepMax = NULL;
     v->SP = v->VP = v->TP = NULL;
     v->SL = v->VL = v->TL = NULL;
     v->ST = v->VT = v->TT = NULL;
@@ -676,7 +732,7 @@ Post_View *Create2DGraph(char *xname, char *yname,
   return v;
 }
 
-// INput/output
+// Input/output
 
 void ReadView(FILE *file, char *filename)
 {
