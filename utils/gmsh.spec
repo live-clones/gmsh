@@ -15,12 +15,12 @@ Prefix: /usr
 %description 
 Gmsh is an automatic three-dimensional finite element mesh generator,
 primarily Delaunay, with built-in pre- and post-processing
-facilities. Its primal goal is to provide a simple meshing tool for
-academic test cases with parametric input and up to date visualization
-capabilities.  One of the strengths of Gmsh is its ability to respect
-a characteristic length field for the generation of adapted meshes on
-lines, surfaces and volumes. Gmsh requires OpenGL (or Mesa) to be
-installed on your system.
+facilities. Its primal design goal is to provide a simple meshing tool
+for academic test cases with parametric input and up to date
+visualization capabilities.  One of the strengths of Gmsh is its
+ability to respect a characteristic length field for the generation of
+adapted meshes on lines, surfaces and volumes. Gmsh requires OpenGL
+(or Mesa) to be installed on your system.
 
 Install Gmsh if you need a simple 3D finite element mesh generator
 and/or post-processor.

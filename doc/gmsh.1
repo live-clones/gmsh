@@ -1,4 +1,4 @@
-.\" $Id: gmsh.1,v 1.44 2003-01-25 20:31:54 geuzaine Exp $
+.\" $Id: gmsh.1,v 1.45 2003-03-02 16:24:19 geuzaine Exp $
 .\" ======================================================================
 .TH Gmsh 1 "12 November 2001" "Gmsh > 1.30" "Gmsh Manual Pages"
 .UC 4
@@ -11,16 +11,15 @@ with built-in pre- and post-processing facilities
 .B gmsh [file(s)] [option(s)]
 .\" ======================================================================
 .SH DESCRIPTION
-.\" \fIGmsh\fR (pronounced "Gnu-mesh") is an automatic three-dimensional
-\fIGmsh\fR is an automatic three-dimensional
-finite element mesh generator, primarily Delaunay, with built-in pre-
-and post-processing facilities. Its primal goal is to provide a simple
-meshing tool for academic test cases with parametric input and up to
-date visualization capabilities. One of the strengths of \fIGmsh\fR is
-its ability to respect a characteristic length field for the
-generation of adapted meshes on lines, surfaces and volumes. These
-adapted meshes can be mixed with simple structured (transfinite,
-elliptic, etc.)  meshes in order to augment the flexibility.
+\fIGmsh\fR is an automatic three-dimensional finite element mesh
+generator, primarily Delaunay, with built-in pre- and post-processing
+facilities. Its primal design goal is to provide a simple meshing tool
+for academic test cases with parametric input and up to date
+visualization capabilities. One of the strengths of \fIGmsh\fR is its
+ability to respect a characteristic length field for the generation of
+adapted meshes on lines, surfaces and volumes. These adapted meshes
+can be mixed with simple structured (transfinite, elliptic, etc.)
+meshes in order to augment the flexibility.
 .SS Geometrical entity definition
 Parameterized geometries are created by successively defining points,
 oriented curves (segments, circles, ellipsis, splines, etc.), oriented

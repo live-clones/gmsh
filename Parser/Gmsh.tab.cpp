@@ -188,7 +188,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.149 2003-02-12 20:27:13 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.150 2003-03-02 16:24:18 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -233,51 +233,51 @@
 #include "CreateFile.h"
 #include "STL.h"
 
-List_T *Symbol_L=NULL;
+List_T *Symbol_L = NULL;
 
-extern Context_T  CTX;
-extern Mesh      *THEM;
+extern Context_T CTX;
+extern Mesh *THEM;
 
-static FILE          *yyinTab[MAX_OPEN_FILES];
-static int            yylinenoTab[MAX_OPEN_FILES];
-static fpos_t         yyposImbricatedLoopsTab[MAX_OPEN_FILES];
-static int            yylinenoImbricatedLoopsTab[MAX_OPEN_FILES];
-static double         LoopControlVariablesTab[MAX_OPEN_FILES][3];
-static char*          LoopControlVariablesNameTab[MAX_OPEN_FILES];
-static char           yynameTab[MAX_OPEN_FILES][256];
-static char           tmpstring[1024];
-static Symbol         TheSymbol, *pSymbol;
-static Surface       *STL_Surf;
-static Shape          TheShape;
-static int            i,j,k,flag,RecursionLevel=0,ImbricatedLoop = 0;
-static int            Last_NumberOfPoints = 0;
-static double         d, *pd;
-static ExtrudeParams  extr;
-static char           *str;
-static StringXString  *pStrCat;
-static StringXNumber  *pNumCat;
-static StringXColor   *pColCat;
-static double         (*pNumOpt)(int num, int action, double value);
-static char*          (*pStrOpt)(int num, int action, char *value);
-static unsigned int   (*pColOpt)(int num, int action, unsigned int value);
-static Post_View      *View;
+static FILE *yyinTab[MAX_OPEN_FILES];
+static int yylinenoTab[MAX_OPEN_FILES];
+static fpos_t yyposImbricatedLoopsTab[MAX_OPEN_FILES];
+static int yylinenoImbricatedLoopsTab[MAX_OPEN_FILES];
+static double LoopControlVariablesTab[MAX_OPEN_FILES][3];
+static char *LoopControlVariablesNameTab[MAX_OPEN_FILES];
+static char yynameTab[MAX_OPEN_FILES][256];
+static char tmpstring[1024];
+static Symbol TheSymbol, *pSymbol;
+static Surface *STL_Surf;
+static Shape TheShape;
+static int i, j, k, flag, RecursionLevel = 0, ImbricatedLoop = 0;
+static int Last_NumberOfPoints = 0;
+static double d, *pd;
+static ExtrudeParams extr;
+static char *str;
+static StringXString *pStrCat;
+static StringXNumber *pNumCat;
+static StringXColor *pColCat;
+static double (*pNumOpt)(int num, int action, double value);
+static char* (*pStrOpt)(int num, int action, char *value);
+static unsigned int (*pColOpt)(int num, int action, unsigned int value);
+static Post_View *View;
 
-char *strsave(char *ptr);
-void  yyerror (char *s);
-void  yymsg (int type, char *fmt, ...);
-void  skip_until (char *skip, char *until);
-int PrintListOfDouble(char *format, List_T *list, char *buffer);
+char *strsave (char *ptr);
+void yyerror (char *s);
+void yymsg (int type, char *fmt, ...);
+void skip_until (char *skip, char *until);
+int PrintListOfDouble (char *format, List_T *list, char *buffer);
 
 #line 84 "Gmsh.y"
 #ifndef YYSTYPE
 typedef union {
-  char    *c;
-  int      i;
+  char *c;
+  int i;
   unsigned int u;
-  double   d;
-  double   v[5];
-  Shape    s;
-  List_T  *l;
+  double d;
+  double v[5];
+  Shape s;
+  List_T *l;
 } yystype;
 # define YYSTYPE yystype
 # define YYSTYPE_IS_TRIVIAL 1
@@ -4929,8 +4929,8 @@ case 53:
 case 54:
 #line 392 "Gmsh.y"
 {
-      yymsg(INFO, "Gmsh file format read");
-    ;
+    yymsg(INFO, "Gmsh file format read");
+  ;
     break;}
 case 55:
 #line 398 "Gmsh.y"

@@ -3,13 +3,13 @@
 
 #ifndef YYSTYPE
 typedef union {
-  char    *c;
-  int      i;
+  char *c;
+  int i;
   unsigned int u;
-  double   d;
-  double   v[5];
-  Shape    s;
-  List_T  *l;
+  double d;
+  double v[5];
+  Shape s;
+  List_T *l;
 } yystype;
 # define YYSTYPE yystype
 # define YYSTYPE_IS_TRIVIAL 1
