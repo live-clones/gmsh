@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.55 2004-05-22 01:24:18 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.56 2004-05-22 01:38:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -302,7 +302,6 @@ void OpenProblemMacFinder(const char *filename)
     OpenProblem((char*)filename);
 #if defined(HAVE_FLTK)
     Draw();
-    DrawUI();
 #endif
   }
 }
