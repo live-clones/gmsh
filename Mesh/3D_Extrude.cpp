@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.70 2003-12-16 17:36:56 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.71 2003-12-16 20:22:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1094,7 +1094,7 @@ int Extrude_Mesh(Tree_T * Volumes)
 	break;
       }
       else{
-	RANDOM_SWAP_FACT += 0.1;
+	RANDOM_SWAP_FACT += 0.05;
 	Msg(INFO, "Setting random swapping factor to %g", RANDOM_SWAP_FACT);
       }
     }
