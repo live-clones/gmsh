@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.13 2001-01-24 11:24:05 geuzaine Exp $
+// $Id: Geom.cpp,v 1.14 2001-01-24 16:15:30 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -241,6 +241,9 @@ void Plan_SurfPlane (void *data,void *dum){
 
   ix=iy=iz=0;
 
+  // TOLERANCE ! WARNING WARNING
+  double eps = 1.e-6 * CTX.lc;
+
   for(i=0;i<N;i++){
     List_Read(points,i,&v);
     if(!i){
@@ -249,9 +252,9 @@ void Plan_SurfPlane (void *data,void *dum){
       Z = v->Pos.Z;
     }
     else{
-      if(X != v->Pos.X ) ix = 1;
-      if(Y != v->Pos.Y ) iy = 1;
-      if(Z != v->Pos.Z ) iz = 1;
+      if(fabs(X-v->Pos.X) > eps) ix = 1;
+      if(fabs(Y-v->Pos.Y) > eps) iy = 1;
+      if(fabs(Z-v->Pos.Z) > eps) iz = 1;
     }
 
     sys[0][0] += v->Pos.X * v->Pos.X;

@@ -1,4 +1,4 @@
-// $Id: Vertex.cpp,v 1.5 2001-01-08 08:05:46 geuzaine Exp $
+// $Id: Vertex.cpp,v 1.6 2001-01-24 16:15:31 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Vertex.h"
@@ -95,6 +95,7 @@ int compareVertex (const void *a, const void *b){
 int comparePosition (const void *a, const void *b){
   int i, j;
   Vertex **q, **w;
+  // TOLERANCE ! WARNING WARNING
   double eps = 1.e-6 * CTX.lc;
 
   q = (Vertex **) a;
