@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.27 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: Geom.cpp,v 1.28 2001-08-17 15:56:18 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -103,33 +103,32 @@ void Draw_Curve (void *a, void *b){
 
   if(CTX.geom.lines){
   
+    int n = List_Nbr(c->Control_Points);
     if(c->Typ == MSH_SEGM_LINE)
-      N = List_Nbr(c->Control_Points);
+      N = n;
     else
-      N = 50;
-    if(c->Typ == MSH_SEGM_DISCRETE)
-      {
-	Simplex *s;
-	List_T *temp = Tree2List(c->Simplexes);
-	for(i=0;i<List_Nbr(temp);i++)
-	  {
-	    List_Read(temp,i,&s);
-	    glBegin(GL_LINE_STRIP);
-	    glVertex3d(s->V[0]->Pos.X,s->V[0]->Pos.Y,s->V[0]->Pos.Z);
-	    glVertex3d(s->V[1]->Pos.X,s->V[1]->Pos.Y,s->V[1]->Pos.Z);
-	    glEnd();
-	  }
-	List_Delete(temp);
-      }
-    else
-      {
+      N = (n<10) ? 50 : 10 * n;
+
+    if(c->Typ == MSH_SEGM_DISCRETE){
+      Simplex *s;
+      List_T *temp = Tree2List(c->Simplexes);
+      for(i=0;i<List_Nbr(temp);i++){
+	List_Read(temp,i,&s);
 	glBegin(GL_LINE_STRIP);
-	for(i=0;i<N;i++){
-	  v = InterpolateCurve(c,(double)i/(double)(N-1),0);
-	  glVertex3d(v.Pos.X,v.Pos.Y,v.Pos.Z);
-	}
+	glVertex3d(s->V[0]->Pos.X,s->V[0]->Pos.Y,s->V[0]->Pos.Z);
+	glVertex3d(s->V[1]->Pos.X,s->V[1]->Pos.Y,s->V[1]->Pos.Z);
 	glEnd();
       }
+      List_Delete(temp);
+    }
+    else{
+      glBegin(GL_LINE_STRIP);
+      for(i=0;i<N;i++){
+	v = InterpolateCurve(c,(double)i/(double)(N-1),0);
+	glVertex3d(v.Pos.X,v.Pos.Y,v.Pos.Z);
+      }
+      glEnd();
+    }
   }
 
   if(CTX.geom.lines_num){
