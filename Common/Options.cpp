@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.95 2002-11-16 23:23:34 geuzaine Exp $
+// $Id: Options.cpp,v 1.96 2002-11-17 17:08:32 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -207,10 +207,10 @@ void Print_Options(int num, int level, char *filename){
     fprintf(file, "// This file takes configuration options (preferences) that\n");
     fprintf(file, "// should be loaded each time Gmsh is launched. You can create\n");
     fprintf(file, "// this file by hand, or let Gmsh generate it for you (with\n");
-    fprintf(file, "// the 'Options->Save options now' menu button). This file can\n");
-    fprintf(file, "// also be automatically regenerated every time you quit\n");
-    fprintf(file, "// Gmsh if the option 'General.SaveOptions' is set. If\n");
-    fprintf(file, "// this file isn't found, defaults are used.\n");
+    fprintf(file, "// 'Tools->Options->Save'). This file can also be automatically\n");
+    fprintf(file, "// regenerated every time you quit Gmsh if the option\n");
+    fprintf(file, "// 'General.SaveOptions' is set. If this file isn't found,\n");
+    fprintf(file, "// defaults are used.\n");
     fprintf(file, "//\n");
   }
 

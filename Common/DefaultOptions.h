@@ -45,7 +45,7 @@ StringXString GeneralOptions_String[] = {
     "File into which the log is saved if a fatal error occurs" },
 
   { F|S, "OptionsFileName" , opt_general_options_filename , ".gmsh-options" ,
-    "File created in your home directory with 'Options->Save options now', and which is read on startup" },
+    "File created in your home directory with 'Tools->Options->Save', and which is read on startup" },
 
   { 0,   "SessionFileName" , opt_general_session_filename , ".gmshrc" ,
     "File into which session specific information is saved, and which is read on startup" },
