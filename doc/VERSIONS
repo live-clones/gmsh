@@ -1,12 +1,12 @@
-$Date: 2002-06-17 15:06:53 $
+$Date: 2002-08-06 21:16:16 $
 
 New in 1.35: Graphical user interface upgraded to FLTK 1.1 (tooltips,
 new file chooser with multiple selection, full keyboard navigation,
 cut/paste of messages, etc.); colors can be now be directly assigned
 to mesh entities; initial tensor visaulization; new keyboard animation
 (righ/left arrow for time steps; up/down arrow for view cycling); new
-VRML output format for surface meshes; many small bug fixes; Gmsh is
-now distributed under the GNU General public License!
+VRML output format for surface meshes; many small bug fixes (read
+mesh, ...);
 
 New in 1.34: Improved surface mesh of non-plane surfaces; fixed
 orientation of elements in 2D anisotropic algorithm; minor user
