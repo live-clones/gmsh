@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.20 2000-12-09 22:26:12 geuzaine Exp $ */
+%{ /* $Id: Gmsh.l,v 1.21 2000-12-13 22:27:45 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -135,6 +135,7 @@ Hypot                   return tHypot ;
 
 In                      return tIn;
 If                      return tIf;
+Intersect               return tIntersect;
 
 Knots			return tKnots;
 

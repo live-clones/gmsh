@@ -1,4 +1,4 @@
-/* $Id: CAD.h,v 1.4 2000-11-26 15:43:45 geuzaine Exp $ */
+/* $Id: CAD.h,v 1.5 2000-12-13 22:27:45 geuzaine Exp $ */
 #ifndef _CAD_H_
 #define _CAD_H_
 
@@ -33,6 +33,7 @@ void Extrude_ProtudeSurface(int ep, int is,
 void ProtudeXYZ ( double &x, double &y, double &z, ExtrudeParams *e);
 void ReplaceAllDuplicates ( Mesh *m );
 void Coherence_PS(void);
+bool IntersectAllSegmentsTogether(void);
 
 void ModifyLcPoint(int ip, double lc);
 void TranslateShapes(double X,double Y,double Z,

@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.42 2000-12-11 22:09:43 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.43 2000-12-13 22:27:45 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -83,7 +83,7 @@ void skip_until (char *until);
 %token tPlane tRuled tTransfinite tComplex tPhysical
 %token tUsing tBump tProgression
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
-%token tLoop tRecombine tDelete tCoherence
+%token tLoop tRecombine tDelete tCoherence tIntersect
 %token tView tAttractor tLayers
 %token tScalarTetrahedron tVectorTetrahedron tTensorTetrahedron
 %token tScalarTriangle tVectorTriangle tTensorTriangle
@@ -2076,6 +2076,10 @@ Coherence :
     tCoherence tEND
     { 
       Coherence_PS();
+    }
+  | tIntersect tEND
+    { 
+      IntersectAllSegmentsTogether();
     }
 ;
 
