@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.33 2001-01-08 08:05:39 geuzaine Exp $
+# $Id: Makefile,v 1.34 2001-01-09 16:09:50 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -120,6 +120,10 @@ gmshm:
 	$(CC) -o $(GMSH_BIN_DIR)/gmshm $(GMSH_XMOTIF_LIB)\
               $(MESA_MOTIF_STATIC_LIB) $(MESA_STATIC_LIB)\
               $(XMOTIF_LIB) $(THREAD_LIB) -lm
+
+gmshm3:
+	$(CC) -o $(GMSH_BIN_DIR)/gmshm $(GMSH_FLTK_LIB)\
+              $(MESA_STATIC_LIB) $(FLTK_LIB) $(THREAD_LIB) -lm
 
 parser:
 	cd Parser && $(MAKE) parser
