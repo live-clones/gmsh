@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.45 2001-12-03 08:41:43 geuzaine Exp $
+// $Id: CAD.cpp,v 1.46 2002-02-05 20:11:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -953,38 +953,38 @@ void Extrude_ProtudePoint(int type, int ip,
     d = CTX.geom.extrude_spline_points;
     d = d?d:1;
     c = Create_Curve(NEWLINE(),MSH_SEGM_SPLN,1,NULL,NULL,-1,-1,0.,1.);
-    c->Control_Points = List_Create(CTX.geom.extrude_spline_points,1,sizeof(Vertex*));
+    c->Control_Points = List_Create(CTX.geom.extrude_spline_points+1,1,sizeof(Vertex*));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type,T0,T1,T2,A0,A1,A2,X0,X1,X2,alpha);
     if(e) c->Extrude->mesh = e->mesh;
-    List_Add(c->Control_Points,&chapeau);
-    c->beg = chapeau;
-    for(i=1 ; i<=CTX.geom.extrude_spline_points ; i++){
-      pv = DuplicateVertex(pv);
+    List_Add(c->Control_Points,&pv);
+    c->beg = pv;
+    for(i=0 ; i<CTX.geom.extrude_spline_points ; i++){
+      if(i) chapeau = DuplicateVertex(chapeau);
 
       T[0] = -X0; T[1] = -X1; T[2] = -X2;
       SetTranslationMatrix(matrix,T);
       List_Reset(ListOfTransformedPoints);
-      ApplyTransformationToPoint(matrix,pv);
+      ApplyTransformationToPoint(matrix,chapeau);
 
       Ax[0] = A0; Ax[1] = A1; Ax[2] = A2;
       SetRotationMatrix(matrix,Ax,alpha/d);
       List_Reset(ListOfTransformedPoints);
-      ApplyTransformationToPoint(matrix,pv);
+      ApplyTransformationToPoint(matrix,chapeau);
 
       T[0] = X0; T[1] = X1; T[2] = X2;
       SetTranslationMatrix(matrix,T);
       List_Reset(ListOfTransformedPoints);
-      ApplyTransformationToPoint(matrix,pv);
+      ApplyTransformationToPoint(matrix,chapeau);
 
       T[0] = T0/d; T[1] = T1/d; T[2] = T2/d;
       SetTranslationMatrix(matrix,T);
       List_Reset(ListOfTransformedPoints);
-      ApplyTransformationToPoint(matrix,pv);
+      ApplyTransformationToPoint(matrix,chapeau);
 
-      List_Add(c->Control_Points,&pv);
+      List_Add(c->Control_Points,&chapeau);
     }
-    c->end = pv;
+    c->end = chapeau;
     break;
 
   default :
