@@ -1311,7 +1311,7 @@ t = 0 ;
 
 
 
-For(1:300)
+For(1:100)
 
   General.Rotation0 += 10 ;
   General.Rotation1 =  General.Rotation0 / 3 ;
@@ -1321,7 +1321,7 @@ For(1:300)
 
   t = (PostProcessing.View[0].TimeStep < PostProcessing.View[0].NbTimeStep-1) ? t+1 : 0 ;
   
-  PostProcessing.View[0].Raise += {0,0,0.0001*t} ;
+  PostProcessing.View[0].Raise += {0,0,0.0002*t} ;
 
   Sleep 0.1;
 
