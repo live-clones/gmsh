@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to Postscript Printing Library
  * Copyright (C) 1999-2001  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.17 2001-06-12 07:27:32 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.18 2001-06-12 07:32:23 geuzaine Exp $
  *
  * E-mail: Christophe.Geuzaine@AdValvas.be
  * URL: http://www.geuz.org/gl2ps/
@@ -1245,7 +1245,7 @@ GLvoid gl2psBeginPage(char *title, char *producer, GLint sort, GLint options,
 		      GLint colormode, GLint colorsize, GL2PSrgba *colormap,
 		      GLint buffersize, FILE *stream){
 
-  gl2ps.format = GL2PS_EPS;
+  gl2ps.format = GL2PS_EPS; /* a new arg should be introduced to select the format */
   gl2ps.title = title;
   gl2ps.producer = producer;
   gl2ps.sort = sort;
@@ -1298,6 +1298,7 @@ GLint gl2psEndPage(GLvoid){
   if(res == GL2PS_SUCCESS){
 
     switch(gl2ps.format){
+      /* other vector formats should go here */
     case GL2PS_EPS :
     default :
       phead = gl2psPrintPostscriptHeader;
