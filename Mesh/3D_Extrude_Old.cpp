@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.19 2002-05-18 07:18:03 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.20 2002-05-18 07:56:50 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -14,7 +14,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
 
 // This is the old extrusion mesh generator -> only available through
 // the command line option -extrude (w/o -recombine). This mesh

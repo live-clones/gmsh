@@ -1,4 +1,4 @@
-// $Id: Edge.cpp,v 1.7 2002-05-18 07:18:03 geuzaine Exp $
+// $Id: Edge.cpp,v 1.8 2002-05-18 07:56:50 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -14,7 +14,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
 
 #include "Gmsh.h"
 #include "Numeric.h"
