@@ -1,7 +1,8 @@
-$Date: 2001-11-12 11:29:00 $
+$Date: 2001-11-12 15:58:48 $
 
 New in 1.29: Translations and rotations can now be combined in
-extrusions; fixed coherence bug in Extrude Line;
+extrusions; fixed coherence bug in Extrude Line; various small
+bug fixes and additions;
 
 New in 1.28: Corrected the 'Using Progression' attribute for
 tranfinite meshes to actually match a real geometric progression; new
