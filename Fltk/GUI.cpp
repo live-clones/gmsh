@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.142 2002-01-03 10:25:06 geuzaine Exp $
+// $Id: GUI.cpp,v 1.143 2002-01-21 18:49:17 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -2118,7 +2118,7 @@ void GUI::create_about_window(){
     o->add("@c@.A three-dimensional finite element mesh generator");
     o->add("@c@.with built-in pre- and post-processing facilities");
     o->add("");
-    o->add("@c@.Copyright (c) 1997-2001");
+    o->add("@c@.Copyright (c) 1997-2002");
     o->add("@c@.Christophe Geuzaine and Jean-François Remacle");
     o->add("");
     o->add("@c@.Please send all questions and bug reports to");

@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.44 2002-01-03 10:25:06 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.45 2002-01-21 18:49:17 geuzaine Exp $
 
 #include <unistd.h>
 #include "Gmsh.h"
@@ -26,7 +26,7 @@ char  *TheFileNameTab[MAX_OPEN_FILES];
 char  *TheBgmFileName=NULL, *TheOptString=NULL;
 
 char gmsh_progname[]  = "This is Gmsh" ;
-char gmsh_copyright[] = "Copyright (C) 1997-2001 Jean-Francois Remacle and Christophe Geuzaine";
+char gmsh_copyright[] = "Copyright (C) 1997-2002 Jean-Francois Remacle and Christophe Geuzaine";
 char gmsh_version[]   = "Version        : " ;
 char gmsh_os[]        = "Build OS       : " GMSH_OS ;
 char gmsh_gui[]       = "GUI toolkit    : " ;
