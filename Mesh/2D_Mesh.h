@@ -20,6 +20,10 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "List.h"
+#include "Tree.h"
+#include "Mesh.h"
+
 typedef struct avl{
   void *treedata;
   int balance;

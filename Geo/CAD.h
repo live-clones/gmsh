@@ -20,7 +20,10 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "List.h"
 #include "Mesh.h"
+#include "Vertex.h"
+#include "ExtrudeParams.h"
 
 int NEWPOINT(void);
 int NEWLINE(void);

@@ -20,6 +20,8 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "Tree.h"
+
 void CalculateMinMax (Tree_T *t, double *bbox);
 
 #endif

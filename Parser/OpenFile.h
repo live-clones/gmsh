@@ -20,8 +20,6 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
-#define MAX_OPEN_FILES  256
-
 int  ParseFile(char *filename, int silent);
 void ParseString(char *str);
 void OpenProblem(char *filename);

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.45 2003-02-23 05:51:28 geuzaine Exp $
+# $Id: Makefile,v 1.46 2003-03-02 18:44:21 geuzaine Exp $
 
 include ../variables
 
@@ -46,25 +46,25 @@ Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
   ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  Gmsh.tab.hpp
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
+  ../Mesh/Matrix.h Gmsh.tab.hpp
 Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Parallel/ParUtil.h \
   ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Numeric/Numeric.h ../Common/Context.h ../Geo/Geo.h ../Geo/CAD.h \
   ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
+  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   ../Geo/DataBase.h ../Graphics/Draw.h ../Common/Views.h \
   ../Common/ColorTable.h ../Mesh/Create.h ../Geo/StepGeomDatabase.h \
   ../Common/Options.h ../Common/Colors.h Parser.h OpenFile.h \
-  FunctionManager.h ../Common/Timer.h ../Graphics/CreateFile.h \
-  ../Mesh/STL.h
+  ../Common/CommandLine.h FunctionManager.h ../Common/Timer.h \
+  ../Graphics/CreateFile.h
 OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h \
   ../Common/Context.h Parser.h OpenFile.h ../Common/CommandLine.h \
   ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ../Common/Views.h ../Common/ColorTable.h ../Geo/MinMax.h \
-  ../Graphics/Visibility.h ../Graphics/ReadImg.h
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
+  ../Mesh/Matrix.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Geo/MinMax.h ../Graphics/Visibility.h ../Graphics/ReadImg.h
 FunctionManager.o: FunctionManager.cpp FunctionManager.h

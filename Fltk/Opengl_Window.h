@@ -20,6 +20,9 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include <FL/Fl_Gl_Window.H>
+#include <FL/Fl_Box.H>
+
 class Opengl_Window : public Fl_Gl_Window {
   void draw();
   void draw_overlay();

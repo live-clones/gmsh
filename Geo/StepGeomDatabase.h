@@ -20,6 +20,8 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "List.h"
+
 typedef struct{
   double X, Y, Z;
 } Step_Coord_t;

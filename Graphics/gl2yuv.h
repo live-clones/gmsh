@@ -5,7 +5,7 @@
  * GL2YUV, an OpenGL to YUV Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2yuv.h,v 1.5 2002-05-25 19:17:45 geuzaine Exp $
+ * $Id: gl2yuv.h,v 1.6 2003-03-02 18:44:16 geuzaine Exp $
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -22,6 +22,8 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
+
+#include <stdio.h>
 
 void create_yuv(FILE *outfile, int width, int height);
 

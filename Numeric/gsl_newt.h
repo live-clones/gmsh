@@ -20,6 +20,6 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
-void newt(double x[], int n, int *check, void (*func)(int, double [],double []));
+void newt(double x[], int n, int *check, void (*func)(int, double [], double []));
 
 #endif

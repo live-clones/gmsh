@@ -20,6 +20,9 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "Vertex.h"
+#include "Mesh.h"
+
 Vertex InterpolateCurve (Curve * Curve, double u, int derivee);
 
 Vertex InterpolateSurface (Surface * s, double u, double v, 

@@ -20,6 +20,10 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "List.h"
+#include "Vertex.h"
+#include "Mesh.h"
+
 int compareNXE (const void *a, const void *b);
 int compareFxE (const void *a, const void *b);
 int compareSurfaceLoop (const void *a, const void *b);

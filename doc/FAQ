@@ -1,4 +1,4 @@
-This is the Gmsh FAQ - $Date: 2003-03-02 16:24:19 $
+This is the Gmsh FAQ - $Date: 2003-03-02 18:44:21 $
 
 ********************************************************************
 
@@ -206,7 +206,7 @@ not, simply go to the solver options
 
 ********************************************************************
 
-Section 7: Post-provessing module
+Section 7: Post-processing module
 
 * 7.1 The graphics display very slowly.
 

@@ -25,7 +25,6 @@
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/fl_draw.H>
 #include <FL/gl.h>
-#include <FL/Fl_Gl_Window.H>
 #include <FL/Fl_Choice.H>
 #include <FL/Fl_Scroll.H>
 #include <FL/Fl_Tabs.H>

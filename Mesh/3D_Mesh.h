@@ -20,6 +20,9 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "Tree.h"
+#include "Mesh.h"
+
 Brick LaBrique (Grid_T * pGrid, double X, double Y, double Z);
 void AddSimplexInGrid (Mesh * m, Simplex * s, int boule_boite);
 int Coherence (Volume * v, Mesh * m);

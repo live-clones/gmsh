@@ -20,6 +20,7 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "GmshUI.h"
 #include "ColorTable.h"
 
 class Colorbar_Window : public Fl_Window {

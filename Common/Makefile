@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.40 2003-03-02 00:16:13 geuzaine Exp $
+# $Id: Makefile,v 1.41 2003-03-02 18:44:15 geuzaine Exp $
 
 include ../variables
 
@@ -42,7 +42,7 @@ depend:
 Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Numeric/Numeric.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
   ../Mesh/Metric.h ../Mesh/Matrix.h ../Graphics/Draw.h ../Common/Views.h \
   ../Common/ColorTable.h Context.h Options.h DefaultOptions.h Trackball.h
 Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
@@ -51,17 +51,20 @@ Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
 Options.o: Options.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   GmshUI.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h Context.h \
-  Options.h
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
+  ../Mesh/Matrix.h ../Graphics/Draw.h ../Common/Views.h \
+  ../Common/ColorTable.h Context.h Options.h
 CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  GmshUI.h GmshVersion.h ../Numeric/Numeric.h Context.h Options.h \
-  ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  Views.h ColorTable.h ../Parser/OpenFile.h ../Parser/Parser.h
+  GmshUI.h GmshVersion.h CommandLine.h ../Numeric/Numeric.h Context.h \
+  Options.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h Views.h ColorTable.h \
+  ../Parser/OpenFile.h ../Parser/Parser.h
 Timer.o: Timer.cpp
 ColorTable.o: ColorTable.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ColorTable.h Context.h
 Trackball.o: Trackball.cpp Trackball.h
+GPL.o: GPL.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h

@@ -20,6 +20,7 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "List.h"
 #include "Vertex.h"
 
 typedef struct {

@@ -20,6 +20,8 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include <FL/Fl_Widget.H>
+
 #define CALLBACK_ARGS   Fl_Widget* w, void* data
 
 int SetGlobalShortcut(int event);

@@ -20,6 +20,8 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include <math.h>
+
 #define _TAILLE_ 3
 
 class Vector3

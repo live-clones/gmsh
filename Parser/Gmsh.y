@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.131 2003-03-02 16:24:18 geuzaine Exp $
+// $Id: Gmsh.y,v 1.132 2003-03-02 18:44:19 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -39,6 +39,7 @@
 #include "Colors.h"
 #include "Parser.h"
 #include "OpenFile.h"
+#include "CommandLine.h"
 #include "FunctionManager.h"
 #include "ColorTable.h"
 #include "Timer.h"

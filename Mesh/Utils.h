@@ -20,6 +20,10 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "List.h"
+#include "Vertex.h"
+#include "Mesh.h"
+
 void direction (Vertex * v1, Vertex * v2, double d[3]);
 void Projette (Vertex * v, double mat[3][3]);
 void MeanPlane(List_T *point, Surface *s);

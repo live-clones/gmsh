@@ -20,10 +20,13 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "List.h"
+#include "Tree.h"
+
 class STL_Data
 {
  public:
-  Tree_T * Vertices;
+  Tree_T *Vertices;
   Tree_T *Simplexes;
   List_T *LVertices;
   List_T *LSimplexes;

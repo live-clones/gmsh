@@ -20,6 +20,9 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "List.h"
+#include "Mesh.h"
+
 typedef struct{
   int n;
   char *s;

@@ -20,6 +20,8 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "List.h"
+
 #define ELEMENTARY 1
 #define PHYSICAL   2
 

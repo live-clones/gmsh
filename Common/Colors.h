@@ -20,7 +20,7 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
-#include "Context.h"
+#include "Options.h"
 
 StringX4Int ColorString[] = {
   { "Snow"                     ,  255, 250, 250, 255 } , 

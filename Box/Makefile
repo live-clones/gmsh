@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.21 2003-02-18 05:50:04 geuzaine Exp $
+# $Id: Makefile,v 1.22 2003-03-02 18:44:15 geuzaine Exp $
 
 include ../variables
 
@@ -37,7 +37,7 @@ Main.o: Main.cpp ../Parallel/ParUtil.h ../Plugin/PluginManager.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Common/GmshVersion.h ../Numeric/Numeric.h ../Geo/Geo.h \
   ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
+  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   ../Common/Views.h ../Common/ColorTable.h ../Parser/Parser.h \
   ../Common/Context.h ../Common/Options.h ../Parser/OpenFile.h \
   ../Common/CommandLine.h ../Geo/MinMax.h

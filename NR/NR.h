@@ -6,7 +6,7 @@
 
 /* "public" routines used in Gmsh */
 
-void dsvdcmp (double **a, int m, int n, double w[], double **v);
+void dsvdcmp(double **a, int m, int n, double w[], double **v);
 double brent(double ax, double bx, double cx,
 	     double (*f)(double), double tol, double *xmin);
 void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb,

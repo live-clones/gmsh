@@ -20,10 +20,13 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "List.h"
+#include "Tree.h"
 #include "Vertex.h"
 #include "Simplex.h"
 #include "Edge.h"
 #include "ExtrudeParams.h"
+#include "STL.h"
 
 #define FORMAT_MSH     1
 #define FORMAT_UNV     2
@@ -90,7 +93,6 @@ typedef struct _CDLIST DListRecord, *DListPeek;
 typedef struct _MAILLAGE maillage, *maipeek;
 typedef struct _DELAUNAY Delaunay, *delpeek;
 typedef int PointNumero;
-class STL_Data;
 
 struct _DOC{
   PointRecord *points;  /* points a trianguler */

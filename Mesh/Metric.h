@@ -20,6 +20,10 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "List.h"
+#include "Vertex.h"
+#include "Simplex.h"
+#include "Mesh.h"
 #include "Matrix.h"
 
 class GMSHMetric{

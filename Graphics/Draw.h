@@ -20,6 +20,8 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "List.h"
+#include "Mesh.h"
 #include "Views.h"
 
 #define GMSH_RENDER    1

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.32 2003-02-23 05:51:28 geuzaine Exp $
+# $Id: Makefile,v 1.33 2003-03-02 18:44:21 geuzaine Exp $
 
 include ../variables
 
@@ -67,7 +67,7 @@ Triangulate.o: Triangulate.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/avl.h ../DataStr/Tools.h Plugin.h ../Common/Options.h \
   Triangulate.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/Context.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
   ../Mesh/Metric.h ../Mesh/Matrix.h ../Mesh/Utils.h ../Mesh/Create.h
 SphericalRaise.o: SphericalRaise.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h SphericalRaise.h ../DataStr/List.h \
