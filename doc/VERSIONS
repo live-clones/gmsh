@@ -1,8 +1,8 @@
-$Id: VERSIONS,v 1.65 2001-09-01 15:19:05 geuzaine Exp $
+$Id: VERSIONS,v 1.66 2001-09-01 16:22:37 geuzaine Exp $
 
 New in 1.25: Fixed bug with mixed recombined/non-recombined extruded
-meshes; Linux versions are build with no optimization, due to bugs in
-gcc 2.95.X;
+meshes; Linux versions are now build with no optimization, due to bugs
+in gcc 2.95.X;
 
 New in 1.24: Fixed characteristic length interpolation for Splines;
 fixed edge swapping bug in 3D initial mesh; fixed degenerated case in
