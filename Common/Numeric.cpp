@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.1 2001-08-11 23:28:31 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.2 2001-11-01 09:39:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -48,7 +48,7 @@ int sys2x2 (double mat[2][2], double b[2], double res[2]){
   det = mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1];
 
   // TOLERANCE ! WARNING WARNING
-  if (norm == 0.0 || fabs (det) / norm < 1.e-07){
+  if (norm == 0.0 || fabs (det) / norm < 1.e-12){
     Msg(DEBUG, "Assuming 2x2 matrix is singular (det/norm == %g)", fabs(det)/norm);
     res[0] = res[1] = 0.0 ;
     return 0;
