@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.88 2001-08-06 08:09:51 geuzaine Exp $
+// $Id: Gmsh.y,v 1.89 2001-08-08 14:05:27 remacle Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -10,6 +10,7 @@
 #ifndef _NOPLUGIN
 #include "PluginManager.h"
 #endif
+#include "ParUtil.h"
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -83,7 +84,7 @@ void  skip_until (char *skip, char *until);
 %token <d> tDOUBLE
 %token <c> tSTRING tBIGSTR
 
-%token tEND tAFFECT tDOTS tPi
+%token tEND tAFFECT tDOTS tPi tMPI_Rank tMPI_Size
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
 %token tFmod tModulo tHypot tPrintf tSprintf tStrCat tStrPrefix tDraw
@@ -2044,6 +2045,8 @@ FExpr_Single :
 
     tDOUBLE   { $$ = $1; }
   | tPi       { $$ = 3.141592653589793; }
+  | tMPI_Rank { $$ = ParUtil::Instance()->rank(); }
+  | tMPI_Size { $$ = ParUtil::Instance()->size(); }
 
   /* -------- Variables -------- */ 
 

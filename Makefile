@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.123 2001-08-08 13:34:02 remacle Exp $
+# $Id: Makefile,v 1.124 2001-08-08 14:05:26 remacle Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -66,11 +66,11 @@ FLTK_LIB_SOLARIS_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libf
 
 
         GMSH_XMOTIF_LIB = -L$(GMSH_LIB_DIR) -lMotif -lGraphics -lParser -lMesh -lGeo\
-                                            -lAdapt -lCommon -lDataStr -lJpeg
+                                            -lAdapt -lCommon -lDataStr -lJpeg -lParallel
           GMSH_FLTK_LIB = -L$(GMSH_LIB_DIR) -lFltk -lParser -lGraphics -lMesh -lGeo\
-                                            -lAdapt -lCommon -lDataStr -lJpeg -lPlugin 
+                                            -lAdapt -lCommon -lDataStr -lJpeg -lPlugin -lParallel
            GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lBox -lParser -lMesh -lGeo\
-                                            -lAdapt -lPlugin -lCommon -lDataStr
+                                            -lAdapt -lPlugin -lCommon -lDataStr -lParallel
            GMSH_ARCHIVE = $(GMSH_ARCHIVE_DIR)/gmsh-`date "+%Y.%m.%d"`
             GMSH_SRCRPM = gmsh-$(GMSH_RELEASE)
            GMSH_SOURCES = `find . \( ! -name "*.tar*" -a ! -name "*.tgz" \

@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.33 2001-07-26 19:21:01 remacle Exp $
+// $Id: Gmsh.l,v 1.34 2001-08-08 14:05:26 remacle Exp $
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -151,6 +151,8 @@ Layers                  return tLayers;
 
 Modulo                  return tModulo ;
 Meshes                  return tMesh;
+MPI_Rank                return tMPI_Rank;
+MPI_Size                return tMPI_Size;
 
 Nurbs			return tNurbs;
 
