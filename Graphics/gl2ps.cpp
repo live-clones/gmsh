@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.71 2003-09-17 18:00:53 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.72 2003-09-22 07:26:38 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -2245,11 +2245,12 @@ void gl2psPrintPDFHeader(){
 int gl2psFlushPDFTriangles(){
   int offs = 0;
 
-  if(gl2ps->lasttype == GL2PS_TRIANGLE){
+  if(gl2ps->lasttype == GL2PS_TRIANGLE && !gl2ps->last_triangle_finished){
     gl2psListAdd(gl2ps->tidxlist, &gl2ps->consec_inner_cnt);
     offs = fprintf(gl2ps->stream, "/Sh%d sh\n", gl2ps->consec_cnt++);
     gl2ps->consec_inner_cnt = 0;
     gl2ps->streamlength += offs;
+    gl2ps->last_triangle_finished = 1;
   }
   return offs;
 }
@@ -2257,10 +2258,10 @@ int gl2psFlushPDFTriangles(){
 int gl2psFlushPDFLines(){
   int offs = 0;
 
-  if(gl2ps->lasttype == GL2PS_LINE && !gl2ps->line_stroked){
+  if(gl2ps->lasttype == GL2PS_LINE && !gl2ps->last_line_finished){
     offs = fprintf(gl2ps->stream, "S\n");
     gl2ps->streamlength += offs;
-    gl2ps->line_stroked = 1;
+    gl2ps->last_line_finished = 1;
   }
   return offs;
 }
@@ -2341,11 +2342,11 @@ void gl2psPrintPDFPrimitive(void *a, void *b){
     gl2ps->streamlength += fprintf(gl2ps->stream, "%f %f m %f %f l \n",
 				   prim->verts[0].xyz[0], prim->verts[0].xyz[1],
 				   prim->verts[1].xyz[0], prim->verts[1].xyz[1]);
-    gl2ps->line_stroked = 0;
+    gl2ps->last_line_finished = 0;
     
     if(prim->dash){
       gl2ps->streamlength += fprintf(gl2ps->stream, "S\n[] 0 d\n"); 
-      gl2ps->line_stroked = 1;
+      gl2ps->last_line_finished = 1;
     }
     break;
   case GL2PS_TRIANGLE :
@@ -2355,6 +2356,7 @@ void gl2psPrintPDFPrimitive(void *a, void *b){
     
     gl2psListAdd(gl2ps->tlist, t);
     ++gl2ps->consec_inner_cnt;
+    gl2ps->last_triangle_finished = 0;
     break;
   case GL2PS_QUADRANGLE :
     gl2psMsg(GL2PS_WARNING, "There should not be any quad left to print");
@@ -3020,7 +3022,8 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
   gl2ps->consec_inner_cnt = 1;
   gl2ps->line_width_diff = 1;
   gl2ps->line_rgb_diff = 1;
-  gl2ps->line_stroked = 0;
+  gl2ps->last_line_finished = 0;
+  gl2ps->last_triangle_finished = 0;
 
   switch(gl2ps->format){
   case GL2PS_TEX :

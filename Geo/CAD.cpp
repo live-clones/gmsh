@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.65 2003-09-19 17:22:25 geuzaine Exp $
+// $Id: CAD.cpp,v 1.66 2003-09-22 07:26:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1060,7 +1060,7 @@ int Extrude_ProtudePoint(int type, int ip,
   double xnew, ynew, znew, matrix[4][4], T[3], Ax[3], d;
   Vertex V, *pv, *newp, *chapeau;
   Curve *c;
-  int i, chapeauNum;
+  int i;
 
   pv = &V;
   pv->Num = ip;
@@ -1071,7 +1071,6 @@ int Extrude_ProtudePoint(int type, int ip,
   Msg(DEBUG, "Extrude Point %d", ip);
 
   chapeau = DuplicateVertex(pv);
-  chapeauNum = chapeau->Num;
 
   switch (type) {
 
@@ -1084,7 +1083,7 @@ int Extrude_ProtudePoint(int type, int ip,
     ApplyTransformationToPoint(matrix, chapeau);
 
     if(!comparePosition(&pv, &chapeau))
-      return chapeauNum;
+      return pv->Num;
     c = Create_Curve(NEWLINE(), MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1.);
     c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
@@ -1121,7 +1120,7 @@ int Extrude_ProtudePoint(int type, int ip,
     ApplyTransformationToPoint(matrix, chapeau);
 
     if(!comparePosition(&pv, &chapeau))
-      return chapeauNum;
+      return pv->Num;
     c = Create_Curve(NEWLINE(), MSH_SEGM_CIRC, 1, NULL, NULL, -1, -1, 0., 1.);
     c->Control_Points = List_Create(3, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
@@ -1194,7 +1193,7 @@ int Extrude_ProtudePoint(int type, int ip,
 
   default:
     Msg(GERROR, "Unknown extrusion type");
-    return chapeauNum;
+    return pv->Num;
   }
 
   End_Curve(c);
@@ -1208,7 +1207,7 @@ int Extrude_ProtudePoint(int type, int ip,
   if(CTX.geom.auto_coherence && final)
     ReplaceAllDuplicates(THEM);
 
-  return chapeauNum;
+  return chapeau->Num;
 }
 
 int Extrude_ProtudeCurve(int type, int ic,
@@ -1223,7 +1222,6 @@ int Extrude_ProtudeCurve(int type, int ic,
   Curve *ReverseChapeau, *ReverseBeg, *ReverseEnd;
   Curve *pc, *revpc, *chapeau;
   Surface *s;
-  int chapeauNum;
 
   pc = FindCurve(ic, THEM);
   revpc = FindCurve(-ic, THEM);
@@ -1236,7 +1234,6 @@ int Extrude_ProtudeCurve(int type, int ic,
   Msg(DEBUG, "Extrude Curve %d", ic);
 
   chapeau = DuplicateCurve(pc);
-  chapeauNum = chapeau->Num;
 
   chapeau->Extrude = new ExtrudeParams(COPIED_ENTITY);
   chapeau->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -1306,7 +1303,7 @@ int Extrude_ProtudeCurve(int type, int ic,
     break;
   default:
     Msg(GERROR, "Unknown extrusion type");
-    return chapeauNum;
+    return pc->Num;
   }
 
   Extrude_ProtudePoint(type, pc->beg->Num, T0, T1, T2,
@@ -1317,7 +1314,7 @@ int Extrude_ProtudeCurve(int type, int ic,
                        &CurveEnd, &ReverseEnd, 0, e);
 
   if(!CurveBeg && !CurveEnd){
-    return chapeauNum;
+    return pc->Num;
   }
 
   if(!CurveBeg || !CurveEnd)
@@ -1361,7 +1358,7 @@ int Extrude_ProtudeCurve(int type, int ic,
   if(CTX.geom.auto_coherence && final)
     ReplaceAllDuplicates(THEM);
 
-  return chapeauNum;
+  return chapeau->Num;
 }
 
 int Extrude_ProtudeSurface(int type, int is,
@@ -1372,7 +1369,7 @@ int Extrude_ProtudeSurface(int type, int is,
 {
   double matrix[4][4], T[3], Ax[3];
   Curve *c, *c2;
-  int i, chapeauNum;
+  int i;
   Surface *s, *ps, *chapeau;
   Volume *pv = NULL;
 
@@ -1382,7 +1379,6 @@ int Extrude_ProtudeSurface(int type, int is,
   Msg(DEBUG, "Extrude Surface %d", is);
 
   chapeau = DuplicateSurface(ps);
-  chapeauNum = chapeau->Num;
 
   chapeau->Extrude = new ExtrudeParams(COPIED_ENTITY);
   chapeau->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -1396,7 +1392,7 @@ int Extrude_ProtudeSurface(int type, int is,
     if(c->Num < 0)
       if(!(c = FindCurve(-c->Num, THEM))) {
         Msg(GERROR, "Unknown Curve %d", -c->Num);
-        return chapeauNum;
+        return ps->Num;
       }
     c->Extrude = new ExtrudeParams(COPIED_ENTITY);
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -1489,14 +1485,13 @@ int Extrude_ProtudeSurface(int type, int is,
     break;
   default:
     Msg(GERROR, "Unknown extrusion type");
-    return chapeauNum;
+    return ps->Num;
   }
 
+  // why do we do this? only for backward compatibility?
   Tree_Suppress(THEM->Surfaces, &chapeau);
-
   chapeau->Num = NEWSURFACE();
   THEM->MaxSurfaceNum = chapeau->Num;
-
   Tree_Add(THEM->Surfaces, &chapeau);
 
   if(pv)
@@ -1507,7 +1502,7 @@ int Extrude_ProtudeSurface(int type, int is,
 
   List_Reset(ListOfTransformedPoints);
 
-  return chapeauNum;
+  return chapeau->Num;
 }
 
 // Duplicate removal
@@ -1785,7 +1780,7 @@ void ReplaceDuplicateSurfaces(Mesh * m)
   if(CTX.geom.old_newreg) {
     m->MaxSurfaceNum = 0;
     Tree_Action(m->Surfaces, MaxNumSurface);
-  }
+  } 
 
   // Replace old surfaces in volumes
 

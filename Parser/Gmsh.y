@@ -1,5 +1,5 @@
 %{ 
-// $Id: Gmsh.y,v 1.143 2003-09-19 17:24:00 geuzaine Exp $
+// $Id: Gmsh.y,v 1.144 2003-09-22 07:26:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2206,7 +2206,7 @@ Extrude :
       $$ = List_Create(1, 1, sizeof(Shape));
       List_Add($$, &TheShape);
     }
-  | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
+  | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'  tEND
     {
       Curve *pc, *prc;
       TheShape.Num = Extrude_ProtudePoint(ROTATE, (int)$4, 0., 0., 0.,
@@ -2216,7 +2216,7 @@ Extrude :
       $$ = List_Create(1, 1, sizeof(Shape));
       List_Add($$, &TheShape);
     }
-  | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr'}' tEND
+  | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr'}'  tEND
     {
       Curve *pc, *prc;
       TheShape.Num = Extrude_ProtudePoint(TRANSLATE_ROTATE, (int)$4, $6[0], $6[1], $6[2],
@@ -2273,7 +2273,6 @@ Extrude :
     }
 
   // Lines
-
   | tExtrude tLine '{' FExpr ',' VExpr '}' tEND
     {
       Surface *ps;
@@ -2470,7 +2469,7 @@ Extrude :
       extr.mesh.Recombine = false;
     }
   
-                      '{' ExtrudeParameters '}'tEND
+                      '{' ExtrudeParameters '}' tEND
     {
       int vol = NEWREG();
       TheShape.Num = Extrude_ProtudeSurface(ROTATE, (int)$4, 0., 0., 0.,
@@ -2493,7 +2492,7 @@ Extrude :
       extr.mesh.Recombine = false;
     }
   
-                      '{' ExtrudeParameters '}'tEND
+                      '{' ExtrudeParameters '}' tEND
     {
       int vol = NEWREG();
       TheShape.Num = Extrude_ProtudeSurface(TRANSLATE_ROTATE, (int)$4, $6[0], $6[1], $6[2],
@@ -3131,6 +3130,8 @@ FExpr_Multi :
     }
   | Extrude
     {
+      // FIXME: The syntax for this is ugly: we get double semi-colons
+      // at the end of the line
       $$ = List_Create(List_Nbr($1), 1, sizeof(double)) ;
       for(int i = 0; i < List_Nbr($1); i++){
 	Shape *s = (Shape*) List_Pointer($1, i);

@@ -1,4 +1,4 @@
-/* $Id: gl2ps.h,v 1.43 2003-09-17 18:00:53 geuzaine Exp $ */
+/* $Id: gl2ps.h,v 1.44 2003-09-22 07:26:38 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -236,7 +236,7 @@ typedef struct {
   int streamlength;
   GL2PSlist *tlist, *tidxlist, *ilist, *slist; 
   int lasttype, consec_cnt, consec_inner_cnt;
-  int line_width_diff, line_rgb_diff, line_stroked;
+  int line_width_diff, line_rgb_diff, last_line_finished, last_triangle_finished;
 } GL2PScontext;
 
 /* public functions */
