@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.32 2001-08-03 14:58:04 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.33 2001-08-04 01:16:58 geuzaine Exp $
 
 #include <unistd.h>
 #include "Gmsh.h"
@@ -54,7 +54,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "Post-processing options:");
   Msg(DIRECT, "  -dl                   enable display lists");
   Msg(DIRECT, "  -noview               hide all views on startup");
-  Msg(DIRECT, "  -link                 link all views on startup");
+  Msg(DIRECT, "  -link int             select link mode between views (default: 0)");
   Msg(DIRECT, "  -convert file file    convert an ascii view into a binary one");
   Msg(DIRECT, "Display options:");    
   Msg(DIRECT, "  -nodb                 disable double buffering");

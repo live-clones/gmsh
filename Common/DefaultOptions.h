@@ -406,7 +406,7 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "Scales" , opt_post_scales , 1. , 
     "Show value scales" },
   { F|O, "Link" , opt_post_link , 0. ,
-    "Link post-processing views (0=no, 1=visible views, 2=all views)" },
+    "Link post-processing views (0=none, 1,2=changes in visible/all, 3,4=everything in visible/all)" },
   { F|O, "Smoothing" , opt_post_smooth , 0. ,
     "Apply (non-reversible) smoothing to post-processing view when merged" },
   { F|O, "AnimationDelay" , opt_post_anim_delay , 0.25 ,

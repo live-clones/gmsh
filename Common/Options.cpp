@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.38 2001-08-03 21:27:20 geuzaine Exp $
+// $Id: Options.cpp,v 1.39 2001-08-04 01:16:58 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1522,6 +1522,8 @@ double opt_post_link(OPT_ARGS_NUM){
     WID->post_butt[0]->value(CTX.post.link==0);
     WID->post_butt[1]->value(CTX.post.link==1);
     WID->post_butt[2]->value(CTX.post.link==2);
+    WID->post_butt[3]->value(CTX.post.link==3);
+    WID->post_butt[4]->value(CTX.post.link==4);
   }
 #endif
   return CTX.post.link;

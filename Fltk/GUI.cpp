@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.102 2001-08-04 00:37:57 geuzaine Exp $
+// $Id: GUI.cpp,v 1.103 2001-08-04 01:16:58 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1426,8 +1426,8 @@ void GUI::create_post_options_window(){
   if(!init_post_options_window){
     init_post_options_window = 1 ;
 
-    int width = 20*CTX.fontsize;
-    int height = 5*WB+8*BH ;
+    int width = 24*CTX.fontsize;
+    int height = 5*WB+10*BH ;
 
     post_window = new Fl_Window(width,height);
     post_window->box(WINDOW_BOX);
@@ -1437,15 +1437,17 @@ void GUI::create_post_options_window(){
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Views");
 	o->labelsize(CTX.fontsize);
-	post_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "No link between views");
-	post_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Link all visible views");
-	post_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Link all views");
-	for(i=0 ; i<3 ; i++){
+	post_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Independent views");
+	post_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Apply next changes to all visible views");
+	post_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Apply next changes to all views");
+	post_butt[3] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Force same options for all visible views");
+	post_butt[4] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Force same options for all views");
+	for(i=0 ; i<5 ; i++){
 	  post_butt[i]->type(FL_RADIO_BUTTON);
 	  post_butt[i]->labelsize(CTX.fontsize);
 	  post_butt[i]->selection_color(FL_YELLOW);
 	}
-	Fl_Box *text =  new Fl_Box(FL_NO_BOX, 2*WB, 3*WB+4*BH, width-4*WB, 2*BH,
+	Fl_Box *text =  new Fl_Box(FL_NO_BOX, 2*WB, 3*WB+6*BH, width-4*WB, 2*BH,
 				   "Individual view options are available "
 				   "by right-clicking on each view button "
 				   "in the post-processing menu");
@@ -1456,7 +1458,7 @@ void GUI::create_post_options_window(){
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Smoothing");
 	o->labelsize(CTX.fontsize);
-	post_butt[3] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Smooth");
+	post_butt[3] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Smooth views during merge");
 	post_butt[3]->type(FL_TOGGLE_BUTTON);
 	post_butt[3]->down_box(FL_DOWN_BOX);
 	post_butt[3]->labelsize(CTX.fontsize);
