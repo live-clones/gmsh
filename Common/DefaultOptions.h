@@ -452,7 +452,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Third coefficient in equation for clipping plane 5" },
   { F,   "Clip5D" , opt_general_clip5d , 0.0 , 
     "Fourth coefficient in equation for clipping plane 5" },
-  { F,   "ClipFactor" , opt_general_clip_factor , 10.0 , 
+  { F,   "ClipFactor" , opt_general_clip_factor , 5.0 , 
     "Near and far clipping plane distance factor (decrease value for better z-buffer resolution)" },
   { F|S, "ClipPositionX" , opt_general_clip_position0 , 650. , 
     "Horizontal position (in pixels) of the upper left corner of the clipping planes window" }, 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.298 2004-11-14 04:38:11 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.299 2004-11-18 23:44:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -921,6 +921,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_rotation_center2(0, GMSH_SET, WID->gen_value[10]->value());
   opt_general_quadric_subdivisions(0, GMSH_SET, WID->gen_value[11]->value());
   opt_general_graphics_fontsize(0, GMSH_SET, WID->gen_value[12]->value());
+  opt_general_clip_factor(0, GMSH_SET, WID->gen_value[14]->value());
 
   opt_general_default_filename(0, GMSH_SET, (char *)WID->gen_input[0]->value());
   opt_general_editor(0, GMSH_SET, (char *)WID->gen_input[1]->value());
