@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.339 2004-09-04 01:38:59 geuzaine Exp $
+// $Id: GUI.cpp,v 1.340 2004-09-04 07:45:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1655,7 +1655,7 @@ void GUI::create_option_window()
       gen_value[3]->maximum(1);
       gen_value[3]->step(0.01);
 
-      gen_value[4] = new Fl_Value_Input(2 * WB + 2 * IW / 3, 2 * WB + 1 * BH, IW/3, BH, "Light origin");
+      gen_value[4] = new Fl_Value_Input(2 * WB + 2 * IW / 3, 2 * WB + 1 * BH, IW/3, BH, "Light position");
       gen_value[4]->minimum(-1);
       gen_value[4]->maximum(1);
       gen_value[4]->step(0.01);
