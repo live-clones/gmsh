@@ -1,7 +1,7 @@
 #ifndef _EXTRUDE_PARAMS_H_
 #define _EXTRUDE_PARAMS_H_
 
-#define NB_LAYER_MAX 30
+#define NB_LAYER_MAX 500
 
 #define EXTRUDED_ENTITY 1
 #define COPIED_ENTITY 2

@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.95 2001-08-17 08:31:32 geuzaine Exp $
+// $Id: Gmsh.y,v 1.96 2001-08-20 10:30:20 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -1799,15 +1799,24 @@ ExtrudeParameter :
       int j;
       extr.mesh.ExtrudeMesh = true;
       extr.mesh.NbLayer = List_Nbr($3);
-      for(int i=0;i<List_Nbr($3);i++){
-	List_Read($3,i,&d);
-	j = (int)d;
-	extr.mesh.NbElmLayer[i] = j;
-	List_Read($5,i,&d);
-	j = (int)d;
-	extr.mesh.ZonLayer[i] = j;
-	List_Read($7,i,&d);
-	extr.mesh.hLayer[i] = d;
+      if(extr.mesh.NbLayer > NB_LAYER_MAX){
+	vyyerror("Too many layers in extrusion");
+      }
+      else if(List_Nbr($3) == List_Nbr($5) && List_Nbr($3) == List_Nbr($7)){
+	for(int i=0;i<List_Nbr($3);i++){
+	  List_Read($3,i,&d);
+	  j = (int)d;
+	  extr.mesh.NbElmLayer[i] = j;
+	  List_Read($5,i,&d);
+	  j = (int)d;
+	  extr.mesh.ZonLayer[i] = j;
+	  List_Read($7,i,&d);
+	  extr.mesh.hLayer[i] = d;
+	}
+      }
+      else{
+	vyyerror("Wrong layer definition {%d, %d, %d}", 
+	       List_Nbr($3), List_Nbr($5), List_Nbr($7));
       }
       List_Delete($3);
       List_Delete($5);
