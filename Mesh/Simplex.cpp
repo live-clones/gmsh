@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.39 2005-03-26 04:09:16 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.40 2005-03-30 19:17:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -222,55 +222,48 @@ void SimplexBase::ExportLcField(FILE * f)
 {
   if(!V[2]){
     if(!VSUP)
-      fprintf(f, "SL(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g){%.16g,%.16g};\n",
+      fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
 	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	      V[1]->Pos.Z, V[0]->lc, V[1]->lc);
     else
-      fprintf(f, "SL2(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g)"
-	      "{%.16g,%.16g,%.16g};\n",
+      fprintf(f, "SL2(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	      V[1]->Pos.Z, VSUP[0]->Pos.X, VSUP[0]->Pos.Y, VSUP[0]->Pos.Z,
 	      V[0]->lc, V[1]->lc, VSUP[0]->lc);
   }
   else if(!V[3]){
     if(!VSUP)
-      fprintf(f, "ST(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g)"
-	      "{%.16g,%.16g,%.16g};\n",
+      fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	      V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[0]->lc,
 	      V[1]->lc, V[2]->lc);
     else
-      fprintf(f, "ST2(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
-	      "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g)"
-	      "{%.16g,%.16g,%.16g,%.16g,%.16g,%.16g};\n",
+      fprintf(f, "ST2(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g)"
+	      "{%g,%g,%g,%g,%g,%g};\n",
 	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
-	      V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, 
-	      VSUP[0]->Pos.X, VSUP[0]->Pos.Y, VSUP[0]->Pos.Z, VSUP[1]->Pos.X, VSUP[1]->Pos.Y,
+	      V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, VSUP[0]->Pos.X, 
+	      VSUP[0]->Pos.Y, VSUP[0]->Pos.Z, VSUP[1]->Pos.X, VSUP[1]->Pos.Y,
 	      VSUP[1]->Pos.Z, VSUP[2]->Pos.X, VSUP[2]->Pos.Y, VSUP[2]->Pos.Z, 
 	      V[0]->lc, V[1]->lc, V[2]->lc, VSUP[0]->lc, VSUP[1]->lc, VSUP[2]->lc);
   }
   else{
     if(!VSUP)
-      fprintf(f, "SS(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
-	      "%.16g,%.16g,%.16g){%.16g,%.16g,%.16g,%.16g};\n",
+      fprintf(f, "SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
 	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	      V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
 	      V[3]->Pos.Y, V[3]->Pos.Z, V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc);
     else
-      fprintf(f, "SS2(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
-	      "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
-	      "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
-	      "%.16g,%.16g,%.16g){%.16g,%.16g,%.16g,%.16g,"
-	      "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g};\n",
+      fprintf(f, "SS2(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,"
+	      "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
 	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	      V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
-	      V[3]->Pos.Y, V[3]->Pos.Z,
-	      VSUP[0]->Pos.X, VSUP[0]->Pos.Y, VSUP[0]->Pos.Z, VSUP[1]->Pos.X, VSUP[1]->Pos.Y,
-	      VSUP[1]->Pos.Z, VSUP[2]->Pos.X, VSUP[2]->Pos.Y, VSUP[2]->Pos.Z, VSUP[3]->Pos.X,
-	      VSUP[3]->Pos.Y, VSUP[3]->Pos.Z, VSUP[4]->Pos.X, VSUP[4]->Pos.Y, VSUP[4]->Pos.Z, 
-	      VSUP[5]->Pos.X, VSUP[5]->Pos.Y, VSUP[5]->Pos.Z,
-	      V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc,
-	      VSUP[0]->lc, VSUP[1]->lc, VSUP[2]->lc, VSUP[3]->lc, VSUP[4]->lc, VSUP[5]->lc);
+	      V[3]->Pos.Y, V[3]->Pos.Z, VSUP[0]->Pos.X, VSUP[0]->Pos.Y, VSUP[0]->Pos.Z, 
+	      VSUP[1]->Pos.X, VSUP[1]->Pos.Y, VSUP[1]->Pos.Z, VSUP[2]->Pos.X, 
+	      VSUP[2]->Pos.Y, VSUP[2]->Pos.Z, VSUP[3]->Pos.X, VSUP[3]->Pos.Y, 
+	      VSUP[3]->Pos.Z, VSUP[4]->Pos.X, VSUP[4]->Pos.Y, VSUP[4]->Pos.Z, 
+	      VSUP[5]->Pos.X, VSUP[5]->Pos.Y, VSUP[5]->Pos.Z, V[0]->lc, V[1]->lc, 
+	      V[2]->lc, V[3]->lc, VSUP[0]->lc, VSUP[1]->lc, VSUP[2]->lc, VSUP[3]->lc,
+	      VSUP[4]->lc, VSUP[5]->lc);
   }
 }
 
