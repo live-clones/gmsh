@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.4 2001-11-05 08:37:27 geuzaine Exp $
+// $Id: Utils.cpp,v 1.5 2001-11-08 10:16:41 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -362,24 +362,21 @@ void XYtoUV (Surface * s, double *X, double *Y,
     else Msg(WARNING, "Many (%d) iterations in XYtoUV...", iter);
   }
 
-  if (Unew > umax || Vnew > vmax || Unew < umin || Vnew < vmin){
-    Msg(WARNING, "(U,V) thresholded in XYtoUV (surface mesh may be wrong)");
+  int thresh = Unew > umax || Vnew > vmax || Unew < umin || Vnew < vmin;
+
+  if (thresh){
+    //Msg(WARNING, "(U,V) thresholded in XYtoUV (surface mesh may be wrong)");
     if(Unew > umax) *U = umax;
     if(Vnew > vmax) *V = vmax;
     if(Unew < umin) *U = umin;
     if(Vnew < vmin) *V = vmin;
   }
 
-#if 0
-  if (iter == MaxIter || Unew > umax || Vnew > vmax || Unew < umin || Vnew < vmin){
-    static int first_try=1;
-    if(first_try){
-      Msg(WARNING, "Entering rescue mode in XYtoUV...");
-      first_try=0;
-    }
+#if 1
+  if (iter == MaxIter || thresh){
+    Msg(WARNING, "Entering rescue mode in XYtoUV: surface mesh may be wrong");
     find_bestuv (s, *X, *Y, U, V, Z, 30);
     P = InterpolateSurface (s, *U, *V, 0, 0);
-    
     *X = P.Pos.X;
     *Y = P.Pos.Y;
     *Z = P.Pos.Z;
