@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.135 2004-10-08 04:36:21 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.136 2004-10-12 17:21:06 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -2266,7 +2266,14 @@ Deletes (removes) the @var{expression}-th post-processing view. Note that
 post-processing view numbers start at 0.
 
 @item Duplicata View[@var{expression}];
-Duplicates the @var{expression}-th post-processing view.
+Duplicates the @var{expression}-th post-processing view. 
+
+Note that @code{Duplicata} creates a logical duplicate of the view without
+actually duplicating the data in memory. This is very useful when you want
+multiple simultaneous renderings of the same large dataset (usually with
+different display options), but you cannot afford to store all copies in
+memory. If what you really want is multiple physical copies of the data,
+just merge the file containing the post-processing view multiple times.
 
 @item Plugin (@var{string}) . Run;
 Executes the plugin @var{string}. The list of default plugins is given in
