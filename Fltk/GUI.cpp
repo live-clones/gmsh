@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.152 2002-02-16 00:18:29 geuzaine Exp $
+// $Id: GUI.cpp,v 1.153 2002-02-18 18:01:05 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -2160,11 +2160,7 @@ void GUI::create_about_window(){
     o->add("@c@.Christophe Geuzaine and Jean-François Remacle");
     o->add("");
     o->add("@c@.Please send all questions and bug reports to");
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
-    o->add("@c@b@.gmsh@@geuz.org");
-#else
     o->add("@c@b@.gmsh@geuz.org");
-#endif
     o->add("");
     sprintf(buffer, "@c@.Version: %d.%d.%d", GMSH_MAJOR_VERSION, 
 	    GMSH_MINOR_VERSION, GMSH_PATCH_VERSION); o->add(buffer);
