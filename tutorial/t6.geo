@@ -116,16 +116,16 @@ Surface Loop(142) = {103,-117,-81,113,127,63};   Volume(143) = {142}; // inf b
 Surface Loop(144) = {89,-119,71,103,115};        Volume(145) = {144}; // inf h
 
 // Transfinite line commands explicitly specify the number of points
-// and their distribution. A minus sign in the argument list of the
-// transfinite command will produce the reversed mesh.
+// and their distribution. 'Progression 2' means that each line
+// element in the series will be twice as long as the preceding one.
 
 Transfinite Line{35,21,22,23,24,38,17,18,19,20}   = nbpt_phi ;
-Transfinite Line{31,26,48,44,42}                  = nbpt_int Using Progression 0.95;
+Transfinite Line{31,26,48,44,42}                  = nbpt_int Using Progression 0.88;
 Transfinite Line{41,37,36,9,11,1,3,13,5,15,7}     = nbpt_arc1 ;
 Transfinite Line{30,25,40,39,10,2,12,4,14,6,16,8} = nbpt_arc2 ;
 Transfinite Line{32,27,49,45,43}                  = nbpt_shell ;
-Transfinite Line{33,28,46,50,52}                  = nbpt_far Using Progression 1.05 ;
-Transfinite Line{34,29,51,47,53}                  = nbpt_inf Using Progression 0.01;
+Transfinite Line{33,28,46,50,52}                  = nbpt_far Using Progression 1.2 ;
+Transfinite Line{34,29,51,47,53}                  = nbpt_inf Using Progression 1.05;
 
 // *All* 2D and 3D transfinite entities are defined in respect to
 // points. The ordering of the points defines the ordering of the mesh
