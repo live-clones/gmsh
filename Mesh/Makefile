@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2001-01-17 21:26:24 remacle Exp $
+# $Id: Makefile,v 1.12 2001-01-17 21:49:25 remacle Exp $
 #
 # Makefile for "libMesh.a"
 #
@@ -48,7 +48,6 @@ SRC = 1D_Mesh.cpp \
       Generator.cpp \
       Print_Mesh.cpp \
       Read_Mesh.cpp \
-      SMS.cpp \
       STL.cpp \
       SwapEdge.cpp \
       Numeric.cpp \
