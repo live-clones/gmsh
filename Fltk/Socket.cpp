@@ -1,8 +1,11 @@
-/* $Id: Socket.cpp,v 1.9 2001-05-07 07:35:40 geuzaine Exp $ */
+/* $Id: Socket.cpp,v 1.10 2001-05-07 07:55:00 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _AIX
+#include <strings.h>
+#endif
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -78,6 +81,16 @@ void Socket_SendString(int socket, char str[]){
   Socket_SendData(socket, str, len);
 }
 
+int Socket_UnlinkName(char *name){
+#ifdef _AIX
+   char name2[1000];
+   strcpy(name2,name);
+   name2[strlen(name2)-1] = '\0';
+   return unlink(name2);
+#else
+   return unlink(name);
+#endif
+}
 
 int Socket_StartProgram(char *progname, char *sockname){
   int s, sock;
@@ -93,7 +106,7 @@ int Socket_StartProgram(char *progname, char *sockname){
   int retval;
 
   /* first delete the socket's name if it exists */
-  unlink(sockname);
+  Socket_UnlinkName(sockname);
   
   /* make the socket */
   s = socket(PF_UNIX, SOCK_STREAM, 0);
@@ -145,7 +158,7 @@ int Socket_StartProgram(char *progname, char *sockname){
 }
 
 int Socket_StopProgram(char *progname, char *sockname, int sock){
-  if(unlink(sockname)==-1) Msg(WARNING, "Impossible to unlink the socket");
+  if(Socket_UnlinkName(sockname)==-1) Msg(WARNING, "Impossible to unlink the socket");
   close(sock);
   return 0;
 }
