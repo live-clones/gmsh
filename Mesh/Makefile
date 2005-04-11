@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.79 2005-02-20 06:36:54 geuzaine Exp $
+# $Id: Makefile,v 1.80 2005-04-11 08:53:15 remacle Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -53,6 +53,7 @@ SRC = 1D_Mesh.cpp \
         3D_Divide.cpp \
         3D_Bricks.cpp \
         3D_Mesh_Netgen.cpp \
+      BDS.cpp \
       MeshQuality.cpp \
       Create.cpp \
       Generator.cpp \

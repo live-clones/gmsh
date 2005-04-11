@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.6 2005-03-14 18:12:29 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.7 2005-04-11 08:53:15 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -32,6 +32,7 @@
 #include "Create.h"
 #include "Interpolation.h"
 #include "Context.h"
+#include "BDS.h"
 
 extern Mesh *THEM;
 extern Context_T CTX;
@@ -135,6 +136,35 @@ double SetLC(Vertex *v1, Vertex *v2, Vertex *v3, double factor)
   double lc = DMAX(lc1, DMAX(lc2, lc3)) * factor;
   v1->lc = v2->lc = v3->lc = lc;
   return lc;
+}
+
+void Mesh_To_BDS(Surface *s, BDS_Mesh *m)
+{
+  List_T *vertices = Tree2List ( s->Vertices ) ;
+  for (int i=0;i<List_Nbr ( vertices ) ;++i)
+    {
+      Vertex *v;
+      List_Read ( vertices, i, &v);
+      m->add_point (v->Num,v->Pos.X,v->Pos.Y,v->Pos.Z); 
+    }
+  List_Delete (vertices);
+  List_T *triangles = Tree2List ( s->Simplexes) ;
+  for (int i=0;i<List_Nbr ( triangles ) ;++i)
+    {
+      Simplex *simp;
+      List_Read ( triangles, i, &simp);
+      Vertex *v1 = simp->V[0];
+      Vertex *v2 = simp->V[1];
+      Vertex *v3 = simp->V[2];
+      double n[3];
+      normal3points ( v1->Pos.X , v1->Pos.Y , v1->Pos.Z,
+		      v2->Pos.X , v2->Pos.Y , v2->Pos.Z,
+		      v3->Pos.X , v3->Pos.Y , v3->Pos.Z,
+		      n);
+      m->add_triangle (v1->Num,v2->Num,v3->Num,n[0],n[1],n[2]); 
+    }
+  List_Delete (triangles);
+
 }
 
 void POLY_rep_To_Mesh(POLY_rep *prep, Surface *s)
@@ -579,6 +609,9 @@ int MeshDiscreteSurface(Surface *s)
     // routines to do that at the moment--so let's just use it and
     // hope for the best.
     POLY_rep_To_Mesh(s->thePolyRep, s);
+    BDS_Mesh bds;
+    Mesh_To_BDS(s,&bds);
+    bds.classify ( M_PI / 9 );
     return 1;
   }
   else if(s->Typ == MSH_SURF_DISCRETE){
