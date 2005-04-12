@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.80 2005-04-11 08:53:15 remacle Exp $
+# $Id: Makefile,v 1.81 2005-04-12 17:05:39 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -271,6 +271,7 @@ depend:
   Face.h Edge.h ../Geo/ExtrudeParams.h DiscreteSurface.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h Metric.h Matrix.h \
   Create.h ../Numeric/Numeric.h ../Common/Context.h
+BDS.o: BDS.cpp BDS.h
 MeshQuality.o: MeshQuality.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
@@ -315,7 +316,7 @@ DiscreteSurface.o: DiscreteSurface.cpp ../Common/Gmsh.h \
   ../Numeric/Numeric.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h DiscreteSurface.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h Metric.h Matrix.h ../Geo/CAD.h ../Geo/Geo.h \
-  Create.h Interpolation.h ../Common/Context.h
+  Create.h Interpolation.h ../Common/Context.h BDS.h
 SwapEdge.o: SwapEdge.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \

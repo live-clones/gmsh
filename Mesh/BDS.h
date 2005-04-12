@@ -40,7 +40,7 @@ public:
     return iD < other.iD;
   }
   BDS_Point ( int id, double x=0, double y=0, double z=0 )
-    : iD(id),X(x),Y(y),Z(z),g(0)
+    : iD(id),g(0),X(x),Y(y),Z(z)
   {	    
   }
 };
@@ -110,7 +110,7 @@ public:
 	    return false;
 	}
     BDS_Triangle ( BDS_Edge *A, BDS_Edge *B, BDS_Edge *C , double nx=0, double ny=0, double nz=0)
-	: NX(nx),NY(ny),NZ(nz),g(0)
+        : g(0),NX(nx),NY(ny),NZ(nz)
 	{	    
 	    if (*A < *B && *A < *C) 
 	    {
