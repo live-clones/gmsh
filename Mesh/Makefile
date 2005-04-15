@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.82 2005-04-15 14:32:40 remacle Exp $
+# $Id: Makefile,v 1.83 2005-04-15 14:33:50 remacle Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -83,7 +83,7 @@ ${LIB}: ${OBJ}
 	${RANLIB} ${LIB}
 
 .cpp.o:
-	${CXX} ${CFLAGS} -c -pg $<
+	${CXX} ${CFLAGS} -c $<
 
 # Don't optimize 3D_Mesh: it sometimes mysteriously crashes on Linux
 3D_Mesh.o:

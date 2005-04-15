@@ -489,6 +489,7 @@ void ActionLiss(void *data, void *dummy);
 void ActionLissSurf(void *data, void *dummy);
 int Recombine(Tree_T *TreeAllVert, Tree_T *TreeAllSimp, Tree_T *TreeAllQuad,
 		double a);
+int Recombine_All(Mesh *M);
 void ApplyLcFactor(Mesh *M);
 void ExportLcField(Mesh *M, char *filename, int volume=1, int surface=1);
 

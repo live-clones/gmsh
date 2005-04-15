@@ -1,4 +1,4 @@
-// $Id: Vertex.cpp,v 1.26 2005-01-01 19:35:31 geuzaine Exp $
+// $Id: Vertex.cpp,v 1.27 2005-04-15 14:32:40 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -159,7 +159,7 @@ int comparePosition(const void *a, const void *b)
   int i, j;
   Vertex **q, **w;
   // TOLERANCE ! WARNING WARNING
-  double eps = 1.e-10 * CTX.lc;
+  double eps = 1.e-6 * CTX.lc;
 
   q = (Vertex **) a;
   w = (Vertex **) b;
