@@ -1,4 +1,4 @@
-// $Id: 2D_Recombine.cpp,v 1.22 2005-01-01 19:35:30 geuzaine Exp $
+// $Id: 2D_Recombine.cpp,v 1.23 2005-04-15 14:32:40 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -165,4 +165,110 @@ int Recombine(Tree_T * Vertices, Tree_T * Simplexes, Tree_T * Quadrangles,
   Msg(STATUS2, "Recombined %d quadrangles", ntot);
 
   return ntot;
+}
+
+/*
+  This function recombines EVERYTHING. 
+
+  First, all characteristic lengths are divided by 2.
+
+  This is done in 3 steps.
+  -) the previous technique is applied to every surface
+  -) remainder triangles are split into 3 quads and all recombined quads
+     are split into 4 quads
+  -) Enhancements are performned on the quad mesh.
+ */
+
+int Recombine_All (Mesh *THEM)
+{
+    if(Tree_Nbr(THEM->Surfaces)) 
+    {
+	// recombine all surfaces
+	List_T *surfaces = Tree2List(THEM->Surfaces);
+	for(int i = 0; i < List_Nbr(surfaces); i++){
+	    Surface *s;
+	    List_Read(surfaces, i, &s);
+	    if(s->Recombine){
+		Msg(STATUS3, "Recombining surface %d", s->Num);
+		Recombine(s->Vertices, s->Simplexes, s->Quadrangles, s->RecombineAngle);
+	    }
+	}
+	
+	// add 2nd order nodes to all elements 
+
+	Degre2(2);
+
+	// then split everybody
+
+	for(int i = 0; i < List_Nbr(surfaces); i++)
+	{
+	    Surface *s;
+	    List_Read(surfaces, i, &s);
+	    List_T *Quadrangles = Tree2List ( s->Quadrangles );
+	    
+	    for (int j=0 ; j<List_Nbr (Quadrangles); j++)
+	    {
+		Quadrangle *q;
+		List_Read (Quadrangles, j, &q);
+		Quadrangle *q1 = Create_Quadrangle(q->V[0], q->VSUP[0], q->VSUP[4], q->VSUP[3]);
+		Quadrangle *q2 = Create_Quadrangle(q->V[1], q->VSUP[1], q->VSUP[4], q->VSUP[0]);
+		Quadrangle *q3 = Create_Quadrangle(q->V[2], q->VSUP[2], q->VSUP[4], q->VSUP[1]);
+		Quadrangle *q4 = Create_Quadrangle(q->V[3], q->VSUP[3], q->VSUP[4], q->VSUP[2]);
+		Tree_Add ( s->Quadrangles, &q1);
+		Tree_Add ( s->Quadrangles, &q2);
+		Tree_Add ( s->Quadrangles, &q3);
+		Tree_Add ( s->Quadrangles, &q4);
+		Tree_Suppress (s->Quadrangles, &q);
+	    }
+	    
+	    List_Delete(Quadrangles);
+	    
+	    List_T *Triangles = Tree2List ( s->Simplexes );
+	    
+	    if(s->Recombine)
+	    {
+		for (int j=0 ; j<List_Nbr (Triangles); j++)
+		{
+		    Simplex *t;
+		    List_Read (Triangles, j, &t);
+		    Vertex *c = Create_Vertex(++THEM->MaxPointNum, 
+					      (t->V[0]->Pos.X+t->V[1]->Pos.X+t->V[2]->Pos.X)/3.,
+					      (t->V[0]->Pos.Y+t->V[1]->Pos.Y+t->V[2]->Pos.Y)/3.,
+					      (t->V[0]->Pos.Z+t->V[1]->Pos.Z+t->V[2]->Pos.Z)/3.,
+					      (t->V[0]->lc+t->V[1]->lc+t->V[2]->lc)/3.,
+					      (t->V[0]->u+t->V[1]->u+t->V[2]->u)/3.);
+		    Quadrangle *q1 = Create_Quadrangle(t->V[0], t->VSUP[0], c, t->VSUP[2]);
+		    Quadrangle *q2 = Create_Quadrangle(t->V[1], t->VSUP[1], c, t->VSUP[0]);
+		    Quadrangle *q3 = Create_Quadrangle(t->V[2], t->VSUP[2], c, t->VSUP[1]);
+		    Tree_Add ( s->Quadrangles, &q1);
+		    Tree_Add ( s->Quadrangles, &q2);
+		    Tree_Add ( s->Quadrangles, &q3);
+		    Tree_Suppress (s->Simplexes, &t);
+		    Free_Simplex(&t,0);
+		}
+	    }
+	    else
+	    {
+		for (int j=0 ; j<List_Nbr (Triangles); j++)
+		{
+		    Simplex *t;
+		    List_Read (Triangles, j, &t);
+		    Simplex *t1 = Create_Simplex(t->V[0], t->VSUP[0],t->VSUP[2],0);
+		    Simplex *t2 = Create_Simplex(t->V[1], t->VSUP[1],t->VSUP[0],0);
+		    Simplex *t3 = Create_Simplex(t->V[2], t->VSUP[2],t->VSUP[1],0);
+		    Simplex *t4 = Create_Simplex(t->VSUP[0], t->VSUP[1],t->VSUP[2],0);
+		    Tree_Add ( s->Simplexes, &t1);
+		    Tree_Add ( s->Simplexes, &t2);
+		    Tree_Add ( s->Simplexes, &t3);
+		    Tree_Add ( s->Simplexes, &t4);
+		    Tree_Suppress (s->Simplexes, &t);
+		    Free_Simplex(&t,0);
+		}
+	    }
+	    List_Delete(Triangles);
+	}
+	List_Delete(surfaces);
+	Degre1();
+    }
+    return 1;
 }

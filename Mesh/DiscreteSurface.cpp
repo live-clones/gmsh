@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.7 2005-04-11 08:53:15 remacle Exp $
+// $Id: DiscreteSurface.cpp,v 1.8 2005-04-15 14:32:40 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -169,6 +169,7 @@ void Mesh_To_BDS(Surface *s, BDS_Mesh *m)
 
 void POLY_rep_To_Mesh(POLY_rep *prep, Surface *s)
 {  
+    printf ("compareposition : %22.15e\n",CTX.lc);
   VertexBound = Tree_Create(sizeof(Vertex *), comparePosition);
   Tree_Action(THEM->Vertices, InsertInVertexBound);
 
@@ -379,6 +380,7 @@ void STLEndSolid()
     Tree_Add(THEM->Surfaces, &STL_Surf);
     Tree_Action(VertexBound, Free_Vertex);
   }
+ 
   Tree_Delete(VertexBound);
 }
 
@@ -545,6 +547,7 @@ double SetLC(Vertex *v1, Vertex *v2, double factor)
 
 void SEGM_rep_To_Mesh(SEGM_rep *srep, Curve *c)
 {  
+
   VertexBound = Tree_Create(sizeof(Vertex *), comparePosition);
   Tree_Action(THEM->Vertices, InsertInVertexBound);
 
@@ -610,8 +613,24 @@ int MeshDiscreteSurface(Surface *s)
     // hope for the best.
     POLY_rep_To_Mesh(s->thePolyRep, s);
     BDS_Mesh bds;
+    BDS_NoProjector nop;
     Mesh_To_BDS(s,&bds);
-    bds.classify ( M_PI / 9 );
+    bds.save_gmsh_format ( "1.msh" );
+    bds.classify ( M_PI / 6 );
+    bds.save_gmsh_format ( "2.msh" );
+    try{
+	for (int i=0;i<15;i++)
+	{
+	    bds.adapt_mesh (CTX.lc/30 , nop );
+	    printf("%d \n",i);
+	}
+    }
+    catch(...)
+    {
+	printf("coucou\n");
+    }
+    bds.save_gmsh_format ( "3.msh" );
+    
     return 1;
   }
   else if(s->Typ == MSH_SURF_DISCRETE){
