@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.47 2005-01-09 02:18:59 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.48 2005-04-19 16:03:15 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -175,6 +175,20 @@ double GMSH_CutPlanePlugin::levelset(double x, double y, double z, double val) c
     CutPlaneOptions_Number[1].def * y +
     CutPlaneOptions_Number[2].def * z + CutPlaneOptions_Number[3].def;
 }
+
+bool GMSH_CutPlanePlugin::geometrical_filter ( Double_Matrix * geometrical_nodes_positions ) const
+{
+    const double l0 = levelset((*geometrical_nodes_positions)(0,0),
+			       (*geometrical_nodes_positions)(0,1),
+			       (*geometrical_nodes_positions)(0,2),1);
+    for (int i=1;i<geometrical_nodes_positions->size1();i++)
+	if (levelset((*geometrical_nodes_positions)(i,0),
+		     (*geometrical_nodes_positions)(i,1),
+		     (*geometrical_nodes_positions)(i,2),1) * l0 < 0) return true;
+    return false;
+}
+
+
 
 Post_View *GMSH_CutPlanePlugin::execute(Post_View * v)
 {

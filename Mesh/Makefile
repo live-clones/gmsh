@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.83 2005-04-15 14:33:50 remacle Exp $
+# $Id: Makefile,v 1.84 2005-04-19 16:03:10 remacle Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -210,8 +210,7 @@ depend:
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h \
   Element.h Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h \
   DiscreteSurface.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  Metric.h Matrix.h ../Numeric/Numeric.h ../Common/Context.h \
-  ../Triangle/triangle.h
+  Metric.h Matrix.h ../Numeric/Numeric.h ../Common/Context.h
 3D_Mesh.o: 3D_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
@@ -271,8 +270,7 @@ depend:
   ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Element.h Simplex.h \
   Face.h Edge.h ../Geo/ExtrudeParams.h DiscreteSurface.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h Metric.h Matrix.h \
-  Create.h ../Numeric/Numeric.h ../Common/Context.h \
-  ../Netgen/libsrc/interface/nglib.h ../Netgen/nglib_addon.h
+  Create.h ../Numeric/Numeric.h ../Common/Context.h
 BDS.o: BDS.cpp BDS.h ../Numeric/Numeric.h
 MeshQuality.o: MeshQuality.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \

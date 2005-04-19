@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.206 2005-04-04 15:41:45 geuzaine Exp $
+// $Id: Gmsh.y,v 1.207 2005-04-19 16:03:15 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -97,8 +97,8 @@ int CheckViewErrorFlags(Post_View *v);
 %token tBoundingBox tDraw tToday
 %token tPoint tCircle tEllipse tLine tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
-%token tPlane tRuled tTriangulation tTransfinite tComplex tPhysical
-%token tUsing tBump tProgression tPlugin tDiscrete
+%token tPlane tRuled tTransfinite tComplex tPhysical
+%token tUsing tBump tProgression tPlugin 
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
 %token tLoop tRecombine tDelete tCoherence tIntersect
 %token tAttractor tLayers tAlias tAliasWithOptions
@@ -120,9 +120,7 @@ int CheckViewErrorFlags(Post_View *v);
 %token tCOMPOSITE_CURVE tTOROIDAL_SURFACE tPRODUCT_DEFINITION tPRODUCT_DEFINITION_SHAPE
 %token tSHAPE_DEFINITION_REPRESENTATION tELLIPSE
 
-%token tSolid tEndSolid tVertex tFacet tNormal tOuter tLoopSTL tEndLoop tEndFacet
-
-%type <d> FExpr FExpr_Single SignedDouble
+%type <d> FExpr FExpr_Single 
 %type <v> VExpr VExpr_Single
 %type <i> BoolExpr NumericAffectation NumericIncrement
 %type <u> ColorExpr
@@ -158,50 +156,10 @@ int CheckViewErrorFlags(Post_View *v);
 
 All : 
     StepFormatItems
-  | StlFormatItems
   | GeoFormatItems
   | error tEND { yyerrok; return 1; }
 ;
 
-//  S T E R E O L I T H O G R A P H Y  ( S T L )
-
-SignedDouble :
-    tDOUBLE     { $$ = $1; }
-  | '-' tDOUBLE { $$ = -$2; }
-;
-
-StlFormatItems : 
-    // nothing
-  | StlFormatItems StlFormatItem
-;
-
-StlFormatItem : 
-    tSolid
-    {
-      yymsg(INFO, "Reading STL solid");
-      STLStartSolid();
-      return 1;
-    }
-  | tFacet
-    tNormal SignedDouble SignedDouble SignedDouble
-    tOuter tLoopSTL
-      tVertex SignedDouble SignedDouble SignedDouble
-      tVertex SignedDouble SignedDouble SignedDouble
-      tVertex SignedDouble SignedDouble SignedDouble
-    tEndLoop
-    tEndFacet
-    {
-      STLAddFacet($9, $10, $11, $13, $14, $15, $17, $18, $19,
-		  $3, $4, $5);
-      return 1;
-    }
-  | tEndSolid
-    {
-      STLEndSolid();
-      yymsg(INFO, "Read STL solid");
-      return 1;
-    }
-;
 
 // S T E P   I S O - 1 0 3 0 3 - 2 1   F I L E   F O R M A T
 
@@ -1459,39 +1417,6 @@ Shape :
       $$.Type = MSH_SEGM_NURBS;
       $$.Num = num;
     }
-  | tDiscrete tLine '(' FExpr ')' tAFFECT '{' FExpr '}' ListOfDouble tEND
-    {
-      // define a new line
-      int num = (int)$4;
-      if(FindCurve(num, THEM)){
-	yymsg(GERROR, "Curve %d already exists", num);
-	List_Delete($10);
-      }
-      else{
-	Curve *c = Create_Curve(num, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0, 1);
-	c->theSegmRep = new SEGM_rep((int)$8, $10);
-	Tree_Add(THEM->Curves, &c);
-	CreateReversedCurve(THEM, c);
-      }
-      $$.Type = MSH_SEGM_DISCRETE;
-      $$.Num = num;
-    }
-  | tDiscrete tLine '{' FExpr '}' tAFFECT '{' FExpr '}' ListOfDouble tEND
-    {
-      // add a poly rep to an existing line
-      int num = (int)$4, type = 0;
-      Curve *c = FindCurve(num, THEM);
-      if(!c) {
-	yymsg(GERROR, "Unknown curve %d", num);
-	List_Delete($10);
-      }
-      else{
-	c->theSegmRep = new SEGM_rep((int)$8, $10);
-	type = c->Typ;
-      }
-      $$.Type = type;
-      $$.Num = num;
-    }
   | tLine tLoop '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
@@ -1627,62 +1552,6 @@ Shape :
       }
       List_Delete($10);
       $$.Type = MSH_SURF_TRIMMED;
-      $$.Num = num;
-    }
-  | tDiscrete tSurface '(' FExpr ')' tAFFECT '{' FExpr ',' FExpr '}' 
-       ListOfDouble ListOfDouble tEND
-    {
-      // define a new surface
-      int num = (int)$4;
-      if(FindSurface(num, THEM)){
-	yymsg(GERROR, "Surface %d already exists", num);
-	List_Delete($12);
-	List_Delete($13);
-      }
-      else{
-	Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
-	s->Support = s;
-	s->thePolyRep = new POLY_rep((int)$8, (int)$10, $12, $13);
-	End_Surface(s);
-	Tree_Add(THEM->Surfaces, &s);
-      }
-      $$.Type = MSH_SURF_DISCRETE;
-      $$.Num = num;
-    }
-  | tDiscrete tSurface '{' FExpr '}' tAFFECT '{' FExpr ',' FExpr '}' 
-       ListOfDouble ListOfDouble tEND
-    {
-      // add a poly rep to an existing surface
-      int num = (int)$4, type = 0;
-      Surface *s = FindSurface(num, THEM);
-      if(!s) {
-	yymsg(GERROR, "Unknown surface %d", num);
-	List_Delete($12);
-	List_Delete($13);
-      }
-      else{
-	s->thePolyRep = new POLY_rep((int)$8, (int)$10, $12, $13);
-	type = s->Typ;
-      }
-      $$.Type = type;
-      $$.Num = num;
-    }
-  // for backward compatibility:
-  | tTriangulation tSurface '(' FExpr ')' tAFFECT '(' FExpr ',' FExpr ')' 
-       ListOfDouble ListOfDouble tEND
-    {
-      int num = (int)$4, type = 0;
-      Surface *s = FindSurface(num, THEM);
-      if(!s) {
-	yymsg(GERROR, "Unknown surface %d", num);
-	List_Delete($12);
-	List_Delete($13);
-      }
-      else{
-	s->thePolyRep = new POLY_rep((int)$8, (int)$10, $12, $13);
-	type = s->Typ;
-      }
-      $$.Type = type;
       $$.Num = num;
     }
   | tNurbs tSurface tWith tBounds '(' FExpr ')' tAFFECT 

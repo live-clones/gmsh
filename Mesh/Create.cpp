@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.69 2005-02-26 04:53:13 geuzaine Exp $
+// $Id: Create.cpp,v 1.70 2005-04-19 16:03:10 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -528,6 +528,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
 			  {1, 0, 0, 0.0} };
 
   pC = (Curve *) Malloc(sizeof(Curve));
+  pC->bds = 0;
   pC->Dirty = 0;
   pC->Color.type = 0;
   pC->Visible = VIS_GEOM | VIS_MESH;
@@ -657,7 +658,7 @@ Surface *Create_Surface(int Num, int Typ)
 
   pS = (Surface *) Malloc(sizeof(Surface));
   pS->Dirty = 0;
-  pS->thePolyRep = 0;
+//  pS->thePolyRep = 0;
   pS->Color.type = 0;
   pS->Visible = VIS_GEOM | VIS_MESH;
   pS->Num = Num;
@@ -714,8 +715,8 @@ void Free_Surface(void *a, void *b)
       delete pS->QuadVertexArray;
     if(pS->normals)
       delete pS->normals;
-    if(pS->thePolyRep)
-      delete pS->thePolyRep;
+//    if(pS->thePolyRep)
+//      delete pS->thePolyRep;
     Free(pS);
     pS = NULL;
   }

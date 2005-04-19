@@ -83,7 +83,7 @@ void Structural_BeamSection :: computeGeometricalProperties ()
 	{
 	  Simplex *simp;
 	  List_Read(triangles,j,&simp);
-	  Vertex v = (*simp->V[0]+*simp->V[1]+*simp->V[2])*0.333333333333333333;
+	  Vertex v = (*simp->V[0]+*simp->V[1]+*simp->V[2])/3.;
 	  double A = simp->surfsimpl();
 	  area+=A;
 	  //	  printf("triangle %d aire %g\n",i,A);
@@ -96,26 +96,26 @@ void Structural_BeamSection :: computeGeometricalProperties ()
 	{
 	  Simplex *simp;
 	  List_Read(triangles,j,&simp);
-	  double A = simp->surfsimpl();
+	  double A = 2 * simp->surfsimpl() / 12.;
 	  {
 	    double dy[3] = {simp->V[0]->Pos.Y-yc,simp->V[1]->Pos.Y-yc,simp->V[2]->Pos.Y-yc};
-	    Iy+= A *
+	    Iy+= A * (
 	      dy[0] * (M[0][0] * dy[0] + M[0][1] * dy[1] + M[0][2] * dy[2]) +
 	      dy[1] * (M[1][0] * dy[0] + M[1][1] * dy[1] + M[1][2] * dy[2]) +
-	      dy[2] * (M[2][0] * dy[0] + M[2][1] * dy[1] + M[2][2] * dy[2]);
+	      dy[2] * (M[2][0] * dy[0] + M[2][1] * dy[1] + M[2][2] * dy[2]));
 	  }
 	  {
 	    double dy[3] = {simp->V[0]->Pos.X-xc,simp->V[1]->Pos.X-xc,simp->V[2]->Pos.X-xc};
-	    Iz+= A * 
+	    Iz+= A * (
 	      dy[0] * (M[0][0] * dy[0] + M[0][1] * dy[1] + M[0][2] * dy[2]) +
 	      dy[1] * (M[1][0] * dy[0] + M[1][1] * dy[1] + M[1][2] * dy[2]) +
-	      dy[2] * (M[2][0] * dy[0] + M[2][1] * dy[1] + M[2][2] * dy[2]);
+	      dy[2] * (M[2][0] * dy[0] + M[2][1] * dy[1] + M[2][2] * dy[2]) );
 	  }
 	}
       List_Delete(triangles);
     }
   List_Delete(surfaces);  
-  //  printf("%s %g %g %g %g %g\n",name.c_str(),area,xc,yc,Iy,Iz);
+  printf("%s %g %g %g %g %g\n",name.c_str(),area,xc,yc,Iy,Iz);
 }
 
 void Structural_Texture::setup ()

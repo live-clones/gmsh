@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.437 2005-04-06 16:30:52 geuzaine Exp $
+// $Id: GUI.cpp,v 1.438 2005-04-19 16:03:09 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1608,6 +1608,36 @@ void GUI::reset_external_view_list()
   }
 }
 
+void GUI::create_surface_mesh_wizard()
+{
+    int width = 42 * fontsize;
+    int height = 12 * BH + 5 * WB;
+    int L = 105 + WB;
+
+    if(swiz_window) {
+	swiz_window->show();
+	return;
+    }
+    swiz_window = new Dialog_Window(width, height);
+    swiz_window->box(GMSH_WINDOW_BOX);
+
+    swiz_wiz = new Fl_Wizard(L, 0, width, height, "Surface Mesh Wizard");
+    {
+	Fl_Tabs *o = new Fl_Tabs(L + WB, WB, width - 2 * WB, height - 2 * WB);
+	{
+	    Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Detect Edges");
+	    swiz_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Angle");
+	    swiz_value[0]->minimum(0.1);
+	    swiz_value[0]->maximum(50);
+	    swiz_value[0]->step(0.1);
+	    swiz_value[0]->align(FL_ALIGN_RIGHT);
+	    o->end();
+	}	
+	o->end();
+    } 
+    swiz_wiz->end();
+}
+
 void GUI::create_option_window()
 {
   int width = 42 * fontsize;
@@ -2142,6 +2172,11 @@ void GUI::create_option_window()
         {"Anisotropic", 0, 0, 0},
         {0}
       };
+      static Fl_Menu_Item menu_recombine_algo[] = {
+        {"Mixed Tri-Quads", 0, 0, 0},
+        {"All Quads", 0, 0, 0},
+        {0}
+      };
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Isotropic", 0, 0, 0},
         {"Netgen", 0, 0, 0},
@@ -2156,36 +2191,40 @@ void GUI::create_option_window()
       mesh_choice[3]->menu(menu_3d_algo);
       mesh_choice[3]->align(FL_ALIGN_RIGHT);
 
-      mesh_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Show interactive anisotropic mesh construction");
+      mesh_choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Quad algorithm");
+      mesh_choice[5]->menu(menu_recombine_algo);
+      mesh_choice[5]->align(FL_ALIGN_RIGHT);
+
+      mesh_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Show interactive anisotropic mesh construction");
       mesh_butt[4]->type(FL_TOGGLE_BUTTON);
       mesh_butt[4]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[4]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Number of smoothing steps");
+      mesh_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Number of smoothing steps");
       mesh_value[0]->minimum(0);
       mesh_value[0]->maximum(100);
       mesh_value[0]->step(1);
       mesh_value[0]->align(FL_ALIGN_RIGHT);
 
-      mesh_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Mesh scaling factor");
+      mesh_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Mesh scaling factor");
       mesh_value[1]->minimum(0.001);
       mesh_value[1]->maximum(1000);
       mesh_value[1]->step(0.001);
       mesh_value[1]->align(FL_ALIGN_RIGHT);
 
-      mesh_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Characteristic length factor");
+      mesh_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Characteristic length factor");
       mesh_value[2]->minimum(0.001);
       mesh_value[2]->maximum(1000);
       mesh_value[2]->step(0.001);
       mesh_value[2]->align(FL_ALIGN_RIGHT);
 
-      mesh_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Random perturbation factor");
+      mesh_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Random perturbation factor");
       mesh_value[3]->minimum(1.e-6);
       mesh_value[3]->maximum(1.e-1);
       mesh_value[3]->step(1.e-6);
       mesh_value[3]->align(FL_ALIGN_RIGHT);
 
-      mesh_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Optimize quality of tetrahedral elements");
+      mesh_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Optimize quality of tetrahedral elements");
       mesh_butt[2]->type(FL_TOGGLE_BUTTON);
       mesh_butt[2]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[2]->selection_color(GMSH_TOGGLE_COLOR);
@@ -2193,12 +2232,12 @@ void GUI::create_option_window()
       mesh_butt[2]->deactivate();
 #endif
 
-      mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Generate second order elements");
+      mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW, BH, "Generate second order elements");
       mesh_butt[3]->type(FL_TOGGLE_BUTTON);
       mesh_butt[3]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[3]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW, BH, "Constrain background mesh with characteristic length field");
+      mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 11 * BH, BW, BH, "Constrain background mesh with characteristic length field");
       mesh_butt[5]->type(FL_TOGGLE_BUTTON);
       mesh_butt[5]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[5]->selection_color(GMSH_TOGGLE_COLOR);

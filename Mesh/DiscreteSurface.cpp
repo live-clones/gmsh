@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.8 2005-04-15 14:32:40 remacle Exp $
+// $Id: DiscreteSurface.cpp,v 1.9 2005-04-19 16:03:10 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -161,11 +161,39 @@ void Mesh_To_BDS(Surface *s, BDS_Mesh *m)
 		      v2->Pos.X , v2->Pos.Y , v2->Pos.Z,
 		      v3->Pos.X , v3->Pos.Y , v3->Pos.Z,
 		      n);
-      m->add_triangle (v1->Num,v2->Num,v3->Num,n[0],n[1],n[2]); 
+      m->add_triangle (v1->Num,v2->Num,v3->Num); 
     }
   List_Delete (triangles);
 
 }
+
+void BDS_To_Mesh(Mesh *m)
+{
+    std::set<BDS_GeomEntity*,GeomLessThan>::iterator it  = m->bds->geom.begin(); 
+    std::set<BDS_GeomEntity*,GeomLessThan>::iterator ite = m->bds->geom.end(); 
+    
+    while (it != ite)
+    {
+	if ((*it)->classif_degree ==2 )
+	{
+	    Surface *_Surf = Create_Surface((*it)->classif_tag, MSH_SURF_DISCRETE);	
+	    _Surf->bds = m->bds;
+	    End_Surface(_Surf);
+	    Tree_Add(m->Surfaces, &_Surf);
+	}
+	else if ((*it)->classif_degree ==1  )
+	{
+	    Curve *_c = Create_Curve((*it)->classif_tag, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);	
+	    _c->bds = m->bds;
+	    End_Curve(_c);
+	    Tree_Add(m->Curves, &_c);
+	}
+	++it;
+    }
+    printf ("%d surfaces\n",Tree_Nbr(m->Surfaces));
+
+}
+
 
 void POLY_rep_To_Mesh(POLY_rep *prep, Surface *s)
 {  
@@ -222,8 +250,6 @@ void POLY_rep_To_Mesh(POLY_rep *prep, Surface *s)
 }
 
 // Routines to process STL surfaces
-
-static Surface *STL_Surf;
 
 static void ComputeNormal(Surface * Surface, double Normal[3])
 {
@@ -354,142 +380,6 @@ static void CreatePhysicalSurface()
   }
 }
 
-void STLStartSolid()
-{
-  VertexBound = Tree_Create(sizeof(Vertex *), comparePosition);
-  if(CTX.geom.stl_create_elementary){
-    Tree_Action(THEM->Points, InsertInVertexBound);
-  }
-  else{
-    STL_Surf = Create_Surface(NEWSURFACE(), MSH_SURF_DISCRETE);
-    STL_Surf->thePolyRep = new POLY_rep();
-  }
-}
-
-void STLEndSolid()
-{
-  if(CTX.geom.stl_create_elementary){
-    ReplaceAllDuplicates(THEM);
-    if(CTX.geom.stl_create_physical)
-      CreatePhysicalSurface();
-  }
-  else{
-    STL_Surf->thePolyRep->compute_bounding_box();
-    STL_Surf->Support = STL_Surf;
-    End_Surface(STL_Surf);
-    Tree_Add(THEM->Surfaces, &STL_Surf);
-    Tree_Action(VertexBound, Free_Vertex);
-  }
- 
-  Tree_Delete(VertexBound);
-}
-
-void STLAddFacet(double x1, double y1, double z1,
-		 double x2, double y2, double z2,
-		 double x3, double y3, double z3,
-		 double n1, double n2, double n3)
-{
-  Vertex **ppv;
-
-  // Create the nodes
-  Vertex *v1 = Create_Vertex(++THEM->MaxPointNum, x1, y1, z1, 1., 0);
-  if((ppv = (Vertex **) Tree_PQuery(VertexBound, &v1))) {
-    Free_Vertex(&v1, NULL);
-    v1 = *ppv;
-  }
-  else {
-    Tree_Add(VertexBound, &v1);
-    if(CTX.geom.stl_create_elementary) Tree_Add(THEM->Points, &v1);
-  }
-
-  Vertex *v2 = Create_Vertex(++THEM->MaxPointNum, x2, y2, z2, 1., 0);
-  if((ppv = (Vertex **) Tree_PQuery(VertexBound, &v2))) {
-    Free_Vertex(&v2, NULL);
-    v2 = *ppv;
-  }
-  else {
-    Tree_Add(VertexBound, &v2);
-    if(CTX.geom.stl_create_elementary) Tree_Add(THEM->Points, &v2);
-  }
-
-  Vertex *v3 = Create_Vertex(++THEM->MaxPointNum, x3, y3, z3, 1., 0);
-  if((ppv = (Vertex **) Tree_PQuery(VertexBound, &v3))) {
-    Free_Vertex(&v3, NULL);
-    v3 = *ppv;
-  }
-  else {
-    Tree_Add(VertexBound, &v3);
-    if(CTX.geom.stl_create_elementary) Tree_Add(THEM->Points, &v3);
-  }
-
-  if(CTX.geom.stl_create_elementary){
-    // Compute a reasonnable Characteristic Length
-    SetLC(v1, v2, v3, 1.);
-
-    // Create each curve
-    Curve *c1 = Create_Curve(NEWLINE(), MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1.);
-    c1->Control_Points = List_Create(2, 1, sizeof(Vertex *));
-    List_Add(c1->Control_Points, &v1);
-    List_Add(c1->Control_Points, &v2);
-    c1->beg = v1;
-    c1->end = v2;
-    End_Curve(c1);
-    Tree_Add(THEM->Curves, &c1);
-    CreateReversedCurve(THEM, c1);
-    
-    Curve *c2 = Create_Curve(NEWLINE(), MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1.);
-    c2->Control_Points = List_Create(2, 1, sizeof(Vertex *));
-    List_Add(c2->Control_Points, &v2);
-    List_Add(c2->Control_Points, &v3);
-    c2->beg = v2;
-    c2->end = v3;
-    End_Curve(c2);
-    Tree_Add(THEM->Curves, &c2);
-    CreateReversedCurve(THEM, c2);
-    
-    Curve *c3 = Create_Curve(NEWLINE(), MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1.);
-    c3->Control_Points = List_Create(2, 1, sizeof(Vertex *));
-    List_Add(c3->Control_Points, &v3);
-    List_Add(c3->Control_Points, &v1);
-    c3->beg = v3;
-    c3->end = v1;
-    End_Curve(c3);
-    Tree_Add(THEM->Curves, &c3);
-    CreateReversedCurve(THEM, c3);
-    
-    // Creation Of Each Surface
-    Surface *s = Create_Surface(NEWSURFACE(), MSH_SURF_PLAN);
-    s->Method = LIBRE;
-    s->Generatrices = List_Create(4, 1, sizeof(Curve *));
-    List_Add(s->Generatrices, &c1);
-    List_Add(s->Generatrices, &c2);
-    List_Add(s->Generatrices, &c3);
-    s->Support = s;
-    End_Surface(s);
-    Tree_Insert(THEM->Surfaces, &s);
-  }
-  else{
-    STL_Surf->thePolyRep->num_points += 3;
-    STL_Surf->thePolyRep->num_polys += 1;
-    List_T *pts = STL_Surf->thePolyRep->points_and_normals;
-    double num = List_Nbr(pts) / 6;
-    List_Add(pts, &v1->Pos.X); List_Add(pts, &v1->Pos.Y); List_Add(pts, &v1->Pos.Z);
-    List_Add(pts, &n1); List_Add(pts, &n2); List_Add(pts, &n3);
-    List_Add(pts, &v2->Pos.X); List_Add(pts, &v2->Pos.Y); List_Add(pts, &v2->Pos.Z);
-    List_Add(pts, &n1); List_Add(pts, &n2); List_Add(pts, &n3);
-    List_Add(pts, &v3->Pos.X); List_Add(pts, &v3->Pos.Y); List_Add(pts, &v3->Pos.Z);
-    List_Add(pts, &n1); List_Add(pts, &n2); List_Add(pts, &n3);
-    List_T *pol = STL_Surf->thePolyRep->polygons;
-    double n = 3;
-    List_Add(pol, &n); 
-    List_Add(pol, &num); num += 1.;
-    List_Add(pol, &num); num += 1.;
-    List_Add(pol, &num);
-  }
-}
-
-// Representation of discrete curves
-
 SEGM_rep::SEGM_rep()
   : num_points(0)
 {
@@ -604,42 +494,21 @@ void SEGM_rep_To_Mesh(SEGM_rep *srep, Curve *c)
 
 int MeshDiscreteSurface(Surface *s)
 {
-  if(s->thePolyRep){
-    // Use the polygonal representation as the surface mesh. Most of
-    // the time we should of course remesh/enhance/refine this (as
-    // there is no guarantee that a polygonal CAD mesh is conform,
-    // that it respects the boundaries, etc.), but we don't have any
-    // routines to do that at the moment--so let's just use it and
-    // hope for the best.
-    POLY_rep_To_Mesh(s->thePolyRep, s);
-    BDS_Mesh bds;
-    BDS_NoProjector nop;
-    Mesh_To_BDS(s,&bds);
-    bds.save_gmsh_format ( "1.msh" );
-    bds.classify ( M_PI / 6 );
-    bds.save_gmsh_format ( "2.msh" );
-    try{
-	for (int i=0;i<15;i++)
+    // s->bds is the discrete surface that 
+    // defines the geometry
+    if(s->bds){
+	if (!THEM->bds_mesh)
 	{
-	    bds.adapt_mesh (CTX.lc/30 , nop );
-	    printf("%d \n",i);
+	    THEM->bds_mesh = new BDS_Mesh (*(THEM->bds));
+	    int iter = 0;
+	    while (iter < 10 && THEM->bds_mesh -> adapt_mesh ( THEM->bds->LC / 30 ))
+	    {
+		iter ++;
+	    }
+	    THEM->bds_mesh->save_gmsh_format ( "3.msh" );
 	}
+	return 1;
     }
-    catch(...)
-    {
-	printf("coucou\n");
-    }
-    bds.save_gmsh_format ( "3.msh" );
-    
-    return 1;
-  }
-  else if(s->Typ == MSH_SURF_DISCRETE){
-    // nothing else to do: we assume that the elements have alreay
-    // been created
-    return 1;
-  }
-  else
-    return 0;
 }
 
 int MeshDiscreteCurve(Curve *c)

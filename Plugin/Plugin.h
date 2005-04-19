@@ -37,6 +37,7 @@
 #include "Options.h"
 #include "Message.h"
 #include "Views.h"
+#include "GmshMatrix.h"
 
 class PluginDialogBox;
 class Vertex;
@@ -96,6 +97,8 @@ public:
   // simply modified, else, a new view is added in the view list
   virtual Post_View *execute(Post_View *) = 0;
   virtual void assign_specific_visibility () const {}
+  virtual bool geometrical_filter ( Double_Matrix * geometrical_nodes_positions ) const {return true;}
+  virtual bool functional_filter  ( Double_Matrix * function_values ) const {return true;}
 };
 
 /*

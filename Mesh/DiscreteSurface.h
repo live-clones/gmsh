@@ -22,6 +22,8 @@
 
 #include "List.h"
 
+
+
 // A convenient surface representation, that can be used
 // as a triangulation for any given surface. See e.g. the "Polygonal
 // Surface" command in the parser, which takes a surface defined by
@@ -31,7 +33,6 @@
 // but anything else is okay. Solid modelers like parasolid or proE
 // are able to provide such representations. I have written a
 // translator from ideas to gmsh that does that.
-
 class POLY_rep 
 {
 public :
@@ -46,15 +47,6 @@ public :
   void compute_bounding_box();
 };
 
-// Routines to process STL surfaces
-
-void STLStartSolid();
-void STLEndSolid();
-void STLAddFacet(double x1, double y1, double z1,
-		 double x2, double y2, double z2,
-		 double x3, double y3, double z3,
-		 double n1, double n2, double n3);
-
 // Same thing for discrete curves
 
 class SEGM_rep 
@@ -68,5 +60,7 @@ public :
   double bounding_box[6];
   void compute_bounding_box();
 };
+
+
 
 #endif

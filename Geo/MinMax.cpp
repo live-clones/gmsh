@@ -1,4 +1,4 @@
-// $Id: MinMax.cpp,v 1.18 2005-03-17 22:37:51 geuzaine Exp $
+// $Id: MinMax.cpp,v 1.19 2005-04-19 16:03:10 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -66,6 +66,7 @@ void CalculateMinMax(Tree_T * t, double *bbox)
       CTX.cg[0] = (CTX.min[0] + CTX.max[0])/2.;
       CTX.cg[1] = (CTX.min[1] + CTX.max[1])/2.;
       CTX.cg[2] = (CTX.min[2] + CTX.max[2])/2.;
+
     }
   }
   else {

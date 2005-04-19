@@ -159,7 +159,7 @@ BDS_Edge *BDS_Mesh :: add_edge  (int p1, int p2)
     return e;
 }
 
-void BDS_Mesh :: add_triangle  (int p1, int p2, int p3, double nx, double ny, double nz)
+BDS_Triangle * BDS_Mesh :: add_triangle  (int p1, int p2, int p3 )
 {
     add_edge (p1,p2);
     add_edge (p2,p3);
@@ -167,8 +167,14 @@ void BDS_Mesh :: add_triangle  (int p1, int p2, int p3, double nx, double ny, do
     BDS_Edge *e1 = find_edge (p1,p2); 
     BDS_Edge *e2 = find_edge (p2,p3); 
     BDS_Edge *e3 = find_edge (p3,p1); 
-    BDS_Triangle *t  = new BDS_Triangle ( e1, e2, e3 ,find_point(p1));    
-    triangles.push_back ( t );        
+    try {
+	BDS_Triangle *t  = new BDS_Triangle ( e1, e2, e3 ,find_point(p1));    
+	triangles.push_back ( t );
+        return t;
+    }
+    catch (...)
+    {
+    }
 }
 void  BDS_Mesh :: del_triangle  (BDS_Triangle *t)
 {
@@ -287,7 +293,6 @@ void BDS_Mesh :: classify ( double angle )
 	int tag = 1;
 	while (1)
 	{
-	    printf("tag %d\n",tag);
 	    std::list<BDS_Triangle*>::iterator it  = triangles.begin();
 	    std::list<BDS_Triangle*>::iterator ite = triangles.end();
 	    BDS_Triangle *start = 0;
@@ -363,6 +368,284 @@ void BDS_Mesh :: classify ( double angle )
 	    ++it;
 	}
     }
+}
+double PointLessThanLexicographic::t = 0;
+
+bool BDS_Mesh :: read_stl ( const char *filename , const double tolerance)
+{
+
+    FILE *f = fopen ( filename, "r");
+    if (!f)return false;
+    char buffer [256], name[256];
+
+    PointLessThanLexicographic::t = tolerance;
+       
+    fgets (buffer,255,f);
+    
+    std::set < BDS_Point *, PointLessThanLexicographic > pts; 
+
+    sscanf (buffer,"%s",name);
+    // ASCII STL    
+    if (!strcmp(name,"solid"))
+    {
+	rewind(f);
+	fgets (buffer,255,f);
+
+	Min[0] = Min[1] = Min[2] = 1.e12;
+	Max[0] = Max[1] = Max[2] = -1.e12;
+
+	double XCG = 0;
+	double YCG = 0;
+	double ZCG = 0;
+
+	int Nf = 0;
+	while (!feof(f))
+	{
+	    char s1[256],s2[256];
+	    float x,y,z;
+	    fgets (buffer,255,f);
+	    sscanf(buffer,"%s",s1);
+	    if (!strcmp(s1,"endsolid"))break;
+	    sscanf(buffer,"%s %s %f %f %f",s1,s2,&x,&y,&z);
+	    fgets (buffer,255,f);
+	    fgets (buffer,255,f); // 1st point
+	    sscanf(buffer,"%s %f %f %f",s2,&x,&y,&z);
+	    BDS_Point P1 ( 0 , x,y,z);
+	    fgets (buffer,255,f); // 2nd point
+	    sscanf(buffer,"%s %f %f %f",s2,&x,&y,&z);
+	    BDS_Point P2 ( 0 , x,y,z); 
+	    fgets (buffer,255,f); // 3rd point
+	    sscanf(buffer,"%s %f %f %f",s2,&x,&y,&z);
+	    BDS_Point P3 ( 0 , x,y,z);
+	    fgets (buffer,255,f); // end loop
+	    fgets (buffer,255,f);// end facet
+
+	    Nf ++;
+
+	    if ( P1.X < Min [0]) Min[0] = P1.X;
+	    if ( P2.X < Min [0]) Min[0] = P2.X;
+	    if ( P3.X < Min [0]) Min[0] = P3.X; 
+
+	    if ( P1.Y < Min [1]) Min[1] = P1.Y;
+	    if ( P2.Y < Min [1]) Min[1] = P2.Y;
+	    if ( P3.Y < Min [1]) Min[1] = P3.Y;
+
+	    if ( P1.Z < Min [2]) Min[2] = P1.Z;
+	    if ( P2.Z < Min [2]) Min[2] = P2.Z;
+	    if ( P3.Z < Min [2]) Min[2] = P3.Z;
+
+	    if ( P1.X > Max [0]) Max[0] = P1.X;
+	    if ( P2.X > Max [0]) Max[0] = P2.X;
+	    if ( P3.X > Max [0]) Max[0] = P3.X; 
+
+	    if ( P1.Y > Max [1]) Max[1] = P1.Y;
+	    if ( P2.Y > Max [1]) Max[1] = P2.Y;
+	    if ( P3.Y > Max [1]) Max[1] = P3.Y;
+
+	    if ( P1.Z > Max [2]) Max[2] = P1.Z;
+	    if ( P2.Z > Max [2]) Max[2] = P2.Z;
+	    if ( P3.Z > Max [2]) Max[2] = P3.Z;
+
+	    XCG += (P1.X + P2.X + P3.X);
+	    YCG += (P1.Y + P2.Y + P3.Y);
+	    ZCG += (P1.Z + P2.Z + P3.Z);
+	}
+
+	XCG /= (3 * Nf);
+	YCG /= (3 * Nf);
+	ZCG /= (3 * Nf);
+
+	Min [0] -= XCG;
+	Min [1] -= YCG;
+	Min [2] -= ZCG;
+	Max [0] -= XCG;
+	Max [1] -= YCG;
+	Max [2] -= ZCG;
+
+	LC = sqrt ((Min[0]-Max[0])*(Min[0]-Max[0])+
+		   (Min[1]-Max[1])*(Min[1]-Max[1])+
+		   (Min[2]-Max[2])*(Min[2]-Max[2]));
+
+	PointLessThanLexicographic::t = LC * tolerance;
+
+	rewind(f);
+	fgets (buffer,255,f);
+	while (!feof(f))
+	{
+	    char s1[256],s2[256];
+	    float x,y,z;
+	    fgets (buffer,255,f);
+	    sscanf(buffer,"%s",s1);
+	    if (!strcmp(s1,"endsolid"))break;
+	    sscanf(buffer,"%s %s %f %f %f",s1,s2,&x,&y,&z);
+	    fgets (buffer,255,f);
+	    fgets (buffer,255,f); // 1st point
+	    sscanf(buffer,"%s %f %f %f",s2,&x,&y,&z);
+	    BDS_Point P1 ( 0 , x-XCG,y-YCG,z-ZCG);
+	    fgets (buffer,255,f); // 2nd point
+	    sscanf(buffer,"%s %f %f %f",s2,&x,&y,&z);
+	    BDS_Point P2 ( 0 , x-XCG,y-YCG,z-ZCG); 
+	    fgets (buffer,255,f); // 3rd point
+	    sscanf(buffer,"%s %f %f %f",s2,&x,&y,&z);
+	    BDS_Point P3 ( 0 , x-XCG,y-YCG,z-ZCG);
+	    fgets (buffer,255,f); // end loop
+	    fgets (buffer,255,f);// end facet
+	    BDS_Point *p1 = 0;
+	    BDS_Point *p2 = 0;
+	    BDS_Point *p3 = 0;
+	    std::set < BDS_Point *, PointLessThanLexicographic >::iterator it1 = pts.find(&P1); 
+	    if ( it1 != pts.end())
+	    {
+		p1 = *it1;
+	    }
+	    else
+	    {
+		MAXPOINTNUMBER++;
+		p1 =  add_point (MAXPOINTNUMBER , P1.X, P1.Y,P1.Z );
+		pts.insert (p1);
+	    }
+	    std::set < BDS_Point *, PointLessThanLexicographic >::iterator it2 = pts.find(&P2); 
+	    if ( it2 != pts.end())
+	    {
+		p2 = *it2;
+	    }
+	    else
+	    {
+		MAXPOINTNUMBER++;
+		p2 =  add_point (MAXPOINTNUMBER , P2.X, P2.Y,P2.Z );
+		pts.insert (p2);
+	    }
+	    std::set < BDS_Point *, PointLessThanLexicographic >::iterator it3 = pts.find(&P3); 
+	    if ( it3 != pts.end())
+	    {
+		p3 = *it3;
+	    }
+	    else
+	    {
+		MAXPOINTNUMBER++;
+		p3 =  add_point (MAXPOINTNUMBER , P3.X, P3.Y,P3.Z );
+		pts.insert (p3);
+	    }	
+	    add_triangle ( p1->iD, p2->iD, p3->iD); 
+	}		
+    }
+    // BINARY STL 
+    else
+    {
+	rewind(f);
+	char DUMMY[80];
+	fread (DUMMY,1,80,f);
+
+	unsigned long int Nf;
+	size_t x = fread (&Nf,sizeof (unsigned long int),1,f);	
+	char *DATA = new char [Nf * 50 * sizeof (char)];
+	x = fread (DATA,sizeof (char),Nf * 50,f);
+
+	printf("BINARY STL data read, %d facets \n",Nf);
+
+	Min[0] = Min[1] = Min[2] = 1.e12;
+	Max[0] = Max[1] = Max[2] = -1.e12;
+
+	double XCG = 0;
+	double YCG = 0;
+	double ZCG = 0;
+
+	for (int i=0;i<Nf;++i)
+	{
+	    float *X = (float*) &DATA[i * 50 * sizeof (char)];
+	    
+	    if ( X[3] < Min [0]) Min[0] = X[3];
+	    if ( X[6] < Min [0]) Min[0] = X[6];
+	    if ( X[9] < Min [0]) Min[0] = X[9];
+
+	    if ( X[4] < Min [1]) Min[1] = X[4];
+	    if ( X[7] < Min [1]) Min[1] = X[7];
+	    if ( X[10] < Min [1]) Min[1] = X[10];
+
+	    if ( X[5] < Min [2]) Min[2] = X[5];
+	    if ( X[8] < Min [2]) Min[2] = X[8];
+	    if ( X[11] < Min [2]) Min[2] = X[11];
+
+	    if ( X[3] > Max [0]) Max[0] = X[3];
+	    if ( X[6] > Max [0]) Max[0] = X[6];
+	    if ( X[9] > Max [0]) Max[0] = X[9];
+
+	    if ( X[4] > Max [1]) Max[1] = X[4];
+	    if ( X[7] > Max [1]) Max[1] = X[7];
+	    if ( X[10] > Max [1]) Max[1] = X[10];
+
+	    if ( X[5] > Max [2]) Max[2] = X[5];
+	    if ( X[8] > Max [2]) Max[2] = X[8];
+	    if ( X[11] > Max [2]) Max[2] = X[11];
+	    XCG += (X[3] + X[6] + X[9]);
+	    YCG += (X[4] + X[7] + X[10]);
+	    ZCG += (X[5] + X[8] + X[11]);
+	}
+
+	XCG /= (3 * Nf);
+	YCG /= (3 * Nf);
+	ZCG /= (3 * Nf);
+
+	Min [0] -= XCG;
+	Min [1] -= YCG;
+	Min [2] -= ZCG;
+	Max [0] -= XCG;
+	Max [1] -= YCG;
+	Max [2] -= ZCG;
+	LC = sqrt ((Min[0]-Max[0])*(Min[0]-Max[0])+
+		   (Min[1]-Max[1])*(Min[1]-Max[1])+
+		   (Min[2]-Max[2])*(Min[2]-Max[2]));
+
+	PointLessThanLexicographic::t = LC * tolerance;
+
+	for (int i=0;i<Nf;++i)
+	{
+	    float *X = (float*) &DATA[i * 50 * sizeof (char)];
+//	    printf("%g %g %g %g %g %g %g %g %g %g %g %g\n",X[0],X[1],X[2],X[3],X[4],X[5],X[6],X[7],X[8],X[9],X[10],X[11]);
+	    BDS_Point P1 ( 0 , X[3]-XCG,  X[4]-YCG,  X[5]-ZCG);
+	    BDS_Point P2 ( 0 , X[6]-XCG,  X[7]-YCG,  X[8]-ZCG);
+	    BDS_Point P3 ( 0 , X[9]-XCG,  X[10]-YCG,  X[11]-ZCG);
+	    BDS_Point *p1 = 0;
+	    BDS_Point *p2 = 0;
+	    BDS_Point *p3 = 0;
+	    std::set < BDS_Point *, PointLessThanLexicographic >::iterator it1 = pts.find(&P1); 
+	    if ( it1 != pts.end())
+	    {
+		p1 = *it1;
+	    }
+	    else
+	    {
+		MAXPOINTNUMBER++;
+		p1 =  add_point (MAXPOINTNUMBER , P1.X, P1.Y,P1.Z );
+		pts.insert (p1);
+	    }
+	    std::set < BDS_Point *, PointLessThanLexicographic >::iterator it2 = pts.find(&P2); 
+	    if ( it2 != pts.end())
+	    {
+		p2 = *it2;
+	    }
+	    else
+	    {
+		MAXPOINTNUMBER++;
+		p2 =  add_point (MAXPOINTNUMBER , P2.X, P2.Y,P2.Z );
+		pts.insert (p2);
+	    }
+	    std::set < BDS_Point *, PointLessThanLexicographic >::iterator it3 = pts.find(&P3); 
+	    if ( it3 != pts.end())
+	    {
+		p3 = *it3;
+	    }
+	    else
+	    {
+		MAXPOINTNUMBER++;
+		p3 =  add_point (MAXPOINTNUMBER , P3.X, P3.Y,P3.Z );
+		pts.insert (p3);
+	    }		
+	    add_triangle ( p1->iD, p2->iD, p3->iD); 
+	}
+	delete [] DATA;
+    }
+    fclose (f);    
 }
 
 void BDS_Mesh :: save_gmsh_format ( const char *filename )
@@ -475,7 +758,7 @@ BDS_Mesh ::~ BDS_Mesh ()
     DESTROOOY ( triangles.begin(),triangles.end());
 }
 
-bool BDS_Mesh ::split_edge ( BDS_Edge *e, double coord, const BDS_Projector &)
+bool BDS_Mesh ::split_edge ( BDS_Edge *e, double coord)
 {
 
 //    printf("split start %d\n",e->deleted);
@@ -635,12 +918,12 @@ bool BDS_Mesh ::swap_edge ( BDS_Edge *e)
 }
 
 
-bool BDS_Mesh ::collapse_edge ( BDS_Edge *e, BDS_Point *p, const BDS_Projector &)
+bool BDS_Mesh ::collapse_edge ( BDS_Edge *e, BDS_Point *p)
 {
 
 }
 
-bool BDS_Mesh ::smooth_point ( BDS_Point *p, const BDS_Projector &)
+bool BDS_Mesh ::smooth_point ( BDS_Point *p)
 {
     std::list<BDS_Edge *>::iterator eit  = p->edges.begin(); 	
     std::list<BDS_Edge *>::iterator eite = p->edges.end();
@@ -701,10 +984,9 @@ bool BDS_Mesh ::smooth_point ( BDS_Point *p, const BDS_Projector &)
     return true;
 }
 
-void BDS_Mesh :: adapt_mesh ( double l, const BDS_Projector &proj) 
+int BDS_Mesh :: adapt_mesh ( double l) 
 {
-
-  printf("couco1\n");
+    int nb_modif = 0;
 
     std::set<BDS_Edge*, EdgeLessThan> small_to_long;
     {
@@ -717,13 +999,10 @@ void BDS_Mesh :: adapt_mesh ( double l, const BDS_Projector &proj)
 	    ++it;
 	}
     }
-    printf("couco2\n");
     {
       std::set<BDS_Edge*, EdgeLessThan>::iterator it = small_to_long.begin();
       std::set<BDS_Edge*, EdgeLessThan>::iterator ite  = small_to_long.end();
-      
-      int nbspl = 0;
-      
+            
       while (it != ite)
 	{
 	  if ((*it)->numfaces()==2)
@@ -734,13 +1013,12 @@ void BDS_Mesh :: adapt_mesh ( double l, const BDS_Projector &proj)
 			       (op[0]->Y-op[1]->Y)*(op[0]->Y-op[1]->Y)+
 			       (op[0]->Z-op[1]->Z)*(op[0]->Z-op[1]->Z));
 	      if (!(*it)->deleted && (*it)->length() > l && ll > 0.5 * l){
-		split_edge (*it, 0.5 ,proj);
-		nbspl++;
+		split_edge (*it, 0.5 );
+		nb_modif++;
 	      }
 	    }
 	  ++it;
 	}
-      printf("nbspl = %d\n",nbspl);
     }
 //  return;
     cleanup();
@@ -789,6 +1067,7 @@ void BDS_Mesh :: adapt_mesh ( double l, const BDS_Projector &proj)
 		    if (qb > qa)
 		    {
 //		      printf("swop ..\n");
+			nb_modif++;
 			swap_edge ( *it );
 		    }
 		}
@@ -804,9 +1083,49 @@ void BDS_Mesh :: adapt_mesh ( double l, const BDS_Projector &proj)
 	    std::set<BDS_Point*, PointLessThan>::iterator ite  = points.end();
 	    while (it != ite)
 	    {
-		smooth_point(*it,proj);
+		smooth_point(*it);
 		++it;
 	    }
 	}
     }
+    return nb_modif;
+}
+
+
+BDS_Mesh::BDS_Mesh (const BDS_Mesh &other)
+{
+
+    printf("1\n");
+    for (std::set<BDS_GeomEntity*,GeomLessThan>::iterator it = other.geom.begin();
+	 it != other.geom.end();
+	 ++it)
+    {
+	add_geom((*it)->classif_tag,(*it)->classif_degree);
+    }
+    printf("1\n");
+    for (std::set<BDS_Point*,PointLessThan>::iterator it  = other.points.begin();
+	 it != other.points.end();
+	 ++it)
+    {
+	add_point((*it)->iD,(*it)->X,(*it)->Y,(*it)->Z);
+    }
+    printf("1\n");
+    for ( std::set<BDS_Edge*, EdgeLessThan>::iterator it  = other.edges.begin();
+	  it != other.edges.end();
+	  ++it)
+    {
+	BDS_Edge  * e = add_edge ((*it)->p1->iD,(*it)->p2->iD);
+	e->g = ((*it)->g)? get_geom  ((*it)->g->classif_tag,(*it)->g->classif_degree) : 0;
+    }
+    printf("1\n");
+    for (std::list<BDS_Triangle*>::const_iterator it  = other.triangles.begin();
+	 it != other.triangles.end();
+	 ++it)
+    {
+	BDS_Point *n[3];
+        (*it)->getNodes (n);
+	BDS_Triangle *t = add_triangle(n[0]->iD,n[1]->iD,n[2]->iD);
+	t->g = get_geom  ((*it)->g->classif_tag,(*it)->g->classif_degree);
+    }
+    printf("1\n");
 }

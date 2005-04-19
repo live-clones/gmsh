@@ -91,6 +91,8 @@
 
 #define NB_HISTOGRAM 100
 
+class BDS_Mesh;
+
 typedef struct _POINT PointRecord, *PointPeek;
 typedef struct _CONTOUR ContourRecord, *ContourPeek;
 typedef struct _DOC DocRecord, *DocPeek;
@@ -249,7 +251,8 @@ struct _Surf{
   CylParam Cyl;
   Grid_T Grid;  // fast search grid
   ExtrudeParams *Extrude;
-  POLY_rep *thePolyRep;
+//  POLY_rep *thePolyRep;
+  BDS_Mesh *bds;
   int Dirty; // flag to prevent any meshing
   DrawingColor Color;
   VertexArray *TriVertexArray;
@@ -354,27 +357,28 @@ typedef struct{
 }CircParam;
 
 typedef struct{
-  int Num;
-  int Typ;
-  char Visible;
-  int Method;
-  int ipar[4];
-  double dpar[4];
-  double l;
-  double mat[4][4];
-  Vertex *beg, *end;
-  double ubeg, uend;
-  List_T *Control_Points;
-  List_T *Vertices;
-  Tree_T *Simplexes, *SimplexesBase;
-  ExtrudeParams *Extrude;
-  float *k, *cp;
-  int degre;
-  CircParam Circle;
-  char functu[256], functv[256], functw[256];
-  int Dirty; // flag to prevent any meshing
-  DrawingColor Color;
-  SEGM_rep *theSegmRep;
+    int Num;
+    int Typ;
+    char Visible;
+    int Method;
+    int ipar[4];
+    double dpar[4];
+    double l;
+    double mat[4][4];
+    Vertex *beg, *end;
+    double ubeg, uend;
+    List_T *Control_Points;
+    List_T *Vertices;
+    Tree_T *Simplexes, *SimplexesBase;
+    ExtrudeParams *Extrude;
+    float *k, *cp;
+    int degre;
+    CircParam Circle;
+    char functu[256], functv[256], functw[256];
+    int Dirty; // flag to prevent any meshing
+    DrawingColor Color;
+    SEGM_rep *theSegmRep;
+    BDS_Mesh *bds;
 }Curve;
 
 typedef struct{
@@ -417,6 +421,8 @@ struct _Mesh{
   double quality_rho[3]; // mesh quality statistics
   int Histogram[3][NB_HISTOGRAM]; // quality histograms
   GMSHMetric *Metric;
+  BDS_Mesh *bds;
+  BDS_Mesh *bds_mesh;
   int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
 };

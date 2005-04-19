@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.76 2005-04-04 18:19:49 geuzaine Exp $
+// $Id: Main.cpp,v 1.77 2005-04-19 16:03:10 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -73,6 +73,8 @@ int main(int argc, char *argv[])
 
   // Initialize the static Mesh
 
+  M.bds = 0;
+  M.bds_mesh = 0;
   M.Vertices = NULL;
   M.Simplexes = NULL;
   M.Points = NULL;

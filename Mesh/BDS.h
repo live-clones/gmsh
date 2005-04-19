@@ -224,6 +224,20 @@ class PointLessThan
 	    return *ent1 < *ent2;
 	}
 };
+class PointLessThanLexicographic
+{
+ public:
+    static double t;
+    bool operator()(const BDS_Point* ent1, const BDS_Point* ent2) const
+	{
+	    if ( ent1->X - ent2->X  >  t ) return true;
+	    if ( ent1->X - ent2->X  < -t ) return false;
+	    if ( ent1->Y - ent2->Y  >  t ) return true;
+	    if ( ent1->Y - ent2->Y  < -t ) return false;
+	    if ( ent1->Z - ent2->Z  >  t ) return true;
+	    return false;
+	}
+};
 class EdgeLessThan
 {
  public:
@@ -233,39 +247,14 @@ class EdgeLessThan
 	}
 };
 
-class BDS_Projector 
-{
- public:
-    virtual bool project ( const double &X, const double &Y, const double &Z, const BDS_Vector & n,
-			   double &Xp, double &Yp, double &Zp ) const = 0;
-};
-
-class BDS_NoProjector : public  BDS_Projector
-{
- public:
-    bool project ( const double &X, const double &Y, const double &Z, const BDS_Vector & n,
-		   double &Xp, double &Yp, double &Zp ) const
-	{
-	    Xp = X;
-	    Yp = Y;
-	    Zp = Z;
-	    return true;
-	}
-};
-
-class BDS_BDSProjector : public  BDS_Projector
-{
-    BDS_Mesh &m;
- public:
-    BDS_BDSProjector (BDS_Mesh &_m) : m(_m){}
-    bool project ( const double &X, const double &Y, const double &Z, const BDS_Vector & n,
-		   double &Xp, double &Yp, double &Zp ) const;
-};
-
 class BDS_Mesh 
-{
+{    
     int MAXPOINTNUMBER;
  public:
+    double Min[3],Max[3],LC;
+    BDS_Mesh(int _MAXX = 0) :  MAXPOINTNUMBER (_MAXX){}
+    virtual ~BDS_Mesh ();
+    BDS_Mesh (const BDS_Mesh &other);
     std::set<BDS_GeomEntity*,GeomLessThan> geom; 
     std::set<BDS_Point*,PointLessThan>     points; 
     std::set<BDS_Edge*, EdgeLessThan>      edges; 
@@ -274,22 +263,24 @@ class BDS_Mesh
     BDS_Point * add_point (int num , double x, double y,double z);
     BDS_Edge  * add_edge  (int p1, int p2);
     void del_edge  (BDS_Edge *e);
-    void add_triangle  (int p1, int p2, int p3);
+    BDS_Triangle *add_triangle  (int p1, int p2, int p3);
     void del_triangle  (BDS_Triangle *t);
-    void add_triangle  (int p1, int p2, int p3, double nx, double ny, double nz);
     void add_geom  (int degree, int tag);
     BDS_Point *find_point (int num);
     BDS_Edge  *find_edge (int p1, int p2);
     BDS_Edge  *find_edge (BDS_Point *p1, BDS_Point *p2, BDS_Triangle *t)const;
     BDS_GeomEntity *get_geom  (int p1, int p2);
     bool swap_edge ( BDS_Edge *);
-    bool collapse_edge ( BDS_Edge *, BDS_Point*, const BDS_Projector &);
-    bool smooth_point ( BDS_Point*, const BDS_Projector &);
-    bool split_edge ( BDS_Edge *, double coord, const BDS_Projector &);
-    void save_gmsh_format (const char *filename);
+    bool collapse_edge ( BDS_Edge *, BDS_Point*);
+    bool smooth_point ( BDS_Point*);
+    bool split_edge ( BDS_Edge *, double coord);
     void classify ( double angle);
-    BDS_Mesh() :  MAXPOINTNUMBER (0){}
-    virtual ~BDS_Mesh ();
-    void adapt_mesh(double, const BDS_Projector &);
+    int adapt_mesh(double);
     void cleanup();
+    // io's 
+    bool read_stl  ( const char *filename, const double tolerance);
+    bool read_tri  ( const char *filename);
+    bool read_vrml ( const char *filename);
+    void save_gmsh_format (const char *filename);
 };
+void normal_triangle (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]);

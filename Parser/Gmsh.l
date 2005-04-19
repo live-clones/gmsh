@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.71 2005-03-26 04:09:16 geuzaine Exp $
+// $Id: Gmsh.l,v 1.72 2005-04-19 16:03:11 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -142,7 +142,6 @@ Call                    return tCall;
 
 Delete                  return tDelete;
 Dilate                  return tDilate;
-Discrete                return tDiscrete;
 Duplicata               return tDuplicata;
 Draw                    return tDraw;
 
@@ -218,7 +217,6 @@ StrPrefix               return tStrPrefix;
 StrRelative             return tStrRelative;
 Show                    return tShow;
 
-Triangulation           return tTriangulation;
 Transfinite             return tTransfinite;
 Translate               return tTranslate;
 Tanh                    return tTanh;
@@ -282,16 +280,6 @@ COMPOSITE_CURVE			   return tCOMPOSITE_CURVE;
 PRODUCT_DEFINITION                 return tPRODUCT_DEFINITION;
 PRODUCT_DEFINITION_SHAPE           return tPRODUCT_DEFINITION_SHAPE;
 SHAPE_DEFINITION_REPRESENTATION    return tSHAPE_DEFINITION_REPRESENTATION;
-
-vertex       return tVertex;
-facet        return tFacet;
-normal       return tNormal;
-outer        return tOuter;
-loop         return tLoopSTL;
-endloop      return tEndLoop;
-endfacet     return tEndFacet;
-endsolid     {skipline();return tEndSolid;}
-solid        {skipline();return tSolid;}
 
 {stepid}                {yylval.d = (double)atoi((char*)(yytext+1)); return tDOUBLE;}
 

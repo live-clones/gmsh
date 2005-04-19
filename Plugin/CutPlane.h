@@ -41,6 +41,7 @@ public:
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  
   Post_View *execute(Post_View *);
+  virtual bool geometrical_filter ( Double_Matrix * geometrical_nodes_positions ) const;
 
   static double callbackA(int, int, double);
   static double callbackB(int, int, double);

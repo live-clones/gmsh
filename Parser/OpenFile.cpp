@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.74 2005-04-01 15:48:14 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.75 2005-04-19 16:03:15 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 #include <sys/cygwin.h>
 #endif
 
+#include "BDS.h"
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Context.h"
@@ -47,6 +48,8 @@ void UpdateViewsInGUI();
 
 extern Mesh *THEM, M;
 extern Context_T CTX;
+
+extern  void BDS_To_Mesh(Mesh *m);
 
 void FixRelativePath(char *in, char *out){
   if(in[0] == '/' || in[0] == '\\' || (strlen(in)>2 && in[1] == ':')){
@@ -96,79 +99,19 @@ void SetBoundingBox(void)
 {
   if(!THEM) 
     return;
-
-  if(Tree_Nbr(THEM->Vertices)) {
+  if (THEM->bds)
+  {
+      double bbox[6] = {THEM->bds->Min[0],THEM->bds->Max[0],THEM->bds->Min[1],
+			THEM->bds->Max[1],THEM->bds->Min[2],THEM->bds->Max[2]};
+      CalculateMinMax(NULL, bbox);
+  }
+  else if(Tree_Nbr(THEM->Vertices)) {
     // if we have mesh vertices, use them
     CalculateMinMax(THEM->Vertices, NULL);
   }
   else if(Tree_Nbr(THEM->Points)) { 
     // else, if we have geometry points, use them
     CalculateMinMax(THEM->Points, NULL);
-  }
-  else if(Tree_Nbr(THEM->Curves)) { 
-    // else, if we have (discrete) curves, use them
-    List_T *l = Tree2List(THEM->Curves);
-    int first = 1;
-    double bbox[6];
-    for(int i = 0; i < List_Nbr(l); i++){
-      Curve *c = *(Curve**)List_Pointer(l, i);
-      if(c->theSegmRep){
-	if(first){
-	  first = 0;
-	  for(int j = 0; j < 6; j++)
-	    bbox[j] = c->theSegmRep->bounding_box[j];
-	}
-	else{
-	  if(c->theSegmRep->bounding_box[0] < bbox[0])
-	    bbox[0] = c->theSegmRep->bounding_box[0];
-	  if(c->theSegmRep->bounding_box[1] > bbox[1])
-	    bbox[1] = c->theSegmRep->bounding_box[1];
-	  if(c->theSegmRep->bounding_box[2] < bbox[2])
-	    bbox[2] = c->theSegmRep->bounding_box[2];
-	  if(c->theSegmRep->bounding_box[3] > bbox[3])
-	    bbox[3] = c->theSegmRep->bounding_box[3];
-	  if(c->theSegmRep->bounding_box[4] < bbox[4])
-	    bbox[4] = c->theSegmRep->bounding_box[4];
-	  if(c->theSegmRep->bounding_box[5] > bbox[5])
-	    bbox[5] = c->theSegmRep->bounding_box[5];
-	}
-      }
-    }
-    CalculateMinMax(NULL, bbox);
-    List_Delete(l);
-  }
-  else if(Tree_Nbr(THEM->Surfaces)) { 
-    // else, if we have (discrete) surfaces, use them
-    List_T *l = Tree2List(THEM->Surfaces);
-    int first = 1;
-    double bbox[6];
-    for(int i = 0; i < List_Nbr(l); i++){
-      Surface *s = *(Surface**)List_Pointer(l, i);
-      if(s->thePolyRep){
-	if(first){
-	  first = 0;
-	  for(int j = 0; j < 6; j++)
-	    bbox[j] = s->thePolyRep->bounding_box[j];
-	}
-	else{
-	  if(s->thePolyRep->bounding_box[0] < bbox[0])
-	    bbox[0] = s->thePolyRep->bounding_box[0];
-	  if(s->thePolyRep->bounding_box[1] > bbox[1])
-	    bbox[1] = s->thePolyRep->bounding_box[1];
-	  if(s->thePolyRep->bounding_box[2] < bbox[2])
-	    bbox[2] = s->thePolyRep->bounding_box[2];
-	  if(s->thePolyRep->bounding_box[3] > bbox[3])
-	    bbox[3] = s->thePolyRep->bounding_box[3];
-	  if(s->thePolyRep->bounding_box[4] < bbox[4])
-	    bbox[4] = s->thePolyRep->bounding_box[4];
-	  if(s->thePolyRep->bounding_box[5] > bbox[5])
-	    bbox[5] = s->thePolyRep->bounding_box[5];
-	}
-      }
-    }
-    CalculateMinMax(NULL, bbox);
-    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
-    List_Delete(l);
   }
   else if(List_Nbr(CTX.post.list)) {
     // else, if we have views, use the max bb of all the views
@@ -334,6 +277,18 @@ int MergeProblem(char *name, int warn_if_missing)
     SetBoundingBox();
 #endif
     status = 0;
+  }
+  else if(!strcmp(ext, ".stl")|| !strcmp(ext, ".STL")) 
+  {
+      // STEREO LITOGRAPHY (STL) FILE
+      if (THEM->bds)delete THEM->bds;
+      THEM->bds = new BDS_Mesh;
+      THEM->bds->read_stl ( name , 1.e-6 );
+      THEM->bds->save_gmsh_format ( "1.msh" );
+      THEM->bds->classify ( M_PI / 6 );
+      THEM->bds->save_gmsh_format ( "2.msh" );
+      BDS_To_Mesh (THEM);
+      SetBoundingBox();
   }
   else {
     fpos_t position;

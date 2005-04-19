@@ -831,6 +831,8 @@ StringXNumber GeometryOptions_Number[] = {
 } ;
 
 StringXNumber MeshOptions_Number[] = {
+  { F|O, "RecombineAlgo" , opt_mesh_recombine_algo , 1 ,
+    "Quadrangulation algorithm (1=mixed tri-quad, 2=all quads)" }, 
   { F|O, "Algorithm" , opt_mesh_algo2d , DELAUNAY_ISO ,
     "2D mesh algorithm (1=isotropic, 2=anisotropic, 3=triangle)" }, 
   { F|O, "Algorithm3D" , opt_mesh_algo3d , DELAUNAY_ISO ,

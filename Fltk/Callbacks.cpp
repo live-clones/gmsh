@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.351 2005-04-06 16:30:52 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.352 2005-04-19 16:03:09 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1062,6 +1062,8 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
 		  (WID->mesh_choice[2]->value() == 0) ? DELAUNAY_ISO :
 		  (WID->mesh_choice[2]->value() == 1) ? DELAUNAY_TRIANGLE :
 		  DELAUNAY_ANISO);
+  opt_mesh_recombine_algo(0, GMSH_SET,
+		  (WID->mesh_choice[5]->value() == 0) ? 1 : 2);
   opt_mesh_algo3d(0, GMSH_SET,
 		  (WID->mesh_choice[3]->value() == 0) ? DELAUNAY_ISO :
 		  FRONTAL_NETGEN);

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.81 2005-02-20 06:36:54 geuzaine Exp $
+// $Id: Geom.cpp,v 1.82 2005-04-19 16:03:10 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include "BDS.h"
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Numeric.h"
@@ -149,13 +150,21 @@ void Draw_Curve(void *a, void *b)
       N = 10 * n;
       break;
     }
-    if(c->theSegmRep) {
-      glBegin(GL_LINE_STRIP);
-      for(int i = 0; i < List_Nbr(c->theSegmRep->points); i+=3) {
-        double *p = (double*)List_Pointer(c->theSegmRep->points, i);
-        glVertex3d(p[0], p[1], p[2]);
+    if(c->bds) {
+      std::set<BDS_Edge*, EdgeLessThan>::iterator it  = c->bds->edges.begin();
+      std::set<BDS_Edge*, EdgeLessThan>::iterator ite = c->bds->edges.end();
+      while (it!=ite)
+      {
+	  if ((*it)->g && (*it)->g->classif_degree == 1&& c->Num == (*it)->g->classif_tag)
+	  { 
+	      BDS_Edge *e = (*it);
+	      glBegin(GL_LINES);
+	      glVertex3d(e->p1->X,e->p1->Y,e->p1->Z);
+	      glVertex3d(e->p2->X,e->p2->Y,e->p2->Z);
+	      glEnd();
+	  }
+	  ++it;
       }
-      glEnd();
     }
     else if(c->Typ == MSH_SEGM_DISCRETE) {
       Simplex *s;
@@ -332,36 +341,29 @@ void Draw_Polygonal_Surface(Surface * s)
   if(CTX.geom.surfaces) {
     if(CTX.geom.light) glEnable(GL_LIGHTING);
     glEnable(GL_POLYGON_OFFSET_FILL); // always!
-    int k = 0;
-    while (k < List_Nbr(s->thePolyRep->polygons)){
-      double *points = (double*)List_Pointer(s->thePolyRep->polygons,k);
-      k+= ((int)points[0] + 1);
-      if (points[0] == 3){
-	glBegin(GL_TRIANGLES);
-	double *p1 = (double*)List_Pointer(s->thePolyRep->points_and_normals, 
-					   6*(int)points[1]);
-	double *p2 = (double*)List_Pointer(s->thePolyRep->points_and_normals,
-					   6*(int)points[2]);
-	double *p3 = (double*)List_Pointer(s->thePolyRep->points_and_normals,
-					   6*(int)points[3]);
-	if(CTX.geom.light) glNormal3dv(&p1[3]);
-	glVertex3d(p1[0],p1[1],p1[2]);
-	if(CTX.geom.light) glNormal3dv(&p2[3]);
-	glVertex3d(p2[0],p2[1],p2[2]);
-	if(CTX.geom.light) glNormal3dv(&p3[3]);
-	glVertex3d(p3[0],p3[1],p3[2]);
-	glEnd();
-      }
-      else{
-	glBegin(GL_POLYGON);
-	for(int i = 0; i < (int)points[0]; i++){
-	  double *p = (double*)List_Pointer(s->thePolyRep->points_and_normals,
-					    6*(int)points[i+1]);
-	  if(CTX.geom.light) glNormal3dv(&p[3]);
-	  glVertex3d(p[0],p[1],p[2]);
+    int k = 0;    
+
+    std::list<BDS_Triangle*>::iterator it  = s->bds->triangles.begin();
+    std::list<BDS_Triangle*>::iterator ite = s->bds->triangles.end();
+    while (it!=ite)
+    {
+	if (!(*it)->g || s->Num == (*it)->g->classif_tag)
+	{ 
+	    glBegin(GL_TRIANGLES);
+	    BDS_Point *n[3];
+	    BDS_Triangle *t = (*it);
+	    double c[3];
+	    t->getNodes (n);
+	    normal_triangle (n[0],n[1],n[2],c);
+	    if(CTX.geom.light) glNormal3dv(c);
+	    glVertex3d(n[0]->X,n[0]->Y,n[0]->Z);
+	    if(CTX.geom.light) glNormal3dv(c);
+	    glVertex3d(n[1]->X,n[1]->Y,n[1]->Z);
+	    if(CTX.geom.light) glNormal3dv(c);
+	    glVertex3d(n[2]->X,n[2]->Y,n[2]->Z);
+	    glEnd();
 	}
-	glEnd();
-      }
+	++it;
     }
     glDisable(GL_POLYGON_OFFSET_FILL);
     glDisable(GL_LIGHTING);
@@ -628,7 +630,7 @@ void Draw_Surface(void *a, void *b)
     glColor4ubv((GLubyte *) & CTX.color.geom.surface);
   }
 
-  if(s->thePolyRep) // always draw the poly reprentation if available
+  if(s->bds) // always draw the poly reprentation if available
     Draw_Polygonal_Surface(s);
   else if(s->Typ == MSH_SURF_DISCRETE)
     Tree_Action(s->Simplexes, Draw_Mesh_Triangle);

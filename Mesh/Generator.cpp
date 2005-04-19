@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.63 2005-01-01 19:35:30 geuzaine Exp $
+// $Id: Generator.cpp,v 1.64 2005-04-19 16:03:10 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include "BDS.h"
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Mesh.h"
@@ -313,6 +314,8 @@ void Init_Mesh(Mesh * M)
   M->MaxSurfaceLoopNum = 0;
   M->MaxVolumeNum = 0;
   M->MaxPhysicalNum = 0;
+  if (M->bds)delete M->bds;
+  M->bds = 0;
 
   Element::TotalNumber = 0;
 

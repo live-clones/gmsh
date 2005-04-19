@@ -463,31 +463,72 @@ void adapt_tet::Recur_Error ( adapt_tet *t, double AVG, double tol )
   if(!t->e[0])t->visible = true; 
   else
     {
-      double vr;
-      double v1 = t->e[0]->V();
-      double v2 = t->e[1]->V();
-      double v3 = t->e[2]->V();
-      double v4 = t->e[3]->V();
-      double v5 = t->e[4]->V();
-      double v6 = t->e[5]->V();
-      double v7 = t->e[6]->V();
-      double v8 = t->e[7]->V();
-      vr = (v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8)*.125;
-      double v =  t->V();
-      if ( fabs(v - vr) > AVG * tol ) 
+	const double v1 = t->e[0]->V();
+	const double v2 = t->e[1]->V();
+	const double v3 = t->e[2]->V();
+	const double v4 = t->e[3]->V();
+	const double v5 = t->e[4]->V();
+	const double v6 = t->e[5]->V();
+	const double v7 = t->e[6]->V();
+	const double v8 = t->e[7]->V();
+	const double vr = (v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8)*.125;
+	const double v =  t->V();
+	if (!t->e[0]->e[0])
 	{
-	  t->visible = false;
-	  Recur_Error (t->e[0],AVG,tol);
-	  Recur_Error (t->e[1],AVG,tol);
-	  Recur_Error (t->e[2],AVG,tol);
-	  Recur_Error (t->e[3],AVG,tol);
-	  Recur_Error (t->e[4],AVG,tol);
-	  Recur_Error (t->e[5],AVG,tol);
-	  Recur_Error (t->e[6],AVG,tol);
-	  Recur_Error (t->e[7],AVG,tol);
-	} 
-      else
-	t->visible = true;
+	    if ( fabs(v - vr) > AVG * tol ) 
+	    {
+		t->visible = false;
+		Recur_Error (t->e[0],AVG,tol);
+		Recur_Error (t->e[1],AVG,tol);
+		Recur_Error (t->e[2],AVG,tol);
+		Recur_Error (t->e[3],AVG,tol);
+		Recur_Error (t->e[4],AVG,tol);
+		Recur_Error (t->e[5],AVG,tol);
+		Recur_Error (t->e[6],AVG,tol);
+		Recur_Error (t->e[7],AVG,tol);
+	    } 
+	    else
+		t->visible = true;
+	}
+	else
+	{
+	    double vi[8][8];
+	    for (int k=0;k<8;k++)
+		for (int l=0;l<8;l++)
+		    vi[k][l] = t->e[k]->e[l]->V();
+	    double vri[8];
+	    for (int k=0;k<8;k++)
+	    {
+		vri[k] = 0.0;
+		for (int l=0;l<8;l++)
+		{
+		    vri[k] += vi[k][l];
+		}
+		vri[k] /= 8.0;
+	    }
+	    if ( fabs(t->e[0]->V() - vri[0]) > AVG * tol  || 
+		 fabs(t->e[1]->V() - vri[1]) > AVG * tol  || 
+		 fabs(t->e[2]->V() - vri[2]) > AVG * tol  || 
+		 fabs(t->e[3]->V() - vri[3]) > AVG * tol  || 
+		 fabs(t->e[4]->V() - vri[4]) > AVG * tol  || 
+		 fabs(t->e[5]->V() - vri[5]) > AVG * tol  || 
+		 fabs(t->e[6]->V() - vri[6]) > AVG * tol  || 
+		 fabs(t->e[7]->V() - vri[7]) > AVG * tol  || 
+		 fabs(v - vr) > AVG * tol )
+	    {
+		t->visible = false;
+		Recur_Error (t->e[0],AVG,tol);
+		Recur_Error (t->e[1],AVG,tol);
+		Recur_Error (t->e[2],AVG,tol);
+		Recur_Error (t->e[3],AVG,tol);
+		Recur_Error (t->e[4],AVG,tol);
+		Recur_Error (t->e[5],AVG,tol);
+		Recur_Error (t->e[6],AVG,tol);
+		Recur_Error (t->e[7],AVG,tol);
+	    } 
+	    else
+		t->visible = true;
+	}
     }
 }
 

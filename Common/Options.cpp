@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.240 2005-04-06 16:30:51 geuzaine Exp $
+// $Id: Options.cpp,v 1.241 2005-04-19 16:03:09 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -4380,6 +4380,37 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
 #endif
   return CTX.mesh.algo2d;
 }
+
+
+
+double opt_mesh_recombine_algo(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    int algo = (int)val;
+    printf("algo = %d\n",algo);
+    if(algo != 1 &&
+       algo != 2){
+      Msg(WARNING, "Unknown mesh algorithm: keeping existing value");
+    }
+    else{
+      CTX.mesh.algo_recombine = algo;
+    }
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)) {
+    switch (CTX.mesh.algo_recombine) {
+    case 2:
+      WID->mesh_choice[5]->value(1);
+      break;
+    default :
+      WID->mesh_choice[5]->value(0);
+      break;
+    }
+  }
+#endif
+  return CTX.mesh.algo_recombine;
+}
+
 
 double opt_mesh_algo3d(OPT_ARGS_NUM)
 {
