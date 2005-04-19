@@ -88,7 +88,8 @@ void BDS_Point::getTriangles (std::list<BDS_Triangle *> &t)
   std::list<BDS_Edge*>::iterator ite = edges.end();
   while(it!=ite)
     {
-      for (int i=0;i<2;++i)
+      int NF = (*it)->numfaces();
+      for (int i=0;i<NF;++i)
 	{
 	  BDS_Triangle *tt = (*it)->faces[i];
 	  if (tt)
@@ -481,7 +482,7 @@ bool BDS_Mesh ::split_edge ( BDS_Edge *e, double coord, const BDS_Projector &)
 
     int nbFaces = e->numfaces();
 
-    if (nbFaces == 1)return false;
+    if (nbFaces != 2)return false;
 
     BDS_Point *op[2];
     BDS_Point *p1 = e->p1;
@@ -569,14 +570,13 @@ bool BDS_Mesh ::swap_edge ( BDS_Edge *e)
 
     int nbFaces = e->numfaces();
 
+    if (nbFaces != 2)return false;
 
     BDS_Point *pts1[3];
     e->faces[0]->getNodes (pts1); 
     BDS_Point *pts2[3];
     e->faces[1]->getNodes (pts2); 
 
-
-    if (nbFaces != 2)return false;
     if (e->g && e->g->classif_degree != 2)return false;
 
     BDS_Point *op[2];
@@ -703,37 +703,44 @@ bool BDS_Mesh ::smooth_point ( BDS_Point *p, const BDS_Projector &)
 
 void BDS_Mesh :: adapt_mesh ( double l, const BDS_Projector &proj) 
 {
+
+  printf("couco1\n");
+
     std::set<BDS_Edge*, EdgeLessThan> small_to_long;
     {
 	std::set<BDS_Edge*, EdgeLessThan>::iterator it = edges.begin();
 	std::set<BDS_Edge*, EdgeLessThan>::iterator ite  = edges.end();
 	while (it != ite)
 	{
-	    if ((*it)->numfaces()==1)printf("one face\n");
+	  //	    if ((*it)->numfaces()==1)printf("one face\n");
 	    small_to_long.insert (*it);  
 	    ++it;
 	}
     }
+    printf("couco2\n");
     {
-	std::set<BDS_Edge*, EdgeLessThan>::iterator it = small_to_long.begin();
-	std::set<BDS_Edge*, EdgeLessThan>::iterator ite  = small_to_long.end();
-	
-	int nbspl = 0;
-	
-	while (it != ite)
+      std::set<BDS_Edge*, EdgeLessThan>::iterator it = small_to_long.begin();
+      std::set<BDS_Edge*, EdgeLessThan>::iterator ite  = small_to_long.end();
+      
+      int nbspl = 0;
+      
+      while (it != ite)
 	{
-	    BDS_Point *op[2];
-	    (*it)->oppositeof (op);
-	    double ll = sqrt((op[0]->X-op[1]->X)*(op[0]->X-op[1]->X)+
-			     (op[0]->Y-op[1]->Y)*(op[0]->Y-op[1]->Y)+
-			     (op[0]->Z-op[1]->Z)*(op[0]->Z-op[1]->Z));
-	    if (!(*it)->deleted && (*it)->length() > l && ll > 0.5 * l){
+	  if ((*it)->numfaces()==2)
+	    {
+	      BDS_Point *op[2];
+	      (*it)->oppositeof (op);
+	      double ll = sqrt((op[0]->X-op[1]->X)*(op[0]->X-op[1]->X)+
+			       (op[0]->Y-op[1]->Y)*(op[0]->Y-op[1]->Y)+
+			       (op[0]->Z-op[1]->Z)*(op[0]->Z-op[1]->Z));
+	      if (!(*it)->deleted && (*it)->length() > l && ll > 0.5 * l){
 		split_edge (*it, 0.5 ,proj);
 		nbspl++;
+	      }
 	    }
-	    ++it;
+	  ++it;
 	}
-	printf("nbspl = %d\n",nbspl);
+      printf("nbspl = %d\n",nbspl);
     }
 //  return;
     cleanup();

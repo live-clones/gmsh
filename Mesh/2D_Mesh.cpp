@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.74 2005-04-15 14:32:40 remacle Exp $
+// $Id: 2D_Mesh.cpp,v 1.75 2005-04-19 07:23:42 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -914,7 +914,7 @@ void Maillage_Surface(void *data, void *dum)
       delete_NXE(tnxe);
     }
     
-    if(s->Recombine && CTX.mesh.algo_recombine ==1 ){
+    if(s->Recombine){// && CTX.mesh.algo_recombine ==1 ){
       Msg(STATUS3, "Recombining surface %d", s->Num);
       Recombine(s->Vertices, s->Simplexes, s->Quadrangles, s->RecombineAngle);
     }
@@ -948,10 +948,10 @@ void Maillage_Surface(void *data, void *dum)
     ReOrientSurfaceMesh(s);
   }
 
-  if(CTX.mesh.algo_recombine ==2 )
-  {
-      printf("coucou\n");
-      Recombine_All (THEM);
-  }
+  //  if(CTX.mesh.algo_recombine ==2 )
+  // {
+  //   printf("coucou\n");
+  //   Recombine_All (THEM);
+  //}
 
 }
