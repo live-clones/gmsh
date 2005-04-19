@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.51 2005-03-11 08:56:38 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.52 2005-04-19 01:09:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -210,6 +210,8 @@ char SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
 {
   int hits;
   GLuint ii[SELECTION_BUFFER_SIZE], jj[SELECTION_BUFFER_SIZE];
+
+  WID->g_opengl_window->take_focus(); // force keyboard focus in GL window 
 
   WID->selection = type;
   WID->try_selection = 0;
