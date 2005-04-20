@@ -164,7 +164,7 @@ StringXString SolverOptions_String[] = {
     "Command associated with the second button for solver 0" },
   { F|O, "ThirdButton0" , opt_solver_third_button0 , "Pos" ,
     "Label of third button for solver 0" },
-  { F|O, "ThirdButtonCommand0" , opt_solver_third_button_command0 , "-bin -pos %s" ,
+  { F|O, "ThirdButtonCommand0" , opt_solver_third_button_command0 , "-pos %s" ,
     "Command associated with the third button for solver 0" },
   { F|O, "FourthButton0" , opt_solver_fourth_button0 , "" ,
     "Label of fourth button for solver 0" },
