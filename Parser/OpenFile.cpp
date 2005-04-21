@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.75 2005-04-19 16:03:15 remacle Exp $
+// $Id: OpenFile.cpp,v 1.76 2005-04-21 09:26:11 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -278,17 +278,24 @@ int MergeProblem(char *name, int warn_if_missing)
 #endif
     status = 0;
   }
-  else if(!strcmp(ext, ".stl")|| !strcmp(ext, ".STL")) 
+  else if(!strcmp(ext, ".stl")|| !strcmp(ext, ".STL")|| !strcmp(ext, ".mesh")) 
   {
-      // STEREO LITOGRAPHY (STL) FILE
-      if (THEM->bds)delete THEM->bds;
-      THEM->bds = new BDS_Mesh;
-      THEM->bds->read_stl ( name , 1.e-6 );
-      THEM->bds->save_gmsh_format ( "1.msh" );
-      THEM->bds->classify ( M_PI / 6 );
-      THEM->bds->save_gmsh_format ( "2.msh" );
-      BDS_To_Mesh (THEM);
-      SetBoundingBox();
+    if (THEM->bds)delete THEM->bds;
+    THEM->bds = new BDS_Mesh;
+    if(!strcmp(ext, ".mesh"))
+    {
+      THEM->bds->read_mesh ( name );
+    }
+    else       
+      {
+	// STEREO LITOGRAPHY (STL) FILE
+	THEM->bds->read_stl ( name , 1.e-6 );
+      }
+    THEM->bds->save_gmsh_format ( "1.msh" );
+    THEM->bds->classify ( M_PI / 6 );
+    THEM->bds->save_gmsh_format ( "2.msh" );
+    BDS_To_Mesh (THEM);
+    SetBoundingBox();
   }
   else {
     fpos_t position;

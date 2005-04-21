@@ -168,7 +168,7 @@ BDS_Triangle * BDS_Mesh :: add_triangle  (int p1, int p2, int p3 )
     BDS_Edge *e2 = find_edge (p2,p3); 
     BDS_Edge *e3 = find_edge (p3,p1); 
     try {
-	BDS_Triangle *t  = new BDS_Triangle ( e1, e2, e3 ,find_point(p1));    
+	BDS_Triangle *t  = new BDS_Triangle ( e1, e2, e3 );    
 	triangles.push_back ( t );
         return t;
     }
@@ -260,6 +260,8 @@ BDS_Vector BDS_Triangle :: N () const
 
 void BDS_Mesh :: classify ( double angle )
 {
+
+  printf("  classifying \n");
  
     static BDS_GeomEntity EDGE_CLAS (0,1);
     {
@@ -269,6 +271,11 @@ void BDS_Mesh :: classify ( double angle )
 	{
 	    BDS_Edge &e = *((BDS_Edge *) *it);
 	    if ( e.numfaces() == 1) e.g = &EDGE_CLAS;
+	    else if (e.numfaces() == 2 && 
+		     e.faces[0]->g != e.faces[1]->g )
+	      {
+		e.g = &EDGE_CLAS;
+	      }
 	    else if (e.numfaces() == 2)
 	    {
 		BDS_Vector N0 = e.faces[0]->N();
@@ -289,27 +296,39 @@ void BDS_Mesh :: classify ( double angle )
 	    ++it;
 	}
     }
+
     {
-	int tag = 1;
-	while (1)
+      std::list<BDS_Triangle*>::iterator it  = triangles.begin();
+      std::list<BDS_Triangle*>::iterator ite = triangles.end();
+      while (it!=ite)
 	{
-	    std::list<BDS_Triangle*>::iterator it  = triangles.begin();
-	    std::list<BDS_Triangle*>::iterator ite = triangles.end();
-	    BDS_Triangle *start = 0;
-	    while (it!=ite)
+	  (*it)->g = 0;
+	  ++it;
+	}
+      geom.clear();
+    }
+
+    {
+      int tag = 1;
+      while (1)
+	{
+	  std::list<BDS_Triangle*>::iterator it  = triangles.begin();
+	  std::list<BDS_Triangle*>::iterator ite = triangles.end();
+	  BDS_Triangle *start = 0;
+	  while (it!=ite)
 	    {
-		if (!(*it)->deleted && !(*it)->g)
+	      if (!(*it)->deleted && !(*it)->g)
 		{
-		    start = (BDS_Triangle*) (*it);
+		  start = (BDS_Triangle*) (*it);
 		}
-		if (start)break;
-		++it;
+	      if (start)break;
+	      ++it;
 	    }
-	    if (!start)break;	  
-	    add_geom (tag, 2);
-	    BDS_GeomEntity *g = get_geom (tag,2);
-	    recur_tag ( start , g );
-	    tag++;
+	  if (!start)break;	  
+	  add_geom (tag, 2);
+	  BDS_GeomEntity *g = get_geom (tag,2);
+	  recur_tag ( start , g );
+	  tag++;
 	}
     }
 //    return;
@@ -368,6 +387,7 @@ void BDS_Mesh :: classify ( double angle )
 	    ++it;
 	}
     }
+  printf("  end classifying \n");
 }
 double PointLessThanLexicographic::t = 0;
 
@@ -648,6 +668,89 @@ bool BDS_Mesh :: read_stl ( const char *filename , const double tolerance)
     fclose (f);    
 }
 
+// INRIA FORMAT
+bool BDS_Mesh :: read_mesh ( const char *filename )
+{
+  FILE *f = fopen ( filename, "r");
+  if (!f)return false;
+  char buffer [256], name[256];
+  
+  fgets (buffer,255,f);
+  
+  int format;
+  
+  sscanf (buffer,"%s %d",name,&format);
+  // ASCII MESH  
+  if (format == 1)
+    {      
+
+      printf("format = 1\n");
+      while (!feof(f))
+	{
+	  fgets (buffer,255,f);
+	  printf("%s\n",buffer);
+	  if (buffer[0] != '#') // skip comments
+	    {
+	      sscanf(buffer,"%s",name);
+
+	      if (!strcmp (name,"Dimension"))
+		fgets (buffer,255,f);
+	      else if (!strcmp (name,"Vertices"))
+		{
+		  Min[0] = Min[1] = Min[2] = 1.e12;
+		  Max[0] = Max[1] = Max[2] = -1.e12;
+		  int nbv,cl;
+		  double x,y,z;
+		  fgets (buffer,255,f);
+		  sscanf (buffer,"%d",&nbv);
+		  printf("%d Vertices\n",nbv);
+		  for (int i=0;i<nbv;i++)
+		    {
+		      fgets (buffer,255,f);
+		      sscanf (buffer,"%lf %lf %lf %d",&x,&y,&z,&cl);
+		      Min[0] = (Min[0] < x)?Min[0]:x;
+		      Min[1] = (Min[1] < y)?Min[1]:y;
+		      Min[2] = (Min[2] < z)?Min[2]:z;
+		      Max[0] = (Max[0] > x)?Max[0]:x;
+		      Max[1] = (Max[1] > y)?Max[1]:y;
+		      Max[2] = (Max[2] > z)?Max[2]:z;
+		      add_point (i+1 , x,y,z );
+		    }
+		  MAXPOINTNUMBER = nbv+1;
+		}
+	      else if (!strcmp (name,"Triangles"))
+		{
+
+		  int nbt,cl,n1,n2,n3;
+		  fgets (buffer,255,f);
+		  sscanf (buffer,"%d",&nbt);
+		  printf("%d Triangles\n",nbt);
+		  for (int i=0;i<nbt;i++)
+		    {
+		      fgets (buffer,255,f);
+		      sscanf (buffer,"%d %d %d %d",&n1,&n2,&n3,&cl);
+		      BDS_Triangle *t = add_triangle(n1,n2,n3);
+		      t->g = get_geom  (cl,2);
+		      if (!t->g)
+			{
+			  add_geom (cl,2);
+			  t->g = get_geom  (cl,2);
+			}
+		    }
+		}
+	    }
+	}
+      
+      LC = sqrt ((Min[0]-Max[0])*(Min[0]-Max[0])+
+		 (Min[1]-Max[1])*(Min[1]-Max[1])+
+		 (Min[2]-Max[2])*(Min[2]-Max[2]));
+    }
+  else
+    {
+      throw;
+    }
+}
+
 void BDS_Mesh :: save_gmsh_format ( const char *filename )
 {
     cleanup();
@@ -826,10 +929,10 @@ bool BDS_Mesh ::split_edge ( BDS_Edge *e, double coord)
     edges.insert ( mid_op2 );
 
 //    printf("split ends 1 %d (%d %d) %d %d \n",p1_op1->numfaces(), p1->iD, op[0]->iD, op1_mid->numfaces(),p1_mid->numfaces());
-    BDS_Triangle*t1 =  new BDS_Triangle ( p1_op1, op1_mid, p1_mid ,op[0] );
-    BDS_Triangle*t2 =  new BDS_Triangle ( op2_p2, mid_op2, mid_p2 ,op[1] );
-    BDS_Triangle*t3 =  new BDS_Triangle ( op1_p2, op1_mid, mid_p2 ,p2);
-    BDS_Triangle*t4 =  new BDS_Triangle ( p1_op2, mid_op2, p1_mid ,p1);
+    BDS_Triangle*t1 =  new BDS_Triangle ( p1_op1, op1_mid, p1_mid );
+    BDS_Triangle*t2 =  new BDS_Triangle ( op2_p2, mid_op2, mid_p2 );
+    BDS_Triangle*t3 =  new BDS_Triangle ( op1_p2, op1_mid, mid_p2 );
+    BDS_Triangle*t4 =  new BDS_Triangle ( p1_op2, mid_op2, p1_mid );
     
     t1->g = g1;
     t2->g = g2;
@@ -889,23 +992,8 @@ bool BDS_Mesh ::swap_edge ( BDS_Edge *e)
     BDS_Edge *op1_op2 = new BDS_Edge ( op[0], op[1] );
     edges.insert ( op1_op2 );
 
-    BDS_Point *first_in_0 = 0;
-    for (int k=0;k<3;k++)
-	if (pts1[k] == p1)
-	{
-	    if (pts1[(k+1)%3] == op[0])first_in_0 = p1;
-	    else first_in_0 = op[0];
-	}
-    BDS_Point *first_in_1 = 0;
-    for (int k=0;k<3;k++)
-	if (pts2[k] == p2)
-	{
-	    if (pts2[(k+1)%3] == op[1])first_in_1 = p2;
-	    else first_in_1 = op[1];
-	}
-
-    BDS_Triangle*t1 =  new BDS_Triangle ( p1_op1, p1_op2, op1_op2 , first_in_0 );
-    BDS_Triangle*t2 =  new BDS_Triangle ( op2_p2, op1_op2, op1_p2 , first_in_1 );
+    BDS_Triangle*t1 =  new BDS_Triangle ( p1_op1, p1_op2, op1_op2  );
+    BDS_Triangle*t2 =  new BDS_Triangle ( op2_p2, op1_op2, op1_p2  );
     
     t1->g = g1;
     t2->g = g2;

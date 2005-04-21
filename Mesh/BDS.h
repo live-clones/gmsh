@@ -30,6 +30,7 @@ public:
 class BDS_Edge;
 class BDS_Triangle;
 class BDS_Mesh;
+void print_face (BDS_Triangle *t);
 
 class BDS_Vector
 {
@@ -113,12 +114,24 @@ public:
 	    if (faces[0]) return 1;
 	    return 0;
 	}
+    inline BDS_Point * commonvertex ( const BDS_Edge *other ) const
+      {
+	if (p1 == other->p1 || p1 == other->p2) return p1;
+	if (p2 == other->p1 || p2 == other->p2) return p2;
+	return 0;
+      }
+
     inline void addface ( BDS_Triangle *f)
 	{
 	    if (faces[1])
 	    {
-		printf("Non Manifold model not done yet\n");
-		throw 1;
+	      printf("Non Manifold model not done yet\n");
+	      print_face (f);
+	      print_face (faces[0]);
+	      print_face (faces[1]);
+	      
+
+	      throw 1;
 	    }
 	    if(faces [0])faces[1] = f;
 	    else faces[0] = f;
@@ -130,7 +143,7 @@ public:
 	    if (*other.p2 < *p2) return true;
 	    return false;
 	}
-    inline BDS_Triangle * otherFace ( BDS_Triangle *f)
+    inline BDS_Triangle * otherFace ( const BDS_Triangle *f) const
       {
 	if (f == faces[0]) return faces[1];
 	if (f == faces[1]) return faces[0];
@@ -175,34 +188,18 @@ class BDS_Triangle
 {
 public:
     bool deleted;
-    int ori_first_edge;
     BDS_Edge *e1,*e2,*e3;
     BDS_Vector N() const ;
     BDS_GeomEntity *g;
     inline void getNodes (BDS_Point *n[3]) const
 	{
-	    if (ori_first_edge == 1)
-	    {
-		n[0] = e1->p1;
-		n[1] = e1->p2;
-	    }
-	    else
-	    {
-		n[0] = e1->p2;
-		n[1] = e1->p1;
-	    }
-	    if (e2->p1 != n[0] && e2->p1 != n[1])n[2] = e2->p1;
-	    else n[2] = e2->p2;
+	  n[0] = e1->commonvertex (e3);
+	  n[1] = e1->commonvertex (e2);
+	  n[2] = e2->commonvertex (e3);
 	}
-    BDS_Triangle ( BDS_Edge *A, BDS_Edge *B, BDS_Edge *C, BDS_Point *first_vertex)
+    BDS_Triangle ( BDS_Edge *A, BDS_Edge *B, BDS_Edge *C)
 	: deleted (false) , e1(A),e2(B),e3(C),g(0)
 	{	
-	    if (first_vertex == A->p1) 
-		ori_first_edge = 1;
-	    else  if (first_vertex == A->p2) 
-		ori_first_edge = -1;
-	    else
-		throw;
 	    e1->addface(this);
 	    e2->addface(this);
 	    e3->addface(this);
@@ -278,8 +275,10 @@ class BDS_Mesh
     int adapt_mesh(double);
     void cleanup();
     // io's 
+    // STL
     bool read_stl  ( const char *filename, const double tolerance);
-    bool read_tri  ( const char *filename);
+    // INRIA MESH
+    bool read_mesh  ( const char *filename);
     bool read_vrml ( const char *filename);
     void save_gmsh_format (const char *filename);
 };
