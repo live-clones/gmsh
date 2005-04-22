@@ -1,4 +1,4 @@
-$Id: README.win32,v 1.5 2004-07-04 22:22:12 geuzaine Exp $
+$Id: README.win32,v 1.6 2005-04-22 16:48:11 geuzaine Exp $
 
 1) About opengl32.dll and glu32.dll:
 
@@ -12,14 +12,14 @@ If you plan to use other programs than Gmsh that depend on the
 cygwin1.dll library, you should keep only one version of this library
 on your system (i.e., move cygwin1.dll to the Windows system
 directory--usually C:\Windows\System\--and suppress all other versions
-of cygwin1.dll). Failing to do so may result in an incorrect behaviour
+of cygwin1.dll). Failing to do so may result in an incorrect behavior
 of applications sharing the library and running simultaneously.
 
 3) About configuration files:
 
 Gmsh saves session information and default options in the $GMSH_HOME
 directory, or in the $HOME, $TMP or $TEMP directories if $GMSH_HOME is
-not defined. If none of theses variables are defined, Gmsh will
+not defined. If none of these variables are defined, Gmsh will
 save/load its configuration files from the current working directory.
 
 4) Adjusting the Cygwin memory limit:
