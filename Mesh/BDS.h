@@ -5,8 +5,10 @@
 
 #include <set>
 #include <map>
+#include <vector>
 #include <list>
 #include <math.h>
+#include <algorithm>
 
 class BDS_GeomEntity
 {
@@ -31,38 +33,6 @@ class BDS_Edge;
 class BDS_Triangle;
 class BDS_Mesh;
 void print_face (BDS_Triangle *t);
-
-class BDS_Vector
-{
-public:
-  double x,y,z;
-  BDS_Vector operator + (const  BDS_Vector &v)
-  {
-    return BDS_Vector (x+v.x,y+v.y,z+v.z);
-  }
-  BDS_Vector& operator += (const  BDS_Vector &v)
-  {
-    x+=v.x;
-    y+=v.y;
-    z+=v.z;
-    return *this;
-  }
-  BDS_Vector operator / (const  double &v)
-  {
-    return BDS_Vector (x/v,y/v,z/v);
-  }
-  BDS_Vector operator * (const  double &v)
-  {
-    return BDS_Vector (x*v,y*v,z*v);
-  }
-  BDS_Vector (double ix=0, double iy=0, double iz=0)
-    //    : x(ix),(iy),z(iz)
-  {
-    x=ix;
-    y=iy;
-    z=iz;
-  }
-};
 
 class BDS_Point
 {
@@ -97,22 +67,73 @@ public:
 	}
 };
 
+class BDS_Vector
+{
+public:
+  double x,y,z;
+  BDS_Vector operator + (const  BDS_Vector &v)
+  {
+    return BDS_Vector (x+v.x,y+v.y,z+v.z);
+  }
+  inline BDS_Vector operator % (const BDS_Vector &other) const
+      {
+	  return BDS_Vector(y*other.z-z*other.y,
+			    z*other.x-x*other.z,
+			    x*other.y-y*other.x);
+      }
+  BDS_Vector& operator += (const  BDS_Vector &v)
+  {
+    x+=v.x;
+    y+=v.y;
+    z+=v.z;
+    return *this;
+  }
+  BDS_Vector operator / (const  double &v)
+  {
+    return BDS_Vector (x/v,y/v,z/v);
+  }
+  BDS_Vector operator * (const  double &v)
+  {
+    return BDS_Vector (x*v,y*v,z*v);
+  }
+  double operator * (const  BDS_Vector &v) const
+  {
+    return (x*v.x+y*v.y+z*v.z);
+  }
+  BDS_Vector (const BDS_Point &p2,const BDS_Point &p1)
+      : x(p2.X-p1.X),y(p2.Y-p1.Y),z(p2.Z-p1.Z)
+      {
+	  
+      }
+  BDS_Vector (double ix=0, double iy=0, double iz=0)
+    //    : x(ix),(iy),z(iz)
+  {
+    x=ix;
+    y=iy;
+    z=iz;
+  }
+};
+
+
 class BDS_Edge
 {
+    std::vector <BDS_Triangle *> _faces;
 public:
     bool deleted;
     BDS_Point *p1,*p2;
     BDS_GeomEntity *g;
-    BDS_Triangle*faces[2];
+    inline BDS_Triangle* faces(int i) const
+	{
+	    return _faces [i];
+	}
+
     inline double length () const
 	{
 	    return sqrt ((p1->X-p2->X)*(p1->X-p2->X)+(p1->Y-p2->Y)*(p1->Y-p2->Y)+(p1->Z-p2->Z)*(p1->Z-p2->Z));
 	}
     inline int numfaces ( ) const 
 	{
-	    if (faces[1]) return 2;
-	    if (faces[0]) return 1;
-	    return 0;
+	    return _faces.size();
 	}
     inline BDS_Point * commonvertex ( const BDS_Edge *other ) const
       {
@@ -123,18 +144,7 @@ public:
 
     inline void addface ( BDS_Triangle *f)
 	{
-	    if (faces[1])
-	    {
-	      printf("Non Manifold model not done yet\n");
-	      print_face (f);
-	      print_face (faces[0]);
-	      print_face (faces[1]);
-	      
-
-	      throw 1;
-	    }
-	    if(faces [0])faces[1] = f;
-	    else faces[0] = f;
+	    _faces.push_back(f);
 	}
     inline bool operator <  ( const BDS_Edge & other ) const
 	{
@@ -145,22 +155,15 @@ public:
 	}
     inline BDS_Triangle * otherFace ( const BDS_Triangle *f) const
       {
-	if (f == faces[0]) return faces[1];
-	if (f == faces[1]) return faces[0];
-	throw;
+	  if (numfaces()!=2) throw;
+	  if (f == _faces[0]) return _faces[1];
+	  if (f == _faces[1]) return _faces[0];
+	  throw;
       }
     inline void del (BDS_Triangle *t)
 	{
-	    if (faces[0] == t)
-	    {
-		faces[0] = faces[1];
-	    }
-	    else if (faces[1]!=t)
-	    {
-		printf("edge with faces %p %p : cannot delete %p\n",faces[0],faces[1],t);
-		throw;
-	    }
-	    faces [1] = 0;
+	    _faces.erase ( std::remove_if (_faces.begin(),_faces.end() , std::bind2nd(std::equal_to<BDS_Triangle*> (), t)) , 
+			   _faces.end () );
 	}
 
     inline void oppositeof (BDS_Point * oface[2]) const; 
@@ -168,7 +171,6 @@ public:
     BDS_Edge ( BDS_Point *A, BDS_Point *B )
 	: deleted(false), g(0)
 	{	    
-	    faces[0] = faces[1] = 0;
 	    if (*A < *B) 
 	    {
 		p1=A;

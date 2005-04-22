@@ -3,6 +3,28 @@
 #include <math.h>
 #include "Numeric.h"
 
+double dist_droites_gauches(BDS_Point *p1, BDS_Point *p2, 
+			    BDS_Point *p3 ,BDS_Point *p4)
+{
+    BDS_Vector u1 ( *p2, *p1 );
+    BDS_Vector u2 ( *p4, *p3 );
+    BDS_Vector a  ( *p2, *p4 );
+    BDS_Vector u1xu2 = u1%u2;
+    double x = sqrt (u1xu2 * u1xu2 );
+    // les droites sont paralleles
+    if (x == 0)
+    {
+	throw;
+    }
+    // les droites sont gauches
+    else
+    {
+	double y = fabs((a % u1) * u2);
+	return y/x; 
+    }
+    
+}
+
 void proj_point_plane ( double xa, double ya, double za,
 			BDS_Point *p1, BDS_Point *p2, BDS_Point *p3 ,
 			double &x, double &y, double &z)
@@ -91,7 +113,7 @@ void BDS_Point::getTriangles (std::list<BDS_Triangle *> &t)
       int NF = (*it)->numfaces();
       for (int i=0;i<NF;++i)
 	{
-	  BDS_Triangle *tt = (*it)->faces[i];
+	  BDS_Triangle *tt = (*it)->faces(i);
 	  if (tt)
 	    {
 	      std::list<BDS_Triangle*>::iterator tit  = t.begin();
@@ -198,22 +220,23 @@ void BDS_Mesh :: add_geom  (int p1, int p2)
 
 void BDS_Edge::oppositeof (BDS_Point * oface[2]) const
 {
-  oface[0] = oface[1] = 0;
-  if (faces[0])
+    
+    oface[0] = oface[1] = 0;
+    if (faces(0))
     {
-      BDS_Point *pts[3];
-      faces[0]->getNodes (pts); 
-      if (pts[0] != p1 && pts[0] != p2)oface[0] = pts[0];
-      else if (pts[1] != p1 && pts[1] != p2)oface[0] = pts[1];
-      else oface[0] = pts[2];
+	BDS_Point *pts[3];
+	faces(0)->getNodes (pts); 
+	if (pts[0] != p1 && pts[0] != p2)oface[0] = pts[0];
+	else if (pts[1] != p1 && pts[1] != p2)oface[0] = pts[1];
+	else oface[0] = pts[2];
     }
-  if (faces[1])
+    if (faces(1))
     {
-      BDS_Point *pts[3];
-      faces[1]->getNodes (pts); 
-      if (pts[0] != p1 && pts[0] != p2)oface[1] = pts[0];
-      else if (pts[1] != p1 && pts[1] != p2)oface[1] = pts[1];
-      else oface[1] = pts[2];
+	BDS_Point *pts[3];
+	faces(1)->getNodes (pts); 
+	if (pts[0] != p1 && pts[0] != p2)oface[1] = pts[0];
+	else if (pts[1] != p1 && pts[1] != p2)oface[1] = pts[1];
+	else oface[1] = pts[2];
     }
 }
 
@@ -270,16 +293,21 @@ void BDS_Mesh :: classify ( double angle )
 	while (it!=ite)
 	{
 	    BDS_Edge &e = *((BDS_Edge *) *it);
-	    if ( e.numfaces() == 1) e.g = &EDGE_CLAS;
+	    if ( e.numfaces() == 1) 
+	    {
+		e.g = &EDGE_CLAS;		
+	    }
+
 	    else if (e.numfaces() == 2 && 
-		     e.faces[0]->g != e.faces[1]->g )
+		     e.faces(0)->g != e.faces(1)->g )
 	      {
 		e.g = &EDGE_CLAS;
 	      }
+
 	    else if (e.numfaces() == 2)
 	    {
-		BDS_Vector N0 = e.faces[0]->N();
-		BDS_Vector N1 = e.faces[1]->N();
+		BDS_Vector N0 = e.faces(0)->N();
+		BDS_Vector N1 = e.faces(1)->N();
 		double a[3] = { N0.x ,  N0.y ,  N0.z };
 		double b[3] = { N1.x ,  N1.y ,  N1.z };
 		double c[3];
@@ -289,9 +317,14 @@ void BDS_Mesh :: classify ( double angle )
 		double cosa = a[0]*b[0] +a[1]*b[1] +a[2]*b[2];
 		double sina = sqrt (c[0]*c[0] + c[1]*c[1] + c[2]*c[2]);
 		double ag = atan2(sina,cosa);
-//		printf("edge with angle = %g sin %g cos %g n1 %g %g %g n2 %g %g %g\n",
-//		       ag,sina,cosa,a[0],a[1],a[2],b[0],b[1],b[2]);
+//		if (fabs(ag) > angle)
+//		    printf("edge with angle = %g sin %g cos %g n1 %g %g %g n2 %g %g %g\n",
+//			   ag,sina,cosa,a[0],a[1],a[2],b[0],b[1],b[2]);
 		if (fabs(ag) > angle)e.g = &EDGE_CLAS;
+	    }
+	    else
+	    {
+		e.g = &EDGE_CLAS;
 	    }
 	    ++it;
 	}
@@ -347,14 +380,14 @@ void BDS_Mesh :: classify ( double angle )
 		BDS_GeomEntity *g;
 		if ( e.numfaces() == 1)
 		{
-		    found = edgetags.find (std::make_pair ( e.faces[0]->g->classif_tag,-1));
+		    found = edgetags.find (std::make_pair ( e.faces(0)->g->classif_tag,-1));
 		}
-		else if (e.numfaces() == 2 && e.faces[0]->g->classif_tag != e.faces[1]->g->classif_tag)
+		else if (e.numfaces() == 2 && e.faces(0)->g->classif_tag != e.faces(1)->g->classif_tag)
 		{
-		    if (e.faces[0]->g->classif_tag > e.faces[1]->g->classif_tag)
-			found = edgetags.find (std::make_pair ( e.faces[1]->g->classif_tag,e.faces[0]->g->classif_tag));
+		    if (e.faces(0)->g->classif_tag > e.faces(1)->g->classif_tag)
+			found = edgetags.find (std::make_pair ( e.faces(1)->g->classif_tag,e.faces(0)->g->classif_tag));
 		    else
-			found = edgetags.find (std::make_pair ( e.faces[0]->g->classif_tag,e.faces[1]->g->classif_tag));
+			found = edgetags.find (std::make_pair ( e.faces(0)->g->classif_tag,e.faces(1)->g->classif_tag));
 		}
 		if (e.g)
 		{
@@ -364,15 +397,15 @@ void BDS_Mesh :: classify ( double angle )
 			g = get_geom (edgetag,1);
 			if ( e.numfaces() == 1)
 			{
-			    edgetags[std::make_pair ( e.faces[0]->g->classif_tag,-1)] = edgetag;
+			    edgetags[std::make_pair ( e.faces(0)->g->classif_tag,-1)] = edgetag;
 			}
 			else if (e.numfaces() == 2)
 			{
-			    if (e.faces[0]->g->classif_tag > e.faces[1]->g->classif_tag)
-				edgetags[std::make_pair ( e.faces[1]->g->classif_tag,e.faces[0]->g->classif_tag)]
+			    if (e.faces(0)->g->classif_tag > e.faces(1)->g->classif_tag)
+				edgetags[std::make_pair ( e.faces(1)->g->classif_tag,e.faces(0)->g->classif_tag)]
 				    = edgetag;
 			    else
-				edgetags[std::make_pair ( e.faces[0]->g->classif_tag,e.faces[1]->g->classif_tag)] 
+				edgetags[std::make_pair ( e.faces(0)->g->classif_tag,e.faces(1)->g->classif_tag)] 
 				    = edgetag;
 			}
 			edgetag++;
@@ -485,6 +518,8 @@ bool BDS_Mesh :: read_stl ( const char *filename , const double tolerance)
 	LC = sqrt ((Min[0]-Max[0])*(Min[0]-Max[0])+
 		   (Min[1]-Max[1])*(Min[1]-Max[1])+
 		   (Min[2]-Max[2])*(Min[2]-Max[2]));
+
+	printf("LC = %g\n",LC);
 
 	PointLessThanLexicographic::t = LC * tolerance;
 
@@ -884,10 +919,10 @@ bool BDS_Mesh ::split_edge ( BDS_Edge *e, double coord)
     BDS_GeomEntity *g1=0,*g2=0,*ge=e->g;
 
 
-    BDS_Edge *p1_op1 = find_edge ( p1, op[0], e->faces[0] );
-    BDS_Edge *op1_p2 = find_edge ( op[0],p2,e->faces[0]  );
-    BDS_Edge *p1_op2 = find_edge ( p1, op[1],e->faces[1] );
-    BDS_Edge *op2_p2 = find_edge ( op[1],p2,e->faces[1]   );
+    BDS_Edge *p1_op1 = find_edge ( p1, op[0], e->faces(0) );
+    BDS_Edge *op1_p2 = find_edge ( op[0],p2,e->faces(0)  );
+    BDS_Edge *p1_op2 = find_edge ( p1, op[1],e->faces(1) );
+    BDS_Edge *op2_p2 = find_edge ( op[1],p2,e->faces(1)   );
 
 //    BDS_Edge *p1_op1 = find_edge ( p1->iD, op[0]->iD );
 //    BDS_Edge *op1_p2 = find_edge ( op[0]->iD,p2->iD  );
@@ -903,16 +938,16 @@ bool BDS_Mesh ::split_edge ( BDS_Edge *e, double coord)
     print_face(e->faces[0]);
     print_face(e->faces[1]);
 */
-    if (e->faces[0])
+    if (e->faces(0))
     {
-	g1 = e->faces[0]->g;
-	del_triangle (e->faces[0]);
+	g1 = e->faces(0)->g;
+	del_triangle (e->faces(0));
     }
 // not a bug !!!
-    if (e->faces[0])
+    if (e->faces(0))
     {
-	g2 = e->faces[0]->g;
-	del_triangle (e->faces[0]);
+	g2 = e->faces(0)->g;
+	del_triangle (e->faces(0));
     } 
     
 
@@ -959,9 +994,9 @@ bool BDS_Mesh ::swap_edge ( BDS_Edge *e)
     if (nbFaces != 2)return false;
 
     BDS_Point *pts1[3];
-    e->faces[0]->getNodes (pts1); 
+    e->faces(0)->getNodes (pts1); 
     BDS_Point *pts2[3];
-    e->faces[1]->getNodes (pts2); 
+    e->faces(1)->getNodes (pts2); 
 
     if (e->g && e->g->classif_degree != 2)return false;
 
@@ -971,21 +1006,21 @@ bool BDS_Mesh ::swap_edge ( BDS_Edge *e)
     e->oppositeof (op);
     BDS_GeomEntity *g1=0,*g2=0,*ge=e->g;
 
-    BDS_Edge *p1_op1 = find_edge ( p1, op[0], e->faces[0] );
-    BDS_Edge *op1_p2 = find_edge ( op[0],p2,e->faces[0]  );
-    BDS_Edge *p1_op2 = find_edge ( p1, op[1],e->faces[1] );
-    BDS_Edge *op2_p2 = find_edge ( op[1],p2,e->faces[1]   );
+    BDS_Edge *p1_op1 = find_edge ( p1, op[0], e->faces(0) );
+    BDS_Edge *op1_p2 = find_edge ( op[0],p2,e->faces(0)  );
+    BDS_Edge *p1_op2 = find_edge ( p1, op[1],e->faces(1) );
+    BDS_Edge *op2_p2 = find_edge ( op[1],p2,e->faces(1)   );
 
-    if (e->faces[0])
+    if (e->faces(0))
     {
-	g1 = e->faces[0]->g;
-	del_triangle (e->faces[0]);
+	g1 = e->faces(0)->g;
+	del_triangle (e->faces(0));
     }
 // not a bug !!!
-    if (e->faces[0])
+    if (e->faces(0))
     {
-	g2 = e->faces[0]->g;
-	del_triangle (e->faces[0]);
+	g2 = e->faces(0)->g;
+	del_triangle (e->faces(0));
     } 
     del_edge (e);
 
@@ -1149,10 +1184,17 @@ int BDS_Mesh :: adapt_mesh ( double l)
 		    double qb1 = quality_triangle ( (*it)->p1 , op[0] , op[1] );
 		    double qb2 = quality_triangle ( (*it)->p2 , op[0] , op[1] );
 		    
+		    double d = dist_droites_gauches((*it)->p1, (*it)->p2, 
+						    op[0],op[1]);
+		    BDS_Vector v1 (*((*it)->p1), *((*it)->p2));
+		    BDS_Vector v2 (*(op[0]),*(op[1]));
+
+		    double dd = sqrt (v1*v1 + v2*v2);
+
 		    double qa = (qa1<qa2)?qa1:qa2; 
 		    double qb = (qb1<qb2)?qb1:qb2; 
 //		  printf("qa %g qb %g ..\n",qa,qb);
-		    if (qb > qa)
+		    if (qb > qa && d < 0.05 * dd)
 		    {
 //		      printf("swop ..\n");
 			nb_modif++;
