@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.241 2005-04-19 16:03:09 remacle Exp $
+// $Id: Options.cpp,v 1.242 2005-04-28 14:53:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -4387,9 +4387,7 @@ double opt_mesh_recombine_algo(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     int algo = (int)val;
-    printf("algo = %d\n",algo);
-    if(algo != 1 &&
-       algo != 2){
+    if(algo != 1 && algo != 2){
       Msg(WARNING, "Unknown mesh algorithm: keeping existing value");
     }
     else{
@@ -4494,10 +4492,6 @@ double opt_mesh_interactive(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.mesh.interactive = (int)val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[4]->value(CTX.mesh.interactive);
-#endif
   return CTX.mesh.interactive;
 }
 
