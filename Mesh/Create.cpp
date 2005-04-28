@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.70 2005-04-19 16:03:10 remacle Exp $
+// $Id: Create.cpp,v 1.71 2005-04-28 16:45:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -658,7 +658,7 @@ Surface *Create_Surface(int Num, int Typ)
 
   pS = (Surface *) Malloc(sizeof(Surface));
   pS->Dirty = 0;
-//  pS->thePolyRep = 0;
+  pS->bds = 0;
   pS->Color.type = 0;
   pS->Visible = VIS_GEOM | VIS_MESH;
   pS->Num = Num;
@@ -715,8 +715,6 @@ void Free_Surface(void *a, void *b)
       delete pS->QuadVertexArray;
     if(pS->normals)
       delete pS->normals;
-//    if(pS->thePolyRep)
-//      delete pS->thePolyRep;
     Free(pS);
     pS = NULL;
   }
