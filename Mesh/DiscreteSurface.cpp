@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.9 2005-04-19 16:03:10 remacle Exp $
+// $Id: DiscreteSurface.cpp,v 1.10 2005-04-28 14:38:30 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -501,7 +501,7 @@ int MeshDiscreteSurface(Surface *s)
 	{
 	    THEM->bds_mesh = new BDS_Mesh (*(THEM->bds));
 	    int iter = 0;
-	    while (iter < 10 && THEM->bds_mesh -> adapt_mesh ( THEM->bds->LC / 30 ))
+	    while (iter < 20 && THEM->bds_mesh -> adapt_mesh ( THEM->bds->LC / 50 ))
 	    {
 		iter ++;
 	    }
@@ -509,6 +509,7 @@ int MeshDiscreteSurface(Surface *s)
 	}
 	return 1;
     }
+    return 0;
 }
 
 int MeshDiscreteCurve(Curve *c)

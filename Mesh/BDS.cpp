@@ -1039,10 +1039,14 @@ bool BDS_Mesh ::swap_edge ( BDS_Edge *e)
     triangles.push_back(t2); 
     return true;
 }
-
-
 bool BDS_Mesh ::collapse_edge ( BDS_Edge *e, BDS_Point *p)
 {
+    std::list<BDS_Triangle *> t; 	
+    p->getTriangles (t); 	
+    {
+	std::list<BDS_Triangle *>::iterator it = t.begin();
+	std::list<BDS_Triangle *>::iterator ite = t.end();
+    }
 
 }
 
@@ -1099,7 +1103,7 @@ bool BDS_Mesh ::smooth_point ( BDS_Point *p)
 	Y = YY;
 	Z = ZZ;
     }
-
+    
     p->X = X;
     p->Y = Y;
     p->Z = Z;
@@ -1177,7 +1181,7 @@ int BDS_Mesh :: adapt_mesh ( double l)
 		
 		double prosc = cb1[0]*cb2[0]+cb1[1]*cb2[1]+cb1[2]*cb2[2];
 		
-		if (fabs(a1+a2-b1-b2) < 0.1 * (a1+a2) && prosc < 0 && fabs (prosc) > 0.7)
+		if (fabs(a1+a2-b1-b2) < 0.1 * (a1+a2) && prosc < 0 )//&& fabs (prosc) > 0.7)
 		{
 		    double qa1 = quality_triangle ( (*it)->p1 , (*it)->p2 , op[0] );
 		    double qa2 = quality_triangle ( (*it)->p1 , (*it)->p2 , op[1] );
@@ -1194,7 +1198,7 @@ int BDS_Mesh :: adapt_mesh ( double l)
 		    double qa = (qa1<qa2)?qa1:qa2; 
 		    double qb = (qb1<qb2)?qb1:qb2; 
 //		  printf("qa %g qb %g ..\n",qa,qb);
-		    if (qb > qa && d < 0.05 * dd)
+		    if (qb > qa && d < 0.05 * dd )
 		    {
 //		      printf("swop ..\n");
 			nb_modif++;
@@ -1225,21 +1229,18 @@ int BDS_Mesh :: adapt_mesh ( double l)
 BDS_Mesh::BDS_Mesh (const BDS_Mesh &other)
 {
 
-    printf("1\n");
     for (std::set<BDS_GeomEntity*,GeomLessThan>::iterator it = other.geom.begin();
 	 it != other.geom.end();
 	 ++it)
     {
 	add_geom((*it)->classif_tag,(*it)->classif_degree);
     }
-    printf("1\n");
     for (std::set<BDS_Point*,PointLessThan>::iterator it  = other.points.begin();
 	 it != other.points.end();
 	 ++it)
     {
 	add_point((*it)->iD,(*it)->X,(*it)->Y,(*it)->Z);
     }
-    printf("1\n");
     for ( std::set<BDS_Edge*, EdgeLessThan>::iterator it  = other.edges.begin();
 	  it != other.edges.end();
 	  ++it)
@@ -1247,7 +1248,6 @@ BDS_Mesh::BDS_Mesh (const BDS_Mesh &other)
 	BDS_Edge  * e = add_edge ((*it)->p1->iD,(*it)->p2->iD);
 	e->g = ((*it)->g)? get_geom  ((*it)->g->classif_tag,(*it)->g->classif_degree) : 0;
     }
-    printf("1\n");
     for (std::list<BDS_Triangle*>::const_iterator it  = other.triangles.begin();
 	 it != other.triangles.end();
 	 ++it)
@@ -1257,5 +1257,4 @@ BDS_Mesh::BDS_Mesh (const BDS_Mesh &other)
 	BDS_Triangle *t = add_triangle(n[0]->iD,n[1]->iD,n[2]->iD);
 	t->g = get_geom  ((*it)->g->classif_tag,(*it)->g->classif_degree);
     }
-    printf("1\n");
 }
