@@ -1046,6 +1046,16 @@ bool BDS_Mesh ::collapse_edge ( BDS_Edge *e, BDS_Point *p)
     {
 	std::list<BDS_Triangle *>::iterator it = t.begin();
 	std::list<BDS_Triangle *>::iterator ite = t.end();
+	std::list<BDS_Edge *> cavity;
+	while ( it != ite )
+	{
+	    BDS_Triangle *t = *it;
+	    if ( t->e1->p1 != p && t->e1->p1 != p) cavity.push_back (t->e1);
+	    else if ( t->e2->p1 != p && t->e2->p1 != p) cavity.push_back (t->e2);
+	    else if ( t->e3->p1 != p && t->e3->p1 != p) cavity.push_back (t->e3);
+	    else throw;
+	    ++it;
+	}
     }
 
 }
