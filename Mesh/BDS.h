@@ -142,6 +142,13 @@ public:
 	return 0;
       }
 
+    inline BDS_Point * othervertex ( const BDS_Point *p ) const
+      {
+	if (p1 == p) return p2;
+	if (p2 == p) return p1;
+	return 0;
+      }
+
     inline void addface ( BDS_Triangle *f)
 	{
 	    _faces.push_back(f);
@@ -193,6 +200,7 @@ public:
     BDS_Edge *e1,*e2,*e3;
     BDS_Vector N() const ;
     BDS_GeomEntity *g;
+
     inline void getNodes (BDS_Point *n[3]) const
 	{
 	  n[0] = e1->commonvertex (e3);
@@ -206,6 +214,16 @@ public:
 	    e2->addface(this);
 	    e3->addface(this);
 	}
+    void replacedge ( BDS_Edge *a, BDS_Edge *b )
+      {
+	if ( a == e1 )
+	  {
+	    e1->del (this);
+	    e1 = a;
+	    e1->add (this);
+	  }
+      }
+
 };
 class GeomLessThan
 {
@@ -261,6 +279,7 @@ class BDS_Mesh
     std::list<BDS_Triangle*>   triangles; 
     BDS_Point * add_point (int num , double x, double y,double z);
     BDS_Edge  * add_edge  (int p1, int p2);
+    void del_point  (BDS_Point *p);
     void del_edge  (BDS_Edge *e);
     BDS_Triangle *add_triangle  (int p1, int p2, int p3);
     void del_triangle  (BDS_Triangle *t);

@@ -213,6 +213,11 @@ void  BDS_Mesh :: del_edge  (BDS_Edge *e)
     e->deleted = true;
     edges_to_delete.insert (e);
 }
+void  BDS_Mesh :: del_point  (BDS_Point *p)
+{
+    points.erase ( p );
+    delete p;
+}
 void BDS_Mesh :: add_geom  (int p1, int p2)
 {
     geom.insert ( new BDS_GeomEntity ( p1,p2 ) ) ;        
@@ -1039,25 +1044,89 @@ bool BDS_Mesh ::swap_edge ( BDS_Edge *e)
     triangles.push_back(t2); 
     return true;
 }
-bool BDS_Mesh ::collapse_edge ( BDS_Edge *e, BDS_Point *p)
+bool BDS_Mesh ::collapse_edge ( BDS_Edge *e, BDS_Point *p, const double eps)
 {
-    std::list<BDS_Triangle *> t; 	
+    std::list<BDS_Triangle *> t;
+    BDS_Point *o = e->othervertex (p);
+    X = p->X;
+    Y = p->Y;
+    Z = p->Z;
     p->getTriangles (t); 	
     {
 	std::list<BDS_Triangle *>::iterator it = t.begin();
 	std::list<BDS_Triangle *>::iterator ite = t.end();
 	std::list<BDS_Edge *> cavity;
+	BDS_Triangle * todelete[2];
+	BDS_Edge     * tocollapse[2][2];
+	int nb_del = 0;
 	while ( it != ite )
 	{
 	    BDS_Triangle *t = *it;
-	    if ( t->e1->p1 != p && t->e1->p1 != p) cavity.push_back (t->e1);
-	    else if ( t->e2->p1 != p && t->e2->p1 != p) cavity.push_back (t->e2);
-	    else if ( t->e3->p1 != p && t->e3->p1 != p) cavity.push_back (t->e3);
-	    else throw;
+	    if (t->e1 != e && t->e2 != e && t->e3 != e)
+	      {
+		double n1[3],n2[3];
+		BDS_Point *pts[3];
+		t->getNodes (pts); 
+		p->X = o->X;
+		p->Y = o->Y;
+		p->Z = o->Z;
+		normal_triangle (pts[0],pts[1],pts[2], n1); // normal after collapse
+		p->X = X;
+		p->Y = Y;
+		p->Z = Z;
+		normal_triangle (pts[0],pts[1],pts[2], n2); // normal before collapse
+		// normals should not be opposed or change too dramatically
+		// this does not concern the triangles with the small edge that
+		// are collapsed too
+		double ps = n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2];
+		if ( ps < eps ) return false;
+	      }
+	    else
+	      {
+		// this triangle disappears
+		if (nb_del == 2) throw;
+		if (t->e1 == e)
+		  {
+		    tocollapse[nb_del][0] = t->e2;
+		    tocollapse[nb_del][1] = t->e3;
+		  }
+		if (t->e2 == e)
+		  {
+		    tocollapse[nb_del][0] = t->e1;
+		    tocollapse[nb_del][1] = t->e3;
+		  }
+		if (t->e3 == e)
+		  {
+		    tocollapse[nb_del][0] = t->e1;
+		    tocollapse[nb_del][1] = t->e2;
+		  }
+		else throw;
+		todelete[nb_del++] = t;
+	      }
 	    ++it;
 	}
-    }
+	if (nb_del != 2) throw;
+	// we can collapse
+	// delete the 2 triangles
+	del_triangle ( todelete [0] );
+	del_triangle ( todelete [1] );
+	// delete the edge
+	del_edge (e);
+	// reconnect together faces on  
+	for (int k=0;k<tocollapse[0][0]->numfaces();k++)
+	  tocollapse[0][1]->faces(k)->replaceedge ( tocollapse[0][1], tocollapse[0][0] ); 
+	for (int k=0;k<tocollapse[1][0]->numfaces();k++)
+	  tocollapse[1][1]->faces(k)->replaceedge ( tocollapse[1][1], tocollapse[1][0] ); 
 
+	
+	
+	del_edge (tocollase[0][1]);
+	del_edge (tocollase[1][1]);
+	// delete the point
+	del_point (p);
+       
+    }
+    return true;
 }
 
 bool BDS_Mesh ::smooth_point ( BDS_Point *p)
