@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.10 2005-04-28 14:38:30 remacle Exp $
+// $Id: DiscreteSurface.cpp,v 1.11 2005-05-04 14:42:22 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -501,10 +501,20 @@ int MeshDiscreteSurface(Surface *s)
 	{
 	    THEM->bds_mesh = new BDS_Mesh (*(THEM->bds));
 	    int iter = 0;
-	    while (iter < 20 && THEM->bds_mesh -> adapt_mesh ( THEM->bds->LC / 50 ))
+	    while (iter < 20 && THEM->bds_mesh -> adapt_mesh ( THEM->bds->LC / 170, true))
 	    {
+		printf("iter %d done\n",iter);
 		iter ++;
 	    }
+	    printf("smoothing 1/4\n");
+	    THEM->bds_mesh -> adapt_mesh ( THEM->bds->LC / 170, true,THEM->bds);
+	    printf("smoothing 2/4 \n");
+	    THEM->bds_mesh -> adapt_mesh ( THEM->bds->LC / 170, true,THEM->bds);
+	    printf("smoothing 3/4 \n");
+	    THEM->bds_mesh -> adapt_mesh ( THEM->bds->LC / 170, true,THEM->bds);
+	    printf("smoothing 4/4\n");
+	    THEM->bds_mesh -> adapt_mesh ( THEM->bds->LC / 170, true,THEM->bds);
+	    printf("smoothing done \n");
 	    THEM->bds_mesh->save_gmsh_format ( "3.msh" );
 	}
 	return 1;

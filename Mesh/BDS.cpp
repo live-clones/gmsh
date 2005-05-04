@@ -61,6 +61,15 @@ void print_face (BDS_Triangle *t)
     printf("face %p with nodes %d %d %d and edges %p (%d %d) %p (%d %d) %p (%d %d)\n",t,pts[0]->iD,pts[1]->iD,pts[2]->iD,
 	   t->e1,t->e1->p1->iD,t->e1->p2->iD,t->e2,t->e2->p1->iD,t->e2->p2->iD,t->e3,t->e3->p1->iD,t->e3->p2->iD);
 }
+void print_edge (BDS_Edge *e)
+{
+    printf("edge %p with nodes %d %d ------------------\n",e,e->p1->iD,e->p2->iD);
+    printf("faces : \n ");
+    for (int i=0;i<e->numfaces();++i)
+	print_face (e->faces(i));
+
+    printf("----------------------------------------------\n ");
+}
 
 void vector_triangle (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]) 
 {
@@ -369,12 +378,11 @@ void BDS_Mesh :: classify ( double angle )
 	  tag++;
 	}
     }
-//    return;
+    int edgetag = 1;
     {
 	std::map< std::pair<int,int> , int > edgetags;
 	std::set<BDS_Edge*, EdgeLessThan>::iterator it  = edges.begin();
 	std::set<BDS_Edge*, EdgeLessThan>::iterator ite = edges.end();	
-	int edgetag = 1;
 	while (it!=ite)
 	{
 	    BDS_Edge &e = *((BDS_Edge *) *it);
@@ -394,6 +402,7 @@ void BDS_Mesh :: classify ( double angle )
 		    else
 			found = edgetags.find (std::make_pair ( e.faces(0)->g->classif_tag,e.faces(1)->g->classif_tag));
 		}
+
 		if (e.g)
 		{
 		    if (found == edgetags.end())
@@ -422,10 +431,47 @@ void BDS_Mesh :: classify ( double angle )
 		    e.g = g;
 		}
 	    }
+	    else
+	    {
+		e.g = e.faces(0)->g;
+	    }	    
 	    ++it;
 	}
     }
-  printf("  end classifying \n");
+    int vertextag = 1;
+    {
+	std::set<BDS_Point*,PointLessThan>::iterator it  = points.begin();
+	std::set<BDS_Point*,PointLessThan>::iterator ite = points.end();
+	while (it != ite)
+	{
+	    std::list<BDS_Edge *>::iterator eit  = (*it)->edges.begin(); 	
+	    std::list<BDS_Edge *>::iterator eite =  (*it)->edges.end();
+	    std::set<BDS_GeomEntity*> geoms;
+	    BDS_GeomEntity* vg = 0;
+	    while (eit!=eite)
+	    {
+		if ((*eit)->g && (*eit)->g->classif_degree == 1)
+		    geoms.insert ( (*eit)->g );
+		else vg = (*eit)->g;
+		    
+		++eit;
+	    }
+	    if ( geoms.size() == 0){
+		(*it)->g = vg;
+	    }
+	    else if ( geoms.size() == 1) {
+		(*it)->g = (*(geoms.begin()));
+	    }
+	    else {
+		add_geom (vertextag, 0);
+		(*it)->g = get_geom(vertextag++,0);
+	    }	    
+	    if (!(*it)->g)printf("argh\n");
+	    ++it;
+	}	
+    }
+
+  printf("  end classifying %d edgetags %d vertextags\n",edgetag-1,vertextag-1);
 }
 double PointLessThanLexicographic::t = 0;
 
@@ -794,6 +840,9 @@ bool BDS_Mesh :: read_mesh ( const char *filename )
 void BDS_Mesh :: save_gmsh_format ( const char *filename )
 {
     cleanup();
+
+    int nbModelVertex = 0;
+
     FILE *f = fopen ( filename, "w");
     {
 	std::set<BDS_Point*,PointLessThan>::iterator it  = points.begin();
@@ -803,6 +852,7 @@ void BDS_Mesh :: save_gmsh_format ( const char *filename )
 	fprintf(f,"%d\n",points.size());
 	while(it!=ite)
 	{
+	    if ((*it)->g && (*it)->g->classif_degree == 0)nbModelVertex++;
 	    fprintf(f,"%d %g %g %g\n",(*it)->iD,(*it)->X,(*it)->Y,(*it)->Z);
 	    ++it;
 	}
@@ -817,20 +867,34 @@ void BDS_Mesh :: save_gmsh_format ( const char *filename )
 	    std::set<BDS_Edge*, EdgeLessThan>::iterator ite = edges.end();
 	    while(it!=ite)
 	    {
-		if ((*it)->g)nbClasEdges++;
+		if ((*it)->g && (*it)->g->classif_degree == 1)nbClasEdges++;
 		++it;
 	    }
 	}
 	
-	fprintf(f,"%d\n",nbClasEdges+triangles.size());
+	fprintf(f,"%d\n",nbClasEdges+nbModelVertex+triangles.size());
 	
-	int k=1;
+	int k=1;  
+	{
+	    std::set<BDS_Point*,PointLessThan>::iterator it  = points.begin();
+	    std::set<BDS_Point*,PointLessThan>::iterator ite = points.end();
+	    while(it!=ite)
+	    {
+		if ((*it)->g && (*it)->g->classif_degree == 0)
+		{
+		    fprintf(f,"%d %d %d %d %d %d\n",
+			    k++,15,(*it)->g->classif_tag,(*it)->g->classif_tag,1,
+			    (*it)->iD);
+		}
+		++it;
+	    }
+	}
 	{
 	    std::set<BDS_Edge*, EdgeLessThan>::iterator it  = edges.begin();
 	    std::set<BDS_Edge*, EdgeLessThan>::iterator ite = edges.end();
 	    while(it!=ite)
 	    {
-		if ((*it)->g)
+		if ((*it)->g && (*it)->g->classif_degree == 1)
 		    fprintf(f,"%d %d %d %d %d %d %d\n",
 			    k++,1,(*it)->g->classif_tag,(*it)->g->classif_tag,2,
 			    (*it)->p1->iD, (*it)->p2->iD);
@@ -904,7 +968,6 @@ BDS_Mesh ::~ BDS_Mesh ()
 bool BDS_Mesh ::split_edge ( BDS_Edge *e, double coord)
 {
 
-//    printf("split start %d\n",e->deleted);
 
     int nbFaces = e->numfaces();
 
@@ -981,6 +1044,10 @@ bool BDS_Mesh ::split_edge ( BDS_Edge *e, double coord)
 
     p1_mid->g = ge;
     mid_p2->g = ge;
+    op1_mid->g = g1;
+    mid_op2->g = g2;
+
+    mid->g = ge;
 
     triangles.push_back(t1); 
     triangles.push_back (t2); 
@@ -1046,105 +1113,134 @@ bool BDS_Mesh ::swap_edge ( BDS_Edge *e)
 }
 bool BDS_Mesh ::collapse_edge ( BDS_Edge *e, BDS_Point *p, const double eps)
 {
+
+    if (e->numfaces() != 2)return false;
+    if (p->g && p->g->classif_degree == 0)return false;
+    if (e->g && e->g->classif_degree == 1)return false;
+
     std::list<BDS_Triangle *> t;
     BDS_Point *o = e->othervertex (p);
-    X = p->X;
-    Y = p->Y;
-    Z = p->Z;
+
+    if (!p->g)printf("argh1\n");
+    if (!o->g)printf("argh2\n");
+    if (!e->g)printf("argh3\n");
+
+    if (o->g != p->g)return false;
+    
+    double X = p->X;
+    double Y = p->Y;
+    double Z = p->Z;
+
+//    printf("collapsing an edge :");
+//    print_edge(e);
+
+    static int pt[3][1024];
+    static BDS_GeomEntity *gs[1024];
+    static int ept[2][1024];
+    static BDS_GeomEntity *egs[1024];
+    int nt=0;
+
     p->getTriangles (t); 	
     {
 	std::list<BDS_Triangle *>::iterator it = t.begin();
 	std::list<BDS_Triangle *>::iterator ite = t.end();
-	std::list<BDS_Edge *> cavity;
-	BDS_Triangle * todelete[2];
-	BDS_Edge     * tocollapse[2][2];
-	int nb_del = 0;
+
 	while ( it != ite )
 	{
 	    BDS_Triangle *t = *it;
+//	    print_face(t);
 	    if (t->e1 != e && t->e2 != e && t->e3 != e)
 	      {
 		double n1[3],n2[3];
-		BDS_Point *pts[3];
+ 		BDS_Point *pts[3];
 		t->getNodes (pts); 
 		p->X = o->X;
 		p->Y = o->Y;
 		p->Z = o->Z;
+		double s_after = surface_triangle (pts[0],pts[1],pts[2]); 
 		normal_triangle (pts[0],pts[1],pts[2], n1); // normal after collapse
 		p->X = X;
 		p->Y = Y;
 		p->Z = Z;
 		normal_triangle (pts[0],pts[1],pts[2], n2); // normal before collapse
+		double s_before = surface_triangle (pts[0],pts[1],pts[2]); 
 		// normals should not be opposed or change too dramatically
 		// this does not concern the triangles with the small edge that
 		// are collapsed too
 		double ps = n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2];
 		if ( ps < eps ) return false;
-	      }
-	    else
-	      {
-		// this triangle disappears
-		if (nb_del == 2) throw;
-		if (t->e1 == e)
-		  {
-		    tocollapse[nb_del][0] = t->e2;
-		    tocollapse[nb_del][1] = t->e3;
-		  }
-		if (t->e2 == e)
-		  {
-		    tocollapse[nb_del][0] = t->e1;
-		    tocollapse[nb_del][1] = t->e3;
-		  }
-		if (t->e3 == e)
-		  {
-		    tocollapse[nb_del][0] = t->e1;
-		    tocollapse[nb_del][1] = t->e2;
-		  }
-		else throw;
-		todelete[nb_del++] = t;
+		if (fabs (s_after - s_before) < 0.01 * fabs (s_after + s_before))return false; 
+		gs[nt] = t->g;
+		pt[0][nt]   = (pts[0] == p) ? o->iD : pts[0]->iD ;
+		pt[1][nt]   = (pts[1] == p) ? o->iD : pts[1]->iD ;
+		pt[2][nt++] = (pts[2] == p) ? o->iD : pts[2]->iD ;
 	      }
 	    ++it;
 	}
-	if (nb_del != 2) throw;
-	// we can collapse
-	// delete the 2 triangles
-	del_triangle ( todelete [0] );
-	del_triangle ( todelete [1] );
-	// delete the edge
-	del_edge (e);
-	// reconnect together faces on  
-	for (int k=0;k<tocollapse[0][0]->numfaces();k++)
-	  tocollapse[0][1]->faces(k)->replaceedge ( tocollapse[0][1], tocollapse[0][0] ); 
-	for (int k=0;k<tocollapse[1][0]->numfaces();k++)
-	  tocollapse[1][1]->faces(k)->replaceedge ( tocollapse[1][1], tocollapse[1][0] ); 
-
-	
-	
-	del_edge (tocollase[0][1]);
-	del_edge (tocollase[1][1]);
-	// delete the point
-	del_point (p);
-       
     }
+
+
+    {
+	std::list<BDS_Triangle *>::iterator it = t.begin();
+	std::list<BDS_Triangle *>::iterator ite = t.end();
+	
+	while ( it != ite )
+	{
+	    BDS_Triangle *t = *it;
+	    del_triangle (t);
+	    ++it;
+	}
+    }
+
+//    printf("%d triangles 2 add\n",nt);
+
+    int kk = 0;
+    {
+	std::list<BDS_Edge *>edges (p->edges);
+	std::list<BDS_Edge *>::iterator eit  = edges.begin(); 	
+	std::list<BDS_Edge *>::iterator eite = edges.end();
+	while (eit!=eite)
+	{
+	    ept[0][kk] = ((*eit)->p1 == p)?o->iD:(*eit)->p1->iD;
+	    ept[1][kk] = ((*eit)->p2 == p)?o->iD:(*eit)->p2->iD;
+	    egs[kk++] = (*eit)->g;
+	    del_edge (*eit);
+	    ++eit;
+	}
+    }
+
+    del_point (p);
+    
+    {
+	for (int k=0;k<nt;k++)
+	{
+	    BDS_Triangle *t = add_triangle(pt[0][k],pt[1][k],pt[2][k]);
+	    t->g = gs[k];
+	}
+    }
+
+    for (int i=0;i<kk;++i)
+    {
+	BDS_Edge *e = find_edge (ept[0][i],ept[1][i]);
+	if (e) e->g = egs[i];
+    }
+
+
     return true;
 }
 
-bool BDS_Mesh ::smooth_point ( BDS_Point *p)
+bool BDS_Mesh ::smooth_point ( BDS_Point *p , BDS_Mesh *geom_mesh )
 {
-    std::list<BDS_Edge *>::iterator eit  = p->edges.begin(); 	
-    std::list<BDS_Edge *>::iterator eite = p->edges.end();
-    while (eit!=eite)
-    {
-	if ((*eit)->g)
-	    if((*eit)->g->classif_degree == 1)return false;
-	++eit;
-    }
+
+    if (p->g && p->g->classif_degree <= 1)return false;
+
     double X = 0;
     double Y = 0;
     double Z = 0;
 
-    eit  = p->edges.begin(); 
-    while (eit!=eite)
+    std::list<BDS_Edge*>::iterator eit  = p->edges.begin(); 
+
+    while (eit!=p->edges.end())
     {
 	BDS_Point *op = ((*eit)->p1 == p)?(*eit)->p2:(*eit)->p1; 	
 	X+=op->X;
@@ -1158,14 +1254,29 @@ bool BDS_Mesh ::smooth_point ( BDS_Point *p)
     Z /= p->edges.size();
 
     std::list<BDS_Triangle *> t; 	
-    p->getTriangles (t); 	
+    std::list<BDS_Triangle *>::iterator it ;
+    std::list<BDS_Triangle *>::iterator ite;
+    if (geom_mesh)
     {
-	std::list<BDS_Triangle *>::iterator it = t.begin();
-	std::list<BDS_Triangle *>::iterator ite = t.end();
-	double dist = 1.e22;
-	double XX = X,YY=Y,ZZ=Z;
-	while (it != ite)
-	{ 
+	it = geom_mesh->triangles.begin();
+	ite = geom_mesh->triangles.end();
+    }
+    else
+    {
+	p->getTriangles (t); 
+	it = t.begin();	
+	ite = t.end();
+    }
+
+    double dist = 1.e22;
+    double XX = X,YY=Y,ZZ=Z;
+
+    int p_classif = p->g->classif_tag;
+
+    while (it != ite)
+    { 
+	if ((*it)->g->classif_tag == p_classif)
+	{
 	    BDS_Point *pts[3];
 	    (*it)->getNodes (pts); 
 	    double xp,yp,zp;
@@ -1176,24 +1287,25 @@ bool BDS_Mesh ::smooth_point ( BDS_Point *p)
 		XX = xp; YY = yp; ZZ = zp;
 		dist = d;
 	    }
-	    ++it;
 	}
-	X = XX;
-	Y = YY;
-	Z = ZZ;
+	++it;
     }
-    
+    X = XX;
+    Y = YY;
+    Z = ZZ;
+
     p->X = X;
     p->Y = Y;
     p->Z = Z;
-
     return true;
 }
-
-int BDS_Mesh :: adapt_mesh ( double l) 
+    
+int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh) 
 {
     int nb_modif = 0;
 
+
+    // add initial set of edges in a list
     std::set<BDS_Edge*, EdgeLessThan> small_to_long;
     {
 	std::set<BDS_Edge*, EdgeLessThan>::iterator it = edges.begin();
@@ -1205,6 +1317,7 @@ int BDS_Mesh :: adapt_mesh ( double l)
 	    ++it;
 	}
     }
+    // split edges
     {
       std::set<BDS_Edge*, EdgeLessThan>::iterator it = small_to_long.begin();
       std::set<BDS_Edge*, EdgeLessThan>::iterator ite  = small_to_long.end();
@@ -1218,7 +1331,7 @@ int BDS_Mesh :: adapt_mesh ( double l)
 	      double ll = sqrt((op[0]->X-op[1]->X)*(op[0]->X-op[1]->X)+
 			       (op[0]->Y-op[1]->Y)*(op[0]->Y-op[1]->Y)+
 			       (op[0]->Z-op[1]->Z)*(op[0]->Z-op[1]->Z));
-	      if (!(*it)->deleted && (*it)->length() > l && ll > 0.5 * l){
+	      if (!(*it)->deleted && (*it)->length() > l/0.7 && ll > 0.5 * l){
 		split_edge (*it, 0.5 );
 		nb_modif++;
 	      }
@@ -1226,9 +1339,33 @@ int BDS_Mesh :: adapt_mesh ( double l)
 	  ++it;
 	}
     }
-//  return;
-    cleanup();
-    
+
+    // re-create small_to_long
+    cleanup();    
+    {
+	small_to_long.clear();
+	std::set<BDS_Edge*, EdgeLessThan>::iterator it = edges.begin();
+	std::set<BDS_Edge*, EdgeLessThan>::iterator ite  = edges.end();
+	while (it != ite)
+	{
+	    small_to_long.insert (*it);  
+	    ++it;
+	}
+    }
+    // collapse 
+    {    	
+	std::set<BDS_Edge*, EdgeLessThan>::iterator it = small_to_long.begin();
+	std::set<BDS_Edge*, EdgeLessThan>::iterator ite  = small_to_long.end();
+	while (it != ite)
+	{
+	    if (!(*it)->deleted && (*it)->length() < 0.7 * l ){
+		if (collapse_edge (*it, (*it)->p1, 0.1 ))
+		    nb_modif++;
+	    }
+	    ++it;
+	}
+    }
+    cleanup();  
     {
 	small_to_long.clear();
 	std::set<BDS_Edge*, EdgeLessThan>::iterator it = edges.begin();
@@ -1289,16 +1426,14 @@ int BDS_Mesh :: adapt_mesh ( double l)
 	}
     }
     cleanup();  
+    if (smooth)
     {    
-	for (int i=0;i<4;++i)
+	std::set<BDS_Point*, PointLessThan>::iterator it   = points.begin();
+	std::set<BDS_Point*, PointLessThan>::iterator ite  = points.end();
+	while (it != ite)
 	{
-	    std::set<BDS_Point*, PointLessThan>::iterator it   = points.begin();
-	    std::set<BDS_Point*, PointLessThan>::iterator ite  = points.end();
-	    while (it != ite)
-	    {
-		smooth_point(*it);
-		++it;
-	    }
+	    smooth_point(*it,geom_mesh);
+	    ++it;
 	}
     }
     return nb_modif;
@@ -1318,7 +1453,8 @@ BDS_Mesh::BDS_Mesh (const BDS_Mesh &other)
 	 it != other.points.end();
 	 ++it)
     {
-	add_point((*it)->iD,(*it)->X,(*it)->Y,(*it)->Z);
+	BDS_Point *p =  add_point((*it)->iD,(*it)->X,(*it)->Y,(*it)->Z);
+	p->g = ((*it)->g)? get_geom  ((*it)->g->classif_tag,(*it)->g->classif_degree) : 0;
     }
     for ( std::set<BDS_Edge*, EdgeLessThan>::iterator it  = other.edges.begin();
 	  it != other.edges.end();

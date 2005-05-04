@@ -15,6 +15,7 @@ class BDS_GeomEntity
 public:
     int classif_tag;
     int classif_degree;
+    bool is_plane_surface;
     inline bool operator <  ( const BDS_GeomEntity & other ) const
 	{
 	    if (classif_degree < other.classif_degree)return true;
@@ -214,16 +215,6 @@ public:
 	    e2->addface(this);
 	    e3->addface(this);
 	}
-    void replacedge ( BDS_Edge *a, BDS_Edge *b )
-      {
-	if ( a == e1 )
-	  {
-	    e1->del (this);
-	    e1 = a;
-	    e1->add (this);
-	  }
-      }
-
 };
 class GeomLessThan
 {
@@ -269,6 +260,9 @@ class BDS_Mesh
     int MAXPOINTNUMBER;
  public:
     double Min[3],Max[3],LC;
+
+    void projection ( double &x, double &y, double &z );
+
     BDS_Mesh(int _MAXX = 0) :  MAXPOINTNUMBER (_MAXX){}
     virtual ~BDS_Mesh ();
     BDS_Mesh (const BDS_Mesh &other);
@@ -289,11 +283,11 @@ class BDS_Mesh
     BDS_Edge  *find_edge (BDS_Point *p1, BDS_Point *p2, BDS_Triangle *t)const;
     BDS_GeomEntity *get_geom  (int p1, int p2);
     bool swap_edge ( BDS_Edge *);
-    bool collapse_edge ( BDS_Edge *, BDS_Point*);
-    bool smooth_point ( BDS_Point*);
+    bool collapse_edge ( BDS_Edge *, BDS_Point*, const double eps);
+    bool smooth_point ( BDS_Point* , BDS_Mesh *geom = 0);
     bool split_edge ( BDS_Edge *, double coord);
     void classify ( double angle);
-    int adapt_mesh(double);
+    int adapt_mesh(double,bool smooth = false,BDS_Mesh *geom = 0);
     void cleanup();
     // io's 
     // STL

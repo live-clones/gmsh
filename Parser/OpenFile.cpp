@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.77 2005-04-22 14:36:43 remacle Exp $
+// $Id: OpenFile.cpp,v 1.78 2005-05-04 14:42:22 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -292,7 +292,7 @@ int MergeProblem(char *name, int warn_if_missing)
 	THEM->bds->read_stl ( name , 5.e-7 );
       }
     THEM->bds->save_gmsh_format ( "1.msh" );
-    THEM->bds->classify ( M_PI / 4 );
+    THEM->bds->classify ( M_PI / 8 );
     THEM->bds->save_gmsh_format ( "2.msh" );
     BDS_To_Mesh (THEM);
     SetBoundingBox();
