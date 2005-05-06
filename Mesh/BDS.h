@@ -10,12 +10,28 @@
 #include <math.h>
 #include <algorithm>
 
+class BDS_Edge;
+class BDS_Triangle;
+class BDS_Mesh;
+class BDS_Point;
+
+class BDS_Surface
+{
+public :
+    virtual double signedDistanceTo ( BDS_Point * ) const = 0;
+    virtual void projection ( double xa, double ya, double za,
+			      double &x, double &y, double &z) const =0;
+};
+
+
 class BDS_GeomEntity
 {
 public:
     int classif_tag;
     int classif_degree;
-    bool is_plane_surface;
+
+    BDS_Surface *surf;
+
     inline bool operator <  ( const BDS_GeomEntity & other ) const
 	{
 	    if (classif_degree < other.classif_degree)return true;
@@ -24,15 +40,12 @@ public:
 	    return false;
 	}
     BDS_GeomEntity (int a, int b)
-	: classif_tag (a),classif_degree(b)
+	: classif_tag (a),classif_degree(b),surf(0)
 	{
 	}
 };
 
 
-class BDS_Edge;
-class BDS_Triangle;
-class BDS_Mesh;
 void print_face (BDS_Triangle *t);
 
 class BDS_Point
@@ -216,6 +229,45 @@ public:
 	    e3->addface(this);
 	}
 };
+
+
+class BDS_Plane : public  BDS_Surface
+{
+    double a,b,c;
+public :
+    BDS_Plane (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3);
+    virtual double signedDistanceTo ( BDS_Point * p) const {return a*p->X + b*p->Y + c*p->Z + 1;}
+    virtual void projection ( double xa, double ya, double za,
+			      double &x, double &y, double &z) const 
+	{
+	    double k = - ( a * xa +  b * ya +  c * za + 1 ) / ( a * a + b * b + c * c ); 
+	    x = xa + k * a;
+	    y = ya + k * b;
+	    z = za + k * c;
+	}
+};
+
+class BDS_Sphere : public  BDS_Surface
+{
+public :
+    double xc,yc,zc,R;
+    BDS_Sphere (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, BDS_Point *p4);
+    virtual double signedDistanceTo ( BDS_Point * p) const {
+	return sqrt((p->X-xc)*(p->X-xc)+
+		    (p->Y-yc)*(p->Y-yc)+
+		    (p->Z-zc)*(p->Z-zc)) - R;
+    }
+    virtual void projection ( double xa, double ya, double za,
+			      double &x, double &y, double &z) const 
+	{
+	    double k =  ( R * R )/((xa-xc)*(xa-xc)+(ya-yc)*(ya-yc)+(za-zc)*(za-zc)) ; 
+	    x = xc + k * (xa-xc);
+	    y = yc + k * (ya-yc);
+	    z = zc + k * (za-zc);
+	}
+};
+
+
 class GeomLessThan
 {
  public:
@@ -287,6 +339,7 @@ class BDS_Mesh
     bool smooth_point ( BDS_Point* , BDS_Mesh *geom = 0);
     bool split_edge ( BDS_Edge *, double coord);
     void classify ( double angle);
+    void reverseEngineerCAD ( ) ;
     int adapt_mesh(double,bool smooth = false,BDS_Mesh *geom = 0);
     void cleanup();
     // io's 

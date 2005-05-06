@@ -3,6 +3,55 @@
 #include <math.h>
 #include "Numeric.h"
 
+
+
+BDS_Sphere :: BDS_Sphere( BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, BDS_Point *p4)
+{
+  double mat[3][3], b[3], dum,res[3];
+  int i;
+  double X[4] = {p1->X,p2->X,p3->X,p4->X};
+  double Y[4] = {p1->Y,p2->Y,p3->Y,p4->Y};
+  double Z[4] = {p1->Z,p2->Z,p3->Z,p4->Z};
+
+  b[0] = X[1] * X[1] - X[0] * X[0] +
+    Y[1] * Y[1] - Y[0] * Y[0] + Z[1] * Z[1] - Z[0] * Z[0];
+  b[1] = X[2] * X[2] - X[1] * X[1] +
+    Y[2] * Y[2] - Y[1] * Y[1] + Z[2] * Z[2] - Z[1] * Z[1];
+  b[2] = X[3] * X[3] - X[2] * X[2] +
+    Y[3] * Y[3] - Y[2] * Y[2] + Z[3] * Z[3] - Z[2] * Z[2];
+
+  for(i = 0; i < 3; i++)
+    b[i] *= 0.5;
+
+  mat[0][0] = X[1] - X[0];
+  mat[0][1] = Y[1] - Y[0];
+  mat[0][2] = Z[1] - Z[0];
+  mat[1][0] = X[2] - X[1];
+  mat[1][1] = Y[2] - Y[1];
+  mat[1][2] = Z[2] - Z[1];
+  mat[2][0] = X[3] - X[2];
+  mat[2][1] = Y[3] - Y[2];
+  mat[2][2] = Z[3] - Z[2];
+
+
+//  printf("X = %g %g %g %g\n",X[0],X[1],X[2],X[3]);
+//  printf("Y = %g %g %g %g\n",Y[0],Y[1],Y[2],Y[3]);
+//  printf("Z = %g %g %g %g\n",Z[0],Z[1],Z[2],Z[3]);
+
+  if(!sys3x3(mat, b, res, &dum)) {
+      R = 1.e22;
+      xc = yc = zc = 1.e33;
+//      printf("ahrgh\n");
+  }
+  else
+  {
+      xc = res[0];
+      yc = res[1];
+      zc = res[2];
+      R = sqrt ((p1->X-xc)*(p1->X-xc)+(p1->Y-yc)*(p1->Y-yc)+(p1->Z-zc)*(p1->Z-zc));
+  }
+}
+
 double dist_droites_gauches(BDS_Point *p1, BDS_Point *p2, 
 			    BDS_Point *p3 ,BDS_Point *p4)
 {
@@ -109,6 +158,20 @@ double quality_triangle  (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3)
 		   (p3->Z - p2->Z)*(p3->Z - p2->Z));
     double a =  surface_triangle ( p1,p2,p3);
     return a / (e12+e22+e32);
+}
+
+BDS_Plane::BDS_Plane (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3)
+{
+    double mat[3][3];
+    mat[0][0] = p1->X; mat[0][1] = p1->Y; mat[0][2] = p1->Z;
+    mat[1][0] = p2->X; mat[1][1] = p2->Y; mat[1][2] = p2->Z;
+    mat[2][0] = p3->X; mat[2][1] = p3->Y; mat[2][2] = p3->Z;
+    double rhs[3] = {-1,-1,-1};
+    double pl[3] , det ;
+    sys3x3 (mat,rhs,pl,&det);
+    a = pl[0];
+    b = pl[1];
+    c = pl[2];
 }
 
 
@@ -295,6 +358,95 @@ BDS_Vector BDS_Triangle :: N () const
 }
 
 
+void BDS_Mesh :: reverseEngineerCAD ( ) 
+{
+    for (std::set<BDS_GeomEntity*,GeomLessThan>::iterator it = geom.begin();
+	 it != geom.end();
+	 ++it)
+    {
+	if ((*it)->classif_degree == 2)
+	{
+	    std::set<BDS_Point*,PointLessThan> pts;
+
+	    std::list<BDS_Triangle*>::iterator tit  = triangles.begin();
+	    std::list<BDS_Triangle*>::iterator tite = triangles.end();
+	    while (tit!=tite)
+	    {
+		if ((*tit)->g == (*it))
+		{
+		    BDS_Point *nod[3];
+		    (*tit)->getNodes (nod);
+		    pts.insert(nod[0]);
+		    pts.insert(nod[1]);
+		    pts.insert(nod[2]);
+		}
+		tit++;
+	    }
+	    if(pts.size() > 3)
+	    {
+		// TEST PLANE 
+		{
+		    std::set<BDS_Point*>::iterator pit  = pts.begin();
+		    std::set<BDS_Point*>::iterator pite = pts.end();
+		    
+		    BDS_Point *p1 = *pit;++pit;
+		    BDS_Point *p2 = *pit;++pit;
+		    BDS_Point *p3 = *pit;++pit;
+		    BDS_Plane *plane = new BDS_Plane (  p1 , p2 , p3 );
+		    double distmax = 0;
+		    while (pit!=pite)
+		    {
+			double dist = plane->signedDistanceTo (*pit);
+			if (fabs(dist) > distmax) distmax = fabs(dist);
+			++pit;
+		    }
+		    if (distmax < 1.e-6 * LC ) 
+		    {
+			(*it)->surf = plane;
+			printf("plane surface found %g\n",distmax); 
+		    }
+		    else
+		    { 
+//			printf("non plane surface found %g\n",distmax); 
+			delete plane;
+		    }
+		}
+	    }
+	    if(pts.size() > 4 && !(*it)->surf)
+	    {
+		// TEST SPHERE
+		{
+		    std::set<BDS_Point*,PointLessThan>::iterator pit  = pts.begin();
+		    std::set<BDS_Point*,PointLessThan>::iterator pite = pts.end();
+		    
+		    BDS_Point *p1 = *pit;++pit;
+		    BDS_Point *p2 = *pit;++pit;
+		    BDS_Point *p3 = *pit;++pit;
+		    BDS_Point *p4 = *pit;++pit;
+		    BDS_Sphere *sphere = new BDS_Sphere (  p1 , p2 , p3 , p4);
+		    double distmax = 0;
+		    while (pit!=pite)
+		    {
+			double dist = sphere->signedDistanceTo (*pit);
+			if (fabs(dist) > distmax) distmax = fabs(dist);
+			++pit;
+		    }
+		    if (distmax < 1.e-2 * LC ) 
+		    {
+			(*it)->surf = sphere;
+			printf("spherical surface %d found %g (R=%g,LC=%g)\n",(*it)->classif_tag,distmax,sphere->R,LC); 
+		    }
+		    else
+		    { 
+//			printf("non spherical surface found %g\n",distmax); 
+			delete sphere;
+		    }
+		}
+	    }
+	}
+    }
+}
+
 void BDS_Mesh :: classify ( double angle )
 {
 
@@ -470,6 +622,7 @@ void BDS_Mesh :: classify ( double angle )
 	    ++it;
 	}	
     }
+    reverseEngineerCAD ( ) ;
 
   printf("  end classifying %d edgetags %d vertextags\n",edgetag-1,vertextag-1);
 }
@@ -1253,50 +1406,58 @@ bool BDS_Mesh ::smooth_point ( BDS_Point *p , BDS_Mesh *geom_mesh )
     Y /= p->edges.size();
     Z /= p->edges.size();
 
-    std::list<BDS_Triangle *> t; 	
-    std::list<BDS_Triangle *>::iterator it ;
-    std::list<BDS_Triangle *>::iterator ite;
-    if (geom_mesh)
+    if (p->g->surf)
     {
-	it = geom_mesh->triangles.begin();
-	ite = geom_mesh->triangles.end();
+	p->g->surf->projection ( X,Y,Z,p->X,p->Y,p->Z);
+//	printf("coucou\n");
     }
     else
     {
-	p->getTriangles (t); 
-	it = t.begin();	
-	ite = t.end();
-    }
-
-    double dist = 1.e22;
-    double XX = X,YY=Y,ZZ=Z;
-
-    int p_classif = p->g->classif_tag;
-
-    while (it != ite)
-    { 
-	if ((*it)->g->classif_tag == p_classif)
+	std::list<BDS_Triangle *> t; 	
+	std::list<BDS_Triangle *>::iterator it ;
+	std::list<BDS_Triangle *>::iterator ite;
+	if (geom_mesh)
 	{
-	    BDS_Point *pts[3];
-	    (*it)->getNodes (pts); 
-	    double xp,yp,zp;
-	    proj_point_plane ( X,Y,Z,pts[0],pts[1],pts[2],xp,yp,zp);
-	    double d = sqrt ((xp-X)*(xp-X)+(yp-Y)*(yp-Y)+(zp-Z)*(zp-Z));
-	    if (d < dist)
-	    {
-		XX = xp; YY = yp; ZZ = zp;
-		dist = d;
-	    }
+	    it = geom_mesh->triangles.begin();
+	    ite = geom_mesh->triangles.end();
 	}
-	++it;
+	else
+	{
+	    p->getTriangles (t); 
+	    it = t.begin();	
+	    ite = t.end();
+	}
+	
+	double dist = 1.e22;
+	double XX = X,YY=Y,ZZ=Z;
+	
+	int p_classif = p->g->classif_tag;
+	
+	while (it != ite)
+	{ 
+	    if ((*it)->g->classif_tag == p_classif)
+	    {
+		BDS_Point *pts[3];
+		(*it)->getNodes (pts); 
+		double xp,yp,zp;
+		proj_point_plane ( X,Y,Z,pts[0],pts[1],pts[2],xp,yp,zp);
+		double d = sqrt ((xp-X)*(xp-X)+(yp-Y)*(yp-Y)+(zp-Z)*(zp-Z));
+		if (d < dist)
+		{
+		    XX = xp; YY = yp; ZZ = zp;
+		    dist = d;
+		}
+	    }
+	    ++it;
+	}
+	X = XX;
+	Y = YY;
+	Z = ZZ;
+	
+	p->X = X;
+	p->Y = Y;
+	p->Z = Z;
     }
-    X = XX;
-    Y = YY;
-    Z = ZZ;
-
-    p->X = X;
-    p->Y = Y;
-    p->Z = Z;
     return true;
 }
     
@@ -1448,6 +1609,8 @@ BDS_Mesh::BDS_Mesh (const BDS_Mesh &other)
 	 ++it)
     {
 	add_geom((*it)->classif_tag,(*it)->classif_degree);
+	BDS_GeomEntity* g = get_geom((*it)->classif_tag,(*it)->classif_degree);
+	g->surf = (*it)->surf;
     }
     for (std::set<BDS_Point*,PointLessThan>::iterator it  = other.points.begin();
 	 it != other.points.end();
