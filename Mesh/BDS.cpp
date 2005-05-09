@@ -3,6 +3,13 @@
 #include <math.h>
 #include "Numeric.h"
 
+/*
+  (X-Xc)^2 = R^2
+
+  
+
+*/
+
 
 
 BDS_Sphere :: BDS_Sphere( BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, BDS_Point *p4)
@@ -431,7 +438,7 @@ void BDS_Mesh :: reverseEngineerCAD ( )
 			if (fabs(dist) > distmax) distmax = fabs(dist);
 			++pit;
 		    }
-		    if (distmax < 1.e-2 * LC ) 
+		    if (distmax < 1.e-116 * LC ) 
 		    {
 			(*it)->surf = sphere;
 			printf("spherical surface %d found %g (R=%g,LC=%g)\n",(*it)->classif_tag,distmax,sphere->R,LC); 
@@ -474,18 +481,7 @@ void BDS_Mesh :: classify ( double angle )
 	    {
 		BDS_Vector N0 = e.faces(0)->N();
 		BDS_Vector N1 = e.faces(1)->N();
-		double a[3] = { N0.x ,  N0.y ,  N0.z };
-		double b[3] = { N1.x ,  N1.y ,  N1.z };
-		double c[3];
-		c[2] = a[0] * b[1] - a[1] * b[0];
-		c[1] = -a[0] * b[2] + a[2] * b[0];
-		c[0] = a[1] * b[2] - a[2] * b[1];
-		double cosa = a[0]*b[0] +a[1]*b[1] +a[2]*b[2];
-		double sina = sqrt (c[0]*c[0] + c[1]*c[1] + c[2]*c[2]);
-		double ag = atan2(sina,cosa);
-//		if (fabs(ag) > angle)
-//		    printf("edge with angle = %g sin %g cos %g n1 %g %g %g n2 %g %g %g\n",
-//			   ag,sina,cosa,a[0],a[1],a[2],b[0],b[1],b[2]);
+		double ag = N0.angle (N1);
 		if (fabs(ag) > angle)e.g = &EDGE_CLAS;
 	    }
 	    else
@@ -620,6 +616,42 @@ void BDS_Mesh :: classify ( double angle )
 	    }	    
 	    if (!(*it)->g)printf("argh\n");
 	    ++it;
+	}	
+    }
+    {
+	std::set<BDS_Point*,PointLessThan>::iterator it  = points.begin();
+	std::set<BDS_Point*,PointLessThan>::iterator ite = points.end();
+	while (it != ite)
+	{
+	  if ((*it)->g->classif_degree > 1)
+	    {
+	      std::list<BDS_Triangle *> t; 	
+	      (*it)->getTriangles (t);
+	      std::list<BDS_Triangle *>::iterator tit  = t.begin(); 	
+	      std::list<BDS_Triangle *>::iterator tite =  t.end();
+	      BDS_Vector SumN;
+	      while (tit!=tite)
+		{
+		  SumN += (*tit)->N();
+		  ++tit;
+		}
+	      double max_angle = 0;
+	      double NORM = sqrt(SumN*SumN);
+	      SumN /= NORM;
+	      tit  = t.begin(); 	
+	      while (tit!=tite)
+		{
+		  double ag = SumN.angle ((*tit)->N());
+		  if (fabs(ag) > max_angle) max_angle = fabs(ag);
+		  ++tit;
+		}
+	      if (fabs(max_angle) > angle)
+		{
+		  add_geom (vertextag, 0);
+		  (*it)->g = get_geom(vertextag++,0);
+		}
+	    }	    
+	  ++it;
 	}	
     }
     reverseEngineerCAD ( ) ;
@@ -977,9 +1009,33 @@ bool BDS_Mesh :: read_mesh ( const char *filename )
 			}
 		    }
 		}
+	      else if (!strcmp (name,"Quadrilaterals"))
+		{
+		  
+		  int nbt,cl,n1,n2,n3,n4;
+		  fgets (buffer,255,f);
+		  sscanf (buffer,"%d",&nbt);
+		  printf("%d Quadrilaterals\n",nbt);
+		  for (int i=0;i<nbt;i++)
+		    {
+		      fgets (buffer,255,f);
+		      sscanf (buffer,"%d %d %d %d %d",&n1,&n2,&n3,&n4,&cl);
+		      BDS_Triangle *t1 = add_triangle(n1,n2,n3);
+		      // pas 12
+		      // pas 13
+		      BDS_Triangle *t2 = add_triangle(n1,n3,n4);
+		      t1->g = get_geom  (cl,2);
+		      if (!t1->g)
+			{
+			  add_geom (cl,2);
+			  t1->g = get_geom  (cl,2);
+			}
+		      t2->g = t1->g;
+		    }
+		}
 	    }
 	}
-      
+     
       LC = sqrt ((Min[0]-Max[0])*(Min[0]-Max[0])+
 		 (Min[1]-Max[1])*(Min[1]-Max[1])+
 		 (Min[2]-Max[2])*(Min[2]-Max[2]));
@@ -1122,6 +1178,23 @@ bool BDS_Mesh ::split_edge ( BDS_Edge *e, double coord)
 {
 
 
+  /*
+
+            p1
+          / | \
+         /  |  \
+     op1/ 0mid1 \op2
+        \   |   /
+         \  |  /
+          \ p2/
+
+//  p1,op1,mid -
+//  p2,op2,mid -
+//  p2,op1,mid +
+//  p1,op2,mid +
+
+  */
+
     int nbFaces = e->numfaces();
 
     if (nbFaces != 2)return false;
@@ -1129,6 +1202,26 @@ bool BDS_Mesh ::split_edge ( BDS_Edge *e, double coord)
     BDS_Point *op[2];
     BDS_Point *p1 = e->p1;
     BDS_Point *p2 = e->p2;
+
+    BDS_Point *pts1[3];
+    e->faces(0)->getNodes (pts1); 
+
+
+    int orientation = 0;
+    for (int i=0;i<3;i++)
+      {
+	if (pts1[i] == p1) 
+	  {
+	    if (pts1[(i+1)%3] == p2)
+	      orientation = 1;
+	    else
+	      orientation = -1;
+
+	    break;
+	  }
+      }
+
+
     MAXPOINTNUMBER++;
     BDS_Point *mid = add_point (MAXPOINTNUMBER , 
 				coord * p1->X + (1-coord) * p2->X, 
@@ -1145,20 +1238,6 @@ bool BDS_Mesh ::split_edge ( BDS_Edge *e, double coord)
     BDS_Edge *p1_op2 = find_edge ( p1, op[1],e->faces(1) );
     BDS_Edge *op2_p2 = find_edge ( op[1],p2,e->faces(1)   );
 
-//    BDS_Edge *p1_op1 = find_edge ( p1->iD, op[0]->iD );
-//    BDS_Edge *op1_p2 = find_edge ( op[0]->iD,p2->iD  );
-//    BDS_Edge *p1_op2 = find_edge ( p1->iD, op[1]->iD );
-//    BDS_Edge *op2_p2 = find_edge ( op[1]->iD,p2->iD   );
-
-//    printf("%p %p %p %p\n",p1_op1,op1_p2,p1_op2,op2_p2);
-
-/*    printf("edge %p (%d %d) with %d neighbors\n",p1_op1,p1->iD, op[0]->iD,p1_op1->numfaces());
-    print_face(p1_op1->faces[0]);
-    print_face(p1_op1->faces[1]);
-    printf("edge %p (%d %d) with %d neighbors\n",e,p1->iD, p2->iD,e->numfaces());
-    print_face(e->faces[0]);
-    print_face(e->faces[1]);
-*/
     if (e->faces(0))
     {
 	g1 = e->faces(0)->g;
@@ -1185,11 +1264,21 @@ bool BDS_Mesh ::split_edge ( BDS_Edge *e, double coord)
     edges.insert ( mid_op2 );
 
 //    printf("split ends 1 %d (%d %d) %d %d \n",p1_op1->numfaces(), p1->iD, op[0]->iD, op1_mid->numfaces(),p1_mid->numfaces());
-    BDS_Triangle*t1 =  new BDS_Triangle ( p1_op1, op1_mid, p1_mid );
-    BDS_Triangle*t2 =  new BDS_Triangle ( op2_p2, mid_op2, mid_p2 );
-    BDS_Triangle*t3 =  new BDS_Triangle ( op1_p2, op1_mid, mid_p2 );
-    BDS_Triangle*t4 =  new BDS_Triangle ( p1_op2, mid_op2, p1_mid );
-    
+    BDS_Triangle *t1,*t2,*t3,*t4;
+      if (orientation == 1)
+      {
+	t1 =  new BDS_Triangle ( op1_mid,  p1_op1,p1_mid );
+	t2 =  new BDS_Triangle ( mid_op2, op2_p2, mid_p2 );
+	t3 =  new BDS_Triangle ( op1_p2, op1_mid, mid_p2 );
+	t4 =  new BDS_Triangle ( p1_op2, mid_op2, p1_mid );
+      }
+    else
+      {
+	t1 =  new BDS_Triangle (   p1_op1,op1_mid,p1_mid );
+	t2 =  new BDS_Triangle (  op2_p2, mid_op2,mid_p2 );
+	t3 =  new BDS_Triangle (  op1_mid,op1_p2, mid_p2 );
+	t4 =  new BDS_Triangle (  mid_op2, p1_op2,p1_mid );
+      }
     t1->g = g1;
     t2->g = g2;
     t3->g = g1;
@@ -1212,16 +1301,29 @@ bool BDS_Mesh ::split_edge ( BDS_Edge *e, double coord)
 
 bool BDS_Mesh ::swap_edge ( BDS_Edge *e)
 {
+
+  /*
+
+            p1
+          / | \
+         /  |  \
+     op1/ 0 | 1 \op2
+        \   |   /
+         \  |  /
+          \ p2/
+
+    // op1 p1 op2
+    // op1 op2 p2
+
+  */
+
+
     if (e->deleted)return false;
 
     int nbFaces = e->numfaces();
 
     if (nbFaces != 2)return false;
 
-    BDS_Point *pts1[3];
-    e->faces(0)->getNodes (pts1); 
-    BDS_Point *pts2[3];
-    e->faces(1)->getNodes (pts2); 
 
     if (e->g && e->g->classif_degree != 2)return false;
 
@@ -1230,6 +1332,24 @@ bool BDS_Mesh ::swap_edge ( BDS_Edge *e)
     BDS_Point *p2 = e->p2;
     e->oppositeof (op);
     BDS_GeomEntity *g1=0,*g2=0,*ge=e->g;
+
+    BDS_Point *pts1[3];
+    e->faces(0)->getNodes (pts1); 
+
+
+    int orientation = 0;
+    for (int i=0;i<3;i++)
+      {
+	if (pts1[i] == p1) 
+	  {
+	    if (pts1[(i+1)%3] == p2)
+	      orientation = 1;
+	    else
+	      orientation = -1;
+
+	    break;
+	  }
+      }
 
     BDS_Edge *p1_op1 = find_edge ( p1, op[0], e->faces(0) );
     BDS_Edge *op1_p2 = find_edge ( op[0],p2,e->faces(0)  );
@@ -1252,9 +1372,18 @@ bool BDS_Mesh ::swap_edge ( BDS_Edge *e)
     BDS_Edge *op1_op2 = new BDS_Edge ( op[0], op[1] );
     edges.insert ( op1_op2 );
 
-    BDS_Triangle*t1 =  new BDS_Triangle ( p1_op1, p1_op2, op1_op2  );
-    BDS_Triangle*t2 =  new BDS_Triangle ( op2_p2, op1_op2, op1_p2  );
-    
+    BDS_Triangle*t1,*t2;
+    if (orientation == 1)
+      {
+	t1 =  new BDS_Triangle ( p1_op1, p1_op2, op1_op2  );
+	t2 =  new BDS_Triangle ( op1_op2, op2_p2, op1_p2  );
+      }
+    else
+      {
+	t1 =  new BDS_Triangle (  p1_op2,p1_op1, op1_op2  );
+	t2 =  new BDS_Triangle (  op2_p2,op1_op2, op1_p2  );
+      }
+
     t1->g = g1;
     t2->g = g2;
 
@@ -1492,7 +1621,7 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
 	      double ll = sqrt((op[0]->X-op[1]->X)*(op[0]->X-op[1]->X)+
 			       (op[0]->Y-op[1]->Y)*(op[0]->Y-op[1]->Y)+
 			       (op[0]->Z-op[1]->Z)*(op[0]->Z-op[1]->Z));
-	      if (!(*it)->deleted && (*it)->length() > l/0.7 && ll > 0.5 * l){
+	      if (!(*it)->deleted && (*it)->length() > l/0.7 && ll > 0.25 * l){
 		split_edge (*it, 0.5 );
 		nb_modif++;
 	      }

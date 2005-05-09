@@ -102,6 +102,20 @@ public:
     z+=v.z;
     return *this;
   }
+  BDS_Vector& operator *= (const  double &v)
+  {
+    x*=v;
+    y*=v;
+    z*=v;
+    return *this;
+  }
+  BDS_Vector& operator /= (const  double &v)
+  {
+    x/=v;
+    y/=v;
+    z/=v;
+    return *this;
+  }
   BDS_Vector operator / (const  double &v)
   {
     return BDS_Vector (x/v,y/v,z/v);
@@ -109,6 +123,19 @@ public:
   BDS_Vector operator * (const  double &v)
   {
     return BDS_Vector (x*v,y*v,z*v);
+  }
+  double angle (const  BDS_Vector &v) const
+  {
+    double a[3] = { x ,  y ,  z };
+    double b[3] = { v.x ,  v.y ,  v.z };
+    double c[3];
+    c[2] = a[0] * b[1] - a[1] * b[0];
+    c[1] = -a[0] * b[2] + a[2] * b[0];
+    c[0] = a[1] * b[2] - a[2] * b[1];
+    double cosa = a[0]*b[0] +a[1]*b[1] +a[2]*b[2];
+    double sina = sqrt (c[0]*c[0] + c[1]*c[1] + c[2]*c[2]);
+    double ag = atan2(sina,cosa);
+    return ag;
   }
   double operator * (const  BDS_Vector &v) const
   {

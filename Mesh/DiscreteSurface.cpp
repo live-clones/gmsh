@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.12 2005-05-06 16:06:42 remacle Exp $
+// $Id: DiscreteSurface.cpp,v 1.13 2005-05-09 06:56:13 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -501,7 +501,7 @@ int MeshDiscreteSurface(Surface *s)
 	{
 	    THEM->bds_mesh = new BDS_Mesh (*(THEM->bds));
 	    int iter = 0;
-	    while (iter < 20 && THEM->bds_mesh -> adapt_mesh ( THEM->bds->LC / 100, true))
+	    while (iter < 20 && THEM->bds_mesh -> adapt_mesh ( CTX.mesh.lc_factor * THEM->bds->LC, true,THEM->bds))
 	    {
 		printf("iter %d done\n",iter);
 		iter ++;
