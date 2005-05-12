@@ -69,13 +69,13 @@ class Main_Window : public Fl_Window {
     case FL_KEYBOARD:
 #if defined(__APPLE__)
       if(Fl::test_shortcut(FL_META+'w')){
-	if(fl_ask("Do you really want to quit?"))
+	if(fl_choice("Do you really want to quit?", "Cancel", "Quit", NULL))
 	  do_callback();
 	return 1;
       }
 #elif defined(WIN32)
       if(Fl::test_shortcut(FL_ALT+FL_F+4)){
-	if(fl_ask("Do you really want to quit?"))
+	if(fl_choice("Do you really want to quit?", "Cancel", "Quit", NULL))
 	  do_callback();
 	return 1;
       }
