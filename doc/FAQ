@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.59 2005-04-04 18:40:13 geuzaine Exp $
+$Id: FAQ,v 1.60 2005-05-12 15:43:12 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -137,6 +137,39 @@ problem:
   strategic locations in your geo files (e.g. before the creation of
   line loops, etc.).
 
+* 4.3 How can I display only selected parts of my model?
+
+By using 'Tool->Visibility':
+
+- In the 'Browser' tab, you can select which group of entities to show
+(several entities can be selected at once by dragging the mouse or by
+holding the Ctrl and Shift keys while clicking). There are three main
+modes: 'Elementary', in which the numbers in the list correspond to
+elementary geometrical entities; 'Physical', in which the numbers in
+the list correspond to physical entities; and 'Partitions', in which
+the numbers in the list correspond to indices of mesh partitions (for
+multi-domain meshes read from "new" .msh files). If 'Geometry+Mesh' is
+selected, the selection applies to both the geometrical entities and
+their associated meshes; if 'Mesh' is selected, the selection applies
+only to the mesh; if 'Geometry' is selected, the selection applies
+only to the geometry. If the 'Recursive' option is set, selecting an
+entity implies that all the entities that are used to construct it
+(all the "boundaries") are selected too, recursively. For example, if
+'Recursive' is set, selecting a surface will automatically select its
+boundary curves, as well as the boundaries of these curves (i.e.,
+points). If 'Recursive' is not set, only the surface (the dashed
+cross) would be shown.
+
+- In the 'Numeric Input' tab, you can choose to show or hide any
+entity or mesh element by giving its number. You can also use the "*"
+character to select all the entities/elements at once. For example, to
+show only the mesh element 13245 in the mesh, you would enter "*" in
+the 'Element' input field and click on 'Hide' (this will hide all the
+mesh elements); and then enter "13245" in the 'Element' input field
+and click on 'Show' (this will show the element 13245). To show other
+element, you would just enter another number in the input field, click
+on 'Show', etc.
+
 ********************************************************************
 
 Section 5: Mesh module
@@ -234,6 +267,25 @@ Gmsh is done by defining Physical entities (Physical Points, Physical
 Lines, Physical Surfaces and Physical Volumes): see the reference
 manual as well as the tutorials (in particular 'tutorial/t1.geo') for
 a detailed description and some examples.
+
+* 5.12 How can I display only the mesh associated with selected
+geometrical entities?
+
+See question 4.3.
+
+* 5.13 How can I "explore" a mesh (for example, to see inside a
+complex structure)?
+
+You can use 'Tools->Clipping Planes' to extract the region of
+interest. You can define up to 6 clipping planes in Gmsh (i.e., enough
+to define a "cube" inside your model) and each plane can clip either
+the geometry, the mesh, the post-processing views, or any combination
+of the above.  The clipping planes are defined using the four
+coeficients A,B,C,D of the equation A*x+B*y+C*y+D=0, which can be
+adjusted interactively by dragging the mouse in the input
+fields. There is also one additional clipping plane available for
+"cutting" only the mesh (by keeping entire elements), in
+'Tools->Options->Mesh->Cut Plane'.
 
 ********************************************************************
 
@@ -407,3 +459,13 @@ Also note that if all the views are based on the same grid, Gmsh can
 combine the separate views into a multi-time-step view by using the
 'View->Combine->Time Steps' menu, or by using the '-combine' command
 line option.
+
+* 7.14 How can I see "inside" a complicated post-processing view?
+
+See question 5.13. 
+
+When viewing 3D salar fields, you can also modify the colormap
+('Tools->Options->View->Map') to make the iso-surfaces "transparent":
+either by holding 'Ctrl' while dragging the mouse to draw the alpha
+channel by hand, or by using the 'a', 'Ctrl+a', 'p' and 'Ctrl+p'
+keyboard shortcuts.
