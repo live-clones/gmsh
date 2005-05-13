@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.71 2005-04-28 16:45:45 geuzaine Exp $
+// $Id: Create.cpp,v 1.72 2005-05-13 05:09:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -535,7 +535,6 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
   pC->cp = NULL;
   pC->Vertices = List_Create(2, 20, sizeof(Vertex *));
   pC->Extrude = NULL;
-  pC->theSegmRep = 0;
   pC->Typ = Typ;
   pC->Num = Num;
   THEM->MaxLineNum = IMAX(THEM->MaxLineNum, Num);
@@ -644,8 +643,6 @@ void Free_Curve(void *a, void *b)
     Free(pC->k);
     List_Delete(pC->Control_Points);
     Free(pC->cp);
-    if(pC->theSegmRep)
-      delete pC->theSegmRep;
     Free(pC);
     pC = NULL;
   }

@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.38 2005-04-19 16:03:10 remacle Exp $
+// $Id: Print_Geo.cpp,v 1.39 2005-05-13 05:09:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -133,59 +133,6 @@ void Print_Curve(void *a, void *b)
 
 }
 
-void Print_Discrete_Curve(void *a, void *b)
-{
-  Curve *c = *(Curve **) a;
-  
-  if(c->Num < 0) return;
-  
-  // if we have a SEGM_rep, print it:
-
-  if(c->theSegmRep){
-    if(!List_Nbr(c->Control_Points))
-      fprintf(FOUT, "Discrete Line (%d) = {%d}\n", 
-	      c->Num, c->theSegmRep->num_points);
-    else
-      fprintf(FOUT, "Discrete Line {%d} = {%d}\n", 
-	      c->Num, c->theSegmRep->num_points);
-    
-    fprintf(FOUT, "{\n");
-    for(int i = 0; i < List_Nbr(c->theSegmRep->points); i++){
-      if(i){
-	fprintf(FOUT, ",");
-	if(!(i%3)) fprintf(FOUT, "\n");
-      }
-      fprintf(FOUT, "%.16g", 
-	      *(double*)List_Pointer_Fast(c->theSegmRep->points, i));
-    }
-    fprintf(FOUT, "};\n");
-    return;
-  }
-
-  // else, print the mesh:
-
-  if(!List_Nbr(c->Vertices))
-    return;
-
-  if(!List_Nbr(c->Control_Points))
-    fprintf(FOUT, "Discrete Line (%d) = {%d}\n", 
-	    c->Num, List_Nbr(c->Vertices));
-  else
-    fprintf(FOUT, "Discrete Line {%d} = {%d}\n", 
-	    c->Num, List_Nbr(c->Vertices));
-
-  fprintf(FOUT, "{\n");
-  for(int i = 0; i < List_Nbr(c->Vertices); i++){
-    Vertex *v = *(Vertex**)List_Pointer(c->Vertices, i);
-    fprintf(FOUT, "  %.16g,%.16g,%.16g", v->Pos.X, v->Pos.Y, v->Pos.Z);
-    if(i != List_Nbr(c->Vertices) - 1) 
-      fprintf(FOUT, ",\n");
-    else
-      fprintf(FOUT, "\n");
-  }
-  fprintf(FOUT, "};\n");
-}
-
 void Print_Surface(void *a, void *b)
 {
   Curve *c;
@@ -264,134 +211,6 @@ void Print_Surface(void *a, void *b)
   }
 }
 
-void Print_Discrete_Surface(void *a, void *b)
-{
-    throw;
-//   Surface *s = *(Surface **) a;
-  
-//   // if we have a poly_rep, print it:
-
-//   if(s->thePolyRep){
-//     if(!List_Nbr(s->Generatrices))
-//       fprintf(FOUT, "Discrete Surface (%d) = {%d, %d}\n", 
-// 	      s->Num, s->thePolyRep->num_points, s->thePolyRep->num_polys);
-//     else
-//       fprintf(FOUT, "Discrete Surface {%d} = {%d, %d}\n", 
-// 	      s->Num, s->thePolyRep->num_points, s->thePolyRep->num_polys);
-    
-//     fprintf(FOUT, "{\n");
-//     for(int i = 0; i < List_Nbr(s->thePolyRep->points_and_normals); i++){
-//       if(i){
-// 	fprintf(FOUT, ",");
-// 	if(!(i%6)) fprintf(FOUT, "\n");
-//       }
-//       fprintf(FOUT, "%.16g", 
-// 	      *(double*)List_Pointer_Fast(s->thePolyRep->points_and_normals, i));
-//     }
-//     fprintf(FOUT, "}\n");
-//     fprintf(FOUT, "{\n");    
-//     for(int i = 0; i < List_Nbr(s->thePolyRep->polygons); i++){
-//       if(i){
-// 	fprintf(FOUT, ",");
-// 	if(!(i%4)) fprintf(FOUT, "\n");
-//       }
-//       fprintf(FOUT, "%.16g", *(double*)List_Pointer_Fast(s->thePolyRep->polygons, i));
-//     }
-//     fprintf(FOUT, "};\n");
-//     return;
-//   }
-
-//   // else, print the surface mesh:
-
-//   if(!Tree_Nbr(s->Vertices))
-//     return;
-
-//   List_T *verts = Tree2List(s->Vertices);  
-//   List_T *tmp = Tree2List(s->Simplexes);
-//   List_T *tris = Tree2List(s->SimplexesBase);
-//   List_Copy(tmp, tris);
-//   List_Delete(tmp);
-//   List_T *quads = Tree2List(s->Quadrangles);
-
-//   // compute smoothed normals
-//   smooth_normals norms;
-//   for(int i = 0; i < List_Nbr(tris); i++){
-//     SimplexBase *t = *(SimplexBase**)List_Pointer(tris, i);
-//     if(t->V[2]){
-//       double n[3];
-//       normal3points(t->V[0]->Pos.X, t->V[0]->Pos.Y, t->V[0]->Pos.Z,
-// 		    t->V[1]->Pos.X, t->V[1]->Pos.Y, t->V[1]->Pos.Z,
-// 		    t->V[2]->Pos.X, t->V[2]->Pos.Y, t->V[2]->Pos.Z, n);
-//       norms.add(t->V[0]->Pos.X, t->V[0]->Pos.Y, t->V[0]->Pos.Z, n[0], n[1], n[2]);
-//       norms.add(t->V[1]->Pos.X, t->V[1]->Pos.Y, t->V[1]->Pos.Z, n[0], n[1], n[2]);
-//       norms.add(t->V[2]->Pos.X, t->V[2]->Pos.Y, t->V[2]->Pos.Z, n[0], n[1], n[2]);
-//     }
-//   }
-//   for(int i = 0; i < List_Nbr(quads); i++){
-//     Quadrangle *q = *(Quadrangle**)List_Pointer(quads, i);
-//     double n[3];
-//     normal3points(q->V[0]->Pos.X, q->V[0]->Pos.Y, q->V[0]->Pos.Z,
-// 		  q->V[1]->Pos.X, q->V[1]->Pos.Y, q->V[1]->Pos.Z,
-// 		  q->V[2]->Pos.X, q->V[2]->Pos.Y, q->V[2]->Pos.Z, n);
-//     norms.add(q->V[0]->Pos.X, q->V[0]->Pos.Y, q->V[0]->Pos.Z, n[0], n[1], n[2]);
-//     norms.add(q->V[1]->Pos.X, q->V[1]->Pos.Y, q->V[1]->Pos.Z, n[0], n[1], n[2]);
-//     norms.add(q->V[2]->Pos.X, q->V[2]->Pos.Y, q->V[2]->Pos.Z, n[0], n[1], n[2]);
-//     norms.add(q->V[3]->Pos.X, q->V[3]->Pos.Y, q->V[3]->Pos.Z, n[0], n[1], n[2]);
-//   }
-
-//   if(!List_Nbr(s->Generatrices))
-//     fprintf(FOUT, "Discrete Surface (%d) = {%d, %d}\n", 
-// 	    s->Num, List_Nbr(verts), List_Nbr(tris)+List_Nbr(quads));
-//   else
-//     fprintf(FOUT, "Discrete Surface {%d} = {%d, %d}\n", 
-// 	    s->Num, List_Nbr(verts), List_Nbr(tris)+List_Nbr(quads));
-
-//   // print nodes and create dense vertex numbering
-//   fprintf(FOUT, "{\n");
-//   map<int, int> nodes;
-//   for(int i = 0; i < List_Nbr(verts); i++){
-//     Vertex *v = *(Vertex**)List_Pointer(verts, i);
-//     nodes[v->Num] = i;
-//     double n[3] = {0.,0.,0.};
-//     norms.get(v->Pos.X, v->Pos.Y, v->Pos.Z, n[0], n[1], n[2], 180.);
-//     fprintf(FOUT, "  %.16g,%.16g,%.16g, %g,%g,%g", 
-// 	    v->Pos.X, v->Pos.Y, v->Pos.Z, n[0], n[1], n[2]);
-//     if(i != List_Nbr(verts) - 1) 
-//       fprintf(FOUT, ",\n");
-//     else
-//       fprintf(FOUT, "\n");
-//   }
-//   fprintf(FOUT, "}\n");
-  
-//   // print polygons
-//   fprintf(FOUT, "{\n");
-//   for(int i = 0; i < List_Nbr(tris); i++){
-//     SimplexBase *t = *(SimplexBase**)List_Pointer(tris, i);
-//     if(t->V[2])
-//       fprintf(FOUT, "  3, %d,%d,%d", 
-// 	      nodes[t->V[0]->Num], nodes[t->V[1]->Num], nodes[t->V[2]->Num]);
-//     if(List_Nbr(quads) || i != List_Nbr(tris) - 1) 
-//       fprintf(FOUT, ",\n");    
-//     else
-//       fprintf(FOUT, "\n");
-//   }
-//   for(int i = 0; i < List_Nbr(quads); i++){
-//     Quadrangle *q = *(Quadrangle**)List_Pointer(quads, i);
-//     fprintf(FOUT, "  4, %d,%d,%d,%d", nodes[q->V[0]->Num], nodes[q->V[1]->Num],
-// 	    nodes[q->V[2]->Num], nodes[q->V[3]->Num]);
-//     if(i != List_Nbr(quads) - 1) 
-//       fprintf(FOUT, ",\n");
-//     else
-//       fprintf(FOUT, "\n");
-//   }
-//   fprintf(FOUT, "};\n");
-  
-//   List_Delete(verts);
-//   List_Delete(tris);
-//   List_Delete(quads);
-// 
-}
-
 void Print_Volume(void *a, void *b)
 {
   Surface *s;
@@ -455,7 +274,7 @@ void Print_PhysicalGroups(void *a, void *b)
 
 }
 
-void Print_Geo(Mesh * M, char *filename, int discrete_curves, int discrete_surf)
+void Print_Geo(Mesh * M, char *filename, int discrete_curve, int discrete_surface)
 {
   if(filename) {
     FOUT = fopen(filename, "w");
@@ -471,10 +290,6 @@ void Print_Geo(Mesh * M, char *filename, int discrete_curves, int discrete_surf)
   Tree_Action(M->Points, Print_Point);
   Tree_Action(M->Curves, Print_Curve);
   Tree_Action(M->Surfaces, Print_Surface); 
-  if(discrete_curves)
-    Tree_Action(M->Curves, Print_Discrete_Curve);
-  if(discrete_surf)
-    Tree_Action(M->Surfaces, Print_Discrete_Surface);
   Tree_Action(M->Volumes, Print_Volume);
   List_Action(M->PhysicalGroups, Print_PhysicalGroups);
 

@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.60 2005-05-12 15:43:12 geuzaine Exp $
+$Id: FAQ,v 1.61 2005-05-13 05:09:08 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -249,11 +249,7 @@ option panel. From the command line, you can also use '-order 2'.
 * 5.10 Can I import an existing surface mesh in Gmsh and use it to
 build a 3D mesh?
 
-Yes, either in the form of a STL triangulation, or by using the
-'Discrete Surface' commands. Note that Gmsh cannot currently modify
-the surface mesh you provide in this way, so the surface mesh has to
-be conform (without gaps, hanging nodes, etc.) and must contain
-surface elements having the (final) desired sizes.
+Yes, either in the form of a STL triangulation, or FIXME: TODO
 
 * 5.11 How do I define boundary conditions or material properties in
 Gmsh?

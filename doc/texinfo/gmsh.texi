@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.182 2005-04-04 15:41:45 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.183 2005-05-13 05:09:08 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -1515,14 +1515,6 @@ spline's identification number; the @var{expression-list} on the right hand
 side should contain the identification numbers of all the spline's control
 points.
 
-@item Discrete Line ( @var{expression} ) = @{ @var{expression} @} @{ @var{expression-list} @};
-Creates a discrete line, i.e., a line defined by a series of points.  The
-@var{expression} on the right hand side gives the number of points in the
-discretization and the @var{expression-list} gives the list of these points,
-by groups of three coordinates (X, Y and Z). This discretization is used
-both for the graphical representation and for the one-dimensional mesh of
-the line.
-
 @item Line Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates an oriented line loop. The @var{expression} inside the parentheses
 is the line loop's identification number; the @var{expression-list} on the
@@ -1583,34 +1575,6 @@ transfinite interpolation. The @var{expression} inside the parentheses is
 the ruled surface's identification number; the @var{expression-list} on the
 right hand side should the identification number of a single line loop,
 composed of either three or four elementary lines.
-
-@item Discrete Surface ( @var{expression} ) = @{ @var{expression}, @var{expression} @} @{ @var{expression-list} @} @{ @var{expression-list} @};
-Creates a discrete surface, i.e., a surface defined by a polygonal
-discretization (usually a triangulation).  The two @w{@var{expression}s} on
-the right hand side give the number of points and the number of polygons
-in the discretization, respectively. The first @var{expression-list} gives
-the list of discretization points and their associated normals, by groups of
-six @w{@var{expression}s} (three node coordinates and three normal
-components for each point). The second @var{expression-list} gives the list
-of polygons, by groups of (@var{N}+1) @w{@var{expression}s} (the first
-expression being equal to @var{N}, the number of points in the polygon, and
-the @var{N} following expressions referring to the indices of the points in
-the first list). For example, a triangulation of a unit square surface in
-the X-Y plane with two triangles could be defined as:
-
-@example
-Discrete Surface (1) = @{4, 2@} 
-@{ 0,0,0, 0,0,1,
-  1,0,0, 0,0,1,
-  1,1,0, 0,0,1,
-  0,1,0, 0,0,1 @}
-@{ 3, 0,1,2,
-  3, 0,2,3 @};
-@end example
-
-The polygonal discretization is used for the graphical representation of the
-surface and is also used as the actual two-dimensional mesh of the surface
-if all the polygons are triangles or quadrangles.
 
 @c todo:
 @c @item Trimmed Surface ( @var{expression} ) = @{ @var{expression}, @{ @var{expression-list} @} @};
@@ -2113,25 +2077,6 @@ for triangles or quadrangles given in @ref{Gmsh node ordering}.
 Here is a list of all other mesh commands currently available:
 
 @ftable @code
-@item Discrete Line @{ @var{expression} @} = @{ @var{expression} @} @{ @var{expression-list} @};
-Associates a discretization with the (existing) curve @var{expression}.
-This discretization is used both for the graphical representation and for
-the one-dimensional mesh of the line.
-
-See the definition of @code{Discrete Line} in @ref{Lines}, for an
-explanation of the meaning of the @var{expression} and the
-@var{expression-list} on the right hand side.
-
-@item Discrete Surface @{ @var{expression} @} = @{ @var{expression}, @var{expression} @} @{ @var{expression-list} @} @{ @var{expression-list} @};
-Associates a polygonal discretization with the (existing) surface
-@var{expression}.  This polygonal discretization is used for the graphical
-representation of the surface and can also be used as the actual
-two-dimensional mesh of the surface if all the polygons are triangles.
-
-See the definition of @code{Discrete Surface} in @ref{Surfaces}, for an
-explanation of the meaning of the @w{@var{expression}s} and
-@w{@var{expression-list}s} on the right hand side.
-
 @item Color @var{color-expression} @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Sets the mesh color of the entities in @var{expression-list} to @var{color-expression}.
 
