@@ -275,6 +275,7 @@ BDS_Triangle * BDS_Mesh :: add_triangle  (int p1, int p2, int p3 )
     }
     catch (...)
     {
+      return 0;
     }
 }
 void  BDS_Mesh :: del_triangle  (BDS_Triangle *t)
@@ -832,7 +833,7 @@ bool BDS_Mesh :: read_stl ( const char *filename , const double tolerance)
 	char *DATA = new char [Nf * 50 * sizeof (char)];
 	x = fread (DATA,sizeof (char),Nf * 50,f);
 
-	printf("BINARY STL data read, %d facets \n",Nf);
+	printf("BINARY STL data read, %ld facets \n",Nf);
 
 	Min[0] = Min[1] = Min[2] = 1.e12;
 	Max[0] = Max[1] = Max[2] = -1.e12;
@@ -841,7 +842,7 @@ bool BDS_Mesh :: read_stl ( const char *filename , const double tolerance)
 	double YCG = 0;
 	double ZCG = 0;
 
-	for (int i=0;i<Nf;++i)
+	for (unsigned int i=0;i<Nf;++i)
 	{
 	    float *X = (float*) &DATA[i * 50 * sizeof (char)];
 	    
@@ -889,7 +890,7 @@ bool BDS_Mesh :: read_stl ( const char *filename , const double tolerance)
 
 	PointLessThanLexicographic::t = LC * tolerance;
 
-	for (int i=0;i<Nf;++i)
+	for (unsigned int i=0;i<Nf;++i)
 	{
 	    float *X = (float*) &DATA[i * 50 * sizeof (char)];
 //	    printf("%g %g %g %g %g %g %g %g %g %g %g %g\n",X[0],X[1],X[2],X[3],X[4],X[5],X[6],X[7],X[8],X[9],X[10],X[11]);
@@ -937,6 +938,8 @@ bool BDS_Mesh :: read_stl ( const char *filename , const double tolerance)
 	delete [] DATA;
     }
     fclose (f);    
+
+    return true;
 }
 
 // INRIA FORMAT
@@ -1044,6 +1047,8 @@ bool BDS_Mesh :: read_mesh ( const char *filename )
     {
       throw;
     }
+
+  return true;
 }
 
 void BDS_Mesh :: save_gmsh_format ( const char *filename )
