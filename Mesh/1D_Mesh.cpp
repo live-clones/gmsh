@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.44 2005-02-20 07:11:04 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.45 2005-05-15 01:44:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -136,11 +136,6 @@ void Maillage_Curve(void *data, void *dummy)
 
   if(c->Num < 0)
     return;
-
-  if(c->Dirty) {
-    Msg(INFO, "Not meshing dirty Curve %d", c->Num);
-    return;
-  }
 
   Msg(STATUS3, "Meshing curve %d", c->Num);
 

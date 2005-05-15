@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.64 2005-01-01 19:35:30 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.65 2005-05-15 01:44:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -19,24 +19,20 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-/*
-  Isotropic Delaunay 3D
-
-  tant que l'arbre des tetraedres de qualites inacceptables 
-  n'est pas vide {
-    prendre le plus mauvais tetraedre;
-    creer un nouveau point;
-    eliminer les tetraedres dont le cercle circonscrit contient le point;
-    reconstruire le volume convexe;
-  } 
-
-*/
+// Isotropic Delaunay 3D:
+// while the tree of bad quality tets is not empty {
+//   take the worst tet
+//   create a new point
+//   rempve the test whose circumscribed sphere contains the point
+//   reconstruct the convex volume
+// } 
 
 #include <vector>
 #include <algorithm>
 #include <time.h>
 #include "Gmsh.h"
 #include "Numeric.h"
+#include "Geo.h"
 #include "Mesh.h"
 #include "3D_Mesh.h"
 #include "Create.h"
@@ -202,24 +198,16 @@ int Pt_In_Volume(double X, double Y, double Z, Mesh * m,
 
 inline int Pt_In_Circum(Simplex * s, Vertex * v)
 {
-  double d1, d2, eps;
+  // Determines of a point is inside the simplexe's circumscribed sphere
+  double d1 = s->Radius;
+  double d2 = sqrt(DSQR(v->Pos.X - s->Center.X) +
+		   DSQR(v->Pos.Y - s->Center.Y) + 
+		   DSQR(v->Pos.Z - s->Center.Z));
+  double eps = fabs(d1 - d2) / (d1 + d2);
 
-  /* Determine si un point est dans le cercle circonscrit a un simplexe */
-
-  d1 = s->Radius;
-  d2 = sqrt(DSQR(v->Pos.X - s->Center.X) +
-            DSQR(v->Pos.Y - s->Center.Y) + DSQR(v->Pos.Z - s->Center.Z));
-
-  eps = fabs(d1 - d2) / (d1 + d2);
-
-  if(eps < 1.e-12) {
-    return (0); // return 1 ? 0 ?
-  }
-
-  if(d2 < d1)
-    return (1);
-
-  return (0);
+  if(eps < 1.e-12) return 0; // return 1? 0?
+  if(d2 < d1) return 1;
+  return 0;
 }
 
 struct SimplexInteriorCheck {
@@ -252,9 +240,7 @@ struct SimplexInBox {
   }
 };
 
-/*
-  Recursive search;
- */
+// Recursive search
 
 Simplex *SearchPointByNeighbor(Vertex * v, Simplex * s, Tree_T * visited,
                                int depth)
@@ -307,7 +293,7 @@ void LiS(void *a, void *b)
   for(j = 0; j < N; j++) {
     SXF.F = S->F[j];
     if((pSXF = (SxF *) Tree_PQuery(SimXFac, &SXF))) {
-      /* Creation du lien */
+      // Create link
       S->S[j] = pSXF->S;
       pSXF->S->S[pSXF->NumFaceSimpl] = S;
     }
@@ -335,7 +321,7 @@ void RzS(void *a, void *b)
   }
 }
 
-/* Cree les liens entre les simplexes, c.a.d recherche les voisins */
+// create the links between the simplices, i.e., search for neighbors
 
 void Link_Simplexes(List_T * Sim, Tree_T * Tim)
 {
@@ -420,8 +406,6 @@ void Box_6_Tetraedron(List_T * P, Mesh * m)
   Yc = YM - Ym;
   Zc = ZM - Zm;
 
-  /* initialisation de la grille */
-
   m->Grid.init = 0;
   m->Grid.min.X = Xm - LOIN * FACT * Xc;
   m->Grid.min.Y = Ym - LOIN * FACT * Yc;
@@ -432,11 +416,9 @@ void Box_6_Tetraedron(List_T * P, Mesh * m)
 
   m->Grid.Nx = m->Grid.Ny = m->Grid.Nz = 20;
 
-  /* Longueur Caracteristique */
-
   LC3D = sqrt(Xc * Xc + Yc * Yc + Zc * Zc);
 
-  /* Points de la boite de 1 a 8 
+  /* 8 box points
 
      Z    8____________7
      |   /|           /|
@@ -475,7 +457,7 @@ void Box_6_Tetraedron(List_T * P, Mesh * m)
     Tree_Replace(m->Vertices, &pv);
   }
 
-  /* 6 Tetraedres forment le maillage de la boite */
+  // 6-tet mesh of the box
 
   for(i = 0; i < 6; i++) {
     S = Create_Simplex(&V[tet[i][0] - 1], &V[tet[i][1] - 1],
@@ -561,13 +543,10 @@ void NewSimplexes(Mesh * m, List_T * Sim, List_T * news)
     }
   }
 
-  /* Les faces non communes sont obligatoirement a la frontiere ... 
-     -> Nouveaux simplexes */
-
+  // The non-common faces are on the boundary -> create new simplices
   Tree_Action(SimXFac, CrSi);
   Tree_Delete(SimXFac);
 }
-
 
 
 /* Methode recursive : Rempli Tsd les simplexes detruits 
@@ -633,7 +612,7 @@ bool Bowyer_Watson(Mesh * m, Vertex * v, Simplex * S, int force)
   Tree_Action(Tsd, TStoLS);
   NewSimplexes(m, Simplexes_Destroyed, Simplexes_New);
 
-  /* calcul des volumes des simplexes crees */
+  // compute volume
 
   if(Alerte_Point_Scabreux || !CTX.mesh.speed_max) {
     volume = 0.0;
@@ -652,7 +631,7 @@ bool Bowyer_Watson(Mesh * m, Vertex * v, Simplex * S, int force)
     volumenew = 1.0;
   }
 
-  /* critere du volume */
+  // volume criterion
 
   if((fabs(volumeold - volumenew) / (volumeold + volumenew)) > 1.e-8) {
     if(Tree_Suppress(m->Simplexes, &S)) {
@@ -691,7 +670,7 @@ bool Bowyer_Watson(Mesh * m, Vertex * v, Simplex * S, int force)
       Tree_Add(m->Simplexes, &theNewS);
     }
 
-    /* Suppression des simplexes elimines */
+    // remove deleted tets
 
     for(i = 0; i < List_Nbr(Simplexes_Destroyed); i++) {
       List_Read(Simplexes_Destroyed, i, &s);
@@ -700,7 +679,7 @@ bool Bowyer_Watson(Mesh * m, Vertex * v, Simplex * S, int force)
       Free_Simplex(&s, 0);
     }
 
-    /* Creation des liens entre nouveaux simplexes */
+    // create links between new tets
 
     Tree_Action(Sim_Sur_Le_Bord, TAtoLA);
     Link_Simplexes(Simplexes_New, m->Simplexes);
@@ -888,12 +867,9 @@ void Maillage_Volume(void *data, void *dum)
   pv = (Volume **) data;
   v = *pv;
 
-  if(v->Dirty) {
-    Msg(INFO, "Not meshing dirty Volume %d", v->Num);
-    return;
+  if(v->Typ == MSH_VOLUME_DISCRETE) {
   }
-
-  if(Extrude_Mesh(v)) {
+  else if(Extrude_Mesh(v)) {
   }
   else if(MeshTransfiniteVolume(v)) {
   }
@@ -927,7 +903,7 @@ void Maillage_Volume(void *data, void *dum)
     if(!N)
       return;
 
-    /* Creation d'un maillage initial respectant la frontiere */
+    // Create initial mesh respecting the boundary
 
     Msg(STATUS2, "Mesh 3D... (initial)");
 
@@ -947,7 +923,7 @@ void Maillage_Volume(void *data, void *dum)
       return;
     }
 
-    /* Suppression des noeuds de num < 0 */
+    // remove nodes with nums < 0
 
     Suppress = List_Create(10, 10, sizeof(Vertex *));
     Tree_Action(v->Vertices, suppress_vertex);
@@ -956,8 +932,8 @@ void Maillage_Volume(void *data, void *dum)
     }
     List_Delete(Suppress);
 
-    /* Suppression des elements dont le num de vol == 0 (cad qui
-       n'appartiennent a auncun volume defini) */
+    // remove elements whose volume num==0 (i.e., that don't belong to
+    // any volume)
 
     Suppress = List_Create(10, 10, sizeof(Simplex *));
     Tree_Action(v->Simplexes, suppress_simplex);
@@ -970,7 +946,7 @@ void Maillage_Volume(void *data, void *dum)
     if(Tree_Nbr(LOCAL->Simplexes) == 0)
       return;
 
-    /* Si il reste quelque chose a mailler en volume : */
+    // If there is something left to mesh:
 
     Msg(STATUS2, "Mesh 3D... (final)");
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.69 2005-03-12 07:52:56 geuzaine Exp $
+# $Id: Makefile,v 1.70 2005-05-15 01:44:26 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -86,17 +86,17 @@ Mesh.o: Mesh.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Mesh/Matrix.h Draw.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/Context.h \
   ../Geo/MinMax.h gl2ps.h ../Numeric/Numeric.h
-Geom.o: Geom.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  ../Common/GmshUI.h ../Numeric/Numeric.h ../Geo/Geo.h ../Geo/CAD.h \
-  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
-  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
-  ../Mesh/DiscreteSurface.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ../Mesh/Utils.h Draw.h ../Common/Views.h ../Common/ColorTable.h \
-  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/Context.h \
-  ../Mesh/Interpolation.h ../Plugin/Plugin.h ../Common/Options.h \
-  ../Plugin/PluginManager.h gl2ps.h
+Geom.o: Geom.cpp ../Mesh/BDS.h ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
+  ../Numeric/Numeric.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h \
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/DiscreteSurface.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
+  ../Mesh/Matrix.h ../Mesh/Utils.h Draw.h ../Common/Views.h \
+  ../Common/ColorTable.h ../Common/GmshMatrix.h ../Common/AdaptiveViews.h \
+  ../Common/Context.h ../Mesh/Interpolation.h ../Plugin/Plugin.h \
+  ../Common/Options.h ../Plugin/PluginManager.h gl2ps.h
 Post.o: Post.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Common/GmshUI.h ../Numeric/Numeric.h ../Geo/Geo.h ../Mesh/Mesh.h \

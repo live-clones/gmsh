@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Netgen.cpp,v 1.15 2005-01-01 19:35:30 geuzaine Exp $
+// $Id: 3D_Mesh_Netgen.cpp,v 1.16 2005-05-15 01:44:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,7 @@
 //
 
 #include "Gmsh.h"
+#include "Geo.h"
 #include "Mesh.h"
 #include "Create.h"
 #include "Numeric.h"
@@ -293,10 +294,10 @@ int Mesh_Netgen(Volume * v)
 
 void Optimize_Netgen(Volume * v)
 {
-  // abort of we don't have real volumes (volume is "dirty", or has no
+  // abort of we don't have real volumes (volume has no CAD, or has no
   // surface loop w/ oriented surfaces) or if there are no simplices
   // to optimize
-  if(v->Dirty || Extrude_Mesh(v) || !Tree_Nbr(v->Simplexes))
+  if(v->Typ == MSH_VOLUME_DISCRETE || Extrude_Mesh(v) || !Tree_Nbr(v->Simplexes))
     return;
 
   Msg(STATUS3, "Optimizing volume %d", v->Num);

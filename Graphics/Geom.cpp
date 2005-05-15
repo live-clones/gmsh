@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.82 2005-04-19 16:03:10 remacle Exp $
+// $Id: Geom.cpp,v 1.83 2005-05-15 01:44:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -115,7 +115,7 @@ void Draw_Curve(void *a, void *b)
 
   Curve *c = *(Curve **) a;
 
-  if(c->Num < 0 || !(c->Visible & VIS_GEOM) || c->Dirty)
+  if(c->Num < 0 || !(c->Visible & VIS_GEOM))
     return;
 
   if(CTX.render_mode == GMSH_SELECT) {
@@ -167,16 +167,7 @@ void Draw_Curve(void *a, void *b)
       }
     }
     else if(c->Typ == MSH_SEGM_DISCRETE) {
-      Simplex *s;
-      List_T *temp = Tree2List(c->Simplexes);
-      for(int i = 0; i < List_Nbr(temp); i++) {
-        List_Read(temp, i, &s);
-        glBegin(GL_LINES);
-        glVertex3d(s->V[0]->Pos.X, s->V[0]->Pos.Y, s->V[0]->Pos.Z);
-        glVertex3d(s->V[1]->Pos.X, s->V[1]->Pos.Y, s->V[1]->Pos.Z);
-        glEnd();
-      }
-      List_Delete(temp);
+      // do nothing
     }
     else {
       if(CTX.geom.line_type >= 1) {
@@ -610,7 +601,7 @@ void Draw_Surface(void *a, void *b)
 {
   Surface *s = *(Surface **) a;
 
-  if(!s || !s->Support || !(s->Visible & VIS_GEOM) || s->Dirty)
+  if(!s || !s->Support || !(s->Visible & VIS_GEOM))
     return;
 
   if(CTX.render_mode == GMSH_SELECT) {
@@ -630,14 +621,18 @@ void Draw_Surface(void *a, void *b)
     glColor4ubv((GLubyte *) & CTX.color.geom.surface);
   }
 
-  if(s->bds) // always draw the poly reprentation if available
+  if(s->bds){
     Draw_Polygonal_Surface(s);
-  else if(s->Typ == MSH_SURF_DISCRETE)
-    Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
-  else if(s->Typ == MSH_SURF_PLAN)
+  }
+  else if(s->Typ == MSH_SURF_DISCRETE){
+    // do nothing
+  }
+  else if(s->Typ == MSH_SURF_PLAN){
     Draw_Plane_Surface(s);
-  else
+  }
+  else{
     Draw_NonPlane_Surface(s);
+  }
 
   if(CTX.render_mode == GMSH_SELECT) {
     glPopName();

@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.39 2005-05-13 05:09:07 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.40 2005-05-15 01:44:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -76,7 +76,7 @@ void Print_Curve(void *a, void *b)
   int i;
   c = *(Curve **) a;
 
-  if(c->Num < 0 || c->Dirty)
+  if(c->Num < 0 || c->Typ == MSH_SEGM_DISCRETE)
     return;
 
   switch (c->Typ) {
@@ -141,7 +141,7 @@ void Print_Surface(void *a, void *b)
   int i, j;
   s = *(Surface **) a;
 
-  if(s->Dirty)
+  if(s->Typ == MSH_SURF_DISCRETE)
     return;
 
   int NUMLOOP = s->Num + 1000000;
@@ -218,7 +218,7 @@ void Print_Volume(void *a, void *b)
   int i;
   vol = *(Volume **) a;
 
-  if(vol->Dirty)
+  if(vol->Typ == MSH_VOLUME_DISCRETE)
     return;
 
   int NUMLOOP = vol->Num + 1000000;

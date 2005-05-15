@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.86 2005-03-15 15:36:06 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.87 2005-05-15 01:44:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -65,16 +65,14 @@ void addPhysicalGroup(Mesh * M, int Type, int Physical, int Elementary)
   }
 }
 
-/* Note: the "Dirty" flag only has an influence if one doesn't load
-   the geometry along with the mesh (since we only add "dirty"
-   geometrical entities if they don't already exist). */
+// If a "normal" elementary entity does not exist, we create a
+// "discrete" entity, i.e., an entity entirely defined by its mesh
 
 Curve *addElementaryCurve(Mesh * M, int Num)
 {
   Curve *c;
   if(!(c = FindCurve(Num, M))) {
-    c = Create_Curve(Num, MSH_SEGM_LINE, 0, NULL, NULL, -1, -1, 0., 1.);
-    c->Dirty = 1;
+    c = Create_Curve(Num, MSH_SEGM_DISCRETE, 0, NULL, NULL, -1, -1, 0., 1.);
     Tree_Add(M->Curves, &c);
   }
   return c;
@@ -84,8 +82,7 @@ Surface *addElementarySurface(Mesh * M, int Num)
 {
   Surface *s;
   if(!(s = FindSurface(Num, M))) {
-    s = Create_Surface(Num, MSH_SURF_PLAN);
-    s->Dirty = 1;
+    s = Create_Surface(Num, MSH_SURF_DISCRETE);
     Tree_Add(M->Surfaces, &s);
   }
   return s;
@@ -95,8 +92,7 @@ Volume *addElementaryVolume(Mesh * M, int Num)
 {
   Volume *v;
   if(!(v = FindVolume(Num, M))) {
-    v = Create_Volume(Num, MSH_VOLUME);
-    v->Dirty = 1;
+    v = Create_Volume(Num, MSH_VOLUME_DISCRETE);
     Tree_Add(M->Volumes, &v);
   }
   return v;
@@ -560,7 +556,6 @@ void Read_Mesh_VTK(Mesh * m, FILE *fp)
 
   sscanf(line, "%s %d %s", dumline1, &NbVertices, dumline2);
   Surface *surf = Create_Surface(1, MSH_SURF_DISCRETE);
-  surf->Dirty = 1;
   Tree_Add(m->Surfaces, &surf);
   for(i = 0; i < NbVertices; i++) {
     fscanf(fp, "%le %le %le", &x, &y, &z);
@@ -592,7 +587,6 @@ void Read_Mesh_VTK(Mesh * m, FILE *fp)
     }
     if(!(surf = FindSurface(1, m))) {
       surf = Create_Surface(1, MSH_SURF_DISCRETE);
-      surf->Dirty = 1;
       Tree_Add(m->Surfaces, &surf);
     }
     Tree_Add(surf->Simplexes, &s);
@@ -601,8 +595,7 @@ void Read_Mesh_VTK(Mesh * m, FILE *fp)
   if(NbFaces)
     m->status = 2;
 
-  Volume *vol = Create_Volume(1, MSH_VOLUME);
-  vol->Dirty = 1;
+  Volume *vol = Create_Volume(1, MSH_VOLUME_DISCRETE);
   vol->Surfaces = List_Create(1, 1, sizeof(Surface *));
   List_Add(vol->Surfaces, &surf);
   Tree_Add(m->Volumes, &vol);
@@ -699,7 +692,6 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
         Curve *c;
         if(!(c = FindCurve(GEntityId, m))) {
           c = Create_Curve(GEntityId, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0, 1);
-	  c->Dirty = 1;
           Tree_Add(m->Curves, &c);
         }
         s->iEnt = GEntityId;
@@ -711,8 +703,7 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
 
   AllFaces = List_Create(NbFaces, 1, sizeof(Simplex *));
 
-  Volume *vol = Create_Volume(1, MSH_VOLUME);
-  vol->Dirty = 1;
+  Volume *vol = Create_Volume(1, MSH_VOLUME_DISCRETE);
   vol->Surfaces = List_Create(1, 1, sizeof(Surface *));
   Tree_Add(m->Volumes, &vol);
 
@@ -800,7 +791,6 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
       case ENTITY_FACE:
         if(!(surf = FindSurface(GEntityId + 10000, m))) {
           surf = Create_Surface(GEntityId + 10000, MSH_SURF_DISCRETE);
-          surf->Dirty = 1;
           if(!NbRegions)
             List_Add(vol->Surfaces, &surf);
           Tree_Add(m->Surfaces, &surf);
@@ -843,8 +833,7 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
       Simplex *s = Create_Simplex(v1, v2, v3, v4);
 
       if(!(vol = FindVolume(GEntityId, m))) {
-        vol = Create_Volume(GEntityId, MSH_VOLUME);
-	vol->Dirty = 1;
+        vol = Create_Volume(GEntityId, MSH_VOLUME_DISCRETE);
         Tree_Add(m->Volumes, &vol);
       }
       s->iEnt = GEntityId;

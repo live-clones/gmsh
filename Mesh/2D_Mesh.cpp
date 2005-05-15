@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.75 2005-04-19 07:23:42 remacle Exp $
+// $Id: 2D_Mesh.cpp,v 1.76 2005-05-15 01:44:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -851,11 +851,6 @@ void Maillage_Surface(void *data, void *dum)
 
   if(!s->Support)
     return;
-
-  if(s->Dirty) {
-    Msg(INFO, "Not meshing dirty Surface %d", s->Num);
-    return;
-  }
 
   THESUPPORT = s->Support;
   THESURFACE = s;

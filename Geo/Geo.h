@@ -57,6 +57,11 @@
 #define MSH_SEGM_LOOP        8
 #define MSH_SEGM_PARAMETRIC  888
 #define MSH_SEGM_MERGEDSEGS  889
+#define MSH_SEGM_BSPLN       15
+#define MSH_SEGM_URBS        16
+#define MSH_SEGM_NURBS       17
+#define MSH_SEGM_BEZIER      18
+#define MSH_SEGM_DISCRETE    19
 
 #define MSH_SURF_PLAN        9
 #define MSH_SURF_REGL        10
@@ -69,12 +74,8 @@
 #define MSH_SURF_TRIMMED     1599
 #define MSH_SURF_DISCRETE    1799
 
-#define MSH_VOLUME                   14
-#define MSH_SEGM_BSPLN       15
-#define MSH_SEGM_URBS        16
-#define MSH_SEGM_NURBS       17
-#define MSH_SEGM_BEZIER      18
-#define MSH_SEGM_DISCRETE    19
+#define MSH_VOLUME           14
+#define MSH_VOLUME_DISCRETE  114
 
 #define MSH_PHYSICAL_POINT   300
 #define MSH_PHYSICAL_LINE    310

@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.72 2005-05-13 05:09:08 geuzaine Exp $
+// $Id: Create.cpp,v 1.73 2005-05-15 01:44:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -529,7 +529,6 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
 
   pC = (Curve *) Malloc(sizeof(Curve));
   pC->bds = 0;
-  pC->Dirty = 0;
   pC->Color.type = 0;
   pC->Visible = VIS_GEOM | VIS_MESH;
   pC->cp = NULL;
@@ -592,7 +591,6 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
         List_Add(pC->Control_Points, &v);
       else{
         Msg(GERROR, "Unknown control point %d in Curve %d", iPnt, pC->Num);
-	pC->Dirty = 1;
       }
     }
   }
@@ -614,7 +612,6 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
     }
     else {
       Msg(GERROR, "Unknown control point %d in Curve %d", p1, pC->Num);
-      pC->Dirty = 1;
     }
     if((v = FindPoint(p2, THEM))) {
       Msg(INFO, "Curve %d first control point %d ", pC->Num, v->Num);
@@ -622,7 +619,6 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
     }
     else {
       Msg(GERROR, "Unknown control point %d in Curve %d", p2, pC->Num);
-      pC->Dirty = 1;
     }
   }
 
@@ -654,7 +650,6 @@ Surface *Create_Surface(int Num, int Typ)
   int i;  
 
   pS = (Surface *) Malloc(sizeof(Surface));
-  pS->Dirty = 0;
   pS->bds = 0;
   pS->Color.type = 0;
   pS->Visible = VIS_GEOM | VIS_MESH;
@@ -723,7 +718,6 @@ Volume *Create_Volume(int Num, int Typ)
   int i;
 
   pV = (Volume *) Malloc(sizeof(Volume));
-  pV->Dirty = 0;
   pV->Color.type = 0;
   pV->Visible = VIS_GEOM | VIS_MESH;
   pV->Num = Num;

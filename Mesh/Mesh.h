@@ -252,7 +252,6 @@ struct _Surf{
   Grid_T Grid;  // fast search grid
   ExtrudeParams *Extrude;
   BDS_Mesh *bds;
-  int Dirty; // flag to prevent any meshing
   DrawingColor Color;
   VertexArray *TriVertexArray;
   VertexArray *QuadVertexArray;
@@ -310,7 +309,6 @@ typedef struct {
   Tree_T *Hexahedra;
   Tree_T *Prisms;
   Tree_T *Pyramids;
-  int Dirty; //flag to prevent any meshing
   DrawingColor Color;
   VertexArray *TriVertexArray;
   VertexArray *QuadVertexArray;
@@ -374,7 +372,6 @@ typedef struct{
     int degre;
     CircParam Circle;
     char functu[256], functv[256], functw[256];
-    int Dirty; // flag to prevent any meshing
     DrawingColor Color;
     BDS_Mesh *bds;
 }Curve;

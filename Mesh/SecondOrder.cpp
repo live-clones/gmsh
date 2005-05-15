@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.32 2005-03-26 04:09:16 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.33 2005-05-15 01:44:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -423,14 +423,12 @@ void ResetDegre2_Pyramid(void *a, void *b)
 void ResetDegre2_Curve(void *a, void *b)
 {
   Curve *c = *(Curve**)a;
-  if(c->Dirty) return;
   Tree_Action(c->Simplexes, ResetDegre2_Simplex);
 }
 
 void ResetDegre2_Surface(void *a, void *b)
 {
   Surface *s = *(Surface**)a;
-  if(s->Dirty) return;
   Tree_Action(s->Simplexes, ResetDegre2_Simplex);
   Tree_Action(s->Quadrangles, ResetDegre2_Quadrangle);
 }
@@ -438,7 +436,6 @@ void ResetDegre2_Surface(void *a, void *b)
 void ResetDegre2_Volume(void *a, void *b)
 {
   Volume *v = *(Volume**)a;
-  if(v->Dirty) return;
   Tree_Action(v->Simplexes, ResetDegre2_Simplex);
   Tree_Action(v->Hexahedra, ResetDegre2_Hexahedron);
   Tree_Action(v->Prisms, ResetDegre2_Prism);
@@ -476,7 +473,7 @@ void Degre1()
 void Degre2_Curve(void *a, void *b)
 {
   Curve *c = *(Curve**)a;
-  if(c->Dirty || c->Num < 0) return;
+  if(c->Num < 0) return;
 
   Msg(STATUS3, "Second order curve %d", c->Num);
 
@@ -489,7 +486,6 @@ void Degre2_Curve(void *a, void *b)
 void Degre2_Surface(void *a, void *b)
 {
   Surface *s = *(Surface**)a;
-  if(s->Dirty) return;
 
   Msg(STATUS3, "Second order surface %d", s->Num);
 
@@ -506,7 +502,6 @@ void Degre2_Surface(void *a, void *b)
 void Degre2_Volume(void *a, void *b)
 {
   Volume *v = *(Volume**)a;
-  if(v->Dirty) return;
 
   Msg(STATUS3, "Second order volume %d", v->Num);
 
