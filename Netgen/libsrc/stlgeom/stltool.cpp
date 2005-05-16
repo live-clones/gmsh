@@ -43,7 +43,7 @@ double GetDistFromLine(const Point<3> & lp1, const Point<3> & lp2,
   vn /= vnl;
   p = lp1 + (v1 * vn) * vn;
   return (pold - p).Length();
-};
+}
 
 double GetDistFromInfiniteLine(const Point<3>& lp1, const Point<3>& lp2, const Point<3>& p)
 {
@@ -60,7 +60,7 @@ double GetDistFromInfiniteLine(const Point<3>& lp1, const Point<3>& lp2, const P
     {
       return Cross (vn, v1).Length() / vnl;
     }
-};
+}
 
 
 
@@ -607,7 +607,7 @@ ostream& operator<<(ostream& os, const STLTriangle& t)
   os << t[2] << "]";
 
   return os;
-};
+}
 
 
 

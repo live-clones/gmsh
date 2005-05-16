@@ -1114,7 +1114,7 @@ PointBetween (const Point3d & p1, const Point3d & p2, double secpoint,
 void RefinementSTLGeometry :: ProjectToSurface (Point<3> & p, int surfi)
 {
   cout << "RefinementSTLGeometry :: ProjectToSurface not implemented!" << endl;
-};
+}
 
 
 void RefinementSTLGeometry :: ProjectToSurface (Point<3> & p, int surfi,
@@ -1124,7 +1124,7 @@ void RefinementSTLGeometry :: ProjectToSurface (Point<3> & p, int surfi,
   gi.trignum = geom.Project (p);
   //  if (!gi.trignum) 
   //    cout << "projectSTL failed" << endl;
-};
+}
 
  
 }

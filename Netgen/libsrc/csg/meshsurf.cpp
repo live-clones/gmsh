@@ -167,12 +167,12 @@ PointBetween (const Point3d & p1, const Point3d & p2, double secpoint,
     }
 
   newp = hnewp;
-};
+}
 
 
 void RefinementSurfaces :: ProjectToSurface (Point<3> & p, int surfi)
 {
   if (surfi != -1)
     geometry.GetSurface (surfi) -> Project (p);
-};
+}
 }

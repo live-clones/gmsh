@@ -2365,7 +2365,7 @@ void Refinement :: PointBetween (const Point3d & p1, const Point3d & p2, double 
 void Refinement :: ProjectToSurface (Point<3> & p, int surfi)
 {
   cout << "Refinement :: ProjectToSurface    ERROR: no geometry set" << endl;
-};
+}
 
 
 }

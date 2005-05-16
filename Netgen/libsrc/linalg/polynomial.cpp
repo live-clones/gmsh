@@ -43,7 +43,7 @@ LinearPolynomial2V (double ac, double acx, double acy)
   c = ac;
   cx = acx;
   cy = acy;
-};
+}
 
 
 QuadraticPolynomial2V ::   
@@ -170,7 +170,7 @@ MaxUnitSquare ()
   //  (*testout) << maxv << endl;
   return maxv;
   */
-};
+}
 
 
 

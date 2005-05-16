@@ -555,7 +555,7 @@ STLLine :: STLLine(const STLGeometry * ageometry)
 {
   geometry = ageometry;
   split = 0;
-};
+}
 
 int STLLine :: GetNS() const
 {
@@ -572,13 +572,13 @@ int STLLine :: GetLeftTrig(int nr) const
 {
   if (nr > lefttrigs.Size()) {PrintSysError("In STLLine::GetLeftTrig!!!"); return 0;}
   return lefttrigs.Get(nr);
-};
+}
 
 int STLLine :: GetRightTrig(int nr) const 
 {
   if (nr > righttrigs.Size()) {PrintSysError("In STLLine::GetRightTrig!!!"); return 0;}
   return righttrigs.Get(nr);
-};
+}
 
 double STLLine :: GetSegLen(const ARRAY<Point<3> >& ap, int nr) const
 {

@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.78 2005-05-04 14:42:22 remacle Exp $
+// $Id: OpenFile.cpp,v 1.79 2005-05-16 00:50:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -296,6 +296,7 @@ int MergeProblem(char *name, int warn_if_missing)
     THEM->bds->save_gmsh_format ( "2.msh" );
     BDS_To_Mesh (THEM);
     SetBoundingBox();
+    status = THEM->status;
   }
   else {
     fpos_t position;

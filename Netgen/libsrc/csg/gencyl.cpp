@@ -14,7 +14,7 @@ GeneralizedCylinder :: GeneralizedCylinder (ExplicitCurve2d & acrosssection,
   planee2 = ae2;
   planee3 = Cross (planee1, planee2);
   (*testout) << "Vecs = " << planee1 << " " << planee2 << " " << planee3 << endl;
-};
+}
   
 
 void GeneralizedCylinder :: Project (Point<3> & p) const

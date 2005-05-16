@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.83 2005-05-15 01:44:26 geuzaine Exp $
+// $Id: Geom.cpp,v 1.84 2005-05-16 00:50:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -332,7 +332,6 @@ void Draw_Polygonal_Surface(Surface * s)
   if(CTX.geom.surfaces) {
     if(CTX.geom.light) glEnable(GL_LIGHTING);
     glEnable(GL_POLYGON_OFFSET_FILL); // always!
-    int k = 0;    
 
     std::list<BDS_Triangle*>::iterator it  = s->bds->triangles.begin();
     std::list<BDS_Triangle*>::iterator ite = s->bds->triangles.end();

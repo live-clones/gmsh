@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.60 2005-02-28 23:57:59 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.61 2005-05-16 00:50:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -583,7 +583,7 @@ void Print_Mesh_MSH(Mesh *M, FILE *fp)
   else if(CTX.mesh.msh_file_version == 2.0){
     fprintf(MSHFILE, "$MeshFormat\n");
     fprintf(MSHFILE, "%g %d %d\n", CTX.mesh.msh_file_version,
-	    LIST_FORMAT_ASCII, sizeof(double));
+	    LIST_FORMAT_ASCII, (int)sizeof(double));
     fprintf(MSHFILE, "$EndMeshFormat\n");
   }
   else{

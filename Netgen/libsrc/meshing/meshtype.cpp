@@ -2226,7 +2226,7 @@ DebugParameters :: DebugParameters ()
   haltsegment = 0;
   haltsegmentp1 = 0;
   haltsegmentp2 = 0;
-};
+}
 
 
 

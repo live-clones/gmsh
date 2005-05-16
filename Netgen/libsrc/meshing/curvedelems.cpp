@@ -215,7 +215,7 @@ namespace netgen
 	    fdshape.SetSize( nfaceshapes );
 	    fddshape.SetSize ( nfaceshapes );
 	}
-    };
+    }
     
 
 
@@ -272,7 +272,7 @@ namespace netgen
 	    fshape.SetSize( nfaces * (maxfaceorder-1) * (maxfaceorder-1)); // number of face shape functions
 	    fdshape.SetSize( nfaces * (maxfaceorder-1) * (maxfaceorder-1));
 	}
-    };
+    }
     
     
 

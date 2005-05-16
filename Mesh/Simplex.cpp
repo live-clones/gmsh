@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.40 2005-03-30 19:17:07 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.41 2005-05-16 00:50:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -803,7 +803,7 @@ bool Simplex::SwapEdge(int iFac)
 bool Simplex::SwapFace(int iFac, List_T * newsimp, List_T * delsimp)
 {
   Simplex *s = S[iFac], *s1, *s2, *s3;
-  Vertex *o[2];
+  Vertex *o[2] = {NULL, NULL};
   int i;
 
   if(!s || s == &MyNewBoundary || !s->iEnt)

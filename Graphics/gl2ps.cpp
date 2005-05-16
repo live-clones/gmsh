@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.95 2005-03-13 20:17:54 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.96 2005-05-16 00:50:10 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2005 Christophe Geuzaine <geuz@geuz.org>
@@ -483,7 +483,7 @@ static void gl2psListRealloc(GL2PSlist *list, GLint n)
   }
   if(n <= 0) return;
   if(!list->array){
-    list->nmax = ((n - 1) / list->incr + 1) * list->incr;
+    list->nmax = n;
     list->array = (char*)gl2psMalloc(list->nmax * list->size);
   }
   else{
@@ -1208,7 +1208,7 @@ static GLboolean gl2psLess(GLfloat f1, GLfloat f2)
 
 static void gl2psBuildBspTree(GL2PSbsptree *tree, GL2PSlist *primitives)
 {
-  GL2PSprimitive *prim, *frontprim, *backprim;
+  GL2PSprimitive *prim, *frontprim = NULL, *backprim = NULL;
   GL2PSlist *frontlist, *backlist;
   GLint i, index;
 
@@ -2819,11 +2819,11 @@ static void gl2psPrintPostScriptBeginViewport(GLint viewport[4])
                 "closepath fill\n",
                 rgba[0], rgba[1], rgba[2], 
                 x, y, x+w, y, x+w, y+h, x, y+h);
-    gl2psPrintf("newpath %d %d moveto %d %d lineto %d %d lineto %d %d lineto\n"
-                "closepath clip\n",
-                x, y, x+w, y, x+w, y+h, x, y+h);
   }
-
+  
+  gl2psPrintf("newpath %d %d moveto %d %d lineto %d %d lineto %d %d lineto\n"
+              "closepath clip\n",
+              x, y, x+w, y, x+w, y+h, x, y+h);
 }
 
 static GLint gl2psPrintPostScriptEndViewport(void)
@@ -4927,6 +4927,15 @@ GL2PSDLL_API GLint gl2psBlendFunc(GLenum sfactor, GLenum dfactor)
   glPassThrough((GLfloat)sfactor);
   glPassThrough(GL2PS_DST_BLEND);
   glPassThrough((GLfloat)dfactor);
+
+  return GL2PS_SUCCESS;
+}
+
+GL2PSDLL_API GLint gl2psSetOptions(GLint options)
+{
+  if(!gl2ps) return GL2PS_UNINITIALIZED;
+
+  gl2ps->options = options;
 
   return GL2PS_SUCCESS;
 }

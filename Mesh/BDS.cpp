@@ -114,12 +114,12 @@ void print_face (BDS_Triangle *t)
 {
     BDS_Point *pts[3];
     t->getNodes (pts); 
-    printf("face %p with nodes %d %d %d and edges %p (%d %d) %p (%d %d) %p (%d %d)\n",t,pts[0]->iD,pts[1]->iD,pts[2]->iD,
-	   t->e1,t->e1->p1->iD,t->e1->p2->iD,t->e2,t->e2->p1->iD,t->e2->p2->iD,t->e3,t->e3->p1->iD,t->e3->p2->iD);
+    printf("face %p with nodes %d %d %d and edges %p (%d %d) %p (%d %d) %p (%d %d)\n",(void*)t,pts[0]->iD,pts[1]->iD,pts[2]->iD,
+	   (void*)t->e1,t->e1->p1->iD,t->e1->p2->iD,(void*)t->e2,t->e2->p1->iD,t->e2->p2->iD,(void*)t->e3,t->e3->p1->iD,t->e3->p2->iD);
 }
 void print_edge (BDS_Edge *e)
 {
-    printf("edge %p with nodes %d %d ------------------\n",e,e->p1->iD,e->p2->iD);
+  printf("edge %p with nodes %d %d ------------------\n",(void*)e,e->p1->iD,e->p2->iD);
     printf("faces : \n ");
     for (int i=0;i<e->numfaces();++i)
 	print_face (e->faces(i));
@@ -1063,7 +1063,7 @@ void BDS_Mesh :: save_gmsh_format ( const char *filename )
 	std::set<BDS_Point*,PointLessThan>::iterator ite = points.end();
 	
 	fprintf(f,"$NOD\n");
-	fprintf(f,"%d\n",points.size());
+	fprintf(f,"%d\n",(int)points.size());
 	while(it!=ite)
 	{
 	    if ((*it)->g && (*it)->g->classif_degree == 0)nbModelVertex++;
@@ -1086,7 +1086,7 @@ void BDS_Mesh :: save_gmsh_format ( const char *filename )
 	    }
 	}
 	
-	fprintf(f,"%d\n",nbClasEdges+nbModelVertex+triangles.size());
+	fprintf(f,"%ld\n",nbClasEdges+nbModelVertex+triangles.size());
 	
 	int k=1;  
 	{

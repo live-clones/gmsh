@@ -540,7 +540,7 @@ int STLGeometry :: FromPlane (const Point<2> & plainpoint,
 }
 
 int lasttrig;
-int STLGeometry :: LastTrig() const {return lasttrig;};
+int STLGeometry :: LastTrig() const {return lasttrig;}
 
 //project normal to tangential plane
 int STLGeometry :: Project(Point<3> & p3d) const

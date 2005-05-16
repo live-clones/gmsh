@@ -1349,7 +1349,7 @@ StringXColor GeneralOptions_Color[] = {
     PACK_COLOR(0,   0,   0,   255),
     "Text color" },
   { F|O, "Axes" , opt_general_color_axes ,
-    PACK_COLOR(255, 255, 255,   255),
+    PACK_COLOR(255, 255, 255, 255),
     PACK_COLOR(128, 128, 128, 255),
     PACK_COLOR(0,   0,   0,   255),
     "Axes color" },

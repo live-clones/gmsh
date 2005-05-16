@@ -7,7 +7,7 @@ namespace netgen
   GeomSearch3d :: GeomSearch3d() 
   {
     size.i1 = 0; size.i2 = 0; size.i3 = 0; 
-  };
+  }
 
   GeomSearch3d :: ~GeomSearch3d()
   {

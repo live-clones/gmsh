@@ -50,6 +50,6 @@ namespace netgen
     newp = Point3d (p2d(0), p2d(1), 0);
     newgi.edgenr = ap1.edgenr;
     newgi.dist = ((1-secpoint)*ap1.dist+secpoint*ap2.dist);
-  };
+  }
 
 }
