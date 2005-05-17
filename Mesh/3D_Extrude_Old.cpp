@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.31 2005-02-25 01:45:41 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.32 2005-05-17 22:03:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -482,8 +482,11 @@ static void Extrude_Surface1(void *data, void *dum)
   THES = s;
 
   Tree_Action(s->Vertices, Extrude_Vertex);
-  if(!CTX.mesh.oldxtrude_recombine)
+
+  if(!CTX.mesh.oldxtrude_recombine){
     Tree_Action(s->Simplexes, Extrude_Simplex_Phase1);
+    Tree_Action(s->SimplexesBase, Extrude_Simplex_Phase1);
+  }
 }
 
 static void Extrude_Surface2(void *data, void *dum)
@@ -494,6 +497,7 @@ static void Extrude_Surface2(void *data, void *dum)
   THES = s;
 
   Tree_Action(s->Simplexes, Extrude_Simplex_Phase2);
+  Tree_Action(s->SimplexesBase, Extrude_Simplex_Phase2);
 }
 
 static void Extrude_Surface3(void *data, void *dum)
@@ -515,6 +519,7 @@ static void Extrude_Surface3(void *data, void *dum)
   }
 
   Tree_Action(s->Simplexes, Extrude_Simplex_Phase3);
+  Tree_Action(s->SimplexesBase, Extrude_Simplex_Phase3);
   Tree_Action(s->Quadrangles, Extrude_Quadrangle_Phase3);
 }
 
