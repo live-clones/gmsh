@@ -1,4 +1,4 @@
-// $Id: mshsort.cpp,v 1.6 2005-01-01 19:35:41 geuzaine Exp $
+// $Id: mshsort.cpp,v 1.7 2005-05-18 22:04:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -209,7 +209,7 @@ void printMesh(FILE *fp, double version, map<int, node*> nodes, vector<element*>
 
   if(version == 2.0){
     fprintf(fp, "$MeshFormat\n");
-    fprintf(fp, "2.0 0 %d\n", sizeof(double));
+    fprintf(fp, "2.0 0 %d\n", (int)sizeof(double));
     fprintf(fp, "$EndMeshFormat\n");
     fprintf(fp, "$Nodes\n");
   }
