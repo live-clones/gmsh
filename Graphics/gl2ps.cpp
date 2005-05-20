@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.96 2005-05-16 00:50:10 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.97 2005-05-20 23:25:09 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2005 Christophe Geuzaine <geuz@geuz.org>
@@ -463,7 +463,7 @@ static void gl2psAssignTriangleProperties(GL2PStriangle *t)
   }
 }
 
-static void gl2psFillTriangleFromPrimitive(GL2PStriangle* t, GL2PSprimitive* p,
+static void gl2psFillTriangleFromPrimitive(GL2PStriangle *t, GL2PSprimitive *p,
                                            GLboolean assignprops)
 {
   t->vertex[0] = p->verts[0];
@@ -471,6 +471,15 @@ static void gl2psFillTriangleFromPrimitive(GL2PStriangle* t, GL2PSprimitive* p,
   t->vertex[2] = p->verts[2];
   if(GL_TRUE == assignprops)
     gl2psAssignTriangleProperties(t);
+}
+
+static void gl2psInitTriangle(GL2PStriangle *t)
+{
+  int i;
+  GL2PSvertex vertex = { {-1.0F, -1.0F, -1.0F}, {-1.0F, -1.0F, -1.0F, -1.0F} };
+  for(i = 0; i < 3; i++)
+    t->vertex[i] = vertex;
+  t->prop = T_UNDEFINED;
 }
 
 /* The list handling routines */
@@ -583,7 +592,7 @@ static void gl2psListActionInverse(GL2PSlist *list, void (*action)(void *data))
 
 /* Helper for pixmaps and strings */
 
-static GL2PSimage *gl2psCopyPixmap(GL2PSimage* im)
+static GL2PSimage *gl2psCopyPixmap(GL2PSimage *im)
 {
   int size;
   GL2PSimage *image = (GL2PSimage*)gl2psMalloc(sizeof(GL2PSimage));
@@ -609,7 +618,7 @@ static GL2PSimage *gl2psCopyPixmap(GL2PSimage* im)
   return image;
 }
 
-static void gl2psFreePixmap(GL2PSimage* im)
+static void gl2psFreePixmap(GL2PSimage *im)
 {
   if(!im)
     return;
@@ -617,7 +626,7 @@ static void gl2psFreePixmap(GL2PSimage* im)
   gl2psFree(im);
 }
 
-static GL2PSstring *gl2psCopyText(GL2PSstring* t)
+static GL2PSstring *gl2psCopyText(GL2PSstring *t)
 {
   GL2PSstring *text = (GL2PSstring*)gl2psMalloc(sizeof(GL2PSstring));
   text->str = (char*)gl2psMalloc((strlen(t->str)+1)*sizeof(char));
@@ -631,7 +640,7 @@ static GL2PSstring *gl2psCopyText(GL2PSstring* t)
   return text;
 }
 
-static void gl2psFreeText(GL2PSstring* text)
+static void gl2psFreeText(GL2PSstring *text)
 {
   if(!text)
     return;
@@ -640,7 +649,7 @@ static void gl2psFreeText(GL2PSstring* text)
   gl2psFree(text);
 }
 
-static GL2PSprimitive *gl2psCopyPrimitive(GL2PSprimitive* p)
+static GL2PSprimitive *gl2psCopyPrimitive(GL2PSprimitive *p)
 {
   GL2PSprimitive *prim;
 
@@ -2067,7 +2076,7 @@ static void gl2psParseFeedbackBuffer(GLint used)
  *
  *********************************************************************/
 
-static GLfloat gl2psGetRGB(GL2PSimage* im, GLuint x, GLuint y,
+static GLfloat gl2psGetRGB(GL2PSimage *im, GLuint x, GLuint y,
                            GLfloat *red, GLfloat *green, GLfloat *blue)
 {
   
@@ -3042,17 +3051,18 @@ static void gl2psPDFgroupListInit(void)
   GL2PSprimitive *p = NULL;
   GL2PSpdfgroup gro;
   int lasttype = GL2PS_NOTYPE;
-  GL2PSrgba lastrgba;
+  GL2PSrgba lastrgba = {-1.0F, -1.0F, -1.0F, -1.0F};
   GLushort lastpattern = 0;
   GLint lastfactor = 0;
   GLfloat lastwidth = 1;
-  GL2PStriangle tmpt, lastt;
+  GL2PStriangle lastt, tmpt;
   int lastTriangleWasNotSimpleWithSameColor = 0;
 
   if(!gl2ps->pdfprimlist)
     return;
 
   gl2ps->pdfgrouplist = gl2psListCreate(500, 500, sizeof(GL2PSpdfgroup));
+  gl2psInitTriangle(&lastt);
 
   for(i = 0; i < gl2psListNbr(gl2ps->pdfprimlist); ++i){  
     p = *(GL2PSprimitive**)gl2psListPointer(gl2ps->pdfprimlist, i);
@@ -3122,7 +3132,7 @@ static void gl2psPDFgroupListInit(void)
         gl2psListAdd(gro.ptrlist, &p);
         gl2psListAdd(gl2ps->pdfgrouplist, &gro);
       }
-      lastt.prop = tmpt.prop;
+      lastt = tmpt;
       break;
     default:
       break;
@@ -3733,7 +3743,7 @@ static int gl2psPrintPDFGSObject(void)
 
 /* Put vertex' edge flag (8bit) and coordinates (32bit) in shader stream */
 
-static int gl2psPrintPDFShaderStreamDataCoord(GL2PSvertex* vertex, 
+static int gl2psPrintPDFShaderStreamDataCoord(GL2PSvertex *vertex, 
                                               size_t (*action)(unsigned long data, 
                                                                size_t size), 
                                               GLfloat dx, GLfloat dy, 
@@ -3799,7 +3809,7 @@ static int gl2psPrintPDFShaderStreamDataRGB(GL2PSvertex *vertex,
 
 /* Put vertex' alpha (8/16bit) in shader stream */
 
-static int gl2psPrintPDFShaderStreamDataAlpha(GL2PSvertex* vertex, 
+static int gl2psPrintPDFShaderStreamDataAlpha(GL2PSvertex *vertex, 
                                               size_t (*action)(unsigned long data, 
                                                                size_t size),
                                               int sigbyte)
@@ -3822,7 +3832,7 @@ static int gl2psPrintPDFShaderStreamDataAlpha(GL2PSvertex* vertex,
 
 /* Put a triangles raw data in shader stream */
 
-static int gl2psPrintPDFShaderStreamData(GL2PStriangle* triangle, 
+static int gl2psPrintPDFShaderStreamData(GL2PStriangle *triangle, 
                                          GLfloat dx, GLfloat dy, 
                                          GLfloat xmin, GLfloat ymin,
                                          size_t (*action)(unsigned long data, 
@@ -4043,7 +4053,7 @@ static int gl2psPrintPDFShaderSimpleExtGS(int obj, GLfloat alpha)
 
 /* Similar groups of functions for pixmaps and text */
 
-static int gl2psPrintPDFPixmapStreamData(GL2PSimage* im,
+static int gl2psPrintPDFPixmapStreamData(GL2PSimage *im,
                                          size_t (*action)(unsigned long data, 
                                                           size_t size), 
                                          int gray)
@@ -4148,7 +4158,7 @@ static int gl2psPrintPDFPixmap(int obj, int childobj, GL2PSimage *im, int gray)
   return offs;
 }
 
-static int gl2psPrintPDFText(int obj, GL2PSstring* s, int fontnumber)
+static int gl2psPrintPDFText(int obj, GL2PSstring *s, int fontnumber)
 {
   int offs = 0;
   
