@@ -1,4 +1,4 @@
-$Id: TODO,v 1.91 2005-03-14 21:19:32 geuzaine Exp $
+$Id: TODO,v 1.92 2005-05-21 17:27:03 geuzaine Exp $
 
 ********************************************************************
 
@@ -27,10 +27,6 @@ add GUI for
 
 - translate+rotate extrusions
 - mesh extrusion (layer stuff)
-
-********************************************************************
-
-add vertex arrays for isolines in post-pro
 
 ********************************************************************
 

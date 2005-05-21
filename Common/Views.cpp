@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.174 2005-04-06 19:03:01 geuzaine Exp $
+// $Id: Views.cpp,v 1.175 2005-05-21 17:27:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -94,6 +94,7 @@ Post_View *BeginView(int allocate)
   v->Index = i;
   v->Dirty = 1;
   v->TriVertexArray = NULL;
+  v->LinVertexArray = NULL;
   v->NbTimeStep = 1;
   v->TimeStepMin = NULL;
   v->TimeStepMax = NULL;
@@ -586,6 +587,7 @@ void FreeView(Post_View * v)
     // Note: all the second order elements have already been freed in xxxx
     if(v->normals) delete v->normals;
     if(v->TriVertexArray) delete v->TriVertexArray;
+    if(v->LinVertexArray) delete v->LinVertexArray;
     if(v->adaptive) delete v->adaptive;
     FreeGeneralizedRaise(v);
     Free(v);

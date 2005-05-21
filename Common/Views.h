@@ -69,8 +69,8 @@ class Post_View{
   int NbT2, NbT3;
   List_T *T2D, *T2C, *T3D, *T3C; // 2D and 3D text strings
 
-  // a vertex array to draw triangles efficiently
-  VertexArray *TriVertexArray;
+  // vertex arrays to draw triangles and lines efficiently
+  VertexArray *TriVertexArray, *LinVertexArray;
 
   // options
   int Type;

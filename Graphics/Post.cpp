@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.99 2005-03-14 18:55:22 geuzaine Exp $
+// $Id: Post.cpp,v 1.100 2005-05-21 17:27:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -648,6 +648,9 @@ void Draw_Post(void)
 	      if(v->TriVertexArray) delete v->TriVertexArray;
 	      v->TriVertexArray = new VertexArray(3, 10000);
 	      v->TriVertexArray->fill = 1;
+	      if(v->LinVertexArray) delete v->LinVertexArray;
+	      v->LinVertexArray = new VertexArray(2, 10000);
+	      v->LinVertexArray->fill = 1;
 	      goto pass_0;
 	    }
 	  }
@@ -655,14 +658,16 @@ void Draw_Post(void)
 	}
 	else{
 	  // don't even enter the classic data path if we don't have to
-	  if(v->TriVertexArray){
-	    if(v->Boundary < 1 && !v->ShowElement && !v->Normals &&
-	       v->IntervalsType != DRAW_POST_NUMERIC && v->IntervalsType != DRAW_POST_ISO){
+	  if(v->TriVertexArray || v->LinVertexArray){
+	    if(v->Boundary < 1 && !v->ShowElement && !v->Normals && 
+	       (!v->LineType || (v->LineType && v->IntervalsType != DRAW_POST_ISO)) &&
+	       v->IntervalsType != DRAW_POST_NUMERIC){
 	      Msg(DEBUG, "View[%d]: skiping 2D scalar pass alltogether", v->Index);
 	      skip_2d = 1;
 	    }
 	    if(v->Boundary < 2 && !v->ShowElement &&
-	       v->IntervalsType != DRAW_POST_NUMERIC && v->IntervalsType != DRAW_POST_ISO){
+	       (!v->LineType || (v->LineType && v->IntervalsType != DRAW_POST_ISO)) &&
+	       v->IntervalsType != DRAW_POST_NUMERIC){
 	      Msg(DEBUG, "View[%d]: skiping 3D scalar pass alltogether", v->Index);
 	      skip_3d = 1;
 	    }
@@ -742,10 +747,13 @@ void Draw_Post(void)
 	  Msg(DEBUG, "View[%d]; %d tris in vertex array", v->Index, v->TriVertexArray->num);
 	  v->TriVertexArray->fill = 0;
 	}
+	if(v->LinVertexArray && v->LinVertexArray->fill){
+	  Msg(DEBUG, "View[%d]; %d segs in vertex array", v->Index, v->LinVertexArray->num);
+	  v->LinVertexArray->fill = 0;
+	}
       }
 
       if(v->TriVertexArray && v->TriVertexArray->num){
-
 	if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && !v->FakeTransparency &&
 	   (changedEye() || v->Changed)){
 	  Msg(DEBUG, "Sorting View[%d] for transparency (WITH vertex array)", v->Index);
@@ -772,6 +780,16 @@ void Draw_Post(void)
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
+      }
+
+      if(v->LinVertexArray && v->LinVertexArray->num){
+	glVertexPointer(3, GL_FLOAT, 0, v->LinVertexArray->vertices->array);
+	glColorPointer(4, GL_UNSIGNED_BYTE, 0, v->LinVertexArray->colors->array);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+	glDrawArrays(GL_LINES, 0, 2 * v->LinVertexArray->num);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_COLOR_ARRAY);
       }
 
       if(v->DrawStrings) {

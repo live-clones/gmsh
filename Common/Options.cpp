@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.243 2005-05-21 04:55:59 geuzaine Exp $
+// $Id: Options.cpp,v 1.244 2005-05-21 17:27:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -5432,7 +5432,7 @@ double opt_view_max_recursion_level(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    if (v->adaptive)
+    if(v->adaptive)
       v->adaptive->setGlobalResolutionLevel(v,(int)val);
   }
 #if defined(HAVE_FLTK)
@@ -5442,7 +5442,7 @@ double opt_view_max_recursion_level(OPT_ARGS_NUM)
     }
   }
 #endif
-  if (v->adaptive)
+  if(v->adaptive)
     return v->adaptive->getGlobalResolutionLevel();
   return 0;
 }
@@ -5451,15 +5451,14 @@ double opt_view_target_error(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    if (v->adaptive)
-      {
-	v->adaptive->setTolerance(val);
-	v->adaptive->setGlobalResolutionLevel(v,v->adaptive->getGlobalResolutionLevel());
-      }
+    if(v->adaptive) {
+      v->adaptive->setTolerance(val);
+      v->adaptive->setGlobalResolutionLevel(v,v->adaptive->getGlobalResolutionLevel());
+    }
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    if (v->adaptive){
+    if(v->adaptive){
       WID->view_value[34]->value(v->adaptive->getTolerance());
     }
   }
@@ -6195,6 +6194,7 @@ double opt_view_line_type(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->LineType = (int)val;
+    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {

@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.33 2005-01-01 19:35:29 geuzaine Exp $
+// $Id: Iso.cpp,v 1.34 2005-05-21 17:27:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -33,7 +33,7 @@ extern Context_T CTX;
 // Draw an iso-line inside a triangle
 
 void IsoTriangle(Post_View * View, double *X, double *Y, double *Z,
-		 double *Val, double V)
+		 double *Val, double V, unsigned int color)
 {
   // don't draw anything if the value is constant
   if(Val[0] == Val[1] && Val[0] == Val[2])
@@ -54,8 +54,17 @@ void IsoTriangle(Post_View * View, double *X, double *Y, double *Z,
     nb++;
   }
   
-  if(nb == 2)
-    Draw_Line(View->LineType, View->LineWidth, Xp, Yp, Zp, View->Light);
+  if(nb == 2){
+    if(View->LinVertexArray && View->LinVertexArray->fill && !View->LineType){
+      View->LinVertexArray->add(Xp[0], Yp[0], Zp[0], color);
+      View->LinVertexArray->add(Xp[1], Yp[1], Zp[1], color);
+      View->LinVertexArray->num++;
+    }
+    else{
+      glColor4ubv((GLubyte *) & color);
+      Draw_Line(View->LineType, View->LineWidth, Xp, Yp, Zp, View->Light);
+    }
+  }
 }
 
 // Compute the polygon between the two iso-lines V1 and V2 in a

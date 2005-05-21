@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.64 2005-04-06 16:30:52 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.65 2005-05-21 17:27:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -575,13 +575,15 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
     }
   }
   
-  if(!preproNormals && View->IntervalsType == DRAW_POST_ISO) {
+  if(!preproNormals && View->IntervalsType == DRAW_POST_ISO &&
+     (!View->LinVertexArray || (View->LinVertexArray && View->LinVertexArray->fill) ||
+      View->LineType)){
     for(int k = 0; k < View->NbIso; k++) {
       if(ValMin == ValMax)
 	k = View->NbIso / 2;
-      PaletteDiscrete(View, View->NbIso, k);
+      unsigned int col = PaletteDiscrete(View, View->NbIso, k);
       IsoTriangle(View, X, Y, Z, Val,
-		  View->GVFI(ValMin, ValMax, View->NbIso, k));
+		  View->GVFI(ValMin, ValMax, View->NbIso, k), col);
       if(ValMin == ValMax) 
 	break;
     }

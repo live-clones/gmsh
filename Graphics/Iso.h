@@ -33,8 +33,9 @@ void CutLine(double *X, double *Y, double *Z, double *Val,
 void IsoLine(Post_View *View, double *X, double *Y, double *Z, 
 	     double *Val, double V);
 
-void IsoTriangle(Post_View *View, double *X, double *Y, double *Z,
-		 double *Val, double V);
+void IsoTriangle(Post_View *View, 
+		 double *X, double *Y, double *Z, double *Val, double V,
+		 unsigned int color);
 
 void IsoSimplex(Post_View *View, int preproNormals, 
 		double *X, double *Y, double *Z, double *Val, double V,
