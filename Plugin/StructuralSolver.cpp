@@ -31,19 +31,8 @@ Structural_BeamSection:: Structural_BeamSection( const char *direct, std::string
 : name (_name)
 {    
   Mesh *kk = THEM;
-  m.Vertices = NULL;
-  m.Simplexes = NULL;
-  m.Points = NULL;
-  m.Curves = NULL;
-  m.SurfaceLoops = NULL;
-  m.EdgeLoops = NULL;
-  m.Surfaces = NULL;
-  m.Volumes = NULL;
-  m.PhysicalGroups = NULL;
-  m.Partitions = NULL;
-  m.Metric = NULL;
-  m.BGM.bgm = NULL;
-  m.Grid.init = 0;
+
+  Init_Mesh0(&m);
   Init_Mesh(&m);
   //  THEM=&m;
 

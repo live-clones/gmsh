@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.48 2005-04-04 18:19:49 geuzaine Exp $
+// $Id: Main.cpp,v 1.49 2005-05-21 04:55:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -91,19 +91,7 @@ int main(int argc, char *argv[])
   if(argc < 2)
     Info(0, argv[0]);
 
-  M.Vertices = NULL;
-  M.Simplexes = NULL;
-  M.Points = NULL;
-  M.Curves = NULL;
-  M.SurfaceLoops = NULL;
-  M.EdgeLoops = NULL;
-  M.Surfaces = NULL;
-  M.Volumes = NULL;
-  M.PhysicalGroups = NULL;
-  M.Partitions = NULL;
-  M.Metric = NULL;
-  M.BGM.bgm = NULL;
-  M.Grid.init = 0;
+  Init_Mesh0(&M);
 
   signal(SIGINT, Signal);
   signal(SIGSEGV, Signal);

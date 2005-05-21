@@ -440,6 +440,7 @@ struct Map{
 
 void mai3d(Mesh *M, int Asked);
 
+void Init_Mesh0(Mesh *M);
 void Init_Mesh(Mesh *M);
 void Create_BgMesh(int i, double d, Mesh *m);
 void Print_Geo(Mesh *M, char *c, int discrete_curve=0, int discrete_surface=0);

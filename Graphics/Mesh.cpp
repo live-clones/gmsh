@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.126 2005-05-21 01:10:47 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.127 2005-05-21 04:55:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -239,13 +239,17 @@ void Draw_Mesh(Mesh * M)
 	glEnable((GLenum)(GL_CLIP_PLANE0 + i));
       else
 	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
-    
+
+    // Dimension 3
+
     if(M->status >= 3 && (CTX.mesh.volumes_faces || CTX.mesh.volumes_edges ||
 			  CTX.mesh.volumes_num || CTX.mesh.points_per_element ||
 			  (CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_as_surface &&
 			   (CTX.mesh.surfaces_edges || CTX.mesh.surfaces_faces)))) {
       Tree_Action(M->Volumes, Draw_Mesh_Volume);
     }
+
+    // Dimension 2
    
     if(M->status >= 2 && (CTX.mesh.surfaces_faces || CTX.mesh.surfaces_edges ||
 			  CTX.mesh.surfaces_num || CTX.mesh.points_per_element ||
@@ -255,15 +259,22 @@ void Draw_Mesh(Mesh * M)
 	Tree_Action(M->Volumes, Draw_Mesh_Extruded_Surfaces);
     }
     
+    // Dimension 1
+
     if(M->status >= 1 && (CTX.mesh.lines || CTX.mesh.lines_num || 
 			  CTX.mesh.points_per_element || CTX.mesh.tangents)) {
       Tree_Action(M->Curves, Draw_Mesh_Curve);
     }
+
+    // Dimension 0
     
     if(M->status >= 0 && !CTX.mesh.points_per_element &&
        (CTX.mesh.points || CTX.mesh.points_num)) {
       Tree_Action(M->Vertices, Draw_Mesh_Point);
     }
+
+    // Done!
+
     CTX.mesh.changed = 0;
 
     for(int i = 0; i < 6; i++)
@@ -466,10 +477,13 @@ void Draw_Mesh_Point(int num, double x, double y, double z, int degree, int visi
   if(!(visible & VIS_MESH))
     return;
 
+  unsigned int col;
   if(degree == 2)
-    glColor4ubv((GLubyte *) & CTX.color.mesh.vertex_deg2);
+    col = CTX.color.mesh.vertex_deg2;
   else
-    glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);
+    col = CTX.color.mesh.vertex;
+
+  glColor4ubv((GLubyte *) & col);
 
   if(CTX.mesh.points) {
     if(CTX.mesh.point_type) {
@@ -745,7 +759,11 @@ void Draw_Mesh_Array(VertexArray *va, int faces, int edges)
   glEnableClientState(GL_COLOR_ARRAY);
   glEnableClientState(GL_NORMAL_ARRAY);
 
-  if(va->type == 2){
+  if(va->type == 1){
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDrawArrays(GL_POINTS, 0, va->type * va->num);
+  }
+  else if(va->type == 2){
     glDisableClientState(GL_NORMAL_ARRAY);
     glDrawArrays(GL_LINES, 0, va->type * va->num);
   }

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.77 2005-04-19 16:03:10 remacle Exp $
+// $Id: Main.cpp,v 1.78 2005-05-21 04:55:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -72,22 +72,8 @@ int main(int argc, char *argv[])
   Init_Options(0);
 
   // Initialize the static Mesh
-
-  M.bds = 0;
-  M.bds_mesh = 0;
-  M.Vertices = NULL;
-  M.Simplexes = NULL;
-  M.Points = NULL;
-  M.Curves = NULL;
-  M.SurfaceLoops = NULL;
-  M.EdgeLoops = NULL;
-  M.Surfaces = NULL;
-  M.Volumes = NULL;
-  M.PhysicalGroups = NULL;
-  M.Partitions = NULL;
-  M.Metric = NULL;
-  M.BGM.bgm = NULL;
-  M.Grid.init = 0;
+  
+  Init_Mesh0(&M);
 
   // Generate automatic documentation (before getting user-defined options)
   

@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.5 2005-05-21 01:10:46 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.6 2005-05-21 04:55:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -27,8 +27,8 @@
 VertexArray::VertexArray(int numNodesPerElement, int numElements) 
 {
   type = numNodesPerElement;
-  if(type != 2 && type != 3 && type != 4){
-    Msg(GERROR, "Vertex arrays should only contain lines, triangles or quadrangles");
+  if(type < 1 || type > 4){
+    Msg(GERROR, "Vertex arrays not done for %d-node element", type);
     type = 3;
   }
   num = fill = 0;

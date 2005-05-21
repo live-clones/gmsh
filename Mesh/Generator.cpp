@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.64 2005-04-19 16:03:10 remacle Exp $
+// $Id: Generator.cpp,v 1.65 2005-05-21 04:55:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -302,6 +302,24 @@ void Maillage_Dimension_3(Mesh * M)
   M->timing[2] = t2 - t1;
 }
 
+void Init_Mesh0(Mesh * M)
+{
+  M->bds = 0;
+  M->bds_mesh = 0;
+  M->Vertices = NULL;
+  M->Simplexes = NULL;
+  M->Points = NULL;
+  M->Curves = NULL;
+  M->SurfaceLoops = NULL;
+  M->EdgeLoops = NULL;
+  M->Surfaces = NULL;
+  M->Volumes = NULL;
+  M->PhysicalGroups = NULL;
+  M->Partitions = NULL;
+  M->Metric = NULL;
+  M->BGM.bgm = NULL;
+  M->Grid.init = 0;
+}
 
 void Init_Mesh(Mesh * M)
 {
@@ -314,12 +332,13 @@ void Init_Mesh(Mesh * M)
   M->MaxSurfaceLoopNum = 0;
   M->MaxVolumeNum = 0;
   M->MaxPhysicalNum = 0;
-  if (M->bds)delete M->bds;
-  M->bds = 0;
 
   Element::TotalNumber = 0;
 
   ExitExtrude();
+
+  if(M->bds) delete M->bds;
+  M->bds = 0;
 
   Tree_Action(M->Vertices, Free_Vertex);  
   Tree_Delete(M->Vertices);
@@ -335,10 +354,10 @@ void Init_Mesh(Mesh * M)
   Tree_Action(M->Curves, Free_Curve);
   Tree_Delete(M->Curves);
 
-  Tree_Action (M->SurfaceLoops, Free_SurfaceLoop);
+  Tree_Action(M->SurfaceLoops, Free_SurfaceLoop);
   Tree_Delete(M->SurfaceLoops);
 
-  Tree_Action (M->EdgeLoops, Free_EdgeLoop);
+  Tree_Action(M->EdgeLoops, Free_EdgeLoop);
   Tree_Delete(M->EdgeLoops);
 
   Tree_Action(M->Surfaces, Free_Surface);
