@@ -100,7 +100,7 @@ void Draw_Mesh_Tetrahedron(void *a, void *b);
 void Draw_Mesh_Hexahedron(void *a, void *b);
 void Draw_Mesh_Prism(void *a, void *b);
 void Draw_Mesh_Pyramid(void *a, void *b);
-void Draw_Mesh_Array(VertexArray *va, int faces, int edges);
+void Draw_Mesh_Array(VertexArray *va, int faces=0, int edges=0);
 
 #define ARGS Post_View *View, int preproNormals, \
              double ValMin, double ValMax, 	 \

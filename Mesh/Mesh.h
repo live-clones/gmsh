@@ -354,26 +354,28 @@ typedef struct{
 }CircParam;
 
 typedef struct{
-    int Num;
-    int Typ;
-    char Visible;
-    int Method;
-    int ipar[4];
-    double dpar[4];
-    double l;
-    double mat[4][4];
-    Vertex *beg, *end;
-    double ubeg, uend;
-    List_T *Control_Points;
-    List_T *Vertices;
-    Tree_T *Simplexes, *SimplexesBase;
-    ExtrudeParams *Extrude;
-    float *k, *cp;
-    int degre;
-    CircParam Circle;
-    char functu[256], functv[256], functw[256];
-    DrawingColor Color;
-    BDS_Mesh *bds;
+  int Num;
+  int Typ;
+  char Visible;
+  int Method;
+  int ipar[4];
+  double dpar[4];
+  double l;
+  double mat[4][4];
+  Vertex *beg, *end;
+  double ubeg, uend;
+  List_T *Control_Points;
+  List_T *Vertices;
+  Tree_T *VerticesTemp; // a temp tree for fast vertex insertion
+  Tree_T *Simplexes, *SimplexesBase;
+  ExtrudeParams *Extrude;
+  float *k, *cp;
+  int degre;
+  CircParam Circle;
+  char functu[256], functv[256], functw[256];
+  DrawingColor Color;
+  BDS_Mesh *bds;
+  VertexArray *LinVertexArray;
 }Curve;
 
 typedef struct{

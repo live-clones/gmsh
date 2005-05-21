@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.4 2005-01-01 19:35:27 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.5 2005-05-21 01:10:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -27,8 +27,8 @@
 VertexArray::VertexArray(int numNodesPerElement, int numElements) 
 {
   type = numNodesPerElement;
-  if(type != 3 && type != 4){
-    Msg(GERROR, "Vertex arrays should only contain triangles or quadrangles");
+  if(type != 2 && type != 3 && type != 4){
+    Msg(GERROR, "Vertex arrays should only contain lines, triangles or quadrangles");
     type = 3;
   }
   num = fill = 0;
@@ -60,6 +60,21 @@ void VertexArray::add(float x, float y, float z,
   List_Add(normals, &n0);
   List_Add(normals, &n1);
   List_Add(normals, &n2);
+  List_Add(colors, &r);
+  List_Add(colors, &g);
+  List_Add(colors, &b);
+  List_Add(colors, &a);
+}
+
+void VertexArray::add(float x, float y, float z, unsigned int col)
+{
+  unsigned char r = UNPACK_RED(col);
+  unsigned char g = UNPACK_GREEN(col);
+  unsigned char b = UNPACK_BLUE(col);
+  unsigned char a = UNPACK_ALPHA(col);
+  List_Add(vertices, &x);
+  List_Add(vertices, &y);
+  List_Add(vertices, &z);
   List_Add(colors, &r);
   List_Add(colors, &g);
   List_Add(colors, &b);

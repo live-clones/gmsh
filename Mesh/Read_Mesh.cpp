@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.87 2005-05-15 01:44:26 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.88 2005-05-21 01:10:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -118,6 +118,21 @@ int getNbrNodes(int Type)
   case PYR2: return 5 + 8 + 1;
   default: return 0;
   }
+}
+
+static Curve *theCurve = NULL;
+
+static void TransferVertex(void *a, void *b)
+{
+  List_Add(theCurve->Vertices, a);
+}
+
+static void Transfer_VertexTree2List(void *a, void *b)
+{
+  theCurve = *(Curve**)a;
+  Tree_Action(theCurve->VerticesTemp, TransferVertex);
+  Tree_Delete(theCurve->VerticesTemp);
+  theCurve->VerticesTemp = NULL;
 }
 
 void Read_Mesh_MSH(Mesh * M, FILE * fp)
@@ -325,8 +340,16 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    Free_SimplexBase(&simp, 0);
 	  }
 	  else{
+	    // This is dog slow when there is a large num of verts per curve:
+	    //
+	    // for(i = 0; i < Nbr_Nodes; i++)
+	    //    List_Insert(c->Vertices, &vertsp[i], fcmp_int);
+	    //
+	    // So we use a temp tree instead:
+	    if(!c->VerticesTemp)
+	      c->VerticesTemp = Tree_Create(sizeof(Vertex *), compareVertex);
 	    for(i = 0; i < Nbr_Nodes; i++)
-	      List_Insert(c->Vertices, &vertsp[i], fcmp_int);
+	      Tree_Insert(c->VerticesTemp, &vertsp[i]);
 	  }
           break;
         case TRI1:
@@ -536,6 +559,9 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
   // re-sort the list according to these indices to allow direct
   // access through List_Pointer & co.
   List_Sort(M->Partitions, compareMeshPartitionIndex);
+
+  // Transfer the vertices from temp trees into lists
+  Tree_Action(M->Curves, Transfer_VertexTree2List);
 }
 
 // Read mesh in VTK format

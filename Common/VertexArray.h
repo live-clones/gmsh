@@ -30,6 +30,7 @@ class VertexArray{
   ~VertexArray();
   void add(float x, float y, float z, 
 	   float n0, float n1, float n2, unsigned int col);
+  void add(float x, float y, float z, unsigned int col);
   void sort(double eye[3]);
 };
 

@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.73 2005-05-15 01:44:26 geuzaine Exp $
+// $Id: Create.cpp,v 1.74 2005-05-21 01:10:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -510,10 +510,6 @@ void End_Surface(Surface * s, int reset_orientations)
 Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
                     List_T * Knots, int p1, int p2, double u1, double u2)
 {
-  Curve *pC;
-  Vertex *v;
-  int i, j, iPnt;
-  double d;
   double matcr[4][4] = { {-0.5, 1.5, -1.5, 0.5},
 			 {1.0, -2.5, 2.0, -0.5},
 			 {-0.5, 0.0, 0.5, 0.0},
@@ -527,12 +523,14 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
 			  {-3, 3.0, 0, 0.0},
 			  {1, 0, 0, 0.0} };
 
-  pC = (Curve *) Malloc(sizeof(Curve));
+  Curve *pC = (Curve *) Malloc(sizeof(Curve));
   pC->bds = 0;
+  pC->LinVertexArray = NULL;
   pC->Color.type = 0;
   pC->Visible = VIS_GEOM | VIS_MESH;
   pC->cp = NULL;
   pC->Vertices = List_Create(2, 20, sizeof(Vertex *));
+  pC->VerticesTemp = NULL;
   pC->Extrude = NULL;
   pC->Typ = Typ;
   pC->Num = Num;
@@ -544,24 +542,24 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
   pC->Circle.n[0] = 0.0;
   pC->Circle.n[1] = 0.0;
   pC->Circle.n[2] = 1.0;
-  for(i = 0; i < 4; i++) {
+  for(int i = 0; i < 4; i++) {
     pC->ipar[i] = 0;
     pC->dpar[i] = 0.0;
   }
 
   if(Typ == MSH_SEGM_SPLN) {
-    for(i = 0; i < 4; i++)
-      for(j = 0; j < 4; j++)
+    for(int i = 0; i < 4; i++)
+      for(int j = 0; j < 4; j++)
         pC->mat[i][j] = matcr[i][j];
   }
   else if(Typ == MSH_SEGM_BSPLN) {
-    for(i = 0; i < 4; i++)
-      for(j = 0; j < 4; j++)
+    for(int i = 0; i < 4; i++)
+      for(int j = 0; j < 4; j++)
         pC->mat[i][j] = matbs[i][j] / 6.0;
   }
   else if(Typ == MSH_SEGM_BEZIER) {
-    for(i = 0; i < 4; i++)
-      for(j = 0; j < 4; j++)
+    for(int i = 0; i < 4; i++)
+      for(int j = 0; j < 4; j++)
         pC->mat[i][j] = matbez[i][j];
   }
 
@@ -575,7 +573,8 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
     List_Read(Knots, List_Nbr(Knots) - 1, &kmax);
     pC->ubeg = kmin;
     pC->uend = kmax;
-    for(i = 0; i < List_Nbr(Knots); i++) {
+    for(int i = 0; i < List_Nbr(Knots); i++) {
+      double d;
       List_Read(Knots, i, &d);
       pC->k[i] = (float)d;
     }
@@ -585,8 +584,10 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
 
   if(Liste) {
     pC->Control_Points = List_Create(List_Nbr(Liste), 1, sizeof(Vertex *));
-    for(j = 0; j < List_Nbr(Liste); j++) {
+    for(int j = 0; j < List_Nbr(Liste); j++) {
+      int iPnt;
       List_Read(Liste, j, &iPnt);
+      Vertex *v;
       if((v = FindPoint(iPnt, THEM)))
         List_Add(pC->Control_Points, &v);
       else{
@@ -606,6 +607,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
     List_Read(pC->Control_Points, List_Nbr(pC->Control_Points) - 1, &pC->end);
   }
   else {
+    Vertex *v;
     if((v = FindPoint(p1, THEM))) {
       Msg(INFO, "Curve %d first control point %d ", pC->Num, v->Num);
       pC->beg = v;
@@ -631,6 +633,8 @@ void Free_Curve(void *a, void *b)
 {
   Curve *pC = *(Curve **) a;
   if(pC) {
+    if(pC->LinVertexArray)
+      delete pC->LinVertexArray;
     List_Delete(pC->Vertices);
     Tree_Action(pC->Simplexes, Free_Simplex);
     Tree_Delete(pC->Simplexes);
@@ -646,10 +650,7 @@ void Free_Curve(void *a, void *b)
 
 Surface *Create_Surface(int Num, int Typ)
 {
-  Surface *pS;
-  int i;  
-
-  pS = (Surface *) Malloc(sizeof(Surface));
+  Surface *pS = (Surface *) Malloc(sizeof(Surface));
   pS->bds = 0;
   pS->Color.type = 0;
   pS->Visible = VIS_GEOM | VIS_MESH;
@@ -657,7 +658,7 @@ Surface *Create_Surface(int Num, int Typ)
   THEM->MaxSurfaceNum = IMAX(THEM->MaxSurfaceNum, Num);
   pS->Typ = Typ;
   pS->Method = LIBRE;
-  for(i = 0; i < 5; i++)
+  for(int i = 0; i < 5; i++)
     pS->ipar[i] = 0;
   pS->Recombine = 0;
   pS->RecombineAngle = 75;
@@ -714,17 +715,14 @@ void Free_Surface(void *a, void *b)
 
 Volume *Create_Volume(int Num, int Typ)
 {
-  Volume *pV;
-  int i;
-
-  pV = (Volume *) Malloc(sizeof(Volume));
+  Volume *pV = (Volume *) Malloc(sizeof(Volume));
   pV->Color.type = 0;
   pV->Visible = VIS_GEOM | VIS_MESH;
   pV->Num = Num;
   THEM->MaxVolumeNum = IMAX(THEM->MaxVolumeNum, Num);
   pV->Typ = Typ;
   pV->Method = LIBRE;
-  for(i = 0; i < 8; i++)
+  for(int i = 0; i < 8; i++)
     pV->ipar[i] = 0;
   pV->TrsfPoints = List_Create(6, 6, sizeof(Vertex *));
   pV->Surfaces = List_Create(1, 2, sizeof(Surface *));

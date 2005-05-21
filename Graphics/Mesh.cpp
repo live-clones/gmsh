@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.125 2005-03-15 15:43:31 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.126 2005-05-21 01:10:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -47,6 +47,7 @@ extern int quadfaces_pyramid[1][4];
 
 static DrawingColor theColor;
 static int thePhysical = 0;
+static Curve *theCurve = NULL;
 static Surface *theSurface = NULL;
 static Volume *theVolume = NULL;
 
@@ -427,11 +428,37 @@ void Draw_Mesh_Curve(void *a, void *b)
     return;
   if(!(c->Visible & VIS_MESH))
     return;
+
+  theCurve = c;
   theColor = c->Color;
   thePhysical = getFirstPhysical(MSH_PHYSICAL_LINE, c->Num);
 
-  Tree_Action(c->Simplexes, Draw_Mesh_Line);
-  Tree_Action(c->SimplexesBase, Draw_Mesh_Line);
+  if(CTX.mesh.vertex_arrays){
+    if(CTX.mesh.changed){
+      Msg(DEBUG, "regenerate curve mesh vertex array");
+      if(c->LinVertexArray) delete c->LinVertexArray;
+      c->LinVertexArray = new VertexArray(2, Tree_Nbr(c->Simplexes) + 
+					  Tree_Nbr(c->SimplexesBase));
+      c->LinVertexArray->fill = 1;
+      Tree_Action(c->Simplexes, Draw_Mesh_Line);
+      Tree_Action(c->SimplexesBase, Draw_Mesh_Line);
+      if(c->LinVertexArray){
+	Msg(DEBUG, "%d segments in curve vertex array", c->LinVertexArray->num);
+	c->LinVertexArray->fill = 0;
+      }
+    }
+    if(c->LinVertexArray)
+      Draw_Mesh_Array(c->LinVertexArray);
+  }
+    
+  if(!c->LinVertexArray || CTX.mesh.lines_num ||
+     CTX.mesh.points_per_element || CTX.mesh.tangents){
+    Msg(DEBUG, "classic line data path");
+    Tree_Action(c->Simplexes, Draw_Mesh_Line);
+    Tree_Action(c->SimplexesBase, Draw_Mesh_Line);
+  }
+
+  theCurve = NULL;
 }
 
 void Draw_Mesh_Point(int num, double x, double y, double z, int degree, int visible)
@@ -527,26 +554,41 @@ void Draw_Mesh_Line(void *a, void *b)
 		      s->VSUP[0]->Degree, s->VSUP[0]->Visible);
   }
 
+  unsigned int col;
   if(theColor.type)
-    glColor4ubv((GLubyte *) & theColor.mesh);
+    col = theColor.mesh;
   else if(CTX.mesh.color_carousel == 1)
-    glColor4ubv((GLubyte *) & CTX.color.mesh.carousel[abs(s->iEnt % 10)]);
+    col = CTX.color.mesh.carousel[abs(s->iEnt % 10)];
   else if(CTX.mesh.color_carousel == 2)
-    glColor4ubv((GLubyte *) & CTX.color.mesh.carousel[abs(thePhysical % 10)]);
+    col = CTX.color.mesh.carousel[abs(thePhysical % 10)];
   else if(CTX.mesh.color_carousel == 3)
-    glColor4ubv((GLubyte *) & CTX.color.mesh.carousel[abs(s->iPart % 10)]);
+    col = CTX.color.mesh.carousel[abs(s->iPart % 10)];
   else
-    glColor4ubv((GLubyte *) & CTX.color.mesh.line);
+    col = CTX.color.mesh.line;
 
-  if(CTX.mesh.lines) {
-    glBegin(GL_LINE_STRIP);
-    for(int i = 0; i < N; i++){
-      glVertex3d(X[i], Y[i], Z[i]);
+  if(theCurve && theCurve->LinVertexArray && theCurve->LinVertexArray->fill){
+    theCurve->LinVertexArray->add(X[0], Y[0], Z[0], col);
+    theCurve->LinVertexArray->add(X[1], Y[1], Z[1], col);
+    theCurve->LinVertexArray->num++;
+    if(N == 3){
+      theCurve->LinVertexArray->add(X[1], Y[1], Z[1], col);
+      theCurve->LinVertexArray->add(X[2], Y[2], Z[2], col);
+      theCurve->LinVertexArray->num++;
     }
-    glEnd();
+  }
+  else{
+    if(CTX.mesh.lines) {
+      glColor4ubv((GLubyte *) & col);
+      glBegin(GL_LINE_STRIP);
+      for(int i = 0; i < N; i++){
+	glVertex3d(X[i], Y[i], Z[i]);
+      }
+      glEnd();
+    }
   }
 
   if(CTX.mesh.lines_num) {
+    glColor4ubv((GLubyte *) & col);
     sprintf(Num, "%d", s->Num);
     double offset = 0.3 * (CTX.mesh.line_width + CTX.gl_fontsize) * CTX.pixel_equiv_x;
     glRasterPos3d(Xc + offset / CTX.s[0],
@@ -696,33 +738,38 @@ void Draw_Mesh_Array(VertexArray *va, int faces, int edges)
     return;
 
   glVertexPointer(3, GL_FLOAT, 0, va->vertices->array);
-  glNormalPointer(GL_FLOAT, 0, va->normals->array);
   glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->colors->array);
+  glNormalPointer(GL_FLOAT, 0, va->normals->array);
 
   glEnableClientState(GL_VERTEX_ARRAY);
   glEnableClientState(GL_COLOR_ARRAY);
   glEnableClientState(GL_NORMAL_ARRAY);
 
-  if(faces){
-    if(CTX.mesh.light)
-      glEnable(GL_LIGHTING);
-    else
-      glDisableClientState(GL_NORMAL_ARRAY);
-    if(CTX.polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
-    glDrawArrays((va->type == 3) ? GL_TRIANGLES : GL_QUADS, 0, va->type * va->num);
-    glDisable(GL_POLYGON_OFFSET_FILL);
-    glDisable(GL_LIGHTING);
-  }
-      
-  if(edges){
-    if(faces){
-      glDisableClientState(GL_COLOR_ARRAY);
-      glColor4ubv((GLubyte *) & CTX.color.mesh.line);
-    }
+  if(va->type == 2){
     glDisableClientState(GL_NORMAL_ARRAY);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDrawArrays((va->type == 3) ? GL_TRIANGLES : GL_QUADS, 0, va->type * va->num);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glDrawArrays(GL_LINES, 0, va->type * va->num);
+  }
+  else{
+    if(faces){
+      if(CTX.mesh.light)
+	glEnable(GL_LIGHTING);
+      else
+	glDisableClientState(GL_NORMAL_ARRAY);
+      if(CTX.polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
+      glDrawArrays((va->type == 3) ? GL_TRIANGLES : GL_QUADS, 0, va->type * va->num);
+      glDisable(GL_POLYGON_OFFSET_FILL);
+      glDisable(GL_LIGHTING);
+    }
+    if(edges){
+      if(faces){
+	glDisableClientState(GL_COLOR_ARRAY);
+	glColor4ubv((GLubyte *) & CTX.color.mesh.line);
+      }
+      glDisableClientState(GL_NORMAL_ARRAY);
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+      glDrawArrays((va->type == 3) ? GL_TRIANGLES : GL_QUADS, 0, va->type * va->num);
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
   }
 
   glDisableClientState(GL_VERTEX_ARRAY);
