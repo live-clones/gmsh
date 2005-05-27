@@ -1,4 +1,4 @@
-// $Id: Tools.cpp,v 1.13 2005-01-01 19:35:27 geuzaine Exp $
+// $Id: Tools.cpp,v 1.14 2005-05-27 19:35:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include "Tools.h"
+
+static List_T *pListeTransfert;
+static Tree_T *pTreeTransfert;
+static Tree_T *pTreeTransfert2;
 
 // Comparison functions
 
@@ -65,8 +69,6 @@ List_T *ListOfDouble2ListOfInt(List_T *dList)
 
 // Tree -> List transfer
 
-List_T *pListeTransfert;
-
 void TransfereListe(void *a, void *b)
 {
   List_Add(pListeTransfert, a);
@@ -83,10 +85,21 @@ List_T *Tree2List(Tree_T * pTree)
   return (pListeTransfert);
 }
 
-// Algebraic utilities
+// List -> Tree transfer
 
-Tree_T *pTreeTransfert;
-Tree_T *pTreeTransfert2;
+void TransfereTree(void *a, void *b)
+{
+  Tree_Add(pTreeTransfert, a);
+}
+
+Tree_T *List2Tree(List_T * pList, int (*fcmp) (const void *a, const void *b))
+{
+  pTreeTransfert = Tree_Create(pList->size, fcmp);
+  List_Action(pList, TransfereTree);
+  return (pTreeTransfert);
+}
+
+// Algebraic utilities
 
 void DupliqueArbre(void *a, void *b)
 {

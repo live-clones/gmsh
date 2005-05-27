@@ -29,6 +29,7 @@ int fcmp_double(const void *a, const void *b);
 
 List_T *ListOfDouble2ListOfInt(List_T *dList);
 List_T *Tree2List(Tree_T *pTree);
+Tree_T *List2Tree(List_T * pList, int (*fcmp) (const void *a, const void *b));
 
 Tree_T *Tree_Duplique(Tree_T *pTree);
 Tree_T *Tree_Union(Tree_T *pTreeA, Tree_T *pTreeB);

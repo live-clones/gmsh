@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.88 2005-05-21 01:10:47 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.89 2005-05-27 19:35:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -50,21 +50,6 @@ extern Context_T CTX;
 
 #define NB_NOD_MAX_ELM 30
 
-void addPhysicalGroup(Mesh * M, int Type, int Physical, int Elementary)
-{
-  PhysicalGroup *pg;
-  if((pg = FindPhysicalGroup(Physical, Type, M))) {
-    List_Insert(pg->Entities, &Elementary, fcmp_int);
-  }
-  else {
-    List_T *tmp = List_Create(1, 1, sizeof(int));
-    List_Add(tmp, &Elementary);
-    pg = Create_PhysicalGroup(Physical, Type, tmp);
-    List_Add(M->PhysicalGroups, &pg);
-    List_Delete(tmp);
-  }
-}
-
 // If a "normal" elementary entity does not exist, we create a
 // "discrete" entity, i.e., an entity entirely defined by its mesh
 
@@ -96,6 +81,45 @@ Volume *addElementaryVolume(Mesh * M, int Num)
     Tree_Add(M->Volumes, &v);
   }
   return v;
+}
+
+void addPhysicalGroup(Tree_T * groups, int Type, int Physical, int Elementary)
+{
+  // we add in a temporary group tree for performance reasons; the
+  // tree is converted back into a list in the mesh at the end of read_mesh
+  PhysicalGroup g, *pg;
+  pg = &g;
+  pg->Num = Physical;
+  pg->Typ = Type;
+  if(Tree_Query(groups, &pg)) {
+    List_Insert(pg->Entities, &Elementary, fcmp_int);
+  }
+  else {
+    List_T *tmp = List_Create(1, 1, sizeof(int));
+    List_Add(tmp, &Elementary);
+    pg = Create_PhysicalGroup(Physical, Type, tmp);
+    Tree_Add(groups, &pg);
+    List_Delete(tmp);
+  }
+}
+
+int addMeshPartition(int Num, Mesh * M)
+{
+  MeshPartition P, *p, **pp;
+  p = &P;
+  p->Num = Num;
+  if((pp = (MeshPartition**)List_PQuery(M->Partitions, &p, compareMeshPartitionNum))){
+    return (*pp)->Index;
+  }
+  else{
+    p = (MeshPartition*)Malloc(sizeof(MeshPartition));
+    p->Num = Num;
+    p->Visible = VIS_GEOM | VIS_MESH;
+    p->Index = List_Nbr(M->Partitions);
+    List_Add(M->Partitions, &p);
+    return p->Index;
+  }
+  return 0;
 }
 
 int getNbrNodes(int Type)
@@ -154,6 +178,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
   Surface *s;
   Volume *v;
   Tree_T *Duplicates = NULL;
+  Tree_T *groups = List2Tree(M->PhysicalGroups, comparePhysicalGroup);
 
   while(1) {
     do {
@@ -262,7 +287,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	if(version <= 1.0){
 	  fscanf(fp, "%d %d %d %d %d",
 		 &Num, &Type, &Physical, &Elementary, &Nbr_Nodes);
-	  Partition = Physical;
+	  Partition = 1;
 	  int Nbr_Nodes_Check = getNbrNodes(Type);
 	  if(!Nbr_Nodes_Check){
 	    Msg(GERROR, "Unknown type for element %d", Num); 
@@ -325,11 +350,11 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
         case LGN1:
         case LGN2:
 	  c = addElementaryCurve(M, abs(Elementary));
-	  addPhysicalGroup(M, MSH_PHYSICAL_LINE, Physical, abs(Elementary));
+	  addPhysicalGroup(groups, MSH_PHYSICAL_LINE, Physical, abs(Elementary));
           simp = Create_SimplexBase(vertsp[0], vertsp[1], NULL, NULL);
           simp->Num = Num;
           simp->iEnt = Elementary;
-          simp->iPart = Add_MeshPartition(Partition, M);
+          simp->iPart = addMeshPartition(Partition, M);
 	  if(Type == LGN2){
 	    simp->VSUP = (Vertex **) Malloc(1 * sizeof(Vertex *));
 	    simp->VSUP[0] = vertsp[2];
@@ -355,11 +380,11 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
         case TRI1:
         case TRI2:
 	  s = addElementarySurface(M, Elementary);
-	  addPhysicalGroup(M, MSH_PHYSICAL_SURFACE, Physical, Elementary);
+	  addPhysicalGroup(groups, MSH_PHYSICAL_SURFACE, Physical, Elementary);
           simp = Create_SimplexBase(vertsp[0], vertsp[1], vertsp[2], NULL);
           simp->Num = Num;
           simp->iEnt = Elementary;
-          simp->iPart = Add_MeshPartition(Partition, M);
+          simp->iPart = addMeshPartition(Partition, M);
 	  if(Type == TRI2){
 	    simp->VSUP = (Vertex **) Malloc(3 * sizeof(Vertex *));
 	    for(i = 0; i < 3; i++){
@@ -379,11 +404,11 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
         case QUA1:
         case QUA2:
 	  s = addElementarySurface(M, Elementary);
-	  addPhysicalGroup(M, MSH_PHYSICAL_SURFACE, Physical, Elementary);
+	  addPhysicalGroup(groups, MSH_PHYSICAL_SURFACE, Physical, Elementary);
           quad = Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
           quad->Num = Num;
           quad->iEnt = Elementary;
-          quad->iPart = Add_MeshPartition(Partition, M);
+          quad->iPart = addMeshPartition(Partition, M);
 	  if(Type == QUA2){
 	    quad->VSUP = (Vertex **) Malloc((4 + 1) * sizeof(Vertex *));
 	    for(i = 0; i < 4 + 1; i++){
@@ -403,11 +428,11 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
         case TET1:
         case TET2:
 	  v = addElementaryVolume(M, Elementary);
-	  addPhysicalGroup(M, MSH_PHYSICAL_VOLUME, Physical, Elementary);
+	  addPhysicalGroup(groups, MSH_PHYSICAL_VOLUME, Physical, Elementary);
           simp = Create_SimplexBase(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
           simp->Num = Num;
           simp->iEnt = Elementary;
-          simp->iPart = Add_MeshPartition(Partition, M);
+          simp->iPart = addMeshPartition(Partition, M);
 	  if(Type == TET2){
 	    simp->VSUP = (Vertex **) Malloc(6 * sizeof(Vertex *));
 	    for(i = 0; i < 6; i++){
@@ -429,12 +454,12 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
         case HEX1:
         case HEX2:
 	  v = addElementaryVolume(M, Elementary);
-	  addPhysicalGroup(M, MSH_PHYSICAL_VOLUME, Physical, Elementary);
+	  addPhysicalGroup(groups, MSH_PHYSICAL_VOLUME, Physical, Elementary);
           hex = Create_Hexahedron(vertsp[0], vertsp[1], vertsp[2], vertsp[3],
                                   vertsp[4], vertsp[5], vertsp[6], vertsp[7]);
           hex->Num = Num;
           hex->iEnt = Elementary;
-          hex->iPart = Add_MeshPartition(Partition, M);
+          hex->iPart = addMeshPartition(Partition, M);
 	  if(Type == HEX2){
 	    hex->VSUP = (Vertex **) Malloc((12 + 6 + 1) * sizeof(Vertex *));
 	    for(i = 0; i < 12 + 6 + 1; i++){
@@ -456,12 +481,12 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
         case PRI1:
         case PRI2:
 	  v = addElementaryVolume(M, Elementary);
-	  addPhysicalGroup(M, MSH_PHYSICAL_VOLUME, Physical, Elementary);
+	  addPhysicalGroup(groups, MSH_PHYSICAL_VOLUME, Physical, Elementary);
           pri = Create_Prism(vertsp[0], vertsp[1], vertsp[2],
                              vertsp[3], vertsp[4], vertsp[5]);
           pri->Num = Num;
           pri->iEnt = Elementary;
-          pri->iPart = Add_MeshPartition(Partition, M);
+          pri->iPart = addMeshPartition(Partition, M);
 	  if(Type == PRI2){
 	    pri->VSUP = (Vertex **) Malloc((9 + 3) * sizeof(Vertex *));
 	    for(i = 0; i < 9 + 3; i++){
@@ -483,12 +508,12 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
         case PYR1:
         case PYR2:
 	  v = addElementaryVolume(M, Elementary);
-	  addPhysicalGroup(M, MSH_PHYSICAL_VOLUME, Physical, Elementary);
+	  addPhysicalGroup(groups, MSH_PHYSICAL_VOLUME, Physical, Elementary);
           pyr = Create_Pyramid(vertsp[0], vertsp[1], vertsp[2],
                                vertsp[3], vertsp[4]);
           pyr->Num = Num;
           pyr->iEnt = Elementary;
-          pyr->iPart = Add_MeshPartition(Partition, M);
+          pyr->iPart = addMeshPartition(Partition, M);
 	  if(Type == PYR2){
 	    pyr->VSUP = (Vertex **) Malloc((8 + 1) * sizeof(Vertex *));
 	    for(i = 0; i < 8 + 1; i++){
@@ -508,7 +533,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 #endif
           break;
         case PNT:
-	  addPhysicalGroup(M, MSH_PHYSICAL_POINT, Physical, Elementary);
+	  addPhysicalGroup(groups, MSH_PHYSICAL_POINT, Physical, Elementary);
 	  // we need to make a new one: vertices in M->Vertices and
 	  // M->Points should never point to the same memory location
 	  vert = Create_Vertex(vertsp[0]->Num, vertsp[0]->Pos.X, vertsp[0]->Pos.Y, 
@@ -562,6 +587,11 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 
   // Transfer the vertices from temp trees into lists
   Tree_Action(M->Curves, Transfer_VertexTree2List);
+
+  // Transfer the temp group tree back into the mesh
+  List_Delete(M->PhysicalGroups);
+  M->PhysicalGroups = Tree2List(groups);
+  Tree_Delete(groups);
 }
 
 // Read mesh in VTK format
