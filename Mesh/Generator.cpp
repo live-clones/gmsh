@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.65 2005-05-21 04:55:59 geuzaine Exp $
+// $Id: Generator.cpp,v 1.66 2005-05-27 21:34:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -51,6 +51,7 @@ void GetStatistics(double stat[50])
   stat[1] = Tree_Nbr(THEM->Curves);
   stat[2] = Tree_Nbr(THEM->Surfaces);
   stat[3] = Tree_Nbr(THEM->Volumes);
+  stat[45] = List_Nbr(THEM->PhysicalGroups);
   
   stat[4] = 0.;
   if(Tree_Nbr(THEM->Curves)) {

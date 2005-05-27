@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.439 2005-04-28 14:53:13 geuzaine Exp $
+// $Id: GUI.cpp,v 1.440 2005-05-27 21:34:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3312,6 +3312,7 @@ void GUI::create_statistics_window()
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Lines");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Surfaces");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 4 * BH, IW, BH, "Volumes");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 5 * BH, IW, BH, "Physical groups");
       o->end();
     }
     {
@@ -3398,6 +3399,7 @@ void GUI::set_statistics()
   sprintf(label[num], "%g", s[1]); stat_value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[2]); stat_value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[3]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[45]); stat_value[num]->value(label[num]); num++;
 
   // mesh
   sprintf(label[num], "%g", s[4]); stat_value[num]->value(label[num]); num++;
