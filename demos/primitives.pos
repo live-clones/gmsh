@@ -65,7 +65,7 @@ View[1].Name = "Primitives (dupl. 1)" ;
 View[1].OffsetX = 3 ;
 View[1].IntervalsType = 2 ;
 View[1].ShowElement = 1 ;
-View[1].ArrowLocation = 2 ;
+View[1].GlyphLocation = 2 ;
 View[1].ColorTable = {Red,Green,Magenta,Cyan,Brown,Pink} ;
 
 Alias View[0];
