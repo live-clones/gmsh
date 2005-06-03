@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.129 2005-06-03 22:11:48 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.130 2005-06-03 22:42:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -777,7 +777,7 @@ void Draw_Mesh_Array(VertexArray *va, int faces, int edges)
   glEnableClientState(GL_COLOR_ARRAY);
   glEnableClientState(GL_NORMAL_ARRAY);
 
-  // glLockArraysEXT(0, va->num); // extension GL_EXT_compiled_vertex_array
+  // glLockArraysEXT(0, va->type * va->num); // extension GL_EXT_compiled_vertex_array
 
   if(va->type == 1){
     glDisableClientState(GL_NORMAL_ARRAY);
