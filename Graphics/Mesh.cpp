@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.128 2005-05-27 19:35:06 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.129 2005-06-03 22:11:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -762,6 +762,8 @@ void _quadFace2(double *x, double *y, double *z,
   _triFace(x2[j3], y2[j3], z2[j3], x[i0], y[i0], z[i0], x2[j4], y2[j4], z2[j4]);
 }
 
+// #include <GL/glext.h>
+
 void Draw_Mesh_Array(VertexArray *va, int faces, int edges)
 {
   if(!va->num)
@@ -774,6 +776,8 @@ void Draw_Mesh_Array(VertexArray *va, int faces, int edges)
   glEnableClientState(GL_VERTEX_ARRAY);
   glEnableClientState(GL_COLOR_ARRAY);
   glEnableClientState(GL_NORMAL_ARRAY);
+
+  // glLockArraysEXT(0, va->num); // extension GL_EXT_compiled_vertex_array
 
   if(va->type == 1){
     glDisableClientState(GL_NORMAL_ARRAY);
@@ -805,6 +809,8 @@ void Draw_Mesh_Array(VertexArray *va, int faces, int edges)
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
   }
+
+  // glUnlockArraysEXT(); // extension GL_EXT_compiled_vertex_array
 
   glDisableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_COLOR_ARRAY);
