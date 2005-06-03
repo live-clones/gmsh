@@ -27,7 +27,6 @@
 #include "Simplex.h"
 #include "Edge.h"
 #include "ExtrudeParams.h"
-#include "DiscreteSurface.h"
 #include "VertexArray.h"
 #include "SmoothNormals.h"
 

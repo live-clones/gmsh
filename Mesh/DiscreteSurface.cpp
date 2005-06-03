@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.14 2005-05-13 05:09:08 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.15 2005-06-03 17:32:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -22,7 +22,6 @@
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Mesh.h"
-#include "DiscreteSurface.h"
 #include "CAD.h"
 #include "Geo.h"
 #include "Create.h"
@@ -93,30 +92,34 @@ void BDS_To_Mesh(Mesh *m)
 
 int MeshDiscreteSurface(Surface *s)
 {
-    // s->bds is the discrete surface that 
-    // defines the geometry
-    if(s->bds){
-	if (!THEM->bds_mesh)
-	{
-	    THEM->bds_mesh = new BDS_Mesh (*(THEM->bds));
-	    int iter = 0;
-	    while (iter < 20 && THEM->bds_mesh -> adapt_mesh ( CTX.mesh.lc_factor * THEM->bds->LC, true,THEM->bds))
-	    {
-		printf("iter %d done\n",iter);
-		iter ++;
-	    }
-	    THEM->bds_mesh->save_gmsh_format ( "3.msh" );
-	}
-	return 1;
+  if(s->bds){
+    // s->bds is the discrete surface that defines the geometry
+    if(!THEM->bds_mesh){
+      THEM->bds_mesh = new BDS_Mesh (*(THEM->bds));
+      int iter = 0;
+      while(iter < 20 && THEM->bds_mesh->adapt_mesh(CTX.mesh.lc_factor * THEM->bds->LC, 
+						    true, THEM->bds)){
+	printf("iter %d done\n",iter);
+	iter ++;
+      }
+      THEM->bds_mesh->save_gmsh_format ( "3.msh" );
     }
+    return 1;
+  }
+  else if(s->Typ == MSH_SURF_DISCRETE){
+    // nothing to do: we suppose that the surface is represented by
+    // a mesh that will not be modified
+    return 1;
+  }
+  else
     return 0;
 }
 
 int MeshDiscreteCurve(Curve *c)
 {
   if(c->Typ == MSH_SEGM_DISCRETE){
-    // nothing else to do: we assume that the elements have alreay
-    // been created
+    // nothing else to do: we assume that the curve is represented by
+    // a mesh that will not be modified
     return 1;
   }
   else
