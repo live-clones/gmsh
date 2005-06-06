@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.62 2005-06-06 22:05:28 geuzaine Exp $
+dnl $Id: configure.in,v 1.63 2005-06-06 22:20:56 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -340,6 +340,13 @@ fi
 dnl Check if we should build the parallel version
 if test "x$enable_parallel" = "xyes"; then
   FLAGS="-DHAVE_PARALLEL ${FLAGS}"
+fi
+
+dnl Check if the machine is big or little endian
+if test "x$UNAME" = "xDarwin"; then
+  echo "detected Darwin... no need to check byte ordering"
+else
+  AC_C_BIGENDIAN(FLAGS="-D__BIG_ENDIAN__ ${FLAGS}")
 fi
 
 dnl Set default linker and post build action
