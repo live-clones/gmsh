@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.61 2005-03-14 06:32:33 geuzaine Exp $
+dnl $Id: configure.in,v 1.62 2005-06-06 22:05:28 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -398,9 +398,6 @@ case "$UNAME" in
     ;;
 
 esac
-
-dnl Is the machine big or little endian?
-AC_C_BIGENDIAN(FLAGS="-DHAVE_BIG_ENDIAN ${FLAGS}")
 
 dnl Check for header files
 AC_HEADER_STDC

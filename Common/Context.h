@@ -23,10 +23,9 @@
 #include "List.h"
 
 // How RGBA values are packed and unpacked into/from a 4-byte
-// integer. Don't use 'LITTLE_ENDIAN': Apple defines it in its system
-// headers.
+// integer:
 
-#if defined(HAVE_BIG_ENDIAN)
+#if defined(__BIG_ENDIAN__)
 #  define PACK_COLOR(R,G,B,A)   ( (unsigned int)((R)<<24 | (G)<<16 | (B)<<8 | (A)) )
 #  define UNPACK_RED(X)         ( ( (X) >> 24 ) & 0xff )
 #  define UNPACK_GREEN(X)       ( ( (X) >> 16 ) & 0xff )
