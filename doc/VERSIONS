@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.330 2005-05-27 19:36:02 geuzaine Exp $
+$Id: VERSIONS,v 1.331 2005-06-06 23:16:07 geuzaine Exp $
 
 New since 1.60: added support for second order (curved) elements in
 post-processor; new version (1.4) of post-processing file formats; new
@@ -9,7 +9,8 @@ optimized memory usage when loading many (>1000) views; optimzed
 loading and drawing of line meshes and 2D iso views; optimize handling
 of meshes with large number of physical entities; Removed Discrete
 Line and Discrete Surface commands: the same functionnality can now be
-obtained by simply loading meshes in the usual formats;
+obtained by simply loading meshes in the usual formats; fixed coloring
+by mesh partition;
 
 New in 1.60: added support for discrete curves; new Window menu on Mac
 OS X; generalized all octree-based plugins (CutGrid, StreamLines,
