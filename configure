@@ -4072,7 +4072,7 @@ if test "x$enable_parallel" = "xyes"; then
 fi
 
 if test "x$UNAME" = "xDarwin"; then
-  echo "detected Darwin... no need to check byte ordering"
+      echo "detected Darwin... no need to check byte ordering"
 else
   echo "$as_me:$LINENO: checking whether byte ordering is bigendian" >&5
 echo $ECHO_N "checking whether byte ordering is bigendian... $ECHO_C" >&6
