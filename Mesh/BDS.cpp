@@ -394,8 +394,8 @@ void BDS_Mesh :: reverseEngineerCAD ( )
 	    {
 		// TEST PLANE 
 		{
-		    std::set<BDS_Point*>::iterator pit  = pts.begin();
-		    std::set<BDS_Point*>::iterator pite = pts.end();
+		    std::set<BDS_Point*,PointLessThan>::iterator pit  = pts.begin();
+		    std::set<BDS_Point*,PointLessThan>::iterator pite = pts.end();
 		    
 		    BDS_Point *p1 = *pit;++pit;
 		    BDS_Point *p2 = *pit;++pit;
@@ -1738,7 +1738,7 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
 BDS_Mesh::BDS_Mesh (const BDS_Mesh &other)
 {
 
-    for (std::set<BDS_GeomEntity*,GeomLessThan>::iterator it = other.geom.begin();
+    for (std::set<BDS_GeomEntity*,GeomLessThan>::const_iterator it = other.geom.begin();
 	 it != other.geom.end();
 	 ++it)
     {
@@ -1746,14 +1746,14 @@ BDS_Mesh::BDS_Mesh (const BDS_Mesh &other)
 	BDS_GeomEntity* g = get_geom((*it)->classif_tag,(*it)->classif_degree);
 	g->surf = (*it)->surf;
     }
-    for (std::set<BDS_Point*,PointLessThan>::iterator it  = other.points.begin();
+    for (std::set<BDS_Point*,PointLessThan>::const_iterator it  = other.points.begin();
 	 it != other.points.end();
 	 ++it)
     {
 	BDS_Point *p =  add_point((*it)->iD,(*it)->X,(*it)->Y,(*it)->Z);
 	p->g = ((*it)->g)? get_geom  ((*it)->g->classif_tag,(*it)->g->classif_degree) : 0;
     }
-    for ( std::set<BDS_Edge*, EdgeLessThan>::iterator it  = other.edges.begin();
+    for ( std::set<BDS_Edge*, EdgeLessThan>::const_iterator it  = other.edges.begin();
 	  it != other.edges.end();
 	  ++it)
     {
