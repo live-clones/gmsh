@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.64 2005-06-06 22:26:12 geuzaine Exp $
+dnl $Id: configure.in,v 1.65 2005-06-07 03:34:09 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -345,7 +345,7 @@ fi
 dnl Check if the machine is big or little endian
 if test "x$UNAME" = "xDarwin"; then
   dnl Apple guarantees that its compilers will define the macro: forcing
-  dnl the definition here would prevent building universal binaries
+  dnl the definition here would prevent building "universal" binaries
   echo "detected Darwin... no need to check byte ordering"
 else
   AC_C_BIGENDIAN(FLAGS="-D__BIG_ENDIAN__ ${FLAGS}")
@@ -369,6 +369,7 @@ case "$UNAME" in
     ;;
 
   Darwin*)
+    dnl to build a universal binary, add "-arch ppc -arch i686"
     FLAGS="-DHAVE_NO_DLL ${FLAGS}"
     if test "x$enable_gui" = "xno"; then
       GMSH_LIBS="${GMSH_LIBS} -framework ApplicationServices"

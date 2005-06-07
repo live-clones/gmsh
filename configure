@@ -4317,7 +4317,7 @@ case "$UNAME" in
     ;;
 
   Darwin*)
-    FLAGS="-DHAVE_NO_DLL ${FLAGS}"
+        FLAGS="-DHAVE_NO_DLL ${FLAGS}"
     if test "x$enable_gui" = "xno"; then
       GMSH_LIBS="${GMSH_LIBS} -framework ApplicationServices"
     fi
