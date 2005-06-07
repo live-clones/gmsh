@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.27 2005-01-09 02:40:13 geuzaine Exp $
+# $Id: Makefile,v 1.28 2005-06-07 21:12:44 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -52,14 +52,12 @@ depend:
 
 # DO NOT DELETE THIS LINE
 Main.o: Main.cpp ../Parallel/ParUtil.h ../Plugin/PluginManager.h \
-  ../Plugin/Plugin.h ../Common/Options.h ../Common/Message.h \
-  ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
-  ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/Gmsh.h \
-  ../DataStr/Malloc.h ../DataStr/Tree.h ../DataStr/avl.h \
-  ../DataStr/Tools.h ../Common/GmshVersion.h ../Numeric/Numeric.h \
-  ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
-  ../Mesh/DiscreteSurface.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ../Parser/Parser.h ../Common/Context.h ../Parser/OpenFile.h \
-  ../Common/CommandLine.h ../Geo/MinMax.h
+ ../Plugin/Plugin.h ../Common/Options.h ../Common/Message.h ../Common/Views.h \
+ ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
+ ../Common/SmoothNormals.h ../Common/GmshMatrix.h ../Common/AdaptiveViews.h \
+ ../Common/Gmsh.h ../DataStr/Malloc.h ../DataStr/Tree.h ../DataStr/avl.h \
+ ../DataStr/Tools.h ../Common/GmshVersion.h ../Numeric/Numeric.h ../Geo/Geo.h \
+ ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
+ ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
+ ../Mesh/Mesh.h ../Mesh/Matrix.h ../Parser/Parser.h ../Common/Context.h \
+ ../Parser/OpenFile.h ../Common/CommandLine.h ../Geo/MinMax.h
