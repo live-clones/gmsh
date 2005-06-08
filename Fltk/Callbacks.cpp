@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.353 2005-04-28 14:53:12 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.354 2005-06-08 19:12:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -695,7 +695,7 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"Gmsh options (*.opt)", _save_options},
     {"Gmsh unrolled geometry (*.geo)", _save_geo},
     {"Gmsh mesh (*.msh)", _save_msh},
-    {"Gmsh characteristic length field (*.pos)", _save_lc},
+    {"Gmsh mesh statistics (*.pos)", _save_lc},
     {"GREF mesh (*.gref)", _save_gref},
     {"I-DEAS universal mesh (*.unv)", _save_unv},
     {"PLOT3D formatted ASCII mgrid (*.p3d)", _save_p3d},

@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.68 2005-03-09 02:18:40 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.69 2005-06-08 19:12:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -121,7 +121,7 @@ void CreateOutputFile(char *name, int format)
     break;
 
   case FORMAT_LC:
-    ExportLcField(&M, name);
+    ExportMeshStatistics(&M, name);
     Msg(STATUS2N, "Wrote '%s'", name);
     break;
 

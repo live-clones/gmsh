@@ -1,4 +1,4 @@
-// $Id: Element.cpp,v 1.7 2005-03-30 19:17:07 geuzaine Exp $
+// $Id: Element.cpp,v 1.8 2005-06-08 19:12:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -49,6 +49,16 @@ double Element::lij(Vertex *Vi, Vertex *Vj)
               DSQR(Vi->Pos.Z - Vj->Pos.Z));
 }
 
+double Element::RhoShapeMeasure()
+{
+  double min = minEdge();
+  double max = maxEdge();
+  if(max)
+    return min/max;
+  else
+    return 0.;
+}
+
 // Quads
 
 Quadrangle::Quadrangle()
@@ -71,21 +81,34 @@ double Quadrangle::maxEdge()
   return maxlij;
 }
 
+double Quadrangle::minEdge()
+{
+  double minlij = 1.e25;
+  for(int i = 0; i < 4; i++)
+      minlij = DMIN(minlij, lij(V[edges_quad[i][0]], V[edges_quad[i][1]]));
+  return minlij;
+}
+
 Quadrangle *Create_Quadrangle(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4)
 {
   return new Quadrangle(v1, v2, v3, v4);
 }
 
-void Quadrangle::ExportLcField(FILE * f)
+void Quadrangle::ExportStatistics(FILE * f)
 {
-  if(!VSUP)
-    fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
+  int N;
+
+  if(!VSUP){
+    N = 4;
+    fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g",
 	    V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	    V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
 	    V[3]->Pos.Y, V[3]->Pos.Z, V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc);
-  else
+  }
+  else{
+    N = 9;
     fprintf(f, "SQ2(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,"
-	    "%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
+	    "%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g",
 	    V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	    V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
 	    V[3]->Pos.Y, V[3]->Pos.Z, 
@@ -94,6 +117,18 @@ void Quadrangle::ExportLcField(FILE * f)
 	    VSUP[3]->Pos.Y, VSUP[3]->Pos.Z, VSUP[4]->Pos.X, VSUP[4]->Pos.Y, VSUP[4]->Pos.Z, 
 	    V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc, 
 	    VSUP[0]->lc, VSUP[1]->lc, VSUP[2]->lc, VSUP[3]->lc, VSUP[4]->lc);
+  }
+
+  double g = 0.;
+  double e = 0.;
+  double r = RhoShapeMeasure();
+  double n = Num;
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", g);
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", e);
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", r);
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", n);
+  
+  fprintf(f, "};\n");
 }
 
 void Free_Quadrangle(void *a, void *b)
@@ -151,6 +186,14 @@ double Hexahedron::maxEdge()
   return maxlij;
 }
 
+double Hexahedron::minEdge()
+{
+  double minlij = 1.e25;
+  for(int i = 0; i < 12; i++)
+      minlij = DMIN(minlij, lij(V[edges_hexa[i][0]], V[edges_hexa[i][1]]));
+  return minlij;
+}
+
 Hexahedron *Create_Hexahedron(Vertex * v1, Vertex * v2, Vertex * v3,
                               Vertex * v4, Vertex * v5, Vertex * v6,
                               Vertex * v7, Vertex * v8)
@@ -158,18 +201,23 @@ Hexahedron *Create_Hexahedron(Vertex * v1, Vertex * v2, Vertex * v3,
   return new Hexahedron(v1, v2, v3, v4, v5, v6, v7, v8);
 }
 
-void Hexahedron::ExportLcField(FILE * f)
+void Hexahedron::ExportStatistics(FILE * f)
 {
-  if(!VSUP)
+  int N;
+
+  if(!VSUP){
+    N = 8;
     fprintf(f,"SH(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,"
-	    "%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g};\n",
+	    "%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g\n",
 	    V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	    V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X, 
 	    V[3]->Pos.Y, V[3]->Pos.Z, V[4]->Pos.X, V[4]->Pos.Y, V[4]->Pos.Z,
 	    V[5]->Pos.X, V[5]->Pos.Y, V[5]->Pos.Z, V[6]->Pos.X, V[6]->Pos.Y, 
 	    V[6]->Pos.Z, V[7]->Pos.X, V[7]->Pos.Y, V[7]->Pos.Z, V[0]->lc, 
 	    V[1]->lc, V[2]->lc, V[3]->lc, V[4]->lc, V[5]->lc, V[6]->lc, V[7]->lc);
+  }
   else{
+    N = 27;
     fprintf(f,"SH2(%g,%g,%g", V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z);
     for(int i = 1; i < 8; i++) 
       fprintf(f,",%g,%g,%g", V[i]->Pos.X, V[i]->Pos.Y, V[i]->Pos.Z);
@@ -180,8 +228,18 @@ void Hexahedron::ExportLcField(FILE * f)
       fprintf(f,",%g", V[i]->lc);
     for(int i = 0; i < 19; i++) 
       fprintf(f,",%g", VSUP[i]->lc);
-    fprintf(f,"};\n");
   }
+
+  double g = 0.;
+  double e = 0.;
+  double r = RhoShapeMeasure();
+  double n = Num;
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", g);
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", e);
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", r);
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", n);
+  
+  fprintf(f, "};\n");
 }
 
 void Free_Hexahedron(void *a, void *b)
@@ -239,23 +297,36 @@ double Prism::maxEdge()
   return maxlij;
 }
 
+double Prism::minEdge()
+{
+  double minlij = 1.e25;
+  for(int i = 0; i < 9; i++)
+      minlij = DMIN(minlij, lij(V[edges_prism[i][0]], V[edges_prism[i][1]]));
+  return minlij;
+}
+
 Prism *Create_Prism(Vertex * v1, Vertex * v2, Vertex * v3,
                     Vertex * v4, Vertex * v5, Vertex * v6)
 {
   return new Prism(v1, v2, v3, v4, v5, v6);
 }
 
-void Prism::ExportLcField(FILE * f)
+void Prism::ExportStatistics(FILE * f)
 {
-  if(!VSUP)
+  int N;
+
+  if(!VSUP){
+    N = 6;
     fprintf(f,"SI(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g)"
-	    "{%g,%g,%g,%g,%g,%g};\n",
+	    "{%g,%g,%g,%g,%g,%g",
 	    V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	    V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X, 
 	    V[3]->Pos.Y, V[3]->Pos.Z, V[4]->Pos.X, V[4]->Pos.Y, V[4]->Pos.Z,
 	    V[5]->Pos.X, V[5]->Pos.Y, V[5]->Pos.Z, V[0]->lc, V[1]->lc, V[2]->lc,
 	    V[3]->lc, V[4]->lc, V[5]->lc);
+  }
   else{
+    N = 18;
     fprintf(f,"SI2(%g,%g,%g", V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z);
     for(int i = 1; i < 6; i++) 
       fprintf(f,",%g,%g,%g", V[i]->Pos.X, V[i]->Pos.Y, V[i]->Pos.Z);
@@ -266,8 +337,18 @@ void Prism::ExportLcField(FILE * f)
       fprintf(f,",%g", V[i]->lc);
     for(int i = 0; i < 12; i++) 
       fprintf(f,",%g", VSUP[i]->lc);
-    fprintf(f,"};\n");
   }
+
+  double g = 0.;
+  double e = 0.;
+  double r = RhoShapeMeasure();
+  double n = Num;
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", g);
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", e);
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", r);
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", n);
+  
+  fprintf(f, "};\n");
 }
 
 void Free_Prism(void *a, void *b)
@@ -323,21 +404,34 @@ double Pyramid::maxEdge()
   return maxlij;
 }
 
+double Pyramid::minEdge()
+{
+  double minlij = 1.e25;
+  for(int i = 0; i < 8; i++)
+      minlij = DMIN(minlij, lij(V[edges_pyramid[i][0]], V[edges_pyramid[i][1]]));
+  return minlij;
+}
+
 Pyramid *Create_Pyramid(Vertex * v1, Vertex * v2, Vertex * v3,
                         Vertex * v4, Vertex * v5)
 {
   return new Pyramid(v1, v2, v3, v4, v5);
 }
 
-void Pyramid::ExportLcField(FILE * f)
+void Pyramid::ExportStatistics(FILE * f)
 {
-  if(!VSUP)
+  int N;
+
+  if(!VSUP){
+    N = 5;
     fprintf(f,"SY(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g};\n",
 	    V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	    V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X, 
 	    V[3]->Pos.Y, V[3]->Pos.Z, V[4]->Pos.X, V[4]->Pos.Y, V[4]->Pos.Z,
 	    V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc, V[4]->lc);
+  }
   else{
+    N = 14;
     fprintf(f,"SY2(%g,%g,%g", V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z);
     for(int i = 1; i < 5; i++) 
       fprintf(f,",%g,%g,%g", V[i]->Pos.X, V[i]->Pos.Y, V[i]->Pos.Z);
@@ -348,8 +442,18 @@ void Pyramid::ExportLcField(FILE * f)
       fprintf(f,",%g", V[i]->lc);
     for(int i = 0; i < 9; i++) 
       fprintf(f,",%g", VSUP[i]->lc);
-    fprintf(f,"};\n");
   }
+
+  double g = 0.;
+  double e = 0.;
+  double r = RhoShapeMeasure();
+  double n = Num;
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", g);
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", e);
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", r);
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", n);
+  
+  fprintf(f, "};\n");
 }
 
 void Free_Pyramid(void *a, void *b)

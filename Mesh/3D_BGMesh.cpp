@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.36 2005-01-01 19:35:30 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.37 2005-06-08 19:12:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -30,15 +30,15 @@
 extern Mesh *THEM;
 extern Context_T CTX;
 
-static FILE *lcfile = NULL;
+static FILE *statfile = NULL;
 
-void ExportLc(void *a, void *b)
+void ExportStatistics(void *a, void *b)
 {
   Element *ele = *(Element**)a;
-  if(lcfile) ele->ExportLcField(lcfile);
+  if(statfile) ele->ExportStatistics(statfile);
 }
 
-void ExportLcField(Mesh * M, char *filename, int volume, int surface)
+void ExportMeshStatistics(Mesh * M, char *filename, int volume, int surface)
 {
   if(!Tree_Nbr(M->Volumes) && !Tree_Nbr(M->Surfaces)){
     Msg(GERROR, "No volumes or surfaces to save");
@@ -53,45 +53,49 @@ void ExportLcField(Mesh * M, char *filename, int volume, int surface)
     return;
   }
 
-  lcfile = fopen(filename, "w");
+  statfile = fopen(filename, "w");
 
-  if(!lcfile) {
+  if(!statfile) {
     Msg(GERROR, "Unable to open file '%s'", filename);
     return;
   }
 
   if(volume && Tree_Nbr(M->Volumes)){
     List_T *l = Tree2List(M->Volumes);
-    fprintf(lcfile, "View \"Volume LC Field\" {\n");
+    fprintf(statfile, "View \"Volume Statistics\" {\n");
+    fprintf(statfile, "T2(1.e5,30,%d){\"Characteristic Length\", \"Gamma\", \"Eta\", "
+	    "\"Rho\", \"Element Number\"};\n", (1<<16)|(4<<8));
     for(int i = 0; i < List_Nbr(l); i++) {
       Volume *vol;
       List_Read(l, i, &vol);
-      Tree_Action(vol->Simplexes, ExportLc);
-      Tree_Action(vol->SimplexesBase, ExportLc);
-      Tree_Action(vol->Hexahedra, ExportLc);
-      Tree_Action(vol->Prisms, ExportLc);
-      Tree_Action(vol->Pyramids, ExportLc);
+      Tree_Action(vol->Simplexes, ExportStatistics);
+      Tree_Action(vol->SimplexesBase, ExportStatistics);
+      Tree_Action(vol->Hexahedra, ExportStatistics);
+      Tree_Action(vol->Prisms, ExportStatistics);
+      Tree_Action(vol->Pyramids, ExportStatistics);
     }
     List_Delete(l);
-    fprintf(lcfile, "};\n");
+    fprintf(statfile, "};\n");
   }
   
   if(surface && Tree_Nbr(M->Surfaces)){
     List_T *l = Tree2List(M->Surfaces);
-    fprintf(lcfile, "View \"Surface LC Field\" {\n");
+    fprintf(statfile, "View \"Surface Statistics\" {\n");
+    fprintf(statfile, "T2(1.e5,30,%d){\"Characteristic Length\", \"Gamma\", \"Eta\", "
+	    "\"Rho\", \"Element Number\"};\n", (1<<16)|(4<<8));
     for(int i = 0; i < List_Nbr(l); i++) {
       Surface *surf;
       List_Read(l, i, &surf);
-      Tree_Action(surf->Simplexes, ExportLc);
-      Tree_Action(surf->SimplexesBase, ExportLc);
-      Tree_Action(surf->Quadrangles, ExportLc);
+      Tree_Action(surf->Simplexes, ExportStatistics);
+      Tree_Action(surf->SimplexesBase, ExportStatistics);
+      Tree_Action(surf->Quadrangles, ExportStatistics);
     }
     List_Delete(l);
-    fprintf(lcfile, "};\n");
+    fprintf(statfile, "};\n");
   }
 
-  fclose(lcfile);
-  lcfile = NULL;
+  fclose(statfile);
+  statfile = NULL;
 }
 
 static Mesh *TMPM = NULL;

@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.41 2005-05-16 00:50:10 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.42 2005-06-08 19:12:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -172,45 +172,40 @@ double SimplexBase::maxEdge()
   return maxlij;
 }
 
+double SimplexBase::minEdge()
+{
+  double minlij = 1.e25;
+  int N = V[3] ? 6 : 3;
+
+  if(V[3] || V[2])
+    for(int i = 0; i < N; i++)
+      minlij = DMIN(minlij, lij(V[edges_tetra[i][0]], V[edges_tetra[i][1]]));
+  else if(V[1])
+    minlij = lij(V[0], V[1]);
+
+  return minlij;
+}
+
 double SimplexBase::EtaShapeMeasure()
 {
-  int i, j;
+  if(!V[3]) return 0.;
+
   double lij2 = 0.0;
-  for(i = 0; i <= 3; i++) {
-    for(j = i + 1; j <= 3; j++) {
+  for(int i = 0; i <= 3; i++) {
+    for(int j = i + 1; j <= 3; j++) {
       lij2 += DSQR(lij(V[i], V[j]));
     }
   }
   return 12. * pow(9. / 10. * DSQR(fabs(Volume_Simplexe())), 1./3.) / (lij2);
 }
 
-double SimplexBase::RhoShapeMeasure()
-{
-  int i, j;
-  double minlij = 1.e25, maxlij = 0.0;
-  for(i = 0; i <= 3; i++) {
-    for(j = i + 1; j <= 3; j++) {
-      if(i != j) {
-        minlij = DMIN(minlij, fabs(lij(V[i], V[j])));
-        maxlij = DMAX(maxlij, fabs(lij(V[i], V[j])));
-      }
-    }
-  }
-  return minlij / maxlij;
-}
-
 double SimplexBase::GammaShapeMeasure()
 {
-  int i, j, N;
+  if(!V[3]) return 0.;
+
   double maxlij = 0.0;
-
-  if(V[3])
-    N = 4;
-  else
-    N = 3;
-
-  for(i = 0; i <= N - 1; i++) {
-    for(j = i + 1; j <= N - 1; j++) {
+  for(int i = 0; i <= 3; i++) {
+    for(int j = i + 1; j <= 3; j++) {
       if(i != j)
         maxlij = DMAX(maxlij, lij(V[i], V[j]));
     }
@@ -218,43 +213,56 @@ double SimplexBase::GammaShapeMeasure()
   return 12. * rhoin() / (sqrt(6.) * maxlij);
 }
 
-void SimplexBase::ExportLcField(FILE * f)
+void SimplexBase::ExportStatistics(FILE * f)
 {
+  int N;
+
   if(!V[2]){
-    if(!VSUP)
-      fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
+    if(!VSUP){
+      N = 2;
+      fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%g,%g",
 	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	      V[1]->Pos.Z, V[0]->lc, V[1]->lc);
-    else
-      fprintf(f, "SL2(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+    }
+    else{
+      N = 3;
+      fprintf(f, "SL2(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g",
 	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	      V[1]->Pos.Z, VSUP[0]->Pos.X, VSUP[0]->Pos.Y, VSUP[0]->Pos.Z,
 	      V[0]->lc, V[1]->lc, VSUP[0]->lc);
+    }
   }
   else if(!V[3]){
-    if(!VSUP)
-      fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+    if(!VSUP){
+      N = 3;
+      fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g",
 	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	      V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[0]->lc,
 	      V[1]->lc, V[2]->lc);
-    else
+    }
+    else{
+      N = 6;
       fprintf(f, "ST2(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g)"
-	      "{%g,%g,%g,%g,%g,%g};\n",
+	      "{%g,%g,%g,%g,%g,%g",
 	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	      V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, VSUP[0]->Pos.X, 
 	      VSUP[0]->Pos.Y, VSUP[0]->Pos.Z, VSUP[1]->Pos.X, VSUP[1]->Pos.Y,
 	      VSUP[1]->Pos.Z, VSUP[2]->Pos.X, VSUP[2]->Pos.Y, VSUP[2]->Pos.Z, 
 	      V[0]->lc, V[1]->lc, V[2]->lc, VSUP[0]->lc, VSUP[1]->lc, VSUP[2]->lc);
+    }
   }
   else{
-    if(!VSUP)
-      fprintf(f, "SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
+    if(!VSUP){
+      N = 4;
+      fprintf(f, "SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g",
 	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	      V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
 	      V[3]->Pos.Y, V[3]->Pos.Z, V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc);
-    else
+    }
+    else{
+      N = 10;
       fprintf(f, "SS2(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,"
-	      "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
+	      "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g,%g",
 	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	      V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
 	      V[3]->Pos.Y, V[3]->Pos.Z, VSUP[0]->Pos.X, VSUP[0]->Pos.Y, VSUP[0]->Pos.Z, 
@@ -264,7 +272,19 @@ void SimplexBase::ExportLcField(FILE * f)
 	      VSUP[5]->Pos.X, VSUP[5]->Pos.Y, VSUP[5]->Pos.Z, V[0]->lc, V[1]->lc, 
 	      V[2]->lc, V[3]->lc, VSUP[0]->lc, VSUP[1]->lc, VSUP[2]->lc, VSUP[3]->lc,
 	      VSUP[4]->lc, VSUP[5]->lc);
+    }
   }
+
+  double g = GammaShapeMeasure();
+  double e = EtaShapeMeasure();
+  double r = RhoShapeMeasure();
+  double n = Num;
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", g);
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", e);
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", r);
+  for(int i = 0; i < N; i++) fprintf(f, ",%g", n);
+  
+  fprintf(f, "};\n");
 }
 
 SimplexBase *Create_SimplexBase(Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)

@@ -38,11 +38,11 @@ class SimplexBase : public Element {
   double AireFace(Vertex *V[3]);
   double surfsimpl();
   double GammaShapeMeasure();
-  double RhoShapeMeasure();
   double EtaShapeMeasure();
   double rhoin();
   double maxEdge();
-  void ExportLcField(FILE *f);
+  double minEdge();
+  void ExportStatistics(FILE *f);
 };
 
 SimplexBase *Create_SimplexBase(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
