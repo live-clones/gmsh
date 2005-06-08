@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.65 2005-05-21 17:27:04 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.66 2005-06-08 21:31:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -775,7 +775,7 @@ void Draw_ScalarPrism(Post_View * View, int preproNormals,
     Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val);
     REORDER4(1, 2, 5, 4);
     Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val);
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, &X[3], &Y[3], &Z[3], &V[3]);
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, &X[3], &Y[3], &Z[3], &vv[3]);
     View->TimeStep = ts;
     View->Boundary++;
     return;
