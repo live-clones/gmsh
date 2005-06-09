@@ -876,12 +876,6 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Format" , opt_mesh_format , FORMAT_MSH , 
     "Mesh output format (1=msh, 2=unv, 3=gref, 19=vrml)" },
 
-  { F|O, "QualityInf" , opt_mesh_quality_inf , 0.0 , 
-    "Only display elements whose quality measure is greater than QualityInf" },
-  { F|O, "QualitySup" , opt_mesh_quality_sup , 0.0 , 
-    "Only display elements whose quality measure is smaller than QualitySup" },
-  { F|O, "QualityType" , opt_mesh_quality_type , 0. , 
-    "Type of quality measure (0=gamma~vol/sum_face/max_edge, 1=eta~vol^(2/3)/sum_edge^2, 2=rho~min_edge/max_edge)" },
   { F|O, "Interactive" , opt_mesh_interactive , 0. ,
     "Show the construction of 2D anisotropic mesh in real time" },
 
@@ -938,6 +932,12 @@ StringXNumber MeshOptions_Number[] = {
 
   //{ F|O, "Quality" , opt_mesh_quality , 0.0 ,
   //  "Target quality for tetrahedral elements (not fully functional)" },
+  { F|O, "QualityInf" , opt_mesh_quality_inf , 0.0 , 
+    "Only display elements whose quality measure is greater than QualityInf" },
+  { F|O, "QualitySup" , opt_mesh_quality_sup , 0.0 , 
+    "Only display elements whose quality measure is smaller than QualitySup" },
+  { F|O, "QualityType" , opt_mesh_quality_type , 0. , 
+    "Type of quality measure (0=gamma~vol/sum_face/max_edge, 1=eta~vol^(2/3)/sum_edge^2, 2=rho~min_edge/max_edge)" },
 
   { F|O, "RadiusInf" , opt_mesh_radius_inf , 0.0 , 
     "Only display elements whose longest edge is greater than RadiusInf" },
