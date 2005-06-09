@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.442 2005-06-09 17:57:12 geuzaine Exp $
+// $Id: GUI.cpp,v 1.443 2005-06-09 22:28:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2191,7 +2191,7 @@ void GUI::create_option_window()
       mesh_choice[3]->menu(menu_3d_algo);
       mesh_choice[3]->align(FL_ALIGN_RIGHT);
 
-      mesh_choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Quadrangulation algorithm (Recombine)");
+      mesh_choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Recombine algorithm");
       mesh_choice[5]->menu(menu_recombine_algo);
       mesh_choice[5]->align(FL_ALIGN_RIGHT);
 
