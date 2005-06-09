@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.66 2005-05-27 21:34:54 geuzaine Exp $
+// $Id: Generator.cpp,v 1.67 2005-06-09 22:19:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -239,6 +239,11 @@ void Maillage_Dimension_2(Mesh * M)
   // mesh 2D
 
   Tree_Action(M->Surfaces, Maillage_Surface);
+
+  // global "all-quad" recombine
+
+  if(CTX.mesh.algo_recombine == 2)
+    Recombine_All(THEM);
 
   t2 = Cpu();
 
