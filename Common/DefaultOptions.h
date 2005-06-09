@@ -831,8 +831,6 @@ StringXNumber GeometryOptions_Number[] = {
 } ;
 
 StringXNumber MeshOptions_Number[] = {
-  { F|O, "RecombineAlgo" , opt_mesh_recombine_algo , 1 ,
-    "Quadrangulation algorithm (1=mixed tri-quad, 2=all quads)" }, 
   { F|O, "Algorithm" , opt_mesh_algo2d , DELAUNAY_ISO ,
     "2D mesh algorithm (1=isotropic, 2=anisotropic, 3=triangle)" }, 
   { F|O, "Algorithm3D" , opt_mesh_algo3d , DELAUNAY_ISO ,
@@ -945,6 +943,8 @@ StringXNumber MeshOptions_Number[] = {
     "Only display elements whose longest edge is smaller than RadiusSup" },
   { F|O, "RandomFactor" , opt_mesh_rand_factor , 1.e-4 ,
     "Random factor used in 2D and 3D meshing algorithm (test other values when the algorithm fails)" },
+  { F|O, "RecombineAlgo" , opt_mesh_recombine_algo , 1 ,
+    "Recombine algorithm (1=mixed triangles-quadrangles, 2=all quadrangles)" }, 
 
   { F,   "SaveAll" , opt_mesh_save_all , 0. , 
     "Ignore Physical definitions and save all elements" },

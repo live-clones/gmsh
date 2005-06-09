@@ -9,11 +9,6 @@ Options for Jonathan Shewchuk's Triangle isotropic algorithm@*
 Default value: @code{"praqzBPY"}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.RecombineAlgo
-Quadrangulation algorithm (1=mixed tri-quad, 2=all quads)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.Algorithm
 2D mesh algorithm (1=isotropic, 2=anisotropic, 3=triangle)@*
 Default value: @code{1}@*
@@ -257,6 +252,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.RandomFactor
 Random factor used in 2D and 3D meshing algorithm (test other values when the algorithm fails)@*
 Default value: @code{0.0001}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RecombineAlgo
+Recombine algorithm (1=mixed triangles-quadrangles, 2=all quadrangles)@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveAll
