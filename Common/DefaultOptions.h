@@ -876,11 +876,12 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Format" , opt_mesh_format , FORMAT_MSH , 
     "Mesh output format (1=msh, 2=unv, 3=gref, 19=vrml)" },
 
-  { F|O, "GammaInf" , opt_mesh_gamma_inf , 0.0 , 
-    "Only display elements whose Gamma factor is greater than GammaInf" },
-  { F|O, "GammaSup" , opt_mesh_gamma_sup , 0.0 , 
-    "Only display elements whose Gamma factor is smaller than GammaSup" },
-
+  { F|O, "QualityInf" , opt_mesh_quality_inf , 0.0 , 
+    "Only display elements whose quality measure is greater than QualityInf" },
+  { F|O, "QualitySup" , opt_mesh_quality_sup , 0.0 , 
+    "Only display elements whose quality measure is smaller than QualitySup" },
+  { F|O, "QualityType" , opt_mesh_quality_type , 0. , 
+    "Type of quality measure (0=gamma~vol/sum_face/max_edge, 1=eta~vol^(2/3)/sum_edge^2, 2=rho~min_edge/max_edge)" },
   { F|O, "Interactive" , opt_mesh_interactive , 0. ,
     "Show the construction of 2D anisotropic mesh in real time" },
 

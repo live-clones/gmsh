@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.130 2005-06-03 22:42:54 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.131 2005-06-09 17:22:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -835,6 +835,16 @@ void Draw_Mesh_Triangle(void *a, void *b)
   if(part && !(*part)->Visible)
     return;
 
+  if(CTX.mesh.quality_sup) {
+    double tmp;
+    if(CTX.mesh.quality_type == 2)
+      tmp = s->RhoShapeMeasure();
+    else
+      tmp = 0.0;
+    if(tmp < CTX.mesh.quality_inf || tmp > CTX.mesh.quality_sup)
+      return;
+  }
+
   if(CTX.mesh.radius_sup) {
     double r = s->maxEdge();
     if(r < CTX.mesh.radius_inf || r > CTX.mesh.radius_sup)
@@ -994,6 +1004,16 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
   if(part && !(*part)->Visible)
     return;
 
+  if(CTX.mesh.quality_sup) {
+    double tmp;
+    if(CTX.mesh.quality_type == 2)
+      tmp = q->RhoShapeMeasure();
+    else
+      tmp = 0.0;
+    if(tmp < CTX.mesh.quality_inf || tmp > CTX.mesh.quality_sup)
+      return;
+  }
+
   if(CTX.mesh.radius_sup) {
     double r = q->maxEdge();
     if(r < CTX.mesh.radius_inf || r > CTX.mesh.radius_sup)
@@ -1144,7 +1164,7 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
 void Draw_Mesh_Tetrahedron(void *a, void *b)
 {
   char Num[100];
-  double tmp, X[4], Y[4], Z[4], X2[6], Y2[6], Z2[6];
+  double X[4], Y[4], Z[4], X2[6], Y2[6], Z2[6];
 
   SimplexBase *s = *(SimplexBase **) a;
 
@@ -1155,9 +1175,15 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
   if(part && !(*part)->Visible)
     return;
 
-  if(CTX.mesh.gamma_sup) {
-    tmp = s->GammaShapeMeasure();
-    if(tmp < CTX.mesh.gamma_inf || tmp > CTX.mesh.gamma_sup)
+  if(CTX.mesh.quality_sup) {
+    double tmp;
+    if(CTX.mesh.quality_type == 2)
+      tmp = s->RhoShapeMeasure();
+    else if(CTX.mesh.quality_type == 1)
+      tmp = s->EtaShapeMeasure();
+    else
+      tmp = s->GammaShapeMeasure();
+    if(tmp < CTX.mesh.quality_inf || tmp > CTX.mesh.quality_sup)
       return;
   }
 
@@ -1327,6 +1353,16 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
   MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, h->iPart);
   if(part && !(*part)->Visible)
     return;
+
+  if(CTX.mesh.quality_sup) {
+    double tmp;
+    if(CTX.mesh.quality_type == 2)
+      tmp = h->RhoShapeMeasure();
+    else
+      tmp = 0.0;
+    if(tmp < CTX.mesh.quality_inf || tmp > CTX.mesh.quality_sup)
+      return;
+  }
 
   if(CTX.mesh.radius_sup) {
     double r = h->maxEdge();
@@ -1508,6 +1544,16 @@ void Draw_Mesh_Prism(void *a, void *b)
   MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, p->iPart);
   if(part && !(*part)->Visible)
     return;
+
+  if(CTX.mesh.quality_sup) {
+    double tmp;
+    if(CTX.mesh.quality_type == 2)
+      tmp = p->RhoShapeMeasure();
+    else
+      tmp = 0.0;
+    if(tmp < CTX.mesh.quality_inf || tmp > CTX.mesh.quality_sup)
+      return;
+  }
 
   if(CTX.mesh.radius_sup) {
     double r = p->maxEdge();
@@ -1704,6 +1750,16 @@ void Draw_Mesh_Pyramid(void *a, void *b)
   MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, p->iPart);
   if(part && !(*part)->Visible)
     return;
+
+  if(CTX.mesh.quality_sup) {
+    double tmp;
+    if(CTX.mesh.quality_type == 2)
+      tmp = p->RhoShapeMeasure();
+    else
+      tmp = 0.0;
+    if(tmp < CTX.mesh.quality_inf || tmp > CTX.mesh.quality_sup)
+      return;
+  }
 
   if(CTX.mesh.radius_sup) {
     double r = p->maxEdge();

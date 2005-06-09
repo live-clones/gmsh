@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.245 2005-06-06 23:14:59 geuzaine Exp $
+// $Id: Options.cpp,v 1.246 2005-06-09 17:22:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -4028,30 +4028,46 @@ double opt_mesh_rand_factor(OPT_ARGS_NUM)
   return CTX.mesh.rand_factor;
 }
 
-double opt_mesh_gamma_inf(OPT_ARGS_NUM)
+double opt_mesh_quality_type(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    if(CTX.mesh.gamma_inf != val) CTX.mesh.changed = 1;
-    CTX.mesh.gamma_inf = val;
+    if(CTX.mesh.quality_type != val) CTX.mesh.changed = 1;
+    CTX.mesh.quality_type = (int)val;
+    if(CTX.mesh.quality_type < 0 || CTX.mesh.quality_type > 2)
+      CTX.mesh.quality_type = 0;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_value[4]->value(CTX.mesh.gamma_inf);
+  if(WID && (action & GMSH_GUI)){
+    WID->mesh_choice[6]->value(CTX.mesh.quality_type);
+  }
 #endif
-  return CTX.mesh.gamma_inf;
+  return CTX.mesh.quality_type;
 }
 
-double opt_mesh_gamma_sup(OPT_ARGS_NUM)
+double opt_mesh_quality_inf(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    if(CTX.mesh.gamma_sup != val) CTX.mesh.changed = 1;
-    CTX.mesh.gamma_sup = val;
+    if(CTX.mesh.quality_inf != val) CTX.mesh.changed = 1;
+    CTX.mesh.quality_inf = val;
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->mesh_value[5]->value(CTX.mesh.gamma_sup);
+    WID->mesh_value[4]->value(CTX.mesh.quality_inf);
 #endif
-  return CTX.mesh.gamma_sup;
+  return CTX.mesh.quality_inf;
+}
+
+double opt_mesh_quality_sup(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX.mesh.quality_sup != val) CTX.mesh.changed = 1;
+    CTX.mesh.quality_sup = val;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_value[5]->value(CTX.mesh.quality_sup);
+#endif
+  return CTX.mesh.quality_sup;
 }
 
 double opt_mesh_radius_inf(OPT_ARGS_NUM)

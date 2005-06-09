@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.440 2005-05-27 21:34:53 geuzaine Exp $
+// $Id: GUI.cpp,v 1.441 2005-06-09 17:22:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2304,11 +2304,21 @@ void GUI::create_option_window()
       mesh_value[4]->step(0.001);
       mesh_value[4]->align(FL_ALIGN_RIGHT);
 
-      mesh_value[5] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 7 * BH, IW / 2, BH, "Tetrahedra quality range");
+      mesh_value[5] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 7 * BH, IW / 2, BH, "Element quality range");
       mesh_value[5]->minimum(0);
       mesh_value[5]->maximum(1);
       mesh_value[5]->step(0.001);
       mesh_value[5]->align(FL_ALIGN_RIGHT);
+
+      static Fl_Menu_Item menu_quality_type[] = {
+        {"Gamma", 0, 0, 0},
+        {"Eta", 0, 0, 0},
+        {"Rho", 0, 0, 0},
+        {0}
+      };
+      mesh_choice[6] = new Fl_Choice(L + width - BB - 5 * WB, 2 * WB + 7 * BH, BB, BH);
+      mesh_choice[6]->menu(menu_quality_type);
+      mesh_choice[6]->align(FL_ALIGN_LEFT);
 
       mesh_value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW / 2, BH);
       mesh_value[6]->align(FL_ALIGN_RIGHT);

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.354 2005-06-08 19:12:04 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.355 2005-06-09 17:22:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1040,8 +1040,8 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_scaling_factor(0, GMSH_SET, WID->mesh_value[1]->value());
   opt_mesh_lc_factor(0, GMSH_SET, WID->mesh_value[2]->value());
   opt_mesh_rand_factor(0, GMSH_SET, WID->mesh_value[3]->value());
-  opt_mesh_gamma_inf(0, GMSH_SET, WID->mesh_value[4]->value());
-  opt_mesh_gamma_sup(0, GMSH_SET, WID->mesh_value[5]->value());
+  opt_mesh_quality_inf(0, GMSH_SET, WID->mesh_value[4]->value());
+  opt_mesh_quality_sup(0, GMSH_SET, WID->mesh_value[5]->value());
   opt_mesh_radius_inf(0, GMSH_SET, WID->mesh_value[6]->value());
   opt_mesh_radius_sup(0, GMSH_SET, WID->mesh_value[7]->value());
   opt_mesh_normals(0, GMSH_SET, WID->mesh_value[8]->value());
@@ -1067,6 +1067,7 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
 		  (WID->mesh_choice[3]->value() == 0) ? DELAUNAY_ISO :
 		  FRONTAL_NETGEN);
   opt_mesh_color_carousel(0, GMSH_SET, WID->mesh_choice[4]->value());
+  opt_mesh_quality_type(0, GMSH_SET, WID->mesh_choice[6]->value());
 }
 
 void mesh_cut_plane_cb(CALLBACK_ARGS)

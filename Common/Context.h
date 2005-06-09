@@ -175,7 +175,8 @@ public :
     int points_per_element;
     int optimize;
     double quality;
-    double gamma_inf, gamma_sup, radius_inf, radius_sup;
+    int quality_type;
+    double quality_inf, quality_sup, radius_inf, radius_sup;
     double scaling_factor, lc_factor, rand_factor;
     int dual, interactive;
     int light, light_two_side;
