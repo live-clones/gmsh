@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.441 2005-06-09 17:22:04 geuzaine Exp $
+// $Id: GUI.cpp,v 1.442 2005-06-09 17:57:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3342,15 +3342,15 @@ void GUI::create_statistics_window()
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 12 * BH, IW, BH, "Time for 2D mesh");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 13 * BH, IW, BH, "Time for 3D mesh");
 
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 14 * BH, IW, BH, "Gamma factor");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "Eta factor");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 16 * BH, IW, BH, "Rho factor");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 14 * BH, IW, BH, "Gamma");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "Eta");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 16 * BH, IW, BH, "Rho");
 
-      Fl_Button *b0 = new Fl_Button(width - BB - 2 * WB, 2 * WB + 14 * BH, BB, BH, "Graph");
+      Fl_Button *b0 = new Fl_Button(width - BB - 5 * WB, 2 * WB + 14 * BH, BB, BH, "Graph");
       b0->callback(statistics_histogram_cb, (void *)"gamma");
-      Fl_Button *b1 = new Fl_Button(width - BB - 2 * WB, 2 * WB + 15 * BH, BB, BH, "Graph");
+      Fl_Button *b1 = new Fl_Button(width - BB - 5 * WB, 2 * WB + 15 * BH, BB, BH, "Graph");
       b1->callback(statistics_histogram_cb, (void *)"eta");
-      Fl_Button *b2 = new Fl_Button(width - BB - 2 * WB, 2 * WB + 16 * BH, BB, BH, "Graph");
+      Fl_Button *b2 = new Fl_Button(width - BB - 5 * WB, 2 * WB + 16 * BH, BB, BH, "Graph");
       b2->callback(statistics_histogram_cb, (void *)"rho");
 
       o->end();
