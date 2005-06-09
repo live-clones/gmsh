@@ -110,7 +110,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Solver.ThirdButtonCommand0
 Command associated with the third button for solver 0@*
-Default value: @code{"-bin -pos %s"}@*
+Default value: @code{"-pos %s"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.FourthButton0
