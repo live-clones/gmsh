@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.89 2005-05-27 19:35:07 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.90 2005-06-10 16:46:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -370,7 +370,11 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    // for(i = 0; i < Nbr_Nodes; i++)
 	    //    List_Insert(c->Vertices, &vertsp[i], fcmp_int);
 	    //
-	    // So we use a temp tree instead:
+	    // So we use a temp tree instead. Note that this can cause
+	    // problems in some algos since this can destroy the
+	    // "natural" ordering of the vertices in the list (two
+	    // successive vertices do not necessarily define an
+	    // element).
 	    if(!c->VerticesTemp)
 	      c->VerticesTemp = Tree_Create(sizeof(Vertex *), compareVertex);
 	    for(i = 0; i < Nbr_Nodes; i++)

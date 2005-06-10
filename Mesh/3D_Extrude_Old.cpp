@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.32 2005-05-17 22:03:18 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.33 2005-06-10 16:46:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -523,45 +523,46 @@ static void Extrude_Surface3(void *data, void *dum)
   Tree_Action(s->Quadrangles, Extrude_Quadrangle_Phase3);
 }
 
-static void Extrude_Seg(Vertex * V1, Vertex * V2)
+static void Extrude_Seg(void *data, void *dum)
 {
-  int i, j, k;
-  Vertex *v1, *v2, *v3, *v4;
-  Simplex *s;
-  Quadrangle *q;
+  Simplex *ll = *(Simplex **) data;
+  Vertex *V1 = ll->V[0];
+  Vertex *V2 = ll->V[1];
 
   //printf("-curve vertex %d %p   %d %p\n", V1->Num, V1, V2->Num, V2);
 
-  k = 0;
-  for(i = 0; i <= NbLayer; i++) {
+  int k = 0;
+  for(int i = 0; i <= NbLayer; i++) {
     if(LineLayer[i]) {
+      Vertex *v1, *v2;
       List_Read(V1->Extruded_Points, k, &v1);
       List_Read(V2->Extruded_Points, k, &v2);
-      s = Create_Simplex(v1, v2, NULL, NULL);
+      Simplex *s = Create_Simplex(v1, v2, NULL, NULL);
       s->iEnt = LineLayer[i];
       Tree_Add(THEV->Simp_Surf, &s);
     }
-    for(j = 0; j < NbElmLayer[i]; j++) {
+    for(int j = 0; j < NbElmLayer[i]; j++) {
       k++;
     }
   }
 
   k = 0;
-  for(i = 0; i < NbLayer; i++) {
-    for(j = 0; j < NbElmLayer[i]; j++) {
+  for(int i = 0; i < NbLayer; i++) {
+    for(int j = 0; j < NbElmLayer[i]; j++) {
+      Vertex *v1, *v2, *v3, *v4;
       List_Read(V1->Extruded_Points, k, &v1);
       List_Read(V2->Extruded_Points, k, &v2);
       List_Read(V1->Extruded_Points, k + 1, &v3);
       List_Read(V2->Extruded_Points, k + 1, &v4);
       if(SurfLayer[i]) {
         if(CTX.mesh.oldxtrude_recombine) {
-          q = Create_Quadrangle(v1, v2, v4, v3);
+          Quadrangle *q = Create_Quadrangle(v1, v2, v4, v3);
           q->iEnt = SurfLayer[i];
           Tree_Add(THEV->Quad_Surf, &q);
         }
         else {
           if(are_exist(v3, v2, Tree_Ares)) {
-            s = Create_Simplex(v3, v2, v1, NULL);
+            Simplex *s = Create_Simplex(v3, v2, v1, NULL);
             s->iEnt = SurfLayer[i];
             Tree_Add(THEV->Simp_Surf, &s);
             s = Create_Simplex(v3, v4, v2, NULL);
@@ -569,7 +570,7 @@ static void Extrude_Seg(Vertex * V1, Vertex * V2)
             Tree_Add(THEV->Simp_Surf, &s);
           }
           else {
-            s = Create_Simplex(v3, v4, v1, NULL);
+            Simplex *s = Create_Simplex(v3, v4, v1, NULL);
             s->iEnt = SurfLayer[i];
             Tree_Add(THEV->Simp_Surf, &s);
             s = Create_Simplex(v1, v4, v2, NULL);
@@ -587,7 +588,6 @@ static void Extrude_Seg(Vertex * V1, Vertex * V2)
 static void Extrude_Curve(void *data, void *dum)
 {
   Curve **pC, *c;
-  Vertex *v1, *v2;
   int i;
   if(!NbLayer)
     return;
@@ -605,11 +605,10 @@ static void Extrude_Curve(void *data, void *dum)
     LineLayer[i + 1] = (int)(5 * K1) + (int)((i + 1) * K2) + c->Num;
   }
 
-  for(i = 0; i < List_Nbr(c->Vertices) - 1; i++) {
-    List_Read(c->Vertices, i, &v1);
-    List_Read(c->Vertices, i + 1, &v2);
-    Extrude_Seg(v1, v2);
-  }
+  // This is better than extruding based on c->Vertices (since it also
+  // works if for some reason v->Vertices is not ordered)
+  Tree_Action(c->Simplexes, Extrude_Seg);
+  Tree_Action(c->SimplexesBase, Extrude_Seg);
 }
 
 static void Extrude_Pnt(Vertex * V1)
