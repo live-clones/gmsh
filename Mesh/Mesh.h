@@ -442,7 +442,7 @@ void mai3d(Mesh *M, int Asked);
 void Init_Mesh0(Mesh *M);
 void Init_Mesh(Mesh *M);
 void Create_BgMesh(int i, double d, Mesh *m);
-void Print_Geo(Mesh *M, char *c, int discrete_curve=0, int discrete_surface=0);
+void Print_Geo(Mesh *M, char *c);
 void Print_Mesh(Mesh *M, char *c, int Type);
 void Read_Mesh(Mesh *M, FILE *fp, char *filename, int Type);
 void GetStatistics(double s[50]);

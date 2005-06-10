@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.77 2005-06-09 22:19:02 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.78 2005-06-10 20:59:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -66,12 +66,10 @@ void Plan_Moyen(void *data, void *dum)
   int i, j;
   Vertex *v;
   Curve *pC;
-  Surface **pS, *s;
   static List_T *points;
   static int deb = 1;
 
-  pS = (Surface **) data;
-  s = *pS;
+  Surface *s = *(Surface **) data;
 
   if(deb) {
     points = List_Create(10, 10, sizeof(Vertex *));
@@ -842,15 +840,22 @@ void ReOrientSurfaceMesh(Surface *s)
 
 void Maillage_Surface(void *data, void *dum)
 {
-  Surface **pS, *s;
   Tree_T *tnxe;
   int ori;
 
-  pS = (Surface **) data;
-  s = *pS;
+  Surface *s = *(Surface **) data;
 
   if(!s->Support)
     return;
+
+  Msg(STATUS3, "Meshing surface %d", s->Num);
+
+  if(MeshDiscreteSurface(s)){
+    Tree_Action(THEM->Points, PutVertex_OnSurf);
+    Tree_Action(s->Vertices, PutVertex_OnSurf);
+    Tree_Action(s->Vertices, Add_In_Mesh);
+    return;
+  }
 
   THESUPPORT = s->Support;
   THESURFACE = s;
@@ -862,10 +867,7 @@ void Maillage_Surface(void *data, void *dum)
     Tree_Delete(s->Vertices);
   s->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
 
-  Msg(STATUS3, "Meshing surface %d", s->Num);
-
-  if(MeshDiscreteSurface(s) ||
-     MeshTransfiniteSurface(s) ||
+  if(MeshTransfiniteSurface(s) ||
      MeshEllipticSurface(s) ||
      MeshCylindricalSurface(s) ||
      MeshParametricSurface(s) ||
@@ -882,7 +884,7 @@ void Maillage_Surface(void *data, void *dum)
     }
 
     int TypSurface = s->Typ;
-    Plan_Moyen(pS, dum);
+    Plan_Moyen(&s, dum);
     Tree_Action(THEM->Points, Freeze_Vertex);
     Tree_Action(s->Vertices, Freeze_Vertex);
     Tree_Action(THEM->Points, Projette_Plan_Moyen);

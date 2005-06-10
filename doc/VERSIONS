@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.334 2005-06-09 22:19:02 geuzaine Exp $
+$Id: VERSIONS,v 1.335 2005-06-10 20:59:20 geuzaine Exp $
 
 New since 1.60: added support for second order (curved) elements in
 post-processor; new version (1.4) of post-processing file formats; new
@@ -8,8 +8,8 @@ the parser; changed View.ArrowLocation into View.GlyphLocation;
 optimized memory usage when loading many (>1000) views; optimzed
 loading and drawing of line meshes and 2D iso views; optimize handling
 of meshes with large number of physical entities; Removed Discrete
-Line and Discrete Surface commands: the same functionnality can now be
-obtained by simply loading meshes in the usual formats; fixed coloring
+Line and Discrete Surface commands (the same functionnality can now be
+obtained by simply loading a mesh in .msh format); fixed coloring
 by mesh partition; new "mesh statistics" export format; new full-quad
 recombine option; various small bug fixes.
 

@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.88 2005-05-17 22:03:18 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.89 2005-06-10 20:59:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -611,24 +611,20 @@ void Extrude_Surface1(Surface * s)
 {
   THES = s;
   Tree_Action(s->Vertices, Extrude_Vertex);
-  if(!ep->mesh.Recombine){
+  if(!ep->mesh.Recombine)
     Tree_Action(s->Simplexes, Extrude_Simplex_Phase1);
-    Tree_Action(s->SimplexesBase, Extrude_Simplex_Phase1);
-  }
 }
 
 void Extrude_Surface2(Surface * s)
 {
   THES = s;
   Tree_Action(s->Simplexes, Extrude_Simplex_Phase2);
-  Tree_Action(s->SimplexesBase, Extrude_Simplex_Phase2);
 }
 
 void Extrude_Surface3(Surface * s)
 {
   THES = s;
   Tree_Action(s->Simplexes, Extrude_Simplex_Phase3);
-  Tree_Action(s->SimplexesBase, Extrude_Simplex_Phase3);
   Tree_Action(s->Quadrangles, Extrude_Quadrangle_Phase3);
 }
 
@@ -1037,7 +1033,6 @@ int Extrude_Mesh(Surface * s)
   }
 
   Tree_Action(s->Simplexes, AddSimVertsInSurf);
-  Tree_Action(s->SimplexesBase, AddSimVertsInSurf);
   Tree_Action(s->Quadrangles, AddQuadVertsInSurf);
 
   ReOrientSurfaceMesh(s);

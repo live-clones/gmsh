@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.207 2005-04-19 16:03:15 remacle Exp $
+// $Id: Gmsh.y,v 1.208 2005-06-10 20:59:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1850,6 +1850,10 @@ Delete :
     {
       if(!strcmp($2, "Meshes") || !strcmp($2, "All")){
 	Init_Mesh(THEM);
+      }
+      else if(!strcmp($2, "Physicals")){
+	List_Action(THEM->PhysicalGroups, Free_PhysicalGroup);
+	List_Reset(THEM->PhysicalGroups);
       }
       else{
 	yymsg(GERROR, "Unknown command 'Delete %s'", $2);

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.87 2005-06-10 00:31:28 geuzaine Exp $
+# $Id: Makefile,v 1.88 2005-06-10 20:59:15 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -385,7 +385,7 @@ Read_Mesh.o: Read_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h Mesh.h 3D_Mesh.h Create.h Vertex.h \
-  ../Geo/MinMax.h ../Common/Context.h
+  ../Geo/MinMax.h ../Numeric/Numeric.h ../Common/Context.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 DiscreteSurface.o: DiscreteSurface.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \

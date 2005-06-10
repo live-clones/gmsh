@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.42 2005-06-08 19:12:05 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.43 2005-06-10 20:59:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -860,5 +860,45 @@ bool Simplex::SwapFace(int iFac, List_T * newsimp, List_T * delsimp)
     return false;
 
   return true;
+}
+
+// Transfer SimplexBase to Simplex
+
+static Tree_T *simptree = NULL;
+
+void Copy_SimplexBaseToSimplex(void *a, void *b)
+{
+  SimplexBase *base = *(SimplexBase**)a;
+  Simplex *s = Create_Simplex(base->V[0], base->V[1], base->V[2], base->V[3]);
+  s->iEnt = base->iEnt;
+  s->Num = base->Num;
+  s->iPart = base->iPart;
+  s->Visible = base->Visible;
+  if(base->VSUP){
+    int ns;
+    if(base->V[3])
+      ns = 6;
+    else if(base->V[2])
+      ns = 3;
+    else if(base->V[1])
+      ns = 1;
+    else
+      ns = 0;
+    if(ns){
+      s->VSUP = (Vertex **) Malloc(ns * sizeof(Vertex *));
+      memcpy(s->VSUP, base->VSUP, ns * sizeof(Vertex *));
+    }
+  }
+  Tree_Insert(simptree, &s);
+}
+
+void Move_SimplexBaseToSimplex(Tree_T **base, Tree_T *simp)
+{
+  if(!Tree_Nbr(*base)) return;
+  simptree = simp;
+  Tree_Action(*base, Copy_SimplexBaseToSimplex);
+  Tree_Action(*base, Free_SimplexBase);
+  Tree_Delete(*base);
+  *base = Tree_Create(sizeof(SimplexBase *), compareSimplexBase);
 }
 

@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.40 2005-05-15 01:44:25 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.41 2005-06-10 20:59:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -274,7 +274,7 @@ void Print_PhysicalGroups(void *a, void *b)
 
 }
 
-void Print_Geo(Mesh * M, char *filename, int discrete_curve, int discrete_surface)
+void Print_Geo(Mesh * M, char *filename)
 {
   if(filename) {
     FOUT = fopen(filename, "w");

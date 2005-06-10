@@ -21,6 +21,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "List.h"
+#include "Tree.h"
 #include "Vertex.h"
 #include "Element.h"
 #include "Face.h"
@@ -80,5 +81,7 @@ int compareFace(const void *a, const void *b);
 
 Simplex *Create_Simplex (Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
 void Free_Simplex(void *a, void *b);
+
+void Move_SimplexBaseToSimplex(Tree_T **base, Tree_T *simp);
 
 #endif

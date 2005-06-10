@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.33 2005-06-10 16:46:30 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.34 2005-06-10 20:59:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -483,10 +483,8 @@ static void Extrude_Surface1(void *data, void *dum)
 
   Tree_Action(s->Vertices, Extrude_Vertex);
 
-  if(!CTX.mesh.oldxtrude_recombine){
+  if(!CTX.mesh.oldxtrude_recombine)
     Tree_Action(s->Simplexes, Extrude_Simplex_Phase1);
-    Tree_Action(s->SimplexesBase, Extrude_Simplex_Phase1);
-  }
 }
 
 static void Extrude_Surface2(void *data, void *dum)
@@ -497,7 +495,6 @@ static void Extrude_Surface2(void *data, void *dum)
   THES = s;
 
   Tree_Action(s->Simplexes, Extrude_Simplex_Phase2);
-  Tree_Action(s->SimplexesBase, Extrude_Simplex_Phase2);
 }
 
 static void Extrude_Surface3(void *data, void *dum)
@@ -519,7 +516,6 @@ static void Extrude_Surface3(void *data, void *dum)
   }
 
   Tree_Action(s->Simplexes, Extrude_Simplex_Phase3);
-  Tree_Action(s->SimplexesBase, Extrude_Simplex_Phase3);
   Tree_Action(s->Quadrangles, Extrude_Quadrangle_Phase3);
 }
 
@@ -608,7 +604,6 @@ static void Extrude_Curve(void *data, void *dum)
   // This is better than extruding based on c->Vertices (since it also
   // works if for some reason v->Vertices is not ordered)
   Tree_Action(c->Simplexes, Extrude_Seg);
-  Tree_Action(c->SimplexesBase, Extrude_Seg);
 }
 
 static void Extrude_Pnt(Vertex * V1)

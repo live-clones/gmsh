@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.355 2005-06-09 17:22:04 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.356 2005-06-10 20:59:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -567,7 +567,8 @@ int _save_options(char *name)
 
 int _save_geo(char *name)
 {
-  return geo_dialog(name);
+  CreateOutputFile(name, FORMAT_GEO);
+  return 1;
 }
 
 int _save_msh(char *name)

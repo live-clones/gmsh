@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.69 2005-06-10 00:31:28 geuzaine Exp $
+// $Id: Generator.cpp,v 1.70 2005-06-10 20:59:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -198,11 +198,47 @@ void ApplyLcFactor(Mesh * M)
   List_Action(M->Metric->Attractors, ApplyLcFactor_Attractor);
 }
 
+void Move_SimplexBaseToSimplex(Mesh * M, int dimension)
+{
+  if(dimension >= 1){
+    List_T *Curves = Tree2List(M->Curves);
+    for(int i = 0; i < List_Nbr(Curves); i++) {
+      Curve *c;
+      List_Read(Curves, i, &c);
+      Move_SimplexBaseToSimplex(&c->SimplexesBase, c->Simplexes);
+    }
+    List_Delete(Curves);
+  }
+
+  if(dimension >= 2){
+    List_T *Surfaces = Tree2List(M->Surfaces);
+    for(int i = 0; i < List_Nbr(Surfaces); i++){
+      Surface *s;
+      List_Read(Surfaces, i, &s);
+      Move_SimplexBaseToSimplex(&s->SimplexesBase, s->Simplexes);
+    }
+    List_Delete(Surfaces);
+  }
+  
+  if(dimension >= 3){
+    List_T *Volumes = Tree2List(M->Volumes);
+    for(int i = 0; i < List_Nbr(Volumes); i++){
+      Volume *v;
+      List_Read(Volumes, i, &v);
+      Move_SimplexBaseToSimplex(&v->SimplexesBase, v->Simplexes);
+    }
+    List_Delete(Volumes);
+  }
+}
+
 void Maillage_Dimension_1(Mesh * M)
 {
   double t1, t2;
 
   t1 = Cpu();
+
+  Move_SimplexBaseToSimplex(M, 1);
+
   Tree_Action(M->Curves, Maillage_Curve);
   t2 = Cpu();
   M->timing[0] = t2 - t1;
@@ -215,6 +251,8 @@ void Maillage_Dimension_2(Mesh * M)
   double t1, t2, shortest = 1.e300;
 
   t1 = Cpu();
+
+  Move_SimplexBaseToSimplex(M, 2);
 
   // create reverse 1D meshes
 
@@ -269,6 +307,8 @@ void Maillage_Dimension_3(Mesh * M)
   Volume *vol;
 
   t1 = Cpu();
+
+  Move_SimplexBaseToSimplex(M, 3);
 
   // merge all the delaunay parts in a single special volume
   v = Create_Volume(99999, 99999);

@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.90 2005-06-10 16:46:30 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.91 2005-06-10 20:59:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #include "3D_Mesh.h"
 #include "Create.h"
 #include "MinMax.h"
+#include "Numeric.h"
 #include "Context.h"
 
 extern Context_T CTX;
@@ -142,6 +143,23 @@ int getNbrNodes(int Type)
   case PYR2: return 5 + 8 + 1;
   default: return 0;
   }
+}
+
+double SetLC(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4 = 0)
+{ 
+  double lc1 = sqrt((v1->Pos.X - v2->Pos.X) * (v1->Pos.X - v2->Pos.X) +
+		    (v1->Pos.Y - v2->Pos.Y) * (v1->Pos.Y - v2->Pos.Y) +
+		    (v1->Pos.Z - v2->Pos.Z) * (v1->Pos.Z - v2->Pos.Z));
+  double lc2 = sqrt((v1->Pos.X - v3->Pos.X) * (v1->Pos.X - v3->Pos.X) +
+		    (v1->Pos.Y - v3->Pos.Y) * (v1->Pos.Y - v3->Pos.Y) +
+		    (v1->Pos.Z - v3->Pos.Z) * (v1->Pos.Z - v3->Pos.Z));
+  double lc3 = sqrt((v2->Pos.X - v3->Pos.X) * (v2->Pos.X - v3->Pos.X) +
+		    (v2->Pos.Y - v3->Pos.Y) * (v2->Pos.Y - v3->Pos.Y) +
+		    (v2->Pos.Z - v3->Pos.Z) * (v2->Pos.Z - v3->Pos.Z));
+  double lc = DMAX(lc1, DMAX(lc2, lc3)) * CTX.mesh.lc_factor;
+  v1->lc = v2->lc = v3->lc = lc;
+  if(v4) v4->lc = lc;
+  return lc;
 }
 
 static Curve *theCurve = NULL;
@@ -389,6 +407,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           simp->Num = Num;
           simp->iEnt = Elementary;
           simp->iPart = addMeshPartition(Partition, M);
+	  SetLC(vertsp[0], vertsp[1], vertsp[2]);
 	  if(Type == TRI2){
 	    simp->VSUP = (Vertex **) Malloc(3 * sizeof(Vertex *));
 	    for(i = 0; i < 3; i++){
@@ -413,6 +432,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           quad->Num = Num;
           quad->iEnt = Elementary;
           quad->iPart = addMeshPartition(Partition, M);
+	  SetLC(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
 	  if(Type == QUA2){
 	    quad->VSUP = (Vertex **) Malloc((4 + 1) * sizeof(Vertex *));
 	    for(i = 0; i < 4 + 1; i++){
