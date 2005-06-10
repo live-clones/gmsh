@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.34 2005-06-10 20:59:15 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.35 2005-06-10 22:50:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -167,14 +167,13 @@ static void are_del(Vertex * v1, Vertex * v2, Tree_T * t)
 
 static void Extrude_Simplex_Phase1(void *data, void *dum)
 {
-  int i, j, k;
   Vertex *v1, *v2, *v3, *v4, *v5, *v6;
 
   Simplex *s = *(Simplex **) data;
 
-  k = 0;
-  for(i = 0; i < NbLayer; i++) {
-    for(j = 0; j < NbElmLayer[i]; j++) {
+  int k = 0;
+  for(int i = 0; i < NbLayer; i++) {
+    for(int j = 0; j < NbElmLayer[i]; j++) {
       List_Read(s->V[0]->Extruded_Points, k, &v1);
       List_Read(s->V[1]->Extruded_Points, k, &v2);
       List_Read(s->V[2]->Extruded_Points, k, &v3);
@@ -194,15 +193,14 @@ static void Extrude_Simplex_Phase1(void *data, void *dum)
 
 static void Extrude_Simplex_Phase3(void *data, void *dum)
 {
-  Simplex  *news;
+  Simplex *news;
   Prism *newp;
-  int i, j, k;
   Vertex *v1, *v2, *v3, *v4, *v5, *v6;
 
   Simplex *s = *(Simplex **) data;
 
-  k = 0;
-  for(i = 0; i <= NbLayer; i++) {
+  int k = 0;
+  for(int i = 0; i <= NbLayer; i++) {
     if(SurfLayer[i]) {
       List_Read(s->V[0]->Extruded_Points, k, &v1);
       List_Read(s->V[1]->Extruded_Points, k, &v2);
@@ -211,14 +209,14 @@ static void Extrude_Simplex_Phase3(void *data, void *dum)
       news->iEnt = SurfLayer[i];
       Tree_Add(THEV->Simp_Surf, &news);
     }
-    for(j = 0; j < NbElmLayer[i]; j++) {
+    for(int j = 0; j < NbElmLayer[i]; j++) {
       k++;
     }
   }
 
   k = 0;
-  for(i = 0; i < NbLayer; i++) {
-    for(j = 0; j < NbElmLayer[i]; j++) {
+  for(int i = 0; i < NbLayer; i++) {
+    for(int j = 0; j < NbElmLayer[i]; j++) {
       List_Read(s->V[0]->Extruded_Points, k, &v1);
       List_Read(s->V[1]->Extruded_Points, k, &v2);
       List_Read(s->V[2]->Extruded_Points, k, &v3);
@@ -320,8 +318,6 @@ static void Extrude_Simplex_Phase3(void *data, void *dum)
 
 static void Extrude_Quadrangle_Phase3(void *data, void *dum)
 {
-  int i, j, k;
-  Vertex *v1, *v2, *v3, *v4, *v5, *v6, *v7, *v8;
 
   Quadrangle *q = *(Quadrangle **) data;
 
@@ -330,8 +326,10 @@ static void Extrude_Quadrangle_Phase3(void *data, void *dum)
     return;
   }
 
-  k = 0;
-  for(i = 0; i <= NbLayer; i++) {
+  Vertex *v1, *v2, *v3, *v4, *v5, *v6, *v7, *v8;
+
+  int k = 0;
+  for(int i = 0; i <= NbLayer; i++) {
     if(SurfLayer[i]) {
       List_Read(q->V[0]->Extruded_Points, k, &v1);
       List_Read(q->V[1]->Extruded_Points, k, &v2);
@@ -341,14 +339,14 @@ static void Extrude_Quadrangle_Phase3(void *data, void *dum)
       newq->iEnt = SurfLayer[i];
       Tree_Add(THEV->Quad_Surf, &newq);
     }
-    for(j = 0; j < NbElmLayer[i]; j++) {
+    for(int j = 0; j < NbElmLayer[i]; j++) {
       k++;
     }
   }
 
   k = 0;
-  for(i = 0; i < NbLayer; i++) {
-    for(j = 0; j < NbElmLayer[i]; j++) {
+  for(int i = 0; i < NbLayer; i++) {
+    for(int j = 0; j < NbElmLayer[i]; j++) {
       List_Read(q->V[0]->Extruded_Points, k, &v1);
       List_Read(q->V[1]->Extruded_Points, k, &v2);
       List_Read(q->V[2]->Extruded_Points, k, &v3);
@@ -370,14 +368,12 @@ static void Extrude_Quadrangle_Phase3(void *data, void *dum)
 
 static void Extrude_Simplex_Phase2(void *data, void *dum)
 {
-  int i, j, k;
-  Vertex *v1, *v2, *v3, *v4, *v5, *v6;
-
   Simplex *s = *(Simplex **) data;
 
-  k = 0;
-  for(i = 0; i < NbLayer; i++) {
-    for(j = 0; j < NbElmLayer[i]; j++) {
+  int k = 0;
+  for(int i = 0; i < NbLayer; i++) {
+    for(int j = 0; j < NbElmLayer[i]; j++) {
+      Vertex *v1, *v2, *v3, *v4, *v5, *v6;
       List_Read(s->V[0]->Extruded_Points, k, &v1);
       List_Read(s->V[1]->Extruded_Points, k, &v2);
       List_Read(s->V[2]->Extruded_Points, k, &v3);
@@ -435,38 +431,37 @@ static void Extrude_Simplex_Phase2(void *data, void *dum)
 
 static void Extrude_Vertex(void *data, void *dum)
 {
-  Vertex **pV, *v, *newv;
-  int i, j;
-  double h, a;
+  Vertex *v = *(Vertex **) data;
 
-  pV = (Vertex **) data;
-  v = *pV;
   if(v->Extruded_Points)
     return;
+
   v->Extruded_Points = List_Create(NbLayer, 1, sizeof(Vertex *));
   List_Add(v->Extruded_Points, &v);
-  h = 0.0;
 
   //printf("-extruding vertex %d %p\n", v->Num, v);
 
-  for(i = 0; i < NbLayer; i++) {
+  double h = 0.0;
+
+  for(int i = 0; i < NbLayer; i++) {
 
     // Geometric progression ar^i
     // Sum of n (=NbElmLayer[i]) terms = hLayer[i] = a (r^n-1)/(r-1)
     
+    double a;
     if(parLayer[i] == 1.)
       a = hLayer[i] / (double)NbElmLayer[i];
     else
       a = hLayer[i] * (parLayer[i] - 1.) / 
 	(pow(parLayer[i], NbElmLayer[i]) - 1.);
     
-    for(j = 0; j < NbElmLayer[i]; j++) {
+    for(int j = 0; j < NbElmLayer[i]; j++) {
      
       //h += hLayer[i]/(double)NbElmLayer[i];
 
       h += a * pow(parLayer[i], j);
 
-      newv = Create_Vertex(++THEM->MaxPointNum, v->Pos.X, v->Pos.Y, 
+      Vertex *newv = Create_Vertex(++THEM->MaxPointNum, v->Pos.X, v->Pos.Y, 
 			   v->Pos.Z + h, v->lc, v->u);
       Tree_Add(THEM->Vertices, &newv);
       List_Add(v->Extruded_Points, &newv);
@@ -499,7 +494,6 @@ static void Extrude_Surface2(void *data, void *dum)
 
 static void Extrude_Surface3(void *data, void *dum)
 {
-  int i;
   if(!NbLayer)
     return;
 
@@ -507,11 +501,11 @@ static void Extrude_Surface3(void *data, void *dum)
   THES = s;
 
   Msg(INFO, "Extruding Surface %d", s->Num);
-  for(i = 0; i < NbLayer; i++) {
+  for(int i = 0; i < NbLayer; i++) {
     ZonLayer[i] = (int)(3 * K1) + (int)((i + 1) * K2) + s->Num;
   }
   SurfLayer[0] = s->Num;
-  for(i = 0; i < NbLayer; i++) {
+  for(int i = 0; i < NbLayer; i++) {
     SurfLayer[i + 1] = (int)(2 * K1) + (int)((i + 1) * K2) + s->Num;
   }
 
@@ -521,7 +515,7 @@ static void Extrude_Surface3(void *data, void *dum)
 
 static void Extrude_Seg(void *data, void *dum)
 {
-  Simplex *ll = *(Simplex **) data;
+  Simplex *ll = *(Simplex**)data;
   Vertex *V1 = ll->V[0];
   Vertex *V2 = ll->V[1];
 
@@ -583,12 +577,10 @@ static void Extrude_Seg(void *data, void *dum)
 
 static void Extrude_Curve(void *data, void *dum)
 {
-  Curve **pC, *c;
-  int i;
   if(!NbLayer)
     return;
-  pC = (Curve **) data;
-  c = *pC;
+
+  Curve *c = *(Curve **) data;
 
   if(c->Num < 0)
     return;
@@ -596,29 +588,24 @@ static void Extrude_Curve(void *data, void *dum)
   Msg(INFO, "Extruding Curve %d", c->Num);
 
   LineLayer[0] = c->Num;
-  for(i = 0; i < NbLayer; i++) {
+  for(int i = 0; i < NbLayer; i++) {
     SurfLayer[i] = (int)(1 * K1) + (int)((i + 1) * K2) + c->Num;
     LineLayer[i + 1] = (int)(5 * K1) + (int)((i + 1) * K2) + c->Num;
   }
 
-  // This is better than extruding based on c->Vertices (since it also
-  // works if for some reason v->Vertices is not ordered)
   Tree_Action(c->Simplexes, Extrude_Seg);
 }
 
 static void Extrude_Pnt(Vertex * V1)
 {
-  int i, j, k;
-  Vertex *v1, *v2;
-  Simplex *s;
-
-  k = 0;
-  for(i = 0; i < NbLayer; i++) {
-    for(j = 0; j < NbElmLayer[i]; j++) {
+  int k = 0;
+  for(int i = 0; i < NbLayer; i++) {
+    for(int j = 0; j < NbElmLayer[i]; j++) {
+      Vertex *v1, *v2;
       List_Read(V1->Extruded_Points, k, &v1);
       List_Read(V1->Extruded_Points, k + 1, &v2);
       if(LineLayer[i]) {
-        s = Create_Simplex(v1, v2, NULL, NULL);
+        Simplex *s = Create_Simplex(v1, v2, NULL, NULL);
         s->iEnt = LineLayer[i];
         Tree_Add(THEV->Simp_Surf, &s);
       }
@@ -630,31 +617,29 @@ static void Extrude_Pnt(Vertex * V1)
 
 static void Extrude_Point(void *data, void *dum)
 {
-  Vertex **pV, *v, **pV2;
-  int i;
-
   if(!NbLayer)
     return;
-  pV = (Vertex **) data;
-  v = *pV;
+
+  Vertex *v = *(Vertex **) data;
 
   Msg(INFO, "Extruding Vertex %d", v->Num);
-  for(i = 0; i < NbLayer; i++) {
+  for(int i = 0; i < NbLayer; i++) {
     LineLayer[i] = (int)(4 * K1) + (int)((i + 1) * K2) + v->Num;
   }
 
   // only extrude points for which a mesh vertex exists with the same
   // number (i.e., start & end points of curves)
-  if((pV2 = (Vertex **) Tree_PQuery(THEM->Vertices, pV))) {
-    Extrude_Vertex(pV2, NULL);
-    Extrude_Pnt(*pV2);
+  Vertex **pV;
+  if((pV = (Vertex **) Tree_PQuery(THEM->Vertices, &v))) {
+    Extrude_Vertex(pV, NULL);
+    Extrude_Pnt(*pV);
   }
 
 }
 
 void FreeEP(void *a, void *b)
 {
-  Vertex *v = *((Vertex **) a);
+  Vertex *v = *(Vertex **) a;
   Free_ExtrudedPoints(v->Extruded_Points);
   v->Extruded_Points = NULL;
 }

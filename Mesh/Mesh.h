@@ -365,7 +365,6 @@ typedef struct{
   double ubeg, uend;
   List_T *Control_Points;
   List_T *Vertices;
-  Tree_T *VerticesTemp; // a temp tree for fast vertex insertion
   Tree_T *Simplexes, *SimplexesBase;
   ExtrudeParams *Extrude;
   float *k, *cp;

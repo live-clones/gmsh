@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.91 2005-06-10 20:59:15 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.92 2005-06-10 22:50:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -160,21 +160,6 @@ double SetLC(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4 = 0)
   v1->lc = v2->lc = v3->lc = lc;
   if(v4) v4->lc = lc;
   return lc;
-}
-
-static Curve *theCurve = NULL;
-
-static void TransferVertex(void *a, void *b)
-{
-  List_Add(theCurve->Vertices, a);
-}
-
-static void Transfer_VertexTree2List(void *a, void *b)
-{
-  theCurve = *(Curve**)a;
-  Tree_Action(theCurve->VerticesTemp, TransferVertex);
-  Tree_Delete(theCurve->VerticesTemp);
-  theCurve->VerticesTemp = NULL;
 }
 
 void Read_Mesh_MSH(Mesh * M, FILE * fp)
@@ -383,20 +368,9 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    Free_SimplexBase(&simp, 0);
 	  }
 	  else{
-	    // This is dog slow when there is a large num of verts per curve:
-	    //
-	    // for(i = 0; i < Nbr_Nodes; i++)
-	    //    List_Insert(c->Vertices, &vertsp[i], fcmp_int);
-	    //
-	    // So we use a temp tree instead. Note that this can cause
-	    // problems in some algos since this can destroy the
-	    // "natural" ordering of the vertices in the list (two
-	    // successive vertices do not necessarily define an
-	    // element).
-	    if(!c->VerticesTemp)
-	      c->VerticesTemp = Tree_Create(sizeof(Vertex *), compareVertex);
+	    // this can be quite slow if there are many nodes on the curve...
 	    for(i = 0; i < Nbr_Nodes; i++)
-	      Tree_Insert(c->VerticesTemp, &vertsp[i]);
+	      List_Insert(c->Vertices, &vertsp[i], fcmp_int);
 	  }
           break;
         case TRI1:
@@ -608,9 +582,6 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
   // re-sort the list according to these indices to allow direct
   // access through List_Pointer & co.
   List_Sort(M->Partitions, compareMeshPartitionIndex);
-
-  // Transfer the vertices from temp trees into lists
-  Tree_Action(M->Curves, Transfer_VertexTree2List);
 
   // Transfer the temp group tree back into the mesh
   List_Delete(M->PhysicalGroups);

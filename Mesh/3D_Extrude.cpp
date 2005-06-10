@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.89 2005-06-10 20:59:15 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.90 2005-06-10 22:50:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -96,7 +96,6 @@ List_T *getnxl(Vertex * v, Volume * vol)
 
 List_T *getnxl(Vertex * v, int dim)
 {
-  int i, j;
   Curve *c;
   Surface *s;
   List_T *list;
@@ -112,7 +111,7 @@ List_T *getnxl(Vertex * v, int dim)
     if((list = getnxl(v, THES)))
       return list;
     else {
-      for(i = 0; i < List_Nbr(THES->Generatrices); i++) {
+      for(int i = 0; i < List_Nbr(THES->Generatrices); i++) {
         if((abs(ep->geo.Source) != c->Num) && (list = getnxl(v, c)))
           return list;
       }
@@ -122,15 +121,15 @@ List_T *getnxl(Vertex * v, int dim)
     if((list = getnxl(v, THEV)))
       return list;
     else {
-      for(i = 0; i < List_Nbr(THEV->Surfaces); i++) {
+      for(int i = 0; i < List_Nbr(THEV->Surfaces); i++) {
         List_Read(THEV->Surfaces, i, &s);
         if((ep->geo.Source != s->Num) && (list = getnxl(v, s)))
           return list;
       }
-      for(i = 0; i < List_Nbr(THEV->Surfaces); i++) {
+      for(int i = 0; i < List_Nbr(THEV->Surfaces); i++) {
         List_Read(THEV->Surfaces, i, &s);
         if(ep->geo.Source != s->Num) {
-          for(j = 0; j < List_Nbr(s->Generatrices); j++) {
+          for(int j = 0; j < List_Nbr(s->Generatrices); j++) {
             List_Read(s->Generatrices, j, &c);
             if((list = getnxl(v, c)))
               return list;
@@ -349,7 +348,7 @@ void Extrude_Simplex_Phase2(void *data, void *dum)
 
 void Create_HexPri(int iEnt, Vertex * v[8])
 {
-  int i, j = 0, dup[4];
+  int dup[4];
   Hexahedron *newh;
   Prism *newp;
 
@@ -360,7 +359,8 @@ void Create_HexPri(int iEnt, Vertex * v[8])
     return;
   }
 
-  for(i = 0; i < 4; i++)
+  int j = 0;
+  for(int i = 0; i < 4; i++)
     if(v[i]->Num == v[i + 4]->Num)
       dup[j++] = i;
 
@@ -393,7 +393,7 @@ void Create_HexPri(int iEnt, Vertex * v[8])
 
 void Create_PriPyrTet(int iEnt, Vertex * v[6])
 {
-  int i, j = 0, dup[3];
+  int dup[3];
   Prism *newp;
   Pyramid *newpyr;
   Simplex *news;
@@ -405,7 +405,8 @@ void Create_PriPyrTet(int iEnt, Vertex * v[6])
     return;
   }
 
-  for(i = 0; i < 3; i++)
+  int j = 0;
+  for(int i = 0; i < 3; i++)
     if(v[i]->Num == v[i + 3]->Num)
       dup[j++] = i;
 
@@ -454,7 +455,6 @@ void Create_Sim(int iEnt, Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)
 
 void Extrude_Simplex_Phase3(void *data, void *dum)
 {
-  int i, j, k;
   Vertex *v[8];
 
   Simplex *s = *(Simplex **) data;
@@ -465,9 +465,9 @@ void Extrude_Simplex_Phase3(void *data, void *dum)
 
   if(!L0 || !L1 || !L2) return;
 
-  k = 0;
-  for(i = 0; i < ep->mesh.NbLayer; i++) {
-    for(j = 0; j < ep->mesh.NbElmLayer[i]; j++) {
+  int k = 0;
+  for(int i = 0; i < ep->mesh.NbLayer; i++) {
+    for(int j = 0; j < ep->mesh.NbElmLayer[i]; j++) {
       List_Read(L0, k, &v[0]);
       List_Read(L1, k, &v[1]);
       List_Read(L2, k, &v[2]);
@@ -528,7 +528,6 @@ void Extrude_Simplex_Phase3(void *data, void *dum)
 
 void Extrude_Quadrangle_Phase3(void *data, void *dum)
 {
-  int i, j, k;
   Vertex *v[8];
 
   Quadrangle *q = *(Quadrangle **) data;
@@ -545,9 +544,9 @@ void Extrude_Quadrangle_Phase3(void *data, void *dum)
 
   if(!L0 || !L1 || !L2 || !L3) return;
 
-  k = 0;
-  for(i = 0; i < ep->mesh.NbLayer; i++) {
-    for(j = 0; j < ep->mesh.NbElmLayer[i]; j++) {
+  int k = 0;
+  for(int i = 0; i < ep->mesh.NbLayer; i++) {
+    for(int j = 0; j < ep->mesh.NbElmLayer[i]; j++) {
       List_Read(L0, k, &v[0]);
       List_Read(L1, k, &v[1]);
       List_Read(L2, k, &v[2]);
@@ -565,7 +564,6 @@ void Extrude_Quadrangle_Phase3(void *data, void *dum)
 void Extrude_Vertex(void *data, void *dum)
 {
   Vertex **vexist, *v, *newv;
-  int i, j;
   nxl NXL;
 
   v = *((Vertex **) data);
@@ -582,8 +580,8 @@ void Extrude_Vertex(void *data, void *dum)
 
   List_Add(NXL.List, &v);
 
-  for(i = 0; i < ep->mesh.NbLayer; i++) {
-    for(j = 0; j < ep->mesh.NbElmLayer[i]; j++) {
+  for(int i = 0; i < ep->mesh.NbLayer; i++) {
+    for(int j = 0; j < ep->mesh.NbElmLayer[i]; j++) {
       newv = Create_Vertex(++THEM->MaxPointNum, v->Pos.X,
                            v->Pos.Y, v->Pos.Z, v->lc, v->u);
       ep->Extrude(i, j + 1, newv->Pos.X, newv->Pos.Y, newv->Pos.Z);
@@ -640,8 +638,12 @@ void Create_Tri(int iEnt, Vertex * v1, Vertex * v2, Vertex * v3)
   }
 }
 
-void Extrude_Seg(Vertex * V1, Vertex * V2)
+void Extrude_Seg(void *data, void *dum)
 {
+  Simplex *ll = *(Simplex**)data;
+  Vertex *V1 = ll->V[0];
+  Vertex *V2 = ll->V[1];
+
   Vertex *v1, *v2, *v3, *v4;
 
   List_T *L1 = getnxl(V1, DIM);
@@ -709,20 +711,18 @@ void Extrude_Seg(Vertex * V1, Vertex * V2)
 
 void Extrude_Curve(void *data, void *dum)
 {
-  Vertex *v1, *v2;
   Curve *c = *(Curve **) data;
 
   //if (c->Num < 0) return;
 
-  for(int i = 0; i < List_Nbr(c->Vertices) - 1; i++) {
-    List_Read(c->Vertices, i, &v1);
-    List_Read(c->Vertices, i + 1, &v2);
-    Extrude_Seg(v1, v2);
-  }
+  Tree_Action(c->Simplexes, Extrude_Seg);
 }
 
 void copy_mesh(Curve * from, Curve * to, int direction)
 {
+  // Warning: this routine relies on the fact that the vertex lists
+  // are ordered...
+
   List_T *list = from->Vertices;
   Vertex **vexist, *v, *newv;
 
@@ -810,7 +810,6 @@ void copy_mesh(Curve * from, Curve * to, int direction)
 
 int Extrude_Mesh(Curve * c)
 {
-  int i, j;
   Vertex **vexist, *v, *newv, *v1, *v2;
   List_T *L;
 
@@ -843,7 +842,7 @@ int Extrude_Mesh(Curve * c)
       List_Add(c->Vertices, &newv);
     }
 
-    for(i = 1; i < List_Nbr(L) - 1; i++) {
+    for(int i = 1; i < List_Nbr(L) - 1; i++) {
       List_Read(L, i, &v);
       if(!v->ListCurves)
         v->ListCurves = List_Create(1, 1, sizeof(Curve *));
@@ -871,8 +870,8 @@ int Extrude_Mesh(Curve * c)
     }
 
     int k = 0;
-    for(i = 0; i < ep->mesh.NbLayer; i++) {
-      for(j = 0; j < ep->mesh.NbElmLayer[i]; j++) {
+    for(int i = 0; i < ep->mesh.NbLayer; i++) {
+      for(int j = 0; j < ep->mesh.NbElmLayer[i]; j++) {
 	if(k >= List_Nbr(c->Vertices) - 1){
 	  Msg(GERROR, "Something wrong in number of elements in extruded curve %d",
 	      c->Num);
@@ -1000,7 +999,6 @@ void AddQuadVertsInSurf(void *a, void *b)
 
 int Extrude_Mesh(Surface * s)
 {
-  int i;
   Vertex *v1;
   Curve *c;
   extern int FACE_DIMENSION;
@@ -1019,7 +1017,7 @@ int Extrude_Mesh(Surface * s)
     c = FindCurve(abs(ep->geo.Source), THEM);
     if(!c)
       return false;
-    for(i = 0; i < List_Nbr(c->Vertices); i++) {
+    for(int i = 0; i < List_Nbr(c->Vertices); i++) {
       List_Read(c->Vertices, i, &v1);
       Extrude_Vertex(&v1, NULL);
     }
@@ -1067,7 +1065,7 @@ int Extrude_Mesh(Volume * v)
 
 int Extrude_Mesh(Tree_T * Volumes)
 {
-  int i, j, extrude = 0;
+  int extrude = 0;
   Surface *s;
   List_T *list;
 
@@ -1100,7 +1098,7 @@ int Extrude_Mesh(Tree_T * Volumes)
     }
   }
 
-  j = 0;
+  int j = 0;
   do {
     BAD_TETS = 0;
     for(int ivol = 0; ivol < List_Nbr(vol); ivol++) {
@@ -1143,14 +1141,14 @@ int Extrude_Mesh(Tree_T * Volumes)
     ep = THEV->Extrude;
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY &&
        !ep->mesh.Recombine) {
-      for(i = 0; i < List_Nbr(THEV->Surfaces); i++) {
+      for(int i = 0; i < List_Nbr(THEV->Surfaces); i++) {
         List_Read(THEV->Surfaces, i, &s);
         if(!List_Search(list, &s, compareSurface))
           List_Add(list, &s);
       }
     }
   }
-  for(i = 0; i < List_Nbr(list); i++) {
+  for(int i = 0; i < List_Nbr(list); i++) {
     List_Read(list, i, &s);
     tmp = Tree_Create(sizeof(Simplex *), compareQuality);
     Tree_Action(s->Simplexes, Free_NegativeSimplex);
