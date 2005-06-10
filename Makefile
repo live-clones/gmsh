@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.391 2005-05-27 21:34:53 geuzaine Exp $
+# $Id: Makefile,v 1.392 2005-06-10 23:19:19 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -170,7 +170,7 @@ package-unix:
 	cp -R tutorial gmsh-${GMSH_VERSION}
 	cp -R demos gmsh-${GMSH_VERSION}
 	rm -rf gmsh-${GMSH_VERSION}/*/CVS
-	rm -f gmsh-${GMSH_VERSION}/*/*.msh
+	rm -f gmsh-${GMSH_VERSION}/tutorial/*.msh
 	rm -f gmsh-${GMSH_VERSION}/*/*~
 	tar cvf gmsh-${GMSH_VERSION}-${UNAME}.tar gmsh-${GMSH_VERSION}
 	gzip gmsh-${GMSH_VERSION}-${UNAME}.tar
@@ -191,7 +191,7 @@ package-win:
 	cp -R tutorial gmsh-${GMSH_VERSION}
 	cp -R demos gmsh-${GMSH_VERSION}
 	rm -rf gmsh-${GMSH_VERSION}/*/CVS
-	rm -f gmsh-${GMSH_VERSION}/*/*.msh
+	rm -f gmsh-${GMSH_VERSION}/tutorial/*.msh
 	rm -f gmsh-${GMSH_VERSION}/*/*~
 	cd utils/misc && unix2dos.bash ../../gmsh-${GMSH_VERSION}/tutorial/*\
                                        ../../gmsh-${GMSH_VERSION}/demos/*
@@ -259,7 +259,7 @@ package-mac:
 	cp doc/CREDITS gmsh-${GMSH_VERSION}/CREDITS.txt
 	cp doc/LICENSE gmsh-${GMSH_VERSION}/LICENSE.txt
 	rm -rf gmsh-${GMSH_VERSION}/*/CVS\
-               gmsh-${GMSH_VERSION}/*/*.msh\
+               gmsh-${GMSH_VERSION}/tutorial/*.msh\
                gmsh-${GMSH_VERSION}/*/*~
 	tar zcvf gmsh-${GMSH_VERSION}-MacOSX.tgz gmsh-${GMSH_VERSION}
 
