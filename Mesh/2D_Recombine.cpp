@@ -1,4 +1,4 @@
-// $Id: 2D_Recombine.cpp,v 1.24 2005-06-09 22:19:02 geuzaine Exp $
+// $Id: 2D_Recombine.cpp,v 1.25 2005-06-10 00:31:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,9 @@
 
 #include "Gmsh.h"
 #include "Numeric.h"
+#include "Geo.h"
 #include "Mesh.h"
+#include "Interpolation.h"
 #include "Utils.h"
 #include "2D_Mesh.h"
 #include "Create.h"
@@ -236,12 +238,25 @@ int Recombine_All (Mesh *THEM)
       for(int j=0 ; j<List_Nbr(Triangles); j++){
 	Simplex *t;
 	List_Read(Triangles, j, &t);
-	Vertex *c = Create_Vertex(++THEM->MaxPointNum, 
-				  (t->V[0]->Pos.X+t->V[1]->Pos.X+t->V[2]->Pos.X)/3.,
-				  (t->V[0]->Pos.Y+t->V[1]->Pos.Y+t->V[2]->Pos.Y)/3.,
-				  (t->V[0]->Pos.Z+t->V[1]->Pos.Z+t->V[2]->Pos.Z)/3.,
-				  (t->V[0]->lc+t->V[1]->lc+t->V[2]->lc)/3.,
-				  (t->V[0]->u+t->V[1]->u+t->V[2]->u)/3.);
+	Vertex *c;
+	if(s->Typ == MSH_SURF_PLAN || s->Typ == MSH_SURF_DISCRETE){
+	  c = Create_Vertex(++THEM->MaxPointNum, 
+			    (t->V[0]->Pos.X+t->V[1]->Pos.X+t->V[2]->Pos.X)/3.,
+			    (t->V[0]->Pos.Y+t->V[1]->Pos.Y+t->V[2]->Pos.Y)/3.,
+			    (t->V[0]->Pos.Z+t->V[1]->Pos.Z+t->V[2]->Pos.Z)/3.,
+			    (t->V[0]->lc+t->V[1]->lc+t->V[2]->lc)/3.,
+			    (t->V[0]->u+t->V[1]->u+t->V[2]->u)/3.);
+	}
+	else{
+	  double U1, U2, U3, V1, V2, V3;
+	  XYZtoUV(s, t->V[0]->Pos.X, t->V[0]->Pos.Y, t->V[0]->Pos.Z, &U1, &V1, 1.0);
+	  XYZtoUV(s, t->V[1]->Pos.X, t->V[1]->Pos.Y, t->V[1]->Pos.Z, &U2, &V2, 1.0);
+	  XYZtoUV(s, t->V[2]->Pos.X, t->V[2]->Pos.Y, t->V[2]->Pos.Z, &U3, &V3, 1.0);
+	  double U = (U1 + U2 + U3)/.3;
+	  double V = (V1 + V2 + V3)/3.;
+	  Vertex v = InterpolateSurface(s, U, V, 0, 0);
+	  c = Create_Vertex(++THEM->MaxPointNum, v.Pos.X, v.Pos.Y, v.Pos.Z, v.lc, v.u);
+	}  
         Tree_Add(THEM->Vertices, &c);
 	Quadrangle *q1 = Create_Quadrangle(t->V[0], t->VSUP[0], c, t->VSUP[2]);
 	Quadrangle *q2 = Create_Quadrangle(t->V[1], t->VSUP[1], c, t->VSUP[0]);

@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.68 2005-06-09 22:27:18 geuzaine Exp $
+// $Id: Generator.cpp,v 1.69 2005-06-10 00:31:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -310,6 +310,7 @@ void Maillage_Dimension_3(Mesh * M)
 
 void Init_Mesh0(Mesh * M)
 {
+  THEM = M;
   M->bds = 0;
   M->bds_mesh = 0;
   M->Vertices = NULL;
@@ -330,7 +331,6 @@ void Init_Mesh0(Mesh * M)
 void Init_Mesh(Mesh * M)
 {
   THEM = M;
-
   M->MaxPointNum = 0;
   M->MaxLineNum = 0;
   M->MaxLineLoopNum = 0;

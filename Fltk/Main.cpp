@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.78 2005-05-21 04:55:59 geuzaine Exp $
+// $Id: Main.cpp,v 1.79 2005-06-10 00:31:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -67,13 +67,13 @@ int main(int argc, char *argv[])
     strcat(cmdline, " ");
   }
 
-  // Gmsh default options
-
-  Init_Options(0);
-
   // Initialize the static Mesh
   
   Init_Mesh0(&M);
+
+  // Gmsh default options
+
+  Init_Options(0);
 
   // Generate automatic documentation (before getting user-defined options)
   

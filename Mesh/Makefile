@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.86 2005-06-03 17:32:29 geuzaine Exp $
+# $Id: Makefile,v 1.87 2005-06-10 00:31:28 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -153,10 +153,10 @@ depend:
 2D_Recombine.o: 2D_Recombine.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
-  ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h Metric.h Matrix.h Utils.h 2D_Mesh.h Create.h \
-  ../Common/Context.h
+  ../Numeric/Numeric.h ../Geo/Geo.h Mesh.h Vertex.h Element.h Simplex.h \
+  Face.h Edge.h ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h Metric.h Matrix.h Interpolation.h Utils.h \
+  2D_Mesh.h Create.h ../Common/Context.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 2D_InitMesh.o: 2D_InitMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
