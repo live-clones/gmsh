@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.246 2005-06-09 17:22:04 geuzaine Exp $
+// $Id: Options.cpp,v 1.247 2005-06-11 02:01:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -6884,125 +6884,38 @@ unsigned int opt_mesh_color_normals(OPT_ARGS_COL)
   return CTX.color.mesh.normals;
 }
 
-unsigned int opt_mesh_color_1(OPT_ARGS_COL)
+unsigned int opt_mesh_color_(int i, OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
-    if(CTX.color.mesh.carousel[0] != val) CTX.mesh.changed = 1;
-    CTX.color.mesh.carousel[0] = val;
+    if(CTX.color.mesh.carousel[i] != val) CTX.mesh.changed = 1;
+    CTX.color.mesh.carousel[i] = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.carousel[0], WID->mesh_col[11]);
+  CCC(CTX.color.mesh.carousel[i], WID->mesh_col[11+i]);
 #endif
-  return CTX.color.mesh.carousel[0];
+  return CTX.color.mesh.carousel[i];
 }
 
-unsigned int opt_mesh_color_2(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET) {
-    if(CTX.color.mesh.carousel[1] != val) CTX.mesh.changed = 1;
-    CTX.color.mesh.carousel[1] = val;
-  }
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.carousel[1], WID->mesh_col[12]);
-#endif
-  return CTX.color.mesh.carousel[1];
-}
-
-unsigned int opt_mesh_color_3(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET) {
-    if(CTX.color.mesh.carousel[2] != val) CTX.mesh.changed = 1;
-    CTX.color.mesh.carousel[2] = val;
-  }
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.carousel[2], WID->mesh_col[13]);
-#endif
-  return CTX.color.mesh.carousel[2];
-}
-
-unsigned int opt_mesh_color_4(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET) {
-    if(CTX.color.mesh.carousel[3] != val) CTX.mesh.changed = 1;
-    CTX.color.mesh.carousel[3] = val;
-  }
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.carousel[3], WID->mesh_col[14]);
-#endif
-  return CTX.color.mesh.carousel[3];
-}
-
-unsigned int opt_mesh_color_5(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET) {
-    if(CTX.color.mesh.carousel[4] != val) CTX.mesh.changed = 1;
-    CTX.color.mesh.carousel[4] = val;
-  }
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.carousel[4], WID->mesh_col[15]);
-#endif
-  return CTX.color.mesh.carousel[4];
-}
-
-unsigned int opt_mesh_color_6(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET) {
-    if(CTX.color.mesh.carousel[5] != val) CTX.mesh.changed = 1;
-    CTX.color.mesh.carousel[5] = val;
-  }
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.carousel[5], WID->mesh_col[16]);
-#endif
-  return CTX.color.mesh.carousel[5];
-}
-
-unsigned int opt_mesh_color_7(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET) {
-    if(CTX.color.mesh.carousel[6] != val) CTX.mesh.changed = 1;
-    CTX.color.mesh.carousel[6] = val;
-  }
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.carousel[6], WID->mesh_col[17]);
-#endif
-  return CTX.color.mesh.carousel[6];
-}
-
-unsigned int opt_mesh_color_8(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET) {
-    if(CTX.color.mesh.carousel[7] != val) CTX.mesh.changed = 1;
-    CTX.color.mesh.carousel[7] = val;
-  }
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.carousel[7], WID->mesh_col[18]);
-#endif
-  return CTX.color.mesh.carousel[7];
-}
-
-unsigned int opt_mesh_color_9(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET) {
-    if(CTX.color.mesh.carousel[8] != val) CTX.mesh.changed = 1;
-    CTX.color.mesh.carousel[8] = val;
-  }
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.carousel[8], WID->mesh_col[19]);
-#endif
-  return CTX.color.mesh.carousel[8];
-}
-
-unsigned int opt_mesh_color_10(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET) {
-    if(CTX.color.mesh.carousel[9] != val) CTX.mesh.changed = 1;
-    CTX.color.mesh.carousel[9] = val;
-  }
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.carousel[9], WID->mesh_col[20]);
-#endif
-  return CTX.color.mesh.carousel[9];
-}
+unsigned int opt_mesh_color_0(OPT_ARGS_COL){ return opt_mesh_color_(0, num, action, val); }
+unsigned int opt_mesh_color_1(OPT_ARGS_COL){ return opt_mesh_color_(1, num, action, val); }
+unsigned int opt_mesh_color_2(OPT_ARGS_COL){ return opt_mesh_color_(2, num, action, val); }
+unsigned int opt_mesh_color_3(OPT_ARGS_COL){ return opt_mesh_color_(3, num, action, val); }
+unsigned int opt_mesh_color_4(OPT_ARGS_COL){ return opt_mesh_color_(4, num, action, val); }
+unsigned int opt_mesh_color_5(OPT_ARGS_COL){ return opt_mesh_color_(5, num, action, val); }
+unsigned int opt_mesh_color_6(OPT_ARGS_COL){ return opt_mesh_color_(6, num, action, val); }
+unsigned int opt_mesh_color_7(OPT_ARGS_COL){ return opt_mesh_color_(7, num, action, val); }
+unsigned int opt_mesh_color_8(OPT_ARGS_COL){ return opt_mesh_color_(8, num, action, val); }
+unsigned int opt_mesh_color_9(OPT_ARGS_COL){ return opt_mesh_color_(9, num, action, val); }
+unsigned int opt_mesh_color_10(OPT_ARGS_COL){ return opt_mesh_color_(10, num, action, val); }
+unsigned int opt_mesh_color_11(OPT_ARGS_COL){ return opt_mesh_color_(11, num, action, val); }
+unsigned int opt_mesh_color_12(OPT_ARGS_COL){ return opt_mesh_color_(12, num, action, val); }
+unsigned int opt_mesh_color_13(OPT_ARGS_COL){ return opt_mesh_color_(13, num, action, val); }
+unsigned int opt_mesh_color_14(OPT_ARGS_COL){ return opt_mesh_color_(14, num, action, val); }
+unsigned int opt_mesh_color_15(OPT_ARGS_COL){ return opt_mesh_color_(15, num, action, val); }
+unsigned int opt_mesh_color_16(OPT_ARGS_COL){ return opt_mesh_color_(16, num, action, val); }
+unsigned int opt_mesh_color_17(OPT_ARGS_COL){ return opt_mesh_color_(17, num, action, val); }
+unsigned int opt_mesh_color_18(OPT_ARGS_COL){ return opt_mesh_color_(18, num, action, val); }
+unsigned int opt_mesh_color_19(OPT_ARGS_COL){ return opt_mesh_color_(19, num, action, val); }
 
 unsigned int opt_view_color_points(OPT_ARGS_COL)
 {

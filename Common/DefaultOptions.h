@@ -1431,21 +1431,55 @@ StringXColor GeometryOptions_Color[] = {
   { 0, NULL , NULL , 0, 0, 0 , NULL }
 } ;
 
-#define COL1  PACK_COLOR( 232, 210, 23, 255  )
-#define COL2  PACK_COLOR( 226, 167, 29, 255  )
-#define COL3  PACK_COLOR( 217, 113, 38, 255  )
-#define COL4  PACK_COLOR( 201, 54, 54, 255   )
-#define COL5  PACK_COLOR( 169, 12, 86, 255   )
-#define COL6  PACK_COLOR( 114, 2, 141, 255   )
-#define COL7  PACK_COLOR( 67, 30, 188, 255   )
-#define COL8  PACK_COLOR( 44, 86, 211, 255   )
-#define COL9  PACK_COLOR( 32, 145, 223, 255  )
-#define COL10 PACK_COLOR( 25, 193, 230, 255  )
 #define COLW  PACK_COLOR( 210, 210, 210, 255 )
 #define COLT  PACK_COLOR( 160, 150, 255, 255 )
 #define COLQ  PACK_COLOR( 130, 120, 225, 255 )
-#define COLP  PACK_COLOR( 232, 210, 23, 255  )
-#define COLY  PACK_COLOR( 217, 113, 38, 255  )
+#define COLP  PACK_COLOR( 232, 210, 23, 255 )
+#define COLY  PACK_COLOR( 217, 113, 38, 255 )
+
+// blue->yellow
+#define COL0  PACK_COLOR( 9, 3, 103, 255 )
+#define COL1  PACK_COLOR( 35, 0, 111, 255 )
+#define COL2  PACK_COLOR( 60, 0, 114, 255 )
+#define COL3  PACK_COLOR( 83, 0, 114, 255 )
+#define COL4  PACK_COLOR( 105, 1, 109, 255 )
+#define COL5  PACK_COLOR( 126, 10, 102, 255 )
+#define COL6  PACK_COLOR( 145, 21, 93, 255 )
+#define COL7  PACK_COLOR( 163, 34, 82, 255 )
+#define COL8  PACK_COLOR( 179, 50, 69, 255 )
+#define COL9  PACK_COLOR( 193, 67, 57, 255 )
+#define COL10  PACK_COLOR( 207, 85, 44, 255 )
+#define COL11  PACK_COLOR( 219, 104, 32, 255 )
+#define COL12  PACK_COLOR( 229, 124, 22, 255 )
+#define COL13  PACK_COLOR( 238, 143, 13, 255 )
+#define COL14  PACK_COLOR( 246, 162, 8, 255 )
+#define COL15  PACK_COLOR( 252, 181, 5, 255 )
+#define COL16  PACK_COLOR( 255, 198, 6, 255 )
+#define COL17  PACK_COLOR( 255, 214, 11, 255 )
+#define COL18  PACK_COLOR( 255, 228, 22, 255 )
+#define COL19  PACK_COLOR( 255, 240, 38, 255 )
+
+// truncated hsv
+// #define COL0  PACK_COLOR(  255, 0, 0, 255)
+// #define COL1  PACK_COLOR(  255, 67, 0, 255)
+// #define COL2  PACK_COLOR(  255, 134, 0, 255)
+// #define COL3  PACK_COLOR(  255, 201, 0, 255)
+// #define COL4  PACK_COLOR(  241, 255, 0, 255)
+// #define COL5  PACK_COLOR(  174, 255, 0, 255)
+// #define COL6  PACK_COLOR(  107, 255, 0, 255)
+// #define COL7  PACK_COLOR(  40, 255, 0, 255)
+// #define COL8  PACK_COLOR(  0, 255, 26, 255)
+// #define COL9  PACK_COLOR(  0, 255, 93, 255)
+// #define COL10  PACK_COLOR( 0, 255, 161, 255)
+// #define COL11  PACK_COLOR( 0, 255, 228, 255)
+// #define COL12  PACK_COLOR( 0, 214, 255, 255)
+// #define COL13  PACK_COLOR( 0, 147, 255, 255)
+// #define COL14  PACK_COLOR( 0, 80, 255, 255)
+// #define COL15  PACK_COLOR( 0, 13, 255, 255)
+// #define COL16  PACK_COLOR( 53, 0, 255, 255)
+// #define COL17  PACK_COLOR( 120, 0, 255, 255)
+// #define COL18  PACK_COLOR( 187, 0, 255, 255)
+// #define COL19  PACK_COLOR( 255, 0, 254, 255)
 
 StringXColor MeshOptions_Color[] = {
   { F|O, "Points" , opt_mesh_color_points , 
@@ -1485,30 +1519,28 @@ StringXColor MeshOptions_Color[] = {
     PACK_COLOR(255, 0, 0, 255),
     PACK_COLOR(0,   0, 0, 255),
     "Normal mesh vector color" },
-  { F|O, "One" , opt_mesh_color_1   , COL1, COL1, COLW, "First color in color carousel" },
-  { F|O, "Two" , opt_mesh_color_2   , COL2, COL2, COLW, "Second color in color carousel" },
-  { F|O, "Three" , opt_mesh_color_3 , COL3, COL3, COLW, "Third color in color carousel" },
-  { F|O, "Four" , opt_mesh_color_4  , COL4, COL4, COLW, "Fourth color in color carousel" },
-  { F|O, "Five" , opt_mesh_color_5  , COL5, COL5, COLW, "Fifth color in color carousel" },
-  { F|O, "Six" , opt_mesh_color_6   , COL6, COL6, COLW, "Sixth color in color carousel" },
-  { F|O, "Seven" , opt_mesh_color_7 , COL7, COL7, COLW, "Seventh color in color carousel" },
-  { F|O, "Eight" , opt_mesh_color_8 , COL8, COL8, COLW, "Eighth color in color carousel" },
-  { F|O, "Nine" , opt_mesh_color_9  , COL9, COL9, COLW, "Ninth color in color carousel" },
-  { F|O, "Ten" , opt_mesh_color_10  , COL10, COL10, COLW,  "Tenth color in color carousel" },
+  { F|O, "Zero"     , opt_mesh_color_0 , COL0, COL0, COLW, "Color 0 in color carousel" },
+  { F|O, "One"      , opt_mesh_color_1 , COL1, COL1, COLW, "Color 1 in color carousel" },
+  { F|O, "Two"      , opt_mesh_color_2 , COL2, COL2, COLW, "Color 2 in color carousel" },
+  { F|O, "Three"    , opt_mesh_color_3 , COL3, COL3, COLW, "Color 3 in color carousel" },
+  { F|O, "Four"     , opt_mesh_color_4 , COL4, COL4, COLW, "Color 4 in color carousel" },
+  { F|O, "Five"     , opt_mesh_color_5 , COL5, COL5, COLW, "Color 5 in color carousel" },
+  { F|O, "Six"      , opt_mesh_color_6 , COL6, COL6, COLW, "Color 6 in color carousel" },
+  { F|O, "Seven"    , opt_mesh_color_7 , COL7, COL7, COLW, "Color 7 in color carousel" },
+  { F|O, "Eight"    , opt_mesh_color_8 , COL8, COL8, COLW, "Color 8 in color carousel" },
+  { F|O, "Nine"     , opt_mesh_color_9 , COL9, COL9, COLW, "Color 9 in color carousel" },
+  { F|O, "Ten"      , opt_mesh_color_10, COL10, COL10, COLW, "Color 10 in color carousel" },
+  { F|O, "Eleven"   , opt_mesh_color_11, COL11, COL11, COLW, "Color 11 in color carousel" },
+  { F|O, "Twelve"   , opt_mesh_color_12, COL12, COL12, COLW, "Color 12 in color carousel" },
+  { F|O, "Thirtheen", opt_mesh_color_13, COL13, COL13, COLW, "Color 13 in color carousel" },
+  { F|O, "Fourteen" , opt_mesh_color_14, COL14, COL14, COLW, "Color 14 in color carousel" },
+  { F|O, "Fifteen"  , opt_mesh_color_15, COL15, COL15, COLW, "Color 15 in color carousel" },
+  { F|O, "Sixteen"  , opt_mesh_color_16, COL16, COL16, COLW, "Color 16 in color carousel" },
+  { F|O, "Seventeen", opt_mesh_color_17, COL17, COL17, COLW, "Color 17 in color carousel" },
+  { F|O, "Eighteen" , opt_mesh_color_18, COL18, COL18, COLW, "Color 18 in color carousel" },
+  { F|O, "Nineteen" , opt_mesh_color_19, COL19, COL19, COLW, "Color 19 in color carousel" },
   { 0, NULL , NULL , 0, 0, 0 , NULL }
 } ;
-
-#undef COL1
-#undef COL2
-#undef COL3
-#undef COL4
-#undef COL5
-#undef COL6
-#undef COL7
-#undef COL8
-#undef COL9
-#undef COL10
-#undef COLW
 
 StringXColor SolverOptions_Color[] = {
   { 0, NULL , NULL , 0, 0, 0 , NULL }
@@ -1544,8 +1576,6 @@ StringXColor ViewOptions_Color[] = {
   { F|O, "Axes" , opt_view_color_axes , ELECOL, "Axes color" },
   { 0, NULL , NULL , 0, 0, 0 , NULL }
 } ;
-
-#undef ELECOL
 
 StringXColor PrintOptions_Color[] = {
   { 0, NULL , NULL , 0, 0, 0 , NULL }

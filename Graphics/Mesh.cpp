@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.131 2005-06-09 17:22:05 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.132 2005-06-11 02:01:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -588,11 +588,11 @@ void Draw_Mesh_Line(void *a, void *b)
   if(theColor.type)
     col = theColor.mesh;
   else if(CTX.mesh.color_carousel == 1)
-    col = CTX.color.mesh.carousel[abs(s->iEnt % 10)];
+    col = CTX.color.mesh.carousel[abs(s->iEnt % 20)];
   else if(CTX.mesh.color_carousel == 2)
-    col = CTX.color.mesh.carousel[abs(thePhysical % 10)];
+    col = CTX.color.mesh.carousel[abs(thePhysical % 20)];
   else if(CTX.mesh.color_carousel == 3)
-    col = CTX.color.mesh.carousel[abs(s->iPart % 10)];
+    col = CTX.color.mesh.carousel[abs(s->iPart % 20)];
   else
     col = CTX.color.mesh.line;
 
@@ -858,11 +858,11 @@ void Draw_Mesh_Triangle(void *a, void *b)
   if(theColor.type)
     col = theColor.mesh;
   else if(CTX.mesh.color_carousel == 1)
-    col = CTX.color.mesh.carousel[abs(s->iEnt % 10)];
+    col = CTX.color.mesh.carousel[abs(s->iEnt % 20)];
   else if(CTX.mesh.color_carousel == 2)
-    col = CTX.color.mesh.carousel[abs(thePhysical % 10)];
+    col = CTX.color.mesh.carousel[abs(thePhysical % 20)];
   else if(CTX.mesh.color_carousel == 3)
-    col = CTX.color.mesh.carousel[abs(s->iPart % 10)];
+    col = CTX.color.mesh.carousel[abs(s->iPart % 20)];
   else
     col = CTX.color.mesh.triangle;
 
@@ -1027,11 +1027,11 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
   if(theColor.type)
     col = theColor.mesh;
   else if(CTX.mesh.color_carousel == 1)
-    col = CTX.color.mesh.carousel[abs(q->iEnt % 10)];
+    col = CTX.color.mesh.carousel[abs(q->iEnt % 20)];
   else if(CTX.mesh.color_carousel == 2)
-    col = CTX.color.mesh.carousel[abs(thePhysical % 10)];
+    col = CTX.color.mesh.carousel[abs(thePhysical % 20)];
   else if(CTX.mesh.color_carousel == 3)
-    col = CTX.color.mesh.carousel[abs(q->iPart % 10)];
+    col = CTX.color.mesh.carousel[abs(q->iPart % 20)];
   else
     col = CTX.color.mesh.quadrangle;
 
@@ -1203,11 +1203,11 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
   if(theColor.type)
     col = theColor.mesh;
   else if(CTX.mesh.color_carousel == 1)
-    col = CTX.color.mesh.carousel[abs(s->iEnt % 10)];
+    col = CTX.color.mesh.carousel[abs(s->iEnt % 20)];
   else if(CTX.mesh.color_carousel == 2)
-    col = CTX.color.mesh.carousel[abs(thePhysical % 10)];
+    col = CTX.color.mesh.carousel[abs(thePhysical % 20)];
   else if(CTX.mesh.color_carousel == 3)
-    col = CTX.color.mesh.carousel[abs(s->iPart % 10)];
+    col = CTX.color.mesh.carousel[abs(s->iPart % 20)];
   else
     col = CTX.color.mesh.tetrahedron;
 
@@ -1380,11 +1380,11 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
   if(theColor.type)
     col = theColor.mesh;
   else if(CTX.mesh.color_carousel == 1)
-    col = CTX.color.mesh.carousel[abs(h->iEnt % 10)];
+    col = CTX.color.mesh.carousel[abs(h->iEnt % 20)];
   else if(CTX.mesh.color_carousel == 2)
-    col = CTX.color.mesh.carousel[abs(thePhysical % 10)];
+    col = CTX.color.mesh.carousel[abs(thePhysical % 20)];
   else if(CTX.mesh.color_carousel == 3)
-    col = CTX.color.mesh.carousel[abs(h->iPart % 10)];
+    col = CTX.color.mesh.carousel[abs(h->iPart % 20)];
   else
     col = CTX.color.mesh.hexahedron;
 
@@ -1571,11 +1571,11 @@ void Draw_Mesh_Prism(void *a, void *b)
   if(theColor.type)
     col = theColor.mesh;
   else if(CTX.mesh.color_carousel == 1)
-    col = CTX.color.mesh.carousel[abs(p->iEnt % 10)];
+    col = CTX.color.mesh.carousel[abs(p->iEnt % 20)];
   else if(CTX.mesh.color_carousel == 2)
-    col = CTX.color.mesh.carousel[abs(thePhysical % 10)];
+    col = CTX.color.mesh.carousel[abs(thePhysical % 20)];
   else if(CTX.mesh.color_carousel == 3)
-    col = CTX.color.mesh.carousel[abs(p->iPart % 10)];
+    col = CTX.color.mesh.carousel[abs(p->iPart % 20)];
   else
     col = CTX.color.mesh.prism;
 
@@ -1777,11 +1777,11 @@ void Draw_Mesh_Pyramid(void *a, void *b)
   if(theColor.type)
     col = theColor.mesh;
   else if(CTX.mesh.color_carousel == 1)
-    col = CTX.color.mesh.carousel[abs(p->iEnt % 10)];
+    col = CTX.color.mesh.carousel[abs(p->iEnt % 20)];
   else if(CTX.mesh.color_carousel == 2)
-    col = CTX.color.mesh.carousel[abs(thePhysical % 10)];
+    col = CTX.color.mesh.carousel[abs(thePhysical % 20)];
   else if(CTX.mesh.color_carousel == 3)
-    col = CTX.color.mesh.carousel[abs(p->iPart % 10)];
+    col = CTX.color.mesh.carousel[abs(p->iPart % 20)];
   else
     col = CTX.color.mesh.pyramid;
 

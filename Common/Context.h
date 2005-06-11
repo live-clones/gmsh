@@ -239,7 +239,7 @@ public :
     struct{
       unsigned int vertex, vertex_deg2, line, triangle, quadrangle;
       unsigned int tetrahedron, hexahedron, prism, pyramid;
-      unsigned int carousel[10];
+      unsigned int carousel[20];
       unsigned int tangents, normals;
     } mesh;
   } color;
