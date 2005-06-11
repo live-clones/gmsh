@@ -379,54 +379,104 @@ Normal mesh vector color@*
 Default value: @code{@{255,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Color.Zero
+Color 0 in color carousel@*
+Default value: @code{@{9,3,103@}}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Color.One
-First color in color carousel@*
-Default value: @code{@{232,210,23@}}@*
+Color 1 in color carousel@*
+Default value: @code{@{35,0,111@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Two
-Second color in color carousel@*
-Default value: @code{@{226,167,29@}}@*
+Color 2 in color carousel@*
+Default value: @code{@{60,0,114@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Three
-Third color in color carousel@*
-Default value: @code{@{217,113,38@}}@*
+Color 3 in color carousel@*
+Default value: @code{@{83,0,114@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Four
-Fourth color in color carousel@*
-Default value: @code{@{201,54,54@}}@*
+Color 4 in color carousel@*
+Default value: @code{@{105,1,109@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Five
-Fifth color in color carousel@*
-Default value: @code{@{169,12,86@}}@*
+Color 5 in color carousel@*
+Default value: @code{@{126,10,102@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Six
-Sixth color in color carousel@*
-Default value: @code{@{114,2,141@}}@*
+Color 6 in color carousel@*
+Default value: @code{@{145,21,93@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Seven
-Seventh color in color carousel@*
-Default value: @code{@{67,30,188@}}@*
+Color 7 in color carousel@*
+Default value: @code{@{163,34,82@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Eight
-Eighth color in color carousel@*
-Default value: @code{@{44,86,211@}}@*
+Color 8 in color carousel@*
+Default value: @code{@{179,50,69@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Nine
-Ninth color in color carousel@*
-Default value: @code{@{32,145,223@}}@*
+Color 9 in color carousel@*
+Default value: @code{@{193,67,57@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Ten
-Tenth color in color carousel@*
-Default value: @code{@{25,193,230@}}@*
+Color 10 in color carousel@*
+Default value: @code{@{207,85,44@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.Eleven
+Color 11 in color carousel@*
+Default value: @code{@{219,104,32@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.Twelve
+Color 12 in color carousel@*
+Default value: @code{@{229,124,22@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.Thirtheen
+Color 13 in color carousel@*
+Default value: @code{@{238,143,13@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.Fourteen
+Color 14 in color carousel@*
+Default value: @code{@{246,162,8@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.Fifteen
+Color 15 in color carousel@*
+Default value: @code{@{252,181,5@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.Sixteen
+Color 16 in color carousel@*
+Default value: @code{@{255,198,6@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.Seventeen
+Color 17 in color carousel@*
+Default value: @code{@{255,214,11@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.Eighteen
+Color 18 in color carousel@*
+Default value: @code{@{255,228,22@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.Nineteen
+Color 19 in color carousel@*
+Default value: @code{@{255,240,38@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @end ftable
