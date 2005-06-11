@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.132 2005-06-11 02:01:39 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.133 2005-06-11 17:02:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -122,6 +122,17 @@ double intersectCutPlane(int num, Vertex **v)
 {
   int dummy;
   return intersectCutPlane(num, v, &dummy, &dummy);
+}
+
+int getPartition(int index)
+{
+  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, index);
+  if(!part)
+    return 0; // OK, no partitions available
+  else if(!(*part)->Visible) 
+    return -1; // partition should be hidden
+  else
+    return (*part)->Num; // partition number
 }
 
 void Draw_Mesh(Mesh * M)
@@ -543,8 +554,8 @@ void Draw_Mesh_Line(void *a, void *b)
   if(!(s->Visible & VIS_MESH))
     return;
 
-  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, s->iPart);
-  if(part && !(*part)->Visible)
+  int iPart = getPartition(s->iPart);
+  if(iPart < 0)
     return;
 
   if(CTX.mesh.radius_sup) {
@@ -592,7 +603,7 @@ void Draw_Mesh_Line(void *a, void *b)
   else if(CTX.mesh.color_carousel == 2)
     col = CTX.color.mesh.carousel[abs(thePhysical % 20)];
   else if(CTX.mesh.color_carousel == 3)
-    col = CTX.color.mesh.carousel[abs(s->iPart % 20)];
+    col = CTX.color.mesh.carousel[abs(iPart % 20)];
   else
     col = CTX.color.mesh.line;
 
@@ -831,8 +842,8 @@ void Draw_Mesh_Triangle(void *a, void *b)
   if(!(s->Visible & VIS_MESH))
     return;
 
-  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, s->iPart);
-  if(part && !(*part)->Visible)
+  int iPart = getPartition(s->iPart);
+  if(iPart < 0)
     return;
 
   if(CTX.mesh.quality_sup) {
@@ -862,7 +873,7 @@ void Draw_Mesh_Triangle(void *a, void *b)
   else if(CTX.mesh.color_carousel == 2)
     col = CTX.color.mesh.carousel[abs(thePhysical % 20)];
   else if(CTX.mesh.color_carousel == 3)
-    col = CTX.color.mesh.carousel[abs(s->iPart % 20)];
+    col = CTX.color.mesh.carousel[abs(iPart % 20)];
   else
     col = CTX.color.mesh.triangle;
 
@@ -1000,8 +1011,8 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
   if(!(q->Visible & VIS_MESH))
     return;
 
-  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, q->iPart);
-  if(part && !(*part)->Visible)
+  int iPart = getPartition(q->iPart);
+  if(iPart < 0)
     return;
 
   if(CTX.mesh.quality_sup) {
@@ -1031,7 +1042,7 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
   else if(CTX.mesh.color_carousel == 2)
     col = CTX.color.mesh.carousel[abs(thePhysical % 20)];
   else if(CTX.mesh.color_carousel == 3)
-    col = CTX.color.mesh.carousel[abs(q->iPart % 20)];
+    col = CTX.color.mesh.carousel[abs(iPart % 20)];
   else
     col = CTX.color.mesh.quadrangle;
 
@@ -1171,8 +1182,8 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
   if(!s->V[3] || !(s->Visible & VIS_MESH))
     return;
 
-  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, s->iPart);
-  if(part && !(*part)->Visible)
+  int iPart = getPartition(s->iPart);
+  if(iPart < 0)
     return;
 
   if(CTX.mesh.quality_sup) {
@@ -1207,7 +1218,7 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
   else if(CTX.mesh.color_carousel == 2)
     col = CTX.color.mesh.carousel[abs(thePhysical % 20)];
   else if(CTX.mesh.color_carousel == 3)
-    col = CTX.color.mesh.carousel[abs(s->iPart % 20)];
+    col = CTX.color.mesh.carousel[abs(iPart % 20)];
   else
     col = CTX.color.mesh.tetrahedron;
 
@@ -1350,8 +1361,8 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
   if(!(h->Visible & VIS_MESH))
     return;
 
-  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, h->iPart);
-  if(part && !(*part)->Visible)
+  int iPart = getPartition(h->iPart);
+  if(iPart < 0)
     return;
 
   if(CTX.mesh.quality_sup) {
@@ -1384,7 +1395,7 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
   else if(CTX.mesh.color_carousel == 2)
     col = CTX.color.mesh.carousel[abs(thePhysical % 20)];
   else if(CTX.mesh.color_carousel == 3)
-    col = CTX.color.mesh.carousel[abs(h->iPart % 20)];
+    col = CTX.color.mesh.carousel[abs(iPart % 20)];
   else
     col = CTX.color.mesh.hexahedron;
 
@@ -1541,8 +1552,8 @@ void Draw_Mesh_Prism(void *a, void *b)
   if(!(p->Visible & VIS_MESH))
     return;
 
-  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, p->iPart);
-  if(part && !(*part)->Visible)
+  int iPart = getPartition(p->iPart);
+  if(iPart < 0)
     return;
 
   if(CTX.mesh.quality_sup) {
@@ -1575,7 +1586,7 @@ void Draw_Mesh_Prism(void *a, void *b)
   else if(CTX.mesh.color_carousel == 2)
     col = CTX.color.mesh.carousel[abs(thePhysical % 20)];
   else if(CTX.mesh.color_carousel == 3)
-    col = CTX.color.mesh.carousel[abs(p->iPart % 20)];
+    col = CTX.color.mesh.carousel[abs(iPart % 20)];
   else
     col = CTX.color.mesh.prism;
 
@@ -1747,8 +1758,8 @@ void Draw_Mesh_Pyramid(void *a, void *b)
   if(!(p->Visible & VIS_MESH))
     return;
 
-  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, p->iPart);
-  if(part && !(*part)->Visible)
+  int iPart = getPartition(p->iPart);
+  if(iPart < 0)
     return;
 
   if(CTX.mesh.quality_sup) {
@@ -1781,7 +1792,7 @@ void Draw_Mesh_Pyramid(void *a, void *b)
   else if(CTX.mesh.color_carousel == 2)
     col = CTX.color.mesh.carousel[abs(thePhysical % 20)];
   else if(CTX.mesh.color_carousel == 3)
-    col = CTX.color.mesh.carousel[abs(p->iPart % 20)];
+    col = CTX.color.mesh.carousel[abs(iPart % 20)];
   else
     col = CTX.color.mesh.pyramid;
 
