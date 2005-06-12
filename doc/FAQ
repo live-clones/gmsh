@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.63 2005-06-08 19:12:05 geuzaine Exp $
+$Id: FAQ,v 1.64 2005-06-12 04:00:10 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -249,7 +249,16 @@ option panel. From the command line, you can also use '-order 2'.
 * 5.10 Can I import an existing surface mesh in Gmsh and use it to
 build a 3D mesh?
 
-Yes, either in the form of a STL triangulation, or FIXME: TODO
+Yes, see for example 'demos/sphere-discrete.geo'. Note that Gmsh
+does not currently modify the surface mesh that you provide in this 
+way, so this surface mesh has to be conform (without gaps, hanging 
+nodes, etc.) and must contain surface elements having the final
+desired sizes.
+
+Gmsh can also import discrete geometries in the form of STL 
+triangulations, and remesh these to respect certain constraints. This
+is an experimental and undocumented feature as of this writing 
+(version 1.61).
 
 * 5.11 How do I define boundary conditions or material properties in
 Gmsh?
