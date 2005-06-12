@@ -9,7 +9,7 @@ General.RotationZ = -15;
 View.ShowElement = 1;
 View.ColorTable = {Red,Green,Blue};
 
-// Load the views one by one to save momory
+// Load the views one by one to save memory
 
 For i In {1:4}
 
