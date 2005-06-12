@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.64 2005-06-12 04:00:10 geuzaine Exp $
+$Id: FAQ,v 1.65 2005-06-12 04:25:21 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -292,14 +292,14 @@ fields. There is also one additional clipping plane available for
 "cutting" only the mesh (by keeping entire elements), in
 'Tools->Options->Mesh->Cut Plane'.
 
-* 5.14 What is the signification of rho, eta and gamma metrics in
+* 5.14 What is the signification of Rho, Eta and Gamma in 
 Tools->Statistics?
 
 They measure the quality of the tetrahedra in a mesh:
 
-rho ~ min_edge_length / max_edge_length
-eta ~ volume^(2/3) / sum_edge_length^2
-gamma ~ volume / sum_face_area / max_edge_length 
+Rho ~ min_edge_length / max_edge_length
+Eta ~ volume^(2/3) / sum_edge_length^2
+Gamma ~ volume / sum_face_area / max_edge_length 
 
 For the exact definitions, look at Mesh/Element.cpp and
 Mesh/Simplex.cpp.
