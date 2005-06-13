@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.208 2005-06-10 20:59:18 geuzaine Exp $
+// $Id: Gmsh.y,v 1.209 2005-06-13 04:17:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2775,6 +2775,7 @@ Transfinite :
 		"%d points instead of 3 or 4" , (int)$4, k);
 	}
 	else{
+	  List_Reset(s->TrsfPoints);
 	  for(int i = 0; i < k; i++){
 	    double d;
 	    List_Read($7, i, &d);
@@ -2801,6 +2802,7 @@ Transfinite :
 	  yymsg(GERROR, "Wrong definition of Elliptic Surface %d: "
 		"%d points instead of 4" , (int)$4, k);
         else{
+	  List_Reset(s->TrsfPoints);
 	  for(int i = 0; i < k; i++){
 	    double d;
 	    List_Read($7, i, &d);
@@ -2827,6 +2829,7 @@ Transfinite :
 	  yymsg(GERROR, "Wrong definition of Transfinite Volume %d: "
 		"%d points instead of 6 or 8" , (int)$4, k);
 	else{
+	  List_Reset(v->TrsfPoints);
 	  for(int i = 0; i < k; i++){
 	    double d;
 	    List_Read($7, i, &d);
