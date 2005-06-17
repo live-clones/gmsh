@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.392 2005-06-10 23:19:19 geuzaine Exp $
+# $Id: Makefile,v 1.393 2005-06-17 20:29:07 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -187,14 +187,14 @@ package-win:
 	cp doc/FAQ gmsh-${GMSH_VERSION}/FAQ.txt
 	cp doc/CREDITS gmsh-${GMSH_VERSION}/CREDITS.txt
 	cp doc/LICENSE gmsh-${GMSH_VERSION}/LICENSE.txt
-	cd utils/misc && unix2dos.bash ../../gmsh-${GMSH_VERSION}/*.txt
+	cd utils/misc && ./unix2dos.bash ../../gmsh-${GMSH_VERSION}/*.txt
 	cp -R tutorial gmsh-${GMSH_VERSION}
 	cp -R demos gmsh-${GMSH_VERSION}
 	rm -rf gmsh-${GMSH_VERSION}/*/CVS
 	rm -f gmsh-${GMSH_VERSION}/tutorial/*.msh
 	rm -f gmsh-${GMSH_VERSION}/*/*~
-	cd utils/misc && unix2dos.bash ../../gmsh-${GMSH_VERSION}/tutorial/*\
-                                       ../../gmsh-${GMSH_VERSION}/demos/*
+	cd utils/misc && ./unix2dos.bash ../../gmsh-${GMSH_VERSION}/tutorial/*\
+                                         ../../gmsh-${GMSH_VERSION}/demos/*
 	cd gmsh-${GMSH_VERSION} && zip -r gmsh-${GMSH_VERSION}-Windows.zip *
 	mv gmsh-${GMSH_VERSION}/gmsh-${GMSH_VERSION}-Windows.zip .
 
