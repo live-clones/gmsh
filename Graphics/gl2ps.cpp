@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.97 2005-05-20 23:25:09 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.98 2005-06-18 18:41:28 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2005 Christophe Geuzaine <geuz@geuz.org>
@@ -215,11 +215,12 @@ typedef struct {
   GLboolean boundary, blending;
   GLfloat *feedback, offset[2], lastlinewidth;
   GLint viewport[4], blendfunc[2], lastfactor;
-  GL2PSrgba *colormap, lastrgba, threshold;
+  GL2PSrgba *colormap, lastrgba, threshold, bgcolor;
   GLushort lastpattern;
   GL2PSlist *primitives;
   FILE *stream;
   GL2PScompress *compress;
+  GLboolean header;
 
   /* BSP-specific */
   GLint maxbestroot;
@@ -873,6 +874,7 @@ static void gl2psCutEdge(GL2PSvertex *a, GL2PSvertex *b, GL2PSplane plane,
   v[0] = b->xyz[0] - a->xyz[0];
   v[1] = b->xyz[1] - a->xyz[1];
   v[2] = b->xyz[2] - a->xyz[2];
+
   sect = - gl2psComparePointPlane(a->xyz, plane) / gl2psPsca(plane, v);
 
   c->xyz[0] = a->xyz[0] + v[0] * sect;
@@ -905,10 +907,11 @@ static void gl2psCreateSplitPrimitive(GL2PSprimitive *parent, GL2PSplane plane,
     case 2 : child->type = GL2PS_LINE; break; 
     case 3 : child->type = GL2PS_TRIANGLE; break; 
     case 4 : child->type = GL2PS_QUADRANGLE; break;    
+    default: child->type = GL2PS_NOTYPE; break;
     }
   }
 
-  child->boundary = 0; /* not done! */
+  child->boundary = 0; /* FIXME: not done! */
   child->culled = parent->culled;
   child->offset = parent->offset;
   child->pattern = parent->pattern;
@@ -1568,9 +1571,10 @@ static GL2PSprimitive *gl2psCreateSplitPrimitive2D(GL2PSprimitive *parent,
     case 2 : child->type = GL2PS_LINE; break;
     case 3 : child->type = GL2PS_TRIANGLE; break;
     case 4 : child->type = GL2PS_QUADRANGLE; break;
+    default: child->type = GL2PS_NOTYPE; break; /* FIXME */
     }
   }
-  child->boundary = 0; /* not done! */
+  child->boundary = 0; /* FIXME: not done! */
   child->culled = parent->culled;
   child->offset = parent->offset;
   child->pattern = parent->pattern;
@@ -2331,8 +2335,6 @@ static void gl2psPrintPostScriptImagemap(GLfloat x, GLfloat y,
 
 static void gl2psPrintPostScriptHeader(void)
 {
-  GLint index;
-  GLfloat rgba[4];
   time_t now;
 
 #ifdef GL2PS_HAVE_ZLIB
@@ -2397,7 +2399,8 @@ static void gl2psPrintPostScriptHeader(void)
   /* RGB color: r g b C (replace C by G in output to change from rgb to gray)
      Grayscale: r g b G
      Font choose: size fontname FC
-     Text string: (string) x y size fontname SXX
+     Text string: (string) x y size fontname S??
+     Rotated text string: (string) angle x y size fontname S??R
      Point primitive: x y size P
      Line width: width W
      Flat-shaded line: x2 y2 x1 y1 L
@@ -2431,6 +2434,19 @@ static void gl2psPrintPostScriptHeader(void)
               "/STL{ FC moveto 0 SH neg rmoveto show } BD\n"
               "/STC{ FC moveto SW -2 div SH neg rmoveto show } BD\n"
               "/STR{ FC moveto SW neg SH neg rmoveto show } BD\n");
+
+  /* rotated text routines: same nameanem with R appended */
+
+  gl2psPrintf("/FCT { FC translate 0 0 } BD\n"
+              "/SR  { gsave FCT moveto rotate show grestore } BD\n"  
+              "/SBCR{ gsave FCT moveto rotate SW -2 div 0 rmoveto show grestore } BD\n"
+              "/SBRR{ gsave FCT moveto rotate SW neg 0 rmoveto show grestore } BD\n"
+              "/SCLR{ gsave FCT moveto rotate 0 SH -2 div rmoveto show grestore} BD\n");
+  gl2psPrintf("/SCCR{ gsave FCT moveto rotate SW -2 div SH -2 div rmoveto show grestore} BD\n"
+              "/SCRR{ gsave FCT moveto rotate SW neg SH -2 div rmoveto show grestore} BD\n"
+              "/STLR{ gsave FCT moveto rotate 0 SH neg rmoveto show grestore } BD\n"
+              "/STCR{ gsave FCT moveto rotate SW -2 div SH neg rmoveto show grestore } BD\n"
+              "/STRR{ gsave FCT moveto rotate SW neg SH neg rmoveto show grestore } BD\n");
 
   gl2psPrintf("/P  { newpath 0.0 360.0 arc closepath fill } BD\n"
               "/L  { newpath moveto lineto stroke } BD\n"
@@ -2557,20 +2573,10 @@ static void gl2psPrintPostScriptHeader(void)
               "1.0 1.0 scale\n");
           
   if(gl2ps->options & GL2PS_DRAW_BACKGROUND){
-    if(gl2ps->colormode == GL_RGBA || gl2ps->colorsize == 0){
-      glGetFloatv(GL_COLOR_CLEAR_VALUE, rgba);
-    }
-    else{
-      glGetIntegerv(GL_INDEX_CLEAR_VALUE, &index);
-      rgba[0] = gl2ps->colormap[index][0];
-      rgba[1] = gl2ps->colormap[index][1];
-      rgba[2] = gl2ps->colormap[index][2];
-      rgba[3] = 0.0F;
-    }
     gl2psPrintf("%g %g %g C\n"
                 "newpath %d %d moveto %d %d lineto %d %d lineto %d %d lineto\n"
                 "closepath fill\n",
-                rgba[0], rgba[1], rgba[2], 
+                gl2ps->bgcolor[0], gl2ps->bgcolor[1], gl2ps->bgcolor[2], 
                 (int)gl2ps->viewport[0], (int)gl2ps->viewport[1], (int)gl2ps->viewport[2], 
                 (int)gl2ps->viewport[1], (int)gl2ps->viewport[2], (int)gl2ps->viewport[3], 
                 (int)gl2ps->viewport[0], (int)gl2ps->viewport[3]);
@@ -2659,38 +2665,40 @@ static void gl2psPrintPostScriptPrimitive(void *data)
     break;
   case GL2PS_TEXT :
     gl2psPrintPostScriptColor(prim->verts[0].rgba);
-    gl2psPrintf("(%s) %g %g %d /%s ",
-                prim->data.text->str, prim->verts[0].xyz[0], prim->verts[0].xyz[1],
+    gl2psPrintf("(%s) ", prim->data.text->str);
+    if(prim->data.text->angle)
+      gl2psPrintf("%g ", prim->data.text->angle);
+    gl2psPrintf("%g %g %d /%s ",
+                prim->verts[0].xyz[0], prim->verts[0].xyz[1],
                 prim->data.text->fontsize, prim->data.text->fontname);
-
     switch(prim->data.text->alignment){
     case GL2PS_TEXT_C:
-      gl2psPrintf("SCC\n");
+      gl2psPrintf(prim->data.text->angle ? "SCCR\n" : "SCC\n");
       break;
     case GL2PS_TEXT_CL:
-      gl2psPrintf("SCL\n");
+      gl2psPrintf(prim->data.text->angle ? "SCLR\n" : "SCL\n");
       break;
     case GL2PS_TEXT_CR:
-      gl2psPrintf("SCR\n");
+      gl2psPrintf(prim->data.text->angle ? "SCRR\n" : "SCR\n");
       break;
     case GL2PS_TEXT_B:
-      gl2psPrintf("SBC\n");
+      gl2psPrintf(prim->data.text->angle ? "SBCR\n" : "SBC\n");
       break;
     case GL2PS_TEXT_BR:
-      gl2psPrintf("SBR\n");
+      gl2psPrintf(prim->data.text->angle ? "SBRR\n" : "SBR\n");
       break;
     case GL2PS_TEXT_T:
-      gl2psPrintf("STC\n");
+      gl2psPrintf(prim->data.text->angle ? "STCR\n" : "STC\n");
       break;
     case GL2PS_TEXT_TL:
-      gl2psPrintf("STL\n");
+      gl2psPrintf(prim->data.text->angle ? "STLR\n" : "STL\n");
       break;
     case GL2PS_TEXT_TR:
-      gl2psPrintf("STR\n");
+      gl2psPrintf(prim->data.text->angle ? "STRR\n" : "STR\n");
       break;
     case GL2PS_TEXT_BL:
     default:
-      gl2psPrintf("S\n");
+      gl2psPrintf(prim->data.text->angle ? "SR\n" : "S\n");
       break;
     }
     break;
@@ -2808,6 +2816,11 @@ static void gl2psPrintPostScriptBeginViewport(GLint viewport[4])
   int x = viewport[0], y = viewport[1], w = viewport[2], h = viewport[3];
 
   glRenderMode(GL_FEEDBACK);
+
+  if(gl2ps->header){
+    gl2psPrintPostScriptHeader();
+    gl2ps->header = GL_FALSE;
+  }
 
   gl2psPrintf("gsave\n"
               "1.0 1.0 scale\n");
@@ -3560,26 +3573,14 @@ static int gl2psOpenPDFDataStream(void)
 static int gl2psOpenPDFDataStreamWritePreface(void)
 {
   int offs;
-  GLint index;
-  GLfloat rgba[4];
 
   offs = gl2psPrintf("/GSa gs\n");
   
   if(gl2ps->options & GL2PS_DRAW_BACKGROUND){
-    if(gl2ps->colormode == GL_RGBA || gl2ps->colorsize == 0){
-      glGetFloatv(GL_COLOR_CLEAR_VALUE, rgba);
-    }
-    else{
-      glGetIntegerv(GL_INDEX_CLEAR_VALUE, &index);
-      rgba[0] = gl2ps->colormap[index][0];
-      rgba[1] = gl2ps->colormap[index][1];
-      rgba[2] = gl2ps->colormap[index][2];
-      rgba[3] = 0.0F;
-    }
-    offs += gl2psPrintPDFFillColor(rgba);
+    offs += gl2psPrintPDFFillColor(gl2ps->bgcolor);
     offs += gl2psPrintf("%d %d %d %d re\n",
-                    (int)gl2ps->viewport[0], (int)gl2ps->viewport[1],
-                    (int)gl2ps->viewport[2], (int)gl2ps->viewport[3]);
+                        (int)gl2ps->viewport[0], (int)gl2ps->viewport[1],
+                        (int)gl2ps->viewport[2], (int)gl2ps->viewport[3]);
     offs += gl2psPrintf("f\n");  
   }
   return offs;
@@ -4314,15 +4315,18 @@ static void gl2psPrintPDFFooter(void)
 
 static void gl2psPrintPDFBeginViewport(GLint viewport[4])
 {
-  int offs;
+  int offs = 0;
   GLint index;
   GLfloat rgba[4];
   int x = viewport[0], y = viewport[1], w = viewport[2], h = viewport[3];
   
-  offs = 0;
-  
   glRenderMode(GL_FEEDBACK);
   
+  if(gl2ps->header){
+    gl2psPrintPDFHeader();
+    gl2ps->header = GL_FALSE;
+  }
+
   offs += gl2psPrintf("q\n");
   
   if(gl2ps->options & GL2PS_DRAW_BACKGROUND){
@@ -4334,7 +4338,7 @@ static void gl2psPrintPDFBeginViewport(GLint viewport[4])
       rgba[0] = gl2ps->colormap[index][0];
       rgba[1] = gl2ps->colormap[index][1];
       rgba[2] = gl2ps->colormap[index][2];
-      rgba[3] = 0.;
+      rgba[3] = 0.0F;
     }
     offs += gl2psPrintPDFFillColor(rgba);
     offs += gl2psPrintf("%d %d %d %d re\n"
@@ -4357,9 +4361,7 @@ static GLint gl2psPrintPDFEndViewport(void)
   GLint res;
   
   res = gl2psPrintPrimitives();
-
   gl2ps->streamlength += gl2psPrintf("Q\n");
-  
   return res;
 }
 
@@ -4368,6 +4370,25 @@ static GLint gl2psPrintPDFEndViewport(void)
  * General primitive printing routine
  *
  *********************************************************************/
+
+static void gl2psComputeTightBoundingBox(void *data)
+{
+  GL2PSprimitive *prim;
+  int i;
+
+  prim = *(GL2PSprimitive**)data;
+
+  for(i = 0; i < prim->numverts; i++){
+    if(prim->verts[i].xyz[0] < gl2ps->viewport[0])
+      gl2ps->viewport[0] = (GLint)prim->verts[i].xyz[0];
+    if(prim->verts[i].xyz[0] > gl2ps->viewport[2])
+      gl2ps->viewport[2] = (GLint)(prim->verts[i].xyz[0] + 0.5F);
+    if(prim->verts[i].xyz[1] < gl2ps->viewport[1])
+      gl2ps->viewport[1] = (GLint)prim->verts[i].xyz[1];
+    if(prim->verts[i].xyz[1] > gl2ps->viewport[3])
+      gl2ps->viewport[3] = (GLint)(prim->verts[i].xyz[1] + 0.5F);
+  }
+}  
 
 static GLint gl2psPrintPrimitives(void)
 {
@@ -4388,12 +4409,34 @@ static GLint gl2psPrintPrimitives(void)
       gl2psParseFeedbackBuffer(used);
   }
 
+  gl2psRescaleAndOffset();
+
+  if(gl2ps->header){
+    if(gl2psListNbr(gl2ps->primitives) && 
+       (gl2ps->options & GL2PS_TIGHT_BOUNDING_BOX)){
+      gl2ps->viewport[0] = gl2ps->viewport[1] = 100000;
+      gl2ps->viewport[2] = gl2ps->viewport[3] = -100000;
+      gl2psListAction(gl2ps->primitives, gl2psComputeTightBoundingBox);
+    }
+    switch(gl2ps->format){
+    case GL2PS_TEX :
+      gl2psPrintTeXHeader();
+      break;
+    case GL2PS_PS :
+    case GL2PS_EPS :
+      gl2psPrintPostScriptHeader();
+      break;
+    case GL2PS_PDF :
+      gl2psPrintPDFHeader();
+      break;
+    }
+    gl2ps->header = GL_FALSE;
+  }
+
   if(!gl2psListNbr(gl2ps->primitives)){
     /* empty feedback buffer and/or nothing else to print */
     return GL2PS_NO_FEEDBACK;
   }
-
-  gl2psRescaleAndOffset();
 
   switch(gl2ps->format){
   case GL2PS_TEX :
@@ -4442,12 +4485,7 @@ static GLint gl2psPrintPrimitives(void)
        gl2psBuildBspTree) in case there is another viewport */
     gl2ps->primitives = gl2psListCreate(500, 500, sizeof(GL2PSprimitive*));
     break;
-  default :
-    gl2psMsg(GL2PS_ERROR, "Unknown sorting algorithm: %d", gl2ps->sort);
-    return GL2PS_ERROR;
   }
-
-  fflush(gl2ps->stream);
 
   return GL2PS_SUCCESS;
 }
@@ -4465,6 +4503,7 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
                                   GLint nr, GLint ng, GLint nb, GLint buffersize,
                                   FILE *stream, const char *filename)
 {
+  GLint index;
   int i;
 
   if(gl2ps){
@@ -4473,9 +4512,50 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
   }
 
   gl2ps = (GL2PScontext*)gl2psMalloc(sizeof(GL2PScontext));
+
+  switch(format){
+  case GL2PS_TEX :
+  case GL2PS_PS :
+  case GL2PS_EPS :
+  case GL2PS_PDF :
+    gl2ps->format = format;
+    break;
+  default :
+    gl2psMsg(GL2PS_ERROR, "Unknown output format: %d", format);
+    gl2psFree(gl2ps);
+    gl2ps = NULL;
+    return GL2PS_ERROR;
+  }
+
+  switch(sort){
+  case GL2PS_NO_SORT :
+  case GL2PS_SIMPLE_SORT :
+  case GL2PS_BSP_SORT :
+    gl2ps->sort = sort;
+    break;
+  default :
+    gl2psMsg(GL2PS_ERROR, "Unknown sorting algorithm: %d", sort);
+    gl2psFree(gl2ps);
+    gl2ps = NULL;
+    return GL2PS_ERROR;
+  }
+
+  if(stream){
+    gl2ps->stream = stream;
+    /* In case gl2psEndPage failed (e.g. due to a GL2PS_OVERFLOW) and
+       we didn't reopen the stream before calling gl2psBeginPage
+       again, we need to rewind the stream */
+    rewind(gl2ps->stream);
+  }
+  else{
+    gl2psMsg(GL2PS_ERROR, "Bad file pointer");
+    gl2psFree(gl2ps);
+    gl2ps = NULL;
+    return GL2PS_ERROR;
+  }
+
+  gl2ps->header = GL_TRUE;
   gl2ps->maxbestroot = 10;
-  gl2ps->format = format;
-  gl2ps->sort = sort;
   gl2ps->options = options;
   gl2ps->compress = NULL;
   gl2ps->imagemap_head = NULL;
@@ -4524,6 +4604,7 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
   if(gl2ps->colormode == GL_RGBA){
     gl2ps->colorsize = 0;
     gl2ps->colormap = NULL;
+    glGetFloatv(GL_COLOR_CLEAR_VALUE, gl2ps->bgcolor);
   }
   else if(gl2ps->colormode == GL_COLOR_INDEX){
     if(!colorsize || !colormap){
@@ -4535,26 +4616,17 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
     gl2ps->colorsize = colorsize;
     gl2ps->colormap = (GL2PSrgba*)gl2psMalloc(gl2ps->colorsize * sizeof(GL2PSrgba));
     memcpy(gl2ps->colormap, colormap, gl2ps->colorsize * sizeof(GL2PSrgba));
+    glGetIntegerv(GL_INDEX_CLEAR_VALUE, &index);
+    gl2ps->bgcolor[0] = gl2ps->colormap[index][0];
+    gl2ps->bgcolor[1] = gl2ps->colormap[index][1];
+    gl2ps->bgcolor[2] = gl2ps->colormap[index][2];
+    gl2ps->bgcolor[3] = 0.0F;
   }
   else{
     gl2psMsg(GL2PS_ERROR, "Unknown color mode in gl2psBeginPage");
     gl2psFree(gl2ps);
     gl2ps = NULL;
     return GL2PS_ERROR;
-  }
-
-  if(!stream){
-    gl2psMsg(GL2PS_ERROR, "Bad file pointer");
-    gl2psFree(gl2ps);
-    gl2ps = NULL;
-    return GL2PS_ERROR;
-  }
-  else{
-    gl2ps->stream = stream;
-    /* In case gl2psEndPage failed (e.g. due to a GL2PS_OVERFLOW) and
-       we didn't reopen the stream before calling gl2psBeginPage
-       again, we need to rewind the stream */
-    rewind(gl2ps->stream);
   }
 
   if(!title){
@@ -4584,28 +4656,6 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
     strcpy(gl2ps->filename, filename);
   }
 
-  switch(gl2ps->format){
-  case GL2PS_TEX :
-    gl2psPrintTeXHeader();
-    break;
-  case GL2PS_PS :
-  case GL2PS_EPS :
-    gl2psPrintPostScriptHeader();
-    break;
-  case GL2PS_PDF :
-    gl2psPrintPDFHeader();
-    break;
-  default :
-    gl2psMsg(GL2PS_ERROR, "Unknown output format: %d", gl2ps->format);
-    gl2psFree(gl2ps->colormap);
-    gl2psFree(gl2ps->title);
-    gl2psFree(gl2ps->producer);
-    gl2psFree(gl2ps->filename);
-    gl2psFree(gl2ps);
-    gl2ps = NULL;
-    return GL2PS_ERROR;
-  }
-
   gl2ps->primitives = gl2psListCreate(500, 500, sizeof(GL2PSprimitive*));
   gl2ps->feedback = (GLfloat*)gl2psMalloc(gl2ps->buffersize * sizeof(GLfloat));
   glFeedbackBuffer(gl2ps->buffersize, GL_3D_COLOR, gl2ps->feedback);
@@ -4622,8 +4672,6 @@ GL2PSDLL_API GLint gl2psEndPage(void)
 
   res = gl2psPrintPrimitives();
 
-  /* print the footer even if gl2psPrintPrimitives didn't succeed, so
-     that we end up with a valid file */
   switch(gl2ps->format){
   case GL2PS_TEX :
     gl2psPrintTeXFooter();
