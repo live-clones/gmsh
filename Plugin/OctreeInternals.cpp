@@ -1,4 +1,4 @@
-// $Id: OctreeInternals.cpp,v 1.4 2005-01-01 19:35:39 geuzaine Exp $
+// $Id: OctreeInternals.cpp,v 1.5 2005-06-20 17:02:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -52,7 +52,7 @@ int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
   for (i = 0; i < 3; i++)
     error[i]= _size[i]*0.01;
 
-  initial_buckets_num = (int)pow(8, p); // it is actually 8 
+  initial_buckets_num = (int)pow(8., p); // it is actually 8 
 
   (*globalPara) = new globalInfo;
   (*globalPara)->maxPrecision = 1;
@@ -95,7 +95,7 @@ int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
     buckets[i].precision = 1;
   } 
   
-  tmp1 = (int)(pow(2, p));
+  tmp1 = (int)(pow(2., p));
   for (i = 0; i < 3; i++) {
     tmp[i] = (double)(_size[i]+2*error[i])/tmp1;
   }

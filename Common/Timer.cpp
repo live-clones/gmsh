@@ -1,4 +1,4 @@
-// $Id: Timer.cpp,v 1.13 2005-01-01 19:35:27 geuzaine Exp $
+// $Id: Timer.cpp,v 1.14 2005-06-20 17:02:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <time.h> // FIXME: for sgi and maybe others
 #include <sys/time.h>
 #include <unistd.h>
 

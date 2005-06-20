@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.44 2005-01-01 19:35:30 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.45 2005-06-20 17:02:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -537,7 +537,6 @@ int recur_bowyer_2D(Simplex * s)
 
 bool draw_simplex2d(Surface * sur, Simplex * s, bool nouv)
 {
-  double x[3], y[3], z[3];
   Vertex v1, v2, v3;
 
   if(!CTX.mesh.interactive)
@@ -550,6 +549,8 @@ bool draw_simplex2d(Surface * sur, Simplex * s, bool nouv)
   v2 = InterpolateSurface(sur->Support, s->V[1]->Pos.X, s->V[1]->Pos.Y, 0, 0);
   v3 = InterpolateSurface(sur->Support, s->V[2]->Pos.X, s->V[2]->Pos.Y, 0, 0);
 
+#if defined(HAVE_FLTK)
+  double x[3], y[3], z[3];
   x[0] = v1.Pos.X;
   x[1] = v2.Pos.X;
   x[2] = v3.Pos.X;
@@ -559,8 +560,6 @@ bool draw_simplex2d(Surface * sur, Simplex * s, bool nouv)
   z[0] = v1.Pos.Z;
   z[1] = v2.Pos.Z;
   z[2] = v3.Pos.Z;
-
-#if defined(HAVE_FLTK)
   void draw_polygon_2d(double r, double g, double b, int n,
                        double *x, double *y, double *z);
   if(nouv)

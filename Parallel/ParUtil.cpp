@@ -1,4 +1,4 @@
-// $Id: ParUtil.cpp,v 1.11 2005-01-01 19:35:32 geuzaine Exp $
+// $Id: ParUtil.cpp,v 1.12 2005-06-20 17:02:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #ifdef HAVE_PARALLEL
 #include "mpi.h"
 #else
+#include <time.h> // FIXME: for sgi and maybe others
 #include <sys/time.h>
 #endif
 

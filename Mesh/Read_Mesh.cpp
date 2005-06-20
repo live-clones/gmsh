@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.92 2005-06-10 22:50:49 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.93 2005-06-20 17:02:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -764,24 +764,19 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
     if(GEntityId) {
       fscanf(in, "%d %d", &GEntityType, &NbEdgesOnFace);
 
-      List_T *Lists[4] = { 0, 0, 0, 0 };
-
       if(NbEdgesOnFace == 3) {
         fscanf(in, "%d %d %d %d", &Edge1, &Edge2, &Edge3, &nbPts);
         List_Read(AllEdges, abs(Edge1) - 1, &e);
-        Lists[0] = e.Points;
         if(Edge1 > 0)
           v1 = e.V[0];
         else
           v1 = e.V[1];
         List_Read(AllEdges, abs(Edge2) - 1, &e);
-        Lists[1] = e.Points;
         if(Edge2 > 0)
           v2 = e.V[0];
         else
           v2 = e.V[1];
         List_Read(AllEdges, abs(Edge3) - 1, &e);
-        Lists[2] = e.Points;
         if(Edge3 > 0)
           v3 = e.V[0];
         else

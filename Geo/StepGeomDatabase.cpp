@@ -1,4 +1,4 @@
-// $Id: StepGeomDatabase.cpp,v 1.17 2005-01-01 19:35:29 geuzaine Exp $
+// $Id: StepGeomDatabase.cpp,v 1.18 2005-06-20 17:02:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -607,8 +607,7 @@ void Resolve_BREP(void)
   Step_Axis2_Placement3D_t *axs;
   Step_Closed_Shell_t cs;
   List_T *ListInt, *ListIntBis;
-  double ubeg, uend, n[3], t[3], p[3], XMIN = 0., XMAX = 0., YMIN = 0., YMAX =
-    0., ZMIN = 0., ZMAX = 0., L;
+  double ubeg, uend, n[3], t[3], p[3], XMIN = 0., XMAX = 0., YMIN = 0., YMAX = 0., ZMIN = 0., ZMAX = 0.;
   int fob;
 
   ListInt = List_Create(2, 2, sizeof(int));
@@ -633,7 +632,7 @@ void Resolve_BREP(void)
       ZMIN = MIN(cp.Pos.Z, ZMIN);
     }
   }
-  CTX.lc = L = sqrt(SQR(XMIN - XMAX) + SQR(YMIN - YMAX) + SQR(ZMIN - ZMAX));
+  CTX.lc = sqrt(SQR(XMIN - XMAX) + SQR(YMIN - YMAX) + SQR(ZMIN - ZMAX));
 
   // resolving cartesian_points
   for(i = 0; i < List_Nbr(BREP->AllCartesian_Points); i++) {

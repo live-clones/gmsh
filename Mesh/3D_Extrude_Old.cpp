@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.35 2005-06-10 22:50:49 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.36 2005-06-20 17:02:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -56,7 +56,6 @@ extern Context_T CTX;
 extern Mesh *LOCAL, *THEM;
 
 static Tree_T *Tree_Ares, *Tree_Swaps;
-static Surface *THES;
 static Volume *THEV;
 static int TEST_IS_ALL_OK, NbLayer;
 static int NbElmLayer[MAXLAYERS];
@@ -474,7 +473,6 @@ static void Extrude_Surface1(void *data, void *dum)
   if(!NbLayer)
     return;
   Surface *s = *(Surface **) data;
-  THES = s;
 
   Tree_Action(s->Vertices, Extrude_Vertex);
 
@@ -487,7 +485,6 @@ static void Extrude_Surface2(void *data, void *dum)
   if(!NbLayer)
     return;
   Surface *s = *(Surface **) data;
-  THES = s;
 
   Tree_Action(s->Simplexes, Extrude_Simplex_Phase2);
 }
@@ -498,7 +495,6 @@ static void Extrude_Surface3(void *data, void *dum)
     return;
 
   Surface *s = *(Surface **) data;
-  THES = s;
 
   Msg(INFO, "Extruding Surface %d", s->Num);
   for(int i = 0; i < NbLayer; i++) {
