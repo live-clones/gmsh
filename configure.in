@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.68 2005-06-20 18:13:21 geuzaine Exp $
+dnl $Id: configure.in,v 1.69 2005-06-20 18:27:51 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -81,9 +81,6 @@ AC_ARG_ENABLE(png,
 
 dnl Get the operating system and version number
 UNAME=`uname`
-if test "x${UNAME}" = "xIRIX64"; then
-  UNAME="IRIX"
-fi
 
 dnl Check for default compilers
 AC_PROG_CC

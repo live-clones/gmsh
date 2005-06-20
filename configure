@@ -1408,9 +1408,6 @@ if test "${enable_png+set}" = set; then
 fi;
 
 UNAME=`uname`
-if test "x${UNAME}" = "xIRIX64"; then
-  UNAME="IRIX"
-fi
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
