@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.98 2005-06-18 18:41:28 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.99 2005-06-20 17:33:18 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2005 Christophe Geuzaine <geuz@geuz.org>
@@ -3995,7 +3995,7 @@ static int gl2psPrintPDFShaderMask(int obj, int childobj)
                   (int)gl2ps->viewport[2], (int)gl2ps->viewport[3]);
   
   len = (childobj>0) 
-    ? strlen("/TrSh sh\n") + (int)log10(childobj)+1
+    ? strlen("/TrSh sh\n") + (int)log10((double)childobj)+1
     : strlen("/TrSh0 sh\n"); 
   
   offs += fprintf(gl2ps->stream,
