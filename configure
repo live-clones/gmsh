@@ -5694,7 +5694,10 @@ fi
 
 echo "********************************************************************"
 echo "Gmsh is configured for"
-echo "- OS    : $UNAME"
-echo "- OPTIM : $OPTIM"
-echo "- FLAGS : $FLAGS"
+echo "- OS           : $UNAME"
+echo "- C compiler   : $CC"
+echo "- C++ compiler : $CXX"
+echo "- Linker       : $LINKER"
+echo "- Optimization : $OPTIM"
+echo "- Options      : $FLAGS"
 echo "********************************************************************"
