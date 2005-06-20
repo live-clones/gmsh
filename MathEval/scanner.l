@@ -24,7 +24,7 @@
 
 #include "common.h"
 #include "node.h"
-#include "parser.h"
+#include "parser.tab.hpp"
 #include "symbol_table.h"
 
 #define YY_ALWAYS_INTERACTIVE 1

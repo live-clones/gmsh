@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2005-06-03 17:32:29 geuzaine Exp $
+# $Id: Makefile,v 1.5 2005-06-20 16:35:30 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -28,8 +28,8 @@ CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = matheval.cpp\
       node.cpp\
-      scanner.cpp\
-      parser.cpp\
+      scanner.yy.cpp\
+      parser.tab.cpp\
       symbol_table.cpp\
       xmath.cpp
 
@@ -45,10 +45,9 @@ ${LIB}: ${OBJ}
 	${CXX} ${CFLAGS} -c $<
 
 parser:
-	bison --output parser.cpp -pme -d parser.y 
-	flex -oscanner.cpp -Pme scanner.l
-	if [ -r parser.cpp.h ]; then mv parser.cpp.h parser.h ; fi
-	if [ -r parser.hpp ]; then mv parser.hpp parser.h ; fi
+	bison --output parser.tab.cpp -pme -d parser.y
+	if [ -r parser.tab.cpp.h ]; then mv parser.tab.cpp.h parser.tab.hpp ; fi
+	flex -oscanner.yy.cpp -Pme scanner.l
 
 clean:
 	rm -f *.o
