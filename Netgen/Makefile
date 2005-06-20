@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2005-06-03 17:32:30 geuzaine Exp $
+# $Id: Makefile,v 1.11 2005-06-20 18:02:51 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -123,7 +123,7 @@ SRC = libsrc/opti/linopt.cpp \
 	libsrc/general/array.cpp \
 	libsrc/general/symbolta.cpp \
 	libsrc/general/mystring.cpp \
-	nglib_addon.cpp \
+	nglib_addon.cpp
 
 OBJ = ${SRC:.cpp=.o}
 
