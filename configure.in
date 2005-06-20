@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.65 2005-06-07 03:34:09 geuzaine Exp $
+dnl $Id: configure.in,v 1.66 2005-06-20 17:00:23 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -385,8 +385,9 @@ case "$UNAME" in
     CXX="CC"
     CC="cc"
     OPTIM="-O2"
-    dnl -DOLDCINCLUDE is for Netgen
-    FLAGS="-mips3 -n32 -LANG:std -OPT:Olimit=0 -DOLDCINCLUDE ${FLAGS}"
+    dnl "-DOLDCINCLUDE" is for Netgen
+    dnl Add "-mips3 -n32" to FLAGS, AR and LINKER for portable 32 bit binary
+    FLAGS="-LANG:std -OPT:Olimit=0 -DOLDCINCLUDE ${FLAGS}"
     AR="CC -mips3 -n32 -ar -o"
     LINKER="CC -O2 -mips3 -n32"
     ;;
