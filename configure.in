@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.67 2005-06-20 17:43:24 geuzaine Exp $
+dnl $Id: configure.in,v 1.68 2005-06-20 18:13:21 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -382,18 +382,20 @@ case "$UNAME" in
     ;;
 
   IRIX*)
-    CXX="CC"
-    CC="cc"
-    OPTIM="-O2"
-    dnl "-DOLDCINCLUDE" is for Netgen
-    dnl Add "-mips3 -n32" to FLAGS, AR and LINKER for portable 32 bit binary
-    FLAGS="-LANG:std -OPT:Olimit=0 -DOLDCINCLUDE ${FLAGS}"
-    AR="CC -ar -o"
-    LINKER="CC -O2"
+    dnl options for native SGI compiler
+    if test "x${CXX}" = "xCC"; then
+      dnl add "-mips3 -n32" to FLAGS, AR and LINKER for portable 32 bit exe
+      dnl "-DOLDCINCLUDE" is for Netgen
+      OPTIM="-O2"
+      FLAGS="-LANG:std -OPT:Olimit=0 -DOLDCINCLUDE ${FLAGS}"
+      AR="CC -ar -o"
+      LINKER="CC -O2"
+    fi
     ;;
 
   OSF1*)
     FLAGS="-DHAVE_NO_SOCKLEN_T ${FLAGS}"
+    dnl options for native DEC compiler
     if test "x${CXX}" = "xcxx" ; then
       FLAGS="-D__USE_STD_IOSTREAM ${FLAGS}"
     fi
