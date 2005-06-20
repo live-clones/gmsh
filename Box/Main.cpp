@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.49 2005-05-21 04:55:59 geuzaine Exp $
+// $Id: Main.cpp,v 1.50 2005-06-20 16:40:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -93,9 +93,12 @@ int main(int argc, char *argv[])
 
   Init_Mesh0(&M);
 
+  // FIXME: could not make this work on IRIX
+#if !defined(__sgi__) 
   signal(SIGINT, Signal);
   signal(SIGSEGV, Signal);
   signal(SIGFPE, Signal);
+#endif
 
   GMSH_PluginManager::instance()->registerDefaultPlugins();
 

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.79 2005-06-10 00:31:28 geuzaine Exp $
+// $Id: Main.cpp,v 1.80 2005-06-20 16:40:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -95,9 +95,12 @@ int main(int argc, char *argv[])
 
   // Signal handling
 
+  // FIXME: could not make this work on IRIX
+#if !defined(__sgi__) 
   signal(SIGINT, Signal);
   signal(SIGSEGV, Signal);
   signal(SIGFPE, Signal);
+#endif
 
   // Initialize the default plugins
 
