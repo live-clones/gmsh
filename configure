@@ -4333,8 +4333,8 @@ case "$UNAME" in
     CC="cc"
     OPTIM="-O2"
             FLAGS="-LANG:std -OPT:Olimit=0 -DOLDCINCLUDE ${FLAGS}"
-    AR="CC -mips3 -n32 -ar -o"
-    LINKER="CC -O2 -mips3 -n32"
+    AR="CC -ar -o"
+    LINKER="CC -O2"
     ;;
 
   OSF1*)
