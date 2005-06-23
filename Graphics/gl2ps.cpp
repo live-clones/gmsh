@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.99 2005-06-20 17:33:18 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.100 2005-06-23 07:15:44 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2005 Christophe Geuzaine <geuz@geuz.org>
@@ -4672,17 +4672,19 @@ GL2PSDLL_API GLint gl2psEndPage(void)
 
   res = gl2psPrintPrimitives();
 
-  switch(gl2ps->format){
-  case GL2PS_TEX :
-    gl2psPrintTeXFooter();
-    break;
-  case GL2PS_PS :
-  case GL2PS_EPS :
-    gl2psPrintPostScriptFooter();
-    break;
-  case GL2PS_PDF :
-    gl2psPrintPDFFooter();
-    break;
+  if(res != GL2PS_OVERFLOW){
+    switch(gl2ps->format){
+    case GL2PS_TEX :
+      gl2psPrintTeXFooter();
+      break;
+    case GL2PS_PS :
+    case GL2PS_EPS :
+      gl2psPrintPostScriptFooter();
+      break;
+    case GL2PS_PDF :
+      gl2psPrintPDFFooter();
+      break;
+    }
   }
 
   fflush(gl2ps->stream);
