@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.14 2005-03-09 02:19:09 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.15 2005-06-24 01:23:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -331,17 +331,17 @@ Post_View *GMSH_CutParametricPlugin::execute(Post_View * v)
     y1 = y[i];
     z1 = z[i];
 
-    if(v->NbST || v->NbSQ || v->NbSS || v->NbSH || v->NbSI || v->NbSY){
+    if(v1->NbST || v1->NbSQ || v1->NbSS || v1->NbSH || v1->NbSI || v1->NbSY){
       o.searchScalar(x1, y1, z1, res1);
       addInView(connect, i, 1, v1->NbTimeStep, x0, y0, z0, res0, x1, y1, z1, res1,
 		v2->SP, &v2->NbSP, v2->SL, &v2->NbSL);
     }
-    if(v->NbVT || v->NbVQ || v->NbVS || v->NbVH || v->NbVI || v->NbVY){
+    if(v1->NbVT || v1->NbVQ || v1->NbVS || v1->NbVH || v1->NbVI || v1->NbVY){
       o.searchVector(x1, y1, z1, res1);
       addInView(connect, i, 3, v1->NbTimeStep, x0, y0, z0, res0, x1, y1, z1, res1,
 		v2->VP, &v2->NbVP, v2->VL, &v2->NbVL);
     }
-    if(v->NbTT || v->NbTQ || v->NbTS || v->NbTH || v->NbTI || v->NbTY){
+    if(v1->NbTT || v1->NbTQ || v1->NbTS || v1->NbTH || v1->NbTI || v1->NbTY){
       o.searchTensor(x1, y1, z1, res1);
       addInView(connect, i, 9, v1->NbTimeStep, x0, y0, z0, res0, x1, y1, z1, res1,
 		v2->TP, &v2->NbTP, v2->TL, &v2->NbTL);
