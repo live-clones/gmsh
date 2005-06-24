@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.20 2005-04-01 22:14:56 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.21 2005-06-24 01:17:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -240,7 +240,7 @@ Post_View *GMSH_EvaluatePlugin::execute(Post_View * v)
 
   Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
 
-  if(timeStep > v->NbTimeStep - 1){
+  if(timeStep > v1->NbTimeStep - 1){
     Msg(GERROR, "Invalid time step (%d) in View[%d]: using step 0 instead",
 	timeStep, v1->Index);
     timeStep = 0;
