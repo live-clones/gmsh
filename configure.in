@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.70 2005-06-20 20:28:54 geuzaine Exp $
+dnl $Id: configure.in,v 1.71 2005-06-24 18:14:15 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -32,23 +32,23 @@ dnl Parse '--with' command-line options
 AC_ARG_WITH(fltk-prefix,
             AC_HELP_STRING([--with-fltk-prefix=PFX],
                            [prefix where FLTK is installed]),
-            [FLTK_PREFIX=$withval],[FLTK_PREFIX="$FLTK_DIR"])
+            [FLTK_PREFIX=$withval])
 AC_ARG_WITH(gsl-prefix,
             AC_HELP_STRING([--with-gsl-prefix=PFX],
                            [prefix where GSL is installed]),
-            [GSL_PREFIX=$withval],[GSL_PREFIX="$GSL_DIR"])
+            [GSL_PREFIX=$withval])
 AC_ARG_WITH(jpeg-prefix,
             AC_HELP_STRING([--with-jpeg-prefix=PFX],
                            [prefix where the JPEG library and includes are installed]),
-            [JPEG_PREFIX=$withval],[JPEG_PREFIX="$JPEG_DIR"])
+            [JPEG_PREFIX=$withval])
 AC_ARG_WITH(png-prefix,
             AC_HELP_STRING([--with-png-prefix=PFX],
                            [prefix where the PNG library and includes are installed]),
-            [PNG_PREFIX=$withval],[PNG_PREFIX="$PNG_DIR"])
+            [PNG_PREFIX=$withval])
 AC_ARG_WITH(z-prefix,
             AC_HELP_STRING([--with-z-prefix=PFX],
                            [prefix where the ZLIB library and includes are installed]),
-            [Z_PREFIX=$withval],[Z_PREFIX="$Z_DIR"])
+            [Z_PREFIX=$withval])
 
 dnl Parse '--enable' command line options
 AC_ARG_ENABLE(gsl,

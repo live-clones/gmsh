@@ -1325,40 +1325,30 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 if test "${with_fltk_prefix+set}" = set; then
   withval="$with_fltk_prefix"
   FLTK_PREFIX=$withval
-else
-  FLTK_PREFIX="$FLTK_DIR"
 fi;
 
 # Check whether --with-gsl-prefix or --without-gsl-prefix was given.
 if test "${with_gsl_prefix+set}" = set; then
   withval="$with_gsl_prefix"
   GSL_PREFIX=$withval
-else
-  GSL_PREFIX="$GSL_DIR"
 fi;
 
 # Check whether --with-jpeg-prefix or --without-jpeg-prefix was given.
 if test "${with_jpeg_prefix+set}" = set; then
   withval="$with_jpeg_prefix"
   JPEG_PREFIX=$withval
-else
-  JPEG_PREFIX="$JPEG_DIR"
 fi;
 
 # Check whether --with-png-prefix or --without-png-prefix was given.
 if test "${with_png_prefix+set}" = set; then
   withval="$with_png_prefix"
   PNG_PREFIX=$withval
-else
-  PNG_PREFIX="$PNG_DIR"
 fi;
 
 # Check whether --with-z-prefix or --without-z-prefix was given.
 if test "${with_z_prefix+set}" = set; then
   withval="$with_z_prefix"
   Z_PREFIX=$withval
-else
-  Z_PREFIX="$Z_DIR"
 fi;
 
 # Check whether --enable-gsl or --disable-gsl was given.
