@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.29 2005-01-08 20:15:19 geuzaine Exp $
+// $Id: Transform.cpp,v 1.30 2005-06-25 17:17:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -69,7 +69,7 @@ void GMSH_TransformPlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(Transform) transforms the homogenous\n"
+         "Plugin(Transform) transforms the homogeneous\n"
 	 "node coordinates (x,y,z,1) of the elements in\n"
 	 "the view `iView' by the matrix\n"
          "[`A11' `A12' `A13' `T1']\n"

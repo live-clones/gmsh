@@ -35,7 +35,7 @@ Set characteristic length scaling factor
 @item -rand float
 Set random perturbation factor
 @item -bgm file
-Load backround mesh from file
+Load background mesh from file
 @item -constrain
 Constrain background mesh with characteristic lengths
 @item -histogram

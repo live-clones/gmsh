@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.58 2005-04-04 18:19:49 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.59 2005-06-25 17:17:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -78,7 +78,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -meshscale float      Set mesh scaling factor");
   Msg(DIRECT, "  -clscale float        Set characteristic length scaling factor");
   Msg(DIRECT, "  -rand float           Set random perturbation factor");
-  Msg(DIRECT, "  -bgm file             Load backround mesh from file");
+  Msg(DIRECT, "  -bgm file             Load background mesh from file");
   Msg(DIRECT, "  -constrain            Constrain background mesh with characteristic lengths");
   Msg(DIRECT, "  -histogram            Print mesh quality histogram");
   Msg(DIRECT, "  -extrude              Use old extrusion mesh generator");

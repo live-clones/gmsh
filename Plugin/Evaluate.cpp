@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.21 2005-06-24 01:17:58 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.22 2005-06-25 17:17:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -102,7 +102,7 @@ void GMSH_EvaluatePlugin::getInfos(char *author, char *copyright,
 	 "component of the field in `ExternalView' at the\n"
 	 "`ExternalTimeStep'-th time step.\n"
 	 "\n"
-	 "If `TimeStep' < 0, the plugin atomatically loops\n"
+	 "If `TimeStep' < 0, the plugin automatically loops\n"
 	 "over all the time steps in `iView' and evaluates\n"
 	 "`Expression' for each one. If `ExternalTimeStep'\n"
 	 "< 0, the plugin uses `TimeStep' instead. If\n"

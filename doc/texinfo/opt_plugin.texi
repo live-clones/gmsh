@@ -347,7 +347,7 @@ is interpolated onto `iView';
 component of the field in `ExternalView' at the
 `ExternalTimeStep'-th time step.
 
-If `TimeStep' < 0, the plugin atomatically loops
+If `TimeStep' < 0, the plugin automatically loops
 over all the time steps in `iView' and evaluates
 `Expression' for each one. If `ExternalTimeStep'
 < 0, the plugin uses `TimeStep' instead. If
@@ -685,7 +685,7 @@ Default value: @code{-1}
 
 
 @item Plugin(Transform)
-Plugin(Transform) transforms the homogenous
+Plugin(Transform) transforms the homogeneous
 node coordinates (x,y,z,1) of the elements in
 the view `iView' by the matrix
 [`A11' `A12' `A13' `T1']

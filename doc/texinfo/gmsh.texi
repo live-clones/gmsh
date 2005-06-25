@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.185 2005-06-25 17:04:09 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.186 2005-06-25 17:17:15 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -536,7 +536,7 @@ elements).
 
 If you have the skills and some free time, feel free to join the project! We
 gladly accept any code contributions (@pxref{Programming notes}) to remedy
-the aforementioned (and all other) shortcommings...
+the aforementioned (and all other) shortcomings...
 
 @c -------------------------------------------------------------------------
 @c Syntactic Rules Used in this Document
@@ -736,7 +736,7 @@ The fifth case permits to reference an expression sublist (whose elements
 are those corresponding to the indices provided by the
 @var{expression-list}). The sixth case permits to retrieve the coordinates
 of a given geometry point (@pxref{Points}). The last two cases permit to
-retreive the indices of entities created through geometrical transformations
+retrieve the indices of entities created through geometrical transformations
 and extrusions (see @ref{Transformations}, and @ref{Extrusions}).
 
 @c todo: explain in detail what numbers are returned once we decide what to
@@ -777,7 +777,7 @@ Character expressions are defined as:
 @noindent The third and fourth cases in this definition permit to take the
 prefix (e.g. to remove the extension) or the relative path of a string. The
 fifth case permits to concatenate two character expressions, and the sixth
-and seveth are equivalent to the @code{sprintf} C function (where
+and seventh are equivalent to the @code{sprintf} C function (where
 @var{char-expression} is a format string that can contain floating point
 formatting characters: @code{%e}, @code{%g}, etc.). The last case permits to
 use the value of a @var{char-option} as a @var{char-expression}.  The
@@ -2778,7 +2778,7 @@ program is also a good example on how to read and write files in the
 @subsection Version 1.0
 
 The @file{.msh} file format, version 1.0, is Gmsh's old native mesh file
-format, now superseeded by the format described in @ref{Version 2.0}.
+format, now superseded by the format described in @ref{Version 2.0}.
 
 In the @file{.msh} file format, version 1.0, the file is divided in two
 sections, defining the nodes (@code{$NOD}-@code{$ENDNOD}) and the elements
