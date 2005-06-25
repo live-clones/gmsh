@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.133 2005-06-11 17:02:34 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.134 2005-06-25 04:05:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -454,6 +454,7 @@ void Draw_Mesh_Extruded_Surfaces(void *a, void *b)
   Volume *v = *(Volume **) a;
   if(!(v->Visible & VIS_MESH))
     return;
+  Tree_Action(v->Lin_Surf, Draw_Mesh_Line);
   Tree_Action(v->Simp_Surf, Draw_Mesh_Triangle);
   Tree_Action(v->Quad_Surf, Draw_Mesh_Quadrangle);
 }
@@ -835,9 +836,6 @@ void Draw_Mesh_Triangle(void *a, void *b)
   char Num[256];
 
   SimplexBase *s = *(SimplexBase **) a;
-
-  if(!s->V[2]) // the old extrusion algo puts lines in the simp_surf tree...
-    return;
 
   if(!(s->Visible & VIS_MESH))
     return;

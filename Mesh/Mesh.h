@@ -303,6 +303,7 @@ typedef struct {
   Tree_T *Edges;
   Tree_T *Faces;
   Tree_T *Simplexes, *SimplexesBase;
+  Tree_T *Lin_Surf; // for old extrusion mesh generator
   Tree_T *Simp_Surf; // for old extrusion mesh generator
   Tree_T *Quad_Surf; // for old extrusion mesh generator
   Tree_T *Hexahedra;

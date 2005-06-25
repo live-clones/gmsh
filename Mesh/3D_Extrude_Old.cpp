@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.36 2005-06-20 17:02:45 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.37 2005-06-25 04:05:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -525,7 +525,7 @@ static void Extrude_Seg(void *data, void *dum)
       List_Read(V2->Extruded_Points, k, &v2);
       Simplex *s = Create_Simplex(v1, v2, NULL, NULL);
       s->iEnt = LineLayer[i];
-      Tree_Add(THEV->Simp_Surf, &s);
+      Tree_Add(THEV->Lin_Surf, &s);
     }
     for(int j = 0; j < NbElmLayer[i]; j++) {
       k++;
@@ -603,7 +603,7 @@ static void Extrude_Pnt(Vertex * V1)
       if(LineLayer[i]) {
         Simplex *s = Create_Simplex(v1, v2, NULL, NULL);
         s->iEnt = LineLayer[i];
-        Tree_Add(THEV->Simp_Surf, &s);
+        Tree_Add(THEV->Lin_Surf, &s);
       }
       k++;
     }

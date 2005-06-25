@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.61 2005-05-16 00:50:10 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.62 2005-06-25 04:05:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -415,8 +415,7 @@ static void _msh_print_elements(Mesh *M)
             List_Read(p->Entities, j, &Num);
             MSH_LIN_NUM = abs(Num);
             MSH_PHYSICAL_ORI = sign(Num);
-            Tree_Action(pV->Simp_Surf, _msh_print_simplex);
-            Tree_Action(pV->Quad_Surf, _msh_print_quadrangle);
+            Tree_Action(pV->Lin_Surf, _msh_print_simplex);
           }
         }
       }
@@ -512,6 +511,12 @@ static void _msh_print_all_simpsurf(void *a, void *b)
   Tree_Action(v->Quad_Surf, _msh_print_quadrangle);
 }
 
+static void _msh_print_all_linsurf(void *a, void *b)
+{
+  Volume *v = *(Volume **) a;
+  Tree_Action(v->Lin_Surf, _msh_print_simplex);
+}
+
 static void _msh_print_all_volumes(void *a, void *b)
 {
   Volume *v = *(Volume **) a;
@@ -530,6 +535,7 @@ static void _msh_print_all_elements(Mesh *M)
 
   if(CTX.mesh.oldxtrude) {
     Tree_Action(M->Volumes, _msh_print_all_simpsurf);
+    Tree_Action(M->Volumes, _msh_print_all_linsurf);
   }
   else {
     Tree_Action(M->Curves, _msh_print_all_curves);
