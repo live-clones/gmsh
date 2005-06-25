@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.65 2005-06-12 04:25:21 geuzaine Exp $
+$Id: FAQ,v 1.66 2005-06-25 18:11:45 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -286,7 +286,7 @@ interest. You can define up to 6 clipping planes in Gmsh (i.e., enough
 to define a "cube" inside your model) and each plane can clip either
 the geometry, the mesh, the post-processing views, or any combination
 of the above.  The clipping planes are defined using the four
-coeficients A,B,C,D of the equation A*x+B*y+C*y+D=0, which can be
+coefficients A,B,C,D of the equation A*x+B*y+C*y+D=0, which can be
 adjusted interactively by dragging the mouse in the input
 fields. There is also one additional clipping plane available for
 "cutting" only the mesh (by keeping entire elements), in
@@ -481,7 +481,7 @@ line option.
 
 See question 5.13. 
 
-When viewing 3D salar fields, you can also modify the colormap
+When viewing 3D scalar fields, you can also modify the colormap
 ('Tools->Options->View->Map') to make the iso-surfaces "transparent":
 either by holding 'Ctrl' while dragging the mouse to draw the alpha
 channel by hand, or by using the 'a', 'Ctrl+a', 'p' and 'Ctrl+p'
