@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.184 2005-06-10 20:59:21 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.185 2005-06-25 17:04:09 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -3060,7 +3060,7 @@ set. Its syntax is also very permissive, which makes it ideal for testing
 purposes. Its main disadvantage resides in the overhead introduced by the
 parser, which makes loading a view in parsed format slower than loading a
 view in ASCII or binary format. This is only a disadvantage for very large
-data sets, tough.
+data sets, though.
 
 A post-processing view in parsed format is defined as follows (there can be
 one or more views in the same file):
