@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.82 2005-06-03 17:32:30 geuzaine Exp $
+# $Id: Makefile,v 1.83 2005-06-27 19:34:34 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -46,7 +46,7 @@ SRC = Plugin.cpp\
         Integrate.cpp Gradient.cpp Curl.cpp Divergence.cpp\
         Annotate.cpp Remove.cpp\
         Probe.cpp\
-        HarmonicToTime.cpp
+        HarmonicToTime.cpp ModulusPhase.cpp
 
 OBJ = ${SRC:.cpp=.o}
 
@@ -78,17 +78,17 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   PluginManager.h CutMap.h Levelset.h CutGrid.h StreamLines.h CutPlane.h \
   CutParametric.h CutSphere.h Skin.h ../DataStr/Tree.h ../DataStr/avl.h \
-  Extract.h HarmonicToTime.h Integrate.h Gradient.h Curl.h Divergence.h \
-  Annotate.h Remove.h DecomposeInSimplex.h Smooth.h Transform.h \
-  Triangulate.h SphericalRaise.h DisplacementRaise.h StructuralSolver.h \
-  ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
-  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
-  ../Mesh/Matrix.h ../Common/GmshUI.h Eigenvectors.h Eigenvalues.h \
-  Lambda2.h ../Numeric/Numeric.h Evaluate.h OctreePost.h Octree.h \
-  OctreeInternals.h Probe.h ../Common/Context.h
+  Extract.h HarmonicToTime.h ModulusPhase.h Integrate.h Gradient.h Curl.h \
+  Divergence.h Annotate.h Remove.h DecomposeInSimplex.h Smooth.h \
+  Transform.h Triangulate.h SphericalRaise.h DisplacementRaise.h \
+  StructuralSolver.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+  ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h \
+  ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h ../Common/GmshUI.h \
+  Eigenvectors.h Eigenvalues.h Lambda2.h ../Numeric/Numeric.h Evaluate.h \
+  OctreePost.h Octree.h OctreeInternals.h Probe.h ../Common/Context.h
 # 1 "/Users/geuzaine/.gmsh/Plugin//"
 Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
@@ -340,3 +340,9 @@ HarmonicToTime.o: HarmonicToTime.cpp Plugin.h ../Common/Options.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   HarmonicToTime.h ../Common/Context.h ../Numeric/Numeric.h
+# 1 "/Users/geuzaine/.gmsh/Plugin//"
+ModulusPhase.o: ModulusPhase.cpp Plugin.h ../Common/Options.h \
+  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
+  ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
+  ModulusPhase.h ../Common/Context.h ../Numeric/Numeric.h

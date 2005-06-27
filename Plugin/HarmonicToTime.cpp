@@ -1,4 +1,4 @@
-// $Id: HarmonicToTime.cpp,v 1.6 2005-01-08 20:15:19 geuzaine Exp $
+// $Id: HarmonicToTime.cpp,v 1.7 2005-06-27 19:34:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -116,12 +116,10 @@ static void h2t(int nb1, List_T *list1, int *nb2, List_T *list2,
 
 Post_View *GMSH_HarmonicToTimePlugin::execute(Post_View * v)
 {
-  int rIndex, iIndex, nSteps, iView;
-
-  rIndex = (int)HarmonicToTimeOptions_Number[0].def;
-  iIndex = (int)HarmonicToTimeOptions_Number[1].def;
-  nSteps = (int)HarmonicToTimeOptions_Number[2].def;
-  iView = (int)HarmonicToTimeOptions_Number[3].def;
+  int rIndex = (int)HarmonicToTimeOptions_Number[0].def;
+  int iIndex = (int)HarmonicToTimeOptions_Number[1].def;
+  int nSteps = (int)HarmonicToTimeOptions_Number[2].def;
+  int iView = (int)HarmonicToTimeOptions_Number[3].def;
 
   if(iView < 0)
     iView = v ? v->Index : 0;
@@ -131,16 +129,16 @@ Post_View *GMSH_HarmonicToTimePlugin::execute(Post_View * v)
     return v;
   }
 
-  if(nSteps <= 0){
-    Msg(GERROR, "nSteps should be > 0");
-    return v;
-  }
-
   Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
   if(rIndex < 0 || rIndex >= v1->NbTimeStep ||
      iIndex < 0 || iIndex >= v1->NbTimeStep){
     Msg(GERROR, "Wrong real or imaginary part index");
-    return v;
+    return v1;
+  }
+
+  if(nSteps <= 0){
+    Msg(GERROR, "nSteps should be > 0");
+    return v1;
   }
 
   Post_View *v2 = BeginView(1);

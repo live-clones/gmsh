@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.76 2005-04-19 16:03:16 remacle Exp $
+// $Id: Plugin.cpp,v 1.77 2005-06-27 19:34:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -41,6 +41,7 @@
 #include "Skin.h"
 #include "Extract.h"
 #include "HarmonicToTime.h"
+#include "ModulusPhase.h"
 #include "Integrate.h"
 #include "Gradient.h"
 #include "Curl.h"
@@ -199,6 +200,8 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		      ("DisplacementRaise", GMSH_RegisterDisplacementRaisePlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("HarmonicToTime", GMSH_RegisterHarmonicToTimePlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("ModulusPhase", GMSH_RegisterModulusPhasePlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Integrate", GMSH_RegisterIntegratePlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >

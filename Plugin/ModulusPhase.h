@@ -1,5 +1,5 @@
-#ifndef _HARMONIC_TO_TIME_H_
-#define _HARMONIC_TO_TIME_H_
+#ifndef _MODULUS_PHASE_H_
+#define _MODULUS_PHASE_H_
 
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -24,13 +24,13 @@
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterHarmonicToTimePlugin();
+  GMSH_Plugin *GMSH_RegisterModulusPhasePlugin();
 }
 
-class GMSH_HarmonicToTimePlugin : public GMSH_Post_Plugin
+class GMSH_ModulusPhasePlugin : public GMSH_Post_Plugin
 {
 public:
-  GMSH_HarmonicToTimePlugin();
+  GMSH_ModulusPhasePlugin();
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *help_text) const;
   void catchErrorMessage(char *errorMessage) const;

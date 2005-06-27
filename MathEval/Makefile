@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2005-06-20 16:35:30 geuzaine Exp $
+# $Id: Makefile,v 1.6 2005-06-27 19:34:34 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -67,10 +67,11 @@ matheval.o: matheval.cpp common.h ../DataStr/Malloc.h matheval.h node.h \
 # 1 "/Users/geuzaine/.gmsh/MathEval//"
 node.o: node.cpp common.h ../DataStr/Malloc.h node.h symbol_table.h
 # 1 "/Users/geuzaine/.gmsh/MathEval//"
-scanner.o: scanner.cpp common.h ../DataStr/Malloc.h node.h symbol_table.h \
-  parser.h
+scanner.yy.o: scanner.yy.cpp common.h ../DataStr/Malloc.h node.h \
+  symbol_table.h parser.tab.hpp
 # 1 "/Users/geuzaine/.gmsh/MathEval//"
-parser.o: parser.cpp common.h ../DataStr/Malloc.h node.h symbol_table.h
+parser.tab.o: parser.tab.cpp common.h ../DataStr/Malloc.h node.h \
+  symbol_table.h
 # 1 "/Users/geuzaine/.gmsh/MathEval//"
 symbol_table.o: symbol_table.cpp common.h ../DataStr/Malloc.h \
   symbol_table.h xmath.h

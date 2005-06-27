@@ -513,6 +513,26 @@ Default value: @code{2}
 Default value: @code{-1}
 @end table
 
+@item Plugin(ModulusPhase)
+Plugin(ModulusPhase) interprets the time steps
+`realPart' and `imaginaryPart' in the view `iView'
+as the real and imaginary parts of a complex field
+and replaces them with their corresponding
+modulus and phase. If `iView' < 0, the plugin is
+run on the current view.
+
+Plugin(ModulusPhase) is executed in-place.
+
+Numeric options:
+@table @code
+@item RealPart
+Default value: @code{0}
+@item ImaginaryPart
+Default value: @code{1}
+@item iView
+Default value: @code{-1}
+@end table
+
 @item Plugin(Probe)
 Plugin(Probe) gets the value of the view `iView' at
 the point (`X',`Y',`Z'). If `iView' < 0, the plugin is
