@@ -30,6 +30,9 @@ public:
     int classif_tag;
     int classif_degree;
 
+    std::list<BDS_Triangle *> t;
+    std::list<BDS_Edge *>     e;
+
     BDS_Surface *surf;
 
     inline bool operator <  ( const BDS_GeomEntity & other ) const
@@ -47,39 +50,6 @@ public:
 
 
 void print_face (BDS_Triangle *t);
-
-class BDS_Point
-{
-public:
-    int iD;
-    double X,Y,Z;
-    BDS_GeomEntity *g;
-    std::list<BDS_Edge*> edges;
-    inline bool operator <  ( const BDS_Point & other ) const
-	{
-	    return iD < other.iD;
-	}
-    inline void del (BDS_Edge *e)
-	{
-	    std::list<BDS_Edge*>::iterator it  = edges.begin();
-	    std::list<BDS_Edge*>::iterator ite = edges.end();
-	    while(it!=ite)
-	    {
-		if (*it == e) 
-		{
-		    edges.erase(it);
-		    break;
-		}
-		++it;
-	    }
-	}
-    void getTriangles (std::list<BDS_Triangle *> &t); 	
-
-    BDS_Point ( int id, double x=0, double y=0, double z=0 )
-    : iD(id),X(x),Y(y),Z(z),g(0)
-	{	    
-	}
-};
 
 class BDS_Vector
 {
@@ -141,11 +111,8 @@ public:
   {
     return (x*v.x+y*v.y+z*v.z);
   }
-  BDS_Vector (const BDS_Point &p2,const BDS_Point &p1)
-      : x(p2.X-p1.X),y(p2.Y-p1.Y),z(p2.Z-p1.Z)
-      {
-	  
-      }
+  BDS_Vector (const BDS_Point &p2,const BDS_Point &p1);
+
   BDS_Vector (double ix=0, double iy=0, double iz=0)
     //    : x(ix),(iy),z(iz)
   {
@@ -155,6 +122,44 @@ public:
   }
 };
 
+
+class BDS_Point
+{
+public:
+    int iD;
+    double X,Y,Z,radius_of_curvature;
+    BDS_GeomEntity *g;
+    std::list<BDS_Edge*> edges;
+
+    BDS_Vector N() const;
+
+    inline bool operator <  ( const BDS_Point & other ) const
+	{
+	    return iD < other.iD;
+	}
+    inline void del (BDS_Edge *e)
+	{
+	    std::list<BDS_Edge*>::iterator it  = edges.begin();
+	    std::list<BDS_Edge*>::iterator ite = edges.end();
+	    while(it!=ite)
+	    {
+		if (*it == e) 
+		{
+		    edges.erase(it);
+		    break;
+		}
+		++it;
+	    }
+	}
+    void getTriangles (std::list<BDS_Triangle *> &t) const; 	
+
+    void compute_curvature ( );
+
+    BDS_Point ( int id, double x=0, double y=0, double z=0 )
+	: iD(id),X(x),Y(y),Z(z),radius_of_curvature(1.e22),g(0)
+	{	    
+	}
+};
 
 class BDS_Edge
 {
@@ -241,6 +246,15 @@ public:
     BDS_Edge *e1,*e2,*e3;
     BDS_Vector N() const ;
     BDS_GeomEntity *g;
+
+    inline BDS_Vector cog() const
+	{
+	    BDS_Point *n[3];
+	    getNodes (n);
+	    return BDS_Vector ((n[0]->X+n[1]->X+n[2]->X)/3.,
+			       (n[0]->Y+n[1]->Y+n[2]->Y)/3.,
+			       (n[0]->Z+n[1]->Z+n[2]->Z)/3.);
+	}
 
     inline void getNodes (BDS_Point *n[3]) const
 	{
@@ -362,8 +376,9 @@ class BDS_Mesh
     BDS_Edge  *find_edge (BDS_Point *p1, BDS_Point *p2, BDS_Triangle *t)const;
     BDS_GeomEntity *get_geom  (int p1, int p2);
     bool swap_edge ( BDS_Edge *);
-    bool collapse_edge ( BDS_Edge *, BDS_Point*, const double eps);
-    bool smooth_point ( BDS_Point* , BDS_Mesh *geom = 0);
+    bool collapse_edge ( BDS_Edge *, BDS_Point*, const double eps, const double l);
+    bool smooth_point   ( BDS_Point* , BDS_Mesh *geom = 0);
+    bool smooth_point_b ( BDS_Point* );
     bool split_edge ( BDS_Edge *, double coord);
     void classify ( double angle);
     void reverseEngineerCAD ( ) ;
@@ -378,3 +393,5 @@ class BDS_Mesh
     void save_gmsh_format (const char *filename);
 };
 void normal_triangle (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]);
+void project_point_on_a_list_of_triangles ( BDS_Point *p , const std::list<BDS_Triangle*> &t,
+					    double &X, double &Y, double &Z);	   

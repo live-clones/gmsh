@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.356 2005-06-10 20:59:14 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.357 2005-06-27 15:03:45 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 #include <signal.h>
 #include <map>
 
+#include "BDS.h"
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Geo.h"
@@ -827,6 +828,19 @@ void options_restore_defaults_cb(CALLBACK_ARGS)
   if(WID && WID->get_context() == 3)    // hack to refresh the buttons
     WID->set_context(menu_post, 0);
   Draw();
+}
+
+void wizard_update_edges_cb(CALLBACK_ARGS)
+{
+    extern  void BDS_To_Mesh(Mesh *m);
+    if (THEM && THEM->bds && WID)
+    {
+	const double angle = WID->swiz_value[0]->value() * M_PI / 180;
+	printf ("value = %g\n",angle);
+	THEM->bds->classify (angle);
+	BDS_To_Mesh (THEM); 
+	Draw();
+    }
 }
 
 void options_ok_cb(CALLBACK_ARGS)

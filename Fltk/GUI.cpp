@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.443 2005-06-09 22:28:24 geuzaine Exp $
+// $Id: GUI.cpp,v 1.444 2005-06-27 15:03:45 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -812,6 +812,7 @@ GUI::GUI(int argc, char **argv)
   int i;
 
   // initialize static windows
+  swiz_window = NULL;
   m_window = NULL;
   g_window = NULL;
   opt_window = NULL;
@@ -900,6 +901,9 @@ GUI::GUI(int argc, char **argv)
     create_solver_window(i);
   }
   call_for_solver_plugin(-1);
+
+  // create the surface mesh wizard
+  create_surface_mesh_wizard();
 
   // Draw the scene
   g_opengl_window->redraw();
@@ -1612,7 +1616,6 @@ void GUI::create_surface_mesh_wizard()
 {
     int width = 42 * fontsize;
     int height = 12 * BH + 5 * WB;
-    int L = 105 + WB;
 
     if(swiz_window) {
 	swiz_window->show();
@@ -1621,16 +1624,47 @@ void GUI::create_surface_mesh_wizard()
     swiz_window = new Dialog_Window(width, height);
     swiz_window->box(GMSH_WINDOW_BOX);
 
-    swiz_wiz = new Fl_Wizard(L, 0, width, height, "Surface Mesh Wizard");
+    swiz_wiz = new Fl_Wizard(0, 0, width, height, "Surface Mesh Wizard");
     {
-	Fl_Tabs *o = new Fl_Tabs(L + WB, WB, width - 2 * WB, height - 2 * WB);
+	Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
 	{
-	    Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Detect Edges");
-	    swiz_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Angle");
-	    swiz_value[0]->minimum(0.1);
-	    swiz_value[0]->maximum(50);
-	    swiz_value[0]->step(0.1);
+	    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Model Edge Detection");
+	    swiz_value[0] = new Fl_Value_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Treshold Dihedral Angle");
+	    swiz_value[0]->value(180/8);
+	    swiz_value[0]->minimum(0);
+	    swiz_value[0]->maximum(90);
+	    swiz_value[0]->step(1);
 	    swiz_value[0]->align(FL_ALIGN_RIGHT);
+	    {
+		Fl_Return_Button *b = new Fl_Return_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Apply");
+		b->callback(wizard_update_edges_cb);
+	    }
+	    {
+		Fl_Button *b = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Next");
+//		b->callback(options_save_cb);
+	    }
+	    {
+		Fl_Button *b = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
+		b->callback(cancel_cb, (void *)swiz_window);
+	    }
+
+	    o->end();
+	}	
+	{
+	    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Reverse Engineering the CAD");
+	    {
+		Fl_Return_Button *b = new Fl_Return_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Apply");
+//		b->callback(wizard_update_edges_cb);
+	    }
+	    {
+		Fl_Button *b = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Next");
+//		b->callback(options_save_cb);
+	    }
+	    {
+		Fl_Button *b = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
+		b->callback(cancel_cb, (void *)swiz_window);
+	    }
+
 	    o->end();
 	}	
 	o->end();

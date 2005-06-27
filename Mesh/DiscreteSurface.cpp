@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.15 2005-06-03 17:32:29 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.16 2005-06-27 15:03:46 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -63,6 +63,13 @@ void Mesh_To_BDS(Surface *s, BDS_Mesh *m)
 
 void BDS_To_Mesh(Mesh *m)
 {
+    Tree_Action(m->Surfaces, Free_Surface);
+    Tree_Action(m->Curves, Free_Curve);
+    Tree_Delete(m->Surfaces);
+    Tree_Delete(m->Curves);
+    m->Curves = Tree_Create(sizeof(Curve *), compareCurve);
+    m->Surfaces = Tree_Create(sizeof(Surface *), compareSurface);
+
     std::set<BDS_GeomEntity*,GeomLessThan>::iterator it  = m->bds->geom.begin(); 
     std::set<BDS_GeomEntity*,GeomLessThan>::iterator ite = m->bds->geom.end(); 
     
@@ -70,21 +77,30 @@ void BDS_To_Mesh(Mesh *m)
     {
 	if ((*it)->classif_degree ==2 )
 	{
-	    Surface *_Surf = Create_Surface((*it)->classif_tag, MSH_SURF_DISCRETE);	
+	    Surface *_Surf = 0; 
+	    _Surf = FindSurface((*it)->classif_tag, m);
+	    if (!_Surf) 
+		_Surf = Create_Surface((*it)->classif_tag, MSH_SURF_DISCRETE);	
 	    _Surf->bds = m->bds;
 	    End_Surface(_Surf);
 	    Tree_Add(m->Surfaces, &_Surf);
 	}
 	else if ((*it)->classif_degree ==1  )
 	{
-	    Curve *_c = Create_Curve((*it)->classif_tag, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);	
+	    Curve *_c = 0; 
+	    _c = FindCurve((*it)->classif_tag, m);
+	    if (!_c) 
+		_c = Create_Curve((*it)->classif_tag, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);	
 	    _c->bds = m->bds;
 	    End_Curve(_c);
 	    Tree_Add(m->Curves, &_c);
 	}
 	++it;
     }
-    printf ("%d surfaces\n",Tree_Nbr(m->Surfaces));
+
+    CTX.mesh.changed = 1;
+
+    printf ("%d surfaces %d curves\n",Tree_Nbr(m->Surfaces), Tree_Nbr(m->Curves) );
 
 }
 

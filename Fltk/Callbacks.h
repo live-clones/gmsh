@@ -291,5 +291,9 @@ void solver_kill_cb(CALLBACK_ARGS);
 void solver_choose_executable_cb(CALLBACK_ARGS);
 void solver_ok_cb(CALLBACK_ARGS);
 
+// SURFACE MESH WIZARD
+
+void wizard_update_edges_cb(CALLBACK_ARGS);
+
 #endif
 

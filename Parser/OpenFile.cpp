@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.79 2005-05-16 00:50:11 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.80 2005-06-27 15:03:46 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -293,6 +293,9 @@ int MergeProblem(char *name, int warn_if_missing)
       }
     THEM->bds->save_gmsh_format ( "1.msh" );
     THEM->bds->classify ( M_PI / 8 );
+#if defined(HAVE_FLTK)
+    WID->create_surface_mesh_wizard();
+#endif
     THEM->bds->save_gmsh_format ( "2.msh" );
     BDS_To_Mesh (THEM);
     SetBoundingBox();
