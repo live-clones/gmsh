@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.66 2005-06-08 21:31:11 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.67 2005-06-27 19:33:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -975,7 +975,7 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
     
     if(ext_nbcomp == 1){
       Draw_ScalarElement(type, View, preproNormals, ext_min, ext_max, xx, yy, zz, ext_norm);
-      if(type == POST_POINT && ts > 0) {  // draw point "trajectory"
+      if(type == POST_POINT && ts > 0 && View->LineWidth) {  // draw point "trajectory"
 	if(View->LineType) {
 	  double dx, dy, dz, dx2, dy2, dz2, XX[2], YY[2], ZZ[2];
 	  for(int j = 0; j < ts; j++) {
