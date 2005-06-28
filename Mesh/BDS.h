@@ -3,6 +3,7 @@
 // points may know the normals to the surface they are classified on
 // default values are 0,0,1
 
+#include <string>
 #include <set>
 #include <map>
 #include <vector>
@@ -18,9 +19,10 @@ class BDS_Point;
 class BDS_Surface
 {
 public :
-    virtual double signedDistanceTo ( BDS_Point * ) const = 0;
+    virtual double signedDistanceTo ( double x, double y, double z ) const = 0;
     virtual void projection ( double xa, double ya, double za,
 			      double &x, double &y, double &z) const =0;
+    virtual std::string nameOf () const = 0;
 };
 
 
@@ -55,6 +57,15 @@ class BDS_Vector
 {
 public:
   double x,y,z;
+  bool operator<(const BDS_Vector &o) const
+      {
+	  if ( x - o.x  > t  ) return true;
+	  if ( x - o.x  < -t ) return false;
+	  if ( y - o.y  > t  ) return true;
+	  if ( y - o.y  < -t ) return false;
+	  if ( z - o.z  > t  ) return true;
+	  return false;
+      }
   BDS_Vector operator + (const  BDS_Vector &v)
   {
     return BDS_Vector (x+v.x,y+v.y,z+v.z);
@@ -113,21 +124,29 @@ public:
   }
   BDS_Vector (const BDS_Point &p2,const BDS_Point &p1);
 
-  BDS_Vector (double ix=0, double iy=0, double iz=0)
-    //    : x(ix),(iy),z(iz)
+  BDS_Vector (const double X=0., const double Y=0., const double Z=0.)
+        : x(X),y(Y),z(Z)
   {
-    x=ix;
-    y=iy;
-    z=iz;
   }
+  static double t;
 };
 
 
-class BDS_Point
+class BDS_Pos
+{
+ public:
+    double X,Y,Z;    
+    BDS_Pos(const double &x,const double &y, const double & z)
+	: X(x),Y(y),Z(z)
+	{
+	}
+};
+
+class BDS_Point : public BDS_Pos
 {
 public:
     int iD;
-    double X,Y,Z,radius_of_curvature;
+    double radius_of_curvature;
     BDS_GeomEntity *g;
     std::list<BDS_Edge*> edges;
 
@@ -156,7 +175,7 @@ public:
     void compute_curvature ( );
 
     BDS_Point ( int id, double x=0, double y=0, double z=0 )
-	: iD(id),X(x),Y(y),Z(z),radius_of_curvature(1.e22),g(0)
+	: BDS_Pos(x,y,z),iD(id),radius_of_curvature(1.e22),g(0)
 	{	    
 	}
 };
@@ -276,8 +295,11 @@ class BDS_Plane : public  BDS_Surface
 {
     double a,b,c;
 public :
-    BDS_Plane (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3);
-    virtual double signedDistanceTo ( BDS_Point * p) const {return a*p->X + b*p->Y + c*p->Z + 1;}
+    BDS_Plane (const double &A, const double &B, const double &C)
+	: a(A),b(B),c(C)
+	{
+	}
+    virtual double signedDistanceTo (  double x, double y, double z ) const {return a*x + b*y + c*z + 1;}
     virtual void projection ( double xa, double ya, double za,
 			      double &x, double &y, double &z) const 
 	{
@@ -286,26 +308,41 @@ public :
 	    y = ya + k * b;
 	    z = za + k * c;
 	}
+    virtual std::string nameOf () const {return std::string("Plane");}
+
 };
 
-class BDS_Sphere : public  BDS_Surface
+class BDS_Quadric : public  BDS_Surface
 {
 public :
-    double xc,yc,zc,R;
-    BDS_Sphere (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, BDS_Point *p4);
-    virtual double signedDistanceTo ( BDS_Point * p) const {
-	return sqrt((p->X-xc)*(p->X-xc)+
-		    (p->Y-yc)*(p->Y-yc)+
-		    (p->Z-zc)*(p->Z-zc)) - R;
+    double a,b,c,d,e,f,g,h,i;
+    BDS_Quadric (double A,double B,double C, double D, double E, double F, double G, double H, double I)
+	: a(A),b(B),c(C),d(D),e(E),f(F),g(G),h(H),i(I)
+	{
+	}
+    virtual double signedDistanceTo (  double x, double y, double z ) const {
+	const double q = 
+	    a * x * x +  
+	    b * y * y +  
+	    c * z * z +  
+	    2 * d * x * y + 
+	    2 * e * x * z + 
+	    2 * f * y * z +
+	    g *  x +
+	    h *  y +
+	    i *  z - 1.0;
+	return q;
     }
     virtual void projection ( double xa, double ya, double za,
 			      double &x, double &y, double &z) const 
 	{
-	    double k =  ( R * R )/((xa-xc)*(xa-xc)+(ya-yc)*(ya-yc)+(za-zc)*(za-zc)) ; 
-	    x = xc + k * (xa-xc);
-	    y = yc + k * (ya-yc);
-	    z = zc + k * (za-zc);
+	    // not done yet
+	    // this is not as simple as for the plane
+	    // you shoud have min (signedDistance), this can
+	    // be done using the GSL... 2 BE DONE !!!!!
+	    throw;
 	}
+    virtual std::string nameOf () const {return std::string("Quadric");}
 };
 
 

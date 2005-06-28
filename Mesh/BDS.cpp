@@ -36,53 +36,6 @@ BDS_Vector BDS_Point::N() const
     return SumN;
 }
 
-BDS_Sphere :: BDS_Sphere( BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, BDS_Point *p4)
-{
-  double mat[3][3], b[3], dum,res[3];
-  int i;
-  double X[4] = {p1->X,p2->X,p3->X,p4->X};
-  double Y[4] = {p1->Y,p2->Y,p3->Y,p4->Y};
-  double Z[4] = {p1->Z,p2->Z,p3->Z,p4->Z};
-
-  b[0] = X[1] * X[1] - X[0] * X[0] +
-    Y[1] * Y[1] - Y[0] * Y[0] + Z[1] * Z[1] - Z[0] * Z[0];
-  b[1] = X[2] * X[2] - X[1] * X[1] +
-    Y[2] * Y[2] - Y[1] * Y[1] + Z[2] * Z[2] - Z[1] * Z[1];
-  b[2] = X[3] * X[3] - X[2] * X[2] +
-    Y[3] * Y[3] - Y[2] * Y[2] + Z[3] * Z[3] - Z[2] * Z[2];
-
-  for(i = 0; i < 3; i++)
-    b[i] *= 0.5;
-
-  mat[0][0] = X[1] - X[0];
-  mat[0][1] = Y[1] - Y[0];
-  mat[0][2] = Z[1] - Z[0];
-  mat[1][0] = X[2] - X[1];
-  mat[1][1] = Y[2] - Y[1];
-  mat[1][2] = Z[2] - Z[1];
-  mat[2][0] = X[3] - X[2];
-  mat[2][1] = Y[3] - Y[2];
-  mat[2][2] = Z[3] - Z[2];
-
-
-//  printf("X = %g %g %g %g\n",X[0],X[1],X[2],X[3]);
-//  printf("Y = %g %g %g %g\n",Y[0],Y[1],Y[2],Y[3]);
-//  printf("Z = %g %g %g %g\n",Z[0],Z[1],Z[2],Z[3]);
-
-  if(!sys3x3(mat, b, res, &dum)) {
-      R = 1.e22;
-      xc = yc = zc = 1.e33;
-//      printf("ahrgh\n");
-  }
-  else
-  {
-      xc = res[0];
-      yc = res[1];
-      zc = res[2];
-      R = sqrt ((p1->X-xc)*(p1->X-xc)+(p1->Y-yc)*(p1->Y-yc)+(p1->Z-zc)*(p1->Z-zc));
-  }
-}
-
 double dist_droites_gauches(BDS_Point *p1, BDS_Point *p2, 
 			    BDS_Point *p3 ,BDS_Point *p4)
 {
@@ -190,21 +143,6 @@ double quality_triangle  (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3)
     double a =  surface_triangle ( p1,p2,p3);
     return a / (e12+e22+e32);
 }
-
-BDS_Plane::BDS_Plane (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3)
-{
-    double mat[3][3];
-    mat[0][0] = p1->X; mat[0][1] = p1->Y; mat[0][2] = p1->Z;
-    mat[1][0] = p2->X; mat[1][1] = p2->Y; mat[1][2] = p2->Z;
-    mat[2][0] = p3->X; mat[2][1] = p3->Y; mat[2][2] = p3->Z;
-    double rhs[3] = {-1,-1,-1};
-    double pl[3] , det ;
-    sys3x3 (mat,rhs,pl,&det);
-    a = pl[0];
-    b = pl[1];
-    c = pl[2];
-}
-
 
 void BDS_Point::getTriangles (std::list<BDS_Triangle *> &t) const
 {
@@ -399,85 +337,155 @@ void BDS_Mesh :: reverseEngineerCAD ( )
     {
 	if ((*it)->classif_degree == 2)
 	{
-	    std::set<BDS_Point*,PointLessThan> pts;
-
+	    std::set<BDS_Vector> pts;
+	    
 	    std::list<BDS_Triangle*>::iterator tit  = (*it)->t.begin();
 	    std::list<BDS_Triangle*>::iterator tite = (*it)->t.end();
+	    BDS_Vector::t = LC/1.e6;
 	    while (tit!=tite)
 	    {
 		BDS_Point *nod[3];
 		(*tit)->getNodes (nod);
-		pts.insert(nod[0]);
-		pts.insert(nod[1]);
-		pts.insert(nod[2]);
+		BDS_Vector p1 = BDS_Vector(nod[0]->X, nod[0]->Y, nod[0]->Z);
+		BDS_Vector p2 = BDS_Vector(nod[1]->X, nod[1]->Y, nod[1]->Z);
+		BDS_Vector p3 = BDS_Vector(nod[2]->X, nod[2]->Y, nod[2]->Z);
+		pts.insert(p1);
+		pts.insert(p2);
+		pts.insert(p3);
+		pts.insert((p1+p2)*0.5);
+		pts.insert((p1+p3)*0.5);
+		pts.insert((p2+p3)*0.5);
 		tit++;
 	    }
+	    
+	    // We consider the following implicit quadrics surface
+	    // f(x) = x^T A x + b^T x + c = 0 
+	    // A symmetric ( 6 coeffs ), b a vector ( 3 coeffs ) and c a scalar
+	    // 10 coefficients
+	    // we try to fit that using least squares
+	    // we use both points and edges mid points for the fitting 
+
+
 	    if(pts.size() > 3)
 	    {
-		// TEST PLANE 
-		{
-		    std::set<BDS_Point*,PointLessThan>::iterator pit  = pts.begin();
-		    std::set<BDS_Point*,PointLessThan>::iterator pite = pts.end();
-		    
-		    BDS_Point *p1 = *pit;++pit;
-		    BDS_Point *p2 = *pit;++pit;
-		    BDS_Point *p3 = *pit;++pit;
-		    BDS_Plane *plane = new BDS_Plane (  p1 , p2 , p3 );
-		    double distmax = 0;
+		// TEST PLANE (easier than quadrics...)
+		{		    
+		    Double_Matrix PLANE  ( pts.size() , 3 );
+		    Double_Vector ONES  ( pts.size() );
+		    Double_Vector RSLT  ( 3 );
+		    std::set<BDS_Vector>::iterator pit  = pts.begin();
+		    std::set<BDS_Vector>::iterator pite = pts.end();
+		    int k=0;
 		    while (pit!=pite)
 		    {
-			double dist = plane->signedDistanceTo (*pit);
-			if (fabs(dist) > distmax) distmax = fabs(dist);
+			PLANE  ( k , 0 ) = (*pit).x;
+			PLANE  ( k , 1 ) = (*pit).y;
+			PLANE  ( k , 2 ) = (*pit).z;
+			ONES  ( k )     = -1;
+			k++;
 			++pit;
 		    }
-		    if (distmax < 1.e-6 * LC ) 
+
+		    PLANE.least_squares (ONES, RSLT);
+//		    printf("%d points plane surface %d ?? : %g %g %g\n",pts.size(),(*it)->classif_tag,RSLT(0),RSLT(1),RSLT(2));
+		    
+		    bool plane = true;
+		    for (int i=0;i<pts.size();i++)
 		    {
-			(*it)->surf = plane;
-//			printf("plane surface found %g\n",distmax); 
-			pit  = pts.begin();
-			while (pit!=pite)
-			{
-			    if ((*pit)->g->classif_degree == 2)
-				(*pit)->radius_of_curvature = 1.e22;
-			    pit++;
-			}
+			const double dist = PLANE  ( i , 0 ) * RSLT(0)+PLANE  ( i , 1 ) * RSLT(1)+PLANE  ( i , 2 ) * RSLT(2)+1;
+			if (fabs(dist) > 1.e-6 * LC)plane = false;
 		    }
-		    else
-		    { 
-//			printf("non plane surface found %g\n",distmax); 
-			delete plane;
+		    
+		    if ( plane ) 
+		    {
+			printf("plane surface %d found : %g %g %g\n",(*it)->classif_tag,RSLT(0),RSLT(1),RSLT(2));
+			(*it)->surf = new BDS_Plane (RSLT(0),RSLT(1),RSLT(2));
 		    }
 		}
-	    }
-	    if(pts.size() > 4 && !(*it)->surf)
-	    {
-		// TEST SPHERE
+		if (!(*it)->surf && pts.size() > 20)
 		{
-		    std::set<BDS_Point*,PointLessThan>::iterator pit  = pts.begin();
-		    std::set<BDS_Point*,PointLessThan>::iterator pite = pts.end();
-		    
-		    BDS_Point *p1 = *pit;++pit;
-		    BDS_Point *p2 = *pit;++pit;
-		    BDS_Point *p3 = *pit;++pit;
-		    BDS_Point *p4 = *pit;++pit;
-		    BDS_Sphere *sphere = new BDS_Sphere (  p1 , p2 , p3 , p4);
-		    double distmax = 0;
+		    Double_Matrix QUADRIC  ( pts.size() , 9 );
+		    Double_Vector ONES  ( pts.size() );
+		    Double_Vector RSLT  ( 9 );
+		    std::set<BDS_Vector>::iterator pit  = pts.begin();
+		    std::set<BDS_Vector>::iterator pite = pts.end();
+		    int k=0;
 		    while (pit!=pite)
 		    {
-			double dist = sphere->signedDistanceTo (*pit);
-			if (fabs(dist) > distmax) distmax = fabs(dist);
+			QUADRIC  ( k , 0 ) =   (*pit).x* (*pit).x;
+			QUADRIC  ( k , 1 ) =   (*pit).y* (*pit).y;
+			QUADRIC  ( k , 2 ) =   (*pit).z* (*pit).z;
+			QUADRIC  ( k , 3 ) = 2*(*pit).x* (*pit).y;
+			QUADRIC  ( k , 4 ) = 2*(*pit).x* (*pit).z;
+			QUADRIC  ( k , 5 ) = 2*(*pit).y* (*pit).z;
+			QUADRIC  ( k , 6 ) =   (*pit).x;
+			QUADRIC  ( k , 7 ) =   (*pit).y;
+			QUADRIC  ( k , 8 ) =   (*pit).z;
+			ONES   ( k )     =  1;
+			k++;
 			++pit;
 		    }
-		    if (distmax < 1.e-116 * LC ) 
+		    QUADRIC.least_squares (ONES, RSLT);
+		    bool quad = true;
+		    for (int i=0;i<pts.size();i++)
 		    {
-			(*it)->surf = sphere;
-			printf("spherical surface %d found %g (R=%g,LC=%g)\n",(*it)->classif_tag,distmax,sphere->R,LC); 
+			const double dist = 
+			    QUADRIC  ( i , 0 ) * RSLT(0) +
+			    QUADRIC  ( i , 1 ) * RSLT(1) +
+			    QUADRIC  ( i , 2 ) * RSLT(2) +
+			    QUADRIC  ( i , 3 ) * RSLT(3) +
+			    QUADRIC  ( i , 4 ) * RSLT(4) +
+			    QUADRIC  ( i , 5 ) * RSLT(5) +
+			    QUADRIC  ( i , 6 ) * RSLT(6) +
+			    QUADRIC  ( i , 7 ) * RSLT(7) +
+			    QUADRIC  ( i , 8 ) * RSLT(8) - 1;			    
+			if (fabs(dist) > 1.e-4 * LC )quad = false;
+		    }		    
+		    if ( quad ) 
+		    {
+			printf("quadric surface %d found : %g %g %g %g %g %g %g %g %g\n",(*it)->classif_tag,
+			       RSLT(0),RSLT(1),RSLT(2),RSLT(3),RSLT(4),RSLT(5),RSLT(6),RSLT(7),RSLT(8));
+			(*it)->surf = new BDS_Quadric ( RSLT(0),RSLT(1),RSLT(2),RSLT(3),RSLT(4),RSLT(5),RSLT(6),RSLT(7),RSLT(8));
+
+			//test
+
+			FILE *f = fopen ("QUADRIC.pos","w");
+			fprintf(f,"View \"quadric\" {\n");
+			const int NNN = 20;
+			for (int I=0;I<NNN;I++)
+			{
+			    for (int J=0;J<NNN;J++)
+			    {
+				for (int K=0;K<NNN;K++)
+				{
+				    double u1 = (double)I/NNN;
+				    double v1 = (double)J/NNN;
+				    double w1 = (double)K/NNN;
+				    double X1 = Min[0] + u1 * (Max[0]-Min[0]);
+				    double Y1 = Min[1] + v1 * (Max[1]-Min[1]);
+				    double Z1 = Min[2] + w1 * (Max[2]-Min[2]);
+				    double u2 = (double)(I+1)/NNN;
+				    double v2 = (double)(J+1)/NNN;
+				    double w2 = (double)(K+1)/NNN;
+				    double X2 = Min[0] + u2 * (Max[0]-Min[0]);
+				    double Y2 = Min[1] + v2 * (Max[1]-Min[1]);
+				    double Z2 = Min[2] + w2 * (Max[2]-Min[2]);
+				    fprintf(f,"SH(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g};\n",X1,Y1,Z1,X2,Y1,Z1,X2,Y2,Z1,X1,Y2,Z1,X1,Y1,Z2,X2,Y1,Z2,X2,Y2,Z2,X1,Y2,Z2,
+					    (*it)->surf->signedDistanceTo (X1,Y1,Z1),
+					    (*it)->surf->signedDistanceTo (X2,Y1,Z1),
+					    (*it)->surf->signedDistanceTo (X2,Y2,Z1),
+					    (*it)->surf->signedDistanceTo (X1,Y2,Z1),
+					    (*it)->surf->signedDistanceTo (X1,Y1,Z2),
+					    (*it)->surf->signedDistanceTo (X2,Y1,Z2),
+					    (*it)->surf->signedDistanceTo (X2,Y2,Z2),
+					    (*it)->surf->signedDistanceTo (X1,Y2,Z2));
+				}
+			    }
+			}
+			fprintf(f,"};\n");
+			fclose(f);
 		    }
-		    else
-		    { 
-//			printf("non spherical surface found %g\n",distmax); 
-			delete sphere;
-		    }
+		    
 		}
 	    }
 	}
@@ -799,6 +807,7 @@ void BDS_Mesh :: classify ( double angle )
   printf("  end classifying %d edgetags %d vertextags\n",edgetag-1,vertextag-1);
 }
 double PointLessThanLexicographic::t = 0;
+double BDS_Vector::t = 0;
 
 bool BDS_Mesh :: read_stl ( const char *filename , const double tolerance)
 {

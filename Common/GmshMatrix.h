@@ -109,7 +109,7 @@ public:
 class GSL_Vector
 {
 private:
-  int r,c;
+  int r;
 public:
   inline int size() const {return r;}
   gsl_vector *data;
