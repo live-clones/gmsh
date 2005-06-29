@@ -395,6 +395,7 @@ typedef struct{
 #define DELAUNAY_ANISO 2
 #define DELAUNAY_TRIANGLE 3
 #define FRONTAL_NETGEN 4
+//#define DELAUNAY_TETGEN 5
 
 struct _Mesh{
   char name[256];
@@ -474,6 +475,7 @@ int AlgorithmeMaillage2DAnisotropeModeJF(Surface *s);
 void Maillage_Automatique_VieuxCode(Surface *pS, Mesh *m, int ori);
 int Mesh_Triangle(Surface *s);
 int Mesh_Netgen(Volume *v);
+//int Mesh_Tetgen(Volume *v);
 void Optimize_Netgen(Volume *v);
 void Optimize_Netgen(Mesh *m);
 

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.247 2005-06-11 02:01:38 geuzaine Exp $
+// $Id: Options.cpp,v 1.248 2005-06-29 10:02:55 tardieu Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -4432,6 +4432,7 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
   if(action & GMSH_SET){
     int algo = (int)val;
     if(algo != DELAUNAY_ISO && algo != FRONTAL_NETGEN){
+//    if(algo != DELAUNAY_ISO && algo != FRONTAL_NETGEN && algo != DELAUNAY_TETGEN){
       Msg(WARNING, "Unknown mesh algorithm: keeping existing value");
     }
     else{
@@ -4448,6 +4449,9 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
     default:
       WID->mesh_choice[3]->value(1);
       break;
+//    case DELAUNAY_TETGEN:
+//      WID->mesh_choice[3]->value(2);
+//      break;
     }
   }
 #endif

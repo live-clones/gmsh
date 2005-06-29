@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.59 2005-06-25 17:17:15 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.60 2005-06-29 10:02:55 tardieu Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -71,6 +71,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -o file               Specify mesh output file name");
   Msg(DIRECT, "  -format string        Set output mesh format (msh, unv, gref, p3d)");
   Msg(DIRECT, "  -algo string          Select mesh algorithm (iso, tri, aniso, netgen)");
+//  Msg(DIRECT, "  -algo string          Select mesh algorithm (iso, tri, aniso, netgen, tetgen)");
   Msg(DIRECT, "  -smooth int           Set number of mesh smoothing steps");
   Msg(DIRECT, "  -optimize             Optimize quality of tetrahedral elements");
   Msg(DIRECT, "  -order int            Set mesh order (1, 2)");
@@ -125,6 +126,9 @@ char *Get_BuildOptions(void)
 #if defined(HAVE_NETGEN)
     strcat(opt, "NETGEN ");
 #endif
+//#if defined(HAVE_TETGEN)
+//    strcat(opt, "TETGEN ");
+//#endif
 #if defined(HAVE_LIBJPEG)
     strcat(opt, "JPEG ");
 #endif
@@ -408,6 +412,8 @@ void Get_Options(int argc, char *argv[])
             CTX.mesh.algo2d = DELAUNAY_ANISO;
           else if(!strncmp(argv[i], "netgen", 6))
             CTX.mesh.algo3d = FRONTAL_NETGEN;
+//          else if(!strncmp(argv[i], "tetgen", 6))
+//            CTX.mesh.algo3d = DELAUNAY_TETGEN;
           else {
             fprintf(stderr, ERROR_STR "Unknown mesh algorithm\n");
             exit(1);

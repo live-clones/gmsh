@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.71 2005-06-24 18:14:15 geuzaine Exp $
+dnl $Id: configure.in,v 1.72 2005-06-29 10:02:54 tardieu Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -275,6 +275,36 @@ else
      echo "********************************************************************"
   fi
 fi
+
+
+#dnl Check if Tetgen is installed
+#AC_CHECK_FILE(./Tetgen/tetgen.h, TETGEN="yes", TETGEN="no")
+#if test "x${TETGEN}" = "xyes"; then
+#  if test "x$enable_tetgen" != "xno"; then
+#     GMSH_DIRS="${GMSH_DIRS} Tetgen"
+#     GMSH_LIBS="${GMSH_LIBS} -lGmshTetgen"
+#     FLAGS="-DHAVE_TETGEN ${FLAGS}"
+#     echo "********************************************************************"
+#     echo "You are building a version of Gmsh that contains Hang Si's"
+#     echo "Tetgen as an alternative 3D mesh generator. Tetgen is distributed"
+#     echo "under the GNU LGPL: see ./Tetgen/LICENSE for more info."
+#     echo "To disable Tetgen, run configure again with the --disable-tetgen"
+#     echo "option."
+#     echo "********************************************************************"
+#  fi
+#else
+#  if test "x$enable_tetgen" != "xno"; then
+#     echo "********************************************************************"
+#     echo "If you want to use Hang Si's Tetgen as an alternative "
+#     echo "3D mesh generator, please download Tetgen from the project's"
+#     echo "web site at http://www.tetgen.berlios.de, unpack the archive"
+#     echo "and move the files in the ./Tetgen subdirectory. Then"
+#     echo "run ./configure again."
+#     echo "Please note that by doing so, you agree with Tetgen's licensing"
+#     echo "requirements stated in ./Tetgen/LICENSE."
+#     echo "********************************************************************"
+#  fi
+#fi
 
 
 dnl Check for MathEval

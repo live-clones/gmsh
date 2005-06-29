@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.65 2005-05-15 01:44:26 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.66 2005-06-29 10:02:55 tardieu Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -875,6 +875,10 @@ void Maillage_Volume(void *data, void *dum)
   }
   else if((v->Typ != 99999) && Mesh_Netgen(v)) {
   }
+//  else if((v->Typ != 99999) && Mesh_Tetgen(v)) {
+//  }
+//  else if((v->Typ == 99999) && (CTX.mesh.algo3d != FRONTAL_NETGEN)
+//                            && (CTX.mesh.algo3d != DELAUNAY_TETGEN)) {
   else if((v->Typ == 99999) && (CTX.mesh.algo3d != FRONTAL_NETGEN)) {
     
     Simplexes_New = List_Create(10, 10, sizeof(Simplex *));
