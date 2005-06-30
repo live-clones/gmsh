@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.86 2005-06-27 19:33:00 geuzaine Exp $
+// $Id: Geom.cpp,v 1.87 2005-06-30 07:13:38 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -714,6 +714,13 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
 	}
 	strcat(Message, "}");
 	Msg(STATUS1N, Message);
+      }
+      else if (s->bds){
+	BDS_GeomEntity *g = s->bds->get_geom ( s->Num, 2);
+	if (g && g->surf)
+	  Msg(STATUS1N, "Surface %d (%s)", s->Num,g->surf->nameOf().c_str());
+	else
+	  Msg(STATUS1N, "Surface %d (unknown type)", s->Num);
       }
       else{
 	Msg(STATUS1N, "Surface %d", s->Num);

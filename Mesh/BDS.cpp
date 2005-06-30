@@ -448,7 +448,7 @@ void BDS_Mesh :: reverseEngineerCAD ( )
 			(*it)->surf = new BDS_Quadric ( RSLT(0),RSLT(1),RSLT(2),RSLT(3),RSLT(4),RSLT(5),RSLT(6),RSLT(7),RSLT(8));
 
 			//test
-
+			/*
 			FILE *f = fopen ("QUADRIC.pos","w");
 			fprintf(f,"View \"quadric\" {\n");
 			const int NNN = 20;
@@ -483,9 +483,9 @@ void BDS_Mesh :: reverseEngineerCAD ( )
 			    }
 			}
 			fprintf(f,"};\n");
-			fclose(f);
+			fclose(f);		    
+			*/   
 		    }
-		    
 		}
 	    }
 	}
