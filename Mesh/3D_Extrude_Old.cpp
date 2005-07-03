@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.37 2005-06-25 04:05:40 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.38 2005-07-03 08:00:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -55,9 +55,9 @@
 extern Context_T CTX;
 extern Mesh *LOCAL, *THEM;
 
-static Tree_T *Tree_Ares, *Tree_Swaps;
+static Tree_T *Tree_Ares = NULL, *Tree_Swaps = NULL;
 static Volume *THEV;
-static int TEST_IS_ALL_OK, NbLayer;
+static int BAD_TETS, TRY_INVERSE, NbLayer;
 static int NbElmLayer[MAXLAYERS];
 static int ZonLayer[MAXLAYERS];
 static int LineLayer[MAXLAYERS + 1];
@@ -71,9 +71,8 @@ typedef struct{
 
 static int compnxn(const void *a, const void *b)
 {
-  nxn *q, *w;
-  q = (nxn *) a;
-  w = (nxn *) b;
+  nxn *q = (nxn *) a;
+  nxn *w = (nxn *) b;
   if(q->a > w->a)
     return 1;
   if(q->a < w->a)
@@ -204,7 +203,7 @@ static void Extrude_Simplex_Phase3(void *data, void *dum)
       List_Read(s->V[0]->Extruded_Points, k, &v1);
       List_Read(s->V[1]->Extruded_Points, k, &v2);
       List_Read(s->V[2]->Extruded_Points, k, &v3);
-      news = Create_Simplex(v1, v2, v3, NULL);
+      Simplex *news = Create_Simplex(v1, v2, v3, NULL);
       news->iEnt = SurfLayer[i];
       Tree_Add(THEV->Simp_Surf, &news);
     }
@@ -381,8 +380,9 @@ static void Extrude_Simplex_Phase2(void *data, void *dum)
       List_Read(s->V[2]->Extruded_Points, k + 1, &v6);
       k++;
       if(are_exist(v4, v2, Tree_Ares) &&
-         are_exist(v5, v3, Tree_Ares) && are_exist(v1, v6, Tree_Ares)) {
-        TEST_IS_ALL_OK++;
+         are_exist(v5, v3, Tree_Ares) && 
+	 are_exist(v1, v6, Tree_Ares)) {
+        BAD_TETS++;
         if(!are_exist(v4, v2, Tree_Swaps)) {
           are_del(v4, v2, Tree_Ares);
           are_cree(v1, v5, Tree_Ares);
@@ -403,8 +403,9 @@ static void Extrude_Simplex_Phase2(void *data, void *dum)
         }
       }
       else if(are_exist(v1, v5, Tree_Ares) &&
-              are_exist(v2, v6, Tree_Ares) && are_exist(v4, v3, Tree_Ares)) {
-        TEST_IS_ALL_OK++;
+              are_exist(v2, v6, Tree_Ares) && 
+	      are_exist(v4, v3, Tree_Ares)) {
+        BAD_TETS++;
         if(!are_exist(v1, v5, Tree_Swaps)) {
           are_del(v1, v5, Tree_Ares);
           are_cree(v4, v2, Tree_Ares);
@@ -486,7 +487,11 @@ static void Extrude_Surface2(void *data, void *dum)
     return;
   Surface *s = *(Surface **) data;
 
-  Tree_Action(s->Simplexes, Extrude_Simplex_Phase2);
+  // we could try a whole bunch of orderings...
+  if(TRY_INVERSE)
+    Tree_Action_Inverse(s->Simplexes, Extrude_Simplex_Phase2);
+  else
+    Tree_Action(s->Simplexes, Extrude_Simplex_Phase2);
 }
 
 static void Extrude_Surface3(void *data, void *dum)
@@ -589,26 +594,8 @@ static void Extrude_Curve(void *data, void *dum)
     LineLayer[i + 1] = (int)(5 * K1) + (int)((i + 1) * K2) + c->Num;
   }
 
+  List_Action(c->Vertices, Extrude_Vertex);
   Tree_Action(c->Simplexes, Extrude_Seg);
-}
-
-static void Extrude_Pnt(Vertex * V1)
-{
-  int k = 0;
-  for(int i = 0; i < NbLayer; i++) {
-    for(int j = 0; j < NbElmLayer[i]; j++) {
-      Vertex *v1, *v2;
-      List_Read(V1->Extruded_Points, k, &v1);
-      List_Read(V1->Extruded_Points, k + 1, &v2);
-      if(LineLayer[i]) {
-        Simplex *s = Create_Simplex(v1, v2, NULL, NULL);
-        s->iEnt = LineLayer[i];
-        Tree_Add(THEV->Lin_Surf, &s);
-      }
-      k++;
-    }
-  }
-
 }
 
 static void Extrude_Point(void *data, void *dum)
@@ -619,6 +606,7 @@ static void Extrude_Point(void *data, void *dum)
   Vertex *v = *(Vertex **) data;
 
   Msg(INFO, "Extruding Vertex %d", v->Num);
+
   for(int i = 0; i < NbLayer; i++) {
     LineLayer[i] = (int)(4 * K1) + (int)((i + 1) * K2) + v->Num;
   }
@@ -628,27 +616,38 @@ static void Extrude_Point(void *data, void *dum)
   Vertex **pV;
   if((pV = (Vertex **) Tree_PQuery(THEM->Vertices, &v))) {
     Extrude_Vertex(pV, NULL);
-    Extrude_Pnt(*pV);
+    int k = 0;
+    for(int i = 0; i < NbLayer; i++) {
+      for(int j = 0; j < NbElmLayer[i]; j++) {
+	Vertex *v1, *v2;
+	List_Read((*pV)->Extruded_Points, k, &v1);
+	List_Read((*pV)->Extruded_Points, k + 1, &v2);
+	if(LineLayer[i]) {
+	  Simplex *s = Create_Simplex(v1, v2, NULL, NULL);
+	  s->iEnt = LineLayer[i];
+	  Tree_Add(THEV->Lin_Surf, &s);
+	}
+	k++;
+      }
+    }
   }
-
+  
 }
 
 void FreeEP(void *a, void *b)
 {
   Vertex *v = *(Vertex **) a;
-  Free_ExtrudedPoints(v->Extruded_Points);
-  v->Extruded_Points = NULL;
+  if(v->Extruded_Points){
+    Free_ExtrudedPoints(v->Extruded_Points);
+    v->Extruded_Points = NULL;
+  }
 }
 
 void Extrude_Mesh_Old(Mesh * M)
 {
-  int j;
-  Mesh MM;
-
   InitExtrudeParams();
-  Tree_Ares = Tree_Create(sizeof(nxn), compnxn);
-  Tree_Swaps = Tree_Create(sizeof(nxn), compnxn);
 
+  Mesh MM;
   LOCAL = &MM;
   THEM = M;
 
@@ -657,23 +656,43 @@ void Extrude_Mesh_Old(Mesh * M)
   Tree_Action(THEM->Vertices, FreeEP);
 
   Create_BgMesh(WITHPOINTS, .2, LOCAL);
-
   THEV = Create_Volume(1, MSH_VOLUME);
   Tree_Add(M->Volumes, &THEV);
+
+  TRY_INVERSE = 0;
+
+ try_again:
+
+  if(Tree_Ares)
+    Tree_Delete(Tree_Ares);
+  if(Tree_Swaps)
+    Tree_Delete(Tree_Swaps);
+  Tree_Ares = Tree_Create(sizeof(nxn), compnxn);
+  Tree_Swaps = Tree_Create(sizeof(nxn), compnxn);
+
   Tree_Action(M->Surfaces, Extrude_Surface1);
 
   if(!CTX.mesh.oldxtrude_recombine) {
-    j = 0;
+    int j = 0;
     do {
-      TEST_IS_ALL_OK = 0;
+      BAD_TETS = 0;
       Tree_Action(M->Surfaces, Extrude_Surface2);
-      Msg(INFO, "%d swaps", TEST_IS_ALL_OK);
-      if(TEST_IS_ALL_OK == j)
-        break;
-      j = TEST_IS_ALL_OK;
-    } while(TEST_IS_ALL_OK);
+      Msg(INFO, "%d swaps", BAD_TETS);
+      if(BAD_TETS == j && j != 0) {
+	if(!TRY_INVERSE){
+	  Msg(WARNING, "Unable to swap all edges: trying again...");
+	  TRY_INVERSE = 1;
+	  goto try_again;
+	}
+	else{
+	  Msg(GERROR, "Unable to swap all edges (output mesh will be incorrect): use -recombine");
+	  break;
+	}
+      }
+      j = BAD_TETS;
+    } while(BAD_TETS);
   }
-
+  
   Tree_Action(M->Surfaces, Extrude_Surface3);
   Tree_Action(M->Curves, Extrude_Curve);
   Tree_Action(M->Points, Extrude_Point);
