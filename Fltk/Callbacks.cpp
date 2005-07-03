@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.358 2005-06-29 10:02:55 tardieu Exp $
+// $Id: Callbacks.cpp,v 1.359 2005-07-03 08:02:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1080,11 +1080,8 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
 		  (WID->mesh_choice[5]->value() == 0) ? 1 : 2);
   opt_mesh_algo3d(0, GMSH_SET,
 		  (WID->mesh_choice[3]->value() == 0) ? DELAUNAY_ISO :
-		  FRONTAL_NETGEN);
-//  opt_mesh_algo3d(0, GMSH_SET,
-//		  (WID->mesh_choice[3]->value() == 0) ? DELAUNAY_ISO :
-//		  (WID->mesh_choice[3]->value() == 1) ? FRONTAL_NETGEN :
-//		  DELAUNAY_TETGEN);
+		  (WID->mesh_choice[3]->value() == 1) ? FRONTAL_NETGEN :
+		  DELAUNAY_TETGEN);
   opt_mesh_color_carousel(0, GMSH_SET, WID->mesh_choice[4]->value());
   opt_mesh_quality_type(0, GMSH_SET, WID->mesh_choice[6]->value());
 }

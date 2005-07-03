@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.43 2005-06-10 20:59:15 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.44 2005-07-03 08:02:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -501,6 +501,32 @@ int compareSimplex(const void *a, const void *b)
   Simplex *q = *(Simplex **) a;
   Simplex *w = *(Simplex **) b;
   return (q->Num - w->Num);
+}
+
+int compareSimplexBarycenter(const void *a, const void *b)
+{
+  Simplex *q = *(Simplex **) a;
+  Simplex *w = *(Simplex **) b;
+  int nq = q->V[3] ? 4 : q->V[2] ? 3 : q->V[1] ? 2 : 1;
+  int nw = w->V[3] ? 4 : w->V[2] ? 3 : w->V[1] ? 2 : 1;
+  double bq, bw, TOL = CTX.lc * 1.e-6;
+
+  bq = bw = 0.;
+  for(int i = 0; i < nq; i++) bq += q->V[i]->Pos.X;
+  for(int i = 0; i < nw; i++) bw += w->V[i]->Pos.X;
+  if(bq-bw > TOL) return 1; else if(bq-bw < -TOL) return -1;
+
+  bq = bw = 0.;
+  for(int i = 0; i < nq; i++) bq += q->V[i]->Pos.Y;
+  for(int i = 0; i < nw; i++) bw += w->V[i]->Pos.Y;
+  if(bq-bw > TOL) return 1; else if(bq-bw < -TOL) return -1;
+
+  bq = bw = 0.;
+  for(int i = 0; i < nq; i++) bq += q->V[i]->Pos.Z;
+  for(int i = 0; i < nw; i++) bw += w->V[i]->Pos.Z;
+  if(bq-bw > TOL) return 1; else if(bq-bw < -TOL) return -1;
+
+  return 0;
 }
 
 int Simplex::Pt_In_Simplexe(Vertex * v, double uvw[3], double tol)

@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.62 2005-06-25 04:05:40 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.63 2005-07-03 08:02:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1623,7 +1623,6 @@ int _p3d_cmp_entities(const void *a, const void *b)
   return (*e1)->iEnt - (*e2)->iEnt;
 }
 
-
 int _p3d_cmp_surf_num(const void *a, const void *b)
 {
   Surface **e1 = (Surface **) a;
@@ -1674,7 +1673,6 @@ void _p3d_print_hex(List_T *ListHex, int Nu, int Nv, int Nw)
   double coord;
   Hexahedron *pH;
 
-  
   for (c = 0; c < 3; c++) {
     for (k = 0; k < (Nu - 1); k++) {
       for (j = 0; j < (Nv - 1); j++) {

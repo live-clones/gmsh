@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.72 2005-06-29 10:02:54 tardieu Exp $
+dnl $Id: configure.in,v 1.73 2005-07-03 08:02:23 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -66,6 +66,9 @@ AC_ARG_ENABLE(triangle,
 AC_ARG_ENABLE(netgen,
               AC_HELP_STRING([--enable-netgen],
                              [compile Netgen if available (default=yes)]))
+AC_ARG_ENABLE(tetgen,
+              AC_HELP_STRING([--enable-tetgen],
+                             [compile Tetgen if available (default=yes)]))
 AC_ARG_ENABLE(matheval,
               AC_HELP_STRING([--enable-matheval],
                              [compile MathEval if available (default=yes)]))
@@ -223,9 +226,9 @@ if test "x${TRIANGLE}" = "xyes"; then
      echo "********************************************************************"
      echo "You are building a version of Gmsh that contains Jonathan"
      echo "Shewchuk's Triangle as an alternative isotropic 2D mesh generator."
-     echo "Please note that by doing so, you agree to Triangle's licensing"
-     echo "requirements stated in ./Triangle/README. (Most notably, you can"
-     echo "only redistribute Gmsh if no compensation is received.)"
+     echo "Please note that by doing so, you agree with Triangle's licensing"
+     echo "requirements stated in ./Triangle/README. (Most notably, you may"
+     echo "then only redistribute Gmsh for non-commercial purposes.)"
      echo "To disable Triangle, run configure again with the --disable-triangle"
      echo "option."
      echo "********************************************************************"
@@ -239,13 +242,12 @@ else
      echo "unpack the archive and copy the two files 'triangle.c' and"
      echo "'triangle.h' in the ./Triangle subdirectory. Then run ./configure"
      echo "again."
-     echo "Please note that by doing so, you agree to Triangle's licensing"
+     echo "Please note that by doing so, you agree with Triangle's licensing"
      echo "requirements stated in ./Triangle/README. (Most notably, you may"
      echo "then only redistribute Gmsh if no compensation is received.)"
      echo "********************************************************************"
   fi
 fi
-
 
 dnl Check if Netgen is installed
 AC_CHECK_FILE(./Netgen/libsrc/meshing/meshclass.cpp, NETGEN="yes", NETGEN="no")
@@ -265,7 +267,7 @@ if test "x${NETGEN}" = "xyes"; then
 else
   if test "x$enable_netgen" != "xno"; then
      echo "********************************************************************"
-     echo "If you want to use Joachim Schoberl's Netgen as an alternative "
+     echo "If you want to use Joachim Schoberl's Netgen as an alternative"
      echo "3D mesh generator, please download Netgen from the project's"
      echo "web site at http://www.hpfem.jku.at/netgen/, unpack the archive"
      echo "and move the libsrc subdirectory in the ./Netgen subdirectory. Then"
@@ -276,36 +278,37 @@ else
   fi
 fi
 
-
-#dnl Check if Tetgen is installed
-#AC_CHECK_FILE(./Tetgen/tetgen.h, TETGEN="yes", TETGEN="no")
-#if test "x${TETGEN}" = "xyes"; then
-#  if test "x$enable_tetgen" != "xno"; then
-#     GMSH_DIRS="${GMSH_DIRS} Tetgen"
-#     GMSH_LIBS="${GMSH_LIBS} -lGmshTetgen"
-#     FLAGS="-DHAVE_TETGEN ${FLAGS}"
-#     echo "********************************************************************"
-#     echo "You are building a version of Gmsh that contains Hang Si's"
-#     echo "Tetgen as an alternative 3D mesh generator. Tetgen is distributed"
-#     echo "under the GNU LGPL: see ./Tetgen/LICENSE for more info."
-#     echo "To disable Tetgen, run configure again with the --disable-tetgen"
-#     echo "option."
-#     echo "********************************************************************"
-#  fi
-#else
-#  if test "x$enable_tetgen" != "xno"; then
-#     echo "********************************************************************"
-#     echo "If you want to use Hang Si's Tetgen as an alternative "
-#     echo "3D mesh generator, please download Tetgen from the project's"
-#     echo "web site at http://www.tetgen.berlios.de, unpack the archive"
-#     echo "and move the files in the ./Tetgen subdirectory. Then"
-#     echo "run ./configure again."
-#     echo "Please note that by doing so, you agree with Tetgen's licensing"
-#     echo "requirements stated in ./Tetgen/LICENSE."
-#     echo "********************************************************************"
-#  fi
-#fi
-
+dnl Check if Tetgen is installed
+AC_CHECK_FILE(./Tetgen/tetgen.h, TETGEN="yes", TETGEN="no")
+if test "x${TETGEN}" = "xyes"; then
+  if test "x$enable_tetgen" != "xno"; then
+     GMSH_DIRS="${GMSH_DIRS} Tetgen"
+     GMSH_LIBS="${GMSH_LIBS} -lGmshTetgen"
+     FLAGS="-DHAVE_TETGEN ${FLAGS}"
+     echo "********************************************************************"
+     echo "You are building a version of Gmsh that contains Hang Si's"
+     echo "Tetgen as an alternative 3D mesh generator."
+     echo "Please note that by doing so, you agree with Tetgen's licensing"
+     echo "requirements stated in ./Tetgen/LICENSE. (Most notably, you may"
+     echo "then only redistribute Gmsh for non-commercial purposes.)"
+     echo "To disable Tetgen, run configure again with the --disable-tetgen"
+     echo "option."
+     echo "********************************************************************"
+  fi
+else
+  if test "x$enable_tetgen" != "xno"; then
+     echo "********************************************************************"
+     echo "If you want to use Hang Si's Tetgen as an alternative"
+     echo "3D mesh generator, please download Tetgen from the project's"
+     echo "web site at http://www.tetgen.berlios.de, unpack the archive"
+     echo "and move the files predicates.cxx, tetgen.cxx and tetgen.h in"
+     echo "the ./Tetgen subdirectory. Then run ./configure again."
+     echo "Please note that by doing so, you agree with Tetgen's licensing"
+     echo "requirements stated in ./Tetgen/LICENSE. (Most notably, you may"
+     echo "then only redistribute Gmsh if no compensation is received.)"
+     echo "********************************************************************"
+  fi
+fi
 
 dnl Check for MathEval
 AC_CHECK_FILE(./MathEval/matheval.cpp, MATHEVAL="yes", MATHEVAL="no")
@@ -316,7 +319,6 @@ if test "x${MATHEVAL}" = "xyes"; then
      FLAGS="-DHAVE_MATH_EVAL ${FLAGS}"
   fi
 fi
-
 
 dnl Check for GSL
 if test "x$enable_gsl" != "xno"; then

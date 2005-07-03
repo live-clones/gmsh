@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.393 2005-06-17 20:29:07 geuzaine Exp $
+# $Id: Makefile,v 1.394 2005-07-03 08:02:23 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -144,13 +144,15 @@ source-common:
 
 source: source-common
 	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */*/*/CVS */.globalrc\
-          NR Triangle/triangle.* utils/commercial ${GMSH_VERSION_FILE} 
+          NR Triangle/triangle.* Tetgen/tetgen.* Tetgen/predicates.*\
+          utils/commercial ${GMSH_VERSION_FILE} 
 	tar zcvf gmsh-${GMSH_VERSION}-source.tgz gmsh-${GMSH_VERSION}
 
 source-commercial: source-common
 	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */*/*/CVS */.globalrc\
-          MathEval Triangle/triangle.* Netgen/libsrc TODO *.spec doc/gmsh.html doc/FAQ\
-          doc/README.cvs utils/commercial ${GMSH_VERSION_FILE}
+          MathEval Triangle/triangle.* Tetgen/tetgen.* Tetgen/predicates.* Netgen/libsrc\
+          TODO *.spec doc/gmsh.html doc/FAQ doc/README.cvs\
+          utils/commercial ${GMSH_VERSION_FILE}
 	cp -f utils/commercial/README gmsh-${GMSH_VERSION}/README
 	cp -f utils/commercial/LICENSE gmsh-${GMSH_VERSION}/doc/LICENSE
 	cp -f utils/commercial/License.cpp gmsh-${GMSH_VERSION}/Common/License.cpp

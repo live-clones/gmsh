@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2005-06-29 09:52:59 tardieu Exp $
+# $Id: Makefile,v 1.4 2005-07-03 08:02:24 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -21,14 +21,11 @@
 
 include ../variables
 
-
 LIB     = ../lib/libGmshTetgen.a
-INCLUDE = -I../Common -I.
 # Do not optimize (same as Triangle...) 
-#CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} -DNO_PARALLEL_THREADS -UWIN32 
-CFLAGS  =  ${FLAGS} ${INCLUDE} -DNO_PARALLEL_THREADS -UWIN32 
+CFLAGS  =  ${FLAGS} -DTETLIBRARY
 
-SRC =  predicates.cxx  tetgen.cxx
+SRC = predicates.cxx tetgen.cxx
 OBJ = ${SRC:.cxx=.o}
 
 .SUFFIXES: .o .cxx
@@ -38,8 +35,7 @@ ${LIB}: ${OBJ}
 	${RANLIB} ${LIB}
 
 .cxx.o:
-	${CXX} ${CFLAGS} -c predicates.cxx
-	${CXX} ${CFLAGS} -g -DTETLIBRARY -c tetgen.cxx
+	${CXX} ${CFLAGS} -c $<
 
 clean:
 	rm -f *.o
@@ -53,4 +49,5 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-tetgen.o:predicates.cxx tetgen.cxx tetgen.h
+predicates.o: predicates.cxx tetgen.h
+tetgen.o: tetgen.cxx tetgen.h

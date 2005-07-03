@@ -77,6 +77,7 @@ class Simplex : public SimplexBase {
 };
 
 int compareSimplex(const void *a, const void *b);
+int compareSimplexBarycenter(const void *a, const void *b);
 int compareFace(const void *a, const void *b);
 
 Simplex *Create_Simplex (Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);

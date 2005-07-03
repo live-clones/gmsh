@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.88 2005-06-10 20:59:15 geuzaine Exp $
+# $Id: Makefile,v 1.89 2005-07-03 08:02:24 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,7 @@ include ../variables
 
 LIB     = ../lib/libGmshMesh.a
 INCLUDE = -I../Numeric -I../NR -I../Common -I../DataStr -I../Geo -I../Mesh\
-          -I../Graphics -I../Parser -I../Fltk -I../Triangle\
+          -I../Graphics -I../Parser -I../Fltk -I../Triangle -I../Tetgen\
           -I../Netgen -I../Netgen/libsrc/include  -I../Netgen/libsrc/interface
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
@@ -53,6 +53,7 @@ SRC = 1D_Mesh.cpp \
         3D_Divide.cpp \
         3D_Bricks.cpp \
         3D_Mesh_Netgen.cpp \
+        3D_Mesh_Tetgen.cpp \
       BDS.cpp \
       MeshQuality.cpp \
       Create.cpp \
@@ -329,7 +330,16 @@ depend:
   ../Common/SmoothNormals.h Metric.h Matrix.h Create.h \
   ../Numeric/Numeric.h ../Common/Context.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
-BDS.o: BDS.cpp BDS.h ../Numeric/Numeric.h
+3D_Mesh_Tetgen.o: 3D_Mesh_Tetgen.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../Geo/Geo.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
+  ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h Metric.h Matrix.h Create.h \
+  ../Numeric/Numeric.h ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
+BDS.o: BDS.cpp BDS.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
+  ../Numeric/EigSolve.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 MeshQuality.o: MeshQuality.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \

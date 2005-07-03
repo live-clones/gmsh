@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.445 2005-06-29 10:02:55 tardieu Exp $
+// $Id: GUI.cpp,v 1.446 2005-07-03 08:02:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2214,7 +2214,7 @@ void GUI::create_option_window()
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Isotropic", 0, 0, 0},
         {"Netgen", 0, 0, 0},
-//        {"Tetgen", 0, 0, 0},
+        {"Tetgen", 0, 0, 0},
         {0}
       };
 

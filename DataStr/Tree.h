@@ -53,6 +53,13 @@ inline void Tree_Action(Tree_T *tree, void (*action) (void *data, void *dummy))
   avl_foreach(tree->root, action, AVL_FORWARD);
 }
 
+inline void Tree_Action_Inverse(Tree_T *tree, void (*action) (void *data, void *dummy))
+{
+  if(!tree) return;
+
+  avl_foreach(tree->root, action, AVL_BACKWARD);
+}
+
 
 #endif
 

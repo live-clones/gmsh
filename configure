@@ -853,6 +853,7 @@ Optional Features:
   --enable-parallel       enable parallel version (default=no)
   --enable-triangle       compile Triangle if available (default=yes)
   --enable-netgen         compile Netgen if available (default=yes)
+  --enable-tetgen         compile Tetgen if available (default=yes)
   --enable-matheval       compile MathEval if available (default=yes)
   --enable-jpeg           enable JPEG support (default=yes)
   --enable-z              enable ZLIB support (default=yes)
@@ -1374,6 +1375,11 @@ fi;
 # Check whether --enable-netgen or --disable-netgen was given.
 if test "${enable_netgen+set}" = set; then
   enableval="$enable_netgen"
+
+fi;
+# Check whether --enable-tetgen or --disable-tetgen was given.
+if test "${enable_tetgen+set}" = set; then
+  enableval="$enable_tetgen"
 
 fi;
 # Check whether --enable-matheval or --disable-matheval was given.
@@ -3749,9 +3755,9 @@ if test "x${TRIANGLE}" = "xyes"; then
      echo "********************************************************************"
      echo "You are building a version of Gmsh that contains Jonathan"
      echo "Shewchuk's Triangle as an alternative isotropic 2D mesh generator."
-     echo "Please note that by doing so, you agree to Triangle's licensing"
-     echo "requirements stated in ./Triangle/README. (Most notably, you can"
-     echo "only redistribute Gmsh if no compensation is received.)"
+     echo "Please note that by doing so, you agree with Triangle's licensing"
+     echo "requirements stated in ./Triangle/README. (Most notably, you may"
+     echo "then only redistribute Gmsh for non-commercial purposes.)"
      echo "To disable Triangle, run configure again with the --disable-triangle"
      echo "option."
      echo "********************************************************************"
@@ -3765,13 +3771,12 @@ else
      echo "unpack the archive and copy the two files 'triangle.c' and"
      echo "'triangle.h' in the ./Triangle subdirectory. Then run ./configure"
      echo "again."
-     echo "Please note that by doing so, you agree to Triangle's licensing"
+     echo "Please note that by doing so, you agree with Triangle's licensing"
      echo "requirements stated in ./Triangle/README. (Most notably, you may"
      echo "then only redistribute Gmsh if no compensation is received.)"
      echo "********************************************************************"
   fi
 fi
-
 
 echo "$as_me:$LINENO: checking for ./Netgen/libsrc/meshing/meshclass.cpp" >&5
 echo $ECHO_N "checking for ./Netgen/libsrc/meshing/meshclass.cpp... $ECHO_C" >&6
@@ -3812,7 +3817,7 @@ if test "x${NETGEN}" = "xyes"; then
 else
   if test "x$enable_netgen" != "xno"; then
      echo "********************************************************************"
-     echo "If you want to use Joachim Schoberl's Netgen as an alternative "
+     echo "If you want to use Joachim Schoberl's Netgen as an alternative"
      echo "3D mesh generator, please download Netgen from the project's"
      echo "web site at http://www.hpfem.jku.at/netgen/, unpack the archive"
      echo "and move the libsrc subdirectory in the ./Netgen subdirectory. Then"
@@ -3823,6 +3828,58 @@ else
   fi
 fi
 
+echo "$as_me:$LINENO: checking for ./Tetgen/tetgen.h" >&5
+echo $ECHO_N "checking for ./Tetgen/tetgen.h... $ECHO_C" >&6
+if test "${ac_cv_file___Tetgen_tetgen_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "./Tetgen/tetgen.h"; then
+  ac_cv_file___Tetgen_tetgen_h=yes
+else
+  ac_cv_file___Tetgen_tetgen_h=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file___Tetgen_tetgen_h" >&5
+echo "${ECHO_T}$ac_cv_file___Tetgen_tetgen_h" >&6
+if test $ac_cv_file___Tetgen_tetgen_h = yes; then
+  TETGEN="yes"
+else
+  TETGEN="no"
+fi
+
+if test "x${TETGEN}" = "xyes"; then
+  if test "x$enable_tetgen" != "xno"; then
+     GMSH_DIRS="${GMSH_DIRS} Tetgen"
+     GMSH_LIBS="${GMSH_LIBS} -lGmshTetgen"
+     FLAGS="-DHAVE_TETGEN ${FLAGS}"
+     echo "********************************************************************"
+     echo "You are building a version of Gmsh that contains Hang Si's"
+     echo "Tetgen as an alternative 3D mesh generator."
+     echo "Please note that by doing so, you agree with Tetgen's licensing"
+     echo "requirements stated in ./Tetgen/LICENSE. (Most notably, you may"
+     echo "then only redistribute Gmsh for non-commercial purposes.)"
+     echo "To disable Tetgen, run configure again with the --disable-tetgen"
+     echo "option."
+     echo "********************************************************************"
+  fi
+else
+  if test "x$enable_tetgen" != "xno"; then
+     echo "********************************************************************"
+     echo "If you want to use Hang Si's Tetgen as an alternative"
+     echo "3D mesh generator, please download Tetgen from the project's"
+     echo "web site at http://www.tetgen.berlios.de, unpack the archive"
+     echo "and move the files predicates.cxx, tetgen.cxx and tetgen.h in"
+     echo "the ./Tetgen subdirectory. Then run ./configure again."
+     echo "Please note that by doing so, you agree with Tetgen's licensing"
+     echo "requirements stated in ./Tetgen/LICENSE. (Most notably, you may"
+     echo "then only redistribute Gmsh if no compensation is received.)"
+     echo "********************************************************************"
+  fi
+fi
 
 echo "$as_me:$LINENO: checking for ./MathEval/matheval.cpp" >&5
 echo $ECHO_N "checking for ./MathEval/matheval.cpp... $ECHO_C" >&6
@@ -3854,7 +3911,6 @@ if test "x${MATHEVAL}" = "xyes"; then
      FLAGS="-DHAVE_MATH_EVAL ${FLAGS}"
   fi
 fi
-
 
 if test "x$enable_gsl" != "xno"; then
   if test "x${GSL_PREFIX}" != "x"; then
