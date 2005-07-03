@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.87 2005-06-30 07:13:38 remacle Exp $
+// $Id: Geom.cpp,v 1.88 2005-07-03 07:55:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -304,11 +304,17 @@ void getPlaneSurfaceNormal(Surface *s, double x, double y, double z, double n[3]
       t1[0] = x - c->beg->Pos.X;
       t1[1] = y - c->beg->Pos.Y;
       t1[2] = z - c->beg->Pos.Z;
-      for(int i = 1; i < List_Nbr(s->Generatrices); i++){
+      // 1) try to get a point close to 'beg' on the same curve
+      // 2) if we are really unlucky and these two points are aligned 
+      // with (x,y,z), which we know is inside or on the boundary of
+      // the surface, then get a point from the next generatrice
+      // 3) repeat
+      for(int i = 0; i < List_Nbr(s->Generatrices); i++){
 	List_Read(s->Generatrices, i, &c);
-	t2[0] = x - c->beg->Pos.X;
-	t2[1] = y - c->beg->Pos.Y;
-	t2[2] = z - c->beg->Pos.Z;
+	Vertex v = InterpolateCurve(c, 0.1, 0);
+	t2[0] = x - v.Pos.X;
+	t2[1] = y - v.Pos.Y;
+	t2[2] = z - v.Pos.Z;
 	prodve(t1, t2, n);
 	if(norme(n))
 	  break;
