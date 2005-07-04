@@ -34,7 +34,7 @@ public:
 
     std::list<BDS_Triangle *> t;
     std::list<BDS_Edge *>     e;
-
+    BDS_Point   *p;
     BDS_Surface *surf;
 
     inline bool operator <  ( const BDS_GeomEntity & other ) const
@@ -45,7 +45,7 @@ public:
 	    return false;
 	}
     BDS_GeomEntity (int a, int b)
-	: classif_tag (a),classif_degree(b),surf(0)
+	: classif_tag (a),classif_degree(b),p(0),surf(0)
 	{
 	}
 };
@@ -185,6 +185,7 @@ class BDS_Edge
     std::vector <BDS_Triangle *> _faces;
 public:
     bool deleted;
+    int status;
     BDS_Point *p1,*p2;
     BDS_GeomEntity *g;
     inline BDS_Triangle* faces(int i) const
@@ -241,7 +242,7 @@ public:
     inline void oppositeof (BDS_Point * oface[2]) const; 
 
     BDS_Edge ( BDS_Point *A, BDS_Point *B )
-	: deleted(false), g(0)
+	: deleted(false), status(0),g(0)
 	{	    
 	    if (*A < *B) 
 	    {
@@ -262,6 +263,7 @@ class BDS_Triangle
 {
 public:
     bool deleted;
+    int status;
     BDS_Edge *e1,*e2,*e3;
     BDS_Vector N() const ;
     BDS_GeomEntity *g;
@@ -282,7 +284,7 @@ public:
 	  n[2] = e2->commonvertex (e3);
 	}
     BDS_Triangle ( BDS_Edge *A, BDS_Edge *B, BDS_Edge *C)
-	: deleted (false) , e1(A),e2(B),e3(C),g(0)
+	: deleted (false) , status(0), e1(A),e2(B),e3(C),g(0)
 	{	
 	    e1->addface(this);
 	    e2->addface(this);
@@ -320,6 +322,14 @@ public :
 	: a(A),b(B),c(C),d(D),e(E),f(F),g(G),h(H),i(I)
 	{
 	}
+
+    virtual BDS_Vector Gradient ( double x, double y, double z ) const 
+	{
+	    return BDS_Vector ( 2* ( a * x + d * y + e * z ) + g ,
+				2* ( d * x + b * y + f * z ) + h ,
+				2* ( e * x + f * y + c * z ) + i );
+	}
+
     virtual double signedDistanceTo (  double x, double y, double z ) const {
 	const double q = 
 	    a * x * x +  
@@ -334,14 +344,7 @@ public :
 	return q;
     }
     virtual void projection ( double xa, double ya, double za,
-			      double &x, double &y, double &z) const 
-	{
-	    // not done yet
-	    // this is not as simple as for the plane
-	    // you shoud have min (signedDistance), this can
-	    // be done using the GSL... 2 BE DONE !!!!!
-	    throw;
-	}
+			      double &x, double &y, double &z) const ;
     virtual std::string nameOf () const {return std::string("Quadric");}
 };
 

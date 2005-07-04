@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.359 2005-07-03 08:02:23 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.360 2005-07-04 15:07:40 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -836,10 +836,122 @@ void wizard_update_edges_cb(CALLBACK_ARGS)
     if (THEM && THEM->bds && WID)
     {
 	const double angle = WID->swiz_value[0]->value() * M_PI / 180;
-	printf ("value = %g\n",angle);
+	THEM->bds->classify (angle);
+	BDS_To_Mesh (THEM); 
+	char a[25];
+	sprintf(a,"%d",Tree_Nbr(THEM->Points));
+	WID->swiz_output[1]->value(a);
+	sprintf(a,"%d",Tree_Nbr(THEM->Curves));
+	WID->swiz_output[2]->value(a);
+	sprintf(a,"%d",Tree_Nbr(THEM->Surfaces));
+	WID->swiz_output[3]->value(a);
+	Draw();
+    }
+}
+
+void wizard_update_more_edges_cb(CALLBACK_ARGS)
+{
+    Vertex *v;
+    Curve *c;
+    Surface *s;
+    int n,p[100];
+    extern  void BDS_To_Mesh(Mesh *m);
+    if (THEM && THEM->bds && WID)
+    {
+	const double angle = WID->swiz_value[2]->value() * M_PI / 180;
 	THEM->bds->classify (angle);
 	BDS_To_Mesh (THEM); 
 	Draw();
+	n=0;
+	while(1) {
+	    Msg(STATUS3N, "Adding new Model Edges");
+	    if(n == 0)
+		Msg(ONSCREEN, "Select Model Edges\n"
+		    "[Press 'q' to abort or 'e' end]");
+	    if(n == 1)
+		Msg(ONSCREEN, "Select Model Edge\n"
+		    "[Press 'u' to undo last selection, 'q' to abort, 'e' end]");
+	    char ib = SelectEntity(ENT_LINE, &v, &c, &s);
+	    printf("ib = %c\n",ib);
+	    if(ib == 'l') {
+		p[n++] = c->Num;
+		printf("line %d has been selected\n",c->Num);
+	    }
+	    if(ib == 'u') {
+		if(n > 0){
+		    ZeroHighlightEntityNum(p[n-1], 0, 0);
+		    Draw(); // inefficient, but hard to do otherwise
+		    n--;
+		}
+	    }
+	    if(ib == 'q') {
+		ZeroHighlight(THEM);
+		Msg(ONSCREEN, "");
+		Draw(); 
+		Msg(STATUS3N, "Ready");
+		const double angle = WID->swiz_value[0]->value() * M_PI / 180;
+		THEM->bds->classify (angle);
+		BDS_To_Mesh (THEM); 
+		Draw();
+		break;
+	    }
+	    if(ib == 'e') {
+		for (int i=0;i<n;i++)
+		{
+		    BDS_GeomEntity *g = THEM->bds->get_geom(p[i],1);
+		    std::list<BDS_Edge*>::iterator it  = g->e.begin();
+		    std::list<BDS_Edge*>::iterator ite = g->e.end();
+		    while (it!=ite){			
+			BDS_Edge *e = (*it);
+			e->status = 1;
+			++it;
+		    }
+		}
+
+		ZeroHighlight(THEM);
+		Draw();
+		n = 0;
+	    }
+	}
+    }
+}
+
+void wizard_update_tolerance_cb(CALLBACK_ARGS)
+{
+    extern  void BDS_To_Mesh(Mesh *m);    
+    
+    if (THEM && THEM->bds && WID)
+    {
+	const double tol = WID->swiz_value[1]->value();
+	if (THEM->bds)delete THEM->bds;
+	THEM->bds = new BDS_Mesh;
+	printf("reading file %s\n",WID->surfmesh_filename.c_str());
+	THEM->bds->read_stl ( WID->surfmesh_filename.c_str(), tol );
+	BDS_To_Mesh (THEM); 
+	SetBoundingBox(); 
+	char a[25];
+	sprintf(a,"%d",THEM->bds->points.size());
+	WID->swiz_output[0]->value(a);
+	WID->swiz_output[1]->value("0");
+	WID->swiz_output[2]->value("0");
+	WID->swiz_output[3]->value("0");
+	Draw();
+    }
+}
+
+void wizard_update_next_cb(CALLBACK_ARGS)
+{
+    if (WID)
+    {
+	WID->swiz_wiz->next();
+    }
+}
+
+void wizard_update_prev_cb(CALLBACK_ARGS)
+{
+    if (WID)
+    {
+	WID->swiz_wiz->prev();
     }
 }
 

@@ -53,6 +53,7 @@
 #endif
 
 #include <vector>
+#include <string>
 
 #include "Opengl_Window.h"
 #include "Colorbar_Window.h"
@@ -162,8 +163,9 @@ public:
   Fl_Button        *swiz_push_butt[20] ;
   Fl_Value_Input   *swiz_value[50] ;
   Fl_Input         *swiz_input[20] ;
-  Fl_Choice        *swiz_choice[20] ;
-
+  Fl_Output        *swiz_output[20] ;
+  Fl_Choice        *swiz_choice[20] ;  
+  std::string surfmesh_filename;
   // Option window
   Fl_Window        *opt_window ;
   Fl_Hold_Browser  *opt_browser ;
@@ -269,7 +271,7 @@ public:
   void create_menu_window();
   void create_graphic_window();
   void create_option_window();
-  void create_surface_mesh_wizard();
+  void create_surface_mesh_wizard(const char * = 0);
   void hide_all_option_groups();
   void create_general_options_window();
   void create_geometry_options_window();

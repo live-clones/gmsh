@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.446 2005-07-03 08:02:23 geuzaine Exp $
+// $Id: GUI.cpp,v 1.447 2005-07-04 15:07:40 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1612,62 +1612,137 @@ void GUI::reset_external_view_list()
   }
 }
 
-void GUI::create_surface_mesh_wizard()
+void GUI::create_surface_mesh_wizard(const char *name)
 {
-    int width = 42 * fontsize;
-    int height = 12 * BH + 5 * WB;
+    if (name)
+	surfmesh_filename = name; 
 
-    if(swiz_window) {
+    int width = 42 * fontsize;
+    int height = 5 * BH + 5 * WB;
+
+    if(swiz_window) {	
 	swiz_window->show();
 	return;
     }
-    swiz_window = new Dialog_Window(width, height);
+    swiz_window = new Dialog_Window(width, height, "Surface Mesh Wizard");
     swiz_window->box(GMSH_WINDOW_BOX);
+//    swiz_window->set_modal();
 
-    swiz_wiz = new Fl_Wizard(0, 0, width, height, "Surface Mesh Wizard");
+    swiz_wiz = new Fl_Wizard(0, 0, width, height, "Surface Mesh Wizard");    
     {
-	Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
+//	Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
+	{
+	    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "STL File");
+	    swiz_value[1] = new Fl_Value_Input(2 * WB, 2 * WB + 0 * BH, IW, BH, "Distance Tolerance");
+	    swiz_value[1]->value(5.e-7);
+	    swiz_value[1]->minimum(0);
+	    swiz_value[1]->maximum(1.e-4);
+	    swiz_value[1]->step(1.e-7);
+	    swiz_value[1]->align(FL_ALIGN_RIGHT);
+	    swiz_output[0] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Number of Nodes after Merge");
+	    swiz_output[0]->align(FL_ALIGN_RIGHT);
+	    swiz_output[0]->value("0");
+	    {
+		Fl_Return_Button *b = new Fl_Return_Button(width - 4 * BB - 4 * WB, height - BH - WB, BB, BH, "Apply");
+		b->callback(wizard_update_tolerance_cb);
+	    }
+	    {
+		Fl_Button *b = new Fl_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Next");
+		b->callback(wizard_update_next_cb);
+	    }
+	    {
+		Fl_Button *b = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Prev");
+		b->callback(wizard_update_prev_cb);
+	    }
+	    {
+		Fl_Button *b = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
+		b->callback(cancel_cb, (void *)swiz_window);
+	    }
+	    
+	    o->end();
+	}	
 	{
 	    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Model Edge Detection");
-	    swiz_value[0] = new Fl_Value_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Treshold Dihedral Angle");
+	    swiz_value[0] = new Fl_Value_Input(2 * WB, 2 * WB + 0 * BH, IW, BH, "Treshold Dihedral Angle");
 	    swiz_value[0]->value(180/8);
 	    swiz_value[0]->minimum(0);
 	    swiz_value[0]->maximum(90);
 	    swiz_value[0]->step(1);
 	    swiz_value[0]->align(FL_ALIGN_RIGHT);
+	    swiz_output[1] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Number of Model Vertices");
+	    swiz_output[1]->align(FL_ALIGN_RIGHT);
+	    swiz_output[1]->value("0");
+	    swiz_output[2] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Number of Model Edges");
+	    swiz_output[2]->align(FL_ALIGN_RIGHT);
+	    swiz_output[2]->value("0");
+	    swiz_output[3] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Number of Model Faces");
+	    swiz_output[3]->align(FL_ALIGN_RIGHT);
+	    swiz_output[3]->value("0");
 	    {
-		Fl_Return_Button *b = new Fl_Return_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Apply");
+		Fl_Return_Button *b = new Fl_Return_Button(width - 4 * BB - 4 * WB, height - BH - WB, BB, BH, "Apply");
 		b->callback(wizard_update_edges_cb);
 	    }
 	    {
-		Fl_Button *b = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Next");
-//		b->callback(options_save_cb);
+		Fl_Button *b = new Fl_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Next");
+		b->callback(wizard_update_next_cb);
+	    }
+	    {
+		Fl_Button *b = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Prev");
+		b->callback(wizard_update_prev_cb);
 	    }
 	    {
 		Fl_Button *b = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
 		b->callback(cancel_cb, (void *)swiz_window);
+	    }	    
+	    o->end();
+	}	
+	{ 
+	    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Select More Edges");
+	    swiz_value[2] = new Fl_Value_Input(2 * WB, 2 * WB + 0 * BH, IW, BH, "Treshold Dihedral Angle For Extra Edges");
+	    swiz_value[2]->value(180/8);
+	    swiz_value[2]->minimum(0);
+	    swiz_value[2]->maximum(90);
+	    swiz_value[2]->step(1);
+	    swiz_value[2]->align(FL_ALIGN_RIGHT);
+	    {
+		Fl_Return_Button *b = new Fl_Return_Button(width - 4 * BB - 4 * WB, height - BH - WB, BB, BH, "Apply");
+		b->callback(wizard_update_more_edges_cb);
 	    }
-
+	    {
+		Fl_Button *b = new Fl_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Next");
+		b->callback(wizard_update_next_cb);
+	    }
+	    {
+		Fl_Button *b = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Prev");
+		b->callback(wizard_update_prev_cb);
+	    }
+	    {
+		Fl_Button *b = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
+		b->callback(cancel_cb, (void *)swiz_window);
+	    }	    
 	    o->end();
 	}	
 	{
 	    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Reverse Engineering the CAD");
 	    {
-		Fl_Return_Button *b = new Fl_Return_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Apply");
-//		b->callback(wizard_update_edges_cb);
+		Fl_Return_Button *b = new Fl_Return_Button(width - 4 * BB - 4 * WB, height - BH - WB, BB, BH, "Apply");
+		b->callback(wizard_update_edges_cb);
 	    }
 	    {
-		Fl_Button *b = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Next");
-//		b->callback(options_save_cb);
+		Fl_Button *b = new Fl_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Next");
+		b->callback(wizard_update_next_cb);
+	    }
+	    {
+		Fl_Button *b = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Prev");
+		b->callback(wizard_update_prev_cb);
 	    }
 	    {
 		Fl_Button *b = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
 		b->callback(cancel_cb, (void *)swiz_window);
-	    }
-
+	    }	    
 	    o->end();
 	}	
-	o->end();
+//	o->end();
     } 
     swiz_wiz->end();
 }

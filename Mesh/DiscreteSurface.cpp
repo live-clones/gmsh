@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.16 2005-06-27 15:03:46 remacle Exp $
+// $Id: DiscreteSurface.cpp,v 1.17 2005-07-04 15:07:41 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -61,12 +61,69 @@ void Mesh_To_BDS(Surface *s, BDS_Mesh *m)
 
 }
 
+void BDS_To_Mesh_2(Mesh *m)
+{
+    Tree_Action(m->Vertices, Free_Vertex);  
+    Tree_Delete(m->Vertices);
+    m->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
+
+    {
+	std::set<BDS_Point*, PointLessThan>::iterator it   = m->bds_mesh->points.begin();
+	std::set<BDS_Point*, PointLessThan>::iterator ite  = m->bds_mesh->points.end();
+	while (it != ite)
+	{
+	    Vertex *vert = Create_Vertex((*it)->iD, (*it)->X,(*it)->Y,(*it)->Z, 1.0, 0.0);
+	    Tree_Add (m->Vertices,&vert);
+	    ++it;
+	}
+    }
+    {
+	std::set<BDS_Edge*, EdgeLessThan>::iterator it  = m->bds_mesh->edges.begin();
+	std::set<BDS_Edge*, EdgeLessThan>::iterator ite = m->bds_mesh->edges.end();
+	while(it!=ite)
+	{
+	    BDS_GeomEntity *g = (*it)->g;
+	    if (g && g->classif_degree == 1)
+	    {
+		Vertex *v1 = FindVertex((*it)->p1->iD, m);
+		Vertex *v2 = FindVertex((*it)->p2->iD, m);
+		SimplexBase *simp = Create_SimplexBase(v1,v2,NULL, NULL);
+		Curve *c = FindCurve (g->classif_tag,m);
+		simp->iEnt = g->classif_tag;
+		Tree_Insert(c->SimplexesBase, &simp);
+	    }
+	    ++it;
+	}
+    }
+    {
+	std::list<BDS_Triangle*>::iterator it  = m->bds_mesh->triangles.begin();
+	std::list<BDS_Triangle*>::iterator ite = m->bds_mesh->triangles.end();
+	while (it!=ite){
+	    BDS_Point *nod[3];
+	    (*it)->getNodes (nod);
+	    Vertex *v1 = FindVertex(nod[0]->iD, m);
+	    Vertex *v2 = FindVertex(nod[1]->iD, m);
+	    Vertex *v3 = FindVertex(nod[2]->iD, m);
+	    SimplexBase *simp = Create_SimplexBase(v1,v2,v3, NULL);
+	    BDS_GeomEntity *g = (*it)->g;
+	    Surface *s = FindSurface (g->classif_tag,m);
+	    simp->iEnt = g->classif_tag;
+	    Tree_Add(s->Simplexes, &simp);
+	    ++it;
+	}
+    }
+
+
+}
 void BDS_To_Mesh(Mesh *m)
 {
+    Tree_Action(m->Points, Free_Vertex);  
+    Tree_Delete(m->Points);
     Tree_Action(m->Surfaces, Free_Surface);
     Tree_Action(m->Curves, Free_Curve);
     Tree_Delete(m->Surfaces);
     Tree_Delete(m->Curves);
+    m->Points = Tree_Create(sizeof(Vertex *), compareVertex);
     m->Curves = Tree_Create(sizeof(Curve *), compareCurve);
     m->Surfaces = Tree_Create(sizeof(Surface *), compareSurface);
 
@@ -84,6 +141,9 @@ void BDS_To_Mesh(Mesh *m)
 	    _Surf->bds = m->bds;
 	    End_Surface(_Surf);
 	    Tree_Add(m->Surfaces, &_Surf);
+	    
+	   
+
 	}
 	else if ((*it)->classif_degree ==1  )
 	{
@@ -94,6 +154,12 @@ void BDS_To_Mesh(Mesh *m)
 	    _c->bds = m->bds;
 	    End_Curve(_c);
 	    Tree_Add(m->Curves, &_c);
+	}
+	else if ((*it)->classif_degree == 0 )
+	{
+	    BDS_Point *p = (*it)->p;
+	    Vertex *_v = Create_Vertex(p->iD, p->X,p->Y,p->Z,1,0);	
+	    Tree_Add(m->Points, &_v);
 	}
 	++it;
     }
@@ -118,6 +184,8 @@ int MeshDiscreteSurface(Surface *s)
 	printf("iter %d done\n",iter);
 	iter ++;
       }
+      BDS_To_Mesh_2(THEM);
+      printf("mesh has %d vertices (%d)\n",Tree_Nbr(THEM->Vertices),THEM->bds->points.size());
       THEM->bds_mesh->save_gmsh_format ( "3.msh" );
     }
     return 1;

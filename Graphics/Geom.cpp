@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.88 2005-07-03 07:55:32 geuzaine Exp $
+// $Id: Geom.cpp,v 1.89 2005-07-04 15:07:40 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -156,10 +156,23 @@ void Draw_Curve(void *a, void *b)
       std::list<BDS_Edge*>::iterator ite = g->e.end();
       while (it!=ite){
 	BDS_Edge *e = (*it);
-	glBegin(GL_LINES);
-	glVertex3d(e->p1->X,e->p1->Y,e->p1->Z);
-	glVertex3d(e->p2->X,e->p2->Y,e->p2->Z);
-	glEnd();
+	if(CTX.geom.line_type < 1) {
+	    glBegin(GL_LINES);
+	    glVertex3d(e->p1->X,e->p1->Y,e->p1->Z);
+	    glVertex3d(e->p2->X,e->p2->Y,e->p2->Z);
+	    glEnd();
+	}
+	else
+	{
+	    x[0] = e->p1->X;
+	    y[0] = e->p1->Y;
+	    z[0] = e->p1->Z;
+	    x[1] = e->p2->X;
+	    y[1] = e->p2->Y;
+	    z[1] = e->p2->Z;
+	    Draw_Cylinder(c->ipar[3] ? CTX.geom.line_sel_width : CTX.geom.line_width,
+			  x, y, z, CTX.geom.light);
+	}
 	++it;
       }
     }
@@ -337,6 +350,7 @@ void Draw_Polygonal_Surface(Surface * s)
     glEnable(GL_POLYGON_OFFSET_FILL); // always!
 
     BDS_GeomEntity *g = s->bds->get_geom ( s->Num,2);	
+//    if (g->surf) glColor4ubv((GLubyte *) & CTX.color.geom.line);
     std::list<BDS_Triangle*>::iterator it  = g->t.begin();
     std::list<BDS_Triangle*>::iterator ite = g->t.end();
     while (it!=ite) {

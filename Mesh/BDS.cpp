@@ -13,6 +13,60 @@
 
 */
 
+void BDS_Quadric::projection ( double xa, double ya, double za,
+			       double &x, double &y, double &z) const 
+{
+    x = xa;
+    y = ya;
+    z = za;
+    const double residual = signedDistanceTo (xa,ya,za);
+
+    int ITER = 0;
+    while (1)
+    {
+	// the equation to solve is 
+	// X = XA + z * N (XA)
+	// N = Gradient F (XA)
+	// F(X) is the quadric :: X^t A X + X^t B + C
+	// z^2 ( N^t A N ) + z ( XA^t A N + N^t A XA + N^t B) + F ( XA )  
+	BDS_Vector grad = Gradient (x,y,z);
+	double coef1 = 
+	    a * grad.x * grad.x +  
+	    b * grad.y * grad.y +  
+	    c * grad.z * grad.z +
+	    2 * d *  grad.x * grad.y +    
+	    2 * e *  grad.x * grad.z +  
+	    2 * f *  grad.y * grad.z ;
+	double coef2 = 
+	    2* a * xa * grad.x +  
+	    2* b * ya * grad.y +  
+	    2* c * za * grad.z +  
+	    2 * d *  (xa * grad.y + ya *grad.x)+   
+	    2 * e *  (xa * grad.z + za *grad.x)+   
+	    2 * f *  (za * grad.y + ya *grad.z)+
+	    grad.x * g +grad.y * h +grad.z * i;
+	double delta = coef2*coef2 - 4.*coef1*residual;
+	if (delta < 0){
+	    printf ("aaargh error projection");
+	}
+	else
+	{
+	    double alpha;
+	    double alpha1 = (-coef2 + sqrt (delta) ) / (2*coef1);
+	    double alpha2 = (-coef2 - sqrt (delta) ) / (2*coef1);
+	    if (fabs(alpha1) > fabs(alpha2))alpha = alpha2;
+	    else alpha = alpha1;
+	    x = xa + alpha * grad.x;
+	    y = ya + alpha * grad.y;
+	    z = za + alpha * grad.z;
+	}
+//	printf("point (%g,%g,%g) ==> (%g,%g,%g) dist %g\n",
+//	       xa,ya,za,x,y,z,signedDistanceTo (x,y,z));;
+	if (ITER++ == 1)	
+	    break;
+   }
+}
+
 BDS_Vector::BDS_Vector (const BDS_Point &p2,const BDS_Point &p1)
     : x(p2.X-p1.X),y(p2.Y-p1.Y),z(p2.Z-p1.Z)
 {    
@@ -393,7 +447,7 @@ void BDS_Mesh :: reverseEngineerCAD ( )
 		    for (int i=0;i<pts.size();i++)
 		    {
 			const double dist = PLANE  ( i , 0 ) * RSLT(0)+PLANE  ( i , 1 ) * RSLT(1)+PLANE  ( i , 2 ) * RSLT(2)+1;
-			if (fabs(dist) > 1.e-6 * LC)plane = false;
+			if (fabs(dist) > 1.e-5 * LC)plane = false;
 		    }
 		    
 		    if ( plane ) 
@@ -402,8 +456,9 @@ void BDS_Mesh :: reverseEngineerCAD ( )
 			(*it)->surf = new BDS_Plane (RSLT(0),RSLT(1),RSLT(2));
 		    }
 		}
-		if (!(*it)->surf && pts.size() > 20)
+		if (!(*it)->surf && pts.size() > 10)
 		{
+		    printf("coucou quadrique\n");
 		    Double_Matrix QUADRIC  ( pts.size() , 9 );
 		    Double_Vector ONES  ( pts.size() );
 		    Double_Vector RSLT  ( 9 );
@@ -438,8 +493,9 @@ void BDS_Mesh :: reverseEngineerCAD ( )
 			    QUADRIC  ( i , 5 ) * RSLT(5) +
 			    QUADRIC  ( i , 6 ) * RSLT(6) +
 			    QUADRIC  ( i , 7 ) * RSLT(7) +
-			    QUADRIC  ( i , 8 ) * RSLT(8) - 1;			    
-			if (fabs(dist) > 1.e-4 * LC )quad = false;
+			    QUADRIC  ( i , 8 ) * RSLT(8) - 1;
+//			printf("dist = %g LC %g\n",dist,LC);
+			if (fabs(dist) > 1.e-3 * LC )quad = false;
 		    }		    
 		    if ( quad ) 
 		    {
@@ -592,13 +648,22 @@ void BDS_Mesh :: classify ( double angle )
 	while (it!=ite)
 	{
 	    BDS_Edge &e = *((BDS_Edge *) *it);
-	    if ( e.numfaces() == 1) 
+	    if ( e.status == 1)
+	    {
+		e.g = &EDGE_CLAS;
+	    }
+
+	    else if ( e.status == -1)
+	    {
+	    }
+
+	    else if ( e.numfaces() == 1) 
 	    {
 		e.g = &EDGE_CLAS;		
 	    }
 	    
 	    else if (e.numfaces() == 2 && 
-		     e.faces(0)->g != e.faces(1)->g )
+		     e.faces(0)->status != e.faces(1)->status )
 	    {
 		e.g = &EDGE_CLAS;
 	    }
@@ -768,6 +833,7 @@ void BDS_Mesh :: classify ( double angle )
 	    else {
 		add_geom (vertextag, 0);
 		(*it)->g = get_geom(vertextag++,0);
+		(*it)->g->p = (*it);
 	    }	    
 	    if (!(*it)->g)printf("argh\n");
 	    ++it;
@@ -796,6 +862,7 @@ void BDS_Mesh :: classify ( double angle )
 		{
 		    add_geom (vertextag, 0);
 		  (*it)->g = get_geom(vertextag++,0);
+		  (*it)->g->p = (*it);
 		}
 	    }
 	    ++it;
@@ -1086,7 +1153,7 @@ bool BDS_Mesh :: read_stl ( const char *filename , const double tolerance)
 	delete [] DATA;
     }
     fclose (f);    
-
+    classify ( M_PI );
     return true;
 }
 
@@ -1152,12 +1219,7 @@ bool BDS_Mesh :: read_mesh ( const char *filename )
 		      fgets (buffer,255,f);
 		      sscanf (buffer,"%d %d %d %d",&n1,&n2,&n3,&cl);
 		      BDS_Triangle *t = add_triangle(n1,n2,n3);
-		      t->g = get_geom  (cl,2);
-		      if (!t->g)
-			{
-			  add_geom (cl,2);
-			  t->g = get_geom  (cl,2);
-			}
+		      t->status = cl;
 		    }
 		}
 	      else if (!strcmp (name,"Quadrilaterals"))
@@ -1175,13 +1237,8 @@ bool BDS_Mesh :: read_mesh ( const char *filename )
 		      // pas 12
 		      // pas 13
 		      BDS_Triangle *t2 = add_triangle(n1,n3,n4);
-		      t1->g = get_geom  (cl,2);
-		      if (!t1->g)
-			{
-			  add_geom (cl,2);
-			  t1->g = get_geom  (cl,2);
-			}
-		      t2->g = t1->g;
+		      t1->status = cl;
+		      t2->status = cl;
 		    }
 		}
 	    }
@@ -1446,6 +1503,11 @@ bool BDS_Mesh ::split_edge ( BDS_Edge *e, double coord)
     mid_op2->g = g2;
 
     mid->g = ge;
+
+    if (mid->g->surf)
+    {
+	mid->g->surf->projection ( mid->X,mid->Y,mid->Z,mid->X,mid->Y,mid->Z);
+    }
 
     triangles.push_back(t1); 
     triangles.push_back (t2); 
@@ -1742,7 +1804,7 @@ bool BDS_Mesh ::smooth_point_b ( BDS_Point *p  )
 
     if (p->g->surf)
     {
-//	p->g->surf->projection ( X,Y,Z,p->X,p->Y,p->Z);
+	p->g->surf->projection ( p->X,p->Y,p->Z,p->X,p->Y,p->Z);
 //	printf("coucou\n");
     }
     else
@@ -1781,7 +1843,7 @@ bool BDS_Mesh ::smooth_point ( BDS_Point *p , BDS_Mesh *geom_mesh )
     }
     else
     {
-//	return false;
+	return false;
 	p->X = X;
 	p->Y = Y;
 	p->Z = Z;

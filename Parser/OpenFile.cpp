@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.80 2005-06-27 15:03:46 remacle Exp $
+// $Id: OpenFile.cpp,v 1.81 2005-07-04 15:07:41 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -285,17 +285,20 @@ int MergeProblem(char *name, int warn_if_missing)
     if(!strcmp(ext, ".mesh"))
     {
       THEM->bds->read_mesh ( name );
+#if defined(HAVE_FLTK)
+      WID->create_surface_mesh_wizard(name);
+#endif
     }
-    else       
-      {
-	// STEREO LITOGRAPHY (STL) FILE
-	THEM->bds->read_stl ( name , 5.e-7 );
-      }
+    else
+    {
+#if defined(HAVE_FLTK)
+	WID->create_surface_mesh_wizard(name);
+#endif
+    }
+
+
     THEM->bds->save_gmsh_format ( "1.msh" );
     THEM->bds->classify ( M_PI / 8 );
-#if defined(HAVE_FLTK)
-    WID->create_surface_mesh_wizard();
-#endif
     THEM->bds->save_gmsh_format ( "2.msh" );
     BDS_To_Mesh (THEM);
     SetBoundingBox();
