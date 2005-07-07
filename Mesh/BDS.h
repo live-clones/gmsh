@@ -23,6 +23,8 @@ public :
     virtual void projection ( double xa, double ya, double za,
 			      double &x, double &y, double &z) const =0;
     virtual std::string nameOf () const = 0;
+//    virtual BDS_Vector Gradient ( double x, double y, double z ) const = 0;
+    virtual double normalCurv ( double x, double y, double z ) const = 0;
 };
 
 
@@ -295,7 +297,7 @@ public:
 
 class BDS_Plane : public  BDS_Surface
 {
-    double a,b,c;
+    double a,b,c,d;
 public :
     BDS_Plane (const double &A, const double &B, const double &C)
 	: a(A),b(B),c(C)
@@ -311,7 +313,14 @@ public :
 	    z = za + k * c;
 	}
     virtual std::string nameOf () const {return std::string("Plane");}
-
+    virtual BDS_Vector Gradient ( double x, double y, double z ) const
+	{
+	    return BDS_Vector ( a , b , c );
+	} 
+    virtual double normalCurv ( double x, double y, double z ) const
+	{
+	    return 0.0;
+	}
 };
 
 class BDS_Quadric : public  BDS_Surface
@@ -329,6 +338,8 @@ public :
 				2* ( d * x + b * y + f * z ) + h ,
 				2* ( e * x + f * y + c * z ) + i );
 	}
+
+    virtual double normalCurv ( double x, double y, double z ) const;
 
     virtual double signedDistanceTo (  double x, double y, double z ) const {
 	const double q = 

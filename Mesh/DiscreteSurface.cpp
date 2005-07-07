@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.17 2005-07-04 15:07:41 remacle Exp $
+// $Id: DiscreteSurface.cpp,v 1.18 2005-07-07 07:19:27 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -63,6 +63,8 @@ void Mesh_To_BDS(Surface *s, BDS_Mesh *m)
 
 void BDS_To_Mesh_2(Mesh *m)
 {
+    Msg(STATUS2, "Moving the surface mesh in the old gmsh structure\n");
+    
     Tree_Action(m->Vertices, Free_Vertex);  
     Tree_Delete(m->Vertices);
     m->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
@@ -77,6 +79,7 @@ void BDS_To_Mesh_2(Mesh *m)
 	    ++it;
 	}
     }
+
     {
 	std::set<BDS_Edge*, EdgeLessThan>::iterator it  = m->bds_mesh->edges.begin();
 	std::set<BDS_Edge*, EdgeLessThan>::iterator ite = m->bds_mesh->edges.end();
@@ -89,7 +92,8 @@ void BDS_To_Mesh_2(Mesh *m)
 		Vertex *v2 = FindVertex((*it)->p2->iD, m);
 		SimplexBase *simp = Create_SimplexBase(v1,v2,NULL, NULL);
 		Curve *c = FindCurve (g->classif_tag,m);
-		simp->iEnt = g->classif_tag;
+		if (c)
+		    simp->iEnt = g->classif_tag;
 		Tree_Insert(c->SimplexesBase, &simp);
 	    }
 	    ++it;
@@ -107,13 +111,15 @@ void BDS_To_Mesh_2(Mesh *m)
 	    SimplexBase *simp = Create_SimplexBase(v1,v2,v3, NULL);
 	    BDS_GeomEntity *g = (*it)->g;
 	    Surface *s = FindSurface (g->classif_tag,m);
-	    simp->iEnt = g->classif_tag;
-	    Tree_Add(s->Simplexes, &simp);
+	    if(s)
+		simp->iEnt = g->classif_tag;
+	    else
+		printf("argh\n");
+	    Tree_Add(s->SimplexesBase, &simp);
 	    ++it;
 	}
     }
-
-
+    Msg(STATUS2, "Ready");
 }
 void BDS_To_Mesh(Mesh *m)
 {
@@ -166,37 +172,36 @@ void BDS_To_Mesh(Mesh *m)
 
     CTX.mesh.changed = 1;
 
-    printf ("%d surfaces %d curves\n",Tree_Nbr(m->Surfaces), Tree_Nbr(m->Curves) );
-
 }
 
 // Public interface for discrete surface/curve mesh algo
 
 int MeshDiscreteSurface(Surface *s)
-{
-  if(s->bds){
-    // s->bds is the discrete surface that defines the geometry
-    if(!THEM->bds_mesh){
-      THEM->bds_mesh = new BDS_Mesh (*(THEM->bds));
-      int iter = 0;
-      while(iter < 20 && THEM->bds_mesh->adapt_mesh(CTX.mesh.lc_factor * THEM->bds->LC, 
+{ 
+    Msg(STATUS2, "Discrete Surface Mesh Generator...");
+    if(s->bds){
+	// s->bds is the discrete surface that defines the geometry
+	if(!THEM->bds_mesh){
+	    THEM->bds_mesh = new BDS_Mesh (*(THEM->bds));
+	    int iter = 0;
+	    while(iter < 20 && THEM->bds_mesh->adapt_mesh(CTX.mesh.lc_factor * THEM->bds->LC, 
 						    true, THEM->bds)){
-	printf("iter %d done\n",iter);
-	iter ++;
-      }
-      BDS_To_Mesh_2(THEM);
-      printf("mesh has %d vertices (%d)\n",Tree_Nbr(THEM->Vertices),THEM->bds->points.size());
-      THEM->bds_mesh->save_gmsh_format ( "3.msh" );
+		Msg(STATUS2, "Iteration %2d/20 done (%d triangles)\n",iter, THEM->bds_mesh->triangles.size());
+		iter ++;
+	    }
+	    BDS_To_Mesh_2(THEM);
+	    Msg(STATUS2, "Mesh has %d vertices (%d)\n",Tree_Nbr(THEM->Vertices),THEM->bds->points.size());
+//	    THEM->bds_mesh->save_gmsh_format ( "3.msh" );
+	}
+	return 1;
     }
-    return 1;
-  }
-  else if(s->Typ == MSH_SURF_DISCRETE){
-    // nothing to do: we suppose that the surface is represented by
-    // a mesh that will not be modified
-    return 1;
-  }
-  else
-    return 0;
+    else if(s->Typ == MSH_SURF_DISCRETE){
+	// nothing to do: we suppose that the surface is represented by
+	// a mesh that will not be modified
+	return 1;
+    }
+    else
+	return 0;
 }
 
 int MeshDiscreteCurve(Curve *c)

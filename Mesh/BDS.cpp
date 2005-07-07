@@ -12,6 +12,27 @@
   
 
 */
+double BDS_Quadric:: normalCurv ( double x, double y, double z ) const
+{
+    // K = div n = div ( Grad(f) / ||Grad(f)||)
+    //   = Laplacian (f) /  ||Grad(f)|| - Grad^t(f) Hessian Grad(f) / ||Grad(f)||^3
+    BDS_Vector g = Gradient ( x , y , z );
+    double normG = sqrt ( g.x*g.x +g.y*g.y +g.z*g.z); 
+
+    double c1 = 2*(a + b + c)/normG;
+
+
+    double c2 = 
+	2*a * g.x * g.x +  
+	2*b * g.y * g.y +  
+	2*c * g.z * g.z +
+	4*d *  g.x * g.y +    
+	4*e *  g.x * g.z +  
+	4*f *  g.y * g.z ;
+
+    //printf("%g %g %g %g %g %g\n",a,b,c,normG,c1, c2 / (normG*normG*normG));
+    return fabs(c1 - c2 / (normG*normG*normG));
+}
 
 void BDS_Quadric::projection ( double xa, double ya, double za,
 			       double &x, double &y, double &z) const 
@@ -47,7 +68,7 @@ void BDS_Quadric::projection ( double xa, double ya, double za,
 	    grad.x * g +grad.y * h +grad.z * i;
 	double delta = coef2*coef2 - 4.*coef1*residual;
 	if (delta < 0){
-	    printf ("aaargh error projection");
+//	    printf ("aaargh error projection");
 	}
 	else
 	{
@@ -432,9 +453,9 @@ void BDS_Mesh :: reverseEngineerCAD ( )
 		    int k=0;
 		    while (pit!=pite)
 		    {
-			PLANE  ( k , 0 ) = (*pit).x;
-			PLANE  ( k , 1 ) = (*pit).y;
-			PLANE  ( k , 2 ) = (*pit).z;
+			PLANE  ( k , 0 ) = (*pit).x + (rand() % 1000) * LC / 1.e12;
+			PLANE  ( k , 1 ) = (*pit).y+ (rand() % 1000) * LC / 1.e12;
+			PLANE  ( k , 2 ) = (*pit).z+ (rand() % 1000) * LC / 1.e12;
 			ONES  ( k )     = -1;
 			k++;
 			++pit;
@@ -447,7 +468,7 @@ void BDS_Mesh :: reverseEngineerCAD ( )
 		    for (int i=0;i<pts.size();i++)
 		    {
 			const double dist = PLANE  ( i , 0 ) * RSLT(0)+PLANE  ( i , 1 ) * RSLT(1)+PLANE  ( i , 2 ) * RSLT(2)+1;
-			if (fabs(dist) > 1.e-5 * LC)plane = false;
+			if (fabs(dist) > 1.e-5 * LC * sqrt (RSLT(0)*RSLT(0)+RSLT(1)*RSLT(1)+RSLT(2)*RSLT(2)) )plane = false;
 		    }
 		    
 		    if ( plane ) 
@@ -456,7 +477,7 @@ void BDS_Mesh :: reverseEngineerCAD ( )
 			(*it)->surf = new BDS_Plane (RSLT(0),RSLT(1),RSLT(2));
 		    }
 		}
-		if (!(*it)->surf && pts.size() > 10)
+		if (!(*it)->surf && pts.size() > 20)
 		{
 		    printf("coucou quadrique\n");
 		    Double_Matrix QUADRIC  ( pts.size() , 9 );
@@ -482,20 +503,20 @@ void BDS_Mesh :: reverseEngineerCAD ( )
 		    }
 		    QUADRIC.least_squares (ONES, RSLT);
 		    bool quad = true;
-		    for (int i=0;i<pts.size();i++)
+		    BDS_Quadric temp ( RSLT(0),RSLT(1),RSLT(2),RSLT(3),RSLT(4),RSLT(5),RSLT(6),RSLT(7),RSLT(8));
+		    pit  = pts.begin();
+		    while (pit!=pite)
 		    {
-			const double dist = 
-			    QUADRIC  ( i , 0 ) * RSLT(0) +
-			    QUADRIC  ( i , 1 ) * RSLT(1) +
-			    QUADRIC  ( i , 2 ) * RSLT(2) +
-			    QUADRIC  ( i , 3 ) * RSLT(3) +
-			    QUADRIC  ( i , 4 ) * RSLT(4) +
-			    QUADRIC  ( i , 5 ) * RSLT(5) +
-			    QUADRIC  ( i , 6 ) * RSLT(6) +
-			    QUADRIC  ( i , 7 ) * RSLT(7) +
-			    QUADRIC  ( i , 8 ) * RSLT(8) - 1;
-//			printf("dist = %g LC %g\n",dist,LC);
-			if (fabs(dist) > 1.e-3 * LC )quad = false;
+			double x,y,z;
+			temp.projection ((*pit).x , (*pit).y , (*pit).z ,
+					 x,y,z);
+			const double dist = sqrt ( ((*pit).x-x)*((*pit).x-x) +
+						   ((*pit).y-y)*((*pit).y-y) +
+						   ((*pit).z-z)*((*pit).z-z));
+//			printf("%g %g %g ... %g %g %g\n",(*pit).x , (*pit).y , (*pit).z ,x,y,z);
+			       
+			if (dist > 1.e-2 * LC )quad = false;
+			++pit;
 		    }		    
 		    if ( quad ) 
 		    {
@@ -1860,6 +1881,7 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
 {
     int nb_modif = 0;
 
+    double CURV_FACTOR = 5;
 
     // add initial set of edges in a list
     std::set<BDS_Edge*, EdgeLessThan> small_to_long;
@@ -1887,14 +1909,28 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
 	      double ll = sqrt((op[0]->X-op[1]->X)*(op[0]->X-op[1]->X)+
 			       (op[0]->Y-op[1]->Y)*(op[0]->Y-op[1]->Y)+
 			       (op[0]->Z-op[1]->Z)*(op[0]->Z-op[1]->Z));
-	      double curv = 0.5 * (*it)->p1->radius_of_curvature + 
-		  0.5 * (*it)->p2->radius_of_curvature;
 	      double LLL = l;
-///	      if (l > .50 * curv ) LLL = .50*curv;
+
+	      if ((*it)->g && (*it)->g->classif_degree == 2 &&(*it)->g->surf)
+	      {
+		  double curvature = (*it)->g->surf->normalCurv (0.5*((*it)->p1->X+(*it)->p2->X),
+								 0.5*((*it)->p1->Y+(*it)->p2->Y),
+								 0.5*((*it)->p1->Z+(*it)->p2->Z));
+		  if (curvature > 0.0)
+		  {
+
+		      double radius_of_curvature = 1./curvature;
+//		      printf("surface %d radius %g\n",(*it)->g->classif_tag,radius_of_curvature);
+		      double maxL = radius_of_curvature / CURV_FACTOR;
+
+		      if ( LLL > maxL ) LLL = maxL;
+		  }
+	      }
 
 	      if (!(*it)->deleted && (*it)->length() > LLL/0.7 && ll > 0.25 * LLL){
-		split_edge (*it, 0.5 );
-		nb_modif++;
+//		  printf("we schpilt\n");
+		  split_edge (*it, 0.5 );
+		  nb_modif++;
 	      }
 	    }
 	  ++it;
@@ -1919,10 +1955,20 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
 	std::set<BDS_Edge*, EdgeLessThan>::iterator ite  = small_to_long.end();
 	while (it != ite)
 	{
-	    double curv = 0.5 * (*it)->p1->radius_of_curvature + 
-		0.5 * (*it)->p2->radius_of_curvature;
+
 	    double LLL = l;
-//	    if (l > .50 * curv ) LLL = .50*curv;
+	    if ((*it)->g && (*it)->g->classif_degree == 2 &&(*it)->g->surf)
+	    {
+		double curvature = (*it)->g->surf->normalCurv (0.5*((*it)->p1->X+(*it)->p2->X),
+							       0.5*((*it)->p1->Y+(*it)->p2->Y),
+							       0.5*((*it)->p1->Z+(*it)->p2->Z));
+		if (curvature > 0.0)
+		{
+		    double radius_of_curvature = 1./curvature;
+		    double maxL = radius_of_curvature / CURV_FACTOR;
+		    if ( LLL > maxL ) LLL = maxL;
+		}
+	    }
 
 	    if (!(*it)->deleted && (*it)->length() < 0.7 * LLL ){
 		if (nb_modif %2 )
@@ -2033,6 +2079,8 @@ BDS_Mesh::BDS_Mesh (const BDS_Mesh &other)
 	BDS_Point *p =  add_point((*it)->iD,(*it)->X,(*it)->Y,(*it)->Z);
 	p->g = ((*it)->g)? get_geom  ((*it)->g->classif_tag,(*it)->g->classif_degree) : 0;
 	p->radius_of_curvature = (*it)->radius_of_curvature ;
+	if (p->g->classif_degree == 0)
+	    p->g->p = p;
     }
     for ( std::set<BDS_Edge*, EdgeLessThan>::const_iterator it  = other.edges.begin();
 	  it != other.edges.end();
@@ -2040,6 +2088,8 @@ BDS_Mesh::BDS_Mesh (const BDS_Mesh &other)
     {
 	BDS_Edge  * e = add_edge ((*it)->p1->iD,(*it)->p2->iD);
 	e->g = ((*it)->g)? get_geom  ((*it)->g->classif_tag,(*it)->g->classif_degree) : 0;
+	if (e->g->classif_degree == 1)
+	    e->g->e.push_back(e);
     }
     for (std::list<BDS_Triangle*>::const_iterator it  = other.triangles.begin();
 	 it != other.triangles.end();
@@ -2049,5 +2099,6 @@ BDS_Mesh::BDS_Mesh (const BDS_Mesh &other)
         (*it)->getNodes (n);
 	BDS_Triangle *t = add_triangle(n[0]->iD,n[1]->iD,n[2]->iD);
 	t->g = get_geom  ((*it)->g->classif_tag,(*it)->g->classif_degree);
+	t->g->t.push_back(t);
     }
 }
