@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.18 2005-07-07 07:19:27 remacle Exp $
+// $Id: DiscreteSurface.cpp,v 1.19 2005-07-07 20:44:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -178,8 +178,8 @@ void BDS_To_Mesh(Mesh *m)
 
 int MeshDiscreteSurface(Surface *s)
 { 
-    Msg(STATUS2, "Discrete Surface Mesh Generator...");
     if(s->bds){
+    Msg(STATUS2, "Discrete Surface Mesh Generator...");
 	// s->bds is the discrete surface that defines the geometry
 	if(!THEM->bds_mesh){
 	    THEM->bds_mesh = new BDS_Mesh (*(THEM->bds));
