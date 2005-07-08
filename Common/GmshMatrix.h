@@ -100,6 +100,14 @@ public:
   {
     throw;
   }
+  inline void least_squares (const GSL_Vector & rhs, GSL_Vector & result)
+  {
+    throw;
+  }
+  inline void lu_solve (const GSL_Vector & rhs, GSL_Vector & result)
+  {
+    throw;
+  }
 };
 
 #ifdef HAVE_GSL
