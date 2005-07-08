@@ -15,7 +15,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm3D
-3D mesh algorithm (1=isotropic, 4=netgen)@*
+3D mesh algorithm (1=isotropic, 4=netgen, 5=tetgen)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.360 2005-07-04 15:07:40 remacle Exp $
+// $Id: Callbacks.cpp,v 1.361 2005-07-08 22:07:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3651,6 +3651,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double boundary = opt_view_boundary(current, GMSH_GET, 0);
   double external_view = opt_view_external_view(current, GMSH_GET, 0);
   double gen_raise_view = opt_view_gen_raise_view(current, GMSH_GET, 0);
+  double show_time = opt_view_show_time(current, GMSH_GET, 0);
 
   double type = opt_view_type(current, GMSH_GET, 0);
   double saturate_values = opt_view_saturate_values(current, GMSH_GET, 0);
@@ -3660,7 +3661,6 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double show_scale = opt_view_show_scale(current, GMSH_GET, 0);
   double auto_position = opt_view_auto_position(current, GMSH_GET, 0);
   double axes_auto_position = opt_view_axes_auto_position(current, GMSH_GET, 0);
-  double show_time = opt_view_show_time(current, GMSH_GET, 0);
   double draw_strings = opt_view_draw_strings(current, GMSH_GET, 0);
   double light = opt_view_light(current, GMSH_GET, 0);
   double light_two_side = opt_view_light_two_side(current, GMSH_GET, 0);
@@ -3862,13 +3862,17 @@ void view_options_ok_cb(CALLBACK_ARGS)
       if(force || (val != boundary))
         opt_view_boundary(i, GMSH_SET, val);
 
-      val = WID->view_choice[10]->value()-1;
+      val = WID->view_choice[10]->value() - 1;
       if(force || (val != external_view))
         opt_view_external_view(i, GMSH_SET, val);
 
-      val = WID->view_choice[11]->value()-1;
+      val = WID->view_choice[11]->value() - 1;
       if(force || (val != gen_raise_view))
         opt_view_gen_raise_view(i, GMSH_SET, val);
+
+      val = WID->view_choice[12]->value();
+      if(force || (val != show_time))
+        opt_view_show_time(i, GMSH_SET, val);
 
       // view_butts
 
@@ -3900,10 +3904,6 @@ void view_options_ok_cb(CALLBACK_ARGS)
       val = WID->view_butt[25]->value();
       if(force || (val != axes_auto_position))
         opt_view_axes_auto_position(i, GMSH_SET, val);
-
-      val = WID->view_butt[8]->value();
-      if(force || (val != show_time))
-        opt_view_show_time(i, GMSH_SET, val);
 
       val = WID->view_butt[5]->value();
       if(force || (val != draw_strings))

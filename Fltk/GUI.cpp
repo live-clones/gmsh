@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.447 2005-07-04 15:07:40 remacle Exp $
+// $Id: GUI.cpp,v 1.448 2005-07-08 22:07:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2860,10 +2860,17 @@ void GUI::create_option_window()
       view_butt[4]->down_box(GMSH_TOGGLE_BOX);
       view_butt[4]->selection_color(GMSH_TOGGLE_COLOR);
 
-      view_butt[8] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Step value");
-      view_butt[8]->type(FL_TOGGLE_BUTTON);
-      view_butt[8]->down_box(GMSH_TOGGLE_BOX);
-      view_butt[8]->selection_color(GMSH_TOGGLE_COLOR);
+      static Fl_Menu_Item time_display[] = {
+	{"Hidden", 0, 0, 0},
+	{"Value if multiple", 0, 0, 0},
+	{"Value always", 0, 0, 0},
+	{"Step if multiple", 0, 0, 0},
+	{"Step always", 0, 0, 0},
+	{0}
+      };
+      view_choice[12] = new Fl_Choice(L + width / 2, 2 * WB + 2 * BH, IW, BH, "Time");
+      view_choice[12]->menu(time_display);
+      view_choice[12]->align(FL_ALIGN_RIGHT);
 
       view_butt[5] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Annotations");
       view_butt[5]->tooltip("(Alt+n)");
@@ -3353,13 +3360,11 @@ void GUI::update_view_window(int num)
     view_value[50]->deactivate();
     view_butt_rep[0]->deactivate();
     view_butt_rep[1]->deactivate();
-    view_butt[8]->deactivate();
   }
   else {
     view_value[50]->activate();
     view_butt_rep[0]->activate();
     view_butt_rep[1]->activate();
-    view_butt[8]->activate();
   }
   view_value[50]->maximum(v->NbTimeStep - 1);
   opt_view_timestep(num, GMSH_GUI, 0);

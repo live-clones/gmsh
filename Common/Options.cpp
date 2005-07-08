@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.249 2005-07-03 08:02:23 geuzaine Exp $
+// $Id: Options.cpp,v 1.250 2005-07-08 22:07:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -5844,10 +5844,12 @@ double opt_view_show_time(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->ShowTime = (int)val;
+    if(v->ShowTime < 0 || v->ShowTime > 4)
+      v->ShowTime = 0;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_butt[8]->value(v->ShowTime);
+    WID->view_choice[12]->value(v->ShowTime);
 #endif
   return v->ShowTime;
 }

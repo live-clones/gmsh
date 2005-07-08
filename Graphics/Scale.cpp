@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.60 2005-03-13 09:10:35 geuzaine Exp $
+// $Id: Scale.cpp,v 1.61 2005-07-08 22:07:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -272,6 +272,10 @@ void draw_scale(Post_View * v,
     char tmp[256];
     sprintf(tmp, v->Format, *(double *)List_Pointer(v->Time, v->TimeStep));
     sprintf(label, "%s (%s)", v->Name, tmp);
+  }
+  else if((v->ShowTime == 3 && List_Nbr(v->Time) > 1) ||
+	  (v->ShowTime == 4 && List_Nbr(v->Time) > 0)){
+    sprintf(label, "%s (%d)", v->Name, v->TimeStep);
   }
   else
     sprintf(label, "%s", v->Name);

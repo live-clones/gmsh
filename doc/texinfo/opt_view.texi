@@ -525,8 +525,8 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ShowTime
-Show time value in the scale? (1=only if NbTimeStep>1, 2=always)@*
-Default value: @code{1}@*
+Time display mode (0=hidden, 1=value if multiple, 2=value always, 3=step if multiple, 4=step always)@*
+Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.SmoothNormals
