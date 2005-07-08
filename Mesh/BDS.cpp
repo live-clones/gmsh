@@ -607,16 +607,14 @@ void BDS_Point :: compute_curvature ( )
       M.least_squares (Ny,Cy);
       M.least_squares (Nz,Cz);
       
-      const double A[9] = { Cx(0),0.5*(Cx(1)+Cy(0)),  0.5*(Cx(2)+Cz(0)) ,
-			    0.5*(Cx(1)+Cy(0)), Cy(1), 0.5*(Cy(2)+Cz(1)) , 
-			    0.5*(Cx(2)+Cz(0)), 0.5*(Cy(2)+Cz(1)) ,Cz(2)};
-      
-      double v[9];
-      double wr[3],wi[3];
-      
-      EigSolve3x3 (A ,wr,wi,v);
+      // curvature = divergence of n
 
-      if(wr[0]!=0.0)radius_of_curvature = fabs(1/wr[0]);
+      double curvature = Cx(0) + Cy(1) + Cz(2);
+
+      if (curvature != 0.0)
+	radius_of_curvature = fabs(1/curvature);
+      else
+	radius_of_curvature = 1.e22;
 //      printf(" curvature = %g %g %g R = %g\n",wr[0],wr[1],wr[2],radius_of_curvature);
   }
 }
