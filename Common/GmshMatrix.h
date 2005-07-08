@@ -100,11 +100,11 @@ public:
   {
     throw;
   }
-  inline void least_squares (const GSL_Vector & rhs, GSL_Vector & result)
+  inline void least_squares (const Gmsh_Vector<SCALAR> & rhs, Gmsh_Vector<SCALAR> & result)
   {
     throw;
   }
-  inline void lu_solve (const GSL_Vector & rhs, GSL_Vector & result)
+  inline void lu_solve (const Gmsh_Vector<SCALAR> & rhs, Gmsh_Vector<SCALAR> & result)
   {
     throw;
   }
