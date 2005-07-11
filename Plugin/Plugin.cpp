@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.77 2005-06-27 19:34:34 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.78 2005-07-11 16:22:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -167,7 +167,7 @@ GMSH_PluginManager *GMSH_PluginManager::instance()
 void GMSH_PluginManager::registerDefaultPlugins()
 {
   // SOLVE PLUGINS
-  if(CTX.solver.plugins || 1){
+  if(CTX.solver.plugins){
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("StructuralSolver", GMSH_RegisterStructuralSolverPlugin()));
   }
