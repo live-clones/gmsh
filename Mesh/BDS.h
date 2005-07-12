@@ -16,6 +16,28 @@ class BDS_Triangle;
 class BDS_Mesh;
 class BDS_Point;
 
+class BDS_Metric
+{
+ public:
+  const double target,_min,_max,treshold;
+  BDS_Metric ( double _target , double _mmin, double _mmax, double _tres = 0.7) 
+    : target(_target),_min(_mmin),_max(_mmax),treshold(_tres)
+    {}
+  inline double update_target_length( double _target, double old_target_length  ) const
+    {
+      if (_target <= _min) return _min;
+      if (_target >= _max) return _max;
+      if (old_target_length > _target)return _target ;
+      return old_target_length;
+
+    }
+  inline double target_length( double x, double y, double z ) const
+    {
+      return target;
+    }
+};
+
+
 class BDS_Surface
 {
 public :
@@ -188,6 +210,7 @@ class BDS_Edge
 public:
     bool deleted;
     int status;
+    double target_length;
     BDS_Point *p1,*p2;
     BDS_GeomEntity *g;
     inline BDS_Triangle* faces(int i) const
@@ -244,7 +267,7 @@ public:
     inline void oppositeof (BDS_Point * oface[2]) const; 
 
     BDS_Edge ( BDS_Point *A, BDS_Point *B )
-	: deleted(false), status(0),g(0)
+      : deleted(false), status(0),target_length(1.0),g(0)
 	{	    
 	    if (*A < *B) 
 	    {
@@ -412,8 +435,7 @@ class BDS_Mesh
     BDS_Mesh (const BDS_Mesh &other);
     std::set<BDS_GeomEntity*,GeomLessThan> geom; 
     std::set<BDS_Point*,PointLessThan>     points; 
-    std::set<BDS_Edge*, EdgeLessThan>      edges; 
-    std::set<BDS_Edge*>                    edges_to_delete; 
+    std::list<BDS_Edge*>      edges; 
     std::list<BDS_Triangle*>   triangles; 
     BDS_Point * add_point (int num , double x, double y,double z);
     BDS_Edge  * add_edge  (int p1, int p2);
@@ -427,13 +449,15 @@ class BDS_Mesh
     BDS_Edge  *find_edge (BDS_Point *p1, BDS_Point *p2, BDS_Triangle *t)const;
     BDS_GeomEntity *get_geom  (int p1, int p2);
     bool swap_edge ( BDS_Edge *);
-    bool collapse_edge ( BDS_Edge *, BDS_Point*, const double eps, const double l);
+    bool collapse_edge ( BDS_Edge *, BDS_Point*, const double eps);
     bool smooth_point   ( BDS_Point* , BDS_Mesh *geom = 0);
     bool smooth_point_b ( BDS_Point* );
     bool split_edge ( BDS_Edge *, double coord);
-    void classify ( double angle);
+    void classify ( double angle, int nb = -1); 
+    void color_plane_surf ( double eps , int nb);
     void reverseEngineerCAD ( ) ;
-    int adapt_mesh(double,bool smooth = false,BDS_Mesh *geom = 0);
+    int adapt_mesh(double,bool smooth = false,BDS_Mesh *geom = 0); 
+    void compute_metric_edge_lengths (const BDS_Metric & metric);
     void cleanup();
     // io's 
     // STL

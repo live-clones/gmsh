@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.19 2005-07-07 20:44:47 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.20 2005-07-12 15:01:17 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -81,8 +81,8 @@ void BDS_To_Mesh_2(Mesh *m)
     }
 
     {
-	std::set<BDS_Edge*, EdgeLessThan>::iterator it  = m->bds_mesh->edges.begin();
-	std::set<BDS_Edge*, EdgeLessThan>::iterator ite = m->bds_mesh->edges.end();
+	std::list<BDS_Edge*>::iterator it  = m->bds_mesh->edges.begin();
+	std::list<BDS_Edge*>::iterator ite = m->bds_mesh->edges.end();
 	while(it!=ite)
 	{
 	    BDS_GeomEntity *g = (*it)->g;

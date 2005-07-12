@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.19 2005-06-03 17:32:30 geuzaine Exp $
+# $Id: Makefile,v 1.20 2005-07-12 15:02:04 remacle Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -53,20 +53,13 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-# 1 "/Users/geuzaine/.gmsh/Numeric//"
 Numeric.o: Numeric.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Numeric.h
-# 1 "/Users/geuzaine/.gmsh/Numeric//"
+  ../DataStr/avl.h ../DataStr/Tools.h Numeric.h
 EigSolve.o: EigSolve.cpp
-# 1 "/Users/geuzaine/.gmsh/Numeric//"
 gsl_newt.o: gsl_newt.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Numeric.h
-# 1 "/Users/geuzaine/.gmsh/Numeric//"
+  ../DataStr/avl.h ../DataStr/Tools.h Numeric.h
 gsl_brent.o: gsl_brent.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Numeric.h
+  ../DataStr/avl.h ../DataStr/Tools.h Numeric.h

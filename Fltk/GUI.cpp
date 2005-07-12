@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.448 2005-07-08 22:07:38 geuzaine Exp $
+// $Id: GUI.cpp,v 1.449 2005-07-12 15:02:04 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1618,7 +1618,7 @@ void GUI::create_surface_mesh_wizard(const char *name)
 	surfmesh_filename = name; 
 
     int width = 42 * fontsize;
-    int height = 5 * BH + 5 * WB;
+    int height = 6 * BH + 6 * WB;
 
     if(swiz_window) {	
 	swiz_window->show();
@@ -1669,13 +1669,19 @@ void GUI::create_surface_mesh_wizard(const char *name)
 	    swiz_value[0]->maximum(90);
 	    swiz_value[0]->step(1);
 	    swiz_value[0]->align(FL_ALIGN_RIGHT);
-	    swiz_output[1] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Number of Model Vertices");
+	    swiz_value[3] = new Fl_Value_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Min nb. of Triangles for plane surface detection");
+	    swiz_value[3]->value(4);
+	    swiz_value[3]->minimum(2);
+	    swiz_value[3]->maximum(30);
+	    swiz_value[3]->step(1);
+	    swiz_value[3]->align(FL_ALIGN_RIGHT);
+	    swiz_output[1] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Number of Model Vertices");
 	    swiz_output[1]->align(FL_ALIGN_RIGHT);
 	    swiz_output[1]->value("0");
-	    swiz_output[2] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Number of Model Edges");
+	    swiz_output[2] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Number of Model Edges");
 	    swiz_output[2]->align(FL_ALIGN_RIGHT);
 	    swiz_output[2]->value("0");
-	    swiz_output[3] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Number of Model Faces");
+	    swiz_output[3] = new Fl_Output(2 * WB, 2 * WB + 4 * BH, IW, BH, "Number of Model Faces");
 	    swiz_output[3]->align(FL_ALIGN_RIGHT);
 	    swiz_output[3]->value("0");
 	    {
@@ -1723,7 +1729,7 @@ void GUI::create_surface_mesh_wizard(const char *name)
 	    o->end();
 	}	
 	{
-	    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Reverse Engineering the CAD");
+	    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Mesh Generation");
 	    {
 		Fl_Return_Button *b = new Fl_Return_Button(width - 4 * BB - 4 * WB, height - BH - WB, BB, BH, "Apply");
 		b->callback(wizard_update_edges_cb);

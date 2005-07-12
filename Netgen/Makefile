@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2005-06-20 18:02:51 geuzaine Exp $
+# $Id: Makefile,v 1.12 2005-07-12 15:02:04 remacle Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -148,100 +148,72 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 linopt.o: libsrc/opti/linopt.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/opti/opti.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/opti/opti.hpp
 bfgs.o: libsrc/opti/bfgs.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/opti/opti.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/opti/opti.hpp
 linsearch.o: libsrc/opti/linsearch.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/opti/opti.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/opti/opti.hpp
 global.o: libsrc/meshing/global.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -254,37 +226,27 @@ global.o: libsrc/meshing/global.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 bisect.o: libsrc/meshing/bisect.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -297,37 +259,27 @@ bisect.o: libsrc/meshing/bisect.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 meshtool.o: libsrc/meshing/meshtool.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -339,55 +291,39 @@ meshtool.o: libsrc/meshing/meshtool.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
-  libsrc/meshing/specials.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/meshing.hpp libsrc/include/../meshing/meshing.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp \
-  libsrc/include/geometry2d.hpp libsrc/include/../geom2d/geometry2d.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/include/../geom2d/spline2d.hpp \
-  libsrc/include/../geom2d/splinegeometry2.hpp \
-  libsrc/include/../geom2d/geom2dmesh.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/meshing/specials.hpp libsrc/include/csg.hpp libsrc/csg/csg.hpp \
+  libsrc/include/meshing.hpp libsrc/csg/surface.hpp libsrc/csg/solid.hpp \
+  libsrc/csg/identify.hpp libsrc/csg/singularref.hpp \
+  libsrc/csg/csgeom.hpp libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp \
+  libsrc/csg/brick.hpp libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp \
+  libsrc/csg/curve2d.hpp libsrc/csg/explicitcurve2d.hpp \
+  libsrc/csg/gencyl.hpp libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp \
+  libsrc/include/geometry2d.hpp libsrc/geom2d/geometry2d.hpp \
+  libsrc/geom2d/spline2d.hpp libsrc/geom2d/splinegeometry2.hpp \
+  libsrc/geom2d/geom2dmesh.hpp
 refine.o: libsrc/meshing/refine.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -400,37 +336,27 @@ refine.o: libsrc/meshing/refine.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 ruler3.o: libsrc/meshing/ruler3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -443,37 +369,27 @@ ruler3.o: libsrc/meshing/ruler3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 improve3.o: libsrc/meshing/improve3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -485,38 +401,28 @@ improve3.o: libsrc/meshing/improve3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
-  libsrc/meshing/specials.hpp libsrc/include/../opti/opti.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/meshing/specials.hpp
 smoothing3.o: libsrc/meshing/smoothing3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -528,38 +434,28 @@ smoothing3.o: libsrc/meshing/smoothing3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
-  libsrc/meshing/specials.hpp libsrc/include/../opti/opti.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/meshing/specials.hpp
 adfront3.o: libsrc/meshing/adfront3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -572,45 +468,31 @@ adfront3.o: libsrc/meshing/adfront3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 tetrarls.o: libsrc/meshing/tetrarls.cpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 prism2rls.o: libsrc/meshing/prism2rls.cpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 pyramidrls.o: libsrc/meshing/pyramidrls.cpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 pyramid2rls.o: libsrc/meshing/pyramid2rls.cpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 netrule3.o: libsrc/meshing/netrule3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -623,37 +505,27 @@ netrule3.o: libsrc/meshing/netrule3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 ruler2.o: libsrc/meshing/ruler2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -666,37 +538,27 @@ ruler2.o: libsrc/meshing/ruler2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 meshclass.o: libsrc/meshing/meshclass.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -709,37 +571,27 @@ meshclass.o: libsrc/meshing/meshclass.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 improve2.o: libsrc/meshing/improve2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -751,38 +603,28 @@ improve2.o: libsrc/meshing/improve2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
-  libsrc/meshing/specials.hpp libsrc/include/../opti/opti.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/meshing/specials.hpp
 smoothing2.o: libsrc/meshing/smoothing2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -794,38 +636,28 @@ smoothing2.o: libsrc/meshing/smoothing2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
-  libsrc/meshing/specials.hpp libsrc/include/../opti/opti.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/meshing/specials.hpp
 adfront2.o: libsrc/meshing/adfront2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -838,37 +670,27 @@ adfront2.o: libsrc/meshing/adfront2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 netrule2.o: libsrc/meshing/netrule2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -881,39 +703,28 @@ netrule2.o: libsrc/meshing/netrule2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 triarls.o: libsrc/meshing/triarls.cpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 geomsearch.o: libsrc/meshing/geomsearch.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -926,37 +737,27 @@ geomsearch.o: libsrc/meshing/geomsearch.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 secondorder.o: libsrc/meshing/secondorder.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -969,37 +770,27 @@ secondorder.o: libsrc/meshing/secondorder.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 meshtype.o: libsrc/meshing/meshtype.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -1012,37 +803,27 @@ meshtype.o: libsrc/meshing/meshtype.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 parser3.o: libsrc/meshing/parser3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -1055,37 +836,27 @@ parser3.o: libsrc/meshing/parser3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 meshing2.o: libsrc/meshing/meshing2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -1098,39 +869,28 @@ meshing2.o: libsrc/meshing/meshing2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 quadrls.o: libsrc/meshing/quadrls.cpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 specials.o: libsrc/meshing/specials.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -1143,37 +903,27 @@ specials.o: libsrc/meshing/specials.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 parser2.o: libsrc/meshing/parser2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -1186,37 +936,27 @@ parser2.o: libsrc/meshing/parser2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 meshing3.o: libsrc/meshing/meshing3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -1229,37 +969,27 @@ meshing3.o: libsrc/meshing/meshing3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 meshfunc.o: libsrc/meshing/meshfunc.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -1272,37 +1002,27 @@ meshfunc.o: libsrc/meshing/meshfunc.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 localh.o: libsrc/meshing/localh.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -1315,37 +1035,27 @@ localh.o: libsrc/meshing/localh.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 improve2gen.o: libsrc/meshing/improve2gen.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -1357,38 +1067,28 @@ improve2gen.o: libsrc/meshing/improve2gen.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
-  libsrc/meshing/specials.hpp libsrc/include/../opti/opti.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/meshing/specials.hpp
 delaunay.o: libsrc/meshing/delaunay.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -1401,135 +1101,93 @@ delaunay.o: libsrc/meshing/delaunay.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 boundarylayer.o: libsrc/meshing/boundarylayer.cpp \
   libsrc/include/mystdlib.h libsrc/meshing/meshing.hpp \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
-  libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
-  libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
-  libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
-  libsrc/meshing/adfront2.hpp libsrc/meshing/meshing2.hpp \
-  libsrc/meshing/improve2.hpp libsrc/meshing/geomsearch.hpp \
-  libsrc/meshing/adfront3.hpp libsrc/meshing/ruler3.hpp \
-  libsrc/meshing/meshing3.hpp libsrc/meshing/improve3.hpp \
-  libsrc/meshing/findip.hpp libsrc/meshing/topology.hpp \
-  libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
-  libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
-  libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
-  libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp
 msghandler.o: libsrc/meshing/msghandler.cpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mystdlib.h \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mystdlib.h \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp
 meshfunc2d.o: libsrc/meshing/meshfunc2d.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -1542,37 +1200,27 @@ meshfunc2d.o: libsrc/meshing/meshfunc2d.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 topology.o: libsrc/meshing/topology.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -1585,37 +1233,27 @@ topology.o: libsrc/meshing/topology.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 clusters.o: libsrc/meshing/clusters.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -1628,37 +1266,27 @@ clusters.o: libsrc/meshing/clusters.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 curvedelems.o: libsrc/meshing/curvedelems.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -1671,37 +1299,27 @@ curvedelems.o: libsrc/meshing/curvedelems.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 curvedelems2.o: libsrc/meshing/curvedelems2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -1714,37 +1332,27 @@ curvedelems2.o: libsrc/meshing/curvedelems2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 hprefinement.o: libsrc/meshing/hprefinement.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
   libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
   libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
   libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
@@ -1759,2654 +1367,1628 @@ hprefinement.o: libsrc/meshing/hprefinement.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/specials.hpp libsrc/meshing/hpref_trig.hpp \
   libsrc/meshing/hpref_quad.hpp libsrc/meshing/hpref_tet.hpp \
   libsrc/meshing/hpref_prism.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 nglib.o: libsrc/interface/nglib.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp \
-  libsrc/include/stlgeom.hpp libsrc/include/../stlgeom/stlgeom.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../stlgeom/stltopology.hpp \
-  libsrc/include/../stlgeom/stltool.hpp \
-  libsrc/include/../stlgeom/stlline.hpp \
-  libsrc/include/../stlgeom/meshstlsurface.hpp \
-  libsrc/include/geometry2d.hpp libsrc/include/../geom2d/geometry2d.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/include/../geom2d/spline2d.hpp \
-  libsrc/include/../geom2d/splinegeometry2.hpp \
-  libsrc/include/../geom2d/geom2dmesh.hpp libsrc/interface/nglib.h
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/meshing.hpp \
+  libsrc/meshing/meshing.hpp libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/csg/surface.hpp libsrc/csg/solid.hpp libsrc/csg/identify.hpp \
+  libsrc/csg/singularref.hpp libsrc/csg/csgeom.hpp \
+  libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp libsrc/csg/brick.hpp \
+  libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp libsrc/csg/curve2d.hpp \
+  libsrc/csg/explicitcurve2d.hpp libsrc/csg/gencyl.hpp \
+  libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp \
+  libsrc/include/stlgeom.hpp libsrc/stlgeom/stlgeom.hpp \
+  libsrc/stlgeom/stltopology.hpp libsrc/stlgeom/stltool.hpp \
+  libsrc/stlgeom/stlline.hpp libsrc/stlgeom/meshstlsurface.hpp \
+  libsrc/include/geometry2d.hpp libsrc/geom2d/geometry2d.hpp \
+  libsrc/geom2d/spline2d.hpp libsrc/geom2d/splinegeometry2.hpp \
+  libsrc/geom2d/geom2dmesh.hpp libsrc/interface/nglib.h
 geomtest3d.o: libsrc/gprim/geomtest3d.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp
 geom2d.o: libsrc/gprim/geom2d.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp
 geom3d.o: libsrc/gprim/geom3d.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp
 adtree.o: libsrc/gprim/adtree.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp
 transform3d.o: libsrc/gprim/transform3d.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp
 geomfuncs.o: libsrc/gprim/geomfuncs.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp
 polynomial.o: libsrc/linalg/polynomial.cpp libsrc/include/mystdlib.h \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp
 densemat.o: libsrc/linalg/densemat.cpp libsrc/include/mystdlib.h \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp
 vector.o: libsrc/linalg/vector.cpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 algprim.o: libsrc/csg/algprim.cpp libsrc/include/mystdlib.h \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/meshing.hpp \
+  libsrc/meshing/meshing.hpp libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/csg/surface.hpp libsrc/csg/solid.hpp libsrc/csg/identify.hpp \
+  libsrc/csg/singularref.hpp libsrc/csg/csgeom.hpp \
+  libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp libsrc/csg/brick.hpp \
+  libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp libsrc/csg/curve2d.hpp \
+  libsrc/csg/explicitcurve2d.hpp libsrc/csg/gencyl.hpp \
+  libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 brick.o: libsrc/csg/brick.cpp libsrc/include/mystdlib.h \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/meshing.hpp \
+  libsrc/meshing/meshing.hpp libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/csg/surface.hpp libsrc/csg/solid.hpp libsrc/csg/identify.hpp \
+  libsrc/csg/singularref.hpp libsrc/csg/csgeom.hpp \
+  libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp libsrc/csg/brick.hpp \
+  libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp libsrc/csg/curve2d.hpp \
+  libsrc/csg/explicitcurve2d.hpp libsrc/csg/gencyl.hpp \
+  libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 manifold.o: libsrc/csg/manifold.cpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mystdlib.h \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/csg/csg.hpp libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mystdlib.h libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/meshing.hpp libsrc/meshing/meshing.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
+  libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
+  libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
+  libsrc/meshing/adfront2.hpp libsrc/meshing/meshing2.hpp \
+  libsrc/meshing/improve2.hpp libsrc/meshing/geomsearch.hpp \
+  libsrc/meshing/adfront3.hpp libsrc/meshing/ruler3.hpp \
+  libsrc/meshing/meshing3.hpp libsrc/meshing/improve3.hpp \
+  libsrc/meshing/findip.hpp libsrc/meshing/topology.hpp \
+  libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
+  libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
+  libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
+  libsrc/meshing/specials.hpp libsrc/csg/surface.hpp libsrc/csg/solid.hpp \
+  libsrc/csg/identify.hpp libsrc/csg/singularref.hpp \
+  libsrc/csg/csgeom.hpp libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp \
+  libsrc/csg/brick.hpp libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp \
+  libsrc/csg/curve2d.hpp libsrc/csg/explicitcurve2d.hpp \
+  libsrc/csg/gencyl.hpp libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 bspline2d.o: libsrc/csg/bspline2d.cpp libsrc/include/mystdlib.h \
-  libsrc/include/csg.hpp libsrc/include/../csg/csg.hpp \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/myadt.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/meshing.hpp libsrc/meshing/meshing.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
+  libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
+  libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
+  libsrc/meshing/adfront2.hpp libsrc/meshing/meshing2.hpp \
+  libsrc/meshing/improve2.hpp libsrc/meshing/geomsearch.hpp \
+  libsrc/meshing/adfront3.hpp libsrc/meshing/ruler3.hpp \
+  libsrc/meshing/meshing3.hpp libsrc/meshing/improve3.hpp \
+  libsrc/meshing/findip.hpp libsrc/meshing/topology.hpp \
+  libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
+  libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
+  libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
+  libsrc/meshing/specials.hpp libsrc/csg/surface.hpp libsrc/csg/solid.hpp \
+  libsrc/csg/identify.hpp libsrc/csg/singularref.hpp \
+  libsrc/csg/csgeom.hpp libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp \
+  libsrc/csg/brick.hpp libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp \
+  libsrc/csg/curve2d.hpp libsrc/csg/explicitcurve2d.hpp \
+  libsrc/csg/gencyl.hpp libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 meshsurf.o: libsrc/csg/meshsurf.cpp libsrc/include/mystdlib.h \
-  libsrc/include/csg.hpp libsrc/include/../csg/csg.hpp \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/myadt.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/meshing.hpp libsrc/meshing/meshing.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
+  libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
+  libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
+  libsrc/meshing/adfront2.hpp libsrc/meshing/meshing2.hpp \
+  libsrc/meshing/improve2.hpp libsrc/meshing/geomsearch.hpp \
+  libsrc/meshing/adfront3.hpp libsrc/meshing/ruler3.hpp \
+  libsrc/meshing/meshing3.hpp libsrc/meshing/improve3.hpp \
+  libsrc/meshing/findip.hpp libsrc/meshing/topology.hpp \
+  libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
+  libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
+  libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
+  libsrc/meshing/specials.hpp libsrc/csg/surface.hpp libsrc/csg/solid.hpp \
+  libsrc/csg/identify.hpp libsrc/csg/singularref.hpp \
+  libsrc/csg/csgeom.hpp libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp \
+  libsrc/csg/brick.hpp libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp \
+  libsrc/csg/curve2d.hpp libsrc/csg/explicitcurve2d.hpp \
+  libsrc/csg/gencyl.hpp libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 csgeom.o: libsrc/csg/csgeom.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/meshing.hpp \
+  libsrc/meshing/meshing.hpp libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/csg/surface.hpp libsrc/csg/solid.hpp libsrc/csg/identify.hpp \
+  libsrc/csg/singularref.hpp libsrc/csg/csgeom.hpp \
+  libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp libsrc/csg/brick.hpp \
+  libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp libsrc/csg/curve2d.hpp \
+  libsrc/csg/explicitcurve2d.hpp libsrc/csg/gencyl.hpp \
+  libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 polyhedra.o: libsrc/csg/polyhedra.cpp libsrc/include/mystdlib.h \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/meshing.hpp \
+  libsrc/meshing/meshing.hpp libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/csg/surface.hpp libsrc/csg/solid.hpp libsrc/csg/identify.hpp \
+  libsrc/csg/singularref.hpp libsrc/csg/csgeom.hpp \
+  libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp libsrc/csg/brick.hpp \
+  libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp libsrc/csg/curve2d.hpp \
+  libsrc/csg/explicitcurve2d.hpp libsrc/csg/gencyl.hpp \
+  libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 curve2d.o: libsrc/csg/curve2d.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/csg.hpp libsrc/csg/csg.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/meshing.hpp libsrc/meshing/meshing.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
+  libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
+  libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
+  libsrc/meshing/adfront2.hpp libsrc/meshing/meshing2.hpp \
+  libsrc/meshing/improve2.hpp libsrc/meshing/geomsearch.hpp \
+  libsrc/meshing/adfront3.hpp libsrc/meshing/ruler3.hpp \
+  libsrc/meshing/meshing3.hpp libsrc/meshing/improve3.hpp \
+  libsrc/meshing/findip.hpp libsrc/meshing/topology.hpp \
+  libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
+  libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
+  libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
+  libsrc/meshing/specials.hpp libsrc/csg/surface.hpp libsrc/csg/solid.hpp \
+  libsrc/csg/identify.hpp libsrc/csg/singularref.hpp \
+  libsrc/csg/csgeom.hpp libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp \
+  libsrc/csg/brick.hpp libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp \
+  libsrc/csg/curve2d.hpp libsrc/csg/explicitcurve2d.hpp \
+  libsrc/csg/gencyl.hpp libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 singularref.o: libsrc/csg/singularref.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/meshing.hpp \
+  libsrc/meshing/meshing.hpp libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/csg/surface.hpp libsrc/csg/solid.hpp libsrc/csg/identify.hpp \
+  libsrc/csg/singularref.hpp libsrc/csg/csgeom.hpp \
+  libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp libsrc/csg/brick.hpp \
+  libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp libsrc/csg/curve2d.hpp \
+  libsrc/csg/explicitcurve2d.hpp libsrc/csg/gencyl.hpp \
+  libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 edgeflw.o: libsrc/csg/edgeflw.cpp libsrc/include/mystdlib.h \
-  libsrc/include/meshing.hpp libsrc/include/../meshing/meshing.hpp \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/meshing.hpp libsrc/meshing/meshing.hpp \
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/csg/surface.hpp \
+  libsrc/csg/solid.hpp libsrc/csg/identify.hpp libsrc/csg/singularref.hpp \
+  libsrc/csg/csgeom.hpp libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp \
+  libsrc/csg/brick.hpp libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp \
+  libsrc/csg/curve2d.hpp libsrc/csg/explicitcurve2d.hpp \
+  libsrc/csg/gencyl.hpp libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 solid.o: libsrc/csg/solid.cpp libsrc/include/mystdlib.h \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/meshing.hpp \
+  libsrc/meshing/meshing.hpp libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/csg/surface.hpp libsrc/csg/solid.hpp libsrc/csg/identify.hpp \
+  libsrc/csg/singularref.hpp libsrc/csg/csgeom.hpp \
+  libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp libsrc/csg/brick.hpp \
+  libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp libsrc/csg/curve2d.hpp \
+  libsrc/csg/explicitcurve2d.hpp libsrc/csg/gencyl.hpp \
+  libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 explicitcurve2d.o: libsrc/csg/explicitcurve2d.cpp \
-  libsrc/include/mystdlib.h libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/mystdlib.h libsrc/include/csg.hpp libsrc/csg/csg.hpp \
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/meshing.hpp \
+  libsrc/meshing/meshing.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/csg/surface.hpp libsrc/csg/solid.hpp libsrc/csg/identify.hpp \
+  libsrc/csg/singularref.hpp libsrc/csg/csgeom.hpp \
+  libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp libsrc/csg/brick.hpp \
+  libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp libsrc/csg/curve2d.hpp \
+  libsrc/csg/explicitcurve2d.hpp libsrc/csg/gencyl.hpp \
+  libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 specpoin.o: libsrc/csg/specpoin.cpp libsrc/include/mystdlib.h \
-  libsrc/include/meshing.hpp libsrc/include/../meshing/meshing.hpp \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/meshing.hpp libsrc/meshing/meshing.hpp \
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/csg/surface.hpp \
+  libsrc/csg/solid.hpp libsrc/csg/identify.hpp libsrc/csg/singularref.hpp \
+  libsrc/csg/csgeom.hpp libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp \
+  libsrc/csg/brick.hpp libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp \
+  libsrc/csg/curve2d.hpp libsrc/csg/explicitcurve2d.hpp \
+  libsrc/csg/gencyl.hpp libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 gencyl.o: libsrc/csg/gencyl.cpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mystdlib.h \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/linalg/linalg.hpp libsrc/include/myadt.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mystdlib.h \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/meshing.hpp \
+  libsrc/meshing/meshing.hpp libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/csg/surface.hpp libsrc/csg/solid.hpp libsrc/csg/identify.hpp \
+  libsrc/csg/singularref.hpp libsrc/csg/csgeom.hpp \
+  libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp libsrc/csg/brick.hpp \
+  libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp libsrc/csg/curve2d.hpp \
+  libsrc/csg/explicitcurve2d.hpp libsrc/csg/gencyl.hpp \
+  libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 revolution.o: libsrc/csg/revolution.cpp libsrc/include/mystdlib.h \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/meshing.hpp \
+  libsrc/meshing/meshing.hpp libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/csg/surface.hpp libsrc/csg/solid.hpp libsrc/csg/identify.hpp \
+  libsrc/csg/singularref.hpp libsrc/csg/csgeom.hpp \
+  libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp libsrc/csg/brick.hpp \
+  libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp libsrc/csg/curve2d.hpp \
+  libsrc/csg/explicitcurve2d.hpp libsrc/csg/gencyl.hpp \
+  libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 genmesh.o: libsrc/csg/genmesh.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/meshing.hpp \
+  libsrc/meshing/meshing.hpp libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/csg/surface.hpp libsrc/csg/solid.hpp libsrc/csg/identify.hpp \
+  libsrc/csg/singularref.hpp libsrc/csg/csgeom.hpp \
+  libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp libsrc/csg/brick.hpp \
+  libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp libsrc/csg/curve2d.hpp \
+  libsrc/csg/explicitcurve2d.hpp libsrc/csg/gencyl.hpp \
+  libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 spline3d.o: libsrc/csg/spline3d.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/meshing.hpp \
+  libsrc/meshing/meshing.hpp libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/csg/surface.hpp libsrc/csg/solid.hpp libsrc/csg/identify.hpp \
+  libsrc/csg/singularref.hpp libsrc/csg/csgeom.hpp \
+  libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp libsrc/csg/brick.hpp \
+  libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp libsrc/csg/curve2d.hpp \
+  libsrc/csg/explicitcurve2d.hpp libsrc/csg/gencyl.hpp \
+  libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 surface.o: libsrc/csg/surface.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp \
-  libsrc/include/../linalg/linalg.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/csg.hpp libsrc/csg/csg.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/meshing.hpp libsrc/meshing/meshing.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
+  libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
+  libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
+  libsrc/meshing/adfront2.hpp libsrc/meshing/meshing2.hpp \
+  libsrc/meshing/improve2.hpp libsrc/meshing/geomsearch.hpp \
+  libsrc/meshing/adfront3.hpp libsrc/meshing/ruler3.hpp \
+  libsrc/meshing/meshing3.hpp libsrc/meshing/improve3.hpp \
+  libsrc/meshing/findip.hpp libsrc/meshing/topology.hpp \
+  libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
+  libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
+  libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
+  libsrc/meshing/specials.hpp libsrc/csg/surface.hpp libsrc/csg/solid.hpp \
+  libsrc/csg/identify.hpp libsrc/csg/singularref.hpp \
+  libsrc/csg/csgeom.hpp libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp \
+  libsrc/csg/brick.hpp libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp \
+  libsrc/csg/curve2d.hpp libsrc/csg/explicitcurve2d.hpp \
+  libsrc/csg/gencyl.hpp libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 identify.o: libsrc/csg/identify.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/meshing.hpp \
+  libsrc/meshing/meshing.hpp libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/csg/surface.hpp libsrc/csg/solid.hpp libsrc/csg/identify.hpp \
+  libsrc/csg/singularref.hpp libsrc/csg/csgeom.hpp \
+  libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp libsrc/csg/brick.hpp \
+  libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp libsrc/csg/curve2d.hpp \
+  libsrc/csg/explicitcurve2d.hpp libsrc/csg/gencyl.hpp \
+  libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 triapprox.o: libsrc/csg/triapprox.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/meshing.hpp \
+  libsrc/meshing/meshing.hpp libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/csg/surface.hpp libsrc/csg/solid.hpp libsrc/csg/identify.hpp \
+  libsrc/csg/singularref.hpp libsrc/csg/csgeom.hpp \
+  libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp libsrc/csg/brick.hpp \
+  libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp libsrc/csg/curve2d.hpp \
+  libsrc/csg/explicitcurve2d.hpp libsrc/csg/gencyl.hpp \
+  libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp
 geom2dmesh.o: libsrc/geom2d/geom2dmesh.cpp libsrc/include/mystdlib.h \
-  libsrc/include/csg.hpp libsrc/include/../csg/csg.hpp \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp \
-  libsrc/include/geometry2d.hpp libsrc/include/../geom2d/geometry2d.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/include/../geom2d/spline2d.hpp \
-  libsrc/include/../geom2d/splinegeometry2.hpp \
-  libsrc/include/../geom2d/geom2dmesh.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/myadt.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/meshing.hpp libsrc/meshing/meshing.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
+  libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
+  libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
+  libsrc/meshing/adfront2.hpp libsrc/meshing/meshing2.hpp \
+  libsrc/meshing/improve2.hpp libsrc/meshing/geomsearch.hpp \
+  libsrc/meshing/adfront3.hpp libsrc/meshing/ruler3.hpp \
+  libsrc/meshing/meshing3.hpp libsrc/meshing/improve3.hpp \
+  libsrc/meshing/findip.hpp libsrc/meshing/topology.hpp \
+  libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
+  libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
+  libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
+  libsrc/meshing/specials.hpp libsrc/csg/surface.hpp libsrc/csg/solid.hpp \
+  libsrc/csg/identify.hpp libsrc/csg/singularref.hpp \
+  libsrc/csg/csgeom.hpp libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp \
+  libsrc/csg/brick.hpp libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp \
+  libsrc/csg/curve2d.hpp libsrc/csg/explicitcurve2d.hpp \
+  libsrc/csg/gencyl.hpp libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp \
+  libsrc/include/geometry2d.hpp libsrc/geom2d/geometry2d.hpp \
+  libsrc/geom2d/spline2d.hpp libsrc/geom2d/splinegeometry2.hpp \
+  libsrc/geom2d/geom2dmesh.hpp
 spline2d.o: libsrc/geom2d/spline2d.cpp libsrc/include/mystdlib.h \
-  libsrc/include/csg.hpp libsrc/include/../csg/csg.hpp \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/geom2d/spline2d.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/myadt.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/meshing.hpp libsrc/meshing/meshing.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
+  libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
+  libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
+  libsrc/meshing/adfront2.hpp libsrc/meshing/meshing2.hpp \
+  libsrc/meshing/improve2.hpp libsrc/meshing/geomsearch.hpp \
+  libsrc/meshing/adfront3.hpp libsrc/meshing/ruler3.hpp \
+  libsrc/meshing/meshing3.hpp libsrc/meshing/improve3.hpp \
+  libsrc/meshing/findip.hpp libsrc/meshing/topology.hpp \
+  libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
+  libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
+  libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
+  libsrc/meshing/specials.hpp libsrc/csg/surface.hpp libsrc/csg/solid.hpp \
+  libsrc/csg/identify.hpp libsrc/csg/singularref.hpp \
+  libsrc/csg/csgeom.hpp libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp \
+  libsrc/csg/brick.hpp libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp \
+  libsrc/csg/curve2d.hpp libsrc/csg/explicitcurve2d.hpp \
+  libsrc/csg/gencyl.hpp libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp \
+  libsrc/geom2d/spline2d.hpp
 splinegeometry2.o: libsrc/geom2d/splinegeometry2.cpp \
-  libsrc/include/mystdlib.h libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/geom2d/spline2d.hpp \
-  libsrc/geom2d/splinegeometry2.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/mystdlib.h libsrc/include/csg.hpp libsrc/csg/csg.hpp \
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/meshing.hpp \
+  libsrc/meshing/meshing.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/csg/surface.hpp libsrc/csg/solid.hpp libsrc/csg/identify.hpp \
+  libsrc/csg/singularref.hpp libsrc/csg/csgeom.hpp \
+  libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp libsrc/csg/brick.hpp \
+  libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp libsrc/csg/curve2d.hpp \
+  libsrc/csg/explicitcurve2d.hpp libsrc/csg/gencyl.hpp \
+  libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp \
+  libsrc/geom2d/spline2d.hpp libsrc/geom2d/splinegeometry2.hpp
 genmesh2d.o: libsrc/geom2d/genmesh2d.cpp libsrc/include/mystdlib.h \
-  libsrc/include/csg.hpp libsrc/include/../csg/csg.hpp \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
-  libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
-  libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
-  libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
-  libsrc/include/../csg/manifold.hpp libsrc/include/../csg/curve2d.hpp \
-  libsrc/include/../csg/explicitcurve2d.hpp \
-  libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
-  libsrc/include/../csg/extrusion.hpp \
-  libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp \
-  libsrc/include/geometry2d.hpp libsrc/include/../geom2d/geometry2d.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/include/../geom2d/spline2d.hpp \
-  libsrc/include/../geom2d/splinegeometry2.hpp \
-  libsrc/include/../geom2d/geom2dmesh.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/csg.hpp libsrc/csg/csg.hpp libsrc/include/myadt.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/meshing.hpp libsrc/meshing/meshing.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
+  libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
+  libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
+  libsrc/meshing/adfront2.hpp libsrc/meshing/meshing2.hpp \
+  libsrc/meshing/improve2.hpp libsrc/meshing/geomsearch.hpp \
+  libsrc/meshing/adfront3.hpp libsrc/meshing/ruler3.hpp \
+  libsrc/meshing/meshing3.hpp libsrc/meshing/improve3.hpp \
+  libsrc/meshing/findip.hpp libsrc/meshing/topology.hpp \
+  libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
+  libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
+  libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
+  libsrc/meshing/specials.hpp libsrc/csg/surface.hpp libsrc/csg/solid.hpp \
+  libsrc/csg/identify.hpp libsrc/csg/singularref.hpp \
+  libsrc/csg/csgeom.hpp libsrc/csg/triapprox.hpp libsrc/csg/algprim.hpp \
+  libsrc/csg/brick.hpp libsrc/csg/spline3d.hpp libsrc/csg/manifold.hpp \
+  libsrc/csg/curve2d.hpp libsrc/csg/explicitcurve2d.hpp \
+  libsrc/csg/gencyl.hpp libsrc/csg/polyhedra.hpp libsrc/csg/extrusion.hpp \
+  libsrc/csg/revolution.hpp libsrc/csg/specpoin.hpp \
+  libsrc/csg/edgeflw.hpp libsrc/csg/meshsurf.hpp \
+  libsrc/include/geometry2d.hpp libsrc/geom2d/geometry2d.hpp \
+  libsrc/geom2d/spline2d.hpp libsrc/geom2d/splinegeometry2.hpp \
+  libsrc/geom2d/geom2dmesh.hpp
 meshstlsurface.o: libsrc/stlgeom/meshstlsurface.cpp \
   libsrc/include/mystdlib.h libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
-  libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp libsrc/stlgeom/stlgeom.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/stlgeom/stltopology.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/meshing.hpp \
+  libsrc/meshing/meshing.hpp libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/stlgeom/stlgeom.hpp libsrc/stlgeom/stltopology.hpp \
   libsrc/stlgeom/stltool.hpp libsrc/stlgeom/stlline.hpp \
   libsrc/stlgeom/meshstlsurface.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 stlline.o: libsrc/stlgeom/stlline.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp libsrc/stlgeom/stlgeom.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/stlgeom/stltopology.hpp \
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/meshing.hpp libsrc/meshing/meshing.hpp \
+  libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/stlgeom/stlgeom.hpp libsrc/stlgeom/stltopology.hpp \
   libsrc/stlgeom/stltool.hpp libsrc/stlgeom/stlline.hpp \
   libsrc/stlgeom/meshstlsurface.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 stltopology.o: libsrc/stlgeom/stltopology.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp libsrc/stlgeom/stlgeom.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/stlgeom/stltopology.hpp \
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/meshing.hpp libsrc/meshing/meshing.hpp \
+  libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/stlgeom/stlgeom.hpp libsrc/stlgeom/stltopology.hpp \
   libsrc/stlgeom/stltool.hpp libsrc/stlgeom/stlline.hpp \
   libsrc/stlgeom/meshstlsurface.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 stltool.o: libsrc/stlgeom/stltool.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp libsrc/stlgeom/stlgeom.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/stlgeom/stltopology.hpp \
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/meshing.hpp libsrc/meshing/meshing.hpp \
+  libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/stlgeom/stlgeom.hpp libsrc/stlgeom/stltopology.hpp \
   libsrc/stlgeom/stltool.hpp libsrc/stlgeom/stlline.hpp \
   libsrc/stlgeom/meshstlsurface.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 stlgeom.o: libsrc/stlgeom/stlgeom.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp libsrc/stlgeom/stlgeom.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/stlgeom/stltopology.hpp \
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/meshing.hpp libsrc/meshing/meshing.hpp \
+  libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/stlgeom/stlgeom.hpp libsrc/stlgeom/stltopology.hpp \
   libsrc/stlgeom/stltool.hpp libsrc/stlgeom/stlline.hpp \
   libsrc/stlgeom/meshstlsurface.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 stlgeomchart.o: libsrc/stlgeom/stlgeomchart.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp libsrc/stlgeom/stlgeom.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/stlgeom/stltopology.hpp \
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/meshing.hpp libsrc/meshing/meshing.hpp \
+  libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/stlgeom/stlgeom.hpp libsrc/stlgeom/stltopology.hpp \
   libsrc/stlgeom/stltool.hpp libsrc/stlgeom/stlline.hpp \
   libsrc/stlgeom/meshstlsurface.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 stlgeommesh.o: libsrc/stlgeom/stlgeommesh.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp libsrc/stlgeom/stlgeom.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/stlgeom/stltopology.hpp \
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/meshing.hpp libsrc/meshing/meshing.hpp \
+  libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/stlgeom/stlgeom.hpp libsrc/stlgeom/stltopology.hpp \
   libsrc/stlgeom/stltool.hpp libsrc/stlgeom/stlline.hpp \
   libsrc/stlgeom/meshstlsurface.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
 moveablemem.o: libsrc/general/moveablemem.cpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mystdlib.h \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/general/myadt.hpp libsrc/include/mystdlib.h \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp
 ngexception.o: libsrc/general/ngexception.cpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mystdlib.h \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/general/myadt.hpp libsrc/include/mystdlib.h \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp
 table.o: libsrc/general/table.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp
 optmem.o: libsrc/general/optmem.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp
 spbita2d.o: libsrc/general/spbita2d.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp
 hashtabl.o: libsrc/general/hashtabl.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp
 sort.o: libsrc/general/sort.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp
 flags.o: libsrc/general/flags.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp
 seti.o: libsrc/general/seti.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp
 bitarray.o: libsrc/general/bitarray.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp
 array.o: libsrc/general/array.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp
 symbolta.o: libsrc/general/symbolta.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp
 mystring.o: libsrc/general/mystring.cpp libsrc/include/mystdlib.h \
-  libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp
-# 1 "/Users/geuzaine/.gmsh/Netgen//"
+  libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp
 nglib_addon.o: nglib_addon.cpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/myadt.hpp \
-  libsrc/include/../general/myadt.hpp libsrc/include/mystdlib.h \
-  libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
-  libsrc/include/../general/parthreads.hpp \
-  libsrc/include/../general/moveablemem.hpp \
-  libsrc/include/../general/dynamicmem.hpp \
-  libsrc/include/../general/template.hpp \
-  libsrc/include/../general/array.hpp libsrc/include/../general/table.hpp \
-  libsrc/include/../general/hashtabl.hpp \
-  libsrc/include/../general/symbolta.hpp \
-  libsrc/include/../general/bitarray.hpp \
-  libsrc/include/../general/flags.hpp \
-  libsrc/include/../general/spbita2d.hpp \
-  libsrc/include/../general/seti.hpp libsrc/include/../general/optmem.hpp \
-  libsrc/include/../general/autoptr.hpp \
-  libsrc/include/../general/sort.hpp libsrc/include/../general/stack.hpp \
-  libsrc/include/../general/mystring.hpp libsrc/include/gprim.hpp \
-  libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../gprim/geomobjects.hpp \
-  libsrc/include/../gprim/geomops.hpp \
-  libsrc/include/../gprim/geomfuncs.hpp \
-  libsrc/include/../gprim/geom2d.hpp libsrc/include/../gprim/geom3d.hpp \
-  libsrc/include/../gprim/geomtest3d.hpp \
-  libsrc/include/../gprim/transform3d.hpp \
-  libsrc/include/../gprim/adtree.hpp libsrc/include/linalg.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
-  libsrc/include/../linalg/densemat.hpp \
-  libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
-  libsrc/include/../opti/opti.hpp \
-  libsrc/include/../meshing/msghandler.hpp \
-  libsrc/include/../meshing/meshtype.hpp \
-  libsrc/include/../meshing/localh.hpp \
-  libsrc/include/../meshing/meshclass.hpp \
-  libsrc/include/../meshing/global.hpp \
-  libsrc/include/../meshing/meshtool.hpp \
-  libsrc/include/../meshing/ruler2.hpp \
-  libsrc/include/../meshing/adfront2.hpp \
-  libsrc/include/../meshing/meshing2.hpp \
-  libsrc/include/../meshing/improve2.hpp \
-  libsrc/include/../meshing/geomsearch.hpp \
-  libsrc/include/../meshing/adfront3.hpp \
-  libsrc/include/../meshing/ruler3.hpp \
-  libsrc/include/../meshing/meshing3.hpp \
-  libsrc/include/../meshing/improve3.hpp \
-  libsrc/include/../meshing/findip.hpp \
-  libsrc/include/../meshing/topology.hpp \
-  libsrc/include/../meshing/curvedelems.hpp \
-  libsrc/include/../meshing/bisect.hpp \
-  libsrc/include/../meshing/clusters.hpp \
-  libsrc/include/../meshing/meshfunc.hpp \
-  libsrc/include/../meshing/hprefinement.hpp \
-  libsrc/include/../meshing/boundarylayer.hpp \
-  libsrc/include/../meshing/specials.hpp libsrc/interface/nglib.h \
-  ../Common/Message.h
+  libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mystdlib.h \
+  libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
+  libsrc/general/parthreads.hpp libsrc/general/moveablemem.hpp \
+  libsrc/general/dynamicmem.hpp libsrc/general/template.hpp \
+  libsrc/general/array.hpp libsrc/general/table.hpp \
+  libsrc/general/hashtabl.hpp libsrc/general/symbolta.hpp \
+  libsrc/general/bitarray.hpp libsrc/general/flags.hpp \
+  libsrc/general/spbita2d.hpp libsrc/general/seti.hpp \
+  libsrc/general/optmem.hpp libsrc/general/autoptr.hpp \
+  libsrc/general/sort.hpp libsrc/general/stack.hpp \
+  libsrc/general/mystring.hpp libsrc/include/gprim.hpp \
+  libsrc/gprim/gprim.hpp libsrc/gprim/geomobjects.hpp \
+  libsrc/gprim/geomops.hpp libsrc/gprim/geomfuncs.hpp \
+  libsrc/gprim/geom2d.hpp libsrc/gprim/geom3d.hpp \
+  libsrc/gprim/geomtest3d.hpp libsrc/gprim/transform3d.hpp \
+  libsrc/gprim/adtree.hpp libsrc/include/linalg.hpp \
+  libsrc/linalg/linalg.hpp libsrc/linalg/vector.hpp \
+  libsrc/linalg/densemat.hpp libsrc/linalg/polynomial.hpp \
+  libsrc/include/opti.hpp libsrc/opti/opti.hpp \
+  libsrc/meshing/msghandler.hpp libsrc/meshing/meshtype.hpp \
+  libsrc/meshing/localh.hpp libsrc/meshing/meshclass.hpp \
+  libsrc/meshing/global.hpp libsrc/meshing/meshtool.hpp \
+  libsrc/meshing/ruler2.hpp libsrc/meshing/adfront2.hpp \
+  libsrc/meshing/meshing2.hpp libsrc/meshing/improve2.hpp \
+  libsrc/meshing/geomsearch.hpp libsrc/meshing/adfront3.hpp \
+  libsrc/meshing/ruler3.hpp libsrc/meshing/meshing3.hpp \
+  libsrc/meshing/improve3.hpp libsrc/meshing/findip.hpp \
+  libsrc/meshing/topology.hpp libsrc/meshing/curvedelems.hpp \
+  libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
+  libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
+  libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
+  libsrc/interface/nglib.h ../Common/Message.h

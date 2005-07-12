@@ -17,9 +17,10 @@ double BDS_Quadric:: normalCurv ( double x, double y, double z ) const
     // K = div n = div ( Grad(f) / ||Grad(f)||)
     //   = Laplacian (f) /  ||Grad(f)|| - Grad^t(f) Hessian Grad(f) / ||Grad(f)||^3
     BDS_Vector g = Gradient ( x , y , z );
-    double normG = sqrt ( g.x*g.x +g.y*g.y +g.z*g.z); 
+    const double normG2 = 1./( g.x*g.x +g.y*g.y +g.z*g.z); 
+    double normG = sqrt ( normG2 );
 
-    double c1 = 2*(a + b + c)/normG;
+    double c1 = 2*(a + b + c);
 
 
     double c2 = 
@@ -31,7 +32,7 @@ double BDS_Quadric:: normalCurv ( double x, double y, double z ) const
 	4*f *  g.y * g.z ;
 
     //printf("%g %g %g %g %g %g\n",a,b,c,normG,c1, c2 / (normG*normG*normG));
-    return fabs(c1 - c2 / (normG*normG*normG));
+    return fabs(c1 - c2 * (normG2) ) * normG;
 }
 
 void BDS_Quadric::projection ( double xa, double ya, double za,
@@ -68,7 +69,7 @@ void BDS_Quadric::projection ( double xa, double ya, double za,
 	    grad.x * g +grad.y * h +grad.z * i;
 	double delta = coef2*coef2 - 4.*coef1*residual;
 	if (delta < 0){
-//	    printf ("aaargh error projection");
+	  //printf ("aaargh error projection delta = %g\n",delta);
 	}
 	else
 	{
@@ -83,7 +84,7 @@ void BDS_Quadric::projection ( double xa, double ya, double za,
 	}
 //	printf("point (%g,%g,%g) ==> (%g,%g,%g) dist %g\n",
 //	       xa,ya,za,x,y,z,signedDistanceTo (x,y,z));;
-	if (ITER++ == 1)	
+	if (ITER++ == 0)	
 	    break;
    }
 }
@@ -265,12 +266,15 @@ BDS_Point *BDS_Mesh :: find_point  (int p)
 
 BDS_Edge *BDS_Mesh :: find_edge  (int num1, int num2)
 {
-    BDS_Point P1 ( num1 ) ;
-    BDS_Point P2 ( num2 ) ;
-    BDS_Edge  E (&P1, &P2);
-    std::set<BDS_Edge*, EdgeLessThan>::iterator it = edges.find(&E);
-    if (it != edges.end()) return (BDS_Edge*) (*it);
-    else return 0;
+  BDS_Point *p = find_point(num1);
+  std::list<BDS_Edge*>::iterator eit  = p->edges.begin(); 
+  while (eit!=p->edges.end())
+    {
+      if ((*eit)->p1 == p && (*eit)->p2->iD == num2)return (*eit);
+      if ((*eit)->p2 == p && (*eit)->p1->iD == num2)return (*eit);
+      ++eit;
+    }
+  return 0;
 }
 
 BDS_Edge *BDS_Mesh :: find_edge  (BDS_Point *p1, BDS_Point *p2, BDS_Triangle *t) const
@@ -293,18 +297,18 @@ BDS_Edge *BDS_Mesh :: add_edge  (int p1, int p2)
     BDS_Point *pp2=find_point(p2);
     if (!pp1 || !pp2)throw;
     BDS_Edge *e = new BDS_Edge ( pp1, pp2 );
-    edges.insert ( e );
+    edges.push_back ( e );
     return e;
 }
 
 BDS_Triangle * BDS_Mesh :: add_triangle  (int p1, int p2, int p3 )
 {
-    add_edge (p1,p2);
-    add_edge (p2,p3);
-    add_edge (p3,p1);
-    BDS_Edge *e1 = find_edge (p1,p2); 
-    BDS_Edge *e2 = find_edge (p2,p3); 
-    BDS_Edge *e3 = find_edge (p3,p1); 
+    BDS_Edge *e1=add_edge (p1,p2);
+    BDS_Edge *e2=add_edge (p2,p3);
+    BDS_Edge *e3=add_edge (p3,p1);
+    //    BDS_Edge *e1 = find_edge (p1,p2); 
+    //    BDS_Edge *e2 = find_edge (p2,p3); 
+    //    BDS_Edge *e3 = find_edge (p3,p1); 
     try {
 	BDS_Triangle *t  = new BDS_Triangle ( e1, e2, e3 );    
 	triangles.push_back ( t );
@@ -324,11 +328,11 @@ void  BDS_Mesh :: del_triangle  (BDS_Triangle *t)
 }
 void  BDS_Mesh :: del_edge  (BDS_Edge *e)
 {
-    edges.erase ( e );
+  //    edges.erase ( e );
     e->p1->del ( e );
     e->p2->del ( e );
     e->deleted = true;
-    edges_to_delete.insert (e);
+    //    edges_to_delete.insert (e);
 }
 void  BDS_Mesh :: del_point  (BDS_Point *p)
 {
@@ -515,7 +519,7 @@ void BDS_Mesh :: reverseEngineerCAD ( )
 						   ((*pit).z-z)*((*pit).z-z));
 //			printf("%g %g %g ... %g %g %g\n",(*pit).x , (*pit).y , (*pit).z ,x,y,z);
 			       
-			if (dist > 1.e-2 * LC )quad = false;
+			if (dist > 1.e-3 * LC )quad = false;
 			++pit;
 		    }		    
 		    if ( quad ) 
@@ -615,12 +619,71 @@ void BDS_Point :: compute_curvature ( )
 	radius_of_curvature = fabs(1/curvature);
       else
 	radius_of_curvature = 1.e22;
-//      printf(" curvature = %g %g %g R = %g\n",wr[0],wr[1],wr[2],radius_of_curvature);
+      //      printf(" R = %g\n",radius_of_curvature);
   }
 }
-  
 
-void BDS_Mesh :: classify ( double angle )
+void recur_color_plane_surf ( const double eps, 
+			      BDS_Triangle *t , 
+			      const BDS_Vector &n, 
+			      std::set <BDS_Triangle *> &all,
+			      std::list<BDS_Triangle *> &plane)
+{
+  if (all.find (t) == all.end())
+    {
+      BDS_Vector n2 = t->N();
+      double angle = fabs(n2.angle(n));
+      //      printf("triangle %p angle %g\n",t,angle);
+      if (angle < eps)
+	{
+	  all.insert (t);
+	  plane.push_back (t);
+	  if ( t->e1->numfaces() == 2)recur_color_plane_surf (eps,t->e1->otherFace (t) , n, all, plane);
+	  if ( t->e2->numfaces() == 2)recur_color_plane_surf (eps,t->e2->otherFace (t) , n, all, plane);
+	  if ( t->e3->numfaces() == 2)recur_color_plane_surf (eps,t->e3->otherFace (t) , n, all, plane);
+	}
+    }
+}
+
+void BDS_Mesh :: color_plane_surf ( double eps, int NB_T )
+{
+  int current_status = 100000;
+  {
+    std::set<BDS_Triangle*> all;
+    while (1)
+      {
+	std::list<BDS_Triangle*> plane;
+	std::list<BDS_Triangle*>::iterator it  = triangles.begin();
+	std::list<BDS_Triangle*>::iterator ite = triangles.end();
+	BDS_Triangle *start = 0;
+	while (it!=ite)
+	  {
+	    if (all.find(*it) == all.end())
+	      {
+		start = (BDS_Triangle*) (*it);
+	      }
+	    if (start)break;
+	    ++it;
+	  }
+	if (!start)break;	  
+	recur_color_plane_surf ( eps, start , start->N(),all,plane );
+	if (plane.size() > NB_T)
+	  {
+	    printf("plane surface found %d triangles\n",plane.size());
+	    std::list<BDS_Triangle*>::iterator xit  = plane.begin(); 
+	    std::list<BDS_Triangle*>::iterator xite = plane.end();
+	    while (xit != xite)
+	      {
+		(*xit)->status = current_status;
+		++xit;
+	      }
+	      current_status++;
+	  }
+      }
+  }
+}
+
+void BDS_Mesh :: classify ( double angle, int NB_T )
 {
 
     printf("  classifying \n");
@@ -628,7 +691,7 @@ void BDS_Mesh :: classify ( double angle )
     static BDS_GeomEntity EDGE_CLAS (0,1);
 
     // clear everything
-    // pre classified meshes will fail to work, more 2 be done
+
     { 
 	{
 	    std::set<BDS_Point*,PointLessThan>::iterator it  = points.begin();
@@ -637,14 +700,18 @@ void BDS_Mesh :: classify ( double angle )
 	}
 
 	{
-	    std::set<BDS_Edge*, EdgeLessThan>::iterator it  = edges.begin();
-	    std::set<BDS_Edge*, EdgeLessThan>::iterator ite = edges.end();
+	    std::list<BDS_Edge*>::iterator it  = edges.begin();
+	    std::list<BDS_Edge*>::iterator ite = edges.end();
 	    while (it != ite){ (*it)->g = 0; ++it;}
 	}
 	{
 	    std::list<BDS_Triangle*>::iterator it  = triangles.begin();
 	    std::list<BDS_Triangle*>::iterator ite = triangles.end();
-	    while (it!=ite){(*it)->g = 0;++it;}
+	    while (it!=ite){
+	      (*it)->g = 0;
+	      if ((*it)->status > 10000)(*it)->status =0;
+	      ++it;
+	    }
 	}
 	geom.clear();
     }
@@ -660,10 +727,14 @@ void BDS_Mesh :: classify ( double angle )
 	}	
     }
 
+    // color plane surfaces
+
+    if (NB_T > 0)color_plane_surf (1.e-4, NB_T);
+
 
     {
-	std::set<BDS_Edge*, EdgeLessThan>::iterator it  = edges.begin();
-	std::set<BDS_Edge*, EdgeLessThan>::iterator ite = edges.end();
+	std::list<BDS_Edge*>::iterator it  = edges.begin();
+	std::list<BDS_Edge*>::iterator ite = edges.end();
 	while (it!=ite)
 	{
 	    BDS_Edge &e = *((BDS_Edge *) *it);
@@ -747,8 +818,8 @@ void BDS_Mesh :: classify ( double angle )
     int edgetag = 1;
     {
 	std::map< std::pair<int,int> , int > edgetags;
-	std::set<BDS_Edge*, EdgeLessThan>::iterator it  = edges.begin();
-	std::set<BDS_Edge*, EdgeLessThan>::iterator ite = edges.end();	
+	std::list<BDS_Edge*>::iterator it  = edges.begin();
+	std::list<BDS_Edge*>::iterator ite = edges.end();	
 	while (it!=ite)
 	{
 	    BDS_Edge &e = *((BDS_Edge *) *it);
@@ -1301,8 +1372,8 @@ void BDS_Mesh :: save_gmsh_format ( const char *filename )
 	
 	int nbClasEdges = 0;
 	{
-	    std::set<BDS_Edge*, EdgeLessThan>::iterator it  = edges.begin();
-	    std::set<BDS_Edge*, EdgeLessThan>::iterator ite = edges.end();
+	    std::list<BDS_Edge*>::iterator it  = edges.begin();
+	    std::list<BDS_Edge*>::iterator ite = edges.end();
 	    while(it!=ite)
 	    {
 		if ((*it)->g && (*it)->g->classif_degree == 1)nbClasEdges++;
@@ -1328,8 +1399,8 @@ void BDS_Mesh :: save_gmsh_format ( const char *filename )
 	    }
 	}
 	{
-	    std::set<BDS_Edge*, EdgeLessThan>::iterator it  = edges.begin();
-	    std::set<BDS_Edge*, EdgeLessThan>::iterator ite = edges.end();
+	    std::list<BDS_Edge*>::iterator it  = edges.begin();
+	    std::list<BDS_Edge*>::iterator ite = edges.end();
 	    while(it!=ite)
 	    {
 		if ((*it)->g && (*it)->g->classif_degree == 1)
@@ -1380,26 +1451,40 @@ void DESTROOOY ( IT beg , IT end)
 }
 void BDS_Mesh :: cleanup()
 {
+  {
     for (std::list<BDS_Triangle*> :: iterator it = triangles.begin();
 	 it != triangles.end();
 	 it++)
-    {
+      {
 	while (it != triangles.end() && (*it)->deleted)
-	{
+	  {
 	    delete *it;
 	    it = triangles.erase (it);
-	}
-    }	    
-    DESTROOOY ( edges_to_delete.begin(),edges_to_delete.end());
-    edges_to_delete.clear();
+	  }
+      }	   
+  }
+  { 
+    for (std::list<BDS_Edge*> :: iterator it = edges.begin();
+	 it != edges.end();
+	 it++)
+      {
+	while (it != edges.end() && (*it)->deleted)
+	  {
+	    delete *it;
+	    it = edges.erase (it);
+	  }	
+      }	   
+  } 
+  //    DESTROOOY ( edges_to_delete.begin(),edges_to_delete.end());
+  //    edges_to_delete.clear();
 }
 
 BDS_Mesh ::~ BDS_Mesh ()
 {
     DESTROOOY ( geom.begin(),geom.end());
     DESTROOOY ( points.begin(),points.end());
-    DESTROOOY ( edges.begin(),edges.end());
     cleanup();
+    DESTROOOY ( edges.begin(),edges.end());
     DESTROOOY ( triangles.begin(),triangles.end());
 }
 
@@ -1470,6 +1555,7 @@ bool BDS_Mesh ::split_edge ( BDS_Edge *e, double coord)
     BDS_Edge *p1_op2 = find_edge ( p1, op[1],e->faces(1) );
     BDS_Edge *op2_p2 = find_edge ( op[1],p2,e->faces(1)   );
 
+
     if (e->faces(0))
     {
 	g1 = e->faces(0)->g;
@@ -1483,17 +1569,25 @@ bool BDS_Mesh ::split_edge ( BDS_Edge *e, double coord)
     } 
     
 
+    double t_l = e->target_length;
+
     del_edge (e);
 
 
     BDS_Edge *p1_mid = new BDS_Edge ( p1, mid );
-    edges.insert ( p1_mid );
+    edges.push_back ( p1_mid );
     BDS_Edge *mid_p2 = new BDS_Edge ( mid, p2 );
-    edges.insert ( mid_p2 );
+    edges.push_back ( mid_p2 );
     BDS_Edge *op1_mid = new BDS_Edge ( op[0], mid );
-    edges.insert ( op1_mid );
+    edges.push_back ( op1_mid );
     BDS_Edge *mid_op2 = new BDS_Edge ( mid, op[1] );
-    edges.insert ( mid_op2 );
+    edges.push_back ( mid_op2 );
+
+
+    p1_mid->target_length = t_l; 
+    op1_mid->target_length = t_l; 
+    mid_p2->target_length = t_l; 
+    mid_op2->target_length = t_l; 
 
 //    printf("split ends 1 %d (%d %d) %d %d \n",p1_op1->numfaces(), p1->iD, op[0]->iD, op1_mid->numfaces(),p1_mid->numfaces());
     BDS_Triangle *t1,*t2,*t3,*t4;
@@ -1607,7 +1701,7 @@ bool BDS_Mesh ::swap_edge ( BDS_Edge *e)
     del_edge (e);
 
     BDS_Edge *op1_op2 = new BDS_Edge ( op[0], op[1] );
-    edges.insert ( op1_op2 );
+    edges.push_back ( op1_op2 );
 
     BDS_Triangle*t1,*t2;
     if (orientation == 1)
@@ -1630,7 +1724,7 @@ bool BDS_Mesh ::swap_edge ( BDS_Edge *e)
     triangles.push_back(t2); 
     return true;
 }
-bool BDS_Mesh ::collapse_edge ( BDS_Edge *e, BDS_Point *p, const double eps, const double l)
+bool BDS_Mesh ::collapse_edge ( BDS_Edge *e, BDS_Point *p, const double eps)
 {
 
     if (e->numfaces() != 2)return false;
@@ -1688,7 +1782,6 @@ bool BDS_Mesh ::collapse_edge ( BDS_Edge *e, BDS_Point *p, const double eps, con
 		// are collapsed too
 		double angle = n1.angle(n2);
 		if (fabs(angle) > M_PI/2 )return false;
-		if ( e->length() > 0.1 *l && fabs(angle) > M_PI/4 ) return false;
 		if (s_after < 1.e-2 * s_before)
 		{
 		    return false; 
@@ -1809,26 +1902,7 @@ void project_point_on_a_list_of_triangles ( BDS_Point *p ,
 
 bool BDS_Mesh ::smooth_point_b ( BDS_Point *p  )
 {
-    if (p->g && p->g->classif_degree <= 1)return false;
-    
-    std::list<BDS_Edge*>::iterator eit  = p->edges.begin(); 
-
-    double l_max  = 0;
-    BDS_Edge *e_max;
-
-    while (eit!=p->edges.end())
-    {
-	++eit;
-    }
-
-    if (p->g->surf)
-    {
-	p->g->surf->projection ( p->X,p->Y,p->Z,p->X,p->Y,p->Z);
-//	printf("coucou\n");
-    }
-    else
-    {
-    }
+  throw;
 }
 
 bool BDS_Mesh ::smooth_point ( BDS_Point *p , BDS_Mesh *geom_mesh )
@@ -1862,73 +1936,147 @@ bool BDS_Mesh ::smooth_point ( BDS_Point *p , BDS_Mesh *geom_mesh )
     }
     else
     {
-	return false;
+      //	return false;
 	p->X = X;
 	p->Y = Y;
 	p->Z = Z;
-	std::list<BDS_Triangle *>t;
-	p->getTriangles (t);
-	project_point_on_a_list_of_triangles ( p , t, p->X,p->Y,p->Z);	
-	if (geom_mesh)
-	    project_point_on_a_list_of_triangles ( p , geom_mesh->triangles, p->X,p->Y,p->Z);
+	//	std::list<BDS_Triangle *>t;
+	//	p->getTriangles (t);
+	//	project_point_on_a_list_of_triangles ( p , t, p->X,p->Y,p->Z);	
+	if (p->g && geom_mesh)
+	  {
+	    BDS_GeomEntity *gg = geom_mesh->get_geom(p->g->classif_tag,p->g->classif_degree);
+	    project_point_on_a_list_of_triangles ( p , gg->t, p->X,p->Y,p->Z);
+	  }
     }
     return true;
+}
+
+void BDS_Mesh :: compute_metric_edge_lengths (const BDS_Metric & metric)
+{
+
+  //  printf("computation of metric lengths\n");
+  {
+    std::list<BDS_Edge*>::iterator it = edges.begin();
+    std::list<BDS_Edge*>::iterator ite  = edges.end();
+    while (it != ite)
+      {
+	if (!(*it)->deleted)
+	  {
+	    (*it)->target_length = metric.target_length (  0.5*((*it)->p2->X+(*it)->p1->X),
+							   0.5*((*it)->p2->Y+(*it)->p1->Y),
+							   0.5*((*it)->p2->Z+(*it)->p1->Z));
+	  }
+	++it;
+      }
+  }
+  //  printf("computation of curvatures\n");
+  {
+    std::set<BDS_Point*, PointLessThan>::iterator it   = points.begin();
+    std::set<BDS_Point*, PointLessThan>::iterator ite  = points.end();
+    while (it != ite)
+      {	
+	if ((*it)->g && !(*it)->g->surf)
+	  (*it)->compute_curvature ();
+	++it;
+      }
+  }
+
+
+  { 
+    std::list<BDS_Edge*>::iterator it = edges.begin();
+    std::list<BDS_Edge*>::iterator ite  = edges.end();
+    while (it != ite)
+      {
+	BDS_Edge *e = (*it);
+	BDS_GeomEntity *g = e->g;
+	if(g && g->surf)
+	  {	    	   
+	    double curvature = g->surf->normalCurv (0.5*(e->p1->X+e->p2->X),
+						    0.5*(e->p1->Y+e->p2->Y),
+						    0.5*(e->p1->Z+e->p2->Z));
+	    double radius = 1./curvature;
+	    double target = radius  /  5.0;
+	    e->target_length = metric.update_target_length (target,e->target_length);
+	    //		printf("e1 radius %g target %g length %g mlp %g ml %g\n",radius, target,e->length(),e->length()/target,e->metric_length);
+	  }
+	else
+	  {
+	    	    double radius = 1/(0.5*(1/e->p1->radius_of_curvature+1/e->p2->radius_of_curvature));
+	    	    double target = radius  /  5.0;
+	    	    e->target_length = metric.update_target_length (target,e->target_length);
+	    
+	  }
+	++it;
+      }
+  }
+  //  printf("smoothing\n");
+  const int NITER = 3;
+  for (int I=0;I<NITER;++I)  {     
+    const double BETA = 0.9;
+    std::set<BDS_Point*, PointLessThan>::iterator it   = points.begin();
+    std::set<BDS_Point*, PointLessThan>::iterator ite  = points.end();
+    while (it != ite)
+      {
+	
+	std::list<BDS_Edge*>::iterator eit  = (*it)->edges.begin(); 
+	
+	double l_min  = metric._max;
+	
+	while (eit!=(*it)->edges.end())
+	  {
+	    if (l_min > (*eit)->target_length)l_min =  (*eit)->target_length;
+	    ++eit;
+	  }
+	
+	l_min /= BETA;
+
+	eit  = (*it)->edges.begin(); 
+	while (eit!=(*it)->edges.end())
+	  {
+	    if ((*eit)->target_length > l_min)(*eit)->target_length = l_min;
+	    ++eit;
+	  }
+	++it;
+      }
+  }
+
+  //  printf("end computation of metric lengths\n");
 }
     
 int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh) 
 {
     int nb_modif = 0;
 
-    double CURV_FACTOR = 5;
+    BDS_Metric metric ( l , LC/200 , LC );
+    //    printf("METRIC %g %g %g\n",LC,metric._min,metric._max);
 
     // add initial set of edges in a list
-    std::set<BDS_Edge*, EdgeLessThan> small_to_long;
+    std::list<BDS_Edge*> small_to_long;
     {
-	std::set<BDS_Edge*, EdgeLessThan>::iterator it = edges.begin();
-	std::set<BDS_Edge*, EdgeLessThan>::iterator ite  = edges.end();
+	std::list<BDS_Edge*>::iterator it = edges.begin();
+	std::list<BDS_Edge*>::iterator ite  = edges.end();
 	while (it != ite)
 	{
 	  //	    if ((*it)->numfaces()==1)printf("one face\n");
-	    small_to_long.insert (*it);  
+	    small_to_long.push_back (*it);  
 	    ++it;
 	}
     }
     // split edges
     {
-      std::set<BDS_Edge*, EdgeLessThan>::iterator it = small_to_long.begin();
-      std::set<BDS_Edge*, EdgeLessThan>::iterator ite  = small_to_long.end();
+      std::list<BDS_Edge*>::iterator it = small_to_long.begin();
+      std::list<BDS_Edge*>::iterator ite  = small_to_long.end();
+      compute_metric_edge_lengths (metric);
             
       while (it != ite)
 	{
 	  if ((*it)->numfaces()==2)
 	    {
-	      BDS_Point *op[2];
-	      (*it)->oppositeof (op);
-	      double ll = sqrt((op[0]->X-op[1]->X)*(op[0]->X-op[1]->X)+
-			       (op[0]->Y-op[1]->Y)*(op[0]->Y-op[1]->Y)+
-			       (op[0]->Z-op[1]->Z)*(op[0]->Z-op[1]->Z));
-	      double LLL = l;
-
-	      if ((*it)->g && (*it)->g->classif_degree == 2 &&(*it)->g->surf)
-	      {
-		  double curvature = (*it)->g->surf->normalCurv (0.5*((*it)->p1->X+(*it)->p2->X),
-								 0.5*((*it)->p1->Y+(*it)->p2->Y),
-								 0.5*((*it)->p1->Z+(*it)->p2->Z));
-		  if (curvature > 0.0)
-		  {
-
-		      double radius_of_curvature = 1./curvature;
-//		      printf("surface %d radius %g\n",(*it)->g->classif_tag,radius_of_curvature);
-		      double maxL = radius_of_curvature / CURV_FACTOR;
-
-		      if ( LLL > maxL ) LLL = maxL;
-		  }
-	      }
-
-	      if (!(*it)->deleted && (*it)->length() > LLL/0.7 && ll > 0.25 * LLL){
-//		  printf("we schpilt\n");
-		  split_edge (*it, 0.5 );
-		  nb_modif++;
+	      double length = (*it)->length();
+	      if (!(*it)->deleted && length > (*it)->target_length / 0.7 ){
+		split_edge (*it, 0.5 );
+		nb_modif++;
 	      }
 	    }
 	  ++it;
@@ -1939,64 +2087,52 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
     cleanup();    
     {
 	small_to_long.clear();
-	std::set<BDS_Edge*, EdgeLessThan>::iterator it = edges.begin();
-	std::set<BDS_Edge*, EdgeLessThan>::iterator ite  = edges.end();
+	std::list<BDS_Edge*>::iterator it = edges.begin();
+	std::list<BDS_Edge*>::iterator ite  = edges.end();
 	while (it != ite)
 	{
-	    small_to_long.insert (*it);  
+	    small_to_long.push_back (*it);  
 	    ++it;
 	}
     }
     // collapse 
     {    	
-	std::set<BDS_Edge*, EdgeLessThan>::iterator it = small_to_long.begin();
-	std::set<BDS_Edge*, EdgeLessThan>::iterator ite  = small_to_long.end();
+	std::list<BDS_Edge*>::iterator it = small_to_long.begin();
+	std::list<BDS_Edge*>::iterator ite  = small_to_long.end();
+	//	compute_metric_edge_lengths (metric);
+
 	while (it != ite)
 	{
-
-	    double LLL = l;
-	    if ((*it)->g && (*it)->g->classif_degree == 2 &&(*it)->g->surf)
-	    {
-		double curvature = (*it)->g->surf->normalCurv (0.5*((*it)->p1->X+(*it)->p2->X),
-							       0.5*((*it)->p1->Y+(*it)->p2->Y),
-							       0.5*((*it)->p1->Z+(*it)->p2->Z));
-		if (curvature > 0.0)
-		{
-		    double radius_of_curvature = 1./curvature;
-		    double maxL = radius_of_curvature / CURV_FACTOR;
-		    if ( LLL > maxL ) LLL = maxL;
-		}
-	    }
-
-	    if (!(*it)->deleted && (*it)->length() < 0.7 * LLL ){
-		if (nb_modif %2 )
-		{
-		    if (collapse_edge (*it, (*it)->p1, 0.1,LLL ))
-			nb_modif++;
-		}
-		else
-		{
-		    if (collapse_edge (*it, (*it)->p2, 0.1,LLL ))
-			nb_modif++;
-		}
-	    }
-	    ++it;
+	  double length = (*it)->length();
+	  if (!(*it)->deleted && length < (*it)->target_length * 0.7 ){
+	    if (nb_modif %2 )
+	      {
+		if (collapse_edge (*it, (*it)->p1, 0.1 ))
+		  nb_modif++;
+	      }
+	    else
+	      {
+		if (collapse_edge (*it, (*it)->p2, 0.1 ))
+		  nb_modif++;
+	      }
+	  }
+	  ++it;
 	}
     }
     cleanup();  
     {
 	small_to_long.clear();
-	std::set<BDS_Edge*, EdgeLessThan>::iterator it = edges.begin();
-	std::set<BDS_Edge*, EdgeLessThan>::iterator ite  = edges.end();
+	std::list<BDS_Edge*>::iterator it = edges.begin();
+	std::list<BDS_Edge*>::iterator ite  = edges.end();
 	while (it != ite)
 	{
-	    small_to_long.insert (*it);  
+	    small_to_long.push_back (*it);  
 	    ++it;
 	}
     }
     {    
-	std::set<BDS_Edge*, EdgeLessThan>::iterator it = small_to_long.begin();
-	std::set<BDS_Edge*, EdgeLessThan>::iterator ite  = small_to_long.end();
+	std::list<BDS_Edge*>::iterator it = small_to_long.begin();
+	std::list<BDS_Edge*>::iterator ite  = small_to_long.end();
 	while (it != ite)
 	{
 	    if (!(*it)->deleted && (*it)->numfaces()==2)
@@ -2061,7 +2197,12 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
 BDS_Mesh::BDS_Mesh (const BDS_Mesh &other)
 {
     MAXPOINTNUMBER = other.MAXPOINTNUMBER;
-
+    LC = other.LC;
+    for (int i=0;i<3;i++)
+      {
+	Min[i] = other.Min[i];
+	Max[i] = other.Max[i];
+      }
     for (std::set<BDS_GeomEntity*,GeomLessThan>::const_iterator it = other.geom.begin();
 	 it != other.geom.end();
 	 ++it)
@@ -2080,7 +2221,7 @@ BDS_Mesh::BDS_Mesh (const BDS_Mesh &other)
 	if (p->g->classif_degree == 0)
 	    p->g->p = p;
     }
-    for ( std::set<BDS_Edge*, EdgeLessThan>::const_iterator it  = other.edges.begin();
+    for ( std::list<BDS_Edge*>::const_iterator it  = other.edges.begin();
 	  it != other.edges.end();
 	  ++it)
     {
