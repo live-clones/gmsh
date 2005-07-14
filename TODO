@@ -1,4 +1,9 @@
-$Id: TODO,v 1.92 2005-05-21 17:27:03 geuzaine Exp $
+$Id: TODO,v 1.93 2005-07-14 08:54:17 geuzaine Exp $
+
+********************************************************************
+
+fill TrsfPoint list in surfaces in 3D_Extrude, so that we can use 
+extruded+recombined surfaces to create Transfinite Volumes
 
 ********************************************************************
 
