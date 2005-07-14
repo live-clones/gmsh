@@ -675,11 +675,9 @@ void BDS_Mesh :: color_plane_surf ( double eps, int NB_T )
 
 void BDS_Mesh :: classify ( double angle, int NB_T )
 {
-
     printf("  classifying \n");
     
     static BDS_GeomEntity EDGE_CLAS (0,1);
-
     // clear everything
 
     { 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.362 2005-07-12 15:02:04 remacle Exp $
+// $Id: Callbacks.cpp,v 1.363 2005-07-14 14:28:15 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3039,7 +3039,8 @@ static void _add_transfinite_elliptic(int type, int dim)
             switch (dim) {
             case 2:
               if(n == 3 + 1 || n == 4 + 1)
-                add_trsfellisurf(type, n, p, CTX.filename);
+                add_trsfellisurf(type, n, p, CTX.filename,
+				 (char*)WID->context_mesh_choice[1]->text());
               else
                 Msg(GERROR, "Wrong number of points for %s surface",
 		    type ? "elliptic" : "transfinite");
@@ -3081,12 +3082,13 @@ void mesh_define_transfinite_line_cb(CALLBACK_ARGS)
 
 void mesh_define_transfinite_surface_cb(CALLBACK_ARGS)
 {
+  WID->create_mesh_context_window(2);
   _add_transfinite_elliptic(0, 2);
 }
 
 void mesh_define_transfinite_volume_cb(CALLBACK_ARGS)
 {
-  WID->create_mesh_context_window(2);
+  WID->create_mesh_context_window(3);
   _add_transfinite_elliptic(0, 3);
 }
 

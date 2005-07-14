@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.209 2005-06-13 04:17:56 geuzaine Exp $
+// $Id: Gmsh.y,v 1.210 2005-07-14 14:28:17 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2769,6 +2769,7 @@ Transfinite :
 	yymsg(WARNING, "Unknown surface %d", (int)$4);
       else{
 	s->Method = TRANSFINI;
+	s->Recombine_Dir = -1;
 	int k = List_Nbr($7);
 	if(k != 3 && k != 4){
 	  yymsg(GERROR, "Wrong definition of Transfinite Surface %d: "
@@ -2776,6 +2777,41 @@ Transfinite :
 	}
 	else{
 	  List_Reset(s->TrsfPoints);
+	  for(int i = 0; i < k; i++){
+	    double d;
+	    List_Read($7, i, &d);
+	    int j = (int)fabs(d);
+	    Vertex *v = FindPoint(j, THEM);
+	    if(!v)
+	      yymsg(WARNING, "Unknown point %d", j);
+	    else
+	      List_Add(s->TrsfPoints, &v);
+	  }
+	}
+      }
+      List_Delete($7);
+    }
+  | tTransfinite tSurface '{' FExpr '}' tAFFECT ListOfDouble tSTRING tEND
+    {
+      Surface *s = FindSurface((int)$4, THEM);
+      if(!s)
+	yymsg(WARNING, "Unknown surface %d", (int)$4);
+      else{
+	s->Method = TRANSFINI;
+	int k = List_Nbr($7);
+	if(k != 3 && k != 4){
+	  yymsg(GERROR, "Wrong definition of Transfinite Surface %d: "
+		"%d points instead of 3 or 4" , (int)$4, k);
+	}
+	else{
+	  List_Reset(s->TrsfPoints);
+	  if (!strcmp($8,"Right"))
+	    s->Recombine_Dir = 1;
+	  else if (!strcmp($8,"Left"))
+	    s->Recombine_Dir = -1;
+	  else
+	    s->Recombine_Dir = 0;
+
 	  for(int i = 0; i < k; i++){
 	    double d;
 	    List_Read($7, i, &d);

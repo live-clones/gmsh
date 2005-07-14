@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.449 2005-07-12 15:02:04 remacle Exp $
+// $Id: GUI.cpp,v 1.450 2005-07-14 14:28:15 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -4336,6 +4336,12 @@ void GUI::create_mesh_context_window(int num)
 {
   static Fl_Group *g[10];
   int i;
+  static Fl_Menu Transfinite_Dir[] = {
+    {"Left", 0, 0, 0},
+    {"Right", 0, 0, 0},
+    {"Alternated", 0, 0, 0},
+    {0}
+  };
 
   if(context_mesh_window) {
     for(i = 0; i < 3; i++)
@@ -4345,7 +4351,7 @@ void GUI::create_mesh_context_window(int num)
     return;
   }
 
-  int width = 31 * fontsize;
+  int width = 41 * fontsize;
   int height = 5 * WB + 5 * BH;
 
   context_mesh_window = new Dialog_Window(width, height, "Contextual Mesh Definitions");
@@ -4380,13 +4386,24 @@ void GUI::create_mesh_context_window(int num)
       context_mesh_choice[0]->align(FL_ALIGN_RIGHT);
       g[1]->end();
     }
-    // 2: Transfinite volume
+    
+    // 2: Transfinite surface
     {
-      g[2] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Transfinite Volume");
+      g[2] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Transfinite Surface");
+
+      context_mesh_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 2 * BH, IW, BH, "Transfinite Arrangement");
+      context_mesh_choice[1]->menu(Transfinite_Dir);
+      context_mesh_choice[1]->align(FL_ALIGN_RIGHT);
+
+      g[2]->end();
+    }
+    // 3: Transfinite volume
+    {
+      g[3] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Transfinite Volume");
       context_mesh_input[3] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Volume number");
       context_mesh_input[3]->value("1");
       context_mesh_input[3]->align(FL_ALIGN_RIGHT);
-      g[2]->end();
+      g[3]->end();
     }
     o->end();
   }

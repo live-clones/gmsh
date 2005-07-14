@@ -228,6 +228,8 @@ struct _Surf{
   char Visible;
   int Method;
   int Recombine;
+// -1 is left, +1 is right, 0 is alternated
+  int Recombine_Dir; 
   double RecombineAngle;
   int ipar[5];
   int Nu, Nv;

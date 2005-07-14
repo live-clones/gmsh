@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.43 2005-02-02 18:47:56 geuzaine Exp $
+// $Id: Geo.cpp,v 1.44 2005-07-14 14:28:15 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -112,7 +112,7 @@ void delet(int p1, char *fich, char *what)
   add_infile(text, fich);
 }
 
-void add_trsfellisurf(int type, int N, int *l, char *fich)
+void add_trsfellisurf(int type, int N, int *l, char *fich, char *dir)
 {
   char text[BUFFSIZE];
   char text2[BUFFSIZE];
@@ -126,7 +126,11 @@ void add_trsfellisurf(int type, int N, int *l, char *fich)
       snprintf(text2, BUFFSIZE, ",%d", l[i]);
     strncat(text, text2, BUFFSIZE-strlen(text));
   }
-  snprintf(text2, BUFFSIZE, "};");
+  if (!strcmp(dir,"Left"))
+    snprintf(text2, BUFFSIZE, "};");
+  else
+    snprintf(text2, BUFFSIZE, "} %s;",dir);
+
   strncat(text, text2, BUFFSIZE-strlen(text));
   add_infile(text, fich);
 }

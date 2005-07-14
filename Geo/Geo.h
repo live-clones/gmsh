@@ -99,7 +99,7 @@ void coherence(char *fich);
 void delet(int p1, char *fich, char *what);
 void add_infile(char *text, char *fich);
 void add_trsfline(int N, int *l, char *fich, char *type, char *typearg, char *pts);
-void add_trsfellisurf(int type, int N, int *l, char *fich);
+void add_trsfellisurf(int type, int N, int *l, char *fich, char *dir);
 void add_trsfvol(int N, int *l, char *fich, char *vol);
 void add_charlength(int N, int *l, char *fich, char *lc);
 void add_recosurf(int N, int *l, char *fich);
