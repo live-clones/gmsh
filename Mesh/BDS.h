@@ -16,6 +16,12 @@ class BDS_Triangle;
 class BDS_Mesh;
 class BDS_Point;
 
+
+void vector_triangle (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]); 
+void normal_triangle (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]); 
+double surface_triangle (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3); 
+double quality_triangle  (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3);
+
 class BDS_Metric
 {
  public:
@@ -290,7 +296,10 @@ public:
     bool deleted;
     int status;
     BDS_Edge *e1,*e2,*e3;
-    BDS_Vector N() const ;
+    BDS_Vector NORMAL;
+    double surface;
+    inline BDS_Vector N() const {return NORMAL;}
+    inline double S() const {return surface;}
     BDS_GeomEntity *g;
 
     inline BDS_Vector cog() const
@@ -301,6 +310,18 @@ public:
 			       (n[0]->Y+n[1]->Y+n[2]->Y)/3.,
 			       (n[0]->Z+n[1]->Z+n[2]->Z)/3.);
 	}
+
+    inline void _update ()
+      { 
+	BDS_Point *pts[3];
+	getNodes (pts);
+	double c[3];
+	vector_triangle (pts[0],pts[1],pts[2],c);
+	surface = 0.5 * sqrt(c[0]*c[0]+c[1]*c[1]+c[2]*c[2]);
+	NORMAL.x = 2*c[0]/surface;
+	NORMAL.y = 2*c[1]/surface;
+	NORMAL.z = 2*c[2]/surface;
+      }
 
     inline void getNodes (BDS_Point *n[3]) const
 	{
@@ -314,6 +335,7 @@ public:
 	    e1->addface(this);
 	    e2->addface(this);
 	    e3->addface(this);
+	    _update();
 	}
 };
 
@@ -467,6 +489,5 @@ class BDS_Mesh
     bool read_vrml ( const char *filename);
     void save_gmsh_format (const char *filename);
 };
-void normal_triangle (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]);
 void project_point_on_a_list_of_triangles ( BDS_Point *p , const std::list<BDS_Triangle*> &t,
 					    double &X, double &Y, double &Z);	   

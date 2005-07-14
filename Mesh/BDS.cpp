@@ -398,16 +398,6 @@ void recur_tag ( BDS_Triangle *t , BDS_GeomEntity *g )
     }
 }
 
-BDS_Vector BDS_Triangle :: N () const 
-{
-    BDS_Point *pts[3];
-    getNodes (pts); 
-    double c[3];
-    normal_triangle (pts[0],pts[1],pts[2],c); 
-    return BDS_Vector ( c[0], c[1], c[2] );
-}
-
-
 void BDS_Mesh :: reverseEngineerCAD ( ) 
 {
     for (std::set<BDS_GeomEntity*,GeomLessThan>::iterator it = geom.begin();
@@ -1853,6 +1843,9 @@ bool BDS_Mesh ::collapse_edge ( BDS_Edge *e, BDS_Point *p, const double eps)
 
 */
 
+#ifdef _HAVE_ANN
+#include <ANN/ANN.h>
+#endif
 
 void project_point_on_a_list_of_triangles ( BDS_Point *p , 
 					    const std::list<BDS_Triangle*> &t,
@@ -1900,11 +1893,6 @@ void project_point_on_a_list_of_triangles ( BDS_Point *p ,
     Z = ZZ;
 }
 
-bool BDS_Mesh ::smooth_point_b ( BDS_Point *p  )
-{
-  throw;
-}
-
 bool BDS_Mesh ::smooth_point ( BDS_Point *p , BDS_Mesh *geom_mesh )
 {
 
@@ -1949,6 +1937,18 @@ bool BDS_Mesh ::smooth_point ( BDS_Point *p , BDS_Mesh *geom_mesh )
 	    project_point_on_a_list_of_triangles ( p , gg->t, p->X,p->Y,p->Z);
 	  }
     }
+    
+    {
+      std::list<BDS_Triangle *> t;
+      p->getTriangles (t); 	
+      std::list<BDS_Triangle *>::iterator tit  = t.begin(); 	
+      std::list<BDS_Triangle *>::iterator tite =  t.end();
+      while (tit!=tite)
+	{
+	  (*tit)->_update();
+	  ++tit;
+	}      
+    }
     return true;
 }
 
@@ -1981,8 +1981,8 @@ void BDS_Mesh :: compute_metric_edge_lengths (const BDS_Metric & metric)
 	++it;
       }
   }
-
-
+  
+  
   { 
     std::list<BDS_Edge*>::iterator it = edges.begin();
     std::list<BDS_Edge*>::iterator ite  = edges.end();
@@ -2048,7 +2048,7 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
 {
     int nb_modif = 0;
 
-    BDS_Metric metric ( l , LC/200 , LC );
+    BDS_Metric metric ( l , LC/100 , LC );
     //    printf("METRIC %g %g %g\n",LC,metric._min,metric._max);
 
     // add initial set of edges in a list
