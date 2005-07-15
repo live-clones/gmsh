@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.186 2005-06-25 17:17:15 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.187 2005-07-15 10:43:52 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -2042,14 +2042,15 @@ line.
 
 (A deprecated synonym for @code{Progression} is @code{Power}.)
 
-@item Transfinite Surface @{ @var{expression} @} = @{ @var{expression-list} @};
+@item Transfinite Surface @{ @var{expression} @} = @{ @var{expression-list} @} < Left | Right | Alternate > ;
 Selects the surface @var{expression} to be meshed with the 2D transfinite
 algorithm (the surface can only have three or four sides). The
 @var{expression-list} should contain the identification numbers of the
 points on the boundary of the surface. The ordering of these point numbers
 defines the ordering and orientation of the mesh elements, and should thus
 follow the node ordering for triangles or quadrangles given in @ref{Gmsh
-node ordering}.
+node ordering}. The optional argument specifies the way the triangles are
+oriented when the mesh is not recombined.
 
 @item Transfinite Volume @{ @var{expression} @} = @{ @var{expression-list} @};
 Selects the volume @var{expression} to be meshed with the 3D transfinite
