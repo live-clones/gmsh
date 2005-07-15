@@ -1,4 +1,4 @@
-// $Id: 2D_Transfinite.cpp,v 1.3 2005-07-14 14:28:15 remacle Exp $
+// $Id: 2D_Transfinite.cpp,v 1.4 2005-07-15 10:31:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -227,37 +227,34 @@ int MeshTransfiniteSurface(Surface * sur)
 	  if (sur->Recombine_Dir == 1 ||
 	      (sur->Recombine_Dir == 0 && 
 	       ( ( i % 2 == 0 && j % 2 == 1 ) ||
-		 ( i % 2 == 1 && j % 2 == 0 ) ) ) )
-	    {  
-	   //DECOUPAGE1
- 	  simp = Create_Simplex(list[(i) + N1 * (j)], 
- 				list[(i + 1) + N1 * (j)],
- 				list[(i) + N1 * (j + 1)], NULL);
- 	  simp->iEnt = sur->Num;
- 	  Tree_Add(sur->Simplexes, &simp);
-  
- 	  simp = Create_Simplex(list[(i + 1) + N1 * (j + 1)],
- 				list[(i) + N1 * (j + 1)],
- 				list[(i + 1) + N1 * (j)], NULL);
- 	  simp->iEnt = sur->Num;
- 	  Tree_Add(sur->Simplexes, &simp);
-	    }
-	  else
-	    {
-	      
-	      //DECOUPAGE2
-	      simp = Create_Simplex(list[(i) + N1 * (j)], 
-				    list[(i + 1) + N1 * (j)],
-				    list[(i + 1) + N1 * (j + 1) ], NULL);
-	      simp->iEnt = sur->Num;
-	      Tree_Add(sur->Simplexes, &simp);
-	      
-	      simp = Create_Simplex(list[(i) + N1 * (j + 1)],
-				    list[(i) + N1 * j ],
-				    list[(i + 1) + N1 * (j + 1)], NULL);
-	      simp->iEnt = sur->Num;
-	      Tree_Add(sur->Simplexes, &simp);
-	    }
+		 ( i % 2 == 1 && j % 2 == 0 ) ) ) ) {  
+	    // DECOUPAGE1
+	    simp = Create_Simplex(list[(i) + N1 * (j)], 
+				  list[(i + 1) + N1 * (j)],
+				  list[(i) + N1 * (j + 1)], NULL);
+	    simp->iEnt = sur->Num;
+	    Tree_Add(sur->Simplexes, &simp);
+	    
+	    simp = Create_Simplex(list[(i + 1) + N1 * (j + 1)],
+				  list[(i) + N1 * (j + 1)],
+				  list[(i + 1) + N1 * (j)], NULL);
+	    simp->iEnt = sur->Num;
+	    Tree_Add(sur->Simplexes, &simp);
+	  }
+	  else {
+	    // DECOUPAGE2
+	    simp = Create_Simplex(list[(i) + N1 * (j)], 
+				  list[(i + 1) + N1 * (j)],
+				  list[(i + 1) + N1 * (j + 1) ], NULL);
+	    simp->iEnt = sur->Num;
+	    Tree_Add(sur->Simplexes, &simp);
+	    
+	    simp = Create_Simplex(list[(i) + N1 * (j + 1)],
+				  list[(i) + N1 * j ],
+				  list[(i + 1) + N1 * (j + 1)], NULL);
+	    simp->iEnt = sur->Num;
+	    Tree_Add(sur->Simplexes, &simp);
+	  }
 	}
       }
     }
@@ -287,7 +284,7 @@ int MeshTransfiniteSurface(Surface * sur)
 	  Tree_Add(sur->Quadrangles, &quad);
 	}
 	else {
-        simp = Create_Simplex(list[(i) + N1 * (j)], 
+	  simp = Create_Simplex(list[(i) + N1 * (j)], 
 				list[(i + 1) + N1 * (j)],
 				list[(i) + N1 * (j + 1)], NULL);
 	  simp->iEnt = sur->Num;
