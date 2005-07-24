@@ -1,4 +1,10 @@
-$Id: TODO,v 1.93 2005-07-14 08:54:17 geuzaine Exp $
+$Id: TODO,v 1.94 2005-07-24 05:43:16 geuzaine Exp $
+
+********************************************************************
+
+automatic exterior orientation of boundary surfaces (would greatly
+enhance Netgen/Frontal integration). Easiest way is prabably to
+compute the solid angle using the discretized surface.
 
 ********************************************************************
 
@@ -170,9 +176,7 @@ the same).
 
 ********************************************************************
 
-Include the 2D Netgen algorithms and improve the integration of the 3D
-algorithm (would be nice to have automatic exterior orientation of
-surfaces...)
+Include the 2D Netgen algorithms?
 
 ********************************************************************
 
