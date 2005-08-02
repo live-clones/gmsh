@@ -175,7 +175,7 @@ public :
     int points_per_element;
     int optimize;
     double quality;
-    int quality_type;
+    int quality_type, label_type;
     double quality_inf, quality_sup, radius_inf, radius_sup;
     double scaling_factor, lc_factor, rand_factor;
     int dual, interactive;

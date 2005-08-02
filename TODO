@@ -1,10 +1,23 @@
-$Id: TODO,v 1.95 2005-07-26 13:55:24 remacle Exp $
+$Id: TODO,v 1.96 2005-08-02 17:02:07 geuzaine Exp $
 
 ********************************************************************
 
 automatic exterior orientation of boundary surfaces (would greatly
-enhance Netgen/Frontal integration). Easiest way is prabably to
-compute the solid angle using the discretized surface.
+enhance Netgen/Frontal integration). One way is to compute the solid
+angle using the discretized surface. Another (probably more efficient
+way) is to select one element per surface loop, shoot a ray in both
+normal directions, and count the intersections with all other elements
+in the same surface: if we get 0 or an even number, the normal points
+outside. If we get an even number, it points inside.
+
+********************************************************************
+
+add an interactive way to choose the orientation of surfaces in
+surface loops and lines in line loops?
+
+(To make things simple, all line loops should be oriented "aire a
+gauche", and all surface loops whould be oriented with exterior
+normals...)
 
 ********************************************************************
 
@@ -27,7 +40,8 @@ elements
 
 ********************************************************************
 
-use inria's mesh and solution file formats?
+read inria's mesh and solution file formats? ALMOST DONE with new BDS
+code.
 
 ********************************************************************
 
@@ -57,7 +71,8 @@ disable all replacements)
 
 ********************************************************************
 
-Add a "bitmap" object in the views, e.g. to add a logo
+Add a "bitmap" object in the views, e.g. to add a logo or a niver
+background. Oddly enough, people seem to want that kind of stuff.
 
 ********************************************************************
 
@@ -66,22 +81,13 @@ simple while(1) loop
 
 ********************************************************************
 
-add an option to enable lighting of wireframe plots?
+add an option to enable lighting of wireframe meshes & post-pro plots.
 
 ********************************************************************
 
 keep a table (stack) with the N last file positions when add_infile()
 is called; we could then easily implement a simple (but real) UNDO
 strategy
-
-********************************************************************
-
-add an interactive way to choose the orientation of surfaces in
-surface loops and lines in line loops
-
-(To make things simple, all line loops should be oriented "aire a
-gauche", and all surface loops whould be oriented with exterior
-normals...)
 
 ********************************************************************
 
@@ -130,7 +136,7 @@ other using 2nd order elements (in the same geometry)?
 ********************************************************************
 
 find a better way to display the time/timestep in the scale... (would
-be solved if we had dynamic labels)
+be solved if we had dynamic labels).
 
 ********************************************************************
 
@@ -177,7 +183,8 @@ Rewrite the View and ColorTable interface in C++
 ********************************************************************
 
 Include Tetgen (the same way we did it with Triangle--the license is
-the same).
+the same). PARTIALLY DONE by Nicolas. Needs testing + regenerate
+surface mesh.
 
 ********************************************************************
 
@@ -199,7 +206,6 @@ post-processing file format:
 - add an integer per simplex (region num)?
 - add a format similar to the msh format (node list + simplex list)?
 - add a structured format?
-
 ...or implement one of the "industry-standard" formats?
 
 ********************************************************************

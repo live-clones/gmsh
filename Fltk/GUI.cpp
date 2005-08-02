@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.450 2005-07-14 14:28:15 remacle Exp $
+// $Id: GUI.cpp,v 1.451 2005-08-02 17:02:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2399,20 +2399,31 @@ void GUI::create_option_window()
       mesh_butt[12]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[12]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_butt[13] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Line element numbers");
+      mesh_butt[13] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Line element labels");
       mesh_butt[13]->type(FL_TOGGLE_BUTTON);
       mesh_butt[13]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[13]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_butt[14] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface element numbers");
+      mesh_butt[14] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface element labels");
       mesh_butt[14]->type(FL_TOGGLE_BUTTON);
       mesh_butt[14]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[14]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_butt[15] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volume element numbers");
+      mesh_butt[15] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volume element labels");
       mesh_butt[15]->type(FL_TOGGLE_BUTTON);
       mesh_butt[15]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[15]->selection_color(GMSH_TOGGLE_COLOR);
+
+      static Fl_Menu_Item menu_label_type[] = {
+        {"Element numbers", 0, 0, 0},
+        {"Elementary entity numbers", 0, 0, 0},
+        {"Physical entity numbers", 0, 0, 0},
+        {"Partition numbers", 0, 0, 0},
+        {0}
+      };
+      mesh_choice[7] = new Fl_Choice(L + width / 2, 2 * WB + 5 * BH, IW, BH, "Labels");
+      mesh_choice[7]->menu(menu_label_type);
+      mesh_choice[7]->align(FL_ALIGN_RIGHT);
 
       mesh_value[4] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW / 2, BH);
       mesh_value[4]->minimum(0);

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.363 2005-07-14 14:28:15 remacle Exp $
+// $Id: Callbacks.cpp,v 1.364 2005-08-02 17:02:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1198,6 +1198,7 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
 		  DELAUNAY_TETGEN);
   opt_mesh_color_carousel(0, GMSH_SET, WID->mesh_choice[4]->value());
   opt_mesh_quality_type(0, GMSH_SET, WID->mesh_choice[6]->value());
+  opt_mesh_label_type(0, GMSH_SET, WID->mesh_choice[7]->value());
 }
 
 void mesh_cut_plane_cb(CALLBACK_ARGS)

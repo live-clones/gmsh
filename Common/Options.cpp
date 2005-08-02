@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.250 2005-07-08 22:07:37 geuzaine Exp $
+// $Id: Options.cpp,v 1.251 2005-08-02 17:02:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -4094,6 +4094,21 @@ double opt_mesh_radius_sup(OPT_ARGS_NUM)
     WID->mesh_value[7]->value(CTX.mesh.radius_sup);
 #endif
   return CTX.mesh.radius_sup;
+}
+
+double opt_mesh_label_type(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX.mesh.label_type = (int)val;
+    if(CTX.mesh.label_type < 0 || CTX.mesh.label_type > 3)
+      CTX.mesh.label_type = 0;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)){
+    WID->mesh_choice[7]->value(CTX.mesh.label_type);
+  }
+#endif
+  return CTX.mesh.label_type;
 }
 
 double opt_mesh_points(OPT_ARGS_NUM)

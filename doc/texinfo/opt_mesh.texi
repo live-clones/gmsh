@@ -109,6 +109,11 @@ Show the construction of 2D anisotropic mesh in real time@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.LabelType
+Type of element label (0=element number, 1=elementary entity number, 2=physical entity number, 3=partition number)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Light
 Enable lighting for the mesh@*
 Default value: @code{0}@*

@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.134 2005-06-25 04:05:39 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.135 2005-08-02 17:02:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -77,15 +77,16 @@ void draw_polygon_2d(double r, double g, double b, int n,
 
 int getFirstPhysical(int type, int num)
 {
-  // If we visualize the mesh by coloring the physical entities, this
+  // If we visualize the mesh by coloring the physical entities, or if
+  // we ask to display physical enyity labels on elements, this
   // routine returns the number of the first physical entity of type
   // "type" that contains the elementary entity "num"
-  if(CTX.mesh.color_carousel == 2){
+  if(CTX.mesh.color_carousel == 2 || CTX.mesh.label_type == 2){
     static int warn = 1;
     if(List_Nbr(THEM->PhysicalGroups) > 100 && warn){
       Msg(WARNING, "There are many physical entities in the mesh (%d)",
 	  List_Nbr(THEM->PhysicalGroups));
-      Msg(WARNING, "You might want to color the mesh by elementary entity instead");
+      Msg(WARNING, "You might want to color and/or label the mesh by elementary entity instead");
       warn = 0;
     }
     for(int i = 0; i < List_Nbr(THEM->PhysicalGroups); i++){
@@ -631,7 +632,14 @@ void Draw_Mesh_Line(void *a, void *b)
 
   if(CTX.mesh.lines_num) {
     glColor4ubv((GLubyte *) & col);
-    sprintf(Num, "%d", s->Num);
+    if(CTX.mesh.label_type == 3)
+      sprintf(Num, "%d", iPart);
+    else if(CTX.mesh.label_type == 2)
+      sprintf(Num, "%d", thePhysical);
+    else if(CTX.mesh.label_type == 1)
+      sprintf(Num, "%d", s->iEnt);
+    else
+      sprintf(Num, "%d", s->Num);
     double offset = 0.3 * (CTX.mesh.line_width + CTX.gl_fontsize) * CTX.pixel_equiv_x;
     glRasterPos3d(Xc + offset / CTX.s[0],
                   Yc + offset / CTX.s[1],
@@ -979,7 +987,14 @@ void Draw_Mesh_Triangle(void *a, void *b)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
       glColor4ubv((GLubyte *) & col);
-    sprintf(Num, "%d", s->Num);
+    if(CTX.mesh.label_type == 3)
+      sprintf(Num, "%d", iPart);
+    else if(CTX.mesh.label_type == 2)
+      sprintf(Num, "%d", thePhysical);
+    else if(CTX.mesh.label_type == 1)
+      sprintf(Num, "%d", s->iEnt);
+    else
+      sprintf(Num, "%d", s->Num);
     glRasterPos3d(Xc, Yc, Zc);
     Draw_String(Num);
   }
@@ -1151,7 +1166,14 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
       glColor4ubv((GLubyte *) & col);
-    sprintf(Num, "%d", q->Num);
+    if(CTX.mesh.label_type == 3)
+      sprintf(Num, "%d", iPart);
+    else if(CTX.mesh.label_type == 2)
+      sprintf(Num, "%d", thePhysical);
+    else if(CTX.mesh.label_type == 1)
+      sprintf(Num, "%d", q->iEnt);
+    else
+      sprintf(Num, "%d", q->Num);
     glRasterPos3d(Xc, Yc, Zc);
     Draw_String(Num);
   }
@@ -1342,7 +1364,14 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
       glColor4ubv((GLubyte *) & col);
-    sprintf(Num, "%d", s->Num);
+    if(CTX.mesh.label_type == 3)
+      sprintf(Num, "%d", iPart);
+    else if(CTX.mesh.label_type == 2)
+      sprintf(Num, "%d", thePhysical);
+    else if(CTX.mesh.label_type == 1)
+      sprintf(Num, "%d", s->iEnt);
+    else
+      sprintf(Num, "%d", s->Num);
     glRasterPos3d(Xc, Yc, Zc);
     Draw_String(Num);
   }
@@ -1533,7 +1562,14 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
       glColor4ubv((GLubyte *) & col);
-    sprintf(Num, "%d", h->Num);
+    if(CTX.mesh.label_type == 3)
+      sprintf(Num, "%d", iPart);
+    else if(CTX.mesh.label_type == 2)
+      sprintf(Num, "%d", thePhysical);
+    else if(CTX.mesh.label_type == 1)
+      sprintf(Num, "%d", h->iEnt);
+    else
+      sprintf(Num, "%d", h->Num);
     glRasterPos3d(Xc, Yc, Zc);
     Draw_String(Num);
   }
@@ -1739,7 +1775,14 @@ void Draw_Mesh_Prism(void *a, void *b)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
       glColor4ubv((GLubyte *) & col);
-    sprintf(Num, "%d", p->Num);
+    if(CTX.mesh.label_type == 3)
+      sprintf(Num, "%d", iPart);
+    else if(CTX.mesh.label_type == 2)
+      sprintf(Num, "%d", thePhysical);
+    else if(CTX.mesh.label_type == 1)
+      sprintf(Num, "%d", p->iEnt);
+    else
+      sprintf(Num, "%d", p->Num);
     glRasterPos3d(Xc, Yc, Zc);
     Draw_String(Num);
   }
@@ -1917,7 +1960,14 @@ void Draw_Mesh_Pyramid(void *a, void *b)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
       glColor4ubv((GLubyte *) & col);
-    sprintf(Num, "%d", p->Num);
+    if(CTX.mesh.label_type == 3)
+      sprintf(Num, "%d", iPart);
+    else if(CTX.mesh.label_type == 2)
+      sprintf(Num, "%d", thePhysical);
+    else if(CTX.mesh.label_type == 1)
+      sprintf(Num, "%d", p->iEnt);
+    else
+      sprintf(Num, "%d", p->Num);
     glRasterPos3d(Xc, Yc, Zc);
     Draw_String(Num);
   }
