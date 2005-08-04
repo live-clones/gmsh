@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.251 2005-08-02 17:02:08 geuzaine Exp $
+// $Id: Options.cpp,v 1.252 2005-08-04 14:04:07 colignon Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <iostream>
 #include "PluginManager.h"
 #include "Gmsh.h"
 #include "GmshUI.h"

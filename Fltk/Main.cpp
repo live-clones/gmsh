@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.80 2005-06-20 16:40:25 geuzaine Exp $
+// $Id: Main.cpp,v 1.81 2005-08-04 14:04:08 colignon Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <iostream>
 #include <signal.h>
 #include <time.h>
 
