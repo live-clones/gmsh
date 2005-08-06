@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.364 2005-08-02 17:02:08 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.365 2005-08-06 02:32:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -860,7 +860,7 @@ void wizard_update_more_edges_cb(CALLBACK_ARGS)
     if (THEM && THEM->bds && WID)
     {
 	const double angle = WID->swiz_value[2]->value() * M_PI / 180;
-	const int nb_t  = (int)WID->swiz_value[3]->value() * M_PI / 180;
+	const int nb_t  = (int)(WID->swiz_value[3]->value() * M_PI / 180);
 	THEM->bds->classify (angle,nb_t);
 	BDS_To_Mesh (THEM); 
 	Draw();
