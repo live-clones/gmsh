@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.136 2005-08-09 08:50:12 pgeuzain Exp $
+// $Id: Mesh.cpp,v 1.137 2005-08-09 23:39:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -328,7 +328,7 @@ void Draw_Mesh_Volume(void *a, void *b)
       + Tree_Nbr(v->Hexahedra) + Tree_Nbr(v->Prisms) + Tree_Nbr(v->Pyramids);
     numLabelsDisplayed = 0;
     if (CTX.mesh.label_frequency == 0.0) stepLabelsDisplayed = numLabels;
-    else stepLabelsDisplayed = 100.0 / CTX.mesh.label_frequency;
+    else stepLabelsDisplayed = (int)(100.0 / CTX.mesh.label_frequency);
     if (stepLabelsDisplayed > numLabels) stepLabelsDisplayed = numLabels;
   }
 
@@ -401,7 +401,7 @@ void Draw_Mesh_Surface(void *a, void *b)
       + Tree_Nbr(s->Quadrangles);
     numLabelsDisplayed = 0;
     if (CTX.mesh.label_frequency == 0.0) stepLabelsDisplayed = numLabels;
-    else stepLabelsDisplayed = 100.0 / CTX.mesh.label_frequency;
+    else stepLabelsDisplayed = (int)(100.0 / CTX.mesh.label_frequency);
     if (stepLabelsDisplayed > numLabels) stepLabelsDisplayed = numLabels;
   }
 
@@ -492,7 +492,7 @@ void Draw_Mesh_Curve(void *a, void *b)
     int numLabels = Tree_Nbr(c->Simplexes) + Tree_Nbr(c->SimplexesBase);
     numLabelsDisplayed = 0;
     if (CTX.mesh.label_frequency == 0.0) stepLabelsDisplayed = numLabels;
-    else stepLabelsDisplayed = 100.0 / CTX.mesh.label_frequency;
+    else stepLabelsDisplayed = (int)(100.0 / CTX.mesh.label_frequency);
     if (stepLabelsDisplayed > numLabels) stepLabelsDisplayed = numLabels;
   }
 
