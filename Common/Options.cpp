@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.253 2005-08-09 08:50:11 pgeuzain Exp $
+// $Id: Options.cpp,v 1.254 2005-08-09 23:41:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -151,6 +151,7 @@ void Init_Options(int num)
 #else
   CTX.gl_font_enum = -1;
 #endif
+  CTX.solver.listen = 0;
 }
 
 void ReInit_Options(int num)

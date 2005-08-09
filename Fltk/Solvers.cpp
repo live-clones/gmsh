@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.36 2005-03-14 06:32:33 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.37 2005-08-09 23:41:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -22,7 +22,8 @@
 #include "Gmsh.h"
 #include "GmshServer.h"
 
-// FIXME: this should be removed
+// FIXME: this should be removed (and we should set the socket options
+// so that the addresses can be reused)
 int GmshServer::init = 0;
 int GmshServer::s;
 
@@ -46,40 +47,99 @@ extern GUI *WID;
 
 SolverInfo SINFO[MAXSOLVERS];
 
+// This routine polls the socket file descriptor every pollint
+// milliseconds until data is avalable; when nothing is available, we
+// just tend to pending GUI events. The routine returns 0 if data is
+// available and 1 if there was en error or if the process was killed.
+// (This is much easier to manage than non-blocking IO. The real
+// solution is of course to use threads, or to fork a new process for
+// each new connection, but that's still a bit of a nightmare to
+// maintain in a portable way on all the platforms.)
+
+int WaitForData(int socket, int num, int pollint, double waitint)
+{
+  struct pollfd pfd;
+  pfd.fd = socket;
+  pfd.events = POLLIN;
+
+  while(1){
+    if( (num >= 0 && SINFO[num].pid < 0) ||  // process has been killed
+	(num < 0 && !CTX.solver.listen) )    // we stopped listening
+      return 1;
+    
+    int ret = poll(&pfd, 1, pollint);
+    
+    if(ret == 0){ // nothing available
+      // use wait() with a delay instead of check() to reduce CPU
+      // usage
+      WID->wait(waitint);
+      //WID->check();
+    }
+    else if(ret > 0){ // data is there
+      return 0;
+    }
+    else{ // error
+      if(num >= 0)
+	SINFO[num].pid = -1;
+      return 1;
+    }
+  }
+}
+
+// This routine either launches a solver and waits for some answer (if
+// num >= 0), or simply waits for messages (if num < 0)
+
 int Solver(int num, char *args)
 {
   char command[1024], sockname[1024], str[1024], prog[1024], buf[1024];
 
+ new_connection:
+
   GmshServer server(CTX.solver.max_delay);
 
-  FixWindowsPath(SINFO[num].executable_name, prog);
-
-  if(!SINFO[num].client_server) {
-    sprintf(command, "%s %s", prog, args);
+  if(num >= 0){
+    FixWindowsPath(SINFO[num].executable_name, prog);
+    if(!SINFO[num].client_server) {
+      sprintf(command, "%s %s", prog, args);
 #if !defined(WIN32)
-    strcat(command, " &");
+      strcat(command, " &");
 #endif
-    server.StartClient(command);
-    return 1;
+      server.StartClient(command);
+      return 1;
+    }
+  }
+  else{
+    if(!CTX.solver.listen){
+      Msg(INFO, "Stopped listening for solver conncetions");
+      return 0;
+    }
+    // we don't know who will (maybe) contact us
+    strcpy(prog, "");
+    strcpy(command, "");
   }
 
   if(!strstr(CTX.solver.socket_name, ":")){
     // file socket
-    sprintf(str, "%s%s-%d", CTX.home_dir, CTX.solver.socket_name, num);
+    if(num >= 0)
+      sprintf(str, "%s%s-%d", CTX.home_dir, CTX.solver.socket_name, num);
+    else
+      sprintf(str, "%s%s", CTX.home_dir, CTX.solver.socket_name);
     FixWindowsPath(str, sockname);
   }
   else
     strcpy(sockname, CTX.solver.socket_name);
 
-  sprintf(str, "\"%s\"", sockname);
-  sprintf(buf, SINFO[num].socket_command, str);
-  
-  sprintf(command, "%s %s %s", prog, args, buf);
+  if(num >= 0){
+    sprintf(str, "\"%s\"", sockname);
+    sprintf(buf, SINFO[num].socket_command, str);
+    sprintf(command, "%s %s %s", prog, args, buf);
 #if !defined(WIN32)
-  strcat(command, " &");
+    strcat(command, " &");
 #endif
+  }
 
   int sock = server.StartClient(command, sockname);
+
   if(sock < 0) {
     switch (sock) {
     case -1:
@@ -99,75 +159,71 @@ int Solver(int num, char *args)
       Msg(GERROR, "Socket accept failed on '%s'", sockname);
       break;
     }
-    for(int i = 0; i < SINFO[num].nboptions; i++)
-      WID->solver[num].choice[i]->clear();
+    if(num >= 0){
+      for(int i = 0; i < SINFO[num].nboptions; i++)
+	WID->solver[num].choice[i]->clear();
+    }
     return 0;
   }
 
-  for(int i = 0; i < SINFO[num].nboptions; i++)
-    SINFO[num].nbval[i] = 0;
-  SINFO[num].pid = 0;
-
-  struct pollfd pfd;
-  pfd.fd = sock;
-  pfd.events = POLLIN;
+  if(num >= 0){
+    for(int i = 0; i < SINFO[num].nboptions; i++)
+      SINFO[num].nbval[i] = 0;
+    SINFO[num].pid = 0;
+  }
 
   while(1) {
-    // poll the socket file descriptor every 10 milliseconds until
-    // data is avalable; when nothing is available, just tend to
-    // pending GUI events. (This is much easier to manage than
-    // non-blocking IO. The real solution is of course to use threads,
-    // but that's still a bit of a nightmare to maintain in a portable
-    // way on all the platforms.)
-    while(1){
-      if(SINFO[num].pid < 0){ // process has been killed
-	break;
-      }
-      int ret = poll(&pfd, 1, 10);
-      if(ret == 0){ // nothing available
-	WID->check();
-      }
-      else if(ret > 0){ // data is there
-        break;
-      }
-      else{ // error
-        SINFO[num].pid = -1;
-        break;
-      }
-    }
 
-    if(SINFO[num].pid < 0)
+    int stop = (num < 0 && !CTX.solver.listen);
+
+    if(stop || (num >= 0 && SINFO[num].pid < 0))
+      break;
+
+    stop = WaitForData(sock, num, 10, 0.1);
+
+    if(stop || (num >= 0 && SINFO[num].pid < 0))
       break;
 
     int type;
     if(server.ReceiveString(&type, str)){
       switch (type) {
       case GmshServer::CLIENT_START:
-	SINFO[num].pid = atoi(str);
+	if(num >= 0)
+	  SINFO[num].pid = atoi(str);
 	break;
       case GmshServer::CLIENT_STOP:
-	SINFO[num].pid = -1;
+	stop = 1;
+	if(num >= 0)
+	  SINFO[num].pid = -1;
 	break;
       case GmshServer::CLIENT_PROGRESS:
-	Msg(STATUS3N, "%s %s", SINFO[num].name, str);
+	if(num >= 0)
+	  Msg(STATUS3N, "%s %s", SINFO[num].name, str);
+	else
+	  Msg(STATUS3N, "%s", str);
 	break;
       case GmshServer::CLIENT_OPTION_1:
-	strcpy(SINFO[num].option[0][SINFO[num].nbval[0]++], str);
+	if(num >= 0)
+	  strcpy(SINFO[num].option[0][SINFO[num].nbval[0]++], str);
 	break;
       case GmshServer::CLIENT_OPTION_2:
-	strcpy(SINFO[num].option[1][SINFO[num].nbval[1]++], str);
+	if(num >= 0)
+	  strcpy(SINFO[num].option[1][SINFO[num].nbval[1]++], str);
 	break;
       case GmshServer::CLIENT_OPTION_3:
-	strcpy(SINFO[num].option[2][SINFO[num].nbval[2]++], str);
+	if(num >= 0)
+	  strcpy(SINFO[num].option[2][SINFO[num].nbval[2]++], str);
 	break;
       case GmshServer::CLIENT_OPTION_4:
-	strcpy(SINFO[num].option[3][SINFO[num].nbval[3]++], str);
+	if(num >= 0)
+	  strcpy(SINFO[num].option[3][SINFO[num].nbval[3]++], str);
 	break;
       case GmshServer::CLIENT_OPTION_5:
-	strcpy(SINFO[num].option[4][SINFO[num].nbval[4]++], str);
+	if(num >= 0)
+	  strcpy(SINFO[num].option[4][SINFO[num].nbval[4]++], str);
 	break;
       case GmshServer::CLIENT_VIEW:
-	if(SINFO[num].merge_views) {
+	if(num < 0 || (num >= 0 && SINFO[num].merge_views)) {
 	  int n = List_Nbr(CTX.post.list);
 	  MergeProblem(str);
 	  Draw();
@@ -176,35 +232,47 @@ int Solver(int num, char *args)
 	}
 	break;
       case GmshServer::CLIENT_INFO:
-	Msg(SOLVER, "%-8.8s: %s", SINFO[num].name, str);
+	Msg(SOLVER, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", str);
 	break;
       case GmshServer::CLIENT_WARNING:
       case GmshServer::CLIENT_ERROR:
-	Msg(SOLVERR, "%-8.8s: %s", SINFO[num].name, str);
+	Msg(SOLVERR, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", str);
 	break;
       default:
 	Msg(WARNING, "Unknown type of message received from %s",
-	    SINFO[num].name);
-	Msg(SOLVER, "%-8.8s: %s", SINFO[num].name, str);
+	    num >= 0 ? SINFO[num].name : "client");
+	Msg(SOLVER, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", str);
 	break;
       }
       WID->check();
     }
+    else{
+      Msg(WARNING, "Failed to received data on socket: arborting");
+      break;
+    }
   }
   
-  for(int i = 0; i < SINFO[num].nboptions; i++) {
-    if(SINFO[num].nbval[i]) {
-      WID->solver[num].choice[i]->clear();
-      for(int j = 0; j < SINFO[num].nbval[i]; j++)
-        WID->solver[num].choice[i]->add(SINFO[num].option[i][j]);
-      WID->solver[num].choice[i]->value(0);
+  if(num >= 0){
+    for(int i = 0; i < SINFO[num].nboptions; i++) {
+      if(SINFO[num].nbval[i]) {
+	WID->solver[num].choice[i]->clear();
+	for(int j = 0; j < SINFO[num].nbval[i]; j++)
+	  WID->solver[num].choice[i]->add(SINFO[num].option[i][j]);
+	WID->solver[num].choice[i]->value(0);
+      }
     }
   }
 
-  Msg(STATUS3N, "Ready");
-
   if(server.StopClient() < 0)
     Msg(WARNING, "Impossible to unlink the socket '%s'", sockname);
+
+  if(num >= 0){
+    Msg(STATUS3N, "Ready");
+  }
+  else{
+    Msg(INFO, "Client disconnected: starting new connection");
+    goto new_connection;
+  }
 
   return 1;
 }

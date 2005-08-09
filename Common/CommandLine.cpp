@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.61 2005-07-03 08:02:23 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.62 2005-08-09 23:41:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -100,6 +100,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -a, -g, -m, -s, -p    Start in automatic, geometry, mesh, solver or post-processing mode");
 #endif
   Msg(DIRECT, "  -pid                  Print process id on stdout");
+  Msg(DIRECT, "  -listen               Always listen to external solver requests");
   Msg(DIRECT, "  -v int                Set verbosity level");
   Msg(DIRECT, "  -nopopup              Don't popup dialog windows in scripts");
   Msg(DIRECT, "  -string \"string\"      Parse option string at startup");
@@ -423,6 +424,10 @@ void Get_Options(int argc, char *argv[])
           fprintf(stderr, ERROR_STR "Missing algorithm\n");
           exit(1);
         }
+      }
+      else if(!strcmp(argv[i] + 1, "listen")) {
+        CTX.solver.listen = 1;
+        i++;
       }
       else if(!strcmp(argv[i] + 1, "version") || !strcmp(argv[i] + 1, "-version")) {
         fprintf(stderr, "%s\n", GMSH_VERSION);

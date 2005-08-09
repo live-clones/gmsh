@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.366 2005-08-09 08:50:11 pgeuzain Exp $
+// $Id: Callbacks.cpp,v 1.367 2005-08-09 23:41:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -48,6 +48,7 @@
 #include "Visibility.h"
 #include "MinMax.h"
 #include "Numeric.h"
+#include "Solvers.h"
 
 using namespace std;
 
@@ -3100,8 +3101,6 @@ void mesh_define_elliptic_surface_cb(CALLBACK_ARGS)
 }
 
 // Dynamic Solver Menus
-
-#include "Solvers.h"
 
 void solver_cb(CALLBACK_ARGS)
 {

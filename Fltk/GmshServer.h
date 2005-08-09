@@ -30,7 +30,8 @@
 // Contributor(s):
 //   Christopher Stott
 
-void SystemCall(char *str); // use our own instead of 'system()'
+void SystemCall(char *str);
+int WaitForData(int socket, int num, int pollint, double waitint);
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -81,18 +82,41 @@ class GmshServer {
     } while(remaining > 0);
     return bytes;
   }
+  int _AcceptConnection(int s)
+  {
+#if defined(HAVE_NO_SOCKLEN_T)
+    int len;
+#else
+    socklen_t len;
+#endif
+    if(_portno < 0){
+      struct sockaddr_un from_un;
+      len = sizeof(from_un);
+      return accept(s, (struct sockaddr *)&from_un, &len);
+    }
+    else{
+      struct sockaddr_in from_in;
+      len = sizeof(from_in);
+      return accept(s, (struct sockaddr *)&from_in, &len);
+    }
+  }
+
  public:
   GmshServer(int maxdelay = 4)
     : _maxdelay(maxdelay), _portno(-1), _sock(0), _sockname(NULL) {}
   ~GmshServer(){}
   int StartClient(char *command, char *sockname = NULL)
   {
+    int justwait = 0;
+
+    if(!command || !strlen(command))
+      justwait = 1;
+
     _sockname = sockname;
 
     // no socket? launch the command directly
     if(!_sockname) {
       SystemCall(command);
-      //system(command);
       return 1;
     }
 
@@ -147,43 +171,35 @@ class GmshServer {
       }
     }
 
-    // Start the solver via system() call
-    SystemCall(command);
-    //system(command);
+    if(!justwait)
+      SystemCall(command); // Start the solver
     
-    // wait for solver to connect
+    // listen on socket (queue up to 20 connections before having
+    // them automatically rejected)
     if(listen(s, 20))
       return -3;  // Error: Socket listen failed
     
-    // Watch socket s to see when it has input; wait up to N seconds
-    struct timeval tv;
-    tv.tv_sec = _maxdelay;
-    tv.tv_usec = 0;
-    fd_set rfds;
-    FD_ZERO(&rfds);
-    FD_SET(s, &rfds);
-    if(!select(s + 1, &rfds, NULL, NULL, &tv))
-      return -4;  // Error: Socket listening timeout
-    
-    // accept connection request
-#if defined(HAVE_NO_SOCKLEN_T)
-    int len;
-#else
-    socklen_t len;
-#endif
-    if(_portno < 0){
-      struct sockaddr_un from_un;
-      len = sizeof(from_un);
-      if((_sock = accept(s, (struct sockaddr *)&from_un, &len)) < 0)
-	return -5;  // Error: Socket accept failed
+    if(justwait){
+      // wait indefinitely until we get data, polling every 10 ms
+      WaitForData(s, -1, 10, 1.);
     }
     else{
-      struct sockaddr_in from_in;
-      len = sizeof(from_in);
-      if((_sock = accept(s, (struct sockaddr *)&from_in, &len)) < 0)
-	return -5;  // Error: Socket accept failed
+      // Wait at most _maxdelay seconds for data, issue error if no
+      // connection in that amount of time
+      struct timeval tv;
+      tv.tv_sec = _maxdelay;
+      tv.tv_usec = 0;
+      fd_set rfds;
+      FD_ZERO(&rfds);
+      FD_SET(s, &rfds);
+      if(!select(s + 1, &rfds, NULL, NULL, &tv))
+	return -4;  // Error: Socket listening timeout
     }
-   
+
+    // accept connection request
+    if((_sock = _AcceptConnection(s)) < 0)
+      return -5;  // Error: Socket accept failed
+    
     return _sock;
   }
   int ReceiveString(int *type, char str[])

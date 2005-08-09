@@ -295,6 +295,7 @@ public:
   int run();
   void check();
   void wait();
+  void wait(double time);
   void make_opengl_current();
   void redraw_opengl();
   void set_size(int w, int h);

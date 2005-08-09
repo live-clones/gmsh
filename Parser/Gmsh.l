@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.72 2005-04-19 16:03:11 remacle Exp $
+// $Id: Gmsh.l,v 1.73 2005-08-09 23:41:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -53,12 +53,12 @@ void   skipline(void);
 	 yylineno++;							\
        }								\
        if ( c == EOF && ferror( yyin ) )				\
-	 Msg(FATAL,  "input in flex scanner failed" );			\
+	 Msg(FATAL, "Input in flex scanner failed");			\
        result = n;							\
      }									\
    else if ( ((result = fread( buf, 1, max_size, yyin )) == 0)		\
 	     && ferror( yyin ) )					\
-     Msg(FATAL,  "input in flex scanner failed" );
+     Msg(FATAL, "Input in flex scanner failed");
 
 %}
 

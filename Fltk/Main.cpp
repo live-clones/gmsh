@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.81 2005-08-04 14:04:08 colignon Exp $
+// $Id: Main.cpp,v 1.82 2005-08-09 23:41:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -39,6 +39,7 @@
 #include "OpenFile.h"
 #include "CommandLine.h"
 #include "Numeric.h"
+#include "Solvers.h"
 
 char yyname[256] = "";
 int yyerrorstate = 0;
@@ -233,6 +234,10 @@ int main(int argc, char *argv[])
 
   // Draw the actual scene
   Draw();
+
+  // Listen to external solvers
+  if(CTX.solver.listen)
+    Solver(-1, NULL);
 
   // loop
   return WID->run();

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.453 2005-08-09 08:50:11 pgeuzain Exp $
+// $Id: GUI.cpp,v 1.454 2005-08-09 23:41:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -929,6 +929,11 @@ void GUI::check()
 void GUI::wait()
 {
   Fl::wait();
+}
+
+void GUI::wait(double time)
+{
+  Fl::wait(time);
 }
 
 // Create the menu window
