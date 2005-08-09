@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.54 2005-07-08 22:07:39 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.55 2005-08-09 23:39:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -182,7 +182,7 @@ static void Draw_Graph2D(Post_View * v, double xtop, double ytop,
     else if(v->Type == DRAW_POST_2D_SPACE &&
        ((v->ShowTime == 3 && List_Nbr(v->Time) > 1) ||
 	(v->ShowTime == 4 && List_Nbr(v->Time) > 0))){
-      sprintf(label, "%s (%s)", v->Name, v->TimeStep);
+      sprintf(label, "%s (%d)", v->Name, v->TimeStep);
     }
     else
       sprintf(label, "%s", v->Name);
