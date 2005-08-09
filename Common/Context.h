@@ -170,6 +170,7 @@ public :
     int draw;
     int points, lines, surfaces_edges, surfaces_faces, volumes_edges, volumes_faces;
     int points_num, lines_num, surfaces_num, volumes_num;
+    double label_frequency;
     int point_type, line_type; // flat or 3D
     double point_size, line_width;
     int points_per_element;

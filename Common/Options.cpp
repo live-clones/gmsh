@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.252 2005-08-04 14:04:07 colignon Exp $
+// $Id: Options.cpp,v 1.253 2005-08-09 08:50:11 pgeuzain Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -4284,6 +4284,18 @@ double opt_mesh_line_width(OPT_ARGS_NUM)
     WID->mesh_value[11]->value(CTX.mesh.line_width);
 #endif
   return CTX.mesh.line_width;
+}
+
+double opt_mesh_label_frequency(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX.mesh.label_frequency = val;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_value[12]->value(CTX.mesh.label_frequency);
+#endif
+  return CTX.mesh.label_frequency;
 }
 
 double opt_mesh_line_type(OPT_ARGS_NUM)

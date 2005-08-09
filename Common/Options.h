@@ -391,6 +391,7 @@ double opt_geometry_point_size(OPT_ARGS_NUM);
 double opt_geometry_point_sel_size(OPT_ARGS_NUM);
 double opt_geometry_point_type(OPT_ARGS_NUM);
 double opt_geometry_line_width(OPT_ARGS_NUM);
+double opt_mesh_label_frequency(OPT_ARGS_NUM);
 double opt_geometry_line_sel_width(OPT_ARGS_NUM);
 double opt_geometry_line_type(OPT_ARGS_NUM);
 double opt_geometry_light(OPT_ARGS_NUM);

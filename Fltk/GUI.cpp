@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.452 2005-08-04 14:04:08 colignon Exp $
+// $Id: GUI.cpp,v 1.453 2005-08-09 08:50:11 pgeuzain Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2425,6 +2425,12 @@ void GUI::create_option_window()
       mesh_choice[7] = new Fl_Choice(L + width / 2, 2 * WB + 5 * BH, IW, BH, "Labels");
       mesh_choice[7]->menu(menu_label_type);
       mesh_choice[7]->align(FL_ALIGN_RIGHT);
+
+      mesh_value[12] = new Fl_Value_Input(L + width / 2, 2 * WB + 6 * BH, IW / 2, BH, "Labels frequency");
+      mesh_value[12]->minimum(0.0);
+      mesh_value[12]->maximum(100.0);
+      mesh_value[12]->step(0.1);
+      mesh_value[12]->align(FL_ALIGN_RIGHT);
 
       mesh_value[4] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW / 2, BH);
       mesh_value[4]->minimum(0);

@@ -977,6 +977,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "VolumeNumbers" , opt_mesh_volumes_num , 0. , 
     "Display volume mesh element numbers?" },
 
+  { F|O, "LabelsFrequency" , opt_mesh_label_frequency , 100. , 
+    "Labels display frequency?" },
+
   { 0, NULL , NULL , 0. , NULL }
 } ;
 

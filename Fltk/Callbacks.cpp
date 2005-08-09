@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.365 2005-08-06 02:32:36 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.366 2005-08-09 08:50:11 pgeuzain Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1178,6 +1178,7 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_tangents(0, GMSH_SET, WID->mesh_value[13]->value());
   opt_mesh_point_size(0, GMSH_SET, WID->mesh_value[10]->value());
   opt_mesh_line_width(0, GMSH_SET, WID->mesh_value[11]->value());
+  opt_mesh_label_frequency(0, GMSH_SET, WID->mesh_value[12]->value());
   opt_mesh_cut_planea(0, GMSH_SET, WID->mesh_value[14]->value());
   opt_mesh_cut_planeb(0, GMSH_SET, WID->mesh_value[15]->value());
   opt_mesh_cut_planec(0, GMSH_SET, WID->mesh_value[16]->value());

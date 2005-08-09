@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.135 2005-08-02 17:02:09 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.136 2005-08-09 08:50:12 pgeuzain Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -50,6 +50,8 @@ static int thePhysical = 0;
 static Curve *theCurve = NULL;
 static Surface *theSurface = NULL;
 static Volume *theVolume = NULL;
+static int numLabelsDisplayed = 0;
+static int stepLabelsDisplayed = 1;
 
 void draw_polygon_2d(double r, double g, double b, int n,
                      double *x, double *y, double *z)
@@ -321,6 +323,15 @@ void Draw_Mesh_Volume(void *a, void *b)
   if(!(v->Visible & VIS_MESH))
     return;
 
+  if (CTX.mesh.volumes_num) {
+    int numLabels = Tree_Nbr(v->Simplexes) + Tree_Nbr(v->SimplexesBase) 
+      + Tree_Nbr(v->Hexahedra) + Tree_Nbr(v->Prisms) + Tree_Nbr(v->Pyramids);
+    numLabelsDisplayed = 0;
+    if (CTX.mesh.label_frequency == 0.0) stepLabelsDisplayed = numLabels;
+    else stepLabelsDisplayed = 100.0 / CTX.mesh.label_frequency;
+    if (stepLabelsDisplayed > numLabels) stepLabelsDisplayed = numLabels;
+  }
+
   theVolume = v;
   theColor = v->Color;
 
@@ -384,6 +395,15 @@ void Draw_Mesh_Surface(void *a, void *b)
   Surface *s = *(Surface **) a;
   if(!(s->Visible & VIS_MESH))
     return;
+
+  if (CTX.mesh.surfaces_num) {
+    int numLabels = Tree_Nbr(s->Simplexes) + Tree_Nbr(s->SimplexesBase) 
+      + Tree_Nbr(s->Quadrangles);
+    numLabelsDisplayed = 0;
+    if (CTX.mesh.label_frequency == 0.0) stepLabelsDisplayed = numLabels;
+    else stepLabelsDisplayed = 100.0 / CTX.mesh.label_frequency;
+    if (stepLabelsDisplayed > numLabels) stepLabelsDisplayed = numLabels;
+  }
 
   theSurface = s;
   theColor = s->Color;
@@ -467,6 +487,14 @@ void Draw_Mesh_Curve(void *a, void *b)
     return;
   if(!(c->Visible & VIS_MESH))
     return;
+
+  if (CTX.mesh.lines_num) {
+    int numLabels = Tree_Nbr(c->Simplexes) + Tree_Nbr(c->SimplexesBase);
+    numLabelsDisplayed = 0;
+    if (CTX.mesh.label_frequency == 0.0) stepLabelsDisplayed = numLabels;
+    else stepLabelsDisplayed = 100.0 / CTX.mesh.label_frequency;
+    if (stepLabelsDisplayed > numLabels) stepLabelsDisplayed = numLabels;
+  }
 
   theCurve = c;
   theColor = c->Color;
@@ -630,7 +658,9 @@ void Draw_Mesh_Line(void *a, void *b)
     }
   }
 
-  if(CTX.mesh.lines_num) {
+  ++numLabelsDisplayed;
+
+  if(CTX.mesh.lines_num && (numLabelsDisplayed % stepLabelsDisplayed == 0)) {
     glColor4ubv((GLubyte *) & col);
     if(CTX.mesh.label_type == 3)
       sprintf(Num, "%d", iPart);
@@ -982,7 +1012,9 @@ void Draw_Mesh_Triangle(void *a, void *b)
     gl2psDisable(GL2PS_LINE_STIPPLE);
   }
 
-  if(CTX.mesh.surfaces_num) {
+  ++numLabelsDisplayed;
+
+  if(CTX.mesh.surfaces_num && (numLabelsDisplayed % stepLabelsDisplayed == 0)) {
     if(CTX.mesh.surfaces_faces)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
@@ -1161,7 +1193,9 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
     gl2psDisable(GL2PS_LINE_STIPPLE);
   }
 
-  if(CTX.mesh.surfaces_num) {
+  ++numLabelsDisplayed;
+
+  if(CTX.mesh.surfaces_num && (numLabelsDisplayed % stepLabelsDisplayed == 0)) {
     if(CTX.mesh.surfaces_faces)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
@@ -1359,7 +1393,9 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
     gl2psDisable(GL2PS_LINE_STIPPLE);
   }
 
-  if(CTX.mesh.volumes_num) {
+  ++numLabelsDisplayed;
+
+  if(CTX.mesh.volumes_num && (numLabelsDisplayed % stepLabelsDisplayed == 0)) {
     if(CTX.mesh.surfaces_faces || faces)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
@@ -1557,7 +1593,9 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
     gl2psDisable(GL2PS_LINE_STIPPLE);
   }
 
-  if(CTX.mesh.volumes_num) {
+  ++numLabelsDisplayed;
+
+  if(CTX.mesh.volumes_num && (numLabelsDisplayed % stepLabelsDisplayed == 0)) {
     if(CTX.mesh.surfaces_faces || faces)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
@@ -1770,7 +1808,9 @@ void Draw_Mesh_Prism(void *a, void *b)
     gl2psDisable(GL2PS_LINE_STIPPLE);
   }
 
-  if(CTX.mesh.volumes_num) {
+  ++numLabelsDisplayed;
+
+  if(CTX.mesh.volumes_num && (numLabelsDisplayed % stepLabelsDisplayed == 0)) {
     if(CTX.mesh.surfaces_faces || faces)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
@@ -1955,7 +1995,9 @@ void Draw_Mesh_Pyramid(void *a, void *b)
     }
   }
 
-  if(CTX.mesh.volumes_num) {
+  ++numLabelsDisplayed;
+
+  if(CTX.mesh.volumes_num && (numLabelsDisplayed % stepLabelsDisplayed == 0)) {
     if(CTX.mesh.surfaces_faces || faces)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
