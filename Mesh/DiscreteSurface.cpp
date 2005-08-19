@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.20 2005-07-12 15:01:17 remacle Exp $
+// $Id: DiscreteSurface.cpp,v 1.21 2005-08-19 14:07:34 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -178,30 +178,33 @@ void BDS_To_Mesh(Mesh *m)
 
 int MeshDiscreteSurface(Surface *s)
 { 
-    if(s->bds){
+
+  const int NITER = 20;
+  if(s->bds){
     Msg(STATUS2, "Discrete Surface Mesh Generator...");
-	// s->bds is the discrete surface that defines the geometry
-	if(!THEM->bds_mesh){
-	    THEM->bds_mesh = new BDS_Mesh (*(THEM->bds));
-	    int iter = 0;
-	    while(iter < 20 && THEM->bds_mesh->adapt_mesh(CTX.mesh.lc_factor * THEM->bds->LC, 
+    // s->bds is the discrete surface that defines the geometry
+    if(!THEM->bds_mesh){
+      THEM->bds_mesh = new BDS_Mesh (*(THEM->bds));
+      int iter = 0;
+      while(iter < NITER && THEM->bds_mesh->adapt_mesh(CTX.mesh.lc_factor * THEM->bds->LC, 
 						    true, THEM->bds)){
-		Msg(STATUS2, "Iteration %2d/20 done (%d triangles)\n",iter, THEM->bds_mesh->triangles.size());
-		iter ++;
-	    }
-	    BDS_To_Mesh_2(THEM);
-	    Msg(STATUS2, "Mesh has %d vertices (%d)\n",Tree_Nbr(THEM->Vertices),THEM->bds->points.size());
-//	    THEM->bds_mesh->save_gmsh_format ( "3.msh" );
-	}
-	return 1;
+	Msg(STATUS2, "Iteration %2d/%d done (%d triangles)\n",iter, NITER,THEM->bds_mesh->triangles.size());
+	iter ++;
+      }
+      BDS_To_Mesh_2(THEM);
+      Msg(STATUS2, "Mesh has %d vertices (%d)\n",Tree_Nbr(THEM->Vertices),THEM->bds->points.size());
+      //	    THEM->bds_mesh->save_gmsh_format ( "3.msh" ); 
+      return 1;
     }
-    else if(s->Typ == MSH_SURF_DISCRETE){
-	// nothing to do: we suppose that the surface is represented by
-	// a mesh that will not be modified
-	return 1;
-    }
-    else
-	return 0;
+    return 2;
+  }
+  else if(s->Typ == MSH_SURF_DISCRETE){
+    // nothing to do: we suppose that the surface is represented by
+    // a mesh that will not be modified
+    return 2;
+  }
+  else
+    return 0;
 }
 
 int MeshDiscreteCurve(Curve *c)

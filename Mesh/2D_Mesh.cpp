@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.78 2005-06-10 20:59:15 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.79 2005-08-19 14:07:32 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -850,12 +850,18 @@ void Maillage_Surface(void *data, void *dum)
 
   Msg(STATUS3, "Meshing surface %d", s->Num);
 
-  if(MeshDiscreteSurface(s)){
+  int tag = MeshDiscreteSurface(s);
+
+  if(tag == 1){
     Tree_Action(THEM->Points, PutVertex_OnSurf);
     Tree_Action(s->Vertices, PutVertex_OnSurf);
     Tree_Action(s->Vertices, Add_In_Mesh);
     return;
   }
+  else if (tag == 2)
+    {
+      return;
+    }
 
   THESUPPORT = s->Support;
   THESURFACE = s;

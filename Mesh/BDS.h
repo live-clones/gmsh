@@ -10,6 +10,9 @@
 #include <list>
 #include <math.h>
 #include <algorithm>
+#ifdef HAVE_ANN_
+#include "ANN/ANN.h"
+#endif
 
 class BDS_Edge;
 class BDS_Triangle;
@@ -62,11 +65,22 @@ public:
     int classif_tag;
     int classif_degree;
 
+#ifdef HAVE_ANN_
+    ANNpointArray           dataPts;                                // data points
+    ANNpoint                queryPt;                                // query point
+    ANNidxArray             nnIdx;                                  // near neighbor indices
+    ANNdistArray            dists;                                  // near neighbor distances
+    ANNkd_tree*             kdTree;                                 // search structure
+    std::vector<BDS_Triangle *> sT;
+    std::vector<BDS_Edge *> sE;
+    std::vector<BDS_Point *> sP;
+#endif
     std::list<BDS_Triangle *> t;
     std::list<BDS_Edge *>     e;
     BDS_Point   *p;
     BDS_Surface *surf;
-
+    void getClosestTriangles ( double x, double y, double z, 
+			  std::list<BDS_Triangle*> &l );
     inline bool operator <  ( const BDS_GeomEntity & other ) const
 	{
 	    if (classif_degree < other.classif_degree)return true;
@@ -74,10 +88,25 @@ public:
 	    if (classif_tag < other.classif_tag)return true;
 	    return false;
 	}
-    BDS_GeomEntity (int a, int b)
-	: classif_tag (a),classif_degree(b),p(0),surf(0)
-	{
-	}
+    BDS_GeomEntity (int a, int b)  
+      : classif_tag (a),classif_degree(b),p(0),surf(0)
+      {
+#ifdef HAVE_ANN_
+	kdTree = 0;
+#endif
+      }
+    ~BDS_GeomEntity ()  
+      {
+#ifdef HAVE_ANN_
+	if (kdTree)
+	  {
+	    delete [] nnIdx;                                                    // clean things up
+	    delete [] dists;
+	    delete kdTree;
+	  }
+#endif
+      }
+
 };
 
 
@@ -446,7 +475,8 @@ class EdgeLessThan
 
 class BDS_Mesh 
 {    
-    int MAXPOINTNUMBER;
+    int MAXPOINTNUMBER,SNAP_SUCCESS,SNAP_FAILURE;
+    
  public:
     double Min[3],Max[3],LC;
 
@@ -472,12 +502,14 @@ class BDS_Mesh
     BDS_GeomEntity *get_geom  (int p1, int p2);
     bool swap_edge ( BDS_Edge *);
     bool collapse_edge ( BDS_Edge *, BDS_Point*, const double eps);
+    void snap_point   ( BDS_Point* , BDS_Mesh *geom = 0);
     bool smooth_point   ( BDS_Point* , BDS_Mesh *geom = 0);
     bool smooth_point_b ( BDS_Point* );
-    bool split_edge ( BDS_Edge *, double coord);
+    bool split_edge ( BDS_Edge *, double coord, BDS_Mesh *geom = 0);
     void classify ( double angle, int nb = -1); 
     void color_plane_surf ( double eps , int nb);
     void reverseEngineerCAD ( ) ;
+    void createSearchStructures ( ) ;
     int adapt_mesh(double,bool smooth = false,BDS_Mesh *geom = 0); 
     void compute_metric_edge_lengths (const BDS_Metric & metric);
     void cleanup();
@@ -489,5 +521,5 @@ class BDS_Mesh
     bool read_vrml ( const char *filename);
     void save_gmsh_format (const char *filename);
 };
-void project_point_on_a_list_of_triangles ( BDS_Point *p , const std::list<BDS_Triangle*> &t,
+bool project_point_on_a_list_of_triangles ( BDS_Point *p , const std::list<BDS_Triangle*> &t,
 					    double &X, double &Y, double &Z);	   
