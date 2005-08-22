@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2005-08-19 09:55:00 remacle Exp $
+# $Id: Makefile,v 1.2 2005-08-22 00:35:06 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -63,3 +63,52 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
+# 1 "/Users/geuzaine/.gmsh/ANN//"
+ANN.o: src/ANN.cpp include/ANN/ANNx.h include/ANN/ANN.h \
+  include/ANN/ANNperf.h
+# 1 "/Users/geuzaine/.gmsh/ANN//"
+bd_fix_rad_search.o: src/bd_fix_rad_search.cpp src/bd_tree.h \
+  include/ANN/ANNx.h include/ANN/ANN.h src/kd_tree.h \
+  src/kd_fix_rad_search.h src/kd_util.h src/pr_queue_k.h \
+  include/ANN/ANNperf.h
+# 1 "/Users/geuzaine/.gmsh/ANN//"
+bd_pr_search.o: src/bd_pr_search.cpp src/bd_tree.h include/ANN/ANNx.h \
+  include/ANN/ANN.h src/kd_tree.h src/kd_pr_search.h src/kd_util.h \
+  src/pr_queue.h include/ANN/ANNperf.h src/pr_queue_k.h
+# 1 "/Users/geuzaine/.gmsh/ANN//"
+bd_search.o: src/bd_search.cpp src/bd_tree.h include/ANN/ANNx.h \
+  include/ANN/ANN.h src/kd_tree.h src/kd_search.h src/kd_util.h \
+  src/pr_queue_k.h include/ANN/ANNperf.h
+# 1 "/Users/geuzaine/.gmsh/ANN//"
+bd_tree.o: src/bd_tree.cpp src/bd_tree.h include/ANN/ANNx.h \
+  include/ANN/ANN.h src/kd_tree.h src/kd_util.h src/kd_split.h \
+  include/ANN/ANNperf.h
+# 1 "/Users/geuzaine/.gmsh/ANN//"
+brute.o: src/brute.cpp include/ANN/ANNx.h include/ANN/ANN.h \
+  src/pr_queue_k.h include/ANN/ANNperf.h
+# 1 "/Users/geuzaine/.gmsh/ANN//"
+kd_dump.o: src/kd_dump.cpp src/kd_tree.h include/ANN/ANNx.h \
+  include/ANN/ANN.h src/bd_tree.h
+# 1 "/Users/geuzaine/.gmsh/ANN//"
+kd_fix_rad_search.o: src/kd_fix_rad_search.cpp src/kd_fix_rad_search.h \
+  src/kd_tree.h include/ANN/ANNx.h include/ANN/ANN.h src/kd_util.h \
+  src/pr_queue_k.h include/ANN/ANNperf.h
+# 1 "/Users/geuzaine/.gmsh/ANN//"
+kd_pr_search.o: src/kd_pr_search.cpp src/kd_pr_search.h src/kd_tree.h \
+  include/ANN/ANNx.h include/ANN/ANN.h src/kd_util.h src/pr_queue.h \
+  include/ANN/ANNperf.h src/pr_queue_k.h
+# 1 "/Users/geuzaine/.gmsh/ANN//"
+kd_search.o: src/kd_search.cpp src/kd_search.h src/kd_tree.h \
+  include/ANN/ANNx.h include/ANN/ANN.h src/kd_util.h src/pr_queue_k.h \
+  include/ANN/ANNperf.h
+# 1 "/Users/geuzaine/.gmsh/ANN//"
+kd_split.o: src/kd_split.cpp src/kd_tree.h include/ANN/ANNx.h \
+  include/ANN/ANN.h src/kd_util.h src/kd_split.h
+# 1 "/Users/geuzaine/.gmsh/ANN//"
+kd_tree.o: src/kd_tree.cpp src/kd_tree.h include/ANN/ANNx.h \
+  include/ANN/ANN.h src/kd_split.h src/kd_util.h include/ANN/ANNperf.h
+# 1 "/Users/geuzaine/.gmsh/ANN//"
+kd_util.o: src/kd_util.cpp src/kd_util.h src/kd_tree.h include/ANN/ANNx.h \
+  include/ANN/ANN.h include/ANN/ANNperf.h
+# 1 "/Users/geuzaine/.gmsh/ANN//"
+perf.o: src/perf.cpp include/ANN/ANN.h include/ANN/ANNperf.h

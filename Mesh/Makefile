@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.93 2005-08-19 14:07:34 remacle Exp $
+# $Id: Makefile,v 1.94 2005-08-22 00:35:06 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -333,7 +333,7 @@ depend:
 3D_Mesh_Tetgen.o: 3D_Mesh_Tetgen.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Geo/Geo.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
+  Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h Metric.h Matrix.h Create.h \
   ../Numeric/Numeric.h ../Common/Context.h

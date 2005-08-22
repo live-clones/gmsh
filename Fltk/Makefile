@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.72 2005-08-19 14:07:31 remacle Exp $
+# $Id: Makefile,v 1.73 2005-08-22 00:35:06 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -78,7 +78,7 @@ Main.o: Main.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h ../Graphics/Draw.h \
   ../Common/Context.h ../Parser/Parser.h GUI.h Opengl_Window.h \
   Colorbar_Window.h ../Parser/OpenFile.h ../Common/CommandLine.h \
-  ../Numeric/Numeric.h
+  ../Numeric/Numeric.h Solvers.h
 # 1 "/Users/geuzaine/.gmsh/Fltk//"
 Message.o: Message.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
