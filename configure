@@ -851,9 +851,9 @@ Optional Features:
   --enable-gsl            use GSL as numerical toolkit (default=yes)
   --enable-gui            build the graphical user interface (default=yes)
   --enable-parallel       enable parallel version (default=no)
-  --enable-ann            compile ANN if available (default=yes)
   --enable-triangle       compile Triangle if available (default=yes)
   --enable-netgen         compile Netgen if available (default=yes)
+  --enable-ann            compile ANN if available (default=yes)
   --enable-tetgen         compile Tetgen if available (default=yes)
   --enable-matheval       compile MathEval if available (default=yes)
   --enable-jpeg           enable JPEG support (default=yes)
@@ -1368,11 +1368,6 @@ if test "${enable_parallel+set}" = set; then
   enableval="$enable_parallel"
 
 fi;
-# Check whether --enable-ann or --disable-ann was given.
-if test "${enable_ann+set}" = set; then
-  enableval="$enable_ann"
-
-fi;
 # Check whether --enable-triangle or --disable-triangle was given.
 if test "${enable_triangle+set}" = set; then
   enableval="$enable_triangle"
@@ -1381,6 +1376,11 @@ fi;
 # Check whether --enable-netgen or --disable-netgen was given.
 if test "${enable_netgen+set}" = set; then
   enableval="$enable_netgen"
+
+fi;
+# Check whether --enable-ann or --disable-ann was given.
+if test "${enable_ann+set}" = set; then
+  enableval="$enable_ann"
 
 fi;
 # Check whether --enable-tetgen or --disable-tetgen was given.
@@ -3784,7 +3784,6 @@ else
   fi
 fi
 
-
 echo "$as_me:$LINENO: checking for ./ANN/include/ANN/ANN.h" >&5
 echo $ECHO_N "checking for ./ANN/include/ANN/ANN.h... $ECHO_C" >&6
 if test "${ac_cv_file___ANN_include_ANN_ANN_h+set}" = set; then
@@ -3814,8 +3813,8 @@ if test "x${ANN}" = "xyes"; then
      GMSH_LIBS="${GMSH_LIBS} -lGmshANN"
      FLAGS="-DHAVE_ANN_ ${FLAGS}"
      echo "********************************************************************"
-     echo "You are building a version of Gmsh that contains ANN, the Approximate"
-     echo "Nearest Neighbor library."
+     echo "You are building a version of Gmsh that contains ANN, the"
+     echo "Approximate Nearest Neighbor library."
      echo "Please note that by doing so, you agree with ANN's licensing"
      echo "requirements stated in ./ANN/Copyright.txt."
      echo "To disable ANN, run configure again with the --disable-ann"
@@ -3828,8 +3827,8 @@ else
      echo "If you want to use ANN for doing fast geometrical searchs in the"
      echo "STL mesher, please download ANN from the"
      echo "author's web site at http://www.cs.umd.edu/~mount/ANN/,"
-     echo "unpack the archive and copy both src and include directories in the ./ANN subdirectory."
-     echo "Then run ./configure again."
+     echo "unpack the archive and copy both src and include directories in the"
+     echo "./ANN subdirectory. Then run ./configure again."
      echo "********************************************************************"
   fi
 fi

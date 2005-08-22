@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.74 2005-08-22 07:17:34 remacle Exp $
+dnl $Id: configure.in,v 1.75 2005-08-22 12:00:32 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -256,12 +256,12 @@ dnl Check if ANN is installed
 AC_CHECK_FILE(./ANN/include/ANN/ANN.h, ANN="yes", ANN="no")
 if test "x${ANN}" = "xyes"; then
   if test "x$enable_ann" != "xno"; then
-     GMSH_DIRS="${GMSH_DIRS} Netgen"
-     GMSH_LIBS="${GMSH_LIBS} -lGmshNetgen"
-     FLAGS="-DHAVE_NETGEN ${FLAGS}"
-      echo "********************************************************************"
-     echo "You are building a version of Gmsh that contains ANN, the Approximate"
-     echo "Nearest Neighbor library."
+     GMSH_DIRS="${GMSH_DIRS} ANN"
+     GMSH_LIBS="${GMSH_LIBS} -lGmshANN"
+     FLAGS="-DHAVE_ANN_ ${FLAGS}"
+     echo "********************************************************************"
+     echo "You are building a version of Gmsh that contains ANN, the"
+     echo "Approximate Nearest Neighbor library."
      echo "Please note that by doing so, you agree with ANN's licensing"
      echo "requirements stated in ./ANN/Copyright.txt."
      echo "To disable ANN, run configure again with the --disable-ann"
@@ -274,8 +274,8 @@ else
      echo "If you want to use ANN for doing fast geometrical searchs in the"
      echo "STL mesher, please download ANN from the"
      echo "author's web site at http://www.cs.umd.edu/~mount/ANN/,"
-     echo "unpack the archive and copy both src and include directories in the ./ANN subdirectory."
-     echo "Then run ./configure again."
+     echo "unpack the archive and copy both src and include directories in the"
+     echo "./ANN subdirectory. Then run ./configure again."
      echo "********************************************************************"
   fi
 fi
