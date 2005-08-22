@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.73 2005-07-03 08:02:23 geuzaine Exp $
+dnl $Id: configure.in,v 1.74 2005-08-22 07:17:34 remacle Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -66,6 +66,9 @@ AC_ARG_ENABLE(triangle,
 AC_ARG_ENABLE(netgen,
               AC_HELP_STRING([--enable-netgen],
                              [compile Netgen if available (default=yes)]))
+AC_ARG_ENABLE(ann,
+              AC_HELP_STRING([--enable-ann],
+                             [compile ANN if available (default=yes)]))
 AC_ARG_ENABLE(tetgen,
               AC_HELP_STRING([--enable-tetgen],
                              [compile Tetgen if available (default=yes)]))
@@ -245,6 +248,34 @@ else
      echo "Please note that by doing so, you agree with Triangle's licensing"
      echo "requirements stated in ./Triangle/README. (Most notably, you may"
      echo "then only redistribute Gmsh if no compensation is received.)"
+     echo "********************************************************************"
+  fi
+fi
+
+dnl Check if ANN is installed
+AC_CHECK_FILE(./ANN/include/ANN/ANN.h, ANN="yes", ANN="no")
+if test "x${ANN}" = "xyes"; then
+  if test "x$enable_ann" != "xno"; then
+     GMSH_DIRS="${GMSH_DIRS} Netgen"
+     GMSH_LIBS="${GMSH_LIBS} -lGmshNetgen"
+     FLAGS="-DHAVE_NETGEN ${FLAGS}"
+      echo "********************************************************************"
+     echo "You are building a version of Gmsh that contains ANN, the Approximate"
+     echo "Nearest Neighbor library."
+     echo "Please note that by doing so, you agree with ANN's licensing"
+     echo "requirements stated in ./ANN/Copyright.txt."
+     echo "To disable ANN, run configure again with the --disable-ann"
+     echo "option."
+     echo "********************************************************************"
+  fi
+else
+  if test "x$enable_ann" != "xno"; then
+     echo "********************************************************************"
+     echo "If you want to use ANN for doing fast geometrical searchs in the"
+     echo "STL mesher, please download ANN from the"
+     echo "author's web site at http://www.cs.umd.edu/~mount/ANN/,"
+     echo "unpack the archive and copy both src and include directories in the ./ANN subdirectory."
+     echo "Then run ./configure again."
      echo "********************************************************************"
   fi
 fi

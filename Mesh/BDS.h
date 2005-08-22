@@ -62,8 +62,9 @@ public :
 class BDS_GeomEntity
 {
 public:
-    int classif_tag;
-    int classif_degree;
+  int nbK;
+  int classif_tag;
+  int classif_degree;
 
 #ifdef HAVE_ANN_
     ANNpointArray           dataPts;                                // data points
@@ -91,6 +92,7 @@ public:
     BDS_GeomEntity (int a, int b)  
       : classif_tag (a),classif_degree(b),p(0),surf(0)
       {
+	nbK=3;
 #ifdef HAVE_ANN_
 	kdTree = 0;
 #endif

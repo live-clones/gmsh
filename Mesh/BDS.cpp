@@ -109,40 +109,48 @@ void BDS_GeomEntity::getClosestTriangles ( double x, double y, double z,
   double eps;
   kdTree->annkSearch(                                             // search
 		     queryPt,                                     // query point
-		     1,                                           // number of near neighbors
+		     nbK,                                         // number of near neighbors
 		     nnIdx,                                       // nearest neighbors (returned)
 		     dists,                                       // distance (returned)
 		     eps);                                        // error bound
-  if (nnIdx[0] < sP.size())
-    {
-      sP[nnIdx[0]]->getTriangles (l);
-    }
-  else if (nnIdx[0] <  sP.size() + sE.size() )
-    {
 
-      BDS_Edge *e = sE[nnIdx[0]- sP.size()];
-      std::list<BDS_Triangle *> l1;
-      //e->p1->getTriangles (l);
-      //e->p2->getTriangles (l1);
-      //l.insert(l.begin(),l1.begin(),l1.end());
-            for (int i=0;i<e->numfaces();i++)
-      	{
-      	  l.push_back(e->faces(i));
-      	}
-    }
-  else
+  for (int K=0;K<nbK;K++)
     {
-      std::list<BDS_Triangle *> l1,l2;
-      BDS_Point *pts[3];
-      sT[nnIdx[0] - sP.size() - sE.size()]->getNodes (pts); 
-      pts[0]->getTriangles (l);
-      pts[0]->getTriangles (l1);
-      pts[0]->getTriangles (l2);
-      l.insert(l.begin(),l1.begin(),l1.end());
-      l.insert(l.begin(),l2.begin(),l2.end());
-      
-      //      l.push_back( sT[nnIdx[0] - sP.size() - sE.size()]);
-    } 
+      if (nnIdx[K] < sP.size())
+	{
+	  std::list<BDS_Triangle *> l1;
+	  sP[nnIdx[K]]->getTriangles (l1);
+	  l.insert(l.begin(),l1.begin(),l1.end());
+	}
+      else if (nnIdx[K] <  sP.size() + sE.size() )
+	{
+	  
+	  BDS_Edge *e = sE[nnIdx[K]- sP.size()];
+	  std::list<BDS_Triangle *> l1,l2;
+	  e->p1->getTriangles (l1);
+	  e->p2->getTriangles (l2);
+	  l.insert(l.begin(),l1.begin(),l1.end());
+	  l.insert(l.begin(),l2.begin(),l2.end());
+      //      for (int i=0;i<e->numfaces();i++)
+      //      	{
+      //      	  app.push_back(e->faces(i));
+      //      	}
+	}
+      else
+	{
+	  std::list<BDS_Triangle *> l1,l2,l3;
+	  BDS_Point *pts[3];
+	  sT[nnIdx[K] - sP.size() - sE.size()]->getNodes (pts); 
+	  pts[0]->getTriangles (l1);
+	  pts[0]->getTriangles (l2);
+	  pts[0]->getTriangles (l3);
+	  l.insert(l.begin(),l1.begin(),l1.end());
+	  l.insert(l.begin(),l2.begin(),l2.end());
+	  l.insert(l.begin(),l3.begin(),l3.end());      
+	  //      l.push_back( sT[nnIdx[0] - sP.size() - sE.size()]);
+	}       
+    }
+
 #else
   {
     l = t;
@@ -715,8 +723,8 @@ void BDS_Mesh :: createSearchStructures ( )
 		const int dim = 3;
 		(*it)->queryPt = annAllocPt(dim);                              // allocate query point
 		(*it)->dataPts = annAllocPts(maxPts, dim);                     // allocate data points
-		(*it)->nnIdx = new ANNidx[1];                                  // allocate near neigh indices
-		(*it)->dists = new ANNdist[1];                                 // allocate near neighbor dists  
+		(*it)->nnIdx = new ANNidx[(*it)->nbK];                                  // allocate near neigh indices
+		(*it)->dists = new ANNdist[(*it)->nbK];                                 // allocate near neighbor dists  
 		
 		int I = 0;
 		
@@ -2250,7 +2258,7 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
     SNAP_SUCCESS = 0;
     SNAP_FAILURE = 0;
 
-    BDS_Metric metric ( l , LC/100 , LC );
+    BDS_Metric metric ( l , LC/200 , LC );
     //    printf("METRIC %g %g %g\n",LC,metric._min,metric._max);
 
     // add initial set of edges in a list
