@@ -17,7 +17,7 @@ Save all elements (discard physical group definitions)
 @item -o file
 Specify mesh output file name
 @item -format string
-Set output mesh format (msh, unv, gref, p3d)
+Set output mesh format (msh, unv, gref, stl, p3d)
 @item -algo string
 Select mesh algorithm (iso, tri, aniso, netgen)
 @item -smooth int
