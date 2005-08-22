@@ -930,8 +930,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "PointType" , opt_mesh_point_type , 0. , 
     "Display mesh vertices as solid color dots (0) or 3D spheres (1)" },
 
-  //{ F|O, "Quality" , opt_mesh_quality , 0.0 ,
-  //  "Target quality for tetrahedral elements (not fully functional)" },
+  { F|O, "Quality" , opt_mesh_quality , 1.0 ,
+    "Target quality for tetrahedral elements (currently only used by Tetgen)" },
   { F|O, "QualityInf" , opt_mesh_quality_inf , 0.0 , 
     "Only display elements whose quality measure is greater than QualityInf" },
   { F|O, "QualitySup" , opt_mesh_quality_sup , 0.0 , 

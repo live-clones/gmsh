@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.62 2005-08-09 23:41:12 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.63 2005-08-22 00:29:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -69,7 +69,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -1, -2, -3            Perform batch 1D, 2D and 3D mesh generation");
   Msg(DIRECT, "  -saveall              Save all elements (discard physical group definitions)");
   Msg(DIRECT, "  -o file               Specify mesh output file name");
-  Msg(DIRECT, "  -format string        Set output mesh format (msh, unv, gref, p3d)");
+  Msg(DIRECT, "  -format string        Set output mesh format (msh, unv, gref, stl, p3d)");
   Msg(DIRECT, "  -algo string          Select mesh algorithm (iso, tri, aniso, netgen, tetgen)");
   Msg(DIRECT, "  -smooth int           Set number of mesh smoothing steps");
   Msg(DIRECT, "  -optimize             Optimize quality of tetrahedral elements");
@@ -385,6 +385,9 @@ void Get_Options(int argc, char *argv[])
           else if(!strcmp(argv[i], "gref") ||
                   !strcmp(argv[i], "GREF") || !strcmp(argv[i], "Gref")) {
             CTX.mesh.format = FORMAT_GREF;
+          }
+          else if(!strcmp(argv[i], "stl") || !strcmp(argv[i], "STL")) {
+            CTX.mesh.format = FORMAT_STL;
           }
           else if(!strcmp(argv[i], "p3d") ||
                   !strcmp(argv[i], "P3D") || !strcmp(argv[i], "Plot3D")) {

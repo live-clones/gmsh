@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.37 2005-08-09 23:41:13 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.38 2005-08-22 00:29:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -55,6 +55,8 @@ SolverInfo SINFO[MAXSOLVERS];
 // solution is of course to use threads, or to fork a new process for
 // each new connection, but that's still a bit of a nightmare to
 // maintain in a portable way on all the platforms.)
+
+// FIXME: we should reimplement this using Fl::add_fd()
 
 int WaitForData(int socket, int num, int pollint, double waitint)
 {
