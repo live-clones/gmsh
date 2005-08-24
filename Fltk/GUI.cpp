@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.454 2005-08-09 23:41:12 geuzaine Exp $
+// $Id: GUI.cpp,v 1.455 2005-08-24 20:28:42 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -66,6 +66,7 @@
 // *INDENT-OFF*
 
 #include <iostream>
+#include <vector>
 #include "PluginManager.h"
 #include "Gmsh.h"
 #include "GmshUI.h"

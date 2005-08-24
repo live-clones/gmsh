@@ -1,10 +1,8 @@
-#include "BDS.h"
-#include <map>
 #include <math.h>
 #include <stdio.h>
 #include "Numeric.h"
 #include "GmshMatrix.h"
-#include "EigSolve.h"
+#include "BDS.h"
 
 /*
   (X-Xc)^2 = R^2
@@ -2410,7 +2408,7 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
     }
     
     printf("%d snaps have succeeded , %d have failed\n",SNAP_SUCCESS,SNAP_FAILURE);
-    outputScalarField (triangles,"b.pos");
+    //    outputScalarField (triangles,"b.pos");
     return nb_modif;
 }
 

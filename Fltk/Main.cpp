@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.82 2005-08-09 23:41:13 geuzaine Exp $
+// $Id: Main.cpp,v 1.83 2005-08-24 20:28:43 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -20,8 +20,11 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <iostream>
+#include <vector>
 #include <signal.h>
 #include <time.h>
+
+#include "GUI.h"
 
 #include "PluginManager.h"
 #include "Gmsh.h"
@@ -35,7 +38,6 @@
 #include "Options.h"
 #include "ColorTable.h"
 #include "Parser.h"
-#include "GUI.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
 #include "Numeric.h"

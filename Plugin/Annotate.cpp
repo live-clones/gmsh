@@ -1,4 +1,4 @@
-// $Id: Annotate.cpp,v 1.12 2005-08-04 14:04:08 colignon Exp $
+// $Id: Annotate.cpp,v 1.13 2005-08-24 20:28:43 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <iostream>
+#include <vector>
 #include "Plugin.h"
 #include "Annotate.h"
 #include "List.h"

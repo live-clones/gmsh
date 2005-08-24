@@ -3,16 +3,16 @@
 // points may know the normals to the surface they are classified on
 // default values are 0,0,1
 
+#ifdef HAVE_ANN_
+#include "ANN/ANN.h"
+#endif
 #include <string>
 #include <set>
 #include <map>
 #include <vector>
 #include <list>
 #include <math.h>
-#include <algorithm>
-#ifdef HAVE_ANN_
-#include "ANN/ANN.h"
-#endif
+//#include <algorithm>
 
 class BDS_Edge;
 class BDS_Triangle;
