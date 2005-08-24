@@ -183,9 +183,12 @@ public:
 	  assert (result.size() == c);
 	  GSL_Matrix *ls     = new GSL_Matrix(c, c);
 	  GSL_Vector *ls_rhs = new GSL_Vector(c);
+	  //GSL_Vector *test = new GSL_Vector(c);
 	  gsl_blas_dgemm (CblasTrans,CblasNoTrans, 1.0, data, data, 1.0, ls->data);
 	  gsl_blas_dgemv (CblasTrans, 1.0, data, rhs.data, 1.0, ls_rhs->data);
 	  ls->lu_solve (*ls_rhs,result);
+	  
+
 	  delete ls;
 	  delete ls_rhs;
       }

@@ -72,16 +72,15 @@ public:
     ANNidxArray             nnIdx;                                  // near neighbor indices
     ANNdistArray            dists;                                  // near neighbor distances
     ANNkd_tree*             kdTree;                                 // search structure
-    std::vector<BDS_Triangle *> sT;
     std::vector<BDS_Edge *> sE;
-    std::vector<BDS_Point *> sP;
+    std::vector<double> sR;
 #endif
     std::list<BDS_Triangle *> t;
     std::list<BDS_Edge *>     e;
     BDS_Point   *p;
     BDS_Surface *surf;
     void getClosestTriangles ( double x, double y, double z, 
-			  std::list<BDS_Triangle*> &l );
+			  std::list<BDS_Triangle*> &l , double &radius);
     inline bool operator <  ( const BDS_GeomEntity & other ) const
 	{
 	    if (classif_degree < other.classif_degree)return true;
@@ -92,7 +91,7 @@ public:
     BDS_GeomEntity (int a, int b)  
       : classif_tag (a),classif_degree(b),p(0),surf(0)
       {
-	nbK=3;
+	nbK=1;
 #ifdef HAVE_ANN_
 	kdTree = 0;
 #endif
@@ -130,6 +129,10 @@ public:
   BDS_Vector operator + (const  BDS_Vector &v)
   {
     return BDS_Vector (x+v.x,y+v.y,z+v.z);
+  }
+  BDS_Vector operator - (const  BDS_Vector &v)
+  {
+    return BDS_Vector (x-v.x,y-v.y,z-v.z);
   }
   inline BDS_Vector operator % (const BDS_Vector &other) const
       {
