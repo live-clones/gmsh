@@ -204,11 +204,12 @@ double dist_droites_gauches(BDS_Point *p1, BDS_Point *p2,
 }
 
 bool proj_point_triangle ( double xa, double ya, double za,
+			   const BDS_Vector &n,
 			   BDS_Triangle *t,
 			   double &x, double &y, double &z)
 {
   const double eps_prec = 1.e-10;
-  BDS_Vector n = t->N();
+  //  BDS_Vector n = t->N();
   double mat[3][3];
   double b[3];
   double res[2];
@@ -681,7 +682,7 @@ void BDS_Mesh :: createSearchStructures ( )
 
   printf("creating the ANN search structure\n");
   
-  const double LC_SEARCH = LC *3.e-3;
+  const double LC_SEARCH = LC *1.e-3;
 
   for (std::set<BDS_GeomEntity*,GeomLessThan>::iterator it = geom.begin();
        it != geom.end();
@@ -2079,7 +2080,7 @@ bool project_point_on_a_list_of_triangles ( BDS_Point *p ,
 	{	  
 	  {
 	    double xp,yp,zp;
-	    bool ok = proj_point_triangle ( p->X,p->Y,p->Z,*it,xp,yp,zp);
+	    bool ok = proj_point_triangle ( p->X,p->Y,p->Z,p->N(),*it,xp,yp,zp);
 	    if (ok)
 	      {
 		global_ok = true;
@@ -2208,14 +2209,14 @@ void BDS_Mesh :: compute_metric_edge_lengths (const BDS_Metric & metric)
 						    0.5*(e->p1->Y+e->p2->Y),
 						    0.5*(e->p1->Z+e->p2->Z));
 	    double radius = 1./curvature;
-	    double target = 3.14159 *radius  / 3.0;
+	    double target = 3.14159 *radius  / metric.nb_elements_per_radius_of_curvature;
 	    e->target_length = metric.update_target_length (target,e->target_length);
 	    //		printf("e1 radius %g target %g length %g mlp %g ml %g\n",radius, target,e->length(),e->length()/target,e->metric_length);
 	  }
 	else
 	  {
 	    double radius = 0.5*(e->p1->radius_of_curvature+e->p2->radius_of_curvature);
-	    double target = 3.14159 * radius  /  3.0;
+	    double target = 3.14159 * radius  /  metric.nb_elements_per_radius_of_curvature;
 	    e->target_length = metric.update_target_length (target,e->target_length);
 	    
 	  }
@@ -2263,7 +2264,7 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
     SNAP_SUCCESS = 0;
     SNAP_FAILURE = 0;
 
-    BDS_Metric metric ( l , LC/200 , LC );
+    BDS_Metric metric ( l , LC/500 , LC, 3 );
     //    printf("METRIC %g %g %g\n",LC,metric._min,metric._max);
 
     // add initial set of edges in a list
@@ -2402,7 +2403,7 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
 	std::set<BDS_Point*, PointLessThan>::iterator ite  = points.end();
 	while (it != ite)
 	{
-	    smooth_point(*it,geom_mesh);
+	     smooth_point(*it,geom_mesh);
 	    ++it;
 	}
     }

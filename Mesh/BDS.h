@@ -29,8 +29,9 @@ class BDS_Metric
 {
  public:
   const double target,_min,_max,treshold;
-  BDS_Metric ( double _target , double _mmin, double _mmax, double _tres = 0.7) 
-    : target(_target),_min(_mmin),_max(_mmax),treshold(_tres)
+  const double nb_elements_per_radius_of_curvature;
+  BDS_Metric ( double _target , double _mmin, double _mmax, double cc, double _tres = 0.7) 
+    : target(_target),_min(_mmin),_max(_mmax), treshold(_tres),nb_elements_per_radius_of_curvature(cc)
     {}
   inline double update_target_length( double _target, double old_target_length  ) const
     {

@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.22 2005-08-24 14:32:56 remacle Exp $
+// $Id: DiscreteSurface.cpp,v 1.23 2005-08-25 14:56:54 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -50,11 +50,6 @@ void Mesh_To_BDS(Surface *s, BDS_Mesh *m)
       Vertex *v1 = simp->V[0];
       Vertex *v2 = simp->V[1];
       Vertex *v3 = simp->V[2];
-      double n[3];
-      normal3points ( v1->Pos.X , v1->Pos.Y , v1->Pos.Z,
-		      v2->Pos.X , v2->Pos.Y , v2->Pos.Z,
-		      v3->Pos.X , v3->Pos.Y , v3->Pos.Z,
-		      n);
       m->add_triangle (v1->Num,v2->Num,v3->Num); 
     }
   List_Delete (triangles);
