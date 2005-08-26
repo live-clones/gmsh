@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.63 2005-07-03 08:02:24 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.64 2005-08-26 18:58:59 stainier Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -254,9 +254,25 @@ static void _msh_print_hexahedron(void *a, void *b)
   if(h->VSUP) {
     type = HEXAHEDRON_2;
     nbs = 12 + 6 + 1;
+    if(h->Orientation() < 0) {
+      Vertex *temp;
+      temp = h->V[0]; h->V[0] = h->V[2]; h->V[2] = temp;
+      temp = h->V[4]; h->V[4] = h->V[6]; h->V[6] = temp;
+      temp = h->VSUP[0]; h->VSUP[0] = h->VSUP[4];  h->VSUP[4]  = temp;
+      temp = h->VSUP[1]; h->VSUP[1] = h->VSUP[10]; h->VSUP[10] = temp;
+      temp = h->VSUP[2]; h->VSUP[2] = h->VSUP[8];  h->VSUP[8]  = temp;
+      temp = h->VSUP[5]; h->VSUP[5] = h->VSUP[6];  h->VSUP[6]  = temp;
+      temp = h->VSUP[7]; h->VSUP[7] = h->VSUP[11]; h->VSUP[11] = temp;
+    }
   }
-  else
+  else {
     type = HEXAHEDRON;
+    if(h->Orientation() < 0) {
+      Vertex *temp;
+      temp = h->V[0]; h->V[0] = h->V[2]; h->V[2] = temp;
+      temp = h->V[4]; h->V[4] = h->V[6]; h->V[6] = temp;
+    }
+  }
 
   if(CTX.mesh.msh_file_version == 2.0)
     fprintf(MSHFILE, "%d %d 2 %d %d",
@@ -294,9 +310,22 @@ static void _msh_print_prism(void *a, void *b)
   if(p->VSUP) {
     type = PRISM_2;
     nbs = 9 + 3;
+    if(p->Orientation() < 0) {
+      Vertex *temp;
+      temp = p->V[0]; p->V[0] = p->V[1]; p->V[1] = temp;
+      temp = p->V[3]; p->V[3] = p->V[4]; p->V[4] = temp;
+      temp = p->VSUP[1]; p->VSUP[1] = p->VSUP[3]; p->VSUP[3] = temp;
+      temp = p->VSUP[2]; p->VSUP[2] = p->VSUP[4]; p->VSUP[4] = temp;
+      temp = p->VSUP[7]; p->VSUP[7] = p->VSUP[8]; p->VSUP[8] = temp;
+    }
   }
   else {
     type = PRISM;
+    if(p->Orientation() < 0) {
+      Vertex *temp;
+      temp = p->V[0]; p->V[0] = p->V[1]; p->V[1] = temp;
+      temp = p->V[3]; p->V[3] = p->V[4]; p->V[4] = temp;
+    }
   }
 
   if(CTX.mesh.msh_file_version == 2.0)
@@ -335,9 +364,20 @@ static void _msh_print_pyramid(void *a, void *b)
   if(p->VSUP) {
     type = PYRAMID_2;
     nbs = 8 + 1;
+    if(p->Orientation() < 0) {
+      Vertex *temp;
+      temp = p->V[0]; p->V[0] = p->V[2]; p->V[2] = temp;
+      temp = p->VSUP[0]; p->VSUP[0] = p->VSUP[3]; p->VSUP[3] = temp;
+      temp = p->VSUP[1]; p->VSUP[1] = p->VSUP[5]; p->VSUP[5] = temp;
+      temp = p->VSUP[2]; p->VSUP[2] = p->VSUP[6]; p->VSUP[6] = temp;
+    }
   }
   else {
     type = PYRAMID;
+    if(p->Orientation() < 0) {
+      Vertex *temp;
+      temp = p->V[0]; p->V[0] = p->V[2]; p->V[2] = temp;
+    }
   }
 
   if(CTX.mesh.msh_file_version == 2.0)
