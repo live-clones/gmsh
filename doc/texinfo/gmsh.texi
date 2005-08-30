@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.187 2005-07-15 10:43:52 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.188 2005-08-30 17:14:49 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -2307,24 +2307,37 @@ all the options of the @var{expression}-th view to the new aliased view.
 
 @item Combine ElementsByViewName;
 Combines all the post-processing views having the same name into new views.
+The combination is done ``spatially'', i.e., simply by appending the
+elements at the end of the new views.
 
 @item Combine ElementsFromAllViews | Combine Views;
-Combines all the post-processing views into a single new view.
+Combines all the post-processing views into a single new view.  The
+combination is done ``spatially'', i.e., simply by appending the elements at
+the end of the new view.
 
 @item Combine ElementsFromVisibleViews;
-Combines all the visible post-processing views into a single new view.
+Combines all the visible post-processing views into a single new view. The
+combination is done ``spatially'', i.e., simply by appending the elements at
+the end of the new view.
 
 @item Combine TimeStepsByViewName | Combine TimeSteps;
 Combines the data from all the post-processing views having the same name
-into new multi-time-step views.
+into new multi-time-step views. The combination is done ``temporally'',
+i.e., as if the data in each view corresponds to a different time
+instant. The combination will fail if the meshes in all the views are not
+identical.
 
 @item Combine TimeStepsFromAllViews;
 Combines the data from all the post-processing views into a new
-multi-time-step view.
+multi-time-step view. The combination is done ``temporally'', i.e., as if
+the data in each view corresponds to a different time instant. The
+combination will fail if the meshes in all the views are not identical.
 
 @item Combine TimeStepsFromVisibleViews;
 Combines the data from all the visible post-processing views into a new
-multi-time-step view.
+multi-time-step view. The combination is done ``temporally'', i.e., as if
+the data in each view corresponds to a different time instant. The
+combination will fail if the meshes in all the views are not identical.
 
 @item Delete View[@var{expression}];
 Deletes (removes) the @var{expression}-th post-processing view. Note that
@@ -2367,6 +2380,16 @@ sets, are described in @ref{ASCII post-processing file format}, and
 
 @cindex Post-processing plugins
 @cindex Plugins, post-processing
+
+Post-processing plugins permit to extend the functionality of Gmsh's
+post-processing module. The difference between regular post-processing
+options (@pxref{Post-processing options}) and post-processing plugins is
+that regular post-processing options only change the way the data is
+displayed, while post-processing plugins either create new post-processing
+views, or modify the data stored in a view (in a destructive, non-reversible
+way).
+
+Here is the list of the plugins that are shipped by default with Gmsh:
 
 @include opt_plugin.texi
 
