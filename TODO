@@ -1,4 +1,9 @@
-$Id: TODO,v 1.96 2005-08-02 17:02:07 geuzaine Exp $
+$Id: TODO,v 1.97 2005-08-31 15:51:58 geuzaine Exp $
+
+********************************************************************
+
+VertexArray::add() seems to be very slow on cygwin (due to the many
+memcpy's in List_Add?). Should investigate...
 
 ********************************************************************
 
