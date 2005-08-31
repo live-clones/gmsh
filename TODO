@@ -1,4 +1,12 @@
-$Id: TODO,v 1.97 2005-08-31 15:51:58 geuzaine Exp $
+$Id: TODO,v 1.98 2005-08-31 22:12:40 geuzaine Exp $
+
+********************************************************************
+
+On Windows without Cygwin:
+- rewrite solver interface (GmshServer and GmshClient)
+- Functions in parser don't seem to work
+- fix compilation issues in triangle (timezone) and gl2ps (zlib??)
+- need alternative timer functions (Timer.cpp, ParUtils.cpp)
 
 ********************************************************************
 
