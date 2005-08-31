@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.75 2005-08-22 12:00:32 geuzaine Exp $
+dnl $Id: configure.in,v 1.76 2005-08-31 21:44:44 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -57,6 +57,9 @@ AC_ARG_ENABLE(gsl,
 AC_ARG_ENABLE(gui,
               AC_HELP_STRING([--enable-gui],
                              [build the graphical user interface (default=yes)]))
+AC_ARG_ENABLE(cygwin,
+              AC_HELP_STRING([--enable-cygwin],
+                             [use the Cygwin library on Windows (default=yes)]))
 AC_ARG_ENABLE(parallel,
               AC_HELP_STRING([--enable-parallel],
                              [enable parallel version (default=no)]))
@@ -422,7 +425,12 @@ dnl Modify defaults according to OS
 case "$UNAME" in
 
   CYGWIN* | MINGW*)
-    LINKER="${LINKER} -Wl,--subsystem,windows -mwindows"
+    LINKER="${LINKER} -mwindows"
+    if test "x$enable_cygwin" = "xno"; then
+      FLAGS="${FLAGS} -mno-cygwin -DHAVE_NO_DLL"
+      LINKER="${LINKER} -mno-cygwin"
+      UNAME="${UNAME}-no-cygwin"
+    fi
     if test "x$enable_gui" != "xno"; then
       GMSH_LIBS="${GMSH_LIBS} Fltk/Win32Icon.res"
     fi

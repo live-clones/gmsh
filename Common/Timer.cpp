@@ -1,4 +1,4 @@
-// $Id: Timer.cpp,v 1.14 2005-06-20 17:02:45 geuzaine Exp $
+// $Id: Timer.cpp,v 1.15 2005-08-31 21:44:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#if !defined(WIN32) || defined(__CYGWIN__)
+
 #include <time.h> // FIXME: for sgi and maybe others
 #include <sys/time.h>
 #include <unistd.h>
@@ -29,3 +31,15 @@ long GetTime()
   gettimeofday(&tp, (struct timezone *)0);
   return (long)tp.tv_sec * 1000000 + (long)tp.tv_usec;
 }
+
+#else // pure windows
+
+#include "Gmsh.h"
+
+long GetTime()
+{
+  Msg(GERROR, "GetTime not implemented on Windows without Cygwin");
+  return 1;
+}
+
+#endif

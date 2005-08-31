@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.20 2005-07-15 10:31:06 geuzaine Exp $
+# $Id: Makefile,v 1.21 2005-08-31 21:44:44 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -22,7 +22,7 @@
 include ../variables
 
 LIB     = ../lib/libGmshParallel.a
-INCLUDE =
+INCLUDE = -I../Common -I../DataStr
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
 
 SRC = ParUtil.cpp

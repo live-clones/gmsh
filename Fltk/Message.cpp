@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.64 2005-03-11 08:56:38 geuzaine Exp $
+// $Id: Message.cpp,v 1.65 2005-08-31 21:44:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -19,10 +19,12 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#if !defined(WIN32) || defined(__CYGWIN__)
 #include <unistd.h>
 #include <signal.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#endif
 
 #if defined(__APPLE__)
 #define RUSAGE_SELF      0
@@ -45,6 +47,7 @@ extern Context_T CTX;
 
 void Signal(int sig_num)
 {
+#if !defined(WIN32) || defined(__CYGWIN__)
   switch (sig_num) {
   case SIGSEGV:
     Msg(FATAL1, "Segmentation violation (invalid memory reference)");
@@ -64,6 +67,7 @@ void Signal(int sig_num)
     Msg(FATAL, "Unknown signal");
     break;
   }
+#endif
 }
 
 // General purpose message routine
@@ -212,8 +216,10 @@ void Msg(int level, char *fmt, ...)
 
 void Exit(int level)
 {
+#if !defined(WIN32) || defined(__CYGWIN__)
   // delete the temp file
   unlink(CTX.tmp_filename_fullpath);
+#endif
 
   if(level){
     // in case of an abnormal exit, force the abort directly
@@ -264,12 +270,18 @@ void Exit(int level)
 
 void GetResources(long *s, long *us, long *mem)
 {
+#if !defined(WIN32) || defined(__CYGWIN__)
   static struct rusage r;
 
   getrusage(RUSAGE_SELF, &r);
   *s = (long)r.ru_utime.tv_sec;
   *us = (long)r.ru_utime.tv_usec;
   *mem = (long)r.ru_maxrss;
+#else
+  *s = 0;
+  *us = 0;
+  *mem = 0;
+#endif
 }
 
 void PrintResources(long s, long us, long mem)

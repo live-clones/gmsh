@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.367 2005-08-09 23:41:12 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.368 2005-08-31 21:44:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3223,12 +3223,16 @@ void solver_command_cb(CALLBACK_ARGS)
 
 void solver_kill_cb(CALLBACK_ARGS)
 {
+#if !defined(WIN32) || defined(__CYGWIN__)
   int num = (int)(long)data;
   if(SINFO[num].pid > 0) {
     kill(SINFO[num].pid, 9);
     Msg(INFO, "Killed %s pid %d", SINFO[num].name, SINFO[num].pid);
   }
   SINFO[num].pid = -1;
+#else
+  Msg(WARNING, "Killing processes not supported on Windows without Cygwin");  
+#endif
 }
 
 void solver_choose_executable_cb(CALLBACK_ARGS)

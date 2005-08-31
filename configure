@@ -850,6 +850,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-gsl            use GSL as numerical toolkit (default=yes)
   --enable-gui            build the graphical user interface (default=yes)
+  --enable-cygwin         use the Cygwin library on Windows (default=yes)
   --enable-parallel       enable parallel version (default=no)
   --enable-triangle       compile Triangle if available (default=yes)
   --enable-netgen         compile Netgen if available (default=yes)
@@ -1361,6 +1362,11 @@ fi;
 # Check whether --enable-gui or --disable-gui was given.
 if test "${enable_gui+set}" = set; then
   enableval="$enable_gui"
+
+fi;
+# Check whether --enable-cygwin or --disable-cygwin was given.
+if test "${enable_cygwin+set}" = set; then
+  enableval="$enable_cygwin"
 
 fi;
 # Check whether --enable-parallel or --disable-parallel was given.
@@ -4408,7 +4414,12 @@ GMSH_LIBS="${GMSH_LIBS} -lm"
 case "$UNAME" in
 
   CYGWIN* | MINGW*)
-    LINKER="${LINKER} -Wl,--subsystem,windows -mwindows"
+    LINKER="${LINKER} -mwindows"
+    if test "x$enable_cygwin" = "xno"; then
+      FLAGS="${FLAGS} -mno-cygwin -DHAVE_NO_DLL"
+      LINKER="${LINKER} -mno-cygwin"
+      UNAME="${UNAME}-no-cygwin"
+    fi
     if test "x$enable_gui" != "xno"; then
       GMSH_LIBS="${GMSH_LIBS} Fltk/Win32Icon.res"
     fi
@@ -4982,9 +4993,10 @@ for ac_i in : $LIBOBJS; do test "x$ac_i" = x: && continue
   # 1. Remove the extension, and $U if already installed.
   ac_i=`echo "$ac_i" |
 	 sed 's/\$U\././;s/\.o$//;s/\.obj$//'`
-  # 2. Add them.
-  ac_libobjs="$ac_libobjs $ac_i\$U.$ac_objext"
-  ac_ltlibobjs="$ac_ltlibobjs $ac_i"'$U.lo'
+  # 2. Prepend LIBOBJDIR.  When used with automake>=1.10 LIBOBJDIR
+  #    will be set to the directory where LIBOBJS objects are built.
+  ac_libobjs="$ac_libobjs \${LIBOBJDIR}$ac_i\$U.$ac_objext"
+  ac_ltlibobjs="$ac_ltlibobjs \${LIBOBJDIR}$ac_i"'$U.lo'
 done
 LIBOBJS=$ac_libobjs
 

@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.38 2005-08-22 00:29:11 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.39 2005-08-31 21:44:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,12 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Gmsh.h"
+#include "Solvers.h"
+
+SolverInfo SINFO[MAXSOLVERS];
+
+#if !defined(WIN32) || defined(__CYGWIN__)
+
 #include "GmshServer.h"
 
 // FIXME: this should be removed (and we should set the socket options
@@ -35,7 +41,6 @@ int GmshServer::s;
 #include <unistd.h>
 
 #include "OpenFile.h"
-#include "Solvers.h"
 #include "GmshUI.h"
 #include "GUI.h"
 #include "Mesh.h"
@@ -44,8 +49,6 @@ int GmshServer::s;
 
 extern Context_T CTX;
 extern GUI *WID;
-
-SolverInfo SINFO[MAXSOLVERS];
 
 // This routine polls the socket file descriptor every pollint
 // milliseconds until data is avalable; when nothing is available, we
@@ -278,3 +281,13 @@ int Solver(int num, char *args)
 
   return 1;
 }
+
+#else // pure windows
+
+int Solver(int num, char *args)
+{
+  Msg(GERROR, "Solver interface not available on Windows without Cygwin");
+  return 1;
+}
+
+#endif

@@ -20,8 +20,6 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <stdio.h>
-
 /**
    ParUtil is a Singleton. It gives some
    general services for parallel implementation.
