@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.188 2005-08-30 17:14:49 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.189 2005-09-02 15:56:24 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -686,8 +686,10 @@ parsing of the data file:
   GetValue("@var{string}", @var{expression})
 @end example
 
-Such @w{@var{expression}s} are used in most of Gmsh's commands.  The
-operators @var{operator-unary-left}, @var{operator-unary-right},
+Such @w{@var{expression}s} are used in most of Gmsh's commands.  The third
+and fourth cases in this definition permit to extract one item from a list
+(see below) and get the size of a list, respectively. The operators
+@var{operator-unary-left}, @var{operator-unary-right},
 @var{operator-binary}, @var{operator-ternary-left} and
 @var{operator-ternary-right} are defined in @ref{Operators}. For the
 definition of @w{@var{built-in-function}s}, see @ref{Built-in
@@ -695,7 +697,7 @@ functions}. The various @w{@var{real-option}s} are listed in @ref{General
 options}, @ref{Geometry options}, @ref{Mesh options}, @ref{Solver options},
 and @ref{Post-processing options}.
 
-The last case in this definition allows to ask the user for a value
+The last case in the definition allows to ask the user for a value
 interactively. For example, inserting @code{GetValue("Value of parameter
 alpha?", 5.76)} in an input file will query the user for the value of a
 certain parameter alpha, assuming the default value is 5.76. If the option

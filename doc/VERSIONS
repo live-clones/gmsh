@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.340 2005-08-29 13:09:23 geuzaine Exp $
+$Id: VERSIONS,v 1.341 2005-09-02 15:56:24 geuzaine Exp $
 
 New since 1.60: added support for second order (curved) elements in
 post-processor; new version (1.4) of post-processing file formats; new
@@ -7,13 +7,15 @@ files on command line; all "Combine" operations are now available in
 the parser; changed View.ArrowLocation into View.GlyphLocation;
 optimized memory usage when loading many (>1000) views; optimized
 loading and drawing of line meshes and 2D iso views; optimized
-handling of meshes with large number of physical entities; removed
-Discrete Line and Discrete Surface commands (the same functionality
-can now be obtained by simply loading a mesh in .msh format); fixed
-coloring by mesh partition; new "mesh statistics" export format; new
-full-quad recombine option; new Plugin(ModulusPhase); experimental
-Tetgen integration; hexas and prisms are now always saved with
-positive volume; various small bug fixes and improvements.
+handling of meshes with large number of physical entities; optimized
+vertex array creation for large post-processing views on
+Windows/Cygwin; removed Discrete Line and Discrete Surface commands
+(the same functionality can now be obtained by simply loading a mesh
+in .msh format); fixed coloring by mesh partition; new "mesh
+statistics" export format; new full-quad recombine option; new
+Plugin(ModulusPhase); experimental Tetgen integration; hexas and
+prisms are now always saved with positive volume; various small bug
+fixes and improvements.
 
 New in 1.60: added support for discrete curves; new Window menu on Mac
 OS X; generalized all octree-based plugins (CutGrid, StreamLines,
