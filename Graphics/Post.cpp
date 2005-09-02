@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.100 2005-05-21 17:27:03 geuzaine Exp $
+// $Id: Post.cpp,v 1.101 2005-09-02 15:53:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -430,6 +430,28 @@ void Draw_List(Post_View * v, double ValMin, double ValMax, int type,
   }
 }
 
+// We try to estimate how many primitives will end up in the vertex
+// arrays, since reallocating the arrays takes a HUGE amount of time
+// on Windows/Cygwin. A better way would be to slightly redisign the
+// drawing routines so we can have different pre-processing steps
+// (like the one we have for normals right now), in order to count how
+// many primitives we will have.
+
+int EstimateNumTri(Post_View *v)
+{
+  int num2d = v->NbST + v->NbSQ;
+  int num3d = v->NbSS + v->NbSH + v->NbSI + v->NbSY;
+
+  int heuristic = num2d + num3d/10;
+
+  return (heuristic < 10000) ? 10000 : heuristic;
+}
+
+int EstimateNumLin(Post_View *v)
+{
+  return 10000;
+}
+
 void Draw_Post(void)
 {
   int nb;
@@ -646,10 +668,10 @@ void Draw_Post(void)
 	    if(v->Changed){
 	      Msg(DEBUG, "regenerate View[%d] vertex array", v->Index);
 	      if(v->TriVertexArray) delete v->TriVertexArray;
-	      v->TriVertexArray = new VertexArray(3, 10000);
+	      v->TriVertexArray = new VertexArray(3, EstimateNumTri(v));
 	      v->TriVertexArray->fill = 1;
 	      if(v->LinVertexArray) delete v->LinVertexArray;
-	      v->LinVertexArray = new VertexArray(2, 10000);
+	      v->LinVertexArray = new VertexArray(2, EstimateNumLin(v));
 	      v->LinVertexArray->fill = 1;
 	      goto pass_0;
 	    }
