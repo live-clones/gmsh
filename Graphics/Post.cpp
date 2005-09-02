@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.101 2005-09-02 15:53:55 geuzaine Exp $
+// $Id: Post.cpp,v 1.102 2005-09-02 18:04:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -432,10 +432,10 @@ void Draw_List(Post_View * v, double ValMin, double ValMax, int type,
 
 // We try to estimate how many primitives will end up in the vertex
 // arrays, since reallocating the arrays takes a HUGE amount of time
-// on Windows/Cygwin. A better way would be to slightly redisign the
+// on Windows/Cygwin. A better way would be to slightly redesign the
 // drawing routines so we can have different pre-processing steps
-// (like the one we have for normals right now), in order to count how
-// many primitives we will have.
+// (like the one we have for smooth normals right now), in order to
+// count how many primitives we will have.
 
 int EstimateNumTri(Post_View *v)
 {
