@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.175 2005-05-21 17:27:03 geuzaine Exp $
+// $Id: Views.cpp,v 1.176 2005-09-02 16:11:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -833,23 +833,24 @@ void ReadView(FILE *file, char *filename)
       v = BeginView(0);
 
       if(version <= 1.0) {
+        Msg(DEBUG, "Detected post-processing view format <= 1.0");
         fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
                name, &v->NbTimeStep,
                &v->NbSP, &v->NbVP, &v->NbTP,
                &v->NbSL, &v->NbVL, &v->NbTL,
                &v->NbST, &v->NbVT, &v->NbTT, &v->NbSS, &v->NbVS, &v->NbTS);
         v->NbT2 = t2l = v->NbT3 = t3l = 0;
-        Msg(DEBUG, "Detected post-processing view format <= 1.0");
       }
       else if(version == 1.1) {
+        Msg(DEBUG, "Detected post-processing view format 1.1");
         fscanf(file,
                "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
                name, &v->NbTimeStep, &v->NbSP, &v->NbVP, &v->NbTP, &v->NbSL,
                &v->NbVL, &v->NbTL, &v->NbST, &v->NbVT, &v->NbTT, &v->NbSS,
                &v->NbVS, &v->NbTS, &v->NbT2, &t2l, &v->NbT3, &t3l);
-        Msg(DEBUG, "Detected post-processing view format 1.1");
       }
       else if(version == 1.2 || version == 1.3) {
+        Msg(DEBUG, "Detected post-processing view format %g", version);
         fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
                "%d %d %d %d %d %d %d %d %d %d %d %d %d\n",
                name, &v->NbTimeStep,
@@ -862,9 +863,9 @@ void ReadView(FILE *file, char *filename)
                &v->NbSI, &v->NbVI, &v->NbTI,
                &v->NbSY, &v->NbVY, &v->NbTY,
 	       &v->NbT2, &t2l, &v->NbT3, &t3l);
-        Msg(DEBUG, "Detected post-processing view format %g", version);
       }
       else if(version == 1.4) {
+        Msg(DEBUG, "Detected post-processing view format 1.4");
         fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
                "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
 	       "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
@@ -885,7 +886,6 @@ void ReadView(FILE *file, char *filename)
                &v->NbSI2, &v->NbVI2, &v->NbTI2,
                &v->NbSY2, &v->NbVY2, &v->NbTY2,
 	       &v->NbT2, &t2l, &v->NbT3, &t3l);
-        Msg(DEBUG, "Detected post-processing view format 1.4");
       }
       else {
         Msg(GERROR, "Unknown post-processing file format (version %g)",

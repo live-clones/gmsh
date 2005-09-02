@@ -1,4 +1,4 @@
-$Id: TODO,v 1.98 2005-08-31 22:12:40 geuzaine Exp $
+$Id: TODO,v 1.99 2005-09-02 16:11:16 geuzaine Exp $
 
 ********************************************************************
 
@@ -7,6 +7,8 @@ On Windows without Cygwin:
 - Functions in parser don't seem to work
 - fix compilation issues in triangle (timezone) and gl2ps (zlib??)
 - need alternative timer functions (Timer.cpp, ParUtils.cpp)
+- there is a bug in fwrite/fread as used for binary post-processing
+  views (need to investigate "premature end of file" message)
 
 ********************************************************************
 
