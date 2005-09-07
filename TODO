@@ -1,4 +1,4 @@
-$Id: TODO,v 1.99 2005-09-02 16:11:16 geuzaine Exp $
+$Id: TODO,v 1.100 2005-09-07 16:38:19 geuzaine Exp $
 
 ********************************************************************
 
@@ -9,11 +9,6 @@ On Windows without Cygwin:
 - need alternative timer functions (Timer.cpp, ParUtils.cpp)
 - there is a bug in fwrite/fread as used for binary post-processing
   views (need to investigate "premature end of file" message)
-
-********************************************************************
-
-VertexArray::add() seems to be very slow on cygwin (due to the many
-memcpy's in List_Add?). Should investigate...
 
 ********************************************************************
 
