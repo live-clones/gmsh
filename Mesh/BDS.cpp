@@ -2551,6 +2551,7 @@ BDS_Mesh::BDS_Mesh (const BDS_Mesh &other)
 	e->g = ((*it)->g)? get_geom  ((*it)->g->classif_tag,(*it)->g->classif_degree) : 0;
 	if (e->g->classif_degree == 1)
 	    e->g->e.push_back(e);
+	e->partition = (*it)->partition;
     }
     for (std::list<BDS_Triangle*>::const_iterator it  = other.triangles.begin();
 	 it != other.triangles.end();
@@ -2561,7 +2562,7 @@ BDS_Mesh::BDS_Mesh (const BDS_Mesh &other)
 	BDS_Triangle *t = add_triangle(n[0]->iD,n[1]->iD,n[2]->iD);
 	t->g = get_geom  ((*it)->g->classif_tag,(*it)->g->classif_degree);
 	t->g->t.push_back(t);
-	t->status = (*it)->status;
+	t->partition = (*it)->partition;
     } 
 
     for (std::list<BDS_Tet*>::const_iterator it  = other.tets.begin();
@@ -2573,7 +2574,7 @@ BDS_Mesh::BDS_Mesh (const BDS_Mesh &other)
 	BDS_Tet *t = add_tet(n[0]->iD,n[1]->iD,n[2]->iD,n[3]->iD);
 	t->g = get_geom  ((*it)->g->classif_tag,(*it)->g->classif_degree);
 	//	t->g->t.push_back(t);
-	t->status = (*it)->status;
+	t->partition = (*it)->partition;
     }
 
 }

@@ -252,6 +252,7 @@ class BDS_Edge
 public:
     bool deleted;
     int status;
+    int partition;
     double target_length;
     BDS_Point *p1,*p2;
     BDS_GeomEntity *g;
@@ -309,7 +310,7 @@ public:
     inline void oppositeof (BDS_Point * oface[2]) const; 
 
     BDS_Edge ( BDS_Point *A, BDS_Point *B )
-      : deleted(false), status(0),target_length(1.0),g(0)
+      : deleted(false), status(0),partition(0),target_length(1.0),g(0)
 	{	    
 	    if (*A < *B) 
 	    {
@@ -331,6 +332,7 @@ class BDS_Triangle
 public:
     bool deleted;
     int status;
+    int partition;
     BDS_Tet  *t1,*t2;
     BDS_Edge *e1,*e2,*e3;
     BDS_Vector NORMAL;
@@ -402,7 +404,7 @@ public:
 	}
 
     BDS_Triangle ( BDS_Edge *A, BDS_Edge *B, BDS_Edge *C)
-	: deleted (false) , status(0), t1(0),t2(0),e1(A),e2(B),e3(C),g(0)
+	: deleted (false) , status(0), partition(0),t1(0),t2(0),e1(A),e2(B),e3(C),g(0)
 	{	
 	    e1->addface(this);
 	    e2->addface(this);
@@ -416,6 +418,7 @@ class BDS_Tet
 public:
     bool deleted;
     int status;
+    int partition;
     BDS_Triangle  *f1,*f2,*f3,*f4;
     double volume;
     inline double V() const {return volume;}
@@ -445,7 +448,7 @@ public:
 	}
 
     BDS_Tet ( BDS_Triangle *A, BDS_Triangle *B, BDS_Triangle *C, BDS_Triangle *D)
-	: deleted (false) , status(0), f1(A),f2(B),f3(C),f4(D),g(0)
+	: deleted (false) , status(0), partition(0),f1(A),f2(B),f3(C),f4(D),g(0)
 	{	
 	    f1->addtet(this);
 	    f2->addtet(this);

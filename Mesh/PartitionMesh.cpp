@@ -67,9 +67,9 @@ void PartitionMesh ( Mesh *M , int NP)
   M->bds_mesh = new BDS_Mesh (*M->bds);
   BDS_To_Mesh_2(M);
   delete M->bds;
-  delete M->bds_mesh;
+  //  delete M->bds_mesh;
   M->bds = 0;
-  M->bds_mesh = 0;
+  //M->bds_mesh = 0;
   SetBoundingBox();
 }
 
@@ -98,7 +98,7 @@ void PartitionMesh ( BDS_Mesh *m , int NP)
       if (dim == 2)
 	{
 	  BDS_Triangle *t = *it2;
-	  t->status = i;
+	  t->partition = i;
 	  ++it2;
 	  nbAdj = (t->e1->numfaces() + t->e2->numfaces() + t->e3->numfaces() - 3);
 	  totCount += nbAdj;
@@ -106,7 +106,7 @@ void PartitionMesh ( BDS_Mesh *m , int NP)
       else if (dim == 3)
 	{
 	  BDS_Tet *t = *it3;
-	  t->status = i;
+	  t->partition = i;
 	  ++it3;
 	  nbAdj =(t->f1->numtets() + t->f2->numtets() + t->f3->numtets() + t->f4->numtets() - 4); 
 	  totCount += nbAdj;
@@ -131,17 +131,17 @@ void PartitionMesh ( BDS_Mesh *m , int NP)
 	  for (int j=0;j<t->e1->numfaces();j++)
 	    {
 	      BDS_Triangle *f = t->e1->faces(j);
-	      if (f != t) adjncy[count++] = f->status;
+	      if (f != t) adjncy[count++] = f->partition;
 	    }
 	  for (int j=0;j<t->e2->numfaces();j++)
 	    {
 	      BDS_Triangle *f = t->e2->faces(j);
-	      if (f != t) adjncy[count++] = f->status;
+	      if (f != t) adjncy[count++] = f->partition;
 	    }
 	  for (int j=0;j<t->e3->numfaces();j++)
 	    {
 	      BDS_Triangle *f = t->e3->faces(j);
-	      if (f != t) adjncy[count++] = f->status;
+	      if (f != t) adjncy[count++] = f->partition;
 	    }
 	  ++it2;
 	}
@@ -149,13 +149,13 @@ void PartitionMesh ( BDS_Mesh *m , int NP)
 	{
 	  BDS_Tet *t = *it3;
 	  BDS_Tet *o = t->f1->opposite_tet (t);
-	  if (o) adjncy[count++] = o->status;
+	  if (o) adjncy[count++] = o->partition;
 	  o = t->f2->opposite_tet (t);
-	  if (o) adjncy[count++] = o->status;
+	  if (o) adjncy[count++] = o->partition;
 	  o = t->f3->opposite_tet (t);
-	  if (o) adjncy[count++] = o->status;
+	  if (o) adjncy[count++] = o->partition;
 	  o = t->f4->opposite_tet (t);
-	  if (o) adjncy[count++] = o->status;
+	  if (o) adjncy[count++] = o->partition;
 	  ++it3;
 	}
     }
@@ -179,13 +179,13 @@ void PartitionMesh ( BDS_Mesh *m , int NP)
       if (dim == 2)
 	{
 	  BDS_Triangle *t = *it2;
-	  t->status = partitionVector[i];
+	  t->partition = partitionVector[i];
 	  ++it2;
 	}
       else if (dim == 3)
 	{
 	  BDS_Tet *t = *it3;
-	  t->status = partitionVector[i];
+	  t->partition = partitionVector[i];
 	  ++it3;
 	}
     }

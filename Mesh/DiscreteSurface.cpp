@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.24 2005-09-07 14:36:45 remacle Exp $
+// $Id: DiscreteSurface.cpp,v 1.25 2005-09-07 17:12:16 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -233,7 +233,7 @@ void BDS_To_Mesh_2(Mesh *m)
 	    if(s)
 	      {
 		simp->iEnt = g->classif_tag;
-		simp->iPart = addMeshPartition((*it)->status, m);
+		simp->iPart = addMeshPartition((*it)->partition, m);
 	      }
 	    else
 	      printf("impossible to find surface %d\n",g->classif_tag);
@@ -258,7 +258,7 @@ void BDS_To_Mesh_2(Mesh *m)
       if(v)
 	{
 	  simp->iEnt = g->classif_tag;
-	  simp->iPart = addMeshPartition((*it)->status, m);
+	  simp->iPart = addMeshPartition((*it)->partition, m);
 	}
       else
 	printf("argh\n");
