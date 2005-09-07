@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.77 2005-08-31 22:03:26 geuzaine Exp $
+dnl $Id: configure.in,v 1.78 2005-09-07 14:36:44 remacle Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -72,6 +72,9 @@ AC_ARG_ENABLE(netgen,
 AC_ARG_ENABLE(ann,
               AC_HELP_STRING([--enable-ann],
                              [compile ANN if available (default=yes)]))
+AC_ARG_ENABLE(metis,
+              AC_HELP_STRING([--enable-metis],
+                             [compile METIS if available (default=yes)]))
 AC_ARG_ENABLE(tetgen,
               AC_HELP_STRING([--enable-tetgen],
                              [compile Tetgen if available (default=yes)]))
@@ -279,6 +282,33 @@ else
      echo "author's web site at http://www.cs.umd.edu/~mount/ANN/,"
      echo "unpack the archive and copy both src and include directories in the"
      echo "./ANN subdirectory. Then run ./configure again."
+     echo "********************************************************************"
+  fi
+fi
+
+dnl Check if METIS is installed
+AC_CHECK_FILE(./Metis/metis.h, METIS="yes", METIS="no")
+if test "x${METIS}" = "xyes"; then
+  if test "x$enable_metis" != "xno"; then
+     GMSH_DIRS="${GMSH_DIRS} Metis"
+     GMSH_LIBS="${GMSH_LIBS} -lGmshMetis"
+     FLAGS="-DHAVE_METIS ${FLAGS}"
+     echo "********************************************************************"
+     echo "You are building a version of Gmsh that contains METIS, the"
+     echo "Serial Graph Partitioner."
+     echo "Please note that by doing so, you agree with METIS's licensing"
+     echo "requirements stated in ./Metis/Doc/manual.ps."
+     echo "To disable METIS, run configure again with the --disable-metis"
+     echo "option."
+     echo "********************************************************************"
+  fi
+else
+  if test "x$enable-metis" != "xno"; then
+     echo "********************************************************************"
+     echo "If you want to use METIS for doing mesh partitioning, please download METIS from the"
+     echo "author's web site at http://www-users.cs.umn.edu/~karypis/metis/"
+     echo "unpack the archive and copy the Lib Directory in the"
+     echo "./Metis subdirectory. Then run ./configure again."
      echo "********************************************************************"
   fi
 fi

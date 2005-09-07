@@ -439,6 +439,7 @@ double opt_mesh_light_two_side(OPT_ARGS_NUM);
 double opt_mesh_format(OPT_ARGS_NUM);
 double opt_mesh_msh_file_version(OPT_ARGS_NUM);
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM);
+double opt_mesh_nb_partitions(OPT_ARGS_NUM);
 double opt_mesh_algo2d(OPT_ARGS_NUM);
 double opt_mesh_recombine_algo(OPT_ARGS_NUM);
 double opt_mesh_algo3d(OPT_ARGS_NUM);

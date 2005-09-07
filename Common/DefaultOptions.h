@@ -954,6 +954,8 @@ StringXNumber MeshOptions_Number[] = {
     "Global scaling factor applied to the saved mesh" },
   { F|O, "Smoothing" , opt_mesh_nb_smoothing , 1. ,
     "Number of smoothing steps applied to the final mesh" },
+  { F|O, "Partitioning" , opt_mesh_nb_partitions , 1. ,
+    "Number of partitions applied to the final mesh" },
   { F|O, "SmoothNormals" , opt_mesh_smooth_normals , 0. , 
     "Smooth the mesh normals?" },
   { F|O, "SpeedMax" , opt_mesh_speed_max , 0. ,

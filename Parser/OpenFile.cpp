@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.81 2005-07-04 15:07:41 remacle Exp $
+// $Id: OpenFile.cpp,v 1.82 2005-09-07 14:36:46 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -50,6 +50,7 @@ extern Mesh *THEM, M;
 extern Context_T CTX;
 
 extern  void BDS_To_Mesh(Mesh *m);
+extern  void BDS_To_Mesh_2(Mesh *m);
 
 void FixRelativePath(char *in, char *out){
   if(in[0] == '/' || in[0] == '\\' || (strlen(in)>2 && in[1] == ':')){

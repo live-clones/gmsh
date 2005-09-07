@@ -855,6 +855,7 @@ Optional Features:
   --enable-triangle       compile Triangle if available (default=yes)
   --enable-netgen         compile Netgen if available (default=yes)
   --enable-ann            compile ANN if available (default=yes)
+  --enable-metis          compile METIS if available (default=yes)
   --enable-tetgen         compile Tetgen if available (default=yes)
   --enable-matheval       compile MathEval if available (default=yes)
   --enable-jpeg           enable JPEG support (default=yes)
@@ -1387,6 +1388,11 @@ fi;
 # Check whether --enable-ann or --disable-ann was given.
 if test "${enable_ann+set}" = set; then
   enableval="$enable_ann"
+
+fi;
+# Check whether --enable-metis or --disable-metis was given.
+if test "${enable_metis+set}" = set; then
+  enableval="$enable_metis"
 
 fi;
 # Check whether --enable-tetgen or --disable-tetgen was given.
@@ -3835,6 +3841,54 @@ else
      echo "author's web site at http://www.cs.umd.edu/~mount/ANN/,"
      echo "unpack the archive and copy both src and include directories in the"
      echo "./ANN subdirectory. Then run ./configure again."
+     echo "********************************************************************"
+  fi
+fi
+
+echo "$as_me:$LINENO: checking for ./Metis/metis.h" >&5
+echo $ECHO_N "checking for ./Metis/metis.h... $ECHO_C" >&6
+if test "${ac_cv_file___Metis_metis_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "./Metis/metis.h"; then
+  ac_cv_file___Metis_metis_h=yes
+else
+  ac_cv_file___Metis_metis_h=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file___Metis_metis_h" >&5
+echo "${ECHO_T}$ac_cv_file___Metis_metis_h" >&6
+if test $ac_cv_file___Metis_metis_h = yes; then
+  METIS="yes"
+else
+  METIS="no"
+fi
+
+if test "x${METIS}" = "xyes"; then
+  if test "x$enable_metis" != "xno"; then
+     GMSH_DIRS="${GMSH_DIRS} Metis"
+     GMSH_LIBS="${GMSH_LIBS} -lGmshMetis"
+     FLAGS="-DHAVE_METIS ${FLAGS}"
+     echo "********************************************************************"
+     echo "You are building a version of Gmsh that contains METIS, the"
+     echo "Serial Graph Partitioner."
+     echo "Please note that by doing so, you agree with METIS's licensing"
+     echo "requirements stated in ./Metis/Doc/manual.ps."
+     echo "To disable METIS, run configure again with the --disable-metis"
+     echo "option."
+     echo "********************************************************************"
+  fi
+else
+  if test "x$enable-metis" != "xno"; then
+     echo "********************************************************************"
+     echo "If you want to use METIS for doing mesh partitioning, please download METIS from the"
+     echo "author's web site at http://www-users.cs.umn.edu/~karypis/metis/"
+     echo "unpack the archive and copy the Lib Directory in the"
+     echo "./Metis subdirectory. Then run ./configure again."
      echo "********************************************************************"
   fi
 fi

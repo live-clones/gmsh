@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.89 2005-07-04 15:07:40 remacle Exp $
+// $Id: Geom.cpp,v 1.90 2005-09-07 14:36:45 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -150,8 +150,8 @@ void Draw_Curve(void *a, void *b)
       N = 10 * n;
       break;
     }
-    if(c->Typ == MSH_SEGM_DISCRETE && c->bds) {
-      BDS_GeomEntity *g = c->bds->get_geom ( c->Num,1);	
+    if(c->Typ == MSH_SEGM_DISCRETE && THEM->bds) {
+      BDS_GeomEntity *g = THEM->bds->get_geom ( c->Num,1);	
       std::list<BDS_Edge*>::iterator it  = g->e.begin();
       std::list<BDS_Edge*>::iterator ite = g->e.end();
       while (it!=ite){
@@ -349,7 +349,7 @@ void Draw_Polygonal_Surface(Surface * s)
     if(CTX.geom.light) glEnable(GL_LIGHTING);
     glEnable(GL_POLYGON_OFFSET_FILL); // always!
 
-    BDS_GeomEntity *g = s->bds->get_geom ( s->Num,2);	
+    BDS_GeomEntity *g = THEM->bds->get_geom ( s->Num,2);	
 //    if (g->surf) glColor4ubv((GLubyte *) & CTX.color.geom.line);
     std::list<BDS_Triangle*>::iterator it  = g->t.begin();
     std::list<BDS_Triangle*>::iterator ite = g->t.end();
@@ -634,7 +634,7 @@ void Draw_Surface(void *a, void *b)
     glColor4ubv((GLubyte *) & CTX.color.geom.surface);
   }
 
-  if(s->bds){
+  if(THEM->bds){
     Draw_Polygonal_Surface(s);
   }
   else if(s->Typ == MSH_SURF_DISCRETE){
@@ -735,8 +735,8 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
 	strcat(Message, "}");
 	Msg(STATUS1N, Message);
       }
-      else if (s->bds){
-	BDS_GeomEntity *g = s->bds->get_geom ( s->Num, 2);
+      else if (THEM->bds){
+	BDS_GeomEntity *g = THEM->bds->get_geom ( s->Num, 2);
 	if (g && g->surf)
 	  Msg(STATUS1N, "Surface %d (%s)", s->Num,g->surf->nameOf().c_str());
 	else

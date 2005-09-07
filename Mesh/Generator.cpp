@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.70 2005-06-10 20:59:15 geuzaine Exp $
+// $Id: Generator.cpp,v 1.71 2005-09-07 14:36:45 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -27,6 +27,7 @@
 #include "Context.h"
 #include "OpenFile.h"
 #include "Views.h"
+#include "PartitionMesh.h"
 
 extern Mesh *THEM;
 extern Context_T CTX;
@@ -533,6 +534,8 @@ void mai3d(Mesh * M, int Asked)
 
   if(M->status && CTX.mesh.order == 2)
     Degre2(M->status);
+  if(M->status > 1 && CTX.mesh.nbPartitions != 1)
+    PartitionMesh ( M , CTX.mesh.nbPartitions);
 
   CTX.threads_lock = 0;
   CTX.mesh.changed = 1;

@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.93 2005-06-20 17:02:46 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.94 2005-09-07 14:36:45 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,7 @@
 #include "MinMax.h"
 #include "Numeric.h"
 #include "Context.h"
+#include "PartitionMesh.h"
 
 extern Context_T CTX;
 
@@ -907,6 +908,7 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
 }
 
 // Public Read_Mesh routine
+extern  void Mesh_To_BDS(Mesh *m);
 
 void Read_Mesh(Mesh * M, FILE * fp, char *filename, int type)
 {
@@ -928,4 +930,7 @@ void Read_Mesh(Mesh * M, FILE * fp, char *filename, int type)
     Msg(INFO, "Read mesh file '%s'", filename);
     Msg(STATUS2N, "Read '%s'", filename);
   }
+  if (CTX.mesh.nbPartitions != 1)
+    PartitionMesh ( M , CTX.mesh.nbPartitions);
+  //  Mesh_To_BDS(M);
 }

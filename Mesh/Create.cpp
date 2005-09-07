@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.77 2005-07-14 14:28:15 remacle Exp $
+// $Id: Create.cpp,v 1.78 2005-09-07 14:36:45 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -524,7 +524,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
 			  {1, 0, 0, 0.0} };
 
   Curve *pC = (Curve *) Malloc(sizeof(Curve));
-  pC->bds = 0;
+  //  pC->bds = 0;
   pC->LinVertexArray = NULL;
   pC->Color.type = 0;
   pC->Visible = VIS_GEOM | VIS_MESH;
@@ -650,7 +650,7 @@ void Free_Curve(void *a, void *b)
 Surface *Create_Surface(int Num, int Typ)
 {
   Surface *pS = (Surface *) Malloc(sizeof(Surface));
-  pS->bds = 0;
+  //  pS->bds = 0;
   pS->Color.type = 0;
   pS->Visible = VIS_GEOM | VIS_MESH;
   pS->Num = Num;

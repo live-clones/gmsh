@@ -252,7 +252,7 @@ struct _Surf{
   CylParam Cyl;
   Grid_T Grid;  // fast search grid
   ExtrudeParams *Extrude;
-  BDS_Mesh *bds;
+  //  BDS_Mesh *bds;
   DrawingColor Color;
   VertexArray *TriVertexArray;
   VertexArray *QuadVertexArray;
@@ -375,7 +375,7 @@ typedef struct{
   CircParam Circle;
   char functu[256], functv[256], functw[256];
   DrawingColor Color;
-  BDS_Mesh *bds;
+  //  BDS_Mesh *bds;
   VertexArray *LinVertexArray;
 }Curve;
 

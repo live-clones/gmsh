@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.255 2005-08-24 20:28:42 remacle Exp $
+// $Id: Options.cpp,v 1.256 2005-09-07 14:36:45 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -4394,6 +4394,17 @@ double opt_mesh_nb_smoothing(OPT_ARGS_NUM)
     WID->mesh_value[0]->value(CTX.mesh.nb_smoothing);
 #endif
   return CTX.mesh.nb_smoothing;
+}
+
+double opt_mesh_nb_partitions(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.nbPartitions = (int)val;
+  //#if defined(HAVE_FLTK)
+  //  if(WID && (action & GMSH_GUI))
+  //    WID->mesh_value[0]->value(CTX.mesh.nb_smoothing);
+  //#endif
+  return CTX.mesh.nbPartitions;
 }
 
 double opt_mesh_algo2d(OPT_ARGS_NUM)

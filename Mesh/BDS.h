@@ -14,6 +14,7 @@
 #include <math.h>
 //#include <algorithm>
 
+class BDS_Tet;
 class BDS_Edge;
 class BDS_Triangle;
 class BDS_Mesh;
@@ -330,12 +331,25 @@ class BDS_Triangle
 public:
     bool deleted;
     int status;
+    BDS_Tet  *t1,*t2;
     BDS_Edge *e1,*e2,*e3;
     BDS_Vector NORMAL;
     double surface;
     inline BDS_Vector N() const {return NORMAL;}
     inline double S() const {return surface;}
     BDS_GeomEntity *g;
+
+    inline BDS_Tet * opposite_tet (BDS_Tet *t)
+      {
+	if (t == t1)return t2;
+	if (t == t2)return t1;
+	throw;
+      }
+
+    inline int numtets ( ) const 
+	{
+	  return ( (t1!=0) + (t2 !=0) );
+	}
 
     inline BDS_Vector cog() const
 	{
@@ -364,12 +378,79 @@ public:
 	  n[1] = e1->commonvertex (e2);
 	  n[2] = e2->commonvertex (e3);
 	}
+
+    inline void addtet ( BDS_Tet *t)
+	{
+	  if (!t1) t1 = t;
+	  else if (!t2) t2 = t;
+	  else throw;
+	}
+
+    inline void del (BDS_Tet *t)
+	{
+	  if (t == t1) 
+	    {
+	      t1 = t2;
+	      t2 = 0;
+	    }
+	  else if (t == t2)
+	    {
+	      t2 = 0;
+	    }
+	  else
+	    throw;
+	}
+
     BDS_Triangle ( BDS_Edge *A, BDS_Edge *B, BDS_Edge *C)
-	: deleted (false) , status(0), e1(A),e2(B),e3(C),g(0)
+	: deleted (false) , status(0), t1(0),t2(0),e1(A),e2(B),e3(C),g(0)
 	{	
 	    e1->addface(this);
 	    e2->addface(this);
 	    e3->addface(this);
+	    _update();
+	}
+};
+
+class BDS_Tet
+{
+public:
+    bool deleted;
+    int status;
+    BDS_Triangle  *f1,*f2,*f3,*f4;
+    double volume;
+    inline double V() const {return volume;}
+    BDS_GeomEntity *g;
+
+    inline BDS_Vector cog() const
+	{
+	  BDS_Point *n[4];
+	  getNodes (n);
+	  return BDS_Vector ((n[0]->X+n[1]->X+n[2]->X+n[3]->X)/4.,
+			     (n[0]->Y+n[1]->Y+n[2]->Y+n[3]->Y)/4.,
+			     (n[0]->Z+n[1]->Z+n[2]->Z+n[3]->Z)/4.);
+	}
+
+    inline void _update ()
+      { 
+      }
+
+    inline void getNodes (BDS_Point *n[4]) const
+	{
+	  BDS_Point *o[3];
+	  f1->getNodes (n);
+	  f2->getNodes (o);	  
+	  if(o[0] != n[0] && o[0] != n[1] &&o[0] != n[2])n[3] = o[0];
+	  if(o[1] != n[0] && o[1] != n[1] &&o[1] != n[2])n[3] = o[1];
+	  if(o[2] != n[0] && o[2] != n[1] &&o[2] != n[2])n[3] = o[2];
+	}
+
+    BDS_Tet ( BDS_Triangle *A, BDS_Triangle *B, BDS_Triangle *C, BDS_Triangle *D)
+	: deleted (false) , status(0), f1(A),f2(B),f3(C),f4(D),g(0)
+	{	
+	    f1->addtet(this);
+	    f2->addtet(this);
+	    f3->addtet(this);
+	    f4->addtet(this);
 	    _update();
 	}
 };
@@ -399,7 +480,7 @@ public :
 	} 
     virtual double normalCurv ( double x, double y, double z ) const
 	{
-	    return 0.0;
+	    return 1.e-22;
 	}
 };
 
@@ -495,15 +576,19 @@ class BDS_Mesh
     std::set<BDS_Point*,PointLessThan>     points; 
     std::list<BDS_Edge*>      edges; 
     std::list<BDS_Triangle*>   triangles; 
+    std::list<BDS_Tet*>        tets; 
     BDS_Point * add_point (int num , double x, double y,double z);
     BDS_Edge  * add_edge  (int p1, int p2);
     void del_point  (BDS_Point *p);
     void del_edge  (BDS_Edge *e);
-    BDS_Triangle *add_triangle  (int p1, int p2, int p3);
+    BDS_Triangle *add_triangle  (int p1, int p2, int p3); 
+    BDS_Triangle *add_triangle  (BDS_Edge *e1,BDS_Edge *e2,BDS_Edge *e3);
+    BDS_Tet *add_tet  (int p1, int p2, int p3,int p4);
     void del_triangle  (BDS_Triangle *t);
     void add_geom  (int degree, int tag);
     BDS_Point *find_point (int num);
     BDS_Edge  *find_edge (int p1, int p2);
+    BDS_Triangle  *find_triangle (BDS_Edge *e1,BDS_Edge *e2,BDS_Edge *e3);
     BDS_Edge  *find_edge (BDS_Point *p1, BDS_Point *p2, BDS_Triangle *t)const;
     BDS_GeomEntity *get_geom  (int p1, int p2);
     bool swap_edge ( BDS_Edge *);
