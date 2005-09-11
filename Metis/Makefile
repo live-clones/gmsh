@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2005-09-07 17:12:16 remacle Exp $
+# $Id: Makefile,v 1.2 2005-09-11 02:08:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,7 @@ include ../variables
 
 LIB     = ../lib/libGmshMetis.a
 INCLUDE = -I.
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} -DNO_PARALLEL_THREADS -UWIN32
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = balance.c \
       fm.c        \
@@ -90,7 +90,7 @@ ${LIB}: ${OBJ}
 	${CC} ${CFLAGS} -c $< -o ${<:.c=.o}
 
 clean:
-	rm -f src/*.o
+	rm -f *.o
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
