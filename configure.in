@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.78 2005-09-07 14:36:44 remacle Exp $
+dnl $Id: configure.in,v 1.79 2005-09-15 16:58:09 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -535,4 +535,6 @@ echo "- C++ compiler : $CXX"
 echo "- Linker       : $LINKER"
 echo "- Optimization : $OPTIM"
 echo "- Options      : $FLAGS"
+echo "********************************************************************"
+echo "To fine-tune the configuration, edit the 'variables' file"
 echo "********************************************************************"

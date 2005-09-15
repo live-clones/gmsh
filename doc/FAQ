@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.66 2005-06-25 18:11:45 geuzaine Exp $
+$Id: FAQ,v 1.67 2005-09-15 16:58:09 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -303,6 +303,8 @@ Gamma ~ volume / sum_face_area / max_edge_length
 
 For the exact definitions, look at Mesh/Element.cpp and
 Mesh/Simplex.cpp.
+
+The graphs plot the the number of elements vs the quality measure.
 
 ********************************************************************
 
