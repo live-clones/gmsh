@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.189 2005-09-02 15:56:24 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.190 2005-09-20 12:06:36 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -3477,6 +3477,9 @@ the same for all other kinds of values.
 
 For all mesh and post-processing file formats, the reference elements are
 defined as follows:
+
+@c FIXME: changer la doc des faces pour les definir de maniere sensee
+@c sans butterflies.
 
 @example
 @group

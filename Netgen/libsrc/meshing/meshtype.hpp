@@ -35,7 +35,7 @@ enum ELEMENTTYPE { FREEELEMENT, FIXEDELEMENT };
 enum OPTIMIZEGOAL { OPT_QUALITY, OPT_CONFORM, OPT_REST, OPT_WORSTCASE, OPT_LEGAL };
 
 
-
+class Mesh; // Added by Christophe for Gmsh (ISO C++ forbids declaration of 'Mesh' with no type)
 
 // class CSGeometry;
 

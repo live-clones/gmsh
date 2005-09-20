@@ -7,6 +7,9 @@ Sch\"oberl's NETGEN mesh generator:
 - the file meshing/improve2.cpp was slightly modified to fix build
   problems on machines without TCL/TK
 
+- the file meshing/meshtype.hpp was slightly modified so that it
+  compiles with ISO-C++ complient compilers
+
 **IMPORTANT NOTICE** 
 
 NETGEN requires the boundary mesh to be oriented with exterior
