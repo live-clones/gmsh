@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2005-09-21 18:09:21 geuzaine Exp $
+# $Id: Makefile,v 1.3 2005-09-21 18:46:23 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -137,7 +137,7 @@ ${LIB}: ${OBJ}
 	${CXX} ${CFLAGS} -c $< -o ${<:.cpp=.o}
 
 clean:
-	rm -f libsrc/*/*.o
+	rm -f *.o libsrc/*/*.o
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
