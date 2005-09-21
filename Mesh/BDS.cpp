@@ -3,6 +3,9 @@
 #include "Numeric.h"
 #include "GmshMatrix.h"
 #include "BDS.h"
+#include "Context.h"
+
+extern Context_T CTX;
 
 /*
   (X-Xc)^2 = R^2

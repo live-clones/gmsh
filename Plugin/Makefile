@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.84 2005-09-21 17:29:37 geuzaine Exp $
+# $Id: Makefile,v 1.85 2005-09-21 17:49:22 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -23,8 +23,8 @@ include ../variables
 
 LIB     = ../lib/libGmshPlugin.a
 INCLUDE = -I../Common -I../Graphics -I../DataStr -I../Geo -I../Fltk\
-          -I../Mesh -I../Numeric -I../Triangle\
-          -I../contrib/MathEval
+          -I../Mesh -I../Numeric\
+          -I../contrib/Triangle -I../contrib/MathEval
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Plugin.cpp\
