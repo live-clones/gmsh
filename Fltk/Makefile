@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.73 2005-08-22 00:35:06 geuzaine Exp $
+# $Id: Makefile,v 1.74 2005-09-21 17:29:36 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,8 @@ include ../variables
 
 LIB     = ../lib/libGmshFltk.a
 INCLUDE = -I../Common -I../DataStr -I../Graphics -I../Geo -I../Mesh\
-          -I../Numeric -I../Parser -I../Fltk -I../Plugin -I../utils/solvers -I../ANN/include
+          -I../Numeric -I../Parser -I../Fltk -I../Plugin -I../utils/solvers\
+          -I../contrib/ANN/include
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Main.cpp \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.65 2005-07-15 10:31:06 geuzaine Exp $
+# $Id: Makefile,v 1.66 2005-09-21 17:29:36 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -22,8 +22,9 @@
 include ../variables
 
 LIB     = ../lib/libGmshGeo.a
-INCLUDE = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Numeric -I../NR\
-          -I../Parser -I../Fltk 
+INCLUDE = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Numeric\
+          -I../Parser -I../Fltk\
+          -I../contrib/NR
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = CAD.cpp \

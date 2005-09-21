@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.72 2005-08-19 14:07:32 remacle Exp $
+# $Id: Makefile,v 1.73 2005-09-21 17:29:37 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,8 @@ include ../variables
 
 LIB     = ../lib/libGmshGraphics.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics\
-          -I../Fltk -I../Mesh -I../Numeric -I../Parser -I../Plugin -I../ANN/include
+          -I../Fltk -I../Mesh -I../Numeric -I../Parser -I../Plugin\
+          -I../contrib/ANN/include
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Draw.cpp \

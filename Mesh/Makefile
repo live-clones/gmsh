@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.95 2005-09-07 14:36:45 remacle Exp $
+# $Id: Makefile,v 1.96 2005-09-21 17:29:37 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -22,9 +22,12 @@
 include ../variables
 
 LIB     = ../lib/libGmshMesh.a
-INCLUDE = -I../Numeric -I../NR -I../Common -I../DataStr -I../Geo -I../Mesh\
-          -I../Graphics -I../Parser -I../Fltk -I../Triangle -I../Tetgen\
-          -I../Netgen -I../Netgen/libsrc/include  -I../Netgen/libsrc/interface -I../ANN/include -I../Metis
+INCLUDE = -I../Numeric -I../Common -I../DataStr -I../Geo -I../Mesh\
+          -I../Graphics -I../Parser -I../Fltk\
+          -I../contrib/NR -I../contrib/Triangle -I../contrib/Tetgen\
+          -I../contrib/Netgen -I../contrib/Netgen/libsrc/include\
+          -I../contrib/Netgen/libsrc/interface -I../contrib/ANN/include\
+          -I../contrib/Metis
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = 1D_Mesh.cpp \

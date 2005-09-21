@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.76 2005-06-03 17:32:29 geuzaine Exp $
+# $Id: Makefile,v 1.77 2005-09-21 17:29:36 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,8 @@ include ../variables
 
 LIB     = ../lib/libGmshCommon.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics -I../Mesh\
-          -I../Numeric -I../Parser -I../Plugin -I../Fltk -I../MathEval
+          -I../Numeric -I../Parser -I../Plugin -I../Fltk\
+          -I../contrib/MathEval
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Context.cpp\

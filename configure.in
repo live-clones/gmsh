@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.79 2005-09-15 16:58:09 geuzaine Exp $
+dnl $Id: configure.in,v 1.80 2005-09-21 17:29:36 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -226,18 +226,18 @@ else
 fi
 
 dnl Check if Triangle is installed
-AC_CHECK_FILE(./Triangle/triangle.c, TRIANGLE="yes", TRIANGLE="no")
+AC_CHECK_FILE(./contrib/Triangle/triangle.c, TRIANGLE="yes", TRIANGLE="no")
 if test "x${TRIANGLE}" = "xyes"; then
   if test "x$enable_triangle" != "xno"; then
-     GMSH_DIRS="${GMSH_DIRS} Triangle"
+     GMSH_DIRS="${GMSH_DIRS} contrib/Triangle"
      GMSH_LIBS="${GMSH_LIBS} -lGmshTriangle"
      FLAGS="-DHAVE_TRIANGLE ${FLAGS}"
      echo "********************************************************************"
      echo "You are building a version of Gmsh that contains Jonathan"
      echo "Shewchuk's Triangle as an alternative isotropic 2D mesh generator."
      echo "Please note that by doing so, you agree with Triangle's licensing"
-     echo "requirements stated in ./Triangle/README. (Most notably, you may"
-     echo "then only redistribute Gmsh for non-commercial purposes.)"
+     echo "requirements stated in ./contrib/Triangle/README. (Most notably, you"
+     echo "may then only redistribute Gmsh for non-commercial purposes.)"
      echo "To disable Triangle, run configure again with the --disable-triangle"
      echo "option."
      echo "********************************************************************"
@@ -249,27 +249,27 @@ else
      echo "isotropic 2D mesh generator, please download Triangle from the"
      echo "author's web site at http://www.cs.cmu.edu/~quake/triangle.html,"
      echo "unpack the archive and copy the two files 'triangle.c' and"
-     echo "'triangle.h' in the ./Triangle subdirectory. Then run ./configure"
-     echo "again."
+     echo "'triangle.h' in the ./contrib/Triangle subdirectory. Then run"
+     echo "./configure again."
      echo "Please note that by doing so, you agree with Triangle's licensing"
-     echo "requirements stated in ./Triangle/README. (Most notably, you may"
-     echo "then only redistribute Gmsh if no compensation is received.)"
+     echo "requirements stated in ./contrib/Triangle/README. (Most notably, you"
+     echo "may then only redistribute Gmsh if no compensation is received.)"
      echo "********************************************************************"
   fi
 fi
 
 dnl Check if ANN is installed
-AC_CHECK_FILE(./ANN/include/ANN/ANN.h, ANN="yes", ANN="no")
+AC_CHECK_FILE(./contrib/ANN/include/ANN/ANN.h, ANN="yes", ANN="no")
 if test "x${ANN}" = "xyes"; then
   if test "x$enable_ann" != "xno"; then
-     GMSH_DIRS="${GMSH_DIRS} ANN"
+     GMSH_DIRS="${GMSH_DIRS} contrib/ANN"
      GMSH_LIBS="${GMSH_LIBS} -lGmshANN"
      FLAGS="-DHAVE_ANN_ ${FLAGS}"
      echo "********************************************************************"
      echo "You are building a version of Gmsh that contains ANN, the"
      echo "Approximate Nearest Neighbor library."
      echo "Please note that by doing so, you agree with ANN's licensing"
-     echo "requirements stated in ./ANN/Copyright.txt."
+     echo "requirements stated in ./contrib/ANN/Copyright.txt."
      echo "To disable ANN, run configure again with the --disable-ann"
      echo "option."
      echo "********************************************************************"
@@ -281,23 +281,23 @@ else
      echo "STL mesher, please download ANN from the"
      echo "author's web site at http://www.cs.umd.edu/~mount/ANN/,"
      echo "unpack the archive and copy both src and include directories in the"
-     echo "./ANN subdirectory. Then run ./configure again."
+     echo "./contrib/ANN subdirectory. Then run ./configure again."
      echo "********************************************************************"
   fi
 fi
 
 dnl Check if METIS is installed
-AC_CHECK_FILE(./Metis/metis.h, METIS="yes", METIS="no")
+AC_CHECK_FILE(./contrib/Metis/metis.h, METIS="yes", METIS="no")
 if test "x${METIS}" = "xyes"; then
   if test "x$enable_metis" != "xno"; then
-     GMSH_DIRS="${GMSH_DIRS} Metis"
+     GMSH_DIRS="${GMSH_DIRS} contrib/Metis"
      GMSH_LIBS="${GMSH_LIBS} -lGmshMetis"
      FLAGS="-DHAVE_METIS ${FLAGS}"
      echo "********************************************************************"
      echo "You are building a version of Gmsh that contains METIS, the"
      echo "Serial Graph Partitioner."
      echo "Please note that by doing so, you agree with METIS's licensing"
-     echo "requirements stated in ./Metis/Doc/manual.ps."
+     echo "requirements stated in ./contrib/Metis/Doc/manual.ps."
      echo "To disable METIS, run configure again with the --disable-metis"
      echo "option."
      echo "********************************************************************"
@@ -305,25 +305,26 @@ if test "x${METIS}" = "xyes"; then
 else
   if test "x$enable-metis" != "xno"; then
      echo "********************************************************************"
-     echo "If you want to use METIS for doing mesh partitioning, please download METIS from the"
-     echo "author's web site at http://www-users.cs.umn.edu/~karypis/metis/"
-     echo "unpack the archive and copy the Lib Directory in the"
-     echo "./Metis subdirectory. Then run ./configure again."
+     echo "If you want to use METIS for doing mesh partitioning, please"
+     echo "download METIS from the author's web site at"
+     echo "http://www-users.cs.umn.edu/~karypis/metis/, unpack the archive and"
+     echo "copy the Lib Directory in the ./contrib/Metis subdirectory. Then"
+     echo "run ./configure again."
      echo "********************************************************************"
   fi
 fi
 
 dnl Check if Netgen is installed
-AC_CHECK_FILE(./Netgen/libsrc/meshing/meshclass.cpp, NETGEN="yes", NETGEN="no")
+AC_CHECK_FILE(./contrib/Netgen/libsrc/meshing/meshclass.cpp, NETGEN="yes", NETGEN="no")
 if test "x${NETGEN}" = "xyes"; then
   if test "x$enable_netgen" != "xno"; then
-     GMSH_DIRS="${GMSH_DIRS} Netgen"
+     GMSH_DIRS="${GMSH_DIRS} contrib/Netgen"
      GMSH_LIBS="${GMSH_LIBS} -lGmshNetgen"
      FLAGS="-DHAVE_NETGEN ${FLAGS}"
      echo "********************************************************************"
      echo "You are building a version of Gmsh that contains Joachim Schoberl's"
      echo "Netgen as an alternative 3D mesh generator. Netgen is distributed"
-     echo "under the GNU LGPL: see ./Netgen/COPYING.LIB for more info."
+     echo "under the GNU LGPL: see ./contrib/Netgen/COPYING.LIB for more info."
      echo "To disable Netgen, run configure again with the --disable-netgen"
      echo "option."
      echo "********************************************************************"
@@ -334,27 +335,27 @@ else
      echo "If you want to use Joachim Schoberl's Netgen as an alternative"
      echo "3D mesh generator, please download Netgen from the project's"
      echo "web site at http://www.hpfem.jku.at/netgen/, unpack the archive"
-     echo "and move the libsrc subdirectory in the ./Netgen subdirectory. Then"
-     echo "run ./configure again."
+     echo "and move the libsrc subdirectory in the ./contrib/Netgen"
+     echo "subdirectory. Then run ./configure again."
      echo "Please note that by doing so, you agree with Netgen's licensing"
-     echo "requirements stated in ./Netgen/COPYING.LIB."
+     echo "requirements stated in ./contrib/Netgen/COPYING.LIB."
      echo "********************************************************************"
   fi
 fi
 
 dnl Check if Tetgen is installed
-AC_CHECK_FILE(./Tetgen/tetgen.h, TETGEN="yes", TETGEN="no")
+AC_CHECK_FILE(./contrib/Tetgen/tetgen.h, TETGEN="yes", TETGEN="no")
 if test "x${TETGEN}" = "xyes"; then
   if test "x$enable_tetgen" != "xno"; then
-     GMSH_DIRS="${GMSH_DIRS} Tetgen"
+     GMSH_DIRS="${GMSH_DIRS} contrib/Tetgen"
      GMSH_LIBS="${GMSH_LIBS} -lGmshTetgen"
      FLAGS="-DHAVE_TETGEN ${FLAGS}"
      echo "********************************************************************"
      echo "You are building a version of Gmsh that contains Hang Si's"
      echo "Tetgen as an alternative 3D mesh generator."
      echo "Please note that by doing so, you agree with Tetgen's licensing"
-     echo "requirements stated in ./Tetgen/LICENSE. (Most notably, you may"
-     echo "then only redistribute Gmsh for non-commercial purposes.)"
+     echo "requirements stated in ./contrib/Tetgen/LICENSE. (Most notably, you"
+     echo "may then only redistribute Gmsh for non-commercial purposes.)"
      echo "To disable Tetgen, run configure again with the --disable-tetgen"
      echo "option."
      echo "********************************************************************"
@@ -366,19 +367,19 @@ else
      echo "3D mesh generator, please download Tetgen from the project's"
      echo "web site at http://www.tetgen.berlios.de, unpack the archive"
      echo "and move the files predicates.cxx, tetgen.cxx and tetgen.h in"
-     echo "the ./Tetgen subdirectory. Then run ./configure again."
+     echo "the ./contrib/Tetgen subdirectory. Then run ./configure again."
      echo "Please note that by doing so, you agree with Tetgen's licensing"
-     echo "requirements stated in ./Tetgen/LICENSE. (Most notably, you may"
-     echo "then only redistribute Gmsh if no compensation is received.)"
+     echo "requirements stated in ./contrib/Tetgen/LICENSE. (Most notably, you"
+     echo "may then only redistribute Gmsh if no compensation is received.)"
      echo "********************************************************************"
   fi
 fi
 
 dnl Check for MathEval
-AC_CHECK_FILE(./MathEval/matheval.cpp, MATHEVAL="yes", MATHEVAL="no")
+AC_CHECK_FILE(./contrib/MathEval/matheval.cpp, MATHEVAL="yes", MATHEVAL="no")
 if test "x${MATHEVAL}" = "xyes"; then
   if test "x$enable_matheval" != "xno"; then
-     GMSH_DIRS="${GMSH_DIRS} MathEval"
+     GMSH_DIRS="${GMSH_DIRS} contrib/MathEval"
      GMSH_LIBS="${GMSH_LIBS} -lGmshMathEval"
      FLAGS="-DHAVE_MATH_EVAL ${FLAGS}"
   fi
@@ -403,7 +404,7 @@ if test "x$enable_gsl" != "xno"; then
 fi
 if test "x${GSL}" != "xyes"; then
   dnl Check if non-free numerical recipes routines are in the tree
-  AC_CHECK_FILE(./NR/dsvdcmp.cpp,NR="yes",NR="no")
+  AC_CHECK_FILE(./contrib/NR/dsvdcmp.cpp,NR="yes",NR="no")
   if test "x${NR}" = "xyes"; then
     echo "********************************************************************"
     echo "You are building a non-free version of Gmsh, using code copyright"
@@ -411,7 +412,7 @@ if test "x${GSL}" != "xyes"; then
     echo "To use the GSL instead, run configure again with the --enable-gsl"
     echo "option."
     echo "********************************************************************"
-    GMSH_DIRS="${GMSH_DIRS} NR"
+    GMSH_DIRS="${GMSH_DIRS} contrib/NR"
     GMSH_LIBS="${GMSH_LIBS} -lGmshNR"
   else
     echo "********************************************************************"

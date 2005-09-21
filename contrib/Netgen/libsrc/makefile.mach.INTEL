@@ -1,0 +1,34 @@
+#
+# Machine dependent make include file
+#
+CC=icc
+CPLUSPLUS=$(CC)
+AR=ar
+LINK=$(CC)
+MAKE=make
+RM=rm
+RANLIB=ranlib
+#
+# Machine dependent flags:
+#
+CFLAGS2 =
+CPLUSPLUSFLAGS2 = -O2 -wd1572 -Ob2 -DLINUX -DOPENGL -DNGSOLVE \
+	-Qoption,c,-ip_ninl_max_stats=1000 \
+	-Qoption,c,-ip_ninl_min_stats=50 \
+	-Qoption,c,-ip_ninl_max_total_stats=1000 \
+	-gcc-name=/usr/bin/g++
+#  
+LINKFLAGS2 =  -L/usr/openwin/lib -L/usr/X11R6/lib -L/usr/lib/GL3.5 \
+	-gcc-name=/usr/bin/g++
+#
+# SYSLIB2 = /opt/experimental/lib/libstdc++.a
+# SYSLIB2 = -lstdc++ 
+# -lgcc_s
+# SYSLIB2 = -L/usr/lib/lapack -lblas -lstdc++
+
+# goalngs = goalngs
+
+
+goalngs=goalngs
+
+appngs =  lib/$(MACHINE)/*.o -lngsolvebasic

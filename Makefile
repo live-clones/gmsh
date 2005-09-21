@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.395 2005-08-31 22:03:26 geuzaine Exp $
+# $Id: Makefile,v 1.396 2005-09-21 17:29:36 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -90,7 +90,7 @@ clean:
 	rm -f ${GMSH_VERSION_FILE}
 
 clean-most:
-	for i in doc lib ${GMSH_DIRS:Netgen=}; do (cd $$i && ${MAKE} clean); done
+	for i in doc lib ${GMSH_DIRS:contrib/Netgen=}; do (cd $$i && ${MAKE} clean); done
 	rm -f ${GMSH_VERSION_FILE}
 
 depend: initialtag
@@ -133,24 +133,26 @@ etags:
 
 source-common:
 	rm -rf gmsh-${GMSH_VERSION}
-	tar zcvf gmsh.tgz `ls TODO README* */README* */COPYING* */VERSION*\
-                           configure *.in *.spec Makefile */Makefile\
-                           */*.[chylr] */*.[ch]pp */*/*/*.[chyli]*\
-                           */*.rc */*.res */*.ico */*.icns`\
+	tar zcvf gmsh.tgz `ls TODO README* */README* */*/README* */COPYING* */VERSION*\
+                           configure *.in *.spec Makefile */Makefile */*/Makefile\
+                           */*.[chylr] */*/*.[chylr] */*.[ch]pp */*/*.[ch]pp\
+                           */*/*/*/*.[chyli]* */*.rc */*.res */*.ico */*.icns`\
                            doc demos tutorial utils
 	mkdir gmsh-${GMSH_VERSION}
 	cd gmsh-${GMSH_VERSION} && tar zxvf ../gmsh.tgz
 	rm -f gmsh.tgz
 
 source: source-common
-	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */*/*/CVS */.globalrc\
-          NR Triangle/triangle.* Tetgen/tetgen.* Tetgen/predicates.*\
+	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */*/*/CVS */*/*/*/CVS\
+          */.globalrc contrib/NR contrib/Triangle/triangle.* contrib/Tetgen/tetgen.*\
+          contrib/Tetgen/predicates.*\
           utils/commercial ${GMSH_VERSION_FILE} 
 	tar zcvf gmsh-${GMSH_VERSION}-source.tgz gmsh-${GMSH_VERSION}
 
 source-commercial: source-common
-	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */*/*/CVS */.globalrc\
-          MathEval Triangle/triangle.* Tetgen/tetgen.* Tetgen/predicates.* Netgen/libsrc\
+	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */*/*/CVS  */*/*/*/CVS\
+          */.globalrc contrib/MathEval contrib/Triangle/triangle.* contrib/Tetgen/tetgen.*\
+          contrib/Tetgen/predicates.* contrib/Netgen/libsrc\
           TODO *.spec doc/gmsh.html doc/FAQ doc/README.cvs\
           utils/commercial ${GMSH_VERSION_FILE}
 	cp -f utils/commercial/README gmsh-${GMSH_VERSION}/README
