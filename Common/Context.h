@@ -178,7 +178,7 @@ public :
     double quality;
     int quality_type, label_type;
     double quality_inf, quality_sup, radius_inf, radius_sup;
-    double scaling_factor, lc_factor, rand_factor;
+    double scaling_factor, lc_factor, rand_factor,nb_elem_per_rc;
     int dual, interactive;
     int light, light_two_side;
     int format, nbPartitions,nb_smoothing, algo2d, algo3d, order,algo_recombine;

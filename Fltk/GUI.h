@@ -190,6 +190,7 @@ public:
   Fl_Group         *mesh_group ;
   Fl_Group         *mesh_cut_plane ;
   Fl_Check_Button  *mesh_butt[50] ;
+  Fl_Return_Button *mesh_retbutt[50] ;
   Fl_Input         *mesh_input[20] ;
   Fl_Value_Input   *mesh_value[20] ;
   Fl_Button        *mesh_col[50] ;

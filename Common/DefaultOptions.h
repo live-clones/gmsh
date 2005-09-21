@@ -897,6 +897,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 1.0 , 
     "Version of the `msh' file format to use" },
 
+  { F|O, "NbElemsPerRadiusOfCurv" , opt_mesh_nb_elem_per_rc, 5. ,
+    "Number of elements per radius of curvature in the remesher" },
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. , 
     "Number of hexahedra in the current mesh (read-only)" },
   { F, "NbNodes" , opt_mesh_nb_nodes , 0. , 

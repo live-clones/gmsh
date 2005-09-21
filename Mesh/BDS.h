@@ -381,6 +381,15 @@ public:
 	  n[2] = e2->commonvertex (e3);
 	}
 
+    inline BDS_Vector N_on_the_fly() const 
+      {
+	double nn[3];
+	BDS_Point *pp[3];
+	getNodes(pp);
+	normal_triangle (pp[0], pp[1], pp[2],nn);
+	return BDS_Vector (nn[0],nn[1],nn[2]);
+      }
+
     inline void addtet ( BDS_Tet *t)
 	{
 	  if (!t1) t1 = t;

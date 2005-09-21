@@ -656,7 +656,6 @@ void BDS_Mesh :: reverseEngineerCAD ( )
 		}
 		if (!(*it)->surf && pts.size() > 20)
 		{
-		    printf("coucou quadrique\n");
 		    Double_Matrix QUADRIC  ( pts.size() , 9 );
 		    Double_Vector ONES  ( pts.size() );
 		    Double_Vector RSLT  ( 9 );
@@ -1905,17 +1904,12 @@ bool BDS_Mesh ::split_edge ( BDS_Edge *e, double coord, BDS_Mesh *geom )
 
     mid->g = ge;
 
-    if (mid->g->surf)
-    {
-	mid->g->surf->projection ( mid->X,mid->Y,mid->Z,mid->X,mid->Y,mid->Z);
-    }
-
     triangles.push_back(t1); 
     triangles.push_back (t2); 
     triangles.push_back (t3); 
     triangles.push_back (t4); 
 
-    snap_point (mid, geom);
+    if(geom || mid->g->surf)snap_point (mid, geom);
 
     return true;
 }
@@ -2051,47 +2045,47 @@ bool BDS_Mesh ::collapse_edge ( BDS_Edge *e, BDS_Point *p, const double eps)
 
     p->getTriangles (t); 	
     {
-	std::list<BDS_Triangle *>::iterator it = t.begin();
-	std::list<BDS_Triangle *>::iterator ite = t.end();
-
-	while ( it != ite )
+      std::list<BDS_Triangle *>::iterator it = t.begin();
+      std::list<BDS_Triangle *>::iterator ite = t.end();
+      
+      while ( it != ite )
 	{
-	    BDS_Triangle *t = *it;
-//	    print_face(t);
-	    if (t->e1 != e && t->e2 != e && t->e3 != e)
-	      {
-		BDS_Vector n1,n2;
- 		BDS_Point *pts[3];
-		t->getNodes (pts); 
-		p->X = o->X;
-		p->Y = o->Y;
-		p->Z = o->Z;
-		double s_after = surface_triangle (pts[0],pts[1],pts[2]); 
-		n1 = t->N();
-		p->X = X;
-		p->Y = Y;
-		p->Z = Z;
-		n2 = t->N();
-		double s_before = surface_triangle (pts[0],pts[1],pts[2]); 
-		// normals should not be opposed or change too dramatically
-		// this does not concern the triangles with the small edge that
-		// are collapsed too
-		double angle = n1.angle(n2);
-		if (fabs(angle) > M_PI/2 )return false;
-		if (s_after < 1.e-2 * s_before)
+	  BDS_Triangle *t = *it;
+	  //	    print_face(t);
+	  if (t->e1 != e && t->e2 != e && t->e3 != e)
+	    {
+	      BDS_Vector n1,n2;
+	      BDS_Point *pts[3];
+	      t->getNodes (pts); 
+	      p->X = o->X;
+	      p->Y = o->Y;
+	      p->Z = o->Z;
+	      double s_after = surface_triangle (pts[0],pts[1],pts[2]); 
+	      n1 = t->N_on_the_fly();
+	      p->X = X;
+	      p->Y = Y;
+	      p->Z = Z;
+	      n2 = t->N();
+	      double s_before = surface_triangle (pts[0],pts[1],pts[2]); 
+	      // normals should not be opposed or change too dramatically
+	      // this does not concern the triangles with the small edge that
+	      // are collapsed too
+	      double angle = n1.angle(n2);
+	      if (fabs(angle) > M_PI/2 )return false;
+	      if (s_after < 1.e-2 * s_before)
 		{
-		    return false; 
+		  return false; 
 		}
-		gs[nt] = t->g;
-		pt[0][nt]   = (pts[0] == p) ? o->iD : pts[0]->iD ;
-		pt[1][nt]   = (pts[1] == p) ? o->iD : pts[1]->iD ;
-		pt[2][nt++] = (pts[2] == p) ? o->iD : pts[2]->iD ;
-	      }
-	    ++it;
+	      gs[nt] = t->g;
+	      pt[0][nt]   = (pts[0] == p) ? o->iD : pts[0]->iD ;
+	      pt[1][nt]   = (pts[1] == p) ? o->iD : pts[1]->iD ;
+	      pt[2][nt++] = (pts[2] == p) ? o->iD : pts[2]->iD ;
+	    }
+	  ++it;
 	}
     }
-
-
+    
+    
     {
 	std::list<BDS_Triangle *>::iterator it = t.begin();
 	std::list<BDS_Triangle *>::iterator ite = t.end();
@@ -2209,10 +2203,11 @@ void BDS_Mesh :: snap_point ( BDS_Point *p , BDS_Mesh *geom_mesh )
 {
   if (p->g->surf)
     {
-      p->g->surf->projection ( p->X,p->Y,p->Z,p->X,p->Y,p->Z);
+      p->g->surf->projection ( p->X,p->Y,p->Z,p->X,p->Y,p->Z);      
     }
   else if (p->g && p->g->classif_degree == 2 && geom_mesh)
     {
+
       std::list<BDS_Triangle*> l;
       BDS_GeomEntity *gg = geom_mesh->get_geom(p->g->classif_tag,p->g->classif_degree);
       gg->getClosestTriangles (p->X,p->Y,p->Z,l,p->radius_of_curvature);
@@ -2230,7 +2225,7 @@ void BDS_Mesh :: snap_point ( BDS_Point *p , BDS_Mesh *geom_mesh )
     }
   else
     {
-      return;
+      return ;
     }
   
   {
@@ -2266,16 +2261,12 @@ bool BDS_Mesh ::smooth_point ( BDS_Point *p , BDS_Mesh *geom_mesh )
 	++eit;
     }
 
-    X /= p->edges.size();
-    Y /= p->edges.size();
-    Z /= p->edges.size();
-
-    p->X = X;
-    p->Y = Y;
-    p->Z = Z;
+    p->X = X / p->edges.size();
+    p->Y = Y / p->edges.size();
+    p->Z = Z / p->edges.size();
 
     snap_point ( p, geom_mesh );
-
+    
     return true;
 }
 
@@ -2366,21 +2357,16 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
     SNAP_SUCCESS = 0;
     SNAP_FAILURE = 0;
 
-    BDS_Metric metric ( l , LC/500 , LC, 7 );
+    BDS_Metric metric ( l , LC/500 , LC, CTX.mesh.nb_elem_per_rc );
+
+    printf("%g\n",CTX.mesh.nb_elem_per_rc);
+    
     //     pr intf("METRIC %g %g %g\n",LC,metric._min,metric._max);
 
     // add initial set of edges in a list
-    std::list<BDS_Edge*> small_to_long;
-    {
-	std::list<BDS_Edge*>::iterator it = edges.begin();
-	std::list<BDS_Edge*>::iterator ite  = edges.end();
-	while (it != ite)
-	{
-	  //	    if ((*it)->numfaces()==1)printf("one face\n");
-	    small_to_long.push_back (*it);  
-	    ++it;
-	}
-    }
+
+    std::list<BDS_Edge*> small_to_long (edges);
+
     // split edges
     {
       std::list<BDS_Edge*>::iterator it = small_to_long.begin();
@@ -2394,6 +2380,7 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
 	      double length = (*it)->length();
 	      if (!(*it)->deleted && length > (*it)->target_length / 0.7 ){
 		split_edge (*it, 0.5,geom_mesh );
+		//split_edge (*it, 0.5, 0  );
 		nb_modif++;
 	      }
 	    }
@@ -2403,16 +2390,8 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
 
     // re-create small_to_long
     cleanup();    
-    {
-	small_to_long.clear();
-	std::list<BDS_Edge*>::iterator it = edges.begin();
-	std::list<BDS_Edge*>::iterator ite  = edges.end();
-	while (it != ite)
-	{
-	    small_to_long.push_back (*it);  
-	    ++it;
-	}
-    }
+    small_to_long = edges;
+
     // collapse 
     {    	
 	std::list<BDS_Edge*>::iterator it = small_to_long.begin();
@@ -2438,16 +2417,8 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
 	}
     }
     cleanup();  
-    {
-	small_to_long.clear();
-	std::list<BDS_Edge*>::iterator it = edges.begin();
-	std::list<BDS_Edge*>::iterator ite  = edges.end();
-	while (it != ite)
-	{
-	    small_to_long.push_back (*it);  
-	    ++it;
-	}
-    }
+    small_to_long = edges;
+
     {    
 	std::list<BDS_Edge*>::iterator it = small_to_long.begin();
 	std::list<BDS_Edge*>::iterator ite  = small_to_long.end();

@@ -472,6 +472,7 @@ int MeshParametricSurface(Surface *s);
 int MeshEllipticSurface(Surface *sur);
 int MeshDiscreteSurface(Surface *sur);
 int MeshDiscreteCurve(Curve *c);
+int ReMesh (Mesh *M);
 
 int AlgorithmeMaillage2DAnisotropeModeJF(Surface *s);
 void Maillage_Automatique_VieuxCode(Surface *pS, Mesh *m, int ori);

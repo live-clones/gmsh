@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.456 2005-08-30 12:52:50 geuzaine Exp $
+// $Id: GUI.cpp,v 1.457 2005-09-21 15:03:46 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -324,6 +324,7 @@ Context_Item menu_mesh[] = {
   { "1D",     (Fl_Callback *)mesh_1d_cb } ,
   { "2D",     (Fl_Callback *)mesh_2d_cb } , 
   { "3D",     (Fl_Callback *)mesh_3d_cb } , 
+  { "remesh", (Fl_Callback *)mesh_remesh } , 
   { "First order",  (Fl_Callback *)mesh_degree_cb, (void*)1 } , 
   { "Second order", (Fl_Callback *)mesh_degree_cb, (void*)2 } , 
 #if defined(HAVE_NETGEN)
@@ -903,9 +904,6 @@ GUI::GUI(int argc, char **argv)
     create_solver_window(i);
   }
   call_for_solver_plugin(-1);
-
-  // create the surface mesh wizard
-  create_surface_mesh_wizard();
 
   // Draw the scene
   g_opengl_window->redraw();
@@ -1618,146 +1616,6 @@ void GUI::reset_external_view_list()
   }
 }
 
-void GUI::create_surface_mesh_wizard(const char *name)
-{
-    if (name)
-	surfmesh_filename = name; 
-
-    int width = 42 * fontsize;
-    int height = 6 * BH + 6 * WB;
-
-    if(swiz_window) {	
-	swiz_window->show();
-	return;
-    }
-    swiz_window = new Dialog_Window(width, height, "Surface Mesh Wizard");
-    swiz_window->box(GMSH_WINDOW_BOX);
-//    swiz_window->set_modal();
-
-    swiz_wiz = new Fl_Wizard(0, 0, width, height, "Surface Mesh Wizard");    
-    {
-//	Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
-	{
-	    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "STL File");
-	    swiz_value[1] = new Fl_Value_Input(2 * WB, 2 * WB + 0 * BH, IW, BH, "Distance Tolerance");
-	    swiz_value[1]->value(5.e-7);
-	    swiz_value[1]->minimum(0);
-	    swiz_value[1]->maximum(1.e-4);
-	    swiz_value[1]->step(1.e-7);
-	    swiz_value[1]->align(FL_ALIGN_RIGHT);
-	    swiz_output[0] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Number of Nodes after Merge");
-	    swiz_output[0]->align(FL_ALIGN_RIGHT);
-	    swiz_output[0]->value("0");
-	    {
-		Fl_Return_Button *b = new Fl_Return_Button(width - 4 * BB - 4 * WB, height - BH - WB, BB, BH, "Apply");
-		b->callback(wizard_update_tolerance_cb);
-	    }
-	    {
-		Fl_Button *b = new Fl_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Next");
-		b->callback(wizard_update_next_cb);
-	    }
-	    {
-		Fl_Button *b = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Prev");
-		b->callback(wizard_update_prev_cb);
-	    }
-	    {
-		Fl_Button *b = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-		b->callback(cancel_cb, (void *)swiz_window);
-	    }
-	    
-	    o->end();
-	}	
-	{
-	    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Model Edge Detection");
-	    swiz_value[0] = new Fl_Value_Input(2 * WB, 2 * WB + 0 * BH, IW, BH, "Treshold Dihedral Angle");
-	    swiz_value[0]->value(180/8);
-	    swiz_value[0]->minimum(0);
-	    swiz_value[0]->maximum(90);
-	    swiz_value[0]->step(1);
-	    swiz_value[0]->align(FL_ALIGN_RIGHT);
-	    swiz_value[3] = new Fl_Value_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Min nb. of Triangles for plane surface detection");
-	    swiz_value[3]->value(4);
-	    swiz_value[3]->minimum(2);
-	    swiz_value[3]->maximum(30);
-	    swiz_value[3]->step(1);
-	    swiz_value[3]->align(FL_ALIGN_RIGHT);
-	    swiz_output[1] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Number of Model Vertices");
-	    swiz_output[1]->align(FL_ALIGN_RIGHT);
-	    swiz_output[1]->value("0");
-	    swiz_output[2] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Number of Model Edges");
-	    swiz_output[2]->align(FL_ALIGN_RIGHT);
-	    swiz_output[2]->value("0");
-	    swiz_output[3] = new Fl_Output(2 * WB, 2 * WB + 4 * BH, IW, BH, "Number of Model Faces");
-	    swiz_output[3]->align(FL_ALIGN_RIGHT);
-	    swiz_output[3]->value("0");
-	    {
-		Fl_Return_Button *b = new Fl_Return_Button(width - 4 * BB - 4 * WB, height - BH - WB, BB, BH, "Apply");
-		b->callback(wizard_update_edges_cb);
-	    }
-	    {
-		Fl_Button *b = new Fl_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Next");
-		b->callback(wizard_update_next_cb);
-	    }
-	    {
-		Fl_Button *b = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Prev");
-		b->callback(wizard_update_prev_cb);
-	    }
-	    {
-		Fl_Button *b = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-		b->callback(cancel_cb, (void *)swiz_window);
-	    }	    
-	    o->end();
-	}	
-	{ 
-	    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Select More Edges");
-	    swiz_value[2] = new Fl_Value_Input(2 * WB, 2 * WB + 0 * BH, IW, BH, "Treshold Dihedral Angle For Extra Edges");
-	    swiz_value[2]->value(180/8);
-	    swiz_value[2]->minimum(0);
-	    swiz_value[2]->maximum(90);
-	    swiz_value[2]->step(1);
-	    swiz_value[2]->align(FL_ALIGN_RIGHT);
-	    {
-		Fl_Return_Button *b = new Fl_Return_Button(width - 4 * BB - 4 * WB, height - BH - WB, BB, BH, "Apply");
-		b->callback(wizard_update_more_edges_cb);
-	    }
-	    {
-		Fl_Button *b = new Fl_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Next");
-		b->callback(wizard_update_next_cb);
-	    }
-	    {
-		Fl_Button *b = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Prev");
-		b->callback(wizard_update_prev_cb);
-	    }
-	    {
-		Fl_Button *b = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-		b->callback(cancel_cb, (void *)swiz_window);
-	    }	    
-	    o->end();
-	}	
-	{
-	    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Mesh Generation");
-	    {
-		Fl_Return_Button *b = new Fl_Return_Button(width - 4 * BB - 4 * WB, height - BH - WB, BB, BH, "Apply");
-		b->callback(wizard_update_edges_cb);
-	    }
-	    {
-		Fl_Button *b = new Fl_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Next");
-		b->callback(wizard_update_next_cb);
-	    }
-	    {
-		Fl_Button *b = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Prev");
-		b->callback(wizard_update_prev_cb);
-	    }
-	    {
-		Fl_Button *b = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-		b->callback(cancel_cb, (void *)swiz_window);
-	    }	    
-	    o->end();
-	}	
-//	o->end();
-    } 
-    swiz_wiz->end();
-}
 
 void GUI::create_option_window()
 {
@@ -2361,6 +2219,58 @@ void GUI::create_option_window()
 
       o->end();
     }
+
+    {
+      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Remesher");
+      o->hide();
+      // In STL FILES, points have to be merged and a distance tolerance has to be set 
+      swiz_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Distance Tolerance (for STL inputs)");
+      swiz_value[1]->value(5.e-7);
+      swiz_value[1]->minimum(0);
+      swiz_value[1]->maximum(1.e-4);
+      swiz_value[1]->step(1.e-7);
+      swiz_value[1]->align(FL_ALIGN_RIGHT);
+      // when this button is pushed, the STL file is re-loaded
+      mesh_retbutt[0] = new Fl_Return_Button(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Reload");
+      mesh_retbutt[0]->callback(wizard_update_tolerance_cb);
+
+      // The number of nodes after merge is computed 
+      swiz_output[0] = new Fl_Output(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Number of Nodes after Merge");
+      swiz_output[0]->align(FL_ALIGN_RIGHT);
+      swiz_output[0]->value("0");
+      // If no geometry is provided, then the triangulation can be used for computing a discrete geometry
+      // The dihedral angle between neighboring triangles can be used to find model edges.
+      swiz_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Treshold Dihedral Angle");
+      swiz_value[0]->value(180/8);
+      swiz_value[0]->minimum(0);
+      swiz_value[0]->maximum(90);
+      swiz_value[0]->step(1);
+      swiz_value[0]->align(FL_ALIGN_RIGHT);
+      swiz_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Edge prolongation treshold");
+      swiz_value[3]->value(180/8);
+      swiz_value[3]->minimum(0);
+      swiz_value[3]->maximum(90);
+      swiz_value[3]->step(1);
+      swiz_value[3]->align(FL_ALIGN_RIGHT); 
+
+      mesh_retbutt[1] = new Fl_Return_Button(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Re-Classify");
+      mesh_retbutt[1]->callback(wizard_update_edges_cb);
+
+      swiz_value[4] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Number of elements per rad. of curv.");
+      swiz_value[4]->value(5);
+      swiz_value[4]->minimum(1);
+      swiz_value[4]->maximum(10);
+      swiz_value[4]->step(1);
+      swiz_value[4]->align(FL_ALIGN_RIGHT); 
+      swiz_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "LC/Minimum element size");
+      swiz_value[3]->value(500);
+      swiz_value[3]->minimum(10);
+      swiz_value[3]->maximum(10000);
+      swiz_value[3]->step(10);
+      swiz_value[3]->align(FL_ALIGN_RIGHT); 
+      o->end();
+    }
+
     {
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Visibility");
 

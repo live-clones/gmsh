@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.25 2005-09-07 17:12:16 remacle Exp $
+// $Id: DiscreteSurface.cpp,v 1.26 2005-09-21 15:03:46 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,7 @@
 #include "Interpolation.h"
 #include "Context.h"
 #include "BDS.h"
+#include "PartitionMesh.h"
 
 extern Mesh *THEM;
 extern Context_T CTX;
@@ -333,6 +334,23 @@ void BDS_To_Mesh(Mesh *m)
 
 }
 
+
+int ReMesh(Mesh *M)
+{
+
+  if(M->status != 2) return 0;
+
+  DeleteMesh (M);
+  
+  delete M->bds_mesh;
+  M->bds_mesh = 0;
+  
+  MeshDiscreteSurface ((Surface*)0);
+
+  CTX.mesh.changed = 1;
+  return 1;
+}
+
 // Public interface for discrete surface/curve mesh algo
 
 int MeshDiscreteSurface(Surface *s)
@@ -341,7 +359,6 @@ int MeshDiscreteSurface(Surface *s)
   const int NITER = 10;
   if(THEM->bds){
     Msg(STATUS2, "Discrete Surface Mesh Generator...");
-    // s->bds is the discrete surface that defines the geometry
     if(!THEM->bds_mesh){
       THEM->bds_mesh = new BDS_Mesh (*(THEM->bds));
       int iter = 0;
@@ -355,11 +372,6 @@ int MeshDiscreteSurface(Surface *s)
       //	    THEM->bds_mesh->save_gmsh_format ( "3.msh" ); 
       return 1;
     }
-    return 2;
-  }
-  else if(s->Typ == MSH_SURF_DISCRETE){
-    // nothing to do: we suppose that the surface is represented by
-    // a mesh that will not be modified
     return 2;
   }
   else

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.368 2005-08-31 21:44:44 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.369 2005-09-21 15:03:46 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -840,13 +840,6 @@ void wizard_update_edges_cb(CALLBACK_ARGS)
 	const int nb       = (int) WID->swiz_value[3]->value();
 	THEM->bds->classify (angle, nb);
 	BDS_To_Mesh (THEM); 
-	char a[25];
-	sprintf(a,"%d",Tree_Nbr(THEM->Points));
-	WID->swiz_output[1]->value(a);
-	sprintf(a,"%d",Tree_Nbr(THEM->Curves));
-	WID->swiz_output[2]->value(a);
-	sprintf(a,"%d",Tree_Nbr(THEM->Surfaces));
-	WID->swiz_output[3]->value(a);
 	Draw();
     }
 }
@@ -935,9 +928,6 @@ void wizard_update_tolerance_cb(CALLBACK_ARGS)
 	char a[25];
 	sprintf(a,"%d",THEM->bds->points.size());
 	WID->swiz_output[0]->value(a);
-	WID->swiz_output[1]->value("0");
-	WID->swiz_output[2]->value("0");
-	WID->swiz_output[3]->value("0");
 	Draw();
     }
 }
@@ -1165,7 +1155,7 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_light(0, GMSH_SET, WID->mesh_butt[17]->value());
   opt_mesh_light_two_side(0, GMSH_SET, WID->mesh_butt[18]->value());
   opt_mesh_smooth_normals(0, GMSH_SET, WID->mesh_butt[19]->value());
-
+  opt_mesh_nb_elem_per_rc(0, GMSH_SET, WID->swiz_value[4]->value());
   opt_mesh_nb_smoothing(0, GMSH_SET, WID->mesh_value[0]->value());
   opt_mesh_scaling_factor(0, GMSH_SET, WID->mesh_value[1]->value());
   opt_mesh_lc_factor(0, GMSH_SET, WID->mesh_value[2]->value());
@@ -2813,6 +2803,13 @@ void mesh_2d_cb(CALLBACK_ARGS)
 void mesh_3d_cb(CALLBACK_ARGS)
 {
   mai3d(THEM, 3);
+  Draw();
+  Msg(STATUS3N, "Ready");
+}
+
+void mesh_remesh(CALLBACK_ARGS)
+{
+  ReMesh(THEM);
   Draw();
   Msg(STATUS3N, "Ready");
 }

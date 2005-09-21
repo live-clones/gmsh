@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.82 2005-09-07 14:36:46 remacle Exp $
+// $Id: OpenFile.cpp,v 1.83 2005-09-21 15:03:47 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -287,21 +287,26 @@ int MergeProblem(char *name, int warn_if_missing)
     {
       THEM->bds->read_mesh ( name );
 #if defined(HAVE_FLTK)
-      WID->create_surface_mesh_wizard(name);
+      WID->swiz_value[1]->deactivate();
+      WID->mesh_retbutt[0]->deactivate();
 #endif
     }
     else
     {
+      THEM->bds->read_stl ( name , 5.e-7);
 #if defined(HAVE_FLTK)
-	WID->create_surface_mesh_wizard(name);
 #endif
     }
-
-
-    THEM->bds->save_gmsh_format ( "1.msh" );
+#if defined(HAVE_FLTK)
+    WID->surfmesh_filename = name; 
+#endif
+    //    THEM->bds->save_gmsh_format ( "1.msh" );
     THEM->bds->classify ( M_PI / 8 );
-    THEM->bds->save_gmsh_format ( "2.msh" );
+    //    THEM->bds->save_gmsh_format ( "2.msh" );
     BDS_To_Mesh (THEM);
+    THEM->bds_mesh = new BDS_Mesh (*THEM->bds);
+    BDS_To_Mesh_2(THEM);
+    THEM->status = 2;
     SetBoundingBox();
     status = THEM->status;
   }
