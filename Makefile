@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.396 2005-09-21 17:29:36 geuzaine Exp $
+# $Id: Makefile,v 1.397 2005-09-21 19:58:33 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -131,30 +131,27 @@ etags:
 
 # Rules to package the sources
 
-source-common:
+source-tree: purge
 	rm -rf gmsh-${GMSH_VERSION}
-	tar zcvf gmsh.tgz `ls TODO README* */README* */*/README* */COPYING* */VERSION*\
-                           configure *.in *.spec Makefile */Makefile */*/Makefile\
-                           */*.[chylr] */*/*.[chylr] */*.[ch]pp */*/*.[ch]pp\
-                           */*/*/*/*.[chyli]* */*.rc */*.res */*.ico */*.icns`\
-                           doc demos tutorial utils
+	tar zcvf gmsh.tgz --exclude "*.o" --exclude "*.a" --exclude "gmsh"\
+          --exclude "variables" --exclude "config.log" --exclude "config.status"\
+          --exclude "autom4*" --exclude "benchmarks" --exclude "zzz_*" *
 	mkdir gmsh-${GMSH_VERSION}
 	cd gmsh-${GMSH_VERSION} && tar zxvf ../gmsh.tgz
 	rm -f gmsh.tgz
 
-source: source-common
-	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */*/*/CVS */*/*/*/CVS\
-          */.globalrc contrib/NR contrib/Triangle/triangle.* contrib/Tetgen/tetgen.*\
-          contrib/Tetgen/predicates.*\
-          utils/commercial ${GMSH_VERSION_FILE} 
-	tar zcvf gmsh-${GMSH_VERSION}-source.tgz gmsh-${GMSH_VERSION}
+source: source-tree
+	cd gmsh-${GMSH_VERSION} && rm -rf ${GMSH_VERSION_FILE}\
+          contrib/NR contrib/Triangle/triangle.* contrib/Tetgen/tetgen.*\
+          contrib/Tetgen/predicates.* utils/commercial 
+	tar zcvf gmsh-${GMSH_VERSION}-source.tgz --exclude "CVS" gmsh-${GMSH_VERSION}
 
-source-commercial: source-common
-	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */*/*/CVS  */*/*/*/CVS\
-          */.globalrc contrib/MathEval contrib/Triangle/triangle.* contrib/Tetgen/tetgen.*\
+source-commercial: source-tree
+	cd gmsh-${GMSH_VERSION} && rm -rf ${GMSH_VERSION_FILE}\
+          contrib/MathEval contrib/Triangle/triangle.* contrib/Tetgen/tetgen.*\
           contrib/Tetgen/predicates.* contrib/Netgen/libsrc\
-          TODO *.spec doc/gmsh.html doc/FAQ doc/README.cvs\
-          utils/commercial ${GMSH_VERSION_FILE}
+          TODO *.spec doc/gmsh.html doc/README.cvs\
+          utils/commercial
 	cp -f utils/commercial/README gmsh-${GMSH_VERSION}/README
 	cp -f utils/commercial/LICENSE gmsh-${GMSH_VERSION}/doc/LICENSE
 	cp -f utils/commercial/License.cpp gmsh-${GMSH_VERSION}/Common/License.cpp
