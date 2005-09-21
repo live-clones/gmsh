@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.74 2005-09-21 17:29:36 geuzaine Exp $
+# $Id: Makefile,v 1.75 2005-09-21 18:09:20 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -64,22 +64,23 @@ depend:
 
 # DO NOT DELETE THIS LINE
 # 1 "/Users/geuzaine/.gmsh/Fltk//"
-Main.o: Main.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
-  ../Common/Options.h ../Common/Message.h ../Common/Views.h \
-  ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Gmsh.h \
-  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Common/GmshUI.h ../Common/GmshVersion.h ../Geo/Geo.h ../Mesh/Mesh.h \
-  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h ../Graphics/Draw.h \
-  ../Common/Context.h ../Parser/Parser.h GUI.h Opengl_Window.h \
-  Colorbar_Window.h ../Parser/OpenFile.h ../Common/CommandLine.h \
-  ../Numeric/Numeric.h Solvers.h
+Main.o: Main.cpp GUI.h Opengl_Window.h ../Mesh/Mesh.h ../DataStr/List.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
+  Colorbar_Window.h ../Common/GmshUI.h ../Common/ColorTable.h \
+  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
+  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h \
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
+  ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
+  ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../Common/GmshVersion.h ../Geo/Geo.h ../Graphics/Draw.h \
+  ../Common/Context.h ../Parser/Parser.h ../Parser/OpenFile.h \
+  ../Common/CommandLine.h ../Numeric/Numeric.h Solvers.h
 # 1 "/Users/geuzaine/.gmsh/Fltk//"
 Message.o: Message.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -190,7 +191,7 @@ Colorbar_Window.o: Colorbar_Window.cpp ../Common/Gmsh.h \
 Solvers.o: Solvers.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  GmshServer.h ../Parser/OpenFile.h Solvers.h ../Common/GmshUI.h GUI.h \
+  Solvers.h GmshServer.h ../Parser/OpenFile.h ../Common/GmshUI.h GUI.h \
   Opengl_Window.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
   ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \

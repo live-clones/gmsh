@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.96 2005-09-21 17:29:37 geuzaine Exp $
+# $Id: Makefile,v 1.97 2005-09-21 18:09:20 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -342,8 +342,8 @@ depend:
   ../Common/SmoothNormals.h Metric.h Matrix.h Create.h \
   ../Numeric/Numeric.h ../Common/Context.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
-BDS.o: BDS.cpp BDS.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
-  ../Numeric/EigSolve.h
+BDS.o: BDS.cpp ../Numeric/Numeric.h ../Common/GmshMatrix.h BDS.h \
+  ../Common/Context.h ../DataStr/List.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 MeshQuality.o: MeshQuality.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -374,7 +374,7 @@ Generator.o: Generator.cpp BDS.h ../Common/Gmsh.h ../Common/Message.h \
   ../Common/Context.h ../Parser/OpenFile.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h PartitionMesh.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 Print_Mesh.o: Print_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -399,7 +399,8 @@ Read_Mesh.o: Read_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h Mesh.h 3D_Mesh.h Create.h Vertex.h \
-  ../Geo/MinMax.h ../Numeric/Numeric.h ../Common/Context.h
+  ../Geo/MinMax.h ../Numeric/Numeric.h ../Common/Context.h \
+  PartitionMesh.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 DiscreteSurface.o: DiscreteSurface.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
@@ -408,7 +409,7 @@ DiscreteSurface.o: DiscreteSurface.cpp ../Common/Gmsh.h \
   Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h Metric.h Matrix.h ../Geo/CAD.h ../Mesh/Mesh.h \
   ../Mesh/Vertex.h ../Geo/ExtrudeParams.h ../Geo/Geo.h Create.h \
-  Interpolation.h ../Common/Context.h BDS.h
+  Interpolation.h ../Common/Context.h BDS.h PartitionMesh.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 SwapEdge.o: SwapEdge.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -466,6 +467,16 @@ SecondOrder.o: SecondOrder.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h Metric.h Matrix.h Utils.h Interpolation.h \
   ../Numeric/Numeric.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
+PartitionMesh.o: PartitionMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../Numeric/Numeric.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
+  ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h Metric.h Matrix.h ../Geo/CAD.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Geo/ExtrudeParams.h ../Geo/Geo.h Create.h \
+  Interpolation.h ../Common/Context.h BDS.h PartitionMesh.h \
+  ../Parser/OpenFile.h ../Geo/MinMax.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 Smoothing.o: Smoothing.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \

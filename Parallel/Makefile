@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.21 2005-08-31 21:44:44 geuzaine Exp $
+# $Id: Makefile,v 1.22 2005-09-21 18:09:21 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -51,4 +51,7 @@ depend:
 
 # DO NOT DELETE THIS LINE
 # 1 "/Users/geuzaine/.gmsh/Parallel//"
-ParUtil.o: ParUtil.cpp ParUtil.h
+ParUtil.o: ParUtil.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
+  ParUtil.h
