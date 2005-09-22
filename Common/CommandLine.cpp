@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.64 2005-09-07 14:36:44 remacle Exp $
+// $Id: CommandLine.cpp,v 1.65 2005-09-22 22:39:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -141,6 +141,12 @@ char *Get_BuildOptions(void)
 #endif
 #if defined(HAVE_MATH_EVAL)
     strcat(opt, "MATHEVAL ");
+#endif
+#if defined(HAVE_METIS)
+    strcat(opt, "METIS ");
+#endif
+#if defined(HAVE_ANN_)
+    strcat(opt, "ANN ");
 #endif
     first = 0;
   }
