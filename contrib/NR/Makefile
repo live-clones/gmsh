@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2005-09-21 17:29:38 geuzaine Exp $
+# $Id: Makefile,v 1.2 2005-09-22 12:45:50 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -62,16 +62,44 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-brent.o: brent.cpp nrutil.h ../Numeric/Numeric.h
-dpythag.o: dpythag.cpp nrutil.h ../Numeric/Numeric.h
-dsvdcmp.o: dsvdcmp.cpp nrutil.h ../Numeric/Numeric.h
-fdjac.o: fdjac.cpp nrutil.h ../Numeric/Numeric.h
-fmin.o: fmin.cpp nrutil.h ../Numeric/Numeric.h
-lnsrch.o: lnsrch.cpp nrutil.h ../Numeric/Numeric.h
+brent.o: brent.cpp nrutil.h ../../Common/Gmsh.h ../../Common/Message.h \
+  ../../DataStr/Malloc.h ../../DataStr/List.h ../../DataStr/Tree.h \
+  ../../DataStr/avl.h ../../DataStr/Tools.h ../../DataStr/List.h \
+  ../../DataStr/Tree.h ../../Numeric/Numeric.h
+dpythag.o: dpythag.cpp nrutil.h ../../Common/Gmsh.h \
+  ../../Common/Message.h ../../DataStr/Malloc.h ../../DataStr/List.h \
+  ../../DataStr/Tree.h ../../DataStr/avl.h ../../DataStr/Tools.h \
+  ../../DataStr/List.h ../../DataStr/Tree.h ../../Numeric/Numeric.h
+dsvdcmp.o: dsvdcmp.cpp nrutil.h ../../Common/Gmsh.h \
+  ../../Common/Message.h ../../DataStr/Malloc.h ../../DataStr/List.h \
+  ../../DataStr/Tree.h ../../DataStr/avl.h ../../DataStr/Tools.h \
+  ../../DataStr/List.h ../../DataStr/Tree.h ../../Numeric/Numeric.h
+fdjac.o: fdjac.cpp nrutil.h ../../Common/Gmsh.h ../../Common/Message.h \
+  ../../DataStr/Malloc.h ../../DataStr/List.h ../../DataStr/Tree.h \
+  ../../DataStr/avl.h ../../DataStr/Tools.h ../../DataStr/List.h \
+  ../../DataStr/Tree.h ../../Numeric/Numeric.h
+fmin.o: fmin.cpp nrutil.h ../../Common/Gmsh.h ../../Common/Message.h \
+  ../../DataStr/Malloc.h ../../DataStr/List.h ../../DataStr/Tree.h \
+  ../../DataStr/avl.h ../../DataStr/Tools.h ../../DataStr/List.h \
+  ../../DataStr/Tree.h ../../Numeric/Numeric.h
+lnsrch.o: lnsrch.cpp nrutil.h ../../Common/Gmsh.h ../../Common/Message.h \
+  ../../DataStr/Malloc.h ../../DataStr/List.h ../../DataStr/Tree.h \
+  ../../DataStr/avl.h ../../DataStr/Tools.h ../../DataStr/List.h \
+  ../../DataStr/Tree.h ../../Numeric/Numeric.h
 lubksb.o: lubksb.cpp
-ludcmp.o: ludcmp.cpp nrutil.h ../Numeric/Numeric.h
-mnbrak.o: mnbrak.cpp nrutil.h ../Numeric/Numeric.h
-newt.o: newt.cpp nrutil.h ../Numeric/Numeric.h
-nrutil.o: nrutil.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h
+ludcmp.o: ludcmp.cpp nrutil.h ../../Common/Gmsh.h ../../Common/Message.h \
+  ../../DataStr/Malloc.h ../../DataStr/List.h ../../DataStr/Tree.h \
+  ../../DataStr/avl.h ../../DataStr/Tools.h ../../DataStr/List.h \
+  ../../DataStr/Tree.h ../../Numeric/Numeric.h
+mnbrak.o: mnbrak.cpp nrutil.h ../../Common/Gmsh.h ../../Common/Message.h \
+  ../../DataStr/Malloc.h ../../DataStr/List.h ../../DataStr/Tree.h \
+  ../../DataStr/avl.h ../../DataStr/Tools.h ../../DataStr/List.h \
+  ../../DataStr/Tree.h ../../Numeric/Numeric.h
+newt.o: newt.cpp nrutil.h ../../Common/Gmsh.h ../../Common/Message.h \
+  ../../DataStr/Malloc.h ../../DataStr/List.h ../../DataStr/Tree.h \
+  ../../DataStr/avl.h ../../DataStr/Tools.h ../../DataStr/List.h \
+  ../../DataStr/Tree.h ../../Numeric/Numeric.h
+nrutil.o: nrutil.cpp ../../Common/Gmsh.h ../../Common/Message.h \
+  ../../DataStr/Malloc.h ../../DataStr/List.h ../../DataStr/Tree.h \
+  ../../DataStr/avl.h ../../DataStr/Tools.h ../../DataStr/List.h \
+  ../../DataStr/Tree.h
