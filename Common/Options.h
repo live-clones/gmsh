@@ -440,6 +440,7 @@ double opt_mesh_format(OPT_ARGS_NUM);
 double opt_mesh_msh_file_version(OPT_ARGS_NUM);
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM);
 double opt_mesh_nb_elem_per_rc(OPT_ARGS_NUM);
+double opt_mesh_min_elem_size_fact(OPT_ARGS_NUM);
 double opt_mesh_nb_partitions(OPT_ARGS_NUM);
 double opt_mesh_algo2d(OPT_ARGS_NUM);
 double opt_mesh_recombine_algo(OPT_ARGS_NUM);

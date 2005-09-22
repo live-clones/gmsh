@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.257 2005-09-21 15:03:46 remacle Exp $
+// $Id: Options.cpp,v 1.258 2005-09-22 15:20:38 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -4388,6 +4388,17 @@ double opt_mesh_nb_elem_per_rc(OPT_ARGS_NUM)
     WID->swiz_value[4]->value(CTX.mesh.nb_elem_per_rc);
 #endif
   return CTX.mesh.nb_elem_per_rc;
+}
+
+double opt_mesh_min_elem_size_fact(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.min_elem_size_fact = (double)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->swiz_value[3]->value(CTX.mesh.min_elem_size_fact);
+#endif
+  return CTX.mesh.min_elem_size_fact;
 }
 
 double opt_mesh_msh_file_version(OPT_ARGS_NUM)

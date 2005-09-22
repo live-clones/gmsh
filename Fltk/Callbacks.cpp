@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.369 2005-09-21 15:03:46 remacle Exp $
+// $Id: Callbacks.cpp,v 1.370 2005-09-22 15:20:38 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1156,6 +1156,7 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_light_two_side(0, GMSH_SET, WID->mesh_butt[18]->value());
   opt_mesh_smooth_normals(0, GMSH_SET, WID->mesh_butt[19]->value());
   opt_mesh_nb_elem_per_rc(0, GMSH_SET, WID->swiz_value[4]->value());
+  opt_mesh_min_elem_size_fact(0, GMSH_SET, WID->swiz_value[3]->value());
   opt_mesh_nb_smoothing(0, GMSH_SET, WID->mesh_value[0]->value());
   opt_mesh_scaling_factor(0, GMSH_SET, WID->mesh_value[1]->value());
   opt_mesh_lc_factor(0, GMSH_SET, WID->mesh_value[2]->value());

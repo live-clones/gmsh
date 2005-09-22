@@ -887,6 +887,8 @@ void BDS_Point :: compute_curvature ( )
 
 int compute_curvatures (std::list<BDS_Edge*> &edges)
 {
+  const int init_inner = 1;
+  
   {
     std::list<BDS_Edge*>::iterator it = edges.begin();
     std::list<BDS_Edge*>::iterator ite  = edges.end();
@@ -908,13 +910,14 @@ int compute_curvatures (std::list<BDS_Edge*> &edges)
 	  {
 	    if ((*it)->faces(0)->g == (*it)->faces(1)->g)
 	      {
+		double l1 = 2*(*it)->faces(0)->inscribed_radius();
+		double l2 = 2*(*it)->faces(1)->inscribed_radius();
 		BDS_Vector N1=(*it)->faces(0)->N();
 		BDS_Vector N2=(*it)->faces(1)->N();
-		BDS_Vector C1=(*it)->faces(0)->cog();
-		BDS_Vector C2=(*it)->faces(1)->cog();
 		BDS_Vector DIFFN = N2-N1;
-		BDS_Vector DIST  = C2-C1;
+		BDS_Vector DIST  = l1+l2;
 		double crv = 1./sqrt((DIFFN*DIFFN)/(DIST*DIST));
+
 		if ((*it)->p1->radius_of_curvature > crv)
 		  (*it)->p1->radius_of_curvature = crv;
 		if ((*it)->p2->radius_of_curvature > crv)
@@ -1532,7 +1535,7 @@ bool BDS_Mesh :: read_stl ( const char *filename , const double tolerance)
 	delete [] DATA;
     }
     fclose (f);    
-    classify ( M_PI );
+    //    classify ( M_PI );
     return true;
 }
 
@@ -2360,7 +2363,7 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
     SNAP_SUCCESS = 0;
     SNAP_FAILURE = 0;
 
-    BDS_Metric metric ( l , LC/500 , LC, CTX.mesh.nb_elem_per_rc );
+    BDS_Metric metric ( l , LC/ CTX.mesh.min_elem_size_fact , LC, CTX.mesh.nb_elem_per_rc );
 
     printf("%g\n",CTX.mesh.nb_elem_per_rc);
     

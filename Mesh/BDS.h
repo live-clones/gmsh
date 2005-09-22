@@ -341,6 +341,14 @@ public:
     inline double S() const {return surface;}
     BDS_GeomEntity *g;
 
+    inline double inscribed_radius () const
+      {
+	double l1 = e1->length();
+	double l2 = e2->length();
+	double l3 = e3->length();
+	return (2 * S() / (l1+l2+l3));
+      }
+
     inline BDS_Tet * opposite_tet (BDS_Tet *t)
       {
 	if (t == t1)return t2;
