@@ -852,15 +852,16 @@ Optional Features:
   --enable-gui            build the graphical user interface (default=yes)
   --enable-cygwin         use the Cygwin library on Windows (default=yes)
   --enable-parallel       enable parallel version (default=no)
+  --enable-jpeg           enable JPEG support (default=yes)
+  --enable-z              enable ZLIB support (default=yes)
+  --enable-png            enable PNG support (default=yes)
+  --enable-contrib        enable contrib packages (default=yes)
   --enable-triangle       compile Triangle if available (default=yes)
   --enable-netgen         compile Netgen if available (default=yes)
   --enable-ann            compile ANN if available (default=yes)
   --enable-metis          compile METIS if available (default=yes)
   --enable-tetgen         compile Tetgen if available (default=yes)
   --enable-matheval       compile MathEval if available (default=yes)
-  --enable-jpeg           enable JPEG support (default=yes)
-  --enable-z              enable ZLIB support (default=yes)
-  --enable-png            enable PNG support (default=yes)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1375,6 +1376,26 @@ if test "${enable_parallel+set}" = set; then
   enableval="$enable_parallel"
 
 fi;
+# Check whether --enable-jpeg or --disable-jpeg was given.
+if test "${enable_jpeg+set}" = set; then
+  enableval="$enable_jpeg"
+
+fi;
+# Check whether --enable-z or --disable-z was given.
+if test "${enable_z+set}" = set; then
+  enableval="$enable_z"
+
+fi;
+# Check whether --enable-png or --disable-png was given.
+if test "${enable_png+set}" = set; then
+  enableval="$enable_png"
+
+fi;
+# Check whether --enable-contrib or --disable-contrib was given.
+if test "${enable_contrib+set}" = set; then
+  enableval="$enable_contrib"
+
+fi;
 # Check whether --enable-triangle or --disable-triangle was given.
 if test "${enable_triangle+set}" = set; then
   enableval="$enable_triangle"
@@ -1403,21 +1424,6 @@ fi;
 # Check whether --enable-matheval or --disable-matheval was given.
 if test "${enable_matheval+set}" = set; then
   enableval="$enable_matheval"
-
-fi;
-# Check whether --enable-jpeg or --disable-jpeg was given.
-if test "${enable_jpeg+set}" = set; then
-  enableval="$enable_jpeg"
-
-fi;
-# Check whether --enable-z or --disable-z was given.
-if test "${enable_z+set}" = set; then
-  enableval="$enable_z"
-
-fi;
-# Check whether --enable-png or --disable-png was given.
-if test "${enable_png+set}" = set; then
-  enableval="$enable_png"
 
 fi;
 
@@ -3742,7 +3748,9 @@ else
 
 fi
 
-echo "$as_me:$LINENO: checking for ./contrib/Triangle/triangle.c" >&5
+if test "x$enable_contrib" != "xno"; then
+
+    echo "$as_me:$LINENO: checking for ./contrib/Triangle/triangle.c" >&5
 echo $ECHO_N "checking for ./contrib/Triangle/triangle.c... $ECHO_C" >&6
 if test "${ac_cv_file___contrib_Triangle_triangle_c+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -3765,38 +3773,38 @@ else
   TRIANGLE="no"
 fi
 
-if test "x${TRIANGLE}" = "xyes"; then
-  if test "x$enable_triangle" != "xno"; then
-     GMSH_DIRS="${GMSH_DIRS} contrib/Triangle"
-     GMSH_LIBS="${GMSH_LIBS} -lGmshTriangle"
-     FLAGS="-DHAVE_TRIANGLE ${FLAGS}"
-     echo "********************************************************************"
-     echo "You are building a version of Gmsh that contains Jonathan"
-     echo "Shewchuk's Triangle as an alternative isotropic 2D mesh generator."
-     echo "Please note that by doing so, you agree with Triangle's licensing"
-     echo "requirements stated in ./contrib/Triangle/README. (Most notably, you"
-     echo "may then only redistribute Gmsh for non-commercial purposes.)"
-     echo "To disable Triangle, run configure again with the --disable-triangle"
-     echo "option."
-     echo "********************************************************************"
+  if test "x${TRIANGLE}" = "xyes"; then
+    if test "x$enable_triangle" != "xno"; then
+       GMSH_DIRS="${GMSH_DIRS} contrib/Triangle"
+       GMSH_LIBS="${GMSH_LIBS} -lGmshTriangle"
+       FLAGS="-DHAVE_TRIANGLE ${FLAGS}"
+       echo "********************************************************************"
+       echo "You are building a version of Gmsh that contains Jonathan"
+       echo "Shewchuk's Triangle as an alternative isotropic 2D mesh generator."
+       echo "Please note that by doing so, you agree with Triangle's licensing"
+       echo "requirements stated in ./contrib/Triangle/README. (Most notably, you"
+       echo "may then only redistribute Gmsh for non-commercial purposes.)"
+       echo "To disable Triangle, run configure again with the --disable-triangle"
+       echo "option."
+       echo "********************************************************************"
+    fi
+  else
+    if test "x$enable_triangle" != "xno"; then
+       echo "********************************************************************"
+       echo "If you want to use Jonathan Shewchuk's Triangle as an alternative"
+       echo "isotropic 2D mesh generator, please download Triangle from the"
+       echo "author's web site at http://www.cs.cmu.edu/~quake/triangle.html,"
+       echo "unpack the archive and copy the two files 'triangle.c' and"
+       echo "'triangle.h' in the ./contrib/Triangle subdirectory. Then run"
+       echo "./configure again."
+       echo "Please note that by doing so, you agree with Triangle's licensing"
+       echo "requirements stated in ./contrib/Triangle/README. (Most notably, you"
+       echo "may then only redistribute Gmsh if no compensation is received.)"
+       echo "********************************************************************"
+    fi
   fi
-else
-  if test "x$enable_triangle" != "xno"; then
-     echo "********************************************************************"
-     echo "If you want to use Jonathan Shewchuk's Triangle as an alternative"
-     echo "isotropic 2D mesh generator, please download Triangle from the"
-     echo "author's web site at http://www.cs.cmu.edu/~quake/triangle.html,"
-     echo "unpack the archive and copy the two files 'triangle.c' and"
-     echo "'triangle.h' in the ./contrib/Triangle subdirectory. Then run"
-     echo "./configure again."
-     echo "Please note that by doing so, you agree with Triangle's licensing"
-     echo "requirements stated in ./contrib/Triangle/README. (Most notably, you"
-     echo "may then only redistribute Gmsh if no compensation is received.)"
-     echo "********************************************************************"
-  fi
-fi
 
-echo "$as_me:$LINENO: checking for ./contrib/ANN/include/ANN/ANN.h" >&5
+    echo "$as_me:$LINENO: checking for ./contrib/ANN/include/ANN/ANN.h" >&5
 echo $ECHO_N "checking for ./contrib/ANN/include/ANN/ANN.h... $ECHO_C" >&6
 if test "${ac_cv_file___contrib_ANN_include_ANN_ANN_h+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -3819,33 +3827,33 @@ else
   ANN="no"
 fi
 
-if test "x${ANN}" = "xyes"; then
-  if test "x$enable_ann" != "xno"; then
-     GMSH_DIRS="${GMSH_DIRS} contrib/ANN"
-     GMSH_LIBS="${GMSH_LIBS} -lGmshANN"
-     FLAGS="-DHAVE_ANN_ ${FLAGS}"
-     echo "********************************************************************"
-     echo "You are building a version of Gmsh that contains ANN, the"
-     echo "Approximate Nearest Neighbor library."
-     echo "Please note that by doing so, you agree with ANN's licensing"
-     echo "requirements stated in ./contrib/ANN/Copyright.txt."
-     echo "To disable ANN, run configure again with the --disable-ann"
-     echo "option."
-     echo "********************************************************************"
+  if test "x${ANN}" = "xyes"; then
+    if test "x$enable_ann" != "xno"; then
+       GMSH_DIRS="${GMSH_DIRS} contrib/ANN"
+       GMSH_LIBS="${GMSH_LIBS} -lGmshANN"
+       FLAGS="-DHAVE_ANN_ ${FLAGS}"
+       echo "********************************************************************"
+       echo "You are building a version of Gmsh that contains ANN, the"
+       echo "Approximate Nearest Neighbor library."
+       echo "Please note that by doing so, you agree with ANN's licensing"
+       echo "requirements stated in ./contrib/ANN/Copyright.txt."
+       echo "To disable ANN, run configure again with the --disable-ann"
+       echo "option."
+       echo "********************************************************************"
+    fi
+  else
+    if test "x$enable_ann" != "xno"; then
+       echo "********************************************************************"
+       echo "If you want to use ANN for doing fast geometrical searchs in the"
+       echo "STL mesher, please download ANN from the"
+       echo "author's web site at http://www.cs.umd.edu/~mount/ANN/,"
+       echo "unpack the archive and copy both src and include directories in the"
+       echo "./contrib/ANN subdirectory. Then run ./configure again."
+       echo "********************************************************************"
+    fi
   fi
-else
-  if test "x$enable_ann" != "xno"; then
-     echo "********************************************************************"
-     echo "If you want to use ANN for doing fast geometrical searchs in the"
-     echo "STL mesher, please download ANN from the"
-     echo "author's web site at http://www.cs.umd.edu/~mount/ANN/,"
-     echo "unpack the archive and copy both src and include directories in the"
-     echo "./contrib/ANN subdirectory. Then run ./configure again."
-     echo "********************************************************************"
-  fi
-fi
 
-echo "$as_me:$LINENO: checking for ./contrib/Metis/metis.h" >&5
+    echo "$as_me:$LINENO: checking for ./contrib/Metis/metis.h" >&5
 echo $ECHO_N "checking for ./contrib/Metis/metis.h... $ECHO_C" >&6
 if test "${ac_cv_file___contrib_Metis_metis_h+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -3868,33 +3876,33 @@ else
   METIS="no"
 fi
 
-if test "x${METIS}" = "xyes"; then
-  if test "x$enable_metis" != "xno"; then
-     GMSH_DIRS="${GMSH_DIRS} contrib/Metis"
-     GMSH_LIBS="${GMSH_LIBS} -lGmshMetis"
-     FLAGS="-DHAVE_METIS ${FLAGS}"
-     echo "********************************************************************"
-     echo "You are building a version of Gmsh that contains METIS, the"
-     echo "Serial Graph Partitioner."
-     echo "Please note that by doing so, you agree with METIS's licensing"
-     echo "requirements stated in ./contrib/Metis/Doc/manual.ps."
-     echo "To disable METIS, run configure again with the --disable-metis"
-     echo "option."
-     echo "********************************************************************"
+  if test "x${METIS}" = "xyes"; then
+    if test "x$enable_metis" != "xno"; then
+       GMSH_DIRS="${GMSH_DIRS} contrib/Metis"
+       GMSH_LIBS="${GMSH_LIBS} -lGmshMetis"
+       FLAGS="-DHAVE_METIS ${FLAGS}"
+       echo "********************************************************************"
+       echo "You are building a version of Gmsh that contains METIS, the"
+       echo "Serial Graph Partitioner."
+       echo "Please note that by doing so, you agree with METIS's licensing"
+       echo "requirements stated in ./contrib/Metis/Doc/manual.ps."
+       echo "To disable METIS, run configure again with the --disable-metis"
+       echo "option."
+       echo "********************************************************************"
+    fi
+  else
+    if test "x$enable-metis" != "xno"; then
+       echo "********************************************************************"
+       echo "If you want to use METIS for doing mesh partitioning, please"
+       echo "download METIS from the author's web site at"
+       echo "http://www-users.cs.umn.edu/~karypis/metis/, unpack the archive and"
+       echo "copy the Lib Directory in the ./contrib/Metis subdirectory. Then"
+       echo "run ./configure again."
+       echo "********************************************************************"
+    fi
   fi
-else
-  if test "x$enable-metis" != "xno"; then
-     echo "********************************************************************"
-     echo "If you want to use METIS for doing mesh partitioning, please"
-     echo "download METIS from the author's web site at"
-     echo "http://www-users.cs.umn.edu/~karypis/metis/, unpack the archive and"
-     echo "copy the Lib Directory in the ./contrib/Metis subdirectory. Then"
-     echo "run ./configure again."
-     echo "********************************************************************"
-  fi
-fi
 
-echo "$as_me:$LINENO: checking for ./contrib/Netgen/libsrc/meshing/meshclass.cpp" >&5
+    echo "$as_me:$LINENO: checking for ./contrib/Netgen/libsrc/meshing/meshclass.cpp" >&5
 echo $ECHO_N "checking for ./contrib/Netgen/libsrc/meshing/meshclass.cpp... $ECHO_C" >&6
 if test "${ac_cv_file___contrib_Netgen_libsrc_meshing_meshclass_cpp+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -3917,34 +3925,34 @@ else
   NETGEN="no"
 fi
 
-if test "x${NETGEN}" = "xyes"; then
-  if test "x$enable_netgen" != "xno"; then
-     GMSH_DIRS="${GMSH_DIRS} contrib/Netgen"
-     GMSH_LIBS="${GMSH_LIBS} -lGmshNetgen"
-     FLAGS="-DHAVE_NETGEN ${FLAGS}"
-     echo "********************************************************************"
-     echo "You are building a version of Gmsh that contains Joachim Schoberl's"
-     echo "Netgen as an alternative 3D mesh generator. Netgen is distributed"
-     echo "under the GNU LGPL: see ./contrib/Netgen/COPYING.LIB for more info."
-     echo "To disable Netgen, run configure again with the --disable-netgen"
-     echo "option."
-     echo "********************************************************************"
+  if test "x${NETGEN}" = "xyes"; then
+    if test "x$enable_netgen" != "xno"; then
+       GMSH_DIRS="${GMSH_DIRS} contrib/Netgen"
+       GMSH_LIBS="${GMSH_LIBS} -lGmshNetgen"
+       FLAGS="-DHAVE_NETGEN ${FLAGS}"
+       echo "********************************************************************"
+       echo "You are building a version of Gmsh that contains Joachim Schoberl's"
+       echo "Netgen as an alternative 3D mesh generator. Netgen is distributed"
+       echo "under the GNU LGPL: see ./contrib/Netgen/COPYING.LIB for more info."
+       echo "To disable Netgen, run configure again with the --disable-netgen"
+       echo "option."
+       echo "********************************************************************"
+    fi
+  else
+    if test "x$enable_netgen" != "xno"; then
+       echo "********************************************************************"
+       echo "If you want to use Joachim Schoberl's Netgen as an alternative"
+       echo "3D mesh generator, please download Netgen from the project's"
+       echo "web site at http://www.hpfem.jku.at/netgen/, unpack the archive"
+       echo "and move the libsrc subdirectory in the ./contrib/Netgen"
+       echo "subdirectory. Then run ./configure again."
+       echo "Please note that by doing so, you agree with Netgen's licensing"
+       echo "requirements stated in ./contrib/Netgen/COPYING.LIB."
+       echo "********************************************************************"
+    fi
   fi
-else
-  if test "x$enable_netgen" != "xno"; then
-     echo "********************************************************************"
-     echo "If you want to use Joachim Schoberl's Netgen as an alternative"
-     echo "3D mesh generator, please download Netgen from the project's"
-     echo "web site at http://www.hpfem.jku.at/netgen/, unpack the archive"
-     echo "and move the libsrc subdirectory in the ./contrib/Netgen"
-     echo "subdirectory. Then run ./configure again."
-     echo "Please note that by doing so, you agree with Netgen's licensing"
-     echo "requirements stated in ./contrib/Netgen/COPYING.LIB."
-     echo "********************************************************************"
-  fi
-fi
 
-echo "$as_me:$LINENO: checking for ./contrib/Tetgen/tetgen.h" >&5
+    echo "$as_me:$LINENO: checking for ./contrib/Tetgen/tetgen.h" >&5
 echo $ECHO_N "checking for ./contrib/Tetgen/tetgen.h... $ECHO_C" >&6
 if test "${ac_cv_file___contrib_Tetgen_tetgen_h+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -3967,37 +3975,37 @@ else
   TETGEN="no"
 fi
 
-if test "x${TETGEN}" = "xyes"; then
-  if test "x$enable_tetgen" != "xno"; then
-     GMSH_DIRS="${GMSH_DIRS} contrib/Tetgen"
-     GMSH_LIBS="${GMSH_LIBS} -lGmshTetgen"
-     FLAGS="-DHAVE_TETGEN ${FLAGS}"
-     echo "********************************************************************"
-     echo "You are building a version of Gmsh that contains Hang Si's"
-     echo "Tetgen as an alternative 3D mesh generator."
-     echo "Please note that by doing so, you agree with Tetgen's licensing"
-     echo "requirements stated in ./contrib/Tetgen/LICENSE. (Most notably, you"
-     echo "may then only redistribute Gmsh for non-commercial purposes.)"
-     echo "To disable Tetgen, run configure again with the --disable-tetgen"
-     echo "option."
-     echo "********************************************************************"
+  if test "x${TETGEN}" = "xyes"; then
+    if test "x$enable_tetgen" != "xno"; then
+       GMSH_DIRS="${GMSH_DIRS} contrib/Tetgen"
+       GMSH_LIBS="${GMSH_LIBS} -lGmshTetgen"
+       FLAGS="-DHAVE_TETGEN ${FLAGS}"
+       echo "********************************************************************"
+       echo "You are building a version of Gmsh that contains Hang Si's"
+       echo "Tetgen as an alternative 3D mesh generator."
+       echo "Please note that by doing so, you agree with Tetgen's licensing"
+       echo "requirements stated in ./contrib/Tetgen/LICENSE. (Most notably, you"
+       echo "may then only redistribute Gmsh for non-commercial purposes.)"
+       echo "To disable Tetgen, run configure again with the --disable-tetgen"
+       echo "option."
+       echo "********************************************************************"
+    fi
+  else
+    if test "x$enable_tetgen" != "xno"; then
+       echo "********************************************************************"
+       echo "If you want to use Hang Si's Tetgen as an alternative"
+       echo "3D mesh generator, please download Tetgen from the project's"
+       echo "web site at http://www.tetgen.berlios.de, unpack the archive"
+       echo "and move the files predicates.cxx, tetgen.cxx and tetgen.h in"
+       echo "the ./contrib/Tetgen subdirectory. Then run ./configure again."
+       echo "Please note that by doing so, you agree with Tetgen's licensing"
+       echo "requirements stated in ./contrib/Tetgen/LICENSE. (Most notably, you"
+       echo "may then only redistribute Gmsh if no compensation is received.)"
+       echo "********************************************************************"
+    fi
   fi
-else
-  if test "x$enable_tetgen" != "xno"; then
-     echo "********************************************************************"
-     echo "If you want to use Hang Si's Tetgen as an alternative"
-     echo "3D mesh generator, please download Tetgen from the project's"
-     echo "web site at http://www.tetgen.berlios.de, unpack the archive"
-     echo "and move the files predicates.cxx, tetgen.cxx and tetgen.h in"
-     echo "the ./contrib/Tetgen subdirectory. Then run ./configure again."
-     echo "Please note that by doing so, you agree with Tetgen's licensing"
-     echo "requirements stated in ./contrib/Tetgen/LICENSE. (Most notably, you"
-     echo "may then only redistribute Gmsh if no compensation is received.)"
-     echo "********************************************************************"
-  fi
-fi
 
-echo "$as_me:$LINENO: checking for ./contrib/MathEval/matheval.cpp" >&5
+    echo "$as_me:$LINENO: checking for ./contrib/MathEval/matheval.cpp" >&5
 echo $ECHO_N "checking for ./contrib/MathEval/matheval.cpp... $ECHO_C" >&6
 if test "${ac_cv_file___contrib_MathEval_matheval_cpp+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -4020,12 +4028,14 @@ else
   MATHEVAL="no"
 fi
 
-if test "x${MATHEVAL}" = "xyes"; then
-  if test "x$enable_matheval" != "xno"; then
-     GMSH_DIRS="${GMSH_DIRS} contrib/MathEval"
-     GMSH_LIBS="${GMSH_LIBS} -lGmshMathEval"
-     FLAGS="-DHAVE_MATH_EVAL ${FLAGS}"
+  if test "x${MATHEVAL}" = "xyes"; then
+    if test "x$enable_matheval" != "xno"; then
+       GMSH_DIRS="${GMSH_DIRS} contrib/MathEval"
+       GMSH_LIBS="${GMSH_LIBS} -lGmshMathEval"
+       FLAGS="-DHAVE_MATH_EVAL ${FLAGS}"
+    fi
   fi
+
 fi
 
 if test "x$enable_gsl" != "xno"; then
