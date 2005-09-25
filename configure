@@ -853,7 +853,7 @@ Optional Features:
   --enable-cygwin         use the Cygwin library on Windows (default=yes)
   --enable-parallel       enable parallel version (default=no)
   --enable-jpeg           enable JPEG support (default=yes)
-  --enable-z              enable ZLIB support (default=yes)
+  --enable-zlib           enable ZLIB support (default=yes)
   --enable-png            enable PNG support (default=yes)
   --enable-contrib        enable contrib packages (default=yes)
   --enable-triangle       compile Triangle if available (default=yes)
@@ -872,7 +872,7 @@ Optional Packages:
                           installed
   --with-png-prefix=PFX   prefix where the PNG library and includes are
                           installed
-  --with-z-prefix=PFX     prefix where the ZLIB library and includes are
+  --with-zlib-prefix=PFX  prefix where the ZLIB library and includes are
                           installed
 
 Some influential environment variables:
@@ -1350,10 +1350,10 @@ if test "${with_png_prefix+set}" = set; then
   PNG_PREFIX=$withval
 fi;
 
-# Check whether --with-z-prefix or --without-z-prefix was given.
-if test "${with_z_prefix+set}" = set; then
-  withval="$with_z_prefix"
-  Z_PREFIX=$withval
+# Check whether --with-zlib-prefix or --without-zlib-prefix was given.
+if test "${with_zlib_prefix+set}" = set; then
+  withval="$with_zlib_prefix"
+  ZLIB_PREFIX=$withval
 fi;
 
 # Check whether --enable-gsl or --disable-gsl was given.
@@ -1381,9 +1381,9 @@ if test "${enable_jpeg+set}" = set; then
   enableval="$enable_jpeg"
 
 fi;
-# Check whether --enable-z or --disable-z was given.
-if test "${enable_z+set}" = set; then
-  enableval="$enable_z"
+# Check whether --enable-zlib or --disable-zlib was given.
+if test "${enable_zlib+set}" = set; then
+  enableval="$enable_zlib"
 
 fi;
 # Check whether --enable-png or --disable-png was given.
@@ -3580,10 +3580,10 @@ fi
     fi
   fi
 
-    Z=""
-  if test "x$enable_z" != "xno"; then
-    if test "x${Z_PREFIX}" != "x"; then
-      LDFLAGS="-L${Z_PREFIX} -L${Z_PREFIX}/lib ${LDFLAGS}"
+    ZLIB=""
+  if test "x$enable_zlib" != "xno"; then
+    if test "x${ZLIB_PREFIX}" != "x"; then
+      LDFLAGS="-L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib ${LDFLAGS}"
     fi
     echo "$as_me:$LINENO: checking for main in -lz" >&5
 echo $ECHO_N "checking for main in -lz... $ECHO_C" >&6
@@ -3644,14 +3644,14 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_z_main" >&5
 echo "${ECHO_T}$ac_cv_lib_z_main" >&6
 if test $ac_cv_lib_z_main = yes; then
-  Z="yes"
+  ZLIB="yes"
 else
-  Z="no"
+  ZLIB="no"
 fi
 
   fi
 
-    if test "x$enable_png" != "xno" -a "x${Z}" = "xyes"; then
+    if test "x$enable_png" != "xno" -a "x${ZLIB}" = "xyes"; then
     if test "x${PNG_PREFIX}" != "x"; then
       LDFLAGS="-L${PNG_PREFIX} -L${PNG_PREFIX}/lib ${LDFLAGS}"
     fi
@@ -3730,13 +3730,13 @@ fi
     fi
   fi
 
-    if test "x${Z}" = "xyes"; then
+    if test "x${ZLIB}" = "xyes"; then
     FLAGS="-DHAVE_LIBZ ${FLAGS}"
-    if test "x${Z_PREFIX}" = "x"; then
+    if test "x${ZLIB_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lz"
     else
-            GMSH_LIBS="${GMSH_LIBS} -L${Z_PREFIX} -L${Z_PREFIX}/lib -lz"
-      INCLS="${INCLS} -I${Z_PREFIX} -I${Z_PREFIX}/include"
+            GMSH_LIBS="${GMSH_LIBS} -L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib -lz"
+      INCLS="${INCLS} -I${ZLIB_PREFIX} -I${ZLIB_PREFIX}/include"
     fi
   fi
 
