@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.398 2005-09-25 15:52:17 geuzaine Exp $
+# $Id: Makefile,v 1.399 2005-09-25 16:09:15 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -161,7 +161,7 @@ source-commercial: source-tree
 	cp -f utils/commercial/license.texi gmsh-${GMSH_VERSION}/doc/texinfo/license.texi
 	cp -f utils/commercial/copying.texi gmsh-${GMSH_VERSION}/doc/texinfo/copying.texi
 	utils/commercial/sanitize.sh gmsh-${GMSH_VERSION}
-	tar zcvf gmsh-${GMSH_VERSION}-source-commercial.tgz gmsh-${GMSH_VERSION}
+	tar zcvf gmsh-${GMSH_VERSION}-source-commercial.tgz --exclude "CVS" gmsh-${GMSH_VERSION}
 
 # Rules to package the binaries
 
