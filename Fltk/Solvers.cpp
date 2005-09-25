@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.39 2005-08-31 21:44:44 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.40 2005-09-25 18:51:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -24,21 +24,12 @@
 
 SolverInfo SINFO[MAXSOLVERS];
 
-#if !defined(WIN32) || defined(__CYGWIN__)
-
 #include "GmshServer.h"
 
 // FIXME: this should be removed (and we should set the socket options
 // so that the addresses can be reused)
 int GmshServer::init = 0;
 int GmshServer::s;
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/poll.h>
-#include <sys/un.h>
-#include <unistd.h>
 
 #include "OpenFile.h"
 #include "GmshUI.h"
@@ -281,13 +272,3 @@ int Solver(int num, char *args)
 
   return 1;
 }
-
-#else // pure windows
-
-int Solver(int num, char *args)
-{
-  Msg(GERROR, "Solver interface not available on Windows without Cygwin");
-  return 1;
-}
-
-#endif

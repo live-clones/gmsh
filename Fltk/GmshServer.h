@@ -39,13 +39,23 @@ int WaitForData(int socket, int num, int pollint, double waitint);
 #if defined(_AIX)
 #include <strings.h>
 #endif
+
+#if !defined(WIN32) || defined(__CYGWIN__)
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/poll.h>
 #include <sys/un.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <netinet/in.h>
+
+#else // pure windows
+
+#include <winsock2.h>
+
+#endif
 
 class GmshServer {
  public:
@@ -74,7 +84,7 @@ class GmshServer {
     int sofar = 0;
     int remaining = bytes;
     do {
-      int len = read(_sock, buf + sofar, remaining);
+      ssize_t len = recv(_sock, buf + sofar, remaining, 0);
       if(len <= 0)
 	return 0;
       sofar += len;
@@ -132,7 +142,9 @@ class GmshServer {
     
     if(_portno < 0){
       // delete the file if it already exists
+#if !defined(WIN32) || defined(__CYGWIN__)
       unlink(_sockname);
+#endif
       
       // make the socket
       s = socket(PF_UNIX, SOCK_STREAM, 0);
@@ -218,8 +230,10 @@ class GmshServer {
   {
     if(_portno < 0){
       // UNIX socket
+#if !defined(WIN32) || defined(__CYGWIN__)
       if(unlink(_sockname) == -1)
 	return -1;  // Impossible to unlink the socket
+#endif
     }
     close(_sock);
     return 0;

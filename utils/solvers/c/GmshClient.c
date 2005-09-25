@@ -1,4 +1,4 @@
-/* $Id: GmshClient.c,v 1.3 2005-01-16 20:56:03 geuzaine Exp $ */
+/* $Id: GmshClient.c,v 1.4 2005-09-25 18:51:27 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
  *
@@ -36,6 +36,9 @@
 #ifdef _AIX
 #include <strings.h>
 #endif
+
+#if !defined(WIN32) || defined(__CYGWIN__)
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -45,17 +48,24 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
+#else /* pure windows */
+
+#include <winsock2.h>
+
+#endif
+
 /* private functions */
 
 static void Socket_SendData(int socket, void *buffer, int bytes)
 {
-  int sofar, remaining, len;
+  ssize_t len;
+  int sofar, remaining;
   char *buf;
   buf = (char *)buffer;
   sofar = 0;
   remaining = bytes;
   do {
-    len = write(socket, buf + sofar, remaining);
+    len = send(socket, buf + sofar, remaining, 0); 
     sofar += len;
     remaining -= len;
   } while(remaining > 0);
@@ -63,18 +73,24 @@ static void Socket_SendData(int socket, void *buffer, int bytes)
 
 static long Socket_GetTime()
 {
+#if !defined(WIN32) || defined(__CYGWIN__)
   struct timeval tp;
   gettimeofday(&tp, (struct timezone *)0);
   return (long)tp.tv_sec * 1000000 + (long)tp.tv_usec;
+#else
+  return 0;
+#endif
 }
 
 static void Socket_Idle(double delay)
 {
+#if !defined(WIN32) || defined(__CYGWIN__)
   long t1 = Socket_GetTime();
   while(1) {
     if(Socket_GetTime() - t1 > 1.e6 * delay)
       break;
   }
+#endif
 }
 
 /* public interface */

@@ -33,6 +33,9 @@
 #ifdef _AIX
 #include <strings.h>
 #endif
+
+#if !defined(WIN32) || defined(__CYGWIN__)
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -41,6 +44,12 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <netdb.h>
+
+#else // pure windows
+
+#include <winsock2.h>
+
+#endif
 
 class GmshClient {
  private:
@@ -63,7 +72,7 @@ class GmshClient {
     int sofar = 0;
     int remaining = bytes;
     do {
-      int len = write(_sock, buf + sofar, remaining);
+      ssize_t len = send(_sock, buf + sofar, remaining, 0); 
       sofar += len;
       remaining -= len;
     } while(remaining > 0);
@@ -77,17 +86,23 @@ class GmshClient {
   }
   long _GetTime()
   {
+#if !defined(WIN32) || defined(__CYGWIN__)
     struct timeval tp;
     gettimeofday(&tp, (struct timezone *)0);
     return (long)tp.tv_sec * 1000000 + (long)tp.tv_usec;
+#else
+    return 0;
+#endif
   }
   void _Idle(double delay)
   {
+#if !defined(WIN32) || defined(__CYGWIN__)
     long t1 = _GetTime();
     while(1) {
       if(_GetTime() - t1 > 1.e6 * delay)
 	break;
     }
+#endif
   }
  public:
   GmshClient() : _sock(0) {}
