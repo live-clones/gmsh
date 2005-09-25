@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.29 2005-09-21 18:52:19 geuzaine Exp $
+$Id: CREDITS,v 1.30 2005-09-25 16:20:43 geuzaine Exp $
 
              Gmsh is copyright (C) 1997-2005
 
@@ -55,21 +55,29 @@ copyright notice appear in all copies and that both that copyright
 notice and this permission notice appear in supporting documentation.
 This software is provided "as is" without express or implied warranty.
 
-The MathEval library (in the contrib/MathEval subdirectory) is based
-on GNU libmatheval, copyright (C) 1999, 2002, 2003 Free Software
-Foundation, Inc.
-
 The colorbar widget (Fltk/Colorbar_Window.cpp) was inspired by code
 from the Vis5d program for visualizing five dimensional gridded data
 sets, copyright (C) 1990-1995, Bill Hibbard, Brian Paul, Dave Santek,
 and Andre Battaiola.
 
+This version of Gmsh may contain code (in the contrib/ANN
+subdirectory) copyright (C) 1997-2005 University of Maryland and Sunil
+Arya and David Mount: check the configuration options.
+
+This version of Gmsh may contain code (in the contrib/MathEval
+subdirectory) based on GNU libmatheval, copyright (C) 1999, 2002, 2003
+Free Software Foundation, Inc.
+
+This version of Gmsh may contain code (in the contrib/Netgen
+subdirectory) copyright (C) 1994-2004, Joachim Sch"oberl: check the
+configuration options.
+
 This version of Gmsh may contain code (in the contrib/Triangle
 subdirectory) copyright (C) 1993, 1995, 1997, 1998, 2002, Jonathan
 Richard Shewchuk: check the configuration options.
 
-This version of Gmsh may contain code (in the contrib/Netgen
-subdirectory) copyright (C) 1994-2004, Joachim Sch"oberl: check the
+This version of Gmsh may contain code (in the contrib/Tetgen
+subdirectory) copyright (C) 2002, 2004 Hang Si: check the
 configuration options.
 
 Special thanks to Bill Spitzak <spitzak at users.sourceforge.net>,

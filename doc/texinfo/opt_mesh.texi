@@ -154,6 +154,16 @@ Version of the `msh' file format to use@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.NbElemsPerRadiusOfCurv
+Number of elements per radius of curvature in the remesher@*
+Default value: @code{5}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MinimumElementSizeFact
+Number of elements per radius of curvature in the remesher@*
+Default value: @code{500}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.NbHexahedra
 Number of hexahedra in the current mesh (read-only)@*
 Default value: @code{0}@*
@@ -229,6 +239,11 @@ Display mesh vertices as solid color dots (0) or 3D spheres (1)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Quality
+Target quality for tetrahedral elements (currently only used by Tetgen)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.QualityInf
 Only display elements whose quality measure is greater than QualityInf@*
 Default value: @code{0}@*
@@ -276,6 +291,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Smoothing
 Number of smoothing steps applied to the final mesh@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Partitioning
+Number of partitions applied to the final mesh@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -327,6 +347,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.VolumeNumbers
 Display volume mesh element numbers?@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.LabelsFrequency
+Labels display frequency?@*
+Default value: @code{100}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Points
