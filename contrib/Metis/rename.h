@@ -8,7 +8,7 @@
  * Started 10/2/97
  * George
  *
- * $Id: rename.h,v 1.1 2005-09-21 17:29:38 geuzaine Exp $
+ * $Id: rename.h,v 1.2 2005-09-26 18:11:23 geuzaine Exp $
  *
  */
 
@@ -410,7 +410,7 @@
 #define RandomPermute			__RandomPermute
 #define ispow2				__ispow2
 #define InitRandom			__InitRandom
-#define log2				__log2
+#define METISlog2				__METISlog2 /* Gmsh: changed from log2 */
 
 
 

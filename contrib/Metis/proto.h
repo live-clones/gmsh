@@ -8,7 +8,7 @@
  * Started 10/19/95
  * George
  *
- * $Id: proto.h,v 1.1 2005-09-21 17:29:38 geuzaine Exp $
+ * $Id: proto.h,v 1.2 2005-09-26 18:11:23 geuzaine Exp $
  *
  */
 
@@ -459,7 +459,7 @@ double drand48();
 void srand48(long);
 int ispow2(int);
 void InitRandom(int);
-//int log2(int);
+int METISlog2(int); /* Gmsh: changed fron log2 */
 
 
 

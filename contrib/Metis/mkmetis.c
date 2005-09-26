@@ -9,7 +9,7 @@
  * Started 7/28/97
  * George
  *
- * $Id: mkmetis.c,v 1.1 2005-09-21 17:29:38 geuzaine Exp $
+ * $Id: mkmetis.c,v 1.2 2005-09-26 18:11:23 geuzaine Exp $
  *
  */
 
@@ -47,7 +47,7 @@ void METIS_mCPartGraphKway(int *nvtxs, int *ncon, idxtype *xadj, idxtype *adjncy
     ctrl.dbglvl = options[OPTION_DBGLVL];
   }
   ctrl.optype = OP_KMETIS;
-  ctrl.CoarsenTo = amax((*nvtxs)/(20*log2(*nparts)), 30*(*nparts));
+  ctrl.CoarsenTo = amax((*nvtxs)/(20*METISlog2(*nparts)), 30*(*nparts)); /* Gmsh: log2 */
 
   ctrl.nmaxvwgt = 1.5/(1.0*ctrl.CoarsenTo);
 

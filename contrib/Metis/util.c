@@ -8,7 +8,7 @@
  * Started 9/28/95
  * George
  *
- * $Id: util.c,v 1.1 2005-09-21 17:29:38 geuzaine Exp $
+ * $Id: util.c,v 1.2 2005-09-26 18:11:23 geuzaine Exp $
  */
 
 #include <metis.h>
@@ -509,7 +509,7 @@ void InitRandom(int seed)
 /*************************************************************************
 * This function returns the log2(x)
 **************************************************************************/
-int log2(int a)
+int METISlog2(int a) /* Gmsh: changed from log2 */
 {
   int i;
 
