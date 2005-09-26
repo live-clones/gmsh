@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.40 2005-09-25 18:51:27 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.41 2005-09-26 19:37:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,8 @@
 #include "Solvers.h"
 
 SolverInfo SINFO[MAXSOLVERS];
+
+#if !defined(WIN32) || defined(__CYGWIN__)
 
 #include "GmshServer.h"
 
@@ -272,3 +274,13 @@ int Solver(int num, char *args)
 
   return 1;
 }
+
+#else // pure windows
+  	 
+int Solver(int num, char *args) 	 
+{ 	 
+  Msg(GERROR, "Solver interface not available on Windows without Cygwin"); 	 
+  return 1; 	 
+} 	 
+
+#endif
