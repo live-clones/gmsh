@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.48 2005-04-05 05:56:48 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.49 2005-10-09 15:58:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -35,11 +35,7 @@ extern GUI *WID;
 extern Mesh M;
 extern Context_T CTX;
 
-void Process_SelectionBuffer(int x, int y, int *n, GLuint * ii, GLuint * jj);
-void Filter_SelectionBuffer(int n, GLuint * typ, GLuint * ient,
-                            Vertex ** thev, Curve ** thec, Surface ** thes,
-                            Mesh * m);
-int check_type(int type, Vertex * v, Curve * c, Surface * s);
+int check_type(int type, Vertex *v, Curve *c, Surface *s);
 
 void Opengl_Window::draw()
 {
@@ -140,7 +136,8 @@ void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
 
 int Opengl_Window::handle(int event)
 {
-  GLuint ii[SELECTION_BUFFER_SIZE], jj[SELECTION_BUFFER_SIZE];
+  int numhits;
+  hit hits[SELECTION_BUFFER_SIZE];
 
   switch (event) {
 
@@ -319,14 +316,14 @@ int Opengl_Window::handle(int event)
     }
     else {
       WID->make_opengl_current();
-      Process_SelectionBuffer(xpos, ypos, &hits, ii, jj);
+      Process_SelectionBuffer(xpos, ypos, &numhits, hits);
       ov = v;
       oc = c;
       os = s;
       v = NULL;
       c = NULL;
       s = NULL;
-      Filter_SelectionBuffer(hits, ii, jj, &v, &c, &s, &M);
+      Filter_SelectionBuffer(WID->selection, numhits, hits, &v, &c, &s, &M);
       if(ov != v || oc != c || os != s) {
         if(check_type(WID->selection, v, c, s))
           WID->g_window->cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.90 2005-09-07 14:36:45 remacle Exp $
+// $Id: Geom.cpp,v 1.91 2005-10-09 15:58:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -683,7 +683,7 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
   char Message[256], temp[256];
 
   if(permanent){
-    // we want to draw incrementally (in-between to "Draw()" calls):
+    // we want to draw incrementally (in-between to "Draw()" calls!):
     // we need to make sure that the opengl context is set correctly
     SetOpenglContext();
   }
@@ -702,6 +702,8 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
     if(permanent){
       c->ipar[3] = 1;
       Draw_Curve(&c,NULL);
+      CTX.mesh.changed = 1; // a bit brutal, but the simplest solution
+      Draw_Mesh_Curve(&c,NULL);
     }
     else{
       if(c->beg && c->end)
@@ -714,6 +716,8 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
     if(permanent){
       s->ipar[4] = 1;
       Draw_Surface(&s,NULL);
+      CTX.mesh.changed = 1; // a bit brutal, but the simplest solution
+      Draw_Mesh_Surface(&s,NULL);
     }
     else{
       int nbg = List_Nbr(s->Generatrices);
@@ -774,23 +778,28 @@ void HighlightEntityNum(int v, int c, int s, int permanent)
 
 void ZeroHighlightPoint(void *a, void *b)
 {
-  Vertex *v;
-  v = *(Vertex **) a;
+  Vertex *v = *(Vertex **) a;
   v->Frozen = 0;
 }
 
 void ZeroHighlightCurve(void *a, void *b)
 {
-  Curve *c;
-  c = *(Curve **) a;
+  Curve *c = *(Curve **) a;
   c->ipar[3] = 0;
+  // the curve colors might have changed (and in complicated ways,
+  // e.g., if we color by partition, so we cannot use the
+  // global_change_color trick)
+  CTX.mesh.changed = 1;
 }
 
 void ZeroHighlightSurface(void *a, void *b)
 {
-  Surface *s;
-  s = *(Surface **) a;
+  Surface *s = *(Surface **) a;
   s->ipar[4] = 0;
+  // the surface colors might have changed (and in complicated ways,
+  // e.g., if we color by partition, so we cannot use the
+  // global_change_color trick)
+  CTX.mesh.changed = 1;
 }
 
 void ZeroHighlight(Mesh * m)

@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.52 2005-04-19 01:09:33 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.53 2005-10-09 15:58:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -33,10 +33,6 @@ extern GUI *WID;
 extern Mesh M;
 extern Context_T CTX;
 
-void Process_SelectionBuffer(int x, int y, int *n, GLuint * ii, GLuint * jj);
-void Filter_SelectionBuffer(int n, GLuint * typ, GLuint * ient,
-                            Vertex ** thev, Curve ** thec, Surface ** thes,
-                            Mesh * m);
 // Draw specialization
 
 void InitOpengl(void)
@@ -208,8 +204,8 @@ int check_type(int type, Vertex * v, Curve * c, Surface * s)
 
 char SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
 {
-  int hits;
-  GLuint ii[SELECTION_BUFFER_SIZE], jj[SELECTION_BUFFER_SIZE];
+  int numhits;
+  hit hits[SELECTION_BUFFER_SIZE];
 
   WID->g_opengl_window->take_focus(); // force keyboard focus in GL window 
 
@@ -227,12 +223,12 @@ char SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
     WID->wait();
     if(WID->quit_selection) {
       WID->quit_selection = 0;
-      WID->selection = 0;
+      WID->selection = ENT_NONE;
       return 'q';
     }
     if(WID->end_selection) {
       WID->end_selection = 0;
-      WID->selection = 0;
+      WID->selection = ENT_NONE;
       return 'e';
     }
     if(WID->undo_selection) {
@@ -241,15 +237,14 @@ char SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
     }
     if(WID->try_selection) {
       WID->try_selection = 0;
-      if(type == ENT_NONE){ // just report the mouse click
+      if(WID->selection == ENT_NONE){ // just report the mouse click
 	return 'c';
       }
       else{
-	Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &hits, ii, jj);
-	Filter_SelectionBuffer(hits, ii, jj, v, c, s, &M);
-	if(check_type(type, *v, *c, *s)) {
+	Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &numhits, hits);
+	if(Filter_SelectionBuffer(WID->selection, numhits, hits, v, c, s, &M)){
 	  HighlightEntity(*v, *c, *s, 1);
-	  WID->selection = 0;
+	  WID->selection = ENT_NONE;
 	  return 'l';
 	}
       }

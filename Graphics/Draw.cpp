@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.77 2005-03-20 20:45:11 geuzaine Exp $
+// $Id: Draw.cpp,v 1.78 2005-10-09 15:58:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -285,7 +285,7 @@ void InitPosition(void)
 
 // Entity selection
 
-void Process_SelectionBuffer(int x, int y, int *n, GLuint * ii, GLuint * jj)
+void Process_SelectionBuffer(int x, int y, int *n, hit *hits)
 {
   GLuint selectBuf[SELECTION_BUFFER_SIZE];
 
@@ -295,63 +295,90 @@ void Process_SelectionBuffer(int x, int y, int *n, GLuint * ii, GLuint * jj)
   CTX.render_mode = GMSH_SELECT;
 
   glInitNames();
-  glPushName(0);
+  glPushName(0); // init stack with 0 (=type=point). This will be
+		 // overwritten with the actual entity type everytime
+		 // an entity is drawn
 
   glPushMatrix();
   Orthogonalize(x, y);
   Draw_Mesh(&M);
   glPopMatrix();
 
-  GLint hits = glRenderMode(GL_RENDER);
+  GLint numhits = glRenderMode(GL_RENDER);
   CTX.render_mode = GMSH_RENDER;
 
-  if(hits < 0)
-    return;     // Selection Buffer Overflow
+  if(numhits < 0){
+    // selection buffer overflow
+    *n = 0;
+    return;
+  }
 
   GLint *ptr = (GLint *) selectBuf;
 
-  for(int i = 0; i < hits; i++) {
-    GLint names = *ptr;
+  for(int i = 0; i < numhits; i++) {
+    GLint names = *ptr; // number of names in the name stack (should
+			// always be 2 in Gmsh: the first is the type
+			// of the entity, the second the entity
+			// number)
     ptr++;
+    GLint mindepth = *ptr;
     ptr++;
+    GLint maxdepth = *ptr;
     ptr++;
+    hits[i].depth = (mindepth+maxdepth)/2;
     for(int j = 0; j < names; j++) {
       if(j == 0)
-        ii[i] = *ptr;
+        hits[i].type = *ptr; // type of entity (0, 1, 2 for point, line, surf)
       else if(j == 1)
-        jj[i] = *ptr;
+        hits[i].ient = *ptr; // num of entity
       ptr++;
     }
   }
-  *n = hits;
+  *n = numhits;
 }
 
-void Filter_SelectionBuffer(int n, GLuint * typ, GLuint * ient,
-                            Vertex ** thev, Curve ** thec, Surface ** thes,
-                            Mesh * m)
+int fcmp_hit_depth(const void *a, const void *b)
 {
-  GLuint typmin = 4;
+  return ((hit*)a)->depth - ((hit*)b)->depth;
+}
+
+int Filter_SelectionBuffer(int type, int n, hit *hits, 
+			   Vertex **thev, Curve **thec, Surface **thes, Mesh *m)
+{
+  // If type == ENT_NONE, return the closest entity of "lowest
+  // dimension" (point < line < surface < volume). Otherwise, return
+  // the closest entity of type "type"
+
+  unsigned int typmin = 4;
 
   for(int i = 0; i < n; i++) {
-    if(typ[i] < typmin)
-      typmin = typ[i];
+    if(hits[i].type < typmin)
+      typmin = hits[i].type;
   }
 
+  // sort hits to get closest entities first
+  qsort(hits, n, sizeof(hit), fcmp_hit_depth);
+
   for(int i = 0; i < n; i++) {
-    if(typ[i] == typmin) {
-      switch (typ[i]) {
+    if((type == ENT_NONE && hits[i].type == typmin) ||
+       (type == ENT_POINT && hits[i].type == 0) ||
+       (type == ENT_LINE && hits[i].type == 1) ||
+       (type == ENT_SURFACE && hits[i].type == 2)){
+      switch (hits[i].type) {
       case 0:
-	*thev = FindPoint(ient[i], m);
-        break;
+	*thev = FindPoint(hits[i].ient, m);
+        return 1;
       case 1:
-	*thec = FindCurve(ient[i], m);
-        break;
+	*thec = FindCurve(hits[i].ient, m);
+	return 1;
       case 2:
-	*thes = FindSurface(ient[i], m);
-        break;
+	*thes = FindSurface(hits[i].ient, m);
+	return 1;
       }
     }
   }
+  
+  return 0;
 }
 
 // Takes a cursor position in window coordinates and returns the line

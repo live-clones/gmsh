@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.457 2005-09-21 15:03:46 remacle Exp $
+// $Id: GUI.cpp,v 1.458 2005-10-09 15:58:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -324,7 +324,7 @@ Context_Item menu_mesh[] = {
   { "1D",     (Fl_Callback *)mesh_1d_cb } ,
   { "2D",     (Fl_Callback *)mesh_2d_cb } , 
   { "3D",     (Fl_Callback *)mesh_3d_cb } , 
-  { "remesh", (Fl_Callback *)mesh_remesh } , 
+  { "Remesh", (Fl_Callback *)mesh_remesh } , 
   { "First order",  (Fl_Callback *)mesh_degree_cb, (void*)1 } , 
   { "Second order", (Fl_Callback *)mesh_degree_cb, (void*)2 } , 
 #if defined(HAVE_NETGEN)
@@ -831,6 +831,10 @@ GUI::GUI(int argc, char **argv)
   // initialize on-screen message buffer
   onscreen_buffer[0][0] = '\0';
   onscreen_buffer[1][0] = '\0';
+
+  // initialize selection bits
+  selection = ENT_NONE;
+  try_selection = quit_selection = end_selection = undo_selection = 0;
 
   // set X display
   if(strlen(CTX.display))

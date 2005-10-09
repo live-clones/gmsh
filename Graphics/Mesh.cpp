@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.137 2005-08-09 23:39:42 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.138 2005-10-09 15:58:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -162,11 +162,11 @@ void Draw_Mesh(Mesh * M)
       glDisable((GLenum)(GL_CLIP_PLANE0 + i));
   }
 
-  // if we're in selection mode, we're done
-
-  if(CTX.render_mode == GMSH_SELECT)
-    return;
-
+  // We used to be able to exit here when in SELECT mode. Since we
+  // also allow to select mesh entities now, we cannot anymore. Not
+  // sure what we should do eventually
+  //if(CTX.render_mode == GMSH_SELECT) return;
+  
   // draw the bounding box if we asked for it and we have a geometry
   // or a mesh, or if we are in fast redraw mode and there is no
   // geometry but there is a mesh
@@ -396,6 +396,11 @@ void Draw_Mesh_Surface(void *a, void *b)
   if(!(s->Visible & VIS_MESH))
     return;
 
+  if(CTX.render_mode == GMSH_SELECT) {
+    glLoadName(2);
+    glPushName(s->Num);
+  }
+
   if (CTX.mesh.surfaces_num) {
     int numLabels = Tree_Nbr(s->Simplexes) + Tree_Nbr(s->SimplexesBase) 
       + Tree_Nbr(s->Quadrangles);
@@ -467,6 +472,10 @@ void Draw_Mesh_Surface(void *a, void *b)
     Tree_Action(s->Quadrangles, Draw_Mesh_Quadrangle);
   }
 
+  if(CTX.render_mode == GMSH_SELECT) {
+    glPopName();
+  }
+
   theSurface = NULL;
 }
 
@@ -487,6 +496,11 @@ void Draw_Mesh_Curve(void *a, void *b)
     return;
   if(!(c->Visible & VIS_MESH))
     return;
+
+  if(CTX.render_mode == GMSH_SELECT) {
+    glLoadName(1);
+    glPushName(c->Num);
+  }
 
   if (CTX.mesh.lines_num) {
     int numLabels = Tree_Nbr(c->Simplexes) + Tree_Nbr(c->SimplexesBase);
@@ -524,6 +538,10 @@ void Draw_Mesh_Curve(void *a, void *b)
     thePhysical = getFirstPhysical(MSH_PHYSICAL_LINE, c->Num);
     Tree_Action(c->Simplexes, Draw_Mesh_Line);
     Tree_Action(c->SimplexesBase, Draw_Mesh_Line);
+  }
+
+  if(CTX.render_mode == GMSH_SELECT) {
+    glPopName();
   }
 
   theCurve = NULL;
@@ -626,7 +644,9 @@ void Draw_Mesh_Line(void *a, void *b)
   }
 
   unsigned int col;
-  if(theColor.type)
+  if(theCurve && theCurve->ipar[3])
+    col = CTX.color.geom.line_sel;
+  else if(theColor.type)
     col = theColor.mesh;
   else if(CTX.mesh.color_carousel == 1)
     col = CTX.color.mesh.carousel[abs(s->iEnt % 20)];
@@ -902,7 +922,9 @@ void Draw_Mesh_Triangle(void *a, void *b)
     return;
 
   unsigned int col;
-  if(theColor.type)
+  if(theSurface && theSurface->ipar[4])
+    col = CTX.color.geom.surface_sel;
+  else if(theColor.type)
     col = theColor.mesh;
   else if(CTX.mesh.color_carousel == 1)
     col = CTX.color.mesh.carousel[abs(s->iEnt % 20)];
@@ -1080,7 +1102,9 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
     return;
 
   unsigned int col;
-  if(theColor.type)
+  if(theSurface && theSurface->ipar[4])
+    col = CTX.color.geom.surface_sel;
+  else if(theColor.type)
     col = theColor.mesh;
   else if(CTX.mesh.color_carousel == 1)
     col = CTX.color.mesh.carousel[abs(q->iEnt % 20)];

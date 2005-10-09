@@ -38,6 +38,14 @@ void Orthogonalize(int x, int y);
 void ClearOpengl(void);
 void SetOpenglContext(void);
 
+typedef struct{
+  unsigned int type, ient, depth;
+} hit;
+
+void Process_SelectionBuffer(int x, int y, int *n, hit *hits);
+int Filter_SelectionBuffer(int type, int n, hit *hits, 
+			    Vertex **thev, Curve **thec, Surface **thes, Mesh *m);
+
 void unproject(double x, double y, double p[3], double d[3]);
 void Viewport2World(double win[3], double xyz[3]);
 void World2Viewport(double xyz[3], double win[3]);

@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.6 2005-05-21 04:55:59 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.7 2005-10-09 15:58:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -79,6 +79,20 @@ void VertexArray::add(float x, float y, float z, unsigned int col)
   List_Add(colors, &g);
   List_Add(colors, &b);
   List_Add(colors, &a);
+}
+
+void VertexArray::global_change_color(unsigned int col)
+{
+  unsigned char r = UNPACK_RED(col);
+  unsigned char g = UNPACK_GREEN(col);
+  unsigned char b = UNPACK_BLUE(col);
+  unsigned char a = UNPACK_ALPHA(col);
+  for(int i = 0; i < List_Nbr(colors); i+= 4){
+    List_Write(colors, i, &r);
+    List_Write(colors, i, &g);
+    List_Write(colors, i, &b);
+    List_Write(colors, i, &a);
+  }
 }
 
 static double theeye[3];
