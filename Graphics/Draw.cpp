@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.78 2005-10-09 15:58:41 geuzaine Exp $
+// $Id: Draw.cpp,v 1.79 2005-10-09 18:00:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -328,7 +328,8 @@ void Process_SelectionBuffer(int x, int y, int *n, hit *hits)
     hits[i].depth = (mindepth+maxdepth)/2;
     for(int j = 0; j < names; j++) {
       if(j == 0)
-        hits[i].type = *ptr; // type of entity (0, 1, 2 for point, line, surf)
+        hits[i].type = *ptr; // type of entity (0, 1, 2, ... for
+			     // point, line, surf, ...)
       else if(j == 1)
         hits[i].ient = *ptr; // num of entity
       ptr++;

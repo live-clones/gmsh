@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.54 2005-10-09 17:45:37 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.55 2005-10-09 18:00:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -194,13 +194,6 @@ void Draw_OnScreenMessages()
 }
 
 // Select entity routines
-
-int check_type(int type, Vertex * v, Curve * c, Surface * s)
-{
-  return ((type == ENT_POINT && v) ||
-          (type == ENT_LINE && c) || 
-	  (type == ENT_SURFACE && s));
-}
 
 char SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
 {

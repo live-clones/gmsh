@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.49 2005-10-09 15:58:41 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.50 2005-10-09 18:00:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -34,8 +34,6 @@
 extern GUI *WID;
 extern Mesh M;
 extern Context_T CTX;
-
-int check_type(int type, Vertex *v, Curve *c, Surface *s);
 
 void Opengl_Window::draw()
 {
@@ -325,7 +323,9 @@ int Opengl_Window::handle(int event)
       s = NULL;
       Filter_SelectionBuffer(WID->selection, numhits, hits, &v, &c, &s, &M);
       if(ov != v || oc != c || os != s) {
-        if(check_type(WID->selection, v, c, s))
+        if((WID->selection == ENT_POINT && v) ||
+	   (WID->selection == ENT_LINE && c) || 
+	   (WID->selection == ENT_SURFACE && s))
           WID->g_window->cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
         else
           WID->g_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);

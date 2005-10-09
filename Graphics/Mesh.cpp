@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.139 2005-10-09 17:45:37 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.140 2005-10-09 18:00:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -307,6 +307,8 @@ void Draw_Mesh(Mesh * M)
       glDisable((GLenum)(GL_CLIP_PLANE0 + i));
   }
 
+  if(CTX.render_mode == GMSH_SELECT) return;
+  
   // draw any plugin-specific stuff
   
   if(CTX.post.plugin_draw_function)
