@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.91 2005-10-09 15:58:41 geuzaine Exp $
+// $Id: Geom.cpp,v 1.92 2005-10-09 17:45:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -123,7 +123,7 @@ void Draw_Curve(void *a, void *b)
     glPushName(c->Num);
   }
 
-  if(c->ipar[3]) {
+  if(c->ipar[3] > 0) {
     glLineWidth(CTX.geom.line_sel_width);
     gl2psLineWidth(CTX.geom.line_sel_width * CTX.print.eps_line_width_factor);
     glColor4ubv((GLubyte *) & CTX.color.geom.line_sel);
@@ -170,7 +170,7 @@ void Draw_Curve(void *a, void *b)
 	    x[1] = e->p2->X;
 	    y[1] = e->p2->Y;
 	    z[1] = e->p2->Z;
-	    Draw_Cylinder(c->ipar[3] ? CTX.geom.line_sel_width : CTX.geom.line_width,
+	    Draw_Cylinder(c->ipar[3] > 0 ? CTX.geom.line_sel_width : CTX.geom.line_width,
 			  x, y, z, CTX.geom.light);
 	}
 	++it;
@@ -190,7 +190,7 @@ void Draw_Curve(void *a, void *b)
 	  x[1] = dv.Pos.X;
 	  y[1] = dv.Pos.Y;
 	  z[1] = dv.Pos.Z;
-	  Draw_Cylinder(c->ipar[3] ? CTX.geom.line_sel_width : CTX.geom.line_width,
+	  Draw_Cylinder(c->ipar[3] > 0 ? CTX.geom.line_sel_width : CTX.geom.line_width,
 			x, y, z, CTX.geom.light);
 	}
 	if(CTX.geom.line_type == 2) {
@@ -622,7 +622,7 @@ void Draw_Surface(void *a, void *b)
     glPushName(s->Num);
   }
 
-  if(s->ipar[4]) {
+  if(s->ipar[4] > 0) {
     glLineWidth(CTX.geom.line_sel_width / 2.);
     gl2psLineWidth(CTX.geom.line_sel_width / 2. *
 		   CTX.print.eps_line_width_factor);
@@ -682,16 +682,19 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
   Curve *cc;
   char Message[256], temp[256];
 
-  if(permanent){
-    // we want to draw incrementally (in-between to "Draw()" calls!):
-    // we need to make sure that the opengl context is set correctly
-    SetOpenglContext();
-  }
+  // Note: in Gmsh < 1.61, we used to draw permanent highlights (the
+  // "red" selected lines, etc.) using incrmental drawing, i.e., by
+  // drawing "over" the current picture in-between Draw() calls. This
+  // was fine for simple overlays on points and lines (that we could
+  // draw with a slightly larger width so that they would cover the
+  // old ones), but it does not work well when drawing surfaces,
+  // post-pro views, etc. And since real cross-platform overlays are
+  // unmanageable, the best solution is actually to redraw the whole
+  // scene. This is the approach we follow now.
 
   if(v) {
     if(permanent){
       v->Frozen = 1;
-      Draw_Geo_Point(&v,NULL);
     }
     else{
       Msg(STATUS1N, "Point %d {%.5g,%.5g,%.5g} (%.5g)", v->Num, v->Pos.X,
@@ -700,10 +703,7 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
   }
   else if(c) {
     if(permanent){
-      c->ipar[3] = 1;
-      Draw_Curve(&c,NULL);
-      CTX.mesh.changed = 1; // a bit brutal, but the simplest solution
-      Draw_Mesh_Curve(&c,NULL);
+      c->ipar[3] = 2;
     }
     else{
       if(c->beg && c->end)
@@ -714,10 +714,7 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
   }
   else if(s) {
     if(permanent){
-      s->ipar[4] = 1;
-      Draw_Surface(&s,NULL);
-      CTX.mesh.changed = 1; // a bit brutal, but the simplest solution
-      Draw_Mesh_Surface(&s,NULL);
+      s->ipar[4] = 2;
     }
     else{
       int nbg = List_Nbr(s->Generatrices);
@@ -755,6 +752,7 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
     if(!permanent)
       Msg(STATUS1N, " ");
   }
+
 }
 
 void HighlightEntityNum(int v, int c, int s, int permanent)
@@ -785,21 +783,13 @@ void ZeroHighlightPoint(void *a, void *b)
 void ZeroHighlightCurve(void *a, void *b)
 {
   Curve *c = *(Curve **) a;
-  c->ipar[3] = 0;
-  // the curve colors might have changed (and in complicated ways,
-  // e.g., if we color by partition, so we cannot use the
-  // global_change_color trick)
-  CTX.mesh.changed = 1;
+  c->ipar[3] = -2;
 }
 
 void ZeroHighlightSurface(void *a, void *b)
 {
   Surface *s = *(Surface **) a;
-  s->ipar[4] = 0;
-  // the surface colors might have changed (and in complicated ways,
-  // e.g., if we color by partition, so we cannot use the
-  // global_change_color trick)
-  CTX.mesh.changed = 1;
+  s->ipar[4] = -2;
 }
 
 void ZeroHighlight(Mesh * m)

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.258 2005-09-22 15:20:38 remacle Exp $
+// $Id: Options.cpp,v 1.259 2005-10-09 17:45:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -6778,8 +6778,10 @@ unsigned int opt_geometry_color_points_select(OPT_ARGS_COL)
 
 unsigned int opt_geometry_color_lines_select(OPT_ARGS_COL)
 {
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
+    if(CTX.color.geom.line_sel != val) CTX.mesh.changed = 1;
     CTX.color.geom.line_sel = val;
+  }
 #if defined(HAVE_FLTK)
   CCC(CTX.color.geom.line_sel, WID->geo_col[5]);
 #endif
@@ -6788,8 +6790,10 @@ unsigned int opt_geometry_color_lines_select(OPT_ARGS_COL)
 
 unsigned int opt_geometry_color_surfaces_select(OPT_ARGS_COL)
 {
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
+    if(CTX.color.geom.surface_sel != val) CTX.mesh.changed = 1;
     CTX.color.geom.surface_sel = val;
+  }
 #if defined(HAVE_FLTK)
   CCC(CTX.color.geom.surface_sel, WID->geo_col[6]);
 #endif

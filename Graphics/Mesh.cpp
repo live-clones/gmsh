@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.138 2005-10-09 15:58:41 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.139 2005-10-09 17:45:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -425,7 +425,10 @@ void Draw_Mesh_Surface(void *a, void *b)
   }
 
   if(CTX.mesh.vertex_arrays){
-    if(CTX.mesh.changed){
+    if(CTX.mesh.changed || s->ipar[4] == 2 || s->ipar[4] == -2){
+      if(s->ipar[4] == 2) s->ipar[4] = 1;
+      if(s->ipar[4] == -2) s->ipar[4] = -1;
+
       Msg(DEBUG, "regenerate surface mesh vertex arrays");
       thePhysical = getFirstPhysical(MSH_PHYSICAL_SURFACE, s->Num);
       // triangles
@@ -514,7 +517,10 @@ void Draw_Mesh_Curve(void *a, void *b)
   theColor = c->Color;
 
   if(CTX.mesh.vertex_arrays){
-    if(CTX.mesh.changed){
+    if(CTX.mesh.changed || c->ipar[3] == 2 || c->ipar[3] == -2){
+      if(c->ipar[3] == 2) c->ipar[3] = 1;
+      if(c->ipar[3] == -2) c->ipar[3] = -1;
+
       Msg(DEBUG, "regenerate curve mesh vertex array");
       thePhysical = getFirstPhysical(MSH_PHYSICAL_LINE, c->Num);
       if(c->LinVertexArray) delete c->LinVertexArray;
@@ -644,7 +650,7 @@ void Draw_Mesh_Line(void *a, void *b)
   }
 
   unsigned int col;
-  if(theCurve && theCurve->ipar[3])
+  if(theCurve && theCurve->ipar[3] > 0)
     col = CTX.color.geom.line_sel;
   else if(theColor.type)
     col = theColor.mesh;
@@ -922,7 +928,7 @@ void Draw_Mesh_Triangle(void *a, void *b)
     return;
 
   unsigned int col;
-  if(theSurface && theSurface->ipar[4])
+  if(theSurface && theSurface->ipar[4] > 0)
     col = CTX.color.geom.surface_sel;
   else if(theColor.type)
     col = theColor.mesh;
@@ -1102,7 +1108,7 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
     return;
 
   unsigned int col;
-  if(theSurface && theSurface->ipar[4])
+  if(theSurface && theSurface->ipar[4] > 0)
     col = CTX.color.geom.surface_sel;
   else if(theColor.type)
     col = theColor.mesh;

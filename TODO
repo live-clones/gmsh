@@ -1,17 +1,9 @@
-$Id: TODO,v 1.101 2005-10-09 15:58:40 geuzaine Exp $
+$Id: TODO,v 1.102 2005-10-09 17:45:37 geuzaine Exp $
 
 ********************************************************************
 
 Add a way to select multiple entities using a lasso + add a way to
 remove entities from a selection by clicking on them
-
-********************************************************************
-
-We should fine-grain CTX.mesh.changed so that we can keep track of
-changes surface by surface, volume by volume, etc. This would speed up
-mesh selection quite a bit on large models (since we would only have
-to regenerate the vertex array for the surface/volume that has
-changed, and not everything)
 
 ********************************************************************
 

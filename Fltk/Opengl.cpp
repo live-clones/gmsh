@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.53 2005-10-09 15:58:41 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.54 2005-10-09 17:45:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -244,6 +244,7 @@ char SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
 	Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &numhits, hits);
 	if(Filter_SelectionBuffer(WID->selection, numhits, hits, v, c, s, &M)){
 	  HighlightEntity(*v, *c, *s, 1);
+	  Draw();
 	  WID->selection = ENT_NONE;
 	  return 'l';
 	}
