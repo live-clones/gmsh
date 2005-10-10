@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.92 2005-10-09 17:45:37 geuzaine Exp $
+// $Id: Geom.cpp,v 1.93 2005-10-10 16:16:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -683,7 +683,7 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
   char Message[256], temp[256];
 
   // Note: in Gmsh < 1.61, we used to draw permanent highlights (the
-  // "red" selected lines, etc.) using incrmental drawing, i.e., by
+  // "red" selected lines, etc.) using incremental drawing, i.e., by
   // drawing "over" the current picture in-between Draw() calls. This
   // was fine for simple overlays on points and lines (that we could
   // draw with a slightly larger width so that they would cover the

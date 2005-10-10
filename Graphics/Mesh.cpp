@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.140 2005-10-09 18:00:54 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.141 2005-10-10 16:16:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -80,7 +80,7 @@ void draw_polygon_2d(double r, double g, double b, int n,
 int getFirstPhysical(int type, int num)
 {
   // If we visualize the mesh by coloring the physical entities, or if
-  // we ask to display physical enyity labels on elements, this
+  // we ask to display physical entity labels on elements, this
   // routine returns the number of the first physical entity of type
   // "type" that contains the elementary entity "num"
   if(CTX.mesh.color_carousel == 2 || CTX.mesh.label_type == 2){
