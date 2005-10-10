@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.64 2005-08-26 18:58:59 stainier Exp $
+// $Id: Print_Mesh.cpp,v 1.65 2005-10-10 19:33:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -728,100 +728,64 @@ static void _unv_print_record(int num, int fetyp, int geo, int n, int nsup,
 static void _unv_process_1D_elements(Mesh *m)
 {
   List_T *ListCurves = Tree2List(m->Curves);
-  List_T *AllCurves = List_Create(2, 2, sizeof(Surface *));
-  List_T *ListSurfaces = Tree2List(m->Surfaces);
   List_T *Elements;
   SimplexBase *sx;
   Curve *c;
-  Surface *surf;
-
-  for(int i = 0; i < List_Nbr(ListSurfaces); i++) {
-    List_Read(ListSurfaces, i, &surf);
-    for(int j = 0; j < List_Nbr(surf->Generatrices); j++) {
-      List_Read(surf->Generatrices, j, &c);
-      if(Tree_Nbr(c->Simplexes) || Tree_Nbr(c->SimplexesBase))
-        List_Add(AllCurves, &c);
-      c = FindCurve(-c->Num, m);
-      if(Tree_Nbr(c->Simplexes) || Tree_Nbr(c->SimplexesBase))
-        List_Add(AllCurves, &c);
-    }
-  }
 
   for(int i = 0; i < List_Nbr(ListCurves); i++) {
     List_Read(ListCurves, i, &c);
-    if(!List_Search(AllCurves, &c, compareCurve)) {
-      for(int simtype = 0; simtype < 2; simtype ++){
-	Elements = (!simtype) ? Tree2List(c->Simplexes) : Tree2List(c->SimplexesBase);
-	for(int j = 0; j < List_Nbr(Elements); j++) {
-	  List_Read(Elements, j, &sx);
-	  if(sx->VSUP)
-	    _unv_print_record(sx->Num, BEAM2, c->Num, 2, 2, &sx->V[0], sx->VSUP);
-	  else 
-	    _unv_print_record(sx->Num, BEAM, c->Num, 2, 0, &sx->V[0], NULL);
-	}
-	List_Delete(Elements);
+    for(int simtype = 0; simtype < 2; simtype ++){
+      Elements = (!simtype) ? Tree2List(c->Simplexes) : Tree2List(c->SimplexesBase);
+      for(int j = 0; j < List_Nbr(Elements); j++) {
+	List_Read(Elements, j, &sx);
+	if(sx->VSUP)
+	  _unv_print_record(sx->Num, BEAM2, c->Num, 2, 2, &sx->V[0], sx->VSUP);
+	else 
+	  _unv_print_record(sx->Num, BEAM, c->Num, 2, 0, &sx->V[0], NULL);
       }
+      List_Delete(Elements);
     }
   }
 
-  List_Delete(AllCurves);
-  List_Delete(ListSurfaces);
   List_Delete(ListCurves);
 }
 
 static void _unv_process_2D_elements(Mesh *m)
 {
   List_T *ListSurfaces = Tree2List(m->Surfaces);
-  List_T *AllSurfaces = List_Create(2, 2, sizeof(Surface *));
-  List_T *ListVolumes = Tree2List(m->Volumes);
   List_T *Elements;
-  Volume *vol;
   Surface *s;
   SimplexBase *sx;
   Quadrangle *qx;
 
-  for(int i = 0; i < List_Nbr(ListVolumes); i++) {
-    List_Read(ListVolumes, i, &vol);
-    for(int j = 0; j < List_Nbr(vol->Surfaces); j++) {
-      List_Read(vol->Surfaces, j, &s);
-      if(Tree_Nbr(s->Simplexes) || Tree_Nbr(s->SimplexesBase) ||
-	 Tree_Nbr(s->Quadrangles))
-        List_Add(AllSurfaces, &s);
-    }
-  }
-
   for(int i = 0; i < List_Nbr(ListSurfaces); i++) {
     List_Read(ListSurfaces, i, &s);
-    if(!List_Search(AllSurfaces, &s, compareSurface)) {
       
-      // triangles
-      for(int simtype = 0; simtype < 2; simtype++){
-	Elements = (!simtype) ? Tree2List(s->Simplexes) : Tree2List(s->SimplexesBase);
-	for(int j = 0; j < List_Nbr(Elements); j++) {
-	  List_Read(Elements, j, &sx);
-	  if(sx->VSUP)
-	    _unv_print_record(abs(sx->Num), THINSHLL, s->Num, 3, 3, &sx->V[0], sx->VSUP);
-	  else
-	    _unv_print_record(abs(sx->Num), THINSHLL, s->Num, 3, 0, &sx->V[0], NULL);
-	}
-	List_Delete(Elements);
-      }
-
-      // quadrangles
-      Elements = Tree2List(s->Quadrangles);
+    // triangles
+    for(int simtype = 0; simtype < 2; simtype++){
+      Elements = (!simtype) ? Tree2List(s->Simplexes) : Tree2List(s->SimplexesBase);
       for(int j = 0; j < List_Nbr(Elements); j++) {
-        List_Read(Elements, j, &qx);
-	if(qx->VSUP)
-	  _unv_print_record(abs(qx->Num), QUAD, s->Num, 4, 4+1, &qx->V[0], qx->VSUP);
+	List_Read(Elements, j, &sx);
+	if(sx->VSUP)
+	  _unv_print_record(abs(sx->Num), THINSHLL, s->Num, 3, 3, &sx->V[0], sx->VSUP);
 	else
-	  _unv_print_record(abs(qx->Num), QUAD2, s->Num, 4, 0, &qx->V[0], NULL);
+	  _unv_print_record(abs(sx->Num), THINSHLL, s->Num, 3, 0, &sx->V[0], NULL);
       }
       List_Delete(Elements);
     }
+    
+    // quadrangles
+    Elements = Tree2List(s->Quadrangles);
+    for(int j = 0; j < List_Nbr(Elements); j++) {
+      List_Read(Elements, j, &qx);
+      if(qx->VSUP)
+	_unv_print_record(abs(qx->Num), QUAD, s->Num, 4, 4+1, &qx->V[0], qx->VSUP);
+      else
+	_unv_print_record(abs(qx->Num), QUAD2, s->Num, 4, 0, &qx->V[0], NULL);
+    }
+    List_Delete(Elements);
   }
   List_Delete(ListSurfaces);
-  List_Delete(ListVolumes);
-  List_Delete(AllSurfaces);
 }
 
 static void _unv_process_3D_elements(Mesh *m)
@@ -1014,7 +978,7 @@ void Print_Mesh_UNV(Mesh *M, FILE *fp)
   ELEMENT_ID = 1;
   _unv_process_3D_elements(M);
   _unv_process_2D_elements(M);
-  if(0) _unv_process_1D_elements(M);
+  // _unv_process_1D_elements(M);
   fprintf(UNVFILE, "%6d\n", -1);
   _unv_process_groups(M);
 }
