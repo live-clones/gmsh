@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.371 2005-10-09 17:45:37 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.372 2005-10-14 19:26:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -207,10 +207,14 @@ void activate_cb(CALLBACK_ARGS)
     if(WID->view_choice[7]->value() == 2){
       WID->view_value[31]->activate();
       WID->view_value[32]->activate();
+      WID->view_push_butt[1]->activate();
+      WID->view_push_butt[2]->activate();
     }
     else {
       WID->view_value[31]->deactivate();
       WID->view_value[32]->deactivate();
+      WID->view_push_butt[1]->deactivate();
+      WID->view_push_butt[2]->deactivate();
     }
   }
   else if(!strcmp(str, "general_transform")){
@@ -3629,6 +3633,18 @@ void view_options_timestep_incr_cb(CALLBACK_ARGS)
     }
   }
   Draw();
+}
+
+void view_options_custom_set_cb(CALLBACK_ARGS)
+{
+  char *str = (char*)data;
+
+  if(!strcmp(str, "Min")){
+    WID->view_value[31]->value(opt_view_min(WID->view_number, GMSH_GET, 0));
+  }
+  else if(!strcmp(str, "Max")){
+    WID->view_value[32]->value(opt_view_max(WID->view_number, GMSH_GET, 0));
+  }
 }
 
 void view_options_ok_cb(CALLBACK_ARGS)

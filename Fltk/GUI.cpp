@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.458 2005-10-09 15:58:40 geuzaine Exp $
+// $Id: GUI.cpp,v 1.459 2005-10-14 19:26:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2887,10 +2887,15 @@ void GUI::create_option_window()
       view_choice[7]->align(FL_ALIGN_RIGHT);
       view_choice[7]->callback(activate_cb, (void*)"custom_range");
 
-      view_value[31] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Custom minimum");
+      int sw = (int)(2.5 * fontsize);
+      view_push_butt[1] = new Fl_Button(L + 2 * WB, 2 * WB + 4 * BH, sw, BH, "Min");
+      view_push_butt[1]->callback(view_options_custom_set_cb, (void*)"Min");
+      view_value[31] = new Fl_Value_Input(L + 2 * WB + sw, 2 * WB + 4 * BH, IW - sw, BH, "Custom minimum");
       view_value[31]->align(FL_ALIGN_RIGHT);
 
-      view_value[32] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Custom maximum");
+      view_push_butt[2] = new Fl_Button(L + 2 * WB, 2 * WB + 5 * BH, sw, BH, "Max");
+      view_push_butt[2]->callback(view_options_custom_set_cb, (void*)"Max");
+      view_value[32] = new Fl_Value_Input(L + 2 * WB + sw, 2 * WB + 5 * BH, IW - sw, BH, "Custom maximum");
       view_value[32]->align(FL_ALIGN_RIGHT);
 
       static Fl_Menu_Item menu_scale[] = {
@@ -3257,10 +3262,6 @@ void GUI::update_view_window(int num)
   opt_view_range_type(num, GMSH_GUI, 0);
   opt_view_custom_min(num, GMSH_GUI, 0);
   opt_view_custom_max(num, GMSH_GUI, 0);
-  for(int i = 31; i <= 32; i++) {
-    view_value[i]->minimum(v->CustomMin);
-    view_value[i]->maximum(v->CustomMax);
-  }
   opt_view_scale_type(num, GMSH_GUI, 0);
   opt_view_saturate_values(num, GMSH_GUI, 0);
 

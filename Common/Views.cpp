@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.176 2005-09-02 16:11:16 geuzaine Exp $
+// $Id: Views.cpp,v 1.177 2005-10-14 19:26:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -403,8 +403,6 @@ void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
   opt_view_filename(v->Index, GMSH_SET | GMSH_GUI, file_name);
   opt_view_nb_timestep(v->Index, GMSH_GUI, 0);
   opt_view_timestep(v->Index, GMSH_SET | GMSH_GUI, v->TimeStep);
-  opt_view_custom_min(v->Index, GMSH_SET | GMSH_GUI, v->Min);
-  opt_view_custom_max(v->Index, GMSH_SET | GMSH_GUI, v->Max);
 
   if(CTX.post.smooth)
     v->smooth();

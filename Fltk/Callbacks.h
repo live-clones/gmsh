@@ -134,6 +134,7 @@ void view_options_cb(CALLBACK_ARGS);
 void view_options_timestep_cb(CALLBACK_ARGS);
 void view_options_timestep_decr_cb(CALLBACK_ARGS);
 void view_options_timestep_incr_cb(CALLBACK_ARGS);
+void view_options_custom_set_cb(CALLBACK_ARGS);
 void view_options_ok_cb(CALLBACK_ARGS);
 void view_arrow_param_cb(CALLBACK_ARGS);
 
