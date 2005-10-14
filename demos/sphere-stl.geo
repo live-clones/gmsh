@@ -1,7 +1,7 @@
 
 // include an STL triangulation as the representation of the surface 1
 
-Merge "sphere-stl.stl";
+Merge "sphere-surf.stl";
 
 // define a volume using that surface
 
