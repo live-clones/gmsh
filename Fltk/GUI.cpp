@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.459 2005-10-14 19:26:06 geuzaine Exp $
+// $Id: GUI.cpp,v 1.460 2005-10-15 19:06:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -324,12 +324,14 @@ Context_Item menu_mesh[] = {
   { "1D",     (Fl_Callback *)mesh_1d_cb } ,
   { "2D",     (Fl_Callback *)mesh_2d_cb } , 
   { "3D",     (Fl_Callback *)mesh_3d_cb } , 
-  { "Remesh", (Fl_Callback *)mesh_remesh } , 
   { "First order",  (Fl_Callback *)mesh_degree_cb, (void*)1 } , 
   { "Second order", (Fl_Callback *)mesh_degree_cb, (void*)2 } , 
 #if defined(HAVE_NETGEN)
   { "Optimize quality", (Fl_Callback *)mesh_optimize_cb } , 
 #endif
+  { "Update STL edges", (Fl_Callback *)mesh_update_edges_cb } , 
+  { "Add STL edges", (Fl_Callback *)mesh_update_more_edges_cb } , 
+  { "Remesh STL", (Fl_Callback *)mesh_remesh_cb } , 
   { "Save",   (Fl_Callback *)mesh_save_cb } ,
   { NULL } 
 };  
@@ -815,7 +817,6 @@ GUI::GUI(int argc, char **argv)
   int i;
 
   // initialize static windows
-  swiz_window = NULL;
   m_window = NULL;
   g_window = NULL;
   opt_window = NULL;
@@ -2225,53 +2226,39 @@ void GUI::create_option_window()
     }
 
     {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Remesher");
+      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "STL");
       o->hide();
-      // In STL FILES, points have to be merged and a distance tolerance has to be set 
-      swiz_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Distance Tolerance (for STL inputs)");
-      swiz_value[1]->value(5.e-7);
-      swiz_value[1]->minimum(0);
-      swiz_value[1]->maximum(1.e-4);
-      swiz_value[1]->step(1.e-7);
-      swiz_value[1]->align(FL_ALIGN_RIGHT);
-      // when this button is pushed, the STL file is re-loaded
-      mesh_retbutt[0] = new Fl_Return_Button(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Reload");
-      mesh_retbutt[0]->callback(wizard_update_tolerance_cb);
 
-      // The number of nodes after merge is computed 
-      swiz_output[0] = new Fl_Output(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Number of Nodes after Merge");
-      swiz_output[0]->align(FL_ALIGN_RIGHT);
-      swiz_output[0]->value("0");
-      // If no geometry is provided, then the triangulation can be used for computing a discrete geometry
-      // The dihedral angle between neighboring triangles can be used to find model edges.
-      swiz_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Treshold Dihedral Angle");
-      swiz_value[0]->value(180/8);
-      swiz_value[0]->minimum(0);
-      swiz_value[0]->maximum(90);
-      swiz_value[0]->step(1);
-      swiz_value[0]->align(FL_ALIGN_RIGHT);
-      swiz_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Edge prolongation treshold");
-      swiz_value[3]->value(180/8);
-      swiz_value[3]->minimum(0);
-      swiz_value[3]->maximum(90);
-      swiz_value[3]->step(1);
-      swiz_value[3]->align(FL_ALIGN_RIGHT); 
+      mesh_value[19] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Vertex distance tolerance");
+      mesh_value[19]->minimum(0);
+      mesh_value[19]->maximum(1.e-3);
+      mesh_value[19]->step(1.e-7);
+      mesh_value[19]->align(FL_ALIGN_RIGHT);
 
-      mesh_retbutt[1] = new Fl_Return_Button(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Re-Classify");
-      mesh_retbutt[1]->callback(wizard_update_edges_cb);
+      mesh_value[20] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Dihedral angle threshold");
+      mesh_value[20]->minimum(0);
+      mesh_value[20]->maximum(90);
+      mesh_value[20]->step(1);
+      mesh_value[20]->align(FL_ALIGN_RIGHT);
 
-      swiz_value[4] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Number of elements per rad. of curv.");
-      swiz_value[4]->value(5);
-      swiz_value[4]->minimum(1);
-      swiz_value[4]->maximum(10);
-      swiz_value[4]->step(1);
-      swiz_value[4]->align(FL_ALIGN_RIGHT); 
-      swiz_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "LC/Minimum element size");
-      swiz_value[3]->value(500);
-      swiz_value[3]->minimum(10);
-      swiz_value[3]->maximum(10000);
-      swiz_value[3]->step(10);
-      swiz_value[3]->align(FL_ALIGN_RIGHT); 
+      mesh_value[21] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Edge prolongation threshold");
+      mesh_value[21]->minimum(0);
+      mesh_value[21]->maximum(100);
+      mesh_value[21]->step(1);
+      mesh_value[21]->align(FL_ALIGN_RIGHT); 
+
+      mesh_value[22] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Number of elements per rad. of curv.");
+      mesh_value[22]->minimum(1);
+      mesh_value[22]->maximum(10);
+      mesh_value[22]->step(1);
+      mesh_value[22]->align(FL_ALIGN_RIGHT); 
+
+      mesh_value[23] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "LC/Minimum element size");
+      mesh_value[23]->minimum(10);
+      mesh_value[23]->maximum(10000);
+      mesh_value[23]->step(10);
+      mesh_value[23]->align(FL_ALIGN_RIGHT); 
+
       o->end();
     }
 

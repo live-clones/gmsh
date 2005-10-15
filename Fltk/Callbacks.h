@@ -271,7 +271,9 @@ void mesh_define_cb(CALLBACK_ARGS);
 void mesh_1d_cb(CALLBACK_ARGS);
 void mesh_2d_cb(CALLBACK_ARGS); 
 void mesh_3d_cb(CALLBACK_ARGS); 
-void mesh_remesh(CALLBACK_ARGS); 
+void mesh_remesh_cb(CALLBACK_ARGS); 
+void mesh_update_edges_cb(CALLBACK_ARGS); 
+void mesh_update_more_edges_cb(CALLBACK_ARGS);
 void mesh_degree_cb(CALLBACK_ARGS); 
 void mesh_optimize_cb(CALLBACK_ARGS); 
 void mesh_define_length_cb (CALLBACK_ARGS);
@@ -293,12 +295,5 @@ void solver_kill_cb(CALLBACK_ARGS);
 void solver_choose_executable_cb(CALLBACK_ARGS);
 void solver_ok_cb(CALLBACK_ARGS);
 
-// SURFACE MESH WIZARD
-
-void wizard_update_more_edges_cb(CALLBACK_ARGS);
-void wizard_update_edges_cb(CALLBACK_ARGS);
-void wizard_update_tolerance_cb(CALLBACK_ARGS);
-void wizard_update_prev_cb(CALLBACK_ARGS);
-void wizard_update_next_cb(CALLBACK_ARGS);
 #endif
 

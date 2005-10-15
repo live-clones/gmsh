@@ -40,7 +40,6 @@
 #include <FL/Fl_Output.H>
 #include <FL/Fl_Multiline_Output.H>
 #include <FL/Fl_Bitmap.H>
-#include <FL/Fl_Wizard.H>
 #include <FL/Fl_Browser.H>
 #include <FL/Fl_Multi_Browser.H>
 #include <FL/Fl_Hold_Browser.H>
@@ -156,16 +155,6 @@ public:
   Fl_Button        *g_status_butt[8] ;
   Fl_Box           *g_status_label[3] ;
 
-  // Surface mesh Wizard  window
-  Fl_Window        *swiz_window ;
-  Fl_Wizard        *swiz_wiz ;
-  Fl_Check_Button  *swiz_butt[20] ;
-  Fl_Button        *swiz_push_butt[20] ;
-  Fl_Value_Input   *swiz_value[50] ;
-  Fl_Input         *swiz_input[20] ;
-  Fl_Output        *swiz_output[20] ;
-  Fl_Choice        *swiz_choice[20] ;  
-  std::string surfmesh_filename;
   // Option window
   Fl_Window        *opt_window ;
   Fl_Hold_Browser  *opt_browser ;
@@ -192,7 +181,7 @@ public:
   Fl_Check_Button  *mesh_butt[50] ;
   Fl_Return_Button *mesh_retbutt[50] ;
   Fl_Input         *mesh_input[20] ;
-  Fl_Value_Input   *mesh_value[20] ;
+  Fl_Value_Input   *mesh_value[50] ;
   Fl_Button        *mesh_col[50] ;
   Fl_Choice        *mesh_choice[20] ;
 
@@ -272,7 +261,6 @@ public:
   void create_menu_window();
   void create_graphic_window();
   void create_option_window();
-  void create_surface_mesh_wizard(const char * = 0);
   void hide_all_option_groups();
   void create_general_options_window();
   void create_geometry_options_window();

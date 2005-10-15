@@ -810,10 +810,6 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "ScalingFactor" , opt_geometry_scaling_factor , 1.0 , 
     "Global geometry scaling factor" },
-  { F|O, "StlCreateElementary" , opt_geometry_stl_create_elementary , 0. ,
-    "Treat each STL input face as a new geometrical surface" },
-  { F|O, "StlCreatePhysical" , opt_geometry_stl_create_physical , 1. ,
-    "Automatically create physical entities when importing STL faces as geometrical surfaces" },
   { F|O, "Surfaces" , opt_geometry_surfaces , 0. , 
     "Display geometry surfaces?" },
   { F|O, "SurfaceNumbers" , opt_geometry_surfaces_num , 0. , 
@@ -863,9 +859,13 @@ StringXNumber MeshOptions_Number[] = {
   { F,   "CutPlaneD" , opt_mesh_cut_planed , 0.0 , 
     "Fourth cut plane equation coefficient (`D' in `AX+BY+CZ+D=0')" },
 
+  { F|O, "DihedralAngleTol" , opt_mesh_dihedral_angle_tol, 22. ,
+    "Dihedral angle tolerance for edge creation in the remesher" },
   { F|O, "Dual" , opt_mesh_dual , 0. ,
     "Display the dual mesh obtained by barycentric subdivision" },
 
+  { F|O, "EdgeProlongationThreshold" , opt_mesh_edge_prolongation_threshold, 1. ,
+    "Edge prolongation threshold in the remesher" },
   { F|O, "ElementOrder" , opt_mesh_order , 1. , // "Order" is already a lex token
     "Element order (1=linear elements, 2=quadratic elements)" },
   { F|O, "Explode" , opt_mesh_explode , 1.0 ,
@@ -964,6 +964,8 @@ StringXNumber MeshOptions_Number[] = {
     "Smooth the mesh normals?" },
   { F|O, "SpeedMax" , opt_mesh_speed_max , 0. ,
     "Disable dubious point insertion tests" },
+  { F|O, "StlDistanceTol" , opt_mesh_stl_distance_tol, 5.e-7 ,
+    "Distance tolerance between two distinct vertices in STL meshes" },
   { F|O, "SurfaceEdges" , opt_mesh_surfaces_edges , 1. , 
     "Display edges of surface mesh?" },
   { F|O, "SurfaceFaces" , opt_mesh_surfaces_faces , 0. , 

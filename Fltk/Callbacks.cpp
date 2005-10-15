@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.372 2005-10-14 19:26:06 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.373 2005-10-15 19:06:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -836,118 +836,6 @@ void options_restore_defaults_cb(CALLBACK_ARGS)
   Draw();
 }
 
-void wizard_update_edges_cb(CALLBACK_ARGS)
-{
-  extern  void BDS_To_Mesh(Mesh *m);
-  if (THEM && THEM->bds && WID){
-    const double angle = WID->swiz_value[0]->value() * M_PI / 180;
-    const int nb       = (int) WID->swiz_value[3]->value();
-    THEM->bds->classify (angle, nb);
-    BDS_To_Mesh (THEM); 
-    Draw();
-  }
-}
-
-void wizard_update_more_edges_cb(CALLBACK_ARGS)
-{
-  Vertex *v;
-  Curve *c;
-  Surface *s;
-  int n,p[100];
-  extern  void BDS_To_Mesh(Mesh *m);
-
-  if (THEM && THEM->bds && WID) {
-    const double angle = WID->swiz_value[2]->value() * M_PI / 180;
-    const int nb_t  = (int)(WID->swiz_value[3]->value() * M_PI / 180);
-    THEM->bds->classify (angle,nb_t);
-    BDS_To_Mesh (THEM); 
-    Draw();
-    n=0;
-    while(1) {
-      Msg(STATUS3N, "Adding new Model Edges");
-      if(n == 0)
-	Msg(ONSCREEN, "Select Model Edges\n"
-	    "[Press 'q' to abort or 'e' end]");
-      if(n == 1)
-	Msg(ONSCREEN, "Select Model Edge\n"
-	    "[Press 'u' to undo last selection, 'q' to abort, 'e' end]");
-      char ib = SelectEntity(ENT_LINE, &v, &c, &s);
-      printf("ib = %c\n",ib);
-      if(ib == 'l') {
-	p[n++] = c->Num;
-	printf("line %d has been selected\n",c->Num);
-      }
-      if(ib == 'u') {
-	if(n > 0){
-	  ZeroHighlightEntityNum(p[n-1], 0, 0);
-	  Draw();
-	  n--;
-	}
-      }
-      if(ib == 'q') {
-	ZeroHighlight(THEM);
-	Draw(); 
-	Msg(ONSCREEN, "");
-	Msg(STATUS3N, "Ready");
-	const double angle = WID->swiz_value[0]->value() * M_PI / 180;
-	THEM->bds->classify (angle,nb_t);
-	BDS_To_Mesh (THEM); 
-	Draw();
-	break;
-      }
-      if(ib == 'e') {
-	for (int i=0;i<n;i++) {
-	  BDS_GeomEntity *g = THEM->bds->get_geom(p[i],1);
-	  std::list<BDS_Edge*>::iterator it  = g->e.begin();
-	  std::list<BDS_Edge*>::iterator ite = g->e.end();
-	  while (it!=ite){			
-	    BDS_Edge *e = (*it);
-	    e->status = 1;
-	    ++it;
-	  }
-	}
-	
-	ZeroHighlight(THEM);
-	Draw();
-	n = 0;
-      }
-    }
-  }
-}
-
-void wizard_update_tolerance_cb(CALLBACK_ARGS)
-{
-  extern  void BDS_To_Mesh(Mesh *m);    
-  
-  if (THEM && THEM->bds && WID) {
-    const double tol = WID->swiz_value[1]->value();
-    if (THEM->bds)delete THEM->bds;
-    THEM->bds = new BDS_Mesh;
-    printf("reading file %s\n",WID->surfmesh_filename.c_str());
-    THEM->bds->read_stl ( WID->surfmesh_filename.c_str(), tol );
-    BDS_To_Mesh (THEM); 
-    SetBoundingBox(); 
-    char a[25];
-    sprintf(a,"%d",THEM->bds->points.size());
-    WID->swiz_output[0]->value(a);
-    Draw();
-  }
-}
-
-void wizard_update_next_cb(CALLBACK_ARGS)
-{
-  if (WID) {
-    WID->swiz_wiz->next();
-  }
-}
-
-void wizard_update_prev_cb(CALLBACK_ARGS)
-{
-  if (WID) {
-    WID->swiz_wiz->prev();
-  }
-}
-
 void options_ok_cb(CALLBACK_ARGS)
 {
   general_options_ok_cb(w, data);
@@ -1155,8 +1043,7 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_light(0, GMSH_SET, WID->mesh_butt[17]->value());
   opt_mesh_light_two_side(0, GMSH_SET, WID->mesh_butt[18]->value());
   opt_mesh_smooth_normals(0, GMSH_SET, WID->mesh_butt[19]->value());
-  opt_mesh_nb_elem_per_rc(0, GMSH_SET, WID->swiz_value[4]->value());
-  opt_mesh_min_elem_size_fact(0, GMSH_SET, WID->swiz_value[3]->value());
+
   opt_mesh_nb_smoothing(0, GMSH_SET, WID->mesh_value[0]->value());
   opt_mesh_scaling_factor(0, GMSH_SET, WID->mesh_value[1]->value());
   opt_mesh_lc_factor(0, GMSH_SET, WID->mesh_value[2]->value());
@@ -1176,6 +1063,11 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_cut_planec(0, GMSH_SET, WID->mesh_value[16]->value());
   opt_mesh_cut_planed(0, GMSH_SET, WID->mesh_value[17]->value());
   opt_mesh_angle_smooth_normals(0, GMSH_SET, WID->mesh_value[18]->value());
+  opt_mesh_stl_distance_tol(0, GMSH_SET, WID->mesh_value[19]->value());
+  opt_mesh_dihedral_angle_tol(0, GMSH_SET, WID->mesh_value[20]->value());
+  opt_mesh_edge_prolongation_threshold(0, GMSH_SET, WID->mesh_value[21]->value());
+  opt_mesh_nb_elem_per_rc(0, GMSH_SET, WID->mesh_value[22]->value());
+  opt_mesh_min_elem_size_fact(0, GMSH_SET, WID->mesh_value[23]->value());
 
   opt_mesh_point_type(0, GMSH_SET, WID->mesh_choice[0]->value());
   opt_mesh_line_type(0, GMSH_SET, WID->mesh_choice[1]->value());
@@ -2808,7 +2700,7 @@ void mesh_3d_cb(CALLBACK_ARGS)
   Msg(STATUS3N, "Ready");
 }
 
-void mesh_remesh(CALLBACK_ARGS)
+void mesh_remesh_cb(CALLBACK_ARGS)
 {
   ReMesh(THEM);
   Draw();
@@ -2844,6 +2736,83 @@ void mesh_optimize_cb(CALLBACK_ARGS)
   CTX.mesh.changed = 1;
   Draw();
   Msg(STATUS3N, "Ready");
+}
+
+void mesh_update_edges_cb(CALLBACK_ARGS)
+{
+  extern  void BDS_To_Mesh(Mesh *m);
+  if(THEM && THEM->bds){
+    THEM->bds->classify(CTX.mesh.dihedral_angle_tol * M_PI/180,
+			CTX.mesh.edge_prolongation_threshold);
+    BDS_To_Mesh (THEM); 
+    Draw();
+  }
+}
+
+void mesh_update_more_edges_cb(CALLBACK_ARGS)
+{
+  Vertex *v;
+  Curve *c;
+  Surface *s;
+  int n, p[100];
+  extern void BDS_To_Mesh(Mesh *m);
+
+  if (THEM && THEM->bds && WID) {
+    const double angle = CTX.mesh.dihedral_angle_tol * M_PI / 180;
+    const int nb_t = CTX.mesh.edge_prolongation_threshold;
+    THEM->bds->classify(angle, nb_t);
+    BDS_To_Mesh (THEM); 
+    Draw();
+    n=0;
+    while(1) {
+      Msg(STATUS3N, "Adding new Model Edges");
+      if(n == 0)
+	Msg(ONSCREEN, "Select Model Edges\n"
+	    "[Press 'q' to abort or 'e' end]");
+      if(n == 1)
+	Msg(ONSCREEN, "Select Model Edge\n"
+	    "[Press 'u' to undo last selection, 'q' to abort, 'e' end]");
+      char ib = SelectEntity(ENT_LINE, &v, &c, &s);
+      printf("ib = %c\n",ib);
+      if(ib == 'l') {
+	p[n++] = c->Num;
+	printf("line %d has been selected\n",c->Num);
+      }
+      if(ib == 'u') {
+	if(n > 0){
+	  ZeroHighlightEntityNum(p[n-1], 0, 0);
+	  Draw();
+	  n--;
+	}
+      }
+      if(ib == 'q') {
+	ZeroHighlight(THEM);
+	Draw(); 
+	Msg(ONSCREEN, "");
+	Msg(STATUS3N, "Ready");
+	THEM->bds->classify(angle, nb_t);
+	BDS_To_Mesh(THEM); 
+	Draw();
+	break;
+      }
+      if(ib == 'e') {
+	for (int i=0;i<n;i++) {
+	  BDS_GeomEntity *g = THEM->bds->get_geom(p[i],1);
+	  std::list<BDS_Edge*>::iterator it  = g->e.begin();
+	  std::list<BDS_Edge*>::iterator ite = g->e.end();
+	  while (it!=ite){			
+	    BDS_Edge *e = (*it);
+	    e->status = 1;
+	    ++it;
+	  }
+	}
+	
+	ZeroHighlight(THEM);
+	Draw();
+	n = 0;
+      }
+    }
+  }
 }
 
 void mesh_define_length_cb(CALLBACK_ARGS)

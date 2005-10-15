@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.259 2005-10-09 17:45:37 geuzaine Exp $
+// $Id: Options.cpp,v 1.260 2005-10-15 19:06:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3929,20 +3929,6 @@ double opt_geometry_scaling_factor(OPT_ARGS_NUM)
   return CTX.geom.scaling_factor;
 }
 
-double opt_geometry_stl_create_elementary(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.geom.stl_create_elementary = (int)val;
-  return CTX.geom.stl_create_elementary;
-}
-
-double opt_geometry_stl_create_physical(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.geom.stl_create_physical = (int)val;
-  return CTX.geom.stl_create_physical;
-}
-
 double opt_mesh_optimize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -4378,14 +4364,46 @@ double opt_mesh_format(OPT_ARGS_NUM)
   return CTX.mesh.format;
 }
 
+double opt_mesh_stl_distance_tol(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.stl_distance_tol = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_value[19]->value(CTX.mesh.stl_distance_tol);
+#endif
+  return CTX.mesh.stl_distance_tol;
+}
+
+double opt_mesh_dihedral_angle_tol(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.dihedral_angle_tol = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_value[20]->value(CTX.mesh.dihedral_angle_tol);
+#endif
+  return CTX.mesh.dihedral_angle_tol;
+}
+
+double opt_mesh_edge_prolongation_threshold(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.edge_prolongation_threshold = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_value[21]->value(CTX.mesh.edge_prolongation_threshold);
+#endif
+  return CTX.mesh.edge_prolongation_threshold;
+}
 
 double opt_mesh_nb_elem_per_rc(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.mesh.nb_elem_per_rc = (double)val;
+    CTX.mesh.nb_elem_per_rc = (int)val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->swiz_value[4]->value(CTX.mesh.nb_elem_per_rc);
+    WID->mesh_value[22]->value(CTX.mesh.nb_elem_per_rc);
 #endif
   return CTX.mesh.nb_elem_per_rc;
 }
@@ -4393,10 +4411,10 @@ double opt_mesh_nb_elem_per_rc(OPT_ARGS_NUM)
 double opt_mesh_min_elem_size_fact(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.mesh.min_elem_size_fact = (double)val;
+    CTX.mesh.min_elem_size_fact = (int)val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->swiz_value[3]->value(CTX.mesh.min_elem_size_fact);
+    WID->mesh_value[23]->value(CTX.mesh.min_elem_size_fact);
 #endif
   return CTX.mesh.min_elem_size_fact;
 }

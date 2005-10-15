@@ -160,7 +160,6 @@ public :
     double normals, tangents;
     double scaling_factor;
     int auto_coherence;
-    int stl_create_elementary, stl_create_physical;
   } geom;
 
   // mesh options 
@@ -178,7 +177,7 @@ public :
     double quality;
     int quality_type, label_type;
     double quality_inf, quality_sup, radius_inf, radius_sup;
-    double scaling_factor, lc_factor, rand_factor,nb_elem_per_rc,min_elem_size_fact;
+    double scaling_factor, lc_factor, rand_factor;
     int dual, interactive;
     int light, light_two_side;
     int format, nbPartitions,nb_smoothing, algo2d, algo3d, order,algo_recombine;
@@ -197,6 +196,8 @@ public :
     char *triangle_options;
     int smooth_normals;
     double angle_smooth_normals;
+    double stl_distance_tol, dihedral_angle_tol;
+    int nb_elem_per_rc, min_elem_size_fact, edge_prolongation_threshold;
   } mesh;
 
   // post processing options 
