@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.93 2005-10-10 16:16:50 geuzaine Exp $
+// $Id: Geom.cpp,v 1.94 2005-10-15 19:49:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -157,21 +157,20 @@ void Draw_Curve(void *a, void *b)
       while (it!=ite){
 	BDS_Edge *e = (*it);
 	if(CTX.geom.line_type < 1) {
-	    glBegin(GL_LINES);
-	    glVertex3d(e->p1->X,e->p1->Y,e->p1->Z);
-	    glVertex3d(e->p2->X,e->p2->Y,e->p2->Z);
-	    glEnd();
+	  glBegin(GL_LINES);
+	  glVertex3d(e->p1->X,e->p1->Y,e->p1->Z);
+	  glVertex3d(e->p2->X,e->p2->Y,e->p2->Z);
+	  glEnd();
 	}
-	else
-	{
-	    x[0] = e->p1->X;
-	    y[0] = e->p1->Y;
-	    z[0] = e->p1->Z;
-	    x[1] = e->p2->X;
-	    y[1] = e->p2->Y;
-	    z[1] = e->p2->Z;
-	    Draw_Cylinder(c->ipar[3] > 0 ? CTX.geom.line_sel_width : CTX.geom.line_width,
-			  x, y, z, CTX.geom.light);
+	else{
+	  x[0] = e->p1->X;
+	  y[0] = e->p1->Y;
+	  z[0] = e->p1->Z;
+	  x[1] = e->p2->X;
+	  y[1] = e->p2->Y;
+	  z[1] = e->p2->Z;
+	  Draw_Cylinder(c->ipar[3] > 0 ? CTX.geom.line_sel_width : CTX.geom.line_width,
+			x, y, z, CTX.geom.light);
 	}
 	++it;
       }
@@ -348,9 +347,7 @@ void Draw_Polygonal_Surface(Surface * s)
   if(CTX.geom.surfaces) {
     if(CTX.geom.light) glEnable(GL_LIGHTING);
     glEnable(GL_POLYGON_OFFSET_FILL); // always!
-
     BDS_GeomEntity *g = THEM->bds->get_geom ( s->Num,2);	
-//    if (g->surf) glColor4ubv((GLubyte *) & CTX.color.geom.line);
     std::list<BDS_Triangle*>::iterator it  = g->t.begin();
     std::list<BDS_Triangle*>::iterator ite = g->t.end();
     while (it!=ite) {
@@ -737,7 +734,7 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
 	Msg(STATUS1N, Message);
       }
       else if (THEM->bds){
-	BDS_GeomEntity *g = THEM->bds->get_geom ( s->Num, 2);
+	BDS_GeomEntity *g = THEM->bds->get_geom(s->Num, 2);
 	if (g && g->surf)
 	  Msg(STATUS1N, "Surface %d (%s)", s->Num,g->surf->nameOf().c_str());
 	else
