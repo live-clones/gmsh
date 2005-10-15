@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.373 2005-10-15 19:06:08 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.374 2005-10-15 20:38:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2700,11 +2700,9 @@ void mesh_3d_cb(CALLBACK_ARGS)
   Msg(STATUS3N, "Ready");
 }
 
-void mesh_remesh_cb(CALLBACK_ARGS)
+void mesh_stl_cb(CALLBACK_ARGS)
 {
-  ReMesh(THEM);
-  Draw();
-  Msg(STATUS3N, "Ready");
+  WID->set_context(menu_mesh_stl, 0);
 }
 
 void mesh_degree_cb(CALLBACK_ARGS)
@@ -2734,6 +2732,13 @@ void mesh_optimize_cb(CALLBACK_ARGS)
   CTX.threads_lock = 0;
 
   CTX.mesh.changed = 1;
+  Draw();
+  Msg(STATUS3N, "Ready");
+}
+
+void mesh_remesh_cb(CALLBACK_ARGS)
+{
+  ReMesh(THEM);
   Draw();
   Msg(STATUS3N, "Ready");
 }

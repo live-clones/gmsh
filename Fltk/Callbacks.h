@@ -271,6 +271,7 @@ void mesh_define_cb(CALLBACK_ARGS);
 void mesh_1d_cb(CALLBACK_ARGS);
 void mesh_2d_cb(CALLBACK_ARGS); 
 void mesh_3d_cb(CALLBACK_ARGS); 
+void mesh_stl_cb(CALLBACK_ARGS);
 void mesh_remesh_cb(CALLBACK_ARGS); 
 void mesh_update_edges_cb(CALLBACK_ARGS); 
 void mesh_update_more_edges_cb(CALLBACK_ARGS);

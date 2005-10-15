@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.460 2005-10-15 19:06:09 geuzaine Exp $
+// $Id: GUI.cpp,v 1.461 2005-10-15 20:38:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -324,17 +324,22 @@ Context_Item menu_mesh[] = {
   { "1D",     (Fl_Callback *)mesh_1d_cb } ,
   { "2D",     (Fl_Callback *)mesh_2d_cb } , 
   { "3D",     (Fl_Callback *)mesh_3d_cb } , 
+  { "STL",    (Fl_Callback *)mesh_stl_cb } , 
   { "First order",  (Fl_Callback *)mesh_degree_cb, (void*)1 } , 
   { "Second order", (Fl_Callback *)mesh_degree_cb, (void*)2 } , 
 #if defined(HAVE_NETGEN)
   { "Optimize quality", (Fl_Callback *)mesh_optimize_cb } , 
 #endif
-  { "Update STL edges", (Fl_Callback *)mesh_update_edges_cb } , 
-  { "Add STL edges", (Fl_Callback *)mesh_update_more_edges_cb } , 
-  { "Remesh STL", (Fl_Callback *)mesh_remesh_cb } , 
   { "Save",   (Fl_Callback *)mesh_save_cb } ,
   { NULL } 
 };  
+    Context_Item menu_mesh_stl[] = {
+      { "1Mesh > STL", NULL } ,
+      { "Update edges", (Fl_Callback *)mesh_update_edges_cb } , 
+      { "Manually add edges", (Fl_Callback *)mesh_update_more_edges_cb } , 
+      { "Remesh", (Fl_Callback *)mesh_remesh_cb } , 
+      { NULL } 
+    };  
     Context_Item menu_mesh_define[] = {
       { "1Mesh > Define", NULL } ,
       { "Characteristic length", (Fl_Callback *)mesh_define_length_cb  } ,
