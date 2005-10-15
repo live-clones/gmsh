@@ -84,9 +84,19 @@ Fourth cut plane equation coefficient (`D' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item Mesh.DihedralAngleTol
+Dihedral angle tolerance for edge creation in the remesher@*
+Default value: @code{22}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Dual
 Display the dual mesh obtained by barycentric subdivision@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.EdgeProlongationThreshold
+Edge prolongation threshold in the remesher@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ElementOrder
@@ -307,6 +317,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.SpeedMax
 Disable dubious point insertion tests@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.StlDistanceTol
+Distance tolerance between two distinct vertices in STL meshes@*
+Default value: @code{5e-07}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SurfaceEdges
