@@ -1,9 +1,9 @@
-$Id: CREDITS,v 1.31 2005-10-16 05:39:26 geuzaine Exp $
+$Id: CREDITS,v 1.32 2005-10-16 16:29:48 geuzaine Exp $
 
              Gmsh is copyright (C) 1997-2005
 
                    Christophe Geuzaine
-              <geuzaine at acm.caltech.edu>
+             <christophe.geuzaine at case.edu>
 
                            and
 
@@ -15,7 +15,7 @@ Major code contributions to Gmsh have been provided by Nicolas Tardieu
 to elementary geometry" interface, Netgen integration).
 
 Other code contributors include: David Colignon <David.Colignon at
-univ.u-3mrs.fr> for new colormaps; Patrick Dular <patrick.dular at
+ulg.ac.be> for new colormaps; Patrick Dular <patrick.dular at
 ulg.ac.be> for transfinite mesh bug fixes; Laurent Stainier
 <l.stainier at ulg.ac.be> for the eigenvalue solvers and for help with
 the MacOS port and the tensor display code; Pierre Badel <badel at
