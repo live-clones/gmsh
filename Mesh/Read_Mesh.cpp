@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.94 2005-09-07 14:36:45 remacle Exp $
+// $Id: Read_Mesh.cpp,v 1.95 2005-10-16 03:15:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -908,7 +908,6 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
 }
 
 // Public Read_Mesh routine
-extern  void Mesh_To_BDS(Mesh *m);
 
 void Read_Mesh(Mesh * M, FILE * fp, char *filename, int type)
 {
@@ -930,7 +929,7 @@ void Read_Mesh(Mesh * M, FILE * fp, char *filename, int type)
     Msg(INFO, "Read mesh file '%s'", filename);
     Msg(STATUS2N, "Read '%s'", filename);
   }
-  if (CTX.mesh.nbPartitions != 1)
-    PartitionMesh ( M , CTX.mesh.nbPartitions);
-  //  Mesh_To_BDS(M);
+
+  if(CTX.mesh.nbPartitions != 1)
+    PartitionMesh(M, CTX.mesh.nbPartitions);
 }
