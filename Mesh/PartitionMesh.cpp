@@ -1,4 +1,4 @@
-// $Id: PartitionMesh.cpp,v 1.3 2005-10-16 03:15:31 geuzaine Exp $
+// $Id: PartitionMesh.cpp,v 1.4 2005-10-16 03:36:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -107,8 +107,8 @@ void PartitionMesh(BDS_Mesh * m, int NP)
 
   int totCount = 0;
 
-std: : list < BDS_Triangle * >: :iterator it2 = m->triangles.begin();
-std: : list < BDS_Tet * >: :iterator it3 = m->tets.begin();
+  std::list< BDS_Triangle*>::iterator it2 = m->triangles.begin();
+  std::list< BDS_Tet*>::iterator it3 = m->tets.begin();
 
   xadj[0] = 0;
   for(int i = 0; i < NN; i++) {

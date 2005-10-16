@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.65 2005-10-10 19:33:35 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.66 2005-10-16 03:36:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,7 @@
 #include "Context.h"
 
 extern Context_T CTX;
+extern Mesh *THEM;
 
 // Write mesh in native MSH format
 
@@ -98,6 +99,15 @@ static void _msh_process_nodes(Mesh *M)
     fprintf(MSHFILE, "$ENDNOD\n");
 }
 
+int _get_partition(int index)
+{
+  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, index);
+  if(!part)
+    return -1; // OK, no partitions available
+  else
+    return (*part)->Num; // partition number
+}
+
 static void _msh_print_simplex(void *a, void *b)
 {
   int i, type, nbn, nbs = 0;
@@ -159,10 +169,13 @@ static void _msh_print_simplex(void *a, void *b)
     }
   }
 
-  if(CTX.mesh.msh_file_version == 2.0)
-    fprintf(MSHFILE, "%d %d 2 %d %d",
-	    MSH_ELEMENT_NUM++, type, MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : s->iEnt, 
-	    s->iEnt);
+  if(CTX.mesh.msh_file_version == 2.0){
+    int part = _get_partition(s->iPart);
+    fprintf(MSHFILE, "%d %d %d %d %d",
+	    MSH_ELEMENT_NUM++, type, (part >= 0) ? 3 : 2, 
+	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : s->iEnt, s->iEnt);
+    if(part >= 0) fprintf(MSHFILE, " %d", part);
+  }
   else
     fprintf(MSHFILE, "%d %d %d %d %d",
 	    MSH_ELEMENT_NUM++, type,
@@ -207,10 +220,13 @@ static void _msh_print_quadrangle(void *a, void *b)
   else
     type = QUADRANGLE;
 
-  if(CTX.mesh.msh_file_version == 2.0)
-    fprintf(MSHFILE, "%d %d 2 %d %d",
-	    MSH_ELEMENT_NUM++, type, MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : q->iEnt, 
-	    q->iEnt);
+  if(CTX.mesh.msh_file_version == 2.0){
+    int part = _get_partition(q->iPart);
+    fprintf(MSHFILE, "%d %d %d %d %d",
+	    MSH_ELEMENT_NUM++, type, (part >= 0) ? 3 : 2, 
+	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : q->iEnt, q->iEnt);
+    if(part >= 0) fprintf(MSHFILE, " %d", part);
+  }
   else
     fprintf(MSHFILE, "%d %d %d %d %d",
 	    MSH_ELEMENT_NUM++, type,
@@ -274,10 +290,13 @@ static void _msh_print_hexahedron(void *a, void *b)
     }
   }
 
-  if(CTX.mesh.msh_file_version == 2.0)
-    fprintf(MSHFILE, "%d %d 2 %d %d",
-	    MSH_ELEMENT_NUM++, type, MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : h->iEnt,
-	    h->iEnt);
+  if(CTX.mesh.msh_file_version == 2.0){
+    int part = _get_partition(h->iPart);
+    fprintf(MSHFILE, "%d %d %d %d %d",
+	    MSH_ELEMENT_NUM++, type, (part >= 0) ? 3 : 2, 
+	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : h->iEnt, h->iEnt);
+    if(part >= 0) fprintf(MSHFILE, " %d", part);
+  }
   else
     fprintf(MSHFILE, "%d %d %d %d %d",
 	    MSH_ELEMENT_NUM++, type,
@@ -328,10 +347,13 @@ static void _msh_print_prism(void *a, void *b)
     }
   }
 
-  if(CTX.mesh.msh_file_version == 2.0)
-    fprintf(MSHFILE, "%d %d 2 %d %d",
-	    MSH_ELEMENT_NUM++, type, MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : p->iEnt,
-	    p->iEnt);
+  if(CTX.mesh.msh_file_version == 2.0){
+    int part = _get_partition(p->iPart);
+    fprintf(MSHFILE, "%d %d %d %d %d",
+	    MSH_ELEMENT_NUM++, type, (part >= 0) ? 3 : 2, 
+	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : p->iEnt, p->iEnt);
+    if(part >= 0) fprintf(MSHFILE, " %d", part);
+  }
   else
     fprintf(MSHFILE, "%d %d %d %d %d",
 	    MSH_ELEMENT_NUM++, type,
@@ -380,10 +402,13 @@ static void _msh_print_pyramid(void *a, void *b)
     }
   }
 
-  if(CTX.mesh.msh_file_version == 2.0)
-    fprintf(MSHFILE, "%d %d 2 %d %d",
-	    MSH_ELEMENT_NUM++, type, MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : p->iEnt,
-	    p->iEnt);
+  if(CTX.mesh.msh_file_version == 2.0){
+    int part = _get_partition(p->iPart);
+    fprintf(MSHFILE, "%d %d %d %d %d",
+	    MSH_ELEMENT_NUM++, type, (part >= 0) ? 3 : 2, 
+	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : p->iEnt, p->iEnt);
+    if(part >= 0) fprintf(MSHFILE, " %d", part);
+  }
   else
     fprintf(MSHFILE, "%d %d %d %d %d",
 	    MSH_ELEMENT_NUM++, type,
