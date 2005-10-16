@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.71 2005-09-07 14:36:45 remacle Exp $
+// $Id: Generator.cpp,v 1.72 2005-10-16 15:55:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -534,8 +534,9 @@ void mai3d(Mesh * M, int Asked)
 
   if(M->status && CTX.mesh.order == 2)
     Degre2(M->status);
+
   if(M->status > 1 && CTX.mesh.nbPartitions != 1)
-    PartitionMesh ( M , CTX.mesh.nbPartitions);
+    PartitionMesh(M, CTX.mesh.nbPartitions);
 
   CTX.threads_lock = 0;
   CTX.mesh.changed = 1;
