@@ -1,4 +1,4 @@
-$Id: TODO,v 1.103 2005-10-15 19:06:08 geuzaine Exp $
+$Id: TODO,v 1.104 2005-10-17 16:32:25 geuzaine Exp $
 
 ********************************************************************
 
@@ -43,6 +43,13 @@ normals...)
 
 color selected surface/line/point on the fly (instead of just showing
 the entity number)
+
+********************************************************************
+
+Would be nice to have Plugin(CutBox) and Plugin(CutCylinder) (Box:
+using Xc, Yc, Zc, Xl, Yl, Zl, Xr, Yr, Zr, or 4 points. 4 points is
+more general: can be wedge. Cylinder should be able to degenerate
+into cone)
 
 ********************************************************************
 
