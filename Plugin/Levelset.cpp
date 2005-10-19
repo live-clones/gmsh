@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.26 2005-03-25 12:13:23 remacle Exp $
+// $Id: Levelset.cpp,v 1.27 2005-10-19 15:45:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -374,8 +374,10 @@ int GMSH_LevelsetPlugin::zeroLevelset(int timeStep,
     }
   }
 
-  // if we compute isovolumes, add the nodes on the chosen side
+  // if we compute isovolumes, add the nodes on the chosen side 
   if(_extractVolume){
+    // FIXME: when cutting 2D views, the elts we get can have the wrong
+    // orientation
     int nbCut = np;
     for(int k = 0; k < nbNod; k++){
       if((_extractVolume < 0. && levels[k] < 0.0) ||
