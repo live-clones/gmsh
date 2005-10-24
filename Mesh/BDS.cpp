@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.36 2005-10-16 03:15:31 geuzaine Exp $
+// $Id: BDS.cpp,v 1.37 2005-10-24 14:09:42 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1274,7 +1274,7 @@ void BDS_Mesh :: classify ( double angle, int NB_T )
     printf(" creating search  structures\n");
     createSearchStructures ( ) ;
     printf("  end classifying %d edgetags %d vertextags\n",edgetag-1,vertextag-1);
-    outputScalarField (triangles,"R_curvature.pos");
+    //    outputScalarField (triangles,"R_curvature.pos");
 }
 double PointLessThanLexicographic::t = 0;
 double BDS_Vector::t = 0;

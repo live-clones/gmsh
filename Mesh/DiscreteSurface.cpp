@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.26 2005-09-21 15:03:46 remacle Exp $
+// $Id: DiscreteSurface.cpp,v 1.27 2005-10-24 14:09:42 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -181,6 +181,10 @@ void BDS_To_Mesh_2(Mesh *m)
 {
   Msg(STATUS2, "Moving the surface mesh in the old gmsh structure\n");
   
+
+
+  printf("coiucouce\n");
+
   Tree_Action(m->Vertices, Free_Vertex);  
   Tree_Delete(m->Vertices);
   m->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
@@ -197,6 +201,7 @@ void BDS_To_Mesh_2(Mesh *m)
   }
   
   
+  printf("coiucouce\n");
   {
     std::list<BDS_Edge*>::iterator it  = m->bds_mesh->edges.begin();
     std::list<BDS_Edge*>::iterator ite = m->bds_mesh->edges.end();
@@ -207,7 +212,7 @@ void BDS_To_Mesh_2(Mesh *m)
 	  {
 	    Vertex *v1 = FindVertex((*it)->p1->iD, m);
 	    Vertex *v2 = FindVertex((*it)->p2->iD, m);
-	    SimplexBase *simp = Create_SimplexBase(v1,v2,NULL, NULL);
+	    Simplex *simp = Create_Simplex(v1,v2,NULL, NULL);
 	    Curve *c = FindCurve (g->classif_tag,m);
 	    if (c)
 	      simp->iEnt = g->classif_tag;
@@ -216,6 +221,7 @@ void BDS_To_Mesh_2(Mesh *m)
 	++it;
       }
   }
+  printf("coiucouce\n");
   {
     std::list<BDS_Triangle*>::iterator it  = m->bds_mesh->triangles.begin();
     std::list<BDS_Triangle*>::iterator ite = m->bds_mesh->triangles.end();
@@ -228,7 +234,7 @@ void BDS_To_Mesh_2(Mesh *m)
 	    Vertex *v1 = FindVertex(nod[0]->iD, m);
 	    Vertex *v2 = FindVertex(nod[1]->iD, m);
 	    Vertex *v3 = FindVertex(nod[2]->iD, m);
-	    SimplexBase *simp = Create_SimplexBase(v1,v2,v3, NULL);
+	    Simplex *simp = Create_Simplex(v1,v2,v3, NULL);
 	    BDS_GeomEntity *g = (*it)->g;
 	    Surface *s = FindSurface (g->classif_tag,m);
 	    if(s)
@@ -243,6 +249,7 @@ void BDS_To_Mesh_2(Mesh *m)
       ++it;
     }
   }
+  printf("coiucoucessss\n");
   {
     std::list<BDS_Tet*>::iterator it  = m->bds_mesh->tets.begin();
     std::list<BDS_Tet*>::iterator ite = m->bds_mesh->tets.end();
@@ -253,7 +260,7 @@ void BDS_To_Mesh_2(Mesh *m)
       Vertex *v2 = FindVertex(nod[1]->iD, m);
       Vertex *v3 = FindVertex(nod[2]->iD, m);
       Vertex *v4 = FindVertex(nod[3]->iD, m);
-      SimplexBase *simp = Create_SimplexBase(v1,v2,v3, v4);
+      Simplex *simp = Create_Simplex(v1,v2,v3, v4);
       BDS_GeomEntity *g = (*it)->g;
       Volume *v = FindVolume (g->classif_tag,m);
       if(v)
@@ -284,6 +291,8 @@ void BDS_To_Mesh(Mesh *m)
     m->Curves = Tree_Create(sizeof(Curve *), compareCurve);
     m->Surfaces = Tree_Create(sizeof(Surface *), compareSurface);
     m->Volumes = Tree_Create(sizeof(Volume *), compareVolume);
+
+    printf("coucou1ss\n");
 
     std::set<BDS_GeomEntity*,GeomLessThan>::iterator it  = m->bds->geom.begin(); 
     std::set<BDS_GeomEntity*,GeomLessThan>::iterator ite = m->bds->geom.end(); 
@@ -332,6 +341,7 @@ void BDS_To_Mesh(Mesh *m)
 
     CTX.mesh.changed = 1;
 
+    printf("coucou2\n");
 }
 
 
