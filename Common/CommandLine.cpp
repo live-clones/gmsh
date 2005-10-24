@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.65 2005-09-22 22:39:22 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.66 2005-10-24 15:38:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -155,10 +155,6 @@ char *Get_BuildOptions(void)
 
 void Get_Options(int argc, char *argv[])
 {
-  // This symbol context is local to option parsing (the symbols will
-  // not interfere with subsequent OpenFiles)
-  InitSymbols();
-
   // Parse session and option files
   ParseFile(CTX.session_filename_fullpath, 1, 1);
   ParseFile(CTX.options_filename_fullpath, 1, 1);

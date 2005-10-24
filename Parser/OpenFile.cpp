@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.84 2005-10-15 19:06:09 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.85 2005-10-24 15:38:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -342,7 +342,6 @@ void OpenProblem(char *name)
   }
   CTX.threads_lock = 1;
 
-  InitSymbols();
   Init_Mesh(&M);
 
   // Initialize pseudo random mesh generator to the same seed

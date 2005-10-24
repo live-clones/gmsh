@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.50 2005-06-20 16:40:25 geuzaine Exp $
+// $Id: Main.cpp,v 1.51 2005-10-24 15:38:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -86,12 +86,14 @@ int main(int argc, char *argv[])
 {
   ParUtil::Instance()->init(argc, argv);
 
+  InitSymbols();
+
+  Init_Mesh0(&M);
+
   Init_Options(0);
 
   if(argc < 2)
     Info(0, argv[0]);
-
-  Init_Mesh0(&M);
 
   // FIXME: could not make this work on IRIX
 #if !defined(__sgi__) 

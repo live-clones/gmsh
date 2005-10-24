@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.83 2005-08-24 20:28:43 remacle Exp $
+// $Id: Main.cpp,v 1.84 2005-10-24 15:38:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -70,6 +70,10 @@ int main(int argc, char *argv[])
     strcat(cmdline, argv[i]);
     strcat(cmdline, " ");
   }
+
+  // Initialize the symbol tree that will hold variable names
+  
+  InitSymbols();
 
   // Initialize the static Mesh
   
