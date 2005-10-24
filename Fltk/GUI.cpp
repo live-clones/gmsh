@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.462 2005-10-15 20:47:28 geuzaine Exp $
+// $Id: GUI.cpp,v 1.463 2005-10-24 15:53:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -336,7 +336,7 @@ Context_Item menu_mesh[] = {
     Context_Item menu_mesh_stl[] = {
       {"1Mesh>STL", NULL} ,
       {"Update edges", (Fl_Callback *)mesh_update_edges_cb} , 
-      {"Manually add edges", (Fl_Callback *)mesh_update_more_edges_cb} , 
+      // {"Manually add edges", (Fl_Callback *)mesh_update_more_edges_cb} , 
       {"Remesh", (Fl_Callback *)mesh_remesh_cb} , 
       {0} 
     };  
