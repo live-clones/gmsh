@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.72 2005-10-16 15:55:46 geuzaine Exp $
+// $Id: Generator.cpp,v 1.73 2005-10-26 15:19:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -238,9 +238,8 @@ void Maillage_Dimension_1(Mesh * M)
 
   t1 = Cpu();
 
-  Move_SimplexBaseToSimplex(M, 1);
-
   Tree_Action(M->Curves, Maillage_Curve);
+
   t2 = Cpu();
   M->timing[0] = t2 - t1;
 }
@@ -252,8 +251,6 @@ void Maillage_Dimension_2(Mesh * M)
   double t1, t2, shortest = 1.e300;
 
   t1 = Cpu();
-
-  Move_SimplexBaseToSimplex(M, 2);
 
   // create reverse 1D meshes
 
@@ -308,8 +305,6 @@ void Maillage_Dimension_3(Mesh * M)
   Volume *vol;
 
   t1 = Cpu();
-
-  Move_SimplexBaseToSimplex(M, 3);
 
   // merge all the delaunay parts in a single special volume
   v = Create_Volume(99999, 99999);
@@ -466,7 +461,7 @@ void mai3d(Mesh * M, int Asked)
 
   oldstatus = M->status;
 
-  // re-read data
+  // Re-read data
 
   if((Asked > oldstatus && Asked >= 0 && oldstatus < 0) ||
      (Asked < oldstatus)) {
@@ -475,6 +470,9 @@ void mai3d(Mesh * M, int Asked)
   }
 
   CTX.threads_lock = 1;
+
+  // Clean up all the 2nd order nodes and transfer all SimplexBase
+  // into "real" Simplexes
 
   Degre1();
 
@@ -530,10 +528,12 @@ void mai3d(Mesh * M, int Asked)
   if(M->status == 3 && CTX.mesh.optimize)
     Optimize_Netgen(M);
 
-  // Second order elements
+  // Create second order elements
 
   if(M->status && CTX.mesh.order == 2)
     Degre2(M->status);
+
+  // Partition
 
   if(M->status > 1 && CTX.mesh.nbPartitions != 1)
     PartitionMesh(M, CTX.mesh.nbPartitions);

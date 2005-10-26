@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.27 2005-10-24 14:09:42 remacle Exp $
+// $Id: DiscreteSurface.cpp,v 1.28 2005-10-26 15:19:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -32,7 +32,7 @@
 
 extern Mesh *THEM;
 extern Context_T CTX;
-extern void Move_SimplexBaseToSimplex(Mesh * M, int dimension);
+
 void Mesh_To_BDS(Mesh *m)
 {
 

@@ -492,6 +492,8 @@ void Freeze_Vertex(void *a, void *b);
 void deFreeze_Vertex(void *a, void *b);
 void ReOrientSurfaceMesh(Surface *s);
 
+void Move_SimplexBaseToSimplex(Mesh * M, int dimension);
+
 double Lc_XYZ(double X, double Y, double Z, Mesh *m);
 void ActionLiss(void *data, void *dummy);
 void ActionLissSurf(void *data, void *dummy);
