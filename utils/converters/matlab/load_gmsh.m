@@ -47,10 +47,12 @@ function mesh = load_gmsh ( filename )
             mesh.nbPoints = 0;
             mesh.nbTriangles = 0;
             mesh.nbQuads = 0;
+            mesh.nbTet = 0;
             mesh.POINTS=zeros(mesh.nbElm,2);
             mesh.BEAMS=zeros(mesh.nbElm,3);
             mesh.TRIANGLES=zeros(mesh.nbElm,4);
             mesh.QUADS=zeros(mesh.nbElm,5);
+            mesh.TETS=zeros(mesh.nbElm,5);
             for(I=1:mesh.nbElm)
                 mesh.ELE_INFOS(I,:) = fscanf (fid,'%d',5);
                 NODES_ELEM = fscanf (fid,'%d',mesh.ELE_INFOS(I,5));
@@ -72,7 +74,7 @@ function mesh = load_gmsh ( filename )
                    mesh.TRIANGLES ( mesh.nbTriangles , 3) = IDS (NODES_ELEM ( 3) );
                    mesh.TRIANGLES ( mesh.nbTriangles , 4) = I;
                 end
-                if (mesh.ELE_INFOS(I,2) == 4) %% quadrangle
+                if (mesh.ELE_INFOS(I,2) == 3) %% quadrangle
                    mesh.nbQuads = mesh.nbQuads + 1;
                    mesh.QUADS ( mesh.nbQuads , 1) = IDS (NODES_ELEM ( 1) );
                    mesh.QUADS ( mesh.nbQuads , 2) = IDS (NODES_ELEM ( 2) );
@@ -80,6 +82,15 @@ function mesh = load_gmsh ( filename )
                    mesh.QUADS ( mesh.nbQuads , 4) = IDS (NODES_ELEM ( 4) );
                    mesh.QUADS ( mesh.nbQuads , 5) = I;
                 end
+                if (mesh.ELE_INFOS(I,2) == 4) %% tet
+                   mesh.nbTet = mesh.nbTet + 1;
+                   mesh.QUADS ( mesh.nbTet , 1) = IDS (NODES_ELEM ( 1) );
+                   mesh.QUADS ( mesh.nbTet , 2) = IDS (NODES_ELEM ( 2) );
+                   mesh.QUADS ( mesh.nbTet , 3) = IDS (NODES_ELEM ( 3) );
+                   mesh.QUADS ( mesh.nbTet , 4) = IDS (NODES_ELEM ( 4) );
+                   mesh.QUADS ( mesh.nbTet , 5) = mesh.ELE_INFOS(I,3);
+                end
+
             end
             tline = fgetl(fid);
             disp('elements have been read')
