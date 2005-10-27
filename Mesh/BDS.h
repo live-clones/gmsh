@@ -101,7 +101,9 @@ public:
     BDS_Point   *p;
     BDS_Surface *surf;
     void getClosestTriangles ( double x, double y, double z, 
-			  std::list<BDS_Triangle*> &l , double &radius);
+			       std::list<BDS_Triangle*> &l , 
+			       double &radius,
+			       double &X, double &Y, double &Z );
     inline bool operator <  ( const BDS_GeomEntity & other ) const
 	{
 	    if (classif_degree < other.classif_degree)return true;
@@ -634,7 +636,8 @@ class BDS_Mesh
     bool collapse_edge ( BDS_Edge *, BDS_Point*, const double eps);
     void snap_point   ( BDS_Point* , BDS_Mesh *geom = 0);
     bool smooth_point   ( BDS_Point* , BDS_Mesh *geom = 0);
-    bool smooth_point_b ( BDS_Point* );
+    bool smooth_point_b ( BDS_Point* ); 
+    bool move_point ( BDS_Point *p , double X, double Y, double Z );
     bool split_edge ( BDS_Edge *, double coord, BDS_Mesh *geom = 0);
     void classify ( double angle, int nb = -1); 
     void color_plane_surf ( double eps , int nb);

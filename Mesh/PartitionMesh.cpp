@@ -1,4 +1,4 @@
-// $Id: PartitionMesh.cpp,v 1.4 2005-10-16 03:36:11 geuzaine Exp $
+// $Id: PartitionMesh.cpp,v 1.5 2005-10-27 15:06:26 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -49,17 +49,23 @@ void DeleteMesh(Mesh * M)
   for(int i = 0; i < List_Nbr(Curves); i++) {
     Curve *c;
     List_Read(Curves, i, &c);
-    Tree_Action(c->Simplexes, Free_SimplexBase);
+    Tree_Action(c->Simplexes, Free_Simplex);
     Tree_Delete(c->Simplexes);
-    c->Simplexes = Tree_Create(sizeof(SimplexBase *), compareSimplex);
+    Tree_Action(c->SimplexesBase, Free_SimplexBase);
+    Tree_Delete(c->SimplexesBase);
+    c->Simplexes = Tree_Create(sizeof(Simplex *), compareSimplex);
+    c->SimplexesBase = Tree_Create(sizeof(SimplexBase *), compareSimplexBase);
   }
   List_T *Surfaces = Tree2List(M->Surfaces);
   for(int i = 0; i < List_Nbr(Surfaces); i++) {
     Surface *s;
     List_Read(Surfaces, i, &s);
-    Tree_Action(s->Simplexes, Free_SimplexBase);
+    Tree_Action(s->Simplexes, Free_Simplex);
     Tree_Delete(s->Simplexes);
-    s->Simplexes = Tree_Create(sizeof(SimplexBase *), compareSimplex);
+    Tree_Action(s->SimplexesBase, Free_SimplexBase);
+    Tree_Delete(s->SimplexesBase);
+    s->Simplexes = Tree_Create(sizeof(Simplex *), compareSimplex);
+    s->SimplexesBase = Tree_Create(sizeof(SimplexBase *), compareSimplexBase);
   }
   List_Delete(Surfaces);
 
@@ -67,9 +73,12 @@ void DeleteMesh(Mesh * M)
   for(int i = 0; i < List_Nbr(Volumes); i++) {
     Volume *v;
     List_Read(Volumes, i, &v);
-    Tree_Action(v->Simplexes, Free_SimplexBase);
+    Tree_Action(v->Simplexes, Free_Simplex);
     Tree_Delete(v->Simplexes);
-    v->Simplexes = Tree_Create(sizeof(SimplexBase *), compareSimplex);
+    Tree_Action(v->SimplexesBase, Free_SimplexBase);
+    Tree_Delete(v->SimplexesBase);
+    v->Simplexes = Tree_Create(sizeof(Simplex *), compareSimplex);
+    v->SimplexesBase = Tree_Create(sizeof(SimplexBase *), compareSimplexBase);
   }
   List_Delete(Volumes);
 }

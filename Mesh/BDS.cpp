@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.37 2005-10-24 14:09:42 remacle Exp $
+// $Id: BDS.cpp,v 1.38 2005-10-27 15:06:26 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 #include "GmshMatrix.h"
 #include "BDS.h"
 #include "Context.h"
+#include "Message.h"
 
 extern Context_T CTX;
 
@@ -135,7 +136,8 @@ void BDS_Quadric::projection ( double xa, double ya, double za,
 
 void BDS_GeomEntity::getClosestTriangles ( double x, double y, double z, 
 					   std::list<BDS_Triangle*> &l ,
-					   double &radius)
+					   double &radius,
+					   double &X, double &Y, double &Z )
   
 {
 #ifdef HAVE_ANN_
@@ -160,6 +162,10 @@ void BDS_GeomEntity::getClosestTriangles ( double x, double y, double z,
 		     eps);                                        // error bound
 
   std::list<BDS_Triangle*>l1,l2,l3;
+
+  X =kdTree->thePoints()[nnIdx[0]][0];
+  Y =kdTree->thePoints()[nnIdx[0]][1];
+  Z =kdTree->thePoints()[nnIdx[0]][2];
 
   radius =  sR[nnIdx[0]];
 
@@ -674,11 +680,11 @@ void BDS_Mesh :: reverseEngineerCAD ( )
 		    
 		    if ( plane ) 
 		    {
-			printf("plane surface %d found : %g %g %g\n",(*it)->classif_tag,RSLT(0),RSLT(1),RSLT(2));
+		      //			printf("plane surface %d found : %g %g %g\n",(*it)->classif_tag,RSLT(0),RSLT(1),RSLT(2));
 			(*it)->surf = new BDS_Plane (RSLT(0),RSLT(1),RSLT(2));
 		    }
 		}
-		if (!(*it)->surf && pts.size() > 20)
+		if (!(*it)->surf && pts.size() > 20 )
 		{
 		    Double_Matrix QUADRIC  ( pts.size() , 9 );
 		    Double_Vector ONES  ( pts.size() );
@@ -720,8 +726,8 @@ void BDS_Mesh :: reverseEngineerCAD ( )
 		    }		    
 		    if ( quad ) 
 		    {
-			printf("quadric surface %d found : %g %g %g %g %g %g %g %g %g\n",(*it)->classif_tag,
-			       RSLT(0),RSLT(1),RSLT(2),RSLT(3),RSLT(4),RSLT(5),RSLT(6),RSLT(7),RSLT(8));
+		      //			printf("quadric surface %d found : %g %g %g %g %g %g %g %g %g\n",(*it)->classif_tag,
+		      //			       RSLT(0),RSLT(1),RSLT(2),RSLT(3),RSLT(4),RSLT(5),RSLT(6),RSLT(7),RSLT(8));
 			(*it)->surf = new BDS_Quadric ( RSLT(0),RSLT(1),RSLT(2),RSLT(3),RSLT(4),RSLT(5),RSLT(6),RSLT(7),RSLT(8));
 
 			//test
@@ -772,7 +778,7 @@ void BDS_Mesh :: createSearchStructures ( )
 {
 #ifdef HAVE_ANN_
 
-  printf("creating the ANN search structure\n");
+  Msg(INFO,"creating the ANN search structure\n");
   
   const double LC_SEARCH = LC *.3e-3;
 
@@ -808,7 +814,7 @@ void BDS_Mesh :: createSearchStructures ( )
 		  eit++;
 		}
 
-	      printf("%d pts found\n",maxPts);
+	      //	      printf("%d pts found\n",maxPts);
 	      
 	      const int dim = 3;
 	      (*it)->queryPt = annAllocPt(dim);                              // allocate query point
@@ -839,7 +845,7 @@ void BDS_Mesh :: createSearchStructures ( )
 		    }
 		  eit++;
 		}
-	      printf("building kd Tree for surface %d -- %d points\n",(*it)->classif_tag,maxPts);
+	      //	      printf("building kd Tree for surface %d -- %d points\n",(*it)->classif_tag,maxPts);
 	      (*it)->kdTree = new ANNkd_tree(                                        // build search structure
 					     (*it)->dataPts,                                // the data points
 					     maxPts,                                 // number of points
@@ -902,7 +908,7 @@ void BDS_Point :: compute_curvature ( )
 	radius_of_curvature = fabs(1./curvature);
       else
 	radius_of_curvature = 1.e22;
-      printf(" R = %g\n",radius_of_curvature);
+      //      printf(" R = %g\n",radius_of_curvature);
   }
 }
 
@@ -997,7 +1003,7 @@ void BDS_Mesh :: color_plane_surf ( double eps, int NB_T )
 	recur_color_plane_surf ( eps, start , start->N(),all,plane );
 	if (plane.size() > NB_T)
 	  {
-	    printf("plane surface found %d triangles\n",plane.size());
+	    //	    printf("plane surface found %d triangles\n",plane.size());
 	    std::list<BDS_Triangle*>::iterator xit  = plane.begin(); 
 	    std::list<BDS_Triangle*>::iterator xite = plane.end();
 	    while (xit != xite)
@@ -1013,7 +1019,7 @@ void BDS_Mesh :: color_plane_surf ( double eps, int NB_T )
 
 void BDS_Mesh :: classify ( double angle, int NB_T )
 {
-    printf("  classifying \n");
+  //    printf("  classifying \n");
     
     static BDS_GeomEntity EDGE_CLAS (0,1);
     // clear everything
@@ -1097,7 +1103,7 @@ void BDS_Mesh :: classify ( double angle, int NB_T )
     }
 */
 
-    printf("  classifying faces\n");
+//    printf("  classifying faces\n");
   
     {
       int tag = 1;
@@ -1121,7 +1127,7 @@ void BDS_Mesh :: classify ( double angle, int NB_T )
 	  recur_tag ( start , g );
 	  tag++;
 	}
-      printf("  classifying edges (%d face tags found)\n",tag-1);
+      //      printf("  classifying edges (%d face tags found)\n",tag-1);
     }
 
     int edgetag = 1;
@@ -1203,7 +1209,7 @@ void BDS_Mesh :: classify ( double angle, int NB_T )
 	}
     }
 
-    printf("  classifying points\n");
+    //    printf("  classifying points\n");
 
     int vertextag = 1;
     {
@@ -1281,11 +1287,11 @@ double BDS_Vector::t = 0;
 
 bool BDS_Mesh :: read_stl ( const char *filename , const double tolerance)
 {
-
-    FILE *f = fopen ( filename, "r");
-    if (!f)return false;
-    char buffer [256], name[256];
-
+  
+  FILE *f = fopen ( filename, "r");
+  if (!f)return false;
+  char buffer [256], name[256];
+    
     PointLessThanLexicographic::t = tolerance;
        
     fgets (buffer,255,f);
@@ -1374,7 +1380,7 @@ bool BDS_Mesh :: read_stl ( const char *filename , const double tolerance)
 		   (Min[1]-Max[1])*(Min[1]-Max[1])+
 		   (Min[2]-Max[2])*(Min[2]-Max[2]));
 
-	printf("LC = %g\n",LC);
+	//	printf("LC = %g\n",LC);
 
 	PointLessThanLexicographic::t = LC * tolerance;
 
@@ -1451,7 +1457,7 @@ bool BDS_Mesh :: read_stl ( const char *filename , const double tolerance)
 	char *DATA = new char [Nf * 50 * sizeof (char)];
 	x = fread (DATA,sizeof (char),Nf * 50,f);
 
-	printf("BINARY STL data read, %ld facets \n",Nf);
+	Msg(INFO,"BINARY STL data read, %ld facets \n",Nf);
 
 	Min[0] = Min[1] = Min[2] = 1.e12;
 	Max[0] = Max[1] = Max[2] = -1.e12;
@@ -1576,11 +1582,9 @@ bool BDS_Mesh :: read_mesh ( const char *filename )
   if (format == 1)
     {      
 
-      printf("format = 1\n");
       while (!feof(f))
 	{
 	  fgets (buffer,255,f);
-	  printf("%s\n",buffer);
 	  if (buffer[0] != '#') // skip comments
 	    {
 	      sscanf(buffer,"%s",name);
@@ -1595,7 +1599,6 @@ bool BDS_Mesh :: read_mesh ( const char *filename )
 		  double x,y,z;
 		  fgets (buffer,255,f);
 		  sscanf (buffer,"%d",&nbv);
-		  printf("%d Vertices\n",nbv);
 		  for (int i=0;i<nbv;i++)
 		    {
 		      fgets (buffer,255,f);
@@ -1616,7 +1619,6 @@ bool BDS_Mesh :: read_mesh ( const char *filename )
 		  int nbt,cl,n1,n2,n3;
 		  fgets (buffer,255,f);
 		  sscanf (buffer,"%d",&nbt);
-		  printf("%d Triangles\n",nbt);
 		  for (int i=0;i<nbt;i++)
 		    {
 		      fgets (buffer,255,f);
@@ -1631,7 +1633,6 @@ bool BDS_Mesh :: read_mesh ( const char *filename )
 		  int nbt,cl,n1,n2,n3,n4;
 		  fgets (buffer,255,f);
 		  sscanf (buffer,"%d",&nbt);
-		  printf("%d Quadrilaterals\n",nbt);
 		  for (int i=0;i<nbt;i++)
 		    {
 		      fgets (buffer,255,f);
@@ -2226,46 +2227,111 @@ bool project_point_on_a_list_of_triangles ( BDS_Point *p ,
     return global_ok;
 }
 
+bool BDS_Mesh :: move_point ( BDS_Point *p , double X, double Y, double Z )
+{
+  std::list<BDS_Triangle *> t;
+  p->getTriangles (t); 	
+  std::list<BDS_Triangle *>::iterator tit  = t.begin(); 	
+  std::list<BDS_Triangle *>::iterator tite =  t.end();
+  const double oldx = p->X;
+  const double oldy = p->Y;
+  const double oldz = p->Z;
+  while (tit!=tite)
+    {
+      BDS_Vector n1 = (*tit)->N();
+      p->X = X;
+      p->Y = Y;
+      p->Z = Z;
+      BDS_Vector n2 = (*tit)->N_on_the_fly();
+      p->X = oldx;
+      p->Y = oldy;
+      p->Z = oldz;
+      double angle = n1.angle(n2);
+      if (fabs(angle) > M_PI/3 )return false;
+      ++tit;
+    }
+  p->X = X;
+  p->Y = Y;
+  p->Z = Z;
+
+  tit  = t.begin(); 	
+  while (tit!=tite)
+    {
+      (*tit)->_update();
+      ++tit;
+    }
+  return true;
+}
+
+
 void BDS_Mesh :: snap_point ( BDS_Point *p , BDS_Mesh *geom_mesh )
 {
+  double X,Y,Z;
   if (p->g->surf)
     {
-      p->g->surf->projection ( p->X,p->Y,p->Z,p->X,p->Y,p->Z);      
-    }
-  else if (p->g && p->g->classif_degree == 2 && geom_mesh)
-    {
-
-      std::list<BDS_Triangle*> l;
-      BDS_GeomEntity *gg = geom_mesh->get_geom(p->g->classif_tag,p->g->classif_degree);
-      gg->getClosestTriangles (p->X,p->Y,p->Z,l,p->radius_of_curvature);
-      bool ok = project_point_on_a_list_of_triangles ( p , l, p->X,p->Y,p->Z);
-      
-      if (!ok)
-	{
-	  SNAP_FAILURE++;
+      p->g->surf->projection ( p->X,p->Y,p->Z,X,Y,Z);
+      if(move_point(p,X,Y,Z))
+	{ 
+	  SNAP_SUCCESS++;
 	}
       else
 	{
-	  SNAP_SUCCESS++;
+	  SNAP_FAILURE++;
 	}
+    }
+  else if (p->g && p->g->classif_degree == 2 && geom_mesh)
+    {
+      double xx, yy,zz;
+      std::list<BDS_Triangle*> l;
+      BDS_GeomEntity *gg = geom_mesh->get_geom(p->g->classif_tag,p->g->classif_degree);
+      gg->getClosestTriangles (p->X,p->Y,p->Z,l,p->radius_of_curvature,xx,yy,zz);
+
+
       
+      bool ok = project_point_on_a_list_of_triangles ( p , l, X,Y,Z);
+
+      /*
+      std::list<BDS_Triangle *>::iterator tit  = l.begin(); 	
+      std::list<BDS_Triangle *>::iterator tite =  l.end();
+      BDS_Vector n1 = p->N(), n2;      
+      while(tit!=tite)
+	{
+	  n2 += (*tit)->N();
+	  tit++;
+	}
+      n2 /= sqrt(n2*n2);
+      n1 /= sqrt(n1*n1);
+      double angle = n1.angle(n2);
+      if (fabs(angle) > M_PI/2 )ok= false;
+      */
+
+      if (!ok)
+	{
+	  if(move_point(p,xx,yy,zz))
+	    { 
+	      SNAP_SUCCESS++;
+	    }
+	  else
+	    {
+	      SNAP_FAILURE++;
+	    }
+	}
+      else
+	{ 
+	  if(move_point(p,X,Y,Z))
+	    { 
+	      SNAP_SUCCESS++;
+	    }
+	  else
+	    {
+	      SNAP_FAILURE++;
+	    }
+	}
     }
   else
     {
       return ;
     }
-  
-  {
-    std::list<BDS_Triangle *> t;
-    p->getTriangles (t); 	
-    std::list<BDS_Triangle *>::iterator tit  = t.begin(); 	
-    std::list<BDS_Triangle *>::iterator tite =  t.end();
-    while (tit!=tite)
-      {
-	(*tit)->_update();
-	++tit;
-      }      
-  }
 }
 
 bool BDS_Mesh ::smooth_point ( BDS_Point *p , BDS_Mesh *geom_mesh )
@@ -2288,12 +2354,10 @@ bool BDS_Mesh ::smooth_point ( BDS_Point *p , BDS_Mesh *geom_mesh )
 	++eit;
     }
 
-    p->X = X / p->edges.size();
-    p->Y = Y / p->edges.size();
-    p->Z = Z / p->edges.size();
+    bool success = move_point(p, X / p->edges.size(),Y / p->edges.size(),Z / p->edges.size());
 
-    snap_point ( p, geom_mesh );
-    
+    if (success)snap_point ( p, geom_mesh );
+
     return true;
 }
 
@@ -2386,8 +2450,6 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
 
     BDS_Metric metric ( l , LC/ CTX.mesh.min_elem_size_fact , LC, CTX.mesh.nb_elem_per_rc );
 
-    printf("%g\n",CTX.mesh.nb_elem_per_rc);
-    
     //     pr intf("METRIC %g %g %g\n",LC,metric._min,metric._max);
 
     // add initial set of edges in a list
@@ -2498,7 +2560,7 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
     cleanup();  
     if (smooth)
     {    
-      printf("smoothing %d points\n",points.size());
+      Msg(INFO,"smoothing %d points\n",points.size());
 	std::set<BDS_Point*, PointLessThan>::iterator it   = points.begin();
 	std::set<BDS_Point*, PointLessThan>::iterator ite  = points.end();
 	while (it != ite)
@@ -2508,7 +2570,7 @@ int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh)
 	}
     }
     
-    printf("%d snaps have succeeded , %d have failed\n",SNAP_SUCCESS,SNAP_FAILURE);
+    Msg(INFO,"%d snaps have succeeded , %d have failed\n",SNAP_SUCCESS,SNAP_FAILURE);
     //    outputScalarField (triangles,"b.pos");
     return nb_modif;
 }

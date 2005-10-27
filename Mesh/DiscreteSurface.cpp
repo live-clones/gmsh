@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.28 2005-10-26 15:19:24 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.29 2005-10-27 15:06:26 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -292,7 +292,6 @@ void BDS_To_Mesh(Mesh *m)
     m->Surfaces = Tree_Create(sizeof(Surface *), compareSurface);
     m->Volumes = Tree_Create(sizeof(Volume *), compareVolume);
 
-    printf("coucou1ss\n");
 
     std::set<BDS_GeomEntity*,GeomLessThan>::iterator it  = m->bds->geom.begin(); 
     std::set<BDS_GeomEntity*,GeomLessThan>::iterator ite = m->bds->geom.end(); 
@@ -341,20 +340,29 @@ void BDS_To_Mesh(Mesh *m)
 
     CTX.mesh.changed = 1;
 
-    printf("coucou2\n");
 }
 
 
 int ReMesh(Mesh *M)
 {
-
   if(M->status != 2) return 0;
+  printf("status %d\n",M->status);
+
+  if (!M->bds)
+    {
+      Mesh_To_BDS(M);
+      M->bds->classify(CTX.mesh.dihedral_angle_tol * M_PI / 180);
+      BDS_To_Mesh(M);
+    }
 
   DeleteMesh (M);
   
-  delete M->bds_mesh;
-  M->bds_mesh = 0;
-  
+  if (M->bds_mesh)
+    {
+      delete M->bds_mesh;
+      M->bds_mesh = 0;
+    }
+
   MeshDiscreteSurface ((Surface*)0);
 
   CTX.mesh.changed = 1;

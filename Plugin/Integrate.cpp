@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.14 2005-01-12 19:10:41 geuzaine Exp $
+// $Id: Integrate.cpp,v 1.15 2005-10-27 15:06:42 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -18,6 +18,7 @@
 // USA.
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
+
 
 #include "Plugin.h"
 #include "Integrate.h"

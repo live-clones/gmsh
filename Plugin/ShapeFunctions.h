@@ -54,10 +54,10 @@ public:
 	jac[1][0] += _x[i] * s[1]; jac[1][1] += _y[i] * s[1]; jac[1][2] += _z[i] * s[1];
 	jac[2][0] += _x[i] * s[2]; jac[2][1] += _y[i] * s[2]; jac[2][2] += _z[i] * s[2];
       }
-      return
+      return fabs(
 	jac[0][0] * jac[1][1] * jac[2][2] + jac[0][2] * jac[1][0] * jac[2][1] +
 	jac[0][1] * jac[1][2] * jac[2][0] - jac[0][2] * jac[1][1] * jac[2][0] -
-	jac[0][0] * jac[1][2] * jac[2][1] - jac[0][1] * jac[1][0] * jac[2][2];
+	jac[0][0] * jac[1][2] * jac[2][1] - jac[0][1] * jac[1][0] * jac[2][2]);
     case 2 :
       for(int i = 0; i < getNumNodes(); i++) {
 	getGradShapeFunction(i, u, v, w, s);
@@ -163,6 +163,7 @@ public:
       getGaussPoint(i, u, v, w, weight);
       double det = getJacobian(u, v, w, jac);
       double d = interpolate(val, u, v, w, stride);
+      //      if(d<0) printf("error %g %g %g %g %g %g %g %g %g\n",d,u,v,w,jac,val[0],val[1],val[2],val[3]);
       sum += d * weight * det;
     }
     return sum;
@@ -178,7 +179,7 @@ public:
     }
     double res = 0.;
     if(sumabs)
-      res = area * (1 - sum/sumabs) * 0.5 ;
+      res = area * (1 + sum/sumabs) * 0.5 ;
     return res;
   }
   virtual double integrateCirculation(double val[])
