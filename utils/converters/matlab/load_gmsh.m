@@ -1,5 +1,5 @@
 function mesh = load_gmsh ( filename )
-% Reads a 2D mesh in msh format, version 1
+% Reads a mesh in msh format, version 1
     mesh = [];    
     mesh.MIN = zeros(3,1);
     mesh.MAX = zeros(3,1);
