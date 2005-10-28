@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.38 2005-10-27 15:06:26 remacle Exp $
+// $Id: BDS.cpp,v 1.39 2005-10-28 08:31:00 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -24,10 +24,8 @@
 #include "Numeric.h"
 #include "GmshMatrix.h"
 #include "BDS.h"
-#include "Context.h"
 #include "Message.h"
 
-extern Context_T CTX;
 
 /*
   (X-Xc)^2 = R^2
@@ -2442,13 +2440,13 @@ void BDS_Mesh :: compute_metric_edge_lengths (const BDS_Metric & metric)
 }
     
 
-int BDS_Mesh :: adapt_mesh ( double l, bool smooth, BDS_Mesh *geom_mesh) 
+int BDS_Mesh :: adapt_mesh ( double l,  double C1, double C2 , bool smooth, BDS_Mesh *geom_mesh) 
 {
     int nb_modif = 0;
     SNAP_SUCCESS = 0;
     SNAP_FAILURE = 0;
 
-    BDS_Metric metric ( l , LC/ CTX.mesh.min_elem_size_fact , LC, CTX.mesh.nb_elem_per_rc );
+    BDS_Metric metric ( l , LC/ C1 , LC, C2 );
 
     //     pr intf("METRIC %g %g %g\n",LC,metric._min,metric._max);
 

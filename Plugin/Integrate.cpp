@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.15 2005-10-27 15:06:42 remacle Exp $
+// $Id: Integrate.cpp,v 1.16 2005-10-28 08:31:00 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -89,6 +89,8 @@ static double integrate(int nbList, List_T *list, int dim,
 			int nbNod, int nbComp, int step)
 {
   if(!nbList) return 0.;
+
+  printf("dim = %d nbComp = %d nbNod = %d nbList = %d\n",dim,nbComp,nbNod,nbList);
   
   const int levelsetPositive = (int)IntegrateOptions_Number[0].def;
   
@@ -110,6 +112,9 @@ static double integrate(int nbList, List_T *list, int dim,
 	res += element->integrateLevelsetPositive(v);
     }
     else if(nbComp == 3){
+
+      printf("coucouc\n");
+
       if(dim == 1)
 	res += element->integrateCirculation(v);
       else if(dim == 2)

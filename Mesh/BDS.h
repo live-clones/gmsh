@@ -643,7 +643,7 @@ class BDS_Mesh
     void color_plane_surf ( double eps , int nb);
     void reverseEngineerCAD ( ) ;
     void createSearchStructures ( ) ;
-    int adapt_mesh(double,bool smooth = false,BDS_Mesh *geom = 0); 
+    int adapt_mesh(double,double, double,bool smooth = false,BDS_Mesh *geom = 0); 
     void compute_metric_edge_lengths (const BDS_Metric & metric);
     void cleanup();
     // io's 

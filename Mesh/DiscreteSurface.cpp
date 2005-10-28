@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.29 2005-10-27 15:06:26 remacle Exp $
+// $Id: DiscreteSurface.cpp,v 1.30 2005-10-28 08:31:00 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -345,8 +345,8 @@ void BDS_To_Mesh(Mesh *m)
 
 int ReMesh(Mesh *M)
 {
-  if(M->status != 2) return 0;
   printf("status %d\n",M->status);
+  if(M->status != 2) return 0;
 
   if (!M->bds)
     {
@@ -380,8 +380,10 @@ int MeshDiscreteSurface(Surface *s)
     if(!THEM->bds_mesh){
       THEM->bds_mesh = new BDS_Mesh (*(THEM->bds));
       int iter = 0;
-      while(iter < NITER && THEM->bds_mesh->adapt_mesh(CTX.mesh.lc_factor * THEM->bds->LC, 
-						    true, THEM->bds)){
+      while(iter < NITER && THEM->bds_mesh->adapt_mesh(CTX.mesh.lc_factor * THEM->bds->LC,
+						       CTX.mesh.min_elem_size_fact,
+						       CTX.mesh.nb_elem_per_rc,
+						       true, THEM->bds)){
 	Msg(STATUS2, "Iteration %2d/%d done (%d triangles)\n",iter, NITER,THEM->bds_mesh->triangles.size());
 	iter ++;
       }
