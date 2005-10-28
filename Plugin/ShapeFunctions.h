@@ -163,7 +163,6 @@ public:
       getGaussPoint(i, u, v, w, weight);
       double det = getJacobian(u, v, w, jac);
       double d = interpolate(val, u, v, w, stride);
-      //if(d<0) printf("error %g %g %g %g %g %g %g %g %g\n",d,u,v,w,jac,val[0],val[1],val[2],val[3]);
       sum += d * weight * det;
     }
     return sum;
