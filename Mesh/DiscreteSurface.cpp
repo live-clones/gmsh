@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.30 2005-10-28 08:31:00 remacle Exp $
+// $Id: DiscreteSurface.cpp,v 1.31 2005-11-01 16:37:12 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -373,17 +373,18 @@ int ReMesh(Mesh *M)
 
 int MeshDiscreteSurface(Surface *s)
 { 
-
   const int NITER = 10;
   if(THEM->bds){
+    BDS_Metric metric ( THEM->bds->LC/ CTX.mesh.target_elem_size_fact,  
+			THEM->bds->LC/ CTX.mesh.min_elem_size_fact,
+			THEM->bds->LC,
+			CTX.mesh.beta_smooth_metric,
+			CTX.mesh.nb_elem_per_rc);   
     Msg(STATUS2, "Discrete Surface Mesh Generator...");
     if(!THEM->bds_mesh){
       THEM->bds_mesh = new BDS_Mesh (*(THEM->bds));
       int iter = 0;
-      while(iter < NITER && THEM->bds_mesh->adapt_mesh(CTX.mesh.lc_factor * THEM->bds->LC,
-						       CTX.mesh.min_elem_size_fact,
-						       CTX.mesh.nb_elem_per_rc,
-						       true, THEM->bds)){
+      while(iter < NITER && THEM->bds_mesh->adapt_mesh(metric,true, THEM->bds)){
 	Msg(STATUS2, "Iteration %2d/%d done (%d triangles)\n",iter, NITER,THEM->bds_mesh->triangles.size());
 	iter ++;
       }

@@ -48,15 +48,15 @@ double quality_triangle  (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3);
 class BDS_Metric
 {
  public:
-  const double target,_min,_max,treshold;
+  const double target,_min,_max,treshold, beta;
   const double nb_elements_per_radius_of_curvature;
-  BDS_Metric ( double _target , double _mmin, double _mmax, double cc, double _tres = 0.7) 
-    : target(_target),_min(_mmin),_max(_mmax), treshold(_tres),nb_elements_per_radius_of_curvature(cc)
+  BDS_Metric ( double _target , double _mmin, double _mmax, double _b, double cc, double _tres = 0.7) 
+    : target(_target),_min(_mmin),_max(_mmax), beta(_b),treshold(_tres),nb_elements_per_radius_of_curvature(cc)
     {}
   inline double update_target_length( double _target, double old_target_length  ) const
     {
       if (_target <= _min) return _min;
-      if (_target >= _max) return _max;
+      if (_target >= _max && old_target_length > _max) return _max;
       if (old_target_length > _target)return _target ;
       return old_target_length;
 
@@ -643,7 +643,7 @@ class BDS_Mesh
     void color_plane_surf ( double eps , int nb);
     void reverseEngineerCAD ( ) ;
     void createSearchStructures ( ) ;
-    int adapt_mesh(double,double, double,bool smooth = false,BDS_Mesh *geom = 0); 
+    int adapt_mesh(const BDS_Metric & ,bool smooth = false,BDS_Mesh *geom = 0); 
     void compute_metric_edge_lengths (const BDS_Metric & metric);
     void cleanup();
     // io's 

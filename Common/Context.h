@@ -197,7 +197,8 @@ public :
     int smooth_normals;
     double angle_smooth_normals;
     double stl_distance_tol, dihedral_angle_tol;
-    int nb_elem_per_rc, min_elem_size_fact, edge_prolongation_threshold;
+    int edge_prolongation_threshold;
+    double  nb_elem_per_rc ,   min_elem_size_fact , target_elem_size_fact, beta_smooth_metric;
   } mesh;
 
   // post processing options 

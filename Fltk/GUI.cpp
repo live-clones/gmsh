@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.463 2005-10-24 15:53:18 geuzaine Exp $
+// $Id: GUI.cpp,v 1.464 2005-11-01 16:37:12 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2255,7 +2255,7 @@ void GUI::create_option_window()
       mesh_value[22] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Number of elements per rad. of curv.");
       mesh_value[22]->minimum(1);
       mesh_value[22]->maximum(10);
-      mesh_value[22]->step(1);
+      mesh_value[22]->step(.1);
       mesh_value[22]->align(FL_ALIGN_RIGHT); 
 
       mesh_value[23] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "LC/Minimum element size");
@@ -2263,6 +2263,18 @@ void GUI::create_option_window()
       mesh_value[23]->maximum(10000);
       mesh_value[23]->step(10);
       mesh_value[23]->align(FL_ALIGN_RIGHT); 
+
+      mesh_value[24] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "LC/Target element size");
+      mesh_value[24]->minimum(1);
+      mesh_value[24]->maximum(1000);
+      mesh_value[24]->step(1);
+      mesh_value[24]->align(FL_ALIGN_RIGHT); 
+
+      mesh_value[25] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "BETA smoothing factor");
+      mesh_value[25]->minimum(0);
+      mesh_value[25]->maximum(1);
+      mesh_value[25]->step(.01);
+      mesh_value[25]->align(FL_ALIGN_RIGHT); 
 
       o->end();
     }

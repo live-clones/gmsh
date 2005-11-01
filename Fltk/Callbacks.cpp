@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.374 2005-10-15 20:38:35 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.375 2005-11-01 16:37:12 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1068,6 +1068,8 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_edge_prolongation_threshold(0, GMSH_SET, WID->mesh_value[21]->value());
   opt_mesh_nb_elem_per_rc(0, GMSH_SET, WID->mesh_value[22]->value());
   opt_mesh_min_elem_size_fact(0, GMSH_SET, WID->mesh_value[23]->value());
+  opt_mesh_target_elem_size_fact(0, GMSH_SET, WID->mesh_value[24]->value());
+  opt_mesh_beta_smooth_metric(0, GMSH_SET, WID->mesh_value[25]->value());
 
   opt_mesh_point_type(0, GMSH_SET, WID->mesh_choice[0]->value());
   opt_mesh_line_type(0, GMSH_SET, WID->mesh_choice[1]->value());

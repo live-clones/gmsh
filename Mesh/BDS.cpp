@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.39 2005-10-28 08:31:00 remacle Exp $
+// $Id: BDS.cpp,v 1.40 2005-11-01 16:37:12 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -778,7 +778,7 @@ void BDS_Mesh :: createSearchStructures ( )
 
   Msg(INFO,"creating the ANN search structure\n");
   
-  const double LC_SEARCH = LC *.3e-3;
+  const double LC_SEARCH = LC *1e-2;
 
   for (std::set<BDS_GeomEntity*,GeomLessThan>::iterator it = geom.begin();
        it != geom.end();
@@ -789,9 +789,9 @@ void BDS_Mesh :: createSearchStructures ( )
 	  if ((*it)->t.size() > 5)
 	    {	      
 	      int maxPts = 0;
-
+	      
 	      std::set<BDS_Edge *> edg;
-
+	      
 	      std::list<BDS_Triangle*>::iterator tit  = (*it)->t.begin();
 	      std::list<BDS_Triangle*>::iterator tite = (*it)->t.end();
 
@@ -2407,8 +2407,9 @@ void BDS_Mesh :: compute_metric_edge_lengths (const BDS_Metric & metric)
   }
   //  printf("smoothing\n");
   const int NITER = 3;
+
   for (int I=0;I<NITER;++I)  {     
-    const double BETA = 0.9;
+    const double BETA = metric.beta;
     std::set<BDS_Point*, PointLessThan>::iterator it   = points.begin();
     std::set<BDS_Point*, PointLessThan>::iterator ite  = points.end();
     while (it != ite)
@@ -2440,13 +2441,11 @@ void BDS_Mesh :: compute_metric_edge_lengths (const BDS_Metric & metric)
 }
     
 
-int BDS_Mesh :: adapt_mesh ( double l,  double C1, double C2 , bool smooth, BDS_Mesh *geom_mesh) 
+int BDS_Mesh :: adapt_mesh ( const  BDS_Metric &metric, bool smooth, BDS_Mesh *geom_mesh) 
 {
     int nb_modif = 0;
     SNAP_SUCCESS = 0;
     SNAP_FAILURE = 0;
-
-    BDS_Metric metric ( l , LC/ C1 , LC, C2 );
 
     //     pr intf("METRIC %g %g %g\n",LC,metric._min,metric._max);
 

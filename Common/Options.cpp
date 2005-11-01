@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.260 2005-10-15 19:06:08 geuzaine Exp $
+// $Id: Options.cpp,v 1.261 2005-11-01 16:37:12 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -4411,14 +4411,33 @@ double opt_mesh_nb_elem_per_rc(OPT_ARGS_NUM)
 double opt_mesh_min_elem_size_fact(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.mesh.min_elem_size_fact = (int)val;
+    CTX.mesh.min_elem_size_fact = val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
     WID->mesh_value[23]->value(CTX.mesh.min_elem_size_fact);
 #endif
   return CTX.mesh.min_elem_size_fact;
 }
-
+double opt_mesh_target_elem_size_fact(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.target_elem_size_fact = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_value[24]->value(CTX.mesh.target_elem_size_fact);
+#endif
+  return CTX.mesh.target_elem_size_fact;
+}
+double opt_mesh_beta_smooth_metric(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.beta_smooth_metric = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_value[25]->value(CTX.mesh.beta_smooth_metric);
+#endif
+  return CTX.mesh.beta_smooth_metric;
+}
 double opt_mesh_msh_file_version(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

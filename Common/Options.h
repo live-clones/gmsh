@@ -440,6 +440,8 @@ double opt_mesh_nb_smoothing(OPT_ARGS_NUM);
 double opt_mesh_stl_distance_tol(OPT_ARGS_NUM);
 double opt_mesh_nb_elem_per_rc(OPT_ARGS_NUM);
 double opt_mesh_min_elem_size_fact(OPT_ARGS_NUM);
+double opt_mesh_target_elem_size_fact(OPT_ARGS_NUM);
+double opt_mesh_beta_smooth_metric(OPT_ARGS_NUM);
 double opt_mesh_dihedral_angle_tol(OPT_ARGS_NUM);
 double opt_mesh_edge_prolongation_threshold(OPT_ARGS_NUM);
 double opt_mesh_nb_partitions(OPT_ARGS_NUM);

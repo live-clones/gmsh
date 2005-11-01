@@ -899,8 +899,12 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "NbElemsPerRadiusOfCurv" , opt_mesh_nb_elem_per_rc, 5. ,
     "Number of elements per radius of curvature in the remesher" },
+  { F|O, "TargetElmentSizeFact" , opt_mesh_target_elem_size_fact, 20. ,
+    "Target element size factor in the Remesher" },
   { F|O, "MinimumElementSizeFact" , opt_mesh_min_elem_size_fact, 500. ,
-    "Number of elements per radius of curvature in the remesher" },
+    "Minimum element size factor in the Remesher" },
+  { F|O, "BetaSmoothMetric" ,opt_mesh_beta_smooth_metric, 0.9 ,
+    "Maximum ratio of two consecutive edge lengths" },
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. , 
     "Number of hexahedra in the current mesh (read-only)" },
   { F, "NbNodes" , opt_mesh_nb_nodes , 0. , 
