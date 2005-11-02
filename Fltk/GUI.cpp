@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.464 2005-11-01 16:37:12 remacle Exp $
+// $Id: GUI.cpp,v 1.465 2005-11-02 19:31:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -4278,7 +4278,7 @@ void GUI::create_mesh_context_window(int num)
 {
   static Fl_Group *g[10];
   int i;
-  static Fl_Menu Transfinite_Dir[] = {
+  static Fl_Menu menu_transfinite_dir[] = {
     {"Left", 0, 0, 0},
     {"Right", 0, 0, 0},
     {"Alternated", 0, 0, 0},
@@ -4333,8 +4333,8 @@ void GUI::create_mesh_context_window(int num)
     {
       g[2] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Transfinite Surface");
 
-      context_mesh_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 2 * BH, IW, BH, "Transfinite Arrangement");
-      context_mesh_choice[1]->menu(Transfinite_Dir);
+      context_mesh_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 1 * BH, IW, BH, "Transfinite Arrangement");
+      context_mesh_choice[1]->menu(menu_transfinite_dir);
       context_mesh_choice[1]->align(FL_ALIGN_RIGHT);
 
       g[2]->end();
