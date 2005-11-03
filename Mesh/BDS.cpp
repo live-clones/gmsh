@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.40 2005-11-01 16:37:12 remacle Exp $
+// $Id: BDS.cpp,v 1.41 2005-11-03 02:39:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -151,7 +151,7 @@ void BDS_GeomEntity::getClosestTriangles ( double x, double y, double z,
   queryPt[1] = y;
   queryPt[2] = z;
 
-  double eps;
+  double eps = 0.;
   kdTree->annkSearch(                                             // search
 		     queryPt,                                     // query point
 		     nbK,                                         // number of near neighbors
@@ -670,7 +670,7 @@ void BDS_Mesh :: reverseEngineerCAD ( )
 //		    printf("%d points plane surface %d ?? : %g %g %g\n",pts.size(),(*it)->classif_tag,RSLT(0),RSLT(1),RSLT(2));
 		    
 		    bool plane = true;
-		    for (int i=0;i<pts.size();i++)
+		    for (unsigned int i=0;i<pts.size();i++)
 		    {
 			const double dist = PLANE  ( i , 0 ) * RSLT(0)+PLANE  ( i , 1 ) * RSLT(1)+PLANE  ( i , 2 ) * RSLT(2)+1;
 			if (fabs(dist) > 1.e-5 * LC * sqrt (RSLT(0)*RSLT(0)+RSLT(1)*RSLT(1)+RSLT(2)*RSLT(2)) )plane = false;
@@ -910,10 +910,8 @@ void BDS_Point :: compute_curvature ( )
   }
 }
 
-int compute_curvatures (std::list<BDS_Edge*> &edges)
+void compute_curvatures (std::list<BDS_Edge*> &edges)
 {
-  const int init_inner = 1;
-  
   {
     std::list<BDS_Edge*>::iterator it = edges.begin();
     std::list<BDS_Edge*>::iterator ite  = edges.end();
@@ -999,7 +997,7 @@ void BDS_Mesh :: color_plane_surf ( double eps, int NB_T )
 	  }
 	if (!start)break;	  
 	recur_color_plane_surf ( eps, start , start->N(),all,plane );
-	if (plane.size() > NB_T)
+	if ((int)plane.size() > NB_T)
 	  {
 	    //	    printf("plane surface found %d triangles\n",plane.size());
 	    std::list<BDS_Triangle*>::iterator xit  = plane.begin(); 
@@ -1141,7 +1139,7 @@ void BDS_Mesh :: classify ( double angle, int NB_T )
 	    {	    
 		int MIN_FAC = 100000; 
 		int MAX_FAC = -100000; 
-		std::map< std::pair<int,int> , int >::iterator found;
+		std::map< std::pair<int,int> , int >::iterator found = 0;
 		BDS_GeomEntity *g;
 		if ( e.numfaces() == 1)
 		{

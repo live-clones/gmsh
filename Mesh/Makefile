@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.97 2005-09-21 18:09:20 geuzaine Exp $
+# $Id: Makefile,v 1.98 2005-11-03 02:39:24 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -92,6 +92,9 @@ ${LIB}: ${OBJ}
 
 # Don't optimize 3D_Mesh: it sometimes mysteriously crashes on Linux
 3D_Mesh.o:
+	${CXX} ${FLAGS} ${INCLUDE} -c $<
+# Don't optimize BDS: it leads to erroneous results with gcc 4.0
+BDS.o:
 	${CXX} ${FLAGS} ${INCLUDE} -c $<
 
 clean:

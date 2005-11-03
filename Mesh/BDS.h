@@ -51,7 +51,7 @@ class BDS_Metric
   const double target,_min,_max,treshold, beta;
   const double nb_elements_per_radius_of_curvature;
   BDS_Metric ( double _target , double _mmin, double _mmax, double _b, double cc, double _tres = 0.7) 
-    : target(_target),_min(_mmin),_max(_mmax), beta(_b),treshold(_tres),nb_elements_per_radius_of_curvature(cc)
+    : target(_target),_min(_mmin),_max(_mmax),treshold(_tres),beta(_b),nb_elements_per_radius_of_curvature(cc)
     {}
   inline double update_target_length( double _target, double old_target_length  ) const
     {
@@ -480,6 +480,7 @@ public:
 	  BDS_Point *o[3];
 	  f1->getNodes (n);
 	  f2->getNodes (o);	  
+	  n[3] = 0; //for stupid gcc warning
 	  if(o[0] != n[0] && o[0] != n[1] &&o[0] != n[2])n[3] = o[0];
 	  if(o[1] != n[0] && o[1] != n[1] &&o[1] != n[2])n[3] = o[1];
 	  if(o[2] != n[0] && o[2] != n[1] &&o[2] != n[2])n[3] = o[2];
