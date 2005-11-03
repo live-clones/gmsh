@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.66 2005-10-16 03:36:11 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.67 2005-11-03 06:46:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -764,7 +764,7 @@ static void _unv_process_1D_elements(Mesh *m)
       for(int j = 0; j < List_Nbr(Elements); j++) {
 	List_Read(Elements, j, &sx);
 	if(sx->VSUP)
-	  _unv_print_record(sx->Num, BEAM2, c->Num, 2, 2, &sx->V[0], sx->VSUP);
+	  _unv_print_record(sx->Num, BEAM2, c->Num, 2, 1, &sx->V[0], sx->VSUP);
 	else 
 	  _unv_print_record(sx->Num, BEAM, c->Num, 2, 0, &sx->V[0], NULL);
       }
@@ -1003,7 +1003,7 @@ void Print_Mesh_UNV(Mesh *M, FILE *fp)
   ELEMENT_ID = 1;
   _unv_process_3D_elements(M);
   _unv_process_2D_elements(M);
-  // _unv_process_1D_elements(M);
+  _unv_process_1D_elements(M);
   fprintf(UNVFILE, "%6d\n", -1);
   _unv_process_groups(M);
 }
