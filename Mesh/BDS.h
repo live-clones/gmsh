@@ -119,11 +119,13 @@ public:
   ~BDS_GeomEntity()  
   {
 #ifdef HAVE_ANN_
-    if(kdTree){
-      delete [] nnIdx;                                                    // clean things up
-      delete [] dists;
-      delete kdTree;
-    }
+	if (kdTree)
+	  {
+	    annDeallocPts(dataPts);
+	    delete [] nnIdx;                                                    // clean things up
+	    delete [] dists;	    
+	    delete kdTree;
+	  }
 #endif
   }
 };
@@ -638,6 +640,7 @@ public:
   bool read_mesh(const char *filename);
   bool read_vrml(const char *filename);
   void save_gmsh_format(const char *filename);
+  void applyOptimizationPatterns();
 };
 
 bool project_point_on_a_list_of_triangles(BDS_Point *p , const std::list<BDS_Triangle*> &t,

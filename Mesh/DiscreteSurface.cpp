@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.32 2005-11-03 03:55:15 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.33 2005-11-03 13:44:03 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -214,6 +214,7 @@ void BDS_To_Mesh_2(Mesh * m)
   Msg(STATUS2, "Moving surface mesh into old structure");
 
   Tree_Action(m->Vertices, Free_Vertex);
+
   Tree_Delete(m->Vertices);
   m->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
 
@@ -229,7 +230,6 @@ void BDS_To_Mesh_2(Mesh * m)
       ++it;
     }
   }
-
   {
     std::list < BDS_Edge * >::iterator it = m->bds_mesh->edges.begin();
     std::list < BDS_Edge * >::iterator ite = m->bds_mesh->edges.end();
@@ -247,7 +247,6 @@ void BDS_To_Mesh_2(Mesh * m)
       ++it;
     }
   }
-
   {
     std::list < BDS_Triangle * >::iterator it =
       m->bds_mesh->triangles.begin();
@@ -274,7 +273,6 @@ void BDS_To_Mesh_2(Mesh * m)
       ++it;
     }
   }
-
   {
     std::list < BDS_Tet * >::iterator it = m->bds_mesh->tets.begin();
     std::list < BDS_Tet * >::iterator ite = m->bds_mesh->tets.end();
@@ -391,7 +389,7 @@ int ReMesh(Mesh * M)
 
 int MeshDiscreteSurface(Surface * s)
 {
-  const int NITER = 10;
+  static  int NITER = 10;
   if(THEM->bds) {
     BDS_Metric metric(THEM->bds->LC / CTX.mesh.target_elem_size_fact,
                       THEM->bds->LC / CTX.mesh.min_elem_size_fact,
@@ -414,6 +412,7 @@ int MeshDiscreteSurface(Surface * s)
 
       double t2 = Cpu();
       Msg(STATUS2, "Remesh 2D complete (%g s)", t2 - t1);
+      //      NITER++;
       return 1;
     }
     return 2;

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.465 2005-11-02 19:31:49 geuzaine Exp $
+// $Id: GUI.cpp,v 1.466 2005-11-03 13:44:02 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2275,6 +2275,12 @@ void GUI::create_option_window()
       mesh_value[25]->maximum(1);
       mesh_value[25]->step(.01);
       mesh_value[25]->align(FL_ALIGN_RIGHT); 
+
+      mesh_value[26] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Allow coarsening of the initial mesh");
+      mesh_value[26]->minimum(0);
+      mesh_value[26]->maximum(1);
+      mesh_value[26]->step(1);
+      mesh_value[26]->align(FL_ALIGN_RIGHT); 
 
       o->end();
     }

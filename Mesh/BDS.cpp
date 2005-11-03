@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.42 2005-11-03 03:55:14 geuzaine Exp $
+// $Id: BDS.cpp,v 1.43 2005-11-03 13:44:03 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -777,7 +777,7 @@ void BDS_Mesh::createSearchStructures()
 
   Msg(INFO, "Creating the ANN search structure");
 
-  const double LC_SEARCH = LC * 1e-2;
+  const double LC_SEARCH = LC * 1e-3;
 
   for(std::set < BDS_GeomEntity *, GeomLessThan >::iterator it = geom.begin();
       it != geom.end(); ++it) {
@@ -1742,36 +1742,41 @@ template < class IT > void DESTROOOY(IT beg, IT end)
 void BDS_Mesh::cleanup()
 {
   {
-    for(std::list < BDS_Triangle * >::iterator it = triangles.begin();
-        it != triangles.end(); it++) {
-      while(it != triangles.end() && (*it)->deleted) {
-        delete *it;
-        it = triangles.erase(it);
-      }
-    }
+    for (std::list<BDS_Triangle*> :: iterator it = triangles.begin();
+	 it != triangles.end();
+	 it++)
+      {
+	while (it != triangles.end() && (*it)->deleted)
+	  {
+	    delete *it;
+	    it = triangles.erase (it);
+	  }
+      }	   
   }
-  {
-    for(std::list < BDS_Edge * >::iterator it = edges.begin();
-        it != edges.end(); it++) {
-      while(it != edges.end() && (*it)->deleted) {
-        delete *it;
-        it = edges.erase(it);
-      }
-    }
-  }
-  // DESTROOOY(edges_to_delete.begin(),edges_to_delete.end());
-  // edges_to_delete.clear();
+  { 
+    for (std::list<BDS_Edge*> :: iterator it = edges.begin();
+	 it != edges.end();
+	 it++)
+      {
+	while (it != edges.end() && (*it)->deleted)
+	  {
+	    delete *it;
+	    it = edges.erase (it);
+	  }	
+      }	   
+  } 
 }
 
-BDS_Mesh::~BDS_Mesh()
+BDS_Mesh ::~ BDS_Mesh ()
 {
-  // DESTROOOY(geom.begin(),geom.end());
-  // DESTROOOY(points.begin(),points.end());
-  // cleanup();
-  // DESTROOOY(edges.begin(),edges.end());
-  // DESTROOOY(triangles.begin(),triangles.end());
-  // DESTROOOY(tets.begin(),tets.end());
+   DESTROOOY ( geom.begin(),geom.end());
+   DESTROOOY ( points.begin(),points.end());
+   cleanup();
+   DESTROOOY ( edges.begin(),edges.end());
+   DESTROOOY ( triangles.begin(),triangles.end());
+   DESTROOOY ( tets.begin(),tets.end());
 }
+
 
 bool BDS_Mesh::split_edge(BDS_Edge * e, double coord, BDS_Mesh * geom)
 {
@@ -2054,9 +2059,12 @@ bool BDS_Mesh::collapse_edge(BDS_Edge * e, BDS_Point * p, const double eps)
         // this does not concern the triangles with the small edge that
         // are collapsed too
         double angle = n1.angle(n2);
-        if(fabs(angle) > M_PI / 2)
+        if(fabs(angle) > M_PI / 12)
           return false;
-        if(s_after < 1.e-2 * s_before) {
+        if(s_after+s_before < 3.e-1 * fabs(s_before-s_after)) {
+          return false;
+        }
+        if(s_after < 1.e-1 * s_before) {
           return false;
         }
         gs[nt] = t->g;
@@ -2374,6 +2382,21 @@ void BDS_Mesh::compute_metric_edge_lengths(const BDS_Metric & metric)
 }
 
 
+void BDS_Mesh::applyOptimizationPatterns()
+{
+  std::set<BDS_Point*, PointLessThan>::iterator it   = points.begin();
+  std::set<BDS_Point*, PointLessThan>::iterator ite  = points.end();
+  while (it != ite)
+    {
+      if ((*it)->edges.size() == 3 && (*it)->g->classif_degree == 2)
+	{
+	  BDS_Edge *e = *((*it)->edges.begin());
+	  if (!e->deleted)collapse_edge ( e , *it , .1);
+	}
+      ++it;
+    }
+}
+
 int BDS_Mesh::adapt_mesh(const BDS_Metric & metric, bool smooth,
                          BDS_Mesh * geom_mesh)
 {
@@ -2410,92 +2433,126 @@ int BDS_Mesh::adapt_mesh(const BDS_Metric & metric, bool smooth,
   cleanup();
   small_to_long = edges;
 
-  // collapse 
+  // split edges
   {
-    std::list < BDS_Edge * >::iterator it = small_to_long.begin();
-    std::list < BDS_Edge * >::iterator ite = small_to_long.end();
-    //  compute_metric_edge_lengths (metric);
-
-    while(it != ite) {
-      double length = (*it)->length();
-      if(!(*it)->deleted && length < (*it)->target_length * 0.7) {
-        if(nb_modif % 2) {
-          if(collapse_edge(*it, (*it)->p1, 0.1))
-            nb_modif++;
-        }
-        else {
-          if(collapse_edge(*it, (*it)->p2, 0.1))
-            nb_modif++;
-        }
+    std::list<BDS_Edge*>::iterator it = small_to_long.begin();
+    std::list<BDS_Edge*>::iterator ite  = small_to_long.end();
+    compute_metric_edge_lengths (metric);
+    
+    while (it != ite)
+      {
+	if ((*it)->numfaces()==2)
+	  {
+	    double length = (*it)->length();
+	    if (!(*it)->deleted && length > (*it)->target_length / 0.7 ){
+	      split_edge (*it, 0.5,geom_mesh );
+	      //split_edge (*it, 0.5, 0  );
+	      nb_modif++;
+	    }
+	  }
+	++it;
       }
-      ++it;
     }
-  }
-  cleanup();
+  
+  // re-create small_to_long
+  cleanup();    
   small_to_long = edges;
-
-  {
-    std::list < BDS_Edge * >::iterator it = small_to_long.begin();
-    std::list < BDS_Edge * >::iterator ite = small_to_long.end();
-    while(it != ite) {
-      if(!(*it)->deleted && (*it)->numfaces() == 2) {
-        BDS_Point *op[2];
-        (*it)->oppositeof(op);
-
-        double a1 = surface_triangle((*it)->p1, (*it)->p2, op[0]);
-        double a2 = surface_triangle((*it)->p1, (*it)->p2, op[1]);
-        double b1 = surface_triangle((*it)->p1, op[0], op[1]);
-        double b2 = surface_triangle((*it)->p2, op[0], op[1]);
-
-        double cb1[3], cb2[3];
-        normal_triangle((*it)->p1, op[0], op[1], cb1);
-        normal_triangle((*it)->p2, op[0], op[1], cb2);
-
-        double prosc = cb1[0] * cb2[0] + cb1[1] * cb2[1] + cb1[2] * cb2[2];
-
-        if(fabs(a1 + a2 - b1 - b2) < 0.1 * (a1 + a2) && prosc < 0)      //&& fabs (prosc) > 0.7)
-        {
-          double qa1 = quality_triangle((*it)->p1, (*it)->p2, op[0]);
-          double qa2 = quality_triangle((*it)->p1, (*it)->p2, op[1]);
-          double qb1 = quality_triangle((*it)->p1, op[0], op[1]);
-          double qb2 = quality_triangle((*it)->p2, op[0], op[1]);
-
-          double d = dist_droites_gauches((*it)->p1, (*it)->p2,
-                                          op[0], op[1]);
-          BDS_Vector v1(*((*it)->p1), *((*it)->p2));
-          BDS_Vector v2(*(op[0]), *(op[1]));
-
-          double dd = sqrt(v1 * v1 + v2 * v2);
-
-          double qa = (qa1 < qa2) ? qa1 : qa2;
-          double qb = (qb1 < qb2) ? qb1 : qb2;
-          // printf("qa %g qb %g ..\n",qa,qb);
-          if(qb > qa && d < 0.01 * dd) {
-            // printf("swop ..\n");
-            nb_modif++;
-            swap_edge(*it);
-          }
-        }
+  
+  // collapse 
+  {    	
+    std::list<BDS_Edge*>::iterator it = small_to_long.begin();
+    std::list<BDS_Edge*>::iterator ite  = small_to_long.end();
+    //	compute_metric_edge_lengths (metric);
+    
+    while (it != ite)
+      {
+	double length = (*it)->length();
+	if (!(*it)->deleted && length < (*it)->target_length * 0.7 ){
+	  if (nb_modif %2 )
+	    {
+	      if (collapse_edge (*it, (*it)->p1, 0.1 ))
+		nb_modif++;
+	    }
+	  else
+	    {
+	      if (collapse_edge (*it, (*it)->p2, 0.1 ))
+		nb_modif++;
+	    }
+	}
+	++it;
       }
-      ++it;
-    }
   }
-  cleanup();
-  if(smooth) {
-    Msg(INFO, "smoothing %d points", points.size());
-    std::set < BDS_Point *, PointLessThan >::iterator it = points.begin();
-    std::set < BDS_Point *, PointLessThan >::iterator ite = points.end();
-    while(it != ite) {
-      smooth_point(*it, geom_mesh);
-      ++it;
-    }
-  }
+  cleanup();  
+  small_to_long = edges;
+  
+  {    
+    std::list<BDS_Edge*>::iterator it = small_to_long.begin();
+    std::list<BDS_Edge*>::iterator ite  = small_to_long.end();
+    while (it != ite)
+      {
+	if (!(*it)->deleted && (*it)->numfaces()==2)
+	  {
+	    BDS_Point *op[2];
+	    (*it)->oppositeof (op);
+	    
+	    double a1 = surface_triangle ( (*it)->p1 , (*it)->p2 , op[0] );
+	    double a2 = surface_triangle ( (*it)->p1 , (*it)->p2 , op[1] );
+	    double b1 = surface_triangle ( (*it)->p1 , op[0] , op[1] );
+	    double b2 = surface_triangle ( (*it)->p2 , op[0] , op[1] );
+	    
+	    double cb1[3],cb2[3];
+	    normal_triangle ( (*it)->p1 , op[0] , op[1],cb1 );
+	    normal_triangle ( (*it)->p2 , op[0] , op[1],cb2 );
+	    
+	    double prosc = cb1[0]*cb2[0]+cb1[1]*cb2[1]+cb1[2]*cb2[2];
+	    
+	    if (fabs(a1+a2-b1-b2) < 0.1 * (a1+a2))
+	      {
+		double qa1 = quality_triangle ( (*it)->p1 , (*it)->p2 , op[0] );
+		double qa2 = quality_triangle ( (*it)->p1 , (*it)->p2 , op[1] );
+		double qb1 = quality_triangle ( (*it)->p1 , op[0] , op[1] );
+		double qb2 = quality_triangle ( (*it)->p2 , op[0] , op[1] );
+		
+		double d = dist_droites_gauches((*it)->p1, (*it)->p2, 
+						op[0],op[1]);
+		BDS_Vector v1 (*((*it)->p1), *((*it)->p2));
+		BDS_Vector v2 (*(op[0]),*(op[1]));
+		
+		double dd = sqrt (v1*v1 + v2*v2);
 
-  Msg(INFO, "%d snaps have succeeded , %d have failed", SNAP_SUCCESS,
-      SNAP_FAILURE);
-  // outputScalarField (triangles,"b.pos");
+		double qa = (qa1<qa2)?qa1:qa2; 
+		double qb = (qb1<qb2)?qb1:qb2; 
+		//		  printf("qa %g qb %g ..\n",qa,qb);
+		if (qb > qa && d < 0.01 * dd)
+		  {
+		    nb_modif++;
+		    swap_edge ( *it );
+		  }
+	      }
+	  }
+	++it;
+      }
+  }
+  cleanup();  
+  if (smooth){
+    Msg(INFO,"smoothing %d points\n",points.size());
+    std::set<BDS_Point*, PointLessThan>::iterator it   = points.begin();
+    std::set<BDS_Point*, PointLessThan>::iterator ite  = points.end();
+    while (it != ite)
+      {
+	smooth_point(*it,geom_mesh);
+	++it;
+      }
+  }
+  
+  Msg(INFO,"%d snaps have succeeded , %d have failed\n",SNAP_SUCCESS,SNAP_FAILURE);
+    //    outputScalarField (triangles,"b.pos");
+  applyOptimizationPatterns();
+  cleanup();  
   return nb_modif;
 }
+
+
 
 BDS_Mesh::BDS_Mesh(const BDS_Mesh & other)
 {
