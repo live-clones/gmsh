@@ -1,4 +1,9 @@
-$Id: TODO,v 1.104 2005-10-17 16:32:25 geuzaine Exp $
+$Id: TODO,v 1.105 2005-11-04 19:17:58 geuzaine Exp $
+
+********************************************************************
+
+- Fix nodes of surface elements in Tetgen (easy)
+- Extend Tetgen to multiple-volume geometries (hard)
 
 ********************************************************************
 
