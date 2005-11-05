@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.466 2005-11-03 13:44:02 remacle Exp $
+// $Id: GUI.cpp,v 1.467 2005-11-05 03:12:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2252,7 +2252,7 @@ void GUI::create_option_window()
       mesh_value[21]->step(1);
       mesh_value[21]->align(FL_ALIGN_RIGHT); 
 
-      mesh_value[22] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Number of elements per rad. of curv.");
+      mesh_value[22] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Number of elements per radius of curvature");
       mesh_value[22]->minimum(1);
       mesh_value[22]->maximum(10);
       mesh_value[22]->step(.1);
@@ -2270,17 +2270,16 @@ void GUI::create_option_window()
       mesh_value[24]->step(1);
       mesh_value[24]->align(FL_ALIGN_RIGHT); 
 
-      mesh_value[25] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "BETA smoothing factor");
+      mesh_value[25] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Beta smoothing factor");
       mesh_value[25]->minimum(0);
       mesh_value[25]->maximum(1);
       mesh_value[25]->step(.01);
       mesh_value[25]->align(FL_ALIGN_RIGHT); 
 
-      mesh_value[26] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Allow coarsening of the initial mesh");
-      mesh_value[26]->minimum(0);
-      mesh_value[26]->maximum(1);
-      mesh_value[26]->step(1);
-      mesh_value[26]->align(FL_ALIGN_RIGHT); 
+      //mesh_butt[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Allow coarsening of the initial mesh");
+      //mesh_butt[1]->type(FL_TOGGLE_BUTTON);
+      //mesh_butt[1]->down_box(GMSH_TOGGLE_BOX);
+      //mesh_butt[1]->selection_color(GMSH_TOGGLE_COLOR);
 
       o->end();
     }
