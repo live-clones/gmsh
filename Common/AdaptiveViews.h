@@ -57,6 +57,42 @@ public :
   static std::set<adapt_point> all_points;
 };
 
+class adapt_edge
+{
+public:
+ adapt_edge (adapt_point *p1,adapt_point *p2)
+ 	: visible(false)
+	{
+	  p[0]=p1;
+	  p[1]=p2;
+	  e[0]=e[1]=0;
+	} 
+  inline double V () const
+  {
+    return (p[0]->val + p[1]->val)/2.;    
+  }
+  inline static void GSF (const double u, const double v, double w, double sf[]) 
+  {
+    sf[0] = (1-u)/2.;
+    sf[1] = (1+u)/2.;
+  }
+  void print ()
+  {
+    printf ("p1 %g %g p2 %g %g  \n",p[0]->x,p[0]->y,p[1]->x,p[1]->y);
+  }
+  static void Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) ;
+  static void Recur_Create (adapt_edge *e, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps);
+  static void Error ( double AVG , double tol );
+  static void Recur_Error ( adapt_edge *e, double AVG, double tol );
+  bool visible;
+  adapt_point *p[2];
+  adapt_edge  *e[2];
+  static std::list<adapt_edge*> all_elems;
+  static int nbNod;
+};
+
+
+
 class adapt_triangle
 {
 public:
