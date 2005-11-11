@@ -1,42 +1,32 @@
+Christophe,
 
-Jean-Francois:  As-tu du faire des modifs dans Metis? Sinon, on pourrait aussi simplement linker avec Metis en externe. Si oui, ou si tu trouves que c'est bien d'avoir Metis directement dans nos sources, il faut que tu envoies un mail a Karypis pour demander son autorisation concernant l'inclusion. Voici un example tire de libmesh:
+You can do that but be aware that metis/parmetis is not being distributed
+under an open source license.
 
-*************************
+George 
 
-> My name is Benjamin Kirk.  I'm currently a PhD student in the CFDLab at
-> The University of Texas at Austin.  For the past year I have been
-> developing a parallel, unstructured mesh finite element library for
-> large-scale applications.  I have been using METIS for graph
-> partitioning to achieve load balancing and domain decomposition.
->
-> The project recently moved to http://libmesh.sourceforge.net/
-> It is protected under the GNU Lesser General Public License and is
-> classified as a non-commercial application.  I would like to distribute
-> METIS (and eventually PARMETIS) with the application.  May I do so?
->
-> Thanks.
->
-> Benjamin S. Kirk
-> benkirk@cfdlab.ae.utexas.edu
->
-
-Benjamin,
-
-Yes you can as long as you provide proper references and Metis's
-original code and documentation.
-
-regards,
-
-George
-
-------------------------------------------------------------------
-George Karypis                           email: karypis@cs.umn.edu
-Assistant Professor,          tel: 612-626-7524; fax: 612-625-0572
-University of Minnesota,       URL: http://www.cs.umn.edu/~karypis
-
-*****************************
+-----Original Message-----
+From: Christophe Geuzaine [mailto:cag32@case.edu] 
+Sent: Tuesday, November 08, 2005 7:09 PM
+To: karypis@cs.umn.edu
+Cc: Jean François Remacle
+Subject: METIS
 
 
+Dear George,
 
-Attention : si Karypis n'est pas d'accord pour une utilsation commerciale (il faut lui demander aussi), il faudra qu'on ajoute Metis a la liste des trucs a effacer dans le "make commercial".
+For the past few years a colleague and I have been developing an open
+source finite element mesh generator and pre-/post-processor
+(http://geuz.org/gmsh/). We would like to distribute METIS (and
+eventually PARMETIS) with the application. Can we do so?
 
+Thanks to let me know.
+
+Best wishes,
+
+Christophe
+
+-- 
+Christophe Geuzaine
+Assistant Professor, Case University, Mathematics
+http://www.case.edu/artsci/math/geuzaine 
