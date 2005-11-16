@@ -1,4 +1,4 @@
-$Id: TODO,v 1.106 2005-11-11 18:58:17 geuzaine Exp $
+$Id: TODO,v 1.107 2005-11-16 18:15:35 geuzaine Exp $
 
 ********************************************************************
 
@@ -25,6 +25,23 @@ On Windows without Cygwin:
 - need alternative timer functions (Timer.cpp, ParUtils.cpp)
 - there is a bug in fwrite/fread as used for binary post-processing
   views (need to investigate "premature end of file" message)
+
+********************************************************************
+
+allow mixed 1st/2nd order meshes (2nd order only where the geometry
+requires it). Add this as an advanced option since it will create
+meshes with hanging nodes.
+
+From: Julian Swartz <swartzjp@gmail.com>
+> I think that the feature may also fit under:
+> 
+> menu: Tool -> Options
+> select "Mesh"
+> tab "General"
+> then perhaps under "Generate second order elements" there could be an 
+> additional check box for "Generate second order elements only along 
+> curved boundaries".
+>
 
 ********************************************************************
 
@@ -159,12 +176,6 @@ add ternary operator and <,>,<=,>=,== tests in MathEval
 on Macs, datasets with a bounding box < 1.e-06 don't display properly
 (probably because all the OpenGL stuff is done ineternally in single
 precision...). Rescale?
-
-********************************************************************
-
-add the capability to mesh some entities using 1st order and some
-other using 2nd order elements (in the same geometry)?
-<gerard.fleury@inrs.fr>
 
 ********************************************************************
 
