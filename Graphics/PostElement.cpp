@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.67 2005-06-27 19:33:21 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.68 2005-11-18 23:21:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -601,18 +601,23 @@ void Draw_ScalarTetrahedron(Post_View * View, int preproNormals,
 
   double *vv = &V[4 * View->TimeStep];
 
-  if(!preproNormals && View->Boundary > 0) {
+  // To draw filled iso-values or continuous maps, we should ideally
+  // do volume rendering. Until we can do that, we just draw the
+  // solution on the boundary of the elements
+  if((View->Boundary > 0) ||
+     (View->IntervalsType == DRAW_POST_DISCRETE ||
+      View->IntervalsType == DRAW_POST_CONTINUOUS)) {
     View->Boundary--;
     int ts = View->TimeStep;
     View->TimeStep = 0;
     REORDER3(0, 2, 1);
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val); // 021
+    Draw_ScalarTriangle(View, preproNormals, ValMin, ValMax, Xp, Yp, Zp, Val); // 021
     REORDER3(0, 1, 3);
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val); // 013
+    Draw_ScalarTriangle(View, preproNormals, ValMin, ValMax, Xp, Yp, Zp, Val); // 013
     REORDER3(0, 3, 2);
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val); // 032
+    Draw_ScalarTriangle(View, preproNormals, ValMin, ValMax, Xp, Yp, Zp, Val); // 032
     REORDER3(3, 1, 2);
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val); // 312
+    Draw_ScalarTriangle(View, preproNormals, ValMin, ValMax, Xp, Yp, Zp, Val); // 312
     View->TimeStep = ts;
     View->Boundary++;
     return;
@@ -709,7 +714,12 @@ void Draw_ScalarHexahedron(Post_View * View, int preproNormals,
   ts = View->TimeStep;
   View->TimeStep = 0;
 
-  if(!preproNormals && View->Boundary > 0) {
+  // To draw filled iso-values or continuous maps, we should ideally
+  // do volume rendering. Until we can do that, we just draw the
+  // solution on the boundary of the elements
+  if((View->Boundary > 0) ||
+     (View->IntervalsType == DRAW_POST_DISCRETE ||
+      View->IntervalsType == DRAW_POST_CONTINUOUS)) {
     View->Boundary--;
     REORDER4(0, 1, 5, 4);
     Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val); // 0154
@@ -765,7 +775,12 @@ void Draw_ScalarPrism(Post_View * View, int preproNormals,
   ts = View->TimeStep;
   View->TimeStep = 0;
 
-  if(!preproNormals && View->Boundary > 0) {
+  // To draw filled iso-values or continuous maps, we should ideally
+  // do volume rendering. Until we can do that, we just draw the
+  // solution on the boundary of the elements
+  if((View->Boundary > 0) ||
+     (View->IntervalsType == DRAW_POST_DISCRETE ||
+      View->IntervalsType == DRAW_POST_CONTINUOUS)) {
     View->Boundary--;
     REORDER4(0, 1, 4, 3);
     Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val);
@@ -810,7 +825,12 @@ void Draw_ScalarPyramid(Post_View * View, int preproNormals,
   ts = View->TimeStep;
   View->TimeStep = 0;
 
-  if(!preproNormals && View->Boundary > 0) {
+  // To draw filled iso-values or continuous maps, we should ideally
+  // do volume rendering. Until we can do that, we just draw the
+  // solution on the boundary of the elements
+  if((View->Boundary > 0) ||
+     (View->IntervalsType == DRAW_POST_DISCRETE ||
+      View->IntervalsType == DRAW_POST_CONTINUOUS)) {
     View->Boundary--;
     REORDER4(0, 3, 2, 1);
     Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val);

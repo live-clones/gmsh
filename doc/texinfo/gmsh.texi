@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.190 2005-09-20 12:06:36 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.191 2005-11-18 23:21:57 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -2390,6 +2390,10 @@ that regular post-processing options only change the way the data is
 displayed, while post-processing plugins either create new post-processing
 views, or modify the data stored in a view (in a destructive, non-reversible
 way).
+
+Plugins are available in the graphical user interface by right-clicking
+on a view button (or by clicking on the black arrow next to the view
+button) and then selecting the `Plugin' submenu.
 
 Here is the list of the plugins that are shipped by default with Gmsh:
 
