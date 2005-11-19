@@ -1,5 +1,5 @@
 
-MergeWithBoundingBox "../../tutorial/view1.pos" ;
+Merge "../../tutorial/view1.pos" ;
 
 View[0].Name = "gloups.prout" ;
 

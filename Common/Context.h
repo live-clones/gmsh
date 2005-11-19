@@ -147,6 +147,8 @@ public :
   double model[16], proj[16]; // the modelview and projection matrix as they were
                               // at the time of the last InitPosition() call
 
+  int forced_bbox; // dynamic variable tracking if the bbox is currently imposed
+
   // geometry options 
   struct{
     int vis_type;

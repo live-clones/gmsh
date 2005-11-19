@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.85 2005-10-24 15:38:14 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.86 2005-11-19 04:01:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -98,13 +98,12 @@ void SetBoundingBox(double xmin, double xmax,
 
 void SetBoundingBox(void)
 {
-  if(!THEM) 
+  if(!THEM || CTX.forced_bbox) 
     return;
-  if (THEM->bds)
-  {
-      double bbox[6] = {THEM->bds->Min[0],THEM->bds->Max[0],THEM->bds->Min[1],
-			THEM->bds->Max[1],THEM->bds->Min[2],THEM->bds->Max[2]};
-      CalculateMinMax(NULL, bbox);
+  if (THEM->bds) {
+    double bbox[6] = {THEM->bds->Min[0],THEM->bds->Max[0],THEM->bds->Min[1],
+		      THEM->bds->Max[1],THEM->bds->Min[2],THEM->bds->Max[2]};
+    CalculateMinMax(NULL, bbox);
   }
   else if(Tree_Nbr(THEM->Vertices)) {
     // if we have mesh vertices, use them
@@ -279,8 +278,8 @@ int MergeProblem(char *name, int warn_if_missing)
 #endif
     status = 0;
   }
-  else if(!strcmp(ext, ".stl")|| !strcmp(ext, ".STL")|| !strcmp(ext, ".mesh")) 
-  {
+  else if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL") || 
+	  !strcmp(ext, ".mesh")) {
     if (THEM->bds)delete THEM->bds;
     THEM->bds = new BDS_Mesh;
     if(!strcmp(ext, ".mesh"))

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.211 2005-07-15 10:31:12 geuzaine Exp $
+// $Id: Gmsh.y,v 1.212 2005-11-19 04:01:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2045,10 +2045,12 @@ Command :
     } 
    | tBoundingBox tEND
     {
+      CTX.forced_bbox = 0;
       SetBoundingBox();
     } 
    | tBoundingBox '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND
     {
+      CTX.forced_bbox = 1;
       SetBoundingBox($3, $5, $7, $9, $11, $13);
     } 
    | tDraw tEND

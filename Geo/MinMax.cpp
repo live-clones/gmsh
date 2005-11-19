@@ -1,4 +1,4 @@
-// $Id: MinMax.cpp,v 1.19 2005-04-19 16:03:10 remacle Exp $
+// $Id: MinMax.cpp,v 1.20 2005-11-19 04:01:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -66,7 +66,6 @@ void CalculateMinMax(Tree_T * t, double *bbox)
       CTX.cg[0] = (CTX.min[0] + CTX.max[0])/2.;
       CTX.cg[1] = (CTX.min[1] + CTX.max[1])/2.;
       CTX.cg[2] = (CTX.min[2] + CTX.max[2])/2.;
-
     }
   }
   else {
@@ -124,8 +123,7 @@ void CalculateMinMax(Tree_T * t, double *bbox)
     CTX.lc = sqrt(DSQR(CTX.range[0]) + DSQR(CTX.range[1]));
   }
   else {
-    CTX.lc =
-      sqrt(DSQR(CTX.range[0]) + DSQR(CTX.range[1]) + DSQR(CTX.range[2]));
+    CTX.lc = sqrt(DSQR(CTX.range[0]) + DSQR(CTX.range[1]) + DSQR(CTX.range[2]));
   }
 
 }
