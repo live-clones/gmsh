@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.79 2005-10-09 18:00:54 geuzaine Exp $
+// $Id: Draw.cpp,v 1.80 2005-11-19 14:59:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -45,9 +45,9 @@ int NeedPolygonOffset()
   for(int i = 0; i < List_Nbr(CTX.post.list); i++){
     Post_View *v = *(Post_View**)List_Pointer(CTX.post.list, i);
     if(v->Visible){
-      if(v->ShowElement || v->Axes)
+      if(v->ShowElement)
 	return 1;
-      if((v->NbST || v->NbSQ) && (v->IntervalsType == DRAW_POST_ISO))
+      if((v->NbST || v->NbSQ) && (v->Axes || v->IntervalsType == DRAW_POST_ISO))
 	return 1;
     }
   }
