@@ -379,6 +379,11 @@ Enable lighting for the view@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.LightLines
+Light element edges@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.LightTwoSide
 Light both sides of view elements (leads to slower rendering)@*
 Default value: @code{1}@*
