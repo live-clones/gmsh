@@ -169,9 +169,19 @@ Number of elements per radius of curvature in the remesher@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.TargetElmentSizeFact
+Target element size factor in the Remesher@*
+Default value: @code{20}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.MinimumElementSizeFact
-Number of elements per radius of curvature in the remesher@*
+Minimum element size factor in the Remesher@*
 Default value: @code{500}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.BetaSmoothMetric
+Maximum ratio of two consecutive edge lengths@*
+Default value: @code{0.9}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NbHexahedra
