@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.191 2005-11-18 23:21:57 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.192 2005-11-20 01:39:40 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -286,10 +286,7 @@ Bugs, versions and credits
 Gmsh is an automatic three-dimensional finite element mesh generator,
 primarily Delaunay, with built-in pre- and post-processing facilities. Its
 design goal is to provide a simple meshing tool for academic problems with
-parametric input and advanced visualization capabilities.  One of its
-strengths is the ability to respect a characteristic length field for the
-generation of adapted meshes on lines, surfaces and volumes, and to mix
-these meshes with simple structured (transfinite, extruded, etc.) grids.
+parametric input and advanced visualization capabilities.
 
 Gmsh is built around four modules: geometry, mesh, solver and
 post-processing. All geometrical, mesh, solver and post-processing
