@@ -181,7 +181,7 @@ public :
     double quality_inf, quality_sup, radius_inf, radius_sup;
     double scaling_factor, lc_factor, rand_factor;
     int dual, interactive;
-    int light, light_two_side;
+    int light, light_two_side, light_lines;
     int format, nbPartitions,nb_smoothing, algo2d, algo3d, order,algo_recombine;
     int point_insertion, speed_max, min_circ_points, constrained_bgmesh;
     int histogram, initial_only;

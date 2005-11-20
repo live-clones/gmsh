@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.375 2005-11-01 16:37:12 remacle Exp $
+// $Id: Callbacks.cpp,v 1.376 2005-11-20 03:58:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -297,21 +297,25 @@ void activate_cb(CALLBACK_ARGS)
     if(WID->mesh_butt[17]->value()){
       WID->mesh_butt[18]->activate();
       WID->mesh_butt[19]->activate();
+      WID->mesh_butt[20]->activate();
       WID->mesh_value[18]->activate();
     }
     else{
       WID->mesh_butt[18]->deactivate();
       WID->mesh_butt[19]->deactivate();
+      WID->mesh_butt[20]->deactivate();
       WID->mesh_value[18]->deactivate();
     }
   }
   else if(!strcmp(str, "view_light")){
     if(WID->view_butt[11]->value()){
+      WID->view_butt[8]->activate();
       WID->view_butt[9]->activate();
       WID->view_butt[12]->activate();
       WID->view_value[10]->activate();
     }
     else{
+      WID->view_butt[8]->deactivate();
       WID->view_butt[9]->deactivate();
       WID->view_butt[12]->deactivate();
       WID->view_value[10]->deactivate();
@@ -1043,6 +1047,7 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_light(0, GMSH_SET, WID->mesh_butt[17]->value());
   opt_mesh_light_two_side(0, GMSH_SET, WID->mesh_butt[18]->value());
   opt_mesh_smooth_normals(0, GMSH_SET, WID->mesh_butt[19]->value());
+  opt_mesh_light_lines(0, GMSH_SET, WID->mesh_butt[20]->value());
 
   opt_mesh_nb_smoothing(0, GMSH_SET, WID->mesh_value[0]->value());
   opt_mesh_scaling_factor(0, GMSH_SET, WID->mesh_value[1]->value());
@@ -3659,6 +3664,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double draw_strings = opt_view_draw_strings(current, GMSH_GET, 0);
   double light = opt_view_light(current, GMSH_GET, 0);
   double light_two_side = opt_view_light_two_side(current, GMSH_GET, 0);
+  double light_lines = opt_view_light_lines(current, GMSH_GET, 0);
   double smooth_normals = opt_view_smooth_normals(current, GMSH_GET, 0);
   double draw_points = opt_view_draw_points(current, GMSH_GET, 0);
   double draw_lines = opt_view_draw_lines(current, GMSH_GET, 0);
@@ -3907,6 +3913,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
       val = WID->view_butt[11]->value();
       if(force || (val != light))
         opt_view_light(i, GMSH_SET, val);
+
+      val = WID->view_butt[8]->value();
+      if(force || (val != light_lines))
+        opt_view_light_lines(i, GMSH_SET, val);
 
       val = WID->view_butt[9]->value();
       if(force || (val != light_two_side))

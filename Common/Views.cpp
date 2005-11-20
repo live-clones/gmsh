@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.177 2005-10-14 19:26:06 geuzaine Exp $
+// $Id: Views.cpp,v 1.178 2005-11-20 03:58:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -633,6 +633,7 @@ void CopyViewOptions(Post_View * src, Post_View * dest)
   dest->NbIso = src->NbIso;
   dest->Light = src->Light;
   dest->LightTwoSide = src->LightTwoSide;
+  dest->LightLines = src->LightLines;
   dest->SmoothNormals = src->SmoothNormals;
   dest->AngleSmoothNormals = src->AngleSmoothNormals;
   dest->ShowElement = src->ShowElement;

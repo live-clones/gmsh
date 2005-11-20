@@ -1,4 +1,4 @@
-$Id: TODO,v 1.107 2005-11-16 18:15:35 geuzaine Exp $
+$Id: TODO,v 1.108 2005-11-20 03:58:27 geuzaine Exp $
 
 ********************************************************************
 
@@ -128,10 +128,6 @@ background. Oddly enough, people seem to want that kind of stuff.
 
 reduce cpu during 'sleep' by using small 'usleep' calls instead of a
 simple while(1) loop
-
-********************************************************************
-
-add an option to enable lighting of wireframe meshes & post-pro plots.
 
 ********************************************************************
 

@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.141 2005-10-10 16:16:50 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.142 2005-11-20 03:58:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -881,10 +881,14 @@ void Draw_Mesh_Array(VertexArray *va, int faces, int edges)
 	glDisableClientState(GL_COLOR_ARRAY);
 	glColor4ubv((GLubyte *) & CTX.color.mesh.line);
       }
-      glDisableClientState(GL_NORMAL_ARRAY);
+      if(CTX.mesh.light && CTX.mesh.light_lines)
+	glEnable(GL_LIGHTING);
+      else
+	glDisableClientState(GL_NORMAL_ARRAY);
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
       glDrawArrays((va->type == 3) ? GL_TRIANGLES : GL_QUADS, 0, va->type * va->num);
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      glDisable(GL_LIGHTING);
     }
   }
 
@@ -999,12 +1003,19 @@ void Draw_Mesh_Triangle(void *a, void *b)
 	glColor4ubv((GLubyte *) & CTX.color.mesh.line);
       else
 	glColor4ubv((GLubyte *) & col);
+      if(CTX.mesh.light && CTX.mesh.light_lines){
+	// FIXME: very crude (not smooth, only 1st order)
+	glEnable(GL_LIGHTING);
+	normal3points(X[0], Y[0], Z[0], X[1], Y[1], Z[1], X[2], Y[2], Z[2], n);
+	glNormal3dv(n);
+      }
       glBegin(GL_LINE_LOOP);
       for(int i = 0; i < 3; i++){
 	glVertex3d(X[i], Y[i], Z[i]);
 	if(s->VSUP) glVertex3d(X2[i], Y2[i], Z2[i]);
       }
       glEnd();
+      glDisable(GL_LIGHTING);
     }
 
     if(CTX.mesh.surfaces_faces) {
@@ -1182,12 +1193,19 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
 	glColor4ubv((GLubyte *) & CTX.color.mesh.line);
       else
 	glColor4ubv((GLubyte *) & col);
+      if(CTX.mesh.light && CTX.mesh.light_lines){
+	// FIXME: very crude (not smooth, only 1st order)
+	glEnable(GL_LIGHTING);
+	normal3points(X[0], Y[0], Z[0], X[1], Y[1], Z[1], X[2], Y[2], Z[2], n);
+	glNormal3dv(n);
+      }
       glBegin(GL_LINE_LOOP);
       for(int i = 0; i < 4; i++){
 	glVertex3d(X[i], Y[i], Z[i]);
 	if(q->VSUP) glVertex3d(X2[i], Y2[i], Z2[i]);
       }
       glEnd();
+      glDisable(GL_LIGHTING);
     }
 
     if(CTX.mesh.surfaces_faces) {

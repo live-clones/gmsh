@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.467 2005-11-05 03:12:50 geuzaine Exp $
+// $Id: GUI.cpp,v 1.468 2005-11-20 03:58:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2510,17 +2510,22 @@ void GUI::create_option_window()
       mesh_butt[17]->selection_color(GMSH_TOGGLE_COLOR);
       mesh_butt[17]->callback(activate_cb, (void*)"mesh_light");
 
-      mesh_butt[18] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Use two-side lighting");
+      mesh_butt[20] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Enable lighting of lines");
+      mesh_butt[20]->type(FL_TOGGLE_BUTTON);
+      mesh_butt[20]->down_box(GMSH_TOGGLE_BOX);
+      mesh_butt[20]->selection_color(GMSH_TOGGLE_COLOR);
+
+      mesh_butt[18] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Use two-side lighting");
       mesh_butt[18]->type(FL_TOGGLE_BUTTON);
       mesh_butt[18]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[18]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_butt[19] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Smooth normals");
+      mesh_butt[19] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Smooth normals");
       mesh_butt[19]->type(FL_TOGGLE_BUTTON);
       mesh_butt[19]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[19]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_value[18] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Smoothing threshold angle");
+      mesh_value[18] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Smoothing threshold angle");
       mesh_value[18]->minimum(0.);
       mesh_value[18]->maximum(180.);
       mesh_value[18]->step(1.);
@@ -3109,17 +3114,22 @@ void GUI::create_option_window()
       view_butt[11]->selection_color(GMSH_TOGGLE_COLOR);
       view_butt[11]->callback(activate_cb, (void*)"view_light");
 
-      view_butt[9]  = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Use two-side lighting");
+      view_butt[8] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Enable lighting of lines");
+      view_butt[8]->type(FL_TOGGLE_BUTTON);
+      view_butt[8]->down_box(GMSH_TOGGLE_BOX);
+      view_butt[8]->selection_color(GMSH_TOGGLE_COLOR);
+
+      view_butt[9] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Use two-side lighting");
       view_butt[9]->type(FL_TOGGLE_BUTTON);
       view_butt[9]->down_box(GMSH_TOGGLE_BOX);
       view_butt[9]->selection_color(GMSH_TOGGLE_COLOR);
 
-      view_butt[12] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Smooth normals");
+      view_butt[12] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Smooth normals");
       view_butt[12]->type(FL_TOGGLE_BUTTON);
       view_butt[12]->down_box(GMSH_TOGGLE_BOX);
       view_butt[12]->selection_color(GMSH_TOGGLE_COLOR);
 
-      view_value[10] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Smoothing threshold angle");
+      view_value[10] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Smoothing threshold angle");
       view_value[10]->minimum(0.);
       view_value[10]->step(1.);
       view_value[10]->maximum(180.);
@@ -3248,6 +3258,7 @@ void GUI::update_view_window(int num)
   opt_view_show_element(num, GMSH_GUI, 0);
   opt_view_light(num, GMSH_GUI, 0);
   opt_view_light_two_side(num, GMSH_GUI, 0);
+  opt_view_light_lines(num, GMSH_GUI, 0);
   opt_view_smooth_normals(num, GMSH_GUI, 0);
   opt_view_angle_smooth_normals(num, GMSH_GUI, 0);
   opt_view_boundary(num, GMSH_GUI, 0);

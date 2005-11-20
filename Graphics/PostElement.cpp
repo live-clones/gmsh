@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.68 2005-11-18 23:21:56 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.69 2005-11-20 03:58:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -35,8 +35,13 @@
 extern Context_T CTX;
 
 void Draw_ElementBoundary(int type, Post_View * View, 
-			  double *X, double *Y, double *Z)
+			  double *X, double *Y, double *Z, double *n = 0)
 {
+  if(n && View->Light && View->LightLines){
+    glEnable(GL_LIGHTING);
+    glNormal3dv(n);
+  }
+
   switch (type) {
   case POST_POINT:
     glColor4ubv((GLubyte *) & View->color.point);
@@ -151,6 +156,8 @@ void Draw_ElementBoundary(int type, Post_View * View,
     glEnd();
     break;
   }
+
+  glDisable(GL_LIGHTING);
 }
 
 void SaturateValues(int saturate, double min, double max,
@@ -382,8 +389,16 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
     normal3points(X[0], Y[0], Z[0], X[1], Y[1], Z[1], X[2], Y[2], Z[2], nn);
   }
 
-  if(!preproNormals && View->ShowElement)
-    Draw_ElementBoundary(POST_TRIANGLE, View, X, Y, Z);
+  if(!preproNormals && View->ShowElement){
+    if(View->Light && View->LightLines){
+      // FIXME: very crude (not smooth) and inefficient
+      double n[3];
+      normal3points(X[0], Y[0], Z[0], X[1], Y[1], Z[1], X[2], Y[2], Z[2], n);
+      Draw_ElementBoundary(POST_TRIANGLE, View, X, Y, Z, n);
+    }
+    else
+      Draw_ElementBoundary(POST_TRIANGLE, View, X, Y, Z);
+  }
 
   if(!preproNormals && View->Normals){
     double t[3] = { nn[0], nn[1], nn[2] };
@@ -692,7 +707,14 @@ void Draw_ScalarQuadrangle(Post_View * View, int preproNormals,
 
   if(!preproNormals && show) {
     SaturateValues(View->SaturateValues, ValMin, ValMax, vv, Val, 4);
-    Draw_ElementBoundary(POST_QUADRANGLE, View, X, Y, Z);
+    if(View->Light && View->LightLines){
+      // FIXME: very crude (not smooth) and inefficient
+      double n[3];
+      normal3points(X[0], Y[0], Z[0], X[1], Y[1], Z[1], X[2], Y[2], Z[2], n);
+      Draw_ElementBoundary(POST_QUADRANGLE, View, X, Y, Z, n);
+    }
+    else
+      Draw_ElementBoundary(POST_QUADRANGLE, View, X, Y, Z);
   }
 
   Draw_ScalarTriangle(View, preproNormals, ValMin, ValMax, X, Y, Z, vv); // 012

@@ -84,7 +84,7 @@ class Post_View{
   double ArrowSize, ArrowRelHeadRadius, ArrowRelStemRadius, ArrowRelStemLength;
   double Normals, Tangents;
   int Visible, IntervalsType, NbIso, ArrowSizeProportional;
-  int Light, LightTwoSide, SmoothNormals;
+  int Light, LightTwoSide, LightLines, SmoothNormals;
   double AngleSmoothNormals;
   int SaturateValues, FakeTransparency;
   int ShowElement, ShowTime, ShowScale;

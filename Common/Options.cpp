@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.262 2005-11-19 04:01:13 geuzaine Exp $
+// $Id: Options.cpp,v 1.263 2005-11-20 03:58:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -4347,6 +4347,17 @@ double opt_mesh_light(OPT_ARGS_NUM)
   return CTX.mesh.light;
 }
 
+double opt_mesh_light_lines(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.light_lines = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[20]->value(CTX.mesh.light_lines);
+#endif
+  return CTX.mesh.light_lines;
+}
+
 double opt_mesh_light_two_side(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -5898,6 +5909,19 @@ double opt_view_light_two_side(OPT_ARGS_NUM)
     WID->view_butt[9]->value(v->LightTwoSide);
 #endif
   return v->LightTwoSide;
+}
+
+double opt_view_light_lines(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->LightLines = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_butt[8]->value(v->LightLines);
+#endif
+  return v->LightLines;
 }
 
 double opt_view_smooth_normals(OPT_ARGS_NUM)
