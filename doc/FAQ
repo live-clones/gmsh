@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.67 2005-09-15 16:58:09 geuzaine Exp $
+$Id: FAQ,v 1.68 2005-11-22 03:15:49 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -61,11 +61,11 @@ You'll also need the jpeg library if you want to save jpeg images, and
 the libpng and zlib libraries if you want to save png images.
 
 Under Windows, you will need the Cygwin tools and compilers (freely
-available from http://www.cygwin.com), as well as "cygwin-enabled"
+available from http://www.cygwin.com), as well as a "cygwin-enabled"
 version of FLTK (i.e., you have to configure FLTK with './configure
 --enable-cygwin').
 
-* 2.4 How to I compile Gmsh?
+* 2.4 How do I compile Gmsh?
 
 Just type './configure; make; make install'. If you change some
 configuration options (type './configure --help' to get the list of
@@ -241,10 +241,10 @@ extruded physical entities is to save the mesh, and to read it again.
 * 5.9 Does Gmsh support curved elements?
 
 Yes, Gmsh can generate both 1st order and 2nd order elements. To
-generate second order elements, click on 'Second order elements' in
-the mesh menu after the mesh is completed. To always generate 2nd
-order elements, select 'Generate second order elements' in the mesh
-option panel. From the command line, you can also use '-order 2'.
+generate second order elements, click on 'Second order' in the mesh
+menu after the mesh is completed. To always generate 2nd order
+elements, select 'Generate second order elements' in the mesh option
+panel. From the command line, you can also use '-order 2'.
 
 * 5.10 Can I import an existing surface mesh in Gmsh and use it to
 build a 3D mesh?
@@ -342,6 +342,13 @@ from Gmsh) in order to monitor a solution?
 
 Sure. A simple C program showing how to do this is given in
 'utils/misc/callgmsh.c'.
+
+* 6.4 Is it possible for Gmsh top listen to an external program not
+launched from Gmsh?
+
+Yes: just create a program as described in 6.1 above (you can skip the
+option file creation). Then run 'gmsh -listen' and Gmsh will listen
+for the program on the Solver.SocketName socket.
 
 ********************************************************************
 
@@ -488,3 +495,23 @@ When viewing 3D scalar fields, you can also modify the colormap
 either by holding 'Ctrl' while dragging the mouse to draw the alpha
 channel by hand, or by using the 'a', 'Ctrl+a', 'p' and 'Ctrl+p'
 keyboard shortcuts.
+
+Yet another (destructive) option is to use the ExtractVolume option in
+the CutSphere or CutPlane plugins.
+
+* 7.15 I am loading a valid 3D scalar view but Gmsh does not display
+anything!
+
+In versions < 1.61, the default drawing mode for 3D scalar views was
+to draw iso-surfaces. If your data set was constant per element, Gmsh
+would not draw anything (a fix for this would be to run
+Plugin(Smooth), which would average the data on the nodes of the
+grid)... This behavior has changed in version 1.61, and Gmsh now draws
+the solution on the boundary of the elements by default. Iso-surfaces
+are of course still available by setting 'Intervals type' to
+'Iso-values' in 'Tools->Options->View->Range'.
+
+Note that the most efficient way to visualize the dataset on the
+boundary of the elements is to run Plugin(Skin) on the view: this will
+extract the boundary of the dataset and only draw the data on this
+boundary.
