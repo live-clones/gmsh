@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.178 2005-11-20 03:58:28 geuzaine Exp $
+// $Id: Views.cpp,v 1.179 2005-11-24 19:59:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1212,6 +1212,10 @@ static void write_txt(FILE *file, int nbelm, List_T *list,
     fprintf(file, "\n");
   }
 }
+
+// Change this to have 2 choices: 
+// Tabular (By Element)
+// Tabular (By Time Step)
 
 void WriteViewTXT(Post_View *v, char *filename)
 {

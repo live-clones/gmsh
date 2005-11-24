@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.43 2005-11-03 13:44:03 remacle Exp $
+// $Id: BDS.cpp,v 1.44 2005-11-24 19:59:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2546,8 +2546,8 @@ int BDS_Mesh::adapt_mesh(const BDS_Metric & metric, bool smooth,
   }
   
   Msg(INFO,"%d snaps have succeeded , %d have failed\n",SNAP_SUCCESS,SNAP_FAILURE);
-    //    outputScalarField (triangles,"b.pos");
-  applyOptimizationPatterns();
+  // outputScalarField (triangles,"b.pos");
+  // applyOptimizationPatterns(); // FIXME: this is buggy
   cleanup();  
   return nb_modif;
 }
