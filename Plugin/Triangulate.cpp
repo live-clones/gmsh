@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.28 2005-03-02 08:14:29 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.29 2005-11-25 23:49:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -98,6 +98,7 @@ void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
 
 #define ANSI_DECLARATORS
 #define REAL double
+#define VOID void
 
 extern "C"
 {

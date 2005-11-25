@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Triangle.cpp,v 1.12 2005-01-01 19:35:30 geuzaine Exp $
+// $Id: 2D_Mesh_Triangle.cpp,v 1.13 2005-11-25 23:49:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -36,6 +36,7 @@ int Mesh_Triangle(Surface * s)
 
 #define ANSI_DECLARATORS
 #define REAL double
+#define VOID void
 
 extern "C"
 {
