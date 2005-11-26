@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.402 2005-11-26 00:03:18 geuzaine Exp $
+# $Id: Makefile,v 1.403 2005-11-26 00:08:58 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -135,9 +135,9 @@ source-tree: purge
 	rm -rf gmsh-${GMSH_VERSION}
 	tar zcvf gmsh.tgz --exclude "*.o" --exclude "*.a" --exclude "gmsh"\
           --exclude "variables" --exclude "config.log" --exclude "config.status"\
-          --exclude "autom4*" --exclude "benchmarks" --exclude "Makefile.distrib"\
-          --exclude "zzz_*" --exclude "HTML"\
-          --exclude "*TAGS*" --exclude "GSYMS" --exclude "GPATH"\
+          --exclude "autom4*" --exclude "Makefile.distrib" --exclude "Makefile.back"\
+          --exclude "benchmarks" --exclude "zzz_*" --exclude "HTML"\
+          --exclude "*TAGS*" --exclude "GSYMS" --exclude "GPATH" --exclude "CVS"\
           *
 	mkdir gmsh-${GMSH_VERSION}
 	cd gmsh-${GMSH_VERSION} && tar zxvf ../gmsh.tgz
@@ -147,7 +147,7 @@ source: source-tree
 	cd gmsh-${GMSH_VERSION} && rm -rf ${GMSH_VERSION_FILE}\
           contrib/NR contrib/Triangle/triangle.* contrib/Tetgen/tetgen.*\
           contrib/Tetgen/predicates.* utils/commercial 
-	tar zcvf gmsh-${GMSH_VERSION}-source.tgz --exclude "CVS" gmsh-${GMSH_VERSION}
+	tar zcvf gmsh-${GMSH_VERSION}-source.tgz gmsh-${GMSH_VERSION}
 
 source-commercial: source-tree
 	cd gmsh-${GMSH_VERSION} && rm -rf ${GMSH_VERSION_FILE}\
@@ -161,7 +161,7 @@ source-commercial: source-tree
 	cp -f utils/commercial/license.texi gmsh-${GMSH_VERSION}/doc/texinfo/license.texi
 	cp -f utils/commercial/copying.texi gmsh-${GMSH_VERSION}/doc/texinfo/copying.texi
 	utils/commercial/sanitize.sh gmsh-${GMSH_VERSION}
-	tar zcvf gmsh-${GMSH_VERSION}-source-commercial.tgz --exclude "CVS" gmsh-${GMSH_VERSION}
+	tar zcvf gmsh-${GMSH_VERSION}-source-commercial.tgz gmsh-${GMSH_VERSION}
 
 # Rules to package the binaries
 
