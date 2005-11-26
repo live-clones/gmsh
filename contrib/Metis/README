@@ -1,3 +1,21 @@
+/*
+ * Copyright 1997, Regents of the University of Minnesota
+ *
+ * metis.h
+ *
+ * This file includes all necessary header files
+ *
+ * Started 8/27/94
+ * George
+ *
+ * $Id: README,v 1.3 2005-11-26 16:01:11 geuzaine Exp $
+ */
+
+
+The original source code must be distributed.
+
+-------------------------------------------------------------------
+
 Christophe,
 
 You can do that but be aware that metis/parmetis is not being distributed

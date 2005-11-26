@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.376 2005-11-20 03:58:28 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.377 2005-11-26 16:01:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1520,14 +1520,16 @@ void manip_update_cb(CALLBACK_ARGS)
 // Help Menu (if you change the following, please also change the
 // texinfo documentation in doc/texinfo/shortcuts.texi)
 
+#if defined(__APPLE__)
+#  define CC(str) "Cmd+" str " "
+#else
+#  define CC(str) "Ctrl+" str
+#endif
+
 void help_short_cb(CALLBACK_ARGS)
 {
   Msg(DIRECT, " ");
-#if defined(__APPLE__)
-  Msg(DIRECT, "Keyboard shortcuts (Ctrl and Command can be used interchangeably):");
-#else
   Msg(DIRECT, "Keyboard shortcuts:");
-#endif
   Msg(DIRECT, " ");
   Msg(DIRECT, "  Left arrow    Go to previous time step"); 
   Msg(DIRECT, "  Right arrow   Go to next time step"); 
@@ -1554,23 +1556,23 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Shift+s       Show solver options"); 
   Msg(DIRECT, "  Shift+w       Show post-processing view options");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "  Ctrl+i        Show statistics window"); 
-  Msg(DIRECT, "  Ctrl+l        Show message console");
+  Msg(DIRECT, "  " CC("i") "        Show statistics window"); 
+  Msg(DIRECT, "  " CC("l") "        Show message console");
 #if defined(__APPLE__)
-  Msg(DIRECT, "  Ctrl+m        Minimize window"); 
+  Msg(DIRECT, "  " CC("m") "        Minimize window"); 
 #endif
-  Msg(DIRECT, "  Ctrl+n        Create new project file"); 
-  Msg(DIRECT, "  Ctrl+o        Open project file"); 
-  Msg(DIRECT, "  Ctrl+q        Quit");
-  Msg(DIRECT, "  Ctrl+r        Rename project file");
-  Msg(DIRECT, "  Ctrl+s        Save file as");
+  Msg(DIRECT, "  " CC("n") "        Create new project file"); 
+  Msg(DIRECT, "  " CC("o") "        Open project file"); 
+  Msg(DIRECT, "  " CC("q") "        Quit");
+  Msg(DIRECT, "  " CC("r") "        Rename project file");
+  Msg(DIRECT, "  " CC("s") "        Save file as");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "  Shift+Ctrl+c  Show clipping plane window");
-  Msg(DIRECT, "  Shift+Ctrl+m  Show manipulator window"); 
-  Msg(DIRECT, "  Shift+Ctrl+n  Show option window"); 
-  Msg(DIRECT, "  Shift+Ctrl+o  Merge file(s)"); 
-  Msg(DIRECT, "  Shift+Ctrl+s  Save mesh in default format");
-  Msg(DIRECT, "  Shift+Ctrl+v  Show visibility window");
+  Msg(DIRECT, "  Shift+" CC("c") "  Show clipping plane window");
+  Msg(DIRECT, "  Shift+" CC("m") "  Show manipulator window"); 
+  Msg(DIRECT, "  Shift+" CC("n") "  Show option window"); 
+  Msg(DIRECT, "  Shift+" CC("o") "  Merge file(s)"); 
+  Msg(DIRECT, "  Shift+" CC("s") "  Save mesh in default format");
+  Msg(DIRECT, "  Shift+" CC("v") "  Show visibility window");
   Msg(DIRECT, " ");
   Msg(DIRECT, "  Alt+a         Loop through axes modes"); 
   Msg(DIRECT, "  Alt+b         Hide/show bounding boxes");

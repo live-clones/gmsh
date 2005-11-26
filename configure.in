@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.82 2005-09-25 15:52:17 geuzaine Exp $
+dnl $Id: configure.in,v 1.83 2005-11-26 16:01:10 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -303,7 +303,7 @@ if test "x$enable_contrib" != "xno"; then
        echo "You are building a version of Gmsh that contains METIS, the"
        echo "Serial Graph Partitioner."
        echo "Please note that by doing so, you agree with METIS's licensing"
-       echo "requirements stated in ./contrib/Metis/Doc/manual.ps."
+       echo "requirements stated in ./contrib/Metis/README."
        echo "To disable METIS, run configure again with the --disable-metis"
        echo "option."
        echo "********************************************************************"

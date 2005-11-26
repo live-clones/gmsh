@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.32 2005-10-16 16:29:48 geuzaine Exp $
+$Id: CREDITS,v 1.33 2005-11-26 16:01:11 geuzaine Exp $
 
              Gmsh is copyright (C) 1997-2005
 
@@ -78,6 +78,11 @@ Richard Shewchuk: check the configuration options.
 
 This version of Gmsh may contain code (in the contrib/Tetgen
 subdirectory) copyright (C) 2002, 2004 Hang Si: check the
+configuration options.
+
+This version of Gmsh may contain code (in the contrib/Metis
+subdirectory) written by George Karypis (karypis at cs.umn.edu),
+copyright (C) 1998, Regents of the University of Minnesota: check the
 configuration options.
 
 Special thanks to Bill Spitzak <spitzak at users.sourceforge.net>,

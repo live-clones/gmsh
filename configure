@@ -3885,7 +3885,7 @@ fi
        echo "You are building a version of Gmsh that contains METIS, the"
        echo "Serial Graph Partitioner."
        echo "Please note that by doing so, you agree with METIS's licensing"
-       echo "requirements stated in ./contrib/Metis/Doc/manual.ps."
+       echo "requirements stated in ./contrib/Metis/README."
        echo "To disable METIS, run configure again with the --disable-metis"
        echo "option."
        echo "********************************************************************"

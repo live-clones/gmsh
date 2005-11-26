@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.192 2005-11-20 01:39:40 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.193 2005-11-26 16:01:11 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -2748,6 +2748,9 @@ Pop up menu on post-processing view button
 @cindex Keyboard, shortcuts
 @cindex Shortcuts, keyboard
 @cindex Bindings, keyboard
+
+(On Mac Ctrl is replaced by Cmd (the `Apple key') in the shortcuts
+below.)
 
 @include shortcuts.texi
 
