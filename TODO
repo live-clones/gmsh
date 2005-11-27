@@ -1,4 +1,4 @@
-$Id: TODO,v 1.108 2005-11-20 03:58:27 geuzaine Exp $
+$Id: TODO,v 1.109 2005-11-27 23:09:49 geuzaine Exp $
 
 ********************************************************************
 
@@ -123,6 +123,13 @@ disable all replacements)
 
 Add a "bitmap" object in the views, e.g. to add a logo or a niver
 background. Oddly enough, people seem to want that kind of stuff.
+
+********************************************************************
+
+Would be nice to have gradients (cf. visit) in the background?
+--Just save as PNG with a "strong" background colorand use e.g.
+Gimp to replace the bg with whatever gradient you like. You can
+even do it in batch with a gimp script.
 
 ********************************************************************
 
