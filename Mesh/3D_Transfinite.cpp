@@ -1,4 +1,4 @@
-// $Id: 3D_Transfinite.cpp,v 1.2 2005-01-01 19:35:30 geuzaine Exp $
+// $Id: 3D_Transfinite.cpp,v 1.3 2005-11-28 19:13:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -24,7 +24,7 @@
 //
 
 /*  
-  Maillage transfini volumique
+  Volume trasfinite meshes
 
                      a0   s0 s1  f0  s0 s1 s5 s4              s6      
    s7        s6      a1   s1 s2  f1  s1 s2 s6 s4              *       
@@ -41,9 +41,14 @@
                                                    *--u              
 
 
-  Remarque : La definition d'un volume prismatique doit se faire dans l'ordre
-             donne sur le schema. (degenerescence obligatoirement en s0/s4)
+  Warning: 
 
+  1) the definition of a prismatic volume has to follow the ordering
+  given in the fig (degenerescence has to be in s0/s4)
+  
+  2) meshing a hex volume with prisms assumes that the surface mesh
+     has been oriented in a certain way ('left' and 'alternate'
+     transf. surfaces are not supported)
 */
 
 #include "Gmsh.h"
@@ -235,10 +240,6 @@ int MeshTransfiniteVolume(Volume * vol)
     S[6] = Stmp[5];
   }
 
-  /*
-     for(i=0;i<8;i++) printf("S[%d]=%d \n", i, S[i]->Num);
-   */
-
   for(i = 0; i < nbs; i++)
     List_Read(vol->Surfaces, i, &GG[i]);
 
@@ -263,14 +264,13 @@ int MeshTransfiniteVolume(Volume * vol)
           G[k] = GG[i];
           F_flag[k] = flag;
           NbFacesFound++;
-          /*
-             printf("TR3D: (k=%d) face trouvee %d (flag = %d) : nodes %d %d %d %d \n", 
-             k,GG[i]->Num, flag, 
-             S[tab1hex[4*k  ]]->Num, 
-             S[tab1hex[4*k+1]]->Num,
-             S[tab1hex[4*k+2]]->Num,
-             S[tab1hex[4*k+3]]->Num);
-           */
+
+	  if(GG[i]->Recombine_Dir != 1){
+	    Msg(GERROR, "Transfinite Volume not available yet with left- or alternate-"
+		"oriented transfinite surfaces");
+	    return 0;
+	  }
+	  
         }
       }
     }
@@ -303,10 +303,8 @@ int MeshTransfiniteVolume(Volume * vol)
     for(i = 0; i < 6; i++) {
       if(i != 3) {
         if(G[i] == NULL) {
-          Msg(WARNING1, "Wrong definition of prismatic Transfinite Volume %d",
-              vol->Num);
-          Msg(WARNING2,
-              "Possibly because the first and fourth points are not the");
+          Msg(WARNING1, "Wrong definition of prismatic Transfinite Volume %d", vol->Num);
+          Msg(WARNING2, "Possibly because the first and fourth points are not the");
           Msg(WARNING3, "degenerated ones");
           return 0;
         }
@@ -314,14 +312,9 @@ int MeshTransfiniteVolume(Volume * vol)
     }
   }
 
-
   N1 = (F_flag[4] % 2 == 0) ? G[4]->Nu : G[4]->Nv;
   N2 = (F_flag[4] % 2 == 0) ? G[4]->Nv : G[4]->Nu;
   N3 = (F_flag[0] % 2 == 0) ? G[0]->Nv : G[0]->Nu;
-
-  /*
-     printf("N1(%d) N2(%d) N3(%d)\n", N1,N2,N3);
-   */
 
   list = (Vertex **) Malloc(N1 * N2 * N3 * sizeof(Vertex *));
 
@@ -368,13 +361,8 @@ int MeshTransfiniteVolume(Volume * vol)
                              *S[7], u, v, w);
           list[i + N1 * j + N1 * N2 * k] =
             Create_Vertex(++THEM->MaxPointNum, V.Pos.X, V.Pos.Y, V.Pos.Z,
-                          V.lc, 0.0);
-          /*
-             printf(" NEW node : %f %f %f\n", list[i+N1*j+N1*N2*k]->Pos.X, 
-             list[i+N1*j+N1*N2*k]->Pos.Y, list[i+N1*j+N1*N2*k]->Pos.Z);
-           */
+			  V.lc, 0.0);
         }
-
         else if(!i) {
           list[i + N1 * j + N1 * N2 * k] = F[3];
         }
@@ -452,13 +440,12 @@ int MeshTransfiniteVolume(Volume * vol)
             prism->iEnt = vol->Num;
             Tree_Add(vol->Prisms, &prism);
 
-            prism =
-              Create_Prism(list[(i + 1) + N1 * (j + 1) + N1 * N2 * (k + 1)],
-                           list[(i + 1) + N1 * (j) + N1 * N2 * (k + 1)],
-                           list[(i + 1) + N1 * (j + 1) + N1 * N2 * (k)],
-                           list[(i) + N1 * (j + 1) + N1 * N2 * (k + 1)],
-                           list[(i) + N1 * (j) + N1 * N2 * (k + 1)],
-                           list[(i) + N1 * (j + 1) + N1 * N2 * (k)]);
+            prism = Create_Prism(list[(i + 1) + N1 * (j + 1) + N1 * N2 * (k + 1)],
+				 list[(i + 1) + N1 * (j) + N1 * N2 * (k + 1)],
+				 list[(i + 1) + N1 * (j + 1) + N1 * N2 * (k)],
+				 list[(i) + N1 * (j + 1) + N1 * N2 * (k + 1)],
+				 list[(i) + N1 * (j) + N1 * N2 * (k + 1)],
+				 list[(i) + N1 * (j + 1) + N1 * N2 * (k)]);
             prism->iEnt = vol->Num;
             Tree_Add(vol->Prisms, &prism);
 
@@ -613,5 +600,4 @@ int MeshTransfiniteVolume(Volume * vol)
   }
 
   return 1;
-
 }

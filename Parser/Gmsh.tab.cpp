@@ -168,7 +168,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.244 2005-11-19 04:01:13 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.245 2005-11-28 19:13:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -5722,7 +5722,7 @@ case 223:
 	yymsg(WARNING, "Unknown surface %d", (int)yyvsp[-4].d);
       else{
 	s->Method = TRANSFINI;
-	s->Recombine_Dir = -1;
+	s->Recombine_Dir = 1;
 	int k = List_Nbr(yyvsp[-1].l);
 	if(k != 3 && k != 4){
 	  yymsg(GERROR, "Wrong definition of Transfinite Surface %d: "
