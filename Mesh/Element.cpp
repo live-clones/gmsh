@@ -1,4 +1,4 @@
-// $Id: Element.cpp,v 1.8 2005-06-08 19:12:05 geuzaine Exp $
+// $Id: Element.cpp,v 1.9 2005-11-28 15:59:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -424,7 +424,8 @@ void Pyramid::ExportStatistics(FILE * f)
 
   if(!VSUP){
     N = 5;
-    fprintf(f,"SY(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g};\n",
+    fprintf(f,"SY(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g)"
+	    "{%g,%g,%g,%g,%g",
 	    V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	    V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X, 
 	    V[3]->Pos.Y, V[3]->Pos.Z, V[4]->Pos.X, V[4]->Pos.Y, V[4]->Pos.Z,
