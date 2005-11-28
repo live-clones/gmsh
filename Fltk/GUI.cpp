@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.469 2005-11-26 16:01:11 geuzaine Exp $
+// $Id: GUI.cpp,v 1.470 2005-11-28 15:41:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -668,6 +668,18 @@ int GUI::global_shortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_ALT + 'z')) {
     status_xyz1p_cb(0, (void *)"z");
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'x')) {
+    status_xyz1p_cb(0, (void *)"nx");
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT +  'y')) {
+    status_xyz1p_cb(0, (void *)"ny");
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT +  'z')) {
+    status_xyz1p_cb(0, (void *)"nz");
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'a')) {

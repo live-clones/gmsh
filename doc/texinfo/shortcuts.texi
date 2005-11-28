@@ -139,5 +139,11 @@ Hide/show mesh points
 Hide/show mesh surfaces
 @item Alt+Shift+v
 Hide/show mesh volumes
+@item Alt+Shift+x
+Set -X view 
+@item Alt+Shift+y
+Set -Y view 
+@item Alt+Shift+z
+Set -Z view 
 
 @end table

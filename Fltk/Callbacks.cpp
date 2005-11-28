@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.377 2005-11-26 16:01:10 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.378 2005-11-28 15:41:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -400,6 +400,30 @@ void status_xyz1p_cb(CALLBACK_ARGS)
     Draw();
   }
   else if(!strcmp(str, "z")){ // Z-axis pointing out of the screen
+    CTX.r[0] = 0.;
+    CTX.r[1] = 0.;
+    CTX.r[2] = 0.;
+    CTX.setQuaternionFromEulerAngles();
+    Draw();
+  }
+  else if(!strcmp(str, "nx")){ // X-axis pointing into the screen
+    // FIXME: dave
+    CTX.r[0] = 0.;
+    CTX.r[1] = 0.;
+    CTX.r[2] = 0.;
+    CTX.setQuaternionFromEulerAngles();
+    Draw();
+  }
+  else if(!strcmp(str, "ny")){ // Y-axis pointing into the screen
+    // FIXME: dave
+    CTX.r[0] = 0.;
+    CTX.r[1] = 0.;
+    CTX.r[2] = 0.;
+    CTX.setQuaternionFromEulerAngles();
+    Draw();
+  }
+  else if(!strcmp(str, "nz")){ // Z-axis pointing into the screen
+    // FIXME: dave
     CTX.r[0] = 0.;
     CTX.r[1] = 0.;
     CTX.r[2] = 0.;
@@ -1600,6 +1624,9 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Alt+Shift+p   Hide/show mesh points");
   Msg(DIRECT, "  Alt+Shift+s   Hide/show mesh surfaces");
   Msg(DIRECT, "  Alt+Shift+v   Hide/show mesh volumes");
+  Msg(DIRECT, "  Alt+Shift+x   Set -X view"); 
+  Msg(DIRECT, "  Alt+Shift+y   Set -Y view"); 
+  Msg(DIRECT, "  Alt+Shift+z   Set -Z view"); 
   Msg(DIRECT, " ");
   WID->create_message_window();
 }
