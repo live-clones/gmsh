@@ -1,4 +1,6 @@
-$Id: VERSIONS,v 1.345 2005-11-25 03:20:37 geuzaine Exp $
+$Id: VERSIONS,v 1.346 2005-11-28 19:16:45 geuzaine Exp $
+
+New since 1.61: fixed bug with transfinite volumes and prisms;
 
 New in 1.61: added support for second order (curved) elements in
 post-processor; new version (1.4) of post-processing file formats; new
