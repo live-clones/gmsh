@@ -1,4 +1,4 @@
-// $Id: 3D_Transfinite.cpp,v 1.3 2005-11-28 19:13:49 geuzaine Exp $
+// $Id: 3D_Transfinite.cpp,v 1.4 2005-11-28 19:19:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -24,7 +24,7 @@
 //
 
 /*  
-  Volume trasfinite meshes
+  Volume transfinite meshes
 
                      a0   s0 s1  f0  s0 s1 s5 s4              s6      
    s7        s6      a1   s1 s2  f1  s1 s2 s6 s4              *       
