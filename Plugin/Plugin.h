@@ -59,6 +59,7 @@ public :
 		GMSH_SOLVE_PLUGIN} GMSH_PLUGIN_TYPE ;
 
   GMSH_Plugin() : dialogBox(0), hlib(0) {;};
+  virtual ~GMSH_Plugin() {;};
   
   // returns the type of plugin for downcasting GMSH_Plugin into
   // GMSH_CAD_Plugin, GMSH_Mesh_Plugin and GMSH_Post_Plugin
