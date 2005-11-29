@@ -46,6 +46,8 @@ View[v1].NbIso = 10 ;
 View[v1].ShowScale = 0;
 
 View[v2].Name = "Test..." ;
+View[v2].Axes = 1;
+View[v2].Color.Axes = Black;
 View[v2].IntervalsType = 2 ;
 View[v2].Type = 2;
 View[v2].IntervalsType = 2 ;
@@ -55,18 +57,7 @@ View[v2].PositionY = 50;
 View[v2].Width = 200;
 View[v2].Height = 130;
 
-View[v3].Type = 3;
-View[v3].RangeType = 2;
-View[v3].IntervalsType = 4 ;
-View[v3].ShowScale = 0;
-View[v3].Axes = 0;
-View[v3].CustomMin = View[v2].CustomMin;
-View[v3].CustomMax = View[v2].CustomMax;
-View[v3].AutoPosition = 0;
-View[v3].PositionX = View[v2].PositionX;
-View[v3].PositionY = View[v2].PositionY;
-View[v3].Width = View[v2].Width;
-View[v3].Height = View[v2].Height;
+View[v3].Visible = 0;
 
 // We then loop from 1 to 255 with a step of 1. (To use a different
 // step, just add a third argument in the list. For example, `For num
@@ -75,6 +66,8 @@ View[v3].Height = View[v2].Height;
 
 t = 0 ;
 
+
+//For num In {1:1}
 For num In {1:255}
 
   View[v0].TimeStep = t ;
