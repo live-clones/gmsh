@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.378 2005-11-28 15:41:54 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.379 2005-11-29 11:06:53 colignon Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -393,9 +393,9 @@ void status_xyz1p_cb(CALLBACK_ARGS)
     Draw();
   }
   else if(!strcmp(str, "y")){ // Y-axis pointing out of the screen
-    CTX.r[0] = 0.;
-    CTX.r[1] = 90.;
-    CTX.r[2] = 90.;
+    CTX.r[0] = -90.;
+    CTX.r[1] = 0.;
+    CTX.r[2] = 180.;
     CTX.setQuaternionFromEulerAngles();
     Draw();
   }
@@ -407,25 +407,22 @@ void status_xyz1p_cb(CALLBACK_ARGS)
     Draw();
   }
   else if(!strcmp(str, "nx")){ // X-axis pointing into the screen
-    // FIXME: dave
-    CTX.r[0] = 0.;
+    CTX.r[0] = -90.;
     CTX.r[1] = 0.;
-    CTX.r[2] = 0.;
+    CTX.r[2] = 90.;
     CTX.setQuaternionFromEulerAngles();
     Draw();
   }
   else if(!strcmp(str, "ny")){ // Y-axis pointing into the screen
-    // FIXME: dave
-    CTX.r[0] = 0.;
+    CTX.r[0] = -90.;
     CTX.r[1] = 0.;
     CTX.r[2] = 0.;
     CTX.setQuaternionFromEulerAngles();
     Draw();
   }
   else if(!strcmp(str, "nz")){ // Z-axis pointing into the screen
-    // FIXME: dave
     CTX.r[0] = 0.;
-    CTX.r[1] = 0.;
+    CTX.r[1] = 180.;
     CTX.r[2] = 0.;
     CTX.setQuaternionFromEulerAngles();
     Draw();
