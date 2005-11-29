@@ -57,7 +57,7 @@ Plugin(Annotate).Run ;
 // We finish by setting some view options and redrawing the scene:
 
 View[0].Light = 1;
-View[0].IntervalsType = 2;
+View[0].IntervalsType = 1;
 View[0].NbIso = 6;
 View[0].SmoothNormals = 1;
 
