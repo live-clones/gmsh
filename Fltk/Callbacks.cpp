@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.380 2005-11-29 15:49:30 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.381 2005-11-29 16:11:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -385,21 +385,21 @@ void status_xyz1p_cb(CALLBACK_ARGS)
 {
   char *str = (char*)data;
 
-  if(!strcmp(str, "x")){ // X-axis pointing out of the screen
+  if(!strcmp(str, "x")){ // X pointing out of the screen (and Z pointing up)
     CTX.r[0] = -90.;
     CTX.r[1] = 0.;
     CTX.r[2] = -90.;
     CTX.setQuaternionFromEulerAngles();
     Draw();
   }
-  else if(!strcmp(str, "y")){ // Y-axis pointing out of the screen
-    CTX.r[0] = 0.;
-    CTX.r[1] = 90.;
-    CTX.r[2] = 90.;
+  else if(!strcmp(str, "y")){ // Y pointing out of the screen (and Z pointing up)
+    CTX.r[0] = -90.;
+    CTX.r[1] = 0.;
+    CTX.r[2] = 180.;
     CTX.setQuaternionFromEulerAngles();
     Draw();
   }
-  else if(!strcmp(str, "z")){ // Z-axis pointing out of the screen
+  else if(!strcmp(str, "z")){ // Z pointing out of the screen
     CTX.r[0] = 0.;
     CTX.r[1] = 0.;
     CTX.r[2] = 0.;
@@ -415,7 +415,7 @@ void status_xyz1p_cb(CALLBACK_ARGS)
   }
   else if(!strcmp(str, "ny")){ // look from behind Y view
     CTX.r[0] = -90.;
-    CTX.r[1] = -90.;
+    CTX.r[1] = 0.;
     CTX.r[2] = 0.;
     CTX.setQuaternionFromEulerAngles();
     Draw();
