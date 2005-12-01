@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.381 2005-11-29 16:11:19 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.382 2005-12-01 04:55:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -746,14 +746,14 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"PDF (*.pdf)", _save_pdf},
     {"PPM (*.ppm)", _save_ppm},
 #if defined(HAVE_LIBJPEG)
-    {"LaTeX JPEG part (*.jpg)", _save_jpegtex},
+    {"LaTeX JPEG part w/o text (*.jpg)", _save_jpegtex},
 #endif
 #if defined(HAVE_LIBPNG)
-    {"LaTeX PNG part (*.png)", _save_pngtex},
+    {"LaTeX PNG part w/o text (*.png)", _save_pngtex},
 #endif
-    {"LaTeX EPS part (*.eps)", _save_epstex},
-    {"LaTeX PDF part (*.pdf)", _save_pdftex},
-    {"LaTeX TeX part (*.tex)", _save_tex},
+    {"LaTeX EPS part w/o text (*.eps)", _save_epstex},
+    {"LaTeX PDF part w/o text (*.pdf)", _save_pdftex},
+    {"LaTeX text part (*.tex)", _save_tex},
     {"YUV (*.yuv)", _save_yuv}
   };
 
