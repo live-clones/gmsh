@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.142 2005-11-20 03:58:29 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.143 2005-12-05 20:36:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -77,11 +77,11 @@ void draw_polygon_2d(double r, double g, double b, int n,
   glEnable(GL_DEPTH_TEST);
 }
 
-int getFirstPhysical(int type, int num)
+int getLastPhysical(int type, int num)
 {
   // If we visualize the mesh by coloring the physical entities, or if
   // we ask to display physical entity labels on elements, this
-  // routine returns the number of the first physical entity of type
+  // routine returns the number of the last physical entity of type
   // "type" that contains the elementary entity "num"
   if(CTX.mesh.color_carousel == 2 || CTX.mesh.label_type == 2){
     static int warn = 1;
@@ -91,7 +91,7 @@ int getFirstPhysical(int type, int num)
       Msg(WARNING, "You might want to color and/or label the mesh by elementary entity instead");
       warn = 0;
     }
-    for(int i = 0; i < List_Nbr(THEM->PhysicalGroups); i++){
+    for(int i = List_Nbr(THEM->PhysicalGroups)-1; i >=0 ; i--){
       PhysicalGroup *p = *(PhysicalGroup**)List_Pointer(THEM->PhysicalGroups, i);
       if(p->Typ == type && List_Query(p->Entities, &num, fcmp_int))
 	return p->Num;
@@ -344,7 +344,7 @@ void Draw_Mesh_Volume(void *a, void *b)
      CTX.mesh.vertex_arrays){
     if(CTX.mesh.changed){
       Msg(DEBUG, "regenerate volume mesh vertex arrays");
-      thePhysical = getFirstPhysical(MSH_PHYSICAL_VOLUME, v->Num);
+      thePhysical = getLastPhysical(MSH_PHYSICAL_VOLUME, v->Num);
       // triangles
       if(v->TriVertexArray) delete v->TriVertexArray;
       v->TriVertexArray = new VertexArray(3, 1000);
@@ -381,7 +381,7 @@ void Draw_Mesh_Volume(void *a, void *b)
      CTX.mesh.dual || CTX.mesh.volumes_num || CTX.mesh.points_per_element ||
      CTX.mesh.normals){
     Msg(DEBUG, "classic volume data path");
-    thePhysical = getFirstPhysical(MSH_PHYSICAL_VOLUME, v->Num);
+    thePhysical = getLastPhysical(MSH_PHYSICAL_VOLUME, v->Num);
     Tree_Action(v->Simplexes, Draw_Mesh_Tetrahedron);
     Tree_Action(v->SimplexesBase, Draw_Mesh_Tetrahedron);
     Tree_Action(v->Hexahedra, Draw_Mesh_Hexahedron);
@@ -432,7 +432,7 @@ void Draw_Mesh_Surface(void *a, void *b)
       if(s->ipar[4] == -2) s->ipar[4] = -1;
 
       Msg(DEBUG, "regenerate surface mesh vertex arrays");
-      thePhysical = getFirstPhysical(MSH_PHYSICAL_SURFACE, s->Num);
+      thePhysical = getLastPhysical(MSH_PHYSICAL_SURFACE, s->Num);
       // triangles
       if(s->TriVertexArray) delete s->TriVertexArray;
       s->TriVertexArray = new VertexArray(3, Tree_Nbr(s->Simplexes) + 
@@ -465,7 +465,7 @@ void Draw_Mesh_Surface(void *a, void *b)
   if(!s->TriVertexArray || CTX.mesh.dual || CTX.mesh.surfaces_num ||
      CTX.mesh.points_per_element || CTX.mesh.normals){
     Msg(DEBUG, "classic triangle data path");
-    thePhysical = getFirstPhysical(MSH_PHYSICAL_SURFACE, s->Num);
+    thePhysical = getLastPhysical(MSH_PHYSICAL_SURFACE, s->Num);
     Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
     Tree_Action(s->SimplexesBase, Draw_Mesh_Triangle);
   }
@@ -473,7 +473,7 @@ void Draw_Mesh_Surface(void *a, void *b)
   if(!s->QuadVertexArray || CTX.mesh.dual || CTX.mesh.surfaces_num ||
      CTX.mesh.points_per_element || CTX.mesh.normals){
     Msg(DEBUG, "classic quadrangle data path");
-    thePhysical = getFirstPhysical(MSH_PHYSICAL_SURFACE, s->Num);
+    thePhysical = getLastPhysical(MSH_PHYSICAL_SURFACE, s->Num);
     Tree_Action(s->Quadrangles, Draw_Mesh_Quadrangle);
   }
 
@@ -524,7 +524,7 @@ void Draw_Mesh_Curve(void *a, void *b)
       if(c->ipar[3] == -2) c->ipar[3] = -1;
 
       Msg(DEBUG, "regenerate curve mesh vertex array");
-      thePhysical = getFirstPhysical(MSH_PHYSICAL_LINE, c->Num);
+      thePhysical = getLastPhysical(MSH_PHYSICAL_LINE, c->Num);
       if(c->LinVertexArray) delete c->LinVertexArray;
       c->LinVertexArray = new VertexArray(2, Tree_Nbr(c->Simplexes) + 
 					  Tree_Nbr(c->SimplexesBase));
@@ -543,7 +543,7 @@ void Draw_Mesh_Curve(void *a, void *b)
   if(!c->LinVertexArray || CTX.mesh.lines_num ||
      CTX.mesh.points_per_element || CTX.mesh.tangents){
     Msg(DEBUG, "classic line data path");
-    thePhysical = getFirstPhysical(MSH_PHYSICAL_LINE, c->Num);
+    thePhysical = getLastPhysical(MSH_PHYSICAL_LINE, c->Num);
     Tree_Action(c->Simplexes, Draw_Mesh_Line);
     Tree_Action(c->SimplexesBase, Draw_Mesh_Line);
   }
