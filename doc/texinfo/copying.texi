@@ -34,12 +34,13 @@ information about this license is available from the GNU Project webpage
 information can be found in @ref{Credits}.
 
 The source code and various pre-compiled versions of Gmsh (for Unix, Windows
-and Mac OS) can be downloaded from the webpage @value{GMSH-WEB}.
+and Mac OS) can be downloaded from the webpage @uref{http://geuz.org/gmsh/}.
 
 If you use Gmsh, we would appreciate that you mention it in your
 work. References, as well as the latest news about Gmsh development, are
-always available on @value{GMSH-WEB}. Please send all Gmsh-related questions
-to the public Gmsh mailing list at @email{gmsh@@geuz.org}.
+always available on @uref{http://geuz.org/gmsh/}. Please send all
+Gmsh-related questions to the public Gmsh mailing list at
+@email{gmsh@@geuz.org}.
 
 @sp 2
 

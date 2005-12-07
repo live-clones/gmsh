@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.193 2005-11-26 16:01:11 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.194 2005-12-07 17:56:01 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -39,7 +39,6 @@
 @setfilename        gmsh.info
 @set EDITION        1.32
 @set GMSH-VERSION   1.61
-@set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
 @set COPYRIGHT      @copyright{} 1997-2005 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @c
 @settitle Gmsh @value{GMSH-VERSION}
@@ -2159,7 +2158,7 @@ should set the client-server option to 1 (e.g., @code{Solver.ClientServer0 =
 1}), so that Gmsh and the solver can communicate through a Unix socket. See
 @ref{Solver example}, for an example of how to interface a C++
 solver. Bindings for solvers written in other languages (C, Perl and Python)
-are available on @value{GMSH-WEB}.
+are available in the source distribution.
 
 @menu
 * Solver options::              
@@ -2445,7 +2444,22 @@ the @file{tutorial} directory of the Gmsh distribution.
 This tutorial does not explain the mesh and post-processing file formats:
 see @ref{File formats}, for this.
 
-To learn how to run Gmsh on your computer, see @ref{Running Gmsh}.
+To learn how to run Gmsh on your computer, see @ref{Running Gmsh}. In
+addition, interactive tutorials that explain how to use the graphical
+user interface are available on Gmsh's webpage:
+
+@itemize @bullet
+@item 
+@uref{http://geuz.org/gmsh/doc/gui_tutorial/,The first interactive
+tutorial} shows how to create a simple 2D geometry and how to generate a
+mesh;
+@item
+@uref{http://geuz.org/gmsh/doc/gui_tutorial_2/,The second} shows several
+methods to visualize data sets on deformed grids;
+@item
+@uref{http://geuz.org/gmsh/doc/gui_tutorial_3/,The third} shows how to
+use post-processing plugins.
+@end itemize
 
 @menu
 * t1.geo::                      
