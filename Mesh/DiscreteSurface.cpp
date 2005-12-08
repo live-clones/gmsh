@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.33 2005-11-03 13:44:03 remacle Exp $
+// $Id: DiscreteSurface.cpp,v 1.34 2005-12-08 15:35:20 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -225,7 +225,7 @@ void BDS_To_Mesh_2(Mesh * m)
       m->bds_mesh->points.end();
     while(it != ite) {
       Vertex *vert =
-        Create_Vertex((*it)->iD, (*it)->X, (*it)->Y, (*it)->Z, 1.0, 0.0);
+        Create_Vertex((*it)->iD, (*it)->X, (*it)->Y, (*it)->Z, (*it)->min_edge_length(), 0.0);
       Tree_Add(m->Vertices, &vert);
       ++it;
     }
@@ -269,6 +269,9 @@ void BDS_To_Mesh_2(Mesh * m)
         else
           Msg(GERROR, "Impossible to find surface %d", g->classif_tag);
         Tree_Add(s->Simplexes, &simp);
+        Tree_Add(s->Vertices, &v1);
+        Tree_Add(s->Vertices, &v2);
+        Tree_Add(s->Vertices, &v3);
       }
       ++it;
     }
@@ -361,8 +364,29 @@ void BDS_To_Mesh(Mesh * m)
   CTX.mesh.changed = 1;
 }
 
+
+void  CreateVolumeWithAllSurfaces(Mesh *M)
+{
+  //  Volume *vol = Create_Volume(1, MSH_VOLUME_DISCRETE);
+  //  Volume *vol = Create_Volume(1, 99999);
+  Volume *vol2 = Create_Volume(2, MSH_VOLUME);
+  List_T *surfaces = Tree2List(M->Surfaces); 
+  for(int i = 0; i < List_Nbr(surfaces); ++i) {
+    Surface *s;
+    List_Read(surfaces, i, &s);
+    //List_Add (vol->Surfaces,&s);
+    List_Add (vol2->Surfaces,&s);
+    int ori = 1;
+    Move_SimplexBaseToSimplex(&s->SimplexesBase, s->Simplexes);
+    List_Add (vol2->SurfacesOrientations,&ori);
+  }
+  //  Tree_Add(M->Volumes, &vol);
+  Tree_Add(M->Volumes, &vol2);
+}
+
 int ReMesh(Mesh * M)
 {
+
   if(M->status != 2)
     return 0;
 
@@ -379,8 +403,9 @@ int ReMesh(Mesh * M)
     M->bds_mesh = 0;
   }
 
-  MeshDiscreteSurface((Surface *) 0);
 
+  MeshDiscreteSurface((Surface *) 0);
+  CreateVolumeWithAllSurfaces(M);
   CTX.mesh.changed = 1;
   return 1;
 }

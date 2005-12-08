@@ -37,8 +37,8 @@ class GMSH_Post_Plugin;
 class adapt_point
 {
 public :
-  double x, y, z;
-  double X, Y, Z, val;
+  double x,y,z;
+  double X,Y,Z,val,valx,valy,valz;
   double shape_functions[128];
   static adapt_point * New (double x, double y, double z, 
 			    Double_Matrix *coeffs, Double_Matrix *eexps); 
@@ -275,6 +275,10 @@ class Adaptive_Post_View
   Double_Matrix * _STposY;
   Double_Matrix * _STposZ;
   Double_Matrix * _STval;
+  // for vectors
+  Double_Matrix * _STvalX;
+  Double_Matrix * _STvalY;
+  Double_Matrix * _STvalZ;
   Double_Matrix * _Interpolate;
   Double_Matrix * _Geometry;
 public:

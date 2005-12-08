@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.67 2005-07-03 08:02:24 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.68 2005-12-08 15:35:20 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -867,9 +867,16 @@ void Maillage_Volume(void *data, void *dum)
   pv = (Volume **) data;
   v = *pv;
 
-  if(v->Typ == MSH_VOLUME_DISCRETE) {
-  }
-  else if(Extrude_Mesh(v)) {
+  /*  if(v->Typ == MSH_VOLUME_DISCRETE) 
+    {
+      printf("coucou1\n");
+      int temp = CTX.mesh.algo3d;
+      CTX.mesh.algo3d = FRONTAL_NETGEN;
+      CTX.mesh.algo3d =DELAUNAY_TETGEN;
+      Mesh_Tetgen(v);
+      CTX.mesh.algo3d = temp;
+    }
+    else*/ if(Extrude_Mesh(v)) {
   }
   else if(MeshTransfiniteVolume(v)) {
   }

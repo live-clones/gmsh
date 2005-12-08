@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.44 2005-11-24 19:59:01 geuzaine Exp $
+// $Id: BDS.cpp,v 1.45 2005-12-08 15:35:20 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,19 @@
 #include "GmshMatrix.h"
 #include "BDS.h"
 #include "Message.h"
+
+double BDS_Point::min_edge_length()
+{
+  std::list<BDS_Edge*>::iterator it  = edges.begin();
+  std::list<BDS_Edge*>::iterator ite = edges.end();
+  double L = 1.e245;
+  while(it!=ite){
+    double l = (*it)->length();
+    if (l<L)L=l;
+    ++it;
+  }
+  return L;
+}
 
 void outputScalarField(std::list < BDS_Triangle * >t, const char *iii)
 {
@@ -120,7 +133,7 @@ void BDS_Quadric::projection(double xa, double ya, double za,
 
 void BDS_GeomEntity::getClosestTriangles(double x, double y, double z,
                                          std::list < BDS_Triangle * >&l,
-                                         double &radius,
+                                         double &radius ,
                                          double &X, double &Y, double &Z)
 {
 #ifdef HAVE_ANN_
@@ -823,6 +836,7 @@ void BDS_Mesh::createSearchStructures()
           int N = (int)(l / (LC_SEARCH) + 2);
           BDS_Point *p1 = (*eit)->p1;
           BDS_Point *p2 = (*eit)->p2;
+
           for(int i = 0; i < N; i++) {
             double u = (double)i / (N - 1);
             (*it)->dataPts[I][0] = p1->X + (p2->X - p1->X) * (u);
@@ -962,6 +976,9 @@ void recur_color_plane_surf(const double eps,
   }
 }
 
+
+
+
 void BDS_Mesh::color_plane_surf(double eps, int NB_T)
 {
   int current_status = 100000;
@@ -996,6 +1013,25 @@ void BDS_Mesh::color_plane_surf(double eps, int NB_T)
     }
   }
 }
+
+bool BDS_Mesh::extractVolumes()
+{
+  bool closed = true;
+  {
+    std::list < BDS_Edge * >::iterator it = edges.begin();
+    std::list < BDS_Edge * >::iterator ite = edges.end();
+    while(it != ite) 
+      {
+	if ( (*it)->numfaces() !=2 ) closed = false;	  
+	++it;
+      }    
+  }
+  
+  printf("the domain is closed ? : %d\n",closed);
+
+  BDS_Triangle *t = *(triangles.begin());  
+}
+
 
 void BDS_Mesh::classify(double angle, int NB_T)
 {
@@ -1246,7 +1282,8 @@ void BDS_Mesh::classify(double angle, int NB_T)
   Msg(INFO, "Creating search structures");
   createSearchStructures();
   Msg(INFO, "End classifying %d edgetags %d vertextags", edgetag - 1, vertextag - 1);
-  // outputScalarField (triangles,"R_curvature.pos");
+  //  outputScalarField (triangles,"R_curvature.pos");
+  extractVolumes();
 }
 
 double PointLessThanLexicographic::t = 0;
@@ -1953,6 +1990,32 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e)
     }
   }
 
+  // See if the swap revert one triangle
+  double cb1[3],cb2[3];
+  if(orientation == 1) 
+    {    
+      normal_triangle ( p1 , op[1] , op[0] , cb1);
+      normal_triangle ( op[1] , p2 , op[0] , cb2);  
+    }
+  else
+    {    
+      normal_triangle ( p1 , op[0] , op[1]  , cb1);
+      normal_triangle ( op[0] , p2 , op[1] , cb2);  
+    }
+
+  BDS_Vector n1 = e->faces(0)->N();
+  BDS_Vector n2 = e->faces(1)->N();
+  double psc = n1.x * cb1[0] +n1.y * cb1[1] +n1.z * cb1[2];
+  if (psc < 0) return false;
+  psc = n2.x * cb1[0] +n2.y * cb1[1] +n2.z * cb1[2];
+  if (psc < 0) return false;
+  psc = n2.x * cb2[0] +n2.y * cb2[1] +n2.z * cb2[2];
+  if (psc < 0) return false;
+  psc = n1.x * cb2[0] +n1.y * cb2[1] +n1.z * cb2[2];
+  if (psc < 0) return false;
+  //-----------------------------------------------
+
+
   BDS_Edge *p1_op1 = find_edge(p1, op[0], e->faces(0));
   BDS_Edge *op1_p2 = find_edge(op[0], p2, e->faces(0));
   BDS_Edge *p1_op2 = find_edge(p1, op[1], e->faces(1));
@@ -2225,7 +2288,7 @@ void BDS_Mesh::snap_point(BDS_Point * p, BDS_Mesh * geom_mesh)
     }
   }
   else if(p->g && p->g->classif_degree == 2 && geom_mesh) {
-    double xx, yy, zz;
+    double xx, yy, zz,sz;
     std::list < BDS_Triangle * >l;
     BDS_GeomEntity *gg =
       geom_mesh->get_geom(p->g->classif_tag, p->g->classif_degree);
@@ -2233,20 +2296,6 @@ void BDS_Mesh::snap_point(BDS_Point * p, BDS_Mesh * geom_mesh)
                             yy, zz);
 
     bool ok = project_point_on_a_list_of_triangles(p, l, X, Y, Z);
-
-    /*
-       std::list<BDS_Triangle *>::iterator tit  = l.begin();  
-       std::list<BDS_Triangle *>::iterator tite =  l.end();
-       BDS_Vector n1 = p->N(), n2;      
-       while(tit!=tite){
-       n2 += (*tit)->N();
-       tit++;
-       }
-       n2 /= sqrt(n2*n2);
-       n1 /= sqrt(n1*n1);
-       double angle = n1.angle(n2);
-       if(fabs(angle) > M_PI/2 )ok= false;
-     */
 
     if(!ok) {
       if(move_point(p, xx, yy, zz)) {
@@ -2324,6 +2373,7 @@ void BDS_Mesh::compute_metric_edge_lengths(const BDS_Metric & metric)
     while(it != ite) {
       BDS_Edge *e = (*it);
       BDS_GeomEntity *g = e->g;
+     
       if(g && g->surf) {
         double curvature = g->surf->normalCurv(0.5 * (e->p1->X + e->p2->X),
                                                0.5 * (e->p1->Y + e->p2->Y),
@@ -2506,7 +2556,7 @@ int BDS_Mesh::adapt_mesh(const BDS_Metric & metric, bool smooth,
 	    
 	    double prosc = cb1[0]*cb2[0]+cb1[1]*cb2[1]+cb1[2]*cb2[2];
 	    
-	    if (fabs(a1+a2-b1-b2) < 0.1 * (a1+a2))
+	    if (fabs(a1+a2-b1-b2) < 0.2 * (a1+a2+b1+b2))
 	      {
 		double qa1 = quality_triangle ( (*it)->p1 , (*it)->p2 , op[0] );
 		double qa2 = quality_triangle ( (*it)->p1 , (*it)->p2 , op[1] );
@@ -2523,7 +2573,7 @@ int BDS_Mesh::adapt_mesh(const BDS_Metric & metric, bool smooth,
 		double qa = (qa1<qa2)?qa1:qa2; 
 		double qb = (qb1<qb2)?qb1:qb2; 
 		//		  printf("qa %g qb %g ..\n",qa,qb);
-		if (qb > qa && d < 0.01 * dd)
+		if (qb > qa && d < 0.1 * dd)
 		  {
 		    nb_modif++;
 		    swap_edge ( *it );
@@ -2534,7 +2584,7 @@ int BDS_Mesh::adapt_mesh(const BDS_Metric & metric, bool smooth,
       }
   }
   cleanup();  
-  if (smooth){
+  if (smooth && 0){
     Msg(INFO,"smoothing %d points\n",points.size());
     std::set<BDS_Point*, PointLessThan>::iterator it   = points.begin();
     std::set<BDS_Point*, PointLessThan>::iterator ite  = points.end();

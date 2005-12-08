@@ -743,36 +743,63 @@ int Adaptive_Post_View::zoomElement(Post_View * view,
 
 
   const int N = _coefs->size1();
-  Double_Vector val(N), res(adapt_point::all_points.size());
-  Double_Matrix xyz(nbNod, 3);
-  Double_Matrix XYZ(adapt_point::all_points.size(), 3);
+  Double_Vector val ( N ), res(adapt_point::all_points.size());
+  Double_Vector valx ( N ), valy(N), valz(N), resx(adapt_point::all_points.size()), resy(adapt_point::all_points.size()), resz(adapt_point::all_points.size());
+  Double_Matrix xyz (nbNod,3);
+  Double_Matrix XYZ (adapt_point::all_points.size(),3);
 
-  for(int k = 0; k < nbNod; ++k) {
-    xyz(k, 0) = (*_STposX) (ielem, k);
-    xyz(k, 1) = (*_STposY) (ielem, k);
-    xyz(k, 2) = (*_STposZ) (ielem, k);
-  }
+  for ( int k=0;k<nbNod;++k)
+    {
+      xyz(k,0) = (*_STposX) ( ielem , k );
+      xyz(k,1) = (*_STposY) ( ielem , k );
+      xyz(k,2) = (*_STposZ) ( ielem , k );
+    }
 
-  for(int k = 0; k < N; ++k) {
-    val(k) = (*_STval) (ielem, k);
-  }
-  _Interpolate->mult(val, res);
-  _Geometry->mult(xyz, XYZ);
+  for ( int k=0;k<N;++k)
+    {
+      val(k) = (*_STval )( ielem , k );
+    }	        
+
+
+  _Interpolate->mult(val,res);
+
+  if (_STvalX)
+    {
+      for ( int k=0;k<N;++k)
+	{
+	  valx(k) = (*_STvalX )( ielem , k );
+	  valy(k) = (*_STvalY )( ielem , k );
+	  valz(k) = (*_STvalZ )( ielem , k );
+	}	        
+      _Interpolate->mult(valx,resx);
+      _Interpolate->mult(valy,resy);
+      _Interpolate->mult(valz,resz);
+    }
+
+  _Geometry->mult(xyz,XYZ);
+
   double c1 = Cpu();
 
-  int kk = 0;
-  for(; it != ite; ++it) {
-    adapt_point *p = (adapt_point *) & (*it);
-    p->val = res(kk);
-    p->X = XYZ(kk, 0);
-    p->Y = XYZ(kk, 1);
-    p->Z = XYZ(kk, 2);
-    if(min > p->val)
-      min = p->val;
-    if(max < p->val)
-      max = p->val;
-    kk++;
-  }
+  int kk=0;
+  for ( ; it !=ite ; ++it)
+    {
+      adapt_point *p = (adapt_point*) &(*it);
+      p->val = res(kk);
+      if (_STvalX)
+	{
+	   p->valx = resx(kk);
+	   p->valy = resy(kk);
+	   p->valz = resz(kk);
+	}
+      p->val = res(kk);
+
+      p->X = XYZ(kk,0);
+      p->Y = XYZ(kk,1);
+      p->Z = XYZ(kk,2);
+      if (min > p->val) min = p->val;
+      if (max < p->val) max = p->val;
+      kk++;
+    }
   double c2 = Cpu();
 
   typename std::list < ELEM * >::iterator itt = ELEM::all_elems.begin();
@@ -803,22 +830,33 @@ int Adaptive_Post_View::zoomElement(Post_View * view,
   itt = ELEM::all_elems.begin();
   adapt_point **p;
 
-  for(; itt != itte; itt++) {
-    if((*itt)->visible) {
-      p = (*itt)->p;
-      for(int k = 0; k < nbNod; ++k)
-        List_Add(theList, &p[k]->X);
-      for(int k = 0; k < nbNod; ++k)
-        List_Add(theList, &p[k]->Y);
-      for(int k = 0; k < nbNod; ++k)
-        List_Add(theList, &p[k]->Z);
-      for(int k = 0; k < nbNod; ++k)
-        List_Add(theList, &p[k]->val);
-      (*counter)++;
+  for ( ;itt != itte ; itt++)
+    {
+      if ((*itt)->visible)
+	{
+	  p = (*itt)->p;
+	  for (int k=0;k<nbNod;++k)List_Add ( theList , &p[k]->X );
+	  for (int k=0;k<nbNod;++k)List_Add ( theList , &p[k]->Y );
+	  for (int k=0;k<nbNod;++k)List_Add ( theList , &p[k]->Z );
+	  if (_STvalX)
+	    {
+	      for (int k=0;k<nbNod;++k)
+		{
+		  List_Add ( theList , &p[k]->valx );
+		  List_Add ( theList , &p[k]->valy );
+		  List_Add ( theList , &p[k]->valz );
+		}
+	    }
+	  else
+	    {
+	      for (int k=0;k<nbNod;++k)List_Add ( theList , &p[k]->val );
+	    }
+	  (*counter)++;
+	}
     }
-  }
-  double c4 = Cpu();
 
+  double c4 = Cpu();
+  
   t0 += c1 - c0;
   t1 += c2 - c1;
   t2 += c3 - c2;
@@ -857,11 +895,18 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(Post_View * view,
 
   int TYP = 0;
   if(view->NbSL) {
-    TYP = 5;
+    TYP = 7;
     List_Delete(view->SL);
     view->NbSL = 0;
     view->SL = List_Create(nbelm * 8, nbelm, sizeof(double));
   }
+  if (view->NbVT)
+    {
+      TYP  = 5;
+      List_Delete(view->VT); 
+      view->NbVT = 0;
+      view->VT =List_Create ( nbelm * 36, nbelm , sizeof(double));	
+    }
   if(view->NbST) {
     TYP = 1;
     List_Delete(view->ST);
@@ -880,6 +925,12 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(Post_View * view,
     view->NbSQ = 0;
     view->SQ = List_Create(nbelm * 20, nbelm * 20, sizeof(double));
   }
+  if(view->NbVQ) {
+    TYP = 6;
+    List_Delete(view->VQ);
+    view->NbVQ = 0;
+    view->VQ = List_Create(nbelm * 60, nbelm * 20, sizeof(double));
+  }
   if(view->NbSH) {
     TYP = 4;
     List_Delete(view->SH);
@@ -890,42 +941,26 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(Post_View * view,
   view->NbTimeStep = 1;
 
   t0 = t1 = t2 = t3 = 0;
-
-  while(1) {
-    if(TYP == 5)
-      setAdaptiveResolutionLevel_TEMPL < adapt_edge > (view, level_act, level,
-                                                       plug, &(view->SL),
-                                                       &(view->NbSL), done);
-    if(TYP == 1)
-      setAdaptiveResolutionLevel_TEMPL < adapt_triangle > (view, level_act,
-                                                           level, plug,
-                                                           &(view->ST),
-                                                           &(view->NbST),
-                                                           done);
-    if(TYP == 2)
-      setAdaptiveResolutionLevel_TEMPL < adapt_quad > (view, level_act, level,
-                                                       plug, &(view->SQ),
-                                                       &(view->NbSQ), done);
-    if(TYP == 4)
-      setAdaptiveResolutionLevel_TEMPL < adapt_hex > (view, level_act, level,
-                                                      plug, &(view->SH),
-                                                      &(view->NbSH), done);
-    if(TYP == 3)
-      setAdaptiveResolutionLevel_TEMPL < adapt_tet > (view, level_act, level,
-                                                      plug, &(view->SS),
-                                                      &(view->NbSS), done);
-    int nbDone = 0;
-    for(int i = 0; i < _STposX->size1(); ++i)
-      nbDone += done[i];
-    printf("adaptive %d %d %d %d\n", level, level_act, nbDone,
-           _STposX->size1());
-    if(nbDone == _STposX->size1())
-      break;
-    if(level_act >= level)
-      break;
-    level_act++;
-  }
-
+  
+  while (1)
+    {
+      if(TYP == 7)
+	setAdaptiveResolutionLevel_TEMPL < adapt_edge > (view, level_act, level,
+							 plug, &(view->SL),
+							 &(view->NbSL), done);
+      if (TYP == 1)setAdaptiveResolutionLevel_TEMPL <adapt_triangle> ( view,level_act,level, plug,&(view->ST),&(view->NbST),done) ;
+      if (TYP == 5)setAdaptiveResolutionLevel_TEMPL <adapt_triangle> ( view,level_act,level, plug,&(view->VT),&(view->NbVT),done) ;
+      if (TYP == 2)setAdaptiveResolutionLevel_TEMPL <adapt_quad>     ( view,level_act,level, plug,&(view->SQ),&(view->NbSQ),done) ;
+      if (TYP == 6)setAdaptiveResolutionLevel_TEMPL <adapt_quad>     ( view,level_act,level, plug,&(view->VQ),&(view->NbVQ),done) ;
+      if (TYP == 4)setAdaptiveResolutionLevel_TEMPL <adapt_hex>      ( view,level_act,level, plug,&(view->SH),&(view->NbSH),done) ;
+      if (TYP == 3)setAdaptiveResolutionLevel_TEMPL <adapt_tet>      ( view,level_act,level, plug,&(view->SS),&(view->NbSS),done) ;
+      int nbDone = 0;
+      for (int i=0;i<_STposX->size1();++i)nbDone += done[i];
+      printf("adaptive %d %d %d %d\n",level, level_act, nbDone, _STposX->size1());
+      if (nbDone ==_STposX->size1())  break;
+      if (level_act >= level) break;
+      level_act ++;
+    }
   view->Changed = 1;
   presentZoomLevel = level;
   presentTol = tol;
@@ -1004,61 +1039,108 @@ void Adaptive_Post_View::initWithLowResolution(Post_View * view)
   List_T *myList;
   int nbelm;
   int nbnod;
-  if(view->NbSL) {
-    myList = view->SL;
-    nbelm = view->NbSL;
-    nbnod = 2;
-  }
-  else if(view->NbST) {
-    myList = view->ST;
-    nbelm = view->NbST;
-    nbnod = 3;
-  }
-  else if(view->NbSS) {
-    myList = view->SS;
-    nbelm = view->NbSS;
-    nbnod = 4;
-  }
-  else if(view->NbSQ) {
-    myList = view->SQ;
-    nbelm = view->NbSQ;
-    nbnod = 4;
-  }
-  else if(view->NbSH) {
-    myList = view->SH;
-    nbelm = view->NbSH;
-    nbnod = 8;
-  }
-  else
-    return;
+
+  int nbComp = 1;
+
+  if (view->NbST)
+    {
+      myList = view->ST;
+      nbelm = view->NbST;
+      nbnod = 3;
+    }
+  else if(view->NbSL) 
+    {
+      myList = view->SL;
+      nbelm = view->NbSL;
+      nbnod = 2;
+    }
+  else if (view->NbVT)
+    {
+      myList = view->VT;
+      nbelm = view->NbVT;
+      nbnod = 3;
+      nbComp = 3;
+    }
+  else if (view->NbVQ)
+    {
+      myList = view->VQ;
+      nbelm = view->NbVQ;
+      nbnod = 4;
+      nbComp = 3;
+    }
+  else if (view->NbSS)
+    {
+      myList = view->SS;
+      nbelm = view->NbSS;
+      nbnod = 4;
+    }
+  else if (view->NbSQ)
+    {
+      myList = view->SQ;
+      nbelm = view->NbSQ;
+      nbnod = 4;
+    }
+  else if (view->NbSH)
+    {
+      myList = view->SH;
+      nbelm = view->NbSH;
+      nbnod = 8;
+    }
+  else return;
 
   min = VAL_INF;
   max = -VAL_INF;
 
   int nb = List_Nbr(myList) / (nbelm);
 
-  _STposX = new Double_Matrix(nbelm, nbnod);
-  _STposY = new Double_Matrix(nbelm, nbnod);
-  _STposZ = new Double_Matrix(nbelm, nbnod);
-  _STval = new Double_Matrix(nbelm, nb - 3 * nbnod);
+  _STposX = new Double_Matrix ( nbelm , nbnod        );
+  _STposY = new Double_Matrix ( nbelm , nbnod        );
+  _STposZ = new Double_Matrix ( nbelm , nbnod        );
+  _STval  = new Double_Matrix ( nbelm , (nb-3*nbnod)/nbComp   );
 
+  if (nbComp == 3)
+    {
+      _STvalX  = new Double_Matrix ( nbelm , (nb-3*nbnod)/nbComp   );
+      _STvalY  = new Double_Matrix ( nbelm , (nb-3*nbnod)/nbComp   );
+      _STvalZ  = new Double_Matrix ( nbelm , (nb-3*nbnod)/nbComp   );
+    }
   /// Store non interpolated data
-  int k = 0;
-  for(int i = 0; i < List_Nbr(myList); i += nb) {
-    double *x = (double *)List_Pointer_Fast(myList, i);
-    double *y = (double *)List_Pointer_Fast(myList, i + nbnod);
-    double *z = (double *)List_Pointer_Fast(myList, i + 2 * nbnod);
-    for(int NN = 0; NN < nbnod; NN++) {
-      (*_STposX) (k, NN) = x[NN];
-      (*_STposY) (k, NN) = y[NN];
-      (*_STposZ) (k, NN) = z[NN];
+
+  int k=0;
+  for (int i=0;i<List_Nbr(myList);i+=nb)
+    {    
+      double *x = (double*)List_Pointer_Fast (myList,i);
+      double *y = (double*)List_Pointer_Fast (myList,i+nbnod); 
+      double *z = (double*)List_Pointer_Fast (myList,i+2*nbnod); 
+      for (int NN=0;NN<nbnod;NN++)
+	{
+	  (*_STposX) ( k , NN) = x[NN]; 
+	  (*_STposY) ( k , NN) = y[NN]; 
+	  (*_STposZ) ( k , NN) = z[NN]; 
+	}
+      double *val = (double*)List_Pointer_Fast (myList,i+3*nbnod);
+      if (nbComp == 1)
+	{
+	  for (int j=0;j<(nb-3*nbnod)/nbComp;j++){
+	    (*_STval)(k,j)=val[j];      
+	  }      	  
+	}
+      else if (nbComp == 3)
+	{
+	  int size = (nb-3*nbnod)/3;
+	  for (int j=0;j<size;j++){
+	    int index1  = j;
+	    int index2  = j+size;
+	    int index3  = j+2*size;
+	    // adaptation of the visualization mesh bases on the norm squared of the vector 
+	    (*_STval)(k,j)=(val[index1]*val[index1]+val[index2]*val[index2]+val[index3]*val[index3]);      
+	    (*_STvalX)(k,j)=val[index1];
+	    (*_STvalY)(k,j)=val[index2];
+	    (*_STvalZ)(k,j)=val[index3];
+	  }      	  	  
+	}
+      k++;
     }
-    double *val = (double *)List_Pointer_Fast(myList, i + 3 * nbnod);
-    for(int j = 0; j < nb - 3 * nbnod; j++) {
-      (*_STval) (k, j) = val[j];
-    }
-    k++;
-  }
   setAdaptiveResolutionLevel(view, 0);
 }
 
@@ -1068,8 +1150,9 @@ Adaptive_Post_View::Adaptive_Post_View(Post_View * view, List_T * _c,
 {
 
   _Interpolate = _Geometry = 0;
-  _coefs = new Double_Matrix(List_Nbr(_c), List_Nbr(_c));
-  _eexps = new Double_Matrix(List_Nbr(_c), 3);
+  _coefs = new Double_Matrix ( List_Nbr (_c) , List_Nbr (_c)  );
+  _eexps  = new Double_Matrix ( List_Nbr (_c) , 3  );
+  _STvalX = _STvalY = _STvalZ =0;
 
   for(int i = 0; i < List_Nbr(_c); ++i) {
     List_T **line = (List_T **) List_Pointer_Fast(_c, i);

@@ -250,6 +250,7 @@ public:
       ++it;
     }
   }
+  double min_edge_length();
   void getTriangles(std::list<BDS_Triangle *> &t) const; 	
   void compute_curvature();
   BDS_Point(int id, double x=0, double y=0, double z=0)
@@ -633,6 +634,7 @@ public:
   int adapt_mesh(const BDS_Metric & ,bool smooth = false,BDS_Mesh *geom = 0); 
   void compute_metric_edge_lengths(const BDS_Metric & metric);
   void cleanup();
+  bool extractVolumes();
   // io's 
   // STL
   bool read_stl(const char *filename, const double tolerance);
