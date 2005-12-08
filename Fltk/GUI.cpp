@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.470 2005-11-28 15:41:54 geuzaine Exp $
+// $Id: GUI.cpp,v 1.471 2005-12-08 20:35:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -658,28 +658,19 @@ int GUI::global_shortcuts(int event)
     redraw_opengl();
     return 1;
   }
-  else if(Fl::test_shortcut(FL_ALT + 'x')) {
+  else if(Fl::test_shortcut(FL_ALT + 'x') || 
+	  Fl::test_shortcut(FL_ALT + FL_SHIFT + 'x')) {
     status_xyz1p_cb(0, (void *)"x");
     return 1;
   }
-  else if(Fl::test_shortcut(FL_ALT + 'y')) {
+  else if(Fl::test_shortcut(FL_ALT + 'y') ||
+	  Fl::test_shortcut(FL_ALT + FL_SHIFT + 'y')) {
     status_xyz1p_cb(0, (void *)"y");
     return 1;
   }
-  else if(Fl::test_shortcut(FL_ALT + 'z')) {
+  else if(Fl::test_shortcut(FL_ALT + 'z') ||
+	  Fl::test_shortcut(FL_ALT + FL_SHIFT + 'z')) {
     status_xyz1p_cb(0, (void *)"z");
-    return 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'x')) {
-    status_xyz1p_cb(0, (void *)"nx");
-    return 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT +  'y')) {
-    status_xyz1p_cb(0, (void *)"ny");
-    return 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT +  'z')) {
-    status_xyz1p_cb(0, (void *)"nz");
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'a')) {
@@ -1345,17 +1336,24 @@ void GUI::create_graphic_window()
   g_status_butt[0] = new Fl_Button(x, glheight + 2, sw, sh - 4, "X");
   x += sw;
   g_status_butt[0]->callback(status_xyz1p_cb, (void *)"x");
-  g_status_butt[0]->tooltip("Set X view (Alt+x)");
+  g_status_butt[0]->tooltip("Set +X or -X view (Alt+x or Alt+Shift+x)");
 
   g_status_butt[1] = new Fl_Button(x, glheight + 2, sw, sh - 4, "Y");
   x += sw;
   g_status_butt[1]->callback(status_xyz1p_cb, (void *)"y");
-  g_status_butt[1]->tooltip("Set Y view (Alt+y)");
+  g_status_butt[1]->tooltip("Set +Y or -Y view (Alt+y or Alt+Shift+y)");
 
   g_status_butt[2] = new Fl_Button(x, glheight + 2, sw, sh - 4, "Z");
   x += sw;
   g_status_butt[2]->callback(status_xyz1p_cb, (void *)"z");
-  g_status_butt[2]->tooltip("Set Z view (Alt+z)");
+  g_status_butt[2]->tooltip("Set +Z or -Z view (Alt+z or Alt+Shift+z)");
+
+  g_status_butt[4] = new Fl_Button(x, glheight + 2, sw, sh - 4);
+  x += sw;
+  g_status_butt[4]->callback(status_xyz1p_cb, (void *)"r");
+  g_status_butt[4]->tooltip("Rotate +90 or -90 degrees");
+  rotate_bmp = new Fl_Bitmap(rotate_bits, rotate_width, rotate_height);
+  rotate_bmp->label(g_status_butt[4]);
 
   g_status_butt[3] = new Fl_Button(x, glheight + 2, 2 * fontsize, sh - 4, "1:1");
   x += 2 * fontsize;
@@ -1363,6 +1361,7 @@ void GUI::create_graphic_window()
   g_status_butt[3]->tooltip("Set unit scale");
 
   //FIXME: remove this until we do the perspective projection properly
+  //FIXME: need to change the button number!!
   //g_status_butt[4] = new Fl_Button(x, glheight + 2, sw, sh - 4);
   //x += sw;
   //g_status_butt[4]->callback(status_xyz1p_cb, (void *)"p");
@@ -1394,12 +1393,9 @@ void GUI::create_graphic_window()
   g_status_butt[7]->deactivate();
 
   for(i = 0; i < 8; i++) {
-    //FIXME:
-    if(i != 4){
-      g_status_butt[i]->box(FL_FLAT_BOX);
-      g_status_butt[i]->selection_color(FL_WHITE);
-      g_status_butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-    }
+    g_status_butt[i]->box(FL_FLAT_BOX);
+    g_status_butt[i]->selection_color(FL_WHITE);
+    g_status_butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   }
 
   g_status_label[0] = new Fl_Box(x, glheight + 2, 

@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.55 2005-03-11 08:56:37 geuzaine Exp $
+// $Id: Context.cpp,v 1.56 2005-12-08 20:35:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -56,6 +56,14 @@ void Context_T::addQuaternion(double p1x, double p1y, double p2x, double p2y)
   double quat[4];
   trackball(quat, p1x, p1y, p2x, p2y);
   add_quats(quat, quaternion, quaternion);
+}
+
+void Context_T::addQuaternionFromAxisAndAngle(double axis[3], double angle)
+{
+  double a = angle * Pi / 180.;
+  double quat[4];
+  axis_to_quat(axis, a, quat);
+  add_quats(quat, quaternion, quaternion);  
 }
 
 void Context_T::setQuaternion(double q0, double q1, double q2, double q3)

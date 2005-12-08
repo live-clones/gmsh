@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.383 2005-12-08 18:14:46 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.384 2005-12-08 20:35:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -385,49 +385,53 @@ void status_xyz1p_cb(CALLBACK_ARGS)
 {
   char *str = (char*)data;
 
-  if(!strcmp(str, "x")){ // X pointing out of the screen (and Z pointing up)
-    CTX.r[0] = -90.;
-    CTX.r[1] = 0.;
-    CTX.r[2] = -90.;
+  if(!strcmp(str, "r")){ // rotate 90 degress around axis perp to the screen
+    double axis[3] = {0., 0., 1.};
+    if(!Fl::event_state(FL_SHIFT))
+      CTX.addQuaternionFromAxisAndAngle(axis, -90.);
+    else
+      CTX.addQuaternionFromAxisAndAngle(axis, 90.);
+    Draw();
+  }
+  else if(!strcmp(str, "x")){ // X pointing out or into the screen
+    if(!Fl::event_state(FL_SHIFT)){
+      CTX.r[0] = -90.;
+      CTX.r[1] = 0.;
+      CTX.r[2] = -90.;
+    }
+    else{
+      CTX.r[0] = -90.;
+      CTX.r[1] = 0.;
+      CTX.r[2] = 90.;
+    }
     CTX.setQuaternionFromEulerAngles();
     Draw();
   }
-  else if(!strcmp(str, "y")){ // Y pointing out of the screen (and Z pointing up)
-    CTX.r[0] = -90.;
-    CTX.r[1] = 0.;
-    CTX.r[2] = 180.;
+  else if(!strcmp(str, "y")){ // Y pointing out or into the screen
+    if(!Fl::event_state(FL_SHIFT)){
+      CTX.r[0] = -90.;
+      CTX.r[1] = 0.;
+      CTX.r[2] = 180.;
+    }
+    else{
+      CTX.r[0] = -90.;
+      CTX.r[1] = 0.;
+      CTX.r[2] = 0.;
+    }
     CTX.setQuaternionFromEulerAngles();
     Draw();
   }
-  else if(!strcmp(str, "z")){ // Z pointing out of the screen
+  else if(!strcmp(str, "z")){ // Z pointing out or into the screen
     if(!Fl::event_state(FL_SHIFT)){
       CTX.r[0] = 0.;
       CTX.r[1] = 0.;
       CTX.r[2] = 0.;
     }
-    else
-      CTX.r[2] += 90.; // little hack for philou
-    CTX.setQuaternionFromEulerAngles();
-    Draw();
-  }
-  else if(!strcmp(str, "nx")){ // look from behind X view
-    CTX.r[0] = -90.;
-    CTX.r[1] = 0.;
-    CTX.r[2] = 90.;
-    CTX.setQuaternionFromEulerAngles();
-    Draw();
-  }
-  else if(!strcmp(str, "ny")){ // look from behind Y view
-    CTX.r[0] = -90.;
-    CTX.r[1] = 0.;
-    CTX.r[2] = 0.;
-    CTX.setQuaternionFromEulerAngles();
-    Draw();
-  }
-  else if(!strcmp(str, "nz")){ // look from behind Z view
-    CTX.r[0] = 0.;
-    CTX.r[1] = 180.;
-    CTX.r[2] = 0.;
+    else{
+      CTX.r[0] = 0.;
+      CTX.r[1] = 180.;
+      CTX.r[2] = 0.;
+    }
     CTX.setQuaternionFromEulerAngles();
     Draw();
   }

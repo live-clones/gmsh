@@ -253,6 +253,7 @@ public :
   void buildRotationMatrix(void);
   void setQuaternion(double p1x, double p1y, double p2x, double p2y);
   void addQuaternion(double p1x, double p1y, double p2x, double p2y);
+  void addQuaternionFromAxisAndAngle(double axis[3], double angle);
   void setQuaternionFromEulerAngles(void);
   void setEulerAnglesFromRotationMatrix(void);
 };
