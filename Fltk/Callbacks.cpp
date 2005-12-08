@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.382 2005-12-01 04:55:13 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.383 2005-12-08 18:14:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -400,9 +400,13 @@ void status_xyz1p_cb(CALLBACK_ARGS)
     Draw();
   }
   else if(!strcmp(str, "z")){ // Z pointing out of the screen
-    CTX.r[0] = 0.;
-    CTX.r[1] = 0.;
-    CTX.r[2] = 0.;
+    if(!Fl::event_state(FL_SHIFT)){
+      CTX.r[0] = 0.;
+      CTX.r[1] = 0.;
+      CTX.r[2] = 0.;
+    }
+    else
+      CTX.r[2] += 90.; // little hack for philou
     CTX.setQuaternionFromEulerAngles();
     Draw();
   }
