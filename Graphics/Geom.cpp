@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.94 2005-10-15 19:49:21 geuzaine Exp $
+// $Id: Geom.cpp,v 1.95 2005-12-13 23:18:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -589,9 +589,10 @@ void Draw_NonPlane_Surface(Surface * s)
   }
 
   if(CTX.geom.normals) {
+    const double eps = 1.e-3;
     Vertex v1 = InterpolateSurface(s, 0.5, 0.5, 0, 0);
-    Vertex v2 = InterpolateSurface(s, 0.6, 0.5, 0, 0);
-    Vertex v3 = InterpolateSurface(s, 0.5, 0.6, 0, 0);
+    Vertex v2 = InterpolateSurface(s, 0.5 + eps, 0.5, 0, 0);
+    Vertex v3 = InterpolateSurface(s, 0.5, 0.5 + eps, 0, 0);
     double n[3];
     normal3points(v1.Pos.X, v1.Pos.Y, v1.Pos.Z, 
 		  v2.Pos.X, v2.Pos.Y, v2.Pos.Z, 
