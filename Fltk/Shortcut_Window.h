@@ -35,16 +35,15 @@ class Dialog_Window : public Fl_Double_Window {
     case FL_SHORTCUT:
     case FL_KEYBOARD:
 #if defined(__APPLE__)
-      if(Fl::test_shortcut(FL_META+'w')){
-	do_callback();
-	return 1;
-      }
+      if(Fl::test_shortcut(FL_META+'w') || Fl::test_shortcut(FL_Escape)){
 #elif defined(WIN32)
-      if(Fl::test_shortcut(FL_ALT+FL_F+4)){
+      if(Fl::test_shortcut(FL_ALT+FL_F+4) || Fl::test_shortcut(FL_Escape)){
+#else
+      if(Fl::test_shortcut(FL_CTRL+'w') || Fl::test_shortcut(FL_Escape)){
+#endif
 	do_callback();
 	return 1;
       }
-#endif
       break;
     }
     return Fl_Double_Window::handle(event);
@@ -69,17 +68,15 @@ class Main_Window : public Fl_Window {
     case FL_KEYBOARD:
 #if defined(__APPLE__)
       if(Fl::test_shortcut(FL_META+'w')){
-	if(fl_choice("Do you really want to quit?", "Cancel", "Quit", NULL))
-	  do_callback();
-	return 1;
-      }
 #elif defined(WIN32)
       if(Fl::test_shortcut(FL_ALT+FL_F+4)){
+#else
+      if(Fl::test_shortcut(FL_CTRL+'w')){
+#endif
 	if(fl_choice("Do you really want to quit?", "Cancel", "Quit", NULL))
 	  do_callback();
 	return 1;
       }
-#endif
       break;
     }
     return Fl_Window::handle(event);
