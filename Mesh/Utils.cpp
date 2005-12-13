@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.28 2005-01-01 19:35:31 geuzaine Exp $
+// $Id: Utils.cpp,v 1.29 2005-12-13 23:29:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -160,7 +160,9 @@ void MeanPlane(List_T * points, Surface * s)
     t2[2] = v3.Pos.Z - v1.Pos.Z;
     norme(t1);
     norme(t2);
-    prodve(t1, t2, res2);
+    // prodve(t1, t2, res2);
+    // Warning: the rest of the code assumes res = t2 x t1, not t1 x t2 (WTF?)
+    prodve(t2, t1, res2); 
     norme(res2);
     prodve(res, res2, c);
     prosca(res, res2, &cosc);
