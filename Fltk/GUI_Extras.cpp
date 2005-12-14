@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.11 2005-06-10 20:59:15 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.12 2005-12-14 13:53:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -473,7 +473,7 @@ int msh_dialog(char *name)
     dialog->c = new Fl_Choice(10, y, 130, 25, "Format"); y+= 25;
     dialog->c->menu(versionmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
-    dialog->b = new Fl_Check_Button(10, y, 180, 25, "Save all elements"); y += 25;
+    dialog->b = new Fl_Check_Button(10, y, 180, 25, "Save all (ignore physicals)"); y += 25;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->b->down_box(GMSH_TOGGLE_BOX);
     dialog->b->selection_color(GMSH_TOGGLE_COLOR);
