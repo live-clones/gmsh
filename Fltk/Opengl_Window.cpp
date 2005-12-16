@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.51 2005-12-16 17:35:33 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.52 2005-12-16 19:17:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -64,7 +64,6 @@ void Opengl_Window::draw()
 
   if(!ZoomMode) {
     ClearOpengl();
-    Orthogonalize(0, 0);
     Draw3d();
     Draw2d();
   }

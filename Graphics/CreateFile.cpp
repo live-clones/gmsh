@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.70 2005-12-16 17:35:33 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.71 2005-12-16 19:17:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -41,7 +41,6 @@ void FillBuffer(void)
 {
   SetOpenglContext();
   ClearOpengl();
-  Orthogonalize(0, 0);
   Draw3d();
   Draw2d();
 }

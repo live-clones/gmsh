@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.81 2005-12-16 17:35:33 geuzaine Exp $
+// $Id: Draw.cpp,v 1.82 2005-12-16 19:17:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -75,6 +75,8 @@ void Draw3d(void)
   glDepthFunc(GL_LESS);
   glEnable(GL_DEPTH_TEST);
 
+  InitProjection(0, 0);
+  InitPosition();
   InitRenderModel();
 
   Draw_Mesh(&M);
@@ -129,38 +131,25 @@ void ClearOpengl(void)
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
-// Ortho
+// Init
 
-void Orthogonalize(int x, int y)
+void InitProjection(int x, int y)
 {
-  double Va, Wa;
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-
-  if(CTX.render_mode == GMSH_SELECT)
-    gluPickMatrix((GLdouble) x,
-                  (GLdouble) (CTX.viewport[3] - y),
-                  5.0, 5.0, (GLint *) CTX.viewport);
-
-  Va = (GLdouble) (CTX.viewport[3] - CTX.viewport[1]) /
+  double Va = 
+    (GLdouble) (CTX.viewport[3] - CTX.viewport[1]) /
     (GLdouble) (CTX.viewport[2] - CTX.viewport[0]);
+  double Wa = (CTX.max[1] - CTX.min[1]) / (CTX.max[0] - CTX.min[0]);
 
-  Wa = (CTX.max[1] - CTX.min[1]) / (CTX.max[0] - CTX.min[0]);
-
+  // compute the viewport in World coordinates (with margins)
   if(Va > Wa) {
     CTX.vxmin = CTX.min[0];
     CTX.vxmax = CTX.max[0];
-    CTX.vymin =
-      0.5 * (CTX.min[1] + CTX.max[1] - Va * (CTX.max[0] - CTX.min[0]));
-    CTX.vymax =
-      0.5 * (CTX.min[1] + CTX.max[1] + Va * (CTX.max[0] - CTX.min[0]));
+    CTX.vymin = 0.5 * (CTX.min[1] + CTX.max[1] - Va * (CTX.max[0] - CTX.min[0]));
+    CTX.vymax = 0.5 * (CTX.min[1] + CTX.max[1] + Va * (CTX.max[0] - CTX.min[0]));
   }
   else {
-    CTX.vxmin =
-      0.5 * (CTX.min[0] + CTX.max[0] - (CTX.max[1] - CTX.min[1]) / Va);
-    CTX.vxmax =
-      0.5 * (CTX.min[0] + CTX.max[0] + (CTX.max[1] - CTX.min[1]) / Va);
+    CTX.vxmin = 0.5 * (CTX.min[0] + CTX.max[0] - (CTX.max[1] - CTX.min[1]) / Va);
+    CTX.vxmax = 0.5 * (CTX.min[0] + CTX.max[0] + (CTX.max[1] - CTX.min[1]) / Va);
     CTX.vymin = CTX.min[1];
     CTX.vymax = CTX.max[1];
   }
@@ -169,21 +158,24 @@ void Orthogonalize(int x, int y)
   CTX.vymin -= (CTX.vymax - CTX.vymin) / 3.;
   CTX.vymax += 0.25 * (CTX.vymax - CTX.vymin);
 
-  CTX.pixel_equiv_x =
-    (CTX.vxmax - CTX.vxmin) / (CTX.viewport[2] - CTX.viewport[0]);
-  CTX.pixel_equiv_y =
-    (CTX.vymax - CTX.vymin) / (CTX.viewport[3] - CTX.viewport[1]);
+  // store what one pixel represents in world coordinates
+  CTX.pixel_equiv_x = (CTX.vxmax - CTX.vxmin) / (CTX.viewport[2] - CTX.viewport[0]);
+  CTX.pixel_equiv_y = (CTX.vymax - CTX.vymin) / (CTX.viewport[3] - CTX.viewport[1]);
 
-  // We should have a look at how the scaling is done in "real" opengl
-  // applications (I guess they normalize the scene to fit in a 1x1x1
-  // box or something...). Here, we set up a large box around the
-  // object, so that if we zoom a lot the resolution of the depth
-  // buffer might become insufficient (at least with the "software"
-  // Mesa on Linux; with hardware acceleration or on Windows
-  // everyhting seems to be fine).
+  // setup ortho or perspective projection matrix
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+
+  if(CTX.render_mode == GMSH_SELECT)
+    gluPickMatrix((GLdouble) x, (GLdouble) (CTX.viewport[3] - y),
+                  5.0, 5.0, (GLint *) CTX.viewport);
 
   double gradient_zdist, gradient_xyfact;
   if(CTX.ortho) {
+    // setting up the near and far clipping planes so that the box is
+    // large enough to manipulate the model and zoom, but not too big
+    // (the z-buffer resolution, e.g., on software Mesa can become
+    // insufficient)
     double maxz = MAX(fabs(CTX.min[2]), fabs(CTX.max[2]));
     if(maxz < CTX.lc) maxz = CTX.lc;
     double clip = maxz * CTX.s[2] * CTX.clip_factor;
@@ -196,18 +188,15 @@ void Orthogonalize(int x, int y)
   else {
     double near = 0.75 * CTX.clip_factor * CTX.lc;
     double far = 75. * CTX.clip_factor * CTX.lc;
-
     // recenter the model such that the perspective is always at the
     // center of the screen. FIXME: this screws up the zoom, so let's
     // leave it out for now
-    /*
-    double w = (CTX.max[0] - CTX.min[0]) / 2.;
-    double h = (CTX.max[1] - CTX.min[1]) / 2.;
-    CTX.vxmin -= w;
-    CTX.vxmax -= w;
-    CTX.vymin -= h;
-    CTX.vymax -= h;
-    */
+    //double w = (CTX.max[0] - CTX.min[0]) / 2.;
+    //double h = (CTX.max[1] - CTX.min[1]) / 2.;
+    //CTX.vxmin -= w;
+    //CTX.vxmax -= w;
+    //CTX.vymin -= h;
+    //CTX.vymax -= h;
     double w = 0.;
     double h = 0.;
     glFrustum(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, near, far);
@@ -220,7 +209,7 @@ void Orthogonalize(int x, int y)
   }
 
   // draw background gradient
-  if(CTX.bg_gradient){
+  if(CTX.render_mode != GMSH_SELECT && CTX.bg_gradient){
     glPushMatrix();
     glLoadIdentity();
     glTranslated(0., 0., -gradient_zdist);
@@ -246,8 +235,6 @@ void Orthogonalize(int x, int y)
     glPopMatrix();
   }
 }
-
-// Init
 
 void InitRenderModel(void)
 {
@@ -355,7 +342,8 @@ void Process_SelectionBuffer(int x, int y, int *n, hit *hits)
 		 // an entity is drawn
 
   glPushMatrix();
-  Orthogonalize(x, y);
+  InitProjection(x, y);
+  InitPosition();
   Draw_Mesh(&M);
   glPopMatrix();
 

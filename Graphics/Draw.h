@@ -30,12 +30,12 @@
 
 #define SELECTION_BUFFER_SIZE  1024
 
-void InitRenderModel(void);
-void InitPosition(void);
-
-void Orthogonalize(int x, int y);
-void ClearOpengl(void);
 void SetOpenglContext(void);
+void ClearOpengl(void);
+
+void InitProjection(int x, int y);
+void InitPosition(void);
+void InitRenderModel(void);
 
 typedef struct{
   unsigned int type, ient, depth;

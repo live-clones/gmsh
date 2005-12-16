@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.144 2005-12-16 17:35:33 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.145 2005-12-16 19:17:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -56,18 +56,18 @@ static int stepLabelsDisplayed = 1;
 void draw_polygon_2d(double r, double g, double b, int n,
                      double *x, double *y, double *z)
 {
-  int i;
-
+  // this routine is only used to display the interactive construction
+  // of the 2D aniso mesh
   CalculateMinMax(THEM->Points, NULL);
   SetOpenglContext();
-  Orthogonalize(0, 0);
+  InitProjection(0, 0);
   InitPosition();
 
   glDisable(GL_DEPTH_TEST);
   glDrawBuffer(GL_FRONT);
   glColor3f(r, g, b);
   glBegin(GL_LINE_STRIP);
-  for(i = 0; i < n; i++)
+  for(int i = 0; i < n; i++)
     if(z)
       glVertex3d(x[i], y[i], z[i]);
     else
@@ -141,8 +141,6 @@ int getPartition(int index)
 
 void Draw_Mesh(Mesh * M)
 {
-  InitPosition();
-
   for(int i = 0; i < 6; i++)
     glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), CTX.clip_plane[i]);
 
