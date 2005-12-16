@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.385 2005-12-16 17:35:32 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.386 2005-12-16 20:20:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -594,12 +594,6 @@ void file_merge_cb(CALLBACK_ARGS)
     WID->set_context(menu_post, 0);
 }
 
-int _save_auto(char *name)
-{
-  CreateOutputFile(name, FORMAT_AUTO);
-  return 1;
-}
-
 int _save_options(char *name)
 {
   return options_dialog(name);
@@ -720,6 +714,25 @@ int _save_yuv(char *name)
 {
   CreateOutputFile(name, FORMAT_YUV);
   return 1;
+}
+
+int _save_auto(char *name)
+{
+  switch(GuessFileFormatFromFileName(name)){
+  case FORMAT_OPT     : return _save_options(name);
+  case FORMAT_MSH     : return _save_msh(name);
+  case FORMAT_PS      : return _save_ps(name);
+  case FORMAT_EPS     : return _save_eps(name);
+  case FORMAT_EPSTEX  : return _save_epstex(name);
+  case FORMAT_PDF     : return _save_pdf(name);
+  case FORMAT_PDFTEX  : return _save_pdftex(name);
+  case FORMAT_JPEGTEX : return _save_jpegtex(name);
+  case FORMAT_JPEG    : return _save_jpeg(name);
+  case FORMAT_GIF     : return _save_gif(name);
+  default :
+    CreateOutputFile(name, FORMAT_AUTO); 
+    return 1;
+  }
 }
 
 typedef struct{

@@ -20,6 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-void CreateOutputFile (char *name, int format) ;
+int GuessFileFormatFromFileName(char *name);
+void CreateOutputFile (char *name, int format);
 
 #endif

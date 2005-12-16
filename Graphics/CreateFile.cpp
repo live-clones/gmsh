@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.71 2005-12-16 19:17:33 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.72 2005-12-16 20:20:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -45,12 +45,55 @@ void FillBuffer(void)
   Draw2d();
 }
 
+int GuessFileFormatFromFileName(char *name)
+{
+  int len;
+  char ext[256];
+
+  for(len = strlen(name) - 1; len >= 0; len--) {
+    if(name[len] == '.') {
+      strcpy(ext, &name[len]);
+      break;
+    }
+  }
+  if(len <= 0)
+    strcpy(ext, "");
+  
+  if(!strcmp(ext, ".geo"))          return FORMAT_GEO;
+  else if(!strcmp(ext, ".opt"))     return FORMAT_OPT;
+  else if(!strcmp(ext, ".msh"))     return FORMAT_MSH;
+  else if(!strcmp(ext, ".unv"))     return FORMAT_UNV;
+  else if(!strcmp(ext, ".p3d"))     return FORMAT_P3D;
+  else if(!strcmp(ext, ".dmg"))     return FORMAT_DMG;
+  else if(!strcmp(ext, ".stl"))     return FORMAT_STL;
+  else if(!strcmp(ext, ".pos"))     return FORMAT_LC;
+  else if(!strcmp(ext, ".gif"))     return FORMAT_GIF;
+  else if(!strcmp(ext, ".jpg"))     return FORMAT_JPEG;
+  else if(!strcmp(ext, ".jpeg"))    return FORMAT_JPEG;
+  else if(!strcmp(ext, ".png"))     return FORMAT_PNG;
+  else if(!strcmp(ext, ".ps"))      return FORMAT_PS;
+  else if(!strcmp(ext, ".eps"))     return FORMAT_EPS;
+  else if(!strcmp(ext, ".pdf"))     return FORMAT_PDF;
+  else if(!strcmp(ext, ".tex"))     return FORMAT_TEX;
+  else if(!strcmp(ext, ".epstex"))  return FORMAT_EPSTEX;
+  else if(!strcmp(ext, ".pdftex"))  return FORMAT_PDFTEX;
+  else if(!strcmp(ext, ".jpegtex")) return FORMAT_JPEGTEX;
+  else if(!strcmp(ext, ".ppm"))     return FORMAT_PPM;
+  else if(!strcmp(ext, ".yuv"))     return FORMAT_YUV;
+  else if(!strcmp(ext, ".gref"))    return FORMAT_GREF;
+  else if(!strcmp(ext, ".Gref"))    return FORMAT_GREF;
+  else if(!strcmp(ext, ".wrl"))     return FORMAT_VRML;
+  else{
+    Msg(GERROR, "Unknown extension '%s' for automatic format detection", ext);
+    return -1;
+  }
+}
+
 void CreateOutputFile(char *name, int format)
 {
   FILE *fp;
   GLint size3d, viewport[4], width, height;
-  char ext[256];
-  int len, res, oldformat, psformat, pssort, psoptions;
+  int res, oldformat, psformat, pssort, psoptions, guess;
 
   if(!name || !strlen(name))
     return;
@@ -65,41 +108,8 @@ void CreateOutputFile(char *name, int format)
   switch (format) {
 
   case FORMAT_AUTO:
-    for(len = strlen(name) - 1; len >= 0; len--) {
-      if(name[len] == '.') {
-        strcpy(ext, &name[len]);
-        break;
-      }
-    }
-    if(len <= 0)
-      strcpy(ext, "");
-
-    if(!strcmp(ext, ".geo"))       CreateOutputFile(name, FORMAT_GEO);
-    else if(!strcmp(ext, ".opt"))  CreateOutputFile(name, FORMAT_OPT);
-    else if(!strcmp(ext, ".msh"))  CreateOutputFile(name, FORMAT_MSH);
-    else if(!strcmp(ext, ".unv"))  CreateOutputFile(name, FORMAT_UNV);
-    else if(!strcmp(ext, ".p3d"))  CreateOutputFile(name, FORMAT_P3D);
-    else if(!strcmp(ext, ".dmg"))  CreateOutputFile(name, FORMAT_DMG);
-    else if(!strcmp(ext, ".stl"))  CreateOutputFile(name, FORMAT_STL);
-    else if(!strcmp(ext, ".pos"))  CreateOutputFile(name, FORMAT_LC);
-    else if(!strcmp(ext, ".gif"))  CreateOutputFile(name, FORMAT_GIF);
-    else if(!strcmp(ext, ".jpg"))  CreateOutputFile(name, FORMAT_JPEG);
-    else if(!strcmp(ext, ".jpeg")) CreateOutputFile(name, FORMAT_JPEG);
-    else if(!strcmp(ext, ".png"))  CreateOutputFile(name, FORMAT_PNG);
-    else if(!strcmp(ext, ".ps"))   CreateOutputFile(name, FORMAT_PS);
-    else if(!strcmp(ext, ".eps"))  CreateOutputFile(name, FORMAT_EPS);
-    else if(!strcmp(ext, ".pdf"))  CreateOutputFile(name, FORMAT_PDF);
-    else if(!strcmp(ext, ".tex"))  CreateOutputFile(name, FORMAT_TEX);
-    else if(!strcmp(ext, ".epstex")) CreateOutputFile(name, FORMAT_EPSTEX);
-    else if(!strcmp(ext, ".pdftex")) CreateOutputFile(name, FORMAT_PDFTEX);
-    else if(!strcmp(ext, ".jpegtex")) CreateOutputFile(name, FORMAT_JPEGTEX);
-    else if(!strcmp(ext, ".ppm"))  CreateOutputFile(name, FORMAT_PPM);
-    else if(!strcmp(ext, ".yuv"))  CreateOutputFile(name, FORMAT_YUV);
-    else if(!strcmp(ext, ".gref")) CreateOutputFile(name, FORMAT_GREF);
-    else if(!strcmp(ext, ".Gref")) CreateOutputFile(name, FORMAT_GREF);
-    else if(!strcmp(ext, ".wrl"))  CreateOutputFile(name, FORMAT_VRML);
-    else
-      Msg(GERROR, "Unknown extension '%s' for automatic format detection", ext);
+    guess = GuessFileFormatFromFileName(name);
+    if(guess >= 0) CreateOutputFile(name, guess);
     break;
 
   case FORMAT_GEO:
