@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.73 2005-12-16 20:28:12 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.74 2005-12-16 20:29:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -90,7 +90,7 @@ void CreateOutputFile(char *name, int format)
 {
   FILE *fp;
   GLint size3d, viewport[4], width, height;
-  int res, oldformat, psformat, pssort, psoptions, guess;
+  int res, oldformat, psformat, pssort, psoptions;
 
   if(!name || !strlen(name))
     return;
