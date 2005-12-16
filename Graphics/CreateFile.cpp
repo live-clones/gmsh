@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.72 2005-12-16 20:20:17 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.73 2005-12-16 20:28:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -83,10 +83,7 @@ int GuessFileFormatFromFileName(char *name)
   else if(!strcmp(ext, ".gref"))    return FORMAT_GREF;
   else if(!strcmp(ext, ".Gref"))    return FORMAT_GREF;
   else if(!strcmp(ext, ".wrl"))     return FORMAT_VRML;
-  else{
-    Msg(GERROR, "Unknown extension '%s' for automatic format detection", ext);
-    return -1;
-  }
+  else                              return -1;
 }
 
 void CreateOutputFile(char *name, int format)
@@ -108,10 +105,9 @@ void CreateOutputFile(char *name, int format)
   switch (format) {
 
   case FORMAT_AUTO:
-    guess = GuessFileFormatFromFileName(name);
-    if(guess >= 0) CreateOutputFile(name, guess);
+    CreateOutputFile(name, GuessFileFormatFromFileName(name));
     break;
-
+    
   case FORMAT_GEO:
     Print_Geo(&M, name);
     break;
@@ -300,7 +296,7 @@ void CreateOutputFile(char *name, int format)
     break;
 
   default:
-    Msg(WARNING, "Unknown print format");
+    Msg(GERROR, "Unknown output file format (%d)", format);
     break;
   }
 
