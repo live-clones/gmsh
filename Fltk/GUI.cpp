@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.471 2005-12-08 20:35:34 geuzaine Exp $
+// $Id: GUI.cpp,v 1.472 2005-12-16 17:35:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1985,10 +1985,21 @@ void GUI::create_option_window()
       gen_choice[3]->align(FL_ALIGN_RIGHT);
       gen_choice[3]->tooltip("(Alt+c)");
 
-      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 2 * BH, IW + 20, height - 5 * WB - 2 * BH);
+      static Fl_Menu_Item menu_bg_grad[] = {
+	{"None", 0, 0, 0},
+	{"Vertical", 0, 0, 0},
+	{"Horizontal", 0, 0, 0},
+	{0}
+      };
+
+      gen_choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Background gradient");
+      gen_choice[5]->menu(menu_bg_grad);
+      gen_choice[5]->align(FL_ALIGN_RIGHT);
+
+      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 3 * BH, IW + 20, height - 5 * WB - 3 * BH);
       int i = 0;
       while(GeneralOptions_Color[i].str) {
-        gen_col[i] = new Fl_Button(L + 2 * WB, 3 * WB + (2 + i) * BH, IW, BH, GeneralOptions_Color[i].str);
+        gen_col[i] = new Fl_Button(L + 2 * WB, 3 * WB + (3 + i) * BH, IW, BH, GeneralOptions_Color[i].str);
         gen_col[i]->callback(color_cb, (void *)GeneralOptions_Color[i].function);
         i++;
       }

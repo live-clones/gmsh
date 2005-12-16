@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.384 2005-12-08 20:35:34 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.385 2005-12-16 17:35:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1001,6 +1001,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_graphics_font(0, GMSH_SET, (char *)WID->gen_choice[1]->text());
   opt_general_orthographic(0, GMSH_SET | GMSH_GUI, !WID->gen_choice[2]->value());
   opt_general_axes(0, GMSH_SET, WID->gen_choice[4]->value());
+  opt_general_background_gradient(0, GMSH_SET, WID->gen_choice[5]->value());
 }
 
 void general_arrow_param_cb(CALLBACK_ARGS)

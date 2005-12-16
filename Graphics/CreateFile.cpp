@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.69 2005-06-08 19:12:04 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.70 2005-12-16 17:35:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -39,8 +39,9 @@ extern Mesh M;
 
 void FillBuffer(void)
 {
-  InitOpengl();
+  SetOpenglContext();
   ClearOpengl();
+  Orthogonalize(0, 0);
   Draw3d();
   Draw2d();
 }

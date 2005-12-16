@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.55 2005-10-09 18:00:54 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.56 2005-12-16 17:35:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -35,23 +35,9 @@ extern Context_T CTX;
 
 // Draw specialization
 
-void InitOpengl(void)
-{
-  WID->make_opengl_current();
-  Orthogonalize(0, 0);
-}
-
 void SetOpenglContext(void)
 {
   WID->make_opengl_current();
-}
-
-void ClearOpengl(void)
-{
-  glClearColor(UNPACK_RED(CTX.color.bg) / 255.,
-               UNPACK_GREEN(CTX.color.bg) / 255.,
-               UNPACK_BLUE(CTX.color.bg) / 255., 0.);
-  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
 void Draw(void)

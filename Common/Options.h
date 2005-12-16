@@ -282,6 +282,7 @@ double opt_general_line_width(OPT_ARGS_NUM);
 double opt_general_shine(OPT_ARGS_NUM);
 double opt_general_shine_exponent(OPT_ARGS_NUM);
 double opt_general_color_scheme(OPT_ARGS_NUM);
+double opt_general_background_gradient(OPT_ARGS_NUM);
 double opt_general_verbosity(OPT_ARGS_NUM);
 double opt_general_nopopup(OPT_ARGS_NUM);
 double opt_general_terminal(OPT_ARGS_NUM);
@@ -627,6 +628,7 @@ double opt_print_gif_transparent(OPT_ARGS_NUM);
 // COLORS
 
 unsigned int opt_general_color_background(OPT_ARGS_COL);
+unsigned int opt_general_color_background_gradient(OPT_ARGS_COL);
 unsigned int opt_general_color_foreground(OPT_ARGS_COL);
 unsigned int opt_general_color_text(OPT_ARGS_COL);
 unsigned int opt_general_color_axes(OPT_ARGS_COL);

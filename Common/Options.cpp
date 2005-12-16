@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.263 2005-11-20 03:58:27 geuzaine Exp $
+// $Id: Options.cpp,v 1.264 2005-12-16 17:35:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3096,6 +3096,20 @@ double opt_general_color_scheme(OPT_ARGS_NUM)
     WID->gen_choice[3]->value(CTX.color_scheme);
 #endif
   return CTX.color_scheme;
+}
+
+double opt_general_background_gradient(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX.bg_gradient = (int)val;
+    if(CTX.bg_gradient < 0 || CTX.bg_gradient > 2)
+      CTX.bg_gradient = 0;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_choice[5]->value(CTX.bg_gradient);
+#endif
+  return CTX.bg_gradient;
 }
 
 double opt_general_trackball(OPT_ARGS_NUM)
@@ -6715,12 +6729,22 @@ unsigned int opt_general_color_background(OPT_ARGS_COL)
   return CTX.color.bg;
 }
 
+unsigned int opt_general_color_background_gradient(OPT_ARGS_COL)
+{
+  if(action & GMSH_SET)
+    CTX.color.bg_grad = val;
+#if defined(HAVE_FLTK)
+  CCC(CTX.color.bg_grad, WID->gen_col[1]);
+#endif
+  return CTX.color.bg_grad;
+}
+
 unsigned int opt_general_color_foreground(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
     CTX.color.fg = val;
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.fg, WID->gen_col[1]);
+  CCC(CTX.color.fg, WID->gen_col[2]);
 #endif
   return CTX.color.fg;
 }
@@ -6730,7 +6754,7 @@ unsigned int opt_general_color_text(OPT_ARGS_COL)
   if(action & GMSH_SET)
     CTX.color.text = val;
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.text, WID->gen_col[2]);
+  CCC(CTX.color.text, WID->gen_col[3]);
 #endif
   return CTX.color.text;
 }
@@ -6740,7 +6764,7 @@ unsigned int opt_general_color_axes(OPT_ARGS_COL)
   if(action & GMSH_SET)
     CTX.color.axes = val;
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.axes, WID->gen_col[3]);
+  CCC(CTX.color.axes, WID->gen_col[4]);
 #endif
   return CTX.color.axes;
 }
@@ -6750,7 +6774,7 @@ unsigned int opt_general_color_small_axes(OPT_ARGS_COL)
   if(action & GMSH_SET)
     CTX.color.small_axes = val;
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.small_axes, WID->gen_col[4]);
+  CCC(CTX.color.small_axes, WID->gen_col[5]);
 #endif
   return CTX.color.small_axes;
 }
@@ -6761,7 +6785,7 @@ unsigned int opt_general_color_ambient_light(OPT_ARGS_COL)
     for(int i = 0; i < 6; i++)
       CTX.color.ambient_light[i] = val;
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.ambient_light[0], WID->gen_col[5]);
+  CCC(CTX.color.ambient_light[0], WID->gen_col[6]);
 #endif
   return CTX.color.ambient_light[0];
 }
@@ -6772,7 +6796,7 @@ unsigned int opt_general_color_diffuse_light(OPT_ARGS_COL)
     for(int i = 0; i < 6; i++)
       CTX.color.diffuse_light[i] = val;
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.diffuse_light[0], WID->gen_col[6]);
+  CCC(CTX.color.diffuse_light[0], WID->gen_col[7]);
 #endif
   return CTX.color.diffuse_light[0];
 }
@@ -6783,7 +6807,7 @@ unsigned int opt_general_color_specular_light(OPT_ARGS_COL)
     for(int i = 0; i < 6; i++)
       CTX.color.specular_light[i] = val;
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.specular_light[0], WID->gen_col[7]);
+  CCC(CTX.color.specular_light[0], WID->gen_col[8]);
 #endif
   return CTX.color.specular_light[0];
 }

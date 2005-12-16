@@ -117,6 +117,7 @@ public :
   int threads, threads_lock;  // threads?, lock (should be a mutex...) 
   int alpha;                  // enable alpha blending 
   double zoom_factor;         // mouse2 zoom coefficient
+  int bg_gradient;            // draw background gradient?
 
   int fontsize;               // font size for fltk UI
   char *gl_font;              // font for opengl graphics
@@ -233,7 +234,7 @@ public :
 
   // color options
   struct{
-    unsigned int bg, fg, text, axes, small_axes;
+    unsigned int bg, bg_grad, fg, text, axes, small_axes;
     unsigned int ambient_light[6], diffuse_light[6], specular_light[6];
     struct{
       unsigned int point, line, surface, volume;

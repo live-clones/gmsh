@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.80 2005-11-19 14:59:41 geuzaine Exp $
+// $Id: Draw.cpp,v 1.81 2005-12-16 17:35:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -121,6 +121,14 @@ void DrawPlugin(void (*draw)(void))
   CTX.mesh.draw = 1;
 }
 
+void ClearOpengl(void)
+{
+  glClearColor(UNPACK_RED(CTX.color.bg) / 255.,
+               UNPACK_GREEN(CTX.color.bg) / 255.,
+               UNPACK_BLUE(CTX.color.bg) / 255., 0.);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+}
+
 // Ortho
 
 void Orthogonalize(int x, int y)
@@ -173,6 +181,8 @@ void Orthogonalize(int x, int y)
   // buffer might become insufficient (at least with the "software"
   // Mesa on Linux; with hardware acceleration or on Windows
   // everyhting seems to be fine).
+
+  double gradient_zdist, gradient_xyfact;
   if(CTX.ortho) {
     double maxz = MAX(fabs(CTX.min[2]), fabs(CTX.max[2]));
     if(maxz < CTX.lc) maxz = CTX.lc;
@@ -180,16 +190,61 @@ void Orthogonalize(int x, int y)
     glOrtho(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, -clip, clip);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+    gradient_zdist = 0.99 * clip;
+    gradient_xyfact = 1.;
   }
   else {
-    glFrustum(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, CTX.lc,
-              100 * CTX.lc);
+    double near = 0.75 * CTX.clip_factor * CTX.lc;
+    double far = 75. * CTX.clip_factor * CTX.lc;
+
+    // recenter the model such that the perspective is always at the
+    // center of the screen. FIXME: this screws up the zoom, so let's
+    // leave it out for now
+    /*
+    double w = (CTX.max[0] - CTX.min[0]) / 2.;
+    double h = (CTX.max[1] - CTX.min[1]) / 2.;
+    CTX.vxmin -= w;
+    CTX.vxmax -= w;
+    CTX.vymin -= h;
+    CTX.vymax -= h;
+    */
+    double w = 0.;
+    double h = 0.;
+    glFrustum(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, near, far);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslated(0.0, 0.0, -10 * CTX.lc);
-    glScaled(10., 10., 10.);
+    glTranslated(-5 * w, -5 * h, -5 * near);
+    glScaled(5., 5., 5.);
+    gradient_zdist = 0.99 * far;
+    gradient_xyfact = far / near;
   }
 
+  // draw background gradient
+  if(CTX.bg_gradient){
+    glPushMatrix();
+    glLoadIdentity();
+    glTranslated(0., 0., -gradient_zdist);
+    glShadeModel(GL_SMOOTH);
+    glBegin(GL_QUADS);
+    if(CTX.bg_gradient == 1){
+      glColor4ubv((GLubyte *) & CTX.color.bg);
+      glVertex2d(gradient_xyfact * CTX.vxmin, gradient_xyfact * CTX.vymin);
+      glVertex2d(gradient_xyfact * CTX.vxmax, gradient_xyfact * CTX.vymin);
+      glColor4ubv((GLubyte *) & CTX.color.bg_grad);
+      glVertex2d(gradient_xyfact * CTX.vxmax, gradient_xyfact * CTX.vymax);
+      glVertex2d(gradient_xyfact * CTX.vxmin, gradient_xyfact * CTX.vymax);
+    }
+    else{
+      glColor4ubv((GLubyte *) & CTX.color.bg);
+      glVertex2d(gradient_xyfact * CTX.vxmax, gradient_xyfact * CTX.vymin);
+      glVertex2d(gradient_xyfact * CTX.vxmax, gradient_xyfact * CTX.vymax);
+      glColor4ubv((GLubyte *) & CTX.color.bg_grad);
+      glVertex2d(gradient_xyfact * CTX.vxmin, gradient_xyfact * CTX.vymax);
+      glVertex2d(gradient_xyfact * CTX.vxmin, gradient_xyfact * CTX.vymin);
+    }
+    glEnd();
+    glPopMatrix();
+  }
 }
 
 // Init

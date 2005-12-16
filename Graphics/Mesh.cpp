@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.143 2005-12-05 20:36:55 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.144 2005-12-16 17:35:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -59,7 +59,8 @@ void draw_polygon_2d(double r, double g, double b, int n,
   int i;
 
   CalculateMinMax(THEM->Points, NULL);
-  InitOpengl();
+  SetOpenglContext();
+  Orthogonalize(0, 0);
   InitPosition();
 
   glDisable(GL_DEPTH_TEST);
