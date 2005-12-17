@@ -26,6 +26,7 @@ class  Post_View;
 
 class OctreePost 
 {
+  Octree *SL, *VL, *TL;
   Octree *ST, *VT, *TT;
   Octree *SQ, *VQ, *TQ;
   Octree *SS, *VS, *TS;
@@ -38,11 +39,11 @@ class OctreePost
  public :
   OctreePost(Post_View *);
   ~OctreePost();
-  // search for the value of the View at point
-  // x, y, z. Values is interpolated linearly in
-  // the post element. If several time steps
-  // are present, they are all interpolated unless
-  // time step is set to a different value than -1.
+  // search for the value of the View at point x, y, z. Values are
+  // interpolated using standard first order shape functions in the
+  // post element. If several time steps are present, they are all
+  // interpolated unless time step is set to a different value than
+  // -1.
   bool searchScalar(double x, double y, double z, double *values, 
 		    int timestep = -1, double *size_elem = 0);
   bool searchVector(double x, double y, double z, double *values, 

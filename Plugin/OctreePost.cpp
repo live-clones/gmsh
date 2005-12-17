@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.15 2005-03-04 19:08:38 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.16 2005-12-17 22:26:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -63,6 +63,12 @@ static void centroid(int n, double *X, double *Y, double *Z, double *c)
   c[2] *= oc;
 }
 
+void linBB(void *a, double *min, double *max)
+{
+  double *X = (double*) a, *Y = &X[2], *Z = &X[4];
+  minmax(2, X, Y, Z, min, max);
+}
+
 void triBB(void *a, double *min, double *max)
 {
   double *X = (double*) a, *Y = &X[3], *Z = &X[6];
@@ -97,6 +103,14 @@ void pyrBB(void *a, double *min, double *max)
 {
   double *X = (double*) a, *Y = &X[5], *Z = &X[10];
   minmax(5, X, Y, Z, min, max);
+}
+
+int linInEle(void *a, double *x)
+{
+  double *X = (double*) a, *Y = &X[2], *Z = &X[4], uvw[3];
+  line lin(X, Y, Z);
+  lin.xyz2uvw(x, uvw);
+  return lin.isInside(uvw[0], uvw[1], uvw[2]);
 }
 
 int triInEle(void *a, double *x)
@@ -145,6 +159,12 @@ int pyrInEle(void *a, double *x)
   pyramid pyr(X, Y, Z);
   pyr.xyz2uvw(x, uvw);
   return pyr.isInside(uvw[0], uvw[1], uvw[2]);
+}
+
+void linCentroid(void *a, double *x)
+{
+  double *X = (double*) a, *Y = &X[2], *Z = &X[4];
+  centroid(2, X, Y, Z, x);
 }
 
 void triCentroid(void *a, double *x)
@@ -213,6 +233,16 @@ OctreePost::OctreePost(Post_View *v)
 		    v->BBox[5] - v->BBox[4]};		    
   
   const int maxElePerBucket = 100; // memory vs. speed trade-off
+
+  SL = Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
+  addListOfStuff(SL, v->SL, 6 + 2 * v->NbTimeStep);
+  Octree_Arrange(SL);
+  VL = Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
+  addListOfStuff(VL, v->VL, 6 + 6 * v->NbTimeStep);
+  Octree_Arrange(VL);
+  TL = Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
+  addListOfStuff(TL, v->TL, 6 + 18 * v->NbTimeStep);
+  Octree_Arrange(TL);
 
   ST = Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
   addListOfStuff(ST, v->ST, 9 + 3 * v->NbTimeStep);
@@ -323,6 +353,7 @@ bool OctreePost::searchScalar(double x, double y, double z, double *values,
   if(getValue(Octree_Search(P, SY), 3, 5, 1, P, timestep, values, size_elem)) return true;
   if(getValue(Octree_Search(P, ST), 2, 3, 1, P, timestep, values, size_elem)) return true;
   if(getValue(Octree_Search(P, SQ), 2, 4, 1, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, SL), 1, 2, 1, P, timestep, values, size_elem)) return true;
 
   return false;
 }
@@ -345,6 +376,7 @@ bool OctreePost::searchVector(double x, double y, double z, double *values,
   if(getValue(Octree_Search(P, VY), 3, 5, 3, P, timestep, values, size_elem)) return true;
   if(getValue(Octree_Search(P, VT), 2, 3, 3, P, timestep, values, size_elem)) return true;
   if(getValue(Octree_Search(P, VQ), 2, 4, 3, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, VL), 1, 2, 3, P, timestep, values, size_elem)) return true;
 
   return false;
 }
@@ -367,6 +399,7 @@ bool OctreePost::searchTensor(double x, double y, double z, double *values,
   if(getValue(Octree_Search(P, TY), 3, 5, 9, P, timestep, values, size_elem)) return true;
   if(getValue(Octree_Search(P, TT), 2, 3, 9, P, timestep, values, size_elem)) return true;
   if(getValue(Octree_Search(P, TQ), 2, 4, 9, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, TL), 1, 2, 9, P, timestep, values, size_elem)) return true;
 
   return false;
 }

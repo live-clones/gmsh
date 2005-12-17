@@ -1,4 +1,4 @@
-// $Id: Probe.cpp,v 1.10 2005-03-09 02:19:09 geuzaine Exp $
+// $Id: Probe.cpp,v 1.11 2005-12-17 22:26:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -86,6 +86,7 @@ void GMSH_ProbePlugin::draw()
     glVertex3d(x,y,z-d); glVertex3d(x,y,z+d);
     glEnd();
   }
+  Draw_Point(1, CTX.point_size, &x, &y, &z, 1);
 #endif
 }
 
