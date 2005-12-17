@@ -147,6 +147,7 @@ public :
 
   double model[16], proj[16]; // the modelview and projection matrix as they were
                               // at the time of the last InitPosition() call
+  double model_init[16]; // the modelview matrix before applying s, t and rot
 
   int forced_bbox; // dynamic variable tracking if the bbox is currently imposed
 

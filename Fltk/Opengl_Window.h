@@ -24,27 +24,46 @@
 #include <FL/Fl_Box.H>
 #include "Mesh.h"
 
+class MousePosition {
+ public:
+  double win[3]; // window coordinates
+  double wnr[3]; // world coordinates BEFORE rotation
+  double world[3]; // world coordinates (in a given plane // to screen)
+  double s[3]; // scaling state when the event was recorded
+  double t[3];  // translation state when the event was recorded
+  MousePosition(){
+    for(int i = 0; i < 3; i++)
+      win[i] = wnr[i] = world[i] = s[i] = t[i] = 0.;
+  }
+  MousePosition(const MousePosition &instance){
+    for(int i = 0; i < 3; i++){
+      win[i] = instance.win[i];
+      wnr[i] = instance.wnr[i];
+      world[i] = instance.world[i];
+      s[i] = instance.s[i];
+      t[i] = instance.t[i];
+    }
+  }
+  void set();
+  void recenter();
+};
+
 class Opengl_Window : public Fl_Gl_Window {
  public:
-  bool AddPointMode;
+  bool AddPointMode, ZoomMode;
  private:
-  bool ZoomMode, ZoomClick, FirstClick;
-  int xpos, ypos, xmov, ymov, ibut, hits;
-  double xzoom0, yzoom0, xzoom1, yzoom1;
-  GLdouble xc, yc, xc1, yc1, xc2, yc2, xt1, yt1, xscale1, yscale1;
+  int hits;
   Vertex *v, *ov;
   Curve *c, *oc;
   Surface *s, *os;
-
+  MousePosition click, curr, prev, zoom;
   void draw();
   int handle(int);
-
  public:
   Opengl_Window(int x,int y,int w,int h,const char *l=0)
     : Fl_Gl_Window(x, y, w, h, l) {
-    xpos = ypos = xmov = ymov = ibut = hits = 0;
-    xzoom0 = yzoom0 = xzoom1 = yzoom1 = 0.;
-    AddPointMode = ZoomMode = ZoomClick = FirstClick = false;
+    AddPointMode = ZoomMode = false;
+    hits = 0;
     v = ov = NULL;
     c = oc = NULL;
     s = os = NULL;

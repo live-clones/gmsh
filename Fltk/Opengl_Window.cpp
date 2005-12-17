@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.52 2005-12-16 19:17:33 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.53 2005-12-17 22:28:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -29,11 +29,87 @@
 #include "GUI.h"
 #include "Opengl_Window.h"
 
-// This file defines the Opengl_Window class (subclass of Fl_GL_Window)
-
 extern GUI *WID;
 extern Mesh M;
 extern Context_T CTX;
+
+void MousePosition::set()
+{
+  for(int i = 0; i < 3; i++){
+    s[i] = CTX.s[i];
+    t[i] = CTX.t[i];
+  }
+
+  win[0] = (double)Fl::event_x();
+  win[1] = (double)Fl::event_y();
+  win[2] = 0.;
+
+  wnr[0] = (CTX.vxmin + win[0] / (double)CTX.viewport[2] * 
+	    (CTX.vxmax - CTX.vxmin)) / CTX.s[0] - CTX.t[0];
+  wnr[1] = (CTX.vymax - win[1] / (double)CTX.viewport[3] * 
+	    (CTX.vymax - CTX.vymin)) / CTX.s[1] - CTX.t[1];
+  wnr[2] = 0.;
+
+  // might need this later
+  // Viewport2World(win, world);
+}
+
+void MousePosition::recenter()
+{
+  // this computes the equivalent translation to apply after the
+  // scaling so that the scaling is done around the point which was
+  // clicked. FIXME: needs to be generalized to the case where an
+  // initial translation is done BEFORE the scaling (necessary for the
+  // general perspective case, with the line of sight in the middle of
+  // the screen, and not just the z-axis).
+  CTX.t[0] = t[0] * (s[0] / CTX.s[0]) - wnr[0] * (1. - (s[0] / CTX.s[0]));
+  CTX.t[1] = t[1] * (s[1] / CTX.s[1]) - wnr[1] * (1. - (s[1] / CTX.s[1]));
+
+  /*
+  double sx, sy;
+  double tx0, ty0;
+  double tx, ty;
+  double model_new[16];
+
+  glPushMatrix();
+  glLoadMatrix(CTX.model_init);
+  glTranslated(tx0, ty0, 0.);
+  glScaled(sx, sy, sz);
+  glTranslated(-tx0, -ty0, 0.);
+  glTranslated(tx, ty, 0.);
+  glGetDoublev(GL_MODELVIEW_MATRIX, model_new);
+  glPopMatrix();
+
+  CTX.s[0] = model_new[0][0];
+  CTX.s[1] = model_new[1][1];
+  CTX.s[2] = model_new[2][2];
+
+  CTX.t[0] = model_new[0][3];
+  CTX.t[1] = model_new[1][3];
+  CTX.t[2] = model_new[2][3];
+  */
+}
+  
+void myZoom(MousePosition &click1, MousePosition &click2)
+{
+  if(click1.wnr[0] == click2.wnr[0] || click1.wnr[1] == click2.wnr[1])
+    return;
+
+  CTX.s[0] *= (CTX.vxmax - CTX.vxmin) / (click2.wnr[0] - click1.wnr[0]);
+  CTX.s[1] *= (CTX.vymax - CTX.vymin) / (click1.wnr[1] - click2.wnr[1]);
+  CTX.s[2] = MIN(CTX.s[0], CTX.s[1]); // bof...
+  
+  MousePosition tmp(click1);
+  tmp.wnr[0] = 0.5 * (click1.wnr[0] + click2.wnr[0]);
+  tmp.wnr[1] = 0.5 * (click1.wnr[1] + click2.wnr[1]);
+  tmp.t[0] = CTX.t[0];
+  tmp.t[1] = CTX.t[1]; 
+  tmp.recenter();
+
+  WID->update_manip_window();
+  InitPosition();
+  Draw();
+}
 
 void Opengl_Window::draw()
 {
@@ -42,7 +118,9 @@ void Opengl_Window::draw()
     return;
   else
     locked = 1;
+
   Msg(DEBUG, "Opengl_Window->draw()");
+
   if(!valid()) {
     valid(1);
     CTX.viewport[0] = 0;
@@ -75,55 +153,26 @@ void Opengl_Window::draw()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glDisable(GL_DEPTH_TEST);
-    glColor3f(1., 1., 1.);
-    glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO); // glBlendEquation(GL_FUNC_ADD);
+    glColor3d(1., 1., 1.);
+    // glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
     glEnable(GL_BLEND);
     glLineWidth(0.2);
-    glBegin(GL_LINE_STRIP);
-    glVertex2d(xzoom0, yzoom0);
-    glVertex2d(xzoom1, yzoom0);
-    glVertex2d(xzoom1, yzoom1);
-    glVertex2d(xzoom0, yzoom1);
-    glVertex2d(xzoom0, yzoom0);
-    glEnd();
-    xzoom1 = CTX.vxmin + ((double)Fl::event_x() / (double)w()) * 
-      (CTX.vxmax - CTX.vxmin);
-    yzoom1 = CTX.vymax - ((double)Fl::event_y() / (double)h()) *
-      (CTX.vymax - CTX.vymin);
-    glBegin(GL_LINE_STRIP);
-    glVertex2d(xzoom0, yzoom0);
-    glVertex2d(xzoom1, yzoom0);
-    glVertex2d(xzoom1, yzoom1);
-    glVertex2d(xzoom0, yzoom1);
-    glVertex2d(xzoom0, yzoom0);
-    glEnd();
+    for(int i = 0; i < 2; i++){
+      glBegin(GL_LINE_STRIP);
+      glVertex2d(click.wnr[0], click.wnr[1]);
+      glVertex2d(zoom.wnr[0], click.wnr[1]);
+      glVertex2d(zoom.wnr[0], zoom.wnr[1]);
+      glVertex2d(click.wnr[0], zoom.wnr[1]);
+      glVertex2d(click.wnr[0], click.wnr[1]);
+      glEnd();
+      if(!i) zoom.set();
+    }
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
-    ZoomMode = false;
   }
   locked = 0;
 }
-
-// FIXME: this is notoriously wrong :-)
-
-void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
-            GLdouble Xc1, GLdouble Xc2, GLdouble Yc1, GLdouble Yc2)
-{
-  GLdouble xscale1 = CTX.s[0];
-  GLdouble yscale1 = CTX.s[1];
-  CTX.s[0] *= (CTX.vxmax - CTX.vxmin) / (X2 - X1);
-  CTX.s[1] *= (CTX.vymax - CTX.vymin) / (Y1 - Y2);
-  CTX.s[2] = MIN(CTX.s[0], CTX.s[1]); // bof...
-  CTX.t[0] = CTX.t[0] * (xscale1 / CTX.s[0]) - 
-    ((Xc1 + Xc2) / 2.) * (1. - (xscale1 / CTX.s[0]));
-  CTX.t[1] = CTX.t[1] * (yscale1 / CTX.s[1]) - 
-    ((Yc1 + Yc2) / 2.) * (1. - (yscale1 / CTX.s[1]));
-  
-  WID->update_manip_window();
-  InitPosition();
-  Draw();
-}
-
 
 // The event model in FLTK is pretty different from other toolkits:
 // the events are passed to the widget handle of the widget that has
@@ -133,6 +182,7 @@ void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
 
 int Opengl_Window::handle(int event)
 {
+  double dx, dy;
   int numhits;
   hit hits[SELECTION_BUFFER_SIZE];
 
@@ -144,52 +194,42 @@ int Opengl_Window::handle(int event)
 
   case FL_SHORTCUT:
   case FL_KEYBOARD:
-    // this overrides the default navigation
-    if(WID->arrow_shortcuts()) {
+    // override the default widget navigation
+    if(WID->arrow_shortcuts())
       return 1;
-    }
     return Fl_Gl_Window::handle(event);
-
+    
   case FL_PUSH:
     take_focus(); // force keyboard focus when we click in the window
-    FirstClick = 1;
-    ibut = Fl::event_button();
-    xpos = Fl::event_x();
-    ypos = Fl::event_y();
+    curr.set();
     
-    if(ibut == 1 && !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
-      if(!ZoomClick && Fl::event_state(FL_CTRL)) {
-        xzoom0 = xzoom1 = CTX.vxmin + ((double)xpos / (double)w()) *
-	  (CTX.vxmax - CTX.vxmin);
-        yzoom0 = yzoom1 = CTX.vymax - ((double)ypos / (double)h()) * 
-	  (CTX.vymax - CTX.vymin);
-        xc1 = xzoom0 / CTX.s[0] - CTX.t[0];
-        yc1 = yzoom0 / CTX.s[1] - CTX.t[1];
-        ZoomClick = true;
+    if(Fl::event_button() == 1 && 
+       !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
+      if(!ZoomMode && Fl::event_state(FL_CTRL)) {
+        ZoomMode = true;
+	zoom.set();
       }
-      else if(ZoomClick) {
-        xc2 = xzoom1 / CTX.s[0] - CTX.t[0];
-        yc2 = yzoom1 / CTX.s[1] - CTX.t[1];
-        ZoomClick = false;
-        if(xzoom0 != xzoom1 && yzoom0 != yzoom1)
-          myZoom(xzoom0, xzoom1, yzoom0, yzoom1, xc1, xc2, yc1, yc2);
+      else if(ZoomMode) {
+        ZoomMode = false;
+	myZoom(click, curr);
       }
       else {
         WID->try_selection = 1;
       }
     }
-    else if(ibut == 2 || (ibut == 1 && Fl::event_state(FL_SHIFT))) {
-      if(Fl::event_state(FL_CTRL) && !ZoomClick) {
+    else if(Fl::event_button() == 2 || 
+	    (Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
+      if(Fl::event_state(FL_CTRL) && !ZoomMode) {
         CTX.s[1] = CTX.s[0];
         CTX.s[2] = CTX.s[0];
         redraw();
       }
       else {
-        ZoomClick = false;
+        ZoomMode = false;
       }
     }
     else {
-      if(Fl::event_state(FL_CTRL) && !ZoomClick) {
+      if(Fl::event_state(FL_CTRL) && !ZoomMode) {
         if(CTX.useTrackball)
           CTX.setQuaternion(0., 0., 0., 1.);
         else
@@ -199,106 +239,86 @@ int Opengl_Window::handle(int event)
         redraw();
       }
       else {
-        ZoomClick = false;
+        ZoomMode = false;
       }
     }
+
+    click.set();
+    prev.set();
     WID->update_manip_window();
     return 1;
 
   case FL_RELEASE:
-    ibut = Fl::event_button();
-    xpos = Fl::event_x();
-    ypos = Fl::event_y();
-    if(!ZoomClick) {
+    curr.set();
+    if(!ZoomMode) {
       CTX.mesh.draw = 1;
       CTX.post.draw = 1;
       redraw();
     }
+    prev.set();
     return 1;
 
   case FL_DRAG:
-    xmov = Fl::event_x() - xpos;
-    ymov = Fl::event_y() - ypos;
+    curr.set();
+    dx = curr.win[0] - prev.win[0];
+    dy = curr.win[1] - prev.win[1];
 
-    if(ZoomClick) {
-      ZoomMode = true;
+    if(ZoomMode) {
       redraw();
     }
     else {
-      if(FirstClick) {
-        xc1 = (((double)xpos / (double)w()) * (CTX.vxmax - CTX.vxmin) + CTX.vxmin)
-          / CTX.s[0] - CTX.t[0];
-        yc1 = (CTX.vymax - ((double)ypos / (double)h()) * (CTX.vymax - CTX.vymin))
-          / CTX.s[1] - CTX.t[1];
-        xt1 = CTX.t[0];
-        yt1 = CTX.t[1];
-        xscale1 = CTX.s[0];
-        yscale1 = CTX.s[1];
-        FirstClick = 0;
-      }
-
-      if(ibut == 1 && !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
+      if(Fl::event_button() == 1 && 
+	 !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
         if(CTX.useTrackball)
-          CTX.addQuaternion((2.0 * xpos - w()) / w(),
-                            (h() - 2.0 * ypos) / h(),
-                            (2.0 * Fl::event_x() - w()) / w(),
-                            (h() - 2.0 * Fl::event_y()) / h());
+          CTX.addQuaternion((2. * prev.win[0] - w()) / w(),
+                            (h() - 2. * prev.win[1]) / h(),
+                            (2. * curr.win[0] - w()) / w(),
+                            (h() - 2. * curr.win[1]) / h());
         else {
-          CTX.r[1] += ((abs(xmov) > abs(ymov)) ? 180 * (double)xmov / (double)w() : 0);
-	  CTX.r[0] += ((abs(xmov) > abs(ymov)) ? 0 : 180 * (double)ymov / (double)h());
+          CTX.r[1] += ((fabs(dx) > fabs(dy)) ? 180. * dx / (double)w() : 0.);
+	  CTX.r[0] += ((fabs(dx) > fabs(dy)) ? 0. : 180. * dy / (double)h());
         }
       }
-      else if(ibut == 2 || (ibut == 1 && Fl::event_state(FL_SHIFT))) {
-	if(!CTX.useTrackball)
-          CTX.r[2] += (abs(ymov) > abs(xmov) ? 0 : -180 * (double)xmov / (double)w());
-	double zoomfact = (ymov > 0) ? 
-	  (double)(CTX.zoom_factor * abs(ymov) + h()) / (double)h() : 
-	  (double)(h()) / (double)(CTX.zoom_factor * abs(ymov) + h());
-	CTX.s[0] *= (abs(ymov) > abs(xmov) ? zoomfact : 1.);
-        CTX.s[1] = CTX.s[0];
-        CTX.s[2] = CTX.s[0];
-        if(abs(ymov) > abs(xmov)) {
-          CTX.t[0] = xt1 * (xscale1 / CTX.s[0]) - xc1 * (1. - (xscale1 / CTX.s[0]));
-          CTX.t[1] = yt1 * (yscale1 / CTX.s[1]) - yc1 * (1. - (yscale1 / CTX.s[1]));
-        }
+      else if(Fl::event_button() == 2 ||
+	      (Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
+        if(fabs(dy) > fabs(dx)) {
+	  double fact = (CTX.zoom_factor * fabs(dy) + h()) / (double)h();
+	  CTX.s[0] *= ((dy > 0) ? fact : 1./fact);
+	  CTX.s[1] = CTX.s[0];
+	  CTX.s[2] = CTX.s[0];
+	  click.recenter();
+	}
+	else if(!CTX.useTrackball)
+          CTX.r[2] += -180. * dx / (double)w();
       }
       else {
-        xc = (((double)xpos / (double)w()) * (CTX.vxmax - CTX.vxmin) + CTX.vxmin)
-          / CTX.s[0];
-        yc = (CTX.vymax - ((double)ypos / (double)h()) * (CTX.vymax - CTX.vymin))
-          / CTX.s[1];
-        CTX.t[0] = xc - xc1;
-        CTX.t[1] = yc - yc1;
+        CTX.t[0] += (curr.wnr[0] - click.wnr[0]);
+	CTX.t[1] += (curr.wnr[1] - click.wnr[1]);
         CTX.t[2] = 0.;
       }
-
       if(CTX.fast_redraw) {
         CTX.mesh.draw = 0;
         CTX.post.draw = 0;
       }
-
       redraw();
     }
 
-    xpos += xmov;
-    ypos += ymov;
+    prev.set();
     WID->update_manip_window();
     return 1;
 
   case FL_MOVE:
-    xpos = Fl::event_x();
-    ypos = Fl::event_y();
+    curr.set();
 
     if(AddPointMode && !Fl::event_state(FL_SHIFT)){
       WID->g_opengl_window->cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
       // find line in real space corresponding to current cursor position
       double p[3],d[3];
-      unproject(xpos, ypos, p, d);
+      unproject(curr.win[0], curr.win[1], p, d);
       // fin closest point to the center of gravity
-      double r[3] = {CTX.cg[0]-p[0], CTX.cg[1]-p[1], CTX.cg[2]-p[2]};
-      double t;
+      double r[3] = {CTX.cg[0] - p[0], CTX.cg[1] - p[1], CTX.cg[2] - p[2]}, t;
       prosca(r,d,&t);
-      double sol[3] = {p[0]+t*d[0], p[1]+t*d[1], p[2]+t*d[2]};
+      double sol[3] = {p[0] + t * d[0], p[1] + t * d[1], p[2] + t * d[2]};
       char str[32];
       sprintf(str, "%g", sol[0]);        
       WID->context_geometry_input[2]->value(str);
@@ -307,19 +327,15 @@ int Opengl_Window::handle(int event)
       sprintf(str, "%g", sol[2]);
       WID->context_geometry_input[4]->value(str);
     }
-    else if(ZoomClick) {
-      ZoomMode = true;
+    else if(ZoomMode) {
       redraw();
     }
     else {
       WID->make_opengl_current();
-      Process_SelectionBuffer(xpos, ypos, &numhits, hits);
-      ov = v;
-      oc = c;
-      os = s;
-      v = NULL;
-      c = NULL;
-      s = NULL;
+      Process_SelectionBuffer((int)curr.win[0], (int)curr.win[1], &numhits, hits);
+      ov = v; v = NULL;
+      oc = c; c = NULL;
+      os = s; s = NULL;
       Filter_SelectionBuffer(WID->selection, numhits, hits, &v, &c, &s, &M);
       if(ov != v || oc != c || os != s) {
         if((WID->selection == ENT_POINT && v) ||
@@ -331,11 +347,10 @@ int Opengl_Window::handle(int event)
         HighlightEntity(v, c, s, 0);
       }
     }
+    prev.set();
     return 1;
 
   default:
     return Fl_Gl_Window::handle(event);
-
   }
-
 }

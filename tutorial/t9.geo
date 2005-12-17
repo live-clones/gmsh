@@ -54,7 +54,9 @@ Plugin(Annotate).Font = "Times-Roman" ;
 Plugin(Annotate).FontSize = 12 ; 
 Plugin(Annotate).Run ; 
 
-// We finish by setting some view options and redrawing the scene:
+// We finish by setting some options and redrawing the scene:
+
+General.BackgroundGradient = 1;
 
 View[0].Light = 1;
 View[0].IntervalsType = 1;

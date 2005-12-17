@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.82 2005-12-16 19:17:34 geuzaine Exp $
+// $Id: Draw.cpp,v 1.83 2005-12-17 22:28:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -298,6 +298,11 @@ void InitRenderModel(void)
 
 void InitPosition(void)
 {
+  // store the model transfo matrix before we position the object
+  // (this way we can isolate the scaling/translation/rotation) from
+  // any transformations made before to adjust the viewpoint
+  glGetDoublev(GL_MODELVIEW_MATRIX, CTX.model_init);
+
   glScaled(CTX.s[0], CTX.s[1], CTX.s[2]);
   glTranslated(CTX.t[0], CTX.t[1], CTX.t[2]);
 
