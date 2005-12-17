@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.53 2005-12-17 22:28:16 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.54 2005-12-17 23:13:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -92,11 +92,11 @@ void MousePosition::recenter()
   
 void myZoom(MousePosition &click1, MousePosition &click2)
 {
-  if(click1.wnr[0] == click2.wnr[0] || click1.wnr[1] == click2.wnr[1])
+  if(click1.win[0] == click2.win[0] || click1.win[1] == click2.win[1])
     return;
 
-  CTX.s[0] *= (CTX.vxmax - CTX.vxmin) / (click2.wnr[0] - click1.wnr[0]);
-  CTX.s[1] *= (CTX.vymax - CTX.vymin) / (click1.wnr[1] - click2.wnr[1]);
+  CTX.s[0] *= (double)CTX.viewport[2] / (click2.win[0] - click1.win[0]);
+  CTX.s[1] *= (double)CTX.viewport[3] / (click2.win[1] - click1.win[1]);
   CTX.s[2] = MIN(CTX.s[0], CTX.s[1]); // bof...
   
   MousePosition tmp(click1);
@@ -106,9 +106,9 @@ void myZoom(MousePosition &click1, MousePosition &click2)
   tmp.t[1] = CTX.t[1]; 
   tmp.recenter();
 
-  WID->update_manip_window();
   InitPosition();
   Draw();
+  WID->update_manip_window();
 }
 
 void Opengl_Window::draw()
@@ -149,7 +149,8 @@ void Opengl_Window::draw()
     glDisable(GL_DEPTH_TEST);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax);
+    glOrtho((double)CTX.viewport[0], (double)CTX.viewport[2],
+	    (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glDisable(GL_DEPTH_TEST);
@@ -160,11 +161,11 @@ void Opengl_Window::draw()
     glLineWidth(0.2);
     for(int i = 0; i < 2; i++){
       glBegin(GL_LINE_STRIP);
-      glVertex2d(click.wnr[0], click.wnr[1]);
-      glVertex2d(zoom.wnr[0], click.wnr[1]);
-      glVertex2d(zoom.wnr[0], zoom.wnr[1]);
-      glVertex2d(click.wnr[0], zoom.wnr[1]);
-      glVertex2d(click.wnr[0], click.wnr[1]);
+      glVertex2d(click.win[0], CTX.viewport[3] - click.win[1]);
+      glVertex2d(zoom.win[0], CTX.viewport[3] - click.win[1]);
+      glVertex2d(zoom.win[0], CTX.viewport[3] - zoom.win[1]);
+      glVertex2d(click.win[0], CTX.viewport[3] - zoom.win[1]);
+      glVertex2d(click.win[0], CTX.viewport[3] - click.win[1]);
       glEnd();
       if(!i) zoom.set();
     }
