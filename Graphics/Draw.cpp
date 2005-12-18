@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.83 2005-12-17 22:28:16 geuzaine Exp $
+// $Id: Draw.cpp,v 1.84 2005-12-18 18:10:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -169,6 +169,9 @@ void InitProjection(int x, int y)
   if(CTX.render_mode == GMSH_SELECT)
     gluPickMatrix((GLdouble) x, (GLdouble) (CTX.viewport[3] - y),
                   5.0, 5.0, (GLint *) CTX.viewport);
+
+  // we should generalize the following for cases when the object is
+  // located far from the z=0 plane
 
   double gradient_zdist, gradient_xyfact;
   if(CTX.ortho) {

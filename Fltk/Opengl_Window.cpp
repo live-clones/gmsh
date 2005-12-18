@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.54 2005-12-17 23:13:20 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.55 2005-12-18 18:10:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -102,8 +102,6 @@ void myZoom(MousePosition &click1, MousePosition &click2)
   MousePosition tmp(click1);
   tmp.wnr[0] = 0.5 * (click1.wnr[0] + click2.wnr[0]);
   tmp.wnr[1] = 0.5 * (click1.wnr[1] + click2.wnr[1]);
-  tmp.t[0] = CTX.t[0];
-  tmp.t[1] = CTX.t[1]; 
   tmp.recenter();
 
   InitPosition();
