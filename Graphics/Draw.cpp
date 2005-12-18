@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.85 2005-12-18 21:10:54 geuzaine Exp $
+// $Id: Draw.cpp,v 1.86 2005-12-18 23:45:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -76,8 +76,8 @@ void Draw3d(void)
   glEnable(GL_DEPTH_TEST);
 
   InitProjection(0, 0);
-  InitPosition();
   InitRenderModel();
+  InitPosition();
 
   Draw_Mesh(&M);
 }
