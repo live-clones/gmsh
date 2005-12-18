@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.12 2005-12-14 13:53:09 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.13 2005-12-18 22:13:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -27,10 +27,12 @@
 #include "CreateFile.h"
 #include "Options.h"
 #include "Context.h"
+#include "Draw.h"
 
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Value_Slider.H>
+#include <FL/Fl_Menu_Window.H>
 #include <errno.h>
 
 extern Context_T CTX;
@@ -160,6 +162,55 @@ int arrow_editor(char *title, double &a, double &b, double &c)
       }
     }
   }
+  return 0;
+}
+
+// Perspective editor (aka z-clipping planes factor slider)
+
+static void persp_change_factor(Fl_Widget* w, void* data){
+  opt_general_clip_factor(0, GMSH_SET|GMSH_GUI, ((Fl_Slider*)w)->value());
+  Draw();
+}
+
+class Release_Slider : public Fl_Slider {
+  int handle(int event){ 
+    switch (event) {
+    case FL_RELEASE: 
+      if(window())
+	window()->hide();
+      return 1;
+    default:
+      return Fl_Slider::handle(event);
+    }
+  };
+public:
+  Release_Slider(int x,int y,int w,int h,const char *l=0)
+    : Fl_Slider(x, y, w, h, l) {}
+};
+
+int perspective_editor()
+{
+  struct _editor{
+    Fl_Menu_Window *window;
+    Release_Slider *sa;
+  };
+  static _editor *editor = NULL;
+
+  if(!editor){
+    editor = new _editor;
+    editor->window = new Fl_Menu_Window(20, 100);
+    editor->sa = new Release_Slider(0, 0, 20, 100);
+    editor->sa->type(FL_VERT_NICE_SLIDER);
+    editor->sa->minimum(12);
+    editor->sa->maximum(0.75);
+    editor->sa->callback(persp_change_factor);
+    editor->window->border(0);
+    editor->window->end();
+  }
+
+  editor->window->hotspot(editor->window);
+  editor->sa->value(CTX.clip_factor);
+  editor->window->show();
   return 0;
 }
 

@@ -133,6 +133,8 @@ Set Z view
 Hide/show small axes 
 @item Alt+Shift+l
 Hide/show surface mesh edges
+@item Alt+Shift+o
+Adjust projection parameters
 @item Alt+Shift+p
 Hide/show mesh points
 @item Alt+Shift+s

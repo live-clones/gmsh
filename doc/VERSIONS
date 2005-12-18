@@ -1,7 +1,7 @@
-$Id: VERSIONS,v 1.348 2005-12-16 17:37:44 geuzaine Exp $
+$Id: VERSIONS,v 1.349 2005-12-18 22:13:26 geuzaine Exp $
 
 New since 1.61: new option to draw color gradients in the background;
-various small bug fixes.
+enhanced perspective projection mode; various small bug fixes.
 
 New in 1.61: added support for second order (curved) elements in
 post-processor; new version (1.4) of post-processing file formats; new

@@ -27,6 +27,7 @@ int file_chooser_get_filter();
 void file_chooser_get_position(int *x, int *y);
 
 int arrow_editor(char *title, double &a, double &b, double &c);
+int perspective_editor();
 
 int jpeg_dialog(char *filename, int TeX);
 int gif_dialog(char *filename);

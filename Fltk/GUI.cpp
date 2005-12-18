@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.473 2005-12-18 21:10:54 geuzaine Exp $
+// $Id: GUI.cpp,v 1.474 2005-12-18 22:13:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -628,12 +628,6 @@ int GUI::global_shortcuts(int event)
     redraw_opengl();
     return 1;
   }
-  else if(Fl::test_shortcut(FL_ALT + 'o')) {
-    opt_general_orthographic(0, GMSH_SET | GMSH_GUI,
-                             !opt_general_orthographic(0, GMSH_GET, 0));
-    redraw_opengl();
-    return 1;
-  }
   else if(Fl::test_shortcut(FL_ALT + 'c')) {
     opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
                              opt_general_color_scheme(0, GMSH_GET, 0) + 1);
@@ -671,6 +665,11 @@ int GUI::global_shortcuts(int event)
   else if(Fl::test_shortcut(FL_ALT + 'z') ||
 	  Fl::test_shortcut(FL_ALT + FL_SHIFT + 'z')) {
     status_xyz1p_cb(0, (void *)"z");
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT + 'o') ||
+	  Fl::test_shortcut(FL_ALT + FL_SHIFT + 'o')) {
+    status_xyz1p_cb(0, (void *)"p");
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'a')) {
@@ -1363,7 +1362,7 @@ void GUI::create_graphic_window()
   g_status_butt[8] = new Fl_Button(x, glheight + 2, sw, sh - 4);
   x += sw;
   g_status_butt[8]->callback(status_xyz1p_cb, (void *)"p");
-  g_status_butt[8]->tooltip("Toggle projection mode (Alt+o)");
+  g_status_butt[8]->tooltip("Toggle projection mode (Alt+o or Alt+Shift+o)");
   ortho_bmp = new Fl_Bitmap(ortho_bits, ortho_width, ortho_height);
   ortho_bmp->label(g_status_butt[8]);
 

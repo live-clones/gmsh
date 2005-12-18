@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.387 2005-12-18 21:10:54 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.388 2005-12-18 22:13:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -450,8 +450,13 @@ void status_xyz1p_cb(CALLBACK_ARGS)
     Draw();
   }
   else if(!strcmp(str, "p")){ // toggle projection mode
-    opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 
-			     !opt_general_orthographic(0, GMSH_GET, 0));
+    if(!Fl::event_state(FL_SHIFT)){
+      opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 
+			       !opt_general_orthographic(0, GMSH_GET, 0));
+    }
+    else{
+      perspective_editor();
+    }
     Draw();
   }
   else if(!strcmp(str, "?")){ // display options
@@ -1640,6 +1645,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, " ");
   Msg(DIRECT, "  Alt+Shift+a   Hide/show small axes"); 
   Msg(DIRECT, "  Alt+Shift+l   Hide/show surface mesh edges");
+  Msg(DIRECT, "  Alt+Shift+o   Adjust projection parameters");
   Msg(DIRECT, "  Alt+Shift+p   Hide/show mesh points");
   Msg(DIRECT, "  Alt+Shift+s   Hide/show mesh surfaces");
   Msg(DIRECT, "  Alt+Shift+v   Hide/show mesh volumes");
