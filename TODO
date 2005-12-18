@@ -1,4 +1,4 @@
-$Id: TODO,v 1.109 2005-11-27 23:09:49 geuzaine Exp $
+$Id: TODO,v 1.110 2005-12-18 18:19:22 geuzaine Exp $
 
 ********************************************************************
 
@@ -121,20 +121,11 @@ disable all replacements)
 
 ********************************************************************
 
-Add a "bitmap" object in the views, e.g. to add a logo or a niver
-background. Oddly enough, people seem to want that kind of stuff.
+Add a "bitmap" object in the views, e.g. to add a logo
 
 ********************************************************************
 
-Would be nice to have gradients (cf. visit) in the background?
---Just save as PNG with a "strong" background colorand use e.g.
-Gimp to replace the bg with whatever gradient you like. You can
-even do it in batch with a gimp script.
-
-********************************************************************
-
-reduce cpu during 'sleep' by using small 'usleep' calls instead of a
-simple while(1) loop
+Add a way to draw arrows in annotations?
 
 ********************************************************************
 
@@ -177,7 +168,7 @@ add ternary operator and <,>,<=,>=,== tests in MathEval
 ********************************************************************
 
 on Macs, datasets with a bounding box < 1.e-06 don't display properly
-(probably because all the OpenGL stuff is done ineternally in single
+(probably because all the OpenGL stuff is done internally in single
 precision...). Rescale?
 
 ********************************************************************
@@ -229,12 +220,6 @@ Rewrite the View and ColorTable interface in C++
 
 ********************************************************************
 
-Include Tetgen (the same way we did it with Triangle--the license is
-the same). PARTIALLY DONE by Nicolas. Needs testing + regenerate
-surface mesh.
-
-********************************************************************
-
 Include the 2D Netgen algorithms?
 
 ********************************************************************
@@ -244,8 +229,7 @@ projected into a plane with a 1-to-1 correspondance between the nodes,
 then gmsh will fail. 
 
 We should definitely use a better projection algorithm
-(e.g. intrinstic parameterization). See the work by Desbrun et al. in
-CS for this.
+(intrinstic parameterization?). See e.g. work by Desbrun et al.
 
 ********************************************************************
 
