@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.472 2005-12-16 17:35:32 geuzaine Exp $
+// $Id: GUI.cpp,v 1.473 2005-12-18 21:10:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1360,15 +1360,12 @@ void GUI::create_graphic_window()
   g_status_butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
   g_status_butt[3]->tooltip("Set unit scale");
 
-  //FIXME: remove this until we do the perspective projection properly
-  //FIXME: need to change the button number!!
-  //g_status_butt[4] = new Fl_Button(x, glheight + 2, sw, sh - 4);
-  //x += sw;
-  //g_status_butt[4]->callback(status_xyz1p_cb, (void *)"p");
-  //g_status_butt[4]->tooltip("Set orthographic/perspective projection");
+  g_status_butt[8] = new Fl_Button(x, glheight + 2, sw, sh - 4);
+  x += sw;
+  g_status_butt[8]->callback(status_xyz1p_cb, (void *)"p");
+  g_status_butt[8]->tooltip("Toggle projection mode (Alt+o)");
   ortho_bmp = new Fl_Bitmap(ortho_bits, ortho_width, ortho_height);
-  persp_bmp = new Fl_Bitmap(persp_bits, persp_width, persp_height);
-  //persp_bmp->label(g_status_butt[4]);
+  ortho_bmp->label(g_status_butt[8]);
 
   g_status_butt[5] = new Fl_Button(x, glheight + 2, sw, sh - 4, "?");
   x += sw;
@@ -1378,10 +1375,10 @@ void GUI::create_graphic_window()
   g_status_butt[6] = new Fl_Button(x, glheight + 2, sw, sh - 4);
   x += sw;
   g_status_butt[6]->callback(status_rewind_cb);
+  g_status_butt[6]->tooltip("Rewind animation");
   rewind_bmp = new Fl_Bitmap(rewind_bits, rewind_width, rewind_height);
   rewind_bmp->label(g_status_butt[6]);
   g_status_butt[6]->deactivate();
-  g_status_butt[6]->tooltip("Rewind animation");
 
   g_status_butt[7] = new Fl_Button(x, glheight + 2, sw, sh - 4);
   x += sw;
@@ -1392,7 +1389,7 @@ void GUI::create_graphic_window()
   stop_bmp = new Fl_Bitmap(stop_bits, stop_width, stop_height);
   g_status_butt[7]->deactivate();
 
-  for(i = 0; i < 8; i++) {
+  for(i = 0; i < 9; i++) {
     g_status_butt[i]->box(FL_FLAT_BOX);
     g_status_butt[i]->selection_color(FL_WHITE);
     g_status_butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);

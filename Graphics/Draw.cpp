@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.84 2005-12-18 18:10:46 geuzaine Exp $
+// $Id: Draw.cpp,v 1.85 2005-12-18 21:10:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -162,6 +162,9 @@ void InitProjection(int x, int y)
   CTX.pixel_equiv_x = (CTX.vxmax - CTX.vxmin) / (CTX.viewport[2] - CTX.viewport[0]);
   CTX.pixel_equiv_y = (CTX.vymax - CTX.vymin) / (CTX.viewport[3] - CTX.viewport[1]);
 
+  // no initial translation of the model
+  CTX.t_init[0] = CTX.t_init[1] = CTX.t_init[2] = 0.;
+
   // setup ortho or perspective projection matrix
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -192,21 +195,19 @@ void InitProjection(int x, int y)
     double near = 0.75 * CTX.clip_factor * CTX.lc;
     double far = 75. * CTX.clip_factor * CTX.lc;
     // recenter the model such that the perspective is always at the
-    // center of the screen. FIXME: this screws up the zoom, so let's
-    // leave it out for now
-    //double w = (CTX.max[0] - CTX.min[0]) / 2.;
-    //double h = (CTX.max[1] - CTX.min[1]) / 2.;
-    //CTX.vxmin -= w;
-    //CTX.vxmax -= w;
-    //CTX.vymin -= h;
-    //CTX.vymax -= h;
-    double w = 0.;
-    double h = 0.;
+    // center of gravity (we should maybe add an option to choose
+    // this, as we do for the rotation center)
+    CTX.t_init[0] = CTX.cg[0];
+    CTX.t_init[1] = CTX.cg[1];
+    CTX.vxmin -= CTX.t_init[0];
+    CTX.vxmax -= CTX.t_init[0];
+    CTX.vymin -= CTX.t_init[1];
+    CTX.vymax -= CTX.t_init[1];
     glFrustum(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, near, far);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslated(-5 * w, -5 * h, -5 * near);
-    glScaled(5., 5., 5.);
+    glTranslated(-10 * CTX.t_init[0], -10 * CTX.t_init[1], -10 * near);
+    glScaled(10., 10., 10.);
     gradient_zdist = 0.99 * far;
     gradient_xyfact = far / near;
   }
@@ -301,11 +302,6 @@ void InitRenderModel(void)
 
 void InitPosition(void)
 {
-  // store the model transfo matrix before we position the object
-  // (this way we can isolate the scaling/translation/rotation) from
-  // any transformations made before to adjust the viewpoint
-  glGetDoublev(GL_MODELVIEW_MATRIX, CTX.model_init);
-
   glScaled(CTX.s[0], CTX.s[1], CTX.s[2]);
   glTranslated(CTX.t[0], CTX.t[1], CTX.t[2]);
 

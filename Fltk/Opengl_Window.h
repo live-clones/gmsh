@@ -28,18 +28,16 @@ class MousePosition {
  public:
   double win[3]; // window coordinates
   double wnr[3]; // world coordinates BEFORE rotation
-  double world[3]; // world coordinates (in a given plane // to screen)
   double s[3]; // scaling state when the event was recorded
   double t[3];  // translation state when the event was recorded
   MousePosition(){
     for(int i = 0; i < 3; i++)
-      win[i] = wnr[i] = world[i] = s[i] = t[i] = 0.;
+      win[i] = wnr[i] = s[i] = t[i] = 0.;
   }
   MousePosition(const MousePosition &instance){
     for(int i = 0; i < 3; i++){
       win[i] = instance.win[i];
       wnr[i] = instance.wnr[i];
-      world[i] = instance.world[i];
       s[i] = instance.s[i];
       t[i] = instance.t[i];
     }

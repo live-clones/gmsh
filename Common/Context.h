@@ -94,6 +94,7 @@ public :
   double rot[16];             // current rotation matrix 
   double r[3];                // current Euler angles (in degrees!) 
   double t[3], s[3];          // current translation and scale 
+  double t_init[3];           // initial translation before applying modelview transform
   double clip_factor;         // clipping plane distance factor
   double quaternion[4];       // current quaternion used for "trackball" rotation
   int useTrackball;           // do or do not use the trackball for rotations 
@@ -147,7 +148,6 @@ public :
 
   double model[16], proj[16]; // the modelview and projection matrix as they were
                               // at the time of the last InitPosition() call
-  double model_init[16]; // the modelview matrix before applying s, t and rot
 
   int forced_bbox; // dynamic variable tracking if the bbox is currently imposed
 

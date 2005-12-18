@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.55 2005-12-18 18:10:46 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.56 2005-12-18 21:10:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -44,53 +44,24 @@ void MousePosition::set()
   win[1] = (double)Fl::event_y();
   win[2] = 0.;
 
-  wnr[0] = (CTX.vxmin + win[0] / (double)CTX.viewport[2] * 
-	    (CTX.vxmax - CTX.vxmin)) / CTX.s[0] - CTX.t[0];
-  wnr[1] = (CTX.vymax - win[1] / (double)CTX.viewport[3] * 
-	    (CTX.vymax - CTX.vymin)) / CTX.s[1] - CTX.t[1];
+  wnr[0] = 
+    (CTX.vxmin + win[0] / (double)CTX.viewport[2] * (CTX.vxmax - CTX.vxmin)) 
+    / CTX.s[0] - CTX.t[0] + CTX.t_init[0] / CTX.s[0];
+  wnr[1] = 
+    (CTX.vymax - win[1] / (double)CTX.viewport[3] * (CTX.vymax - CTX.vymin))
+    / CTX.s[1] - CTX.t[1] + CTX.t_init[1] / CTX.s[1];
   wnr[2] = 0.;
-
-  // might need this later
-  // Viewport2World(win, world);
 }
 
 void MousePosition::recenter()
 {
-  // this computes the equivalent translation to apply after the
-  // scaling so that the scaling is done around the point which was
-  // clicked. FIXME: needs to be generalized to the case where an
-  // initial translation is done BEFORE the scaling (necessary for the
-  // general perspective case, with the line of sight in the middle of
-  // the screen, and not just the z-axis).
+  // compute the equivalent translation to apply *after* the scaling
+  // so that the scaling is done around the point which was clicked:
   CTX.t[0] = t[0] * (s[0] / CTX.s[0]) - wnr[0] * (1. - (s[0] / CTX.s[0]));
   CTX.t[1] = t[1] * (s[1] / CTX.s[1]) - wnr[1] * (1. - (s[1] / CTX.s[1]));
-
-  /*
-  double sx, sy;
-  double tx0, ty0;
-  double tx, ty;
-  double model_new[16];
-
-  glPushMatrix();
-  glLoadMatrix(CTX.model_init);
-  glTranslated(tx0, ty0, 0.);
-  glScaled(sx, sy, sz);
-  glTranslated(-tx0, -ty0, 0.);
-  glTranslated(tx, ty, 0.);
-  glGetDoublev(GL_MODELVIEW_MATRIX, model_new);
-  glPopMatrix();
-
-  CTX.s[0] = model_new[0][0];
-  CTX.s[1] = model_new[1][1];
-  CTX.s[2] = model_new[2][2];
-
-  CTX.t[0] = model_new[0][3];
-  CTX.t[1] = model_new[1][3];
-  CTX.t[2] = model_new[2][3];
-  */
 }
   
-void myZoom(MousePosition &click1, MousePosition &click2)
+void lasso_zoom(MousePosition &click1, MousePosition &click2)
 {
   if(click1.win[0] == click2.win[0] || click1.win[1] == click2.win[1])
     return;
@@ -99,6 +70,7 @@ void myZoom(MousePosition &click1, MousePosition &click2)
   CTX.s[1] *= (double)CTX.viewport[3] / (click2.win[1] - click1.win[1]);
   CTX.s[2] = MIN(CTX.s[0], CTX.s[1]); // bof...
   
+  // recenter around the center of the lasso rectangle
   MousePosition tmp(click1);
   tmp.wnr[0] = 0.5 * (click1.wnr[0] + click2.wnr[0]);
   tmp.wnr[1] = 0.5 * (click1.wnr[1] + click2.wnr[1]);
@@ -210,7 +182,7 @@ int Opengl_Window::handle(int event)
       }
       else if(ZoomMode) {
         ZoomMode = false;
-	myZoom(click, curr);
+	lasso_zoom(click, curr);
       }
       else {
         WID->try_selection = 1;

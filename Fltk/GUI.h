@@ -126,13 +126,11 @@ class GUI{
   Fl_Scroll *m_scroll;
 
   // Bitmaps
-  Fl_Bitmap  *abort_bmp, *start_bmp, *stop_bmp, *rewind_bmp, *rotate_bmp ;
+  Fl_Bitmap  *abort_bmp, *start_bmp, *stop_bmp, *rewind_bmp, *rotate_bmp, *ortho_bmp ;
   void add_post_plugins ( Fl_Menu_Button *button , int iView);
   void add_multiline_in_browser(Fl_Browser *o, char* prefix, char *str);
 
 public:
-
-  Fl_Bitmap  *ortho_bmp, *persp_bmp;
 
   // menu window
   Fl_Window        *m_window ;
@@ -153,7 +151,7 @@ public:
   // graphic window
   Fl_Window        *g_window ;
   Opengl_Window    *g_opengl_window ;
-  Fl_Button        *g_status_butt[8] ;
+  Fl_Button        *g_status_butt[9] ;
   Fl_Box           *g_status_label[3] ;
 
   // Option window

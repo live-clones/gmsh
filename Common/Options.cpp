@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.264 2005-12-16 17:35:32 geuzaine Exp $
+// $Id: Options.cpp,v 1.265 2005-12-18 21:10:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2759,13 +2759,12 @@ double opt_general_orthographic(OPT_ARGS_NUM)
   if(WID && (action & GMSH_GUI)) {
     if(CTX.ortho){
       WID->gen_choice[2]->value(0);
-      //WID->persp_bmp->label(WID->g_status_butt[4]);
+      Msg(STATUS1N, "Orthographic projection");
     }
     else{
       WID->gen_choice[2]->value(1);
-      //WID->ortho_bmp->label(WID->g_status_butt[4]);
+      Msg(STATUS1N, "Perspective projection");
     }
-    //WID->g_status_butt[4]->redraw();
   }
 #endif
   return CTX.ortho;

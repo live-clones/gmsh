@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.386 2005-12-16 20:20:17 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.387 2005-12-18 21:10:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -449,7 +449,7 @@ void status_xyz1p_cb(CALLBACK_ARGS)
     CTX.setQuaternionFromEulerAngles();
     Draw();
   }
-  else if(!strcmp(str, "p")){ // switch projection mode
+  else if(!strcmp(str, "p")){ // toggle projection mode
     opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 
 			     !opt_general_orthographic(0, GMSH_GET, 0));
     Draw();
@@ -1012,7 +1012,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
   }
   opt_general_vector_type(0, GMSH_SET, val);
   opt_general_graphics_font(0, GMSH_SET, (char *)WID->gen_choice[1]->text());
-  opt_general_orthographic(0, GMSH_SET | GMSH_GUI, !WID->gen_choice[2]->value());
+  opt_general_orthographic(0, GMSH_SET, !WID->gen_choice[2]->value());
   opt_general_axes(0, GMSH_SET, WID->gen_choice[4]->value());
   opt_general_background_gradient(0, GMSH_SET, WID->gen_choice[5]->value());
 }
