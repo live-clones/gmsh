@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.86 2005-12-18 23:45:01 geuzaine Exp $
+// $Id: Draw.cpp,v 1.87 2005-12-19 02:24:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -176,24 +176,24 @@ void InitProjection(int x, int y)
   // we should generalize the following for cases when the object is
   // located far from the z=0 plane
 
-  double gradient_zdist, gradient_xyfact;
+  double grad_z, grad_xy;
   if(CTX.ortho) {
     // setting up the near and far clipping planes so that the box is
     // large enough to manipulate the model and zoom, but not too big
     // (the z-buffer resolution, e.g., on software Mesa can become
     // insufficient)
-    double maxz = MAX(fabs(CTX.min[2]), fabs(CTX.max[2]));
-    if(maxz < CTX.lc) maxz = CTX.lc;
-    double clip = maxz * CTX.s[2] * CTX.clip_factor;
+    double zmax = MAX(fabs(CTX.min[2]), fabs(CTX.max[2]));
+    if(zmax < CTX.lc) zmax = CTX.lc;
+    double clip = zmax * CTX.s[2] * CTX.clip_factor;
     glOrtho(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, -clip, clip);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    gradient_zdist = 0.99 * clip;
-    gradient_xyfact = 1.;
+    grad_z = 0.99 * clip;
+    grad_xy = 1.;
   }
   else {
-    double near = 0.75 * CTX.clip_factor * CTX.lc;
-    double far = 75. * CTX.clip_factor * CTX.lc;
+    double znear = 0.75 * CTX.clip_factor * CTX.lc;
+    double zfar = 75. * CTX.clip_factor * CTX.lc;
     // recenter the model such that the perspective is always at the
     // center of gravity (we should maybe add an option to choose
     // this, as we do for the rotation center)
@@ -203,37 +203,36 @@ void InitProjection(int x, int y)
     CTX.vxmax -= CTX.t_init[0];
     CTX.vymin -= CTX.t_init[1];
     CTX.vymax -= CTX.t_init[1];
-    glFrustum(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, near, far);
+    glFrustum(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, znear, zfar);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslated(-10 * CTX.t_init[0], -10 * CTX.t_init[1], -10 * near);
+    glTranslated(-10 * CTX.t_init[0], -10 * CTX.t_init[1], -10 * znear);
     glScaled(10., 10., 10.);
-    gradient_zdist = 0.99 * far;
-    gradient_xyfact = far / near;
+    grad_z = 0.99 * zfar;
+    grad_xy = zfar / znear;
   }
 
   // draw background gradient
   if(CTX.render_mode != GMSH_SELECT && CTX.bg_gradient){
     glPushMatrix();
     glLoadIdentity();
-    glTranslated(0., 0., -gradient_zdist);
-    glShadeModel(GL_SMOOTH);
+    glTranslated(0., 0., -grad_z);
     glBegin(GL_QUADS);
     if(CTX.bg_gradient == 1){
       glColor4ubv((GLubyte *) & CTX.color.bg);
-      glVertex2d(gradient_xyfact * CTX.vxmin, gradient_xyfact * CTX.vymin);
-      glVertex2d(gradient_xyfact * CTX.vxmax, gradient_xyfact * CTX.vymin);
+      glVertex3d(grad_xy * CTX.vxmin, grad_xy * CTX.vymin, 0.);
+      glVertex3d(grad_xy * CTX.vxmax, grad_xy * CTX.vymin, 0.);
       glColor4ubv((GLubyte *) & CTX.color.bg_grad);
-      glVertex2d(gradient_xyfact * CTX.vxmax, gradient_xyfact * CTX.vymax);
-      glVertex2d(gradient_xyfact * CTX.vxmin, gradient_xyfact * CTX.vymax);
+      glVertex3d(grad_xy * CTX.vxmax, grad_xy * CTX.vymax, 0.);
+      glVertex3d(grad_xy * CTX.vxmin, grad_xy * CTX.vymax, 0.);
     }
     else{
       glColor4ubv((GLubyte *) & CTX.color.bg);
-      glVertex2d(gradient_xyfact * CTX.vxmax, gradient_xyfact * CTX.vymin);
-      glVertex2d(gradient_xyfact * CTX.vxmax, gradient_xyfact * CTX.vymax);
+      glVertex3d(grad_xy * CTX.vxmax, grad_xy * CTX.vymin, 0.);
+      glVertex3d(grad_xy * CTX.vxmax, grad_xy * CTX.vymax, 0.);
       glColor4ubv((GLubyte *) & CTX.color.bg_grad);
-      glVertex2d(gradient_xyfact * CTX.vxmin, gradient_xyfact * CTX.vymax);
-      glVertex2d(gradient_xyfact * CTX.vxmin, gradient_xyfact * CTX.vymin);
+      glVertex3d(grad_xy * CTX.vxmin, grad_xy * CTX.vymax, 0.);
+      glVertex3d(grad_xy * CTX.vxmin, grad_xy * CTX.vymin, 0.);
     }
     glEnd();
     glPopMatrix();
@@ -288,6 +287,7 @@ void InitRenderModel(void)
   glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, CTX.shine_exponent);
 
   glShadeModel(GL_SMOOTH);
+
   // Normalize the normals automatically. We could use the more
   // efficient glEnable(GL_RESCALE_NORMAL) instead (since we initially
   // specify unit normals), but GL_RESCALE_NORMAL does only work with
