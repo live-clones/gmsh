@@ -164,6 +164,11 @@ Number of tics on the Z-axis@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.BackgroundGradient
+Draw background gradient (0=none, 1=vertical, 2=horizontal)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.Clip0
 Enable clipping plane 0 (Geometry=2^0, Mesh=2^1, View[i]=2^(2+i))@*
 Default value: @code{0}@*
@@ -847,6 +852,11 @@ Saved in: @code{General.OptionsFileName}
 @item General.Color.Background
 Background color@*
 Default value: @code{@{0,0,0@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Color.BackgroundGradient
+Background gradient color@*
+Default value: @code{@{0,0,125@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Color.Foreground
