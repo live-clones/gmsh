@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.265 2005-12-18 21:10:54 geuzaine Exp $
+// $Id: Options.cpp,v 1.266 2005-12-19 05:08:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2651,8 +2651,13 @@ double opt_general_scale2(OPT_ARGS_NUM)
 
 double opt_general_clip_factor(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
-    CTX.clip_factor = val;
+  if(action & GMSH_SET){
+    // should NEVER be zero (or negative)
+    if(val < 0.01) 
+      CTX.clip_factor = 0.01;
+    else
+      CTX.clip_factor = val;    
+  }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
     WID->gen_value[14]->value(CTX.clip_factor);

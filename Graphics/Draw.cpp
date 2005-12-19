@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.87 2005-12-19 02:24:56 geuzaine Exp $
+// $Id: Draw.cpp,v 1.88 2005-12-19 05:08:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -169,21 +169,20 @@ void InitProjection(int x, int y)
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
 
+  // restrict to 5x5 pixel viewport when in SELECT mode
   if(CTX.render_mode == GMSH_SELECT)
     gluPickMatrix((GLdouble) x, (GLdouble) (CTX.viewport[3] - y),
                   5.0, 5.0, (GLint *) CTX.viewport);
 
-  // we should generalize the following for cases when the object is
-  // located far from the z=0 plane
-
   double grad_z, grad_xy;
+  double zmax = MAX(fabs(CTX.min[2]), fabs(CTX.max[2]));
+  if(zmax < CTX.lc) zmax = CTX.lc;
+
   if(CTX.ortho) {
     // setting up the near and far clipping planes so that the box is
     // large enough to manipulate the model and zoom, but not too big
     // (the z-buffer resolution, e.g., on software Mesa can become
     // insufficient)
-    double zmax = MAX(fabs(CTX.min[2]), fabs(CTX.max[2]));
-    if(zmax < CTX.lc) zmax = CTX.lc;
     double clip = zmax * CTX.s[2] * CTX.clip_factor;
     glOrtho(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, -clip, clip);
     glMatrixMode(GL_MODELVIEW);
@@ -192,8 +191,9 @@ void InitProjection(int x, int y)
     grad_xy = 1.;
   }
   else {
-    double znear = 0.75 * CTX.clip_factor * CTX.lc;
-    double zfar = 75. * CTX.clip_factor * CTX.lc;
+    double clip_near = 0.75 * CTX.clip_factor * zmax;
+    double clip_far = 75. * CTX.clip_factor * zmax;
+    double coef = (75./0.75) / 3.;
     // recenter the model such that the perspective is always at the
     // center of gravity (we should maybe add an option to choose
     // this, as we do for the rotation center)
@@ -203,13 +203,13 @@ void InitProjection(int x, int y)
     CTX.vxmax -= CTX.t_init[0];
     CTX.vymin -= CTX.t_init[1];
     CTX.vymax -= CTX.t_init[1];
-    glFrustum(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, znear, zfar);
+    glFrustum(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, clip_near, clip_far);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslated(-10 * CTX.t_init[0], -10 * CTX.t_init[1], -10 * znear);
-    glScaled(10., 10., 10.);
-    grad_z = 0.99 * zfar;
-    grad_xy = zfar / znear;
+    glTranslated(-coef * CTX.t_init[0], -coef * CTX.t_init[1], -coef * clip_near);
+    glScaled(coef, coef, coef);
+    grad_z = 0.99 * clip_far;
+    grad_xy = clip_far / clip_near;
   }
 
   // draw background gradient
