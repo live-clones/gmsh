@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.77 2005-09-21 17:29:36 geuzaine Exp $
+# $Id: Makefile,v 1.78 2005-12-19 02:35:03 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -63,7 +63,6 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-# 1 "/Users/geuzaine/.gmsh/Common//"
 Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Context.h \
@@ -75,19 +74,16 @@ Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h Views.h ColorTable.h \
   VertexArray.h SmoothNormals.h GmshMatrix.h AdaptiveViews.h Trackball.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 AdaptiveViews.o: AdaptiveViews.cpp AdaptiveViews.h ../DataStr/List.h \
   GmshMatrix.h ../Plugin/Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
   ../Common/AdaptiveViews.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h ../Numeric/Numeric.h Views.h ColorTable.h \
   VertexArray.h SmoothNormals.h GmshMatrix.h AdaptiveViews.h Context.h \
   Options.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 Options.o: Options.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
@@ -103,7 +99,6 @@ Options.o: Options.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Mesh/Matrix.h ../Graphics/Draw.h Context.h Options.h \
   ../Fltk/Solvers.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
   ../Fltk/Colorbar_Window.h ../Common/GmshUI.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h GmshUI.h GmshVersion.h \
@@ -116,14 +111,11 @@ CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h Views.h ColorTable.h \
   VertexArray.h SmoothNormals.h GmshMatrix.h AdaptiveViews.h \
   ../Parser/OpenFile.h ../Parser/Parser.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 Timer.o: Timer.cpp
-# 1 "/Users/geuzaine/.gmsh/Common//"
 ColorTable.o: ColorTable.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ColorTable.h Context.h \
   ../Numeric/Numeric.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 Visibility.o: Visibility.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Geo/Geo.h ../Geo/CAD.h \
@@ -134,19 +126,15 @@ Visibility.o: Visibility.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h ../Parser/Parser.h Visibility.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 Trackball.o: Trackball.cpp Trackball.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 VertexArray.o: VertexArray.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h VertexArray.h Context.h \
   ../Numeric/Numeric.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 SmoothNormals.o: SmoothNormals.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h \
   SmoothNormals.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 License.o: License.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h

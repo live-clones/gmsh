@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.85 2005-09-21 17:49:22 geuzaine Exp $
+# $Id: Makefile,v 1.86 2005-12-19 02:35:04 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -72,7 +72,6 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
@@ -90,7 +89,6 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h ../Common/GmshUI.h \
   Eigenvectors.h Eigenvalues.h Lambda2.h ../Numeric/Numeric.h Evaluate.h \
   OctreePost.h Octree.h OctreeInternals.h Probe.h ../Common/Context.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
@@ -98,7 +96,6 @@ Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   DecomposeInSimplex.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../Graphics/Iso.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/Malloc.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 CutPlane.o: CutPlane.cpp CutPlane.h Levelset.h Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
@@ -110,7 +107,6 @@ CutPlane.o: CutPlane.cpp CutPlane.h Levelset.h Plugin.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 CutSphere.o: CutSphere.cpp CutSphere.h Levelset.h Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
@@ -122,19 +118,16 @@ CutSphere.o: CutSphere.cpp CutSphere.h Levelset.h Plugin.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 CutMap.o: CutMap.cpp CutMap.h Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   ../Common/Context.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Smooth.o: Smooth.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   Smooth.h ../Common/Context.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 CutParametric.o: CutParametric.cpp OctreePost.h Octree.h \
   OctreeInternals.h CutParametric.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
@@ -147,38 +140,31 @@ CutParametric.o: CutParametric.cpp OctreePost.h Octree.h \
   ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Lambda2.o: Lambda2.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   Lambda2.h ../Numeric/Numeric.h ../Common/Context.h ShapeFunctions.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Eigenvectors.o: Eigenvectors.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   Eigenvectors.h ../Common/Context.h ../DataStr/Malloc.h \
   ../Numeric/Numeric.h ../Numeric/EigSolve.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Eigenvalues.o: Eigenvalues.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   Eigenvalues.h ../Common/Context.h ../DataStr/Malloc.h \
   ../Numeric/Numeric.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Octree.o: Octree.cpp Octree.h OctreeInternals.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 OctreeInternals.o: OctreeInternals.cpp ../Common/Message.h \
   OctreeInternals.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 OctreePost.o: OctreePost.cpp Octree.h OctreeInternals.h OctreePost.h \
   ../DataStr/List.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   ../Numeric/Numeric.h ../Common/Message.h ShapeFunctions.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 StreamLines.o: StreamLines.cpp OctreePost.h Octree.h OctreeInternals.h \
   StreamLines.h Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
@@ -191,7 +177,6 @@ StreamLines.o: StreamLines.cpp OctreePost.h Octree.h OctreeInternals.h \
   ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 CutGrid.o: CutGrid.cpp OctreePost.h Octree.h OctreeInternals.h CutGrid.h \
   Plugin.h ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
@@ -203,13 +188,11 @@ CutGrid.o: CutGrid.cpp OctreePost.h Octree.h OctreeInternals.h CutGrid.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Transform.o: Transform.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   Transform.h ../Common/Context.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Triangulate.o: Triangulate.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -224,19 +207,16 @@ Triangulate.o: Triangulate.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h ../Mesh/Utils.h \
   ../Mesh/Vertex.h ../Mesh/Mesh.h ../Mesh/Create.h ../Mesh/Vertex.h \
   ../Mesh/Mesh.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 SphericalRaise.o: SphericalRaise.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   SphericalRaise.h ../Common/Context.h ../Numeric/Numeric.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 DisplacementRaise.o: DisplacementRaise.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   DisplacementRaise.h ../Common/Context.h ../Numeric/Numeric.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 StructuralSolver.o: StructuralSolver.cpp StructuralSolver.h ../Geo/Geo.h \
   ../DataStr/List.h ../Mesh/Mesh.h ../DataStr/Tree.h ../DataStr/avl.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
@@ -252,58 +232,49 @@ StructuralSolver.o: StructuralSolver.cpp StructuralSolver.h ../Geo/Geo.h \
   ../Common/Context.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h ../Graphics/Draw.h ../Mesh/Utils.h ../Mesh/Vertex.h \
   ../Mesh/Mesh.h ../Numeric/Numeric.h ../Fltk/Shortcut_Window.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Skin.o: Skin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   Skin.h ../DataStr/Tree.h ../DataStr/avl.h ../Common/Context.h \
   ../DataStr/Malloc.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Extract.o: Extract.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   Extract.h ../Common/Context.h ../DataStr/Malloc.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 DecomposeInSimplex.o: DecomposeInSimplex.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   DecomposeInSimplex.h ../DataStr/Tree.h ../DataStr/avl.h \
   ../Common/Context.h ../DataStr/Malloc.h ../Numeric/Numeric.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Evaluate.o: Evaluate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   Evaluate.h OctreePost.h Octree.h OctreeInternals.h ../Common/Context.h \
   ../Numeric/Numeric.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Integrate.o: Integrate.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   Integrate.h ../Common/Context.h ../Numeric/Numeric.h ShapeFunctions.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Gradient.o: Gradient.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   Gradient.h ../Common/Context.h ../Numeric/Numeric.h ShapeFunctions.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Curl.o: Curl.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   Curl.h ../Common/Context.h ../Numeric/Numeric.h ShapeFunctions.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Divergence.o: Divergence.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   Divergence.h ../Common/Context.h ../Numeric/Numeric.h ShapeFunctions.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Annotate.o: Annotate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
@@ -316,13 +287,11 @@ Annotate.o: Annotate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Fltk/Colorbar_Window.h ../Graphics/Draw.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Remove.o: Remove.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   Remove.h ../Common/Context.h ../Numeric/Numeric.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 Probe.o: Probe.cpp Probe.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
@@ -335,13 +304,11 @@ Probe.o: Probe.cpp Probe.h Plugin.h ../Common/Options.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h OctreePost.h Octree.h \
   OctreeInternals.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 HarmonicToTime.o: HarmonicToTime.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   HarmonicToTime.h ../Common/Context.h ../Numeric/Numeric.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
 ModulusPhase.o: ModulusPhase.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
