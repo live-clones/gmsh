@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.145 2005-12-16 19:17:34 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.146 2005-12-19 02:30:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -68,10 +68,7 @@ void draw_polygon_2d(double r, double g, double b, int n,
   glColor3f(r, g, b);
   glBegin(GL_LINE_STRIP);
   for(int i = 0; i < n; i++)
-    if(z)
-      glVertex3d(x[i], y[i], z[i]);
-    else
-      glVertex2d(x[i], y[i]);
+    glVertex3d(x[i], y[i], z ? z[i] : 0.);
   glEnd();
   glFlush();
   glDrawBuffer(GL_BACK);
