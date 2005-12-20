@@ -1,4 +1,4 @@
-/* $Id: gl2ps.h,v 1.61 2005-06-23 07:15:44 geuzaine Exp $ */
+/* $Id: gl2ps.h,v 1.62 2005-12-20 21:52:45 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2005 Christophe Geuzaine <geuz@geuz.org>
@@ -40,7 +40,7 @@
 
 /* Define GL2PSDLL at compile time to build a Windows dll */
 
-#if defined (WIN32) || defined(_WIN32)
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #  if defined(_MSC_VER)
 #    pragma warning(disable:4115)
 #  endif
@@ -77,18 +77,20 @@
 
 #define GL2PS_MAJOR_VERSION 1
 #define GL2PS_MINOR_VERSION 2
-#define GL2PS_PATCH_VERSION 6
+#define GL2PS_PATCH_VERSION 7
 
 #define GL2PS_VERSION (GL2PS_MAJOR_VERSION + \
                        0.01 * GL2PS_MINOR_VERSION + \
                        0.0001 * GL2PS_PATCH_VERSION)
 
-/* Output file format */
+/* Output file formats (the values and the ordering are important!) */
 
-#define GL2PS_PS  1
-#define GL2PS_EPS 2
-#define GL2PS_TEX 3
-#define GL2PS_PDF 4
+#define GL2PS_PS  0
+#define GL2PS_EPS 1
+#define GL2PS_TEX 2
+#define GL2PS_PDF 3
+#define GL2PS_SVG 4
+#define GL2PS_PGF 5
 
 /* Sorting algorithms */
 
@@ -179,6 +181,8 @@ GL2PSDLL_API GLint gl2psBlendFunc(GLenum sfactor, GLenum dfactor);
 GL2PSDLL_API GLint gl2psDrawImageMap(GLsizei width, GLsizei height,
                                      const GLfloat position[3],
                                      const unsigned char *imagemap);
+GL2PSDLL_API const char *gl2psGetFileExtension(GLint format);
+GL2PSDLL_API const char *gl2psGetFormatDescription(GLint format);
 
 #if defined(__cplusplus)
 }
