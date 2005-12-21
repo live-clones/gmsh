@@ -29,6 +29,11 @@ Threshold angle below which normals are not smoothed@*
 Default value: @code{180}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.BetaSmoothMetric
+Maximum ratio of two consecutive edge lengths@*
+Default value: @code{0.9}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.CharacteristicLengthFactor
 Factor applied to all characteristic lengths (and background meshes)@*
 Default value: @code{1}@*
@@ -164,6 +169,11 @@ Minimum number of points used to mesh a circle@*
 Default value: @code{7}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.MinimumElementSizeFact
+Minimum element size factor in the Remesher@*
+Default value: @code{500}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.MshFileVersion
 Version of the `msh' file format to use@*
 Default value: @code{1}@*
@@ -172,21 +182,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.NbElemsPerRadiusOfCurv
 Number of elements per radius of curvature in the remesher@*
 Default value: @code{5}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.TargetElmentSizeFact
-Target element size factor in the Remesher@*
-Default value: @code{20}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.MinimumElementSizeFact
-Minimum element size factor in the Remesher@*
-Default value: @code{500}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.BetaSmoothMetric
-Maximum ratio of two consecutive edge lengths@*
-Default value: @code{0.9}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NbHexahedra
@@ -357,6 +352,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Tangents
 Display size of tangent vectors (in pixels)@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.TargetElmentSizeFact
+Target element size factor in the Remesher@*
+Default value: @code{20}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.VertexArrays

@@ -165,7 +165,7 @@ Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.BackgroundGradient
-Draw background gradient (0=none, 1=vertical, 2=horizontal)@*
+Draw background gradient (0=none, 1=vertical, 2=horizontal, 3=radial)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
