@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.474 2005-12-18 22:13:26 geuzaine Exp $
+// $Id: GUI.cpp,v 1.475 2005-12-21 02:01:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1985,6 +1985,7 @@ void GUI::create_option_window()
 	{"None", 0, 0, 0},
 	{"Vertical", 0, 0, 0},
 	{"Horizontal", 0, 0, 0},
+	{"Radial", 0, 0, 0},
 	{0}
       };
 

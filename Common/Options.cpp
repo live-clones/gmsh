@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.267 2005-12-20 23:17:28 geuzaine Exp $
+// $Id: Options.cpp,v 1.268 2005-12-21 02:01:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3106,7 +3106,7 @@ double opt_general_background_gradient(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     CTX.bg_gradient = (int)val;
-    if(CTX.bg_gradient < 0 || CTX.bg_gradient > 2)
+    if(CTX.bg_gradient < 0 || CTX.bg_gradient > 3)
       CTX.bg_gradient = 0;
   }
 #if defined(HAVE_FLTK)

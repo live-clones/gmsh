@@ -469,7 +469,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "AxesTicsZ" , opt_general_axes_tics2 , 5. ,
     "Number of tics on the Z-axis" },
   { F|O, "BackgroundGradient" , opt_general_background_gradient , 0. ,
-    "Draw background gradient (0=none, 1=vertical, 2=horizontal)" },
+    "Draw background gradient (0=none, 1=vertical, 2=horizontal, 3=radial)" },
   { F,   "Clip0" , opt_general_clip0 , 0. ,
     "Enable clipping plane 0 (Geometry=2^0, Mesh=2^1, View[i]=2^(2+i))" },
   { F,   "Clip0A" , opt_general_clip0a , 1.0 ,
