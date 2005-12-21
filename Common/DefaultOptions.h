@@ -92,12 +92,8 @@ StringXString GeneralOptions_String[] = {
     "explorer.exe %s" , 
 #elif defined(__APPLE__)
     "open %s" ,
-#elif defined (__FreeBSD__) || defined (__NetBSD__) || defined (__OpenBSD__)
-    "if [[ $(ps -ax|grep mozilla|grep -v grep) ]]; "
-    "then mozilla -remote 'openurl(%s)' ; else mozilla %s ; fi &" ,
 #else
-    "if [[ $(ps -e|grep mozilla|grep -v grep) ]]; "
-    "then mozilla -remote 'openurl(%s)' ; else mozilla %s ; fi &" ,
+    "firefox %s &" ,
 #endif
     "System command to launch a web browser" },
 
@@ -838,6 +834,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 180.0 ,
     "Threshold angle below which normals are not smoothed" }, 
 
+  { F|O, "BetaSmoothMetric" ,opt_mesh_beta_smooth_metric, 0.9 ,
+    "Maximum ratio of two consecutive edge lengths" },
+
   { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
     "Factor applied to all characteristic lengths (and background meshes)" },
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
@@ -898,17 +897,13 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
     "Minimum number of points used to mesh a circle" },
+  { F|O, "MinimumElementSizeFact" , opt_mesh_min_elem_size_fact, 500. ,
+    "Minimum element size factor in the Remesher" },
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 1.0 , 
     "Version of the `msh' file format to use" },
 
   { F|O, "NbElemsPerRadiusOfCurv" , opt_mesh_nb_elem_per_rc, 5. ,
     "Number of elements per radius of curvature in the remesher" },
-  { F|O, "TargetElmentSizeFact" , opt_mesh_target_elem_size_fact, 20. ,
-    "Target element size factor in the Remesher" },
-  { F|O, "MinimumElementSizeFact" , opt_mesh_min_elem_size_fact, 500. ,
-    "Minimum element size factor in the Remesher" },
-  { F|O, "BetaSmoothMetric" ,opt_mesh_beta_smooth_metric, 0.9 ,
-    "Maximum ratio of two consecutive edge lengths" },
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. , 
     "Number of hexahedra in the current mesh (read-only)" },
   { F, "NbNodes" , opt_mesh_nb_nodes , 0. , 
@@ -983,6 +978,8 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "Tangents" , opt_mesh_tangents , 0.0 , 
     "Display size of tangent vectors (in pixels)" }, 
+  { F|O, "TargetElmentSizeFact" , opt_mesh_target_elem_size_fact, 20. ,
+    "Target element size factor in the Remesher" },
 
   { F|O, "VertexArrays" , opt_mesh_vertex_arrays , 1. , 
     "Use OpenGL vertex arrays to draw triangular meshes?" },
@@ -1012,7 +1009,7 @@ StringXNumber SolverOptions_Number[] = {
     "Automatically merge any post-processing view created by solver 0" },
   { F|O, "PopupMessages0" , opt_solver_popup_messages0 , 
 #if defined(WIN32)
-    0. , // we already have the transient dos window
+    0. , // we already have the transient DOS window
 #else
     1. ,
 #endif
