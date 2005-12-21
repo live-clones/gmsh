@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.89 2005-12-21 02:01:28 geuzaine Exp $
+// $Id: Draw.cpp,v 1.90 2005-12-21 02:11:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -240,7 +240,7 @@ void InitProjection(int x, int y)
     else{ // radial
       double cx = grad_xy * (CTX.vxmin + CTX.vxmax) / 2.;
       double cy = grad_xy * (CTX.vymin + CTX.vymax) / 2.;
-      double r = MAX(CTX.vxmax - CTX.vxmin, CTX.vymax - CTX.vymin) / 2.;
+      double r = grad_xy * MAX(CTX.vxmax - CTX.vxmin, CTX.vymax - CTX.vymin) / 2.;
       glBegin(GL_TRIANGLE_FAN);
       glColor4ubv((GLubyte *) & CTX.color.bg_grad);
       glVertex3d(cx, cy, 0.);
