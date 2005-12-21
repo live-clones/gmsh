@@ -33,7 +33,7 @@
 void SetOpenglContext(void);
 void ClearOpengl(void);
 
-void InitProjection(int x, int y);
+void InitProjection(int xpick=0, int ypick=0, int wpick=0, int hpick=0);
 void InitPosition(void);
 void InitRenderModel(void);
 

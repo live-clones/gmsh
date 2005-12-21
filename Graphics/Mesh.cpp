@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.146 2005-12-19 02:30:33 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.147 2005-12-21 23:09:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -60,7 +60,7 @@ void draw_polygon_2d(double r, double g, double b, int n,
   // of the 2D aniso mesh
   CalculateMinMax(THEM->Points, NULL);
   SetOpenglContext();
-  InitProjection(0, 0);
+  InitProjection();
   InitPosition();
 
   glDisable(GL_DEPTH_TEST);

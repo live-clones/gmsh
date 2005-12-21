@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.90 2005-12-21 02:11:47 geuzaine Exp $
+// $Id: Draw.cpp,v 1.91 2005-12-21 23:09:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -75,7 +75,7 @@ void Draw3d(void)
   glDepthFunc(GL_LESS);
   glEnable(GL_DEPTH_TEST);
 
-  InitProjection(0, 0);
+  InitProjection();
   InitRenderModel();
   InitPosition();
 
@@ -133,7 +133,7 @@ void ClearOpengl(void)
 
 // Init
 
-void InitProjection(int x, int y)
+void InitProjection(int xpick, int ypick, int wpick, int hpick)
 {
   double Va = 
     (GLdouble) (CTX.viewport[3] - CTX.viewport[1]) /
@@ -169,10 +169,10 @@ void InitProjection(int x, int y)
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
 
-  // restrict to 5x5 pixel viewport when in SELECT mode
+  // restrict picking to a rectangular region around xpick,ypick in SELECT mode
   if(CTX.render_mode == GMSH_SELECT)
-    gluPickMatrix((GLdouble) x, (GLdouble) (CTX.viewport[3] - y),
-                  5.0, 5.0, (GLint *) CTX.viewport);
+    gluPickMatrix((GLdouble)xpick, (GLdouble)(CTX.viewport[3] - ypick),
+                  (GLdouble)wpick, (GLdouble)hpick, (GLint *)CTX.viewport);
 
   double grad_z, grad_xy;
   double zmax = MAX(fabs(CTX.min[2]), fabs(CTX.max[2]));
@@ -364,7 +364,7 @@ void Process_SelectionBuffer(int x, int y, int *n, hit *hits)
 		 // an entity is drawn
 
   glPushMatrix();
-  InitProjection(x, y);
+  InitProjection(x, y, 5, 5);
   InitPosition();
   Draw_Mesh(&M);
   glPopMatrix();
