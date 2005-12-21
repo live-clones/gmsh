@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.65 2005-08-31 21:44:44 geuzaine Exp $
+// $Id: Message.cpp,v 1.66 2005-12-21 02:32:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -83,9 +83,12 @@ void Msg(int level, char *fmt, ...)
   int abort = 0, verb = 0, window = -1, log = 1, color = 0;
   char *str = NULL;
 
-  // *INDENT-OFF*
+  // standard messages in black
+  // errors, wanrnings in red
+  // external and or direct messages in blue
+  
   switch(level){
-  case DIRECT   : color = 5; verb = 2; break ;
+  case DIRECT   : color = 4; verb = 2; break ;
   case SOLVER   : color = 4; verb = 3; break ;
   case SOLVERR  : color = 1; verb = 3; break ;
 
@@ -126,7 +129,6 @@ void Msg(int level, char *fmt, ...)
 
   default : return;
   }
-  // *INDENT-ON*
 
   if(verb < 2)
     color = 1;
