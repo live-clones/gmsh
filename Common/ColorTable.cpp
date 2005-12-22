@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.29 2005-02-02 18:47:55 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.30 2005-12-22 20:42:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -351,7 +351,7 @@ void ColorTable_Recompute(GmshColorTable * ct)
     b = b < 0 ? 0 : (b > 255 ? 255 : b);
     a = a < 0 ? 0 : (a > 255 ? 255 : a);
     
-    ct->table[i] = PACK_COLOR(r, g, b, a);
+    ct->table[i] = CTX.PACK_COLOR(r, g, b, a);
   }
 
 }
@@ -389,10 +389,10 @@ void ColorTable_Print(GmshColorTable * ct, FILE * fp)
 
   strcpy(tmp1, "");
   for(i = 0; i < ct->size; i++) {
-    r = UNPACK_RED(ct->table[i]);
-    g = UNPACK_GREEN(ct->table[i]);
-    b = UNPACK_BLUE(ct->table[i]);
-    a = UNPACK_ALPHA(ct->table[i]);
+    r = CTX.UNPACK_RED(ct->table[i]);
+    g = CTX.UNPACK_GREEN(ct->table[i]);
+    b = CTX.UNPACK_BLUE(ct->table[i]);
+    a = CTX.UNPACK_ALPHA(ct->table[i]);
     if(i && !(i % 4)) {
       if(fp)
         fprintf(fp, "%s\n", tmp1);
@@ -415,7 +415,7 @@ int ColorTable_IsAlpha(GmshColorTable * ct)
 {
   int i, a;
   for(i = 0; i < ct->size; i++) {
-    a = UNPACK_ALPHA(ct->table[i]);
+    a = CTX.UNPACK_ALPHA(ct->table[i]);
     if(a < 255)
       return 1;
   }

@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.74 2005-12-16 20:29:15 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.75 2005-12-22 20:42:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -184,8 +184,9 @@ void CreateOutputFile(char *name, int format)
 		 CTX.print.gif_sort,
 		 CTX.print.gif_interlace,
 		 CTX.print.gif_transparent,
-		 UNPACK_RED(CTX.color.bg),
-		 UNPACK_GREEN(CTX.color.bg), UNPACK_BLUE(CTX.color.bg));
+		 CTX.UNPACK_RED(CTX.color.bg),
+		 CTX.UNPACK_GREEN(CTX.color.bg), 
+		 CTX.UNPACK_BLUE(CTX.color.bg));
       Msg(INFO, "Wrote GIF file '%s'", name);
     }
     Msg(STATUS2N, "Wrote '%s'", name);

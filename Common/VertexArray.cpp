@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.8 2005-10-09 17:45:37 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.9 2005-12-22 20:42:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,8 @@
 #include "VertexArray.h"
 #include "Context.h"
 #include "Numeric.h"
+
+extern Context_T CTX;
 
 VertexArray::VertexArray(int numNodesPerElement, int numElements) 
 {
@@ -50,10 +52,10 @@ VertexArray::~VertexArray()
 void VertexArray::add(float x, float y, float z, 
 		      float n0, float n1, float n2, unsigned int col)
 {
-  unsigned char r = UNPACK_RED(col);
-  unsigned char g = UNPACK_GREEN(col);
-  unsigned char b = UNPACK_BLUE(col);
-  unsigned char a = UNPACK_ALPHA(col);
+  unsigned char r = CTX.UNPACK_RED(col);
+  unsigned char g = CTX.UNPACK_GREEN(col);
+  unsigned char b = CTX.UNPACK_BLUE(col);
+  unsigned char a = CTX.UNPACK_ALPHA(col);
   List_Add(vertices, &x);
   List_Add(vertices, &y);
   List_Add(vertices, &z);
@@ -68,10 +70,10 @@ void VertexArray::add(float x, float y, float z,
 
 void VertexArray::add(float x, float y, float z, unsigned int col)
 {
-  unsigned char r = UNPACK_RED(col);
-  unsigned char g = UNPACK_GREEN(col);
-  unsigned char b = UNPACK_BLUE(col);
-  unsigned char a = UNPACK_ALPHA(col);
+  unsigned char r = CTX.UNPACK_RED(col);
+  unsigned char g = CTX.UNPACK_GREEN(col);
+  unsigned char b = CTX.UNPACK_BLUE(col);
+  unsigned char a = CTX.UNPACK_ALPHA(col);
   List_Add(vertices, &x);
   List_Add(vertices, &y);
   List_Add(vertices, &z);

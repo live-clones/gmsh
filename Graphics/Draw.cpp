@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.91 2005-12-21 23:09:52 geuzaine Exp $
+// $Id: Draw.cpp,v 1.92 2005-12-22 20:42:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -125,9 +125,9 @@ void DrawPlugin(void (*draw)(void))
 
 void ClearOpengl(void)
 {
-  glClearColor(UNPACK_RED(CTX.color.bg) / 255.,
-               UNPACK_GREEN(CTX.color.bg) / 255.,
-               UNPACK_BLUE(CTX.color.bg) / 255., 0.);
+  glClearColor(CTX.UNPACK_RED(CTX.color.bg) / 255.,
+               CTX.UNPACK_GREEN(CTX.color.bg) / 255.,
+               CTX.UNPACK_BLUE(CTX.color.bg) / 255., 0.);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
@@ -269,21 +269,21 @@ void InitRenderModel(void)
 			     (GLfloat)CTX.light_position[i][3]};
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
 
-      r = UNPACK_RED(CTX.color.ambient_light[i])/255.;
-      g = UNPACK_GREEN(CTX.color.ambient_light[i])/255.;
-      b = UNPACK_BLUE(CTX.color.ambient_light[i])/255.;
+      r = CTX.UNPACK_RED(CTX.color.ambient_light[i])/255.;
+      g = CTX.UNPACK_GREEN(CTX.color.ambient_light[i])/255.;
+      b = CTX.UNPACK_BLUE(CTX.color.ambient_light[i])/255.;
       GLfloat ambient[4] = {r, g, b, 1.0};
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
 
-      r = UNPACK_RED(CTX.color.diffuse_light[i])/255.;
-      g = UNPACK_GREEN(CTX.color.diffuse_light[i])/255.;
-      b = UNPACK_BLUE(CTX.color.diffuse_light[i])/255.;
+      r = CTX.UNPACK_RED(CTX.color.diffuse_light[i])/255.;
+      g = CTX.UNPACK_GREEN(CTX.color.diffuse_light[i])/255.;
+      b = CTX.UNPACK_BLUE(CTX.color.diffuse_light[i])/255.;
       GLfloat diffuse[4] = {r, g, b, 1.0};
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
 
-      r = UNPACK_RED(CTX.color.specular_light[i])/255.;
-      g = UNPACK_GREEN(CTX.color.specular_light[i])/255.;
-      b = UNPACK_BLUE(CTX.color.specular_light[i])/255.;
+      r = CTX.UNPACK_RED(CTX.color.specular_light[i])/255.;
+      g = CTX.UNPACK_GREEN(CTX.color.specular_light[i])/255.;
+      b = CTX.UNPACK_BLUE(CTX.color.specular_light[i])/255.;
       GLfloat specular[4] = {r, g, b, 1.0};
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, specular);
 

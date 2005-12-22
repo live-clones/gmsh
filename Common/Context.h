@@ -22,28 +22,12 @@
 
 #include "List.h"
 
-// How RGBA values are packed and unpacked into/from a 4-byte
-// integer:
-
-#if defined(__BIG_ENDIAN__)
-#  define PACK_COLOR(R,G,B,A)   ( (unsigned int)((R)<<24 | (G)<<16 | (B)<<8 | (A)) )
-#  define UNPACK_RED(X)         ( ( (X) >> 24 ) & 0xff )
-#  define UNPACK_GREEN(X)       ( ( (X) >> 16 ) & 0xff )
-#  define UNPACK_BLUE(X)        ( ( (X) >> 8 ) & 0xff )
-#  define UNPACK_ALPHA(X)       ( (X) & 0xff )
-#else
-#  define PACK_COLOR(R,G,B,A)   ( (unsigned int)((A)<<24 | (B)<<16 | (G)<<8 | (R)) )
-#  define UNPACK_RED(X)         ( (X) & 0xff )
-#  define UNPACK_GREEN(X)       ( ( (X) >> 8 ) & 0xff )
-#  define UNPACK_BLUE(X)        ( ( (X) >> 16 ) & 0xff )
-#  define UNPACK_ALPHA(X)       ( ( (X) >> 24 ) & 0xff )
-#endif
-
 // Interface-independent context 
 
 class Context_T {
 
 public :
+  int big_endian;             // is the machine big-endian?
 
   // general options
   char filename[256];         // the name of the currently opened file
@@ -258,6 +242,30 @@ public :
   void addQuaternionFromAxisAndAngle(double axis[3], double angle);
   void setQuaternionFromEulerAngles(void);
   void setEulerAnglesFromRotationMatrix(void);
+
+  // how RGBA values are packed and unpacked into/from an unsigned
+  // integer to be fed to glColor4ubv (depends on machine byte
+  // ordering!):
+  inline unsigned int PACK_COLOR(int R, int G, int B, int A){
+    if(big_endian) return ( (unsigned int)((R)<<24 | (G)<<16 | (B)<<8 | (A)) );
+    else           return ( (unsigned int)((A)<<24 | (B)<<16 | (G)<<8 | (R)) );
+  }
+  inline int UNPACK_RED(unsigned int X){
+    if(big_endian) return ( ( (X) >> 24 ) & 0xff );
+    else           return ( (X) & 0xff );
+  }
+  inline int UNPACK_GREEN(unsigned int X){
+    if(big_endian) return ( ( (X) >> 16 ) & 0xff );
+    else           return ( ( (X) >> 8 ) & 0xff );
+  }
+  inline int UNPACK_BLUE(unsigned int X){
+    if(big_endian) return ( ( (X) >> 8 ) & 0xff );
+    else           return ( ( (X) >> 16 ) & 0xff );
+  }
+  inline int UNPACK_ALPHA(unsigned int X){
+    if(big_endian) return ( (X) & 0xff );
+    else           return ( ( (X) >> 24 ) & 0xff );
+  }
 };
 
 #endif

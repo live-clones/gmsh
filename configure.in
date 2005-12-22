@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.83 2005-11-26 16:01:10 geuzaine Exp $
+dnl $Id: configure.in,v 1.84 2005-12-22 20:42:41 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -442,15 +442,6 @@ fi
 dnl Check if we should build the parallel version
 if test "x$enable_parallel" = "xyes"; then
   FLAGS="-DHAVE_PARALLEL ${FLAGS}"
-fi
-
-dnl Check if the machine is big or little endian
-if test "x$UNAME" = "xDarwin"; then
-  dnl Apple guarantees that its compilers will define the macro: forcing
-  dnl the definition here would prevent building "universal" binaries
-  echo "detected Darwin... no need to check byte ordering"
-else
-  AC_C_BIGENDIAN(FLAGS="-D__BIG_ENDIAN__ ${FLAGS}")
 fi
 
 dnl Set default linker and post build action

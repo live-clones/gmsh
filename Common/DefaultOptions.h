@@ -1355,216 +1355,174 @@ StringXNumber PrintOptions_Number[] = {
 
 StringXColor GeneralOptions_Color[] = {
   { F|O, "Background" , opt_general_color_background ,
-    PACK_COLOR(0,   0,   0,   255), 
-    PACK_COLOR(255, 255, 255, 255), 
-    PACK_COLOR(255, 255, 255, 255), 
+    {0, 0, 0, 255}, {255, 255, 255, 255}, {255, 255, 255, 255}, 
     "Background color" },
   { F|O, "BackgroundGradient" , opt_general_color_background_gradient ,
-    PACK_COLOR(0,   0, 125, 255), 
-    PACK_COLOR(0,   0, 125, 255), 
-    PACK_COLOR(125, 125, 125, 255), 
+    {0, 0, 125, 255}, {0, 0, 125, 255}, {125, 125, 125, 255}, 
     "Background gradient color" },
   { F|O, "Foreground" , opt_general_color_foreground ,
-    PACK_COLOR(255, 255, 255, 255),
-    PACK_COLOR(0,   0,   0,   255),
-    PACK_COLOR(0,   0,   0,   255),
+    {255, 255, 255, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},
     "Foreground color" },
   { F|O, "Text" , opt_general_color_text ,
-    PACK_COLOR(255, 255, 255, 255),
-    PACK_COLOR(0,   0,   0,   255),
-    PACK_COLOR(0,   0,   0,   255),
+    {255, 255, 255, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},
     "Text color" },
   { F|O, "Axes" , opt_general_color_axes ,
-    PACK_COLOR(255, 255, 255, 255),
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(0,   0,   0,   255),
+    {255, 255, 255, 255}, {128, 128, 128, 255}, {0, 0, 0, 255},
     "Axes color" },
   { F|O, "SmallAxes" , opt_general_color_small_axes ,
-    PACK_COLOR(255, 255, 255, 255),
-    PACK_COLOR(0,   0,   0,   255),
-    PACK_COLOR(0,   0,   0,   255),
+    {255, 255, 255, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},
     "Small axes color" },
   { F|O, "AmbientLight" , opt_general_color_ambient_light,
-    PACK_COLOR(25, 25, 25, 255),
-    PACK_COLOR(25, 25, 25, 255),
-    PACK_COLOR(25, 25, 25, 255),
+    {25, 25, 25, 255}, {25, 25, 25, 255}, {25, 25, 25, 255},
     "Ambient light color" },
   { F|O, "DiffuseLight" , opt_general_color_diffuse_light,
-    PACK_COLOR(255, 255, 255, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    PACK_COLOR(255, 255, 255, 255),
+    {255, 255, 255, 255}, {255, 255, 255, 255}, {255, 255, 255, 255},
     "Diffuse light color" },
   { F|O, "SpecularLight" , opt_general_color_specular_light,
-    PACK_COLOR(255, 255, 255, 255),
-    PACK_COLOR(255, 255, 255, 255),
-    PACK_COLOR(255, 255, 255, 255),
+    {255, 255, 255, 255}, {255, 255, 255, 255}, {255, 255, 255, 255},
     "Specular light color" },
-  { 0, NULL , NULL ,  0, 0, 0 , NULL }
+  { 0, NULL , NULL ,  {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , NULL }
 } ;
 
 StringXColor GeometryOptions_Color[] = {
   { F|O, "Points" , opt_geometry_color_points , 
-    PACK_COLOR(178, 182, 129, 255) ,
-    PACK_COLOR(178, 182, 129, 255) ,
-    PACK_COLOR(0,   0,   0,   255), 
+    {178, 182, 129, 255}, {178, 182, 129, 255}, {0, 0, 0, 255}, 
     "Normal geometry point color" },
   { F|O, "Lines" , opt_geometry_color_lines ,
-    PACK_COLOR(0,   0,   255, 255),
-    PACK_COLOR(0,   0,   255, 255),
-    PACK_COLOR(0,   0,   0,   255),
+    {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255},
     "Normal geometry curve color" },
   { F|O, "Surfaces" , opt_geometry_color_surfaces ,
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(0,   0,   0,   255),
+    {128, 128, 128, 255}, {128, 128, 128, 255}, {0, 0, 0, 255},
     "Normal geometry surface color" },
   { F|O, "Volumes" , opt_geometry_color_volumes ,
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(128, 128, 128, 255),
-    PACK_COLOR(0,   0,   0,   255),
+    {128, 128, 128, 255}, {128, 128, 128, 255}, {0, 0, 0, 255},
     "Normal geometry volume color" },
   { F|O, "PointsSelect" , opt_geometry_color_points_select ,
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(0,   0,   0,   255),
+    {255, 0, 0, 255}, {255, 0, 0, 255}, {0, 0, 0, 255},
     "Selected geometry point color" },
   { F|O, "LinesSelect" , opt_geometry_color_lines_select ,
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(0,   0,   0,   255),
-    "Selected geometry curve color"  },
+    {255, 0, 0, 255}, {255, 0, 0, 255}, {0, 0, 0, 255},
+    "Selected geometry curve color" },
   { F|O, "SurfacesSelect" , opt_geometry_color_surfaces_select ,
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(0,   0,   0,   255),
+    {255, 0, 0, 255}, {255, 0, 0, 255}, {0, 0, 0, 255},
     "Selected geometry surface color" },
   { F|O, "VolumesSelect" , opt_geometry_color_volumes_select ,
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(0,   0,   0,   255),
+    {255, 0, 0, 255}, {255, 0, 0, 255}, {0, 0, 0, 255},
     "Selected geometry volume color" },
   { F|O, "Tangents" , opt_geometry_color_tangents ,
-    PACK_COLOR(255, 255, 0,   255),
-    PACK_COLOR(255, 255, 0,   255),
-    PACK_COLOR(0,   0,   0,   255),
+    {255, 255, 0, 255}, {255, 255, 0, 255}, {0, 0, 0, 255},
     "Tangent geometry vectors color" },
   { F|O, "Normals" , opt_geometry_color_normals ,
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(255, 0,   0,   255),
-    PACK_COLOR(0,   0,   0,   255),
+    {255, 0, 0, 255}, {255, 0, 0, 255}, {0, 0, 0, 255},
     "Normal geometry vectors color" },
-  { 0, NULL , NULL , 0, 0, 0 , NULL }
+  { 0, NULL , NULL , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , NULL }
 } ;
 
-#define COLW  PACK_COLOR( 210, 210, 210, 255 )
-#define COLT  PACK_COLOR( 160, 150, 255, 255 )
-#define COLQ  PACK_COLOR( 130, 120, 225, 255 )
-#define COLP  PACK_COLOR( 232, 210, 23, 255 )
-#define COLY  PACK_COLOR( 217, 113, 38, 255 )
+#define COLW  {210, 210, 210, 255}
+#define COLT  {160, 150, 255, 255}
+#define COLQ  {130, 120, 225, 255}
+#define COLP  {232, 210, 23, 255}
+#define COLY  {217, 113, 38, 255}
 
 // dark blue to yellow:
-#define COL0   PACK_COLOR( 9, 3, 103, 255 )
-#define COL1   PACK_COLOR( 35, 0, 111, 255 )
-#define COL2   PACK_COLOR( 60, 0, 114, 255 )
-#define COL3   PACK_COLOR( 83, 0, 114, 255 )
-#define COL4   PACK_COLOR( 105, 1, 109, 255 )
-#define COL5   PACK_COLOR( 126, 10, 102, 255 )
-#define COL6   PACK_COLOR( 145, 21, 93, 255 )
-#define COL7   PACK_COLOR( 163, 34, 82, 255 )
-#define COL8   PACK_COLOR( 179, 50, 69, 255 )
-#define COL9   PACK_COLOR( 193, 67, 57, 255 )
-#define COL10  PACK_COLOR( 207, 85, 44, 255 )
-#define COL11  PACK_COLOR( 219, 104, 32, 255 )
-#define COL12  PACK_COLOR( 229, 124, 22, 255 )
-#define COL13  PACK_COLOR( 238, 143, 13, 255 )
-#define COL14  PACK_COLOR( 246, 162, 8, 255 )
-#define COL15  PACK_COLOR( 252, 181, 5, 255 )
-#define COL16  PACK_COLOR( 255, 198, 6, 255 )
-#define COL17  PACK_COLOR( 255, 214, 11, 255 )
-#define COL18  PACK_COLOR( 255, 228, 22, 255 )
-#define COL19  PACK_COLOR( 255, 240, 38, 255 )
+#define COL0  {9, 3, 103, 255}
+#define COL1  {35, 0, 111, 255}
+#define COL2  {60, 0, 114, 255}
+#define COL3  {83, 0, 114, 255}
+#define COL4  {105, 1, 109, 255}
+#define COL5  {126, 10, 102, 255}
+#define COL6  {145, 21, 93, 255}
+#define COL7  {163, 34, 82, 255}
+#define COL8  {179, 50, 69, 255}
+#define COL9  {193, 67, 57, 255}
+#define COL10 {207, 85, 44, 255}
+#define COL11 {219, 104, 32, 255}
+#define COL12 {229, 124, 22, 255}
+#define COL13 {238, 143, 13, 255}
+#define COL14 {246, 162, 8, 255}
+#define COL15 {252, 181, 5, 255}
+#define COL16 {255, 198, 6, 255}
+#define COL17 {255, 214, 11, 255}
+#define COL18 {255, 228, 22, 255}
+#define COL19 {255, 240, 38, 255}
 
 // jet:
-// #define COL0   PACK_COLOR( 0, 0, 143, 255)
-// #define COL1   PACK_COLOR( 0, 0, 197, 255)
-// #define COL2   PACK_COLOR( 0, 0, 250, 255)
-// #define COL3   PACK_COLOR( 0, 49, 255, 255)
-// #define COL4   PACK_COLOR( 0, 103, 255, 255)
-// #define COL5   PACK_COLOR( 0, 156, 255, 255)
-// #define COL6   PACK_COLOR( 0, 210, 255, 255)
-// #define COL7   PACK_COLOR( 9, 255, 253, 255)
-// #define COL8   PACK_COLOR( 62, 255, 200, 255)
-// #define COL9   PACK_COLOR( 116, 255, 146, 255)
-// #define COL10  PACK_COLOR( 170, 255, 92, 255)
-// #define COL11  PACK_COLOR( 223, 255, 39, 255)
-// #define COL12  PACK_COLOR( 255, 240, 0, 255)
-// #define COL13  PACK_COLOR( 255, 186, 0, 255)
-// #define COL14  PACK_COLOR( 255, 132, 0, 255)
-// #define COL15  PACK_COLOR( 255, 79, 0, 255)
-// #define COL16  PACK_COLOR( 255, 25, 0, 255)
-// #define COL17  PACK_COLOR( 226, 0, 0, 255)
-// #define COL18  PACK_COLOR( 173, 0, 0, 255)
-// #define COL19  PACK_COLOR( 119, 0, 0, 255)
+// #define COL0  {0, 0, 143, 255}
+// #define COL1  {0, 0, 197, 255}
+// #define COL2  {0, 0, 250, 255}
+// #define COL3  {0, 49, 255, 255}
+// #define COL4  {0, 103, 255, 255}
+// #define COL5  {0, 156, 255, 255}
+// #define COL6  {0, 210, 255, 255}
+// #define COL7  {9, 255, 253, 255}
+// #define COL8  {62, 255, 200, 255}
+// #define COL9  {116, 255, 146, 255}
+// #define COL10 {170, 255, 92, 255}
+// #define COL11 {223, 255, 39, 255}
+// #define COL12 {255, 240, 0, 255}
+// #define COL13 {255, 186, 0, 255}
+// #define COL14 {255, 132, 0, 255}
+// #define COL15 {255, 79, 0, 255}
+// #define COL16 {255, 25, 0, 255}
+// #define COL17 {226, 0, 0, 255}
+// #define COL18 {173, 0, 0, 255}
+// #define COL19 {119, 0, 0, 255}
 
 // truncated hsv:
-// #define COL0  PACK_COLOR(  255, 0, 0, 255)
-// #define COL1  PACK_COLOR(  255, 67, 0, 255)
-// #define COL2  PACK_COLOR(  255, 134, 0, 255)
-// #define COL3  PACK_COLOR(  255, 201, 0, 255)
-// #define COL4  PACK_COLOR(  241, 255, 0, 255)
-// #define COL5  PACK_COLOR(  174, 255, 0, 255)
-// #define COL6  PACK_COLOR(  107, 255, 0, 255)
-// #define COL7  PACK_COLOR(  40, 255, 0, 255)
-// #define COL8  PACK_COLOR(  0, 255, 26, 255)
-// #define COL9  PACK_COLOR(  0, 255, 93, 255)
-// #define COL10  PACK_COLOR( 0, 255, 161, 255)
-// #define COL11  PACK_COLOR( 0, 255, 228, 255)
-// #define COL12  PACK_COLOR( 0, 214, 255, 255)
-// #define COL13  PACK_COLOR( 0, 147, 255, 255)
-// #define COL14  PACK_COLOR( 0, 80, 255, 255)
-// #define COL15  PACK_COLOR( 0, 13, 255, 255)
-// #define COL16  PACK_COLOR( 53, 0, 255, 255)
-// #define COL17  PACK_COLOR( 120, 0, 255, 255)
-// #define COL18  PACK_COLOR( 187, 0, 255, 255)
-// #define COL19  PACK_COLOR( 255, 0, 254, 255)
+// #define COL0  {255, 0, 0, 255}
+// #define COL1  {255, 67, 0, 255}
+// #define COL2  {255, 134, 0, 255}
+// #define COL3  {255, 201, 0, 255}
+// #define COL4  {241, 255, 0, 255}
+// #define COL5  {174, 255, 0, 255}
+// #define COL6  {107, 255, 0, 255}
+// #define COL7  {40, 255, 0, 255}
+// #define COL8  {0, 255, 26, 255}
+// #define COL9  {0, 255, 93, 255}
+// #define COL10 {0, 255, 161, 255}
+// #define COL11 {0, 255, 228, 255}
+// #define COL12 {0, 214, 255, 255}
+// #define COL13 {0, 147, 255, 255}
+// #define COL14 {0, 80, 255, 255}
+// #define COL15 {0, 13, 255, 255}
+// #define COL16 {53, 0, 255, 255}
+// #define COL17 {120, 0, 255, 255}
+// #define COL18 {187, 0, 255, 255}
+// #define COL19 {255, 0, 254, 255}
 
 StringXColor MeshOptions_Color[] = {
   { F|O, "Points" , opt_mesh_color_points , 
-    PACK_COLOR(0  , 255, 0 , 255),
-    PACK_COLOR(0  , 255, 0 , 255),
-    PACK_COLOR(0,   0,   0,   255),
+    {0, 255, 0, 255}, {0, 255, 0, 255}, {0, 0, 0, 255},
     "Mesh node color" },
   { F|O, "PointsSup" , opt_mesh_color_points_deg2 , 
-    PACK_COLOR(255, 0,  255 , 255),
-    PACK_COLOR(255, 0,  255 , 255),
-    PACK_COLOR(0,   0,  0,   255),
+    {255, 0, 255, 255}, {255, 0, 255, 255}, {0, 0, 0, 255},
     "Second order mesh node color" },
   { F|O, "Lines" , opt_mesh_color_lines , 
-    PACK_COLOR(0,   255, 0,   255),
-    PACK_COLOR(0,   255, 0,   255),
-    PACK_COLOR(0,   0,   0,   255),
+    {0, 255, 0, 255}, {0, 255, 0, 255}, {0, 0, 0, 255},
     "Mesh line color" },
   { F|O, "Triangles" , opt_mesh_color_triangles , 
-    COLT, COLT, COLW, "Mesh triangle color (if Mesh.ColorCarousel=0)" },
+    COLT, COLT, COLW, 
+    "Mesh triangle color (if Mesh.ColorCarousel=0)" },
   { F|O, "Quadrangles" , opt_mesh_color_quadrangles ,
-    COLQ, COLQ, COLW, "Mesh quadrangle color (if Mesh.ColorCarousel=0)" },
+    COLQ, COLQ, COLW, 
+    "Mesh quadrangle color (if Mesh.ColorCarousel=0)" },
   { F|O, "Tetrahedra" , opt_mesh_color_tetrahedra ,
-    COLT, COLT, COLW, "Mesh tetrahedron color (if Mesh.ColorCarousel=0)" },
+    COLT, COLT, COLW,
+     "Mesh tetrahedron color (if Mesh.ColorCarousel=0)" },
   { F|O, "Hexahedra" , opt_mesh_color_hexahedra ,
-    COLQ, COLQ, COLW, "Mesh hexahedron color (if Mesh.ColorCarousel=0)" },
+    COLQ, COLQ, COLW, 
+    "Mesh hexahedron color (if Mesh.ColorCarousel=0)" },
   { F|O, "Prisms" , opt_mesh_color_prisms ,
-    COLP, COLP, COLW, "Mesh prism color (if Mesh.ColorCarousel=0)" },
+    COLP, COLP, COLW,
+     "Mesh prism color (if Mesh.ColorCarousel=0)" },
   { F|O, "Pyramids" , opt_mesh_color_pyramid ,
-    COLY, COLY, COLW, "Mesh pyramid color (if Mesh.ColorCarousel=0)" },
+    COLY, COLY, COLW,
+     "Mesh pyramid color (if Mesh.ColorCarousel=0)" },
   { F|O, "Tangents" , opt_mesh_color_tangents ,
-    PACK_COLOR(255, 255, 0, 255),
-    PACK_COLOR(255, 255, 0, 255),
-    PACK_COLOR(0,   0,   0, 255),
+    {255, 255, 0, 255}, {255, 255, 0, 255}, {0, 0, 0, 255},
     "Tangent mesh vector color" },
   { F|O, "Normals" , opt_mesh_color_normals ,
-    PACK_COLOR(255, 0, 0, 255),
-    PACK_COLOR(255, 0, 0, 255),
-    PACK_COLOR(0,   0, 0, 255),
+    {255, 0, 0, 255}, {255, 0, 0, 255}, {0, 0, 0, 255},
     "Normal mesh vector color" },
   { F|O, "Zero"     , opt_mesh_color_0 , COL0, COL0, COLW, "Color 0 in color carousel" },
   { F|O, "One"      , opt_mesh_color_1 , COL1, COL1, COLW, "Color 1 in color carousel" },
@@ -1586,18 +1544,18 @@ StringXColor MeshOptions_Color[] = {
   { F|O, "Seventeen", opt_mesh_color_17, COL17, COL17, COLW, "Color 17 in color carousel" },
   { F|O, "Eighteen" , opt_mesh_color_18, COL18, COL18, COLW, "Color 18 in color carousel" },
   { F|O, "Nineteen" , opt_mesh_color_19, COL19, COL19, COLW, "Color 19 in color carousel" },
-  { 0, NULL , NULL , 0, 0, 0 , NULL }
+  { 0, NULL , NULL , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , NULL }
 } ;
 
 StringXColor SolverOptions_Color[] = {
-  { 0, NULL , NULL , 0, 0, 0 , NULL }
+  { 0, NULL , NULL , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , NULL }
 } ;
 
 StringXColor PostProcessingOptions_Color[] = {
-  { 0, NULL , NULL , 0, 0, 0 , NULL }
+  { 0, NULL , NULL , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , NULL }
 } ;
 
-#define ELECOL  PACK_COLOR(255,255,255,255), PACK_COLOR(0,0,0,255), PACK_COLOR(0,0,0,255)
+#define ELECOL  {255, 255, 255, 255}, {0, 0, 0, 255}, {0, 0, 0, 255}
 
 StringXColor ViewOptions_Color[] = {
   { F|O, "Points" , opt_view_color_points , ELECOL, "Point color" },
@@ -1609,23 +1567,19 @@ StringXColor ViewOptions_Color[] = {
   { F|O, "Prisms" , opt_view_color_prisms , ELECOL, "Prism color" },
   { F|O, "Pyramids" , opt_view_color_pyramids , ELECOL, "Pyramid color" },
   { F|O, "Tangents" , opt_view_color_tangents ,
-    PACK_COLOR(255, 255, 0, 255),
-    PACK_COLOR(255, 255, 0, 255),
-    PACK_COLOR(0,   0,   0, 255),
+    {255, 255, 0, 255}, {255, 255, 0, 255}, {0, 0, 0, 255},
     "Tangent vector color" },
   { F|O, "Normals" , opt_view_color_normals ,
-    PACK_COLOR(255, 0, 0, 255),
-    PACK_COLOR(255, 0, 0, 255),
-    PACK_COLOR(0,   0, 0, 255),
+    {255, 0, 0, 255}, {255, 0, 0, 255}, {0, 0, 0, 255},
     "Normal vector color" },
   { F|O, "Text2D" , opt_view_color_text2d , ELECOL, "2D text color" },
   { F|O, "Text3D" , opt_view_color_text3d , ELECOL, "3D text color" },
   { F|O, "Axes" , opt_view_color_axes , ELECOL, "Axes color" },
-  { 0, NULL , NULL , 0, 0, 0 , NULL }
+  { 0, NULL , NULL , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , NULL }
 } ;
 
 StringXColor PrintOptions_Color[] = {
-  { 0, NULL , NULL , 0, 0, 0 , NULL }
+  { 0, NULL , NULL , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , NULL }
 } ;
 
 #undef S

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.213 2005-11-28 19:13:50 geuzaine Exp $
+// $Id: Gmsh.y,v 1.214 2005-12-22 20:42:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3485,11 +3485,11 @@ RecursiveListOfDouble :
 ColorExpr :
     '{' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
-      $$ = PACK_COLOR((int)$2, (int)$4, (int)$6, (int)$8);
+      $$ = CTX.PACK_COLOR((int)$2, (int)$4, (int)$6, (int)$8);
     }
   | '{' FExpr ',' FExpr ',' FExpr '}'
     {
-      $$ = PACK_COLOR((int)$2, (int)$4, (int)$6, 255);
+      $$ = CTX.PACK_COLOR((int)$2, (int)$4, (int)$6, 255);
     }
 /* shift/reduce conflict
   | '{' tSTRING ',' FExpr '}'

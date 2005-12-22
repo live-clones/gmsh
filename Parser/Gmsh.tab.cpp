@@ -168,7 +168,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.245 2005-11-28 19:13:49 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.246 2005-12-22 20:42:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -6703,13 +6703,13 @@ case 350:
 case 351:
 #line 3487 "Gmsh.y"
 {
-      yyval.u = PACK_COLOR((int)yyvsp[-7].d, (int)yyvsp[-5].d, (int)yyvsp[-3].d, (int)yyvsp[-1].d);
+      yyval.u = CTX.PACK_COLOR((int)yyvsp[-7].d, (int)yyvsp[-5].d, (int)yyvsp[-3].d, (int)yyvsp[-1].d);
     ;
     break;}
 case 352:
 #line 3491 "Gmsh.y"
 {
-      yyval.u = PACK_COLOR((int)yyvsp[-5].d, (int)yyvsp[-3].d, (int)yyvsp[-1].d, 255);
+      yyval.u = CTX.PACK_COLOR((int)yyvsp[-5].d, (int)yyvsp[-3].d, (int)yyvsp[-1].d, 255);
     ;
     break;}
 case 353:

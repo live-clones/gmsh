@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.268 2005-12-21 02:01:26 geuzaine Exp $
+// $Id: Options.cpp,v 1.269 2005-12-22 20:42:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -93,9 +93,13 @@ char *gmsh_getenv(char *var)
 
 void Init_Options(int num)
 {
-  char *tmp;
+  // Is machine big- or little-endian?
+  short int word = 0x0001;
+  char *byte = (char *) &word;
+  CTX.big_endian = (byte[0] ? 0 : 1);
 
   // Home directory
+  char *tmp;
   if((tmp = gmsh_getenv("GMSH_HOME")))
     strcpy(CTX.home_dir, tmp);
   else if((tmp = gmsh_getenv("HOME")))
@@ -695,19 +699,22 @@ void Set_DefaultColorOptions(int num, StringXColor s[])
   switch (CTX.color_scheme) {
   case 1:
     while(s[i].str) {
-      s[i].function(num, GMSH_SET, s[i].def2);
+      s[i].function(num, GMSH_SET, CTX.PACK_COLOR(s[i].def2[0], s[i].def2[1],
+						  s[i].def2[2], s[i].def2[3]));
       i++;
     }
     break;
   case 2:
     while(s[i].str) {
-      s[i].function(num, GMSH_SET, s[i].def3);
+      s[i].function(num, GMSH_SET, CTX.PACK_COLOR(s[i].def3[0], s[i].def3[1],
+						  s[i].def3[2], s[i].def3[3]));
       i++;
     }
     break;
   default:
     while(s[i].str) {
-      s[i].function(num, GMSH_SET, s[i].def1);
+      s[i].function(num, GMSH_SET, CTX.PACK_COLOR(s[i].def1[0], s[i].def1[1],
+						  s[i].def1[2], s[i].def1[3]));
       i++;
     }
     break;
@@ -743,16 +750,25 @@ void Print_ColorOptions(int num, int level, int diff, StringXColor s[],
     if(s[i].level & level) {
       unsigned int def;
       switch (CTX.color_scheme) {
-      case 1: def = s[i].def2; break;
-      case 2: def = s[i].def3; break;
-      default: def = s[i].def1; break;
+      case 1: 
+	def = CTX.PACK_COLOR(s[i].def2[0], s[i].def2[1],
+			     s[i].def2[2], s[i].def2[3]);
+	break;
+      case 2: 
+	def = CTX.PACK_COLOR(s[i].def3[0], s[i].def3[1], 
+			     s[i].def3[2], s[i].def3[3]);
+	break;
+      default: 
+	def = CTX.PACK_COLOR(s[i].def1[0], s[i].def1[1], 
+			     s[i].def1[2], s[i].def1[3]);
+	break;
       }
       if(!diff || (s[i].function(num, GMSH_GET, 0) != def)){
 	sprintf(tmp, "%sColor.%s = {%d,%d,%d}; // %s",
 		prefix, s[i].str,
-		UNPACK_RED(s[i].function(num, GMSH_GET, 0)),
-		UNPACK_GREEN(s[i].function(num, GMSH_GET, 0)),
-		UNPACK_BLUE(s[i].function(num, GMSH_GET, 0)), s[i].help);
+		CTX.UNPACK_RED(s[i].function(num, GMSH_GET, 0)),
+		CTX.UNPACK_GREEN(s[i].function(num, GMSH_GET, 0)),
+		CTX.UNPACK_BLUE(s[i].function(num, GMSH_GET, 0)), s[i].help);
 	if(file)
 	  fprintf(file, "%s\n", tmp);
 	else
@@ -770,9 +786,9 @@ void Print_ColorOptionsDoc(StringXColor s[], char *prefix, FILE * file)
     fprintf(file, "@item %sColor.%s\n", prefix, s[i].str);
     fprintf(file, "%s@*\n", s[i].help);
     fprintf(file, "Default value: @code{@{%d,%d,%d@}}@*\n",
-	    UNPACK_RED(s[i].function(0, GMSH_GET, 0)),
-	    UNPACK_GREEN(s[i].function(0, GMSH_GET, 0)),
-	    UNPACK_BLUE(s[i].function(0, GMSH_GET, 0)));
+	    CTX.UNPACK_RED(s[i].function(0, GMSH_GET, 0)),
+	    CTX.UNPACK_GREEN(s[i].function(0, GMSH_GET, 0)),
+	    CTX.UNPACK_BLUE(s[i].function(0, GMSH_GET, 0)));
     fprintf(file, "Saved in: @code{%s}\n\n", Get_OptionSaveLevel(s[i].level));
     i++;
   }
@@ -786,9 +802,9 @@ int Get_ColorForString(StringX4Int SX4I[], int alpha,
     i++;
   *FlagError = (SX4I[i].str == NULL) ? 1 : 0;
   if(alpha > 0)
-    return PACK_COLOR(SX4I[i].int1, SX4I[i].int2, SX4I[i].int3, alpha);
+    return CTX.PACK_COLOR(SX4I[i].int1, SX4I[i].int2, SX4I[i].int3, alpha);
   else
-    return PACK_COLOR(SX4I[i].int1, SX4I[i].int2, SX4I[i].int3, SX4I[i].int4);
+    return CTX.PACK_COLOR(SX4I[i].int1, SX4I[i].int2, SX4I[i].int3, SX4I[i].int4);
 }
 
 
@@ -6708,9 +6724,9 @@ double opt_print_gif_transparent(OPT_ARGS_NUM)
 
 #define CCC(col,but)							\
   if(WID && (action & GMSH_GUI)){					\
-    Fl_Color c = fl_color_cube(UNPACK_RED(col)*FL_NUM_RED/256, 		\
-			       UNPACK_GREEN(col)*FL_NUM_GREEN/256,	\
-			       UNPACK_BLUE(col)*FL_NUM_BLUE/256);	\
+    Fl_Color c = fl_color_cube(CTX.UNPACK_RED(col)*FL_NUM_RED/256, 	\
+			       CTX.UNPACK_GREEN(col)*FL_NUM_GREEN/256,	\
+			       CTX.UNPACK_BLUE(col)*FL_NUM_BLUE/256);	\
     (but)->color(c);							\
     (but)->labelcolor(fl_contrast(FL_BLACK,c));				\
     (but)->redraw();							\

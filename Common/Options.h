@@ -718,7 +718,10 @@ typedef struct {
   int level;
   char *str ; 
   unsigned int (*function)(int num, int action, unsigned int val) ;
-  unsigned int def1, def2, def3 ;
+  // the defaults are stored in individual bytes so that we can initialize
+  // them statically independently of the machine endianness. They will be
+  // packed into unsigned ints at runtime
+  unsigned char def1[4], def2[4], def3[4] ;
   char *help ;
 } StringXColor ;
 

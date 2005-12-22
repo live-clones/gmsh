@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.388 2005-12-18 22:13:26 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.389 2005-12-22 20:42:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -113,11 +113,11 @@ void color_cb(CALLBACK_ARGS)
 {
   unsigned int (*fct) (int, int, unsigned int);
   fct = (unsigned int (*)(int, int, unsigned int))data;
-  uchar r = UNPACK_RED(fct(0, GMSH_GET, 0));
-  uchar g = UNPACK_GREEN(fct(0, GMSH_GET, 0));
-  uchar b = UNPACK_BLUE(fct(0, GMSH_GET, 0));
+  uchar r = CTX.UNPACK_RED(fct(0, GMSH_GET, 0));
+  uchar g = CTX.UNPACK_GREEN(fct(0, GMSH_GET, 0));
+  uchar b = CTX.UNPACK_BLUE(fct(0, GMSH_GET, 0));
   if(fl_color_chooser("Color Chooser", r, g, b))
-    fct(0, GMSH_SET | GMSH_GUI, PACK_COLOR(r, g, b, 255));
+    fct(0, GMSH_SET | GMSH_GUI, CTX.PACK_COLOR(r, g, b, 255));
   Draw();
 }
 
@@ -125,11 +125,11 @@ void view_color_cb(CALLBACK_ARGS)
 {
   unsigned int (*fct) (int, int, unsigned int);
   fct = (unsigned int (*)(int, int, unsigned int))data;
-  uchar r = UNPACK_RED(fct(WID->view_number, GMSH_GET, 0));
-  uchar g = UNPACK_GREEN(fct(WID->view_number, GMSH_GET, 0));
-  uchar b = UNPACK_BLUE(fct(WID->view_number, GMSH_GET, 0));
+  uchar r = CTX.UNPACK_RED(fct(WID->view_number, GMSH_GET, 0));
+  uchar g = CTX.UNPACK_GREEN(fct(WID->view_number, GMSH_GET, 0));
+  uchar b = CTX.UNPACK_BLUE(fct(WID->view_number, GMSH_GET, 0));
   if(fl_color_chooser("Color Chooser", r, g, b))
-    fct(WID->view_number, GMSH_SET | GMSH_GUI, PACK_COLOR(r, g, b, 255));
+    fct(WID->view_number, GMSH_SET | GMSH_GUI, CTX.PACK_COLOR(r, g, b, 255));
   Draw();
 }
 
