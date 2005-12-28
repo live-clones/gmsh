@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.56 2005-12-18 21:10:54 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.57 2005-12-28 13:55:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -116,15 +116,14 @@ void Opengl_Window::draw()
     Draw2d();
   }
   else {
-    glDisable(GL_DEPTH_TEST);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho((double)CTX.viewport[0], (double)CTX.viewport[2],
 	    (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glDisable(GL_DEPTH_TEST);
     glColor3d(1., 1., 1.);
+    glDisable(GL_DEPTH_TEST);
     // glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
     glEnable(GL_BLEND);
@@ -165,7 +164,7 @@ int Opengl_Window::handle(int event)
 
   case FL_SHORTCUT:
   case FL_KEYBOARD:
-    // override the default widget navigation
+    // override the default widget arrow-key-navigation
     if(WID->arrow_shortcuts())
       return 1;
     return Fl_Gl_Window::handle(event);
@@ -291,12 +290,9 @@ int Opengl_Window::handle(int event)
       prosca(r,d,&t);
       double sol[3] = {p[0] + t * d[0], p[1] + t * d[1], p[2] + t * d[2]};
       char str[32];
-      sprintf(str, "%g", sol[0]);        
-      WID->context_geometry_input[2]->value(str);
-      sprintf(str, "%g", sol[1]);
-      WID->context_geometry_input[3]->value(str);
-      sprintf(str, "%g", sol[2]);
-      WID->context_geometry_input[4]->value(str);
+      sprintf(str, "%g", sol[0]); WID->context_geometry_input[2]->value(str);
+      sprintf(str, "%g", sol[1]); WID->context_geometry_input[3]->value(str);
+      sprintf(str, "%g", sol[2]); WID->context_geometry_input[4]->value(str);
     }
     else if(ZoomMode) {
       redraw();

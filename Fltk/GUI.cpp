@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.475 2005-12-21 02:01:27 geuzaine Exp $
+// $Id: GUI.cpp,v 1.476 2005-12-28 13:55:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -4090,7 +4090,7 @@ void GUI::create_about_window()
     return;
   }
 
-  int width = 33 * fontsize;
+  int width = 28 * fontsize;
   int height = 15 * BH;
 
   about_window = new Dialog_Window(width, height, "About Gmsh");
@@ -4098,6 +4098,7 @@ void GUI::create_about_window()
 
   {
     Fl_Browser *o = new Fl_Browser(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+    o->has_scrollbar(0); // no scrollbars
     o->add(" ");
     o->add("@c@b@.Gmsh");
     o->add("@c@.A three-dimensional finite element mesh generator");
@@ -4126,8 +4127,28 @@ void GUI::create_about_window()
     o->add(buffer);
     sprintf(buffer, "@c@.Build host: %s", GMSH_HOST);
     o->add(buffer);
-    sprintf(buffer, "@c@.Options: %s", Get_BuildOptions());
-    o->add(buffer);
+    {
+      char str1[1024];
+      strcpy(str1, Get_BuildOptions());
+      unsigned int len = 30;
+      if(strlen(str1) > len){
+	int split;
+	for(split = len - 1; split >= 0; split--){
+	  if(str1[split] == ' '){
+	    str1[split] = '\0';
+	    break;
+	  }
+	}
+	sprintf(buffer, "@c@.Build options: %s", str1);
+	o->add(buffer);
+	sprintf(buffer, "@c@.%s", &str1[split+1]);
+	o->add(buffer);
+      }
+      else{
+	sprintf(buffer, "@c@.Options: %s", str1);
+	o->add(buffer);
+      }
+    }
     sprintf(buffer, "@c@.Packaged by: %s", GMSH_PACKAGER);
     o->add(buffer);
     o->add(" ");
