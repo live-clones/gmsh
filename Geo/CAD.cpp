@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.87 2006-01-06 03:06:24 geuzaine Exp $
+// $Id: CAD.cpp,v 1.88 2006-01-06 04:53:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -896,7 +896,8 @@ void printSurface(Surface * s)
   }
 }
 
-void ApplyTransformationToPoint(double matrix[4][4], Vertex * v)
+void ApplyTransformationToPoint(double matrix[4][4], Vertex * v,
+				bool do_end_curves=false)
 {
   double pos[4], vec[4];
 
@@ -918,6 +919,21 @@ void ApplyTransformationToPoint(double matrix[4][4], Vertex * v)
   v->Pos.Y = pos[1];
   v->Pos.Z = pos[2];
   v->w = pos[3];
+
+  if(do_end_curves){
+    List_T *All = Tree2List(THEM->Curves);
+    for(int i = 0; i < List_Nbr(All); i++) {
+      Curve *c;
+      List_Read(All, i, &c);
+      for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
+	Vertex *pv = *(Vertex **) List_Pointer(c->Control_Points, j);
+	if(pv->Num == v->Num){
+	  End_Curve(c);
+	}
+      }
+    }
+    List_Delete(All);
+  }
 }
 
 void ApplyTransformationToCurve(double matrix[4][4], Curve * c)
@@ -976,7 +992,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T * ListShapes)
     case MSH_POINT:
       v = FindPoint(O.Num, THEM);
       if(v)
-        ApplyTransformationToPoint(matrix, v);
+        ApplyTransformationToPoint(matrix, v, true);
       else
         Msg(GERROR, "Unknown point %d", O.Num);
       break;
