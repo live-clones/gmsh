@@ -1,6 +1,6 @@
-// $Id: DecomposeInSimplex.cpp,v 1.19 2005-03-14 22:46:26 geuzaine Exp $
+// $Id: DecomposeInSimplex.cpp,v 1.20 2006-01-06 00:34:32 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

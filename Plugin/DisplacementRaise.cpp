@@ -1,6 +1,6 @@
-// $Id: DisplacementRaise.cpp,v 1.20 2005-01-03 04:09:27 geuzaine Exp $
+// $Id: DisplacementRaise.cpp,v 1.21 2006-01-06 00:34:32 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

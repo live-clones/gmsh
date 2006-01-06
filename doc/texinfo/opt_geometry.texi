@@ -99,6 +99,21 @@ Global geometry scaling factor@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.SnapX
+Snapping grid spacing along the X-axis@*
+Default value: @code{0.1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.SnapY
+Snapping grid spacing along the Y-axis@*
+Default value: @code{0.1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.SnapZ
+Snapping grid spacing along the Z-axis@*
+Default value: @code{0.1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.Surfaces
 Display geometry surfaces?@*
 Default value: @code{0}@*

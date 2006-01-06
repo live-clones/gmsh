@@ -1,7 +1,7 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.194 2005-12-07 17:56:01 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.195 2006-01-06 00:34:34 geuzaine Exp $
 @c
-@c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+@c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
 @c This program is free software; you can redistribute it and/or modify
 @c it under the terms of the GNU General Public License as published by
@@ -37,9 +37,9 @@
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
-@set EDITION        1.32
-@set GMSH-VERSION   1.61
-@set COPYRIGHT      @copyright{} 1997-2005 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set EDITION        1.33
+@set GMSH-VERSION   1.62
+@set COPYRIGHT      @copyright{} 1997-2006 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @c
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate
@@ -2717,7 +2717,8 @@ In the following, for a 2 button mouse, @kbd{Middle button} =
 Highlight the elementary geometrical entity currently under the mouse
 pointer and display its properties in the status bar
 @item
-Size a rubber zoom started with @kbd{Ctrl+Left button}
+Resize a lasso zoom or a lasso selection started with @kbd{Ctrl+Left
+button}
 @end itemize
 
 @kbd{Left button}:
@@ -2725,32 +2726,37 @@ Size a rubber zoom started with @kbd{Ctrl+Left button}
 @item
 Rotate
 @item
-Accept a rubber zoom started with @kbd{Ctrl+Left button}
+Select an entity
+@item
+Accept a lasso zoom or a lasso selection started with @kbd{Ctrl+Left
+button}
 @end itemize
 
-@kbd{Ctrl+Left button}: start (anisotropic) rubber zoom
+@kbd{Ctrl+Left button}: Start a lasso zoom or a lasso selection
 
 @kbd{Middle button}:
 @itemize @bullet
 @item
-Zoom (isotropic)
+Zoom
 @item
-Cancel a rubber zoom
+Unselect an entity
+@item
+Cancel a lasso zoom or a lasso selection
 @end itemize
 
-@kbd{Ctrl+Middle button}: orthogonalize display
+@kbd{Ctrl+Middle button}: Orthogonalize display
 
 @kbd{Right button}:
 @itemize @bullet
 @item
 Pan
 @item
-Cancel a rubber zoom
+Cancel a lasso zoom or a lasso selection
 @item
-Pop up menu on post-processing view button
+Pop-up menu on post-processing view button
 @end itemize
 
-@kbd{Ctrl+Right button}: reset to default viewpoint
+@kbd{Ctrl+Right button}: Reset to default viewpoint
 
 @c -------------------------------------------------------------------------
 @c Keyboard shortcuts

@@ -1,6 +1,6 @@
-// $Id: Levelset.cpp,v 1.27 2005-10-19 15:45:10 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.28 2006-01-06 00:34:33 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

@@ -15,7 +15,7 @@ Make next view visible
 Go back to previous context
 @item >
 Go forward to next context
-@item 0 or Esc
+@item 0
 Reload project file
 @item 1 or F1
 Mesh lines
@@ -23,6 +23,8 @@ Mesh lines
 Mesh surfaces
 @item 3 or F3
 Mesh volumes
+@item Escape
+Cancel lasso zoom/selection, toggle mouse selection ON/OFF
 
 @sp 1 @c ----------------------------------------------
 

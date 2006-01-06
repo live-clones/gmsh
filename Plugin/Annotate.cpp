@@ -1,6 +1,6 @@
-// $Id: Annotate.cpp,v 1.13 2005-08-24 20:28:43 remacle Exp $
+// $Id: Annotate.cpp,v 1.14 2006-01-06 00:34:32 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

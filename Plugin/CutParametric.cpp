@@ -1,6 +1,6 @@
-// $Id: CutParametric.cpp,v 1.15 2005-06-24 01:23:27 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.16 2006-01-06 00:34:32 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
-// $Id: mshsort.cpp,v 1.7 2005-05-18 22:04:18 geuzaine Exp $
+// $Id: mshsort.cpp,v 1.8 2006-01-06 00:34:34 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
