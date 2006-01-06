@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.86 2006-01-06 00:34:23 geuzaine Exp $
+// $Id: CAD.cpp,v 1.87 2006-01-06 03:06:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -872,6 +872,30 @@ static void vecmat4x4(double mat[4][4], double vec[4], double res[4])
   }
 }
 
+void printCurve(Curve * c)
+{
+  Vertex *v;
+  int N = List_Nbr(c->Control_Points);
+  Msg(DEBUG, "Curve %d %d cp (%d->%d)", c->Num, N, c->beg->Num, c->end->Num);
+  for(int i = 0; i < N; i++) {
+    List_Read(c->Control_Points, i, &v);
+    Msg(DEBUG, "Vertex %d (%g,%g,%g,%g)", v->Num, v->Pos.X, v->Pos.Y,
+        v->Pos.Z, v->lc);
+  }
+}
+
+void printSurface(Surface * s)
+{
+  Curve *c;
+  int N = List_Nbr(s->Generatrices);
+
+  Msg(DEBUG, "Surface %d, %d generatrices", s->Num, N);
+  for(int i = 0; i < N; i++) {
+    List_Read(s->Generatrices, i, &c);
+    printCurve(c);
+  }
+}
+
 void ApplyTransformationToPoint(double matrix[4][4], Vertex * v)
 {
   double pos[4], vec[4];
@@ -915,18 +939,6 @@ void ApplyTransformationToCurve(double matrix[4][4], Curve * c)
   End_Curve(c);
 }
 
-void printCurve(Curve * c)
-{
-  Vertex *v;
-  int N = List_Nbr(c->Control_Points);
-  Msg(DEBUG, "Curve %d %d cp (%d->%d)", c->Num, N, c->beg->Num, c->end->Num);
-  for(int i = 0; i < N; i++) {
-    List_Read(c->Control_Points, i, &v);
-    Msg(DEBUG, "Vertex %d (%g,%g,%g,%g)", v->Num, v->Pos.X, v->Pos.Y,
-        v->Pos.Z, v->lc);
-  }
-}
-
 void ApplyTransformationToSurface(double matrix[4][4], Surface * s)
 {
   Curve *c;
@@ -935,25 +947,17 @@ void ApplyTransformationToSurface(double matrix[4][4], Surface * s)
 
   for(i = 0; i < List_Nbr(s->Generatrices); i++) {
     List_Read(s->Generatrices, i, &c);
-    ApplyTransformationToCurve(matrix, c);
+    // FIXME: this fixes benchmarks/bug/transfo_neg_curves.geo, but is
+    // it the correct fix?
+    //ApplyTransformationToCurve(matrix, c);
+    Curve *cc = FindCurve(abs(c->Num), THEM);
+    ApplyTransformationToCurve(matrix, cc);
   }
   for(i = 0; i < List_Nbr(s->Control_Points); i++) {
     List_Read(s->Control_Points, i, &v);
     ApplyTransformationToPoint(matrix, v);
   }
   End_Surface(s);
-}
-
-void printSurface(Surface * s)
-{
-  Curve *c;
-  int N = List_Nbr(s->Generatrices);
-
-  Msg(DEBUG, "Surface %d, %d generatrices", s->Num, N);
-  for(int i = 0; i < N; i++) {
-    List_Read(s->Generatrices, i, &c);
-    printCurve(c);
-  }
 }
 
 void ApplicationOnShapes(double matrix[4][4], List_T * ListShapes)
