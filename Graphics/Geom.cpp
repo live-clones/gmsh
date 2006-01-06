@@ -1,6 +1,6 @@
-// $Id: Geom.cpp,v 1.95 2005-12-13 23:18:20 geuzaine Exp $
+// $Id: Geom.cpp,v 1.96 2006-01-06 00:34:24 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -795,6 +795,13 @@ void ZeroHighlight(Mesh * m)
   Tree_Action(m->Points, ZeroHighlightPoint);
   Tree_Action(m->Curves, ZeroHighlightCurve);
   Tree_Action(m->Surfaces, ZeroHighlightSurface);
+}
+
+void ZeroHighlightEntity(Vertex * v, Curve * c, Surface * s)
+{
+  if(v) ZeroHighlightPoint(&v, NULL);
+  if(c) ZeroHighlightCurve(&c, NULL);
+  if(s) ZeroHighlightSurface(&s, NULL);
 }
 
 void ZeroHighlightEntityNum(int v, int c, int s)

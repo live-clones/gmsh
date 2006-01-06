@@ -1,7 +1,7 @@
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -402,6 +402,9 @@ double opt_geometry_circle_points(OPT_ARGS_NUM);
 double opt_geometry_circle_warning(OPT_ARGS_NUM);
 double opt_geometry_extrude_spline_points(OPT_ARGS_NUM);
 double opt_geometry_scaling_factor(OPT_ARGS_NUM);
+double opt_geometry_snap0(OPT_ARGS_NUM);
+double opt_geometry_snap1(OPT_ARGS_NUM);
+double opt_geometry_snap2(OPT_ARGS_NUM);
 double opt_mesh_optimize(OPT_ARGS_NUM);
 double opt_mesh_quality(OPT_ARGS_NUM);
 double opt_mesh_normals(OPT_ARGS_NUM);
@@ -725,10 +728,10 @@ typedef struct {
   char *help ;
 } StringXColor ;
 
-void Init_Options (int num);
-void Init_Options_GUI (int num);
-void ReInit_Options (int num);
-void Print_Options(int num, int level, int diff, char *filename);
+void Init_Options(int num);
+void Init_Options_GUI(int num);
+void ReInit_Options(int num);
+void Print_Options(int num, int level, int diff, int help, char *filename);
 void Print_OptionsDoc();
 
 StringXString * Get_StringOptionCategory(char * cat);
@@ -747,12 +750,12 @@ void * Get_StringOption(char *str, StringXString s[]);
 void * Get_NumberOption(char *str, StringXNumber s[]);
 void * Get_ColorOption(char *str, StringXColor s[]);
 
-void Print_StringOptions(int num, int level, int diff, StringXString s[], 
-			 char *prefix, FILE *file);
-void Print_NumberOptions(int num, int level, int diff, StringXNumber s[], 
-			 char *prefix, FILE *file);
-void Print_ColorOptions(int num, int level, int diff, StringXColor s[], 
-			char *prefix, FILE *file);
+void Print_StringOptions(int num, int level, int diff, int help,
+			 StringXString s[], char *prefix, FILE *file);
+void Print_NumberOptions(int num, int level, int diff, int help,
+			 StringXNumber s[], char *prefix, FILE *file);
+void Print_ColorOptions(int num, int level, int diff, int help,
+			StringXColor s[], char *prefix, FILE *file);
 
 void Print_StringOptionsDoc(StringXString s[], char *prefix, FILE * file);
 void Print_NumberOptionsDoc(StringXNumber s[], char *prefix, FILE * file);

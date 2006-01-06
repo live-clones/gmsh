@@ -1,6 +1,6 @@
-// $Id: Create.cpp,v 1.79 2005-11-28 19:13:49 geuzaine Exp $
+// $Id: Create.cpp,v 1.80 2006-01-06 00:34:26 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

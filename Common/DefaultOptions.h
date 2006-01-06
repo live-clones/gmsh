@@ -1,7 +1,7 @@
 #ifndef _DEFAULT_OPTIONS_H_
 #define _DEFAULT_OPTIONS_H_
 
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -118,7 +118,7 @@ StringXString SolverOptions_String[] = {
     "Name of solver 0" },
   { F|O, "Help0" , opt_solver_help0 , 
     "A General environment for the treatment of\nDiscrete Problems\n\n"
-    "Copyright (C) 1997-2005\nPatrick Dular and Christophe Geuzaine\n\n"
+    "Copyright (C) 1997-2006\nPatrick Dular and Christophe Geuzaine\n\n"
     "Visit http://www.geuz.org/getdp/ for more info",
     "Help string for solver 0" },
   { F|O, "Executable0" , opt_solver_executable0 , 
@@ -808,6 +808,12 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "ScalingFactor" , opt_geometry_scaling_factor , 1.0 , 
     "Global geometry scaling factor" },
+  { F|O, "SnapX" , opt_geometry_snap0 , 0.1 ,
+    "Snapping grid spacing along the X-axis" },
+  { F|O, "SnapY" , opt_geometry_snap1 , 0.1 ,
+    "Snapping grid spacing along the Y-axis" },
+  { F|O, "SnapZ" , opt_geometry_snap2 , 0.1 ,
+    "Snapping grid spacing along the Z-axis" },
   { F|O, "Surfaces" , opt_geometry_surfaces , 0. , 
     "Display geometry surfaces?" },
   { F|O, "SurfaceNumbers" , opt_geometry_surfaces_num , 0. , 
@@ -879,7 +885,7 @@ StringXNumber MeshOptions_Number[] = {
     "Show the construction of 2D anisotropic mesh in real time" },
 
   { F|O, "LabelType" , opt_mesh_label_type , 0. , 
-    "Type of element label (0=element number, 1=elementary entity number, 2=physical entity number, 3=partition number)" },
+    "Type of element label (0=element number, 1=elementary entity number, 2=physical entity number, 3=partition number, 4=coordinates)" },
   { F|O, "Light" , opt_mesh_light , 0. , 
     "Enable lighting for the mesh" },
   { F|O, "LightLines" , opt_mesh_light_lines , 1. , 
@@ -1398,16 +1404,16 @@ StringXColor GeometryOptions_Color[] = {
     {128, 128, 128, 255}, {128, 128, 128, 255}, {0, 0, 0, 255},
     "Normal geometry volume color" },
   { F|O, "PointsSelect" , opt_geometry_color_points_select ,
-    {255, 0, 0, 255}, {255, 0, 0, 255}, {0, 0, 0, 255},
+    {255, 0, 0, 255}, {255, 0, 0, 255}, {255, 0, 0, 255},
     "Selected geometry point color" },
   { F|O, "LinesSelect" , opt_geometry_color_lines_select ,
-    {255, 0, 0, 255}, {255, 0, 0, 255}, {0, 0, 0, 255},
+    {255, 0, 0, 255}, {255, 0, 0, 255}, {255, 0, 0, 255},
     "Selected geometry curve color" },
   { F|O, "SurfacesSelect" , opt_geometry_color_surfaces_select ,
-    {255, 0, 0, 255}, {255, 0, 0, 255}, {0, 0, 0, 255},
+    {255, 0, 0, 255}, {255, 0, 0, 255}, {255, 0, 0, 255},
     "Selected geometry surface color" },
   { F|O, "VolumesSelect" , opt_geometry_color_volumes_select ,
-    {255, 0, 0, 255}, {255, 0, 0, 255}, {0, 0, 0, 255},
+    {255, 0, 0, 255}, {255, 0, 0, 255}, {255, 0, 0, 255},
     "Selected geometry volume color" },
   { F|O, "Tangents" , opt_geometry_color_tangents ,
     {255, 255, 0, 255}, {255, 255, 0, 255}, {0, 0, 0, 255},

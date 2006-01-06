@@ -1,6 +1,6 @@
-// $Id: GUI.cpp,v 1.476 2005-12-28 13:55:58 geuzaine Exp $
+// $Id: GUI.cpp,v 1.477 2006-01-06 00:34:22 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -514,7 +514,7 @@ int GUI::global_shortcuts(int event)
     return 1;
   }
 
-  if(Fl::test_shortcut('0') || Fl::test_shortcut(FL_Escape)) {
+  if(Fl::test_shortcut('0')) {
     geometry_reload_cb(0, 0);
     mod_geometry_cb(0, 0);
     return 1;
@@ -575,6 +575,16 @@ int GUI::global_shortcuts(int event)
   else if(Fl::test_shortcut('q')) {
     quit_selection = 1;
     return 0;   // trick: do as if we didn't use it
+  }
+  else if(Fl::test_shortcut(FL_Escape)) {
+    if(g_opengl_window->LassoMode){
+      g_opengl_window->LassoMode = false;
+      redraw_opengl();
+    }
+    else{
+      status_xyz1p_cb(0, (void *)"S");
+    }
+    return 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'a')) { 
     window_cb(0, (void*)"front");
@@ -821,8 +831,6 @@ int GUI::arrow_shortcuts()
 
 GUI::GUI(int argc, char **argv)
 {
-  int i;
-
   // initialize static windows
   m_window = NULL;
   g_window = NULL;
@@ -843,6 +851,7 @@ GUI::GUI(int argc, char **argv)
   // initialize selection bits
   selection = ENT_NONE;
   try_selection = quit_selection = end_selection = undo_selection = 0;
+  for(int i = 0; i < 4; i++) try_selection_xywh[i] = 0;
 
   // set X display
   if(strlen(CTX.display))
@@ -911,7 +920,7 @@ GUI::GUI(int argc, char **argv)
   create_about_window();
   create_geometry_context_window(0);
   create_mesh_context_window(0);
-  for(i = 0; i < MAXSOLVERS; i++) {
+  for(int i = 0; i < MAXSOLVERS; i++) {
     solver[i].window = NULL;
     create_solver_window(i);
   }
@@ -1366,6 +1375,11 @@ void GUI::create_graphic_window()
   ortho_bmp = new Fl_Bitmap(ortho_bits, ortho_width, ortho_height);
   ortho_bmp->label(g_status_butt[8]);
 
+  g_status_butt[9] = new Fl_Button(x, glheight + 2, sw, sh - 4, "S");
+  x += sw;
+  g_status_butt[9]->callback(status_xyz1p_cb, (void *)"S");
+  g_status_butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape)");
+
   g_status_butt[5] = new Fl_Button(x, glheight + 2, sw, sh - 4, "?");
   x += sw;
   g_status_butt[5]->callback(status_xyz1p_cb, (void *)"?");
@@ -1388,7 +1402,7 @@ void GUI::create_graphic_window()
   stop_bmp = new Fl_Bitmap(stop_bits, stop_width, stop_height);
   g_status_butt[7]->deactivate();
 
-  for(i = 0; i < 9; i++) {
+  for(i = 0; i < 10; i++) {
     g_status_butt[i]->box(FL_FLAT_BOX);
     g_status_butt[i]->selection_color(FL_WHITE);
     g_status_butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
@@ -2339,7 +2353,7 @@ void GUI::create_option_window()
       mesh_butt[11]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[11]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_butt[12] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Node numbers");
+      mesh_butt[12] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Node labels");
       mesh_butt[12]->type(FL_TOGGLE_BUTTON);
       mesh_butt[12]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[12]->selection_color(GMSH_TOGGLE_COLOR);
@@ -2360,17 +2374,18 @@ void GUI::create_option_window()
       mesh_butt[15]->selection_color(GMSH_TOGGLE_COLOR);
 
       static Fl_Menu_Item menu_label_type[] = {
-        {"Element numbers", 0, 0, 0},
-        {"Elementary entity numbers", 0, 0, 0},
-        {"Physical entity numbers", 0, 0, 0},
-        {"Partition numbers", 0, 0, 0},
+        {"Number", 0, 0, 0},
+        {"Elementary entity", 0, 0, 0},
+        {"Physical entity", 0, 0, 0},
+        {"Partition", 0, 0, 0},
+        {"Coordinates", 0, 0, 0},
         {0}
       };
-      mesh_choice[7] = new Fl_Choice(L + width / 2, 2 * WB + 5 * BH, IW, BH, "Labels");
+      mesh_choice[7] = new Fl_Choice(L + width / 2, 2 * WB + 5 * BH, width/4 - 2*WB, BH, "Label type");
       mesh_choice[7]->menu(menu_label_type);
       mesh_choice[7]->align(FL_ALIGN_RIGHT);
 
-      mesh_value[12] = new Fl_Value_Input(L + width / 2, 2 * WB + 6 * BH, IW / 2, BH, "Labels frequency");
+      mesh_value[12] = new Fl_Value_Input(L + width / 2, 2 * WB + 6 * BH, width/4 - 2*WB, BH, "Label frequency");
       mesh_value[12]->minimum(0.0);
       mesh_value[12]->maximum(100.0);
       mesh_value[12]->step(0.1);
@@ -2394,7 +2409,7 @@ void GUI::create_option_window()
         {"Rho", 0, 0, 0},
         {0}
       };
-      mesh_choice[6] = new Fl_Choice(L + width - BB - 5 * WB, 2 * WB + 7 * BH, BB, BH);
+      mesh_choice[6] = new Fl_Choice(L + (3 * width)/4 - WB, 2 * WB + 7 * BH, width/4 - 2*WB, BH);
       mesh_choice[6]->menu(menu_quality_type);
       mesh_choice[6]->align(FL_ALIGN_LEFT);
 
@@ -3810,20 +3825,29 @@ void GUI::create_visibility_window()
     vis_butt[0]->selection_color(GMSH_TOGGLE_COLOR);
     vis_butt[0]->value(1);
 
-    Fl_Button *o0 = new Fl_Button(2 * WB, 3 * WB + 2 * BH, cols[0], BH, "*");
+    Fl_Button *o0 = new Fl_Button(2 * WB, 3 * WB + 2 * BH, cols[0], BH/2, "*");
+    o0->align(FL_ALIGN_TOP | FL_ALIGN_INSIDE);
+    o0->tooltip("Select/unselect all");
     o0->callback(visibility_sort_cb, (void *)"*");
+
+    Fl_Button *o1 = new Fl_Button(2 * WB, 3 * WB + 2 * BH + BH/2, cols[0], BH - BH/2, "-");
+    o1->tooltip("Invert selection");
+    o1->callback(visibility_sort_cb, (void *)"-");
     
-    Fl_Button *o1 = new Fl_Button(2 * WB + cols[0], 3 * WB + 2 * BH, cols[1], BH, "Type");
-    o1->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-    o1->callback(visibility_sort_cb, (void *)"type");
-
-    Fl_Button *o2 = new Fl_Button(2 * WB + cols[0] + cols[1], 3 * WB + 2 * BH, cols[2], BH, "Number");
+    Fl_Button *o2 = new Fl_Button(2 * WB + cols[0], 3 * WB + 2 * BH, cols[1], BH, "Type");
     o2->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-    o2->callback(visibility_sort_cb, (void *)"number");
+    o2->tooltip("Sort by type");
+    o2->callback(visibility_sort_cb, (void *)"type");
 
-    Fl_Button *o3 = new Fl_Button(2 * WB + cols[0] + cols[1] + cols[2], 3 * WB + 2 * BH, cols[3], BH, "Name");
+    Fl_Button *o3 = new Fl_Button(2 * WB + cols[0] + cols[1], 3 * WB + 2 * BH, cols[2], BH, "Number");
     o3->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-    o3->callback(visibility_sort_cb, (void *)"name");
+    o3->tooltip("Sort by number");
+    o3->callback(visibility_sort_cb, (void *)"number");
+
+    Fl_Button *o4 = new Fl_Button(2 * WB + cols[0] + cols[1] + cols[2], 3 * WB + 2 * BH, cols[3], BH, "Name");
+    o4->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+    o4->tooltip("Sort by name");
+    o4->callback(visibility_sort_cb, (void *)"name");
     
     {
       Fl_Group *o = new Fl_Group(2 * WB, 3 * WB + 3 * BH, brw, height - 7 * WB - 5 * BH);
@@ -4104,7 +4128,7 @@ void GUI::create_about_window()
     o->add("@c@.A three-dimensional finite element mesh generator");
     o->add("@c@.with built-in pre- and post-processing facilities");
     o->add(" ");
-    o->add("@c@.Copyright (C) 1997-2005");
+    o->add("@c@.Copyright (C) 1997-2006");
 #if defined(__APPLE__)
     o->add("@c@.Christophe Geuzaine and Jean-Francois Remacle");
 #else
@@ -4228,6 +4252,13 @@ void GUI::create_geometry_context_window(int num)
       context_geometry_input[5]->value("0.1");
       for(i = 2; i < 6; i++) {
         context_geometry_input[i]->align(FL_ALIGN_RIGHT);
+      }
+      context_geometry_value[0] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW/3, BH);
+      context_geometry_value[1] = new Fl_Value_Input(2 * WB + IW/3, 2 * WB + 5 * BH, IW/3, BH);
+      context_geometry_value[2] = new Fl_Value_Input(2 * WB + 2*IW/3, 2 * WB + 5 * BH, IW/3, BH, "Snapping grid spacing");
+      for(i = 0; i < 3; i++) {
+        context_geometry_value[i]->align(FL_ALIGN_RIGHT);
+        context_geometry_value[i]->callback(con_geometry_snap_cb);
       }
       {
         Fl_Return_Button *o = new Fl_Return_Button(width - BB - 2 * WB, 2 * WB + 7 * BH, BB, BH, "Add");

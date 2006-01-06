@@ -1,7 +1,7 @@
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 class Context_T {
 
 public :
-  int big_endian;             // is the machine big-endian?
+
 
   // general options
   char filename[256];         // the name of the currently opened file
@@ -135,6 +135,8 @@ public :
 
   int forced_bbox; // dynamic variable tracking if the bbox is currently imposed
 
+  int enable_mouse_selection; // enable selection using the mouse
+
   // geometry options 
   struct{
     int vis_type;
@@ -148,6 +150,7 @@ public :
     double normals, tangents;
     double scaling_factor;
     int auto_coherence;
+    double snap[3];
   } geom;
 
   // mesh options 
@@ -242,6 +245,8 @@ public :
   void addQuaternionFromAxisAndAngle(double axis[3], double angle);
   void setQuaternionFromEulerAngles(void);
   void setEulerAnglesFromRotationMatrix(void);
+
+  int big_endian; // is the machine big-endian?
 
   // how RGBA values are packed and unpacked into/from an unsigned
   // integer to be fed to glColor4ubv (depends on machine byte

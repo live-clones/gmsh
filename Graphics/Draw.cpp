@@ -1,6 +1,6 @@
-// $Id: Draw.cpp,v 1.92 2005-12-22 20:42:42 geuzaine Exp $
+// $Id: Draw.cpp,v 1.93 2006-01-06 00:34:24 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -349,8 +349,23 @@ void InitPosition(void)
 
 // Entity selection
 
-void Process_SelectionBuffer(int x, int y, int *n, hit *hits)
+typedef struct{
+  unsigned int type, ient, depth;
+} hit;
+
+int fcmp_hit_depth(const void *a, const void *b)
 {
+  return ((hit*)a)->depth - ((hit*)b)->depth;
+}
+
+int Process_SelectionBuffer(int type, bool multi,
+			    int x, int y, int w, int h,
+			    Vertex *v[SELECTION_MAX_HITS],
+			    Curve *c[SELECTION_MAX_HITS],
+			    Surface *s[SELECTION_MAX_HITS],
+			    Mesh *m)
+{
+  hit hits[SELECTION_BUFFER_SIZE];
   GLuint selectBuf[SELECTION_BUFFER_SIZE];
 
   glSelectBuffer(SELECTION_BUFFER_SIZE, selectBuf);
@@ -364,7 +379,7 @@ void Process_SelectionBuffer(int x, int y, int *n, hit *hits)
 		 // an entity is drawn
 
   glPushMatrix();
-  InitProjection(x, y, 5, 5);
+  InitProjection(x, y, w, h);
   InitPosition();
   Draw_Mesh(&M);
   glPopMatrix();
@@ -372,10 +387,12 @@ void Process_SelectionBuffer(int x, int y, int *n, hit *hits)
   GLint numhits = glRenderMode(GL_RENDER);
   CTX.render_mode = GMSH_RENDER;
 
-  if(numhits < 0){
-    // selection buffer overflow
-    *n = 0;
-    return;
+  if(!numhits){ // no hits
+    return 0;
+  }
+  else if(numhits < 0){ // overflow
+    Msg(WARNING, "Selection buffer size exceeded");
+    return 0;
   }
 
   GLint *ptr = (GLint *) selectBuf;
@@ -400,51 +417,43 @@ void Process_SelectionBuffer(int x, int y, int *n, hit *hits)
       ptr++;
     }
   }
-  *n = numhits;
-}
 
-int fcmp_hit_depth(const void *a, const void *b)
-{
-  return ((hit*)a)->depth - ((hit*)b)->depth;
-}
-
-int Filter_SelectionBuffer(int type, int n, hit *hits, 
-			   Vertex **thev, Curve **thec, Surface **thes, Mesh *m)
-{
-  // If type == ENT_NONE, return the closest entity of "lowest
-  // dimension" (point < line < surface < volume). Otherwise, return
-  // the closest entity of type "type"
+  // filter result: if type == ENT_NONE, return the closest entity of
+  // "lowest dimension" (point < line < surface < volume). Otherwise,
+  // return the closest entity of type "type"
 
   unsigned int typmin = 4;
-
-  for(int i = 0; i < n; i++) {
+  for(int i = 0; i < numhits; i++) {
     if(hits[i].type < typmin)
       typmin = hits[i].type;
   }
 
   // sort hits to get closest entities first
-  qsort(hits, n, sizeof(hit), fcmp_hit_depth);
-
-  for(int i = 0; i < n; i++) {
+  qsort(hits, numhits, sizeof(hit), fcmp_hit_depth);
+  
+  int j = 0;
+  for(int i = 0; i < numhits; i++) {
     if((type == ENT_NONE && hits[i].type == typmin) ||
        (type == ENT_POINT && hits[i].type == 0) ||
        (type == ENT_LINE && hits[i].type == 1) ||
        (type == ENT_SURFACE && hits[i].type == 2)){
       switch (hits[i].type) {
       case 0:
-	*thev = FindPoint(hits[i].ient, m);
-        return 1;
+	v[j++] = FindPoint(hits[i].ient, m);
+	if(!multi) return 1;
+	break;
       case 1:
-	*thec = FindCurve(hits[i].ient, m);
-	return 1;
+	c[j++] = FindCurve(hits[i].ient, m);
+	if(!multi) return 1;
+	break;
       case 2:
-	*thes = FindSurface(hits[i].ient, m);
-	return 1;
+	s[j++] = FindSurface(hits[i].ient, m);
+	if(!multi) return 1;
+	break;
       }
     }
   }
-  
-  return 0;
+  return j;
 }
 
 // Takes a cursor position in window coordinates and returns the line

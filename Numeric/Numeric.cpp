@@ -1,6 +1,6 @@
-// $Id: Numeric.cpp,v 1.23 2005-03-11 05:47:56 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.24 2006-01-06 00:34:27 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

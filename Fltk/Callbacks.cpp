@@ -1,6 +1,6 @@
-// $Id: Callbacks.cpp,v 1.389 2005-12-22 20:42:41 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.390 2006-01-06 00:34:22 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
+#include <time.h>
 #include <map>
 
 #include "BDS.h"
@@ -460,8 +461,22 @@ void status_xyz1p_cb(CALLBACK_ARGS)
     Draw();
   }
   else if(!strcmp(str, "?")){ // display options
-    Print_Options(0, GMSH_FULLRC, false, NULL);
+    Print_Options(0, GMSH_FULLRC, 0, 1, NULL);
     WID->create_message_window();
+  }
+  else if(!strcmp(str, "S")){ // mouse selection
+    if(CTX.enable_mouse_selection){
+      CTX.enable_mouse_selection = 0;
+      Msg(STATUS1N, "Mouse selection OFF");
+      WID->g_status_butt[9]->color(FL_RED);
+      WID->g_opengl_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
+    }
+    else{
+      CTX.enable_mouse_selection = 1;
+      Msg(STATUS1N, "Mouse selection ON");
+      WID->g_status_butt[9]->color(FL_BACKGROUND_COLOR);
+    }
+    WID->g_status_butt[9]->redraw();
   }
   WID->update_manip_window();
 }
@@ -552,14 +567,14 @@ void file_new_cb(CALLBACK_ARGS)
       else
 	goto test;
     }
-    // create a zero length file so that it actually exists (and stupid
-    // Mac/Windows editors accept to deal with it)
     FILE *fp = fopen(name, "w");
     if(!fp){
       Msg(GERROR, "Unable to open file '%s'", name);
       return;
     }
-    fprintf(fp, "");
+    time_t now;
+    time(&now);
+    fprintf(fp, "// Gmsh project created on %s", ctime(&now));
     fclose(fp);
     OpenProblem(name);
     Draw();
@@ -872,7 +887,7 @@ void options_browser_cb(CALLBACK_ARGS)
 
 void options_save_cb(CALLBACK_ARGS)
 {
-  Print_Options(0, GMSH_OPTIONSRC, true, CTX.options_filename_fullpath);
+  Print_Options(0, GMSH_OPTIONSRC, 1, 1, CTX.options_filename_fullpath);
 }
 
 void options_restore_defaults_cb(CALLBACK_ARGS)
@@ -913,16 +928,17 @@ void general_options_color_scheme_cb(CALLBACK_ARGS)
 
 void general_options_rotation_center_select_cb(CALLBACK_ARGS)
 {
-  Vertex *v;
-  Curve *c;
-  Surface *s;
+  Vertex *v[SELECTION_MAX_HITS];
+  Curve *c[SELECTION_MAX_HITS];
+  Surface *s[SELECTION_MAX_HITS];
+  int ne;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
 
   Msg(STATUS3N, "Setting rotation center");
   Msg(ONSCREEN, "Select point\n[Press 'q' to abort]");
-  char ib = SelectEntity(ENT_POINT, &v, &c, &s);
+  char ib = SelectEntity(ENT_POINT, &ne, v, c, s);
   if(ib == 'l') {
     // This would bypass the "Apply" button... Not necessarily bad,
     // but it's not consistent with the rest of the GUI.
@@ -931,9 +947,9 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
     //opt_general_rotation_center2(0, GMSH_SET|GMSH_GUI, v->Pos.Z);
 
     // This is more conform to the way we do things elsewhere:
-    WID->gen_value[8]->value(v->Pos.X);
-    WID->gen_value[9]->value(v->Pos.Y);
-    WID->gen_value[10]->value(v->Pos.Z);
+    WID->gen_value[8]->value(v[0]->Pos.X);
+    WID->gen_value[9]->value(v[0]->Pos.Y);
+    WID->gen_value[10]->value(v[0]->Pos.Z);
   }
   ZeroHighlight(THEM);
   Draw();
@@ -953,7 +969,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
   double sessionrc = opt_general_session_save(0, GMSH_GET, 0);
   opt_general_session_save(0, GMSH_SET, WID->gen_butt[8]->value());
   if(sessionrc && !opt_general_session_save(0, GMSH_GET, 0))
-    Print_Options(0, GMSH_SESSIONRC, true, CTX.session_filename_fullpath);
+    Print_Options(0, GMSH_SESSIONRC, 1, 1, CTX.session_filename_fullpath);
   opt_general_options_save(0, GMSH_SET, WID->gen_butt[9]->value());
   opt_general_tooltips(0, GMSH_SET, WID->gen_butt[13]->value());
   opt_general_confirm_overwrite(0, GMSH_SET, WID->gen_butt[14]->value());
@@ -1300,14 +1316,12 @@ void message_save_cb(CALLBACK_ARGS)
   }
 }
 
-// Option Visibility Menu
+// Visibility Menu
 
 void select_vis_browser(int mode)
 {
-  int i;
-  Entity *e;
-  for(i = 1; i <= WID->vis_browser->size(); i++) {
-    e = (Entity *) WID->vis_browser->data(i);
+  for(int i = 1; i <= WID->vis_browser->size(); i++) {
+    Entity *e = (Entity *) WID->vis_browser->data(i);
     if((mode & VIS_GEOM) && (mode & VIS_MESH)){
       if((e->Visible() & VIS_GEOM) && (e->Visible() & VIS_MESH))
 	WID->vis_browser->select(i);
@@ -1325,13 +1339,10 @@ void select_vis_browser(int mode)
 
 void visibility_cb(CALLBACK_ARGS)
 {
-  int i, type, mode;
-  List_T *list;
-  Entity *e;
-
   WID->create_visibility_window();
   WID->vis_browser->clear();
 
+  int type;
   switch (WID->vis_type->value()) {
   case 0:
     type = ELEMENTARY;
@@ -1343,6 +1354,8 @@ void visibility_cb(CALLBACK_ARGS)
     type = PARTITION;
     break;
   }
+
+  int mode;
   switch (WID->vis_browser_mode->value()) {
   case 0:
     mode = VIS_GEOM | VIS_MESH;
@@ -1355,10 +1368,10 @@ void visibility_cb(CALLBACK_ARGS)
     break;
   }
 
-  list = GetVisibilityList(type);
+  List_T *list = GetVisibilityList(type);
 
-  for(i = 0; i < List_Nbr(list); i++) {
-    e = (Entity *) List_Pointer(list, i);
+  for(int i = 0; i < List_Nbr(list); i++) {
+    Entity *e = (Entity *) List_Pointer(list, i);
     WID->vis_browser->add(e->BrowserLine(), e);
   }
   select_vis_browser(mode);
@@ -1366,9 +1379,6 @@ void visibility_cb(CALLBACK_ARGS)
 
 void visibility_ok_cb(CALLBACK_ARGS)
 {
-  int i, mode;
-  Entity *e;
-
   InitVisibilityThroughPhysical();
 
   switch (WID->vis_type->value()) {
@@ -1382,6 +1392,8 @@ void visibility_ok_cb(CALLBACK_ARGS)
     // partitions: do nothing
     break;
   }
+
+  int mode;
   switch (WID->vis_browser_mode->value()) {
   case 0:
     mode = VIS_GEOM | VIS_MESH;
@@ -1396,8 +1408,8 @@ void visibility_ok_cb(CALLBACK_ARGS)
     break;
   }
 
-  for(i = 1; i <= WID->vis_browser->size(); i++) {
-    e = (Entity *) WID->vis_browser->data(i);
+  for(int i = 1; i <= WID->vis_browser->size(); i++) {
+    Entity *e = (Entity *) WID->vis_browser->data(i);
     if(WID->vis_browser->selected(i)) {
       e->Visible(e->Visible() | mode);
     }
@@ -1423,8 +1435,8 @@ void visibility_ok_cb(CALLBACK_ARGS)
   }
 
   if(WID->vis_butt[0]->value()) {
-    for(i = 1; i <= WID->vis_browser->size(); i++) {
-      e = (Entity *) WID->vis_browser->data(i);
+    for(int i = 1; i <= WID->vis_browser->size(); i++) {
+      Entity *e = (Entity *) WID->vis_browser->data(i);
       e->RecurVisible();
     }
     select_vis_browser(mode);
@@ -1435,7 +1447,7 @@ void visibility_ok_cb(CALLBACK_ARGS)
 
 void visibility_sort_cb(CALLBACK_ARGS)
 {
-  int selectall, val;
+  int val;
   char *str = (char*)data;
 
   if(!strcmp(str, "type"))
@@ -1444,11 +1456,13 @@ void visibility_sort_cb(CALLBACK_ARGS)
     val = 2;
   else if(!strcmp(str, "name"))
     val = 3;
+  else if(!strcmp(str, "-"))
+    val = -1;
   else
     val = 0;
 
-  if(!val) {
-    selectall = 0;
+  if(val == 0) { // (de)select everything
+    int selectall = 0;
     for(int i = 1; i <= WID->vis_browser->size(); i++)
       if(!WID->vis_browser->selected(i)) {
         selectall = 1;
@@ -1460,7 +1474,16 @@ void visibility_sort_cb(CALLBACK_ARGS)
     else
       WID->vis_browser->deselect();
   }
-  else {
+  else if(val == -1){ // invert the selection
+    int *state = new int[WID->vis_browser->size()];
+    for(int i = 1; i <= WID->vis_browser->size(); i++)
+      state[i-1] = WID->vis_browser->selected(i);
+    WID->vis_browser->deselect();
+    for(int i = 1; i <= WID->vis_browser->size(); i++)
+      if(!state[i-1]) WID->vis_browser->select(i);
+    delete [] state;
+  }
+  else { // sort
     SetVisibilitySort(val);
     visibility_cb(NULL, NULL);
   }
@@ -1468,7 +1491,7 @@ void visibility_sort_cb(CALLBACK_ARGS)
 
 void visibility_number_cb(CALLBACK_ARGS)
 {
-  int pos, mode, type = (int)(long)data;
+  int mode, type = (int)(long)data;
 
   if(type >= 100){ // show
     mode = VIS_GEOM | VIS_MESH;
@@ -1482,7 +1505,7 @@ void visibility_number_cb(CALLBACK_ARGS)
   
   char *str = (char *)WID->vis_input[type]->value();  
   SetVisibilityByNumber(str, type, mode);
-  pos = WID->vis_browser->position();
+  int pos = WID->vis_browser->position();
   visibility_cb(NULL, NULL);
   WID->vis_browser->position(pos);
 
@@ -1586,10 +1609,11 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, " ");
   Msg(DIRECT, "  <             Go back to previous context");
   Msg(DIRECT, "  >             Go forward to next context");
-  Msg(DIRECT, "  0 or Esc      Reload project file");
+  Msg(DIRECT, "  0             Reload project file");
   Msg(DIRECT, "  1 or F1       Mesh lines");
   Msg(DIRECT, "  2 or F2       Mesh surfaces");
   Msg(DIRECT, "  3 or F3       Mesh volumes");
+  Msg(DIRECT, "  Escape        Cancel lasso zoom/selection, toggle mouse selection ON/OFF");
   Msg(DIRECT, " ");
   Msg(DIRECT, "  g             Go to geometry module");
   Msg(DIRECT, "  m             Go to mesh module");
@@ -1661,19 +1685,21 @@ void help_mouse_cb(CALLBACK_ARGS)
   Msg(DIRECT, " ");
   Msg(DIRECT, "Mouse actions:");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "  move                - Highlight the elementary geometrical entity");
+  Msg(DIRECT, "  Move                - Highlight the elementary geometrical entity");
   Msg(DIRECT, "                        currently under the mouse pointer and display");
   Msg(DIRECT, "                        its properties in the status bar");
-  Msg(DIRECT, "                      - Size a rubber zoom started with Ctrl+Left button");
+  Msg(DIRECT, "                      - Resize a lasso zoom/selection");
   Msg(DIRECT, "  Left button         - Rotate");
-  Msg(DIRECT, "                      - Accept a rubber zoom started with Ctrl+Left button"); 
-  Msg(DIRECT, "  Ctrl+Left button    Start (anisotropic) rubber zoom"); 
-  Msg(DIRECT, "  Middle button       - Zoom (isotropic)");
-  Msg(DIRECT, "                      - Cancel a rubber zoom");
+  Msg(DIRECT, "                      - Select an entity");
+  Msg(DIRECT, "                      - Accept a lasso zoom/selection"); 
+  Msg(DIRECT, "  Ctrl+Left button    Start a lasso zoom/selection"); 
+  Msg(DIRECT, "  Middle button       - Zoom");
+  Msg(DIRECT, "                      - Unselect an entity");
+  Msg(DIRECT, "                      - Cancel a lasso zoom/selection");
   Msg(DIRECT, "  Ctrl+Middle button  Orthogonalize display"); 
   Msg(DIRECT, "  Right button        - Pan");
-  Msg(DIRECT, "                      - Cancel a rubber zoom");
-  Msg(DIRECT, "                      - Pop up menu on post-processing view button");
+  Msg(DIRECT, "                      - Cancel a lasso zoom/selection");
+  Msg(DIRECT, "                      - Pop-up menu on post-processing view button");
   Msg(DIRECT, "  Ctrl+Right button   Reset to default viewpoint");   
   Msg(DIRECT, " ");   
   Msg(DIRECT, "  For a 2 button mouse, Middle button = Shift+Left button");
@@ -1830,10 +1856,11 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
     WID->g_opengl_window->AddPointMode = true;
     Msg(ONSCREEN, "Move mouse and/or enter coordinates\n"
 	"[Press 'Shift' to hold position, 'e' to add point or 'q' to abort]");
-    Vertex *v;
-    Curve *c;
-    Surface *s;
-    char ib = SelectEntity(ENT_NONE, &v, &c, &s);
+    Vertex *v[SELECTION_MAX_HITS];
+    Curve *c[SELECTION_MAX_HITS];
+    Surface *s[SELECTION_MAX_HITS];
+    int ne;
+    char ib = SelectEntity(ENT_NONE, &ne, v, c, s);
     if(ib == 'e'){
       add_point(CTX.filename,
 		(char*)WID->context_geometry_input[2]->value(),
@@ -1844,7 +1871,6 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
     }
     if(ib == 'q'){
       WID->g_opengl_window->AddPointMode = false;
-      WID->g_opengl_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
       break;
     }
   }
@@ -1854,10 +1880,10 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
 
 static void _new_multiline(int type)
 {
-  Vertex *v;
-  Curve *c;
-  Surface *s;
-  int n, p[100];
+  Vertex *v[SELECTION_MAX_HITS];
+  Curve *c[SELECTION_MAX_HITS];
+  Surface *s[SELECTION_MAX_HITS];
+  int n, p[100], ne;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
@@ -1872,9 +1898,13 @@ static void _new_multiline(int type)
     else
       Msg(ONSCREEN, "Select control points\n"
 	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-    char ib = SelectEntity(ENT_POINT, &v, &c, &s);
+    char ib = SelectEntity(ENT_POINT, &ne, v, c, s);
     if(ib == 'l') {
-      p[n++] = v->Num;
+      for(int i = 0; i < ne; i++)
+	p[n++] = v[i]->Num;
+    }
+    if(ib == 'r') {
+      Msg(WARNING, "Entity de-selection not supported yet during multi-line creation");
     }
     if(ib == 'e') {
       if(n >= 2) {
@@ -1922,10 +1952,10 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
   //
   //_new_multiline(0);
   //
-  Vertex *v;
-  Curve *c;
-  Surface *s;
-  int n, p[100];
+  Vertex *v[SELECTION_MAX_HITS];
+  Curve *c[SELECTION_MAX_HITS];
+  Surface *s[SELECTION_MAX_HITS];
+  int n, p[100], ne;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
@@ -1940,9 +1970,12 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
     if(n == 1)
       Msg(ONSCREEN, "Select end point\n"
 	  "[Press 'u' to undo last selection or 'q' to abort]");
-    char ib = SelectEntity(ENT_POINT, &v, &c, &s);
+    char ib = SelectEntity(ENT_POINT, &ne, v, c, s);
     if(ib == 'l') {
-      p[n++] = v->Num;
+      p[n++] = v[0]->Num;
+    }
+    if(ib == 'r') {
+      Msg(WARNING, "Entity de-selection not supported yet during line creation");
     }
     if(ib == 'u') {
       if(n > 0){
@@ -1980,10 +2013,10 @@ void geometry_elementary_add_new_bspline_cb(CALLBACK_ARGS)
 
 void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
 {
-  Vertex *v;
-  Curve *c;
-  Surface *s;
-  int n, p[100];
+  Vertex *v[SELECTION_MAX_HITS];
+  Curve *c[SELECTION_MAX_HITS];
+  Surface *s[SELECTION_MAX_HITS];
+  int n, p[100], ne;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
@@ -2001,9 +2034,12 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
     if(n == 2)
       Msg(ONSCREEN, "Select end point\n"
 	  "[Press 'u' to undo last selection or 'q' to abort]");
-    char ib = SelectEntity(ENT_POINT, &v, &c, &s);
+    char ib = SelectEntity(ENT_POINT, &ne, v, c, s);
     if(ib == 'l') {
-      p[n++] = v->Num;
+      p[n++] = v[0]->Num;
+    }
+    if(ib == 'r') {
+      Msg(WARNING, "Entity de-selection not supported yet during circle creation");
     }
     if(ib == 'u') {
       if(n > 0){
@@ -2031,10 +2067,10 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
 
 void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
 {
-  Vertex *v;
-  Curve *c;
-  Surface *s;
-  int n, p[100];
+  Vertex *v[SELECTION_MAX_HITS];
+  Curve *c[SELECTION_MAX_HITS];
+  Surface *s[SELECTION_MAX_HITS];
+  int n, p[100], ne;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
@@ -2055,9 +2091,12 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
     if(n == 3)
       Msg(ONSCREEN, "Select end point\n"
 	  "[Press 'u' to undo last selection or 'q' to abort]");
-    char ib = SelectEntity(ENT_POINT, &v, &c, &s);
+    char ib = SelectEntity(ENT_POINT, &ne, v, c, s);
     if(ib == 'l') {
-      p[n++] = v->Num;
+      p[n++] = v[0]->Num;
+    }
+    if(ib == 'r') {
+      Msg(WARNING, "Entity de-selection not supported yet during ellipse creation");
     }
     if(ib == 'u') {
       if(n > 0){
@@ -2085,10 +2124,10 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
 
 static void _new_surface_volume(int mode)
 {
-  Vertex *v;
-  Curve *c;
-  Surface *s;
-  int type, num;
+  Vertex *v[SELECTION_MAX_HITS];
+  Curve *c[SELECTION_MAX_HITS];
+  Surface *s[SELECTION_MAX_HITS];
+  int type, num, ne;
 
   List_T *List1 = List_Create(10, 10, sizeof(int));
   List_T *List2 = List_Create(10, 10, sizeof(int));
@@ -2129,7 +2168,7 @@ static void _new_surface_volume(int mode)
 	      "[Press 'u' to undo last selection or 'q' to abort]");
       }
 
-      char ib = SelectEntity(type, &v, &c, &s);
+      char ib = SelectEntity(type, &ne, v, c, s);
       if(ib == 'q') {
         ZeroHighlight(THEM);
         Draw();
@@ -2137,7 +2176,7 @@ static void _new_surface_volume(int mode)
       }
       if(ib == 'u') {
 	if(List_Nbr(List1) > 0){
-	  List_Read(List1, List_Nbr(List1)-1, &num);	    
+	  List_Read(List1, List_Nbr(List1)-1, &num);
 	  ZeroHighlightEntityNum(0,
 				 (type == ENT_LINE) ? abs(num) : 0, 
 				 (type != ENT_LINE) ? abs(num) : 0);
@@ -2145,8 +2184,11 @@ static void _new_surface_volume(int mode)
 	  Draw();
 	}
       }
+      if(ib == 'r') {
+	Msg(WARNING, "Entity de-selection not supported yet during surface/volume creation");
+      }
       if(ib == 'l') {
-	int num = (type == ENT_LINE) ? c->Num : s->Num;
+	int num = (type == ENT_LINE) ? c[0]->Num : s[0]->Num;
 	if(SelectContour(type, num, List1)) {
 	  if(type == ENT_LINE)
 	    add_loop(List1, CTX.filename, &num);
@@ -2161,7 +2203,7 @@ static void _new_surface_volume(int mode)
 	    else
 	      Msg(ONSCREEN, "Select hole boundaries\n"
 		  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-	    ib = SelectEntity(type, &v, &c, &s);
+	    ib = SelectEntity(type, &ne, v, c, s);
 	    if(ib == 'q') {
 	      ZeroHighlight(THEM);
 	      Draw();
@@ -2184,7 +2226,7 @@ static void _new_surface_volume(int mode)
 	      }
 	    }
 	    if(ib == 'l') {
-	      num = (type == ENT_LINE) ? c->Num : s->Num;
+	      num = (type == ENT_LINE) ? c[0]->Num : s[0]->Num;
 	      if(SelectContour(type, num, List1)) {
 		if(type == ENT_LINE)
 		  add_loop(List1, CTX.filename, &num);
@@ -2193,6 +2235,9 @@ static void _new_surface_volume(int mode)
 		List_Reset(List1);
 		List_Add(List2, &num);
 	      }
+	    }
+	    if(ib == 'r') {
+	      Msg(WARNING, "Entity de-selection not supported yet during surface/volume creation");
 	    }
 	  }
 	  if(List_Nbr(List2)) {
@@ -2234,10 +2279,10 @@ void geometry_elementary_add_new_volume_cb(CALLBACK_ARGS)
 
 static void _transform_point_line_surface(int transfo, int mode, char *what)
 {
-  Vertex *v;
-  Curve *c;
-  Surface *s;
-  int type, num = 0;
+  Vertex *v[SELECTION_MAX_HITS];
+  Curve *c[SELECTION_MAX_HITS];
+  Surface *s[SELECTION_MAX_HITS];
+  int type, num = 0, ne;
   char *str;
 
   if(!strcmp(what, "Point")) {
@@ -2261,7 +2306,7 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
 
   while(1) {
     Msg(STATUS3N, "Transforming %s", str);
-    char ib = SelectEntity(type, &v, &c, &s);
+    char ib = SelectEntity(type, &ne, v, c, s);
     if(ib == 'q') {
       ZeroHighlight(THEM);
       Draw();
@@ -2270,13 +2315,13 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
     if(ib == 'l') {
       switch (type) {
       case ENT_POINT:
-	num = v->Num;
+	num = v[0]->Num;
 	break;
       case ENT_LINE:
-	num = c->Num;
+	num = c[0]->Num;
 	break;
       case ENT_SURFACE:
-	num = s->Num;
+	num = s[0]->Num;
 	break;
       }
       switch (transfo) {
@@ -2602,10 +2647,10 @@ void geometry_elementary_delete_surface_cb(CALLBACK_ARGS)
 
 static void _add_physical(char *what)
 {
-  Vertex *v;
-  Curve *c;
-  Surface *s;
-  int type, num;
+  Vertex *v[SELECTION_MAX_HITS];
+  Curve *c[SELECTION_MAX_HITS];
+  Surface *s[SELECTION_MAX_HITS];
+  int type, num, ne;
   char *str;
   List_T *List1;
 
@@ -2643,19 +2688,40 @@ static void _add_physical(char *what)
     else
       Msg(ONSCREEN, "Select %s\n"
 	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
-    char ib = SelectEntity(type, &v, &c, &s);
+    char ib = SelectEntity(type, &ne, v, c, s);
     if(ib == 'l') {
-      switch (type) {
-      case ENT_POINT:
-        List_Add(List1, &v->Num);
-        break;
-      case ENT_LINE:
-        List_Add(List1, &c->Num);
-        break;
-      case ENT_SURFACE:
-        List_Add(List1, &s->Num);
-        break;
+      for(int i = 0; i < ne; i++){
+	switch (type) {
+	case ENT_POINT:
+	  List_Add(List1, &v[i]->Num);
+	  break;
+	case ENT_LINE:
+	  List_Add(List1, &c[i]->Num);
+	  break;
+	case ENT_SURFACE:
+	  List_Add(List1, &s[i]->Num);
+	  break;
+	}
       }
+    }
+    if(ib == 'r') {
+      for(int i = 0; i < ne; i++){
+	switch (type) {
+	case ENT_POINT:
+	  List_Suppress(List1, &v[i]->Num, fcmp_int);
+	  ZeroHighlightEntity(v[i], NULL, NULL);
+	  break;
+	case ENT_LINE:
+	  List_Suppress(List1, &c[i]->Num, fcmp_int);
+	  ZeroHighlightEntity(NULL, c[i], NULL);
+	  break;
+	case ENT_SURFACE:
+	  List_Suppress(List1, &s[i]->Num, fcmp_int);
+	  ZeroHighlightEntity(NULL, NULL, s[i]);
+	  break;
+	}
+      }
+      Draw();
     }
     if(ib == 'u') {
       if(List_Nbr(List1)) {
@@ -2817,10 +2883,10 @@ void mesh_update_edges_cb(CALLBACK_ARGS)
 
 void mesh_update_more_edges_cb(CALLBACK_ARGS)
 {
-  Vertex *v;
-  Curve *c;
-  Surface *s;
-  int n, p[100];
+  Vertex *v[SELECTION_MAX_HITS];
+  Curve *c[SELECTION_MAX_HITS];
+  Surface *s[SELECTION_MAX_HITS];
+  int n, p[100], ne;
   extern void BDS_To_Mesh(Mesh *m);
 
   if (THEM && THEM->bds && WID) {
@@ -2834,15 +2900,17 @@ void mesh_update_more_edges_cb(CALLBACK_ARGS)
       Msg(STATUS3N, "Adding new Model Edges");
       if(n == 0)
 	Msg(ONSCREEN, "Select Model Edges\n"
-	    "[Press 'q' to abort or 'e' end]");
+	    "[Press 'e' to end selection or 'q' to abort]");
       if(n == 1)
 	Msg(ONSCREEN, "Select Model Edge\n"
-	    "[Press 'u' to undo last selection, 'q' to abort, 'e' end]");
-      char ib = SelectEntity(ENT_LINE, &v, &c, &s);
-      printf("ib = %c\n",ib);
+	    "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
+      char ib = SelectEntity(ENT_LINE, &ne, v, c, s);
       if(ib == 'l') {
-	p[n++] = c->Num;
-	printf("line %d has been selected\n",c->Num);
+	for(int i = 0; i < ne; i++)
+	  p[n++] = c[i]->Num;
+      }
+      if(ib == 'r') {
+	Msg(WARNING, "Entity de-selection not supported yet during edge selection");
       }
       if(ib == 'u') {
 	if(n > 0){
@@ -2872,7 +2940,6 @@ void mesh_update_more_edges_cb(CALLBACK_ARGS)
 	    ++it;
 	  }
 	}
-	
 	ZeroHighlight(THEM);
 	Draw();
 	n = 0;
@@ -2883,10 +2950,10 @@ void mesh_update_more_edges_cb(CALLBACK_ARGS)
 
 void mesh_define_length_cb(CALLBACK_ARGS)
 {
-  Vertex *v;
-  Curve *c;
-  Surface *s;
-  int n = 0, p[100];
+  Vertex *v[SELECTION_MAX_HITS];
+  Curve *c[SELECTION_MAX_HITS];
+  Surface *s[SELECTION_MAX_HITS];
+  int n = 0, p[100], ne;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
@@ -2901,9 +2968,13 @@ void mesh_define_length_cb(CALLBACK_ARGS)
     else
       Msg(ONSCREEN, "Select points\n"
 	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-    char ib = SelectEntity(ENT_POINT, &v, &c, &s);
+    char ib = SelectEntity(ENT_POINT, &ne, v, c, s);
     if(ib == 'l') {
-      p[n++] = v->Num;
+      for(int i = 0; i < ne; i++)
+	p[n++] = v[i]->Num;
+    }
+    if(ib == 'r') {
+      Msg(WARNING, "Entity de-selection not supported yet during char. length definition");
     }
     if(ib == 'e') {
       if(n > 0)
@@ -2931,10 +3002,10 @@ void mesh_define_length_cb(CALLBACK_ARGS)
 
 void mesh_define_recombine_cb(CALLBACK_ARGS)
 {
-  Vertex *v;
-  Curve *c;
-  Surface *s;
-  int n, p[100];
+  Vertex *v[SELECTION_MAX_HITS];
+  Curve *c[SELECTION_MAX_HITS];
+  Surface *s[SELECTION_MAX_HITS];
+  int n, p[100], ne;
 
   opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
@@ -2948,9 +3019,13 @@ void mesh_define_recombine_cb(CALLBACK_ARGS)
     else
       Msg(ONSCREEN, "Select surfaces\n"
 	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-    char ib = SelectEntity(ENT_SURFACE, &v, &c, &s);
+    char ib = SelectEntity(ENT_SURFACE, &ne, v, c, s);
     if(ib == 'l') {
-      p[n++] = s->Num;
+      for(int i = 0; i < ne; i++)
+	p[n++] = s[i]->Num;
+    }
+    if(ib == 'r') {
+      Msg(WARNING, "Entity de-selection not supported yet during recombine definition");
     }
     if(ib == 'e') {
       if(n > 0)
@@ -2983,11 +3058,11 @@ void mesh_define_transfinite_cb(CALLBACK_ARGS)
 
 static void _add_transfinite_elliptic(int type, int dim)
 {
-  Vertex *v;
-  Curve *c;
-  Surface *s;
+  Vertex *v[SELECTION_MAX_HITS];
+  Curve *c[SELECTION_MAX_HITS];
+  Surface *s[SELECTION_MAX_HITS];
   char ib;
-  int n, p[100];
+  int n, p[100], ne;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   switch (dim) {
@@ -3008,11 +3083,11 @@ static void _add_transfinite_elliptic(int type, int dim)
       else
 	Msg(ONSCREEN, "Select lines\n"
 	    "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-      ib = SelectEntity(ENT_LINE, &v, &c, &s);
+      ib = SelectEntity(ENT_LINE, &ne, v, c, s);
       break;
     case 2:
       Msg(ONSCREEN, "Select surface\n[Press 'q' to abort]");
-      ib = SelectEntity(ENT_SURFACE, &v, &c, &s);
+      ib = SelectEntity(ENT_SURFACE, &ne, v, c, s);
       break;
     default:
       ib = 'l';
@@ -3045,13 +3120,16 @@ static void _add_transfinite_elliptic(int type, int dim)
       Draw();
       break;
     }
+    if(ib == 'r') {
+      Msg(WARNING, "Entity de-selection not supported yet during transfinite definition");
+    }
     if(ib == 'l') {
       switch (dim) {
       case 1:
-        p[n++] = c->Num;
+        p[n++] = c[0]->Num;
         break;
       case 2:
-        p[n++] = s->Num; // fall-through
+        p[n++] = s[0]->Num; // fall-through
       case 3:
         while(1) {
 	  if(n == ((dim == 2) ? 1 : 0))
@@ -3060,9 +3138,9 @@ static void _add_transfinite_elliptic(int type, int dim)
 	  else
 	    Msg(ONSCREEN, "Select (ordered) boundary points\n"
 		"[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-          ib = SelectEntity(ENT_POINT, &v, &c, &s);
+          ib = SelectEntity(ENT_POINT, &ne, v, c, s);
           if(ib == 'l') {
-            p[n++] = v->Num;
+            p[n++] = v[0]->Num;
           }
 	  if(ib == 'u') {
 	    if(n > ((dim == 2) ? 1 : 0)){
@@ -3070,6 +3148,9 @@ static void _add_transfinite_elliptic(int type, int dim)
 	      Draw();
 	      n--;
 	    }
+	  }
+	  if(ib == 'r') {
+	    Msg(WARNING, "Entity de-selection not supported yet during transfinite definition");
 	  }
           if(ib == 'e') {
             switch (dim) {
@@ -4323,4 +4404,11 @@ void con_geometry_define_point_cb(CALLBACK_ARGS)
   ZeroHighlight(THEM);
   CalculateMinMax(THEM->Points, NULL);
   Draw();
+}
+
+void con_geometry_snap_cb(CALLBACK_ARGS)
+{
+  CTX.geom.snap[0] = WID->context_geometry_value[0]->value();
+  CTX.geom.snap[1] = WID->context_geometry_value[1]->value();
+  CTX.geom.snap[2] = WID->context_geometry_value[2]->value();
 }

@@ -1,7 +1,7 @@
 #ifndef _GUI_H_
 #define _GUI_H_
 
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -151,7 +151,7 @@ public:
   // graphic window
   Fl_Window        *g_window ;
   Opengl_Window    *g_opengl_window ;
-  Fl_Button        *g_status_butt[9] ;
+  Fl_Button        *g_status_butt[10] ;
   Fl_Box           *g_status_label[3] ;
 
   // Option window
@@ -241,6 +241,7 @@ public:
   // geometry context window
   Fl_Window        *context_geometry_window ;
   Fl_Input         *context_geometry_input[30] ;
+  Fl_Value_Input   *context_geometry_value[10] ;
 
   // mesh context window
   Fl_Window        *context_mesh_window ;
@@ -307,7 +308,7 @@ public:
   void update_manip_window(int force=0);
   void reset_external_view_list();
   int  selection, try_selection, quit_selection, end_selection, undo_selection;
-
+  int  try_selection_xywh[4];
 };
 
 // some utility font functions

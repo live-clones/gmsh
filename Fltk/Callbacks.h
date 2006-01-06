@@ -1,7 +1,7 @@
 #ifndef _CALLBACKS_H_
 #define _CALLBACKS_H_
 
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -262,6 +262,7 @@ void geometry_reload_cb(CALLBACK_ARGS);
 
 void con_geometry_define_parameter_cb(CALLBACK_ARGS);
 void con_geometry_define_point_cb(CALLBACK_ARGS);
+void con_geometry_snap_cb(CALLBACK_ARGS);
 
 // Dynamic Mesh Menus
 

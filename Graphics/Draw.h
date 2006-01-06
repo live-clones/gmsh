@@ -1,7 +1,7 @@
 #ifndef _DRAW_H_
 #define _DRAW_H_
 
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -28,7 +28,9 @@
 #define GMSH_SELECT    2
 #define GMSH_FEEDBACK  3
 
-#define SELECTION_BUFFER_SIZE  1024
+// selection buffer size = 5 * number of hits (in our case)
+#define SELECTION_BUFFER_SIZE  50000
+#define SELECTION_MAX_HITS     10000
 
 void SetOpenglContext(void);
 void ClearOpengl(void);
@@ -37,13 +39,16 @@ void InitProjection(int xpick=0, int ypick=0, int wpick=0, int hpick=0);
 void InitPosition(void);
 void InitRenderModel(void);
 
-typedef struct{
-  unsigned int type, ient, depth;
-} hit;
-
-void Process_SelectionBuffer(int x, int y, int *n, hit *hits);
-int Filter_SelectionBuffer(int type, int n, hit *hits, 
-			    Vertex **thev, Curve **thec, Surface **thes, Mesh *m);
+int Process_SelectionBuffer(int type, bool multi, 
+			    int x, int y, int w, int h, 
+			    Vertex *v[SELECTION_MAX_HITS], 
+			    Curve *c[SELECTION_MAX_HITS], 
+			    Surface *s[SELECTION_MAX_HITS], 
+			    Mesh *m);
+char SelectEntity(int type, int *n,
+		  Vertex *v[SELECTION_MAX_HITS], 
+		  Curve *c[SELECTION_MAX_HITS], 
+		  Surface *s[SELECTION_MAX_HITS]);
 
 void unproject(double x, double y, double p[3], double d[3]);
 void Viewport2World(double win[3], double xyz[3]);
@@ -53,11 +58,11 @@ unsigned int PaletteContinuous(Post_View * View, double min, double max, double 
 unsigned int PaletteContinuousLinear(Post_View * v, double min, double max, double val);
 unsigned int PaletteDiscrete(Post_View * View, int nbi, int i);
 
-char SelectEntity(int type, Vertex **v, Curve **c, Surface **s);
 void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent);
 void HighlightEntityNum(int v, int c, int s, int permanant);
-void ZeroHighlight(Mesh *m);
+void ZeroHighlightEntity(Vertex *v,Curve *c, Surface *s);
 void ZeroHighlightEntityNum(int v, int c, int s);
+void ZeroHighlight(Mesh *m);
 
 void Draw3d(void);
 void Draw2d(void);

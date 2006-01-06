@@ -1,6 +1,6 @@
-// $Id: Mesh.cpp,v 1.147 2005-12-21 23:09:52 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.148 2006-01-06 00:34:24 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -551,7 +551,8 @@ void Draw_Mesh_Curve(void *a, void *b)
   theCurve = NULL;
 }
 
-void Draw_Mesh_Point(int num, double x, double y, double z, int degree, int visible)
+void Draw_Mesh_Point(int num, double x, double y, double z, int degree, int visible,
+		     int elementary=-1, int physical=-1, int partition=-1)
 {
   if(!(visible & VIS_MESH))
     return;
@@ -577,7 +578,28 @@ void Draw_Mesh_Point(int num, double x, double y, double z, int degree, int visi
 
   if(CTX.mesh.points_num) {
     char Num[100];
-    sprintf(Num, "%d", num);
+    if(CTX.mesh.label_type == 4)
+      sprintf(Num, "(%g,%g,%g)", x, y, z);
+    else if(CTX.mesh.label_type == 3){
+      if(partition > 0)
+	sprintf(Num, "%d", partition);
+      else
+	strcpy(Num, "NA");
+    }
+    else if(CTX.mesh.label_type == 2){
+      if(physical > 0)
+	sprintf(Num, "%d", physical);
+      else
+	strcpy(Num, "NA");
+    }
+    else if(CTX.mesh.label_type == 1){
+      if(elementary > 0)
+	sprintf(Num, "%d", elementary);
+      else
+	strcpy(Num, "NA");
+    }
+    else
+      sprintf(Num, "%d", num);
     double offset = 0.3 * (CTX.mesh.point_size + CTX.gl_fontsize) * CTX.pixel_equiv_x;
     glRasterPos3d(x + offset / CTX.s[0],
                   y + offset / CTX.s[1],
@@ -632,7 +654,8 @@ void Draw_Mesh_Line(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
     if(CTX.mesh.points_per_element)
       Draw_Mesh_Point(s->V[i]->Num, X[i], Y[i], Z[i], 
-		      s->V[i]->Degree, s->V[i]->Visible);
+		      s->V[i]->Degree, s->V[i]->Visible,
+		      s->iEnt, thePhysical, iPart);
   }
   
   if(N == 3){
@@ -644,7 +667,8 @@ void Draw_Mesh_Line(void *a, void *b)
     Z[1] = Zc + CTX.mesh.explode * (s->VSUP[0]->Pos.Z - Zc);
     if(CTX.mesh.points_per_element)
       Draw_Mesh_Point(s->VSUP[0]->Num, X[1], Y[1], Z[1], 
-		      s->VSUP[0]->Degree, s->VSUP[0]->Visible);
+		      s->VSUP[0]->Degree, s->VSUP[0]->Visible,
+		      s->iEnt, thePhysical, iPart);
   }
 
   unsigned int col;
@@ -686,7 +710,9 @@ void Draw_Mesh_Line(void *a, void *b)
 
   if(CTX.mesh.lines_num && (numLabelsDisplayed % stepLabelsDisplayed == 0)) {
     glColor4ubv((GLubyte *) & col);
-    if(CTX.mesh.label_type == 3)
+    if(CTX.mesh.label_type == 4)
+      sprintf(Num, "(%g,%g,%g)", Xc, Yc, Zc);
+    else if(CTX.mesh.label_type == 3)
       sprintf(Num, "%d", iPart);
     else if(CTX.mesh.label_type == 2)
       sprintf(Num, "%d", thePhysical);
@@ -953,7 +979,8 @@ void Draw_Mesh_Triangle(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
     if(CTX.mesh.points_per_element)
       Draw_Mesh_Point(s->V[i]->Num, X[i], Y[i], Z[i], 
-		      s->V[i]->Degree, s->V[i]->Visible);
+		      s->V[i]->Degree, s->V[i]->Visible,
+		      s->iEnt, thePhysical, iPart);
   }
 
   if(s->VSUP){
@@ -968,7 +995,8 @@ void Draw_Mesh_Triangle(void *a, void *b)
       Z2[i] = Zc + CTX.mesh.explode * (s->VSUP[i]->Pos.Z - Zc);
       if(CTX.mesh.points_per_element)
 	Draw_Mesh_Point(s->VSUP[i]->Num, X2[i], Y2[i], Z2[i], 
-			s->VSUP[i]->Degree, s->VSUP[i]->Visible);
+			s->VSUP[i]->Degree, s->VSUP[i]->Visible,
+			s->iEnt, thePhysical, iPart);
     }
   }
 
@@ -1056,7 +1084,9 @@ void Draw_Mesh_Triangle(void *a, void *b)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
       glColor4ubv((GLubyte *) & col);
-    if(CTX.mesh.label_type == 3)
+    if(CTX.mesh.label_type == 4)
+      sprintf(Num, "(%g,%g,%g)", Xc, Yc, Zc);
+    else if(CTX.mesh.label_type == 3)
       sprintf(Num, "%d", iPart);
     else if(CTX.mesh.label_type == 2)
       sprintf(Num, "%d", thePhysical);
@@ -1143,7 +1173,8 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (q->V[i]->Pos.Z - Zc);
     if(CTX.mesh.points_per_element)
       Draw_Mesh_Point(q->V[i]->Num, X[i], Y[i], Z[i], 
-		      q->V[i]->Degree, q->V[i]->Visible);
+		      q->V[i]->Degree, q->V[i]->Visible,
+		      q->iEnt, thePhysical, iPart);
   }
 
   if(q->VSUP){
@@ -1158,7 +1189,8 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
       Z2[i] = Zc + CTX.mesh.explode * (q->VSUP[i]->Pos.Z - Zc);
       if(CTX.mesh.points_per_element)
 	Draw_Mesh_Point(q->VSUP[i]->Num, X2[i], Y2[i], Z2[i], 
-			q->VSUP[i]->Degree, q->VSUP[i]->Visible);
+			q->VSUP[i]->Degree, q->VSUP[i]->Visible,
+			q->iEnt, thePhysical, iPart);
     }
   }
 
@@ -1246,7 +1278,9 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
       glColor4ubv((GLubyte *) & col);
-    if(CTX.mesh.label_type == 3)
+    if(CTX.mesh.label_type == 4)
+      sprintf(Num, "(%g,%g,%g)", Xc, Yc, Zc);
+    else if(CTX.mesh.label_type == 3)
       sprintf(Num, "%d", iPart);
     else if(CTX.mesh.label_type == 2)
       sprintf(Num, "%d", thePhysical);
@@ -1335,7 +1369,8 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
     if(CTX.mesh.points_per_element)
       Draw_Mesh_Point(s->V[i]->Num, X[i], Y[i], Z[i], 
-		      s->V[i]->Degree, s->V[i]->Visible);
+		      s->V[i]->Degree, s->V[i]->Visible,
+		      s->iEnt, thePhysical, iPart);
   }
 
   if(s->VSUP){
@@ -1350,7 +1385,8 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
       Z2[i] = Zc + CTX.mesh.explode * (s->VSUP[i]->Pos.Z - Zc);
       if(CTX.mesh.points_per_element)
 	Draw_Mesh_Point(s->VSUP[i]->Num, X2[i], Y2[i], Z2[i], 
-			s->VSUP[i]->Degree, s->VSUP[i]->Visible);
+			s->VSUP[i]->Degree, s->VSUP[i]->Visible,
+			s->iEnt, thePhysical, iPart);
     }
   }
 
@@ -1446,7 +1482,9 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
       glColor4ubv((GLubyte *) & col);
-    if(CTX.mesh.label_type == 3)
+    if(CTX.mesh.label_type == 4)
+      sprintf(Num, "(%g,%g,%g)", Xc, Yc, Zc);
+    else if(CTX.mesh.label_type == 3)
       sprintf(Num, "%d", iPart);
     else if(CTX.mesh.label_type == 2)
       sprintf(Num, "%d", thePhysical);
@@ -1523,7 +1561,8 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (h->V[i]->Pos.Z - Zc);
     if(CTX.mesh.points_per_element)
       Draw_Mesh_Point(h->V[i]->Num, X[i], Y[i], Z[i], 
-		      h->V[i]->Degree, h->V[i]->Visible);
+		      h->V[i]->Degree, h->V[i]->Visible,
+		      h->iEnt, thePhysical, iPart);
   }
 
   if(h->VSUP){
@@ -1538,7 +1577,8 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
       Z2[i] = Zc + CTX.mesh.explode * (h->VSUP[i]->Pos.Z - Zc);
       if(CTX.mesh.points_per_element)
 	Draw_Mesh_Point(h->VSUP[i]->Num, X2[i], Y2[i], Z2[i], 
-			h->VSUP[i]->Degree, h->VSUP[i]->Visible);
+			h->VSUP[i]->Degree, h->VSUP[i]->Visible,
+			h->iEnt, thePhysical, iPart);
     }
   }
 
@@ -1646,7 +1686,9 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
       glColor4ubv((GLubyte *) & col);
-    if(CTX.mesh.label_type == 3)
+    if(CTX.mesh.label_type == 4)
+      sprintf(Num, "(%g,%g,%g)", Xc, Yc, Zc);
+    else if(CTX.mesh.label_type == 3)
       sprintf(Num, "%d", iPart);
     else if(CTX.mesh.label_type == 2)
       sprintf(Num, "%d", thePhysical);
@@ -1723,7 +1765,8 @@ void Draw_Mesh_Prism(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (p->V[i]->Pos.Z - Zc);
     if(CTX.mesh.points_per_element)
       Draw_Mesh_Point(p->V[i]->Num, X[i], Y[i], Z[i], 
-		      p->V[i]->Degree, p->V[i]->Visible);
+		      p->V[i]->Degree, p->V[i]->Visible,
+		      p->iEnt, thePhysical, iPart);
   }
 
   if(p->VSUP){
@@ -1743,7 +1786,8 @@ void Draw_Mesh_Prism(void *a, void *b)
       Z2[i] = Zc + CTX.mesh.explode * (p->VSUP[i]->Pos.Z - Zc);
       if(CTX.mesh.points_per_element)
 	Draw_Mesh_Point(p->VSUP[i]->Num, X2[i], Y2[i], Z2[i], 
-			p->VSUP[i]->Degree, p->VSUP[i]->Visible);
+			p->VSUP[i]->Degree, p->VSUP[i]->Visible,
+			p->iEnt, thePhysical, iPart);
     }
   }
 
@@ -1861,7 +1905,9 @@ void Draw_Mesh_Prism(void *a, void *b)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
       glColor4ubv((GLubyte *) & col);
-    if(CTX.mesh.label_type == 3)
+    if(CTX.mesh.label_type == 4)
+      sprintf(Num, "(%g,%g,%g)", Xc, Yc, Zc);
+    else if(CTX.mesh.label_type == 3)
       sprintf(Num, "%d", iPart);
     else if(CTX.mesh.label_type == 2)
       sprintf(Num, "%d", thePhysical);
@@ -1938,7 +1984,8 @@ void Draw_Mesh_Pyramid(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (p->V[i]->Pos.Z - Zc);
     if(CTX.mesh.points_per_element)
       Draw_Mesh_Point(p->V[i]->Num, X[i], Y[i], Z[i], 
-		      p->V[i]->Degree, p->V[i]->Visible);
+		      p->V[i]->Degree, p->V[i]->Visible,
+		      p->iEnt, thePhysical, iPart);
   }
 
   if(p->VSUP){
@@ -1958,7 +2005,8 @@ void Draw_Mesh_Pyramid(void *a, void *b)
       Z2[i] = Zc + CTX.mesh.explode * (p->VSUP[i]->Pos.Z - Zc);
       if(CTX.mesh.points_per_element)
 	Draw_Mesh_Point(p->VSUP[i]->Num, X2[i], Y2[i], Z2[i], 
-			p->VSUP[i]->Degree, p->VSUP[i]->Visible);
+			p->VSUP[i]->Degree, p->VSUP[i]->Visible,
+			p->iEnt, thePhysical, iPart);
     }
   }
 
@@ -2048,7 +2096,9 @@ void Draw_Mesh_Pyramid(void *a, void *b)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     else
       glColor4ubv((GLubyte *) & col);
-    if(CTX.mesh.label_type == 3)
+    if(CTX.mesh.label_type == 4)
+      sprintf(Num, "(%g,%g,%g)", Xc, Yc, Zc);
+    else if(CTX.mesh.label_type == 3)
       sprintf(Num, "%d", iPart);
     else if(CTX.mesh.label_type == 2)
       sprintf(Num, "%d", thePhysical);

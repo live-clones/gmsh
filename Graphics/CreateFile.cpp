@@ -1,6 +1,6 @@
-// $Id: CreateFile.cpp,v 1.75 2005-12-22 20:42:42 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.76 2006-01-06 00:34:24 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -113,7 +113,7 @@ void CreateOutputFile(char *name, int format)
     break;
 
   case FORMAT_OPT:
-    Print_Options(0, GMSH_FULLRC, true, name);
+    Print_Options(0, GMSH_FULLRC, 1, 1, name);
     break;
 
   case FORMAT_MSH:

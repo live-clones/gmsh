@@ -1,6 +1,6 @@
-// $Id: Opengl_Window.cpp,v 1.57 2005-12-28 13:55:58 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.58 2006-01-06 00:34:23 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -110,12 +110,9 @@ void Opengl_Window::draw()
     }
   }
 
-  if(!ZoomMode) {
-    ClearOpengl();
-    Draw3d();
-    Draw2d();
-  }
-  else {
+  if(LassoMode) { 
+    // draw the zoom or selection lasso on top of the current scene
+    // (without using overlays!)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho((double)CTX.viewport[0], (double)CTX.viewport[2],
@@ -124,6 +121,10 @@ void Opengl_Window::draw()
     glLoadIdentity();
     glColor3d(1., 1., 1.);
     glDisable(GL_DEPTH_TEST);
+    if(SelectionMode){
+      glEnable(GL_LINE_STIPPLE);
+      glLineStipple(1, 0x0F0F);
+    }
     // glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
     glEnable(GL_BLEND);
@@ -131,16 +132,42 @@ void Opengl_Window::draw()
     for(int i = 0; i < 2; i++){
       glBegin(GL_LINE_STRIP);
       glVertex2d(click.win[0], CTX.viewport[3] - click.win[1]);
-      glVertex2d(zoom.win[0], CTX.viewport[3] - click.win[1]);
-      glVertex2d(zoom.win[0], CTX.viewport[3] - zoom.win[1]);
-      glVertex2d(click.win[0], CTX.viewport[3] - zoom.win[1]);
+      glVertex2d(lasso.win[0], CTX.viewport[3] - click.win[1]);
+      glVertex2d(lasso.win[0], CTX.viewport[3] - lasso.win[1]);
+      glVertex2d(click.win[0], CTX.viewport[3] - lasso.win[1]);
       glVertex2d(click.win[0], CTX.viewport[3] - click.win[1]);
       glEnd();
-      if(!i) zoom.set();
+      if(!i) lasso.set();
     }
     glDisable(GL_BLEND);
+    if(SelectionMode)
+      glDisable(GL_LINE_STIPPLE);
     glEnable(GL_DEPTH_TEST);
   }
+  else if(AddPointMode) { 
+    // draw the whole scene and the point to add
+    if(CTX.fast_redraw) {
+      CTX.mesh.draw = 0;
+      CTX.post.draw = 0;
+    }
+    ClearOpengl();
+    Draw3d();
+    glColor4ubv((GLubyte *) & CTX.color.fg);
+    glPointSize(CTX.geom.point_size);
+    glBegin(GL_POINTS);
+    glVertex3d(point[0], point[1], point[2]);
+    glEnd();
+    Draw2d();
+    CTX.mesh.draw = 1;
+    CTX.post.draw = 1;
+  }
+  else{
+    // draw the whole scene
+    ClearOpengl();
+    Draw3d();
+    Draw2d();
+  }
+
   locked = 0;
 }
 
@@ -152,9 +179,10 @@ void Opengl_Window::draw()
 
 int Opengl_Window::handle(int event)
 {
+  Vertex *v[SELECTION_MAX_HITS];
+  Curve *c[SELECTION_MAX_HITS];
+  Surface *s[SELECTION_MAX_HITS];
   double dx, dy;
-  int numhits;
-  hit hits[SELECTION_BUFFER_SIZE];
 
   switch (event) {
 
@@ -172,34 +200,54 @@ int Opengl_Window::handle(int event)
   case FL_PUSH:
     take_focus(); // force keyboard focus when we click in the window
     curr.set();
-    
     if(Fl::event_button() == 1 && 
        !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
-      if(!ZoomMode && Fl::event_state(FL_CTRL)) {
-        ZoomMode = true;
-	zoom.set();
+      if(!LassoMode && Fl::event_state(FL_CTRL)) {
+        LassoMode = true;
+	lasso.set();
       }
-      else if(ZoomMode) {
-        ZoomMode = false;
-	lasso_zoom(click, curr);
+      else if(LassoMode) {
+        LassoMode = false;
+	if(SelectionMode){
+	  WID->try_selection = 2; // will try to select multiple entities
+	  WID->try_selection_xywh[0] = (int)(click.win[0] + curr.win[0])/2;
+	  WID->try_selection_xywh[1] = (int)(click.win[1] + curr.win[1])/2;
+	  WID->try_selection_xywh[2] = (int)fabs(click.win[0] - curr.win[0]);
+	  WID->try_selection_xywh[3] = (int)fabs(click.win[1] - curr.win[1]);
+	}
+	else{
+	  lasso_zoom(click, curr);
+	}
       }
-      else {
-        WID->try_selection = 1;
+      else if(CTX.enable_mouse_selection){
+        WID->try_selection = 1; // will try to select clicked entity
+	WID->try_selection_xywh[0] = (int)curr.win[0];
+	WID->try_selection_xywh[1] = (int)curr.win[1];
+	WID->try_selection_xywh[2] = 5;
+	WID->try_selection_xywh[3] = 5;
       }
     }
     else if(Fl::event_button() == 2 || 
 	    (Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
-      if(Fl::event_state(FL_CTRL) && !ZoomMode) {
+      if(Fl::event_state(FL_CTRL) && !LassoMode) {
+	// make zoom isotropic
         CTX.s[1] = CTX.s[0];
         CTX.s[2] = CTX.s[0];
         redraw();
       }
-      else {
-        ZoomMode = false;
+      else if(LassoMode) {
+        LassoMode = false;
+      }
+      else if(CTX.enable_mouse_selection){
+        WID->try_selection = -1; // will try to unselect clicked entity
+	WID->try_selection_xywh[0] = (int)curr.win[0];
+	WID->try_selection_xywh[1] = (int)curr.win[1];
+	WID->try_selection_xywh[2] = 5;
+	WID->try_selection_xywh[3] = 5;
       }
     }
     else {
-      if(Fl::event_state(FL_CTRL) && !ZoomMode) {
+      if(Fl::event_state(FL_CTRL) && !LassoMode) {
         if(CTX.useTrackball)
           CTX.setQuaternion(0., 0., 0., 1.);
         else
@@ -209,10 +257,9 @@ int Opengl_Window::handle(int event)
         redraw();
       }
       else {
-        ZoomMode = false;
+        LassoMode = false;
       }
     }
-
     click.set();
     prev.set();
     WID->update_manip_window();
@@ -220,7 +267,7 @@ int Opengl_Window::handle(int event)
 
   case FL_RELEASE:
     curr.set();
-    if(!ZoomMode) {
+    if(!LassoMode) {
       CTX.mesh.draw = 1;
       CTX.post.draw = 1;
       redraw();
@@ -232,8 +279,7 @@ int Opengl_Window::handle(int event)
     curr.set();
     dx = curr.win[0] - prev.win[0];
     dy = curr.win[1] - prev.win[1];
-
-    if(ZoomMode) {
+    if(LassoMode) {
       redraw();
     }
     else {
@@ -272,46 +318,53 @@ int Opengl_Window::handle(int event)
       }
       redraw();
     }
-
     prev.set();
     WID->update_manip_window();
     return 1;
 
   case FL_MOVE:
     curr.set();
-
-    if(AddPointMode && !Fl::event_state(FL_SHIFT)){
+    if(LassoMode) {
+      redraw();
+    }
+    else if(AddPointMode && !Fl::event_state(FL_SHIFT)){
       WID->g_opengl_window->cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
       // find line in real space corresponding to current cursor position
       double p[3],d[3];
       unproject(curr.win[0], curr.win[1], p, d);
       // fin closest point to the center of gravity
       double r[3] = {CTX.cg[0] - p[0], CTX.cg[1] - p[1], CTX.cg[2] - p[2]}, t;
-      prosca(r,d,&t);
-      double sol[3] = {p[0] + t * d[0], p[1] + t * d[1], p[2] + t * d[2]};
+      prosca(r, d, &t);
+      for(int i = 0; i < 3; i++){
+	point[i] = p[i] + t * d[i];
+	if(CTX.geom.snap[i]){
+	  double d = point[i]/CTX.geom.snap[i];
+	  double f = floor(d);
+	  double c = ceil(d);
+	  double n = (d - f < c - d) ? f : c;
+	  point[i] = n * CTX.geom.snap[i];
+	}
+      }
       char str[32];
-      sprintf(str, "%g", sol[0]); WID->context_geometry_input[2]->value(str);
-      sprintf(str, "%g", sol[1]); WID->context_geometry_input[3]->value(str);
-      sprintf(str, "%g", sol[2]); WID->context_geometry_input[4]->value(str);
-    }
-    else if(ZoomMode) {
+      sprintf(str, "%g", point[0]); WID->context_geometry_input[2]->value(str);
+      sprintf(str, "%g", point[1]); WID->context_geometry_input[3]->value(str);
+      sprintf(str, "%g", point[2]); WID->context_geometry_input[4]->value(str);
       redraw();
     }
-    else {
-      WID->make_opengl_current();
-      Process_SelectionBuffer((int)curr.win[0], (int)curr.win[1], &numhits, hits);
-      ov = v; v = NULL;
-      oc = c; c = NULL;
-      os = s; s = NULL;
-      Filter_SelectionBuffer(WID->selection, numhits, hits, &v, &c, &s, &M);
-      if(ov != v || oc != c || os != s) {
-        if((WID->selection == ENT_POINT && v) ||
-	   (WID->selection == ENT_LINE && c) || 
-	   (WID->selection == ENT_SURFACE && s))
-          WID->g_window->cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
-        else
-          WID->g_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
-        HighlightEntity(v, c, s, 0);
+    else if(CTX.enable_mouse_selection){
+      if(curr.win[0] != prev.win[0] || curr.win[1] != prev.win[1]){
+	WID->make_opengl_current();
+	v[0] = NULL; c[0] = NULL; s[0] = NULL;
+	Process_SelectionBuffer(WID->selection, 0, 
+				(int)curr.win[0], (int)curr.win[1], 5, 5, 
+				v, c, s, &M);
+	if((WID->selection == ENT_POINT && v[0]) ||
+	   (WID->selection == ENT_LINE && c[0]) || 
+	   (WID->selection == ENT_SURFACE && s[0]))
+	  WID->g_window->cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
+	else
+	  WID->g_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
+	HighlightEntity(v[0], c[0], s[0], 0);
       }
     }
     prev.set();

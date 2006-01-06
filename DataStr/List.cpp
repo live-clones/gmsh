@@ -1,6 +1,6 @@
-// $Id: List.cpp,v 1.36 2005-04-06 19:09:10 geuzaine Exp $
+// $Id: List.cpp,v 1.37 2006-01-06 00:34:21 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

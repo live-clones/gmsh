@@ -1,6 +1,6 @@
-// $Id: 3D_Extrude.cpp,v 1.90 2005-06-10 22:50:49 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.91 2006-01-06 00:34:25 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

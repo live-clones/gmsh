@@ -1,6 +1,6 @@
-// $Id: Graph2D.cpp,v 1.55 2005-08-09 23:39:25 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.56 2006-01-06 00:34:24 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

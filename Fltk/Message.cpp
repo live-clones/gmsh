@@ -1,6 +1,6 @@
-// $Id: Message.cpp,v 1.66 2005-12-21 02:32:05 geuzaine Exp $
+// $Id: Message.cpp,v 1.67 2006-01-06 00:34:23 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -259,10 +259,10 @@ void Exit(int level)
       CTX.solver_position[1] = WID->solver[0].window->y();
       file_chooser_get_position(&CTX.file_chooser_position[0],
 				&CTX.file_chooser_position[1]);
-      Print_Options(0, GMSH_SESSIONRC, false, CTX.session_filename_fullpath);
+      Print_Options(0, GMSH_SESSIONRC, 0, 1, CTX.session_filename_fullpath);
     }
     if(CTX.options_save)
-      Print_Options(0, GMSH_OPTIONSRC, true, CTX.options_filename_fullpath);
+      Print_Options(0, GMSH_OPTIONSRC, 1, 1, CTX.options_filename_fullpath);
   }
 
   exit(0);

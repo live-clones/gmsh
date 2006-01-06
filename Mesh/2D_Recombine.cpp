@@ -1,6 +1,6 @@
-// $Id: 2D_Recombine.cpp,v 1.25 2005-06-10 00:31:28 geuzaine Exp $
+// $Id: 2D_Recombine.cpp,v 1.26 2006-01-06 00:34:25 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

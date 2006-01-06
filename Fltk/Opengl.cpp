@@ -1,6 +1,6 @@
-// $Id: Opengl.cpp,v 1.56 2005-12-16 17:35:33 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.57 2006-01-06 00:34:23 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -179,14 +179,15 @@ void Draw_OnScreenMessages()
   }
 }
 
-// Select entity routines
+// Select entity routine
 
-char SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
+char SelectEntity(int type, int *n,
+		  Vertex *v[SELECTION_MAX_HITS], 
+		  Curve *c[SELECTION_MAX_HITS], 
+		  Surface *s[SELECTION_MAX_HITS])
 {
-  int numhits;
-  hit hits[SELECTION_BUFFER_SIZE];
-
   WID->g_opengl_window->take_focus(); // force keyboard focus in GL window 
+  WID->g_opengl_window->SelectionMode = true; // enable lasso selection
 
   WID->selection = type;
   WID->try_selection = 0;
@@ -195,14 +196,20 @@ char SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
   WID->undo_selection = 0;
 
   while(1) {
-    *v = NULL;
-    *c = NULL;
-    *s = NULL;
+    *n = 0;
+    for(int i = 0; i < SELECTION_MAX_HITS; i++){
+      v[i] = NULL;
+      c[i] = NULL;
+      s[i] = NULL;
+    }
 
     WID->wait();
     if(WID->quit_selection) {
-      WID->quit_selection = 0;
       WID->selection = ENT_NONE;
+      WID->g_opengl_window->SelectionMode = false;
+      WID->g_opengl_window->LassoMode = false;
+      WID->g_opengl_window->AddPointMode = false;
+      WID->g_opengl_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
       return 'q';
     }
     if(WID->end_selection) {
@@ -215,20 +222,37 @@ char SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
       return 'u';
     }
     if(WID->try_selection) {
+      bool add = (WID->try_selection > 0) ? true : false;
+      bool multi = (WID->try_selection > 1) ? true : false;
       WID->try_selection = 0;
       if(WID->selection == ENT_NONE){ // just report the mouse click
+	WID->g_opengl_window->SelectionMode = false;
 	return 'c';
       }
       else{
-	Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &numhits, hits);
-	if(Filter_SelectionBuffer(WID->selection, numhits, hits, v, c, s, &M)){
-	  HighlightEntity(*v, *c, *s, 1);
-	  Draw();
+	*n = Process_SelectionBuffer(WID->selection, multi,
+				     WID->try_selection_xywh[0],
+				     WID->try_selection_xywh[1], 
+				     WID->try_selection_xywh[2],
+				     WID->try_selection_xywh[3], 
+				     v, c, s, &M);
+	if(*n){
+	  if(add){
+	    for(int i = 0; i < *n; i++)
+	      HighlightEntity(v[i], c[i], s[i], 1);
+	    Draw();
+	  }
+	  // don't call ZeroHighlight here if we (try to) deselect:
+	  // deselection is not supported in all cases, so it's better
+	  // to de-highlight the entities in the callback
 	  WID->selection = ENT_NONE;
-	  return 'l';
+	  WID->g_opengl_window->SelectionMode = false;
+	  if(add)
+	    return 'l';
+	  else
+	    return 'r';
 	}
       }
     }
   }
-
 }

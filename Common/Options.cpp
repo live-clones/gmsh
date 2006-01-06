@@ -1,6 +1,6 @@
-// $Id: Options.cpp,v 1.269 2005-12-22 20:42:41 geuzaine Exp $
+// $Id: Options.cpp,v 1.270 2006-01-06 00:34:21 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -158,6 +158,7 @@ void Init_Options(int num)
 #endif
   CTX.solver.listen = 0;
   CTX.forced_bbox = 0;
+  CTX.enable_mouse_selection = 1;
 }
 
 void ReInit_Options(int num)
@@ -214,7 +215,7 @@ void Print_OptionCategory(int level, int diff, char *cat, FILE * file)
   }
 }
 
-void Print_Options(int num, int level, int diff, char *filename)
+void Print_Options(int num, int level, int diff, int help, char *filename)
 {
   FILE *file;
   char tmp[256];
@@ -256,72 +257,72 @@ void Print_Options(int num, int level, int diff, char *filename)
   }
 
   Print_OptionCategory(level, diff, "General options (strings)", file);
-  Print_StringOptions(num, level, diff, GeneralOptions_String, "General.", file);
+  Print_StringOptions(num, level, diff, help, GeneralOptions_String, "General.", file);
   Print_OptionCategory(level, diff, "General options (numbers)", file);
-  Print_NumberOptions(num, level, diff, GeneralOptions_Number, "General.", file);
+  Print_NumberOptions(num, level, diff, help, GeneralOptions_Number, "General.", file);
   Print_OptionCategory(level, diff, "General options (colors)", file);
-  Print_ColorOptions(num, level, diff, GeneralOptions_Color, "General.", file);
+  Print_ColorOptions(num, level, diff, help, GeneralOptions_Color, "General.", file);
 
   Print_OptionCategory(level, diff, "Geometry options (strings)", file);
-  Print_StringOptions(num, level, diff, GeometryOptions_String, "Geometry.", file);
+  Print_StringOptions(num, level, diff, help, GeometryOptions_String, "Geometry.", file);
   Print_OptionCategory(level, diff, "Geometry options (numbers)", file);
-  Print_NumberOptions(num, level, diff, GeometryOptions_Number, "Geometry.", file);
+  Print_NumberOptions(num, level, diff, help, GeometryOptions_Number, "Geometry.", file);
   Print_OptionCategory(level, diff, "Geometry options (colors)", file);
-  Print_ColorOptions(num, level, diff, GeometryOptions_Color, "Geometry.", file);
+  Print_ColorOptions(num, level, diff, help, GeometryOptions_Color, "Geometry.", file);
 
   Print_OptionCategory(level, diff, "Mesh options (strings)", file);
-  Print_StringOptions(num, level, diff, MeshOptions_String, "Mesh.", file);
+  Print_StringOptions(num, level, diff, help, MeshOptions_String, "Mesh.", file);
   Print_OptionCategory(level, diff, "Mesh options (numbers)", file);
-  Print_NumberOptions(num, level, diff, MeshOptions_Number, "Mesh.", file);
+  Print_NumberOptions(num, level, diff, help, MeshOptions_Number, "Mesh.", file);
   Print_OptionCategory(level, diff, "Mesh options (colors)", file);
-  Print_ColorOptions(num, level, diff, MeshOptions_Color, "Mesh.", file);
+  Print_ColorOptions(num, level, diff, help, MeshOptions_Color, "Mesh.", file);
 
   Print_OptionCategory(level, diff, "Solver options (strings)", file);
-  Print_StringOptions(num, level, diff, SolverOptions_String, "Solver.", file);
+  Print_StringOptions(num, level, diff, help, SolverOptions_String, "Solver.", file);
   Print_OptionCategory(level, diff, "Solver options (numbers)", file);
-  Print_NumberOptions(num, level, diff, SolverOptions_Number, "Solver.", file);
+  Print_NumberOptions(num, level, diff, help, SolverOptions_Number, "Solver.", file);
   Print_OptionCategory(level, diff, "Solver options (colors)", file);
-  Print_ColorOptions(num, level, diff, SolverOptions_Color, "Solver.", file);
+  Print_ColorOptions(num, level, diff, help, SolverOptions_Color, "Solver.", file);
 
   Print_OptionCategory(level, diff, "Post-processing options (strings)", file);
-  Print_StringOptions(num, level, diff, PostProcessingOptions_String,
+  Print_StringOptions(num, level, diff, help, PostProcessingOptions_String,
                       "PostProcessing.", file);
   Print_OptionCategory(level, diff, "Post-processing options (numbers)", file);
-  Print_NumberOptions(num, level, diff, PostProcessingOptions_Number,
+  Print_NumberOptions(num, level, diff, help, PostProcessingOptions_Number,
                       "PostProcessing.", file);
   Print_OptionCategory(level, diff, "Post-processing options (colors)", file);
-  Print_ColorOptions(num, level, diff, PostProcessingOptions_Color,
+  Print_ColorOptions(num, level, diff, help, PostProcessingOptions_Color,
                      "PostProcessing.", file);
 
   if(level & GMSH_FULLRC) {
     for(i = 0; i < List_Nbr(CTX.post.list); i++) {
       sprintf(tmp, "View[%d].", i);
       Print_OptionCategory(level, diff, "View options (strings)", file);
-      Print_StringOptions(i, level, diff, ViewOptions_String, tmp, file);
+      Print_StringOptions(i, level, diff, help, ViewOptions_String, tmp, file);
       Print_OptionCategory(level, diff, "View options (numbers)", file);
-      Print_NumberOptions(i, level, diff, ViewOptions_Number, tmp, file);
+      Print_NumberOptions(i, level, diff, help, ViewOptions_Number, tmp, file);
       Print_OptionCategory(level, diff, "View options (colors)", file);
-      Print_ColorOptions(i, level, diff, ViewOptions_Color, tmp, file);
+      Print_ColorOptions(i, level, diff, help, ViewOptions_Color, tmp, file);
       strcat(tmp, "ColorTable");
       Print_ColorTable(i, diff, tmp, file);
     }
   }
   else if(level & GMSH_OPTIONSRC) {
     Print_OptionCategory(level, diff, "View options (strings)", file);
-    Print_StringOptions(num, level, diff, ViewOptions_String, "View.", file);
+    Print_StringOptions(num, level, diff, help, ViewOptions_String, "View.", file);
     Print_OptionCategory(level, diff, "View options (numbers)", file);
-    Print_NumberOptions(num, level, diff, ViewOptions_Number, "View.", file);
+    Print_NumberOptions(num, level, diff, help, ViewOptions_Number, "View.", file);
     Print_OptionCategory(level, diff, "View options (colors)", file);
-    Print_ColorOptions(num, level, diff, ViewOptions_Color, "View.", file);
+    Print_ColorOptions(num, level, diff, help, ViewOptions_Color, "View.", file);
     Print_ColorTable(num, diff, "View.ColorTable", file);
   }
 
   Print_OptionCategory(level, diff, "Print options (strings)", file);
-  Print_StringOptions(num, level, diff, PrintOptions_String, "Print.", file);
+  Print_StringOptions(num, level, diff, help, PrintOptions_String, "Print.", file);
   Print_OptionCategory(level, diff, "Print options (numbers)", file);
-  Print_NumberOptions(num, level, diff, PrintOptions_Number, "Print.", file);
+  Print_NumberOptions(num, level, diff, help, PrintOptions_Number, "Print.", file);
   Print_OptionCategory(level, diff, "Print options (colors)", file);
-  Print_ColorOptions(num, level, diff, PrintOptions_Color, "Print.", file);
+  Print_ColorOptions(num, level, diff, help, PrintOptions_Color, "Print.", file);
 
   if(filename) {
     Msg(INFO, "Wrote option file '%s'", filename);
@@ -537,16 +538,17 @@ void *Get_StringOption(char *str, StringXString s[])
     return (void *)s[i].function;
 }
 
-void Print_StringOptions(int num, int level, int diff, StringXString s[], 
-			 char *prefix, FILE * file)
+void Print_StringOptions(int num, int level, int diff, int help, 
+			 StringXString s[], char *prefix, FILE * file)
 {
   int i = 0;
   char tmp[1024];
   while(s[i].str) {
     if(s[i].level & level) {
       if(!diff || strcmp(s[i].function(num, GMSH_GET, NULL), s[i].def)){
-	sprintf(tmp, "%s%s = \"%s\"; // %s", prefix,
-		s[i].str, s[i].function(num, GMSH_GET, NULL), s[i].help);
+	sprintf(tmp, "%s%s = \"%s\";%s%s", prefix,
+		s[i].str, s[i].function(num, GMSH_GET, NULL), 
+		help ? " // " : "", help ? s[i].help : "");
 	if(file)
 	  fprintf(file, "%s\n", tmp);
 	else
@@ -638,16 +640,17 @@ void *Get_NumberOption(char *str, StringXNumber s[])
   }
 }
 
-void Print_NumberOptions(int num, int level, int diff, StringXNumber s[], 
-			 char *prefix, FILE * file)
+void Print_NumberOptions(int num, int level, int diff, int help,
+			 StringXNumber s[], char *prefix, FILE * file)
 {
   int i = 0;
   char tmp[1024];
   while(s[i].str) {
     if(s[i].level & level) {
       if(!diff || (s[i].function(num, GMSH_GET, 0) != s[i].def)){
-	sprintf(tmp, "%s%s = %.16g; // %s", prefix,
-		s[i].str, s[i].function(num, GMSH_GET, 0), s[i].help);
+	sprintf(tmp, "%s%s = %.16g;%s%s", prefix,
+		s[i].str, s[i].function(num, GMSH_GET, 0), 
+		help ? " // " : "", help ? s[i].help : "");
 	if(file)
 	  fprintf(file, "%s\n", tmp);
 	else
@@ -741,8 +744,8 @@ void *Get_ColorOption(char *str, StringXColor s[])
     return (void *)s[i].function;
 }
 
-void Print_ColorOptions(int num, int level, int diff, StringXColor s[], 
-			char *prefix, FILE * file)
+void Print_ColorOptions(int num, int level, int diff, int help,
+			StringXColor s[], char *prefix, FILE * file)
 {
   int i = 0;
   char tmp[1024];
@@ -764,11 +767,12 @@ void Print_ColorOptions(int num, int level, int diff, StringXColor s[],
 	break;
       }
       if(!diff || (s[i].function(num, GMSH_GET, 0) != def)){
-	sprintf(tmp, "%sColor.%s = {%d,%d,%d}; // %s",
+	sprintf(tmp, "%sColor.%s = {%d,%d,%d};%s%s",
 		prefix, s[i].str,
 		CTX.UNPACK_RED(s[i].function(num, GMSH_GET, 0)),
 		CTX.UNPACK_GREEN(s[i].function(num, GMSH_GET, 0)),
-		CTX.UNPACK_BLUE(s[i].function(num, GMSH_GET, 0)), s[i].help);
+		CTX.UNPACK_BLUE(s[i].function(num, GMSH_GET, 0)), 
+		help ? " // " : "", help ? s[i].help : "");
 	if(file)
 	  fprintf(file, "%s\n", tmp);
 	else
@@ -3964,6 +3968,39 @@ double opt_geometry_scaling_factor(OPT_ARGS_NUM)
   return CTX.geom.scaling_factor;
 }
 
+double opt_geometry_snap0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.geom.snap[0] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->context_geometry_value[0]->value(CTX.geom.snap[0]);
+#endif
+  return CTX.geom.snap[0];
+}
+
+double opt_geometry_snap1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.geom.snap[1] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->context_geometry_value[1]->value(CTX.geom.snap[1]);
+#endif
+  return CTX.geom.snap[1];
+}
+
+double opt_geometry_snap2(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.geom.snap[2] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->context_geometry_value[2]->value(CTX.geom.snap[2]);
+#endif
+  return CTX.geom.snap[2];
+}
+
 double opt_mesh_optimize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -4124,7 +4161,7 @@ double opt_mesh_label_type(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     CTX.mesh.label_type = (int)val;
-    if(CTX.mesh.label_type < 0 || CTX.mesh.label_type > 3)
+    if(CTX.mesh.label_type < 0 || CTX.mesh.label_type > 4)
       CTX.mesh.label_type = 0;
   }
 #if defined(HAVE_FLTK)

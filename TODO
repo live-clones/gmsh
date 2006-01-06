@@ -1,4 +1,4 @@
-$Id: TODO,v 1.110 2005-12-18 18:19:22 geuzaine Exp $
+$Id: TODO,v 1.111 2006-01-06 00:34:20 geuzaine Exp $
 
 ********************************************************************
 
@@ -13,12 +13,7 @@ mesh file (in MSH format)
 
 ********************************************************************
 
-Add a way to select multiple entities using a lasso + add a way to
-remove entities from a selection by clicking on them
-
-********************************************************************
-
-On Windows without Cygwin:
+On Windows WITHOUT Cygwin:
 - rewrite solver interface (GmshServer and GmshClient)
 - Functions in parser don't seem to work
 - fix compilation issues in triangle (timezone) and gl2ps (zlib??)
@@ -64,11 +59,6 @@ normals...)
 
 ********************************************************************
 
-color selected surface/line/point on the fly (instead of just showing
-the entity number)
-
-********************************************************************
-
 Would be nice to have Plugin(CutBox) and Plugin(CutCylinder) (Box:
 using Xc, Yc, Zc, Xl, Yl, Zl, Xr, Yr, Zr, or 4 points. 4 points is
 more general: can be wedge. Cylinder should be able to degenerate
@@ -82,6 +72,10 @@ extruded+recombined surfaces to create Transfinite Volumes
 ********************************************************************
 
 add a mode to pick a mesh element with the mouse (a la medit)
+
+********************************************************************
+
+add a way to display the coordinates of a node in the mesh
 
 ********************************************************************
 
@@ -121,7 +115,9 @@ disable all replacements)
 
 ********************************************************************
 
-Add a "bitmap" object in the views, e.g. to add a logo
+Add a "bitmap" object in the views, e.g. to add a logo. Maybe would
+be good enough to add another mode in the "background gradient" stuff
+to display an image in the background
 
 ********************************************************************
 
@@ -143,11 +139,6 @@ index-based format)
 ********************************************************************
 
 Test and reintroduce the cylindrical surfaces (cylinder, cone, torus)
-
-********************************************************************
-
-fix the orientation of hexas, prisms and pyramids (reorder nodes
-according to Orientation())
 
 ********************************************************************
 
@@ -174,7 +165,7 @@ precision...). Rescale?
 ********************************************************************
 
 find a better way to display the time/timestep in the scale... (would
-be solved if we had dynamic labels).
+be solved if we had dynamic labels?)
 
 ********************************************************************
 

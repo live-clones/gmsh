@@ -1,7 +1,7 @@
 #ifndef _OPENGL_WINDOW_H_
 #define _OPENGL_WINDOW_H_
 
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -48,23 +48,19 @@ class MousePosition {
 
 class Opengl_Window : public Fl_Gl_Window {
  public:
-  bool AddPointMode, ZoomMode;
+  bool AddPointMode, LassoMode, SelectionMode;
  private:
   int hits;
-  Vertex *v, *ov;
-  Curve *c, *oc;
-  Surface *s, *os;
-  MousePosition click, curr, prev, zoom;
+  MousePosition click, curr, prev, lasso;
+  double point[3];
   void draw();
   int handle(int);
  public:
   Opengl_Window(int x,int y,int w,int h,const char *l=0)
     : Fl_Gl_Window(x, y, w, h, l) {
-    AddPointMode = ZoomMode = false;
+    AddPointMode = LassoMode = SelectionMode = false;
     hits = 0;
-    v = ov = NULL;
-    c = oc = NULL;
-    s = os = NULL;
+    point[0] = point[1] = point[2] = 0.;
   }
 };
 

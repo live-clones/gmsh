@@ -1,7 +1,7 @@
 %{
-// $Id: Gmsh.y,v 1.214 2005-12-22 20:42:45 geuzaine Exp $
+// $Id: Gmsh.y,v 1.215 2006-01-06 00:34:29 geuzaine Exp $
 //
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
