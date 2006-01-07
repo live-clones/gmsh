@@ -96,7 +96,7 @@ typedef struct {
 double evaluate_scalarfunction (char *var, double val, char *funct);
 
 void coherence(char *fich);
-void delet(int p1, char *fich, char *what);
+void delet(List_T *list, char *fich, char *what);
 void add_infile(char *text, char *fich);
 void add_trsfline(int N, int *l, char *fich, char *type, char *typearg, char *pts);
 void add_trsfellisurf(int type, int N, int *l, char *fich, char *dir);
@@ -118,11 +118,15 @@ void add_surf(List_T *list, char *fich, int support, int typ);
 void add_vol(List_T *list, char *fich, int *numvol);
 void add_multvol(List_T *list, char *fich);
 void add_physical(List_T *list, char *fich, int type, int *num);
-void translate(int add, int s, char *fich, char *what, char *tx, char *ty, char *tz);
-void rotate(int add, int s, char *fich, char *what, char *ax, char *ay, char *az,
+void translate(int add, List_T *list, char *fich, char *what,
+	       char *tx, char *ty, char *tz);
+void rotate(int add, List_T *list, char *fich, char *what, 
+	    char *ax, char *ay, char *az,
 	    char *px, char *py, char *pz, char *angle);
-void dilate(int add, int s, char *fich, char *what, char *dx, char *dy, char *dz, char *df);
-void symmetry(int add, int s, char *fich, char *what, char *sa, char *sb, char *sc, char *sd);
+void dilate(int add, List_T *list, char *fich, char *what,
+	    char *dx, char *dy, char *dz, char *df);
+void symmetry(int add, List_T *list, char *fich, char *what, 
+	      char *sa, char *sb, char *sc, char *sd);
 void extrude(int s, char *fich, char *what, char *tx, char *ty, char *tz);
 void protude(int s, char *fich, char *what, char *ax, char *ay, char *az,
 	     char *px, char *py, char *pz, char *angle);

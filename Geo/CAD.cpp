@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.89 2006-01-07 18:19:34 geuzaine Exp $
+// $Id: CAD.cpp,v 1.90 2006-01-07 18:42:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -247,6 +247,15 @@ Vertex *DuplicateVertex(Vertex * v)
   return pv;
 }
 
+int compareAbsCurve(const void *a, const void *b)
+{
+  Curve **q, **w;
+
+  q = (Curve **) a;
+  w = (Curve **) b;
+  return (abs((*q)->Num) - abs((*w)->Num));
+}
+
 void CopyCurve(Curve * c, Curve * cc)
 {
   int i, j;
@@ -414,8 +423,10 @@ void DeletePoint(int ip)
     Curve *c;
     List_Read(Curves, i, &c);
     for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
-      if(!compareVertex(List_Pointer(c->Control_Points, j), &v))
+      if(!compareVertex(List_Pointer(c->Control_Points, j), &v)){
+	List_Delete(Curves);
         return;
+      }
     }
   }
   List_Delete(Curves);
@@ -435,8 +446,10 @@ void DeleteCurve(int ip)
     Surface *s;
     List_Read(Surfs, i, &s);
     for(int j = 0; j < List_Nbr(s->Generatrices); j++) {
-      if(!compareCurve(List_Pointer(s->Generatrices, j), &c))
+      if(!compareAbsCurve(List_Pointer(s->Generatrices, j), &c)){
+	List_Delete(Surfs);
         return;
+      }
     }
   }
   List_Delete(Surfs);
@@ -456,8 +469,10 @@ void DeleteSurface(int is)
     Volume *v;
     List_Read(Vols, i, &v);
     for(int j = 0; j < List_Nbr(v->Surfaces); j++) {
-      if(!compareSurface(List_Pointer(v->Surfaces, j), &s))
+      if(!compareSurface(List_Pointer(v->Surfaces, j), &s)){
+	List_Delete(Vols);
         return;
+      }
     }
   }
   List_Delete(Vols);
@@ -1668,15 +1683,6 @@ int compareTwoCurves(const void *a, const void *b)
   }
 
   return 0;
-}
-
-int compareAbsCurve(const void *a, const void *b)
-{
-  Curve **q, **w;
-
-  q = (Curve **) a;
-  w = (Curve **) b;
-  return (abs((*q)->Num) - abs((*w)->Num));
 }
 
 int compareTwoSurfaces(const void *a, const void *b)

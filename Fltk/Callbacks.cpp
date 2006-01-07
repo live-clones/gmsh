@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.390 2006-01-06 00:34:22 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.391 2006-01-07 18:42:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2282,7 +2282,7 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
   Vertex *v[SELECTION_MAX_HITS];
   Curve *c[SELECTION_MAX_HITS];
   Surface *s[SELECTION_MAX_HITS];
-  int type, num = 0, ne;
+  int type, ne;
   char *str;
 
   if(!strcmp(what, "Point")) {
@@ -2302,7 +2302,9 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
   }
   Draw();
 
-  Msg(ONSCREEN, "Select %s\n[Press 'q' to abort]", str);
+  Msg(ONSCREEN, "Select %s\n[Press 'e' to end or 'q' to abort]", str);
+
+  List_T *List1 = List_Create(5, 5, sizeof(int));
 
   while(1) {
     Msg(STATUS3N, "Transforming %s", str);
@@ -2312,74 +2314,104 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
       Draw();
       break;
     }
-    if(ib == 'l') {
-      switch (type) {
-      case ENT_POINT:
-	num = v[0]->Num;
-	break;
-      case ENT_LINE:
-	num = c[0]->Num;
-	break;
-      case ENT_SURFACE:
-	num = s[0]->Num;
-	break;
+    if(ib == 'r') {
+      for(int i = 0; i < ne; i++){
+	switch (type) {
+	case ENT_POINT:
+	  List_Suppress(List1, &v[i]->Num, fcmp_int);
+	  ZeroHighlightEntity(v[i], NULL, NULL);
+	  break;
+	case ENT_LINE:
+	  List_Suppress(List1, &c[i]->Num, fcmp_int);
+	  ZeroHighlightEntity(NULL, c[i], NULL);
+	  break;
+	case ENT_SURFACE:
+	  List_Suppress(List1, &s[i]->Num, fcmp_int);
+	  ZeroHighlightEntity(NULL, NULL, s[i]);
+	  break;
+	}
       }
-      switch (transfo) {
-      case 0:
-	translate(mode, num, CTX.filename, what,
-		  (char*)WID->context_geometry_input[6]->value(),
-		  (char*)WID->context_geometry_input[7]->value(),
-		  (char*)WID->context_geometry_input[8]->value());
-	break;
-      case 1:
-	rotate(mode, num, CTX.filename, what,
-	       (char*)WID->context_geometry_input[12]->value(),
-	       (char*)WID->context_geometry_input[13]->value(),
-	       (char*)WID->context_geometry_input[14]->value(),
-	       (char*)WID->context_geometry_input[9]->value(),
-	       (char*)WID->context_geometry_input[10]->value(),
-	       (char*)WID->context_geometry_input[11]->value(),
-	       (char*)WID->context_geometry_input[15]->value());
-	break;
-      case 2:
-	dilate(mode, num, CTX.filename, what,
-	       (char*)WID->context_geometry_input[16]->value(),
-	       (char*)WID->context_geometry_input[17]->value(),
-	       (char*)WID->context_geometry_input[18]->value(),
-	       (char*)WID->context_geometry_input[19]->value());
-	break;
-      case 3:
-	symmetry(mode, num, CTX.filename, what,
-		 (char*)WID->context_geometry_input[20]->value(),
-		 (char*)WID->context_geometry_input[21]->value(),
-		 (char*)WID->context_geometry_input[22]->value(),
-		 (char*)WID->context_geometry_input[23]->value());
-	break;
-      case 4:
-	extrude(num, CTX.filename, what,
-		(char*)WID->context_geometry_input[6]->value(),
-		(char*)WID->context_geometry_input[7]->value(),
-		(char*)WID->context_geometry_input[8]->value());
-	break;
-      case 5:
-	protude(num, CTX.filename, what,
-		(char*)WID->context_geometry_input[12]->value(),
-		(char*)WID->context_geometry_input[13]->value(),
-		(char*)WID->context_geometry_input[14]->value(),
-		(char*)WID->context_geometry_input[9]->value(),
-		(char*)WID->context_geometry_input[10]->value(),
-		(char*)WID->context_geometry_input[11]->value(),
-		(char*)WID->context_geometry_input[15]->value());
-	break;
-      case 6:
-	delet(num, CTX.filename, what);
-	break;
-      }
-      ZeroHighlight(THEM);
-      CalculateMinMax(THEM->Points, NULL);
       Draw();
     }
+    if(ib == 'l') {
+      for(int i = 0; i < ne; i++){
+	switch (type) {
+	case ENT_POINT:   List_Add(List1, &v[i]->Num); break;
+	case ENT_LINE:    List_Add(List1, &c[i]->Num); break;
+	case ENT_SURFACE: List_Add(List1, &s[i]->Num); break;
+	}
+      }
+    }
+    if(ib == 'e') {
+      if(List_Nbr(List1)){
+	switch (transfo) {
+	case 0:
+	  translate(mode, List1, CTX.filename, what,
+		    (char*)WID->context_geometry_input[6]->value(),
+		    (char*)WID->context_geometry_input[7]->value(),
+		    (char*)WID->context_geometry_input[8]->value());
+	  break;
+	case 1:
+	  rotate(mode, List1, CTX.filename, what,
+		 (char*)WID->context_geometry_input[12]->value(),
+		 (char*)WID->context_geometry_input[13]->value(),
+		 (char*)WID->context_geometry_input[14]->value(),
+		 (char*)WID->context_geometry_input[9]->value(),
+		 (char*)WID->context_geometry_input[10]->value(),
+		 (char*)WID->context_geometry_input[11]->value(),
+		 (char*)WID->context_geometry_input[15]->value());
+	  break;
+	case 2:
+	  dilate(mode, List1, CTX.filename, what,
+		 (char*)WID->context_geometry_input[16]->value(),
+		 (char*)WID->context_geometry_input[17]->value(),
+		 (char*)WID->context_geometry_input[18]->value(),
+		 (char*)WID->context_geometry_input[19]->value());
+	  break;
+	case 3:
+	  symmetry(mode, List1, CTX.filename, what,
+		   (char*)WID->context_geometry_input[20]->value(),
+		   (char*)WID->context_geometry_input[21]->value(),
+		   (char*)WID->context_geometry_input[22]->value(),
+		   (char*)WID->context_geometry_input[23]->value());
+	  break;
+	case 4:
+	  for(int i = 0; i < List_Nbr(List1); i++){
+	    int num;
+	    List_Read(List1, i, &num);
+	    extrude(num, CTX.filename, what,
+		    (char*)WID->context_geometry_input[6]->value(),
+		    (char*)WID->context_geometry_input[7]->value(),
+		    (char*)WID->context_geometry_input[8]->value());
+	  }
+	  break;
+	case 5:
+	  for(int i = 0; i < List_Nbr(List1); i++){
+	    int num;
+	    List_Read(List1, i, &num);
+	    protude(num, CTX.filename, what,
+		    (char*)WID->context_geometry_input[12]->value(),
+		    (char*)WID->context_geometry_input[13]->value(),
+		    (char*)WID->context_geometry_input[14]->value(),
+		    (char*)WID->context_geometry_input[9]->value(),
+		    (char*)WID->context_geometry_input[10]->value(),
+		    (char*)WID->context_geometry_input[11]->value(),
+		    (char*)WID->context_geometry_input[15]->value());
+	  }
+	  break;
+	case 6:
+	  delet(List1, CTX.filename, what);
+	  break;
+	}
+	List_Reset(List1);
+	ZeroHighlight(THEM);
+	CalculateMinMax(THEM->Points, NULL);
+	Draw();
+      }
+    }
   }
+
+  List_Delete(List1);
 
   Msg(STATUS3N, "Ready");
   Msg(ONSCREEN, "");
