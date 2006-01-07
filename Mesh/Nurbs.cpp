@@ -1,4 +1,4 @@
-// $Id: Nurbs.cpp,v 1.17 2006-01-06 00:34:26 geuzaine Exp $
+// $Id: Nurbs.cpp,v 1.18 2006-01-07 16:12:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -119,6 +119,8 @@ Vertex InterpolateUBS(Curve * Curve, double u, int derivee)
 
   if(iCurve > NbCurves)
     iCurve = NbCurves;
+  else if (iCurve < 1)
+    iCurve = 1;
 
   t1 = (double)(iCurve - 1) / (double)(NbCurves);
   t2 = (double)(iCurve) / (double)(NbCurves);
