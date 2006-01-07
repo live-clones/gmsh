@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.391 2006-01-07 18:42:39 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.392 2006-01-07 19:46:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2277,8 +2277,10 @@ void geometry_elementary_add_new_volume_cb(CALLBACK_ARGS)
   _new_surface_volume(2);
 }
 
-static void _transform_point_line_surface(int transfo, int mode, char *what)
+static void _action_point_line_surface_volume(int action, int mode, char *what)
 {
+  extern void BDS_To_Mesh(Mesh *m);
+
   Vertex *v[SELECTION_MAX_HITS];
   Curve *c[SELECTION_MAX_HITS];
   Surface *s[SELECTION_MAX_HITS];
@@ -2287,32 +2289,80 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
 
   if(!strcmp(what, "Point")) {
     type = ENT_POINT;
-    str = "point";
+    str = "points";
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(what, "Line")) {
     type = ENT_LINE;
-    str = "line";
+    str = "lines";
     opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   }
-  else {
+  else if(!strcmp(what, "Surface")) {
     type = ENT_SURFACE;
-    str = "surface";
+    str = "surfaces";
     opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
+  else if(!strcmp(what, "Volume")) {
+    Msg(GERROR, "Interactive volume selection not implemented yet!");
+    Msg(GERROR, "You will have to edit the input file by hand...");
+    return;
+  }
+  else{
+    Msg(GERROR, "Unknown entity to select");
+    return;
+  }
+
+  if(action == 8){
+    WID->create_mesh_context_window(0);
+  }
+  else if(action == 10){
+    if(THEM && THEM->bds) {
+      const double angle = CTX.mesh.dihedral_angle_tol * M_PI / 180.;
+      const int nb_t = CTX.mesh.edge_prolongation_threshold;
+      THEM->bds->classify(angle, nb_t);
+      BDS_To_Mesh(THEM); 
+    }
+  }
+
   Draw();
-
-  Msg(ONSCREEN, "Select %s\n[Press 'e' to end or 'q' to abort]", str);
-
+    
   List_T *List1 = List_Create(5, 5, sizeof(int));
-
   while(1) {
-    Msg(STATUS3N, "Transforming %s", str);
+    if(action == 10)
+      Msg(STATUS3N, "Adding new model edges");
+    else if(action == 9)
+      Msg(STATUS3N, "Defining surfaces to recombine");
+    else if(action == 8)
+      Msg(STATUS3N, "Setting characteristic length");
+    else if(action == 7)
+      Msg(STATUS3N, "Creating physical %s", str);
+    else if(action == 6)
+      Msg(STATUS3N, "Deleting %s", str);
+    else
+      Msg(STATUS3N, "Transforming %s", str);
+
+    if(!List_Nbr(List1))
+      Msg(ONSCREEN, "Select %s\n"
+	  "[Press 'e' to end selection or 'q' to abort]", str);
+    else
+      Msg(ONSCREEN, "Select %s\n"
+	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
+
     char ib = SelectEntity(type, &ne, v, c, s);
-    if(ib == 'q') {
-      ZeroHighlight(THEM);
-      Draw();
-      break;
+    if(ib == 'l') {
+      for(int i = 0; i < ne; i++){
+	switch (type) {
+	case ENT_POINT: 
+	  List_Add(List1, &v[i]->Num);
+	  break;
+	case ENT_LINE:
+	  List_Add(List1, &c[i]->Num);
+	  break;
+	case ENT_SURFACE: 
+	  List_Add(List1, &s[i]->Num);
+	  break;
+	}
+      }
     }
     if(ib == 'r') {
       for(int i = 0; i < ne; i++){
@@ -2333,18 +2383,20 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
       }
       Draw();
     }
-    if(ib == 'l') {
-      for(int i = 0; i < ne; i++){
-	switch (type) {
-	case ENT_POINT:   List_Add(List1, &v[i]->Num); break;
-	case ENT_LINE:    List_Add(List1, &c[i]->Num); break;
-	case ENT_SURFACE: List_Add(List1, &s[i]->Num); break;
-	}
+    if(ib == 'u') {
+      if(List_Nbr(List1)) {
+	int num;
+	List_Read(List1, List_Nbr(List1)-1, &num);
+	ZeroHighlightEntityNum((type == ENT_POINT) ? num : 0,
+			       (type == ENT_LINE) ? num : 0,
+			       (type == ENT_SURFACE) ? num : 0);
+	Draw();
+	List_Pop(List1);
       }
     }
     if(ib == 'e') {
       if(List_Nbr(List1)){
-	switch (transfo) {
+	switch (action) {
 	case 0:
 	  translate(mode, List1, CTX.filename, what,
 		    (char*)WID->context_geometry_input[6]->value(),
@@ -2402,6 +2454,41 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
 	case 6:
 	  delet(List1, CTX.filename, what);
 	  break;
+	case 7:
+	  {
+	    int num = add_physical(List1, CTX.filename, type);
+	    GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
+	    if(sp){
+	      sp->receiveNewPhysicalGroup(type, num);
+	      sp->writeSolverFile(CTX.filename);
+	    }
+	  }
+	  break;
+	case 8:
+	  add_charlength(List1, CTX.filename, (char*)WID->context_mesh_input[0]->value());
+	  break;
+	case 9:
+	  add_recosurf(List1, CTX.filename);
+	  break;
+	case 10:
+	  if(THEM && THEM->bds) {
+	    for(int i = 0; i < List_Nbr(List1); i++){
+	      int num;
+	      List_Read(List1, i, &num);
+	      BDS_GeomEntity *g = THEM->bds->get_geom(num, 1);
+	      std::list<BDS_Edge*>::iterator it  = g->e.begin();
+	      std::list<BDS_Edge*>::iterator ite = g->e.end();
+	      while (it!=ite){			
+		BDS_Edge *e = (*it);
+		e->status = 1;
+		++it;
+	      }
+	    }
+	  }
+	  break;
+	default:
+	  Msg(GERROR, "Unknown action on selected entities");
+	  break;
 	}
 	List_Reset(List1);
 	ZeroHighlight(THEM);
@@ -2409,14 +2496,26 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
 	Draw();
       }
     }
+    if(ib == 'q') {
+      if(action == 10){
+	if(THEM && THEM->bds) {
+	  const double angle = CTX.mesh.dihedral_angle_tol * M_PI / 180.;
+	  const int nb_t = CTX.mesh.edge_prolongation_threshold;
+	  THEM->bds->classify(angle, nb_t);
+	  BDS_To_Mesh(THEM); 
+	}
+      }
+      ZeroHighlight(THEM);
+      Draw();
+      break;
+    }
   }
-
+  
   List_Delete(List1);
-
   Msg(STATUS3N, "Ready");
   Msg(ONSCREEN, "");
 }
-
+  
 void geometry_elementary_add_translate_cb(CALLBACK_ARGS)
 {
   WID->set_context(menu_geometry_elementary_add_translate, 0);
@@ -2425,19 +2524,19 @@ void geometry_elementary_add_translate_cb(CALLBACK_ARGS)
 void geometry_elementary_add_translate_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_line_surface(0, 1, "Point");
+  _action_point_line_surface_volume(0, 1, "Point");
 }
 
 void geometry_elementary_add_translate_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_line_surface(0, 1, "Line");
+  _action_point_line_surface_volume(0, 1, "Line");
 }
 
 void geometry_elementary_add_translate_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_line_surface(0, 1, "Surface");
+  _action_point_line_surface_volume(0, 1, "Surface");
 }
 
 void geometry_elementary_translate_cb(CALLBACK_ARGS)
@@ -2448,19 +2547,19 @@ void geometry_elementary_translate_cb(CALLBACK_ARGS)
 void geometry_elementary_translate_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_line_surface(0, 0, "Point");
+  _action_point_line_surface_volume(0, 0, "Point");
 }
 
 void geometry_elementary_translate_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_line_surface(0, 0, "Line");
+  _action_point_line_surface_volume(0, 0, "Line");
 }
 
 void geometry_elementary_translate_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_line_surface(0, 0, "Surface");
+  _action_point_line_surface_volume(0, 0, "Surface");
 }
 
 void geometry_elementary_add_rotate_cb(CALLBACK_ARGS)
@@ -2471,19 +2570,19 @@ void geometry_elementary_add_rotate_cb(CALLBACK_ARGS)
 void geometry_elementary_add_rotate_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_line_surface(1, 1, "Point");
+  _action_point_line_surface_volume(1, 1, "Point");
 }
 
 void geometry_elementary_add_rotate_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_line_surface(1, 1, "Line");
+  _action_point_line_surface_volume(1, 1, "Line");
 }
 
 void geometry_elementary_add_rotate_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_line_surface(1, 1, "Surface");
+  _action_point_line_surface_volume(1, 1, "Surface");
 }
 
 void geometry_elementary_rotate_cb(CALLBACK_ARGS)
@@ -2494,19 +2593,19 @@ void geometry_elementary_rotate_cb(CALLBACK_ARGS)
 void geometry_elementary_rotate_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_line_surface(1, 0, "Point");
+  _action_point_line_surface_volume(1, 0, "Point");
 }
 
 void geometry_elementary_rotate_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_line_surface(1, 0, "Line");
+  _action_point_line_surface_volume(1, 0, "Line");
 }
 
 void geometry_elementary_rotate_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_line_surface(1, 0, "Surface");
+  _action_point_line_surface_volume(1, 0, "Surface");
 }
 
 void geometry_elementary_add_scale_cb(CALLBACK_ARGS)
@@ -2517,19 +2616,19 @@ void geometry_elementary_add_scale_cb(CALLBACK_ARGS)
 void geometry_elementary_add_scale_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(4);
-  _transform_point_line_surface(2, 1, "Point");
+  _action_point_line_surface_volume(2, 1, "Point");
 }
 
 void geometry_elementary_add_scale_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(4);
-  _transform_point_line_surface(2, 1, "Line");
+  _action_point_line_surface_volume(2, 1, "Line");
 }
 
 void geometry_elementary_add_scale_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(4);
-  _transform_point_line_surface(2, 1, "Surface");
+  _action_point_line_surface_volume(2, 1, "Surface");
 }
 
 void geometry_elementary_scale_cb(CALLBACK_ARGS)
@@ -2540,19 +2639,19 @@ void geometry_elementary_scale_cb(CALLBACK_ARGS)
 void geometry_elementary_scale_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(4);
-  _transform_point_line_surface(2, 0, "Point");
+  _action_point_line_surface_volume(2, 0, "Point");
 }
 
 void geometry_elementary_scale_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(4);
-  _transform_point_line_surface(2, 0, "Line");
+  _action_point_line_surface_volume(2, 0, "Line");
 }
 
 void geometry_elementary_scale_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(4);
-  _transform_point_line_surface(2, 0, "Surface");
+  _action_point_line_surface_volume(2, 0, "Surface");
 }
 
 void geometry_elementary_add_symmetry_cb(CALLBACK_ARGS)
@@ -2563,19 +2662,19 @@ void geometry_elementary_add_symmetry_cb(CALLBACK_ARGS)
 void geometry_elementary_add_symmetry_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(5);
-  _transform_point_line_surface(3, 1, "Point");
+  _action_point_line_surface_volume(3, 1, "Point");
 }
 
 void geometry_elementary_add_symmetry_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(5);
-  _transform_point_line_surface(3, 1, "Line");
+  _action_point_line_surface_volume(3, 1, "Line");
 }
 
 void geometry_elementary_add_symmetry_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(5);
-  _transform_point_line_surface(3, 1, "Surface");
+  _action_point_line_surface_volume(3, 1, "Surface");
 }
 
 void geometry_elementary_symmetry_cb(CALLBACK_ARGS)
@@ -2586,19 +2685,19 @@ void geometry_elementary_symmetry_cb(CALLBACK_ARGS)
 void geometry_elementary_symmetry_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(5);
-  _transform_point_line_surface(3, 0, "Point");
+  _action_point_line_surface_volume(3, 0, "Point");
 }
 
 void geometry_elementary_symmetry_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(5);
-  _transform_point_line_surface(3, 0, "Line");
+  _action_point_line_surface_volume(3, 0, "Line");
 }
 
 void geometry_elementary_symmetry_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(5);
-  _transform_point_line_surface(3, 0, "Surface");
+  _action_point_line_surface_volume(3, 0, "Surface");
 }
 
 void geometry_elementary_extrude_cb(CALLBACK_ARGS)
@@ -2614,19 +2713,19 @@ void geometry_elementary_extrude_translate_cb(CALLBACK_ARGS)
 void geometry_elementary_extrude_translate_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_line_surface(4, 0, "Point");
+  _action_point_line_surface_volume(4, 0, "Point");
 }
 
 void geometry_elementary_extrude_translate_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_line_surface(4, 0, "Line");
+  _action_point_line_surface_volume(4, 0, "Line");
 }
 
 void geometry_elementary_extrude_translate_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_line_surface(4, 0, "Surface");
+  _action_point_line_surface_volume(4, 0, "Surface");
 }
 
 void geometry_elementary_extrude_rotate_cb(CALLBACK_ARGS)
@@ -2637,19 +2736,19 @@ void geometry_elementary_extrude_rotate_cb(CALLBACK_ARGS)
 void geometry_elementary_extrude_rotate_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_line_surface(5, 0, "Point");
+  _action_point_line_surface_volume(5, 0, "Point");
 }
 
 void geometry_elementary_extrude_rotate_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_line_surface(5, 0, "Line");
+  _action_point_line_surface_volume(5, 0, "Line");
 }
 
 void geometry_elementary_extrude_rotate_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_line_surface(5, 0, "Surface");
+  _action_point_line_surface_volume(5, 0, "Surface");
 }
 
 void geometry_elementary_coherence_cb(CALLBACK_ARGS)
@@ -2664,131 +2763,17 @@ void geometry_elementary_delete_cb(CALLBACK_ARGS)
 
 void geometry_elementary_delete_point_cb(CALLBACK_ARGS)
 {
-  _transform_point_line_surface(6, 0, "Point");
+  _action_point_line_surface_volume(6, 0, "Point");
 }
 
 void geometry_elementary_delete_line_cb(CALLBACK_ARGS)
 {
-  _transform_point_line_surface(6, 0, "Line");
+  _action_point_line_surface_volume(6, 0, "Line");
 }
 
 void geometry_elementary_delete_surface_cb(CALLBACK_ARGS)
 {
-  _transform_point_line_surface(6, 0, "Surface");
-}
-
-static void _add_physical(char *what)
-{
-  Vertex *v[SELECTION_MAX_HITS];
-  Curve *c[SELECTION_MAX_HITS];
-  Surface *s[SELECTION_MAX_HITS];
-  int type, num, ne;
-  char *str;
-  List_T *List1;
-
-  if(!strcmp(what, "Point")) {
-    type = ENT_POINT;
-    str = "points";
-    opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else if(!strcmp(what, "Line")) {
-    type = ENT_LINE;
-    str = "lines";
-    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else if(!strcmp(what, "Surface")) {
-    type = ENT_SURFACE;
-    str = "surfaces";
-    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else {
-    type = ENT_VOLUME;
-    str = "volumes";
-    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
-    Msg(GERROR, "Interactive volume selection not done "
-        "(you will have to edit the input file manually)");
-    return;
-  }
-  Draw();
-
-  List1 = List_Create(5, 5, sizeof(int));
-  while(1) {
-    Msg(STATUS3N, "Creating physical %s", str);
-    if(!List_Nbr(List1))
-      Msg(ONSCREEN, "Select %s\n"
-	  "[Press 'e' to end selection or 'q' to abort]", str);
-    else
-      Msg(ONSCREEN, "Select %s\n"
-	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
-    char ib = SelectEntity(type, &ne, v, c, s);
-    if(ib == 'l') {
-      for(int i = 0; i < ne; i++){
-	switch (type) {
-	case ENT_POINT:
-	  List_Add(List1, &v[i]->Num);
-	  break;
-	case ENT_LINE:
-	  List_Add(List1, &c[i]->Num);
-	  break;
-	case ENT_SURFACE:
-	  List_Add(List1, &s[i]->Num);
-	  break;
-	}
-      }
-    }
-    if(ib == 'r') {
-      for(int i = 0; i < ne; i++){
-	switch (type) {
-	case ENT_POINT:
-	  List_Suppress(List1, &v[i]->Num, fcmp_int);
-	  ZeroHighlightEntity(v[i], NULL, NULL);
-	  break;
-	case ENT_LINE:
-	  List_Suppress(List1, &c[i]->Num, fcmp_int);
-	  ZeroHighlightEntity(NULL, c[i], NULL);
-	  break;
-	case ENT_SURFACE:
-	  List_Suppress(List1, &s[i]->Num, fcmp_int);
-	  ZeroHighlightEntity(NULL, NULL, s[i]);
-	  break;
-	}
-      }
-      Draw();
-    }
-    if(ib == 'u') {
-      if(List_Nbr(List1)) {
-	List_Read(List1, List_Nbr(List1)-1, &num);
-	ZeroHighlightEntityNum((type == ENT_POINT) ? num : 0,
-			       (type == ENT_LINE) ? num : 0,
-			       (type == ENT_SURFACE) ? num : 0);
-	Draw();
-	List_Pop(List1);
-      }
-    }
-    if(ib == 'e') {
-      if(List_Nbr(List1)) {
-        add_physical(List1, CTX.filename, type, &num);
-
-	GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
-	if (sp){
-	  sp->receiveNewPhysicalGroup(type,num);
-	  sp->writeSolverFile(CTX.filename);
-	}
-
-        List_Reset(List1);
-        ZeroHighlight(THEM);
-        Draw();
-      }
-    }
-    if(ib == 'q') {
-      ZeroHighlight(THEM);
-      Draw();
-      break;
-    }
-  }
-  List_Delete(List1);
-  Msg(STATUS3N, "Ready");
-  Msg(ONSCREEN, "");
+  _action_point_line_surface_volume(6, 0, "Surface");
 }
 
 void geometry_physical_add_cb(CALLBACK_ARGS)
@@ -2799,23 +2784,23 @@ void geometry_physical_add_cb(CALLBACK_ARGS)
 void geometry_physical_add_point_cb(CALLBACK_ARGS)
 {
   WID->call_for_solver_plugin(0);
-  _add_physical("Point");
+  _action_point_line_surface_volume(7, 0, "Point");
 }
 
 void geometry_physical_add_line_cb(CALLBACK_ARGS)
 {
   WID->call_for_solver_plugin(1);
-  _add_physical("Line");
+  _action_point_line_surface_volume(7, 0, "Line");
 }
 
 void geometry_physical_add_surface_cb(CALLBACK_ARGS)
 {
-  _add_physical("Surface");
+  _action_point_line_surface_volume(7, 0, "Surface");
 }
 
 void geometry_physical_add_volume_cb(CALLBACK_ARGS)
 {
-  _add_physical("Volume");
+  _action_point_line_surface_volume(7, 0, "Volume");
 }
 
 // Dynamic Mesh Menus
@@ -2915,172 +2900,17 @@ void mesh_update_edges_cb(CALLBACK_ARGS)
 
 void mesh_update_more_edges_cb(CALLBACK_ARGS)
 {
-  Vertex *v[SELECTION_MAX_HITS];
-  Curve *c[SELECTION_MAX_HITS];
-  Surface *s[SELECTION_MAX_HITS];
-  int n, p[100], ne;
-  extern void BDS_To_Mesh(Mesh *m);
-
-  if (THEM && THEM->bds && WID) {
-    const double angle = CTX.mesh.dihedral_angle_tol * M_PI / 180;
-    const int nb_t = CTX.mesh.edge_prolongation_threshold;
-    THEM->bds->classify(angle, nb_t);
-    BDS_To_Mesh (THEM); 
-    Draw();
-    n=0;
-    while(1) {
-      Msg(STATUS3N, "Adding new Model Edges");
-      if(n == 0)
-	Msg(ONSCREEN, "Select Model Edges\n"
-	    "[Press 'e' to end selection or 'q' to abort]");
-      if(n == 1)
-	Msg(ONSCREEN, "Select Model Edge\n"
-	    "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-      char ib = SelectEntity(ENT_LINE, &ne, v, c, s);
-      if(ib == 'l') {
-	for(int i = 0; i < ne; i++)
-	  p[n++] = c[i]->Num;
-      }
-      if(ib == 'r') {
-	Msg(WARNING, "Entity de-selection not supported yet during edge selection");
-      }
-      if(ib == 'u') {
-	if(n > 0){
-	  ZeroHighlightEntityNum(p[n-1], 0, 0);
-	  Draw();
-	  n--;
-	}
-      }
-      if(ib == 'q') {
-	ZeroHighlight(THEM);
-	Draw(); 
-	Msg(ONSCREEN, "");
-	Msg(STATUS3N, "Ready");
-	THEM->bds->classify(angle, nb_t);
-	BDS_To_Mesh(THEM); 
-	Draw();
-	break;
-      }
-      if(ib == 'e') {
-	for (int i=0;i<n;i++) {
-	  BDS_GeomEntity *g = THEM->bds->get_geom(p[i],1);
-	  std::list<BDS_Edge*>::iterator it  = g->e.begin();
-	  std::list<BDS_Edge*>::iterator ite = g->e.end();
-	  while (it!=ite){			
-	    BDS_Edge *e = (*it);
-	    e->status = 1;
-	    ++it;
-	  }
-	}
-	ZeroHighlight(THEM);
-	Draw();
-	n = 0;
-      }
-    }
-  }
+  _action_point_line_surface_volume(10, 0, "Line");
 }
 
 void mesh_define_length_cb(CALLBACK_ARGS)
 {
-  Vertex *v[SELECTION_MAX_HITS];
-  Curve *c[SELECTION_MAX_HITS];
-  Surface *s[SELECTION_MAX_HITS];
-  int n = 0, p[100], ne;
-
-  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  Draw();
-
-  WID->create_mesh_context_window(0);
-
-  while(1) {
-    Msg(STATUS3N, "Setting characteristic length");
-    if(n == 0)
-      Msg(ONSCREEN, "Select points\n"
-	  "[Press 'e' to end selection or 'q' to abort]");
-    else
-      Msg(ONSCREEN, "Select points\n"
-	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-    char ib = SelectEntity(ENT_POINT, &ne, v, c, s);
-    if(ib == 'l') {
-      for(int i = 0; i < ne; i++)
-	p[n++] = v[i]->Num;
-    }
-    if(ib == 'r') {
-      Msg(WARNING, "Entity de-selection not supported yet during char. length definition");
-    }
-    if(ib == 'e') {
-      if(n > 0)
-        add_charlength(n, p, CTX.filename, (char*)WID->context_mesh_input[0]->value());
-      ZeroHighlight(THEM);
-      Draw();
-      n = 0;
-    }
-    if(ib == 'u') {
-      if(n > 0){
-	ZeroHighlightEntityNum(p[n-1], 0, 0);
-	Draw();
-	n--;
-      }
-    }
-    if(ib == 'q') {
-      ZeroHighlight(THEM);
-      Draw();
-      break;
-    }
-  }
-  Msg(STATUS3N, "Ready");
-  Msg(ONSCREEN, "");
+  _action_point_line_surface_volume(8, 0, "Point");
 }
 
 void mesh_define_recombine_cb(CALLBACK_ARGS)
 {
-  Vertex *v[SELECTION_MAX_HITS];
-  Curve *c[SELECTION_MAX_HITS];
-  Surface *s[SELECTION_MAX_HITS];
-  int n, p[100], ne;
-
-  opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
-  Draw();
-
-  n = 0;
-  while(1) {
-    Msg(STATUS3N, "Selecting recombined surfaces");
-    if(n == 0)
-      Msg(ONSCREEN, "Select surfaces\n"
-	  "[Press 'e' to end selection or 'q' to abort]");
-    else
-      Msg(ONSCREEN, "Select surfaces\n"
-	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-    char ib = SelectEntity(ENT_SURFACE, &ne, v, c, s);
-    if(ib == 'l') {
-      for(int i = 0; i < ne; i++)
-	p[n++] = s[i]->Num;
-    }
-    if(ib == 'r') {
-      Msg(WARNING, "Entity de-selection not supported yet during recombine definition");
-    }
-    if(ib == 'e') {
-      if(n > 0)
-        add_recosurf(n, p, CTX.filename);
-      ZeroHighlight(THEM);
-      Draw();
-      n = 0;
-    }
-    if(ib == 'u') {
-      if(n > 0){
-	ZeroHighlightEntityNum(0, 0, p[n-1]);
-	Draw();
-	n--;
-      }
-    }
-    if(ib == 'q') {
-      ZeroHighlight(THEM);
-      Draw();
-      break;
-    }
-  }
-  Msg(STATUS3N, "Ready");
-  Msg(ONSCREEN, "");
+  _action_point_line_surface_volume(9, 0, "Surface");
 }
 
 void mesh_define_transfinite_cb(CALLBACK_ARGS)

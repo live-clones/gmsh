@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.46 2006-01-07 18:42:39 geuzaine Exp $
+// $Id: Geo.cpp,v 1.47 2006-01-07 19:46:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -151,40 +151,27 @@ void add_trsfellisurf(int type, int N, int *l, char *fich, char *dir)
   add_infile(text, fich);
 }
 
-void add_charlength(int N, int *l, char *fich, char *lc)
+void add_charlength(List_T *list, char *fich, char *lc)
 {
-  char text[BUFFSIZE], text2[BUFFSIZE];
+  char text[BUFFSIZE];
 
   snprintf(text, BUFFSIZE, "Characteristic Length {");
-  for(int i = 0; i < N; i++) {
-    if(i == 0)
-      snprintf(text2, BUFFSIZE, "%d", l[i]);
-    else
-      snprintf(text2, BUFFSIZE, ",%d", l[i]);
-    strncat(text, text2, BUFFSIZE-strlen(text));
-  }
-  snprintf(text2, BUFFSIZE, "} = %s;", lc);
-  strncat(text, text2, BUFFSIZE-strlen(text));
+  strncat_list(text, list);
+  strncat(text, "} = ", BUFFSIZE-strlen(text));
+  strncat(text, lc, BUFFSIZE-strlen(text));
+  strncat(text, ";", BUFFSIZE-strlen(text));
   add_infile(text, fich);
 }
 
-void add_recosurf(int N, int *l, char *fich)
+void add_recosurf(List_T *list, char *fich)
 {
-  char text[BUFFSIZE], text2[BUFFSIZE];
+  char text[BUFFSIZE];
 
   snprintf(text, BUFFSIZE, "Recombine Surface {");
-  for(int i = 0; i < N; i++) {
-    if(i == 0)
-      snprintf(text2, BUFFSIZE, "%d", l[i]);
-    else
-      snprintf(text2, BUFFSIZE, ",%d", l[i]);
-    strncat(text, text2, BUFFSIZE-strlen(text));
-  }
-  snprintf(text2, BUFFSIZE, "};");
-  strncat(text, text2, BUFFSIZE-strlen(text));
+  strncat_list(text, list);
+  strncat(text, "};", BUFFSIZE-strlen(text));
   add_infile(text, fich);
 }
-
 
 void add_trsfline(int N, int *l, char *fich, char *type, char *typearg, char *pts)
 {
@@ -447,41 +434,36 @@ void add_trsfvol(int N, int *l, char *fich, char *vol)
 }
 
 
-void add_physical(List_T * list, char *fich, int type, int *num)
+int add_physical(List_T *list, char *fich, int type)
 {
-  char text[BUFFSIZE], text2[BUFFSIZE];
-  int elementary_entity;
-
-  *num = NEWPHYSICAL();
+  char text[BUFFSIZE];
+  int num = NEWPHYSICAL();
+  
   switch (type) {
   case ENT_POINT:
-    snprintf(text, BUFFSIZE, "Physical Point(%d) = {", *num);
+    snprintf(text, BUFFSIZE, "Physical Point(%d) = {", num);
     break;
   case ENT_LINE:
-    snprintf(text, BUFFSIZE, "Physical Line(%d) = {", *num);
+    snprintf(text, BUFFSIZE, "Physical Line(%d) = {", num);
     break;
   case ENT_SURFACE:
-    snprintf(text, BUFFSIZE, "Physical Surface(%d) = {", *num);
+    snprintf(text, BUFFSIZE, "Physical Surface(%d) = {", num);
     break;
   case ENT_VOLUME:
-    snprintf(text, BUFFSIZE, "Physical Volume(%d) = {", *num);
+    snprintf(text, BUFFSIZE, "Physical Volume(%d) = {", num);
     break;
   }
 
-  for(int i = 0; i < List_Nbr(list); i++) {
-    List_Read(list, i, &elementary_entity);
-    if(i != List_Nbr(list) - 1)
-      snprintf(text2, BUFFSIZE, "%d,", elementary_entity);
-    else
-      snprintf(text2, BUFFSIZE, "%d};", elementary_entity);
-    strncat(text, text2, BUFFSIZE-strlen(text));
-  }
+  strncat_list(text, list);
+  strncat(text, "};", BUFFSIZE-strlen(text));
   add_infile(text, fich);
+  
+  return num;
 }
 
 void translate(int add, List_T *list, char *fich, char *what, char *tx, char *ty, char *tz)
 {
-  char text[BUFFSIZE], text2[BUFFSIZE];
+  char text[BUFFSIZE];
 
   if(add)
     snprintf(text, BUFFSIZE, "Translate {%s,%s,%s} {\n  Duplicata { %s{", tx, ty, tz, what);

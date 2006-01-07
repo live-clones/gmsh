@@ -101,8 +101,8 @@ void add_infile(char *text, char *fich);
 void add_trsfline(int N, int *l, char *fich, char *type, char *typearg, char *pts);
 void add_trsfellisurf(int type, int N, int *l, char *fich, char *dir);
 void add_trsfvol(int N, int *l, char *fich, char *vol);
-void add_charlength(int N, int *l, char *fich, char *lc);
-void add_recosurf(int N, int *l, char *fich);
+void add_charlength(List_T *list, char *fich, char *lc);
+void add_recosurf(List_T *list, char *fich);
 void add_param(char *par, char *value, char *fich);
 void add_point(char *fich, char *x, char *y, char *z, char *lc);
 void add_attractor(char *fich, int ip, int typ);
@@ -117,7 +117,7 @@ void add_loop(List_T *list, char *fich, int *numloop);
 void add_surf(List_T *list, char *fich, int support, int typ);
 void add_vol(List_T *list, char *fich, int *numvol);
 void add_multvol(List_T *list, char *fich);
-void add_physical(List_T *list, char *fich, int type, int *num);
+int add_physical(List_T *list, char *fich, int type);
 void translate(int add, List_T *list, char *fich, char *what,
 	       char *tx, char *ty, char *tz);
 void rotate(int add, List_T *list, char *fich, char *what, 
