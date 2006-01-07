@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.88 2006-01-06 04:53:18 geuzaine Exp $
+// $Id: CAD.cpp,v 1.89 2006-01-07 18:19:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -493,6 +493,7 @@ void DeleteShape(int Type, int Num)
   case MSH_SEGM_NURBS:
   case MSH_SEGM_PARAMETRIC:
     DeleteCurve(Num);
+    DeleteCurve(-Num);
     break;
   case MSH_SURF_NURBS:
   case MSH_SURF_TRIC:
