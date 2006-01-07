@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.90 2006-01-07 18:42:39 geuzaine Exp $
+// $Id: CAD.cpp,v 1.91 2006-01-07 20:12:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -386,7 +386,9 @@ void CopyShape(int Type, int Num, int *New)
   case MSH_SEGM_BSPLN:
   case MSH_SEGM_BEZIER:
   case MSH_SEGM_CIRC:
+  case MSH_SEGM_CIRC_INV:
   case MSH_SEGM_ELLI:
+  case MSH_SEGM_ELLI_INV:
   case MSH_SEGM_NURBS:
   case MSH_SEGM_PARAMETRIC:
     if(!(c = FindCurve(Num, THEM))) {
@@ -504,7 +506,9 @@ void DeleteShape(int Type, int Num)
   case MSH_SEGM_BSPLN:
   case MSH_SEGM_BEZIER:
   case MSH_SEGM_CIRC:
+  case MSH_SEGM_CIRC_INV:
   case MSH_SEGM_ELLI:
+  case MSH_SEGM_ELLI_INV:
   case MSH_SEGM_NURBS:
   case MSH_SEGM_PARAMETRIC:
     DeleteCurve(Num);
@@ -562,7 +566,9 @@ void ColorShape(int Type, int Num, unsigned int Color)
   case MSH_SEGM_BSPLN:
   case MSH_SEGM_BEZIER:
   case MSH_SEGM_CIRC:
+  case MSH_SEGM_CIRC_INV:
   case MSH_SEGM_ELLI:
+  case MSH_SEGM_ELLI_INV:
   case MSH_SEGM_NURBS:
   case MSH_SEGM_PARAMETRIC:
     ColorCurve(Num, Color);
@@ -592,7 +598,9 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_SEGM_BSPLN:
   case MSH_SEGM_BEZIER:
   case MSH_SEGM_CIRC:
+  case MSH_SEGM_CIRC_INV:
   case MSH_SEGM_ELLI:
+  case MSH_SEGM_ELLI_INV:
   case MSH_SEGM_NURBS:
   case MSH_SEGM_PARAMETRIC:
     SetVisibilityByNumber(Num, 3, Mode);
@@ -1017,7 +1025,9 @@ void ApplicationOnShapes(double matrix[4][4], List_T * ListShapes)
     case MSH_SEGM_BSPLN:
     case MSH_SEGM_BEZIER:
     case MSH_SEGM_CIRC:
+    case MSH_SEGM_CIRC_INV:
     case MSH_SEGM_ELLI:
+    case MSH_SEGM_ELLI_INV:
     case MSH_SEGM_NURBS:
     case MSH_SEGM_PARAMETRIC:
       c = FindCurve(O.Num, THEM);
