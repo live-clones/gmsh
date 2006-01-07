@@ -1,4 +1,4 @@
-$Id: TODO,v 1.111 2006-01-06 00:34:20 geuzaine Exp $
+$Id: TODO,v 1.112 2006-01-07 15:48:08 geuzaine Exp $
 
 ********************************************************************
 
@@ -72,10 +72,6 @@ extruded+recombined surfaces to create Transfinite Volumes
 ********************************************************************
 
 add a mode to pick a mesh element with the mouse (a la medit)
-
-********************************************************************
-
-add a way to display the coordinates of a node in the mesh
 
 ********************************************************************
 

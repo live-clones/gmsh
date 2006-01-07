@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.477 2006-01-06 00:34:22 geuzaine Exp $
+// $Id: GUI.cpp,v 1.478 2006-01-07 15:48:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4115,7 +4115,7 @@ void GUI::create_about_window()
   }
 
   int width = 28 * fontsize;
-  int height = 15 * BH;
+  int height = 15 * BH + BH/2;
 
   about_window = new Dialog_Window(width, height, "About Gmsh");
   about_window->box(GMSH_WINDOW_BOX);
