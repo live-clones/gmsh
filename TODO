@@ -1,4 +1,4 @@
-$Id: TODO,v 1.112 2006-01-07 15:48:08 geuzaine Exp $
+$Id: TODO,v 1.113 2006-01-07 20:30:25 geuzaine Exp $
 
 ********************************************************************
 
@@ -56,6 +56,11 @@ surface loops and lines in line loops?
 (To make things simple, all line loops should be oriented "aire a
 gauche", and all surface loops whould be oriented with exterior
 normals...)
+
+********************************************************************
+
+Create a plugin that computes the normals of a surface view; could be
+used to remove SphericalRaise...
 
 ********************************************************************
 
