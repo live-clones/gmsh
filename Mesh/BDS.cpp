@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.47 2006-01-06 00:34:26 geuzaine Exp $
+// $Id: BDS.cpp,v 1.48 2006-01-07 16:20:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1027,7 +1027,7 @@ bool BDS_Mesh::extractVolumes()
       }    
   }
   
-  printf("the domain is closed ? : %d\n",closed);
+  // printf("the domain is closed ? : %d\n",closed);
 
   BDS_Triangle *t = *(triangles.begin());  
 }
