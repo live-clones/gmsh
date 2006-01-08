@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.91 2006-01-07 20:12:18 geuzaine Exp $
+// $Id: CAD.cpp,v 1.92 2006-01-08 14:32:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -921,7 +921,7 @@ void printSurface(Surface * s)
 }
 
 void ApplyTransformationToPoint(double matrix[4][4], Vertex * v,
-				bool do_end_curves=false)
+				bool end_curve_surface=false)
 {
   double pos[4], vec[4];
 
@@ -944,7 +944,7 @@ void ApplyTransformationToPoint(double matrix[4][4], Vertex * v,
   v->Pos.Z = pos[2];
   v->w = pos[3];
 
-  if(do_end_curves){
+  if(end_curve_surface){
     List_T *All = Tree2List(THEM->Curves);
     for(int i = 0; i < List_Nbr(All); i++) {
       Curve *c;
@@ -953,6 +953,20 @@ void ApplyTransformationToPoint(double matrix[4][4], Vertex * v,
 	Vertex *pv = *(Vertex **) List_Pointer(c->Control_Points, j);
 	if(pv->Num == v->Num){
 	  End_Curve(c);
+	  break;
+	}
+      }
+    }
+    List_Delete(All);
+    All = Tree2List(THEM->Surfaces);
+    for(int i = 0; i < List_Nbr(All); i++) {
+      Surface *s;
+      List_Read(All, i, &s);
+      for(int j = 0; j < List_Nbr(s->Control_Points); j++) {
+	Vertex *pv = *(Vertex **) List_Pointer(s->Control_Points, j);
+	if(pv->Num == v->Num){
+	  End_Surface(s);
+	  break;
 	}
       }
     }
@@ -1085,7 +1099,6 @@ void DilatShapes(double X, double Y, double Z, double A,
   if(CTX.geom.auto_coherence && final)
     ReplaceAllDuplicates(THEM);
 }
-
 
 void RotateShapes(double Ax, double Ay, double Az,
                   double Px, double Py, double Pz,
@@ -1975,7 +1988,7 @@ void ReplaceAllDuplicates(Mesh * m)
 }
 
 
-// Inetersection routines
+// Intersection routines
 // FIXME: this code is full of crap :-)
 
 /*
