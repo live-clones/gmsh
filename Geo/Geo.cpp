@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.48 2006-01-08 14:09:50 geuzaine Exp $
+// $Id: Geo.cpp,v 1.49 2006-01-08 14:10:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -330,8 +330,7 @@ void add_multline(int N, int *p, char *fich)
 
 void add_lineloop(List_T *list, char *fich, int *numloop)
 {
-  char text[BUFFSIZE], text2[BUFFSIZE];
-  int seg;
+  char text[BUFFSIZE];
 
   if((recognize_loop(list, numloop)))
     return;
