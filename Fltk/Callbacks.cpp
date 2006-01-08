@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.392 2006-01-07 19:46:17 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.393 2006-01-08 14:09:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2191,9 +2191,9 @@ static void _new_surface_volume(int mode)
 	int num = (type == ENT_LINE) ? c[0]->Num : s[0]->Num;
 	if(SelectContour(type, num, List1)) {
 	  if(type == ENT_LINE)
-	    add_loop(List1, CTX.filename, &num);
+	    add_lineloop(List1, CTX.filename, &num);
 	  else
-	    add_vol(List1, CTX.filename, &num);
+	    add_surfloop(List1, CTX.filename, &num);
 	  List_Reset(List1);
 	  List_Add(List2, &num);
 	  while(1) {
@@ -2229,9 +2229,9 @@ static void _new_surface_volume(int mode)
 	      num = (type == ENT_LINE) ? c[0]->Num : s[0]->Num;
 	      if(SelectContour(type, num, List1)) {
 		if(type == ENT_LINE)
-		  add_loop(List1, CTX.filename, &num);
+		  add_lineloop(List1, CTX.filename, &num);
 		else
-		  add_vol(List1, CTX.filename, &num);
+		  add_surfloop(List1, CTX.filename, &num);
 		List_Reset(List1);
 		List_Add(List2, &num);
 	      }
@@ -2244,7 +2244,7 @@ static void _new_surface_volume(int mode)
 	    switch (mode) {
 	    case 0: add_surf(List2, CTX.filename, 0, 2); break;
 	    case 1: add_surf(List2, CTX.filename, 0, 1); break;
-	    case 2: add_multvol(List2, CTX.filename); break;
+	    case 2: add_vol(List2, CTX.filename); break;
 	    }
 	    ZeroHighlight(THEM);
 	    Draw();

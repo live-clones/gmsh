@@ -113,10 +113,10 @@ void add_spline(int N, int *p, char *fich);
 void add_bezier(int N, int *p, char *fich);
 void add_bspline(int N, int *p, char *fich);
 void add_multline(int N, int *p, char *fich);
-void add_loop(List_T *list, char *fich, int *numloop);
+void add_lineloop(List_T *list, char *fich, int *numloop);
 void add_surf(List_T *list, char *fich, int support, int typ);
-void add_vol(List_T *list, char *fich, int *numvol);
-void add_multvol(List_T *list, char *fich);
+void add_surfloop(List_T *list, char *fich, int *numvol);
+void add_vol(List_T *list, char *fich);
 int add_physical(List_T *list, char *fich, int type);
 void translate(int add, List_T *list, char *fich, char *what,
 	       char *tx, char *ty, char *tz);
