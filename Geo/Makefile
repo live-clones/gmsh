@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.68 2006-01-06 00:34:24 geuzaine Exp $
+# $Id: Makefile,v 1.69 2006-01-10 15:13:25 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -137,4 +137,4 @@ Print_Geo.o: Print_Geo.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
-  CAD.h ExtrudeParams.h ../Numeric/Numeric.h ../Common/Context.h
+  CAD.h ExtrudeParams.h

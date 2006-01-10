@@ -50,7 +50,6 @@ class Opengl_Window : public Fl_Gl_Window {
  public:
   bool AddPointMode, LassoMode, SelectionMode;
  private:
-  int hits;
   MousePosition click, curr, prev, lasso;
   double point[3];
   void draw();
@@ -59,7 +58,6 @@ class Opengl_Window : public Fl_Gl_Window {
   Opengl_Window(int x,int y,int w,int h,const char *l=0)
     : Fl_Gl_Window(x, y, w, h, l) {
     AddPointMode = LassoMode = SelectionMode = false;
-    hits = 0;
     point[0] = point[1] = point[2] = 0.;
   }
 };

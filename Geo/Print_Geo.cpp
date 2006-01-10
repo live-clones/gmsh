@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.42 2006-01-06 00:34:24 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.43 2006-01-10 15:13:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -22,31 +22,22 @@
 #include "Gmsh.h"
 #include "Geo.h"
 #include "Mesh.h"
-#include "Vertex.h"
 #include "CAD.h"
-#include "SmoothNormals.h"
-#include "Numeric.h"
-#include "Context.h"
-
-#include <map>
 
 FILE *FOUT;
 
 void Print_Point(void *a, void *b)
 {
-  Vertex *v;
-  v = *(Vertex **) a;
+  Vertex *v = *(Vertex **) a;
   fprintf(FOUT, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n",
           v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc);
 }
 
-void Print_Nurbs(Curve * c, FILE * f)
+void Print_Nurbs(Curve *c, FILE *f)
 {
-  int i, j;
-  Vertex *v;
-
   fprintf(f, "Nurbs (%d) = {", c->Num);
-  for(i = 0; i < List_Nbr(c->Control_Points); i++) {
+  for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
+    Vertex *v;
     List_Read(c->Control_Points, i, &v);
     if(!i)
       fprintf(FOUT, "%d", v->Num);
@@ -57,7 +48,7 @@ void Print_Nurbs(Curve * c, FILE * f)
   }
   fprintf(f, "}\n");
   fprintf(f, "  Knots {");
-  for(j = 0; j < List_Nbr(c->Control_Points) + c->degre + 1; j++) {
+  for(int j = 0; j < List_Nbr(c->Control_Points) + c->degre + 1; j++) {
     if(!j)
       fprintf(f, "%.16g", c->k[j]);
     else
@@ -71,10 +62,7 @@ void Print_Nurbs(Curve * c, FILE * f)
 
 void Print_Curve(void *a, void *b)
 {
-  Curve *c;
-  Vertex *v;
-  int i;
-  c = *(Curve **) a;
+  Curve *c = *(Curve **) a;
 
   if(c->Num < 0 || c->Typ == MSH_SEGM_DISCRETE)
     return;
@@ -108,7 +96,8 @@ void Print_Curve(void *a, void *b)
     return;
   }
 
-  for(i = 0; i < List_Nbr(c->Control_Points); i++) {
+  for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
+    Vertex *v;
     List_Read(c->Control_Points, i, &v);
     if(i)
       fprintf(FOUT, ", %d", v->Num);
@@ -118,38 +107,22 @@ void Print_Curve(void *a, void *b)
       fprintf(FOUT, "\n");
   }
 
-  switch (c->Typ) {
-  case MSH_SEGM_CIRC:
-  case MSH_SEGM_CIRC_INV:
-  case MSH_SEGM_ELLI:
-  case MSH_SEGM_ELLI_INV:
-    fprintf(FOUT, "} Plane{%.16g, %.16g, %.16g};\n",
-            c->Circle.n[0], c->Circle.n[1], c->Circle.n[2]);
-    break;
-  default:
-    fprintf(FOUT, "};\n");
-    break;
-  }
-
+  fprintf(FOUT, "};\n");
 }
 
 void Print_Surface(void *a, void *b)
 {
-  Curve *c;
-  Surface *s;
-  Vertex *v;
-  int i, j;
-  s = *(Surface **) a;
+  Surface *s = *(Surface **) a;
 
   if(s->Typ == MSH_SURF_DISCRETE)
     return;
 
   int NUMLOOP = s->Num + 1000000;
-
   if(s->Typ != MSH_SURF_NURBS) {
     if(List_Nbr(s->Generatrices)){
       fprintf(FOUT, "Line Loop (%d) = ", NUMLOOP);
-      for(i = 0; i < List_Nbr(s->Generatrices); i++) {
+      for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
+	Curve *c;
 	List_Read(s->Generatrices, i, &c);
 	if(i)
 	  fprintf(FOUT, ", %d", c->Num);
@@ -174,9 +147,10 @@ void Print_Surface(void *a, void *b)
     break;
   case MSH_SURF_NURBS:
     fprintf(FOUT, "Nurbs Surface (%d) = {\n", s->Num);
-    for(i = 0; i < s->Nv; i++) {
+    for(int i = 0; i < s->Nv; i++) {
       fprintf(FOUT, "  {");
-      for(j = 0; j < s->Nu; j++) {
+      for(int j = 0; j < s->Nu; j++) {
+	Vertex *v;
         List_Read(s->Control_Points, j + s->Nu * i, &v);
         if(!j)
           fprintf(FOUT, "%d", v->Num);
@@ -189,7 +163,7 @@ void Print_Surface(void *a, void *b)
         fprintf(FOUT, "}}\n");
     }
     fprintf(FOUT, "  Knots\n  {");
-    for(j = 0; j < s->Nu + s->OrderU + 1; j++) {
+    for(int j = 0; j < s->Nu + s->OrderU + 1; j++) {
       if(!j)
         fprintf(FOUT, "%.16g", s->ku[j]);
       else
@@ -198,7 +172,7 @@ void Print_Surface(void *a, void *b)
         fprintf(FOUT, "\n  ");
     }
     fprintf(FOUT, "}\n  {");
-    for(j = 0; j < s->Nv + s->OrderV + 1; j++) {
+    for(int j = 0; j < s->Nv + s->OrderV + 1; j++) {
       if(!j)
         fprintf(FOUT, "%.16g", s->kv[j]);
       else
@@ -213,10 +187,7 @@ void Print_Surface(void *a, void *b)
 
 void Print_Volume(void *a, void *b)
 {
-  Surface *s;
-  Volume *vol;
-  int i;
-  vol = *(Volume **) a;
+  Volume *vol = *(Volume **) a;
 
   if(vol->Typ == MSH_VOLUME_DISCRETE)
     return;
@@ -225,7 +196,8 @@ void Print_Volume(void *a, void *b)
 
   fprintf(FOUT, "Surface Loop (%d) = ", NUMLOOP);
 
-  for(i = 0; i < List_Nbr(vol->Surfaces); i++) {
+  for(int i = 0; i < List_Nbr(vol->Surfaces); i++) {
+    Surface *s;
     List_Read(vol->Surfaces, i, &s);
     if(i)
       fprintf(FOUT, ", %d", s->Num);
@@ -243,10 +215,7 @@ void Print_Volume(void *a, void *b)
 
 void Print_PhysicalGroups(void *a, void *b)
 {
-  PhysicalGroup *pg;
-  int i, j;
-
-  pg = *(PhysicalGroup **) a;
+  PhysicalGroup *pg = *(PhysicalGroup **) a;
 
   switch (pg->Typ) {
   case MSH_PHYSICAL_POINT:
@@ -263,7 +232,8 @@ void Print_PhysicalGroups(void *a, void *b)
     break;
   }
 
-  for(i = 0; i < List_Nbr(pg->Entities); i++) {
+  for(int i = 0; i < List_Nbr(pg->Entities); i++) {
+    int j;
     List_Read(pg->Entities, i, &j);
     if(i)
       fprintf(FOUT, ", %d", j);
@@ -271,10 +241,9 @@ void Print_PhysicalGroups(void *a, void *b)
       fprintf(FOUT, "{%d", j);
   }
   fprintf(FOUT, "};\n");
-
 }
 
-void Print_Geo(Mesh * M, char *filename)
+void Print_Geo(Mesh *M, char *filename)
 {
   if(filename) {
     FOUT = fopen(filename, "w");
@@ -298,5 +267,4 @@ void Print_Geo(Mesh * M, char *filename)
     Msg(STATUS2N, "Wrote '%s'", filename);
     fclose(FOUT);
   }
-
 }
