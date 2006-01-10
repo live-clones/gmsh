@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.93 2006-01-06 00:34:24 geuzaine Exp $
+// $Id: Draw.cpp,v 1.94 2006-01-10 03:58:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -374,10 +374,6 @@ int Process_SelectionBuffer(int type, bool multi,
   CTX.render_mode = GMSH_SELECT;
 
   glInitNames();
-  glPushName(0); // init stack with 0 (=type=point). This will be
-		 // overwritten with the actual entity type everytime
-		 // an entity is drawn
-
   glPushMatrix();
   InitProjection(x, y, w, h);
   InitPosition();
@@ -397,25 +393,24 @@ int Process_SelectionBuffer(int type, bool multi,
 
   GLint *ptr = (GLint *) selectBuf;
 
+  int numentities = 0;
   for(int i = 0; i < numhits; i++) {
-    GLint names = *ptr; // number of names in the name stack (should
-			// always be 2 in Gmsh: the first is the type
-			// of the entity, the second the entity
-			// number)
-    ptr++;
-    GLint mindepth = *ptr;
-    ptr++;
-    GLint maxdepth = *ptr;
-    ptr++;
-    hits[i].depth = (mindepth+maxdepth)/2;
-    for(int j = 0; j < names; j++) {
-      if(j == 0)
-        hits[i].type = *ptr; // type of entity (0, 1, 2, ... for
-			     // point, line, surf, ...)
-      else if(j == 1)
-        hits[i].ient = *ptr; // num of entity
-      ptr++;
+    GLint names = *ptr++; 
+    GLint mindepth = *ptr++;
+    GLint maxdepth = *ptr++;
+    // in Gmsh 'names' should always be 2 (in which case the first is
+    // the type of the entity (0=point, 1=line, ...) and the second
+    // the entity number) or 0 (if there is nothing in the stack)
+    if(names == 2){
+      hits[numentities].depth = (mindepth+maxdepth)/2;
+      hits[numentities].type = *ptr++; 
+      hits[numentities].ient = *ptr++;
+      numentities++;
     }
+  }
+
+  if(!numentities){ // no entities
+    return 0;
   }
 
   // filter result: if type == ENT_NONE, return the closest entity of
@@ -423,31 +418,43 @@ int Process_SelectionBuffer(int type, bool multi,
   // return the closest entity of type "type"
 
   unsigned int typmin = 4;
-  for(int i = 0; i < numhits; i++) {
+  for(int i = 0; i < numentities; i++) {
     if(hits[i].type < typmin)
       typmin = hits[i].type;
   }
 
   // sort hits to get closest entities first
-  qsort(hits, numhits, sizeof(hit), fcmp_hit_depth);
+  qsort(hits, numentities, sizeof(hit), fcmp_hit_depth);
   
   int j = 0;
-  for(int i = 0; i < numhits; i++) {
+  for(int i = 0; i < numentities; i++) {
     if((type == ENT_NONE && hits[i].type == typmin) ||
        (type == ENT_POINT && hits[i].type == 0) ||
        (type == ENT_LINE && hits[i].type == 1) ||
        (type == ENT_SURFACE && hits[i].type == 2)){
       switch (hits[i].type) {
       case 0:
-	v[j++] = FindPoint(hits[i].ient, m);
+	if(!(v[j] = FindPoint(hits[i].ient, m))){
+	  Msg(GERROR, "Problem in point selection processing");
+	  return j;
+	}
+	j++;
 	if(!multi) return 1;
 	break;
       case 1:
-	c[j++] = FindCurve(hits[i].ient, m);
+	if(!(c[j] = FindCurve(hits[i].ient, m))){
+	  Msg(GERROR, "Problem in line selection processing");
+	  return j;
+	}
+	j++;
 	if(!multi) return 1;
 	break;
       case 2:
-	s[j++] = FindSurface(hits[i].ient, m);
+	if(!(s[j] = FindSurface(hits[i].ient, m))){
+	  Msg(GERROR, "Problem in surface selection processing");
+	  return j;
+	}
+	j++;
 	if(!multi) return 1;
 	break;
       }

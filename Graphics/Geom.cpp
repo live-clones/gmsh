@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.96 2006-01-06 00:34:24 geuzaine Exp $
+// $Id: Geom.cpp,v 1.97 2006-01-10 03:58:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -49,7 +49,7 @@ void Draw_Geo_Point(void *a, void *b)
     return;
 
   if(CTX.render_mode == GMSH_SELECT) {
-    glLoadName(0);
+    glPushName(0);
     glPushName(v->Num);
   }
 
@@ -101,6 +101,7 @@ void Draw_Geo_Point(void *a, void *b)
 
   if(CTX.render_mode == GMSH_SELECT) {
     glPopName();
+    glPopName();
   }
 }
 
@@ -119,7 +120,7 @@ void Draw_Curve(void *a, void *b)
     return;
 
   if(CTX.render_mode == GMSH_SELECT) {
-    glLoadName(1);
+    glPushName(1);
     glPushName(c->Num);
   }
 
@@ -241,6 +242,7 @@ void Draw_Curve(void *a, void *b)
   }
 
   if(CTX.render_mode == GMSH_SELECT) {
+    glPopName();
     glPopName();
   }
 }
@@ -616,7 +618,7 @@ void Draw_Surface(void *a, void *b)
     return;
 
   if(CTX.render_mode == GMSH_SELECT) {
-    glLoadName(2);
+    glPushName(2);
     glPushName(s->Num);
   }
 
@@ -646,6 +648,7 @@ void Draw_Surface(void *a, void *b)
   }
 
   if(CTX.render_mode == GMSH_SELECT) {
+    glPopName();
     glPopName();
   }
 }

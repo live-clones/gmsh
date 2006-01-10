@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.148 2006-01-06 00:34:24 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.149 2006-01-10 03:58:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -395,7 +395,7 @@ void Draw_Mesh_Surface(void *a, void *b)
     return;
 
   if(CTX.render_mode == GMSH_SELECT) {
-    glLoadName(2);
+    glPushName(2);
     glPushName(s->Num);
   }
 
@@ -475,6 +475,7 @@ void Draw_Mesh_Surface(void *a, void *b)
 
   if(CTX.render_mode == GMSH_SELECT) {
     glPopName();
+    glPopName();
   }
 
   theSurface = NULL;
@@ -499,7 +500,7 @@ void Draw_Mesh_Curve(void *a, void *b)
     return;
 
   if(CTX.render_mode == GMSH_SELECT) {
-    glLoadName(1);
+    glPushName(1);
     glPushName(c->Num);
   }
 
@@ -545,6 +546,7 @@ void Draw_Mesh_Curve(void *a, void *b)
   }
 
   if(CTX.render_mode == GMSH_SELECT) {
+    glPopName();
     glPopName();
   }
 
