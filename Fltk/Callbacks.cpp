@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.393 2006-01-08 14:09:50 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.394 2006-01-11 05:37:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1449,6 +1449,7 @@ void visibility_sort_cb(CALLBACK_ARGS)
 {
   int val;
   char *str = (char*)data;
+  static char tmpstr[256];
 
   if(!strcmp(str, "type"))
     val = 1;
@@ -1458,6 +1459,8 @@ void visibility_sort_cb(CALLBACK_ARGS)
     val = 3;
   else if(!strcmp(str, "-"))
     val = -1;
+  else if(!strcmp(str, "+"))
+    val = -2;
   else
     val = 0;
 
@@ -1482,6 +1485,18 @@ void visibility_sort_cb(CALLBACK_ARGS)
     for(int i = 1; i <= WID->vis_browser->size(); i++)
       if(!state[i-1]) WID->vis_browser->select(i);
     delete [] state;
+  }
+  else if(val == -2){ // create new parameter name for selection
+    for(int i = 1; i < WID->vis_browser->size(); i++){
+      if(WID->vis_browser->selected(i)){
+	Entity *e = (Entity *) WID->vis_browser->data(i);
+	sprintf(tmpstr, "%d", e->Num());
+	WID->context_geometry_input[1]->value(tmpstr);
+	break;
+      }
+    }
+    WID->context_geometry_input[0]->value("NewName");
+    WID->create_geometry_context_window(0);
   }
   else { // sort
     SetVisibilitySort(val);
@@ -1874,6 +1889,8 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
       break;
     }
   }
+
+  WID->reset_visibility();
   Msg(STATUS3N, "Ready");
   Msg(ONSCREEN, "");
 }
@@ -1941,6 +1958,7 @@ static void _new_multiline(int type)
     }
   }
 
+  WID->reset_visibility();
   Msg(STATUS3N, "Ready");
   Msg(ONSCREEN, "");
 }
@@ -1997,6 +2015,7 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
     }
   }
 
+  WID->reset_visibility();
   Msg(STATUS3N, "Ready");
   Msg(ONSCREEN, "");
 }
@@ -2061,6 +2080,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
     }
   }
 
+  WID->reset_visibility();
   Msg(STATUS3N, "Ready");
   Msg(ONSCREEN, "");
 }
@@ -2118,6 +2138,7 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
     }
   }
 
+  WID->reset_visibility();
   Msg(STATUS3N, "Ready");
   Msg(ONSCREEN, "");
 }
@@ -2258,6 +2279,8 @@ static void _new_surface_volume(int mode)
 stopall:;
   List_Delete(List1);
   List_Delete(List2);
+
+  WID->reset_visibility();
   Msg(STATUS3N, "Ready");
   Msg(ONSCREEN, "");
 }
@@ -2510,8 +2533,9 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
       break;
     }
   }
-  
   List_Delete(List1);
+
+  WID->reset_visibility();
   Msg(STATUS3N, "Ready");
   Msg(ONSCREEN, "");
 }
@@ -4254,6 +4278,7 @@ void con_geometry_define_parameter_cb(CALLBACK_ARGS)
 {
   add_param((char *)WID->context_geometry_input[0]->value(),
             (char *)WID->context_geometry_input[1]->value(), CTX.filename);
+  WID->reset_visibility();
 }
 
 void con_geometry_define_point_cb(CALLBACK_ARGS)
@@ -4265,6 +4290,7 @@ void con_geometry_define_point_cb(CALLBACK_ARGS)
 	    (char*)WID->context_geometry_input[5]->value());
   ZeroHighlight(THEM);
   CalculateMinMax(THEM->Points, NULL);
+  WID->reset_visibility();
   Draw();
 }
 

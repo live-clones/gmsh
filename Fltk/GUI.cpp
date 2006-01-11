@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.479 2006-01-07 20:38:29 geuzaine Exp $
+// $Id: GUI.cpp,v 1.480 2006-01-11 05:37:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3800,7 +3800,7 @@ void GUI::create_visibility_window()
     {0}
   };
 
-  int width = cols[0] + cols[1] + cols[2] + cols[3] + 4 * WB;
+  int width = cols[0] + cols[1] + cols[2] + cols[3] + 6 * WB;
   int height = 18 * BH;
 
   vis_window = new Dialog_Window(width, height, "Visibility");
@@ -3833,7 +3833,7 @@ void GUI::create_visibility_window()
     Fl_Button *o1 = new Fl_Button(2 * WB, 3 * WB + 2 * BH + BH/2, cols[0], BH - BH/2, "-");
     o1->tooltip("Invert selection");
     o1->callback(visibility_sort_cb, (void *)"-");
-    
+
     Fl_Button *o2 = new Fl_Button(2 * WB + cols[0], 3 * WB + 2 * BH, cols[1], BH, "Type");
     o2->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
     o2->tooltip("Sort by type");
@@ -3848,6 +3848,10 @@ void GUI::create_visibility_window()
     o4->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
     o4->tooltip("Sort by name");
     o4->callback(visibility_sort_cb, (void *)"name");
+
+    Fl_Button *o5 = new Fl_Button(width - 4 * WB, 3 * WB + 2 * BH, 2 * WB, BH, "+");
+    o5->tooltip("Add parameter name for first selected item");
+    o5->callback(visibility_sort_cb, (void *)"+");
     
     {
       Fl_Group *o = new Fl_Group(2 * WB, 3 * WB + 3 * BH, brw, height - 7 * WB - 5 * BH);
