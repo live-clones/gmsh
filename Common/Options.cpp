@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.270 2006-01-06 00:34:21 geuzaine Exp $
+// $Id: Options.cpp,v 1.271 2006-01-11 03:51:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -199,9 +199,9 @@ void Init_Options_GUI(int num)
   Set_ColorOptions_GUI(num, PrintOptions_Color);
 }
 
-void Print_OptionCategory(int level, int diff, char *cat, FILE * file)
+void Print_OptionCategory(int level, int diff, int help, char *cat, FILE * file)
 {
-  if(diff || !(level & GMSH_FULLRC))
+  if(diff || !help || !(level & GMSH_FULLRC))
     return;
   if(file) {
     fprintf(file, "//\n");
@@ -256,72 +256,72 @@ void Print_Options(int num, int level, int diff, int help, char *filename)
     fprintf(file, "//\n");
   }
 
-  Print_OptionCategory(level, diff, "General options (strings)", file);
+  Print_OptionCategory(level, diff, help, "General options (strings)", file);
   Print_StringOptions(num, level, diff, help, GeneralOptions_String, "General.", file);
-  Print_OptionCategory(level, diff, "General options (numbers)", file);
+  Print_OptionCategory(level, diff, help, "General options (numbers)", file);
   Print_NumberOptions(num, level, diff, help, GeneralOptions_Number, "General.", file);
-  Print_OptionCategory(level, diff, "General options (colors)", file);
+  Print_OptionCategory(level, diff, help, "General options (colors)", file);
   Print_ColorOptions(num, level, diff, help, GeneralOptions_Color, "General.", file);
 
-  Print_OptionCategory(level, diff, "Geometry options (strings)", file);
+  Print_OptionCategory(level, diff, help, "Geometry options (strings)", file);
   Print_StringOptions(num, level, diff, help, GeometryOptions_String, "Geometry.", file);
-  Print_OptionCategory(level, diff, "Geometry options (numbers)", file);
+  Print_OptionCategory(level, diff, help, "Geometry options (numbers)", file);
   Print_NumberOptions(num, level, diff, help, GeometryOptions_Number, "Geometry.", file);
-  Print_OptionCategory(level, diff, "Geometry options (colors)", file);
+  Print_OptionCategory(level, diff, help, "Geometry options (colors)", file);
   Print_ColorOptions(num, level, diff, help, GeometryOptions_Color, "Geometry.", file);
 
-  Print_OptionCategory(level, diff, "Mesh options (strings)", file);
+  Print_OptionCategory(level, diff, help, "Mesh options (strings)", file);
   Print_StringOptions(num, level, diff, help, MeshOptions_String, "Mesh.", file);
-  Print_OptionCategory(level, diff, "Mesh options (numbers)", file);
+  Print_OptionCategory(level, diff, help, "Mesh options (numbers)", file);
   Print_NumberOptions(num, level, diff, help, MeshOptions_Number, "Mesh.", file);
-  Print_OptionCategory(level, diff, "Mesh options (colors)", file);
+  Print_OptionCategory(level, diff, help, "Mesh options (colors)", file);
   Print_ColorOptions(num, level, diff, help, MeshOptions_Color, "Mesh.", file);
 
-  Print_OptionCategory(level, diff, "Solver options (strings)", file);
+  Print_OptionCategory(level, diff, help, "Solver options (strings)", file);
   Print_StringOptions(num, level, diff, help, SolverOptions_String, "Solver.", file);
-  Print_OptionCategory(level, diff, "Solver options (numbers)", file);
+  Print_OptionCategory(level, diff, help, "Solver options (numbers)", file);
   Print_NumberOptions(num, level, diff, help, SolverOptions_Number, "Solver.", file);
-  Print_OptionCategory(level, diff, "Solver options (colors)", file);
+  Print_OptionCategory(level, diff, help, "Solver options (colors)", file);
   Print_ColorOptions(num, level, diff, help, SolverOptions_Color, "Solver.", file);
 
-  Print_OptionCategory(level, diff, "Post-processing options (strings)", file);
+  Print_OptionCategory(level, diff, help, "Post-processing options (strings)", file);
   Print_StringOptions(num, level, diff, help, PostProcessingOptions_String,
                       "PostProcessing.", file);
-  Print_OptionCategory(level, diff, "Post-processing options (numbers)", file);
+  Print_OptionCategory(level, diff, help, "Post-processing options (numbers)", file);
   Print_NumberOptions(num, level, diff, help, PostProcessingOptions_Number,
                       "PostProcessing.", file);
-  Print_OptionCategory(level, diff, "Post-processing options (colors)", file);
+  Print_OptionCategory(level, diff, help, "Post-processing options (colors)", file);
   Print_ColorOptions(num, level, diff, help, PostProcessingOptions_Color,
                      "PostProcessing.", file);
 
   if(level & GMSH_FULLRC) {
     for(i = 0; i < List_Nbr(CTX.post.list); i++) {
       sprintf(tmp, "View[%d].", i);
-      Print_OptionCategory(level, diff, "View options (strings)", file);
+      Print_OptionCategory(level, diff, help, "View options (strings)", file);
       Print_StringOptions(i, level, diff, help, ViewOptions_String, tmp, file);
-      Print_OptionCategory(level, diff, "View options (numbers)", file);
+      Print_OptionCategory(level, diff, help, "View options (numbers)", file);
       Print_NumberOptions(i, level, diff, help, ViewOptions_Number, tmp, file);
-      Print_OptionCategory(level, diff, "View options (colors)", file);
+      Print_OptionCategory(level, diff, help, "View options (colors)", file);
       Print_ColorOptions(i, level, diff, help, ViewOptions_Color, tmp, file);
       strcat(tmp, "ColorTable");
       Print_ColorTable(i, diff, tmp, file);
     }
   }
   else if(level & GMSH_OPTIONSRC) {
-    Print_OptionCategory(level, diff, "View options (strings)", file);
+    Print_OptionCategory(level, diff, help, "View options (strings)", file);
     Print_StringOptions(num, level, diff, help, ViewOptions_String, "View.", file);
-    Print_OptionCategory(level, diff, "View options (numbers)", file);
+    Print_OptionCategory(level, diff, help, "View options (numbers)", file);
     Print_NumberOptions(num, level, diff, help, ViewOptions_Number, "View.", file);
-    Print_OptionCategory(level, diff, "View options (colors)", file);
+    Print_OptionCategory(level, diff, help, "View options (colors)", file);
     Print_ColorOptions(num, level, diff, help, ViewOptions_Color, "View.", file);
     Print_ColorTable(num, diff, "View.ColorTable", file);
   }
 
-  Print_OptionCategory(level, diff, "Print options (strings)", file);
+  Print_OptionCategory(level, diff, help, "Print options (strings)", file);
   Print_StringOptions(num, level, diff, help, PrintOptions_String, "Print.", file);
-  Print_OptionCategory(level, diff, "Print options (numbers)", file);
+  Print_OptionCategory(level, diff, help, "Print options (numbers)", file);
   Print_NumberOptions(num, level, diff, help, PrintOptions_Number, "Print.", file);
-  Print_OptionCategory(level, diff, "Print options (colors)", file);
+  Print_OptionCategory(level, diff, help, "Print options (colors)", file);
   Print_ColorOptions(num, level, diff, help, PrintOptions_Color, "Print.", file);
 
   if(filename) {
