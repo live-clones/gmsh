@@ -116,7 +116,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.AngleSmoothNormals
 Threshold angle below which normals are not smoothed@*
-Default value: @code{180}@*
+Default value: @code{30}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ArrowHeadRadius
