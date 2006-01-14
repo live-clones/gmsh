@@ -19,9 +19,9 @@ Include "t1.geo";
 
 h = 0.1;
 
-Extrude Surface { 6, {0,0,h} } { 
-  Layers { {8,4,2,1}, {9000:9003}, {0.25,0.5,0.75,1} }; 
-};
+Extrude {0,0,h} { 
+  Surface{6}; Layers{ {8,4,2,1}, {9000:9003}, {0.25,0.5,0.75,1} }; 
+}
 
 // The extrusion can also be performed with a rotation instead of a
 // translation, and the resulting mesh can be recombined into prisms
@@ -29,16 +29,16 @@ Extrude Surface { 6, {0,0,h} } {
 // ({0,1,0}), an axis point ({-0.1,0,0.1}) and a rotation angle
 // (-Pi/2):
 
-Extrude Surface { 122, {0,1,0} , {-0.1,0,0.1} , -Pi/2 } { 
-  Recombine; Layers { 7, 9004, 1 }; 
-};
+Extrude { {0,1,0} , {-0.1,0,0.1} , -Pi/2 } { 
+  Surface{122}; Layers { 7, 9004, 1 }; Recombine; 
+}
 
 // Note that a translation ({-2*h,0,0}) and a rotation ({1,0,0},
 // {0,0.15,0.25}, Pi/2) can also be combined:
 
-aa[] = Extrude Surface {news-1, {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , Pi/2}{ 
-  Layers { 10, 1 }; Recombine; 
-}; ;
+aa[] = Extrude { {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , Pi/2 } { 
+  Surface{news-1}; Layers{ 10, 1 }; Recombine; 
+};
 
 // In this last extrusion command we didn't specify an explicit
 // volume number (which is equivalent to setting it to "0"),

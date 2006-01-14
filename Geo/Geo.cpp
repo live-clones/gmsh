@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.49 2006-01-08 14:10:38 geuzaine Exp $
+// $Id: Geo.cpp,v 1.50 2006-01-14 22:32:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -513,20 +513,24 @@ void symmetry(int add, List_T *list, char *fich, char *what, char *sa, char *sb,
   add_infile(text, fich);
 }
 
-void extrude(int s, char *fich, char *what, char *tx, char *ty, char *tz)
+void extrude(List_T *list, char *fich, char *what, char *tx, char *ty, char *tz)
 {
   char text[BUFFSIZE];
 
-  snprintf(text, BUFFSIZE, "Extrude %s {%d, {%s,%s,%s}};", what, s, tx, ty, tz);
+  snprintf(text, BUFFSIZE, "Extrude {%s,%s,%s} {\n  %s{", tx, ty, tz, what);
+  strncat_list(text, list);
+  strncat(text, "};\n}", BUFFSIZE-strlen(text));
   add_infile(text, fich);
 }
 
-void protude(int s, char *fich, char *what, char *ax, char *ay, char *az,
+void protude(List_T *list, char *fich, char *what, char *ax, char *ay, char *az,
 	     char *px, char *py, char *pz, char *angle)
 {
   char text[BUFFSIZE];
 
-  snprintf(text, BUFFSIZE, "Extrude %s {%d, {%s,%s,%s}, {%s,%s,%s}, %s};",
-           what, s, ax, ay, az, px, py, pz, angle);
+  snprintf(text, BUFFSIZE, "Extrude {{%s,%s,%s}, {%s,%s,%s}, %s} {\n  %s{",
+           ax, ay, az, px, py, pz, angle, what);
+  strncat_list(text, list);
+  strncat(text, "};\n}", BUFFSIZE-strlen(text));
   add_infile(text, fich);
 }

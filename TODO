@@ -1,4 +1,4 @@
-$Id: TODO,v 1.114 2006-01-14 17:13:14 geuzaine Exp $
+$Id: TODO,v 1.115 2006-01-14 22:32:58 geuzaine Exp $
 
 ********************************************************************
 
@@ -20,13 +20,6 @@ On Windows WITHOUT Cygwin:
 - need alternative timer functions (Timer.cpp, ParUtils.cpp)
 - there is a bug in fwrite/fread as used for binary post-processing
   views (need to investigate "premature end of file" message)
-
-********************************************************************
-
-introduce new syntax for Extrude that matches the syntax for the other
-transformations ("Extrude {...} { Line{...}; <Layers{...};> }"). would
-allow multiple extrusions in one command + nicer ret[] = Extrude{}{};
-syntax
 
 ********************************************************************
 

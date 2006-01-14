@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.396 2006-01-14 17:13:14 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.397 2006-01-14 22:32:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2456,28 +2456,20 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 		   (char*)WID->context_geometry_input[23]->value());
 	  break;
 	case 4:
-	  for(int i = 0; i < List_Nbr(List1); i++){
-	    int num;
-	    List_Read(List1, i, &num);
-	    extrude(num, CTX.filename, what,
-		    (char*)WID->context_geometry_input[6]->value(),
-		    (char*)WID->context_geometry_input[7]->value(),
-		    (char*)WID->context_geometry_input[8]->value());
-	  }
+	  extrude(List1, CTX.filename, what,
+		  (char*)WID->context_geometry_input[6]->value(),
+		  (char*)WID->context_geometry_input[7]->value(),
+		  (char*)WID->context_geometry_input[8]->value());
 	  break;
 	case 5:
-	  for(int i = 0; i < List_Nbr(List1); i++){
-	    int num;
-	    List_Read(List1, i, &num);
-	    protude(num, CTX.filename, what,
-		    (char*)WID->context_geometry_input[12]->value(),
-		    (char*)WID->context_geometry_input[13]->value(),
-		    (char*)WID->context_geometry_input[14]->value(),
-		    (char*)WID->context_geometry_input[9]->value(),
-		    (char*)WID->context_geometry_input[10]->value(),
-		    (char*)WID->context_geometry_input[11]->value(),
-		    (char*)WID->context_geometry_input[15]->value());
-	  }
+	  protude(List1, CTX.filename, what,
+		  (char*)WID->context_geometry_input[12]->value(),
+		  (char*)WID->context_geometry_input[13]->value(),
+		  (char*)WID->context_geometry_input[14]->value(),
+		  (char*)WID->context_geometry_input[9]->value(),
+		  (char*)WID->context_geometry_input[10]->value(),
+		  (char*)WID->context_geometry_input[11]->value(),
+		  (char*)WID->context_geometry_input[15]->value());
 	  break;
 	case 6:
 	  delet(List1, CTX.filename, what);

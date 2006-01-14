@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.195 2006-01-06 00:34:34 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.196 2006-01-14 22:32:58 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -1654,30 +1654,39 @@ can be extended in order to also extrude the mesh):
 
 @var{extrude}:
 @ftable @code
-@item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @} @};
-Extrudes the @var{expression}-th point, line or surface using a
-translation. The @var{expression-list} should contain three
-@w{@var{expression}s} giving the X, Y and Z components of the translation
-vector.
+@item Extrude @{ @var{expression-list} @}  @{ @var{extrude-list} @}
+Extrudes all elementary entities (points, lines or surfaces) in
+@var{extrude-list} using a translation. The @var{expression-list} should
+contain three @w{@var{expression}s} giving the X, Y and Z components of
+the translation vector.
 
-@item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @};
-Extrudes the @var{expression}-th point, line or surface using a
-rotation. The first @var{expression-list} should contain three
-@w{@var{expression}s} giving the X, Y and Z direction of the rotation axis;
-the second @var{expression-list} should contain three @w{@var{expression}s}
-giving the X, Y and Z components of any point on this axis; the last
-@var{expression} should contain the rotation angle (in radians).
+@item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @}
+Extrudes all elementary entities (points, lines or surfaces) in
+@var{extrude-list} using a rotation. The first @var{expression-list}
+should contain three @w{@var{expression}s} giving the X, Y and Z
+direction of the rotation axis; the second @var{expression-list} should
+contain three @w{@var{expression}s} giving the X, Y and Z components of
+any point on this axis; the last @var{expression} should contain the
+rotation angle (in radians).
 
-@item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @};
-Extrudes the @var{expression}-th point, line or surface using a translation
-combined with a rotation. The first @var{expression-list} should contain
-three @w{@var{expression}s} giving the X, Y and Z components of the
-translation vector; the second @var{expression-list} should contain three
-@w{@var{expression}s} giving the X, Y and Z direction of the rotation axis;
-the third @var{expression-list} should contain three @w{@var{expression}s}
-giving the X, Y and Z components of any point on this axis; the last
+@item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @}
+Extrudes all elementary entities (points, lines or surfaces) in
+@var{extrude-list} using a translation combined with a rotation. The
+first @var{expression-list} should contain three @w{@var{expression}s}
+giving the X, Y and Z components of the translation vector; the second
+@var{expression-list} should contain three @w{@var{expression}s} giving
+the X, Y and Z direction of the rotation axis; the third
+@var{expression-list} should contain three @w{@var{expression}s} giving
+the X, Y and Z components of any point on this axis; the last
 @var{expression} should contain the rotation angle (in radians).
 @end ftable
+
+@noindent with
+
+@example
+@var{extrude-list}: 
+  Point | Line | Surface @{ @var{expression-list} @}; @dots{}
+@end example
 
 @c .........................................................................
 @c Transformations
@@ -1985,7 +1994,7 @@ numbers are listed in @var{expression-list}. The new value is given by
 @cindex Mesh, elliptic
 
 @ftable @code
-@item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @} @} @{ @var{layers}; @dots{} @};
+@item Extrude @{ @var{expression-list} @} @{ @var{extrude-list} @var{layers} @}
 Extrudes both the geometry and the mesh using a translation
 (@pxref{Extrusions}). The @var{layers} option determines how the mesh is
 extruded and has the following syntax:
@@ -1994,7 +2003,7 @@ extruded and has the following syntax:
 @var{layers}:
 @group
   Layers @{ @{ @var{expression-list} @}, < @{ @var{expression-list} @}, >
-           @{ @var{expression-list} @} @} | Recombine
+           @{ @var{expression-list} @} @} | Recombine; @dots{}
 @end group
 @end example
 
@@ -2016,11 +2025,11 @@ into quadrangles when possible.  For surface extrusions, the
 @code{Recombine} option will recombine tetrahedra into prisms, hexahedra or
 pyramids.
 
-@item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{layers}; @dots{} @};
+@item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @var{layers} @}
 Extrudes both the geometry and the mesh using a rotation
 (@pxref{Extrusions}). The @var{layers} option is defined as above.
 
-@item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{layers}; @dots{} @};
+@item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @var{layers} @}
 Extrudes both the geometry and the mesh using a combined translation and
 rotation (@pxref{Extrusions}). The @var{layers} option is defined as
 above.

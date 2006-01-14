@@ -34,7 +34,6 @@ int NEWVOLUME(void);
 int NEWPHYSICAL(void);
 int NEWREG(void);
 
-
 Vertex *FindPoint(int inum, Mesh *M);
 Vertex *FindVertex(int inum, Mesh *M);
 Curve *FindCurve(int inum, Mesh *M);
@@ -42,12 +41,10 @@ Surface *FindSurface(int inum, Mesh *M);
 Volume *FindVolume(int inum, Mesh *M);
 EdgeLoop *FindEdgeLoop(int inum, Mesh *M);
 SurfaceLoop *FindSurfaceLoop(int inum, Mesh *M);
-PhysicalGroup *FindPhysicalGroup(int inum, int type, Mesh * M);
+PhysicalGroup *FindPhysicalGroup(int inum, int type, Mesh *M);
 
-
-Curve * CreateReversedCurve (Mesh *M,Curve *c);
+Curve *CreateReversedCurve(Mesh *M, Curve *c);
 void ModifyLcPoint(int ip, double lc);
-
 
 void TranslateShapes(double X,double Y,double Z,
                      List_T *ListShapes, int final);
@@ -62,40 +59,30 @@ void CopyShape(int Type, int Num, int *New);
 void DeleteShape(int Type, int Num);
 void ColorShape(int Type, int Num, unsigned int Color);
 void VisibilityShape(int Type, int Num, int Mode);
-
+void ExtrudeShape(int extrude_type, int shape_type, int shape_num,
+		  double T0, double T1, double T2,
+		  double A0, double A1, double A2,
+		  double X0, double X1, double X2, double alpha,
+		  ExtrudeParams *e,
+		  List_T *out);
+void ExtrudeShapes(int extrude_type, List_T *in,
+		   double T0, double T1, double T2,
+		   double A0, double A1, double A2,
+		   double X0, double X1, double X2, double alpha,
+		   ExtrudeParams *e,
+		   List_T *out);
 
 void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e);
-int Extrude_ProtudePoint(int type, int ip, 
-			 double T0, double T1, double T2,
-			 double A0, double A1, double A2,
-			 double X0, double X1, double X2, double alpha,
-			 Curve **pc, Curve **prc, int final,
-			 ExtrudeParams *e);
-int Extrude_ProtudeCurve(int type, int ic,
-			 double T0, double T1, double T2,
-			 double A0, double A1, double A2,
-			 double X0, double X1, double X2, double alpha,
-			 Surface **ps, int final, 
-			 ExtrudeParams *e);
-int Extrude_ProtudeSurface(int type, int is,
-			   double T0, double T1, double T2,
-			   double A0, double A1, double A2,
-			   double X0, double X1, double X2, double alpha,
-			   Volume **pv, ExtrudeParams *e);
-
 
 void ReplaceAllDuplicates(Mesh *m);
 
-
-bool ProjectPointOnCurve (Curve *c, Vertex *v, Vertex *RES, Vertex *DER);
-bool ProjectPointOnSurface (Surface *s, Vertex &p);
-bool ProjectPointOnSurface (Surface *s, Vertex *p,double *u, double *v);
+bool ProjectPointOnCurve(Curve *c, Vertex *v, Vertex *RES, Vertex *DER);
+bool ProjectPointOnSurface(Surface *s, Vertex &p);
+bool ProjectPointOnSurface(Surface *s, Vertex *p,double *u, double *v);
 bool IntersectAllSegmentsTogether(void);
 
-
-int recognize_seg(int typ, List_T * liste, int *seg);
-int recognize_loop(List_T * liste, int *loop);
-int recognize_surfloop(List_T * liste, int *loop);
-
+int recognize_seg(int typ, List_T *liste, int *seg);
+int recognize_loop(List_T *liste, int *loop);
+int recognize_surfloop(List_T *liste, int *loop);
 
 #endif

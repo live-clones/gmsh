@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.92 2006-01-08 14:32:46 geuzaine Exp $
+// $Id: CAD.cpp,v 1.93 2006-01-14 22:32:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1659,13 +1659,118 @@ int Extrude_ProtudeSurface(int type, int is,
   return chapeau->Num;
 }
 
+void ExtrudeShape(int extrude_type, int shape_type, int shape_num,
+		  double T0, double T1, double T2,
+		  double A0, double A1, double A2,
+		  double X0, double X1, double X2, double alpha,
+		  ExtrudeParams *e,
+		  List_T *out)
+{
+  Shape shape;
+  shape.Type = shape_type;
+  shape.Num = shape_num;
+  List_T *tmp = List_Create(1, 1, sizeof(Shape));
+  List_Add(tmp, &shape);
+  ExtrudeShapes(extrude_type, tmp,
+		T0, T1, T2,
+		A0, A1, A2,
+		X0, X1, X2, alpha,
+		e,
+		out);
+  List_Delete(tmp);
+}
+
+void ExtrudeShapes(int type, List_T *in, 
+		   double T0, double T1, double T2,
+		   double A0, double A1, double A2,
+		   double X0, double X1, double X2, double alpha,
+		   ExtrudeParams *e,
+		   List_T *out)
+{
+  Shape O, TheShape;
+  Curve *pc, *prc;
+  Surface *ps;
+  Volume *pv;
+      
+  for(int i = 0; i < List_Nbr(in); i++){
+    List_Read(in, i, &O);
+    switch(O.Type){
+    case MSH_POINT:
+      TheShape.Num = Extrude_ProtudePoint(type, O.Num, T0, T1, T2,
+					  A0, A1, A2, X0, X1, X2, alpha,
+					  &pc, &prc, 1, e);
+      TheShape.Type = MSH_POINT;
+      List_Add(out, &TheShape);
+      if(pc){
+	TheShape.Num = pc->Num;
+	TheShape.Type = pc->Typ;
+	List_Add(out, &TheShape);
+      }
+      break;
+    case MSH_SEGM_LINE:
+    case MSH_SEGM_SPLN:
+    case MSH_SEGM_BSPLN:
+    case MSH_SEGM_BEZIER:
+    case MSH_SEGM_CIRC:
+    case MSH_SEGM_CIRC_INV:
+    case MSH_SEGM_ELLI:
+    case MSH_SEGM_ELLI_INV:
+    case MSH_SEGM_NURBS:
+    case MSH_SEGM_PARAMETRIC:
+      TheShape.Num = Extrude_ProtudeCurve(type, O.Num, T0, T1, T2,
+					  A0, A1, A2, X0, X1, X2, alpha,
+					  &ps, 1, e);
+      pc = FindCurve(TheShape.Num, THEM);
+      if(!pc){
+	//Msg(WARNING, "Unknown curve %d", TheShape.Num);
+	TheShape.Type = 0;
+      }
+      else{
+	TheShape.Type = pc->Typ;
+      }
+      List_Add(out, &TheShape);
+      if(ps){
+	TheShape.Num = ps->Num;
+	TheShape.Type = ps->Typ;
+	List_Add(out, &TheShape);
+      }
+      break;
+    case MSH_SURF_NURBS:
+    case MSH_SURF_REGL:
+    case MSH_SURF_TRIC:
+    case MSH_SURF_PLAN:
+      TheShape.Num = Extrude_ProtudeSurface(type, O.Num, T0, T1, T2,
+					    A0, A1, A2, X0, X1, X2, alpha,
+					    &pv, e);
+      ps = FindSurface(TheShape.Num, THEM);
+      if(!ps){
+	//Msg(WARNING, "Unknown surface %d", TheShape.Num);
+	TheShape.Type = 0;
+      }
+      else{
+	TheShape.Type = ps->Typ;
+      }
+      List_Add(out, &TheShape);
+      if(pv){
+	TheShape.Num = pv->Num;
+	TheShape.Type = pv->Typ;
+	List_Add(out, &TheShape);
+      }
+      break;
+    default:
+      Msg(GERROR, "Impossible to extrude entity %d (of type %d)", O.Num,
+          O.Type);
+      break;
+    }
+  }
+}
+
 // Duplicate removal
 
 int compareTwoCurves(const void *a, const void *b)
 {
-  Curve *c1, *c2;
-  c1 = *(Curve **) a;
-  c2 = *(Curve **) b;
+  Curve *c1 = *(Curve **) a;
+  Curve *c2 = *(Curve **) b;
   int comp;
 
   if(c1->Typ != c2->Typ){
@@ -1710,9 +1815,8 @@ int compareTwoCurves(const void *a, const void *b)
 
 int compareTwoSurfaces(const void *a, const void *b)
 {
-  Surface *s1, *s2;
-  s1 = *(Surface **) a;
-  s2 = *(Surface **) b;
+  Surface *s1 = *(Surface **) a;
+  Surface *s2 = *(Surface **) b;
   return compare2Lists(s1->Generatrices, s2->Generatrices, compareAbsCurve);
 }
 
@@ -2316,7 +2420,6 @@ bool IntersectCurveSurface(Curve * c, Surface * s)
     return false;
   return true;
 }
-
 
 void DivideCurve(Curve * c, double u, Vertex * v, Curve ** c1, Curve ** c2)
 {

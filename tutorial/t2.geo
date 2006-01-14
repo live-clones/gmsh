@@ -69,7 +69,7 @@ Volume(119) = {118};
 // following command extrudes the surface 11 along the z axis and
 // automatically creates a new volume:
 
-Extrude Surface { 11, {0, 0, h} };
+Extrude {0, 0, h} { Surface{11}; }
 
 // All these geometrical transformations automatically generate new
 // elementary entities. The following command permits to manually

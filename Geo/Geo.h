@@ -127,8 +127,8 @@ void dilate(int add, List_T *list, char *fich, char *what,
 	    char *dx, char *dy, char *dz, char *df);
 void symmetry(int add, List_T *list, char *fich, char *what, 
 	      char *sa, char *sb, char *sc, char *sd);
-void extrude(int s, char *fich, char *what, char *tx, char *ty, char *tz);
-void protude(int s, char *fich, char *what, char *ax, char *ay, char *az,
+void extrude(List_T *list, char *fich, char *what, char *tx, char *ty, char *tz);
+void protude(List_T *list, char *fich, char *what, char *ax, char *ay, char *az,
 	     char *px, char *py, char *pz, char *angle);
 
 #endif

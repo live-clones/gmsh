@@ -79,7 +79,12 @@ Line Loop(48) = -{-2,-1,5,6,4,3,31,-26,-25,29,30,28,27,35,-20,-19,
   23,24,22,21,34,-14,-13,17,18,16,15,33,-8,-7,11,12,10,9,32};
 Plane Surface(49) = {48,46};
 
-Extrude Surface {47, {0,0,0.2}};
-Extrude Surface {49, {0,0,0.2}};
-Extrude Surface {91, {0,0,0.2}};
-Extrude Surface {47, {0,0,-0.2}};
+Extrude {0,0,0.2}{ 
+  Surface{47,49};
+}
+Extrude {0,0,0.2}{ 
+  Surface{91};
+}
+Extrude {0,0,-0.2}{
+  Surface{47};
+}

@@ -85,15 +85,12 @@ For i In {0:4}
   ep2[i]=2*ep[i]; 
 EndFor
 
-Extrude Surface {47, {0,0,0.2}}{ Layers{ ones[], ones[], ep[] }; };
-Extrude Surface {49, {0,0,0.2}}{ Layers{ ones[], ones[], ep[] }; };
-Extrude Surface {91, {0,0,0.2}}{ Layers{ ones[{0:4}],ones[{0:4}], ep2[] }; };
-Extrude Surface {47, {0,0,-0.2}}{ Layers{ ones[{0:4}],ones[{0:4}], ep2[] }; }; 
-
-Physical Volume(1) = 1 ;
-
-Physical Surface(2) = {288,49,215,211,207,203,199,195,191,187,183,179,175,171,
-		       167,163,159,155,151,147,143,139,135,271,267,263,259,255,
-		       251,247,243,239,235,231,227,223,219,372,343,62,301,330,
-		       313,74,355,367,86,325,321,82,363,359,78,317,91,47,347,
-		       66,371,90,305,329,309,70,351};
+Extrude {0,0,0.2}{ 
+  Surface{47,49}; Layers{ ones[], ep[] };
+}
+Extrude {0,0,0.2}{
+  Surface{91}; Layers{ ones[{0:4}], ep2[] };
+}
+Extrude {0,0,-0.2}{
+  Surface{47}; Layers{ ones[{0:4}], ep2[] };
+}
