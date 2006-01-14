@@ -1,4 +1,4 @@
-// $Id: SmoothNormals.cpp,v 1.4 2006-01-06 00:34:21 geuzaine Exp $
+// $Id: SmoothNormals.cpp,v 1.5 2006-01-14 16:24:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,123 +23,88 @@
 #include "Numeric.h"
 #include "SmoothNormals.h"
 
-double xyzv::eps = 1.e-12;
+double xyzn::eps = 1.e-12;
 
-xyzv::xyzv(double xx, double yy, double zz)
-  : x(xx), y(yy), z(zz), vals(0), nbvals(0), nboccurences(0)
+float xyzn::angle(int i, float nx, float ny, float nz)
 {
-}
-
-xyzv::~xyzv()
-{
-  if(vals)
-    delete [] vals;
-}
-
-xyzv::xyzv(const xyzv & other)
-{
-  x = other.x;
-  y = other.y;
-  z = other.z;
-  nbvals = other.nbvals;
-  nboccurences = other.nboccurences;
-  if(other.vals && other.nbvals) {
-    vals = new double[other.nbvals];
-    for(int i = 0; i < nbvals; i++)
-      vals[i] = other.vals[i];
-  }
-}
-
-xyzv & xyzv::operator =(const xyzv & other)
-{
-  if(this != &other) {
-    x = other.x;
-    y = other.y;
-    z = other.z;
-    nbvals = other.nbvals;
-    nboccurences = other.nboccurences;
-    if(other.vals && other.nbvals) {
-      vals = new double[other.nbvals];
-      for(int i = 0; i < nbvals; i++)
-        vals[i] = other.vals[i];
-    }
-  }
-  return *this;
-}
-
-void xyzv::update(int n, double *v)
-{
-  int i;
-  if(!vals) {
-    vals = new double[n];
-    for(i = 0; i < n; i++)
-      vals[i] = 0.0;
-    nbvals = n;
-    nboccurences = 0;
-  }
-  else if(nbvals != n) {
-    throw n;
-  }
-
-  double x1 = (double)(nboccurences) / (double)(nboccurences + 1);
-  double x2 = 1. / (double)(nboccurences + 1);
-  for(i = 0; i < nbvals; i++)
-    vals[i] = (x1 * vals[i] + x2 * v[i]);
-  nboccurences++;
-
-  //printf("val(%d,%f,%f,%f) = %f\n",nboccurences,x,y,z,vals[0]);
-}
-
-double smooth_normals::get_angle(double *aa, double *bb)
-{
-  double angplan, cosc, sinc, a[3], b[3], c[3];
-  if(!aa || !bb)
-    return 0.;
-  a[0] = aa[0];
-  a[1] = aa[1];
-  a[2] = aa[2];
-  b[0] = bb[0];
-  b[1] = bb[1];
-  b[2] = bb[2];
+  // computes the angle between the ith normal stored at point xyz and
+  // the new normal nx,ny,nz
+  double a[3] = {n[i].nx, n[i].ny, n[i].nz};
+  double b[3] = {nx, ny, nz};
   norme(a);
   norme(b);
+  double c[3];
   prodve(a, b, c);
+  double cosc; 
   prosca(a, b, &cosc);
-  sinc = sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
-  angplan = myatan2(sinc, cosc);
-  return angplan * 180. / Pi;
+  double sinc = sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
+  double angplan = myatan2(sinc, cosc);
+  return (float)(angplan * 180. / Pi);
+}
+
+void xyzn::update(float nx, float ny, float nz, double tol)
+{
+  int N = n.size();
+
+  if(N > 100){
+    // just ignore it if we have more than 100 clusters (think "more
+    // than 100 elements touching a single vertex")
+    return;
+  }
+
+  // we average by clusters of normals separated by tol; the result of
+  // the averaging depends on the order in which we average (since we
+  // store the average value as the cluster center as we go), but it
+  // seems to work very nicely in practice (and it's faster than
+  // storing everyting and averaging at the end)
+  for(int i = 0; i < N; i++){
+    if(tol >= 180. || fabs(angle(i, nx, ny, nz)) < tol){
+      float c1 = (float)(n[i].nb) / (float)(n[i].nb + 1);
+      float c2 = 1. / (float)(n[i].nb + 1);
+      n[i].nx = (c1 * n[i].nx + c2 * nx);
+      n[i].ny = (c1 * n[i].ny + c2 * ny);
+      n[i].nz = (c1 * n[i].nz + c2 * nz);
+      n[i].nb++;
+      return;
+    }
+  }
+
+  // create a new cluster
+  nnb nn = {nx, ny, nz, 0};
+  n.push_back(nn);
 }
 
 void smooth_normals::add(double x, double y, double z,
 			 double nx, double ny, double nz)
 {
-  double n[3] = { nx, ny, nz };
-  xyzv xyz(x, y, z);
-  xyziter it = c.find(xyz);
+  xyzn xyz(x, y, z);
+  xyzn_iter it = c.find(xyz);
   if(it == c.end()) {
-    xyz.update(3, n);
+    xyz.update((float)nx, (float)ny, (float)nz, tol);
     c.insert(xyz);
   }
   else {
-    xyzv *xx = (xyzv *) & (*it);
-    xx->update(3, n);
+    xyzn *p = (xyzn *) & (*it);
+    p->update((float)nx, (float)ny, (float)nz, tol);
   }    
 }
 
 bool smooth_normals::get(double x, double y, double z,
-			 double &nx, double &ny, double &nz, double tol)
+			 double &nx, double &ny, double &nz)
 {
-  double n[3] = { nx, ny, nz };
-  xyzv xyz(x, y, z);
-  xyziter it = c.find(xyz);
+  xyzn xyz(x, y, z);
+  xyzn_iter it = c.find(xyz);
   if(it == c.end())
     return false;
-  double angle = get_angle((*it).vals, n);
-  if(fabs(angle) < tol) {
-    nx = (*it).vals[0];
-    ny = (*it).vals[1];
-    nz = (*it).vals[2];
+
+  xyzn *p = (xyzn *) & (*it);
+  for(unsigned int i = 0; i < p->n.size(); i++){
+    if(fabs(p->angle(i, (float)nx, (float)ny, (float)nz)) < tol) {
+      nx = p->n[i].nx;
+      ny = p->n[i].ny;
+      nz = p->n[i].nz;
+      break;
+    }
   }
   return true;
 }
-

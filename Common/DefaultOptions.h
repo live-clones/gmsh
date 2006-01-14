@@ -837,7 +837,7 @@ StringXNumber MeshOptions_Number[] = {
     "3D mesh algorithm (1=isotropic, 4=netgen, 5=tetgen)" }, 
   { F,   "AllowDegeneratedExtrude" , opt_mesh_allow_degenerated_extrude , 0. , 
     "Allow the generation of degenerated hexahedra or prisms during extrusion" },
-  { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 180.0 ,
+  { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" }, 
 
   { F|O, "BetaSmoothMetric" ,opt_mesh_beta_smooth_metric, 0.9 ,
@@ -1086,7 +1086,7 @@ StringXNumber PostProcessingOptions_Number[] = {
 } ;
 
 StringXNumber ViewOptions_Number[] = {
-  { F|O, "AngleSmoothNormals" , opt_view_angle_smooth_normals , 180. ,
+  { F|O, "AngleSmoothNormals" , opt_view_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" },
   { F|O, "ArrowHeadRadius" , opt_view_arrow_head_radius , 0.12 ,
     "Relative radius of arrow head" },

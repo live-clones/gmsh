@@ -256,7 +256,6 @@ struct _Surf{
   DrawingColor Color;
   VertexArray *TriVertexArray;
   VertexArray *QuadVertexArray;
-  smooth_normals *normals;
 };
 
 typedef struct _Surf Surface;
@@ -413,6 +412,7 @@ struct _Mesh{
   List_T *PhysicalGroups;
   List_T *Partitions;
   Grid_T Grid; // fast search grid
+  smooth_normals *normals; // container for smooth normals
   LcField BGM; // background mesh
   double timing[3]; // timing for 1d, 2d and 3d mesh
   double quality_gamma[3]; // mesh quality statistics

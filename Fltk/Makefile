@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.77 2006-01-06 00:34:23 geuzaine Exp $
+# $Id: Makefile,v 1.78 2006-01-14 16:24:54 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -68,18 +68,18 @@ Main.o: Main.cpp GUI.h Opengl_Window.h ../Mesh/Mesh.h ../DataStr/List.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
   ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
-  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
-  Colorbar_Window.h ../Common/GmshUI.h ../Common/ColorTable.h \
-  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
-  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
-  ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
-  ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
-  ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Common/GmshVersion.h ../Geo/Geo.h ../Graphics/Draw.h \
-  ../Common/Context.h ../Parser/Parser.h ../Parser/OpenFile.h \
-  ../Common/CommandLine.h ../Numeric/Numeric.h Solvers.h
+  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
+  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
+  ../Mesh/Matrix.h Colorbar_Window.h ../Common/GmshUI.h \
+  ../Common/ColorTable.h ../Plugin/PluginManager.h ../Plugin/Plugin.h \
+  ../Common/Options.h ../Common/Message.h ../Common/Views.h \
+  ../Common/ColorTable.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Gmsh.h \
+  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/Tools.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../Common/GmshVersion.h \
+  ../Geo/Geo.h ../Graphics/Draw.h ../Common/Context.h ../Parser/Parser.h \
+  ../Parser/OpenFile.h ../Common/CommandLine.h Solvers.h
 Message.o: Message.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -89,21 +89,21 @@ Message.o: Message.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h \
   ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h Colorbar_Window.h \
-  ../Common/ColorTable.h GUI_Extras.h
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Mesh/Metric.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
+  Colorbar_Window.h ../Common/ColorTable.h GUI_Extras.h
 GUI.o: GUI.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Common/GmshUI.h ../Numeric/Numeric.h ../Common/GmshVersion.h \
-  ../Common/Context.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
-  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Common/GmshUI.h ../Common/GmshVersion.h ../Common/Context.h \
+  ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+  ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h \
+  ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h ../Graphics/Draw.h GUI.h Opengl_Window.h \
@@ -117,13 +117,13 @@ GUI_Extras.o: GUI_Extras.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
   ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
-  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
-  File_Picker.h Shortcut_Window.h ../Graphics/CreateFile.h \
-  ../Common/Options.h ../Common/Context.h ../Graphics/Draw.h \
-  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
+  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
+  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
+  ../Mesh/Matrix.h File_Picker.h Shortcut_Window.h \
+  ../Graphics/CreateFile.h ../Common/Options.h ../Common/Context.h \
+  ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h \
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
 Callbacks.o: Callbacks.cpp ../Mesh/BDS.h ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
@@ -132,8 +132,8 @@ Callbacks.o: Callbacks.cpp ../Mesh/BDS.h ../Common/Gmsh.h \
   ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Mesh/Metric.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h ../Geo/ExtractContour.h ../Graphics/Draw.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
@@ -142,7 +142,7 @@ Callbacks.o: Callbacks.cpp ../Mesh/BDS.h ../Common/Gmsh.h \
   ../Common/Context.h ../Common/Options.h GUI.h Opengl_Window.h \
   Colorbar_Window.h GUI_Extras.h Callbacks.h ../Plugin/Plugin.h \
   ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Visibility.h \
-  ../Geo/MinMax.h ../Numeric/Numeric.h Solvers.h
+  ../Geo/MinMax.h Solvers.h
 Opengl.o: Opengl.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -179,9 +179,9 @@ Colorbar_Window.o: Colorbar_Window.cpp ../Common/Gmsh.h \
   ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h Colorbar_Window.h \
-  ../Common/ColorTable.h ../Common/Context.h
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Mesh/Metric.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
+  Colorbar_Window.h ../Common/ColorTable.h ../Common/Context.h
 Solvers.o: Solvers.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -190,9 +190,10 @@ Solvers.o: Solvers.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
   ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
-  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
-  Colorbar_Window.h ../Common/ColorTable.h ../Graphics/Draw.h \
-  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h
+  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
+  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
+  ../Mesh/Matrix.h Colorbar_Window.h ../Common/ColorTable.h \
+  ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h \
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
+  ../Common/Context.h

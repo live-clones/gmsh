@@ -20,53 +20,58 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <set>
+#include <vector>
+#include "Numeric.h"
 
 using namespace std;
 
-struct xyzv
+struct nnb
 {
-  double x, y, z, *vals;
-  int nbvals;
-  int nboccurences;
-  static double eps;
-  void update(int nbVals, double *);
-  xyzv(double x, double y, double z);
-  ~xyzv();
-  xyzv & operator =(const xyzv &);
-  xyzv(const xyzv &);
+  float nx, ny, nz;
+  int nb;
 };
 
-struct lessthanxyzv
+struct xyzn
 {
-  bool operator () (const xyzv & p2, const xyzv & p1)const
+  double x, y, z;
+  vector<nnb> n;
+  static double eps;
+  xyzn(double xx, double yy, double zz) : x(xx), y(yy), z(zz){}
+  ~xyzn(){}
+  float angle(int i, float n0, float n1, float n2);
+  void update(float n0, float n1, float n2, double tol);
+};
+
+struct lessthanxyzn
+{
+  bool operator () (const xyzn & p2, const xyzn & p1)const
   {
-    if(p1.x - p2.x > xyzv::eps)
+    if(p1.x - p2.x > xyzn::eps)
       return true;
-    if(p1.x - p2.x < -xyzv::eps)
+    if(p1.x - p2.x < -xyzn::eps)
       return false;
-    if(p1.y - p2.y > xyzv::eps)
+    if(p1.y - p2.y > xyzn::eps)
       return true;
-    if(p1.y - p2.y < -xyzv::eps)
+    if(p1.y - p2.y < -xyzn::eps)
       return false;
-    if(p1.z - p2.z > xyzv::eps)
+    if(p1.z - p2.z > xyzn::eps)
       return true;
     return false;
   }
 };
 
-#include <set>
-typedef set < xyzv, lessthanxyzv > xyzcont;
-typedef xyzcont::const_iterator xyziter;
+typedef set < xyzn, lessthanxyzn > xyzn_cont;
+typedef xyzn_cont::const_iterator xyzn_iter;
 
 class smooth_normals{
  private:
-  double get_angle(double *aa, double *bb);
+  double tol;
+  xyzn_cont c;  
  public:
-  xyzcont c;
-  void add(double x, double y, double z,
-	   double nx, double ny, double nz);
-  bool get(double x, double y, double z,
-	   double &nx, double &ny, double &nz, double angletol = 180.0);
+  smooth_normals(double angle) : tol(angle) {}
+  void add(double x, double y, double z, double nx, double ny, double nz);
+  bool get(double x, double y, double z, double &nx, double &ny, double &nz);
 };
 
 #endif

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.100 2006-01-06 00:34:26 geuzaine Exp $
+# $Id: Makefile,v 1.101 2006-01-14 16:24:54 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -133,7 +133,7 @@ depend:
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Geo/Geo.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h Metric.h Matrix.h ../Numeric/Numeric.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h Metric.h Matrix.h \
   Interpolation.h
 2D_Elliptic.o: 2D_Elliptic.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -202,7 +202,8 @@ depend:
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h Metric.h Matrix.h 2D_Mesh.h
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h Metric.h Matrix.h \
+  2D_Mesh.h
 2D_Cylindrical.o: 2D_Cylindrical.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -238,7 +239,7 @@ depend:
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h Metric.h Matrix.h ../Numeric/Numeric.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h Metric.h Matrix.h \
   ../Common/Context.h
 3D_Mesh.o: 3D_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -252,16 +253,17 @@ depend:
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h Metric.h Matrix.h Interpolation.h Create.h
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h Metric.h Matrix.h \
+  Interpolation.h Create.h
 3D_BGMesh.o: 3D_BGMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h Metric.h Matrix.h 2D_Mesh.h 3D_Mesh.h \
-  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Numeric/Numeric.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h Metric.h Matrix.h \
+  2D_Mesh.h 3D_Mesh.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h \
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   ../Common/Context.h
 3D_Extrude.o: 3D_Extrude.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -308,15 +310,15 @@ depend:
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Geo/Geo.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h Metric.h Matrix.h Create.h \
-  ../Numeric/Numeric.h ../Common/Context.h
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h Metric.h Matrix.h \
+  Create.h ../Common/Context.h
 3D_Mesh_Tetgen.o: 3D_Mesh_Tetgen.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h Metric.h Matrix.h Create.h \
-  ../Numeric/Numeric.h ../Common/Context.h
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h Metric.h Matrix.h \
+  Create.h ../Common/Context.h
 BDS.o: BDS.cpp ../Numeric/Numeric.h ../Common/GmshMatrix.h BDS.h \
   ../Common/Message.h
 MeshQuality.o: MeshQuality.cpp ../Common/Gmsh.h ../Common/Message.h \
@@ -366,11 +368,10 @@ Read_Mesh.o: Read_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h \
   ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Mesh/Metric.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h Mesh.h 3D_Mesh.h Create.h Vertex.h \
-  ../Geo/MinMax.h ../Numeric/Numeric.h ../Common/Context.h \
-  PartitionMesh.h
+  ../Geo/MinMax.h ../Common/Context.h PartitionMesh.h
 DiscreteSurface.o: DiscreteSurface.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
@@ -413,9 +414,9 @@ Nurbs.o: Nurbs.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   Nurbs.h Vertex.h Mesh.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h Metric.h Matrix.h ../Geo/Geo.h \
-  ../Geo/GeoUtils.h ../Mesh/Mesh.h Create.h ../Geo/CAD.h ../Mesh/Vertex.h \
-  ../Geo/ExtrudeParams.h
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h Metric.h Matrix.h \
+  ../Geo/Geo.h ../Geo/GeoUtils.h ../Mesh/Mesh.h Create.h ../Geo/CAD.h \
+  ../Mesh/Vertex.h ../Geo/ExtrudeParams.h
 Interpolation.o: Interpolation.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -428,8 +429,8 @@ SecondOrder.o: SecondOrder.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Geo/Geo.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h Metric.h Matrix.h Utils.h Interpolation.h \
-  ../Numeric/Numeric.h
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h Metric.h Matrix.h \
+  Utils.h Interpolation.h
 PartitionMesh.o: PartitionMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -450,7 +451,7 @@ CrossData.o: CrossData.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h Metric.h Matrix.h
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h Metric.h Matrix.h
 Vertex.o: Vertex.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -472,7 +473,7 @@ Element.o: Element.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h Metric.h Matrix.h ../Numeric/Numeric.h
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h Metric.h Matrix.h
 Simplex.o: Simplex.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \

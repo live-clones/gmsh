@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.80 2006-01-06 00:34:26 geuzaine Exp $
+// $Id: Create.cpp,v 1.81 2006-01-14 16:24:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -677,7 +677,6 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Extrude = NULL;
   pS->TriVertexArray = NULL;
   pS->QuadVertexArray = NULL;
-  pS->normals = new smooth_normals;
   return (pS);
 }
 
@@ -706,8 +705,6 @@ void Free_Surface(void *a, void *b)
       delete pS->TriVertexArray;
     if(pS->QuadVertexArray)
       delete pS->QuadVertexArray;
-    if(pS->normals)
-      delete pS->normals;
     Free(pS);
     pS = NULL;
   }

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.394 2006-01-11 05:37:35 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.395 2006-01-14 16:24:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -174,6 +174,11 @@ void window_cb(CALLBACK_ARGS)
     // the order is important!
     WID->g_window->show();
     if(WID->opt_window->shown()) WID->opt_window->show();
+    if(WID->context_geometry_window->shown()) WID->context_geometry_window->show();
+    if(WID->context_mesh_window->shown()) WID->context_mesh_window->show();
+    for(int i = 0; i < MAXSOLVERS; i++) {
+      if(WID->solver[i].window->shown()) WID->solver[i].window->show();
+    }
     if(WID->vis_window->shown()) WID->vis_window->show();
     if(WID->clip_window->shown()) WID->clip_window->show();
     if(WID->manip_window->shown()) WID->manip_window->show();

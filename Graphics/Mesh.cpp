@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.149 2006-01-10 03:58:31 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.150 2006-01-14 16:24:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -136,6 +136,8 @@ int getPartition(int index)
     return (*part)->Num; // partition number
 }
 
+static int preproNormals = 0;
+
 void Draw_Mesh(Mesh * M)
 {
   for(int i = 0; i < 6; i++)
@@ -262,6 +264,11 @@ void Draw_Mesh(Mesh * M)
       else
 	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
+    if(CTX.mesh.changed){
+      if(M->normals) delete M->normals;
+      M->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
+    }
+
     // Dimension 3
 
     if(M->status >= 3 && (CTX.mesh.volumes_faces || CTX.mesh.volumes_edges ||
@@ -276,6 +283,11 @@ void Draw_Mesh(Mesh * M)
     if(M->status >= 2 && (CTX.mesh.surfaces_faces || CTX.mesh.surfaces_edges ||
 			  CTX.mesh.surfaces_num || CTX.mesh.points_per_element ||
 			  CTX.mesh.normals)) {
+      if(CTX.mesh.changed && CTX.mesh.smooth_normals){
+	preproNormals = 1;
+	Tree_Action(M->Surfaces, Draw_Mesh_Surface);
+	preproNormals = 0;
+      }
       Tree_Action(M->Surfaces, Draw_Mesh_Surface);
       if(CTX.mesh.oldxtrude)  //old extrusion algo
 	Tree_Action(M->Volumes, Draw_Mesh_Extruded_Surfaces);
@@ -386,8 +398,6 @@ void Draw_Mesh_Volume(void *a, void *b)
   }
 }
 
-static int preproNormals = 0;
-
 void Draw_Mesh_Surface(void *a, void *b)
 {
   Surface *s = *(Surface **) a;
@@ -411,15 +421,11 @@ void Draw_Mesh_Surface(void *a, void *b)
   theSurface = s;
   theColor = s->Color;
 
-  if(CTX.mesh.changed && CTX.mesh.smooth_normals){
-    Msg(DEBUG, "pre-processing smooth normals");
-    if(s->normals) delete s->normals;
-    s->normals = new smooth_normals;
-    preproNormals = 1;
+  if(preproNormals){
     Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
     Tree_Action(s->SimplexesBase, Draw_Mesh_Triangle);
     Tree_Action(s->Quadrangles, Draw_Mesh_Quadrangle);
-    preproNormals = 0;
+    return;
   }
 
   if(CTX.mesh.vertex_arrays){
@@ -752,10 +758,10 @@ void _triFace(double x0, double y0, double z0,
 
   if(CTX.mesh.light || (theSurface && preproNormals)){
     normal3points(x0, y0, z0, x1, y1, z1, x2, y2, z2, n);
-    if(theSurface && preproNormals){
-      theSurface->normals->add(x0, y0, z0, n[0], n[1], n[2]);
-      theSurface->normals->add(x1, y1, z1, n[0], n[1], n[2]);
-      theSurface->normals->add(x2, y2, z2, n[0], n[1], n[2]);
+    if(preproNormals){
+      THEM->normals->add(x0, y0, z0, n[0], n[1], n[2]);
+      THEM->normals->add(x1, y1, z1, n[0], n[1], n[2]);
+      THEM->normals->add(x2, y2, z2, n[0], n[1], n[2]);
       return;
     }
     glNormal3dv(n);
@@ -763,24 +769,21 @@ void _triFace(double x0, double y0, double z0,
 
   if(CTX.mesh.light && theSurface && CTX.mesh.smooth_normals){
     ns[0] = n[0]; ns[1] = n[1]; ns[2] = n[2];
-    theSurface->normals->get(x0, y0, z0, ns[0], ns[1], ns[2], 
-			     CTX.mesh.angle_smooth_normals);
+    THEM->normals->get(x0, y0, z0, ns[0], ns[1], ns[2]);
     glNormal3dv(ns);    
   }
   glVertex3d(x0, y0, z0);
 
   if(CTX.mesh.light && theSurface && CTX.mesh.smooth_normals){
     ns[0] = n[0]; ns[1] = n[1]; ns[2] = n[2];
-    theSurface->normals->get(x1, y1, z1, ns[0], ns[1], ns[2], 
-			     CTX.mesh.angle_smooth_normals);
+    THEM->normals->get(x1, y1, z1, ns[0], ns[1], ns[2]);
     glNormal3dv(ns);    
   }
   glVertex3d(x1, y1, z1);
 
   if(CTX.mesh.light && theSurface && CTX.mesh.smooth_normals){
     ns[0] = n[0]; ns[1] = n[1]; ns[2] = n[2];
-    theSurface->normals->get(x2, y2, z2, ns[0], ns[1], ns[2], 
-			     CTX.mesh.angle_smooth_normals);
+    THEM->normals->get(x2, y2, z2, ns[0], ns[1], ns[2]);
     glNormal3dv(ns);    
   }
   glVertex3d(x2, y2, z2);
@@ -806,11 +809,11 @@ void _quadFace(double *x, double *y, double *z,
     normal3points(x[i0], y[i0], z[i0],
 		  x[i1], y[i1], z[i1],
 		  x[i2], y[i2], z[i2], n);
-    if(theSurface && preproNormals){
-      theSurface->normals->add(x[i0], y[i0], z[i0], n[0], n[1], n[2]);
-      theSurface->normals->add(x[i1], y[i1], z[i1], n[0], n[1], n[2]);
-      theSurface->normals->add(x[i2], y[i2], z[i2], n[0], n[1], n[2]);
-      theSurface->normals->add(x[i3], y[i3], z[i3], n[0], n[1], n[2]);
+    if(preproNormals){
+      THEM->normals->add(x[i0], y[i0], z[i0], n[0], n[1], n[2]);
+      THEM->normals->add(x[i1], y[i1], z[i1], n[0], n[1], n[2]);
+      THEM->normals->add(x[i2], y[i2], z[i2], n[0], n[1], n[2]);
+      THEM->normals->add(x[i3], y[i3], z[i3], n[0], n[1], n[2]);
       return;
     }
     glNormal3dv(n);
@@ -818,32 +821,28 @@ void _quadFace(double *x, double *y, double *z,
 
   if(CTX.mesh.light && theSurface && CTX.mesh.smooth_normals){
     ns[0] = n[0]; ns[1] = n[1]; ns[2] = n[2];
-    theSurface->normals->get(x[i0], y[i0], z[i0], ns[0], ns[1], ns[2], 
-			     CTX.mesh.angle_smooth_normals);
+    THEM->normals->get(x[i0], y[i0], z[i0], ns[0], ns[1], ns[2]);
     glNormal3dv(ns);    
   }
   glVertex3d(x[i0], y[i0], z[i0]);
 
   if(CTX.mesh.light && theSurface && CTX.mesh.smooth_normals){
     ns[0] = n[0]; ns[1] = n[1]; ns[2] = n[2];
-    theSurface->normals->get(x[i1], y[i1], z[i1], ns[0], ns[1], ns[2], 
-			     CTX.mesh.angle_smooth_normals);
+    THEM->normals->get(x[i1], y[i1], z[i1], ns[0], ns[1], ns[2]);
     glNormal3dv(ns);    
   }
   glVertex3d(x[i1], y[i1], z[i1]);
 
   if(CTX.mesh.light && theSurface && CTX.mesh.smooth_normals){
     ns[0] = n[0]; ns[1] = n[1]; ns[2] = n[2];
-    theSurface->normals->get(x[i2], y[i2], z[i2], ns[0], ns[1], ns[2], 
-			     CTX.mesh.angle_smooth_normals);
+    THEM->normals->get(x[i2], y[i2], z[i2], ns[0], ns[1], ns[2]);
     glNormal3dv(ns);    
   }
   glVertex3d(x[i2], y[i2], z[i2]);
 
   if(CTX.mesh.light && theSurface && CTX.mesh.smooth_normals){
     ns[0] = n[0]; ns[1] = n[1]; ns[2] = n[2];
-    theSurface->normals->get(x[i3], y[i3], z[i3], ns[0], ns[1], ns[2], 
-			     CTX.mesh.angle_smooth_normals);
+    THEM->normals->get(x[i3], y[i3], z[i3], ns[0], ns[1], ns[2]);
     glNormal3dv(ns);    
   }
   glVertex3d(x[i3], y[i3], z[i3]);
@@ -1009,15 +1008,14 @@ void Draw_Mesh_Triangle(void *a, void *b)
 		   X[2], Y[2], Z[2], n);
     if(preproNormals){
       for(int i = 0; i < 3; i++)
-	theSurface->normals->add(X[i], Y[i], Z[i], n[0], n[1], n[2]);
+	THEM->normals->add(X[i], Y[i], Z[i], n[0], n[1], n[2]);
       return;
     }
     if(theSurface->TriVertexArray->fill){
       for(int i = 0; i < 3; i++){
 	double ns[3] = {n[0], n[1], n[2]};
 	if(CTX.mesh.smooth_normals)
-	  theSurface->normals->get(X[i], Y[i], Z[i], ns[0], ns[1], ns[2], 
-				   CTX.mesh.angle_smooth_normals);
+	  THEM->normals->get(X[i], Y[i], Z[i], ns[0], ns[1], ns[2]);
 	theSurface->TriVertexArray->add(X[i], Y[i], Z[i], ns[0], ns[1], ns[2], col);
       }
       theSurface->TriVertexArray->num++;
@@ -1203,15 +1201,14 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
 		    X[2], Y[2], Z[2], n);
     if(preproNormals){
       for(int i = 0; i < 4; i++)
-	theSurface->normals->add(X[i], Y[i], Z[i], n[0], n[1], n[2]);
+	THEM->normals->add(X[i], Y[i], Z[i], n[0], n[1], n[2]);
       return;
     }
     if(theSurface->QuadVertexArray->fill){
       for(int i = 0; i < 4; i++){
 	double ns[3] = {n[0], n[1], n[2]};
 	if(CTX.mesh.smooth_normals)
-	  theSurface->normals->get(X[i], Y[i], Z[i], ns[0], ns[1], ns[2], 
-				   CTX.mesh.angle_smooth_normals);
+	  THEM->normals->get(X[i], Y[i], Z[i], ns[0], ns[1], ns[2]);
 	theSurface->QuadVertexArray->add(X[i], Y[i], Z[i], ns[0], ns[1], ns[2], col);
       }
       theSurface->QuadVertexArray->num++;

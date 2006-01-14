@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.35 2006-01-06 00:34:24 geuzaine Exp $
+// $Id: Iso.cpp,v 1.36 2006-01-14 16:24:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -390,8 +390,7 @@ void EnhanceSimplexPolygon(Post_View * View, int nb,    // nb of points in polyg
         norms[3 * i + 1] = n[1];
         norms[3 * i + 2] = n[2];
         View->normals->get(Xp[i], Yp[i], Zp[i], 
-			   norms[3 * i], norms[3 * i + 1], norms[3 * i + 2],
-			   View->AngleSmoothNormals);
+			   norms[3 * i], norms[3 * i + 1], norms[3 * i + 2]);
       }
     }
   }

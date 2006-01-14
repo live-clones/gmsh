@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.180 2006-01-06 00:34:21 geuzaine Exp $
+// $Id: Views.cpp,v 1.181 2006-01-14 16:24:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,7 @@
 #include "Context.h"
 #include "Options.h"
 #include "ColorTable.h"
+#include "xyzv.h"
 #include "SmoothNormals.h"
 
 #if defined(HAVE_MATH_EVAL)
@@ -150,7 +151,7 @@ Post_View *BeginView(int allocate)
   v->AliasOf = 0;
   v->ScalarOnly = 1;
   v->TextOnly = 1;
-  v->normals = new smooth_normals;
+  v->normals = new smooth_normals(v->AngleSmoothNormals);
   v->Min = VAL_INF;
   v->Max = -VAL_INF;
   v->adaptive = 0;
@@ -162,6 +163,13 @@ Post_View *BeginView(int allocate)
     v->GenRaise_f[i] = NULL;
 
   return v;
+}
+
+void Post_View::reset_normals()
+{
+  if(normals)
+    delete normals;
+  normals = new smooth_normals(AngleSmoothNormals);
 }
 
 double ComputeVonMises(double *V)
@@ -1497,15 +1505,10 @@ void Post_View::splitCurvedElements()
 
 // Smoothing
 
-void Post_View::reset_normals()
-{
-  if(normals)
-    delete normals;
-  normals = new smooth_normals;
-}
+double xyzv::eps = 1.e-12;
 
 void generate_connectivities(List_T * list, int nbList, int nbTimeStep, int nbVert,
-                             xyzcont & connectivities)
+                             xyzv_cont & connectivities)
 {
   double *x, *y, *z, *v;
   int i, j, k;
@@ -1524,7 +1527,7 @@ void generate_connectivities(List_T * list, int nbList, int nbTimeStep, int nbVe
       for(k = 0; k < nbTimeStep; k++)
         vals[k] = v[j + k * nbVert];
       xyzv xyz(x[j], y[j], z[j]);
-      xyziter it = connectivities.find(xyz);
+      xyzv_iter it = connectivities.find(xyz);
       if(it == connectivities.end()) {
         xyz.update(nbTimeStep, vals);
         connectivities.insert(xyz);
@@ -1542,7 +1545,7 @@ void generate_connectivities(List_T * list, int nbList, int nbTimeStep, int nbVe
 
 void smooth_list(List_T * list, int nbList,
 		 double *min, double *max, double *tsmin, double *tsmax, 
-                 int nbTimeStep, int nbVert, xyzcont & connectivities)
+                 int nbTimeStep, int nbVert, xyzv_cont & connectivities)
 {
   if(!nbList)
     return;
@@ -1555,7 +1558,7 @@ void smooth_list(List_T * list, int nbList,
     double *v = (double *)List_Pointer_Fast(list, i + 3 * nbVert);
     for(int j = 0; j < nbVert; j++) {
       xyzv xyz(x[j], y[j], z[j]);
-      xyziter it = connectivities.find(xyz);
+      xyzv_iter it = connectivities.find(xyz);
       if(it != connectivities.end()) {
         for(int k = 0; k < nbTimeStep; k++) {
 	  double dd = (*it).vals[k];
@@ -1580,7 +1583,7 @@ void Post_View::smooth()
   xyzv::eps = CTX.lc * 1.e-8;
 
   if(NbSL || NbST || NbSQ || NbSS || NbSH || NbSI || NbSY) {
-    xyzcont con;
+    xyzv_cont con;
     Msg(INFO, "Smoothing scalar primitives in View[%d]", Index);
     Min = VAL_INF;
     Max = -VAL_INF;

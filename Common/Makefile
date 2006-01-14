@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.79 2006-01-06 00:34:21 geuzaine Exp $
+# $Id: Makefile,v 1.80 2006-01-14 16:24:53 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -77,17 +77,17 @@ Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
 AdaptiveViews.o: AdaptiveViews.cpp AdaptiveViews.h ../DataStr/List.h \
   GmshMatrix.h ../Plugin/Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
   ../Common/AdaptiveViews.h
 Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h ../Numeric/Numeric.h Views.h ColorTable.h \
   VertexArray.h SmoothNormals.h GmshMatrix.h AdaptiveViews.h Context.h \
-  Options.h
+  Options.h xyzv.h
 Options.o: Options.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h Gmsh.h Message.h \
   ../DataStr/Malloc.h ../DataStr/Tree.h ../DataStr/avl.h \
   ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h GmshUI.h \
@@ -123,8 +123,8 @@ Visibility.o: Visibility.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Mesh/Metric.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h ../Parser/Parser.h Visibility.h
 Trackball.o: Trackball.cpp Trackball.h
 VertexArray.o: VertexArray.cpp Gmsh.h Message.h ../DataStr/Malloc.h \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.77 2006-01-06 00:34:32 geuzaine Exp $
+# $Id: Makefile,v 1.78 2006-01-14 16:24:54 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -78,18 +78,18 @@ depend:
 Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Parallel/ParUtil.h \
   ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../Numeric/Numeric.h ../Common/Context.h ../Geo/Geo.h \
-  ../Geo/GeoUtils.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
-  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
-  ../Mesh/Matrix.h ../Mesh/Nurbs.h ../Mesh/Vertex.h ../Mesh/Mesh.h \
-  ../Geo/CAD.h ../Geo/ExtrudeParams.h ../Graphics/Draw.h ../Mesh/Create.h \
+  ../DataStr/Tree.h ../Common/Context.h ../Geo/Geo.h ../Geo/GeoUtils.h \
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
+  ../Mesh/Nurbs.h ../Mesh/Vertex.h ../Mesh/Mesh.h ../Geo/CAD.h \
+  ../Geo/ExtrudeParams.h ../Graphics/Draw.h ../Mesh/Create.h \
   ../Mesh/Vertex.h ../Mesh/Mesh.h ../Geo/StepGeomDatabase.h \
   ../Common/Colors.h ../Common/Options.h Parser.h OpenFile.h \
   ../Common/CommandLine.h FunctionManager.h ../Common/Timer.h \

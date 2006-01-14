@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.74 2006-01-06 00:34:26 geuzaine Exp $
+// $Id: Generator.cpp,v 1.75 2006-01-14 16:24:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -422,6 +422,9 @@ void Init_Mesh(Mesh * M)
   if(M->Grid.init)
     List_Delete(M->Grid.Bricks);
 
+  if(M->normals)
+    delete M->normals;
+
   M->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
   M->Simplexes = Tree_Create(sizeof(Simplex *), compareSimplex);
   M->Points = Tree_Create(sizeof(Vertex *), compareVertex);
@@ -435,6 +438,7 @@ void Init_Mesh(Mesh * M)
   M->Metric = new GMSHMetric;
   M->BGM.bgm = NULL;
   M->Grid.init = 0;
+  M->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
 
   M->status = 0;
 
