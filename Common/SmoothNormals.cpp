@@ -1,4 +1,4 @@
-// $Id: SmoothNormals.cpp,v 1.5 2006-01-14 16:24:53 geuzaine Exp $
+// $Id: SmoothNormals.cpp,v 1.6 2006-01-14 17:13:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -27,8 +27,8 @@ double xyzn::eps = 1.e-12;
 
 float xyzn::angle(int i, float nx, float ny, float nz)
 {
-  // computes the angle between the ith normal stored at point xyz and
-  // the new normal nx,ny,nz
+  // returns the angle (in [-180,180]) between the ith normal stored
+  // at point xyz and the new normal nx,ny,nz
   double a[3] = {n[i].nx, n[i].ny, n[i].nz};
   double b[3] = {nx, ny, nz};
   norme(a);

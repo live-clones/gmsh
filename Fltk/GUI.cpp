@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.480 2006-01-11 05:37:35 geuzaine Exp $
+// $Id: GUI.cpp,v 1.481 2006-01-14 17:13:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4233,7 +4233,7 @@ void GUI::create_geometry_context_window(int num)
       context_geometry_input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Name");
       context_geometry_input[0]->value("lc");
       context_geometry_input[1] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Value");
-      context_geometry_input[1]->value("1.0");
+      context_geometry_input[1]->value("0.1");
       for(i = 0; i < 2; i++) {
         context_geometry_input[i]->align(FL_ALIGN_RIGHT);
       }
@@ -4247,11 +4247,11 @@ void GUI::create_geometry_context_window(int num)
     {
       g[1] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Point");
       context_geometry_input[2] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X coordinate");
-      context_geometry_input[2]->value("0.0");
+      context_geometry_input[2]->value("0");
       context_geometry_input[3] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y coordinate");
-      context_geometry_input[3]->value("0.0");
+      context_geometry_input[3]->value("0");
       context_geometry_input[4] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z coordinate");
-      context_geometry_input[4]->value("0.0");
+      context_geometry_input[4]->value("0");
       context_geometry_input[5] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Characteristic length");
       context_geometry_input[5]->value("0.1");
       for(i = 2; i < 6; i++) {
@@ -4274,11 +4274,11 @@ void GUI::create_geometry_context_window(int num)
     {
       g[2] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Translation");
       context_geometry_input[6] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X component");
-      context_geometry_input[6]->value("0.0");
+      context_geometry_input[6]->value("0");
       context_geometry_input[7] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y component");
-      context_geometry_input[7]->value("0.0");
+      context_geometry_input[7]->value("0");
       context_geometry_input[8] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z component");
-      context_geometry_input[8]->value("1.0");
+      context_geometry_input[8]->value("1");
       for(i = 6; i < 9; i++) {
         context_geometry_input[i]->align(FL_ALIGN_RIGHT);
       }
@@ -4288,17 +4288,17 @@ void GUI::create_geometry_context_window(int num)
     {
       g[3] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Rotation");
       context_geometry_input[9] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X coordinate of an axis point");
-      context_geometry_input[9]->value("0.0");
+      context_geometry_input[9]->value("0");
       context_geometry_input[10] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y coordinate of an axis point");
-      context_geometry_input[10]->value("0.0");
+      context_geometry_input[10]->value("0");
       context_geometry_input[11] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z coordinate of an axis point");
-      context_geometry_input[11]->value("0.0");
+      context_geometry_input[11]->value("0");
       context_geometry_input[12] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "X component of axis direction");
-      context_geometry_input[12]->value("0.0");
+      context_geometry_input[12]->value("0");
       context_geometry_input[13] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Y component of axis direction");
-      context_geometry_input[13]->value("1.0");
+      context_geometry_input[13]->value("1");
       context_geometry_input[14] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Z component of axis direction");
-      context_geometry_input[14]->value("0.0");
+      context_geometry_input[14]->value("0");
       context_geometry_input[15] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Angle in radians");
       context_geometry_input[15]->value("Pi/4");
       for(i = 9; i < 16; i++) {
@@ -4310,13 +4310,13 @@ void GUI::create_geometry_context_window(int num)
     {
       g[4] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Scale");
       context_geometry_input[16] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X component of direction");
-      context_geometry_input[16]->value("1.0");
+      context_geometry_input[16]->value("0");
       context_geometry_input[17] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y component of direction");
-      context_geometry_input[17]->value("0.0");
+      context_geometry_input[17]->value("0");
       context_geometry_input[18] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z component of direction");
-      context_geometry_input[18]->value("0.0");
+      context_geometry_input[18]->value("0");
       context_geometry_input[19] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Factor");
-      context_geometry_input[19]->value("2.0");
+      context_geometry_input[19]->value("0.5");
       for(i = 16; i < 20; i++) {
         context_geometry_input[i]->align(FL_ALIGN_RIGHT);
       }
@@ -4325,14 +4325,14 @@ void GUI::create_geometry_context_window(int num)
     // 5: Symmetry
     {
       g[5] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Symmetry");
-      context_geometry_input[20] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "1st plane equation coefficient");
-      context_geometry_input[20]->value("1.0");
-      context_geometry_input[21] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "2nd plane equation coefficient");
-      context_geometry_input[21]->value("0.0");
-      context_geometry_input[22] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "3rd plane equation coefficient");
-      context_geometry_input[22]->value("0.0");
-      context_geometry_input[23] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "4th plane equation coefficient");
-      context_geometry_input[23]->value("1.0");
+      context_geometry_input[20] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "A");
+      context_geometry_input[20]->value("1");
+      context_geometry_input[21] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "B");
+      context_geometry_input[21]->value("0");
+      context_geometry_input[22] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "C");
+      context_geometry_input[22]->value("0");
+      context_geometry_input[23] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "D");
+      context_geometry_input[23]->value("1");
       for(i = 20; i < 24; i++) {
         context_geometry_input[i]->align(FL_ALIGN_RIGHT);
       }
@@ -4391,7 +4391,7 @@ void GUI::create_mesh_context_window(int num)
     {
       g[0] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Charact. Length");
       context_mesh_input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Value");
-      context_mesh_input[0]->value("1.0");
+      context_mesh_input[0]->value("0.1");
       context_mesh_input[0]->align(FL_ALIGN_RIGHT);
       g[0]->end();
     }
@@ -4401,7 +4401,7 @@ void GUI::create_mesh_context_window(int num)
       context_mesh_input[1] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Number of points");
       context_mesh_input[1]->value("10");
       context_mesh_input[2] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Parameter");
-      context_mesh_input[2]->value("1.0");
+      context_mesh_input[2]->value("1");
       for(int i = 1; i < 3; i++) {
         context_mesh_input[i]->align(FL_ALIGN_RIGHT);
       }

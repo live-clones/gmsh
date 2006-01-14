@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.395 2006-01-14 16:24:53 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.396 2006-01-14 17:13:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1492,7 +1492,7 @@ void visibility_sort_cb(CALLBACK_ARGS)
     delete [] state;
   }
   else if(val == -2){ // create new parameter name for selection
-    for(int i = 1; i < WID->vis_browser->size(); i++){
+    for(int i = 1; i <= WID->vis_browser->size(); i++){
       if(WID->vis_browser->selected(i)){
 	Entity *e = (Entity *) WID->vis_browser->data(i);
 	sprintf(tmpstr, "%d", e->Num());
