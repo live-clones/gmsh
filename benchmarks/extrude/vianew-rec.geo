@@ -95,20 +95,20 @@ NLdn = 8;
 NLup = 3;
 
 // extrude down first:
-Extrude Surface {42, {0,0,-A*L}}{ Layers { {NLdn}, {9001}, {1} } ; Recombine; };
+Extrude {0,0,-A*L} {
+  Surface{42};
+  Layers { {NLdn}, {9001}, {1} } ; 
+  Recombine;
+}
+
 // extrude up second:
-Extrude Surface {26, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
-Extrude Surface {28, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
-Extrude Surface {30, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
-Extrude Surface {32, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
-Extrude Surface {34, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
-Extrude Surface {36, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
-Extrude Surface {38, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
-Extrude Surface {40, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
-Extrude Surface {42, {0,0,L}}{ Layers { {NLup}, {9000}, {1} } ; Recombine;};
+Extrude {0,0,L} {
+  Surface { 26:42:2 };
+  Layers { {NLup}, {9000}, {1} }; 
+  Recombine;
+}
 
 // wafer surface including surfaces that are extruded downwards:
 Physical Surface(1001) = {26,28,30,32,34,36,38,40, 51,55,59,63,64};
 Physical Surface(1009) = {73,95,117,121,139,161,165,183,205,209,227,85, 86,108,130,152,174,196,218,240,262};
 Physical Volume(2001)  = {9000,9001};
-

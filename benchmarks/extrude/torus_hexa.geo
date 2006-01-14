@@ -44,21 +44,14 @@ Transfinite Surface {22} = {11,12,13,10};
 
 Recombine Surface {14:22:2};
 
-Extrude Surface {14, {0,0,1}, {0,0,0}, 2*Pi/3}{Recombine;Layers{10,73,1};};
-Extrude Surface {16, {0,0,1}, {0,0,0}, 2*Pi/3}{Recombine;Layers{10,73,1};};
-Extrude Surface {18, {0,0,1}, {0,0,0}, 2*Pi/3}{Recombine;Layers{10,73,1};};
-Extrude Surface {20, {0,0,1}, {0,0,0}, 2*Pi/3}{Recombine;Layers{10,73,1};};
-Extrude Surface {22, {0,0,1}, {0,0,0}, 2*Pi/3}{Recombine;Layers{10,73,1};};
+s[] = Extrude {{0,0,1}, {0,0,0}, 2*Pi/3}{
+  Surface{14:22:2}; Recombine; Layers{10,73,1};
+};
 
-Extrude Surface {44, {0,0,1}, {0,0,0}, 2*Pi/3}{Recombine;Layers{10,73,1};};
-Extrude Surface {66, {0,0,1}, {0,0,0}, 2*Pi/3}{Recombine;Layers{10,73,1};};
-Extrude Surface {88, {0,0,1}, {0,0,0}, 2*Pi/3}{Recombine;Layers{10,73,1};};
-Extrude Surface {110, {0,0,1}, {0,0,0}, 2*Pi/3}{Recombine;Layers{10,73,1};};
-Extrude Surface {132, {0,0,1}, {0,0,0}, 2*Pi/3}{Recombine;Layers{10,73,1};};
+s[] = Extrude {{0,0,1}, {0,0,0}, 2*Pi/3}{
+  Surface{s[{0:8:2}]}; Recombine; Layers{10,73,1};
+};
 
-Extrude Surface {154, {0,0,1}, {0,0,0}, 2*Pi/3}{Recombine;Layers{10,73,1};};
-Extrude Surface {176, {0,0,1}, {0,0,0}, 2*Pi/3}{Recombine;Layers{10,73,1};};
-Extrude Surface {198, {0,0,1}, {0,0,0}, 2*Pi/3}{Recombine;Layers{10,73,1};};
-Extrude Surface {220, {0,0,1}, {0,0,0}, 2*Pi/3}{Recombine;Layers{10,73,1};};
-Extrude Surface {242, {0,0,1}, {0,0,0}, 2*Pi/3}{Recombine;Layers{10,73,1};};
-
+Extrude {{0,0,1}, {0,0,0}, 2*Pi/3}{
+  Surface{s[{0:8:2}]}; Recombine; Layers{10,73,1};
+}
