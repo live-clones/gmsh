@@ -1,6 +1,6 @@
-$Id: VERSIONS,v 1.352 2006-01-14 22:32:58 geuzaine Exp $
+$Id: VERSIONS,v 1.353 2006-01-15 17:42:48 geuzaine Exp $
 
-New since 1.61: new option to draw color gradients in the background;
+New in 1.62: new option to draw color gradients in the background;
 enhanced perspective projection mode; new "lasso" selection mode (same
 as "lasso" zoom, but in selection mode); new "invert selection" button
 in the visibility browser; new snapping grid when adding points in the
