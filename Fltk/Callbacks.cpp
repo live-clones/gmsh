@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.397 2006-01-14 22:32:58 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.398 2006-01-16 16:55:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2512,7 +2512,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	}
 	List_Reset(List1);
 	ZeroHighlight(THEM);
-	CalculateMinMax(THEM->Points, NULL);
+	if(action <= 6) SetBoundingBox();
 	Draw();
       }
     }
@@ -4286,7 +4286,7 @@ void con_geometry_define_point_cb(CALLBACK_ARGS)
 	    (char*)WID->context_geometry_input[4]->value(),
 	    (char*)WID->context_geometry_input[5]->value());
   ZeroHighlight(THEM);
-  CalculateMinMax(THEM->Points, NULL);
+  SetBoundingBox();
   WID->reset_visibility();
   Draw();
 }
