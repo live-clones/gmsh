@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.29 2006-01-06 00:34:20 geuzaine Exp $
+# $Id: Makefile,v 1.30 2006-01-16 17:55:43 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -60,4 +60,4 @@ Main.o: Main.cpp ../Parallel/ParUtil.h ../Plugin/PluginManager.h \
  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
  ../Mesh/Mesh.h ../Mesh/Matrix.h ../Parser/Parser.h ../Common/Context.h \
- ../Parser/OpenFile.h ../Common/CommandLine.h ../Geo/MinMax.h
+ ../Parser/OpenFile.h ../Common/CommandLine.h

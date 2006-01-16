@@ -1,4 +1,4 @@
-// $Id: PartitionMesh.cpp,v 1.7 2006-01-06 00:34:26 geuzaine Exp $
+// $Id: PartitionMesh.cpp,v 1.8 2006-01-16 17:55:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,6 @@
 #include "BDS.h"
 #include "PartitionMesh.h"
 #include "OpenFile.h"
-#include "MinMax.h"
 
 #ifdef HAVE_METIS
 extern "C"

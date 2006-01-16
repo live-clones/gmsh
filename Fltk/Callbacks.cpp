@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.398 2006-01-16 16:55:04 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.399 2006-01-16 17:55:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -47,7 +47,6 @@
 #include "Plugin.h"
 #include "PluginManager.h"
 #include "Visibility.h"
-#include "MinMax.h"
 #include "Numeric.h"
 #include "Solvers.h"
 

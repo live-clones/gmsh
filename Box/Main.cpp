@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.52 2006-01-06 00:34:20 geuzaine Exp $
+// $Id: Main.cpp,v 1.53 2006-01-16 17:55:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -41,7 +41,6 @@
 #include "Options.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
-#include "MinMax.h"
 
 char yyname[256] = "";
 int yyerrorstate = 0;

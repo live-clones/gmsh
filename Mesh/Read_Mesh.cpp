@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.96 2006-01-06 00:34:26 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.97 2006-01-16 17:55:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,7 +25,6 @@
 #include "Mesh.h"
 #include "3D_Mesh.h"
 #include "Create.h"
-#include "MinMax.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "PartitionMesh.h"

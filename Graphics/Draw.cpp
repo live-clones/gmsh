@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.94 2006-01-10 03:58:31 geuzaine Exp $
+// $Id: Draw.cpp,v 1.95 2006-01-16 17:55:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,6 @@
 #include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"
-#include "MinMax.h"
 #include "Numeric.h"
 
 extern Context_T CTX;

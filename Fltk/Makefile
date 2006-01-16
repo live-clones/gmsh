@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.78 2006-01-14 16:24:54 geuzaine Exp $
+# $Id: Makefile,v 1.79 2006-01-16 17:55:43 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -142,7 +142,7 @@ Callbacks.o: Callbacks.cpp ../Mesh/BDS.h ../Common/Gmsh.h \
   ../Common/Context.h ../Common/Options.h GUI.h Opengl_Window.h \
   Colorbar_Window.h GUI_Extras.h Callbacks.h ../Plugin/Plugin.h \
   ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Visibility.h \
-  ../Geo/MinMax.h Solvers.h
+  Solvers.h
 Opengl.o: Opengl.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
