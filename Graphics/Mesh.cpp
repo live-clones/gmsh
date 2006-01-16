@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.150 2006-01-14 16:24:54 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.151 2006-01-16 00:38:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -349,7 +349,7 @@ void Draw_Mesh_Volume(void *a, void *b)
   // volume cuts drawn "as surfaces" (using vertex arrays for
   // everything would require quite a bit of memory...)
   if(CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_as_surface && 
-     CTX.mesh.vertex_arrays){
+     CTX.mesh.vertex_arrays && (CTX.mesh.surfaces_faces || CTX.mesh.surfaces_edges)){
     if(CTX.mesh.changed){
       Msg(DEBUG, "regenerate volume mesh vertex arrays");
       thePhysical = getLastPhysical(MSH_PHYSICAL_VOLUME, v->Num);
@@ -409,7 +409,7 @@ void Draw_Mesh_Surface(void *a, void *b)
     glPushName(s->Num);
   }
 
-  if (CTX.mesh.surfaces_num) {
+  if(CTX.mesh.surfaces_num) {
     int numLabels = Tree_Nbr(s->Simplexes) + Tree_Nbr(s->SimplexesBase) 
       + Tree_Nbr(s->Quadrangles);
     numLabelsDisplayed = 0;
@@ -428,7 +428,7 @@ void Draw_Mesh_Surface(void *a, void *b)
     return;
   }
 
-  if(CTX.mesh.vertex_arrays){
+  if(CTX.mesh.vertex_arrays && (CTX.mesh.surfaces_faces || CTX.mesh.surfaces_edges)){
     if(CTX.mesh.changed || s->ipar[4] == 2 || s->ipar[4] == -2){
       if(s->ipar[4] == 2) s->ipar[4] = 1;
       if(s->ipar[4] == -2) s->ipar[4] = -1;
@@ -521,7 +521,7 @@ void Draw_Mesh_Curve(void *a, void *b)
   theCurve = c;
   theColor = c->Color;
 
-  if(CTX.mesh.vertex_arrays){
+  if(CTX.mesh.vertex_arrays && CTX.mesh.lines){
     if(CTX.mesh.changed || c->ipar[3] == 2 || c->ipar[3] == -2){
       if(c->ipar[3] == 2) c->ipar[3] = 1;
       if(c->ipar[3] == -2) c->ipar[3] = -1;
