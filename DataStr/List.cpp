@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.37 2006-01-06 00:34:21 geuzaine Exp $
+// $Id: List.cpp,v 1.38 2006-01-17 17:09:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -427,7 +427,7 @@ void swap_bytes(char *array, int size, int n)
 List_T *List_CreateFromFile(int n, int incr, int size, FILE * file, int format,
                             int swap)
 {
-  int i;
+  int i, error = 0;
   List_T *liste;
 
   if(!n){
@@ -439,34 +439,67 @@ List_T *List_CreateFromFile(int n, int incr, int size, FILE * file, int format,
   liste->n = n;
   switch (format) {
   case LIST_FORMAT_ASCII:
-    if(size == sizeof(double))
-      for(i = 0; i < n; i++)
-        fscanf(file, "%lf", (double *)&liste->array[i * size]);
-    else if(size == sizeof(float))
-      for(i = 0; i < n; i++)
-        fscanf(file, "%f", (float *)&liste->array[i * size]);
-    else if(size == sizeof(int))
-      for(i = 0; i < n; i++)
-        fscanf(file, "%d", (int *)&liste->array[i * size]);
-    else if(size == sizeof(char)) {
-      for(i = 0; i < n; i++)
-        liste->array[i * size] = fgetc(file);
+    if(size == sizeof(double)){
+      for(i = 0; i < n; i++){
+        if(!fscanf(file, "%lf", (double *)&liste->array[i * size])){
+	  error = 1;
+	  break;
+	}
+      }
     }
-    else {
+    else if(size == sizeof(float)){
+      for(i = 0; i < n; i++){
+        if(!fscanf(file, "%f", (float *)&liste->array[i * size])){
+	  error = 1;
+	  break;
+	}
+      }
+    }
+    else if(size == sizeof(int)){
+      for(i = 0; i < n; i++){
+        if(!fscanf(file, "%d", (int *)&liste->array[i * size])){
+	  error = 1;
+	  break;
+	}
+      }
+    }
+    else if(size == sizeof(char)){
+      for(i = 0; i < n; i++){
+	char c = (char)fgetc(file);
+	if(c == EOF){
+	  error = 1;
+	  break;
+	}
+	else{
+	  liste->array[i * size] = c;
+	}
+      }
+    }
+    else{
       Msg(GERROR, "Bad type of data to create list from (size = %d)", size);
-      return NULL;
+      error = 1;
     }
-    return liste;
+    break;
   case LIST_FORMAT_BINARY:
-    fread(liste->array, size, n, file);
+    if(!fread(liste->array, size, n, file)){
+      error = 1;
+      break;
+    }
     if(swap)
       swap_bytes(liste->array, size, n);
-    return liste;
+    break;
   default:
     Msg(GERROR, "Unknown list format");
-    return NULL;
+    error = 1;
+    break;
   }
 
+  if(error){
+    Msg(GERROR, "Read error");
+    liste->n = 0;
+  }
+
+  return liste;
 }
 
 void List_WriteToFile(List_T * liste, FILE * file, int format)
@@ -499,6 +532,7 @@ void List_WriteToFile(List_T * liste, FILE * file, int format)
     break;
   default:
     Msg(GERROR, "Unknown list format");
+    break;
   }
 }
 
@@ -507,7 +541,7 @@ void List_WriteToFile(List_T * liste, FILE * file, int format)
 List_T *List_CreateFromFileOld(int n, int incr, int size, FILE * file, int format,
 			       int swap)
 {
-  int i;
+  int i, error = 0;
   List_T *liste;
 
   if(!n){
@@ -519,35 +553,63 @@ List_T *List_CreateFromFileOld(int n, int incr, int size, FILE * file, int forma
   liste->n = n;
   switch (format) {
   case LIST_FORMAT_ASCII:
-    if(size == sizeof(double))
-      for(i = 0; i < n; i++)
-        fscanf(file, "%lf", (double *)&liste->array[i * size]);
-    else if(size == sizeof(float))
-      for(i = 0; i < n; i++)
-        fscanf(file, "%f", (float *)&liste->array[i * size]);
-    else if(size == sizeof(int))
-      for(i = 0; i < n; i++)
-        fscanf(file, "%d", (int *)&liste->array[i * size]);
-    else if(size == sizeof(char)) {
-      for(i = 0; i < n; i++) {
-        fscanf(file, "%c", (char *)&liste->array[i * size]);
+    if(size == sizeof(double)){
+      for(i = 0; i < n; i++){
+        if(!fscanf(file, "%lf", (double *)&liste->array[i * size])){
+	  error = 1;
+	  break;
+	}
+      }
+    }
+    else if(size == sizeof(float)){
+      for(i = 0; i < n; i++){
+        if(!fscanf(file, "%f", (float *)&liste->array[i * size])){
+	  error = 1;
+	  break;
+	}
+      }
+    }
+    else if(size == sizeof(int)){
+      for(i = 0; i < n; i++){
+        if(!fscanf(file, "%d", (int *)&liste->array[i * size])){
+	  error = 1;
+	  break;
+	}
+      }
+    }
+    else if(size == sizeof(char)){
+      for(i = 0; i < n; i++){
+        if(!fscanf(file, "%c", (char *)&liste->array[i * size])){
+	  error = 1;
+	  break;
+	}
         if(liste->array[i * size] == '^')
           liste->array[i * size] = '\0';
       }
     }
     else {
       Msg(GERROR, "Bad type of data to create list from (size = %d)", size);
-      return NULL;
+      error = 1;
     }
     return liste;
   case LIST_FORMAT_BINARY:
-    fread(liste->array, size, n, file);
+    if(!fread(liste->array, size, n, file)){
+      error = 1;
+      break;
+    }
     if(swap)
       swap_bytes(liste->array, size, n);
     return liste;
   default:
     Msg(GERROR, "Unknown list format");
-    return NULL;
+    error = 1;
+    break;
   }
 
+  if(error){
+    Msg(GERROR, "Read error");
+    liste->n = 0;
+  }
+
+  return liste;
 }

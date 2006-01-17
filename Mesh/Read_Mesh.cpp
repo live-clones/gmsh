@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.97 2006-01-16 17:55:44 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.98 2006-01-17 17:09:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -185,7 +185,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 
   while(1) {
     do {
-      fgets(String, sizeof(String), fp);
+      if(!fgets(String, sizeof(String), fp))
+	break;
       if(feof(fp))
         break;
     } while(String[0] != '$');
@@ -559,7 +560,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
     }
 
     do {
-      fgets(String, sizeof(String), fp);
+      if(!fgets(String, sizeof(String), fp))
+	Msg(GERROR, "Prematured end of mesh file");
       if(feof(fp))
         Msg(GERROR, "Prematured end of mesh file");
     } while(String[0] != '$');

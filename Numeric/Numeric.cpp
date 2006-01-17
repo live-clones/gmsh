@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.24 2006-01-06 00:34:27 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.25 2006-01-17 17:09:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,10 @@ int check_gsl()
 {
   // check version
   int major, minor;
-  sscanf(gsl_version, "%d.%d", &major, &minor);
+  if(!sscanf(gsl_version, "%d.%d", &major, &minor)){
+    Msg(FATAL, "Cannot retreive GSL version");
+    return 0;
+  }
   if(major < 1 || (major == 1 && minor < 2)) {
     Msg(FATAL1, "Your GSL version (%d.%d.X) has a bug in the singular value",
         major, minor);

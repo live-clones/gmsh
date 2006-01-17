@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.181 2006-01-14 16:24:53 geuzaine Exp $
+// $Id: Views.cpp,v 1.182 2006-01-17 17:09:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -798,7 +798,8 @@ void ReadView(FILE *file, char *filename)
   while(1) {
 
     do {
-      fgets(str, 256, file);
+      if(!fgets(str, 256, file))
+	break;
       if(feof(file))
         break;
     } while(str[0] != '$');
@@ -809,7 +810,10 @@ void ReadView(FILE *file, char *filename)
     /*  F o r m a t  */
 
     if(!strncmp(&str[1], "PostFormat", 10)) {
-      fscanf(file, "%lf %d %d\n", &version, &format, &size);
+      if(!fscanf(file, "%lf %d %d\n", &version, &format, &size)){
+        Msg(GERROR, "Read error");
+        return;
+      }
       if(version < 1.0) {
         Msg(GERROR, "This post-processing file is too old (version %g < 1.0)",
             version);
@@ -841,58 +845,70 @@ void ReadView(FILE *file, char *filename)
 
       if(version <= 1.0) {
         Msg(DEBUG, "Detected post-processing view format <= 1.0");
-        fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-               name, &v->NbTimeStep,
-               &v->NbSP, &v->NbVP, &v->NbTP,
-               &v->NbSL, &v->NbVL, &v->NbTL,
-               &v->NbST, &v->NbVT, &v->NbTT, &v->NbSS, &v->NbVS, &v->NbTS);
+        if(!fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+		   name, &v->NbTimeStep,
+		   &v->NbSP, &v->NbVP, &v->NbTP,
+		   &v->NbSL, &v->NbVL, &v->NbTL,
+		   &v->NbST, &v->NbVT, &v->NbTT, &v->NbSS, &v->NbVS, &v->NbTS)){
+	  Msg(GERROR, "Read error");
+	  return;
+	}
         v->NbT2 = t2l = v->NbT3 = t3l = 0;
       }
       else if(version == 1.1) {
         Msg(DEBUG, "Detected post-processing view format 1.1");
-        fscanf(file,
-               "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-               name, &v->NbTimeStep, &v->NbSP, &v->NbVP, &v->NbTP, &v->NbSL,
-               &v->NbVL, &v->NbTL, &v->NbST, &v->NbVT, &v->NbTT, &v->NbSS,
-               &v->NbVS, &v->NbTS, &v->NbT2, &t2l, &v->NbT3, &t3l);
+        if(!fscanf(file,
+		   "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+		   name, &v->NbTimeStep, &v->NbSP, &v->NbVP, &v->NbTP, &v->NbSL,
+		   &v->NbVL, &v->NbTL, &v->NbST, &v->NbVT, &v->NbTT, &v->NbSS,
+		   &v->NbVS, &v->NbTS, &v->NbT2, &t2l, &v->NbT3, &t3l)){
+	  Msg(GERROR, "Read error");
+	  return;
+	}
       }
       else if(version == 1.2 || version == 1.3) {
         Msg(DEBUG, "Detected post-processing view format %g", version);
-        fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
-               "%d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-               name, &v->NbTimeStep,
-               &v->NbSP, &v->NbVP, &v->NbTP,
-               &v->NbSL, &v->NbVL, &v->NbTL,
-               &v->NbST, &v->NbVT, &v->NbTT,
-               &v->NbSQ, &v->NbVQ, &v->NbTQ,
-               &v->NbSS, &v->NbVS, &v->NbTS,
-               &v->NbSH, &v->NbVH, &v->NbTH,
-               &v->NbSI, &v->NbVI, &v->NbTI,
-               &v->NbSY, &v->NbVY, &v->NbTY,
-	       &v->NbT2, &t2l, &v->NbT3, &t3l);
+        if(!fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+		   "%d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+		   name, &v->NbTimeStep,
+		   &v->NbSP, &v->NbVP, &v->NbTP,
+		   &v->NbSL, &v->NbVL, &v->NbTL,
+		   &v->NbST, &v->NbVT, &v->NbTT,
+		   &v->NbSQ, &v->NbVQ, &v->NbTQ,
+		   &v->NbSS, &v->NbVS, &v->NbTS,
+		   &v->NbSH, &v->NbVH, &v->NbTH,
+		   &v->NbSI, &v->NbVI, &v->NbTI,
+		   &v->NbSY, &v->NbVY, &v->NbTY,
+		   &v->NbT2, &t2l, &v->NbT3, &t3l)){
+	  Msg(GERROR, "Read error");
+	  return;
+	}
       }
       else if(version == 1.4) {
         Msg(DEBUG, "Detected post-processing view format 1.4");
-        fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
-               "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
-	       "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-               name, &v->NbTimeStep,
-               &v->NbSP, &v->NbVP, &v->NbTP,
-               &v->NbSL, &v->NbVL, &v->NbTL,
-               &v->NbST, &v->NbVT, &v->NbTT,
-               &v->NbSQ, &v->NbVQ, &v->NbTQ,
-               &v->NbSS, &v->NbVS, &v->NbTS,
-               &v->NbSH, &v->NbVH, &v->NbTH,
-               &v->NbSI, &v->NbVI, &v->NbTI,
-               &v->NbSY, &v->NbVY, &v->NbTY,
-               &v->NbSL2, &v->NbVL2, &v->NbTL2,
-               &v->NbST2, &v->NbVT2, &v->NbTT2,
-               &v->NbSQ2, &v->NbVQ2, &v->NbTQ2,
-               &v->NbSS2, &v->NbVS2, &v->NbTS2,
-               &v->NbSH2, &v->NbVH2, &v->NbTH2,
-               &v->NbSI2, &v->NbVI2, &v->NbTI2,
-               &v->NbSY2, &v->NbVY2, &v->NbTY2,
-	       &v->NbT2, &t2l, &v->NbT3, &t3l);
+        if(!fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+		   "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+		   "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+		   name, &v->NbTimeStep,
+		   &v->NbSP, &v->NbVP, &v->NbTP,
+		   &v->NbSL, &v->NbVL, &v->NbTL,
+		   &v->NbST, &v->NbVT, &v->NbTT,
+		   &v->NbSQ, &v->NbVQ, &v->NbTQ,
+		   &v->NbSS, &v->NbVS, &v->NbTS,
+		   &v->NbSH, &v->NbVH, &v->NbTH,
+		   &v->NbSI, &v->NbVI, &v->NbTI,
+		   &v->NbSY, &v->NbVY, &v->NbTY,
+		   &v->NbSL2, &v->NbVL2, &v->NbTL2,
+		   &v->NbST2, &v->NbVT2, &v->NbTT2,
+		   &v->NbSQ2, &v->NbVQ2, &v->NbTQ2,
+		   &v->NbSS2, &v->NbVS2, &v->NbTS2,
+		   &v->NbSH2, &v->NbVH2, &v->NbTH2,
+		   &v->NbSI2, &v->NbVI2, &v->NbTI2,
+		   &v->NbSY2, &v->NbVY2, &v->NbTY2,
+		   &v->NbT2, &t2l, &v->NbT3, &t3l)){
+	  Msg(GERROR, "Read error");
+	  return;
+	}
       }
       else {
         Msg(GERROR, "Unknown post-processing file format (version %g)",
@@ -906,7 +922,10 @@ void ReadView(FILE *file, char *filename)
 
       swap = 0;
       if(format == LIST_FORMAT_BINARY) {
-        fread(&testone, sizeof(int), 1, file);
+        if(!fread(&testone, sizeof(int), 1, file)){
+	  Msg(GERROR, "Read error");
+	  return;
+	}
         if(testone != 1) {
           Msg(INFO, "Swapping bytes from binary file");
           swap = 1;
@@ -1058,7 +1077,8 @@ void ReadView(FILE *file, char *filename)
     }
 
     do {
-      fgets(str, 256, file);
+      if(!fgets(str, 256, file))
+	Msg(GERROR, "Prematured end of file");
       if(feof(file))
         Msg(GERROR, "Prematured end of file");
     } while(str[0] != '$');
@@ -1319,7 +1339,10 @@ void WriteView(Post_View *v, char *filename, int format, int append)
 	    v->NbT2, List_Nbr(v->T2C), v->NbT3, List_Nbr(v->T3C));
     if(binary) {
       f = LIST_FORMAT_BINARY;
-      fwrite(&One, sizeof(int), 1, file);
+      if(!fwrite(&One, sizeof(int), 1, file)){
+	Msg(GERROR, "Write error");
+	return;
+      }
     }
     else
       f = LIST_FORMAT_ASCII;

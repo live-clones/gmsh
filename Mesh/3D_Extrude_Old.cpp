@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.39 2006-01-06 00:34:25 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.40 2006-01-17 17:09:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -86,11 +86,12 @@ static int compnxn(const void *a, const void *b)
 
 static void InitExtrudeParams(void)
 {
+  char *ret;
   char str[256];
 
   printf("Number of layers (default=1): ");
-  fgets(str, sizeof(str), stdin);
-  if(!strlen(str) || !strcmp(str, "\n"))
+  ret = fgets(str, sizeof(str), stdin);
+  if(!ret || !strlen(str) || !strcmp(str, "\n"))
     NbLayer = 1;
   else
     NbLayer = atoi(str);
@@ -106,8 +107,8 @@ static void InitExtrudeParams(void)
     fprintf(file, "%d\n", NbLayer);
   for(int i = 0; i < NbLayer; i++) {
     printf("Number of elements in layer %d (default=1): ", i + 1);
-    fgets(str, sizeof(str), stdin);
-    if(!strlen(str) || !strcmp(str, "\n"))
+    ret = fgets(str, sizeof(str), stdin);
+    if(!ret || !strlen(str) || !strcmp(str, "\n"))
       NbElmLayer[i] = 1;
     else
       NbElmLayer[i] = atoi(str);
@@ -115,8 +116,8 @@ static void InitExtrudeParams(void)
       fprintf(file, "%d\n", NbElmLayer[i]);
 
     printf("Depth of layer %d (default=1.0): ", i + 1);
-    fgets(str, sizeof(str), stdin);
-    if(!strlen(str) || !strcmp(str, "\n"))
+    ret = fgets(str, sizeof(str), stdin);
+    if(!ret || !strlen(str) || !strcmp(str, "\n"))
       hLayer[i] = 1.0;
     else
       hLayer[i] = atof(str);
@@ -124,8 +125,8 @@ static void InitExtrudeParams(void)
       fprintf(file, "%g\n", hLayer[i]);
 
     printf("Progression ratio for layer %d (default=1.0): ", i + 1);
-    fgets(str, sizeof(str), stdin);
-    if(!strlen(str) || !strcmp(str, "\n"))
+    ret = fgets(str, sizeof(str), stdin);
+    if(!ret || !strlen(str) || !strcmp(str, "\n"))
       parLayer[i] = 1.0;
     else
       parLayer[i] = atof(str);
