@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.67 2006-01-06 00:34:23 geuzaine Exp $
+// $Id: Message.cpp,v 1.68 2006-01-17 20:00:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -315,8 +315,8 @@ double GetValue(char *text, double defaultval)
   else{
     printf("%s (default=%.16g): ", text, defaultval);
     char str[256];
-    fgets(str, sizeof(str), stdin);
-    if(!strlen(str) || !strcmp(str, "\n"))
+    char *ret = fgets(str, sizeof(str), stdin);
+    if(!ret || !strlen(str) || !strcmp(str, "\n"))
       return defaultval;
     else
       return atof(str);
