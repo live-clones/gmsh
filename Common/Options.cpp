@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.271 2006-01-11 03:51:16 geuzaine Exp $
+// $Id: Options.cpp,v 1.272 2006-01-18 04:33:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -158,7 +158,7 @@ void Init_Options(int num)
 #endif
   CTX.solver.listen = 0;
   CTX.forced_bbox = 0;
-  CTX.enable_mouse_selection = 1;
+  CTX.enable_mouse_selection = 2; // hover-to-show-number and click-to-select
 }
 
 void ReInit_Options(int num)

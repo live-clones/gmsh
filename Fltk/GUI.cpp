@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.481 2006-01-14 17:13:14 geuzaine Exp $
+// $Id: GUI.cpp,v 1.482 2006-01-18 04:33:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -507,8 +507,7 @@ int GUI::global_shortcuts(int event)
   if(event != FL_SHORTCUT)
     return 0;
 
-  if(Fl::test_shortcut(FL_SHIFT + FL_Escape) ||
-     Fl::test_shortcut(FL_CTRL + FL_Escape) ||
+  if(Fl::test_shortcut(FL_CTRL + FL_Escape) ||
      Fl::test_shortcut(FL_META + FL_Escape) ||
      Fl::test_shortcut(FL_ALT + FL_Escape)) {
     return 1;
@@ -576,7 +575,8 @@ int GUI::global_shortcuts(int event)
     quit_selection = 1;
     return 0;   // trick: do as if we didn't use it
   }
-  else if(Fl::test_shortcut(FL_Escape)) {
+  else if(Fl::test_shortcut(FL_Escape) ||
+	  Fl::test_shortcut(FL_SHIFT + FL_Escape)) {
     if(g_opengl_window->LassoMode){
       g_opengl_window->LassoMode = false;
       redraw_opengl();

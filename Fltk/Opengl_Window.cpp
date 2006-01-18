@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.58 2006-01-06 00:34:23 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.59 2006-01-18 04:33:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -351,7 +351,7 @@ int Opengl_Window::handle(int event)
       sprintf(str, "%g", point[2]); WID->context_geometry_input[4]->value(str);
       redraw();
     }
-    else if(CTX.enable_mouse_selection){
+    else if(CTX.enable_mouse_selection > 1){
       if(curr.win[0] != prev.win[0] || curr.win[1] != prev.win[1]){
 	WID->make_opengl_current();
 	v[0] = NULL; c[0] = NULL; s[0] = NULL;
