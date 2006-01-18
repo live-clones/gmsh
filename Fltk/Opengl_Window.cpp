@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.59 2006-01-18 04:33:52 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.60 2006-01-18 16:19:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -121,7 +121,7 @@ void Opengl_Window::draw()
     glLoadIdentity();
     glColor3d(1., 1., 1.);
     glDisable(GL_DEPTH_TEST);
-    if(SelectionMode){
+    if(SelectionMode && CTX.enable_mouse_selection){
       glEnable(GL_LINE_STIPPLE);
       glLineStipple(1, 0x0F0F);
     }
@@ -140,7 +140,7 @@ void Opengl_Window::draw()
       if(!i) lasso.set();
     }
     glDisable(GL_BLEND);
-    if(SelectionMode)
+    if(SelectionMode && CTX.enable_mouse_selection)
       glDisable(GL_LINE_STIPPLE);
     glEnable(GL_DEPTH_TEST);
   }
@@ -208,7 +208,7 @@ int Opengl_Window::handle(int event)
       }
       else if(LassoMode) {
         LassoMode = false;
-	if(SelectionMode){
+	if(SelectionMode && CTX.enable_mouse_selection){
 	  WID->try_selection = 2; // will try to select multiple entities
 	  WID->try_selection_xywh[0] = (int)(click.win[0] + curr.win[0])/2;
 	  WID->try_selection_xywh[1] = (int)(click.win[1] + curr.win[1])/2;
@@ -351,7 +351,7 @@ int Opengl_Window::handle(int event)
       sprintf(str, "%g", point[2]); WID->context_geometry_input[4]->value(str);
       redraw();
     }
-    else if(CTX.enable_mouse_selection > 1){
+    else if(CTX.enable_mouse_selection >= 2){ // hover mode
       if(curr.win[0] != prev.win[0] || curr.win[1] != prev.win[1]){
 	WID->make_opengl_current();
 	v[0] = NULL; c[0] = NULL; s[0] = NULL;

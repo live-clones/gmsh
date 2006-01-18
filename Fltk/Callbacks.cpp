@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.400 2006-01-18 04:33:51 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.401 2006-01-18 16:19:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -470,7 +470,7 @@ void status_xyz1p_cb(CALLBACK_ARGS)
   }
   else if(!strcmp(str, "S")){ // mouse selection
     if(Fl::event_state(FL_SHIFT)){
-      CTX.enable_mouse_selection = 1; // mouse click only (no hover)
+      CTX.enable_mouse_selection = 1; // mouse selection only (no hover)
       Msg(STATUS1N, "Mouse hover OFF");
       WID->g_status_butt[9]->color(FL_GREEN);
     }
@@ -481,7 +481,7 @@ void status_xyz1p_cb(CALLBACK_ARGS)
       WID->g_opengl_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);      
     }
     else{
-      CTX.enable_mouse_selection = 2; // mouse hover and click (default)
+      CTX.enable_mouse_selection = 2; // mouse hover and select (default)
       Msg(STATUS1N, "Mouse selection ON");
       WID->g_status_butt[9]->color(FL_BACKGROUND_COLOR);
     }
