@@ -122,6 +122,7 @@ protected :
   virtual void GetTriangleWithoutRot(int iPattern, int iTriangle,int tri[3])=0;
 public :
   SwapPattern(){Rot = 0;}
+  virtual ~SwapPattern(){}
   int GetNbPatterns() {return NbPatterns;}
   virtual int GetNbRotations(int iPattern) = 0;
   int GetNbTriangles(){return NbNod-2;}

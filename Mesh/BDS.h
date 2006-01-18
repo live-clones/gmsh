@@ -69,6 +69,7 @@ public:
 class BDS_Surface
 {
 public :
+  virtual ~BDS_Surface(){}
   virtual double signedDistanceTo(double x, double y, double z) const = 0;
   virtual void projection(double xa, double ya, double za,
 			  double &x, double &y, double &z) const =0;
