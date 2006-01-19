@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.46 2006-01-06 00:34:25 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.47 2006-01-19 02:26:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -59,7 +59,8 @@ double F_Transfini(double t)
   d = sqrt(der.Pos.X * der.Pos.X + der.Pos.Y * der.Pos.Y +
            der.Pos.Z * der.Pos.Z);
 
-  if(THEC->dpar[0] == 0.0 || THEC->dpar[0] == 1.0) {
+  if(THEC->dpar[0] <= 0.0 || THEC->dpar[0] == 1.0) {
+    // dpar[0] < 0 should never happen
     val = d * (double)THEC->ipar[0] / THEC->l;
   }
   else {
@@ -70,10 +71,7 @@ double F_Transfini(double t)
 	r = THEC->dpar[0];
       else
 	r = 1. / THEC->dpar[0];
-      if(r == 1.)
-        a = THEC->l / (double)THEC->ipar[0];
-      else
-        a = THEC->l * (r - 1.) / (pow(r, THEC->ipar[0]) - 1.);
+      a = THEC->l * (r - 1.) / (pow(r, THEC->ipar[0] - 1.) - 1.);
       i = (int)(log(t * THEC->l / a * (r - 1.) + 1.) / log(r));
       val = d / (a * pow(r, (double)i));
       break;

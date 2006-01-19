@@ -1,7 +1,7 @@
 // original file from benarafa@alpes.cea.fr
 
 Lc = 0.003 ;
-nb = 12;
+nb_layers = 12;
 use_prisms = 1;
 
 Point(1) = {0.,0.,0.,Lc};
@@ -46,12 +46,12 @@ Physical Line(18) = {2,3};
 Physical Surface(19) = {15};
 
 If(use_prisms)
-  Extrude Surface {15, {0.,0.,2.*R}}{Layers{nb,83,1}; Recombine; };
+  Extrude Surface {15, {0.,0.,2.*R}}{Layers{nb_layers,83,1}; Recombine; };
 EndIf
 
 If(!use_prisms)
   Extrude Surface {15, {0.,0.,2.*R}};
-  Transfinite Line {27,55,1,59,23,43,4,39,21,34,3,35,25,51,2,47} = nb Using Progression 1.;
+  Transfinite Line {27,55,1,59,23,43,4,39,21,34,3,35,25,51,2,47} = (nb_layers+1) Using Progression 1.;
   Transfinite Surface {52} = {16,14,33,37};
   Transfinite Surface {36} = {11,15,19,18};
   Transfinite Surface {44} = {13,17,24,28};
