@@ -1,4 +1,10 @@
-$Id: TODO,v 1.115 2006-01-14 22:32:58 geuzaine Exp $
+$Id: TODO,v 1.116 2006-01-20 14:36:37 geuzaine Exp $
+
+********************************************************************
+
+recompute bbox/axes depending on what is which entities are
+visible. (For meshes with no geometry: either store a bbox for each
+curve/surface/volume or loop over all elements.)
 
 ********************************************************************
 
