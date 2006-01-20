@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.62 2006-01-06 00:34:24 geuzaine Exp $
+// $Id: Entity.cpp,v 1.63 2006-01-20 00:29:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -399,11 +399,11 @@ void Draw_Vector(int Type, int Fill,
 
 class point{
 public:
-    double x, y, z;
-    bool valid;
-    point() : x(0.), y(0.), z(0.), valid(false) {;};
-    point(double xi, double yi, double zi) :
-	x(xi), y(yi), z(zi), valid(true) {;};
+  double x, y, z;
+  bool valid;
+  point() : x(0.), y(0.), z(0.), valid(false) {;};
+  point(double xi, double yi, double zi) :
+    x(xi), y(yi), z(zi), valid(true) {;};
 };
 
 class plane{
@@ -439,7 +439,8 @@ public:
 
 void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
 			     double xmax, double ymax, double zmax,
-			     double a, double b, double c, double d)
+			     double a, double b, double c, double d,
+			     int shade)
 {
 
   plane pl(a, b, c, d);
@@ -480,6 +481,9 @@ void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
   n[2] *= ll * CTX.pixel_equiv_x / CTX.s[2];
   double length = sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
 
+  int n_shade = 0;
+  point p_shade[24];
+
   for(int i = 0; i < 6; i++){
     int nb = 0;
     point p[4];
@@ -498,8 +502,30 @@ void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
 	Draw_3DArrow(CTX.arrow_rel_head_radius, 
 		     CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
 		     p[j].x, p[j].y, p[j].z, n[0], n[1], n[2], length, 1);
+	if(shade){
+	  p_shade[n_shade].x = p[j].x;
+	  p_shade[n_shade].y = p[j].y;
+	  p_shade[n_shade].z = p[j].z;
+	  n_shade++;
+	}
       }
     }
+  }
+
+  if(shade){
+    // disable two-side lighting beacuse polygon can overlap itself
+    GLboolean twoside;
+    glGetBooleanv(GL_LIGHT_MODEL_TWO_SIDE, &twoside);
+    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+    glEnable(GL_LIGHTING);
+    glBegin(GL_POLYGON);
+    glNormal3d(n[0], n[1], n[2]);
+    for(int j = 0; j < n_shade; j++){
+      glVertex3d(p_shade[j].x, p_shade[j].y, p_shade[j].z);
+    }	
+    glEnd();
+    glDisable(GL_LIGHTING);
+    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, twoside);
   }
 }
 

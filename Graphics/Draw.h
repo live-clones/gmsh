@@ -94,7 +94,7 @@ void Draw_Vector(int Type, int Fill,
 		 int light);
 void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
 			     double xmax, double ymax, double zmax,
-			     double a, double b, double c, double d);
+			     double a, double b, double c, double d, int shade=0);
 void Draw_SmallAxes(void);
 void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
 	       double bbox[6]);
