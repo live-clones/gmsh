@@ -10,26 +10,22 @@ deph = Pi ;
 
 lc1 = ll/nbrp ;
 
-// Point(1)   = { 0. , 0. , 0. , lc1 } ;
-
 For ii In {0:nn-1}
 
-   For tt In {0:nbrp_tot} 
+  For tt In {0:nbrp_tot} 
+     Point(2*ii*1000+tt) = { tt*ll/nbrp , ii*dd-larg/2 , ampl*Sin(2*Pi*tt/nbrp+ii*deph) , lc1 } ;
+     tab1[tt] = 2*ii*1000+tt ;
+     Point((2*ii+1)*1000+tt)={dd/2+ii*dd-larg/2,-ll/4+tt*ll/nbrp,ampl*Sin(2*Pi*tt/nbrp-Pi+ii*deph),lc1};
+     tab2[tt] = (2*ii+1)*1000+tt ;
+  EndFor
 
-      Point(2*ii*1000+tt) = { tt*ll/nbrp , ii*dd-larg/2 , ampl*Sin(2*Pi*tt/nbrp+ii*deph) , lc1 } ;
-      tab1[tt] = 2*ii*1000+tt ;
-      Point((2*ii+1)*1000+tt)={dd/2+ii*dd-larg/2,-ll/4+tt*ll/nbrp,ampl*Sin(2*Pi*tt/nbrp-Pi+ii*deph),lc1};
-      tab2[tt] = (2*ii+1)*1000+tt ;
-      EndFor
+  Spline(2*ii*1000+tt) = tab1[];
+  Extrude { 0, larg, 0 } {
+    Line {2*ii*1000+tt} ; 
+  }
+  Spline((2*ii+1)*1000+tt) = tab2[];
+  Extrude { larg, 0, 0 } {
+    Line {(2*ii+1)*1000+tt};
+  }
 
-   Spline(2*ii*1000+tt) = tab1[];
-   Extrude Line {2*ii*1000+tt ,     { 0. , larg , 0. } } ; 
-   Spline((2*ii+1)*1000+tt) = tab2[];
-   Extrude Line {(2*ii+1)*1000+tt , { larg , 0. , 0. } } ; 
-   EndFor
-
-/*
-//Translate {0,0.15,0} { Duplicata { Surface{1004} ; } }
-Plane Surface (1002) = {1001} ;
-Physical Surface (9999) = tab2[] ; 
-*/
+EndFor
