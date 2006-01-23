@@ -1,3 +1,6 @@
+// original model from Zaqueu Ernesto da Silva (zaqueu at les.ufpb.br)
+// rewritten by CG
+
 lc = 3;
 e = 6; // thickness
 w = 30; // width
@@ -21,7 +24,7 @@ Circle(5) = {4,7,6};
 Symmetry {1,0,0,-c} { Duplicata { Line{1:5}; } }
 Line Loop(11) = {4,-9,-6,8,7,10,-5,-2,-3,1};
 Plane Surface(12) = {11};
-v[] = Extrude Surface{12, {0,-w,0}};;
+v[] = Extrude {0,-w,0}{ Surface{12}; };
 Delete { Volume{v[1]}; }
 Delete { Surface{55,63,43,35}; }
 
@@ -34,10 +37,7 @@ Circle(65) = {101,100,103};
 Circle(66) = {103,100,102};
 Circle(67) = {102,100,104};
 Circle(68) = {104,100,101};
-Extrude Line{65, {0,0,e}};
-Extrude Line{66, {0,0,e}};
-Extrude Line{67, {0,0,e}};
-Extrude Line{68, {0,0,e}};
+Extrude {0,0,e}{ Line{65:68}; }
 Symmetry {1,0,0,-c} { Duplicata { Surface{72,76,80,84}; } }
 
 Line Loop(104) = {2,50,21,-54};
