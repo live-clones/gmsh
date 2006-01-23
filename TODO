@@ -1,9 +1,4 @@
-$Id: TODO,v 1.117 2006-01-23 20:59:07 geuzaine Exp $
-
-********************************************************************
-
-Should be ensure that there are no repeated entities in the lists 
-when creating physicals?
+$Id: TODO,v 1.118 2006-01-23 21:26:34 geuzaine Exp $
 
 ********************************************************************
 

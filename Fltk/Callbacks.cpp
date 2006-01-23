@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.401 2006-01-18 16:19:10 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.402 2006-01-23 21:26:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2382,33 +2382,46 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 
     char ib = SelectEntity(type, &ne, v, c, s);
     if(ib == 'l') {
+      // we don't use List_Insert in order to keep the original
+      // ordering (this is slower, but this way undo works as
+      // expected)
       for(int i = 0; i < ne; i++){
 	switch (type) {
 	case ENT_POINT: 
-	  List_Add(List1, &v[i]->Num);
+	  if(List_ISearchSeq(List1, &v[i]->Num, fcmp_int) < 0)
+	    List_Add(List1, &v[i]->Num);
 	  break;
 	case ENT_LINE:
-	  List_Add(List1, &c[i]->Num);
+	  if(List_ISearchSeq(List1, &c[i]->Num, fcmp_int) < 0)
+	    List_Add(List1, &c[i]->Num);
 	  break;
 	case ENT_SURFACE: 
-	  List_Add(List1, &s[i]->Num);
+	  if(List_ISearchSeq(List1, &s[i]->Num, fcmp_int) < 0)
+	    List_Add(List1, &s[i]->Num);
 	  break;
 	}
       }
     }
     if(ib == 'r') {
+      // we don't use List_Suppress in order to keep the original
+      // ordering (this is slower, but this way undo works as
+      // expected)
       for(int i = 0; i < ne; i++){
+	int index;
 	switch (type) {
 	case ENT_POINT:
-	  List_Suppress(List1, &v[i]->Num, fcmp_int);
+	  index = List_ISearchSeq(List1, &v[i]->Num, fcmp_int); 
+	  if(index >= 0) List_PSuppress(List1, index);
 	  ZeroHighlightEntity(v[i], NULL, NULL);
 	  break;
 	case ENT_LINE:
-	  List_Suppress(List1, &c[i]->Num, fcmp_int);
+	  index = List_ISearchSeq(List1, &c[i]->Num, fcmp_int); 
+	  if(index >= 0) List_PSuppress(List1, index);
 	  ZeroHighlightEntity(NULL, c[i], NULL);
 	  break;
 	case ENT_SURFACE:
-	  List_Suppress(List1, &s[i]->Num, fcmp_int);
+	  index = List_ISearchSeq(List1, &s[i]->Num, fcmp_int); 
+	  if(index >= 0) List_PSuppress(List1, index);
 	  ZeroHighlightEntity(NULL, NULL, s[i]);
 	  break;
 	}
