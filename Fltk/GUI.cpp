@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.482 2006-01-18 04:33:51 geuzaine Exp $
+// $Id: GUI.cpp,v 1.483 2006-01-26 13:41:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2187,8 +2187,8 @@ void GUI::create_option_window()
 
       static Fl_Menu_Item menu_2d_algo[] = {
         {"Isotropic", 0, 0, 0},
-        {"Triangle", 0, 0, 0},
         {"Anisotropic", 0, 0, 0},
+        {"Triangle", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_recombine_algo[] = {

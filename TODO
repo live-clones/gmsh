@@ -1,4 +1,9 @@
-$Id: TODO,v 1.118 2006-01-23 21:26:34 geuzaine Exp $
+$Id: TODO,v 1.119 2006-01-26 13:41:44 geuzaine Exp $
+
+********************************************************************
+
+bug: triangle orientations with the anisotropic algo can change from
+element to element in a single surface? (TO BE CONFIRMED)
 
 ********************************************************************
 

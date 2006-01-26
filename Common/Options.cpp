@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.272 2006-01-18 04:33:51 geuzaine Exp $
+// $Id: Options.cpp,v 1.273 2006-01-26 13:41:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4569,10 +4569,10 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
     case DELAUNAY_ISO:
       WID->mesh_choice[2]->value(0);
       break;
-    case DELAUNAY_TRIANGLE:
+    case DELAUNAY_ANISO:
       WID->mesh_choice[2]->value(1);
       break;
-    case DELAUNAY_ANISO:
+    case DELAUNAY_TRIANGLE:
     default:
       WID->mesh_choice[2]->value(2);
       break;
