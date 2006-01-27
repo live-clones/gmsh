@@ -1062,7 +1062,7 @@ StringXNumber PostProcessingOptions_Number[] = {
     "Remove original views after a Combine operation" },
 
   { F|O, "Format" , opt_post_file_format , 0. ,
-    "Default file format for post-processing views (0=ASCII view, 1=binary view, 2=parsed view, 3=STL triangulation, 4=text)" },
+    "Default file format for post-processing views (0=ASCII view, 1=binary view, 2=parsed view, 3=STL triangulation, 4=text, 5=mesh)" },
 
   { F|O, "HorizontalScales" , opt_post_horizontal_scales , 1. , 
     "Display value scales horizontally" },

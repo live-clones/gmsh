@@ -231,7 +231,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Points
 Display mesh vertices (nodes)?@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PointsPerElement

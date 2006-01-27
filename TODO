@@ -1,4 +1,4 @@
-$Id: TODO,v 1.119 2006-01-26 13:41:44 geuzaine Exp $
+$Id: TODO,v 1.120 2006-01-27 21:15:30 geuzaine Exp $
 
 ********************************************************************
 
@@ -16,11 +16,6 @@ curve/surface/volume or loop over all elements.)
 - Fix nodes of surface elements in Tetgen (easy)
 - Extend Tetgen to multiple-volume geometries (hard)
 - Tetgen+partitions -> crash in BDS transfer
-
-********************************************************************
-
-Would be nice to have a routine to save a post-processing view as a
-mesh file (in MSH format)
 
 ********************************************************************
 

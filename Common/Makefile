@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.80 2006-01-14 16:24:53 geuzaine Exp $
+# $Id: Makefile,v 1.81 2006-01-27 21:15:30 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -29,7 +29,7 @@ CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Context.cpp\
       AdaptiveViews.cpp\
-      Views.cpp\
+      Views.cpp ViewsIO.cpp\
       Options.cpp\
       CommandLine.cpp\
       Timer.cpp\

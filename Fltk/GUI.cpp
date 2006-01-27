@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.483 2006-01-26 13:41:45 geuzaine Exp $
+// $Id: GUI.cpp,v 1.484 2006-01-27 21:15:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1263,6 +1263,8 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 		  (Fl_Callback *) view_all_visible_cb, (void *)1, 0);
 	p[j]->add("Set Visibility/All Off", 0, 
 		  (Fl_Callback *) view_all_visible_cb, (void *)0, 0);
+	p[j]->add("Set Visibility/Invert", 0, 
+		  (Fl_Callback *) view_all_visible_cb, (void *)-1, 0);
 	p[j]->add("Save As/Parsed View...", 0, 
 		  (Fl_Callback *) view_save_parsed_cb, (void *)nb, 0);
 	p[j]->add("Save As/ASCII View...", 0, 
@@ -1273,6 +1275,8 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 		  (Fl_Callback *) view_save_stl_cb, (void *)nb, 0);
 	p[j]->add("Save As/Text...", 0, 
 		  (Fl_Callback *) view_save_txt_cb, (void *)nb, 0);
+	p[j]->add("Save As/Mesh...", 0, 
+		  (Fl_Callback *) view_save_msh_cb, (void *)nb, 0);
 	add_post_plugins(p[j], nb);
 	p[j]->add("Apply As Background Mesh", 0, 
 		  (Fl_Callback *) view_applybgmesh_cb, (void *)nb, FL_MENU_DIVIDER);

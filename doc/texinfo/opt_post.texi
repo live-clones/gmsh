@@ -20,7 +20,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item PostProcessing.Format
-Default file format for post-processing views (0=ASCII view, 1=binary view, 2=parsed view, 3=STL triangulation, 4=text)@*
+Default file format for post-processing views (0=ASCII view, 1=binary view, 2=parsed view, 3=STL triangulation, 4=text, 5=mesh)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.403 2006-01-26 13:41:44 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.404 2006-01-27 21:15:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3436,6 +3436,11 @@ void view_save_txt_cb(CALLBACK_ARGS)
   _view_save_as((int)(long)data, "Save As Text", 4);
 }
 
+void view_save_msh_cb(CALLBACK_ARGS)
+{
+  _view_save_as((int)(long)data, "Save As Mesh", 5);
+}
+
 void view_alias_cb(CALLBACK_ARGS)
 {
   AliasView((int)(long)data, 0);
@@ -3487,7 +3492,9 @@ void view_combine_time_by_name_cb(CALLBACK_ARGS)
 void view_all_visible_cb(CALLBACK_ARGS)
 {
   for(int i = 0; i < List_Nbr(CTX.post.list); i ++)
-    opt_view_visible(i, GMSH_SET | GMSH_GUI, (long)data ? 1 : 0);
+    opt_view_visible(i, GMSH_SET | GMSH_GUI, 
+		     (long)data < 0 ? !opt_view_visible(i, GMSH_GET, 0) :
+		     (long)data > 0 ? 1 : 0);
   Draw();
 }
 
