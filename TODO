@@ -1,4 +1,18 @@
-$Id: TODO,v 1.120 2006-01-27 21:15:30 geuzaine Exp $
+$Id: TODO,v 1.121 2006-01-27 23:35:35 geuzaine Exp $
+
+
+********************************************************************
+
+pfgshield-freebsd@yahoo.com:
+
+On the FreeBSD port, unfortunately, the licensing issues prohibit us from
+redistributing gmsh with tetgen and triangle. Of course this is a problem
+derived from the license in both utilities and not really gmsh's fault. 
+One thing could be done to alleviate the problem though: Adding exceptions to
+the GPL for linking with these libraries as explained in the GPL FAQ would
+permit people to make distributions of the package and libraries, although
+without charging any fee with it.
+http://www.gnu.org/licenses/gpl-faq.html#GPLIncompatibleLibs
 
 ********************************************************************
 
