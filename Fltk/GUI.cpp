@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.484 2006-01-27 21:15:30 geuzaine Exp $
+// $Id: GUI.cpp,v 1.485 2006-01-28 06:40:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3414,10 +3414,19 @@ void GUI::update_view_window(int num)
 void GUI::create_statistics_window()
 {
   int i, num = 0;
+  static Fl_Group *g[10];
 
   if(stat_window) {
     if(!stat_window->shown())
       set_statistics();
+    for(i = 0; i < 3; i++)
+      g[i]->hide();
+    switch(get_context()){
+    case 0: g[0]->show(); break; // geometry
+    case 1: g[1]->show(); break; // mesh
+    case 3: g[2]->show(); break; // post-pro
+    default: g[1]->show(); break; // mesh
+    }
     stat_window->show();
     return;
   }
@@ -3430,17 +3439,16 @@ void GUI::create_statistics_window()
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
     {
-      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Geometry");
-      o->hide();
+      g[0] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Geometry");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Points");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Lines");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Surfaces");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 4 * BH, IW, BH, "Volumes");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 5 * BH, IW, BH, "Physical groups");
-      o->end();
+      g[0]->end();
     }
     {
-      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Mesh");
+      g[1] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Mesh");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Nodes on Lines");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Nodes on surfaces");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Nodes in volumes");
@@ -3467,11 +3475,10 @@ void GUI::create_statistics_window()
       Fl_Button *b2 = new Fl_Button(width - BB - 5 * WB, 2 * WB + 16 * BH, BB, BH, "Graph");
       b2->callback(statistics_histogram_cb, (void *)"rho");
 
-      o->end();
+      g[1]->end();
     }
     {
-      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Post-processing");
-      o->hide();
+      g[2] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Post-processing");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Views");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Visible points");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Visible lines");
@@ -3482,7 +3489,7 @@ void GUI::create_statistics_window()
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 8 * BH, IW, BH, "Visible prisms");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 9 * BH, IW, BH, "Visible pyramids");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 10 * BH, IW, BH, "Visible strings");
-      o->end();
+      g[2]->end();
     }
     o->end();
   }
