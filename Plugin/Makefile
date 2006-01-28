@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.88 2006-01-14 16:24:55 geuzaine Exp $
+# $Id: Makefile,v 1.89 2006-01-28 01:37:48 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -41,7 +41,7 @@ SRC = Plugin.cpp\
         DisplacementRaise.cpp\
 	StructuralSolver.cpp\
         Skin.cpp\
-        Extract.cpp\
+        Extract.cpp ExtractElements.cpp\
         DecomposeInSimplex.cpp\
         Evaluate.cpp\
         Integrate.cpp Gradient.cpp Curl.cpp Divergence.cpp\
