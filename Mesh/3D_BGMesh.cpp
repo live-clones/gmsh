@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.42 2006-01-28 22:30:32 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.43 2006-01-28 22:57:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -34,6 +34,7 @@ static double BGM_MAX = 0.;
 
 int BGMWithView(Post_View * ErrView)
 {
+  Msg(INFO, "Applying '%s' as background mesh", ErrView->Name);
   if(BGM_OCTREE) delete BGM_OCTREE;
   BGM_OCTREE = new OctreePost(ErrView);
   BGM_MAX = ErrView->Max;
