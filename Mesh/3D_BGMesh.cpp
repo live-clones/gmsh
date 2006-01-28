@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.41 2006-01-28 19:53:18 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.42 2006-01-28 22:30:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -43,7 +43,8 @@ int BGMWithView(Post_View * ErrView)
 
 double Lc_XYZ(double X, double Y, double Z, Mesh * m)
 {
-  double l, fact[6] = {0.001, 0.005, 0.01, 0.05, 0.1, 0.5};
+  double l = 0.;
+  double fact[9] = {0.001, 0.0025, 0.005, 0.0075, 0.01, 0.025, 0.05, 0.075, 0.1};
 
   switch (m->BGM.Typ) {
   case FUNCTION:
@@ -55,7 +56,8 @@ double Lc_XYZ(double X, double Y, double Z, Mesh * m)
     break;
   case ONFILE:
     if(!BGM_OCTREE->searchScalar(X, Y, Z, &l, 0)){
-      for(int i = 0; i < 6; i++){
+      // try really hard to find an element around the point
+      for(int i = 0; i < 9; i++){
 	double eps = CTX.lc * fact[i];
 	if(BGM_OCTREE->searchScalar(X + eps, Y, Z, &l, 0)) break;
 	if(BGM_OCTREE->searchScalar(X - eps, Y, Z, &l, 0)) break;
@@ -63,6 +65,14 @@ double Lc_XYZ(double X, double Y, double Z, Mesh * m)
 	if(BGM_OCTREE->searchScalar(X, Y - eps, Z, &l, 0)) break;
 	if(BGM_OCTREE->searchScalar(X, Y, Z + eps, &l, 0)) break;
 	if(BGM_OCTREE->searchScalar(X, Y, Z - eps, &l, 0)) break;
+	if(BGM_OCTREE->searchScalar(X + eps, Y - eps, Z - eps, &l, 0)) break;
+	if(BGM_OCTREE->searchScalar(X + eps, Y + eps, Z - eps, &l, 0)) break;
+	if(BGM_OCTREE->searchScalar(X - eps, Y - eps, Z - eps, &l, 0)) break;
+	if(BGM_OCTREE->searchScalar(X - eps, Y + eps, Z - eps, &l, 0)) break;
+	if(BGM_OCTREE->searchScalar(X + eps, Y - eps, Z + eps, &l, 0)) break;
+	if(BGM_OCTREE->searchScalar(X + eps, Y + eps, Z + eps, &l, 0)) break;
+	if(BGM_OCTREE->searchScalar(X - eps, Y - eps, Z + eps, &l, 0)) break;
+	if(BGM_OCTREE->searchScalar(X - eps, Y + eps, Z + eps, &l, 0)) break;
       }
     }
     if(l <= 0) l = BGM_MAX;
