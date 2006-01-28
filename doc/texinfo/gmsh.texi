@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.197 2006-01-28 21:16:36 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.198 2006-01-28 21:44:23 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -1942,15 +1942,16 @@ Attractors only work with the 2D anisotropic algorithm (see the
 You can give Gmsh an explicit background mesh in the form of a scalar
 post-processing view (see @ref{Post-processing commands}, and @ref{File
 formats}) in which the nodal values are the target element sizes.  This
-method is very general but it requires a first (usually rough) mesh and a
-way to compute the target sizes on this mesh (usually through an error
-estimation procedure, in an iterative process of mesh adaptation). Note that
-the target element sizes can be constrained by the characteristic lengths
-defined in the geometrical model if the
-@code{Mesh.ConstrainedBackgroundMesh} option is set. To load a background
-mesh, use the @code{-bgm} command-line option (@pxref{Command-line options})
-or select `Apply as background mesh' in the post-processing view option
-menu.
+method is very general but it requires a first (usually rough) mesh and
+a way to compute the target sizes on this mesh (usually through an error
+estimation procedure, in an iterative process of mesh adaptation). Note
+that the target element sizes can be constrained by the characteristic
+lengths defined in the geometrical model if the
+@code{Mesh.ConstrainedBackgroundMesh} option is set. To load a
+background mesh, you can use the @code{-bgm} command-line option
+(@pxref{Command-line options}), select `Apply as background mesh' in the
+post-processing view option menu, or use the @code{Background Mesh}
+command in a script (@pxref{Post-processing commands}).
 
 Background meshes are supported by all algorithms except the algorithms
 based on Netgen.
@@ -2352,6 +2353,10 @@ post-processing view numbers start at 0.
 
 @item Delete Empty Views;
 Deletes (removes) all the empty post-processing views.
+
+@item Background Mesh View[@var{expression}];
+Applies the @var{expression}-th post-processing view as the current
+background mesh. Note that post-processing view numbers start at 0.
 
 @item Plugin (@var{string}) . Run;
 Executes the plugin @var{string}. The list of default plugins is given in

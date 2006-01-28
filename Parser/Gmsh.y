@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.217 2006-01-28 21:13:35 geuzaine Exp $
+// $Id: Gmsh.y,v 1.218 2006-01-28 21:44:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1798,6 +1798,17 @@ Command :
 	yymsg(GERROR, "Unknown command '%s'", $1);
       }
       Free($1); Free($2); Free($6);
+    }
+  | tSTRING tSTRING tSTRING '[' FExpr ']' tEND
+    {
+      if(!strcmp($1, "Background") && !strcmp($2, "Mesh")  && !strcmp($3, "View")){
+	Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, (int)$5);
+	if(vv) BGMWithView(*vv);
+      }
+      else{
+	yymsg(GERROR, "Unknown command '%s'", $1);
+      }
+      Free($1); Free($2); Free($3);
     }
   | tSTRING FExpr tEND
     {
