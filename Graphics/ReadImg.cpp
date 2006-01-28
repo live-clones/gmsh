@@ -1,4 +1,4 @@
-// $Id: ReadImg.cpp,v 1.10 2006-01-06 00:34:25 geuzaine Exp $
+// $Id: ReadImg.cpp,v 1.11 2006-01-28 00:58:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -27,71 +27,66 @@
 #include <FL/Fl_PNM_Image.H>
   
 // from an image, we create a post pro object
-Post_View * Img2Pos(Fl_RGB_Image & img_init) 
-{
-  img_init.desaturate();
 
-  Fl_RGB_Image * img = (Fl_RGB_Image *) img_init.copy(128, 128);
+Post_View * Img2Pos(Fl_RGB_Image & img_init, int quads=1,
+		    int resizex=0, int resizey=0) 
+{
+  img_init.desaturate(); // convert to grayscale
+
+  // resize if necessary
+  Fl_RGB_Image * img;
+  if(!resizex || !resizey)
+    img = (Fl_RGB_Image *) img_init.copy();
+  else
+    img = (Fl_RGB_Image *) img_init.copy(resizex, resizey);
 
   const uchar *data = img->array;
   int height = img->h();
   int width = img->w();
   int dim = img->d();
 
+  if(dim != 1) {
+    Msg(GERROR, "Unable to convert image to grayscale");
+    return NULL;
+  }
+
   Post_View * v = BeginView(1);
 
-  for(int i = 0; i < width - 1; i++) {
+  double z = 0.;
+  for(int i = 0; i < height - 1; i++) {
     const uchar *a = data + i * width * dim;
     const uchar *a1 = data + (i + 1) * width * dim;
-    double y = 1. - (double)i / ((double)width - 1.);
-    double y1 = 1. - (double)(i + 1) / ((double)width - 1.);
-    for(int j = 0; j < height - 1; j++) {
-      double x = (double)j / ((double)height - 1.);
-      double x1 = (double)(j + 1) / ((double)height - 1.);
-      double z = 0.0;
-      if(dim == 1) {     // grayscale
-        uchar G1 = a[j];
-        uchar G2 = a1[j];
-        uchar G3 = a1[j + 1];
-        uchar G4 = a[j + 1];
-        const double eps = 0.005;
-        const double Eps = .25;
-        double val1 = Eps * (G1) / 255. + eps;
-        double val2 = Eps * (G2) / 255. + eps;
-        double val3 = Eps * (G3) / 255. + eps;
-        double val4 = Eps * (G4) / 255. + eps;
-	/*
-	  val1*=val1;
-	  val2*=val2;
-	  val3*=val3;
-	  val4*=val4;
-	*/ 
-	List_Add(v->ST, &x);
-        List_Add(v->ST, &x);
-        List_Add(v->ST, &x1);
-        List_Add(v->ST, &y);
-        List_Add(v->ST, &y1);
-        List_Add(v->ST, &y1);
-        List_Add(v->ST, &z);
-        List_Add(v->ST, &z);
-        List_Add(v->ST, &z);
-        List_Add(v->ST, &val1);
-        List_Add(v->ST, &val2);
-        List_Add(v->ST, &val3);
-        v->NbST++;
-        List_Add(v->ST, &x);
-        List_Add(v->ST, &x1);
-        List_Add(v->ST, &x1);
-        List_Add(v->ST, &y);
-        List_Add(v->ST, &y1);
-        List_Add(v->ST, &y);
-        List_Add(v->ST, &z);
-        List_Add(v->ST, &z);
-        List_Add(v->ST, &z);
-        List_Add(v->ST, &val1);
-        List_Add(v->ST, &val3);
-        List_Add(v->ST, &val4);
-        v->NbST++;
+    double y = height - i;
+    double y1 = height - (i + 1);
+    for(int j = 0; j < width - 1; j++) {
+      double x = j;
+      double x1 = (j + 1);
+      double val1 = (double)a[j]/255.;
+      double val2 = (double)a1[j]/255.;
+      double val3 = (double)a1[j + 1]/255.;
+      double val4 = (double)a[j + 1]/255.;
+      if(quads){ // generate quads
+	List_Add(v->SQ, &x); List_Add(v->SQ, &x); 
+	List_Add(v->SQ, &x1); List_Add(v->SQ, &x1);
+	List_Add(v->SQ, &y); List_Add(v->SQ, &y1);
+	List_Add(v->SQ, &y1); List_Add(v->SQ, &y);
+	List_Add(v->SQ, &z); List_Add(v->SQ, &z);
+	List_Add(v->SQ, &z); List_Add(v->SQ, &z);
+	List_Add(v->SQ, &val1); List_Add(v->SQ, &val2);
+	List_Add(v->SQ, &val3); List_Add(v->SQ, &val4);
+	v->NbSQ++;
+      }
+      else{ // generate triangles
+	List_Add(v->ST, &x); List_Add(v->ST, &x); List_Add(v->ST, &x1);
+	List_Add(v->ST, &y); List_Add(v->ST, &y1); List_Add(v->ST, &y1);
+	List_Add(v->ST, &z); List_Add(v->ST, &z); List_Add(v->ST, &z);
+	List_Add(v->ST, &val1); List_Add(v->ST, &val2); List_Add(v->ST, &val3);
+	v->NbST++;
+	List_Add(v->ST, &x); List_Add(v->ST, &x1); List_Add(v->ST, &x1);
+	List_Add(v->ST, &y); List_Add(v->ST, &y1); List_Add(v->ST, &y);
+	List_Add(v->ST, &z); List_Add(v->ST, &z); List_Add(v->ST, &z);
+	List_Add(v->ST, &val1); List_Add(v->ST, &val3); List_Add(v->ST, &val4);
+	v->NbST++;
       }
     }
   }
@@ -105,11 +100,12 @@ void read_pnm(char *name)
 
   Fl_PNM_Image theVeryNicePicture(name);
   Post_View * v = Img2Pos(theVeryNicePicture);
-  char name2[256];
-  strcpy(name2, name);
-  strcat(name2, ".pos");
-  EndView(v, 1, name2, name);
-
-  Msg(INFO, "Read PNM file '%s'", name);
-  Msg(STATUS2N, "Read '%s'", name);
+  if(v){
+    char name2[256];
+    strcpy(name2, name);
+    strcat(name2, ".pos");
+    EndView(v, 1, name2, name);
+    Msg(INFO, "Read PNM file '%s'", name);
+    Msg(STATUS2N, "Read '%s'", name);
+  }
 }

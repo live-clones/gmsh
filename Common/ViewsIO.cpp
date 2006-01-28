@@ -1,4 +1,4 @@
-// $Id: ViewsIO.cpp,v 1.1 2006-01-27 21:15:30 geuzaine Exp $
+// $Id: ViewsIO.cpp,v 1.2 2006-01-28 00:58:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -706,7 +706,7 @@ static void print_elms(FILE *file, int nbelm, List_T *list,
 	std::set<Nod, NodCompPos>::iterator it = nodes->find(n);
 	if(it == nodes->end()){
 	  Msg(GERROR, "Unknown node in element");
-	  break;
+	  return;
 	}
 	else{
 	  nod[j] = (Nod)(*it);
