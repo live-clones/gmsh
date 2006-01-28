@@ -1,4 +1,4 @@
-// $Id: ViewsIO.cpp,v 1.2 2006-01-28 00:58:25 geuzaine Exp $
+// $Id: ViewsIO.cpp,v 1.3 2006-01-28 03:23:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -645,12 +645,26 @@ static void get_nod(int nbelm, List_T *list, int nbnod, int nbcomp,
 static void print_elm(FILE *file, int num, int nbnod, Nod nod[8], 
 		      int nbcomp, double *vals, int dim)
 {
-  // FIXME: implement a nice algo to assign regions based on the values!
-  double avg = 0.;
-  for(int i = 0; i < nbcomp*nbnod; i++)
-    avg += vals[i];
-  avg /= (double)(nbcomp*nbnod);
-  int ele = (int)fabs(avg) + 1, phys = 1;
+  // compute average value in elm
+  double d = 0.;
+  for(int k = 0; k < nbnod; k++) {
+    double *v = &vals[nbcomp * k];
+    switch(nbcomp) {
+    case 1: // scalar
+      d += v[0];
+      break;
+    case 3 : // vector
+      d += sqrt(DSQR(v[0]) + DSQR(v[1]) + DSQR(v[2]));
+      break;
+    case 9 : // tensor
+      d += ComputeVonMises(v);
+      break;
+    }
+  }
+  d /= (double)nbnod;
+
+  // assign val as elementary region number
+  int ele = (int)fabs(d) + 1, phys = 1;
 
   switch(dim){
   case 0:

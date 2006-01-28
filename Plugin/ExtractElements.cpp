@@ -1,4 +1,4 @@
-// $Id: ExtractElements.cpp,v 1.2 2006-01-28 01:44:11 geuzaine Exp $
+// $Id: ExtractElements.cpp,v 1.3 2006-01-28 03:23:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -90,13 +90,27 @@ static void extract(List_T *inList, int inNb,
 
   int nb = List_Nbr(inList) / inNb;
   for(int i = 0; i < List_Nbr(inList); i += nb) {
-    double *val = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + 
-					      timeStep * nbNod * nbComp);
-    double v = 0.;
-    for(int j = 0; j < nbNod*nbComp; j++)
-      v += val[j];
-    v /= (double)(nbNod*nbComp);
-    if(v >= MinVal && v < MaxVal){
+    double *vals = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + 
+					       timeStep * nbNod * nbComp);
+    double d = 0.;
+    for(int k = 0; k < nbNod; k++) {
+      double *v = &vals[nbComp * k];
+      switch(nbComp) {
+      case 1: // scalar
+	d += v[0];
+	break;
+      case 3 : // vector
+	d += sqrt(DSQR(v[0]) + DSQR(v[1]) + DSQR(v[2]));
+	break;
+      case 9 : // tensor
+	d += ComputeVonMises(v);
+	break;
+      }
+    }
+    d /= (double)nbNod;
+    // '<=' and '<' so that we can do segmentation without playing
+    // without worrying about roudoff errors
+    if(d >= MinVal && d < MaxVal){
       for(int j = 0; j < nb; j++)
 	List_Add(outList, List_Pointer_Fast(inList, i + j));
       (*outNb)++;
