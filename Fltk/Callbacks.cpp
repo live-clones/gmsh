@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.404 2006-01-27 21:15:30 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.405 2006-01-28 07:07:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -596,7 +596,12 @@ static char *file_types =
   "\tGmsh mesh (*.msh)"
   "\tGmsh post-processing view (*.pos)"
   "\tSTL triangulation (*.stl)"
+  "\tJPEG (*.jpg)"
+  "\tPNG (*.png)"
+  "\tBMP (*.bmp)"
   "\tPPM (*.ppm)"
+  "\tPGM (*.pgm)"
+  "\tPBM (*.pbm)"
   "\tPNM (*.pnm)";
 
 void file_open_cb(CALLBACK_ARGS)

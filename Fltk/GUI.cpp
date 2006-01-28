@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.485 2006-01-28 06:40:41 geuzaine Exp $
+// $Id: GUI.cpp,v 1.486 2006-01-28 07:07:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -872,6 +872,9 @@ GUI::GUI(int argc, char **argv)
   if(strlen(CTX.scheme))
     Fl::scheme(CTX.scheme);
   Fl_Tooltip::size(fontsize);
+
+  // load system icons
+  Fl_File_Icon::load_system_icons();
 
   // add callback to respond to the Mac Finder (when you click on a
   // document)
