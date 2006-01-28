@@ -1,4 +1,4 @@
-// $Id: ExtractElements.cpp,v 1.1 2006-01-28 01:37:48 geuzaine Exp $
+// $Id: ExtractElements.cpp,v 1.2 2006-01-28 01:44:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -50,7 +50,7 @@ GMSH_ExtractElementsPlugin::GMSH_ExtractElementsPlugin()
 
 void GMSH_ExtractElementsPlugin::getName(char *name) const
 {
-  strcpy(name, "ExtractElements");
+  strcpy(name, "Extract Elements");
 }
 
 void GMSH_ExtractElementsPlugin::getInfos(char *author, char *copyright, char *help_text) const
