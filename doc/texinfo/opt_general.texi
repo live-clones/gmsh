@@ -166,7 +166,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BackgroundGradient
 Draw background gradient (0=none, 1=vertical, 2=horizontal, 3=radial)@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Clip0
