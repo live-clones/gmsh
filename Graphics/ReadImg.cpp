@@ -1,4 +1,4 @@
-// $Id: ReadImg.cpp,v 1.13 2006-01-28 04:50:36 geuzaine Exp $
+// $Id: ReadImg.cpp,v 1.14 2006-01-28 07:48:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -100,10 +100,19 @@ static Post_View *Img2Pos(Fl_RGB_Image & img_init, int quads=1,
 static void EndPos(char *name, Post_View *v)
 {
   if(!v) return;
-  char name2[256];
-  strcpy(name2, name);
-  strcat(name2, ".pos");
-  EndView(v, 1, name2, name);
+  char name_pos[256], title[256];
+  strcpy(name_pos, name);
+  strcat(name_pos, ".pos");
+  int i;
+  for(i = strlen(name)-1; i >= 0; i--){
+    if(name[i] == '/' || name[i] == '\\')
+      break;
+  }
+  if(i <= 0)
+    strcpy(title, name);
+  else
+    strcpy(title, &name[i+1]);
+  EndView(v, 1, name_pos, title);
   Msg(INFO, "Read file '%s'", name);
   Msg(STATUS2N, "Read '%s'", name);
 }
