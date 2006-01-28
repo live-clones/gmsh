@@ -3501,8 +3501,15 @@ echo "$as_me: error: Could not find fltk-config. Try --with-fltk-prefix?" >&2;}
   GMSH_LIBS="${GMSH_LIBS} `$FLTKCONFIG --use-gl --use-images --ldflags`"
   INCLS="${INCLS} `$FLTKCONFIG --use-gl --use-images --cxxflags`"
 
+  FL_JPEG=""
+  expr "x${GMSH_LIBS}" : 'x.*fltk_jpeg.*' >/dev/null && FL_JPEG="yes"
+  FL_PNG=""
+  expr "x${GMSH_LIBS}" : 'x.*fltk_png.*' >/dev/null && FL_PNG="yes"
+  FL_ZLIB=""
+  expr "x${GMSH_LIBS}" : 'x.*fltk_z.*' >/dev/null && FL_ZLIB="yes"
+
     if test "x$enable_jpeg" != "xno"; then
-        if expr "${GMSH_LIBS}" : '.*fltk_jpeg.*'; then
+        if test "x${FL_JPEG}" = "xyes"; then
       FLAGS="-DHAVE_LIBJPEG ${FLAGS}"
     else
       if test "x${JPEG_PREFIX}" != "x"; then
@@ -3586,7 +3593,7 @@ fi
 
     ZLIB=""
   if test "x$enable_zlib" != "xno"; then
-        if expr "${GMSH_LIBS}" : '.*fltk_z.*'; then
+        if test "x${FL_ZLIB}" = "xyes"; then
       ZLIB="yes"
     else
       if test "x${ZLIB_PREFIX}" != "x"; then
@@ -3660,7 +3667,7 @@ fi
   fi
 
     if test "x$enable_png" != "xno" -a "x${ZLIB}" = "xyes"; then
-        if expr "${GMSH_LIBS}" : '.*fltk_png.*'; then
+        if test "x${FL_PNG}" = "xyes"; then
       FLAGS="-DHAVE_LIBPNG ${FLAGS}"
     else
       if test "x${PNG_PREFIX}" != "x"; then
@@ -3743,7 +3750,7 @@ fi
   fi
 
     if test "x${ZLIB}" = "xyes"; then
-        if expr "${GMSH_LIBS}" : '.*fltk_z.*'; then
+        if test "x${FL_ZLIB}" = "xyes"; then
       FLAGS="-DHAVE_LIBZ ${FLAGS}"
     else
       FLAGS="-DHAVE_LIBZ ${FLAGS}"

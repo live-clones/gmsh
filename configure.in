@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.86 2006-01-28 04:50:36 geuzaine Exp $
+dnl $Id: configure.in,v 1.87 2006-01-28 05:26:43 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 dnl
@@ -163,10 +163,17 @@ if test "x$enable_gui" != "xno"; then
   GMSH_LIBS="${GMSH_LIBS} `$FLTKCONFIG --use-gl --use-images --ldflags`"
   INCLS="${INCLS} `$FLTKCONFIG --use-gl --use-images --cxxflags`"
 
+  FL_JPEG=""
+  expr "x${GMSH_LIBS}" : 'x.*fltk_jpeg.*' >/dev/null && FL_JPEG="yes"
+  FL_PNG=""
+  expr "x${GMSH_LIBS}" : 'x.*fltk_png.*' >/dev/null && FL_PNG="yes"
+  FL_ZLIB=""
+  expr "x${GMSH_LIBS}" : 'x.*fltk_z.*' >/dev/null && FL_ZLIB="yes"
+
   dnl Check for libjpeg
   if test "x$enable_jpeg" != "xno"; then
     dnl If provided by FLTK, use that one; otherwise, look for it
-    if expr "${GMSH_LIBS}" : '.*fltk_jpeg.*'; then
+    if test "x${FL_JPEG}" = "xyes"; then
       FLAGS="-DHAVE_LIBJPEG ${FLAGS}"
     else      
       if test "x${JPEG_PREFIX}" != "x"; then
@@ -190,7 +197,7 @@ if test "x$enable_gui" != "xno"; then
   ZLIB=""
   if test "x$enable_zlib" != "xno"; then
     dnl If provided by FLTK, use that one; otherwise, look for it
-    if expr "${GMSH_LIBS}" : '.*fltk_z.*'; then
+    if test "x${FL_ZLIB}" = "xyes"; then
       ZLIB="yes"
     else      
       if test "x${ZLIB_PREFIX}" != "x"; then
@@ -203,7 +210,7 @@ if test "x$enable_gui" != "xno"; then
   dnl Check for libpng (only if libz is available)
   if test "x$enable_png" != "xno" -a "x${ZLIB}" = "xyes"; then
     dnl If provided by FLTK, use that one; otherwise, look for it
-    if expr "${GMSH_LIBS}" : '.*fltk_png.*'; then
+    if test "x${FL_PNG}" = "xyes"; then
       FLAGS="-DHAVE_LIBPNG ${FLAGS}"
     else
       if test "x${PNG_PREFIX}" != "x"; then
@@ -215,7 +222,7 @@ if test "x$enable_gui" != "xno"; then
         if test "x${PNG_PREFIX}" = "x"; then
           GMSH_LIBS="${GMSH_LIBS} -lpng"
         else
-          dnl Find the libs/includes even if libjpeg is _not_ properly installed (ugly hack!)
+          dnl Find the libs/includes even if libpng is _not_ properly installed (ugly hack!)
           GMSH_LIBS="${GMSH_LIBS} -L${PNG_PREFIX} -L${PNG_PREFIX}/lib -lpng"
           INCLS="${INCLS} -I${PNG_PREFIX} -I${PNG_PREFIX}/include"
         fi
@@ -226,14 +233,14 @@ if test "x$enable_gui" != "xno"; then
   dnl Complete zlib link line (zlib must be linked in after libpng)
   if test "x${ZLIB}" = "xyes"; then
     dnl If provided by FLTK, use that one; otherwise, look for it
-    if expr "${GMSH_LIBS}" : '.*fltk_z.*'; then
+    if test "x${FL_ZLIB}" = "xyes"; then
       FLAGS="-DHAVE_LIBZ ${FLAGS}"
     else
       FLAGS="-DHAVE_LIBZ ${FLAGS}"
       if test "x${ZLIB_PREFIX}" = "x"; then
         GMSH_LIBS="${GMSH_LIBS} -lz"
       else
-        dnl Find the libs/includes even if libjpeg is _not_ properly installed (ugly hack!)
+        dnl Find the libs/includes even if libz is _not_ properly installed (ugly hack!)
         GMSH_LIBS="${GMSH_LIBS} -L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib -lz"
         INCLS="${INCLS} -I${ZLIB_PREFIX} -I${ZLIB_PREFIX}/include"
       fi
