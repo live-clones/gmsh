@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.89 2006-01-28 01:37:48 geuzaine Exp $
+# $Id: Makefile,v 1.90 2006-01-28 01:41:35 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -78,9 +78,9 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   PluginManager.h CutMap.h Levelset.h CutGrid.h StreamLines.h CutPlane.h \
   CutParametric.h CutSphere.h Skin.h ../DataStr/Tree.h ../DataStr/avl.h \
-  Extract.h HarmonicToTime.h ModulusPhase.h Integrate.h Gradient.h Curl.h \
-  Divergence.h Annotate.h Remove.h DecomposeInSimplex.h Smooth.h \
-  Transform.h Triangulate.h SphericalRaise.h DisplacementRaise.h \
+  Extract.h ExtractElements.h HarmonicToTime.h ModulusPhase.h Integrate.h \
+  Gradient.h Curl.h Divergence.h Annotate.h Remove.h DecomposeInSimplex.h \
+  Smooth.h Transform.h Triangulate.h SphericalRaise.h DisplacementRaise.h \
   StructuralSolver.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
   ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h \
   ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h \
@@ -243,6 +243,12 @@ Extract.o: Extract.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   Extract.h ../Common/Context.h ../DataStr/Malloc.h
+ExtractElements.o: ExtractElements.cpp Plugin.h ../Common/Options.h \
+  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
+  ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
+  ../Numeric/Numeric.h ../Common/GmshMatrix.h ../Common/AdaptiveViews.h \
+  ../Common/GmshMatrix.h ExtractElements.h ../Common/Context.h \
+  ../DataStr/Malloc.h
 DecomposeInSimplex.o: DecomposeInSimplex.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
