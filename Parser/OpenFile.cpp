@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.87 2006-01-06 00:34:32 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.88 2006-01-28 04:50:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -267,20 +267,8 @@ int MergeProblem(char *name, int warn_if_missing)
   }
 #endif
   
-  if(!strcmp(ext, ".ppm") || !strcmp(ext, ".pnm")) {
-    // An image file is used as an input, we transform it onto a post
-    // pro file that could be used as a background mesh. We should
-    // check the first bytes of the file instead of the extension to
-    // determine the file type.
-#if defined(HAVE_FLTK)
-    read_pnm(name);
-    SetBoundingBox();
-#endif
-    status = 0;
-  }
-  else if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL") || 
-	  !strcmp(ext, ".mesh")) {
-    if (THEM->bds)delete THEM->bds;
+  if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL") || !strcmp(ext, ".mesh")) {
+    if(THEM->bds) delete THEM->bds;
     THEM->bds = new BDS_Mesh;
     if(!strcmp(ext, ".mesh"))
       THEM->bds->read_mesh(name);
@@ -294,6 +282,36 @@ int MergeProblem(char *name, int warn_if_missing)
     SetBoundingBox();
     status = THEM->status;
   }
+#if defined(HAVE_FLTK)
+  else if(!strcmp(ext, ".pnm") || !strcmp(ext, ".PNM") ||
+	  !strcmp(ext, ".pbm") || !strcmp(ext, ".PBM") ||
+	  !strcmp(ext, ".pgm") || !strcmp(ext, ".PGM") ||
+	  !strcmp(ext, ".ppm") || !strcmp(ext, ".PPM")) {
+    read_pnm(name);
+    SetBoundingBox();
+    status = 0;
+  }
+  else if(!strcmp(ext, ".bmp") || !strcmp(ext, ".BMP")) {
+    read_bmp(name);
+    SetBoundingBox();
+    status = 0;
+  }
+#if defined(HAVE_LIBJPEG)
+  else if(!strcmp(ext, ".jpg") || !strcmp(ext, ".JPG") ||
+	  !strcmp(ext, ".jpeg") || !strcmp(ext, ".JPEG")) {
+    read_jpeg(name);
+    SetBoundingBox();
+    status = 0;
+  }
+#endif
+#if defined(HAVE_LIBPNG)
+  else if(!strcmp(ext, ".png") || !strcmp(ext, ".PNG")) {
+    read_png(name);
+    SetBoundingBox();
+    status = 0;
+  }
+#endif
+#endif
   else {
     fpos_t position;
     fgetpos(fp, &position);

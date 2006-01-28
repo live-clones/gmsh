@@ -20,6 +20,9 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-void read_pnm (char *name);
+void read_pnm(char *name);
+void read_jpeg(char *name);
+void read_png(char *name);
+void read_bmp(char *name);
 
 #endif

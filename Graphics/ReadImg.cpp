@@ -1,4 +1,4 @@
-// $Id: ReadImg.cpp,v 1.12 2006-01-28 03:39:44 geuzaine Exp $
+// $Id: ReadImg.cpp,v 1.13 2006-01-28 04:50:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -24,12 +24,15 @@
 #include "GmshUI.h"
 #include "Views.h"
   
+#include <FL/Fl_JPEG_Image.H>
 #include <FL/Fl_PNM_Image.H>
-  
-// from an image, we create a post pro object
+#include <FL/Fl_PNG_Image.H>
+#include <FL/Fl_BMP_Image.H>
 
-Post_View * Img2Pos(Fl_RGB_Image & img_init, int quads=1,
-		    int resizex=0, int resizey=0) 
+// from an image, we create a post-procession view
+
+static Post_View *Img2Pos(Fl_RGB_Image & img_init, int quads=1, 
+			  int resizex=0, int resizey=0) 
 {
   img_init.desaturate(); // convert to grayscale
 
@@ -94,18 +97,41 @@ Post_View * Img2Pos(Fl_RGB_Image & img_init, int quads=1,
   return v;
 }
 
+static void EndPos(char *name, Post_View *v)
+{
+  if(!v) return;
+  char name2[256];
+  strcpy(name2, name);
+  strcat(name2, ".pos");
+  EndView(v, 1, name2, name);
+  Msg(INFO, "Read file '%s'", name);
+  Msg(STATUS2N, "Read '%s'", name);
+}
+
 void read_pnm(char *name) 
 {
   Msg(INFO, "Reading PNM file '%s'", name);
+  Fl_PNM_Image img(name);
+  EndPos(name, Img2Pos(img));
+}
 
-  Fl_PNM_Image theVeryNicePicture(name);
-  Post_View * v = Img2Pos(theVeryNicePicture);
-  if(v){
-    char name2[256];
-    strcpy(name2, name);
-    strcat(name2, ".pos");
-    EndView(v, 1, name2, name);
-    Msg(INFO, "Read PNM file '%s'", name);
-    Msg(STATUS2N, "Read '%s'", name);
-  }
+void read_jpeg(char *name) 
+{
+  Msg(INFO, "Reading JPEG file '%s'", name);
+  Fl_JPEG_Image img(name);
+  EndPos(name, Img2Pos(img));
+}
+
+void read_png(char *name) 
+{
+  Msg(INFO, "Reading PNG file '%s'", name);
+  Fl_PNG_Image img(name);
+  EndPos(name, Img2Pos(img));
+}
+
+void read_bmp(char *name) 
+{
+  Msg(INFO, "Reading BMP file '%s'", name);
+  Fl_BMP_Image img(name);
+  EndPos(name, Img2Pos(img));
 }
