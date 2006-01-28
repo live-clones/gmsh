@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.216 2006-01-14 22:32:58 geuzaine Exp $
+// $Id: Gmsh.y,v 1.217 2006-01-28 21:13:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -35,7 +35,6 @@
 #include "Draw.h"
 #include "Create.h"
 #include "Views.h"
-#include "StepGeomDatabase.h"
 #include "Options.h"
 #include "Colors.h"
 #include "Parser.h"
@@ -108,28 +107,15 @@ int CheckViewErrorFlags(Post_View *v);
 %token tReturn tCall tFunction tTrimmed tShow tHide tGetValue
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 
-%token tB_SPLINE_SURFACE_WITH_KNOTS
-%token tB_SPLINE_CURVE_WITH_KNOTS
-%token tCARTESIAN_POINT
-%token tTRUE tFALSE tUNSPECIFIED tU tV tEDGE_CURVE tVERTEX_POINT tORIENTED_EDGE tPLANE
-%token tFACE_OUTER_BOUND tEDGE_LOOP tADVANCED_FACE tVECTOR tDIRECTION tAXIS2_PLACEMENT_3D
-%token tISO tENDISO tENDSEC tDATA tHEADER tFILE_DESCRIPTION tFILE_SCHEMA tFILE_NAME
-%token tMANIFOLD_SOLID_BREP tCLOSED_SHELL tADVANCED_BREP_SHAPE_REPRESENTATION
-%token tFACE_BOUND tCYLINDRICAL_SURFACE tCONICAL_SURFACE tCIRCLE tTRIMMED_CURVE
-%token tGEOMETRIC_SET tCOMPOSITE_CURVE_SEGMENT tCOMPOSITE_CURVE_SEGMENT tCONTINUOUS
-%token tCOMPOSITE_CURVE tTOROIDAL_SURFACE tPRODUCT_DEFINITION tPRODUCT_DEFINITION_SHAPE
-%token tSHAPE_DEFINITION_REPRESENTATION tELLIPSE
-
 %type <d> FExpr FExpr_Single 
 %type <v> VExpr VExpr_Single
-%type <i> BoolExpr NumericAffectation NumericIncrement
+%type <i> NumericAffectation NumericIncrement
 %type <u> ColorExpr
 %type <c> StringExpr
 %type <l> FExpr_Multi ListOfDouble RecursiveListOfDouble
 %type <l> ListOfListOfDouble RecursiveListOfListOfDouble 
 %type <l> ListOfColor RecursiveListOfColor 
 %type <l> ListOfShapes Duplicata Transform Extrude MultipleShape
-%type <l> ListOfStrings
 %type <s> Shape
 
 // Operators (with ascending priority): cf. C language
@@ -155,186 +141,8 @@ int CheckViewErrorFlags(Post_View *v);
 %%
 
 All : 
-    StepFormatItems
-  | GeoFormatItems
+    GeoFormatItems
   | error tEND { yyerrok; return 1; }
-;
-
-
-// S T E P   I S O - 1 0 3 0 3 - 2 1   F I L E   F O R M A T
-
-// FIXME: The STEP interface is incomplete. All the strings and most
-// of the lists are leaked in this (unused and unusable...) part of
-// the parser.
-
-StepFormatItems :
-    // nothing
-  | StepFormatItems StepFormatItem
-;
-
-StepFormatItem :
-    StepSpecial { return 1; }
-  | StepDataItem { return 1; }
-  | StepHeaderItem { return 1; }
-;
-
-StepSpecial :
-    tISO tEND
-    {
-      yymsg(INFO, "Reading Step Iso-10303-21 data");
-      Create_Step_Solid_BRep();
-    }
-  | tENDISO tEND
-    {
-      Resolve_BREP ();
-      yymsg(INFO, "Read Step Iso-10303-21 data");
-    }
-  | tDATA tEND
-  | tENDSEC tEND
-  | tHEADER tEND
-;
-
-StepHeaderItem :
-    tFILE_DESCRIPTION '(' ListOfStrings ',' tBIGSTR ')' tEND
-    {
-    }
-  | tFILE_SCHEMA '(' ListOfStrings ')' tEND
-    {
-    }
-  | tFILE_NAME '(' tBIGSTR ',' tBIGSTR ',' ListOfStrings ',' 
-                    ListOfStrings ',' tBIGSTR ',' tBIGSTR ',' tBIGSTR ')' tEND
-    {
-    }
-;
-
-StepDataItem  :
-    tDOUBLE tAFFECT tCARTESIAN_POINT '(' tBIGSTR ',' VExpr ')' tEND
-    {
-      Add_Cartesian_Point((int)$1, $5, $7[0], $7[1], $7[2]);
-    }
-  | tDOUBLE tAFFECT tB_SPLINE_CURVE_WITH_KNOTS 
-    '(' tBIGSTR ',' FExpr ',' ListOfDouble ',' BoolExpr ',' BoolExpr ',' 
-        BoolExpr ',' ListOfDouble ',' ListOfDouble ',' BoolExpr ')' tEND
-    {
-      Add_BSpline_Curve_With_Knots ((int)$1, $5, (int) $7, $9,	$17, $19, 0., 1.);
-    }
-  | tDOUBLE tAFFECT tB_SPLINE_SURFACE_WITH_KNOTS 
-    '(' tBIGSTR ',' FExpr ',' FExpr ',' ListOfListOfDouble ',' BoolExpr ',' 
-        BoolExpr ',' BoolExpr ',' BoolExpr ',' ListOfDouble ',' ListOfDouble ',' 
-        ListOfDouble ',' ListOfDouble ',' BoolExpr ')' tEND
-    {
-      Add_BSpline_Surface_With_Knots ((int)$1, $5, (int) $7, (int) $9, $11, $21,
-				      $23, $25, $27, 0., 1., 0., 1. );
-    }
-  | tDOUBLE tAFFECT tEDGE_CURVE '(' tBIGSTR ',' tDOUBLE ','  tDOUBLE ',' 
-                                    tDOUBLE ',' BoolExpr ')' tEND
-    {
-      Add_Edge_Curve ((int)$1, $5 , (int)$7 , (int)$9, (int)$11);
-    }
-  | tDOUBLE tAFFECT tFACE_OUTER_BOUND '(' tBIGSTR ',' tDOUBLE ','  BoolExpr  ')' tEND
-    {
-      Add_Face_Outer_Bound((int)$1, $5, (int)$7, $9, 1);
-    }
-  | tDOUBLE tAFFECT tFACE_BOUND '(' tBIGSTR ',' tDOUBLE ','  BoolExpr  ')' tEND
-    {
-      // check the norm! Face_Bound : hole outside surface!
-      yymsg(INFO, "Found a face bound");
-      Add_Face_Outer_Bound((int)$1, $5, (int)$7, $9, 0);
-    }
-  | tDOUBLE tAFFECT tORIENTED_EDGE '(' tBIGSTR ',' '*' ','  '*' ','  FExpr ',' 
-                                       BoolExpr ')' tEND
-    {
-      Add_Oriented_Edge((int)$1, $5, (int)$11, $13);
-    }
-  | tDOUBLE tAFFECT tEDGE_LOOP '(' tBIGSTR ',' ListOfDouble ')' tEND
-    {
-      Add_Edge_Loop((int)$1, $5, $7);
-    }
-  | tDOUBLE tAFFECT tADVANCED_FACE '(' tBIGSTR ',' ListOfDouble ',' 
-                                       tDOUBLE ',' BoolExpr ')' tEND
-    {
-      Add_Advanced_Face((int)$1, $5, $7, (int)$9, $11);
-    }
-  | tDOUBLE tAFFECT tVERTEX_POINT '(' tBIGSTR ',' tDOUBLE ')'  tEND
-    {
-      Add_Vertex_Point((int)$1, $5, (int)$7);
-    }
-  | tDOUBLE tAFFECT tVECTOR '(' tBIGSTR ',' tDOUBLE ',' FExpr ')'  tEND
-    {
-    }
-  | tDOUBLE tAFFECT tAXIS2_PLACEMENT_3D '(' tBIGSTR ',' tDOUBLE ',' 
-                                            tDOUBLE ',' tDOUBLE ')'  tEND
-    {
-      Add_Axis2_Placement3D  ((int)$1, (int)$9, (int)$11, (int)$7);
-    }
-  | tDOUBLE tAFFECT tDIRECTION '(' tBIGSTR ',' VExpr ')' tEND
-    {
-      Add_Direction((int)$1 , $5, $7[0], $7[1], $7[2]);
-    }
-  | tDOUBLE tAFFECT tPLANE '(' tBIGSTR ',' tDOUBLE ')' tEND
-    {
-      Add_Plane((int)$1, $5, (int)$7);
-    }
-  | tDOUBLE tAFFECT tLine '(' tBIGSTR ',' tDOUBLE ',' tDOUBLE ')'  tEND
-    {
-      Add_Line ((int)$1, $5 , (int) $7, (int)$9);
-    }
-  | tDOUBLE tAFFECT tCLOSED_SHELL '(' tBIGSTR ',' ListOfDouble ')' tEND
-    {
-      yymsg(INFO, "Found a closed shell");
-      Add_Closed_Shell((int)$1, $5 , $7);
-    }
-  | tDOUBLE tAFFECT tADVANCED_BREP_SHAPE_REPRESENTATION
-     '(' tBIGSTR ',' ListOfDouble ',' tDOUBLE')' tEND
-    {
-    }
-  | tDOUBLE tAFFECT tMANIFOLD_SOLID_BREP '(' tBIGSTR ',' tDOUBLE ')' tEND
-    {
-    }
-  | tDOUBLE tAFFECT tCYLINDRICAL_SURFACE '(' tBIGSTR ',' tDOUBLE ',' FExpr ')' tEND
-    {
-      Add_Cylinder ((int)$1, $5 , (int)$7, $9);
-    }
-  | tDOUBLE tAFFECT tCONICAL_SURFACE '(' tBIGSTR ',' tDOUBLE ',' FExpr ',' FExpr ')' tEND
-    {
-      Add_Cone ((int)$1, $5 , (int)$7, $9, $11);
-    }
-  | tDOUBLE tAFFECT tTOROIDAL_SURFACE '(' tBIGSTR ',' tDOUBLE ',' FExpr ',' FExpr ')' tEND
-    {
-      Add_Torus ((int)$1, $5 , (int)$7, $9, $11);
-    }
-  | tDOUBLE tAFFECT tCIRCLE '(' tBIGSTR ',' tDOUBLE ',' FExpr ')' tEND
-    {
-      Add_Circle((int) $1, $5, (int) $7, $9);
-    }
-  | tDOUBLE tAFFECT tELLIPSE '(' tBIGSTR ',' tDOUBLE ',' FExpr ',' FExpr ')' tEND
-    {
-      Add_Ellipse((int) $1, $5, (int) $7, $9, $11);
-    }
-  | tDOUBLE tAFFECT tTRIMMED_CURVE '(' tBIGSTR ',' tDOUBLE ','
-            ListOfDouble ',' ListOfDouble ',' BoolExpr ',' BoolExpr ')' tEND
-    {
-    }
-  | tDOUBLE tAFFECT tGEOMETRIC_SET '(' tBIGSTR ',' ListOfDouble')' tEND
-    {
-    }
-  | tDOUBLE tAFFECT tCOMPOSITE_CURVE_SEGMENT 
-       '(' tCONTINUOUS ',' BoolExpr ',' tDOUBLE ')' tEND
-    {
-    }
-  | tDOUBLE tAFFECT tCOMPOSITE_CURVE '(' tBIGSTR ',' ListOfDouble ',' BoolExpr ')' tEND
-    {
-    }
-  | tDOUBLE tAFFECT tPRODUCT_DEFINITION 
-       '(' tBIGSTR ',' tBIGSTR ',' tDOUBLE',' tDOUBLE ')' tEND
-    {
-    }
-  | tDOUBLE tAFFECT tPRODUCT_DEFINITION_SHAPE '(' tBIGSTR ',' tBIGSTR ',' tDOUBLE ')' tEND
-    {
-    }
-  | tDOUBLE tAFFECT tSHAPE_DEFINITION_REPRESENTATION '(' tDOUBLE ',' tDOUBLE ')' tEND
-    {
-    }
 ;
 
 //  G E O   F I L E   F O R M A T
@@ -2739,14 +2547,6 @@ Coherence :
 
 //  G E N E R A L
 
-BoolExpr :
-    tTRUE {$$ = 1;}
-  | tFALSE {$$ = 0;}
-  | tUNSPECIFIED {$$ = -1;}
-  | tU {$$ = -1;}
-  | tV {$$ = -1;}
-;
-
 FExpr :
     FExpr_Single                     { $$ = $1;           }
   | '(' FExpr ')'                    { $$ = $2;           }
@@ -3036,24 +2836,6 @@ VExpr_Single :
   | '(' FExpr ',' FExpr ',' FExpr ')'
     {
       $$[0] = $2;  $$[1] = $4;  $$[2] = $6;  $$[3] = 0.0; $$[4] = 1.0;
-    }
-;
-
-ListOfStrings :
-    // nothing
-    {
-    }
-  | '(' RecursiveListOfStrings ')'
-    {
-    }
-;
-
-RecursiveListOfStrings :
-    tBIGSTR
-    {
-    }
-  | RecursiveListOfStrings ',' tBIGSTR
-    {
     }
 ;
 

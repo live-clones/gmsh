@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.83 2006-01-28 18:44:19 geuzaine Exp $
+# $Id: Makefile,v 1.84 2006-01-28 21:13:35 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -87,7 +87,7 @@ Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h ../Numeric/Numeric.h Views.h ColorTable.h \
   VertexArray.h SmoothNormals.h GmshMatrix.h AdaptiveViews.h Context.h \
-  Options.h xyzv.h
+  Options.h
 # 1 "/Users/geuzaine/.gmsh/Common//"
 ViewsIO.o: ViewsIO.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \

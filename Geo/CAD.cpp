@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.93 2006-01-14 22:32:58 geuzaine Exp $
+// $Id: CAD.cpp,v 1.94 2006-01-28 21:13:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2092,19 +2092,7 @@ void ReplaceAllDuplicates(Mesh * m)
 }
 
 
-// Intersection routines
-// FIXME: this code is full of crap :-)
-
-/*
-  S = (sx(u,v),sy(u,v),sz(u,v))
-  C = (cx(w),cy(w),cz(w))
-
-  sx - cx = 0
-  sy - cy = 0
-  sz - cz = 0
-  
-  3eqs 3incs
-*/
+// Projection of point on curve or surface
 
 static Curve *CURVE, *CURVE_2;
 static Surface *SURFACE;
@@ -2341,12 +2329,6 @@ bool ProjectPointOnSurface(Surface * s, Vertex * p, double *u, double *v)
     deb = 0;
   }
 
-  if(p->Num == 160) {
-    lmin += 1.e90;
-    if(p->Num == 133)
-      UMAX = s->ku[s->Nu + s->OrderU];
-  }
-
   if(try_a_value(SURFACE, VERTEX, SURFACE->ku[0] + VERTEX->u,
                  SURFACE->kv[0], u, v))
     return true;
@@ -2408,6 +2390,14 @@ bool ProjectPointOnSurface(Surface * s, Vertex * p, double *u, double *v)
   }
   return true;
 }
+
+// Intersection of curves/surfaces (FIXME: this code is full of crap)
+
+// S = (sx(u,v),sy(u,v),sz(u,v))  C = (cx(w),cy(w),cz(w))
+// sx - cx = 0
+// sy - cy = 0
+// sz - cz = 0
+// 3eqs 3unk
 
 bool IntersectCurveSurface(Curve * c, Surface * s)
 {

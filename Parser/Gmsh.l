@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.74 2006-01-06 00:34:27 geuzaine Exp $
+// $Id: Gmsh.l,v 1.75 2006-01-28 21:13:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -234,54 +234,6 @@ T2                      return tText2D;
 T3                      return tText3D;
 INTERPOLATION_SCHEME    return tInterpolationScheme;
 TIME                    return tTime;
-
-
-CARTESIAN_POINT         	   return tCARTESIAN_POINT;
-B_SPLINE_SURFACE_WITH_KNOTS        return tB_SPLINE_SURFACE_WITH_KNOTS;
-B_SPLINE_CURVE_WITH_KNOTS          return tB_SPLINE_CURVE_WITH_KNOTS;
-.UNSPECIFIED.                      return tUNSPECIFIED;
-.CONTINUOUS.                       return tCONTINUOUS;
-".F."                              return tFALSE;
-".T."                              return tTRUE;
-".U."				   return tU;
-".V."				   return tV;
-ORIENTED_EDGE                      return tORIENTED_EDGE;
-EDGE_CURVE			   return tEDGE_CURVE;
-EDGE_LOOP 			   return tEDGE_LOOP;
-ELLIPSE                            return tELLIPSE;
-VERTEX_POINT			   return tVERTEX_POINT;
-FACE_OUTER_BOUND     		   return tFACE_OUTER_BOUND;
-FACE_BOUND		     	   return tFACE_BOUND;
-ADVANCED_FACE			   return tADVANCED_FACE;
-LINE				   return tLine;
-VECTOR				   return tVECTOR;
-DIRECTION			   return tDIRECTION;
-AXIS2_PLACEMENT_3D 		   return tAXIS2_PLACEMENT_3D;
-PLANE				   return tPLANE;
-HEADER                             return tHEADER;
-DATA                               return tDATA;
-FILE_SCHEMA                        return tFILE_SCHEMA;
-FILE_NAME	                   return tFILE_NAME;
-FILE_DESCRIPTION                   return tFILE_DESCRIPTION;
-"ISO-10303-21"			   return tISO;
-"END-ISO-10303-21"		   return tENDISO;
-ENDSEC				   return tENDSEC;
-CLOSED_SHELL			   return tCLOSED_SHELL;
-ADVANCED_BREP_SHAPE_REPRESENTATION  return  tADVANCED_BREP_SHAPE_REPRESENTATION;
-MANIFOLD_SOLID_BREP		   return tMANIFOLD_SOLID_BREP;
-CYLINDRICAL_SURFACE		   return tCYLINDRICAL_SURFACE;
-CONICAL_SURFACE			   return tCONICAL_SURFACE;
-TOROIDAL_SURFACE		   return tTOROIDAL_SURFACE;
-CIRCLE				   return tCIRCLE;
-TRIMMED_CURVE			   return tTRIMMED_CURVE;
-GEOMETRIC_SET			   return tGEOMETRIC_SET;
-COMPOSITE_CURVE_SEGMENT		   return tCOMPOSITE_CURVE_SEGMENT;
-COMPOSITE_CURVE			   return tCOMPOSITE_CURVE;
-PRODUCT_DEFINITION                 return tPRODUCT_DEFINITION;
-PRODUCT_DEFINITION_SHAPE           return tPRODUCT_DEFINITION_SHAPE;
-SHAPE_DEFINITION_REPRESENTATION    return tSHAPE_DEFINITION_REPRESENTATION;
-
-{stepid}                {yylval.d = (double)atoi((char*)(yytext+1)); return tDOUBLE;}
 
 {digit}+ |
 {digit}+"."{digit}*({exp})? |

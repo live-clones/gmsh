@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.79 2006-01-28 18:44:19 geuzaine Exp $
+# $Id: Makefile,v 1.80 2006-01-28 21:13:36 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -91,10 +91,10 @@ Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Mesh/Nurbs.h ../Mesh/Vertex.h ../Mesh/Mesh.h ../Geo/CAD.h \
   ../Geo/ExtrudeParams.h ../Graphics/Draw.h ../Mesh/Create.h \
-  ../Mesh/Vertex.h ../Mesh/Mesh.h ../Geo/StepGeomDatabase.h \
-  ../Common/Colors.h ../Common/Options.h Parser.h OpenFile.h \
-  ../Common/CommandLine.h FunctionManager.h ../Common/Timer.h \
-  ../Graphics/CreateFile.h ../Common/Visibility.h ../Common/GmshVersion.h
+  ../Mesh/Vertex.h ../Mesh/Mesh.h ../Common/Colors.h ../Common/Options.h \
+  Parser.h OpenFile.h ../Common/CommandLine.h FunctionManager.h \
+  ../Common/Timer.h ../Graphics/CreateFile.h ../Common/Visibility.h \
+  ../Common/GmshVersion.h
 # 1 "/Users/geuzaine/.gmsh/Parser//"
 Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \

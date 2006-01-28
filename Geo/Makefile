@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.71 2006-01-28 18:44:19 geuzaine Exp $
+# $Id: Makefile,v 1.72 2006-01-28 21:13:35 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -32,7 +32,6 @@ SRC = CAD.cpp \
       ExtrudeParams.cpp \
       Geo.cpp \
       GeoUtils.cpp \
-      StepGeomDatabase.cpp \
       ExtractContour.cpp \
       Print_Geo.cpp
 
@@ -110,20 +109,6 @@ GeoUtils.o: GeoUtils.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
   ../Mesh/Matrix.h ExtrudeParams.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
-StepGeomDatabase.o: StepGeomDatabase.cpp ../Common/Gmsh.h \
-  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../Numeric/Numeric.h Geo.h GeoUtils.h ../Mesh/Mesh.h \
-  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h ../Mesh/Nurbs.h \
-  ../Mesh/Vertex.h ../Mesh/Mesh.h CAD.h ExtrudeParams.h \
-  StepGeomDatabase.h ../Mesh/Create.h ../Mesh/Vertex.h ../Mesh/Mesh.h \
-  ../Common/Context.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 ExtractContour.o: ExtractContour.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \

@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.30 2006-01-06 00:34:26 geuzaine Exp $
+// $Id: Utils.cpp,v 1.31 2006-01-28 21:13:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -37,6 +37,7 @@
 #else
 #define NRANSI
 #include "nrutil.h"
+void dsvdcmp(double **a, int m, int n, double w[], double **v);
 #endif
 
 extern Context_T CTX;

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.183 2006-01-27 21:15:30 geuzaine Exp $
+// $Id: Views.cpp,v 1.184 2006-01-28 21:13:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,6 @@
 #include "Context.h"
 #include "Options.h"
 #include "ColorTable.h"
-#include "xyzv.h"
 #include "SmoothNormals.h"
 
 #if defined(HAVE_MATH_EVAL)
@@ -894,7 +893,54 @@ void Post_View::splitCurvedElements()
 
 // Smoothing
 
+struct xyzv {
+  double x, y, z, *vals;
+  int nbvals;
+  int nboccurences;
+  static double eps;
+  xyzv(double xx, double yy, double zz)
+    : x(xx), y(yy), z(zz), vals(0), nbvals(0), nboccurences(0) {}
+  ~xyzv(){ if(vals) delete [] vals; }
+  void update(int n, double *v) 
+  {
+    if(!vals) {
+      vals = new double[n];
+      for(int i = 0; i < n; i++)
+	vals[i] = 0.0;
+      nbvals = n;
+      nboccurences = 0;
+    }
+    else if(nbvals != n) {
+      throw n;
+    }
+    double x1 = (double)(nboccurences) / (double)(nboccurences + 1);
+    double x2 = 1. / (double)(nboccurences + 1);
+    for(int i = 0; i < nbvals; i++)
+      vals[i] = (x1 * vals[i] + x2 * v[i]);
+    nboccurences++;
+  }
+};
+
+struct lessthanxyzv {
+  bool operator () (const xyzv & p2, const xyzv & p1)const
+  {
+    if(p1.x - p2.x > xyzv::eps)
+      return true;
+    if(p1.x - p2.x < -xyzv::eps)
+      return false;
+    if(p1.y - p2.y > xyzv::eps)
+      return true;
+    if(p1.y - p2.y < -xyzv::eps)
+      return false;
+    if(p1.z - p2.z > xyzv::eps)
+      return true;
+    return false;
+  }
+};
+
 double xyzv::eps = 1.e-12;
+typedef set < xyzv, lessthanxyzv > xyzv_cont;
+typedef xyzv_cont::const_iterator xyzv_iter;
 
 void generate_connectivities(List_T * list, int nbList, int nbTimeStep, int nbVert,
                              xyzv_cont & connectivities)
