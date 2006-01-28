@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Netgen.cpp,v 1.18 2006-01-06 00:34:26 geuzaine Exp $
+// $Id: 3D_Mesh_Netgen.cpp,v 1.19 2006-01-28 19:53:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -312,7 +312,11 @@ void Optimize_Netgen(Mesh *m)
   Msg(STATUS2, "Optimize volume mesh...");
   double t1 = Cpu();
 
-  Degre1(); // cleanup 2nd order vertices, if any
+  // cleanup 2nd order vertices, if any
+  Degre1(); 
+
+  // make sure we don't use any fancy background mesh
+  Create_BgMesh(WITHPOINTS, .2, m); 
 
   List_T *list = Tree2List(m->Volumes);
   for(int i = 0; i < List_Nbr(list); i++){

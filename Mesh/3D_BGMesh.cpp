@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.40 2006-01-28 18:44:19 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.41 2006-01-28 19:53:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -30,18 +30,20 @@ extern Mesh *THEM;
 extern Context_T CTX;
 
 static OctreePost *BGM_OCTREE = NULL;
+static double BGM_MAX = 0.;
 
 int BGMWithView(Post_View * ErrView)
 {
   if(BGM_OCTREE) delete BGM_OCTREE;
   BGM_OCTREE = new OctreePost(ErrView);
+  BGM_MAX = ErrView->Max;
   Create_BgMesh(ONFILE, .2, THEM);
   return 1 ;
 }
 
 double Lc_XYZ(double X, double Y, double Z, Mesh * m)
 {
-  double l;
+  double l, fact[6] = {0.001, 0.005, 0.01, 0.05, 0.1, 0.5};
 
   switch (m->BGM.Typ) {
   case FUNCTION:
@@ -52,7 +54,18 @@ double Lc_XYZ(double X, double Y, double Z, Mesh * m)
     l = m->BGM.lc;
     break;
   case ONFILE:
-    BGM_OCTREE->searchScalar(X, Y, Z, &l, 0);
+    if(!BGM_OCTREE->searchScalar(X, Y, Z, &l, 0)){
+      for(int i = 0; i < 6; i++){
+	double eps = CTX.lc * fact[i];
+	if(BGM_OCTREE->searchScalar(X + eps, Y, Z, &l, 0)) break;
+	if(BGM_OCTREE->searchScalar(X - eps, Y, Z, &l, 0)) break;
+	if(BGM_OCTREE->searchScalar(X, Y + eps, Z, &l, 0)) break;
+	if(BGM_OCTREE->searchScalar(X, Y - eps, Z, &l, 0)) break;
+	if(BGM_OCTREE->searchScalar(X, Y, Z + eps, &l, 0)) break;
+	if(BGM_OCTREE->searchScalar(X, Y, Z - eps, &l, 0)) break;
+      }
+    }
+    if(l <= 0) l = BGM_MAX;
     break;
   case WITHPOINTS:
     Msg(GERROR, "We should never call Lc_XYZ with BGM.Typ == WITHPOINTS!");
@@ -61,7 +74,7 @@ double Lc_XYZ(double X, double Y, double Z, Mesh * m)
   }
 
   if(l <= 0.){
-    Msg(WARNING, "Characteristic length <= 0: setting to LC/10");
+    Msg(WARNING, "Characteristic length <= 0 at point (%g,%g,%g)", X, Y, Z);
     l = CTX.lc / 10.;
   }
 
