@@ -1,4 +1,4 @@
-// $Id: 3D_Bricks.cpp,v 1.17 2006-01-06 00:34:25 geuzaine Exp $
+// $Id: 3D_Bricks.cpp,v 1.18 2006-01-28 18:44:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -22,90 +22,6 @@
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Mesh.h"
-
-Brick LaBrique(Grid_T * pGrid, double X, double Y, double Z)
-{
-  int Ix, Iy, Iz, index;
-  Brick B;
-
-  B.N = -1;
-  B.pT = NULL;
-  if(X > pGrid->max.X || X < pGrid->min.X || Y > pGrid->max.Y ||
-     Y < pGrid->min.Y || Z > pGrid->max.Z || Z < pGrid->min.Z) {
-    return (B);
-  }
-
-  Ix =
-    (int)((double)pGrid->Nx * (X - pGrid->min.X) /
-          (pGrid->max.X - pGrid->min.X));
-  Iy =
-    (int)((double)pGrid->Ny * (Y - pGrid->min.Y) /
-          (pGrid->max.Y - pGrid->min.Y));
-  Iz =
-    (int)((double)pGrid->Nz * (Z - pGrid->min.Z) /
-          (pGrid->max.Z - pGrid->min.Z));
-  Ix = IMIN(Ix, pGrid->Nx - 1);
-  Iy = IMIN(Iy, pGrid->Ny - 1);
-  Iz = IMIN(Iz, pGrid->Nz - 1);
-
-  if(Ix < 0)
-    Ix = 0;
-  if(Iy < 0)
-    Iy = 0;
-  if(Iz < 0)
-    Iz = 0;
-
-  index = Ix + Iy * pGrid->Nx + Iz * pGrid->Nx * pGrid->Ny;
-  List_Read(pGrid->Bricks, index, &B);
-  return (B);
-}
-
-
-int DEBUT = 0;
-Coord MINIM, MAXIM;
-
-void getminmax(double *xmin, double *ymin, double *zmin,
-               double *xmax, double *ymax, double *zmax)
-{
-  double dx, dy, dz, f;
-
-  dx = MAXIM.X - MINIM.X;
-  dy = MAXIM.Y - MINIM.Y;
-  dz = MAXIM.Z - MINIM.Z;
-  f = .1;
-
-  *xmin = MINIM.X - f * dx;
-  *ymin = MINIM.Y - f * dy;
-  *zmin = MINIM.Z - f * dz;
-  *xmax = MAXIM.X + f * dx;
-  *ymax = MAXIM.Y + f * dy;
-  *zmax = MAXIM.Z + f * dz;
-}
-
-void findminmax(void *a, void *b)
-{
-  Vertex *v;
-  v = *(Vertex **) a;
-
-  if(!DEBUT) {
-    MINIM.X = DMIN(MINIM.X, v->Pos.X);
-    MAXIM.X = DMAX(MAXIM.X, v->Pos.X);
-    MINIM.Y = DMIN(MINIM.Y, v->Pos.Y);
-    MAXIM.Y = DMAX(MAXIM.Y, v->Pos.Y);
-    MINIM.Z = DMIN(MINIM.Z, v->Pos.Z);
-    MAXIM.Z = DMAX(MAXIM.Z, v->Pos.Z);
-  }
-  else {
-    DEBUT = 0;
-    MINIM.X = v->Pos.X;
-    MAXIM.X = v->Pos.X;
-    MINIM.Y = v->Pos.Y;
-    MAXIM.Y = v->Pos.Y;
-    MINIM.Z = v->Pos.Z;
-    MAXIM.Z = v->Pos.Z;
-  }
-}
-
 
 void AddSimplexInGrid(Mesh * m, Simplex * s, int boule_boite)
 {

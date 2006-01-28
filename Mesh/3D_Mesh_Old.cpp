@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Old.cpp,v 1.15 2006-01-06 00:34:26 geuzaine Exp $
+// $Id: 3D_Mesh_Old.cpp,v 1.16 2006-01-28 18:44:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -129,42 +129,6 @@ Vertex *NewVertex(Simplex * s)
   v->lc = Interpole_lcTetraedre(s, v);
 
   return (v);
-}
-
-int Pt_In_Volume(double X, double Y, double Z, Mesh * m,
-                 double *l, double tol)
-{
-  int i;
-  Vertex V;
-  double uvw[3];
-  Simplex *s;
-  Brick B;
-
-  V.Pos.X = X;
-  V.Pos.Y = Y;
-  V.Pos.Z = Z;
-
-  if(!(m->BGM.Typ == ONFILE) && !m->BGM.bgm) {
-    *l = -1.0;
-    return (1);
-  }
-
-  B = LaBrique(&m->Grid, X, Y, Z);
-
-  if(B.N < 0) {
-    return (0);
-  }
-
-  for(i = 0; i < List_Nbr(B.pT); i++) {
-    List_Read(B.pT, i, &s);
-    if(s->Pt_In_Simplexe(&V, uvw, tol)) {
-      *l = (1. - uvw[0] - uvw[1] - uvw[2]) * s->V[0]->lc
-        + uvw[0] * s->V[1]->lc + uvw[1] * s->V[2]->lc + uvw[2] * s->V[3]->lc;
-      return (1);
-    }
-  }
-
-  return (0);
 }
 
 int Pt_In_Circum(Simplex * s, Vertex * v)
@@ -841,9 +805,6 @@ void Maillage_Volume(void *data, void *dum)
 
     while(simp->Quality > CONV_VALUE) {
       newv = NewVertex(simp);
-      //double l;
-      //while(!Pt_In_Volume(newv->Pos.X,newv->Pos.Y,newv->Pos.Z,LOCAL,&l,0.0)){
-
       while(!simp->Pt_In_Simplexe(newv, uvw, 1.e-5) &&
             (simp->S[0] == &MyNewBoundary ||
              !simp->S[0]->Pt_In_Simplexe(newv, uvw, 1.e-5)) &&

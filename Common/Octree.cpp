@@ -1,4 +1,4 @@
-// $Id: Octree.cpp,v 1.4 2006-01-06 00:34:33 geuzaine Exp $
+// $Id: Octree.cpp,v 1.1 2006-01-28 18:44:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //

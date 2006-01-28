@@ -23,14 +23,8 @@
 #include "Tree.h"
 #include "Mesh.h"
 
-Brick LaBrique (Grid_T * pGrid, double X, double Y, double Z);
 void AddSimplexInGrid (Mesh * m, Simplex * s, int boule_boite);
 int Coherence (Volume * v, Mesh * m);
-int Pt_In_Volume (double X, double Y, double Z, Mesh * m,
-                  double *l, double tol);
-void findminmax (void *a, void *b);
-void getminmax (double *xmin, double *ymin, double *zmin,
-                double *xmax, double *ymax, double *zmax);
 void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
                     Tree_T * newpoints);
 void Impression_Resultats (void);
