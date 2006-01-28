@@ -1,4 +1,4 @@
-/* $Id: gl2jpeg.cpp,v 1.24 2006-01-28 07:54:37 geuzaine Exp $ */
+/* $Id: gl2jpeg.cpp,v 1.25 2006-01-28 08:04:16 geuzaine Exp $ */
 /*
  * GL2JPEG, an OpenGL to JPEG Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -50,9 +50,12 @@ void create_jpeg(FILE * outfile, int width, int height,
 #define XMD_H
 #endif
 
+#if defined(__CYGWIN__)
+#define boolean char
+#endif
+
 extern "C"
 {
-#define boolean char
 #include <jpeglib.h>
 #include <jerror.h>
 }
