@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.38 2006-01-06 00:34:25 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.39 2006-01-28 15:02:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -161,13 +161,56 @@ static void AIG(void *a, void *b)
   AddSimplexInGrid(TMPM, s, BOITE);
 }
 
+void BGMWithViewList(int Nb, List_T *List, Tree_T *Pts, int NbNod, Vertex *VertexUp)
+{
+  if(Nb) {
+    int nb = List_Nbr(List) / Nb;
+    for(int i = 0; i < List_Nbr(List); i += nb) {
+      double *X = (double *)List_Pointer_Fast(List, i);
+      double *Y = (double *)List_Pointer_Fast(List, i + NbNod);
+      double *Z = (double *)List_Pointer_Fast(List, i + 2 * NbNod);
+      double *Val = (double *)List_Pointer_Fast(List, i + 3 * NbNod);
+      Vertex *ver[4];
+      for(int j = 0; j < NbNod; j++) {
+	Vertex V;
+        Vertex *v = &V;
+        v->Pos.X = X[j];
+        v->Pos.Y = Y[j];
+        v->Pos.Z = Z[j];
+        if(Tree_Query(Pts, &v)) {
+          ver[j] = v;
+        }
+        else {
+          v = Create_Vertex(TMPM->MaxPointNum++, X[j], Y[j], Z[j], Val[j], -1.0);
+          ver[j] = v;
+          Tree_Add(TMPM->Vertices, &v);
+          Tree_Add(Pts, &v);
+        }
+      }
+      if(NbNod == 3){ // tri
+	Simplex *s = Create_Simplex(ver[0], ver[1], ver[2], VertexUp);
+	Tree_Add(TMPM->Simplexes, &s);
+      }
+      else{
+	if(VertexUp){ // quad
+	  Simplex *s1 = Create_Simplex(ver[0], ver[1], ver[2], VertexUp);
+	  Tree_Add(TMPM->Simplexes, &s1);
+	  Simplex *s2 = Create_Simplex(ver[0], ver[2], ver[3], VertexUp);
+	  Tree_Add(TMPM->Simplexes, &s2);
+	}
+	else{ // tet
+	  Simplex *s = Create_Simplex(ver[0], ver[1], ver[2], ver[3]);
+	  Tree_Add(TMPM->Simplexes, &s);
+	}
+      }
+    }
+  }
+}
+
 int BGMWithView(Post_View * ErrView)
 {
-  Vertex *VertexUp, *v, V, *ver[4];
+  Vertex *VertexUp;
   Tree_T *Pts;
-  int i, j, k, nb;
-  double *X, *Y, *Z, *Val;
-  Simplex *si;
 
   if(TMPM){
     Tree_Action(TMPM->Vertices, Free_Vertex);    
@@ -184,69 +227,17 @@ int BGMWithView(Post_View * ErrView)
   TMPM->BGM.Typ = ONFILE;
   TMPM->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
   TMPM->Simplexes = Tree_Create(sizeof(Simplex *), compareSimplex);
+  TMPM->MaxPointNum = 0;
   Create_BgMesh(ONFILE, .2, THEM);
 
-  k = 1;
-  if(ErrView->NbST) {
-    nb = List_Nbr(ErrView->ST) / ErrView->NbST;
-    for(i = 0; i < List_Nbr(ErrView->ST); i += nb) {
-      X = (double *)List_Pointer_Fast(ErrView->ST, i);
-      Y = (double *)List_Pointer_Fast(ErrView->ST, i + 3);
-      Z = (double *)List_Pointer_Fast(ErrView->ST, i + 6);
-      Val = (double *)List_Pointer_Fast(ErrView->ST, i + 9);
-
-      for(j = 0; j < 3; j++) {
-        v = &V;
-        v->Pos.X = X[j];
-        v->Pos.Y = Y[j];
-        v->Pos.Z = Z[j];
-        if(Tree_Query(Pts, &v)) {
-          ver[j] = v;
-        }
-        else {
-          v = Create_Vertex(k++, X[j], Y[j], Z[j], Val[j], -1.0);
-          ver[j] = v;
-          Tree_Add(TMPM->Vertices, &v);
-          Tree_Add(Pts, &v);
-        }
-      }
-      si = Create_Simplex(ver[0], ver[1], ver[2], VertexUp);
-      Tree_Add(TMPM->Simplexes, &si);
-    }
-  }
-
-  if(ErrView->NbSS) {
-    nb = List_Nbr(ErrView->SS) / ErrView->NbSS;
-    for(i = 0; i < List_Nbr(ErrView->SS); i += nb) {
-      X = (double *)List_Pointer_Fast(ErrView->SS, i);
-      Y = (double *)List_Pointer_Fast(ErrView->SS, i + 4);
-      Z = (double *)List_Pointer_Fast(ErrView->SS, i + 8);
-      Val = (double *)List_Pointer_Fast(ErrView->SS, i + 12);
-
-      for(j = 0; j < 4; j++) {
-        v = &V;
-        v->Pos.X = X[j];
-        v->Pos.Y = Y[j];
-        v->Pos.Z = Z[j];
-        if(Tree_Query(Pts, &v)) {
-          ver[j] = v;
-        }
-        else {
-          v = Create_Vertex(k++, X[j], Y[j], Z[j], Val[j], -1.0);
-          ver[j] = v;
-          Tree_Add(TMPM->Vertices, &v);
-          Tree_Add(Pts, &v);
-        }
-      }
-      si = Create_Simplex(ver[0], ver[1], ver[2], ver[3]);
-      Tree_Add(TMPM->Simplexes, &si);
-    }
-  }
+  BGMWithViewList(ErrView->NbST, ErrView->ST, Pts, 3, VertexUp);
+  BGMWithViewList(ErrView->NbSQ, ErrView->SQ, Pts, 4, VertexUp);
+  BGMWithViewList(ErrView->NbSS, ErrView->SS, Pts, 4, NULL);
 
   TMPM->Grid.init = 0;
-  TMPM->Grid.Nx = 10;
-  TMPM->Grid.Ny = 10;
-  TMPM->Grid.Nz = 10;
+  TMPM->Grid.Nx = 20;
+  TMPM->Grid.Ny = 20;
+  TMPM->Grid.Nz = 20;
   Tree_Action(TMPM->Vertices, findminmax);
   getminmax(&TMPM->Grid.min.X, &TMPM->Grid.min.Y, &TMPM->Grid.min.Z,
             &TMPM->Grid.max.X, &TMPM->Grid.max.Y, &TMPM->Grid.max.Z);
@@ -267,40 +258,4 @@ int BGMWithView(Post_View * ErrView)
       Tree_Nbr(TMPM->Vertices), Tree_Nbr(TMPM->Simplexes));
 
   return 1;
-}
-
-
-double ErrorInView(Post_View * ErrView, int *n)
-{
-  double e, tot = 0.0, *Val;
-  int i, j = 0, nb;
-
-  if(ErrView == NULL) {
-    Msg(WARNING, "Empty error view");
-    return 0.;
-  }
-
-  if(ErrView->NbST) {
-    nb = List_Nbr(ErrView->ST) / ErrView->NbST;
-    for(i = 0; i < List_Nbr(ErrView->ST); i += nb) {
-      Val = (double *)List_Pointer_Fast(ErrView->ST, i + 9);
-      e = (Val[0] + Val[1] + Val[2]) / 3.;
-      tot += e * e;
-      j++;
-    }
-  }
-
-  if(ErrView->NbSS) {
-    nb = List_Nbr(ErrView->SS) / ErrView->NbSS;
-    for(i = 0; i < List_Nbr(ErrView->SS); i += nb) {
-      Val = (double *)List_Pointer_Fast(ErrView->SS, i + 12);
-      e = (Val[0] + Val[1] + Val[2] + Val[3]) * 0.25;
-      tot += e * e;
-      j++;
-    }
-  }
-
-  *n = j;
-
-  return 100 * sqrt(tot);
 }
