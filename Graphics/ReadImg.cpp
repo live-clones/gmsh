@@ -1,4 +1,4 @@
-// $Id: ReadImg.cpp,v 1.11 2006-01-28 00:58:25 geuzaine Exp $
+// $Id: ReadImg.cpp,v 1.12 2006-01-28 03:39:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -56,11 +56,11 @@ Post_View * Img2Pos(Fl_RGB_Image & img_init, int quads=1,
   for(int i = 0; i < height - 1; i++) {
     const uchar *a = data + i * width * dim;
     const uchar *a1 = data + (i + 1) * width * dim;
-    double y = height - i;
-    double y1 = height - (i + 1);
+    double y = height - i - 1;
+    double y1 = height - i - 2;
     for(int j = 0; j < width - 1; j++) {
       double x = j;
-      double x1 = (j + 1);
+      double x1 = j + 1;
       double val1 = (double)a[j]/255.;
       double val2 = (double)a1[j]/255.;
       double val3 = (double)a1[j + 1]/255.;
