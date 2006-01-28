@@ -1,4 +1,4 @@
-// $Id: ReadImg.cpp,v 1.14 2006-01-28 07:48:43 geuzaine Exp $
+// $Id: ReadImg.cpp,v 1.15 2006-01-28 23:01:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -49,7 +49,7 @@ static Post_View *Img2Pos(Fl_RGB_Image & img_init, int quads=1,
   int dim = img->d();
 
   if(dim != 1) {
-    Msg(GERROR, "Unable to convert image to grayscale");
+    Msg(GERROR, "Unable to obtain one-channel image");
     return NULL;
   }
 
