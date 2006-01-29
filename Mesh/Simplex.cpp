@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.45 2006-01-06 00:34:26 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.46 2006-01-29 20:32:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -215,76 +215,14 @@ double SimplexBase::GammaShapeMeasure()
 
 void SimplexBase::ExportStatistics(FILE * f)
 {
-  int N;
-
-  if(!V[2]){
-    if(!VSUP){
-      N = 2;
-      fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%g,%g",
-	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
-	      V[1]->Pos.Z, V[0]->lc, V[1]->lc);
-    }
-    else{
-      N = 3;
-      fprintf(f, "SL2(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g",
-	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
-	      V[1]->Pos.Z, VSUP[0]->Pos.X, VSUP[0]->Pos.Y, VSUP[0]->Pos.Z,
-	      V[0]->lc, V[1]->lc, VSUP[0]->lc);
-    }
-  }
-  else if(!V[3]){
-    if(!VSUP){
-      N = 3;
-      fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g",
-	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
-	      V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[0]->lc,
-	      V[1]->lc, V[2]->lc);
-    }
-    else{
-      N = 6;
-      fprintf(f, "ST2(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g)"
-	      "{%g,%g,%g,%g,%g,%g",
-	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
-	      V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, VSUP[0]->Pos.X, 
-	      VSUP[0]->Pos.Y, VSUP[0]->Pos.Z, VSUP[1]->Pos.X, VSUP[1]->Pos.Y,
-	      VSUP[1]->Pos.Z, VSUP[2]->Pos.X, VSUP[2]->Pos.Y, VSUP[2]->Pos.Z, 
-	      V[0]->lc, V[1]->lc, V[2]->lc, VSUP[0]->lc, VSUP[1]->lc, VSUP[2]->lc);
-    }
-  }
-  else{
-    if(!VSUP){
-      N = 4;
-      fprintf(f, "SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g",
-	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
-	      V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
-	      V[3]->Pos.Y, V[3]->Pos.Z, V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc);
-    }
-    else{
-      N = 10;
-      fprintf(f, "SS2(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,"
-	      "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g,%g",
-	      V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
-	      V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
-	      V[3]->Pos.Y, V[3]->Pos.Z, VSUP[0]->Pos.X, VSUP[0]->Pos.Y, VSUP[0]->Pos.Z, 
-	      VSUP[1]->Pos.X, VSUP[1]->Pos.Y, VSUP[1]->Pos.Z, VSUP[2]->Pos.X, 
-	      VSUP[2]->Pos.Y, VSUP[2]->Pos.Z, VSUP[3]->Pos.X, VSUP[3]->Pos.Y, 
-	      VSUP[3]->Pos.Z, VSUP[4]->Pos.X, VSUP[4]->Pos.Y, VSUP[4]->Pos.Z, 
-	      VSUP[5]->Pos.X, VSUP[5]->Pos.Y, VSUP[5]->Pos.Z, V[0]->lc, V[1]->lc, 
-	      V[2]->lc, V[3]->lc, VSUP[0]->lc, VSUP[1]->lc, VSUP[2]->lc, VSUP[3]->lc,
-	      VSUP[4]->lc, VSUP[5]->lc);
-    }
-  }
-
+  int N = !V[2] ? 2 : (!V[3] ? 3 : 4);
+  int NSUP = !VSUP ? 0 : (!V[2] ? 1 : (!V[3] ? 3 : 6));
   double g = GammaShapeMeasure();
   double e = EtaShapeMeasure();
   double r = RhoShapeMeasure();
-  double n = Num;
-  for(int i = 0; i < N; i++) fprintf(f, ",%g", g);
-  for(int i = 0; i < N; i++) fprintf(f, ",%g", e);
-  for(int i = 0; i < N; i++) fprintf(f, ",%g", r);
-  for(int i = 0; i < N; i++) fprintf(f, ",%g", n);
-  
-  fprintf(f, "};\n");
+  print_elm_stats(f, Num, iEnt, g, e, r, 
+		  !V[2] ? "SL" : (!V[3] ? "ST" : "SS"), N, V, 
+		  !V[2] ? "SL2" : (!V[3] ? "ST2" : "SS2"), NSUP, VSUP);
 }
 
 SimplexBase *Create_SimplexBase(Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)

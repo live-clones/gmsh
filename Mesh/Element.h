@@ -108,4 +108,8 @@ int compareHexahedron(const void *a, const void *b);
 int comparePrism(const void *a, const void *b);
 int comparePyramid(const void *a, const void *b);
 
+void print_elm_stats(FILE *f, int Num, int Ent, double Gamma, double Eta, double Rho, 
+		     const char *S, int N, Vertex **V, 
+		     const char *SSUP, int NSUP, Vertex **VSUP);
+
 #endif

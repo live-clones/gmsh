@@ -501,7 +501,7 @@ int Recombine(Tree_T *TreeAllVert, Tree_T *TreeAllSimp, Tree_T *TreeAllQuad,
 		double a);
 int Recombine_All(Mesh *M);
 void ApplyLcFactor(Mesh *M);
-void ExportMeshStatistics(Mesh *M, char *filename, int volume=1, int surface=1);
+void ExportMeshStatistics(Mesh *M, char *filename, int vol=1, int surf=1, int lin=1);
 
 void Degre1();
 void Degre2(int dim);

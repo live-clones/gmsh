@@ -1,4 +1,4 @@
-// $Id: ViewsIO.cpp,v 1.3 2006-01-28 03:23:15 geuzaine Exp $
+// $Id: ViewsIO.cpp,v 1.4 2006-01-29 20:32:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -664,7 +664,7 @@ static void print_elm(FILE *file, int num, int nbnod, Nod nod[8],
   d /= (double)nbnod;
 
   // assign val as elementary region number
-  int ele = (int)fabs(d) + 1, phys = 1;
+  int ele = (int)fabs(d), phys = 1;
 
   switch(dim){
   case 0:

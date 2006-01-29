@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.43 2006-01-28 22:57:19 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.44 2006-01-29 20:32:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -103,21 +103,9 @@ void ExportStatistics(void *a, void *b)
   if(statfile) ele->ExportStatistics(statfile);
 }
 
-void ExportMeshStatistics(Mesh * M, char *filename, int volume, int surface)
+void ExportMeshStatistics(Mesh * M, char *filename, 
+			  int volumes, int surfaces, int lines)
 {
-  if(!Tree_Nbr(M->Volumes) && !Tree_Nbr(M->Surfaces)){
-    Msg(GERROR, "No volumes or surfaces to save");
-    return;
-  }
-  else if(volume && !surface && !Tree_Nbr(M->Volumes)){
-    Msg(GERROR, "No volumes to save");
-    return;
-  }
-  else if(!volume && surface && !Tree_Nbr(M->Surfaces)){
-    Msg(GERROR, "No surfaces to save");
-    return;
-  }
-
   statfile = fopen(filename, "w");
 
   if(!statfile) {
@@ -125,11 +113,12 @@ void ExportMeshStatistics(Mesh * M, char *filename, int volume, int surface)
     return;
   }
 
-  if(volume && Tree_Nbr(M->Volumes)){
+  if(volumes && Tree_Nbr(M->Volumes)){
     List_T *l = Tree2List(M->Volumes);
-    fprintf(statfile, "View \"Volume Statistics\" {\n");
-    fprintf(statfile, "T2(1.e5,30,%d){\"Characteristic Length\", \"Gamma\", \"Eta\", "
-	    "\"Rho\", \"Element Number\"};\n", (1<<16)|(4<<8));
+    fprintf(statfile, "View \"Volumes\" {\n");
+    fprintf(statfile, "T2(1.e5,30,%d){\"Elementary Entity\", \"Element Number\", "
+	    "\"Characteristic Length\", \"Gamma\", \"Eta\", \"Rho\"};\n", 
+	    (1<<16)|(4<<8));
     for(int i = 0; i < List_Nbr(l); i++) {
       Volume *vol;
       List_Read(l, i, &vol);
@@ -143,17 +132,34 @@ void ExportMeshStatistics(Mesh * M, char *filename, int volume, int surface)
     fprintf(statfile, "};\n");
   }
   
-  if(surface && Tree_Nbr(M->Surfaces)){
+  if(surfaces && Tree_Nbr(M->Surfaces)){
     List_T *l = Tree2List(M->Surfaces);
-    fprintf(statfile, "View \"Surface Statistics\" {\n");
-    fprintf(statfile, "T2(1.e5,30,%d){\"Characteristic Length\", \"Gamma\", \"Eta\", "
-	    "\"Rho\", \"Element Number\"};\n", (1<<16)|(4<<8));
+    fprintf(statfile, "View \"Surfaces\" {\n");
+    fprintf(statfile, "T2(1.e5,30,%d){\"Elementary Entity\", \"Element Number\", "
+	    "\"Characteristic Length\", \"Gamma\", \"Eta\", \"Rho\"};\n", 
+	    (1<<16)|(4<<8));
     for(int i = 0; i < List_Nbr(l); i++) {
       Surface *surf;
       List_Read(l, i, &surf);
       Tree_Action(surf->Simplexes, ExportStatistics);
       Tree_Action(surf->SimplexesBase, ExportStatistics);
       Tree_Action(surf->Quadrangles, ExportStatistics);
+    }
+    List_Delete(l);
+    fprintf(statfile, "};\n");
+  }
+
+  if(lines && Tree_Nbr(M->Curves)){
+    List_T *l = Tree2List(M->Curves);
+    fprintf(statfile, "View \"Lines\" {\n");
+    fprintf(statfile, "T2(1.e5,30,%d){\"Elementary Entity\", \"Element Number\", "
+	    "\"Characteristic Length\", \"Gamma\", \"Eta\", \"Rho\"};\n", 
+	    (1<<16)|(4<<8));
+    for(int i = 0; i < List_Nbr(l); i++) {
+      Curve *lin;
+      List_Read(l, i, &lin);
+      Tree_Action(lin->Simplexes, ExportStatistics);
+      Tree_Action(lin->SimplexesBase, ExportStatistics);
     }
     List_Delete(l);
     fprintf(statfile, "};\n");
