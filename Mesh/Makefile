@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.103 2006-01-28 18:44:19 geuzaine Exp $
+# $Id: Makefile,v 1.104 2006-01-29 21:53:31 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -54,7 +54,6 @@ SRC = 1D_Mesh.cpp \
         3D_Extrude_Old.cpp \
         3D_Coherence.cpp \
         3D_Divide.cpp \
-        3D_Bricks.cpp \
         3D_Mesh_Netgen.cpp \
         3D_Mesh_Tetgen.cpp \
       BDS.cpp \
@@ -318,13 +317,6 @@ depend:
   ../Common/SmoothNormals.h Metric.h Matrix.h 3D_Mesh.h Create.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 3D_Divide.o: 3D_Divide.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
-  ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h Metric.h Matrix.h
-# 1 "/Users/geuzaine/.gmsh/Mesh//"
-3D_Bricks.o: 3D_Bricks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Numeric/Numeric.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \

@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.75 2006-01-14 16:24:54 geuzaine Exp $
+// $Id: Generator.cpp,v 1.76 2006-01-29 21:53:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -361,7 +361,6 @@ void Init_Mesh0(Mesh * M)
   M->Partitions = NULL;
   M->Metric = NULL;
   M->BGM.bgm = NULL;
-  M->Grid.init = 0;
 }
 
 void Init_Mesh(Mesh * M)
@@ -419,9 +418,6 @@ void Init_Mesh(Mesh * M)
 
   List_Delete(M->BGM.bgm);
 
-  if(M->Grid.init)
-    List_Delete(M->Grid.Bricks);
-
   if(M->normals)
     delete M->normals;
 
@@ -437,7 +433,6 @@ void Init_Mesh(Mesh * M)
   M->Partitions = List_Create(5, 5, sizeof(MeshPartition *));
   M->Metric = new GMSHMetric;
   M->BGM.bgm = NULL;
-  M->Grid.init = 0;
   M->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
 
   M->status = 0;

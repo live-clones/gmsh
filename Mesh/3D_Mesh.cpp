@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.70 2006-01-28 18:44:19 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.71 2006-01-29 21:53:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,7 @@
 // while the tree of bad quality tets is not empty {
 //   take the worst tet
 //   create a new point
-//   rempve the test whose circumscribed sphere contains the point
+//   remove the test whose circumscribed sphere contains the point
 //   reconstruct the convex volume
 // } 
 
@@ -369,16 +369,6 @@ void Box_6_Tetraedron(List_T * P, Mesh * m)
   Xc = XM - Xm;
   Yc = YM - Ym;
   Zc = ZM - Zm;
-
-  m->Grid.init = 0;
-  m->Grid.min.X = Xm - LOIN * FACT * Xc;
-  m->Grid.min.Y = Ym - LOIN * FACT * Yc;
-  m->Grid.min.Z = Zm - LOIN * FACT * Zc;
-  m->Grid.max.X = XM + LOIN * FACT * Xc;
-  m->Grid.max.Y = YM + LOIN * FACT * Yc;
-  m->Grid.max.Z = ZM + LOIN * FACT * Zc;
-
-  m->Grid.Nx = m->Grid.Ny = m->Grid.Nz = 20;
 
   LC3D = sqrt(Xc * Xc + Yc * Yc + Zc * Zc);
 
@@ -779,25 +769,15 @@ void suppress_simplex(void *data, void *dum)
 
 void add_in_bgm(void *a, void *b)
 {
-  Simplex **s, *S;
-
-  s = (Simplex **) a;
-  S = *s;
-  List_Add(LLL, S);
+  Simplex *s = *(Simplex **) a;
+  List_Add(LLL, s);
 }
 
 void Bgm_With_Points(Mesh * bgm)
 {
-  int i;
-  Simplex *s;
-
   bgm->BGM.bgm = List_Create(Tree_Nbr(bgm->Simplexes), 10, sizeof(Simplex));
   LLL = bgm->BGM.bgm;
   Tree_Action(bgm->Simplexes, add_in_bgm);
-  for(i = 0; i < List_Nbr(LLL); i++) {
-    s = (Simplex *) List_Pointer(LLL, i);
-    AddSimplexInGrid(bgm, s, BOITE);
-  }
 }
 
 void Create_BgMesh(int Type, double lc, Mesh * m)

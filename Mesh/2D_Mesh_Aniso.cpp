@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.46 2006-01-06 00:34:25 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.47 2006-01-29 21:53:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -214,16 +214,6 @@ void Box_2_Triangles(List_T * P, Surface * s)
 
   Xc = XM - Xm;
   Yc = YM - Ym;
-
-  /* initialisation de la grille */
-
-  s->Grid.init = 0;
-  s->Grid.min.X = Xm - LOIN * FACT * Xc;
-  s->Grid.min.Y = Ym - LOIN * FACT * Yc;
-  s->Grid.max.X = XM + LOIN * FACT * Xc;
-  s->Grid.max.Y = YM + LOIN * FACT * Yc;
-
-  s->Grid.Nx = s->Grid.Ny = 20;
 
   /* Longueur Caracteristique */
 

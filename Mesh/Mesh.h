@@ -197,18 +197,6 @@ class NXE{
 };
 
 typedef struct{
-  int N;
-  List_T *pT;
-}Brick;
-
-typedef struct{
-  int init;
-  List_T *Bricks;
-  Coord min, max;
-  int Nx, Ny, Nz;
-}Grid_T;
-
-typedef struct{
   double zaxis[3];
   double radius1;
   double radius2;
@@ -250,9 +238,7 @@ struct _Surf{
   float *ku, *kv, *cp;
   struct _Surf *Support;
   CylParam Cyl;
-  Grid_T Grid;  // fast search grid
   ExtrudeParams *Extrude;
-  //  BDS_Mesh *bds;
   DrawingColor Color;
   VertexArray *TriVertexArray;
   VertexArray *QuadVertexArray;
@@ -374,7 +360,6 @@ typedef struct{
   CircParam Circle;
   char functu[256], functv[256], functw[256];
   DrawingColor Color;
-  //  BDS_Mesh *bds;
   VertexArray *LinVertexArray;
 }Curve;
 
@@ -411,7 +396,6 @@ struct _Mesh{
   Tree_T *EdgeLoops;
   List_T *PhysicalGroups;
   List_T *Partitions;
-  Grid_T Grid; // fast search grid
   smooth_normals *normals; // container for smooth normals
   LcField BGM; // background mesh
   double timing[3]; // timing for 1d, 2d and 3d mesh

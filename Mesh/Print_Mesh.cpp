@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.68 2006-01-06 00:34:26 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.69 2006-01-29 21:53:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1558,17 +1558,10 @@ void Print_Mesh_DMG(Mesh *m, FILE *fp)
 
   // then write the bounding box
 
-  m->Grid.min.X = CTX.min[0];
-  m->Grid.min.Y = CTX.min[1];
-  m->Grid.min.Z = CTX.min[2];
-  m->Grid.max.X = CTX.max[0];
-  m->Grid.max.Y = CTX.max[1];
-  m->Grid.max.Z = CTX.max[2];
-
   fprintf(fp, "%12.5E %12.5E %12.5E \n", 
-	  m->Grid.min.X, m->Grid.min.Y, m->Grid.min.Z);
+	  CTX.min[0], CTX.min[1], CTX.min[2]);
   fprintf(fp, "%12.5E %12.5E %12.5E \n", 
-	  m->Grid.max.X, m->Grid.max.Y, m->Grid.max.Z);
+	  CTX.max[0], CTX.max[1], CTX.max[2]);
 
   // write the points
   k = 0;
