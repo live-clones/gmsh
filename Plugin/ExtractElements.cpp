@@ -1,4 +1,4 @@
-// $Id: ExtractElements.cpp,v 1.3 2006-01-28 03:23:15 geuzaine Exp $
+// $Id: ExtractElements.cpp,v 1.4 2006-01-29 23:25:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -59,9 +59,10 @@ void GMSH_ExtractElementsPlugin::getInfos(char *author, char *copyright, char *h
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(ExtractElements) extracts the elements\n"
-	 "from the view `iView' whose `TimeStep'th values\n"
-	 "are comprised between `MinVal' and `MaxVal'. If\n"
-	 "`iView' < 0, the plugin is run on the current view.\n"
+	 "from the view `iView' whose `TimeStep'-th values\n"
+	 "(averaged by element) are comprised between\n"
+	 "`MinVal' and `MaxVal'. If `iView' < 0, the plugin\n"
+	 "is run on the current view.\n"
 	 "\n"
 	 "Plugin(ExtractElements) creates one new view.\n");
 }
@@ -108,8 +109,8 @@ static void extract(List_T *inList, int inNb,
       }
     }
     d /= (double)nbNod;
-    // '<=' and '<' so that we can do segmentation without playing
-    // without worrying about roudoff errors
+    // We use '>=' and '<' so that we can do segmentation without
+    // worrying about roudoff errors
     if(d >= MinVal && d < MaxVal){
       for(int j = 0; j < nb; j++)
 	List_Add(outList, List_Pointer_Fast(inList, i + j));
