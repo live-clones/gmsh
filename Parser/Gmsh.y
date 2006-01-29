@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.218 2006-01-28 21:44:22 geuzaine Exp $
+// $Id: Gmsh.y,v 1.219 2006-01-29 19:06:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1817,6 +1817,9 @@ Command :
 	while(1){
 	  if(GetTime() - sleep_time > (long)($2*1.e6)) break;
 	}
+      }
+      else if(!strcmp($1, "Remesh")){
+	ReMesh(THEM);
       }
       else if(!strcmp($1, "Mesh")){
 	yymsg(GERROR, "Mesh directives are not (yet) allowed in scripts");
