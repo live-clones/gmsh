@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.76 2006-01-29 21:53:31 geuzaine Exp $
+// $Id: Generator.cpp,v 1.77 2006-01-29 22:53:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -360,7 +360,6 @@ void Init_Mesh0(Mesh * M)
   M->PhysicalGroups = NULL;
   M->Partitions = NULL;
   M->Metric = NULL;
-  M->BGM.bgm = NULL;
 }
 
 void Init_Mesh(Mesh * M)
@@ -387,9 +386,9 @@ void Init_Mesh(Mesh * M)
   Tree_Action(M->Points, Free_Vertex);  
   Tree_Delete(M->Points);
 
-  // Note: don't free the simplices here (with 
-  // Tree_Action (M->Simplexes, Free_Simplex)): we free them 
-  // in each curve, surface, volume
+  // Note: don't free the simplices here (with Tree_Action
+  // (M->Simplexes, Free_Simplex)): we free them in each curve,
+  // surface, volume
   Tree_Delete(M->Simplexes);
 
   Tree_Action(M->Curves, Free_Curve);
@@ -416,8 +415,6 @@ void Init_Mesh(Mesh * M)
   if(M->Metric)
     delete M->Metric;
 
-  List_Delete(M->BGM.bgm);
-
   if(M->normals)
     delete M->normals;
 
@@ -432,12 +429,10 @@ void Init_Mesh(Mesh * M)
   M->PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
   M->Partitions = List_Create(5, 5, sizeof(MeshPartition *));
   M->Metric = new GMSHMetric;
-  M->BGM.bgm = NULL;
   M->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
 
   M->status = 0;
-
-  Create_BgMesh(WITHPOINTS, .2, M);
+  M->BackgroundMeshType = WITHPOINTS;
 
   for(int i = 0; i < 3; i++){
     M->timing[i] = 0.0;

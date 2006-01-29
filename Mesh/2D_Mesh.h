@@ -56,7 +56,7 @@ Delaunay * Find_Triangle (MPoint pt, DocRecord *MESH, int typ);
 int Insert_Triangle (avlstruct **root, Delaunay * del);
 int Delete_Triangle ( avlstruct **root, Delaunay * del );
 int Insert_Point (MPoint pt, int *numpoints, int *numalloc, 
-                  DocRecord *doc, DocRecord *BGM, int is3d);
+                  DocRecord *doc, DocRecord *BGM);
 MPoint Localize (Delaunay * del , DocRecord *MESH);
 
 void InitBricks (DocRecord *MESH);

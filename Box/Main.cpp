@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.53 2006-01-16 17:55:43 geuzaine Exp $
+// $Id: Main.cpp,v 1.54 2006-01-29 22:53:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,7 @@
 char yyname[256] = "";
 int yyerrorstate = 0;
 Context_T CTX;
-Mesh M, *THEM = NULL, *LOCAL = NULL;
+Mesh M, *THEM = NULL;
 
 // Print some help/info messages
 

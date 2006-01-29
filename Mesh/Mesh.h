@@ -76,17 +76,12 @@
 #define EXTERN      1
 #define INTERN      2
 
-#define CONSTANT    1
 #define ONFILE      2
 #define WITHPOINTS  3
-#define FUNCTION    4
 
 #define TRANSFINI 1
 #define LIBRE     2
 #define ELLIPTIC  3
-
-#define BOULE 1
-#define BOITE 2
 
 #define NB_HISTOGRAM 100
 
@@ -216,8 +211,7 @@ struct _Surf{
   char Visible;
   int Method;
   int Recombine;
-// -1 is left, +1 is right, 0 is alternated
-  int Recombine_Dir; 
+  int Recombine_Dir; // -1 is left, +1 is right, 0 is alternated
   double RecombineAngle;
   int ipar[5];
   int Nu, Nv;
@@ -328,12 +322,6 @@ typedef struct{
 typedef struct _Mesh Mesh;
 
 typedef struct{
-  int Typ;
-  double lc;
-  List_T *bgm;
-}LcField;
-
-typedef struct{
   double t1, t2, f1, f2, incl;
   Vertex *v[4];
   double invmat[3][3];
@@ -396,8 +384,8 @@ struct _Mesh{
   Tree_T *EdgeLoops;
   List_T *PhysicalGroups;
   List_T *Partitions;
+  int BackgroundMeshType;
   smooth_normals *normals; // container for smooth normals
-  LcField BGM; // background mesh
   double timing[3]; // timing for 1d, 2d and 3d mesh
   double quality_gamma[3]; // mesh quality statistics
   double quality_eta[3]; // mesh quality statistics
@@ -428,7 +416,6 @@ void mai3d(Mesh *M, int Asked);
 
 void Init_Mesh0(Mesh *M);
 void Init_Mesh(Mesh *M);
-void Create_BgMesh(int i, double d, Mesh *m);
 void Print_Geo(Mesh *M, char *c);
 void Print_Mesh(Mesh *M, char *c, int Type);
 void Read_Mesh(Mesh *M, FILE *fp, char *filename, int Type);
@@ -478,7 +465,7 @@ void ReOrientSurfaceMesh(Surface *s);
 
 void Move_SimplexBaseToSimplex(Mesh * M, int dimension);
 
-double Lc_XYZ(double X, double Y, double Z, Mesh *m);
+double BGMXYZ(double X, double Y, double Z);
 void ActionLiss(void *data, void *dummy);
 void ActionLissSurf(void *data, void *dummy);
 int Recombine(Tree_T *TreeAllVert, Tree_T *TreeAllSimp, Tree_T *TreeAllQuad,

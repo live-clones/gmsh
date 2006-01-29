@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Netgen.cpp,v 1.19 2006-01-28 19:53:18 geuzaine Exp $
+// $Id: 3D_Mesh_Netgen.cpp,v 1.20 2006-01-29 22:53:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -279,7 +279,7 @@ int Mesh_Netgen(Volume * v)
   if(CTX.mesh.algo3d != FRONTAL_NETGEN)
     return 0;
 
-  if(THEM->BGM.Typ == ONFILE){
+  if(THEM->BackgroundMeshType == ONFILE){
     Msg(GERROR, "Netgen is not ready to be used with a background mesh");
     return 0;
   }
@@ -315,8 +315,9 @@ void Optimize_Netgen(Mesh *m)
   // cleanup 2nd order vertices, if any
   Degre1(); 
 
-  // make sure we don't use any fancy background mesh
-  Create_BgMesh(WITHPOINTS, .2, m); 
+  // make sure we don't have ONFILE (so that when we create simplices
+  // we don't try to compute the quality from the bgmesh)
+  m->BackgroundMeshType = WITHPOINTS; 
 
   List_T *list = Tree2List(m->Volumes);
   for(int i = 0; i < List_Nbr(list); i++){

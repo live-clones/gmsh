@@ -1,4 +1,4 @@
-// $Id: 2D_Util.cpp,v 1.24 2006-01-06 00:34:25 geuzaine Exp $
+// $Id: 2D_Util.cpp,v 1.25 2006-01-29 22:53:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -78,7 +78,7 @@ int Delete_Triangle(avlstruct ** root, Delaunay * del)
 }
 
 int Insert_Point(MPoint pt, int *numpoints, int *numalloc,
-                 DocRecord * doc, DocRecord * BGM, int is3d)
+                 DocRecord * doc, DocRecord * BGM)
 {
   Vertex *v, *dum;
   double qual;
@@ -95,19 +95,19 @@ int Insert_Point(MPoint pt, int *numpoints, int *numalloc,
   gPointArray[*numpoints].where.v = pt.v;
   gPointArray[*numpoints].numcontour = -1;
   gPointArray[*numpoints].initial = -1;
-  if(!is3d)
-    gPointArray[*numpoints].quality = find_quality(pt, BGM);
-  else {
+  if(THEM->BackgroundMeshType == ONFILE){
     v = Create_Vertex(-1, pt.h, pt.v, 0.0, 0.0, 0.0);
     Calcule_Z_Plan(&v, &dum);
     Projette_Inverse(&v, &dum);
-    qual = Lc_XYZ(v->Pos.X, v->Pos.Y, v->Pos.Z, THEM);
+    qual = BGMXYZ(v->Pos.X, v->Pos.Y, v->Pos.Z);
     if(CTX.mesh.constrained_bgmesh)
       gPointArray[*numpoints].quality = MIN(find_quality(pt, BGM), qual);
     else
       gPointArray[*numpoints].quality = qual;
     Free_Vertex(&v, 0);
   }
+  else
+    gPointArray[*numpoints].quality = find_quality(pt, BGM);
 
   (*numpoints)++;
 

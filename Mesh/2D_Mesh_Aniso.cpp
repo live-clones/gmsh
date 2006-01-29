@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.47 2006-01-29 21:53:31 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.48 2006-01-29 22:53:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -61,12 +61,12 @@ double Interpole_lcTriangle(Simplex * s, Vertex * vv)
 {
   double Xp, Yp, X[3], Y[3], det, u, v, q1, q2, q3;
 
-  if(THEM->BGM.Typ == ONFILE){
+  if(THEM->BackgroundMeshType == ONFILE){
     Vertex *v2 = Create_Vertex(-1, vv->Pos.X, vv->Pos.Y, 0.0, 0.0, 0.0);
     Vertex *dum;
     Calcule_Z_Plan(&v2, &dum);
     Projette_Inverse(&v2, &dum);
-    double val = Lc_XYZ(v2->Pos.X, v2->Pos.Y, v2->Pos.Z, THEM);
+    double val = BGMXYZ(v2->Pos.X, v2->Pos.Y, v2->Pos.Z);
     Free_Vertex(&v2, 0);
     return val;
   }
@@ -962,8 +962,6 @@ Vertex *NewVertex_2D(Simplex * s)
   return (v);
 }
 
-extern Mesh *LOCAL;
-
 void TRIE_MON_GARS(void *a, void *b)
 {
   Simplex *s = *(Simplex **) a;
@@ -1033,7 +1031,6 @@ int AlgorithmeMaillage2DAnisotropeModeJF(Surface * s)
   FACE_DIMENSION = 1;
 
   SURF = s;
-  LOCAL = NULL;
 
   if(s->Typ == MSH_SURF_PLAN || s->Typ == MSH_SURF_REGL
      || s->Typ == MSH_SURF_TRIC)

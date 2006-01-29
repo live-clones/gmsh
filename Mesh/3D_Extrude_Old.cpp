@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.40 2006-01-17 17:09:05 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.41 2006-01-29 22:53:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -53,7 +53,7 @@
 #include "Create.h"
 
 extern Context_T CTX;
-extern Mesh *LOCAL, *THEM;
+extern Mesh *THEM;
 
 static Tree_T *Tree_Ares = NULL, *Tree_Swaps = NULL;
 static Volume *THEV;
@@ -648,15 +648,12 @@ void Extrude_Mesh_Old(Mesh * M)
 {
   InitExtrudeParams();
 
-  Mesh MM;
-  LOCAL = &MM;
   THEM = M;
 
   // clean up Extruded_Points stuff (in case another extrusion was
   // performed before)
   Tree_Action(THEM->Vertices, FreeEP);
 
-  Create_BgMesh(WITHPOINTS, .2, LOCAL);
   THEV = Create_Volume(1, MSH_VOLUME);
   Tree_Add(M->Volumes, &THEV);
 

@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.46 2006-01-29 20:32:48 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.47 2006-01-29 22:53:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,7 @@
 #include "Context.h"
 
 extern Context_T CTX;
-extern Mesh *THEM, *LOCAL;
+extern Mesh *THEM;
 
 extern Simplex MyNewBoundary;
 extern int edges_tetra[6][2];
@@ -406,8 +406,8 @@ void Simplex::Fourre_Simplexe(Vertex * v1, Vertex * v2, Vertex * v3,
 
   Center_Circum();
 
-  if(N == 4 && LOCAL && THEM && THEM->BGM.Typ == ONFILE){
-    Quality = fabs(4. * Radius / Lc_XYZ(Center.X, Center.Y, Center.Z, LOCAL));
+  if(N == 4 && THEM && THEM->BackgroundMeshType == ONFILE){
+    Quality = fabs(4. * Radius / BGMXYZ(Center.X, Center.Y, Center.Z));
   }
   else{
     Quality = (double)N *Radius / (V[0]->lc + V[1]->lc + V[2]->lc + 

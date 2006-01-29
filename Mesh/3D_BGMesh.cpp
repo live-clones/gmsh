@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.44 2006-01-29 20:32:48 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.45 2006-01-29 22:53:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -38,56 +38,42 @@ int BGMWithView(Post_View * ErrView)
   if(BGM_OCTREE) delete BGM_OCTREE;
   BGM_OCTREE = new OctreePost(ErrView);
   BGM_MAX = ErrView->Max;
-  Create_BgMesh(ONFILE, .2, THEM);
+  THEM->BackgroundMeshType = ONFILE;
   return 1 ;
 }
 
-double Lc_XYZ(double X, double Y, double Z, Mesh * m)
+double BGMXYZ(double X, double Y, double Z)
 {
+  if(!BGM_OCTREE){
+    Msg(GERROR, "Missing background mesh");
+    THEM->BackgroundMeshType = WITHPOINTS;
+    return 1.;
+  }
+
   double l = 0.;
   double fact[9] = {0.001, 0.0025, 0.005, 0.0075, 0.01, 0.025, 0.05, 0.075, 0.1};
 
-  switch (m->BGM.Typ) {
-  case FUNCTION:
-    // for testing...
-    l = 0.1 * fabs(cos(2 * 3.14159 * X) * cos( 2 * 3.14159 * Y))  + 0.01;
-    break;
-  case CONSTANT:
-    l = m->BGM.lc;
-    break;
-  case ONFILE:
-    if(!BGM_OCTREE->searchScalar(X, Y, Z, &l, 0)){
-      // try really hard to find an element around the point
-      for(int i = 0; i < 9; i++){
-	double eps = CTX.lc * fact[i];
-	if(BGM_OCTREE->searchScalar(X + eps, Y, Z, &l, 0)) break;
-	if(BGM_OCTREE->searchScalar(X - eps, Y, Z, &l, 0)) break;
-	if(BGM_OCTREE->searchScalar(X, Y + eps, Z, &l, 0)) break;
-	if(BGM_OCTREE->searchScalar(X, Y - eps, Z, &l, 0)) break;
-	if(BGM_OCTREE->searchScalar(X, Y, Z + eps, &l, 0)) break;
-	if(BGM_OCTREE->searchScalar(X, Y, Z - eps, &l, 0)) break;
-	if(BGM_OCTREE->searchScalar(X + eps, Y - eps, Z - eps, &l, 0)) break;
-	if(BGM_OCTREE->searchScalar(X + eps, Y + eps, Z - eps, &l, 0)) break;
-	if(BGM_OCTREE->searchScalar(X - eps, Y - eps, Z - eps, &l, 0)) break;
-	if(BGM_OCTREE->searchScalar(X - eps, Y + eps, Z - eps, &l, 0)) break;
-	if(BGM_OCTREE->searchScalar(X + eps, Y - eps, Z + eps, &l, 0)) break;
-	if(BGM_OCTREE->searchScalar(X + eps, Y + eps, Z + eps, &l, 0)) break;
-	if(BGM_OCTREE->searchScalar(X - eps, Y - eps, Z + eps, &l, 0)) break;
-	if(BGM_OCTREE->searchScalar(X - eps, Y + eps, Z + eps, &l, 0)) break;
-      }
+  if(!BGM_OCTREE->searchScalar(X, Y, Z, &l, 0)){
+    // try really hard to find an element around the point
+    for(int i = 0; i < 9; i++){
+      double eps = CTX.lc * fact[i];
+      if(BGM_OCTREE->searchScalar(X + eps, Y, Z, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X - eps, Y, Z, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X, Y + eps, Z, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X, Y - eps, Z, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X, Y, Z + eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X, Y, Z - eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X + eps, Y - eps, Z - eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X + eps, Y + eps, Z - eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X - eps, Y - eps, Z - eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X - eps, Y + eps, Z - eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X + eps, Y - eps, Z + eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X + eps, Y + eps, Z + eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X - eps, Y - eps, Z + eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X - eps, Y + eps, Z + eps, &l, 0)) break;
     }
-    if(l <= 0) l = BGM_MAX;
-    break;
-  case WITHPOINTS:
-    Msg(GERROR, "We should never call Lc_XYZ with BGM.Typ == WITHPOINTS!");
-    l = 1.0;
-    break;
   }
-
-  if(l <= 0.){
-    Msg(WARNING, "Characteristic length <= 0 at point (%g,%g,%g)", X, Y, Z);
-    l = CTX.lc / 10.;
-  }
+  if(l <= 0) l = BGM_MAX;
 
   return CTX.mesh.lc_factor * l;
 }

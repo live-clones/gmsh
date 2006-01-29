@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.47 2006-01-19 02:26:21 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.48 2006-01-29 22:53:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -106,10 +106,10 @@ double F_Lc(double t)
   Vertex der, point;
   double Lc, d;
 
-  if(THEM->BGM.Typ == ONFILE) {
+  if(THEM->BackgroundMeshType == ONFILE) {
     der = InterpolateCurve(THEC, t, 1);
     point = InterpolateCurve(THEC, t, 0);
-    Lc = Lc_XYZ(point.Pos.X, point.Pos.Y, point.Pos.Z, THEM);
+    Lc = BGMXYZ(point.Pos.X, point.Pos.Y, point.Pos.Z);
     d = sqrt(DSQR(der.Pos.X) + DSQR(der.Pos.Y) + DSQR(der.Pos.Z));
     if(CTX.mesh.constrained_bgmesh)
       return MAX(d / Lc, THEM->Metric->getLc(t, THEC));

@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.71 2006-01-29 21:53:31 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.72 2006-01-29 22:53:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,7 @@
 #include "Create.h"
 #include "Context.h"
 
-extern Mesh *THEM, *LOCAL;
+extern Mesh *THEM;
 extern Context_T CTX;
 extern int FACE_DIMENSION;
 
@@ -767,34 +767,6 @@ void suppress_simplex(void *data, void *dum)
     List_Add(Suppress, pv);
 }
 
-void add_in_bgm(void *a, void *b)
-{
-  Simplex *s = *(Simplex **) a;
-  List_Add(LLL, s);
-}
-
-void Bgm_With_Points(Mesh * bgm)
-{
-  bgm->BGM.bgm = List_Create(Tree_Nbr(bgm->Simplexes), 10, sizeof(Simplex));
-  LLL = bgm->BGM.bgm;
-  Tree_Action(bgm->Simplexes, add_in_bgm);
-}
-
-void Create_BgMesh(int Type, double lc, Mesh * m)
-{
-  m->BGM.Typ = Type;
-  switch (Type) {
-  case CONSTANT:
-    m->BGM.lc = lc;
-    break;
-  case ONFILE:
-    break;
-  case WITHPOINTS:
-    m->BGM.bgm = NULL;
-    break;
-  }
-}
-
 void Maillage_Volume(void *data, void *dum)
 {
   Volume *v, **pv;
@@ -834,8 +806,7 @@ void Maillage_Volume(void *data, void *dum)
     Simplexes_New = List_Create(10, 10, sizeof(Simplex *));
     Simplexes_Destroyed = List_Create(10, 10, sizeof(Simplex *));
 
-    LOCAL = &M;
-    Create_BgMesh(THEM->BGM.Typ, .2, LOCAL);
+    Mesh *LOCAL = &M;
     s = &S;
 
     POINTS_TREE = Tree_Create(sizeof(Vertex *), comparePosition);
@@ -906,7 +877,6 @@ void Maillage_Volume(void *data, void *dum)
 
     v->Simplexes = LOCAL->Simplexes;
 
-    Bgm_With_Points(LOCAL);
     POINTS_TREE = THEM->Simplexes;
 
     Tree_Right(LOCAL->Simplexes, &simp);

@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Triangle.cpp,v 1.14 2006-01-06 00:34:25 geuzaine Exp $
+// $Id: 2D_Mesh_Triangle.cpp,v 1.15 2006-01-29 22:53:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -213,7 +213,7 @@ int Mesh_Triangle(Surface * s)
   mid.trianglearealist =
     (REAL *) Malloc(mid.numberoftriangles * sizeof(REAL));
   for(i = 0; i < mid.numberoftriangles; i++) {
-    if(THEM->BGM.Typ == ONFILE) {
+    if(THEM->BackgroundMeshType == ONFILE) {
       double xx = 0.0, yy = 0.0;
       for(j = 0; j < mid.numberofcorners; j++) {
 	k = mid.trianglelist[i * mid.numberofcorners + j];
@@ -226,7 +226,7 @@ int Mesh_Triangle(Surface * s)
       v = Create_Vertex(-1, xx, yy, 0.0, 0.0, 0.0);
       Calcule_Z_Plan(&v, &dum);
       Projette_Inverse(&v, &dum);
-      val = Lc_XYZ(v->Pos.X, v->Pos.Y, v->Pos.Z, THEM);
+      val = BGMXYZ(v->Pos.X, v->Pos.Y, v->Pos.Z);
       val = val * val / 1.2;  // FIXME: bof
       Free_Vertex(&v, 0);
     }

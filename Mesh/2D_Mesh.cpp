@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.80 2006-01-06 00:34:25 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.81 2006-01-29 22:53:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,6 @@ PointRecord *gPointArray;
 DocRecord *BGMESH, *FGMESH;
 double LC2D;
 
-static int is_3D = 0;
 static Surface *THESURFACE, *THESUPPORT;
 
 void ProjetteSurface(void *a, void *b)
@@ -301,7 +300,7 @@ int mesh_domain(ContourPeek * ListContours, int numcontours,
   Conversion(doc);
   remove_all_dlist(doc->numPoints, doc->points);
 
-  if(!is_3D || CTX.mesh.constrained_bgmesh)
+  if(THEM->BackgroundMeshType != ONFILE || CTX.mesh.constrained_bgmesh)
     BGMESH = doc;
   else
     BGMESH = NULL;
@@ -453,7 +452,7 @@ int mesh_domain(ContourPeek * ListContours, int numcontours,
     }
 
     *numpoints = doc->numPoints;
-    Insert_Point(pt, numpoints, &numaloc, doc, BGMESH, is_3D);
+    Insert_Point(pt, numpoints, &numaloc, doc, BGMESH);
     doc->points = gPointArray;
     doc->numPoints = *numpoints;
 
@@ -563,16 +562,7 @@ void Maillage_Automatique_VieuxCode(Surface * pS, Mesh * m, int ori)
   Simplex *s;
   double Xmin = 0., Xmax = 0., Ymin = 0., Ymax = 0.;
 
-
-  if(m->BGM.Typ == WITHPOINTS) {
-    is_3D = 0;
-  }
-  else {
-    is_3D = 1;
-  }
-
-  liste =
-    (ContourPeek *) Malloc(List_Nbr(pS->Contours) * sizeof(ContourPeek));
+  liste = (ContourPeek *) Malloc(List_Nbr(pS->Contours) * sizeof(ContourPeek));
 
   k = 0;
 
@@ -722,24 +712,12 @@ void filldel(Delaunay * deladd, int aa, int bb, int cc,
 
   pt2.h = deladd->t.xc;
   pt2.v = deladd->t.yc;
-  if(!is_3D) {
-    if(mesh) {
-      newqual = find_quality(pt2, mesh);
-    }
-    else {
-      newqual =
-        (points[aa].quality + points[bb].quality + points[cc].quality) / 3.;
-    }
+
+  if(THEM->BackgroundMeshType == ONFILE) {
     v = Create_Vertex(-1, pt2.h, pt2.v, 0.0, 0.0, 0.0);
     Calcule_Z_Plan(&v, &dum);
     Projette_Inverse(&v, &dum);
-    Free_Vertex(&v, 0);
-  }
-  else {
-    v = Create_Vertex(-1, pt2.h, pt2.v, 0.0, 0.0, 0.0);
-    Calcule_Z_Plan(&v, &dum);
-    Projette_Inverse(&v, &dum);
-    qual = Lc_XYZ(v->Pos.X, v->Pos.Y, v->Pos.Z, THEM);
+    qual = BGMXYZ(v->Pos.X, v->Pos.Y, v->Pos.Z);
     if(CTX.mesh.constrained_bgmesh) {
       if(mesh) {
         newqual = MIN(qual, find_quality(pt2, mesh));
@@ -753,6 +731,17 @@ void filldel(Delaunay * deladd, int aa, int bb, int cc,
     }
     else
       newqual = qual;
+    Free_Vertex(&v, 0);
+  }
+  else{
+    if(mesh)
+      newqual = find_quality(pt2, mesh);
+    else
+      newqual = (points[aa].quality + points[bb].quality + 
+		 points[cc].quality) / 3.;
+    v = Create_Vertex(-1, pt2.h, pt2.v, 0.0, 0.0, 0.0);
+    Calcule_Z_Plan(&v, &dum);
+    Projette_Inverse(&v, &dum);
     Free_Vertex(&v, 0);
   }
 
