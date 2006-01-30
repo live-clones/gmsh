@@ -1,9 +1,9 @@
-$Id: VERSIONS,v 1.357 2006-01-28 20:33:35 geuzaine Exp $
+$Id: VERSIONS,v 1.358 2006-01-30 03:43:18 geuzaine Exp $
 
-New since 1.62: post-processing views can now also be exported as
-meshes; sped up generation of meshes with background char. length
-fields from post-pro views; improved support for input images; 
-small bug fixes and enhancements.
+New in 1.63: post-processing views can now be exported as meshes;
+improved background mesh handling (a lot faster, and more accurate);
+improved support for input images; new Plugin(ExtractElements); small
+bug fixes and enhancements.
 
 New in 1.62: new option to draw color gradients in the background;
 enhanced perspective projection mode; new "lasso" selection mode (same
