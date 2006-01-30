@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.86 2006-01-29 22:53:41 geuzaine Exp $
+// $Id: Main.cpp,v 1.87 2006-01-30 00:40:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -43,8 +43,6 @@
 #include "Numeric.h"
 #include "Solvers.h"
 
-char yyname[256] = "";
-int yyerrorstate = 0;
 Context_T CTX;
 Mesh M, *THEM = NULL;
 GUI *WID = NULL;

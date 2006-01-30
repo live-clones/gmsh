@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.75 2006-01-28 21:13:35 geuzaine Exp $
+// $Id: Gmsh.l,v 1.76 2006-01-30 00:40:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -31,8 +31,9 @@
 #include "CAD.h"
 #include "Gmsh.tab.hpp"
 
-int    yywhere = INFILE;
-int    yylineno = 1;
+char yyname[256] = "";
+int  yylineno = 1;
+int  yyerrorstate = 0;
 
 void   parsestring(char endchar);
 char  *strsave(char *ptr);

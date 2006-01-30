@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.54 2006-01-29 22:53:41 geuzaine Exp $
+// $Id: Main.cpp,v 1.55 2006-01-30 00:40:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -42,8 +42,6 @@
 #include "OpenFile.h"
 #include "CommandLine.h"
 
-char yyname[256] = "";
-int yyerrorstate = 0;
 Context_T CTX;
 Mesh M, *THEM = NULL;
 
