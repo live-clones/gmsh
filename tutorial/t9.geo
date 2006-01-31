@@ -2,7 +2,7 @@
  *
  *  Gmsh tutorial 9
  * 
- *  Post-processing, plugins
+ *  Post-processing plugins (levelsets, sections, annotations)
  *
  *********************************************************************/
 
