@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.72 2006-01-29 22:53:41 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.73 2006-01-31 00:22:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -44,7 +44,7 @@ extern int FACE_DIMENSION;
 
 static Tree_T *Tsd, *Sim_Sur_Le_Bord, *POINTS_TREE;
 static List_T *Simplexes_Destroyed, *Simplexes_New, *Suppress;
-static List_T *LLL, *POINTS_LIST;
+static List_T *POINTS_LIST;
 static Simplex *THES;
 static Vertex *THEV;
 static Tree_T *SimXFac;
