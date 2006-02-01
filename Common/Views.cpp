@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.184 2006-01-28 21:13:35 geuzaine Exp $
+// $Id: Views.cpp,v 1.185 2006-02-01 02:11:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -901,6 +901,37 @@ struct xyzv {
   xyzv(double xx, double yy, double zz)
     : x(xx), y(yy), z(zz), vals(0), nbvals(0), nboccurences(0) {}
   ~xyzv(){ if(vals) delete [] vals; }
+  // the following two are needed for set<> operations, since the
+  // default copy ctor won't allocate *vals
+  xyzv(const xyzv & other)
+  { 
+    x = other.x;
+    y = other.y;
+    z = other.z;
+    nbvals = other.nbvals;
+    nboccurences = other.nboccurences;
+    if(other.vals && other.nbvals) {
+      vals = new double[other.nbvals];
+      for(int i = 0; i < nbvals; i++)
+	vals[i] = other.vals[i];
+    }
+  }
+  xyzv & operator =(const xyzv &other)
+  {
+    if(this != &other) {
+      x = other.x;
+      y = other.y;
+      z = other.z;
+      nbvals = other.nbvals;
+      nboccurences = other.nboccurences;
+      if(other.vals && other.nbvals) {
+	vals = new double[other.nbvals];
+	for(int i = 0; i < nbvals; i++)
+	  vals[i] = other.vals[i];
+      }
+    }
+    return *this;
+  }
   void update(int n, double *v) 
   {
     if(!vals) {
@@ -945,21 +976,18 @@ typedef xyzv_cont::const_iterator xyzv_iter;
 void generate_connectivities(List_T * list, int nbList, int nbTimeStep, int nbVert,
                              xyzv_cont & connectivities)
 {
-  double *x, *y, *z, *v;
-  int i, j, k;
-
   if(!nbList) return;
 
   double *vals = new double[nbTimeStep];
   int nb = List_Nbr(list)/nbList;
-  for(i = 0; i < List_Nbr(list); i += nb) {
-    x = (double *)List_Pointer_Fast(list, i);
-    y = (double *)List_Pointer_Fast(list, i + nbVert);
-    z = (double *)List_Pointer_Fast(list, i + 2 * nbVert);
-    v = (double *)List_Pointer_Fast(list, i + 3 * nbVert);
+  for(int i = 0; i < List_Nbr(list); i += nb) {
+    double *x = (double *)List_Pointer_Fast(list, i);
+    double *y = (double *)List_Pointer_Fast(list, i + nbVert);
+    double *z = (double *)List_Pointer_Fast(list, i + 2 * nbVert);
+    double *v = (double *)List_Pointer_Fast(list, i + 3 * nbVert);
 
-    for(j = 0; j < nbVert; j++) {
-      for(k = 0; k < nbTimeStep; k++)
+    for(int j = 0; j < nbVert; j++) {
+      for(int k = 0; k < nbTimeStep; k++)
         vals[k] = v[j + k * nbVert];
       xyzv xyz(x[j], y[j], z[j]);
       xyzv_iter it = connectivities.find(xyz);
