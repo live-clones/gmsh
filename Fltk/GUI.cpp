@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.486 2006-01-28 07:07:11 geuzaine Exp $
+// $Id: GUI.cpp,v 1.487 2006-02-02 16:01:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -873,9 +873,12 @@ GUI::GUI(int argc, char **argv)
     Fl::scheme(CTX.scheme);
   Fl_Tooltip::size(fontsize);
 
-  // load system icons
-  Fl_File_Icon::load_system_icons();
+  // register image formats not in core fltk library (jpeg/png)
+  fl_register_images();
 
+  // load default system icons (for file browser)
+  Fl_File_Icon::load_system_icons();
+  
   // add callback to respond to the Mac Finder (when you click on a
   // document)
 #if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)

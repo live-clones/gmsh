@@ -47,6 +47,7 @@
 #include <FL/Fl_Color_Chooser.H>
 #include <FL/fl_ask.H>
 #include <FL/Fl_Tooltip.H>
+#include <FL/Fl_Shared_Image.H>
 #include <FL/Fl_File_Icon.H>
 #if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
 #include <FL/Fl_Sys_Menu_Bar.H>
