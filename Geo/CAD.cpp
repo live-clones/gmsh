@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.94 2006-01-28 21:13:35 geuzaine Exp $
+// $Id: CAD.cpp,v 1.95 2006-02-02 13:53:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -944,7 +944,13 @@ void ApplyTransformationToPoint(double matrix[4][4], Vertex * v,
   v->Pos.Z = pos[2];
   v->w = pos[3];
 
-  if(end_curve_surface){
+  // Warning: in theory we should always redo these checks if
+  // end_curve_surface is true; but in practice this is so slow for
+  // big models that we need to provide a way to bypass it (which is
+  // OK if the guy who builds the geometry knowns what he's
+  // doing). Instead of adding one more option, let's just bypass all
+  // the checks if auto_coherence==0...
+  if(CTX.geom.auto_coherence && end_curve_surface){
     List_T *All = Tree2List(THEM->Curves);
     for(int i = 0; i < List_Nbr(All); i++) {
       Curve *c;
