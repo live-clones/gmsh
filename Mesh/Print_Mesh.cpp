@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.69 2006-01-29 21:53:31 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.70 2006-02-04 03:43:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1843,19 +1843,10 @@ void Print_Mesh_P3D(Mesh *M, FILE *fp)
 
 // Public Print_Mesh routine
 
-void Print_Mesh(Mesh *M, char *c, int Type)
+void GetDefaultMeshFileName(Mesh *M, int Type, char *name)
 {
-  char name[256], ext[10]="";
-
-  if(CTX.threads_lock) {
-    Msg(INFO, "I'm busy! Ask me that later...");
-    return;
-  }
-
-  CTX.threads_lock = 1;
-
+  char ext[10] = "";
   strcpy(name, M->name);
-
   switch(Type){
   case FORMAT_MSH:  strcpy(ext, ".msh"); break;
   case FORMAT_VRML: strcpy(ext, ".wrl"); break;
@@ -1864,12 +1855,26 @@ void Print_Mesh(Mesh *M, char *c, int Type)
   case FORMAT_DMG:  strcpy(ext, ".dmg"); break;
   case FORMAT_STL:  strcpy(ext, ".stl"); break;
   case FORMAT_P3D:  strcpy(ext, ".p3d"); break;
-  default:
-    Msg(GERROR, "Unknown mesh file format %d", Type);
+  default: Msg(GERROR, "Unknown mesh file format %d", Type); break;
+  }
+  strcat(name, ext);
+}
+
+void Print_Mesh(Mesh *M, char *filename, int Type)
+{
+  char name[256];
+
+  if(CTX.threads_lock) {
+    Msg(INFO, "I'm busy! Ask me that later...");
     return;
   }
-  
-  c ? strcpy(name, c) : strcat(name, ext);
+
+  CTX.threads_lock = 1;
+
+  if(!filename)
+    GetDefaultMeshFileName(M, Type, name);
+  else
+    strcpy(name, filename);
 
   Msg(INFO, "Writing mesh file '%s'", name);
 

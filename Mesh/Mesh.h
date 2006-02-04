@@ -420,6 +420,7 @@ void Print_Geo(Mesh *M, char *c);
 void Print_Mesh(Mesh *M, char *c, int Type);
 void Read_Mesh(Mesh *M, FILE *fp, char *filename, int Type);
 void GetStatistics(double s[50]);
+void GetDefaultMeshFileName(Mesh *M, int Type, char *name);
 
 void Maillage_Dimension_1(Mesh *M);
 void Maillage_Dimension_2(Mesh *M);

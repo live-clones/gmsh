@@ -268,7 +268,6 @@ void con_geometry_snap_cb(CALLBACK_ARGS);
 // Dynamic Mesh Menus
 
 void mesh_save_cb(CALLBACK_ARGS);
-void mesh_save_all_cb(CALLBACK_ARGS);
 void mesh_define_cb(CALLBACK_ARGS);
 void mesh_1d_cb(CALLBACK_ARGS);
 void mesh_2d_cb(CALLBACK_ARGS); 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.405 2006-01-28 07:07:11 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.406 2006-02-04 03:43:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2850,15 +2850,19 @@ void geometry_physical_add_volume_cb(CALLBACK_ARGS)
 
 void mesh_save_cb(CALLBACK_ARGS)
 {
-  Print_Mesh(THEM, CTX.output_filename, CTX.mesh.format);
-}
-
-void mesh_save_all_cb(CALLBACK_ARGS)
-{
-  int all = CTX.mesh.save_all;
-  CTX.mesh.save_all = 1;
-  Print_Mesh(THEM, CTX.output_filename, CTX.mesh.format);
-  CTX.mesh.save_all = all;
+  char name[256];
+  if(CTX.output_filename)
+    strcpy(name, CTX.output_filename);
+  else
+    GetDefaultMeshFileName(THEM, CTX.mesh.format, name);
+  if(CTX.confirm_overwrite) {
+    struct stat buf;
+    if(!stat(name, &buf))
+      if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
+		    "Cancel", "Replace", NULL, name))
+	return;
+  }
+  Print_Mesh(THEM, name, CTX.mesh.format);
 }
 
 void mesh_define_cb(CALLBACK_ARGS)
