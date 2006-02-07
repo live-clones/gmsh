@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.103 2006-01-06 00:34:25 geuzaine Exp $
+// $Id: Post.cpp,v 1.104 2006-02-07 14:18:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -439,12 +439,24 @@ void Draw_List(Post_View * v, double ValMin, double ValMax, int type,
 
 int EstimateNumTri(Post_View *v)
 {
-  int num2d = v->NbST + v->NbSQ;
-  int num3d = v->NbSS + v->NbSH + v->NbSI + v->NbSY;
+  int tris = v->NbST + v->NbVT + v->NbTT;
+  int quads = v->NbSQ + v->NbVQ + v->NbTQ;
+  int tets = v->NbSS + v->NbVS + v->NbTS;
+  int prisms = v->NbSI + v->NbVI + v->NbTI;
+  int pyrs = v->NbSY + v->NbVY + v->NbTY;
+  int hexas = v->NbSH + v->NbVH + v->NbTH;
+  
+  int heuristic;
+  if(v->IntervalsType == DRAW_POST_ISO)
+    heuristic = (tets + prisms + pyrs + hexas) / 10;
+  else if(v->IntervalsType == DRAW_POST_CONTINUOUS)
+    heuristic = (tris + 2 * quads + 6 * tets + 
+      8 * prisms + 6 * pyrs + 12 * hexas);
+  else if(v->IntervalsType == DRAW_POST_DISCRETE)
+    heuristic = (tris + 2 * quads + 6 * tets + 
+      8 * prisms + 6 * pyrs + 12 * hexas) * 2;
 
-  int heuristic = num2d + num3d/10;
-
-  return (heuristic < 10000) ? 10000 : heuristic;
+  return heuristic + 10000;
 }
 
 int EstimateNumLin(Post_View *v)
