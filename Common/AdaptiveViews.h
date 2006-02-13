@@ -110,7 +110,7 @@ public:
   }
   inline static void GSF (const double u, const double v, double w, double sf[]) 
   {
-    sf[0] = 1-u-v;
+    sf[0] = 1. - u - v;
     sf[1] = u;
     sf[2] = v;
   }
@@ -149,10 +149,10 @@ public:
   }
   inline static void GSF (const double u, const double v, double w, double sf[]) 
   {
-    sf[0] = 0.25 * (1 - u) * (1 - v);
-    sf[1] = 0.25 * (1 + u) * (1 - v);
-    sf[2] = 0.25 * (1 + u) * (1 + v);
-    sf[3] = 0.25 * (1 - u) * (1 + v);
+    sf[0] = 0.25 * (1. - u) * (1. - v);
+    sf[1] = 0.25 * (1. + u) * (1. - v);
+    sf[2] = 0.25 * (1. + u) * (1. + v);
+    sf[3] = 0.25 * (1. - u) * (1. + v);
   }
   void print ()
   {
@@ -186,7 +186,7 @@ public:
   }
   inline static void GSF (const double u, const double v, double w, double sf[])
   {
-    sf[0] = 1-u-v-w;
+    sf[0] = 1. - u - v - w;
     sf[1] = u;
     sf[2] = v;
     sf[3] = w;
