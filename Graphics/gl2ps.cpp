@@ -1,7 +1,7 @@
-/* $Id: gl2ps.cpp,v 1.101 2005-12-20 21:52:45 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.102 2006-02-14 15:13:18 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
- * Copyright (C) 1999-2005 Christophe Geuzaine <geuz@geuz.org>
+ * Copyright (C) 1999-2006 Christophe Geuzaine <geuz@geuz.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of either:
@@ -1384,13 +1384,14 @@ static void gl2psRescaleAndOffset()
 
   /* rescale z-buffer coordinate in [0,GL2PS_ZSCALE], to make it of
      the same order of magnitude as the x and y coordinates */
-  scaleZ = GL2PS_ZERO(rangeZ) ? GL2PS_ZSCALE : GL2PS_ZSCALE / rangeZ;
+  scaleZ = GL2PS_ZERO(rangeZ) ? GL2PS_ZSCALE : (GL2PS_ZSCALE / rangeZ);
+  if(scaleZ > 100000.F) scaleZ = 100000.F;
 
   /* apply offsets */
   for(i = 0; i < gl2psListNbr(gl2ps->primitives); i++){
     prim = *(GL2PSprimitive**)gl2psListPointer(gl2ps->primitives, i);
     for(j = 0; j < prim->numverts; j++){
-      prim->verts[j].xyz[2] *= scaleZ;
+      prim->verts[j].xyz[2] = (prim->verts[j].xyz[2] - minZ) * scaleZ;
     }
     if((gl2ps->options & GL2PS_SIMPLE_LINE_OFFSET) &&
        (prim->type == GL2PS_LINE)){
@@ -1421,7 +1422,7 @@ static void gl2psRescaleAndOffset()
         (prim->verts[2].xyz[2] - prim->verts[1].xyz[2]) -
         (prim->verts[2].xyz[0] - prim->verts[1].xyz[0]) *
         (prim->verts[1].xyz[2] - prim->verts[0].xyz[2]) / area;
-      maxdZ = (GLfloat)sqrt(dZdX*dZdX + dZdY*dZdY);
+      maxdZ = (GLfloat)sqrt(dZdX * dZdX + dZdY * dZdY);
       dZ = factor * maxdZ + units;
       prim->verts[0].xyz[2] += dZ;
       prim->verts[1].xyz[2] += dZ;
@@ -1891,6 +1892,10 @@ static void gl2psAddPolyPrimitive(GLshort type, GLshort numverts,
   prim->factor = factor;
   prim->width = width;
   prim->culled = 0;
+
+  /* FIXME: here we should have an option to split stretched
+     tris/quads to enhance SIMPLE_SORT */
+
   gl2psListAdd(gl2ps->primitives, &prim);
 }
 
@@ -2379,7 +2384,7 @@ static void gl2psPrintPostScriptHeader(void)
   }
 
   gl2psPrintf("%%%%Title: %s\n"
-              "%%%%Creator: GL2PS %d.%d.%d, (C) 1999-2005 Christophe Geuzaine <geuz@geuz.org>\n"
+              "%%%%Creator: GL2PS %d.%d.%d, (C) 1999-2006 Christophe Geuzaine <geuz@geuz.org>\n"
               "%%%%For: %s\n"
               "%%%%CreationDate: %s"
               "%%%%LanguageLevel: 3\n"
@@ -3558,7 +3563,7 @@ static int gl2psPrintPDFInfo(void)
                  "/Title (%s)\n"
                  "/Creator (%s)\n"
                  "/Producer (GL2PS %d.%d.%d, "
-                 "(C) 1999-2005 Christophe Geuzaine <geuz@geuz.org>)\n",
+                 "(C) 1999-2006 Christophe Geuzaine <geuz@geuz.org>)\n",
                  gl2ps->title, gl2ps->producer,
                  GL2PS_MAJOR_VERSION, GL2PS_MINOR_VERSION, GL2PS_PATCH_VERSION);
   
@@ -4472,25 +4477,25 @@ static void gl2psPrintSVGHeader(void)
   time(&now);
 
   fprintf(gl2ps->stream, 
-	  "<svg viewBox=\"%d %d %d %d\" xmlns=\"http://www.w3.org/2000/svg\">\n",
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[1] : 
-	  (int)gl2ps->viewport[0],
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[0] :
-	  (int)gl2ps->viewport[1],
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[3] : 
-	  (int)gl2ps->viewport[2],
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[2] :
-	  (int)gl2ps->viewport[3]);
+          "<svg viewBox=\"%d %d %d %d\" xmlns=\"http://www.w3.org/2000/svg\">\n",
+          (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[1] : 
+          (int)gl2ps->viewport[0],
+          (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[0] :
+          (int)gl2ps->viewport[1],
+          (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[3] : 
+          (int)gl2ps->viewport[2],
+          (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[2] :
+          (int)gl2ps->viewport[3]);
   fprintf(gl2ps->stream, "<title>\n");
   fprintf(gl2ps->stream, "%s\n",gl2ps->title);
   fprintf(gl2ps->stream, "</title>\n");
   fprintf(gl2ps->stream, "<desc>\n");
   fprintf(gl2ps->stream, 
-	  "Creator: GL2PS %d.%d.%d\n"
-	  "For: %s\n"
-	  "CreationDate: %s",
-	  GL2PS_MAJOR_VERSION, GL2PS_MINOR_VERSION, GL2PS_PATCH_VERSION,
-	  gl2ps->producer, ctime(&now));
+          "Creator: GL2PS %d.%d.%d\n"
+          "For: %s\n"
+          "CreationDate: %s",
+          GL2PS_MAJOR_VERSION, GL2PS_MINOR_VERSION, GL2PS_PATCH_VERSION,
+          gl2ps->producer, ctime(&now));
   fprintf(gl2ps->stream, "</desc>\n");
   fprintf(gl2ps->stream, "<defs>\n");
   fprintf(gl2ps->stream, "</defs>\n");
@@ -4518,12 +4523,12 @@ static void gl2psPrintSVGPrimitive(void *data)
   case GL2PS_TEXT :
     gl2psSVGGetColorString(prim->verts[0].rgba, col);
     fprintf(gl2ps->stream,
-	    "<text x=\"%g\" y=\"%g\" fill=\"%s\" "
-	    "font-size=\"%d\" font-family=\"%s\">%s</text>\n",
-	    xyz[0][0], xyz[0][1], col,
-	    prim->data.text->fontsize,
-	    prim->data.text->fontname,
-	    prim->data.text->str);
+            "<text x=\"%g\" y=\"%g\" fill=\"%s\" "
+            "font-size=\"%d\" font-family=\"%s\">%s</text>\n",
+            xyz[0][0], xyz[0][1], col,
+            prim->data.text->fontsize,
+            prim->data.text->fontname,
+            prim->data.text->str);
     break;
   case GL2PS_POINT :
     /* FIXME */
@@ -4531,16 +4536,16 @@ static void gl2psPrintSVGPrimitive(void *data)
   case GL2PS_LINE :
     gl2psSVGGetColorString(prim->verts[0].rgba, col);
     fprintf(gl2ps->stream,
-	    "<line stroke=\"%s\" stroke-width=\"%d\" "
-	    "x1=\"%g\" y1=\"%g\" x2=\"%g\" y2=\"%g\"/>\n",
-	    col, (int)(prim->width),
-	    xyz[0][0], xyz[0][1], xyz[1][0], xyz[1][1]);
+            "<line stroke=\"%s\" stroke-width=\"%d\" "
+            "x1=\"%g\" y1=\"%g\" x2=\"%g\" y2=\"%g\"/>\n",
+            col, (int)(prim->width),
+            xyz[0][0], xyz[0][1], xyz[1][0], xyz[1][1]);
     break;
   case GL2PS_TRIANGLE :
     gl2psSVGGetColorString(prim->verts[0].rgba, col);
     fprintf(gl2ps->stream, 
-	    "<polygon fill=\"%s\" points=\"%g,%g %g,%g %g,%g\"/>\n",
-	    col, xyz[0][0], xyz[0][1], xyz[1][0], xyz[1][1], xyz[2][0], xyz[2][1]);
+            "<polygon fill=\"%s\" points=\"%g,%g %g,%g %g,%g\"/>\n",
+            col, xyz[0][0], xyz[0][1], xyz[1][0], xyz[1][1], xyz[2][0], xyz[2][1]);
     break;
   case GL2PS_QUADRANGLE :
     gl2psMsg(GL2PS_WARNING, "There should not be any quad left to print");
@@ -4616,11 +4621,11 @@ static void gl2psPrintPGFHeader(void)
   if(gl2ps->options & GL2PS_DRAW_BACKGROUND){
     gl2psPrintPGFColor(gl2ps->bgcolor);
     fprintf(gl2ps->stream,
-	    "\\pgfpathrectanglecorners{"
-	    "\\pgfpoint{%dpt}{%dpt}}{\\pgfpoint{%dpt}{%dpt}}\n"
-	    "\\pgfusepath{fill}\n",
-	    (int)gl2ps->viewport[0], (int)gl2ps->viewport[1],
-	    (int)gl2ps->viewport[2], (int)gl2ps->viewport[3]);
+            "\\pgfpathrectanglecorners{"
+            "\\pgfpoint{%dpt}{%dpt}}{\\pgfpoint{%dpt}{%dpt}}\n"
+            "\\pgfusepath{fill}\n",
+            (int)gl2ps->viewport[0], (int)gl2ps->viewport[1],
+            (int)gl2ps->viewport[2], (int)gl2ps->viewport[3]);
   }
 }
 
@@ -4660,7 +4665,7 @@ static void gl2psPrintPGFDash(GLushort pattern, GLint factor)
     fprintf(gl2ps->stream, "\\pgfsetdash{");
     for(n = i; n >= 0; n--){
       fprintf(gl2ps->stream, "{%dpt}{%dpt}",
-	      (int)(factor * on[n]), (int)(factor * off[n]));
+              (int)(factor * on[n]), (int)(factor * off[n]));
     }
     fprintf(gl2ps->stream, "}{0pt}\n");
   }
@@ -4691,14 +4696,14 @@ static void gl2psPrintPGFPrimitive(void *data)
   switch(prim->type){
   case GL2PS_TEXT :
     fprintf(gl2ps->stream, "{\n\\pgftransformshift{\\pgfpoint{%fpt}{%fpt}}\n",
-	    prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
+            prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
 
     if(prim->data.text->angle)
       fprintf(gl2ps->stream, "\\pgftransformrotate{%f}{", prim->data.text->angle);
 
     fprintf(gl2ps->stream, "\\pgfnode{rectangle}{%s}{\\fontsize{%d}{0}\\selectfont",
-	    gl2psPGFTextAlignment(prim->data.text->alignment),
-	    prim->data.text->fontsize);
+            gl2psPGFTextAlignment(prim->data.text->alignment),
+            prim->data.text->fontsize);
 
     fprintf(gl2ps->stream, "\\textcolor[rgb]{%g,%g,%g}{{%s}}",
             prim->verts[0].rgba[0], prim->verts[0].rgba[1],
@@ -4710,11 +4715,11 @@ static void gl2psPrintPGFPrimitive(void *data)
     /* Points in openGL are rectangular */
     gl2psPrintPGFColor(prim->verts[0].rgba);
     fprintf(gl2ps->stream, 
-	    "\\pgfpathrectangle{\\pgfpoint{%fpt}{%fpt}}"
-	    "{\\pgfpoint{%fpt}{%fpt}}\n\\pgfusepath{fill}\n",
-	    prim->verts[0].xyz[0]-0.5*prim->width,
-	    prim->verts[0].xyz[1]-0.5*prim->width,
-	    prim->width,prim->width);
+            "\\pgfpathrectangle{\\pgfpoint{%fpt}{%fpt}}"
+            "{\\pgfpoint{%fpt}{%fpt}}\n\\pgfusepath{fill}\n",
+            prim->verts[0].xyz[0]-0.5*prim->width,
+            prim->verts[0].xyz[1]-0.5*prim->width,
+            prim->width,prim->width);
     break;
   case GL2PS_LINE :
     gl2psPrintPGFColor(prim->verts[0].rgba);
@@ -4724,11 +4729,11 @@ static void gl2psPrintPGFPrimitive(void *data)
     }
     gl2psPrintPGFDash(prim->pattern, prim->factor);
     fprintf(gl2ps->stream, 
-	    "\\pgfpathmoveto{\\pgfpoint{%fpt}{%fpt}}\n"
-	    "\\pgflineto{\\pgfpoint{%fpt}{%fpt}}\n"
-	    "\\pgfusepath{stroke}\n",
-	    prim->verts[1].xyz[0], prim->verts[1].xyz[1],
-	    prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
+            "\\pgfpathmoveto{\\pgfpoint{%fpt}{%fpt}}\n"
+            "\\pgflineto{\\pgfpoint{%fpt}{%fpt}}\n"
+            "\\pgfusepath{stroke}\n",
+            prim->verts[1].xyz[0], prim->verts[1].xyz[1],
+            prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
     break;
   case GL2PS_TRIANGLE :
     if(gl2ps->lastlinewidth != 0){
@@ -4737,14 +4742,14 @@ static void gl2psPrintPGFPrimitive(void *data)
     }
     gl2psPrintPGFColor(prim->verts[0].rgba);
     fprintf(gl2ps->stream, 
-	    "\\pgfpathmoveto{\\pgfpoint{%fpt}{%fpt}}\n"
-	    "\\pgflineto{\\pgfpoint{%fpt}{%fpt}}\n"
-	    "\\pgflineto{\\pgfpoint{%fpt}{%fpt}}\n"
-	    "\\pgfpathclose\n"
-	    "\\pgfusepath{fill,stroke}\n",
-	    prim->verts[2].xyz[0], prim->verts[2].xyz[1],
-	    prim->verts[1].xyz[0], prim->verts[1].xyz[1],
-	    prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
+            "\\pgfpathmoveto{\\pgfpoint{%fpt}{%fpt}}\n"
+            "\\pgflineto{\\pgfpoint{%fpt}{%fpt}}\n"
+            "\\pgflineto{\\pgfpoint{%fpt}{%fpt}}\n"
+            "\\pgfpathclose\n"
+            "\\pgfusepath{fill,stroke}\n",
+            prim->verts[2].xyz[0], prim->verts[2].xyz[1],
+            prim->verts[1].xyz[0], prim->verts[1].xyz[1],
+            prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
     break;
   default :
     break;
@@ -4783,17 +4788,17 @@ static void gl2psPrintPGFBeginViewport(GLint viewport[4])
     }
     gl2psPrintPGFColor(rgba);
     fprintf(gl2ps->stream, 
-	    "\\pgfpathrectangle{\\pgfpoint{%dpt}{%dpt}}"
-	    "{\\pgfpoint{%dpt}{%dpt}}\n"
-	    "\\pgfusepath{fill}\n",
-	    x, y, w, h);
+            "\\pgfpathrectangle{\\pgfpoint{%dpt}{%dpt}}"
+            "{\\pgfpoint{%dpt}{%dpt}}\n"
+            "\\pgfusepath{fill}\n",
+            x, y, w, h);
   }
   
   fprintf(gl2ps->stream, 
-	  "\\pgfpathrectangle{\\pgfpoint{%dpt}{%dpt}}"
-	  "{\\pgfpoint{%dpt}{%dpt}}\n"
-	  "\\pgfusepath{clip}\n",
-	  x, y, w, h);
+          "\\pgfpathrectangle{\\pgfpoint{%dpt}{%dpt}}"
+          "{\\pgfpoint{%dpt}{%dpt}}\n"
+          "\\pgfusepath{clip}\n",
+          x, y, w, h);
 }
 
 static GLint gl2psPrintPGFEndViewport(void)
@@ -4856,7 +4861,7 @@ static void gl2psComputeTightBoundingBox(void *data)
 static GLint gl2psPrintPrimitives(void)
 {
   GL2PSbsptree *root;
-  GL2PSxyz eye = {0.0F, 0.0F, 100000.0F};
+  GL2PSxyz eye = {0.0F, 0.0F, 100.0F * GL2PS_ZSCALE};
   GLint used;
 
   used = glRenderMode(GL_RENDER);

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.104 2006-02-07 14:18:43 geuzaine Exp $
+// $Id: Post.cpp,v 1.105 2006-02-14 15:13:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -446,7 +446,7 @@ int EstimateNumTri(Post_View *v)
   int pyrs = v->NbSY + v->NbVY + v->NbTY;
   int hexas = v->NbSH + v->NbVH + v->NbTH;
   
-  int heuristic;
+  int heuristic = 0;
   if(v->IntervalsType == DRAW_POST_ISO)
     heuristic = (tets + prisms + pyrs + hexas) / 10;
   else if(v->IntervalsType == DRAW_POST_CONTINUOUS)
