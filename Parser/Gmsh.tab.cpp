@@ -125,7 +125,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.254 2006-01-30 00:40:19 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.255 2006-02-15 15:06:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //

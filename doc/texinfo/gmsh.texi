@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.198 2006-01-28 21:44:23 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.199 2006-02-15 15:06:27 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -1181,6 +1181,12 @@ Returns the next available surface number.
 
 @item newv
 Returns the next available volume number.
+
+@item newll
+Returns the next available line loop number.
+
+@item newsl
+Returns the next available surface loop number.
 
 @item newreg
 Returns the next available region number. That is, @code{newreg} returns the

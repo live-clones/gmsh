@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.76 2006-01-30 00:40:19 geuzaine Exp $
+// $Id: Gmsh.l,v 1.77 2006-02-15 15:06:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -90,7 +90,9 @@ stepid  {dieze}({digit})+
 "newp"  		{yylval.d = NEWPOINT(); return tDOUBLE;}
 "newl"  		{yylval.d = NEWLINE(); return tDOUBLE;}
 "newc"  		{yylval.d = NEWLINE(); return tDOUBLE;}
+"newll"  		{yylval.d = NEWLINELOOP(); return tDOUBLE;}
 "news"  		{yylval.d = NEWSURFACE(); return tDOUBLE;}
+"newsl"  		{yylval.d = NEWSURFACELOOP(); return tDOUBLE;}
 "newv"  		{yylval.d = NEWVOLUME(); return tDOUBLE;}
 "="                     return tAFFECT;
 "+="                    return tAFFECTPLUS;
