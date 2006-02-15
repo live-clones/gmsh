@@ -115,8 +115,8 @@ class Post_View{
   } color;
 
   // dynamic
-  double (*GVFI) (double min, double max, int nb, int index);
-  int (*GIFV) (double min, double max, int nb, double value);
+  double (*GVFI)(double min, double max, int nb, int index);
+  int (*GIFV)(double min, double max, int nb, double value);
   int ExternalElementIndex;
   double ExternalMin, ExternalMax;
   double TmpBBox[6]; // dynamically computed during drawing
@@ -140,14 +140,14 @@ class Post_View{
   // minimal resolution. Then, we can interactively modify the
   // resolution.
   Adaptive_Post_View *adaptive;
-  void setGlobalResolutionLevel (int level)
+  void setGlobalResolutionLevel(int level)
   {
-    if ( adaptive )
+    if (adaptive)
       adaptive->setGlobalResolutionLevel(this, level);
   }
   void setAdaptiveResolutionLevel (int level, GMSH_Post_Plugin *plug = 0)
   {
-    if ( adaptive )
+    if (adaptive)
       adaptive->setAdaptiveResolutionLevel(this, level, plug);
   }
 
@@ -194,8 +194,8 @@ class Post_View{
 int fcmpPostViewNum(const void *v1, const void *v2);
 int fcmpPostViewAliasOf(const void *v1, const void *v2);
 
-Post_View * BeginView (int alloc);
-void EndView (Post_View *v, int AddInUI, char *FileName, char *Name);
+Post_View *BeginView(int alloc);
+void EndView(Post_View *v, int AddInUI, char *FileName, char *Name);
 void AliasView(int num, int withoptions);
 void FreeView(Post_View *v);
 bool RemoveViewByIndex(int index);
@@ -205,7 +205,7 @@ void WriteView(Post_View *v, char *filename, int format, int append);
 void CopyViewOptions(Post_View *src, Post_View *dest);
 void CombineViews(int time, int how, int remove);
 
-int BGMWithView (Post_View *ErrView);
+int BGMWithView(Post_View *ErrView);
 Post_View *Create2DGraph(char *xname, char *yname, int nbdata, double *x, double *y);
 
 GmshColorTable *Get_ColorTable(int num);

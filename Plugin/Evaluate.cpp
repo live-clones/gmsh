@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.24 2006-01-06 00:34:33 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.25 2006-02-15 04:47:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -317,16 +317,8 @@ Post_View *GMSH_EvaluatePlugin::execute(Post_View * v)
   if(_octree) delete _octree;
 
   // recompute min/max, etc.:
-  for(int i = 0; i < v1->NbTimeStep; i++){
-    v1->TimeStepMin[i] = VAL_INF;
-    v1->TimeStepMax[i] = -VAL_INF;
-  }
   v1->Min = VAL_INF;
   v1->Max = -VAL_INF;
-  for(int i = 0; i < 3; i++) {
-    v1->BBox[2 * i] = VAL_INF;
-    v1->BBox[2 * i + 1] = -VAL_INF;
-  }
   EndView(v1, 0, v1->FileName, v1->Name);
 
   return v1;

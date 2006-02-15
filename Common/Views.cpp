@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.185 2006-02-01 02:11:02 geuzaine Exp $
+// $Id: Views.cpp,v 1.186 2006-02-15 04:47:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -200,6 +200,8 @@ void Stat_Element(Post_View *v, int type, int nbnod, int N,
   case 0:      // scalar
     if(v->Min == VAL_INF || v->Max == -VAL_INF) {
       v->NbTimeStep = N / nbnod;
+      if(v->TimeStepMin) Free(v->TimeStepMin);
+      if(v->TimeStepMax) Free(v->TimeStepMax);
       v->TimeStepMin = (double*)Malloc(v->NbTimeStep * sizeof(double));
       v->TimeStepMax = (double*)Malloc(v->NbTimeStep * sizeof(double));
       for(i = 0; i < v->NbTimeStep; i++){
@@ -231,6 +233,8 @@ void Stat_Element(Post_View *v, int type, int nbnod, int N,
   case 1:      // vector
     if(v->Min == VAL_INF || v->Max == -VAL_INF) {
       v->NbTimeStep = N / (3 * nbnod);
+      if(v->TimeStepMin) Free(v->TimeStepMin);
+      if(v->TimeStepMax) Free(v->TimeStepMax);
       v->TimeStepMin = (double*)Malloc(v->NbTimeStep * sizeof(double));
       v->TimeStepMax = (double*)Malloc(v->NbTimeStep * sizeof(double));
       for(i = 0; i < v->NbTimeStep; i++){
@@ -262,6 +266,8 @@ void Stat_Element(Post_View *v, int type, int nbnod, int N,
   case 2:      // tensor
     if(v->Min == VAL_INF || v->Max == -VAL_INF) {
       v->NbTimeStep = N / (9 * nbnod);
+      if(v->TimeStepMin) Free(v->TimeStepMin);
+      if(v->TimeStepMax) Free(v->TimeStepMax);
       v->TimeStepMin = (double*)Malloc(v->NbTimeStep * sizeof(double));
       v->TimeStepMax = (double*)Malloc(v->NbTimeStep * sizeof(double));
       for(i = 0; i < v->NbTimeStep; i++){
@@ -356,7 +362,7 @@ void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
   // elements *AND* free all the data associated with the curved
   // elements
   v->splitCurvedElements();
-
+  
   // Points
   Stat_List(v, v->SP, 0, v->NbSP, 1);
   Stat_List(v, v->VP, 1, v->NbVP, 1);
@@ -454,7 +460,7 @@ void AliasView(int index, int withoptions)
     }
   }
 
-  // When we duplicate a view, we just point to a reference view: we
+  // When we create an alias we just point to a reference view: we
   // DON'T allocate a new data set!
   v2->Time = v1->Time;
   v2->TimeStepMin = v1->TimeStepMin;

@@ -1,4 +1,4 @@
-// $Id: ModulusPhase.cpp,v 1.2 2006-01-06 00:34:33 geuzaine Exp $
+// $Id: ModulusPhase.cpp,v 1.3 2006-02-15 04:47:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -142,16 +142,8 @@ Post_View *GMSH_ModulusPhasePlugin::execute(Post_View * v)
   mp(v1->NbSY, v1->SY, 5, 1); mp(v1->NbVY, v1->VY, 5, 3); mp(v1->NbTY, v1->TY, 5, 9);
 
   // recompute min/max, etc.:
-  for(int i = 0; i < v1->NbTimeStep; i++){
-    v1->TimeStepMin[i] = VAL_INF;
-    v1->TimeStepMax[i] = -VAL_INF;
-  }
   v1->Min = VAL_INF;
   v1->Max = -VAL_INF;
-  for(int i = 0; i < 3; i++) {
-    v1->BBox[2 * i] = VAL_INF;
-    v1->BBox[2 * i + 1] = -VAL_INF;
-  }
   char name[1024], filename[1024];
   sprintf(name, "%s_ModulusPhase", v1->Name);
   sprintf(filename, "%s_ModulusPhase.pos", v1->Name);

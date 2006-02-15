@@ -846,13 +846,12 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(Post_View * view,
     view->NbSL = 0;
     view->SL = List_Create(nbelm * 8, nbelm, sizeof(double));
   }
-  if (view->NbVT)
-    {
-      TYP  = 5;
-      List_Delete(view->VT); 
-      view->NbVT = 0;
-      view->VT =List_Create ( nbelm * 36, nbelm , sizeof(double));	
-    }
+  if (view->NbVT) {
+    TYP = 5;
+    List_Delete(view->VT); 
+    view->NbVT = 0;
+    view->VT =List_Create ( nbelm * 36, nbelm , sizeof(double));	
+  }
   if(view->NbST) {
     TYP = 1;
     List_Delete(view->ST);
@@ -917,6 +916,11 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(Post_View * view,
     if (level_act >= level) break;
     level_act ++;
   }
+
+  // recompute min/max, etc.:
+  view->Min = VAL_INF;
+  view->Max = -VAL_INF;
+  EndView(view, 0, view->FileName, view->Name);
   view->Changed = 1;
   presentZoomLevel = level;
   presentTol = tol;

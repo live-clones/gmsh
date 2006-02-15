@@ -1,4 +1,4 @@
-// $Id: Remove.cpp,v 1.6 2006-01-06 00:34:33 geuzaine Exp $
+// $Id: Remove.cpp,v 1.7 2006-02-15 04:47:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -163,10 +163,6 @@ Post_View *GMSH_RemovePlugin::execute(Post_View * v)
   v1->Changed = 1;
 
   // recompute min/max, etc.:
-  for(int i = 0; i < v1->NbTimeStep; i++){
-    v1->TimeStepMin[i] = VAL_INF;
-    v1->TimeStepMax[i] = -VAL_INF;
-  }
   v1->Min = VAL_INF;
   v1->Max = -VAL_INF;
   for(int i = 0; i < 3; i++) {
