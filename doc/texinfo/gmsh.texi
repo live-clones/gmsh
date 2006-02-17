@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.199 2006-02-15 15:06:27 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.200 2006-02-17 14:35:07 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -1140,7 +1140,7 @@ The following commands can be used anywhere in a Gmsh ASCII text input file:
 @ftable @code
 
 @item @var{string} = @var{expression};
-Defines a new expression identifier @var{string}, or affects
+Creates a new expression identifier @var{string}, or affects
 @var{expression} to an existing expression identifier. Eleven expression
 identifiers are predefined (hardcoded in Gmsh's parser):
 
@@ -1196,17 +1196,23 @@ of @code{newl}, @code{news}, @code{newv} and @code{newreg} can be modified
 with the @code{Geometry.OldNewReg} option (@pxref{Geometry options}).}.
 @end ftable
 
+@item @var{string} [ ] = @{ @};
+Creates a new expression list identifier @code{@var{string}[]} with an
+empty list.
+
 @item @var{string} [ ] = @{ @var{expression-list} @};
-Defines a new expression list identifier @code{@var{string}[]}, or affects
-@var{expression-list} to an existing expression list identifier.
+Creates a new expression list identifier @code{@var{string}[]} with the
+list @var{expression-list}, or affects @var{expression-list} to an
+existing expression list identifier. (Remember the remark we made when
+we defined @w{@var{expression-list}s}: the braces enclosing an
+@var{expression-list} are optional if the list only contains a single
+item.)
 
 @item @var{string} [ @{ @var{expression-list} @} ] = @{ @var{expression-list} @};
 Affects each item in the right hand side @var{expression-list} to the
 elements (indexed by the left hand side @var{expression-list}) of an
 existing expression list identifier. The two @w{@var{expression-list}s} must
-contain the same number of items. Remember the remark made when defining
-@w{@var{expression-list}s}: the braces enclosing an @var{expression-list}
-are optional if the list only contains a single item.
+contain the same number of items. 
 
 @item @var{real-option} = @var{expression};
 Affects @var{expression} to a real option.
@@ -1232,6 +1238,10 @@ or to a real option.
 @item @var{string} | @var{real-option} /= @var{expression};
 Divides and affects @var{expression} to an existing expression identifier
 or to a real option.
+
+@item @var{string} [ ] += @{ @var{expression-list} @};
+Appends @var{expression-list} to an existing expression list or creates
+a new expression list with @var{expression-list}).
 
 @item @var{string} [ @{ @var{expression-list} @} ] += @{ @var{expression-list} @};
 Adds and affects, item per item, the right hand side @var{expression-list}

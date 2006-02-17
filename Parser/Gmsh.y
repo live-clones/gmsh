@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.219 2006-01-29 19:06:36 geuzaine Exp $
+// $Id: Gmsh.y,v 1.220 2006-02-17 14:35:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -685,6 +685,24 @@ Affectation :
       else{
 	List_Reset(pSymbol->val);
 	List_Copy($5, pSymbol->val);
+	Free($1);
+      }
+      List_Delete($5);
+    }
+  | tSTRING '[' ']' tAFFECTPLUS ListOfDouble tEND
+    {
+      // appends to the list
+      Symbol TheSymbol;
+      TheSymbol.Name = $1;
+      Symbol *pSymbol;
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
+	TheSymbol.val = List_Create(5, 5, sizeof(double));
+	List_Copy($5, TheSymbol.val);
+	Tree_Add(Symbol_T, &TheSymbol);
+      }
+      else{
+	for(int i = 0; i < List_Nbr($5); i++)
+	  List_Add(pSymbol->val, List_Pointer($5, i));
 	Free($1);
       }
       List_Delete($5);
@@ -2889,6 +2907,11 @@ ListOfDouble :
   | FExpr_Multi
     {
       $$ = $1;
+    }
+  | '{' '}'
+    {
+      // creates an empty list
+      $$ = List_Create(2, 1, sizeof(double));
     }
   | '{' RecursiveListOfDouble '}'
     {
