@@ -364,6 +364,11 @@ Draw bounding boxes@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.ExpertMode
+Enable expert mode (to disable all the messages meant for inexperienced users)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.FastRedraw
 Draw simplified model while rotating, panning and zooming@*
 Default value: @code{0}@*
