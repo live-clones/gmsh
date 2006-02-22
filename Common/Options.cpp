@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.273 2006-01-26 13:41:44 geuzaine Exp $
+// $Id: Options.cpp,v 1.274 2006-02-22 19:39:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3167,6 +3167,17 @@ double opt_general_zoom_factor(OPT_ARGS_NUM)
   return CTX.zoom_factor;
 }
 
+double opt_general_expert_mode(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.expert_mode = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_butt[10]->value(CTX.expert_mode);
+#endif
+  return CTX.expert_mode;
+}
+
 double opt_general_clip0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -3945,13 +3956,6 @@ double opt_geometry_circle_points(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.geom.circle_points = (int)val;
   return CTX.geom.circle_points;
-}
-
-double opt_geometry_circle_warning(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.geom.circle_warning = (int)val;
-  return CTX.geom.circle_warning;
 }
 
 double opt_geometry_extrude_spline_points(OPT_ARGS_NUM)

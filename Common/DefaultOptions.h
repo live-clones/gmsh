@@ -546,6 +546,9 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "DrawBoundingBoxes" , opt_general_draw_bounding_box, 0. ,
     "Draw bounding boxes" },
 
+  { F|O, "ExpertMode" , opt_general_expert_mode, 0. ,
+    "Enable expert mode (to disable all the messages meant for inexperienced users)" },
+
   { F|O, "FastRedraw" , opt_general_fast_redraw, 0. ,
     "Draw simplified model while rotating, panning and zooming" },
   { F|S, "FileChooserPositionX" , opt_general_file_chooser_position0 , 200. , 
@@ -768,8 +771,6 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "CirclePoints" , opt_geometry_circle_points, 20. ,
     "Number of points used to draw a circle/ellipse" },
-  { F|O, "CircleWarning" , opt_geometry_circle_warning, 1. ,
-    "Warn if circle arc is greater than Pi" },
 
   { F|O, "ExtrudeSplinePoints" , opt_geometry_extrude_spline_points, 5. ,
     "Number of control points for splines created during extrusion" },

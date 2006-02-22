@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.77 2006-01-29 22:53:41 geuzaine Exp $
+// $Id: Generator.cpp,v 1.78 2006-02-22 19:39:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -174,12 +174,19 @@ void GetStatistics(double stat[50])
 
 }
 
+static double SumOfAllLc = 0.;
+void GetSumOfAllLc(void *a, void *b)
+{
+  Vertex *v = *(Vertex **) a;
+  SumOfAllLc += v->lc;
+}
+
 void ApplyLcFactor_Point(void *a, void *b)
 {
   Vertex *v = *(Vertex **) a;
   if(v->lc <= 0.0) {
-    Msg(GERROR,
-        "Wrong characteristic length (%g <= 0) for Point %d, defaulting to 1.0",
+    Msg(GERROR, 
+	"Wrong characteristic length (%g <= 0) for Point %d, defaulting to 1.0",
         v->lc, v->Num);
     v->lc = 1.0;
   }
@@ -232,35 +239,55 @@ void Move_SimplexBaseToSimplex(Mesh * M, int dimension)
   }
 }
 
+bool TooManyElements(Mesh *M, int dim){
+  if(CTX.expert_mode) return false;
+
+  // try to detect obvious mistakes in characteristic lenghts (one of
+  // the most common cause for erroneous bug reports on the mailing
+  // list)
+  SumOfAllLc = 0.;
+  Tree_Action(M->Points, GetSumOfAllLc);
+  SumOfAllLc /= (double)Tree_Nbr(M->Points);
+  if(pow(CTX.lc / SumOfAllLc, dim) < 1.e7) return false;
+
+  return !GetBinaryAnswer("Your choice of characteristic lengths will likely produce\n"
+			  "a very large mesh. Do you really want to continue?\n\n"
+			  "(To disable this warning in the future, select `Enable\n"
+			  "expert mode' in the option dialog.)",
+			  "Continue", "Cancel");
+}
+
 void Maillage_Dimension_1(Mesh * M)
 {
-  double t1, t2;
+  if(TooManyElements(M, 1)) return;
 
-  t1 = Cpu();
+  double t1 = Cpu();
 
   Tree_Action(M->Curves, Maillage_Curve);
 
-  t2 = Cpu();
+  double t2 = Cpu();
   M->timing[0] = t2 - t1;
 }
 
 void Maillage_Dimension_2(Mesh * M)
 {
-  int i;
-  Curve *c, *neew, C;
-  double t1, t2, shortest = 1.e300;
+  if(TooManyElements(M, 2)) return;
 
-  t1 = Cpu();
+  double shortest = 1.e300;
+
+  double t1 = Cpu();
 
   // create reverse 1D meshes
 
   List_T *Curves = Tree2List(M->Curves);
-  for(i = 0; i < List_Nbr(Curves); i++) {
+  for(int i = 0; i < List_Nbr(Curves); i++) {
+    Curve *c;
     List_Read(Curves, i, &c);
     if(c->Num > 0) {
       if(c->l < shortest)
         shortest = c->l;
-      neew = &C;
+      Curve C;
+      Curve *neew = &C;
       neew->Num = -c->Num;
       Tree_Query(M->Curves, &neew);
       neew->Vertices =
@@ -281,7 +308,7 @@ void Maillage_Dimension_2(Mesh * M)
   if(CTX.mesh.algo_recombine == 2)
     Recombine_All(M);
 
-  t2 = Cpu();
+  double t2 = Cpu();
 
   M->timing[1] = t2 - t1;
 }
@@ -300,16 +327,15 @@ void TransferData(void *a, void *b)
 
 void Maillage_Dimension_3(Mesh * M)
 {
-  Volume *v;
-  double t1, t2;
-  Volume *vol;
+  if(TooManyElements(M, 3)) return;
 
-  t1 = Cpu();
+  double t1 = Cpu();
 
   // merge all the delaunay parts in a single special volume
-  v = Create_Volume(99999, 99999);
+  Volume *v = Create_Volume(99999, 99999);
   List_T *list = Tree2List(M->Volumes);
   for(int i = 0; i < List_Nbr(list); i++) {
+    Volume *vol;
     List_Read(list, i, &vol);
     if((!vol->Extrude || !vol->Extrude->mesh.ExtrudeMesh) &&
        (vol->Method != TRANSFINI)) {
@@ -339,7 +365,7 @@ void Maillage_Dimension_3(Mesh * M)
 
   List_Delete(list);
 
-  t2 = Cpu();
+  double t2 = Cpu();
 
   M->timing[2] = t2 - t1;
 }

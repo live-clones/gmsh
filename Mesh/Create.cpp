@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.81 2006-01-14 16:24:54 geuzaine Exp $
+// $Id: Create.cpp,v 1.82 2006-02-22 19:39:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -457,12 +457,12 @@ void End_Curve(Curve * c)
     for(i = 0; i < 4; i++)
       Curve->Circle.v[i] = v[i];
 
-    if(CTX.geom.circle_warning && Curve->Num > 0 && A3-A1 >= Pi){
+    if(!CTX.expert_mode && Curve->Num > 0 && A3-A1 >= Pi){
       Msg(GERROR1, "Circle or ellipse arc %d greater than/equal to Pi (angle=%g)",
 	  Curve->Num, A3-A1);
       Msg(GERROR2, "(If you understand what this implies, you can disable this error");
-      Msg(GERROR2, "message by setting Geometry.CircleWarning to 0. Otherwise, please");
-      Msg(GERROR3, "subdivide the arc in smaller pieces)");
+      Msg(GERROR2, "message by selecting `Enable expert mode' in the option dialog.");
+      Msg(GERROR3, "Otherwise, please subdivide the arc in smaller pieces.)");
     }
 
   }

@@ -28,7 +28,6 @@ class Context_T {
 
 public :
 
-
   // general options
   char filename[256];         // the name of the currently opened file
   char base_filename[256];    // the same without the extension
@@ -137,6 +136,8 @@ public :
 
   int enable_mouse_selection; // enable selection using the mouse
 
+  int expert_mode; // to disable some warnings for beginners
+
   // geometry options 
   struct{
     int vis_type;
@@ -145,7 +146,7 @@ public :
     double point_size, line_width, point_sel_size, line_sel_width;
     int point_type, line_type; // flat or 3D
     int light;
-    int level, old_circle, circle_points, circle_warning;
+    int level, old_circle, circle_points;
     int extrude_spline_points, old_newreg;
     double normals, tangents;
     double scaling_factor;

@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.68 2006-01-17 20:00:41 geuzaine Exp $
+// $Id: Message.cpp,v 1.69 2006-02-22 19:39:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -321,4 +321,16 @@ double GetValue(char *text, double defaultval)
     else
       return atof(str);
   }
+}
+
+bool GetBinaryAnswer(const char *question, const char *yes, const char *no, 
+		     bool defaultval)
+{
+  if(CTX.nopopup || CTX.batch || !WID)
+    return defaultval;
+
+  if(fl_choice(question, no, yes, NULL))
+    return true;
+  else
+    return false;
 }
