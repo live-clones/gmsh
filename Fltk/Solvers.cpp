@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.42 2006-01-06 00:34:23 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.43 2006-02-22 17:25:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -108,7 +108,7 @@ int Solver(int num, char *args)
   }
   else{
     if(!CTX.solver.listen){
-      Msg(INFO, "Stopped listening for solver conncetions");
+      Msg(INFO, "Stopped listening for solver connections");
       return 0;
     }
     // we don't know who will (maybe) contact us

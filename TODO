@@ -1,5 +1,9 @@
-$Id: TODO,v 1.121 2006-01-27 23:35:35 geuzaine Exp $
+$Id: TODO,v 1.122 2006-02-22 17:25:03 geuzaine Exp $
 
+********************************************************************
+
+add a min_recursion option for adaptve views (to force at least a 
+certain number of subdivisions)
 
 ********************************************************************
 
