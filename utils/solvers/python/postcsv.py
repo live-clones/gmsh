@@ -305,4 +305,4 @@ else:
         else:
             pmesh.makeviews(posfile)
             posfile.close()
-            Gmsh.send(posfile.name, Gmsh.VIEW)
+            Gmsh.send(posfile.name, Gmsh.MERGE_FILE)

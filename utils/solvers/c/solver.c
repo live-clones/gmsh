@@ -1,4 +1,4 @@
-/* $Id: solver.c,v 1.2 2005-01-17 18:52:49 geuzaine Exp $ */
+/* $Id: solver.c,v 1.3 2006-02-23 21:59:08 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
  *
@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
 	fprintf(file, "ST(0,0,0,1,0,0,0,1,0){0,1,2};\n");
         fprintf(file, "};\n");
         fclose(file);
-        Gmsh_SendString(s, GMSH_CLIENT_VIEW, "solver.pos");
+        Gmsh_SendString(s, GMSH_CLIENT_MERGE_FILE, "solver.pos");
       }
       break;
     }

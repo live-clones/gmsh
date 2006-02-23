@@ -1,4 +1,4 @@
-// $Id: solver.cpp,v 1.6 2005-03-12 07:52:56 geuzaine Exp $
+// $Id: solver.cpp,v 1.7 2006-02-23 21:59:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
 	  fprintf(file, "SP(%d,0,0){%g};\n", j,sin(j*i*M_PI/10.));
 	fprintf(file, "};\n");
 	fclose(file);
-	client.View("solver.pos");
+	client.MergeFile("solver.pos");
       }
     }
     client.Info("Done!");

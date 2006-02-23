@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $Id: solver.pl,v 1.2 2005-01-17 18:52:49 geuzaine Exp $
+# $Id: solver.pl,v 1.3 2006-02-23 21:59:09 geuzaine Exp $
 #
 # Copyright (c) 2002 Laurent CHAMPANEY <laurent.champaney@meca.uvsq.fr>. 
 #
@@ -92,7 +92,7 @@ if ($opt_run) {
 	print POSFIC "ST(0,0,0,1,0,0,0,1,0){0,1,2};\n";
 	print POSFIC "};\n";
 	close POSFIC;
-	GMSH_CLIENT::SendString(CLIENT, $GMSH_CLIENT::VIEW, "solver.pos");
+	GMSH_CLIENT::SendString(CLIENT, $GMSH_CLIENT::MERGE_FILE, "solver.pos");
 };
 #
 #   3.3. We can now disconnect the solver from Gmsh:

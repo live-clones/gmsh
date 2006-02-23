@@ -60,18 +60,19 @@ int WaitForData(int socket, int num, int pollint, double waitint);
 class GmshServer {
  public:
   // This should match what's in GmshClient.h
-  typedef enum{ CLIENT_START    = 1,
-		CLIENT_STOP     = 2,
-		CLIENT_INFO     = 10,
-		CLIENT_WARNING  = 11,
-		CLIENT_ERROR    = 12,
-		CLIENT_PROGRESS = 13,
-		CLIENT_VIEW     = 20,
-		CLIENT_OPTION_1 = 100,
-		CLIENT_OPTION_2 = 101,
-		CLIENT_OPTION_3 = 102,
-		CLIENT_OPTION_4 = 103,
-		CLIENT_OPTION_5 = 104 } MessageType;
+  typedef enum{ CLIENT_START        = 1,
+		CLIENT_STOP         = 2,
+		CLIENT_INFO         = 10,
+		CLIENT_WARNING      = 11,
+		CLIENT_ERROR        = 12,
+		CLIENT_PROGRESS     = 13,
+		CLIENT_MERGE_FILE   = 20, // old name: CLIENT_VIEW
+		CLIENT_PARSE_STRING = 21,
+		CLIENT_OPTION_1     = 100,
+		CLIENT_OPTION_2     = 101,
+		CLIENT_OPTION_3     = 102,
+		CLIENT_OPTION_4     = 103,
+		CLIENT_OPTION_5     = 104 } MessageType;
   // FIXME: this should be removed
   static int init, s;
 
@@ -223,6 +224,21 @@ class GmshServer {
 	str[len] = '\0';
 	return 1;
       }
+    }
+    return 0;
+  }
+  int ReceiveMessageHeader(int *type, int *len)
+  {
+    _ReceiveData(type, sizeof(int));
+    if(_ReceiveData(len, sizeof(int)))
+      return 1;
+    return 0;
+  }
+  int ReceiveMessageBody(int len, char *str)
+  {
+    if(_ReceiveData(str, len) == len) {
+      str[len] = '\0';
+      return 1;
     }
     return 0;
   }

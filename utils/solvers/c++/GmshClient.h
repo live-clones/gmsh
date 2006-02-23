@@ -53,18 +53,19 @@
 
 class GmshClient {
  private:
-  typedef enum{ CLIENT_START    = 1,
-		CLIENT_STOP     = 2,
-		CLIENT_INFO     = 10,
-		CLIENT_WARNING  = 11,
-		CLIENT_ERROR    = 12,
-		CLIENT_PROGRESS = 13,
-		CLIENT_VIEW     = 20,
-		CLIENT_OPTION_1 = 100,
-		CLIENT_OPTION_2 = 101,
-		CLIENT_OPTION_3 = 102,
-		CLIENT_OPTION_4 = 103,
-		CLIENT_OPTION_5 = 104 } MessageType;
+  typedef enum{ CLIENT_START        = 1,
+		CLIENT_STOP         = 2,
+		CLIENT_INFO         = 10,
+		CLIENT_WARNING      = 11,
+		CLIENT_ERROR        = 12,
+		CLIENT_PROGRESS     = 13,
+		CLIENT_MERGE_FILE   = 20, // old name was CLIENT_VIEW
+		CLIENT_PARSE_STRING = 21,
+		CLIENT_OPTION_1     = 100,
+		CLIENT_OPTION_2     = 101,
+		CLIENT_OPTION_3     = 102,
+		CLIENT_OPTION_4     = 103,
+		CLIENT_OPTION_5     = 104 } MessageType;
   int _sock;
   void _SendData(void *buffer, int bytes)
   {
@@ -193,9 +194,18 @@ class GmshClient {
   {
     _SendString(CLIENT_PROGRESS, str);
   }
-  void View(char *str)
+  void View(char *str) 
   {
-    _SendString(CLIENT_VIEW, str);
+    // deprecated: use MergeFile(str) instead
+    _SendString(CLIENT_MERGE_FILE, str);
+  }
+  void MergeFile(char *str)
+  {
+    _SendString(CLIENT_MERGE_FILE, str);
+  }
+  void ParseString(char *str)
+  {
+    _SendString(CLIENT_PARSE_STRING, str);
   }
   void Option(int num, char *str)
   {

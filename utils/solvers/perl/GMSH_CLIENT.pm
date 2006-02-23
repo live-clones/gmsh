@@ -1,4 +1,4 @@
-# $Id: GMSH_CLIENT.pm,v 1.2 2005-01-16 20:41:42 geuzaine Exp $
+# $Id: GMSH_CLIENT.pm,v 1.3 2006-02-23 21:59:09 geuzaine Exp $
 #
 # Copyright (c) 2002 Laurent CHAMPANEY <laurent.champaney@meca.uvsq.fr>. 
 # All rights reserved.
@@ -8,19 +8,21 @@
 package GMSH_CLIENT;
 use Socket;
 
-$START     = 1;
-$STOP      = 2;
-$INFO      = 10;
-$WARNING   = 11;
-$ERROR     = 12;
-$PROGRESS  = 13;
-$VIEW      = 20;
-$OPTION    = 100;
-$OPTION_1  = ($OPTION+0);
-$OPTION_2  = ($OPTION+1);
-$OPTION_3  = ($OPTION+2);
-$OPTION_4  = ($OPTION+3);
-$OPTION_5  = ($OPTION+4);
+$START        = 1;
+$STOP         = 2;
+$INFO         = 10;
+$WARNING      = 11;
+$ERROR        = 12;
+$PROGRESS     = 13;
+$VIEW         = 20; # deprecated: use MERGE_FILE instead
+$MERGE_FILE   = 20;
+$PARSE_STRING = 21;
+$OPTION       = 100;
+$OPTION_1     = ($OPTION+0);
+$OPTION_2     = ($OPTION+1);
+$OPTION_3     = ($OPTION+2);
+$OPTION_4     = ($OPTION+3);
+$OPTION_5     = ($OPTION+4);
 
 sub SocketSendData (*$;$$) {
 	my ($socket, $buffer, $bytes) = @_; 

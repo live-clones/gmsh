@@ -26,19 +26,21 @@ import time
 import os
 import sys
 
-START    = 1
-STOP     = 2
-INFO     = 10
-WARNING  = 11
-ERROR    = 12
-PROGRESS = 13
-VIEW     = 20
-OPTION   = 100
-OPTION_1 = OPTION + 0
-OPTION_2 = OPTION + 1
-OPTION_3 = OPTION + 2
-OPTION_4 = OPTION + 3
-OPTION_5 = OPTION + 4
+START        = 1
+STOP         = 2
+INFO         = 10
+WARNING      = 11
+ERROR        = 12
+PROGRESS     = 13
+VIEW         = 20 # deprecated: use MERGE_FILE instead
+MERGE_FILE   = 20
+PARSE_STRING = 21
+OPTION       = 100
+OPTION_1     = OPTION + 0
+OPTION_2     = OPTION + 1
+OPTION_3     = OPTION + 2
+OPTION_4     = OPTION + 3
+OPTION_5     = OPTION + 4
 
 # Module variable used to store the open communication socket with Gmsh
 sock = None
@@ -72,8 +74,8 @@ def send(message, type=INFO):
     type -- the type of message being sent (default INFO)
 
     As of Gmsh version 1.56, type should be one of:
-    START STOP INFO WARNING ERROR PROGRESS VIEW OPTION 
-    OPTION_1 OPTION_2 OPTION_3 OPTION_4 OPTION_5 
+    START STOP INFO WARNING ERROR PROGRESS MERGE_FILE PARSE_FILE
+    OPTION OPTION_1 OPTION_2 OPTION_3 OPTION_4 OPTION_5 
 
     If no socket has been opened (using a Gmsh.Client instance) then print the
     string sys.stderr.
