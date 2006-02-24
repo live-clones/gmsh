@@ -194,7 +194,8 @@ class GmshServer {
     
     if(justwait){
       // wait indefinitely until we get data, polling every 10 ms
-      WaitForData(s, -1, 10, 1.);
+      if(WaitForData(s, -1, 10, 1.))
+	return -6; // not an actual error: we just stopped listening
     }
     else{
       // Wait at most _maxdelay seconds for data, issue error if no

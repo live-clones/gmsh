@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.45 2006-02-24 03:30:21 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.46 2006-02-24 04:03:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -155,6 +155,10 @@ int Solver(int num, char *args)
       break;
     case -5:
       Msg(GERROR, "Socket accept failed on '%s'", sockname);
+      break;
+    case -6:
+      Msg(INFO, "Stopped listening for solver connections");
+      server.StopClient();
       break;
     }
     if(num >= 0){
