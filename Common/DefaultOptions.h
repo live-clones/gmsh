@@ -1004,6 +1004,9 @@ StringXNumber MeshOptions_Number[] = {
 } ;
 
 StringXNumber SolverOptions_Number[] = {
+  { F|O, "AlwaysListen" , opt_solver_listen , 0. ,
+    "Always listen to incoming connection requests?" },
+
   { F|O, "MaximumDelay" , opt_solver_max_delay , 4.0 ,
     "Maximum delay (in seconds) allowed for solver response" },
 
