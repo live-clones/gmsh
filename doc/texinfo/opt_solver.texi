@@ -613,6 +613,11 @@ Command associated with the fifth button for solver 4@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Solver.AlwaysListen
+Always listen to incoming connection requests?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Solver.MaximumDelay
 Maximum delay (in seconds) allowed for solver response@*
 Default value: @code{4}@*

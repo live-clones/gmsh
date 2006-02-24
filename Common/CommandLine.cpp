@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.67 2006-01-06 00:34:20 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.68 2006-02-24 03:26:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -101,7 +101,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -a, -g, -m, -s, -p    Start in automatic, geometry, mesh, solver or post-processing mode");
 #endif
   Msg(DIRECT, "  -pid                  Print process id on stdout");
-  Msg(DIRECT, "  -listen               Always listen to external solver requests");
+  Msg(DIRECT, "  -listen               Always listen to incoming connection requests");
   Msg(DIRECT, "  -v int                Set verbosity level");
   Msg(DIRECT, "  -nopopup              Don't popup dialog windows in scripts");
   Msg(DIRECT, "  -string \"string\"      Parse option string at startup");
