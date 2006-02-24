@@ -2,7 +2,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-// compile with: g++ interact.cpp -lreadline
+// compile with: g++ interactive.cpp -lreadline
 
 class GmshInteractiveClient{
  private:
@@ -11,7 +11,8 @@ class GmshInteractiveClient{
   GmshInteractiveClient()
   {
     using_history();
-    char *socket = "/Users/geuzaine/.gmshsock";
+    char socket[256];
+    sprintf(socket, "%s/.gmshsock", getenv("HOME"));
     if(_client.Connect(socket) < 0) {
       printf("Unable to connect to Gmsh\n");
       exit(1);
@@ -25,6 +26,12 @@ class GmshInteractiveClient{
   }
   void read(char *prompt)
   {
+    // preload a few commands in the history:
+    add_history("lc = 1.;");
+    add_history("Point(1) = {0,0,0,lc};");
+    add_history("Point(2) = {5,0,0,lc};");
+    add_history("Line(1) = {1,2};");
+    
     while (1) {
       // read input char until CR, LF, EOF, ^D
       char *ptr = readline(prompt);
