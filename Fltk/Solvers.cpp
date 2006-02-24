@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.46 2006-02-24 04:03:38 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.47 2006-02-24 14:24:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -21,18 +21,7 @@
 
 #include "Gmsh.h"
 #include "Solvers.h"
-
-SolverInfo SINFO[MAXSOLVERS];
-
-#if !defined(WIN32) || defined(__CYGWIN__)
-
 #include "GmshServer.h"
-
-// FIXME: this should be removed (and we should set the socket options
-// so that the addresses can be reused)
-int GmshServer::init = 0;
-int GmshServer::s;
-
 #include "OpenFile.h"
 #include "GmshUI.h"
 #include "GUI.h"
@@ -43,40 +32,42 @@ int GmshServer::s;
 extern Context_T CTX;
 extern GUI *WID;
 
-// This routine polls the socket file descriptor every pollint
-// milliseconds until data is avalable; when nothing is available, we
-// just tend to pending GUI events. The routine returns 0 if data is
-// available and 1 if there was en error or if the process was killed.
-// (This is much easier to manage than non-blocking IO. The real
-// solution is of course to use threads, or to fork a new process for
-// each new connection, but that's still a bit of a nightmare to
-// maintain in a portable way on all the platforms.)
+SolverInfo SINFO[MAXSOLVERS];
 
-// FIXME: we should reimplement this using Fl::add_fd()
+// FIXME: this should be removed (and we should set the socket options
+// so that the addresses can be reused)
+int GmshServer::init = 0;
+int GmshServer::s;
 
-int WaitForData(int socket, int num, int pollint, double waitint)
+// This routine polls the socket at least every 'waitint' seconds and
+// returns 0 if data is available or 1 if there was en error or if the
+// process was killed. Otherwise it just tends to current GUI events
+// (this is easier to manage than non-blocking IO, and simpler than
+// using the "real" solution, i.e., threads. Another possibility would
+// be to use Fl::add_fd())
+
+int WaitForData(int socket, int num, double waitint)
 {
-  struct pollfd pfd;
-  pfd.fd = socket;
-  pfd.events = POLLIN;
-
   while(1){
-    if( (num >= 0 && SINFO[num].pid < 0) ||  // process has been killed
-	(num < 0 && !CTX.solver.listen) )    // we stopped listening
+    if((num >= 0 && SINFO[num].pid < 0) || (num < 0 && !CTX.solver.listen)){
+      // process has been killed or we stopped listening
       return 1;
-    
-    int ret = poll(&pfd, 1, pollint);
-    
-    if(ret == 0){ // nothing available
-      // use wait() with a delay instead of check() to reduce CPU
-      // usage
-      WID->wait(waitint);
-      //WID->check();
     }
-    else if(ret > 0){ // data is there
+
+    // check if there is data (call select with a zero timeout to
+    // return immediately, i.e., do polling)
+    int ret = myselect(socket, 0);
+
+    if(ret == 0){ 
+      // nothing available: wait at most waitint seconds
+      WID->wait(waitint);
+    }
+    else if(ret > 0){ 
+      // data is there
       return 0;
     }
-    else{ // error
+    else{ 
+      // an error happened
       if(num >= 0)
 	SINFO[num].pid = -1;
       return 1;
@@ -181,7 +172,7 @@ int Solver(int num, char *args)
     if(stop || (num >= 0 && SINFO[num].pid < 0))
       break;
 
-    stop = WaitForData(sock, num, 10, 0.1);
+    stop = WaitForData(sock, num, 0.1);
 
     if(stop || (num >= 0 && SINFO[num].pid < 0))
       break;
@@ -290,13 +281,3 @@ int Solver(int num, char *args)
 
   return 1;
 }
-
-#else // pure windows
-  	 
-int Solver(int num, char *args) 	 
-{ 	 
-  Msg(GERROR, "Solver interface not available on Windows without Cygwin"); 	 
-  return 1; 	 
-} 	 
-
-#endif

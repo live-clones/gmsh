@@ -31,7 +31,7 @@
 //   Christopher Stott
 
 void SystemCall(char *str);
-int WaitForData(int socket, int num, int pollint, double waitint);
+int WaitForData(int socket, int num, double waitint);
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,13 +42,12 @@ int WaitForData(int socket, int num, int pollint, double waitint);
 
 #if !defined(WIN32) || defined(__CYGWIN__)
 
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/poll.h>
 #include <sys/un.h>
 #include <sys/time.h>
-#include <unistd.h>
 #include <netinet/in.h>
 
 #else // pure windows
@@ -56,6 +55,17 @@ int WaitForData(int socket, int num, int pollint, double waitint);
 #include <winsock2.h>
 
 #endif
+
+int myselect(int socket, int seconds)
+{
+  struct timeval tv;
+  tv.tv_sec = seconds;
+  tv.tv_usec = 0;
+  fd_set rfds;
+  FD_ZERO(&rfds);
+  FD_SET(socket, &rfds);
+  return select(socket + 1, &rfds, NULL, NULL, &tv);
+}
 
 class GmshServer {
  public:
@@ -146,7 +156,7 @@ class GmshServer {
 #if !defined(WIN32) || defined(__CYGWIN__)
       unlink(_sockname);
 #endif
-      
+     
       // make the socket
       s = socket(PF_UNIX, SOCK_STREAM, 0);
       if(s < 0)
@@ -193,20 +203,14 @@ class GmshServer {
       return -3;  // Error: Socket listen failed
     
     if(justwait){
-      // wait indefinitely until we get data, polling every 10 ms
-      if(WaitForData(s, -1, 10, 1.))
+      // wait indefinitely until we get data
+      if(WaitForData(s, -1, 0.5))
 	return -6; // not an actual error: we just stopped listening
     }
     else{
       // Wait at most _maxdelay seconds for data, issue error if no
       // connection in that amount of time
-      struct timeval tv;
-      tv.tv_sec = _maxdelay;
-      tv.tv_usec = 0;
-      fd_set rfds;
-      FD_ZERO(&rfds);
-      FD_SET(s, &rfds);
-      if(!select(s + 1, &rfds, NULL, NULL, &tv))
+      if(!myselect(s, _maxdelay))
 	return -4;  // Error: Socket listening timeout
     }
 
@@ -215,18 +219,6 @@ class GmshServer {
       return -5;  // Error: Socket accept failed
     
     return _sock;
-  }
-  int ReceiveString(int *type, char str[])
-  {
-    _ReceiveData(type, sizeof(int));
-    int len;
-    if(_ReceiveData(&len, sizeof(int))) {
-      if(_ReceiveData(str, len) == len) {
-	str[len] = '\0';
-	return 1;
-      }
-    }
-    return 0;
   }
   int ReceiveMessageHeader(int *type, int *len)
   {
