@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.489 2006-02-24 03:20:44 geuzaine Exp $
+// $Id: GUI.cpp,v 1.490 2006-02-24 03:28:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2628,7 +2628,7 @@ void GUI::create_option_window()
 	solver_input[0] = new Fl_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Socket name");
 	solver_input[0]->align(FL_ALIGN_RIGHT);
 
-	solver_butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Always listen to incoming connections");
+	solver_butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Always listen to incoming connection requests");
 	solver_butt[0]->type(FL_TOGGLE_BUTTON);
 	solver_butt[0]->down_box(GMSH_TOGGLE_BOX);
 	solver_butt[0]->selection_color(GMSH_TOGGLE_COLOR);

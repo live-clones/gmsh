@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.44 2006-02-23 21:59:08 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.45 2006-02-24 03:30:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -223,7 +223,6 @@ int Solver(int num, char *args)
 	    strcpy(SINFO[num].option[4][SINFO[num].nbval[4]++], message);
 	  break;
 	case GmshServer::CLIENT_MERGE_FILE:
-	  printf("merging %s\n", message);
 	  if(num < 0 || (num >= 0 && SINFO[num].merge_views)) {
 	    int n = List_Nbr(CTX.post.list);
 	    MergeProblem(message);
