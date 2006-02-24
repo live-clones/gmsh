@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2006-02-24 01:57:09 geuzaine Exp $
+# $Id: Makefile,v 1.6 2006-02-24 02:29:45 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -27,7 +27,7 @@ solver.exe: solver.cpp
 	${CXX} ${FLAGS} ${OPTIM} -o solver.exe solver.cpp
 
 interactive.exe: interactive.cpp
-	${CXX} ${FLAGS} ${OPTIM} -o interactive.exe interactive.cpp -lreadline
+	${CXX} ${FLAGS} ${OPTIM} -o interactive.exe interactive.cpp -lreadline -ltermcap
 
 clean:
 	rm -f *.o *.exe *.pos

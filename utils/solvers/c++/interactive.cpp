@@ -2,7 +2,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-// compile with: g++ interactive.cpp -lreadline
+// compile with: g++ interactive.cpp -lreadline -ltermcap
 
 class GmshInteractiveClient{
  private:
