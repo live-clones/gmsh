@@ -8,7 +8,7 @@
  * Started 9/25/94
  * George
  *
- * $Id: macros.h,v 1.1 2005-09-21 17:29:38 geuzaine Exp $
+ * $Id: macros.h,v 1.2 2006-02-24 22:07:08 geuzaine Exp $
  *
  */
 
@@ -16,7 +16,10 @@
 /*************************************************************************
 * The following macro returns a random number in the specified range
 **************************************************************************/
-#ifdef __VC__
+/* Gmsh
+ #ifdef __VC__
+*/
+#if defined(WIN32) && !defined(__CYGWIN__)
 #define RandomInRange(u) ((rand()>>3)%(u))
 #define RandomInRangeFast(u) ((rand()>>3)%(u))
 #else

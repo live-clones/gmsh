@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.89 2006-02-23 21:59:08 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.90 2006-02-24 22:07:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -405,9 +405,9 @@ void OpenProblemMacFinder(const char *filename)
 
 void SystemCall(char *command)
 {
-#if defined(WIN32) && defined(HAVE_FLTK)
-  STARTUPINFO suInfo;           // Process startup information
-  PROCESS_INFORMATION prInfo;   // Process information
+#if defined(WIN32)
+  STARTUPINFO suInfo;
+  PROCESS_INFORMATION prInfo;
   memset(&suInfo, 0, sizeof(suInfo));
   suInfo.cb = sizeof(suInfo);
   Msg(INFO, "Calling '%s'", command);

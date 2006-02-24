@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CPP RANLIB ac_ct_RANLIB AR FLTKCONFIG EGREP UNAME FLAGS INCLS OPTIM LINKER GMSH_DIRS GMSH_LIBS POSTBUILD LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CPP RANLIB ac_ct_RANLIB AR FLTKCONFIG EGREP UNAME FLAGS OPTIM LINKER GMSH_DIRS GMSH_LIBS POSTBUILD LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -2719,9 +2719,17 @@ if test "x${CC}" = "x" -o "x${CXX}" = "x" ; then
 echo "$as_me: error: Could not find required compilers, aborting." >&2;}
    { (exit 1); exit 1; }; }
 fi
+LINKER="${CXX}"
+POSTBUILD=""
+
+if test "x$enable_cygwin" = "xno"; then
+  UNAME="${UNAME}-no-cygwin"
+  CC="${CC} -mno-cygwin"
+  CXX="${CXX} -mno-cygwin"
+  LINKER="${LINKER} -mno-cygwin"
+fi
 
 FLAGS=""
-INCLS=""
 OPTIM="${CXXFLAGS}"
 
 ac_ext=c
@@ -3087,6 +3095,382 @@ AR="${AR} ruvs"
 
 
 
+GMSH_DIRS="Common DataStr Geo Mesh Numeric Parallel Parser Plugin"
+
+if test "x$enable_gui" != "xno"; then
+
+  GMSH_DIRS="${GMSH_DIRS} Graphics Fltk"
+  GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshDataStr -lGmshPlugin -lGmshNumeric"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshParallel"
+  FLAGS="-DHAVE_FLTK ${FLAGS}"
+
+  if test "x${FLTK_PREFIX}" != "x" ; then
+    # Extract the first word of "fltk-config", so it can be a program name with args.
+set dummy fltk-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_FLTKCONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $FLTKCONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_FLTKCONFIG="$FLTKCONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+as_dummy="${FLTK_PREFIX}:${FLTK_PREFIX}/bin:$PATH"
+for as_dir in $as_dummy
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_FLTKCONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_FLTKCONFIG" && ac_cv_path_FLTKCONFIG=""""
+  ;;
+esac
+fi
+FLTKCONFIG=$ac_cv_path_FLTKCONFIG
+
+if test -n "$FLTKCONFIG"; then
+  echo "$as_me:$LINENO: result: $FLTKCONFIG" >&5
+echo "${ECHO_T}$FLTKCONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+        GMSH_LIBS="${GMSH_LIBS} -L${FLTK_PREFIX}/lib"
+    FLAGS="${FLAGS} -I${FLTK_PREFIX}"
+  else
+    # Extract the first word of "fltk-config", so it can be a program name with args.
+set dummy fltk-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_FLTKCONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $FLTKCONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_FLTKCONFIG="$FLTKCONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_FLTKCONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+FLTKCONFIG=$ac_cv_path_FLTKCONFIG
+
+if test -n "$FLTKCONFIG"; then
+  echo "$as_me:$LINENO: result: $FLTKCONFIG" >&5
+echo "${ECHO_T}$FLTKCONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  fi
+  if test "x$FLTKCONFIG" = "x"; then
+    { { echo "$as_me:$LINENO: error: Could not find fltk-config. Try --with-fltk-prefix?" >&5
+echo "$as_me: error: Could not find fltk-config. Try --with-fltk-prefix?" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+  GMSH_LIBS="${GMSH_LIBS} `$FLTKCONFIG --use-gl --use-images --ldflags`"
+  FLAGS="${FLAGS} `$FLTKCONFIG --use-gl --use-images --cxxflags`"
+
+  FL_JPEG=""
+  expr "x${GMSH_LIBS}" : 'x.*fltk_jpeg.*' >/dev/null && FL_JPEG="yes"
+  FL_PNG=""
+  expr "x${GMSH_LIBS}" : 'x.*fltk_png.*' >/dev/null && FL_PNG="yes"
+  FL_ZLIB=""
+  expr "x${GMSH_LIBS}" : 'x.*fltk_z.*' >/dev/null && FL_ZLIB="yes"
+
+    if test "x$enable_jpeg" != "xno"; then
+        if test "x${FL_JPEG}" = "xyes"; then
+      FLAGS="-DHAVE_LIBJPEG ${FLAGS}"
+    else
+      if test "x${JPEG_PREFIX}" != "x"; then
+        LDFLAGS="-L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib ${LDFLAGS}"
+      fi
+
+echo "$as_me:$LINENO: checking for main in -ljpeg" >&5
+echo $ECHO_N "checking for main in -ljpeg... $ECHO_C" >&6
+if test "${ac_cv_lib_jpeg_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ljpeg  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_jpeg_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_jpeg_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_jpeg_main" >&5
+echo "${ECHO_T}$ac_cv_lib_jpeg_main" >&6
+if test $ac_cv_lib_jpeg_main = yes; then
+  JPEG="yes"
+else
+  JPEG="no"
+fi
+
+      if test "x${JPEG}" = "xyes"; then
+        FLAGS="-DHAVE_LIBJPEG ${FLAGS}"
+        if test "x${JPEG_PREFIX}" = "x"; then
+          GMSH_LIBS="${GMSH_LIBS} -ljpeg"
+        else
+                    GMSH_LIBS="${GMSH_LIBS} -L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib -ljpeg"
+          FLAGS="${FLAGS} -I${JPEG_PREFIX} -I${JPEG_PREFIX}/include"
+        fi
+      fi
+    fi
+  fi
+
+    ZLIB=""
+  if test "x$enable_zlib" != "xno"; then
+        if test "x${FL_ZLIB}" = "xyes"; then
+      ZLIB="yes"
+    else
+      if test "x${ZLIB_PREFIX}" != "x"; then
+        LDFLAGS="-L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib ${LDFLAGS}"
+      fi
+      echo "$as_me:$LINENO: checking for main in -lz" >&5
+echo $ECHO_N "checking for main in -lz... $ECHO_C" >&6
+if test "${ac_cv_lib_z_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lz  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_z_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_z_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_z_main" >&5
+echo "${ECHO_T}$ac_cv_lib_z_main" >&6
+if test $ac_cv_lib_z_main = yes; then
+  ZLIB="yes"
+else
+  ZLIB="no"
+fi
+
+    fi
+  fi
+
+    if test "x$enable_png" != "xno" -a "x${ZLIB}" = "xyes"; then
+        if test "x${FL_PNG}" = "xyes"; then
+      FLAGS="-DHAVE_LIBPNG ${FLAGS}"
+    else
+      if test "x${PNG_PREFIX}" != "x"; then
+        LDFLAGS="-L${PNG_PREFIX} -L${PNG_PREFIX}/lib ${LDFLAGS}"
+      fi
+      echo "$as_me:$LINENO: checking for main in -lpng" >&5
+echo $ECHO_N "checking for main in -lpng... $ECHO_C" >&6
+if test "${ac_cv_lib_png_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpng  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_png_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_png_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_png_main" >&5
+echo "${ECHO_T}$ac_cv_lib_png_main" >&6
+if test $ac_cv_lib_png_main = yes; then
+  PNG="yes"
+else
+  PNG="no"
+fi
+
+      if test "x${PNG}" = "xyes"; then
+        FLAGS="-DHAVE_LIBPNG ${FLAGS}"
+        if test "x${PNG_PREFIX}" = "x"; then
+          GMSH_LIBS="${GMSH_LIBS} -lpng"
+        else
+                    GMSH_LIBS="${GMSH_LIBS} -L${PNG_PREFIX} -L${PNG_PREFIX}/lib -lpng"
+          FLAGS="${FLAGS} -I${PNG_PREFIX} -I${PNG_PREFIX}/include"
+        fi
+      fi
+    fi
+  fi
+
+    if test "x${ZLIB}" = "xyes"; then
+        if test "x${FL_ZLIB}" = "xyes"; then
+      FLAGS="-DHAVE_LIBZ ${FLAGS}"
+    else
+      FLAGS="-DHAVE_LIBZ ${FLAGS}"
+      if test "x${ZLIB_PREFIX}" = "x"; then
+        GMSH_LIBS="${GMSH_LIBS} -lz"
+      else
+                GMSH_LIBS="${GMSH_LIBS} -L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib -lz"
+        FLAGS="${FLAGS} -I${ZLIB_PREFIX} -I${ZLIB_PREFIX}/include"
+      fi
+    fi
+  fi
+
+else
+
+  GMSH_DIRS="${GMSH_DIRS} Box"
+  GMSH_LIBS="-Llib -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshCommon"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshDataStr -lGmshPlugin -lGmshNumeric -lGmshParallel"
+
+fi
+
+
 echo "$as_me:$LINENO: checking for main in -lm" >&5
 echo $ECHO_N "checking for main in -lm... $ECHO_C" >&6
 if test "${ac_cv_lib_m_main+set}" = set; then
@@ -3394,382 +3778,6 @@ sed 's/^/| /' conftest.$ac_ext >&5
 FLAGS="-DHAVE_NO_SOCKLEN_T ${FLAGS}"
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-
-
-
-GMSH_DIRS="Common DataStr Geo Mesh Numeric Parallel Parser Plugin"
-
-if test "x$enable_gui" != "xno"; then
-
-  GMSH_DIRS="${GMSH_DIRS} Graphics Fltk"
-  GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshDataStr -lGmshPlugin -lGmshNumeric"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshParallel"
-  FLAGS="-DHAVE_FLTK ${FLAGS}"
-
-  if test "x${FLTK_PREFIX}" != "x" ; then
-    # Extract the first word of "fltk-config", so it can be a program name with args.
-set dummy fltk-config; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_FLTKCONFIG+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $FLTKCONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_FLTKCONFIG="$FLTKCONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-as_dummy="${FLTK_PREFIX}:${FLTK_PREFIX}/bin:$PATH"
-for as_dir in $as_dummy
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_FLTKCONFIG="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  test -z "$ac_cv_path_FLTKCONFIG" && ac_cv_path_FLTKCONFIG=""""
-  ;;
-esac
-fi
-FLTKCONFIG=$ac_cv_path_FLTKCONFIG
-
-if test -n "$FLTKCONFIG"; then
-  echo "$as_me:$LINENO: result: $FLTKCONFIG" >&5
-echo "${ECHO_T}$FLTKCONFIG" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-        GMSH_LIBS="${GMSH_LIBS} -L${FLTK_PREFIX}/lib"
-    INCLS="${INCLS} -I${FLTK_PREFIX}"
-  else
-    # Extract the first word of "fltk-config", so it can be a program name with args.
-set dummy fltk-config; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_FLTKCONFIG+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $FLTKCONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_FLTKCONFIG="$FLTKCONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_FLTKCONFIG="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  ;;
-esac
-fi
-FLTKCONFIG=$ac_cv_path_FLTKCONFIG
-
-if test -n "$FLTKCONFIG"; then
-  echo "$as_me:$LINENO: result: $FLTKCONFIG" >&5
-echo "${ECHO_T}$FLTKCONFIG" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  fi
-  if test "x$FLTKCONFIG" = "x"; then
-    { { echo "$as_me:$LINENO: error: Could not find fltk-config. Try --with-fltk-prefix?" >&5
-echo "$as_me: error: Could not find fltk-config. Try --with-fltk-prefix?" >&2;}
-   { (exit 1); exit 1; }; }
-  fi
-
-  GMSH_LIBS="${GMSH_LIBS} `$FLTKCONFIG --use-gl --use-images --ldflags`"
-  INCLS="${INCLS} `$FLTKCONFIG --use-gl --use-images --cxxflags`"
-
-  FL_JPEG=""
-  expr "x${GMSH_LIBS}" : 'x.*fltk_jpeg.*' >/dev/null && FL_JPEG="yes"
-  FL_PNG=""
-  expr "x${GMSH_LIBS}" : 'x.*fltk_png.*' >/dev/null && FL_PNG="yes"
-  FL_ZLIB=""
-  expr "x${GMSH_LIBS}" : 'x.*fltk_z.*' >/dev/null && FL_ZLIB="yes"
-
-    if test "x$enable_jpeg" != "xno"; then
-        if test "x${FL_JPEG}" = "xyes"; then
-      FLAGS="-DHAVE_LIBJPEG ${FLAGS}"
-    else
-      if test "x${JPEG_PREFIX}" != "x"; then
-        LDFLAGS="-L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib ${LDFLAGS}"
-      fi
-      echo "$as_me:$LINENO: checking for main in -ljpeg" >&5
-echo $ECHO_N "checking for main in -ljpeg... $ECHO_C" >&6
-if test "${ac_cv_lib_jpeg_main+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-ljpeg  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-
-int
-main ()
-{
-main ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_jpeg_main=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_jpeg_main=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_jpeg_main" >&5
-echo "${ECHO_T}$ac_cv_lib_jpeg_main" >&6
-if test $ac_cv_lib_jpeg_main = yes; then
-  JPEG="yes"
-else
-  JPEG="no"
-fi
-
-      if test "x${JPEG}" = "xyes"; then
-        FLAGS="-DHAVE_LIBJPEG ${FLAGS}"
-        if test "x${JPEG_PREFIX}" = "x"; then
-          GMSH_LIBS="${GMSH_LIBS} -ljpeg"
-        else
-                    GMSH_LIBS="${GMSH_LIBS} -L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib -ljpeg"
-          INCLS="${INCLS} -I${JPEG_PREFIX} -I${JPEG_PREFIX}/include"
-        fi
-      fi
-    fi
-  fi
-
-    ZLIB=""
-  if test "x$enable_zlib" != "xno"; then
-        if test "x${FL_ZLIB}" = "xyes"; then
-      ZLIB="yes"
-    else
-      if test "x${ZLIB_PREFIX}" != "x"; then
-        LDFLAGS="-L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib ${LDFLAGS}"
-      fi
-      echo "$as_me:$LINENO: checking for main in -lz" >&5
-echo $ECHO_N "checking for main in -lz... $ECHO_C" >&6
-if test "${ac_cv_lib_z_main+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lz  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-
-int
-main ()
-{
-main ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_z_main=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_z_main=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_z_main" >&5
-echo "${ECHO_T}$ac_cv_lib_z_main" >&6
-if test $ac_cv_lib_z_main = yes; then
-  ZLIB="yes"
-else
-  ZLIB="no"
-fi
-
-    fi
-  fi
-
-    if test "x$enable_png" != "xno" -a "x${ZLIB}" = "xyes"; then
-        if test "x${FL_PNG}" = "xyes"; then
-      FLAGS="-DHAVE_LIBPNG ${FLAGS}"
-    else
-      if test "x${PNG_PREFIX}" != "x"; then
-        LDFLAGS="-L${PNG_PREFIX} -L${PNG_PREFIX}/lib ${LDFLAGS}"
-      fi
-      echo "$as_me:$LINENO: checking for main in -lpng" >&5
-echo $ECHO_N "checking for main in -lpng... $ECHO_C" >&6
-if test "${ac_cv_lib_png_main+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpng  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-
-int
-main ()
-{
-main ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_png_main=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_png_main=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_png_main" >&5
-echo "${ECHO_T}$ac_cv_lib_png_main" >&6
-if test $ac_cv_lib_png_main = yes; then
-  PNG="yes"
-else
-  PNG="no"
-fi
-
-      if test "x${PNG}" = "xyes"; then
-        FLAGS="-DHAVE_LIBPNG ${FLAGS}"
-        if test "x${PNG_PREFIX}" = "x"; then
-          GMSH_LIBS="${GMSH_LIBS} -lpng"
-        else
-                    GMSH_LIBS="${GMSH_LIBS} -L${PNG_PREFIX} -L${PNG_PREFIX}/lib -lpng"
-          INCLS="${INCLS} -I${PNG_PREFIX} -I${PNG_PREFIX}/include"
-        fi
-      fi
-    fi
-  fi
-
-    if test "x${ZLIB}" = "xyes"; then
-        if test "x${FL_ZLIB}" = "xyes"; then
-      FLAGS="-DHAVE_LIBZ ${FLAGS}"
-    else
-      FLAGS="-DHAVE_LIBZ ${FLAGS}"
-      if test "x${ZLIB_PREFIX}" = "x"; then
-        GMSH_LIBS="${GMSH_LIBS} -lz"
-      else
-                GMSH_LIBS="${GMSH_LIBS} -L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib -lz"
-        INCLS="${INCLS} -I${ZLIB_PREFIX} -I${ZLIB_PREFIX}/include"
-      fi
-    fi
-  fi
-
-else
-
-  GMSH_DIRS="${GMSH_DIRS} Box"
-  GMSH_LIBS="-Llib -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshCommon"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshDataStr -lGmshPlugin -lGmshNumeric -lGmshParallel"
-
-fi
 
 if test "x$enable_contrib" != "xno"; then
 
@@ -4203,7 +4211,7 @@ fi
       GMSH_LIBS="${GMSH_LIBS} -lgsl -lgslcblas"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${GSL_PREFIX}/lib -lgsl -lgslcblas"
-      INCLS="${INCLS} -I${GSL_PREFIX}/include"
+      FLAGS="${FLAGS} -I${GSL_PREFIX}/include"
     fi
   fi
 fi
@@ -4263,9 +4271,6 @@ if test "x$enable_parallel" = "xyes"; then
   FLAGS="-DHAVE_PARALLEL ${FLAGS}"
 fi
 
-LINKER="${CXX}"
-POSTBUILD=""
-
 GMSH_LIBS="${GMSH_LIBS} -lm"
 
 case "$UNAME" in
@@ -4273,9 +4278,7 @@ case "$UNAME" in
   CYGWIN* | MINGW*)
     LINKER="${LINKER} -mwindows"
     if test "x$enable_cygwin" = "xno"; then
-      FLAGS="${FLAGS} -mno-cygwin -DHAVE_NO_DLL"
-      LINKER="${LINKER} -mno-cygwin"
-      UNAME="${UNAME}-no-cygwin"
+      FLAGS="${FLAGS} -DHAVE_NO_DLL"
     fi
     if test "x$enable_gui" != "xno"; then
       GMSH_LIBS="${GMSH_LIBS} Fltk/Win32Icon.res"
@@ -4735,7 +4738,6 @@ done
 
 
 
-
           ac_config_files="$ac_config_files variables"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -4850,9 +4852,10 @@ for ac_i in : $LIBOBJS; do test "x$ac_i" = x: && continue
   # 1. Remove the extension, and $U if already installed.
   ac_i=`echo "$ac_i" |
 	 sed 's/\$U\././;s/\.o$//;s/\.obj$//'`
-  # 2. Add them.
-  ac_libobjs="$ac_libobjs $ac_i\$U.$ac_objext"
-  ac_ltlibobjs="$ac_ltlibobjs $ac_i"'$U.lo'
+  # 2. Prepend LIBOBJDIR.  When used with automake>=1.10 LIBOBJDIR
+  #    will be set to the directory where LIBOBJS objects are built.
+  ac_libobjs="$ac_libobjs \${LIBOBJDIR}$ac_i\$U.$ac_objext"
+  ac_ltlibobjs="$ac_ltlibobjs \${LIBOBJDIR}$ac_i"'$U.lo'
 done
 LIBOBJS=$ac_libobjs
 
@@ -5389,7 +5392,6 @@ s,@FLTKCONFIG@,$FLTKCONFIG,;t t
 s,@EGREP@,$EGREP,;t t
 s,@UNAME@,$UNAME,;t t
 s,@FLAGS@,$FLAGS,;t t
-s,@INCLS@,$INCLS,;t t
 s,@OPTIM@,$OPTIM,;t t
 s,@LINKER@,$LINKER,;t t
 s,@GMSH_DIRS@,$GMSH_DIRS,;t t

@@ -36,18 +36,19 @@
 
 #if !defined(WIN32) || defined(__CYGWIN__)
 
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <sys/time.h>
-#include <unistd.h>
 #include <netinet/in.h>
 #include <netdb.h>
 
 #else // pure windows
 
-#include <winsock2.h>
+#include <winsock.h>
+#include <process.h>
 
 #endif
 
@@ -85,24 +86,12 @@ class GmshClient {
     _SendData(&len, sizeof(int));
     _SendData(str, len);
   }
-  long _GetTime()
+  void _Idle(int usec)
   {
 #if !defined(WIN32) || defined(__CYGWIN__)
-    struct timeval tp;
-    gettimeofday(&tp, (struct timezone *)0);
-    return (long)tp.tv_sec * 1000000 + (long)tp.tv_usec;
+    usleep(usec);
 #else
-    return 0;
-#endif
-  }
-  void _Idle(double delay)
-  {
-#if !defined(WIN32) || defined(__CYGWIN__)
-    long t1 = _GetTime();
-    while(1) {
-      if(_GetTime() - t1 > 1.e6 * delay)
-	break;
-    }
+    Sleep(usec);
 #endif
   }
  public:
@@ -110,9 +99,16 @@ class GmshClient {
   ~GmshClient(){}
   int Connect(char *sockname)
   {
+#if defined(WIN32) && !defined(__CYGWIN__)
+    WSADATA wsaData;
+    int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+    if(iResult != NO_ERROR)
+      return -4;  // Error: Couldn't initialize Windows sockets
+#endif
+
     // slight delay to be sure that the socket is bound by the
     // server before we attempt to connect to it...
-    _Idle(0.1);
+    _Idle(100);
 
     int portno;
     char remote[256];
@@ -133,6 +129,7 @@ class GmshClient {
     // create socket
     
     if(portno < 0){
+#if !defined(WIN32) || defined(__CYGWIN__)
       _sock = socket(PF_UNIX, SOCK_STREAM, 0);
       if(_sock < 0)
 	return -1;  // Error: Couldn't create socket
@@ -143,8 +140,12 @@ class GmshClient {
       for(int tries = 0; tries < 5; tries++) {
 	if(connect(_sock, (struct sockaddr *)&addr_un, sizeof(addr_un)) >= 0)
 	  return _sock;
-	_Idle(0.1);
+	_Idle(100);
       }
+#else
+      // Unix sockets are not available on Windows without Cygwin
+      return -1;
+#endif
     }
     else{
       _sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -159,11 +160,10 @@ class GmshClient {
       addr_in.sin_family = AF_INET;
       memcpy((char *)&addr_in.sin_addr.s_addr, (char *)server->h_addr, server->h_length);
       addr_in.sin_port = htons(portno);
-      addr_in.sin_addr.s_addr = INADDR_ANY;
       for(int tries = 0; tries < 5; tries++) {
 	if(connect(_sock, (struct sockaddr *)&addr_in, sizeof(addr_in)) >= 0)
 	  return _sock;
-	_Idle(0.1);
+	_Idle(100);
       }
     }
     return -2; // Error: Couldn't connect
@@ -171,7 +171,11 @@ class GmshClient {
   void Start()
   {
     char tmp[256];
+#if !defined(WIN32) || defined(__CYGWIN__)
     sprintf(tmp, "%d", getpid());
+#else
+    sprintf(tmp, "%d", _getpid());
+#endif
     _SendString(CLIENT_START, tmp);
   }
   void Stop()
@@ -215,7 +219,12 @@ class GmshClient {
   }
   void Disconnect()
   {
+#if !defined(WIN32) || defined(__CYGWIN__)
     close(_sock);
+#else
+    closesocket(_sock);
+    WSACleanup();
+#endif
   }
 };
 

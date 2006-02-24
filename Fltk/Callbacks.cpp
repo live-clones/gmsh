@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.408 2006-02-24 03:20:44 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.409 2006-02-24 22:07:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -523,12 +523,12 @@ void status_play_cb(CALLBACK_ARGS)
   static long anim_time;
   WID->set_anim_buttons(0);
   stop_anim = 0;
-  anim_time = GetTime();
+  anim_time = GetTimeMilliSeconds();
   while(1) {
     if(stop_anim)
       break;
-    if(GetTime() - anim_time > 1.e6 * CTX.post.anim_delay) {
-      anim_time = GetTime();
+    if(GetTimeMilliSeconds() - anim_time > 1.e6 * CTX.post.anim_delay) {
+      anim_time = GetTimeMilliSeconds();
       ManualPlay(!CTX.post.anim_cycle, 1);
     }
     WID->check();
@@ -3252,16 +3252,22 @@ void solver_command_cb(CALLBACK_ARGS)
 
 void solver_kill_cb(CALLBACK_ARGS)
 {
-#if !defined(WIN32) || defined(__CYGWIN__)
   int num = (int)(long)data;
   if(SINFO[num].pid > 0) {
+#if !defined(WIN32) || defined(__CYGWIN__)
     kill(SINFO[num].pid, 9);
-    Msg(INFO, "Killed %s pid %d", SINFO[num].name, SINFO[num].pid);
-  }
-  SINFO[num].pid = -1;
 #else
-  Msg(WARNING, "Killing processes not supported on Windows without Cygwin");  
+    HANDLE hProc = OpenProcess(PROCESS_TERMINATE, FALSE, SINFO[num].pid);
+    if(!TerminateProcess(hProc, 0)){
+      CloseHandle(hProc);
+      Msg(WARNING, "Could not kill process %s pid %d",
+	  SINFO[num].name, SINFO[num].pid);
+      return;
+    }
 #endif
+  }
+  Msg(INFO, "Killed %s pid %d", SINFO[num].name, SINFO[num].pid);
+  SINFO[num].pid = -1;
 }
 
 void solver_choose_executable_cb(CALLBACK_ARGS)

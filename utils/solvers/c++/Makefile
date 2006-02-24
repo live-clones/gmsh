@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2006-02-24 02:29:45 geuzaine Exp $
+# $Id: Makefile,v 1.7 2006-02-24 22:07:08 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -22,6 +22,9 @@
 include ../../../variables
 
 all: solver.exe interactive.exe
+
+win: solver.cpp
+	${CXX} ${FLAGS} ${OPTIM} -o solver.exe solver.cpp -lwsock32
 
 solver.exe: solver.cpp
 	${CXX} ${FLAGS} ${OPTIM} -o solver.exe solver.cpp

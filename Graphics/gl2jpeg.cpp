@@ -1,4 +1,4 @@
-/* $Id: gl2jpeg.cpp,v 1.25 2006-01-28 08:04:16 geuzaine Exp $ */
+/* $Id: gl2jpeg.cpp,v 1.26 2006-02-24 22:07:06 geuzaine Exp $ */
 /*
  * GL2JPEG, an OpenGL to JPEG Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -42,15 +42,13 @@ void create_jpeg(FILE * outfile, int width, int height,
 
 #else
 
-/* Some releases of the Cygwin JPEG libraries don't have a correctly
-   updated header file for the INT32 data type; the following define
-   from Shane Hill seems to be a usable workaround... */
+/* Some releases of the Cygwin JPEG libraries (as well as the JPEG
+   library bundled with FLTK) don't have a correctly updated header
+   file for the INT32 data type; the following define from Shane Hill
+   seems to be a usable workaround... */
 
 #if defined(WIN32)
 #define XMD_H
-#endif
-
-#if defined(__CYGWIN__)
 #define boolean char
 #endif
 

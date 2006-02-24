@@ -1,3 +1,9 @@
+
+This directory contains a slightly modifed version of Metis (see the
+"Gmsh" tags in the code; the purpose of the changes is only to make the
+library compile on all the architectures supported by Gmsh)
+
+
 /*
  * Copyright 1997, Regents of the University of Minnesota
  *
@@ -8,7 +14,7 @@
  * Started 8/27/94
  * George
  *
- * $Id: README,v 1.3 2005-11-26 16:01:11 geuzaine Exp $
+ * $Id: README,v 1.4 2006-02-24 22:07:08 geuzaine Exp $
  */
 
 

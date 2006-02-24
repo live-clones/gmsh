@@ -45,9 +45,9 @@ public:
     for (int i=0;i<r;++i)data[i]=other.data[i];
   }
   inline void lu_solve (const  Gmsh_Vector<SCALAR>& rhs,  Gmsh_Vector<SCALAR> & result)
-      {
-	  throw;
-      }
+  {
+    throw;
+  }
 };
 
 template <class SCALAR>
@@ -113,6 +113,7 @@ public:
 #ifdef HAVE_GSL
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_matrix.h>
+#include <gsl/gsl_vector.h>
 #include <gsl/gsl_blas.h>
 class GSL_Vector
 {
@@ -175,32 +176,28 @@ public:
   {
     gsl_blas_dgemm (CblasNoTrans,CblasNoTrans, 1.0, data, x.data, 1.0, b.data);
   }
-
   inline void least_squares (const GSL_Vector & rhs, GSL_Vector & result)
-      {
-	  assert (r > c);
-	  assert (rhs.size() == r);
-	  assert (result.size() == c);
-	  GSL_Matrix *ls     = new GSL_Matrix(c, c);
-	  GSL_Vector *ls_rhs = new GSL_Vector(c);
-	  //GSL_Vector *test = new GSL_Vector(c);
-	  gsl_blas_dgemm (CblasTrans,CblasNoTrans, 1.0, data, data, 1.0, ls->data);
-	  gsl_blas_dgemv (CblasTrans, 1.0, data, rhs.data, 1.0, ls_rhs->data);
-	  ls->lu_solve (*ls_rhs,result);
-	  
-
-	  delete ls;
-	  delete ls_rhs;
-      }
+  {
+    assert (r > c);
+    assert (rhs.size() == r);
+    assert (result.size() == c);
+    GSL_Matrix *ls     = new GSL_Matrix(c, c);
+    GSL_Vector *ls_rhs = new GSL_Vector(c);
+    //GSL_Vector *test = new GSL_Vector(c);
+    gsl_blas_dgemm (CblasTrans,CblasNoTrans, 1.0, data, data, 1.0, ls->data);
+    gsl_blas_dgemv (CblasTrans, 1.0, data, rhs.data, 1.0, ls_rhs->data);
+    ls->lu_solve (*ls_rhs,result);
+    delete ls;
+    delete ls_rhs;
+  }
   inline void lu_solve (const GSL_Vector & rhs, GSL_Vector & result)
-      {
-	  int s;
-	  gsl_permutation * p = gsl_permutation_alloc (size1());
-	  gsl_linalg_LU_decomp ( data, p, &s);
-	  gsl_linalg_LU_solve ( data ,  p, rhs.data, result.data ) ;
-	  gsl_permutation_free (p);
-      }
-
+  {
+    int s;
+    gsl_permutation * p = gsl_permutation_alloc (size1());
+    gsl_linalg_LU_decomp ( data, p, &s);
+    gsl_linalg_LU_solve ( data ,  p, rhs.data, result.data ) ;
+    gsl_permutation_free (p);
+  }
   inline void mult (const GSL_Vector & x, GSL_Vector & b )
   {
     gsl_blas_dgemv (CblasNoTrans, 1.0, data, x.data, 1.0, b.data);

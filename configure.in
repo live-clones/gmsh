@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.87 2006-01-28 05:26:43 geuzaine Exp $
+dnl $Id: configure.in,v 1.88 2006-02-24 22:07:05 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 dnl
@@ -103,10 +103,19 @@ AC_PROG_CXX
 if test "x${CC}" = "x" -o "x${CXX}" = "x" ; then
   AC_MSG_ERROR([Could not find required compilers, aborting.])
 fi
+LINKER="${CXX}"
+POSTBUILD=""
+
+dnl Specify -mno-cygwin as soon as possible
+if test "x$enable_cygwin" = "xno"; then
+  UNAME="${UNAME}-no-cygwin"
+  CC="${CC} -mno-cygwin"
+  CXX="${CXX} -mno-cygwin"
+  LINKER="${LINKER} -mno-cygwin"
+fi
 
 dnl Set default flags
 FLAGS=""
-INCLS=""
 OPTIM="${CXXFLAGS}"
 
 dnl Check for various programs
@@ -119,19 +128,6 @@ if test "x${AR}" = "x:"; then
   AC_MSG_ERROR([Could not find the library archiver, aborting.])
 fi
 AR="${AR} ruvs"
-
-dnl Check for standard math library
-AC_CHECK_LIB(m,main)
-
-dnl Check for various functions
-AC_CHECK_FUNC(vsnprintf,,FLAGS="-DHAVE_NO_VSNPRINTF ${FLAGS}")
-AC_CHECK_FUNC(snprintf,,FLAGS="-DHAVE_NO_SNPRINTF ${FLAGS}")
-
-dnl Check if Unix98 socklen_t type is available
-AC_TRY_COMPILE(
- [#include <sys/types.h>
-  #include <sys/socket.h>],
- [socklen_t len = 42; return 0;],,FLAGS="-DHAVE_NO_SOCKLEN_T ${FLAGS}")
 
 dnl See if we need a .exe extension on executables
 AC_EXEEXT
@@ -152,7 +148,7 @@ if test "x$enable_gui" != "xno"; then
     AC_PATH_PROG(FLTKCONFIG,fltk-config,"",[${FLTK_PREFIX}:${FLTK_PREFIX}/bin:$PATH])
     dnl Find the libs/includes even if fltk is _not_ properly installed (ugly hack!)
     GMSH_LIBS="${GMSH_LIBS} -L${FLTK_PREFIX}/lib"
-    INCLS="${INCLS} -I${FLTK_PREFIX}"
+    FLAGS="${FLAGS} -I${FLTK_PREFIX}"
   else
     AC_PATH_PROG(FLTKCONFIG,fltk-config)
   fi
@@ -161,7 +157,7 @@ if test "x$enable_gui" != "xno"; then
   fi
 
   GMSH_LIBS="${GMSH_LIBS} `$FLTKCONFIG --use-gl --use-images --ldflags`"
-  INCLS="${INCLS} `$FLTKCONFIG --use-gl --use-images --cxxflags`"
+  FLAGS="${FLAGS} `$FLTKCONFIG --use-gl --use-images --cxxflags`"
 
   FL_JPEG=""
   expr "x${GMSH_LIBS}" : 'x.*fltk_jpeg.*' >/dev/null && FL_JPEG="yes"
@@ -187,7 +183,7 @@ if test "x$enable_gui" != "xno"; then
         else
           dnl Find the libs/includes even if libjpeg is _not_ properly installed (ugly hack!)
           GMSH_LIBS="${GMSH_LIBS} -L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib -ljpeg"
-          INCLS="${INCLS} -I${JPEG_PREFIX} -I${JPEG_PREFIX}/include"
+          FLAGS="${FLAGS} -I${JPEG_PREFIX} -I${JPEG_PREFIX}/include"
         fi
       fi 
     fi
@@ -224,7 +220,7 @@ if test "x$enable_gui" != "xno"; then
         else
           dnl Find the libs/includes even if libpng is _not_ properly installed (ugly hack!)
           GMSH_LIBS="${GMSH_LIBS} -L${PNG_PREFIX} -L${PNG_PREFIX}/lib -lpng"
-          INCLS="${INCLS} -I${PNG_PREFIX} -I${PNG_PREFIX}/include"
+          FLAGS="${FLAGS} -I${PNG_PREFIX} -I${PNG_PREFIX}/include"
         fi
       fi
     fi 
@@ -242,7 +238,7 @@ if test "x$enable_gui" != "xno"; then
       else
         dnl Find the libs/includes even if libz is _not_ properly installed (ugly hack!)
         GMSH_LIBS="${GMSH_LIBS} -L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib -lz"
-        INCLS="${INCLS} -I${ZLIB_PREFIX} -I${ZLIB_PREFIX}/include"
+        FLAGS="${FLAGS} -I${ZLIB_PREFIX} -I${ZLIB_PREFIX}/include"
       fi
     fi
   fi 
@@ -254,6 +250,19 @@ else
   GMSH_LIBS="${GMSH_LIBS} -lGmshDataStr -lGmshPlugin -lGmshNumeric -lGmshParallel"
 
 fi
+
+dnl Check for standard math library
+AC_CHECK_LIB(m,main)
+
+dnl Check for various functions
+AC_CHECK_FUNC(vsnprintf,,FLAGS="-DHAVE_NO_VSNPRINTF ${FLAGS}")
+AC_CHECK_FUNC(snprintf,,FLAGS="-DHAVE_NO_SNPRINTF ${FLAGS}")
+
+dnl Check if Unix98 socklen_t type is available
+AC_TRY_COMPILE(
+ [#include <sys/types.h>
+  #include <sys/socket.h>],
+ [socklen_t len = 42; return 0;],,FLAGS="-DHAVE_NO_SOCKLEN_T ${FLAGS}")
 
 dnl Check if we should consider the packages in contrib
 if test "x$enable_contrib" != "xno"; then
@@ -433,7 +442,7 @@ if test "x$enable_gsl" != "xno"; then
       GMSH_LIBS="${GMSH_LIBS} -lgsl -lgslcblas"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${GSL_PREFIX}/lib -lgsl -lgslcblas"
-      INCLS="${INCLS} -I${GSL_PREFIX}/include"
+      FLAGS="${FLAGS} -I${GSL_PREFIX}/include"
     fi
   fi
 fi
@@ -471,10 +480,6 @@ if test "x$enable_parallel" = "xyes"; then
   FLAGS="-DHAVE_PARALLEL ${FLAGS}"
 fi
 
-dnl Set default linker and post build action
-LINKER="${CXX}"
-POSTBUILD=""
-
 dnl Finish link line
 GMSH_LIBS="${GMSH_LIBS} -lm"
 
@@ -484,9 +489,7 @@ case "$UNAME" in
   CYGWIN* | MINGW*)
     LINKER="${LINKER} -mwindows"
     if test "x$enable_cygwin" = "xno"; then
-      FLAGS="${FLAGS} -mno-cygwin -DHAVE_NO_DLL"
-      LINKER="${LINKER} -mno-cygwin"
-      UNAME="${UNAME}-no-cygwin"
+      FLAGS="${FLAGS} -DHAVE_NO_DLL"
     fi
     if test "x$enable_gui" != "xno"; then
       GMSH_LIBS="${GMSH_LIBS} Fltk/Win32Icon.res"
@@ -544,7 +547,6 @@ AC_CHECK_HEADERS(sys/time.h sys/resource.h)
 dnl Write output
 AC_SUBST(UNAME)
 AC_SUBST(FLAGS)
-AC_SUBST(INCLS)
 AC_SUBST(OPTIM)
 AC_SUBST(LINKER)
 AC_SUBST(GMSH_DIRS)

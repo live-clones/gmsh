@@ -52,7 +52,7 @@ int WaitForData(int socket, int num, double waitint);
 
 #else // pure windows
 
-#include <winsock2.h>
+#include <winsock.h>
 
 #endif
 
@@ -83,7 +83,6 @@ class GmshServer {
 		CLIENT_OPTION_3     = 102,
 		CLIENT_OPTION_4     = 103,
 		CLIENT_OPTION_5     = 104 } MessageType;
-  // FIXME: this should be removed
   static int init, s;
 
  private:
@@ -111,9 +110,13 @@ class GmshServer {
     socklen_t len;
 #endif
     if(_portno < 0){
+#if !defined(WIN32) || defined(__CYGWIN__)
       struct sockaddr_un from_un;
       len = sizeof(from_un);
       return accept(s, (struct sockaddr *)&from_un, &len);
+#else
+      return -7; // Unix sockets not available on Windows without Cygwin
+#endif
     }
     else{
       struct sockaddr_in from_in;
@@ -155,8 +158,7 @@ class GmshServer {
       // delete the file if it already exists
 #if !defined(WIN32) || defined(__CYGWIN__)
       unlink(_sockname);
-#endif
-     
+
       // make the socket
       s = socket(PF_UNIX, SOCK_STREAM, 0);
       if(s < 0)
@@ -164,23 +166,39 @@ class GmshServer {
       
       // bind the socket to its name
       struct sockaddr_un addr_un;
+      memset((char *) &addr_un, 0, sizeof(addr_un));
       strcpy(addr_un.sun_path, _sockname);
       addr_un.sun_family = AF_UNIX;
       if(bind(s, (struct sockaddr *)&addr_un, sizeof(addr_un)) < 0)
 	return -2;  // Error: Couldn't bind socket to name
-      
+
       // change permissions on the socket name in case it has to be rm'd later
       chmod(_sockname, 0666);
+#else
+      return -7; // Unix sockets not available on Windows without Cygwin
+#endif
     }
     else{
+#if defined(WIN32) && !defined(__CYGWIN__)
+      if(!init){ 
+	WSADATA wsaData;
+	int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+	if(iResult != NO_ERROR)
+	  return -8;  // Error: Couldn't initialize Windows sockets
+      }
+#endif
       if(init != _portno){ 
-	// FIXME: need a better solution to deal with addresses that
-	// have already been bound!
+	// We need a better solution to deal with addresses that have
+	// already been bound...
 	init = _portno;
 	
 	// make the socket
 	s = socket(AF_INET, SOCK_STREAM, 0);
+#if !defined(WIN32) || defined(__CYGWIN__)
 	if(s < 0)
+#else
+	if(s == INVALID_SOCKET)
+#endif
 	  return -1;  // Error: Couldn't create socket
 	
 	// bind the socket to its name
@@ -237,14 +255,16 @@ class GmshServer {
   }
   int StopClient()
   {
+#if !defined(WIN32) || defined(__CYGWIN__)
     if(_portno < 0){
       // UNIX socket
-#if !defined(WIN32) || defined(__CYGWIN__)
       if(unlink(_sockname) == -1)
 	return -1;  // Impossible to unlink the socket
-#endif
     }
     close(_sock);
+#else
+    closesocket(_sock);
+#endif
     return 0;
   }
 };

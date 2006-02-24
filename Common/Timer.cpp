@@ -1,4 +1,4 @@
-// $Id: Timer.cpp,v 1.16 2006-01-06 00:34:21 geuzaine Exp $
+// $Id: Timer.cpp,v 1.17 2006-02-24 22:07:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,21 +25,33 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-long GetTime()
+long GetTimeMilliSeconds()
 {
   struct timeval tp;
   gettimeofday(&tp, (struct timezone *)0);
   return (long)tp.tv_sec * 1000000 + (long)tp.tv_usec;
 }
 
+void SleepMilliSeconds(int usec)
+{
+  usleep(usec);
+}
+
 #else // pure windows
 
 #include "Gmsh.h"
+#include <windows.h>
 
-long GetTime()
+long GetTimeMilliSeconds()
 {
-  Msg(GERROR, "GetTime not implemented on Windows without Cygwin");
-  return 1;
+  FILETIME ft;
+  GetSystemTimeAsFileTime(&ft);
+  return (long)ft.dwHighDateTime * 100000 + (long)ft.dwLowDateTime / 10;
+}
+
+void SleepMilliSeconds(int usec)
+{
+  Sleep(usec);
 }
 
 #endif

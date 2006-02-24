@@ -8,7 +8,7 @@
  * Started 9/28/95
  * George
  *
- * $Id: util.c,v 1.2 2005-09-26 18:11:23 geuzaine Exp $
+ * $Id: util.c,v 1.3 2006-02-24 22:07:08 geuzaine Exp $
  */
 
 #include <metis.h>
@@ -493,13 +493,19 @@ int ispow2(int a)
 void InitRandom(int seed)
 {
   if (seed == -1) {
-#ifndef __VC__
+/* Gmsh
+ #ifndef __VC__
+*/
+#if !defined(WIN32) || defined(__CYGWIN__)
     srand48(7654321L);  
 #endif
     srand(4321);  
   }
   else {
-#ifndef __VC__
+/* Gmsh
+ #ifndef __VC__
+*/
+#if !defined(WIN32) || defined(__CYGWIN__)
     srand48(seed);  
 #endif
     srand(seed);  

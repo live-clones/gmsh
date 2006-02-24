@@ -1,4 +1,4 @@
-// $Id: solver.cpp,v 1.7 2006-02-23 21:59:08 geuzaine Exp $
+// $Id: solver.cpp,v 1.8 2006-02-24 22:07:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -100,7 +100,12 @@ int main(int argc, char *argv[])
     // do the computation and merge some views
     for(int i = 0; i < 10; i++){
       client.Info("Computing curve...");
-      sleep(1); // fake computation...
+      // fake computation...
+#if !defined(WIN32) || defined(__CYGWIN__)
+      usleep(500);
+#else
+      Sleep(500);
+#endif
       client.Info("Done computing curve");
       FILE *file = fopen("solver.pos", "w");
       if(!file)

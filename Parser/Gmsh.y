@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.220 2006-02-17 14:35:06 geuzaine Exp $
+// $Id: Gmsh.y,v 1.221 2006-02-24 22:07:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1831,10 +1831,7 @@ Command :
   | tSTRING FExpr tEND
     {
       if(!strcmp($1, "Sleep")){
-	long sleep_time = GetTime();
-	while(1){
-	  if(GetTime() - sleep_time > (long)($2*1.e6)) break;
-	}
+	SleepMilliSeconds((int)($2 * 1000.));
       }
       else if(!strcmp($1, "Remesh")){
 	ReMesh(THEM);

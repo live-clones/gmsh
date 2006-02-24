@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.47 2006-02-24 14:24:46 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.48 2006-02-24 22:07:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -34,8 +34,6 @@ extern GUI *WID;
 
 SolverInfo SINFO[MAXSOLVERS];
 
-// FIXME: this should be removed (and we should set the socket options
-// so that the addresses can be reused)
 int GmshServer::init = 0;
 int GmshServer::s;
 
@@ -150,6 +148,13 @@ int Solver(int num, char *args)
     case -6:
       Msg(INFO, "Stopped listening for solver connections");
       server.StopClient();
+      break;
+    case -7:
+      Msg(GERROR, "Unix sockets not available on Windows without Cygwin");
+      Msg(GERROR, "Use TCP/IP sockets instead");
+      break;
+    case -8:
+      Msg(GERROR, "Could not initialize Windows sockets");
       break;
     }
     if(num >= 0){

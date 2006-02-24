@@ -20,6 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-long GetTime();
+long GetTimeMilliSeconds();
+void SleepMilliSeconds(int usec);
 
 #endif
