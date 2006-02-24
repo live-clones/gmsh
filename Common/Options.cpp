@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.274 2006-02-22 19:39:49 geuzaine Exp $
+// $Id: Options.cpp,v 1.275 2006-02-24 03:20:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -156,7 +156,6 @@ void Init_Options(int num)
 #else
   CTX.gl_font_enum = -1;
 #endif
-  CTX.solver.listen = 0;
   CTX.forced_bbox = 0;
   CTX.enable_mouse_selection = 2; // hover-to-show-number and click-to-select
 }
@@ -4899,6 +4898,17 @@ double opt_solver_max_delay(OPT_ARGS_NUM)
     WID->solver_value[0]->value(CTX.solver.max_delay);
 #endif
   return CTX.solver.max_delay;
+}
+
+double opt_solver_listen(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.solver.listen = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->solver_butt[0]->value(CTX.solver.listen);
+#endif
+  return CTX.solver.listen;
 }
 
 double opt_solver_plugins(OPT_ARGS_NUM)

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.407 2006-02-22 19:39:49 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.408 2006-02-24 03:20:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1214,6 +1214,11 @@ void solver_options_cb(CALLBACK_ARGS)
 
 void solver_options_ok_cb(CALLBACK_ARGS)
 {
+  int old_listen = (int)opt_solver_listen(0, GMSH_GET, WID->solver_butt[0]->value());
+  opt_solver_listen(0, GMSH_SET, WID->solver_butt[0]->value());
+  if(!old_listen && WID->solver_butt[0]->value())
+    Solver(-1, NULL);
+
   opt_solver_max_delay(0, GMSH_SET, WID->solver_value[0]->value());
 
   opt_solver_socket_name(0, GMSH_SET, (char *)WID->solver_input[0]->value());
