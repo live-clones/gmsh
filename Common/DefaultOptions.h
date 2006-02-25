@@ -111,7 +111,13 @@ StringXString MeshOptions_String[] = {
 } ;
 
 StringXString SolverOptions_String[] = {
+#if defined(WIN32) && !defined(__CYGWIN__)
+  // use TCP/IP sockets by default on "pure" Windows
   { F|O, "SocketName" , opt_solver_socket_name , "127.0.0.1:44122" ,
+#else
+  // use Unix sockets by default otherwise
+  { F|O, "SocketName" , opt_solver_socket_name , ".gmshsock" ,
+#endif
     "Name of socket (TCP/IP if it contains the `:' character, UNIX otherwise)" },
 
   { F|O, "Name0" , opt_solver_name0 , "GetDP" ,
