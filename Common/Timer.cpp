@@ -1,4 +1,4 @@
-// $Id: Timer.cpp,v 1.21 2006-02-25 07:22:11 geuzaine Exp $
+// $Id: Timer.cpp,v 1.22 2006-02-25 21:57:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -47,8 +47,8 @@ double GetTimeInSeconds()
 {
   FILETIME ft;
   GetSystemTimeAsFileTime(&ft);
-  double t = 1.e-1 * (double)ft.dwHighDateTime +
-             1.e-7 * (double)ft.dwLowDateTime;
+  double t =  1.e-7 * 4294967296. * (double)ft.dwHighDateTime +
+              1.e-7 * (double)ft.dwLowDateTime;
   return t;
 }
 
