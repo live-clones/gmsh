@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.69 2006-02-22 19:39:50 geuzaine Exp $
+// $Id: Message.cpp,v 1.70 2006-02-25 05:27:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,6 @@
 
 #if !defined(WIN32) || defined(__CYGWIN__)
 #include <unistd.h>
-#include <signal.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #endif
@@ -30,6 +29,8 @@
 #define RUSAGE_SELF      0
 #define RUSAGE_CHILDREN -1
 #endif
+
+#include <signal.h>
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -47,7 +48,6 @@ extern Context_T CTX;
 
 void Signal(int sig_num)
 {
-#if !defined(WIN32) || defined(__CYGWIN__)
   switch (sig_num) {
   case SIGSEGV:
     Msg(FATAL1, "Segmentation violation (invalid memory reference)");
@@ -67,7 +67,6 @@ void Signal(int sig_num)
     Msg(FATAL, "Unknown signal");
     break;
   }
-#endif
 }
 
 // General purpose message routine

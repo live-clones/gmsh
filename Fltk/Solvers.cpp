@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.48 2006-02-24 22:07:06 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.49 2006-02-25 05:27:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -106,15 +106,17 @@ int Solver(int num, char *args)
   }
 
   if(!strstr(CTX.solver.socket_name, ":")){
-    // file socket
+    // Unix socket
     if(num >= 0)
       sprintf(tmp, "%s%s-%d", CTX.home_dir, CTX.solver.socket_name, num);
     else
       sprintf(tmp, "%s%s", CTX.home_dir, CTX.solver.socket_name);
     FixWindowsPath(tmp, sockname);
   }
-  else
+  else{
+    // TCP/IP socket
     strcpy(sockname, CTX.solver.socket_name);
+  }
 
   if(num >= 0){
     sprintf(tmp, "\"%s\"", sockname);

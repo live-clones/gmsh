@@ -149,7 +149,7 @@ class GmshServer {
       _portno = -1;
     }
     else{
-      // INET socket
+      // TCP/IP socket
       char *port = strstr(_sockname, ":");
       _portno = atoi(port+1);
     }
