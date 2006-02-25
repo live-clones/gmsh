@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.91 2006-02-25 07:58:12 geuzaine Exp $
+dnl $Id: configure.in,v 1.92 2006-02-25 08:40:40 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 dnl
@@ -436,7 +436,7 @@ fi
 dnl Check for GSL
 if test "x$enable_gsl" != "xno"; then
   if test "x${GSL_PREFIX}" != "x"; then
-    LDFLAGS="-L${GSL_PREFIX}/lib ${LDFLAGS}"
+    LDFLAGS="-L${GSL_PREFIX} -L${GSL_PREFIX}/lib ${LDFLAGS}"
   fi
   AC_CHECK_LIB(gslcblas,main)
   AC_CHECK_LIB(gsl,main,GSL="yes",GSL="no")
@@ -445,8 +445,8 @@ if test "x$enable_gsl" != "xno"; then
     if test "x${GSL_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lgsl -lgslcblas"
     else
-      GMSH_LIBS="${GMSH_LIBS} -L${GSL_PREFIX}/lib -lgsl -lgslcblas"
-      FLAGS="${FLAGS} -I${GSL_PREFIX}/include"
+      GMSH_LIBS="${GMSH_LIBS} -L${GSL_PREFIX} -L${GSL_PREFIX}/lib -lgsl -lgslcblas"
+      FLAGS="${FLAGS} -I${GSL_PREFIX} -I${GSL_PREFIX}/include"
     fi
   fi
 fi

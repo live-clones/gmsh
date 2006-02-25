@@ -4075,7 +4075,7 @@ fi
 
 if test "x$enable_gsl" != "xno"; then
   if test "x${GSL_PREFIX}" != "x"; then
-    LDFLAGS="-L${GSL_PREFIX}/lib ${LDFLAGS}"
+    LDFLAGS="-L${GSL_PREFIX} -L${GSL_PREFIX}/lib ${LDFLAGS}"
   fi
 
 echo "$as_me:$LINENO: checking for main in -lgslcblas" >&5
@@ -4214,8 +4214,8 @@ fi
     if test "x${GSL_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lgsl -lgslcblas"
     else
-      GMSH_LIBS="${GMSH_LIBS} -L${GSL_PREFIX}/lib -lgsl -lgslcblas"
-      FLAGS="${FLAGS} -I${GSL_PREFIX}/include"
+      GMSH_LIBS="${GMSH_LIBS} -L${GSL_PREFIX} -L${GSL_PREFIX}/lib -lgsl -lgslcblas"
+      FLAGS="${FLAGS} -I${GSL_PREFIX} -I${GSL_PREFIX}/include"
     fi
   fi
 fi
