@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.202 2006-02-25 14:43:07 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.203 2006-02-25 14:44:53 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -113,8 +113,8 @@ all copies.
 Christophe Geuzaine and Jean-Fran@,{c}ois Remacle
 
 Gmsh is an automatic 3D finite element mesh generator with build-in pre-
-and post-processing facilities. This is @cite{Gmsh Reference Manual} for
-Gmsh @value{GMSH-VERSION} (@today{}).
+and post-processing facilities. This is the @cite{Gmsh Reference Manual}
+for Gmsh @value{GMSH-VERSION} (@today{}).
 @end ifnottex
 
 @c =========================================================================
