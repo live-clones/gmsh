@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.25 2006-01-28 18:44:19 geuzaine Exp $
+# $Id: Makefile,v 1.26 2006-02-25 07:05:37 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -54,4 +54,4 @@ depend:
 ParUtil.o: ParUtil.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ParUtil.h
+  ../Common/Timer.h ParUtil.h

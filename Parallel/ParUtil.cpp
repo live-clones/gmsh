@@ -1,4 +1,4 @@
-// $Id: ParUtil.cpp,v 1.14 2006-01-06 00:34:27 geuzaine Exp $
+// $Id: ParUtil.cpp,v 1.15 2006-02-25 07:05:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,13 +20,11 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Gmsh.h"
+#include "Timer.h"
 #include "ParUtil.h"
 
 #if defined(HAVE_PARALLEL)
-#  include "mpi.h"
-#elif !defined(WIN32) || defined(__CYGWIN__)
-#  include <time.h> // FIXME: for sgi and maybe others
-#  include <sys/time.h>
+#include "mpi.h"
 #endif
 
 ParUtil *ParUtil::Instance()
@@ -68,20 +66,8 @@ double ParUtil::wTime() const
 {
 #ifdef HAVE_PARALLEL
   return MPI_Wtime();
-#elif !defined(WIN32) || defined(__CYGWIN__)
-  struct timeval tp;
-  struct timezone tzp;
-  double timeval;
-
-  gettimeofday(&tp, &tzp);
-
-  timeval = (double)tp.tv_sec;
-  timeval = timeval + (double)((double).000001 * (double)tp.tv_usec);
-
-  return (timeval);
 #else
-  Msg(GERROR, "wTime not implemented on Windows without Cygwin");
-  return 1.; 
+  return GetTimeInSeconds();
 #endif
 }
 

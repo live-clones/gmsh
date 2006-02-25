@@ -1,4 +1,4 @@
-// $Id: Timer.cpp,v 1.19 2006-02-25 07:02:20 geuzaine Exp $
+// $Id: Timer.cpp,v 1.20 2006-02-25 07:07:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -43,7 +43,7 @@ void SleepInSeconds(double s)
 #include "Gmsh.h"
 #include <windows.h>
 
-long GetTimeInSeconds()
+double GetTimeInSeconds()
 {
   FILETIME ft;
   GetSystemTimeAsFileTime(&ft);
