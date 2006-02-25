@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.78 2006-02-22 19:39:50 geuzaine Exp $
+// $Id: Generator.cpp,v 1.79 2006-02-25 14:20:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -240,7 +240,7 @@ void Move_SimplexBaseToSimplex(Mesh * M, int dimension)
 }
 
 bool TooManyElements(Mesh *M, int dim){
-  if(CTX.expert_mode) return false;
+  if(CTX.expert_mode || !Tree_Nbr(M->Points)) return false;
 
   // try to detect obvious mistakes in characteristic lenghts (one of
   // the most common cause for erroneous bug reports on the mailing
