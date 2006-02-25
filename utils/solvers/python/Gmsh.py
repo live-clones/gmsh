@@ -73,7 +73,7 @@ def send(message, type=INFO):
     message -- the string message to send
     type -- the type of message being sent (default INFO)
 
-    As of Gmsh version 1.56, type should be one of:
+    As of Gmsh version 2.0, type should be one of:
     START STOP INFO WARNING ERROR PROGRESS MERGE_FILE PARSE_FILE
     OPTION OPTION_1 OPTION_2 OPTION_3 OPTION_4 OPTION_5 
 
