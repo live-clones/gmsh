@@ -1,4 +1,4 @@
-/* $Id: solver.c,v 1.3 2006-02-23 21:59:08 geuzaine Exp $ */
+/* $Id: solver.c,v 1.4 2006-02-25 00:15:01 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
  *
@@ -44,51 +44,12 @@
    solver menu.
 */
 
-/* We start by including some standard headers. Under Windows, you
-   will need to install the cygwin tools (http://www.cygwin.com) to
-   compile this example (as well as your own solver), since the Gmsh
-   solver interface uses Unix sockets. */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <unistd.h>
-
-/* Now we include the Gmsh client interface definitions. At the time
-   of this writing, the client interface contains only three
-   functions: Gmsh_Connect, Gmsh_SendString and Gmsh_Disconnect. This
-   example shows how to use these functions in order to program some
-   simple interactions between a solver and Gmsh. */
-
 #include "GmshClient.h"
 
-/* The following typedef defines the two actions of our dummy solver:
-   either output some valid option strings, or run a dummy computation
-   and output a post-processing map. */
-
 typedef enum { options, run } action;
-
-/* Let's now define some fake CPU intensive functions: */
-
-long worktime()
-{
-  struct timeval tp;
-  gettimeofday(&tp, (struct timezone *)0);
-  return (long)tp.tv_sec * 1000000 + (long)tp.tv_usec;
-}
-
-void work()
-{
-  long t1 = worktime();
-  while(1) {
-    if(worktime() - t1 > 1.e5)
-      break;
-  }
-}
-
-/* And here we go with the main routine of the solver: */
 
 int main(int argc, char *argv[])
 {
@@ -180,7 +141,12 @@ int main(int argc, char *argv[])
       for(i = 0; i < 10; i++) {
         sprintf(tmp, "%d %% complete", 10*i);
         Gmsh_SendString(s, GMSH_CLIENT_PROGRESS, tmp);
-        work();
+	/* Fake some cpu-intensive calculation: */
+#if !defined(WIN32) || defined(__CYGWIN__)
+	usleep(500 * 1000);
+#else
+	Sleep(500);
+#endif
       }
       sprintf(tmp, "Done with %s!", name);
       Gmsh_SendString(s, GMSH_CLIENT_INFO, tmp);

@@ -1,7 +1,7 @@
 #ifndef _GMSH_CLIENT_H_
 #define _GMSH_CLIENT_H_
 
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -86,12 +86,12 @@ class GmshClient {
     _SendData(&len, sizeof(int));
     _SendData(str, len);
   }
-  void _Idle(int usec)
+  void _Idle(int ms)
   {
 #if !defined(WIN32) || defined(__CYGWIN__)
-    usleep(usec);
+    usleep(1000 * ms);
 #else
-    Sleep(usec);
+    Sleep(ms);
 #endif
   }
  public:

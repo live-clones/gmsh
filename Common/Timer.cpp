@@ -1,4 +1,4 @@
-// $Id: Timer.cpp,v 1.17 2006-02-24 22:07:06 geuzaine Exp $
+// $Id: Timer.cpp,v 1.18 2006-02-25 00:15:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -32,9 +32,9 @@ long GetTimeMilliSeconds()
   return (long)tp.tv_sec * 1000000 + (long)tp.tv_usec;
 }
 
-void SleepMilliSeconds(int usec)
+void SleepMilliSeconds(int ms)
 {
-  usleep(usec);
+  usleep(1000 * ms);
 }
 
 #else // pure windows
@@ -49,9 +49,9 @@ long GetTimeMilliSeconds()
   return (long)ft.dwHighDateTime * 100000 + (long)ft.dwLowDateTime / 10;
 }
 
-void SleepMilliSeconds(int usec)
+void SleepMilliSeconds(int ms)
 {
-  Sleep(usec);
+  Sleep(ms);
 }
 
 #endif

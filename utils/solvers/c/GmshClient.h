@@ -2,7 +2,7 @@
 #define _GMSH_CLIENT_H_
 
 /*
- * Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
+ * Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -48,6 +48,5 @@
 int  Gmsh_Connect(char *sockname);
 void Gmsh_SendString(int socket, int type, char str[]);
 void Gmsh_Disconnect(int sock);
-
 
 #endif

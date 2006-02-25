@@ -21,6 +21,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 long GetTimeMilliSeconds();
-void SleepMilliSeconds(int usec);
+void SleepMilliSeconds(int ms);
 
 #endif

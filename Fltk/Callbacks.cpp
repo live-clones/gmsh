@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.409 2006-02-24 22:07:06 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.410 2006-02-25 00:15:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3265,8 +3265,8 @@ void solver_kill_cb(CALLBACK_ARGS)
       return;
     }
 #endif
+    Msg(INFO, "Killed %s pid %d", SINFO[num].name, SINFO[num].pid);
   }
-  Msg(INFO, "Killed %s pid %d", SINFO[num].name, SINFO[num].pid);
   SINFO[num].pid = -1;
 }
 
