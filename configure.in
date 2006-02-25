@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.90 2006-02-25 03:07:37 geuzaine Exp $
+dnl $Id: configure.in,v 1.91 2006-02-25 07:58:12 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 dnl
@@ -59,7 +59,7 @@ AC_ARG_ENABLE(gui,
                              [build the graphical user interface (default=yes)]))
 AC_ARG_ENABLE(cygwin,
               AC_HELP_STRING([--enable-cygwin],
-                             [use the Cygwin library on Windows (default=yes)]))
+                             [use the Cygwin library on Windows (default=no)]))
 AC_ARG_ENABLE(parallel,
               AC_HELP_STRING([--enable-parallel],
                              [enable parallel version (default=no)]))
@@ -109,7 +109,7 @@ POSTBUILD=""
 dnl Take care of no-cygwin option before doing any other tests
 case "$UNAME" in
   CYGWIN*)
-    if test "x$enable_cygwin" = "xno"; then
+    if test "x$enable_cygwin" != "xyes"; then
       UNAME="${UNAME}-no-cygwin"
       CC="${CC} -mno-cygwin"
       CXX="${CXX} -mno-cygwin"
@@ -492,7 +492,7 @@ case "$UNAME" in
 
   CYGWIN* | MINGW*)
     LINKER="${LINKER} -mwindows"
-    if test "x$enable_cygwin" = "xno"; then
+    if test "x$enable_cygwin" != "xyes"; then
       FLAGS="${FLAGS} -DHAVE_NO_DLL"
     fi
     if test "x$enable_gui" != "xno"; then

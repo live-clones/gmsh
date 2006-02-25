@@ -13,11 +13,7 @@ http://sources.redhat.com/gsl/) and FLTK 1.1.x (configured with OpenGL
 support; freely available from http://www.fltk.org). You can use the
 --with-fltk-prefix and --with-gsl-prefix configure options (or define
 the FLTK_PREFIX and GSL_PREFIX environment variables) if the libraries
-are not installed in their default locations. Please note that
-compiling the Windows version requires the Cygwin tools (freely
-available from http://www.cygwin.com) and a "cygwin-enabled" version
-of FLTK (i.e., you have to configure FLTK with "./configure
---enable-cygwin").
+are not installed in their default locations.
 
 To install a non-graphical version of Gmsh (that does not require FLTK
 nor OpenGL), type

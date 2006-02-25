@@ -10,8 +10,7 @@ make install
 
 This requires FLTK 1.1.x (configured with OpenGL support; freely
 available from http://www.fltk.org) to be properly installed on your
-system. Please note that compiling the Windows version requires the
-Cygwin tools (freely available from http://www.cygwin.com).
+system.
 
 To install a non-graphical version of Gmsh (that does not require FLTK
 nor OpenGL), type

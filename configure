@@ -850,7 +850,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-gsl            use GSL as numerical toolkit (default=yes)
   --enable-gui            build the graphical user interface (default=yes)
-  --enable-cygwin         use the Cygwin library on Windows (default=yes)
+  --enable-cygwin         use the Cygwin library on Windows (default=no)
   --enable-parallel       enable parallel version (default=no)
   --enable-jpeg           enable JPEG support (default=yes)
   --enable-zlib           enable ZLIB support (default=yes)
@@ -2724,7 +2724,7 @@ POSTBUILD=""
 
 case "$UNAME" in
   CYGWIN*)
-    if test "x$enable_cygwin" = "xno"; then
+    if test "x$enable_cygwin" != "xyes"; then
       UNAME="${UNAME}-no-cygwin"
       CC="${CC} -mno-cygwin"
       CXX="${CXX} -mno-cygwin"
@@ -4281,7 +4281,7 @@ case "$UNAME" in
 
   CYGWIN* | MINGW*)
     LINKER="${LINKER} -mwindows"
-    if test "x$enable_cygwin" = "xno"; then
+    if test "x$enable_cygwin" != "xyes"; then
       FLAGS="${FLAGS} -DHAVE_NO_DLL"
     fi
     if test "x$enable_gui" != "xno"; then

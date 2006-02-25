@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.413 2006-02-24 03:28:34 geuzaine Exp $
+# $Id: Makefile,v 1.414 2006-02-25 07:58:11 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -21,9 +21,9 @@
 
 include variables
 
-GMSH_MAJOR_VERSION = 1
-GMSH_MINOR_VERSION = 63
-GMSH_PATCH_VERSION = 3
+GMSH_MAJOR_VERSION = 2
+GMSH_MINOR_VERSION = 0
+GMSH_PATCH_VERSION = 0
 GMSH_EXTRA_VERSION = "-cvs"
 
 GMSH_VERSION = ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}
@@ -183,7 +183,6 @@ package-unix:
 package-win:
 	rm -rf gmsh-${GMSH_VERSION}
 	mkdir gmsh-${GMSH_VERSION}
-	cp /usr/bin/cygwin1.dll gmsh-${GMSH_VERSION}
 	cp bin/gmsh.exe gmsh-${GMSH_VERSION}
 	strip gmsh-${GMSH_VERSION}/gmsh.exe
 	cp doc/README.win32 gmsh-${GMSH_VERSION}/README.txt

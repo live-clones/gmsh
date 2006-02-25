@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.68 2005-11-22 03:15:49 geuzaine Exp $
+$Id: FAQ,v 1.69 2006-02-25 07:58:12 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -59,11 +59,6 @@ http://sources.redhat.com/gsl/) and FLTK (version 1.1.x, configured
 with OpenGL support; freely available from http://www.fltk.org).
 You'll also need the jpeg library if you want to save jpeg images, and
 the libpng and zlib libraries if you want to save png images.
-
-Under Windows, you will need the Cygwin tools and compilers (freely
-available from http://www.cygwin.com), as well as a "cygwin-enabled"
-version of FLTK (i.e., you have to configure FLTK with './configure
---enable-cygwin').
 
 * 2.4 How do I compile Gmsh?
 

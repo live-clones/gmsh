@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.200 2006-02-17 14:35:07 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.201 2006-02-25 07:58:12 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -3683,11 +3683,10 @@ graphics and FLTK for the widget set. See @uref{http://www.opengl.org},
 information.
 
 Gmsh's build system is based on autoconf, and should work on most modern
-platforms providing standard compliant C and C++ compilers. Practical notes
-on how to compile Gmsh's source code are included in the distribution. Note
-that compiling the Windows version requires the Cygwin tools (freely
-available from @uref{http://www.cygwin.com}). See @ref{Frequently asked
-questions}, for more information.
+platforms providing standard compliant C and C++ compilers. Practical
+notes on how to compile Gmsh's source code are included in the
+distribution. See @ref{Frequently asked questions}, for more
+information.
 
 @menu
 * Coding style::                
