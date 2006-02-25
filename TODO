@@ -1,4 +1,4 @@
-$Id: TODO,v 1.122 2006-02-22 17:25:03 geuzaine Exp $
+$Id: TODO,v 1.123 2006-02-25 07:02:20 geuzaine Exp $
 
 ********************************************************************
 
@@ -38,12 +38,7 @@ curve/surface/volume or loop over all elements.)
 ********************************************************************
 
 On Windows WITHOUT Cygwin:
-- rewrite solver interface (GmshServer and GmshClient)
 - Functions in parser don't seem to work
-- fix compilation issues in triangle (timezone) and gl2ps (zlib??)
-- need alternative timer functions (Timer.cpp, ParUtils.cpp)
-- there is a bug in fwrite/fread as used for binary post-processing
-  views (need to investigate "premature end of file" message)
 
 ********************************************************************
 

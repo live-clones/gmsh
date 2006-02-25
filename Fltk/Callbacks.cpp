@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.410 2006-02-25 00:15:00 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.411 2006-02-25 07:02:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -520,15 +520,15 @@ void ManualPlay(int time, int step)
 
 void status_play_cb(CALLBACK_ARGS)
 {
-  static long anim_time;
+  static double anim_time;
   WID->set_anim_buttons(0);
   stop_anim = 0;
-  anim_time = GetTimeMilliSeconds();
+  anim_time = GetTimeInSeconds();
   while(1) {
     if(stop_anim)
       break;
-    if(GetTimeMilliSeconds() - anim_time > 1.e6 * CTX.post.anim_delay) {
-      anim_time = GetTimeMilliSeconds();
+    if(GetTimeInSeconds() - anim_time > CTX.post.anim_delay) {
+      anim_time = GetTimeInSeconds();
       ManualPlay(!CTX.post.anim_cycle, 1);
     }
     WID->check();

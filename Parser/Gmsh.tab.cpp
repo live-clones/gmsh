@@ -125,7 +125,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.258 2006-02-24 22:08:13 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.259 2006-02-25 07:02:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4479,7 +4479,7 @@ case 129:
 #line 1832 "Gmsh.y"
 {
       if(!strcmp(yyvsp[-2].c, "Sleep")){
-	SleepMilliSeconds((int)(yyvsp[-1].d * 1000.));
+	SleepInSeconds(yyvsp[-1].d);
       }
       else if(!strcmp(yyvsp[-2].c, "Remesh")){
 	ReMesh(THEM);

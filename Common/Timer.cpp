@@ -1,4 +1,4 @@
-// $Id: Timer.cpp,v 1.18 2006-02-25 00:15:00 geuzaine Exp $
+// $Id: Timer.cpp,v 1.19 2006-02-25 07:02:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,16 +25,17 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-long GetTimeMilliSeconds()
+double GetTimeInSeconds()
 {
   struct timeval tp;
   gettimeofday(&tp, (struct timezone *)0);
-  return (long)tp.tv_sec * 1000000 + (long)tp.tv_usec;
+  double t = (double)tp.tv_sec + 1.e-6 * (double)tp.tv_usec;
+  return t;
 }
 
-void SleepMilliSeconds(int ms)
+void SleepInSeconds(double s)
 {
-  usleep(1000 * ms);
+  usleep((long)(1.e6 * s));
 }
 
 #else // pure windows
@@ -42,16 +43,17 @@ void SleepMilliSeconds(int ms)
 #include "Gmsh.h"
 #include <windows.h>
 
-long GetTimeMilliSeconds()
+long GetTimeInSeconds()
 {
   FILETIME ft;
   GetSystemTimeAsFileTime(&ft);
-  return (long)ft.dwHighDateTime * 100000 + (long)ft.dwLowDateTime / 10;
+  double t = 1.e2 * (double)ft.dwHighDateTime;
+  return t;
 }
 
-void SleepMilliSeconds(int ms)
+void SleepInSeconds(double s)
 {
-  Sleep(ms);
+  Sleep((long)(1.e3 * s));
 }
 
 #endif
