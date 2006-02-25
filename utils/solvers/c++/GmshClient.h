@@ -135,8 +135,9 @@ class GmshClient {
 	return -1;  // Error: Couldn't create socket
       // try to connect socket to given name
       struct sockaddr_un addr_un;
-      strcpy(addr_un.sun_path, sockname);
+      memset((char *) &addr_un, 0, sizeof(addr_un));
       addr_un.sun_family = AF_UNIX;
+      strcpy(addr_un.sun_path, sockname);
       for(int tries = 0; tries < 5; tries++) {
 	if(connect(_sock, (struct sockaddr *)&addr_un, sizeof(addr_un)) >= 0)
 	  return _sock;

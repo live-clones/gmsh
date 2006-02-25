@@ -1,4 +1,4 @@
-/* $Id: solver.c,v 1.5 2006-02-25 14:36:53 geuzaine Exp $ */
+/* $Id: solver.c,v 1.6 2006-02-25 19:07:50 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
  *
@@ -47,6 +47,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#if !defined(WIN32) || defined(__CYGWIN__)
+#include <unistd.h>
+#endif
+
 #include "GmshClient.h"
 
 typedef enum { options, run } action;

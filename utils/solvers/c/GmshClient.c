@@ -1,4 +1,4 @@
-/* $Id: GmshClient.c,v 1.5 2006-02-25 00:15:01 geuzaine Exp $ */
+/* $Id: GmshClient.c,v 1.6 2006-02-25 19:07:50 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
  *
@@ -131,8 +131,9 @@ int Gmsh_Connect(char *sockname)
     if(sock < 0)
       return -1; /* Error: Couldn't create socket */
     /* try to connect socket to given name */
-    strcpy(addr_un.sun_path, sockname);
+    memset((char *) &addr_un, 0, sizeof(addr_un));
     addr_un.sun_family = AF_UNIX;
+    strcpy(addr_un.sun_path, sockname);
     for(tries = 0; tries < 5; tries++) {
       if(connect(sock, (struct sockaddr *)&addr_un, sizeof(addr_un)) >= 0)
 	return sock;
