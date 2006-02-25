@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.89 2006-02-25 02:50:23 geuzaine Exp $
+dnl $Id: configure.in,v 1.90 2006-02-25 03:07:37 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 dnl
@@ -116,7 +116,7 @@ case "$UNAME" in
       LINKER="${LINKER} -mno-cygwin"
     fi
     ;;
-fi
+esac
 
 dnl Set default flags
 FLAGS=""

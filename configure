@@ -2731,7 +2731,7 @@ case "$UNAME" in
       LINKER="${LINKER} -mno-cygwin"
     fi
     ;;
-fi
+esac
 
 FLAGS=""
 OPTIM="${CXXFLAGS}"
