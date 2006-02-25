@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.92 2006-02-25 08:40:40 geuzaine Exp $
+dnl $Id: configure.in,v 1.93 2006-02-25 15:59:07 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 dnl
@@ -543,10 +543,6 @@ case "$UNAME" in
     ;;
 
 esac
-
-dnl Check for header files
-AC_HEADER_STDC
-AC_CHECK_HEADERS(sys/time.h sys/resource.h)
 
 dnl Write output
 AC_SUBST(UNAME)
