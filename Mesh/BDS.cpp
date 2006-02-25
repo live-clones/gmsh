@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.48 2006-01-07 16:20:50 geuzaine Exp $
+// $Id: BDS.cpp,v 1.49 2006-02-25 07:22:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1291,7 +1291,9 @@ double BDS_Vector::t = 0;
 
 bool BDS_Mesh::read_stl(const char *filename, const double tolerance)
 {
-  FILE *f = fopen(filename, "r");
+  // add 'b' for pure Windows programs, since some of these files
+  // contain binary data
+  FILE *f = fopen(filename, "rb");
   if(!f)
     return false;
   char buffer[256], name[256];

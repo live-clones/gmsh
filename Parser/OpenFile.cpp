@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.90 2006-02-24 22:07:08 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.91 2006-02-25 07:22:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -242,7 +242,9 @@ int MergeProblem(char *name, int warn_if_missing)
   int status;
   FILE *fp;
 
-  if(!(fp = fopen(name, "r"))){
+  // add 'b' for pure Windows programs, since some of these files
+  // contain binary data
+  if(!(fp = fopen(name, "rb"))){
     if(warn_if_missing)
       Msg(WARNING, "Unable to open file '%s'", name);
     return 0;

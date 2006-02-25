@@ -12,7 +12,11 @@ class GmshInteractiveClient{
   {
     using_history();
     char socket[256];
+#if !defined(WIN32) || defined(__CYGWIN__)
     sprintf(socket, "%s/.gmshsock", getenv("HOME"));
+#else
+    sprintf(socket, "127.0.0.1:44122");
+#endif
     if(_client.Connect(socket) < 0) {
       printf("Unable to connect to Gmsh\n");
       exit(1);
