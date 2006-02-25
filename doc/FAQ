@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.69 2006-02-25 07:58:12 geuzaine Exp $
+$Id: FAQ,v 1.70 2006-02-25 14:43:07 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -250,10 +250,9 @@ way, so this surface mesh has to be conform (without gaps, hanging
 nodes, etc.) and must contain surface elements having the final
 desired sizes.
 
-Gmsh can also import discrete geometries in the form of STL 
+Gmsh can also import discrete geometries in the form of STL
 triangulations, and remesh these to respect certain constraints. This
-is an experimental and undocumented feature as of this writing 
-(version 1.61).
+is still an experimental feature as of this writing (version 2.0.0).
 
 * 5.11 How do I define boundary conditions or material properties in
 Gmsh?

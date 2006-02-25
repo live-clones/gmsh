@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.201 2006-02-25 07:58:12 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.202 2006-02-25 14:43:07 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -37,8 +37,7 @@
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
-@set EDITION        1.34
-@set GMSH-VERSION   1.63
+@set GMSH-VERSION   2.0.0
 @set COPYRIGHT      @copyright{} 1997-2006 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @c
 @settitle Gmsh @value{GMSH-VERSION}
@@ -62,8 +61,8 @@
 post-processing facilities
 @end direntry
 @noindent
-This is edition @value{EDITION} (@today{}) of the @cite{Gmsh Reference
-Manual}, for Gmsh @value{GMSH-VERSION}.
+This is the @cite{Gmsh Reference Manual} for Gmsh @value{GMSH-VERSION}
+(@today{}).
 @noindent
 Copyright @value{COPYRIGHT}
 @end ifinfo
@@ -81,7 +80,7 @@ Copyright @value{COPYRIGHT}
 @subtitle The documentation for Gmsh @value{GMSH-VERSION}
 @subtitle A finite element mesh generator with built-in pre- and post-processing facilities
 @subtitle 
-@subtitle Edition @value{EDITION} (@today{})
+@subtitle @today{}
 
 @author Christophe Geuzaine
 @author Jean-Fran@,{c}ois Remacle
@@ -113,9 +112,9 @@ all copies.
 
 Christophe Geuzaine and Jean-Fran@,{c}ois Remacle
 
-Gmsh is an automatic 3D finite element mesh generator with build-in pre- and
-post-processing facilities. This is edition @value{EDITION} (@today{}) of
-the @cite{Gmsh Reference Manual}, for Gmsh @value{GMSH-VERSION}.
+Gmsh is an automatic 3D finite element mesh generator with build-in pre-
+and post-processing facilities. This is @cite{Gmsh Reference Manual} for
+Gmsh @value{GMSH-VERSION} (@today{}).
 @end ifnottex
 
 @c =========================================================================
