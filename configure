@@ -2722,11 +2722,15 @@ fi
 LINKER="${CXX}"
 POSTBUILD=""
 
-if test "x$enable_cygwin" = "xno"; then
-  UNAME="${UNAME}-no-cygwin"
-  CC="${CC} -mno-cygwin"
-  CXX="${CXX} -mno-cygwin"
-  LINKER="${LINKER} -mno-cygwin"
+case "$UNAME" in
+  CYGWIN*)
+    if test "x$enable_cygwin" = "xno"; then
+      UNAME="${UNAME}-no-cygwin"
+      CC="${CC} -mno-cygwin"
+      CXX="${CXX} -mno-cygwin"
+      LINKER="${LINKER} -mno-cygwin"
+    fi
+    ;;
 fi
 
 FLAGS=""

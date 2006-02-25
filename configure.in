@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.88 2006-02-24 22:07:05 geuzaine Exp $
+dnl $Id: configure.in,v 1.89 2006-02-25 02:50:23 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 dnl
@@ -106,12 +106,16 @@ fi
 LINKER="${CXX}"
 POSTBUILD=""
 
-dnl Specify -mno-cygwin as soon as possible
-if test "x$enable_cygwin" = "xno"; then
-  UNAME="${UNAME}-no-cygwin"
-  CC="${CC} -mno-cygwin"
-  CXX="${CXX} -mno-cygwin"
-  LINKER="${LINKER} -mno-cygwin"
+dnl Take care of no-cygwin option before doing any other tests
+case "$UNAME" in
+  CYGWIN*)
+    if test "x$enable_cygwin" = "xno"; then
+      UNAME="${UNAME}-no-cygwin"
+      CC="${CC} -mno-cygwin"
+      CXX="${CXX} -mno-cygwin"
+      LINKER="${LINKER} -mno-cygwin"
+    fi
+    ;;
 fi
 
 dnl Set default flags
