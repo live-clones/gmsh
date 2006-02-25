@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.91 2006-02-25 07:22:11 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.92 2006-02-25 07:32:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -141,7 +141,9 @@ int ParseFile(char *f, int silent, int close, int warn_if_missing)
   FILE *yyin_old, *fp;
   int yylineno_old, yyerrorstate_old, numviews_old, status;
 
-  if(!(fp = fopen(f, "r"))){
+  // add 'b' for pure Windows programs: opening in text mode messes up
+  // fsetpos/fgetpos (used e.g. for user-defined functions)
+  if(!(fp = fopen(f, "rb"))){
     if(warn_if_missing)
       Msg(WARNING, "Unable to open file '%s'", f);
     return 0;
@@ -242,7 +244,7 @@ int MergeProblem(char *name, int warn_if_missing)
   int status;
   FILE *fp;
 
-  // add 'b' for pure Windows programs, since some of these files
+  // added 'b' for pure Windows programs, since some of these files
   // contain binary data
   if(!(fp = fopen(name, "rb"))){
     if(warn_if_missing)

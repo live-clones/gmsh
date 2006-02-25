@@ -1,4 +1,4 @@
-$Id: TODO,v 1.123 2006-02-25 07:02:20 geuzaine Exp $
+$Id: TODO,v 1.124 2006-02-25 07:32:42 geuzaine Exp $
 
 ********************************************************************
 
@@ -34,11 +34,6 @@ curve/surface/volume or loop over all elements.)
 - Fix nodes of surface elements in Tetgen (easy)
 - Extend Tetgen to multiple-volume geometries (hard)
 - Tetgen+partitions -> crash in BDS transfer
-
-********************************************************************
-
-On Windows WITHOUT Cygwin:
-- Functions in parser don't seem to work
 
 ********************************************************************
 
