@@ -1,4 +1,4 @@
-// $Id: solver.cpp,v 1.8 2006-02-24 22:07:08 geuzaine Exp $
+// $Id: solver.cpp,v 1.9 2006-02-25 14:36:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -100,9 +100,9 @@ int main(int argc, char *argv[])
     // do the computation and merge some views
     for(int i = 0; i < 10; i++){
       client.Info("Computing curve...");
-      // fake computation...
+      // fake computation for 500ms:
 #if !defined(WIN32) || defined(__CYGWIN__)
-      usleep(500);
+      usleep(500 * 1000);
 #else
       Sleep(500);
 #endif

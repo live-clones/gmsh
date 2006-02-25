@@ -1,4 +1,4 @@
-/* $Id: solver.c,v 1.4 2006-02-25 00:15:01 geuzaine Exp $ */
+/* $Id: solver.c,v 1.5 2006-02-25 14:36:53 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
  *
@@ -141,11 +141,11 @@ int main(int argc, char *argv[])
       for(i = 0; i < 10; i++) {
         sprintf(tmp, "%d %% complete", 10*i);
         Gmsh_SendString(s, GMSH_CLIENT_PROGRESS, tmp);
-	/* Fake some cpu-intensive calculation: */
+	/* Fake some cpu-intensive calculation during 100ms: */
 #if !defined(WIN32) || defined(__CYGWIN__)
-	usleep(500 * 1000);
+	usleep(100 * 1000);
 #else
-	Sleep(500);
+	Sleep(100);
 #endif
       }
       sprintf(tmp, "Done with %s!", name);
