@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.79 2006-02-25 14:20:07 geuzaine Exp $
+// $Id: Generator.cpp,v 1.80 2006-02-26 00:40:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,7 @@
 #include "OpenFile.h"
 #include "Views.h"
 #include "PartitionMesh.h"
+#include "Timer.h"
 
 extern Mesh *THEM;
 extern Context_T CTX;

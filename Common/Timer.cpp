@@ -1,4 +1,4 @@
-// $Id: Timer.cpp,v 1.22 2006-02-25 21:57:51 geuzaine Exp $
+// $Id: Timer.cpp,v 1.23 2006-02-26 00:40:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -21,40 +21,68 @@
 
 #if !defined(WIN32) || defined(__CYGWIN__)
 
-#include <time.h> // FIXME: for sgi and maybe others
-#include <sys/time.h>
 #include <unistd.h>
+#include <time.h> // for sgi and maybe others
+#include <sys/time.h>
+#include <sys/resource.h>
+
+#else // pure windows
+
+#include <windows.h>
+
+#endif
+
+#if defined(__APPLE__)
+#define RUSAGE_SELF      0
+#define RUSAGE_CHILDREN -1
+#endif
 
 double GetTimeInSeconds()
 {
+#if !defined(WIN32) || defined(__CYGWIN__)
   struct timeval tp;
   gettimeofday(&tp, (struct timezone *)0);
   double t = (double)tp.tv_sec + 1.e-6 * (double)tp.tv_usec;
   return t;
-}
-
-void SleepInSeconds(double s)
-{
-  usleep((long)(1.e6 * s));
-}
-
-#else // pure windows
-
-#include "Gmsh.h"
-#include <windows.h>
-
-double GetTimeInSeconds()
-{
+#else
   FILETIME ft;
   GetSystemTimeAsFileTime(&ft);
   double t =  1.e-7 * 4294967296. * (double)ft.dwHighDateTime +
               1.e-7 * (double)ft.dwLowDateTime;
   return t;
+#endif
 }
 
 void SleepInSeconds(double s)
 {
+#if !defined(WIN32) || defined(__CYGWIN__)
+  usleep((long)(1.e6 * s));
+#else
   Sleep((long)(1.e3 * s));
+#endif
 }
 
+void GetResources(double *s, long *mem)
+{
+#if !defined(WIN32) || defined(__CYGWIN__)
+  static struct rusage r;
+  getrusage(RUSAGE_SELF, &r);
+  *s = (double)r.ru_utime.tv_sec + 1.e-6 * (double)r.ru_utime.tv_usec;
+  *mem = (long)r.ru_maxrss;
+#else
+  FILETIME creation, exit, kernel, user;
+  if(GetProcessTimes(GetCurrentProcess(), &creation, &exit, &kernel, &user)){
+    *s = 1.e-7 * 4294967296. * (double)user.dwHighDateTime +
+         1.e-7 * (double)user.dwLowDateTime;
+  }
+  *mem = 0;
 #endif
+}
+
+double Cpu()
+{
+  long mem = 0;
+  double s = 0.;
+  GetResources(&s, &mem);
+  return s;
+}

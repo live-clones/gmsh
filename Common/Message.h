@@ -73,7 +73,6 @@
 
 void   Signal(int signum);
 void   Msg(int level, char *fmt, ...);
-double Cpu(void);
 void   Exit(int);
 double GetValue(char *text, double defaultval);
 bool   GetBinaryAnswer(const char *question, const char *yes, const char *no, 

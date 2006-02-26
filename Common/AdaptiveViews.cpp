@@ -24,6 +24,7 @@
 #include <set>
 #include "AdaptiveViews.h"
 #include "Plugin.h"
+#include "Timer.h"
 
 // A recursive effective implementation
 

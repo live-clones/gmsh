@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.70 2006-02-25 05:27:59 geuzaine Exp $
+// $Id: Message.cpp,v 1.71 2006-02-26 00:40:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,18 +19,10 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#if !defined(WIN32) || defined(__CYGWIN__)
-#include <unistd.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#endif
-
-#if defined(__APPLE__)
-#define RUSAGE_SELF      0
-#define RUSAGE_CHILDREN -1
-#endif
-
 #include <signal.h>
+#if !defined(WIN32) || defined(__CYGWIN__)
+#include <unistd.h> // for unlink
+#endif
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -73,7 +65,7 @@ void Signal(int sig_num)
 
 void Debug()
 {
-  ;
+  printf("debug!\n");
 }
 
 void Msg(int level, char *fmt, ...)
@@ -265,36 +257,6 @@ void Exit(int level)
   }
 
   exit(0);
-}
-
-// CPU time computation, etc.
-
-void GetResources(long *s, long *us, long *mem)
-{
-#if !defined(WIN32) || defined(__CYGWIN__)
-  static struct rusage r;
-
-  getrusage(RUSAGE_SELF, &r);
-  *s = (long)r.ru_utime.tv_sec;
-  *us = (long)r.ru_utime.tv_usec;
-  *mem = (long)r.ru_maxrss;
-#else
-  *s = 0;
-  *us = 0;
-  *mem = 0;
-#endif
-}
-
-void PrintResources(long s, long us, long mem)
-{
-  Msg(INFO, "cpu %ld.%ld s / mem %ld kb\n", s, us, mem);
-}
-
-double Cpu(void)
-{
-  long s, us, mem;
-  GetResources(&s, &us, &mem);
-  return (double)s + (double)us / 1.e6;
 }
 
 double GetValue(char *text, double defaultval)

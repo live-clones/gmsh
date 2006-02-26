@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.55 2006-01-30 00:40:19 geuzaine Exp $
+// $Id: Main.cpp,v 1.56 2006-02-26 00:40:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,14 +20,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <signal.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-
-#if defined(__APPLE__)
-#define RUSAGE_SELF      0
-#define RUSAGE_CHILDREN -1
-#endif
-
 #include "ParUtil.h"
 #include "PluginManager.h"
 #include "Gmsh.h"
@@ -241,25 +233,6 @@ void Msg(int level, char *fmt, ...)
 
   if(abort)
     exit(1);
-}
-
-// CPU time computation
-
-void GetResources(long *s, long *us, long *mem)
-{
-  static struct rusage r;
-
-  getrusage(RUSAGE_SELF, &r);
-  *s = (long)r.ru_utime.tv_sec;
-  *us = (long)r.ru_utime.tv_usec;
-  *mem = (long)r.ru_maxrss;
-}
-
-double Cpu(void)
-{
-  long s, us, mem;
-  GetResources(&s, &us, &mem);
-  return (double)s + (double)us / 1.e6;
 }
 
 // interactive value dialog

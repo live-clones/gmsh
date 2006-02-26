@@ -22,5 +22,7 @@
 
 double GetTimeInSeconds();
 void SleepInSeconds(double s);
+void GetResources(double *s, long *mem);
+double Cpu();
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.35 2006-01-06 00:34:26 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.36 2006-02-26 00:40:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 #include "Utils.h"
 #include "Interpolation.h"
 #include "Numeric.h"
+#include "Timer.h"
 
 extern Mesh *THEM;
 
