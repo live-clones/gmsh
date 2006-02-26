@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.56 2006-02-26 00:40:29 geuzaine Exp $
+// $Id: Main.cpp,v 1.57 2006-02-26 01:24:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -249,4 +249,10 @@ double GetValue(char *text, double defaultval)
     return defaultval;
   else
     return atof(str);
+}
+
+bool GetBinaryAnswer(const char *question, const char *yes, const char *no, 
+		     bool defaultval)
+{
+  return defaultval;
 }
