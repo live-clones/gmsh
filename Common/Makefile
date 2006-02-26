@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.84 2006-01-28 21:13:35 geuzaine Exp $
+# $Id: Makefile,v 1.85 2006-02-26 00:53:06 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -81,7 +81,7 @@ AdaptiveViews.o: AdaptiveViews.cpp AdaptiveViews.h ../DataStr/List.h \
   GmshMatrix.h ../Plugin/Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h
+  ../Common/AdaptiveViews.h Timer.h
 # 1 "/Users/geuzaine/.gmsh/Common//"
 Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
