@@ -28,6 +28,6 @@ int GetProcessId();
 int UnlinkFile(char *name);
 int StatFile(char *filename);
 int KillProcess(int pid);
-int SystemCall(char *command);
+void SystemCall(char *command);
 
 #endif

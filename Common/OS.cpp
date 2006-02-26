@@ -1,4 +1,4 @@
-// $Id: OS.cpp,v 1.1 2006-02-26 16:26:08 geuzaine Exp $
+// $Id: OS.cpp,v 1.2 2006-02-26 16:55:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,7 @@
 
 // these are available on all OSes
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -35,6 +36,7 @@
 #else
 #include <windows.h>
 #include <process.h>
+#include <io.h>
 #endif
 
 #if defined(__APPLE__)
