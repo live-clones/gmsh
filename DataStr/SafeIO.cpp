@@ -1,4 +1,4 @@
-// $Id: SafeIO.cpp,v 1.7 2006-02-26 16:26:08 geuzaine Exp $
+// $Id: SafeIO.cpp,v 1.8 2006-02-26 16:33:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -68,7 +68,6 @@ int safe_fwrite(const void *ptr, size_t size, size_t nmemb, FILE * stream)
       Msg(GERROR, "Disk full");
     else
       Msg(GERROR, strerror(errno));
-    Msg(GERROR, "Truncating output file");
     if(fflush(stream) < 0)
       Msg(GERROR, "EOF reached");
     if(fclose(stream) < 0)
