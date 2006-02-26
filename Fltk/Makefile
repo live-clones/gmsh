@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.80 2006-01-28 18:44:19 geuzaine Exp $
+# $Id: Makefile,v 1.81 2006-02-26 16:26:09 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -93,7 +93,7 @@ Message.o: Message.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
-  Colorbar_Window.h ../Common/ColorTable.h GUI_Extras.h
+  Colorbar_Window.h ../Common/ColorTable.h GUI_Extras.h ../Common/OS.h
 # 1 "/Users/geuzaine/.gmsh/Fltk//"
 GUI.o: GUI.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \
@@ -142,12 +142,12 @@ Callbacks.o: Callbacks.cpp ../Mesh/BDS.h ../Common/Gmsh.h \
   ../Geo/ExtrudeParams.h ../Geo/ExtractContour.h ../Graphics/Draw.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Timer.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   ../Graphics/CreateFile.h ../Parser/OpenFile.h ../Common/CommandLine.h \
   ../Common/Context.h ../Common/Options.h GUI.h Opengl_Window.h \
   Colorbar_Window.h GUI_Extras.h Callbacks.h ../Plugin/Plugin.h \
   ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Visibility.h \
-  Solvers.h
+  Solvers.h ../Common/OS.h
 # 1 "/Users/geuzaine/.gmsh/Fltk//"
 Opengl.o: Opengl.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \

@@ -25,7 +25,6 @@ void ParseString(char *str);
 void OpenProblem(char *filename);
 void OpenProblemMacFinder(const char *filename);
 int MergeProblem(char *filename, int warn_if_missing=0);
-void SystemCall(char *command);
 void FixRelativePath(char *in, char *out);
 void FixWindowsPath(char *in, char *out);
 void SetBoundingBox(double xmin, double xmax,

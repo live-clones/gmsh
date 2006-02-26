@@ -1,4 +1,4 @@
-// $Id: ParUtil.cpp,v 1.15 2006-02-25 07:05:37 geuzaine Exp $
+// $Id: ParUtil.cpp,v 1.16 2006-02-26 16:26:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,7 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Gmsh.h"
-#include "Timer.h"
+#include "OS.h"
 #include "ParUtil.h"
 
 #if defined(HAVE_PARALLEL)

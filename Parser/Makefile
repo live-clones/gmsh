@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.80 2006-01-28 21:13:36 geuzaine Exp $
+# $Id: Makefile,v 1.81 2006-02-26 16:26:14 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -93,7 +93,7 @@ Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Geo/ExtrudeParams.h ../Graphics/Draw.h ../Mesh/Create.h \
   ../Mesh/Vertex.h ../Mesh/Mesh.h ../Common/Colors.h ../Common/Options.h \
   Parser.h OpenFile.h ../Common/CommandLine.h FunctionManager.h \
-  ../Common/Timer.h ../Graphics/CreateFile.h ../Common/Visibility.h \
+  ../Common/OS.h ../Graphics/CreateFile.h ../Common/Visibility.h \
   ../Common/GmshVersion.h
 # 1 "/Users/geuzaine/.gmsh/Parser//"
 Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \
@@ -123,7 +123,7 @@ OpenFile.o: OpenFile.cpp ../Mesh/BDS.h ../Common/Gmsh.h \
   ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/MinMax.h ../Common/Visibility.h ../Graphics/ReadImg.h \
-  ../Common/GmshUI.h ../Graphics/Draw.h ../Fltk/GUI.h \
+  ../Common/OS.h ../Common/GmshUI.h ../Graphics/Draw.h ../Fltk/GUI.h \
   ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h
 # 1 "/Users/geuzaine/.gmsh/Parser//"
 FunctionManager.o: FunctionManager.cpp FunctionManager.h

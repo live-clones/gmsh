@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.85 2006-02-26 00:53:06 geuzaine Exp $
+# $Id: Makefile,v 1.86 2006-02-26 16:26:08 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -33,7 +33,7 @@ SRC = Context.cpp\
       Octree.cpp OctreeInternals.cpp OctreePost.cpp\
       Options.cpp\
       CommandLine.cpp\
-      Timer.cpp\
+      OS.cpp\
       ColorTable.cpp\
       Visibility.cpp\
       Trackball.cpp\
@@ -81,7 +81,7 @@ AdaptiveViews.o: AdaptiveViews.cpp AdaptiveViews.h ../DataStr/List.h \
   GmshMatrix.h ../Plugin/Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h Timer.h
+  ../Common/AdaptiveViews.h OS.h
 # 1 "/Users/geuzaine/.gmsh/Common//"
 Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
@@ -131,9 +131,9 @@ CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h Views.h ColorTable.h \
   VertexArray.h SmoothNormals.h GmshMatrix.h AdaptiveViews.h \
-  ../Parser/OpenFile.h ../Parser/Parser.h
+  ../Parser/OpenFile.h ../Parser/Parser.h OS.h
 # 1 "/Users/geuzaine/.gmsh/Common//"
-Timer.o: Timer.cpp
+OS.o: OS.cpp Message.h
 # 1 "/Users/geuzaine/.gmsh/Common//"
 ColorTable.o: ColorTable.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \

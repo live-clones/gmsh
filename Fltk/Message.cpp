@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.71 2006-02-26 00:40:29 geuzaine Exp $
+// $Id: Message.cpp,v 1.72 2006-02-26 16:26:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,10 +20,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <signal.h>
-#if !defined(WIN32) || defined(__CYGWIN__)
-#include <unistd.h> // for unlink
-#endif
-
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "GmshVersion.h"
@@ -31,6 +27,7 @@
 #include "Options.h"
 #include "GUI.h"
 #include "GUI_Extras.h"
+#include "OS.h"
 
 extern GUI *WID;
 extern Context_T CTX;
@@ -204,15 +201,12 @@ void Msg(int level, char *fmt, ...)
   }
 }
 
-
 // Clean exit
 
 void Exit(int level)
 {
-#if !defined(WIN32) || defined(__CYGWIN__)
   // delete the temp file
-  unlink(CTX.tmp_filename_fullpath);
-#endif
+  UnlinkFile(CTX.tmp_filename_fullpath);
 
   if(level){
     // in case of an abnormal exit, force the abort directly

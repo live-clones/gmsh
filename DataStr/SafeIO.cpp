@@ -1,4 +1,4 @@
-// $Id: SafeIO.cpp,v 1.6 2006-01-06 00:34:21 geuzaine Exp $
+// $Id: SafeIO.cpp,v 1.7 2006-02-26 16:26:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -22,8 +22,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <unistd.h>
-
 #include "SafeIO.h"
 #include "Message.h"
 
@@ -73,8 +71,6 @@ int safe_fwrite(const void *ptr, size_t size, size_t nmemb, FILE * stream)
     Msg(GERROR, "Truncating output file");
     if(fflush(stream) < 0)
       Msg(GERROR, "EOF reached");
-    if(ftruncate(fileno(stream), 0) < 0)
-      Msg(GERROR, strerror(errno));
     if(fclose(stream) < 0)
       Msg(GERROR, strerror(errno));
     return 1;

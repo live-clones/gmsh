@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.36 2006-02-26 00:40:29 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.37 2006-02-26 16:26:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@
 #include "Context.h"
 #include "BDS.h"
 #include "PartitionMesh.h"
-#include "Timer.h"
+#include "OS.h"
 
 extern Mesh *THEM;
 extern Context_T CTX;

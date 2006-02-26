@@ -1,5 +1,5 @@
-#ifndef _TIMER_H_
-#define _TIMER_H_
+#ifndef _OS_H_
+#define _OS_H_
 
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -24,5 +24,10 @@ double GetTimeInSeconds();
 void SleepInSeconds(double s);
 void GetResources(double *s, long *mem);
 double Cpu();
+int GetProcessId();
+int UnlinkFile(char *name);
+int StatFile(char *filename);
+int KillProcess(int pid);
+int SystemCall(char *command);
 
 #endif

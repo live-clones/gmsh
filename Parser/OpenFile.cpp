@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.92 2006-02-25 07:32:42 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.93 2006-02-26 16:26:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -37,6 +37,7 @@
 #include "MinMax.h"
 #include "Visibility.h"
 #include "ReadImg.h"
+#include "OS.h"
 
 #if defined(HAVE_FLTK)
 #include "GmshUI.h"
@@ -407,22 +408,3 @@ void OpenProblemMacFinder(const char *filename)
   }
 }
 
-void SystemCall(char *command)
-{
-#if defined(WIN32)
-  STARTUPINFO suInfo;
-  PROCESS_INFORMATION prInfo;
-  memset(&suInfo, 0, sizeof(suInfo));
-  suInfo.cb = sizeof(suInfo);
-  Msg(INFO, "Calling '%s'", command);
-  CreateProcess(NULL, command, NULL, NULL, FALSE,
-                NORMAL_PRIORITY_CLASS, NULL, NULL, &suInfo, &prInfo);
-#else
-  if(!system(NULL)) {
-    Msg(GERROR, "Could not find /bin/sh: aborting system call");
-    return;
-  }
-  Msg(INFO, "Calling '%s'", command);
-  system(command);
-#endif
-}

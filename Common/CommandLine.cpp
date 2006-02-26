@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.68 2006-02-24 03:26:37 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.69 2006-02-26 16:26:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,8 +19,6 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <sys/types.h>
-#include <unistd.h>
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "GmshVersion.h"
@@ -33,6 +31,7 @@
 #include "Views.h"
 #include "OpenFile.h"
 #include "Parser.h"
+#include "OS.h"
 
 #if !defined(GMSH_EXTRA_VERSION)
 #error
@@ -166,7 +165,7 @@ void Get_Options(int argc, char *argv[])
     if(argv[i][0] == '-') {
 
       if(!strcmp(argv[i] + 1, "pid")) {
-	fprintf(stdout, "%d\n", getpid());
+	fprintf(stdout, "%d\n", GetProcessId());
 	fflush(stdout);
         i++;
       }

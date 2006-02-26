@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.105 2006-02-26 00:53:06 geuzaine Exp $
+# $Id: Makefile,v 1.106 2006-02-26 16:26:09 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -329,7 +329,7 @@ depend:
   ../Geo/Geo.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h Metric.h Matrix.h \
-  Create.h ../Common/Context.h ../Common/Timer.h
+  Create.h ../Common/Context.h ../Common/OS.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 3D_Mesh_Tetgen.o: 3D_Mesh_Tetgen.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -372,7 +372,7 @@ Generator.o: Generator.cpp BDS.h ../Common/Gmsh.h ../Common/Message.h \
   ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h PartitionMesh.h \
-  ../Common/Timer.h
+  ../Common/OS.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 Print_Mesh.o: Print_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -407,7 +407,7 @@ DiscreteSurface.o: DiscreteSurface.cpp ../Common/Gmsh.h \
   ../Common/SmoothNormals.h Metric.h Matrix.h ../Geo/CAD.h ../Mesh/Mesh.h \
   ../Mesh/Vertex.h ../Geo/ExtrudeParams.h ../Geo/Geo.h Create.h \
   Interpolation.h ../Common/Context.h BDS.h PartitionMesh.h \
-  ../Common/Timer.h
+  ../Common/OS.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 SwapEdge.o: SwapEdge.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -464,7 +464,7 @@ SecondOrder.o: SecondOrder.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/Geo.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h Metric.h Matrix.h \
-  Utils.h Interpolation.h ../Common/Timer.h
+  Utils.h Interpolation.h ../Common/OS.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 PartitionMesh.o: PartitionMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \

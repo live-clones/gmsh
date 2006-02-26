@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.411 2006-02-25 07:02:20 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.412 2006-02-26 16:26:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,9 +19,6 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <signal.h>
 #include <time.h>
 #include <map>
@@ -35,7 +32,6 @@
 #include "Mesh.h"
 #include "Draw.h"
 #include "Views.h"
-#include "Timer.h"
 #include "CreateFile.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
@@ -49,6 +45,7 @@
 #include "Visibility.h"
 #include "Numeric.h"
 #include "Solvers.h"
+#include "OS.h"
 
 using namespace std;
 
@@ -568,11 +565,10 @@ void file_new_cb(CALLBACK_ARGS)
  test:
   if(file_chooser(0, 1, "New", "*")) {
     char *name = file_chooser_get_name(1);
-    struct stat buf;
-    if(!stat(name, &buf)){
+    if(!StatFile(name)){
       if(fl_choice("File '%s' already exists.\n\nDo you want to erase it?",
 		   "Cancel", "Erase", NULL, name))
-	unlink(name);
+	UnlinkFile(name);
       else
 	goto test;
     }
@@ -827,8 +823,7 @@ void file_save_as_cb(CALLBACK_ARGS)
   if(file_chooser(0, 1, "Save As", pat)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
-      struct stat buf;
-      if(!stat(name, &buf))
+      if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
 		      "Cancel", "Replace", NULL, name))
           goto test;
@@ -849,8 +844,7 @@ void file_rename_cb(CALLBACK_ARGS)
   if(file_chooser(0, 1, "Rename", "*", CTX.filename)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
-      struct stat buf;
-      if(!stat(name, &buf))
+      if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
 		      "Cancel", "Replace", NULL, name))
           goto test;
@@ -907,8 +901,8 @@ void options_save_cb(CALLBACK_ARGS)
 void options_restore_defaults_cb(CALLBACK_ARGS)
 {
   // not sure if we have to remove the file...
-  unlink(CTX.session_filename_fullpath);
-  unlink(CTX.options_filename_fullpath);
+  UnlinkFile(CTX.session_filename_fullpath);
+  UnlinkFile(CTX.options_filename_fullpath);
   ReInit_Options(0);
   Init_Options_GUI(0);
   if(WID && WID->get_context() == 3)    // hack to refresh the buttons
@@ -1326,8 +1320,7 @@ void message_save_cb(CALLBACK_ARGS)
   if(file_chooser(0, 1, "Save", "*")) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
-      struct stat buf;
-      if(!stat(name, &buf))
+      if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
 		      "Cancel", "Replace", NULL, name))
           goto test;
@@ -2862,8 +2855,7 @@ void mesh_save_cb(CALLBACK_ARGS)
   else
     GetDefaultMeshFileName(THEM, CTX.mesh.format, name);
   if(CTX.confirm_overwrite) {
-    struct stat buf;
-    if(!stat(name, &buf))
+    if(!StatFile(name))
       if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
 		    "Cancel", "Replace", NULL, name))
 	return;
@@ -3254,18 +3246,8 @@ void solver_kill_cb(CALLBACK_ARGS)
 {
   int num = (int)(long)data;
   if(SINFO[num].pid > 0) {
-#if !defined(WIN32) || defined(__CYGWIN__)
-    kill(SINFO[num].pid, 9);
-#else
-    HANDLE hProc = OpenProcess(PROCESS_TERMINATE, FALSE, SINFO[num].pid);
-    if(!TerminateProcess(hProc, 0)){
-      CloseHandle(hProc);
-      Msg(WARNING, "Could not kill process %s pid %d",
-	  SINFO[num].name, SINFO[num].pid);
-      return;
-    }
-#endif
-    Msg(INFO, "Killed %s pid %d", SINFO[num].name, SINFO[num].pid);
+    if(KillProcess(SINFO[num].pid))
+      Msg(INFO, "Killed %s pid %d", SINFO[num].name, SINFO[num].pid);
   }
   SINFO[num].pid = -1;
 }
@@ -3315,8 +3297,7 @@ static void _view_reload(int num)
 
   Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, num);
 
-  struct stat buf;
-  if(stat(v->FileName, &buf)){
+  if(StatFile(v->FileName)){
     Msg(GERROR, "File '%s' does not exist", v->FileName);
     return;
   }
@@ -3422,8 +3403,7 @@ static void _view_save_as(int view_num, char *title, int type)
   if(file_chooser(0, 1, title, "*", v->FileName)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
-      struct stat buf;
-      if(!stat(name, &buf))
+      if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
 		      "Cancel", "Replace", NULL, name))
           goto test;

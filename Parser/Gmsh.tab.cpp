@@ -125,7 +125,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.259 2006-02-25 07:02:20 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.260 2006-02-26 16:26:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -168,7 +168,7 @@
 #include "CommandLine.h"
 #include "FunctionManager.h"
 #include "ColorTable.h"
-#include "Timer.h"
+#include "OS.h"
 #include "CreateFile.h"
 #include "Visibility.h"
 #include "GmshVersion.h"

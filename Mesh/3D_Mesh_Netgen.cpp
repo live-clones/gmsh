@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Netgen.cpp,v 1.21 2006-02-26 00:40:29 geuzaine Exp $
+// $Id: 3D_Mesh_Netgen.cpp,v 1.22 2006-02-26 16:26:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@
 #include "Create.h"
 #include "Numeric.h"
 #include "Context.h"
-#include "Timer.h"
+#include "OS.h"
 
 extern Context_T CTX;
 extern Mesh *THEM;

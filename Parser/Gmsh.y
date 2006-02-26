@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.222 2006-02-25 07:02:21 geuzaine Exp $
+// $Id: Gmsh.y,v 1.223 2006-02-26 16:26:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -42,7 +42,7 @@
 #include "CommandLine.h"
 #include "FunctionManager.h"
 #include "ColorTable.h"
-#include "Timer.h"
+#include "OS.h"
 #include "CreateFile.h"
 #include "Visibility.h"
 #include "GmshVersion.h"

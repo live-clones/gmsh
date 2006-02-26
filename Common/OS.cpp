@@ -1,4 +1,4 @@
-// $Id: Timer.cpp,v 1.23 2006-02-26 00:40:29 geuzaine Exp $
+// $Id: OS.cpp,v 1.1 2006-02-26 16:26:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,23 +19,30 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#if !defined(WIN32) || defined(__CYGWIN__)
+// This file contains a bunch of functions that depend on OS-dependent
+// features and/or system calls
 
+// these are available on all OSes
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <time.h>
+
+#if !defined(WIN32) || defined(__CYGWIN__)
 #include <unistd.h>
-#include <time.h> // for sgi and maybe others
 #include <sys/time.h>
 #include <sys/resource.h>
-
-#else // pure windows
-
+#else
 #include <windows.h>
-
+#include <process.h>
 #endif
 
 #if defined(__APPLE__)
 #define RUSAGE_SELF      0
 #define RUSAGE_CHILDREN -1
 #endif
+
+#include "Message.h"
 
 double GetTimeInSeconds()
 {
@@ -85,4 +92,67 @@ double Cpu()
   double s = 0.;
   GetResources(&s, &mem);
   return s;
+}
+
+int GetProcessId()
+{
+#if !defined(WIN32) || defined(__CYGWIN__)
+  return getpid();
+#else
+  return _getpid();
+#endif
+}
+
+int UnlinkFile(char *filename)
+{
+#if !defined(WIN32) || defined(__CYGWIN__)
+  return unlink(filename);
+#else
+  return _unlink(filename);
+#endif
+}
+
+int StatFile(char *filename)
+{
+#if !defined(WIN32) || defined(__CYGWIN__)
+  struct stat buf;
+  return stat(filename, &buf);
+#else
+  struct _stat buf;
+  return _stat(filename, &buf);
+#endif
+}
+
+int KillProcess(int pid)
+{
+#if !defined(WIN32) || defined(__CYGWIN__)
+  kill(pid, 9);
+#else
+  HANDLE hProc = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+  if(!TerminateProcess(hProc, 0)){
+    CloseHandle(hProc);
+    return 0;
+  }
+#endif
+  return 1;
+}
+
+void SystemCall(char *command)
+{
+#if defined(WIN32)
+  STARTUPINFO suInfo;
+  PROCESS_INFORMATION prInfo;
+  memset(&suInfo, 0, sizeof(suInfo));
+  suInfo.cb = sizeof(suInfo);
+  Msg(INFO, "Calling '%s'", command);
+  CreateProcess(NULL, command, NULL, NULL, FALSE,
+                NORMAL_PRIORITY_CLASS, NULL, NULL, &suInfo, &prInfo);
+#else
+  if(!system(NULL)) {
+    Msg(GERROR, "Could not find /bin/sh: aborting system call");
+    return;
+  }
+  Msg(INFO, "Calling '%s'", command);
+  system(command);
+#endif
 }
