@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.103 2006-02-27 18:38:12 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.104 2006-02-27 18:39:45 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2006 Christophe Geuzaine <geuz@geuz.org>
@@ -2713,11 +2713,11 @@ static void gl2psPrintPostScriptPrimitive(void *data)
        gl2ps->lastpattern != prim->pattern ||
        gl2ps->lastfactor != prim->factor){
       /* End the current line if the new segment does not start where
-	 the last one ended, or if the color, the width or the
-	 stippling have changed (multi-stroking lines with changing
-	 colors is necessary until we use /shfill for lines;
-	 unfortunately this means that at the moment we can screw up
-	 line stippling for smooth-shaded lines) */
+         the last one ended, or if the color, the width or the
+         stippling have changed (multi-stroking lines with changing
+         colors is necessary until we use /shfill for lines;
+         unfortunately this means that at the moment we can screw up
+         line stippling for smooth-shaded lines) */
       gl2psEndPostScriptLine();
       newline = 1;
     }
@@ -2731,7 +2731,7 @@ static void gl2psPrintPostScriptPrimitive(void *data)
     gl2psPrintPostScriptDash(prim->pattern, prim->factor, "setdash");
     gl2psPrintPostScriptColor(prim->verts[0].rgba);
     gl2psPrintf("%g %g %s\n", prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-		newline ? "LS" : "L");
+                newline ? "LS" : "L");
     gl2ps->lastvertex = prim->verts[1];
     break;
   case GL2PS_TRIANGLE :
@@ -3358,42 +3358,42 @@ static void gl2psPDFgroupListWriteMainStream(void)
       break;
     case GL2PS_LINE:
       /* We try to use as few paths as possible to draw lines, in
-	 order to get nice stippling even when the individual segments
-	 are smaller than the stipple */
+         order to get nice stippling even when the individual segments
+         are smaller than the stipple */
       gl2ps->streamlength += gl2psPrintPDFLineWidth(prim->width);
       gl2ps->streamlength += gl2psPrintPDFStrokeColor(prim->verts[0].rgba);
       gl2ps->streamlength += gl2psPrintPostScriptDash(prim->pattern, prim->factor, "d");
       /* start new path */
       gl2ps->streamlength += 
-	gl2psPrintf("%f %f m\n", 
-		    prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
+        gl2psPrintf("%f %f m\n", 
+                    prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
       
       for(j = 1; j <= lastel; ++j){
-	prev = prim;
+        prev = prim;
         prim = *(GL2PSprimitive**)gl2psListPointer(gro->ptrlist, j);
-	if(!gl2psSamePosition(prim->verts[0].xyz, prev->verts[1].xyz)){
-	  /* the starting point of the new segment does not match the
-	     end point of the previous line, so we end the current
-	     path and start a new one */
-	  gl2ps->streamlength += 
-	    gl2psPrintf("%f %f l\n", 
-			prev->verts[1].xyz[0], prev->verts[1].xyz[1]);
-	  gl2ps->streamlength += 
-	    gl2psPrintf("%f %f m\n", 
-			prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
-	}
-	else{
-	  /* the two segements are connected, so we just append to the
-	     current path */
-	  gl2ps->streamlength += 
-	    gl2psPrintf("%f %f l\n",
-			prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
-	}
+        if(!gl2psSamePosition(prim->verts[0].xyz, prev->verts[1].xyz)){
+          /* the starting point of the new segment does not match the
+             end point of the previous line, so we end the current
+             path and start a new one */
+          gl2ps->streamlength += 
+            gl2psPrintf("%f %f l\n", 
+                        prev->verts[1].xyz[0], prev->verts[1].xyz[1]);
+          gl2ps->streamlength += 
+            gl2psPrintf("%f %f m\n", 
+                        prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
+        }
+        else{
+          /* the two segements are connected, so we just append to the
+             current path */
+          gl2ps->streamlength += 
+            gl2psPrintf("%f %f l\n",
+                        prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
+        }
       }
       /* end last path */
       gl2ps->streamlength += 
-	gl2psPrintf("%f %f l\n", 
-		    prim->verts[1].xyz[0], prim->verts[1].xyz[1]);
+        gl2psPrintf("%f %f l\n", 
+                    prim->verts[1].xyz[0], prim->verts[1].xyz[1]);
       gl2ps->streamlength += gl2psPrintf("S\n");
       break;
     case GL2PS_TRIANGLE:
