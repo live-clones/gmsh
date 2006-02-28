@@ -29,4 +29,4 @@ directory.
 3) About the solver interface:
 
 By default, on Windows, Gmsh communicates with solvers on the TCP/IP
-port 44122.
+port 44122. You can change this in the Solver option panel.
