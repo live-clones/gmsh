@@ -1,14 +1,32 @@
-$Id: README.win32,v 1.7 2006-02-25 07:58:12 geuzaine Exp $
+This is Gmsh, an automatic three-dimensional finite element mesh
+generator with built-in pre- and post-processing facilities.
 
-1) About opengl32.dll and glu32.dll:
+Gmsh is distributed under the terms of the GNU General Public
+License. See the LICENSE and CREDITS files for more information.
 
-If your system complains about missing opengl32.dll or glu32.dll
-libraries, then OpenGL is not properly installed... Go download OpenGL
-on Microsoft's web site or on http://www.opengl.org.
+The tutorial/ directory contains the examples from the tutorial
+chapter in the reference manual (http://geuz.org/gmsh/doc/texinfo/).
+The demos/ directory contains additional examples.
+
+Important notes:
+
+1) About OPENGL32.DLL and GLU32.DLL:
+
+If your system complains about missing OPENGL32.DLL or GLU32.DLL
+libraries, then OpenGL is not properly installed on your machine. You
+can download OpenGL from Microsoft's web site, or directly from
+http://www.opengl.org.
 
 2) About configuration files:
 
-Gmsh saves session information and default options in the $GMSH_HOME
-directory, or in the $HOME, $TMP or $TEMP directories if $GMSH_HOME is
-not defined. If none of these variables are defined, Gmsh will
-save/load its configuration files from the current working directory.
+Gmsh will attempt to save temporary files and persistent configuration
+options first in the $GMSH_HOME directory, then in the $HOME, $TMP or
+$TEMP directories (in that order) if the $GMSH_HOME environment
+variable is not defined. If none of these variables are defined, Gmsh
+will try to save/load its configuration files from the current working
+directory.
+
+3) About the solver interface:
+
+By default, on Windows, Gmsh communicates with solvers on the TCP/IP
+port 44122.
