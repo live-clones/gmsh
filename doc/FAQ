@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.70 2006-02-25 14:43:07 geuzaine Exp $
+$Id: FAQ,v 1.71 2006-02-28 18:50:08 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -252,7 +252,7 @@ desired sizes.
 
 Gmsh can also import discrete geometries in the form of STL
 triangulations, and remesh these to respect certain constraints. This
-is still an experimental feature as of this writing (version 2.0.0).
+is still an experimental feature as of this writing (version 1.64).
 
 * 5.11 How do I define boundary conditions or material properties in
 Gmsh?

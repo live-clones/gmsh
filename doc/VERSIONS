@@ -1,6 +1,6 @@
-$Id: VERSIONS,v 1.360 2006-02-28 15:57:25 geuzaine Exp $
+$Id: VERSIONS,v 1.361 2006-02-28 18:50:08 geuzaine Exp $
 
-New in 2.0.0: Windows versions do no depend on Cygwin anymore. Various
+New in 1.64: Windows versions do no depend on Cygwin anymore. Various
 bug fixes and cleanups.
 
 New in 1.63: post-processing views can now be exported as meshes;
