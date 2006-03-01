@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.71 2006-02-28 18:50:08 geuzaine Exp $
+$Id: FAQ,v 1.72 2006-03-01 16:07:17 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -327,10 +327,6 @@ The solver executable (for example, 'getdp.exe') has to be in your
 path. If not, simply go to the solver options (for example,
 'Solver->GetDP->Options->Executable') to specify its location.
 
-On recent versions of Microsoft Windows (XP SP2), it seems that you
-need to execute the solver (e.g. launch 'getdp.exe') at least once
-independently first in order to authorize future executions.
-
 * 6.3 Can I launch Gmsh from my solver (instead of launching my solver
 from Gmsh) in order to monitor a solution?
 
@@ -341,8 +337,10 @@ Sure. A simple C program showing how to do this is given in
 launched from Gmsh?
 
 Yes: just create a program as described in 6.1 above (you can skip the
-option file creation). Then run 'gmsh -listen' and Gmsh will listen
-for the program on the Solver.SocketName socket.
+option file creation). Then select 'Always listen to incoming
+connection requests' in the solver option panel (or run gmsh with the
+'-listen' command line option) and Gmsh will listen for the program on
+the Solver.SocketName socket.
 
 ********************************************************************
 

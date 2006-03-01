@@ -1,4 +1,4 @@
-// $Id: OS.cpp,v 1.2 2006-02-26 16:55:08 geuzaine Exp $
+// $Id: OS.cpp,v 1.3 2006-03-01 16:07:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <signal.h>
 #include <time.h>
 
 #if !defined(WIN32) || defined(__CYGWIN__)
@@ -128,7 +129,8 @@ int StatFile(char *filename)
 int KillProcess(int pid)
 {
 #if !defined(WIN32) || defined(__CYGWIN__)
-  kill(pid, 9);
+  if(kill(pid, 9))
+    return 0;
 #else
   HANDLE hProc = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
   if(!TerminateProcess(hProc, 0)){
