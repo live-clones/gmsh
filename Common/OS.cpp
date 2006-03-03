@@ -1,4 +1,4 @@
-// $Id: OS.cpp,v 1.3 2006-03-01 16:07:17 geuzaine Exp $
+// $Id: OS.cpp,v 1.4 2006-03-03 12:40:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -34,7 +34,9 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#else
+#endif
+
+#if defined(WIN32)
 #include <windows.h>
 #include <process.h>
 #include <io.h>
