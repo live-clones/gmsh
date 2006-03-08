@@ -379,6 +379,17 @@ public:
 		      (n[0]->Y+n[1]->Y+n[2]->Y)/3.,
 		      (n[0]->Z+n[1]->Z+n[2]->Z)/3.);
   }
+
+  inline double longest_edge_length() const
+  {
+    double l1 = e1->length();
+    double l2 = e2->length();
+    double l3 = e3->length();
+
+    if (l1  > l2 && l1 > l3) return l1;
+    if (l2  > l1 && l2 > l3) return l2;
+    return l3;
+  }
   
   inline void _update()
   { 
@@ -608,20 +619,26 @@ public:
   std::list<BDS_Edge*>      edges; 
   std::list<BDS_Triangle*>   triangles; 
   std::list<BDS_Tet*>        tets; 
+  // Points
   BDS_Point * add_point(int num , double x, double y,double z);
-  BDS_Edge  * add_edge(int p1, int p2);
   void del_point(BDS_Point *p);
+  BDS_Point *find_point(int num);
+  // Edges
+  BDS_Edge  * add_edge(int p1, int p2);
   void del_edge(BDS_Edge *e);
+  BDS_Edge  *find_edge(int p1, int p2);
+  BDS_Edge  *find_edge(BDS_Point *p1, BDS_Point *p2, BDS_Triangle *t)const;
+  // Triangles
   BDS_Triangle *add_triangle(int p1, int p2, int p3); 
   BDS_Triangle *add_triangle(BDS_Edge *e1,BDS_Edge *e2,BDS_Edge *e3);
-  BDS_Tet *add_tet(int p1, int p2, int p3,int p4);
   void del_triangle(BDS_Triangle *t);
-  void add_geom(int degree, int tag);
-  BDS_Point *find_point(int num);
-  BDS_Edge  *find_edge(int p1, int p2);
   BDS_Triangle  *find_triangle(BDS_Edge *e1,BDS_Edge *e2,BDS_Edge *e3);
-  BDS_Edge  *find_edge(BDS_Point *p1, BDS_Point *p2, BDS_Triangle *t)const;
+  // Tets
+  BDS_Tet *add_tet(int p1, int p2, int p3,int p4);
+  // Geom entities
+  void add_geom(int degree, int tag);
   BDS_GeomEntity *get_geom(int p1, int p2);
+  // 2D operators
   bool swap_edge(BDS_Edge *);
   bool collapse_edge(BDS_Edge *, BDS_Point*, const double eps);
   void snap_point(BDS_Point* , BDS_Mesh *geom = 0);
@@ -629,6 +646,7 @@ public:
   bool smooth_point_b(BDS_Point*); 
   bool move_point(BDS_Point *p , double X, double Y, double Z);
   bool split_edge(BDS_Edge *, double coord, BDS_Mesh *geom = 0);
+  // Global operators
   void classify(double angle, int nb = -1); 
   void color_plane_surf(double eps , int nb);
   void reverseEngineerCAD() ;

@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.93 2006-02-25 15:59:07 geuzaine Exp $
+dnl $Id: configure.in,v 1.94 2006-03-08 17:03:35 remacle Exp $
 dnl
 dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 dnl
@@ -249,8 +249,8 @@ if test "x$enable_gui" != "xno"; then
 
 else
 
-  GMSH_DIRS="${GMSH_DIRS} Box"
-  GMSH_LIBS="-Llib -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshCommon"
+  GMSH_DIRS="${GMSH_DIRS} Box BoxMain"
+  GMSH_LIBS="-Llib -lGmshBoxMain -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshCommon"
   GMSH_LIBS="${GMSH_LIBS} -lGmshDataStr -lGmshPlugin -lGmshNumeric -lGmshParallel"
 
 fi
@@ -328,6 +328,30 @@ if test "x$enable_contrib" != "xno"; then
        echo "author's web site at http://www.cs.umd.edu/~mount/ANN/,"
        echo "unpack the archive and copy both src and include directories in the"
        echo "./contrib/ANN subdirectory. Then run ./configure again."
+       echo "********************************************************************"
+    fi
+  fi
+
+
+  dnl Check for MODEL
+  AC_CHECK_FILE(${DEVROOT}/MeshAdapt/model/model/model/SGModel.h, MODEL="yes", MODEL="no")
+  if test "x${MODEL}" = "xyes"; then
+    if test "x$enable_model" != "xno"; then
+       GMSH_LIBS="${GMSH_LIBS} ${DEVROOT}/MeshAdapt/model/lib/x86_linux/libmodel-O.a"
+       FLAGS="-D_HAVE_SGMODEL_ ${FLAGS}"
+       echo "********************************************************************"
+       echo "You are building a version of Gmsh that contains model, the"
+       echo "Modeler Interface."
+       echo "Please note that by doing so, you agree with model's licensing"
+       echo "requirements."
+       echo "To disable model, run configure again with the --disable-model"
+       echo "option."
+       echo "********************************************************************"
+    fi
+  else
+    if test "x$enable_model" != "xno"; then
+       echo "********************************************************************"
+       echo "If you want to use model for doing modeling interface, contact us."
        echo "********************************************************************"
     fi
   fi

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.57 2006-02-26 01:24:44 geuzaine Exp $
+// $Id: Main.cpp,v 1.58 2006-03-08 17:04:36 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -71,7 +71,7 @@ void Info(int level, char *arg0)
 
 // Main routine for the batch (black box) version
 
-int main(int argc, char *argv[])
+int GMSHBOX(int argc, char *argv[])
 {
   ParUtil::Instance()->init(argc, argv);
 
@@ -124,11 +124,11 @@ int main(int argc, char *argv[])
       Print_Histogram(THEM->Histogram[0]);
     }
     ParUtil::Instance()->Barrier(__LINE__, __FILE__);
-    ParUtil::Instance()->Exit();
+    //    ParUtil::Instance()->Exit();
     return 1;
   }
   ParUtil::Instance()->Barrier(__LINE__, __FILE__);
-  ParUtil::Instance()->Exit();
+  //  ParUtil::Instance()->Exit();
   return 1;
 }
 
@@ -250,9 +250,21 @@ double GetValue(char *text, double defaultval)
   else
     return atof(str);
 }
-
 bool GetBinaryAnswer(const char *question, const char *yes, const char *no, 
 		     bool defaultval)
 {
-  return defaultval;
+  if(CTX.nopopup || CTX.batch )
+    return defaultval;
+
+  char answ[256];
+
+  while(1)
+    {
+      printf("%s (%s/%s)",question,yes,no);
+      
+      scanf("%s ",answ);
+      if (!strcmp(answ,yes))return true;
+      if (!strcmp(answ,no))return false;
+    }
 }
+

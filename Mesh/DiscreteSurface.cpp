@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.37 2006-02-26 16:26:09 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.38 2006-03-08 17:04:59 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -224,9 +224,17 @@ void BDS_To_Mesh_2(Mesh * m)
       m->bds_mesh->points.begin();
     std::set < BDS_Point *, PointLessThan >::iterator ite =
       m->bds_mesh->points.end();
+
+
     while(it != ite) {
+      //      double dx = 1.e-3 * m->bds_mesh->LC * (double)rand() / (double)RAND_MAX;
+      //      double dy = 1.e-3 * m->bds_mesh->LC * (double)rand() / (double)RAND_MAX;
+      //      double dz = 1.e-3 * m->bds_mesh->LC * (double)rand() / (double)RAND_MAX;
+      double dx = 0;
+      double dy = 0;
+      double dz = 0;
       Vertex *vert =
-        Create_Vertex((*it)->iD, (*it)->X, (*it)->Y, (*it)->Z, (*it)->min_edge_length(), 0.0);
+        Create_Vertex((*it)->iD, (*it)->X+dx, (*it)->Y+dy, (*it)->Z+dz, (*it)->min_edge_length(), 0.0);
       Tree_Add(m->Vertices, &vert);
       ++it;
     }

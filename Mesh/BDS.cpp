@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.49 2006-02-25 07:22:11 geuzaine Exp $
+// $Id: BDS.cpp,v 1.50 2006-03-08 17:04:59 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -982,36 +982,31 @@ void recur_color_plane_surf(const double eps,
 void BDS_Mesh::color_plane_surf(double eps, int NB_T)
 {
   int current_status = 100000;
-  {
-    std::set < BDS_Triangle * >all;
-    while(1) {
-      std::list < BDS_Triangle * >plane;
-      std::list < BDS_Triangle * >::iterator it = triangles.begin();
-      std::list < BDS_Triangle * >::iterator ite = triangles.end();
-      BDS_Triangle *start = 0;
-      while(it != ite) {
-        if(all.find(*it) == all.end()) {
-          start = (BDS_Triangle *) (*it);
-        }
-        if(start)
-          break;
-        ++it;
-      }
-      if(!start)
-        break;
-      recur_color_plane_surf(eps, start, start->N(), all, plane);
-      if((int)plane.size() > NB_T) {
-        // printf("plane surface found %d triangles\n",plane.size());
-        std::list < BDS_Triangle * >::iterator xit = plane.begin();
-        std::list < BDS_Triangle * >::iterator xite = plane.end();
-        while(xit != xite) {
-          (*xit)->status = current_status;
-          ++xit;
-        }
-        current_status++;
-      }
+  std::set < BDS_Triangle * >all;
+  std::list < BDS_Triangle * >::iterator it = triangles.begin();
+  std::list < BDS_Triangle * >::iterator ite = triangles.end();
+  while(it != ite) 
+    {
+      if(all.find(*it) == all.end()) 
+	{
+	  std::list < BDS_Triangle * >plane;
+	  BDS_Triangle *start = (BDS_Triangle *) (*it);
+	  recur_color_plane_surf(eps, start, start->N(), all, plane);
+	  if((int)plane.size() > NB_T) 
+	    {
+	      // printf("plane surface found %d triangles\n",plane.size());
+	      std::list < BDS_Triangle * >::iterator xit = plane.begin();
+	      std::list < BDS_Triangle * >::iterator xite = plane.end();
+	      while(xit != xite) 
+		{
+		  (*xit)->status = current_status;
+		  ++xit;
+		}
+	      current_status++;
+	    }
+	}
+      ++it;
     }
-  }
 }
 
 bool BDS_Mesh::extractVolumes()
@@ -1069,6 +1064,9 @@ void BDS_Mesh::classify(double angle, int NB_T)
     }
     geom.clear();
   }
+
+  color_plane_surf(3.1415/200, 40);
+
   {
     std::list < BDS_Edge * >::iterator it = edges.begin();
     std::list < BDS_Edge * >::iterator ite = edges.end();
@@ -1278,6 +1276,7 @@ void BDS_Mesh::classify(double angle, int NB_T)
   Msg(INFO, "Computing curvatures");
   compute_curvatures(edges);
   Msg(INFO, "Reverse engineering surfaces");
+
   reverseEngineerCAD();
   Msg(INFO, "Creating search structures");
   createSearchStructures();
@@ -1640,6 +1639,27 @@ bool BDS_Mesh::read_mesh(const char *filename)
             Max[2] = (Max[2] > z) ? Max[2] : z;
             add_point(i + 1, x, y, z);
           }
+
+	  // NORMALIZE HERE
+
+	  LC = sqrt((Min[0] - Max[0]) * (Min[0] - Max[0]) +
+		    (Min[1] - Max[1]) * (Min[1] - Max[1]) +
+		    (Min[2] - Max[2]) * (Min[2] - Max[2]));
+	  	  
+	  std::set < BDS_Point *, PointLessThan >::iterator it = points.begin();
+	  std::set < BDS_Point *, PointLessThan >::iterator ite = points.end();
+	  
+	  while(it != ite) 
+	    {
+	      (*it)->X /= LC;
+	      (*it)->Y /= LC;
+	      (*it)->Z /= LC;
+	      ++it;
+	    }
+	  Min[0]/=LC;Min[1]/=LC;Min[2]/=LC;
+	  Max[0]/=LC;Max[1]/=LC;Max[2]/=LC;
+	  LC = 1;
+
           MAXPOINTNUMBER = nbv + 1;
         }
         else if(!strcmp(name, "Triangles")) {
@@ -1671,9 +1691,8 @@ bool BDS_Mesh::read_mesh(const char *filename)
       }
     }
 
-    LC = sqrt((Min[0] - Max[0]) * (Min[0] - Max[0]) +
-              (Min[1] - Max[1]) * (Min[1] - Max[1]) +
-              (Min[2] - Max[2]) * (Min[2] - Max[2]));
+
+
   }
   else {
     throw;
@@ -2378,7 +2397,7 @@ void BDS_Mesh::compute_metric_edge_lengths(const BDS_Metric & metric)
 	BDS_GeomEntity *g = e->g;
 	if (g && g->classif_degree == 1)
 	  {
-	    double l = (*it)->length() * 4;
+	    double l = (*it)->length() * 1000;
 	    if (l < (*it)->target_length)
 	      (*it)->target_length =l;
 	  }   
@@ -2386,6 +2405,8 @@ void BDS_Mesh::compute_metric_edge_lengths(const BDS_Metric & metric)
       ++it;
     }
   }
+
+  
 
   {
     std::list < BDS_Edge * >::iterator it = edges.begin();
@@ -2421,29 +2442,37 @@ void BDS_Mesh::compute_metric_edge_lengths(const BDS_Metric & metric)
   }
   //  printf("smoothing\n");
   const int NITER = 3;
+  const double BETA = metric.beta;
+
+  std::vector<BDS_Point *> temp(points.size());
+  std::copy( points.begin(),points.end(),temp.begin());
 
   for(int I = 0; I < NITER; ++I) {
-    const double BETA = metric.beta;
-    std::set < BDS_Point *, PointLessThan >::iterator it = points.begin();
-    std::set < BDS_Point *, PointLessThan >::iterator ite = points.end();
+
+    std::vector < BDS_Point * >::const_iterator it = temp.begin();
+    std::vector < BDS_Point * >::const_iterator ite = temp.end();
+
     while(it != ite) {
 
       std::list < BDS_Edge * >::iterator eit = (*it)->edges.begin();
+      std::list < BDS_Edge * >::iterator eite = (*it)->edges.end();
 
-      double l_min = metric._max;
+      double l_min = metric._max;      
 
-      while(eit != (*it)->edges.end()) {
-        if(l_min > (*eit)->target_length)
-          l_min = (*eit)->target_length;
+      while(eit != eite) {
+	BDS_Edge *ee = (*eit);
+        if(l_min > ee->target_length)
+          l_min = ee->target_length;
         ++eit;
       }
 
       l_min /= BETA;
 
       eit = (*it)->edges.begin();
-      while(eit != (*it)->edges.end()) {
-        if((*eit)->target_length > l_min)
-          (*eit)->target_length = l_min;
+      while(eit != eite) {
+	BDS_Edge *ee = (*eit);
+        if(ee->target_length > l_min)
+          ee->target_length = l_min;
         ++eit;
       }
       ++it;
@@ -2541,7 +2570,13 @@ int BDS_Mesh::adapt_mesh(const BDS_Metric & metric, bool smooth,
 	    double qb2 = quality_triangle ( (*it)->p2 , op[0] , op[1] );
 	    double qa = (qa1<qa2)?qa1:qa2; 
 	    double qb = (qb1<qb2)?qb1:qb2; 
-	    if (qb > qa)	      
+
+	    double dd = dist_droites_gauches((*it)->p1 , (*it)->p2,
+					     op[0],op[1]);
+	    
+	    double ll = (*it)->length();
+
+	    if ((qb > qa && dd < 0.1 * ll) || (qb > 5 * qa))	      
 	      {
 		nb_modif++;
 		swap_edge ( *it );
@@ -2554,18 +2589,22 @@ int BDS_Mesh::adapt_mesh(const BDS_Metric & metric, bool smooth,
   cleanup();  
   if (smooth ){
     Msg(INFO,"smoothing %d points\n",points.size());
-    std::set<BDS_Point*, PointLessThan>::iterator it   = points.begin();
-    std::set<BDS_Point*, PointLessThan>::iterator ite  = points.end();
-    while (it != ite)
+
+    std::vector <BDS_Point *> temp_l(points.size());
+    std::copy( points.begin(),points.end(),temp_l.begin());
+    std::vector < BDS_Point * >::iterator itx = temp_l.begin();
+    std::vector < BDS_Point * >::iterator itxe = temp_l.end();
+    while (itx != itxe)
       {
-	smooth_point(*it,geom_mesh);
-	++it;
+	smooth_point(*itx,geom_mesh);
+	++itx;
       }
+    printf("coucouc1\n");
   }
   
   Msg(INFO,"%d snaps have succeeded , %d have failed\n",SNAP_SUCCESS,SNAP_FAILURE);
   // outputScalarField (triangles,"b.pos");
-  // applyOptimizationPatterns(); // FIXME: this is buggy
+   applyOptimizationPatterns(); // FIXME: this is buggy
   cleanup();  
   return nb_modif;
 }

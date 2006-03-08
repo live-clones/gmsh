@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.95 2006-02-02 13:53:57 geuzaine Exp $
+// $Id: CAD.cpp,v 1.96 2006-03-08 17:02:50 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2201,13 +2201,15 @@ bool ProjectPointOnCurve(Curve * c, Vertex * v, Vertex * RES, Vertex * DER)
   *RES = InterpolateCurve(CURVE, xmin, 0);
   *DER = InterpolateCurve(CURVE, xmin, 1);
   if(xmin > c->uend) {
+    xmin = c->uend;
     *RES = InterpolateCurve(CURVE, c->uend, 0);
     *DER = InterpolateCurve(CURVE, c->uend, 1);
   }
   else if(xmin < c->ubeg) {
+    xmin = c->ubeg;
     *RES = InterpolateCurve(CURVE, c->ubeg, 0);
     *DER = InterpolateCurve(CURVE, c->ubeg, 1);
-  }
+  }  
   return true;
 }
 
@@ -2308,6 +2310,8 @@ bool ProjectPointOnSurface(Surface * s, Vertex & p)
   p.Pos.X = vv.Pos.X;
   p.Pos.Y = vv.Pos.Y;
   p.Pos.Z = vv.Pos.Z;
+  p.us[0] = x[1];
+  p.us[1] = x[2];
   if(!check) {
     return false;
   }

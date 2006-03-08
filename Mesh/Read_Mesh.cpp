@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.98 2006-01-17 17:09:05 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.99 2006-03-08 17:04:59 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <map>
 #include "Gmsh.h"
 #include "Geo.h"
 #include "CAD.h"
@@ -162,6 +163,34 @@ double SetLC(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4 = 0)
   return lc;
 }
 
+int getPartition ( const std::multimap<int,int> &nod2proc , int nbNod, Vertex *verts )
+{
+
+  std::map<int,int> proc2nbnod;
+  for (int i=0;i<nbNod;i++)
+    {
+      std::multimap<int,int>::const_iterator beg = nod2proc.lower_bound(verts[i].Num);      
+      std::multimap<int,int>::const_iterator end = nod2proc.upper_bound(verts[i].Num);
+      while ( beg != end )
+	{
+	  int iProc = (*beg).second;	  
+	  if (proc2nbnod.find(iProc) == proc2nbnod.end()) proc2nbnod[iProc] = 1;
+	  else proc2nbnod[iProc] = proc2nbnod[iProc]+1;
+	  ++beg;
+	}
+    }
+  {
+    std::map<int,int>::const_iterator beg = proc2nbnod.begin();      
+    std::map<int,int>::const_iterator end = proc2nbnod.end();
+    while (beg!=end)
+      {
+	if ( (*beg).second == nbNod ) return (*beg).first;
+	beg++;
+      }    
+  }
+  return 0;  
+}
+
 void Read_Mesh_MSH(Mesh * M, FILE * fp)
 {
   char String[256];
@@ -183,6 +212,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
   Tree_T *Duplicates = NULL;
   Tree_T *groups = List2Tree(M->PhysicalGroups, comparePhysicalGroup);
 
+  std::multimap<int,int> nod2proc;
   while(1) {
     do {
       if(!fgets(String, sizeof(String), fp))
@@ -194,6 +224,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
     if(feof(fp))
       break;
 
+    Msg(INFO, "%s\n", &String[1]);
     /*  F o r m a t  */
 
     if(!strncmp(&String[1], "MeshFormat", 10)) {
@@ -236,6 +267,23 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
       }
     }
 
+    /*  NODE'S PROCESSORS */
+
+    else if(!strncmp(&String[1], "PARA", 4))
+      {
+	fscanf(fp, "%d", &Nbr_Nodes);
+	Msg(INFO,"%d parallel nodes\n",Nbr_Nodes);
+	for(i_Node = 0; i_Node < Nbr_Nodes; i_Node++) {
+	  int nbProc;
+	  fscanf(fp, "%d %d",&Num, &nbProc);
+	  for (int iProc=0;iProc<nbProc;iProc++)
+	    {
+	      int iProcNum;
+	      fscanf(fp, "%d",&iProcNum);
+	      nod2proc.insert(std::pair<int, int>(Num,iProcNum ));
+	    }
+	}
+      }
     /*  NODES  */
 
     else if(!strncmp(&String[1], "NOD", 3) ||
@@ -323,8 +371,15 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	}
 
         for(j = 0; j < Nbr_Nodes; j++)
-          fscanf(fp, "%d", &verts[j].Num);
-	
+	  {
+	    fscanf(fp, "%d", &verts[j].Num);
+	  }
+
+	if (nod2proc.size())
+	  {
+	    Partition = getPartition ( nod2proc ,Nbr_Nodes , verts );
+	  }
+
         for(i = 0; i < Nbr_Nodes; i++) {
           vertsp[i] = &verts[i];
           if(!(vertspp = (Vertex **) Tree_PQuery(M->Vertices, &vertsp[i])))

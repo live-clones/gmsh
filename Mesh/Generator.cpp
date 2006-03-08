@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.81 2006-02-26 16:26:09 geuzaine Exp $
+// $Id: Generator.cpp,v 1.82 2006-03-08 17:04:59 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -250,7 +250,6 @@ bool TooManyElements(Mesh *M, int dim){
   Tree_Action(M->Points, GetSumOfAllLc);
   SumOfAllLc /= (double)Tree_Nbr(M->Points);
   if(pow(CTX.lc / SumOfAllLc, dim) < 1.e7) return false;
-
   return !GetBinaryAnswer("Your choice of characteristic lengths will likely produce\n"
 			  "a very large mesh. Do you really want to continue?\n\n"
 			  "(To disable this warning in the future, select `Enable\n"

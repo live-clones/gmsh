@@ -22,9 +22,9 @@
 
 #include "List.h"
 
-typedef struct {
+struct Coord{
   double X,Y,Z;
-}Coord;
+};
 
 class Vertex {
   public :
