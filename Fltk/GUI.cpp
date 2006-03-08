@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.490 2006-02-24 03:28:18 geuzaine Exp $
+// $Id: GUI.cpp,v 1.491 2006-03-08 15:43:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -134,6 +134,13 @@ Fl_Menu_Item m_menubar_table[] = {
 // menu window; removed File->Quit)
 
 #if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
+
+// random changes in fltk are driving me nuts sometimes
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1) && (FL_PATCH_VERSION <= 6)
+#undef FL_META
+#define FL_META FL_CTRL
+#endif
+
 Fl_Menu_Item m_sys_menubar_table[] = {
   {"File", 0, 0, 0, FL_SUBMENU},
     {"New...",     FL_META+'n', (Fl_Callback *)file_new_cb, 0},
@@ -143,7 +150,7 @@ Fl_Menu_Item m_sys_menubar_table[] = {
     {"Save As...", FL_META+'s', (Fl_Callback *)file_save_as_cb, 0},
     {"Save Mesh",  FL_META+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
     {0},
-  {"Tools",0,0,0,FL_SUBMENU},
+  {"Tools", 0, 0, 0, FL_SUBMENU},
     {"Options...",      FL_META+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
     {"Visibility",      FL_META+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"Clipping Planes", FL_META+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
@@ -151,12 +158,12 @@ Fl_Menu_Item m_sys_menubar_table[] = {
     {"Statistics",      FL_META+'i', (Fl_Callback *)statistics_cb, 0},
     {"Message Console", FL_META+'l', (Fl_Callback *)message_cb, 0},
     {0},
-  {"Window",0,0,0,FL_SUBMENU},
+  {"Window", 0, 0, 0, FL_SUBMENU},
     {"Minimize",           FL_META+'m', (Fl_Callback *)window_cb, (void*)"minimize"},
     {"Zoom",               0, (Fl_Callback *)window_cb, (void*)"zoom", FL_MENU_DIVIDER},
     {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
     {0},
-  {"Help",0,0,0,FL_SUBMENU},
+  {"Help", 0, 0, 0, FL_SUBMENU},
     {"Online Documentation", 0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
     {"Mouse Actions",        0, (Fl_Callback *)help_mouse_cb, 0},
     {"Keyboard Shortcuts",   0, (Fl_Callback *)help_short_cb, 0},
