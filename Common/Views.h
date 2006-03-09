@@ -20,6 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <map>
 #include "ColorTable.h"
 #include "List.h"
 #include "VertexArray.h"
@@ -68,6 +69,8 @@ class Post_View{
   List_T *SY, *VY, *TY, *SY2, *VY2, *TY2; // pyramids
   int NbT2, NbT3;
   List_T *T2D, *T2C, *T3D, *T3C; // 2D and 3D text strings
+  std::map < int , List_T * >  Grains; // For LMGC90, grains shapes
+
 
   // vertex arrays to draw triangles and lines efficiently
   VertexArray *TriVertexArray, *LinVertexArray;
@@ -177,7 +180,7 @@ class Post_View{
 
 // TensorType
 #define DRAW_POST_VONMISES     0
-#define DRAW_POST_EIGENVECTORS 1
+#define DRAW_POST_LMGC90       1
 
 // RangeType
 #define DRAW_POST_RANGE_DEFAULT  1

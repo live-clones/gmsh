@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.491 2006-03-08 15:43:15 geuzaine Exp $
+// $Id: GUI.cpp,v 1.492 2006-03-09 07:56:21 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1665,7 +1665,7 @@ void GUI::reset_external_view_list()
 void GUI::create_option_window()
 {
   int width = 42 * fontsize;
-  int height = 12 * BH + 5 * WB;
+  int height = 13 * BH + 5 * WB;
   int L = 105 + WB;
 
   if(opt_window) {
@@ -3138,14 +3138,7 @@ void GUI::create_option_window()
         view_choice[10]->align(FL_ALIGN_RIGHT);
 	view_choice[10]->add("Self");
 
-        //static Fl_Menu_Item menu_tensor[] = {
-	  //{"Von-Mises", 0, 0, 0},
-          //{"Eigenvectors", 0, 0, 0}, //not implemented yet
-          //{0}
-        //};
-        //view_choice[4] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Tensor display");
-        //view_choice[4]->menu(menu_tensor);
-        //view_choice[4]->align(FL_ALIGN_RIGHT);
+        
 
         view_vector->end();
 
@@ -3157,6 +3150,16 @@ void GUI::create_option_window()
         view_choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Glyph location");
         view_choice[3]->menu(menu_vecloc);
         view_choice[3]->align(FL_ALIGN_RIGHT);
+
+	static Fl_Menu_Item menu_tensor[] = {
+	  {"Von-Mises", 0, 0, 0},
+          {"LMGC90", 0, 0, 0}, //not implemented yet
+          {0}
+        };
+        view_choice[4] = new Fl_Choice(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tensor display");
+        view_choice[4]->menu(menu_tensor);
+        view_choice[4]->align(FL_ALIGN_RIGHT);
+
       }
 
       o->end();

@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.93 2006-02-26 16:26:14 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.94 2006-03-09 07:56:35 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -326,6 +326,7 @@ int MergeProblem(char *name, int warn_if_missing)
 
     if(!strncmp(tmp, "$PTS", 4) || 
        !strncmp(tmp, "$NO", 3) || 
+       !strncmp(tmp, "$PARA", 5) || 
        !strncmp(tmp, "$ELM", 4) ||
        !strncmp(tmp, "$MeshFormat", 4)) {
       if(THEM->status < 0)
@@ -349,6 +350,7 @@ int MergeProblem(char *name, int warn_if_missing)
     }
     else {
       status = ParseFile(name, 0, 1);
+      //      gmshModel m ;
     }
   }
 

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.77 2006-02-15 15:06:25 geuzaine Exp $
+// $Id: Gmsh.l,v 1.78 2006-03-09 07:56:34 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -237,6 +237,7 @@ T2                      return tText2D;
 T3                      return tText3D;
 INTERPOLATION_SCHEME    return tInterpolationScheme;
 TIME                    return tTime;
+GRAIN                   return tGrain;
 
 {digit}+ |
 {digit}+"."{digit}*({exp})? |

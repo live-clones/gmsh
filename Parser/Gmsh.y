@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.223 2006-02-26 16:26:13 geuzaine Exp $
+// $Id: Gmsh.y,v 1.224 2006-03-09 07:56:35 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -101,7 +101,7 @@ int CheckViewErrorFlags(Post_View *v);
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
 %token tLoop tRecombine tDelete tCoherence tIntersect
 %token tAttractor tLayers tAlias tAliasWithOptions
-%token tText2D tText3D tInterpolationScheme tTime tCombine
+%token tText2D tText3D tInterpolationScheme tTime tGrain tCombine
 %token tBSpline tBezier tNurbs tOrder tWith tBounds tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
 %token tReturn tCall tFunction tTrimmed tShow tHide tGetValue
@@ -222,6 +222,7 @@ Views :
   | Views Text3D
   | Views InterpolationMatrix
   | Views Time
+  | Views Grain
 ;
 
 ElementCoords :
@@ -526,6 +527,11 @@ Time :
     }
    '{' ElementValues '}' tEND
     {
+    }
+Grain :
+    tGrain '(' FExpr ')'  ListOfDouble  tEND
+    {
+      View->Grains [(int)$3] = $5;
     }
 ;
 

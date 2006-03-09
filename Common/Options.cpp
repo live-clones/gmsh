@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.275 2006-02-24 03:20:44 geuzaine Exp $
+// $Id: Options.cpp,v 1.276 2006-03-09 07:56:51 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -6311,19 +6311,19 @@ double opt_view_tensor_type(OPT_ARGS_NUM)
     v->TensorType = (int)val;
     v->Changed = 1;
   }
-// #if defined(HAVE_FLTK)
-//   if(_gui_action_valid(action, num)) {
-//     switch (v->TensorType) {
-//     case DRAW_POST_EIGENVECTORS:
-//       WID->view_choice[4]->value(1);
-//       break;
-//     case DRAW_POST_VONMISES:
-//     default:
-//       WID->view_choice[4]->value(0);
-//       break;
-//     }
-//   }
-// #endif
+ #if defined(HAVE_FLTK)
+   if(_gui_action_valid(action, num)) {
+     switch (v->TensorType) {
+     case DRAW_POST_LMGC90:
+       WID->view_choice[4]->value(1);
+       break;
+     case DRAW_POST_VONMISES:
+     default:
+       WID->view_choice[4]->value(0);
+       break;
+     }
+   }
+ #endif
   return v->TensorType;
 }
 

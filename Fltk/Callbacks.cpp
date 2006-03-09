@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.412 2006-02-26 16:26:08 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.413 2006-03-09 07:56:21 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3688,7 +3688,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double line_type = opt_view_line_type(current, GMSH_GET, 0);
   double vector_type = opt_view_vector_type(current, GMSH_GET, 0);
   double glyph_location = opt_view_glyph_location(current, GMSH_GET, 0);
-  //double tensor_type = opt_view_tensor_type(current, GMSH_GET, 0);
+  double tensor_type = opt_view_tensor_type(current, GMSH_GET, 0);
   double range_type = opt_view_range_type(current, GMSH_GET, 0);
   double axes = opt_view_axes(current, GMSH_GET, 0);
   double boundary = opt_view_boundary(current, GMSH_GET, 0);
@@ -3873,16 +3873,16 @@ void view_options_ok_cb(CALLBACK_ARGS)
       if(force || (val != glyph_location))
         opt_view_glyph_location(i, GMSH_SET, val);
 
-//     switch (WID->view_choice[4]->value()) {
-//     case 0:
-// 	val = DRAW_POST_VONMISES;
-//      break;
-//     default:
-// 	val = DRAW_POST_EIGENVECTORS;
-// 	break;
-//     }
-//     if(force || (val != tensor_type))
-//       opt_view_tensor_type(i, GMSH_SET, val);
+     switch (WID->view_choice[4]->value()) {
+     case 0:
+ 	val = DRAW_POST_VONMISES;
+      break;
+     default:
+ 	val = DRAW_POST_LMGC90;
+ 	break;
+     }
+     if(force || (val != tensor_type))
+       opt_view_tensor_type(i, GMSH_SET, val);
 
       switch (WID->view_choice[7]->value()) {
       case 0:
