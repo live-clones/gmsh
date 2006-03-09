@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.70 2006-02-04 03:43:30 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.71 2006-03-09 13:06:52 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,8 @@
 #include "Mesh.h"
 #include "Create.h"
 #include "Context.h"
+#include <list>
+#include <map>
 
 extern Context_T CTX;
 extern Mesh *THEM;
@@ -554,9 +556,47 @@ static void _msh_print_elements(Mesh *M)
   List_Delete(ListVolumes);
 }
 
+
+static void _get_all_model_points ( std::list<Vertex*> &mp )
+{
+  List_T *curves = Tree2List(THEM->Curves);
+  std::set<Vertex*> points;
+  for(int i = 0; i < List_Nbr(curves); i++){
+    Curve *c;
+    List_Read(curves, i, &c);
+    if (c->Num >=0)
+      {
+	if (points.find(c->beg) == points.end())
+	  {
+	    points.insert(c->beg);
+	    mp.push_back(c->beg); 
+	  }
+	if (points.find(c->end) == points.end())
+	  {
+	    points.insert(c->end);
+	    mp.push_back(c->end); 
+	  }
+      }
+  }
+}
+
+static void _msh_print_all_modelpoints()
+{
+  std::list<Vertex*> mp;
+  _get_all_model_points ( mp );
+  std::list<Vertex*>::iterator it = mp.begin();
+  while (it != mp.end())
+    {
+      Vertex *v = (*it);
+      _msh_print_point(v);
+      it++;
+    }
+}
+
 static void _msh_print_all_curves(void *a, void *b)
 {
-  Curve *c = *(Curve **) a;
+  Curve *c = *(Curve **) a; 
+
   Tree_Action(c->Simplexes, _msh_print_simplex);
   Tree_Action(c->SimplexesBase, _msh_print_simplex);
 }
@@ -597,6 +637,9 @@ static void _msh_print_all_elements(Mesh *M)
   MSH_PHYSICAL_NUM = 0;
   MSH_PHYSICAL_ORI = 1;
   MSH_LIN_NUM = MSH_SUR_NUM = MSH_VOL_NUM = 0;
+
+
+  _msh_print_all_modelpoints();
 
   if(CTX.mesh.oldxtrude) {
     Tree_Action(M->Volumes, _msh_print_all_simpsurf);
