@@ -825,6 +825,7 @@ Optional Features:
   --enable-metis          compile METIS if available (default=yes)
   --enable-tetgen         compile Tetgen if available (default=yes)
   --enable-matheval       compile MathEval if available (default=yes)
+  --enable-model          compile Model interface if available (default=yes)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1387,6 +1388,11 @@ fi;
 # Check whether --enable-matheval or --disable-matheval was given.
 if test "${enable_matheval+set}" = set; then
   enableval="$enable_matheval"
+
+fi;
+# Check whether --enable-model or --disable-model was given.
+if test "${enable_model+set}" = set; then
+  enableval="$enable_model"
 
 fi;
 
@@ -3431,8 +3437,8 @@ fi
 
 else
 
-  GMSH_DIRS="${GMSH_DIRS} Box"
-  GMSH_LIBS="-Llib -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshCommon"
+  GMSH_DIRS="${GMSH_DIRS} Box BoxMain"
+  GMSH_LIBS="-Llib -lGmshBoxMain -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshCommon"
   GMSH_LIBS="${GMSH_LIBS} -lGmshDataStr -lGmshPlugin -lGmshNumeric -lGmshParallel"
 
 fi
@@ -3843,10 +3849,56 @@ fi
     if test "x$enable_ann" != "xno"; then
        echo "********************************************************************"
        echo "If you want to use ANN for doing fast geometrical searchs in the"
-       echo "STL mesher, please download ANN from the"
-       echo "author's web site at http://www.cs.umd.edu/~mount/ANN/,"
-       echo "unpack the archive and copy both src and include directories in the"
-       echo "./contrib/ANN subdirectory. Then run ./configure again."
+       echo "STL mesher, please download ANN from the author's web site at"
+       echo "http://www.cs.umd.edu/~mount/ANN/, unpack the archive and copy both"
+       echo "src and include directories in the /contrib/ANN subdirectory. Then"
+       echo "run ./configure again."
+       echo "********************************************************************"
+    fi
+  fi
+
+
+    as_ac_File=`echo "ac_cv_file_${DEVROOT}/MeshAdapt/model/model/model/SGModel.h" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for ${DEVROOT}/MeshAdapt/model/model/model/SGModel.h" >&5
+echo $ECHO_N "checking for ${DEVROOT}/MeshAdapt/model/model/model/SGModel.h... $ECHO_C" >&6
+if eval "test \"\${$as_ac_File+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "${DEVROOT}/MeshAdapt/model/model/model/SGModel.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
+if test `eval echo '${'$as_ac_File'}'` = yes; then
+  MODEL="yes"
+else
+  MODEL="no"
+fi
+
+  if test "x${MODEL}" = "xyes"; then
+    if test "x$enable_model" != "xno"; then
+       GMSH_LIBS="${GMSH_LIBS} ${DEVROOT}/MeshAdapt/model/lib/x86_linux/libmodel-O.a"
+       FLAGS="-D_HAVE_SGMODEL_ ${FLAGS}"
+       echo "********************************************************************"
+       echo "You are building a version of Gmsh that contains model, the"
+       echo "Modeler Interface."
+       echo "Please note that by doing so, you agree with model's licensing"
+       echo "requirements."
+       echo "To disable model, run configure again with the --disable-model"
+       echo "option."
+       echo "********************************************************************"
+    fi
+  else
+    if test "x$enable_model" != "xno"; then
+       echo "********************************************************************"
+       echo "If you want to use model for doing modeling interface, contact us."
        echo "********************************************************************"
     fi
   fi

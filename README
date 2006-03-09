@@ -18,9 +18,10 @@ are not installed in their default locations.
 [ WARNING: Do not use FLTK 1.1.7. FLTK 1.1.7 has a few serious bugs
 that can lead to seemingly random crashes in Gmsh. FLTK 1.1.6 is OK,
 as are most SVN revisions anterior to {"2005-10-10"}. Unfortunately,
-these versions come with a buggy JPEG header: if you enable the local
-JPEG library when you configure FLTK, you will have to remove the
-"#include <config.h>" line in the file "jconfig.h". ]
+both 1.1.6 and all these versions come with a buggy JPEG header: if
+you enable the local JPEG library when you configure FLTK, you will
+have to remove the "#include <config.h>" line in the file
+"jconfig.h". ]
 
 To install a non-graphical version of Gmsh (that does not require FLTK
 nor OpenGL), type

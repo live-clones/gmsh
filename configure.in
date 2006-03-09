@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.94 2006-03-08 17:03:35 remacle Exp $
+dnl $Id: configure.in,v 1.95 2006-03-09 12:18:28 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 dnl
@@ -93,6 +93,9 @@ AC_ARG_ENABLE(tetgen,
 AC_ARG_ENABLE(matheval,
               AC_HELP_STRING([--enable-matheval],
                              [compile MathEval if available (default=yes)]))
+AC_ARG_ENABLE(model,
+              AC_HELP_STRING([--enable-model],
+                             [compile Model interface if available (default=yes)]))
 
 dnl Get the operating system name
 UNAME=`uname`
@@ -324,10 +327,10 @@ if test "x$enable_contrib" != "xno"; then
     if test "x$enable_ann" != "xno"; then
        echo "********************************************************************"
        echo "If you want to use ANN for doing fast geometrical searchs in the"
-       echo "STL mesher, please download ANN from the"
-       echo "author's web site at http://www.cs.umd.edu/~mount/ANN/,"
-       echo "unpack the archive and copy both src and include directories in the"
-       echo "./contrib/ANN subdirectory. Then run ./configure again."
+       echo "STL mesher, please download ANN from the author's web site at"
+       echo "http://www.cs.umd.edu/~mount/ANN/, unpack the archive and copy both"
+       echo "src and include directories in the /contrib/ANN subdirectory. Then"
+       echo "run ./configure again."
        echo "********************************************************************"
     fi
   fi
