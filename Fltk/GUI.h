@@ -57,7 +57,7 @@
 
 #include "Opengl_Window.h"
 #include "Colorbar_Window.h"
-#include "Popup_Menu.h"
+#include "Popup_Button.h"
 
 // The dynamic contexts
 

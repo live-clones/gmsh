@@ -1,4 +1,4 @@
-// $Id: Popup_Button.cpp,v 1.1.2.1 2006-03-10 06:31:25 geuzaine Exp $
+// $Id: Popup_Button.cpp,v 1.1.2.2 2006-03-10 06:35:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,11 +19,6 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-// This class was inspired by the colorbar widget provided in Vis5d, a
-// program for visualizing five dimensional gridded data sets
-// Copyright (C) 1990 - 1995 Bill Hibbard, Brian Paul, Dave Santek,
-// and Andre Battaiola.
-   
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Popup_Button.h"

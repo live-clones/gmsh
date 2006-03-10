@@ -35,3 +35,5 @@ class Popup_Button : public Fl_Menu_Button {
   int handle(int e);
   const Fl_Menu_Item* popup();
 };
+
+#endif
