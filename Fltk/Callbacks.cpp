@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.412 2006-02-26 16:26:08 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.412.2.1 2006-03-10 02:28:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -487,32 +487,38 @@ void status_xyz1p_cb(CALLBACK_ARGS)
   WID->update_manip_window();
 }
 
-static int stop_anim, view_in_cycle = -1;
+static int stop_anim, view_in_cycle = -1, busy = 0;
 
 void ManualPlay(int time, int step)
 {
-  int i;
+  // avoid firing ManualPlay recursively (can happen e.g when keeping
+  // the finger down on the arrow key: if the system generates too
+  // many events, we can overflow the stack--that happened on my
+  // powerbook with the new, optimzed FLTK event handler)
+  if(busy) return;
+  busy = 1;
   if(time) {
-    for(i = 0; i < List_Nbr(CTX.post.list); i++)
+    for(int i = 0; i < List_Nbr(CTX.post.list); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_timestep(i, GMSH_SET | GMSH_GUI,
                           opt_view_timestep(i, GMSH_GET, 0) + step);
   }
-  else {        //hide all views except view_in_cycle
+  else { // hide all views except view_in_cycle
     if(step > 0) {
       if((view_in_cycle += step) >= List_Nbr(CTX.post.list))
         view_in_cycle = 0;
-      for(i = 0; i < List_Nbr(CTX.post.list); i += step)
+      for(int i = 0; i < List_Nbr(CTX.post.list); i += step)
         opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
     }
     else {
       if((view_in_cycle += step) < 0)
         view_in_cycle = List_Nbr(CTX.post.list) - 1;
-      for(i = List_Nbr(CTX.post.list) - 1; i >= 0; i += step)
+      for(int i = List_Nbr(CTX.post.list) - 1; i >= 0; i += step)
         opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
     }
   }
   Draw();
+  busy = 0;
 }
 
 void status_play_cb(CALLBACK_ARGS)

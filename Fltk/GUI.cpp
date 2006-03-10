@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.491 2006-03-08 15:43:15 geuzaine Exp $
+// $Id: GUI.cpp,v 1.491.2.1 2006-03-10 02:28:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -971,7 +971,7 @@ void GUI::wait(double time)
 
 // Create the menu window
 
-void GUI::add_post_plugins(Fl_Menu_Button * button, int iView)
+void GUI::add_post_plugins(PopupButton * button, int iView)
 {
   char name[256], menuname[256];
   for(GMSH_PluginManager::iter it = GMSH_PluginManager::instance()->begin();
@@ -1230,13 +1230,9 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
       b2->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
       b2->tooltip("Show view option menu (Shift+w)");
   
-      Fl_Menu_Button *p[2];
-      p[0] = new Fl_Menu_Button(width - popw, MH + nb * BH, popw, BH);
-      p[0]->type(Fl_Menu_Button::POPUP123);
-  
-      p[1] = new Fl_Menu_Button(0, MH + nb * BH, width - popw, BH);
-      p[1]->type(Fl_Menu_Button::POPUP3);
-  
+      PopupButton *p[2];
+      p[0] = new PopupButton(width - popw, MH + nb * BH, popw, BH);
+      p[1] = new PopupButton(0, MH + nb * BH, width - popw, BH);
       for(int j = 0; j < 2; j++) {
 	p[j]->add("Reload/View", 0, 
 		  (Fl_Callback *) view_reload_cb, (void *)nb, 0);

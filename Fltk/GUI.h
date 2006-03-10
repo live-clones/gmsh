@@ -120,6 +120,28 @@ struct SolverDialogBox
   Fl_Button *command[10] ;
 };
 
+// We need to define our own popup button to fix a bug in FLTK 1.1.7
+// (popup() in 1.1.7 calls redraw() after picked(), which can cause a
+// crash if the button was deleted by the callback)
+
+class PopupButton : public Fl_Menu_Button {
+ public:
+  PopupButton(int x, int y, int w, int h, char *label=0) 
+    : Fl_Menu_Button(x, y, w, h, label)
+  {
+    type(Fl_Menu_Button::POPUP123);
+  }
+  void draw(){ Fl_Menu_Button::draw(); }
+  int handle(int e){ return Fl_Menu_Button::handle(e); }
+  const Fl_Menu_Item* popup()
+  {
+    const Fl_Menu_Item* m;
+    m = menu()->popup(Fl::event_x(), Fl::event_y(), label(), mvalue(), this);
+    picked(m);
+    return m;
+  }
+};
+
 // The GUI class contains only the important widgets (which can be set/queried).
 
 class GUI{
@@ -129,7 +151,7 @@ class GUI{
 
   // Bitmaps
   Fl_Bitmap  *abort_bmp, *start_bmp, *stop_bmp, *rewind_bmp, *rotate_bmp, *ortho_bmp ;
-  void add_post_plugins ( Fl_Menu_Button *button , int iView);
+  void add_post_plugins(PopupButton *button , int iView);
   void add_multiline_in_browser(Fl_Browser *o, char* prefix, char *str);
 
 public:
@@ -145,8 +167,8 @@ public:
   std::vector<Fl_Button*>       m_push_butt ;
   std::vector<Fl_Light_Button*> m_toggle_butt ;
   std::vector<Fl_Button*>       m_toggle2_butt ;
-  std::vector<Fl_Menu_Button*>  m_popup_butt ;
-  std::vector<Fl_Menu_Button*>  m_popup2_butt ;
+  std::vector<PopupButton*>     m_popup_butt ;
+  std::vector<PopupButton*>     m_popup2_butt ;
   std::vector<char*>            m_pop_label ;
   std::vector<std::pair<int, GMSH_Plugin*>*> m_pop_plugin;
 
