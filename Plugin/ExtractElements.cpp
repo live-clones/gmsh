@@ -1,4 +1,4 @@
-// $Id: ExtractElements.cpp,v 1.4 2006-01-29 23:25:20 geuzaine Exp $
+// $Id: ExtractElements.cpp,v 1.4.2.1 2006-03-10 17:04:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -86,6 +86,9 @@ static void extract(List_T *inList, int inNb,
 		    List_T *outList, int *outNb, 
 		    int timeStep, int nbNod, int nbComp)
 {
+  if(!inNb)
+    return;
+
   double MinVal = ExtractElementsOptions_Number[0].def;
   double MaxVal = ExtractElementsOptions_Number[1].def;
 
