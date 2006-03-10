@@ -127,10 +127,7 @@ struct SolverDialogBox
 class PopupButton : public Fl_Menu_Button {
  public:
   PopupButton(int x, int y, int w, int h, char *label=0) 
-    : Fl_Menu_Button(x, y, w, h, label)
-  {
-    type(Fl_Menu_Button::POPUP123);
-  }
+    : Fl_Menu_Button(x, y, w, h, label) {}
   void draw(){ Fl_Menu_Button::draw(); }
   int handle(int e){ return Fl_Menu_Button::handle(e); }
   const Fl_Menu_Item* popup()
