@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.30.2.1 2006-03-10 06:35:01 geuzaine Exp $
+# $Id: Makefile,v 1.30.2.2 2006-03-10 21:22:56 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -55,15 +55,15 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-# 1 "/Users/geuzaine/src/gmsh-1.64-branch/DataStr//"
+# 1 "/Users/geuzaine/src/gmsh_1_64_branch/DataStr//"
 List.o: List.cpp Malloc.h List.h ../Common/Message.h SafeIO.h
-# 1 "/Users/geuzaine/src/gmsh-1.64-branch/DataStr//"
+# 1 "/Users/geuzaine/src/gmsh_1_64_branch/DataStr//"
 Malloc.o: Malloc.cpp Malloc.h ../Common/Message.h
-# 1 "/Users/geuzaine/src/gmsh-1.64-branch/DataStr//"
+# 1 "/Users/geuzaine/src/gmsh_1_64_branch/DataStr//"
 SafeIO.o: SafeIO.cpp SafeIO.h ../Common/Message.h
-# 1 "/Users/geuzaine/src/gmsh-1.64-branch/DataStr//"
+# 1 "/Users/geuzaine/src/gmsh_1_64_branch/DataStr//"
 Tree.o: Tree.cpp Malloc.h Tree.h avl.h ../Common/Message.h
-# 1 "/Users/geuzaine/src/gmsh-1.64-branch/DataStr//"
+# 1 "/Users/geuzaine/src/gmsh_1_64_branch/DataStr//"
 avl.o: avl.cpp avl.h Malloc.h
-# 1 "/Users/geuzaine/src/gmsh-1.64-branch/DataStr//"
+# 1 "/Users/geuzaine/src/gmsh_1_64_branch/DataStr//"
 Tools.o: Tools.cpp Tools.h List.h Tree.h avl.h
