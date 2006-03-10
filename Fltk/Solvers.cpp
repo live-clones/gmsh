@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.49 2006-02-25 05:27:59 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.49.2.1 2006-03-10 15:54:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -186,7 +186,7 @@ int Solver(int num, char *args)
 
     int type, length;
     if(server.ReceiveMessageHeader(&type, &length)){
-      char *message = new char[length+1];
+      char *message = new char[length + 1];
       if(server.ReceiveMessageBody(length, message)){
 	switch (type) {
 	case GmshServer::CLIENT_START:
@@ -253,7 +253,7 @@ int Solver(int num, char *args)
 	WID->check();
       }
       else{
-	Msg(WARNING, "Failed to receive message body on socket: arborting");
+	Msg(WARNING, "Failed to receive message body on socket: aborting");
 	break;
       }
       delete [] message;
