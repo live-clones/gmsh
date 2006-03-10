@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.81 2006-02-26 16:26:09 geuzaine Exp $
+# $Id: Makefile,v 1.81.2.1 2006-03-10 06:31:25 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -34,6 +34,7 @@ SRC = Main.cpp \
       Opengl.cpp\
       Opengl_Window.cpp\
       Colorbar_Window.cpp\
+      Popup_Button.cpp\
       Solvers.cpp
 
 
