@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.73 2006-03-08 17:02:50 remacle Exp $
+# $Id: Makefile,v 1.74 2006-03-10 06:39:46 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -69,6 +69,7 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
+# 1 "/Users/geuzaine/.gmsh/Geo//"
 CAD.o: CAD.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Geo.h \
@@ -81,10 +82,12 @@ CAD.o: CAD.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Mesh/Interpolation.h ../Mesh/Vertex.h ../Mesh/Mesh.h \
   ../Mesh/Create.h ../Mesh/Vertex.h ../Mesh/Mesh.h CAD.h ExtrudeParams.h \
   ../Common/Visibility.h ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Geo//"
 MinMax.o: MinMax.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Numeric/Numeric.h ../Mesh/Vertex.h ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Geo//"
 ExtrudeParams.o: ExtrudeParams.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -95,6 +98,7 @@ ExtrudeParams.o: ExtrudeParams.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
   ../Mesh/Matrix.h ExtrudeParams.h
+# 1 "/Users/geuzaine/.gmsh/Geo//"
 Geo.o: Geo.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Geo.h CAD.h \
@@ -105,6 +109,7 @@ Geo.o: Geo.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h ExtrudeParams.h \
   ../Parser/Parser.h ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Geo//"
 GeoUtils.o: GeoUtils.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -115,19 +120,21 @@ GeoUtils.o: GeoUtils.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
   ../Mesh/Matrix.h ExtrudeParams.h
-gmshModel.o: gmshModel.cpp gmshModel.h gmshDefs.h ../Mesh/Mesh.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+# 1 "/Users/geuzaine/.gmsh/Geo//"
+gmshModel.o: gmshModel.cpp gmshModel.h gmshDefs.h SPoint2.h \
+  ../Mesh/Mesh.h ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h \
+  ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
-  Range.h Pair.h SPoint2.h SPoint3.h SVector3.h SBoundingBox3d.h \
-  gmshVertex.h gmshEdge.h gmshFace.h ../Parser/OpenFile.h \
+  Range.h Pair.h SPoint3.h SVector3.h SBoundingBox3d.h gmshVertex.h \
+  gmshFace.h gmshEdge.h gmshRegion.h ../Parser/OpenFile.h \
   ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Common/Message.h
-gmshEdge.o: gmshEdge.cpp gmshModel.h gmshDefs.h ../Mesh/Mesh.h \
+# 1 "/Users/geuzaine/.gmsh/Geo//"
+gmshEdge.o: gmshEdge.cpp gmshModel.h gmshDefs.h SPoint2.h ../Mesh/Mesh.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../Mesh/Vertex.h \
   ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h \
   ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h \
@@ -135,11 +142,26 @@ gmshEdge.o: gmshEdge.cpp gmshModel.h gmshDefs.h ../Mesh/Mesh.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
-  Range.h Pair.h SPoint2.h SPoint3.h SVector3.h SBoundingBox3d.h \
-  gmshVertex.h gmshEdge.h gmshFace.h ../Mesh/Interpolation.h \
+  Range.h Pair.h SPoint3.h SVector3.h SBoundingBox3d.h gmshVertex.h \
+  gmshFace.h gmshEdge.h gmshRegion.h ../Mesh/Interpolation.h \
   ../Mesh/Vertex.h ../Mesh/Mesh.h CAD.h ExtrudeParams.h Geo.h
+# 1 "/Users/geuzaine/.gmsh/Geo//"
+gmshFace.o: gmshFace.cpp gmshModel.h gmshDefs.h SPoint2.h ../Mesh/Mesh.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../Mesh/Vertex.h \
+  ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h \
+  ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Mesh/Metric.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
+  Range.h Pair.h SPoint3.h SVector3.h SBoundingBox3d.h gmshVertex.h \
+  gmshFace.h gmshEdge.h gmshRegion.h ../Mesh/Interpolation.h \
+  ../Mesh/Vertex.h ../Mesh/Mesh.h CAD.h ExtrudeParams.h Geo.h
+# 1 "/Users/geuzaine/.gmsh/Geo//"
 SVector3.o: SVector3.cpp SVector3.h SPoint3.h
+# 1 "/Users/geuzaine/.gmsh/Geo//"
 SBoundingBox3d.o: SBoundingBox3d.cpp SBoundingBox3d.h SPoint3.h
+# 1 "/Users/geuzaine/.gmsh/Geo//"
 ExtractContour.o: ExtractContour.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -150,6 +172,7 @@ ExtractContour.o: ExtractContour.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
   ../Mesh/Matrix.h CAD.h ExtrudeParams.h
+# 1 "/Users/geuzaine/.gmsh/Geo//"
 Print_Geo.o: Print_Geo.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \

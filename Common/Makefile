@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.86 2006-02-26 16:26:08 geuzaine Exp $
+# $Id: Makefile,v 1.87 2006-03-10 06:39:46 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -118,7 +118,7 @@ Options.o: Options.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
   ../Mesh/Matrix.h ../Graphics/Draw.h Context.h Options.h \
   ../Fltk/Solvers.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
-  ../Fltk/Colorbar_Window.h ../Common/GmshUI.h
+  ../Fltk/Colorbar_Window.h ../Common/GmshUI.h ../Fltk/Popup_Button.h
 # 1 "/Users/geuzaine/.gmsh/Common//"
 CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
