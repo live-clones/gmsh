@@ -151,7 +151,7 @@ class GmshServer {
     else{
       // TCP/IP socket
       char *port = strstr(_sockname, ":");
-      _portno = atoi(port+1);
+      _portno = atoi(port + 1);
     }
     
     if(_portno < 0){
