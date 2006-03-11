@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.72 2006-03-01 16:07:17 geuzaine Exp $
+$Id: FAQ,v 1.73 2006-03-11 02:19:32 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -57,8 +57,6 @@ You need a C and a C++ compiler (e.g. the GNU compilers gcc and g++)
 as well as the GSL (version 1.2 or higher; freely available from
 http://sources.redhat.com/gsl/) and FLTK (version 1.1.x, configured
 with OpenGL support; freely available from http://www.fltk.org).
-You'll also need the jpeg library if you want to save jpeg images, and
-the libpng and zlib libraries if you want to save png images.
 
 * 2.4 How do I compile Gmsh?
 
@@ -244,15 +242,11 @@ panel. From the command line, you can also use '-order 2'.
 * 5.10 Can I import an existing surface mesh in Gmsh and use it to
 build a 3D mesh?
 
-Yes, see for example 'demos/sphere-discrete.geo'. Note that Gmsh
-does not currently modify the surface mesh that you provide in this 
-way, so this surface mesh has to be conform (without gaps, hanging 
-nodes, etc.) and must contain surface elements having the final
-desired sizes.
-
-Gmsh can also import discrete geometries in the form of STL
-triangulations, and remesh these to respect certain constraints. This
-is still an experimental feature as of this writing (version 1.64).
+Yes, see for example 'demos/sphere-discrete.geo'. You can either use
+the surface mesh "as-is" (for example to build a 3D mesh from an
+existing boundary mesh), or you can remesh the surfaces to respect
+certain constraints (see the STL menu in the mesh module). This is
+still an experimental feature as of this writing (version 2.0).
 
 * 5.11 How do I define boundary conditions or material properties in
 Gmsh?
@@ -324,23 +318,21 @@ distribution in the 'utils/solvers' directory.
 executable. What's wrong?
 
 The solver executable (for example, 'getdp.exe') has to be in your
-path. If not, simply go to the solver options (for example,
-'Solver->GetDP->Options->Executable') to specify its location.
+path. If it is not, simply go to the solver options (the second tab in
+the Solver dialog) and specify its location in the 'Executable' field.
 
 * 6.3 Can I launch Gmsh from my solver (instead of launching my solver
 from Gmsh) in order to monitor a solution?
 
-Sure. A simple C program showing how to do this is given in
-'utils/misc/callgmsh.c'.
-
-* 6.4 Is it possible for Gmsh top listen to an external program not
-launched from Gmsh?
-
-Yes: just create a program as described in 6.1 above (you can skip the
-option file creation). Then select 'Always listen to incoming
-connection requests' in the solver option panel (or run gmsh with the
-'-listen' command line option) and Gmsh will listen for the program on
-the Solver.SocketName socket.
+Sure. The simplest (but rather crude) approach if to re-launch Gmsh
+everytime you want to visualize something (a simple C program showing
+how to do this is given in 'utils/misc/callgmsh.c'). A better approach
+is to modify your program so that it can communicate with Gmsh over a
+socket (see question 6.1 above; you can skip the option file
+creation). Then select 'Always listen to incoming connection requests'
+in the solver option panel (or run gmsh with the '-listen' command
+line option) and Gmsh will always listen for your program on the
+Solver.SocketName socket.
 
 ********************************************************************
 
