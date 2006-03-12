@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.416 2006-03-10 02:30:43 geuzaine Exp $
+# $Id: Makefile,v 1.417 2006-03-12 07:22:04 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -153,7 +153,7 @@ source-commercial: source-tree
 	cd gmsh-${GMSH_VERSION} && rm -rf ${GMSH_VERSION_FILE}\
           contrib/MathEval contrib/Triangle/triangle.* contrib/Tetgen/tetgen.*\
           contrib/Tetgen/predicates.* contrib/Netgen/libsrc contrib/Metis\
-          TODO *.spec doc/gmsh.html doc/README.cvs\
+          TODO doc/gmsh.html doc/README.cvs\
           utils/commercial
 	cp -f utils/commercial/README gmsh-${GMSH_VERSION}/README
 	cp -f utils/commercial/LICENSE gmsh-${GMSH_VERSION}/doc/LICENSE
@@ -268,7 +268,7 @@ package-mac:
 
 package-rpm:
 	tar zcvf /usr/src/redhat/SOURCES/gmsh-${GMSH_VERSION}.tar.gz .
-	rpmbuild -bb --define 'gmshversion ${GMSH_VERSION}' gmsh.spec
+	rpmbuild -bb --define 'gmshversion ${GMSH_VERSION}' utils/misc/gmsh.spec
 	mv /usr/src/redhat/RPMS/i386/gmsh-${GMSH_VERSION}-?.i386.rpm .
 	mv /usr/src/redhat/BUILD/gmsh-${GMSH_VERSION}/gmsh-${GMSH_VERSION}-${UNAME}.tgz .
 	rm -f /usr/src/redhat/SOURCES/gmsh-${GMSH_VERSION}.tar.gz
