@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.417 2006-03-12 07:22:04 geuzaine Exp $
+# $Id: Makefile,v 1.418 2006-03-12 14:52:29 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -153,7 +153,7 @@ source-commercial: source-tree
 	cd gmsh-${GMSH_VERSION} && rm -rf ${GMSH_VERSION_FILE}\
           contrib/MathEval contrib/Triangle/triangle.* contrib/Tetgen/tetgen.*\
           contrib/Tetgen/predicates.* contrib/Netgen/libsrc contrib/Metis\
-          TODO doc/gmsh.html doc/README.cvs\
+          doc/TODO doc/gmsh.html doc/README.cvs\
           utils/commercial
 	cp -f utils/commercial/README gmsh-${GMSH_VERSION}/README
 	cp -f utils/commercial/LICENSE gmsh-${GMSH_VERSION}/doc/LICENSE
