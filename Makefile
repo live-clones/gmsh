@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.415.2.2 2006-03-12 14:51:23 geuzaine Exp $
+# $Id: Makefile,v 1.415.2.3 2006-03-12 16:20:20 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -267,12 +267,12 @@ package-mac:
 	tar zcvf gmsh-${GMSH_VERSION}-MacOSX.tgz gmsh-${GMSH_VERSION}
 
 package-rpm:
-	tar zcvf /usr/src/redhat/SOURCES/gmsh-${GMSH_VERSION}.tar.gz .
+	tar zcvf /usr/src/rpm/SOURCES/gmsh-${GMSH_VERSION}.tar.gz .
 	rpmbuild -bb --define 'gmshversion ${GMSH_VERSION}' utils/misc/gmsh.spec
-	mv /usr/src/redhat/RPMS/i386/gmsh-${GMSH_VERSION}-?.i386.rpm .
-	mv /usr/src/redhat/BUILD/gmsh-${GMSH_VERSION}/gmsh-${GMSH_VERSION}-${UNAME}.tgz .
-	rm -f /usr/src/redhat/SOURCES/gmsh-${GMSH_VERSION}.tar.gz
-	rm -rf /usr/src/redhat/BUILD/gmsh-${GMSH_VERSION}
+	mv /usr/src/rpm/RPMS/i386/gmsh-${GMSH_VERSION}-?.i386.rpm .
+	mv /usr/src/rpm/BUILD/gmsh-${GMSH_VERSION}/gmsh-${GMSH_VERSION}-${UNAME}.tgz .
+	rm -f /usr/src/rpm/SOURCES/gmsh-${GMSH_VERSION}.tar.gz
+	rm -rf /usr/src/rpm/BUILD/gmsh-${GMSH_VERSION}
 
 # Rules to distribute official releases
 
