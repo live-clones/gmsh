@@ -240,9 +240,13 @@ class GmshServer {
   }
   int ReceiveMessageHeader(int *type, int *len)
   {
-    _ReceiveData(type, sizeof(int));
-    if(_ReceiveData(len, sizeof(int)))
-      return 1;
+    if(_ReceiveData(type, sizeof(int))){
+      if(*type < 0) return 0;
+      if(_ReceiveData(len, sizeof(int))){
+	if(*len < 0) return 0;
+	return 1;
+      }
+    }
     return 0;
   }
   int ReceiveMessageBody(int len, char *str)
