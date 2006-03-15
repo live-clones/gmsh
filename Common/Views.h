@@ -69,7 +69,7 @@ class Post_View{
   List_T *SY, *VY, *TY, *SY2, *VY2, *TY2; // pyramids
   int NbT2, NbT3;
   List_T *T2D, *T2C, *T3D, *T3C; // 2D and 3D text strings
-  std::map < int , List_T * >  Grains; // For LMGC90, grains shapes
+  std::map < int , List_T * >  *Grains; // For LMGC90, grains shapes
 
 
   // vertex arrays to draw triangles and lines efficiently

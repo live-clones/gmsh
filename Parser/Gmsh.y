@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.224 2006-03-09 07:56:35 remacle Exp $
+// $Id: Gmsh.y,v 1.225 2006-03-15 08:29:06 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -528,10 +528,11 @@ Time :
    '{' ElementValues '}' tEND
     {
     }
+;
 Grain :
     tGrain '(' FExpr ')'  ListOfDouble  tEND
     {
-      View->Grains [(int)$3] = $5;
+      (*View->Grains) [(int)$3] = $5;
     }
 ;
 
