@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <list>
 #include <math.h>
+#include "Views.h"
 
 class BDS_Tet;
 class BDS_Edge;
@@ -661,6 +662,7 @@ public:
   // INRIA MESH
   bool read_mesh(const char *filename);
   bool read_vrml(const char *filename);
+  bool import_view(Post_View *view, const double tolerance);
   void save_gmsh_format(const char *filename);
   void applyOptimizationPatterns();
 };

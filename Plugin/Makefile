@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.92 2006-03-10 06:39:46 geuzaine Exp $
+# $Id: Makefile,v 1.93 2006-03-15 18:00:45 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,7 @@ include ../variables
 
 LIB     = ../lib/libGmshPlugin.a
 INCLUDE = -I../Common -I../Graphics -I../DataStr -I../Geo -I../Fltk\
-          -I../Mesh -I../Numeric\
+          -I../Mesh -I../Numeric -I../contrib/ANN/include\
           -I../contrib/Triangle -I../contrib/MathEval
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
@@ -40,7 +40,7 @@ SRC = Plugin.cpp\
         DisplacementRaise.cpp\
 	StructuralSolver.cpp\
         Skin.cpp\
-        Extract.cpp ExtractElements.cpp\
+        Extract.cpp ExtractElements.cpp ExtractEdges.cpp\
         DecomposeInSimplex.cpp\
         Evaluate.cpp\
         Integrate.cpp Gradient.cpp Curl.cpp Divergence.cpp\

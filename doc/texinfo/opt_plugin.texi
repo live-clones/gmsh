@@ -431,6 +431,22 @@ Default value: @code{-1}
 Default value: @code{-1}
 @end table
 
+@item Plugin(ExtractEdges)
+Plugin(ExtractEdges) extracts the geometry edges of
+the view `iView', using `Angle' as the dihedral angle
+tolerance. If `iView' < 0, the plugin is run on the
+current view.
+
+Plugin(ExtractEdges) creates one new view.
+
+Numeric options:
+@table @code
+@item Angle
+Default value: @code{22}
+@item iView
+Default value: @code{-1}
+@end table
+
 @item Plugin(ExtractElements)
 Plugin(ExtractElements) extracts the elements
 from the view `iView' whose `TimeStep'-th values

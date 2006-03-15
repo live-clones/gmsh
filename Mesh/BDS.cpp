@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.50 2006-03-08 17:04:59 remacle Exp $
+// $Id: BDS.cpp,v 1.51 2006-03-15 18:00:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1595,6 +1595,63 @@ bool BDS_Mesh::read_stl(const char *filename, const double tolerance)
   }
   fclose(f);
   // classify(M_PI);
+  return true;
+}
+
+bool BDS_Mesh::import_view(Post_View *view, const double tolerance)
+{
+  // imports all the tris+quads from a post-processing view
+
+  Min[0] = view->BBox[0]; Max[0] = view->BBox[1];
+  Min[1] = view->BBox[2]; Max[1] = view->BBox[3];
+  Min[2] = view->BBox[4]; Max[2] = view->BBox[5];
+  LC = sqrt((Min[0] - Max[0]) * (Min[0] - Max[0]) +
+	    (Min[1] - Max[1]) * (Min[1] - Max[1]) +
+	    (Min[2] - Max[2]) * (Min[2] - Max[2]));
+  
+  PointLessThanLexicographic::t = tolerance;
+  std::set < BDS_Point *, PointLessThanLexicographic > pts;
+
+  for(int type = 0; type < 6; type++){
+    int nbList, nbNod;
+    List_T *list;
+    switch(type){
+    case 0: list = view->ST; nbList = view->NbST; nbNod = 3; break;
+    case 1: list = view->VT; nbList = view->NbVT; nbNod = 3; break;
+    case 2: list = view->TT; nbList = view->NbTT; nbNod = 3; break;
+    case 3: list = view->SQ; nbList = view->NbSQ; nbNod = 4; break;
+    case 4: list = view->VQ; nbList = view->NbVQ; nbNod = 4; break;
+    case 5: list = view->TQ; nbList = view->NbTQ; nbNod = 4; break;
+    }
+    if(nbList){
+      int nb = List_Nbr(list) / nbList;
+      for(int i = 0; i < List_Nbr(list); i += nb) {
+	double *x = (double *)List_Pointer_Fast(list, i);
+	double *y = (double *)List_Pointer_Fast(list, i + nbNod);
+	double *z = (double *)List_Pointer_Fast(list, i + 2 * nbNod);
+	BDS_Point *p[4];
+	for(int j = 0; j < nbNod; j++){
+	  BDS_Point P(0, x[j], y[j], z[j]);    
+	  std::set < BDS_Point *, PointLessThanLexicographic >::iterator it = pts.find(&P);
+	  if(it != pts.end()) {
+	    p[j] = *it;
+	  }
+	  else {
+	    MAXPOINTNUMBER++;
+	    p[j] = add_point(MAXPOINTNUMBER, P.X, P.Y, P.Z);
+	    pts.insert(p[j]);
+	  }
+	}
+	if(nbNod == 3){
+	  add_triangle(p[0]->iD, p[1]->iD, p[2]->iD);
+	}
+	else{
+	  add_triangle(p[0]->iD, p[1]->iD, p[2]->iD);
+	  add_triangle(p[0]->iD, p[2]->iD, p[3]->iD);
+	}
+      }
+    }
+  }
   return true;
 }
 
