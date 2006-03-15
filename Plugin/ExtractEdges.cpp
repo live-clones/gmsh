@@ -1,4 +1,4 @@
-// $Id: ExtractEdges.cpp,v 1.2 2006-03-15 19:00:21 geuzaine Exp $
+// $Id: ExtractEdges.cpp,v 1.2.2.1 2006-03-15 19:13:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //

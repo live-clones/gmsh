@@ -432,10 +432,10 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(ExtractEdges)
-Plugin(ExtractEdges) extracts the geometry edges of
-the view `iView', using `Angle' as the dihedral angle
-tolerance. If `iView' < 0, the plugin is run on the
-current view.
+Plugin(ExtractEdges) extracts the geometry edges
+from the surface view `iView', using `Angle' as
+the dihedral angle tolerance. If `iView' < 0, then
+plugin is run on the current view.
 
 Plugin(ExtractEdges) creates one new view.
 
