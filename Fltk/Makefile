@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.81.2.3 2006-03-10 21:22:56 geuzaine Exp $
+# $Id: Makefile,v 1.81.2.4 2006-03-15 19:00:37 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -131,20 +131,19 @@ GUI_Extras.o: GUI_Extras.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
 # 1 "/Users/geuzaine/src/gmsh_1_64_branch/Fltk//"
-Callbacks.o: Callbacks.cpp ../Mesh/BDS.h ../Common/Gmsh.h \
-  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../Common/GmshUI.h ../Geo/Geo.h ../Geo/CAD.h \
-  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h \
-  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Mesh/Metric.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
+Callbacks.o: Callbacks.cpp ../Mesh/BDS.h ../Common/Views.h \
+  ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Gmsh.h \
+  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../Common/GmshUI.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h \
+  ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h ../Geo/ExtractContour.h ../Graphics/Draw.h \
-  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   ../Graphics/CreateFile.h ../Parser/OpenFile.h ../Common/CommandLine.h \
   ../Common/Context.h ../Common/Options.h GUI.h Opengl_Window.h \
   Colorbar_Window.h Popup_Button.h GUI_Extras.h Callbacks.h \
