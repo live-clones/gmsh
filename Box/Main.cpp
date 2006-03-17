@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.57 2006-02-26 01:24:44 geuzaine Exp $
+// $Id: Main.cpp,v 1.57.2.1 2006-03-17 21:16:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,6 @@
 #include "ParUtil.h"
 #include "PluginManager.h"
 #include "Gmsh.h"
-#include "GmshVersion.h"
 #include "Numeric.h"
 #include "Geo.h"
 #include "Mesh.h"
@@ -51,11 +50,11 @@ void Info(int level, char *arg0)
     ParUtil::Instance()->Exit();
   case 1:
     if(ParUtil::Instance()->master())
-      fprintf(stderr, "%s\n", GMSH_VERSION);
+      fprintf(stderr, "%s\n", Get_GmshVersion());
     ParUtil::Instance()->Exit();
   case 2:
     if(ParUtil::Instance()->master()) {
-      fprintf(stderr, "%s%s\n", gmsh_version, GMSH_VERSION);
+      fprintf(stderr, "%s%s\n", gmsh_version, Get_GmshVersion());
       fprintf(stderr, "%s\n", gmsh_os);
       fprintf(stderr, "%s\n", gmsh_date);
       fprintf(stderr, "%s\n", gmsh_host);

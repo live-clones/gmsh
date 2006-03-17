@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.491.2.3 2006-03-10 06:31:25 geuzaine Exp $
+// $Id: GUI.cpp,v 1.491.2.4 2006-03-17 21:16:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -71,7 +71,6 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Numeric.h"
-#include "GmshVersion.h"
 #include "Context.h"
 #include "Options.h"
 #include "Geo.h"
@@ -4174,18 +4173,18 @@ void GUI::create_about_window()
     o->add("@c@.Please send all questions and bug reports to");
     o->add("@c@b@.gmsh@geuz.org");
     o->add(" ");
-    sprintf(buffer, "@c@.Version: %s", GMSH_VERSION);
+    sprintf(buffer, "@c@.Version: %s", Get_GmshVersion());
     o->add(buffer);
-    sprintf(buffer, "@c@.License: %s", GMSH_SHORT_LICENSE);
+    sprintf(buffer, "@c@.License: %s", Get_GmshShortLicense());
     o->add(buffer);
     sprintf(buffer, "@c@.Graphical user interface toolkit: FLTK %d.%d.%d", 
 	    FL_MAJOR_VERSION, FL_MINOR_VERSION, FL_PATCH_VERSION);
     o->add(buffer);
-    sprintf(buffer, "@c@.Build OS: %s", GMSH_OS);
+    sprintf(buffer, "@c@.Build OS: %s", Get_GmshBuildOS());
     o->add(buffer);
-    sprintf(buffer, "@c@.Build date: %s", GMSH_DATE);
+    sprintf(buffer, "@c@.Build date: %s", Get_GmshBuildDate());
     o->add(buffer);
-    sprintf(buffer, "@c@.Build host: %s", GMSH_HOST);
+    sprintf(buffer, "@c@.Build host: %s", Get_GmshBuildHost());
     o->add(buffer);
     {
       char str1[1024];
@@ -4209,7 +4208,7 @@ void GUI::create_about_window()
 	o->add(buffer);
       }
     }
-    sprintf(buffer, "@c@.Packaged by: %s", GMSH_PACKAGER);
+    sprintf(buffer, "@c@.Packaged by: %s", Get_GmshPackager());
     o->add(buffer);
     o->add(" ");
     o->add("@c@.Visit http://www.geuz.org/gmsh/ for more information");
