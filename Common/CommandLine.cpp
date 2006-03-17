@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.69 2006-02-26 16:26:08 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.70 2006-03-17 21:04:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -56,11 +56,21 @@ char gmsh_packager[]  = "Packager       : " GMSH_PACKAGER ;
 char gmsh_url[]       = "Web site       : http://www.geuz.org/gmsh/" ;
 char gmsh_email[]     = "Mailing list   : gmsh@geuz.org" ;
 
-// If you change the following, please also change
-// * the texinfo documentation (doc/texinfo/command_line.texi)
-// * the man page (doc/gmsh.1)
+int Get_GmshMajorVersion(){ return GMSH_MAJOR_VERSION; }
+int Get_GmshMinorVersion(){ return GMSH_MINOR_VERSION; }
+int Get_GmshPatchVersion(){ return GMSH_PATCH_VERSION; }
+char *Get_GmshExtraVersion(){ return GMSH_EXTRA_VERSION; }
+char *Get_GmshVersion(){ return GMSH_VERSION; }
+char *Get_GmshBuildDate(){ return GMSH_DATE; }
+char *Get_GmshBuildHost(){ return GMSH_HOST; }
+char *Get_GmshPackager(){ return GMSH_PACKAGER; }
+char *Get_GmshBuildOS(){ return GMSH_OS; }
+char *Get_GmshShortLicense(){ return GMSH_SHORT_LICENSE; }
 
 void Print_Usage(char *name){
+  // If you make changes in this routine, please also change the
+  // texinfo documentation (doc/texinfo/command_line.texi) as well as
+  // the man page (doc/gmsh.1)
   Msg(DIRECT, "Usage: %s [options] [files]", name);
   Msg(DIRECT, "Geometry options:");
   Msg(DIRECT, "  -0                    Parse input files, output unrolled geometry, and exit");

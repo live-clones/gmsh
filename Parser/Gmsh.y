@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.225 2006-03-15 08:29:06 remacle Exp $
+// $Id: Gmsh.y,v 1.226 2006-03-17 21:04:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,6 @@
 #include "OS.h"
 #include "CreateFile.h"
 #include "Visibility.h"
-#include "GmshVersion.h"
 
 Tree_T *Symbol_T = NULL;
 
@@ -2665,9 +2664,9 @@ FExpr_Single :
   | tPi       { $$ = 3.141592653589793; }
   | tMPI_Rank { $$ = ParUtil::Instance()->rank(); }
   | tMPI_Size { $$ = ParUtil::Instance()->size(); }
-  | tGMSH_MAJOR_VERSION { $$ = GMSH_MAJOR_VERSION; }
-  | tGMSH_MINOR_VERSION { $$ = GMSH_MINOR_VERSION; }
-  | tGMSH_PATCH_VERSION { $$ = GMSH_PATCH_VERSION; }
+  | tGMSH_MAJOR_VERSION { $$ = Get_GmshMajorVersion(); }
+  | tGMSH_MINOR_VERSION { $$ = Get_GmshMinorVersion(); }
+  | tGMSH_PATCH_VERSION { $$ = Get_GmshPatchVersion(); }
 
   // Variables
 

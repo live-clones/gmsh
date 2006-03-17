@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.93 2006-03-15 18:00:45 geuzaine Exp $
+# $Id: Makefile,v 1.94 2006-03-17 21:04:47 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -78,16 +78,16 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   PluginManager.h CutMap.h Levelset.h CutGrid.h StreamLines.h CutPlane.h \
   CutParametric.h CutSphere.h Skin.h ../DataStr/Tree.h ../DataStr/avl.h \
-  Extract.h ExtractElements.h HarmonicToTime.h ModulusPhase.h Integrate.h \
-  Gradient.h Curl.h Divergence.h Annotate.h Remove.h DecomposeInSimplex.h \
-  Smooth.h Transform.h Triangulate.h SphericalRaise.h DisplacementRaise.h \
-  StructuralSolver.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h ../Common/GmshUI.h \
-  Eigenvectors.h Eigenvalues.h Lambda2.h Evaluate.h \
+  Extract.h ExtractElements.h ExtractEdges.h HarmonicToTime.h \
+  ModulusPhase.h Integrate.h Gradient.h Curl.h Divergence.h Annotate.h \
+  Remove.h DecomposeInSimplex.h Smooth.h Transform.h Triangulate.h \
+  SphericalRaise.h DisplacementRaise.h StructuralSolver.h ../Geo/Geo.h \
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
+  ../Common/GmshUI.h Eigenvectors.h Eigenvalues.h Lambda2.h Evaluate.h \
   ../Common/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h \
   Probe.h ../Common/Context.h
 # 1 "/Users/geuzaine/.gmsh/Plugin//"
@@ -262,6 +262,13 @@ ExtractElements.o: ExtractElements.cpp Plugin.h ../Common/Options.h \
   ../Numeric/Numeric.h ../Common/GmshMatrix.h ../Common/AdaptiveViews.h \
   ../Common/GmshMatrix.h ExtractElements.h ../Common/Context.h \
   ../DataStr/Malloc.h
+# 1 "/Users/geuzaine/.gmsh/Plugin//"
+ExtractEdges.o: ExtractEdges.cpp Plugin.h ../Common/Options.h \
+  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
+  ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
+  ../Numeric/Numeric.h ../Common/GmshMatrix.h ../Common/AdaptiveViews.h \
+  ../Common/GmshMatrix.h ExtractEdges.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../Common/Context.h ../DataStr/Malloc.h ../Mesh/BDS.h
 # 1 "/Users/geuzaine/.gmsh/Plugin//"
 DecomposeInSimplex.o: DecomposeInSimplex.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \

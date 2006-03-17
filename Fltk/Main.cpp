@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.87 2006-01-30 00:40:19 geuzaine Exp $
+// $Id: Main.cpp,v 1.88 2006-03-17 21:04:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,12 +25,9 @@
 #include <time.h>
 
 #include "GUI.h"
-
 #include "PluginManager.h"
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "GmshVersion.h"
-
 #include "Geo.h"
 #include "Mesh.h"
 #include "Draw.h"
@@ -168,12 +165,12 @@ int main(int argc, char *argv[])
   // Say welcome!
 
   Msg(STATUS3N, "Ready");
-  Msg(STATUS1N, "Gmsh %s", GMSH_VERSION);
+  Msg(STATUS1N, "Gmsh %s", Get_GmshVersion());
 
   // Log the following for bug reports
 
   Msg(INFO, "-------------------------------------------------------");
-  Msg(INFO, "Gmsh version   : %s", GMSH_VERSION);
+  Msg(INFO, "Gmsh version   : %s", Get_GmshVersion());
   Msg(INFO, gmsh_os);
   Msg(INFO, "%s%s", gmsh_options, Get_BuildOptions());
   Msg(INFO, gmsh_date);

@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.72 2006-02-26 16:26:09 geuzaine Exp $
+// $Id: Message.cpp,v 1.73 2006-03-17 21:04:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -22,7 +22,6 @@
 #include <signal.h>
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "GmshVersion.h"
 #include "Context.h"
 #include "Options.h"
 #include "GUI.h"
