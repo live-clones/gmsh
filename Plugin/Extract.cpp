@@ -1,4 +1,4 @@
-// $Id: Extract.cpp,v 1.20 2006-01-06 00:34:33 geuzaine Exp $
+// $Id: Extract.cpp,v 1.20.2.1 2006-03-17 15:13:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,11 @@ StringXNumber ExtractOptions_Number[] = {
 };
 
 StringXString ExtractOptions_String[] = {
+#if defined(HAVE_MATH_EVAL)
+  {GMSH_FULLRC, "Expression0", NULL, "Sqrt(v0^2+v1^2+v2^2)"},
+#else
   {GMSH_FULLRC, "Expression0", NULL, "v0"},
+#endif
   {GMSH_FULLRC, "Expression1", NULL, ""},
   {GMSH_FULLRC, "Expression2", NULL, ""},
   {GMSH_FULLRC, "Expression3", NULL, ""},
