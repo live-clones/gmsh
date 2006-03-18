@@ -31,6 +31,7 @@ Transformation3d :: Transformation3d (const Vec3d & translate)
     }
 }
 
+void CalcInverse (const DenseMatrix & m1, DenseMatrix & m2);
 
 Transformation3d :: 
 Transformation3d (const Point3d & c, double alpha, 
