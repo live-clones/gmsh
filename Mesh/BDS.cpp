@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.49.2.2 2006-03-18 04:00:45 geuzaine Exp $
+// $Id: BDS.cpp,v 1.49.2.3 2006-03-18 04:48:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1771,7 +1771,7 @@ void BDS_Mesh::save_gmsh_format(const char *filename)
       }
     }
 
-    fprintf(f, "%ld\n", nbClasEdges + nbModelVertex + triangles.size());
+    fprintf(f, "%d\n", nbClasEdges + nbModelVertex + triangles.size());
 
     int k = 1;
     {
