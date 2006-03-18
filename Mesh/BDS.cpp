@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.49.2.1 2006-03-15 19:00:38 geuzaine Exp $
+// $Id: BDS.cpp,v 1.49.2.2 2006-03-18 04:00:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1026,10 +1026,7 @@ bool BDS_Mesh::extractVolumes()
 	++it;
       }    
   }
-  
-  // printf("the domain is closed ? : %d\n",closed);
-
-  BDS_Triangle *t = *(triangles.begin());  
+  return closed;
 }
 
 
@@ -1149,7 +1146,7 @@ void BDS_Mesh::classify(double angle, int NB_T)
       if(e.g) {
         int MIN_FAC = 100000;
         int MAX_FAC = -100000;
-        std::map < std::pair < int, int >, int >::iterator found = 0;
+        std::map < std::pair < int, int >, int >::iterator found;
         BDS_GeomEntity *g;
         if(e.numfaces() == 1) {
           found =
@@ -2353,12 +2350,10 @@ void BDS_Mesh::snap_point(BDS_Point * p, BDS_Mesh * geom_mesh)
     }
   }
   else if(p->g && p->g->classif_degree == 2 && geom_mesh) {
-    double xx, yy, zz,sz;
+    double xx, yy, zz;
     std::list < BDS_Triangle * >l;
-    BDS_GeomEntity *gg =
-      geom_mesh->get_geom(p->g->classif_tag, p->g->classif_degree);
-    gg->getClosestTriangles(p->X, p->Y, p->Z, l, p->radius_of_curvature, xx,
-                            yy, zz);
+    BDS_GeomEntity *gg = geom_mesh->get_geom(p->g->classif_tag, p->g->classif_degree);
+    gg->getClosestTriangles(p->X, p->Y, p->Z, l, p->radius_of_curvature, xx, yy, zz);
 
     bool ok = project_point_on_a_list_of_triangles(p, l, X, Y, Z);
 
