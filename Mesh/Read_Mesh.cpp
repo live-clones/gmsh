@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.99 2006-03-08 17:04:59 remacle Exp $
+// $Id: Read_Mesh.cpp,v 1.100 2006-03-19 20:34:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -146,21 +146,28 @@ int getNbrNodes(int Type)
   }
 }
 
-double SetLC(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4 = 0)
+double SetLC(Vertex *v1, Vertex *v2, Vertex *v3 = 0, Vertex *v4 = 0)
 { 
   double lc1 = sqrt((v1->Pos.X - v2->Pos.X) * (v1->Pos.X - v2->Pos.X) +
 		    (v1->Pos.Y - v2->Pos.Y) * (v1->Pos.Y - v2->Pos.Y) +
 		    (v1->Pos.Z - v2->Pos.Z) * (v1->Pos.Z - v2->Pos.Z));
-  double lc2 = sqrt((v1->Pos.X - v3->Pos.X) * (v1->Pos.X - v3->Pos.X) +
-		    (v1->Pos.Y - v3->Pos.Y) * (v1->Pos.Y - v3->Pos.Y) +
-		    (v1->Pos.Z - v3->Pos.Z) * (v1->Pos.Z - v3->Pos.Z));
-  double lc3 = sqrt((v2->Pos.X - v3->Pos.X) * (v2->Pos.X - v3->Pos.X) +
-		    (v2->Pos.Y - v3->Pos.Y) * (v2->Pos.Y - v3->Pos.Y) +
-		    (v2->Pos.Z - v3->Pos.Z) * (v2->Pos.Z - v3->Pos.Z));
-  double lc = DMAX(lc1, DMAX(lc2, lc3)) * CTX.mesh.lc_factor;
-  v1->lc = v2->lc = v3->lc = lc;
-  if(v4) v4->lc = lc;
-  return lc;
+  if(!v3){
+    double lc = lc1 * CTX.mesh.lc_factor;
+    v1->lc = v2->lc = lc;
+    return lc;
+  }
+  else{
+    double lc2 = sqrt((v1->Pos.X - v3->Pos.X) * (v1->Pos.X - v3->Pos.X) +
+		      (v1->Pos.Y - v3->Pos.Y) * (v1->Pos.Y - v3->Pos.Y) +
+		      (v1->Pos.Z - v3->Pos.Z) * (v1->Pos.Z - v3->Pos.Z));
+    double lc3 = sqrt((v2->Pos.X - v3->Pos.X) * (v2->Pos.X - v3->Pos.X) +
+		      (v2->Pos.Y - v3->Pos.Y) * (v2->Pos.Y - v3->Pos.Y) +
+		      (v2->Pos.Z - v3->Pos.Z) * (v2->Pos.Z - v3->Pos.Z));
+    double lc = DMAX(lc1, DMAX(lc2, lc3)) * CTX.mesh.lc_factor;
+    v1->lc = v2->lc = v3->lc = lc;
+    if(v4) v4->lc = lc;
+    return lc;
+  }
 }
 
 int getPartition ( const std::multimap<int,int> &nod2proc , int nbNod, Vertex *verts )
@@ -414,6 +421,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           simp->Num = Num;
           simp->iEnt = Elementary;
           simp->iPart = addMeshPartition(Partition, M);
+	  SetLC(vertsp[0], vertsp[1]);
 	  if(Type == LGN2){
 	    simp->VSUP = (Vertex **) Malloc(1 * sizeof(Vertex *));
 	    simp->VSUP[0] = vertsp[2];
