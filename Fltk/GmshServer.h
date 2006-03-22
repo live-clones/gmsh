@@ -69,7 +69,10 @@ int myselect(int socket, int seconds)
 
 class GmshServer {
  public:
-  // This should match what's in GmshClient.h
+  // This should match what's in GmshClient.h (Do not use values
+  // greater that 65535: if we receive types > 65535 we assume that we
+  // receive data from a machine with a different byte ordering, and
+  // we just swap the bytes)
   typedef enum{ CLIENT_START        = 1,
 		CLIENT_STOP         = 2,
 		CLIENT_INFO         = 10,
@@ -101,6 +104,17 @@ class GmshServer {
       remaining -= len;
     } while(remaining > 0);
     return bytes;
+  }
+  void _SwapBytes(char *array, int size, int n)
+  {
+    char *x = new char[size];
+    for(int i = 0; i < n; i++) {
+      char *a = &array[i * size];
+      memcpy(x, a, size);
+      for(int c = 0; c < size; c++)
+	a[size - 1 - c] = x[c];
+    }
+    delete [] x;
   }
   int _AcceptConnection(int s)
   {
@@ -240,10 +254,18 @@ class GmshServer {
   }
   int ReceiveMessageHeader(int *type, int *len)
   {
+    bool swap = false;
     if(_ReceiveData(type, sizeof(int))){
       if(*type < 0) return 0;
+      if(*type > 65535){ 
+	// the data comes from a machine with different endianness and
+	// we must swap the bytes
+	swap = true;
+	_SwapBytes((char*)type, sizeof(int), 1);
+      }
       if(_ReceiveData(len, sizeof(int))){
 	if(*len < 0) return 0;
+	if(swap) _SwapBytes((char*)len, sizeof(int), 1);
 	return 1;
       }
     }
