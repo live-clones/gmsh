@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.100 2006-03-19 20:34:14 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.101 2006-03-24 21:37:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -231,7 +231,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
     if(feof(fp))
       break;
 
-    Msg(INFO, "%s\n", &String[1]);
+    Msg(INFO, "%s", &String[1]);
+
     /*  F o r m a t  */
 
     if(!strncmp(&String[1], "MeshFormat", 10)) {
@@ -276,21 +277,20 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 
     /*  NODE'S PROCESSORS */
 
-    else if(!strncmp(&String[1], "PARA", 4))
-      {
-	fscanf(fp, "%d", &Nbr_Nodes);
-	Msg(INFO,"%d parallel nodes\n",Nbr_Nodes);
-	for(i_Node = 0; i_Node < Nbr_Nodes; i_Node++) {
-	  int nbProc;
-	  fscanf(fp, "%d %d",&Num, &nbProc);
-	  for (int iProc=0;iProc<nbProc;iProc++)
-	    {
-	      int iProcNum;
-	      fscanf(fp, "%d",&iProcNum);
-	      nod2proc.insert(std::pair<int, int>(Num,iProcNum ));
-	    }
+    else if(!strncmp(&String[1], "PARA", 4)){
+      fscanf(fp, "%d", &Nbr_Nodes);
+      Msg(INFO, "%d parallel nodes", Nbr_Nodes);
+      for(i_Node = 0; i_Node < Nbr_Nodes; i_Node++) {
+	int nbProc;
+	fscanf(fp, "%d %d", &Num, &nbProc);
+	for (int iProc = 0; iProc < nbProc; iProc++){
+	  int iProcNum;
+	  fscanf(fp, "%d", &iProcNum);
+	  nod2proc.insert(std::pair<int, int>(Num, iProcNum));
 	}
       }
+    }
+    
     /*  NODES  */
 
     else if(!strncmp(&String[1], "NOD", 3) ||
@@ -377,16 +377,14 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	  }
 	}
 
-        for(j = 0; j < Nbr_Nodes; j++)
-	  {
-	    fscanf(fp, "%d", &verts[j].Num);
-	  }
-
-	if (nod2proc.size())
-	  {
-	    Partition = getPartition ( nod2proc ,Nbr_Nodes , verts );
-	  }
-
+        for(j = 0; j < Nbr_Nodes; j++){
+	  fscanf(fp, "%d", &verts[j].Num);
+	}
+	
+	if (nod2proc.size()){
+	  Partition = getPartition ( nod2proc ,Nbr_Nodes , verts );
+	}
+	
         for(i = 0; i < Nbr_Nodes; i++) {
           vertsp[i] = &verts[i];
           if(!(vertspp = (Vertex **) Tree_PQuery(M->Vertices, &vertsp[i])))
@@ -935,10 +933,10 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
             v4 = myS2->V[hh];
       }
       if(!v1 || !v2 || !v3 || !v4) {
-        Msg(GERROR, "%d\n", NbFacesOnRegion);
-        Msg(GERROR, "%p %p %p %p\n", v1, v2, v3, v4);
-	Msg(GERROR, "%p %p %p \n", myS1->V[0], myS1->V[1], myS1->V[2]);
-        Msg(GERROR, "%p %p %p \n", myS2->V[0], myS2->V[1], myS2->V[2]);
+        Msg(GERROR, "%d", NbFacesOnRegion);
+        Msg(GERROR, "%p %p %p %p", v1, v2, v3, v4);
+	Msg(GERROR, "%p %p %p", myS1->V[0], myS1->V[1], myS1->V[2]);
+        Msg(GERROR, "%p %p %p", myS2->V[0], myS2->V[1], myS2->V[2]);
         return;
       }
       Simplex *s = Create_Simplex(v1, v2, v3, v4);

@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.71 2006-03-09 13:06:52 remacle Exp $
+// $Id: Print_Mesh.cpp,v 1.72 2006-03-24 21:37:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -566,12 +566,12 @@ static void _get_all_model_points ( std::list<Vertex*> &mp )
     List_Read(curves, i, &c);
     if (c->Num >=0)
       {
-	if (points.find(c->beg) == points.end())
+	if (c->beg && points.find(c->beg) == points.end())
 	  {
 	    points.insert(c->beg);
 	    mp.push_back(c->beg); 
 	  }
-	if (points.find(c->end) == points.end())
+	if (c->end && points.find(c->end) == points.end())
 	  {
 	    points.insert(c->end);
 	    mp.push_back(c->end); 

@@ -1,4 +1,11 @@
-$Id: TODO,v 1.2 2006-03-12 14:52:29 geuzaine Exp $
+$Id: TODO,v 1.3 2006-03-24 21:37:14 geuzaine Exp $
+
+********************************************************************
+
+if we try to mesh a surface from a single discrete curve mesh read
+from a .msh file we get a "non contour" error in Mesh_2D (since we
+List_Insert the vertices in c->Vertices, thus never having
+last==first)
 
 ********************************************************************
 
