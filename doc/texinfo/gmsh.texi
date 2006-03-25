@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.204 2006-02-28 18:50:08 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.204.2.1 2006-03-25 13:07:19 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -368,10 +368,15 @@ length field, which can be uniform, specified by characteristic lengths
 associated with elementary geometrical entities, or associated with another
 mesh (the background mesh).
 
-For each meshing step, all structured mesh directives are executed first,
-and serve as additional constraints for the unstructured parts. The
-implemented Delaunay algorithm is subdivided in the following five steps for
-surface/volume discretization:
+For each meshing step, all structured mesh directives are executed
+first, and serve as additional constraints for the unstructured parts
+@footnote{Note that mixing structured volume grids with unstructured
+volume grids generated with the default 3D isotropic Delaunay algorithm
+can result, in certain cases, to non-conform surface meshes on their
+shared boudary. If this happens, you may consider using the Netgen
+algorithm for the unstructured part.}. The implemented Delaunay
+algorithm is subdivided in the following five steps for surface/volume
+discretization:
 
 @enumerate
 @item
