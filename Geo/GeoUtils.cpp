@@ -1,4 +1,4 @@
-// $Id: GeoUtils.cpp,v 1.9 2006-03-29 01:45:13 geuzaine Exp $
+// $Id: GeoUtils.cpp,v 1.10 2006-03-29 14:33:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -53,8 +53,10 @@ void sortEdgesInLoop(int num, List_T *edges)
       if(nbEdges == 1 && List_Nbr(c->Vertices) && c->Typ == MSH_SEGM_DISCRETE){
 	Vertex *first = *(Vertex**)List_Pointer(c->Vertices, 0);
 	Vertex *last = *(Vertex**)List_Pointer(c->Vertices, List_Nbr(c->Vertices) - 1);
-	if(first != last)
+	if(first != last){
+	  Msg(INFO, "Adding last vertex in closed discrete curve %d", c->Num);
 	  List_Add(c->Vertices, &first);
+	}
       }
     }
     else
