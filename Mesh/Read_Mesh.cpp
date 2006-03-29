@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.98.2.1 2006-03-19 20:35:46 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.98.2.2 2006-03-29 01:46:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -379,7 +379,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	  else{
 	    // this can be quite slow if there are many nodes on the curve...
 	    for(i = 0; i < Nbr_Nodes; i++)
-	      List_Insert(c->Vertices, &vertsp[i], fcmp_int);
+	      List_Insert(c->Vertices, &vertsp[i], compareVertex);
 	  }
           break;
         case TRI1:
