@@ -1,15 +1,8 @@
-$Id: TODO,v 1.4 2006-03-25 14:34:27 geuzaine Exp $
+$Id: TODO,v 1.5 2006-03-29 01:45:13 geuzaine Exp $
 
 ********************************************************************
 
 add support for off-screen rendering using OSMesa
-
-********************************************************************
-
-if we try to mesh a surface from a single discrete curve mesh read
-from a .msh file we get a "non contour" error in Mesh_2D (since we
-List_Insert the vertices in c->Vertices, thus never having
-last==first)
 
 ********************************************************************
 

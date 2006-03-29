@@ -1,4 +1,4 @@
-// $Id: GeoUtils.cpp,v 1.8 2006-01-06 00:34:24 geuzaine Exp $
+// $Id: GeoUtils.cpp,v 1.9 2006-03-29 01:45:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -41,8 +41,22 @@ void sortEdgesInLoop(int num, List_T *edges)
   for(int i = 0; i < nbEdges; i++) {
     int j;
     List_Read(edges, i, &j);
-    if((c = FindCurve(j, THEM)))
+    if((c = FindCurve(j, THEM))){
       List_Add(temp, &c);
+      // FIXME: if the loop is composed of a single curve and if the
+      // curve is already discretized, we check if the first vertex
+      // and the last vertex are the same. If not, we assume that they
+      // should, and we add the missing end vertex. (This situation
+      // can arise due to a limitation in Read_Mesh, where we do a
+      // List_Insert() to add the vertices in discrete curves--so that
+      // we never get the last vertex for single, closed curves.)
+      if(nbEdges == 1 && List_Nbr(c->Vertices) && c->Typ == MSH_SEGM_DISCRETE){
+	Vertex *first = *(Vertex**)List_Pointer(c->Vertices, 0);
+	Vertex *last = *(Vertex**)List_Pointer(c->Vertices, List_Nbr(c->Vertices) - 1);
+	if(first != last)
+	  List_Add(c->Vertices, &first);
+      }
+    }
     else
       Msg(GERROR, "Unknown curve %d in line loop %d", j, num);
   }
