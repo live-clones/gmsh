@@ -41,18 +41,24 @@ while 1
     disp('reading elements')
     mesh.nbElm = fscanf(fid, '%d', 1);
     mesh.ELE_INFOS = zeros(mesh.nbElm, 5);
-    mesh.nbLines = 0;
     mesh.nbPoints = 0;
+    mesh.nbLines = 0;
     mesh.nbTriangles = 0;
     mesh.nbQuads = 0;
     mesh.nbTets = 0;
-    % comment next 5 lines to get "tight" arrays (will slow down reading)
+    mesh.nbHexas = 0;
+    mesh.nbPrisms = 0;
+    mesh.nbPyramids = 0;
+    % comment next 8 lines to get "tight" arrays (will slow down reading)
     mesh.POINTS = zeros(mesh.nbElm, 2);
     mesh.LINES = zeros(mesh.nbElm, 3);
     mesh.TRIANGLES = zeros(mesh.nbElm, 4);
     mesh.QUADS = zeros(mesh.nbElm, 5);
     mesh.TETS = zeros(mesh.nbElm, 5);
-    for(I=1:mesh.nbElm)
+    mesh.HEXAS = zeros(mesh.nbElm, 9);
+    mesh.PRISMS = zeros(mesh.nbElm, 7);
+    mesh.PYRAMIDS = zeros(mesh.nbElm, 6);
+    for(I = 1:mesh.nbElm)
       mesh.ELE_INFOS(I, :) = fscanf(fid, '%d', 5);
       NODES_ELEM = fscanf(fid, '%d', mesh.ELE_INFOS(I, 5));
       if(mesh.ELE_INFOS(I, 2) == 15) %% point
@@ -81,13 +87,45 @@ while 1
 	mesh.QUADS(mesh.nbQuads, 4) = IDS(NODES_ELEM(4));
 	mesh.QUADS(mesh.nbQuads, 5) = mesh.ELE_INFOS(I, 3);
       end
-      if(mesh.ELE_INFOS(I, 2) == 4) %% tet
+      if(mesh.ELE_INFOS(I, 2) == 4) %% tetrahedron
 	mesh.nbTets = mesh.nbTets + 1;
 	mesh.TETS(mesh.nbTets, 1) = IDS(NODES_ELEM(1));
 	mesh.TETS(mesh.nbTets, 2) = IDS(NODES_ELEM(2));
 	mesh.TETS(mesh.nbTets, 3) = IDS(NODES_ELEM(3));
 	mesh.TETS(mesh.nbTets, 4) = IDS(NODES_ELEM(4));
 	mesh.TETS(mesh.nbTets, 5) = mesh.ELE_INFOS(I, 3);
+      end
+      if(mesh.ELE_INFOS(I, 2) == 5) %% hexahedron
+	mesh.nbHexas = mesh.nbHexas + 1;
+	mesh.HEXAS(mesh.nbHexas, 1) = IDS(NODES_ELEM(1));
+	mesh.HEXAS(mesh.nbHexas, 2) = IDS(NODES_ELEM(2));
+	mesh.HEXAS(mesh.nbHexas, 3) = IDS(NODES_ELEM(3));
+	mesh.HEXAS(mesh.nbHexas, 4) = IDS(NODES_ELEM(4));
+	mesh.HEXAS(mesh.nbHexas, 5) = IDS(NODES_ELEM(5));
+	mesh.HEXAS(mesh.nbHexas, 6) = IDS(NODES_ELEM(6));
+	mesh.HEXAS(mesh.nbHexas, 7) = IDS(NODES_ELEM(7));
+	mesh.HEXAS(mesh.nbHexas, 8) = IDS(NODES_ELEM(8));
+	mesh.HEXAS(mesh.nbHexas, 9) = mesh.ELE_INFOS(I, 3);
+      end
+      if(mesh.ELE_INFOS(I, 2) == 6) %% prism
+	mesh.nbPrisms = mesh.nbPrisms + 1;
+	mesh.PRISMS(mesh.nbPrisms, 1) = IDS(NODES_ELEM(1));
+	mesh.PRISMS(mesh.nbPrisms, 2) = IDS(NODES_ELEM(2));
+	mesh.PRISMS(mesh.nbPrisms, 3) = IDS(NODES_ELEM(3));
+	mesh.PRISMS(mesh.nbPrisms, 4) = IDS(NODES_ELEM(4));
+	mesh.PRISMS(mesh.nbPrisms, 5) = IDS(NODES_ELEM(5));
+	mesh.PRISMS(mesh.nbPrisms, 6) = IDS(NODES_ELEM(6));
+	mesh.PRISMS(mesh.nbPrisms, 7) = mesh.ELE_INFOS(I, 3);
+      end
+      if(mesh.ELE_INFOS(I, 2) == 7) %% pyramid
+	mesh.nbPyramids = mesh.nbPyramids + 1;
+	mesh.PYRAMIDS(mesh.nbPyramids, 1) = IDS(NODES_ELEM(1));
+	mesh.PYRAMIDS(mesh.nbPyramids, 2) = IDS(NODES_ELEM(2));
+	mesh.PYRAMIDS(mesh.nbPyramids, 3) = IDS(NODES_ELEM(3));
+	mesh.PYRAMIDS(mesh.nbPyramids, 4) = IDS(NODES_ELEM(4));
+	mesh.PYRAMIDS(mesh.nbPyramids, 5) = IDS(NODES_ELEM(5));
+	mesh.PYRAMIDS(mesh.nbPyramids, 6) = IDS(NODES_ELEM(6));
+	mesh.PYRAMIDS(mesh.nbPyramids, 7) = mesh.ELE_INFOS(I, 3);
       end
     end
     tline = fgetl(fid);
