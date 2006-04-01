@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.86 2006-04-01 23:02:22 geuzaine Exp $
+# $Id: Makefile,v 1.87 2006-04-01 23:06:39 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -34,6 +34,7 @@ SRC = Main.cpp \
       Opengl.cpp\
       Opengl_Window.cpp\
       Colorbar_Window.cpp\
+      Popup_Button.cpp\
       Solvers.cpp
 
 
@@ -190,6 +191,11 @@ Colorbar_Window.o: Colorbar_Window.cpp ../Common/Gmsh.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   Colorbar_Window.h ../Common/ColorTable.h Popup_Button.h \
   ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Fltk//"
+Popup_Button.o: Popup_Button.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../Common/GmshUI.h Popup_Button.h
 # 1 "/Users/geuzaine/.gmsh/Fltk//"
 Solvers.o: Solvers.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
