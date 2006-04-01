@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.497 2006-04-01 22:05:19 geuzaine Exp $
+// $Id: GUI.cpp,v 1.498 2006-04-01 23:02:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -970,7 +970,7 @@ void GUI::wait(double time)
 
 // Create the menu window
 
-void GUI::add_post_plugins(Fl_Menu_Button * button, int iView)
+void GUI::add_post_plugins(Popup_Button * button, int iView)
 {
   char name[256], menuname[256];
   for(GMSH_PluginManager::iter it = GMSH_PluginManager::instance()->begin();
@@ -1145,43 +1145,59 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 
   Msg(STATUS2N, menu[0].label + 1);
 
-  // We can only delete widgets at the very end of the callback, to
-  // avoid running into potential race conditions where a widget can
-  // be accessed after its callback is called---even when using
-  // Fl::delete_widget. (We thus need to make a temporary copy of the
-  // vectors holding references to the widgets that will be deleted
-  // later on. Note that in any case, we cannot use m_scroll->clear(),
-  // which is broken in < 1.1.5, and is a potential crasher in >=
-  // 1.1.5.)
-  std::vector<Fl_Button*>       tmp_push_butt(m_push_butt);
-  std::vector<Fl_Light_Button*> tmp_toggle_butt(m_toggle_butt);
-  std::vector<Fl_Button*>       tmp_toggle2_butt(m_toggle2_butt);
-  std::vector<Fl_Menu_Button*>  tmp_popup_butt(m_popup_butt);
-  std::vector<Fl_Menu_Button*>  tmp_popup2_butt(m_popup2_butt);
+  // Remove all the children (m_push*, m_toggle*, m_pop*). FLTK <=
+  // 1.1.4 should be OK with this. FLTK 1.1.5 may crash as it may
+  // access a widget's data after its callback is executed (we call
+  // set_context in the button callbacks!). FLTK 1.1.6 introduced a
+  // fix (Fl::delete_widget) to delay the deletion until the next
+  // Fl::wait call. In any case, we cannot use m_scroll->clear()
+  // (broken in < 1.1.5, potential crasher in >= 1.1.5).
   for(unsigned int i = 0; i < m_push_butt.size(); i++){
     m_scroll->remove(m_push_butt[i]);
-    m_push_butt[i]->hide();
+#if defined(HAVE_FLTK_1_1_6_OR_ABOVE)
+    Fl::delete_widget(m_push_butt[i]);
+#else
+    delete m_push_butt[i];
+#endif
   }
-  m_push_butt.clear();
   for(unsigned int i = 0; i < m_toggle_butt.size(); i++){
     m_scroll->remove(m_toggle_butt[i]);
-    m_toggle_butt[i]->hide();
+#if defined(HAVE_FLTK_1_1_6_OR_ABOVE)
+    Fl::delete_widget(m_toggle_butt[i]);
+#else
+    delete m_toggle_butt[i];
+#endif
   }
-  m_toggle_butt.clear();
   for(unsigned int i = 0; i < m_toggle2_butt.size(); i++){
     m_scroll->remove(m_toggle2_butt[i]);
-    m_toggle2_butt[i]->hide();
+#if defined(HAVE_FLTK_1_1_6_OR_ABOVE)
+    Fl::delete_widget(m_toggle2_butt[i]);
+#else
+    delete m_toggle2_butt[i];
+#endif
   }
-  m_toggle2_butt.clear();
   for(unsigned int i = 0; i < m_popup_butt.size(); i++){
     m_scroll->remove(m_popup_butt[i]);
-    m_popup_butt[i]->hide();
+#if defined(HAVE_FLTK_1_1_6_OR_ABOVE)
+    Fl::delete_widget(m_popup_butt[i]);
+#else
+    delete m_popup_butt[i];
+#endif
   }
-  m_popup_butt.clear();
   for(unsigned int i = 0; i < m_popup2_butt.size(); i++){
     m_scroll->remove(m_popup2_butt[i]);
-    m_popup2_butt[i]->hide();
+#if defined(HAVE_FLTK_1_1_6_OR_ABOVE)
+    Fl::delete_widget(m_popup2_butt[i]);
+#else
+    delete m_popup2_butt[i];
+#endif
   }
+
+  // reset the vectors
+  m_push_butt.clear();
+  m_toggle_butt.clear();
+  m_toggle2_butt.clear();
+  m_popup_butt.clear();
   m_popup2_butt.clear();
   for(unsigned int i = 0; i < m_pop_label.size(); i++)
     delete [] m_pop_label[i];
@@ -1190,9 +1206,10 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
     delete m_pop_plugin[i]; 	 
   m_pop_plugin.clear();
 
-  // construct the dynamic menu
   int width = m_window->w();
   int popw = 4 * fontsize + 3;
+
+  // construct the dynamic menu
   int nb = 0;
   if(m_module_butt->value() == 3){ // post-processing context
     for(nb = 0; nb < List_Nbr(CTX.post.list); nb++) {
@@ -1212,10 +1229,10 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
       b2->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
       b2->tooltip("Show view option menu (Shift+w)");
   
-      Fl_Menu_Button *p[2];
-      p[0] = new Fl_Menu_Button(width - popw, MH + nb * BH, popw, BH);
+      Popup_Button *p[2];
+      p[0] = new Popup_Button(width - popw, MH + nb * BH, popw, BH);
       p[0]->type(Fl_Menu_Button::POPUP123);
-      p[1] = new Fl_Menu_Button(0, MH + nb * BH, width - popw, BH);
+      p[1] = new Popup_Button(0, MH + nb * BH, width - popw, BH);
       p[1]->type(Fl_Menu_Button::POPUP3);
   
       for(int j = 0; j < 2; j++) {
@@ -1305,38 +1322,6 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
     m_window->size(width, MH + nb * BH);
   else
     m_window->size(width, MH + NB_BUTT_SCROLL * BH);
-
-  // Delete the old widgets at the very end of the callback. Note: in
-  // FLTK <= 1.1.4 we could simply delete a widget anywhere in its
-  // callback. FLTK 1.1.5 broke this, as it could access a widget's
-  // data after its callback is executed (and we call set_context in a
-  // button's callback precisely to delete it!). FLTK 1.1.6 introduced
-  // a fix (Fl::delete_widget) to delay the deletion until the next
-  // Fl::wait call. But FLTK 1.1.7 broke this again by introducing
-  // extra redraw() calls in the menu button widget. Sigh.
-#if defined(HAVE_FLTK_1_1_6_OR_ABOVE)
-  for(unsigned int i = 0; i < tmp_push_butt.size(); i++) 
-    Fl::delete_widget(tmp_push_butt[i]);
-  for(unsigned int i = 0; i < tmp_toggle_butt.size(); i++) 
-    Fl::delete_widget(tmp_toggle_butt[i]);
-  for(unsigned int i = 0; i < tmp_toggle2_butt.size(); i++)
-    Fl::delete_widget(tmp_toggle2_butt[i]);
-  for(unsigned int i = 0; i < tmp_popup_butt.size(); i++)
-    Fl::delete_widget(tmp_popup_butt[i]);
-  for(unsigned int i = 0; i < tmp_popup2_butt.size(); i++)
-    Fl::delete_widget(tmp_popup2_butt[i]);
-#else
-  for(unsigned int i = 0; i < tmp_push_butt.size(); i++) 
-    delete tmp_push_butt[i];
-  for(unsigned int i = 0; i < tmp_toggle_butt.size(); i++) 
-    delete tmp_toggle_butt[i];
-  for(unsigned int i = 0; i < tmp_toggle2_butt.size(); i++)
-    delete tmp_toggle2_butt[i];
-  for(unsigned int i = 0; i < tmp_popup_butt.size(); i++)
-    delete tmp_popup_butt[i];
-  for(unsigned int i = 0; i < tmp_popup2_butt.size(); i++)
-    delete tmp_popup2_butt[i];
-#endif
 }
 
 int GUI::get_context()

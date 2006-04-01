@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.84 2006-04-01 22:05:21 geuzaine Exp $
+# $Id: Makefile,v 1.85 2006-04-01 23:02:22 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -123,6 +123,6 @@ OpenFile.o: OpenFile.cpp ../Mesh/BDS.h ../Common/Views.h \
   ../Mesh/Matrix.h ../Geo/MinMax.h ../Common/Visibility.h \
   ../Graphics/ReadImg.h ../Common/OS.h ../Common/GmshUI.h \
   ../Graphics/Draw.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
-  ../Fltk/Colorbar_Window.h
+  ../Fltk/Colorbar_Window.h ../Fltk/Popup_Button.h
 # 1 "/Users/geuzaine/.gmsh/Parser//"
 FunctionManager.o: FunctionManager.cpp FunctionManager.h

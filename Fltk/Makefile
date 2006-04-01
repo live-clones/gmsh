@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.85 2006-04-01 22:05:21 geuzaine Exp $
+# $Id: Makefile,v 1.86 2006-04-01 23:02:22 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -72,9 +72,9 @@ Main.o: Main.cpp GUI.h Opengl_Window.h ../Mesh/Mesh.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
   ../Mesh/Matrix.h Colorbar_Window.h ../Common/GmshUI.h \
-  ../Common/ColorTable.h ../Plugin/PluginManager.h ../Plugin/Plugin.h \
-  ../Common/Options.h ../Common/Message.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Common/VertexArray.h \
+  ../Common/ColorTable.h Popup_Button.h ../Plugin/PluginManager.h \
+  ../Plugin/Plugin.h ../Common/Options.h ../Common/Message.h \
+  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/Tools.h \
@@ -92,8 +92,8 @@ Message.o: Message.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
-  ../Mesh/Matrix.h Colorbar_Window.h ../Common/ColorTable.h GUI_Extras.h \
-  ../Common/OS.h
+  ../Mesh/Matrix.h Colorbar_Window.h ../Common/ColorTable.h \
+  Popup_Button.h GUI_Extras.h ../Common/OS.h
 # 1 "/Users/geuzaine/.gmsh/Fltk//"
 GUI.o: GUI.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \
@@ -109,7 +109,7 @@ GUI.o: GUI.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h ../Graphics/Draw.h GUI.h Opengl_Window.h \
-  Colorbar_Window.h Callbacks.h Bitmaps.h Win32Icon.h \
+  Colorbar_Window.h Popup_Button.h Callbacks.h Bitmaps.h Win32Icon.h \
   ../Parser/OpenFile.h ../Common/CommandLine.h Solvers.h \
   Shortcut_Window.h
 # 1 "/Users/geuzaine/.gmsh/Fltk//"
@@ -143,9 +143,9 @@ Callbacks.o: Callbacks.cpp ../Mesh/BDS.h ../Common/Views.h \
   ../Geo/ExtrudeParams.h ../Geo/ExtractContour.h ../Graphics/Draw.h \
   ../Graphics/CreateFile.h ../Parser/OpenFile.h ../Common/CommandLine.h \
   ../Common/Context.h ../Common/Options.h GUI.h Opengl_Window.h \
-  Colorbar_Window.h GUI_Extras.h Callbacks.h ../Plugin/Plugin.h \
-  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Visibility.h \
-  Solvers.h ../Common/OS.h
+  Colorbar_Window.h Popup_Button.h GUI_Extras.h Callbacks.h \
+  ../Plugin/Plugin.h ../Plugin/PluginManager.h ../Plugin/Plugin.h \
+  ../Common/Visibility.h Solvers.h ../Common/OS.h
 # 1 "/Users/geuzaine/.gmsh/Fltk//"
 Opengl.o: Opengl.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -160,7 +160,8 @@ Opengl.o: Opengl.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
-  GUI.h Opengl_Window.h Colorbar_Window.h ../Graphics/gl2ps.h
+  GUI.h Opengl_Window.h Colorbar_Window.h Popup_Button.h \
+  ../Graphics/gl2ps.h
 # 1 "/Users/geuzaine/.gmsh/Fltk//"
 Opengl_Window.o: Opengl_Window.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -175,7 +176,7 @@ Opengl_Window.o: Opengl_Window.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
-  GUI.h Opengl_Window.h Colorbar_Window.h
+  GUI.h Opengl_Window.h Colorbar_Window.h Popup_Button.h
 # 1 "/Users/geuzaine/.gmsh/Fltk//"
 Colorbar_Window.o: Colorbar_Window.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
@@ -187,7 +188,8 @@ Colorbar_Window.o: Colorbar_Window.cpp ../Common/Gmsh.h \
   ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
-  Colorbar_Window.h ../Common/ColorTable.h ../Common/Context.h
+  Colorbar_Window.h ../Common/ColorTable.h Popup_Button.h \
+  ../Common/Context.h
 # 1 "/Users/geuzaine/.gmsh/Fltk//"
 Solvers.o: Solvers.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -200,7 +202,7 @@ Solvers.o: Solvers.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
   ../Mesh/Matrix.h Colorbar_Window.h ../Common/ColorTable.h \
-  ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
-  ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
-  ../Common/Context.h
+  Popup_Button.h ../Graphics/Draw.h ../Common/Views.h \
+  ../Common/ColorTable.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h
