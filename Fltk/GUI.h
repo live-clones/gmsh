@@ -34,6 +34,7 @@
 #include <FL/Fl_Repeat_Button.H>
 #include <FL/Fl_Light_Button.H>
 #include <FL/Fl_Check_Button.H>
+#include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Output.H>
@@ -57,7 +58,6 @@
 
 #include "Opengl_Window.h"
 #include "Colorbar_Window.h"
-#include "Popup_Button.h"
 
 // The dynamic contexts
 
@@ -129,7 +129,7 @@ class GUI{
 
   // Bitmaps
   Fl_Bitmap  *abort_bmp, *start_bmp, *stop_bmp, *rewind_bmp, *rotate_bmp, *ortho_bmp ;
-  void add_post_plugins(Popup_Button *button , int iView);
+  void add_post_plugins(Fl_Menu_Button *button , int iView);
   void add_multiline_in_browser(Fl_Browser *o, char* prefix, char *str);
 
 public:
@@ -145,8 +145,8 @@ public:
   std::vector<Fl_Button*>       m_push_butt ;
   std::vector<Fl_Light_Button*> m_toggle_butt ;
   std::vector<Fl_Button*>       m_toggle2_butt ;
-  std::vector<Popup_Button*>    m_popup_butt ;
-  std::vector<Popup_Button*>    m_popup2_butt ;
+  std::vector<Fl_Menu_Button*>  m_popup_butt ;
+  std::vector<Fl_Menu_Button*>  m_popup2_butt ;
   std::vector<char*>            m_pop_label ;
   std::vector<std::pair<int, GMSH_Plugin*>*> m_pop_plugin;
 
