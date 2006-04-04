@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.37 2006-02-26 16:26:09 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.37.2.1 2006-04-04 04:36:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -442,6 +442,11 @@ int MeshDiscreteSurface(Surface * s)
       return 1;
     }
     return 2;
+  }
+  else if(s->Typ == MSH_SURF_DISCRETE) {
+    // nothing else to do: we assume that the surface is represented
+    // by a mesh that will not be modified
+    return 1;
   }
   else
     return 0;

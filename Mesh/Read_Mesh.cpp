@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.98.2.2 2006-03-29 01:46:31 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.98.2.3 2006-04-04 04:36:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -60,6 +60,7 @@ Curve *addElementaryCurve(Mesh * M, int Num)
   if(!(c = FindCurve(Num, M))) {
     c = Create_Curve(Num, MSH_SEGM_DISCRETE, 0, NULL, NULL, -1, -1, 0., 1.);
     Tree_Add(M->Curves, &c);
+    CreateReversedCurve(M, c);
   }
   return c;
 }
