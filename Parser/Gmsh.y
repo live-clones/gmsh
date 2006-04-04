@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.226 2006-03-17 21:04:42 geuzaine Exp $
+// $Id: Gmsh.y,v 1.227 2006-04-04 04:32:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1844,6 +1844,9 @@ Command :
       }
       else if(!strcmp($1, "Mesh")){
 	yymsg(GERROR, "Mesh directives are not (yet) allowed in scripts");
+      }
+      else if(!strcmp($1, "Status")){
+	THEM->status = (int)$2;
       }
       else{
 	yymsg(GERROR, "Unknown command '%s'", $1);
