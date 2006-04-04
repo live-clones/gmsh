@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.204.2.1 2006-03-25 13:07:19 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.204.2.2 2006-04-04 04:46:52 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -1321,6 +1321,9 @@ the path of the current file.
 
 @item Sleep @var{expression};
 Suspends the execution of Gmsh during @var{expression} seconds.
+
+@item Status @var{expression};
+Forces mesh status to @var{expression}.
 
 @item System @var{char-expression};
 Executes a system call.
