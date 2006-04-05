@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.151 2006-01-16 00:38:14 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.152 2006-04-05 18:13:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -53,22 +53,21 @@ static Volume *theVolume = NULL;
 static int numLabelsDisplayed = 0;
 static int stepLabelsDisplayed = 1;
 
-void draw_polygon_2d(double r, double g, double b, int n,
-                     double *x, double *y, double *z)
+void draw_triangle_overlay(double r, double g, double b,
+			   Vertex *v1, Vertex *v2, Vertex *v3)
 {
   // this routine is only used to display the interactive construction
   // of the 2D aniso mesh
-  CalculateMinMax(THEM->Points, NULL);
   SetOpenglContext();
   InitProjection();
   InitPosition();
-
   glDisable(GL_DEPTH_TEST);
   glDrawBuffer(GL_FRONT);
   glColor3f(r, g, b);
   glBegin(GL_LINE_STRIP);
-  for(int i = 0; i < n; i++)
-    glVertex3d(x[i], y[i], z ? z[i] : 0.);
+  glVertex3d(v1->Pos.X, v1->Pos.Y, v1->Pos.Z);
+  glVertex3d(v2->Pos.X, v2->Pos.Y, v2->Pos.Z);
+  glVertex3d(v3->Pos.X, v3->Pos.Y, v3->Pos.Z);
   glEnd();
   glFlush();
   glDrawBuffer(GL_BACK);

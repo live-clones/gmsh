@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.48 2006-01-29 22:53:41 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.49 2006-04-05 18:13:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -527,35 +527,30 @@ int recur_bowyer_2D(Simplex * s)
 
 bool draw_simplex2d(Surface * sur, Simplex * s, bool nouv)
 {
-  Vertex v1, v2, v3;
-
   if(!CTX.mesh.interactive)
     return false;
 
   if(s == &MyNewBoundary || !s || !s->iEnt)
     return false;
 
-  v1 = InterpolateSurface(sur->Support, s->V[0]->Pos.X, s->V[0]->Pos.Y, 0, 0);
-  v2 = InterpolateSurface(sur->Support, s->V[1]->Pos.X, s->V[1]->Pos.Y, 0, 0);
-  v3 = InterpolateSurface(sur->Support, s->V[2]->Pos.X, s->V[2]->Pos.Y, 0, 0);
-
 #if defined(HAVE_FLTK)
-  double x[3], y[3], z[3];
-  x[0] = v1.Pos.X;
-  x[1] = v2.Pos.X;
-  x[2] = v3.Pos.X;
-  y[0] = v1.Pos.Y;
-  y[1] = v2.Pos.Y;
-  y[2] = v3.Pos.Y;
-  z[0] = v1.Pos.Z;
-  z[1] = v2.Pos.Z;
-  z[2] = v3.Pos.Z;
-  void draw_polygon_2d(double r, double g, double b, int n,
-                       double *x, double *y, double *z);
+  Vertex v1 = InterpolateSurface(sur->Support, s->V[0]->Pos.X, s->V[0]->Pos.Y, 0, 0);
+  Vertex v2 = InterpolateSurface(sur->Support, s->V[1]->Pos.X, s->V[1]->Pos.Y, 0, 0);
+  Vertex v3 = InterpolateSurface(sur->Support, s->V[2]->Pos.X, s->V[2]->Pos.Y, 0, 0);
+
+  Vertex *pv1 = &v1, *pv2 = &v2, *pv3 = &v3, *dum;
+  Calcule_Z_Plan(&pv1, &dum);
+  Projette_Inverse(&pv1, &dum);
+  Calcule_Z_Plan(&pv2, &dum);
+  Projette_Inverse(&pv2, &dum);
+  Calcule_Z_Plan(&pv3, &dum);
+  Projette_Inverse(&pv3, &dum);
+
+  void draw_triangle_overlay(double, double, double, Vertex *, Vertex *, Vertex *);
   if(nouv)
-    draw_polygon_2d(1., 0., 0., 3, x, y, z);
+    draw_triangle_overlay(1., 0., 0., pv1, pv2, pv3);
   else
-    draw_polygon_2d(0., 0., 0., 3, x, y, z);
+    draw_triangle_overlay(0., 0., 0., pv1, pv2, pv3);
 #endif
 
   return true;
