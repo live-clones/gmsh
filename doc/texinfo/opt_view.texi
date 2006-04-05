@@ -401,32 +401,32 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.Max
 Maximum value in the view (read-only)@*
-Default value: @code{0}@*
+Default value: @code{1.30811e+166}@*
 Saved in: @code{-}
 
 @item View.MaxX
 Maximum view coordinate along the X-axis (read-only)@*
-Default value: @code{0}@*
+Default value: @code{3.79442e-321}@*
 Saved in: @code{-}
 
 @item View.MaxY
 Maximum view coordinate along the Y-axis (read-only)@*
-Default value: @code{0}@*
+Default value: @code{4.15163e-320}@*
 Saved in: @code{-}
 
 @item View.MaxZ
 Maximum view coordinate along the Z-axis (read-only)@*
-Default value: @code{0}@*
+Default value: @code{-2.22195e-146}@*
 Saved in: @code{-}
 
 @item View.Min
 Minimum value in the view (read-only)@*
-Default value: @code{0}@*
+Default value: @code{9.39977e+218}@*
 Saved in: @code{-}
 
 @item View.MinX
 Minimum view coordinate along the X-axis (read-only)@*
-Default value: @code{0}@*
+Default value: @code{3.25056e-319}@*
 Saved in: @code{-}
 
 @item View.MinY
@@ -436,7 +436,7 @@ Saved in: @code{-}
 
 @item View.MinZ
 Minimum view coordinate along the Z-axis (read-only)@*
-Default value: @code{0}@*
+Default value: @code{-2.22195e-146}@*
 Saved in: @code{-}
 
 @item View.NbIso

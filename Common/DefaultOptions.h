@@ -888,6 +888,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Format" , opt_mesh_format , FORMAT_MSH , 
     "Mesh output format (1=msh, 2=unv, 3=gref, 19=vrml)" },
 
+  { F|O, "InitialOnly" , opt_mesh_initial_only , 0. ,
+    "Only contruct the n-dimensional initial mesh (no refinement)" },
   { F|O, "Interactive" , opt_mesh_interactive , 0. ,
     "Show the construction of 2D anisotropic mesh in real time" },
 

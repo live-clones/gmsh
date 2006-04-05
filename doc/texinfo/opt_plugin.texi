@@ -405,7 +405,7 @@ Plugin(Extract) creates one new view.
 String options:
 @table @code
 @item Expression0
-Default value: @code{"v0"}
+Default value: @code{"Sqrt(v0^2+v1^2+v2^2)"}
 @item Expression1
 Default value: @code{""}
 @item Expression2

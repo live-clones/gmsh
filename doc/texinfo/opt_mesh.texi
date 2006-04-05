@@ -119,6 +119,11 @@ Mesh output format (1=msh, 2=unv, 3=gref, 19=vrml)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.InitialOnly
+Only contruct the n-dimensional initial mesh (no refinement)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Interactive
 Show the construction of 2D anisotropic mesh in real time@*
 Default value: @code{0}@*
