@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.50 2006-04-05 19:00:59 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.51 2006-04-05 21:28:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1093,7 +1093,20 @@ int AlgorithmeMaillage2DAnisotropeModeJF(Surface * s)
     Tree_Suppress(s->Simplexes, List_Pointer(Suppress, i));
   }
 
-  if(CTX.mesh.initial_only == 2) return 1;
+  if(CTX.mesh.initial_only == 2){
+    List = Tree2List(s->Vertices);
+    for(i = 0; i < List_Nbr(List); i++) {
+      List_Read(List, i, &THEV);
+      if(THEV->Num < 0)
+	Tree_Suppress(s->Vertices, &THEV);
+    }
+    List_Delete(List);
+    List_Delete(Points);
+    for(i = 0; i < List_Nbr(Suppress); i++)
+      Free_Simplex(List_Pointer(Suppress, i), 0);
+    List_Delete(Suppress);
+    return 1;
+  }
 
   Msg(STATUS2, "Mesh 2D... (final)");
 

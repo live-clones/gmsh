@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.152 2006-04-05 18:13:33 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.153 2006-04-05 21:28:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -64,7 +64,7 @@ void draw_triangle_overlay(double r, double g, double b,
   glDisable(GL_DEPTH_TEST);
   glDrawBuffer(GL_FRONT);
   glColor3f(r, g, b);
-  glBegin(GL_LINE_STRIP);
+  glBegin(GL_LINE_LOOP);
   glVertex3d(v1->Pos.X, v1->Pos.Y, v1->Pos.Z);
   glVertex3d(v2->Pos.X, v2->Pos.Y, v2->Pos.Z);
   glVertex3d(v3->Pos.X, v3->Pos.Y, v3->Pos.Z);
