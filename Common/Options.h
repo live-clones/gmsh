@@ -460,6 +460,7 @@ double opt_mesh_constrained_bgmesh(OPT_ARGS_NUM);
 double opt_mesh_order(OPT_ARGS_NUM);
 double opt_mesh_dual(OPT_ARGS_NUM);
 double opt_mesh_interactive(OPT_ARGS_NUM);
+double opt_mesh_initial_only(OPT_ARGS_NUM);
 double opt_mesh_use_cut_plane(OPT_ARGS_NUM);
 double opt_mesh_cut_plane_as_surface(OPT_ARGS_NUM);
 double opt_mesh_cut_plane_only_volume(OPT_ARGS_NUM);

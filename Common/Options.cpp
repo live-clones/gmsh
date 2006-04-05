@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.276 2006-03-09 07:56:51 remacle Exp $
+// $Id: Options.cpp,v 1.277 2006-04-05 19:00:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -122,7 +122,6 @@ void Init_Options(int num)
 
   // The following defaults cannot be set by the user 
   CTX.batch = 0;
-  CTX.mesh.initial_only = 0;
   CTX.output_filename = NULL;
   CTX.bgm_filename = NULL;
   CTX.files = List_Create(10, 10, sizeof(char*));
@@ -4700,6 +4699,13 @@ double opt_mesh_interactive(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.mesh.interactive = (int)val;
   return CTX.mesh.interactive;
+}
+
+double opt_mesh_initial_only(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.initial_only = (int)val;
+  return CTX.mesh.initial_only;
 }
 
 double opt_mesh_use_cut_plane(OPT_ARGS_NUM)
