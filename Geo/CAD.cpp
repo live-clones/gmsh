@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.95 2006-02-02 13:53:57 geuzaine Exp $
+// $Id: CAD.cpp,v 1.95.2.1 2006-04-09 20:14:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -571,15 +571,18 @@ void ColorShape(int Type, int Num, unsigned int Color)
   case MSH_SEGM_ELLI_INV:
   case MSH_SEGM_NURBS:
   case MSH_SEGM_PARAMETRIC:
+  case MSH_SEGM_DISCRETE:
     ColorCurve(Num, Color);
     break;
   case MSH_SURF_NURBS:
   case MSH_SURF_TRIC:
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
+  case MSH_SURF_DISCRETE:
     ColorSurface(Num, Color);
     break;
   case MSH_VOLUME:
+  case MSH_VOLUME_DISCRETE:
     ColorVolume(Num, Color);
     break;
   default:
@@ -603,15 +606,18 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_SEGM_ELLI_INV:
   case MSH_SEGM_NURBS:
   case MSH_SEGM_PARAMETRIC:
+  case MSH_SEGM_DISCRETE:
     SetVisibilityByNumber(Num, 3, Mode);
     break;
   case MSH_SURF_NURBS:
   case MSH_SURF_TRIC:
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
+  case MSH_SURF_DISCRETE:
     SetVisibilityByNumber(Num, 4, Mode);
     break;
   case MSH_VOLUME:
+  case MSH_VOLUME_DISCRETE:
     SetVisibilityByNumber(Num, 5, Mode);
     break;
   default:
