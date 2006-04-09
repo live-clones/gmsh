@@ -56,7 +56,6 @@
 #define MSH_SEGM_ELLI_INV    7
 #define MSH_SEGM_LOOP        8
 #define MSH_SEGM_PARAMETRIC  888
-#define MSH_SEGM_MERGEDSEGS  889
 #define MSH_SEGM_BSPLN       15
 #define MSH_SEGM_URBS        16
 #define MSH_SEGM_NURBS       17
