@@ -672,9 +672,9 @@ StringXNumber GeneralOptions_Number[] = {
     "Display size of points (in pixels)" },
   { F|O, "PolygonOffsetAlwaysOn" , opt_general_polygon_offset_always , 0. , 
     "Always apply polygon offset, instead of trying to detect when it is required" },
-  { F|O, "PolygonOffsetFactor" , opt_general_polygon_offset_factor , 0.5 , 
+  { F|O, "PolygonOffsetFactor" , opt_general_polygon_offset_factor , 0.75 , 
     "Polygon offset factor (offset = factor * DZ + r * units)" },
-  { F|O, "PolygonOffsetUnits" , opt_general_polygon_offset_units , 0.5 , 
+  { F|O, "PolygonOffsetUnits" , opt_general_polygon_offset_units , 0.75 , 
     "Polygon offset units (offset = factor * DZ + r * units)" },
 
   { F|O, "QuadricSubdivisions" , opt_general_quadric_subdivisions, 8. ,
