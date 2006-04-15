@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.72 2006-03-01 16:07:17 geuzaine Exp $
+$Id: FAQ,v 1.72.2.1 2006-04-15 17:27:04 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -402,7 +402,7 @@ Another solution is to use the 'General transformation expressions'
 (in 'View->Options->Offset') on the field you want to display, with
 the displacement map selected as the data source.
 
-And yet another solution is to use the DiplacementRaise plugin.
+And yet another solution is to use the Warp plugin.
 
 * 7.7 Can I color the arrows representing a vector field with data
 from a scalar field?
