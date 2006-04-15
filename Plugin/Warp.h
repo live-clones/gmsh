@@ -1,5 +1,5 @@
-#ifndef _SPHERICAL_RAISE_H_
-#define _SPHERICAL_RAISE_H_
+#ifndef _WARP_H_
+#define _WARP_H_
 
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -24,15 +24,15 @@
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterSphericalRaisePlugin();
+  GMSH_Plugin *GMSH_RegisterWarpPlugin();
 }
 
-class GMSH_SphericalRaisePlugin : public GMSH_Post_Plugin
+class GMSH_WarpPlugin : public GMSH_Post_Plugin
 {
 public:
-  GMSH_SphericalRaisePlugin();
+  GMSH_WarpPlugin();
   void getName(char *name) const;
-  void getInfos(char *author, char *copyright, char *helpText) const;
+  void getInfos(char *author, char *copyright, char *help_text) const;
   void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  

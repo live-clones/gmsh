@@ -242,30 +242,6 @@ Numeric options:
 Default value: @code{-1}
 @end table
 
-@item Plugin(DisplacementRaise)
-Plugin(DisplacementRaise) transforms the
-coordinates of the elements in the view `iView'
-using the vectorial values (the displacements)
-stored in the `dTimeStep'-th time step of the
-view `dView'. If `iView' < 0, the plugin is run
-on the current view. If `dView' < 0, the plugin
-looks for the displacements in the view located
-just after `iView' in the view list.
-
-Plugin(DisplacementRaise) is executed in-place.
-
-Numeric options:
-@table @code
-@item Factor
-Default value: @code{1}
-@item dTimeStep
-Default value: @code{0}
-@item dView
-Default value: @code{-1}
-@item iView
-Default value: @code{-1}
-@end table
-
 @item Plugin(Divergence)
 Plugin(Divergence) computes the divergence of the
 field in the view `iView'. If `iView' < 0, the plugin
@@ -405,7 +381,7 @@ Plugin(Extract) creates one new view.
 String options:
 @table @code
 @item Expression0
-Default value: @code{"v0"}
+Default value: @code{"Sqrt(v0^2+v1^2+v2^2)"}
 @item Expression1
 Default value: @code{""}
 @item Expression2
@@ -432,10 +408,10 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(ExtractEdges)
-Plugin(ExtractEdges) extracts the geometry edges of
-the view `iView', using `Angle' as the dihedral angle
-tolerance. If `iView' < 0, the plugin is run on the
-current view.
+Plugin(ExtractEdges) extracts the geometry edges
+from the surface view `iView', using `Angle' as
+the dihedral angle tolerance. If `iView' < 0, then
+plugin is run on the current view.
 
 Plugin(ExtractEdges) creates one new view.
 
@@ -654,36 +630,6 @@ Numeric options:
 Default value: @code{-1}
 @end table
 
-@item Plugin(SphericalRaise)
-Plugin(SphericalRaise) transforms the
-coordinates of the elements in the view `iView'
-using the values associated with the
-`TimeStep'-th time step. Instead of elevating
-the nodes along the X, Y and Z axes as in
-View[`iView'].RaiseX, View[`iView'].RaiseY
-and View[`iView'].RaiseZ, the raise is applied
- along the radius of a sphere centered at (`Xc',
-`Yc', `Zc'). If `iView' < 0, the plugin is run
-on the current view.
-
-Plugin(SphericalRaise) is executed in-place.
-
-Numeric options:
-@table @code
-@item Xc
-Default value: @code{0}
-@item Yc
-Default value: @code{0}
-@item Zc
-Default value: @code{0}
-@item Raise
-Default value: @code{1}
-@item TimeStep
-Default value: @code{0}
-@item iView
-Default value: @code{-1}
-@end table
-
 @item Plugin(StreamLines)
 Plugin(StreamLines) computes stream lines
 from a vector view `iView' and optionally
@@ -796,6 +742,34 @@ Plugin(Triangulate) creates one new view.
 
 Numeric options:
 @table @code
+@item iView
+Default value: @code{-1}
+@end table
+
+@item Plugin(Warp)
+Plugin(Warp) transforms the elements in the view
+`iView' by adding to their node coordinates the
+the vector field stored in the `TimeStep'-th time
+step of the view `dView', scaled by `Factor'. If
+`dView' < 0, the vector field is taken as the field
+of surface normals multiplied by the `TimeStep'
+value in `iView'. (The smoothing of the surface
+normals is controlled by the `SmoothingAngle'
+parameter.). If `iView' < 0, the plugin is run on the
+current view.
+
+Plugin(Warp) is executed in-place.
+
+Numeric options:
+@table @code
+@item Factor
+Default value: @code{1}
+@item TimeStep
+Default value: @code{0}
+@item SmoothingAngle
+Default value: @code{180}
+@item dView
+Default value: @code{-1}
 @item iView
 Default value: @code{-1}
 @end table

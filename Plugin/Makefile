@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.96 2006-04-01 23:02:23 geuzaine Exp $
+# $Id: Makefile,v 1.97 2006-04-15 17:21:18 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -36,8 +36,7 @@ SRC = Plugin.cpp\
         StreamLines.cpp CutGrid.cpp\
         Transform.cpp\
         Triangulate.cpp\
-        SphericalRaise.cpp\
-        DisplacementRaise.cpp\
+        Warp.cpp\
 	StructuralSolver.cpp\
         Skin.cpp\
         Extract.cpp ExtractElements.cpp ExtractEdges.cpp\
@@ -80,14 +79,14 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   CutParametric.h CutSphere.h Skin.h ../DataStr/Tree.h ../DataStr/avl.h \
   Extract.h ExtractElements.h ExtractEdges.h HarmonicToTime.h \
   ModulusPhase.h Integrate.h Gradient.h Curl.h Divergence.h Annotate.h \
-  Remove.h DecomposeInSimplex.h Smooth.h Transform.h Triangulate.h \
-  SphericalRaise.h DisplacementRaise.h StructuralSolver.h ../Geo/Geo.h \
-  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h \
-  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
-  ../Common/GmshUI.h Eigenvectors.h Eigenvalues.h Lambda2.h Evaluate.h \
+  Remove.h DecomposeInSimplex.h Smooth.h Transform.h Triangulate.h Warp.h \
+  StructuralSolver.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+  ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h \
+  ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h ../Common/GmshUI.h \
+  Eigenvectors.h Eigenvalues.h Lambda2.h Evaluate.h \
   ../Common/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h \
   Probe.h ../Common/Context.h
 # 1 "/Users/geuzaine/.gmsh/Plugin//"
@@ -215,17 +214,11 @@ Triangulate.o: Triangulate.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Vertex.h ../Mesh/Mesh.h ../Mesh/Create.h ../Mesh/Vertex.h \
   ../Mesh/Mesh.h
 # 1 "/Users/geuzaine/.gmsh/Plugin//"
-SphericalRaise.o: SphericalRaise.cpp Plugin.h ../Common/Options.h \
-  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
-  ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Numeric/Numeric.h ../Common/GmshMatrix.h ../Common/AdaptiveViews.h \
-  ../Common/GmshMatrix.h SphericalRaise.h ../Common/Context.h
-# 1 "/Users/geuzaine/.gmsh/Plugin//"
-DisplacementRaise.o: DisplacementRaise.cpp Plugin.h ../Common/Options.h \
-  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
-  ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Numeric/Numeric.h ../Common/GmshMatrix.h ../Common/AdaptiveViews.h \
-  ../Common/GmshMatrix.h DisplacementRaise.h ../Common/Context.h
+Warp.o: Warp.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
+  ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
+  Warp.h ../Common/Context.h
 # 1 "/Users/geuzaine/.gmsh/Plugin//"
 StructuralSolver.o: StructuralSolver.cpp StructuralSolver.h ../Geo/Geo.h \
   ../DataStr/List.h ../Mesh/Mesh.h ../DataStr/Tree.h ../DataStr/avl.h \
