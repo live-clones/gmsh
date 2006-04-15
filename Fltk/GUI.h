@@ -275,7 +275,7 @@ public:
   void create_clip_window();
   void create_manip_window();
   void create_statistics_window();
-  void create_message_window();
+  void create_message_window(bool redraw_only=false);
   void create_about_window();
   void create_geometry_context_window(int num);
   void call_for_solver_plugin (int dim);

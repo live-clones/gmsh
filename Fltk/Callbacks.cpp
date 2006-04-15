@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.414 2006-03-10 02:01:06 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.415 2006-04-15 13:01:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3216,7 +3216,7 @@ void solver_command_cb(CALLBACK_ARGS)
   int i, usedopts = 0;
 
   if(SINFO[num].popup_messages)
-    WID->create_message_window();
+    WID->create_message_window(true);
 
   if(strlen(WID->solver[num].input[1]->value())) {
     FixWindowsPath((char*)WID->solver[num].input[1]->value(), mesh);

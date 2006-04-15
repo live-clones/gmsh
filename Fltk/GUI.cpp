@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.498 2006-04-01 23:02:20 geuzaine Exp $
+// $Id: GUI.cpp,v 1.499 2006-04-15 13:01:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3702,11 +3702,11 @@ PluginDialogBox *GUI::create_plugin_window(GMSH_Plugin * p)
 
 // Create the window for the messages
 
-void GUI::create_message_window()
+void GUI::create_message_window(bool redraw_only)
 {
 
   if(msg_window) {
-    if(msg_window->shown())
+    if(msg_window->shown() && redraw_only)
       msg_window->redraw();
     else
       msg_window->show();
