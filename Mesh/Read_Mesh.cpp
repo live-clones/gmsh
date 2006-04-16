@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.104 2006-04-16 18:55:18 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.105 2006-04-16 19:02:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -246,30 +246,26 @@ double SetLC(Vertex *v1, Vertex *v2, Vertex *v3 = 0, Vertex *v4 = 0)
   }
 }
 
-int getPartition ( const std::multimap<int,int> &nod2proc , int nbNod, Vertex *verts )
+int getPartition(const std::multimap<int,int> &nod2proc, int nbNod, Vertex *verts)
 {
-
   std::map<int,int> proc2nbnod;
-  for (int i=0;i<nbNod;i++)
-    {
-      std::multimap<int,int>::const_iterator beg = nod2proc.lower_bound(verts[i].Num);      
-      std::multimap<int,int>::const_iterator end = nod2proc.upper_bound(verts[i].Num);
-      while ( beg != end )
-	{
-	  int iProc = (*beg).second;	  
-	  if (proc2nbnod.find(iProc) == proc2nbnod.end()) proc2nbnod[iProc] = 1;
-	  else proc2nbnod[iProc] = proc2nbnod[iProc]+1;
-	  ++beg;
-	}
+  for(int i = 0; i < nbNod; i++){
+    std::multimap<int,int>::const_iterator beg = nod2proc.lower_bound(verts[i].Num);      
+    std::multimap<int,int>::const_iterator end = nod2proc.upper_bound(verts[i].Num);
+    while(beg != end){
+      int iProc = (*beg).second;	  
+      if (proc2nbnod.find(iProc) == proc2nbnod.end()) proc2nbnod[iProc] = 1;
+      else proc2nbnod[iProc] = proc2nbnod[iProc]+1;
+      ++beg;
     }
+  }
   {
     std::map<int,int>::const_iterator beg = proc2nbnod.begin();      
     std::map<int,int>::const_iterator end = proc2nbnod.end();
-    while (beg!=end)
-      {
-	if ( (*beg).second == nbNod ) return (*beg).first;
-	beg++;
-      }    
+    while(beg!=end){
+      if((*beg).second == nbNod) return (*beg).first;
+      beg++;
+    }    
   }
   return 0;  
 }
@@ -294,8 +290,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
   Volume *v;
   Tree_T *Duplicates = NULL;
   Tree_T *groups = List2Tree(M->PhysicalGroups, comparePhysicalGroup);
-
   std::multimap<int,int> nod2proc;
+
   while(1) {
     do {
       if(!fgets(String, sizeof(String), fp))
@@ -306,8 +302,6 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 
     if(feof(fp))
       break;
-
-    Msg(INFO, "%s", &String[1]);
 
     /*  F o r m a t  */
 
