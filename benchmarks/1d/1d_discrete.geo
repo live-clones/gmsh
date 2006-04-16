@@ -9,13 +9,15 @@ cl=0.0999;
 
 // uncomment point 1 and 4 if you merge "1d_without_points.msh"
 //Point(1) = {0, 0, 0, cl};
-Point(2) = {0, 1, 0, cl};
-Point(3) = {1, 1, 0, cl};
 //Point(4) = {1, 0, 0, cl};
 
-Line(1)={1,2};
-Line(2)={2,3};
-Line(3)={3,4};
+p = newp;
+Point(p) = {0, 1, 0, cl};
+Point(p+1) = {1, 1, 0, cl};
+
+Line(1)={1, p};
+Line(2)={p, p+1};
+Line(3)={p+1,4};
 
 Line Loop(1) = {1,2,3,-4};
 Plane Surface(1) = {1};
