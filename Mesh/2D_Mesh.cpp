@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.81 2006-01-29 22:53:41 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.81.2.1 2006-04-16 02:42:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -109,6 +109,10 @@ int Calcule_Contours(Surface * s)
   l = List_Create(10, 10, sizeof(Vertex *));
   for(i = 0; i < List_Nbr(s->Generatrices); i++) {
     List_Read(s->Generatrices, i, &c);
+    if(!List_Nbr(c->Vertices)) {
+      Msg(GERROR, "Curve %d has no mesh", c->Num);
+      return 0;
+    }
     if(!List_Nbr(l)) {
       List_Read(c->Vertices, 0, &first);
     }

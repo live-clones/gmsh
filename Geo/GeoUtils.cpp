@@ -1,4 +1,4 @@
-// $Id: GeoUtils.cpp,v 1.8.2.2 2006-03-29 14:34:05 geuzaine Exp $
+// $Id: GeoUtils.cpp,v 1.8.2.3 2006-04-16 02:42:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -50,7 +50,7 @@ void sortEdgesInLoop(int num, List_T *edges)
       // can arise due to a limitation in Read_Mesh, where we do a
       // List_Insert() to add the vertices in discrete curves--so that
       // we never get the last vertex for single, closed curves.)
-      if(nbEdges == 1 && List_Nbr(c->Vertices) && c->Typ == MSH_SEGM_DISCRETE){
+      if(c->Typ == MSH_SEGM_DISCRETE && nbEdges == 1 && List_Nbr(c->Vertices)){
 	Vertex *first = *(Vertex**)List_Pointer(c->Vertices, 0);
 	Vertex *last = *(Vertex**)List_Pointer(c->Vertices, List_Nbr(c->Vertices) - 1);
 	if(first != last){
@@ -58,12 +58,20 @@ void sortEdgesInLoop(int num, List_T *edges)
 	  List_Add(c->Vertices, &first);
 	}
       }
+      // setting end points for discrete curves
+      if(c->Typ == MSH_SEGM_DISCRETE && !c->beg && !c->end && List_Nbr(c->Vertices)){
+	Vertex *first = *(Vertex**)List_Pointer(c->Vertices, 0);
+	Vertex *last = *(Vertex**)List_Pointer(c->Vertices, List_Nbr(c->Vertices) - 1);
+	c->beg = FindPoint(first->Num, THEM);
+	c->end = FindPoint(last->Num, THEM);
+      }
     }
     else
       Msg(GERROR, "Unknown curve %d in line loop %d", j, num);
   }
   List_Reset(edges);
-  
+
+ 
   int j = 0, k = 0;
   c0 = c1 = *(Curve **) List_Pointer(temp, 0);
   List_Add(edges, &c1->Num);
