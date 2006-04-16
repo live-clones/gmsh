@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.98.2.3 2006-04-04 04:36:09 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.98.2.4 2006-04-16 18:56:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <map>
+#include <vector>
 #include "Gmsh.h"
 #include "Geo.h"
 #include "CAD.h"
@@ -63,6 +65,80 @@ Curve *addElementaryCurve(Mesh * M, int Num)
     CreateReversedCurve(M, c);
   }
   return c;
+}
+
+class nodex{
+ public:
+  Vertex *v;
+  int left, right; // index left/right segment in simplex list
+  nodex(Vertex *vv) : v(vv), left(-1), right(-1) {}
+};
+
+void addVerticesInCurve(void *a, void *b)
+{
+  Curve *c = *(Curve**)a;
+
+  // check if already done or if nothing to do
+  if(List_Nbr(c->Vertices) || !Tree_Nbr(c->SimplexesBase)) 
+    return;
+
+  List_T *elm = Tree2List(c->SimplexesBase);
+
+  // construct node x segment connectivity
+  std::map<int, nodex*> nodes;
+  for(int i = 0; i < List_Nbr(elm); i++){
+    SimplexBase *s = *(SimplexBase**)List_Pointer(elm, i);
+    for(int j = 0; j < 2; j++){
+      if(!nodes.count(s->V[j]->Num))
+	nodes[s->V[j]->Num] = new nodex(s->V[j]);
+      if(!j)
+	nodes[s->V[j]->Num]->right = i;
+      else
+	nodes[s->V[j]->Num]->left = i;
+    }
+  }
+
+  // find starting element (or use the first one for closed curve)
+  std::map<int, nodex*>::const_iterator beg = nodes.begin();
+  std::map<int, nodex*>::const_iterator end = nodes.end();
+  int start = 0;
+  while(beg != end){
+    if((*beg).second->left < 0){ // no element to the left
+      start = (*beg).second->right;
+      break;
+    }
+    beg++;
+  }
+
+  // add nodes by following the line segments
+  if(start < 0){
+    Msg(GERROR, "Something is wrong in mesh of curve %d", c->Num);
+  }
+  else{
+    int N = List_Nbr(elm);
+    SimplexBase *s = *(SimplexBase**)List_Pointer(elm, start);
+    List_Add(c->Vertices, &s->V[0]);
+    while(N > 0){
+      if(s->VSUP) List_Add(c->Vertices, &s->VSUP[0]);
+      List_Add(c->Vertices, &s->V[1]);
+      nodex *n = nodes[s->V[1]->Num];
+      if(n->left != start){
+	Msg(GERROR, "Wrong orientation of element %d in curve %d", s->Num, c->Num);
+	break;
+      }
+      start = n->right;
+      if(start >= 0){
+	s = *(SimplexBase**)List_Pointer(elm, start);
+      }
+      else if(N != 1){
+	Msg(GERROR, "Something is wrong in mesh of curve %d", c->Num);
+	break;
+      }
+      N--;
+    }
+  }
+  
+  List_Delete(elm);
 }
 
 Surface *addElementarySurface(Mesh * M, int Num)
@@ -377,11 +453,11 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    Msg(GERROR, "Line element %d already exists", simp->Num);
 	    Free_SimplexBase(&simp, 0);
 	  }
-	  else{
-	    // this can be quite slow if there are many nodes on the curve...
-	    for(i = 0; i < Nbr_Nodes; i++)
-	      List_Insert(c->Vertices, &vertsp[i], compareVertex);
-	  }
+	  // we don't insert the vertices in the list of vertices at
+	  // this point, since we need the list to ordered (and
+	  // consistent!), and simply doing a List_Insert and sorting
+	  // according to node numbers is not enough (in addition to
+	  // being slow): see addVerticesInCurve() below.
           break;
         case TRI1:
         case TRI2:
@@ -587,6 +663,9 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
     M->status = 0;
   else
     M->status = -1;
+
+  // add vertices in curves
+  Tree_Action(M->Curves, addVerticesInCurve);
 
   // For efficiency reasons, we store the partition index (and not the
   // partition number) in the various mesh elements. We need to
