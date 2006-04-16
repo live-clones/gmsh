@@ -1,4 +1,4 @@
-// $Id: Warp.cpp,v 1.1 2006-04-15 17:21:18 geuzaine Exp $
+// $Id: Warp.cpp,v 1.2 2006-04-16 20:31:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -62,16 +62,16 @@ void GMSH_WarpPlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(Warp) transforms the elements in the view\n"
-	 "`iView' by adding to their node coordinates the\n"
+         "Plugin(Warp) transforms the elements in the\n"
+	 "view `iView' by adding to their node coordinates\n"
 	 "the vector field stored in the `TimeStep'-th time\n"
 	 "step of the view `dView', scaled by `Factor'. If\n"
 	 "`dView' < 0, the vector field is taken as the field\n"
 	 "of surface normals multiplied by the `TimeStep'\n"
 	 "value in `iView'. (The smoothing of the surface\n"
 	 "normals is controlled by the `SmoothingAngle'\n"
-	 "parameter.). If `iView' < 0, the plugin is run on the\n"
-	 "current view.\n"
+	 "parameter.). If `iView' < 0, the plugin is run on\n"
+	 "the current view.\n"
 	 "\n"
 	 "Plugin(Warp) is executed in-place.\n");
 }
