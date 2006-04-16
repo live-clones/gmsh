@@ -1,4 +1,4 @@
-// $Id: GeoUtils.cpp,v 1.11 2006-04-16 02:42:23 geuzaine Exp $
+// $Id: GeoUtils.cpp,v 1.12 2006-04-16 03:27:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -43,27 +43,36 @@ void sortEdgesInLoop(int num, List_T *edges)
     List_Read(edges, i, &j);
     if((c = FindCurve(j, THEM))){
       List_Add(temp, &c);
-      // FIXME: if the loop is composed of a single curve and if the
-      // curve is already discretized, we check if the first vertex
-      // and the last vertex are the same. If not, we assume that they
-      // should, and we add the missing end vertex. (This situation
-      // can arise due to a limitation in Read_Mesh, where we do a
-      // List_Insert() to add the vertices in discrete curves--so that
-      // we never get the last vertex for single, closed curves.)
-      if(c->Typ == MSH_SEGM_DISCRETE && nbEdges == 1 && List_Nbr(c->Vertices)){
-	Vertex *first = *(Vertex**)List_Pointer(c->Vertices, 0);
-	Vertex *last = *(Vertex**)List_Pointer(c->Vertices, List_Nbr(c->Vertices) - 1);
-	if(first != last){
-	  Msg(INFO, "Adding last vertex in closed discrete curve %d", c->Num);
-	  List_Add(c->Vertices, &first);
+      if(c->Typ == MSH_SEGM_DISCRETE){
+	// fill-in vertices in reverse discrete curves
+	if(c->Num < 0 && !List_Nbr(c->Vertices)){
+	  Curve *rc = FindCurve(-c->Num, THEM);
+	  if(rc)
+	    for(int k = List_Nbr(rc->Vertices) - 1; k >= 0; k--)
+	      List_Add(c->Vertices, List_Pointer(rc->Vertices, k));
 	}
-      }
-      // setting end points for discrete curves
-      if(c->Typ == MSH_SEGM_DISCRETE && !c->beg && !c->end && List_Nbr(c->Vertices)){
-	Vertex *first = *(Vertex**)List_Pointer(c->Vertices, 0);
-	Vertex *last = *(Vertex**)List_Pointer(c->Vertices, List_Nbr(c->Vertices) - 1);
-	c->beg = FindPoint(first->Num, THEM);
-	c->end = FindPoint(last->Num, THEM);
+	// if the loop is composed of a single discrete curve we check
+	// if the first vertex and the last vertex are the same. If
+	// not, we assume that they should, and we add the missing end
+	// vertex. (This situation can arise due to a limitation in
+	// Read_Mesh, where we do a List_Insert() to add the vertices
+	// in discrete curves--so that we never get the last vertex
+	// for single, closed curves.)
+	if(nbEdges == 1 && List_Nbr(c->Vertices)){
+	  Vertex *first = *(Vertex**)List_Pointer(c->Vertices, 0);
+	  Vertex *last = *(Vertex**)List_Pointer(c->Vertices, List_Nbr(c->Vertices) - 1);
+	  if(first != last){
+	    Msg(INFO, "Adding last vertex in closed discrete curve %d", c->Num);
+	    List_Add(c->Vertices, &first);
+	  }
+	}
+	// setting end points for discrete curves
+	if(!c->beg && !c->end && List_Nbr(c->Vertices)){
+	  Vertex *first = *(Vertex**)List_Pointer(c->Vertices, 0);
+	  Vertex *last = *(Vertex**)List_Pointer(c->Vertices, List_Nbr(c->Vertices) - 1);
+	  c->beg = FindPoint(first->Num, THEM);
+	  c->end = FindPoint(last->Num, THEM);
+	}
       }
     }
     else
