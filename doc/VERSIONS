@@ -1,8 +1,9 @@
-$Id: VERSIONS,v 1.361.2.3 2006-04-15 17:27:04 geuzaine Exp $
+$Id: VERSIONS,v 1.361.2.4 2006-04-17 02:02:31 geuzaine Exp $
 
-New since 1.64: new Plugin(ExtractEdges); fixed compilation errors
+New in 1.65: new Plugin(ExtractEdges); fixed compilation errors
 with gcc4.1; replaced Plugin(DisplacementRaise) and
-Plugin(SphericalRaise) with the more flexible Plugin(Warp); small
+Plugin(SphericalRaise) with the more flexible Plugin(Warp); better
+handling of discrete curves; new Status command in parser; small
 cleanups.
 
 New in 1.64: Windows versions do no depend on Cygwin anymore; various
