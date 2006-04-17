@@ -1,4 +1,4 @@
-// $Id: Warp.cpp,v 1.1.2.2 2006-04-16 20:31:48 geuzaine Exp $
+// $Id: Warp.cpp,v 1.1.2.3 2006-04-17 15:18:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -128,7 +128,7 @@ static void warpList(Post_View * iView, List_T * iList, int iNbElm,
   //      (x,y,z) += factor * (valx,valy,valz)
 
   int iNb = List_Nbr(iList) / iNbElm;
-  int dNb = List_Nbr(dList) / dNbElm;
+  int dNb = normals ? 0 : List_Nbr(dList) / dNbElm;
   for(int i = 0, j = 0; i < List_Nbr(iList); i += iNb, j += dNb) {
     double *x = (double *)List_Pointer_Fast(iList, i);
     double *y = (double *)List_Pointer_Fast(iList, i + nbNod);
