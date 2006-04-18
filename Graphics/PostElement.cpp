@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.71 2006-01-14 16:24:54 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.72 2006-04-18 07:49:20 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -31,7 +31,15 @@
 #include "Iso.h"
 #include "Context.h"
 #include "Numeric.h"
+#include <iostream>
+#include <math.h>
 
+using namespace std;
+
+int state = -1;		// to distinguish the different LMGC cases to output
+double zmin[1],zmax[1];
+int k = 0;
+int kk =0;
 extern Context_T CTX;
 
 void Draw_ElementBoundary(int type, Post_View * View, 
@@ -470,7 +478,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
       }
       else{
 	if(View->Light) glEnable(GL_LIGHTING);
-	if(CTX.polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
+	if(CTX.polygon_offset)
 	glBegin(GL_TRIANGLES);
 	for(int i = 0; i < 3; i++){
 	  PaletteContinuous(View, ValMin, ValMax, Val[i]);
@@ -1207,7 +1215,6 @@ void Draw_VectorPoint(ARGS)
 {
   Draw_VectorElement(POST_POINT, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
 }
-
 void Draw_VectorLine(ARGS)
 {
   Draw_VectorElement(POST_LINE, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
@@ -1268,18 +1275,427 @@ void Draw_TensorElement(int type, Post_View * View, int preproNormals,
   /// their Von Mises invariant (J2 invariant); this will simply call
   /// the scalar function...
 
-  // View->TensorType == DRAW_POST_VONMISES 
-  int ts = View->TimeStep;
-  View->TimeStep = 0;
+  if(View->TensorType == DRAW_POST_VONMISES){
+  	int ts = View->TimeStep;
+ 	View->TimeStep = 0;
 
-  double V_VonMises[8];
-  for(int i = 0; i < nbnod; i++){
-    V_VonMises[i] = ComputeVonMises(V + 9*(i + nbnod * ts));
-  }
+  	double V_VonMises[8];
+  	for(int i = 0; i < nbnod; i++){
+  	  	V_VonMises[i] = ComputeVonMises(V + 9*(i + nbnod * ts));
+  	}
+  	Draw_ScalarElement(type, View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
 
-  Draw_ScalarElement(type, View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
+  	View->TimeStep = ts;
+	
+   }
 
-  View->TimeStep = ts;
+     if(View->TensorType == DRAW_POST_LMGC90 || View->TensorType == DRAW_POST_LMGC90_TYPE || View->TensorType == DRAW_POST_LMGC90_COORD || View->TensorType == DRAW_POST_LMGC90_PRES || View->TensorType == DRAW_POST_LMGC90_SN || View->TensorType == DRAW_POST_LMGC90_DEPX || View->TensorType == DRAW_POST_LMGC90_DEPY|| View->TensorType == DRAW_POST_LMGC90_DEPZ || View->TensorType == DRAW_POST_LMGC90_DEPAV || View->TensorType == DRAW_POST_LMGC90_DEPNORM){
+//cout << View->TensorType << endl;
+	int ts = View->TimeStep;
+	int it;
+	double DEP[3];	// déplacement relatif cdf % a config de référence
+	double CDG[3];	// coordonnées du centre de gravité au tps t0
+	double VIT[3];  // vitesse en x,y,z du cdg % au repère absolu
+	double ROT[3]; 	// angles de rotation du cdg % au repère absolu
+	double VAR[3];	// valeur des 3 variables supplémentaires
+	double a11,a12,a13,a21,a22,a23,a31,a32,a33;
+	double ztmp[3];
+
+	View->TimeStep = 0;
+
+	List_T * list = (*(View->Grains))[(int)V[6]];
+	// Liste contenant toutes les info sur les lignes TP : (x,x,x) et {x,x,x,x,x,x,x,x,x, ...}
+	// info rangé à la suite
+	List_T * listt = View->TP;
+
+	k = k+1;
+	it = (k-1)*List_Nbr(listt)/View->NbTP;
+		
+	// Lecture des coordonnées du cdg dans le repère absolu
+	List_Read(listt,0+it,&CDG[0]);
+	List_Read(listt,1+it,&CDG[1]);
+	List_Read(listt,2+it,&CDG[2]);
+
+	// Lecture des déplacements par rapport au cdg initital
+	List_Read(listt,3+ts*9+it,&DEP[0]);
+	List_Read(listt,4+ts*9+it,&DEP[1]);
+	List_Read(listt,5+ts*9+it,&DEP[2]);
+
+	// Lecture des rotations du centre de gravité
+	List_Read(listt,6+ts*9+it,&ROT[0]);
+	List_Read(listt,7+ts*9+it,&ROT[1]);
+	List_Read(listt,8+ts*9+it,&ROT[2]);
+
+	/*if(vz==0 || vy == 0){
+		ROT[0] = 0;
+	else{
+		ROT[0] = atan(vz/vy);}
+	if(vx==0 || vz == 0){
+		ROT[1] = 0;}
+	else{
+		ROT[1] = atan(vx/vz);}
+	if(vy==0 || vx == 0){
+		ROT[2] = 0;}
+	else{
+		ROT[2] = atan(vy/vx);}	*/
+
+	// Lecture des valeurs des variables supplémentaires
+	List_Read(listt,9+ts*9+it,&VAR[0]);
+	List_Read(listt,10+ts*9+it,&VAR[1]);
+	List_Read(listt,11+ts*9+it,&VAR[2]);
+//	cout << "var8 " << VAR[1] << endl;
+//	cout << "var9 " << VAR[2] << endl;
+	// calcule les valeurs min et max d'une info 1 seule fois
+	if(state != View->TensorType){
+	switch (View->TensorType) {
+  		case DRAW_POST_LMGC90: 
+			// couleur uniforme
+			zmin[0]=1;
+			zmax[0]=1;
+			state = DRAW_POST_LMGC90;
+		break;
+  		case DRAW_POST_LMGC90_TYPE: 
+			// couleur en fonction du type de grain
+			it = List_Nbr(listt)/View->NbTP;
+			List_Read(listt,9,&zmin[0]);
+			List_Read(listt,9,&zmax[0]);
+			for(int i = 0; i < View->NbTP; i++){
+				List_Read(listt,i*it+9,&ztmp[0]);
+				if(ztmp[0]<zmin[0]){zmin[0] = ztmp[0];}
+				if(ztmp[0]>zmax[0]){zmax[0] = ztmp[0];}
+			}
+			state = DRAW_POST_LMGC90_TYPE;
+		break;
+  		case DRAW_POST_LMGC90_COORD: 
+			it = List_Nbr(listt)/View->NbTP;
+			List_Read(listt,9,&zmin[0]);
+			List_Read(listt,9,&zmax[0]);
+			for(int i = 0; i < View->NbTP; i++){
+				for(int j = 0; j< ((List_Nbr(listt)/View->NbTP)-3)/9-1; j++){
+					List_Read(listt,i*it+18+j*9,&ztmp[0]); // on part pas du premier
+					if(ztmp[0]<zmin[0]){zmin[0] = ztmp[0];}
+					if(ztmp[0]>zmax[0]){zmax[0] = ztmp[0];}
+				}
+			}
+			state = DRAW_POST_LMGC90_COORD;
+		break;
+  		case DRAW_POST_LMGC90_PRES: 
+			it = List_Nbr(listt)/View->NbTP;
+			List_Read(listt,10,&zmin[0]);
+			List_Read(listt,10,&zmax[0]);
+			for(int i = 0; i < View->NbTP; i++){
+				for(int j = 0; j< ((List_Nbr(listt)/View->NbTP)-3)/9; j++){
+					List_Read(listt,i*it+10+j*9,&ztmp[0]);
+					if(ztmp[0]<zmin[0]){zmin[0] = ztmp[0];}
+					if(ztmp[0]>zmax[0]){zmax[0] = ztmp[0];}
+				}
+			}
+			state = DRAW_POST_LMGC90_PRES;
+		break;
+  		case DRAW_POST_LMGC90_SN: 
+			it = List_Nbr(listt)/View->NbTP;
+			List_Read(listt,11,&zmin[0]);
+			List_Read(listt,11,&zmax[0]);
+			for(int i = 0; i < View->NbTP; i++){
+				for(int j = 0; j< ((List_Nbr(listt)/View->NbTP)-3)/9; j++){
+					List_Read(listt,i*it+11+j*9,&ztmp[0]);
+					if(ztmp[0]<zmin[0]){zmin[0] = ztmp[0];}
+					if(ztmp[0]>zmax[0]){zmax[0] = ztmp[0];}
+				}
+			}
+			state = DRAW_POST_LMGC90_SN;
+		break;
+  		case DRAW_POST_LMGC90_DEPX: 
+			it = List_Nbr(listt)/View->NbTP;
+			List_Read(listt,3,&zmin[0]);
+			List_Read(listt,3,&zmax[0]);
+			for(int i = 0; i < View->NbTP; i++){
+				for(int j = 0; j< ((List_Nbr(listt)/View->NbTP)-3)/9; j++){
+					List_Read(listt,i*it+3+j*9,&ztmp[0]);
+					if(ztmp[0]<zmin[0]){zmin[0] = ztmp[0];}
+					if(ztmp[0]>zmax[0]){zmax[0] = ztmp[0];}
+				}
+			}
+			state = DRAW_POST_LMGC90_DEPX;
+		break;
+  		case DRAW_POST_LMGC90_DEPY: 
+			it = List_Nbr(listt)/View->NbTP;
+			List_Read(listt,4,&zmin[0]);
+			List_Read(listt,4,&zmax[0]);
+			for(int i = 0; i < View->NbTP; i++){
+				for(int j = 0; j< ((List_Nbr(listt)/View->NbTP)-3)/9; j++){
+					List_Read(listt,i*it+4+j*9,&ztmp[0]);
+					if(ztmp[0]<zmin[0]){zmin[0] = ztmp[0];}
+					if(ztmp[0]>zmax[0]){zmax[0] = ztmp[0];}
+				}
+			}
+			state = DRAW_POST_LMGC90_DEPY;
+		break;
+  		case DRAW_POST_LMGC90_DEPZ:
+			it = List_Nbr(listt)/View->NbTP;
+			List_Read(listt,5,&zmin[0]);
+			List_Read(listt,5,&zmax[0]);
+			for(int i = 0; i < View->NbTP; i++){
+				for(int j = 0; j< ((List_Nbr(listt)/View->NbTP)-3)/9; j++){
+					List_Read(listt,i*it+5+j*9,&ztmp[0]);
+					if(ztmp[0]<zmin[0]){zmin[0] = ztmp[0];}
+					if(ztmp[0]>zmax[0]){zmax[0] = ztmp[0];}
+				}
+			}
+			state = DRAW_POST_LMGC90_DEPZ;
+		break;
+  		case DRAW_POST_LMGC90_DEPAV:
+			it = List_Nbr(listt)/View->NbTP;
+			List_Read(listt,3,&ztmp[0]);
+			List_Read(listt,4,&ztmp[1]);
+			List_Read(listt,5,&ztmp[2]);
+			zmin[0]=(ztmp[0]+ztmp[1]+ztmp[2])/3;
+			List_Read(listt,3,&ztmp[0]);
+			List_Read(listt,4,&ztmp[1]);
+			List_Read(listt,5,&ztmp[2]);
+			zmax[0]=(ztmp[0]+ztmp[1]+ztmp[2])/3;
+			for(int i = 0; i < View->NbTP; i++){
+				for(int j = 0; j< ((List_Nbr(listt)/View->NbTP)-3)/9; j++){
+					List_Read(listt,i*it+3+j*9,&ztmp[0]);
+					List_Read(listt,i*it+4+j*9,&ztmp[1]);
+					List_Read(listt,i*it+5+j*9,&ztmp[2]);
+					ztmp[0]=(ztmp[0]+ztmp[1]+ztmp[2])/3;
+					if(ztmp[0]<zmin[0]){zmin[0] = ztmp[0];}
+					if(ztmp[0]>zmax[0]){zmax[0] = ztmp[0];}
+				}
+			}
+			state = DRAW_POST_LMGC90_DEPAV ;
+		break;
+  		case DRAW_POST_LMGC90_DEPNORM:
+			it = List_Nbr(listt)/View->NbTP;
+			List_Read(listt,3,&ztmp[0]);
+			List_Read(listt,4,&ztmp[1]);
+			List_Read(listt,5,&ztmp[2]);
+			zmin[0]=sqrt(ztmp[0]*ztmp[0]+ztmp[1]*ztmp[1]+ztmp[2]*ztmp[2]);
+			List_Read(listt,3,&ztmp[0]);
+			List_Read(listt,4,&ztmp[1]);
+			List_Read(listt,5,&ztmp[2]);
+			zmax[0]=sqrt(ztmp[0]*ztmp[0]+ztmp[1]*ztmp[1]+ztmp[2]*ztmp[2]);
+			for(int i = 0; i < View->NbTP; i++){
+				for(int j = 0; j< ((List_Nbr(listt)/View->NbTP)-3)/9; j++){
+					List_Read(listt,i*it+3+j*9,&ztmp[0]);
+					List_Read(listt,i*it+4+j*9,&ztmp[1]);
+					List_Read(listt,i*it+5+j*9,&ztmp[2]);
+					ztmp[0]=sqrt(ztmp[0]*ztmp[0]+ztmp[1]*ztmp[1]+ztmp[2]*ztmp[2]);
+					if(ztmp[0]<zmin[0]){zmin[0] = ztmp[0];}
+					if(ztmp[0]>zmax[0]){zmax[0] = ztmp[0];}
+				}
+			}
+			state = DRAW_POST_LMGC90_DEPNORM ;
+		break;
+	
+/*
+  		case DRAW_POST_LMGC90_DEPX: 
+			it = List_Nbr(listt)/View->NbTP;
+			List_Read(listt,3,&zmin[0]);
+			List_Read(listt,3,&zmax[0]);
+			for(int i = 0; i < View->NbTP; i++){
+				for(int j = 0; j< ((List_Nbr(listt)/View->NbTP)-3)/9; j++){
+					List_Read(listt,i*it+3+j*9,&ztmp[0]);
+					if(ztmp[0]<zmin[0]){zmin[0] = ztmp[0];}
+					if(ztmp[0]>zmax[0]){zmax[0] = ztmp[0];}
+				}
+			}
+			state = DRAW_POST_LMGC90_DEPX;
+		break;
+  		case DRAW_POST_LMGC90_DEPY: 
+			it = List_Nbr(listt)/View->NbTP;
+			List_Read(listt,4,&zmin[0]);
+			List_Read(listt,4,&zmax[0]);
+			for(int i = 0; i < View->NbTP; i++){
+				for(int j = 0; j< ((List_Nbr(listt)/View->NbTP)-3)/9; j++){
+					List_Read(listt,i*it+4+j*9,&ztmp[0]);
+					if(ztmp[0]<zmin[0]){zmin[0] = ztmp[0];}
+					if(ztmp[0]>zmax[0]){zmax[0] = ztmp[0];}
+				}
+			}
+			state = DRAW_POST_LMGC90_DEPY;
+		break;
+  		case DRAW_POST_LMGC90_DEPZ:
+			it = List_Nbr(listt)/View->NbTP;
+			List_Read(listt,5,&zmin[0]);
+			List_Read(listt,5,&zmax[0]);
+			for(int i = 0; i < View->NbTP; i++){
+				for(int j = 0; j< ((List_Nbr(listt)/View->NbTP)-3)/9; j++){
+					List_Read(listt,i*it+5+j*9,&ztmp[0]);
+					if(ztmp[0]<zmin[0]){zmin[0] = ztmp[0];}
+					if(ztmp[0]>zmax[0]){zmax[0] = ztmp[0];}
+				}
+			}
+			state = DRAW_POST_LMGC90_DEP;
+		break;
+  		case DRAW_POST_LMGC90_DEPAV:
+			it = List_Nbr(listt)/View->NbTP;
+			List_Read(listt,3,&ztmp[0]);
+			List_Read(listt,4,&ztmp[1]);
+			List_Read(listt,5,&ztmp[2]);
+			zmin[0]=(ztemp[0]+ztemp[1]+ztemp[2])/3;
+			List_Read(listt,3,&zmax[0]);
+			List_Read(listt,4,&zmax[1]);
+			List_Read(listt,5,&zmax[2]);
+			zmax[0]=(ztemp[0]+ztemp[1]+ztemp[2])/3;
+			for(int i = 0; i < View->NbTP; i++){
+				for(int j = 0; j< ((List_Nbr(listt)/View->NbTP)-3)/9; j++){
+					List_Read(listt,i*it+3+j*9,&ztmp[0]);
+					List_Read(listt,i*it+4+j*9,&ztmp[0]);
+					List_Read(listt,i*it+5+j*9,&ztmp[0]);
+					ztmp[0]=(ztemp[0]+ztemp[1]+ztemp[2])/3;
+					if(ztmp[0]<zmin[0]){zmin[0] = ztmp[0];}
+					if(ztmp[0]>zmax[0]){zmax[0] = ztmp[0];}
+				}
+			}
+			state = DRAW_POST_LMGC90_DEPAV ;
+		break;
+  		case DRAW_POST_LMGC90_DEPNORM:
+			it = List_Nbr(listt)/View->NbTP;
+			List_Read(listt,3,&ztmp[0]);
+			List_Read(listt,4,&ztmp[1]);
+			List_Read(listt,5,&ztmp[2]);
+			zmin[0]=sqrt(ztemp[0]*ztemp[0]+ztemp[1]*ztemp[1]+ztemp[2]*ztemp[2]);
+			List_Read(listt,3,&zmax[0]);
+			List_Read(listt,4,&zmax[1]);
+			List_Read(listt,5,&zmax[2]);
+			zmax[0]=sqrt(ztemp[0]*ztemp[0]+ztemp[1]*ztemp[1]+ztemp[2]*ztemp[2]);
+			for(int i = 0; i < View->NbTP; i++){
+				for(int j = 0; j< ((List_Nbr(listt)/View->NbTP)-3)/9; j++){
+					List_Read(listt,i*it+3+j*9,&ztmp[0]);
+					List_Read(listt,i*it+4+j*9,&ztmp[0]);
+					List_Read(listt,i*it+5+j*9,&ztmp[0]);
+				if(k==View->NbTP){
+		k = 0;	
+	}	ztmp[0]=sqrt(ztemp[0]*ztemp[0]+ztemp[1]*ztemp[1]+ztemp[2]*ztemp[2]);
+					if(ztmp[0]<zmin[0]){zmin[0] = ztmp[0];}
+					if(ztmp[0]>zmax[0]){zmax[0] = ztmp[0];}
+				}
+			}
+			state = DRAW_POST_LMGC90_DEPNORM ;
+		break;*/
+		} //end switch
+	} //end if
+
+	// matrice de changement de base, pour la rotation
+	a11 = cos(ROT[0])*cos(ROT[1]); a12 = -sin(ROT[0])*cos(ROT[1]); 	a13 = -sin(ROT[1]);
+	a21 = sin(ROT[0])*cos(ROT[2])-cos(ROT[0])*sin(ROT[1])*sin(ROT[2]);
+	a22 = cos(ROT[0])*cos(ROT[2])+sin(ROT[0])*sin(ROT[1])*sin(ROT[2]);
+	a23 = -cos(ROT[1])*sin(ROT[2]);
+	a31 = sin(ROT[0])*sin(ROT[2])+cos(ROT[0])*sin(ROT[1])*cos(ROT[2]);
+	a32 = cos(ROT[0])*sin(ROT[2])-sin(ROT[0])*sin(ROT[1])*cos(ROT[2]);
+	a33 = cos(ROT[1])*cos(ROT[2]);	
+
+	for(int i = 0; i < List_Nbr(list) ; i = i+9){
+		double tmp[9];
+		List_Read(list,i,&tmp[0]);	//X
+		List_Read(list,i+1,&tmp[1]);	//Y
+		List_Read(list,i+2,&tmp[2]);	//Z
+		List_Read(list,i+3,&tmp[3]);
+		List_Read(list,i+4,&tmp[4]);
+		List_Read(list,i+5,&tmp[5]);
+		List_Read(list,i+6,&tmp[6]);
+		List_Read(list,i+7,&tmp[7]);
+		List_Read(list,i+8,&tmp[8]);
+
+		X[0] = ((tmp[0])*a11+(tmp[1])*a12+(tmp[2])*a13)+CDG[0]+DEP[0];
+		Y[0] = ((tmp[0])*a21+(tmp[1])*a22+(tmp[2])*a23)+CDG[1]+DEP[1]; 
+		Z[0] = ((tmp[0])*a31+(tmp[1])*a32+(tmp[2])*a33)+CDG[2]+DEP[2];
+
+		X[1] = ((tmp[3])*a11+(tmp[4])*a12+(tmp[5])*a13)+CDG[0]+DEP[0];
+		Y[1] = ((tmp[3])*a21+(tmp[4])*a22+(tmp[5])*a23)+CDG[1]+DEP[1];
+		Z[1] = ((tmp[3])*a31+(tmp[4])*a32+(tmp[5])*a33)+CDG[2]+DEP[2];
+
+		X[2] = ((tmp[6])*a11+(tmp[7])*a12+(tmp[8])*a13)+CDG[0]+DEP[0];
+		Y[2] = ((tmp[6])*a21+(tmp[7])*a22+(tmp[8])*a23)+CDG[1]+DEP[1];
+		Z[2] = ((tmp[6])*a31+(tmp[7])*a32+(tmp[8])*a33)+CDG[2]+DEP[2];
+
+		double n[3];
+     		double n1[3];
+		double n2[3];
+		double n3[3];
+		double racine;
+      		normal3points(X[0], Y[0], Z[0], X[1], Y[1], Z[1], X[2], Y[2], Z[2], n);
+		//vertex 1
+/*		n1[0] = X[0]+X[1]-2*(CDG[0]+DEP[0]);
+		n1[1] = Y[0]+Y[1]-2*(CDG[1]+DEP[1]);
+		n1[2] = Z[0]+Z[1]-2*(CDG[2]+DEP[2]);
+		racine = sqrt(n1[0]*n1[0]+n1[1]*n1[1]+n1[2]*n1[2]);
+		n1[0] = n1[0]/racine;	n1[1] = n1[1]/racine; 	n1[2] = n1[2]/racine;
+		//vertex 2
+		n2[0] = X[2]+X[1]-2*(CDG[0]+DEP[0]);
+		n2[1] = Y[2]+Y[1]-2*(CDG[1]+DEP[1]);
+		n2[2] = Z[2]+Z[1]-2*(CDG[2]+DEP[2]);
+		racine = sqrt(n2[0]*n2[0]+n2[1]*n2[1]+n2[2]*n2[2]);
+		n2[0] = n2[0]/racine;	n2[1] = n2[1]/racine; 	n2[2] = n1[2]/racine;
+		//vertex 3
+		n3[0] = X[0]+X[2]-2*(CDG[0]+DEP[0]);
+		n3[1] = Y[0]+Y[2]-2*(CDG[1]+DEP[1]);
+		n3[2] = Z[0]+Z[2]-2*(CDG[2]+DEP[2]);
+		racine = sqrt(n3[0]*n3[0]+n3[1]*n3[1]+n3[2]*n3[2]);
+		n3[0] = n3[0]/racine;	n3[1] = n3[1]/racine; 	n3[2] = n3[2]/racine;*/
+	switch (View->TensorType) {
+  		case DRAW_POST_LMGC90: 
+			PaletteContinuous(View,zmin[0],zmax[0],1);
+		break;
+  		case DRAW_POST_LMGC90_TYPE:
+			it = List_Nbr(listt)/View->NbTP;
+			List_Read(listt,(k-1)*it+9,&ztmp[0]);
+			PaletteContinuous(View,zmin[0],zmax[0],ztmp[0]); 
+		break;
+		case DRAW_POST_LMGC90_COORD:
+			if(ts!=0){
+				PaletteContinuous(View,zmin[0],zmax[0],VAR[0]);} 
+			else{
+				it = List_Nbr(listt)/View->NbTP;
+				List_Read(listt,(k-1)*it+18,&ztmp[0]);
+				PaletteContinuous(View,zmin[0],zmax[0],ztmp[0]); 
+			}
+		break;
+		case DRAW_POST_LMGC90_PRES:
+			PaletteContinuous(View,zmin[0],zmax[0],VAR[1]); 
+		break;
+		case DRAW_POST_LMGC90_SN:
+			PaletteContinuous(View,zmin[0],zmax[0],VAR[2]); 
+		break;
+		case DRAW_POST_LMGC90_DEPX:
+			PaletteContinuous(View,zmin[0],zmax[0],DEP[0]); 
+		break;
+		case DRAW_POST_LMGC90_DEPY:
+			PaletteContinuous(View,zmin[0],zmax[0],DEP[1]); 
+		break;
+  		case DRAW_POST_LMGC90_DEPZ: 
+			PaletteContinuous(View,zmin[0],zmax[0],DEP[2]);
+		break;
+  		case DRAW_POST_LMGC90_DEPAV:
+			PaletteContinuous(View,zmin[0],zmax[0],(DEP[0]+DEP[1]+DEP[2])/3);
+		break;
+		case DRAW_POST_LMGC90_DEPNORM:
+			PaletteContinuous(View,zmin[0],zmax[0],sqrt(DEP[0]*DEP[0]+DEP[1]*DEP[1]+DEP[2]*DEP[2]));
+		break;
+
+	}
+		glEnable(GL_LIGHTING);
+		glBegin(GL_TRIANGLES);
+			glNormal3dv(n);			
+			glVertex3d(X[0], Y[0], Z[0]);
+//			glNormal3dv(n2);
+			glVertex3d(X[1], Y[1], Z[1]);
+//			glNormal3dv(n3);			
+			glVertex3d(X[2], Y[2], Z[2]);
+		glEnd();
+		glDisable(GL_LIGHTING);
+	}
+
+	View->TimeStep = ts;
+	if(k==View->NbTP){
+		k = 0;	
+	}
+ 
+   }	
+
+	
 }
 
 #define ARGS Post_View *View, int preproNormals, \

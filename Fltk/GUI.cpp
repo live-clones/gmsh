@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.499 2006-04-15 13:01:15 geuzaine Exp $
+// $Id: GUI.cpp,v 1.500 2006-04-18 07:49:19 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3151,7 +3151,16 @@ void GUI::create_option_window()
 
 	static Fl_Menu_Item menu_tensor[] = {
 	  {"Von-Mises", 0, 0, 0},
-          {"LMGC90", 0, 0, 0}, //not implemented yet
+          {"LMGC90", 0, 0, 0}, 
+          {"LMGC90 Type", 0, 0, 0}, 
+          {"LMGC90 Coordinance", 0, 0, 0}, 
+          {"LMGC90 Pression", 0, 0, 0}, 
+          {"LMGC90 Normal stress", 0, 0, 0}, 
+          {"LMGC90 X displacement", 0, 0, 0}, 
+          {"LMGC90 Y displacement", 0, 0, 0}, 
+          {"LMGC90 Z displacement", 0, 0, 0}, 
+          {"LMGC90 Average displacement", 0, 0, 0}, 
+          {"LMGC90 Norm of displacement", 0, 0, 0}, 
           {0}
         };
         view_choice[4] = new Fl_Choice(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tensor display");

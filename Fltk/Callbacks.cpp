@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.415 2006-04-15 13:01:15 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.416 2006-04-18 07:49:18 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3883,7 +3883,34 @@ void view_options_ok_cb(CALLBACK_ARGS)
      case 0:
  	val = DRAW_POST_VONMISES;
       break;
-     default:
+     case 2:
+ 	val = DRAW_POST_LMGC90_TYPE;
+      break;
+     case 3:
+ 	val = DRAW_POST_LMGC90_COORD;
+      break;
+     case 4:
+ 	val = DRAW_POST_LMGC90_PRES;
+      break;
+     case 5:
+ 	val = DRAW_POST_LMGC90_SN;
+      break;
+     case 6:
+ 	val = DRAW_POST_LMGC90_DEPX;
+      break;
+     case 7:
+ 	val = DRAW_POST_LMGC90_DEPY;
+      break;
+     case 8:
+ 	val = DRAW_POST_LMGC90_DEPZ;
+      break;
+     case 9:
+ 	val = DRAW_POST_LMGC90_DEPAV;
+      break;
+     case 10:
+ 	val = DRAW_POST_LMGC90_DEPNORM;
+      break;
+     default:		//1
  	val = DRAW_POST_LMGC90;
  	break;
      }

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.277 2006-04-05 19:00:59 geuzaine Exp $
+// $Id: Options.cpp,v 1.278 2006-04-18 07:49:18 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -6322,6 +6322,33 @@ double opt_view_tensor_type(OPT_ARGS_NUM)
      switch (v->TensorType) {
      case DRAW_POST_LMGC90:
        WID->view_choice[4]->value(1);
+       break;
+     case DRAW_POST_LMGC90_TYPE:
+       WID->view_choice[4]->value(2);
+       break;
+     case DRAW_POST_LMGC90_COORD:
+       WID->view_choice[4]->value(3);
+       break;
+     case DRAW_POST_LMGC90_PRES:
+       WID->view_choice[4]->value(4);
+       break;
+     case DRAW_POST_LMGC90_SN:
+       WID->view_choice[4]->value(5);
+       break;
+     case DRAW_POST_LMGC90_DEPX:
+       WID->view_choice[4]->value(6);
+       break;
+     case DRAW_POST_LMGC90_DEPY:
+       WID->view_choice[4]->value(7);
+       break;
+     case DRAW_POST_LMGC90_DEPZ:
+       WID->view_choice[4]->value(8);
+       break;
+     case DRAW_POST_LMGC90_DEPAV:
+       WID->view_choice[4]->value(9);
+       break;
+     case DRAW_POST_LMGC90_DEPNORM:
+       WID->view_choice[4]->value(10);
        break;
      case DRAW_POST_VONMISES:
      default:

@@ -179,9 +179,17 @@ class Post_View{
 #define DRAW_POST_LOCATE_VERTEX 2
 
 // TensorType
-#define DRAW_POST_VONMISES     0
-#define DRAW_POST_LMGC90       1
-
+#define DRAW_POST_VONMISES     		1
+#define DRAW_POST_LMGC90       		2
+#define DRAW_POST_LMGC90_TYPE  		3
+#define DRAW_POST_LMGC90_COORD  	4
+#define DRAW_POST_LMGC90_PRES   	5
+#define DRAW_POST_LMGC90_SN     	6
+#define DRAW_POST_LMGC90_DEPX   	7	
+#define DRAW_POST_LMGC90_DEPY   	8
+#define DRAW_POST_LMGC90_DEPZ   	9
+#define DRAW_POST_LMGC90_DEPAV  	10
+#define DRAW_POST_LMGC90_DEPNORM  	11
 // RangeType
 #define DRAW_POST_RANGE_DEFAULT  1
 #define DRAW_POST_RANGE_CUSTOM   2
