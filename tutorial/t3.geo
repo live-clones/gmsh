@@ -13,14 +13,14 @@ Include "t1.geo";
 // As in `t2.geo', we plan to perform an extrusion along the z axis.
 // But here, instead of only extruding the geometry, we also want to
 // extrude the 2D mesh. This is done with the same `Extrude' command,
-// but by specifying the number of layers (4 in this case, with 8, 4,
-// 2 and 1 subdivisions, respectively), with volume numbers 9000 to
-// 9003 and respective heights equal to h/4:
+// but by specifying the number of layers (4 layers in this case, each
+// with heights equal to h/4, but with 8, 4, 2 and 1 subdivisions,
+// respectively):
 
 h = 0.1;
 
 Extrude {0,0,h} { 
-  Surface{6}; Layers{ {8,4,2,1}, {9000:9003}, {0.25,0.5,0.75,1} }; 
+  Surface{6}; Layers{ {8,4,2,1}, {0.25,0.5,0.75,1} }; 
 }
 
 // The extrusion can also be performed with a rotation instead of a
@@ -30,25 +30,25 @@ Extrude {0,0,h} {
 // (-Pi/2):
 
 Extrude { {0,1,0} , {-0.1,0,0.1} , -Pi/2 } { 
-  Surface{122}; Layers { 7, 9004, 1 }; Recombine; 
+  Surface{122}; Layers { 7, 1 }; Recombine; 
 }
 
 // Note that a translation ({-2*h,0,0}) and a rotation ({1,0,0},
 // {0,0.15,0.25}, Pi/2) can also be combined:
 
-aa[] = Extrude { {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , Pi/2 } { 
+out[] = Extrude { {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , Pi/2 } { 
   Surface{news-1}; Layers{ 10, 1 }; Recombine; 
 };
 
-// In this last extrusion command we didn't specify an explicit
-// volume number (which is equivalent to setting it to "0"),
-// which means that the elements will simply belong the automatically
-// created volume (whose number we get from the aa[] list).
+// In the last extrusion command we retrieved the volume
+// number programatically by saving the output of the command
+// into an array. This array will contain the "top" of the extruded
+// surface as well as the newly created volume.
 
-// We finally define a new physical volume to save all the tetrahedra
-// with a common region number (101):
+// We can then define a new physical volume to save all
+// the tetrahedra with a common region number (101):
 
-Physical Volume(101) = {9000:9004, aa[1]};
+Physical Volume(101) = {1, 2, out[1]};
 
 // Let us now change some options... Since all interactive options are
 // accessible in Gmsh's scripting language, we can for example define
