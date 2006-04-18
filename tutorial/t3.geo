@@ -25,9 +25,9 @@ Extrude {0,0,h} {
 
 // The extrusion can also be performed with a rotation instead of a
 // translation, and the resulting mesh can be recombined into prisms
-// (wedges). All rotations are specified by an axis direction
-// ({0,1,0}), an axis point ({-0.1,0,0.1}) and a rotation angle
-// (-Pi/2) (only one layer here, with 7 subdivisions):
+// (we use only one layer here, with 7 subdivisions). All rotations
+// are specified by an axis direction ({0,1,0}), an axis point
+// ({-0.1,0,0.1}) and a rotation angle (-Pi/2):
 
 Extrude { {0,1,0} , {-0.1,0,0.1} , -Pi/2 } { 
   Surface{122}; Layers { 7, 1 }; Recombine; 
