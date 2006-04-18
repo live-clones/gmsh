@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.187 2006-03-15 08:29:06 remacle Exp $
+// $Id: Views.cpp,v 1.188 2006-04-18 09:57:32 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -111,6 +111,7 @@ Post_View *BeginView(int allocate)
   if(allocate) {
     v->DataSize = sizeof(double);
     v->Grains = new  std::map < int , List_T * > ;
+    v->DisplayListsOfGrains= new  std::map < int , int > ;
 
 #define LCD List_Create(1, 1000, sizeof(double))
     v->Time = LCD;
@@ -132,6 +133,7 @@ Post_View *BeginView(int allocate)
   else {
     v->Time = NULL;
     v->Grains = 0;
+    v->DisplayListsOfGrains = 0;
     v->SP = v->VP = v->TP = NULL;
     v->SL = v->VL = v->TL = v->SL2 = v->VL2 = v->TL2 = NULL;
     v->ST = v->VT = v->TT = v->ST2 = v->VT2 = v->TT2 = NULL;
@@ -598,6 +600,7 @@ void FreeView(Post_View * v)
     List_Delete(v->T2D); List_Delete(v->T2C);
     List_Delete(v->T3D); List_Delete(v->T3C);
     delete v->Grains;
+    delete v->DisplayListsOfGrains;
     // Note: all the second order elements have already been freed in xxxx
     if(v->normals) delete v->normals;
     if(v->TriVertexArray) delete v->TriVertexArray;
