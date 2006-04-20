@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.25 2006-02-15 04:47:35 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.26 2006-04-20 12:37:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -171,7 +171,8 @@ void GMSH_EvaluatePlugin::evaluate(Post_View *v1, List_T *list1, int nbElm1,
   v1->Changed = 1;
 
   int nb = List_Nbr(list1) / nbElm1;
-  for(int i = 0; i < List_Nbr(list1); i += nb) {
+  int nb2 = nbElm2 ? List_Nbr(list2) / nbElm2 : 0;
+  for(int i = 0, i2 = 0; i < List_Nbr(list1); i += nb, i2 += nb2) {
     double *x = (double *)List_Pointer_Fast(list1, i);
     double *y = (double *)List_Pointer_Fast(list1, i + nbNod);
     double *z = (double *)List_Pointer_Fast(list1, i + 2 * nbNod);
@@ -201,7 +202,7 @@ void GMSH_EvaluatePlugin::evaluate(Post_View *v1, List_T *list1, int nbElm1,
       }
       else{
 	val2 = (double *)List_Pointer_Fast(list2, 
-					   i + 3 * nbNod + 
+					   i2 + 3 * nbNod + 
 					   nbNod * nbComp * timeStep2 + nbComp * j);
 	for(int k = 0; k < nbComp; k++) w[k] = val2[k];
       }
