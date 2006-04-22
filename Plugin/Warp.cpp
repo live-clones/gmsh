@@ -1,4 +1,4 @@
-// $Id: Warp.cpp,v 1.1.2.3 2006-04-17 15:18:02 geuzaine Exp $
+// $Id: Warp.cpp,v 1.1.2.4 2006-04-22 10:03:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -70,7 +70,7 @@ void GMSH_WarpPlugin::getInfos(char *author, char *copyright,
 	 "of surface normals multiplied by the `TimeStep'\n"
 	 "value in `iView'. (The smoothing of the surface\n"
 	 "normals is controlled by the `SmoothingAngle'\n"
-	 "parameter.). If `iView' < 0, the plugin is run on\n"
+	 "parameter.) If `iView' < 0, the plugin is run on\n"
 	 "the current view.\n"
 	 "\n"
 	 "Plugin(Warp) is executed in-place.\n");
