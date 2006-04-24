@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.278 2006-04-18 07:49:18 remacle Exp $
+// $Id: Options.cpp,v 1.279 2006-04-24 00:26:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4503,6 +4503,7 @@ double opt_mesh_min_elem_size_fact(OPT_ARGS_NUM)
 #endif
   return CTX.mesh.min_elem_size_fact;
 }
+
 double opt_mesh_target_elem_size_fact(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -4513,6 +4514,7 @@ double opt_mesh_target_elem_size_fact(OPT_ARGS_NUM)
 #endif
   return CTX.mesh.target_elem_size_fact;
 }
+
 double opt_mesh_beta_smooth_metric(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -4523,11 +4525,19 @@ double opt_mesh_beta_smooth_metric(OPT_ARGS_NUM)
 #endif
   return CTX.mesh.beta_smooth_metric;
 }
+
 double opt_mesh_msh_file_version(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.mesh.msh_file_version = val;
   return CTX.mesh.msh_file_version;
+}
+
+double opt_mesh_renumber_nodes_continuous(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.renumber_nodes_continuous = (int)val;
+  return CTX.mesh.renumber_nodes_continuous;
 }
 
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM)
@@ -4584,8 +4594,6 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
   return CTX.mesh.algo2d;
 }
 
-
-
 double opt_mesh_recombine_algo(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -4611,7 +4619,6 @@ double opt_mesh_recombine_algo(OPT_ARGS_NUM)
 #endif
   return CTX.mesh.algo_recombine;
 }
-
 
 double opt_mesh_algo3d(OPT_ARGS_NUM)
 {

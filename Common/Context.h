@@ -170,15 +170,15 @@ public :
     int quality_type, label_type;
     double quality_inf, quality_sup, radius_inf, radius_sup;
     double scaling_factor, lc_factor, rand_factor;
-    int dual, interactive;
+    int dual, interactive, renumber_nodes_continuous;
     int light, light_two_side, light_lines;
-    int format, nbPartitions,nb_smoothing, algo2d, algo3d, order,algo_recombine;
+    int format, nbPartitions, nb_smoothing, algo2d, algo3d, order, algo_recombine;
     int point_insertion, speed_max, min_circ_points, constrained_bgmesh;
     int histogram, initial_only;
     double normals, tangents, explode;
-    int color_carousel ;
+    int color_carousel;
     int use_cut_plane, cut_plane_as_surface, cut_plane_only_volume;
-    double cut_planea,cut_planeb,cut_planec,cut_planed;
+    double cut_planea, cut_planeb, cut_planec, cut_planed;
     double evalCutPlane (double x, double y, double z){
       double val = cut_planea * x + cut_planeb * y + cut_planec * z + cut_planed; 
       return val;

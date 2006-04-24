@@ -755,7 +755,7 @@ step of the view `dView', scaled by `Factor'. If
 of surface normals multiplied by the `TimeStep'
 value in `iView'. (The smoothing of the surface
 normals is controlled by the `SmoothingAngle'
-parameter.). If `iView' < 0, the plugin is run on
+parameter.) If `iView' < 0, the plugin is run on
 the current view.
 
 Plugin(Warp) is executed in-place.
