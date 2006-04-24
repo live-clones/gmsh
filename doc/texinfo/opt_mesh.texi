@@ -304,6 +304,11 @@ Recombine algorithm (1=mixed triangles-quadrangles, 2=all quadrangles)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.RenumberNodes
+Renumber nodes to remove holes in the numbering sequence@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.SaveAll
 Ignore Physical definitions and save all elements@*
 Default value: @code{0}@*

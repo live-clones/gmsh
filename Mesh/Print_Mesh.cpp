@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.70 2006-02-04 03:43:30 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.70.2.1 2006-04-24 00:28:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -57,6 +57,9 @@ static void _msh_print_node(void *a, void *b)
 {
   Vertex *V = *(Vertex **) a;
 
+  if(CTX.mesh.renumber_nodes_continuous)
+    V->Num = ++MSH_NODE_NUM;
+
   fprintf(MSHFILE, "%d %.16g %.16g %.16g\n",
           V->Num,
           V->Pos.X * CTX.mesh.scaling_factor,
@@ -85,13 +88,13 @@ static void _msh_process_nodes(Mesh *M)
     }
   }
 
-  MSH_NODE_NUM = Tree_Nbr(M->Vertices);
-
   if(CTX.mesh.msh_file_version == 2.0)
     fprintf(MSHFILE, "$Nodes\n");
   else
     fprintf(MSHFILE, "$NOD\n");
-  fprintf(MSHFILE, "%d\n", MSH_NODE_NUM);
+  fprintf(MSHFILE, "%d\n", Tree_Nbr(M->Vertices));
+
+  MSH_NODE_NUM = 0;
   Tree_Action(M->Vertices, _msh_print_node);
   if(CTX.mesh.msh_file_version == 2.0)
     fprintf(MSHFILE, "$EndNodes\n");
