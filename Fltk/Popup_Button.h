@@ -27,6 +27,8 @@
 // (popup() in 1.1.7 calls redraw() after picked(), which can cause a
 // crash if the button was deleted by the callback)
 
+// Update Sat Apr 29 21:39:00 2006: this bug is now fixed in FLTK.
+
 class Popup_Button : public Fl_Menu_Button {
  public:
   Popup_Button(int x, int y, int w, int h, char *label=0) 
