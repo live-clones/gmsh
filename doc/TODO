@@ -1,4 +1,7 @@
-$Id: TODO,v 1.6 2006-04-15 17:21:18 geuzaine Exp $
+$Id: TODO,v 1.7 2006-05-05 17:48:55 geuzaine Exp $
+
+change default hovering mouse mode to off (very slow for ruth on
+ubuntu)
 
 ********************************************************************
 

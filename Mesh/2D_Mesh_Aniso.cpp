@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.51 2006-04-05 21:28:08 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.52 2006-05-05 17:48:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1145,7 +1145,7 @@ int AlgorithmeMaillage2DAnisotropeModeJF(Surface * s)
         Tree_Action(s->Simplexes, VSIM_2D);
         Msg(STATUS3, "Nod=%d Elm=%d",
             Tree_Nbr(s->Vertices), Tree_Nbr(s->Simplexes));
-        Msg(STATUS1, "Vol(%g) Conv(%g->%g)", volume, simp->Quality,
+        Msg(STATUS1, "Surf(%g) Conv(%g->%g)", volume, simp->Quality,
             CONV_VALUE);
       }
       Bowyer_Watson_2D(s, newv, simp, 0);
