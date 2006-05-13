@@ -1,4 +1,4 @@
-// $Id: 2D_Recombine.cpp,v 1.26 2006-01-06 00:34:25 geuzaine Exp $
+// $Id: 2D_Recombine.cpp,v 1.26.2.1 2006-05-13 22:12:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -223,7 +223,10 @@ int Recombine_All (Mesh *THEM)
       Quadrangle *q3 = Create_Quadrangle(q->V[2], q->VSUP[2], q->VSUP[4], q->VSUP[1]);
       Quadrangle *q4 = Create_Quadrangle(q->V[3], q->VSUP[3], q->VSUP[4], q->VSUP[2]);
       q1->iEnt = q2->iEnt = q3->iEnt = q4->iEnt = q->iEnt;      
-      for(int k = 0; k < 5; k++) q->VSUP[k]->Degree = 1;
+      for(int k = 0; k < 5; k++){
+	q->VSUP[k]->Degree = 1;
+	Tree_Insert(s->Vertices, &q->VSUP[k]);
+      }
       Tree_Add(s->Quadrangles, &q1);
       Tree_Add(s->Quadrangles, &q2);
       Tree_Add(s->Quadrangles, &q3);
@@ -258,11 +261,15 @@ int Recombine_All (Mesh *THEM)
 	  c = Create_Vertex(++THEM->MaxPointNum, v.Pos.X, v.Pos.Y, v.Pos.Z, v.lc, v.u);
 	}  
         Tree_Add(THEM->Vertices, &c);
+        Tree_Insert(s->Vertices, &c);
 	Quadrangle *q1 = Create_Quadrangle(t->V[0], t->VSUP[0], c, t->VSUP[2]);
 	Quadrangle *q2 = Create_Quadrangle(t->V[1], t->VSUP[1], c, t->VSUP[0]);
 	Quadrangle *q3 = Create_Quadrangle(t->V[2], t->VSUP[2], c, t->VSUP[1]);
 	q1->iEnt = q2->iEnt = q3->iEnt = t->iEnt;
-	for(int k = 0; k < 3; k++) t->VSUP[k]->Degree = 1;
+	for(int k = 0; k < 3; k++){
+	  t->VSUP[k]->Degree = 1;
+	  Tree_Insert(s->Vertices, &t->VSUP[k]);
+	}
 	Tree_Add(s->Quadrangles, &q1);
 	Tree_Add(s->Quadrangles, &q2);
 	Tree_Add(s->Quadrangles, &q3);
@@ -279,7 +286,10 @@ int Recombine_All (Mesh *THEM)
 	Simplex *t3 = Create_Simplex(t->V[2], t->VSUP[2],t->VSUP[1], 0);
 	Simplex *t4 = Create_Simplex(t->VSUP[0], t->VSUP[1],t->VSUP[2], 0);
 	t1->iEnt = t2->iEnt = t3->iEnt = t4->iEnt = t->iEnt;
-	for(int k = 0; k < 3; k++) t->VSUP[k]->Degree = 1;
+	for(int k = 0; k < 3; k++){
+	  t->VSUP[k]->Degree = 1;
+	  Tree_Insert(s->Vertices, &t->VSUP[k]);
+	}
 	Tree_Add(s->Simplexes, &t1);
 	Tree_Add(s->Simplexes, &t2);
 	Tree_Add(s->Simplexes, &t3);
