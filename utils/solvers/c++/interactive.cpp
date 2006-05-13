@@ -24,7 +24,7 @@ class GmshInteractiveClient{
   }
   void read(char *prompt)
   {
-    // preload a few commands in the history:
+    // pre-load a few commands in the history:
     add_history("lc = 1.;");
     add_history("Point(1) = {0,0,0,lc};");
     add_history("Point(2) = {5,0,0,lc};");
@@ -32,22 +32,22 @@ class GmshInteractiveClient{
     add_history("argh");
     
     while (1) {
-      // read input char until CR, LF, EOF, ^D
+      // read input char until CR, LF, EOF or ^D
       char *ptr = readline(prompt);
       // exit interactive if EOF or ^D
       if(!ptr) break;
-      // if there is something in the line
+      // if the command line is not empty
       if(strlen(ptr)){
 	// add the command in the stack
 	add_history(ptr);
-	if(!strcmp(ptr,"q") || !strcmp(ptr, "quit")){
-	  // exit interactive if q, quit, exit
+	if(!strcmp(ptr, "q") || !strcmp(ptr, "quit")){
+	  // exit interactive if q or quit
 	  free(ptr);
 	  break;
 	}
-	else if(!strcmp(ptr, "dir") || !strcmp(ptr, "ls")){
+	else if(ptr[0] == '!'){
 	  // direct system calls
-	  system("ls -al");
+	  system(&ptr[1]);
 	}
 	else if(!strcmp(ptr, "argh")){
 	  // test speed of string sending with a 1Mb view
