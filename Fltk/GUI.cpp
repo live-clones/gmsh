@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.491.2.5 2006-04-15 13:07:11 geuzaine Exp $
+// $Id: GUI.cpp,v 1.491.2.6 2006-05-13 22:10:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1729,7 +1729,7 @@ void GUI::create_option_window()
       gen_butt[6]->down_box(GMSH_TOGGLE_BOX);
       gen_butt[6]->selection_color(GMSH_TOGGLE_COLOR);
 
-      gen_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Draw simplified model while rotating, panning and zooming");
+      gen_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Draw simplified model during user interaction");
       gen_butt[2]->tooltip("(Alt+f)");
       gen_butt[2]->type(FL_TOGGLE_BUTTON);
       gen_butt[2]->down_box(GMSH_TOGGLE_BOX);
