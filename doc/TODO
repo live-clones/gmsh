@@ -1,6 +1,4 @@
-$Id: TODO,v 1.8 2006-05-13 22:06:09 geuzaine Exp $
-
-Mesh.RenumberNodes breaks second order hexas !?!?
+$Id: TODO,v 1.9 2006-05-13 22:32:13 geuzaine Exp $
 
 ********************************************************************
 
