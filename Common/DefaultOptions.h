@@ -969,7 +969,7 @@ StringXNumber MeshOptions_Number[] = {
     "Random factor used in 2D and 3D meshing algorithm (test other values when the algorithm fails)" },
   { F|O, "RecombineAlgo" , opt_mesh_recombine_algo , 1 ,
     "Recombine algorithm (1=mixed triangles-quadrangles, 2=all quadrangles)" }, 
-  { F|O, "RenumberNodes" , opt_mesh_renumber_nodes_continuous , 1. , 
+  { F|O, "RenumberNodes" , opt_mesh_renumber_nodes_continuous , 0. , 
     "Renumber nodes to remove holes in the numbering sequence" },
 
   { F,   "SaveAll" , opt_mesh_save_all , 0. , 
