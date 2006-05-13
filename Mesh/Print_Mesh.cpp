@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.70.2.1 2006-04-24 00:28:49 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.70.2.2 2006-05-13 22:31:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -57,8 +57,9 @@ static void _msh_print_node(void *a, void *b)
 {
   Vertex *V = *(Vertex **) a;
 
+  MSH_NODE_NUM++;
   if(CTX.mesh.renumber_nodes_continuous)
-    V->Num = ++MSH_NODE_NUM;
+    V->Num = MSH_NODE_NUM;
 
   fprintf(MSHFILE, "%d %.16g %.16g %.16g\n",
           V->Num,
