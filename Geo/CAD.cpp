@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.95.2.1 2006-04-09 20:14:49 geuzaine Exp $
+// $Id: CAD.cpp,v 1.95.2.2 2006-05-13 22:13:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1570,10 +1570,10 @@ int Extrude_ProtudeSurface(int type, int is,
   v->Extrude->geo.Source = is;
   if(e)
     v->Extrude->mesh = e->mesh;
-  int ori = 1;;
+  int ori = -1;
   List_Add(v->Surfaces, &ps);
   List_Add(v->SurfacesOrientations, &ori);
-  ori = -1;
+  ori = 1;
   List_Add(v->Surfaces, &chapeau);
   List_Add(v->SurfacesOrientations, &ori);
 
@@ -1582,7 +1582,10 @@ int Extrude_ProtudeSurface(int type, int is,
     Extrude_ProtudeCurve(type, c->Num, T0, T1, T2, A0, A1, A2, X0, X1, X2,
 			 alpha, &s, 0, e);
     if(s){
-      ori = -1;
+      if(c < 0)
+	ori = -1;
+      else 
+	ori = 1;
       List_Add(v->Surfaces, &s);
       List_Add(v->SurfacesOrientations, &ori);
     }
