@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.74 2006-05-13 22:32:13 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.75 2006-05-14 00:48:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -168,9 +168,7 @@ static void _msh_print_simplex(void *a, void *b)
       type = TETRAHEDRON;
       if(s->Volume_Simplexe() < 0) {
 	Vertex *temp;
-	temp = s->V[0];
-	s->V[0] = s->V[1];
-	s->V[1] = temp;
+	temp = s->V[0]; s->V[0] = s->V[1]; s->V[1] = temp;
       }
     }
   }
@@ -280,11 +278,12 @@ static void _msh_print_hexahedron(void *a, void *b)
       Vertex *temp;
       temp = h->V[0]; h->V[0] = h->V[2]; h->V[2] = temp;
       temp = h->V[4]; h->V[4] = h->V[6]; h->V[6] = temp;
-      temp = h->VSUP[0]; h->VSUP[0] = h->VSUP[4];  h->VSUP[4]  = temp;
-      temp = h->VSUP[1]; h->VSUP[1] = h->VSUP[10]; h->VSUP[10] = temp;
-      temp = h->VSUP[2]; h->VSUP[2] = h->VSUP[8];  h->VSUP[8]  = temp;
-      temp = h->VSUP[5]; h->VSUP[5] = h->VSUP[6];  h->VSUP[6]  = temp;
-      temp = h->VSUP[7]; h->VSUP[7] = h->VSUP[11]; h->VSUP[11] = temp;
+      Vertex *old[12];
+      for(int i = 0; i < 12; i++) old[i] = h->VSUP[i];
+      h->VSUP[0] = old[3]; h->VSUP[1] = old[5]; h->VSUP[2] = old[6];
+      h->VSUP[3] = old[0]; h->VSUP[4] = old[4]; h->VSUP[5] = old[1];
+      h->VSUP[6] = old[2]; h->VSUP[7] = old[7]; h->VSUP[8] = old[10];
+      h->VSUP[9] = old[11]; h->VSUP[10] = old[8]; h->VSUP[11] = old[9];
     }
   }
   else {

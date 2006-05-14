@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.91 2006-01-06 00:34:25 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.92 2006-05-14 00:48:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -366,15 +366,15 @@ void Create_HexPri(int iEnt, Vertex * v[8])
 
   if(j == 2) {
     if(dup[0] == 0 && dup[1] == 1)
-      newp = Create_Prism(v[0], v[3], v[7], v[1], v[6], v[2]);
+      newp = Create_Prism(v[0], v[3], v[7], v[1], v[2], v[6]);
     else if(dup[0] == 1 && dup[1] == 2)
       newp = Create_Prism(v[0], v[1], v[4], v[3], v[2], v[7]);
     else if(dup[0] == 2 && dup[1] == 3)
-      newp = Create_Prism(v[0], v[3], v[4], v[1], v[5], v[7]);
+      newp = Create_Prism(v[0], v[3], v[4], v[1], v[2], v[5]);
     else if(dup[0] == 0 && dup[1] == 3)
       newp = Create_Prism(v[0], v[1], v[5], v[3], v[2], v[6]);
     else {
-      Msg(GERROR, "Uncoherent hexahedron  (nodes %d %d %d %d %d %d %d %d)",
+      Msg(GERROR, "Uncoherent hexahedron (nodes %d %d %d %d %d %d %d %d)",
           v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
       return;
     }
