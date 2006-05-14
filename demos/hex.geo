@@ -63,7 +63,7 @@ Transfinite Line{51:54} = 5;
 Transfinite Surface{56} = {51,52,53,54};
 Recombine Surface{56};
 Extrude {0,0,1} {
-  Surface{56}; Layers{5,1}; Recombine;
+  Surface{56}; Layers{4,1}; Recombine;
 }
 
 // and the same by using only extrusions
