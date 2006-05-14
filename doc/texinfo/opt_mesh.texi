@@ -306,7 +306,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RenumberNodes
 Renumber nodes to remove holes in the numbering sequence@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveAll
