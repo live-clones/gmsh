@@ -614,6 +614,11 @@ Width (in pixels) of the message window@*
 Default value: @code{450}@*
 Saved in: @code{General.SessionFileName}
 
+@item General.MouseSelection
+Mouse selection mode (0=none, 1=no hover, 2=full)@*
+Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.NoPopup
 Disable interactive dialog windows in scripts (and use default values instead)@*
 Default value: @code{0}@*
