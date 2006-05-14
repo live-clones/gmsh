@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.279 2006-04-24 00:26:48 geuzaine Exp $
+// $Id: Options.cpp,v 1.280 2006-05-14 02:03:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -156,7 +156,6 @@ void Init_Options(int num)
   CTX.gl_font_enum = -1;
 #endif
   CTX.forced_bbox = 0;
-  CTX.enable_mouse_selection = 2; // hover-to-show-number and click-to-select
 }
 
 void ReInit_Options(int num)
@@ -2791,6 +2790,30 @@ double opt_general_orthographic(OPT_ARGS_NUM)
   }
 #endif
   return CTX.ortho;
+}
+
+double opt_general_mouse_selection(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.enable_mouse_selection = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)) {
+    if(CTX.enable_mouse_selection == 0){
+      Msg(STATUS1N, "Mouse selection OFF");
+      WID->g_status_butt[9]->color(FL_RED);
+    }
+    else if(CTX.enable_mouse_selection == 1){
+      Msg(STATUS1N, "Mouse hover OFF");
+      WID->g_status_butt[9]->color(FL_GREEN);
+    }
+    else{
+      Msg(STATUS1N, "Mouse selection ON");
+      WID->g_status_butt[9]->color(FL_BACKGROUND_COLOR);
+    }
+    WID->g_status_butt[9]->redraw();
+  }
+#endif
+  return CTX.enable_mouse_selection;
 }
 
 double opt_general_fast_redraw(OPT_ARGS_NUM)

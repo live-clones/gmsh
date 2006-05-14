@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.416 2006-04-18 07:49:18 remacle Exp $
+// $Id: Callbacks.cpp,v 1.417 2006-05-14 02:03:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -467,22 +467,18 @@ void status_xyz1p_cb(CALLBACK_ARGS)
   }
   else if(!strcmp(str, "S")){ // mouse selection
     if(Fl::event_state(FL_SHIFT)){
-      CTX.enable_mouse_selection = 1; // mouse selection only (no hover)
-      Msg(STATUS1N, "Mouse hover OFF");
-      WID->g_status_butt[9]->color(FL_GREEN);
+      // mouse selection only (no hover)
+      opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
     }
     else if(CTX.enable_mouse_selection){
-      CTX.enable_mouse_selection = 0; // mouse does nothing
-      Msg(STATUS1N, "Mouse selection OFF");
-      WID->g_status_butt[9]->color(FL_RED);
+      // mouse does nothing
+      opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 0);
       WID->g_opengl_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);      
     }
     else{
-      CTX.enable_mouse_selection = 2; // mouse hover and select (default)
-      Msg(STATUS1N, "Mouse selection ON");
-      WID->g_status_butt[9]->color(FL_BACKGROUND_COLOR);
+      // mouse hover and select (default)
+      opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 2);
     }
-    WID->g_status_butt[9]->redraw();
   }
   WID->update_manip_window();
 }
