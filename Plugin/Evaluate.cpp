@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.26 2006-04-20 12:37:46 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.27 2006-05-15 13:18:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -74,7 +74,7 @@ void GMSH_EvaluatePlugin::getInfos(char *author, char *copyright,
 	 "view `iView' to the expression `Expression'.\n"
 	 "`Expression' can contain:\n"
 	 "\n"
-	 "- the usual mathematical functions (Log, Sqrt\n"
+	 "- the usual mathematical functions (Log, Sqrt,\n"
 	 "Sin, Cos, Fabs, ...) and operators (+, -, *, /, ^);\n"
 	 "\n"
 	 "- the symbols x, y and z, to retrieve the\n"
