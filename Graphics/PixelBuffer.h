@@ -113,9 +113,9 @@ class PixelBuffer{
       }
       ClearOpengl();
       Draw3d();
-      //Draw2d();
+      Draw2d();
       glFinish();
-      //OSMesaDestroyContext(ctx);
+      OSMesaDestroyContext(ctx);
 #else
       Msg(WARNING, "Offscreen rendering not available in this version");
 #endif
