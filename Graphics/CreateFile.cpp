@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.77 2006-05-17 01:19:05 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.78 2006-05-17 03:27:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -139,7 +139,7 @@ void CreateOutputFile(char *name, int format)
 	CTX.print.gl_fonts = 0;
 
       PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
-      buffer.Fill();
+      buffer.Fill(CTX.batch);
 
       CTX.print.gl_fonts = 1;
       if(format == FORMAT_PPM){
@@ -209,7 +209,7 @@ void CreateOutputFile(char *name, int format)
       if(CTX.print.eps_quality == 0){
 	if(format == FORMAT_EPSTEX || format == FORMAT_PDFTEX)
 	  CTX.print.gl_fonts = 0;
-	buffer.Fill();
+	buffer.Fill(CTX.batch);
 	CTX.print.gl_fonts = 1;
       }
       
@@ -252,7 +252,7 @@ void CreateOutputFile(char *name, int format)
 	}
 	else{
 	  CTX.print.gl_fonts = 0;
-	  buffer.Fill();
+	  buffer.Fill(CTX.batch);
 	  CTX.print.gl_fonts = 1;
 	}
 	res = gl2psEndPage();
@@ -276,7 +276,7 @@ void CreateOutputFile(char *name, int format)
 		     0, 0, 0, 1000, fp, name);
       CTX.print.gl_fonts = 0;
       PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
-      buffer.Fill();
+      buffer.Fill(CTX.batch);
       CTX.print.gl_fonts = 1;
       res = gl2psEndPage();
       Msg(INFO, "Wrote TEX file '%s'", name);

@@ -32,9 +32,6 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Draw.h"
-#include "Context.h"
-
-extern Context_T CTX;
 
 #if defined(HAVE_OSMESA)
 #include <GL/osmesa.h>
@@ -85,9 +82,9 @@ class PixelBuffer{
   GLenum GetFormat(){ return _format; }
   GLenum GetType(){ return _type; }
   void *GetPixels(){ return _pixels; }
-  void Fill()
+  void Fill(int offscreen)
   {
-    if(!CTX.batch){
+    if(!offscreen){
       SetOpenglContext();
       ClearOpengl();
       Draw3d();
