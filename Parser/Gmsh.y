@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.228 2006-05-17 01:19:21 geuzaine Exp $
+// $Id: Gmsh.y,v 1.229 2006-05-17 18:40:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -110,7 +110,7 @@ int CheckViewErrorFlags(Post_View *v);
 %type <v> VExpr VExpr_Single
 %type <i> NumericAffectation NumericIncrement
 %type <u> ColorExpr
-%type <c> StringExpr
+%type <c> StringExpr SendToFile
 %type <l> FExpr_Multi ListOfDouble RecursiveListOfDouble
 %type <l> ListOfListOfDouble RecursiveListOfListOfDouble 
 %type <l> ListOfColor RecursiveListOfColor 
@@ -168,11 +168,37 @@ GeoFormatItem :
   | Command     { return 1; }
 ;
 
+SendToFile :
+    '>'
+    {
+      $$ = "w";
+    }
+  | '>' '>'
+    {
+      $$ = "a";
+    }
+;
+
 Printf :
     tPrintf '(' tBIGSTR ')' tEND
     {
       Msg(DIRECT, $3);
       Free($3);
+    }
+  | tPrintf '(' tBIGSTR ')' SendToFile StringExpr tEND
+    {
+      char tmpstring[1024];
+      FixRelativePath($6, tmpstring);
+      FILE *fp = fopen(tmpstring, $5);
+      if(!fp){
+	yymsg(GERROR, "Unable to open file '%s'", tmpstring);
+      }
+      else{
+	fprintf(fp, "%s\n", $3);
+	fclose(fp);
+      }
+      Free($3);
+      Free($6);
     }
   | tPrintf '(' tBIGSTR ',' RecursiveListOfDouble ')' tEND
     {
@@ -185,6 +211,30 @@ Printf :
       else
 	Msg(DIRECT, tmpstring);
       Free($3);
+      List_Delete($5);
+    }
+  | tPrintf '(' tBIGSTR ',' RecursiveListOfDouble ')' SendToFile StringExpr tEND
+    {
+      char tmpstring[1024];
+      int i = PrintListOfDouble($3, $5, tmpstring);
+      if(i < 0) 
+	yymsg(GERROR, "Too few arguments in Printf");
+      else if(i > 0)
+	yymsg(GERROR, "%d extra argument%s in Printf", i, (i>1)?"s":"");
+      else{
+	char tmpstring2[1024];
+	FixRelativePath($8, tmpstring2);
+	FILE *fp = fopen(tmpstring2, $7);
+	if(!fp){
+	  yymsg(GERROR, "Unable to open file '%s'", tmpstring2);
+	}
+	else{
+	  fprintf(fp, "%s\n", tmpstring);
+	  fclose(fp);
+	}
+      }
+      Free($3);
+      Free($8);
       List_Delete($5);
     }
 ;
@@ -2677,6 +2727,24 @@ FExpr_Single :
       Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", $1);
+	$$ = 0.;
+      }
+      else
+	$$ = *(double*)List_Pointer_Fast(pSymbol->val, 0);
+      Free($1);
+    }
+  // This is for GetDP compatibility (we should generalize it so
+  // that we can create variables with this syntax, use them
+  // recursively, etc., but I don't have time to do it now)
+  | tSTRING '~' '{' FExpr '}'
+    {
+      char tmpstring[1024];
+      sprintf(tmpstring, "%s_%d", $1, (int)$4) ;
+      Symbol TheSymbol;
+      TheSymbol.Name = tmpstring;
+      Symbol *pSymbol;
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
+	yymsg(GERROR, "Unknown variable '%s'", tmpstring);
 	$$ = 0.;
       }
       else

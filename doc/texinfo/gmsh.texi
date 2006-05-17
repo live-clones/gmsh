@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.207 2006-04-04 04:32:34 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.208 2006-05-17 18:40:37 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -1275,6 +1275,13 @@ are evaluated as floating point values in Gmsh (@pxref{Expressions}), so
 that only valid floating point formatting characters make sense in
 @var{char-expression}. See @ref{t5.geo}, for an example of the use of
 @code{Printf}.
+
+@item Printf ( @var{char-expression} , @var{expression-list} ) > @var{char-expression};
+Same as @code{Printf} above, but output the expression in a file.
+
+@item Printf ( @var{char-expression} , @var{expression-list} ) >> @var{char-expression};
+Same as @code{Printf} above, but appends the expression at the end of
+the file.
 
 @item Merge @var{char-expression};
 Merges a file named @var{char-expression}. This command is equivalent to the
