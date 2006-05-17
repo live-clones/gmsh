@@ -826,6 +826,7 @@ Optional Features:
   --enable-tetgen         compile Tetgen if available (default=yes)
   --enable-matheval       compile MathEval if available (default=yes)
   --enable-model          compile Model interface if available (default=yes)
+  --enable-osmesa         use OSMesa for offscreen rendering (default=no)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -838,6 +839,8 @@ Optional Packages:
                           installed
   --with-zlib-prefix=PFX  prefix where the ZLIB library and includes are
                           installed
+  --with-osmesa-prefix=PFX
+                          prefix where OSMesa is installed
 
 Some influential environment variables:
   CC          C compiler command
@@ -1320,6 +1323,12 @@ if test "${with_zlib_prefix+set}" = set; then
   ZLIB_PREFIX=$withval
 fi;
 
+# Check whether --with-osmesa-prefix or --without-osmesa-prefix was given.
+if test "${with_osmesa_prefix+set}" = set; then
+  withval="$with_osmesa_prefix"
+  OSMESA_PREFIX=$withval
+fi;
+
 # Check whether --enable-gsl or --disable-gsl was given.
 if test "${enable_gsl+set}" = set; then
   enableval="$enable_gsl"
@@ -1393,6 +1402,11 @@ fi;
 # Check whether --enable-model or --disable-model was given.
 if test "${enable_model+set}" = set; then
   enableval="$enable_model"
+
+fi;
+# Check whether --enable-osmesa or --disable-osmesa was given.
+if test "${enable_osmesa+set}" = set; then
+  enableval="$enable_osmesa"
 
 fi;
 
@@ -3169,8 +3183,90 @@ echo "$as_me: error: Could not find fltk-config. Try --with-fltk-prefix?" >&2;}
    { (exit 1); exit 1; }; }
   fi
 
-  GMSH_LIBS="${GMSH_LIBS} `$FLTKCONFIG --use-gl --use-images --ldflags`"
-  FLAGS="${FLAGS} `$FLTKCONFIG --use-gl --use-images --cxxflags`"
+    if test "x$enable_osmesa" = "xyes"; then
+    if test "x${OSMESA_PREFIX}" != "x"; then
+      LDFLAGS="-L${OSMESA_PREFIX} -L${OSMESA_PREFIX}/lib ${LDFLAGS}"
+    fi
+
+echo "$as_me:$LINENO: checking for main in -lOSMesa" >&5
+echo $ECHO_N "checking for main in -lOSMesa... $ECHO_C" >&6
+if test "${ac_cv_lib_OSMesa_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lOSMesa  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_OSMesa_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_OSMesa_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_OSMesa_main" >&5
+echo "${ECHO_T}$ac_cv_lib_OSMesa_main" >&6
+if test $ac_cv_lib_OSMesa_main = yes; then
+  OSMESA="yes"
+else
+  OSMESA="no"
+fi
+
+  fi
+
+  if test "x${OSMESA}" = "xyes"; then
+    GMSH_LIBS="${GMSH_LIBS} `$FLTKCONFIG --use-images --ldflags` -lfltk_gl"
+    FLAGS="${FLAGS} -DHAVE_OSMESA `$FLTKCONFIG --use-images --cxxflags`"
+    if test "x${OSMESA_PREFIX}" = "x"; then
+      GMSH_LIBS="${GMSH_LIBS} -lOSMesa -lGL -lGLU"
+    else
+      GMSH_LIBS="${GMSH_LIBS} -L${OSMESA_PREFIX} -L${OSMESA_PREFIX}/lib -lOSMesa -lGL -lGLU"
+      FLAGS="${FLAGS} -I${OSMESA_PREFIX} -I${OSMESA_PREFIX}/include"
+    fi
+  else
+    GMSH_LIBS="${GMSH_LIBS} `$FLTKCONFIG --use-gl --use-images --ldflags`"
+    FLAGS="${FLAGS} `$FLTKCONFIG --use-gl --use-images --cxxflags`"
+  fi
 
   FL_JPEG=""
   expr "x${GMSH_LIBS}" : 'x.*fltk_jpeg.*' >/dev/null && FL_JPEG="yes"
@@ -3186,8 +3282,7 @@ echo "$as_me: error: Could not find fltk-config. Try --with-fltk-prefix?" >&2;}
       if test "x${JPEG_PREFIX}" != "x"; then
         LDFLAGS="-L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib ${LDFLAGS}"
       fi
-
-echo "$as_me:$LINENO: checking for main in -ljpeg" >&5
+      echo "$as_me:$LINENO: checking for main in -ljpeg" >&5
 echo $ECHO_N "checking for main in -ljpeg... $ECHO_C" >&6
 if test "${ac_cv_lib_jpeg_main+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
