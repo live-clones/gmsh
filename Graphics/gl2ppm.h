@@ -32,7 +32,8 @@
  */
 
 #include <stdio.h>
+#include "PixelBuffer.h"
 
-void create_ppm(FILE *outfile, int width, int height);
+void create_ppm(FILE *outfile, PixelBuffer *buffer);
 
 #endif

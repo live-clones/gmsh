@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.227 2006-04-04 04:32:34 geuzaine Exp $
+// $Id: Gmsh.y,v 1.228 2006-05-17 01:19:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1780,11 +1780,9 @@ Command :
       }
       else if(!strcmp($1, "Print")){
 #if defined(HAVE_FLTK)
-	if(!CTX.batch){
-	  char tmpstring[1024];
-	  FixRelativePath($2, tmpstring);
-	  CreateOutputFile(tmpstring, CTX.print.format);
-	}
+	char tmpstring[1024];
+	FixRelativePath($2, tmpstring);
+	CreateOutputFile(tmpstring, CTX.print.format);
 #endif
       }
       else if(!strcmp($1, "Save")){
@@ -1902,8 +1900,7 @@ Command :
    | tDraw tEND
     {
 #if defined(HAVE_FLTK)
-      if(!CTX.batch) // we're in interactive mode
-	Draw();
+      Draw();
 #endif
     }
 ;

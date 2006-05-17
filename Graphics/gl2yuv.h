@@ -32,7 +32,8 @@
  */
 
 #include <stdio.h>
+#include "PixelBuffer.h"
 
-void create_yuv(FILE *outfile, int width, int height);
+void create_yuv(FILE *outfile, PixelBuffer *buffer);
 
 #endif

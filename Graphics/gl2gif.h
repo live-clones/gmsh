@@ -32,6 +32,7 @@
  */
 
 #include <stdio.h>
+#include "PixelBuffer.h"
 
 #define MAX_GIFCOLORS  256
 
@@ -80,7 +81,7 @@ typedef colorhist_list* colorhash_table;
 
 /* Public function */
 
-void create_gif(FILE *outfile, int width, int height, 
+void create_gif(FILE *outfile, PixelBuffer *buffer, 
 		int dither, int sort, int interlace, 
 		int transparency, int r, int g, int b);
 

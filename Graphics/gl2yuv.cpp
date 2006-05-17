@@ -1,4 +1,4 @@
-/* $Id: gl2yuv.cpp,v 1.11 2003-11-04 17:10:29 geuzaine Exp $ */
+/* $Id: gl2yuv.cpp,v 1.12 2006-05-17 01:19:06 geuzaine Exp $ */
 /*
  * GL2YUV, an OpenGL to YUV Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -56,11 +56,15 @@
  */
 
 
-#include "Gmsh.h"
-#include "GmshUI.h"
+#include "gl2yuv.h"
 
-void create_yuv(FILE * outfile, int width, int height)
+void create_yuv(FILE * outfile, PixelBuffer *buffer)
 {
+  if(buffer->GetFormat() != GL_RGB || buffer->GetType() != GL_UNSIGNED_BYTE){
+    Msg(GERROR, "YUV only implemented for GL_RGB and GL_UNSIGNED_BYTE");
+    return;
+  }
+
   register int x, y;
   register unsigned char *dy0, *dy1;
   register unsigned char *dcr, *dcb;
@@ -72,9 +76,7 @@ void create_yuv(FILE * outfile, int width, int height)
   static float mult16874[1024], mult33126[1024], mult5[1024];
   static float mult41869[1024], mult08131[1024];
 
-  unsigned char *pixels;
   unsigned char **orig_y, **orig_cr, **orig_cb;
-  int row_stride;
 
   if(first) {
     register int index;
@@ -96,15 +98,15 @@ void create_yuv(FILE * outfile, int width, int height)
     first = 0;
   }
 
+  int width = buffer->GetWidth();
+  int height = buffer->GetHeight();
+  unsigned char *pixels = (unsigned char *)buffer->GetPixels();
+  
   // yuv format assumes even number of rows and columns
   height -= height % 2;
   width -= width % 2;
 
-  glPixelStorei(GL_PACK_ALIGNMENT, 1);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  pixels = (unsigned char *)Malloc(height * width * 3);
-  glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-  row_stride = width * 3;
+  int row_stride = width * 3;
 
   orig_y = (unsigned char **)Malloc(sizeof(unsigned char *) * height);
   for(y = 0; y < height; y++) {
@@ -185,8 +187,6 @@ void create_yuv(FILE * outfile, int width, int height)
   // V
   for(y = height / 2 - 1; y >= 0; y--)
     fwrite(orig_cr[y], 1, width / 2, outfile);
-
-  Free(pixels);
 
   for(y = 0; y < height; y++)
     Free(orig_y[y]);

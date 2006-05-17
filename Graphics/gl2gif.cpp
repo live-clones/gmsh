@@ -1,4 +1,4 @@
-/* $Id: gl2gif.cpp,v 1.21 2003-11-04 17:10:29 geuzaine Exp $ */
+/* $Id: gl2gif.cpp,v 1.22 2006-05-17 01:19:06 geuzaine Exp $ */
 /*
  * GL2GIF, an OpenGL to GIF Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -71,8 +71,6 @@
  *
  */
 
-#include "Gmsh.h"
-#include "GmshUI.h"
 #include "gl2gif.h"
 
 /* PPM colormap routines */
@@ -1172,7 +1170,7 @@ static void GIFEncode(FILE * fp,
 #define FS_SCALE   1024
 #define MAXCOL2    32767
 
-void create_gif(FILE * outfile, int width, int height,
+void create_gif(FILE * outfile, PixelBuffer *buffer,
                 int dither, int sort, int interlace,
                 int transparency, int bg_r, int bg_g, int bg_b)
 {
@@ -1181,7 +1179,6 @@ void create_gif(FILE * outfile, int width, int height,
   pixel transcolor;
   colorhist_vector chv, colormap;
   int BitsPerPixel, usehash;
-  unsigned char *RedBuffer, *GreenBuffer, *BlueBuffer;
   pixval maxval = MAXCOL2, newmaxval;
   colorhash_table cht;
   register pixel *pP;
@@ -1192,34 +1189,26 @@ void create_gif(FILE * outfile, int width, int height,
   register long sr = 0, sg = 0, sb = 0, err = 0;
   int fs_direction = 0;
 
-  /* This is stupid, but I couldn't figure out how to pack the data
-     directly from the OpenGL frame buffer into unsigned long
-     pixel[][] */
+  int width = buffer->GetWidth();
+  int height = buffer->GetHeight();
+  int numcomp = buffer->GetNumComp();
 
-  glPixelStorei(GL_PACK_ALIGNMENT, 1);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  RedBuffer = (unsigned char *)Malloc(height * width * sizeof(unsigned char));
-  GreenBuffer =
-    (unsigned char *)Malloc(height * width * sizeof(unsigned char));
-  BlueBuffer =
-    (unsigned char *)Malloc(height * width * sizeof(unsigned char));
-  glReadPixels(0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, RedBuffer);
-  glReadPixels(0, 0, width, height, GL_GREEN, GL_UNSIGNED_BYTE, GreenBuffer);
-  glReadPixels(0, 0, width, height, GL_BLUE, GL_UNSIGNED_BYTE, BlueBuffer);
+  if(numcomp != 3){
+    Msg(GERROR, "GIF only implemented for GL_RGB");
+    return;
+  }
 
   static_pixels = (pixel **) Malloc(height * sizeof(pixel *));
   for(i = 0; i < height; i++)
     static_pixels[i] = (pixel *) Malloc(3 * width * sizeof(pixel));
 
+  unsigned char *pixels = (unsigned char*)buffer->GetPixels();
   for(i = 0; i < height; i++)
     for(j = 0; j < width; j++)
       PPM_ASSIGN(static_pixels[height - 1 - i][j],
-                 RedBuffer[i * width + j],
-                 GreenBuffer[i * width + j], BlueBuffer[i * width + j]);
-
-  Free(RedBuffer);
-  Free(GreenBuffer);
-  Free(BlueBuffer);
+                 pixels[i * width * 3 + j * 3],
+                 pixels[i * width * 3 + j * 3 + 1],
+                 pixels[i * width * 3 + j * 3 + 2]);
 
   /* Try to compute color histogram */
 

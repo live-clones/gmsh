@@ -32,8 +32,8 @@
  */
 
 #include <stdio.h>
+#include "PixelBuffer.h"
 
-void create_jpeg(FILE *outfile, int width, int height,
-		 int quality, int smoothing);
+void create_jpeg(FILE *outfile, PixelBuffer *buffer, int quality, int smoothing);
 
 #endif

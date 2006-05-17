@@ -1,4 +1,4 @@
-/* $Id: gl2ppm.cpp,v 1.13 2003-11-04 17:10:29 geuzaine Exp $ */
+/* $Id: gl2ppm.cpp,v 1.14 2006-05-17 01:19:06 geuzaine Exp $ */
 /*
  * GL2PPM, an OpenGL to PPM Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -29,29 +29,27 @@
  * to provide one.
  */
 
-#include "Gmsh.h"
-#include "GmshUI.h"
+#include "gl2ppm.h"
 
-void create_ppm(FILE * outfile, int width, int height)
+void create_ppm(FILE *outfile, PixelBuffer *buffer)
 {
-  unsigned char *pixels;
-  int i, row_stride;
+  if(buffer->GetFormat() != GL_RGB || buffer->GetType() != GL_UNSIGNED_BYTE){
+    Msg(GERROR, "PPM only implemented for GL_RGB and GL_UNSIGNED_BYTE");
+    return;
+  }
 
-  glPixelStorei(GL_PACK_ALIGNMENT, 1);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  pixels = (unsigned char *)Malloc(height * width * 3);
-  glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+  int width = buffer->GetWidth();
+  int height = buffer->GetHeight();
+  unsigned char *pixels = (unsigned char*)buffer->GetPixels();
 
   fprintf(outfile, "P6\n");
   fprintf(outfile, "%d %d\n", width, height);
   fprintf(outfile, "%d\n", 255);
 
-  row_stride = width * 3;
-  i = height - 1;
+  int row_stride = width * 3;
+  int i = height - 1;
   while(i >= 0) {
     fwrite(&pixels[i * row_stride], 1, row_stride, outfile);
     i--;
   }
-
-  Free(pixels);
 }

@@ -1,4 +1,4 @@
-/* $Id: gl2jpeg.cpp,v 1.26 2006-02-24 22:07:06 geuzaine Exp $ */
+/* $Id: gl2jpeg.cpp,v 1.27 2006-05-17 01:19:06 geuzaine Exp $ */
 /*
  * GL2JPEG, an OpenGL to JPEG Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -29,13 +29,12 @@
  * to provide one.
  */
 
-#include "Gmsh.h"
-#include "GmshUI.h"
+#include "gl2jpeg.h"
+#undef EXTERN
 
 #if !defined(HAVE_LIBJPEG)
 
-void create_jpeg(FILE * outfile, int width, int height,
-		 int quality, int smoothing)
+void create_jpeg(FILE *outfile, PixelBuffer *buffer, int quality, int smoothing)
 {
   Msg(GERROR, "This version of Gmsh was compiled without JPEG support");
 }
@@ -67,24 +66,23 @@ void my_output_message(j_common_ptr cinfo)
   Msg(DEBUG, "%s", buffer);
 }
 
-void create_jpeg(FILE * outfile, int width, int height, 
-		 int quality, int smoothing)
+void create_jpeg(FILE *outfile, PixelBuffer *buffer, int quality, int smoothing)
 {
-  int i;
-  unsigned char *pixels;
+  if(buffer->GetFormat() != GL_RGB || buffer->GetType() != GL_UNSIGNED_BYTE){
+    Msg(GERROR, "JPEG only implemented for GL_RGB and GL_UNSIGNED_BYTE");
+    return;
+  }
+
   struct jpeg_compress_struct cinfo;
   struct jpeg_error_mgr jerr;
-  JSAMPROW row_pointer[1];
-  int row_stride;
-
   cinfo.err = jpeg_std_error(&jerr);
   cinfo.err->output_message = my_output_message;
 
   jpeg_create_compress(&cinfo);
   jpeg_stdio_dest(&cinfo, outfile);
-  cinfo.image_width = width;    // in pixels
-  cinfo.image_height = height;
-  cinfo.input_components = 3;   // 3 color components per pixel
+  cinfo.image_width = buffer->GetWidth();
+  cinfo.image_height = buffer->GetHeight();
+  cinfo.input_components = 3;
   cinfo.in_color_space = JCS_RGB;
   jpeg_set_defaults(&cinfo);
   jpeg_set_quality(&cinfo, quality, TRUE);
@@ -92,13 +90,10 @@ void create_jpeg(FILE * outfile, int width, int height,
   cinfo.smoothing_factor = smoothing;
   jpeg_start_compress(&cinfo, TRUE);
 
-  glPixelStorei(GL_PACK_ALIGNMENT, 1);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  pixels = (unsigned char *)Malloc(height * width * 3);
-  glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-
-  row_stride = width * 3;
-  i = cinfo.image_height - 1;
+  unsigned char *pixels = (unsigned char*)buffer->GetPixels();
+  JSAMPROW row_pointer[1]; 
+  int row_stride = cinfo.image_width * cinfo.input_components;
+  int i = cinfo.image_height - 1;
   while(i >= 0) {
     row_pointer[0] = &pixels[i * row_stride];
     (void)jpeg_write_scanlines(&cinfo, row_pointer, 1);
@@ -106,8 +101,6 @@ void create_jpeg(FILE * outfile, int width, int height,
   }
   jpeg_finish_compress(&cinfo);
   jpeg_destroy_compress(&cinfo);
-
-  Free(pixels);
 }
 
 #endif

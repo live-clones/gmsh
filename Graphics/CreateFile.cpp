@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.76 2006-01-06 00:34:24 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.77 2006-05-17 01:19:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,12 +23,8 @@
 #include "GmshUI.h"
 #include "Mesh.h"
 #include "OpenFile.h"
-#include "Draw.h"
 #include "Context.h"
 #include "Options.h"
-
-extern Context_T CTX;
-extern Mesh M;
 
 #include "gl2ps.h"
 #include "gl2gif.h"
@@ -37,13 +33,8 @@ extern Mesh M;
 #include "gl2ppm.h"
 #include "gl2yuv.h"
 
-void FillBuffer(void)
-{
-  SetOpenglContext();
-  ClearOpengl();
-  Draw3d();
-  Draw2d();
-}
+extern Context_T CTX;
+extern Mesh M;
 
 int GuessFileFormatFromFileName(char *name)
 {
@@ -131,66 +122,62 @@ void CreateOutputFile(char *name, int format)
     Msg(STATUS2N, "Wrote '%s'", name);
     break;
 
+  case FORMAT_PPM:
+  case FORMAT_YUV:
+  case FORMAT_GIF:  
   case FORMAT_JPEG:
   case FORMAT_JPEGTEX:
   case FORMAT_PNG:
   case FORMAT_PNGTEX:
-    if(!(fp = fopen(name, "wb"))) {
-      Msg(GERROR, "Unable to open file '%s'", name);
-      return;
-    }
-    if(format == FORMAT_JPEGTEX || format == FORMAT_PNGTEX){
-      CTX.print.gl_fonts = 0;
-    }
-    FillBuffer();
-    CTX.print.gl_fonts = 1;
-    if(format == FORMAT_JPEG || format == FORMAT_JPEGTEX){
-      Msg(INFO, "Writing JPEG file '%s'", name);
-      create_jpeg(fp, width, height, 
-		  CTX.print.jpeg_quality, CTX.print.jpeg_smoothing);
-      Msg(INFO, "Wrote JPEG file '%s'", name);
-    }
-    else{
-      Msg(INFO, "Writing PNG file '%s'", name);
-      create_png(fp, width, height, 100);
-      Msg(INFO, "Wrote PNG file '%s'", name);
-    }
-    Msg(STATUS2N, "Wrote '%s'", name);
-    fclose(fp);
-    break;
+    {
+      if(!(fp = fopen(name, "wb"))) {
+	Msg(GERROR, "Unable to open file '%s'", name);
+	return;
+      }
 
-  case FORMAT_PPM:
-  case FORMAT_YUV:
-  case FORMAT_GIF:
-    if(!(fp = fopen(name, "wb"))) {
-      Msg(GERROR, "Unable to open file '%s'", name);
-      return;
+      if(format == FORMAT_JPEGTEX || format == FORMAT_PNGTEX)
+	CTX.print.gl_fonts = 0;
+
+      PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
+      buffer.Fill();
+
+      CTX.print.gl_fonts = 1;
+      if(format == FORMAT_PPM){
+	Msg(INFO, "Writing PPM file '%s'", name);
+	create_ppm(fp, &buffer);
+	Msg(INFO, "Wrote PPM file '%s'", name);
+      }
+      else if (format == FORMAT_YUV){
+	Msg(INFO, "Writing YUV file '%s'", name);
+	create_yuv(fp, &buffer);
+	Msg(INFO, "Wrote YUV file '%s'", name);
+      }
+      else if (format == FORMAT_GIF){
+	Msg(INFO, "Writing GIF file '%s'", name);
+	create_gif(fp, &buffer,
+		   CTX.print.gif_dither,
+		   CTX.print.gif_sort,
+		   CTX.print.gif_interlace,
+		   CTX.print.gif_transparent,
+		   CTX.UNPACK_RED(CTX.color.bg),
+		   CTX.UNPACK_GREEN(CTX.color.bg), 
+		   CTX.UNPACK_BLUE(CTX.color.bg));
+	Msg(INFO, "Wrote GIF file '%s'", name);
+      }
+      else if(format == FORMAT_JPEG || format == FORMAT_JPEGTEX){
+	Msg(INFO, "Writing JPEG file '%s'", name);
+	create_jpeg(fp, &buffer, CTX.print.jpeg_quality, CTX.print.jpeg_smoothing);
+	Msg(INFO, "Wrote JPEG file '%s'", name);
+      }
+      else{
+	Msg(INFO, "Writing PNG file '%s'", name);
+	create_png(fp, &buffer, 100);
+	Msg(INFO, "Wrote PNG file '%s'", name);
+      }
+      
+      Msg(STATUS2N, "Wrote '%s'", name);
+      fclose(fp);
     }
-    FillBuffer();
-    if(format == FORMAT_PPM){
-      Msg(INFO, "Writing PPM file '%s'", name);
-      create_ppm(fp, width, height);
-      Msg(INFO, "Wrote PPM file '%s'", name);
-    }
-    else if (format == FORMAT_YUV){
-      Msg(INFO, "Writing YUV file '%s'", name);
-      create_yuv(fp, width, height);
-      Msg(INFO, "Wrote YUV file '%s'", name);
-    }
-    else{
-      Msg(INFO, "Writing GIF file '%s'", name);
-      create_gif(fp, width, height,
-		 CTX.print.gif_dither,
-		 CTX.print.gif_sort,
-		 CTX.print.gif_interlace,
-		 CTX.print.gif_transparent,
-		 CTX.UNPACK_RED(CTX.color.bg),
-		 CTX.UNPACK_GREEN(CTX.color.bg), 
-		 CTX.UNPACK_BLUE(CTX.color.bg));
-      Msg(INFO, "Wrote GIF file '%s'", name);
-    }
-    Msg(STATUS2N, "Wrote '%s'", name);
-    fclose(fp);
     break;
 
   case FORMAT_PS:
@@ -198,33 +185,32 @@ void CreateOutputFile(char *name, int format)
   case FORMAT_EPSTEX:
   case FORMAT_PDF:
   case FORMAT_PDFTEX:
-    if(!(fp = fopen(name, "wb"))) {
-      Msg(GERROR, "Unable to open file '%s'", name);
-      return;
-    }
-
-    switch(format){
-    case FORMAT_PDF:
-    case FORMAT_PDFTEX:
-      psformat = GL2PS_PDF;
-      break;
-    case FORMAT_PS:
-      psformat = GL2PS_PS;
-      break;
-    default:
-      psformat = GL2PS_EPS;
-      break;
-    }
-
     {
-      float *pixels = NULL;
+      if(!(fp = fopen(name, "wb"))) {
+	Msg(GERROR, "Unable to open file '%s'", name);
+	return;
+      }
+      
+      switch(format){
+      case FORMAT_PDF:
+      case FORMAT_PDFTEX:
+	psformat = GL2PS_PDF;
+	break;
+      case FORMAT_PS:
+	psformat = GL2PS_PS;
+	break;
+      default:
+	psformat = GL2PS_EPS;
+	break;
+      }
+      
+      PixelBuffer buffer(width, height, GL_RGB, GL_FLOAT);
+      
       if(CTX.print.eps_quality == 0){
 	if(format == FORMAT_EPSTEX || format == FORMAT_PDFTEX)
 	  CTX.print.gl_fonts = 0;
-	FillBuffer();
+	buffer.Fill();
 	CTX.print.gl_fonts = 1;
-	pixels = new float[width * height * 3];
-	glReadPixels(0, 0, width, height, GL_RGB, GL_FLOAT, pixels);
       }
       
       pssort = (CTX.print.eps_quality == 2) ? GL2PS_BSP_SORT : GL2PS_SIMPLE_SORT;
@@ -258,42 +244,45 @@ void CreateOutputFile(char *name, int format)
 	  glMatrixMode(GL_MODELVIEW);
 	  glLoadIdentity();
 	  glRasterPos2d(0, 0);
-	  gl2psDrawPixels(width, height, 0, 0, GL_RGB, GL_FLOAT, pixels);
+	  gl2psDrawPixels(width, height, 0, 0, GL_RGB, GL_FLOAT, buffer.GetPixels());
 	  glMatrixMode(GL_PROJECTION);
 	  glLoadMatrixd(projection);
 	  glMatrixMode(GL_MODELVIEW);
 	  glLoadMatrixd(modelview);
-	  delete [] pixels;
 	}
 	else{
 	  CTX.print.gl_fonts = 0;
-	  FillBuffer();
+	  buffer.Fill();
 	  CTX.print.gl_fonts = 1;
 	}
 	res = gl2psEndPage();
       }
+
+      Msg(INFO, "Wrote %s file '%s'", (psformat == GL2PS_PDF) ? "PDF" : "PS/EPS", name);
+      Msg(STATUS2N, "Wrote '%s'", name);
+      fclose(fp);
     }
-    Msg(INFO, "Wrote %s file '%s'", (psformat == GL2PS_PDF) ? "PDF" : "PS/EPS", name);
-    Msg(STATUS2N, "Wrote '%s'", name);
-    fclose(fp);
     break;
 
   case FORMAT_TEX:
-    if(!(fp = fopen(name, "w"))) {
-      Msg(GERROR, "Unable to open file '%s'", name);
-      return;
+    {
+      if(!(fp = fopen(name, "w"))) {
+	Msg(GERROR, "Unable to open file '%s'", name);
+	return;
+      }
+      Msg(INFO, "Writing TEX file '%s'", name);
+      gl2psBeginPage(CTX.base_filename, "Gmsh", viewport,
+		     GL2PS_TEX, GL2PS_NO_SORT, GL2PS_SILENT, GL_RGBA, 0, NULL, 
+		     0, 0, 0, 1000, fp, name);
+      CTX.print.gl_fonts = 0;
+      PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
+      buffer.Fill();
+      CTX.print.gl_fonts = 1;
+      res = gl2psEndPage();
+      Msg(INFO, "Wrote TEX file '%s'", name);
+      Msg(STATUS2N, "Wrote '%s'", name);
+      fclose(fp);
     }
-    Msg(INFO, "Writing TEX file '%s'", name);
-    gl2psBeginPage(CTX.base_filename, "Gmsh", viewport,
-                   GL2PS_TEX, GL2PS_NO_SORT, GL2PS_SILENT, GL_RGBA, 0, NULL, 
-		   0, 0, 0, 1000, fp, name);
-    CTX.print.gl_fonts = 0;
-    FillBuffer();
-    CTX.print.gl_fonts = 1;
-    res = gl2psEndPage();
-    Msg(INFO, "Wrote TEX file '%s'", name);
-    Msg(STATUS2N, "Wrote '%s'", name);
-    fclose(fp);
     break;
 
   default:

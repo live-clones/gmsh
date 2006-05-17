@@ -32,7 +32,8 @@
  */
 
 #include <stdio.h>
+#include "PixelBuffer.h"
 
-void create_png(FILE *outfile, int width, int height, int quality);
+void create_png(FILE *outfile, PixelBuffer *buffer, int quality);
 
 #endif

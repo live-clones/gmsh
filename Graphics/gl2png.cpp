@@ -28,12 +28,11 @@
  * to provide one.
  */
 
-#include "Gmsh.h"
-#include "GmshUI.h"
+#include "gl2png.h"
 
 #if !defined(HAVE_LIBPNG)
 
-void create_png(FILE * file, int width, int height, int quality)
+void create_png(FILE *file, PixelBuffer *buffer, int quality)
 {
   Msg(GERROR, "This version of Gmsh was compiled without PNG support");
 }
@@ -46,33 +45,22 @@ void create_png(FILE * file, int width, int height, int quality)
 #  define png_jmpbuf(png_ptr) ((png_ptr)->jmpbuf)
 #endif
 
-/*
-  compression_level = Z_DEFAULT_COMPRESSION;
-  compression_level = Z_BEST_SPEED;
-  compression_level = Z_BEST_COMPRESSION;
-  compression_level = Z_NO_COMPRESSION;
-*/
-
-void create_png(FILE * file, int width, int height, int quality)
+void create_png(FILE *file, PixelBuffer *buffer, int quality)
 {
-  int row;
-  int compression_level = Z_DEFAULT_COMPRESSION;
-  png_structp png_ptr;
-  png_infop info_ptr;
-  png_text text_ptr[10];
-  unsigned char *pixels;
-  time_t now;
+  if((buffer->GetFormat() != GL_RGB && buffer->GetFormat() != GL_RGBA) ||
+     buffer->GetType() != GL_UNSIGNED_BYTE){
+    Msg(GERROR, "PNG only implemented for GL_RGB/GL_RGBA and GL_UNSIGNED_BYTE");
+    return;
+  }
 
-  time(&now);
-  
-  png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+  png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
   
   if(png_ptr == NULL) {
     Msg(GERROR, "Could not create PNG write struct");
     return;
   }
   
-  info_ptr = png_create_info_struct(png_ptr);
+  png_infop info_ptr = png_create_info_struct(png_ptr);
 
   if(info_ptr == NULL) {
     png_destroy_write_struct(&png_ptr, NULL);
@@ -88,11 +76,18 @@ void create_png(FILE * file, int width, int height, int quality)
   
   png_init_io(png_ptr, file);
   
-  png_set_compression_level(png_ptr, compression_level);
+  int height = buffer->GetHeight();
+  int width = buffer->GetWidth();
+  int numcomp = buffer->GetNumComp();
 
-  png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_RGB,
+  // Z_DEFAULT_COMPRESSION, Z_BEST_SPEED, Z_BEST_COMPRESSION, Z_NO_COMPRESSION
+  png_set_compression_level(png_ptr, Z_DEFAULT_COMPRESSION);
+  png_set_IHDR(png_ptr, info_ptr, width, height, 8, 
+	       (numcomp == 3) ? PNG_COLOR_TYPE_RGB : PNG_COLOR_TYPE_RGBA,
 	       PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-  
+  time_t now;
+  time(&now);
+  png_text text_ptr[10];  
   text_ptr[0].key = "Creator";
   text_ptr[0].text = "Gmsh";
   text_ptr[0].compression = PNG_TEXT_COMPRESSION_NONE;
@@ -100,22 +95,15 @@ void create_png(FILE * file, int width, int height, int quality)
   text_ptr[1].text = ctime(&now);
   text_ptr[1].compression = PNG_TEXT_COMPRESSION_NONE;
   png_set_text(png_ptr, info_ptr, text_ptr, 2);
-  
   png_write_info(png_ptr, info_ptr);
-  
-  glPixelStorei(GL_PACK_ALIGNMENT, 1);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  pixels = (unsigned char *)Malloc(width * 3 * sizeof(unsigned char));
-  for(row = height - 1; row >= 0; row--) {
-    glReadPixels(0, row, width, 1, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-    png_write_row(png_ptr, (png_bytep)pixels);
-  }
-  Free(pixels);
 
+  unsigned char *pixels = (unsigned char *)buffer->GetPixels();
+  for(int row = height - 1; row >= 0; row--) {
+    unsigned char *row_pointer = &pixels[row * width * numcomp];
+    png_write_row(png_ptr, (png_bytep)row_pointer);
+  }
   png_write_end(png_ptr, info_ptr);
-  
   png_destroy_write_struct(&png_ptr, &info_ptr);
 }
 
 #endif
-

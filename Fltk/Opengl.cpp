@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.57 2006-01-06 00:34:23 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.58 2006-05-17 01:19:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -37,11 +37,13 @@ extern Context_T CTX;
 
 void SetOpenglContext(void)
 {
+  if(!WID) return;
   WID->make_opengl_current();
 }
 
 void Draw(void)
 {
+  if(!WID) return;
   WID->redraw_opengl();
 }
 
@@ -163,6 +165,8 @@ void Draw_String(char *s, double style)
 
 void Draw_OnScreenMessages()
 {
+  if(!WID) return;
+
   glColor4ubv((GLubyte *) & CTX.color.text);
   gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
   double h = gl_height();
@@ -186,6 +190,8 @@ char SelectEntity(int type, int *n,
 		  Curve *c[SELECTION_MAX_HITS], 
 		  Surface *s[SELECTION_MAX_HITS])
 {
+  if(!WID) return 'q';
+
   WID->g_opengl_window->take_focus(); // force keyboard focus in GL window 
   WID->g_opengl_window->SelectionMode = true; // enable lasso selection
 
