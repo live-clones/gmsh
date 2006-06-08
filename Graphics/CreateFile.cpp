@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.79 2006-05-17 14:30:49 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.80 2006-06-08 11:31:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -82,7 +82,7 @@ char *GetStringForFileFormat(int format)
   switch(format){
   case FORMAT_PPM: return "PPM";
   case FORMAT_YUV: return "YUV";
-  case FORMAT_GIF: return "MSH";
+  case FORMAT_GIF: return "GIF";
   case FORMAT_JPEG: return "JPEG";
   case FORMAT_JPEGTEX: return "JPEG";
   case FORMAT_PNG: return "PNG";
