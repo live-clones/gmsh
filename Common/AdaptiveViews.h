@@ -266,7 +266,7 @@ public:
 class Adaptive_Post_View 
 {
   double tol;
-  double min,max;
+  double minval, maxval;
   int presentZoomLevel;
   double presentTol;
   Double_Matrix * _eexps;

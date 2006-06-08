@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Tetgen.cpp,v 1.6 2006-01-29 22:53:41 geuzaine Exp $
+// $Id: 3D_Mesh_Tetgen.cpp,v 1.7 2006-06-08 12:32:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -129,7 +129,7 @@ int Mesh_Tetgen(Volume * vol) {
     in.facetmarkerlist[i] = s->iEnt;
   }
  
-  sprintf(opts, "pqa%f%c", (float)CTX.mesh.quality, 
+  sprintf(opts, "pq1.4Ya%f%c", (float)CTX.mesh.quality, 
 	  (CTX.verbosity < 3)? 'Q': (CTX.verbosity > 6)? 'V': '\0');
   Msg(STATUS3, "Meshing with volume constraint %f", (float)CTX.mesh.quality);
   

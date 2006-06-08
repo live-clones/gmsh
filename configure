@@ -4412,19 +4412,22 @@ case "$UNAME" in
     ;;
 
   IRIX*)
-        if test "x${CXX}" = "xCC"; then
-                  OPTIM="-O2"
-      FLAGS="-LANG:std -OPT:Olimit=0 -DOLDCINCLUDE ${FLAGS}"
-      AR="CC -ar -o"
-      LINKER="CC -O2"
-    fi
+        case "${CXX}" in
+      *CC*)
+                        FLAGS="-LANG:std -OPT:Olimit=0 -DOLDCINCLUDE ${FLAGS}"
+        AR="${CXX} -ar -o"
+        LINKER="${CXX}"
+        ;;
+    esac
     ;;
 
   OSF1*)
     FLAGS="-DHAVE_NO_SOCKLEN_T ${FLAGS}"
-        if test "x${CXX}" = "xcxx" ; then
-      FLAGS="-D__USE_STD_IOSTREAM ${FLAGS}"
-    fi
+        case "${CXX}" in
+      *cxx*)
+        FLAGS="-D__USE_STD_IOSTREAM ${FLAGS}"
+        ;;
+    esac
     ;;
 
   SunOS*)

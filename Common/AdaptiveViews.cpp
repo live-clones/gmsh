@@ -752,8 +752,8 @@ int Adaptive_Post_View::zoomElement(Post_View * view,
     p->X = XYZ(kk, 0);
     p->Y = XYZ(kk, 1);
     p->Z = XYZ(kk, 2);
-    if (min > p->val) min = p->val;
-    if (max < p->val) max = p->val;
+    if (minval > p->val) minval = p->val;
+    if (maxval < p->val) maxval = p->val;
     kk++;
   }
   double c2 = Cpu();
@@ -766,7 +766,7 @@ int Adaptive_Post_View::zoomElement(Post_View * view,
   }
 
   if(!plug || tol != 0.0) {
-    ELEM::Error(max - min, tol);
+    ELEM::Error(maxval - minval, tol);
   }
 
   if(plug)
@@ -1042,8 +1042,8 @@ void Adaptive_Post_View::initWithLowResolution(Post_View * view)
   }
   else return;
 
-  min = VAL_INF;
-  max = -VAL_INF;
+  minval = VAL_INF;
+  maxval = -VAL_INF;
 
   int nb = List_Nbr(myList) / (nbelm);
 
