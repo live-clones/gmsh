@@ -1,4 +1,4 @@
-$Id: TODO,v 1.12 2006-06-08 11:31:55 geuzaine Exp $
+$Id: TODO,v 1.13 2006-06-08 14:32:06 geuzaine Exp $
 
 Custom range on "filled iso" 3D views produces ugly plots, where one
 sees inside the cut elements. (In the meantime, one can use
@@ -6,6 +6,12 @@ Plugin(CutMap) with "ExtractVolume" set to 1 (or -1): this will
 generate a new view with an actual "cut" on the front (an
 "iso-volume"). Then one could use Plugin(Skin) to extract the outer
 surface.)
+
+********************************************************************
+
+Degre2: add an option to simply subdivide the edges/faces instead of
+generating the new vertices on the geometry? (requested by Jacques
+Kools)
 
 ********************************************************************
 
