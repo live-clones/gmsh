@@ -1,4 +1,14 @@
-$Id: TODO,v 1.13 2006-06-08 14:32:06 geuzaine Exp $
+$Id: TODO,v 1.14 2006-06-24 08:06:25 geuzaine Exp $
+
+extrude along a given function (e.g. radius to extrude a sphere)
+
+********************************************************************
+
+Mac: system("open 'http://google.com/'");
+Linux: system("htmlview 'http://google.com' &");
+Windows: ShellExecute(NULL, "open", "http://google.com/", NULL, NULL,SW_SHOWNORMAL);
+
+********************************************************************
 
 Custom range on "filled iso" 3D views produces ugly plots, where one
 sees inside the cut elements. (In the meantime, one can use

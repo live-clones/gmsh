@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.208 2006-05-17 18:40:37 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.209 2006-06-24 08:06:25 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -2092,7 +2092,7 @@ oriented when the mesh is not recombined.
 
 @item Transfinite Volume @{ @var{expression} @} = @{ @var{expression-list} @};
 Selects the volume @var{expression} to be meshed with the 3D transfinite
-algorithm (the volume can only have six or eight faces).  The
+algorithm (the volume can only have five or six faces).  The
 @var{expression-list} should contain the identification numbers of the
 points on the boundary of the volume. The ordering of these point numbers
 defines the ordering and orientation of the mesh elements, and should thus
