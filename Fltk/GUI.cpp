@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.501 2006-05-13 22:03:17 geuzaine Exp $
+// $Id: GUI.cpp,v 1.502 2006-07-01 10:35:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1070,6 +1070,10 @@ void GUI::create_menu_window()
 
   m_window->size(width, MH);
   m_window->position(CTX.position[0], CTX.position[1]);
+  
+  // force always on on top
+  //m_window->set_non_modal();
+
   m_window->end();
 }
 

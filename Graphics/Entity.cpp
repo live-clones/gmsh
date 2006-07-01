@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.63 2006-01-20 00:29:59 geuzaine Exp $
+// $Id: Entity.cpp,v 1.64 2006-07-01 10:35:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -532,7 +532,7 @@ void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
 void Draw_SmallAxes()
 {
   double l = CTX.small_axes_size;
-  double o = 2;
+  double o = CTX.gl_fontsize / 5;
 
   double cx = CTX.small_axes_pos[0];
   double cy = CTX.small_axes_pos[1];
