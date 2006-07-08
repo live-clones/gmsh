@@ -3,6 +3,9 @@
 
 #include "GEntity.h"
 #include "GVertex.h"
+#include "SVector3.h"
+#include "SPoint3.h"
+#include "SPoint2.h"
 
 /** A model edge. */
 
@@ -14,21 +17,16 @@ public:
 	GVertex *_v1)
     : GEntity (model,tag),v0(_v0),v1(_v1) 
     {
-      v0->add_edge (this);
-      v1->add_edge (this);
+      v0->addEdge (this);
+      v1->addEdge (this);
     }
   virtual ~GEdge() 
     {
-      v0->del_edge (this);
-      v1->del_edge (this);
+      v0->delEdge (this);
+      v1->delEdge (this);
     }
 
   virtual int dim() const {return 1;}
-
-  virtual std::list<GRegion*> regions() const;
-  virtual std::list<GFace*> faces() const;
-  virtual std::list<GEdge*> edges() const;
-  virtual std::list<GVertex*> vertices() const;
 
   virtual bool periodic(int dim=0) const = 0;
   virtual bool continuous(int dim=0) const = 0;
@@ -43,10 +41,10 @@ public:
   virtual double parFromPoint(const SPoint3 &) const = 0;
 
   /** Get the point for the given parameter location. */
-  virtual GEPoint point(double p) const = 0;  
+  virtual GPoint point(double p) const = 0;  
 
   /** Get the closest point on the edge to the given point. */
-  virtual GEPoint closestPoint(const SPoint3 & queryPoint);
+  virtual GPoint closestPoint(const SPoint3 & queryPoint);
 
   /** True if the edge contains the given parameter. */
   virtual int containsParam(double pt) const = 0;
@@ -60,15 +58,14 @@ public:
   /** reparmaterize the point onto the given face. */
   virtual SPoint2 reparamOnFace(GFace *face, double epar,int dir) const = 0;			  
 
-  void addFace ( GFace *f ){ l_faces.push_back (f);  }
-  void delFace ( GFace *f ){ l_faces.erase(std::find(l_faces.begin(),l_faces.end(),f));  }
+  void addFace ( GFace *f );
+  void delFace ( GFace *f );
 
 
 protected:
 
-  GVertex v0,v1;
+  GVertex *v0,*v1;
   std::list<GFace *> l_faces;
-
 };
 
 
