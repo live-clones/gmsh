@@ -2,7 +2,6 @@
 #define _H_GMSH_MODEL_
 
 #include <list>
-#include "gmshDefs.h"
 #include "Mesh.h"
 #include "Range.h"
 #include "Pair.h"
@@ -14,9 +13,10 @@
 #include "gmshFace.h"
 #include "gmshEdge.h"
 #include "gmshRegion.h"
+#include "GModel.h"
 
 
-class gmshModel : public SGModel {
+class gmshModel : public GModel {
 public:
   gmshModel(char *geofile = 0); 
   virtual ~gmshModel() {};

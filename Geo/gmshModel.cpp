@@ -4,45 +4,8 @@
 #include "Message.h"
 
 extern Mesh *THEM;
-GFace * gmshModel::faceByTag(int n) const
-{
-  std::list<GFace*>:: const_iterator it = faces.begin();
-  std::list<GFace*>:: const_iterator end = faces.end();
-  while (it != end)
-    {
-      gmshFace *ff = (gmshFace*) (*it);
-      if ( ff->s->Num == n)return *it;
-      ++it;
-    }
-  return 0;
-}
-
-GEdge * gmshModel::edgeByTag(int n) const
-{
-  std::list<GEdge*>:: const_iterator it = edges.begin();
-  std::list<GEdge*>:: const_iterator end = edges.end();
-  while (it != end)
-    {
-      gmshEdge *ee = (gmshEdge*) (*it);
-      if ( ee->c->Num == n)return *it;
-      ++it;
-    }
-  return 0;
-}
-GVertex * gmshModel::vertexByTag(int n) const
-{
-  std::list<GVertex*>:: const_iterator it = vertices.begin();
-  std::list<GVertex*>:: const_iterator end = vertices.end();
-  while (it != end)
-    {
-      gmshVertex *vv = (gmshVertex*) (*it);
-      if ( vv->v->Num == n)return *it;
-      ++it;
-    }
-  return 0;
-}
 gmshModel::gmshModel(char *geofile)
-  : SGModel ( "toto" )
+  : GModel ( geofile )
 {
   if (geofile)
     {
@@ -62,20 +25,20 @@ gmshModel::gmshModel(char *geofile)
 	    {
 	      points.insert(c->beg);
 	      gmshVertex *v = new gmshVertex ( this, c->beg );
-	      vertices.push_back(v); 
+	      //vertices.push_back(v); 
 	      add(v);
 	    }
 	  if (points.find(c->end) == points.end())
 	    {
 	      points.insert(c->end);
 	      gmshVertex *v = new gmshVertex ( this , c->end );
-	      vertices.push_back(v); 
+	      //vertices.push_back(v); 
 	      add(v);
 	    }
 	  gmshEdge *e = new gmshEdge ( this, c ,
 				       vertexByTag(c->beg->Num),
 				       vertexByTag(c->end->Num) );
-	  edges.push_back(e);     	  
+	  //	  edges.push_back(e);     	  
 	  add(e);
 	}
     }
@@ -87,7 +50,7 @@ gmshModel::gmshModel(char *geofile)
       Surface *s;
       List_Read(surfaces, i, &s);
       gmshFace *f = new gmshFace ( this, s );
-      faces.push_back(f); 
+      //      faces.push_back(f); 
       add ( f);
     }
     List_Delete(surfaces);
@@ -98,7 +61,7 @@ gmshModel::gmshModel(char *geofile)
       Volume *v;
       List_Read(volumes, i, &v);
       gmshRegion *r = new gmshRegion ( this, v );
-      regions.push_back(r); 
+      //      regions.push_back(r); 
       add ( r);
     }
     List_Delete(volumes);
@@ -112,7 +75,7 @@ gmshModel::gmshModel(char *geofile)
 
 }
 
-SGModel *createGmshModel (char *f )
+GModel *createGmshModel (char *f )
 {
   return new gmshModel (f);
 }

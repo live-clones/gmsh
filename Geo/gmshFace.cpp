@@ -58,18 +58,19 @@ double * gmshFace::nthDerivative(const SPoint2 &param, int n, double *array) con
   throw;
 }
 
-GFPoint gmshFace::point(const SPoint2 &pt) const
+GPoint gmshFace::point(const SPoint2 &pt) const
 {   
     return point(pt.x(),pt.y()); 
 }
 
-GFPoint gmshFace::point(double par1,double par2) const
+GPoint gmshFace::point(double par1,double par2) const
 {
+  double pp[2]={par1,par2};
   Vertex v = InterpolateSurface( s, par1, par2,0,0);
-  return GFPoint(v.Pos.X,v.Pos.Y,v.Pos.Z,this,SPoint2(par1,par2));
+  return GPoint(v.Pos.X,v.Pos.Y,v.Pos.Z,this,pp);
 }
 
-GFPoint gmshFace::closestPoint(const SPoint3 & qp)
+GPoint gmshFace::closestPoint(const SPoint3 & qp)
 {
   Vertex v;
 
@@ -79,8 +80,8 @@ GFPoint gmshFace::closestPoint(const SPoint3 & qp)
 
   if ( s->Typ != MSH_SURF_PLAN )
     ProjectPointOnSurface(s, v);
-  return GFPoint(v.Pos.X,v.Pos.Y,v.Pos.Z,
-		 this,SPoint2(v.us[0],v.us[1]));
+  return GPoint(v.Pos.X,v.Pos.Y,v.Pos.Z,
+		 this,v.us);
 }
 
 int gmshFace::containsParam(const SPoint2 &pt) const
@@ -109,32 +110,32 @@ SPoint2 gmshFace::parFromPoint(const SPoint3 &qp) const
 GeoRep * gmshFace::geometry()
 { return new gmshGeoRep(this,2); }
 */
-Logical::Value gmshFace::continuous(int dim) const
+bool gmshFace::continuous(int dim) const
 { 
-  return Logical::True;
+  return true;
 }
 
-Logical::Value gmshFace::periodic(int dim) const
+bool gmshFace::periodic(int dim) const
 { 
-  return Logical::False;
+  return false;
 }
 
-Logical::Value gmshFace::degenerate(int dim) const
+bool gmshFace::degenerate(int dim) const
 { 
-  return Logical::False;
+  return false;
 }
 
-GeomType::Value gmshFace::geomType() const
+GEntity::GeomType gmshFace::geomType() const
 {
   int type;
   type = s->Typ;
   //if(type == CONE_TYPE)
   //return GeomType::Cone;
   if(type == MSH_SURF_NURBS)
-    return GeomType::Nurb;
+    return Nurb;
   if(type == MSH_SURF_PLAN)
-    return GeomType::Plane;
-  return GeomType::Unknown;
+    return Plane;
+  return Unknown;
 
 }
 

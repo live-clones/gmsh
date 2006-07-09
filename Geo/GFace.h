@@ -58,6 +58,7 @@ public:
   /* true if the surface underlying the face is periodic and we
      need to worry about that. */
   virtual bool surfPeriodic(int dim) const = 0;
+  virtual int inClosure(GEntity *ent) const {throw;}
 protected:
 };
 

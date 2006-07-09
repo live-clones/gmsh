@@ -4,7 +4,7 @@
 #include "CAD.h"
 #include "Geo.h"
 
-gmshEdge::gmshEdge(SGModel *model,Curve *edge,GVertex *v1,GVertex *v2)
+gmshEdge::gmshEdge(GModel *model,Curve *edge,GVertex *v1,GVertex *v2)
   : GEdge ( model, edge->Num, v1, v2 ), c(edge)
 {}
 
@@ -47,13 +47,13 @@ SBoundingBox3d gmshEdge::bounds() const
   return bbox;
 }
 
-GEPoint gmshEdge::point(double par) const
+GPoint gmshEdge::point(double par) const
 {
   Vertex a = InterpolateCurve(c, par, 0);
-  return GEPoint(a.Pos.X,a.Pos.Y,a.Pos.Z,this,par);
+  return GPoint(a.Pos.X,a.Pos.Y,a.Pos.Z,this,par);
 }
 
-GEPoint gmshEdge::closestPoint(const SPoint3 & qp)
+GPoint gmshEdge::closestPoint(const SPoint3 & qp)
 {
   Vertex v;
   Vertex a;
@@ -62,7 +62,7 @@ GEPoint gmshEdge::closestPoint(const SPoint3 & qp)
   v.Pos.Y = qp.y();
   v.Pos.Z = qp.z();
   ProjectPointOnCurve (c,&v,&a,&der);
-  return GEPoint(a.Pos.X,a.Pos.Y,a.Pos.Z,this,a.u);
+  return GPoint(a.Pos.X,a.Pos.Y,a.Pos.Z,this,a.u);
 }
 
 int gmshEdge::containsParam(double pt) const
@@ -89,19 +89,19 @@ double gmshEdge::parFromPoint(const SPoint3 &pt) const
   return a.u;
 }
 
-Logical::Value gmshEdge::continuous(int) const
+bool gmshEdge::continuous(int) const
 { 
-  return Logical::True;
+  return true;
 }
 
-Logical::Value gmshEdge::degenerate(int) const
+bool gmshEdge::degenerate(int) const
 { 
-  return Logical::False;
+  return false;
 }
 
-Logical::Value gmshEdge::periodic(int dim) const
+bool gmshEdge::periodic(int dim) const
 {
-  return Logical::False;
+  return false;
 }
 
 int gmshEdge::isSeam(GFace *face) const
@@ -115,21 +115,21 @@ double gmshEdge::period() const
   return 0;
 }
 
-GeomType::Value gmshEdge::geomType() const
+GEntity::GeomType gmshEdge::geomType() const
 {
   switch (c->Typ)
     {
-    case MSH_SEGM_LINE : return GeomType::Line;
-    case MSH_SEGM_PARAMETRIC : return GeomType::ParametricCurve;
+    case MSH_SEGM_LINE : return Line;
+    case MSH_SEGM_PARAMETRIC : return ParametricCurve;
     case MSH_SEGM_CIRC :  
-    case MSH_SEGM_CIRC_INV : return GeomType::Circle;
+    case MSH_SEGM_CIRC_INV : return Circle;
     case MSH_SEGM_ELLI:
-    case MSH_SEGM_ELLI_INV: return GeomType::Ellipse;
+    case MSH_SEGM_ELLI_INV: return Ellipse;
     case MSH_SEGM_BSPLN:
     case MSH_SEGM_BEZIER: 
     case MSH_SEGM_NURBS:
-    case MSH_SEGM_SPLN: return GeomType::Nurb; 
-    default : return GeomType::Unknown;
+    case MSH_SEGM_SPLN: return Nurb; 
+    default : return Unknown;
     }
 }
 

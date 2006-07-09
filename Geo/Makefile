@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.74 2006-03-10 06:39:46 geuzaine Exp $
+# $Id: Makefile,v 1.75 2006-07-09 15:22:57 remacle Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -38,6 +38,11 @@ SRC = CAD.cpp \
       ExtrudeParams.cpp \
       Geo.cpp \
       GeoUtils.cpp \
+      GVertex.cpp\
+      GEdge.cpp\
+      GFace.cpp\
+      GRegion.cpp\
+      GModel.cpp\
       gmshModel.cpp\
       gmshEdge.cpp\
       gmshFace.cpp\
