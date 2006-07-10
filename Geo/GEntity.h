@@ -3,6 +3,7 @@
 
 #include "Range.h"
 #include "SPoint3.h"
+#include "SBoundingBox3d.h"
 #include <list>
 
 class GModel;
@@ -37,7 +38,7 @@ public:
     };
 
   GEntity(GModel *m, int t) : _model(m),_tag(t){}
-  virtual ~GEntity();
+    virtual ~GEntity() {};
 
   /** Return a renderable representation of the entity.*/
   //  virtual MeshRep * getGeometry() ;
@@ -48,19 +49,19 @@ public:
   virtual int dim() const = 0;
 
   /** Returns true if ent is in the closure of this entity */
-  virtual int inClosure(GEntity *ent) const =0; 
+  virtual int inClosure(GEntity *ent) const {throw;} 
 
   /// Regions that bound this entity or that this entity bounds.
-  virtual std::list<GRegion*> regions() const;
+  virtual std::list<GRegion*> regions() const{throw;}
 
   /// Faces that bound this entity or that this entity bounds.
-  virtual std::list<GFace*> faces() const;
+  virtual std::list<GFace*> faces() const{throw;}
 
   /// Edges that bound this entity or that this entity bounds.
-  virtual std::list<GEdge*> edges() const;
+  virtual std::list<GEdge*> edges() const{throw;}
 
   /// Vertices that bound this entity.
-  virtual std::list<GVertex*> vertices() const;
+  virtual std::list<GVertex*> vertices() const{throw;}
 
   /// Underlying geometric representation of this entity.
   virtual GeomType geomType() const = 0;
@@ -74,17 +75,14 @@ public:
   /// True if there are parametric degeneracies in the "dim" direction.
   virtual bool degenerate(int dim) const {return false;}
 
-  /// Orientation of the parametric space w.r.t. the entity.
-  //  virtual int geomDirection() const;
-
   /// Parametric bounds of the entity in the "i" direction.
-  virtual Range<double> parBounds(int i) const;
+  virtual Range<double> parBounds(int i) const{throw;}
 
   /// Modeler tolerance for the entity.
-  virtual double tolerance() const;
+  virtual double tolerance() const {return 1.e-14;}
 
   /// True if the entity contains the given point to within tolerance.
-  virtual int containsPoint(const SPoint3 &pt) const;
+  virtual int containsPoint(const SPoint3 &pt) const{throw;}
 
   /// Get the native pointer of the particular representation
   virtual void * getNativePtr() const= 0;
@@ -93,6 +91,9 @@ public:
   GModel *model() const {return _model;}
   // The tag of the entity
   int tag () const {return _tag;}
+  // The bounding box
+  SBoundingBox3d bounds() const{throw;}
+
 
 };
 

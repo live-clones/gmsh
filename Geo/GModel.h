@@ -12,7 +12,7 @@
 class GModel  
 {
 public:
-  virtual ~GModel();
+  virtual ~GModel() {}
 
   typedef std::list<GRegion*>::iterator riter;
   typedef std::list<GFace*>::iterator   fiter;
@@ -20,19 +20,13 @@ public:
   typedef std::list<GVertex*>::iterator viter;
 
   /** Returns the geometric tolerance for the entire model. */
-  virtual double tolerance() const =0;
+  virtual double tolerance() const {return 1.e-14;}
 
   /** Get the number of regions in this model. */
   int numRegion() const;
   int numFace  () const;
   int numEdge  () const;
   int numVertex() const;
-
-  /** Get the nth region in this model. */
-  //  GRegion * region(int n) const;
-  //  GFace   * face  (int n) const;
-  //  GEdge   * edge  (int n) const;
-  //  GVertex * vertex(int n) const;
 
   /** Get an iterator initialized to the first entity in this model. */
   riter firstRegion() {return regions.begin();}
@@ -50,14 +44,6 @@ public:
   virtual GEdge   * edgeByTag  (int n) const;
   virtual GVertex * vertexByTag(int n) const;
 
-  //  virtual GRegion * regionByID(int n) const;
-  //  virtual GFace   * faceByID  (int n) const;
-  //  virtual GEdge   * edgeByID  (int n) const;
-  //  virtual GVertex * vertexByID(int n) const;
-
-  virtual void setGeomTolerance(double) {};
-  //  void setDisplayCoherence(int ); // default is coherent
-
   void add(GRegion *r){regions.push_back(r);}
   void add(GFace *f)  {faces.push_back(f);}
   void add(GEdge *e)  {edges.push_back(e);}
@@ -69,7 +55,8 @@ public:
   void remove(GVertex *v){vertices.erase(std::find(firstVertex(),lastVertex(),v));}
 
 protected:
-  GModel(const std::string &name);
+  std::string modelName;
+  GModel(const std::string &name):modelName(name){}
   std::list<GRegion*> regions;
   std::list<GFace*> faces;
   std::list<GEdge*> edges;

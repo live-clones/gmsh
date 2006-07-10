@@ -18,7 +18,7 @@ public:
   virtual SBoundingBox3d bounds() const; 
   virtual GPoint point(double par1, double par2) const; 
   virtual GPoint point(const SPoint2 &pt) const; 
-  virtual GPoint closestPoint(const SPoint3 & queryPoint); 
+  virtual GPoint closestPoint(const SPoint3 & queryPoint) ; 
   
   virtual int containsPoint(const SPoint3 &pt) const;  
   virtual int containsParam(const SPoint2 &pt) const; 
@@ -26,7 +26,7 @@ public:
   virtual SVector3 normal(const SPoint2 &param) const; 
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const; 
   virtual double * nthDerivative(const SPoint2 &param, int n,  
- 				 double *array) const; 
+ 				 double *array) const {throw;}
   
   virtual GEntity::GeomType geomType() const; 
   virtual int geomDirection() const; 
@@ -34,7 +34,7 @@ public:
   virtual bool continuous(int dim) const; 
   virtual bool periodic(int dim) const; 
   virtual bool degenerate(int dim) const; 
-  virtual double period(int dir) const;	// 200306 
+  virtual double period(int dir) const {throw;}
   virtual double tolerance() const; 
   //  virtual GeoRep * geometry() {return 0;}
   void * getNativePtr() const; 

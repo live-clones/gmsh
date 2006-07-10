@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.98 2006-06-08 12:32:08 geuzaine Exp $
+dnl $Id: configure.in,v 1.99 2006-07-10 12:16:34 remacle Exp $
 dnl
 dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 dnl
@@ -97,9 +97,6 @@ AC_ARG_ENABLE(tetgen,
 AC_ARG_ENABLE(matheval,
               AC_HELP_STRING([--enable-matheval],
                              [compile MathEval if available (default=yes)]))
-AC_ARG_ENABLE(model,
-              AC_HELP_STRING([--enable-model],
-                             [compile Model interface if available (default=yes)]))
 AC_ARG_ENABLE(osmesa,
               AC_HELP_STRING([--enable-osmesa],
                              [use OSMesa for offscreen rendering (default=no)]))
@@ -357,30 +354,6 @@ if test "x$enable_contrib" != "xno"; then
        echo "http://www.cs.umd.edu/~mount/ANN/, unpack the archive and copy both"
        echo "src and include directories in the /contrib/ANN subdirectory. Then"
        echo "run ./configure again."
-       echo "********************************************************************"
-    fi
-  fi
-
-
-  dnl Check for MODEL
-  AC_CHECK_FILE(${DEVROOT}/MeshAdapt/model/model/model/SGModel.h, MODEL="yes", MODEL="no")
-  if test "x${MODEL}" = "xyes"; then
-    if test "x$enable_model" != "xno"; then
-       GMSH_LIBS="${GMSH_LIBS} ${DEVROOT}/MeshAdapt/model/lib/x86_linux/libmodel-O.a"
-       FLAGS="-D_HAVE_SGMODEL_ ${FLAGS}"
-       echo "********************************************************************"
-       echo "You are building a version of Gmsh that contains model, the"
-       echo "Modeler Interface."
-       echo "Please note that by doing so, you agree with model's licensing"
-       echo "requirements."
-       echo "To disable model, run configure again with the --disable-model"
-       echo "option."
-       echo "********************************************************************"
-    fi
-  else
-    if test "x$enable_model" != "xno"; then
-       echo "********************************************************************"
-       echo "If you want to use model for doing modeling interface, contact us."
        echo "********************************************************************"
     fi
   fi

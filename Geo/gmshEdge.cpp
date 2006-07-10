@@ -104,16 +104,6 @@ bool gmshEdge::periodic(int dim) const
   return false;
 }
 
-int gmshEdge::isSeam(GFace *face) const
-{
-  printf("gmshEdge::isSeam() is called.\n");
-  return 0;
-}
-
-double gmshEdge::period() const
-{
-  return 0;
-}
 
 GEntity::GeomType gmshEdge::geomType() const
 {
@@ -133,27 +123,6 @@ GEntity::GeomType gmshEdge::geomType() const
     }
 }
 
-int gmshEdge::geomDirection() const
-{
-  return 1;
-}
-
-double gmshEdge::tolerance() const
-{ 
-  return 1.e-14; 
-}
-
-
-void gmshEdge::nthDerivative(double param, int n, double *array) const
-{
-  throw;
-}
-
-GVertex * gmshEdge::split(double)
-{
-  throw;
-  return 0;
-}
 
 void * gmshEdge::getNativePtr() const
 { 
@@ -163,11 +132,5 @@ void * gmshEdge::getNativePtr() const
 // 200306
 int gmshEdge::containsPoint(const SPoint3 &pt) const
 { 
-  throw;
-}
-
-// 200306 
-void gmshEdge::fixPeriodicPar(double &par)
-{
   throw;
 }

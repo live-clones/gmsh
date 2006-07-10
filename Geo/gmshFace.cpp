@@ -69,10 +69,6 @@ Pair<SVector3,SVector3> gmshFace::firstDer(const SPoint2 &param) const
 				  SVector3(vv.Pos.X,vv.Pos.Y,vv.Pos.Z));
 }
 
-double * gmshFace::nthDerivative(const SPoint2 &param, int n, double *array) const
-{
-  throw;
-}
 
 GPoint gmshFace::point(const SPoint2 &pt) const
 {   
@@ -176,7 +172,3 @@ int gmshFace::containsPoint(const SPoint3 &pt) const
 }
 
 // added 200306
-double gmshFace::period(int dir) const
-{
-  return 0.;
-}

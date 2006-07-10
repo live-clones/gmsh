@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.30 2006-01-28 18:44:19 geuzaine Exp $
+# $Id: Makefile,v 1.31 2006-07-10 12:16:34 remacle Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -55,15 +55,9 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-# 1 "/Users/geuzaine/.gmsh/DataStr//"
 List.o: List.cpp Malloc.h List.h ../Common/Message.h SafeIO.h
-# 1 "/Users/geuzaine/.gmsh/DataStr//"
 Malloc.o: Malloc.cpp Malloc.h ../Common/Message.h
-# 1 "/Users/geuzaine/.gmsh/DataStr//"
 SafeIO.o: SafeIO.cpp SafeIO.h ../Common/Message.h
-# 1 "/Users/geuzaine/.gmsh/DataStr//"
 Tree.o: Tree.cpp Malloc.h Tree.h avl.h ../Common/Message.h
-# 1 "/Users/geuzaine/.gmsh/DataStr//"
 avl.o: avl.cpp avl.h Malloc.h
-# 1 "/Users/geuzaine/.gmsh/DataStr//"
 Tools.o: Tools.cpp Tools.h List.h Tree.h avl.h

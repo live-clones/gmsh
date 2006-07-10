@@ -4,7 +4,7 @@
 class GRegion;
 #include "GPoint.h"
 #include "GEntity.h"
-#include "GEdgeLoop.h"
+//#include "GEdgeLoop.h"
 #include "SPoint2.h"
 #include "SVector3.h"
 #include "Pair.h"
@@ -14,7 +14,7 @@ class GRegion;
 class GFace : public GEntity 
 {
 protected: 
-  std::list<GEdgeLoop *> l_edgeLoops;
+  //  std::list<GEdgeLoop *> l_edgeLoops;
   std::list<GEdge *>     l_edges;
   std::list<int>         l_dirs;
   GRegion *r1, *r2;
@@ -43,10 +43,10 @@ public:
   virtual int containsParam(const SPoint2 &pt) const = 0;
 
   /** Period of the face in the given direction. */
-  virtual double period(int dir) const;
+  virtual double period(int dir) const = 0;
 
   /** Return the point on the face closest to the given point. */
-  virtual GPoint closestPoint(const SPoint3 & queryPoint);
+  virtual GPoint closestPoint(const SPoint3 & queryPoint) = 0;
 
   /** Return the normal to the face at the given parameter location. */
   virtual SVector3 normal(const SPoint2 &param) const = 0;
@@ -54,13 +54,9 @@ public:
   /** Return the first derivate of the face at the parameter location. */
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const = 0;
   
-  /** Return the nth derivate of the face at the parametric location. */
-  virtual double * nthDerivative(const SPoint2 &param, int n, 
-				 double *array) const;
   /* true if the surface underlying the face is periodic and we
      need to worry about that. */
   virtual bool surfPeriodic(int dim) const = 0;
-  virtual int inClosure(GEntity *ent) const {throw;}
 protected:
   void buildEdgeLoops ();
 };

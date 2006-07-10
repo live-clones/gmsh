@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.76 2006-07-10 08:09:00 remacle Exp $
+# $Id: Makefile,v 1.77 2006-07-10 12:16:34 remacle Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -121,51 +121,68 @@ GeoUtils.o: GeoUtils.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
   ../Mesh/Matrix.h ExtrudeParams.h
-GVertex.o: GVertex.cpp GVertex.h GEntity.h Range.h SPoint3.h GPoint.h
-GEdge.o: GEdge.cpp GEdge.h GEntity.h Range.h SPoint3.h GVertex.h GPoint.h \
-  SVector3.h SPoint2.h
-GFace.o: GFace.cpp GFace.h GPoint.h GEntity.h Range.h SPoint3.h SPoint2.h \
-  SVector3.h Pair.h GEdge.h GVertex.h
-GRegion.o: GRegion.cpp GRegion.h GEntity.h Range.h SPoint3.h GFace.h \
-  GPoint.h SPoint2.h SVector3.h Pair.h
+GVertex.o: GVertex.cpp GVertex.h GEntity.h Range.h SPoint3.h \
+  SBoundingBox3d.h GPoint.h
+GEdge.o: GEdge.cpp GEdge.h GEntity.h Range.h SPoint3.h SBoundingBox3d.h \
+  GVertex.h GPoint.h SVector3.h SPoint2.h
+GFace.o: GFace.cpp GFace.h GPoint.h GEntity.h Range.h SPoint3.h \
+  SBoundingBox3d.h GEdgeLoop.h SPoint2.h SVector3.h Pair.h GEdge.h \
+  GVertex.h
+GRegion.o: GRegion.cpp GRegion.h GEntity.h Range.h SPoint3.h \
+  SBoundingBox3d.h GFace.h GPoint.h GEdgeLoop.h SPoint2.h SVector3.h \
+  Pair.h
 GModel.o: GModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
-  GPoint.h GEdge.h SVector3.h SPoint2.h GFace.h Pair.h GRegion.h
-gmshModel.o: gmshModel.cpp gmshModel.h ../Mesh/Mesh.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
-  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
-  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
-  ../Mesh/Matrix.h Range.h Pair.h SPoint2.h SPoint3.h SVector3.h \
-  SBoundingBox3d.h gmshVertex.h GVertex.h GEntity.h GPoint.h gmshFace.h \
-  GFace.h gmshEdge.h GEdge.h gmshRegion.h GRegion.h GModel.h \
+  SBoundingBox3d.h GPoint.h GEdge.h SVector3.h SPoint2.h GFace.h \
+  GEdgeLoop.h Pair.h GRegion.h
+gmshModel.o: gmshModel.cpp gmshModel.h GModel.h GVertex.h GEntity.h \
+  Range.h SPoint3.h SBoundingBox3d.h GPoint.h GEdge.h SVector3.h \
+  SPoint2.h GFace.h GEdgeLoop.h Pair.h GRegion.h ../Mesh/Mesh.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../Mesh/Vertex.h \
+  ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h \
+  ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Mesh/Metric.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Parser/OpenFile.h ../DataStr/Tools.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../Common/Message.h
-gmshEdge.o: gmshEdge.cpp gmshModel.h ../Mesh/Mesh.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
-  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
-  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
-  ../Mesh/Matrix.h Range.h Pair.h SPoint2.h SPoint3.h SVector3.h \
-  SBoundingBox3d.h gmshVertex.h GVertex.h GEntity.h GPoint.h gmshFace.h \
-  GFace.h gmshEdge.h GEdge.h gmshRegion.h GRegion.h GModel.h \
+  ../DataStr/Tree.h ../Common/Message.h gmshVertex.h gmshFace.h \
+  gmshEdge.h gmshRegion.h
+gmshEdge.o: gmshEdge.cpp gmshModel.h GModel.h GVertex.h GEntity.h Range.h \
+  SPoint3.h SBoundingBox3d.h GPoint.h GEdge.h SVector3.h SPoint2.h \
+  GFace.h GEdgeLoop.h Pair.h GRegion.h gmshEdge.h gmshVertex.h \
+  ../Mesh/Mesh.h ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h \
+  ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Mesh/Metric.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Mesh/Interpolation.h ../Mesh/Vertex.h ../Mesh/Mesh.h CAD.h \
   ExtrudeParams.h Geo.h
-gmshFace.o: gmshFace.cpp gmshModel.h ../Mesh/Mesh.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
-  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
-  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
-  ../Mesh/Matrix.h Range.h Pair.h SPoint2.h SPoint3.h SVector3.h \
-  SBoundingBox3d.h gmshVertex.h GVertex.h GEntity.h GPoint.h gmshFace.h \
-  GFace.h gmshEdge.h GEdge.h gmshRegion.h GRegion.h GModel.h \
-  ../Mesh/Interpolation.h ../Mesh/Vertex.h ../Mesh/Mesh.h CAD.h \
-  ExtrudeParams.h Geo.h
+gmshFace.o: gmshFace.cpp gmshModel.h GModel.h GVertex.h GEntity.h Range.h \
+  SPoint3.h SBoundingBox3d.h GPoint.h GEdge.h SVector3.h SPoint2.h \
+  GFace.h GEdgeLoop.h Pair.h GRegion.h gmshEdge.h gmshVertex.h \
+  ../Mesh/Mesh.h ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h \
+  ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Mesh/Metric.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
+  gmshFace.h ../Mesh/Interpolation.h ../Mesh/Vertex.h ../Mesh/Mesh.h \
+  CAD.h ExtrudeParams.h Geo.h
+gmshRegion.o: gmshRegion.cpp gmshModel.h GModel.h GVertex.h GEntity.h \
+  Range.h SPoint3.h SBoundingBox3d.h GPoint.h GEdge.h SVector3.h \
+  SPoint2.h GFace.h GEdgeLoop.h Pair.h GRegion.h gmshEdge.h gmshVertex.h \
+  ../Mesh/Mesh.h ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h \
+  ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Mesh/Metric.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
+  gmshFace.h gmshRegion.h ../Mesh/Interpolation.h ../Mesh/Vertex.h \
+  ../Mesh/Mesh.h CAD.h ExtrudeParams.h Geo.h
 SVector3.o: SVector3.cpp SVector3.h SPoint3.h
 SBoundingBox3d.o: SBoundingBox3d.cpp SBoundingBox3d.h SPoint3.h
 ExtractContour.o: ExtractContour.cpp ../Common/Gmsh.h ../Common/Message.h \

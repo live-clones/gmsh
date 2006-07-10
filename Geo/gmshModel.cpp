@@ -1,17 +1,33 @@
 #include "gmshModel.h"
+#include "Mesh.h"
+#include "GPoint.h"
+#include "SPoint2.h"
+#include "SPoint3.h"
+#include "SBoundingBox3d.h"
 #include "OpenFile.h"
 #include "Tools.h"
 #include "Message.h"
+#include "gmshVertex.h"
+#include "gmshFace.h"
+#include "gmshEdge.h"
+#include "gmshRegion.h"
 
 extern Mesh *THEM;
+gmshModel::gmshModel()
+  : GModel ( "noname" )
+{
+  convertFromUglyOldDataStructuresgmshModel();
+}
+
 gmshModel::gmshModel(char *geofile)
   : GModel ( geofile )
 {
-  if (geofile)
-    {
       OpenProblem ( geofile );
-    }
-  
+      convertFromUglyOldDataStructuresgmshModel();
+}
+
+void gmshModel::convertFromUglyOldDataStructuresgmshModel()
+{
   std::set<Vertex*> points;
 
   if(Tree_Nbr(THEM->Curves)) {
@@ -67,11 +83,11 @@ gmshModel::gmshModel(char *geofile)
     List_Delete(volumes);
   }
 
-  //Msg (INFO,"gmshModel Created\n");
-  //Msg (INFO,"%d Vertices\n",vertices.size());
-  //Msg (INFO,"%d Edges   \n",edges.size());
-  //Msg (INFO,"%d Faces\n",faces.size());
-  //Msg (INFO,"%d Regions\n" ,regions.size());
+  Msg (INFO,"gmshModel Created\n");
+  Msg (INFO,"%d Vertices\n",vertices.size());
+  Msg (INFO,"%d Edges   \n",edges.size());
+  Msg (INFO,"%d Faces\n",faces.size());
+  Msg (INFO,"%d Regions\n" ,regions.size());
 
 }
 

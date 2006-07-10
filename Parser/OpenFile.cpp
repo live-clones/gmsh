@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.94 2006-03-09 07:56:35 remacle Exp $
+// $Id: OpenFile.cpp,v 1.95 2006-07-10 12:16:35 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 
 #include "BDS.h"
 #include "Gmsh.h"
+#include "gmshModel.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "Parser.h"
@@ -350,7 +351,7 @@ int MergeProblem(char *name, int warn_if_missing)
     }
     else {
       status = ParseFile(name, 0, 1);
-      //      gmshModel m ;
+      gmshModel m ;
     }
   }
 
