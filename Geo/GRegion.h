@@ -5,6 +5,7 @@
 
 /** A model region. */
 class GRegion : public GEntity {
+ protected:
   std::list<GFace *> l_faces;
   std::list<int>     l_dirs;
 public:

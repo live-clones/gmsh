@@ -5,6 +5,22 @@
 #include "CAD.h"
 #include "Geo.h"
 
+gmshFace::gmshFace(GModel *m,Surface * face):GFace (m,face->Num), s(face)
+{
+  Curve *c;
+  for (int i=0 ; i< List_Nbr ( s->Generatrices ) ; i++)
+    {
+      List_Read ( s->Generatrices , i, & c );
+      GEdge *e = m->edgeByTag ( abs(c->Num) );
+      if ( ! e ) throw;
+      l_edges.push_back(e);
+      e->addFace (this);
+      if (c->Num>0) l_dirs.push_back(1);
+      else l_dirs.push_back(-1);
+    }
+}
+
+
 Range<double> gmshFace::parBounds(int i) const
 { 
 /*  SPAinterval range;

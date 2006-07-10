@@ -10,7 +10,7 @@
 class gmshFace : public GFace 
 {
 public:
-  gmshFace(GModel *m,Surface * face):GFace (m,face->Num), s(face){}
+  gmshFace(GModel *m,Surface * face);
   virtual ~gmshFace(){}
   Range<double> parBounds(int i) const; 
   virtual int paramDegeneracies(int dir, double *par); 

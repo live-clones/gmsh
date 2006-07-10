@@ -61,7 +61,15 @@ public:
   void addFace ( GFace *f );
   void delFace ( GFace *f );
 
-
+  GVertex * getBeginVertex () const
+    {
+      return v0;
+    }
+  GVertex * getEndVertex () const
+    {
+      return v1;
+    }
+    
 protected:
 
   GVertex *v0,*v1;

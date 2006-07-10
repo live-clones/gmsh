@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.89 2006-04-01 23:02:20 geuzaine Exp $
+# $Id: Makefile,v 1.90 2006-07-10 08:08:59 remacle Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -25,7 +25,7 @@ LIB     = ../lib/libGmshCommon.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics -I../Mesh\
           -I../Numeric -I../Parser -I../Plugin -I../Fltk\
           -I../contrib/MathEval
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
+CFLAGS  =${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Context.cpp\
       AdaptiveViews.cpp\

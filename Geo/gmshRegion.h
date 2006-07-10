@@ -7,11 +7,7 @@
 
 class gmshRegion : public GRegion {
 public:
-  gmshRegion(GModel *m, Volume *_v)
-    : GRegion(m, _v->Num), v(_v)
-    {
-      
-    }
+  gmshRegion(GModel *m, Volume *_v);
   virtual ~gmshRegion() {}
 
   //  virtual GeoRep * geometry(){return 0;}

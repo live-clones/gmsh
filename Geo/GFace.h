@@ -4,6 +4,7 @@
 class GRegion;
 #include "GPoint.h"
 #include "GEntity.h"
+#include "GEdgeLoop.h"
 #include "SPoint2.h"
 #include "SVector3.h"
 #include "Pair.h"
@@ -13,8 +14,9 @@ class GRegion;
 class GFace : public GEntity 
 {
 protected: 
-  std::list<GEdge *> l_edges;
-  std::list<int>     l_dirs;
+  std::list<GEdgeLoop *> l_edgeLoops;
+  std::list<GEdge *>     l_edges;
+  std::list<int>         l_dirs;
   GRegion *r1, *r2;
 public:
   GFace(GModel *model, int tag) : GEntity (model,tag),r1(0),r2(0){}
@@ -60,6 +62,7 @@ public:
   virtual bool surfPeriodic(int dim) const = 0;
   virtual int inClosure(GEntity *ent) const {throw;}
 protected:
+  void buildEdgeLoops ();
 };
 
 
