@@ -3,6 +3,9 @@
 #include "Interpolation.h"
 #include "CAD.h"
 #include "Geo.h"
+#include "Context.h"
+
+extern Context_T CTX;
 
 gmshEdge::gmshEdge(GModel *model,Curve *edge,GVertex *v1,GVertex *v2)
   : GEdge ( model, edge->Num, v1, v2 ), c(edge)
@@ -133,4 +136,17 @@ void * gmshEdge::getNativePtr() const
 int gmshEdge::containsPoint(const SPoint3 &pt) const
 { 
   throw;
+}
+
+int gmshEdge::minimumEdgeSegments () const
+{
+  if(c->Typ == MSH_SEGM_CIRC ||
+     c->Typ == MSH_SEGM_CIRC_INV ||
+     c->Typ == MSH_SEGM_ELLI || 
+     c->Typ == MSH_SEGM_ELLI_INV) {
+    return (int)(fabs(c->Circle.t1 - c->Circle.t2) *
+		 (double)CTX.mesh.min_circ_points / Pi) - 1;
+  }
+  else
+    return GEdge::minimumEdgeSegments () ;
 }

@@ -1,4 +1,5 @@
 #include "GEdge.h"
+#include "GmshDefines.h"
 #include <algorithm>
 void GEdge::addFace ( GFace *e )
 { 
@@ -13,10 +14,11 @@ GEdge::GEdge(GModel *model,
       int tag, 
       GVertex *_v0, 
       GVertex *_v1)
-  : GEntity (model,tag),v0(_v0),v1(_v1) 
+  : GEntity (model,tag),v0(_v0),v1(_v1)
 {
   v0->addEdge (this);
   v1->addEdge (this);
+  meshGEdgeAttributes.Method = LIBRE; 
 }
 
 GEdge::~GEdge() 

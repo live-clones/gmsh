@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.82 2006-03-08 17:04:59 remacle Exp $
+// $Id: Generator.cpp,v 1.83 2006-07-11 13:41:22 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -29,9 +29,12 @@
 #include "Views.h"
 #include "PartitionMesh.h"
 #include "OS.h"
+#include "meshGEdge.h"
+#include "GModel.h"
 
 extern Mesh *THEM;
 extern Context_T CTX;
+extern GModel *GMODEL;
 
 static int nbOrder2 = 0;
 
@@ -264,6 +267,8 @@ void Maillage_Dimension_1(Mesh * M)
   double t1 = Cpu();
 
   Tree_Action(M->Curves, Maillage_Curve);
+
+  std::for_each (GMODEL->firstEdge(),GMODEL->lastEdge(), meshGEdge() );
 
   double t2 = Cpu();
   M->timing[0] = t2 - t1;

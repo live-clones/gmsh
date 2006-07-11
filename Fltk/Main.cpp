@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.88 2006-03-17 21:04:34 geuzaine Exp $
+// $Id: Main.cpp,v 1.89 2006-07-11 13:41:22 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -39,10 +39,13 @@
 #include "CommandLine.h"
 #include "Numeric.h"
 #include "Solvers.h"
+#include "GModel.h"
 
 Context_T CTX;
 Mesh M, *THEM = NULL;
 GUI *WID = NULL;
+GModel *GMODEL = 0;
+
 
 int main(int argc, char *argv[])
 {

@@ -15,8 +15,8 @@ public:
   virtual ~GModel() {}
 
   typedef std::list<GRegion*>::iterator riter;
-  typedef std::list<GFace*>::iterator   fiter;
-  typedef std::list<GEdge*>::iterator   eiter;
+  typedef std::list<GFace*>  ::iterator   fiter;
+  typedef std::list<GEdge*>  ::iterator   eiter;
   typedef std::list<GVertex*>::iterator viter;
 
   /** Returns the geometric tolerance for the entire model. */

@@ -29,6 +29,8 @@ public:
   }
   void * getNativePtr() const; 
   virtual double parFromPoint(const SPoint3 &pt) const;
+  virtual int minimumEdgeSegments () const;
+
 protected:
   Curve *c; 
 };

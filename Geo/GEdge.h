@@ -44,18 +44,29 @@ public:
   void delFace ( GFace *f );
 
   GVertex * getBeginVertex () const
-    {
-      return v0;
-    }
+  {
+    return v0;
+  }
   GVertex * getEndVertex () const
-    {
-      return v1;
-    }
-    
+  {
+    return v1;
+  }
+  
+  struct 
+  {
+    char   Method;
+    double coeffTransfinite;
+    int    nbPointsTransfinite;
+    int    typeTransfinite;
+  } meshGEdgeAttributes ;
+
+  virtual int minimumEdgeSegments () const {return 1;}
+
 protected:
 
   GVertex *v0,*v1;
   std::list<GFace *> l_faces;
+
 };
 
 

@@ -15,6 +15,7 @@ public:
   void delEdge ( GEdge *e );
   virtual int dim() const {return 0;}
   virtual GeomType geomType() const {return Point;}
+  virtual double prescribedMeshSizeAtVertex() const {return 0;}
 
 protected:
   std::list<GEdge*> l_edges;

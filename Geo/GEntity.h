@@ -4,7 +4,9 @@
 #include "Range.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
+#include "MVertex.h"
 #include <list>
+#include <vector>
 
 class GModel;
 class GVertex;
@@ -93,6 +95,8 @@ public:
   int tag () const {return _tag;}
   // The bounding box
   SBoundingBox3d bounds() const{throw;}
+
+  std::vector<MVertex*> mesh_vertices;
 
 
 };
