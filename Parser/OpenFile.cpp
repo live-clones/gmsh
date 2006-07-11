@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.95 2006-07-10 12:16:35 remacle Exp $
+// $Id: OpenFile.cpp,v 1.96 2006-07-11 13:41:22 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -49,6 +49,7 @@ void UpdateViewsInGUI();
 #endif
 
 extern Mesh *THEM, M;
+extern GModel *GMODEL;
 extern Context_T CTX;
 
 extern  void BDS_To_Mesh(Mesh *m);
@@ -351,7 +352,7 @@ int MergeProblem(char *name, int warn_if_missing)
     }
     else {
       status = ParseFile(name, 0, 1);
-      gmshModel m ;
+      GMODEL = new gmshModel ;
     }
   }
 

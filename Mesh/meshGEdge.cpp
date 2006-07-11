@@ -52,31 +52,35 @@ double F_Transfini_bis(double t)
     switch (abs(type)) {
 
     case 1:    // Geometric progression ar^i; Sum of n terms = THEC->l = a (r^n-1)/(r-1)
-      if(sign(type) >= 0)
-	r = coef;
-      else
-	r = 1. / coef;
-      double a = _myGEdgeLength * (r - 1.) / (pow(r, nbpt - 1.) - 1.);
-      int i = (int)(log(t * _myGEdgeLength / a * (r - 1.) + 1.) / log(r));
-      val = d / (a * pow(r, (double)i));
+      {
+	if(sign(type) >= 0)
+	  r = coef;
+	else
+	  r = 1. / coef;
+	double a = _myGEdgeLength * (r - 1.) / (pow(r, nbpt - 1.) - 1.);
+	int i = (int)(log(t * _myGEdgeLength / a * (r - 1.) + 1.) / log(r));
+	val = d / (a * pow(r, (double)i));
+      }
       break;
-
+	
     case 2:    // Bump
-      if(coef > 1.0) {
-        a = -4. * sqrt(coef - 1.) *
-          atan2(1., sqrt(coef - 1.)) /
-          ((double)nbpt *  _myGEdgeLength);
+      {
+	if(coef > 1.0) {
+	  a = -4. * sqrt(coef - 1.) *
+	    atan2(1., sqrt(coef - 1.)) /
+	    ((double)nbpt *  _myGEdgeLength);
+	}
+	else {
+	  a = 2. * sqrt(1. - coef) *
+	    log(fabs((1. + 1. / sqrt(1. - coef))
+		     / (1. - 1. / sqrt(1. - coef))))
+	    / ((double)nbpt * _myGEdgeLength);
+	}
+	double b = -a * _myGEdgeLength * _myGEdgeLength / (4. * (coef - 1.));
+	val = d / (-a * DSQR(t * _myGEdgeLength - (_myGEdgeLength) * 0.5) + b);
       }
-      else {
-        a = 2. * sqrt(1. - coef) *
-          log(fabs((1. + 1. / sqrt(1. - coef))
-                   / (1. - 1. / sqrt(1. - coef))))
-          / ((double)nbpt * _myGEdgeLength);
-      }
-      double b = -a * _myGEdgeLength * _myGEdgeLength / (4. * (coef - 1.));
-      val = d / (-a * DSQR(t * _myGEdgeLength - (_myGEdgeLength) * 0.5) + b);
       break;
-
+      
     default:
       Msg(WARNING, "Unknown case in Transfinite Line mesh");
       val = 1.;
