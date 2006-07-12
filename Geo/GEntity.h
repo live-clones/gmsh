@@ -25,6 +25,7 @@ public:
 
   enum GeomType{
     Unknown,
+    Discrete,
     Point,
     Line,
     Circle,
@@ -42,7 +43,7 @@ public:
 
   GEntity(GModel *m, int t) : _model(m),_tag(t){
     drawAttributes.Visible = VIS_GEOM | VIS_MESH; 
-    drawAttributes.Frozen = false; 
+    drawAttributes.Frozen = 0; 
   }
 
   virtual ~GEntity() {};
@@ -105,8 +106,7 @@ public:
 
   struct 
   {
-    char   Visible;
-    bool   Frozen;
+    char Visible, Frozen;
   } drawAttributes ;
 
 };

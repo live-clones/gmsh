@@ -60,7 +60,8 @@ public:
     int    typeTransfinite;
   } meshAttributes ;
 
-  virtual int minimumEdgeSegments () const {return 1;}
+  virtual int minimumMeshSegments () const {return 1;}
+  virtual int minimumDrawSegments () const {return 1;}
 
 protected:
 

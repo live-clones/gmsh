@@ -143,7 +143,7 @@ void meshGEdge :: operator() (GEdge *ge)
   else
     {
       a = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), F_Lc_bis, Points, 1.e-4);
-      N = std::max (ge->minimumEdgeSegments()+1, (int)(a + 1.));      
+      N = std::max (ge->minimumMeshSegments()+1, (int)(a + 1.));      
     }
   const double b = a / (double)(N - 1);
 

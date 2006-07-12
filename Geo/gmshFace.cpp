@@ -139,16 +139,12 @@ bool gmshFace::degenerate(int dim) const
 
 GEntity::GeomType gmshFace::geomType() const
 {
-  int type;
-  type = s->Typ;
-  //if(type == CONE_TYPE)
-  //return GeomType::Cone;
-  if(type == MSH_SURF_NURBS)
-    return Nurb;
-  if(type == MSH_SURF_PLAN)
-    return Plane;
-  return Unknown;
-
+  switch(s->Typ){
+  case MSH_SURF_NURBS: return Nurb;
+  case MSH_SURF_PLAN: return Plane;
+  case MSH_SURF_DISCRETE: return Discrete;
+  default: return Unknown;
+  }
 }
 
 int gmshFace::geomDirection() const

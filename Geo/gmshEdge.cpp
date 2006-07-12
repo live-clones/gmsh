@@ -23,26 +23,23 @@ SBoundingBox3d gmshEdge::bounds() const
 {
   double xmin,ymin,zmin;
   double xmax,ymax,zmax;
-  for (int i=0;i<20;i++)
-    {
-      double u = c->ubeg + (i/19.) * (c->uend - c->ubeg);
-      Vertex a = InterpolateCurve(c, u, 0);
-      if (!i)
-	{
-	  xmin = xmax = a.Pos.X;
-	  ymin = ymax = a.Pos.Y;
-	  zmin = zmax = a.Pos.Z;
-	}
-      else
-	{
-	  if(a.Pos.X < xmin) xmin = a.Pos.X;
-	  if(a.Pos.Y < ymin) ymin = a.Pos.Z;
-	  if(a.Pos.Z < zmin) zmin = a.Pos.Y;
-	  if(a.Pos.X > xmax) xmax = a.Pos.X;
-	  if(a.Pos.Y > ymax) ymax = a.Pos.Z;
-	  if(a.Pos.Z > zmax) zmax = a.Pos.Y;
-	}
+  for (int i = 0; i < 20; i++){
+    double u = c->ubeg + (i/19.) * (c->uend - c->ubeg);
+    Vertex a = InterpolateCurve(c, u, 0);
+    if (!i){
+      xmin = xmax = a.Pos.X;
+      ymin = ymax = a.Pos.Y;
+      zmin = zmax = a.Pos.Z;
     }
+    else{
+      if(a.Pos.X < xmin) xmin = a.Pos.X;
+      if(a.Pos.Y < ymin) ymin = a.Pos.Z;
+      if(a.Pos.Z < zmin) zmin = a.Pos.Y;
+      if(a.Pos.X > xmax) xmax = a.Pos.X;
+      if(a.Pos.Y > ymax) ymax = a.Pos.Z;
+      if(a.Pos.Z > zmax) zmax = a.Pos.Y;
+    }
+  }
   SPoint3 bmin(xmin,ymin,zmin);
   SPoint3 bmax(xmax,ymax,zmax);
   SBoundingBox3d bbox(bmin);
@@ -110,20 +107,20 @@ bool gmshEdge::periodic(int dim) const
 
 GEntity::GeomType gmshEdge::geomType() const
 {
-  switch (c->Typ)
-    {
-    case MSH_SEGM_LINE : return Line;
-    case MSH_SEGM_PARAMETRIC : return ParametricCurve;
-    case MSH_SEGM_CIRC :  
-    case MSH_SEGM_CIRC_INV : return Circle;
-    case MSH_SEGM_ELLI:
-    case MSH_SEGM_ELLI_INV: return Ellipse;
-    case MSH_SEGM_BSPLN:
-    case MSH_SEGM_BEZIER: 
-    case MSH_SEGM_NURBS:
-    case MSH_SEGM_SPLN: return Nurb; 
-    default : return Unknown;
-    }
+  switch (c->Typ){
+  case MSH_SEGM_LINE : return Line;
+  case MSH_SEGM_PARAMETRIC : return ParametricCurve;
+  case MSH_SEGM_CIRC :  
+  case MSH_SEGM_CIRC_INV : return Circle;
+  case MSH_SEGM_ELLI:
+  case MSH_SEGM_ELLI_INV: return Ellipse;
+  case MSH_SEGM_BSPLN:
+  case MSH_SEGM_BEZIER: 
+  case MSH_SEGM_NURBS:
+  case MSH_SEGM_SPLN: return Nurb; 
+  case MSH_SEGM_DISCRETE: return Discrete; 
+  default : return Unknown;
+  }
 }
 
 
@@ -132,21 +129,27 @@ void * gmshEdge::getNativePtr() const
   return c;
 }
 
-// 200306
 int gmshEdge::containsPoint(const SPoint3 &pt) const
 { 
   throw;
 }
 
-int gmshEdge::minimumEdgeSegments () const
+int gmshEdge::minimumMeshSegments () const
 {
-  if(c->Typ == MSH_SEGM_CIRC ||
-     c->Typ == MSH_SEGM_CIRC_INV ||
-     c->Typ == MSH_SEGM_ELLI || 
-     c->Typ == MSH_SEGM_ELLI_INV) {
+  if(geomType() == Circle || geomType() == Ellipse)
     return (int)(fabs(c->Circle.t1 - c->Circle.t2) *
 		 (double)CTX.mesh.min_circ_points / Pi) - 1;
-  }
   else
-    return GEdge::minimumEdgeSegments () ;
+    return GEdge::minimumMeshSegments () ;
+}
+
+int gmshEdge::minimumDrawSegments () const
+{
+  if(geomType() == Circle || geomType() == Ellipse)
+    return (int)(fabs(c->Circle.t1 - c->Circle.t2) *
+		 (double)CTX.geom.circle_points / Pi) - 1;
+  else if(geomType() == ParametricCurve || geomType() == Nurb)
+    return CTX.geom.circle_points;
+  else
+    return GEdge::minimumDrawSegments () ;
 }

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.98 2006-07-12 07:24:13 geuzaine Exp $
+// $Id: Geom.cpp,v 1.99 2006-07-12 09:07:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,6 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "BDS.h"
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Numeric.h"
@@ -35,6 +34,8 @@
 #include "gl2ps.h"
 #include "GModel.h"
 #include "GVertex.h"
+#include "GEdge.h"
+#include "GFace.h"
 
 extern Context_T CTX;
 extern Mesh *THEM;
@@ -44,8 +45,6 @@ extern GModel *GMODEL;
 
 void Draw_Geo_Vertex(GVertex *v)
 {
-  char Num[100];
-
   if(!(v->drawAttributes.Visible & VIS_GEOM))
     return;
 
@@ -77,7 +76,7 @@ void Draw_Geo_Vertex(GVertex *v)
     else if(CTX.geom.point_type == 2) {
       GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
       if(sp) {
-	Msg(FATAL, "code GL_enhancePoint!");
+	Msg(FATAL, "GL_enhancePoint not done");
 	//sp-> GL_enhancePoint (v);
       }
       glBegin(GL_POINTS);
@@ -93,6 +92,7 @@ void Draw_Geo_Vertex(GVertex *v)
   }
 
   if(CTX.geom.points_num) {
+    char Num[100];
     sprintf(Num, "%d", v->tag());
     double offset = (0.5 * CTX.geom.point_size + 0.3 * CTX.gl_fontsize) * CTX.pixel_equiv_x;
     glRasterPos3d(v->x() + offset / CTX.s[0],
@@ -111,11 +111,6 @@ void Draw_Geo_Vertex(GVertex *v)
 
 void Draw_Geo_Edge(GEdge *c)
 {
-  int N;
-  double mod, x[2], y[2], z[2];
-  char Num[100];
-  Vertex v, dv;
-
   if(c->tag() < 0 || !(c->drawAttributes.Visible & VIS_GEOM))
     return;
 
@@ -135,74 +130,40 @@ void Draw_Geo_Edge(GEdge *c)
     glColor4ubv((GLubyte *) & CTX.color.geom.line);
   }
 
-  /*
+  Range<double> t_bounds = c->parBounds(0);
+  double t_min = t_bounds.low();
+  double t_max = t_bounds.high();
+
   if(CTX.geom.lines) {
-    int n = List_Nbr(c->Control_Points);
-    switch (c->Typ) {
-    case MSH_SEGM_LINE:
-      N = n;
-      break;
-    case MSH_SEGM_CIRC:
-    case MSH_SEGM_CIRC_INV:
-    case MSH_SEGM_ELLI:
-    case MSH_SEGM_ELLI_INV:
-      N = CTX.geom.circle_points;
-      break;
-    default:
-      N = 10 * n;
-      break;
-    }
-    if(c->Typ == MSH_SEGM_DISCRETE && THEM->bds) {
-      BDS_GeomEntity *g = THEM->bds->get_geom ( c->Num,1);	
-      std::list<BDS_Edge*>::iterator it  = g->e.begin();
-      std::list<BDS_Edge*>::iterator ite = g->e.end();
-      while (it!=ite){
-	BDS_Edge *e = (*it);
-	if(CTX.geom.line_type < 1) {
-	  glBegin(GL_LINES);
-	  glVertex3d(e->p1->X,e->p1->Y,e->p1->Z);
-	  glVertex3d(e->p2->X,e->p2->Y,e->p2->Z);
-	  glEnd();
-	}
-	else{
-	  x[0] = e->p1->X;
-	  y[0] = e->p1->Y;
-	  z[0] = e->p1->Z;
-	  x[1] = e->p2->X;
-	  y[1] = e->p2->Y;
-	  z[1] = e->p2->Z;
-	  Draw_Cylinder(c->ipar[3] > 0 ? CTX.geom.line_sel_width : CTX.geom.line_width,
-			x, y, z, CTX.geom.light);
-	}
-	++it;
-      }
-    }
-    else if(c->Typ == MSH_SEGM_DISCRETE) {
+    if(c->geomType() == GEntity::Discrete){
       // do nothing: we draw the elements in the mesh drawing routines
     }
     else {
+      int N = c->minimumDrawSegments() + 1;
       if(CTX.geom.line_type >= 1) {
 	for(int i = 0; i < N - 1; i++) {
-	  v = InterpolateCurve(c, (double)i / (double)(N - 1), 0);
-	  dv = InterpolateCurve(c, (double)(i + 1) / (double)(N - 1), 0);
-	  x[0] = v.Pos.X;
-	  y[0] = v.Pos.Y;
-	  z[0] = v.Pos.Z;
-	  x[1] = dv.Pos.X;
-	  y[1] = dv.Pos.Y;
-	  z[1] = dv.Pos.Z;
-	  Draw_Cylinder(c->ipar[3] > 0 ? CTX.geom.line_sel_width : CTX.geom.line_width,
+	  double t1 = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
+	  GPoint p1 = c->point(t1);
+	  double t2 = t_min + (double)(i + 1) / (double)(N - 1) * (t_max - t_min);
+	  GPoint p2 = c->point(t2);
+	  double x[2], y[2], z[2];
+	  x[0] = p1.x();
+	  y[0] = p1.y();
+	  z[0] = p1.z();
+	  x[1] = p2.x();
+	  y[1] = p2.y();
+	  z[1] = p2.z();
+	  Draw_Cylinder(c->drawAttributes.Frozen ? CTX.geom.line_sel_width : CTX.geom.line_width,
 			x, y, z, CTX.geom.light);
 	}
 	if(CTX.geom.line_type == 2) {
 	  GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
 	  if(sp) {
-	    int NN=(N>1)?N:1;
-	    const double eps=0.e-2;
-	    for(int i = 0; i < NN - 1; i++) {
-	      v = InterpolateCurve(c, (double)i / (double)(NN - 1)-eps, 0);
-	      dv = InterpolateCurve(c, (double)(i + 1) / (double)(NN - 1)+eps, 0);
-	      sp-> GL_enhanceLine (c->Num,&v,&dv);
+	    Msg(FATAL, "GL_enhanceLine not done");
+	    for(int i = 0; i < N - 1; i++) {
+	      //v = InterpolateCurve(c, (double)i / (double)(NN - 1), 0);
+	      //dv = InterpolateCurve(c, (double)(i + 1) / (double)(NN - 1), 0);
+	      //sp-> GL_enhanceLine (c->Num,&v,&dv);
 	    }
 	  }
 	}
@@ -210,8 +171,9 @@ void Draw_Geo_Edge(GEdge *c)
       else {
 	glBegin(GL_LINE_STRIP);
 	for(int i = 0; i < N; i++) {
-	  v = InterpolateCurve(c, (double)i / (double)(N - 1), 0);
-	  glVertex3d(v.Pos.X, v.Pos.Y, v.Pos.Z);
+	  double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
+	  GPoint p = c->point(t);
+	  glVertex3d(p.x(), p.y(), p.z());
 	}
 	glEnd();
       }
@@ -219,30 +181,28 @@ void Draw_Geo_Edge(GEdge *c)
   }
 
   if(CTX.geom.lines_num) {
-    v = InterpolateCurve(c, 0.5, 0);
-    sprintf(Num, "%d", c->Num);
+    GPoint p = c->point(0.5 * (t_max - t_min));
+    char Num[100];
+    sprintf(Num, "%d", c->tag());
     double offset = (0.5 * CTX.geom.line_width + 0.3 * CTX.gl_fontsize) * CTX.pixel_equiv_x;
-    glRasterPos3d(v.Pos.X + offset / CTX.s[0],
-		  v.Pos.Y + offset / CTX.s[1],
-		  v.Pos.Z + offset / CTX.s[2]);
+    glRasterPos3d(p.x() + offset / CTX.s[0],
+		  p.y() + offset / CTX.s[1],
+		  p.z() + offset / CTX.s[2]);
     Draw_String(Num);
   }
 
   if(CTX.geom.tangents) {
-    v = InterpolateCurve(c, 0.5, 0);
-    dv = InterpolateCurve(c, 0.5, 1);
-    mod = sqrt(dv.Pos.X * dv.Pos.X + dv.Pos.Y * dv.Pos.Y + dv.Pos.Z * dv.Pos.Z);
-    dv.Pos.X = dv.Pos.X / mod * CTX.geom.tangents * CTX.pixel_equiv_x / CTX.s[0];
-    dv.Pos.Y = dv.Pos.Y / mod * CTX.geom.tangents * CTX.pixel_equiv_x / CTX.s[1];
-    dv.Pos.Z = dv.Pos.Z / mod * CTX.geom.tangents * CTX.pixel_equiv_x / CTX.s[2];
+    double t = 0.5 * (t_max - t_min);
+    GPoint p = c->point(t);
+    SVector3 der = c->firstDer(t) ;
+    double mod = sqrt(der[0] * der[0] + der[1] * der[1] + der[2] * der[2]);
+    for(int i = 0; i < 3; i++)
+      der[i] = der[i] / mod * CTX.geom.tangents * CTX.pixel_equiv_x / CTX.s[i];
     glColor4ubv((GLubyte *) & CTX.color.geom.tangents);
     Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-		v.Pos.X, v.Pos.Y, v.Pos.Z,
-		dv.Pos.X, dv.Pos.Y, dv.Pos.Z, CTX.geom.light);
+		p.x(), p.y(), p.z(), der[0], der[1], der[2], CTX.geom.light);
   }
-  */
-
 
   if(CTX.render_mode == GMSH_SELECT) {
     glPopName();
@@ -345,35 +305,6 @@ void getPlaneSurfaceNormal(Surface *s, double x, double y, double z, double n[3]
     n[2] = s->c;
     norme(n);
   }
-}
-
-void Draw_Polygonal_Surface(Surface * s)
-{
-  if(CTX.geom.surfaces) {
-    if(CTX.geom.light) glEnable(GL_LIGHTING);
-    glEnable(GL_POLYGON_OFFSET_FILL); // always!
-    BDS_GeomEntity *g = THEM->bds->get_geom ( s->Num,2);	
-    std::list<BDS_Triangle*>::iterator it  = g->t.begin();
-    std::list<BDS_Triangle*>::iterator ite = g->t.end();
-    while (it!=ite) {
-      glBegin(GL_TRIANGLES);
-      BDS_Point *n[3];
-      BDS_Triangle *t = (*it);
-      double c[3];
-      t->getNodes (n);
-      normal_triangle (n[0],n[1],n[2],c);
-      if(CTX.geom.light) glNormal3dv(c);
-      glVertex3d(n[0]->X,n[0]->Y,n[0]->Z);
-      if(CTX.geom.light) glNormal3dv(c);
-      glVertex3d(n[1]->X,n[1]->Y,n[1]->Z);
-      if(CTX.geom.light) glNormal3dv(c);
-      glVertex3d(n[2]->X,n[2]->Y,n[2]->Z);
-      glEnd();
-      ++it;
-    }
-    glDisable(GL_POLYGON_OFFSET_FILL);
-    glDisable(GL_LIGHTING);
-  }  
 }
 
 void Draw_Plane_Surface(Surface * s)
@@ -637,10 +568,7 @@ void Draw_Surface(void *a, void *b)
     glColor4ubv((GLubyte *) & CTX.color.geom.surface);
   }
 
-  if(THEM->bds){
-    Draw_Polygonal_Surface(s);
-  }
-  else if(s->Typ == MSH_SURF_DISCRETE){
+  if(s->Typ == MSH_SURF_DISCRETE){
     // do nothing: we draw the elements in the mesh drawing routines
   }
   else if(s->Typ == MSH_SURF_PLAN){
@@ -677,8 +605,6 @@ void Draw_Geom()
       Draw_Geo_Edge(*e);
 
   /*
-  if(CTX.geom.lines || CTX.geom.lines_num || CTX.geom.tangents)
-    Tree_Action(THEM->Curves, Draw_Curve);
   if(CTX.geom.surfaces || CTX.geom.surfaces_num || CTX.geom.normals)
     Tree_Action(THEM->Surfaces, Draw_Surface);
   if(CTX.geom.volumes || CTX.geom.volumes_num)
@@ -747,15 +673,9 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
 	strcat(Message, "}");
 	Msg(STATUS1N, Message);
       }
-      else if (THEM->bds){
-	BDS_GeomEntity *g = THEM->bds->get_geom(s->Num, 2);
-	if (g && g->surf)
-	  Msg(STATUS1N, "Surface %d (%s)", s->Num,g->surf->nameOf().c_str());
-	else
-	  Msg(STATUS1N, "Surface %d (unknown type)", s->Num);
-      }
       else{
 	Msg(STATUS1N, "Surface %d", s->Num);
+	//Msg(STATUS1N, "Surface %d (%d)", s->Num, s->geomTyp());
       }
     }
   }
