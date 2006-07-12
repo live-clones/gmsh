@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.43 2006-01-10 15:13:25 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.44 2006-07-12 07:24:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,8 @@
 #include "Geo.h"
 #include "Mesh.h"
 #include "CAD.h"
+
+extern Mesh *THEM;
 
 FILE *FOUT;
 
@@ -243,7 +245,7 @@ void Print_PhysicalGroups(void *a, void *b)
   fprintf(FOUT, "};\n");
 }
 
-void Print_Geo(Mesh *M, char *filename)
+void Print_Geo(char *filename)
 {
   if(filename) {
     FOUT = fopen(filename, "w");
@@ -256,11 +258,11 @@ void Print_Geo(Mesh *M, char *filename)
   else
     FOUT = stdout;
 
-  Tree_Action(M->Points, Print_Point);
-  Tree_Action(M->Curves, Print_Curve);
-  Tree_Action(M->Surfaces, Print_Surface); 
-  Tree_Action(M->Volumes, Print_Volume);
-  List_Action(M->PhysicalGroups, Print_PhysicalGroups);
+  Tree_Action(THEM->Points, Print_Point);
+  Tree_Action(THEM->Curves, Print_Curve);
+  Tree_Action(THEM->Surfaces, Print_Surface); 
+  Tree_Action(THEM->Volumes, Print_Volume);
+  List_Action(THEM->PhysicalGroups, Print_PhysicalGroups);
 
   if(filename) {
     Msg(INFO, "Wrote flattened geometry file '%s'", filename);

@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.41 2006-01-29 22:53:41 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.42 2006-07-12 07:24:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -463,7 +463,7 @@ static void Extrude_Vertex(void *data, void *dum)
       h += a * pow(parLayer[i], j);
 
       Vertex *newv = Create_Vertex(++THEM->MaxPointNum, v->Pos.X, v->Pos.Y, 
-			   v->Pos.Z + h, v->lc, v->u);
+				   v->Pos.Z + h, v->lc, v->u);
       Tree_Add(THEM->Vertices, &newv);
       List_Add(v->Extruded_Points, &newv);
     }
@@ -644,18 +644,16 @@ void FreeEP(void *a, void *b)
   }
 }
 
-void Extrude_Mesh_Old(Mesh * M)
+void Extrude_Mesh_Old()
 {
   InitExtrudeParams();
-
-  THEM = M;
 
   // clean up Extruded_Points stuff (in case another extrusion was
   // performed before)
   Tree_Action(THEM->Vertices, FreeEP);
 
   THEV = Create_Volume(1, MSH_VOLUME);
-  Tree_Add(M->Volumes, &THEV);
+  Tree_Add(THEM->Volumes, &THEV);
 
   TRY_INVERSE = 0;
 
@@ -668,13 +666,13 @@ void Extrude_Mesh_Old(Mesh * M)
   Tree_Ares = Tree_Create(sizeof(nxn), compnxn);
   Tree_Swaps = Tree_Create(sizeof(nxn), compnxn);
 
-  Tree_Action(M->Surfaces, Extrude_Surface1);
+  Tree_Action(THEM->Surfaces, Extrude_Surface1);
 
   if(!CTX.mesh.oldxtrude_recombine) {
     int j = 0;
     do {
       BAD_TETS = 0;
-      Tree_Action(M->Surfaces, Extrude_Surface2);
+      Tree_Action(THEM->Surfaces, Extrude_Surface2);
       Msg(INFO, "%d swaps", BAD_TETS);
       if(BAD_TETS == j && j != 0) {
 	if(!TRY_INVERSE){
@@ -691,9 +689,9 @@ void Extrude_Mesh_Old(Mesh * M)
     } while(BAD_TETS);
   }
   
-  Tree_Action(M->Surfaces, Extrude_Surface3);
-  Tree_Action(M->Curves, Extrude_Curve);
-  Tree_Action(M->Points, Extrude_Point);
+  Tree_Action(THEM->Surfaces, Extrude_Surface3);
+  Tree_Action(THEM->Curves, Extrude_Curve);
+  Tree_Action(THEM->Points, Extrude_Point);
 
   Tree_Delete(Tree_Ares);
   Tree_Delete(Tree_Swaps);

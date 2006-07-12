@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.70 2006-03-17 21:04:33 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.71 2006-07-12 07:24:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -297,7 +297,7 @@ void Get_Options(int argc, char *argv[])
 	  if(THEM){
 	    if(Tree_Nbr(THEM->Vertices)){
 	      CTX.mesh.msh_file_version = 2.0;
-	      Print_Mesh(THEM, argv[i + 1], FORMAT_MSH);
+	      Print_Mesh(argv[i + 1], FORMAT_MSH);
 	    }
 	  }
         }

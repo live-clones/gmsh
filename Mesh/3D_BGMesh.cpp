@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.45 2006-01-29 22:53:41 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.46 2006-07-12 07:24:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -89,7 +89,7 @@ void ExportStatistics(void *a, void *b)
   if(statfile) ele->ExportStatistics(statfile);
 }
 
-void ExportMeshStatistics(Mesh * M, char *filename, 
+void ExportMeshStatistics(char *filename, 
 			  int volumes, int surfaces, int lines)
 {
   statfile = fopen(filename, "w");
@@ -99,8 +99,8 @@ void ExportMeshStatistics(Mesh * M, char *filename,
     return;
   }
 
-  if(volumes && Tree_Nbr(M->Volumes)){
-    List_T *l = Tree2List(M->Volumes);
+  if(volumes && Tree_Nbr(THEM->Volumes)){
+    List_T *l = Tree2List(THEM->Volumes);
     fprintf(statfile, "View \"Volumes\" {\n");
     fprintf(statfile, "T2(1.e5,30,%d){\"Elementary Entity\", \"Element Number\", "
 	    "\"Characteristic Length\", \"Gamma\", \"Eta\", \"Rho\"};\n", 
@@ -118,8 +118,8 @@ void ExportMeshStatistics(Mesh * M, char *filename,
     fprintf(statfile, "};\n");
   }
   
-  if(surfaces && Tree_Nbr(M->Surfaces)){
-    List_T *l = Tree2List(M->Surfaces);
+  if(surfaces && Tree_Nbr(THEM->Surfaces)){
+    List_T *l = Tree2List(THEM->Surfaces);
     fprintf(statfile, "View \"Surfaces\" {\n");
     fprintf(statfile, "T2(1.e5,30,%d){\"Elementary Entity\", \"Element Number\", "
 	    "\"Characteristic Length\", \"Gamma\", \"Eta\", \"Rho\"};\n", 
@@ -135,8 +135,8 @@ void ExportMeshStatistics(Mesh * M, char *filename,
     fprintf(statfile, "};\n");
   }
 
-  if(lines && Tree_Nbr(M->Curves)){
-    List_T *l = Tree2List(M->Curves);
+  if(lines && Tree_Nbr(THEM->Curves)){
+    List_T *l = Tree2List(THEM->Curves);
     fprintf(statfile, "View \"Lines\" {\n");
     fprintf(statfile, "T2(1.e5,30,%d){\"Elementary Entity\", \"Element Number\", "
 	    "\"Characteristic Length\", \"Gamma\", \"Eta\", \"Rho\"};\n", 

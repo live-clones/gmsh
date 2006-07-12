@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.37 2006-02-26 16:26:09 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.38 2006-07-12 07:24:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -446,7 +446,7 @@ void ResetDegre2_Volume(void *a, void *b)
 void Degre1()
 {
   // transform any SimplexBase into "real" simplices
-  Move_SimplexBaseToSimplex(THEM, 3);
+  Move_SimplexBaseToSimplex(3);
 
   // (re-)initialize the global tree of edges/quadfaces
   if(edges)

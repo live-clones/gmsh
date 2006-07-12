@@ -58,7 +58,7 @@ public:
     double coeffTransfinite;
     int    nbPointsTransfinite;
     int    typeTransfinite;
-  } meshGEdgeAttributes ;
+  } meshAttributes ;
 
   virtual int minimumEdgeSegments () const {return 1;}
 

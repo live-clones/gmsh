@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.83 2006-07-11 13:41:22 remacle Exp $
+// $Id: Generator.cpp,v 1.84 2006-07-12 07:24:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -204,16 +204,16 @@ void ApplyLcFactor_Attractor(void *a, void *b)
   v->lc2 *= CTX.mesh.lc_factor;
 }
 
-void ApplyLcFactor(Mesh * M)
+void ApplyLcFactor()
 {
-  Tree_Action(M->Points, ApplyLcFactor_Point);
-  List_Action(M->Metric->Attractors, ApplyLcFactor_Attractor);
+  Tree_Action(THEM->Points, ApplyLcFactor_Point);
+  List_Action(THEM->Metric->Attractors, ApplyLcFactor_Attractor);
 }
 
-void Move_SimplexBaseToSimplex(Mesh * M, int dimension)
+void Move_SimplexBaseToSimplex(int dimension)
 {
   if(dimension >= 1){
-    List_T *Curves = Tree2List(M->Curves);
+    List_T *Curves = Tree2List(THEM->Curves);
     for(int i = 0; i < List_Nbr(Curves); i++) {
       Curve *c;
       List_Read(Curves, i, &c);
@@ -223,7 +223,7 @@ void Move_SimplexBaseToSimplex(Mesh * M, int dimension)
   }
 
   if(dimension >= 2){
-    List_T *Surfaces = Tree2List(M->Surfaces);
+    List_T *Surfaces = Tree2List(THEM->Surfaces);
     for(int i = 0; i < List_Nbr(Surfaces); i++){
       Surface *s;
       List_Read(Surfaces, i, &s);
@@ -233,7 +233,7 @@ void Move_SimplexBaseToSimplex(Mesh * M, int dimension)
   }
   
   if(dimension >= 3){
-    List_T *Volumes = Tree2List(M->Volumes);
+    List_T *Volumes = Tree2List(THEM->Volumes);
     for(int i = 0; i < List_Nbr(Volumes); i++){
       Volume *v;
       List_Read(Volumes, i, &v);
@@ -243,15 +243,15 @@ void Move_SimplexBaseToSimplex(Mesh * M, int dimension)
   }
 }
 
-bool TooManyElements(Mesh *M, int dim){
-  if(CTX.expert_mode || !Tree_Nbr(M->Points)) return false;
+bool TooManyElements(int dim){
+  if(CTX.expert_mode || !Tree_Nbr(THEM->Points)) return false;
 
   // try to detect obvious mistakes in characteristic lenghts (one of
   // the most common cause for erroneous bug reports on the mailing
   // list)
   SumOfAllLc = 0.;
-  Tree_Action(M->Points, GetSumOfAllLc);
-  SumOfAllLc /= (double)Tree_Nbr(M->Points);
+  Tree_Action(THEM->Points, GetSumOfAllLc);
+  SumOfAllLc /= (double)Tree_Nbr(THEM->Points);
   if(pow(CTX.lc / SumOfAllLc, dim) < 1.e7) return false;
   return !GetBinaryAnswer("Your choice of characteristic lengths will likely produce\n"
 			  "a very large mesh. Do you really want to continue?\n\n"
@@ -260,23 +260,23 @@ bool TooManyElements(Mesh *M, int dim){
 			  "Continue", "Cancel");
 }
 
-void Maillage_Dimension_1(Mesh * M)
+void Maillage_Dimension_1()
 {
-  if(TooManyElements(M, 1)) return;
+  if(TooManyElements(1)) return;
 
   double t1 = Cpu();
 
-  Tree_Action(M->Curves, Maillage_Curve);
+  Tree_Action(THEM->Curves, Maillage_Curve);
 
   std::for_each (GMODEL->firstEdge(),GMODEL->lastEdge(), meshGEdge() );
 
   double t2 = Cpu();
-  M->timing[0] = t2 - t1;
+  THEM->timing[0] = t2 - t1;
 }
 
-void Maillage_Dimension_2(Mesh * M)
+void Maillage_Dimension_2()
 {
-  if(TooManyElements(M, 2)) return;
+  if(TooManyElements(2)) return;
 
   double shortest = 1.e300;
 
@@ -284,7 +284,7 @@ void Maillage_Dimension_2(Mesh * M)
 
   // create reverse 1D meshes
 
-  List_T *Curves = Tree2List(M->Curves);
+  List_T *Curves = Tree2List(THEM->Curves);
   for(int i = 0; i < List_Nbr(Curves); i++) {
     Curve *c;
     List_Read(Curves, i, &c);
@@ -294,7 +294,7 @@ void Maillage_Dimension_2(Mesh * M)
       Curve C;
       Curve *neew = &C;
       neew->Num = -c->Num;
-      Tree_Query(M->Curves, &neew);
+      Tree_Query(THEM->Curves, &neew);
       neew->Vertices =
         List_Create(List_Nbr(c->Vertices), 1, sizeof(Vertex *));
       List_Invert(c->Vertices, neew->Vertices);
@@ -306,16 +306,16 @@ void Maillage_Dimension_2(Mesh * M)
 
   // mesh 2D
 
-  Tree_Action(M->Surfaces, Maillage_Surface);
+  Tree_Action(THEM->Surfaces, Maillage_Surface);
 
   // global "all-quad" recombine
 
   if(CTX.mesh.algo_recombine == 2)
-    Recombine_All(M);
+    Recombine_All(THEM);
 
   double t2 = Cpu();
 
-  M->timing[1] = t2 - t1;
+  THEM->timing[1] = t2 - t1;
 }
 
 static Volume *IVOL;
@@ -330,15 +330,15 @@ void TransferData(void *a, void *b)
   }
 }
 
-void Maillage_Dimension_3(Mesh * M)
+void Maillage_Dimension_3()
 {
-  if(TooManyElements(M, 3)) return;
+  if(TooManyElements(3)) return;
 
   double t1 = Cpu();
 
   // merge all the delaunay parts in a single special volume
   Volume *v = Create_Volume(99999, 99999);
-  List_T *list = Tree2List(M->Volumes);
+  List_T *list = Tree2List(THEM->Volumes);
   for(int i = 0; i < List_Nbr(list); i++) {
     Volume *vol;
     List_Read(list, i, &vol);
@@ -350,14 +350,14 @@ void Maillage_Dimension_3(Mesh * M)
       }
     }
   }
-  Tree_Insert(M->Volumes, &v);
+  Tree_Insert(THEM->Volumes, &v);
 
   if(CTX.mesh.oldxtrude) {
-    Extrude_Mesh_Old(M); // old extrusion
+    Extrude_Mesh_Old(); // old extrusion
   }
   else {
-    Extrude_Mesh(M->Volumes); // new extrusion
-    Tree_Action(M->Volumes, Maillage_Volume); // delaunay of remaining parts
+    Extrude_Mesh(THEM->Volumes); // new extrusion
+    Tree_Action(THEM->Volumes, Maillage_Volume); // delaunay of remaining parts
   }
 
   // transfer data back to individual volumes and remove special volume
@@ -365,116 +365,114 @@ void Maillage_Dimension_3(Mesh * M)
     List_Read(list, i, &IVOL);
     Tree_Action(v->Simplexes, TransferData);
   }
-  Tree_Suppress(M->Volumes, &v);
+  Tree_Suppress(THEM->Volumes, &v);
   Free_Volume_But_Not_Elements(&v, NULL);
 
   List_Delete(list);
 
   double t2 = Cpu();
 
-  M->timing[2] = t2 - t1;
+  THEM->timing[2] = t2 - t1;
 }
 
-void Init_Mesh0(Mesh * M)
+void Init_Mesh0()
 {
-  THEM = M;
-  M->bds = 0;
-  M->bds_mesh = 0;
-  M->Vertices = NULL;
-  M->Simplexes = NULL;
-  M->Points = NULL;
-  M->Curves = NULL;
-  M->SurfaceLoops = NULL;
-  M->EdgeLoops = NULL;
-  M->Surfaces = NULL;
-  M->Volumes = NULL;
-  M->PhysicalGroups = NULL;
-  M->Partitions = NULL;
-  M->Metric = NULL;
+  THEM->bds = 0;
+  THEM->bds_mesh = 0;
+  THEM->Vertices = NULL;
+  THEM->Simplexes = NULL;
+  THEM->Points = NULL;
+  THEM->Curves = NULL;
+  THEM->SurfaceLoops = NULL;
+  THEM->EdgeLoops = NULL;
+  THEM->Surfaces = NULL;
+  THEM->Volumes = NULL;
+  THEM->PhysicalGroups = NULL;
+  THEM->Partitions = NULL;
+  THEM->Metric = NULL;
 }
 
-void Init_Mesh(Mesh * M)
+void Init_Mesh()
 {
-  THEM = M;
-  M->MaxPointNum = 0;
-  M->MaxLineNum = 0;
-  M->MaxLineLoopNum = 0;
-  M->MaxSurfaceNum = 0;
-  M->MaxSurfaceLoopNum = 0;
-  M->MaxVolumeNum = 0;
-  M->MaxPhysicalNum = 0;
+  THEM->MaxPointNum = 0;
+  THEM->MaxLineNum = 0;
+  THEM->MaxLineLoopNum = 0;
+  THEM->MaxSurfaceNum = 0;
+  THEM->MaxSurfaceLoopNum = 0;
+  THEM->MaxVolumeNum = 0;
+  THEM->MaxPhysicalNum = 0;
 
   Element::TotalNumber = 0;
 
   ExitExtrude();
 
-  if(M->bds) delete M->bds;
-  M->bds = 0;
+  if(THEM->bds) delete THEM->bds;
+  THEM->bds = 0;
 
-  Tree_Action(M->Vertices, Free_Vertex);  
-  Tree_Delete(M->Vertices);
+  Tree_Action(THEM->Vertices, Free_Vertex);  
+  Tree_Delete(THEM->Vertices);
 
-  Tree_Action(M->Points, Free_Vertex);  
-  Tree_Delete(M->Points);
+  Tree_Action(THEM->Points, Free_Vertex);  
+  Tree_Delete(THEM->Points);
 
   // Note: don't free the simplices here (with Tree_Action
-  // (M->Simplexes, Free_Simplex)): we free them in each curve,
+  // (THEM->Simplexes, Free_Simplex)): we free them in each curve,
   // surface, volume
-  Tree_Delete(M->Simplexes);
+  Tree_Delete(THEM->Simplexes);
 
-  Tree_Action(M->Curves, Free_Curve);
-  Tree_Delete(M->Curves);
+  Tree_Action(THEM->Curves, Free_Curve);
+  Tree_Delete(THEM->Curves);
 
-  Tree_Action(M->SurfaceLoops, Free_SurfaceLoop);
-  Tree_Delete(M->SurfaceLoops);
+  Tree_Action(THEM->SurfaceLoops, Free_SurfaceLoop);
+  Tree_Delete(THEM->SurfaceLoops);
 
-  Tree_Action(M->EdgeLoops, Free_EdgeLoop);
-  Tree_Delete(M->EdgeLoops);
+  Tree_Action(THEM->EdgeLoops, Free_EdgeLoop);
+  Tree_Delete(THEM->EdgeLoops);
 
-  Tree_Action(M->Surfaces, Free_Surface);
-  Tree_Delete(M->Surfaces);
+  Tree_Action(THEM->Surfaces, Free_Surface);
+  Tree_Delete(THEM->Surfaces);
 
-  Tree_Action(M->Volumes, Free_Volume);
-  Tree_Delete(M->Volumes);
+  Tree_Action(THEM->Volumes, Free_Volume);
+  Tree_Delete(THEM->Volumes);
 
-  List_Action(M->PhysicalGroups, Free_PhysicalGroup);
-  List_Delete(M->PhysicalGroups);
+  List_Action(THEM->PhysicalGroups, Free_PhysicalGroup);
+  List_Delete(THEM->PhysicalGroups);
 
-  List_Action(M->Partitions, Free_MeshPartition);
-  List_Delete(M->Partitions);
+  List_Action(THEM->Partitions, Free_MeshPartition);
+  List_Delete(THEM->Partitions);
 
-  if(M->Metric)
-    delete M->Metric;
+  if(THEM->Metric)
+    delete THEM->Metric;
 
-  if(M->normals)
-    delete M->normals;
+  if(THEM->normals)
+    delete THEM->normals;
 
-  M->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
-  M->Simplexes = Tree_Create(sizeof(Simplex *), compareSimplex);
-  M->Points = Tree_Create(sizeof(Vertex *), compareVertex);
-  M->Curves = Tree_Create(sizeof(Curve *), compareCurve);
-  M->SurfaceLoops = Tree_Create(sizeof(SurfaceLoop *), compareSurfaceLoop);
-  M->EdgeLoops = Tree_Create(sizeof(EdgeLoop *), compareEdgeLoop);
-  M->Surfaces = Tree_Create(sizeof(Surface *), compareSurface);
-  M->Volumes = Tree_Create(sizeof(Volume *), compareVolume);
-  M->PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
-  M->Partitions = List_Create(5, 5, sizeof(MeshPartition *));
-  M->Metric = new GMSHMetric;
-  M->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
+  THEM->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
+  THEM->Simplexes = Tree_Create(sizeof(Simplex *), compareSimplex);
+  THEM->Points = Tree_Create(sizeof(Vertex *), compareVertex);
+  THEM->Curves = Tree_Create(sizeof(Curve *), compareCurve);
+  THEM->SurfaceLoops = Tree_Create(sizeof(SurfaceLoop *), compareSurfaceLoop);
+  THEM->EdgeLoops = Tree_Create(sizeof(EdgeLoop *), compareEdgeLoop);
+  THEM->Surfaces = Tree_Create(sizeof(Surface *), compareSurface);
+  THEM->Volumes = Tree_Create(sizeof(Volume *), compareVolume);
+  THEM->PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
+  THEM->Partitions = List_Create(5, 5, sizeof(MeshPartition *));
+  THEM->Metric = new GMSHMetric;
+  THEM->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
 
-  M->status = 0;
-  M->BackgroundMeshType = WITHPOINTS;
+  THEM->status = 0;
+  THEM->BackgroundMeshType = WITHPOINTS;
 
   for(int i = 0; i < 3; i++){
-    M->timing[i] = 0.0;
-    M->quality_gamma[i] = 0.0;
-    M->quality_eta[i] = 0.0;
-    M->quality_rho[i] = 0.0;
+    THEM->timing[i] = 0.0;
+    THEM->quality_gamma[i] = 0.0;
+    THEM->quality_eta[i] = 0.0;
+    THEM->quality_rho[i] = 0.0;
   }
   CTX.mesh.changed = 1;
 }
 
-void mai3d(Mesh * M, int Asked)
+void mai3d(int Asked)
 {
   double t1, t2;
   int oldstatus;
@@ -484,14 +482,14 @@ void mai3d(Mesh * M, int Asked)
     return;
   }
 
-  oldstatus = M->status;
+  oldstatus = THEM->status;
 
   // Re-read data
 
   if((Asked > oldstatus && Asked >= 0 && oldstatus < 0) ||
      (Asked < oldstatus)) {
     OpenProblem(CTX.filename);
-    M->status = 0;
+    THEM->status = 0;
   }
 
   CTX.threads_lock = 1;
@@ -508,14 +506,14 @@ void mai3d(Mesh * M, int Asked)
     Msg(STATUS2, "Mesh 1D...");
     t1 = Cpu();
 
-    if(M->status > 1) {
+    if(THEM->status > 1) {
       OpenProblem(CTX.filename);
     }
 
-    Maillage_Dimension_1(M);
+    Maillage_Dimension_1();
     t2 = Cpu();
     Msg(STATUS2, "Mesh 1D complete (%g s)", t2 - t1);
-    M->status = 1;
+    THEM->status = 1;
   }
 
   // 2D mesh
@@ -525,15 +523,15 @@ void mai3d(Mesh * M, int Asked)
     Msg(STATUS2, "Mesh 2D...");
     t1 = Cpu();
 
-    if(M->status == 3) {
+    if(THEM->status == 3) {
       OpenProblem(CTX.filename);
-      Maillage_Dimension_1(M);
+      Maillage_Dimension_1();
     }
 
-    Maillage_Dimension_2(M);
+    Maillage_Dimension_2();
     t2 = Cpu();
     Msg(STATUS2, "Mesh 2D complete (%g s)", t2 - t1);
-    M->status = 2;
+    THEM->status = 2;
   }
 
   // 3D mesh
@@ -542,26 +540,26 @@ void mai3d(Mesh * M, int Asked)
      (Asked < oldstatus && Asked > 2)) {
     Msg(STATUS2, "Mesh 3D...");
     t1 = Cpu();
-    Maillage_Dimension_3(M);
+    Maillage_Dimension_3();
     t2 = Cpu();
     Msg(STATUS2, "Mesh 3D complete (%g s)", t2 - t1);
-    M->status = 3;
+    THEM->status = 3;
   }
 
   // Optimize quality
 
-  if(M->status == 3 && CTX.mesh.optimize)
-    Optimize_Netgen(M);
+  if(THEM->status == 3 && CTX.mesh.optimize)
+    Optimize_Netgen();
 
   // Create second order elements
 
-  if(M->status && CTX.mesh.order == 2)
-    Degre2(M->status);
+  if(THEM->status && CTX.mesh.order == 2)
+    Degre2(THEM->status);
 
   // Partition
 
-  if(M->status > 1 && CTX.mesh.nbPartitions != 1)
-    PartitionMesh(M, CTX.mesh.nbPartitions);
+  if(THEM->status > 1 && CTX.mesh.nbPartitions != 1)
+    PartitionMesh(THEM, CTX.mesh.nbPartitions);
 
   CTX.threads_lock = 0;
   CTX.mesh.changed = 1;

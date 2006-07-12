@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.60 2006-01-18 16:19:10 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.61 2006-07-12 07:24:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,6 @@
 #include "Opengl_Window.h"
 
 extern GUI *WID;
-extern Mesh M;
 extern Context_T CTX;
 
 void MousePosition::set()
@@ -357,7 +356,7 @@ int Opengl_Window::handle(int event)
 	v[0] = NULL; c[0] = NULL; s[0] = NULL;
 	Process_SelectionBuffer(WID->selection, 0, 
 				(int)curr.win[0], (int)curr.win[1], 5, 5, 
-				v, c, s, &M);
+				v, c, s);
 	if((WID->selection == ENT_POINT && v[0]) ||
 	   (WID->selection == ENT_LINE && c[0]) || 
 	   (WID->selection == ENT_SURFACE && s[0]))

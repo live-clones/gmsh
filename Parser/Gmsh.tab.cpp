@@ -126,7 +126,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.267 2006-05-17 18:40:36 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.268 2006-07-12 07:24:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4415,7 +4415,7 @@ case 125:
 #line 1732 "Gmsh.y"
 {
       if(!strcmp(yyvsp[-1].c, "Meshes") || !strcmp(yyvsp[-1].c, "All")){
-	Init_Mesh(THEM);
+	Init_Mesh();
       }
       else if(!strcmp(yyvsp[-1].c, "Physicals")){
 	List_Action(THEM->PhysicalGroups, Free_PhysicalGroup);

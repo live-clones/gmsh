@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.58 2006-05-17 01:19:05 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.59 2006-07-12 07:24:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,6 @@
 #include "gl2ps.h"
 
 extern GUI *WID;
-extern Mesh M;
 extern Context_T CTX;
 
 // Draw specialization
@@ -241,7 +240,7 @@ char SelectEntity(int type, int *n,
 				     WID->try_selection_xywh[1], 
 				     WID->try_selection_xywh[2],
 				     WID->try_selection_xywh[3], 
-				     v, c, s, &M);
+				     v, c, s);
 	if(*n){
 	  if(add){
 	    for(int i = 0; i < *n; i++)

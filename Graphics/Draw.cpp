@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.95 2006-01-16 17:55:43 geuzaine Exp $
+// $Id: Draw.cpp,v 1.96 2006-07-12 07:24:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -28,17 +28,17 @@
 #include "Context.h"
 #include "Numeric.h"
 
+extern Mesh *THEM;
 extern Context_T CTX;
-extern Mesh M;
 
 // Global Draw functions
 
 int NeedPolygonOffset()
 {
-  if(M.status == 2 &&
+  if(THEM->status == 2 &&
      (CTX.mesh.surfaces_edges || CTX.geom.lines || CTX.geom.surfaces))
     return 1;
-  if(M.status == 3 && 
+  if(THEM->status == 3 && 
      (CTX.mesh.surfaces_edges || CTX.mesh.volumes_edges))
     return 1;
   for(int i = 0; i < List_Nbr(CTX.post.list); i++){
@@ -78,7 +78,7 @@ void Draw3d(void)
   InitRenderModel();
   InitPosition();
 
-  Draw_Mesh(&M);
+  Draw_Model();
 }
 
 void Draw2d(void)
@@ -361,8 +361,7 @@ int Process_SelectionBuffer(int type, bool multi,
 			    int x, int y, int w, int h,
 			    Vertex *v[SELECTION_MAX_HITS],
 			    Curve *c[SELECTION_MAX_HITS],
-			    Surface *s[SELECTION_MAX_HITS],
-			    Mesh *m)
+			    Surface *s[SELECTION_MAX_HITS])
 {
   hit hits[SELECTION_BUFFER_SIZE];
   GLuint selectBuf[SELECTION_BUFFER_SIZE];
@@ -376,7 +375,7 @@ int Process_SelectionBuffer(int type, bool multi,
   glPushMatrix();
   InitProjection(x, y, w, h);
   InitPosition();
-  Draw_Mesh(&M);
+  Draw_Model();
   glPopMatrix();
 
   GLint numhits = glRenderMode(GL_RENDER);
@@ -433,7 +432,7 @@ int Process_SelectionBuffer(int type, bool multi,
        (type == ENT_SURFACE && hits[i].type == 2)){
       switch (hits[i].type) {
       case 0:
-	if(!(v[j] = FindPoint(hits[i].ient, m))){
+	if(!(v[j] = FindPoint(hits[i].ient, THEM))){
 	  Msg(GERROR, "Problem in point selection processing");
 	  return j;
 	}
@@ -441,7 +440,7 @@ int Process_SelectionBuffer(int type, bool multi,
 	if(!multi) return 1;
 	break;
       case 1:
-	if(!(c[j] = FindCurve(hits[i].ient, m))){
+	if(!(c[j] = FindCurve(hits[i].ient, THEM))){
 	  Msg(GERROR, "Problem in line selection processing");
 	  return j;
 	}
@@ -449,7 +448,7 @@ int Process_SelectionBuffer(int type, bool multi,
 	if(!multi) return 1;
 	break;
       case 2:
-	if(!(s[j] = FindSurface(hits[i].ient, m))){
+	if(!(s[j] = FindSurface(hits[i].ient, THEM))){
 	  Msg(GERROR, "Problem in surface selection processing");
 	  return j;
 	}

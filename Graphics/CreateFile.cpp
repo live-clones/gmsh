@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.80 2006-06-08 11:31:55 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.81 2006-07-12 07:24:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,6 @@
 
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "Mesh.h"
 #include "OpenFile.h"
 #include "Context.h"
 #include "Options.h"
@@ -34,7 +33,6 @@
 #include "gl2yuv.h"
 
 extern Context_T CTX;
-extern Mesh M;
 
 int GuessFileFormatFromFileName(char *name)
 {
@@ -116,7 +114,7 @@ void CreateOutputFile(char *name, int format)
     break;
     
   case FORMAT_GEO:
-    Print_Geo(&M, name);
+    Print_Geo(name);
     break;
 
   case FORMAT_OPT:
@@ -130,11 +128,11 @@ void CreateOutputFile(char *name, int format)
   case FORMAT_STL:
   case FORMAT_GREF:
   case FORMAT_VRML:
-    Print_Mesh(&M, name, format);
+    Print_Mesh(name, format);
     break;
 
   case FORMAT_LC:
-    ExportMeshStatistics(&M, name);
+    ExportMeshStatistics(name);
     Msg(STATUS2N, "Wrote '%s'", name);
     break;
 

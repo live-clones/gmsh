@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.89 2006-07-11 13:41:22 remacle Exp $
+// $Id: Main.cpp,v 1.90 2006-07-12 07:24:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -42,10 +42,9 @@
 #include "GModel.h"
 
 Context_T CTX;
-Mesh M, *THEM = NULL;
-GUI *WID = NULL;
+Mesh M, *THEM = &M;
+GUI *WID = 0;
 GModel *GMODEL = 0;
-
 
 int main(int argc, char *argv[])
 {
@@ -75,7 +74,7 @@ int main(int argc, char *argv[])
 
   // Initialize the static Mesh
   
-  Init_Mesh0(&M);
+  Init_Mesh0();
 
   // Gmsh default options
 
@@ -135,11 +134,11 @@ int main(int argc, char *argv[])
           Msg(GERROR, "Invalid background mesh (no view)");
       }
       if(CTX.batch > 0) {
-        mai3d(THEM, CTX.batch);
-        Print_Mesh(THEM, CTX.output_filename, CTX.mesh.format);
+        mai3d(CTX.batch);
+        Print_Mesh(CTX.output_filename, CTX.mesh.format);
       }
       else
-        Print_Geo(THEM, CTX.output_filename);
+        Print_Geo(CTX.output_filename);
       if(CTX.mesh.histogram) {
         Mesh_Quality(THEM);
         Print_Histogram(THEM->Histogram[0]);

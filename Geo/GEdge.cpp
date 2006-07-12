@@ -18,7 +18,7 @@ GEdge::GEdge(GModel *model,
 {
   v0->addEdge (this);
   v1->addEdge (this);
-  meshGEdgeAttributes.Method = LIBRE; 
+  meshAttributes.Method = LIBRE; 
 }
 
 GEdge::~GEdge() 

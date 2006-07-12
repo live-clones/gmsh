@@ -23,7 +23,8 @@ extern "C"
 Structural_BeamSection:: ~Structural_BeamSection()
 {
   Mesh *kk = THEM;
-  Init_Mesh(&m);
+  THEM = &m;
+  Init_Mesh();
   THEM=kk;
 }
 
@@ -31,9 +32,9 @@ Structural_BeamSection:: Structural_BeamSection( const char *direct, std::string
 : name (_name)
 {    
   Mesh *kk = THEM;
-
-  Init_Mesh0(&m);
-  Init_Mesh(&m);
+  THEM = &m;
+  Init_Mesh0();
+  Init_Mesh();
   //  THEM=&m;
 
   char temp[256];

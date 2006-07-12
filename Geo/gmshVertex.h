@@ -10,6 +10,9 @@ public:
   gmshVertex(GModel *m, Vertex *_v) : GVertex(m, _v->Num), v(_v){}
   virtual ~gmshVertex() {}
   virtual GPoint point() const{return GPoint ( v->Pos.X,v->Pos.Y,v->Pos.Z,this);}
+  virtual double x() const {return v->Pos.X;}
+  virtual double y() const {return v->Pos.Y;}
+  virtual double z() const {return v->Pos.Z;}
   virtual double tolerance() const {return 1.e-14;}
   void * getNativePtr() const {return v;}
   virtual double prescribedMeshSizeAtVertex () const {return v->lc;}

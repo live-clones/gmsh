@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.82 2006-04-16 02:42:23 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.83 2006-07-12 07:24:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -556,7 +556,7 @@ int mesh_domain(ContourPeek * ListContours, int numcontours,
   return 1;
 }
 
-void Maillage_Automatique_VieuxCode(Surface * pS, Mesh * m, int ori)
+void Maillage_Automatique_VieuxCode(Surface * pS, int ori)
 {
   ContourRecord *cp, **liste;
   List_T *c;
@@ -895,7 +895,7 @@ void Maillage_Surface(void *data, void *dum)
     ori = Calcule_Contours(s);
     
     if(CTX.mesh.algo2d == DELAUNAY_ISO)
-      Maillage_Automatique_VieuxCode(s, THEM, ori);
+      Maillage_Automatique_VieuxCode(s, ori);
     else if(CTX.mesh.algo2d == DELAUNAY_ANISO)
       AlgorithmeMaillage2DAnisotropeModeJF(s);
     else

@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Netgen.cpp,v 1.22 2006-02-26 16:26:09 geuzaine Exp $
+// $Id: 3D_Mesh_Netgen.cpp,v 1.23 2006-07-12 07:24:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -48,7 +48,7 @@ void Optimize_Netgen(Volume * v)
   Msg(GERROR, "Netgen is not compiled in this version of Gmsh");
 }
 
-void Optimize_Netgen(Mesh * m)
+void Optimize_Netgen()
 {
   Msg(GERROR, "Netgen is not compiled in this version of Gmsh");
 }
@@ -308,7 +308,7 @@ void Optimize_Netgen(Volume * v)
   ng.TransferVolumeMesh();
 }
 
-void Optimize_Netgen(Mesh *m)
+void Optimize_Netgen()
 {
   Msg(STATUS2, "Optimize volume mesh...");
   double t1 = Cpu();
@@ -318,9 +318,9 @@ void Optimize_Netgen(Mesh *m)
 
   // make sure we don't have ONFILE (so that when we create simplices
   // we don't try to compute the quality from the bgmesh)
-  m->BackgroundMeshType = WITHPOINTS; 
+  THEM->BackgroundMeshType = WITHPOINTS; 
 
-  List_T *list = Tree2List(m->Volumes);
+  List_T *list = Tree2List(THEM->Volumes);
   for(int i = 0; i < List_Nbr(list); i++){
     Volume *v;
     List_Read(list, i, &v);

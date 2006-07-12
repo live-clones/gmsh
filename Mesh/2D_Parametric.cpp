@@ -1,4 +1,4 @@
-// $Id: 2D_Parametric.cpp,v 1.16 2006-01-06 00:34:25 geuzaine Exp $
+// $Id: 2D_Parametric.cpp,v 1.17 2006-07-12 07:24:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -61,7 +61,7 @@ void UVtoXYZ(void *a, void *dum)
   v->Pos.Z = n.Pos.Z;
 }
 
-void printMetric(Mesh * m, Surface * s, char *name)
+void printMetric(Surface * s, char *name)
 {
   int N = 10, M = 10, i, j;
   double u, v;
@@ -75,19 +75,19 @@ void printMetric(Mesh * m, Surface * s, char *name)
     for(j = 0; j < M; j++) {
       v = (s->kv[0]) + (s->kv[s->Nv + s->OrderV] - s->kv[0])
         * (double)j / (double)(M - 1);
-      m->Metric->setMetric(u, v, s);
+      THEM->Metric->setMetric(u, v, s);
       fprintf(f, "VT (%f,%f,0,%f,%f,0,%f,%f,0)"
               "{%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
               u, v, u, v, u, v,
-              m->Metric->m[0][0], m->Metric->m[0][1], 0.0,
-              m->Metric->m[0][0], m->Metric->m[0][1], 0.0,
-              m->Metric->m[0][0], m->Metric->m[0][1], 0.0);
+              THEM->Metric->m[0][0], THEM->Metric->m[0][1], 0.0,
+              THEM->Metric->m[0][0], THEM->Metric->m[0][1], 0.0,
+              THEM->Metric->m[0][0], THEM->Metric->m[0][1], 0.0);
       fprintf(f, "VT (%f,%f,0,%f,%f,0,%f,%f,0)"
               "{%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
               u, v, u, v, u, v,
-              m->Metric->m[1][0], m->Metric->m[1][1], 0.0,
-              m->Metric->m[1][0], m->Metric->m[1][1], 0.0,
-              m->Metric->m[1][0], m->Metric->m[1][1], 0.0);
+              THEM->Metric->m[1][0], THEM->Metric->m[1][1], 0.0,
+              THEM->Metric->m[1][0], THEM->Metric->m[1][1], 0.0,
+              THEM->Metric->m[1][0], THEM->Metric->m[1][1], 0.0);
     }
   }
   fprintf(f, "};\n");
@@ -127,7 +127,7 @@ int MeshParametricSurface(Surface * s)
   ori = Calcule_Contours(s);
 
   if(!AlgorithmeMaillage2DAnisotropeModeJF(s))
-    Maillage_Automatique_VieuxCode(s, THEM, ori);
+    Maillage_Automatique_VieuxCode(s, ori);
 
   if(CTX.mesh.nb_smoothing) {
     tnxe = Tree_Create(sizeof(NXE), compareNXE);

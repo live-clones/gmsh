@@ -1,4 +1,4 @@
-// $Id: 2D_Recombine.cpp,v 1.27 2006-05-13 22:05:03 geuzaine Exp $
+// $Id: 2D_Recombine.cpp,v 1.28 2006-07-12 07:24:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -181,12 +181,12 @@ int Recombine(Tree_T * Vertices, Tree_T * Simplexes, Tree_T * Quadrangles,
   -) Enhancements are performned on the quad mesh.
  */
 
-int Recombine_All (Mesh *THEM)
+int Recombine_All (Mesh *M)
 {
-  if(!Tree_Nbr(THEM->Surfaces)) 
+  if(!Tree_Nbr(M->Surfaces)) 
     return 0;
 
-  List_T *surfaces = Tree2List(THEM->Surfaces);
+  List_T *surfaces = Tree2List(M->Surfaces);
 
   // check if we need to do something
   int to_do = 0;
@@ -243,7 +243,7 @@ int Recombine_All (Mesh *THEM)
 	List_Read(Triangles, j, &t);
 	Vertex *c;
 	if(s->Typ == MSH_SURF_PLAN || s->Typ == MSH_SURF_DISCRETE){
-	  c = Create_Vertex(++THEM->MaxPointNum, 
+	  c = Create_Vertex(++M->MaxPointNum, 
 			    (t->V[0]->Pos.X+t->V[1]->Pos.X+t->V[2]->Pos.X)/3.,
 			    (t->V[0]->Pos.Y+t->V[1]->Pos.Y+t->V[2]->Pos.Y)/3.,
 			    (t->V[0]->Pos.Z+t->V[1]->Pos.Z+t->V[2]->Pos.Z)/3.,
@@ -258,9 +258,9 @@ int Recombine_All (Mesh *THEM)
 	  double U = (U1 + U2 + U3)/.3;
 	  double V = (V1 + V2 + V3)/3.;
 	  Vertex v = InterpolateSurface(s, U, V, 0, 0);
-	  c = Create_Vertex(++THEM->MaxPointNum, v.Pos.X, v.Pos.Y, v.Pos.Z, v.lc, v.u);
+	  c = Create_Vertex(++M->MaxPointNum, v.Pos.X, v.Pos.Y, v.Pos.Z, v.lc, v.u);
 	}  
-        Tree_Add(THEM->Vertices, &c);
+        Tree_Add(M->Vertices, &c);
         Tree_Insert(s->Vertices, &c);
 	Quadrangle *q1 = Create_Quadrangle(t->V[0], t->VSUP[0], c, t->VSUP[2]);
 	Quadrangle *q2 = Create_Quadrangle(t->V[1], t->VSUP[1], c, t->VSUP[0]);
@@ -303,7 +303,7 @@ int Recombine_All (Mesh *THEM)
 
   List_Delete(surfaces);
 
-  List_T *curves = Tree2List(THEM->Curves);
+  List_T *curves = Tree2List(M->Curves);
   for(int i = 0; i < List_Nbr(curves); i++){
     Curve *c;
     List_Read(curves, i, &c);

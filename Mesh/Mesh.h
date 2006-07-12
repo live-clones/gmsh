@@ -358,19 +358,19 @@ struct Map{
 
 // public functions
 
-void mai3d(Mesh *M, int Asked);
+void mai3d(int Asked);
 
-void Init_Mesh0(Mesh *M);
-void Init_Mesh(Mesh *M);
-void Print_Geo(Mesh *M, char *c);
-void Print_Mesh(Mesh *M, char *c, int Type);
+void Init_Mesh0();
+void Init_Mesh();
+void Print_Geo(char *c);
+void Print_Mesh(char *c, int Type);
 void Read_Mesh(Mesh *M, FILE *fp, char *filename, int Type);
 void GetStatistics(double s[50]);
-void GetDefaultMeshFileName(Mesh *M, int Type, char *name);
+void GetDefaultMeshFileName(int Type, char *name);
 
-void Maillage_Dimension_1(Mesh *M);
-void Maillage_Dimension_2(Mesh *M);
-void Maillage_Dimension_3(Mesh *M);
+void Maillage_Dimension_1();
+void Maillage_Dimension_2();
+void Maillage_Dimension_3();
 
 void Maillage_Curve(void *data, void *dummy);
 void Maillage_Surface(void *data, void *dum);
@@ -381,7 +381,7 @@ int Extrude_Mesh(Surface *s);
 int Extrude_Mesh(Volume *v);
 int Extrude_Mesh(Tree_T *Volumes);
 void ExitExtrude();
-void Extrude_Mesh_Old(Mesh *M);
+void Extrude_Mesh_Old();
 
 int MeshTransfiniteSurface(Surface *sur);
 int MeshTransfiniteVolume(Volume *vol);
@@ -390,15 +390,15 @@ int MeshParametricSurface(Surface *s);
 int MeshEllipticSurface(Surface *sur);
 int MeshDiscreteSurface(Surface *sur);
 int MeshDiscreteCurve(Curve *c);
-int ReMesh (Mesh *M);
+int ReMesh(Mesh *M);
 
 int AlgorithmeMaillage2DAnisotropeModeJF(Surface *s);
-void Maillage_Automatique_VieuxCode(Surface *pS, Mesh *m, int ori);
+void Maillage_Automatique_VieuxCode(Surface *pS, int ori);
 int Mesh_Triangle(Surface *s);
 int Mesh_Netgen(Volume *v);
 int Mesh_Tetgen(Volume *v);
 void Optimize_Netgen(Volume *v);
-void Optimize_Netgen(Mesh *m);
+void Optimize_Netgen();
 
 int Calcule_Contours(Surface *s);
 void Link_Simplexes(List_T *Sim, Tree_T *Tim);
@@ -410,7 +410,7 @@ void Freeze_Vertex(void *a, void *b);
 void deFreeze_Vertex(void *a, void *b);
 void ReOrientSurfaceMesh(Surface *s);
 
-void Move_SimplexBaseToSimplex(Mesh * M, int dimension);
+void Move_SimplexBaseToSimplex(int dimension);
 
 double BGMXYZ(double X, double Y, double Z);
 void ActionLiss(void *data, void *dummy);
@@ -418,18 +418,15 @@ void ActionLissSurf(void *data, void *dummy);
 int Recombine(Tree_T *TreeAllVert, Tree_T *TreeAllSimp, Tree_T *TreeAllQuad,
 		double a);
 int Recombine_All(Mesh *M);
-void ApplyLcFactor(Mesh *M);
-void ExportMeshStatistics(Mesh *M, char *filename, int vol=1, int surf=1, int lin=1);
+void ApplyLcFactor();
+void ExportMeshStatistics(char *filename, int vol=1, int surf=1, int lin=1);
 
 void Degre1();
 void Degre2(int dim);
 void Degre2_Curve(void *a, void *b);
 void Degre2_Surface(void *a, void *b);
 
-void Gamma_Maillage(Mesh *m, double *gamma, double *gammamax, double *gammamin);
-void Eta_Maillage(Mesh *m, double *gamma, double *gammamax, double *gammamin);
-void R_Maillage(Mesh *m, double *gamma, double *gammamax, double *gammamin);
-void Mesh_Quality(Mesh *m);
+void Mesh_Quality(Mesh *M);
 void Print_Histogram(int *h);
 
 #endif

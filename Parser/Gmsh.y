@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.229 2006-05-17 18:40:36 geuzaine Exp $
+// $Id: Gmsh.y,v 1.230 2006-07-12 07:24:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1731,7 +1731,7 @@ Delete :
   | tDelete tSTRING tEND
     {
       if(!strcmp($2, "Meshes") || !strcmp($2, "All")){
-	Init_Mesh(THEM);
+	Init_Mesh();
       }
       else if(!strcmp($2, "Physicals")){
 	List_Action(THEM->PhysicalGroups, Free_PhysicalGroup);

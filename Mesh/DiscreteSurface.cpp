@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.39 2006-04-04 04:32:31 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.40 2006-07-12 07:24:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -34,57 +34,57 @@
 extern Mesh *THEM;
 extern Context_T CTX;
 
-void Mesh_To_BDS(Mesh * m)
+void Mesh_To_BDS(Mesh *M)
 {
   Msg(STATUS2, "Moving mesh into new structure");
-  Move_SimplexBaseToSimplex(m, 3);
+  Move_SimplexBaseToSimplex(3);
   // create the structure
-  if(m->bds)
-    delete m->bds;
-  m->bds = new BDS_Mesh;
+  if(M->bds)
+    delete M->bds;
+  M->bds = new BDS_Mesh;
   PhysicalGroup *p;
 
-  m->bds->Min[0] = m->bds->Min[1] = m->bds->Min[2] = 1.e12;
-  m->bds->Max[0] = m->bds->Max[1] = m->bds->Max[2] = -1.e12;
+  M->bds->Min[0] = M->bds->Min[1] = M->bds->Min[2] = 1.e12;
+  M->bds->Max[0] = M->bds->Max[1] = M->bds->Max[2] = -1.e12;
 
   Msg(STATUS2, "Moving nodes");
   // copy the nodes
-  List_T *vertices = Tree2List(m->Vertices);
+  List_T *vertices = Tree2List(M->Vertices);
   for(int i = 0; i < List_Nbr(vertices); ++i) {
     Vertex *v;
     List_Read(vertices, i, &v);
-    if(v->Pos.X < m->bds->Min[0])
-      m->bds->Min[0] = v->Pos.X;
-    if(v->Pos.Y < m->bds->Min[1])
-      m->bds->Min[1] = v->Pos.Y;
-    if(v->Pos.Z < m->bds->Min[2])
-      m->bds->Min[2] = v->Pos.Z;
-    if(v->Pos.X > m->bds->Max[0])
-      m->bds->Max[0] = v->Pos.X;
-    if(v->Pos.Y > m->bds->Max[1])
-      m->bds->Max[1] = v->Pos.Y;
-    if(v->Pos.Z > m->bds->Max[2])
-      m->bds->Max[2] = v->Pos.Z;
-    m->bds->add_point(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z);
+    if(v->Pos.X < M->bds->Min[0])
+      M->bds->Min[0] = v->Pos.X;
+    if(v->Pos.Y < M->bds->Min[1])
+      M->bds->Min[1] = v->Pos.Y;
+    if(v->Pos.Z < M->bds->Min[2])
+      M->bds->Min[2] = v->Pos.Z;
+    if(v->Pos.X > M->bds->Max[0])
+      M->bds->Max[0] = v->Pos.X;
+    if(v->Pos.Y > M->bds->Max[1])
+      M->bds->Max[1] = v->Pos.Y;
+    if(v->Pos.Z > M->bds->Max[2])
+      M->bds->Max[2] = v->Pos.Z;
+    M->bds->add_point(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z);
   }
-  m->bds->LC =
-    sqrt((m->bds->Min[0] - m->bds->Max[0]) * (m->bds->Min[0] -
-                                              m->bds->Max[0]) +
-         (m->bds->Min[1] - m->bds->Max[1]) * (m->bds->Min[1] -
-                                              m->bds->Max[1]) +
-         (m->bds->Min[2] - m->bds->Max[2]) * (m->bds->Min[2] -
-                                              m->bds->Max[2]));
+  M->bds->LC =
+    sqrt((M->bds->Min[0] - M->bds->Max[0]) * (M->bds->Min[0] -
+                                              M->bds->Max[0]) +
+         (M->bds->Min[1] - M->bds->Max[1]) * (M->bds->Min[1] -
+                                              M->bds->Max[1]) +
+         (M->bds->Min[2] - M->bds->Max[2]) * (M->bds->Min[2] -
+                                              M->bds->Max[2]));
   List_Delete(vertices);
 
-  for(int i = 0; i < List_Nbr(m->PhysicalGroups); i++) {
-    List_Read(m->PhysicalGroups, i, &p);
+  for(int i = 0; i < List_Nbr(M->PhysicalGroups); i++) {
+    List_Read(M->PhysicalGroups, i, &p);
     if(p->Typ == MSH_PHYSICAL_POINT) {
-      m->bds->add_geom(p->Num, 0);
-      BDS_GeomEntity *g = m->bds->get_geom(p->Num, 0);
+      M->bds->add_geom(p->Num, 0);
+      BDS_GeomEntity *g = M->bds->get_geom(p->Num, 0);
       for(int j = 0; j < List_Nbr(p->Entities); j++) {
         int Num;
         List_Read(p->Entities, j, &Num);
-        BDS_Point *ppp = m->bds->find_point(Num);
+        BDS_Point *ppp = M->bds->find_point(Num);
         ppp->g = g;
         g->p = ppp;
       }
@@ -92,17 +92,17 @@ void Mesh_To_BDS(Mesh * m)
   }
 
   Msg(STATUS2, "Moving curves");
-  List_T *curves = Tree2List(m->Curves);
+  List_T *curves = Tree2List(M->Curves);
   for(int i = 0; i < List_Nbr(curves); ++i) {
     Curve *c;
     List_Read(curves, i, &c);
-    m->bds->add_geom(c->Num, 1);
-    BDS_GeomEntity *g = m->bds->get_geom(c->Num, 1);
+    M->bds->add_geom(c->Num, 1);
+    BDS_GeomEntity *g = M->bds->get_geom(c->Num, 1);
     List_T *simplices = Tree2List(c->Simplexes);
     Simplex *simp;
     for(int j = 0; j < List_Nbr(simplices); ++j) {
       List_Read(simplices, j, &simp);
-      BDS_Edge *edge = m->bds->add_edge(simp->V[0]->Num, simp->V[1]->Num);
+      BDS_Edge *edge = M->bds->add_edge(simp->V[0]->Num, simp->V[1]->Num);
       edge->g = g;
       if(!edge->p1->g)
         edge->p1->g = g;
@@ -114,12 +114,12 @@ void Mesh_To_BDS(Mesh * m)
   List_Delete(curves);
 
   Msg(STATUS2, "Moving surfaces");
-  List_T *surfaces = Tree2List(m->Surfaces);
+  List_T *surfaces = Tree2List(M->Surfaces);
   for(int i = 0; i < List_Nbr(surfaces); ++i) {
     Surface *s;
     List_Read(surfaces, i, &s);
-    m->bds->add_geom(s->Num, 2);
-    BDS_GeomEntity *g = m->bds->get_geom(s->Num, 2);
+    M->bds->add_geom(s->Num, 2);
+    BDS_GeomEntity *g = M->bds->get_geom(s->Num, 2);
 
     Msg(INFO, "Created new surface %d %d", g->classif_tag, g->classif_degree);
 
@@ -128,8 +128,8 @@ void Mesh_To_BDS(Mesh * m)
     for(int j = 0; j < List_Nbr(simplices); ++j) {
       List_Read(simplices, j, &simp);
       BDS_Triangle *t =
-        m->bds->add_triangle(simp->V[0]->Num, simp->V[1]->Num,
-                             simp->V[2]->Num);
+        M->bds->add_triangle(simp->V[0]->Num, simp->V[1]->Num,
+				simp->V[2]->Num);
       t->g = g;
       BDS_Point *n[3];
       t->getNodes(n);
@@ -147,21 +147,21 @@ void Mesh_To_BDS(Mesh * m)
   }
   List_Delete(surfaces);
 
-  Msg(STATUS2, "Moving %d volumes", Tree_Nbr(m->Volumes));
-  List_T *volumes = Tree2List(m->Volumes);
+  Msg(STATUS2, "Moving %d volumes", Tree_Nbr(M->Volumes));
+  List_T *volumes = Tree2List(M->Volumes);
   for(int i = 0; i < List_Nbr(volumes); ++i) {
     Volume *v;
     List_Read(volumes, i, &v);
-    m->bds->add_geom(v->Num, 3);
-    BDS_GeomEntity *g = m->bds->get_geom(v->Num, 3);
+    M->bds->add_geom(v->Num, 3);
+    BDS_GeomEntity *g = M->bds->get_geom(v->Num, 3);
     List_T *simplices = Tree2List(v->Simplexes);
     Simplex *simp;
 
     for(int j = 0; j < List_Nbr(simplices); ++j) {
       List_Read(simplices, j, &simp);
       BDS_Tet *t =
-        m->bds->add_tet(simp->V[0]->Num, simp->V[1]->Num, simp->V[2]->Num,
-                        simp->V[3]->Num);
+        M->bds->add_tet(simp->V[0]->Num, simp->V[1]->Num, simp->V[2]->Num,
+			   simp->V[3]->Num);
       t->g = g;
       BDS_Point *n[4];
       t->getNodes(n);
@@ -208,47 +208,47 @@ void Mesh_To_BDS(Mesh * m)
 
 }
 
-extern int addMeshPartition(int Num, Mesh * M);
+extern int addMeshPartition(int Num, Mesh *M);
 
-void BDS_To_Mesh_2(Mesh * m)
+void BDS_To_Mesh_2(Mesh *M)
 {
   Msg(STATUS2, "Moving surface mesh into old structure");
 
-  Tree_Action(m->Vertices, Free_Vertex);
+  Tree_Action(M->Vertices, Free_Vertex);
 
-  Tree_Delete(m->Vertices);
-  m->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
+  Tree_Delete(M->Vertices);
+  M->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
 
   {
     std::set < BDS_Point *, PointLessThan >::iterator it =
-      m->bds_mesh->points.begin();
+      M->bds_mesh->points.begin();
     std::set < BDS_Point *, PointLessThan >::iterator ite =
-      m->bds_mesh->points.end();
+      M->bds_mesh->points.end();
 
 
     while(it != ite) {
-      //      double dx = 1.e-3 * m->bds_mesh->LC * (double)rand() / (double)RAND_MAX;
-      //      double dy = 1.e-3 * m->bds_mesh->LC * (double)rand() / (double)RAND_MAX;
-      //      double dz = 1.e-3 * m->bds_mesh->LC * (double)rand() / (double)RAND_MAX;
+      //      double dx = 1.e-3 * M->bds_mesh->LC * (double)rand() / (double)RAND_MAX;
+      //      double dy = 1.e-3 * M->bds_mesh->LC * (double)rand() / (double)RAND_MAX;
+      //      double dz = 1.e-3 * M->bds_mesh->LC * (double)rand() / (double)RAND_MAX;
       double dx = 0;
       double dy = 0;
       double dz = 0;
       Vertex *vert =
         Create_Vertex((*it)->iD, (*it)->X+dx, (*it)->Y+dy, (*it)->Z+dz, (*it)->min_edge_length(), 0.0);
-      Tree_Add(m->Vertices, &vert);
+      Tree_Add(M->Vertices, &vert);
       ++it;
     }
   }
   {
-    std::list < BDS_Edge * >::iterator it = m->bds_mesh->edges.begin();
-    std::list < BDS_Edge * >::iterator ite = m->bds_mesh->edges.end();
+    std::list < BDS_Edge * >::iterator it = M->bds_mesh->edges.begin();
+    std::list < BDS_Edge * >::iterator ite = M->bds_mesh->edges.end();
     while(it != ite) {
       BDS_GeomEntity *g = (*it)->g;
       if(g && g->classif_degree == 1) {
-        Vertex *v1 = FindVertex((*it)->p1->iD, m);
-        Vertex *v2 = FindVertex((*it)->p2->iD, m);
+        Vertex *v1 = FindVertex((*it)->p1->iD, M);
+        Vertex *v2 = FindVertex((*it)->p2->iD, M);
         Simplex *simp = Create_Simplex(v1, v2, NULL, NULL);
-        Curve *c = FindCurve(g->classif_tag, m);
+        Curve *c = FindCurve(g->classif_tag, M);
         if(c)
           simp->iEnt = g->classif_tag;
         Tree_Insert(c->Simplexes, &simp);
@@ -258,22 +258,22 @@ void BDS_To_Mesh_2(Mesh * m)
   }
   {
     std::list < BDS_Triangle * >::iterator it =
-      m->bds_mesh->triangles.begin();
-    std::list < BDS_Triangle * >::iterator ite = m->bds_mesh->triangles.end();
+      M->bds_mesh->triangles.begin();
+    std::list < BDS_Triangle * >::iterator ite = M->bds_mesh->triangles.end();
     while(it != ite) {
       BDS_GeomEntity *g = (*it)->g;
       if(g && g->classif_degree == 2) {
         BDS_Point *nod[3];
         (*it)->getNodes(nod);
-        Vertex *v1 = FindVertex(nod[0]->iD, m);
-        Vertex *v2 = FindVertex(nod[1]->iD, m);
-        Vertex *v3 = FindVertex(nod[2]->iD, m);
+        Vertex *v1 = FindVertex(nod[0]->iD, M);
+        Vertex *v2 = FindVertex(nod[1]->iD, M);
+        Vertex *v3 = FindVertex(nod[2]->iD, M);
         Simplex *simp = Create_Simplex(v1, v2, v3, NULL);
         BDS_GeomEntity *g = (*it)->g;
-        Surface *s = FindSurface(g->classif_tag, m);
+        Surface *s = FindSurface(g->classif_tag, M);
         if(s) {
           simp->iEnt = g->classif_tag;
-          simp->iPart = addMeshPartition((*it)->partition, m);
+          simp->iPart = addMeshPartition((*it)->partition, M);
         }
         else
           Msg(GERROR, "Impossible to find surface %d", g->classif_tag);
@@ -286,21 +286,21 @@ void BDS_To_Mesh_2(Mesh * m)
     }
   }
   {
-    std::list < BDS_Tet * >::iterator it = m->bds_mesh->tets.begin();
-    std::list < BDS_Tet * >::iterator ite = m->bds_mesh->tets.end();
+    std::list < BDS_Tet * >::iterator it = M->bds_mesh->tets.begin();
+    std::list < BDS_Tet * >::iterator ite = M->bds_mesh->tets.end();
     while(it != ite) {
       BDS_Point *nod[4];
       (*it)->getNodes(nod);
-      Vertex *v1 = FindVertex(nod[0]->iD, m);
-      Vertex *v2 = FindVertex(nod[1]->iD, m);
-      Vertex *v3 = FindVertex(nod[2]->iD, m);
-      Vertex *v4 = FindVertex(nod[3]->iD, m);
+      Vertex *v1 = FindVertex(nod[0]->iD, M);
+      Vertex *v2 = FindVertex(nod[1]->iD, M);
+      Vertex *v3 = FindVertex(nod[2]->iD, M);
+      Vertex *v4 = FindVertex(nod[3]->iD, M);
       Simplex *simp = Create_Simplex(v1, v2, v3, v4);
       BDS_GeomEntity *g = (*it)->g;
-      Volume *v = FindVolume(g->classif_tag, m);
+      Volume *v = FindVolume(g->classif_tag, M);
       if(v) {
         simp->iEnt = g->classif_tag;
-        simp->iPart = addMeshPartition((*it)->partition, m);
+        simp->iPart = addMeshPartition((*it)->partition, M);
       }
       else
         Msg(GERROR, "Error in BDS");
@@ -312,59 +312,59 @@ void BDS_To_Mesh_2(Mesh * m)
   Msg(STATUS3N, "Ready");
 }
 
-void BDS_To_Mesh(Mesh * m)
+void BDS_To_Mesh(Mesh *M)
 {
-  Tree_Action(m->Points, Free_Vertex);
-  Tree_Delete(m->Points);
-  Tree_Action(m->Volumes, Free_Volume);
-  Tree_Action(m->Surfaces, Free_Surface);
-  Tree_Action(m->Curves, Free_Curve);
-  Tree_Delete(m->Surfaces);
-  Tree_Delete(m->Curves);
-  Tree_Delete(m->Volumes);
-  m->Points = Tree_Create(sizeof(Vertex *), compareVertex);
-  m->Curves = Tree_Create(sizeof(Curve *), compareCurve);
-  m->Surfaces = Tree_Create(sizeof(Surface *), compareSurface);
-  m->Volumes = Tree_Create(sizeof(Volume *), compareVolume);
+  Tree_Action(M->Points, Free_Vertex);
+  Tree_Delete(M->Points);
+  Tree_Action(M->Volumes, Free_Volume);
+  Tree_Action(M->Surfaces, Free_Surface);
+  Tree_Action(M->Curves, Free_Curve);
+  Tree_Delete(M->Surfaces);
+  Tree_Delete(M->Curves);
+  Tree_Delete(M->Volumes);
+  M->Points = Tree_Create(sizeof(Vertex *), compareVertex);
+  M->Curves = Tree_Create(sizeof(Curve *), compareCurve);
+  M->Surfaces = Tree_Create(sizeof(Surface *), compareSurface);
+  M->Volumes = Tree_Create(sizeof(Volume *), compareVolume);
 
   std::set < BDS_GeomEntity *, GeomLessThan >::iterator it =
-    m->bds->geom.begin();
+    M->bds->geom.begin();
   std::set < BDS_GeomEntity *, GeomLessThan >::iterator ite =
-    m->bds->geom.end();
+    M->bds->geom.end();
 
   while(it != ite) {
     if((*it)->classif_degree == 3) {
       Volume *_Vol = 0;
-      _Vol = FindVolume((*it)->classif_tag, m);
+      _Vol = FindVolume((*it)->classif_tag, M);
       if(!_Vol)
         _Vol = Create_Volume((*it)->classif_tag, MSH_VOLUME_DISCRETE);
-      Tree_Add(m->Volumes, &_Vol);
+      Tree_Add(M->Volumes, &_Vol);
     }
     else if((*it)->classif_degree == 2) {
       Surface *_Surf = 0;
-      _Surf = FindSurface((*it)->classif_tag, m);
+      _Surf = FindSurface((*it)->classif_tag, M);
       if(!_Surf)
         _Surf = Create_Surface((*it)->classif_tag, MSH_SURF_DISCRETE);
-      //      _Surf->bds = m->bds;
+      //      _Surf->bds = M->bds;
       End_Surface(_Surf);
-      Tree_Add(m->Surfaces, &_Surf);
+      Tree_Add(M->Surfaces, &_Surf);
     }
     else if((*it)->classif_degree == 1) {
       Curve *_c = 0;
-      _c = FindCurve((*it)->classif_tag, m);
+      _c = FindCurve((*it)->classif_tag, M);
       if(!_c)
         _c =
           Create_Curve((*it)->classif_tag, MSH_SEGM_DISCRETE, 1, NULL, NULL,
                        -1, -1, 0., 1.);
-      //      _c->bds = m->bds;
+      //      _c->bds = M->bds;
       End_Curve(_c);
-      Tree_Add(m->Curves, &_c);
+      Tree_Add(M->Curves, &_c);
     }
     else if((*it)->classif_degree == 0) {
       BDS_Point *p = (*it)->p;
       if(p) {
         Vertex *_v = Create_Vertex(p->iD, p->X, p->Y, p->Z, 1, 0);
-        Tree_Add(m->Points, &_v);
+        Tree_Add(M->Points, &_v);
       }
     }
     ++it;
@@ -393,9 +393,8 @@ void  CreateVolumeWithAllSurfaces(Mesh *M)
   Tree_Add(M->Volumes, &vol2);
 }
 
-int ReMesh(Mesh * M)
+int ReMesh(Mesh *M)
 {
-
   if(M->status != 2)
     return 0;
 

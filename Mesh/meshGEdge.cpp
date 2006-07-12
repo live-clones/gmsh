@@ -40,9 +40,9 @@ double F_Transfini_bis(double t)
   SVector3 der = _myGEdge -> firstDer(t) ;
   double d = norm(der);
 
-  double coef = _myGEdge->meshGEdgeAttributes.coeffTransfinite;
-  int    type = _myGEdge->meshGEdgeAttributes.typeTransfinite;
-  int    nbpt = _myGEdge->meshGEdgeAttributes.nbPointsTransfinite;
+  double coef = _myGEdge->meshAttributes.coeffTransfinite;
+  int    type = _myGEdge->meshAttributes.typeTransfinite;
+  int    nbpt = _myGEdge->meshAttributes.nbPointsTransfinite;
 
   if(coef <= 0.0 || coef == 1.0) {
     // coef < 0 should never happen
@@ -65,6 +65,7 @@ double F_Transfini_bis(double t)
 	
     case 2:    // Bump
       {
+	double a;
 	if(coef > 1.0) {
 	  a = -4. * sqrt(coef - 1.) *
 	    atan2(1., sqrt(coef - 1.)) /
@@ -131,13 +132,13 @@ void meshGEdge :: operator() (GEdge *ge)
   t_begin = _myGEdgeBounds.low();
   t_end   = _myGEdgeBounds.high();
 
-  // Integrate ∫ detJ/lc du 
+  // Integrate detJ/lc du 
   double a;
   int N;
-  if(ge->meshGEdgeAttributes.Method == TRANSFINI) 
+  if(ge->meshAttributes.Method == TRANSFINI) 
     {
       a = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), F_Transfini_bis, Points, 1.e-7);
-      N = ge->meshGEdgeAttributes.nbPointsTransfinite;
+      N = ge->meshAttributes.nbPointsTransfinite;
     }
   else
     {

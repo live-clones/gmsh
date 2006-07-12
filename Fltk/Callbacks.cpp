@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.417 2006-05-14 02:03:59 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.418 2006-07-12 07:24:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -961,7 +961,7 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
     WID->gen_value[9]->value(v[0]->Pos.Y);
     WID->gen_value[10]->value(v[0]->Pos.Z);
   }
-  ZeroHighlight(THEM);
+  ZeroHighlight();
   Draw();
   Msg(STATUS3N, "Ready");
   Msg(ONSCREEN, "");
@@ -1955,7 +1955,7 @@ static void _new_multiline(int type)
           break;
         }
       }
-      ZeroHighlight(THEM);
+      ZeroHighlight();
       Draw();
       n = 0;
     }
@@ -1967,7 +1967,7 @@ static void _new_multiline(int type)
       }
     }
     if(ib == 'q') {
-      ZeroHighlight(THEM);
+      ZeroHighlight();
       Draw();
       break;
     }
@@ -2018,13 +2018,13 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
       }
     }
     if(ib == 'q') {
-      ZeroHighlight(THEM);
+      ZeroHighlight();
       Draw();
       break;
     }
     if(n == 2) {
       add_multline(2, p, CTX.filename);
-      ZeroHighlight(THEM);
+      ZeroHighlight();
       Draw();
       n = 0;
     }
@@ -2083,13 +2083,13 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
       }
     }
     if(ib == 'q') {
-      ZeroHighlight(THEM);
+      ZeroHighlight();
       Draw();
       break;
     }
     if(n == 3) {
       add_circ(p[0], p[1], p[2], CTX.filename); // begin, center, end
-      ZeroHighlight(THEM);
+      ZeroHighlight();
       Draw();
       n = 0;
     }
@@ -2141,13 +2141,13 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
       }
     }
     if(ib == 'q') {
-      ZeroHighlight(THEM);
+      ZeroHighlight();
       Draw();
       break;
     }
     if(n == 4) {
       add_ell(p[0], p[1], p[2], p[3], CTX.filename);
-      ZeroHighlight(THEM);
+      ZeroHighlight();
       Draw();
       n = 0;
     }
@@ -2206,7 +2206,7 @@ static void _new_surface_volume(int mode)
 
       char ib = SelectEntity(type, &ne, v, c, s);
       if(ib == 'q') {
-        ZeroHighlight(THEM);
+        ZeroHighlight();
         Draw();
         goto stopall;
       }
@@ -2241,12 +2241,12 @@ static void _new_surface_volume(int mode)
 		  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
 	    ib = SelectEntity(type, &ne, v, c, s);
 	    if(ib == 'q') {
-	      ZeroHighlight(THEM);
+	      ZeroHighlight();
 	      Draw();
 	      goto stopall;
 	    }
 	    if(ib == 'e') {
-	      ZeroHighlight(THEM);
+	      ZeroHighlight();
 	      Draw();
 	      List_Reset(List1);
 	      break;
@@ -2282,7 +2282,7 @@ static void _new_surface_volume(int mode)
 	    case 1: add_surf(List2, CTX.filename, 0, 1); break;
 	    case 2: add_vol(List2, CTX.filename); break;
 	    }
-	    ZeroHighlight(THEM);
+	    ZeroHighlight();
 	    Draw();
 	    break;
 	  }
@@ -2534,7 +2534,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	  break;
 	}
 	List_Reset(List1);
-	ZeroHighlight(THEM);
+	ZeroHighlight();
 	if(action <= 6) SetBoundingBox();
 	Draw();
       }
@@ -2548,7 +2548,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	  BDS_To_Mesh(THEM); 
 	}
       }
-      ZeroHighlight(THEM);
+      ZeroHighlight();
       Draw();
       break;
     }
@@ -2855,14 +2855,14 @@ void mesh_save_cb(CALLBACK_ARGS)
   if(CTX.output_filename)
     strcpy(name, CTX.output_filename);
   else
-    GetDefaultMeshFileName(THEM, CTX.mesh.format, name);
+    GetDefaultMeshFileName(CTX.mesh.format, name);
   if(CTX.confirm_overwrite) {
     if(!StatFile(name))
       if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
 		    "Cancel", "Replace", NULL, name))
 	return;
   }
-  Print_Mesh(THEM, name, CTX.mesh.format);
+  Print_Mesh(name, CTX.mesh.format);
 }
 
 void mesh_define_cb(CALLBACK_ARGS)
@@ -2872,21 +2872,21 @@ void mesh_define_cb(CALLBACK_ARGS)
 
 void mesh_1d_cb(CALLBACK_ARGS)
 {
-  mai3d(THEM, 1);
+  mai3d(1);
   Draw();
   Msg(STATUS3N, "Ready");
 }
 
 void mesh_2d_cb(CALLBACK_ARGS)
 {
-  mai3d(THEM, 2);
+  mai3d(2);
   Draw();
   Msg(STATUS3N, "Ready");
 }
 
 void mesh_3d_cb(CALLBACK_ARGS)
 {
-  mai3d(THEM, 3);
+  mai3d(3);
   Draw();
   Msg(STATUS3N, "Ready");
 }
@@ -2919,7 +2919,7 @@ void mesh_optimize_cb(CALLBACK_ARGS)
     return;
   }
   CTX.threads_lock = 1;
-  Optimize_Netgen(THEM);
+  Optimize_Netgen();
   CTX.threads_lock = 0;
 
   CTX.mesh.changed = 1;
@@ -3011,7 +3011,7 @@ static void _add_transfinite_elliptic(int type, int dim)
 		       (char*)WID->context_mesh_input[2]->value(),
 		       (char*)WID->context_mesh_input[1]->value());
       }
-      ZeroHighlight(THEM);
+      ZeroHighlight();
       Draw();
       n = 0;
     }
@@ -3025,7 +3025,7 @@ static void _add_transfinite_elliptic(int type, int dim)
       }
     }
     if(ib == 'q') {
-      ZeroHighlight(THEM);
+      ZeroHighlight();
       Draw();
       break;
     }
@@ -3079,13 +3079,13 @@ static void _add_transfinite_elliptic(int type, int dim)
                 Msg(GERROR, "Wrong number of points for transfinite volume");
               break;
             }
-            ZeroHighlight(THEM);
+            ZeroHighlight();
             Draw();
             n = 0;
             break;
           }
           if(ib == 'q') {
-            ZeroHighlight(THEM);
+            ZeroHighlight();
             Draw();
             goto stopall;
           }
@@ -4339,7 +4339,7 @@ void con_geometry_define_point_cb(CALLBACK_ARGS)
 	    (char*)WID->context_geometry_input[3]->value(),
 	    (char*)WID->context_geometry_input[4]->value(),
 	    (char*)WID->context_geometry_input[5]->value());
-  ZeroHighlight(THEM);
+  ZeroHighlight();
   SetBoundingBox();
   WID->reset_visibility();
   Draw();

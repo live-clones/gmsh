@@ -11,6 +11,9 @@ public:
   GVertex(GModel *m, int tag) : GEntity (m,tag) {}
   virtual ~GVertex() {}
   virtual GPoint point() const = 0;
+  virtual double x() const = 0;
+  virtual double y() const = 0;
+  virtual double z() const = 0;
   void addEdge ( GEdge *e );
   void delEdge ( GEdge *e );
   virtual int dim() const {return 0;}

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.97 2006-01-10 03:58:31 geuzaine Exp $
+// $Id: Geom.cpp,v 1.98 2006-07-12 07:24:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -33,27 +33,28 @@
 #include "Plugin.h"
 #include "PluginManager.h"
 #include "gl2ps.h"
+#include "GModel.h"
+#include "GVertex.h"
 
 extern Context_T CTX;
 extern Mesh *THEM;
+extern GModel *GMODEL;
 
 // Points
 
-void Draw_Geo_Point(void *a, void *b)
+void Draw_Geo_Vertex(GVertex *v)
 {
   char Num[100];
 
-  Vertex *v = *(Vertex **) a;
-
-  if(!(v->Visible & VIS_GEOM))
+  if(!(v->drawAttributes.Visible & VIS_GEOM))
     return;
 
   if(CTX.render_mode == GMSH_SELECT) {
     glPushName(0);
-    glPushName(v->Num);
+    glPushName(v->tag());
   }
-
-  if(v->Frozen) {
+  
+  if(v->drawAttributes.Frozen) {
     glPointSize(CTX.geom.point_sel_size);
     gl2psPointSize(CTX.geom.point_sel_size * CTX.print.eps_point_size_factor);
     glColor4ubv((GLubyte *) & CTX.color.geom.point_sel);
@@ -66,36 +67,37 @@ void Draw_Geo_Point(void *a, void *b)
 
   if(CTX.geom.points) {
     if(CTX.geom.point_type == 1) {
-      if(v->Frozen)
-	Draw_Sphere(CTX.geom.point_sel_size, v->Pos.X, v->Pos.Y, v->Pos.Z, 
+      if(v->drawAttributes.Frozen)
+	Draw_Sphere(CTX.geom.point_sel_size, v->x(), v->y(), v->z(), 
 		    CTX.geom.light);
       else
-	Draw_Sphere(CTX.geom.point_size, v->Pos.X, v->Pos.Y, v->Pos.Z,
+	Draw_Sphere(CTX.geom.point_size, v->x(), v->y(), v->z(),
 		    CTX.geom.light);
     }
     else if(CTX.geom.point_type == 2) {
       GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
       if(sp) {
-	sp-> GL_enhancePoint (v);
+	Msg(FATAL, "code GL_enhancePoint!");
+	//sp-> GL_enhancePoint (v);
       }
       glBegin(GL_POINTS);
-      glVertex3d(v->Pos.X, v->Pos.Y, v->Pos.Z);
+      glVertex3d(v->x(), v->y(), v->z());
       glEnd();
     }
     else {
       glBegin(GL_POINTS);
-      glVertex3d(v->Pos.X, v->Pos.Y, v->Pos.Z);
+      glVertex3d(v->x(), v->y(), v->z());
       glEnd();
     }
 
   }
 
   if(CTX.geom.points_num) {
-    sprintf(Num, "%d", v->Num);
+    sprintf(Num, "%d", v->tag());
     double offset = (0.5 * CTX.geom.point_size + 0.3 * CTX.gl_fontsize) * CTX.pixel_equiv_x;
-    glRasterPos3d(v->Pos.X + offset / CTX.s[0],
-		  v->Pos.Y + offset / CTX.s[1],
-		  v->Pos.Z + offset / CTX.s[2]);
+    glRasterPos3d(v->x() + offset / CTX.s[0],
+		  v->y() + offset / CTX.s[1],
+		  v->z() + offset / CTX.s[2]);
     Draw_String(Num);
   }
 
@@ -107,24 +109,22 @@ void Draw_Geo_Point(void *a, void *b)
 
 // Curves
 
-void Draw_Curve(void *a, void *b)
+void Draw_Geo_Edge(GEdge *c)
 {
   int N;
   double mod, x[2], y[2], z[2];
   char Num[100];
   Vertex v, dv;
 
-  Curve *c = *(Curve **) a;
-
-  if(c->Num < 0 || !(c->Visible & VIS_GEOM))
+  if(c->tag() < 0 || !(c->drawAttributes.Visible & VIS_GEOM))
     return;
 
   if(CTX.render_mode == GMSH_SELECT) {
     glPushName(1);
-    glPushName(c->Num);
+    glPushName(c->tag());
   }
 
-  if(c->ipar[3] > 0) {
+  if(c->drawAttributes.Frozen) {
     glLineWidth(CTX.geom.line_sel_width);
     gl2psLineWidth(CTX.geom.line_sel_width * CTX.print.eps_line_width_factor);
     glColor4ubv((GLubyte *) & CTX.color.geom.line_sel);
@@ -135,6 +135,7 @@ void Draw_Curve(void *a, void *b)
     glColor4ubv((GLubyte *) & CTX.color.geom.line);
   }
 
+  /*
   if(CTX.geom.lines) {
     int n = List_Nbr(c->Control_Points);
     switch (c->Typ) {
@@ -240,6 +241,8 @@ void Draw_Curve(void *a, void *b)
 		v.Pos.X, v.Pos.Y, v.Pos.Z,
 		dv.Pos.X, dv.Pos.Y, dv.Pos.Z, CTX.geom.light);
   }
+  */
+
 
   if(CTX.render_mode == GMSH_SELECT) {
     glPopName();
@@ -655,25 +658,32 @@ void Draw_Surface(void *a, void *b)
 
 // Volumes
 
-void DrawVolumes(Mesh * m)
+void Draw_Volumes()
 {
 }
 
 // Draw geometry
 
-void Draw_Geom(Mesh * m)
+void Draw_Geom()
 {
-  if(m->status == -1)
-    return;
-
+  if(!GMODEL) return;
+  
   if(CTX.geom.points || CTX.geom.points_num)
-    Tree_Action(m->Points, Draw_Geo_Point);
+    for(GModel::viter v = GMODEL->firstVertex(); v != GMODEL->lastVertex(); v++)
+      Draw_Geo_Vertex(*v);
+
   if(CTX.geom.lines || CTX.geom.lines_num || CTX.geom.tangents)
-    Tree_Action(m->Curves, Draw_Curve);
+    for(GModel::eiter e = GMODEL->firstEdge(); e != GMODEL->lastEdge(); e++)
+      Draw_Geo_Edge(*e);
+
+  /*
+  if(CTX.geom.lines || CTX.geom.lines_num || CTX.geom.tangents)
+    Tree_Action(THEM->Curves, Draw_Curve);
   if(CTX.geom.surfaces || CTX.geom.surfaces_num || CTX.geom.normals)
-    Tree_Action(m->Surfaces, Draw_Surface);
+    Tree_Action(THEM->Surfaces, Draw_Surface);
   if(CTX.geom.volumes || CTX.geom.volumes_num)
-    DrawVolumes(m);
+    Draw_Volumes();
+  */
 }
 
 // Highlight routines
@@ -793,11 +803,11 @@ void ZeroHighlightSurface(void *a, void *b)
   s->ipar[4] = -2;
 }
 
-void ZeroHighlight(Mesh * m)
+void ZeroHighlight()
 {
-  Tree_Action(m->Points, ZeroHighlightPoint);
-  Tree_Action(m->Curves, ZeroHighlightCurve);
-  Tree_Action(m->Surfaces, ZeroHighlightSurface);
+  Tree_Action(THEM->Points, ZeroHighlightPoint);
+  Tree_Action(THEM->Curves, ZeroHighlightCurve);
+  Tree_Action(THEM->Surfaces, ZeroHighlightSurface);
 }
 
 void ZeroHighlightEntity(Vertex * v, Curve * c, Surface * s)

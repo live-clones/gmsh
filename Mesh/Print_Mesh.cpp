@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.75 2006-05-14 00:48:20 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.76 2006-07-12 07:24:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -70,22 +70,22 @@ static void _msh_print_node(void *a, void *b)
           V->Pos.Z * CTX.mesh.scaling_factor);
 }
 
-static void _msh_process_nodes(Mesh *M)
+static void _msh_process_nodes()
 {
   int i, j, Num;
   PhysicalGroup *p;
   Vertex *pv, **ppv, v;
 
-  for(i = 0; i < List_Nbr(M->PhysicalGroups); i++) {
-    List_Read(M->PhysicalGroups, i, &p);
+  for(i = 0; i < List_Nbr(THEM->PhysicalGroups); i++) {
+    List_Read(THEM->PhysicalGroups, i, &p);
     if(p->Typ == MSH_PHYSICAL_POINT) {
       for(j = 0; j < List_Nbr(p->Entities); j++) {
         List_Read(p->Entities, j, &Num);
         pv = &v;
         pv->Num = abs(Num);
-        if(!Tree_Search(M->Vertices, &pv)) {
-          if((ppv = (Vertex **) Tree_PQuery(M->Points, &pv)))
-            Tree_Add(M->Vertices, ppv);
+        if(!Tree_Search(THEM->Vertices, &pv)) {
+          if((ppv = (Vertex **) Tree_PQuery(THEM->Points, &pv)))
+            Tree_Add(THEM->Vertices, ppv);
         }
       }
     }
@@ -95,10 +95,10 @@ static void _msh_process_nodes(Mesh *M)
     fprintf(MSHFILE, "$Nodes\n");
   else
     fprintf(MSHFILE, "$NOD\n");
-  fprintf(MSHFILE, "%d\n", Tree_Nbr(M->Vertices));
+  fprintf(MSHFILE, "%d\n", Tree_Nbr(THEM->Vertices));
 
   MSH_NODE_NUM = 0;
-  Tree_Action(M->Vertices, _msh_print_node);
+  Tree_Action(THEM->Vertices, _msh_print_node);
   if(CTX.mesh.msh_file_version == 2.0)
     fprintf(MSHFILE, "$EndNodes\n");
   else
@@ -445,7 +445,7 @@ static void _msh_print_point(Vertex *V)
 	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : V->Num, V->Num, V->Num);
 }
 
-static void _msh_print_elements(Mesh *M)
+static void _msh_print_elements()
 {
   int i, j, k, Num;
 
@@ -455,12 +455,12 @@ static void _msh_print_elements(Mesh *M)
   Curve *pc;
   Vertex *pv, v;
 
-  List_T *ListCurves = Tree2List(M->Curves);
-  List_T *ListSurfaces = Tree2List(M->Surfaces);
-  List_T *ListVolumes = Tree2List(M->Volumes);
+  List_T *ListCurves = Tree2List(THEM->Curves);
+  List_T *ListSurfaces = Tree2List(THEM->Surfaces);
+  List_T *ListVolumes = Tree2List(THEM->Volumes);
 
-  for(i = 0; i < List_Nbr(M->PhysicalGroups); i++) {
-    List_Read(M->PhysicalGroups, i, &p);
+  for(i = 0; i < List_Nbr(THEM->PhysicalGroups); i++) {
+    List_Read(THEM->PhysicalGroups, i, &p);
     MSH_PHYSICAL_NUM = p->Num;
     MSH_VOL_NUM = MSH_SUR_NUM = MSH_LIN_NUM = 0;
 
@@ -472,7 +472,7 @@ static void _msh_print_elements(Mesh *M)
         List_Read(p->Entities, j, &Num);
         pv->Num = abs(Num);
         MSH_PHYSICAL_ORI = sign(Num);
-        if(Tree_Query(M->Vertices, &pv))
+        if(Tree_Query(THEM->Vertices, &pv))
           _msh_print_point(pv);
       }
       break;
@@ -635,7 +635,7 @@ static void _msh_print_all_volumes(void *a, void *b)
   Tree_Action(v->Pyramids, _msh_print_pyramid);
 }
 
-static void _msh_print_all_elements(Mesh *M)
+static void _msh_print_all_elements()
 {
   MSH_PHYSICAL_NUM = 0;
   MSH_PHYSICAL_ORI = 1;
@@ -645,28 +645,28 @@ static void _msh_print_all_elements(Mesh *M)
   _msh_print_all_modelpoints();
 
   if(CTX.mesh.oldxtrude) {
-    Tree_Action(M->Volumes, _msh_print_all_simpsurf);
-    Tree_Action(M->Volumes, _msh_print_all_linsurf);
+    Tree_Action(THEM->Volumes, _msh_print_all_simpsurf);
+    Tree_Action(THEM->Volumes, _msh_print_all_linsurf);
   }
   else {
-    Tree_Action(M->Curves, _msh_print_all_curves);
-    Tree_Action(M->Surfaces, _msh_print_all_surfaces);
+    Tree_Action(THEM->Curves, _msh_print_all_curves);
+    Tree_Action(THEM->Surfaces, _msh_print_all_surfaces);
   }
 
-  Tree_Action(M->Volumes, _msh_print_all_volumes);
+  Tree_Action(THEM->Volumes, _msh_print_all_volumes);
 }
 
-static void _msh_process_elements(Mesh *M)
+static void _msh_process_elements()
 {
   MSH_ADD = 0;
   MSH_ELEMENT_NUM = 1;
 
-  if(!List_Nbr(M->PhysicalGroups) || CTX.mesh.save_all) {
+  if(!List_Nbr(THEM->PhysicalGroups) || CTX.mesh.save_all) {
     Msg(INFO, "Saving all elements (discarding physical groups)");
-    _msh_print_all_elements(M);
+    _msh_print_all_elements();
   }
   else
-    _msh_print_elements(M);
+    _msh_print_elements();
 
   if(CTX.mesh.msh_file_version == 2.0)
     fprintf(MSHFILE, "$Elements\n");
@@ -680,10 +680,10 @@ static void _msh_process_elements(Mesh *M)
 
   MSH_ADD = 1;
   MSH_ELEMENT_NUM = 1;
-  if(!List_Nbr(M->PhysicalGroups) || CTX.mesh.save_all)
-    _msh_print_all_elements(M);
+  if(!List_Nbr(THEM->PhysicalGroups) || CTX.mesh.save_all)
+    _msh_print_all_elements();
   else
-    _msh_print_elements(M);
+    _msh_print_elements();
 
   if(CTX.mesh.msh_file_version == 2.0)
     fprintf(MSHFILE, "$EndElements\n");
@@ -691,7 +691,7 @@ static void _msh_process_elements(Mesh *M)
     fprintf(MSHFILE, "$ENDELM\n");
 }
 
-void Print_Mesh_MSH(Mesh *M, FILE *fp)
+void Print_Mesh_MSH(FILE *fp)
 {
   MSHFILE = fp;
   if(CTX.mesh.msh_file_version == 1.0){
@@ -708,8 +708,8 @@ void Print_Mesh_MSH(Mesh *M, FILE *fp)
 	CTX.mesh.msh_file_version);
     return;
   }
-  _msh_process_nodes(M);
-  _msh_process_elements(M);
+  _msh_process_nodes();
+  _msh_process_elements();
   Msg(INFO, "%d nodes", MSH_NODE_NUM);
   Msg(INFO, "%d elements", MSH_ELEMENT_NUM - 1);
 }
@@ -743,10 +743,10 @@ static Tree_T *tree;
 static int UNV_VOL_NUM;
 static FILE *UNVFILE;
 
-static void _unv_process_nodes(Mesh *M)
+static void _unv_process_nodes()
 {
   Vertex *v;
-  List_T *Nodes = Tree2List(M->Vertices);
+  List_T *Nodes = Tree2List(THEM->Vertices);
 
   fprintf(UNVFILE, "%6d\n", -1);
   fprintf(UNVFILE, "%6d\n", NODES);
@@ -796,9 +796,9 @@ static void _unv_print_record(int num, int fetyp, int geo, int n, int nsup,
     fprintf(UNVFILE, "\n");
 }
 
-static void _unv_process_1D_elements(Mesh *m)
+static void _unv_process_1D_elements()
 {
-  List_T *ListCurves = Tree2List(m->Curves);
+  List_T *ListCurves = Tree2List(THEM->Curves);
   List_T *Elements;
   SimplexBase *sx;
   Curve *c;
@@ -821,9 +821,9 @@ static void _unv_process_1D_elements(Mesh *m)
   List_Delete(ListCurves);
 }
 
-static void _unv_process_2D_elements(Mesh *m)
+static void _unv_process_2D_elements()
 {
-  List_T *ListSurfaces = Tree2List(m->Surfaces);
+  List_T *ListSurfaces = Tree2List(THEM->Surfaces);
   List_T *Elements;
   Surface *s;
   SimplexBase *sx;
@@ -859,9 +859,9 @@ static void _unv_process_2D_elements(Mesh *m)
   List_Delete(ListSurfaces);
 }
 
-static void _unv_process_3D_elements(Mesh *m)
+static void _unv_process_3D_elements()
 {
-  List_T *ListVolumes = Tree2List(m->Volumes);
+  List_T *ListVolumes = Tree2List(THEM->Volumes);
   List_T *Elements;
   SimplexBase *sx;
   Hexahedron *hx;
@@ -971,7 +971,7 @@ static void _unv_add_pyramid_vertices(void *a, void *b)
     _unv_add_vertex(&p->V[i], NULL);
 }
 
-static void _unv_process_groups(Mesh *m)
+static void _unv_process_groups()
 {
   Volume *pV;
   Surface *ps, s;
@@ -980,9 +980,9 @@ static void _unv_process_groups(Mesh *m)
   PhysicalGroup *p;
   List_T *ListVolumes;
 
-  for(int i = 0; i < List_Nbr(m->PhysicalGroups); i++) {
+  for(int i = 0; i < List_Nbr(THEM->PhysicalGroups); i++) {
 
-    List_Read(m->PhysicalGroups, i, &p);
+    List_Read(THEM->PhysicalGroups, i, &p);
 
     fprintf(UNVFILE, "%6d\n", -1);
     fprintf(UNVFILE, "%6d\n", GROUPOFNODES);
@@ -993,7 +993,7 @@ static void _unv_process_groups(Mesh *m)
 
     switch (p->Typ) {
     case MSH_PHYSICAL_VOLUME:
-      ListVolumes = Tree2List(m->Volumes);
+      ListVolumes = Tree2List(THEM->Volumes);
       for(int k = 0; k < List_Nbr(ListVolumes); k++) {
         List_Read(ListVolumes, k, &pV);
         for(int j = 0; j < List_Nbr(p->Entities); j++) {
@@ -1011,7 +1011,7 @@ static void _unv_process_groups(Mesh *m)
       for(int j = 0; j < List_Nbr(p->Entities); j++) {
         ps = &s;
         List_Read(p->Entities, j, &ps->Num);
-        if(Tree_Query(m->Surfaces, &ps))
+        if(Tree_Query(THEM->Surfaces, &ps))
           Tree_Action(ps->Vertices, _unv_add_vertex);
       }
       break;
@@ -1019,7 +1019,7 @@ static void _unv_process_groups(Mesh *m)
       for(int j = 0; j < List_Nbr(p->Entities); j++) {
         pc = &c;
         List_Read(p->Entities, j, &pc->Num);
-        if(Tree_Query(m->Curves, &pc))
+        if(Tree_Query(THEM->Curves, &pc))
           for(int k = 0; k < List_Nbr(pc->Vertices); k++)
             _unv_add_vertex(List_Pointer(pc->Vertices, k), NULL);
       }
@@ -1028,7 +1028,7 @@ static void _unv_process_groups(Mesh *m)
       for(int j = 0; j < List_Nbr(p->Entities); j++) {
         pv = &v;
         List_Read(p->Entities, j, &pv->Num);
-        if(Tree_Query(m->Vertices, &pv))
+        if(Tree_Query(THEM->Vertices, &pv))
           _unv_add_vertex(&pv, NULL);
       }
       break;
@@ -1040,25 +1040,25 @@ static void _unv_process_groups(Mesh *m)
   }
 }
 
-void Print_Mesh_UNV(Mesh *M, FILE *fp)
+void Print_Mesh_UNV(FILE *fp)
 {
   UNVFILE = fp;
-  _unv_process_nodes(M);
+  _unv_process_nodes();
   fprintf(UNVFILE, "%6d\n", -1);
   fprintf(UNVFILE, "%6d\n", ELEMENTS);
   ELEMENT_ID = 1;
-  _unv_process_3D_elements(M);
-  _unv_process_2D_elements(M);
-  _unv_process_1D_elements(M);
+  _unv_process_3D_elements();
+  _unv_process_2D_elements();
+  _unv_process_1D_elements();
   fprintf(UNVFILE, "%6d\n", -1);
-  _unv_process_groups(M);
+  _unv_process_groups();
 }
 
 // Write mesh in Gref format
 
 static FILE *GREFFILE;
 
-static void _gref_consecutive_nodes(Mesh *M, Tree_T *ConsecutiveNTree,
+static void _gref_consecutive_nodes(Tree_T *ConsecutiveNTree,
 				    Tree_T *ConsecutiveETree)
 {
   SimplexBase *sx;
@@ -1068,7 +1068,7 @@ static void _gref_consecutive_nodes(Mesh *M, Tree_T *ConsecutiveNTree,
 
   int newnum = 0;
 
-  List_T *ListSurfaces = Tree2List(M->Surfaces);
+  List_T *ListSurfaces = Tree2List(THEM->Surfaces);
   for(int i = 0; i < List_Nbr(ListSurfaces); i++) {
     List_Read(ListSurfaces, i, &s);
     // triangles
@@ -1138,13 +1138,13 @@ static void _gref_consecutive_nodes(Mesh *M, Tree_T *ConsecutiveNTree,
   Msg(INFO, "%d Dofs", nbdof);
 }
 
-static void _gref_end_consecutive_nodes(Mesh *M)
+static void _gref_end_consecutive_nodes()
 {
   SimplexBase *sx;
   Quadrangle *qx;
   Surface *s;
 
-  List_T *ListSurfaces = Tree2List(M->Surfaces);
+  List_T *ListSurfaces = Tree2List(THEM->Surfaces);
   for(int i = 0; i < List_Nbr(ListSurfaces); i++) {
     List_Read(ListSurfaces, i, &s);
     // triangles
@@ -1181,7 +1181,7 @@ static int _gref_compare_frozen(const void *a, const void *b)
   return w->Frozen - q->Frozen;
 }
 
-static int _gref_process_nodes(Mesh *M, Tree_T *ConsecutiveNTree, 
+static int _gref_process_nodes(Tree_T *ConsecutiveNTree, 
 			       Tree_T *ConsecutiveETree)
 {
   int i, nbtriqua;
@@ -1189,10 +1189,10 @@ static int _gref_process_nodes(Mesh *M, Tree_T *ConsecutiveNTree,
   Surface *s;
   List_T *Nodes;
 
-  Tree_Action(M->Curves, Degre2_Curve);
-  Tree_Action(M->Surfaces, Degre2_Surface);
+  Tree_Action(THEM->Curves, Degre2_Curve);
+  Tree_Action(THEM->Surfaces, Degre2_Surface);
  
-  List_T *ListSurfaces = Tree2List(M->Surfaces);
+  List_T *ListSurfaces = Tree2List(THEM->Surfaces);
   nbtriqua = 0;
   for(i = 0; i < List_Nbr(ListSurfaces); i++) {
     List_Read(ListSurfaces, i, &s);
@@ -1201,7 +1201,7 @@ static int _gref_process_nodes(Mesh *M, Tree_T *ConsecutiveNTree,
   }
   List_Delete(ListSurfaces);
 
-  _gref_consecutive_nodes(M, ConsecutiveNTree, ConsecutiveETree);
+  _gref_consecutive_nodes(ConsecutiveNTree, ConsecutiveETree);
 
   fprintf(GREFFILE, "%d %d %d\n", nbtriqua, Tree_Nbr(ConsecutiveNTree),
           Tree_Nbr(ConsecutiveNTree) + Tree_Nbr(ConsecutiveETree));
@@ -1228,13 +1228,13 @@ static int _gref_process_nodes(Mesh *M, Tree_T *ConsecutiveNTree,
   return i;
 }
 
-static int _gref_find_physical(Vertex *v, Mesh *m)
+static int _gref_find_physical(Vertex *v)
 {
   PhysicalGroup *p;
   Curve *c;
   int i, j;
-  for(i = 0; i < List_Nbr(m->PhysicalGroups); i++) {
-    List_Read(m->PhysicalGroups, i, &p);
+  for(i = 0; i < List_Nbr(THEM->PhysicalGroups); i++) {
+    List_Read(THEM->PhysicalGroups, i, &p);
     if(p->Typ == MSH_PHYSICAL_POINT) {
       if(List_Search(p->Entities, &v->Num, fcmp_absint)) {
         return p->Num;
@@ -1243,8 +1243,8 @@ static int _gref_find_physical(Vertex *v, Mesh *m)
   }
 
   if(v->ListCurves) {
-    for(i = 0; i < List_Nbr(m->PhysicalGroups); i++) {
-      List_Read(m->PhysicalGroups, i, &p);
+    for(i = 0; i < List_Nbr(THEM->PhysicalGroups); i++) {
+      List_Read(THEM->PhysicalGroups, i, &p);
       if(p->Typ == MSH_PHYSICAL_LINE) {
         for(j = 0; j < List_Nbr(v->ListCurves); j++) {
           List_Read(v->ListCurves, j, &c);
@@ -1258,7 +1258,7 @@ static int _gref_find_physical(Vertex *v, Mesh *m)
   return 0;
 }
 
-static void _gref_process_boundary_conditions(Mesh *M, Tree_T *TRN, Tree_T *TRE)
+static void _gref_process_boundary_conditions(Tree_T *TRN, Tree_T *TRE)
 {
   int i, ent;
   Vertex *v;
@@ -1266,7 +1266,7 @@ static void _gref_process_boundary_conditions(Mesh *M, Tree_T *TRN, Tree_T *TRE)
   List_T *Nodes = Tree2List(TRN);
   for(i = 0; i < List_Nbr(Nodes); i++) {
     List_Read(Nodes, i, &v);
-    ent = _gref_find_physical(v, M);
+    ent = _gref_find_physical(v);
     fprintf(GREFFILE, "%d %d ", ent, ent);
     if(i % 3 == 2)
       fprintf(GREFFILE, "\n");
@@ -1278,7 +1278,7 @@ static void _gref_process_boundary_conditions(Mesh *M, Tree_T *TRN, Tree_T *TRE)
   Nodes = Tree2List(TRE);
   for(i = 0; i < List_Nbr(Nodes); i++) {
     List_Read(Nodes, i, &v);
-    ent = _gref_find_physical(v, M);
+    ent = _gref_find_physical(v);
     fprintf(GREFFILE, "%d %d ", ent, ent);
     if(i % 3 == 2)
       fprintf(GREFFILE, "\n");
@@ -1288,13 +1288,13 @@ static void _gref_process_boundary_conditions(Mesh *M, Tree_T *TRN, Tree_T *TRE)
   List_Delete(Nodes);
 }
 
-static void _gref_process_elements(Mesh *M, int nn)
+static void _gref_process_elements(int nn)
 {
   SimplexBase *sx;
   Quadrangle *qx;
   Surface *s;
 
-  List_T *ListSurfaces = Tree2List(M->Surfaces);
+  List_T *ListSurfaces = Tree2List(THEM->Surfaces);
 
   for(int i = 0; i < List_Nbr(ListSurfaces); i++) {
     List_Read(ListSurfaces, i, &s);
@@ -1367,17 +1367,17 @@ static void _gref_process_elements(Mesh *M, int nn)
   List_Delete(ListSurfaces);
 }
 
-void Print_Mesh_GREF(Mesh *M, FILE *fp)
+void Print_Mesh_GREF(FILE *fp)
 {
   GREFFILE = fp;
   Tree_T *TRN = Tree_Create(sizeof(Vertex *), _gref_compare_frozen);
   Tree_T *TRE = Tree_Create(sizeof(Vertex *), _gref_compare_frozen);
-  _gref_process_nodes(M, TRN, TRE);
-  _gref_process_elements(M, Tree_Nbr(TRN));
-  _gref_process_boundary_conditions(M, TRN, TRE);
+  _gref_process_nodes(TRN, TRE);
+  _gref_process_elements(Tree_Nbr(TRN));
+  _gref_process_boundary_conditions(TRN, TRE);
   Tree_Delete(TRN);
   Tree_Delete(TRE);
-  _gref_end_consecutive_nodes(M);
+  _gref_end_consecutive_nodes();
 }
 
 // Write mesh in VRML 1 format
@@ -1395,17 +1395,17 @@ static void _wrl_print_node(void *a, void *b)
   List_Add(wrlnodes, &V->Num);
 }
 
-static void _wrl_process_nodes(Mesh *M)
+static void _wrl_process_nodes()
 {
   if(!wrlnodes)
-    wrlnodes = List_Create(Tree_Size(M->Vertices), 100, sizeof(int));
+    wrlnodes = List_Create(Tree_Size(THEM->Vertices), 100, sizeof(int));
   else
     List_Reset(wrlnodes);
   fprintf(WRLFILE, "#VRML V1.0 ascii\n");
   fprintf(WRLFILE, "#created by Gmsh\n");
   fprintf(WRLFILE, "Coordinate3 {\n");
   fprintf(WRLFILE, "  point [\n");
-  Tree_Action(M->Vertices, _wrl_print_node);
+  Tree_Action(THEM->Vertices, _wrl_print_node);
   fprintf(WRLFILE, "  ]\n");
   fprintf(WRLFILE, "}\n");
 }
@@ -1480,21 +1480,21 @@ static void _wrl_print_all_surfaces(void *a, void *b)
   fprintf(WRLFILE, "}\n");
 }
 
-static void _wrl_process_elements(Mesh *M)
+static void _wrl_process_elements()
 {
   if(!wrlnodes)
     Msg(GERROR, "VRML node list does not exist");
   else {
-    Tree_Action(M->Curves, _wrl_print_all_curves);
-    Tree_Action(M->Surfaces, _wrl_print_all_surfaces);
+    Tree_Action(THEM->Curves, _wrl_print_all_curves);
+    Tree_Action(THEM->Surfaces, _wrl_print_all_surfaces);
   }
 }
 
-void Print_Mesh_WRL(Mesh *M, FILE *fp)
+void Print_Mesh_WRL(FILE *fp)
 {
   WRLFILE = fp;
-  _wrl_process_nodes(M);
-  _wrl_process_elements(M);
+  _wrl_process_nodes();
+  _wrl_process_elements();
 }
 
 // Write surface mesh in STL format
@@ -1554,11 +1554,11 @@ static void _stl_print_all_surfaces(void *a, void *b)
   Tree_Action(s->Quadrangles, _stl_print_quadrangle);
 }
 
-void Print_Mesh_STL(Mesh *M, FILE *fp)
+void Print_Mesh_STL(FILE *fp)
 {
   STLFILE = fp;
   fprintf(STLFILE, "solid Created by Gmsh\n");
-  Tree_Action(M->Surfaces, _stl_print_all_surfaces);
+  Tree_Action(THEM->Surfaces, _stl_print_all_surfaces);
   fprintf(STLFILE, "endsolid Created by Gmsh\n");
 }
 
@@ -1575,7 +1575,7 @@ static int _dmg_is_topologic(Vertex *v, List_T *curves)
   return 0;
 }
 
-void Print_Mesh_DMG(Mesh *m, FILE *fp)
+void Print_Mesh_DMG(FILE *fp)
 {
   int i, j;
   List_T *ll, *l;
@@ -1584,8 +1584,8 @@ void Print_Mesh_DMG(Mesh *m, FILE *fp)
   Surface *s;
   int k;
 
-  l = Tree2List(m->Points);
-  ll = Tree2List(m->Curves);
+  l = Tree2List(THEM->Points);
+  ll = Tree2List(THEM->Curves);
 
   k = 0;
   for(i = 0; i < List_Nbr(l); i++) {
@@ -1597,9 +1597,9 @@ void Print_Mesh_DMG(Mesh *m, FILE *fp)
 
   // write first the global infos 
 
-  fprintf(fp, "%d %d %d %d \n", Tree_Nbr(m->Volumes),
-          Tree_Nbr(m->Surfaces),
-          Tree_Nbr(m->Curves) / 2,     // the 2 is for the reverse curves
+  fprintf(fp, "%d %d %d %d \n", Tree_Nbr(THEM->Volumes),
+          Tree_Nbr(THEM->Surfaces),
+          Tree_Nbr(THEM->Curves) / 2,     // the 2 is for the reverse curves
           k);
 
   // then write the bounding box
@@ -1628,7 +1628,7 @@ void Print_Mesh_DMG(Mesh *m, FILE *fp)
     List_Read(l, i, &c);
     if(c->Num > 0) {
       c->ipar[3] = k;
-      Curve *cinv = FindCurve(-c->Num, m);
+      Curve *cinv = FindCurve(-c->Num, THEM);
       cinv->ipar[3] = k++;
       fprintf(fp, "%d %d %d \n", 
 	      c->ipar[3], c->beg->Frozen, c->end->Frozen);
@@ -1638,7 +1638,7 @@ void Print_Mesh_DMG(Mesh *m, FILE *fp)
   List_Delete(l);
 
   // write the surfaces
-  l = Tree2List(m->Surfaces);
+  l = Tree2List(THEM->Surfaces);
 
   for(i = 0; i < List_Nbr(l); i++) {
     List_Read(l, i, &s);
@@ -1783,7 +1783,7 @@ void _p3d_print_hex(List_T *ListHex, int Nu, int Nv, int Nw)
   }
 }
 
-void _p3d_print_all_elements(Mesh *M)
+void _p3d_print_all_elements()
 {
   int i, Nv, Nu, ElemCnt = 0;
   Volume *pV;
@@ -1791,8 +1791,8 @@ void _p3d_print_all_elements(Mesh *M)
   List_T *ListQuads;
   List_T *ListHex;
 
-  List_T *ListSurfaces = Tree2List(M->Surfaces);
-  List_T *ListVolumes = Tree2List(M->Volumes);
+  List_T *ListSurfaces = Tree2List(THEM->Surfaces);
+  List_T *ListVolumes = Tree2List(THEM->Volumes);
 
   List_T *ListStructSurf = List_Create(1,1,sizeof(Surface *));
   List_T *ListStructVol = List_Create(1,1,sizeof(Volume *));
@@ -1867,32 +1867,32 @@ void _p3d_print_all_elements(Mesh *M)
   List_Delete(ListStructVol);
 }
 
-void _p3d_print_elements(Mesh *M)
+void _p3d_print_elements()
 {
   // FIXME: to do
 }
 
-void Print_Mesh_P3D(Mesh *M, FILE *fp)
+void Print_Mesh_P3D(FILE *fp)
 {
   P3DFILE = fp;
 
-  if(!List_Nbr(M->PhysicalGroups) || CTX.mesh.save_all) {
+  if(!List_Nbr(THEM->PhysicalGroups) || CTX.mesh.save_all) {
     Msg(INFO, "Saving all elements (discarding physical groups)");
-    _p3d_print_all_elements(M);
+    _p3d_print_all_elements();
   }
   else{
     Msg(WARNING, "No Plot3d format of physicals yet, saving all elements!");
-    //_p3d_print_elements(M);
-    _p3d_print_all_elements(M);
+    //_p3d_print_elements();
+    _p3d_print_all_elements();
   }
 }
 
 // Public Print_Mesh routine
 
-void GetDefaultMeshFileName(Mesh *M, int Type, char *name)
+void GetDefaultMeshFileName(int Type, char *name)
 {
   char ext[10] = "";
-  strcpy(name, M->name);
+  strcpy(name, THEM->name);
   switch(Type){
   case FORMAT_MSH:  strcpy(ext, ".msh"); break;
   case FORMAT_VRML: strcpy(ext, ".wrl"); break;
@@ -1906,7 +1906,7 @@ void GetDefaultMeshFileName(Mesh *M, int Type, char *name)
   strcat(name, ext);
 }
 
-void Print_Mesh(Mesh *M, char *filename, int Type)
+void Print_Mesh(char *filename, int Type)
 {
   char name[256];
 
@@ -1918,7 +1918,7 @@ void Print_Mesh(Mesh *M, char *filename, int Type)
   CTX.threads_lock = 1;
 
   if(!filename)
-    GetDefaultMeshFileName(M, Type, name);
+    GetDefaultMeshFileName(Type, name);
   else
     strcpy(name, filename);
 
@@ -1932,13 +1932,13 @@ void Print_Mesh(Mesh *M, char *filename, int Type)
   }
 
   switch(Type){
-  case FORMAT_MSH:  Print_Mesh_MSH(M, fp); break;
-  case FORMAT_VRML: Print_Mesh_WRL(M, fp); break;
-  case FORMAT_UNV:  Print_Mesh_UNV(M, fp); break;
-  case FORMAT_GREF: Print_Mesh_GREF(M, fp); break;
-  case FORMAT_DMG:  Print_Mesh_DMG(M, fp); break;
-  case FORMAT_STL:  Print_Mesh_STL(M, fp); break;
-  case FORMAT_P3D:  Print_Mesh_P3D(M, fp); break;
+  case FORMAT_MSH:  Print_Mesh_MSH(fp); break;
+  case FORMAT_VRML: Print_Mesh_WRL(fp); break;
+  case FORMAT_UNV:  Print_Mesh_UNV(fp); break;
+  case FORMAT_GREF: Print_Mesh_GREF(fp); break;
+  case FORMAT_DMG:  Print_Mesh_DMG(fp); break;
+  case FORMAT_STL:  Print_Mesh_STL(fp); break;
+  case FORMAT_P3D:  Print_Mesh_P3D(fp); break;
   default:
     break;
   }

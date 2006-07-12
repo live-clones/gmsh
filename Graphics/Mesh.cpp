@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.153 2006-04-05 21:28:08 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.154 2006-07-12 07:24:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -137,14 +137,14 @@ int getPartition(int index)
 
 static int preproNormals = 0;
 
-void Draw_Mesh(Mesh * M)
+void Draw_Model()
 {
   for(int i = 0; i < 6; i++)
     glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), CTX.clip_plane[i]);
 
   // draw the geometry
 
-  if(M->status >= 0){
+  if(THEM->status >= 0){
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
     for(int i = 0; i < 6; i++)
@@ -153,7 +153,7 @@ void Draw_Mesh(Mesh * M)
       else
 	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
-    Draw_Geom(M);
+    Draw_Geom();
 
     for(int i = 0; i < 6; i++)
       glDisable((GLenum)(GL_CLIP_PLANE0 + i));
@@ -169,10 +169,10 @@ void Draw_Mesh(Mesh * M)
   // geometry but there is a mesh
   
   int somegeo = 
-    Tree_Nbr(M->Points) || Tree_Nbr(M->Curves) || Tree_Nbr(M->Surfaces);
+    Tree_Nbr(THEM->Points) || Tree_Nbr(THEM->Curves) || Tree_Nbr(THEM->Surfaces);
 
-  if((CTX.draw_bbox && (somegeo || Tree_Nbr(M->Vertices))) ||
-     (!CTX.mesh.draw && !Tree_Nbr(M->Points) && Tree_Nbr(M->Vertices))) {
+  if((CTX.draw_bbox && (somegeo || Tree_Nbr(THEM->Vertices))) ||
+     (!CTX.mesh.draw && !Tree_Nbr(THEM->Points) && Tree_Nbr(THEM->Vertices))) {
     glColor4ubv((GLubyte *) & CTX.color.fg);
     glLineWidth(CTX.line_width);
     gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
@@ -236,7 +236,7 @@ void Draw_Mesh(Mesh * M)
       Draw_Axes(CTX.axes, CTX.axes_tics, CTX.axes_format, CTX.axes_label, 
 		CTX.axes_position);
     }
-    else if(somegeo || Tree_Nbr(M->Vertices)){
+    else if(somegeo || Tree_Nbr(THEM->Vertices)){
       double bb[6] = { CTX.min[0], CTX.max[0],
 		       CTX.min[1], CTX.max[1],
 		       CTX.min[2], CTX.max[2] };
@@ -264,46 +264,46 @@ void Draw_Mesh(Mesh * M)
 	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
     if(CTX.mesh.changed){
-      if(M->normals) delete M->normals;
-      M->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
+      if(THEM->normals) delete THEM->normals;
+      THEM->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
     }
 
     // Dimension 3
 
-    if(M->status >= 3 && (CTX.mesh.volumes_faces || CTX.mesh.volumes_edges ||
-			  CTX.mesh.volumes_num || CTX.mesh.points_per_element ||
-			  (CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_as_surface &&
-			   (CTX.mesh.surfaces_edges || CTX.mesh.surfaces_faces)))) {
-      Tree_Action(M->Volumes, Draw_Mesh_Volume);
+    if(THEM->status >= 3 && (CTX.mesh.volumes_faces || CTX.mesh.volumes_edges ||
+			     CTX.mesh.volumes_num || CTX.mesh.points_per_element ||
+			     (CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_as_surface &&
+			      (CTX.mesh.surfaces_edges || CTX.mesh.surfaces_faces)))) {
+      Tree_Action(THEM->Volumes, Draw_Mesh_Volume);
     }
 
     // Dimension 2
    
-    if(M->status >= 2 && (CTX.mesh.surfaces_faces || CTX.mesh.surfaces_edges ||
-			  CTX.mesh.surfaces_num || CTX.mesh.points_per_element ||
-			  CTX.mesh.normals)) {
+    if(THEM->status >= 2 && (CTX.mesh.surfaces_faces || CTX.mesh.surfaces_edges ||
+			     CTX.mesh.surfaces_num || CTX.mesh.points_per_element ||
+			     CTX.mesh.normals)) {
       if(CTX.mesh.changed && CTX.mesh.smooth_normals){
 	preproNormals = 1;
-	Tree_Action(M->Surfaces, Draw_Mesh_Surface);
+	Tree_Action(THEM->Surfaces, Draw_Mesh_Surface);
 	preproNormals = 0;
       }
-      Tree_Action(M->Surfaces, Draw_Mesh_Surface);
+      Tree_Action(THEM->Surfaces, Draw_Mesh_Surface);
       if(CTX.mesh.oldxtrude)  //old extrusion algo
-	Tree_Action(M->Volumes, Draw_Mesh_Extruded_Surfaces);
+	Tree_Action(THEM->Volumes, Draw_Mesh_Extruded_Surfaces);
     }
     
     // Dimension 1
 
-    if(M->status >= 1 && (CTX.mesh.lines || CTX.mesh.lines_num || 
-			  CTX.mesh.points_per_element || CTX.mesh.tangents)) {
-      Tree_Action(M->Curves, Draw_Mesh_Curve);
+    if(THEM->status >= 1 && (CTX.mesh.lines || CTX.mesh.lines_num || 
+			     CTX.mesh.points_per_element || CTX.mesh.tangents)) {
+      Tree_Action(THEM->Curves, Draw_Mesh_Curve);
     }
 
     // Dimension 0
     
-    if(M->status >= 0 && !CTX.mesh.points_per_element &&
+    if(THEM->status >= 0 && !CTX.mesh.points_per_element &&
        (CTX.mesh.points || CTX.mesh.points_num)) {
-      Tree_Action(M->Vertices, Draw_Mesh_Point);
+      Tree_Action(THEM->Vertices, Draw_Mesh_Point);
     }
 
     // Done!

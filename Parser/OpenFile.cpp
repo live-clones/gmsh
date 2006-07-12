@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.96 2006-07-11 13:41:22 remacle Exp $
+// $Id: OpenFile.cpp,v 1.97 2006-07-12 07:24:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -48,7 +48,7 @@ extern GUI *WID;
 void UpdateViewsInGUI();
 #endif
 
-extern Mesh *THEM, M;
+extern Mesh *THEM;
 extern GModel *GMODEL;
 extern Context_T CTX;
 
@@ -332,14 +332,14 @@ int MergeProblem(char *name, int warn_if_missing)
        !strncmp(tmp, "$ELM", 4) ||
        !strncmp(tmp, "$MeshFormat", 4)) {
       if(THEM->status < 0)
-	mai3d(THEM, 0);
+	mai3d(0);
       Read_Mesh(THEM, fp, name, FORMAT_MSH);
       SetBoundingBox();
       status = THEM->status;
     }
     else if(!strncmp(tmp, "sms", 3)) {
       if(THEM->status < 0)
-	mai3d(THEM, 0);
+	mai3d(0);
       Read_Mesh(THEM, fp, name, FORMAT_SMS);
       SetBoundingBox();
       status = THEM->status;
@@ -369,7 +369,7 @@ void OpenProblem(char *name)
   }
   CTX.threads_lock = 1;
 
-  Init_Mesh(&M);
+  Init_Mesh();
 
   // Initialize pseudo random mesh generator to the same seed
   srand(1);
@@ -378,17 +378,17 @@ void OpenProblem(char *name)
 
   int status = MergeProblem(name);
 
-  ApplyLcFactor(THEM);
+  ApplyLcFactor();
 
   CTX.threads_lock = 0;
 
   if(!status)
-    mai3d(THEM, 0);
+    mai3d(0);
 
 #if defined(HAVE_FLTK)
   if(!CTX.batch)
     WID->reset_visibility();
-  ZeroHighlight(&M);
+  ZeroHighlight();
 #endif
 }
 

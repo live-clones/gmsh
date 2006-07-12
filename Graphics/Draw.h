@@ -21,8 +21,8 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "List.h"
-#include "Mesh.h"
 #include "Views.h"
+#include "Mesh.h"
 
 #define GMSH_RENDER    1
 #define GMSH_SELECT    2
@@ -43,8 +43,7 @@ int Process_SelectionBuffer(int type, bool multi,
 			    int x, int y, int w, int h, 
 			    Vertex *v[SELECTION_MAX_HITS], 
 			    Curve *c[SELECTION_MAX_HITS], 
-			    Surface *s[SELECTION_MAX_HITS], 
-			    Mesh *m);
+			    Surface *s[SELECTION_MAX_HITS]);
 char SelectEntity(int type, int *n,
 		  Vertex *v[SELECTION_MAX_HITS], 
 		  Curve *c[SELECTION_MAX_HITS], 
@@ -62,7 +61,7 @@ void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent);
 void HighlightEntityNum(int v, int c, int s, int permanant);
 void ZeroHighlightEntity(Vertex *v,Curve *c, Surface *s);
 void ZeroHighlightEntityNum(int v, int c, int s);
-void ZeroHighlight(Mesh *m);
+void ZeroHighlight();
 
 void Draw3d(void);
 void Draw2d(void);
@@ -73,7 +72,7 @@ void Draw_String(char *s);
 void Draw_String(char *s, double style);
 void Draw_String_Center(char *s);
 void Draw_String_Right(char *s);
-void Draw_Geom(Mesh *m);
+void Draw_Geom(void);
 void Draw_Post(void);
 void Draw_Graph2D(void);
 void Draw_Text2D(void);
@@ -99,7 +98,7 @@ void Draw_SmallAxes(void);
 void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
 	       double bbox[6]);
 
-void Draw_Mesh(Mesh *M);
+void Draw_Model();
 void Draw_Mesh_Volume(void *a, void *b);
 void Draw_Mesh_Surface(void *a, void *b);
 void Draw_Mesh_Extruded_Surfaces(void *a, void *b);

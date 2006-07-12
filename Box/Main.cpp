@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.59 2006-03-17 21:04:33 geuzaine Exp $
+// $Id: Main.cpp,v 1.60 2006-07-12 07:24:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -32,9 +32,11 @@
 #include "Options.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
+#include "GModel.h"
 
 Context_T CTX;
-Mesh M, *THEM = NULL;
+Mesh M, *THEM = &M;
+GModel *GMODEL = 0;
 
 // Print some help/info messages
 
@@ -117,7 +119,7 @@ int GMSHBOX(int argc, char *argv[])
       Print_Mesh(THEM, CTX.output_filename, CTX.mesh.format);
     }
     else
-      Print_Geo(THEM, CTX.output_filename);
+      Print_Geo(CTX.output_filename);
     if(CTX.mesh.histogram){
       Mesh_Quality(THEM);
       Print_Histogram(THEM->Histogram[0]);

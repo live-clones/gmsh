@@ -5,6 +5,7 @@
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
 #include "MVertex.h"
+#include "GmshDefines.h"
 #include <list>
 #include <vector>
 
@@ -39,8 +40,12 @@ public:
     ThreeDimVolume
     };
 
-  GEntity(GModel *m, int t) : _model(m),_tag(t){}
-    virtual ~GEntity() {};
+  GEntity(GModel *m, int t) : _model(m),_tag(t){
+    drawAttributes.Visible = VIS_GEOM | VIS_MESH; 
+    drawAttributes.Frozen = false; 
+  }
+
+  virtual ~GEntity() {};
 
   /** Return a renderable representation of the entity.*/
   //  virtual MeshRep * getGeometry() ;
@@ -98,6 +103,11 @@ public:
 
   std::vector<MVertex*> mesh_vertices;
 
+  struct 
+  {
+    char   Visible;
+    bool   Frozen;
+  } drawAttributes ;
 
 };
 
