@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.78 2006-07-12 07:24:13 geuzaine Exp $
+# $Id: Makefile,v 1.79 2006-07-14 12:17:06 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -114,7 +114,10 @@ Geo.o: Geo.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
-  ExtrudeParams.h ../Parser/Parser.h ../Common/Context.h
+  ExtrudeParams.h ../Parser/Parser.h ../Common/Context.h gmshModel.h \
+  GModel.h GVertex.h GEntity.h Range.h SPoint3.h SBoundingBox3d.h \
+  MVertex.h GPoint.h GEdge.h SVector3.h SPoint2.h GFace.h Pair.h \
+  GRegion.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 GeoUtils.o: GeoUtils.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \

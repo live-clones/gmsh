@@ -63,6 +63,13 @@ public:
   virtual int minimumMeshSegments () const {return 1;}
   virtual int minimumDrawSegments () const {return 1;}
 
+  virtual std::string getInfoString()
+  {
+    char tmp[256];
+    sprintf(tmp, "%s %d {%d,%d}", getTypeString().c_str(), tag(), v0->tag(), v1->tag());
+    return std::string(tmp);
+  }
+
 protected:
 
   GVertex *v0,*v1;

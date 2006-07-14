@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.59 2006-07-12 07:24:13 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.60 2006-07-14 12:17:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -24,10 +24,10 @@
 #include "Numeric.h"
 #include "Context.h"
 #include "Geo.h"
-#include "Mesh.h"
 #include "Draw.h"
 #include "GUI.h"
 #include "gl2ps.h"
+#include "GModel.h"
 
 extern GUI *WID;
 extern Context_T CTX;
@@ -185,9 +185,9 @@ void Draw_OnScreenMessages()
 // Select entity routine
 
 char SelectEntity(int type, int *n,
-		  Vertex *v[SELECTION_MAX_HITS], 
-		  Curve *c[SELECTION_MAX_HITS], 
-		  Surface *s[SELECTION_MAX_HITS])
+		  GVertex *v[SELECTION_MAX_HITS], 
+		  GEdge *c[SELECTION_MAX_HITS], 
+		  GFace *s[SELECTION_MAX_HITS])
 {
   if(!WID) return 'q';
 
@@ -203,9 +203,9 @@ char SelectEntity(int type, int *n,
   while(1) {
     *n = 0;
     for(int i = 0; i < SELECTION_MAX_HITS; i++){
-      v[i] = NULL;
-      c[i] = NULL;
-      s[i] = NULL;
+      v[i] = 0;
+      c[i] = 0;
+      s[i] = 0;
     }
 
     WID->wait();

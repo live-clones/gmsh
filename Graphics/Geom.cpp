@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.99 2006-07-12 09:07:36 geuzaine Exp $
+// $Id: Geom.cpp,v 1.100 2006-07-14 12:17:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -33,12 +33,8 @@
 #include "PluginManager.h"
 #include "gl2ps.h"
 #include "GModel.h"
-#include "GVertex.h"
-#include "GEdge.h"
-#include "GFace.h"
 
 extern Context_T CTX;
-extern Mesh *THEM;
 extern GModel *GMODEL;
 
 // Points
@@ -53,7 +49,7 @@ void Draw_Geo_Vertex(GVertex *v)
     glPushName(v->tag());
   }
   
-  if(v->drawAttributes.Frozen) {
+  if(v->drawAttributes.Frozen > 0) {
     glPointSize(CTX.geom.point_sel_size);
     gl2psPointSize(CTX.geom.point_sel_size * CTX.print.eps_point_size_factor);
     glColor4ubv((GLubyte *) & CTX.color.geom.point_sel);
@@ -66,7 +62,7 @@ void Draw_Geo_Vertex(GVertex *v)
 
   if(CTX.geom.points) {
     if(CTX.geom.point_type == 1) {
-      if(v->drawAttributes.Frozen)
+      if(v->drawAttributes.Frozen > 0)
 	Draw_Sphere(CTX.geom.point_sel_size, v->x(), v->y(), v->z(), 
 		    CTX.geom.light);
       else
@@ -119,7 +115,7 @@ void Draw_Geo_Edge(GEdge *c)
     glPushName(c->tag());
   }
 
-  if(c->drawAttributes.Frozen) {
+  if(c->drawAttributes.Frozen > 0) {
     glLineWidth(CTX.geom.line_sel_width);
     gl2psLineWidth(CTX.geom.line_sel_width * CTX.print.eps_line_width_factor);
     glColor4ubv((GLubyte *) & CTX.color.geom.line_sel);
@@ -135,36 +131,28 @@ void Draw_Geo_Edge(GEdge *c)
   double t_max = t_bounds.high();
 
   if(CTX.geom.lines) {
-    if(c->geomType() == GEntity::Discrete){
+    if(c->geomType() == GEntity::DiscreteCurve){
       // do nothing: we draw the elements in the mesh drawing routines
     }
     else {
       int N = c->minimumDrawSegments() + 1;
       if(CTX.geom.line_type >= 1) {
+	GMSH_Solve_Plugin *sp = 0;
+	if(CTX.geom.line_type == 2)
+	  sp = GMSH_PluginManager::instance()->findSolverPlugin();
 	for(int i = 0; i < N - 1; i++) {
 	  double t1 = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
 	  GPoint p1 = c->point(t1);
 	  double t2 = t_min + (double)(i + 1) / (double)(N - 1) * (t_max - t_min);
 	  GPoint p2 = c->point(t2);
-	  double x[2], y[2], z[2];
-	  x[0] = p1.x();
-	  y[0] = p1.y();
-	  z[0] = p1.z();
-	  x[1] = p2.x();
-	  y[1] = p2.y();
-	  z[1] = p2.z();
-	  Draw_Cylinder(c->drawAttributes.Frozen ? CTX.geom.line_sel_width : CTX.geom.line_width,
-			x, y, z, CTX.geom.light);
-	}
-	if(CTX.geom.line_type == 2) {
-	  GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
+	  double x[2] = {p1.x(), p2.x()};
+	  double y[2] = {p1.y(), p2.y()};
+	  double z[2] = {p1.z(), p2.z()};
+	  Draw_Cylinder(c->drawAttributes.Frozen > 0 ? CTX.geom.line_sel_width : 
+			CTX.geom.line_width, x, y, z, CTX.geom.light);
 	  if(sp) {
 	    Msg(FATAL, "GL_enhanceLine not done");
-	    for(int i = 0; i < N - 1; i++) {
-	      //v = InterpolateCurve(c, (double)i / (double)(NN - 1), 0);
-	      //dv = InterpolateCurve(c, (double)(i + 1) / (double)(NN - 1), 0);
-	      //sp-> GL_enhanceLine (c->Num,&v,&dv);
-	    }
+	    //sp->GL_enhanceLine (c->tag(), &p1, &p2);
 	  }
 	}
       }
@@ -544,19 +532,17 @@ void Draw_NonPlane_Surface(Surface * s)
   }
 }
 
-void Draw_Surface(void *a, void *b)
+void Draw_Geo_Face(GFace *s)
 {
-  Surface *s = *(Surface **) a;
-
-  if(!s || !s->Support || !(s->Visible & VIS_GEOM))
+  if(!(s->drawAttributes.Visible & VIS_GEOM))
     return;
 
   if(CTX.render_mode == GMSH_SELECT) {
     glPushName(2);
-    glPushName(s->Num);
+    glPushName(s->tag());
   }
 
-  if(s->ipar[4] > 0) {
+  if(s->drawAttributes.Frozen > 0) {
     glLineWidth(CTX.geom.line_sel_width / 2.);
     gl2psLineWidth(CTX.geom.line_sel_width / 2. *
 		   CTX.print.eps_line_width_factor);
@@ -568,14 +554,15 @@ void Draw_Surface(void *a, void *b)
     glColor4ubv((GLubyte *) & CTX.color.geom.surface);
   }
 
-  if(s->Typ == MSH_SURF_DISCRETE){
+  if(s->geomType() == GEntity::DiscreteSurface){
     // do nothing: we draw the elements in the mesh drawing routines
   }
-  else if(s->Typ == MSH_SURF_PLAN){
-    Draw_Plane_Surface(s);
+  else if(s->geomType() == GEntity::Plane){
+    Msg(GERROR, "draw plane surface not done yet");
+    //Draw_Plane_Surface(s);
   }
   else{
-    Draw_NonPlane_Surface(s);
+    //Draw_NonPlane_Surface(s);
   }
 
   if(CTX.render_mode == GMSH_SELECT) {
@@ -586,7 +573,7 @@ void Draw_Surface(void *a, void *b)
 
 // Volumes
 
-void Draw_Volumes()
+void Draw_Geo_Region(GRegion *v)
 {
 }
 
@@ -597,161 +584,98 @@ void Draw_Geom()
   if(!GMODEL) return;
   
   if(CTX.geom.points || CTX.geom.points_num)
-    for(GModel::viter v = GMODEL->firstVertex(); v != GMODEL->lastVertex(); v++)
-      Draw_Geo_Vertex(*v);
+    for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
+      Draw_Geo_Vertex(*it);
 
   if(CTX.geom.lines || CTX.geom.lines_num || CTX.geom.tangents)
-    for(GModel::eiter e = GMODEL->firstEdge(); e != GMODEL->lastEdge(); e++)
-      Draw_Geo_Edge(*e);
+    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
+      Draw_Geo_Edge(*it);
 
-  /*
   if(CTX.geom.surfaces || CTX.geom.surfaces_num || CTX.geom.normals)
-    Tree_Action(THEM->Surfaces, Draw_Surface);
+    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+      Draw_Geo_Face(*it);
+
   if(CTX.geom.volumes || CTX.geom.volumes_num)
-    Draw_Volumes();
-  */
+    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
+      Draw_Geo_Region(*it);
 }
 
-// Highlight routines
+// Highlight routines (Note: in Gmsh < 1.61, we used to draw permanent
+// highlights (the "red" selected lines, etc.) using incremental
+// drawing, i.e., by drawing "over" the current picture in-between
+// Draw() calls. This was fine for simple overlays on points and lines
+// (that we could draw with a slightly larger width so that they would
+// cover the old ones), but it does not work well when drawing
+// surfaces, post-pro views, etc. And since real cross-platform
+// overlays are unmanageable, the best solution is actually to redraw
+// the whole scene. This is the approach we follow now.
 
-void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
+void HighlightEntity(GEntity *e, int permanent)
 {
-  Curve *cc;
-  char Message[256], temp[256];
+  if(permanent)
+    e->drawAttributes.Frozen = 2;
+  else
+    Msg(STATUS1N, "%s", e->getInfoString().c_str());
+}
 
-  // Note: in Gmsh < 1.61, we used to draw permanent highlights (the
-  // "red" selected lines, etc.) using incremental drawing, i.e., by
-  // drawing "over" the current picture in-between Draw() calls. This
-  // was fine for simple overlays on points and lines (that we could
-  // draw with a slightly larger width so that they would cover the
-  // old ones), but it does not work well when drawing surfaces,
-  // post-pro views, etc. And since real cross-platform overlays are
-  // unmanageable, the best solution is actually to redraw the whole
-  // scene. This is the approach we follow now.
-
-  if(v) {
-    if(permanent){
-      v->Frozen = 1;
-    }
-    else{
-      Msg(STATUS1N, "Point %d {%.5g,%.5g,%.5g} (%.5g)", v->Num, v->Pos.X,
-	  v->Pos.Y, v->Pos.Z, v->lc);
-    }
-  }
-  else if(c) {
-    if(permanent){
-      c->ipar[3] = 2;
-    }
-    else{
-      if(c->beg && c->end)
-	Msg(STATUS1N, "Curve %d {%d->%d}", c->Num, c->beg->Num, c->end->Num);
-      else
-	Msg(STATUS1N, "Curve %d", c->Num);
-    }
-  }
-  else if(s) {
-    if(permanent){
-      s->ipar[4] = 2;
-    }
-    else{
-      int nbg = List_Nbr(s->Generatrices);
-      if(nbg){
-	sprintf(Message, "Surface %d {", s->Num);
-	if(nbg < 10) {
-	  for(int i = 0; i < nbg; i++) {
-	    List_Read(s->Generatrices, i, &cc);
-	    if(!i)
-	      sprintf(temp, "%d", cc->Num);
-	    else
-	      sprintf(temp, ",%d", cc->Num);
-	    strcat(Message, temp);
-	  }
-	}
-	else {
-	  strcat(Message, "...");
-	}
-	strcat(Message, "}");
-	Msg(STATUS1N, Message);
-      }
-      else{
-	Msg(STATUS1N, "Surface %d", s->Num);
-	//Msg(STATUS1N, "Surface %d (%d)", s->Num, s->geomTyp());
-      }
-    }
-  }
-  else{
-    if(!permanent)
-      Msg(STATUS1N, " ");
-  }
-
+void HighlightEntity(GVertex *v, GEdge *c, GFace *s, int permanent)
+{
+  if(v) HighlightEntity(v, permanent);
+  else if(c) HighlightEntity(c, permanent);
+  else if(s) HighlightEntity(s, permanent);
+  else if(!permanent) Msg(STATUS1N, " ");
 }
 
 void HighlightEntityNum(int v, int c, int s, int permanent)
 {
   if(v) {
-    Vertex *pv = FindPoint(v, THEM);
-    if(pv)
-      HighlightEntity(pv, NULL, NULL, permanent);
+    GVertex *pv = GMODEL->vertexByTag(v);
+    if(pv) HighlightEntity(pv, permanent);
   }
   if(c) {
-    Curve *pc = FindCurve(c, THEM);
-    if(pc)
-      HighlightEntity(NULL, pc, NULL, permanent);
+    GEdge *pc = GMODEL->edgeByTag(c);
+    if(pc) HighlightEntity(pc, permanent);
   }
   if(s) {
-    Surface *ps = FindSurface(s, THEM);
-    if(ps)
-      HighlightEntity(NULL, NULL, ps, permanent);
+    GFace *ps = GMODEL->faceByTag(s);
+    if(ps) HighlightEntity(ps, permanent);
   }
 }
 
-void ZeroHighlightPoint(void *a, void *b)
+void ZeroHighlightEntity(GEntity *e)
 {
-  Vertex *v = *(Vertex **) a;
-  v->Frozen = 0;
+  e->drawAttributes.Frozen = -2;
 }
 
-void ZeroHighlightCurve(void *a, void *b)
+void ZeroHighlightEntity(GVertex *v, GEdge *c, GFace *s)
 {
-  Curve *c = *(Curve **) a;
-  c->ipar[3] = -2;
-}
-
-void ZeroHighlightSurface(void *a, void *b)
-{
-  Surface *s = *(Surface **) a;
-  s->ipar[4] = -2;
+  if(v) ZeroHighlightEntity(v);
+  if(c) ZeroHighlightEntity(c);
+  if(s) ZeroHighlightEntity(s);
 }
 
 void ZeroHighlight()
 {
-  Tree_Action(THEM->Points, ZeroHighlightPoint);
-  Tree_Action(THEM->Curves, ZeroHighlightCurve);
-  Tree_Action(THEM->Surfaces, ZeroHighlightSurface);
-}
-
-void ZeroHighlightEntity(Vertex * v, Curve * c, Surface * s)
-{
-  if(v) ZeroHighlightPoint(&v, NULL);
-  if(c) ZeroHighlightCurve(&c, NULL);
-  if(s) ZeroHighlightSurface(&s, NULL);
+  for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
+    ZeroHighlightEntity(*it);
+  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
+    ZeroHighlightEntity(*it);
+  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+    ZeroHighlightEntity(*it);
 }
 
 void ZeroHighlightEntityNum(int v, int c, int s)
 {
   if(v) {
-    Vertex *pv = FindPoint(v, THEM);
-    if(pv)
-      ZeroHighlightPoint(&pv, NULL);
+    GVertex *pv = GMODEL->vertexByTag(v);
+    if(pv) ZeroHighlightEntity(pv);
   }
   if(c) {
-    Curve *pc = FindCurve(c, THEM);
-    if(pc)
-      ZeroHighlightCurve(&pc, NULL);
+    GEdge *pc = GMODEL->edgeByTag(c);
+    if(pc) ZeroHighlightEntity(pc);
   }
   if(s) {
-    Surface *ps = FindSurface(s, THEM);
-    if(ps)
-      ZeroHighlightSurface(&ps, NULL);
+    GFace *ps = GMODEL->faceByTag(s);
+    if(ps) ZeroHighlightEntity(ps);
   }
 }

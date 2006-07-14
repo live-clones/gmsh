@@ -2,6 +2,7 @@
 #define H_GModel
 
 #include <algorithm>
+#include <set>
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -14,10 +15,10 @@ class GModel
 public:
   virtual ~GModel() {}
 
-  typedef std::list<GRegion*>::iterator riter;
-  typedef std::list<GFace*>  ::iterator   fiter;
-  typedef std::list<GEdge*>  ::iterator   eiter;
-  typedef std::list<GVertex*>::iterator viter;
+  typedef std::set<GRegion*, EntityLessThan>::iterator riter;
+  typedef std::set<GFace*,   EntityLessThan>::iterator fiter;
+  typedef std::set<GEdge*,   EntityLessThan>::iterator eiter;
+  typedef std::set<GVertex*, EntityLessThan>::iterator viter;
 
   /** Returns the geometric tolerance for the entire model. */
   virtual double tolerance() const {return 1.e-14;}
@@ -44,10 +45,10 @@ public:
   virtual GEdge   * edgeByTag  (int n) const;
   virtual GVertex * vertexByTag(int n) const;
 
-  void add(GRegion *r){regions.push_back(r);}
-  void add(GFace *f)  {faces.push_back(f);}
-  void add(GEdge *e)  {edges.push_back(e);}
-  void add(GVertex *v){vertices.push_back(v);}
+  void add(GRegion *r){regions.insert(r);}
+  void add(GFace *f)  {faces.insert(f);}
+  void add(GEdge *e)  {edges.insert(e);}
+  void add(GVertex *v){vertices.insert(v);}
 
   void remove(GRegion *r){regions.erase(std::find(firstRegion(),lastRegion(),r));}
   void remove(GFace *f){faces.erase(std::find(firstFace(),lastFace(),f));}
@@ -57,10 +58,10 @@ public:
 protected:
   std::string modelName;
   GModel(const std::string &name):modelName(name){}
-  std::list<GRegion*> regions;
-  std::list<GFace*> faces;
-  std::list<GEdge*> edges;
-  std::list<GVertex*> vertices;
+  std::set<GRegion*, EntityLessThan> regions;
+  std::set<GFace*, EntityLessThan> faces;
+  std::set<GEdge*, EntityLessThan> edges;
+  std::set<GVertex*, EntityLessThan> vertices;
 };
 
 

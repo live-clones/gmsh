@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.50 2006-01-14 22:32:58 geuzaine Exp $
+// $Id: Geo.cpp,v 1.51 2006-07-14 12:17:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,8 +25,10 @@
 #include "CAD.h"
 #include "Parser.h"
 #include "Context.h"
+#include "gmshModel.h"
 
 extern Context_T CTX;
+extern GModel *GMODEL;
 
 #define BUFFSIZE 128000
 
@@ -97,6 +99,9 @@ void add_infile(char *text, char *fich)
   fclose(yyin);
   fprintf(file, "%s\n", text);
   fclose(file);
+
+  if(GMODEL) delete GMODEL;
+  GMODEL = new gmshModel;
 }
 
 void coherence(char *fich)

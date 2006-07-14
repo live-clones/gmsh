@@ -6,7 +6,7 @@
 #include "CAD.h"
 #include "Geo.h"
 
-gmshRegion::gmshRegion(GModel *m,Volume * volume):GRegion (m,volume->Num), v(volume)
+gmshRegion::gmshRegion(GModel *m,::Volume * volume):GRegion (m,volume->Num), v(volume)
 {
   Surface *s;
   int ori;

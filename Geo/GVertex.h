@@ -19,6 +19,12 @@ public:
   virtual int dim() const {return 0;}
   virtual GeomType geomType() const {return Point;}
   virtual double prescribedMeshSizeAtVertex() const {return 0;}
+  virtual std::string getInfoString()
+  {
+    char tmp[256];
+    sprintf(tmp, "%s %d {%g,%g,%g}", getTypeString().c_str(), tag(), x(), y(), z());
+    return std::string(tmp);
+  }
 
 protected:
   std::list<GEdge*> l_edges;

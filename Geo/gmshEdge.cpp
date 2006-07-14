@@ -118,7 +118,7 @@ GEntity::GeomType gmshEdge::geomType() const
   case MSH_SEGM_BEZIER: 
   case MSH_SEGM_NURBS:
   case MSH_SEGM_SPLN: return Nurb; 
-  case MSH_SEGM_DISCRETE: return Discrete; 
+  case MSH_SEGM_DISCRETE: return DiscreteCurve; 
   default : return Unknown;
   }
 }
@@ -145,11 +145,5 @@ int gmshEdge::minimumMeshSegments () const
 
 int gmshEdge::minimumDrawSegments () const
 {
-  if(geomType() == Circle || geomType() == Ellipse)
-    return (int)(fabs(c->Circle.t1 - c->Circle.t2) *
-		 (double)CTX.geom.circle_points / Pi) - 1;
-  else if(geomType() == ParametricCurve || geomType() == Nurb)
-    return CTX.geom.circle_points;
-  else
-    return GEdge::minimumDrawSegments () ;
+  return CTX.geom.circle_points;
 }

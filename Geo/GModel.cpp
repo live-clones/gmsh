@@ -17,54 +17,44 @@ int GModel::numVertex() const
   return vertices.size();
 }
 
+// JF: how can we do the following in a cleaner way???
+
 GRegion * GModel::regionByTag(int n) const
 {
-  std::list<GRegion*>:: const_iterator it = regions.begin();
-  std::list<GRegion*>:: const_iterator end = regions.end();
-  while (it != end)
-    {
-      GRegion *rr = (GRegion*) (*it);
-      if ( rr->tag() == n)return *it;
-      ++it;
-    }
-  return 0;
+  dummyEntity tmp((GModel*)this, n);
+  riter it = regions.find((GRegion*)&tmp);
+  if(it != regions.end())
+    return (GRegion *) (*it);
+  else
+    return 0;
 }
 
 GFace * GModel::faceByTag(int n) const
 {
-  std::list<GFace*>:: const_iterator it = faces.begin();
-  std::list<GFace*>:: const_iterator end = faces.end();
-  while (it != end)
-    {
-      GFace *ff = (GFace*) (*it);
-      if ( ff->tag() == n)return *it;
-      ++it;
-    }
-  return 0;
+  dummyEntity tmp((GModel*)this, n);
+  fiter it = faces.find((GFace*)&tmp);
+  if(it != faces.end())
+    return (GFace *) (*it);
+  else
+    return 0;
 }
 
 GEdge * GModel::edgeByTag(int n) const
 {
-  std::list<GEdge*>:: const_iterator it = edges.begin();
-  std::list<GEdge*>:: const_iterator end = edges.end();
-  while (it != end)
-    {
-      GEdge *ee = (GEdge*) (*it);
-      if ( ee->tag() == n)return *it;
-      ++it;
-    }
-  return 0;
-}
-GVertex * GModel::vertexByTag(int n) const
-{
-  std::list<GVertex*>:: const_iterator it = vertices.begin();
-  std::list<GVertex*>:: const_iterator end = vertices.end();
-  while (it != end)
-    {
-      GVertex *vv = (GVertex*) (*it);
-      if ( vv->tag() == n)return *it;
-      ++it;
-    }
-  return 0;
+  dummyEntity tmp((GModel*)this, n);
+  eiter it = edges.find((GEdge*)&tmp);
+  if(it != edges.end())
+    return (GEdge *) (*it);
+  else
+    return 0;
 }
 
+GVertex * GModel::vertexByTag(int n) const
+{
+  dummyEntity tmp((GModel*)this, n);
+  viter it = vertices.find((GVertex*)&tmp);
+  if(it != vertices.end())
+    return (GVertex *) (*it);
+  else
+    return 0;
+}

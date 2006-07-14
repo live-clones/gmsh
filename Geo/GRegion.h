@@ -8,11 +8,11 @@ class GRegion : public GEntity {
  protected:
   std::list<GFace *> l_faces;
   std::list<int>     l_dirs;
-public:
+ public:
   GRegion(GModel *model, int tag) : GEntity (model,tag) {}
   virtual ~GRegion();
   virtual int dim() const {return 3;}
-  virtual GeomType geomType() const {return ThreeDimVolume;}
+  virtual GeomType geomType() const {return Volume;}
 };
 
 #endif

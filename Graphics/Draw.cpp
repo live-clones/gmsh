@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.96 2006-07-12 07:24:13 geuzaine Exp $
+// $Id: Draw.cpp,v 1.97 2006-07-14 12:17:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -27,9 +27,11 @@
 #include "Draw.h"
 #include "Context.h"
 #include "Numeric.h"
+#include "GModel.h"
 
 extern Mesh *THEM;
 extern Context_T CTX;
+extern GModel *GMODEL;
 
 // Global Draw functions
 
@@ -359,9 +361,9 @@ int fcmp_hit_depth(const void *a, const void *b)
 
 int Process_SelectionBuffer(int type, bool multi,
 			    int x, int y, int w, int h,
-			    Vertex *v[SELECTION_MAX_HITS],
-			    Curve *c[SELECTION_MAX_HITS],
-			    Surface *s[SELECTION_MAX_HITS])
+			    GVertex *v[SELECTION_MAX_HITS],
+			    GEdge *c[SELECTION_MAX_HITS],
+			    GFace *s[SELECTION_MAX_HITS])
 {
   hit hits[SELECTION_BUFFER_SIZE];
   GLuint selectBuf[SELECTION_BUFFER_SIZE];
@@ -432,7 +434,7 @@ int Process_SelectionBuffer(int type, bool multi,
        (type == ENT_SURFACE && hits[i].type == 2)){
       switch (hits[i].type) {
       case 0:
-	if(!(v[j] = FindPoint(hits[i].ient, THEM))){
+	if(!(v[j] = GMODEL->vertexByTag(hits[i].ient))){
 	  Msg(GERROR, "Problem in point selection processing");
 	  return j;
 	}
@@ -440,7 +442,7 @@ int Process_SelectionBuffer(int type, bool multi,
 	if(!multi) return 1;
 	break;
       case 1:
-	if(!(c[j] = FindCurve(hits[i].ient, THEM))){
+	if(!(c[j] = GMODEL->edgeByTag(hits[i].ient))){
 	  Msg(GERROR, "Problem in line selection processing");
 	  return j;
 	}
@@ -448,7 +450,7 @@ int Process_SelectionBuffer(int type, bool multi,
 	if(!multi) return 1;
 	break;
       case 2:
-	if(!(s[j] = FindSurface(hits[i].ient, THEM))){
+	if(!(s[j] = GMODEL->faceByTag(hits[i].ient))){
 	  Msg(GERROR, "Problem in surface selection processing");
 	  return j;
 	}

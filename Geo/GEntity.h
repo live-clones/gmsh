@@ -25,12 +25,12 @@ public:
 
   enum GeomType{
     Unknown,
-    Discrete,
     Point,
     Line,
     Circle,
     Ellipse,
     ParametricCurve,
+    DiscreteCurve,
     Plane,
     Nurb,
     Cylinder,
@@ -38,8 +38,41 @@ public:
     Cone,
     Torus,
     ParametricSurface,
-    ThreeDimVolume
+    DiscreteSurface,
+    Volume
+  };
+
+  virtual std::string getTypeString(){
+    char *name[] = {
+      "Unknown",
+      "Point",
+      "Line",
+      "Circle",
+      "Ellipse",
+      "ParametricCurve",
+      "DiscreteCurve",
+      "Plane",
+      "Nurb",
+      "Cylinder",
+      "Sphere",
+      "Cone",
+      "Torus",
+      "ParametricSurface",
+      "DiscreteSurface",
+      "Volume"
     };
+    int type = (int)geomType();
+    if(type < 0 || type > sizeof(name))
+      return "Unknown";
+    else
+      return name[type];
+  }
+
+  virtual std::string getInfoString() {
+    char tmp[256];
+    sprintf(tmp, "%s %d", getTypeString().c_str(), tag());
+    return std::string(tmp);
+  }
 
   GEntity(GModel *m, int t) : _model(m),_tag(t){
     drawAttributes.Visible = VIS_GEOM | VIS_MESH; 
@@ -111,7 +144,21 @@ public:
 
 };
 
+class EntityLessThan {
+ public:
+  bool operator()(const GEntity *ent1, const GEntity *ent2) const
+  {
+    return ent1->tag() < ent2->tag();
+  }
+};
+
+// A dummy non-abstract entity used for sorting
+class dummyEntity : public GEntity {
+public:
+  dummyEntity(GModel *model, int tag) : GEntity(model, tag){}
+  virtual int dim() const {return -1;}
+  virtual GeomType geomType() const {return Unknown;}
+  virtual void * getNativePtr() const {return 0;}
+};
 
 #endif
-
-

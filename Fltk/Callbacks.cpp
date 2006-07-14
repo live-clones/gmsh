@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.418 2006-07-12 07:24:12 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.419 2006-07-14 12:17:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -46,12 +46,13 @@
 #include "Numeric.h"
 #include "Solvers.h"
 #include "OS.h"
+#include "GModel.h"
 
 using namespace std;
 
+extern Context_T CTX;
 extern GUI *WID;
 extern Mesh *THEM;
-extern Context_T CTX;
 
 // Helper routines
 
@@ -938,9 +939,9 @@ void general_options_color_scheme_cb(CALLBACK_ARGS)
 
 void general_options_rotation_center_select_cb(CALLBACK_ARGS)
 {
-  Vertex *v[SELECTION_MAX_HITS];
-  Curve *c[SELECTION_MAX_HITS];
-  Surface *s[SELECTION_MAX_HITS];
+  GVertex *v[SELECTION_MAX_HITS];
+  GEdge *c[SELECTION_MAX_HITS];
+  GFace *s[SELECTION_MAX_HITS];
   int ne;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -952,14 +953,14 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
   if(ib == 'l') {
     // This would bypass the "Apply" button... Not necessarily bad,
     // but it's not consistent with the rest of the GUI.
-    //opt_general_rotation_center0(0, GMSH_SET|GMSH_GUI, v->Pos.X);
-    //opt_general_rotation_center1(0, GMSH_SET|GMSH_GUI, v->Pos.Y);
-    //opt_general_rotation_center2(0, GMSH_SET|GMSH_GUI, v->Pos.Z);
+    //opt_general_rotation_center0(0, GMSH_SET|GMSH_GUI, v->x());
+    //opt_general_rotation_center1(0, GMSH_SET|GMSH_GUI, v->y());
+    //opt_general_rotation_center2(0, GMSH_SET|GMSH_GUI, v->z());
 
     // This is more conform to the way we do things elsewhere:
-    WID->gen_value[8]->value(v[0]->Pos.X);
-    WID->gen_value[9]->value(v[0]->Pos.Y);
-    WID->gen_value[10]->value(v[0]->Pos.Z);
+    WID->gen_value[8]->value(v[0]->x());
+    WID->gen_value[9]->value(v[0]->y());
+    WID->gen_value[10]->value(v[0]->z());
   }
   ZeroHighlight();
   Draw();
@@ -1886,9 +1887,9 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
     WID->g_opengl_window->AddPointMode = true;
     Msg(ONSCREEN, "Move mouse and/or enter coordinates\n"
 	"[Press 'Shift' to hold position, 'e' to add point or 'q' to abort]");
-    Vertex *v[SELECTION_MAX_HITS];
-    Curve *c[SELECTION_MAX_HITS];
-    Surface *s[SELECTION_MAX_HITS];
+    GVertex *v[SELECTION_MAX_HITS];
+    GEdge *c[SELECTION_MAX_HITS];
+    GFace *s[SELECTION_MAX_HITS];
     int ne;
     char ib = SelectEntity(ENT_NONE, &ne, v, c, s);
     if(ib == 'e'){
@@ -1912,9 +1913,9 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
 
 static void _new_multiline(int type)
 {
-  Vertex *v[SELECTION_MAX_HITS];
-  Curve *c[SELECTION_MAX_HITS];
-  Surface *s[SELECTION_MAX_HITS];
+  GVertex *v[SELECTION_MAX_HITS];
+  GEdge *c[SELECTION_MAX_HITS];
+  GFace *s[SELECTION_MAX_HITS];
   int n, p[100], ne;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -1933,7 +1934,7 @@ static void _new_multiline(int type)
     char ib = SelectEntity(ENT_POINT, &ne, v, c, s);
     if(ib == 'l') {
       for(int i = 0; i < ne; i++)
-	p[n++] = v[i]->Num;
+	p[n++] = v[i]->tag();
     }
     if(ib == 'r') {
       Msg(WARNING, "Entity de-selection not supported yet during multi-line creation");
@@ -1985,9 +1986,9 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
   //
   //_new_multiline(0);
   //
-  Vertex *v[SELECTION_MAX_HITS];
-  Curve *c[SELECTION_MAX_HITS];
-  Surface *s[SELECTION_MAX_HITS];
+  GVertex *v[SELECTION_MAX_HITS];
+  GEdge *c[SELECTION_MAX_HITS];
+  GFace *s[SELECTION_MAX_HITS];
   int n, p[100], ne;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -2005,7 +2006,7 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
 	  "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, &ne, v, c, s);
     if(ib == 'l') {
-      p[n++] = v[0]->Num;
+      p[n++] = v[0]->tag();
     }
     if(ib == 'r') {
       Msg(WARNING, "Entity de-selection not supported yet during line creation");
@@ -2047,9 +2048,9 @@ void geometry_elementary_add_new_bspline_cb(CALLBACK_ARGS)
 
 void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
 {
-  Vertex *v[SELECTION_MAX_HITS];
-  Curve *c[SELECTION_MAX_HITS];
-  Surface *s[SELECTION_MAX_HITS];
+  GVertex *v[SELECTION_MAX_HITS];
+  GEdge *c[SELECTION_MAX_HITS];
+  GFace *s[SELECTION_MAX_HITS];
   int n, p[100], ne;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -2070,7 +2071,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
 	  "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, &ne, v, c, s);
     if(ib == 'l') {
-      p[n++] = v[0]->Num;
+      p[n++] = v[0]->tag();
     }
     if(ib == 'r') {
       Msg(WARNING, "Entity de-selection not supported yet during circle creation");
@@ -2102,9 +2103,9 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
 
 void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
 {
-  Vertex *v[SELECTION_MAX_HITS];
-  Curve *c[SELECTION_MAX_HITS];
-  Surface *s[SELECTION_MAX_HITS];
+  GVertex *v[SELECTION_MAX_HITS];
+  GEdge *c[SELECTION_MAX_HITS];
+  GFace *s[SELECTION_MAX_HITS];
   int n, p[100], ne;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -2128,7 +2129,7 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
 	  "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, &ne, v, c, s);
     if(ib == 'l') {
-      p[n++] = v[0]->Num;
+      p[n++] = v[0]->tag();
     }
     if(ib == 'r') {
       Msg(WARNING, "Entity de-selection not supported yet during ellipse creation");
@@ -2160,9 +2161,9 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
 
 static void _new_surface_volume(int mode)
 {
-  Vertex *v[SELECTION_MAX_HITS];
-  Curve *c[SELECTION_MAX_HITS];
-  Surface *s[SELECTION_MAX_HITS];
+  GVertex *v[SELECTION_MAX_HITS];
+  GEdge *c[SELECTION_MAX_HITS];
+  GFace *s[SELECTION_MAX_HITS];
   int type, num, ne;
 
   List_T *List1 = List_Create(10, 10, sizeof(int));
@@ -2224,7 +2225,7 @@ static void _new_surface_volume(int mode)
 	Msg(WARNING, "Entity de-selection not supported yet during surface/volume creation");
       }
       if(ib == 'l') {
-	int num = (type == ENT_LINE) ? c[0]->Num : s[0]->Num;
+	int num = (type == ENT_LINE) ? c[0]->tag() : s[0]->tag();
 	if(SelectContour(type, num, List1)) {
 	  if(type == ENT_LINE)
 	    add_lineloop(List1, CTX.filename, &num);
@@ -2262,7 +2263,7 @@ static void _new_surface_volume(int mode)
 	      }
 	    }
 	    if(ib == 'l') {
-	      num = (type == ENT_LINE) ? c[0]->Num : s[0]->Num;
+	      num = (type == ENT_LINE) ? c[0]->tag() : s[0]->tag();
 	      if(SelectContour(type, num, List1)) {
 		if(type == ENT_LINE)
 		  add_lineloop(List1, CTX.filename, &num);
@@ -2319,9 +2320,9 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 {
   extern void BDS_To_Mesh(Mesh *m);
 
-  Vertex *v[SELECTION_MAX_HITS];
-  Curve *c[SELECTION_MAX_HITS];
-  Surface *s[SELECTION_MAX_HITS];
+  GVertex *v[SELECTION_MAX_HITS];
+  GEdge *c[SELECTION_MAX_HITS];
+  GFace *s[SELECTION_MAX_HITS];
   int type, ne;
   char *str;
 
@@ -2392,18 +2393,22 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
       // ordering (this is slower, but this way undo works as
       // expected)
       for(int i = 0; i < ne; i++){
+	int tag;
 	switch (type) {
 	case ENT_POINT: 
-	  if(List_ISearchSeq(List1, &v[i]->Num, fcmp_int) < 0)
-	    List_Add(List1, &v[i]->Num);
+	  tag = v[i]->tag();
+	  if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
+	    List_Add(List1, &tag);
 	  break;
 	case ENT_LINE:
-	  if(List_ISearchSeq(List1, &c[i]->Num, fcmp_int) < 0)
-	    List_Add(List1, &c[i]->Num);
+	  tag = c[i]->tag();
+	  if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
+	    List_Add(List1, &tag);
 	  break;
-	case ENT_SURFACE: 
-	  if(List_ISearchSeq(List1, &s[i]->Num, fcmp_int) < 0)
-	    List_Add(List1, &s[i]->Num);
+	case ENT_SURFACE:
+	  tag = s[i]->tag();
+	  if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
+	    List_Add(List1, &tag);
 	  break;
 	}
       }
@@ -2413,22 +2418,25 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
       // ordering (this is slower, but this way undo works as
       // expected)
       for(int i = 0; i < ne; i++){
-	int index;
+	int index, tag;
 	switch (type) {
 	case ENT_POINT:
-	  index = List_ISearchSeq(List1, &v[i]->Num, fcmp_int); 
+	  tag = v[i]->tag();
+	  index = List_ISearchSeq(List1, &tag, fcmp_int); 
 	  if(index >= 0) List_PSuppress(List1, index);
-	  ZeroHighlightEntity(v[i], NULL, NULL);
+	  ZeroHighlightEntityNum(tag, 0, 0);
 	  break;
 	case ENT_LINE:
-	  index = List_ISearchSeq(List1, &c[i]->Num, fcmp_int); 
+	  tag = c[i]->tag();
+	  index = List_ISearchSeq(List1, &tag, fcmp_int); 
 	  if(index >= 0) List_PSuppress(List1, index);
-	  ZeroHighlightEntity(NULL, c[i], NULL);
+	  ZeroHighlightEntityNum(0, tag, 0);
 	  break;
 	case ENT_SURFACE:
-	  index = List_ISearchSeq(List1, &s[i]->Num, fcmp_int); 
+	  tag = s[i]->tag();
+	  index = List_ISearchSeq(List1, &tag, fcmp_int); 
 	  if(index >= 0) List_PSuppress(List1, index);
-	  ZeroHighlightEntity(NULL, NULL, s[i]);
+	  ZeroHighlightEntityNum(0, 0, tag);
 	  break;
 	}
       }
@@ -2967,9 +2975,9 @@ void mesh_define_transfinite_cb(CALLBACK_ARGS)
 
 static void _add_transfinite_elliptic(int type, int dim)
 {
-  Vertex *v[SELECTION_MAX_HITS];
-  Curve *c[SELECTION_MAX_HITS];
-  Surface *s[SELECTION_MAX_HITS];
+  GVertex *v[SELECTION_MAX_HITS];
+  GEdge *c[SELECTION_MAX_HITS];
+  GFace *s[SELECTION_MAX_HITS];
   char ib;
   int n, p[100], ne;
 
@@ -3035,10 +3043,11 @@ static void _add_transfinite_elliptic(int type, int dim)
     if(ib == 'l') {
       switch (dim) {
       case 1:
-        p[n++] = c[0]->Num;
+        p[n++] = c[0]->tag();
         break;
       case 2:
-        p[n++] = s[0]->Num; // fall-through
+        p[n++] = s[0]->tag(); 
+	// fall-through
       case 3:
         while(1) {
 	  if(n == ((dim == 2) ? 1 : 0))
@@ -3049,7 +3058,7 @@ static void _add_transfinite_elliptic(int type, int dim)
 		"[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
           ib = SelectEntity(ENT_POINT, &ne, v, c, s);
           if(ib == 'l') {
-            p[n++] = v[0]->Num;
+            p[n++] = v[0]->tag();
           }
 	  if(ib == 'u') {
 	    if(n > ((dim == 2) ? 1 : 0)){

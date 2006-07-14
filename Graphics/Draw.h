@@ -22,7 +22,7 @@
 
 #include "List.h"
 #include "Views.h"
-#include "Mesh.h"
+#include "GModel.h"
 
 #define GMSH_RENDER    1
 #define GMSH_SELECT    2
@@ -41,13 +41,13 @@ void InitRenderModel(void);
 
 int Process_SelectionBuffer(int type, bool multi, 
 			    int x, int y, int w, int h, 
-			    Vertex *v[SELECTION_MAX_HITS], 
-			    Curve *c[SELECTION_MAX_HITS], 
-			    Surface *s[SELECTION_MAX_HITS]);
+			    GVertex *v[SELECTION_MAX_HITS], 
+			    GEdge *c[SELECTION_MAX_HITS], 
+			    GFace *s[SELECTION_MAX_HITS]);
 char SelectEntity(int type, int *n,
-		  Vertex *v[SELECTION_MAX_HITS], 
-		  Curve *c[SELECTION_MAX_HITS], 
-		  Surface *s[SELECTION_MAX_HITS]);
+		  GVertex *v[SELECTION_MAX_HITS], 
+		  GEdge *c[SELECTION_MAX_HITS], 
+		  GFace *s[SELECTION_MAX_HITS]);
 
 void unproject(double x, double y, double p[3], double d[3]);
 void Viewport2World(double win[3], double xyz[3]);
@@ -57,9 +57,9 @@ unsigned int PaletteContinuous(Post_View * View, double min, double max, double 
 unsigned int PaletteContinuousLinear(Post_View * v, double min, double max, double val);
 unsigned int PaletteDiscrete(Post_View * View, int nbi, int i);
 
-void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent);
+void HighlightEntity(GVertex *v, GEdge *c, GFace *s, int permanent);
 void HighlightEntityNum(int v, int c, int s, int permanant);
-void ZeroHighlightEntity(Vertex *v,Curve *c, Surface *s);
+void ZeroHighlightEntity(GVertex *v, GEdge *c, GFace *s);
 void ZeroHighlightEntityNum(int v, int c, int s);
 void ZeroHighlight();
 

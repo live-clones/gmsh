@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.97 2006-07-12 07:24:23 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.98 2006-07-14 12:17:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -192,6 +192,9 @@ int ParseFile(char *f, int silent, int close, int warn_if_missing)
     Msg(STATUS2N, "Read '%s'", yyname);
   }
 
+  if(GMODEL) delete GMODEL;
+  GMODEL = new gmshModel;
+
   SetBoundingBox();
 
   strncpy(yyname, yyname_old, 255);
@@ -352,7 +355,6 @@ int MergeProblem(char *name, int warn_if_missing)
     }
     else {
       status = ParseFile(name, 0, 1);
-      GMODEL = new gmshModel ;
     }
   }
 

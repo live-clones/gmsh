@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.61 2006-07-12 07:24:13 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.62 2006-07-14 12:17:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -24,10 +24,10 @@
 #include "GmshUI.h"
 #include "Context.h"
 #include "Geo.h"
-#include "Mesh.h"
 #include "Draw.h"
 #include "GUI.h"
 #include "Opengl_Window.h"
+#include "GModel.h"
 
 extern GUI *WID;
 extern Context_T CTX;
@@ -178,9 +178,9 @@ void Opengl_Window::draw()
 
 int Opengl_Window::handle(int event)
 {
-  Vertex *v[SELECTION_MAX_HITS];
-  Curve *c[SELECTION_MAX_HITS];
-  Surface *s[SELECTION_MAX_HITS];
+  GVertex *v[SELECTION_MAX_HITS];
+  GEdge *c[SELECTION_MAX_HITS];
+  GFace *s[SELECTION_MAX_HITS];
   double dx, dy;
 
   switch (event) {
