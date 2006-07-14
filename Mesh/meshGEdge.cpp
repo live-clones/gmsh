@@ -7,7 +7,7 @@
 #include "Message.h"
 
 static GEdge * _myGEdge;
-static double  _myGEdgeLength, t_begin,t_end,lc_begin,lc_end;
+static double  _myGEdgeLength, t_begin, t_end, lc_begin, lc_end;
 static Range<double> _myGEdgeBounds;
 // boooooooh !!!!!!
 extern Mesh *THEM;
@@ -17,11 +17,11 @@ double F_Lc_bis(double t)
 {
   const double fact = (t-t_begin)/(t_end-t_begin);
   const double lc_here = lc_begin + fact * (lc_end-lc_begin);
-  SVector3 der   =  _myGEdge -> firstDer(t) ;
+  SVector3 der = _myGEdge -> firstDer(t) ;
   const double d = norm(der);
 
   if(THEM->BackgroundMeshType == ONFILE) {
-    GPoint point =  _myGEdge -> point(t) ;      
+    GPoint point = _myGEdge -> point(t) ;      
     const double Lc = BGMXYZ(point.x(), point.y(), point.z());
     if(CTX.mesh.constrained_bgmesh)
       return std::max(d / Lc, d / lc_here);
@@ -34,8 +34,7 @@ double F_Lc_bis(double t)
 
 double F_Transfini_bis(double t)
 {
-  double val,r;
-  int i;
+  double val, r;
 
   SVector3 der = _myGEdge -> firstDer(t) ;
   double d = norm(der);
@@ -51,7 +50,7 @@ double F_Transfini_bis(double t)
   else {
     switch (abs(type)) {
 
-    case 1:    // Geometric progression ar^i; Sum of n terms = THEC->l = a (r^n-1)/(r-1)
+    case 1: // Geometric progression ar^i; Sum of n terms = THEC->l = a (r^n-1)/(r-1)
       {
 	if(sign(type) >= 0)
 	  r = coef;
@@ -63,7 +62,7 @@ double F_Transfini_bis(double t)
       }
       break;
 	
-    case 2:    // Bump
+    case 2: // Bump
       {
 	double a;
 	if(coef > 1.0) {
@@ -96,16 +95,15 @@ double F_One_bis(double t)
   return norm(der);
 }
 
-
 void deMeshGEdge :: operator() (GEdge *ge) 
 {
-  for (int i=0;i<ge->mesh_vertices.size();i++) delete ge->mesh_vertices[i];
+  for (unsigned int i=0;i<ge->mesh_vertices.size();i++) 
+    delete ge->mesh_vertices[i];
   ge->mesh_vertices.clear();
 }
 
 void meshGEdge :: operator() (GEdge *ge) 
 {  
-
   deMeshGEdge dem;
   dem(ge);
 
@@ -122,9 +120,9 @@ void meshGEdge :: operator() (GEdge *ge)
     
   // first compute the length of the curve by integrating one
   _myGEdgeBounds = ge->parBounds(0) ;
-  _myGEdgeLength = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), F_One_bis, Points, 1.e-4);
+  _myGEdgeLength = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), 
+			       F_One_bis, Points, 1.e-4);
   List_Reset(Points);
-
 
   lc_begin  =  _myGEdge->getBeginVertex()->prescribedMeshSizeAtVertex();
   lc_end    =  _myGEdge->getEndVertex()->prescribedMeshSizeAtVertex();
@@ -135,20 +133,20 @@ void meshGEdge :: operator() (GEdge *ge)
   // Integrate detJ/lc du 
   double a;
   int N;
-  if(ge->meshAttributes.Method == TRANSFINI) 
-    {
-      a = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), F_Transfini_bis, Points, 1.e-7);
-      N = ge->meshAttributes.nbPointsTransfinite;
-    }
-  else
-    {
-      a = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), F_Lc_bis, Points, 1.e-4);
-      N = std::max (ge->minimumMeshSegments()+1, (int)(a + 1.));      
-    }
+  if(ge->meshAttributes.Method == TRANSFINI){
+    a = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), 
+		    F_Transfini_bis, Points, 1.e-7);
+    N = ge->meshAttributes.nbPointsTransfinite;
+  }
+  else{
+    a = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), 
+		    F_Lc_bis, Points, 1.e-4);
+    N = std::max (ge->minimumMeshSegments()+1, (int)(a + 1.));      
+  }
   const double b = a / (double)(N - 1);
 
   int count = 1, NUMP = 1;
-  IntPoint P1,P2;
+  IntPoint P1, P2;
 
   // do not consider the first and the last vertex 
   // those are not classified on this mesh edge

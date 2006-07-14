@@ -21,8 +21,8 @@ Range<double> gmshEdge::parBounds(int i) const
 
 SBoundingBox3d gmshEdge::bounds() const
 {
-  double xmin,ymin,zmin;
-  double xmax,ymax,zmax;
+  double xmin = 0., ymin = 0., zmin = 0.;
+  double xmax = 0., ymax = 0., zmax = 0.;
   for (int i = 0; i < 20; i++){
     double u = c->ubeg + (i/19.) * (c->uend - c->ubeg);
     Vertex a = InterpolateCurve(c, u, 0);

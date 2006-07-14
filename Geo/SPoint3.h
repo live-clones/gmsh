@@ -1,58 +1,32 @@
+#ifndef _SPOINT3_H_
+#define _SPOINT3_H_
 
-#ifndef H_SPoint3
-#define H_SPoint3
-
-#include <iostream>
 #include <math.h>
 
-/** A point in 3-space */
+// A point in 3-space
 class SPoint3 {
-protected:
+ protected:
   double P[3];
-public:
+ public:
   SPoint3() {}
-  ///
-  SPoint3(double x, double y, double z) 
-    {P[0] = x; P[1] = y; P[2] = z;}
-  ///
-  SPoint3(const double *p)
-    {P[0] = p[0]; P[1] = p[1]; P[2] = p[2];}
-  
-  SPoint3(const SPoint3 &pt)
-    {P[0] = pt.P[0]; P[1] = pt.P[1]; P[2] = pt.P[2]; }
-
+  SPoint3(double x, double y, double z) {P[0] = x; P[1] = y; P[2] = z;}
+  SPoint3(const double *p) {P[0] = p[0]; P[1] = p[1]; P[2] = p[2];}
+  SPoint3(const SPoint3 &pt) {P[0] = pt.P[0]; P[1] = pt.P[1]; P[2] = pt.P[2]; }
   virtual ~SPoint3() {}
-  ///
   void setPosition(double xx, double yy, double zz);
-  ///
   void getPosition(double *xx, double *yy, double *zz) const;
-  ///
   void position(double *) const;
-  
-  ///
   inline double x(void) const;
-  ///
   inline double y(void) const;
-  ///
   inline double z(void) const;
-  
-  ///
   double &operator[](int);
-  ///
   double operator[](int) const;
-  ///
   SPoint3 &operator=(const SPoint3 &p);
-  ///
   void operator+=(const SPoint3 &p);
-  ///
   void operator-=(const SPoint3 &p);
-  ///
   void operator*=(double mult);
-  ///
   SPoint3 operator*(double mult);
-  ///
   operator double *() { return P; }
-
 };
 
 inline SPoint3 operator + (const SPoint3 &a, const SPoint3 &b)
@@ -101,4 +75,3 @@ inline double SPoint3::operator[](int i) const
 { return P[i]; }
 
 #endif
-

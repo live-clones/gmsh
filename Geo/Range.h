@@ -1,23 +1,21 @@
-#ifndef H_Range
-#define H_Range
+#ifndef _RANGE_H_
+#define _RANGE_H_
 
-/** represents a range of values of the template type */
+// represents a range of values of the template type
 template <class T>
-class Range{
-private:
-  T	Low;
-  T	High;
-public:
+class Range {
+ private:
+  T Low;
+  T High;
+ public:
   Range() {}
   Range( const T& low, const T& high) : Low(low), High(high) {}
-  T	low() const { return Low; }
+  T low() const { return Low; }
   void low(const T& low) { Low = low; }
-  T	high() const { return High; }
+  T high() const { return High; }
   void high(const T& high) { High = high; }
-
   int contains(const T& value) const;
   int contains(const Range<T> & range) const;
-
   int operator == (const Range<T> &range) const;
 };
 

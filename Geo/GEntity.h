@@ -8,6 +8,7 @@
 #include "GmshDefines.h"
 #include <list>
 #include <vector>
+#include <string>
 
 class GModel;
 class GVertex;
@@ -20,8 +21,8 @@ class GRegion;
 class GEntity {
 
  private:
-  int _tag;
   GModel *_model;
+  int _tag;
   // DiscreteRep *mesh, *modelMesh;
 
  public:
@@ -66,9 +67,9 @@ class GEntity {
       "DiscreteSurface",
       "Volume"
     };
-    int type = (int)geomType();
-    if(type < 0 || type >= sizeof(name) / sizeof(name[0]))
-      return "Unknown";
+    unsigned int type = (unsigned int)geomType();
+    if(type >= sizeof(name) / sizeof(name[0]))
+      return "Undefined";
     else
       return name[type];
   }

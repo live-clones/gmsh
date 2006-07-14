@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.73 2006-04-18 09:57:42 remacle Exp $
+// $Id: PostElement.cpp,v 1.74 2006-07-14 13:31:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1303,11 +1303,9 @@ void Draw_TensorElement(int type, Post_View * View, int preproNormals,
     int it;
     double DEP[3];	// déplacement relatif cdf % a config de référence
     double CDG[3];	// coordonnées du centre de gravité au tps t0
-    double VIT[3];  // vitesse en x,y,z du cdg % au repère absolu
     double ROT[3]; 	// angles de rotation du cdg % au repère absolu
     double VAR[3];	// valeur des 3 variables supplémentaires
     double X[3],Y[3],Z[3];
-    double a11,a12,a13,a21,a22,a23,a31,a32,a33;
     double ztmp[3];
     
     View->TimeStep = 0;

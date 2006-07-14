@@ -1,50 +1,30 @@
-
-#ifndef H_SPoint2
-#define H_SPoint2
+#ifndef _SPOINT2_H_
+#define _SPOINT2_H_
 
 #include <math.h>
 
-/** A point in 2-space */
+// A point in 2-space
 class SPoint2 {
-protected:
+ protected:
   double P[2];
-public:
+ public:
   SPoint2() {}
-  ///
-  SPoint2(double x, double y) 
-    {P[0] = x; P[1] = y;}
-  ///
-  SPoint2(double *p)
-    {P[0] = p[0]; P[1] = p[1];}
-  SPoint2(const SPoint2 &pt)
-    {P[0] = pt.P[0]; P[1] = pt.P[1]; }
+  SPoint2(double x, double y) {P[0] = x; P[1] = y;}
+  SPoint2(double *p) {P[0] = p[0]; P[1] = p[1];}
+  SPoint2(const SPoint2 &pt) {P[0] = pt.P[0]; P[1] = pt.P[1]; }
   virtual ~SPoint2() {}
-  ///
   void setPosition(double xx, double yy);
-  ///
   void getPosition(double *xx, double *yy) const;
-  ///
   void position(double *) const;
-  ///
   inline double x(void) const;
-  ///
   inline double y(void) const;
-  
-  ///
   double &operator[](int);
-  ///
   double operator[](int) const;
   SPoint2 &operator=(const SPoint2 &p);
-
-  ///
   void operator+=(const SPoint2 &p);
-  ///
   void operator-=(const SPoint2 &p);
-  ///
   void operator*=(double mult);
-  ///
   SPoint2 operator*(double mult);
-  
   operator double *() { return P; }
 };
 
@@ -90,6 +70,4 @@ inline void SPoint2::operator*=(double mult)
 inline SPoint2 SPoint2::operator*(double mult)
 { return SPoint2(P[0]*mult, P[1]*mult); }
 
-
 #endif
-
