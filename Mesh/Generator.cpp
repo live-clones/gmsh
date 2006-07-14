@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.84 2006-07-12 07:24:14 geuzaine Exp $
+// $Id: Generator.cpp,v 1.85 2006-07-14 12:54:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -268,7 +268,7 @@ void Maillage_Dimension_1()
 
   Tree_Action(THEM->Curves, Maillage_Curve);
 
-  std::for_each (GMODEL->firstEdge(),GMODEL->lastEdge(), meshGEdge() );
+  std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), meshGEdge());
 
   double t2 = Cpu();
   THEM->timing[0] = t2 - t1;

@@ -1,32 +1,33 @@
-#ifndef H_GVertex
-#define H_GVertex
+#ifndef _GVERTEX_H_
+#define _GVERTEX_H_
 
 #include "GEntity.h"
 #include "GPoint.h"
 
-/** A model vertex. */
+// A model vertex
 class GVertex  : public GEntity 
 {
-public:
+ public:
   GVertex(GModel *m, int tag) : GEntity (m,tag) {}
   virtual ~GVertex() {}
   virtual GPoint point() const = 0;
   virtual double x() const = 0;
   virtual double y() const = 0;
   virtual double z() const = 0;
-  void addEdge ( GEdge *e );
-  void delEdge ( GEdge *e );
+  void addEdge(GEdge *e);
+  void delEdge(GEdge *e);
   virtual int dim() const {return 0;}
   virtual GeomType geomType() const {return Point;}
   virtual double prescribedMeshSizeAtVertex() const {return 0;}
   virtual std::string getInfoString()
   {
     char tmp[256];
-    sprintf(tmp, "%s %d {%g,%g,%g}", getTypeString().c_str(), tag(), x(), y(), z());
+    sprintf(tmp, "%s %d {%g,%g,%g}", getTypeString().c_str(), 
+	    tag(), x(), y(), z());
     return std::string(tmp);
   }
 
-protected:
+ protected:
   std::list<GEdge*> l_edges;
 };
 

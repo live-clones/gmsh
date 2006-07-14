@@ -1,12 +1,12 @@
-#ifndef _H_GMSH_VERTEX_
-#define _H_GMSH_VERTEX_
+#ifndef _GMSH_VERTEX_H_
+#define _GMSH_VERTEX_H_
 
 #include "Mesh.h"
 #include "gmshModel.h"
 #include "GVertex.h"
 
 class gmshVertex : public GVertex {
-public:
+ public:
   gmshVertex(GModel *m, Vertex *_v) : GVertex(m, _v->Num), v(_v){}
   virtual ~gmshVertex() {}
   virtual GPoint point() const{return GPoint ( v->Pos.X,v->Pos.Y,v->Pos.Z,this);}

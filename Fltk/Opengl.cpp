@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.60 2006-07-14 12:17:05 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.61 2006-07-14 12:54:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,6 @@
 #include "Draw.h"
 #include "GUI.h"
 #include "gl2ps.h"
-#include "GModel.h"
 
 extern GUI *WID;
 extern Context_T CTX;

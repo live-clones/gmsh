@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.88 2006-07-14 12:17:06 geuzaine Exp $
+# $Id: Makefile,v 1.89 2006-07-14 12:54:33 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -90,17 +90,10 @@ Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Common/GmshDefines.h \
   ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
   ../Mesh/Matrix.h ../Mesh/Nurbs.h ../Mesh/Vertex.h ../Mesh/Mesh.h \
-  ../Geo/CAD.h ../Geo/ExtrudeParams.h ../Graphics/Draw.h ../Geo/GModel.h \
-  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/MVertex.h \
-  ../Geo/GPoint.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/SPoint2.h \
-  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Mesh/Create.h ../Mesh/Vertex.h ../Mesh/Mesh.h ../Common/Colors.h \
-  ../Common/Options.h Parser.h OpenFile.h ../Common/CommandLine.h \
-  FunctionManager.h ../Common/OS.h ../Graphics/CreateFile.h \
-  ../Common/Visibility.h
+  ../Geo/CAD.h ../Geo/ExtrudeParams.h ../Graphics/Draw.h ../Mesh/Create.h \
+  ../Mesh/Vertex.h ../Mesh/Mesh.h ../Common/Colors.h ../Common/Options.h \
+  Parser.h OpenFile.h ../Common/CommandLine.h FunctionManager.h \
+  ../Common/OS.h ../Graphics/CreateFile.h ../Common/Visibility.h
 # 1 "/Users/geuzaine/.gmsh/Parser//"
 Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \

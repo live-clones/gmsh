@@ -1,5 +1,5 @@
-#ifndef _H_GMSH_EDGE_
-#define _H_GMSH_EDGE_
+#ifndef _GMSH_EDGE_H_
+#define _GMSH_EDGE_H_
 
 #include "GEdge.h"
 #include "gmshModel.h"
@@ -7,8 +7,8 @@
 #include "Mesh.h"
 #include "Range.h"
 
-class gmshEdge : public GEdge{
-public:
+class gmshEdge : public GEdge {
+ public:
   gmshEdge(GModel *model,Curve *edge,GVertex *v1,GVertex *v2);
   virtual ~gmshEdge();
   double period() const{throw ;}
@@ -24,16 +24,13 @@ public:
   virtual int containsPoint(const SPoint3 &pt) const;  
   virtual int containsParam(double pt) const;
   virtual SVector3 firstDer(double par) const;
-  virtual SPoint2 reparamOnFace(GFace * face, double epar, int dir) const{
-    throw;
-  }
+  virtual SPoint2 reparamOnFace(GFace * face, double epar, int dir) const {throw;}
   void * getNativePtr() const; 
   virtual double parFromPoint(const SPoint3 &pt) const;
   virtual int minimumMeshSegments () const;
   virtual int minimumDrawSegments () const;
-
-protected:
+ protected:
   Curve *c; 
 };
-#endif
 
+#endif

@@ -1,5 +1,5 @@
-#ifndef _H_GMSH_FACE_
-#define _H_GMSH_FACE_
+#ifndef _GMSH_FACE_H_
+#define _GMSH_FACE_H_
 
 #include "GFace.h"
 #include "gmshModel.h"
@@ -7,9 +7,8 @@
 #include "Mesh.h"
 #include "Range.h"
 
-class gmshFace : public GFace 
-{
-public:
+class gmshFace : public GFace {
+ public:
   gmshFace(GModel *m,Surface * face);
   virtual ~gmshFace(){}
   Range<double> parBounds(int i) const; 
@@ -39,10 +38,8 @@ public:
   //  virtual GeoRep * geometry() {return 0;}
   void * getNativePtr() const; 
   Surface *s;
-  virtual bool surfPeriodic(int dim) const
-  {throw;}
+  virtual bool surfPeriodic(int dim) const {throw;}
   virtual SPoint2 parFromPoint(const SPoint3 &) const;
-protected:
 };
 
 #endif

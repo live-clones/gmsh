@@ -1,13 +1,13 @@
-#ifndef H_GRegion
-#define H_GRegion
+#ifndef _GREGION_H_
+#define _GREGION_H_
 
 #include "GEntity.h"
 
-/** A model region. */
+// A model region.
 class GRegion : public GEntity {
  protected:
   std::list<GFace *> l_faces;
-  std::list<int>     l_dirs;
+  std::list<int> l_dirs;
  public:
   GRegion(GModel *model, int tag) : GEntity (model,tag) {}
   virtual ~GRegion();
@@ -16,4 +16,3 @@ class GRegion : public GEntity {
 };
 
 #endif
-

@@ -22,7 +22,10 @@
 
 #include "List.h"
 #include "Views.h"
-#include "GModel.h"
+
+class GVertex;
+class GEdge;
+class GFace;
 
 #define GMSH_RENDER    1
 #define GMSH_SELECT    2

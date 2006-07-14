@@ -1,5 +1,5 @@
-#ifndef H_GModel
-#define H_GModel
+#ifndef _GMODEL_H_
+#define _GMODEL_H_
 
 #include <algorithm>
 #include <set>
@@ -8,7 +8,7 @@
 #include "GFace.h"
 #include "GRegion.h"
 
-/** A geometric model. The model is a non-manifold B-Rep. */
+// A geometric model. The model is a non-manifold B-Rep.
 
 class GModel  
 {
@@ -20,16 +20,16 @@ public:
   typedef std::set<GEdge*,   EntityLessThan>::iterator eiter;
   typedef std::set<GVertex*, EntityLessThan>::iterator viter;
 
-  /** Returns the geometric tolerance for the entire model. */
+  // Returns the geometric tolerance for the entire model.
   virtual double tolerance() const {return 1.e-14;}
 
-  /** Get the number of regions in this model. */
+  // Get the number of regions in this model.
   int numRegion() const;
   int numFace  () const;
   int numEdge  () const;
   int numVertex() const;
 
-  /** Get an iterator initialized to the first entity in this model. */
+  // Get an iterator initialized to the first entity in this model.
   riter firstRegion() {return regions.begin();}
   fiter firstFace() {return faces.begin();}
   eiter firstEdge()  {return edges.begin();}
@@ -39,7 +39,7 @@ public:
   eiter lastEdge() {return edges.end();}
   viter lastVertex() {return vertices.end();}
 
-  /** Find the region with the given tag. */
+  // Find the region with the given tag.
   virtual GRegion * regionByTag(int n) const;
   virtual GFace   * faceByTag  (int n) const;
   virtual GEdge   * edgeByTag  (int n) const;
@@ -64,7 +64,4 @@ protected:
   std::set<GVertex*, EntityLessThan> vertices;
 };
 
-
 #endif
-
-

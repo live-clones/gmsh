@@ -1,5 +1,5 @@
-#ifndef _H_GMSH_REGION_
-#define _H_GMSH_REGION_
+#ifndef _GMSH_REGION_H_
+#define _GMSH_REGION_H_
 
 #include "Mesh.h"
 #include "gmshModel.h"
@@ -19,5 +19,5 @@ public:
 protected:
 
 };
-#endif
 
+#endif

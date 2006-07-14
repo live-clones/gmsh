@@ -1,11 +1,12 @@
-#ifndef _H_GMSH_MODEL_
-#define _H_GMSH_MODEL_
+#ifndef _GMSH_MODEL_H_
+#define _GMSH_MODEL_H_
 
 #include "GModel.h"
 
 class gmshModel : public GModel {
+ private:
   void convertFromUglyOldDataStructuresgmshModel(); 
-public:
+ public:
   gmshModel(char *geofile); 
   gmshModel(); 
   virtual ~gmshModel() {};
