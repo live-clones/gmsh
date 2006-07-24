@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.100 2006-07-14 12:17:06 geuzaine Exp $
+// $Id: Geom.cpp,v 1.101 2006-07-24 14:05:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -39,7 +39,7 @@ extern GModel *GMODEL;
 
 // Points
 
-void Draw_Geo_Vertex(GVertex *v)
+void drawGeoVertex(GVertex *v)
 {
   if(!(v->drawAttributes.Visible & VIS_GEOM))
     return;
@@ -105,7 +105,7 @@ void Draw_Geo_Vertex(GVertex *v)
 
 // Curves
 
-void Draw_Geo_Edge(GEdge *c)
+void drawGeoEdge(GEdge *c)
 {
   if(c->tag() < 0 || !(c->drawAttributes.Visible & VIS_GEOM))
     return;
@@ -532,7 +532,7 @@ void Draw_NonPlane_Surface(Surface * s)
   }
 }
 
-void Draw_Geo_Face(GFace *s)
+void drawGeoFace(GFace *s)
 {
   if(!(s->drawAttributes.Visible & VIS_GEOM))
     return;
@@ -573,7 +573,7 @@ void Draw_Geo_Face(GFace *s)
 
 // Volumes
 
-void Draw_Geo_Region(GRegion *v)
+void drawGeoRegion(GRegion *v)
 {
 }
 
@@ -585,19 +585,19 @@ void Draw_Geom()
   
   if(CTX.geom.points || CTX.geom.points_num)
     for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
-      Draw_Geo_Vertex(*it);
+      drawGeoVertex(*it);
 
   if(CTX.geom.lines || CTX.geom.lines_num || CTX.geom.tangents)
     for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
-      Draw_Geo_Edge(*it);
+      drawGeoEdge(*it);
 
   if(CTX.geom.surfaces || CTX.geom.surfaces_num || CTX.geom.normals)
     for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
-      Draw_Geo_Face(*it);
+      drawGeoFace(*it);
 
   if(CTX.geom.volumes || CTX.geom.volumes_num)
     for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
-      Draw_Geo_Region(*it);
+      drawGeoRegion(*it);
 }
 
 // Highlight routines (Note: in Gmsh < 1.61, we used to draw permanent

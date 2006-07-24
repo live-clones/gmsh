@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.82 2006-07-14 12:17:06 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.83 2006-07-24 14:05:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -68,6 +68,7 @@ int GuessFileFormatFromFileName(char *name)
   else if(!strcmp(ext, ".epstex"))  return FORMAT_EPSTEX;
   else if(!strcmp(ext, ".pdftex"))  return FORMAT_PDFTEX;
   else if(!strcmp(ext, ".jpegtex")) return FORMAT_JPEGTEX;
+  else if(!strcmp(ext, ".svg"))     return FORMAT_SVG;
   else if(!strcmp(ext, ".ppm"))     return FORMAT_PPM;
   else if(!strcmp(ext, ".yuv"))     return FORMAT_YUV;
   else if(!strcmp(ext, ".gref"))    return FORMAT_GREF;
@@ -91,6 +92,7 @@ char *GetStringForFileFormat(int format)
   case FORMAT_EPSTEX: return "EPS";
   case FORMAT_PDF: return "PDF";
   case FORMAT_PDFTEX: return "PDF";
+  case FORMAT_SVG: return "SVG";
   default: return "";
   }
 }
@@ -151,13 +153,16 @@ void CreateOutputFile(char *name, int format)
 	return;
       }
 
+      PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
+
+      int old_bg_gradient = CTX.bg_gradient;
+      if(format == FORMAT_GIF && CTX.print.gif_transparent)
+	CTX.bg_gradient = 0;
       if(format == FORMAT_JPEGTEX || format == FORMAT_PNGTEX)
 	CTX.print.gl_fonts = 0;
-
-      PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
       buffer.Fill(CTX.batch);
-
       CTX.print.gl_fonts = 1;
+      CTX.bg_gradient = old_bg_gradient;
 
       Msg(INFO, "Writing %s file '%s'", GetStringForFileFormat(format), name);
       if(format == FORMAT_PPM){
@@ -194,6 +199,7 @@ void CreateOutputFile(char *name, int format)
   case FORMAT_EPSTEX:
   case FORMAT_PDF:
   case FORMAT_PDFTEX:
+  case FORMAT_SVG:
     {
       FILE *fp;
       if(!(fp = fopen(name, "wb"))) {
@@ -210,10 +216,16 @@ void CreateOutputFile(char *name, int format)
       case FORMAT_PS:
 	psformat = GL2PS_PS;
 	break;
+      case FORMAT_SVG:
+	psformat = GL2PS_SVG;
+	break;
       default:
 	psformat = GL2PS_EPS;
 	break;
       }
+
+      int old_bg_gradient = CTX.bg_gradient;
+      if(!CTX.print.eps_background) CTX.bg_gradient = 0;
       
       PixelBuffer buffer(width, height, GL_RGB, GL_FLOAT);
       
@@ -224,9 +236,12 @@ void CreateOutputFile(char *name, int format)
 	CTX.print.gl_fonts = 1;
       }
       
-      int pssort = (CTX.print.eps_quality == 2) ? GL2PS_BSP_SORT : GL2PS_SIMPLE_SORT;
+      int pssort = 
+	(CTX.print.eps_quality == 3) ? GL2PS_NO_SORT :
+	(CTX.print.eps_quality == 2) ? GL2PS_BSP_SORT : 
+	GL2PS_SIMPLE_SORT;
       int psoptions =
-	GL2PS_SIMPLE_LINE_OFFSET | GL2PS_SILENT | GL2PS_NO_BLENDING |
+	GL2PS_SIMPLE_LINE_OFFSET | GL2PS_SILENT |
 	(CTX.print.eps_occlusion_culling ? GL2PS_OCCLUSION_CULL : 0) |
 	(CTX.print.eps_best_root ? GL2PS_BEST_ROOT : 0) |
 	(CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0) |
@@ -237,13 +252,13 @@ void CreateOutputFile(char *name, int format)
       
       Msg(INFO, "Writing %s file '%s'", GetStringForFileFormat(format), name);
       
-      GLint size3d = 0;
+      GLint buffsize = 0;
       int res = GL2PS_OVERFLOW;
       while(res == GL2PS_OVERFLOW) {
-	size3d += 2048 * 2048;
+	buffsize += 2048 * 2048;
 	gl2psBeginPage(CTX.base_filename, "Gmsh", viewport, 
 		       psformat, pssort, psoptions, GL_RGBA, 0, NULL, 
-		       15, 20, 10, size3d, fp, name);
+		       15, 20, 10, buffsize, fp, name);
 	if(CTX.print.eps_quality == 0){
 	  double modelview[16], projection[16];
 	  glGetDoublev(GL_PROJECTION_MATRIX, projection);
@@ -269,6 +284,8 @@ void CreateOutputFile(char *name, int format)
 	res = gl2psEndPage();
       }
 
+      CTX.bg_gradient = old_bg_gradient;
+
       Msg(INFO, "Wrote %s file '%s'", GetStringForFileFormat(format), name);
       Msg(STATUS2N, "Wrote '%s'", name);
       fclose(fp);
@@ -283,14 +300,20 @@ void CreateOutputFile(char *name, int format)
 	return;
       }
       Msg(INFO, "Writing TEX file '%s'", name);
-      gl2psBeginPage(CTX.base_filename, "Gmsh", viewport,
-		     GL2PS_TEX, GL2PS_NO_SORT, GL2PS_SILENT, GL_RGBA, 0, NULL, 
-		     0, 0, 0, 1000, fp, name);
-      CTX.print.gl_fonts = 0;
-      PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
-      buffer.Fill(CTX.batch);
-      CTX.print.gl_fonts = 1;
-      gl2psEndPage();
+
+      GLint buffsize = 0;
+      int res = GL2PS_OVERFLOW;
+      while(res == GL2PS_OVERFLOW) {
+	buffsize += 2048 * 2048;
+	gl2psBeginPage(CTX.base_filename, "Gmsh", viewport,
+		       GL2PS_TEX, GL2PS_NO_SORT, GL2PS_NONE, GL_RGBA, 0, NULL, 
+		       0, 0, 0, buffsize, fp, name);
+	PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
+	CTX.print.gl_fonts = 0;
+	buffer.Fill(CTX.batch);
+	CTX.print.gl_fonts = 1;
+	res = gl2psEndPage();
+      }
       Msg(INFO, "Wrote TEX file '%s'", name);
       Msg(STATUS2N, "Wrote '%s'", name);
       fclose(fp);
@@ -303,4 +326,5 @@ void CreateOutputFile(char *name, int format)
   }
 
   CTX.print.format = oldformat;
+  Draw();
 }

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.419 2006-07-14 12:17:05 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.420 2006-07-24 14:05:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -704,6 +704,11 @@ int _save_pdftex(char *name)
   return gl2ps_dialog(name, "PDF Options", 2, 1);
 }
 
+int _save_svg(char *name)
+{
+  return gl2ps_dialog(name, "SVG Options", 3, 0);
+}
+
 int _save_jpegtex(char *name)
 {
   return jpeg_dialog(name, 1);
@@ -759,6 +764,7 @@ int _save_auto(char *name)
   case FORMAT_EPSTEX  : return _save_epstex(name);
   case FORMAT_PDF     : return _save_pdf(name);
   case FORMAT_PDFTEX  : return _save_pdftex(name);
+  case FORMAT_SVG     : return _save_svg(name);
   case FORMAT_JPEGTEX : return _save_jpegtex(name);
   case FORMAT_JPEG    : return _save_jpeg(name);
   case FORMAT_GIF     : return _save_gif(name);
@@ -778,7 +784,7 @@ void file_save_as_cb(CALLBACK_ARGS)
   int i, nbformats;
   static char *pat = NULL;
   static patXfunc formats[] = {
-    {"By extension (*)", _save_auto},
+    {"Guess from extension (*.*)", _save_auto},
     {"Gmsh options (*.opt)", _save_options},
     {"Gmsh unrolled geometry (*.geo)", _save_geo},
     {"Gmsh mesh (*.msh)", _save_msh},
@@ -795,18 +801,19 @@ void file_save_as_cb(CALLBACK_ARGS)
 #if defined(HAVE_LIBPNG)
     {"PNG (*.png)", _save_png},
 #endif
-    {"PS (*.ps)", _save_ps},
-    {"EPS (*.eps)", _save_eps},
+    {"PostScript (*.ps)", _save_ps},
+    {"Encapsulated PostScript (*.eps)", _save_eps},
     {"PDF (*.pdf)", _save_pdf},
+    {"SVG (*.svg)", _save_svg},
     {"PPM (*.ppm)", _save_ppm},
 #if defined(HAVE_LIBJPEG)
-    {"LaTeX JPEG part w/o text (*.jpg)", _save_jpegtex},
+    {"LaTeX JPEG part without text (*.jpg)", _save_jpegtex},
 #endif
 #if defined(HAVE_LIBPNG)
-    {"LaTeX PNG part w/o text (*.png)", _save_pngtex},
+    {"LaTeX PNG part without text (*.png)", _save_pngtex},
 #endif
-    {"LaTeX EPS part w/o text (*.eps)", _save_epstex},
-    {"LaTeX PDF part w/o text (*.pdf)", _save_pdftex},
+    {"LaTeX EPS part without text (*.eps)", _save_epstex},
+    {"LaTeX PDF part without text (*.pdf)", _save_pdftex},
     {"LaTeX text part (*.tex)", _save_tex},
     {"YUV (*.yuv)", _save_yuv}
   };

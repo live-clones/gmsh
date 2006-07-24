@@ -1349,7 +1349,7 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "EpsPS3Shading" , opt_print_eps_ps3shading , 0. ,
     "Enable PostScript Level 3 shading" },
   { F|O, "EpsQuality" , opt_print_eps_quality , 1. ,
-    "PostScript/PDF quality (0=bitmap, 1=vector (simple sort), 2=vector (accurate sort)" },
+    "PostScript/PDF quality (0=bitmap, 1=vector (simple sort), 2=vector (accurate sort), 3=vector (unsorted)" },
 
   { F|O, "Format" , opt_print_format , FORMAT_AUTO , 
     "File format (10=automatic)" }, 

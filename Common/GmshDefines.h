@@ -28,6 +28,7 @@
 #define FORMAT_LC            26
 #define FORMAT_STL           27
 #define FORMAT_P3D           28
+#define FORMAT_SVG           29
 
 #define CONV_VALUE    0.8
 

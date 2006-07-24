@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.105 2006-04-16 19:02:37 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.106 2006-07-24 14:05:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -98,7 +98,7 @@ void addVerticesInCurve(void *a, void *b)
     }
   }
 
-  // find starting element (or use the first one for closed curve)
+  // find starting element (or use the first one for a closed curve)
   std::map<int, nodex*>::const_iterator beg = nodes.begin();
   std::map<int, nodex*>::const_iterator end = nodes.end();
   int start = 0;
@@ -500,7 +500,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    Free_SimplexBase(&simp, 0);
 	  }
 	  // we don't insert the vertices in the list of vertices at
-	  // this point, since we need the list to ordered (and
+	  // this point, since we need the list to be ordered (and
 	  // consistent!), and simply doing a List_Insert and sorting
 	  // according to node numbers is not enough (in addition to
 	  // being slow): see addVerticesInCurve() below.

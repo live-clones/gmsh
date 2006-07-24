@@ -1,4 +1,4 @@
-/* $Id: gl2ps.h,v 1.64 2006-02-27 18:38:13 geuzaine Exp $ */
+/* $Id: gl2ps.h,v 1.65 2006-07-24 14:05:50 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2006 Christophe Geuzaine <geuz@geuz.org>
@@ -38,7 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/* Define GL2PSDLL at compile time to build a Windows dll */
+/* Define GL2PSDLL at compile time to build a Windows DLL */
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #  if defined(_MSC_VER)
@@ -58,26 +58,27 @@
 #  define GL2PSDLL_API
 #endif
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(HAVE_OPENGL_GL_H)
 #  include <OpenGL/gl.h>
 #else
 #  include <GL/gl.h>
 #endif
 
-/* Support for compressed PostScript/PDF */
+/* Support for compressed PostScript/PDF and for embedded PNG images in SVG */
 
-#if defined(HAVE_ZLIB) || defined(HAVE_LIBZ) || defined(GL2PS_HAVE_ZLIB)
-#  include <zlib.h>
-#  if !defined(GL2PS_HAVE_ZLIB)
-#    define GL2PS_HAVE_ZLIB
+#if defined(HAVE_ZLIB) || defined(HAVE_LIBZ)
+#  define GL2PS_HAVE_ZLIB
+#  if defined(HAVE_LIBPNG) || defined(HAVE_PNG)
+#    define GL2PS_HAVE_LIBPNG
 #  endif
 #endif
 
 /* Version number */
 
 #define GL2PS_MAJOR_VERSION 1
-#define GL2PS_MINOR_VERSION 2
-#define GL2PS_PATCH_VERSION 8
+#define GL2PS_MINOR_VERSION 3
+#define GL2PS_PATCH_VERSION 0
+#define GL2PS_EXTRA_VERSION "-cvs"
 
 #define GL2PS_VERSION (GL2PS_MAJOR_VERSION + \
                        0.01 * GL2PS_MINOR_VERSION + \
@@ -168,6 +169,7 @@ GL2PSDLL_API GLint gl2psText(const char *str, const char *fontname,
                              GLshort fontsize);
 GL2PSDLL_API GLint gl2psTextOpt(const char *str, const char *fontname, 
                                 GLshort fontsize, GLint align, GLfloat angle);
+GL2PSDLL_API GLint gl2psSpecial(GLint format, const char *str);
 GL2PSDLL_API GLint gl2psDrawPixels(GLsizei width, GLsizei height,
                                    GLint xorig, GLint yorig,
                                    GLenum format, GLenum type, const void *pixels);

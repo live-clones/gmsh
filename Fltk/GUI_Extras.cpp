@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.15 2006-04-24 00:26:48 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.16 2006-07-24 14:05:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -339,25 +339,38 @@ int gif_dialog(char *name)
 
 // ps/eps/pdf dialog
 
-static void activate_gl2ps_choices(int format, Fl_Check_Button *b[5])
+static void activate_gl2ps_choices(int format, int quality, Fl_Check_Button *b[5])
 {
 #if defined(HAVE_LIBZ)
   b[0]->activate();
 #else
   b[0]->deactivate();
 #endif
-  switch(format){
-  case 0: 
-    b[1]->deactivate(); b[2]->deactivate(); 
-    b[3]->deactivate(); b[4]->deactivate();
+  switch(quality){
+  case 0: // raster
+    b[1]->deactivate(); 
+    b[2]->deactivate(); 
+    b[3]->deactivate(); 
+    b[4]->deactivate();
     break;
-  case 1:
-    b[1]->activate();   b[2]->activate();
-    b[3]->deactivate(); b[4]->activate();
+  case 1: // simple sort
+  case 3: // unsorted
+    b[1]->activate();   
+    b[2]->activate();
+    b[3]->deactivate(); 
+    if(format == 2 || format == 3) // pdf or svg
+      b[4]->deactivate();
+    else
+      b[4]->activate();
     break;
-  case 2:
-    b[1]->activate();   b[2]->activate();
-    b[3]->activate();   b[4]->activate();
+  case 2: // bsp sort
+    b[1]->activate();   
+    b[2]->activate();
+    b[3]->activate();   
+    if(format == 2 || format == 3) // pdf or svg
+      b[4]->deactivate();
+    else
+      b[4]->activate();
     break;
   }
 }
@@ -376,6 +389,7 @@ int gl2ps_dialog(char *name, char *title, int format, int TeX)
     {"Raster image", 0, 0, 0},
     {"Vector simple sort", 0, 0, 0},
     {"Vector accurate sort", 0, 0, 0},
+    {"Vector unsorted", 0, 0, 0},
     {0}
   };
 
@@ -412,7 +426,9 @@ int gl2ps_dialog(char *name, char *title, int format, int TeX)
   dialog->b[2]->value(CTX.print.eps_occlusion_culling);
   dialog->b[3]->value(CTX.print.eps_best_root);
   dialog->b[4]->value(CTX.print.eps_ps3shading);
-  activate_gl2ps_choices(CTX.print.eps_quality, dialog->b);
+
+  activate_gl2ps_choices(format, CTX.print.eps_quality, dialog->b);
+
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -422,7 +438,7 @@ int gl2ps_dialog(char *name, char *title, int format, int TeX)
       if (!o) break;
 
       if (o == dialog->c){
-	activate_gl2ps_choices(dialog->c->value(), dialog->b);
+	activate_gl2ps_choices(format, dialog->c->value(), dialog->b);
       }
       if (o == dialog->ok) {
 	opt_print_eps_quality(0, GMSH_SET | GMSH_GUI, dialog->c->value());
@@ -432,6 +448,7 @@ int gl2ps_dialog(char *name, char *title, int format, int TeX)
 	opt_print_eps_best_root(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value());
 	opt_print_eps_ps3shading(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value());
 	CreateOutputFile(name, 
+			 (format == 3) ? FORMAT_SVG :
 			 (format == 2) ? (TeX ? FORMAT_PDFTEX : FORMAT_PDF) : 
 			 (format == 1) ? (TeX ? FORMAT_EPSTEX : FORMAT_EPS) : 
 			 FORMAT_PS);

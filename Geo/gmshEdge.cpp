@@ -145,5 +145,8 @@ int gmshEdge::minimumMeshSegments () const
 
 int gmshEdge::minimumDrawSegments () const
 {
-  return CTX.geom.circle_points;
+  if(geomType() == Line)
+    return GEdge::minimumDrawSegments () ;
+  else
+    return CTX.geom.circle_points;
 }

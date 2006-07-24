@@ -1,4 +1,4 @@
-// $Id: ExtractElements.cpp,v 1.5 2006-03-10 17:03:21 geuzaine Exp $
+// $Id: ExtractElements.cpp,v 1.6 2006-07-24 14:05:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -113,7 +113,7 @@ static void extract(List_T *inList, int inNb,
     }
     d /= (double)nbNod;
     // We use '>=' and '<' so that we can do segmentation without
-    // worrying about roudoff errors
+    // worrying about roundoff errors
     if(d >= MinVal && d < MaxVal){
       for(int j = 0; j < nb; j++)
 	List_Add(outList, List_Pointer_Fast(inList, i + j));
