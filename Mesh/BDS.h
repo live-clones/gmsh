@@ -324,7 +324,7 @@ public:
   void oppositeof(BDS_Point * oface[2]) const; 
   
   BDS_Edge(BDS_Point *A, BDS_Point *B)
-    : deleted(false), status(0),partition(0),target_length(1.0),g(0)
+    : deleted(false), status(0),partition(0),target_length(-1.0),g(0)
   {	    
     if(*A < *B){
       p1=A;

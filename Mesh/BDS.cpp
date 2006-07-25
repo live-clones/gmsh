@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.54 2006-07-25 12:08:23 remacle Exp $
+// $Id: BDS.cpp,v 1.55 2006-07-25 13:00:07 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2445,6 +2445,8 @@ bool BDS_Mesh::smooth_point(BDS_Point * p, BDS_Mesh * geom_mesh)
     X += op->X;
     Y += op->Y;
     Z += op->Z;
+    // lengths are wrong;
+    (*eit)->target_length = -1;
     ++eit;
   }
 
