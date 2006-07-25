@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.106 2006-07-25 11:10:10 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.107 2006-07-25 16:42:09 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2006 Christophe Geuzaine <geuz@geuz.org>
@@ -130,7 +130,6 @@
 #define GL2PS_IMAGEMAP_TOKEN       13
 #define GL2PS_DRAW_PIXELS_TOKEN    14
 #define GL2PS_TEXT_TOKEN           15
-#define GL2PS_SPECIAL_TOKEN        16
 
 typedef enum {
   T_UNDEFINED    = -1,
@@ -899,10 +898,7 @@ static GLint gl2psAddText(GLint type, const char *str, const char *fontname,
   prim->data.text->angle = angle;
 
   gl2psListAdd(gl2ps->auxprimitives, &prim);
-  if(type == GL2PS_TEXT)
-    glPassThrough(GL2PS_TEXT_TOKEN);
-  else
-    glPassThrough(GL2PS_SPECIAL_TOKEN);
+  glPassThrough(GL2PS_TEXT_TOKEN);
     
   return GL2PS_SUCCESS;
 }
@@ -2387,7 +2383,6 @@ static void gl2psParseFeedbackBuffer(GLint used)
         break;
       case GL2PS_DRAW_PIXELS_TOKEN :
       case GL2PS_TEXT_TOKEN :
-      case GL2PS_SPECIAL_TOKEN :
         if(auxindex < gl2psListNbr(gl2ps->auxprimitives))
           gl2psListAdd(gl2ps->primitives, 
                        gl2psListPointer(gl2ps->auxprimitives, auxindex++));
@@ -4872,6 +4867,8 @@ static void gl2psPrintSVGHeader(void)
                 (int)gl2ps->viewport[2], (int)gl2ps->viewport[3], 
                 (int)gl2ps->viewport[0], (int)gl2ps->viewport[3]);
   }
+
+  gl2psPrintf("<g>\n");
 }
 
 static void gl2psPrintSVGSmoothTriangle(GL2PSxyz xyz[3], GL2PSrgba rgba[3])
@@ -5092,6 +5089,7 @@ static void gl2psPrintSVGPrimitive(void *data)
 
 static void gl2psPrintSVGFooter(void)
 {
+  gl2psPrintf("</g>\n");
   gl2psPrintf("</svg>\n");  
   
   gl2psPrintGzipFooter();
@@ -5137,7 +5135,7 @@ static void gl2psPrintSVGBeginViewport(GLint viewport[4])
               x + w, gl2ps->viewport[3] - (y + h), 
               x, gl2ps->viewport[3] - (y + h));
   gl2psPrintf("</clipPath>\n");
-  gl2psPrintf("<g stroke=\"none\" clip-path=\"url(#cp%d%d%d%d)\">\n", x, y, w, h);
+  gl2psPrintf("<g clip-path=\"url(#cp%d%d%d%d)\">\n", x, y, w, h);
 }
 
 static GLint gl2psPrintSVGEndViewport(void)
