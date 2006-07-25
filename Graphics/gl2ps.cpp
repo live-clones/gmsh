@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.105 2006-07-24 14:05:50 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.106 2006-07-25 11:10:10 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2006 Christophe Geuzaine <geuz@geuz.org>
@@ -655,19 +655,22 @@ static void gl2psListEncodeBase64(GL2PSlist *list)
   int i, n, index, len;
 
   n = list->n * list->size;
-  buffer = (unsigned char*)gl2psMalloc(n * sizeof(unsigned int));
-  memcpy(buffer, list->array, n * sizeof(unsigned int));
+  buffer = (unsigned char*)gl2psMalloc(n * sizeof(unsigned char));
+  memcpy(buffer, list->array, n * sizeof(unsigned char));
   gl2psListReset(list);
 
   index = 0;
   while(index < n) {
     len = 0;
     for(i = 0; i < 3; i++) {
-      in[i] = buffer[index++];
-      if(index < n)
+      if(index < n){
+	in[i] = buffer[index];
         len++;
-      else
+      }
+      else{
         in[i] = 0;
+      }
+      index++;
     }
     if(len) {
       gl2psEncodeBase64Block(in, out, len);
@@ -4982,8 +4985,6 @@ static void gl2psPrintSVGPixmap(GLfloat x, GLfloat y, GL2PSimage *pixmap)
   png = gl2psListCreate(pixmap->width * pixmap->height * 3, 1000, 
                         sizeof(unsigned char));
   gl2psConvertPixmapToPNG(pixmap, png);
-  c = '\0'; /* need to base64-encode a null-terminated string */
-  gl2psListAdd(png, &c); 
   gl2psListEncodeBase64(png);
   gl2psPrintf("<image x=\"%g\" y=\"%g\" width=\"%d\" height=\"%d\"\n",
               x, y - pixmap->height, pixmap->width, pixmap->height);
