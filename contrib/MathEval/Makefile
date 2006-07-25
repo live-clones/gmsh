@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2006-07-12 07:24:23 geuzaine Exp $
+# $Id: Makefile,v 1.8 2006-07-25 12:08:24 remacle Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -61,19 +61,13 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-# 1 "/Users/geuzaine/.gmsh/contrib/MathEval//"
 matheval.o: matheval.cpp common.h ../../DataStr/Malloc.h matheval.h \
   node.h symbol_table.h
-# 1 "/Users/geuzaine/.gmsh/contrib/MathEval//"
 node.o: node.cpp common.h ../../DataStr/Malloc.h node.h symbol_table.h
-# 1 "/Users/geuzaine/.gmsh/contrib/MathEval//"
 scanner.yy.o: scanner.yy.cpp common.h ../../DataStr/Malloc.h node.h \
   symbol_table.h parser.tab.hpp
-# 1 "/Users/geuzaine/.gmsh/contrib/MathEval//"
 parser.tab.o: parser.tab.cpp common.h ../../DataStr/Malloc.h node.h \
   symbol_table.h
-# 1 "/Users/geuzaine/.gmsh/contrib/MathEval//"
 symbol_table.o: symbol_table.cpp common.h ../../DataStr/Malloc.h \
   symbol_table.h xmath.h
-# 1 "/Users/geuzaine/.gmsh/contrib/MathEval//"
 xmath.o: xmath.cpp xmath.h

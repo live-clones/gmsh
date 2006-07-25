@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.31 2006-01-28 21:13:35 geuzaine Exp $
+// $Id: Utils.cpp,v 1.32 2006-07-25 12:08:24 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -248,7 +248,7 @@ end:
 
 #define  Precision 1.e-10
 #define  MaxIter 25
-#define  NumInitGuess 9
+#define  NumInitGuess 11
 
 void find_bestuv(Surface * s, double X, double Y,
                  double *U, double *V, double *Z, int N)
@@ -357,6 +357,15 @@ void invert_singular_matrix3x3(double MM[3][3], double II[3][3])
 #endif
 }
 
+
+/*
+  X = X ( u, v )
+  Y = Y ( u, v )
+  Z = Z ( u, v )
+
+*/
+
+
 void XYZtoUV(Surface * s, double X, double Y, double Z, double *U, double *V,
              double relax)
 {
@@ -365,7 +374,7 @@ void XYZtoUV(Surface * s, double X, double Y, double Z, double *U, double *V,
   Vertex D_u, D_v, P;
   double mat[3][3], jac[3][3];
   double umin, umax, vmin, vmax;
-  double init[NumInitGuess] = {0.487, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0.9, 0.1};
+  double init[NumInitGuess] = {0.487, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0.9, 0.1,0,1};
   
   if(s->Typ == MSH_SURF_NURBS) {
     umin = s->ku[0];
@@ -374,8 +383,8 @@ void XYZtoUV(Surface * s, double X, double Y, double Z, double *U, double *V,
     vmax = s->kv[s->OrderV + s->Nv];
   }
   else {
-    umin = vmin = 0.0;
-    umax = vmax = 1.0;
+    umin = vmin = 0.0-1.e-6;
+    umax = vmax = 1.0+1.e-6;
   }
 
   for(int i = 0; i < NumInitGuess; i++){

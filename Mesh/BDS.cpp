@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.53 2006-03-18 04:48:55 geuzaine Exp $
+// $Id: BDS.cpp,v 1.54 2006-07-25 12:08:23 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1892,7 +1892,7 @@ BDS_Mesh ::~ BDS_Mesh ()
 }
 
 
-bool BDS_Mesh::split_edge(BDS_Edge * e, double coord, BDS_Mesh * geom)
+BDS_Point* BDS_Mesh::split_edge(BDS_Edge * e, double coord, BDS_Mesh * geom)
 {
   /*
         p1
@@ -1912,7 +1912,7 @@ bool BDS_Mesh::split_edge(BDS_Edge * e, double coord, BDS_Mesh * geom)
   int nbFaces = e->numfaces();
 
   if(nbFaces != 2)
-    return false;
+    return 0;
 
   BDS_Point *op[2];
   BDS_Point *p1 = e->p1;
@@ -2012,13 +2012,55 @@ bool BDS_Mesh::split_edge(BDS_Edge * e, double coord, BDS_Mesh * geom)
   triangles.push_back(t3);
   triangles.push_back(t4);
 
-  if(geom || mid->g->surf)
+  if(geom || (mid->g && mid->g->surf))
       snap_point(mid, geom);
+
+  return mid;
+}
+
+bool BDS_SwapEdgeTestNonPlanar::operator () (BDS_Edge *e,
+					     BDS_Point *p1,BDS_Point *p2,BDS_Point *p3,
+					     BDS_Point *q1,BDS_Point *q2,BDS_Point *q3) const
+{
+  double cb1[3],cb2[3];
+  normal_triangle ( p1,p2,p3,cb1);
+  normal_triangle ( q1,q2,q3,cb2);  
+  BDS_Vector n1 = e->faces(0)->N();
+  BDS_Vector n2 = e->faces(1)->N();
+
+  double psc = n1.x * cb1[0] +n1.y * cb1[1] +n1.z * cb1[2];
+  if (psc < 0) return false;
+  psc = n2.x * cb1[0] +n2.y * cb1[1] +n2.z * cb1[2];
+  if (psc < 0) return false;
+  psc = n2.x * cb2[0] +n2.y * cb2[1] +n2.z * cb2[2];
+  if (psc < 0) return false;
+  psc = n1.x * cb2[0] +n1.y * cb2[1] +n1.z * cb2[2];
+  if (psc < 0) return false;
+  return true;
+}
+
+bool BDS_SwapEdgeTestPlanar::operator () (BDS_Edge *e,
+					  BDS_Point *p1,BDS_Point *p2,BDS_Point *p3,
+					  BDS_Point *q1,BDS_Point *q2,BDS_Point *q3) const
+{
+  double s1 = surface_triangle ( p1,p2,p3);
+  double s2 = surface_triangle ( q1,q2,q3);  
+  double n1 = e->faces(0)->S();
+  double n2 = e->faces(1)->S();
+
+  if (s1 < 1.e-4 * (n1+n2))return false;
+  if (s2 < 1.e-4 * (n1+n2))return false;
+  if (fabs(s1+s2 - n1-n2) > 1.e-10 * (s1+s2))return false;
 
   return true;
 }
 
-bool BDS_Mesh::swap_edge(BDS_Edge * e)
+
+// This function does actually the swap without taking into account
+// the feasability of the operation. Those conditions have to be
+// taken into account before doing the edge swap
+
+bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
 {
 
   /*
@@ -2034,15 +2076,15 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e)
      // op1 op2 p2
    */
 
+  // we test if the edge is deleted
   if(e->deleted)
     return false;
 
   int nbFaces = e->numfaces();
-
   if(nbFaces != 2)
     return false;
 
-  if(e->g && e->g->classif_degree != 2)
+  if(e->g && e->g->classif_degree == 1)
     return false;
 
   BDS_Point *op[2];
@@ -2055,6 +2097,9 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e)
   BDS_Point *pts1[3];
   e->faces(0)->getNodes(pts1);
 
+
+  // compute the orientation of the face
+  // with respect to the edge
   int orientation = 0;
   for(int i = 0; i < 3; i++) {
     if(pts1[i] == p1) {
@@ -2062,36 +2107,18 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e)
         orientation = 1;
       else
         orientation = -1;
-
       break;
     }
   }
 
-  // See if the swap reverts one triangle
-  double cb1[3],cb2[3];
-  if(orientation == 1) 
-    {    
-      normal_triangle ( p1 , op[1] , op[0] , cb1);
-      normal_triangle ( op[1] , p2 , op[0] , cb2);  
-    }
-  else
-    {    
-      normal_triangle ( p1 , op[0] , op[1]  , cb1);
-      normal_triangle ( op[0] , p2 , op[1] , cb2);  
-    }
-
-  BDS_Vector n1 = e->faces(0)->N();
-  BDS_Vector n2 = e->faces(1)->N();
-  double psc = n1.x * cb1[0] +n1.y * cb1[1] +n1.z * cb1[2];
-  if (psc < 0) return false;
-  psc = n2.x * cb1[0] +n2.y * cb1[1] +n2.z * cb1[2];
-  if (psc < 0) return false;
-  psc = n2.x * cb2[0] +n2.y * cb2[1] +n2.z * cb2[2];
-  if (psc < 0) return false;
-  psc = n1.x * cb2[0] +n1.y * cb2[1] +n1.z * cb2[2];
-  if (psc < 0) return false;
-  //-----------------------------------------------
-
+  if(orientation == 1) {
+    if (!theTest ( e, p1, op[1], op[0] , op[1], p2, op[0]))
+      return false;
+  }
+  else {
+    if (!theTest ( e, p1, op[0], op[1] , op[1], op[0], p2))
+      return false;
+  }
 
   BDS_Edge *p1_op1 = find_edge(p1, op[0], e->faces(0));
   BDS_Edge *op1_p2 = find_edge(op[0], p2, e->faces(0));
@@ -2108,6 +2135,7 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e)
     del_triangle(e->faces(0));
   }
   del_edge(e);
+
 
   BDS_Edge *op1_op2 = new BDS_Edge(op[0], op[1]);
   edges.push_back(op1_op2);
@@ -2132,6 +2160,7 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e)
   return true;
 }
 
+
 bool BDS_Mesh::collapse_edge(BDS_Edge * e, BDS_Point * p, const double eps)
 {
 
@@ -2149,13 +2178,6 @@ bool BDS_Mesh::collapse_edge(BDS_Edge * e, BDS_Point * p, const double eps)
 
   std::list < BDS_Triangle * >t;
   BDS_Point *o = e->othervertex(p);
-
-  if(!p->g)
-    Msg(GERROR, "Error in BDS");
-  if(!o->g)
-    Msg(GERROR, "Error in BDS");
-  if(!e->g)
-    Msg(GERROR, "Error in BDS");
 
   if(o->g != p->g)
     return false;
@@ -2361,7 +2383,7 @@ bool BDS_Mesh::move_point(BDS_Point * p, double X, double Y, double Z)
 void BDS_Mesh::snap_point(BDS_Point * p, BDS_Mesh * geom_mesh)
 {
   double X, Y, Z;
-  if(p->g->surf) {
+  if(p->g && p->g->surf) {
     p->g->surf->projection(p->X, p->Y, p->Z, X, Y, Z);
     if(move_point(p, X, Y, Z)) {
       SNAP_SUCCESS++;
@@ -2418,6 +2440,7 @@ bool BDS_Mesh::smooth_point(BDS_Point * p, BDS_Mesh * geom_mesh)
   std::list < BDS_Edge * >::iterator eit = p->edges.begin();
 
   while(eit != p->edges.end()) {
+    if ((*eit)->numfaces() == 1) return false;
     BDS_Point *op = ((*eit)->p1 == p) ? (*eit)->p2 : (*eit)->p1;
     X += op->X;
     Y += op->Y;
@@ -2554,6 +2577,7 @@ void BDS_Mesh::applyOptimizationPatterns()
     }
 }
 
+
 int BDS_Mesh::adapt_mesh(const BDS_Metric & metric, bool smooth,
                          BDS_Mesh * geom_mesh)
 {
@@ -2635,7 +2659,7 @@ int BDS_Mesh::adapt_mesh(const BDS_Metric & metric, bool smooth,
 	    if ((qb > qa && dd < 0.1 * ll) || (qb > 5 * qa))	      
 	      {
 		nb_modif++;
-		swap_edge ( *it );
+		swap_edge ( *it , BDS_SwapEdgeTestNonPlanar()) ;
 	      }
 	  }	
 	++it;
@@ -2722,3 +2746,23 @@ BDS_Mesh::BDS_Mesh(const BDS_Mesh & other)
   }
 
 }
+
+/*
+void BDS_Mesh::recombineIntoQuads (const double angle)
+{
+  for(std::list < BDS_Edge * >::const_iterator it = edges.begin();
+      it != edges.end(); ++it) 
+    {
+      BDS_Edge *e = *it;
+      if (e->numfaces() == 2 
+	  && !e->faces(0)->q
+	  && !e->faces(1)->q)
+	{
+	  BDS_Point *op[2];
+	  e->oppositeof(op);
+
+	}
+    }
+  
+}
+*/

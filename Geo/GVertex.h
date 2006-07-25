@@ -2,14 +2,21 @@
 #define _GVERTEX_H_
 
 #include "GEntity.h"
+#include "MVertex.h"
 #include "GPoint.h"
 
 // A model vertex
 class GVertex  : public GEntity 
 {
- public:
-  GVertex(GModel *m, int tag) : GEntity (m,tag) {}
-  virtual ~GVertex() {}
+public:
+  GVertex(GModel *m, int tag) : GEntity (m,tag) 
+    {
+    }
+  virtual ~GVertex() 
+    {
+      if (mesh_vertices.size())
+	delete mesh_vertices[0];
+    }
   virtual GPoint point() const = 0;
   virtual double x() const = 0;
   virtual double y() const = 0;

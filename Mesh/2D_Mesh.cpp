@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.83 2006-07-12 07:24:14 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.84 2006-07-25 12:08:23 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -296,6 +296,7 @@ int mesh_domain(ContourPeek * ListContours, int numcontours,
       doc->points[numact + j].permu = numact + j;
       doc->points[numact + j].numcontour = ListContours[i]->numerocontour;
       doc->points[numact + j].adjacent = NULL;
+      //      Msg(INFO, "pt %g %g ",doc->points[numact + j].where.h,doc->points[numact + j].where.v);
     }
     numact += ListContours[i]->numpoints;
   }
@@ -316,6 +317,8 @@ int mesh_domain(ContourPeek * ListContours, int numcontours,
 
   makepermut(nump);
   del_L = List_Create(doc->numTriangles, 1000, sizeof(Delaunay *));
+
+  //  Msg(INFO, "%d triangles in the initial mesh, %d points",doc->numTriangles,nump);
 
   for(i = 0; i < doc->numTriangles; i++) {
     del_P = &doc->delaunay[i];
@@ -743,10 +746,10 @@ void filldel(Delaunay * deladd, int aa, int bb, int cc,
     else
       newqual = (points[aa].quality + points[bb].quality + 
 		 points[cc].quality) / 3.;
-    v = Create_Vertex(-1, pt2.h, pt2.v, 0.0, 0.0, 0.0);
-    Calcule_Z_Plan(&v, &dum);
-    Projette_Inverse(&v, &dum);
-    Free_Vertex(&v, 0);
+    //    v = Create_Vertex(-1, pt2.h, pt2.v, 0.0, 0.0, 0.0);
+    //    Calcule_Z_Plan(&v, &dum);
+    //    Projette_Inverse(&v, &dum);
+    //    Free_Vertex(&v, 0);
   }
 
   deladd->t.quality_value =

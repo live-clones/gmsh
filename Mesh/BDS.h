@@ -37,6 +37,7 @@
 class BDS_Tet;
 class BDS_Edge;
 class BDS_Triangle;
+class BDS_Quad;
 class BDS_Mesh;
 class BDS_Point;
 class BDS_Vector;
@@ -221,7 +222,7 @@ class BDS_Pos
 {
 public:
   double X,Y,Z;    
-  BDS_Pos(const double &x,const double &y, const double & z)
+  BDS_Pos(double x=0,double y=0, double z=0)
     : X(x),Y(y),Z(z)
   {
   }
@@ -320,7 +321,7 @@ public:
 		 _faces.end());
   }
   
-  inline void oppositeof(BDS_Point * oface[2]) const; 
+  void oppositeof(BDS_Point * oface[2]) const; 
   
   BDS_Edge(BDS_Point *A, BDS_Point *B)
     : deleted(false), status(0),partition(0),target_length(1.0),g(0)
@@ -338,6 +339,7 @@ public:
   }
 };
 
+
 class BDS_Triangle
 {
 public:
@@ -346,6 +348,7 @@ public:
   int partition;
   BDS_Tet  *t1,*t2;
   BDS_Edge *e1,*e2,*e3;
+  BDS_Quad *q;
   BDS_Vector NORMAL;
   double surface;
   inline BDS_Vector N() const {return NORMAL;}
@@ -441,7 +444,7 @@ public:
   }
   
   BDS_Triangle(BDS_Edge *A, BDS_Edge *B, BDS_Edge *C)
-    : deleted(false) , status(0), partition(0),t1(0),t2(0),e1(A),e2(B),e3(C),g(0)
+    : deleted(false) , status(0), partition(0),t1(0),t2(0),e1(A),e2(B),e3(C),q(0),g(0)
   {	
     e1->addface(this);
     e2->addface(this);
@@ -449,6 +452,24 @@ public:
     _update();
   }
 };
+
+
+class BDS_Quad
+{
+public:
+  BDS_Triangle *t1,*t2;  
+  inline void getNodes(BDS_Point *n[4]) const
+  {
+  }
+  
+  BDS_Quad(BDS_Triangle *A, BDS_Triangle *B)
+    : t1(A), t2(B)
+  {	
+    t1->q = this;
+    t2->q = this;
+  }
+};
+
 
 class BDS_Tet
 {
@@ -603,6 +624,32 @@ public:
   }
 };
 
+
+class BDS_SwapEdgeTest
+{
+ public:
+  virtual bool operator() (BDS_Edge *e,
+			   BDS_Point *p1,BDS_Point *p2,BDS_Point *p3,
+			   BDS_Point *q1,BDS_Point *q2,BDS_Point *q3) const = 0; 
+};
+
+class BDS_SwapEdgeTestPlanar : public BDS_SwapEdgeTest
+{
+ public:
+  virtual bool operator() (BDS_Edge *e,
+			   BDS_Point *p1,BDS_Point *p2,BDS_Point *p3,
+			   BDS_Point *q1,BDS_Point *q2,BDS_Point *q3) const;
+};
+
+class BDS_SwapEdgeTestNonPlanar : public BDS_SwapEdgeTest
+{
+ public:
+  virtual bool operator() (BDS_Edge *e,
+			   BDS_Point *p1,BDS_Point *p2,BDS_Point *p3,
+			   BDS_Point *q1,BDS_Point *q2,BDS_Point *q3) const;
+};
+
+
 class BDS_Mesh 
 {    
   int MAXPOINTNUMBER,SNAP_SUCCESS,SNAP_FAILURE;
@@ -640,13 +687,13 @@ public:
   void add_geom(int degree, int tag);
   BDS_GeomEntity *get_geom(int p1, int p2);
   // 2D operators
-  bool swap_edge(BDS_Edge *);
+  bool swap_edge(BDS_Edge *, const BDS_SwapEdgeTest &theTest);
   bool collapse_edge(BDS_Edge *, BDS_Point*, const double eps);
   void snap_point(BDS_Point* , BDS_Mesh *geom = 0);
   bool smooth_point(BDS_Point* , BDS_Mesh *geom = 0);
   bool smooth_point_b(BDS_Point*); 
   bool move_point(BDS_Point *p , double X, double Y, double Z);
-  bool split_edge(BDS_Edge *, double coord, BDS_Mesh *geom = 0);
+  BDS_Point* split_edge(BDS_Edge *, double coord, BDS_Mesh *geom = 0);
   // Global operators
   void classify(double angle, int nb = -1); 
   void color_plane_surf(double eps , int nb);

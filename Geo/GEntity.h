@@ -144,7 +144,7 @@ class GEntity {
   int tag () const {return _tag;}
 
   // The bounding box
-  SBoundingBox3d bounds() const{throw;}
+  virtual SBoundingBox3d bounds() const{throw;}
 
   // The mesh vertices uniquely owned by the entity
   std::vector<MVertex*> mesh_vertices;

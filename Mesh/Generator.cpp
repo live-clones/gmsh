@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.85 2006-07-14 12:54:33 geuzaine Exp $
+// $Id: Generator.cpp,v 1.86 2006-07-25 12:08:24 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -30,6 +30,7 @@
 #include "PartitionMesh.h"
 #include "OS.h"
 #include "meshGEdge.h"
+#include "meshGFace.h"
 #include "GModel.h"
 
 extern Mesh *THEM;
@@ -266,7 +267,7 @@ void Maillage_Dimension_1()
 
   double t1 = Cpu();
 
-  Tree_Action(THEM->Curves, Maillage_Curve);
+  //  Tree_Action(THEM->Curves, Maillage_Curve);
 
   std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), meshGEdge());
 
@@ -306,7 +307,9 @@ void Maillage_Dimension_2()
 
   // mesh 2D
 
-  Tree_Action(THEM->Surfaces, Maillage_Surface);
+  //  Tree_Action(THEM->Surfaces, Maillage_Surface);
+
+  std::for_each (GMODEL->firstFace(),GMODEL->lastFace(), meshGFace() );
 
   // global "all-quad" recombine
 

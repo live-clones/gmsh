@@ -93,5 +93,7 @@ int Is_left_of(PointNumero x,PointNumero y,PointNumero check);
 int Is_right_of(PointNumero x,PointNumero y,PointNumero check);
 int DListInsert(DListRecord **dlist, MPoint center, PointNumero newPoint);
 int DListDelete(DListPeek *dlist,PointNumero oldPoint);
+int mesh_domain(ContourPeek * ListContours, int numcontours,
+                maillage * mai, int *numpoints, int OnlyTheInitialMesh);
 
 #endif

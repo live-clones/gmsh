@@ -34,7 +34,6 @@ class gmshFace : public GFace {
   virtual bool periodic(int dim) const; 
   virtual bool degenerate(int dim) const; 
   virtual double period(int dir) const {throw;}
-  virtual double tolerance() const; 
   //  virtual GeoRep * geometry() {return 0;}
   void * getNativePtr() const; 
   Surface *s;

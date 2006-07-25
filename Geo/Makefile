@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.79 2006-07-14 12:17:06 geuzaine Exp $
+# $Id: Makefile,v 1.80 2006-07-25 12:08:23 remacle Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -26,7 +26,7 @@ LIB     = ../lib/libGmshGeo.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Numeric\
           -I../Parser -I../Fltk\
           -I../contrib/NR
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
 
 ifdef DEVROOT
  INCLUDE := $(INCLUDE) -I$(DEVROOT)/MeshAdapt/model/include
@@ -75,7 +75,6 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-# 1 "/Users/geuzaine/.gmsh/Geo//"
 CAD.o: CAD.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Geo.h \
@@ -88,12 +87,10 @@ CAD.o: CAD.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Mesh/Interpolation.h ../Mesh/Vertex.h ../Mesh/Mesh.h \
   ../Mesh/Create.h ../Mesh/Vertex.h ../Mesh/Mesh.h CAD.h ExtrudeParams.h \
   ../Common/Visibility.h ../Common/Context.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
 MinMax.o: MinMax.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Numeric/Numeric.h ../Mesh/Vertex.h ../Common/Context.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
 ExtrudeParams.o: ExtrudeParams.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -104,7 +101,6 @@ ExtrudeParams.o: ExtrudeParams.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/GmshDefines.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h ExtrudeParams.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
 Geo.o: Geo.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Geo.h CAD.h \
@@ -118,7 +114,6 @@ Geo.o: Geo.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   GModel.h GVertex.h GEntity.h Range.h SPoint3.h SBoundingBox3d.h \
   MVertex.h GPoint.h GEdge.h SVector3.h SPoint2.h GFace.h Pair.h \
   GRegion.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
 GeoUtils.o: GeoUtils.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -129,26 +124,20 @@ GeoUtils.o: GeoUtils.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/GmshDefines.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h ExtrudeParams.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
 GVertex.o: GVertex.cpp GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h GPoint.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
 GEdge.o: GEdge.cpp GEdge.h GEntity.h Range.h SPoint3.h SBoundingBox3d.h \
   MVertex.h ../Common/GmshDefines.h GVertex.h GPoint.h SVector3.h \
   SPoint2.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
 GFace.o: GFace.cpp GFace.h GPoint.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h SPoint2.h SVector3.h \
   Pair.h GEdge.h GVertex.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
 GRegion.o: GRegion.cpp GRegion.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h GFace.h GPoint.h \
   SPoint2.h SVector3.h Pair.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
 GModel.o: GModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h GPoint.h GEdge.h \
   SVector3.h SPoint2.h GFace.h Pair.h GRegion.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
 gmshModel.o: gmshModel.cpp gmshModel.h GModel.h GVertex.h GEntity.h \
   Range.h SPoint3.h SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h \
   GPoint.h GEdge.h SVector3.h SPoint2.h GFace.h Pair.h GRegion.h \
@@ -162,7 +151,6 @@ gmshModel.o: gmshModel.cpp gmshModel.h GModel.h GVertex.h GEntity.h \
   ../Parser/OpenFile.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h ../Common/Message.h gmshVertex.h gmshFace.h \
   gmshEdge.h gmshRegion.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
 gmshEdge.o: gmshEdge.cpp gmshModel.h GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h GPoint.h \
   GEdge.h SVector3.h SPoint2.h GFace.h Pair.h GRegion.h gmshEdge.h \
@@ -175,7 +163,6 @@ gmshEdge.o: gmshEdge.cpp gmshModel.h GModel.h GVertex.h GEntity.h Range.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Mesh/Interpolation.h ../Mesh/Vertex.h ../Mesh/Mesh.h CAD.h \
   ExtrudeParams.h Geo.h ../Common/Context.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
 gmshFace.o: gmshFace.cpp gmshModel.h GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h GPoint.h \
   GEdge.h SVector3.h SPoint2.h GFace.h Pair.h GRegion.h gmshEdge.h \
@@ -187,8 +174,8 @@ gmshFace.o: gmshFace.cpp gmshModel.h GModel.h GVertex.h GEntity.h Range.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   gmshFace.h ../Mesh/Interpolation.h ../Mesh/Vertex.h ../Mesh/Mesh.h \
-  CAD.h ExtrudeParams.h Geo.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
+  CAD.h ExtrudeParams.h Geo.h ../Mesh/Utils.h ../Mesh/Vertex.h \
+  ../Mesh/Mesh.h
 gmshRegion.o: gmshRegion.cpp gmshModel.h GModel.h GVertex.h GEntity.h \
   Range.h SPoint3.h SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h \
   GPoint.h GEdge.h SVector3.h SPoint2.h GFace.h Pair.h GRegion.h \
@@ -201,11 +188,8 @@ gmshRegion.o: gmshRegion.cpp gmshModel.h GModel.h GVertex.h GEntity.h \
   ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
   ../Mesh/Matrix.h gmshFace.h gmshRegion.h ../Mesh/Interpolation.h \
   ../Mesh/Vertex.h ../Mesh/Mesh.h CAD.h ExtrudeParams.h Geo.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
 SVector3.o: SVector3.cpp SVector3.h SPoint3.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
 SBoundingBox3d.o: SBoundingBox3d.cpp SBoundingBox3d.h SPoint3.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
 ExtractContour.o: ExtractContour.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -216,7 +200,6 @@ ExtractContour.o: ExtractContour.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/GmshDefines.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h CAD.h ExtrudeParams.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
 Print_Geo.o: Print_Geo.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \

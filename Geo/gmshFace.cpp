@@ -4,6 +4,7 @@
 #include "Interpolation.h"
 #include "CAD.h"
 #include "Geo.h"
+#include "Utils.h"
 
 gmshFace::gmshFace(GModel *m,Surface * face):GFace (m,face->Num), s(face)
 {
@@ -49,7 +50,17 @@ int gmshFace::paramDegeneracies(int dir, double *par)
 
 SBoundingBox3d gmshFace::bounds() const
 {
-  throw;
+
+  std::list<GEdge*>::const_iterator it = l_edges.begin();
+  SBoundingBox3d res = (*it)->bounds();
+  ++it;
+  while (it != l_edges.end())
+    {
+      res += (*it)->bounds();  
+      ++it;
+    }
+  return res;
+
 }
 
 SVector3 gmshFace::normal(const SPoint2 &param) const
@@ -75,11 +86,37 @@ GPoint gmshFace::point(const SPoint2 &pt) const
     return point(pt.x(),pt.y()); 
 }
 
+
+void computePlaneDatas (const GFace *gf, double VX[3],double VY[3],double &x, double &y, double &z)
+{
+  VX[0] = gf->mp.plan[0][0];
+  VX[1] = gf->mp.plan[0][1];
+  VX[2] = gf->mp.plan[0][2];
+  VY[0] = gf->mp.plan[1][0];
+  VY[1] = gf->mp.plan[1][1];
+  VY[2] = gf->mp.plan[1][2];
+  x=gf->mp.x;  
+  y=gf->mp.y;  
+  z=gf->mp.z;  
+}
+
+
 GPoint gmshFace::point(double par1,double par2) const
 {
   double pp[2]={par1,par2};
-  Vertex v = InterpolateSurface( s, par1, par2,0,0);
-  return GPoint(v.Pos.X,v.Pos.Y,v.Pos.Z,this,pp);
+  if (s->Typ == MSH_SURF_PLAN)
+    {
+      double x,y,z,VX[3],VY[3];
+      computePlaneDatas (this,VX,VY,x,y,z);
+      return GPoint( x + VX[0] * par1 + VY[0] * par2,
+		     y + VX[1] * par1 + VY[1] * par2,
+		     z + VX[2] * par1 + VY[2] * par2, this,pp);
+    }
+  else
+    {
+      Vertex v = InterpolateSurface( s, par1, par2,0,0);
+      return GPoint(v.Pos.X,v.Pos.Y,v.Pos.Z,this,pp);
+    }
 }
 
 GPoint gmshFace::closestPoint(const SPoint3 & qp)
@@ -109,12 +146,20 @@ int gmshFace::containsParam(const SPoint2 &pt) const
 
 SPoint2 gmshFace::parFromPoint(const SPoint3 &qp) const
 {
-  Vertex v;
-  v.Pos.X = qp.x();
-  v.Pos.Y = qp.y();
-  v.Pos.Z = qp.z();
-  ProjectPointOnSurface(s, v);
-  SPoint2 pt2(v.us[0],v.us[1]); 
+  double u,v;
+  if (s->Typ == MSH_SURF_PLAN)
+    {
+      double x,y,z,VX[3],VY[3];
+      computePlaneDatas (this,VX,VY,x,y,z);
+      double vec[3] = {qp.x()-x,qp.y()-y,qp.z()-z};
+      prosca(vec,VX,&u);
+      prosca(vec,VY,&v);
+    }
+  else
+    {
+      XYZtoUV(s, qp.x(), qp.y(), qp.z(), &u, &v, 1.0);
+    }
+  SPoint2 pt2(u,v); 
   return pt2;
 }
 /*
@@ -151,11 +196,6 @@ int gmshFace::geomDirection() const
 {
   return 1;
 }
-
-double gmshFace::tolerance() const
-{ return 1.e-14; }
-
-
 
 void * gmshFace::getNativePtr() const
 { return s; }

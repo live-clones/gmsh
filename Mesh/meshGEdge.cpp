@@ -150,25 +150,29 @@ void meshGEdge :: operator() (GEdge *ge)
 
   // do not consider the first and the last vertex 
   // those are not classified on this mesh edge
-  ge->mesh_vertices.resize(N-2);
 
-  while(NUMP < N - 1) {
-    List_Read(Points, count - 1, &P1);
-    List_Read(Points, count, &P2);
-    const double d = (double)NUMP *b;
-    
-    if((fabs(P2.p) >= fabs(d)) && (fabs(P1.p) < fabs(d))) {
-      double dt = P2.t - P1.t;
-      double dp = P2.p - P1.p;
-      double t = P1.t + dt / dp * (d - P1.p);      
-      GPoint V = ge -> point(t) ;      
-      MEdgeVertex *ev = new MEdgeVertex ( V.x(), V.y(), V.z(), ge, t );     
-      ge->mesh_vertices [NUMP-1] = ev;
-      NUMP++;
+  if (N>2)
+    {
+      ge->mesh_vertices.resize(N-2);
+      
+      while(NUMP < N - 1) {
+	List_Read(Points, count - 1, &P1);
+	List_Read(Points, count, &P2);
+	const double d = (double)NUMP *b;
+	
+	if((fabs(P2.p) >= fabs(d)) && (fabs(P1.p) < fabs(d))) {
+	  double dt = P2.t - P1.t;
+	  double dp = P2.p - P1.p;
+	  double t = P1.t + dt / dp * (d - P1.p);      
+	  GPoint V = ge -> point(t) ;      
+	  MEdgeVertex *ev = new MEdgeVertex ( V.x(), V.y(), V.z(), ge, t );     
+	  ge->mesh_vertices [NUMP-1] = ev;
+	  NUMP++;
+	}
+	else {
+	  count++;
+	}
+      }
     }
-    else {
-      count++;
-    }
-  }
   List_Delete(Points);
 }  

@@ -8,6 +8,13 @@
 #include "SVector3.h"
 #include "Pair.h"
 
+struct mean_plane
+{
+  double plan[3][3];
+  double a,b,c,d;
+  double x,y,z;
+};
+
 class GRegion;
 
 // A model face. 
@@ -25,6 +32,14 @@ class GFace : public GEntity
 
   void addRegion(GRegion *r){ r1?r2=r:r1=r;  }
   void delRegion(GRegion *r){ if(r1==r)r1=r2;r2=0;  }
+
+  /// edge orientations.
+  virtual std::list<int> orientations() const{return l_dirs;}
+  /// Edges that bound this entity or that this entity bounds.
+  virtual std::list<GEdge*> edges() const{return l_edges;}
+  /// Edges that bound this entity or that this entity bounds.
+  virtual std::list<GVertex*> vertices() const;
+
 
   virtual int dim() const {return 2;}
 
@@ -59,8 +74,8 @@ class GFace : public GEntity
   // to worry about that.
   virtual bool surfPeriodic(int dim) const = 0;
 
- protected:
-  void buildEdgeLoops ();
+  std::vector<MVertex*> triangles;
+  mean_plane mp;
 };
 
 #endif
