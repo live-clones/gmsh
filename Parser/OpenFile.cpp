@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.98 2006-07-14 12:17:06 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.99 2006-08-04 14:28:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -336,7 +336,11 @@ int MergeProblem(char *name, int warn_if_missing)
        !strncmp(tmp, "$MeshFormat", 4)) {
       if(THEM->status < 0)
 	mai3d(0);
-      Read_Mesh(THEM, fp, name, FORMAT_MSH);
+
+      if(!GMODEL) 
+	GMODEL = new gmshModel;
+      GMODEL->readMSH(name);
+
       SetBoundingBox();
       status = THEM->status;
     }

@@ -9,7 +9,8 @@
 
 class gmshEdge : public GEdge {
  public:
-  gmshEdge(GModel *model,Curve *edge,GVertex *v1,GVertex *v2);
+  gmshEdge(GModel *model, Curve *edge, GVertex *v1, GVertex *v2);
+  gmshEdge(GModel *model, int num);
   virtual ~gmshEdge();
   double period() const{throw ;}
   Range<double> parBounds(int i) const;

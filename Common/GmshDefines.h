@@ -1,5 +1,7 @@
 #ifndef _GMSH_DEFINES_H_
 #define _GMSH_DEFINES_H_
+
+// IO file formats
 #define FORMAT_MSH           1
 #define FORMAT_UNV           2
 #define FORMAT_GREF          3
@@ -29,6 +31,23 @@
 #define FORMAT_STL           27
 #define FORMAT_P3D           28
 #define FORMAT_SVG           29
+
+// Element types in .msh file format
+#define LGN1 1
+#define TRI1 2
+#define QUA1 3
+#define TET1 4
+#define HEX1 5
+#define PRI1 6
+#define PYR1 7
+#define LGN2 8
+#define TRI2 9
+#define QUA2 10
+#define TET2 11
+#define HEX2 12
+#define PRI2 13
+#define PYR2 14
+#define PNT  15
 
 #define CONV_VALUE    0.8
 

@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.97 2006-07-14 12:17:06 geuzaine Exp $
+// $Id: Draw.cpp,v 1.98 2006-08-04 14:28:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -79,8 +79,9 @@ void Draw3d(void)
   InitProjection();
   InitRenderModel();
   InitPosition();
-
-  Draw_Model();
+  Draw_Geom();
+  Draw_Mesh();
+  Draw_Post();
 }
 
 void Draw2d(void)
@@ -346,6 +347,9 @@ void InitPosition(void)
   // context has changed, i.e., even if we are out of Draw())
   glGetDoublev(GL_PROJECTION_MATRIX, CTX.proj);
   glGetDoublev(GL_MODELVIEW_MATRIX, CTX.model);
+
+  for(int i = 0; i < 6; i++)
+    glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), CTX.clip_plane[i]);
 }
 
 // Entity selection
@@ -377,7 +381,8 @@ int Process_SelectionBuffer(int type, bool multi,
   glPushMatrix();
   InitProjection(x, y, w, h);
   InitPosition();
-  Draw_Model();
+  Draw_Geom();
+  Draw_Mesh();
   glPopMatrix();
 
   GLint numhits = glRenderMode(GL_RENDER);

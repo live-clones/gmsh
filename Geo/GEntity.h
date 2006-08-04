@@ -15,7 +15,7 @@ class GVertex;
 class GEdge;
 class GFace;
 class GRegion;
-//class MeshRep;
+class MRep;
 
 // A geometric model entity. All enitites are owned by a GModel.
 class GEntity {
@@ -23,7 +23,7 @@ class GEntity {
  private:
   GModel *_model;
   int _tag;
-  // DiscreteRep *mesh, *modelMesh;
+  MRep *_geom, *_mesh;
 
  public:
 
@@ -89,12 +89,6 @@ class GEntity {
 
   virtual ~GEntity() {};
 
-  // Returns a renderable representation of the entity.
-  // virtual MeshRep * getGeometry();
-
-  // Returns a mesh of the entity
-  // virtual MeshRep * getMesh();
-
   // Spatial dimension of the entity 
   virtual int dim() const = 0;
 
@@ -149,11 +143,19 @@ class GEntity {
   // The mesh vertices uniquely owned by the entity
   std::vector<MVertex*> mesh_vertices;
 
+  // The physical entitites (if any) that contain this entity
+  std::vector<int> physicals;
+
   // The standard drawing attributes of the entity
   struct {
     char Visible, Frozen;
   } drawAttributes ;
 
+  // Returns a renderable representation of the geometry
+  virtual MRep *geomRep(){ return _geom; }
+
+  // Returns a renderable representation of the mesh
+  virtual MRep *meshRep(){ return _mesh; }
 };
 
 // A minimal, non-abstract entity that can be used for sorting

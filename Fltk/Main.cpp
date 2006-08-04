@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.90 2006-07-12 07:24:13 geuzaine Exp $
+// $Id: Main.cpp,v 1.91 2006-08-04 14:28:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,7 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Geo.h"
+#include "CreateFile.h"
 #include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"
@@ -135,10 +136,10 @@ int main(int argc, char *argv[])
       }
       if(CTX.batch > 0) {
         mai3d(CTX.batch);
-        Print_Mesh(CTX.output_filename, CTX.mesh.format);
+        CreateOutputFile(CTX.output_filename, CTX.mesh.format);
       }
       else
-        Print_Geo(CTX.output_filename);
+        CreateOutputFile(CTX.output_filename, FORMAT_GEO);
       if(CTX.mesh.histogram) {
         Mesh_Quality(THEM);
         Print_Histogram(THEM->Histogram[0]);

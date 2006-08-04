@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.111 2006-07-25 12:08:24 remacle Exp $
+# $Id: Makefile,v 1.112 2006-08-04 14:28:03 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -110,6 +110,7 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 1D_Mesh.o: 1D_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -117,6 +118,7 @@ depend:
   Face.h Edge.h ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h \
   Utils.h ../Common/Context.h Interpolation.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 2D_Mesh.o: 2D_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -129,6 +131,7 @@ depend:
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h Mesh.h Utils.h Vertex.h Create.h 2D_Mesh.h \
   ../Common/Context.h Interpolation.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 2D_Transfinite.o: 2D_Transfinite.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -136,6 +139,7 @@ depend:
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshDefines.h \
   Metric.h Matrix.h Interpolation.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 2D_Elliptic.o: 2D_Elliptic.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -147,6 +151,7 @@ depend:
   ../Common/SmoothNormals.h ../Common/GmshDefines.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h Mesh.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 2D_BGMesh.o: 2D_BGMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -154,6 +159,7 @@ depend:
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h \
   2D_Mesh.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 2D_Recombine.o: 2D_Recombine.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -161,6 +167,7 @@ depend:
   Face.h Edge.h ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h \
   Interpolation.h Utils.h 2D_Mesh.h Create.h ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 2D_InitMesh.o: 2D_InitMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -168,6 +175,7 @@ depend:
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h \
   2D_Mesh.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 2D_Bowyer.o: 2D_Bowyer.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -175,6 +183,7 @@ depend:
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h \
   2D_Mesh.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 2D_Bricks.o: 2D_Bricks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -182,6 +191,7 @@ depend:
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h \
   2D_Mesh.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 2D_DivAndConq.o: 2D_DivAndConq.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -189,6 +199,7 @@ depend:
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h \
   2D_Mesh.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 2D_Util.o: 2D_Util.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -196,6 +207,7 @@ depend:
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h \
   2D_Mesh.h ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 2D_Links.o: 2D_Links.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -203,6 +215,7 @@ depend:
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h \
   2D_Mesh.h ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 2D_Tree.o: 2D_Tree.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -210,6 +223,7 @@ depend:
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshDefines.h \
   Metric.h Matrix.h 2D_Mesh.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 2D_Cylindrical.o: 2D_Cylindrical.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -217,6 +231,7 @@ depend:
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h \
   ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 2D_Parametric.o: 2D_Parametric.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -229,6 +244,7 @@ depend:
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h Interpolation.h Vertex.h Mesh.h 2D_Mesh.h \
   Create.h ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 2D_Mesh_Aniso.o: 2D_Mesh_Aniso.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -241,13 +257,15 @@ depend:
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h Mesh.h Interpolation.h Vertex.h Create.h \
   ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 2D_Mesh_Triangle.o: 2D_Mesh_Triangle.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshDefines.h \
-  Metric.h Matrix.h ../Common/Context.h ../contrib/Triangle/triangle.h
+  Metric.h Matrix.h ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 3D_Mesh.o: 3D_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -255,6 +273,7 @@ depend:
   Face.h Edge.h ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h \
   3D_Mesh.h Create.h ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 3D_Transfinite.o: 3D_Transfinite.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -262,6 +281,7 @@ depend:
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshDefines.h \
   Metric.h Matrix.h Interpolation.h Create.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 3D_BGMesh.o: 3D_BGMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -270,43 +290,10 @@ depend:
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshDefines.h \
   Metric.h Matrix.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h /sw/include/gsl/gsl_linalg.h \
-  /sw/include/gsl/gsl_mode.h /sw/include/gsl/gsl_permutation.h \
-  /sw/include/gsl/gsl_types.h /sw/include/gsl/gsl_errno.h \
-  /sw/include/gsl/gsl_check_range.h /sw/include/gsl/gsl_vector.h \
-  /sw/include/gsl/gsl_vector_complex_long_double.h \
-  /sw/include/gsl/gsl_complex.h /sw/include/gsl/gsl_vector_long_double.h \
-  /sw/include/gsl/gsl_block_long_double.h \
-  /sw/include/gsl/gsl_vector_complex.h \
-  /sw/include/gsl/gsl_block_complex_long_double.h \
-  /sw/include/gsl/gsl_vector_complex_double.h \
-  /sw/include/gsl/gsl_vector_double.h /sw/include/gsl/gsl_block_double.h \
-  /sw/include/gsl/gsl_block_complex_double.h \
-  /sw/include/gsl/gsl_vector_complex_float.h \
-  /sw/include/gsl/gsl_vector_float.h /sw/include/gsl/gsl_block_float.h \
-  /sw/include/gsl/gsl_block_complex_float.h \
-  /sw/include/gsl/gsl_vector_ulong.h /sw/include/gsl/gsl_block_ulong.h \
-  /sw/include/gsl/gsl_vector_long.h /sw/include/gsl/gsl_block_long.h \
-  /sw/include/gsl/gsl_vector_uint.h /sw/include/gsl/gsl_block_uint.h \
-  /sw/include/gsl/gsl_vector_int.h /sw/include/gsl/gsl_block_int.h \
-  /sw/include/gsl/gsl_vector_ushort.h /sw/include/gsl/gsl_block_ushort.h \
-  /sw/include/gsl/gsl_vector_short.h /sw/include/gsl/gsl_block_short.h \
-  /sw/include/gsl/gsl_vector_uchar.h /sw/include/gsl/gsl_block_uchar.h \
-  /sw/include/gsl/gsl_vector_char.h /sw/include/gsl/gsl_block_char.h \
-  /sw/include/gsl/gsl_matrix.h \
-  /sw/include/gsl/gsl_matrix_complex_long_double.h \
-  /sw/include/gsl/gsl_matrix_complex_double.h \
-  /sw/include/gsl/gsl_matrix_complex_float.h \
-  /sw/include/gsl/gsl_matrix_long_double.h \
-  /sw/include/gsl/gsl_matrix_double.h /sw/include/gsl/gsl_matrix_float.h \
-  /sw/include/gsl/gsl_matrix_ulong.h /sw/include/gsl/gsl_matrix_long.h \
-  /sw/include/gsl/gsl_matrix_uint.h /sw/include/gsl/gsl_matrix_int.h \
-  /sw/include/gsl/gsl_matrix_ushort.h /sw/include/gsl/gsl_matrix_short.h \
-  /sw/include/gsl/gsl_matrix_uchar.h /sw/include/gsl/gsl_matrix_char.h \
-  /sw/include/gsl/gsl_blas.h /sw/include/gsl/gsl_blas_types.h \
-  /sw/include/gsl/gsl_cblas.h ../Common/AdaptiveViews.h \
-  ../Common/GmshMatrix.h ../Common/Context.h ../Common/OctreePost.h \
-  ../Common/Octree.h ../Common/OctreeInternals.h
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
+  ../Common/Context.h ../Common/OctreePost.h ../Common/Octree.h \
+  ../Common/OctreeInternals.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 3D_Extrude.o: 3D_Extrude.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -318,6 +305,7 @@ depend:
   ../Common/SmoothNormals.h ../Common/GmshDefines.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h Mesh.h ../Common/Context.h Create.h Vertex.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 3D_Extrude_Old.o: 3D_Extrude_Old.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -329,6 +317,7 @@ depend:
   ../Common/SmoothNormals.h ../Common/GmshDefines.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h Mesh.h ../Common/Context.h Create.h Vertex.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 3D_Coherence.o: 3D_Coherence.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -336,75 +325,43 @@ depend:
   Face.h Edge.h ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h \
   3D_Mesh.h Create.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 3D_Divide.o: 3D_Divide.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Numeric/Numeric.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 3D_Mesh_Netgen.o: 3D_Mesh_Netgen.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Geo/Geo.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshDefines.h \
-  Metric.h Matrix.h Create.h ../Common/Context.h ../Common/OS.h \
-  ../contrib/Netgen/libsrc/interface/nglib.h \
-  ../contrib/Netgen/nglib_addon.h
+  Metric.h Matrix.h Create.h ../Common/Context.h ../Common/OS.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 3D_Mesh_Tetgen.o: 3D_Mesh_Tetgen.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshDefines.h \
-  Metric.h Matrix.h Create.h ../Common/Context.h \
-  ../contrib/Tetgen/tetgen.h
-BDS.o: BDS.cpp ../Numeric/Numeric.h ../Common/GmshMatrix.h \
-  /sw/include/gsl/gsl_linalg.h /sw/include/gsl/gsl_mode.h \
-  /sw/include/gsl/gsl_permutation.h /sw/include/gsl/gsl_types.h \
-  /sw/include/gsl/gsl_errno.h /sw/include/gsl/gsl_check_range.h \
-  /sw/include/gsl/gsl_vector.h \
-  /sw/include/gsl/gsl_vector_complex_long_double.h \
-  /sw/include/gsl/gsl_complex.h /sw/include/gsl/gsl_vector_long_double.h \
-  /sw/include/gsl/gsl_block_long_double.h \
-  /sw/include/gsl/gsl_vector_complex.h \
-  /sw/include/gsl/gsl_block_complex_long_double.h \
-  /sw/include/gsl/gsl_vector_complex_double.h \
-  /sw/include/gsl/gsl_vector_double.h /sw/include/gsl/gsl_block_double.h \
-  /sw/include/gsl/gsl_block_complex_double.h \
-  /sw/include/gsl/gsl_vector_complex_float.h \
-  /sw/include/gsl/gsl_vector_float.h /sw/include/gsl/gsl_block_float.h \
-  /sw/include/gsl/gsl_block_complex_float.h \
-  /sw/include/gsl/gsl_vector_ulong.h /sw/include/gsl/gsl_block_ulong.h \
-  /sw/include/gsl/gsl_vector_long.h /sw/include/gsl/gsl_block_long.h \
-  /sw/include/gsl/gsl_vector_uint.h /sw/include/gsl/gsl_block_uint.h \
-  /sw/include/gsl/gsl_vector_int.h /sw/include/gsl/gsl_block_int.h \
-  /sw/include/gsl/gsl_vector_ushort.h /sw/include/gsl/gsl_block_ushort.h \
-  /sw/include/gsl/gsl_vector_short.h /sw/include/gsl/gsl_block_short.h \
-  /sw/include/gsl/gsl_vector_uchar.h /sw/include/gsl/gsl_block_uchar.h \
-  /sw/include/gsl/gsl_vector_char.h /sw/include/gsl/gsl_block_char.h \
-  /sw/include/gsl/gsl_matrix.h \
-  /sw/include/gsl/gsl_matrix_complex_long_double.h \
-  /sw/include/gsl/gsl_matrix_complex_double.h \
-  /sw/include/gsl/gsl_matrix_complex_float.h \
-  /sw/include/gsl/gsl_matrix_long_double.h \
-  /sw/include/gsl/gsl_matrix_double.h /sw/include/gsl/gsl_matrix_float.h \
-  /sw/include/gsl/gsl_matrix_ulong.h /sw/include/gsl/gsl_matrix_long.h \
-  /sw/include/gsl/gsl_matrix_uint.h /sw/include/gsl/gsl_matrix_int.h \
-  /sw/include/gsl/gsl_matrix_ushort.h /sw/include/gsl/gsl_matrix_short.h \
-  /sw/include/gsl/gsl_matrix_uchar.h /sw/include/gsl/gsl_matrix_char.h \
-  /sw/include/gsl/gsl_blas.h /sw/include/gsl/gsl_blas_types.h \
-  /sw/include/gsl/gsl_cblas.h BDS.h ../contrib/ANN/include/ANN/ANN.h \
+  Metric.h Matrix.h Create.h ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
+BDS.o: BDS.cpp ../Numeric/Numeric.h ../Common/GmshMatrix.h BDS.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   ../Common/Message.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 MeshQuality.o: MeshQuality.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Numeric/Numeric.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 Create.o: Create.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -417,44 +374,10 @@ Create.o: Create.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h Mesh.h Utils.h Vertex.h ../Common/Context.h \
   Create.h
-Generator.o: Generator.cpp BDS.h ../contrib/ANN/include/ANN/ANN.h \
-  ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
-  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
-  ../Common/GmshMatrix.h /sw/include/gsl/gsl_linalg.h \
-  /sw/include/gsl/gsl_mode.h /sw/include/gsl/gsl_permutation.h \
-  /sw/include/gsl/gsl_types.h /sw/include/gsl/gsl_errno.h \
-  /sw/include/gsl/gsl_check_range.h /sw/include/gsl/gsl_vector.h \
-  /sw/include/gsl/gsl_vector_complex_long_double.h \
-  /sw/include/gsl/gsl_complex.h /sw/include/gsl/gsl_vector_long_double.h \
-  /sw/include/gsl/gsl_block_long_double.h \
-  /sw/include/gsl/gsl_vector_complex.h \
-  /sw/include/gsl/gsl_block_complex_long_double.h \
-  /sw/include/gsl/gsl_vector_complex_double.h \
-  /sw/include/gsl/gsl_vector_double.h /sw/include/gsl/gsl_block_double.h \
-  /sw/include/gsl/gsl_block_complex_double.h \
-  /sw/include/gsl/gsl_vector_complex_float.h \
-  /sw/include/gsl/gsl_vector_float.h /sw/include/gsl/gsl_block_float.h \
-  /sw/include/gsl/gsl_block_complex_float.h \
-  /sw/include/gsl/gsl_vector_ulong.h /sw/include/gsl/gsl_block_ulong.h \
-  /sw/include/gsl/gsl_vector_long.h /sw/include/gsl/gsl_block_long.h \
-  /sw/include/gsl/gsl_vector_uint.h /sw/include/gsl/gsl_block_uint.h \
-  /sw/include/gsl/gsl_vector_int.h /sw/include/gsl/gsl_block_int.h \
-  /sw/include/gsl/gsl_vector_ushort.h /sw/include/gsl/gsl_block_ushort.h \
-  /sw/include/gsl/gsl_vector_short.h /sw/include/gsl/gsl_block_short.h \
-  /sw/include/gsl/gsl_vector_uchar.h /sw/include/gsl/gsl_block_uchar.h \
-  /sw/include/gsl/gsl_vector_char.h /sw/include/gsl/gsl_block_char.h \
-  /sw/include/gsl/gsl_matrix.h \
-  /sw/include/gsl/gsl_matrix_complex_long_double.h \
-  /sw/include/gsl/gsl_matrix_complex_double.h \
-  /sw/include/gsl/gsl_matrix_complex_float.h \
-  /sw/include/gsl/gsl_matrix_long_double.h \
-  /sw/include/gsl/gsl_matrix_double.h /sw/include/gsl/gsl_matrix_float.h \
-  /sw/include/gsl/gsl_matrix_ulong.h /sw/include/gsl/gsl_matrix_long.h \
-  /sw/include/gsl/gsl_matrix_uint.h /sw/include/gsl/gsl_matrix_int.h \
-  /sw/include/gsl/gsl_matrix_ushort.h /sw/include/gsl/gsl_matrix_short.h \
-  /sw/include/gsl/gsl_matrix_uchar.h /sw/include/gsl/gsl_matrix_char.h \
-  /sw/include/gsl/gsl_blas.h /sw/include/gsl/gsl_blas_types.h \
-  /sw/include/gsl/gsl_cblas.h ../Common/AdaptiveViews.h \
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
+Generator.o: Generator.cpp BDS.h ../Common/Views.h ../Common/ColorTable.h \
+  ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
+  ../Numeric/Numeric.h ../Common/GmshMatrix.h ../Common/AdaptiveViews.h \
   ../Common/GmshMatrix.h ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/Tree.h ../DataStr/avl.h \
   ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h Mesh.h Vertex.h \
@@ -466,9 +389,11 @@ Generator.o: Generator.cpp BDS.h ../contrib/ANN/include/ANN/ANN.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/MVertex.h \
   ../Geo/MVertex.h ../Geo/GPoint.h ../Geo/GEdge.h ../Geo/GEntity.h \
   ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
-  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h \
-  ../Geo/GEntity.h
+  ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h ../Geo/GFace.h \
+  ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/MElement.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/MElement.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 Print_Mesh.o: Print_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -480,6 +405,7 @@ Print_Mesh.o: Print_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h Mesh.h Create.h Vertex.h ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 Read_Mesh.o: Read_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -492,6 +418,7 @@ Read_Mesh.o: Read_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
   ../Mesh/Matrix.h ../Geo/ExtrudeParams.h Mesh.h 3D_Mesh.h Create.h \
   Vertex.h ../Common/Context.h PartitionMesh.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 DiscreteSurface.o: DiscreteSurface.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
@@ -500,45 +427,11 @@ DiscreteSurface.o: DiscreteSurface.cpp ../Common/Gmsh.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h \
   ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Geo/ExtrudeParams.h \
   ../Geo/Geo.h Create.h Interpolation.h ../Common/Context.h BDS.h \
-  ../contrib/ANN/include/ANN/ANN.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Common/VertexArray.h \
+  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  /sw/include/gsl/gsl_linalg.h /sw/include/gsl/gsl_mode.h \
-  /sw/include/gsl/gsl_permutation.h /sw/include/gsl/gsl_types.h \
-  /sw/include/gsl/gsl_errno.h /sw/include/gsl/gsl_check_range.h \
-  /sw/include/gsl/gsl_vector.h \
-  /sw/include/gsl/gsl_vector_complex_long_double.h \
-  /sw/include/gsl/gsl_complex.h /sw/include/gsl/gsl_vector_long_double.h \
-  /sw/include/gsl/gsl_block_long_double.h \
-  /sw/include/gsl/gsl_vector_complex.h \
-  /sw/include/gsl/gsl_block_complex_long_double.h \
-  /sw/include/gsl/gsl_vector_complex_double.h \
-  /sw/include/gsl/gsl_vector_double.h /sw/include/gsl/gsl_block_double.h \
-  /sw/include/gsl/gsl_block_complex_double.h \
-  /sw/include/gsl/gsl_vector_complex_float.h \
-  /sw/include/gsl/gsl_vector_float.h /sw/include/gsl/gsl_block_float.h \
-  /sw/include/gsl/gsl_block_complex_float.h \
-  /sw/include/gsl/gsl_vector_ulong.h /sw/include/gsl/gsl_block_ulong.h \
-  /sw/include/gsl/gsl_vector_long.h /sw/include/gsl/gsl_block_long.h \
-  /sw/include/gsl/gsl_vector_uint.h /sw/include/gsl/gsl_block_uint.h \
-  /sw/include/gsl/gsl_vector_int.h /sw/include/gsl/gsl_block_int.h \
-  /sw/include/gsl/gsl_vector_ushort.h /sw/include/gsl/gsl_block_ushort.h \
-  /sw/include/gsl/gsl_vector_short.h /sw/include/gsl/gsl_block_short.h \
-  /sw/include/gsl/gsl_vector_uchar.h /sw/include/gsl/gsl_block_uchar.h \
-  /sw/include/gsl/gsl_vector_char.h /sw/include/gsl/gsl_block_char.h \
-  /sw/include/gsl/gsl_matrix.h \
-  /sw/include/gsl/gsl_matrix_complex_long_double.h \
-  /sw/include/gsl/gsl_matrix_complex_double.h \
-  /sw/include/gsl/gsl_matrix_complex_float.h \
-  /sw/include/gsl/gsl_matrix_long_double.h \
-  /sw/include/gsl/gsl_matrix_double.h /sw/include/gsl/gsl_matrix_float.h \
-  /sw/include/gsl/gsl_matrix_ulong.h /sw/include/gsl/gsl_matrix_long.h \
-  /sw/include/gsl/gsl_matrix_uint.h /sw/include/gsl/gsl_matrix_int.h \
-  /sw/include/gsl/gsl_matrix_ushort.h /sw/include/gsl/gsl_matrix_short.h \
-  /sw/include/gsl/gsl_matrix_uchar.h /sw/include/gsl/gsl_matrix_char.h \
-  /sw/include/gsl/gsl_blas.h /sw/include/gsl/gsl_blas_types.h \
-  /sw/include/gsl/gsl_cblas.h ../Common/AdaptiveViews.h \
-  ../Common/GmshMatrix.h PartitionMesh.h ../Common/OS.h
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h PartitionMesh.h \
+  ../Common/OS.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 SwapEdge.o: SwapEdge.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -546,6 +439,7 @@ SwapEdge.o: SwapEdge.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h \
   SwapPatterns.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 Utils.o: Utils.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -557,39 +451,8 @@ Utils.o: Utils.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h Mesh.h Interpolation.h Vertex.h \
-  ../Common/Context.h /sw/include/gsl/gsl_vector.h \
-  /sw/include/gsl/gsl_vector_complex_long_double.h \
-  /sw/include/gsl/gsl_types.h /sw/include/gsl/gsl_errno.h \
-  /sw/include/gsl/gsl_complex.h /sw/include/gsl/gsl_check_range.h \
-  /sw/include/gsl/gsl_vector_long_double.h \
-  /sw/include/gsl/gsl_block_long_double.h \
-  /sw/include/gsl/gsl_vector_complex.h \
-  /sw/include/gsl/gsl_block_complex_long_double.h \
-  /sw/include/gsl/gsl_vector_complex_double.h \
-  /sw/include/gsl/gsl_vector_double.h /sw/include/gsl/gsl_block_double.h \
-  /sw/include/gsl/gsl_block_complex_double.h \
-  /sw/include/gsl/gsl_vector_complex_float.h \
-  /sw/include/gsl/gsl_vector_float.h /sw/include/gsl/gsl_block_float.h \
-  /sw/include/gsl/gsl_block_complex_float.h \
-  /sw/include/gsl/gsl_vector_ulong.h /sw/include/gsl/gsl_block_ulong.h \
-  /sw/include/gsl/gsl_vector_long.h /sw/include/gsl/gsl_block_long.h \
-  /sw/include/gsl/gsl_vector_uint.h /sw/include/gsl/gsl_block_uint.h \
-  /sw/include/gsl/gsl_vector_int.h /sw/include/gsl/gsl_block_int.h \
-  /sw/include/gsl/gsl_vector_ushort.h /sw/include/gsl/gsl_block_ushort.h \
-  /sw/include/gsl/gsl_vector_short.h /sw/include/gsl/gsl_block_short.h \
-  /sw/include/gsl/gsl_vector_uchar.h /sw/include/gsl/gsl_block_uchar.h \
-  /sw/include/gsl/gsl_vector_char.h /sw/include/gsl/gsl_block_char.h \
-  /sw/include/gsl/gsl_linalg.h /sw/include/gsl/gsl_mode.h \
-  /sw/include/gsl/gsl_permutation.h /sw/include/gsl/gsl_matrix.h \
-  /sw/include/gsl/gsl_matrix_complex_long_double.h \
-  /sw/include/gsl/gsl_matrix_complex_double.h \
-  /sw/include/gsl/gsl_matrix_complex_float.h \
-  /sw/include/gsl/gsl_matrix_long_double.h \
-  /sw/include/gsl/gsl_matrix_double.h /sw/include/gsl/gsl_matrix_float.h \
-  /sw/include/gsl/gsl_matrix_ulong.h /sw/include/gsl/gsl_matrix_long.h \
-  /sw/include/gsl/gsl_matrix_uint.h /sw/include/gsl/gsl_matrix_int.h \
-  /sw/include/gsl/gsl_matrix_ushort.h /sw/include/gsl/gsl_matrix_short.h \
-  /sw/include/gsl/gsl_matrix_uchar.h /sw/include/gsl/gsl_matrix_char.h
+  ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 Metric.o: Metric.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -601,17 +464,20 @@ Metric.o: Metric.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h Mesh.h Matrix.h Interpolation.h Vertex.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 meshGEdge.o: meshGEdge.cpp meshGEdge.h ../Geo/GEdge.h ../Geo/GEntity.h \
   ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Geo/MVertex.h ../Common/GmshDefines.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/MVertex.h ../Geo/GPoint.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  ../DataStr/List.h ../DataStr/Tree.h Utils.h Vertex.h Mesh.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
+  ../Geo/MElement.h ../Geo/MVertex.h ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
+  Utils.h Vertex.h Mesh.h Element.h Simplex.h Face.h Edge.h \
+  ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h Metric.h Matrix.h \
   ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 meshGFace.o: meshGFace.cpp meshGFace.h ../Geo/SPoint2.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/MVertex.h \
@@ -621,47 +487,13 @@ meshGFace.o: meshGFace.cpp meshGFace.h ../Geo/SPoint2.h ../Geo/GVertex.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   Metric.h Matrix.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/SPoint2.h \
-  ../Geo/SVector3.h ../Geo/Pair.h ../Common/Context.h Utils.h \
-  ../Common/Message.h BDS.h ../contrib/ANN/include/ANN/ANN.h \
+  ../Geo/MElement.h ../Geo/MVertex.h ../Geo/GFace.h ../Geo/GPoint.h \
+  ../Geo/GEntity.h ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/Pair.h ../Common/Context.h Utils.h ../Common/Message.h BDS.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  /sw/include/gsl/gsl_linalg.h /sw/include/gsl/gsl_mode.h \
-  /sw/include/gsl/gsl_permutation.h /sw/include/gsl/gsl_types.h \
-  /sw/include/gsl/gsl_errno.h /sw/include/gsl/gsl_check_range.h \
-  /sw/include/gsl/gsl_vector.h \
-  /sw/include/gsl/gsl_vector_complex_long_double.h \
-  /sw/include/gsl/gsl_complex.h /sw/include/gsl/gsl_vector_long_double.h \
-  /sw/include/gsl/gsl_block_long_double.h \
-  /sw/include/gsl/gsl_vector_complex.h \
-  /sw/include/gsl/gsl_block_complex_long_double.h \
-  /sw/include/gsl/gsl_vector_complex_double.h \
-  /sw/include/gsl/gsl_vector_double.h /sw/include/gsl/gsl_block_double.h \
-  /sw/include/gsl/gsl_block_complex_double.h \
-  /sw/include/gsl/gsl_vector_complex_float.h \
-  /sw/include/gsl/gsl_vector_float.h /sw/include/gsl/gsl_block_float.h \
-  /sw/include/gsl/gsl_block_complex_float.h \
-  /sw/include/gsl/gsl_vector_ulong.h /sw/include/gsl/gsl_block_ulong.h \
-  /sw/include/gsl/gsl_vector_long.h /sw/include/gsl/gsl_block_long.h \
-  /sw/include/gsl/gsl_vector_uint.h /sw/include/gsl/gsl_block_uint.h \
-  /sw/include/gsl/gsl_vector_int.h /sw/include/gsl/gsl_block_int.h \
-  /sw/include/gsl/gsl_vector_ushort.h /sw/include/gsl/gsl_block_ushort.h \
-  /sw/include/gsl/gsl_vector_short.h /sw/include/gsl/gsl_block_short.h \
-  /sw/include/gsl/gsl_vector_uchar.h /sw/include/gsl/gsl_block_uchar.h \
-  /sw/include/gsl/gsl_vector_char.h /sw/include/gsl/gsl_block_char.h \
-  /sw/include/gsl/gsl_matrix.h \
-  /sw/include/gsl/gsl_matrix_complex_long_double.h \
-  /sw/include/gsl/gsl_matrix_complex_double.h \
-  /sw/include/gsl/gsl_matrix_complex_float.h \
-  /sw/include/gsl/gsl_matrix_long_double.h \
-  /sw/include/gsl/gsl_matrix_double.h /sw/include/gsl/gsl_matrix_float.h \
-  /sw/include/gsl/gsl_matrix_ulong.h /sw/include/gsl/gsl_matrix_long.h \
-  /sw/include/gsl/gsl_matrix_uint.h /sw/include/gsl/gsl_matrix_int.h \
-  /sw/include/gsl/gsl_matrix_ushort.h /sw/include/gsl/gsl_matrix_short.h \
-  /sw/include/gsl/gsl_matrix_uchar.h /sw/include/gsl/gsl_matrix_char.h \
-  /sw/include/gsl/gsl_blas.h /sw/include/gsl/gsl_blas_types.h \
-  /sw/include/gsl/gsl_cblas.h ../Common/AdaptiveViews.h \
-  ../Common/GmshMatrix.h
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 Nurbs.o: Nurbs.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -670,6 +502,7 @@ Nurbs.o: Nurbs.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshDefines.h \
   Metric.h Matrix.h ../Geo/Geo.h ../Geo/GeoUtils.h ../Mesh/Mesh.h \
   Create.h ../Geo/CAD.h ../Mesh/Vertex.h ../Geo/ExtrudeParams.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 Interpolation.o: Interpolation.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -678,6 +511,7 @@ Interpolation.o: Interpolation.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h \
   ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Geo/ExtrudeParams.h \
   Utils.h Interpolation.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 SecondOrder.o: SecondOrder.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -685,6 +519,7 @@ SecondOrder.o: SecondOrder.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshDefines.h \
   Metric.h Matrix.h Utils.h Interpolation.h ../Common/OS.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 PartitionMesh.o: PartitionMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -693,54 +528,18 @@ PartitionMesh.o: PartitionMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h \
   ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Geo/ExtrudeParams.h \
   ../Geo/Geo.h Create.h Interpolation.h ../Common/Context.h BDS.h \
-  ../contrib/ANN/include/ANN/ANN.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Common/VertexArray.h \
+  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  /sw/include/gsl/gsl_linalg.h /sw/include/gsl/gsl_mode.h \
-  /sw/include/gsl/gsl_permutation.h /sw/include/gsl/gsl_types.h \
-  /sw/include/gsl/gsl_errno.h /sw/include/gsl/gsl_check_range.h \
-  /sw/include/gsl/gsl_vector.h \
-  /sw/include/gsl/gsl_vector_complex_long_double.h \
-  /sw/include/gsl/gsl_complex.h /sw/include/gsl/gsl_vector_long_double.h \
-  /sw/include/gsl/gsl_block_long_double.h \
-  /sw/include/gsl/gsl_vector_complex.h \
-  /sw/include/gsl/gsl_block_complex_long_double.h \
-  /sw/include/gsl/gsl_vector_complex_double.h \
-  /sw/include/gsl/gsl_vector_double.h /sw/include/gsl/gsl_block_double.h \
-  /sw/include/gsl/gsl_block_complex_double.h \
-  /sw/include/gsl/gsl_vector_complex_float.h \
-  /sw/include/gsl/gsl_vector_float.h /sw/include/gsl/gsl_block_float.h \
-  /sw/include/gsl/gsl_block_complex_float.h \
-  /sw/include/gsl/gsl_vector_ulong.h /sw/include/gsl/gsl_block_ulong.h \
-  /sw/include/gsl/gsl_vector_long.h /sw/include/gsl/gsl_block_long.h \
-  /sw/include/gsl/gsl_vector_uint.h /sw/include/gsl/gsl_block_uint.h \
-  /sw/include/gsl/gsl_vector_int.h /sw/include/gsl/gsl_block_int.h \
-  /sw/include/gsl/gsl_vector_ushort.h /sw/include/gsl/gsl_block_ushort.h \
-  /sw/include/gsl/gsl_vector_short.h /sw/include/gsl/gsl_block_short.h \
-  /sw/include/gsl/gsl_vector_uchar.h /sw/include/gsl/gsl_block_uchar.h \
-  /sw/include/gsl/gsl_vector_char.h /sw/include/gsl/gsl_block_char.h \
-  /sw/include/gsl/gsl_matrix.h \
-  /sw/include/gsl/gsl_matrix_complex_long_double.h \
-  /sw/include/gsl/gsl_matrix_complex_double.h \
-  /sw/include/gsl/gsl_matrix_complex_float.h \
-  /sw/include/gsl/gsl_matrix_long_double.h \
-  /sw/include/gsl/gsl_matrix_double.h /sw/include/gsl/gsl_matrix_float.h \
-  /sw/include/gsl/gsl_matrix_ulong.h /sw/include/gsl/gsl_matrix_long.h \
-  /sw/include/gsl/gsl_matrix_uint.h /sw/include/gsl/gsl_matrix_int.h \
-  /sw/include/gsl/gsl_matrix_ushort.h /sw/include/gsl/gsl_matrix_short.h \
-  /sw/include/gsl/gsl_matrix_uchar.h /sw/include/gsl/gsl_matrix_char.h \
-  /sw/include/gsl/gsl_blas.h /sw/include/gsl/gsl_blas_types.h \
-  /sw/include/gsl/gsl_cblas.h ../Common/AdaptiveViews.h \
-  ../Common/GmshMatrix.h PartitionMesh.h ../Parser/OpenFile.h \
-  ../contrib/Metis/metis.h ../contrib/Metis/defs.h \
-  ../contrib/Metis/struct.h ../contrib/Metis/macros.h \
-  ../contrib/Metis/rename.h ../contrib/Metis/proto.h
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h PartitionMesh.h \
+  ../Parser/OpenFile.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 Smoothing.o: Smoothing.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Numeric/Numeric.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 CrossData.o: CrossData.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -748,6 +547,7 @@ CrossData.o: CrossData.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshDefines.h \
   Metric.h Matrix.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 Vertex.o: Vertex.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -755,18 +555,21 @@ Vertex.o: Vertex.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h \
   ../Common/Context.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 Edge.o: Edge.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Mesh.h \
   Vertex.h Element.h Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshDefines.h Metric.h Matrix.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 Face.o: Face.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Mesh.h \
   Vertex.h Element.h Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshDefines.h Metric.h Matrix.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 Element.o: Element.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -774,6 +577,7 @@ Element.o: Element.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshDefines.h \
   Metric.h Matrix.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
 Simplex.o: Simplex.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \

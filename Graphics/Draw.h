@@ -76,6 +76,7 @@ void Draw_String(char *s, double style);
 void Draw_String_Center(char *s);
 void Draw_String_Right(char *s);
 void Draw_Geom(void);
+void Draw_Mesh(void);
 void Draw_Post(void);
 void Draw_Graph2D(void);
 void Draw_Text2D(void);
@@ -101,7 +102,6 @@ void Draw_SmallAxes(void);
 void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
 	       double bbox[6]);
 
-void Draw_Model();
 void Draw_Mesh_Volume(void *a, void *b);
 void Draw_Mesh_Surface(void *a, void *b);
 void Draw_Mesh_Extruded_Surfaces(void *a, void *b);

@@ -2,6 +2,7 @@
 #define _GREGION_H_
 
 #include "GEntity.h"
+#include "MElement.h"
 
 // A model region.
 class GRegion : public GEntity {
@@ -9,10 +10,14 @@ class GRegion : public GEntity {
   std::list<GFace *> l_faces;
   std::list<int> l_dirs;
  public:
-  GRegion(GModel *model, int tag) : GEntity (model,tag) {}
+  GRegion(GModel *model, int tag) : GEntity (model, tag) {}
   virtual ~GRegion();
   virtual int dim() const {return 3;}
   virtual GeomType geomType() const {return Volume;}
+  std::vector<MTetrahedron*> tetrahedra;
+  std::vector<MHexahedron*> hexahedra;
+  std::vector<MPrism*> prisms;
+  std::vector<MPyramid*> pyramids;
 };
 
 #endif

@@ -97,13 +97,16 @@ double F_One_bis(double t)
 
 void deMeshGEdge :: operator() (GEdge *ge) 
 {
-  for (unsigned int i=0;i<ge->mesh_vertices.size();i++) 
-    delete ge->mesh_vertices[i];
+  for (unsigned int i=0;i<ge->mesh_vertices.size();i++) delete ge->mesh_vertices[i];
   ge->mesh_vertices.clear();
+  for (unsigned int i=0;i<ge->lines.size();i++) delete ge->lines[i];
+  ge->lines.clear();
 }
 
 void meshGEdge :: operator() (GEdge *ge) 
 {  
+  if(ge->geomType() == GEntity::DiscreteCurve) return;
+
   deMeshGEdge dem;
   dem(ge);
 

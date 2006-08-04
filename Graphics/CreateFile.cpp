@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.83 2006-07-24 14:05:50 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.84 2006-08-04 14:28:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 #include "Context.h"
 #include "Options.h"
 #include "Mesh.h"
+#include "GModel.h"
 
 #include "gl2ps.h"
 #include "gl2gif.h"
@@ -34,6 +35,7 @@
 #include "gl2yuv.h"
 
 extern Context_T CTX;
+extern GModel *GMODEL;
 
 int GuessFileFormatFromFileName(char *name)
 {
@@ -97,10 +99,31 @@ char *GetStringForFileFormat(int format)
   }
 }
 
-void CreateOutputFile(char *name, int format)
+void GetDefaultFileName(int format, char *name)
 {
-  if(!name || !strlen(name))
-    return;
+  char ext[10] = "";
+  strcpy(name, CTX.base_filename);
+  switch(format){
+  case FORMAT_MSH:  strcpy(ext, ".msh"); break;
+  case FORMAT_VRML: strcpy(ext, ".wrl"); break;
+  case FORMAT_UNV:  strcpy(ext, ".unv"); break;
+  case FORMAT_GREF: strcpy(ext, ".Gref"); break;
+  case FORMAT_DMG:  strcpy(ext, ".dmg"); break;
+  case FORMAT_STL:  strcpy(ext, ".stl"); break;
+  case FORMAT_P3D:  strcpy(ext, ".p3d"); break;
+  default: break;
+  }
+  strcat(name, ext);
+}
+
+void CreateOutputFile(char *filename, int format)
+{
+  char name[256];
+
+  if(!filename || !strlen(filename))
+    GetDefaultFileName(format, name);
+  else
+    strcpy(name, filename);
 
   int oldformat = CTX.print.format;
   CTX.print.format = format;
@@ -125,6 +148,9 @@ void CreateOutputFile(char *name, int format)
     break;
 
   case FORMAT_MSH:
+    GMODEL->writeMSH(name);
+    break;
+
   case FORMAT_UNV:
   case FORMAT_P3D:
   case FORMAT_DMG:

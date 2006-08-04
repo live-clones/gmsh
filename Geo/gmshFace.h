@@ -9,7 +9,8 @@
 
 class gmshFace : public GFace {
  public:
-  gmshFace(GModel *m,Surface * face);
+  gmshFace(GModel *m, Surface *face);
+  gmshFace(GModel *m, int num);
   virtual ~gmshFace(){}
   Range<double> parBounds(int i) const; 
   virtual int paramDegeneracies(int dir, double *par); 
@@ -34,7 +35,6 @@ class gmshFace : public GFace {
   virtual bool periodic(int dim) const; 
   virtual bool degenerate(int dim) const; 
   virtual double period(int dir) const {throw;}
-  //  virtual GeoRep * geometry() {return 0;}
   void * getNativePtr() const; 
   Surface *s;
   virtual bool surfPeriodic(int dim) const {throw;}

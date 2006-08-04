@@ -6,6 +6,7 @@
 #include "SVector3.h"
 #include "SPoint3.h"
 #include "SPoint2.h"
+#include "MElement.h"
 
 // A model edge.
 
@@ -52,6 +53,8 @@ class GEdge : public GEntity {
     int    nbPointsTransfinite;
     int    typeTransfinite;
   } meshAttributes ;
+
+  std::vector<MLine*> lines;
 
   virtual int minimumMeshSegments () const {return 1;}
   virtual int minimumDrawSegments () const {return 1;}

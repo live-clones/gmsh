@@ -3,7 +3,7 @@
 
 #include "GPoint.h"
 #include "GEntity.h"
-//#include "GEdgeLoop.h"
+#include "MElement.h"
 #include "SPoint2.h"
 #include "SVector3.h"
 #include "Pair.h"
@@ -27,7 +27,7 @@ class GFace : public GEntity
   GRegion *r1, *r2;
 
  public:
-  GFace(GModel *model, int tag) : GEntity (model,tag),r1(0),r2(0){}
+  GFace(GModel *model, int tag) : GEntity(model,tag), r1(0), r2(0) {}
   virtual ~GFace();
 
   void addRegion(GRegion *r){ r1?r2=r:r1=r;  }
@@ -74,7 +74,8 @@ class GFace : public GEntity
   // to worry about that.
   virtual bool surfPeriodic(int dim) const = 0;
 
-  std::vector<MVertex*> triangles;
+  std::vector<MTriangle*> triangles;
+  std::vector<MQuadrangle*> quadrangles;
   mean_plane mp;
 };
 

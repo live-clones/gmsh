@@ -10,13 +10,13 @@ class GVertex  : public GEntity
 {
 public:
   GVertex(GModel *m, int tag) : GEntity (m,tag) 
-    {
-    }
+  {
+  }
   virtual ~GVertex() 
-    {
-      if (mesh_vertices.size())
-	delete mesh_vertices[0];
-    }
+  {
+    if(mesh_vertices.size())
+      delete mesh_vertices[0];
+  }
   virtual GPoint point() const = 0;
   virtual double x() const = 0;
   virtual double y() const = 0;

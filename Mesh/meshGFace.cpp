@@ -4,6 +4,7 @@
 #include "GEdge.h"
 #include "GFace.h"
 #include "MVertex.h"
+#include "MElement.h"
 #include "Context.h"
 #include "Utils.h"
 #include "GPoint.h"
@@ -26,8 +27,6 @@ void dsvdcmp(double **a, int m, int n, double w[], double **v);
   extrude d'une faible hauteur. Le plan moyen sera dans le plan du
   cercle! En attendant mieux, il y a donc un test de coherence
   supplementaire pour les surfaces non-planes. */
-
-
 
 int Orientation (std::vector<MVertex*> &cu)
 {
@@ -130,7 +129,7 @@ void computeEdgeLoops (const GFace *gf,
     GVertex *v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
     all_mvertices.push_back(start->mesh_vertices[0]);
     if (*ito == 1)
-      for (int i=0;i<(*it)->mesh_vertices.size();i++)
+      for (unsigned int i=0;i<(*it)->mesh_vertices.size();i++)
 	all_mvertices.push_back((*it)->mesh_vertices[i]);
     else
       for (int i=(*it)->mesh_vertices.size()-1;i>=0;i--)
@@ -158,7 +157,7 @@ void computeEdgeLoops (const GFace *gf,
 	  }
 	all_mvertices.push_back(v_start->mesh_vertices[0]);
 	if (*ito == 1)
-	  for (int i=0;i<(*it)->mesh_vertices.size();i++)
+	  for (unsigned int i=0;i<(*it)->mesh_vertices.size();i++)
 	    all_mvertices.push_back((*it)->mesh_vertices[i]);
 	else
 	  for (int i=(*it)->mesh_vertices.size()-1;i>=0;i--)
@@ -171,14 +170,13 @@ void computeEdgeLoops (const GFace *gf,
 void MeanPlane_bis(GFace *gf, const std::vector<MVertex*> &points)
 {
 
-  int i, j, min, ndata, na;
+  int min, ndata, na;
   double res[4], ex[3], t1[3], t2[3], svd[3];
-  Vertex *v;
   double xm = 0., ym = 0., zm = 0.;
 
   ndata = points.size();
   na = 3;
-  for(i = 0; i < ndata; i++) {
+  for(int i = 0; i < ndata; i++) {
     xm += points[i]->x();
     ym += points[i]->y();
     zm += points[i]->z();
@@ -192,7 +190,7 @@ void MeanPlane_bis(GFace *gf, const std::vector<MVertex*> &points)
   gsl_matrix *V = gsl_matrix_alloc(na, na);
   gsl_vector *W = gsl_vector_alloc(na);
   gsl_vector *TMPVEC = gsl_vector_alloc(na);
-  for(i = 0; i < ndata; i++) {
+  for(int i = 0; i < ndata; i++) {
     gsl_matrix_set(U, i, 0, points[i]->x() - xm);
     gsl_matrix_set(U, i, 1, points[i]->y() - ym);
     gsl_matrix_set(U, i, 2, points[i]->z() - zm);
@@ -219,7 +217,7 @@ void MeanPlane_bis(GFace *gf, const std::vector<MVertex*> &points)
   double **U = dmatrix(1, ndata, 1, na);
   double **V = dmatrix(1, na, 1, na);
   double *W = dvector(1, na);
-  for(i = 0; i < ndata; i++) {
+  for(int i = 0; i < ndata; i++) {
     U[i + 1][1] = points[i]->x() - xm;
     U[i + 1][2] = points[i]->y() - ym;
     U[i + 1][3] = points[i]->z() - zm;
@@ -293,11 +291,11 @@ void MeanPlane_bis(GFace *gf, const std::vector<MVertex*> &points)
 end:
   res[3] = (xm * res[0] + ym * res[1] + zm * res[2]);
 
-  for(i = 0; i < 3; i++)
+  for(int i = 0; i < 3; i++)
     gf->mp.plan[0][i] = t1[i];
-  for(i = 0; i < 3; i++)
+  for(int i = 0; i < 3; i++)
     gf->mp.plan[1][i] = t2[i];
-  for(i = 0; i < 3; i++)
+  for(int i = 0; i < 3; i++)
     gf->mp.plan[2][i] = res[i];
 
   gf->mp.a = res[0];
@@ -410,8 +408,7 @@ bool edgeSwapTest(BDS_Edge *e, GFace *gf, std::map<BDS_Point*,BDS_Pos> &realCoor
 
   e->oppositeof (op);
   
-  double coordMiddle, edgeLength1, edgeLength2;
-
+  double edgeLength1, edgeLength2;
 
   edgeLength1 = computeEdgeLinearLength ( e,e->p1,e->p2,realCoordinates);
   edgeLength2 = computeEdgeLinearLength ( 0,op[0],op[1],realCoordinates);
@@ -453,7 +450,6 @@ void NewMeshGenerator ( GFace *gf,
 
   int nbEdgeLoops = indices.size()-1;
   for(int i = 0; i < nbEdgeLoops; i++) {
-    int nbPtsOnEdgeLoop = indices[i+1] -indices[i];
     for(int j = indices[i]; j < indices[i+1]; j++) {
       MVertex *here     = points[j];
       MVertex *previous = (j == indices[i])?points[indices[i+1]-1] : points[j-1]; 
@@ -472,17 +468,17 @@ void NewMeshGenerator ( GFace *gf,
   }
   // will not work correctly if points are present initially inside
   // the domain.
-  for (int i=0;i<gf->mesh_vertices.size();++i)
+  for (unsigned int i=0;i<gf->mesh_vertices.size();++i)
     {
       MVertex *p = gf->mesh_vertices[i];
       m.add_point ( NUMP, p->x(), p->y(), p->z());
       numPoints[p]=NUMP++;
     }
-  for (int i=0;i<gf->triangles.size();i+=3)
+  for (unsigned int i=0;i<gf->triangles.size();i++)
     {
-      MVertex *p0 = gf->triangles[i];
-      MVertex *p1 = gf->triangles[i+1];
-      MVertex *p2 = gf->triangles[i+2];
+      MVertex *p0 = gf->triangles[i]->getVertex(0);
+      MVertex *p1 = gf->triangles[i]->getVertex(1);
+      MVertex *p2 = gf->triangles[i]->getVertex(2);
       m.add_triangle ( numPoints[p0], numPoints[p1], numPoints[p2] );
     }
 
@@ -546,9 +542,9 @@ void NewMeshGenerator ( GFace *gf,
 
 	  if ((*it)->numfaces() == 2 && linearLength < 0.7 * l_wanted && errGeom < errGeomTresh * 0.7)
 	    {
-	      if ( (*it)->p1->iD >= points.size() )
+	      if ( (*it)->p1->iD >= (int)points.size() )
 		m.collapse_edge ( *it, (*it)->p1, 0);
-	      else if ( (*it)->p2->iD >= points.size() )
+	      else if ( (*it)->p2->iD >= (int)points.size() )
 		m.collapse_edge ( *it, (*it)->p2, 0);
 	      if(linearLength < 0.35 * l_wanted) NB_MODIF++;	      
 	    }
@@ -582,7 +578,7 @@ void NewMeshGenerator ( GFace *gf,
       if (IT++ > 25 || (double)(NB_MODIF) < .003*(double)m.edges.size())break;
     }
   
-  for (int i=0;i<gf->mesh_vertices.size();++i)
+  for (unsigned int i=0;i<gf->mesh_vertices.size();++i)
     {
       MVertex *p = gf->mesh_vertices[i];
       delete p;
@@ -594,7 +590,7 @@ void NewMeshGenerator ( GFace *gf,
     std::set<BDS_Point*,PointLessThan>::iterator it = m.points.begin();
     while (it != m.points.end())
       {
-	if ( (*it)->iD >= points.size() )
+	if ( (*it)->iD >= (int)points.size() )
 	  {
 	    MFaceVertex *v = new MFaceVertex ( (*it)->X,(*it)->Y, 0.0, gf, 0,0);           
 	    gf->mesh_vertices.push_back(v);
@@ -604,6 +600,8 @@ void NewMeshGenerator ( GFace *gf,
       }
   }
   {
+    for (unsigned int i=0;i<gf->triangles.size();i++)
+      delete gf->triangles[i];
     gf->triangles.clear();
     std::list<BDS_Triangle*>::iterator it = m.triangles.begin();
     while (it != m.triangles.end())
@@ -612,17 +610,10 @@ void NewMeshGenerator ( GFace *gf,
 	  {
 	    BDS_Point *n[3];
 	    (*it)->getNodes (n);
+	    MVertex *v[3];
 	    for (int i=0;i<3;i++)
-	      {
-		if (n[i]->iD >= points.size())
-		  {
-		    gf->triangles.push_back(verts_[n[i]->iD]);
-		  }
-		else
-		  {
-		    gf->triangles.push_back(points[n[i]->iD]);
-		  }
-	      }
+	      v[i] = (n[i]->iD >= (int)points.size()) ? verts_[n[i]->iD] : points[n[i]->iD];
+	    gf->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
 	  }
 	++it;
       }
@@ -736,9 +727,7 @@ void OldMeshGenerator ( GFace *gf,
       int b = M.listdel[i]->t.b;
       int c = M.listdel[i]->t.c;
       //      Msg(INFO, "tri[%d] = %d %d %d",i,a,b,c);
-      gf->triangles.push_back(verts_[a]);
-      gf->triangles.push_back(verts_[b]);
-      gf->triangles.push_back(verts_[c]);
+      gf->triangles.push_back(new MTriangle(verts_[a], verts_[b], verts_[c]));
     }
   
   delete [] verts_;
@@ -759,14 +748,16 @@ void OldMeshGenerator ( GFace *gf,
 
 void deMeshGFace :: operator() (GFace *gf) 
 {
-  for (int i=0;i<gf->mesh_vertices.size();i++) delete gf->mesh_vertices[i];
+  for (unsigned int i=0;i<gf->mesh_vertices.size();i++) delete gf->mesh_vertices[i];
   gf->mesh_vertices.clear();
+  for (unsigned int i=0;i<gf->triangles.size();i++) delete gf->triangles[i];
+  gf->triangles.clear();
 }
 
 
 void meshGFace :: operator() (GFace *gf) 
 {  
-
+  if(gf->geomType() == GEntity::DiscreteSurface) return;
 
   // destroy the mesh if it exists
   deMeshGFace dem;
@@ -785,7 +776,8 @@ void meshGFace :: operator() (GFace *gf)
   //compute the mean plane, this is sometimes useful 
   MeanPlane_bis(gf,points);
 
-  Msg(DEBUG1, "Face %d type %d with %d edge loops and %d points", gf->tag(),gf->geomType(),indices.size()-1,points.size());
+  Msg(DEBUG1, "Face %d type %d with %d edge loops and %d points", 
+      gf->tag(),gf->geomType(),indices.size()-1,points.size());
   fromCartesianToParametric c2p ( gf );
   std::for_each (points.begin(),points.end(),c2p);    
   Msg(DEBUG1, "points were put in parametric coords ...");
@@ -805,48 +797,10 @@ void meshGFace :: operator() (GFace *gf)
       NewMeshGenerator ( gf, points, indices );
     }
 
-  Msg(DEBUG1, "type %d %d triangles generated, %d internal vertices", gf->geomType(),gf->triangles.size()/3,gf->mesh_vertices.size());
-
-  if(0){
-    char name[256];
-    sprintf(name,"view%d-N.pos",gf->tag());
-    FILE *fff = fopen (name,"w");
-    fprintf(fff,"View \" \" {\n");
-    
-    std::vector<MVertex*> &triangles = gf->triangles;
-    for (int i=0;i<gf->triangles.size();i+=3)
-      {
-	fprintf(fff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1};\n",
-		triangles[i]->x(),triangles[i]->y(),triangles[i]->z(),
-		triangles[i+1]->x(),triangles[i+1]->y(),triangles[i+1]->z(),
-		triangles[i+2]->x(),triangles[i+2]->y(),triangles[i+2]->z());
-      }
-    
-    fprintf(fff,"};\n");
-    fclose(fff);
-  }
+  Msg(DEBUG1, "type %d %d triangles generated, %d internal vertices",
+      gf->geomType(),gf->triangles.size(),gf->mesh_vertices.size());
 
   fromParametricToCartesian p2c ( gf );
-  std::for_each (points.begin(),points.end(),p2c);    
-  std::for_each (gf->mesh_vertices.begin(),gf->mesh_vertices.end(),p2c);    
-
-  if(1){
-    char name[256];
-    sprintf(name,"view%d.pos",gf->tag());
-    FILE *fff = fopen (name,"w");
-    fprintf(fff,"View \" \" {\n");
-    
-    std::vector<MVertex*> &triangles = gf->triangles;
-    for (int i=0;i<gf->triangles.size();i+=3)
-      {
-	fprintf(fff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1};\n",
-		triangles[i]->x(),triangles[i]->y(),triangles[i]->z(),
-		triangles[i+1]->x(),triangles[i+1]->y(),triangles[i+1]->z(),
-		triangles[i+2]->x(),triangles[i+2]->y(),triangles[i+2]->z());
-      }
-    
-    fprintf(fff,"};\n");
-    fclose(fff);
-  }
-  
+  std::for_each(points.begin(),points.end(),p2c);    
+  std::for_each(gf->mesh_vertices.begin(),gf->mesh_vertices.end(),p2c);    
 }  

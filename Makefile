@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.420 2006-07-10 12:16:34 remacle Exp $
+# $Id: Makefile,v 1.421 2006-08-04 14:28:01 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -95,7 +95,7 @@ clean-most:
 
 depend: initialtag
 	for i in ${GMSH_DIRS};\
-        do (cd $$i && ${MAKE} depend); done
+        do (cd $$i && ${MAKE} depend "FLAGS=-DHAVE_GSL -DHAVE_FLTK"); done
 
 nodepend:
 	for i in ${GMSH_DIRS} ; do \

@@ -7,20 +7,30 @@
 
 extern Context_T CTX;
 
-gmshEdge::gmshEdge(GModel *model,Curve *edge,GVertex *v1,GVertex *v2)
-  : GEdge ( model, edge->Num, v1, v2 ), c(edge)
-{}
+gmshEdge::gmshEdge(GModel *model, Curve *edge, GVertex *v1, GVertex *v2)
+  : GEdge(model, edge->Num, v1, v2), c(edge)
+{
+}
+
+gmshEdge::gmshEdge(GModel *model, int num)
+  : GEdge(model, num, 0, 0), c(0)
+{
+}
 
 gmshEdge::~gmshEdge()
-{}
+{
+}
 
 Range<double> gmshEdge::parBounds(int i) const
 { 
-  return( Range<double>(  c->ubeg ,c->uend ));
+  if(!c) return(Range<double>(0., 1.));
+  return(Range<double>(c->ubeg, c->uend));
 }
 
 SBoundingBox3d gmshEdge::bounds() const
 {
+  if(!c) return SBoundingBox3d(SPoint3(0., 0., 0.));
+
   double xmin = 0., ymin = 0., zmin = 0.;
   double xmax = 0., ymax = 0., zmax = 0.;
   for (int i = 0; i < 20; i++){
@@ -40,29 +50,31 @@ SBoundingBox3d gmshEdge::bounds() const
       if(a.Pos.Z > zmax) zmax = a.Pos.Y;
     }
   }
-  SPoint3 bmin(xmin,ymin,zmin);
-  SPoint3 bmax(xmax,ymax,zmax);
+  SPoint3 bmin(xmin, ymin, zmin);
+  SPoint3 bmax(xmax, ymax, zmax);
   SBoundingBox3d bbox(bmin);
-  bbox+=bmax;
+  bbox += bmax;
   return bbox;
 }
 
 GPoint gmshEdge::point(double par) const
 {
+  if(!c) return GPoint(0., 0., 0., this, 0.);
   Vertex a = InterpolateCurve(c, par, 0);
   return GPoint(a.Pos.X,a.Pos.Y,a.Pos.Z,this,par);
 }
 
 GPoint gmshEdge::closestPoint(const SPoint3 & qp)
 {
+  if(!c) return GPoint(0., 0., 0., this, 0.);
   Vertex v;
   Vertex a;
   Vertex der;
   v.Pos.X = qp.x();
   v.Pos.Y = qp.y();
   v.Pos.Z = qp.z();
-  ProjectPointOnCurve (c,&v,&a,&der);
-  return GPoint(a.Pos.X,a.Pos.Y,a.Pos.Z,this,a.u);
+  ProjectPointOnCurve (c, &v, &a, &der);
+  return GPoint(a.Pos.X, a.Pos.Y, a.Pos.Z, this, a.u);
 }
 
 int gmshEdge::containsParam(double pt) const
@@ -73,19 +85,21 @@ int gmshEdge::containsParam(double pt) const
 
 SVector3 gmshEdge::firstDer(double par) const
 {
+  if(!c) return SVector3(0., 0., 0.);
   Vertex a = InterpolateCurve(c, par, 1);
-  return SVector3(a.Pos.X,a.Pos.Y,a.Pos.Z);
+  return SVector3(a.Pos.X, a.Pos.Y, a.Pos.Z);
 }
 
 double gmshEdge::parFromPoint(const SPoint3 &pt) const
 {
+  if(!c) return 0;
   Vertex v;
   Vertex a;
   Vertex der;
   v.Pos.X = pt.x();
   v.Pos.Y = pt.y();
   v.Pos.Z = pt.z();
-  ProjectPointOnCurve (c,&v,&a,&der);
+  ProjectPointOnCurve(c, &v, &a, &der);
   return a.u;
 }
 
@@ -107,6 +121,8 @@ bool gmshEdge::periodic(int dim) const
 
 GEntity::GeomType gmshEdge::geomType() const
 {
+  if(!c) return DiscreteCurve;
+
   switch (c->Typ){
   case MSH_SEGM_LINE : return Line;
   case MSH_SEGM_PARAMETRIC : return ParametricCurve;

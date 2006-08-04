@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.90 2006-07-25 12:08:24 remacle Exp $
+# $Id: Makefile,v 1.91 2006-08-04 14:28:03 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -75,59 +75,26 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
+# 1 "/Users/geuzaine/.gmsh/Parser//"
 Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
-  /sw/include/gsl/gsl_linalg.h /sw/include/gsl/gsl_mode.h \
-  /sw/include/gsl/gsl_permutation.h /sw/include/gsl/gsl_types.h \
-  /sw/include/gsl/gsl_errno.h /sw/include/gsl/gsl_check_range.h \
-  /sw/include/gsl/gsl_vector.h \
-  /sw/include/gsl/gsl_vector_complex_long_double.h \
-  /sw/include/gsl/gsl_complex.h /sw/include/gsl/gsl_vector_long_double.h \
-  /sw/include/gsl/gsl_block_long_double.h \
-  /sw/include/gsl/gsl_vector_complex.h \
-  /sw/include/gsl/gsl_block_complex_long_double.h \
-  /sw/include/gsl/gsl_vector_complex_double.h \
-  /sw/include/gsl/gsl_vector_double.h /sw/include/gsl/gsl_block_double.h \
-  /sw/include/gsl/gsl_block_complex_double.h \
-  /sw/include/gsl/gsl_vector_complex_float.h \
-  /sw/include/gsl/gsl_vector_float.h /sw/include/gsl/gsl_block_float.h \
-  /sw/include/gsl/gsl_block_complex_float.h \
-  /sw/include/gsl/gsl_vector_ulong.h /sw/include/gsl/gsl_block_ulong.h \
-  /sw/include/gsl/gsl_vector_long.h /sw/include/gsl/gsl_block_long.h \
-  /sw/include/gsl/gsl_vector_uint.h /sw/include/gsl/gsl_block_uint.h \
-  /sw/include/gsl/gsl_vector_int.h /sw/include/gsl/gsl_block_int.h \
-  /sw/include/gsl/gsl_vector_ushort.h /sw/include/gsl/gsl_block_ushort.h \
-  /sw/include/gsl/gsl_vector_short.h /sw/include/gsl/gsl_block_short.h \
-  /sw/include/gsl/gsl_vector_uchar.h /sw/include/gsl/gsl_block_uchar.h \
-  /sw/include/gsl/gsl_vector_char.h /sw/include/gsl/gsl_block_char.h \
-  /sw/include/gsl/gsl_matrix.h \
-  /sw/include/gsl/gsl_matrix_complex_long_double.h \
-  /sw/include/gsl/gsl_matrix_complex_double.h \
-  /sw/include/gsl/gsl_matrix_complex_float.h \
-  /sw/include/gsl/gsl_matrix_long_double.h \
-  /sw/include/gsl/gsl_matrix_double.h /sw/include/gsl/gsl_matrix_float.h \
-  /sw/include/gsl/gsl_matrix_ulong.h /sw/include/gsl/gsl_matrix_long.h \
-  /sw/include/gsl/gsl_matrix_uint.h /sw/include/gsl/gsl_matrix_int.h \
-  /sw/include/gsl/gsl_matrix_ushort.h /sw/include/gsl/gsl_matrix_short.h \
-  /sw/include/gsl/gsl_matrix_uchar.h /sw/include/gsl/gsl_matrix_char.h \
-  /sw/include/gsl/gsl_blas.h /sw/include/gsl/gsl_blas_types.h \
-  /sw/include/gsl/gsl_cblas.h ../Common/AdaptiveViews.h \
-  ../Common/GmshMatrix.h ../Parallel/ParUtil.h ../Common/Gmsh.h \
-  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Common/Context.h ../Geo/Geo.h ../Geo/GeoUtils.h ../Mesh/Mesh.h \
-  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Geo/ExtrudeParams.h ../Common/GmshDefines.h ../Mesh/Metric.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
-  ../Mesh/Nurbs.h ../Mesh/Vertex.h ../Mesh/Mesh.h ../Geo/CAD.h \
-  ../Geo/ExtrudeParams.h ../Graphics/Draw.h ../Mesh/Create.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Parallel/ParUtil.h \
+  ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
+  ../DataStr/Tree.h ../Common/Context.h ../Geo/Geo.h ../Geo/GeoUtils.h \
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Common/GmshDefines.h \
+  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
+  ../Mesh/Matrix.h ../Mesh/Nurbs.h ../Mesh/Vertex.h ../Mesh/Mesh.h \
+  ../Geo/CAD.h ../Geo/ExtrudeParams.h ../Graphics/Draw.h ../Mesh/Create.h \
   ../Mesh/Vertex.h ../Mesh/Mesh.h ../Common/Colors.h ../Common/Options.h \
   Parser.h OpenFile.h ../Common/CommandLine.h FunctionManager.h \
   ../Common/OS.h ../Graphics/CreateFile.h ../Common/Visibility.h
+# 1 "/Users/geuzaine/.gmsh/Parser//"
 Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -139,55 +106,22 @@ Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h Gmsh.tab.hpp
-OpenFile.o: OpenFile.cpp ../Mesh/BDS.h ../contrib/ANN/include/ANN/ANN.h \
-  ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
-  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
-  ../Common/GmshMatrix.h /sw/include/gsl/gsl_linalg.h \
-  /sw/include/gsl/gsl_mode.h /sw/include/gsl/gsl_permutation.h \
-  /sw/include/gsl/gsl_types.h /sw/include/gsl/gsl_errno.h \
-  /sw/include/gsl/gsl_check_range.h /sw/include/gsl/gsl_vector.h \
-  /sw/include/gsl/gsl_vector_complex_long_double.h \
-  /sw/include/gsl/gsl_complex.h /sw/include/gsl/gsl_vector_long_double.h \
-  /sw/include/gsl/gsl_block_long_double.h \
-  /sw/include/gsl/gsl_vector_complex.h \
-  /sw/include/gsl/gsl_block_complex_long_double.h \
-  /sw/include/gsl/gsl_vector_complex_double.h \
-  /sw/include/gsl/gsl_vector_double.h /sw/include/gsl/gsl_block_double.h \
-  /sw/include/gsl/gsl_block_complex_double.h \
-  /sw/include/gsl/gsl_vector_complex_float.h \
-  /sw/include/gsl/gsl_vector_float.h /sw/include/gsl/gsl_block_float.h \
-  /sw/include/gsl/gsl_block_complex_float.h \
-  /sw/include/gsl/gsl_vector_ulong.h /sw/include/gsl/gsl_block_ulong.h \
-  /sw/include/gsl/gsl_vector_long.h /sw/include/gsl/gsl_block_long.h \
-  /sw/include/gsl/gsl_vector_uint.h /sw/include/gsl/gsl_block_uint.h \
-  /sw/include/gsl/gsl_vector_int.h /sw/include/gsl/gsl_block_int.h \
-  /sw/include/gsl/gsl_vector_ushort.h /sw/include/gsl/gsl_block_ushort.h \
-  /sw/include/gsl/gsl_vector_short.h /sw/include/gsl/gsl_block_short.h \
-  /sw/include/gsl/gsl_vector_uchar.h /sw/include/gsl/gsl_block_uchar.h \
-  /sw/include/gsl/gsl_vector_char.h /sw/include/gsl/gsl_block_char.h \
-  /sw/include/gsl/gsl_matrix.h \
-  /sw/include/gsl/gsl_matrix_complex_long_double.h \
-  /sw/include/gsl/gsl_matrix_complex_double.h \
-  /sw/include/gsl/gsl_matrix_complex_float.h \
-  /sw/include/gsl/gsl_matrix_long_double.h \
-  /sw/include/gsl/gsl_matrix_double.h /sw/include/gsl/gsl_matrix_float.h \
-  /sw/include/gsl/gsl_matrix_ulong.h /sw/include/gsl/gsl_matrix_long.h \
-  /sw/include/gsl/gsl_matrix_uint.h /sw/include/gsl/gsl_matrix_int.h \
-  /sw/include/gsl/gsl_matrix_ushort.h /sw/include/gsl/gsl_matrix_short.h \
-  /sw/include/gsl/gsl_matrix_uchar.h /sw/include/gsl/gsl_matrix_char.h \
-  /sw/include/gsl/gsl_blas.h /sw/include/gsl/gsl_blas_types.h \
-  /sw/include/gsl/gsl_cblas.h ../Common/AdaptiveViews.h \
-  ../Common/GmshMatrix.h ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/Tree.h ../DataStr/avl.h \
-  ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
+# 1 "/Users/geuzaine/.gmsh/Parser//"
+OpenFile.o: OpenFile.cpp ../Mesh/BDS.h ../Common/Views.h \
+  ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Gmsh.h \
+  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Geo/gmshModel.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
   ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Geo/MVertex.h ../Common/GmshDefines.h \
   ../Geo/MVertex.h ../Geo/GPoint.h ../Geo/GEdge.h ../Geo/GEntity.h \
   ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
-  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h \
-  ../Geo/GEntity.h ../Common/Context.h Parser.h OpenFile.h \
+  ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h ../Geo/GFace.h \
+  ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/MElement.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/MElement.h ../Common/Context.h Parser.h OpenFile.h \
   ../Common/CommandLine.h ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Common/Options.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
   ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h \
@@ -199,4 +133,5 @@ OpenFile.o: OpenFile.cpp ../Mesh/BDS.h ../contrib/ANN/include/ANN/ANN.h \
   ../Common/GmshUI.h ../Graphics/Draw.h ../Fltk/GUI.h \
   ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
   ../Fltk/Popup_Button.h
+# 1 "/Users/geuzaine/.gmsh/Parser//"
 FunctionManager.o: FunctionManager.cpp FunctionManager.h

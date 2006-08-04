@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <set>
+#include <map>
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -54,6 +55,12 @@ public:
   void remove(GFace *f){faces.erase(std::find(firstFace(),lastFace(),f));}
   void remove(GEdge *e){edges.erase(std::find(firstEdge(),lastEdge(),e));}
   void remove(GVertex *v){vertices.erase(std::find(firstVertex(),lastVertex(),v));}
+
+  // IO routines
+  int readMSH(const std::string &name);
+  int writeMSH(const std::string &name, double version=1.0, bool saveAll=false,
+	       double scalingFactor=1.0);
+  int writePOS(const std::string &name);
 
 protected:
   std::string modelName;

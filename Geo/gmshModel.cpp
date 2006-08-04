@@ -1,5 +1,6 @@
 #include "gmshModel.h"
 #include "Mesh.h"
+#include "Geo.h"
 #include "GPoint.h"
 #include "SPoint2.h"
 #include "SPoint3.h"
@@ -13,17 +14,18 @@
 #include "gmshRegion.h"
 
 extern Mesh *THEM;
+
 gmshModel::gmshModel()
-  : GModel ( "noname" )
+  : GModel("noname")
 {
   convertFromUglyOldDataStructuresgmshModel();
 }
 
 gmshModel::gmshModel(char *geofile)
-  : GModel ( geofile )
+  : GModel(geofile)
 {
-      OpenProblem ( geofile );
-      convertFromUglyOldDataStructuresgmshModel();
+  OpenProblem(geofile);
+  convertFromUglyOldDataStructuresgmshModel();
 }
 
 void gmshModel::convertFromUglyOldDataStructuresgmshModel()
@@ -35,28 +37,22 @@ void gmshModel::convertFromUglyOldDataStructuresgmshModel()
     for(int i = 0; i < List_Nbr(curves); i++){
       Curve *c;
       List_Read(curves, i, &c);
-      if (c->Num >=0)
-	{
-	  if (points.find(c->beg) == points.end())
-	    {
-	      points.insert(c->beg);
-	      gmshVertex *v = new gmshVertex ( this, c->beg );
-	      //vertices.push_back(v); 
-	      add(v);
-	    }
-	  if (points.find(c->end) == points.end())
-	    {
-	      points.insert(c->end);
-	      gmshVertex *v = new gmshVertex ( this , c->end );
-	      //vertices.push_back(v); 
-	      add(v);
-	    }
-	  gmshEdge *e = new gmshEdge ( this, c ,
-				       vertexByTag(c->beg->Num),
-				       vertexByTag(c->end->Num) );
-	  //	  edges.push_back(e);     	  
-	  add(e);
+      if(c->Num >= 0){
+	if(points.find(c->beg) == points.end()){
+	  points.insert(c->beg);
+	  gmshVertex *v = new gmshVertex(this, c->beg);
+	  add(v);
 	}
+	if(points.find(c->end) == points.end()){
+	  points.insert(c->end);
+	  gmshVertex *v = new gmshVertex(this, c->end);
+	  add(v);
+	}
+	gmshEdge *e = new gmshEdge (this, c,
+				    vertexByTag(c->beg->Num),
+				    vertexByTag(c->end->Num) );
+	add(e);
+      }
     }
     List_Delete(curves);
   }
@@ -66,8 +62,7 @@ void gmshModel::convertFromUglyOldDataStructuresgmshModel()
       Surface *s;
       List_Read(surfaces, i, &s);
       gmshFace *f = new gmshFace ( this, s );
-      //      faces.push_back(f); 
-      add ( f);
+      add(f);
     }
     List_Delete(surfaces);
   } 
@@ -76,22 +71,36 @@ void gmshModel::convertFromUglyOldDataStructuresgmshModel()
     for(int i = 0; i < List_Nbr(volumes); i++){
       Volume *v;
       List_Read(volumes, i, &v);
-      gmshRegion *r = new gmshRegion ( this, v );
-      //      regions.push_back(r); 
-      add ( r);
+      gmshRegion *r = new gmshRegion(this, v);
+      add(r);
     }
     List_Delete(volumes);
   }
-
-  Msg (INFO,"gmshModel Created\n");
-  Msg (INFO,"%d Vertices\n",vertices.size());
-  Msg (INFO,"%d Edges   \n",edges.size());
-  Msg (INFO,"%d Faces\n",faces.size());
-  Msg (INFO,"%d Regions\n" ,regions.size());
-
+  for(int i = 0; i < List_Nbr(THEM->PhysicalGroups); i++){
+    PhysicalGroup *p;
+    List_Read(THEM->PhysicalGroups, i, &p);
+    for(int j = 0; j < List_Nbr(p->Entities); j++){
+      int num;
+      List_Read(p->Entities, j, &num);
+      GEntity *ge = 0;
+      switch(p->Typ){
+      case MSH_PHYSICAL_POINT:   ge = vertexByTag(num); break;
+      case MSH_PHYSICAL_LINE:    ge = edgeByTag(num); break;
+      case MSH_PHYSICAL_SURFACE: ge = faceByTag(num); break;
+      case MSH_PHYSICAL_VOLUME:  ge = regionByTag(num); break;
+      }
+      if(ge) ge->physicals.push_back(p->Num);
+    }
+  }
+  
+  Msg(DEBUG, "gmshModel Created");
+  Msg(DEBUG, "%d Vertices", vertices.size());
+  Msg(DEBUG, "%d Edges", edges.size());
+  Msg(DEBUG, "%d Faces", faces.size());
+  Msg(DEBUG, "%d Regions", regions.size());
 }
 
-GModel *createGmshModel (char *f )
+GModel *createGmshModel(char *f)
 {
-  return new gmshModel (f);
+  return new gmshModel(f);
 }

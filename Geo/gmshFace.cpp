@@ -6,40 +6,28 @@
 #include "Geo.h"
 #include "Utils.h"
 
-gmshFace::gmshFace(GModel *m,Surface * face):GFace (m,face->Num), s(face)
+gmshFace::gmshFace(GModel *m, Surface *face)
+  : GFace(m, face->Num), s(face)
 {
-  Curve *c;
-  for (int i=0 ; i< List_Nbr ( s->Generatrices ) ; i++)
-    {
-      List_Read ( s->Generatrices , i, & c );
-      GEdge *e = m->edgeByTag ( abs(c->Num) );
-      if ( ! e ) throw;
-      l_edges.push_back(e);
-      e->addFace (this);
-      if (c->Num>0) l_dirs.push_back(1);
-      else l_dirs.push_back(-1);
-    }
+  for (int i=0 ; i < List_Nbr(s->Generatrices) ; i++){
+    Curve *c;
+    List_Read(s->Generatrices, i, &c);
+    GEdge *e = m->edgeByTag(abs(c->Num));
+    if(!e) throw;
+    l_edges.push_back(e);
+    e->addFace(this);
+    if(c->Num > 0) l_dirs.push_back(1);
+    else l_dirs.push_back(-1);
+  }
 }
 
+gmshFace::gmshFace(GModel *m, int num)
+  : GFace(m, num), s(0)
+{
+}
 
 Range<double> gmshFace::parBounds(int i) const
 { 
-/*  SPAinterval range;
-  if(i ==0)
-    range = acisSurface()->equation().param_range_u();
-  if(i==1)
-    range = acisSurface()->equation().param_range_v();
-
-  if(range.finite() )
-    return( Range<double>(range.start_pt(),range.end_pt()) );
-  else{
-    //printf("*calcParBounds()* is called\n");
-    SBoundingBox2d b = calcParBounds();
-    SPoint2 min = b.min();
-    SPoint2 max = b.max();
-    return Range<double>(min[i],max[i]);
-  }
-*/
   return Range<double>(0, 1);
 }
 
@@ -50,7 +38,6 @@ int gmshFace::paramDegeneracies(int dir, double *par)
 
 SBoundingBox3d gmshFace::bounds() const
 {
-
   std::list<GEdge*>::const_iterator it = l_edges.begin();
   SBoundingBox3d res = (*it)->bounds();
   ++it;
@@ -60,30 +47,34 @@ SBoundingBox3d gmshFace::bounds() const
       ++it;
     }
   return res;
-
 }
 
 SVector3 gmshFace::normal(const SPoint2 &param) const
 {
-  Vertex vu = InterpolateSurface( s, param[0], param[1],1,1);
-  Vertex vv = InterpolateSurface( s, param[0], param[1],1,2);
+  if(!s) return SVector3(0., 0., 0.);
+
+  Vertex vu = InterpolateSurface(s, param[0], param[1], 1, 1);
+  Vertex vv = InterpolateSurface(s, param[0], param[1], 1, 2);
   Vertex n = vu % vv;
   n.norme();
-  return SVector3(n.Pos.X,n.Pos.Y,n.Pos.Z);
+  return SVector3(n.Pos.X, n.Pos.Y, n.Pos.Z);
 }
 
 Pair<SVector3,SVector3> gmshFace::firstDer(const SPoint2 &param) const
 {
-  Vertex vu = InterpolateSurface( s, param[0], param[1],1,1);
-  Vertex vv = InterpolateSurface( s, param[0], param[1],1,2);
-  return Pair<SVector3,SVector3>( SVector3(vu.Pos.X,vu.Pos.Y,vu.Pos.Z),
-				  SVector3(vv.Pos.X,vv.Pos.Y,vv.Pos.Z));
+  if(!s) return Pair<SVector3,SVector3>(SVector3(0., 0., 0.),
+					SVector3(0., 0., 0.));
+
+  Vertex vu = InterpolateSurface(s, param[0], param[1], 1, 1);
+  Vertex vv = InterpolateSurface(s, param[0], param[1], 1, 2);
+  return Pair<SVector3,SVector3>(SVector3(vu.Pos.X, vu.Pos.Y, vu.Pos.Z),
+				 SVector3(vv.Pos.X, vv.Pos.Y, vv.Pos.Z));
 }
 
 
 GPoint gmshFace::point(const SPoint2 &pt) const
 {   
-    return point(pt.x(),pt.y()); 
+  return point(pt.x(),pt.y()); 
 }
 
 
@@ -103,34 +94,34 @@ void computePlaneDatas (const GFace *gf, double VX[3],double VY[3],double &x, do
 
 GPoint gmshFace::point(double par1,double par2) const
 {
+  if(!s) return GPoint(0., 0., 0., this);
+
   double pp[2]={par1,par2};
-  if (s->Typ == MSH_SURF_PLAN)
-    {
-      double x,y,z,VX[3],VY[3];
-      computePlaneDatas (this,VX,VY,x,y,z);
-      return GPoint( x + VX[0] * par1 + VY[0] * par2,
-		     y + VX[1] * par1 + VY[1] * par2,
-		     z + VX[2] * par1 + VY[2] * par2, this,pp);
-    }
-  else
-    {
-      Vertex v = InterpolateSurface( s, par1, par2,0,0);
-      return GPoint(v.Pos.X,v.Pos.Y,v.Pos.Z,this,pp);
-    }
+  if(s->Typ == MSH_SURF_PLAN){
+    double x,y,z,VX[3],VY[3];
+    computePlaneDatas (this,VX,VY,x,y,z);
+    return GPoint( x + VX[0] * par1 + VY[0] * par2,
+		   y + VX[1] * par1 + VY[1] * par2,
+		   z + VX[2] * par1 + VY[2] * par2, this,pp);
+  }
+  else{
+    Vertex v = InterpolateSurface( s, par1, par2,0,0);
+    return GPoint(v.Pos.X,v.Pos.Y,v.Pos.Z,this,pp);
+  }
 }
 
 GPoint gmshFace::closestPoint(const SPoint3 & qp)
 {
-  Vertex v;
+  if(!s) return GPoint(0., 0., 0., this);
 
+  Vertex v;
   v.Pos.X = qp.x();
   v.Pos.Y = qp.y();
   v.Pos.Z = qp.z();
 
-  if ( s->Typ != MSH_SURF_PLAN )
+  if(s->Typ != MSH_SURF_PLAN)
     ProjectPointOnSurface(s, v);
-  return GPoint(v.Pos.X,v.Pos.Y,v.Pos.Z,
-		 this,v.us);
+  return GPoint(v.Pos.X, v.Pos.Y, v.Pos.Z, this, v.us);
 }
 
 int gmshFace::containsParam(const SPoint2 &pt) const
@@ -146,27 +137,23 @@ int gmshFace::containsParam(const SPoint2 &pt) const
 
 SPoint2 gmshFace::parFromPoint(const SPoint3 &qp) const
 {
+  if(!s) return SPoint2(0., 0.);
+
   double u,v;
-  if (s->Typ == MSH_SURF_PLAN)
-    {
-      double x,y,z,VX[3],VY[3];
-      computePlaneDatas (this,VX,VY,x,y,z);
-      double vec[3] = {qp.x()-x,qp.y()-y,qp.z()-z};
-      prosca(vec,VX,&u);
-      prosca(vec,VY,&v);
-    }
-  else
-    {
-      XYZtoUV(s, qp.x(), qp.y(), qp.z(), &u, &v, 1.0);
-    }
+  if (s->Typ == MSH_SURF_PLAN){
+    double x,y,z,VX[3],VY[3];
+    computePlaneDatas (this,VX,VY,x,y,z);
+    double vec[3] = {qp.x()-x,qp.y()-y,qp.z()-z};
+    prosca(vec,VX,&u);
+    prosca(vec,VY,&v);
+  }
+  else{
+    XYZtoUV(s, qp.x(), qp.y(), qp.z(), &u, &v, 1.0);
+  }
   SPoint2 pt2(u,v); 
   return pt2;
 }
-/*
 
-GeoRep * gmshFace::geometry()
-{ return new gmshGeoRep(this,2); }
-*/
 bool gmshFace::continuous(int dim) const
 { 
   return true;
@@ -184,6 +171,8 @@ bool gmshFace::degenerate(int dim) const
 
 GEntity::GeomType gmshFace::geomType() const
 {
+  if(!s) return DiscreteSurface;
+
   switch(s->Typ){
   case MSH_SURF_NURBS: return Nurb;
   case MSH_SURF_PLAN: return Plane;

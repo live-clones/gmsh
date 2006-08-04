@@ -8,6 +8,7 @@
 class gmshRegion : public GRegion {
 public:
   gmshRegion(GModel *m, ::Volume *_v);
+  gmshRegion(GModel *m, int num);
   virtual ~gmshRegion() {}
   void * getNativePtr() const {return v;}
   ::Volume *v;
