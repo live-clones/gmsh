@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.84 2006-08-04 14:28:02 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.85 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -133,10 +133,15 @@ void CreateOutputFile(char *filename, int format)
   GLint width = viewport[2] - viewport[0];
   GLint height = viewport[3] - viewport[1];
 
+  bool printEndMessage = true;
+  if(format != FORMAT_AUTO)
+    Msg(INFO, "Writing %s file '%s'", GetStringForFileFormat(format), name);
+
   switch (format) {
 
   case FORMAT_AUTO:
     CreateOutputFile(name, GuessFileFormatFromFileName(name));
+    printEndMessage = false;
     break;
     
   case FORMAT_GEO:
@@ -161,8 +166,7 @@ void CreateOutputFile(char *filename, int format)
     break;
 
   case FORMAT_LC:
-    ExportMeshStatistics(name);
-    Msg(STATUS2N, "Wrote '%s'", name);
+    GMODEL->writePOS(name);
     break;
 
   case FORMAT_PPM:
@@ -190,7 +194,6 @@ void CreateOutputFile(char *filename, int format)
       CTX.print.gl_fonts = 1;
       CTX.bg_gradient = old_bg_gradient;
 
-      Msg(INFO, "Writing %s file '%s'", GetStringForFileFormat(format), name);
       if(format == FORMAT_PPM){
 	create_ppm(fp, &buffer);
       }
@@ -213,9 +216,6 @@ void CreateOutputFile(char *filename, int format)
       else{
 	create_png(fp, &buffer, 100);
       }
-
-      Msg(INFO, "Wrote %s file '%s'", GetStringForFileFormat(format), name);
-      Msg(STATUS2N, "Wrote '%s'", name);
       fclose(fp);
     }
     break;
@@ -276,8 +276,6 @@ void CreateOutputFile(char *filename, int format)
 	(format == FORMAT_EPSTEX ? GL2PS_NO_TEXT : 0) |
 	(format == FORMAT_PDFTEX ? GL2PS_NO_TEXT : 0);
       
-      Msg(INFO, "Writing %s file '%s'", GetStringForFileFormat(format), name);
-      
       GLint buffsize = 0;
       int res = GL2PS_OVERFLOW;
       while(res == GL2PS_OVERFLOW) {
@@ -311,9 +309,6 @@ void CreateOutputFile(char *filename, int format)
       }
 
       CTX.bg_gradient = old_bg_gradient;
-
-      Msg(INFO, "Wrote %s file '%s'", GetStringForFileFormat(format), name);
-      Msg(STATUS2N, "Wrote '%s'", name);
       fclose(fp);
     }
     break;
@@ -325,8 +320,6 @@ void CreateOutputFile(char *filename, int format)
 	Msg(GERROR, "Unable to open file '%s'", name);
 	return;
       }
-      Msg(INFO, "Writing TEX file '%s'", name);
-
       GLint buffsize = 0;
       int res = GL2PS_OVERFLOW;
       while(res == GL2PS_OVERFLOW) {
@@ -340,15 +333,19 @@ void CreateOutputFile(char *filename, int format)
 	CTX.print.gl_fonts = 1;
 	res = gl2psEndPage();
       }
-      Msg(INFO, "Wrote TEX file '%s'", name);
-      Msg(STATUS2N, "Wrote '%s'", name);
       fclose(fp);
     }
     break;
 
   default:
     Msg(GERROR, "Unknown output file format (%d)", format);
+    printEndMessage = false;
     break;
+  }
+
+  if(printEndMessage){
+    Msg(INFO, "Wrote %s file '%s'", GetStringForFileFormat(format), name);
+    Msg(STATUS2N, "Wrote '%s'", name);
   }
 
   CTX.print.format = oldformat;

@@ -47,13 +47,11 @@
 #define DEBUG2        19  // Middle part of a multiline DEBUG message
 #define DEBUG3        20  // Last part of a multiline DEBUG message  
 
-#define STATUS1       21  // Small information in status bar (left)
-#define STATUS2       22  // Small interaction in status bar (middle)
-#define STATUS3       23  // Small interaction in status bar (right)
+#define STATUS1       21  // left status bar
+#define STATUS2       22  // right status bar
 
 #define STATUS1N      24  // Same as STATUS1, but not going into the log file
 #define STATUS2N      25  // Same as STATUS2, but not going into the log file
-#define STATUS3N      26  // Same as STATUS3, but not going into the log file
 
 #define ONSCREEN      27  // Persistent on-screen message
 

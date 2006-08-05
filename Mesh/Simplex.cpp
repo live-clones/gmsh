@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.47 2006-01-29 22:53:41 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.48 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -211,18 +211,6 @@ double SimplexBase::GammaShapeMeasure()
     }
   }
   return 12. * rhoin() / (sqrt(6.) * maxlij);
-}
-
-void SimplexBase::ExportStatistics(FILE * f)
-{
-  int N = !V[2] ? 2 : (!V[3] ? 3 : 4);
-  int NSUP = !VSUP ? 0 : (!V[2] ? 1 : (!V[3] ? 3 : 6));
-  double g = GammaShapeMeasure();
-  double e = EtaShapeMeasure();
-  double r = RhoShapeMeasure();
-  print_elm_stats(f, Num, iEnt, g, e, r, 
-		  !V[2] ? "SL" : (!V[3] ? "ST" : "SS"), N, V, 
-		  !V[2] ? "SL2" : (!V[3] ? "ST2" : "SS2"), NSUP, VSUP);
 }
 
 SimplexBase *Create_SimplexBase(Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)

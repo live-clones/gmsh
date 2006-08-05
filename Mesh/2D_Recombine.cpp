@@ -1,4 +1,4 @@
-// $Id: 2D_Recombine.cpp,v 1.28 2006-07-12 07:24:14 geuzaine Exp $
+// $Id: 2D_Recombine.cpp,v 1.29 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -207,7 +207,7 @@ int Recombine_All (Mesh *M)
   // add 2nd order nodes to all elements 
   Degre2(2);
 
-  Msg(STATUS3, "Splitting all elements");
+  Msg(STATUS2, "Splitting all elements");
 
   // then split everybody
   for(int i = 0; i < List_Nbr(surfaces); i++){

@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.73 2006-03-17 21:04:34 geuzaine Exp $
+// $Id: Message.cpp,v 1.74 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -79,14 +79,12 @@ void Msg(int level, char *fmt, ...)
   case SOLVER   : color = 4; verb = 3; break ;
   case SOLVERR  : color = 1; verb = 3; break ;
 
-  case PROGRESS : log = 0; window = 2; break ;
+  case PROGRESS : log = 0; window = 1; break ;
 
   case STATUS1N : log = 0; //fallthrough
   case STATUS1  : str = INFO_STR; verb = 1; window = 0; break ;
   case STATUS2N : log = 0; //fallthrough
   case STATUS2  : str = INFO_STR; verb = 1; window = 1; break ;
-  case STATUS3N : log = 0; //fallthrough
-  case STATUS3  : str = INFO_STR; verb = 1; window = 2; break ;
   case ONSCREEN : log = 0; verb = 1; window = 3; break ;
 
   case FATAL    : str = FATAL_STR; abort = 1; break ;
@@ -141,8 +139,7 @@ void Msg(int level, char *fmt, ...)
 	 level != DEBUG2 &&
 	 level != DEBUG3 &&
 	 level != STATUS1N &&
-	 level != STATUS2N &&
-	 level != STATUS3N){
+	 level != STATUS1N){
 	WID->check();
       }
     }

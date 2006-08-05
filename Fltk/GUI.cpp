@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.502 2006-07-01 10:35:48 geuzaine Exp $
+// $Id: GUI.cpp,v 1.503 2006-08-05 10:05:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1147,7 +1147,7 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
     return;
   }
 
-  Msg(STATUS2N, menu[0].label + 1);
+  Msg(STATUS1N, menu[0].label + 1);
 
   // Remove all the children (m_push*, m_toggle*, m_pop*). FLTK <=
   // 1.1.4 should be OK with this. FLTK 1.1.5 may crash as it may
@@ -1428,12 +1428,10 @@ void GUI::create_graphic_window()
   }
 
   g_status_label[0] = new Fl_Box(x, glheight + 2, 
-				 (width - x) / 3, sh - 4);
-  g_status_label[1] = new Fl_Box(x + (width - x) / 3, glheight + 2, 
-				 (width - x) / 3, sh - 4);
-  g_status_label[2] = new Fl_Box(x + 2 * (width - x) / 3, glheight + 2, 
-				 (width - x) / 3 - 2, sh - 4);
-  for(i = 0; i < 3; i++) {
+				 (width - x) / 2, sh - 4);
+  g_status_label[1] = new Fl_Box(x + (width - x) / 2, glheight + 2, 
+				 (width - x) / 2, sh - 4);
+  for(i = 0; i < 2; i++) {
     g_status_label[i]->box(FL_FLAT_BOX);
     g_status_label[i]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   }
@@ -1512,11 +1510,11 @@ void GUI::check_anim_buttons()
 
 void GUI::set_status(char *msg, int num)
 {
-  if(num >= 0 && num < 3){
+  if(num == 0 || num == 1){
     g_status_label[num]->label(msg);
     g_status_label[num]->redraw();
   }
-  else if (num == 3){
+  else if(num == 3){
     int n = strlen(msg);
     int i = 0;
     while(i < n)

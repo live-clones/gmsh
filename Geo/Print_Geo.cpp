@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.44 2006-07-12 07:24:13 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.45 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -253,7 +253,6 @@ void Print_Geo(char *filename)
       Msg(GERROR, "Unable to open file '%s'", filename);
       return;
     }
-    Msg(INFO, "Writing flattened geometry file '%s'", filename);
   }
   else
     FOUT = stdout;
@@ -264,9 +263,5 @@ void Print_Geo(char *filename)
   Tree_Action(THEM->Volumes, Print_Volume);
   List_Action(THEM->PhysicalGroups, Print_PhysicalGroups);
 
-  if(filename) {
-    Msg(INFO, "Wrote flattened geometry file '%s'", filename);
-    Msg(STATUS2N, "Wrote '%s'", filename);
-    fclose(FOUT);
-  }
+  if(filename) fclose(FOUT);
 }

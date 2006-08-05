@@ -52,16 +52,6 @@ static void storeElementsInEntities(GModel *m, int type,
   std::map<int, std::vector<MElement*> >::const_iterator ite = map.end();
   for(; it != ite; ++it){
     switch(type){
-    case PNT:
-      {
-	GVertex *v = m->vertexByTag(it->first);
-	if(!v){
-	  v = new gmshVertex(m, it->first);
-	  m->add(v);
-	}
-	if(type == PNT) copyElements(v->mesh_vertices, it->second);
-      }
-      break;
     case LGN1:     
       {
 	GEdge *e = m->edgeByTag(it->first);
@@ -290,6 +280,20 @@ int GModel::readMSH(const std::string &name)
   // entity does not exist, create a new one.
   for(int i = 0; i < 7; i++)
     storeElementsInEntities(this, elementTypes[i], elements[i]);
+
+  // treat points separately
+  {
+    std::map<int, std::vector<MVertex*> >::const_iterator it = points.begin();
+    std::map<int, std::vector<MVertex*> >::const_iterator ite = points.end();
+    for(; it != ite; ++it){
+      GVertex *v = vertexByTag(it->first);
+      if(!v){
+	v = new gmshVertex(this, it->first);
+	add(v);
+      }
+      v->mesh_vertices.push_back(it->second[0]);
+    }
+  }
   
   // loop on regions, then on faces, edges and vertices and store the
   // entity pointer in the the elements' vertices (this way we
@@ -309,7 +313,12 @@ int GModel::readMSH(const std::string &name)
     associateEntityWithVertices(*it, (*it)->lines);
   }
   for(viter it = firstVertex(); it != lastVertex(); ++it){
-    //FIXME: TODO 
+    // special case for points: the mesh vertex has been copied here
+    // so that we can assign the entity:
+    (*it)->mesh_vertices[0]->setEntity(*it);
+    // now that this is done, we reset mesh_vertices so that it can be
+    // filled again below
+    (*it)->mesh_vertices.clear();
   }
 
   // store the vertices in their associated geometrical entity
@@ -321,7 +330,7 @@ int GModel::readMSH(const std::string &name)
     if(ge) 
       ge->mesh_vertices.push_back(v);
     else
-      delete v; // delete unused vertex
+      delete v; // we delete all unused vertices
   }
 
   // store the physical tags

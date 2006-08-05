@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.50 2006-03-10 15:54:30 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.51 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -200,9 +200,9 @@ int Solver(int num, char *args)
 	  break;
 	case GmshServer::CLIENT_PROGRESS:
 	  if(num >= 0)
-	    Msg(STATUS3N, "%s %s", SINFO[num].name, message);
+	    Msg(STATUS2N, "%s %s", SINFO[num].name, message);
 	  else
-	    Msg(STATUS3N, "%s", message);
+	    Msg(STATUS2N, "%s", message);
 	  break;
 	case GmshServer::CLIENT_OPTION_1:
 	  if(num >= 0)
@@ -279,7 +279,7 @@ int Solver(int num, char *args)
     Msg(WARNING, "Impossible to unlink the socket '%s'", sockname);
 
   if(num >= 0){
-    Msg(STATUS3N, "Ready");
+    Msg(STATUS2N, "");
   }
   else{
     Msg(INFO, "Client disconnected: starting new connection");

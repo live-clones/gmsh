@@ -1,4 +1,4 @@
-// $Id: Element.cpp,v 1.11 2006-01-29 20:32:48 geuzaine Exp $
+// $Id: Element.cpp,v 1.12 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -94,15 +94,6 @@ Quadrangle *Create_Quadrangle(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4)
   return new Quadrangle(v1, v2, v3, v4);
 }
 
-void Quadrangle::ExportStatistics(FILE * f)
-{
-  int N = 4, NSUP = VSUP ? 5 : 0;
-  double g = 0.;
-  double e = 0.;
-  double r = RhoShapeMeasure();
-  print_elm_stats(f, Num, iEnt, g, e, r, "SQ", N, V, "SQ2", NSUP, VSUP);
-}
-
 void Free_Quadrangle(void *a, void *b)
 {
   Quadrangle *q = *(Quadrangle **) a;
@@ -171,15 +162,6 @@ Hexahedron *Create_Hexahedron(Vertex * v1, Vertex * v2, Vertex * v3,
                               Vertex * v7, Vertex * v8)
 {
   return new Hexahedron(v1, v2, v3, v4, v5, v6, v7, v8);
-}
-
-void Hexahedron::ExportStatistics(FILE * f)
-{
-  int N = 8, NSUP = VSUP ? 19 : 0;
-  double g = 0.;
-  double e = 0.;
-  double r = RhoShapeMeasure();
-  print_elm_stats(f, Num, iEnt, g, e, r, "SH", N, V, "SH2", NSUP, VSUP);
 }
 
 void Free_Hexahedron(void *a, void *b)
@@ -251,15 +233,6 @@ Prism *Create_Prism(Vertex * v1, Vertex * v2, Vertex * v3,
   return new Prism(v1, v2, v3, v4, v5, v6);
 }
 
-void Prism::ExportStatistics(FILE * f)
-{
-  int N = 6, NSUP = VSUP ? 12 : 0;
-  double g = 0.;
-  double e = 0.;
-  double r = RhoShapeMeasure();
-  print_elm_stats(f, Num, iEnt, g, e, r, "SI", N, V, "SI2", NSUP, VSUP);
-}
-
 void Free_Prism(void *a, void *b)
 {
   Prism *p = *(Prism **) a;
@@ -327,15 +300,6 @@ Pyramid *Create_Pyramid(Vertex * v1, Vertex * v2, Vertex * v3,
   return new Pyramid(v1, v2, v3, v4, v5);
 }
 
-void Pyramid::ExportStatistics(FILE * f)
-{
-  int N = 5, NSUP = VSUP ? 9 : 0;
-  double g = 0.;
-  double e = 0.;
-  double r = RhoShapeMeasure();
-  print_elm_stats(f, Num, iEnt, g, e, r, "SY", N, V, "SY2", NSUP, VSUP);
-}
-
 void Free_Pyramid(void *a, void *b)
 {
   Pyramid *p = *(Pyramid **) a;
@@ -352,38 +316,3 @@ int comparePyramid(const void *a, const void *b)
   return (q->Num - w->Num);
 }
 
-// dump an element in a parsed post-processing view
-
-void print_elm_stats(FILE *f, int Num, int Ent, double Gamma, double Eta, double Rho, 
-		     const char *S, int N, Vertex **V, 
-		     const char *SSUP, int NSUP, Vertex **VSUP)
-{
-  fprintf(f, "%s(", NSUP ? SSUP : S);
-  for(int i = 0; i < N; i++){
-    if(i) fprintf(f, ",");
-    fprintf(f, "%g,%g,%g", V[i]->Pos.X, V[i]->Pos.Y, V[i]->Pos.Z);
-  }
-  for(int i = 0; i < NSUP; i++){
-    fprintf(f, ",%g,%g,%g", VSUP[i]->Pos.X, VSUP[i]->Pos.Y, VSUP[i]->Pos.Z);
-  }
-  fprintf(f, "){");
-  for(int i = 0; i < N+NSUP; i++)
-    fprintf(f, "%d,", Ent);
-  for(int i = 0; i < N+NSUP; i++)
-    fprintf(f, "%d,", Num);
-  for(int i = 0; i < N; i++)
-    fprintf(f, "%g,", V[i]->lc);
-  for(int i = 0; i < NSUP; i++)
-    fprintf(f, "%g,", VSUP[i]->lc);
-  for(int i = 0; i < N+NSUP; i++)
-    fprintf(f, "%g,", Gamma);
-  for(int i = 0; i < N+NSUP; i++)
-    fprintf(f, "%g,", Eta);
-  for(int i = 0; i < N+NSUP; i++){
-    if(i == N+NSUP - 1)
-      fprintf(f, "%g", Rho);
-    else
-      fprintf(f, "%g,", Rho);
-  }
-  fprintf(f, "};\n");
-}

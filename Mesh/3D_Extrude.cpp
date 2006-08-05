@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.92 2006-05-14 00:48:20 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.93 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1083,7 +1083,7 @@ int Extrude_Mesh(Tree_T * Volumes)
   if(!extrude)
     return false;
 
-  Msg(STATUS2, "Mesh 3D... (initial)");
+  Msg(STATUS1, "Mesh 3D... (initial)");
 
   for(int ivol = 0; ivol < List_Nbr(vol); ivol++) {
     List_Read(vol, ivol, &THEV);
@@ -1092,7 +1092,7 @@ int Extrude_Mesh(Tree_T * Volumes)
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) {
       s = FindSurface(ep->geo.Source, THEM);
       if(s) {
-        Msg(STATUS3, "Meshing volume %d", NUM);
+        Msg(STATUS2, "Meshing volume %d", NUM);
         Extrude_Surface1(s);
       }
     }
@@ -1112,7 +1112,7 @@ int Extrude_Mesh(Tree_T * Volumes)
           Extrude_Surface2(s);
       }
     }
-    Msg(STATUS3, "Swapping %d", BAD_TETS);
+    Msg(STATUS2, "Swapping %d", BAD_TETS);
     if(BAD_TETS == j && j != 0) {
       Msg(GERROR, "Unable to swap all edges (output mesh will be incorrect): use 'Recombine'");
       break;
@@ -1120,7 +1120,7 @@ int Extrude_Mesh(Tree_T * Volumes)
     j = BAD_TETS;
   } while(BAD_TETS);
 
-  Msg(STATUS2, "Mesh 3D... (Final)");
+  Msg(STATUS1, "Mesh 3D... (final)");
 
   for(int ivol = 0; ivol < List_Nbr(vol); ivol++) {
     List_Read(vol, ivol, &THEV);
@@ -1129,7 +1129,7 @@ int Extrude_Mesh(Tree_T * Volumes)
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) {
       s = FindSurface(ep->geo.Source, THEM);
       if(s) {
-        Msg(STATUS3, "Meshing volume %d", NUM);
+        Msg(STATUS2, "Meshing volume %d", NUM);
         Extrude_Surface3(s);
       }
     }
@@ -1154,7 +1154,7 @@ int Extrude_Mesh(Tree_T * Volumes)
     Tree_Action(s->Simplexes, Free_NegativeSimplex);
     Tree_Delete(s->Simplexes);
     s->Simplexes = tmp;
-    Msg(STATUS3, "Coherence surface %d", s->Num);
+    Msg(STATUS2, "Coherence surface %d", s->Num);
     Extrude_Mesh(s);
   }
 

@@ -154,7 +154,7 @@ public:
   Fl_Window        *g_window ;
   Opengl_Window    *g_opengl_window ;
   Fl_Button        *g_status_butt[10] ;
-  Fl_Box           *g_status_label[3] ;
+  Fl_Box           *g_status_label[2] ;
 
   // Option window
   Fl_Window        *opt_window ;

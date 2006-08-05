@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.102 2006-08-04 14:28:02 geuzaine Exp $
+// $Id: Geom.cpp,v 1.103 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -280,7 +280,7 @@ void HighlightEntity(GEntity *e, int permanent)
   if(permanent)
     e->drawAttributes.Frozen = 2;
   else
-    Msg(STATUS1N, "%s", e->getInfoString().c_str());
+    Msg(STATUS2N, "%s", e->getInfoString().c_str());
 }
 
 void HighlightEntity(GVertex *v, GEdge *c, GFace *s, int permanent)
@@ -288,7 +288,7 @@ void HighlightEntity(GVertex *v, GEdge *c, GFace *s, int permanent)
   if(v) HighlightEntity(v, permanent);
   else if(c) HighlightEntity(c, permanent);
   else if(s) HighlightEntity(s, permanent);
-  else if(!permanent) Msg(STATUS1N, " ");
+  else if(!permanent) Msg(STATUS2N, "");
 }
 
 void HighlightEntityNum(int v, int c, int s, int permanent)

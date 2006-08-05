@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.48 2006-01-29 22:53:41 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.49 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -135,7 +135,7 @@ void Maillage_Curve(void *data, void *dummy)
   if(c->Num < 0)
     return;
 
-  Msg(STATUS3, "Meshing curve %d", c->Num);
+  Msg(STATUS2, "Meshing curve %d", c->Num);
 
   if(MeshDiscreteCurve(c)){
     return;

@@ -111,7 +111,7 @@ void meshGEdge :: operator() (GEdge *ge)
   dem(ge);
 
   // Send a messsage to the GMSH environment
-  Msg(STATUS3, "Meshing curve %d", ge->tag());
+  Msg(STATUS2, "Meshing curve %d", ge->tag());
 
   // Create a list of integration points
   List_T *Points = List_Create(10, 10, sizeof(IntPoint));

@@ -1,4 +1,4 @@
-// $Id: 3D_Transfinite.cpp,v 1.5 2006-01-06 00:34:26 geuzaine Exp $
+// $Id: 3D_Transfinite.cpp,v 1.6 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -219,7 +219,7 @@ int MeshTransfiniteVolume(Volume * vol)
   if(List_Nbr(vol->TrsfPoints) != nbp)
     return 0;
 
-  Msg(STATUS3, "Meshing volume %d", vol->Num);
+  Msg(STATUS2, "Meshing volume %d", vol->Num);
 
   for(i = 0; i < 6; i++)
     G[i] = NULL;

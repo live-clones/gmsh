@@ -43,7 +43,6 @@ class SimplexBase : public Element {
   double rhoin();
   double maxEdge();
   double minEdge();
-  void ExportStatistics(FILE *f);
 };
 
 SimplexBase *Create_SimplexBase(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);

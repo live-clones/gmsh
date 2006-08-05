@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.40 2006-07-12 07:24:14 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.41 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -309,7 +309,7 @@ void BDS_To_Mesh_2(Mesh *M)
     }
   }
 
-  Msg(STATUS3N, "Ready");
+  Msg(STATUS2N, "");
 }
 
 void BDS_To_Mesh(Mesh *M)
@@ -429,13 +429,13 @@ int MeshDiscreteSurface(Surface * s)
                       THEM->bds->LC,
                       CTX.mesh.beta_smooth_metric, CTX.mesh.nb_elem_per_rc);
     if(!THEM->bds_mesh) {
-      Msg(STATUS2, "Remesh 2D...");      
+      Msg(STATUS1, "Remesh 2D...");      
       double t1 = Cpu();
 
       THEM->bds_mesh = new BDS_Mesh(*(THEM->bds));
       int iter = 0;
       while(iter < NITER && THEM->bds_mesh->adapt_mesh(metric, true, THEM->bds)) {
-        Msg(STATUS3, "Iter=%d/%d Tri=%d", iter, NITER, THEM->bds_mesh->triangles.size());
+        Msg(STATUS2, "Iter=%d/%d Tri=%d", iter, NITER, THEM->bds_mesh->triangles.size());
         iter++;
       }
       BDS_To_Mesh_2(THEM);
@@ -444,7 +444,7 @@ int MeshDiscreteSurface(Surface * s)
       // THEM->bds_mesh->save_gmsh_format("3.msh");
 
       double t2 = Cpu();
-      Msg(STATUS2, "Remesh 2D complete (%g s)", t2 - t1);
+      Msg(STATUS1, "Remesh 2D complete (%g s)", t2 - t1);
       //      NITER++;
       return 1;
     }

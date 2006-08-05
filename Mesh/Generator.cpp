@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.86 2006-07-25 12:08:24 remacle Exp $
+// $Id: Generator.cpp,v 1.87 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -506,7 +506,7 @@ void mai3d(int Asked)
 
   if((Asked > oldstatus && Asked > 0 && oldstatus < 1) ||
      (Asked < oldstatus && Asked > 0)) {
-    Msg(STATUS2, "Mesh 1D...");
+    Msg(STATUS1, "Mesh 1D...");
     t1 = Cpu();
 
     if(THEM->status > 1) {
@@ -515,7 +515,7 @@ void mai3d(int Asked)
 
     Maillage_Dimension_1();
     t2 = Cpu();
-    Msg(STATUS2, "Mesh 1D complete (%g s)", t2 - t1);
+    Msg(STATUS1, "Mesh 1D complete (%g s)", t2 - t1);
     THEM->status = 1;
   }
 
@@ -523,7 +523,7 @@ void mai3d(int Asked)
 
   if((Asked > oldstatus && Asked > 1 && oldstatus < 2) ||
      (Asked < oldstatus && Asked > 1)) {
-    Msg(STATUS2, "Mesh 2D...");
+    Msg(STATUS1, "Mesh 2D...");
     t1 = Cpu();
 
     if(THEM->status == 3) {
@@ -533,7 +533,7 @@ void mai3d(int Asked)
 
     Maillage_Dimension_2();
     t2 = Cpu();
-    Msg(STATUS2, "Mesh 2D complete (%g s)", t2 - t1);
+    Msg(STATUS1, "Mesh 2D complete (%g s)", t2 - t1);
     THEM->status = 2;
   }
 
@@ -541,11 +541,11 @@ void mai3d(int Asked)
 
   if((Asked > oldstatus && Asked > 2 && oldstatus < 3) ||
      (Asked < oldstatus && Asked > 2)) {
-    Msg(STATUS2, "Mesh 3D...");
+    Msg(STATUS1, "Mesh 3D...");
     t1 = Cpu();
     Maillage_Dimension_3();
     t2 = Cpu();
-    Msg(STATUS2, "Mesh 3D complete (%g s)", t2 - t1);
+    Msg(STATUS1, "Mesh 3D complete (%g s)", t2 - t1);
     THEM->status = 3;
   }
 

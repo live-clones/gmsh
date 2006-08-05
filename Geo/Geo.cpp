@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.51 2006-07-14 12:17:06 geuzaine Exp $
+// $Id: Geo.cpp,v 1.52 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -90,7 +90,7 @@ void add_infile(char *text, char *fich)
     return;
   }
   fprintf(yyin, "%s\n", text);
-  Msg(STATUS1, "%s", text);
+  Msg(STATUS2, "%s", text);
   fclose(yyin);
   yyin = fopen(CTX.tmp_filename_fullpath, "r");
   while(!feof(yyin)) {

@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.53 2006-08-04 14:28:02 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.54 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -691,7 +691,7 @@ void Convex_Hull_Mesh_2D(List_T * Points, Surface * s)
        if(i%n == n-1){
        volume = 0.0;
        Tree_Action(s->Simplexes,VSIM_2D);
-       Msg(STATUS3, %d->%d Nodes, %d Elements",i+1,N,Tree_Nbr(s->Simplexes));
+       Msg(STATUS2, %d->%d Nodes, %d Elements",i+1,N,Tree_Nbr(s->Simplexes));
        } 
      */
     if(!THES) {
@@ -1048,7 +1048,7 @@ int AlgorithmeMaillage2DAnisotropeModeJF(Surface * s)
   N = List_Nbr(Points);
   n = N + 100;
 
-  Msg(STATUS2, "Mesh 2D... (initial)");
+  Msg(STATUS1, "Mesh 2D... (initial)");
 
   Convex_Hull_Mesh_2D(Points, s);
   List_Reset(Points);
@@ -1111,7 +1111,7 @@ int AlgorithmeMaillage2DAnisotropeModeJF(Surface * s)
     return 1;
   }
 
-  Msg(STATUS2, "Mesh 2D... (final)");
+  Msg(STATUS1, "Mesh 2D... (final)");
 
   if(!Tree_Right(s->Simplexes, &simp))
     Msg(WARNING, "No simplex left");
@@ -1146,10 +1146,9 @@ int AlgorithmeMaillage2DAnisotropeModeJF(Surface * s)
       if(i % n == n - 1) {
         volume = 0.0;
         Tree_Action(s->Simplexes, VSIM_2D);
-        Msg(STATUS3, "Nod=%d Elm=%d",
-            Tree_Nbr(s->Vertices), Tree_Nbr(s->Simplexes));
-        Msg(STATUS1, "Surf(%g) Conv(%g->%g)", volume, simp->Quality,
-            CONV_VALUE);
+        Msg(STATUS2, "Nod=%d Elm=%d Sur=%g Conv=%g->%g",
+            Tree_Nbr(s->Vertices), Tree_Nbr(s->Simplexes),
+	    volume, simp->Quality, CONV_VALUE);
       }
       Bowyer_Watson_2D(s, newv, simp, 0);
       Tree_Right(s->Simplexes, &simp);

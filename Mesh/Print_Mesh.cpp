@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.76 2006-07-12 07:24:14 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.77 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1922,8 +1922,6 @@ void Print_Mesh(char *filename, int Type)
   else
     strcpy(name, filename);
 
-  Msg(INFO, "Writing mesh file '%s'", name);
-
   FILE *fp = fopen(name, "w");
   if(!fp) {
     Msg(GERROR, "Unable to open file '%s'", name);
@@ -1944,8 +1942,6 @@ void Print_Mesh(char *filename, int Type)
   }
 
   fclose(fp);
-  Msg(INFO, "Wrote mesh file '%s'", name);
-  Msg(STATUS2N, "Wrote '%s'", name);
 
   CTX.threads_lock = 0;
 }

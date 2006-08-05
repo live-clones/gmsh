@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.280 2006-05-14 02:03:59 geuzaine Exp $
+// $Id: Options.cpp,v 1.281 2006-08-05 10:05:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -224,7 +224,6 @@ void Print_Options(int num, int level, int diff, int help, char *filename)
       Msg(GERROR, "Unable to open file '%s'", filename);
       return;
     }
-    Msg(INFO, "Writing option file '%s'", filename);
   }
   else
     file = NULL;
@@ -321,11 +320,7 @@ void Print_Options(int num, int level, int diff, int help, char *filename)
   Print_OptionCategory(level, diff, help, "Print options (colors)", file);
   Print_ColorOptions(num, level, diff, help, PrintOptions_Color, "Print.", file);
 
-  if(filename) {
-    Msg(INFO, "Wrote option file '%s'", filename);
-    Msg(STATUS2N, "Wrote '%s'", filename);
-    fclose(file);
-  }
+  if(filename) fclose(file);
 }
 
 char * Get_OptionSaveLevel(int level){
@@ -2781,11 +2776,11 @@ double opt_general_orthographic(OPT_ARGS_NUM)
   if(WID && (action & GMSH_GUI)) {
     if(CTX.ortho){
       WID->gen_choice[2]->value(0);
-      Msg(STATUS1N, "Orthographic projection");
+      Msg(STATUS2N, "Orthographic projection");
     }
     else{
       WID->gen_choice[2]->value(1);
-      Msg(STATUS1N, "Perspective projection");
+      Msg(STATUS2N, "Perspective projection");
     }
   }
 #endif
@@ -2799,15 +2794,15 @@ double opt_general_mouse_selection(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
     if(CTX.enable_mouse_selection == 0){
-      Msg(STATUS1N, "Mouse selection OFF");
+      Msg(STATUS2N, "Mouse selection OFF");
       WID->g_status_butt[9]->color(FL_RED);
     }
     else if(CTX.enable_mouse_selection == 1){
-      Msg(STATUS1N, "Mouse hover OFF");
+      Msg(STATUS2N, "Mouse hover OFF");
       WID->g_status_butt[9]->color(FL_GREEN);
     }
     else{
-      Msg(STATUS1N, "Mouse selection ON");
+      Msg(STATUS2N, "Mouse selection ON");
       WID->g_status_butt[9]->color(FL_BACKGROUND_COLOR);
     }
     WID->g_status_butt[9]->redraw();

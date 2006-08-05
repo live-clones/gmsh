@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.60 2006-07-12 07:24:12 geuzaine Exp $
+// $Id: Main.cpp,v 1.61 2006-08-05 10:05:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -32,6 +32,7 @@
 #include "Options.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
+#include "CreateFile.h"
 #include "GModel.h"
 
 Context_T CTX;
@@ -116,10 +117,10 @@ int GMSHBOX(int argc, char *argv[])
     }
     if(CTX.batch > 0) {
       mai3d(THEM, CTX.batch);
-      Print_Mesh(THEM, CTX.output_filename, CTX.mesh.format);
+      CreateOutputFile(CTX.output_filename, CTX.mesh.format);
     }
     else
-      Print_Geo(CTX.output_filename);
+      CreateOutputFile(CTX.output_filename, FORMAT_GEO);
     if(CTX.mesh.histogram){
       Mesh_Quality(THEM);
       Print_Histogram(THEM->Histogram[0]);
@@ -168,7 +169,6 @@ void Msg(int level, char *fmt, ...)
   case PROGRESS:
   case STATUS1N:
   case STATUS2N:
-  case STATUS3N:
     break;
 
   case DIRECT:

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.420 2006-07-24 14:05:50 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.421 2006-08-05 10:05:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -906,6 +906,7 @@ void options_browser_cb(CALLBACK_ARGS)
 void options_save_cb(CALLBACK_ARGS)
 {
   Print_Options(0, GMSH_OPTIONSRC, 1, 1, CTX.options_filename_fullpath);
+  Msg(STATUS2N, "Wrote '%s'", CTX.options_filename_fullpath);
 }
 
 void options_restore_defaults_cb(CALLBACK_ARGS)
@@ -954,7 +955,7 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
 
-  Msg(STATUS3N, "Setting rotation center");
+  Msg(STATUS2N, "Setting rotation center");
   Msg(ONSCREEN, "Select point\n[Press 'q' to abort]");
   char ib = SelectEntity(ENT_POINT, &ne, v, c, s);
   if(ib == 'l') {
@@ -971,7 +972,7 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
   }
   ZeroHighlight();
   Draw();
-  Msg(STATUS3N, "Ready");
+  Msg(STATUS2N, "");
   Msg(ONSCREEN, "");
 }
 
@@ -1890,7 +1891,7 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
   WID->create_geometry_context_window(1);
 
   while(1) {
-    Msg(STATUS3N, "Creating point");
+    Msg(STATUS2N, "Creating point");
     WID->g_opengl_window->AddPointMode = true;
     Msg(ONSCREEN, "Move mouse and/or enter coordinates\n"
 	"[Press 'Shift' to hold position, 'e' to add point or 'q' to abort]");
@@ -1914,7 +1915,7 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
   }
 
   WID->reset_visibility();
-  Msg(STATUS3N, "Ready");
+  Msg(STATUS2N, "");
   Msg(ONSCREEN, "");
 }
 
@@ -1931,7 +1932,7 @@ static void _new_multiline(int type)
 
   n = 0;
   while(1) {
-    Msg(STATUS3N, "Creating curve");
+    Msg(STATUS2N, "Creating curve");
     if(n == 0)
       Msg(ONSCREEN, "Select control points\n"
 	  "[Press 'e' to end selection or 'q' to abort]");
@@ -1982,7 +1983,7 @@ static void _new_multiline(int type)
   }
 
   WID->reset_visibility();
-  Msg(STATUS3N, "Ready");
+  Msg(STATUS2N, "");
   Msg(ONSCREEN, "");
 }
 
@@ -2004,7 +2005,7 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
 
   n = 0;
   while(1) {
-    Msg(STATUS3N, "Creating straight line");
+    Msg(STATUS2N, "Creating straight line");
     if(n == 0)
       Msg(ONSCREEN, "Select start point\n"
 	  "[Press 'q' to abort]");
@@ -2039,7 +2040,7 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
   }
 
   WID->reset_visibility();
-  Msg(STATUS3N, "Ready");
+  Msg(STATUS2N, "");
   Msg(ONSCREEN, "");
 }
 
@@ -2066,7 +2067,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
 
   n = 0;
   while(1) {
-    Msg(STATUS3N, "Creating circle");
+    Msg(STATUS2N, "Creating circle");
     if(n == 0)
       Msg(ONSCREEN, "Select start point\n"
 	  "[Press 'q' to abort]");
@@ -2104,7 +2105,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
   }
 
   WID->reset_visibility();
-  Msg(STATUS3N, "Ready");
+  Msg(STATUS2N, "");
   Msg(ONSCREEN, "");
 }
 
@@ -2121,7 +2122,7 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
 
   n = 0;
   while(1) {
-    Msg(STATUS3N, "Creating ellipse");
+    Msg(STATUS2N, "Creating ellipse");
     if(n == 0)
       Msg(ONSCREEN, "Select start point\n"
 	  "[Press 'q' to abort]");
@@ -2162,7 +2163,7 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
   }
 
   WID->reset_visibility();
-  Msg(STATUS3N, "Ready");
+  Msg(STATUS2N, "");
   Msg(ONSCREEN, "");
 }
 
@@ -2194,7 +2195,7 @@ static void _new_surface_volume(int mode)
 
     while(1) {
       if(type == ENT_LINE){
-	Msg(STATUS3N, "Creating surface");
+	Msg(STATUS2N, "Creating surface");
 	if(!List_Nbr(List1))
 	  Msg(ONSCREEN, "Select surface boundary\n"
 	      "[Press 'q' to abort]");
@@ -2203,7 +2204,7 @@ static void _new_surface_volume(int mode)
 	      "[Press 'u' to undo last selection or 'q' to abort]");
       }
       else{
-	Msg(STATUS3N, "Creating volume");
+	Msg(STATUS2N, "Creating volume");
 	if(!List_Nbr(List1))
 	  Msg(ONSCREEN, "Select volume boundary\n"
 	      "[Press 'q' to abort]");
@@ -2304,7 +2305,7 @@ stopall:;
   List_Delete(List2);
 
   WID->reset_visibility();
-  Msg(STATUS3N, "Ready");
+  Msg(STATUS2N, "");
   Msg(ONSCREEN, "");
 }
 
@@ -2375,17 +2376,17 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
   List_T *List1 = List_Create(5, 5, sizeof(int));
   while(1) {
     if(action == 10)
-      Msg(STATUS3N, "Adding new model edges");
+      Msg(STATUS2N, "Adding new model edges");
     else if(action == 9)
-      Msg(STATUS3N, "Defining surfaces to recombine");
+      Msg(STATUS2N, "Defining surfaces to recombine");
     else if(action == 8)
-      Msg(STATUS3N, "Setting characteristic length");
+      Msg(STATUS2N, "Setting characteristic length");
     else if(action == 7)
-      Msg(STATUS3N, "Creating physical %s", str);
+      Msg(STATUS2N, "Creating physical %s", str);
     else if(action == 6)
-      Msg(STATUS3N, "Deleting %s", str);
+      Msg(STATUS2N, "Deleting %s", str);
     else
-      Msg(STATUS3N, "Transforming %s", str);
+      Msg(STATUS2N, "Transforming %s", str);
 
     if(!List_Nbr(List1))
       Msg(ONSCREEN, "Select %s\n"
@@ -2571,7 +2572,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
   List_Delete(List1);
 
   WID->reset_visibility();
-  Msg(STATUS3N, "Ready");
+  Msg(STATUS2N, "");
   Msg(ONSCREEN, "");
 }
   
@@ -2877,7 +2878,7 @@ void mesh_save_cb(CALLBACK_ARGS)
 		    "Cancel", "Replace", NULL, name))
 	return;
   }
-  Print_Mesh(name, CTX.mesh.format);
+  CreateOutputFile(name, CTX.mesh.format);
 }
 
 void mesh_define_cb(CALLBACK_ARGS)
@@ -2889,21 +2890,21 @@ void mesh_1d_cb(CALLBACK_ARGS)
 {
   mai3d(1);
   Draw();
-  Msg(STATUS3N, "Ready");
+  Msg(STATUS2N, "");
 }
 
 void mesh_2d_cb(CALLBACK_ARGS)
 {
   mai3d(2);
   Draw();
-  Msg(STATUS3N, "Ready");
+  Msg(STATUS2N, "");
 }
 
 void mesh_3d_cb(CALLBACK_ARGS)
 {
   mai3d(3);
   Draw();
-  Msg(STATUS3N, "Ready");
+  Msg(STATUS2N, "");
 }
 
 void mesh_stl_cb(CALLBACK_ARGS)
@@ -2924,7 +2925,7 @@ void mesh_degree_cb(CALLBACK_ARGS)
   }
   CTX.mesh.changed = 1;
   Draw();
-  Msg(STATUS3N, "Ready");
+  Msg(STATUS2N, "");
 }
 
 void mesh_optimize_cb(CALLBACK_ARGS)
@@ -2939,14 +2940,14 @@ void mesh_optimize_cb(CALLBACK_ARGS)
 
   CTX.mesh.changed = 1;
   Draw();
-  Msg(STATUS3N, "Ready");
+  Msg(STATUS2N, "");
 }
 
 void mesh_remesh_cb(CALLBACK_ARGS)
 {
   ReMesh(THEM);
   Draw();
-  Msg(STATUS3N, "Ready");
+  Msg(STATUS2N, "");
 }
 
 void mesh_update_edges_cb(CALLBACK_ARGS)
@@ -2998,7 +2999,7 @@ static void _add_transfinite_elliptic(int type, int dim)
 
   n = 0;
   while(1) {
-    Msg(STATUS3N, "Setting structured mesh contraints");
+    Msg(STATUS2N, "Setting structured mesh contraints");
     switch (dim) {
     case 1:
       if(n == 0)
@@ -3112,7 +3113,7 @@ static void _add_transfinite_elliptic(int type, int dim)
   }
 
 stopall:
-  Msg(STATUS3N, "Ready");
+  Msg(STATUS2N, "");
   Msg(ONSCREEN, "");
 }
 

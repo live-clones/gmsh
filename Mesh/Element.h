@@ -36,7 +36,6 @@ class Element {
   virtual double maxEdge() = 0;
   virtual double minEdge() = 0;
   double RhoShapeMeasure();
-  virtual void ExportStatistics(FILE *f) = 0;
 };
 
 class Quadrangle : public Element{
@@ -47,7 +46,6 @@ class Quadrangle : public Element{
   ~Quadrangle() {}
   double maxEdge();
   double minEdge();
-  void ExportStatistics(FILE *f);
 };
 
 class Hexahedron : public Element{
@@ -60,7 +58,6 @@ class Hexahedron : public Element{
   double Orientation();
   double maxEdge();
   double minEdge();
-  void ExportStatistics(FILE *f);
 };
 
 class Prism : public Element{
@@ -73,7 +70,6 @@ class Prism : public Element{
   double Orientation();
   double maxEdge();
   double minEdge();
-  void ExportStatistics(FILE *f);
 };
 
 class Pyramid : public Element{
@@ -85,7 +81,6 @@ class Pyramid : public Element{
   double Orientation();
   double maxEdge();
   double minEdge();
-  void ExportStatistics(FILE *f);
 };
 
 // C interface
@@ -107,9 +102,5 @@ int compareQuadrangle(const void *a, const void *b);
 int compareHexahedron(const void *a, const void *b);
 int comparePrism(const void *a, const void *b);
 int comparePyramid(const void *a, const void *b);
-
-void print_elm_stats(FILE *f, int Num, int Ent, double Gamma, double Eta, double Rho, 
-		     const char *S, int N, Vertex **V, 
-		     const char *SSUP, int NSUP, Vertex **VSUP);
 
 #endif

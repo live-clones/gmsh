@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.71 2006-07-12 07:24:12 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.72 2006-08-05 10:05:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,9 @@
 #include "Mesh.h"
 #include "Views.h"
 #include "OpenFile.h"
+#include "CreateFile.h"
 #include "Parser.h"
+#include "GModel.h"
 #include "OS.h"
 
 #if !defined(GMSH_EXTRA_VERSION)
@@ -41,7 +43,7 @@
 #endif
 
 extern Context_T CTX;
-extern Mesh *THEM;
+extern GModel *GMODEL;
 
 char gmsh_progname[]  = "Gmsh, a 3D mesh generator with pre- and post-processing facilities" ;
 char gmsh_copyright[] = "Copyright (C) 1997-2006 Christophe Geuzaine and Jean-Francois Remacle";
@@ -294,11 +296,9 @@ void Get_Options(int argc, char *argv[])
             WriteView(*(Post_View **) List_Pointer(CTX.post.list, j),
                       argv[i + 1], 1, j ? 1 : 0);
 	  // convert any mesh to the latest format
-	  if(THEM){
-	    if(Tree_Nbr(THEM->Vertices)){
-	      CTX.mesh.msh_file_version = 2.0;
-	      Print_Mesh(argv[i + 1], FORMAT_MSH);
-	    }
+	  if(GMODEL && GMODEL->numVertex()){
+	    CTX.mesh.msh_file_version = 2.0;
+	    CreateOutputFile(argv[i + 1], FORMAT_MSH);
 	  }
         }
         else

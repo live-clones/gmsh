@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.38 2006-07-12 07:24:14 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.39 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -479,7 +479,7 @@ void Degre2_Curve(void *a, void *b)
   Curve *c = *(Curve**)a;
   if(c->Num < 0) return;
 
-  Msg(STATUS3, "Second order curve %d", c->Num);
+  Msg(STATUS2, "Second order curve %d", c->Num);
 
   edges->AddSimplexTree(c->Simplexes);
   THEC = c;
@@ -491,7 +491,7 @@ void Degre2_Surface(void *a, void *b)
 {
   Surface *s = *(Surface**)a;
 
-  Msg(STATUS3, "Second order surface %d", s->Num);
+  Msg(STATUS2, "Second order surface %d", s->Num);
 
   edges->AddSimplexTree(s->Simplexes);
   edges->AddQuadrangleTree(s->Quadrangles);
@@ -507,7 +507,7 @@ void Degre2_Volume(void *a, void *b)
 {
   Volume *v = *(Volume**)a;
 
-  Msg(STATUS3, "Second order volume %d", v->Num);
+  Msg(STATUS2, "Second order volume %d", v->Num);
 
   edges->AddSimplexTree(v->Simplexes);
   edges->AddHexahedronTree(v->Hexahedra);
@@ -527,7 +527,7 @@ void Degre2_Volume(void *a, void *b)
 
 void Degre2(int dim)
 {
-  Msg(STATUS2, "Mesh second order...");
+  Msg(STATUS1, "Mesh second order...");
   double t1 = Cpu();
 
   Degre1();
@@ -540,5 +540,5 @@ void Degre2(int dim)
     Tree_Action(THEM->Volumes, Degre2_Volume);
 
   double t2 = Cpu();
-  Msg(STATUS2, "Mesh second order complete (%g s)", t2 - t1);
+  Msg(STATUS1, "Mesh second order complete (%g s)", t2 - t1);
 }

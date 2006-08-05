@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.84 2006-07-25 12:08:23 remacle Exp $
+// $Id: 2D_Mesh.cpp,v 1.85 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -844,7 +844,7 @@ void Maillage_Surface(void *data, void *dum)
   if(!s->Support)
     return;
 
-  Msg(STATUS3, "Meshing surface %d", s->Num);
+  Msg(STATUS2, "Meshing surface %d", s->Num);
 
   int tag = MeshDiscreteSurface(s);
 
@@ -905,7 +905,7 @@ void Maillage_Surface(void *data, void *dum)
       Mesh_Triangle(s);
     
     if(CTX.mesh.nb_smoothing) {
-      Msg(STATUS3, "Smoothing surface %d", s->Num);
+      Msg(STATUS2, "Smoothing surface %d", s->Num);
       tnxe = Tree_Create(sizeof(NXE), compareNXE);
       create_NXE(s->Vertices, s->Simplexes, tnxe);
       for(int i = 0; i < CTX.mesh.nb_smoothing; i++)
@@ -914,7 +914,7 @@ void Maillage_Surface(void *data, void *dum)
     }
     
     if(s->Recombine){
-      Msg(STATUS3, "Recombining surface %d", s->Num);
+      Msg(STATUS2, "Recombining surface %d", s->Num);
       Recombine(s->Vertices, s->Simplexes, s->Quadrangles, s->RecombineAngle);
     }
 

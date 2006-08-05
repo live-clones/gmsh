@@ -1,4 +1,4 @@
-// $Id: 3D_Coherence.cpp,v 1.36 2006-01-06 00:34:25 geuzaine Exp $
+// $Id: 3D_Coherence.cpp,v 1.37 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1177,7 +1177,7 @@ int Coherence(Volume * v, Mesh * m)
   MissingFaces = Missing_Faces(v);
 
   /* Edges Recovery */
-  Msg(STATUS3, "Boundary edges recovery");
+  Msg(STATUS2, "Boundary edges recovery");
 
   volume = 0;
   Tree_Action(v->Simplexes, VSIM);
@@ -1227,7 +1227,7 @@ int Coherence(Volume * v, Mesh * m)
 
   }
 
-  Msg(STATUS3, "Boundary faces recovery");
+  Msg(STATUS2, "Boundary faces recovery");
   volume = 0;
   Tree_Action(v->Simplexes, VSIM);
   Msg(INFO, "Volume = %g", volume);
@@ -1365,7 +1365,7 @@ int Coherence(Volume * v, Mesh * m)
   }
 
   Link_Simplexes(NULL, v->Simplexes);
-  Msg(STATUS3, "Volume recovery");
+  Msg(STATUS2, "Volume recovery");
   Restore_Volume(v);
 
   return 1;

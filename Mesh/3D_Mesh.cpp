@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.73 2006-01-31 00:22:33 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.74 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -651,8 +651,6 @@ void Convex_Hull_Mesh(List_T * Points, Mesh * m)
   N = List_Nbr(Points);
   n = IMAX(N / 20, 1);
 
-  //clock_t t1 = clock();
-
   Box_6_Tetraedron(Points, m);
   List_Sort(Points, comparePosition);
 
@@ -696,8 +694,8 @@ void Convex_Hull_Mesh(List_T * Points, Mesh * m)
     if(i % n == n - 1) {
       volume = 0.0;
       Tree_Action(m->Simplexes, VSIM);
-      Msg(STATUS3, "Nod=%d/%d Elm=%d", i + 1, N, Tree_Nbr(m->Simplexes));
-      Msg(STATUS1, "Vol=%g (%d %d %d)", volume, Nb1, Nb2, Nb3);
+      Msg(STATUS2, "Nod=%d/%d Elm=%d Vol=%g (%d %d %d)", i + 1, N, 
+	  Tree_Nbr(m->Simplexes), volume, Nb1, Nb2, Nb3);
     }
     if(!THES) {
       Msg(WARNING, "Vertex (%g,%g,%g) in no simplex", THEV->Pos.X,
@@ -743,10 +741,6 @@ void Convex_Hull_Mesh(List_T * Points, Mesh * m)
       }
     }
   }
-  //clock_t t2 = clock();
-
-  //Msg(STATUS3,"Nb1 = %d Nb2 = %d Nb3 = %d N = %d t = %lf",Nb1,Nb2,Nb3
-  //    ,N,(double)(t2-t1)/CLOCKS_PER_SEC);
 }
 
 void suppress_vertex(void *data, void *dum)
@@ -830,7 +824,7 @@ void Maillage_Volume(void *data, void *dum)
 
     // Create initial mesh respecting the boundary
 
-    Msg(STATUS2, "Mesh 3D... (initial)");
+    Msg(STATUS1, "Mesh 3D... (initial)");
 
     Convex_Hull_Mesh(POINTS_LIST, LOCAL);
 
@@ -873,7 +867,7 @@ void Maillage_Volume(void *data, void *dum)
 
     // If there is something left to mesh:
 
-    Msg(STATUS2, "Mesh 3D... (final)");
+    Msg(STATUS1, "Mesh 3D... (final)");
 
     v->Simplexes = LOCAL->Simplexes;
 
@@ -907,10 +901,9 @@ void Maillage_Volume(void *data, void *dum)
       if(i % n == n - 1) {
         volume = 0.0;
         Tree_Action(LOCAL->Simplexes, VSIM);
-        Msg(STATUS3, "Nod=%d Elm=%d",
-            Tree_Nbr(LOCAL->Vertices), Tree_Nbr(LOCAL->Simplexes));
-        Msg(STATUS1, "Vol(%g) Conv(%g->%g)", volume, simp->Quality,
-            CONV_VALUE);
+        Msg(STATUS2, "Nod=%d Elm=%d Vol=%g Conv=%g->%g",
+            Tree_Nbr(LOCAL->Vertices), Tree_Nbr(LOCAL->Simplexes),
+	    volume, simp->Quality, CONV_VALUE);
       }
       Bowyer_Watson(LOCAL, newv, simp, 0);
       Tree_Right(LOCAL->Simplexes, &simp);
@@ -925,24 +918,24 @@ void Maillage_Volume(void *data, void *dum)
     if(CTX.mesh.quality) {
       extern void SwapEdges3D(Mesh * M, Volume * v, double GammaPrescribed,
                               bool order);
-      Msg(STATUS3, "Swapping edges (1st pass)");
+      Msg(STATUS2, "Swapping edges (1st pass)");
       SwapEdges3D(THEM, v, CTX.mesh.quality, true);
-      Msg(STATUS3, "Swapping edges (2nd pass)");
+      Msg(STATUS2, "Swapping edges (2nd pass)");
       SwapEdges3D(THEM, v, CTX.mesh.quality, false);
-      Msg(STATUS3, "Swapping edges (last pass)");
+      Msg(STATUS2, "Swapping edges (last pass)");
       SwapEdges3D(THEM, v, CTX.mesh.quality, true);
     }
 #endif
 
 #if 0 // this is full of bugs, too :-)
     if(CTX.mesh.nb_smoothing) {
-      Msg(STATUS3, "Smoothing volume %d", v->Num);
+      Msg(STATUS2, "Smoothing volume %d", v->Num);
       tnxe = Tree_Create (sizeof (NXE), compareNXE);
       create_NXE (v->Vertices, v->Simplexes, tnxe);
       for (int i = 0; i < CTX.mesh.nb_smoothing; i++)
 	Tree_Action (tnxe, ActionLiss);
       delete_NXE (tnxe);
-      Msg(STATUS3, "Swapping edges (last pass)");
+      Msg(STATUS2, "Swapping edges (last pass)");
       SwapEdges3D (THEM, v, 0.5, true);
     }
 #endif

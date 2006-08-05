@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Tetgen.cpp,v 1.7 2006-06-08 12:32:08 geuzaine Exp $
+// $Id: 3D_Mesh_Tetgen.cpp,v 1.8 2006-08-05 10:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -56,7 +56,7 @@ int Mesh_Tetgen(Volume * vol) {
     return 0;
   }
 
-  Msg(STATUS3, "Meshing volume %d with experimental tetgen", vol->Num);
+  Msg(STATUS2, "Meshing volume %d with experimental tetgen", vol->Num);
   
   // Get all surface vertices (from all surfaces)
   Tree_T *treeVrtx = Tree_Create(sizeof(Vertex*), compareVertex);
@@ -131,7 +131,7 @@ int Mesh_Tetgen(Volume * vol) {
  
   sprintf(opts, "pq1.4Ya%f%c", (float)CTX.mesh.quality, 
 	  (CTX.verbosity < 3)? 'Q': (CTX.verbosity > 6)? 'V': '\0');
-  Msg(STATUS3, "Meshing with volume constraint %f", (float)CTX.mesh.quality);
+  Msg(STATUS2, "Meshing with volume constraint %f", (float)CTX.mesh.quality);
   
   tetrahedralize(opts, &in, &out);
  
