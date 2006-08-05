@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.48 2006-08-05 10:05:45 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.49 2006-08-05 13:31:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -394,12 +394,12 @@ void Simplex::Fourre_Simplexe(Vertex * v1, Vertex * v2, Vertex * v3,
 
   Center_Circum();
 
-  if(N == 4 && THEM && THEM->BackgroundMeshType == ONFILE){
+  if(N == 4 && CTX.mesh.bgmesh_type == ONFILE){
     Quality = fabs(4. * Radius / BGMXYZ(Center.X, Center.Y, Center.Z));
   }
   else{
-    Quality = (double)N *Radius / (V[0]->lc + V[1]->lc + V[2]->lc + 
-				   ((V[3]) ? V[3]->lc : 0.0));
+    Quality = (double)N * Radius / (V[0]->lc + V[1]->lc + V[2]->lc + 
+				    ((V[3]) ? V[3]->lc : 0.0));
   }
 
   for(i = 0; i < N; i++)

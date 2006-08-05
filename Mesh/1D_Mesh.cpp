@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.49 2006-08-05 10:05:45 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.50 2006-08-05 13:31:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -106,7 +106,7 @@ double F_Lc(double t)
   Vertex der, point;
   double Lc, d;
 
-  if(THEM->BackgroundMeshType == ONFILE) {
+  if(CTX.mesh.bgmesh_type == ONFILE) {
     der = InterpolateCurve(THEC, t, 1);
     point = InterpolateCurve(THEC, t, 0);
     Lc = BGMXYZ(point.Pos.X, point.Pos.Y, point.Pos.Z);

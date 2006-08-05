@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Tetgen.cpp,v 1.8 2006-08-05 10:05:45 geuzaine Exp $
+// $Id: 3D_Mesh_Tetgen.cpp,v 1.9 2006-08-05 13:31:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -51,7 +51,7 @@ int Mesh_Tetgen(Volume * vol) {
   if(CTX.mesh.algo3d != DELAUNAY_TETGEN)
     return 0;
 
-  if(THEM->BackgroundMeshType == ONFILE){
+  if(CTX.mesh.bgmesh_type == ONFILE){
     Msg(GERROR, "Tetgen is not ready to be used with a background mesh");
     return 0;
   }

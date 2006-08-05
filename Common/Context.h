@@ -173,7 +173,8 @@ public :
     int dual, interactive, renumber_nodes_continuous;
     int light, light_two_side, light_lines;
     int format, nbPartitions, nb_smoothing, algo2d, algo3d, order, algo_recombine;
-    int point_insertion, speed_max, min_circ_points, constrained_bgmesh;
+    int point_insertion, speed_max, min_circ_points;
+    int bgmesh_type, constrained_bgmesh;
     int histogram, initial_only;
     double normals, tangents, explode;
     int color_carousel;

@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.87 2006-08-05 10:05:45 geuzaine Exp $
+// $Id: Generator.cpp,v 1.88 2006-08-05 13:31:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -464,7 +464,6 @@ void Init_Mesh()
   THEM->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
 
   THEM->status = 0;
-  THEM->BackgroundMeshType = WITHPOINTS;
 
   for(int i = 0; i < 3; i++){
     THEM->timing[i] = 0.0;
@@ -472,6 +471,8 @@ void Init_Mesh()
     THEM->quality_eta[i] = 0.0;
     THEM->quality_rho[i] = 0.0;
   }
+
+  CTX.mesh.bgmesh_type = WITHPOINTS;
   CTX.mesh.changed = 1;
 }
 

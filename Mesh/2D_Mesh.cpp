@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.85 2006-08-05 10:05:45 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.86 2006-08-05 13:31:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -305,7 +305,7 @@ int mesh_domain(ContourPeek * ListContours, int numcontours,
   Conversion(doc);
   remove_all_dlist(doc->numPoints, doc->points);
 
-  if(THEM->BackgroundMeshType != ONFILE || CTX.mesh.constrained_bgmesh)
+  if(CTX.mesh.bgmesh_type != ONFILE || CTX.mesh.constrained_bgmesh)
     BGMESH = doc;
   else
     BGMESH = NULL;
@@ -720,7 +720,7 @@ void filldel(Delaunay * deladd, int aa, int bb, int cc,
   pt2.h = deladd->t.xc;
   pt2.v = deladd->t.yc;
 
-  if(THEM->BackgroundMeshType == ONFILE) {
+  if(CTX.mesh.bgmesh_type == ONFILE) {
     v = Create_Vertex(-1, pt2.h, pt2.v, 0.0, 0.0, 0.0);
     Calcule_Z_Plan(&v, &dum);
     Projette_Inverse(&v, &dum);

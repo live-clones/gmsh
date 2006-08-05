@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Triangle.cpp,v 1.15 2006-01-29 22:53:41 geuzaine Exp $
+// $Id: 2D_Mesh_Triangle.cpp,v 1.16 2006-08-05 13:31:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -213,7 +213,7 @@ int Mesh_Triangle(Surface * s)
   mid.trianglearealist =
     (REAL *) Malloc(mid.numberoftriangles * sizeof(REAL));
   for(i = 0; i < mid.numberoftriangles; i++) {
-    if(THEM->BackgroundMeshType == ONFILE) {
+    if(CTX.mesh.bgmesh_type == ONFILE) {
       double xx = 0.0, yy = 0.0;
       for(j = 0; j < mid.numberofcorners; j++) {
 	k = mid.trianglelist[i * mid.numberofcorners + j];

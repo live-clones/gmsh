@@ -59,10 +59,10 @@ class GEdge : public GEntity {
   virtual int minimumMeshSegments () const {return 1;}
   virtual int minimumDrawSegments () const {return 1;}
 
-  virtual std::string getInfoString()
+  virtual std::string getSpecificInfoString()
   {
     char tmp[256];
-    sprintf(tmp, "%s %d {%d,%d}", getTypeString().c_str(), tag(), v0->tag(), v1->tag());
+    sprintf(tmp, "{%d,%d}", v0->tag(), v1->tag());
     return std::string(tmp);
   }
 

@@ -59,7 +59,7 @@ static void storeElementsInEntities(GModel *m, int type,
 	  e = new gmshEdge(m, it->first);
 	  m->add(e);
 	}
-	if(type == LGN1) copyElements(e->lines, it->second);
+	copyElements(e->lines, it->second);
       }
       break;
     case TRI1: case QUA1: 

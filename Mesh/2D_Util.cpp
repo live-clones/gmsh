@@ -1,4 +1,4 @@
-// $Id: 2D_Util.cpp,v 1.25 2006-01-29 22:53:41 geuzaine Exp $
+// $Id: 2D_Util.cpp,v 1.26 2006-08-05 13:31:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -95,7 +95,7 @@ int Insert_Point(MPoint pt, int *numpoints, int *numalloc,
   gPointArray[*numpoints].where.v = pt.v;
   gPointArray[*numpoints].numcontour = -1;
   gPointArray[*numpoints].initial = -1;
-  if(THEM->BackgroundMeshType == ONFILE){
+  if(CTX.mesh.bgmesh_type == ONFILE){
     v = Create_Vertex(-1, pt.h, pt.v, 0.0, 0.0, 0.0);
     Calcule_Z_Plan(&v, &dum);
     Projette_Inverse(&v, &dum);

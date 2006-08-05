@@ -330,7 +330,6 @@ struct _Mesh{
   Tree_T *EdgeLoops;
   List_T *PhysicalGroups;
   List_T *Partitions;
-  int BackgroundMeshType;
   smooth_normals *normals; // container for smooth normals
   double timing[3]; // timing for 1d, 2d and 3d mesh
   double quality_gamma[3]; // mesh quality statistics

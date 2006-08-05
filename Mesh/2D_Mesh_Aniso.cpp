@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.54 2006-08-05 10:05:45 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.55 2006-08-05 13:31:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -61,7 +61,7 @@ double Interpole_lcTriangle(Simplex * s, Vertex * vv)
 {
   double Xp, Yp, X[3], Y[3], det, u, v, q1, q2, q3;
 
-  if(THEM->BackgroundMeshType == ONFILE){
+  if(CTX.mesh.bgmesh_type == ONFILE){
     Vertex *v2 = Create_Vertex(-1, vv->Pos.X, vv->Pos.Y, 0.0, 0.0, 0.0);
     Vertex *dum;
     Calcule_Z_Plan(&v2, &dum);

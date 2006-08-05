@@ -6,12 +6,11 @@
 #include "Context.h"
 #include "Message.h"
 
+extern Context_T CTX;
+
 static GEdge * _myGEdge;
 static double  _myGEdgeLength, t_begin, t_end, lc_begin, lc_end;
 static Range<double> _myGEdgeBounds;
-// boooooooh !!!!!!
-extern Mesh *THEM;
-extern Context_T CTX;
 
 double F_Lc_bis(double t)
 {
@@ -20,7 +19,7 @@ double F_Lc_bis(double t)
   SVector3 der = _myGEdge -> firstDer(t) ;
   const double d = norm(der);
 
-  if(THEM->BackgroundMeshType == ONFILE) {
+  if(CTX.mesh.bgmesh_type == ONFILE) {
     GPoint point = _myGEdge -> point(t) ;      
     const double Lc = BGMXYZ(point.x(), point.y(), point.z());
     if(CTX.mesh.constrained_bgmesh)
@@ -144,7 +143,7 @@ void meshGEdge :: operator() (GEdge *ge)
   else{
     a = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), 
 		    F_Lc_bis, Points, 1.e-4);
-    N = std::max (ge->minimumMeshSegments()+1, (int)(a + 1.));      
+    N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
   const double b = a / (double)(N - 1);
 
@@ -154,28 +153,33 @@ void meshGEdge :: operator() (GEdge *ge)
   // do not consider the first and the last vertex 
   // those are not classified on this mesh edge
 
-  if (N>2)
-    {
-      ge->mesh_vertices.resize(N-2);
-      
-      while(NUMP < N - 1) {
-	List_Read(Points, count - 1, &P1);
-	List_Read(Points, count, &P2);
-	const double d = (double)NUMP *b;
-	
-	if((fabs(P2.p) >= fabs(d)) && (fabs(P1.p) < fabs(d))) {
-	  double dt = P2.t - P1.t;
-	  double dp = P2.p - P1.p;
-	  double t = P1.t + dt / dp * (d - P1.p);      
-	  GPoint V = ge -> point(t) ;      
-	  MEdgeVertex *ev = new MEdgeVertex ( V.x(), V.y(), V.z(), ge, t );     
-	  ge->mesh_vertices [NUMP-1] = ev;
-	  NUMP++;
-	}
-	else {
-	  count++;
-	}
+  if(N > 2){
+    ge->mesh_vertices.resize(N - 2);
+    while(NUMP < N - 1) {
+      List_Read(Points, count - 1, &P1);
+      List_Read(Points, count, &P2);
+      const double d = (double)NUMP *b;
+      if((fabs(P2.p) >= fabs(d)) && (fabs(P1.p) < fabs(d))) {
+	double dt = P2.t - P1.t;
+	double dp = P2.p - P1.p;
+	double t = P1.t + dt / dp * (d - P1.p);
+	GPoint V = ge->point(t);
+	ge->mesh_vertices[NUMP - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t);
+	NUMP++;
+      }
+      else {
+	count++;
       }
     }
+  }
   List_Delete(Points);
-}  
+
+  for(unsigned int i = 0; i < ge->mesh_vertices.size() + 1; i++){
+    MVertex *v0 = (i == 0) ? 
+      ge->getBeginVertex()->mesh_vertices[0] : ge->mesh_vertices[i - 1];
+    MVertex *v1 = (i == ge->mesh_vertices.size()) ? 
+      ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
+    ge->lines.push_back(new MLine(v0, v1));
+  }
+}
+

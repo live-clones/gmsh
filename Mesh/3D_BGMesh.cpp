@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.47 2006-08-05 10:05:45 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.48 2006-08-05 13:31:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,7 @@ int BGMWithView(Post_View * ErrView)
   if(BGM_OCTREE) delete BGM_OCTREE;
   BGM_OCTREE = new OctreePost(ErrView);
   BGM_MAX = ErrView->Max;
-  THEM->BackgroundMeshType = ONFILE;
+  CTX.mesh.bgmesh_type = ONFILE;
   return 1 ;
 }
 
@@ -46,7 +46,7 @@ double BGMXYZ(double X, double Y, double Z)
 {
   if(!BGM_OCTREE){
     Msg(GERROR, "Missing background mesh");
-    THEM->BackgroundMeshType = WITHPOINTS;
+    CTX.mesh.bgmesh_type = WITHPOINTS;
     return 1.;
   }
 
