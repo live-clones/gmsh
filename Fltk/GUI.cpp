@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.503 2006-08-05 10:05:44 geuzaine Exp $
+// $Id: GUI.cpp,v 1.504 2006-08-06 22:58:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1337,8 +1337,6 @@ int GUI::get_context()
 
 void GUI::create_graphic_window()
 {
-  int i, x;
-
   if(g_window) {
     g_window->show();
     return;
@@ -1358,7 +1356,7 @@ void GUI::create_graphic_window()
   Fl_Box *bottom = new Fl_Box(0, glheight, width, sh);
   bottom->box(FL_THIN_UP_BOX);
 
-  x = 2;
+  int x = 2;
 
   g_status_butt[0] = new Fl_Button(x, glheight + 2, sw, sh - 4, "X");
   x += sw;
@@ -1421,18 +1419,19 @@ void GUI::create_graphic_window()
   stop_bmp = new Fl_Bitmap(stop_bits, stop_width, stop_height);
   g_status_butt[7]->deactivate();
 
-  for(i = 0; i < 10; i++) {
+  for(int i = 0; i < 10; i++) {
     g_status_butt[i]->box(FL_FLAT_BOX);
     g_status_butt[i]->selection_color(FL_WHITE);
     g_status_butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   }
 
+  x += 2;
   g_status_label[0] = new Fl_Box(x, glheight + 2, 
-				 (width - x) / 2, sh - 4);
-  g_status_label[1] = new Fl_Box(x + (width - x) / 2, glheight + 2, 
-				 (width - x) / 2, sh - 4);
-  for(i = 0; i < 2; i++) {
-    g_status_label[i]->box(FL_FLAT_BOX);
+				 (width - x) / 3, sh - 4);
+  g_status_label[1] = new Fl_Box(x + (width - x) / 3, glheight + 2, 
+				 2 * (width - x - 1) / 3, sh - 4);
+  for(int i = 0; i < 2; i++) {
+    g_status_label[i]->box(FL_THIN_DOWN_BOX);
     g_status_label[i]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   }
 

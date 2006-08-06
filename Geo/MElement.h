@@ -5,6 +5,7 @@
 #include <algorithm>
 #include "GmshDefines.h"
 #include "MVertex.h"
+#include "Numeric.h"
 
 // the reference topology is defined in Mesh/{Edge,Face}.cpp
 extern int edges_tetra[6][2];
@@ -57,6 +58,12 @@ class MElement
   virtual int getNumVertices() = 0;
   virtual MVertex *getVertex(int num) = 0;
 
+  // get the number of vertices associated with edges, faces and
+  // volumes (nonzero only for higher order elements)
+  virtual int getNumEdgeVertices(){ return 0; }
+  virtual int getNumFaceVertices(){ return 0; }
+  virtual int getNumVolumeVertices(){ return 0; }
+
   // get the edges
   virtual int getNumEdges() = 0;
   virtual void getEdge(int num, MVertex *v[2]) = 0;
@@ -85,10 +92,18 @@ class MElement
   // computes the barycenter
   virtual void cog(double &x, double &y, double &z);
 
+  // compute and change the orientation of 3D elements to get
+  // positive volume
+  virtual int getVolumeSign(){ return 1; }
+  virtual void setVolumePositive(){}
+
   // IO routines
   virtual void writeMSH(FILE *fp, double version=1.0, int num=0, 
 			int elementary=1, int physical=1);
-  virtual void writePOS(FILE *fp);
+  virtual void writePOS(FILE *fp, double scalingFactor=1.0);
+  virtual void writeSTL(FILE *fp, double scalingFactor=1.0);
+  virtual void writeVRML(FILE *fp);
+  virtual void writeUNV(FILE *fp, int type, int elementary);
   virtual char *getStringForPOS() = 0;
   virtual int getTypeForMSH() = 0;
 };
@@ -131,6 +146,7 @@ class MLine2 : public MLine {
   ~MLine2(){}
   inline int getNumVertices(){ return 3; }
   inline MVertex *getVertex(int num){ return num < 2 ? _v[num] : _vs[num - 2]; }
+  inline int getNumEdgeVertices(){ return 1; }
   int getNumEdgesRep(){ return 2; }
   void getEdgeRep(int num, MVertex *v[2])
   { 
@@ -187,6 +203,7 @@ class MTriangle2 : public MTriangle {
   ~MTriangle2(){}
   inline int getNumVertices(){ return 6; }
   inline MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
+  inline int getNumEdgeVertices(){ return 3; }
   int getNumEdgesRep(){ return 6; }
   void getEdgeRep(int num, MVertex *v[2])
   { 
@@ -240,8 +257,8 @@ class MQuadrangle : public MElement {
     v[0] = _v[edges_quad[num][0]];
     v[1] = _v[edges_quad[num][1]];
   }
-  int getNumFaces(){ return 1; }
-  void getFace(int num, MVertex *v[4])
+  virtual int getNumFaces(){ return 1; }
+  virtual void getFace(int num, MVertex *v[4])
   {
     v[0] = _v[0]; v[1] = _v[1]; v[2] = _v[2]; v[3] = _v[3];
   }
@@ -263,6 +280,8 @@ class MQuadrangle2 : public MQuadrangle {
   ~MQuadrangle2(){}
   inline int getNumVertices(){ return 9; }
   inline MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
+  inline int getNumEdgeVertices(){ return 4; }
+  inline int getNumFaceVertices(){ return 1; }
   int getTypeForMSH(){ return QUA2; }
   char *getStringForPOS(){ return "SQ2"; }
 };
@@ -286,8 +305,8 @@ class MTetrahedron : public MElement {
     v[0] = _v[edges_tetra[num][0]];
     v[1] = _v[edges_tetra[num][1]];
   }
-  int getNumFaces(){ return 4; }
-  void getFace(int num, MVertex *v[4])
+  virtual int getNumFaces(){ return 4; }
+  virtual void getFace(int num, MVertex *v[4])
   {
     v[0] = _v[trifaces_tetra[num][0]];
     v[1] = _v[trifaces_tetra[num][1]];
@@ -296,7 +315,39 @@ class MTetrahedron : public MElement {
   }
   int getTypeForMSH(){ return TET1; }
   char *getStringForPOS(){ return "SS"; }
+  virtual int getVolumeSign()
+  { 
+    double mat[3][3];
+    mat[0][0] = _v[1]->x() - _v[0]->x();
+    mat[0][1] = _v[2]->x() - _v[0]->x();
+    mat[0][2] = _v[3]->x() - _v[0]->x();
+    mat[1][0] = _v[1]->y() - _v[0]->y();
+    mat[1][1] = _v[2]->y() - _v[0]->y();
+    mat[1][2] = _v[3]->y() - _v[0]->y();
+    mat[2][0] = _v[1]->z() - _v[0]->z();
+    mat[2][1] = _v[2]->z() - _v[0]->z();
+    mat[2][2] = _v[3]->z() - _v[0]->z();
+    return sign(det3x3(mat));
+  }
+  void setVolumePositive()
+  {
+    if(getVolumeSign() < 0){
+      MVertex *tmp;
+      tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
+    }
+  }
 };
+
+// TODO: for MTetrahedron2
+// void setVolumePositive()
+// {
+//   if(getVolumeSign() < 0){
+//     MVertex *tmp;
+//     tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
+//     tmp = _vs[1]; _vs[1] = _vs[2]; _vs[2] = temp;
+//     tmp = _vs[5]; _vs[5] = _vs[3]; _vs[3] = temp;
+//   }
+// }
 
 class MHexahedron : public MElement {
  protected:
@@ -329,7 +380,45 @@ class MHexahedron : public MElement {
   }
   int getTypeForMSH(){ return HEX1; }
   char *getStringForPOS(){ return "SH"; }
+  virtual int getVolumeSign()
+  { 
+    double mat[3][3];
+    mat[0][0] = _v[1]->x() - _v[0]->x();
+    mat[0][1] = _v[3]->x() - _v[0]->x();
+    mat[0][2] = _v[4]->x() - _v[0]->x();
+    mat[1][0] = _v[1]->y() - _v[0]->y();
+    mat[1][1] = _v[3]->y() - _v[0]->y();
+    mat[1][2] = _v[4]->y() - _v[0]->y();
+    mat[2][0] = _v[1]->z() - _v[0]->z();
+    mat[2][1] = _v[3]->z() - _v[0]->z();
+    mat[2][2] = _v[4]->z() - _v[0]->z();
+    return sign(det3x3(mat));
+  }
+  void setVolumePositive()
+  {
+    if(getVolumeSign() < 0){
+      MVertex *tmp;
+      tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
+      tmp = _v[4]; _v[4] = _v[6]; _v[6] = tmp;
+    }
+  }
 };
+
+// TODO: for MHexahedron2
+// void setVolumePositive()
+// {
+//   if(getVolumeSign() < 0){
+//     MVertex *tmp;
+//     tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
+//     tmp = _v[4]; _v[4] = _v[6]; _v[6] = tmp;
+//     MVertex *old[12];
+//     for(int i = 0; i < 12; i++) old[i] = _vs[i];
+//     _vs[0] = old[3]; _vs[1] = old[5]; _vs[2] = old[6];
+//     _vs[3] = old[0]; _vs[4] = old[4]; _vs[5] = old[1];
+//     _vs[6] = old[2]; _vs[7] = old[7]; _vs[8] = old[10];
+//     _vs[9] = old[11]; _vs[10] = old[8]; _vs[11] = old[9];
+//   }
+// }
 
 class MPrism : public MElement {
  protected:
@@ -369,7 +458,42 @@ class MPrism : public MElement {
   }
   int getTypeForMSH(){ return PRI1; }
   char *getStringForPOS(){ return "SI"; }
+  virtual int getVolumeSign()
+  { 
+    double mat[3][3];
+    mat[0][0] = _v[1]->x() - _v[0]->x();
+    mat[0][1] = _v[2]->x() - _v[0]->x();
+    mat[0][2] = _v[3]->x() - _v[0]->x();
+    mat[1][0] = _v[1]->y() - _v[0]->y();
+    mat[1][1] = _v[2]->y() - _v[0]->y();
+    mat[1][2] = _v[3]->y() - _v[0]->y();
+    mat[2][0] = _v[1]->z() - _v[0]->z();
+    mat[2][1] = _v[2]->z() - _v[0]->z();
+    mat[2][2] = _v[3]->z() - _v[0]->z();
+    return sign(det3x3(mat));
+  }
+  void setVolumePositive()
+  {
+    if(getVolumeSign() < 0){
+      MVertex *tmp;
+      tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
+      tmp = _v[3]; _v[3] = _v[4]; _v[4] = tmp;
+    }
+  }
 };
+
+// TODO: for MPrism2
+// void setVolumePositive()
+// {
+//   if(getVolumeSign() < 0){
+//      MVertex *tmp;
+//      tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
+//      tmp = _v[3]; _v[3] = _v[4]; _v[4] = tmp;
+//      tmp = _vs[1]; _vs[1] = _vs[3]; _vs[3] = tmp;
+//      tmp = _vs[2]; _vs[2] = _vs[4]; _vs[4] = tmp;
+//      tmp = _vs[7]; _vs[7] = _vs[8]; _vs[8] = tmp;
+//   }
+// }
 
 class MPyramid : public MElement {
  protected:
@@ -408,6 +532,39 @@ class MPyramid : public MElement {
   }
   int getTypeForMSH(){ return PYR1; }
   char *getStringForPOS(){ return "SY"; }
+  virtual int getVolumeSign()
+  { 
+    double mat[3][3];
+    mat[0][0] = _v[1]->x() - _v[0]->x();
+    mat[0][1] = _v[3]->x() - _v[0]->x();
+    mat[0][2] = _v[4]->x() - _v[0]->x();
+    mat[1][0] = _v[1]->y() - _v[0]->y();
+    mat[1][1] = _v[3]->y() - _v[0]->y();
+    mat[1][2] = _v[4]->y() - _v[0]->y();
+    mat[2][0] = _v[1]->z() - _v[0]->z();
+    mat[2][1] = _v[3]->z() - _v[0]->z();
+    mat[2][2] = _v[4]->z() - _v[0]->z();
+    return sign(det3x3(mat));
+  }
+  void setVolumePositive()
+  {
+    if(getVolumeSign() < 0){
+      MVertex *tmp;
+      tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
+    }
+  }
 };
+
+// TODO: for MPyramid2
+// void setVolumePositive()
+// {
+//   if(getVolumeSign() < 0){
+//      MVertex *tmp;
+//      tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
+//      tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
+//      tmp = _vs[1]; _vs[1] = _vs[5]; _vs[5] = tmp;
+//      tmp = _vs[2]; _vs[2] = _vs[6]; _vs[6] = tmp;
+//   }
+// }
 
 #endif

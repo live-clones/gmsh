@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.92 2006-08-05 10:05:45 geuzaine Exp $
+// $Id: Main.cpp,v 1.93 2006-08-06 22:58:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -165,6 +165,10 @@ int main(int argc, char *argv[])
 
   CTX.batch = 0;
 
+  // Say welcome!
+
+  Msg(STATUS2N, "Gmsh %s", Get_GmshVersion());
+
   // Log the following for bug reports
 
   Msg(INFO, "-------------------------------------------------------");
@@ -230,10 +234,6 @@ int main(int argc, char *argv[])
     else
       Msg(GERROR, "Invalid background mesh (no view)");
   }
-
-  // Say welcome!
-
-  Msg(STATUS2N, "Gmsh %s", Get_GmshVersion());
 
   // Draw the actual scene
   Draw();

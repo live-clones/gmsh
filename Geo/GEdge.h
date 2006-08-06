@@ -11,6 +11,10 @@
 // A model edge.
 
 class GEdge : public GEntity {
+ protected:
+  GVertex *v0, *v1;
+  std::list<GFace *> l_faces;
+
  public:
   GEdge(GModel *model, 
 	int tag, 
@@ -44,8 +48,8 @@ class GEdge : public GEntity {
   void addFace(GFace *f);
   void delFace(GFace *f);
 
-  GVertex * getBeginVertex () const { return v0; }
-  GVertex * getEndVertex () const { return v1; }
+  GVertex *getBeginVertex () const { return v0; }
+  GVertex *getEndVertex () const { return v1; }
   
   struct {
     char   Method;
@@ -59,18 +63,12 @@ class GEdge : public GEntity {
   virtual int minimumMeshSegments () const {return 1;}
   virtual int minimumDrawSegments () const {return 1;}
 
-  virtual std::string getSpecificInfoString()
+  virtual std::string getAdditionalInfoString()
   {
     char tmp[256];
     sprintf(tmp, "{%d,%d}", v0->tag(), v1->tag());
     return std::string(tmp);
   }
-
- protected:
-
-  GVertex *v0,*v1;
-  std::list<GFace *> l_faces;
-
 };
 
 #endif

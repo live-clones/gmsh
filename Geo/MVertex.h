@@ -35,20 +35,12 @@ class MVertex{
   inline void setEntity(GEntity *ge) { _ge = ge; }
   inline int getNum() const {return _num;}
   inline void setNum(int num) { _num = num; }
-  void writeMSH(FILE *fp, double scalingFactor=1.0)
-  {
-    fprintf(fp, "%d %.16g %.16g %.16g\n", getNum(), 
-	    x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
-  }
-  void writeMSH(FILE *fp, double version, int num, int elementary, int physical)
-  {
-    fprintf(fp, "%d 15", num);
-    if(version < 2.0)
-      fprintf(fp, " %d %d 1", physical, elementary);
-    else
-      fprintf(fp, " 2 %d %d", physical, elementary);
-    fprintf(fp, " %d\n", _num);
-  }
+
+  // IO routines
+  void writeMSH(FILE *fp, double scalingFactor=1.0);
+  void writeMSH(FILE *fp, double version, int num, int elementary, int physical);
+  void writeVRML(FILE *fp, double scalingFactor=1.0);
+  void writeUNV(FILE *fp, double scalingFactor=1.0);
 };
 
 class MEdgeVertex : public MVertex{

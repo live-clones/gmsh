@@ -56,11 +56,23 @@ public:
   void remove(GEdge *e){edges.erase(std::find(firstEdge(),lastEdge(),e));}
   void remove(GVertex *v){vertices.erase(std::find(firstVertex(),lastVertex(),v));}
 
+  // Renumber all the mesh vertices in a continuous sequence
+  int renumberMeshVertices();
+
+  // Checks if there are no physical entities in the model
+  bool noPhysicals();
+
+  // Returns all physical groups (one map per dimension: 0-D to 3-D)
+  void getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]);
+
   // IO routines
   int readMSH(const std::string &name);
   int writeMSH(const std::string &name, double version=1.0, bool saveAll=false,
 	       double scalingFactor=1.0);
-  int writePOS(const std::string &name);
+  int writePOS(const std::string &name, double scalingFactor=1.0);
+  int writeSTL(const std::string &name, double scalingFactor=1.0);
+  int writeVRML(const std::string &name, double scalingFactor=1.0);
+  int writeUNV(const std::string &name, double scalingFactor=1.0);
 
 protected:
   std::string modelName;

@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.85 2006-08-05 10:05:45 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.86 2006-08-06 22:58:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -153,15 +153,25 @@ void CreateOutputFile(char *filename, int format)
     break;
 
   case FORMAT_MSH:
-    GMODEL->writeMSH(name);
+    GMODEL->writeMSH(name, CTX.mesh.msh_file_version, CTX.mesh.save_all,
+		     CTX.mesh.scaling_factor);
+    break;
+
+  case FORMAT_STL:
+    GMODEL->writeSTL(name, CTX.mesh.scaling_factor);
+    break;
+
+  case FORMAT_VRML:
+    GMODEL->writeVRML(name, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_UNV:
+    GMODEL->writeUNV(name, CTX.mesh.scaling_factor);
+    break;
+
   case FORMAT_P3D:
   case FORMAT_DMG:
-  case FORMAT_STL:
   case FORMAT_GREF:
-  case FORMAT_VRML:
     Print_Mesh(name, format);
     break;
 

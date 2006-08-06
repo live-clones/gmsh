@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.96 2006-08-04 14:28:01 geuzaine Exp $
+# $Id: Makefile,v 1.97 2006-08-06 22:58:47 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -133,7 +133,15 @@ CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../Common/SmoothNormals.h ../Common/GmshDefines.h ../Mesh/Metric.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   Views.h ColorTable.h VertexArray.h SmoothNormals.h GmshMatrix.h \
-  AdaptiveViews.h ../Parser/OpenFile.h ../Parser/Parser.h OS.h
+  AdaptiveViews.h ../Parser/OpenFile.h ../Graphics/CreateFile.h \
+  ../Parser/Parser.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
+  ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint3.h ../Geo/MVertex.h ../Geo/MVertex.h ../Geo/GPoint.h \
+  ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h \
+  ../Geo/MVertex.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
+  ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h OS.h
 # 1 "/Users/geuzaine/.gmsh/Common//"
 OS.o: OS.cpp Message.h
 # 1 "/Users/geuzaine/.gmsh/Common//"

@@ -26,11 +26,18 @@ public:
   virtual int dim() const {return 0;}
   virtual GeomType geomType() const {return Point;}
   virtual double prescribedMeshSizeAtVertex() const {return 0;}
-  virtual std::string getSpecificInfoString()
+  virtual std::string getAdditionalInfoString()
   {
-    char tmp[256];
-    sprintf(tmp, "{%g,%g,%g}", x(), y(), z());
-    return std::string(tmp);
+    char str[256];
+    sprintf(str, "{%g,%g,%g", x(), y(), z());
+    double lc = prescribedMeshSizeAtVertex();
+    if(lc > 0.){
+      char str2[256];
+      sprintf(str2, ",%g", lc);
+      strcat(str, str2);
+    }
+    strcat(str, "}");
+    return std::string(str);
   }
 
  protected:

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.103 2006-08-05 10:05:45 geuzaine Exp $
+// $Id: Geom.cpp,v 1.104 2006-08-06 22:58:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -288,7 +288,7 @@ void HighlightEntity(GVertex *v, GEdge *c, GFace *s, int permanent)
   if(v) HighlightEntity(v, permanent);
   else if(c) HighlightEntity(c, permanent);
   else if(s) HighlightEntity(s, permanent);
-  else if(!permanent) Msg(STATUS2N, "");
+  else if(!permanent) Msg(STATUS2N, " ");
 }
 
 void HighlightEntityNum(int v, int c, int s, int permanent)

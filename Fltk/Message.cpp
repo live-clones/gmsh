@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.74 2006-08-05 10:05:45 geuzaine Exp $
+// $Id: Message.cpp,v 1.75 2006-08-06 22:58:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -139,7 +139,7 @@ void Msg(int level, char *fmt, ...)
 	 level != DEBUG2 &&
 	 level != DEBUG3 &&
 	 level != STATUS1N &&
-	 level != STATUS1N){
+	 level != STATUS2N){
 	WID->check();
       }
     }

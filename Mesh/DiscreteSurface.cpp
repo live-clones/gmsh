@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.41 2006-08-05 10:05:45 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.42 2006-08-06 22:58:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -309,7 +309,7 @@ void BDS_To_Mesh_2(Mesh *M)
     }
   }
 
-  Msg(STATUS2N, "");
+  Msg(STATUS2N, " ");
 }
 
 void BDS_To_Mesh(Mesh *M)

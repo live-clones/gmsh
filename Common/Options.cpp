@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.282 2006-08-05 13:31:28 geuzaine Exp $
+// $Id: Options.cpp,v 1.283 2006-08-06 22:58:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2777,11 +2777,11 @@ double opt_general_orthographic(OPT_ARGS_NUM)
   if(WID && (action & GMSH_GUI)) {
     if(CTX.ortho){
       WID->gen_choice[2]->value(0);
-      Msg(STATUS2N, "Orthographic projection");
+      if(!CTX.batch) Msg(STATUS2N, "Orthographic projection");
     }
     else{
       WID->gen_choice[2]->value(1);
-      Msg(STATUS2N, "Perspective projection");
+      if(!CTX.batch) Msg(STATUS2N, "Perspective projection");
     }
   }
 #endif
@@ -2795,15 +2795,15 @@ double opt_general_mouse_selection(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
     if(CTX.enable_mouse_selection == 0){
-      Msg(STATUS2N, "Mouse selection OFF");
+      if(!CTX.batch) Msg(STATUS2N, "Mouse selection OFF");
       WID->g_status_butt[9]->color(FL_RED);
     }
     else if(CTX.enable_mouse_selection == 1){
-      Msg(STATUS2N, "Mouse hover OFF");
+      if(!CTX.batch) Msg(STATUS2N, "Mouse hover OFF");
       WID->g_status_butt[9]->color(FL_GREEN);
     }
     else{
-      Msg(STATUS2N, "Mouse selection ON");
+      if(!CTX.batch) Msg(STATUS2N, "Mouse selection ON");
       WID->g_status_butt[9]->color(FL_BACKGROUND_COLOR);
     }
     WID->g_status_butt[9]->redraw();
