@@ -37,7 +37,7 @@ void gmshModel::convertFromUglyOldDataStructuresgmshModel()
     for(int i = 0; i < List_Nbr(curves); i++){
       Curve *c;
       List_Read(curves, i, &c);
-      if(c->Num >= 0){
+      if(c->Num >= 0 && c->beg && c->end){
 	if(points.find(c->beg) == points.end()){
 	  points.insert(c->beg);
 	  gmshVertex *v = new gmshVertex(this, c->beg);

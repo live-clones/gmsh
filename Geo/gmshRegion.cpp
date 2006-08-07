@@ -5,6 +5,11 @@
 #include "Interpolation.h"
 #include "CAD.h"
 #include "Geo.h"
+#include "Mesh.h"
+#include "Create.h"
+#include "Utils.h"
+
+extern Mesh *THEM;
 
 gmshRegion::gmshRegion(GModel *m, ::Volume * volume)
   : GRegion(m, volume->Num), v(volume)
@@ -22,6 +27,8 @@ gmshRegion::gmshRegion(GModel *m, ::Volume * volume)
 }
 
 gmshRegion::gmshRegion(GModel *m, int num)
-  : GRegion(m, num), v(0)
+  : GRegion(m, num)
 {
+  v = Create_Volume(num, MSH_VOLUME_DISCRETE);
+  Tree_Add(THEM->Volumes, &v);
 }

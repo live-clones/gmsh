@@ -4,7 +4,11 @@
 #include "Interpolation.h"
 #include "CAD.h"
 #include "Geo.h"
+#include "Mesh.h"
+#include "Create.h"
 #include "Utils.h"
+
+extern Mesh *THEM;
 
 gmshFace::gmshFace(GModel *m, Surface *face)
   : GFace(m, face->Num), s(face)
@@ -22,8 +26,10 @@ gmshFace::gmshFace(GModel *m, Surface *face)
 }
 
 gmshFace::gmshFace(GModel *m, int num)
-  : GFace(m, num), s(0)
+  : GFace(m, num)
 {
+  s = Create_Surface(num, MSH_SURF_DISCRETE);
+  Tree_Add(THEM->Surfaces, &s);
 }
 
 Range<double> gmshFace::parBounds(int i) const
@@ -51,8 +57,6 @@ SBoundingBox3d gmshFace::bounds() const
 
 SVector3 gmshFace::normal(const SPoint2 &param) const
 {
-  if(!s) return SVector3(0., 0., 0.);
-
   Vertex vu = InterpolateSurface(s, param[0], param[1], 1, 1);
   Vertex vv = InterpolateSurface(s, param[0], param[1], 1, 2);
   Vertex n = vu % vv;
@@ -62,9 +66,6 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
 
 Pair<SVector3,SVector3> gmshFace::firstDer(const SPoint2 &param) const
 {
-  if(!s) return Pair<SVector3,SVector3>(SVector3(0., 0., 0.),
-					SVector3(0., 0., 0.));
-
   Vertex vu = InterpolateSurface(s, param[0], param[1], 1, 1);
   Vertex vv = InterpolateSurface(s, param[0], param[1], 1, 2);
   return Pair<SVector3,SVector3>(SVector3(vu.Pos.X, vu.Pos.Y, vu.Pos.Z),
@@ -94,8 +95,6 @@ void computePlaneDatas (const GFace *gf, double VX[3],double VY[3],double &x, do
 
 GPoint gmshFace::point(double par1,double par2) const
 {
-  if(!s) return GPoint(0., 0., 0., this);
-
   double pp[2]={par1,par2};
   if(s->Typ == MSH_SURF_PLAN){
     double x,y,z,VX[3],VY[3];
@@ -112,8 +111,6 @@ GPoint gmshFace::point(double par1,double par2) const
 
 GPoint gmshFace::closestPoint(const SPoint3 & qp)
 {
-  if(!s) return GPoint(0., 0., 0., this);
-
   Vertex v;
   v.Pos.X = qp.x();
   v.Pos.Y = qp.y();
@@ -137,8 +134,6 @@ int gmshFace::containsParam(const SPoint2 &pt) const
 
 SPoint2 gmshFace::parFromPoint(const SPoint3 &qp) const
 {
-  if(!s) return SPoint2(0., 0.);
-
   double u,v;
   if (s->Typ == MSH_SURF_PLAN){
     double x,y,z,VX[3],VY[3];
@@ -171,8 +166,6 @@ bool gmshFace::degenerate(int dim) const
 
 GEntity::GeomType gmshFace::geomType() const
 {
-  if(!s) return DiscreteSurface;
-
   switch(s->Typ){
   case MSH_SURF_NURBS: return Nurb;
   case MSH_SURF_PLAN: return Plane;
@@ -187,8 +180,9 @@ int gmshFace::geomDirection() const
 }
 
 void * gmshFace::getNativePtr() const
-{ return s; }
-
+{ 
+  return s; 
+}
 
 int gmshFace::containsPoint(const SPoint3 &pt) const
 { 

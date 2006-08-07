@@ -3,9 +3,12 @@
 #include "Interpolation.h"
 #include "CAD.h"
 #include "Geo.h"
+#include "Mesh.h"
+#include "Create.h"
 #include "Context.h"
 
 extern Context_T CTX;
+extern Mesh *THEM;
 
 gmshEdge::gmshEdge(GModel *model, Curve *edge, GVertex *v1, GVertex *v2)
   : GEdge(model, edge->Num, v1, v2), c(edge)
@@ -13,8 +16,11 @@ gmshEdge::gmshEdge(GModel *model, Curve *edge, GVertex *v1, GVertex *v2)
 }
 
 gmshEdge::gmshEdge(GModel *model, int num)
-  : GEdge(model, num, 0, 0), c(0)
+  : GEdge(model, num, 0, 0)
 {
+  c = Create_Curve(num, MSH_SEGM_DISCRETE, 0, NULL, NULL, -1, -1, 0., 1.);
+  Tree_Add(THEM->Curves, &c);
+  CreateReversedCurve(THEM, c);
 }
 
 gmshEdge::~gmshEdge()
@@ -23,14 +29,11 @@ gmshEdge::~gmshEdge()
 
 Range<double> gmshEdge::parBounds(int i) const
 { 
-  if(!c) return(Range<double>(0., 1.));
   return(Range<double>(c->ubeg, c->uend));
 }
 
 SBoundingBox3d gmshEdge::bounds() const
 {
-  if(!c) return SBoundingBox3d(SPoint3(0., 0., 0.));
-
   double xmin = 0., ymin = 0., zmin = 0.;
   double xmax = 0., ymax = 0., zmax = 0.;
   for (int i = 0; i < 20; i++){
@@ -59,14 +62,12 @@ SBoundingBox3d gmshEdge::bounds() const
 
 GPoint gmshEdge::point(double par) const
 {
-  if(!c) return GPoint(0., 0., 0., this, 0.);
   Vertex a = InterpolateCurve(c, par, 0);
   return GPoint(a.Pos.X,a.Pos.Y,a.Pos.Z,this,par);
 }
 
 GPoint gmshEdge::closestPoint(const SPoint3 & qp)
 {
-  if(!c) return GPoint(0., 0., 0., this, 0.);
   Vertex v;
   Vertex a;
   Vertex der;
@@ -92,7 +93,6 @@ SVector3 gmshEdge::firstDer(double par) const
 
 double gmshEdge::parFromPoint(const SPoint3 &pt) const
 {
-  if(!c) return 0;
   Vertex v;
   Vertex a;
   Vertex der;
@@ -121,8 +121,6 @@ bool gmshEdge::periodic(int dim) const
 
 GEntity::GeomType gmshEdge::geomType() const
 {
-  if(!c) return DiscreteCurve;
-
   switch (c->Typ){
   case MSH_SEGM_LINE : return Line;
   case MSH_SEGM_PARAMETRIC : return ParametricCurve;
