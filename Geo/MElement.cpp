@@ -192,3 +192,10 @@ void MElement::writeUNV(FILE *fp, int type, int elementary)
   if(n - 1 % 8 != 7)
     fprintf(fp, "\n");
 }
+
+void MElement::writeMESH(FILE *fp, int elementary)
+{
+  for(int i = 0; i < getNumVertices(); i++)
+    fprintf(fp, " %d", getVertex(i)->getNum());
+  fprintf(fp, " %d\n", elementary);
+}

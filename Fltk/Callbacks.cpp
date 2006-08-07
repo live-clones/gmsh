@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.424 2006-08-07 13:57:13 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.425 2006-08-07 21:04:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -593,8 +593,9 @@ static char *file_types =
   "*"
   "\tGmsh geometry (*.geo)"
   "\tGmsh mesh (*.msh)"
-  "\tGmsh post-processing view (*.pos)"
-  "\tSTL triangulation (*.stl)"
+  "\tGmsh post-processing (*.pos)"
+  "\tSTL mesh (*.stl)"
+  "\tINRIA mesh (*.mesh)"
   "\tJPEG (*.jpg)"
   "\tPNG (*.png)"
   "\tBMP (*.bmp)"
@@ -643,15 +644,21 @@ int _save_msh(char *name)
   return msh_dialog(name);
 }
 
-int _save_lc(char *name)
+int _save_pos(char *name)
 {
-  CreateOutputFile(name, FORMAT_LC);
+  CreateOutputFile(name, FORMAT_POS);
   return 1;
 }
 
 int _save_unv(char *name)
 {
   CreateOutputFile(name, CTX.mesh.format = FORMAT_UNV);
+  return 1;
+}
+
+int _save_mesh(char *name)
+{
+  CreateOutputFile(name, CTX.mesh.format = FORMAT_MESH);
   return 1;
 }
 
@@ -773,35 +780,40 @@ void file_save_as_cb(CALLBACK_ARGS)
   static char *pat = NULL;
   static patXfunc formats[] = {
     {"Guess from extension (*.*)", _save_auto},
+    {" ", _save_auto},
+    {"Gmsh mesh (*.msh)", _save_msh},
+    {"Gmsh mesh statistics (*.pos)", _save_pos},
     {"Gmsh options (*.opt)", _save_options},
     {"Gmsh unrolled geometry (*.geo)", _save_geo},
-    {"Gmsh mesh (*.msh)", _save_msh},
-    {"Gmsh mesh statistics (*.pos)", _save_lc},
+    {"  ", _save_auto},
     {"I-DEAS universal mesh (*.unv)", _save_unv},
+    {"INRIA mesh (*.mesh)", _save_mesh},
+    {"STL mesh (*.stl)", _save_stl},
     {"VRML surface mesh (*.wrl)", _save_vrml},
-    {"STL surface mesh (*.stl)", _save_stl},
+    {"   ", _save_auto},
+    {"Encapsulated PostScript (*.eps)", _save_eps},
     {"GIF (*.gif)", _save_gif},
 #if defined(HAVE_LIBJPEG)
     {"JPEG (*.jpg)", _save_jpeg},
 #endif
+    {"LaTeX EPS part without text (*.eps)", _save_epstex},
+#if defined(HAVE_LIBJPEG)
+    {"LaTeX JPEG part without text (*.jpg)", _save_jpegtex},
+#endif
+    {"LaTeX PDF part without text (*.pdf)", _save_pdftex},
+#if defined(HAVE_LIBPNG)
+    {"LaTeX PNG part without text (*.png)", _save_pngtex},
+#endif
+    {"LaTeX text part (*.tex)", _save_tex},
+    {"PDF (*.pdf)", _save_pdf},
 #if defined(HAVE_LIBPNG)
     {"PNG (*.png)", _save_png},
 #endif
     {"PostScript (*.ps)", _save_ps},
-    {"Encapsulated PostScript (*.eps)", _save_eps},
-    {"PDF (*.pdf)", _save_pdf},
-    {"SVG (*.svg)", _save_svg},
     {"PPM (*.ppm)", _save_ppm},
-#if defined(HAVE_LIBJPEG)
-    {"LaTeX JPEG part without text (*.jpg)", _save_jpegtex},
-#endif
-#if defined(HAVE_LIBPNG)
-    {"LaTeX PNG part without text (*.png)", _save_pngtex},
-#endif
-    {"LaTeX EPS part without text (*.eps)", _save_epstex},
-    {"LaTeX PDF part without text (*.pdf)", _save_pdftex},
-    {"LaTeX text part (*.tex)", _save_tex},
-    {"YUV (*.yuv)", _save_yuv}
+    {"SVG (*.svg)", _save_svg},
+    {"YUV (*.yuv)", _save_yuv},
+    {"    ", _save_auto},
   };
 
   nbformats = sizeof(formats) / sizeof(formats[0]);
@@ -829,7 +841,7 @@ void file_save_as_cb(CALLBACK_ARGS)
       if(!formats[i].func(name))
 	goto test;
     }
-    else        // handle any additional automatic fltk filter
+    else // handle any additional automatic fltk filter
       _save_auto(name);
   }
 }

@@ -32,14 +32,6 @@ static int getNumVerticesForElementTypeMSH(int type)
 }
 
 template<class T>
-static void associateEntityWithVertices(GEntity *ge, std::vector<T*> &elements)
-{
-  for(unsigned int i = 0; i < elements.size(); i++)
-    for(int j = 0; j < elements[i]->getNumVertices(); j++)
-      elements[i]->getVertex(j)->setEntity(ge);
-}
-
-template<class T>
 void copyElements(std::vector<T*> &dst, const std::vector<MElement*> &src)
 {
   dst.resize(src.size());
@@ -88,6 +80,52 @@ static void storeElementsInEntities(GModel *m, int type,
       }
       break;
     }
+  }
+}
+
+template<class T>
+static void associateEntityWithVertices(GEntity *ge, std::vector<T*> &elements)
+{
+  for(unsigned int i = 0; i < elements.size(); i++)
+    for(int j = 0; j < elements[i]->getNumVertices(); j++)
+      elements[i]->getVertex(j)->setEntity(ge);
+}
+
+static void associateEntityWithVertices(GModel *m)
+{
+  // loop on regions, then on faces, edges and vertices and store the
+  // entity pointer in the the elements' vertices (this way we
+  // associate the entity of lowest geometrical degree with each
+  // vertex)
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
+    associateEntityWithVertices(*it, (*it)->tetrahedra);
+    associateEntityWithVertices(*it, (*it)->hexahedra);
+    associateEntityWithVertices(*it, (*it)->prisms);
+    associateEntityWithVertices(*it, (*it)->pyramids);
+  }
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
+    associateEntityWithVertices(*it, (*it)->triangles);
+    associateEntityWithVertices(*it, (*it)->quadrangles);
+  }
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
+    associateEntityWithVertices(*it, (*it)->lines);
+  }
+  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it){
+    (*it)->mesh_vertices[0]->setEntity(*it);
+  }
+}
+
+static void storeVerticesInEntities(std::map<int, MVertex*> &vertices)
+{
+  std::map<int, MVertex*>::const_iterator it = vertices.begin();
+  std::map<int, MVertex*>::const_iterator ite = vertices.end();
+  for(; it != ite; ++it){
+    MVertex *v = it->second;
+    GEntity *ge = v->onWhat();
+    if(ge) 
+      ge->mesh_vertices.push_back(v);
+    else
+      delete v; // we delete all unused vertices
   }
 }
 
@@ -297,44 +335,18 @@ int GModel::readMSH(const std::string &name)
       v->mesh_vertices.push_back(it->second[0]);
     }
   }
-  
-  // loop on regions, then on faces, edges and vertices and store the
-  // entity pointer in the the elements' vertices (this way we
-  // associate the entity of lowest geometrical degree with each
-  // vertex)
-  for(riter it = firstRegion(); it != lastRegion(); ++it){
-    associateEntityWithVertices(*it, (*it)->tetrahedra);
-    associateEntityWithVertices(*it, (*it)->hexahedra);
-    associateEntityWithVertices(*it, (*it)->prisms);
-    associateEntityWithVertices(*it, (*it)->pyramids);
-  }
-  for(fiter it = firstFace(); it != lastFace(); ++it){
-    associateEntityWithVertices(*it, (*it)->triangles);
-    associateEntityWithVertices(*it, (*it)->quadrangles);
-  }
-  for(eiter it = firstEdge(); it != lastEdge(); ++it){
-    associateEntityWithVertices(*it, (*it)->lines);
-  }
-  for(viter it = firstVertex(); it != lastVertex(); ++it){
-    // special case for points: the mesh vertex has been copied here
-    // so that we can assign the entity:
-    (*it)->mesh_vertices[0]->setEntity(*it);
-    // now that this is done, we reset mesh_vertices so that it can be
-    // filled again below
+
+  // associate the correct geometrical entity with each mesh vertex
+  associateEntityWithVertices(this);
+
+  // special case for geometry vertices: now that the correct
+  // geometrical entity has been associated with the vertices, we
+  // reset mesh_vertices so that it can be filled again below
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
     (*it)->mesh_vertices.clear();
-  }
 
   // store the vertices in their associated geometrical entity
-  std::map<int, MVertex*>::const_iterator it = vertices.begin();
-  std::map<int, MVertex*>::const_iterator ite = vertices.end();
-  for(; it != ite; ++it){
-    MVertex *v = it->second;
-    GEntity *ge = v->onWhat();
-    if(ge) 
-      ge->mesh_vertices.push_back(v);
-    else
-      delete v; // we delete all unused vertices
-  }
+  storeVerticesInEntities(vertices);
 
   // store the physical tags
   for(int i = 0; i < 4; i++)  
@@ -833,6 +845,152 @@ int GModel::writeUNV(const std::string &name, double scalingFactor)
     }
   }
 
+  fclose(fp);
+  return 1;
+}
+
+int GModel::readMESH(const std::string &name)
+{
+  FILE *fp = fopen(name.c_str(), "r");
+  if(!fp){
+    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  char buffer[256];
+  fgets(buffer, sizeof(buffer), fp);
+
+  char str[256];
+  int format;
+  sscanf(buffer, "%s %d", str, &format);
+
+  if(format != 1){
+    Msg(GERROR, "Non-ASCII INRIA mesh import is not yet available");
+    return 0;
+  }
+
+  std::map<int, MVertex*> vertices;
+  int elementTypes[2] = {TRI1, QUA1};
+  std::map<int, std::vector<MElement*> > elements[2];
+  SBoundingBox3d bbox;
+
+  while(!feof(fp)) {
+    fgets(buffer, sizeof(buffer), fp);
+    if(buffer[0] != '#'){ // skip comments
+      sscanf(buffer, "%s", str);
+      if(!strcmp(str, "Dimension")){
+	fgets(buffer, sizeof(buffer), fp);
+      }
+      else if(!strcmp(str, "Vertices")){
+	fgets(buffer, sizeof(buffer), fp);
+	int nbv;
+	sscanf(buffer, "%d", &nbv);
+	Msg(INFO, "%d vertices", nbv);
+	for(int i = 0; i < nbv; i++) {
+	  fgets(buffer, sizeof(buffer), fp);
+	  int cl;
+	  double x, y, z;
+	  sscanf(buffer, "%lf %lf %lf %d", &x, &y, &z, &cl);
+	  bbox += SPoint3(x, y, z);
+	  vertices[i + 1] = new MVertex(x, y, z);
+	}
+      }
+      else if(!strcmp(str, "Triangles")){
+	fgets(buffer, sizeof(buffer), fp);
+	int nbt;
+	sscanf(buffer, "%d", &nbt);
+	Msg(INFO, "%d triangles", nbt);
+	for(int i = 0; i < nbt; i++) {
+	  fgets(buffer, sizeof(buffer), fp);
+	  int n1, n2, n3, cl;
+	  sscanf(buffer, "%d %d %d %d", &n1, &n2, &n3, &cl);
+	  elements[0][cl].push_back
+	    (new MTriangle(vertices[n1], vertices[n2], vertices[n3]));
+	}
+      }
+      else if(!strcmp(str, "Quadrilaterals")) {
+	fgets(buffer, sizeof(buffer), fp);
+	int nbq;
+	sscanf(buffer, "%d", &nbq);
+	Msg(INFO, "%d quadrangles", nbq);
+	for(int i = 0; i < nbq; i++) {
+	  fgets(buffer, sizeof(buffer), fp);
+	  int n1, n2, n3, n4, cl;
+	  sscanf(buffer, "%d %d %d %d %d", &n1, &n2, &n3, &n4, &cl);
+	  elements[1][cl].push_back
+	    (new MQuadrangle(vertices[n1], vertices[n2], vertices[n3], vertices[n4]));
+	}
+      }
+    }
+  }
+
+  // store the elements in their associated elementary entity. If the
+  // entity does not exist, create a new one.
+  for(int i = 0; i < 2; i++)
+    storeElementsInEntities(this, elementTypes[i], elements[i]);
+
+  // associate the correct geometrical entity with each mesh vertex
+  associateEntityWithVertices(this);
+
+  // store the vertices in their associated geometrical entity
+  storeVerticesInEntities(vertices);
+
+  boundingBox += bbox;
+
+  fclose(fp);
+  return 1;
+}
+
+int GModel::writeMESH(const std::string &name, double scalingFactor)
+{
+  FILE *fp = fopen(name.c_str(), "w");
+  if(!fp){
+    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  fprintf(fp, " MeshVersionFormatted 1\n");
+  fprintf(fp, " Dimension\n");
+  fprintf(fp, " 3\n");
+
+  int numVertices = renumberMeshVertices();
+  fprintf(fp, " Vertices\n");
+  fprintf(fp, " %d\n", numVertices);
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
+      (*it)->mesh_vertices[i]->writeMESH(fp, scalingFactor);
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+      (*it)->mesh_vertices[i]->writeMESH(fp, scalingFactor);
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
+      (*it)->mesh_vertices[i]->writeMESH(fp, scalingFactor);
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
+      (*it)->mesh_vertices[i]->writeMESH(fp, scalingFactor);
+  
+  int numTriangles = 0, numQuadrangles = 0;
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+    numTriangles += (*it)->triangles.size();
+    numQuadrangles += (*it)->quadrangles.size();
+  }
+  if(numTriangles){
+    fprintf(fp, " Triangles\n");
+    fprintf(fp, " %d\n", numTriangles);
+    for(fiter it = firstFace(); it != lastFace(); ++it)
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+	(*it)->triangles[i]->writeMESH(fp, (*it)->tag());
+  }
+  if(numQuadrangles){
+    fprintf(fp, " Quadrilaterals\n");
+    fprintf(fp, " %d\n", numQuadrangles);
+    for(fiter it = firstFace(); it != lastFace(); ++it)
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+	(*it)->quadrangles[i]->writeMESH(fp, (*it)->tag());
+  }
+
+  fprintf(fp, " End\n");
+  
   fclose(fp);
   return 1;
 }

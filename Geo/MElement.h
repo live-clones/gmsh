@@ -104,6 +104,7 @@ class MElement
   virtual void writeSTL(FILE *fp, double scalingFactor=1.0);
   virtual void writeVRML(FILE *fp);
   virtual void writeUNV(FILE *fp, int type, int elementary);
+  virtual void writeMESH(FILE *fp, int elementary);
   virtual char *getStringForPOS() = 0;
   virtual int getTypeForMSH() = 0;
 };

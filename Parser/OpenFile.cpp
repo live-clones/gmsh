@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.102 2006-08-07 19:08:13 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.103 2006-08-07 21:04:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -292,6 +292,10 @@ int MergeProblem(char *name, int warn_if_missing)
   if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL")){
     if(!GMODEL) GMODEL = new gmshModel;
     status = GMODEL->readSTL(name, CTX.mesh.stl_distance_tol);
+  }
+  else if(!strcmp(ext, ".mesh")){
+    if(!GMODEL) GMODEL = new gmshModel;
+    status = GMODEL->readMESH(name);
   }
 #if defined(HAVE_FLTK)
   else if(!strcmp(ext, ".pnm") || !strcmp(ext, ".PNM") ||

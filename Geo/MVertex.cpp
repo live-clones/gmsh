@@ -39,3 +39,9 @@ void MVertex::writeUNV(FILE *fp, double scalingFactor)
   tmp[71] = 'D';
   fprintf(fp, tmp);
 }
+
+void MVertex::writeMESH(FILE *fp, double scalingFactor)
+{
+  fprintf(fp, " %20.14E      %20.14E      %20.14E      %d\n", 
+	  x() * scalingFactor, y() * scalingFactor, z() * scalingFactor, 0);
+}

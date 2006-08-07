@@ -27,10 +27,11 @@
 #define FORMAT_PNGTEX        23
 #define FORMAT_PDF           24
 #define FORMAT_PDFTEX        25
-#define FORMAT_LC            26
+#define FORMAT_POS           26
 #define FORMAT_STL           27
 #define FORMAT_P3D           28
 #define FORMAT_SVG           29
+#define FORMAT_MESH          30
 
 // Element types in .msh file format
 #define LGN1 1

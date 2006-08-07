@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.88 2006-08-07 13:57:14 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.89 2006-08-07 21:04:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -56,7 +56,8 @@ int GuessFileFormatFromFileName(char *name)
   else if(!strcmp(ext, ".msh"))     return FORMAT_MSH;
   else if(!strcmp(ext, ".unv"))     return FORMAT_UNV;
   else if(!strcmp(ext, ".stl"))     return FORMAT_STL;
-  else if(!strcmp(ext, ".pos"))     return FORMAT_LC;
+  else if(!strcmp(ext, ".mesh"))    return FORMAT_MESH;
+  else if(!strcmp(ext, ".pos"))     return FORMAT_POS;
   else if(!strcmp(ext, ".gif"))     return FORMAT_GIF;
   else if(!strcmp(ext, ".jpg"))     return FORMAT_JPEG;
   else if(!strcmp(ext, ".jpeg"))    return FORMAT_JPEG;
@@ -72,6 +73,7 @@ int GuessFileFormatFromFileName(char *name)
   else if(!strcmp(ext, ".ppm"))     return FORMAT_PPM;
   else if(!strcmp(ext, ".yuv"))     return FORMAT_YUV;
   else if(!strcmp(ext, ".wrl"))     return FORMAT_VRML;
+  else if(!strcmp(ext, ".vrml"))    return FORMAT_VRML;
   else                              return -1;
 }
 
@@ -84,6 +86,7 @@ void GetDefaultFileName(int format, char *name)
   case FORMAT_VRML: strcpy(ext, ".wrl"); break;
   case FORMAT_UNV:  strcpy(ext, ".unv"); break;
   case FORMAT_STL:  strcpy(ext, ".stl"); break;
+  case FORMAT_MESH: strcpy(ext, ".mesh"); break;
   default: break;
   }
   strcat(name, ext);
@@ -141,7 +144,11 @@ void CreateOutputFile(char *filename, int format)
     GMODEL->writeUNV(name, CTX.mesh.scaling_factor);
     break;
 
-  case FORMAT_LC:
+  case FORMAT_MESH:
+    GMODEL->writeMESH(name, CTX.mesh.scaling_factor);
+    break;
+
+  case FORMAT_POS:
     GMODEL->writePOS(name);
     break;
 

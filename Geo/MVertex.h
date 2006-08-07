@@ -41,6 +41,7 @@ class MVertex{
   void writeMSH(FILE *fp, double version, int num, int elementary, int physical);
   void writeVRML(FILE *fp, double scalingFactor=1.0);
   void writeUNV(FILE *fp, double scalingFactor=1.0);
+  void writeMESH(FILE *fp, double scalingFactor=1.0);
 };
 
 class MEdgeVertex : public MVertex{

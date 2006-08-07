@@ -89,6 +89,8 @@ class GModel
   int writeSTL(const std::string &name, double scalingFactor=1.0);
   int writeVRML(const std::string &name, double scalingFactor=1.0);
   int writeUNV(const std::string &name, double scalingFactor=1.0);
+  int readMESH(const std::string &name);
+  int writeMESH(const std::string &name, double scalingFactor=1.0);
 };
 
 #endif
