@@ -6,7 +6,7 @@ class GEntity;
 class GPoint 
 {
  private:
-  double X,Y,Z;
+  double X, Y, Z;
   const GEntity *e;  
   double par[2];
  public:
