@@ -95,7 +95,7 @@ void MElement::writeMSH(FILE *fp, double version, int num, int elementary,
       fprintf(fp, " %d", getVertex(n - i - 1)->getNum());
   }
 
-  fprintf(fp, " \n");
+  fprintf(fp, "\n");
 }
 
 void MElement::writePOS(FILE *fp, double scalingFactor)

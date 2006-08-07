@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.93 2006-08-06 22:58:49 geuzaine Exp $
+// $Id: Main.cpp,v 1.94 2006-08-07 13:57:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -167,6 +167,7 @@ int main(int argc, char *argv[])
 
   // Say welcome!
 
+  Msg(STATUS1N, "Geometry");
   Msg(STATUS2N, "Gmsh %s", Get_GmshVersion());
 
   // Log the following for bug reports

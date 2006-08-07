@@ -20,7 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-int  ParseFile(char *filename, int silent, int close, int warn_if_missing=0);
+int  ParseFile(char *filename, int close, int warn_if_missing=0);
 void ParseString(char *str);
 void OpenProblem(char *filename);
 void OpenProblemMacFinder(const char *filename);

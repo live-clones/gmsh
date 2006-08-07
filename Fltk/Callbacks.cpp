@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.423 2006-08-07 00:08:07 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.424 2006-08-07 13:57:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -891,8 +891,9 @@ void options_browser_cb(CALLBACK_ARGS)
 
 void options_save_cb(CALLBACK_ARGS)
 {
+  Msg(STATUS2, "Writing '%s'", CTX.options_filename_fullpath);
   Print_Options(0, GMSH_OPTIONSRC, 1, 1, CTX.options_filename_fullpath);
-  Msg(STATUS2N, "Wrote '%s'", CTX.options_filename_fullpath);
+  Msg(STATUS2, "Wrote '%s'", CTX.options_filename_fullpath);
 }
 
 void options_restore_defaults_cb(CALLBACK_ARGS)

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.504 2006-08-06 22:58:48 geuzaine Exp $
+// $Id: GUI.cpp,v 1.505 2006-08-07 13:57:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3772,7 +3772,7 @@ void GUI::save_message(char *filename)
     return;
   }
 
-  Msg(INFO, "Writing log file '%s'", filename);
+  Msg(STATUS2, "Writing '%s'", filename);
   for(int i = 1; i <= msg_browser->size(); i++) {
     const char *c = msg_browser->text(i);
     if(c[0] == '@')
@@ -3780,9 +3780,7 @@ void GUI::save_message(char *filename)
     else
       fprintf(fp, "%s\n", c);
   }
-
-  Msg(INFO, "Wrote log file '%s'", filename);
-  Msg(STATUS2N, "Wrote '%s'", filename);
+  Msg(STATUS2, "Wrote '%s'", filename);
   fclose(fp);
 }
 

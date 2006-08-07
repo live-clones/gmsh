@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.230 2006-07-12 07:24:22 geuzaine Exp $
+// $Id: Gmsh.y,v 1.231 2006-08-07 13:57:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1826,7 +1826,9 @@ Command :
 	// open simultaneously. The right solution would be of course
 	// to modify FunctionManager to reopen the files instead of
 	// using the FILE pointer, but hey, I'm lazy...
-	ParseFile(tmpstring, 0, 0, 1);
+	Msg(STATUS2, "Reading '%s'", tmpstring);
+	ParseFile(tmpstring, 0, 1);
+	Msg(STATUS2, "Read '%s'", tmpstring);
       }
       else if(!strcmp($1, "Print")){
 #if defined(HAVE_FLTK)

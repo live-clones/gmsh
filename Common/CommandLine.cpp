@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.72 2006-08-05 10:05:44 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.73 2006-08-07 13:57:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -167,8 +167,8 @@ char *Get_BuildOptions(void)
 void Get_Options(int argc, char *argv[])
 {
   // Parse session and option files
-  ParseFile(CTX.session_filename_fullpath, 1, 1);
-  ParseFile(CTX.options_filename_fullpath, 1, 1);
+  ParseFile(CTX.session_filename_fullpath, 1);
+  ParseFile(CTX.options_filename_fullpath, 1);
 
   // Get command line options
   int i = 1;
@@ -257,7 +257,7 @@ void Get_Options(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "option")) {
         i++;
         if(argv[i] != NULL)
-          ParseFile(argv[i++], 1, 1);
+          ParseFile(argv[i++], 1);
         else {
           fprintf(stderr, ERROR_STR "Missing file name\n");
           exit(1);

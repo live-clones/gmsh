@@ -1,4 +1,4 @@
-// $Id: ViewsIO.cpp,v 1.4 2006-01-29 20:32:48 geuzaine Exp $
+// $Id: ViewsIO.cpp,v 1.5 2006-08-07 13:57:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -40,14 +40,10 @@ void ReadView(FILE *file, char *filename)
   double version;
   Post_View *v;
 
-  Msg(INFO, "Reading post-processing file '%s'", filename);
-
   while(1) {
 
     do {
-      if(!fgets(str, 256, file))
-	break;
-      if(feof(file))
+      if(!fgets(str, 256, file) || feof(file))
         break;
     } while(str[0] != '$');
 
@@ -306,9 +302,7 @@ void ReadView(FILE *file, char *filename)
     }
 
     do {
-      if(!fgets(str, 256, file))
-	Msg(GERROR, "Prematured end of file");
-      if(feof(file))
+      if(!fgets(str, 256, file) || feof(file))
         Msg(GERROR, "Prematured end of file");
     } while(str[0] != '$');
 
@@ -317,9 +311,6 @@ void ReadView(FILE *file, char *filename)
 #if defined(HAVE_FLTK)
   UpdateViewsInGUI();
 #endif
-
-  Msg(INFO, "Read post-processing file '%s'", filename);
-  Msg(STATUS2N, "Read '%s'", filename);
 }
 
 // Write view to file in Parsed, ASCII or Binary format
@@ -819,7 +810,7 @@ void WriteView(Post_View *v, char *filename, int format, int append)
       return;
     }
     if(!append)
-      Msg(INFO, "Writing post-processing file '%s'", filename);
+      Msg(STATUS2, "Writing '%s'", filename);
   }
   else
     file = stdout;
@@ -835,8 +826,7 @@ void WriteView(Post_View *v, char *filename, int format, int append)
   
   if(filename) {
     fclose(file);
-    Msg(INFO, "Wrote view '%s' in file '%s'", v->Name, filename);
-    Msg(STATUS2N, "Wrote '%s'", filename);
+    Msg(STATUS2, "Wrote '%s'", filename);
   }
  
 }

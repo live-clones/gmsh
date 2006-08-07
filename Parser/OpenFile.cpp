@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.100 2006-08-07 00:08:09 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.101 2006-08-07 13:57:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -138,7 +138,7 @@ void SetBoundingBox(void)
   }
 }
 
-int ParseFile(char *f, int silent, int close, int warn_if_missing)
+int ParseFile(char *f, int close, int warn_if_missing)
 {
   char yyname_old[256], tmp[256];
   FILE *yyin_old, *fp;
@@ -147,8 +147,7 @@ int ParseFile(char *f, int silent, int close, int warn_if_missing)
   // add 'b' for pure Windows programs: opening in text mode messes up
   // fsetpos/fgetpos (used e.g. for user-defined functions)
   if(!(fp = fopen(f, "rb"))){
-    if(warn_if_missing)
-      Msg(WARNING, "Unable to open file '%s'", f);
+    if(warn_if_missing) Msg(WARNING, "Unable to open file '%s'", f);
     return 0;
   }
 
@@ -162,9 +161,6 @@ int ParseFile(char *f, int silent, int close, int warn_if_missing)
   yyin = fp;
   yyerrorstate = 0;
   yylineno = 1;
-
-  if(!silent)
-    Msg(INFO, "Parsing file '%s'", yyname);
 
   fpos_t position;
   fgetpos(yyin, &position);
@@ -186,11 +182,6 @@ int ParseFile(char *f, int silent, int close, int warn_if_missing)
 
   if(close)
     fclose(yyin);
-
-  if(!silent){
-    Msg(INFO, "Parsed file '%s'", yyname);
-    Msg(STATUS2N, "Read '%s'", yyname);
-  }
 
   if(GMODEL) delete GMODEL;
   GMODEL = new gmshModel;
@@ -225,7 +216,7 @@ void ParseString(char *str)
     fprintf(fp, str);
     fprintf(fp, "\n");
     fclose(fp);
-    ParseFile(CTX.tmp_filename_fullpath, 0, 1);
+    ParseFile(CTX.tmp_filename_fullpath, 1);
   }
 }
 
@@ -257,6 +248,8 @@ int MergeProblem(char *name, int warn_if_missing)
       Msg(WARNING, "Unable to open file '%s'", name);
     return 0;
   }
+
+  Msg(STATUS2, "Reading '%s'", name);
 
   SplitFileName(name, base, ext);
 
@@ -351,9 +344,11 @@ int MergeProblem(char *name, int warn_if_missing)
       status = 0;
     }
     else {
-      status = ParseFile(name, 0, 1);
+      status = ParseFile(name, 1);
     }
   }
+
+  Msg(STATUS2, "Read '%s'", name);
 
   fclose(fp);
 

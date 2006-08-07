@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.87 2006-08-07 00:08:08 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.88 2006-08-07 13:57:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -107,7 +107,7 @@ void CreateOutputFile(char *filename, int format)
   GLint height = viewport[3] - viewport[1];
 
   bool printEndMessage = true;
-  if(format != FORMAT_AUTO) Msg(INFO, "Writing '%s'", name);
+  if(format != FORMAT_AUTO) Msg(STATUS2, "Writing '%s'", name);
 
   switch (format) {
 
