@@ -2,6 +2,7 @@
 #include "MVertex.h"
 
 int MVertex::_globalNum = 0;
+double MVertexLessThanLexicographic::tolerance = 1.e-6;
 
 void MVertex::writeMSH(FILE *fp, double scalingFactor)
 {

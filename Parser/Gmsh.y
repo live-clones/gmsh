@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.231 2006-08-07 13:57:17 geuzaine Exp $
+// $Id: Gmsh.y,v 1.232 2006-08-07 19:08:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1828,6 +1828,7 @@ Command :
 	// using the FILE pointer, but hey, I'm lazy...
 	Msg(STATUS2, "Reading '%s'", tmpstring);
 	ParseFile(tmpstring, 0, 1);
+	SetBoundingBox();
 	Msg(STATUS2, "Read '%s'", tmpstring);
       }
       else if(!strcmp($1, "Print")){

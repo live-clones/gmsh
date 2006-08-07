@@ -115,3 +115,20 @@ void GModel::getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4])
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     addInGroup(*it, groups[3]);
 }
+
+SBoundingBox3d GModel::recomputeBounds()
+{
+  SBoundingBox3d bb;
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    bb += (*it)->bounds();
+  /*
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    bb += (*it)->bounds();
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    bb += (*it)->bounds();
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    bb += (*it)->bounds();
+  */
+  boundingBox = bb;
+  return bounds();
+}

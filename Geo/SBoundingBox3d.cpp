@@ -8,6 +8,15 @@ SBoundingBox3d::SBoundingBox3d()
 SBoundingBox3d::SBoundingBox3d(const SPoint3 & pt)
 : MinPt(pt), MaxPt(pt)
 {}
+
+bool SBoundingBox3d::empty()
+{
+  if(MinPt.x() == DBL_MAX || MinPt.y() == DBL_MAX || MinPt.z() == DBL_MAX ||
+     MaxPt.x() == -DBL_MAX || MaxPt.y() == -DBL_MAX || MaxPt.z() == -DBL_MAX) 
+    return true;
+  return false;
+}
+
 void SBoundingBox3d::operator+=(const SPoint3 &pt)
 // note: it is possible for pt[i] to be both > MaxPt[i] and < MinPt[i]
 // the first point always will be both
@@ -26,7 +35,6 @@ void SBoundingBox3d::operator+=(const SPoint3 &pt)
     MinPt[2] = pt[2];
   if (pt[2] > MaxPt[2])
     MaxPt[2] = pt[2];
-
 }
 
 void SBoundingBox3d::operator+=(const SBoundingBox3d &box)
@@ -53,7 +61,6 @@ void SBoundingBox3d::operator*=(double scale)
   MinPt *= scale;
   MaxPt += center;
   MinPt += center;
-
 }
 
 void SBoundingBox3d::scale(double sx, double sy, double sz)
@@ -80,5 +87,4 @@ void SBoundingBox3d::makeCube()
     scales[j] = max/len[j];
 
   scale(scales[0],scales[1],scales[2]);
-  
 }

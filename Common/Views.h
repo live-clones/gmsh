@@ -212,7 +212,7 @@ void AliasView(int num, int withoptions);
 void FreeView(Post_View *v);
 bool RemoveViewByIndex(int index);
 bool RemoveViewByNumber(int num);
-void ReadView(FILE *file, char *filename);
+int ReadView(char *filename);
 void WriteView(Post_View *v, char *filename, int format, int append);
 void CopyViewOptions(Post_View *src, Post_View *dest);
 void CombineViews(int time, int how, int remove);

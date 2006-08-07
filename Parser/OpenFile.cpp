@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.101 2006-08-07 13:57:17 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.102 2006-08-07 19:08:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,6 @@
 #include <sys/cygwin.h>
 #endif
 
-#include "BDS.h"
 #include "Gmsh.h"
 #include "gmshModel.h"
 #include "Numeric.h"
@@ -32,10 +31,8 @@
 #include "OpenFile.h"
 #include "CommandLine.h"
 #include "PluginManager.h"
-#include "Geo.h"
-#include "Mesh.h"
 #include "Views.h"
-#include "MinMax.h"
+#include "Mesh.h"
 #include "Visibility.h"
 #include "ReadImg.h"
 #include "OS.h"
@@ -48,12 +45,8 @@ extern GUI *WID;
 void UpdateViewsInGUI();
 #endif
 
-extern Mesh *THEM;
 extern GModel *GMODEL;
 extern Context_T CTX;
-
-extern  void BDS_To_Mesh(Mesh *m);
-extern  void BDS_To_Mesh_2(Mesh *m);
 
 void FixRelativePath(char *in, char *out){
   if(in[0] == '/' || in[0] == '\\' || (strlen(in)>2 && in[1] == ':')){
@@ -91,58 +84,95 @@ void SplitFileName(char *name, char *base, char *ext)
   }
 }
 
+static void FinishUpBoundingBox()
+{
+  double range[3];
+
+  for(int i = 0; i < 3; i++){
+    CTX.cg[i] = 0.5 * (CTX.min[i] + CTX.max[i]);
+    range[i] = CTX.max[i] - CTX.min[i];
+  }
+
+  if(range[0] == 0. && range[1] == 0. && range[2] == 0.) {
+    CTX.min[0] -= 1.; CTX.min[1] -= 1.;
+    CTX.max[0] += 1.; CTX.max[1] += 1.;
+    CTX.lc = 1.;
+  }
+  else if(range[0] == 0. && range[1] == 0.) {
+    CTX.lc = range[2];
+    CTX.min[0] -= CTX.lc; CTX.min[1] -= CTX.lc;
+    CTX.max[0] += CTX.lc; CTX.max[1] += CTX.lc;
+  }
+  else if(range[0] == 0. && range[2] == 0.) {
+    CTX.lc = range[1];
+    CTX.min[0] -= CTX.lc; CTX.max[0] += CTX.lc;
+  }
+  else if(range[1] == 0. && range[2] == 0.) {
+    CTX.lc = range[0];
+    CTX.min[1] -= CTX.lc; CTX.max[1] += CTX.lc;
+  }
+  else if(range[0] == 0.) {
+    CTX.lc = sqrt(DSQR(range[1]) + DSQR(range[2]));
+    CTX.min[0] -= CTX.lc; CTX.max[0] += CTX.lc;
+  }
+  else if(range[1] == 0.) {
+    CTX.lc = sqrt(DSQR(range[0]) + DSQR(range[2]));
+    CTX.min[1] -= CTX.lc; CTX.max[1] += CTX.lc;
+  }
+  else if(range[2] == 0.) {
+    CTX.lc = sqrt(DSQR(range[0]) + DSQR(range[1]));
+  }
+  else {
+    CTX.lc = sqrt(DSQR(range[0]) + DSQR(range[1]) + DSQR(range[2]));
+  }
+}
+
 void SetBoundingBox(double xmin, double xmax,
 		    double ymin, double ymax, 
 		    double zmin, double zmax)
 {
-  double bbox[6] = {xmin, xmax, ymin, ymax, zmin, zmax};
-  CalculateMinMax(NULL, bbox);
+  CTX.min[0] = xmin; CTX.max[0] = xmax;
+  CTX.min[1] = ymin; CTX.max[1] = ymax;
+  CTX.min[2] = zmin; CTX.max[2] = zmax;
+  FinishUpBoundingBox();
 }
 
 void SetBoundingBox(void)
 {
-  if(!THEM || CTX.forced_bbox) 
-    return;
-  if (THEM->bds) {
-    double bbox[6] = {THEM->bds->Min[0],THEM->bds->Max[0],THEM->bds->Min[1],
-		      THEM->bds->Max[1],THEM->bds->Min[2],THEM->bds->Max[2]};
-    CalculateMinMax(NULL, bbox);
-  }
-  else if(Tree_Nbr(THEM->Vertices)) {
-    // if we have mesh vertices, use them
-    CalculateMinMax(THEM->Vertices, NULL);
-  }
-  else if(Tree_Nbr(THEM->Points)) { 
-    // else, if we have geometry points, use them
-    CalculateMinMax(THEM->Points, NULL);
-  }
-  else if(List_Nbr(CTX.post.list)) {
-    // else, if we have views, use the max bb of all the views
-    double bbox[6];
-    Post_View *v = *(Post_View **)List_Pointer(CTX.post.list, 0);
-    for(int i = 0; i < 6; i++) bbox[i] = v->BBox[i];
-    for(int i = 1; i < List_Nbr(CTX.post.list); i++){
-      v = *(Post_View **)List_Pointer(CTX.post.list, i);
-      if(v->BBox[0] < bbox[0]) bbox[0] = v->BBox[0];
-      if(v->BBox[1] > bbox[1]) bbox[1] = v->BBox[1];
-      if(v->BBox[2] < bbox[2]) bbox[2] = v->BBox[2];
-      if(v->BBox[3] > bbox[3]) bbox[3] = v->BBox[3];
-      if(v->BBox[4] < bbox[4]) bbox[4] = v->BBox[4];
-      if(v->BBox[5] > bbox[5]) bbox[5] = v->BBox[5];
+  if(CTX.forced_bbox) return;
+
+  SBoundingBox3d bb;
+
+  if(GMODEL)
+    bb = GMODEL->bounds();
+
+  if(bb.empty() && GMODEL)
+    bb = GMODEL->recomputeBounds();
+  
+  if(List_Nbr(CTX.post.list)) {
+    for(int i = 0; i < List_Nbr(CTX.post.list); i++){
+      Post_View *v = *(Post_View **)List_Pointer(CTX.post.list, i);
+      bb += SPoint3(v->BBox[0], v->BBox[2], v->BBox[4]);
+      bb += SPoint3(v->BBox[1], v->BBox[3], v->BBox[5]);
     }
-    CalculateMinMax(NULL, bbox);
   }
-  else {
-    // else, use a default bbox
-    CalculateMinMax(NULL, NULL);
+  
+  if(bb.empty()){
+    bb += SPoint3(-1., -1., -1.);
+    bb += SPoint3(1., 1., 1.);
   }
+  
+  CTX.min[0] = bb.min().x(); CTX.max[0] = bb.max().x();
+  CTX.min[1] = bb.min().y(); CTX.max[1] = bb.max().y();
+  CTX.min[2] = bb.min().z(); CTX.max[2] = bb.max().z();
+  FinishUpBoundingBox();
 }
 
 int ParseFile(char *f, int close, int warn_if_missing)
 {
   char yyname_old[256], tmp[256];
   FILE *yyin_old, *fp;
-  int yylineno_old, yyerrorstate_old, numviews_old, status;
+  int yylineno_old, yyerrorstate_old, numviews_old;
 
   // add 'b' for pure Windows programs: opening in text mode messes up
   // fsetpos/fgetpos (used e.g. for user-defined functions)
@@ -175,18 +205,12 @@ int ParseFile(char *f, int close, int warn_if_missing)
       break;
     }
   }
-  if(THEM)
-    status = THEM->status;
-  else
-    status = 0;
 
   if(close)
     fclose(yyin);
 
   if(GMODEL) delete GMODEL;
   GMODEL = new gmshModel;
-
-  SetBoundingBox();
 
   strncpy(yyname, yyname_old, 255);
   yyin = yyin_old;
@@ -200,18 +224,15 @@ int ParseFile(char *f, int close, int warn_if_missing)
   }
   
   GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
-  if(sp) {
-    sp->readSolverFile(f);
-  }
+  if(sp) sp->readSolverFile(f);
 
-  return status;
+  return 1;
 }
 
 void ParseString(char *str)
 {
+  if(!str) return;
   FILE *fp;
-  if(!str)
-    return;
   if((fp = fopen(CTX.tmp_filename_fullpath, "w"))) {
     fprintf(fp, str);
     fprintf(fp, "\n");
@@ -227,30 +248,25 @@ void SetProjectName(char *name)
 
   strncpy(CTX.filename, name, 255);
   strncpy(CTX.base_filename, base, 255);
-  strncpy(THEM->name, CTX.base_filename, 255);
 
 #if defined(HAVE_FLTK)
-  if(!CTX.batch)
-    WID->set_title(CTX.filename);
+  if(!CTX.batch) WID->set_title(CTX.filename);
 #endif
 }
 
 int MergeProblem(char *name, int warn_if_missing)
 {
-  char ext[256], base[256], tmp[256];
-  int status;
-  FILE *fp;
-
   // added 'b' for pure Windows programs, since some of these files
   // contain binary data
+  FILE *fp;
   if(!(fp = fopen(name, "rb"))){
-    if(warn_if_missing)
-      Msg(WARNING, "Unable to open file '%s'", name);
+    if(warn_if_missing) Msg(WARNING, "Unable to open file '%s'", name);
     return 0;
   }
 
   Msg(STATUS2, "Reading '%s'", name);
 
+  char ext[256], base[256];
   SplitFileName(name, base, ext);
 
 #if defined(HAVE_FLTK)
@@ -261,6 +277,7 @@ int MergeProblem(char *name, int warn_if_missing)
       if(fl_choice("File '%s' is in gzip format.\n\nDo you want to uncompress it?", 
 		   "Cancel", "Uncompress", NULL, name)){
 	fclose(fp);
+	char tmp[256];
 	sprintf(tmp, "gunzip -c %s > %s", name, base);
 	SystemCall(tmp);
 	if(!strcmp(CTX.filename, name)) // this is the project file
@@ -270,88 +287,57 @@ int MergeProblem(char *name, int warn_if_missing)
     }
   }
 #endif
-  
-  if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL") || !strcmp(ext, ".mesh")) {
-    if(THEM->bds) delete THEM->bds;
-    THEM->bds = new BDS_Mesh;
-    if(!strcmp(ext, ".mesh"))
-      THEM->bds->read_mesh(name);
-    else
-      THEM->bds->read_stl(name, CTX.mesh.stl_distance_tol);
-    THEM->bds->classify(CTX.mesh.dihedral_angle_tol * M_PI / 180);
-    BDS_To_Mesh(THEM);
-    THEM->bds_mesh = new BDS_Mesh(*THEM->bds);
-    BDS_To_Mesh_2(THEM);
-    THEM->status = 2;
-    SetBoundingBox();
-    status = THEM->status;
+
+  int status = 0;
+  if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL")){
+    if(!GMODEL) GMODEL = new gmshModel;
+    status = GMODEL->readSTL(name, CTX.mesh.stl_distance_tol);
   }
 #if defined(HAVE_FLTK)
   else if(!strcmp(ext, ".pnm") || !strcmp(ext, ".PNM") ||
 	  !strcmp(ext, ".pbm") || !strcmp(ext, ".PBM") ||
 	  !strcmp(ext, ".pgm") || !strcmp(ext, ".PGM") ||
 	  !strcmp(ext, ".ppm") || !strcmp(ext, ".PPM")) {
-    read_pnm(name);
-    SetBoundingBox();
-    status = 0;
+    status = read_pnm(name);
   }
   else if(!strcmp(ext, ".bmp") || !strcmp(ext, ".BMP")) {
-    read_bmp(name);
-    SetBoundingBox();
-    status = 0;
+    status = read_bmp(name);
   }
 #if defined(HAVE_LIBJPEG)
   else if(!strcmp(ext, ".jpg") || !strcmp(ext, ".JPG") ||
 	  !strcmp(ext, ".jpeg") || !strcmp(ext, ".JPEG")) {
-    read_jpeg(name);
-    SetBoundingBox();
-    status = 0;
+    status = read_jpeg(name);
   }
 #endif
 #if defined(HAVE_LIBPNG)
   else if(!strcmp(ext, ".png") || !strcmp(ext, ".PNG")) {
-    read_png(name);
-    SetBoundingBox();
-    status = 0;
+    status = read_png(name);
   }
 #endif
 #endif
   else {
     fpos_t position;
     fgetpos(fp, &position);
+    char tmp[256];
     fgets(tmp, sizeof(tmp), fp);
     fsetpos(fp, &position);
-
-    if(!strncmp(tmp, "$PTS", 4) || 
-       !strncmp(tmp, "$NO", 3) || 
-       !strncmp(tmp, "$PARA", 5) || 
-       !strncmp(tmp, "$ELM", 4) ||
-       !strncmp(tmp, "$MeshFormat", 4)) {
-      if(THEM->status < 0)
-	mai3d(0);
-
-      if(!GMODEL) 
-	GMODEL = new gmshModel;
-      GMODEL->readMSH(name);
-
-      SetBoundingBox();
-      status = THEM->status;
+    if(!strncmp(tmp, "$PTS", 4) || !strncmp(tmp, "$NO", 3) || 
+       !strncmp(tmp, "$PARA", 5) || !strncmp(tmp, "$ELM", 4) ||
+       !strncmp(tmp, "$MeshFormat", 11)) {
+      if(!GMODEL) GMODEL = new gmshModel;
+      status = GMODEL->readMSH(name);
     }
-    else if(!strncmp(tmp, "$PostFormat", 11) ||
-	    !strncmp(tmp, "$View", 5)) {
-      ReadView(fp, name);
-      SetBoundingBox();
-      status = 0;
+    else if(!strncmp(tmp, "$PostFormat", 11) || !strncmp(tmp, "$View", 5)) {
+      status = ReadView(name);
     }
     else {
       status = ParseFile(name, 1);
     }
   }
 
+  SetBoundingBox();
   Msg(STATUS2, "Read '%s'", name);
-
   fclose(fp);
-
   return status;
 }
 
@@ -369,19 +355,13 @@ void OpenProblem(char *name)
   srand(1);
 
   SetProjectName(name);
-
-  int status = MergeProblem(name);
-
+  MergeProblem(name);
   ApplyLcFactor();
 
   CTX.threads_lock = 0;
 
-  if(!status)
-    mai3d(0);
-
 #if defined(HAVE_FLTK)
-  if(!CTX.batch)
-    WID->reset_visibility();
+  if(!CTX.batch) WID->reset_visibility();
   ZeroHighlight();
 #endif
 }

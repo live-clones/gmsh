@@ -1,4 +1,4 @@
-// $Id: ViewsIO.cpp,v 1.5 2006-08-07 13:57:13 geuzaine Exp $
+// $Id: ViewsIO.cpp,v 1.6 2006-08-07 19:08:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -33,8 +33,14 @@ void UpdateViewsInGUI();
 
 // Read view from file
 
-void ReadView(FILE *file, char *filename)
+int ReadView(char *filename)
 {
+  FILE *fp = fopen(filename, "r");
+  if(!fp){
+    Msg(GERROR, "Unable to open file '%s'", filename);
+    return 0;
+  }
+
   char str[256], name[256];
   int i, nb, format, size, testone, swap, t2l, t3l;
   double version;
@@ -43,22 +49,22 @@ void ReadView(FILE *file, char *filename)
   while(1) {
 
     do {
-      if(!fgets(str, 256, file) || feof(file))
+      if(!fgets(str, 256, fp) || feof(fp))
         break;
     } while(str[0] != '$');
 
-    if(feof(file))
+    if(feof(fp))
       break;
 
     if(!strncmp(&str[1], "PostFormat", 10)) {
-      if(!fscanf(file, "%lf %d %d\n", &version, &format, &size)){
+      if(!fscanf(fp, "%lf %d %d\n", &version, &format, &size)){
         Msg(GERROR, "Read error");
-        return;
+        return 0;
       }
       if(version < 1.0) {
         Msg(GERROR, "This post-processing file is too old (version %g < 1.0)",
             version);
-        return;
+        return 0;
       }
       if(size == sizeof(double))
         Msg(DEBUG, "Data is in double precision format (size==%d)", size);
@@ -66,7 +72,7 @@ void ReadView(FILE *file, char *filename)
         Msg(DEBUG, "Data is in single precision format (size==%d)", size);
       else {
         Msg(GERROR, "Unknown data size (%d) in post-processing file", size);
-        return;
+        return 0;
       }
       if(format == 0)
         format = LIST_FORMAT_ASCII;
@@ -74,38 +80,37 @@ void ReadView(FILE *file, char *filename)
         format = LIST_FORMAT_BINARY;
       else {
         Msg(GERROR, "Unknown format for view");
-        return;
+        return 0;
       }
     }
-
 
     if(!strncmp(&str[1], "View", 4)) {
       v = BeginView(0);
       if(version <= 1.0) {
         Msg(DEBUG, "Detected post-processing view format <= 1.0");
-        if(!fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+        if(!fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
 		   name, &v->NbTimeStep,
 		   &v->NbSP, &v->NbVP, &v->NbTP, &v->NbSL, &v->NbVL, &v->NbTL,
 		   &v->NbST, &v->NbVT, &v->NbTT, &v->NbSS, &v->NbVS, &v->NbTS)){
 	  Msg(GERROR, "Read error");
-	  return;
+	  return 0;
 	}
         v->NbT2 = t2l = v->NbT3 = t3l = 0;
       }
       else if(version == 1.1) {
         Msg(DEBUG, "Detected post-processing view format 1.1");
-        if(!fscanf(file,
+        if(!fscanf(fp,
 		   "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
 		   name, &v->NbTimeStep, &v->NbSP, &v->NbVP, &v->NbTP, &v->NbSL,
 		   &v->NbVL, &v->NbTL, &v->NbST, &v->NbVT, &v->NbTT, &v->NbSS,
 		   &v->NbVS, &v->NbTS, &v->NbT2, &t2l, &v->NbT3, &t3l)){
 	  Msg(GERROR, "Read error");
-	  return;
+	  return 0;
 	}
       }
       else if(version == 1.2 || version == 1.3) {
         Msg(DEBUG, "Detected post-processing view format %g", version);
-        if(!fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+        if(!fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
 		   "%d %d %d %d %d %d %d %d %d %d %d %d %d\n",
 		   name, &v->NbTimeStep,
 		   &v->NbSP, &v->NbVP, &v->NbTP, &v->NbSL, &v->NbVL, &v->NbTL,
@@ -114,12 +119,12 @@ void ReadView(FILE *file, char *filename)
 		   &v->NbSI, &v->NbVI, &v->NbTI, &v->NbSY, &v->NbVY, &v->NbTY,
 		   &v->NbT2, &t2l, &v->NbT3, &t3l)){
 	  Msg(GERROR, "Read error");
-	  return;
+	  return 0;
 	}
       }
       else if(version == 1.4) {
         Msg(DEBUG, "Detected post-processing view format 1.4");
-        if(!fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+        if(!fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
 		   "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
 		   "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
 		   name, &v->NbTimeStep,
@@ -132,13 +137,13 @@ void ReadView(FILE *file, char *filename)
 		   &v->NbSH2, &v->NbVH2, &v->NbTH2, &v->NbSI2, &v->NbVI2, &v->NbTI2,
 		   &v->NbSY2, &v->NbVY2, &v->NbTY2, &v->NbT2, &t2l, &v->NbT3, &t3l)){
 	  Msg(GERROR, "Read error");
-	  return;
+	  return 0;
 	}
       }
       else {
         Msg(GERROR, "Unknown post-processing file format (version %g)",
             version);
-        return;
+        return 0;
       }
 
       for(i = 0; i < (int)strlen(name); i++)
@@ -147,9 +152,9 @@ void ReadView(FILE *file, char *filename)
 
       swap = 0;
       if(format == LIST_FORMAT_BINARY) {
-        if(!fread(&testone, sizeof(int), 1, file)){
+        if(!fread(&testone, sizeof(int), 1, fp)){
 	  Msg(GERROR, "Read error");
-	  return;
+	  return 0;
 	}
         if(testone != 1) {
           Msg(INFO, "Swapping bytes from binary file");
@@ -160,12 +165,12 @@ void ReadView(FILE *file, char *filename)
       v->DataSize = size;
 
       // Time values
-      v->Time = List_CreateFromFile(v->NbTimeStep, 100, size, file, format, swap);
+      v->Time = List_CreateFromFile(v->NbTimeStep, 100, size, fp, format, swap);
 
       // Note: if nb==0, we still allocates the lists (so that they
       // are ready to be filled later, e.g. in plugins)
 
-#define LCD List_CreateFromFile(nb, 1000, size, file, format, swap)
+#define LCD List_CreateFromFile(nb, 1000, size, fp, format, swap)
 
       // Points
       nb = v->NbSP ? v->NbSP * (v->NbTimeStep * 1 + 3) : 0; v->SP = LCD;
@@ -246,19 +251,19 @@ void ReadView(FILE *file, char *filename)
 
       // 2D strings
       nb = v->NbT2 ? v->NbT2 * 4 : 0;
-      v->T2D = List_CreateFromFile(nb, 100, size, file, format, swap);
+      v->T2D = List_CreateFromFile(nb, 100, size, fp, format, swap);
       if(version <= 1.2)
-	v->T2C = List_CreateFromFileOld(t2l, 100, sizeof(char), file, format, swap);
+	v->T2C = List_CreateFromFileOld(t2l, 100, sizeof(char), fp, format, swap);
       else
-	v->T2C = List_CreateFromFile(t2l, 100, sizeof(char), file, format, swap);
+	v->T2C = List_CreateFromFile(t2l, 100, sizeof(char), fp, format, swap);
 
       // 3D strings
       nb = v->NbT3 ? v->NbT3 * 5 : 0;
-      v->T3D = List_CreateFromFile(nb, 100, size, file, format, swap);
+      v->T3D = List_CreateFromFile(nb, 100, size, fp, format, swap);
       if(version <= 1.2)
-	v->T3C = List_CreateFromFileOld(t3l, 100, sizeof(char), file, format, swap);
+	v->T3C = List_CreateFromFileOld(t3l, 100, sizeof(char), fp, format, swap);
       else
-	v->T3C = List_CreateFromFile(t3l, 100, sizeof(char), file, format, swap);
+	v->T3C = List_CreateFromFile(t3l, 100, sizeof(char), fp, format, swap);
 
       Msg(DEBUG,
           "Read View '%s' (%d TimeSteps): "
@@ -302,15 +307,17 @@ void ReadView(FILE *file, char *filename)
     }
 
     do {
-      if(!fgets(str, 256, file) || feof(file))
+      if(!fgets(str, 256, fp) || feof(fp))
         Msg(GERROR, "Prematured end of file");
     } while(str[0] != '$');
 
-  }     /* while 1 ... */
+  }
 
 #if defined(HAVE_FLTK)
   UpdateViewsInGUI();
 #endif
+
+  return 1;
 }
 
 // Write view to file in Parsed, ASCII or Binary format

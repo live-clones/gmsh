@@ -65,4 +65,18 @@ class MFaceVertex : public MVertex{
   ~MFaceVertex(){}
 };
 
+class MVertexLessThanLexicographic{
+ public:
+  static double tolerance;
+  bool operator()(const MVertex *v1, const MVertex *v2) const
+  {
+    if(v1->x() - v2->x() >  tolerance) return true;
+    if(v1->x() - v2->x() < -tolerance) return false;
+    if(v1->y() - v2->y() >  tolerance) return true;
+    if(v1->y() - v2->y() < -tolerance) return false;
+    if(v1->z() - v2->z() >  tolerance) return true;
+    return false;
+  }
+};
+
 #endif

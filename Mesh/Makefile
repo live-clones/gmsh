@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.113 2006-08-07 00:08:08 geuzaine Exp $
+# $Id: Makefile,v 1.114 2006-08-07 19:08:12 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -390,7 +390,7 @@ Generator.o: Generator.cpp BDS.h ../Common/Views.h ../Common/ColorTable.h \
   ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h ../Geo/GFace.h \
   ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/MElement.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/MElement.h
+  ../Geo/MElement.h ../Geo/SBoundingBox3d.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 DiscreteSurface.o: DiscreteSurface.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \

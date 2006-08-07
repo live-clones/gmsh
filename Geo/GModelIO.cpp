@@ -7,6 +7,7 @@
 #include "gmshFace.h"
 #include "gmshEdge.h"
 #include "MElement.h"
+#include "SBoundingBox3d.h"
 
 static int getNumVerticesForElementTypeMSH(int type)
 {
@@ -123,6 +124,7 @@ int GModel::readMSH(const std::string &name)
   int elementTypes[7] = {LGN1, TRI1, QUA1, TET1, HEX1, PRI1, PYR1};
   double version = 1.0;
   char str[256];
+  SBoundingBox3d bbox;
   std::map<int, MVertex*> vertices;
   std::map<int, std::vector<MVertex*> > points;
   std::map<int, std::vector<MElement*> > elements[7];
@@ -155,6 +157,7 @@ int GModel::readMSH(const std::string &name)
 	int num;
 	double x, y, z;
         fscanf(fp, "%d %lf %lf %lf", &num, &x, &y, &z);
+	bbox += SPoint3(x, y, z);
 	if(vertices.count(num))
 	  Msg(WARNING, "Skipping duplicate vertex %d", num);
 	else
@@ -337,6 +340,8 @@ int GModel::readMSH(const std::string &name)
   for(int i = 0; i < 4; i++)  
     storePhysicalTagsInEntities(this, i, physicals[i]);
 
+  boundingBox += bbox;
+
   fclose(fp);
   return 1;
 }
@@ -504,6 +509,133 @@ int GModel::writePOS(const std::string &name, double scalingFactor)
     }
     fprintf(fp, "};\n");
   }
+
+  fclose(fp);
+  return 1;
+}
+
+static void swapBytes(char *array, int size, int n)
+{
+  char *x = new char[size];
+  for(int i = 0; i < n; i++) {
+    char *a = &array[i * size];
+    memcpy(x, a, size);
+    for(int c = 0; c < size; c++)
+      a[size - 1 - c] = x[c];
+  }
+  delete [] x;
+}
+
+int GModel::readSTL(const std::string &name, double tolerance)
+{
+  FILE *fp = fopen(name.c_str(), "rb");
+  if(!fp){
+    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  // read all facets and store triplets of points
+  std::vector<SPoint3> points;
+  SBoundingBox3d bbox;
+
+  // "solid" or binary data header
+  char buffer[256];
+  fgets(buffer, sizeof(buffer), fp);
+
+  if(!strncmp(buffer, "solid", 5)) { 
+    // ASCII STL
+    while(!feof(fp)) {
+      // "facet normal x y z" or "endsolid"
+      if(!fgets(buffer, sizeof(buffer), fp)) break;
+      if(!strncmp(buffer, "endsolid", 8)) break;
+      char s1[256], s2[256];
+      float x, y, z;
+      sscanf(buffer, "%s %s %f %f %f", s1, s2, &x, &y, &z);
+      // "outer loop"
+      if(!fgets(buffer, sizeof(buffer), fp)) break;
+      // "vertex x y z"
+      for(int i = 0; i < 3; i++){
+	if(!fgets(buffer, sizeof(buffer), fp)) break;
+	sscanf(buffer, "%s %f %f %f", s1, &x, &y, &z);
+	SPoint3 p(x, y, z);
+	points.push_back(p);
+	bbox += p;
+      }
+      // "endloop"
+      if(!fgets(buffer, sizeof(buffer), fp)) break;
+      // "endfacet"
+      if(!fgets(buffer, sizeof(buffer), fp)) break;
+    }
+  }
+  else{
+    // Binary STL
+    rewind(fp);
+    char header[80];
+    if(fread(header, sizeof(char), 80, fp)){
+      unsigned int nfacets = 0;
+      size_t ret = fread(&nfacets, sizeof(unsigned int), 1, fp);
+      bool swap = false;
+      if(nfacets > 10000000){
+	Msg(INFO, "Swapping bytes from binary file");
+	swap = true;
+	swapBytes((char*)&nfacets, sizeof(unsigned int), 1);
+      }
+      if(ret && nfacets){
+	char *data = new char[nfacets * 50 * sizeof(char)];
+	ret = fread(data, sizeof(char), nfacets * 50, fp);
+	if(ret == nfacets * 50){
+	  for(unsigned int i = 0; i < nfacets; i++) {
+	    float *xyz = (float *)&data[i * 50 * sizeof(char)];
+	    if(swap) swapBytes((char*)xyz, sizeof(float), 12);
+	    for(int j = 0; j < 3; j++){
+	      SPoint3 p(xyz[3 + 3 * j], xyz[3 + 3 * j + 1], xyz[3 + 3 * j + 2]);
+	      points.push_back(p);
+	      bbox += p;
+	    }
+	  }
+	}
+	delete data;
+      }
+    }
+  }
+
+  if(!points.size() || points.size() % 3){
+    Msg(GERROR, "Wrong number of points in STL");
+    return 0;
+  }
+
+  Msg(INFO, "%d facets", points.size() / 3);
+
+  // create face
+  GFace *face = new gmshFace(this, numFace() + 1);
+  add(face);
+
+  // create (unique) vertices and triangles
+  SPoint3 min = bbox.min();
+  SPoint3 max = bbox.max();
+  double dx = max.x() - min.x(), dy = max.y() - min.y(), dz = max.z() - min.z();
+  double lc = sqrt(dx * dx + dy * dy + dz * dz);
+  MVertexLessThanLexicographic::tolerance = lc * tolerance;
+  std::set<MVertex*, MVertexLessThanLexicographic> vertices;
+  for(unsigned int i = 0; i < points.size(); i += 3){
+    MVertex *v[3];
+    for(int j = 0; j < 3; j++){
+      double x = points[i + j].x(), y = points[i + j].y(), z = points[i + j].z();
+      MVertex w(x, y, z);
+      std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = vertices.find(&w);
+      if(it != vertices.end()) {
+        v[j] = *it;
+      }
+      else {
+        v[j] = new MVertex(x, y, z);
+	vertices.insert(v[j]);
+	face->mesh_vertices.push_back(v[j]);
+      }
+    }
+    face->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+  }
+
+  boundingBox += bbox;
 
   fclose(fp);
   return 1;

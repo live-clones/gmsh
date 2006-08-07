@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.284 2006-08-07 00:08:07 geuzaine Exp $
+// $Id: Options.cpp,v 1.285 2006-08-07 19:08:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -130,7 +130,6 @@ void Init_Options(int num)
   CTX.min[0] = CTX.min[1] = CTX.min[2] = 0.0;
   CTX.max[0] = CTX.max[1] = CTX.max[2] = 1.0;
   CTX.cg[0] = CTX.cg[1] = CTX.cg[2] = 0.0;
-  CTX.range[0] = CTX.range[1] = CTX.range[2] = 1.0;
   CTX.vxmin = CTX.vymin = CTX.vxmax = CTX.vymax = 0.;
   CTX.render_mode = GMSH_RENDER;
   CTX.pixel_equiv_x = CTX.pixel_equiv_y = 0.;

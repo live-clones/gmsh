@@ -86,7 +86,6 @@ public :
   double min[3];              // x, y and z min for the current geometry 
   double max[3];              // x, y and z max for the current geometry 
   double cg[3];               // "center of mass" of the current geometry
-  double range[3];            // maximum range in the three directions 
   double lc;                  // characteristic length for the whole problem (never
                               // used in mesh generation ->only for geo/post) 
 

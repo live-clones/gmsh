@@ -1,4 +1,4 @@
-// $Id: ReadImg.cpp,v 1.15 2006-01-28 23:01:15 geuzaine Exp $
+// $Id: ReadImg.cpp,v 1.16 2006-08-07 19:08:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -97,9 +97,9 @@ static Post_View *Img2Pos(Fl_RGB_Image & img_init, int quads=1,
   return v;
 }
 
-static void EndPos(char *name, Post_View *v)
+static int EndPos(char *name, Post_View *v)
 {
-  if(!v) return;
+  if(!v) return 0;
   char name_pos[256], title[256];
   strcpy(name_pos, name);
   strcat(name_pos, ".pos");
@@ -113,34 +113,29 @@ static void EndPos(char *name, Post_View *v)
   else
     strcpy(title, &name[i+1]);
   EndView(v, 1, name_pos, title);
-  Msg(INFO, "Read file '%s'", name);
-  Msg(STATUS2N, "Read '%s'", name);
+  return 1;
 }
 
-void read_pnm(char *name) 
+int read_pnm(char *name) 
 {
-  Msg(INFO, "Reading PNM file '%s'", name);
   Fl_PNM_Image img(name);
-  EndPos(name, Img2Pos(img));
+  return EndPos(name, Img2Pos(img));
 }
 
-void read_jpeg(char *name) 
+int read_jpeg(char *name) 
 {
-  Msg(INFO, "Reading JPEG file '%s'", name);
   Fl_JPEG_Image img(name);
-  EndPos(name, Img2Pos(img));
+  return EndPos(name, Img2Pos(img));
 }
 
-void read_png(char *name) 
+int read_png(char *name) 
 {
-  Msg(INFO, "Reading PNG file '%s'", name);
   Fl_PNG_Image img(name);
-  EndPos(name, Img2Pos(img));
+  return EndPos(name, Img2Pos(img));
 }
 
-void read_bmp(char *name) 
+int read_bmp(char *name) 
 {
-  Msg(INFO, "Reading BMP file '%s'", name);
   Fl_BMP_Image img(name);
-  EndPos(name, Img2Pos(img));
+  return EndPos(name, Img2Pos(img));
 }

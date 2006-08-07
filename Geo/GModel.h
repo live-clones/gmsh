@@ -8,12 +8,23 @@
 #include "GEdge.h"
 #include "GFace.h"
 #include "GRegion.h"
+#include "SBoundingBox3d.h"
 
 // A geometric model. The model is a non-manifold B-Rep.
 
 class GModel  
 {
-public:
+ protected:
+  std::string modelName;
+  std::set<GRegion*, EntityLessThan> regions;
+  std::set<GFace*, EntityLessThan> faces;
+  std::set<GEdge*, EntityLessThan> edges;
+  std::set<GVertex*, EntityLessThan> vertices;
+  // stored bounding box
+  SBoundingBox3d boundingBox;
+
+ public:
+  GModel(const std::string &name) : modelName(name){}
   virtual ~GModel() {}
 
   typedef std::set<GRegion*, EntityLessThan>::iterator riter;
@@ -65,22 +76,19 @@ public:
   // Returns all physical groups (one map per dimension: 0-D to 3-D)
   void getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]);
 
+  // The bounding box
+  virtual SBoundingBox3d bounds(){ return boundingBox; }
+  virtual SBoundingBox3d recomputeBounds();
+
   // IO routines
   int readMSH(const std::string &name);
   int writeMSH(const std::string &name, double version=1.0, bool saveAll=false,
 	       double scalingFactor=1.0);
   int writePOS(const std::string &name, double scalingFactor=1.0);
+  int readSTL(const std::string &name, double tolerance=1.e-3);
   int writeSTL(const std::string &name, double scalingFactor=1.0);
   int writeVRML(const std::string &name, double scalingFactor=1.0);
   int writeUNV(const std::string &name, double scalingFactor=1.0);
-
-protected:
-  std::string modelName;
-  GModel(const std::string &name):modelName(name){}
-  std::set<GRegion*, EntityLessThan> regions;
-  std::set<GFace*, EntityLessThan> faces;
-  std::set<GEdge*, EntityLessThan> edges;
-  std::set<GVertex*, EntityLessThan> vertices;
 };
 
 #endif

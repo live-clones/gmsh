@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.83 2006-08-07 00:08:08 geuzaine Exp $
+# $Id: Makefile,v 1.84 2006-08-07 19:08:11 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -34,7 +34,6 @@ endif
 
 
 SRC = CAD.cpp \
-      MinMax.cpp \
       ExtrudeParams.cpp \
       Geo.cpp \
       GeoUtils.cpp \
@@ -91,11 +90,6 @@ CAD.o: CAD.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Mesh/Interpolation.h ../Mesh/Vertex.h ../Mesh/Mesh.h \
   ../Mesh/Create.h ../Mesh/Vertex.h ../Mesh/Mesh.h CAD.h ExtrudeParams.h \
   ../Common/Visibility.h ../Common/Context.h
-# 1 "/Users/geuzaine/.gmsh/Geo//"
-MinMax.o: MinMax.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h ../Mesh/Vertex.h ../Common/Context.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 ExtrudeParams.o: ExtrudeParams.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -196,7 +190,8 @@ gmshEdge.o: gmshEdge.cpp gmshModel.h GModel.h GVertex.h GEntity.h Range.h \
   ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Mesh/Interpolation.h ../Mesh/Vertex.h ../Mesh/Mesh.h CAD.h \
-  ExtrudeParams.h Geo.h ../Common/Context.h
+  ExtrudeParams.h Geo.h ../Mesh/Create.h ../Mesh/Vertex.h ../Mesh/Mesh.h \
+  ../Common/Context.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 gmshFace.o: gmshFace.cpp gmshModel.h GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h GPoint.h \
@@ -210,7 +205,8 @@ gmshFace.o: gmshFace.cpp gmshModel.h GModel.h GVertex.h GEntity.h Range.h \
   ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h gmshFace.h \
   ../Mesh/Interpolation.h ../Mesh/Vertex.h ../Mesh/Mesh.h CAD.h \
-  ExtrudeParams.h Geo.h ../Mesh/Utils.h ../Mesh/Vertex.h ../Mesh/Mesh.h
+  ExtrudeParams.h Geo.h ../Mesh/Create.h ../Mesh/Vertex.h ../Mesh/Mesh.h \
+  ../Mesh/Utils.h ../Mesh/Vertex.h ../Mesh/Mesh.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 gmshRegion.o: gmshRegion.cpp gmshModel.h GModel.h GVertex.h GEntity.h \
   Range.h SPoint3.h SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h \
@@ -224,7 +220,8 @@ gmshRegion.o: gmshRegion.cpp gmshModel.h GModel.h GVertex.h GEntity.h \
   ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h gmshFace.h \
   gmshRegion.h ../Mesh/Interpolation.h ../Mesh/Vertex.h ../Mesh/Mesh.h \
-  CAD.h ExtrudeParams.h Geo.h
+  CAD.h ExtrudeParams.h Geo.h ../Mesh/Create.h ../Mesh/Vertex.h \
+  ../Mesh/Mesh.h ../Mesh/Utils.h ../Mesh/Vertex.h ../Mesh/Mesh.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 SVector3.o: SVector3.cpp SVector3.h SPoint3.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"

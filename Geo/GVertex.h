@@ -26,6 +26,7 @@ public:
   virtual int dim() const {return 0;}
   virtual GeomType geomType() const {return Point;}
   virtual double prescribedMeshSizeAtVertex() const {return 0;}
+  virtual SBoundingBox3d bounds(){ return SBoundingBox3d(SPoint3(x(), y(), z())); }
   virtual std::string getAdditionalInfoString()
   {
     char str[256];

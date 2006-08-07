@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.97 2006-08-06 22:58:47 geuzaine Exp $
+# $Id: Makefile,v 1.98 2006-08-07 19:08:11 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -141,7 +141,8 @@ CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h \
   ../Geo/MVertex.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
   ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h OS.h
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h \
+  ../Geo/SBoundingBox3d.h OS.h
 # 1 "/Users/geuzaine/.gmsh/Common//"
 OS.o: OS.cpp Message.h
 # 1 "/Users/geuzaine/.gmsh/Common//"
