@@ -42,7 +42,8 @@ Structural_BeamSection:: Structural_BeamSection( const char *direct, std::string
   //  printf("%s/%s\n", direct,name.c_str());
   // read the section (msh format)
   FILE *f = fopen (temp,"r");  
-  Read_Mesh (&m, f, temp,FORMAT_MSH);
+  //need to rewrite this whole plugin using GModel
+  //Read_Mesh (&m, f, temp,FORMAT_MSH); 
   fclose(f);
   // get rid of the extension
   name.erase(name.find("."));

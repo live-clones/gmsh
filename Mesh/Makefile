@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.112 2006-08-04 14:28:03 geuzaine Exp $
+# $Id: Makefile,v 1.113 2006-08-07 00:08:08 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -60,8 +60,6 @@ SRC = 1D_Mesh.cpp \
       MeshQuality.cpp \
       Create.cpp \
       Generator.cpp \
-      Print_Mesh.cpp \
-      Read_Mesh.cpp \
       DiscreteSurface.cpp \
       SwapEdge.cpp \
       Utils.cpp \
@@ -394,31 +392,6 @@ Generator.o: Generator.cpp BDS.h ../Common/Views.h ../Common/ColorTable.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
   ../Geo/MElement.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
-Print_Mesh.o: Print_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
-  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshDefines.h ../Mesh/Metric.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
-  ../Geo/ExtrudeParams.h Mesh.h Create.h Vertex.h ../Common/Context.h
-# 1 "/Users/geuzaine/.gmsh/Mesh//"
-Read_Mesh.o: Read_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshDefines.h \
-  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
-  ../Mesh/Matrix.h ../Geo/ExtrudeParams.h Mesh.h 3D_Mesh.h Create.h \
-  Vertex.h ../Common/Context.h PartitionMesh.h
-# 1 "/Users/geuzaine/.gmsh/Mesh//"
 DiscreteSurface.o: DiscreteSurface.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
@@ -470,13 +443,12 @@ meshGEdge.o: meshGEdge.cpp meshGEdge.h ../Geo/GEdge.h ../Geo/GEntity.h \
   ../Geo/SPoint3.h ../Geo/MVertex.h ../Common/GmshDefines.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/MVertex.h ../Geo/GPoint.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/MElement.h ../Geo/MVertex.h ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Utils.h Vertex.h Mesh.h Element.h Simplex.h Face.h Edge.h \
-  ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Numeric/Numeric.h Metric.h Matrix.h \
-  ../Common/Context.h
+  ../Geo/MElement.h ../Geo/MVertex.h ../Numeric/Numeric.h \
+  ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../DataStr/List.h ../DataStr/Tree.h Utils.h Vertex.h Mesh.h Element.h \
+  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h Metric.h Matrix.h ../Common/Context.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 meshGFace.o: meshGFace.cpp meshGFace.h ../Geo/SPoint2.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \

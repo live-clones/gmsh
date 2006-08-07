@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.86 2006-08-06 22:58:49 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.87 2006-08-07 00:08:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -55,8 +55,6 @@ int GuessFileFormatFromFileName(char *name)
   else if(!strcmp(ext, ".opt"))     return FORMAT_OPT;
   else if(!strcmp(ext, ".msh"))     return FORMAT_MSH;
   else if(!strcmp(ext, ".unv"))     return FORMAT_UNV;
-  else if(!strcmp(ext, ".p3d"))     return FORMAT_P3D;
-  else if(!strcmp(ext, ".dmg"))     return FORMAT_DMG;
   else if(!strcmp(ext, ".stl"))     return FORMAT_STL;
   else if(!strcmp(ext, ".pos"))     return FORMAT_LC;
   else if(!strcmp(ext, ".gif"))     return FORMAT_GIF;
@@ -73,30 +71,8 @@ int GuessFileFormatFromFileName(char *name)
   else if(!strcmp(ext, ".svg"))     return FORMAT_SVG;
   else if(!strcmp(ext, ".ppm"))     return FORMAT_PPM;
   else if(!strcmp(ext, ".yuv"))     return FORMAT_YUV;
-  else if(!strcmp(ext, ".gref"))    return FORMAT_GREF;
-  else if(!strcmp(ext, ".Gref"))    return FORMAT_GREF;
   else if(!strcmp(ext, ".wrl"))     return FORMAT_VRML;
   else                              return -1;
-}
-
-char *GetStringForFileFormat(int format)
-{
-  switch(format){
-  case FORMAT_PPM: return "PPM";
-  case FORMAT_YUV: return "YUV";
-  case FORMAT_GIF: return "GIF";
-  case FORMAT_JPEG: return "JPEG";
-  case FORMAT_JPEGTEX: return "JPEG";
-  case FORMAT_PNG: return "PNG";
-  case FORMAT_PNGTEX: return "PNG";
-  case FORMAT_PS: return "PS";
-  case FORMAT_EPS: return "EPS";
-  case FORMAT_EPSTEX: return "EPS";
-  case FORMAT_PDF: return "PDF";
-  case FORMAT_PDFTEX: return "PDF";
-  case FORMAT_SVG: return "SVG";
-  default: return "";
-  }
 }
 
 void GetDefaultFileName(int format, char *name)
@@ -107,10 +83,7 @@ void GetDefaultFileName(int format, char *name)
   case FORMAT_MSH:  strcpy(ext, ".msh"); break;
   case FORMAT_VRML: strcpy(ext, ".wrl"); break;
   case FORMAT_UNV:  strcpy(ext, ".unv"); break;
-  case FORMAT_GREF: strcpy(ext, ".Gref"); break;
-  case FORMAT_DMG:  strcpy(ext, ".dmg"); break;
   case FORMAT_STL:  strcpy(ext, ".stl"); break;
-  case FORMAT_P3D:  strcpy(ext, ".p3d"); break;
   default: break;
   }
   strcat(name, ext);
@@ -134,8 +107,7 @@ void CreateOutputFile(char *filename, int format)
   GLint height = viewport[3] - viewport[1];
 
   bool printEndMessage = true;
-  if(format != FORMAT_AUTO)
-    Msg(INFO, "Writing %s file '%s'", GetStringForFileFormat(format), name);
+  if(format != FORMAT_AUTO) Msg(INFO, "Writing '%s'", name);
 
   switch (format) {
 
@@ -167,12 +139,6 @@ void CreateOutputFile(char *filename, int format)
 
   case FORMAT_UNV:
     GMODEL->writeUNV(name, CTX.mesh.scaling_factor);
-    break;
-
-  case FORMAT_P3D:
-  case FORMAT_DMG:
-  case FORMAT_GREF:
-    Print_Mesh(name, format);
     break;
 
   case FORMAT_LC:
@@ -353,10 +319,7 @@ void CreateOutputFile(char *filename, int format)
     break;
   }
 
-  if(printEndMessage){
-    Msg(INFO, "Wrote %s file '%s'", GetStringForFileFormat(format), name);
-    Msg(STATUS2N, "Wrote '%s'", name);
-  }
+  if(printEndMessage) Msg(STATUS2, "Wrote '%s'", name);
 
   CTX.print.format = oldformat;
   Draw();

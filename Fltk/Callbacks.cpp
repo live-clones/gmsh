@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.422 2006-08-06 22:58:47 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.423 2006-08-07 00:08:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -649,21 +649,9 @@ int _save_lc(char *name)
   return 1;
 }
 
-int _save_gref(char *name)
-{
-  CreateOutputFile(name, CTX.mesh.format = FORMAT_GREF);
-  return 1;
-}
-
 int _save_unv(char *name)
 {
   CreateOutputFile(name, CTX.mesh.format = FORMAT_UNV);
-  return 1;
-}
-
-int _save_p3d(char *name)
-{
-  CreateOutputFile(name, CTX.mesh.format = FORMAT_P3D);
   return 1;
 }
 
@@ -789,11 +777,9 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"Gmsh unrolled geometry (*.geo)", _save_geo},
     {"Gmsh mesh (*.msh)", _save_msh},
     {"Gmsh mesh statistics (*.pos)", _save_lc},
-    {"GREF mesh (*.gref)", _save_gref},
     {"I-DEAS universal mesh (*.unv)", _save_unv},
-    {"PLOT3D formatted ASCII mgrid (*.p3d)", _save_p3d},
     {"VRML surface mesh (*.wrl)", _save_vrml},
-    {"STL triangulation (*.stl)", _save_stl},
+    {"STL surface mesh (*.stl)", _save_stl},
     {"GIF (*.gif)", _save_gif},
 #if defined(HAVE_LIBJPEG)
     {"JPEG (*.jpg)", _save_jpeg},

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.283 2006-08-06 22:58:47 geuzaine Exp $
+// $Id: Options.cpp,v 1.284 2006-08-07 00:08:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -147,7 +147,7 @@ void Init_Options(int num)
   CTX.mesh.histogram = 0;
   CTX.mesh.changed = 1;
   CTX.mesh.oldxtrude = CTX.mesh.oldxtrude_recombine = 0; // old extrusion mesh generator
-  CTX.mesh.check_duplicates = 0; // check for duplicate nodes in Read_Mesh
+  CTX.mesh.check_duplicates = 0; // check for duplicate nodes when loading a mesh
   CTX.mesh.bgmesh_type = WITHPOINTS;
   CTX.post.combine_time = 0; // try to combine_time views at startup
   CTX.post.plugin_draw_function = NULL;
