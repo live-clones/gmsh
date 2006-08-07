@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.89 2006-08-07 21:04:05 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.90 2006-08-07 22:02:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -24,7 +24,7 @@
 #include "OpenFile.h"
 #include "Context.h"
 #include "Options.h"
-#include "Mesh.h"
+#include "Geo.h"
 #include "GModel.h"
 
 #include "gl2ps.h"

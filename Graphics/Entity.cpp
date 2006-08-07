@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.65 2006-07-14 13:31:08 geuzaine Exp $
+// $Id: Entity.cpp,v 1.66 2006-08-07 22:02:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,6 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Mesh.h"
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Numeric.h"

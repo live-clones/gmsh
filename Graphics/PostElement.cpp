@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.74 2006-07-14 13:31:08 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.75 2006-08-07 22:02:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,16 +25,10 @@
 
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "Geo.h"
-#include "Mesh.h"
 #include "Draw.h"
 #include "Iso.h"
 #include "Context.h"
 #include "Numeric.h"
-#include <iostream>
-#include <math.h>
-
-using namespace std;
 
 extern Context_T CTX;
 
@@ -1270,22 +1264,18 @@ void Draw_TensorElement(int type, Post_View * View, int preproNormals,
   case POST_PYRAMID: nbnod = 5; break;
   }
 
-  /// By lack of any current better solution, tensors are displayed as
-  /// their Von Mises invariant (J2 invariant); this will simply call
-  /// the scalar function...
-
   int ts = View->TimeStep;
 
   if(View->TensorType == DRAW_POST_VONMISES){
- 	View->TimeStep = 0;
 
-  	double V_VonMises[8];
-  	for(int i = 0; i < nbnod; i++){
-  	  	V_VonMises[i] = ComputeVonMises(V + 9*(i + nbnod * ts));
-  	}
-  	Draw_ScalarElement(type, View, preproNormals, ValMin, ValMax, iX, iY, iZ, V_VonMises);
-   }
-  
+    View->TimeStep = 0;
+    double V_VonMises[8];
+    for(int i = 0; i < nbnod; i++)
+      V_VonMises[i] = ComputeVonMises(V + 9*(i + nbnod * ts));
+    Draw_ScalarElement(type, View, preproNormals, ValMin, ValMax, 
+		       iX, iY, iZ, V_VonMises);
+
+  }
   else if(View->TensorType == DRAW_POST_LMGC90 || 
 	  View->TensorType == DRAW_POST_LMGC90_TYPE || 
 	  View->TensorType == DRAW_POST_LMGC90_COORD || 
@@ -1297,9 +1287,7 @@ void Draw_TensorElement(int type, Post_View * View, int preproNormals,
 	  View->TensorType == DRAW_POST_LMGC90_DEPAV || 
 	  View->TensorType == DRAW_POST_LMGC90_DEPNORM){
     
-    //cout << View->TensorType << endl;
-
-    static double zmin[3],zmax[3];
+    static double zmin[3], zmax[3];
     int it;
     double DEP[3];	// déplacement relatif cdf % a config de référence
     double CDG[3];	// coordonnées du centre de gravité au tps t0
@@ -1584,7 +1572,8 @@ void Draw_TensorElement(int type, Post_View * View, int preproNormals,
     glCallList((* View->DisplayListsOfGrains )[(int)V[6]]);
     glPopMatrix();    
     glDisable(GL_LIGHTING);
-  }	      
+  }
+
   View->TimeStep = ts;
 }
 

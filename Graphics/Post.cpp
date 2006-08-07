@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.106 2006-08-04 14:28:02 geuzaine Exp $
+// $Id: Post.cpp,v 1.107 2006-08-07 22:02:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -22,8 +22,6 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Numeric.h"
-#include "Geo.h"
-#include "Mesh.h"
 #include "Draw.h"
 #include "Views.h"
 #include "Context.h"

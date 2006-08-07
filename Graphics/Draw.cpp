@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.98 2006-08-04 14:28:02 geuzaine Exp $
+// $Id: Draw.cpp,v 1.99 2006-08-07 22:02:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -21,15 +21,13 @@
 
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "Geo.h"
+#include "GmshDefines.h"
 #include "CAD.h"
-#include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"
 #include "Numeric.h"
 #include "GModel.h"
 
-extern Mesh *THEM;
 extern Context_T CTX;
 extern GModel *GMODEL;
 
@@ -37,11 +35,8 @@ extern GModel *GMODEL;
 
 int NeedPolygonOffset()
 {
-  if(THEM->status == 2 &&
-     (CTX.mesh.surfaces_edges || CTX.geom.lines || CTX.geom.surfaces))
-    return 1;
-  if(THEM->status == 3 && 
-     (CTX.mesh.surfaces_edges || CTX.mesh.volumes_edges))
+  // FIXME: this should be improved!
+  if(CTX.geom.lines || CTX.mesh.surfaces_edges || CTX.mesh.volumes_edges)
     return 1;
   for(int i = 0; i < List_Nbr(CTX.post.list); i++){
     Post_View *v = *(Post_View**)List_Pointer(CTX.post.list, i);

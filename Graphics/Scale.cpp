@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.62 2006-01-06 00:34:25 geuzaine Exp $
+// $Id: Scale.cpp,v 1.63 2006-08-07 22:02:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -22,7 +22,6 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Numeric.h"
-#include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"
 #include "Views.h"

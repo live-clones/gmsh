@@ -32,12 +32,6 @@
 
 #define NMAX_SPLINE   100
 
-#define ENT_NONE     0
-#define ENT_POINT    1
-#define ENT_LINE     2
-#define ENT_SURFACE  3
-#define ENT_VOLUME   4
-
 #define MSH_TRSF_LINE        1
 #define MSH_TRSF_SURFACE     2
 #define MSH_TRSF_VOLUME      3
@@ -129,5 +123,7 @@ void symmetry(int add, List_T *list, char *fich, char *what,
 void extrude(List_T *list, char *fich, char *what, char *tx, char *ty, char *tz);
 void protude(List_T *list, char *fich, char *what, char *ax, char *ay, char *az,
 	     char *px, char *py, char *pz, char *angle);
+
+void Print_Geo(char *c);
 
 #endif

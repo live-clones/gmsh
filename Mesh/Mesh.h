@@ -361,7 +361,7 @@ void mai3d(int Asked);
 
 void Init_Mesh0();
 void Init_Mesh();
-void Print_Geo(char *c);
+
 void GetStatistics(double s[50]);
 void GetDefaultMeshFileName(int Type, char *name);
 

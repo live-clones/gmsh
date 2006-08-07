@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.36 2006-01-14 16:24:54 geuzaine Exp $
+// $Id: Iso.cpp,v 1.37 2006-08-07 22:02:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -21,8 +21,6 @@
 
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "Geo.h"
-#include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"
 #include "Views.h"

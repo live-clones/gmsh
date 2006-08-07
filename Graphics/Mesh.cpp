@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.155 2006-08-04 14:28:02 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.156 2006-08-07 22:02:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -83,8 +83,8 @@ void Draw_Mesh()
   
   /*
   if(CTX.mesh.changed){
-    if(THEM->normals) delete THEM->normals;
-    THEM->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
+    if(GMODEL->normals) delete GMODEL->normals;
+    GMODEL->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
   }
   */
   
