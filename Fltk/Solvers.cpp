@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.51 2006-08-05 10:05:45 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.52 2006-08-07 14:15:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -171,6 +171,8 @@ int Solver(int num, char *args)
       SINFO[num].nbval[i] = 0;
     SINFO[num].pid = 0;
   }
+
+  Msg(STATUS2N, "Running '%s'", prog);
 
   while(1) {
 
