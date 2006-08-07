@@ -611,8 +611,13 @@ int GModel::readSTL(const std::string &name, double tolerance)
     }
   }
 
-  if(!points.size() || points.size() % 3){
-    Msg(GERROR, "Wrong number of points in STL");
+  if(!points.size()){
+    Msg(GERROR, "No facets found in STL file");
+    return 0;
+  }
+  
+  if(points.size() % 3){
+    Msg(GERROR, "Wrong number of points in STL file");
     return 0;
   }
 
