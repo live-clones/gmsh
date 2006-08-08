@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.114 2006-08-07 19:08:12 geuzaine Exp $
+# $Id: Makefile,v 1.115 2006-08-08 04:35:23 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -57,7 +57,6 @@ SRC = 1D_Mesh.cpp \
         3D_Mesh_Netgen.cpp \
         3D_Mesh_Tetgen.cpp \
       BDS.cpp \
-      MeshQuality.cpp \
       Create.cpp \
       Generator.cpp \
       DiscreteSurface.cpp \
@@ -352,13 +351,6 @@ BDS.o: BDS.cpp ../Numeric/Numeric.h ../Common/GmshMatrix.h BDS.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   ../Common/Message.h
-# 1 "/Users/geuzaine/.gmsh/Mesh//"
-MeshQuality.o: MeshQuality.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Mesh.h Vertex.h Element.h Simplex.h Face.h Edge.h \
-  ../Geo/ExtrudeParams.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshDefines.h Metric.h Matrix.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 Create.o: Create.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \

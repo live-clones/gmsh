@@ -22,10 +22,6 @@
 
 #include "List.h"
 
-#define ELEMENTARY 1
-#define PHYSICAL   2
-#define PARTITION  3
-
 #define INFILE     1
 #define INSTRING   2
 #define STRINGMAX  1024

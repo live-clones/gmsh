@@ -4,20 +4,34 @@ int GModel::numRegion() const
 {
   return regions.size();
 }
+
 int GModel::numFace  () const
 {
   return faces.size();
 }
+
 int GModel::numEdge  () const
 {
   return edges.size();
 }
+
 int GModel::numVertex() const
 {
   return vertices.size();
 }
 
-// JF: how can we do the following in a cleaner way???
+int GModel::meshStatus()
+{
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    if((*it)->mesh_vertices.size()) return 3;
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    if((*it)->mesh_vertices.size()) return 2;
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    if((*it)->mesh_vertices.size()) return 1;
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    if((*it)->mesh_vertices.size()) return 0;
+  return -1;
+}
 
 GRegion * GModel::regionByTag(int n) const
 {
@@ -132,3 +146,4 @@ SBoundingBox3d GModel::recomputeBounds()
   boundingBox = bb;
   return bounds();
 }
+

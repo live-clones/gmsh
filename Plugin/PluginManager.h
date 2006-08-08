@@ -21,8 +21,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <map>
-#include <iosfwd>
-
 #include "Plugin.h"
 
 struct ltstrpg
@@ -35,13 +33,14 @@ struct ltstrpg
 
 class GMSH_PluginManager
 {
+ private:
   GMSH_PluginManager();
   static GMSH_PluginManager *_instance;
   std::map<const char*,GMSH_Plugin*,ltstrpg> allPlugins;
-public :
+
+ public :
   virtual ~GMSH_PluginManager();
   typedef std::map<const char*,GMSH_Plugin*,ltstrpg>::iterator iter;
-
   
   // Registering all default plugins that are in
   // $(GMSHPLUGINSHOME). In fact, we will load all .so files in dir
@@ -56,24 +55,25 @@ public :
   void addPlugin(char *dirName, char *pluginName);
 
   // Uninstall a given plugin
-  void uninstallPlugin (char *pluginName);
+  void uninstallPlugin(char *pluginName);
 
   // Set an option to a value in plugin named pluginName
-  void setPluginOption (char *pluginName, char *option, double value);
-  void setPluginOption (char *pluginName, char *option, char * value);
+  void setPluginOption(char *pluginName, char *option, double value);
+  void setPluginOption(char *pluginName, char *option, char *value);
 
   // Iterator on plugins
   inline iter begin() {return allPlugins.begin();}
   inline iter end() {return allPlugins.end();}
 
   // Find a plugin named pluginName
-  GMSH_Plugin *find            (char *pluginName);
+  GMSH_Plugin *find(char *pluginName);
+
   // Get The ONLY Solver Plugin
   GMSH_Solve_Plugin *findSolverPlugin();
 
   // Perform an action on the plugin. Default action are Run and
   // Save. Other plugins may perform other actions.
-  void action (char *pluginMane , char *action , void *data); 
+  void action(char *pluginMane, char *action, void *data);
 };
 
 #endif

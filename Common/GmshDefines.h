@@ -57,6 +57,10 @@
 #define ENT_SURFACE  3
 #define ENT_VOLUME   4
 
+#define ELEMENTARY 1
+#define PHYSICAL   2
+#define PARTITION  3
+
 #define CONV_VALUE    0.8
 
 #define VIS_GEOM  (1<<0)

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.505 2006-08-07 13:57:13 geuzaine Exp $
+// $Id: GUI.cpp,v 1.506 2006-08-08 04:35:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -65,17 +65,11 @@
 // Don't indent this file
 // *INDENT-OFF*
 
-#include <iostream>
-#include <vector>
-#include "PluginManager.h"
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "Options.h"
-#include "Geo.h"
-#include "CAD.h"
-#include "Mesh.h"
 #include "Draw.h"
 #include "GUI.h"
 #include "Callbacks.h"
@@ -84,6 +78,7 @@
 #include "OpenFile.h"
 #include "CommandLine.h"
 #include "Solvers.h"
+#include "PluginManager.h"
 #include "Shortcut_Window.h"
 
 #define NB_BUTT_SCROLL 25
@@ -3503,11 +3498,11 @@ void GUI::create_statistics_window()
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 16 * BH, IW, BH, "Rho");
 
       Fl_Button *b0 = new Fl_Button(width - BB - 5 * WB, 2 * WB + 14 * BH, BB, BH, "Graph");
-      b0->callback(statistics_histogram_cb, (void *)"gamma");
+      b0->callback(statistics_histogram_cb, (void *)"Gamma");
       Fl_Button *b1 = new Fl_Button(width - BB - 5 * WB, 2 * WB + 15 * BH, BB, BH, "Graph");
-      b1->callback(statistics_histogram_cb, (void *)"eta");
+      b1->callback(statistics_histogram_cb, (void *)"Eta");
       Fl_Button *b2 = new Fl_Button(width - BB - 5 * WB, 2 * WB + 16 * BH, BB, BH, "Graph");
-      b2->callback(statistics_histogram_cb, (void *)"rho");
+      b2->callback(statistics_histogram_cb, (void *)"Rho");
 
       g[1]->end();
     }
@@ -3549,15 +3544,11 @@ void GUI::create_statistics_window()
 
 void GUI::set_statistics()
 {
-
   int num = 0;
   static double s[50];
   static char label[50][256];
 
-  extern Mesh *THEM;
-
-  Mesh_Quality(THEM);
-  GetStatistics(s);
+  GetStatistics(s, quality);
 
   // geom
   sprintf(label[num], "%g", s[0]); stat_value[num]->value(label[num]); num++;

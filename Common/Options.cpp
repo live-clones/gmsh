@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.285 2006-08-07 19:08:11 geuzaine Exp $
+// $Id: Options.cpp,v 1.286 2006-08-08 04:35:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,16 +19,13 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <iostream>
-#include <vector>
-#include "PluginManager.h"
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "Geo.h"
-#include "Mesh.h"
+#include "GmshDefines.h"
 #include "Draw.h"
 #include "Context.h"
 #include "Options.h"
+#include "PluginManager.h"
 
 extern Context_T CTX;
 
@@ -134,6 +131,7 @@ void Init_Options(int num)
   CTX.render_mode = GMSH_RENDER;
   CTX.pixel_equiv_x = CTX.pixel_equiv_y = 0.;
   CTX.polygon_offset = 0;
+  CTX.mesh_timer[0] = CTX.mesh_timer[1] = CTX.mesh_timer[2] = 0.;
   CTX.geom.vis_type = 0;
   CTX.geom.level = ELEMENTARY;
   CTX.mesh.vis_type = 0;
@@ -4551,13 +4549,6 @@ double opt_mesh_msh_file_version(OPT_ARGS_NUM)
   return CTX.mesh.msh_file_version;
 }
 
-double opt_mesh_renumber_nodes_continuous(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.renumber_nodes_continuous = (int)val;
-  return CTX.mesh.renumber_nodes_continuous;
-}
-
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -4868,7 +4859,7 @@ double opt_mesh_nb_nodes(OPT_ARGS_NUM)
 {
   double s[50];
   GetStatistics(s);
-  return s[6] ? s[6] : (s[5] ? s[5] : s[4]);
+  return s[4] + s[5] + s[6];
 }
 
 double opt_mesh_nb_triangles(OPT_ARGS_NUM)

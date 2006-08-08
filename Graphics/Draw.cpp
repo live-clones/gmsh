@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.99 2006-08-07 22:02:29 geuzaine Exp $
+// $Id: Draw.cpp,v 1.100 2006-08-08 04:35:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -35,8 +35,11 @@ extern GModel *GMODEL;
 
 int NeedPolygonOffset()
 {
-  // FIXME: this should be improved!
-  if(CTX.geom.lines || CTX.mesh.surfaces_edges || CTX.mesh.volumes_edges)
+  if(GMODEL->meshStatus() == 2 &&
+     (CTX.mesh.surfaces_edges || CTX.geom.lines || CTX.geom.surfaces))
+    return 1;
+  if(GMODEL->meshStatus() == 3 && 
+     (CTX.mesh.surfaces_edges || CTX.mesh.volumes_edges))
     return 1;
   for(int i = 0; i < List_Nbr(CTX.post.list); i++){
     Post_View *v = *(Post_View**)List_Pointer(CTX.post.list, i);

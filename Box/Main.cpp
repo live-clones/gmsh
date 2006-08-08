@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.61 2006-08-05 10:05:44 geuzaine Exp $
+// $Id: Main.cpp,v 1.62 2006-08-08 04:35:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,8 +20,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <signal.h>
-#include "ParUtil.h"
-#include "PluginManager.h"
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Geo.h"
@@ -33,6 +31,8 @@
 #include "OpenFile.h"
 #include "CommandLine.h"
 #include "CreateFile.h"
+#include "ParUtil.h"
+#include "PluginManager.h"
 #include "GModel.h"
 
 Context_T CTX;
@@ -121,19 +121,12 @@ int GMSHBOX(int argc, char *argv[])
     }
     else
       CreateOutputFile(CTX.output_filename, FORMAT_GEO);
-    if(CTX.mesh.histogram){
-      Mesh_Quality(THEM);
-      Print_Histogram(THEM->Histogram[0]);
-    }
     ParUtil::Instance()->Barrier(__LINE__, __FILE__);
-    //    ParUtil::Instance()->Exit();
     return 1;
   }
   ParUtil::Instance()->Barrier(__LINE__, __FILE__);
-  //  ParUtil::Instance()->Exit();
   return 1;
 }
-
 
 // Handle signals. We should not use Msg functions in these...
 
@@ -251,21 +244,20 @@ double GetValue(char *text, double defaultval)
   else
     return atof(str);
 }
+
 bool GetBinaryAnswer(const char *question, const char *yes, const char *no, 
 		     bool defaultval)
 {
-  if(CTX.nopopup || CTX.batch )
+  if(CTX.nopopup || CTX.batch)
     return defaultval;
 
   char answ[256];
 
-  while(1)
-    {
-      printf("%s (%s/%s)",question,yes,no);
-      
-      scanf("%s ",answ);
-      if (!strcmp(answ,yes))return true;
-      if (!strcmp(answ,no))return false;
-    }
+  while(1){
+    printf("%s (%s/%s)",question,yes,no);
+    scanf("%s ",answ);
+    if (!strcmp(answ,yes))return true;
+    if (!strcmp(answ,no))return false;
+  }
 }
 

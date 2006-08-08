@@ -130,6 +130,7 @@ public :
 
   double model[16], proj[16]; // the modelview and projection matrix as they were
                               // at the time of the last InitPosition() call
+  double mesh_timer[3]; // records cpu times for 1-D, 2-D and 3-D mesh generation
 
   int forced_bbox; // dynamic variable tracking if the bbox is currently imposed
 
@@ -169,7 +170,7 @@ public :
     int quality_type, label_type;
     double quality_inf, quality_sup, radius_inf, radius_sup;
     double scaling_factor, lc_factor, rand_factor;
-    int dual, interactive, renumber_nodes_continuous;
+    int dual, interactive;
     int light, light_two_side, light_lines;
     int format, nbPartitions, nb_smoothing, algo2d, algo3d, order, algo_recombine;
     int point_insertion, speed_max, min_circ_points;

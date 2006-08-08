@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.94 2006-08-07 13:57:14 geuzaine Exp $
+// $Id: Main.cpp,v 1.95 2006-08-08 04:35:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,13 +19,10 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <iostream>
-#include <vector>
 #include <signal.h>
 #include <time.h>
 
 #include "GUI.h"
-#include "PluginManager.h"
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Geo.h"
@@ -40,6 +37,7 @@
 #include "CommandLine.h"
 #include "Numeric.h"
 #include "Solvers.h"
+#include "PluginManager.h"
 #include "GModel.h"
 
 Context_T CTX;
@@ -140,10 +138,6 @@ int main(int argc, char *argv[])
       }
       else
         CreateOutputFile(CTX.output_filename, FORMAT_GEO);
-      if(CTX.mesh.histogram) {
-        Mesh_Quality(THEM);
-        Print_Histogram(THEM->Histogram[0]);
-      }
       exit(0);
     }
   }

@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.88 2006-08-05 13:31:28 geuzaine Exp $
+// $Id: Generator.cpp,v 1.89 2006-08-08 04:35:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -37,95 +37,102 @@ extern Mesh *THEM;
 extern Context_T CTX;
 extern GModel *GMODEL;
 
-static int nbOrder2 = 0;
-
-void countOrder2(void *a, void *b)
+template<class T>
+static void GetQualityMeasure(std::vector<T*>& ele, 
+			      double &gamma, double &gammaMin, double &gammaMax, 
+			      double &eta, double &etaMin, double &etaMax, 
+			      double &rho, double &rhoMin, double &rhoMax,
+			      double quality[3][100])
 {
-  Vertex *v = *(Vertex**)a;
-  if(v->Degree == 2) nbOrder2++;
+  for(unsigned int i = 0; i < ele.size(); i++){
+    double g = ele[i]->gammaShapeMeasure();
+    gamma += g; 
+    gammaMin = std::min(gammaMin, g); 
+    gammaMax = std::max(gammaMax, g);
+    double e = ele[i]->etaShapeMeasure();
+    eta += e; 
+    etaMin = std::min(etaMin, e); 
+    etaMax = std::max(etaMax, e);
+    double r = ele[i]->rhoShapeMeasure();
+    rho += r; 
+    rhoMin = std::min(rhoMin, r); 
+    rhoMax = std::max(rhoMax, r);
+    for(int j = 0; j < 100; j++){
+      if(g > j / 100. && g <= (j + 1) / 100.) quality[0][j]++;
+      if(e > j / 100. && e <= (j + 1) / 100.) quality[1][j]++;
+      if(r > j / 100. && r <= (j + 1) / 100.) quality[2][j]++;
+    }
+  }
 }
 
-void GetStatistics(double stat[50])
+void GetStatistics(double stat[50], double quality[3][100])
 {
-  for(int i = 0; i < 50; i++)
-    stat[i] = 0.;
+  for(int i = 0; i < 50; i++) stat[i] = 0.;
 
-  if(!THEM)
-    return;
+  if(GMODEL){
+    stat[0] = GMODEL->numVertex();
+    stat[1] = GMODEL->numEdge();
+    stat[2] = GMODEL->numFace();
+    stat[3] = GMODEL->numRegion();
 
-  stat[0] = Tree_Nbr(THEM->Points);
-  stat[1] = Tree_Nbr(THEM->Curves);
-  stat[2] = Tree_Nbr(THEM->Surfaces);
-  stat[3] = Tree_Nbr(THEM->Volumes);
-  stat[45] = List_Nbr(THEM->PhysicalGroups);
-  
-  stat[4] = 0.;
-  if(Tree_Nbr(THEM->Curves)) {
-    List_T *curves = Tree2List(THEM->Curves);
-    for(int i = 0; i < List_Nbr(curves); i++){
-      Curve *c;
-      List_Read(curves, i, &c);
-      stat[4] += List_Nbr(c->Vertices);
+    std::map<int, std::vector<GEntity*> > physicals[4];
+    GMODEL->getPhysicalGroups(physicals);
+    stat[45] = physicals[0].size() + physicals[1].size() + 
+      physicals[2].size() + physicals[3].size();
+
+    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); ++it)
+      stat[4] += (*it)->mesh_vertices.size();
+
+    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); ++it){
+      stat[5] += (*it)->mesh_vertices.size();
+      stat[7] += (*it)->triangles.size();
+      stat[8] += (*it)->quadrangles.size();
     }
-    List_Delete(curves);
-  }
 
-  stat[5] = stat[7] = stat[8] = 0.;
-  if(Tree_Nbr(THEM->Surfaces)) {
-    List_T *surfaces = Tree2List(THEM->Surfaces);
-    for(int i = 0; i < List_Nbr(surfaces); i++){
-      Surface *s;
-      List_Read(surfaces, i, &s);
-      stat[5] += Tree_Nbr(s->Vertices);
-      stat[7] += Tree_Nbr(s->Simplexes) + Tree_Nbr(s->SimplexesBase);
-      stat[8] += Tree_Nbr(s->Quadrangles);
+    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); ++it){
+      stat[6] += (*it)->mesh_vertices.size();
+      stat[9] += (*it)->tetrahedra.size();
+      stat[10] += (*it)->hexahedra.size();
+      stat[11] += (*it)->prisms.size();
+      stat[12] += (*it)->pyramids.size();
     }
-    List_Delete(surfaces);
-  }
 
-  stat[6] = stat[9] = stat[10] = stat[11] = stat[12] = 0.;
-  if(Tree_Nbr(THEM->Volumes)) {
-    List_T *volumes = Tree2List(THEM->Volumes);
-    for(int i = 0; i < List_Nbr(volumes); i++){
-      Volume *v;
-      List_Read(volumes, i, &v);
-      stat[6] += Tree_Nbr(v->Vertices);
-      stat[9] += Tree_Nbr(v->Simplexes) + Tree_Nbr(v->SimplexesBase);
-      stat[10] += Tree_Nbr(v->Hexahedra);
-      stat[11] += Tree_Nbr(v->Prisms);
-      stat[12] += Tree_Nbr(v->Pyramids);
+    stat[13] = CTX.mesh_timer[0];
+    stat[14] = CTX.mesh_timer[1];
+    stat[15] = CTX.mesh_timer[2];
+
+    // FIXME:
+    //stat[16] = numOrder2Vertices; 
+
+    if(quality){
+      for(int i = 0; i < 3; i++)
+	for(int j = 0; j < 100; j++)
+	  quality[i][j] = 0.;
+      double gamma=0., gammaMin=1., gammaMax=0.;
+      double eta=0., etaMin=1., etaMax=0.;
+      double rho=0., rhoMin=1., rhoMax=0.;
+      for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); ++it){
+	GetQualityMeasure((*it)->tetrahedra, gamma, gammaMin, gammaMax,
+			  eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
+	GetQualityMeasure((*it)->hexahedra, gamma, gammaMin, gammaMax,
+			  eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
+	GetQualityMeasure((*it)->prisms, gamma, gammaMin, gammaMax,
+			  eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
+	GetQualityMeasure((*it)->pyramids, gamma, gammaMin, gammaMax,
+			  eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
+      }
+      double N = stat[9] + stat[10] + stat[11] + stat[12];
+      stat[17] = N ? gamma / N : 0.;
+      stat[18] = gammaMin;
+      stat[19] = gammaMax;
+      stat[20] = N ? eta / N : 0.;
+      stat[21] = etaMin;
+      stat[22] = etaMax;
+      stat[23] = N ? rho / N : 0;
+      stat[24] = rhoMin;
+      stat[25] = rhoMax;
     }
-    List_Delete(volumes);
   }
-
-  // hack... (Read_Mesh does not fill-in the vertices)
-  int nbnod = Tree_Nbr(THEM->Vertices);
-  if(nbnod && !stat[4] && !stat[5] && !stat[6]){
-    if(stat[9] || stat[10] || stat[11] || stat[12])
-      stat[6] = nbnod;
-    else if(stat[7] || stat[8])
-      stat[5] = nbnod;
-    else
-      stat[4] = nbnod;
-  }
-
-  stat[13] = THEM->timing[0];
-  stat[14] = THEM->timing[1];
-  stat[15] = THEM->timing[2];
-
-  nbOrder2 = 0;
-  Tree_Action(THEM->Vertices, countOrder2);
-  stat[16] = nbOrder2;
-
-  stat[17] = THEM->quality_gamma[0];
-  stat[18] = THEM->quality_gamma[1];
-  stat[19] = THEM->quality_gamma[2];
-  stat[20] = THEM->quality_eta[0];
-  stat[21] = THEM->quality_eta[1];
-  stat[22] = THEM->quality_eta[2];
-  stat[23] = THEM->quality_rho[0];
-  stat[24] = THEM->quality_rho[1];
-  stat[25] = THEM->quality_rho[2];
 
   stat[26] = List_Nbr(CTX.post.list);
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
@@ -272,7 +279,7 @@ void Maillage_Dimension_1()
   std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), meshGEdge());
 
   double t2 = Cpu();
-  THEM->timing[0] = t2 - t1;
+  CTX.mesh_timer[0] = t2 - t1;
 }
 
 void Maillage_Dimension_2()
@@ -317,8 +324,7 @@ void Maillage_Dimension_2()
     Recombine_All(THEM);
 
   double t2 = Cpu();
-
-  THEM->timing[1] = t2 - t1;
+  CTX.mesh_timer[1] = t2 - t1;
 }
 
 static Volume *IVOL;
@@ -374,8 +380,7 @@ void Maillage_Dimension_3()
   List_Delete(list);
 
   double t2 = Cpu();
-
-  THEM->timing[2] = t2 - t1;
+  CTX.mesh_timer[2] = t2 - t1;
 }
 
 void Init_Mesh0()
@@ -476,93 +481,63 @@ void Init_Mesh()
   CTX.mesh.changed = 1;
 }
 
-void mai3d(int Asked)
+void mai3d(int ask)
 {
-  double t1, t2;
-  int oldstatus;
-
   if(CTX.threads_lock) {
     Msg(INFO, "I'm busy! Ask me that later...");
     return;
   }
 
-  oldstatus = THEM->status;
+  int old = GMODEL->meshStatus();
 
   // Re-read data
-
-  if((Asked > oldstatus && Asked >= 0 && oldstatus < 0) ||
-     (Asked < oldstatus)) {
+  if((ask > old && ask >= 0 && old < 0) || (ask < old))
     OpenProblem(CTX.filename);
-    THEM->status = 0;
-  }
 
   CTX.threads_lock = 1;
 
   // Clean up all the 2nd order nodes and transfer all SimplexBase
   // into "real" Simplexes
-
   Degre1();
 
   // 1D mesh
-
-  if((Asked > oldstatus && Asked > 0 && oldstatus < 1) ||
-     (Asked < oldstatus && Asked > 0)) {
+  if((ask > old && ask > 0 && old < 1) || (ask < old && ask > 0)) {
     Msg(STATUS1, "Mesh 1D...");
-    t1 = Cpu();
-
-    if(THEM->status > 1) {
+    if(GMODEL->meshStatus() > 1){
       OpenProblem(CTX.filename);
     }
-
     Maillage_Dimension_1();
-    t2 = Cpu();
-    Msg(STATUS1, "Mesh 1D complete (%g s)", t2 - t1);
-    THEM->status = 1;
+    Msg(STATUS1, "Mesh 1D complete (%g s)", CTX.mesh_timer[0]);
   }
 
   // 2D mesh
-
-  if((Asked > oldstatus && Asked > 1 && oldstatus < 2) ||
-     (Asked < oldstatus && Asked > 1)) {
+  if((ask > old && ask > 1 && old < 2) || (ask < old && ask > 1)) {
     Msg(STATUS1, "Mesh 2D...");
-    t1 = Cpu();
-
-    if(THEM->status == 3) {
+    if(GMODEL->meshStatus() > 2) {
       OpenProblem(CTX.filename);
       Maillage_Dimension_1();
     }
-
     Maillage_Dimension_2();
-    t2 = Cpu();
-    Msg(STATUS1, "Mesh 2D complete (%g s)", t2 - t1);
-    THEM->status = 2;
+    Msg(STATUS1, "Mesh 2D complete (%g s)", CTX.mesh_timer[1]);
   }
 
   // 3D mesh
-
-  if((Asked > oldstatus && Asked > 2 && oldstatus < 3) ||
-     (Asked < oldstatus && Asked > 2)) {
+  if((ask > old && ask > 2 && old < 3) || (ask < old && ask > 2)) {
     Msg(STATUS1, "Mesh 3D...");
-    t1 = Cpu();
     Maillage_Dimension_3();
-    t2 = Cpu();
-    Msg(STATUS1, "Mesh 3D complete (%g s)", t2 - t1);
-    THEM->status = 3;
+    Msg(STATUS1, "Mesh 3D complete (%g s)", CTX.mesh_timer[2]);
   }
 
   // Optimize quality
-
-  if(THEM->status == 3 && CTX.mesh.optimize)
+  if(GMODEL->meshStatus() == 3 && CTX.mesh.optimize)
     Optimize_Netgen();
 
   // Create second order elements
-
-  if(THEM->status && CTX.mesh.order == 2)
-    Degre2(THEM->status);
+  if(GMODEL->meshStatus() && CTX.mesh.order == 2)
+    Degre2(GMODEL->meshStatus());
 
   // Partition
-
-  if(THEM->status > 1 && CTX.mesh.nbPartitions != 1)
+  if(GMODEL->meshStatus() > 1 && CTX.mesh.nbPartitions != 1)
     PartitionMesh(THEM, CTX.mesh.nbPartitions);
 
   CTX.threads_lock = 0;

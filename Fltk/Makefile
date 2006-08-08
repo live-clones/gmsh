@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.94 2006-08-07 19:08:11 geuzaine Exp $
+# $Id: Makefile,v 1.95 2006-08-08 04:35:23 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -74,15 +74,15 @@ Main.o: Main.cpp GUI.h Opengl_Window.h ../Mesh/Mesh.h ../DataStr/List.h \
   ../Common/GmshDefines.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h Colorbar_Window.h \
   ../Common/GmshUI.h ../Common/ColorTable.h Popup_Button.h \
-  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
-  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
-  ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h ../Geo/Geo.h \
-  ../Graphics/CreateFile.h ../Graphics/Draw.h ../Common/Context.h \
-  ../Parser/Parser.h ../Parser/OpenFile.h ../Common/CommandLine.h \
-  Solvers.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
+  ../Graphics/CreateFile.h ../Graphics/Draw.h ../Common/Views.h \
+  ../Common/ColorTable.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h \
+  ../Common/Options.h ../Parser/Parser.h ../Parser/OpenFile.h \
+  ../Common/CommandLine.h Solvers.h ../Plugin/PluginManager.h \
+  ../Plugin/Plugin.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
   ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Geo/MVertex.h ../Geo/MVertex.h ../Geo/GPoint.h \
   ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h \
@@ -105,23 +105,22 @@ Message.o: Message.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h Colorbar_Window.h \
   ../Common/ColorTable.h Popup_Button.h GUI_Extras.h ../Common/OS.h
 # 1 "/Users/geuzaine/.gmsh/Fltk//"
-GUI.o: GUI.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
-  ../Common/Options.h ../Common/Message.h ../Common/Views.h \
-  ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Gmsh.h \
-  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Common/GmshUI.h ../Common/Context.h ../Geo/Geo.h ../Geo/CAD.h \
-  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h \
-  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Geo/ExtrudeParams.h ../Common/GmshDefines.h \
-  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
-  ../Mesh/Matrix.h ../Geo/ExtrudeParams.h ../Graphics/Draw.h GUI.h \
-  Opengl_Window.h Colorbar_Window.h Popup_Button.h Callbacks.h Bitmaps.h \
-  Win32Icon.h ../Parser/OpenFile.h ../Common/CommandLine.h Solvers.h \
-  Shortcut_Window.h
+GUI.o: GUI.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../Common/GmshUI.h \
+  ../Numeric/Numeric.h ../Common/Context.h ../Common/Options.h \
+  ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h \
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
+  GUI.h Opengl_Window.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
+  ../Common/GmshDefines.h ../Mesh/Metric.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h Colorbar_Window.h \
+  Popup_Button.h Callbacks.h Bitmaps.h Win32Icon.h ../Parser/OpenFile.h \
+  ../Common/CommandLine.h Solvers.h ../Plugin/PluginManager.h \
+  ../Plugin/Plugin.h Shortcut_Window.h
 # 1 "/Users/geuzaine/.gmsh/Fltk//"
 GUI_Extras.o: GUI_Extras.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \

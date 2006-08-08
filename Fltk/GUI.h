@@ -215,6 +215,7 @@ public:
   // statistics window
   Fl_Window        *stat_window ;
   Fl_Output        *stat_value[50] ;
+  double           quality[3][100];
 
   // message window
   Fl_Window        *msg_window ;

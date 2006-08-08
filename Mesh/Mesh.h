@@ -362,7 +362,7 @@ void mai3d(int Asked);
 void Init_Mesh0();
 void Init_Mesh();
 
-void GetStatistics(double s[50]);
+void GetStatistics(double s[50], double quality[3][100]=0);
 void GetDefaultMeshFileName(int Type, char *name);
 
 void Maillage_Dimension_1();
@@ -421,8 +421,5 @@ void Degre1();
 void Degre2(int dim);
 void Degre2_Curve(void *a, void *b);
 void Degre2_Surface(void *a, void *b);
-
-void Mesh_Quality(Mesh *M);
-void Print_Histogram(int *h);
 
 #endif

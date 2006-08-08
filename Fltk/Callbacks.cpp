@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.425 2006-08-07 21:04:05 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.426 2006-08-08 04:35:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1258,31 +1258,15 @@ void statistics_update_cb(CALLBACK_ARGS)
 
 void statistics_histogram_cb(CALLBACK_ARGS)
 {
-  char *str = (char*)data;
+  char *name = (char*)data;
   int type;
-  if(!strcmp(str, "gamma"))
+  if(!strcmp(name, "Gamma"))
     type = 0;
-  else if(!strcmp(str, "eta"))
+  else if(!strcmp(name, "Eta"))
     type = 1;
   else
     type = 2;
-
-  Print_Histogram(THEM->Histogram[type]);
-
-  double *x = (double *)Malloc(NB_HISTOGRAM * sizeof(double));
-  double *y = (double *)Malloc(NB_HISTOGRAM * sizeof(double));
-  for(int i = 0; i < NB_HISTOGRAM; i++) {
-    x[i] = (double)(i + 1) / (double)NB_HISTOGRAM;
-    y[i] = (double)THEM->Histogram[type][i];
-  }
-  char *name;
-  if(type == 0)
-    name = "Gamma";
-  else if(type == 1)
-    name = "Eta";
-  else
-    name = "Rho";
-  Create2DGraph(name, "Elements", NB_HISTOGRAM, x, y);
+  Create2DGraph(name, "# Elements", 100, 0, WID->quality[type]);
   Draw();
 }
 

@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.16 2006-07-24 14:05:50 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.17 2006-08-08 04:35:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -525,7 +525,7 @@ int msh_dialog(char *name)
 {
   struct _msh_dialog{
     Fl_Window *window;
-    Fl_Check_Button *b[2];
+    Fl_Check_Button *b;
     Fl_Choice *c;
     Fl_Button *ok, *cancel;
   };
@@ -546,14 +546,10 @@ int msh_dialog(char *name)
     dialog->c = new Fl_Choice(10, y, 130, 25, "Format"); y+= 25;
     dialog->c->menu(versionmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
-    dialog->b[0] = new Fl_Check_Button(10, y, 180, 25, "Save all (ignore physicals)"); y += 25;
-    dialog->b[0]->type(FL_TOGGLE_BUTTON);
-    dialog->b[0]->down_box(GMSH_TOGGLE_BOX);
-    dialog->b[0]->selection_color(GMSH_TOGGLE_COLOR);
-    dialog->b[1] = new Fl_Check_Button(10, y, 180, 25, "Renumber nodes"); y += 25;
-    dialog->b[1]->type(FL_TOGGLE_BUTTON);
-    dialog->b[1]->down_box(GMSH_TOGGLE_BOX);
-    dialog->b[1]->selection_color(GMSH_TOGGLE_COLOR);
+    dialog->b = new Fl_Check_Button(10, y, 180, 25, "Save all (ignore physicals)"); y += 25;
+    dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->b->down_box(GMSH_TOGGLE_BOX);
+    dialog->b->selection_color(GMSH_TOGGLE_COLOR);
     dialog->ok = new Fl_Return_Button(10, y+10, 85, 25, "OK");
     dialog->cancel = new Fl_Button(105, y+10, 85, 25, "Cancel");
     dialog->window->set_modal();
@@ -562,8 +558,7 @@ int msh_dialog(char *name)
   }
   
   dialog->c->value((CTX.mesh.msh_file_version==1.0) ? 0 : 1);
-  dialog->b[0]->value(CTX.mesh.save_all);
-  dialog->b[1]->value(CTX.mesh.renumber_nodes_continuous);
+  dialog->b->value(CTX.mesh.save_all);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -573,8 +568,7 @@ int msh_dialog(char *name)
       if (!o) break;
       if (o == dialog->ok) {
 	opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI, dialog->c->value() + 1);
-	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value());
-	opt_mesh_renumber_nodes_continuous(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value());
+	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value());
 	CreateOutputFile(name, FORMAT_MSH);
 	dialog->window->hide();
 	return 1;

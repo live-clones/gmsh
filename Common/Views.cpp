@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.189 2006-08-08 01:10:04 geuzaine Exp $
+// $Id: Views.cpp,v 1.190 2006-08-08 04:35:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -789,19 +789,23 @@ void Print_ColorTable(int num, int diff, char *prefix, FILE * file)
 Post_View *Create2DGraph(char *xname, char *yname,
                          int nbdata, double *x, double *y)
 {
-  int i;
-  double d = 0.;
-  char filename[1024];
-  Post_View *v;
-
-  v = BeginView(1);
-  for(i = 0; i < nbdata; i++) {
-    List_Add(v->SP, &x[i]);
+  Post_View *v = BeginView(1);
+  for(int i = 0; i < nbdata; i++) {
+    double d;
+    if(x){
+      List_Add(v->SP, &x[i]);
+    }
+    else{
+      d = nbdata > 1 ? (double)i/(double)(nbdata - 1) : 0;
+      List_Add(v->SP, &d);
+    }
+    d = 0.;
     List_Add(v->SP, &d);
     List_Add(v->SP, &d);
     List_Add(v->SP, &y[i]);
     v->NbSP++;
   }
+  char filename[1024];
   sprintf(filename, "%s.pos", yname);
   EndView(v, 1, filename, yname);
   v->Type = DRAW_POST_2D_SPACE;
