@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.89 2006-08-08 04:35:23 geuzaine Exp $
+// $Id: Generator.cpp,v 1.90 2006-08-08 10:37:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,10 +19,10 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "BDS.h"
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Mesh.h"
+#include "BDS.h"
 #include "Create.h"
 #include "Context.h"
 #include "OpenFile.h"
@@ -186,13 +186,6 @@ void GetStatistics(double stat[50], double quality[3][100])
 
 }
 
-static double SumOfAllLc = 0.;
-void GetSumOfAllLc(void *a, void *b)
-{
-  Vertex *v = *(Vertex **) a;
-  SumOfAllLc += v->lc;
-}
-
 void ApplyLcFactor_Point(void *a, void *b)
 {
   Vertex *v = *(Vertex **) a;
@@ -252,15 +245,16 @@ void Move_SimplexBaseToSimplex(int dimension)
 }
 
 bool TooManyElements(int dim){
-  if(CTX.expert_mode || !Tree_Nbr(THEM->Points)) return false;
+  if(CTX.expert_mode || !GMODEL->numVertex()) return false;
 
   // try to detect obvious mistakes in characteristic lenghts (one of
   // the most common cause for erroneous bug reports on the mailing
   // list)
-  SumOfAllLc = 0.;
-  Tree_Action(THEM->Points, GetSumOfAllLc);
-  SumOfAllLc /= (double)Tree_Nbr(THEM->Points);
-  if(pow(CTX.lc / SumOfAllLc, dim) < 1.e7) return false;
+  double sumAllLc = 0.;
+  for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); ++it)
+    sumAllLc += (*it)->prescribedMeshSizeAtVertex();
+  sumAllLc /= (double)GMODEL->numVertex();
+  if(pow(CTX.lc / sumAllLc, dim) < 1.e7) return false;
   return !GetBinaryAnswer("Your choice of characteristic lengths will likely produce\n"
 			  "a very large mesh. Do you really want to continue?\n\n"
 			  "(To disable this warning in the future, select `Enable\n"
@@ -316,7 +310,7 @@ void Maillage_Dimension_2()
 
   //  Tree_Action(THEM->Surfaces, Maillage_Surface);
 
-  std::for_each (GMODEL->firstFace(),GMODEL->lastFace(), meshGFace() );
+  std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), meshGFace());
 
   // global "all-quad" recombine
 
