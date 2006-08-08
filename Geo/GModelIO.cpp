@@ -487,13 +487,13 @@ int GModel::writePOS(const std::string &name, double scalingFactor)
 	    "\"Gamma\", \"Eta\", \"Rho\"};\n", (1<<16)|(4<<8));
     for(riter it = firstRegion(); it != lastRegion(); ++it) {
       for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
-	(*it)->tetrahedra[i]->writePOS(fp, scalingFactor);
+	(*it)->tetrahedra[i]->writePOS(fp, scalingFactor, (*it)->tag());
       for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
-	(*it)->hexahedra[i]->writePOS(fp, scalingFactor);
+	(*it)->hexahedra[i]->writePOS(fp, scalingFactor, (*it)->tag());
       for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
-	(*it)->prisms[i]->writePOS(fp, scalingFactor);
+	(*it)->prisms[i]->writePOS(fp, scalingFactor, (*it)->tag());
       for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
-	(*it)->pyramids[i]->writePOS(fp, scalingFactor);
+	(*it)->pyramids[i]->writePOS(fp, scalingFactor, (*it)->tag());
     }
     fprintf(fp, "};\n");
   }
@@ -504,9 +504,9 @@ int GModel::writePOS(const std::string &name, double scalingFactor)
 	    "\"Gamma\", \"Eta\", \"Rho\"};\n", (1<<16)|(4<<8));
     for(fiter it = firstFace(); it != lastFace(); ++it) {
       for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-	(*it)->triangles[i]->writePOS(fp, scalingFactor);
+	(*it)->triangles[i]->writePOS(fp, scalingFactor, (*it)->tag());
       for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-	(*it)->quadrangles[i]->writePOS(fp, scalingFactor);
+	(*it)->quadrangles[i]->writePOS(fp, scalingFactor, (*it)->tag());
     }
     fprintf(fp, "};\n");
   }
@@ -517,7 +517,7 @@ int GModel::writePOS(const std::string &name, double scalingFactor)
 	    "\"Gamma\", \"Eta\", \"Rho\"};\n", (1<<16)|(4<<8));
     for(eiter it = firstEdge(); it != lastEdge(); ++it) {
       for(unsigned int i = 0; i < (*it)->lines.size(); i++)
- 	(*it)->lines[i]->writePOS(fp, scalingFactor);
+ 	(*it)->lines[i]->writePOS(fp, scalingFactor, (*it)->tag());
     }
     fprintf(fp, "};\n");
   }

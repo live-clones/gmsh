@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.103 2006-08-07 21:04:05 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.104 2006-08-08 01:10:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -149,7 +149,7 @@ void SetBoundingBox(void)
   if(bb.empty() && GMODEL)
     bb = GMODEL->recomputeBounds();
   
-  if(List_Nbr(CTX.post.list)) {
+  if(bb.empty() && List_Nbr(CTX.post.list)) {
     for(int i = 0; i < List_Nbr(CTX.post.list); i++){
       Post_View *v = *(Post_View **)List_Pointer(CTX.post.list, i);
       bb += SPoint3(v->BBox[0], v->BBox[2], v->BBox[4]);

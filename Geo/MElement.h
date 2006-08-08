@@ -94,13 +94,15 @@ class MElement
 
   // compute and change the orientation of 3D elements to get
   // positive volume
+  virtual double getVolume(){ return 0.; }
   virtual int getVolumeSign(){ return 1; }
   virtual void setVolumePositive(){}
 
   // IO routines
   virtual void writeMSH(FILE *fp, double version=1.0, int num=0, 
 			int elementary=1, int physical=1);
-  virtual void writePOS(FILE *fp, double scalingFactor=1.0);
+  virtual void writePOS(FILE *fp, double scalingFactor=1.0,
+			int elementary=1);
   virtual void writeSTL(FILE *fp, double scalingFactor=1.0);
   virtual void writeVRML(FILE *fp);
   virtual void writeUNV(FILE *fp, int type, int elementary);
@@ -316,7 +318,7 @@ class MTetrahedron : public MElement {
   }
   int getTypeForMSH(){ return TET1; }
   char *getStringForPOS(){ return "SS"; }
-  virtual int getVolumeSign()
+  virtual double getVolume()
   { 
     double mat[3][3];
     mat[0][0] = _v[1]->x() - _v[0]->x();
@@ -328,8 +330,9 @@ class MTetrahedron : public MElement {
     mat[2][0] = _v[1]->z() - _v[0]->z();
     mat[2][1] = _v[2]->z() - _v[0]->z();
     mat[2][2] = _v[3]->z() - _v[0]->z();
-    return sign(det3x3(mat));
+    return det3x3(mat) / 6.;
   }
+  virtual int getVolumeSign(){ return sign(getVolume()); }
   void setVolumePositive()
   {
     if(getVolumeSign() < 0){
@@ -337,6 +340,8 @@ class MTetrahedron : public MElement {
       tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
     }
   }
+  virtual double gammaShapeMeasure();
+  virtual double etaShapeMeasure();
 };
 
 // TODO: for MTetrahedron2

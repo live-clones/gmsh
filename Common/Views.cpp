@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.188 2006-04-18 09:57:32 remacle Exp $
+// $Id: Views.cpp,v 1.189 2006-08-08 01:10:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -346,6 +346,21 @@ void Stat_Text(Post_View * v, List_T *D, List_T *C, int nb)
       if(c[j] == '\0') nbtime++;
     if(nbtime > v->NbTimeStep) 
       v->NbTimeStep = nbtime;
+  }
+
+  if(nb == 5){
+    for(int i = 0; i < List_Nbr(D); i += nb){
+      double x, y, z;
+      List_Read(D, i, &x);
+      List_Read(D, i+1, &y);
+      List_Read(D, i+2, &z);
+      if(x < v->BBox[0]) v->BBox[0] = x;
+      if(x > v->BBox[1]) v->BBox[1] = x;
+      if(y < v->BBox[2]) v->BBox[2] = y;
+      if(y > v->BBox[3]) v->BBox[3] = y;
+      if(z < v->BBox[4]) v->BBox[4] = z;
+      if(z > v->BBox[5]) v->BBox[5] = z;
+    }
   }
 }
 

@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.25 2006-01-17 17:09:05 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.26 2006-08-08 01:10:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -281,6 +281,22 @@ double angle_02pi(double A3)
       A3 += DP;
   }
   return A3;
+}
+
+double triangle_area(double p0[3], double p1[3], double p2[3])
+{
+  double a[3], b[3], c[3];
+  
+  a[0] = p2[0] - p1[0];
+  a[1] = p2[1] - p1[1];
+  a[2] = p2[2] - p1[2];
+  
+  b[0] = p0[0] - p1[0];
+  b[1] = p0[1] - p1[1];
+  b[2] = p0[2] - p1[2];
+  
+  prodve(a, b, c);
+  return (0.5 * sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]));
 }
 
 double InterpolateIso(double *X, double *Y, double *Z,

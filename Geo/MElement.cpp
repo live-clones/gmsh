@@ -45,6 +45,33 @@ double MElement::rhoShapeMeasure()
     return 0.;
 }
 
+double MTetrahedron::gammaShapeMeasure()
+{
+  double p0[3] = { _v[0]->x(), _v[0]->y(), _v[0]->z() };
+  double p1[3] = { _v[1]->x(), _v[1]->y(), _v[1]->z() };
+  double p2[3] = { _v[2]->x(), _v[2]->y(), _v[2]->z() };
+  double p3[3] = { _v[3]->x(), _v[3]->y(), _v[3]->z() };
+  double s1 = fabs(triangle_area(p0, p1, p2));
+  double s2 = fabs(triangle_area(p0, p2, p3));
+  double s3 = fabs(triangle_area(p0, p1, p3));
+  double s4 = fabs(triangle_area(p1, p2, p3));
+  double rhoin = 3. * fabs(getVolume()) / (s1 + s2 + s3 + s4);
+  return 12. * rhoin / (sqrt(6.) * maxEdge());
+}
+
+double MTetrahedron::etaShapeMeasure()
+{
+  double lij2 = 0.;
+  for(int i = 0; i <= 3; i++) {
+    for(int j = i + 1; j <= 3; j++) {
+      double lij = dist(_v[i], _v[j]);
+      lij2 += lij * lij;
+    }
+  }
+  double v = fabs(getVolume());
+  return 12. * pow(0.9 * v * v, 1./3.) / lij2;
+}
+
 void MElement::cog(double &x, double &y, double &z)
 {
   x = y = z = 0.;
@@ -98,7 +125,7 @@ void MElement::writeMSH(FILE *fp, double version, int num, int elementary,
   fprintf(fp, "\n");
 }
 
-void MElement::writePOS(FILE *fp, double scalingFactor)
+void MElement::writePOS(FILE *fp, double scalingFactor, int elementary)
 {
   int n = getNumVertices();
   double gamma = gammaShapeMeasure();
@@ -113,7 +140,7 @@ void MElement::writePOS(FILE *fp, double scalingFactor)
   }
   fprintf(fp, "){");
   for(int i = 0; i < n; i++)
-    fprintf(fp, "%d,", getVertex(i)->onWhat()->tag());
+    fprintf(fp, "%d,", elementary);
   for(int i = 0; i < n; i++)
     fprintf(fp, "%d,", getNum());
   for(int i = 0; i < n; i++)
