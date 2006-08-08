@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.17 2006-08-08 04:35:23 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.18 2006-08-08 04:42:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -539,7 +539,7 @@ int msh_dialog(char *name)
 
   if(!dialog){
     dialog = new _msh_dialog;
-    int h = 3*10 + 25 + 3*25, y = 0;
+    int h = 3*10 + 25 + 2*25, y = 0;
     // not a "Dialog_Window" since it is modal 
     dialog->window = new Fl_Double_Window(200, h, "MSH Options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
