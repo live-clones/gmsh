@@ -1,25 +1,5 @@
 #include "GModel.h"
 
-int GModel::numRegion() const
-{
-  return regions.size();
-}
-
-int GModel::numFace  () const
-{
-  return faces.size();
-}
-
-int GModel::numEdge  () const
-{
-  return edges.size();
-}
-
-int GModel::numVertex() const
-{
-  return vertices.size();
-}
-
 int GModel::meshStatus()
 {
   for(riter it = firstRegion(); it != lastRegion(); ++it)
@@ -35,40 +15,40 @@ int GModel::meshStatus()
 
 GRegion * GModel::regionByTag(int n) const
 {
-  dummyEntity tmp((GModel*)this, n);
+  GEntity tmp((GModel*)this, n);
   riter it = regions.find((GRegion*)&tmp);
   if(it != regions.end())
-    return (GRegion *) (*it);
+    return *it;
   else
     return 0;
 }
 
 GFace * GModel::faceByTag(int n) const
 {
-  dummyEntity tmp((GModel*)this, n);
+  GEntity tmp((GModel*)this, n);
   fiter it = faces.find((GFace*)&tmp);
   if(it != faces.end())
-    return (GFace *) (*it);
+    return *it;
   else
     return 0;
 }
 
 GEdge * GModel::edgeByTag(int n) const
 {
-  dummyEntity tmp((GModel*)this, n);
+  GEntity tmp((GModel*)this, n);
   eiter it = edges.find((GEdge*)&tmp);
   if(it != edges.end())
-    return (GEdge *) (*it);
+    return *it;
   else
     return 0;
 }
 
 GVertex * GModel::vertexByTag(int n) const
 {
-  dummyEntity tmp((GModel*)this, n);
+  GEntity tmp((GModel*)this, n);
   viter it = vertices.find((GVertex*)&tmp);
   if(it != vertices.end())
-    return (GVertex *) (*it);
+    return *it;
   else
     return 0;
 }
@@ -93,20 +73,15 @@ int GModel::renumberMeshVertices()
 
 bool GModel::noPhysicals()
 {
-  bool somePhysicals = false;
   for(viter it = firstVertex(); it != lastVertex(); ++it)
-    if((*it)->physicals.size()){ somePhysicals = true; break; }
-  if(!somePhysicals)
-    for(eiter it = firstEdge(); it != lastEdge(); ++it)
-      if((*it)->physicals.size()){ somePhysicals = true; break; }
-  if(!somePhysicals)
-    for(fiter it = firstFace(); it != lastFace(); ++it)
-      if((*it)->physicals.size()){ somePhysicals = true; break; }
-  if(!somePhysicals)
-    for(riter it = firstRegion(); it != lastRegion(); ++it)
-      if((*it)->physicals.size()){ somePhysicals = true; break; }
-
-  return !somePhysicals;
+    if((*it)->physicals.size()) return false;
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    if((*it)->physicals.size()) return false;
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    if((*it)->physicals.size()) return false;
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    if((*it)->physicals.size()) return false;
+  return true;
 }
 
 static void addInGroup(GEntity* ge, std::map<int, std::vector<GEntity*> > &group)
@@ -146,4 +121,3 @@ SBoundingBox3d GModel::recomputeBounds()
   boundingBox = bb;
   return bounds();
 }
-

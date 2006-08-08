@@ -16,20 +16,20 @@ class GModel
 {
  protected:
   std::string modelName;
-  std::set<GRegion*, EntityLessThan> regions;
-  std::set<GFace*, EntityLessThan> faces;
-  std::set<GEdge*, EntityLessThan> edges;
-  std::set<GVertex*, EntityLessThan> vertices;
+  std::set<GRegion*, GEntityLessThan> regions;
+  std::set<GFace*, GEntityLessThan> faces;
+  std::set<GEdge*, GEntityLessThan> edges;
+  std::set<GVertex*, GEntityLessThan> vertices;
   SBoundingBox3d boundingBox;
 
  public:
   GModel(const std::string &name) : modelName(name) {}
   virtual ~GModel() {}
 
-  typedef std::set<GRegion*, EntityLessThan>::iterator riter;
-  typedef std::set<GFace*, EntityLessThan>::iterator fiter;
-  typedef std::set<GEdge*, EntityLessThan>::iterator eiter;
-  typedef std::set<GVertex*, EntityLessThan>::iterator viter;
+  typedef std::set<GRegion*, GEntityLessThan>::iterator riter;
+  typedef std::set<GFace*, GEntityLessThan>::iterator fiter;
+  typedef std::set<GEdge*, GEntityLessThan>::iterator eiter;
+  typedef std::set<GVertex*, GEntityLessThan>::iterator viter;
 
   // Returns the geometric tolerance for the entire model.
   virtual double tolerance() const { return 1.e-14; }
@@ -38,10 +38,10 @@ class GModel
   virtual int meshStatus();
 
   // Get the number of regions in this model.
-  int numRegion() const;
-  int numFace() const;
-  int numEdge() const;
-  int numVertex() const;
+  int numRegion() const { return regions.size(); }
+  int numFace() const { return faces.size(); }
+  int numEdge() const { return edges.size(); }
+  int numVertex() const  { return vertices.size(); }
 
   // Get an iterator initialized to the first entity in this model.
   riter firstRegion() { return regions.begin(); }

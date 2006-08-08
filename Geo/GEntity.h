@@ -83,7 +83,7 @@ class GEntity {
   virtual ~GEntity() {};
 
   // Spatial dimension of the entity 
-  virtual int dim() const = 0;
+  virtual int dim() const {throw;}
 
   // Returns true if ent is in the closure of this entity
   virtual int inClosure(GEntity *ent) const {throw;} 
@@ -101,7 +101,7 @@ class GEntity {
   virtual std::list<GVertex*> vertices() const{throw;}
 
   /// Underlying geometric representation of this entity.
-  virtual GeomType geomType() const = 0;
+  virtual GeomType geomType() const {throw;}
 
   // True if parametric space is continuous in the "dim" direction.
   virtual bool continuous(int dim) const {return true;}
@@ -122,7 +122,7 @@ class GEntity {
   virtual int containsPoint(const SPoint3 &pt) const{throw;}
 
   // Get the native pointer of the particular representation
-  virtual void * getNativePtr() const= 0;
+  virtual void * getNativePtr() const {throw;}
 
   // The model owning this entity.
   GModel *model() const {return _model;}
@@ -178,16 +178,7 @@ class GEntity {
   virtual std::string getAdditionalInfoString() { return std::string(""); }
 };
 
-// A minimal, non-abstract entity that can be used for sorting
-class dummyEntity : public GEntity {
-public:
-  dummyEntity(GModel *model, int tag) : GEntity(model, tag){}
-  virtual int dim() const {return -1;}
-  virtual GeomType geomType() const {return Unknown;}
-  virtual void * getNativePtr() const {return 0;}
-};
-
-class EntityLessThan {
+class GEntityLessThan {
  public:
   bool operator()(const GEntity *ent1, const GEntity *ent2) const
   {
