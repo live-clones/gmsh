@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.62 2006-08-08 04:35:21 geuzaine Exp $
+// $Id: Main.cpp,v 1.63 2006-08-10 15:55:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -119,7 +119,7 @@ int GMSHBOX(int argc, char *argv[])
       mai3d(THEM, CTX.batch);
       CreateOutputFile(CTX.output_filename, CTX.mesh.format);
     }
-    else
+    else if(CTX.batch == -1)
       CreateOutputFile(CTX.output_filename, FORMAT_GEO);
     ParUtil::Instance()->Barrier(__LINE__, __FILE__);
     return 1;

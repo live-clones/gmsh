@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.73 2006-08-07 13:57:13 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.74 2006-08-10 15:55:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -75,12 +75,12 @@ void Print_Usage(char *name){
   // the man page (doc/gmsh.1)
   Msg(DIRECT, "Usage: %s [options] [files]", name);
   Msg(DIRECT, "Geometry options:");
-  Msg(DIRECT, "  -0                    Parse input files, output unrolled geometry, and exit");
+  Msg(DIRECT, "  -0                    Output unrolled geometry, then exit");
   Msg(DIRECT, "Mesh options:");
-  Msg(DIRECT, "  -1, -2, -3            Perform batch 1D, 2D and 3D mesh generation");
+  Msg(DIRECT, "  -1, -2, -3            Perform 1D, 2D or 3D mesh generation, then exit");
   Msg(DIRECT, "  -saveall              Save all elements (discard physical group definitions)");
   Msg(DIRECT, "  -o file               Specify mesh output file name");
-  Msg(DIRECT, "  -format string        Set output mesh format (msh, unv, gref, stl, p3d)");
+  Msg(DIRECT, "  -format string        Set output mesh format (msh, unv, mesh, stl, vrml)");
   Msg(DIRECT, "  -algo string          Select mesh algorithm (iso, tri, aniso, netgen, tetgen)");
   Msg(DIRECT, "  -smooth int           Set number of mesh smoothing steps");
   Msg(DIRECT, "  -optimize             Optimize quality of tetrahedral elements");
@@ -92,7 +92,6 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -rand float           Set random perturbation factor");
   Msg(DIRECT, "  -bgm file             Load background mesh from file");
   Msg(DIRECT, "  -constrain            Constrain background mesh with characteristic lengths");
-  Msg(DIRECT, "  -histogram            Print mesh quality histogram");
   Msg(DIRECT, "  -extrude              Use old extrusion mesh generator");
   Msg(DIRECT, "  -recombine            Recombine meshes from old extrusion mesh generator");
 #if defined(HAVE_FLTK)
@@ -108,6 +107,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -display string       Specify display");
 #endif
   Msg(DIRECT, "Other options:");      
+  Msg(DIRECT, "  -                     Parse input files, then exit");
 #if defined(HAVE_FLTK)
   Msg(DIRECT, "  -a, -g, -m, -s, -p    Start in automatic, geometry, mesh, solver or post-processing mode");
 #endif
@@ -117,7 +117,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -nopopup              Don't popup dialog windows in scripts");
   Msg(DIRECT, "  -string \"string\"      Parse option string at startup");
   Msg(DIRECT, "  -option file          Parse option file at startup");
-  Msg(DIRECT, "  -convert file file    Perform batch conversion of views and meshes into latest file formats");
+  Msg(DIRECT, "  -convert file file    Convert views and meshes into latest file formats, then exit");
   Msg(DIRECT, "  -version              Show version number");
   Msg(DIRECT, "  -info                 Show detailed version information");
   Msg(DIRECT, "  -help                 Show this message");
@@ -176,7 +176,27 @@ void Get_Options(int argc, char *argv[])
 
     if(argv[i][0] == '-') {
 
-      if(!strcmp(argv[i] + 1, "pid")) {
+      if(!strcmp(argv[i] + 1, "")) {
+        CTX.batch = -2;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "0")) {
+        CTX.batch = -1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "1")) {
+        CTX.batch = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "2")) {
+        CTX.batch = 2;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "3")) {
+        CTX.batch = 3;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "pid")) {
 	fprintf(stdout, "%d\n", GetProcessId());
 	fflush(stdout);
         i++;
@@ -199,22 +219,6 @@ void Get_Options(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "p")) {
         CTX.initial_context = 4;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "0")) {
-        CTX.batch = -1;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "1")) {
-        CTX.batch = 1;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "2")) {
-        CTX.batch = 2;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "3")) {
-        CTX.batch = 3;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "saveall")) {
@@ -396,25 +400,16 @@ void Get_Options(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "format") || !strcmp(argv[i] + 1, "f")) {
         i++;
         if(argv[i] != NULL) {
-          if(!strcmp(argv[i], "msh") ||
-             !strcmp(argv[i], "MSH") || !strcmp(argv[i], "gmsh")) {
+          if(!strcmp(argv[i], "msh"))
             CTX.mesh.format = FORMAT_MSH;
-          }
-          else if(!strcmp(argv[i], "unv") ||
-                  !strcmp(argv[i], "UNV") || !strcmp(argv[i], "ideas")) {
+          else if(!strcmp(argv[i], "unv"))
             CTX.mesh.format = FORMAT_UNV;
-          }
-          else if(!strcmp(argv[i], "gref") ||
-                  !strcmp(argv[i], "GREF") || !strcmp(argv[i], "Gref")) {
-            CTX.mesh.format = FORMAT_GREF;
-          }
-          else if(!strcmp(argv[i], "stl") || !strcmp(argv[i], "STL")) {
+          else if(!strcmp(argv[i], "mesh"))
+            CTX.mesh.format = FORMAT_MESH;
+	  else if(!strcmp(argv[i], "stl"))
             CTX.mesh.format = FORMAT_STL;
-          }
-          else if(!strcmp(argv[i], "p3d") ||
-                  !strcmp(argv[i], "P3D") || !strcmp(argv[i], "Plot3D")) {
-            CTX.mesh.format = FORMAT_P3D;
-          }
+          else if(!strcmp(argv[i], "vrml"))
+            CTX.mesh.format = FORMAT_VRML;
           else {
             fprintf(stderr, ERROR_STR "Unknown mesh format\n");
             exit(1);

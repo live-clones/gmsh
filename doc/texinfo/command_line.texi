@@ -2,7 +2,7 @@
 
 @ftable @code
 @item -0
-Parse input files, output unrolled geometry, and exit
+Output unrolled geometry, then exit
 @end ftable
 
 @sp 1 
@@ -11,15 +11,15 @@ Parse input files, output unrolled geometry, and exit
 
 @ftable @code
 @item -1, -2, -3
-Perform batch 1D, 2D and 3D mesh generation
+Perform 1D, 2D or 3D mesh generation, then exit
 @item -saveall
 Save all elements (discard physical group definitions)
 @item -o file
 Specify mesh output file name
 @item -format string
-Set output mesh format (msh, unv, gref, stl, p3d)
+Set output mesh format (msh, unv, mesh, stl, vrml)
 @item -algo string
-Select mesh algorithm (iso, tri, aniso, netgen)
+Select mesh algorithm (iso, tri, aniso, netgen, tetgen)
 @item -smooth int
 Set number of mesh smoothing steps
 @item -optimize
@@ -38,8 +38,6 @@ Set random perturbation factor
 Load background mesh from file
 @item -constrain
 Constrain background mesh with characteristic lengths
-@item -histogram
-Print mesh quality histogram
 @item -extrude
 Use old extrusion mesh generator
 @item -recombine
@@ -83,6 +81,8 @@ Specify display
 @noindent Other options:
 
 @ftable @code
+@item -
+Parse input files, then exit
 @item -a, -g, -m, -s, -p
 Start in automatic, geometry, mesh, solver or post-processing mode
 @item -pid
@@ -98,7 +98,7 @@ Parse option string at startup
 @item -option file
 Parse option file at startup
 @item -convert file file
-Perform batch conversion of views and meshes into latest file formats
+Convert views and meshes into latest file formats, then exit
 @item -version
 Show version number
 @item -info

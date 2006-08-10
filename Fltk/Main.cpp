@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.95 2006-08-08 04:35:23 geuzaine Exp $
+// $Id: Main.cpp,v 1.96 2006-08-10 15:55:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
         mai3d(CTX.batch);
         CreateOutputFile(CTX.output_filename, CTX.mesh.format);
       }
-      else
+      else if(CTX.batch == -1)
         CreateOutputFile(CTX.output_filename, FORMAT_GEO);
       exit(0);
     }
