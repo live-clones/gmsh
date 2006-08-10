@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.156 2006-08-07 22:02:30 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.157 2006-08-10 15:29:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,10 +25,44 @@
 #include "Draw.h"
 #include "Context.h"
 #include "VertexArray.h"
+#include "OS.h"
 #include "gl2ps.h"
 
 extern GModel *GMODEL;
 extern Context_T CTX;
+
+#include "tc.h"
+
+void renumberFaceVertices(GFace *f, List_T *xyz)
+{
+  std::list<GEdge*> ee = f->edges();
+  std::list<GVertex*> vv = f->vertices();
+
+  int num = 0;
+
+  for(std::list<GVertex*>::const_iterator it = vv.begin(); it != vv.end(); ++it){
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++){
+      MVertex *v = (*it)->mesh_vertices[i]; v->setNum(num++); 
+      float x = v->x(), y = v->y(), z = v->z();
+      List_Add(xyz, &x); List_Add(xyz, &y); List_Add(xyz, &z);
+    }
+  }
+  for(std::list<GEdge*>::const_iterator it = ee.begin(); it != ee.end(); ++it){
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++){
+      MVertex *v = (*it)->mesh_vertices[i]; v->setNum(num++);
+      float x = v->x(), y = v->y(), z = v->z();
+      List_Add(xyz, &x); List_Add(xyz, &y); List_Add(xyz, &z);
+    }
+  }
+  for(unsigned int i = 0; i < f->mesh_vertices.size(); i++){
+    MVertex *v = f->mesh_vertices[i]; v->setNum(num++);
+    float x = v->x(), y = v->y(), z = v->z();
+    List_Add(xyz, &x); List_Add(xyz, &y); List_Add(xyz, &z);
+  }
+}
+
+// define this to draw the vertex array by indexing elements
+//#define ELEM
 
 class drawMeshGFace 
 {
@@ -42,6 +76,116 @@ public :
       glPushName(2);
       glPushName(s->tag());
     }
+
+#if 0
+    static int first = 1;
+    static List_T *xyz;
+    static std::vector<List_T*> idx, idx2;
+
+    if(first){
+      first = 0;
+      printf("stripe surface %d\n", s->tag());
+      xyz = List_Create(s->mesh_vertices.size(), 1000, sizeof(float));
+      renumberFaceVertices(s, xyz);
+
+      /*
+      for(int i = 0; i < List_Nbr(xyz)/3; i+=3){
+	float x, y, z;
+	List_Read(xyz, i, &x);
+	List_Read(xyz, i+1, &y);
+	List_Read(xyz, i+2, &z);
+	printf("xyz = %f %f %f\n", x, y, z);
+      }
+      */
+      ACTCData *tc = actcNew();
+      actcParami(tc, ACTC_OUT_MIN_FAN_VERTS, INT_MAX); // generate only strips
+      //actcParami(tc, ACTC_OUT_MAX_PRIM_VERTS, INT_MAX); // optimum 12?
+      actcParami(tc, ACTC_OUT_MAX_PRIM_VERTS, 100); // optimum 12?
+      actcBeginInput(tc);
+      for(unsigned int i = 0; i < s->triangles.size(); i++){
+	actcAddTriangle(tc, 
+			s->triangles[i]->getVertex(0)->getNum(),
+			s->triangles[i]->getVertex(1)->getNum(),
+			s->triangles[i]->getVertex(2)->getNum());
+      }
+      actcEndInput(tc);
+      actcBeginOutput(tc);
+      int strip, prim;
+      unsigned int v1, v2, v3;
+      strip = 0;
+      while((prim = actcStartNextPrim(tc, &v1, &v2)) != ACTC_DATABASE_EMPTY) {
+	strip++;
+#ifdef ELEM
+	idx.push_back(List_Create(100, 100, sizeof(unsigned int)));
+	List_Add(idx[strip - 1], &v1);
+	List_Add(idx[strip - 1], &v2);
+#else
+	idx2.push_back(List_Create(100, 100, sizeof(float)));
+	List_Add(idx2[strip - 1], List_Pointer_Fast(xyz, 3*v1));
+	List_Add(idx2[strip - 1], List_Pointer_Fast(xyz, 3*v1+1));
+	List_Add(idx2[strip - 1], List_Pointer_Fast(xyz, 3*v1+2));
+	List_Add(idx2[strip - 1], List_Pointer_Fast(xyz, 3*v2));
+	List_Add(idx2[strip - 1], List_Pointer_Fast(xyz, 3*v2+1));
+	List_Add(idx2[strip - 1], List_Pointer_Fast(xyz, 3*v2+2));
+#endif
+	while(actcGetNextVert(tc, &v3) != ACTC_PRIM_COMPLETE){
+#ifdef ELEM
+	  List_Add(idx[strip - 1], &v3);
+#else
+	  List_Add(idx2[strip - 1], List_Pointer_Fast(xyz, 3*v3));
+	  List_Add(idx2[strip - 1], List_Pointer_Fast(xyz, 3*v3+1));
+	  List_Add(idx2[strip - 1], List_Pointer_Fast(xyz, 3*v3+2));
+#endif
+	}
+      }
+      actcEndOutput(tc);
+      actcDelete(tc);
+      printf("stripe end\n");
+
+    }
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+#ifdef ELEM
+    glVertexPointer(3, GL_FLOAT, 0, xyz->array);
+    for(unsigned int i = 0; i < idx.size(); i++){
+      //printf("strip %d\n", i);
+      int n = List_Nbr(idx[i]);
+      glColor4ubv((GLubyte *)&CTX.color.mesh.carousel[i % 20]);
+      glDrawElements(GL_TRIANGLE_STRIP, n, GL_UNSIGNED_INT, idx[i]->array);
+    }
+#else
+    for(unsigned int i = 0; i < idx2.size(); i++){
+      //printf("strip %d\n", i);
+      int n = List_Nbr(idx2[i]);
+      glVertexPointer(3, GL_FLOAT, 0, idx2[i]->array);
+      glColor4ubv((GLubyte *)&CTX.color.mesh.carousel[i % 20]);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, n / 3);
+    }
+#endif
+    glDisableClientState(GL_VERTEX_ARRAY);
+
+
+#endif
+
+    unsigned int col;
+    if(s->drawAttributes.Frozen > 0){
+      col = CTX.color.geom.surface_sel;
+    }
+    else if(CTX.mesh.color_carousel == 1){
+      col = CTX.color.mesh.carousel[abs(s->tag() % 20)];
+    }
+    else if(CTX.mesh.color_carousel == 2){
+      int n = 1;
+      int np = s->physicals.size();
+      if(np) n = s->physicals[np - 1];
+      col = CTX.color.mesh.carousel[abs(n % 20)];
+    }
+    else if(CTX.mesh.color_carousel == 3){
+      // partition
+    }
+    else
+      col = CTX.color.mesh.triangle;
+    glColor4ubv((GLubyte *)&col);
 
     glBegin(GL_TRIANGLES);
     for(unsigned int i = 0; i < s->triangles.size(); i++){
@@ -87,7 +231,7 @@ void Draw_Mesh()
     GMODEL->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
   }
   */
-  
+
   if(CTX.mesh.surfaces_faces || CTX.mesh.surfaces_edges)
     std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), drawMeshGFace());
 

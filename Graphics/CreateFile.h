@@ -21,6 +21,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 int GuessFileFormatFromFileName(char *name);
+void GetDefaultFileName(int format, char *name);
 void CreateOutputFile (char *name, int format);
 
 #endif

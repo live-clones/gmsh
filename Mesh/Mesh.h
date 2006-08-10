@@ -363,7 +363,6 @@ void Init_Mesh0();
 void Init_Mesh();
 
 void GetStatistics(double s[50], double quality[3][100]=0);
-void GetDefaultMeshFileName(int Type, char *name);
 
 void Maillage_Dimension_1();
 void Maillage_Dimension_2();

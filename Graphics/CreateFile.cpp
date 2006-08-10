@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.90 2006-08-07 22:02:29 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.91 2006-08-10 15:29:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -51,13 +51,15 @@ int GuessFileFormatFromFileName(char *name)
   if(len <= 0)
     strcpy(ext, "");
   
-  if(!strcmp(ext, ".geo"))          return FORMAT_GEO;
-  else if(!strcmp(ext, ".opt"))     return FORMAT_OPT;
+  if     (!strcmp(ext, ".geo"))     return FORMAT_GEO;
   else if(!strcmp(ext, ".msh"))     return FORMAT_MSH;
+  else if(!strcmp(ext, ".pos"))     return FORMAT_POS;
+  else if(!strcmp(ext, ".opt"))     return FORMAT_OPT;
   else if(!strcmp(ext, ".unv"))     return FORMAT_UNV;
   else if(!strcmp(ext, ".stl"))     return FORMAT_STL;
   else if(!strcmp(ext, ".mesh"))    return FORMAT_MESH;
-  else if(!strcmp(ext, ".pos"))     return FORMAT_POS;
+  else if(!strcmp(ext, ".wrl"))     return FORMAT_VRML;
+  else if(!strcmp(ext, ".vrml"))    return FORMAT_VRML;
   else if(!strcmp(ext, ".gif"))     return FORMAT_GIF;
   else if(!strcmp(ext, ".jpg"))     return FORMAT_JPEG;
   else if(!strcmp(ext, ".jpeg"))    return FORMAT_JPEG;
@@ -72,8 +74,6 @@ int GuessFileFormatFromFileName(char *name)
   else if(!strcmp(ext, ".svg"))     return FORMAT_SVG;
   else if(!strcmp(ext, ".ppm"))     return FORMAT_PPM;
   else if(!strcmp(ext, ".yuv"))     return FORMAT_YUV;
-  else if(!strcmp(ext, ".wrl"))     return FORMAT_VRML;
-  else if(!strcmp(ext, ".vrml"))    return FORMAT_VRML;
   else                              return -1;
 }
 
@@ -82,11 +82,24 @@ void GetDefaultFileName(int format, char *name)
   char ext[10] = "";
   strcpy(name, CTX.base_filename);
   switch(format){
+  case FORMAT_GEO:  strcpy(ext, ".geo"); break;
   case FORMAT_MSH:  strcpy(ext, ".msh"); break;
-  case FORMAT_VRML: strcpy(ext, ".wrl"); break;
+  case FORMAT_POS:  strcpy(ext, ".pos"); break;
+  case FORMAT_OPT:  strcpy(ext, ".opt"); break;
   case FORMAT_UNV:  strcpy(ext, ".unv"); break;
   case FORMAT_STL:  strcpy(ext, ".stl"); break;
   case FORMAT_MESH: strcpy(ext, ".mesh"); break;
+  case FORMAT_VRML: strcpy(ext, ".wrl"); break;
+  case FORMAT_GIF:  strcpy(ext, ".gif"); break;
+  case FORMAT_JPEG: strcpy(ext, ".jpg"); break;
+  case FORMAT_PNG:  strcpy(ext, ".png"); break;
+  case FORMAT_PS:   strcpy(ext, ".ps"); break;
+  case FORMAT_EPS:  strcpy(ext, ".eps"); break;
+  case FORMAT_PDF:  strcpy(ext, ".pdf"); break;
+  case FORMAT_TEX:  strcpy(ext, ".tex"); break;
+  case FORMAT_SVG:  strcpy(ext, ".svg"); break;
+  case FORMAT_PPM:  strcpy(ext, ".ppm"); break;
+  case FORMAT_YUV:  strcpy(ext, ".yuv"); break;
   default: break;
   }
   strcat(name, ext);

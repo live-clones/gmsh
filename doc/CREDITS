@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.35 2006-06-08 12:32:08 geuzaine Exp $
+$Id: CREDITS,v 1.36 2006-08-10 15:29:26 geuzaine Exp $
 
              Gmsh is copyright (C) 1997-2006
 
@@ -54,6 +54,9 @@ purpose and without fee is hereby granted, provided that the above
 copyright notice appear in all copies and that both that copyright
 notice and this permission notice appear in supporting documentation.
 This software is provided "as is" without express or implied warranty.
+
+This product includes software developed by Brad Grantham and
+Applied Conjecture. (Graphics/tp.*)
 
 The colorbar widget (Fltk/Colorbar_Window.cpp) was inspired by code
 from the Vis5d program for visualizing five dimensional gridded data

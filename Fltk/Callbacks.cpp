@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.426 2006-08-08 04:35:22 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.427 2006-08-10 15:29:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2825,7 +2825,7 @@ void mesh_save_cb(CALLBACK_ARGS)
   if(CTX.output_filename)
     strcpy(name, CTX.output_filename);
   else
-    GetDefaultMeshFileName(CTX.mesh.format, name);
+    GetDefaultFileName(CTX.mesh.format, name);
   if(CTX.confirm_overwrite) {
     if(!StatFile(name))
       if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",

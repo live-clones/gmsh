@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.42 2006-08-06 22:58:49 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.43 2006-08-10 15:29:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -208,8 +208,6 @@ void Mesh_To_BDS(Mesh *M)
 
 }
 
-extern int addMeshPartition(int Num, Mesh *M);
-
 void BDS_To_Mesh_2(Mesh *M)
 {
   Msg(STATUS2, "Moving surface mesh into old structure");
@@ -273,7 +271,6 @@ void BDS_To_Mesh_2(Mesh *M)
         Surface *s = FindSurface(g->classif_tag, M);
         if(s) {
           simp->iEnt = g->classif_tag;
-          simp->iPart = addMeshPartition((*it)->partition, M);
         }
         else
           Msg(GERROR, "Impossible to find surface %d", g->classif_tag);
@@ -300,7 +297,6 @@ void BDS_To_Mesh_2(Mesh *M)
       Volume *v = FindVolume(g->classif_tag, M);
       if(v) {
         simp->iEnt = g->classif_tag;
-        simp->iPart = addMeshPartition((*it)->partition, M);
       }
       else
         Msg(GERROR, "Error in BDS");
