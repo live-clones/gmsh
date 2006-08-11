@@ -1,6 +1,7 @@
+#include <algorithm>
+#include "GModel.h"
 #include "GEdge.h"
 #include "GmshDefines.h"
-#include <algorithm>
 
 void GEdge::addFace(GFace *e)
 { 
@@ -37,3 +38,10 @@ GEdge::~GEdge()
   lines.clear();
 }
 
+void GEdge::recomputeMeshPartitions()
+{
+  for(unsigned int i = 0; i < lines.size(); i++) {
+    int part = lines[i]->getPartition();
+    if(part) model()->getMeshPartitions().insert(part);
+  }
+}

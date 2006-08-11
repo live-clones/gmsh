@@ -1,18 +1,5 @@
 #include "GModel.h"
 
-int GModel::meshStatus()
-{
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
-    if((*it)->mesh_vertices.size()) return 3;
-  for(fiter it = firstFace(); it != lastFace(); ++it)
-    if((*it)->mesh_vertices.size()) return 2;
-  for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    if((*it)->mesh_vertices.size()) return 1;
-  for(viter it = firstVertex(); it != lastVertex(); ++it)
-    if((*it)->mesh_vertices.size()) return 0;
-  return -1;
-}
-
 GRegion * GModel::regionByTag(int n) const
 {
   GEntity tmp((GModel*)this, n);
@@ -71,7 +58,7 @@ int GModel::renumberMeshVertices()
   return numVertices;
 }
 
-bool GModel::noPhysicals()
+bool GModel::noPhysicalGroups()
 {
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     if((*it)->physicals.size()) return false;
@@ -110,14 +97,30 @@ SBoundingBox3d GModel::recomputeBounds()
   SBoundingBox3d bb;
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     bb += (*it)->bounds();
-  /*
-  for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    bb += (*it)->bounds();
-  for(fiter it = firstFace(); it != lastFace(); ++it)
-    bb += (*it)->bounds();
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
-    bb += (*it)->bounds();
-  */
   boundingBox = bb;
-  return bounds();
+  return boundingBox;
+}
+
+int GModel::getMeshStatus()
+{
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    if((*it)->mesh_vertices.size()) return 3;
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    if((*it)->mesh_vertices.size()) return 2;
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    if((*it)->mesh_vertices.size()) return 1;
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    if((*it)->mesh_vertices.size()) return 0;
+  return -1;
+}
+
+std::set<int> &GModel::recomputeMeshPartitions()
+{
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    (*it)->recomputeMeshPartitions();
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    (*it)->recomputeMeshPartitions();
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    (*it)->recomputeMeshPartitions();
+  return meshPartitions;
 }

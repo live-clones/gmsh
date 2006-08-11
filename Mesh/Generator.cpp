@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.90 2006-08-08 10:37:11 geuzaine Exp $
+// $Id: Generator.cpp,v 1.91 2006-08-11 18:48:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -482,7 +482,7 @@ void mai3d(int ask)
     return;
   }
 
-  int old = GMODEL->meshStatus();
+  int old = GMODEL->getMeshStatus();
 
   // Re-read data
   if((ask > old && ask >= 0 && old < 0) || (ask < old))
@@ -497,7 +497,7 @@ void mai3d(int ask)
   // 1D mesh
   if((ask > old && ask > 0 && old < 1) || (ask < old && ask > 0)) {
     Msg(STATUS1, "Mesh 1D...");
-    if(GMODEL->meshStatus() > 1){
+    if(GMODEL->getMeshStatus() > 1){
       OpenProblem(CTX.filename);
     }
     Maillage_Dimension_1();
@@ -507,7 +507,7 @@ void mai3d(int ask)
   // 2D mesh
   if((ask > old && ask > 1 && old < 2) || (ask < old && ask > 1)) {
     Msg(STATUS1, "Mesh 2D...");
-    if(GMODEL->meshStatus() > 2) {
+    if(GMODEL->getMeshStatus() > 2) {
       OpenProblem(CTX.filename);
       Maillage_Dimension_1();
     }
@@ -523,15 +523,15 @@ void mai3d(int ask)
   }
 
   // Optimize quality
-  if(GMODEL->meshStatus() == 3 && CTX.mesh.optimize)
+  if(GMODEL->getMeshStatus() == 3 && CTX.mesh.optimize)
     Optimize_Netgen();
 
   // Create second order elements
-  if(GMODEL->meshStatus() && CTX.mesh.order == 2)
-    Degre2(GMODEL->meshStatus());
+  if(GMODEL->getMeshStatus() && CTX.mesh.order == 2)
+    Degre2(GMODEL->getMeshStatus());
 
   // Partition
-  if(GMODEL->meshStatus() > 1 && CTX.mesh.nbPartitions != 1)
+  if(GMODEL->getMeshStatus() > 1 && CTX.mesh.nbPartitions != 1)
     PartitionMesh(THEM, CTX.mesh.nbPartitions);
 
   CTX.threads_lock = 0;

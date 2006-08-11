@@ -21,6 +21,7 @@ class GModel
   std::set<GEdge*, GEntityLessThan> edges;
   std::set<GVertex*, GEntityLessThan> vertices;
   SBoundingBox3d boundingBox;
+  std::set<int> meshPartitions;
 
  public:
   GModel(const std::string &name) : modelName(name) {}
@@ -33,9 +34,6 @@ class GModel
 
   // Returns the geometric tolerance for the entire model.
   virtual double tolerance() const { return 1.e-14; }
-
-  // Returns the mesh status for the entire model.
-  virtual int meshStatus();
 
   // Get the number of regions in this model.
   int numRegion() const { return regions.size(); }
@@ -73,14 +71,21 @@ class GModel
   int renumberMeshVertices();
 
   // Checks if there are no physical entities in the model
-  bool noPhysicals();
+  bool noPhysicalGroups();
 
   // Returns all physical groups (one map per dimension: 0-D to 3-D)
   void getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]);
 
   // The bounding box
-  virtual SBoundingBox3d bounds() { return boundingBox; }
+  virtual SBoundingBox3d getBounds() { return boundingBox; }
   virtual SBoundingBox3d recomputeBounds();
+
+  // Returns the mesh status for the entire model.
+  virtual int getMeshStatus();
+
+  // The list of partitions
+  virtual std::set<int> &getMeshPartitions() { return meshPartitions; }
+  virtual std::set<int> &recomputeMeshPartitions();
 
   // IO routines
   int readMSH(const std::string &name);

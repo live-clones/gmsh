@@ -1,3 +1,4 @@
+#include "GModel.h"
 #include "GRegion.h"
 #include "GFace.h"
 
@@ -29,4 +30,24 @@ GRegion::~GRegion ()
   for(unsigned int i = 0; i < pyramids.size(); i++) 
     delete pyramids[i];
   pyramids.clear();
+}
+
+void GRegion::recomputeMeshPartitions()
+{
+  for(unsigned int i = 0; i < tetrahedra.size(); i++) {
+    int part = tetrahedra[i]->getPartition();
+    if(part) model()->getMeshPartitions().insert(part);
+  }
+  for(unsigned int i = 0; i < hexahedra.size(); i++) {
+    int part = hexahedra[i]->getPartition();
+    if(part) model()->getMeshPartitions().insert(part);
+  }
+  for(unsigned int i = 0; i < prisms.size(); i++) {
+    int part = prisms[i]->getPartition();
+    if(part) model()->getMeshPartitions().insert(part);
+  }
+  for(unsigned int i = 0; i < pyramids.size(); i++) {
+    int part = pyramids[i]->getPartition();
+    if(part) model()->getMeshPartitions().insert(part);
+  }
 }

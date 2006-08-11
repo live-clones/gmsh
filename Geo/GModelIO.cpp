@@ -214,7 +214,7 @@ int GModel::readMSH(const std::string &name)
 
       int progress = (numElements > 100000) ? numElements / 50 : numElements / 10;
       for(int i = 0; i < numElements; i++) {
-	int num, type, physical = 1, elementary = 1, partition = 1, numVertices;
+	int num, type, physical = 0, elementary = 0, partition = 0, numVertices;
 	if(version <= 1.0){
 	  fscanf(fp, "%d %d %d %d %d", &num, &type, &physical, &elementary, &numVertices);
 	  int check = getNumVerticesForElementTypeMSH(type);
@@ -300,9 +300,13 @@ int GModel::readMSH(const std::string &name)
           break;
         }
 
-	if(!physicals[dim].count(elementary) || !physicals[dim][elementary].count(physical))
-	  physicals[dim][elementary][physical] = "unnamed";
-	
+	if(physical){
+	  if(!physicals[dim].count(elementary) || !physicals[dim][elementary].count(physical))
+	    physicals[dim][elementary][physical] = "unnamed";
+	}
+
+	if(partition) meshPartitions.insert(partition);
+
 	if(progress && (i % progress == progress - 1))
 	  Msg(PROGRESS, "Read %d elements", i + 1);
       }
@@ -381,7 +385,7 @@ int GModel::writeMSH(const std::string &name, double version, bool saveAll,
   }
 
   // if there are no physicals we save all the elements
-  if(noPhysicals()) saveAll = true;
+  if(noPhysicalGroups()) saveAll = true;
 
   // get the number of vertices and renumber the vertices in a
   // continuous sequence

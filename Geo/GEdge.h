@@ -31,7 +31,7 @@ class GEdge : public GEntity {
   virtual double parFromPoint(const SPoint3 &) const = 0;
 
   // Get the point for the given parameter location.
-  virtual GPoint point(double p) const = 0;  
+  virtual GPoint point(double p) const = 0;
 
   // Get the closest point on the edge to the given point.
   virtual GPoint closestPoint(const SPoint3 & queryPoint) =0;
@@ -43,7 +43,10 @@ class GEdge : public GEntity {
   virtual SVector3 firstDer(double par) const = 0;
 
   // reparmaterize the point onto the given face.
-  virtual SPoint2 reparamOnFace(GFace *face, double epar,int dir) const = 0;			  
+  virtual SPoint2 reparamOnFace(GFace *face, double epar,int dir) const = 0;
+
+  // recompute the mesh partitions defined on this edge.
+  void recomputeMeshPartitions();
 
   void addFace(GFace *f);
   void delFace(GFace *f);

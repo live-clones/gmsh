@@ -27,19 +27,18 @@ class GFace : public GEntity
   GRegion *r1, *r2;
 
  public:
-  GFace(GModel *model, int tag) : GEntity(model,tag), r1(0), r2(0) {}
+  GFace(GModel *model, int tag) : GEntity(model, tag), r1(0), r2(0) {}
   virtual ~GFace();
 
-  void addRegion(GRegion *r){ r1?r2=r:r1=r;  }
-  void delRegion(GRegion *r){ if(r1==r)r1=r2;r2=0;  }
+  void addRegion(GRegion *r){ r1 ? r2 = r : r1 = r; }
+  void delRegion(GRegion *r){ if(r1 == r) r1 = r2; r2=0; }
 
-  /// edge orientations.
+  // edge orientations.
   virtual std::list<int> orientations() const{return l_dirs;}
-  /// Edges that bound this entity or that this entity bounds.
+  // Edges that bound this entity or that this entity bounds.
   virtual std::list<GEdge*> edges() const{return l_edges;}
-  /// Edges that bound this entity or that this entity bounds.
+  // Edges that bound this entity or that this entity bounds.
   virtual std::list<GVertex*> vertices() const;
-
 
   virtual int dim() const {return 2;}
 
@@ -73,6 +72,9 @@ class GFace : public GEntity
   // True if the surface underlying the face is periodic and we need
   // to worry about that.
   virtual bool surfPeriodic(int dim) const = 0;
+
+  // recompute the mesh partitions defined on this face.
+  void recomputeMeshPartitions();
 
   std::vector<MTriangle*> triangles;
   std::vector<MQuadrangle*> quadrangles;

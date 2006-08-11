@@ -14,6 +14,10 @@ class GRegion : public GEntity {
   virtual ~GRegion();
   virtual int dim() const {return 3;}
   virtual GeomType geomType() const {return Volume;}
+
+  // recompute the mesh partitions defined on this region.
+  void recomputeMeshPartitions();
+
   std::vector<MTetrahedron*> tetrahedra;
   std::vector<MHexahedron*> hexahedra;
   std::vector<MPrism*> prisms;

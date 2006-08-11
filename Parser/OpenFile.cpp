@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.104 2006-08-08 01:10:05 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.105 2006-08-11 18:48:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -144,7 +144,7 @@ void SetBoundingBox(void)
   SBoundingBox3d bb;
 
   if(GMODEL)
-    bb = GMODEL->bounds();
+    bb = GMODEL->getBounds();
 
   if(bb.empty() && GMODEL)
     bb = GMODEL->recomputeBounds();

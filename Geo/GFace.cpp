@@ -1,3 +1,4 @@
+#include "GModel.h"
 #include "GFace.h"
 #include "GEdge.h"
 
@@ -37,4 +38,16 @@ std::list<GVertex*> GFace::vertices() const
     ++it;
   }
   return ret;
+}
+
+void GFace::recomputeMeshPartitions()
+{
+  for(unsigned int i = 0; i < triangles.size(); i++) {
+    int part = triangles[i]->getPartition();
+    if(part) model()->getMeshPartitions().insert(part);
+  }
+  for(unsigned int i = 0; i < quadrangles.size(); i++) {
+    int part = quadrangles[i]->getPartition();
+    if(part) model()->getMeshPartitions().insert(part);
+  }
 }

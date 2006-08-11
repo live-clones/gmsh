@@ -78,7 +78,13 @@ class MElement
 
   // get a face representation for drawing
   virtual int getNumFacesRep(){ return getNumFaces(); }
-  virtual void getFaceRep(int num, MVertex *v[4]){ getFace(num, v); }
+  virtual void getFaceRep(int num, MVertex *v[4], double n[3]=0)
+  { 
+    getFace(num, v); 
+    if(n) normal3points(v[0]->x(), v[0]->y(), v[0]->y(),
+			v[1]->x(), v[1]->y(), v[1]->y(),
+			v[2]->x(), v[2]->y(), v[2]->y(), n);
+  }
 
   // get the max/min edge length
   virtual double maxEdge();
@@ -221,7 +227,7 @@ class MTriangle2 : public MTriangle {
     v[1] = i1 < 3? _v[i1] : _vs[i1 - 3];
   }
   int getNumFacesRep(){ return 4; }
-  void getFaceRep(int num, MVertex *v[4])
+  void getFaceRep(int num, MVertex *v[4], double n[3]=0)
   { 
     static int trifaces_tri2[4][3] = {
       {0, 3, 5},
@@ -236,6 +242,9 @@ class MTriangle2 : public MTriangle {
     v[1] = i1 < 3? _v[i1] : _vs[i1 - 3];
     v[2] = i2 < 3? _v[i2] : _vs[i2 - 3];
     v[3] = 0;
+    if(n) normal3points(v[0]->x(), v[0]->y(), v[0]->y(),
+			v[1]->x(), v[1]->y(), v[1]->y(),
+			v[2]->x(), v[2]->y(), v[2]->y(), n);
   }
   int getTypeForMSH(){ return TRI2; }
   char *getStringForPOS(){ return "ST2"; }

@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.108 2006-08-04 14:28:02 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.109 2006-08-11 18:48:39 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2006 Christophe Geuzaine <geuz@geuz.org>
@@ -662,7 +662,7 @@ static void gl2psListEncodeBase64(GL2PSlist *list)
     len = 0;
     for(i = 0; i < 3; i++) {
       if(index < n){
-	in[i] = buffer[index];
+        in[i] = buffer[index];
         len++;
       }
       else{
@@ -2663,8 +2663,8 @@ static void gl2psPrintPostScriptHeader(void)
               "%%%%DocumentData: Clean7Bit\n"
               "%%%%Pages: 1\n",
               gl2ps->title, GL2PS_MAJOR_VERSION, GL2PS_MINOR_VERSION, 
-	      GL2PS_PATCH_VERSION, GL2PS_EXTRA_VERSION, GL2PS_COPYRIGHT,
-	      gl2ps->producer, ctime(&now));
+              GL2PS_PATCH_VERSION, GL2PS_EXTRA_VERSION, GL2PS_COPYRIGHT,
+              gl2ps->producer, ctime(&now));
 
   if(gl2ps->format == GL2PS_PS){
     gl2psPrintf("%%%%Orientation: %s\n"
@@ -2741,7 +2741,7 @@ static void gl2psPrintPostScriptHeader(void)
               "/STRR{ gsave FCT moveto rotate SW neg SH neg rmoveto show grestore } BD\n");
 
   gl2psPrintf("/P  { newpath 0.0 360.0 arc closepath fill } BD\n"
-              "/LS { moveto } BD\n"
+              "/LS { newpath moveto } BD\n"
               "/L  { lineto } BD\n"
               "/LE { lineto stroke } BD\n"
               "/T  { newpath moveto lineto lineto closepath fill } BD\n");
@@ -3125,7 +3125,7 @@ static void gl2psPrintPostScriptBeginViewport(GLint viewport[4])
 
   gl2psPrintf("gsave\n"
               "1.0 1.0 scale\n");
-          
+
   if(gl2ps->options & GL2PS_DRAW_BACKGROUND){
     if(gl2ps->colormode == GL_RGBA || gl2ps->colorsize == 0){
       glGetFloatv(GL_COLOR_CLEAR_VALUE, rgba);
@@ -3143,10 +3143,11 @@ static void gl2psPrintPostScriptBeginViewport(GLint viewport[4])
                 rgba[0], rgba[1], rgba[2], 
                 x, y, x+w, y, x+w, y+h, x, y+h);
   }
-  
+    
   gl2psPrintf("newpath %d %d moveto %d %d lineto %d %d lineto %d %d lineto\n"
               "closepath clip\n",
               x, y, x+w, y, x+w, y+h, x, y+h);
+  
 }
 
 static GLint gl2psPrintPostScriptEndViewport(void)
@@ -3217,13 +3218,13 @@ static void gl2psPrintTeXHeader(void)
   time(&now);
 
   fprintf(gl2ps->stream, 
-	  "%% Title: %s\n"
-	  "%% Creator: GL2PS %d.%d.%d%s, %s\n"
-	  "%% For: %s\n"
-	  "%% CreationDate: %s",
-	  gl2ps->title, GL2PS_MAJOR_VERSION, GL2PS_MINOR_VERSION,
-	  GL2PS_PATCH_VERSION, GL2PS_EXTRA_VERSION, GL2PS_COPYRIGHT,
-	  gl2ps->producer, ctime(&now));
+          "%% Title: %s\n"
+          "%% Creator: GL2PS %d.%d.%d%s, %s\n"
+          "%% For: %s\n"
+          "%% CreationDate: %s",
+          gl2ps->title, GL2PS_MAJOR_VERSION, GL2PS_MINOR_VERSION,
+          GL2PS_PATCH_VERSION, GL2PS_EXTRA_VERSION, GL2PS_COPYRIGHT,
+          gl2ps->producer, ctime(&now));
 
   fprintf(gl2ps->stream, 
           "\\setlength{\\unitlength}{1pt}\n"
@@ -5199,13 +5200,13 @@ static void gl2psPrintPGFHeader(void)
   time(&now);
 
   fprintf(gl2ps->stream, 
-	  "%% Title: %s\n"
-	  "%% Creator: GL2PS %d.%d.%d%s, %s\n"
-	  "%% For: %s\n"
-	  "%% CreationDate: %s",
-	  gl2ps->title, GL2PS_MAJOR_VERSION, GL2PS_MINOR_VERSION,
-	  GL2PS_PATCH_VERSION, GL2PS_EXTRA_VERSION, GL2PS_COPYRIGHT,
-	  gl2ps->producer, ctime(&now));
+          "%% Title: %s\n"
+          "%% Creator: GL2PS %d.%d.%d%s, %s\n"
+          "%% For: %s\n"
+          "%% CreationDate: %s",
+          gl2ps->title, GL2PS_MAJOR_VERSION, GL2PS_MINOR_VERSION,
+          GL2PS_PATCH_VERSION, GL2PS_EXTRA_VERSION, GL2PS_COPYRIGHT,
+          gl2ps->producer, ctime(&now));
 
   fprintf(gl2ps->stream, "\\begin{pgfpicture}\n");
   if(gl2ps->options & GL2PS_DRAW_BACKGROUND){

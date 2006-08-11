@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.12 2006-01-06 00:34:21 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.13 2006-08-11 18:48:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -18,6 +18,18 @@
 // USA.
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
+
+/*
+std::vector<int> GModel::getMeshPartitions()
+{
+  std::vector<int> part;
+  std::set<int>::const_iterator it = meshPartitions.begin();
+  std::set<int>::const_iterator ite = meshPartitions.end();
+  for(; it != ite; ++it) part.push_back(*it);
+  std::sort(part.begin(), part.end());
+  return part;
+}
+*/
 
 #include "Gmsh.h"
 #include "Geo.h"
