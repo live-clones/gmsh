@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.87 2006-08-12 17:44:24 geuzaine Exp $
+# $Id: Makefile,v 1.88 2006-08-12 19:34:15 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -160,10 +160,10 @@ GModelIO.o: GModelIO.cpp ../Common/Message.h ../Common/GmshDefines.h \
   MElement.h ../Numeric/Numeric.h GFace.h Pair.h GRegion.h gmshFace.h \
   gmshVertex.h gmshEdge.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
-MVertex.o: MVertex.cpp MVertex.h
+MVertex.o: MVertex.cpp MVertex.h SPoint3.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 MElement.o: MElement.cpp MElement.h ../Common/GmshDefines.h MVertex.h \
-  ../Numeric/Numeric.h GEntity.h Range.h SPoint3.h SBoundingBox3d.h
+  SPoint3.h ../Numeric/Numeric.h GEntity.h Range.h SBoundingBox3d.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 gmshModel.o: gmshModel.cpp gmshModel.h GModel.h GVertex.h GEntity.h \
   Range.h SPoint3.h SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h \

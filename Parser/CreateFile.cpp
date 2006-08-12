@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.92 2006-08-10 15:41:34 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.1 2006-08-12 19:34:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,19 +20,21 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Gmsh.h"
-#include "GmshUI.h"
 #include "OpenFile.h"
 #include "Context.h"
 #include "Options.h"
 #include "Geo.h"
 #include "GModel.h"
 
+#if defined(HAVE_FLTK)
+#include "GmshUI.h"
 #include "gl2ps.h"
 #include "gl2gif.h"
 #include "gl2jpeg.h"
 #include "gl2png.h"
 #include "gl2ppm.h"
 #include "gl2yuv.h"
+#endif
 
 extern Context_T CTX;
 extern GModel *GMODEL;
@@ -117,10 +119,12 @@ void CreateOutputFile(char *filename, int format)
   int oldformat = CTX.print.format;
   CTX.print.format = format;
 
+#if defined(HAVE_FLTK)
   GLint viewport[4];
   for(int i = 0; i < 4; i++) viewport[i] = CTX.viewport[i];
   GLint width = viewport[2] - viewport[0];
   GLint height = viewport[3] - viewport[1];
+#endif
 
   bool printEndMessage = true;
   if(format != FORMAT_AUTO) Msg(STATUS2, "Writing '%s'", name);
@@ -165,6 +169,7 @@ void CreateOutputFile(char *filename, int format)
     GMODEL->writePOS(name);
     break;
 
+#if defined(HAVE_FLTK)
   case FORMAT_PPM:
   case FORMAT_YUV:
   case FORMAT_GIF:  
@@ -332,6 +337,7 @@ void CreateOutputFile(char *filename, int format)
       fclose(fp);
     }
     break;
+#endif
 
   default:
     Msg(GERROR, "Unknown output file format (%d)", format);
@@ -342,5 +348,8 @@ void CreateOutputFile(char *filename, int format)
   if(printEndMessage) Msg(STATUS2, "Wrote '%s'", name);
 
   CTX.print.format = oldformat;
+
+#if defined(HAVE_FLTK)
   Draw();
+#endif
 }

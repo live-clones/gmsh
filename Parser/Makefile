@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.94 2006-08-12 16:44:31 geuzaine Exp $
+# $Id: Makefile,v 1.95 2006-08-12 19:34:16 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -30,6 +30,7 @@ CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 SRC = Gmsh.tab.cpp\
       Gmsh.yy.cpp\
       OpenFile.cpp\
+      CreateFile.cpp\
       FunctionManager.cpp
 
 OBJ = ${SRC:.cpp=.o}
@@ -93,8 +94,7 @@ Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Mesh/Vertex.h ../Mesh/Mesh.h ../Geo/CAD.h ../Geo/ExtrudeParams.h \
   ../Graphics/Draw.h ../Mesh/Create.h ../Mesh/Vertex.h ../Mesh/Mesh.h \
   ../Common/Colors.h ../Common/Options.h Parser.h OpenFile.h \
-  ../Common/CommandLine.h FunctionManager.h ../Common/OS.h \
-  ../Graphics/CreateFile.h
+  ../Common/CommandLine.h FunctionManager.h ../Common/OS.h CreateFile.h
 # 1 "/Users/geuzaine/.gmsh/Parser//"
 Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -112,10 +112,10 @@ OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Geo/gmshModel.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
   ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h ../Geo/MVertex.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/GPoint.h ../Geo/GEdge.h ../Geo/GEntity.h \
-  ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h \
+  ../Geo/SPoint3.h ../Geo/MVertex.h ../Geo/SPoint3.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/GPoint.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h \
   ../Numeric/Numeric.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
   ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h \
@@ -132,5 +132,28 @@ OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Graphics/ReadImg.h ../Common/OS.h ../Common/GmshUI.h \
   ../Graphics/Draw.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
   ../Fltk/Colorbar_Window.h ../Fltk/Popup_Button.h
+# 1 "/Users/geuzaine/.gmsh/Parser//"
+CreateFile.o: CreateFile.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
+  OpenFile.h ../Common/Context.h ../Common/Options.h ../Geo/Geo.h \
+  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
+  ../Geo/MVertex.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
+  ../Geo/MVertex.h ../Geo/GPoint.h ../Geo/GEdge.h ../Geo/GEntity.h \
+  ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h \
+  ../Numeric/Numeric.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
+  ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h \
+  ../Geo/SBoundingBox3d.h ../Common/GmshUI.h ../Graphics/gl2ps.h \
+  ../Graphics/gl2gif.h ../Graphics/PixelBuffer.h ../Graphics/Draw.h \
+  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Graphics/gl2jpeg.h \
+  ../Graphics/PixelBuffer.h ../Graphics/gl2png.h \
+  ../Graphics/PixelBuffer.h ../Graphics/gl2ppm.h \
+  ../Graphics/PixelBuffer.h ../Graphics/gl2yuv.h \
+  ../Graphics/PixelBuffer.h
 # 1 "/Users/geuzaine/.gmsh/Parser//"
 FunctionManager.o: FunctionManager.cpp FunctionManager.h

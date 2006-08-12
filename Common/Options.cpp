@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.287 2006-08-12 16:16:27 geuzaine Exp $
+// $Id: Options.cpp,v 1.288 2006-08-12 19:34:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4841,6 +4841,8 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
 #endif
   return CTX.mesh.color_carousel;
 }
+
+extern void GetStatistics(double s[50], double quality[3][100]=0);
 
 double opt_mesh_nb_nodes(OPT_ARGS_NUM)
 {

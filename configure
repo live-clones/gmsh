@@ -3526,8 +3526,8 @@ fi
 
 else
 
-  GMSH_DIRS="${GMSH_DIRS} Box BoxMain"
-  GMSH_LIBS="-Llib -lGmshBoxMain -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshPlugin"
+  GMSH_DIRS="${GMSH_DIRS} Box"
+  GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshPlugin"
   GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshDataStr -lGmshNumeric -lGmshParallel"
 
 fi

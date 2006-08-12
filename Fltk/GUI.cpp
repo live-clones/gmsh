@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.508 2006-08-12 18:34:49 geuzaine Exp $
+// $Id: GUI.cpp,v 1.509 2006-08-12 19:34:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3541,6 +3541,8 @@ void GUI::create_statistics_window()
   stat_window->position(CTX.stat_position[0], CTX.stat_position[1]);
   stat_window->end();
 }
+
+extern void GetStatistics(double s[50], double quality[3][100]=0);
 
 void GUI::set_statistics()
 {

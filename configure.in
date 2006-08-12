@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.99 2006-07-10 12:16:34 remacle Exp $
+dnl $Id: configure.in,v 1.100 2006-08-12 19:34:14 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 dnl
@@ -275,8 +275,8 @@ if test "x$enable_gui" != "xno"; then
 
 else
 
-  GMSH_DIRS="${GMSH_DIRS} Box BoxMain"
-  GMSH_LIBS="-Llib -lGmshBoxMain -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshPlugin"
+  GMSH_DIRS="${GMSH_DIRS} Box"
+  GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshPlugin"
   GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshDataStr -lGmshNumeric -lGmshParallel"
 
 fi
