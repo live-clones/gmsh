@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.107 2006-08-12 17:44:25 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.108 2006-08-12 18:10:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -208,6 +208,7 @@ int ParseFile(char *f, int close, int warn_if_missing)
     fclose(yyin);
 
   GMODEL->import();
+  GMODEL->recomputeBounds();
 
   strncpy(yyname, yyname_old, 255);
   yyin = yyin_old;
