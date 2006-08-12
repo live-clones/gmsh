@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.92 2006-08-12 16:44:31 geuzaine Exp $
+// $Id: Generator.cpp,v 1.93 2006-08-12 17:44:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -69,69 +69,67 @@ void GetStatistics(double stat[50], double quality[3][100])
 {
   for(int i = 0; i < 50; i++) stat[i] = 0.;
 
-  if(GMODEL){
-    stat[0] = GMODEL->numVertex();
-    stat[1] = GMODEL->numEdge();
-    stat[2] = GMODEL->numFace();
-    stat[3] = GMODEL->numRegion();
-
-    std::map<int, std::vector<GEntity*> > physicals[4];
-    GMODEL->getPhysicalGroups(physicals);
-    stat[45] = physicals[0].size() + physicals[1].size() + 
-      physicals[2].size() + physicals[3].size();
-
-    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); ++it)
-      stat[4] += (*it)->mesh_vertices.size();
-
-    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); ++it){
-      stat[5] += (*it)->mesh_vertices.size();
-      stat[7] += (*it)->triangles.size();
-      stat[8] += (*it)->quadrangles.size();
-    }
-
+  stat[0] = GMODEL->numVertex();
+  stat[1] = GMODEL->numEdge();
+  stat[2] = GMODEL->numFace();
+  stat[3] = GMODEL->numRegion();
+  
+  std::map<int, std::vector<GEntity*> > physicals[4];
+  GMODEL->getPhysicalGroups(physicals);
+  stat[45] = physicals[0].size() + physicals[1].size() + 
+    physicals[2].size() + physicals[3].size();
+  
+  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); ++it)
+    stat[4] += (*it)->mesh_vertices.size();
+  
+  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); ++it){
+    stat[5] += (*it)->mesh_vertices.size();
+    stat[7] += (*it)->triangles.size();
+    stat[8] += (*it)->quadrangles.size();
+  }
+  
+  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); ++it){
+    stat[6] += (*it)->mesh_vertices.size();
+    stat[9] += (*it)->tetrahedra.size();
+    stat[10] += (*it)->hexahedra.size();
+    stat[11] += (*it)->prisms.size();
+    stat[12] += (*it)->pyramids.size();
+  }
+  
+  stat[13] = CTX.mesh_timer[0];
+  stat[14] = CTX.mesh_timer[1];
+  stat[15] = CTX.mesh_timer[2];
+  
+  // FIXME:
+  //stat[16] = numOrder2Vertices; 
+  
+  if(quality){
+    for(int i = 0; i < 3; i++)
+      for(int j = 0; j < 100; j++)
+	quality[i][j] = 0.;
+    double gamma=0., gammaMin=1., gammaMax=0.;
+    double eta=0., etaMin=1., etaMax=0.;
+    double rho=0., rhoMin=1., rhoMax=0.;
     for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); ++it){
-      stat[6] += (*it)->mesh_vertices.size();
-      stat[9] += (*it)->tetrahedra.size();
-      stat[10] += (*it)->hexahedra.size();
-      stat[11] += (*it)->prisms.size();
-      stat[12] += (*it)->pyramids.size();
+      GetQualityMeasure((*it)->tetrahedra, gamma, gammaMin, gammaMax,
+			eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
+      GetQualityMeasure((*it)->hexahedra, gamma, gammaMin, gammaMax,
+			eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
+      GetQualityMeasure((*it)->prisms, gamma, gammaMin, gammaMax,
+			eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
+      GetQualityMeasure((*it)->pyramids, gamma, gammaMin, gammaMax,
+			eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
     }
-
-    stat[13] = CTX.mesh_timer[0];
-    stat[14] = CTX.mesh_timer[1];
-    stat[15] = CTX.mesh_timer[2];
-
-    // FIXME:
-    //stat[16] = numOrder2Vertices; 
-
-    if(quality){
-      for(int i = 0; i < 3; i++)
-	for(int j = 0; j < 100; j++)
-	  quality[i][j] = 0.;
-      double gamma=0., gammaMin=1., gammaMax=0.;
-      double eta=0., etaMin=1., etaMax=0.;
-      double rho=0., rhoMin=1., rhoMax=0.;
-      for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); ++it){
-	GetQualityMeasure((*it)->tetrahedra, gamma, gammaMin, gammaMax,
-			  eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
-	GetQualityMeasure((*it)->hexahedra, gamma, gammaMin, gammaMax,
-			  eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
-	GetQualityMeasure((*it)->prisms, gamma, gammaMin, gammaMax,
-			  eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
-	GetQualityMeasure((*it)->pyramids, gamma, gammaMin, gammaMax,
-			  eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
-      }
-      double N = stat[9] + stat[10] + stat[11] + stat[12];
-      stat[17] = N ? gamma / N : 0.;
-      stat[18] = gammaMin;
-      stat[19] = gammaMax;
-      stat[20] = N ? eta / N : 0.;
-      stat[21] = etaMin;
-      stat[22] = etaMax;
-      stat[23] = N ? rho / N : 0;
-      stat[24] = rhoMin;
-      stat[25] = rhoMax;
-    }
+    double N = stat[9] + stat[10] + stat[11] + stat[12];
+    stat[17] = N ? gamma / N : 0.;
+    stat[18] = gammaMin;
+    stat[19] = gammaMax;
+    stat[20] = N ? eta / N : 0.;
+    stat[21] = etaMin;
+    stat[22] = etaMax;
+    stat[23] = N ? rho / N : 0;
+    stat[24] = rhoMin;
+    stat[25] = rhoMax;
   }
 
   stat[26] = List_Nbr(CTX.post.list);

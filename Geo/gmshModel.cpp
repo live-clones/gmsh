@@ -1,11 +1,6 @@
 #include "gmshModel.h"
 #include "Mesh.h"
 #include "Geo.h"
-#include "GPoint.h"
-#include "SPoint2.h"
-#include "SPoint3.h"
-#include "SBoundingBox3d.h"
-#include "OpenFile.h"
 #include "Tools.h"
 #include "Message.h"
 #include "gmshVertex.h"
@@ -18,17 +13,10 @@ extern Mesh *THEM;
 gmshModel::gmshModel()
   : GModel("noname")
 {
-  convertFromUglyOldDataStructuresgmshModel();
+  import();
 }
 
-gmshModel::gmshModel(char *geofile)
-  : GModel(geofile)
-{
-  OpenProblem(geofile);
-  convertFromUglyOldDataStructuresgmshModel();
-}
-
-void gmshModel::convertFromUglyOldDataStructuresgmshModel()
+void gmshModel::import()
 {
   std::set<Vertex*> points;
 
@@ -38,23 +26,25 @@ void gmshModel::convertFromUglyOldDataStructuresgmshModel()
       Curve *c;
       List_Read(curves, i, &c);
       if(c->Num >= 0 && c->beg && c->end){
-	if(points.find(c->beg) == points.end()){
+	if(!vertexByTag(c->beg->Num) && points.find(c->beg) == points.end()){
 	  points.insert(c->beg);
 	  gmshVertex *v = new gmshVertex(this, c->beg);
 	  v->setVisibility(c->beg->Visible);
 	  add(v);
 	}
-	if(points.find(c->end) == points.end()){
+	if(!vertexByTag(c->end->Num) && points.find(c->end) == points.end()){
 	  points.insert(c->end);
 	  gmshVertex *v = new gmshVertex(this, c->end);
 	  v->setVisibility(c->beg->Visible);
 	  add(v);
 	}
-	gmshEdge *e = new gmshEdge(this, c,
-				   vertexByTag(c->beg->Num),
-				   vertexByTag(c->end->Num));
-	e->setVisibility(c->Visible);
-	add(e);
+	if(!edgeByTag(c->Num)){
+	  gmshEdge *e = new gmshEdge(this, c,
+				     vertexByTag(c->beg->Num),
+				     vertexByTag(c->end->Num));
+	  e->setVisibility(c->Visible);
+	  add(e);
+	}
       }
     }
     List_Delete(curves);
@@ -64,9 +54,11 @@ void gmshModel::convertFromUglyOldDataStructuresgmshModel()
     for(int i = 0; i < List_Nbr(surfaces); i++){
       Surface *s;
       List_Read(surfaces, i, &s);
-      gmshFace *f = new gmshFace(this, s);
-      f->setVisibility(s->Visible);
-      add(f);
+      if(!faceByTag(s->Num)){
+	gmshFace *f = new gmshFace(this, s);
+	f->setVisibility(s->Visible);
+	add(f);
+      }
     }
     List_Delete(surfaces);
   } 
@@ -75,9 +67,11 @@ void gmshModel::convertFromUglyOldDataStructuresgmshModel()
     for(int i = 0; i < List_Nbr(volumes); i++){
       Volume *v;
       List_Read(volumes, i, &v);
-      gmshRegion *r = new gmshRegion(this, v);
-      r->setVisibility(v->Visible);
-      add(r);
+      if(!regionByTag(v->Num)){
+	gmshRegion *r = new gmshRegion(this, v);
+	r->setVisibility(v->Visible);
+	add(r);
+      }
     }
     List_Delete(volumes);
   }
@@ -94,7 +88,9 @@ void gmshModel::convertFromUglyOldDataStructuresgmshModel()
       case MSH_PHYSICAL_SURFACE: ge = faceByTag(num); break;
       case MSH_PHYSICAL_VOLUME:  ge = regionByTag(num); break;
       }
-      if(ge) ge->physicals.push_back(p->Num);
+      if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), p->Num) == 
+	 ge->physicals.end())
+	ge->physicals.push_back(p->Num);
     }
   }
   
@@ -105,7 +101,3 @@ void gmshModel::convertFromUglyOldDataStructuresgmshModel()
   Msg(DEBUG, "%d Regions", regions.size());
 }
 
-GModel *createGmshModel(char *f)
-{
-  return new gmshModel(f);
-}

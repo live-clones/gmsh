@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.106 2006-08-12 16:16:36 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.107 2006-08-12 17:44:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -142,10 +142,9 @@ void SetBoundingBox(void)
 
   SBoundingBox3d bb;
 
-  if(GMODEL)
-    bb = GMODEL->getBounds();
+  bb = GMODEL->getBounds();
 
-  if(bb.empty() && GMODEL)
+  if(bb.empty())
     bb = GMODEL->recomputeBounds();
   
   if(bb.empty() && List_Nbr(CTX.post.list)) {
@@ -208,8 +207,7 @@ int ParseFile(char *f, int close, int warn_if_missing)
   if(close)
     fclose(yyin);
 
-  if(GMODEL) delete GMODEL;
-  GMODEL = new gmshModel;
+  GMODEL->import();
 
   strncpy(yyname, yyname_old, 255);
   yyin = yyin_old;
@@ -289,11 +287,9 @@ int MergeProblem(char *name, int warn_if_missing)
 
   int status = 0;
   if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL")){
-    if(!GMODEL) GMODEL = new gmshModel;
     status = GMODEL->readSTL(name, CTX.mesh.stl_distance_tol);
   }
   else if(!strcmp(ext, ".mesh")){
-    if(!GMODEL) GMODEL = new gmshModel;
     status = GMODEL->readMESH(name);
   }
 #if defined(HAVE_FLTK)
@@ -327,7 +323,6 @@ int MergeProblem(char *name, int warn_if_missing)
     if(!strncmp(tmp, "$PTS", 4) || !strncmp(tmp, "$NO", 3) || 
        !strncmp(tmp, "$PARA", 5) || !strncmp(tmp, "$ELM", 4) ||
        !strncmp(tmp, "$MeshFormat", 11)) {
-      if(!GMODEL) GMODEL = new gmshModel;
       status = GMODEL->readMSH(name);
     }
     else if(!strncmp(tmp, "$PostFormat", 11) || !strncmp(tmp, "$View", 5)) {
@@ -351,6 +346,10 @@ void OpenProblem(char *name)
     return;
   }
   CTX.threads_lock = 1;
+
+  // recreate a brand new gmsh model
+  if(GMODEL) delete GMODEL;
+  GMODEL = new gmshModel;
 
   Init_Mesh();
 

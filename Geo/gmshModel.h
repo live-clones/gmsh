@@ -4,12 +4,12 @@
 #include "GModel.h"
 
 class gmshModel : public GModel {
- private:
-  void convertFromUglyOldDataStructuresgmshModel(); 
  public:
-  gmshModel(char *geofile); 
   gmshModel(); 
   virtual ~gmshModel() {};
+
+  // import data from the old Gmsh database ("THEM")
+  virtual void import();
 };
 
 #endif

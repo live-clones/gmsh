@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.105 2006-08-12 16:16:30 geuzaine Exp $
+// $Id: Geom.cpp,v 1.106 2006-08-12 17:44:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -243,8 +243,6 @@ void drawGeoRegion(GRegion *v)
 
 void Draw_Geom()
 {
-  if(!GMODEL) return;
-
   glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
   
   for(int i = 0; i < 6; i++)

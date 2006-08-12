@@ -126,7 +126,7 @@ class VisibilityManager {
   char getVisibility(int n){ return _entities[n]->getVisibility(); }
 
   // set the visibility information for the nth entity in the manager
-  void setVisibility(char n, int val, bool recursive=false)
+  void setVisibility(int n, char val, bool recursive=false)
   { 
     _entities[n]->setVisibility(val, recursive);
   }

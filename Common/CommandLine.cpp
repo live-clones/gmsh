@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.75 2006-08-12 16:44:31 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.76 2006-08-12 17:44:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -300,7 +300,7 @@ void Get_Options(int argc, char *argv[])
             WriteView(*(Post_View **) List_Pointer(CTX.post.list, j),
                       argv[i + 1], 1, j ? 1 : 0);
 	  // convert any mesh to the latest format
-	  if(GMODEL && GMODEL->numVertex()){
+	  if(GMODEL->numVertex()){
 	    CTX.mesh.msh_file_version = 2.0;
 	    CreateOutputFile(argv[i + 1], FORMAT_MSH);
 	  }

@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.158 2006-08-12 16:16:30 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.159 2006-08-12 17:44:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -206,7 +206,7 @@ public :
 
 void Draw_Mesh()
 {
-  if(!GMODEL || !CTX.mesh.draw) return;
+  if(!CTX.mesh.draw) return;
   
   glPointSize(CTX.mesh.point_size);
   gl2psPointSize(CTX.mesh.point_size * CTX.print.eps_point_size_factor);

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.63 2006-08-10 15:55:23 geuzaine Exp $
+// $Id: Main.cpp,v 1.64 2006-08-12 17:44:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -76,6 +76,8 @@ void Info(int level, char *arg0)
 int GMSHBOX(int argc, char *argv[])
 {
   ParUtil::Instance()->init(argc, argv);
+
+  GMODEL = new gmshModel;
 
   InitSymbols();
 

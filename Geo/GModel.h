@@ -27,6 +27,8 @@ class GModel
   GModel(const std::string &name) : modelName(name) {}
   virtual ~GModel() {}
 
+  virtual void import(){}
+
   typedef std::set<GRegion*, GEntityLessThan>::iterator riter;
   typedef std::set<GFace*, GEntityLessThan>::iterator fiter;
   typedef std::set<GEdge*, GEntityLessThan>::iterator eiter;
