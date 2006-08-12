@@ -25,7 +25,7 @@ class MElement
  private:
   static int _globalNum;
   int _num, _partition;
-  bool _visible;
+  char _visible;
 
  public :
   MElement(int num=0, int part=0) 
@@ -48,8 +48,8 @@ class MElement
   virtual int getPartition(){ return _partition; }
 
   // get/set the visibility flag
-  virtual bool getVisibility(){ return _visible; }
-  virtual void setVisibility(bool val){ _visible = val; }
+  virtual char getVisibility(){ return _visible; }
+  virtual void setVisibility(char val){ _visible = val; }
 
   // get the vertices
   virtual int getNumVertices() = 0;

@@ -36,8 +36,8 @@ class Vis {
   virtual int getTag() const = 0;
   virtual int getDim() const = 0;
   virtual std::string getName() const = 0;
-  virtual bool getVisibility() const = 0;
-  virtual void setVisibility(bool val, bool recursive=false) = 0;
+  virtual char getVisibility() const = 0;
+  virtual void setVisibility(char val, bool recursive=false) = 0;
 };
 
 class VisElementary : public Vis {
@@ -59,14 +59,14 @@ class VisElementary : public Vis {
     else if(_dim == 2) return "Surface";
     else return "Volume";
   }
-  bool getVisibility() const { return _e->getVisibility(); }
-  void setVisibility(bool val, bool recursive=false);
+  char getVisibility() const { return _e->getVisibility(); }
+  void setVisibility(char val, bool recursive=false);
 };
 
 class VisPhysical : public Vis {
  private:
   int _tag, _dim;
-  bool _visible;
+  char _visible;
   std::vector<GEntity*> _list;
  public:
   VisPhysical(int tag, int dim, std::vector<GEntity*> list) 
@@ -81,22 +81,22 @@ class VisPhysical : public Vis {
     else if(_dim == 2) return "Surface";
     else return "Volume";
   }
-  bool getVisibility() const { return _visible; }
-  void setVisibility(bool val, bool recursive=false);
+  char getVisibility() const { return _visible; }
+  void setVisibility(char val, bool recursive=false);
 };
 
 class VisPartition : public Vis {
  private:
   int _tag;
-  bool _visible;
+  char _visible;
  public:
   VisPartition(int tag) : _tag(tag), _visible(true) {}
   ~VisPartition(){}
   int getTag() const { return _tag; }
   int getDim() const { return -1; }
   std::string getName() const { return "Partition"; }
-  bool getVisibility() const { return _visible; }
-  void setVisibility(bool val, bool recursive=false);
+  char getVisibility() const { return _visible; }
+  void setVisibility(char val, bool recursive=false);
 };
 
 // Singleton, one visibility manager for the whole interface
@@ -123,10 +123,10 @@ class VisibilityManager {
   int getNumEntities() { return _entities.size(); }
 
   // get the visibility information for the nth entity in the manager
-  bool getVisibility(int n){ return _entities[n]->getVisibility(); }
+  char getVisibility(int n){ return _entities[n]->getVisibility(); }
 
   // set the visibility information for the nth entity in the manager
-  void setVisibility(bool n, int val, bool recursive=false)
+  void setVisibility(char n, int val, bool recursive=false)
   { 
     _entities[n]->setVisibility(val, recursive);
   }

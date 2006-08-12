@@ -14,7 +14,7 @@ class GRegion : public GEntity {
   virtual ~GRegion();
   virtual int dim() const {return 3;}
   virtual GeomType geomType() const {return Volume;}
-  virtual void setVisibility(bool val, bool recursive=false);
+  virtual void setVisibility(char val, bool recursive=false);
 
   // recompute the mesh partitions defined on this region.
   void recomputeMeshPartitions();

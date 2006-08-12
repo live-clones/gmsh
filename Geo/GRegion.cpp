@@ -31,7 +31,7 @@ GRegion::~GRegion ()
   pyramids.clear();
 }
 
-void GRegion::setVisibility(bool val, bool recursive)
+void GRegion::setVisibility(char val, bool recursive)
 {
   GEntity::setVisibility(val);
   if(recursive){

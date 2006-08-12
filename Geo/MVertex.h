@@ -10,7 +10,7 @@ class MVertex{
  private:
   static int _globalNum;
   int _num;
-  bool _visible;
+  char _visible;
   double _x, _y, _z;
   GEntity *_ge;
 
@@ -29,8 +29,8 @@ class MVertex{
   virtual ~MVertex(){}
 
   // get/set the visibility flag
-  virtual bool getVisibility(){ return _visible; }
-  virtual void setVisibility(bool val){ _visible = val; }
+  virtual char getVisibility(){ return _visible; }
+  virtual void setVisibility(char val){ _visible = val; }
   
   // get/set the coordinates
   inline double x() const {return _x;}

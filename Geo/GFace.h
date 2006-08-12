@@ -41,7 +41,7 @@ class GFace : public GEntity
   virtual std::list<GVertex*> vertices() const;
 
   virtual int dim() const {return 2;}
-  virtual void setVisibility(bool val, bool recursive=false);
+  virtual void setVisibility(char val, bool recursive=false);
 
   // Get the location of any parametric degeneracies on the face in
   // the given parametric direction.

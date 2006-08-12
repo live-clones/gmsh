@@ -40,7 +40,7 @@ std::list<GVertex*> GFace::vertices() const
   return ret;
 }
 
-void GFace::setVisibility(bool val, bool recursive)
+void GFace::setVisibility(char val, bool recursive)
 {
   GEntity::setVisibility(val);
   if(recursive){

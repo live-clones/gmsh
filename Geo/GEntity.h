@@ -24,8 +24,7 @@ class GEntity {
   GModel *_model;
   int _tag;
   MRep *_geom, *_mesh;
-  bool _visible;
-  char _flag;
+  char _visible, _flag;
 
  public:
 
@@ -132,8 +131,8 @@ class GEntity {
   virtual SBoundingBox3d bounds() const{throw;}
 
   // get/set the visibility flag
-  virtual bool getVisibility(){ return _visible; }
-  virtual void setVisibility(bool val, bool recursive=false){ _visible = val; }
+  virtual char getVisibility(){ return _visible; }
+  virtual void setVisibility(char val, bool recursive=false){ _visible = val; }
 
   // get/set the multi-purpose flag
   virtual char getFlag(){ return _flag; }

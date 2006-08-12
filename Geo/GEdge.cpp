@@ -38,7 +38,7 @@ GEdge::~GEdge()
   lines.clear();
 }
 
-void GEdge::setVisibility(bool val, bool recursive)
+void GEdge::setVisibility(char val, bool recursive)
 {
   GEntity::setVisibility(val);
   if(recursive){

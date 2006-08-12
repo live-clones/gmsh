@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.14 2006-08-12 16:16:27 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.15 2006-08-12 16:30:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -120,19 +120,19 @@ std::string VisibilityManager::getBrowserLine(int n)
   return std::string(str);
 }
 
-void VisElementary::setVisibility(bool val, bool recursive)
+void VisElementary::setVisibility(char val, bool recursive)
 {
   _e->setVisibility(val, recursive);
 }
 
-void VisPhysical::setVisibility(bool val, bool recursive)
+void VisPhysical::setVisibility(char val, bool recursive)
 {
   _visible = val;
   for(unsigned int i = 0; i < _list.size(); i++)
     _list[i]->setVisibility(val, recursive);
 }
 
-void VisPartition::setVisibility(bool val, bool recursive)
+void VisPartition::setVisibility(char val, bool recursive)
 {
   _visible = val;
   for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++){
