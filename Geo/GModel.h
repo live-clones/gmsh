@@ -20,7 +20,6 @@ class GModel
   std::set<GFace*, GEntityLessThan> faces;
   std::set<GEdge*, GEntityLessThan> edges;
   std::set<GVertex*, GEntityLessThan> vertices;
-  SBoundingBox3d boundingBox;
   std::set<int> meshPartitions;
 
  public:
