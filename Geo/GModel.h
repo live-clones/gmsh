@@ -79,8 +79,7 @@ class GModel
   void getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]);
 
   // The bounding box
-  virtual SBoundingBox3d getBounds() { return boundingBox; }
-  virtual SBoundingBox3d recomputeBounds();
+  virtual SBoundingBox3d bounds();
 
   // Returns the mesh status for the entire model.
   virtual int getMeshStatus();

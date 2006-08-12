@@ -92,13 +92,24 @@ void GModel::getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4])
     addInGroup(*it, groups[3]);
 }
 
-SBoundingBox3d GModel::recomputeBounds()
+SBoundingBox3d GModel::bounds()
 {
   SBoundingBox3d bb;
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     bb += (*it)->bounds();
-  boundingBox = bb;
-  return boundingBox;
+
+  // use the mesh instead of the geometry for now
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+      bb += (*it)->mesh_vertices[i]->point();
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+      bb += (*it)->mesh_vertices[i]->point();
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+      bb += (*it)->mesh_vertices[i]->point();
+
+  return bb;
 }
 
 int GModel::getMeshStatus()

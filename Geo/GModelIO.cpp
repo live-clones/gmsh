@@ -162,7 +162,6 @@ int GModel::readMSH(const std::string &name)
   int elementTypes[7] = {LGN1, TRI1, QUA1, TET1, HEX1, PRI1, PYR1};
   double version = 1.0;
   char str[256];
-  SBoundingBox3d bbox;
   std::map<int, MVertex*> vertices;
   std::map<int, std::vector<MVertex*> > points;
   std::map<int, std::vector<MElement*> > elements[7];
@@ -195,7 +194,6 @@ int GModel::readMSH(const std::string &name)
 	int num;
 	double x, y, z;
         fscanf(fp, "%d %lf %lf %lf", &num, &x, &y, &z);
-	bbox += SPoint3(x, y, z);
 	if(vertices.count(num))
 	  Msg(WARNING, "Skipping duplicate vertex %d", num);
 	else
@@ -355,8 +353,6 @@ int GModel::readMSH(const std::string &name)
   // store the physical tags
   for(int i = 0; i < 4; i++)  
     storePhysicalTagsInEntities(this, i, physicals[i]);
-
-  boundingBox += bbox;
 
   fclose(fp);
   return 1;
@@ -656,8 +652,6 @@ int GModel::readSTL(const std::string &name, double tolerance)
     face->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
   }
 
-  boundingBox += bbox;
-
   fclose(fp);
   return 1;
 }
@@ -881,7 +875,6 @@ int GModel::readMESH(const std::string &name)
   std::map<int, MVertex*> vertices;
   int elementTypes[2] = {TRI1, QUA1};
   std::map<int, std::vector<MElement*> > elements[2];
-  SBoundingBox3d bbox;
 
   while(!feof(fp)) {
     fgets(buffer, sizeof(buffer), fp);
@@ -900,7 +893,6 @@ int GModel::readMESH(const std::string &name)
 	  int cl;
 	  double x, y, z;
 	  sscanf(buffer, "%lf %lf %lf %d", &x, &y, &z, &cl);
-	  bbox += SPoint3(x, y, z);
 	  vertices[i + 1] = new MVertex(x, y, z);
 	}
       }
@@ -943,8 +935,6 @@ int GModel::readMESH(const std::string &name)
 
   // store the vertices in their associated geometrical entity
   storeVerticesInEntities(vertices);
-
-  boundingBox += bbox;
 
   fclose(fp);
   return 1;

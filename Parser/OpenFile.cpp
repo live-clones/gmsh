@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.108 2006-08-12 18:10:25 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.109 2006-08-12 18:27:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -142,10 +142,7 @@ void SetBoundingBox(void)
 
   SBoundingBox3d bb;
 
-  bb = GMODEL->getBounds();
-
-  if(bb.empty())
-    bb = GMODEL->recomputeBounds();
+  bb = GMODEL->bounds();
   
   if(bb.empty() && List_Nbr(CTX.post.list)) {
     for(int i = 0; i < List_Nbr(CTX.post.list); i++){
@@ -208,7 +205,6 @@ int ParseFile(char *f, int close, int warn_if_missing)
     fclose(yyin);
 
   GMODEL->import();
-  GMODEL->recomputeBounds();
 
   strncpy(yyname, yyname_old, 255);
   yyin = yyin_old;

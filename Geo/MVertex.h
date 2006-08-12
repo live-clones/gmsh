@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <algorithm>
+#include "SPoint3.h"
 
 class GEntity;
 
@@ -39,6 +40,7 @@ class MVertex{
   inline double & x() {return _x;}
   inline double & y() {return _y;}
   inline double & z() {return _z;}
+  inline SPoint3 point() { return SPoint3(_x, _y, _z); }
 
   // get/set the parent entity
   inline GEntity* onWhat() const {return _ge;}
