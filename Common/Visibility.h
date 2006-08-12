@@ -20,41 +20,137 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "List.h"
-#include "Mesh.h"
+#include <string>
+#include <map>
+#include <vector>
+#include "GmshDefines.h"
+#include "GVertex.h"
+#include "GEdge.h"
+#include "GFace.h"
+#include "GRegion.h"
 
-typedef struct{
-  int n;
-  char *s;
-} NxS;
-
-class Entity {
-public :
-  int type;
-  union {
-    Vertex *vertex;
-    Curve *curve;
-    Surface *surface;
-    Volume *volume;
-    PhysicalGroup *physical;
-    MeshPartition *partition;
-  } data;
-  char *str;
-
-  int   Num();
-  char *Type();
-  char *Name();
-  int   Visible();
-  void  Visible(int mode);
-  void  RecurVisible();
-  char *BrowserLine();
+class Vis {
+ public:
+  Vis(){}
+  virtual ~Vis(){}
+  virtual int getTag() const = 0;
+  virtual int getDim() const = 0;
+  virtual std::string getName() const = 0;
+  virtual bool getVisibility() const = 0;
+  virtual void setVisibility(bool val, bool recursive=false) = 0;
 };
 
-void    SetVisibilitySort(int sort);
-List_T* GetVisibilityList(int type);
-void    ClearVisibilityList(int type);
-void    InitVisibilityThroughPhysical();
-void    SetVisibilityByNumber(int num, int type, int mode);
-void    SetVisibilityByNumber(char *str, int type, int mode);
+class VisElementary : public Vis {
+ private:
+  GEntity *_e;
+  int _dim;
+ public:
+  VisElementary(GVertex *e) : _e(e), _dim(0) {}
+  VisElementary(GEdge *e) : _e(e), _dim(1) {}
+  VisElementary(GFace *e) : _e(e), _dim(2) {}
+  VisElementary(GRegion *e) : _e(e), _dim(3) {}
+  ~VisElementary(){}
+  int getTag() const { return _e->tag(); }
+  int getDim() const { return _dim; }
+  std::string getName() const
+  {
+    if(_dim == 0) return "Point";
+    else if(_dim == 1) return "Line";
+    else if(_dim == 2) return "Surface";
+    else return "Volume";
+  }
+  bool getVisibility() const { return _e->getVisibility(); }
+  void setVisibility(bool val, bool recursive=false);
+};
+
+class VisPhysical : public Vis {
+ private:
+  int _tag, _dim;
+  bool _visible;
+  std::vector<GEntity*> _list;
+ public:
+  VisPhysical(int tag, int dim, std::vector<GEntity*> list) 
+    : _tag(tag), _dim(dim), _visible(true), _list(list)  {}
+  ~VisPhysical(){}
+  int getTag() const { return _tag; }
+  int getDim() const { return _dim; }
+  std::string getName() const
+  {
+    if(_dim == 0) return "Point";
+    else if(_dim == 1) return "Line";
+    else if(_dim == 2) return "Surface";
+    else return "Volume";
+  }
+  bool getVisibility() const { return _visible; }
+  void setVisibility(bool val, bool recursive=false);
+};
+
+class VisPartition : public Vis {
+ private:
+  int _tag;
+  bool _visible;
+ public:
+  VisPartition(int tag) : _tag(tag), _visible(true) {}
+  ~VisPartition(){}
+  int getTag() const { return _tag; }
+  int getDim() const { return -1; }
+  std::string getName() const { return "Partition"; }
+  bool getVisibility() const { return _visible; }
+  void setVisibility(bool val, bool recursive=false);
+};
+
+// Singleton, one visibility manager for the whole interface
+class VisibilityManager {
+ private:
+  std::map<int, std::string> _labels;
+  std::vector<Vis*> _entities;
+  int _sortMode;
+  static VisibilityManager *manager;
+  VisibilityManager() : _sortMode(1) {}
+
+ public :
+  // create the only instance of the manager
+  static VisibilityManager *instance()
+  {
+    if(!manager) manager = new VisibilityManager();
+    return manager;
+  }
+  
+  // repopulate the manager with current data of the given type
+  void update(int type);
+
+  // get the number of entities in the manager
+  int getNumEntities() { return _entities.size(); }
+
+  // get the visibility information for the nth entity in the manager
+  bool getVisibility(int n){ return _entities[n]->getVisibility(); }
+
+  // set the visibility information for the nth entity in the manager
+  void setVisibility(bool n, int val, bool recursive=false)
+  { 
+    _entities[n]->setVisibility(val, recursive);
+  }
+
+  // set all entities to be invisible
+  void setAllInvisible(int type);
+
+  // get the tag of the nth entity in the manager
+  int getTag(int n){ return _entities[n]->getTag(); }
+
+  // get the browser line for the nth entity in the manager
+  std::string getBrowserLine(int n);
+
+  // set the sort mode
+  void setSortMode(int mode){ _sortMode = (_sortMode != mode) ? mode : -mode; }
+
+  // get the sort mode
+  int getSortMode(){ return _sortMode; }
+
+  // associate a label with a tag
+  void setLabel(int tag, std::string label){ _labels[tag] = label; }
+
+  // get the label associated with a tag
+  std::string getLabel(int tag){ return _labels[tag]; }
+};
 
 #endif

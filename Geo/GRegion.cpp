@@ -5,7 +5,6 @@
 GRegion::~GRegion ()
 { 
   std::list<GFace*>::iterator it = l_faces.begin();
-
   while(it != l_faces.end()){
     (*it)->delRegion(this);
     ++it;
@@ -30,6 +29,18 @@ GRegion::~GRegion ()
   for(unsigned int i = 0; i < pyramids.size(); i++) 
     delete pyramids[i];
   pyramids.clear();
+}
+
+void GRegion::setVisibility(bool val, bool recursive)
+{
+  GEntity::setVisibility(val);
+  if(recursive){
+    std::list<GFace*>::iterator it = l_faces.begin();
+    while(it != l_faces.end()){
+      (*it)->setVisibility(val, recursive);
+      ++it;
+    }
+  }
 }
 
 void GRegion::recomputeMeshPartitions()

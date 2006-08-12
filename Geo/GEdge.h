@@ -26,6 +26,7 @@ class GEdge : public GEntity {
 
   virtual bool periodic(int dim=0) const = 0;
   virtual bool continuous(int dim=0) const = 0;
+  virtual void setVisibility(bool val, bool recursive=false);
 
   // Get the parameter location for a point in space on the edge.
   virtual double parFromPoint(const SPoint3 &) const = 0;
@@ -68,6 +69,7 @@ class GEdge : public GEntity {
 
   virtual std::string getAdditionalInfoString()
   {
+    if(!v0 || !v1) return "";
     char tmp[256];
     sprintf(tmp, "{%d,%d}", v0->tag(), v1->tag());
     return std::string(tmp);

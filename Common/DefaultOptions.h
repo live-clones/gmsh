@@ -760,8 +760,6 @@ StringXNumber GeneralOptions_Number[] = {
     "Default vector display type (for normals, etc.)" },
   { F|O, "Verbosity" , opt_general_verbosity , 3. ,
     "Level of information printed during processing (0=no information)" },
-  { F|O, "VisibilityMode" , opt_general_visibility_mode , 0. , 
-    "Default mode for the visibility browser (0=Geometry+Mesh, 1=Geometry, 2=Mesh)" }, 
   { F|S, "VisibilityPositionX" , opt_general_visibility_position0 , 650. , 
     "Horizontal position (in pixels) of the upper left corner of the visibility window" }, 
   { F|S, "VisibilityPositionY" , opt_general_visibility_position1 , 150. , 

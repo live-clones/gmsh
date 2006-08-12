@@ -1,4 +1,4 @@
-// $Id: Element.cpp,v 1.12 2006-08-05 10:05:45 geuzaine Exp $
+// $Id: Element.cpp,v 1.13 2006-08-12 16:16:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -32,7 +32,7 @@ extern int edges_pyramid[8][2];
 int Element::TotalNumber = 0;
 
 Element::Element()
-  : iEnt(-1), iPart(-1), Visible(VIS_MESH), VSUP(NULL)
+  : iEnt(-1), iPart(-1), Visible(1), VSUP(NULL)
 {
   Num = ++TotalNumber; 
 }

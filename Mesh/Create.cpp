@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.82 2006-02-22 19:39:50 geuzaine Exp $
+// $Id: Create.cpp,v 1.83 2006-08-12 16:16:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -185,7 +185,7 @@ PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T * intlist)
   p->Num = Num;
   THEM->MaxPhysicalNum = IMAX(THEM->MaxPhysicalNum, Num);
   p->Typ = typ;
-  p->Visible = VIS_GEOM | VIS_MESH;
+  p->Visible = 1;
   for(int i = 0; i < List_Nbr(intlist); i++) {
     int j;
     List_Read(intlist, i, &j);
@@ -215,7 +215,7 @@ int Add_MeshPartition(int Num, Mesh * M)
   else{
     p = (MeshPartition*)Malloc(sizeof(MeshPartition));
     p->Num = Num;
-    p->Visible = VIS_GEOM | VIS_MESH;
+    p->Visible = 1;
     p->Index = List_Nbr(M->Partitions);
     List_Add(M->Partitions, &p);
     return p->Index;
@@ -527,7 +527,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
   //  pC->bds = 0;
   pC->LinVertexArray = NULL;
   pC->Color.type = 0;
-  pC->Visible = VIS_GEOM | VIS_MESH;
+  pC->Visible = 1;
   pC->cp = NULL;
   pC->Vertices = List_Create(2, 20, sizeof(Vertex *));
   pC->Extrude = NULL;
@@ -652,7 +652,7 @@ Surface *Create_Surface(int Num, int Typ)
   Surface *pS = (Surface *) Malloc(sizeof(Surface));
   //  pS->bds = 0;
   pS->Color.type = 0;
-  pS->Visible = VIS_GEOM | VIS_MESH;
+  pS->Visible = 1;
   pS->Num = Num;
   THEM->MaxSurfaceNum = IMAX(THEM->MaxSurfaceNum, Num);
   pS->Typ = Typ;
@@ -714,7 +714,7 @@ Volume *Create_Volume(int Num, int Typ)
 {
   Volume *pV = (Volume *) Malloc(sizeof(Volume));
   pV->Color.type = 0;
-  pV->Visible = VIS_GEOM | VIS_MESH;
+  pV->Visible = 1;
   pV->Num = Num;
   THEM->MaxVolumeNum = IMAX(THEM->MaxVolumeNum, Num);
   pV->Typ = Typ;

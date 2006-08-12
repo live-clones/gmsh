@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.90 2006-08-10 15:29:25 geuzaine Exp $
+# $Id: Makefile,v 1.91 2006-08-12 16:16:30 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -107,7 +107,7 @@ Mesh.o: Mesh.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Geo/SBoundingBox3d.h Draw.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
-  ../Common/Context.h gl2ps.h
+  ../Common/Context.h ../Common/OS.h gl2ps.h tc.h
 # 1 "/Users/geuzaine/.gmsh/Graphics//"
 Geom.o: Geom.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
@@ -242,3 +242,5 @@ gl2yuv.o: gl2yuv.cpp gl2yuv.h PixelBuffer.h ../Common/Gmsh.h \
   ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
+# 1 "/Users/geuzaine/.gmsh/Graphics//"
+tc.o: tc.cpp tc.h

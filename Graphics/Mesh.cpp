@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.157 2006-08-10 15:29:26 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.158 2006-08-12 16:16:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -69,7 +69,7 @@ class drawMeshGFace
 public :
   void operator () (GFace *s)
   {  
-    if(!(s->drawAttributes.Visible & VIS_MESH))
+    if(!s->getVisibility())
       return;
     
     if(CTX.render_mode == GMSH_SELECT) {
@@ -168,7 +168,7 @@ public :
 #endif
 
     unsigned int col;
-    if(s->drawAttributes.Frozen > 0){
+    if(s->getFlag() > 0){
       col = CTX.color.geom.surface_sel;
     }
     else if(CTX.mesh.color_carousel == 1){

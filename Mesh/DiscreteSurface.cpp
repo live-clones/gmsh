@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.43 2006-08-10 15:29:26 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.44 2006-08-12 16:16:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -389,27 +389,27 @@ void  CreateVolumeWithAllSurfaces(Mesh *M)
   Tree_Add(M->Volumes, &vol2);
 }
 
-int ReMesh(Mesh *M)
+int ReMesh()
 {
-  if(M->status != 2)
+  if(THEM->status != 2)
     return 0;
 
-  if(!M->bds) {
-    Mesh_To_BDS(M);
-    M->bds->classify(CTX.mesh.dihedral_angle_tol * M_PI / 180);
-    BDS_To_Mesh(M);
+  if(!THEM->bds) {
+    Mesh_To_BDS(THEM);
+    THEM->bds->classify(CTX.mesh.dihedral_angle_tol * M_PI / 180);
+    BDS_To_Mesh(THEM);
   }
 
-  DeleteMesh(M);
+  DeleteMesh(THEM);
 
-  if(M->bds_mesh) {
-    delete M->bds_mesh;
-    M->bds_mesh = 0;
+  if(THEM->bds_mesh) {
+    delete THEM->bds_mesh;
+    THEM->bds_mesh = 0;
   }
 
 
   MeshDiscreteSurface((Surface *) 0);
-  CreateVolumeWithAllSurfaces(M);
+  CreateVolumeWithAllSurfaces(THEM);
   CTX.mesh.changed = 1;
   return 1;
 }

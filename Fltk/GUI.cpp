@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.506 2006-08-08 04:35:22 geuzaine Exp $
+// $Id: GUI.cpp,v 1.507 2006-08-12 16:16:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -181,8 +181,8 @@ Fl_Menu_Item m_module_table[] = {
 
 Context_Item menu_geometry[] = {
   {"0Geometry", NULL} ,
-  {"Elementary", (Fl_Callback *)geometry_elementary_cb} ,
-  {"Physical",   (Fl_Callback *)geometry_physical_cb} ,
+  {"Elementary entities", (Fl_Callback *)geometry_elementary_cb} ,
+  {"Physical groups",     (Fl_Callback *)geometry_physical_cb} ,
   {"Edit",       (Fl_Callback *)geometry_edit_cb} , 
   {"Reload",     (Fl_Callback *)geometry_reload_cb} , 
   {0}
@@ -2392,7 +2392,7 @@ void GUI::create_option_window()
       static Fl_Menu_Item menu_label_type[] = {
         {"Number", 0, 0, 0},
         {"Elementary entity", 0, 0, 0},
-        {"Physical entity", 0, 0, 0},
+        {"Physical group", 0, 0, 0},
         {"Partition", 0, 0, 0},
         {"Coordinates", 0, 0, 0},
         {0}
@@ -3822,15 +3822,9 @@ void GUI::create_visibility_window()
 
   static int cols[5] = { 15, 95, 95, 180, 0 };
   static Fl_Menu_Item type_table[] = {
-    {"Elementary", 0, (Fl_Callback *) visibility_cb},
-    {"Physical", 0, (Fl_Callback *) visibility_cb},
+    {"Elementary entities", 0, (Fl_Callback *) visibility_cb},
+    {"Physical groups", 0, (Fl_Callback *) visibility_cb},
     {"Partitions", 0, (Fl_Callback *) visibility_cb},
-    {0}
-  };
-  static Fl_Menu_Item browser_mode_table[] = {
-    {"Geometry+Mesh", 0, (Fl_Callback *) visibility_cb},
-    {"Geometry", 0, (Fl_Callback *) visibility_cb},
-    {"Mesh", 0, (Fl_Callback *) visibility_cb},
     {0}
   };
 
@@ -3845,15 +3839,13 @@ void GUI::create_visibility_window()
     Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Browser");
 
     int brw = width - 4 * WB;
-    int buw = (brw - 2 * WB)/3;
+    int buw = (brw - 2 * WB) / 2;
 
     vis_type = new Fl_Choice(2 * WB, 2 * WB + 1 * BH, buw, BH);
     vis_type->menu(type_table);
 
-    vis_browser_mode = new Fl_Choice(2 * WB + buw + WB, 2 * WB + 1 * BH, buw, BH);
-    vis_browser_mode->menu(browser_mode_table);
-
-    vis_butt[0] = new Fl_Check_Button(2 * WB + 2 * buw + 2 * WB, 2 * WB + 1 * BH, buw, BH, "Recursive");
+    vis_butt[0] = new Fl_Check_Button(2 * WB + buw + WB, 2 * WB + 1 * BH, width - 5 * WB - buw, BH, 
+				      "Set visibility recursively");
     vis_butt[0]->type(FL_TOGGLE_BUTTON);
     vis_butt[0]->down_box(GMSH_TOGGLE_BOX);
     vis_butt[0]->selection_color(GMSH_TOGGLE_COLOR);
@@ -3891,7 +3883,6 @@ void GUI::create_visibility_window()
       Fl_Group *o = new Fl_Group(2 * WB, 3 * WB + 3 * BH, brw, height - 7 * WB - 5 * BH);
       
       vis_browser = new Vis_Browser(2 * WB, 3 * WB + 3 * BH, brw, height - 7 * WB - 5 * BH);
-      vis_browser->textfont(FL_COURIER);
       vis_browser->type(FL_MULTI_BROWSER);
       vis_browser->column_widths(cols);
       

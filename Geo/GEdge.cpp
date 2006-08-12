@@ -38,6 +38,15 @@ GEdge::~GEdge()
   lines.clear();
 }
 
+void GEdge::setVisibility(bool val, bool recursive)
+{
+  GEntity::setVisibility(val);
+  if(recursive){
+    if(v0) v0->setVisibility(val);
+    if(v1) v1->setVisibility(val);
+  }
+}
+
 void GEdge::recomputeMeshPartitions()
 {
   for(unsigned int i = 0; i < lines.size(); i++) {

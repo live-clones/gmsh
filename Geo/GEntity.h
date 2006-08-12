@@ -24,6 +24,8 @@ class GEntity {
   GModel *_model;
   int _tag;
   MRep *_geom, *_mesh;
+  bool _visible;
+  char _flag;
 
  public:
 
@@ -74,11 +76,7 @@ class GEntity {
       return name[type];
   }
 
-  GEntity(GModel *m, int t) : _model(m), _tag(t)
-  {
-    drawAttributes.Visible = VIS_GEOM | VIS_MESH; 
-    drawAttributes.Frozen = 0; 
-  }
+  GEntity(GModel *m, int t) : _model(m), _tag(t), _visible(true), _flag(0) {}
 
   virtual ~GEntity() {};
 
@@ -133,16 +131,13 @@ class GEntity {
   // The bounding box
   virtual SBoundingBox3d bounds() const{throw;}
 
-  // The mesh vertices uniquely owned by the entity
-  std::vector<MVertex*> mesh_vertices;
+  // get/set the visibility flag
+  virtual bool getVisibility(){ return _visible; }
+  virtual void setVisibility(bool val, bool recursive=false){ _visible = val; }
 
-  // The physical entitites (if any) that contain this entity
-  std::vector<int> physicals;
-
-  // The standard drawing attributes of the entity
-  struct {
-    char Visible, Frozen;
-  } drawAttributes ;
+  // get/set the multi-purpose flag
+  virtual char getFlag(){ return _flag; }
+  virtual void setFlag(char val){ _flag = val; }
 
   // Returns a renderable representation of the geometry
   virtual MRep *geomRep(){ return _geom; }
@@ -176,6 +171,12 @@ class GEntity {
 
   // Returns a type-specific additional information string
   virtual std::string getAdditionalInfoString() { return std::string(""); }
+
+  // The mesh vertices uniquely owned by the entity
+  std::vector<MVertex*> mesh_vertices;
+
+  // The physical entitites (if any) that contain this entity
+  std::vector<int> physicals;
 };
 
 class GEntityLessThan {

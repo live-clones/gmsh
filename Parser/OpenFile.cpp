@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.105 2006-08-11 18:48:39 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.106 2006-08-12 16:16:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -33,7 +33,6 @@
 #include "PluginManager.h"
 #include "Views.h"
 #include "Mesh.h"
-#include "Visibility.h"
 #include "ReadImg.h"
 #include "OS.h"
 

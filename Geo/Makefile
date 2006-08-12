@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.84 2006-08-07 19:08:11 geuzaine Exp $
+# $Id: Makefile,v 1.85 2006-08-12 16:16:29 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -89,7 +89,7 @@ CAD.o: CAD.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Mesh/Interpolation.h ../Mesh/Vertex.h ../Mesh/Mesh.h \
   ../Mesh/Create.h ../Mesh/Vertex.h ../Mesh/Mesh.h CAD.h ExtrudeParams.h \
-  ../Common/Visibility.h ../Common/Context.h
+  ../Common/Context.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 ExtrudeParams.o: ExtrudeParams.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -130,17 +130,20 @@ GeoUtils.o: GeoUtils.cpp ../Common/Gmsh.h ../Common/Message.h \
 GVertex.o: GVertex.cpp GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h GPoint.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
-GEdge.o: GEdge.cpp GEdge.h GEntity.h Range.h SPoint3.h SBoundingBox3d.h \
-  MVertex.h ../Common/GmshDefines.h GVertex.h GPoint.h SVector3.h \
-  SPoint2.h MElement.h ../Numeric/Numeric.h
+GEdge.o: GEdge.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
+  SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h GPoint.h GEdge.h \
+  SVector3.h SPoint2.h MElement.h ../Numeric/Numeric.h GFace.h Pair.h \
+  GRegion.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
-GFace.o: GFace.cpp GFace.h GPoint.h GEntity.h Range.h SPoint3.h \
-  SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h MElement.h \
-  ../Numeric/Numeric.h SPoint2.h SVector3.h Pair.h GEdge.h GVertex.h
+GFace.o: GFace.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
+  SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h GPoint.h GEdge.h \
+  SVector3.h SPoint2.h MElement.h ../Numeric/Numeric.h GFace.h Pair.h \
+  GRegion.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
-GRegion.o: GRegion.cpp GRegion.h GEntity.h Range.h SPoint3.h \
-  SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h MElement.h \
-  ../Numeric/Numeric.h GFace.h GPoint.h SPoint2.h SVector3.h Pair.h
+GRegion.o: GRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
+  SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h GPoint.h GEdge.h \
+  SVector3.h SPoint2.h MElement.h ../Numeric/Numeric.h GFace.h Pair.h \
+  GRegion.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 GModel.o: GModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h GPoint.h GEdge.h \

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.232 2006-08-07 19:08:13 geuzaine Exp $
+// $Id: Gmsh.y,v 1.233 2006-08-12 16:16:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -44,7 +44,6 @@
 #include "ColorTable.h"
 #include "OS.h"
 #include "CreateFile.h"
-#include "Visibility.h"
 
 Tree_T *Symbol_T = NULL;
 
@@ -1777,26 +1776,22 @@ Colorify :
 Visibility :
     tShow StringExpr tEND
     {
-      int m = (CTX.visibility_mode == 2) ? VIS_MESH : 
-	((CTX.visibility_mode == 1) ? VIS_GEOM : VIS_GEOM|VIS_MESH);
-      for(int i = 2; i < 6; i++)
-	SetVisibilityByNumber($2, i, m);
+      for(int i = 0; i < 4; i++)
+	VisibilityShape($2, i, 1);
       Free($2);
     }
   | tHide StringExpr tEND
     {
-      for(int i = 2; i < 6; i++)
-	SetVisibilityByNumber($2, i, 0);
+      for(int i = 0; i < 4; i++)
+	VisibilityShape($2, i, 0);
       Free($2);
     }
   | tShow '{' ListOfShapes '}'
     {
-      int m = (CTX.visibility_mode == 2) ? VIS_MESH :
-	((CTX.visibility_mode == 1) ? VIS_GEOM : VIS_GEOM|VIS_MESH);
       for(int i = 0; i < List_Nbr($3); i++){
 	Shape TheShape;
 	List_Read($3, i, &TheShape);
-	VisibilityShape(TheShape.Type, TheShape.Num, m);
+	VisibilityShape(TheShape.Type, TheShape.Num, 1);
       }
       List_Delete($3);
     }
@@ -1891,7 +1886,7 @@ Command :
 	SleepInSeconds($2);
       }
       else if(!strcmp($1, "Remesh")){
-	ReMesh(THEM);
+	ReMesh();
       }
       else if(!strcmp($1, "Mesh")){
 	yymsg(GERROR, "Mesh directives are not (yet) allowed in scripts");

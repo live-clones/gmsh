@@ -9,7 +9,7 @@
 class GVertex  : public GEntity 
 {
 public:
-  GVertex(GModel *m, int tag) : GEntity (m,tag) 
+  GVertex(GModel *m, int tag) : GEntity (m, tag) 
   {
   }
   virtual ~GVertex() 

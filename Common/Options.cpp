@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.286 2006-08-08 04:35:22 geuzaine Exp $
+// $Id: Options.cpp,v 1.287 2006-08-12 16:16:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2447,19 +2447,6 @@ double opt_general_manip_position1(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.manip_position[1] = (int)val;
   return CTX.manip_position[1];
-}
-
-double opt_general_visibility_mode(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.visibility_mode = (int)val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI)){
-    if(CTX.visibility_mode > 0 && CTX.visibility_mode < 3)
-      WID->vis_browser_mode->value(CTX.visibility_mode);
-  }
-#endif
-  return CTX.visibility_mode;
 }
 
 double opt_general_session_save(OPT_ARGS_NUM)

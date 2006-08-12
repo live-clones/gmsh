@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.427 2006-08-10 15:29:25 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.428 2006-08-12 16:16:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,6 @@
 #include <time.h>
 #include <map>
 
-#include "BDS.h"
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Geo.h"
@@ -52,7 +51,7 @@ using namespace std;
 
 extern Context_T CTX;
 extern GUI *WID;
-extern Mesh *THEM;
+extern GModel *GMODEL;
 
 // Helper routines
 
@@ -1323,139 +1322,38 @@ void message_save_cb(CALLBACK_ARGS)
 
 // Visibility Menu
 
-void select_vis_browser(int mode)
-{
-  for(int i = 1; i <= WID->vis_browser->size(); i++) {
-    Entity *e = (Entity *) WID->vis_browser->data(i);
-    if((mode & VIS_GEOM) && (mode & VIS_MESH)){
-      if((e->Visible() & VIS_GEOM) && (e->Visible() & VIS_MESH))
-	WID->vis_browser->select(i);
-    }
-    else if(mode & VIS_GEOM){
-      if(e->Visible() & VIS_GEOM)
-	WID->vis_browser->select(i);
-    }
-    else if(mode & VIS_MESH){
-      if(e->Visible() & VIS_MESH)
-	WID->vis_browser->select(i);
-    }
-  }
-}
-
 void visibility_cb(CALLBACK_ARGS)
 {
+  // get the visibility info from the model, and update the browser accordingly
   WID->create_visibility_window();
   WID->vis_browser->clear();
-
-  int type;
-  switch (WID->vis_type->value()) {
-  case 0:
-    type = ELEMENTARY;
-    break;
-  case 1:
-    type = PHYSICAL;
-    break;
-  default :
-    type = PARTITION;
-    break;
+  VisibilityManager::instance()->update(WID->vis_type->value());
+  for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++){
+    WID->vis_browser->add(VisibilityManager::instance()->getBrowserLine(i).c_str());
+    if(VisibilityManager::instance()->getVisibility(i))
+      WID->vis_browser->select(i + 1);
   }
-
-  int mode;
-  switch (WID->vis_browser_mode->value()) {
-  case 0:
-    mode = VIS_GEOM | VIS_MESH;
-    break;
-  case 1:
-    mode = VIS_GEOM;
-    break;
-  default:
-    mode = VIS_MESH;
-    break;
-  }
-
-  List_T *list = GetVisibilityList(type);
-
-  for(int i = 0; i < List_Nbr(list); i++) {
-    Entity *e = (Entity *) List_Pointer(list, i);
-    WID->vis_browser->add(e->BrowserLine(), e);
-  }
-  select_vis_browser(mode);
 }
 
 void visibility_ok_cb(CALLBACK_ARGS)
 {
-  InitVisibilityThroughPhysical();
-
-  switch (WID->vis_type->value()) {
-  case 0:
-    ClearVisibilityList(PHYSICAL);
-    break;
-  case 1:
-    ClearVisibilityList(ELEMENTARY);
-    break;
-  default:
-    // partitions: do nothing
-    break;
-  }
-
-  int mode;
-  switch (WID->vis_browser_mode->value()) {
-  case 0:
-    mode = VIS_GEOM | VIS_MESH;
-    CTX.mesh.changed = 1;
-    break;
-  case 1:
-    mode = VIS_GEOM;
-    break;
-  default:
-    mode = VIS_MESH;
-    CTX.mesh.changed = 1;
-    break;
-  }
-
-  for(int i = 1; i <= WID->vis_browser->size(); i++) {
-    Entity *e = (Entity *) WID->vis_browser->data(i);
-    if(WID->vis_browser->selected(i)) {
-      e->Visible(e->Visible() | mode);
-    }
-    else {
-      switch (WID->vis_browser_mode->value()) {
-      case 0:
-        e->Visible(0);
-        break;
-      case 1:
-        if(e->Visible() & VIS_MESH)
-          e->Visible(VIS_MESH);
-        else
-          e->Visible(0);
-        break;
-      default:
-        if(e->Visible() & VIS_GEOM)
-          e->Visible(VIS_GEOM);
-        else
-          e->Visible(0);
-        break;
-      }
-    }
-  }
-
-  if(WID->vis_butt[0]->value()) {
-    for(int i = 1; i <= WID->vis_browser->size(); i++) {
-      Entity *e = (Entity *) WID->vis_browser->data(i);
-      e->RecurVisible();
-    }
-    select_vis_browser(mode);
-  }
-
+  // get the selections made in the browser and apply them into the model
+  CTX.mesh.changed = 1;
+  VisibilityManager::instance()->setAllInvisible(WID->vis_type->value());
+  for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++)
+    if(WID->vis_browser->selected(i + 1))
+      VisibilityManager::instance()->setVisibility(i, true, WID->vis_butt[0]->value());
+  // then refresh the browser to account for recursive selections
+  for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++)
+    if(VisibilityManager::instance()->getVisibility(i))
+      WID->vis_browser->select(i + 1);
   Draw();
 }
 
 void visibility_sort_cb(CALLBACK_ARGS)
 {
-  int val;
   char *str = (char*)data;
-  static char tmpstr[256];
-
+  int val;
   if(!strcmp(str, "type"))
     val = 1;
   else if(!strcmp(str, "number"))
@@ -1469,33 +1367,33 @@ void visibility_sort_cb(CALLBACK_ARGS)
   else
     val = 0;
 
-  if(val == 0) { // (de)select everything
+  if(val == 0) { // select or deselect everything
     int selectall = 0;
-    for(int i = 1; i <= WID->vis_browser->size(); i++)
-      if(!WID->vis_browser->selected(i)) {
+    for(int i = 0; i < WID->vis_browser->size(); i++)
+      if(!WID->vis_browser->selected(i + 1)) {
         selectall = 1;
         break;
       }
     if(selectall)
-      for(int i = 1; i <= WID->vis_browser->size(); i++)
-        WID->vis_browser->select(i);
+      for(int i = 0; i < WID->vis_browser->size(); i++)
+        WID->vis_browser->select(i + 1);
     else
       WID->vis_browser->deselect();
   }
   else if(val == -1){ // invert the selection
     int *state = new int[WID->vis_browser->size()];
-    for(int i = 1; i <= WID->vis_browser->size(); i++)
-      state[i-1] = WID->vis_browser->selected(i);
+    for(int i = 0; i < WID->vis_browser->size(); i++)
+      state[i] = WID->vis_browser->selected(i + 1);
     WID->vis_browser->deselect();
-    for(int i = 1; i <= WID->vis_browser->size(); i++)
-      if(!state[i-1]) WID->vis_browser->select(i);
+    for(int i = 0; i < WID->vis_browser->size(); i++)
+      if(!state[i]) WID->vis_browser->select(i + 1);
     delete [] state;
   }
   else if(val == -2){ // create new parameter name for selection
-    for(int i = 1; i <= WID->vis_browser->size(); i++){
-      if(WID->vis_browser->selected(i)){
-	Entity *e = (Entity *) WID->vis_browser->data(i);
-	sprintf(tmpstr, "%d", e->Num());
+    for(int i = 0; i < WID->vis_browser->size(); i++){
+      if(WID->vis_browser->selected(i + 1)){
+	static char tmpstr[256];
+	sprintf(tmpstr, "%d", VisibilityManager::instance()->getTag(i));
 	WID->context_geometry_input[1]->value(tmpstr);
 	break;
       }
@@ -1503,32 +1401,99 @@ void visibility_sort_cb(CALLBACK_ARGS)
     WID->context_geometry_input[0]->value("NewName");
     WID->create_geometry_context_window(0);
   }
-  else { // sort
-    SetVisibilitySort(val);
+  else { // set new sorting mode
+    VisibilityManager::instance()->setSortMode(val);
     visibility_cb(NULL, NULL);
   }
 }
 
 void visibility_number_cb(CALLBACK_ARGS)
 {
-  int mode, type = (int)(long)data;
+  CTX.mesh.changed = 1;
 
+  int type = (int)(long)data;
+  bool val;
   if(type >= 100){ // show
-    mode = VIS_GEOM | VIS_MESH;
+    val = true;
     type -= 100;
-    CTX.mesh.changed = 1;
   }
   else{ // hide
-    mode = 0;
-    CTX.mesh.changed = 1;
+    val = false;
   }
   
   char *str = (char *)WID->vis_input[type]->value();  
-  SetVisibilityByNumber(str, type, mode);
+  int all = !strcmp(str, "all") || !strcmp(str, "*");
+  int num = all ? 0 : atoi(str); 
+  
+  switch(type){
+  case 0: // nodes
+    for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
+      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+	if(all || (*it)->mesh_vertices[i]->getNum() == num) 
+	  (*it)->mesh_vertices[i]->setVisibility(val);
+    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
+      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+	if(all || (*it)->mesh_vertices[i]->getNum() == num) 
+	  (*it)->mesh_vertices[i]->setVisibility(val);
+    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+	if(all || (*it)->mesh_vertices[i]->getNum() == num) 
+	  (*it)->mesh_vertices[i]->setVisibility(val);
+    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
+      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+	if(all || (*it)->mesh_vertices[i]->getNum() == num) 
+	  (*it)->mesh_vertices[i]->setVisibility(val);
+    break;
+  case 1: // elements
+    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++){
+      for(unsigned int i = 0; i < (*it)->lines.size(); i++)
+	if(all || (*it)->lines[i]->getNum() == num) 
+	  (*it)->lines[i]->setVisibility(val);
+    }
+    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++){
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+	if(all || (*it)->triangles[i]->getNum() == num) 
+	  (*it)->triangles[i]->setVisibility(val);
+      for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
+	if(all || (*it)->quadrangles[i]->getNum() == num) 
+	  (*it)->quadrangles[i]->setVisibility(val);
+    }
+    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++){
+      for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
+	if(all || (*it)->tetrahedra[i]->getNum() == num) 
+	  (*it)->tetrahedra[i]->setVisibility(val);
+      for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
+	if(all || (*it)->hexahedra[i]->getNum() == num) 
+	  (*it)->hexahedra[i]->setVisibility(val);
+      for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
+	if(all || (*it)->prisms[i]->getNum() == num) 
+	  (*it)->prisms[i]->setVisibility(val);
+      for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
+	if(all || (*it)->pyramids[i]->getNum() == num) 
+	  (*it)->pyramids[i]->setVisibility(val);
+    }
+    break;
+  case 2: // point
+    for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
+      if(all || (*it)->tag() == num) (*it)->setVisibility(val);
+    break;
+  case 3: // line
+    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
+      if(all || (*it)->tag() == num) (*it)->setVisibility(val);
+    break;
+  case 4: // surface
+    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+      if(all || (*it)->tag() == num) (*it)->setVisibility(val);
+    break;
+  case 5: // volume
+    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
+      if(all || (*it)->tag() == num) (*it)->setVisibility(val);
+    break;
+  }
+
   int pos = WID->vis_browser->position();
   visibility_cb(NULL, NULL);
   WID->vis_browser->position(pos);
-
   Draw();
 }
 
@@ -2294,8 +2259,6 @@ void geometry_elementary_add_new_volume_cb(CALLBACK_ARGS)
 
 static void _action_point_line_surface_volume(int action, int mode, char *what)
 {
-  extern void BDS_To_Mesh(Mesh *m);
-
   GVertex *v[SELECTION_MAX_HITS];
   GEdge *c[SELECTION_MAX_HITS];
   GFace *s[SELECTION_MAX_HITS];
@@ -2331,12 +2294,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
     WID->create_mesh_context_window(0);
   }
   else if(action == 10){
-    if(THEM && THEM->bds) {
-      const double angle = CTX.mesh.dihedral_angle_tol * M_PI / 180.;
-      const int nb_t = CTX.mesh.edge_prolongation_threshold;
-      THEM->bds->classify(angle, nb_t);
-      BDS_To_Mesh(THEM); 
-    }
+    Msg(GERROR, "BDS->classify(angle, edge_prolongation) must be reinterfaced");
   }
 
   Draw();
@@ -2485,20 +2443,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	  add_recosurf(List1, CTX.filename);
 	  break;
 	case 10:
-	  if(THEM && THEM->bds) {
-	    for(int i = 0; i < List_Nbr(List1); i++){
-	      int num;
-	      List_Read(List1, i, &num);
-	      BDS_GeomEntity *g = THEM->bds->get_geom(num, 1);
-	      std::list<BDS_Edge*>::iterator it  = g->e.begin();
-	      std::list<BDS_Edge*>::iterator ite = g->e.end();
-	      while (it!=ite){			
-		BDS_Edge *e = (*it);
-		e->status = 1;
-		++it;
-	      }
-	    }
-	  }
+	  Msg(GERROR, "BDS->get_geom and set status must be reinterfaced");
 	  break;
 	default:
 	  Msg(GERROR, "Unknown action on selected entities");
@@ -2512,12 +2457,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
     }
     if(ib == 'q') {
       if(action == 10){
-	if(THEM && THEM->bds) {
-	  const double angle = CTX.mesh.dihedral_angle_tol * M_PI / 180.;
-	  const int nb_t = CTX.mesh.edge_prolongation_threshold;
-	  THEM->bds->classify(angle, nb_t);
-	  BDS_To_Mesh(THEM); 
-	}
+	Msg(GERROR, "BDS->classify() must be reinterfaced");
       }
       ZeroHighlight();
       Draw();
@@ -2870,7 +2810,7 @@ void mesh_degree_cb(CALLBACK_ARGS)
 {
   switch ((long)data) {
   case 2: 
-    Degre2(THEM->status);
+    Degre2(GMODEL->getMeshStatus());
     break;
   case 1:
   default:
@@ -2899,20 +2839,14 @@ void mesh_optimize_cb(CALLBACK_ARGS)
 
 void mesh_remesh_cb(CALLBACK_ARGS)
 {
-  ReMesh(THEM);
+  ReMesh();
   Draw();
   Msg(STATUS2N, " ");
 }
 
 void mesh_update_edges_cb(CALLBACK_ARGS)
 {
-  extern  void BDS_To_Mesh(Mesh *m);
-  if(THEM && THEM->bds){
-    THEM->bds->classify(CTX.mesh.dihedral_angle_tol * M_PI/180,
-			CTX.mesh.edge_prolongation_threshold);
-    BDS_To_Mesh (THEM); 
-    Draw();
-  }
+  Msg(GERROR, "BDS->classify() must be reinterfaced");
 }
 
 void mesh_update_more_edges_cb(CALLBACK_ARGS)
@@ -3096,7 +3030,6 @@ void mesh_define_elliptic_surface_cb(CALLBACK_ARGS)
 
 void solver_cb(CALLBACK_ARGS)
 {
-  char file[256], tmp[256];
   static int init = 0, first[MAXSOLVERS];
   int num = (int)(long)data;
 
@@ -3107,13 +3040,14 @@ void solver_cb(CALLBACK_ARGS)
   }
 
   if(first[num]) {
+    char file[256];
     first[num] = 0;
     strcpy(file, CTX.base_filename);
     strcat(file, SINFO[num].extension);
     WID->solver[num].input[0]->value(file);
   }
   if(SINFO[num].nboptions) {
-    char file[1024];
+    char file[256], tmp[256];
     FixWindowsPath((char*)WID->solver[num].input[0]->value(), file);
     sprintf(tmp, "\"%s\"", file);
     sprintf(file, SINFO[num].name_command, tmp);

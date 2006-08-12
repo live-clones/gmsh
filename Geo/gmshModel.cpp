@@ -41,16 +41,19 @@ void gmshModel::convertFromUglyOldDataStructuresgmshModel()
 	if(points.find(c->beg) == points.end()){
 	  points.insert(c->beg);
 	  gmshVertex *v = new gmshVertex(this, c->beg);
+	  v->setVisibility(c->beg->Visible);
 	  add(v);
 	}
 	if(points.find(c->end) == points.end()){
 	  points.insert(c->end);
 	  gmshVertex *v = new gmshVertex(this, c->end);
+	  v->setVisibility(c->beg->Visible);
 	  add(v);
 	}
-	gmshEdge *e = new gmshEdge (this, c,
-				    vertexByTag(c->beg->Num),
-				    vertexByTag(c->end->Num) );
+	gmshEdge *e = new gmshEdge(this, c,
+				   vertexByTag(c->beg->Num),
+				   vertexByTag(c->end->Num));
+	e->setVisibility(c->Visible);
 	add(e);
       }
     }
@@ -61,7 +64,8 @@ void gmshModel::convertFromUglyOldDataStructuresgmshModel()
     for(int i = 0; i < List_Nbr(surfaces); i++){
       Surface *s;
       List_Read(surfaces, i, &s);
-      gmshFace *f = new gmshFace ( this, s );
+      gmshFace *f = new gmshFace(this, s);
+      f->setVisibility(s->Visible);
       add(f);
     }
     List_Delete(surfaces);
@@ -72,6 +76,7 @@ void gmshModel::convertFromUglyOldDataStructuresgmshModel()
       Volume *v;
       List_Read(volumes, i, &v);
       gmshRegion *r = new gmshRegion(this, v);
+      r->setVisibility(v->Visible);
       add(r);
     }
     List_Delete(volumes);

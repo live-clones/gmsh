@@ -63,9 +63,6 @@
 
 #define CONV_VALUE    0.8
 
-#define VIS_GEOM  (1<<0)
-#define VIS_MESH  (1<<1)
-
 #define NOTTOLINK 1
 #define TOLINK    2
 

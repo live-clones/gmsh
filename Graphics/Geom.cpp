@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.104 2006-08-06 22:58:49 geuzaine Exp $
+// $Id: Geom.cpp,v 1.105 2006-08-12 16:16:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -35,7 +35,7 @@ extern GModel *GMODEL;
 
 void drawGeoVertex(GVertex *v)
 {
-  if(!(v->drawAttributes.Visible & VIS_GEOM))
+  if(!v->getVisibility())
     return;
 
   if(CTX.render_mode == GMSH_SELECT) {
@@ -43,7 +43,7 @@ void drawGeoVertex(GVertex *v)
     glPushName(v->tag());
   }
   
-  if(v->drawAttributes.Frozen > 0) {
+  if(v->getFlag() > 0) {
     glPointSize(CTX.geom.point_sel_size);
     gl2psPointSize(CTX.geom.point_sel_size * CTX.print.eps_point_size_factor);
     glColor4ubv((GLubyte *) & CTX.color.geom.point_sel);
@@ -56,7 +56,7 @@ void drawGeoVertex(GVertex *v)
 
   if(CTX.geom.points) {
     if(CTX.geom.point_type == 1) {
-      if(v->drawAttributes.Frozen > 0)
+      if(v->getFlag() > 0)
 	Draw_Sphere(CTX.geom.point_sel_size, v->x(), v->y(), v->z(), 
 		    CTX.geom.light);
       else
@@ -101,7 +101,7 @@ void drawGeoVertex(GVertex *v)
 
 void drawGeoEdge(GEdge *c)
 {
-  if(c->tag() < 0 || !(c->drawAttributes.Visible & VIS_GEOM))
+  if(!c->getVisibility())
     return;
 
   if(CTX.render_mode == GMSH_SELECT) {
@@ -109,7 +109,7 @@ void drawGeoEdge(GEdge *c)
     glPushName(c->tag());
   }
 
-  if(c->drawAttributes.Frozen > 0) {
+  if(c->getFlag() > 0) {
     glLineWidth(CTX.geom.line_sel_width);
     gl2psLineWidth(CTX.geom.line_sel_width * CTX.print.eps_line_width_factor);
     glColor4ubv((GLubyte *) & CTX.color.geom.line_sel);
@@ -142,7 +142,7 @@ void drawGeoEdge(GEdge *c)
 	  double x[2] = {p1.x(), p2.x()};
 	  double y[2] = {p1.y(), p2.y()};
 	  double z[2] = {p1.z(), p2.z()};
-	  Draw_Cylinder(c->drawAttributes.Frozen > 0 ? CTX.geom.line_sel_width : 
+	  Draw_Cylinder(c->getFlag() > 0 ? CTX.geom.line_sel_width : 
 			CTX.geom.line_width, x, y, z, CTX.geom.light);
 	  if(sp) {
 	    Msg(FATAL, "GL_enhanceLine not done");
@@ -196,7 +196,7 @@ void drawGeoEdge(GEdge *c)
 
 void drawGeoFace(GFace *s)
 {
-  if(!(s->drawAttributes.Visible & VIS_GEOM))
+  if(!s->getVisibility())
     return;
 
   if(CTX.render_mode == GMSH_SELECT) {
@@ -204,7 +204,7 @@ void drawGeoFace(GFace *s)
     glPushName(s->tag());
   }
 
-  if(s->drawAttributes.Frozen > 0) {
+  if(s->getFlag() > 0) {
     glLineWidth(CTX.geom.line_sel_width / 2.);
     gl2psLineWidth(CTX.geom.line_sel_width / 2. *
 		   CTX.print.eps_line_width_factor);
@@ -278,7 +278,7 @@ void Draw_Geom()
 void HighlightEntity(GEntity *e, int permanent)
 {
   if(permanent)
-    e->drawAttributes.Frozen = 2;
+    e->setFlag(2);
   else
     Msg(STATUS2N, "%s", e->getInfoString().c_str());
 }
@@ -309,7 +309,7 @@ void HighlightEntityNum(int v, int c, int s, int permanent)
 
 void ZeroHighlightEntity(GEntity *e)
 {
-  e->drawAttributes.Frozen = -2;
+  e->setFlag(-2);
 }
 
 void ZeroHighlightEntity(GVertex *v, GEdge *c, GFace *s)

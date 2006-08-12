@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.98 2006-05-13 22:04:04 geuzaine Exp $
+// $Id: CAD.cpp,v 1.99 2006-08-12 16:16:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,6 @@
 #include "Create.h"
 #include "CAD.h"
 #include "Edge.h"
-#include "Visibility.h"
 #include "Context.h"
 
 extern Mesh *THEM;
@@ -592,9 +591,17 @@ void ColorShape(int Type, int Num, unsigned int Color)
 
 void VisibilityShape(int Type, int Num, int Mode)
 {
+  Vertex *v;
+  Curve *c;
+  Surface *s;
+  Volume *V;
+
   switch (Type) {
   case MSH_POINT:
-    SetVisibilityByNumber(Num, 2, Mode);
+    if((v = FindPoint(Num, THEM)))
+      v->Visible = Mode;
+    else
+      Msg(WARNING, "Unknown point %d (use '*' to hide/show all points)", Num);
     break;
   case MSH_SEGM_LINE:
   case MSH_SEGM_SPLN:
@@ -607,21 +614,53 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_SEGM_NURBS:
   case MSH_SEGM_PARAMETRIC:
   case MSH_SEGM_DISCRETE:
-    SetVisibilityByNumber(Num, 3, Mode);
+    if((c = FindCurve(Num, THEM)))
+      c->Visible = Mode;
+    else
+      Msg(WARNING, "Unknown line %d (use '*' to hide/show all lines)", Num);
     break;
   case MSH_SURF_NURBS:
   case MSH_SURF_TRIC:
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
   case MSH_SURF_DISCRETE:
-    SetVisibilityByNumber(Num, 4, Mode);
+    if((s = FindSurface(Num, THEM)))
+      s->Visible = Mode;
+    else
+      Msg(WARNING, "Unknown surface %d (use '*' to hide/show all surfaces)", Num);
     break;
   case MSH_VOLUME:
   case MSH_VOLUME_DISCRETE:
-    SetVisibilityByNumber(Num, 5, Mode);
+    if((V = FindVolume(Num, THEM)))
+      V->Visible = Mode;
+    else
+      Msg(WARNING, "Unknown volume %d (use '*' to hide/show all volumes)", Num);
     break;
   default:
     break;
+  }
+}
+
+static int vmode;
+static void vis_nod(void *a, void *b){ (*(Vertex **) a)->Visible = vmode; }
+static void vis_cur(void *a, void *b){ (*(Curve **) a)->Visible = vmode; }
+static void vis_sur(void *a, void *b){ (*(Surface **) a)->Visible = vmode; }
+static void vis_vol(void *a, void *b){ (*(Volume **) a)->Visible = vmode; }
+
+void VisibilityShape(char *str, int Type, int Mode)
+{
+  vmode = Mode;
+
+  if(!strcmp(str, "all") || !strcmp(str, "*")) {
+    switch (Type) {
+    case 0: Tree_Action(THEM->Points, vis_nod); break;
+    case 1: Tree_Action(THEM->Curves, vis_cur); break;
+    case 2: Tree_Action(THEM->Surfaces, vis_sur); break;
+    case 3: Tree_Action(THEM->Volumes, vis_vol); break;
+    }
+  }
+  else {
+    VisibilityShape(Type, atoi(str), Mode);
   }
 }
 

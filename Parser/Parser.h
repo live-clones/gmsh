@@ -21,18 +21,19 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "List.h"
+#include "Tree.h"
 
 typedef struct {
   char *Name;
   List_T *val;
 } Symbol;
 
-void InitSymbols (void);
+void InitSymbols();
 
 extern Tree_T *Symbol_T;
 
-int yyparse (void);
-int yylex ();
+int yyparse();
+int yylex();
 void force_yyflush();
 
 extern FILE *yyin;
@@ -40,6 +41,5 @@ extern int yylineno;
 extern char yyname[256];
 extern char *yytext;
 extern int yyerrorstate;
-
 
 #endif

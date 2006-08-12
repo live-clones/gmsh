@@ -22,15 +22,12 @@ extern int quadfaces_pyramid[1][4];
 
 class MElement 
 {
-
  private:
-
   static int _globalNum;
   int _num, _partition;
   bool _visible;
 
  public :
-
   MElement(int num=0, int part=0) 
     : _partition(part), _visible(true) 
   {
@@ -51,8 +48,8 @@ class MElement
   virtual int getPartition(){ return _partition; }
 
   // get/set the visibility flag
-  virtual bool isVisible(){ return _visible; }
-  virtual void setVisible(bool val){ _visible = val; }
+  virtual bool getVisibility(){ return _visible; }
+  virtual void setVisibility(bool val){ _visible = val; }
 
   // get the vertices
   virtual int getNumVertices() = 0;

@@ -59,6 +59,7 @@ void CopyShape(int Type, int Num, int *New);
 void DeleteShape(int Type, int Num);
 void ColorShape(int Type, int Num, unsigned int Color);
 void VisibilityShape(int Type, int Num, int Mode);
+void VisibilityShape(char *str, int Type, int Mode);
 void ExtrudeShape(int extrude_type, int shape_type, int shape_num,
 		  double T0, double T1, double T2,
 		  double A0, double A1, double A2,

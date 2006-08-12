@@ -40,6 +40,18 @@ std::list<GVertex*> GFace::vertices() const
   return ret;
 }
 
+void GFace::setVisibility(bool val, bool recursive)
+{
+  GEntity::setVisibility(val);
+  if(recursive){
+    std::list<GEdge*>::iterator it = l_edges.begin();
+    while (it != l_edges.end()){
+      (*it)->setVisibility(val, recursive);
+      ++it;
+    }
+  }
+}
+
 void GFace::recomputeMeshPartitions()
 {
   for(unsigned int i = 0; i < triangles.size(); i++) {

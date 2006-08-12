@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.13 2006-08-11 18:48:39 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.14 2006-08-12 16:16:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,788 +19,147 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-/*
-std::vector<int> GModel::getMeshPartitions()
-{
-  std::vector<int> part;
-  std::set<int>::const_iterator it = meshPartitions.begin();
-  std::set<int>::const_iterator ite = meshPartitions.end();
-  for(; it != ite; ++it) part.push_back(*it);
-  std::sort(part.begin(), part.end());
-  return part;
-}
-*/
-
-#include "Gmsh.h"
-#include "Geo.h"
-#include "CAD.h"
-#include "Mesh.h"
-#include "Parser.h"
 #include "Visibility.h"
+#include "GModel.h"
+#include "Parser.h" // for Symbol_T
 
-extern Mesh *THEM;
+extern GModel *GMODEL;
 
-static List_T *ElementaryEntities = NULL, *PhysicalEntities = NULL, *Partitions = NULL;
-static Tree_T *VisibleThroughPhysical[4] = { NULL, NULL, NULL, NULL };
-static List_T *NumxSymb = NULL;
-static int Sort = 1;
+VisibilityManager *VisibilityManager::manager = 0;
 
-int Entity::Num()
-{
-  switch (type) {
-  case 1:
-  case 2:
-  case 3:
-  case 4:
-    return data.physical ? data.physical->Num : 0;
-  case 5:
-    return data.vertex ? data.vertex->Num : 0;
-  case 6:
-    return data.curve ? data.curve->Num : 0;
-  case 7:
-    return data.surface ? data.surface->Num : 0;
-  case 8:
-    return data.volume ? data.volume->Num : 0;
-  case 9:
-    return data.partition ? data.partition->Num : 0;
-  default:
-    return 0;
-  }
-}
-
-char *Entity::Type()
-{
-  switch (type) {
-  case 1:
-  case 5:
-    return "Point";
-  case 2:
-  case 6:
-    return "Line";
-  case 3:
-  case 7:
-    return "Surface";
-  case 4:
-  case 8:
-    return "Volume";
-  case 9:
-    return "Partition";
-  default:
-    return "Unknown";
-  }
-}
-
-char *Entity::Name()
-{
-  char *tmp = "";
-  return str ? str : tmp;
-}
-
-static char browserline[512];
-char *Entity::BrowserLine()
-{
-  if(type) {
-    sprintf(browserline, "\t%s\t%d\t%s", Type(), Num(), Name());
-    return browserline;
-  }
-  else
-    return Name();
-}
-
-int Entity::Visible()
-{
-  switch (type) {
-  case 1:
-  case 2:
-  case 3:
-  case 4:
-    return data.physical ? data.physical->Visible : 0;
-  case 5:
-    return data.vertex ? data.vertex->Visible : 0;
-  case 6:
-    return data.curve ? data.curve->Visible : 0;
-  case 7:
-    return data.surface ? data.surface->Visible : 0;
-  case 8:
-    return data.volume ? data.volume->Visible : 0;
-  case 9:
-    return data.partition ? data.partition->Visible : 0;
-  default:
-    return 0;
-  }
-}
-
-void Entity::Visible(int mode)
-{
-  Vertex *v;
-  Curve *c;
-  Surface *s;
-  Volume *V;
-  int i, j;
-
-  switch (type) {
-  case 1:
-    if(!data.physical)
-      break;
-    data.physical->Visible = mode;
-    for(i = 0; i < List_Nbr(data.physical->Entities); i++) {
-      List_Read(data.physical->Entities, i, &j);
-      if((v = FindPoint(j, THEM))) {
-        if(Tree_Search(VisibleThroughPhysical[0], &j)) {
-          v->Visible = v->Visible | mode;
-        }
-        else {
-          v->Visible = mode;
-          if(mode)
-            Tree_Add(VisibleThroughPhysical[0], &j);
-        }
-      }
-    }
-    break;
-  case 2:
-    if(!data.physical)
-      break;
-    data.physical->Visible = mode;
-    for(i = 0; i < List_Nbr(data.physical->Entities); i++) {
-      List_Read(data.physical->Entities, i, &j);
-      if((c = FindCurve(abs(j), THEM))) {
-        if(Tree_Search(VisibleThroughPhysical[1], &j)) {
-          c->Visible = c->Visible | mode;
-        }
-        else {
-          c->Visible = mode;
-          if(mode)
-            Tree_Add(VisibleThroughPhysical[1], &j);
-        }
-      }
-    }
-    break;
-  case 3:
-    if(!data.physical)
-      break;
-    data.physical->Visible = mode;
-    for(i = 0; i < List_Nbr(data.physical->Entities); i++) {
-      List_Read(data.physical->Entities, i, &j);
-      if((s = FindSurface(abs(j), THEM))) {
-        if(Tree_Search(VisibleThroughPhysical[2], &j)) {
-          s->Visible = s->Visible | mode;
-        }
-        else {
-          s->Visible = mode;
-          if(mode)
-            Tree_Add(VisibleThroughPhysical[2], &j);
-        }
-      };
-    }
-    break;
-  case 4:
-    if(!data.physical)
-      break;
-    data.physical->Visible = mode;
-    for(i = 0; i < List_Nbr(data.physical->Entities); i++) {
-      List_Read(data.physical->Entities, i, &j);
-      if((V = FindVolume(abs(j), THEM))) {
-        if(Tree_Search(VisibleThroughPhysical[3], &j)) {
-          V->Visible = V->Visible | mode;
-        }
-        else {
-          V->Visible = mode;
-          if(mode)
-            Tree_Add(VisibleThroughPhysical[3], &j);
-        }
-      }
-    }
-    break;
-  case 5:
-    if(!data.vertex)
-      break;
-    data.vertex->Visible = mode;
-    break;
-  case 6:
-    if(!data.curve)
-      break;
-    data.curve->Visible = mode;
-    break;
-  case 7:
-    if(!data.surface)
-      break;
-    data.surface->Visible = mode;
-    break;
-  case 8:
-    if(!data.volume)
-      break;
-    data.volume->Visible = mode;
-    break;
-  case 9:
-    if(!data.partition)
-      break;
-    data.partition->Visible = mode;
-    break;
-  }
-}
-
-static void Recur(Curve * c, int mode)
-{
-  int k;
-  Vertex *v;
-  for(k = 0; k < List_Nbr(c->Control_Points); k++) {
-    List_Read(c->Control_Points, k, &v);
-    v->Visible = v->Visible | mode;
-  }
-}
-
-static void Recur(Surface * s, int mode)
-{
-  int k, l;
-  Vertex *v;
-  Curve *c;
-  for(k = 0; k < List_Nbr(s->Generatrices); k++) {
-    List_Read(s->Generatrices, k, &c);
-    if(c->Num < 0)
-      c = FindCurve(-c->Num, THEM);
-    if(c) {
-      c->Visible = c->Visible | mode;
-      for(l = 0; l < List_Nbr(c->Control_Points); l++) {
-        List_Read(c->Control_Points, l, &v);
-        v->Visible = v->Visible | mode;
-      }
+class VisLessThan{
+ public:
+  bool operator()(const Vis *v1, const Vis *v2) const
+  {
+    switch(VisibilityManager::instance()->getSortMode()){
+    case  1: return v1->getDim() < v2->getDim() ? true : false;
+    case -1: return v1->getDim() > v2->getDim() ? true : false;
+    case  2: return v1->getTag() < v2->getTag() ? true : false;
+    case -2: return v1->getTag() > v2->getTag() ? true : false;
+    case  3: 
+      return strcmp(VisibilityManager::instance()->getLabel(v1->getTag()).c_str(), 
+		    VisibilityManager::instance()->getLabel(v2->getTag()).c_str()) < 0 ? 
+	true : false;
+    default: 
+      return strcmp(VisibilityManager::instance()->getLabel(v1->getTag()).c_str(), 
+		    VisibilityManager::instance()->getLabel(v2->getTag()).c_str()) > 0 ? 
+	true : false;
     }
   }
-}
+};
 
-static void Recur(Volume * V, int mode)
-{
-  int k, l, m;
-  Vertex *v;
-  Curve *c;
-  Surface *s;
-  for(k = 0; k < List_Nbr(V->Surfaces); k++) {
-    List_Read(V->Surfaces, k, &s);
-    s->Visible = s->Visible | mode;
-    for(l = 0; l < List_Nbr(s->Generatrices); l++) {
-      List_Read(s->Generatrices, l, &c);
-      if(c->Num < 0)
-        c = FindCurve(-c->Num, THEM);
-      if(c) {
-        c->Visible = c->Visible | mode;
-        for(m = 0; m < List_Nbr(c->Control_Points); m++) {
-          List_Read(c->Control_Points, m, &v);
-          v->Visible = v->Visible | mode;
-        }
-      }
-    }
-  }
-}
-
-void Entity::RecurVisible()
-{
-  int j, k, mode;
-  Curve *c;
-  Surface *s;
-  Volume *V;
-
-  mode = Visible();
-  if(mode) {
-    switch (type) {
-    case 1:
-      break;
-    case 2:
-      if(!data.physical)
-        break;
-      for(j = 0; j < List_Nbr(data.physical->Entities); j++) {
-        List_Read(data.physical->Entities, j, &k);
-        if((c = FindCurve(abs(k), THEM)))
-          Recur(c, mode);
-      }
-      break;
-    case 3:
-      if(!data.physical)
-        break;
-      for(j = 0; j < List_Nbr(data.physical->Entities); j++) {
-        List_Read(data.physical->Entities, j, &k);
-        if((s = FindSurface(abs(k), THEM)))
-          Recur(s, mode);
-      }
-      break;
-    case 4:
-      if(!data.physical)
-        break;
-      for(j = 0; j < List_Nbr(data.physical->Entities); j++) {
-        List_Read(data.physical->Entities, j, &k);
-        if((V = FindVolume(abs(k), THEM)))
-          Recur(V, mode);
-      }
-      break;
-    case 5:
-      break;
-    case 6:
-      if(!data.curve)
-        break;
-      Recur(data.curve, mode);
-      break;
-    case 7:
-      if(!data.surface)
-        break;
-      Recur(data.surface, mode);
-      break;
-    case 8:
-      if(!data.volume)
-        break;
-      Recur(data.volume, mode);
-      break;
-    case 9:
-      break;
-    }
-  }
-}
-
-
-
-
-void SetVisibilitySort(int sort)
-{
-  if(Sort == sort)
-    Sort = -sort;
-  else
-    Sort = sort;
-}
-
-static int CompareEntity(const void *a, const void *b)
-{
-  Entity *p = (Entity *) a, *q = (Entity *) b;
-  switch (Sort) {
-  case 1:
-    return p->type - q->type;
-  case -1:
-    return q->type - p->type;
-  case 2:
-    return p->Num() - q->Num();
-  case -2:
-    return q->Num() - p->Num();
-  case 3:
-    return strcmp(p->Name(), q->Name());
-  case -3:
-    return strcmp(q->Name(), p->Name());
-  default:
-    return 0;
-  }
-}
-
-static int CompareNxS(const void *a, const void *b)
-{
-  NxS *p = (NxS *) a, *q = (NxS *) b;
-  return p->n - q->n;
-}
-
-static char *GetString(int num)
-{
-  NxS nxs, *pnxs;
-  nxs.n = num;
-  if((pnxs = (NxS *) List_PQuery(NumxSymb, &nxs, CompareNxS)))
-    return pnxs->s;
-  else
-    return NULL;
-}
-
-static void AddPhysical(void *a, void *b)
-{
-  PhysicalGroup *p = *(PhysicalGroup **) a;
-  Entity e;
-  switch (p->Typ) {
-  case MSH_PHYSICAL_POINT:
-    e.type = 1;
-    break;
-  case MSH_PHYSICAL_LINE:
-    e.type = 2;
-    break;
-  case MSH_PHYSICAL_SURFACE:
-    e.type = 3;
-    break;
-  case MSH_PHYSICAL_VOLUME:
-    e.type = 4;
-    break;
-  }
-  e.data.physical = p;
-  e.str = GetString(p->Num);
-  List_Add(PhysicalEntities, &e);
-}
-
-static void AddPartition(void *a, void *b)
-{
-  MeshPartition *p = *(MeshPartition **) a;
-  Entity e;
-  e.type = 9;
-  e.data.partition = p;
-  e.str = NULL;
-  List_Add(Partitions, &e);
-}
-
-static void AddVertex(void *a, void *b)
-{
-  Vertex *v = *(Vertex **) a;
-  Entity e;
-  e.type = 5;
-  e.data.vertex = v;
-  e.str = GetString(v->Num);
-  List_Add(ElementaryEntities, &e);
-}
-
-static void AddCurve(void *a, void *b)
-{
-  Curve *c = *(Curve **) a;
-  if(c->Num < 0)
-    return;
-  Entity e;
-  e.type = 6;
-  e.data.curve = c;
-  e.str = GetString(c->Num);
-  List_Add(ElementaryEntities, &e);
-}
-
-static void AddSurface(void *a, void *b)
-{
-  Surface *s = *(Surface **) a;
-  Entity e;
-  e.type = 7;
-  e.data.surface = s;
-  e.str = GetString(s->Num);
-  List_Add(ElementaryEntities, &e);
-}
-
-static void AddVolume(void *a, void *b)
-{
-  Volume *v = *(Volume **) a;
-  Entity e;
-  e.type = 8;
-  e.data.volume = v;
-  e.str = GetString(v->Num);
-  List_Add(ElementaryEntities, &e);
-}
-
-static void addInNumxSymb(void *a, void *b){
-  Symbol *s;
-  NxS nxs;
-
-  s = (Symbol *)a;
+static void setLabels(void *a, void *b){
+  Symbol *s = (Symbol *)a;
   for(int j = 0; j < List_Nbr(s->val); j++) {
-    nxs.n = (int)(*(double *)List_Pointer(s->val, j));
-    nxs.s = s->Name;
-    List_Add(NumxSymb, &nxs);
+    double tag;
+    List_Read(s->val, j, &tag);
+    VisibilityManager::instance()->setLabel((int)tag, std::string(s->Name));
   }
 }
 
-List_T *GetVisibilityList(int type)
+void VisibilityManager::update(int type)
 {
-  if(!ElementaryEntities)
-    ElementaryEntities = List_Create(100, 100, sizeof(Entity));
-  else
-    List_Reset(ElementaryEntities);
+  _labels.clear();
+  Tree_Action(Symbol_T, setLabels);
 
-  if(!PhysicalEntities)
-    PhysicalEntities = List_Create(100, 100, sizeof(Entity));
-  else
-    List_Reset(PhysicalEntities);
-
-  if(!Partitions)
-    Partitions = List_Create(100, 100, sizeof(Entity));
-  else
-    List_Reset(Partitions);
-
-  if(!NumxSymb)
-    NumxSymb = List_Create(100, 100, sizeof(NxS));
-  else
-    List_Reset(NumxSymb);
-
-  Tree_Action(Symbol_T, addInNumxSymb);
-
-  if(THEM){
-    List_Action(THEM->PhysicalGroups, AddPhysical);
-    List_Action(THEM->Partitions, AddPartition);
-    Tree_Action(THEM->Points, AddVertex);
-    Tree_Action(THEM->Curves, AddCurve);
-    Tree_Action(THEM->Surfaces, AddSurface);
-    Tree_Action(THEM->Volumes, AddVolume);
+  for(unsigned int i = 0; i < _entities.size(); i++)
+    delete _entities[i];
+  _entities.clear();
+  
+  if(type == 0){ // elementary entities
+    for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
+      _entities.push_back(new VisElementary(*it));
+    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
+      _entities.push_back(new VisElementary(*it));
+    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+      _entities.push_back(new VisElementary(*it));
+    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
+      _entities.push_back(new VisElementary(*it));
   }
-
-  List_Sort(ElementaryEntities, CompareEntity);
-  List_Sort(PhysicalEntities, CompareEntity);
-  List_Sort(Partitions, CompareEntity);
-
-  switch (type) {
-  case ELEMENTARY:
-    return ElementaryEntities;
-  case PHYSICAL:
-    return PhysicalEntities;
-  case PARTITION:
-  default:
-    return Partitions;
-  }
-}
-
-void ClearVisibilityList(int type)
-{
-  int i;
-  Entity *e;
-  List_T *list;
-  switch(type){
-  case ELEMENTARY : list = ElementaryEntities; break;
-  case PHYSICAL : list = PhysicalEntities; break;
-  case PARTITION : list = Partitions; break;
-  default: return;
-  }
-  for(i = 0; i < List_Nbr(list); i++) {
-    e = (Entity *) List_Pointer(list, i);
-    e->Visible(0);
-  }
-}
-
-void InitVisibilityThroughPhysical()
-{
-  int i;
-  for(i = 0; i < 4; i++) {
-    if(VisibleThroughPhysical[i])
-      Tree_Delete(VisibleThroughPhysical[i]);
-    VisibleThroughPhysical[i] = Tree_Create(sizeof(int), fcmp_absint);
-  }
-}
-
-void SetVisibilityByNumber(int num, int type, int mode)
-{
-  int i, found;
-  List_T *tmp;
-  Vertex vv, *v, **pv;
-  Curve *c;
-  Surface *s;
-  Volume *V;
-  Simplex SS, *S, **pS;
-  SimplexBase SSB, *SB, **pSB;
-  Quadrangle QQ, *Q, **pQ;
-  Hexahedron HH, *H, **pH;
-  Prism PP, *P, **pP;
-  Pyramid YY, *Y, **pY;
-
-  if(!THEM)
-    return;
-
-  switch (type) {
-  case 0:    //node
-    vv.Num = num;
-    v = &vv;
-    if((pv = (Vertex **) Tree_PQuery(THEM->Vertices, &v)))
-      (*pv)->Visible = mode;
-    else
-      Msg(WARNING, "Unknown node %d (use '*' to hide/show all nodes)", num);
-    break;
-  case 1:    //element
-    SS.Num = num; S = &SS;
-    SSB.Num = num; SB = &SSB;
-    QQ.Num = num; Q = &QQ;
-    HH.Num = num; H = &HH;
-    PP.Num = num; P = &PP;
-    YY.Num = num; Y = &YY;
-    found = 0;
-    // in curves
-    tmp = Tree2List(THEM->Curves);
-    for(i = 0; i < List_Nbr(tmp); i++) {
-      List_Read(tmp, i, &c);
-      if((pS = (Simplex **) Tree_PQuery(c->Simplexes, &S))) {
-	(*pS)->Visible = mode;
-	found = 1;
-	break;
-      }
-      if((pSB = (SimplexBase **) Tree_PQuery(c->SimplexesBase, &SB))) {
-	(*pSB)->Visible = mode;
-	found = 1;
-	break;
-      }
-    }
-    List_Delete(tmp);
-    if(found)
-      break;
-    // in surfaces
-    tmp = Tree2List(THEM->Surfaces);
-    for(i = 0; i < List_Nbr(tmp); i++) {
-      List_Read(tmp, i, &s);
-      if((pS = (Simplex **) Tree_PQuery(s->Simplexes, &S))) {
-	(*pS)->Visible = mode;
-	found = 1;
-	break;
-      }
-      if((pSB = (SimplexBase **) Tree_PQuery(s->SimplexesBase, &SB))) {
-	(*pSB)->Visible = mode;
-	found = 1;
-	break;
-      }
-      if((pQ = (Quadrangle **) Tree_PQuery(s->Quadrangles, &Q))) {
-	(*pQ)->Visible = mode;
-	found = 1;
-	break;
-      }
-    }
-    List_Delete(tmp);
-    if(found)
-      break;
-    // in volumes (this is tricky, since V->Simplexes contains the
-    // simplexes ordered by quality and not by number; so we use the
-    // global tree of simplexes here)
-    if((pS = (Simplex **) Tree_PQuery(THEM->Simplexes, &S))) {
-      (*pS)->Visible = mode;
-      break;
-    }
-    tmp = Tree2List(THEM->Volumes);
-    for(i = 0; i < List_Nbr(tmp); i++) {
-      List_Read(tmp, i, &V);
-      if((pSB = (SimplexBase **) Tree_PQuery(V->SimplexesBase, &SB))) {
-	(*pSB)->Visible = mode;
-	found = 1;
-	break;
-      }
-      if((pH = (Hexahedron **) Tree_PQuery(V->Hexahedra, &H))) {
-	(*pH)->Visible = mode;
-	found = 1;
-	break;
-      }
-      if((pP = (Prism **) Tree_PQuery(V->Prisms, &P))) {
-	(*pP)->Visible = mode;
-	found = 1;
-	break;
-      }
-      if((pY = (Pyramid **) Tree_PQuery(V->Pyramids, &Y))) {
-	(*pY)->Visible = mode;
-	found = 1;
-	break;
-      }
-    }
-    List_Delete(tmp);
-    if(!found)
-      Msg(WARNING, "Unknown element %d (use '*' to hide/show all elements)", num);
-    break;
-  case 2:    //point
-    if((v = FindPoint(num, THEM)))
-      v->Visible = mode;
-    else
-      Msg(WARNING, "Unknown point %d (use '*' to hide/show all points)", num);
-    break;
-  case 3:    //line
-    if((c = FindCurve(num, THEM)))
-      c->Visible = mode;
-    else
-      Msg(WARNING, "Unknown line %d (use '*' to hide/show all lines)", num);
-    break;
-  case 4:    //surface
-    if((s = FindSurface(num, THEM)))
-      s->Visible = mode;
-    else
-      Msg(WARNING, "Unknown surface %d (use '*' to hide/show all surfaces)", num);
-    break;
-  case 5:    //volume
-    if((V = FindVolume(num, THEM)))
-      V->Visible = mode;
-    else
-      Msg(WARNING, "Unknown volume %d (use '*' to hide/show all volumes)", num);
-    break;
-  }
-}
-
-static int vmode;
-
-static void vis_nod(void *a, void *b)
-{
-  (*(Vertex **) a)->Visible = vmode;
-}
-static void vis_sim(void *a, void *b)
-{
-  (*(SimplexBase **) a)->Visible = vmode;
-}
-static void vis_qua(void *a, void *b)
-{
-  (*(Quadrangle **) a)->Visible = vmode;
-}
-static void vis_hex(void *a, void *b)
-{
-  (*(Hexahedron **) a)->Visible = vmode;
-}
-static void vis_pri(void *a, void *b)
-{
-  (*(Prism **) a)->Visible = vmode;
-}
-static void vis_pyr(void *a, void *b)
-{
-  (*(Pyramid **) a)->Visible = vmode;
-}
-static void vis_cur(void *a, void *b)
-{
-  (*(Curve **) a)->Visible = vmode;
-}
-static void vis_sur(void *a, void *b)
-{
-  (*(Surface **) a)->Visible = vmode;
-}
-static void vis_vol(void *a, void *b)
-{
-  (*(Volume **) a)->Visible = vmode;
-}
-
-void SetVisibilityByNumber(char *str, int type, int mode)
-{
-  int i;
-  List_T *tmp;
-  Curve *c;
-  Surface *s;
-  Volume *V;
-
-  if(!THEM)
-    return;
-
-  vmode = mode;
-
-  if(!strcmp(str, "all") || !strcmp(str, "*")) {
-    switch (type) {
-    case 0:    //node
-      Tree_Action(THEM->Vertices, vis_nod);
-      break;
-    case 1:    //element
-      tmp = Tree2List(THEM->Curves);
-      for(i = 0; i < List_Nbr(tmp); i++) {
-        List_Read(tmp, i, &c);
-        Tree_Action(c->Simplexes, vis_sim);
-        Tree_Action(c->SimplexesBase, vis_sim);
-      }
-      List_Delete(tmp);
-      tmp = Tree2List(THEM->Surfaces);
-      for(i = 0; i < List_Nbr(tmp); i++) {
-        List_Read(tmp, i, &s);
-        Tree_Action(s->Simplexes, vis_sim);
-        Tree_Action(s->SimplexesBase, vis_sim);
-        Tree_Action(s->Quadrangles, vis_qua);
-      }
-      List_Delete(tmp);
-      tmp = Tree2List(THEM->Volumes);
-      for(i = 0; i < List_Nbr(tmp); i++) {
-        List_Read(tmp, i, &V);
-        Tree_Action(V->Simplexes, vis_sim);
-        Tree_Action(V->SimplexesBase, vis_sim);
-        Tree_Action(V->Hexahedra, vis_hex);
-        Tree_Action(V->Prisms, vis_pri);
-        Tree_Action(V->Pyramids, vis_pyr);
-      }
-      List_Delete(tmp);
-      break;
-    case 2:    //point
-      Tree_Action(THEM->Points, vis_nod);
-      break;
-    case 3:    //line
-      Tree_Action(THEM->Curves, vis_cur);
-      break;
-    case 4:    //surface
-      Tree_Action(THEM->Surfaces, vis_sur);
-      break;
-    case 5:    //volume
-      Tree_Action(THEM->Volumes, vis_vol);
-      break;
+  else if(type == 1){ // physical entities
+    std::map<int, std::vector<GEntity*> > groups[4];
+    GMODEL->getPhysicalGroups(groups);
+    for(int i = 0; i < 4; i++){
+      std::map<int, std::vector<GEntity*> >::const_iterator it = groups[i].begin();
+      for(; it != groups[i].end(); ++it)
+	_entities.push_back(new VisPhysical(it->first, i, it->second));
     }
   }
-  else {
-    SetVisibilityByNumber(atoi(str), type, mode);
+  else if(type == 2){ // partitions
+    std::set<int> part = GMODEL->getMeshPartitions();
+    for(std::set<int>::const_iterator it = part.begin(); it != part.end(); ++it)
+      _entities.push_back(new VisPartition(*it));
+  }
+  std::sort(_entities.begin(), _entities.end(), VisLessThan());
+}
+
+void VisibilityManager::setAllInvisible(int type)
+{
+  if(type == 0 || type == 1){
+    // elementary or physical mode: set all entities in the model invisible
+    for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
+      (*it)->setVisibility(false);
+    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
+      (*it)->setVisibility(false);
+    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+      (*it)->setVisibility(false);
+    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
+      (*it)->setVisibility(false);
+  }
+
+  // this is superfluous in elementary mode, but we don't care
+  for(int i = 0; i < getNumEntities(); i++) setVisibility(i, false);
+}
+
+std::string VisibilityManager::getBrowserLine(int n)
+{
+  int tag = _entities[n]->getTag();
+  char str[256];
+  sprintf(str, "\t%s\t%d\t%s", _entities[n]->getName().c_str(), tag, 
+	  _labels.count(tag) ? _labels[tag].c_str() : "");
+  return std::string(str);
+}
+
+void VisElementary::setVisibility(bool val, bool recursive)
+{
+  _e->setVisibility(val, recursive);
+}
+
+void VisPhysical::setVisibility(bool val, bool recursive)
+{
+  _visible = val;
+  for(unsigned int i = 0; i < _list.size(); i++)
+    _list[i]->setVisibility(val, recursive);
+}
+
+void VisPartition::setVisibility(bool val, bool recursive)
+{
+  _visible = val;
+  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++){
+    for(unsigned int i = 0; i < (*it)->lines.size(); i++)
+      if((*it)->lines[i]->getPartition() == _tag) 
+	(*it)->lines[i]->setVisibility(val);
+  }
+  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++){
+    for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+      if((*it)->triangles[i]->getPartition() == _tag) 
+	(*it)->triangles[i]->setVisibility(val);
+    for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
+      if((*it)->quadrangles[i]->getPartition() == _tag) 
+	(*it)->quadrangles[i]->setVisibility(val);
+  }
+  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++){
+    for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
+      if((*it)->tetrahedra[i]->getPartition() == _tag) 
+	(*it)->tetrahedra[i]->setVisibility(val);
+    for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
+      if((*it)->hexahedra[i]->getPartition() == _tag) 
+	(*it)->hexahedra[i]->setVisibility(val);
+    for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
+      if((*it)->prisms[i]->getPartition() == _tag) 
+	(*it)->prisms[i]->setVisibility(val);
+    for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
+      if((*it)->pyramids[i]->getPartition() == _tag) 
+	(*it)->pyramids[i]->setVisibility(val);
   }
 }

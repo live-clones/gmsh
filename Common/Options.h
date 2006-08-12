@@ -257,7 +257,6 @@ double opt_general_clip_position0(OPT_ARGS_NUM);
 double opt_general_clip_position1(OPT_ARGS_NUM);
 double opt_general_manip_position0(OPT_ARGS_NUM);
 double opt_general_manip_position1(OPT_ARGS_NUM);
-double opt_general_visibility_mode(OPT_ARGS_NUM);
 double opt_general_session_save(OPT_ARGS_NUM);
 double opt_general_options_save(OPT_ARGS_NUM);
 double opt_general_rotation0(OPT_ARGS_NUM);
