@@ -20,6 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include "GmshDefines.h"
 #include "List.h"
 #include "Tree.h"
 #include "Vertex.h"
@@ -27,9 +28,6 @@
 #include "Simplex.h"
 #include "Edge.h"
 #include "ExtrudeParams.h"
-#include "VertexArray.h"
-#include "SmoothNormals.h"
-#include "GmshDefines.h"
 
 class BDS_Mesh;
 
@@ -180,8 +178,6 @@ struct _Surf{
   CylParam Cyl;
   ExtrudeParams *Extrude;
   DrawingColor Color;
-  VertexArray *TriVertexArray;
-  VertexArray *QuadVertexArray;
 };
 
 typedef struct _Surf Surface;
@@ -237,8 +233,6 @@ typedef struct {
   Tree_T *Prisms;
   Tree_T *Pyramids;
   DrawingColor Color;
-  VertexArray *TriVertexArray;
-  VertexArray *QuadVertexArray;
 }Volume;
 
 typedef struct {
@@ -294,7 +288,6 @@ typedef struct{
   CircParam Circle;
   char functu[256], functv[256], functw[256];
   DrawingColor Color;
-  VertexArray *LinVertexArray;
 }Curve;
 
 typedef struct{
@@ -309,14 +302,6 @@ typedef struct{
 
 #include "Metric.h"
 
-#define QUALITY_EDGES_BASED 1
-#define QUALITY_SIMPLEX_BASED 2
-#define DELAUNAY_ISO 1
-#define DELAUNAY_ANISO 2
-#define DELAUNAY_TRIANGLE 3
-#define FRONTAL_NETGEN 4
-#define DELAUNAY_TETGEN 5
-
 struct _Mesh{
   char name[256];
   int status; // current state of the mesh
@@ -330,12 +315,6 @@ struct _Mesh{
   Tree_T *EdgeLoops;
   List_T *PhysicalGroups;
   List_T *Partitions;
-  smooth_normals *normals; // container for smooth normals
-  double timing[3]; // timing for 1d, 2d and 3d mesh
-  double quality_gamma[3]; // mesh quality statistics
-  double quality_eta[3]; // mesh quality statistics
-  double quality_rho[3]; // mesh quality statistics
-  int Histogram[3][NB_HISTOGRAM]; // quality histograms
   GMSHMetric *Metric;
   BDS_Mesh *bds;
   BDS_Mesh *bds_mesh;

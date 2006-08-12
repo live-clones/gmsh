@@ -20,9 +20,9 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include "GmshDefines.h"
 #include "Options.h"
 #include "Context.h"
-#include "Mesh.h"
 #include "Views.h"
 
 //          PLEASE RESPECT THE ALPHABETICAL ORDER WHEN 

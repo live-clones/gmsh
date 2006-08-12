@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.74 2006-08-10 15:55:23 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.75 2006-08-12 16:44:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -21,13 +21,13 @@
 
 #include "Gmsh.h"
 #include "GmshUI.h"
+#include "GmshDefines.h"
 #include "GmshVersion.h"
 #include "CommandLine.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "Options.h"
 #include "Geo.h"
-#include "Mesh.h"
 #include "Views.h"
 #include "OpenFile.h"
 #include "CreateFile.h"

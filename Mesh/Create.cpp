@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.83 2006-08-12 16:16:30 geuzaine Exp $
+// $Id: Create.cpp,v 1.84 2006-08-12 16:44:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -525,7 +525,6 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
 
   Curve *pC = (Curve *) Malloc(sizeof(Curve));
   //  pC->bds = 0;
-  pC->LinVertexArray = NULL;
   pC->Color.type = 0;
   pC->Visible = 1;
   pC->cp = NULL;
@@ -632,8 +631,6 @@ void Free_Curve(void *a, void *b)
 {
   Curve *pC = *(Curve **) a;
   if(pC) {
-    if(pC->LinVertexArray)
-      delete pC->LinVertexArray;
     List_Delete(pC->Vertices);
     Tree_Action(pC->Simplexes, Free_Simplex);
     Tree_Delete(pC->Simplexes);
@@ -675,8 +672,6 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Generatrices = NULL;
   pS->Edges = NULL;
   pS->Extrude = NULL;
-  pS->TriVertexArray = NULL;
-  pS->QuadVertexArray = NULL;
   return (pS);
 }
 
@@ -701,10 +696,6 @@ void Free_Surface(void *a, void *b)
       Tree_Action(pS->Edges, Free_Edge);
       Tree_Delete(pS->Edges);
     }
-    if(pS->TriVertexArray)
-      delete pS->TriVertexArray;
-    if(pS->QuadVertexArray)
-      delete pS->QuadVertexArray;
     Free(pS);
     pS = NULL;
   }
@@ -737,8 +728,6 @@ Volume *Create_Volume(int Num, int Typ)
   pV->Lin_Surf = Tree_Create(sizeof(Simplex *), compareSimplex);
   pV->Simp_Surf = Tree_Create(sizeof(Simplex *), compareSimplex);
   pV->Quad_Surf = Tree_Create(sizeof(Simplex *), compareQuadrangle);
-  pV->TriVertexArray = NULL;
-  pV->QuadVertexArray = NULL;
   return pV;
 }
 
@@ -774,10 +763,6 @@ void Free_Volume_But_Not_Elements(void *a, void *b)
     Tree_Delete(pV->Pyramids);
     Tree_Delete(pV->Edges);
     Tree_Delete(pV->Faces);
-    if(pV->TriVertexArray)
-      delete pV->TriVertexArray;
-    if(pV->QuadVertexArray)
-      delete pV->QuadVertexArray;
     Free(pV);
     pV = NULL;
   }

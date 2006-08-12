@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.91 2006-08-11 18:48:39 geuzaine Exp $
+// $Id: Generator.cpp,v 1.92 2006-08-12 16:44:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -446,9 +446,6 @@ void Init_Mesh()
   if(THEM->Metric)
     delete THEM->Metric;
 
-  if(THEM->normals)
-    delete THEM->normals;
-
   THEM->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
   THEM->Simplexes = Tree_Create(sizeof(Simplex *), compareSimplex);
   THEM->Points = Tree_Create(sizeof(Vertex *), compareVertex);
@@ -460,16 +457,7 @@ void Init_Mesh()
   THEM->PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
   THEM->Partitions = List_Create(5, 5, sizeof(MeshPartition *));
   THEM->Metric = new GMSHMetric;
-  THEM->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
-
   THEM->status = 0;
-
-  for(int i = 0; i < 3; i++){
-    THEM->timing[i] = 0.0;
-    THEM->quality_gamma[i] = 0.0;
-    THEM->quality_eta[i] = 0.0;
-    THEM->quality_rho[i] = 0.0;
-  }
 
   CTX.mesh.bgmesh_type = WITHPOINTS;
   CTX.mesh.changed = 1;

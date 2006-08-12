@@ -50,7 +50,7 @@
 #define PYR2 14
 #define PNT  15
 
-// Geometrical entities
+// Geometric entities
 #define ENT_NONE     0
 #define ENT_POINT    1
 #define ENT_LINE     2
@@ -60,6 +60,15 @@
 #define ELEMENTARY 1
 #define PHYSICAL   2
 #define PARTITION  3
+
+// Mesh algorithms
+#define QUALITY_EDGES_BASED 1
+#define QUALITY_SIMPLEX_BASED 2
+#define DELAUNAY_ISO 1
+#define DELAUNAY_ANISO 2
+#define DELAUNAY_TRIANGLE 3
+#define FRONTAL_NETGEN 4
+#define DELAUNAY_TETGEN 5
 
 #define CONV_VALUE    0.8
 
@@ -81,7 +90,5 @@
 #define TRANSFINI 1
 #define LIBRE     2
 #define ELLIPTIC  3
-
-#define NB_HISTOGRAM 100
 
 #endif
