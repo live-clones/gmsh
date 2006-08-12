@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.106 2006-08-12 17:44:24 geuzaine Exp $
+// $Id: Geom.cpp,v 1.107 2006-08-12 21:31:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,223 +23,267 @@
 #include "GmshUI.h"
 #include "Draw.h"
 #include "Context.h"
-#include "Plugin.h"
-#include "PluginManager.h"
 #include "gl2ps.h"
 #include "GModel.h"
 
 extern Context_T CTX;
 extern GModel *GMODEL;
 
-// Points
-
-void drawGeoVertex(GVertex *v)
+class drawGVertex
 {
-  if(!v->getVisibility())
-    return;
+public :
+  void operator () (GVertex *v)
+  {
+    if(!v->getVisibility()) return;
 
-  if(CTX.render_mode == GMSH_SELECT) {
-    glPushName(0);
-    glPushName(v->tag());
-  }
-  
-  if(v->getFlag() > 0) {
-    glPointSize(CTX.geom.point_sel_size);
-    gl2psPointSize(CTX.geom.point_sel_size * CTX.print.eps_point_size_factor);
-    glColor4ubv((GLubyte *) & CTX.color.geom.point_sel);
-  }
-  else {
-    glPointSize(CTX.geom.point_size);
-    gl2psPointSize(CTX.geom.point_size * CTX.print.eps_point_size_factor);
-    glColor4ubv((GLubyte *) & CTX.color.geom.point);
-  }
-
-  if(CTX.geom.points) {
-    if(CTX.geom.point_type == 1) {
-      if(v->getFlag() > 0)
-	Draw_Sphere(CTX.geom.point_sel_size, v->x(), v->y(), v->z(), 
-		    CTX.geom.light);
-      else
-	Draw_Sphere(CTX.geom.point_size, v->x(), v->y(), v->z(),
-		    CTX.geom.light);
+    if(CTX.render_mode == GMSH_SELECT) {
+      glPushName(0);
+      glPushName(v->tag());
     }
-    else if(CTX.geom.point_type == 2) {
-      GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
-      if(sp) {
-	Msg(FATAL, "GL_enhancePoint not done");
-	//sp-> GL_enhancePoint (v);
-      }
-      glBegin(GL_POINTS);
-      glVertex3d(v->x(), v->y(), v->z());
-      glEnd();
+    
+    if(v->getFlag() > 0) {
+      glPointSize(CTX.geom.point_sel_size);
+      gl2psPointSize(CTX.geom.point_sel_size * CTX.print.eps_point_size_factor);
+      glColor4ubv((GLubyte *) & CTX.color.geom.point_sel);
     }
     else {
-      glBegin(GL_POINTS);
-      glVertex3d(v->x(), v->y(), v->z());
-      glEnd();
+      glPointSize(CTX.geom.point_size);
+      gl2psPointSize(CTX.geom.point_size * CTX.print.eps_point_size_factor);
+      glColor4ubv((GLubyte *) & CTX.color.geom.point);
     }
-
-  }
-
-  if(CTX.geom.points_num) {
-    char Num[100];
-    sprintf(Num, "%d", v->tag());
-    double offset = (0.5 * CTX.geom.point_size + 0.3 * CTX.gl_fontsize) * CTX.pixel_equiv_x;
-    glRasterPos3d(v->x() + offset / CTX.s[0],
-		  v->y() + offset / CTX.s[1],
-		  v->z() + offset / CTX.s[2]);
-    Draw_String(Num);
-  }
-
-  if(CTX.render_mode == GMSH_SELECT) {
-    glPopName();
-    glPopName();
-  }
-}
-
-// Curves
-
-void drawGeoEdge(GEdge *c)
-{
-  if(!c->getVisibility())
-    return;
-
-  if(CTX.render_mode == GMSH_SELECT) {
-    glPushName(1);
-    glPushName(c->tag());
-  }
-
-  if(c->getFlag() > 0) {
-    glLineWidth(CTX.geom.line_sel_width);
-    gl2psLineWidth(CTX.geom.line_sel_width * CTX.print.eps_line_width_factor);
-    glColor4ubv((GLubyte *) & CTX.color.geom.line_sel);
-  }
-  else {
-    glLineWidth(CTX.geom.line_width);
-    gl2psLineWidth(CTX.geom.line_width * CTX.print.eps_line_width_factor);
-    glColor4ubv((GLubyte *) & CTX.color.geom.line);
-  }
-
-  Range<double> t_bounds = c->parBounds(0);
-  double t_min = t_bounds.low();
-  double t_max = t_bounds.high();
-
-  if(CTX.geom.lines) {
-    if(c->geomType() == GEntity::DiscreteCurve){
-      // do nothing: we draw the elements in the mesh drawing routines
-    }
-    else {
-      int N = c->minimumDrawSegments() + 1;
-      if(CTX.geom.line_type >= 1) {
-	GMSH_Solve_Plugin *sp = 0;
-	if(CTX.geom.line_type == 2)
-	  sp = GMSH_PluginManager::instance()->findSolverPlugin();
-	for(int i = 0; i < N - 1; i++) {
-	  double t1 = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
-	  GPoint p1 = c->point(t1);
-	  double t2 = t_min + (double)(i + 1) / (double)(N - 1) * (t_max - t_min);
-	  GPoint p2 = c->point(t2);
-	  double x[2] = {p1.x(), p2.x()};
-	  double y[2] = {p1.y(), p2.y()};
-	  double z[2] = {p1.z(), p2.z()};
-	  Draw_Cylinder(c->getFlag() > 0 ? CTX.geom.line_sel_width : 
-			CTX.geom.line_width, x, y, z, CTX.geom.light);
-	  if(sp) {
-	    Msg(FATAL, "GL_enhanceLine not done");
-	    //sp->GL_enhanceLine (c->tag(), &p1, &p2);
-	  }
-	}
+    
+    if(CTX.geom.points) {
+      if(CTX.geom.point_type > 0) {
+	if(v->getFlag() > 0)
+	  Draw_Sphere(CTX.geom.point_sel_size, v->x(), v->y(), v->z(), 
+		      CTX.geom.light);
+	else
+	  Draw_Sphere(CTX.geom.point_size, v->x(), v->y(), v->z(),
+		      CTX.geom.light);
       }
       else {
-	glBegin(GL_LINE_STRIP);
-	for(int i = 0; i < N; i++) {
-	  double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
-	  GPoint p = c->point(t);
-	  glVertex3d(p.x(), p.y(), p.z());
-	}
+	glBegin(GL_POINTS);
+	glVertex3d(v->x(), v->y(), v->z());
 	glEnd();
       }
     }
+
+    if(CTX.geom.points_num) {
+      char Num[100];
+      sprintf(Num, "%d", v->tag());
+      double offset = (0.5 * CTX.geom.point_size + 0.3 * CTX.gl_fontsize) * 
+	CTX.pixel_equiv_x;
+      glRasterPos3d(v->x() + offset / CTX.s[0],
+		    v->y() + offset / CTX.s[1],
+		    v->z() + offset / CTX.s[2]);
+      Draw_String(Num);
+    }
+    
+    if(CTX.render_mode == GMSH_SELECT) {
+      glPopName();
+      glPopName();
+    }
   }
+};
 
-  if(CTX.geom.lines_num) {
-    GPoint p = c->point(0.5 * (t_max - t_min));
-    char Num[100];
-    sprintf(Num, "%d", c->tag());
-    double offset = (0.5 * CTX.geom.line_width + 0.3 * CTX.gl_fontsize) * CTX.pixel_equiv_x;
-    glRasterPos3d(p.x() + offset / CTX.s[0],
-		  p.y() + offset / CTX.s[1],
-		  p.z() + offset / CTX.s[2]);
-    Draw_String(Num);
-  }
-
-  if(CTX.geom.tangents) {
-    double t = 0.5 * (t_max - t_min);
-    GPoint p = c->point(t);
-    SVector3 der = c->firstDer(t) ;
-    double mod = sqrt(der[0] * der[0] + der[1] * der[1] + der[2] * der[2]);
-    for(int i = 0; i < 3; i++)
-      der[i] = der[i] / mod * CTX.geom.tangents * CTX.pixel_equiv_x / CTX.s[i];
-    glColor4ubv((GLubyte *) & CTX.color.geom.tangents);
-    Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
-		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-		p.x(), p.y(), p.z(), der[0], der[1], der[2], CTX.geom.light);
-  }
-
-  if(CTX.render_mode == GMSH_SELECT) {
-    glPopName();
-    glPopName();
-  }
-}
-
-// Surfaces
-
-void drawGeoFace(GFace *s)
+class drawGEdge
 {
-  if(!s->getVisibility())
-    return;
+public :
+  void operator () (GEdge *e)
+  {
+    if(!e->getVisibility())
+      return;
+    
+    if(CTX.render_mode == GMSH_SELECT) {
+      glPushName(1);
+      glPushName(e->tag());
+    }
+    
+    if(e->getFlag() > 0) {
+      glLineWidth(CTX.geom.line_sel_width);
+      gl2psLineWidth(CTX.geom.line_sel_width * CTX.print.eps_line_width_factor);
+      glColor4ubv((GLubyte *) & CTX.color.geom.line_sel);
+    }
+    else {
+      glLineWidth(CTX.geom.line_width);
+      gl2psLineWidth(CTX.geom.line_width * CTX.print.eps_line_width_factor);
+      glColor4ubv((GLubyte *) & CTX.color.geom.line);
+    }
+    
+    Range<double> t_bounds = e->parBounds(0);
+    double t_min = t_bounds.low();
+    double t_max = t_bounds.high();
+    
+    if(CTX.geom.lines) {
+      if(e->geomType() == GEntity::DiscreteCurve){
+	// do nothing: we draw the elements in the mesh drawing routines
+      }
+      else {
+	int N = e->minimumDrawSegments() + 1;
+	if(CTX.geom.line_type > 0) {
+	  for(int i = 0; i < N - 1; i++) {
+	    double t1 = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
+	    GPoint p1 = e->point(t1);
+	    double t2 = t_min + (double)(i + 1) / (double)(N - 1) * (t_max - t_min);
+	    GPoint p2 = e->point(t2);
+	    double x[2] = {p1.x(), p2.x()};
+	    double y[2] = {p1.y(), p2.y()};
+	    double z[2] = {p1.z(), p2.z()};
+	    Draw_Cylinder(e->getFlag() > 0 ? CTX.geom.line_sel_width : 
+			  CTX.geom.line_width, x, y, z, CTX.geom.light);
+	  }
+	}
+	else {
+	  glBegin(GL_LINE_STRIP);
+	  for(int i = 0; i < N; i++) {
+	    double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
+	    GPoint p = e->point(t);
+	    glVertex3d(p.x(), p.y(), p.z());
+	  }
+	  glEnd();
+	}
+      }
+    }
+    
+    if(CTX.geom.lines_num) {
+      GPoint p = e->point(0.5 * (t_max - t_min));
+      char Num[100];
+      sprintf(Num, "%d", e->tag());
+      double offset = (0.5 * CTX.geom.line_width + 0.3 * CTX.gl_fontsize) * CTX.pixel_equiv_x;
+      glRasterPos3d(p.x() + offset / CTX.s[0],
+		    p.y() + offset / CTX.s[1],
+		    p.z() + offset / CTX.s[2]);
+      Draw_String(Num);
+    }
+    
+    if(CTX.geom.tangents) {
+      double t = 0.5 * (t_max - t_min);
+      GPoint p = e->point(t);
+      SVector3 der = e->firstDer(t) ;
+      double mod = sqrt(der[0] * der[0] + der[1] * der[1] + der[2] * der[2]);
+      for(int i = 0; i < 3; i++)
+	der[i] = der[i] / mod * CTX.geom.tangents * CTX.pixel_equiv_x / CTX.s[i];
+      glColor4ubv((GLubyte *) & CTX.color.geom.tangents);
+      Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+		  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
+		  p.x(), p.y(), p.z(), der[0], der[1], der[2], CTX.geom.light);
+    }
+    
+    if(CTX.render_mode == GMSH_SELECT) {
+      glPopName();
+      glPopName();
+    }
+  }
+};
 
-  if(CTX.render_mode == GMSH_SELECT) {
-    glPushName(2);
-    glPushName(s->tag());
-  }
-
-  if(s->getFlag() > 0) {
-    glLineWidth(CTX.geom.line_sel_width / 2.);
-    gl2psLineWidth(CTX.geom.line_sel_width / 2. *
-		   CTX.print.eps_line_width_factor);
-    glColor4ubv((GLubyte *) & CTX.color.geom.surface_sel);
-  }
-  else {
-    glLineWidth(CTX.geom.line_width / 2.);
-    gl2psLineWidth(CTX.geom.line_width / 2. * CTX.print.eps_line_width_factor);
-    glColor4ubv((GLubyte *) & CTX.color.geom.surface);
-  }
-
-  if(s->geomType() == GEntity::DiscreteSurface){
-    // do nothing: we draw the elements in the mesh drawing routines
-  }
-  else if(s->geomType() == GEntity::Plane){
-    Msg(GERROR, "draw plane surface not done yet");
-    //Draw_Plane_Surface(s);
-  }
-  else{
-    //Draw_NonPlane_Surface(s);
-  }
-
-  if(CTX.render_mode == GMSH_SELECT) {
-    glPopName();
-    glPopName();
-  }
-}
-
-// Volumes
-
-void drawGeoRegion(GRegion *v)
+class drawGFace
 {
-}
+private:
+  void _drawNonPlaneGFace(GFace *f)
+  {
+    if(CTX.geom.surfaces) {
+      glEnable(GL_LINE_STIPPLE);
+      glLineStipple(1, 0x1F1F);
+      gl2psEnable(GL2PS_LINE_STIPPLE);
+      int N = 20;
+      glBegin(GL_LINE_STRIP);
+      for(int i = 0; i < N; i++) {
+	GPoint coords = f->point((double)i / (double)(N - 1), 0.5);
+	glVertex3d(coords.x(), coords.y(), coords.z());
+      }
+      glEnd();
+      glBegin(GL_LINE_STRIP);
+      for(int i = 0; i < N; i++) {
+	GPoint coords = f->point(0.5, (double)i / (double)(N - 1));
+	glVertex3d(coords.x(), coords.y(), coords.z());
+      }
+      glEnd();
+      glDisable(GL_LINE_STIPPLE);
+      gl2psDisable(GL2PS_LINE_STIPPLE);
+    }
+    
+    if(CTX.geom.surfaces_num) {
+      GPoint coords = f->point(0.5, 0.5);
+      char Num[100];
+      sprintf(Num, "%d", f->tag());
+      double offset = 0.3 * CTX.gl_fontsize * CTX.pixel_equiv_x;
+      glRasterPos3d(coords.x() + offset / CTX.s[0],
+		    coords.y() + offset / CTX.s[1],
+		    coords.z() + offset / CTX.s[2]);
+      Draw_String(Num);
+    }
+    
+    if(CTX.geom.normals) {
+      const double eps = 1.e-3;
+      GPoint p1 = f->point(0.5, 0.5);
+      GPoint p2 = f->point(0.5 + eps, 0.5);
+      GPoint p3 = f->point(0.5, 0.5 + eps);
+      double n[3];
+      normal3points(p1.x(), p1.y(), p1.z(),
+		    p2.x(), p2.y(), p2.z(),
+		    p3.x(), p3.y(), p3.z(), n);
+      n[0] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[0];
+      n[1] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[1];
+      n[2] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[2];
+      glColor4ubv((GLubyte *) & CTX.color.geom.normals);
+      Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+		  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
+		  p1.x(), p1.y(), p1.z(), n[0], n[1], n[2], CTX.geom.light);
+    }
+  }
 
-// Draw geometry
+  void _drawPlaneGFace(GFace *f)
+  {
+  }
+
+public :
+  void operator () (GFace *f)
+  {
+    if(!f->getVisibility())
+      return;
+    
+    if(CTX.render_mode == GMSH_SELECT) {
+      glPushName(2);
+      glPushName(f->tag());
+    }
+    
+    if(f->getFlag() > 0) {
+      glLineWidth(CTX.geom.line_sel_width / 2.);
+      gl2psLineWidth(CTX.geom.line_sel_width / 2. *
+		     CTX.print.eps_line_width_factor);
+      glColor4ubv((GLubyte *) & CTX.color.geom.surface_sel);
+    }
+    else {
+      glLineWidth(CTX.geom.line_width / 2.);
+      gl2psLineWidth(CTX.geom.line_width / 2. * CTX.print.eps_line_width_factor);
+      glColor4ubv((GLubyte *) & CTX.color.geom.surface);
+    }
+    
+    if(f->geomType() == GEntity::DiscreteSurface){
+      // do nothing: we draw the elements in the mesh drawing routines
+    }
+    else if(f->geomType() == GEntity::Plane){
+      _drawPlaneGFace(f);
+    }
+    else{
+      _drawNonPlaneGFace(f);
+    }
+    
+    if(CTX.render_mode == GMSH_SELECT) {
+      glPopName();
+      glPopName();
+    }
+  }
+};
+
+
+class drawGRegion
+{
+public :
+  void operator () (GRegion *r)
+  {
+  }
+};
 
 void Draw_Geom()
 {
@@ -252,26 +296,20 @@ void Draw_Geom()
       glDisable((GLenum)(GL_CLIP_PLANE0 + i));
   
   if(CTX.geom.points || CTX.geom.points_num)
-    for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
-      drawGeoVertex(*it);
+    std::for_each(GMODEL->firstVertex(), GMODEL->lastVertex(), drawGVertex());
 
   if(CTX.geom.lines || CTX.geom.lines_num || CTX.geom.tangents)
-    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
-      drawGeoEdge(*it);
+    std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), drawGEdge());
 
   if(CTX.geom.surfaces || CTX.geom.surfaces_num || CTX.geom.normals)
-    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
-      drawGeoFace(*it);
+    std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), drawGFace());
 
   if(CTX.geom.volumes || CTX.geom.volumes_num)
-    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
-      drawGeoRegion(*it);
+    std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), drawGRegion());
 
   for(int i = 0; i < 6; i++)
     glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 }
-
-// Highlight routines
 
 void HighlightEntity(GEntity *e, int permanent)
 {

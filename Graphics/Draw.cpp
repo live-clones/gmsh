@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.101 2006-08-11 18:48:39 geuzaine Exp $
+// $Id: Draw.cpp,v 1.102 2006-08-12 21:31:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -30,8 +30,6 @@
 
 extern Context_T CTX;
 extern GModel *GMODEL;
-
-// Global Draw functions
 
 int NeedPolygonOffset()
 {
@@ -130,8 +128,6 @@ void ClearOpengl(void)
                CTX.UNPACK_BLUE(CTX.color.bg) / 255., 0.);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
-
-// Init
 
 void InitProjection(int xpick, int ypick, int wpick, int hpick)
 {
@@ -350,7 +346,7 @@ void InitPosition(void)
     glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), CTX.clip_plane[i]);
 }
 
-// Entity selection
+// Entity selection routines
 
 typedef struct{
   unsigned int type, ient, depth;

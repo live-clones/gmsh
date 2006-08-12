@@ -102,20 +102,6 @@ void Draw_SmallAxes(void);
 void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
 	       double bbox[6]);
 
-void Draw_Mesh_Volume(void *a, void *b);
-void Draw_Mesh_Surface(void *a, void *b);
-void Draw_Mesh_Extruded_Surfaces(void *a, void *b);
-void Draw_Mesh_Curve(void *a, void *b);
-void Draw_Mesh_Point(void *a, void *b);
-void Draw_Mesh_Line(void *a, void *b);
-void Draw_Mesh_Triangle(void *a, void *b);
-void Draw_Mesh_Quadrangle(void *a, void *b);
-void Draw_Mesh_Tetrahedron(void *a, void *b);
-void Draw_Mesh_Hexahedron(void *a, void *b);
-void Draw_Mesh_Prism(void *a, void *b);
-void Draw_Mesh_Pyramid(void *a, void *b);
-void Draw_Mesh_Array(VertexArray *va, int faces=0, int edges=0);
-
 #define ARGS Post_View *View, int preproNormals, \
              double ValMin, double ValMax, 	 \
              double *X, double *Y, double *Z, double *V

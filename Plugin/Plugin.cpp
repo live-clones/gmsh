@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.82 2006-04-15 17:21:18 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.83 2006-08-12 21:31:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -55,7 +55,6 @@
 #include "Transform.h"
 #include "Triangulate.h"
 #include "Warp.h"
-#include "StructuralSolver.h"
 #include "Eigenvectors.h"
 #include "Eigenvalues.h"
 #include "Lambda2.h"
@@ -167,13 +166,10 @@ GMSH_PluginManager *GMSH_PluginManager::instance()
 
 void GMSH_PluginManager::registerDefaultPlugins()
 {
-  // SOLVE PLUGINS
   if(CTX.solver.plugins){
-    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		      ("StructuralSolver", GMSH_RegisterStructuralSolverPlugin()));
+    // nothing here yet
   }
 
-  // POST PLUGINS
   if(CTX.post.plugins){
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("StreamLines", GMSH_RegisterStreamLinesPlugin()));

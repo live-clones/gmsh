@@ -189,7 +189,7 @@ int GModel::readMSH(const std::string &name)
       fscanf(fp, "%d", &numVertices);
       Msg(INFO, "%d vertices", numVertices);
 
-      int progress = (numVertices > 100000) ? numVertices / 50 : numVertices / 10;
+      int progress = (numVertices > 100000) ? numVertices / 25 : 0;
       for(int i = 0; i < numVertices; i++) {
 	int num;
 	double x, y, z;
@@ -210,7 +210,7 @@ int GModel::readMSH(const std::string &name)
       fscanf(fp, "%d", &numElements);
       Msg(INFO, "%d elements", numElements);
 
-      int progress = (numElements > 100000) ? numElements / 50 : numElements / 10;
+      int progress = (numElements > 100000) ? numElements / 25 : 0;
       for(int i = 0; i < numElements; i++) {
 	int num, type, physical = 0, elementary = 0, partition = 0, numVertices;
 	if(version <= 1.0){
