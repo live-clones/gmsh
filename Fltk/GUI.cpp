@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.507 2006-08-12 16:16:28 geuzaine Exp $
+// $Id: GUI.cpp,v 1.508 2006-08-12 18:34:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2393,7 +2393,7 @@ void GUI::create_option_window()
         {"Number", 0, 0, 0},
         {"Elementary entity", 0, 0, 0},
         {"Physical group", 0, 0, 0},
-        {"Partition", 0, 0, 0},
+        {"Mesh partition", 0, 0, 0},
         {"Coordinates", 0, 0, 0},
         {0}
       };
@@ -2587,8 +2587,8 @@ void GUI::create_option_window()
       static Fl_Menu_Item menu_mesh_color[] = {
         {"By element type", 0, 0, 0},
         {"By elementary entity", 0, 0, 0},
-        {"By physical entity", 0, 0, 0},
-        {"By partition", 0, 0, 0},
+        {"By physical group", 0, 0, 0},
+        {"By mesh partition", 0, 0, 0},
         {0}
       };
       mesh_choice[4] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Coloring mode");
@@ -3824,7 +3824,7 @@ void GUI::create_visibility_window()
   static Fl_Menu_Item type_table[] = {
     {"Elementary entities", 0, (Fl_Callback *) visibility_cb},
     {"Physical groups", 0, (Fl_Callback *) visibility_cb},
-    {"Partitions", 0, (Fl_Callback *) visibility_cb},
+    {"Mesh partitions", 0, (Fl_Callback *) visibility_cb},
     {0}
   };
 
