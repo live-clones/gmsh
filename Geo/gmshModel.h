@@ -5,8 +5,8 @@
 
 class gmshModel : public GModel {
  public:
-  gmshModel(); 
-  virtual ~gmshModel() {};
+  gmshModel() : GModel("empty") {}
+  virtual ~gmshModel(){};
 
   // import data from the old Gmsh database ("THEM")
   virtual void import();

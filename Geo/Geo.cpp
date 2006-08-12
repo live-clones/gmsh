@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.52 2006-08-05 10:05:45 geuzaine Exp $
+// $Id: Geo.cpp,v 1.53 2006-08-12 18:05:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -100,8 +100,7 @@ void add_infile(char *text, char *fich)
   fprintf(file, "%s\n", text);
   fclose(file);
 
-  if(GMODEL) delete GMODEL;
-  GMODEL = new gmshModel;
+  GMODEL->import();
 }
 
 void coherence(char *fich)
