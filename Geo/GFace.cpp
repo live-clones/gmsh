@@ -265,15 +265,17 @@ end:
 
   //check coherence for plane surfaces
   if(geomType() == GEntity::Plane) {
+    SBoundingBox3d bb = bounds();
+    double lc = norm(SVector3(bb.max(), bb.min()));
     std::list<GVertex*> verts = vertices();
     std::list<GVertex*>::const_iterator itv = verts.begin();
     for(; itv != verts.end(); itv++){
       const GVertex *v = *itv; 
       double d = meanPlane.a * v->x() + meanPlane.b * v->y() + 
 	meanPlane.c * v->z() - meanPlane.d;
-      if(fabs(d) > 1.e-3) {
+      if(fabs(d) > lc * 1.e-3) {
 	Msg(GERROR1, "Plane surface %d (%gx+%gy+%gz+%g=0) is not plane!",
-	    v->tag(), meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
+	    tag(), meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
 	Msg(GERROR3, "Control point %d = (%g,%g,%g), val=%g",
 	    v->tag(), v->x(), v->y(), v->z(), d);
 	return;

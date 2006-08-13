@@ -34,29 +34,13 @@ Range<double> gmshEdge::parBounds(int i) const
 
 SBoundingBox3d gmshEdge::bounds() const
 {
-  double xmin = 0., ymin = 0., zmin = 0.;
-  double xmax = 0., ymax = 0., zmax = 0.;
-  for (int i = 0; i < 20; i++){
-    double u = c->ubeg + (i/19.) * (c->uend - c->ubeg);
+  SBoundingBox3d bbox;
+  const int N = 10;
+  for (int i = 0; i < N; i++){
+    double u = c->ubeg + (double)i/(double)(N - 1) * (c->uend - c->ubeg);
     Vertex a = InterpolateCurve(c, u, 0);
-    if (!i){
-      xmin = xmax = a.Pos.X;
-      ymin = ymax = a.Pos.Y;
-      zmin = zmax = a.Pos.Z;
-    }
-    else{
-      if(a.Pos.X < xmin) xmin = a.Pos.X;
-      if(a.Pos.Y < ymin) ymin = a.Pos.Z;
-      if(a.Pos.Z < zmin) zmin = a.Pos.Y;
-      if(a.Pos.X > xmax) xmax = a.Pos.X;
-      if(a.Pos.Y > ymax) ymax = a.Pos.Z;
-      if(a.Pos.Z > zmax) zmax = a.Pos.Y;
-    }
+    bbox += SPoint3(a.Pos.X, a.Pos.Y, a.Pos.Z);
   }
-  SPoint3 bmin(xmin, ymin, zmin);
-  SPoint3 bmax(xmax, ymax, zmax);
-  SBoundingBox3d bbox(bmin);
-  bbox += bmax;
   return bbox;
 }
 

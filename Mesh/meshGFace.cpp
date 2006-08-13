@@ -12,6 +12,8 @@
 #include "Numeric.h"
 #include "BDS.h"
 
+extern Context_T CTX;
+
 int Orientation (std::vector<MVertex*> &cu)
 {
   int N, i, a, b, c;
@@ -64,8 +66,6 @@ int Orientation (std::vector<MVertex*> &cu)
 }
 
 
-
-extern Context_T CTX;
 
 class fromCartesianToParametric
 {
