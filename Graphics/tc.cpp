@@ -21,8 +21,10 @@ are met:
      to Brad Grantham's current address (grantham@plunk.org as of September
      20th, 2000) or current U.S. mail address.
 
- * $Header: /cvsroot/gmsh/Graphics/tc.cpp,v 1.1 2006-08-10 15:29:26 geuzaine Exp $
+ * $Header: /cvsroot/gmsh/Graphics/tc.cpp,v 1.2 2006-08-13 21:17:56 geuzaine Exp $
  */
+
+// This is a modified version for Gmsh: see "gmsh"
 
 #include <stdio.h>
 #include <stdlib.h>

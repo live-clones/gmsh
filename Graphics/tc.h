@@ -1,6 +1,8 @@
 /*
- * $Header: /cvsroot/gmsh/Graphics/tc.h,v 1.1 2006-08-10 15:29:26 geuzaine Exp $
+ * $Header: /cvsroot/gmsh/Graphics/tc.h,v 1.2 2006-08-13 21:17:56 geuzaine Exp $
  */
+
+// This is a modified version for Gmsh: see "gmsh"
 
 #if !defined(_ACTC_H_)
 #define _ACTC_H_
@@ -8,6 +10,10 @@
 #include <sys/types.h>
 
 typedef struct _ACTCData ACTCData;
+
+#if defined(WIN32) // gmsh
+#define uint unsigned int
+#endif
 
 /*
     Abbreviated:
