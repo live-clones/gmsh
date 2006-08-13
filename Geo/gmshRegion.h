@@ -6,14 +6,15 @@
 #include "GRegion.h"
 
 class gmshRegion : public GRegion {
-public:
+ protected:
+  ::Volume *v;
+
+ public:
   gmshRegion(GModel *m, ::Volume *_v);
   gmshRegion(GModel *m, int num);
   virtual ~gmshRegion() {}
-  void * getNativePtr() const {return v;}
-  ::Volume *v;
-protected:
-
+  virtual GeomType geomType() const;
+  void * getNativePtr() const { return v; }
 };
 
 #endif

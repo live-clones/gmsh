@@ -1413,7 +1413,7 @@ StringXColor GeometryOptions_Color[] = {
     {128, 128, 128, 255}, {128, 128, 128, 255}, {0, 0, 0, 255},
     "Normal geometry surface color" },
   { F|O, "Volumes" , opt_geometry_color_volumes ,
-    {128, 128, 128, 255}, {128, 128, 128, 255}, {0, 0, 0, 255},
+    {255, 255, 0, 255}, {255, 255, 0, 255}, {0, 0, 0, 255},
     "Normal geometry volume color" },
   { F|O, "PointsSelect" , opt_geometry_color_points_select ,
     {255, 0, 0, 255}, {255, 0, 0, 255}, {255, 0, 0, 255},
@@ -1463,50 +1463,6 @@ StringXColor GeometryOptions_Color[] = {
 #define COL17 {255, 214, 11, 255}
 #define COL18 {255, 228, 22, 255}
 #define COL19 {255, 240, 38, 255}
-
-// jet:
-// #define COL0  {0, 0, 143, 255}
-// #define COL1  {0, 0, 197, 255}
-// #define COL2  {0, 0, 250, 255}
-// #define COL3  {0, 49, 255, 255}
-// #define COL4  {0, 103, 255, 255}
-// #define COL5  {0, 156, 255, 255}
-// #define COL6  {0, 210, 255, 255}
-// #define COL7  {9, 255, 253, 255}
-// #define COL8  {62, 255, 200, 255}
-// #define COL9  {116, 255, 146, 255}
-// #define COL10 {170, 255, 92, 255}
-// #define COL11 {223, 255, 39, 255}
-// #define COL12 {255, 240, 0, 255}
-// #define COL13 {255, 186, 0, 255}
-// #define COL14 {255, 132, 0, 255}
-// #define COL15 {255, 79, 0, 255}
-// #define COL16 {255, 25, 0, 255}
-// #define COL17 {226, 0, 0, 255}
-// #define COL18 {173, 0, 0, 255}
-// #define COL19 {119, 0, 0, 255}
-
-// truncated hsv:
-// #define COL0  {255, 0, 0, 255}
-// #define COL1  {255, 67, 0, 255}
-// #define COL2  {255, 134, 0, 255}
-// #define COL3  {255, 201, 0, 255}
-// #define COL4  {241, 255, 0, 255}
-// #define COL5  {174, 255, 0, 255}
-// #define COL6  {107, 255, 0, 255}
-// #define COL7  {40, 255, 0, 255}
-// #define COL8  {0, 255, 26, 255}
-// #define COL9  {0, 255, 93, 255}
-// #define COL10 {0, 255, 161, 255}
-// #define COL11 {0, 255, 228, 255}
-// #define COL12 {0, 214, 255, 255}
-// #define COL13 {0, 147, 255, 255}
-// #define COL14 {0, 80, 255, 255}
-// #define COL15 {0, 13, 255, 255}
-// #define COL16 {53, 0, 255, 255}
-// #define COL17 {120, 0, 255, 255}
-// #define COL18 {187, 0, 255, 255}
-// #define COL19 {255, 0, 254, 255}
 
 StringXColor MeshOptions_Color[] = {
   { F|O, "Points" , opt_mesh_color_points , 

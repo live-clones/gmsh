@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.429 2006-08-13 14:43:54 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.430 2006-08-13 20:46:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -81,14 +81,14 @@ int SelectContour(int type, int num, List_T * List)
     k = allEdgesLinked(num, List);
     for(int i = 0; i < List_Nbr(List); i++) {
       List_Read(List, i, &ip);
-      HighlightEntityNum(0, abs(ip), 0, 1);
+      HighlightEntityNum(0, abs(ip), 0, 0, 1);
     }
     break;
   case ENT_SURFACE:
     k = allFacesLinked(num, List);
     for(int i = 0; i < List_Nbr(List); i++) {
       List_Read(List, i, &ip);
-      HighlightEntityNum(0, 0, abs(ip), 1);
+      HighlightEntityNum(0, 0, abs(ip), 0, 1);
     }
     break;
   }
@@ -948,13 +948,14 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
   GVertex *v[SELECTION_MAX_HITS];
   GEdge *c[SELECTION_MAX_HITS];
   GFace *s[SELECTION_MAX_HITS];
+  GRegion *r[SELECTION_MAX_HITS];
   int ne;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
 
   Msg(ONSCREEN, "Select point\n[Press 'q' to abort]");
-  char ib = SelectEntity(ENT_POINT, &ne, v, c, s);
+  char ib = SelectEntity(ENT_POINT, &ne, v, c, s, r);
   if(ib == 'l') {
     // This would bypass the "Apply" button... Not necessarily bad,
     // but it's not consistent with the rest of the GUI.
@@ -1850,8 +1851,9 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
     GVertex *v[SELECTION_MAX_HITS];
     GEdge *c[SELECTION_MAX_HITS];
     GFace *s[SELECTION_MAX_HITS];
+    GRegion *r[SELECTION_MAX_HITS];
     int ne;
-    char ib = SelectEntity(ENT_NONE, &ne, v, c, s);
+    char ib = SelectEntity(ENT_NONE, &ne, v, c, s, r);
     if(ib == 'e'){
       add_point(CTX.filename,
 		(char*)WID->context_geometry_input[2]->value(),
@@ -1875,6 +1877,7 @@ static void _new_multiline(int type)
   GVertex *v[SELECTION_MAX_HITS];
   GEdge *c[SELECTION_MAX_HITS];
   GFace *s[SELECTION_MAX_HITS];
+  GRegion *r[SELECTION_MAX_HITS];
   int n, p[100], ne;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -1889,7 +1892,7 @@ static void _new_multiline(int type)
     else
       Msg(ONSCREEN, "Select control points\n"
 	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-    char ib = SelectEntity(ENT_POINT, &ne, v, c, s);
+    char ib = SelectEntity(ENT_POINT, &ne, v, c, s, r);
     if(ib == 'l') {
       for(int i = 0; i < ne; i++)
 	p[n++] = v[i]->tag();
@@ -1920,7 +1923,7 @@ static void _new_multiline(int type)
     }
     if(ib == 'u') {
       if(n > 0){
-	ZeroHighlightEntityNum(p[n-1], 0, 0);
+	ZeroHighlightEntityNum(p[n-1], 0, 0, 0);
 	Draw();
 	n--;
       }
@@ -1946,6 +1949,7 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
   GVertex *v[SELECTION_MAX_HITS];
   GEdge *c[SELECTION_MAX_HITS];
   GFace *s[SELECTION_MAX_HITS];
+  GRegion *r[SELECTION_MAX_HITS];
   int n, p[100], ne;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -1960,7 +1964,7 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
     if(n == 1)
       Msg(ONSCREEN, "Select end point\n"
 	  "[Press 'u' to undo last selection or 'q' to abort]");
-    char ib = SelectEntity(ENT_POINT, &ne, v, c, s);
+    char ib = SelectEntity(ENT_POINT, &ne, v, c, s, r);
     if(ib == 'l') {
       p[n++] = v[0]->tag();
     }
@@ -1969,7 +1973,7 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
     }
     if(ib == 'u') {
       if(n > 0){
-	ZeroHighlightEntityNum(p[n-1], 0, 0);
+	ZeroHighlightEntityNum(p[n-1], 0, 0, 0);
 	Draw();
 	n--;
       }
@@ -2006,6 +2010,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
   GVertex *v[SELECTION_MAX_HITS];
   GEdge *c[SELECTION_MAX_HITS];
   GFace *s[SELECTION_MAX_HITS];
+  GRegion *r[SELECTION_MAX_HITS];
   int n, p[100], ne;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -2023,7 +2028,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
     if(n == 2)
       Msg(ONSCREEN, "Select end point\n"
 	  "[Press 'u' to undo last selection or 'q' to abort]");
-    char ib = SelectEntity(ENT_POINT, &ne, v, c, s);
+    char ib = SelectEntity(ENT_POINT, &ne, v, c, s, r);
     if(ib == 'l') {
       p[n++] = v[0]->tag();
     }
@@ -2032,7 +2037,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
     }
     if(ib == 'u') {
       if(n > 0){
-	ZeroHighlightEntityNum(p[n-1], 0, 0);
+	ZeroHighlightEntityNum(p[n-1], 0, 0, 0);
 	Draw();
 	n--;
       }
@@ -2059,6 +2064,7 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
   GVertex *v[SELECTION_MAX_HITS];
   GEdge *c[SELECTION_MAX_HITS];
   GFace *s[SELECTION_MAX_HITS];
+  GRegion *r[SELECTION_MAX_HITS];
   int n, p[100], ne;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -2079,7 +2085,7 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
     if(n == 3)
       Msg(ONSCREEN, "Select end point\n"
 	  "[Press 'u' to undo last selection or 'q' to abort]");
-    char ib = SelectEntity(ENT_POINT, &ne, v, c, s);
+    char ib = SelectEntity(ENT_POINT, &ne, v, c, s, r);
     if(ib == 'l') {
       p[n++] = v[0]->tag();
     }
@@ -2088,7 +2094,7 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
     }
     if(ib == 'u') {
       if(n > 0){
-	ZeroHighlightEntityNum(p[n-1], 0, 0);
+	ZeroHighlightEntityNum(p[n-1], 0, 0, 0);
 	Draw();
 	n--;
       }
@@ -2115,6 +2121,7 @@ static void _new_surface_volume(int mode)
   GVertex *v[SELECTION_MAX_HITS];
   GEdge *c[SELECTION_MAX_HITS];
   GFace *s[SELECTION_MAX_HITS];
+  GRegion *r[SELECTION_MAX_HITS];
   int type, num, ne;
 
   List_T *List1 = List_Create(10, 10, sizeof(int));
@@ -2154,7 +2161,7 @@ static void _new_surface_volume(int mode)
 	      "[Press 'u' to undo last selection or 'q' to abort]");
       }
 
-      char ib = SelectEntity(type, &ne, v, c, s);
+      char ib = SelectEntity(type, &ne, v, c, s, r);
       if(ib == 'q') {
         ZeroHighlight();
         Draw();
@@ -2165,7 +2172,8 @@ static void _new_surface_volume(int mode)
 	  List_Read(List1, List_Nbr(List1)-1, &num);
 	  ZeroHighlightEntityNum(0,
 				 (type == ENT_LINE) ? abs(num) : 0, 
-				 (type != ENT_LINE) ? abs(num) : 0);
+				 (type != ENT_LINE) ? abs(num) : 0,
+				 0);
 	  List_Pop(List1);
 	  Draw();
 	}
@@ -2189,7 +2197,7 @@ static void _new_surface_volume(int mode)
 	    else
 	      Msg(ONSCREEN, "Select hole boundaries\n"
 		  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-	    ib = SelectEntity(type, &ne, v, c, s);
+	    ib = SelectEntity(type, &ne, v, c, s, r);
 	    if(ib == 'q') {
 	      ZeroHighlight();
 	      Draw();
@@ -2206,7 +2214,8 @@ static void _new_surface_volume(int mode)
 		List_Read(List1, List_Nbr(List1)-1, &num);	    
 		ZeroHighlightEntityNum(0,
 				       (type == ENT_LINE) ? abs(num) : 0, 
-				       (type != ENT_LINE) ? abs(num) : 0);
+				       (type != ENT_LINE) ? abs(num) : 0,
+				       0);
 		List_Pop(List1);
 		Draw();
 	      }
@@ -2269,6 +2278,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
   GVertex *v[SELECTION_MAX_HITS];
   GEdge *c[SELECTION_MAX_HITS];
   GFace *s[SELECTION_MAX_HITS];
+  GRegion *r[SELECTION_MAX_HITS];
   int type, ne;
   char *str;
 
@@ -2288,9 +2298,9 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
     opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(what, "Volume")) {
-    Msg(GERROR, "Interactive volume selection not implemented yet!");
-    Msg(GERROR, "You will have to edit the input file by hand...");
-    return;
+    type = ENT_VOLUME;
+    str = "volumes";
+    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
   }
   else{
     Msg(GERROR, "Unknown entity to select");
@@ -2315,7 +2325,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
       Msg(ONSCREEN, "Select %s\n"
 	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
 
-    char ib = SelectEntity(type, &ne, v, c, s);
+    char ib = SelectEntity(type, &ne, v, c, s, r);
     if(ib == 'l') {
       // we don't use List_Insert in order to keep the original
       // ordering (this is slower, but this way undo works as
@@ -2338,6 +2348,11 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	  if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
 	    List_Add(List1, &tag);
 	  break;
+	case ENT_VOLUME:
+	  tag = r[i]->tag();
+	  if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
+	    List_Add(List1, &tag);
+	  break;
 	}
       }
     }
@@ -2352,19 +2367,25 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	  tag = v[i]->tag();
 	  index = List_ISearchSeq(List1, &tag, fcmp_int); 
 	  if(index >= 0) List_PSuppress(List1, index);
-	  ZeroHighlightEntityNum(tag, 0, 0);
+	  ZeroHighlightEntityNum(tag, 0, 0, 0);
 	  break;
 	case ENT_LINE:
 	  tag = c[i]->tag();
 	  index = List_ISearchSeq(List1, &tag, fcmp_int); 
 	  if(index >= 0) List_PSuppress(List1, index);
-	  ZeroHighlightEntityNum(0, tag, 0);
+	  ZeroHighlightEntityNum(0, tag, 0, 0);
 	  break;
 	case ENT_SURFACE:
 	  tag = s[i]->tag();
 	  index = List_ISearchSeq(List1, &tag, fcmp_int); 
 	  if(index >= 0) List_PSuppress(List1, index);
-	  ZeroHighlightEntityNum(0, 0, tag);
+	  ZeroHighlightEntityNum(0, 0, tag, 0);
+	  break;
+	case ENT_VOLUME:
+	  tag = r[i]->tag();
+	  index = List_ISearchSeq(List1, &tag, fcmp_int); 
+	  if(index >= 0) List_PSuppress(List1, index);
+	  ZeroHighlightEntityNum(0, 0, 0, tag);
 	  break;
 	}
       }
@@ -2376,7 +2397,8 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	List_Read(List1, List_Nbr(List1)-1, &num);
 	ZeroHighlightEntityNum((type == ENT_POINT) ? num : 0,
 			       (type == ENT_LINE) ? num : 0,
-			       (type == ENT_SURFACE) ? num : 0);
+			       (type == ENT_SURFACE) ? num : 0,
+			       (type == ENT_VOLUME) ? num : 0);
 	Draw();
 	List_Pop(List1);
       }
@@ -2434,14 +2456,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	  delet(List1, CTX.filename, what);
 	  break;
 	case 7:
-	  {
-	    int num = add_physical(List1, CTX.filename, type);
-	    GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
-	    if(sp){
-	      sp->receiveNewPhysicalGroup(type, num);
-	      sp->writeSolverFile(CTX.filename);
-	    }
-	  }
+	  add_physical(List1, CTX.filename, type);
 	  break;
 	case 8:
 	  add_charlength(List1, CTX.filename, (char*)WID->context_mesh_input[0]->value());
@@ -2881,6 +2896,7 @@ static void _add_transfinite_elliptic(int type, int dim)
   GVertex *v[SELECTION_MAX_HITS];
   GEdge *c[SELECTION_MAX_HITS];
   GFace *s[SELECTION_MAX_HITS];
+  GRegion *r[SELECTION_MAX_HITS];
   char ib;
   int n, p[100], ne;
 
@@ -2902,11 +2918,15 @@ static void _add_transfinite_elliptic(int type, int dim)
       else
 	Msg(ONSCREEN, "Select lines\n"
 	    "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-      ib = SelectEntity(ENT_LINE, &ne, v, c, s);
+      ib = SelectEntity(ENT_LINE, &ne, v, c, s, r);
       break;
     case 2:
       Msg(ONSCREEN, "Select surface\n[Press 'q' to abort]");
-      ib = SelectEntity(ENT_SURFACE, &ne, v, c, s);
+      ib = SelectEntity(ENT_SURFACE, &ne, v, c, s, r);
+      break;
+    case 3:
+      Msg(ONSCREEN, "Select volume\n[Press 'q' to abort]");
+      ib = SelectEntity(ENT_VOLUME, &ne, v, c, s, r);
       break;
     default:
       ib = 'l';
@@ -2928,7 +2948,7 @@ static void _add_transfinite_elliptic(int type, int dim)
     if(ib == 'u') {
       if(dim == 1) {
         if(n > 0){
-	  ZeroHighlightEntityNum(0, p[n-1], 0);
+	  ZeroHighlightEntityNum(0, p[n-1], 0, 0);
 	  Draw();
 	  n--;
 	}
@@ -2948,23 +2968,25 @@ static void _add_transfinite_elliptic(int type, int dim)
         p[n++] = c[0]->tag();
         break;
       case 2:
-        p[n++] = s[0]->tag(); 
-	// fall-through
       case 3:
+	if(dim == 2)
+	  p[n++] = s[0]->tag(); 
+	else
+	  p[n++] = r[0]->tag(); 
         while(1) {
-	  if(n == ((dim == 2) ? 1 : 0))
+	  if(n == 1)
 	    Msg(ONSCREEN, "Select (ordered) boundary points\n"
 		"[Press 'e' to end selection or 'q' to abort]");
 	  else
 	    Msg(ONSCREEN, "Select (ordered) boundary points\n"
 		"[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-          ib = SelectEntity(ENT_POINT, &ne, v, c, s);
+          ib = SelectEntity(ENT_POINT, &ne, v, c, s, r);
           if(ib == 'l') {
             p[n++] = v[0]->tag();
           }
 	  if(ib == 'u') {
-	    if(n > ((dim == 2) ? 1 : 0)){
-	      ZeroHighlightEntityNum(p[n-1], 0, 0);
+	    if(n > 1){
+	      ZeroHighlightEntityNum(p[n-1], 0, 0, 0);
 	      Draw();
 	      n--;
 	    }
@@ -2983,9 +3005,8 @@ static void _add_transfinite_elliptic(int type, int dim)
 		    type ? "elliptic" : "transfinite");
               break;
             case 3:
-              if(n == 6 || n == 8)
-                add_trsfvol(n, p, CTX.filename, 
-			    (char*)WID->context_mesh_input[3]->value());
+              if(n == 6 + 1 || n == 8 + 1)
+                add_trsfvol(n, p, CTX.filename);
               else
                 Msg(GERROR, "Wrong number of points for transfinite volume");
               break;
@@ -3024,7 +3045,6 @@ void mesh_define_transfinite_surface_cb(CALLBACK_ARGS)
 
 void mesh_define_transfinite_volume_cb(CALLBACK_ARGS)
 {
-  WID->create_mesh_context_window(3);
   _add_transfinite_elliptic(0, 3);
 }
 

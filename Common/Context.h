@@ -228,7 +228,6 @@ public :
     struct{
       unsigned int point, line, surface, volume;
       unsigned int point_sel, line_sel, surface_sel, volume_sel;
-      unsigned int point_hlt, line_hlt, surface_hlt, volume_hlt;
       unsigned int tangents, normals;
     } geom;
     struct{

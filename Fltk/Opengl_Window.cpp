@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.63 2006-07-14 12:54:33 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.64 2006-08-13 20:46:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -180,6 +180,7 @@ int Opengl_Window::handle(int event)
   GVertex *v[SELECTION_MAX_HITS];
   GEdge *c[SELECTION_MAX_HITS];
   GFace *s[SELECTION_MAX_HITS];
+  GRegion *r[SELECTION_MAX_HITS];
   double dx, dy;
 
   switch (event) {
@@ -352,17 +353,18 @@ int Opengl_Window::handle(int event)
     else if(CTX.enable_mouse_selection >= 2){ // hover mode
       if(curr.win[0] != prev.win[0] || curr.win[1] != prev.win[1]){
 	WID->make_opengl_current();
-	v[0] = NULL; c[0] = NULL; s[0] = NULL;
+	v[0] = NULL; c[0] = NULL; s[0] = NULL; r[0] = NULL;
 	Process_SelectionBuffer(WID->selection, 0, 
 				(int)curr.win[0], (int)curr.win[1], 5, 5, 
-				v, c, s);
+				v, c, s, r);
 	if((WID->selection == ENT_POINT && v[0]) ||
 	   (WID->selection == ENT_LINE && c[0]) || 
-	   (WID->selection == ENT_SURFACE && s[0]))
+	   (WID->selection == ENT_SURFACE && s[0]) ||
+	   (WID->selection == ENT_VOLUME && r[0]))
 	  WID->g_window->cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
 	else
 	  WID->g_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
-	HighlightEntity(v[0], c[0], s[0], 0);
+	HighlightEntity(v[0], c[0], s[0], r[0], 0);
       }
     }
     prev.set();

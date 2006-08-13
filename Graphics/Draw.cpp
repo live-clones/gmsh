@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.102 2006-08-12 21:31:24 geuzaine Exp $
+// $Id: Draw.cpp,v 1.103 2006-08-13 20:46:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -361,7 +361,8 @@ int Process_SelectionBuffer(int type, bool multi,
 			    int x, int y, int w, int h,
 			    GVertex *v[SELECTION_MAX_HITS],
 			    GEdge *c[SELECTION_MAX_HITS],
-			    GFace *s[SELECTION_MAX_HITS])
+			    GFace *s[SELECTION_MAX_HITS],
+			    GRegion *r[SELECTION_MAX_HITS])
 {
   hit hits[SELECTION_BUFFER_SIZE];
   GLuint selectBuf[SELECTION_BUFFER_SIZE];
@@ -430,7 +431,8 @@ int Process_SelectionBuffer(int type, bool multi,
     if((type == ENT_NONE && hits[i].type == typmin) ||
        (type == ENT_POINT && hits[i].type == 0) ||
        (type == ENT_LINE && hits[i].type == 1) ||
-       (type == ENT_SURFACE && hits[i].type == 2)){
+       (type == ENT_SURFACE && hits[i].type == 2) ||
+       (type == ENT_VOLUME && hits[i].type == 3)){
       switch (hits[i].type) {
       case 0:
 	if(!(v[j] = GMODEL->vertexByTag(hits[i].ient))){
@@ -451,6 +453,14 @@ int Process_SelectionBuffer(int type, bool multi,
       case 2:
 	if(!(s[j] = GMODEL->faceByTag(hits[i].ient))){
 	  Msg(GERROR, "Problem in surface selection processing");
+	  return j;
+	}
+	j++;
+	if(!multi) return 1;
+	break;
+      case 3:
+	if(!(r[j] = GMODEL->regionByTag(hits[i].ient))){
+	  Msg(GERROR, "Problem in volume selection processing");
 	  return j;
 	}
 	j++;

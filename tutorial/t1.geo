@@ -92,3 +92,4 @@ Physical Surface(MySurface) = {6} ;
 // the mesh will be directly saved with their default orientation and
 // with a region number equal to the number of the elementary entity
 // they discretize.
+Transfinite Surface {6} = {1,2,3,4};

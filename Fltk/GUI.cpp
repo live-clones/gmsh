@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.510 2006-08-13 14:43:55 geuzaine Exp $
+// $Id: GUI.cpp,v 1.511 2006-08-13 20:46:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4410,7 +4410,7 @@ void GUI::create_mesh_context_window(int num)
     return;
   }
 
-  int width = 32 * fontsize;
+  int width = 30 * fontsize;
   int height = 5 * WB + 5 * BH;
 
   context_mesh_window = new Dialog_Window(width, height, "Contextual Mesh Definitions");
@@ -4419,7 +4419,7 @@ void GUI::create_mesh_context_window(int num)
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
     // 0: Characteristic length
     {
-      g[0] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Charact. Length");
+      g[0] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Length");
       context_mesh_input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Value");
       context_mesh_input[0]->value("0.1");
       context_mesh_input[0]->align(FL_ALIGN_RIGHT);
@@ -4427,7 +4427,7 @@ void GUI::create_mesh_context_window(int num)
     }
     // 1: Transfinite line
     {
-      g[1] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Transf. Line");
+      g[1] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Transfinite Line");
       context_mesh_input[1] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Number of points");
       context_mesh_input[1]->value("10");
       context_mesh_input[2] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Parameter");
@@ -4448,21 +4448,13 @@ void GUI::create_mesh_context_window(int num)
     
     // 2: Transfinite surface
     {
-      g[2] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Transf. Surface");
+      g[2] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Transfinite Surface");
 
       context_mesh_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 1 * BH, IW, BH, "Transfinite Arrangement");
       context_mesh_choice[1]->menu(menu_transfinite_dir);
       context_mesh_choice[1]->align(FL_ALIGN_RIGHT);
 
       g[2]->end();
-    }
-    // 3: Transfinite volume
-    {
-      g[3] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Transf. Volume");
-      context_mesh_input[3] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Volume number");
-      context_mesh_input[3]->value("1");
-      context_mesh_input[3]->align(FL_ALIGN_RIGHT);
-      g[3]->end();
     }
     o->end();
   }

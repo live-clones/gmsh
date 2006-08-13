@@ -8,14 +8,16 @@
 #include "Range.h"
 
 class gmshFace : public GFace {
+ protected:
+  Surface *s;
+
  public:
   gmshFace(GModel *m, Surface *face);
   gmshFace(GModel *m, int num);
   virtual ~gmshFace(){}
   Range<double> parBounds(int i) const; 
-  virtual int paramDegeneracies(int dir, double *par); 
+  virtual int paramDegeneracies(int dir, double *par) { return 0; }
   
-  virtual SBoundingBox3d bounds() const; 
   virtual GPoint point(double par1, double par2) const; 
   virtual GPoint point(const SPoint2 &pt) const; 
   virtual GPoint closestPoint(const SPoint3 & queryPoint) ; 
@@ -29,14 +31,13 @@ class gmshFace : public GFace {
  				 double *array) const {throw;}
   
   virtual GEntity::GeomType geomType() const; 
-  virtual int geomDirection() const; 
+  virtual int geomDirection() const { return 1; }
   
-  virtual bool continuous(int dim) const; 
-  virtual bool periodic(int dim) const; 
-  virtual bool degenerate(int dim) const; 
+  virtual bool continuous(int dim) const { return true; }
+  virtual bool periodic(int dim) const { return false; }
+  virtual bool degenerate(int dim) const { return false; }
   virtual double period(int dir) const {throw;}
-  void * getNativePtr() const; 
-  Surface *s;
+  void * getNativePtr() const { return s; }
   virtual bool surfPeriodic(int dim) const {throw;}
   virtual SPoint2 parFromPoint(const SPoint3 &) const;
 };

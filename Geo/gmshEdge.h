@@ -8,30 +8,30 @@
 #include "Range.h"
 
 class gmshEdge : public GEdge {
+ protected:
+  Curve *c; 
+
  public:
   gmshEdge(GModel *model, Curve *edge, GVertex *v1, GVertex *v2);
   gmshEdge(GModel *model, int num);
-  virtual ~gmshEdge();
-  double period() const{throw ;}
+  virtual ~gmshEdge() {}
+  double period() const { throw ; }
   Range<double> parBounds(int i) const;
-  virtual bool periodic(int dim=0) const;
+  virtual bool periodic(int dim=0) const { return false; }
   virtual GeomType geomType() const;
-  virtual bool degenerate(int) const;
-  virtual bool continuous(int dim) const;
-  // Geometric Ops
+  virtual bool degenerate(int) const { return false; }
+  virtual bool continuous(int dim) const { return true; }
   SBoundingBox3d bounds() const;
   virtual GPoint point(double p) const;
   virtual GPoint closestPoint(const SPoint3 & queryPoint);
-  virtual int containsPoint(const SPoint3 &pt) const;  
+  virtual int containsPoint(const SPoint3 &pt) const { throw; }
   virtual int containsParam(double pt) const;
   virtual SVector3 firstDer(double par) const;
-  virtual SPoint2 reparamOnFace(GFace * face, double epar, int dir) const {throw;}
-  void * getNativePtr() const; 
+  virtual SPoint2 reparamOnFace(GFace * face, double epar, int dir) const { throw; }
+  void * getNativePtr() const { return c; }
   virtual double parFromPoint(const SPoint3 &pt) const;
   virtual int minimumMeshSegments () const;
   virtual int minimumDrawSegments () const;
- protected:
-  Curve *c; 
 };
 
 #endif

@@ -21,7 +21,6 @@ class GRegion;
 class GFace : public GEntity 
 {
  protected: 
-  //  std::list<GEdgeLoop *> l_edgeLoops;
   std::list<GEdge *> l_edges;
   std::list<int> l_dirs;
   GRegion *r1, *r2;
@@ -43,6 +42,9 @@ class GFace : public GEntity
 
   virtual int dim() const {return 2;}
   virtual void setVisibility(char val, bool recursive=false);
+
+  // The bounding box
+  virtual SBoundingBox3d bounds() const; 
 
   // Get the location of any parametric degeneracies on the face in
   // the given parametric direction.
@@ -75,17 +77,17 @@ class GFace : public GEntity
   // to worry about that.
   virtual bool surfPeriodic(int dim) const = 0;
 
-  // recompute the mesh partitions defined on this face.
+  // Recompute the mesh partitions defined on this face.
   void recomputeMeshPartitions();
 
-  // recompute the mean plane of the surface from a list of points
+  // Recompute the mean plane of the surface from a list of points
   void computeMeanPlane(const std::vector<MVertex*> &points);
   void computeMeanPlane(const std::vector<SPoint3> &points);
 
-  // recompute the mean plane of the surface from its bounding vertices
+  // Recompute the mean plane of the surface from its bounding vertices
   void computeMeanPlane();
 
-  // get the mean plane info
+  // Get the mean plane info
   void getMeanPlaneData(double VX[3], double VY[3], 
 			double &x, double &y, double &z) const;
 

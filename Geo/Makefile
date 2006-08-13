@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.91 2006-08-13 05:31:41 geuzaine Exp $
+# $Id: Makefile,v 1.92 2006-08-13 20:46:54 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -208,16 +208,14 @@ gmshFace.o: gmshFace.cpp gmshModel.h GModel.h GVertex.h GEntity.h Range.h \
 gmshRegion.o: gmshRegion.cpp gmshModel.h GModel.h GVertex.h GEntity.h \
   Range.h SPoint3.h SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h \
   GPoint.h GEdge.h SVector3.h SPoint2.h MElement.h ../Numeric/Numeric.h \
-  GFace.h Pair.h GRegion.h gmshEdge.h gmshVertex.h ../Mesh/Mesh.h \
+  GFace.h Pair.h GRegion.h gmshFace.h gmshVertex.h ../Mesh/Mesh.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../Mesh/Vertex.h \
   ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h \
   ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h \
   ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h gmshFace.h \
-  gmshRegion.h ../Mesh/Interpolation.h ../Mesh/Vertex.h ../Mesh/Mesh.h \
-  CAD.h ExtrudeParams.h Geo.h ../Mesh/Create.h ../Mesh/Vertex.h \
-  ../Mesh/Mesh.h ../Mesh/Utils.h ../Mesh/Vertex.h ../Mesh/Mesh.h
+  ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h gmshRegion.h Geo.h \
+  ../Mesh/Create.h ../Mesh/Vertex.h ../Mesh/Mesh.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 SVector3.o: SVector3.cpp SVector3.h SPoint3.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"

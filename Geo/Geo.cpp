@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.53 2006-08-12 18:05:14 geuzaine Exp $
+// $Id: Geo.cpp,v 1.54 2006-08-13 20:46:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -389,13 +389,13 @@ void add_vol(List_T *list, char *fich)
   add_infile(text, fich);
 }
 
-void add_trsfvol(int N, int *l, char *fich, char *vol)
+void add_trsfvol(int N, int *l, char *fich)
 {
   char text[BUFFSIZE], text2[BUFFSIZE];
 
-  snprintf(text, BUFFSIZE, "Transfinite Volume{%s} = {", vol);
-  for(int i = 0; i < N; i++) {
-    if(i == 0)
+  snprintf(text, BUFFSIZE, "Transfinite Volume{%d} = {", l[0]);
+  for(int i = 1; i < N; i++) {
+    if(i == 1)
       snprintf(text2, BUFFSIZE, "%d", l[i]);
     else
       snprintf(text2, BUFFSIZE, ",%d", l[i]);
@@ -405,7 +405,6 @@ void add_trsfvol(int N, int *l, char *fich, char *vol)
   strncat(text, text2, BUFFSIZE-strlen(text));
   add_infile(text, fich);
 }
-
 
 int add_physical(List_T *list, char *fich, int type)
 {

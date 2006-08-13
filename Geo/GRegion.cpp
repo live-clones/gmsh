@@ -31,6 +31,18 @@ GRegion::~GRegion ()
   pyramids.clear();
 }
 
+SBoundingBox3d GRegion::bounds() const
+{
+  std::list<GFace*>::const_iterator it = l_faces.begin();
+  SBoundingBox3d res = (*it)->bounds();
+  ++it;
+  while(it != l_faces.end()){
+    res += (*it)->bounds();  
+    ++it;
+  }
+  return res;
+}
+
 void GRegion::setVisibility(char val, bool recursive)
 {
   GEntity::setVisibility(val);

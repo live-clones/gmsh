@@ -22,8 +22,13 @@ class GEdge : public GEntity {
 	GVertex *_v1);
   virtual ~GEdge() ;
 
-  virtual int dim() const {return 1;}
+  GVertex *getBeginVertex () const { return v0; }
+  GVertex *getEndVertex () const { return v1; }
 
+  void addFace(GFace *f);
+  void delFace(GFace *f);
+
+  virtual int dim() const {return 1;}
   virtual bool periodic(int dim=0) const = 0;
   virtual bool continuous(int dim=0) const = 0;
   virtual void setVisibility(char val, bool recursive=false);
@@ -43,18 +48,21 @@ class GEdge : public GEntity {
   // Get first derivative of edge at the given parameter.
   virtual SVector3 firstDer(double par) const = 0;
 
-  // reparmaterize the point onto the given face.
+  // Reparmaterize the point onto the given face.
   virtual SPoint2 reparamOnFace(GFace *face, double epar,int dir) const = 0;
 
-  // recompute the mesh partitions defined on this edge.
+  // Recompute the mesh partitions defined on this edge.
   void recomputeMeshPartitions();
 
-  void addFace(GFace *f);
-  void delFace(GFace *f);
+  // Returns the minimum number of segments used for meshing the edge
+  virtual int minimumMeshSegments () const {return 1;}
 
-  GVertex *getBeginVertex () const { return v0; }
-  GVertex *getEndVertex () const { return v1; }
-  
+  // Returns the minimum number of segments used for drawing the edge
+  virtual int minimumDrawSegments () const {return 1;}
+
+  // Returns a type-specific additional information string
+  virtual std::string getAdditionalInfoString();
+
   struct {
     char   Method;
     double coeffTransfinite;
@@ -63,11 +71,6 @@ class GEdge : public GEntity {
   } meshAttributes ;
 
   std::vector<MLine*> lines;
-
-  virtual int minimumMeshSegments () const {return 1;}
-  virtual int minimumDrawSegments () const {return 1;}
-
-  virtual std::string getAdditionalInfoString();
 };
 
 #endif

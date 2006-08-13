@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.110 2006-08-13 18:11:17 geuzaine Exp $
+// $Id: Geom.cpp,v 1.111 2006-08-13 20:46:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -92,7 +92,7 @@ class drawGEdge
 public :
   void operator () (GEdge *e)
   {
-    if(!e->getVisibility())
+    if(!e->getVisibility() || e->geomType() == GEntity::DiscreteCurve)
       return;
     
     if(CTX.render_mode == GMSH_SELECT) {
@@ -116,33 +116,28 @@ public :
     double t_max = t_bounds.high();
     
     if(CTX.geom.lines) {
-      if(e->geomType() == GEntity::DiscreteCurve){
-	// do nothing: we draw the elements in the mesh drawing routines
+      int N = e->minimumDrawSegments() + 1;
+      if(CTX.geom.line_type > 0) {
+	for(int i = 0; i < N - 1; i++) {
+	  double t1 = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
+	  GPoint p1 = e->point(t1);
+	  double t2 = t_min + (double)(i + 1) / (double)(N - 1) * (t_max - t_min);
+	  GPoint p2 = e->point(t2);
+	  double x[2] = {p1.x(), p2.x()};
+	  double y[2] = {p1.y(), p2.y()};
+	  double z[2] = {p1.z(), p2.z()};
+	  Draw_Cylinder(e->getFlag() > 0 ? CTX.geom.line_sel_width : 
+			CTX.geom.line_width, x, y, z, CTX.geom.light);
+	}
       }
       else {
-	int N = e->minimumDrawSegments() + 1;
-	if(CTX.geom.line_type > 0) {
-	  for(int i = 0; i < N - 1; i++) {
-	    double t1 = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
-	    GPoint p1 = e->point(t1);
-	    double t2 = t_min + (double)(i + 1) / (double)(N - 1) * (t_max - t_min);
-	    GPoint p2 = e->point(t2);
-	    double x[2] = {p1.x(), p2.x()};
-	    double y[2] = {p1.y(), p2.y()};
-	    double z[2] = {p1.z(), p2.z()};
-	    Draw_Cylinder(e->getFlag() > 0 ? CTX.geom.line_sel_width : 
-			  CTX.geom.line_width, x, y, z, CTX.geom.light);
-	  }
+	glBegin(GL_LINE_STRIP);
+	for(int i = 0; i < N; i++) {
+	  double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
+	  GPoint p = e->point(t);
+	  glVertex3d(p.x(), p.y(), p.z());
 	}
-	else {
-	  glBegin(GL_LINE_STRIP);
-	  for(int i = 0; i < N; i++) {
-	    double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
-	    GPoint p = e->point(t);
-	    glVertex3d(p.x(), p.y(), p.z());
-	  }
-	  glEnd();
-	}
+	glEnd();
       }
     }
     
@@ -326,7 +321,7 @@ private:
 public :
   void operator () (GFace *f)
   {
-    if(!f->getVisibility())
+    if(!f->getVisibility() || f->geomType() == GEntity::DiscreteSurface)
       return;
     
     if(CTX.render_mode == GMSH_SELECT) {
@@ -346,15 +341,10 @@ public :
       glColor4ubv((GLubyte *) & CTX.color.geom.surface);
     }
     
-    if(f->geomType() == GEntity::DiscreteSurface){
-      // do nothing: we draw the elements in the mesh drawing routines
-    }
-    else if(f->geomType() == GEntity::Plane){
+    if(f->geomType() == GEntity::Plane)
       _drawPlaneGFace(f);
-    }
-    else{
+    else
       _drawNonPlaneGFace(f);
-    }
     
     if(CTX.render_mode == GMSH_SELECT) {
       glPopName();
@@ -369,6 +359,43 @@ class drawGRegion
 public :
   void operator () (GRegion *r)
   {
+    if(!r->getVisibility() || r->geomType() == GEntity::DiscreteVolume)
+      return;
+    
+    if(CTX.render_mode == GMSH_SELECT) {
+      glPushName(3);
+      glPushName(r->tag());
+    }
+    
+    if(r->getFlag() > 0) {
+      glColor4ubv((GLubyte *) & CTX.color.geom.volume_sel);
+    }
+    else {
+      glColor4ubv((GLubyte *) & CTX.color.geom.volume);
+    }
+    
+    SBoundingBox3d bb = r->bounds();
+    SPoint3 p = bb.center();
+    const double size = 10.;
+
+    if(CTX.geom.volumes){
+      Draw_Sphere(size, p.x(), p.y(), p.z(), CTX.geom.light);
+    }
+
+    if(CTX.geom.volumes_num){
+      char Num[100];
+      sprintf(Num, "%d", r->tag());
+      double offset = (0.5 * size + 0.3 * CTX.gl_fontsize) * CTX.pixel_equiv_x;
+      glRasterPos3d(p.x() + offset / CTX.s[0],
+		    p.y() + offset / CTX.s[1],
+		    p.z() + offset / CTX.s[2]);
+      Draw_String(Num);
+    }
+
+    if(CTX.render_mode == GMSH_SELECT) {
+      glPopName();
+      glPopName();
+    }
   }
 };
 
@@ -406,15 +433,16 @@ void HighlightEntity(GEntity *e, int permanent)
     Msg(STATUS2N, "%s", e->getInfoString().c_str());
 }
 
-void HighlightEntity(GVertex *v, GEdge *c, GFace *s, int permanent)
+void HighlightEntity(GVertex *v, GEdge *c, GFace *s, GRegion *r, int permanent)
 {
   if(v) HighlightEntity(v, permanent);
   else if(c) HighlightEntity(c, permanent);
   else if(s) HighlightEntity(s, permanent);
+  else if(r) HighlightEntity(r, permanent);
   else if(!permanent) Msg(STATUS2N, " ");
 }
 
-void HighlightEntityNum(int v, int c, int s, int permanent)
+void HighlightEntityNum(int v, int c, int s, int r, int permanent)
 {
   if(v) {
     GVertex *pv = GMODEL->vertexByTag(v);
@@ -428,6 +456,10 @@ void HighlightEntityNum(int v, int c, int s, int permanent)
     GFace *ps = GMODEL->faceByTag(s);
     if(ps) HighlightEntity(ps, permanent);
   }
+  if(r) {
+    GRegion *pr = GMODEL->regionByTag(r);
+    if(pr) HighlightEntity(pr, permanent);
+  }
 }
 
 void ZeroHighlightEntity(GEntity *e)
@@ -435,11 +467,12 @@ void ZeroHighlightEntity(GEntity *e)
   e->setFlag(-2);
 }
 
-void ZeroHighlightEntity(GVertex *v, GEdge *c, GFace *s)
+void ZeroHighlightEntity(GVertex *v, GEdge *c, GFace *s, GRegion *r)
 {
   if(v) ZeroHighlightEntity(v);
   if(c) ZeroHighlightEntity(c);
   if(s) ZeroHighlightEntity(s);
+  if(r) ZeroHighlightEntity(r);
 }
 
 void ZeroHighlight()
@@ -450,9 +483,11 @@ void ZeroHighlight()
     ZeroHighlightEntity(*it);
   for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
     ZeroHighlightEntity(*it);
+  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
+    ZeroHighlightEntity(*it);
 }
 
-void ZeroHighlightEntityNum(int v, int c, int s)
+void ZeroHighlightEntityNum(int v, int c, int s, int r)
 {
   if(v) {
     GVertex *pv = GMODEL->vertexByTag(v);
@@ -465,5 +500,9 @@ void ZeroHighlightEntityNum(int v, int c, int s)
   if(s) {
     GFace *ps = GMODEL->faceByTag(s);
     if(ps) ZeroHighlightEntity(ps);
+  }
+  if(r) {
+    GRegion *pr = GMODEL->regionByTag(r);
+    if(pr) ZeroHighlightEntity(pr);
   }
 }

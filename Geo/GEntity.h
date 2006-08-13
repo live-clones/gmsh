@@ -46,7 +46,8 @@ class GEntity {
     RuledSurface,
     ParametricSurface,
     DiscreteSurface,
-    Volume
+    Volume,
+    DiscreteVolume
   };
 
   // Returns a string describing the entity type
@@ -69,7 +70,8 @@ class GEntity {
       "Ruled surface",
       "Parametric surface",
       "Discrete surface",
-      "Volume"
+      "Volume",
+      "Discrete volume"
     };
     unsigned int type = (unsigned int)geomType();
     if(type >= sizeof(name) / sizeof(name[0]))
@@ -133,11 +135,11 @@ class GEntity {
   // The bounding box
   virtual SBoundingBox3d bounds() const{throw;}
 
-  // get/set the visibility flag
+  // Get/set the visibility flag
   virtual char getVisibility(){ return _visible; }
   virtual void setVisibility(char val, bool recursive=false){ _visible = val; }
 
-  // get/set the multi-purpose flag
+  // Get/set the multi-purpose flag
   virtual char getFlag(){ return _flag; }
   virtual void setFlag(char val){ _flag = val; }
 

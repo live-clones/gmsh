@@ -41,8 +41,8 @@ class gmshVertex : public GVertex {
   {
     return v ? v->Pos.Z : mesh_vertices.size() ? mesh_vertices[0]->z() : 0.;
   }
-  void * getNativePtr() const {return v;}
-  virtual double prescribedMeshSizeAtVertex() const {return v ? v->lc : 0.;}
+  void * getNativePtr() const { return v; }
+  virtual double prescribedMeshSizeAtVertex() const { return v ? v->lc : 0.; }
 };
 
 #endif

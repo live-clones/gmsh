@@ -34,6 +34,18 @@ GFace::~GFace ()
   quadrangles.clear();
 }
 
+SBoundingBox3d GFace::bounds() const
+{
+  std::list<GEdge*>::const_iterator it = l_edges.begin();
+  SBoundingBox3d res = (*it)->bounds();
+  ++it;
+  while(it != l_edges.end()){
+    res += (*it)->bounds();  
+    ++it;
+  }
+  return res;
+}
+
 std::list<GVertex*> GFace::vertices() const
 {
   std::list<GEdge*>::const_iterator it = l_edges.begin();

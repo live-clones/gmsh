@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.61 2006-07-14 12:54:33 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.62 2006-08-13 20:46:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -186,7 +186,8 @@ void Draw_OnScreenMessages()
 char SelectEntity(int type, int *n,
 		  GVertex *v[SELECTION_MAX_HITS], 
 		  GEdge *c[SELECTION_MAX_HITS], 
-		  GFace *s[SELECTION_MAX_HITS])
+		  GFace *s[SELECTION_MAX_HITS],
+		  GRegion *r[SELECTION_MAX_HITS])
 {
   if(!WID) return 'q';
 
@@ -205,6 +206,7 @@ char SelectEntity(int type, int *n,
       v[i] = 0;
       c[i] = 0;
       s[i] = 0;
+      r[i] = 0;
     }
 
     WID->wait();
@@ -239,11 +241,11 @@ char SelectEntity(int type, int *n,
 				     WID->try_selection_xywh[1], 
 				     WID->try_selection_xywh[2],
 				     WID->try_selection_xywh[3], 
-				     v, c, s);
+				     v, c, s, r);
 	if(*n){
 	  if(add){
 	    for(int i = 0; i < *n; i++)
-	      HighlightEntity(v[i], c[i], s[i], 1);
+	      HighlightEntity(v[i], c[i], s[i], r[i], 1);
 	    Draw();
 	  }
 	  // don't call ZeroHighlight here if we (try to) deselect:

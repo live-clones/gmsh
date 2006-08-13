@@ -41,23 +41,6 @@ Range<double> gmshFace::parBounds(int i) const
   return Range<double>(0, 1);
 }
 
-int gmshFace::paramDegeneracies(int dir, double *par)
-{
-  return 0;
-}
-
-SBoundingBox3d gmshFace::bounds() const
-{
-  std::list<GEdge*>::const_iterator it = l_edges.begin();
-  SBoundingBox3d res = (*it)->bounds();
-  ++it;
-  while(it != l_edges.end()){
-    res += (*it)->bounds();  
-    ++it;
-  }
-  return res;
-}
-
 SVector3 gmshFace::normal(const SPoint2 &param) const
 {
   if(geomType() != Plane){
@@ -116,7 +99,7 @@ Pair<SVector3,SVector3> gmshFace::firstDer(const SPoint2 &param) const
 
 GPoint gmshFace::point(const SPoint2 &pt) const
 {   
-  return point(pt.x(),pt.y()); 
+  return point(pt.x(), pt.y()); 
 }
 
 GPoint gmshFace::point(double par1, double par2) const
@@ -171,23 +154,7 @@ SPoint2 gmshFace::parFromPoint(const SPoint3 &qp) const
   else{
     XYZtoUV(s, qp.x(), qp.y(), qp.z(), &u, &v, 1.0);
   }
-  SPoint2 pt2(u,v); 
-  return pt2;
-}
-
-bool gmshFace::continuous(int dim) const
-{ 
-  return true;
-}
-
-bool gmshFace::periodic(int dim) const
-{ 
-  return false;
-}
-
-bool gmshFace::degenerate(int dim) const
-{ 
-  return false;
+  return SPoint2(u, v); 
 }
 
 GEntity::GeomType gmshFace::geomType() const
@@ -200,16 +167,6 @@ GEntity::GeomType gmshFace::geomType() const
   case MSH_SURF_DISCRETE: return DiscreteSurface;
   default: return Unknown;
   }
-}
-
-int gmshFace::geomDirection() const
-{
-  return 1;
-}
-
-void * gmshFace::getNativePtr() const
-{ 
-  return s; 
 }
 
 int gmshFace::containsPoint(const SPoint3 &pt) const
