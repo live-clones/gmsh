@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.90 2006-08-13 03:23:44 geuzaine Exp $
+# $Id: Makefile,v 1.91 2006-08-13 05:31:41 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -27,11 +27,6 @@ INCLUDE = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Numeric\
           -I../Parser -I../Fltk\
           -I../contrib/NR
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
-
-ifdef DEVROOT
- INCLUDE := $(INCLUDE) -I$(DEVROOT)/MeshAdapt/model/include
-endif
-
 
 SRC = CAD.cpp \
       ExtrudeParams.cpp \
