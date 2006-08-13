@@ -161,7 +161,7 @@ int gmshFace::containsParam(const SPoint2 &pt) const
 SPoint2 gmshFace::parFromPoint(const SPoint3 &qp) const
 {
   double u,v;
-  if (s->Typ == MSH_SURF_PLAN){
+  if(s->Typ == MSH_SURF_PLAN){
     double x,y,z,VX[3],VY[3];
     getMeanPlaneData(VX, VY, x, y, z);
     double vec[3] = {qp.x()-x,qp.y()-y,qp.z()-z};
