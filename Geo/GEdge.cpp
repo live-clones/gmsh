@@ -54,3 +54,11 @@ void GEdge::recomputeMeshPartitions()
     if(part) model()->getMeshPartitions().insert(part);
   }
 }
+
+std::string GEdge::getAdditionalInfoString()
+{
+  if(!v0 || !v1) return std::string("");
+  char tmp[256];
+  sprintf(tmp, "{%d,%d}", v0->tag(), v1->tag());
+  return std::string(tmp);
+}

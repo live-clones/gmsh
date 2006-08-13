@@ -8,7 +8,10 @@
 // A model vertex
 class GVertex  : public GEntity 
 {
-public:
+ protected:
+  std::list<GEdge*> l_edges;
+
+ public:
   GVertex(GModel *m, int tag) : GEntity (m, tag) 
   {
   }
@@ -27,22 +30,7 @@ public:
   virtual GeomType geomType() const {return Point;}
   virtual double prescribedMeshSizeAtVertex() const {return 0;}
   virtual SBoundingBox3d bounds(){ return SBoundingBox3d(SPoint3(x(), y(), z())); }
-  virtual std::string getAdditionalInfoString()
-  {
-    char str[256];
-    sprintf(str, "{%g,%g,%g", x(), y(), z());
-    double lc = prescribedMeshSizeAtVertex();
-    if(lc > 0.){
-      char str2[256];
-      sprintf(str2, ",%g", lc);
-      strcat(str, str2);
-    }
-    strcat(str, "}");
-    return std::string(str);
-  }
-
- protected:
-  std::list<GEdge*> l_edges;
+  virtual std::string getAdditionalInfoString();
 };
 
 #endif

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.89 2006-08-13 02:46:53 geuzaine Exp $
+# $Id: Makefile,v 1.90 2006-08-13 03:23:44 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -37,6 +37,7 @@ SRC = CAD.cpp \
       ExtrudeParams.cpp \
       Geo.cpp \
       GeoUtils.cpp \
+      GEntity.cpp\
       GVertex.cpp\
       GEdge.cpp\
       GFace.cpp\
@@ -124,6 +125,9 @@ GeoUtils.o: GeoUtils.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h ExtrudeParams.h \
   ../Numeric/Numeric.h
+# 1 "/Users/geuzaine/.gmsh/Geo//"
+GEntity.o: GEntity.cpp GEntity.h Range.h SPoint3.h SBoundingBox3d.h \
+  MVertex.h ../Common/GmshDefines.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 GVertex.o: GVertex.cpp GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h MVertex.h ../Common/GmshDefines.h GPoint.h
