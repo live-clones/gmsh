@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.15 2006-08-12 16:30:12 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.16 2006-08-13 14:43:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -118,6 +118,62 @@ std::string VisibilityManager::getBrowserLine(int n)
   sprintf(str, "\t%s\t%d\t%s", _entities[n]->getName().c_str(), tag, 
 	  _labels.count(tag) ? _labels[tag].c_str() : "");
   return std::string(str);
+}
+
+std::string VisibilityManager::getStringForGEO()
+{
+  std::vector<int> state[4][2];
+
+  for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
+    (*it)->getVisibility() ?
+      state[0][1].push_back((*it)->tag()) : state[0][0].push_back((*it)->tag());
+  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
+    (*it)->getVisibility() ? 
+      state[1][1].push_back((*it)->tag()) : state[1][0].push_back((*it)->tag());
+  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+    (*it)->getVisibility() ? 
+      state[2][1].push_back((*it)->tag()) : state[2][0].push_back((*it)->tag());
+  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
+    (*it)->getVisibility() ? 
+      state[3][1].push_back((*it)->tag()) : state[3][0].push_back((*it)->tag());
+  
+  char tmp[256], *labels[4] = {"Point", "Line", "Surface", "Volume"};
+  std::string str;
+  int mode;
+
+  int on = 0, off = 0;
+  for(int i = 0; i < 4; i++){
+    on += state[i][1].size();
+    off += state[i][0].size();
+  }
+
+  if(on > off){
+    str = "Show \"*\";\n";
+    if(!off) return str;
+    str += "Hide {\n";
+    mode = 0;
+  }
+  else{
+    str = "Hide \"*\";\n";
+    if(!on) return str;
+    str += "Show {\n";
+    mode = 1;
+  }
+
+  for(int i = 0; i < 4; i++){
+    if(state[i][mode].size()){
+      str += labels[i];
+      str += "{";
+      for(unsigned int j = 0; j < state[i][mode].size(); j++){
+	if(j) str += ",";
+	sprintf(tmp, "%d", state[i][mode][j]);
+	str += tmp;
+      }
+      str += "};\n";
+    }
+  }
+  str += "}\n";
+  return str;
 }
 
 void VisElementary::setVisibility(char val, bool recursive)

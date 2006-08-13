@@ -140,6 +140,9 @@ class VisibilityManager {
   // get the browser line for the nth entity in the manager
   std::string getBrowserLine(int n);
 
+  // get the whole visibility information in geo format
+  std::string getStringForGEO();
+
   // set the sort mode
   void setSortMode(int mode){ _sortMode = (_sortMode != mode) ? mode : -mode; }
 

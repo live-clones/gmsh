@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.428 2006-08-12 16:16:27 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.429 2006-08-13 14:43:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1348,6 +1348,13 @@ void visibility_ok_cb(CALLBACK_ARGS)
     if(VisibilityManager::instance()->getVisibility(i))
       WID->vis_browser->select(i + 1);
   Draw();
+}
+
+void visibility_save_cb(CALLBACK_ARGS)
+{
+  visibility_ok_cb(NULL, NULL);
+  std::string str = VisibilityManager::instance()->getStringForGEO();
+  add_infile((char*)str.c_str(), CTX.filename);
 }
 
 void visibility_sort_cb(CALLBACK_ARGS)

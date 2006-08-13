@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.509 2006-08-12 19:34:15 geuzaine Exp $
+// $Id: GUI.cpp,v 1.510 2006-08-13 14:43:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3728,12 +3728,12 @@ void GUI::create_message_window(bool redraw_only)
   msg_browser->callback(message_copy_cb);
 
   {
-    Fl_Return_Button *o = new Fl_Return_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Save");
-    o->callback(message_save_cb);
+    Fl_Return_Button *o = new Fl_Return_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Clear");
+    o->callback(message_clear_cb);
   }
   {
-    Fl_Button *o = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Clear");
-    o->callback(message_clear_cb);
+    Fl_Button *o = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Save");
+    o->callback(message_save_cb);
   }
   {
     Fl_Button *o = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
@@ -3892,8 +3892,11 @@ void GUI::create_visibility_window()
       Fl_Group::current()->resizable(o);
     }
 
-    Fl_Return_Button *b = new Fl_Return_Button(width - BB - 2 * WB, height - 2 * BH - 3 * WB, BB, BH, "Apply");
-    b->callback(visibility_ok_cb);
+    Fl_Return_Button *b1 = new Fl_Return_Button(width - 2 * BB - 3 * WB, height - 2 * BH - 3 * WB, BB, BH, "Apply");
+    b1->callback(visibility_ok_cb);
+
+    Fl_Button *b2 = new Fl_Button(width - BB - 2 * WB, height - 2 * BH - 3 * WB, BB, BH, "Save");
+    b2->callback(visibility_save_cb);
 
     o->end();
     Fl_Group::current()->resizable(o);

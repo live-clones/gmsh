@@ -12,6 +12,9 @@ extern Mesh *THEM;
 
 void gmshModel::import()
 {
+  // When en entity that already exists is reimported, we don't do
+  // anything (except making it invisible if we are asked to)
+
   if(Tree_Nbr(THEM->Points)) {
     List_T *points = Tree2List(THEM->Points);
     for(int i = 0; i < List_Nbr(points); i++){
@@ -22,7 +25,7 @@ void gmshModel::import()
 	v = new gmshVertex(this, p);
 	add(v);
       }
-      v->setVisibility(p->Visible);
+      if(!p->Visible) v->setVisibility(0);
     }
     List_Delete(points);
   }
@@ -39,7 +42,7 @@ void gmshModel::import()
 			   vertexByTag(c->end->Num));
 	  add(e);
 	}
-	e->setVisibility(c->Visible);
+	if(!c->Visible) e->setVisibility(0);
       }
     }
     List_Delete(curves);
@@ -54,7 +57,7 @@ void gmshModel::import()
 	f = new gmshFace(this, s);
 	add(f);
       }
-      f->setVisibility(s->Visible);
+      if(!s->Visible) f->setVisibility(0);
     }
     List_Delete(surfaces);
   } 
@@ -68,7 +71,7 @@ void gmshModel::import()
 	r = new gmshRegion(this, v);
 	add(r);
       }
-      r->setVisibility(v->Visible);
+      if(!v->Visible) r->setVisibility(0);
     }
     List_Delete(volumes);
   }
@@ -97,4 +100,3 @@ void gmshModel::import()
   Msg(DEBUG, "%d Faces", faces.size());
   Msg(DEBUG, "%d Regions", regions.size());
 }
-
