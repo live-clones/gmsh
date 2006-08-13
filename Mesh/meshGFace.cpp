@@ -12,22 +12,6 @@
 #include "Numeric.h"
 #include "BDS.h"
 
-#if defined(HAVE_GSL)
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_linalg.h>
-#else
-#define NRANSI
-#include "nrutil.h"
-void dsvdcmp(double **a, int m, int n, double w[], double **v);
-#endif
-
-/*
-  Le concept d'un plan moyen calcule au sens des moidres carres n'est
-  pas le bon pour les surfaces non-planes : imagine un quart de cercle
-  extrude d'une faible hauteur. Le plan moyen sera dans le plan du
-  cercle! En attendant mieux, il y a donc un test de coherence
-  supplementaire pour les surfaces non-planes. */
-
 int Orientation (std::vector<MVertex*> &cu)
 {
   int N, i, a, b, c;
@@ -167,185 +151,6 @@ void computeEdgeLoops (const GFace *gf,
 
 }
 
-void MeanPlane_bis(GFace *gf, const std::vector<MVertex*> &points)
-{
-
-  int min, ndata, na;
-  double res[4], ex[3], t1[3], t2[3], svd[3];
-  double xm = 0., ym = 0., zm = 0.;
-
-  ndata = points.size();
-  na = 3;
-  for(int i = 0; i < ndata; i++) {
-    xm += points[i]->x();
-    ym += points[i]->y();
-    zm += points[i]->z();
-  }
-  xm /= (double)ndata;
-  ym /= (double)ndata;
-  zm /= (double)ndata;
-
-#if defined(HAVE_GSL)
-  gsl_matrix *U = gsl_matrix_alloc(ndata, na);
-  gsl_matrix *V = gsl_matrix_alloc(na, na);
-  gsl_vector *W = gsl_vector_alloc(na);
-  gsl_vector *TMPVEC = gsl_vector_alloc(na);
-  for(int i = 0; i < ndata; i++) {
-    gsl_matrix_set(U, i, 0, points[i]->x() - xm);
-    gsl_matrix_set(U, i, 1, points[i]->y() - ym);
-    gsl_matrix_set(U, i, 2, points[i]->z() - zm);
-  }
-  gsl_linalg_SV_decomp(U, V, W, TMPVEC);
-  svd[0] = gsl_vector_get(W, 0);
-  svd[1] = gsl_vector_get(W, 1);
-  svd[2] = gsl_vector_get(W, 2);
-  if(fabs(svd[0]) < fabs(svd[1]) && fabs(svd[0]) < fabs(svd[2]))
-    min = 0;
-  else if(fabs(svd[1]) < fabs(svd[0]) && fabs(svd[1]) < fabs(svd[2]))
-    min = 1;
-  else
-    min = 2;
-  res[0] = gsl_matrix_get(V, 0, min);
-  res[1] = gsl_matrix_get(V, 1, min);
-  res[2] = gsl_matrix_get(V, 2, min);
-  norme(res);
-  gsl_matrix_free(U);
-  gsl_matrix_free(V);
-  gsl_vector_free(W);
-  gsl_vector_free(TMPVEC);
-#else
-  double **U = dmatrix(1, ndata, 1, na);
-  double **V = dmatrix(1, na, 1, na);
-  double *W = dvector(1, na);
-  for(int i = 0; i < ndata; i++) {
-    U[i + 1][1] = points[i]->x() - xm;
-    U[i + 1][2] = points[i]->y() - ym;
-    U[i + 1][3] = points[i]->z() - zm;
-  }
-  dsvdcmp(U, ndata, na, W, V);
-  if(fabs(W[1]) < fabs(W[2]) && fabs(W[1]) < fabs(W[3]))
-    min = 1;
-  else if(fabs(W[2]) < fabs(W[1]) && fabs(W[2]) < fabs(W[3]))
-    min = 2;
-  else
-    min = 3;
-  svd[0] = W[1];
-  svd[1] = W[2];
-  svd[2] = W[3];
-  res[0] = V[1][min];
-  res[1] = V[2][min];
-  res[2] = V[3][min];
-  norme(res);
-  free_dmatrix(U, 1, ndata, 1, na);
-  free_dmatrix(V, 1, na, 1, na);
-  free_dvector(W, 1, na);
-#endif
-
-  // check coherence of results for non-plane surfaces
-  if(gf->geomType() != GEntity::Plane) {
-    double res2[3], c[3], cosc, sinc, angplan;
-    double eps = 1.e-3;
-
-    GPoint v1 = gf->point( 0.5, 0.5);
-    GPoint v2 = gf->point( 0.5 + eps, 0.5);
-    GPoint v3 = gf->point( 0.5, 0.5 + eps);
-    t1[0] = v2.x() - v1.x();
-    t1[1] = v2.y() - v1.y();
-    t1[2] = v2.z() - v1.z();
-    t2[0] = v3.x() - v1.x();
-    t2[1] = v3.y() - v1.y();
-    t2[2] = v3.z() - v1.z();
-    norme(t1);
-    norme(t2);
-    // prodve(t1, t2, res2);
-    // Warning: the rest of the code assumes res = t2 x t1, not t1 x t2 (WTF?)
-    prodve(t2, t1, res2); 
-    norme(res2);
-    prodve(res, res2, c);
-    prosca(res, res2, &cosc);
-    sinc = sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
-    angplan = myatan2(sinc, cosc);
-    angplan = angle_02pi(angplan) * 180. / Pi;
-    if((angplan > 70 && angplan < 110) || (angplan > 260 && angplan < 280)) {
-      Msg(INFO, "SVD failed (angle=%g): using rough algo...", angplan);
-      res[0] = res2[0];
-      res[1] = res2[1];
-      res[2] = res2[2];
-      goto end;
-    }
-  }
-
-  ex[0] = ex[1] = ex[2] = 0.0;
-  if(res[0] == 0.)
-    ex[0] = 1.0;
-  else if(res[1] == 0.)
-    ex[1] = 1.0;
-  else
-    ex[2] = 1.0;
-
-  prodve(res, ex, t1);
-  norme(t1);
-  prodve(t1, res, t2);
-  norme(t2);
-
-end:
-  res[3] = (xm * res[0] + ym * res[1] + zm * res[2]);
-
-  for(int i = 0; i < 3; i++)
-    gf->mp.plan[0][i] = t1[i];
-  for(int i = 0; i < 3; i++)
-    gf->mp.plan[1][i] = t2[i];
-  for(int i = 0; i < 3; i++)
-    gf->mp.plan[2][i] = res[i];
-
-  gf->mp.a = res[0];
-  gf->mp.b = res[1];
-  gf->mp.c = res[2];
-  gf->mp.d = res[3];
-
-  gf->mp.x=gf->mp.y=gf->mp.z=0;
-  if (fabs(gf->mp.a) >= fabs(gf->mp.b) && fabs(gf->mp.a) >= fabs(gf->mp.c) )
-    {
-      gf->mp.x = gf->mp.d/gf->mp.a;
-    }
-  else if (fabs(gf->mp.b) >= fabs(gf->mp.a) && fabs(gf->mp.b) >= fabs(gf->mp.c) )
-    {
-      gf->mp.y = gf->mp.d/gf->mp.b;
-    }
-  else
-    {
-      gf->mp.z = gf->mp.d/gf->mp.c;
-    }
-  
-
-  Msg(DEBUG1, "Surface: %d", gf->tag());
-  Msg(DEBUG2, "SVD    : %g,%g,%g (min=%d)", svd[0], svd[1], svd[2], min);
-  Msg(DEBUG2, "Plane  : (%g x + %g y + %g z = %g)", gf->mp.a, gf->mp.b, gf->mp.c, gf->mp.d);
-  Msg(DEBUG2, "Normal : (%g , %g , %g )", gf->mp.a, gf->mp.b, gf->mp.c);
-  Msg(DEBUG3, "t1     : (%g , %g , %g )", t1[0], t1[1], t1[2]);
-  Msg(DEBUG3, "t2     : (%g , %g , %g )", t2[0], t2[1], t2[2]);
-  Msg(DEBUG3, "pt     : (%g , %g , %g )", gf->mp.x, gf->mp.y, gf->mp.z);
-
-  //check coherence for plane surfaces
-  if(gf->geomType() == GEntity::Plane) {
-    std::list<GVertex*> verts = gf->vertices();
-    std::list<GVertex*>::const_iterator itv = verts.begin();
-    
-    for (;itv!=verts.end();itv++)
-      {
-	const GVertex *v = *itv; 
-	double d =
-	  gf->mp.a * v->x() + gf->mp.b * v->y() + gf->mp.c * v->z() - gf->mp.d;
-	if(fabs(d) > CTX.lc * 1.e-3) {
-	  Msg(GERROR1, "Plane surface %d (%gx+%gy+%gz+%g=0) is not plane!",
-	      v->tag(), gf->mp.a, gf->mp.b, gf->mp.c, gf->mp.d);
-	  Msg(GERROR3, "Control point %d = (%g,%g,%g), val=%g",
-	      v->tag(), v->x(), v->y(), v->z(), d);
-	  return;
-	}
-      }
-  }
-}
 
 
 void computeEdgeParameters ( double x1, double y1, double x2, double y2, GFace *gf , const int numberOfTestPoints, double &coordMiddle, double &edgeLength )
@@ -759,6 +564,9 @@ void meshGFace :: operator() (GFace *gf)
 {  
   if(gf->geomType() == GEntity::DiscreteSurface) return;
 
+  // Send a messsage to the GMSH environment
+  Msg(INFO, "Meshing surface %d", gf->tag());
+
   // destroy the mesh if it exists
   deMeshGFace dem;
   dem(gf);
@@ -771,10 +579,10 @@ void meshGFace :: operator() (GFace *gf)
   // compute loops on the fly
   // indices indicate start and end points of a loop
   // loops are not yet oriented
-  computeEdgeLoops(gf,points,indices);
+  computeEdgeLoops(gf, points, indices);
 
-  //compute the mean plane, this is sometimes useful 
-  MeanPlane_bis(gf,points);
+  // compute the mean plane, this is sometimes useful 
+  gf->computeMeanPlane(points);
 
   Msg(DEBUG1, "Face %d type %d with %d edge loops and %d points", 
       gf->tag(),gf->geomType(),indices.size()-1,points.size());

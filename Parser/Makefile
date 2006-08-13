@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.95 2006-08-12 19:34:16 geuzaine Exp $
+# $Id: Makefile,v 1.96 2006-08-13 02:46:53 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -120,8 +120,7 @@ OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h \
   ../Geo/SBoundingBox3d.h ../Common/Context.h Parser.h OpenFile.h \
-  ../Common/CommandLine.h ../Plugin/PluginManager.h ../Plugin/Plugin.h \
-  ../Common/Options.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/CommandLine.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h \

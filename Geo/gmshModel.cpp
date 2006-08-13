@@ -17,11 +17,12 @@ void gmshModel::import()
     for(int i = 0; i < List_Nbr(points); i++){
       Vertex *p;
       List_Read(points, i, &p);
-      if(!vertexByTag(p->Num)){
-	gmshVertex *v = new gmshVertex(this, p);
-	v->setVisibility(p->Visible);
+      GVertex *v = vertexByTag(p->Num);
+      if(!v){
+	v = new gmshVertex(this, p);
 	add(v);
       }
+      v->setVisibility(p->Visible);
     }
     List_Delete(points);
   }
@@ -31,23 +32,14 @@ void gmshModel::import()
       Curve *c;
       List_Read(curves, i, &c);
       if(c->Num >= 0 && c->beg && c->end){
-	if(!vertexByTag(c->beg->Num)){
-	  gmshVertex *v = new gmshVertex(this, c->beg);
-	  v->setVisibility(c->beg->Visible);
-	  add(v);
-	}
-	if(!vertexByTag(c->end->Num)){
-	  gmshVertex *v = new gmshVertex(this, c->end);
-	  v->setVisibility(c->beg->Visible);
-	  add(v);
-	}
-	if(!edgeByTag(c->Num)){
-	  gmshEdge *e = new gmshEdge(this, c,
-				     vertexByTag(c->beg->Num),
-				     vertexByTag(c->end->Num));
-	  e->setVisibility(c->Visible);
+	GEdge *e = edgeByTag(c->Num);
+	if(!e){
+	  e = new gmshEdge(this, c,
+			   vertexByTag(c->beg->Num),
+			   vertexByTag(c->end->Num));
 	  add(e);
 	}
+	e->setVisibility(c->Visible);
       }
     }
     List_Delete(curves);
@@ -57,11 +49,12 @@ void gmshModel::import()
     for(int i = 0; i < List_Nbr(surfaces); i++){
       Surface *s;
       List_Read(surfaces, i, &s);
-      if(!faceByTag(s->Num)){
-	gmshFace *f = new gmshFace(this, s);
-	f->setVisibility(s->Visible);
+      GFace *f = faceByTag(s->Num);
+      if(!f){
+	f = new gmshFace(this, s);
 	add(f);
       }
+      f->setVisibility(s->Visible);
     }
     List_Delete(surfaces);
   } 
@@ -70,11 +63,12 @@ void gmshModel::import()
     for(int i = 0; i < List_Nbr(volumes); i++){
       Volume *v;
       List_Read(volumes, i, &v);
-      if(!regionByTag(v->Num)){
-	gmshRegion *r = new gmshRegion(this, v);
-	r->setVisibility(v->Visible);
+      GRegion *r = regionByTag(v->Num);
+      if(!r){
+	r = new gmshRegion(this, v);
 	add(r);
       }
+      r->setVisibility(v->Visible);
     }
     List_Delete(volumes);
   }

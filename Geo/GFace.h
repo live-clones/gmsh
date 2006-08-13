@@ -11,8 +11,8 @@
 struct mean_plane
 {
   double plan[3][3];
-  double a,b,c,d;
-  double x,y,z;
+  double a, b, c, d;
+  double x, y, z;
 };
 
 class GRegion;
@@ -25,6 +25,7 @@ class GFace : public GEntity
   std::list<GEdge *> l_edges;
   std::list<int> l_dirs;
   GRegion *r1, *r2;
+  mean_plane meanPlane;
 
  public:
   GFace(GModel *model, int tag) : GEntity(model, tag), r1(0), r2(0) {}
@@ -77,9 +78,23 @@ class GFace : public GEntity
   // recompute the mesh partitions defined on this face.
   void recomputeMeshPartitions();
 
+  // recompute the mean plane of the surface from a list of points
+  void computeMeanPlane(const std::vector<MVertex*> &points);
+  void computeMeanPlane(const std::vector<SPoint3> &points);
+
+  // recompute the mean plane of the surface from its bounding vertices
+  void computeMeanPlane();
+
+  // get the mean plane info
+  void getMeanPlaneData(double VX[3], double VY[3], 
+			double &x, double &y, double &z) const;
+
+  // a crude graphical representation using a "cross" defined by pairs
+  // of start/end points
+  std::vector<SPoint3> cross;
+
   std::vector<MTriangle*> triangles;
   std::vector<MQuadrangle*> quadrangles;
-  mean_plane mp;
 };
 
 #endif

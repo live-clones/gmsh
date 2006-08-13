@@ -106,11 +106,11 @@ void meshGEdge :: operator() (GEdge *ge)
 {  
   if(ge->geomType() == GEntity::DiscreteCurve) return;
 
+  // Send a messsage to the GMSH environment
+  Msg(INFO, "Meshing curve %d", ge->tag());
+
   deMeshGEdge dem;
   dem(ge);
-
-  // Send a messsage to the GMSH environment
-  Msg(STATUS2, "Meshing curve %d", ge->tag());
 
   // Create a list of integration points
   List_T *Points = List_Create(10, 10, sizeof(IntPoint));

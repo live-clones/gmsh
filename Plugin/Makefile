@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.105 2006-08-12 21:31:24 geuzaine Exp $
+# $Id: Makefile,v 1.106 2006-08-13 02:46:54 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -79,12 +79,6 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   Extract.h ExtractElements.h ExtractEdges.h HarmonicToTime.h \
   ModulusPhase.h Integrate.h Gradient.h Curl.h Divergence.h Annotate.h \
   Remove.h DecomposeInSimplex.h Smooth.h Transform.h Triangulate.h Warp.h \
-  ../Geo/Geo.h ../Mesh/Mesh.h ../Common/GmshDefines.h \
-  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h ../Common/GmshUI.h \
   Eigenvectors.h Eigenvalues.h Lambda2.h Evaluate.h \
   ../Common/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h \
   Probe.h ../Common/Context.h

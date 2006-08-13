@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.107 2006-08-12 21:31:24 geuzaine Exp $
+// $Id: Geom.cpp,v 1.108 2006-08-13 02:46:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 #include "Context.h"
 #include "gl2ps.h"
 #include "GModel.h"
+#include "SBoundingBox3d.h"
 
 extern Context_T CTX;
 extern GModel *GMODEL;
@@ -214,28 +215,112 @@ private:
     }
     
     if(CTX.geom.normals) {
-      const double eps = 1.e-3;
-      GPoint p1 = f->point(0.5, 0.5);
-      GPoint p2 = f->point(0.5 + eps, 0.5);
-      GPoint p3 = f->point(0.5, 0.5 + eps);
-      double n[3];
-      normal3points(p1.x(), p1.y(), p1.z(),
-		    p2.x(), p2.y(), p2.z(),
-		    p3.x(), p3.y(), p3.z(), n);
-      n[0] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[0];
-      n[1] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[1];
-      n[2] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[2];
+      SPoint2 p2 = SPoint2(0.5, 0.5);
+      SVector3 nn = f->normal(p2);
+      GPoint p = f->point(p2);
+      double n[3] = {nn.x() * CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[0],
+		     nn.y() * CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[1],
+		     nn.z() * CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[2]};
       glColor4ubv((GLubyte *) & CTX.color.geom.normals);
       Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-		  p1.x(), p1.y(), p1.z(), n[0], n[1], n[2], CTX.geom.light);
+		  p.x(), p.y(), p.z(), n[0], n[1], n[2], CTX.geom.light);
     }
   }
-
+  
   void _drawPlaneGFace(GFace *f)
   {
-  }
+    // we must lock this part to avoid it being called recursively
+    // when redraw events are fired in rapid succession
+    if(!f->cross.size() && !CTX.threads_lock) {
+      CTX.threads_lock = 1; 
+      std::list<GVertex*> pts = f->vertices();
+      if(pts.size()){
+	SBoundingBox3d bb;
+	for(std::list<GVertex*>::iterator it = pts.begin(); it != pts.end(); it++){
+	  SPoint3 p((*it)->x(), (*it)->y(), (*it)->z());
+	  SPoint2 uv = f->parFromPoint(p);
+	  bb += SPoint3(uv.x(), uv.y(), 0.);
+	}
+	GPoint v0 = f->point(bb.min().x(), bb.min().y());
+	GPoint v1 = f->point(bb.max().x(), bb.min().y());
+	GPoint v2 = f->point(bb.max().x(), bb.max().y());
+	GPoint v3 = f->point(bb.min().x(), bb.max().y());
+	const int N = 100;
+	for(int dir = 0; dir < 2; dir++) {
+	  int end_line = 0;
+	  SPoint3 pt, pt_last_good;
+	  for(int i = 0; i < N; i++) {
+	    double t = (double)i / (double)(N - 1);
+	    double x, y, z;
+	    if(dir){
+	      x = t * 0.5 * (v0.x() + v1.x()) + (1. - t) * 0.5 * (v2.x() + v3.x());
+	      y = t * 0.5 * (v0.y() + v1.y()) + (1. - t) * 0.5 * (v2.y() + v3.y());
+	      z = t * 0.5 * (v0.z() + v1.z()) + (1. - t) * 0.5 * (v2.z() + v3.z());
+	    }
+	    else{
+	      x = t * 0.5 * (v0.x() + v3.x()) + (1. - t) * 0.5 * (v2.x() + v1.x());
+	      y = t * 0.5 * (v0.y() + v3.y()) + (1. - t) * 0.5 * (v2.y() + v1.y());
+	      z = t * 0.5 * (v0.z() + v3.z()) + (1. - t) * 0.5 * (v2.z() + v1.z());
+	    }
+	    pt.setPosition(x, y, z);
+	    if(f->containsPoint(pt)){
+	      pt_last_good.setPosition(pt.x(), pt.y(), pt.z());
+	      if(!end_line) { f->cross.push_back(pt); end_line = 1; }
+	    }
+	    else {
+	      if(end_line) { f->cross.push_back(pt_last_good); end_line = 0; }
+	    }
+	  }
+	  if(end_line) f->cross.push_back(pt_last_good);
+	}
+      }
+      // if we couldn't determine a cross, add dummy point so that
+      // we won't try again
+      if(!f->cross.size()) f->cross.push_back(SPoint3(0., 0., 0.));
+      CTX.threads_lock = 0;
+    }
 
+    if(f->cross.size() < 2) return ;
+
+    if(CTX.geom.surfaces) {
+      glEnable(GL_LINE_STIPPLE);
+      glLineStipple(1, 0x1F1F);
+      gl2psEnable(GL2PS_LINE_STIPPLE);
+      glBegin(GL_LINES);
+      for(unsigned int i = 0; i < f->cross.size(); i++)
+	glVertex3d(f->cross[i].x(), f->cross[i].y(), f->cross[i].z());
+      glEnd();
+      glDisable(GL_LINE_STIPPLE);
+      gl2psDisable(GL2PS_LINE_STIPPLE);
+    }
+
+    if(CTX.geom.surfaces_num) {
+      char Num[100];
+      sprintf(Num, "%d", f->tag());
+      double offset = 0.3 * CTX.gl_fontsize * CTX.pixel_equiv_x;
+      glRasterPos3d(0.5 * (f->cross[0].x() + f->cross[1].x()) + offset / CTX.s[0],
+		    0.5 * (f->cross[0].y() + f->cross[1].y()) + offset / CTX.s[0],
+		    0.5 * (f->cross[0].z() + f->cross[1].z()) + offset / CTX.s[0]);
+      Draw_String(Num);
+    }
+
+    if(CTX.geom.normals) {
+      SPoint3 p(0.5 * (f->cross[0].x() + f->cross[1].x()),
+		0.5 * (f->cross[0].y() + f->cross[1].y()),
+		0.5 * (f->cross[0].z() + f->cross[1].z()));
+      SPoint2 uv = f->parFromPoint(p);
+      SVector3 nn = f->normal(uv);
+      double n[3] = {nn.x() * CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[0],
+		     nn.y() * CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[1],
+		     nn.z() * CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[2]};
+      glColor4ubv((GLubyte *) & CTX.color.geom.normals);
+      Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+		  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
+		  p.x(), p.y(), p.z(), n[0], n[1], n[2], CTX.geom.light);
+    }
+  }
+  
 public :
   void operator () (GFace *f)
   {

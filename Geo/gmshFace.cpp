@@ -7,13 +7,14 @@
 #include "Mesh.h"
 #include "Create.h"
 #include "Utils.h"
+#include "Message.h"
 
 extern Mesh *THEM;
 
 gmshFace::gmshFace(GModel *m, Surface *face)
   : GFace(m, face->Num), s(face)
 {
-  for (int i=0 ; i < List_Nbr(s->Generatrices) ; i++){
+  for(int i = 0 ; i < List_Nbr(s->Generatrices); i++){
     Curve *c;
     List_Read(s->Generatrices, i, &c);
     GEdge *e = m->edgeByTag(abs(c->Num));
@@ -23,6 +24,9 @@ gmshFace::gmshFace(GModel *m, Surface *face)
     if(c->Num > 0) l_dirs.push_back(1);
     else l_dirs.push_back(-1);
   }
+  // always compute and store the mean plane for plane surfaces
+  // (simply using the bounding vertices)
+  if(s->Typ == MSH_SURF_PLAN) computeMeanPlane();
 }
 
 gmshFace::gmshFace(GModel *m, int num)
@@ -47,21 +51,59 @@ SBoundingBox3d gmshFace::bounds() const
   std::list<GEdge*>::const_iterator it = l_edges.begin();
   SBoundingBox3d res = (*it)->bounds();
   ++it;
-  while (it != l_edges.end())
-    {
-      res += (*it)->bounds();  
-      ++it;
-    }
+  while(it != l_edges.end()){
+    res += (*it)->bounds();  
+    ++it;
+  }
   return res;
 }
 
 SVector3 gmshFace::normal(const SPoint2 &param) const
 {
-  Vertex vu = InterpolateSurface(s, param[0], param[1], 1, 1);
-  Vertex vv = InterpolateSurface(s, param[0], param[1], 1, 2);
-  Vertex n = vu % vv;
-  n.norme();
-  return SVector3(n.Pos.X, n.Pos.Y, n.Pos.Z);
+  if(geomType() != Plane){
+    Vertex vu = InterpolateSurface(s, param[0], param[1], 1, 1);
+    Vertex vv = InterpolateSurface(s, param[0], param[1], 1, 2);
+    Vertex n = vu % vv;
+    n.norme();
+    return SVector3(n.Pos.X, n.Pos.Y, n.Pos.Z);
+  }
+  else{
+    // We cannot use InterpolateSurface() for plane surfaces since
+    // InterpolateSurface() relies on the mean plane, which does *not*
+    // respect the orientation
+    GPoint p = point(param);
+    double t1[3], t2[3], n[3] = {0., 0., 0.};
+    Curve *c;
+    if(List_Nbr(s->Generatrices) > 1){
+      List_Read(s->Generatrices, 0, &c);
+      if(c->beg){
+	t1[0] = p.x() - c->beg->Pos.X;
+	t1[1] = p.y() - c->beg->Pos.Y;
+	t1[2] = p.z() - c->beg->Pos.Z;
+	// 1) try to get a point close to 'beg' on the same curve
+	// 2) if we are unlucky and these two points are aligned with
+	//    (x,y,z), which we know is inside or on the boundary of
+	//    the surface, then get a point from the next edge
+	// 3) repeat
+	for(int i = 0; i < List_Nbr(s->Generatrices); i++){
+	  List_Read(s->Generatrices, i, &c);
+	  Vertex v = InterpolateCurve(c, 0.1, 0);
+	  t2[0] = p.x() - v.Pos.X;
+	  t2[1] = p.y() - v.Pos.Y;
+	  t2[2] = p.z() - v.Pos.Z;
+	  prodve(t1, t2, n);
+	  if(norme(n))
+	    break;
+	}
+      }
+    }
+    if(norme(n))
+      return SVector3(n[0], n[1], n[2]);
+    else{
+      Msg(WARNING, "Using mean plane normal for surface %d", s->Num);
+      return SVector3(meanPlane.a, meanPlane.b, meanPlane.c);
+    }
+  }
 }
 
 Pair<SVector3,SVector3> gmshFace::firstDer(const SPoint2 &param) const
@@ -72,40 +114,24 @@ Pair<SVector3,SVector3> gmshFace::firstDer(const SPoint2 &param) const
 				 SVector3(vv.Pos.X, vv.Pos.Y, vv.Pos.Z));
 }
 
-
 GPoint gmshFace::point(const SPoint2 &pt) const
 {   
   return point(pt.x(),pt.y()); 
 }
 
-
-void computePlaneDatas (const GFace *gf, double VX[3],double VY[3],double &x, double &y, double &z)
+GPoint gmshFace::point(double par1, double par2) const
 {
-  VX[0] = gf->mp.plan[0][0];
-  VX[1] = gf->mp.plan[0][1];
-  VX[2] = gf->mp.plan[0][2];
-  VY[0] = gf->mp.plan[1][0];
-  VY[1] = gf->mp.plan[1][1];
-  VY[2] = gf->mp.plan[1][2];
-  x=gf->mp.x;  
-  y=gf->mp.y;  
-  z=gf->mp.z;  
-}
-
-
-GPoint gmshFace::point(double par1,double par2) const
-{
-  double pp[2]={par1,par2};
+  double pp[2] = {par1, par2};
   if(s->Typ == MSH_SURF_PLAN){
-    double x,y,z,VX[3],VY[3];
-    computePlaneDatas (this,VX,VY,x,y,z);
-    return GPoint( x + VX[0] * par1 + VY[0] * par2,
-		   y + VX[1] * par1 + VY[1] * par2,
-		   z + VX[2] * par1 + VY[2] * par2, this,pp);
+    double x, y, z, VX[3], VY[3];
+    getMeanPlaneData(VX, VY, x, y, z);
+    return GPoint(x + VX[0] * par1 + VY[0] * par2,
+		  y + VX[1] * par1 + VY[1] * par2,
+		  z + VX[2] * par1 + VY[2] * par2, this, pp);
   }
   else{
-    Vertex v = InterpolateSurface( s, par1, par2,0,0);
-    return GPoint(v.Pos.X,v.Pos.Y,v.Pos.Z,this,pp);
+    Vertex v = InterpolateSurface(s, par1, par2, 0, 0);
+    return GPoint(v.Pos.X, v.Pos.Y, v.Pos.Z, this, pp);
   }
 }
 
@@ -125,19 +151,19 @@ int gmshFace::containsParam(const SPoint2 &pt) const
 {
   Range<double> uu = parBounds(0);
   Range<double> vv = parBounds(1);
-  if ((pt.x()>=uu.low() && pt.x()<=uu.high()) && (pt.y()>=vv.low() && pt.y()<=vv.high()))
-     return 1;
+  if((pt.x() >= uu.low() && pt.x() <= uu.high()) && 
+     (pt.y() >= vv.low() && pt.y() <= vv.high()))
+    return 1;
   else 
-     return 0;
+    return 0;
 }
-
 
 SPoint2 gmshFace::parFromPoint(const SPoint3 &qp) const
 {
   double u,v;
   if (s->Typ == MSH_SURF_PLAN){
     double x,y,z,VX[3],VY[3];
-    computePlaneDatas (this,VX,VY,x,y,z);
+    getMeanPlaneData(VX, VY, x, y, z);
     double vec[3] = {qp.x()-x,qp.y()-y,qp.z()-z};
     prosca(vec,VX,&u);
     prosca(vec,VY,&v);
@@ -186,5 +212,32 @@ void * gmshFace::getNativePtr() const
 
 int gmshFace::containsPoint(const SPoint3 &pt) const
 { 
-  throw;
+  if(geomType() == Plane){
+    // OK to use the normal from the mean plane here: we compensate
+    // for the (possibly wrong) orientation at the end
+    double n[3] = {meanPlane.a, meanPlane.b, meanPlane.c};
+    double angle = 0.;
+    Vertex v;
+    v.Pos.X = pt.x();
+    v.Pos.Y = pt.y();
+    v.Pos.Z = pt.z();
+    for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
+      Curve *c;
+      List_Read(s->Generatrices, i, &c);
+      int N = (c->Typ == MSH_SEGM_LINE) ? 1 : 10;
+      for(int j = 0; j < N; j++) {
+	double u1 = (double)j / (double)N;
+	double u2 = (double)(j + 1) / (double)N;
+	Vertex p1 = InterpolateCurve(c, u1, 0);
+	Vertex p2 = InterpolateCurve(c, u2, 0);
+	angle += angle_plan(&v, &p1, &p2, n);
+      }
+    }
+    // we're inside if angle equals 2 * pi
+    if(fabs(angle) > 2 * M_PI - 0.5 && fabs(angle) < 2 * M_PI + 0.5) 
+      return true;
+    return false;
+  }
+  else
+    throw;
 }
