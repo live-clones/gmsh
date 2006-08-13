@@ -143,8 +143,13 @@ int gmshEdge::minimumMeshSegments () const
 
 int gmshEdge::minimumDrawSegments () const
 {
+  int n = List_Nbr(c->Control_Points) - 1;
+  if(!n) n = GEdge::minimumDrawSegments();
+
   if(geomType() == Line)
-    return GEdge::minimumDrawSegments () ;
-  else
+    return n;
+  else if(geomType() == Circle || geomType() == Ellipse)
     return CTX.geom.circle_points;
+  else
+    return 10 * n;
 }
