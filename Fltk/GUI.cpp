@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.512 2006-08-13 21:28:18 geuzaine Exp $
+// $Id: GUI.cpp,v 1.513 2006-08-13 21:41:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1422,7 +1422,7 @@ void GUI::create_graphic_window()
 
   x += 2;
   g_status_label[0] = new Fl_Box(x, glheight + 2, 
-				 (width - x) / 3, sh - 4);
+				 (width - x - 1) / 3, sh - 4);
   g_status_label[1] = new Fl_Box(x + (width - x) / 3, glheight + 2, 
 				 2 * (width - x - 1) / 3, sh - 4);
   for(int i = 0; i < 2; i++) {
@@ -4410,7 +4410,7 @@ void GUI::create_mesh_context_window(int num)
     return;
   }
 
-  int width = 30 * fontsize;
+  int width = 29 * fontsize;
   int height = 5 * WB + 5 * BH;
 
   context_mesh_window = new Dialog_Window(width, height, "Contextual Mesh Definitions");
