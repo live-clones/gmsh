@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.108 2006-08-13 02:46:53 geuzaine Exp $
+// $Id: Geom.cpp,v 1.109 2006-08-13 06:59:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -234,46 +234,50 @@ private:
     // when redraw events are fired in rapid succession
     if(!f->cross.size() && !CTX.threads_lock) {
       CTX.threads_lock = 1; 
-      std::list<GVertex*> pts = f->vertices();
-      if(pts.size()){
-	SBoundingBox3d bb;
-	for(std::list<GVertex*>::iterator it = pts.begin(); it != pts.end(); it++){
-	  SPoint3 p((*it)->x(), (*it)->y(), (*it)->z());
-	  SPoint2 uv = f->parFromPoint(p);
+      std::list<GEdge*> edges = f->edges();
+      SBoundingBox3d bb;
+      for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
+	Range<double> t_bounds = (*it)->parBounds(0);
+	GPoint p[3] = {(*it)->point(t_bounds.low()),
+		       (*it)->point(0.5 * (t_bounds.low() + t_bounds.high())),
+		       (*it)->point(t_bounds.high())};
+	for(int i = 0; i < 3; i++){
+	  SPoint2 uv = f->parFromPoint(SPoint3(p[i].x(), p[i].y(), p[i].z()));
 	  bb += SPoint3(uv.x(), uv.y(), 0.);
 	}
-	GPoint v0 = f->point(bb.min().x(), bb.min().y());
-	GPoint v1 = f->point(bb.max().x(), bb.min().y());
-	GPoint v2 = f->point(bb.max().x(), bb.max().y());
-	GPoint v3 = f->point(bb.min().x(), bb.max().y());
-	const int N = 100;
-	for(int dir = 0; dir < 2; dir++) {
-	  int end_line = 0;
-	  SPoint3 pt, pt_last_good;
-	  for(int i = 0; i < N; i++) {
-	    double t = (double)i / (double)(N - 1);
-	    double x, y, z;
-	    if(dir){
-	      x = t * 0.5 * (v0.x() + v1.x()) + (1. - t) * 0.5 * (v2.x() + v3.x());
-	      y = t * 0.5 * (v0.y() + v1.y()) + (1. - t) * 0.5 * (v2.y() + v3.y());
-	      z = t * 0.5 * (v0.z() + v1.z()) + (1. - t) * 0.5 * (v2.z() + v3.z());
-	    }
-	    else{
-	      x = t * 0.5 * (v0.x() + v3.x()) + (1. - t) * 0.5 * (v2.x() + v1.x());
-	      y = t * 0.5 * (v0.y() + v3.y()) + (1. - t) * 0.5 * (v2.y() + v1.y());
-	      z = t * 0.5 * (v0.z() + v3.z()) + (1. - t) * 0.5 * (v2.z() + v1.z());
-	    }
-	    pt.setPosition(x, y, z);
-	    if(f->containsPoint(pt)){
-	      pt_last_good.setPosition(pt.x(), pt.y(), pt.z());
-	      if(!end_line) { f->cross.push_back(pt); end_line = 1; }
-	    }
-	    else {
-	      if(end_line) { f->cross.push_back(pt_last_good); end_line = 0; }
-	    }
+      }
+      bb *= 1.1;
+      GPoint v0 = f->point(bb.min().x(), bb.min().y());
+      GPoint v1 = f->point(bb.max().x(), bb.min().y());
+      GPoint v2 = f->point(bb.max().x(), bb.max().y());
+      GPoint v3 = f->point(bb.min().x(), bb.max().y());
+      const int N = 100;
+      for(int dir = 0; dir < 2; dir++) {
+	int end_line = 0;
+	SPoint3 pt, pt_last_inside;
+	for(int i = 0; i < N; i++) {
+	  double t = (double)i / (double)(N - 1);
+	  double x, y, z;
+	  if(dir){
+	    x = t * 0.5 * (v0.x() + v1.x()) + (1. - t) * 0.5 * (v2.x() + v3.x());
+	    y = t * 0.5 * (v0.y() + v1.y()) + (1. - t) * 0.5 * (v2.y() + v3.y());
+	    z = t * 0.5 * (v0.z() + v1.z()) + (1. - t) * 0.5 * (v2.z() + v3.z());
 	  }
-	  if(end_line) f->cross.push_back(pt_last_good);
+	  else{
+	    x = t * 0.5 * (v0.x() + v3.x()) + (1. - t) * 0.5 * (v2.x() + v1.x());
+	    y = t * 0.5 * (v0.y() + v3.y()) + (1. - t) * 0.5 * (v2.y() + v1.y());
+	    z = t * 0.5 * (v0.z() + v3.z()) + (1. - t) * 0.5 * (v2.z() + v1.z());
+	  }
+	  pt.setPosition(x, y, z);
+	  if(f->containsPoint(pt)){
+	    pt_last_inside.setPosition(pt.x(), pt.y(), pt.z());
+	    if(!end_line) { f->cross.push_back(pt); end_line = 1; }
+	  }
+	  else {
+	    if(end_line) { f->cross.push_back(pt_last_inside); end_line = 0; }
+	  }
 	}
+	if(end_line) f->cross.push_back(pt_last_inside);
       }
       // if we couldn't determine a cross, add dummy point so that
       // we won't try again
