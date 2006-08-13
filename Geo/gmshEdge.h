@@ -16,12 +16,11 @@ class gmshEdge : public GEdge {
   gmshEdge(GModel *model, int num);
   virtual ~gmshEdge() {}
   double period() const { throw ; }
-  Range<double> parBounds(int i) const;
   virtual bool periodic(int dim=0) const { return false; }
+  virtual Range<double> parBounds(int i) const;
   virtual GeomType geomType() const;
   virtual bool degenerate(int) const { return false; }
   virtual bool continuous(int dim) const { return true; }
-  SBoundingBox3d bounds() const;
   virtual GPoint point(double p) const;
   virtual GPoint closestPoint(const SPoint3 & queryPoint);
   virtual int containsPoint(const SPoint3 &pt) const { throw; }

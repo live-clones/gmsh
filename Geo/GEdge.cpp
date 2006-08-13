@@ -38,6 +38,19 @@ GEdge::~GEdge()
   lines.clear();
 }
 
+SBoundingBox3d GEdge::bounds() const
+{
+  Range<double> tr = parBounds(0);
+  SBoundingBox3d bbox;
+  const int N = 10;
+  for(int i = 0; i < N; i++){
+    double t = tr.low() + (double)i/(double)(N - 1) * (tr.high() - tr.low());
+    GPoint p = point(t);
+    bbox += SPoint3(p.x(), p.y(), p.z());
+  }
+  return bbox;
+}
+
 void GEdge::setVisibility(char val, bool recursive)
 {
   GEntity::setVisibility(val);

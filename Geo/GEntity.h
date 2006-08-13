@@ -135,12 +135,16 @@ class GEntity {
   // The bounding box
   virtual SBoundingBox3d bounds() const{throw;}
 
-  // Get/set the visibility flag
+  // Get the visibility flag
   virtual char getVisibility(){ return _visible; }
+
+  // Set the visibility flag
   virtual void setVisibility(char val, bool recursive=false){ _visible = val; }
 
-  // Get/set the multi-purpose flag
+  // Get the multi-purpose flag
   virtual char getFlag(){ return _flag; }
+
+  // Set the multi-purpose flag
   virtual void setFlag(char val){ _flag = val; }
 
   // Returns an information string for the entity

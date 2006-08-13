@@ -28,18 +28,6 @@ Range<double> gmshEdge::parBounds(int i) const
   return(Range<double>(c->ubeg, c->uend));
 }
 
-SBoundingBox3d gmshEdge::bounds() const
-{
-  SBoundingBox3d bbox;
-  const int N = 10;
-  for(int i = 0; i < N; i++){
-    double u = c->ubeg + (double)i/(double)(N - 1) * (c->uend - c->ubeg);
-    Vertex a = InterpolateCurve(c, u, 0);
-    bbox += SPoint3(a.Pos.X, a.Pos.Y, a.Pos.Z);
-  }
-  return bbox;
-}
-
 GPoint gmshEdge::point(double par) const
 {
   Vertex a = InterpolateCurve(c, par, 0);

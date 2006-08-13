@@ -6,7 +6,7 @@
 #include "GPoint.h"
 
 // A model vertex
-class GVertex  : public GEntity 
+class GVertex : public GEntity 
 {
  protected:
   std::list<GEdge*> l_edges;
