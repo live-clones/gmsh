@@ -1,6 +1,13 @@
 #include "GVertex.h"
 #include <algorithm>
 
+GVertex::~GVertex()
+{
+  for(unsigned int i = 0; i < mesh_vertices.size(); i++)
+    delete mesh_vertices[i];
+  mesh_vertices.clear();
+}
+
 void GVertex::addEdge(GEdge *e)
 { 
   l_edges.push_back(e);

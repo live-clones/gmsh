@@ -334,7 +334,8 @@ int GModel::readMSH(const std::string &name)
 	v = new gmshVertex(this, it->first);
 	add(v);
       }
-      v->mesh_vertices.push_back(it->second[0]);
+      for(unsigned int i = 0; i < it->second.size(); i++) 
+	v->mesh_vertices.push_back(it->second[i]);
     }
   }
 

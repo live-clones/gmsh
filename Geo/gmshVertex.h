@@ -6,7 +6,10 @@
 #include "GVertex.h"
 
 class gmshVertex : public GVertex {
-public:
+ protected:
+  Vertex *v;
+
+ public:
   gmshVertex(GModel *m, Vertex *_v) : GVertex(m, _v->Num), v(_v)
   {
     mesh_vertices.push_back(new MVertex(x(), y(), z(), this));
@@ -40,8 +43,6 @@ public:
   }
   void * getNativePtr() const {return v;}
   virtual double prescribedMeshSizeAtVertex() const {return v ? v->lc : 0.;}
- protected:
-  Vertex *v;
 };
 
 #endif

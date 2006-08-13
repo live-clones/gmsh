@@ -2,23 +2,24 @@
 
 std::string GEntity::getInfoString()
 {
-  char str[256];
-  sprintf(str, "%s %d", getTypeString().c_str(), tag());
+  char tmp[256];
+  sprintf(tmp, " %d", tag());
+
+  std::string out = getTypeString() + " " + tmp;
+
   std::string info = getAdditionalInfoString();
-  if(info.size()){
-    strcat(str, " ");
-    strcat(str, info.c_str());
-  }
+  if(info.size()) 
+    out += " " + info;
+
   if(physicals.size()){
-    char str2[256] = " [";
+    out += " [";
     for(unsigned int i = 0; i < physicals.size(); i++){
-      char str3[256];
-      sprintf(str3, "%d", physicals[i]);
-      if(i) strcat(str2, " ");
-      strcat(str2, str3);
+      if(i) out += " ";
+      sprintf(tmp, "%d", physicals[i]);
+      out += tmp;
     }
-    strcat(str2, "]");
-    strcat(str, str2);
+    out += "]";
   }
-  return std::string(str);
+
+  return out;
 }
