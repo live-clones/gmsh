@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.511 2006-08-13 20:46:54 geuzaine Exp $
+// $Id: GUI.cpp,v 1.512 2006-08-13 21:28:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4419,7 +4419,7 @@ void GUI::create_mesh_context_window(int num)
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
     // 0: Characteristic length
     {
-      g[0] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Length");
+      g[0] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Characteristic Length");
       context_mesh_input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Value");
       context_mesh_input[0]->value("0.1");
       context_mesh_input[0]->align(FL_ALIGN_RIGHT);
