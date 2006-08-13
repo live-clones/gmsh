@@ -1,4 +1,4 @@
-// $Id: ViewsIO.cpp,v 1.6 2006-08-07 19:08:11 geuzaine Exp $
+// $Id: ViewsIO.cpp,v 1.7 2006-08-13 16:02:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -387,7 +387,7 @@ static void write_parsed_strings(int nbc, int nb, List_T *TD, List_T *TC, FILE *
   }
 }
 
-void WriteViewPost(Post_View *v, FILE *file, int binary=0, int parsed=1, int append=0)
+void WriteViewPOS(Post_View *v, FILE *file, int binary=0, int parsed=1, int append=0)
 {
   char name[256];
   int f, One = 1;
@@ -829,7 +829,7 @@ void WriteView(Post_View *v, char *filename, int format, int append)
   else if(msh)
     WriteViewMSH(v, file);
   else
-    WriteViewPost(v, file, binary, parsed, append);
+    WriteViewPOS(v, file, binary, parsed, append);
   
   if(filename) {
     fclose(file);
