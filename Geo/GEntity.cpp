@@ -5,7 +5,7 @@ std::string GEntity::getInfoString()
   char tmp[256];
   sprintf(tmp, " %d", tag());
 
-  std::string out = getTypeString() + " " + tmp;
+  std::string out = getTypeString() + tmp;
 
   std::string info = getAdditionalInfoString();
   if(info.size()) 
