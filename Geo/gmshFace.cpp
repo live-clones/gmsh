@@ -195,6 +195,8 @@ GEntity::GeomType gmshFace::geomType() const
   switch(s->Typ){
   case MSH_SURF_NURBS: return Nurb;
   case MSH_SURF_PLAN: return Plane;
+  case MSH_SURF_REGL:
+  case MSH_SURF_TRIC: return RuledSurface;
   case MSH_SURF_DISCRETE: return DiscreteSurface;
   default: return Unknown;
   }

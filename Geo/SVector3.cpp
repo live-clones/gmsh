@@ -42,7 +42,9 @@ double norm(const SVector3 &v)
 double SVector3::normalize()
 { 
   double n = norm(*this);
-  P[0] /= n; P[1]/= n; P[2] /= n;
+  if(n){
+    P[0] /= n; P[1]/= n; P[2] /= n;
+  }
   return n;
 }
 

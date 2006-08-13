@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.159 2006-08-12 17:44:25 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.160 2006-08-13 18:11:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -64,18 +64,20 @@ void renumberFaceVertices(GFace *f, List_T *xyz)
 // define this to draw the vertex array by indexing elements
 //#define ELEM
 
-class drawMeshGFace 
+class drawMeshGFace
 {
 public :
-  void operator () (GFace *s)
+  void operator () (GFace *f)
   {  
-    if(!s->getVisibility())
+    if(!f->getVisibility())
       return;
     
     if(CTX.render_mode == GMSH_SELECT) {
       glPushName(2);
-      glPushName(s->tag());
+      glPushName(f->tag());
     }
+
+
 
 #if 0
     static int first = 1;
@@ -84,9 +86,9 @@ public :
 
     if(first){
       first = 0;
-      printf("stripe surface %d\n", s->tag());
-      xyz = List_Create(s->mesh_vertices.size(), 1000, sizeof(float));
-      renumberFaceVertices(s, xyz);
+      printf("stripe surface %d\n", f->tag());
+      xyz = List_Create(f->mesh_vertices.size(), 1000, sizeof(float));
+      renumberFaceVertices(f, xyz);
 
       /*
       for(int i = 0; i < List_Nbr(xyz)/3; i+=3){
@@ -102,11 +104,11 @@ public :
       //actcParami(tc, ACTC_OUT_MAX_PRIM_VERTS, INT_MAX); // optimum 12?
       actcParami(tc, ACTC_OUT_MAX_PRIM_VERTS, 100); // optimum 12?
       actcBeginInput(tc);
-      for(unsigned int i = 0; i < s->triangles.size(); i++){
+      for(unsigned int i = 0; i < f->triangles.size(); i++){
 	actcAddTriangle(tc, 
-			s->triangles[i]->getVertex(0)->getNum(),
-			s->triangles[i]->getVertex(1)->getNum(),
-			s->triangles[i]->getVertex(2)->getNum());
+			f->triangles[i]->getVertex(0)->getNum(),
+			f->triangles[i]->getVertex(1)->getNum(),
+			f->triangles[i]->getVertex(2)->getNum());
       }
       actcEndInput(tc);
       actcBeginOutput(tc);
@@ -168,16 +170,16 @@ public :
 #endif
 
     unsigned int col;
-    if(s->getFlag() > 0){
+    if(f->getFlag() > 0){
       col = CTX.color.geom.surface_sel;
     }
     else if(CTX.mesh.color_carousel == 1){
-      col = CTX.color.mesh.carousel[abs(s->tag() % 20)];
+      col = CTX.color.mesh.carousel[abs(f->tag() % 20)];
     }
     else if(CTX.mesh.color_carousel == 2){
       int n = 1;
-      int np = s->physicals.size();
-      if(np) n = s->physicals[np - 1];
+      int np = f->physicals.size();
+      if(np) n = f->physicals[np - 1];
       col = CTX.color.mesh.carousel[abs(n % 20)];
     }
     else if(CTX.mesh.color_carousel == 3){
@@ -188,8 +190,8 @@ public :
     glColor4ubv((GLubyte *)&col);
 
     glBegin(GL_TRIANGLES);
-    for(unsigned int i = 0; i < s->triangles.size(); i++){
-      MTriangle *t = s->triangles[i];
+    for(unsigned int i = 0; i < f->triangles.size(); i++){
+      MTriangle *t = f->triangles[i];
       for(int j = 0; j < 3; j++){
 	MVertex *v = t->getVertex(j);
 	glVertex3d(v->x(), v->y(), v->z());

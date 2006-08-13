@@ -22,10 +22,10 @@ class GEntity {
 
  private:
   GModel *_model;
+  MRep *_mrep;
   int _tag;
-  MRep *_geom, *_mesh;
   char _visible, _flag;
-
+  
  public:
 
   // All known entity types
@@ -43,11 +43,13 @@ class GEntity {
     Sphere,
     Cone,
     Torus,
+    RuledSurface,
     ParametricSurface,
     DiscreteSurface,
     Volume
   };
 
+  // Returns a string describing the entity type
   virtual std::string getTypeString()
   {
     char *name[] = {
@@ -64,6 +66,7 @@ class GEntity {
       "Sphere",
       "Cone",
       "Torus",
+      "Ruled surface",
       "Parametric surface",
       "Discrete surface",
       "Volume"
@@ -75,7 +78,7 @@ class GEntity {
       return name[type];
   }
 
-  GEntity(GModel *m, int t) : _model(m), _tag(t), _visible(true), _flag(0) {}
+  GEntity(GModel *m, int t) : _model(m), _mrep(0), _tag(t), _visible(true), _flag(0) {}
 
   virtual ~GEntity() {};
 
@@ -137,12 +140,6 @@ class GEntity {
   // get/set the multi-purpose flag
   virtual char getFlag(){ return _flag; }
   virtual void setFlag(char val){ _flag = val; }
-
-  // Returns a renderable representation of the geometry
-  virtual MRep *geomRep(){ return _geom; }
-
-  // Returns a renderable representation of the mesh
-  virtual MRep *meshRep(){ return _mesh; }
 
   // Returns an information string for the entity
   virtual std::string getInfoString();

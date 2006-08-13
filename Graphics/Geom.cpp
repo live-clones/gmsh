@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.109 2006-08-13 06:59:14 geuzaine Exp $
+// $Id: Geom.cpp,v 1.110 2006-08-13 18:11:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -150,7 +150,8 @@ public :
       GPoint p = e->point(0.5 * (t_max - t_min));
       char Num[100];
       sprintf(Num, "%d", e->tag());
-      double offset = (0.5 * CTX.geom.line_width + 0.3 * CTX.gl_fontsize) * CTX.pixel_equiv_x;
+      double offset = (0.5 * CTX.geom.line_width + 0.3 * CTX.gl_fontsize) *
+	CTX.pixel_equiv_x;
       glRasterPos3d(p.x() + offset / CTX.s[0],
 		    p.y() + offset / CTX.s[1],
 		    p.z() + offset / CTX.s[2]);
@@ -160,10 +161,10 @@ public :
     if(CTX.geom.tangents) {
       double t = 0.5 * (t_max - t_min);
       GPoint p = e->point(t);
-      SVector3 der = e->firstDer(t) ;
-      double mod = sqrt(der[0] * der[0] + der[1] * der[1] + der[2] * der[2]);
+      SVector3 der = e->firstDer(t);
+      der.normalize();
       for(int i = 0; i < 3; i++)
-	der[i] = der[i] / mod * CTX.geom.tangents * CTX.pixel_equiv_x / CTX.s[i];
+	der[i] *= CTX.geom.tangents * CTX.pixel_equiv_x / CTX.s[i];
       glColor4ubv((GLubyte *) & CTX.color.geom.tangents);
       Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
@@ -189,14 +190,14 @@ private:
       int N = 20;
       glBegin(GL_LINE_STRIP);
       for(int i = 0; i < N; i++) {
-	GPoint coords = f->point((double)i / (double)(N - 1), 0.5);
-	glVertex3d(coords.x(), coords.y(), coords.z());
+	GPoint p = f->point((double)i / (double)(N - 1), 0.5);
+	glVertex3d(p.x(), p.y(), p.z());
       }
       glEnd();
       glBegin(GL_LINE_STRIP);
       for(int i = 0; i < N; i++) {
-	GPoint coords = f->point(0.5, (double)i / (double)(N - 1));
-	glVertex3d(coords.x(), coords.y(), coords.z());
+	GPoint p = f->point(0.5, (double)i / (double)(N - 1));
+	glVertex3d(p.x(), p.y(), p.z());
       }
       glEnd();
       glDisable(GL_LINE_STIPPLE);
@@ -204,23 +205,21 @@ private:
     }
     
     if(CTX.geom.surfaces_num) {
-      GPoint coords = f->point(0.5, 0.5);
+      GPoint p = f->point(0.5, 0.5);
       char Num[100];
       sprintf(Num, "%d", f->tag());
       double offset = 0.3 * CTX.gl_fontsize * CTX.pixel_equiv_x;
-      glRasterPos3d(coords.x() + offset / CTX.s[0],
-		    coords.y() + offset / CTX.s[1],
-		    coords.z() + offset / CTX.s[2]);
+      glRasterPos3d(p.x() + offset / CTX.s[0],
+		    p.y() + offset / CTX.s[1],
+		    p.z() + offset / CTX.s[2]);
       Draw_String(Num);
     }
     
     if(CTX.geom.normals) {
-      SPoint2 p2 = SPoint2(0.5, 0.5);
-      SVector3 nn = f->normal(p2);
-      GPoint p = f->point(p2);
-      double n[3] = {nn.x() * CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[0],
-		     nn.y() * CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[1],
-		     nn.z() * CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[2]};
+      GPoint p = f->point(0.5, 0.5);
+      SVector3 n = f->normal(SPoint2(0.5, 0.5));
+      for(int i = 0; i < 3; i++)
+	n[i] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[i];
       glColor4ubv((GLubyte *) & CTX.color.geom.normals);
       Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
@@ -258,19 +257,19 @@ private:
 	for(int i = 0; i < N; i++) {
 	  double t = (double)i / (double)(N - 1);
 	  double x, y, z;
-	  if(dir){
-	    x = t * 0.5 * (v0.x() + v1.x()) + (1. - t) * 0.5 * (v2.x() + v3.x());
-	    y = t * 0.5 * (v0.y() + v1.y()) + (1. - t) * 0.5 * (v2.y() + v3.y());
-	    z = t * 0.5 * (v0.z() + v1.z()) + (1. - t) * 0.5 * (v2.z() + v3.z());
+	  if(!dir){
+	    x = 0.5 * (t * (v0.x() + v1.x()) + (1. - t) * (v2.x() + v3.x()));
+	    y = 0.5 * (t * (v0.y() + v1.y()) + (1. - t) * (v2.y() + v3.y()));
+	    z = 0.5 * (t * (v0.z() + v1.z()) + (1. - t) * (v2.z() + v3.z()));
 	  }
 	  else{
-	    x = t * 0.5 * (v0.x() + v3.x()) + (1. - t) * 0.5 * (v2.x() + v1.x());
-	    y = t * 0.5 * (v0.y() + v3.y()) + (1. - t) * 0.5 * (v2.y() + v1.y());
-	    z = t * 0.5 * (v0.z() + v3.z()) + (1. - t) * 0.5 * (v2.z() + v1.z());
+	    x = 0.5 * (t * (v0.x() + v3.x()) + (1. - t) * (v2.x() + v1.x()));
+	    y = 0.5 * (t * (v0.y() + v3.y()) + (1. - t) * (v2.y() + v1.y()));
+	    z = 0.5 * (t * (v0.z() + v3.z()) + (1. - t) * (v2.z() + v1.z()));
 	  }
 	  pt.setPosition(x, y, z);
 	  if(f->containsPoint(pt)){
-	    pt_last_inside.setPosition(pt.x(), pt.y(), pt.z());
+	    pt_last_inside.setPosition(x, y, z);
 	    if(!end_line) { f->cross.push_back(pt); end_line = 1; }
 	  }
 	  else {
@@ -279,13 +278,13 @@ private:
 	}
 	if(end_line) f->cross.push_back(pt_last_inside);
       }
-      // if we couldn't determine a cross, add dummy point so that
+      // if we couldn't determine a cross, add a dummy point so that
       // we won't try again
       if(!f->cross.size()) f->cross.push_back(SPoint3(0., 0., 0.));
       CTX.threads_lock = 0;
     }
 
-    if(f->cross.size() < 2) return ;
+    if(f->cross.size() < 2) return;
 
     if(CTX.geom.surfaces) {
       glEnable(GL_LINE_STIPPLE);
@@ -314,10 +313,9 @@ private:
 		0.5 * (f->cross[0].y() + f->cross[1].y()),
 		0.5 * (f->cross[0].z() + f->cross[1].z()));
       SPoint2 uv = f->parFromPoint(p);
-      SVector3 nn = f->normal(uv);
-      double n[3] = {nn.x() * CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[0],
-		     nn.y() * CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[1],
-		     nn.z() * CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[2]};
+      SVector3 n = f->normal(uv);
+      for(int i = 0; i < 3; i++)
+	n[i] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[i];
       glColor4ubv((GLubyte *) & CTX.color.geom.normals);
       Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
