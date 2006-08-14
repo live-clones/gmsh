@@ -90,12 +90,12 @@ void MElement::cog(double &x, double &y, double &z)
 void MElement::writeMSH(FILE *fp, double version, int num, int elementary, 
 			int physical)
 {
-  int n = getNumVertices();
-  int type = getTypeForMSH();
-
   // if necessary, change the ordering of the vertices to get positive
   // volume
   setVolumePositive();
+
+  int n = getNumVertices();
+  int type = getTypeForMSH();
 
   fprintf(fp, "%d %d", num ? num : _num, type);
   if(version < 2.0)
@@ -200,13 +200,15 @@ void MElement::writeVRML(FILE *fp)
   fprintf(fp, "-1,\n");
 }
 
-void MElement::writeUNV(FILE *fp, int type, int elementary)
+void MElement::writeUNV(FILE *fp, int elementary)
 {
   // if necessary, change the ordering of the vertices to get positive
   // volume
   setVolumePositive();
 
   int n = getNumVertices();
+  int type = getTypeForUNV();
+
   fprintf(fp, "%10d%10d%10d%10d%10d%10d\n",
 	  _num, type, elementary, elementary, 7, n);
   if(type == 21 || type == 24) // BEAM or BEAM2

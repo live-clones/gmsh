@@ -44,6 +44,9 @@ class MElement
   // returns the tag of the element
   virtual int getNum(){ return _num; }
 
+  // returns the polynomial order the element
+  virtual int getPolynomialOrder(){ return 1; }
+
   // returns the partition to which the element belongs
   virtual int getPartition(){ return _partition; }
 
@@ -108,18 +111,19 @@ class MElement
 			int elementary=1);
   virtual void writeSTL(FILE *fp, double scalingFactor=1.0);
   virtual void writeVRML(FILE *fp);
-  virtual void writeUNV(FILE *fp, int type, int elementary);
+  virtual void writeUNV(FILE *fp, int elementary);
   virtual void writeMESH(FILE *fp, int elementary);
   virtual char *getStringForPOS() = 0;
   virtual int getTypeForMSH() = 0;
+  virtual int getTypeForUNV() = 0;
 };
 
 class MLine : public MElement {
  protected:
   MVertex *_v[2];
  public :
-  MLine (MVertex *v0, MVertex *v1, int num=0, int part=0) 
-    : MElement (num, part)
+  MLine(MVertex *v0, MVertex *v1, int num=0, int part=0) 
+    : MElement(num, part)
   {
     _v[0] = v0; _v[1] = v1;
   }
@@ -137,6 +141,7 @@ class MLine : public MElement {
     v[0] = v[1] = v[2] = v[3] = 0; 
   }
   int getTypeForMSH(){ return LGN1; }
+  int getTypeForUNV(){ return 21; } // BEAM
   char *getStringForPOS(){ return "SL"; }
 };
 
@@ -144,12 +149,13 @@ class MLine2 : public MLine {
  protected:
   MVertex *_vs[1];
  public :
-  MLine2 (MVertex *v0, MVertex *v1, MVertex *v2, int num=0, int part=0) 
+  MLine2(MVertex *v0, MVertex *v1, MVertex *v2, int num=0, int part=0) 
     : MLine(v0, v1, num, part)
   {
     _vs[0] = v2;
   }
   ~MLine2(){}
+  inline int getPolynomialOrder(){ return 2; }
   inline int getNumVertices(){ return 3; }
   inline MVertex *getVertex(int num){ return num < 2 ? _v[num] : _vs[num - 2]; }
   inline int getNumEdgeVertices(){ return 1; }
@@ -165,6 +171,7 @@ class MLine2 : public MLine {
     v[1] = i1 < 2? _v[i1] : _vs[i1 - 2];
   }
   int getTypeForMSH(){ return LGN2; }
+  int getTypeForUNV(){ return 24; } // BEAM2
   char *getStringForPOS(){ return "SL2"; }
 };
 
@@ -172,8 +179,8 @@ class MTriangle : public MElement {
  protected:
   MVertex *_v[3];
  public :
-  MTriangle (MVertex *v0, MVertex *v1, MVertex *v2, int num=0, int part=0) 
-    : MElement (num, part)
+  MTriangle(MVertex *v0, MVertex *v1, MVertex *v2, int num=0, int part=0) 
+    : MElement(num, part)
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2;
   }
@@ -192,6 +199,7 @@ class MTriangle : public MElement {
     v[0] = _v[0]; v[1] = _v[1]; v[2] = _v[2]; v[3] = 0;
   }
   int getTypeForMSH(){ return TRI1; }
+  int getTypeForUNV(){ return 91; } // THINSHLL
   char *getStringForPOS(){ return "ST"; }
 };
 
@@ -199,14 +207,14 @@ class MTriangle2 : public MTriangle {
  protected:
   MVertex *_vs[3];
  public :
-  MTriangle2 (MVertex *v0, MVertex *v1, MVertex *v2, 
-	      MVertex *v3, MVertex *v4, MVertex *v5, 
-	      int num=0, int part=0) 
+  MTriangle2(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
+	     MVertex *v5, int num=0, int part=0) 
     : MTriangle(v0, v1, v2, num, part)
   {
     _vs[0] = v3; _vs[1] = v4; _vs[2] = v5;
   }
   ~MTriangle2(){}
+  inline int getPolynomialOrder(){ return 2; }
   inline int getNumVertices(){ return 6; }
   inline MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
   inline int getNumEdgeVertices(){ return 3; }
@@ -244,6 +252,7 @@ class MTriangle2 : public MTriangle {
 			v[2]->x(), v[2]->y(), v[2]->y(), n);
   }
   int getTypeForMSH(){ return TRI2; }
+  int getTypeForUNV(){ return 92; } // THINSHLL2
   char *getStringForPOS(){ return "ST2"; }
 };
 
@@ -251,9 +260,8 @@ class MQuadrangle : public MElement {
  protected:
   MVertex *_v[4];
  public :
-  MQuadrangle(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, 
-	      int num=0, int part=0) 
-    : MElement (num, part)
+  MQuadrangle(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, int num=0, int part=0) 
+    : MElement(num, part)
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
   }
@@ -272,6 +280,7 @@ class MQuadrangle : public MElement {
     v[0] = _v[0]; v[1] = _v[1]; v[2] = _v[2]; v[3] = _v[3];
   }
   int getTypeForMSH(){ return QUA1; }
+  int getTypeForUNV(){ return 94; } // QUAD
   char *getStringForPOS(){ return "SQ"; }
 };
 
@@ -279,19 +288,21 @@ class MQuadrangle2 : public MQuadrangle {
  protected:
   MVertex *_vs[5];
  public :
-  MQuadrangle2(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, 
-	       MVertex *v4, MVertex *v5, MVertex *v6, MVertex *v7, 
-	       MVertex *v8, int num=0, int part=0) 
+  MQuadrangle2(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
+	       MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, int num=0, int part=0) 
     : MQuadrangle(v0, v1, v2, v3, num, part)
   {
     _vs[0] = v4; _v[1] = v5; _v[2] = v6; _v[3] = v7; _v[4] = v8;
   }
   ~MQuadrangle2(){}
+  inline int getPolynomialOrder(){ return 2; }
   inline int getNumVertices(){ return 9; }
   inline MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
   inline int getNumEdgeVertices(){ return 4; }
   inline int getNumFaceVertices(){ return 1; }
+  // TODO: edgeRep, faceRep
   int getTypeForMSH(){ return QUA2; }
+  int getTypeForUNV(){ return 95; } // ???? QUAD2
   char *getStringForPOS(){ return "SQ2"; }
 };
 
@@ -299,9 +310,8 @@ class MTetrahedron : public MElement {
  protected:
   MVertex *_v[4];
  public :
-  MTetrahedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, 
-	       int num=0, int part=0) 
-    : MElement (num, part)
+  MTetrahedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, int num=0, int part=0) 
+    : MElement(num, part)
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
   }
@@ -323,6 +333,7 @@ class MTetrahedron : public MElement {
     v[3] = 0;
   }
   int getTypeForMSH(){ return TET1; }
+  int getTypeForUNV(){ return 111; } // SOLIDFEM
   char *getStringForPOS(){ return "SS"; }
   virtual double getVolume()
   { 
@@ -350,25 +361,44 @@ class MTetrahedron : public MElement {
   virtual double etaShapeMeasure();
 };
 
-// TODO: for MTetrahedron2
-// void setVolumePositive()
-// {
-//   if(getVolumeSign() < 0){
-//     MVertex *tmp;
-//     tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
-//     tmp = _vs[1]; _vs[1] = _vs[2]; _vs[2] = temp;
-//     tmp = _vs[5]; _vs[5] = _vs[3]; _vs[3] = temp;
-//   }
-// }
+class MTetrahedron2 : public MTetrahedron {
+ protected:
+  MVertex *_vs[6];
+ public :
+  MTetrahedron2(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
+		MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
+		int num=0, int part=0) 
+    : MTetrahedron(v0, v1, v2, v3, num, part)
+  {
+    _vs[0] = v4; _vs[1] = v5; _vs[2] = v6; _vs[3] = v7; _vs[4] = v8; _vs[5] = v9;
+  }
+  ~MTetrahedron2(){}
+  inline int getPolynomialOrder(){ return 2; }
+  inline int getNumVertices(){ return 10; }
+  inline MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
+  inline int getNumEdgeVertices(){ return 6; }
+  // TODO: edgeRep, faceRep
+  int getTypeForMSH(){ return TET2; }
+  int getTypeForUNV(){ return 118; } // SOLIDFEM2
+  char *getStringForPOS(){ return "SS2"; }
+  void setVolumePositive()
+  {
+    if(getVolumeSign() < 0){
+      MVertex *tmp;
+      tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
+      tmp = _vs[1]; _vs[1] = _vs[2]; _vs[2] = tmp;
+      tmp = _vs[5]; _vs[5] = _vs[3]; _vs[3] = tmp;
+    }
+  }
+};
 
 class MHexahedron : public MElement {
  protected:
   MVertex *_v[8];
  public :
-  MHexahedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, 
-	      MVertex *v4, MVertex *v5, MVertex *v6, MVertex *v7, 
-	      int num=0, int part=0) 
-    : MElement (num, part)
+  MHexahedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
+	      MVertex *v5, MVertex *v6, MVertex *v7, int num=0, int part=0) 
+    : MElement(num, part)
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
     _v[4] = v4; _v[5] = v5; _v[6] = v6; _v[7] = v7;
@@ -391,6 +421,7 @@ class MHexahedron : public MElement {
     v[3] = _v[quadfaces_hexa[num][3]];
   }
   int getTypeForMSH(){ return HEX1; }
+  int getTypeForUNV(){ return 115; } // BRICK
   char *getStringForPOS(){ return "SH"; }
   virtual int getVolumeSign()
   { 
@@ -416,29 +447,57 @@ class MHexahedron : public MElement {
   }
 };
 
-// TODO: for MHexahedron2
-// void setVolumePositive()
-// {
-//   if(getVolumeSign() < 0){
-//     MVertex *tmp;
-//     tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
-//     tmp = _v[4]; _v[4] = _v[6]; _v[6] = tmp;
-//     MVertex *old[12];
-//     for(int i = 0; i < 12; i++) old[i] = _vs[i];
-//     _vs[0] = old[3]; _vs[1] = old[5]; _vs[2] = old[6];
-//     _vs[3] = old[0]; _vs[4] = old[4]; _vs[5] = old[1];
-//     _vs[6] = old[2]; _vs[7] = old[7]; _vs[8] = old[10];
-//     _vs[9] = old[11]; _vs[10] = old[8]; _vs[11] = old[9];
-//   }
-// }
+class MHexahedron2 : public MHexahedron {
+ protected:
+  MVertex *_vs[19];
+ public :
+  MHexahedron2(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
+	       MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
+	       MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
+	       MVertex *v15, MVertex *v16, MVertex *v17, MVertex *v18, MVertex *v19,
+	       MVertex *v20, MVertex *v21, MVertex *v22, MVertex *v23, MVertex *v24,
+	       MVertex *v25, MVertex *v26, int num=0, int part=0) 
+    : MHexahedron(v0, v1, v2, v3, v4, v5, v6, v7, num, part)
+  {
+    _vs[0] = v8; _vs[1] = v9; _vs[2] = v10; _vs[3] = v11; _vs[4] = v12; 
+    _vs[5] = v13; _vs[6] = v14; _vs[7] = v15; _vs[8] = v16; _vs[9] = v17; 
+    _vs[10] = v18; _vs[11] = v19; _vs[12] = v20; _vs[13] = v21; _vs[14] = v22;
+    _vs[15] = v23; _vs[16] = v24; _vs[17] = v25; _vs[18] = v26;
+  }
+  ~MHexahedron2(){}
+  inline int getPolynomialOrder(){ return 2; }
+  inline int getNumVertices(){ return 27; }
+  inline MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
+  inline int getNumEdgeVertices(){ return 12; }
+  inline int getNumFaceVertices(){ return 6; }
+  inline int getNumVolumeVertices(){ return 1; }
+  // TODO: edgeRep, faceRep
+  int getTypeForMSH(){ return HEX2; }
+  int getTypeForUNV(){ return 116; } // ???? BRICK2
+  char *getStringForPOS(){ return "SH2"; }
+  void setVolumePositive()
+  {
+    if(getVolumeSign() < 0){
+      MVertex *tmp;
+      tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
+      tmp = _v[4]; _v[4] = _v[6]; _v[6] = tmp;
+      MVertex *old[12];
+      for(int i = 0; i < 12; i++) old[i] = _vs[i];
+      _vs[0] = old[3]; _vs[1] = old[5]; _vs[2] = old[6];
+      _vs[3] = old[0]; _vs[4] = old[4]; _vs[5] = old[1];
+      _vs[6] = old[2]; _vs[7] = old[7]; _vs[8] = old[10];
+      _vs[9] = old[11]; _vs[10] = old[8]; _vs[11] = old[9];
+    }
+  }
+};
 
 class MPrism : public MElement {
  protected:
   MVertex *_v[6];
  public :
-  MPrism(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, 
-	 MVertex *v4, MVertex *v5, int num=0, int part=0) 
-    : MElement (num, part)
+  MPrism(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
+	 MVertex *v5, int num=0, int part=0) 
+    : MElement(num, part)
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
     _v[4] = v4; _v[5] = v5; 
@@ -469,6 +528,7 @@ class MPrism : public MElement {
     }
   }
   int getTypeForMSH(){ return PRI1; }
+  int getTypeForUNV(){ return 112; } // WEDGE
   char *getStringForPOS(){ return "SI"; }
   virtual int getVolumeSign()
   { 
@@ -494,26 +554,50 @@ class MPrism : public MElement {
   }
 };
 
-// TODO: for MPrism2
-// void setVolumePositive()
-// {
-//   if(getVolumeSign() < 0){
-//      MVertex *tmp;
-//      tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
-//      tmp = _v[3]; _v[3] = _v[4]; _v[4] = tmp;
-//      tmp = _vs[1]; _vs[1] = _vs[3]; _vs[3] = tmp;
-//      tmp = _vs[2]; _vs[2] = _vs[4]; _vs[4] = tmp;
-//      tmp = _vs[7]; _vs[7] = _vs[8]; _vs[8] = tmp;
-//   }
-// }
+class MPrism2 : public MPrism {
+ protected:
+  MVertex *_vs[12];
+ public :
+  MPrism2(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
+	  MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
+	  MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
+	  MVertex *v15, MVertex *v16, MVertex *v17, int num=0, int part=0) 
+    : MPrism(v0, v1, v2, v3, v4, v5, num, part)
+  {
+    _vs[0] = v6; _vs[1] = v7; _vs[2] = v8; _vs[3] = v9; _vs[4] = v10; 
+    _vs[5] = v11; _vs[6] = v12; _vs[7] = v13; _vs[8] = v14; _vs[9] = v15; 
+    _vs[10] = v16; _vs[11] = v17; 
+  }
+  ~MPrism2(){}
+  inline int getPolynomialOrder(){ return 2; }
+  inline int getNumVertices(){ return 18; }
+  inline MVertex *getVertex(int num){ return num < 6 ? _v[num] : _vs[num - 6]; }
+  inline int getNumEdgeVertices(){ return 9; }
+  inline int getNumFaceVertices(){ return 3; }
+  // TODO: edgeRep, faceRep
+  int getTypeForMSH(){ return PRI2; }
+  int getTypeForUNV(){ return 113; } // ???? WEDGE2
+  char *getStringForPOS(){ return "SI2"; }
+  void setVolumePositive()
+  {
+    if(getVolumeSign() < 0){
+      MVertex *tmp;
+      tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
+      tmp = _v[3]; _v[3] = _v[4]; _v[4] = tmp;
+      tmp = _vs[1]; _vs[1] = _vs[3]; _vs[3] = tmp;
+      tmp = _vs[2]; _vs[2] = _vs[4]; _vs[4] = tmp;
+      tmp = _vs[7]; _vs[7] = _vs[8]; _vs[8] = tmp;
+    }
+  }
+};
 
 class MPyramid : public MElement {
  protected:
   MVertex *_v[5];
  public :
-  MPyramid(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, 
-	   MVertex *v4, int num=0, int part=0) 
-    : MElement (num, part)
+  MPyramid(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
+	   int num=0, int part=0) 
+    : MElement(num, part)
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3; _v[4] = v4;
   }
@@ -543,6 +627,7 @@ class MPyramid : public MElement {
     }
   }
   int getTypeForMSH(){ return PYR1; }
+  int getTypeForUNV(){ throw; }
   char *getStringForPOS(){ return "SY"; }
   virtual int getVolumeSign()
   { 
@@ -567,16 +652,39 @@ class MPyramid : public MElement {
   }
 };
 
-// TODO: for MPyramid2
-// void setVolumePositive()
-// {
-//   if(getVolumeSign() < 0){
-//      MVertex *tmp;
-//      tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
-//      tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
-//      tmp = _vs[1]; _vs[1] = _vs[5]; _vs[5] = tmp;
-//      tmp = _vs[2]; _vs[2] = _vs[6]; _vs[6] = tmp;
-//   }
-// }
+class MPyramid2 : public MPyramid {
+ protected:
+  MVertex *_vs[9];
+ public :
+  MPyramid2(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
+	    MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
+	    MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, 
+	    int num=0, int part=0) 
+    : MPyramid(v0, v1, v2, v3, v4, num, part)
+  {
+    _vs[0] = v5; _vs[1] = v6; _vs[2] = v7; _vs[3] = v8; _vs[4] = v9; 
+    _vs[5] = v10; _vs[6] = v11; _vs[7] = v12; _vs[8] = v13; 
+  }
+  ~MPyramid2(){}
+  inline int getPolynomialOrder(){ return 2; }
+  inline int getNumVertices(){ return 14; }
+  inline MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }
+  inline int getNumEdgeVertices(){ return 8; }
+  inline int getNumFaceVertices(){ return 1; }
+  // TODO: edgeRep, faceRep
+  int getTypeForMSH(){ return PYR2; }
+  int getTypeForUNV(){ throw; }
+  char *getStringForPOS(){ return "SY2"; }
+  void setVolumePositive()
+  {
+    if(getVolumeSign() < 0){
+      MVertex *tmp;
+      tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
+      tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
+      tmp = _vs[1]; _vs[1] = _vs[5]; _vs[5] = tmp;
+      tmp = _vs[2]; _vs[2] = _vs[6]; _vs[6] = tmp;
+    }
+  }
+};
 
 #endif

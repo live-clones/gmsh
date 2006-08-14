@@ -45,7 +45,7 @@ static void storeElementsInEntities(GModel *m, int type,
   std::map<int, std::vector<MElement*> >::const_iterator ite = map.end();
   for(; it != ite; ++it){
     switch(type){
-    case LGN1:     
+    case LGN1: 
       {
 	GEdge *e = m->edgeByTag(it->first);
 	if(!e){
@@ -245,52 +245,94 @@ int GModel::readMSH(const std::string &name)
 	int n[30];
         for(int j = 0; j < numVertices; j++) fscanf(fp, "%d", &n[j]);
 	int dim = 0;
+	std::map<int, MVertex*> &v(vertices);
         switch (type) {
         case PNT:
-	  points[elementary].push_back(vertices[n[0]]);
+	  points[elementary].push_back(v[n[0]]);
 	  dim = 0;
           break;
         case LGN1:
 	  elements[0][elementary].push_back
-	    (new MLine(vertices[n[0]], vertices[n[1]], num, partition));
+	    (new MLine(v[n[0]], v[n[1]], num, partition));
+	  dim = 1;
+          break;
+        case LGN2:
+	  elements[0][elementary].push_back
+	    (new MLine2(v[n[0]], v[n[1]], v[n[2]], num, partition));
 	  dim = 1;
           break;
         case TRI1:
 	  elements[1][elementary].push_back
-	    (new MTriangle(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			   num, partition));
+	    (new MTriangle(v[n[0]], v[n[1]], v[n[2]], num, partition));
+	  dim = 2;
+          break;
+        case TRI2:
+	  elements[1][elementary].push_back
+	    (new MTriangle2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+			    num, partition));
 	  dim = 2;
           break;
         case QUA1:
 	  elements[2][elementary].push_back
-	    (new MQuadrangle(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			     vertices[n[3]], num, partition));
+	    (new MQuadrangle(v[n[0]], v[n[1]], v[n[2]], v[n[3]], num, partition));
+	  dim = 2;
+          break;
+        case QUA2:
+	  elements[2][elementary].push_back
+	    (new MQuadrangle2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+			      v[n[6]], v[n[7]], v[n[8]], num, partition));
 	  dim = 2;
           break;
 	case TET1:
 	  elements[3][elementary].push_back
-	    (new MTetrahedron(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			      vertices[n[3]], num, partition));
+	    (new MTetrahedron(v[n[0]], v[n[1]], v[n[2]], v[n[3]], num, partition));
+	  dim = 3; 
+	  break;
+	case TET2:
+	  elements[3][elementary].push_back
+	    (new MTetrahedron2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+			       v[n[6]], v[n[7]], v[n[8]], v[n[9]], num, partition));
 	  dim = 3; 
 	  break;
 	case HEX1:
 	  elements[4][elementary].push_back
-	    (new MHexahedron(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			     vertices[n[3]], vertices[n[4]], vertices[n[5]], 
-			     vertices[n[6]], vertices[n[7]], num, partition));
+	    (new MHexahedron(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+			     v[n[6]], v[n[7]], num, partition));
+	  dim = 3; 
+	  break;
+	case HEX2:
+	  elements[4][elementary].push_back
+	    (new MHexahedron2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+			      v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
+			      v[n[12]], v[n[13]], v[n[14]], v[n[15]], v[n[16]], v[n[17]], 
+			      v[n[18]], v[n[19]], v[n[20]], v[n[21]], v[n[22]], v[n[23]], 
+			      v[n[24]], v[n[25]], v[n[26]], num, partition));
 	  dim = 3; 
 	  break;
 	case PRI1: 
 	  elements[5][elementary].push_back
-	    (new MPrism(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			vertices[n[3]], vertices[n[4]], vertices[n[5]], 
+	    (new MPrism(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
 			num, partition));
+	  dim = 3; 
+	  break;
+	case PRI2: 
+	  elements[5][elementary].push_back
+	    (new MPrism2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+			 v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
+			 v[n[12]], v[n[13]], v[n[14]], v[n[15]], v[n[16]], v[n[17]], 
+			 num, partition));
 	  dim = 3; 
 	  break;
 	case PYR1: 
 	  elements[6][elementary].push_back
-	    (new MPyramid(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			  vertices[n[3]], vertices[n[4]], num, partition));
+	    (new MPyramid(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], num, partition));
+	  dim = 3; 
+	  break;
+	case PYR2: 
+	  elements[6][elementary].push_back
+	    (new MPyramid2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+			   v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
+			   v[n[12]], v[n[13]], num, partition));
 	  dim = 3; 
 	  break;
         default:
@@ -298,13 +340,12 @@ int GModel::readMSH(const std::string &name)
           break;
         }
 
-	if(physical){
-	  if(!physicals[dim].count(elementary) || !physicals[dim][elementary].count(physical))
+	if(physical && (!physicals[dim].count(elementary) || 
+			!physicals[dim][elementary].count(physical)))
 	    physicals[dim][elementary][physical] = "unnamed";
-	}
-
+	
 	if(partition) meshPartitions.insert(partition);
-
+	
 	if(progress && (i % progress == progress - 1))
 	  Msg(PROGRESS, "Read %d elements", i + 1);
       }
@@ -761,17 +802,11 @@ int GModel::writeUNV(const std::string &name, double scalingFactor)
     return 0;
   }
 
-  // IDEAS records
-  const int NODES=2411, ELEMENTS=2412, GROUPOFNODES=790;
-
-  // IDEAS elements
-  const int BEAM=21, THINSHLL=91, QUAD=94, SOLIDFEM=111, WEDGE=112, BRICK=115;
-  //const int BEAM2=24, THINSHLL2=92, QUAD2=95/*?*/, SOLIDFEM2=118;
-
   renumberMeshVertices();
-  
+
+  // IDEAS NODES record
   fprintf(fp, "%6d\n", -1);
-  fprintf(fp, "%6d\n", NODES);
+  fprintf(fp, "%6d\n", 2411);
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
       (*it)->mesh_vertices[i]->writeUNV(fp, scalingFactor);
@@ -786,25 +821,26 @@ int GModel::writeUNV(const std::string &name, double scalingFactor)
       (*it)->mesh_vertices[i]->writeUNV(fp, scalingFactor);
   fprintf(fp, "%6d\n", -1);  
 
+  // IDEAS ELEMENTS record
   fprintf(fp, "%6d\n", -1);
-  fprintf(fp, "%6d\n", ELEMENTS);
+  fprintf(fp, "%6d\n", 2412);
   for(eiter it = firstEdge(); it != lastEdge(); ++it){
     for(unsigned int i = 0; i < (*it)->lines.size(); i++)
-      (*it)->lines[i]->writeUNV(fp, BEAM, (*it)->tag());
+      (*it)->lines[i]->writeUNV(fp, (*it)->tag());
   }
   for(fiter it = firstFace(); it != lastFace(); ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-      (*it)->triangles[i]->writeUNV(fp, THINSHLL, (*it)->tag());
+      (*it)->triangles[i]->writeUNV(fp, (*it)->tag());
     for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-      (*it)->quadrangles[i]->writeUNV(fp, QUAD, (*it)->tag());
+      (*it)->quadrangles[i]->writeUNV(fp, (*it)->tag());
   }
   for(riter it = firstRegion(); it != lastRegion(); ++it){
     for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
-      (*it)->tetrahedra[i]->writeUNV(fp, SOLIDFEM, (*it)->tag());
+      (*it)->tetrahedra[i]->writeUNV(fp, (*it)->tag());
     for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
-      (*it)->hexahedra[i]->writeUNV(fp, BRICK, (*it)->tag());
+      (*it)->hexahedra[i]->writeUNV(fp, (*it)->tag());
     for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
-      (*it)->prisms[i]->writeUNV(fp, WEDGE, (*it)->tag());
+      (*it)->prisms[i]->writeUNV(fp, (*it)->tag());
   }
   fprintf(fp, "%6d\n", -1);
 
@@ -815,8 +851,9 @@ int GModel::writeUNV(const std::string &name, double scalingFactor)
     std::map<int, std::vector<GEntity*> >::const_iterator it = physicals[dim].begin();
     std::map<int, std::vector<GEntity*> >::const_iterator ite = physicals[dim].end();
     for(; it != ite; ++it){
+      // IDEAS GROUPOFNODES record
       fprintf(fp, "%6d\n", -1);
-      fprintf(fp, "%6d\n", GROUPOFNODES);
+      fprintf(fp, "%6d\n", 790);
       fprintf(fp, "%10d%10d\n", it->first, 1);
       fprintf(fp, "LOAD SET %2d\n", 1);
       std::set<int> nodes;
