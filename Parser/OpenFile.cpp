@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.111 2006-08-15 04:15:19 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.112 2006-08-15 06:16:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -248,11 +248,15 @@ int MergeProblem(char *name, int warn_if_missing)
 {
   // added 'b' for pure Windows programs, since some of these files
   // contain binary data
-  FILE *fp;
-  if(!(fp = fopen(name, "rb"))){
+  FILE *fp = fopen(name, "rb");
+  if(!fp){
     if(warn_if_missing) Msg(WARNING, "Unable to open file '%s'", name);
     return 0;
   }
+
+  char header[256];
+  fgets(header, sizeof(header), fp);
+  fclose(fp);
 
   Msg(STATUS2, "Reading '%s'", name);
 
@@ -266,7 +270,6 @@ int MergeProblem(char *name, int warn_if_missing)
       // terms of gzFile, but until then, this is better than nothing
       if(fl_choice("File '%s' is in gzip format.\n\nDo you want to uncompress it?", 
 		   "Cancel", "Uncompress", NULL, name)){
-	fclose(fp);
 	char tmp[256];
 	sprintf(tmp, "gunzip -c %s > %s", name, base);
 	SystemCall(tmp);
@@ -308,17 +311,13 @@ int MergeProblem(char *name, int warn_if_missing)
 #endif
 #endif
   else {
-    fpos_t position;
-    fgetpos(fp, &position);
-    char tmp[256];
-    fgets(tmp, sizeof(tmp), fp);
-    fsetpos(fp, &position);
-    if(!strncmp(tmp, "$PTS", 4) || !strncmp(tmp, "$NO", 3) || 
-       !strncmp(tmp, "$PARA", 5) || !strncmp(tmp, "$ELM", 4) ||
-       !strncmp(tmp, "$MeshFormat", 11)) {
+    if(!strncmp(header, "$PTS", 4) || !strncmp(header, "$NO", 3) || 
+       !strncmp(header, "$PARA", 5) || !strncmp(header, "$ELM", 4) ||
+       !strncmp(header, "$MeshFormat", 11)) {
       status = GMODEL->readMSH(name);
     }
-    else if(!strncmp(tmp, "$PostFormat", 11) || !strncmp(tmp, "$View", 5)) {
+    else if(!strncmp(header, "$PostFormat", 11) || 
+	    !strncmp(header, "$View", 5)) {
       status = ReadView(name);
     }
     else {
@@ -329,7 +328,6 @@ int MergeProblem(char *name, int warn_if_missing)
   SetBoundingBox();
   CTX.mesh.changed = 1;
   Msg(STATUS2, "Read '%s'", name);
-  fclose(fp);
   return status;
 }
 

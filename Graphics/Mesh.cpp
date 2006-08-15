@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.164 2006-08-15 05:19:28 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.165 2006-08-15 06:16:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -78,6 +78,8 @@ static void drawArrays(VertexArray *va, GLint type, bool useColorArray,
 		       bool useNormalArray, bool usePolygonOffset,
 		       unsigned int uniformColor, bool drawOutline=false)
 {
+  if(!va) return;
+
   glVertexPointer(3, GL_FLOAT, 0, va->vertices->array);
   glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->colors->array);
   glNormalPointer(GL_FLOAT, 0, va->normals->array);
@@ -257,16 +259,9 @@ class initMeshGFace {
     //    glDrawElements() instead of glDrawArrays().
     // 2) we can use tc to stripe the triangles to create strips
 
-    if(f->meshRep->va_lines) delete f->meshRep->va_lines;
-    f->meshRep->va_lines = new VertexArray(2, f->meshRep->edges.size());
-
-    if(f->meshRep->va_triangles) delete f->meshRep->va_triangles;
-    f->meshRep->va_triangles = new VertexArray(3, f->triangles.size());
-
-    if(f->meshRep->va_quads) delete f->meshRep->va_quads;
-    f->meshRep->va_quads = new VertexArray(4, f->quadrangles.size());
-
     if(useEdges && CTX.mesh.surfaces_edges){
+      if(f->meshRep->va_lines) delete f->meshRep->va_lines;
+      f->meshRep->va_lines = new VertexArray(2, f->meshRep->edges.size());
       std::set<MEdge>::const_iterator it = f->meshRep->edges.begin();
       for(; it != f->meshRep->edges.end(); ++it){
 	for(int i = 0; i < 2; i++){
@@ -283,8 +278,13 @@ class initMeshGFace {
     }
 
     if(CTX.mesh.surfaces_faces || (!useEdges && CTX.mesh.surfaces_edges)){
+      if(f->meshRep->va_triangles) delete f->meshRep->va_triangles;
+      f->meshRep->va_triangles = new VertexArray(3, f->triangles.size());
       _addInArray(f, f->meshRep->va_triangles, f->triangles);
-      _addInArray(f, f->meshRep->va_triangles, f->quadrangles);
+
+      if(f->meshRep->va_quads) delete f->meshRep->va_quads;
+      f->meshRep->va_quads = new VertexArray(4, f->quadrangles.size());
+      _addInArray(f, f->meshRep->va_quads, f->quadrangles);
     }
   }
 };
@@ -437,20 +437,24 @@ void Draw_Mesh()
   if(!CTX.threads_lock){
     CTX.threads_lock = 1; 
 
+    int stat = GMODEL->getMeshStatus();
+
     if(CTX.mesh.changed) {
-      if(CTX.mesh.smooth_normals){
+      if(stat > 1 && CTX.mesh.smooth_normals){
 	if(GMODEL->normals) delete GMODEL->normals;
 	GMODEL->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
 	std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), initSmoothNormalsGFace());
       }
-      std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), initMeshGFace());
-      std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), initMeshGRegion());
+      if(stat > 1)
+	std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), initMeshGFace());
+      if(stat > 2)
+	std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), initMeshGRegion());
     }
     
-    if(CTX.mesh.surfaces_faces || CTX.mesh.surfaces_edges)
+    if(stat > 1 && (CTX.mesh.surfaces_faces || CTX.mesh.surfaces_edges))
       std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), drawMeshGFace());
     
-    if(CTX.mesh.volumes_faces || CTX.mesh.volumes_edges)
+    if(stat > 2 && (CTX.mesh.volumes_faces || CTX.mesh.volumes_edges))
       std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), drawMeshGRegion());
 
     CTX.mesh.changed = 0;
