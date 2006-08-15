@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.513 2006-08-13 21:41:04 geuzaine Exp $
+// $Id: GUI.cpp,v 1.514 2006-08-15 02:17:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1349,7 +1349,7 @@ void GUI::create_graphic_window()
   // bottom button bar
 
   Fl_Box *bottom = new Fl_Box(0, glheight, width, sh);
-  bottom->box(FL_THIN_UP_BOX);
+  bottom->box(FL_FLAT_BOX);
 
   int x = 2;
 
@@ -1422,7 +1422,7 @@ void GUI::create_graphic_window()
 
   x += 2;
   g_status_label[0] = new Fl_Box(x, glheight + 2, 
-				 (width - x - 1) / 3, sh - 4);
+				 (width - x - 2) / 3, sh - 4);
   g_status_label[1] = new Fl_Box(x + (width - x) / 3, glheight + 2, 
 				 2 * (width - x - 1) / 3, sh - 4);
   for(int i = 0; i < 2; i++) {

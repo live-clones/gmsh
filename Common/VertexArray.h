@@ -24,13 +24,17 @@
 
 class VertexArray{
  public:
-  int type, num, fill;
+  int type, fill;
   List_T *vertices, *normals, *colors;
   VertexArray(int numNodesPerElement, int numElements);
   ~VertexArray();
+  // return the number of nodes in the array
+  int n();
+  // add a node in the array
   void add(float x, float y, float z, 
 	   float n0, float n1, float n2, unsigned int col);
   void add(float x, float y, float z, unsigned int col);
+  // sort the elements back to fron wrt the eye position
   void sort(double eye[3]);
 };
 

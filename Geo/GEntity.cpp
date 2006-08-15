@@ -1,4 +1,10 @@
 #include "GEntity.h"
+#include "MRep.h"
+
+GEntity::~GEntity()
+{
+  if(meshRep) delete meshRep; 
+}
 
 std::string GEntity::getInfoString()
 {

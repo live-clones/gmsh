@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.10 2006-01-06 00:34:21 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.11 2006-08-15 02:17:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -33,7 +33,7 @@ VertexArray::VertexArray(int numNodesPerElement, int numElements)
     Msg(GERROR, "Vertex arrays not done for %d-node element", type);
     type = 3;
   }
-  num = fill = 0;
+  fill = 0;
   if(!numElements)
     numElements = 1;
   int nb = numElements * numNodesPerElement;
@@ -47,6 +47,11 @@ VertexArray::~VertexArray()
   List_Delete(vertices);
   List_Delete(normals);
   List_Delete(colors);
+}
+
+int VertexArray::n()
+{
+  return List_Nbr(vertices) / 3;
 }
 
 void VertexArray::add(float x, float y, float z, 
@@ -115,10 +120,13 @@ void VertexArray::sort(double eye[3])
     return;
   }
 
+  // FIXME this assumes that the color and normals are always filled!
+
   theeye[0] = eye[0];
   theeye[1] = eye[1];
   theeye[2] = eye[2];
-  
+
+  int num = n() / 3;
   int nb = List_Nbr(vertices) + List_Nbr(normals) + List_Nbr(colors);
   float *tmp = new float[nb];
   

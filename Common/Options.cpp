@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.288 2006-08-12 19:34:14 geuzaine Exp $
+// $Id: Options.cpp,v 1.289 2006-08-15 02:17:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4829,7 +4829,10 @@ double opt_mesh_save_all(OPT_ARGS_NUM)
 double opt_mesh_color_carousel(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    if(CTX.mesh.color_carousel != (int)val) CTX.mesh.changed = 1;
+    // vertex arrays need to be regenerated only when we color by
+    // partition
+    if(CTX.mesh.color_carousel != (int)val && val == 3.)
+      CTX.mesh.changed = 1;
     CTX.mesh.color_carousel = (int)val;
     if(CTX.mesh.color_carousel < 0 || CTX.mesh.color_carousel > 3)
       CTX.mesh.color_carousel = 0;
@@ -6974,7 +6977,6 @@ unsigned int opt_geometry_color_points_select(OPT_ARGS_COL)
 unsigned int opt_geometry_color_lines_select(OPT_ARGS_COL)
 {
   if(action & GMSH_SET){
-    if(CTX.color.geom.line_sel != val) CTX.mesh.changed = 1;
     CTX.color.geom.line_sel = val;
   }
 #if defined(HAVE_FLTK)
@@ -6986,7 +6988,6 @@ unsigned int opt_geometry_color_lines_select(OPT_ARGS_COL)
 unsigned int opt_geometry_color_surfaces_select(OPT_ARGS_COL)
 {
   if(action & GMSH_SET){
-    if(CTX.color.geom.surface_sel != val) CTX.mesh.changed = 1;
     CTX.color.geom.surface_sel = val;
   }
 #if defined(HAVE_FLTK)
@@ -7061,7 +7062,6 @@ unsigned int opt_mesh_color_lines(OPT_ARGS_COL)
 unsigned int opt_mesh_color_triangles(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
-    if(CTX.color.mesh.triangle != val) CTX.mesh.changed = 1;
     CTX.color.mesh.triangle = val;
   }
 #if defined(HAVE_FLTK)
@@ -7073,7 +7073,6 @@ unsigned int opt_mesh_color_triangles(OPT_ARGS_COL)
 unsigned int opt_mesh_color_quadrangles(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
-    if(CTX.color.mesh.quadrangle != val) CTX.mesh.changed = 1;
     CTX.color.mesh.quadrangle = val;
   }
 #if defined(HAVE_FLTK)
@@ -7085,7 +7084,6 @@ unsigned int opt_mesh_color_quadrangles(OPT_ARGS_COL)
 unsigned int opt_mesh_color_tetrahedra(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
-    if(CTX.color.mesh.tetrahedron != val) CTX.mesh.changed = 1;
     CTX.color.mesh.tetrahedron = val;
   }
 #if defined(HAVE_FLTK)
@@ -7097,7 +7095,6 @@ unsigned int opt_mesh_color_tetrahedra(OPT_ARGS_COL)
 unsigned int opt_mesh_color_hexahedra(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
-    if(CTX.color.mesh.hexahedron != val) CTX.mesh.changed = 1;
     CTX.color.mesh.hexahedron = val;
   }
 #if defined(HAVE_FLTK)
@@ -7109,7 +7106,6 @@ unsigned int opt_mesh_color_hexahedra(OPT_ARGS_COL)
 unsigned int opt_mesh_color_prisms(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
-    if(CTX.color.mesh.prism != val) CTX.mesh.changed = 1;
     CTX.color.mesh.prism = val;
   }
 #if defined(HAVE_FLTK)
@@ -7121,7 +7117,6 @@ unsigned int opt_mesh_color_prisms(OPT_ARGS_COL)
 unsigned int opt_mesh_color_pyramid(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
-    if(CTX.color.mesh.pyramid != val) CTX.mesh.changed = 1;
     CTX.color.mesh.pyramid = val;
   }
 #if defined(HAVE_FLTK)
@@ -7155,7 +7150,10 @@ unsigned int opt_mesh_color_normals(OPT_ARGS_COL)
 unsigned int opt_mesh_color_(int i, OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
-    if(CTX.color.mesh.carousel[i] != val) CTX.mesh.changed = 1;
+    // vertex arrays need to be regenerated only when we color by
+    // partition
+    if(CTX.color.mesh.carousel[i] != val && CTX.mesh.color_carousel == 3)
+      CTX.mesh.changed = 1;
     CTX.color.mesh.carousel[i] = val;
   }
 #if defined(HAVE_FLTK)

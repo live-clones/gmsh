@@ -74,3 +74,4 @@ void GRegion::recomputeMeshPartitions()
     if(part) model()->getMeshPartitions().insert(part);
   }
 }
+

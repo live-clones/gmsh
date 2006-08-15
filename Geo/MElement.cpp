@@ -16,10 +16,9 @@ static double dist(MVertex *v1, MVertex *v2)
 double MElement::minEdge()
 {
   double m = 1.e25;
-  MVertex *v[2];
   for(int i = 0; i < getNumEdges(); i++){
-    getEdge(i, v);
-    m = std::min(m, dist(v[0], v[1]));
+    MEdge e = getEdge(i);
+    m = std::min(m, dist(e.getVertex(0), e.getVertex(1)));
   }
   return m;
 }
@@ -27,10 +26,9 @@ double MElement::minEdge()
 double MElement::maxEdge()
 {
   double m = 0.;
-  MVertex *v[2];
   for(int i = 0; i < getNumEdges(); i++){
-    getEdge(i, v);
-    m = std::max(m, dist(v[0], v[1]));
+    MEdge e = getEdge(i);
+    m = std::max(m, dist(e.getVertex(0), e.getVertex(1)));
   }
   return m;
 }
@@ -72,19 +70,20 @@ double MTetrahedron::etaShapeMeasure()
   return 12. * pow(0.9 * v * v, 1./3.) / lij2;
 }
 
-void MElement::cog(double &x, double &y, double &z)
+SPoint3 MElement::barycenter()
 {
-  x = y = z = 0.;
+  SPoint3 p(0., 0., 0.);
   int n = getNumVertices();
   for(int i = 0; i < n; i++) {
     MVertex *v = getVertex(i);
-    x += v->x();
-    y += v->y();
-    z += v->z();
+    p[0] += v->x();
+    p[1] += v->y();
+    p[2] += v->z();
   }
-  x /= (double)n;
-  y /= (double)n;
-  z /= (double)n;
+  p[0] /= (double)n;
+  p[1] /= (double)n;
+  p[2] /= (double)n;
+  return p;
 }
 
 void MElement::writeMSH(FILE *fp, double version, int num, int elementary, 

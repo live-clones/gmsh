@@ -5,6 +5,8 @@
 #include <algorithm>
 #include "GmshDefines.h"
 #include "MVertex.h"
+#include "MEdge.h"
+#include "MFace.h"
 #include "Numeric.h"
 
 // the reference topology is defined in Mesh/{Edge,Face}.cpp
@@ -66,25 +68,19 @@ class MElement
 
   // get the edges
   virtual int getNumEdges() = 0;
-  virtual void getEdge(int num, MVertex *v[2]) = 0;
+  virtual MEdge getEdge(int num) = 0;
 
   // get an edge representation for drawing
   virtual int getNumEdgesRep(){ return getNumEdges(); }
-  virtual void getEdgeRep(int num, MVertex *v[2]){ getEdgeRep(num, v); }
+  virtual MEdge getEdgeRep(int num){ return getEdge(num); }
 
   // get the faces
   virtual int getNumFaces() = 0;
-  virtual void getFace(int num, MVertex *v[4]) = 0;
+  virtual MFace getFace(int num) = 0;
 
   // get a face representation for drawing
   virtual int getNumFacesRep(){ return getNumFaces(); }
-  virtual void getFaceRep(int num, MVertex *v[4], double n[3]=0)
-  { 
-    getFace(num, v); 
-    if(n) normal3points(v[0]->x(), v[0]->y(), v[0]->y(),
-			v[1]->x(), v[1]->y(), v[1]->y(),
-			v[2]->x(), v[2]->y(), v[2]->y(), n);
-  }
+  virtual MFace getFaceRep(int num){ return getFace(num); }
 
   // get the max/min edge length
   virtual double maxEdge();
@@ -96,7 +92,7 @@ class MElement
   virtual double etaShapeMeasure(){ return 0.; }
 
   // computes the barycenter
-  virtual void cog(double &x, double &y, double &z);
+  virtual SPoint3 barycenter();
 
   // compute and change the orientation of 3D elements to get
   // positive volume
@@ -131,15 +127,9 @@ class MLine : public MElement {
   inline int getNumVertices(){ return 2; }
   inline MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 1; }
-  virtual void getEdge(int num, MVertex *v[2])
-  {
-    v[0] = _v[0]; v[1] = _v[1];
-  }
+  virtual MEdge getEdge(int num){ return MEdge(_v[0], _v[1], this); }
   virtual int getNumFaces(){ return 0; }
-  virtual void getFace(int num, MVertex *v[4]) 
-  { 
-    v[0] = v[1] = v[2] = v[3] = 0; 
-  }
+  virtual MFace getFace(int num){ throw; }
   int getTypeForMSH(){ return LGN1; }
   int getTypeForUNV(){ return 21; } // BEAM
   char *getStringForPOS(){ return "SL"; }
@@ -160,15 +150,14 @@ class MLine2 : public MLine {
   inline MVertex *getVertex(int num){ return num < 2 ? _v[num] : _vs[num - 2]; }
   inline int getNumEdgeVertices(){ return 1; }
   int getNumEdgesRep(){ return 2; }
-  void getEdgeRep(int num, MVertex *v[2])
+  MEdge getEdgeRep(int num)
   { 
     static int edges_lin2[2][2] = {
       {0, 2}, {2, 1},
     };
     int i0 = edges_lin2[num][0];
     int i1 = edges_lin2[num][1];
-    v[0] = i0 < 2? _v[i0] : _vs[i0 - 2];
-    v[1] = i1 < 2? _v[i1] : _vs[i1 - 2];
+    return MEdge(i0 < 2 ? _v[i0] : _vs[i0 - 2], i1 < 2 ? _v[i1] : _vs[i1 - 2], this);
   }
   int getTypeForMSH(){ return LGN2; }
   int getTypeForUNV(){ return 24; } // BEAM2
@@ -188,15 +177,14 @@ class MTriangle : public MElement {
   inline int getNumVertices(){ return 3; }
   inline MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 3; }
-  virtual void getEdge(int num, MVertex *v[2])
+  virtual MEdge getEdge(int num)
   {
-    v[0] = _v[edges_tetra[num][0]];
-    v[1] = _v[edges_tetra[num][1]];
+    return MEdge(_v[edges_tetra[num][0]], _v[edges_tetra[num][1]], this);
   }
   virtual int getNumFaces(){ return 1; }
-  virtual void getFace(int num, MVertex *v[4])
-  {
-    v[0] = _v[0]; v[1] = _v[1]; v[2] = _v[2]; v[3] = 0;
+  virtual MFace getFace(int num)
+  { 
+    return MFace(_v[0], _v[1], _v[2]); 
   }
   int getTypeForMSH(){ return TRI1; }
   int getTypeForUNV(){ return 91; } // THINSHLL
@@ -219,7 +207,7 @@ class MTriangle2 : public MTriangle {
   inline MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
   inline int getNumEdgeVertices(){ return 3; }
   int getNumEdgesRep(){ return 6; }
-  void getEdgeRep(int num, MVertex *v[2])
+  MEdge getEdgeRep(int num)
   { 
     static int edges_tri2[6][2] = {
       {0, 3}, {3, 1},
@@ -228,11 +216,10 @@ class MTriangle2 : public MTriangle {
     };
     int i0 = edges_tri2[num][0];
     int i1 = edges_tri2[num][1];
-    v[0] = i0 < 3? _v[i0] : _vs[i0 - 3];
-    v[1] = i1 < 3? _v[i1] : _vs[i1 - 3];
+    return MEdge(i0 < 3 ? _v[i0] : _vs[i0 - 3], i1 < 3 ? _v[i1] : _vs[i1 - 3], this);
   }
   int getNumFacesRep(){ return 4; }
-  void getFaceRep(int num, MVertex *v[4], double n[3]=0)
+  MFace getFaceRep(int num)
   { 
     static int trifaces_tri2[4][3] = {
       {0, 3, 5},
@@ -243,13 +230,9 @@ class MTriangle2 : public MTriangle {
     int i0 = trifaces_tri2[num][0];
     int i1 = trifaces_tri2[num][1];
     int i2 = trifaces_tri2[num][2];
-    v[0] = i0 < 3? _v[i0] : _vs[i0 - 3];
-    v[1] = i1 < 3? _v[i1] : _vs[i1 - 3];
-    v[2] = i2 < 3? _v[i2] : _vs[i2 - 3];
-    v[3] = 0;
-    if(n) normal3points(v[0]->x(), v[0]->y(), v[0]->y(),
-			v[1]->x(), v[1]->y(), v[1]->y(),
-			v[2]->x(), v[2]->y(), v[2]->y(), n);
+    return MFace(i0 < 3 ? _v[i0] : _vs[i0 - 3],
+		 i1 < 3 ? _v[i1] : _vs[i1 - 3],
+		 i2 < 3 ? _v[i2] : _vs[i2 - 3]);
   }
   int getTypeForMSH(){ return TRI2; }
   int getTypeForUNV(){ return 92; } // THINSHLL2
@@ -269,16 +252,12 @@ class MQuadrangle : public MElement {
   inline int getNumVertices(){ return 4; }
   inline MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 4; }
-  virtual void getEdge(int num, MVertex *v[2])
+  virtual MEdge getEdge(int num)
   {
-    v[0] = _v[edges_quad[num][0]];
-    v[1] = _v[edges_quad[num][1]];
+    return MEdge(_v[edges_quad[num][0]], _v[edges_quad[num][1]], this);
   }
   virtual int getNumFaces(){ return 1; }
-  virtual void getFace(int num, MVertex *v[4])
-  {
-    v[0] = _v[0]; v[1] = _v[1]; v[2] = _v[2]; v[3] = _v[3];
-  }
+  virtual MFace getFace(int num){ return MFace(_v[0], _v[1], _v[2], _v[3]); }
   int getTypeForMSH(){ return QUA1; }
   int getTypeForUNV(){ return 94; } // QUAD
   char *getStringForPOS(){ return "SQ"; }
@@ -319,18 +298,16 @@ class MTetrahedron : public MElement {
   inline int getNumVertices(){ return 4; }
   inline MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 4; }
-  virtual void getEdge(int num, MVertex *v[2])
+  virtual MEdge getEdge(int num)
   {
-    v[0] = _v[edges_tetra[num][0]];
-    v[1] = _v[edges_tetra[num][1]];
+    return MEdge(_v[edges_tetra[num][0]], _v[edges_tetra[num][1]], this);
   }
   virtual int getNumFaces(){ return 4; }
-  virtual void getFace(int num, MVertex *v[4])
+  virtual MFace getFace(int num)
   {
-    v[0] = _v[trifaces_tetra[num][0]];
-    v[1] = _v[trifaces_tetra[num][1]];
-    v[2] = _v[trifaces_tetra[num][2]];
-    v[3] = 0;
+    return MFace(_v[trifaces_tetra[num][0]],
+		 _v[trifaces_tetra[num][1]],
+		 _v[trifaces_tetra[num][2]]);
   }
   int getTypeForMSH(){ return TET1; }
   int getTypeForUNV(){ return 111; } // SOLIDFEM
@@ -407,18 +384,17 @@ class MHexahedron : public MElement {
   inline int getNumVertices(){ return 8; }
   inline MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 12; }
-  virtual void getEdge(int num, MVertex *v[2])
+  virtual MEdge getEdge(int num)
   {
-    v[0] = _v[edges_hexa[num][0]];
-    v[1] = _v[edges_hexa[num][1]];
+    return MEdge(_v[edges_hexa[num][0]], _v[edges_hexa[num][1]], this);
   }
-  int getNumFaces(){ return 6; }
-  void getFace(int num, MVertex *v[4])
+  virtual int getNumFaces(){ return 6; }
+  virtual MFace getFace(int num)
   {
-    v[0] = _v[quadfaces_hexa[num][0]];
-    v[1] = _v[quadfaces_hexa[num][1]];
-    v[2] = _v[quadfaces_hexa[num][2]];
-    v[3] = _v[quadfaces_hexa[num][3]];
+    return MFace(_v[quadfaces_hexa[num][0]],
+		 _v[quadfaces_hexa[num][1]],
+		 _v[quadfaces_hexa[num][2]],
+		 _v[quadfaces_hexa[num][3]]);
   }
   int getTypeForMSH(){ return HEX1; }
   int getTypeForUNV(){ return 115; } // BRICK
@@ -506,26 +482,22 @@ class MPrism : public MElement {
   inline int getNumVertices(){ return 6; }
   inline MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 9; }
-  virtual void getEdge(int num, MVertex *v[2])
+  virtual MEdge getEdge(int num)
   {
-    v[0] = _v[edges_prism[num][0]];
-    v[1] = _v[edges_prism[num][1]];
+    return MEdge(_v[edges_prism[num][0]], _v[edges_prism[num][1]], this);
   }
-  int getNumFaces(){ return 5; }
-  void getFace(int num, MVertex *v[4])
+  virtual int getNumFaces(){ return 5; }
+  virtual MFace getFace(int num)
   {
-    if(num < 3){
-      v[0] = _v[trifaces_prism[num][0]];
-      v[1] = _v[trifaces_prism[num][1]];
-      v[2] = _v[trifaces_prism[num][2]];
-      v[3] = 0;
-    }
-    else{
-      v[0] = _v[quadfaces_prism[num - 3][0]];
-      v[1] = _v[quadfaces_prism[num - 3][1]];
-      v[2] = _v[quadfaces_prism[num - 3][2]];
-      v[3] = _v[quadfaces_prism[num - 3][3]];
-    }
+    if(num < 3)
+      return MFace(_v[trifaces_prism[num][0]],
+		   _v[trifaces_prism[num][1]],
+		   _v[trifaces_prism[num][2]]);
+    else
+      return MFace(_v[quadfaces_prism[num - 3][0]],
+		   _v[quadfaces_prism[num - 3][1]],
+		   _v[quadfaces_prism[num - 3][2]],
+		   _v[quadfaces_prism[num - 3][3]]);
   }
   int getTypeForMSH(){ return PRI1; }
   int getTypeForUNV(){ return 112; } // WEDGE
@@ -605,26 +577,22 @@ class MPyramid : public MElement {
   inline int getNumVertices(){ return 5; }
   inline MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 8; }
-  virtual void getEdge(int num, MVertex *v[2])
+  virtual MEdge getEdge(int num)
   {
-    v[0] = _v[edges_pyramid[num][0]];
-    v[1] = _v[edges_pyramid[num][1]];
+    return MEdge(_v[edges_pyramid[num][0]], _v[edges_pyramid[num][1]], this);
   }
-  int getNumFaces(){ return 5; }
-  void getFace(int num, MVertex *v[4])
+  virtual int getNumFaces(){ return 5; }
+  virtual MFace getFace(int num)
   {
-    if(num < 4){
-      v[0] = _v[trifaces_pyramid[num][0]];
-      v[1] = _v[trifaces_pyramid[num][1]];
-      v[2] = _v[trifaces_pyramid[num][2]];
-      v[3] = 0;
-    }
-    else{
-      v[0] = _v[quadfaces_pyramid[num - 4][0]];
-      v[1] = _v[quadfaces_pyramid[num - 4][1]];
-      v[2] = _v[quadfaces_pyramid[num - 4][2]];
-      v[3] = _v[quadfaces_pyramid[num - 4][3]];
-    }
+    if(num < 4)
+      return MFace(_v[trifaces_pyramid[num][0]],
+		   _v[trifaces_pyramid[num][1]],
+		   _v[trifaces_pyramid[num][2]]);
+    else
+      return MFace(_v[quadfaces_pyramid[num - 4][0]],
+		   _v[quadfaces_pyramid[num - 4][1]],
+		   _v[quadfaces_pyramid[num - 4][2]],
+		   _v[quadfaces_pyramid[num - 4][3]]);
   }
   int getTypeForMSH(){ return PYR1; }
   int getTypeForUNV(){ throw; }

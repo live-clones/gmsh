@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.107 2006-08-07 22:02:30 geuzaine Exp $
+// $Id: Post.cpp,v 1.108 2006-08-15 02:17:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -783,16 +783,16 @@ void Draw_Post(void)
 
       pass_1:
 	if(v->TriVertexArray && v->TriVertexArray->fill){
-	  Msg(DEBUG, "View[%d]; %d tris in vertex array", v->Index, v->TriVertexArray->num);
+	  Msg(DEBUG, "View[%d]; %d tris in vertex array", v->Index, v->TriVertexArray->n()/3);
 	  v->TriVertexArray->fill = 0;
 	}
 	if(v->LinVertexArray && v->LinVertexArray->fill){
-	  Msg(DEBUG, "View[%d]; %d segs in vertex array", v->Index, v->LinVertexArray->num);
+	  Msg(DEBUG, "View[%d]; %d segs in vertex array", v->Index, v->LinVertexArray->n()/2);
 	  v->LinVertexArray->fill = 0;
 	}
       }
 
-      if(v->TriVertexArray && v->TriVertexArray->num){
+      if(v->TriVertexArray && v->TriVertexArray->n()){
 	if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && !v->FakeTransparency &&
 	   (changedEye() || v->Changed)){
 	  Msg(DEBUG, "Sorting View[%d] for transparency (WITH vertex array)", v->Index);
@@ -812,7 +812,7 @@ void Draw_Post(void)
 	else
 	  glDisableClientState(GL_NORMAL_ARRAY);
 	if(CTX.polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
-	glDrawArrays(GL_TRIANGLES, 0, 3 * v->TriVertexArray->num);
+	glDrawArrays(GL_TRIANGLES, 0, v->TriVertexArray->n());
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDisable(GL_LIGHTING);
       
@@ -821,12 +821,12 @@ void Draw_Post(void)
 	glDisableClientState(GL_NORMAL_ARRAY);
       }
 
-      if(v->LinVertexArray && v->LinVertexArray->num){
+      if(v->LinVertexArray && v->LinVertexArray->n()){
 	glVertexPointer(3, GL_FLOAT, 0, v->LinVertexArray->vertices->array);
 	glColorPointer(4, GL_UNSIGNED_BYTE, 0, v->LinVertexArray->colors->array);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
-	glDrawArrays(GL_LINES, 0, 2 * v->LinVertexArray->num);
+	glDrawArrays(GL_LINES, 0, v->LinVertexArray->n());
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
       }

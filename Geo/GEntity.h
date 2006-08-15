@@ -4,7 +4,6 @@
 #include "Range.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
-#include "MVertex.h"
 #include "GmshDefines.h"
 #include <list>
 #include <vector>
@@ -15,6 +14,7 @@ class GVertex;
 class GEdge;
 class GFace;
 class GRegion;
+class MVertex;
 class MRep;
 
 // A geometric model entity. All enitites are owned by a GModel.
@@ -22,7 +22,6 @@ class GEntity {
 
  private:
   GModel *_model;
-  MRep *_mrep;
   int _tag;
   char _visible, _flag;
   
@@ -80,9 +79,9 @@ class GEntity {
       return name[type];
   }
 
-  GEntity(GModel *m, int t) : _model(m), _mrep(0), _tag(t), _visible(true), _flag(0) {}
+  GEntity(GModel *m, int t) : _model(m), _tag(t), _visible(true), _flag(0), meshRep(0) {}
 
-  virtual ~GEntity() {};
+  virtual ~GEntity();
 
   // Spatial dimension of the entity 
   virtual int dim() const {throw;}
@@ -158,6 +157,9 @@ class GEntity {
 
   // The physical entitites (if any) that contain this entity
   std::vector<int> physicals;
+
+  // A representation of the mesh
+  MRep *meshRep;
 };
 
 class GEntityLessThan {

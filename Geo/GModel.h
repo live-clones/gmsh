@@ -9,6 +9,7 @@
 #include "GFace.h"
 #include "GRegion.h"
 #include "SBoundingBox3d.h"
+#include "SmoothNormals.h"
 
 // A geometric model. The model is a non-manifold B-Rep.
 
@@ -23,8 +24,8 @@ class GModel
   std::set<int> meshPartitions;
 
  public:
-  GModel(const std::string &name) : modelName(name) {}
-  virtual ~GModel() {}
+  GModel(const std::string &name) : modelName(name), normals(0) {}
+  virtual ~GModel();
 
   virtual void import(){}
 
@@ -98,6 +99,9 @@ class GModel
   int writeUNV(const std::string &name, double scalingFactor=1.0);
   int readMESH(const std::string &name);
   int writeMESH(const std::string &name, double scalingFactor=1.0);
+
+  // FIXME: this will be removed (and rewritten)
+  smooth_normals *normals;
 };
 
 #endif

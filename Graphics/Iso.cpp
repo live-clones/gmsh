@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.37 2006-08-07 22:02:30 geuzaine Exp $
+// $Id: Iso.cpp,v 1.38 2006-08-15 02:17:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -56,7 +56,6 @@ void IsoTriangle(Post_View * View, double *X, double *Y, double *Z,
     if(View->LinVertexArray && View->LinVertexArray->fill && !View->LineType){
       View->LinVertexArray->add(Xp[0], Yp[0], Zp[0], color);
       View->LinVertexArray->add(Xp[1], Yp[1], Zp[1], color);
-      View->LinVertexArray->num++;
     }
     else{
       glColor4ubv((GLubyte *) & color);
@@ -493,7 +492,6 @@ void IsoSimplex(Post_View * View, int preproNormals,
 				norms[3*(i-1)], norms[3*(i-1)+1], norms[3*(i-1)+2], color);
       View->TriVertexArray->add(Xp[i], Yp[i], Zp[i],
 				norms[3*i], norms[3*i+1], norms[3*i+2], color);
-      View->TriVertexArray->num++;
     }
   }
   else{

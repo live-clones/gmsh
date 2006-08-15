@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.111 2006-08-13 20:46:55 geuzaine Exp $
+// $Id: Geom.cpp,v 1.112 2006-08-15 02:17:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -30,9 +30,8 @@
 extern Context_T CTX;
 extern GModel *GMODEL;
 
-class drawGVertex
-{
-public :
+class drawGVertex {
+ public :
   void operator () (GVertex *v)
   {
     if(!v->getVisibility()) return;
@@ -87,9 +86,8 @@ public :
   }
 };
 
-class drawGEdge
-{
-public :
+class drawGEdge {
+ public :
   void operator () (GEdge *e)
   {
     if(!e->getVisibility() || e->geomType() == GEntity::DiscreteCurve)
@@ -173,9 +171,8 @@ public :
   }
 };
 
-class drawGFace
-{
-private:
+class drawGFace {
+ private:
   void _drawNonPlaneGFace(GFace *f)
   {
     if(CTX.geom.surfaces) {
@@ -354,9 +351,8 @@ public :
 };
 
 
-class drawGRegion
-{
-public :
+class drawGRegion {
+ public :
   void operator () (GRegion *r)
   {
     if(!r->getVisibility() || r->geomType() == GEntity::DiscreteVolume)

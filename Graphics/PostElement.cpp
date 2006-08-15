@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.75 2006-08-07 22:02:30 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.76 2006-08-15 02:17:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -464,7 +464,6 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 	  View->TriVertexArray->add(X[i], Y[i], Z[i], 
 				    norms[3*i], norms[3*i+1], norms[3*i+2], col);
 	}
-	View->TriVertexArray->num++;
       }
       else{
 	if(View->Light) glEnable(GL_LIGHTING);
@@ -509,7 +508,6 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 	    col = PaletteContinuous(View, ValMin, ValMax, Vp[i]);
 	    View->TriVertexArray->add(Xp[i], Yp[i], Zp[i], 
 				      norms[3*i], norms[3*i+1], norms[3*i+2], col);
-	    View->TriVertexArray->num++;	    
 	  }
 	}
 	else{
@@ -563,7 +561,6 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 					norms[3*(i-1)], norms[3*(i-1)+1], norms[3*(i-1)+2], col);
 	      View->TriVertexArray->add(Xp[i], Yp[i], Zp[i],
 					norms[3*i], norms[3*i+1], norms[3*i+2], col);
-	      View->TriVertexArray->num++;
 	    }
 	  }
 	  else{

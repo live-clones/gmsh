@@ -1,5 +1,19 @@
 #include "GModel.h"
 
+GModel::~GModel()
+{ 
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    delete *it;
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    delete *it;
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    delete *it;
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    delete *it;
+
+  delete normals; 
+}
+
 GRegion * GModel::regionByTag(int n) const
 {
   GEntity tmp((GModel*)this, n);
@@ -46,13 +60,13 @@ int GModel::renumberMeshVertices()
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
       (*it)->mesh_vertices[i]->setNum(++numVertices);
-  for(GModel::eiter it = firstEdge(); it != lastEdge(); ++it)
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
       (*it)->mesh_vertices[i]->setNum(++numVertices);
-  for(GModel::fiter it = firstFace(); it != lastFace(); ++it)
+  for(fiter it = firstFace(); it != lastFace(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
       (*it)->mesh_vertices[i]->setNum(++numVertices);
-  for(GModel::riter it = firstRegion(); it != lastRegion(); ++it)
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
       (*it)->mesh_vertices[i]->setNum(++numVertices);
   return numVertices;
