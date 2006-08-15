@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.514 2006-08-15 02:17:25 geuzaine Exp $
+// $Id: GUI.cpp,v 1.515 2006-08-15 05:19:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1352,52 +1352,57 @@ void GUI::create_graphic_window()
   bottom->box(FL_FLAT_BOX);
 
   int x = 2;
+#if defined(WIN32)
+  int sht = sh - 2; // go all the way to the bottom of the window
+#else
+  int sht = sh - 4; // leave a 2 pixel border at the bottom
+#endif
 
-  g_status_butt[0] = new Fl_Button(x, glheight + 2, sw, sh - 4, "X");
+  g_status_butt[0] = new Fl_Button(x, glheight + 2, sw, sht, "X");
   x += sw;
   g_status_butt[0]->callback(status_xyz1p_cb, (void *)"x");
   g_status_butt[0]->tooltip("Set +X or -X view (Alt+x or Alt+Shift+x)");
 
-  g_status_butt[1] = new Fl_Button(x, glheight + 2, sw, sh - 4, "Y");
+  g_status_butt[1] = new Fl_Button(x, glheight + 2, sw, sht, "Y");
   x += sw;
   g_status_butt[1]->callback(status_xyz1p_cb, (void *)"y");
   g_status_butt[1]->tooltip("Set +Y or -Y view (Alt+y or Alt+Shift+y)");
 
-  g_status_butt[2] = new Fl_Button(x, glheight + 2, sw, sh - 4, "Z");
+  g_status_butt[2] = new Fl_Button(x, glheight + 2, sw, sht, "Z");
   x += sw;
   g_status_butt[2]->callback(status_xyz1p_cb, (void *)"z");
   g_status_butt[2]->tooltip("Set +Z or -Z view (Alt+z or Alt+Shift+z)");
 
-  g_status_butt[4] = new Fl_Button(x, glheight + 2, sw, sh - 4);
+  g_status_butt[4] = new Fl_Button(x, glheight + 2, sw, sht);
   x += sw;
   g_status_butt[4]->callback(status_xyz1p_cb, (void *)"r");
   g_status_butt[4]->tooltip("Rotate +90 or -90 degrees");
   rotate_bmp = new Fl_Bitmap(rotate_bits, rotate_width, rotate_height);
   rotate_bmp->label(g_status_butt[4]);
 
-  g_status_butt[3] = new Fl_Button(x, glheight + 2, 2 * fontsize, sh - 4, "1:1");
+  g_status_butt[3] = new Fl_Button(x, glheight + 2, 2 * fontsize, sht, "1:1");
   x += 2 * fontsize;
   g_status_butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
   g_status_butt[3]->tooltip("Set unit scale");
 
-  g_status_butt[8] = new Fl_Button(x, glheight + 2, sw, sh - 4);
+  g_status_butt[8] = new Fl_Button(x, glheight + 2, sw, sht);
   x += sw;
   g_status_butt[8]->callback(status_xyz1p_cb, (void *)"p");
   g_status_butt[8]->tooltip("Toggle projection mode (Alt+o or Alt+Shift+o)");
   ortho_bmp = new Fl_Bitmap(ortho_bits, ortho_width, ortho_height);
   ortho_bmp->label(g_status_butt[8]);
 
-  g_status_butt[9] = new Fl_Button(x, glheight + 2, sw, sh - 4, "S");
+  g_status_butt[9] = new Fl_Button(x, glheight + 2, sw, sht, "S");
   x += sw;
   g_status_butt[9]->callback(status_xyz1p_cb, (void *)"S");
   g_status_butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape)");
 
-  g_status_butt[5] = new Fl_Button(x, glheight + 2, sw, sh - 4, "?");
+  g_status_butt[5] = new Fl_Button(x, glheight + 2, sw, sht, "?");
   x += sw;
   g_status_butt[5]->callback(status_xyz1p_cb, (void *)"?");
   g_status_butt[5]->tooltip("Show current options");
 
-  g_status_butt[6] = new Fl_Button(x, glheight + 2, sw, sh - 4);
+  g_status_butt[6] = new Fl_Button(x, glheight + 2, sw, sht);
   x += sw;
   g_status_butt[6]->callback(status_rewind_cb);
   g_status_butt[6]->tooltip("Rewind animation");
@@ -1405,7 +1410,7 @@ void GUI::create_graphic_window()
   rewind_bmp->label(g_status_butt[6]);
   g_status_butt[6]->deactivate();
 
-  g_status_butt[7] = new Fl_Button(x, glheight + 2, sw, sh - 4);
+  g_status_butt[7] = new Fl_Button(x, glheight + 2, sw, sht);
   x += sw;
   g_status_butt[7]->callback(status_play_cb);
   g_status_butt[7]->tooltip("Play/pause animation");
@@ -1422,9 +1427,9 @@ void GUI::create_graphic_window()
 
   x += 2;
   g_status_label[0] = new Fl_Box(x, glheight + 2, 
-				 (width - x - 2) / 3, sh - 4);
+				 (width - x) / 3 - 1, sht);
   g_status_label[1] = new Fl_Box(x + (width - x) / 3, glheight + 2, 
-				 2 * (width - x - 1) / 3, sh - 4);
+				 width - (width - x) / 3, sht);
   for(int i = 0; i < 2; i++) {
     g_status_label[i]->box(FL_THIN_DOWN_BOX);
     g_status_label[i]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);

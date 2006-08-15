@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.163 2006-08-15 04:15:19 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.164 2006-08-15 05:19:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -236,15 +236,6 @@ class initMeshGFace {
     if(!f->meshRep)
       f->meshRep = new MRepFace(f);
 
-    if(f->meshRep->va_lines) delete f->meshRep->va_lines;
-    f->meshRep->va_lines = new VertexArray(2, f->meshRep->edges.size());
-
-    if(f->meshRep->va_triangles) delete f->meshRep->va_triangles;
-    f->meshRep->va_triangles = new VertexArray(3, f->triangles.size());
-
-    if(f->meshRep->va_quads) delete f->meshRep->va_quads;
-    f->meshRep->va_quads = new VertexArray(4, f->quadrangles.size());
-
     bool useEdges = true;
 
     if(CTX.mesh.explode != 1. || CTX.mesh.quality_sup || CTX.mesh.radius_sup || 
@@ -265,6 +256,15 @@ class initMeshGFace {
     // 1) store the unique vertices in the vertex array and
     //    glDrawElements() instead of glDrawArrays().
     // 2) we can use tc to stripe the triangles to create strips
+
+    if(f->meshRep->va_lines) delete f->meshRep->va_lines;
+    f->meshRep->va_lines = new VertexArray(2, f->meshRep->edges.size());
+
+    if(f->meshRep->va_triangles) delete f->meshRep->va_triangles;
+    f->meshRep->va_triangles = new VertexArray(3, f->triangles.size());
+
+    if(f->meshRep->va_quads) delete f->meshRep->va_quads;
+    f->meshRep->va_quads = new VertexArray(4, f->quadrangles.size());
 
     if(useEdges && CTX.mesh.surfaces_edges){
       std::set<MEdge>::const_iterator it = f->meshRep->edges.begin();
