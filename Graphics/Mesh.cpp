@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.161 2006-08-15 02:17:26 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.162 2006-08-15 03:43:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -27,20 +27,25 @@
 #include "MRep.h"
 #include "OS.h"
 #include "gl2ps.h"
+#include "tc.h"
 
 extern GModel *GMODEL;
 extern Context_T CTX;
-
-#include "tc.h"
 
 static unsigned int getColor(GEntity *e, int forceColor, unsigned int color)
 {
   if(forceColor) return color;
   
-  if(e->getFlag() > 0)
-    return CTX.color.geom.surface_sel;
-  // else if(e->color)
-  //   return e->color;
+  if(e->getFlag() > 0){
+    switch(e->dim()){
+    case 0: return CTX.color.geom.point_sel;
+    case 1: return CTX.color.geom.line_sel;
+    case 2: return CTX.color.geom.surface_sel;
+    default: return CTX.color.geom.volume_sel;
+    }
+  }
+  else if(e->useColor())
+    return e->getColor();
   else if(CTX.mesh.color_carousel == 1)
     return CTX.color.mesh.carousel[abs(e->tag() % 20)];
   else if(CTX.mesh.color_carousel == 2){
@@ -109,8 +114,8 @@ static void drawArrays(VertexArray *va, GLint type, bool useColorArray,
 }
 
 template<class T>
-void drawLabels(GEntity *e, std::vector<T*> elements, int stepLabelsDisplayed,
-		int &numLabelsDisplayed, int forceColor, unsigned int color)
+static void drawLabels(GEntity *e, std::vector<T*> elements, int stepLabelsDisplayed,
+		       int &numLabelsDisplayed, int forceColor, unsigned int color)
 {
   char str[256];
   for(unsigned int i = 0; i < elements.size(); i++){
@@ -139,7 +144,7 @@ void drawLabels(GEntity *e, std::vector<T*> elements, int stepLabelsDisplayed,
 }
 
 template<class T>
-void drawNormals(GEntity *e, std::vector<T*> elements)
+static void drawNormals(GEntity *e, std::vector<T*> elements)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
     SVector3 n = elements[i]->getFace(0).normal();
@@ -156,7 +161,7 @@ void drawNormals(GEntity *e, std::vector<T*> elements)
 class initSmoothNormalsGFace {
  private:
   template<class T>
-  void _addNormals(GFace *f, std::vector<T*> elements)
+  void _addSmoothNormals(GFace *f, std::vector<T*> elements)
   {
     for(unsigned int i = 0; i < elements.size(); i++){
       for(int j = 0; j < elements[i]->getNumFacesRep(); j++){
@@ -179,8 +184,8 @@ class initSmoothNormalsGFace {
  public :
   void operator () (GFace *f)
   {
-    _addNormals(f, f->triangles);
-    _addNormals(f, f->quadrangles);
+    _addSmoothNormals(f, f->triangles);
+    _addSmoothNormals(f, f->quadrangles);
   }
 };
 
@@ -259,7 +264,7 @@ class initMeshGFace {
     //
     // 1) store the unique vertices in the vertex array and
     //    glDrawElements() instead of glDrawArrays().
-    // 2) we can use tc to stripe the triangle to create strips
+    // 2) we can use tc to stripe the triangles to create strips
 
     if(useEdges && CTX.mesh.surfaces_edges){
       std::set<MEdge>::const_iterator it = f->meshRep->edges.begin();
@@ -434,23 +439,3 @@ void Draw_Mesh()
     glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 }
 
-// this routine is only used to display the interactive construction
-// of the 2D aniso mesh
-void draw_triangle_overlay(double r, double g, double b,
-			   double *v1, double *v2, double *v3)
-{
-  SetOpenglContext();
-  InitProjection();
-  InitPosition();
-  glDisable(GL_DEPTH_TEST);
-  glDrawBuffer(GL_FRONT);
-  glColor3f(r, g, b);
-  glBegin(GL_LINE_LOOP);
-  glVertex3dv(v1);
-  glVertex3dv(v2);
-  glVertex3dv(v3);
-  glEnd();
-  glFlush();
-  glDrawBuffer(GL_BACK);
-  glEnable(GL_DEPTH_TEST);
-}

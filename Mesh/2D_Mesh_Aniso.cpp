@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.55 2006-08-05 13:31:28 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.56 2006-08-15 03:43:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -546,14 +546,14 @@ bool draw_simplex2d(Surface * sur, Simplex * s, bool nouv)
   Calcule_Z_Plan(&pv3, &dum);
   Projette_Inverse(&pv3, &dum);
 
-  void draw_triangle_overlay(double, double, double, double*, double*, double*);
+  void Draw_Triangle_Overlay(double, double, double, double*, double*, double*);
   double p1[3] = {pv1->Pos.X, pv1->Pos.Y, pv1->Pos.Z};
   double p2[3] = {pv2->Pos.X, pv2->Pos.Y, pv2->Pos.Z};
   double p3[3] = {pv3->Pos.X, pv3->Pos.Y, pv3->Pos.Z};
   if(nouv)
-    draw_triangle_overlay(1., 0., 0., p1, p2, p3);
+    Draw_Triangle_Overlay(1., 0., 0., p1, p2, p3);
   else
-    draw_triangle_overlay(0., 0., 0., p1, p2, p3);
+    Draw_Triangle_Overlay(0., 0., 0., p1, p2, p3);
 #endif
 
   return true;

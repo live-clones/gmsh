@@ -94,6 +94,8 @@ void Draw_Point(int type, double size, double *x, double *y, double *z,
 		int light);
 void Draw_Line(int type, double width, double *x, double *y, double *z,
 	       int light);
+void Draw_Triangle_Overlay(double r, double g, double b,
+			   double *v1, double *v2, double *v3);
 void Draw_Vector(int Type, int Fill,
 		 double relHeadRadius, double relStemLength, double relStemRadius,
 		 double x, double y, double z, double dx, double dy, double dz,

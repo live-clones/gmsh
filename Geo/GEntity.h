@@ -1,13 +1,13 @@
 #ifndef _GENTITY_H_
 #define _GENTITY_H_
 
+#include <list>
+#include <vector>
+#include <string>
 #include "Range.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
 #include "GmshDefines.h"
-#include <list>
-#include <vector>
-#include <string>
 
 class GModel;
 class GVertex;
@@ -17,16 +17,23 @@ class GRegion;
 class MVertex;
 class MRep;
 
-// A geometric model entity. All enitites are owned by a GModel.
+// A geometric model entity.
 class GEntity {
-
  private:
+  // All entities are owned by a GModel
   GModel *_model;
+  
+  // The tag (the number) of this entity
   int _tag;
+  
+  // The visibility and the general purpose flag
   char _visible, _flag;
   
+  // The color of the entity (ignored if set to transparent blue)
+  unsigned int _color;
+  
  public:
-
+  
   // All known entity types
   enum GeomType {
     Unknown,
@@ -79,7 +86,7 @@ class GEntity {
       return name[type];
   }
 
-  GEntity(GModel *m, int t) : _model(m), _tag(t), _visible(true), _flag(0), meshRep(0) {}
+  GEntity(GModel *m, int t);
 
   virtual ~GEntity();
 
@@ -145,6 +152,15 @@ class GEntity {
 
   // Set the multi-purpose flag
   virtual void setFlag(char val){ _flag = val; }
+
+  // Get the color
+  virtual unsigned int getColor(){ return _color; }
+
+  // Set the color
+  virtual void setColor(unsigned color){ _color = color; }
+
+  // Returns true if we should use this color to represent the entity
+  virtual bool useColor();
 
   // Returns an information string for the entity
   virtual std::string getInfoString();

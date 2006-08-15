@@ -43,6 +43,7 @@ void gmshModel::import()
 	  add(e);
 	}
 	if(!c->Visible) e->setVisibility(0);
+	if(c->Color.type) e->setColor(c->Color.mesh);
       }
     }
     List_Delete(curves);
@@ -58,6 +59,7 @@ void gmshModel::import()
 	add(f);
       }
       if(!s->Visible) f->setVisibility(0);
+      if(s->Color.type) f->setColor(s->Color.mesh);
     }
     List_Delete(surfaces);
   } 
@@ -72,6 +74,7 @@ void gmshModel::import()
 	add(r);
       }
       if(!v->Visible) r->setVisibility(0);
+      if(v->Color.type) r->setColor(v->Color.mesh);
     }
     List_Delete(volumes);
   }

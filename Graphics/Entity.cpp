@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.66 2006-08-07 22:02:30 geuzaine Exp $
+// $Id: Entity.cpp,v 1.67 2006-08-15 03:43:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -136,6 +136,25 @@ void Draw_Line(int type, double width, double *x, double *y, double *z,
     glVertex3d(x[1], y[1], z[1]);
     glEnd();
   }
+}
+
+void Draw_Triangle_Overlay(double r, double g, double b,
+			   double *v1, double *v2, double *v3)
+{
+  SetOpenglContext();
+  InitProjection();
+  InitPosition();
+  glDisable(GL_DEPTH_TEST);
+  glDrawBuffer(GL_FRONT);
+  glColor3f(r, g, b);
+  glBegin(GL_LINE_LOOP);
+  glVertex3dv(v1);
+  glVertex3dv(v2);
+  glVertex3dv(v3);
+  glEnd();
+  glFlush();
+  glDrawBuffer(GL_BACK);
+  glEnable(GL_DEPTH_TEST);
 }
 
 void Draw_SimpleVector(int arrow, int fill,
