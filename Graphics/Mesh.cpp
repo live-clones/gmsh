@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.165 2006-08-15 06:16:43 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.166 2006-08-15 07:27:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -304,7 +304,7 @@ class drawMeshGFace {
     MRep *m = f->meshRep;
 
     if(CTX.mesh.surfaces_edges){
-      if(m->va_lines->n())
+      if(m->va_lines && m->va_lines->n())
 	drawArrays(m->va_lines, GL_LINES, CTX.mesh.color_carousel == 3, 
 		   CTX.mesh.light && CTX.mesh.light_lines, false, 
 		   getColor(f, CTX.mesh.surfaces_faces, CTX.color.mesh.line));
@@ -437,24 +437,25 @@ void Draw_Mesh()
   if(!CTX.threads_lock){
     CTX.threads_lock = 1; 
 
-    int stat = GMODEL->getMeshStatus();
+    int status = GMODEL->getMeshStatus();
 
     if(CTX.mesh.changed) {
-      if(stat > 1 && CTX.mesh.smooth_normals){
-	if(GMODEL->normals) delete GMODEL->normals;
-	GMODEL->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
-	std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), initSmoothNormalsGFace());
-      }
-      if(stat > 1)
+      if(status > 1){
+	if(CTX.mesh.smooth_normals){
+	  if(GMODEL->normals) delete GMODEL->normals;
+	  GMODEL->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
+	  std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), initSmoothNormalsGFace());
+	}
 	std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), initMeshGFace());
-      if(stat > 2)
+      }
+      if(status > 2)
 	std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), initMeshGRegion());
     }
     
-    if(stat > 1 && (CTX.mesh.surfaces_faces || CTX.mesh.surfaces_edges))
+    if(status > 1 && (CTX.mesh.surfaces_faces || CTX.mesh.surfaces_edges))
       std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), drawMeshGFace());
     
-    if(stat > 2 && (CTX.mesh.volumes_faces || CTX.mesh.volumes_edges))
+    if(status > 2 && (CTX.mesh.volumes_faces || CTX.mesh.volumes_edges))
       std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), drawMeshGRegion());
 
     CTX.mesh.changed = 0;
