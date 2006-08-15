@@ -100,6 +100,8 @@ void Draw_Vector(int Type, int Fill,
 		 double relHeadRadius, double relStemLength, double relStemRadius,
 		 double x, double y, double z, double dx, double dy, double dz,
 		 int light);
+void Draw_Box(double xmin, double ymin, double zmin,
+	      double xmax, double ymax, double zmax);
 void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
 			     double xmax, double ymax, double zmax,
 			     double a, double b, double c, double d, int shade=0);

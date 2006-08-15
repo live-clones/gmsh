@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.67 2006-08-15 03:43:38 geuzaine Exp $
+// $Id: Entity.cpp,v 1.68 2006-08-15 04:15:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -453,6 +453,33 @@ public:
 	    return point();
     };
 };
+
+void Draw_Box(double xmin, double ymin, double zmin,
+	      double xmax, double ymax, double zmax)
+{
+  glBegin(GL_LINE_LOOP);
+  glVertex3d(xmin, ymin, zmin);
+  glVertex3d(xmax, ymin, zmin);
+  glVertex3d(xmax, ymax, zmin);
+  glVertex3d(xmin, ymax, zmin);
+  glEnd();
+  glBegin(GL_LINE_LOOP);
+  glVertex3d(xmin, ymin, zmax);
+  glVertex3d(xmax, ymin, zmax);
+  glVertex3d(xmax, ymax, zmax);
+  glVertex3d(xmin, ymax, zmax);
+  glEnd();
+  glBegin(GL_LINES);
+  glVertex3d(xmin, ymin, zmin);
+  glVertex3d(xmin, ymin, zmax);
+  glVertex3d(xmax, ymin, zmin);
+  glVertex3d(xmax, ymin, zmax);
+  glVertex3d(xmax, ymax, zmin);
+  glVertex3d(xmax, ymax, zmax);
+  glVertex3d(xmin, ymax, zmin);
+  glVertex3d(xmin, ymax, zmax);
+  glEnd();
+}
 
 void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
 			     double xmax, double ymax, double zmax,

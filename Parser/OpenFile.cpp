@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.110 2006-08-12 21:31:24 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.111 2006-08-15 04:15:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -327,6 +327,7 @@ int MergeProblem(char *name, int warn_if_missing)
   }
 
   SetBoundingBox();
+  CTX.mesh.changed = 1;
   Msg(STATUS2, "Read '%s'", name);
   fclose(fp);
   return status;

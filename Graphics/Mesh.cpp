@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.162 2006-08-15 03:43:38 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.163 2006-08-15 04:15:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -339,6 +339,28 @@ class drawMeshGFace {
     if(CTX.mesh.normals) {
       drawNormals(f, f->triangles);
       drawNormals(f, f->quadrangles);
+    }
+
+    if(CTX.mesh.points_per_element){
+      // TODO
+    }
+
+    if(CTX.mesh.dual) {
+      /* TODO
+      glColor4ubv((GLubyte *) & CTX.color.fg);
+      glEnable(GL_LINE_STIPPLE);
+      glLineStipple(1, 0x0F0F);
+      gl2psEnable(GL2PS_LINE_STIPPLE);
+      glBegin(GL_LINES);
+      for(int i = 0; i < 3; i++) {
+	int j = i ? (i - 1) : 2;
+	glVertex3d(Xc, Yc, Zc);
+	glVertex3d((X[i] + X[j]) / 2., (Y[i] + Y[j]) / 2., (Z[i] + Z[j]) / 2.);
+      }
+      glEnd();
+      glDisable(GL_LINE_STIPPLE);
+      gl2psDisable(GL2PS_LINE_STIPPLE);
+      */
     }
 
     if(CTX.render_mode == GMSH_SELECT) {

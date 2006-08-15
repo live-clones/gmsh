@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.112 2006-08-15 02:17:25 geuzaine Exp $
+// $Id: Geom.cpp,v 1.113 2006-08-15 04:15:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -419,6 +419,60 @@ void Draw_Geom()
 
   for(int i = 0; i < 6; i++)
     glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+
+  bool geometryExists = 
+    GMODEL->numVertex() || GMODEL->numEdge() || GMODEL->numFace() || GMODEL->numRegion();
+
+  if(geometryExists && (CTX.draw_bbox || !CTX.mesh.draw)) {
+    glColor4ubv((GLubyte *) & CTX.color.fg);
+    glLineWidth(CTX.line_width);
+    gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
+    
+    Draw_Box(CTX.min[0], CTX.min[1], CTX.min[2], 
+	     CTX.max[0], CTX.max[1], CTX.max[2]);
+    
+    char label[256];
+    double offset = 0.3 * CTX.gl_fontsize * CTX.pixel_equiv_x;
+    glRasterPos3d(CTX.min[0] + offset / CTX.s[0], 
+		  CTX.min[1] + offset / CTX.s[0], 
+		  CTX.min[2] + offset / CTX.s[0]);
+    sprintf(label, "(%g,%g,%g)", CTX.min[0], CTX.min[1], CTX.min[2]);
+    Draw_String(label);
+    glRasterPos3d(CTX.max[0] + offset / CTX.s[0], 
+		  CTX.max[1] + offset / CTX.s[0], 
+		  CTX.max[2] + offset / CTX.s[0]);
+    sprintf(label, "(%g,%g,%g)", CTX.max[0], CTX.max[1], CTX.max[2]);
+    Draw_String(label);
+
+    glColor3d(1.,0.,0.);
+    for(int i = 0; i < 6; i++)
+      if(CTX.clip[i] & 1 || CTX.clip[i] & 2)
+	Draw_PlaneInBoundingBox(CTX.min[0], CTX.min[1], CTX.min[2],
+				CTX.max[0], CTX.max[1], CTX.max[2],
+				CTX.clip_plane[i][0], CTX.clip_plane[i][1], 
+				CTX.clip_plane[i][2], CTX.clip_plane[i][3]);
+    if(CTX.mesh.use_cut_plane)
+      Draw_PlaneInBoundingBox(CTX.min[0], CTX.min[1], CTX.min[2],
+			      CTX.max[0], CTX.max[1], CTX.max[2],
+			      CTX.mesh.cut_planea, CTX.mesh.cut_planeb, 
+			      CTX.mesh.cut_planec, CTX.mesh.cut_planed);
+  }
+  
+  if(CTX.axes){
+    glColor4ubv((GLubyte *) & CTX.color.axes);
+    glLineWidth(CTX.line_width);
+    gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
+    if(!CTX.axes_auto_position){
+      Draw_Axes(CTX.axes, CTX.axes_tics, CTX.axes_format, CTX.axes_label, 
+		CTX.axes_position);
+    }
+    else if(geometryExists){
+      double bb[6] = {CTX.min[0], CTX.max[0],
+		      CTX.min[1], CTX.max[1],
+		      CTX.min[2], CTX.max[2]};
+      Draw_Axes(CTX.axes, CTX.axes_tics, CTX.axes_format, CTX.axes_label, bb);
+    }
+  }
 }
 
 void HighlightEntity(GEntity *e, int permanent)
