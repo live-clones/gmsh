@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.108 2006-08-15 02:17:26 geuzaine Exp $
+// $Id: Post.cpp,v 1.109 2006-08-15 21:22:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -478,47 +478,16 @@ void Draw_Post(void)
   if(!CTX.post.list)
     return;
 
-  if(CTX.draw_bbox || !CTX.post.draw) {  // draw only the bbox of the visible views
+  if(CTX.draw_bbox || !CTX.post.draw) {
     for(int iView = 0; iView < List_Nbr(CTX.post.list); iView++) {
       v = *(Post_View **) List_Pointer(CTX.post.list, iView);
+      // draw only the bbox of visible 3D views
       if(v->Visible && v->Type == DRAW_POST_3D) {
         glColor4ubv((GLubyte *) & CTX.color.fg);
 	glLineWidth(CTX.line_width);
-        glBegin(GL_LINE_LOOP);
-        glVertex3d(v->BBox[0], v->BBox[2], v->BBox[4]);
-        glVertex3d(v->BBox[1], v->BBox[2], v->BBox[4]);
-        glVertex3d(v->BBox[1], v->BBox[3], v->BBox[4]);
-        glVertex3d(v->BBox[0], v->BBox[3], v->BBox[4]);
-        glEnd();
-        glBegin(GL_LINE_LOOP);
-        glVertex3d(v->BBox[0], v->BBox[2], v->BBox[5]);
-        glVertex3d(v->BBox[1], v->BBox[2], v->BBox[5]);
-        glVertex3d(v->BBox[1], v->BBox[3], v->BBox[5]);
-        glVertex3d(v->BBox[0], v->BBox[3], v->BBox[5]);
-        glEnd();
-        glBegin(GL_LINES);
-        glVertex3d(v->BBox[0], v->BBox[2], v->BBox[4]);
-        glVertex3d(v->BBox[0], v->BBox[2], v->BBox[5]);
-        glVertex3d(v->BBox[1], v->BBox[2], v->BBox[4]);
-        glVertex3d(v->BBox[1], v->BBox[2], v->BBox[5]);
-        glVertex3d(v->BBox[1], v->BBox[3], v->BBox[4]);
-        glVertex3d(v->BBox[1], v->BBox[3], v->BBox[5]);
-        glVertex3d(v->BBox[0], v->BBox[3], v->BBox[4]);
-        glVertex3d(v->BBox[0], v->BBox[3], v->BBox[5]);
-        glEnd();
-	char label[256];
-	double offset = 0.5 * CTX.gl_fontsize * CTX.pixel_equiv_x;
-	glRasterPos3d(v->BBox[0] + offset / CTX.s[0], 
-		      v->BBox[2] + offset / CTX.s[0], 
-		      v->BBox[4] + offset / CTX.s[0]);
-	sprintf(label, "(%g,%g,%g)", v->BBox[0], v->BBox[2], v->BBox[4]);
-	Draw_String(label);
-	glRasterPos3d(v->BBox[1] + offset / CTX.s[0], 
-		      v->BBox[3] + offset / CTX.s[0], 
-		      v->BBox[5] + offset / CTX.s[0]);
-	sprintf(label, "(%g,%g,%g)", v->BBox[1], v->BBox[3], v->BBox[5]);
-	Draw_String(label);
-
+	gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
+	Draw_Box(v->BBox[0], v->BBox[2], v->BBox[4],
+		 v->BBox[1], v->BBox[3], v->BBox[5]);
 	glColor3d(1.,0.,0.);
 	for(int i = 0; i < 6; i++)
 	  if(CTX.clip[i] & (1<<(2+iView)))

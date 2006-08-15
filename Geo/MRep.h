@@ -96,9 +96,9 @@ class MRepRegion : public MRep {
     for(unsigned int i = 0; i < _r->prisms.size(); i++)
       for(int j = 0; j < _r->prisms[i]->getNumEdgesRep(); j++)
 	edges.insert(_r->prisms[i]->getEdgeRep(j));
-    for(unsigned int i = 0; i < _r->hexahedra.size(); i++)
-      for(int j = 0; j < _r->hexahedra[i]->getNumEdgesRep(); j++)
-	edges.insert(_r->hexahedra[i]->getEdgeRep(j));
+    for(unsigned int i = 0; i < _r->pyramids.size(); i++)
+      for(int j = 0; j < _r->pyramids[i]->getNumEdgesRep(); j++)
+	edges.insert(_r->pyramids[i]->getEdgeRep(j));
     Msg(DEBUG, "%d edges in volume %d", (int)edges.size(), _r->tag());
   }
 };

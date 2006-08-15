@@ -42,6 +42,21 @@ class MFace {
 		  _v[2]->x(), _v[2]->y(), _v[2]->z(), n);
     return SVector3(n[0], n[1], n[2]);
   }
+  SPoint3 barycenter()
+  {
+    SPoint3 p(0., 0., 0.);
+    int n = getNumVertices();
+    for(int i = 0; i < n; i++) {
+      MVertex *v = getVertex(i);
+      p[0] += v->x();
+      p[1] += v->y();
+      p[2] += v->z();
+    }
+    p[0] /= (double)n;
+    p[1] /= (double)n;
+    p[2] /= (double)n;
+    return p;
+  }
 };
 
 #endif

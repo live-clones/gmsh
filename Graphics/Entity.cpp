@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.68 2006-08-15 04:15:19 geuzaine Exp $
+// $Id: Entity.cpp,v 1.69 2006-08-15 21:22:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -455,7 +455,8 @@ public:
 };
 
 void Draw_Box(double xmin, double ymin, double zmin,
-	      double xmax, double ymax, double zmax)
+	      double xmax, double ymax, double zmax,
+	      bool labels)
 {
   glBegin(GL_LINE_LOOP);
   glVertex3d(xmin, ymin, zmin);
@@ -479,6 +480,20 @@ void Draw_Box(double xmin, double ymin, double zmin,
   glVertex3d(xmin, ymax, zmin);
   glVertex3d(xmin, ymax, zmax);
   glEnd();
+  if(labels){
+    char label[256];
+    double offset = 0.3 * CTX.gl_fontsize * CTX.pixel_equiv_x;
+    glRasterPos3d(xmin + offset / CTX.s[0], 
+		  ymin + offset / CTX.s[1], 
+		  zmin + offset / CTX.s[2]);
+    sprintf(label, "(%g,%g,%g)", xmin, ymin, zmin);
+    Draw_String(label);
+    glRasterPos3d(xmax + offset / CTX.s[0], 
+		  ymax + offset / CTX.s[1], 
+		  zmax + offset / CTX.s[2]);
+    sprintf(label, "(%g,%g,%g)", xmax, ymax, zmax);
+    Draw_String(label);
+  }
 }
 
 void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,

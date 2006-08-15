@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.166 2006-08-15 07:27:16 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.167 2006-08-15 21:22:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -31,6 +31,8 @@
 
 extern GModel *GMODEL;
 extern Context_T CTX;
+
+// General helper routines
 
 static unsigned int getColor(GEntity *e, int forceColor, unsigned int color)
 {
@@ -74,6 +76,224 @@ static double intersectCutPlane(MElement *e, int *edges=0, int *faces=0)
   return val;
 }
 
+static int getLabelStep(int total)
+{
+  int step;
+  if(CTX.mesh.label_frequency == 0.0) 
+    step = total;
+  else 
+    step = (int)(100.0 / CTX.mesh.label_frequency);
+  return (step > total) ? total : step;
+}
+
+template<class T>
+static void drawLabels(GEntity *e, std::vector<T*> &elements, int labelStep,
+		       int &labelNum, int forceColor, unsigned int color)
+{
+  unsigned col = getColor(e, forceColor, color);
+  glColor4ubv((GLubyte *) & col);
+  for(unsigned int i = 0; i < elements.size(); i++){
+    MElement *ele = elements[i];
+    labelNum++;
+    if(labelNum % labelStep == 0) {
+      SPoint3 pc = ele->barycenter();
+      char str[256];
+      if(CTX.mesh.label_type == 4)
+	sprintf(str, "(%g,%g,%g)", pc.x(), pc.y(), pc.z());
+      else if(CTX.mesh.label_type == 3)
+	sprintf(str, "%d", ele->getPartition());
+      else if(CTX.mesh.label_type == 2){
+	int np = e->physicals.size();
+	int p = np ? e->physicals[np - 1] : 0;
+	sprintf(str, "%d", p);
+      }
+      else if(CTX.mesh.label_type == 1)
+	sprintf(str, "%d", e->tag());
+      else
+	sprintf(str, "%d", ele->getNum());
+      if(e->dim() == 1){
+	double offset = 0.3 * (CTX.mesh.line_width + CTX.gl_fontsize) * CTX.pixel_equiv_x;
+	glRasterPos3d(pc.x() + offset / CTX.s[0], 
+		      pc.y() + offset / CTX.s[1], 
+		      pc.z() + offset / CTX.s[2]);
+      }
+      else
+	glRasterPos3d(pc.x(), pc.y(), pc.z());
+      Draw_String(str);
+    }
+  }
+}
+
+template<class T>
+static void drawNormals(std::vector<T*> &elements)
+{
+  glColor4ubv((GLubyte *) & CTX.color.mesh.normals);
+  for(unsigned int i = 0; i < elements.size(); i++){
+    SVector3 n = elements[i]->getFace(0).normal();
+    for(int j = 0; j < 3; j++)
+      n[j] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[j];
+    SPoint3 pc = elements[i]->barycenter();
+    Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
+		pc.x(), pc.y(), pc.z(), n[0], n[1], n[2], CTX.mesh.light);
+  }
+}
+
+static void drawVertices(GEntity *e)
+{
+  glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);
+
+  if(CTX.mesh.points) {
+    if(CTX.mesh.point_type) {
+      for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
+	MVertex *v = e->mesh_vertices[i];
+	Draw_Sphere(CTX.mesh.point_size, v->x(), v->y(), v->z(), CTX.mesh.light);
+      }
+    }
+    else{
+      glBegin(GL_POINTS);
+      for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
+	MVertex *v = e->mesh_vertices[i];
+	glVertex3d(v->x(), v->y(), v->z());
+      }
+      glEnd();
+    }
+  }
+
+  int np = e->physicals.size();
+  int physical = np ? e->physicals[np - 1] : 0;
+  const int labelStep = getLabelStep(e->mesh_vertices.size());
+  int labelNum = 0;
+  if(CTX.mesh.points_num) {
+    for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
+      MVertex *v = e->mesh_vertices[i];
+      labelNum++;
+      if(labelNum % labelStep == 0) {
+	char str[256];
+	if(CTX.mesh.label_type == 4)
+	  sprintf(str, "(%g,%g,%g)", v->x(), v->y(), v->z());
+	else if(CTX.mesh.label_type == 3)
+	  sprintf(str, "NA");
+	else if(CTX.mesh.label_type == 2)
+	  sprintf(str, "%d", physical);
+	else if(CTX.mesh.label_type == 1)
+	  sprintf(str, "%d", e->tag());
+	else
+	  sprintf(str, "%d", v->getNum());
+	double offset = 0.3 * (CTX.mesh.point_size + CTX.gl_fontsize) * CTX.pixel_equiv_x;
+	glRasterPos3d(v->x() + offset / CTX.s[0],
+		      v->y() + offset / CTX.s[1],
+		      v->z() + offset / CTX.s[2]);
+	Draw_String(str);
+      }
+    }
+  }
+}
+
+template<class T>
+static void drawBarycentricDual(std::vector<T*> &elements)
+{
+  glColor4ubv((GLubyte *) & CTX.color.fg);
+  glEnable(GL_LINE_STIPPLE);
+  glLineStipple(1, 0x0F0F);
+  gl2psEnable(GL2PS_LINE_STIPPLE);
+  glBegin(GL_LINES);
+  for(unsigned int i = 0; i < elements.size(); i++){
+    MElement *ele = elements[i];
+    SPoint3 pc = ele->barycenter();
+    if(ele->getDim() == 2){
+      for(int j = 0; j < ele->getNumEdges(); j++){
+	MEdge e = ele->getEdge(j);
+	SPoint3 p = e.barycenter();
+	glVertex3d(pc.x(), pc.y(), pc.z());
+	glVertex3d(p.x(), p.y(), p.z());
+      }
+    }
+    else if(ele->getDim() == 3){
+      for(int j = 0; j < ele->getNumFaces(); j++){
+	MFace f = ele->getFace(j);
+	SPoint3 p = f.barycenter();
+	glVertex3d(pc.x(), pc.y(), pc.z());
+	glVertex3d(p.x(), p.y(), p.z());
+	for(int k = 0; k < f.getNumVertices(); k++){
+	  MEdge e(f.getVertex(k), (k == f.getNumVertices() - 1) ? 
+		  f.getVertex(0) : f.getVertex(k + 1), ele);
+	  SPoint3 pe = e.barycenter();
+	  glVertex3d(p.x(), p.y(), p.z());
+	  glVertex3d(pe.x(), pe.y(), pe.z());
+	}
+      }
+    }
+  }
+  glEnd();
+  glDisable(GL_LINE_STIPPLE);
+  gl2psDisable(GL2PS_LINE_STIPPLE);
+}
+
+// Routines for filling and drawing the vertex arrays
+
+template<class T>
+static void addInArrays(GEntity *e, VertexArray *va, std::vector<T*> &elements)
+{
+  for(unsigned int i = 0; i < elements.size(); i++){
+    MElement *ele = elements[i];
+    int part = ele->getPartition();
+    if(CTX.mesh.quality_sup) {
+      double q;
+      if(CTX.mesh.quality_type == 2)
+	q = ele->rhoShapeMeasure();
+      else if(CTX.mesh.quality_type == 1)
+	q = ele->etaShapeMeasure();
+      else
+	q = ele->gammaShapeMeasure();
+      if(q < CTX.mesh.quality_inf || q > CTX.mesh.quality_sup) continue;
+    }
+    if(CTX.mesh.radius_sup) {
+      double r = ele->maxEdge();
+      if(r < CTX.mesh.radius_inf || r > CTX.mesh.radius_sup) continue;
+    }
+    if(CTX.mesh.use_cut_plane && !CTX.mesh.cut_plane_only_volume){
+      if(intersectCutPlane(ele) < 0) continue;
+    }
+    if(ele->getNumFacesRep()){
+      for(int j = 0; j < ele->getNumFacesRep(); j++){
+	MFace fr = ele->getFaceRep(j);
+	SVector3 n = fr.normal();
+	SPoint3 pc;
+	if(CTX.mesh.explode != 1.) pc = ele->barycenter();
+	for(int k = 0; k < fr.getNumVertices(); k++){
+	  MVertex *v = fr.getVertex(k);
+	  SPoint3 p(v->x(), v->y(), v->z());
+	  if(CTX.mesh.explode != 1.){
+	    for(int l = 0; l < 3; l++)
+	      p[l] = pc[l] + CTX.mesh.explode * (p[l] - pc[l]);
+	  }
+	  if(CTX.mesh.smooth_normals)
+	    e->model()->normals->get(p[0], p[1], p[2], n[0], n[1], n[2]);
+	  va->add(p[0], p[1], p[2], n[0], n[1], n[2],
+		  CTX.color.mesh.carousel[abs(part % 20)]);
+	}
+      }
+    }
+    else{
+      for(int j = 0; j < ele->getNumEdgesRep(); j++){
+	MEdge er = ele->getEdgeRep(j);
+	SPoint3 pc;
+	if(CTX.mesh.explode != 1.) pc = ele->barycenter();
+	for(int k = 0; k < er.getNumVertices(); k++){
+	  MVertex *v = er.getVertex(k);
+	  SPoint3 p(v->x(), v->y(), v->z());
+	  if(CTX.mesh.explode != 1.){
+	    for(int l = 0; l < 3; l++)
+	      p[l] = pc[l] + CTX.mesh.explode * (p[l] - pc[l]);
+	  }
+	  va->add(p[0], p[1], p[2], CTX.color.mesh.carousel[abs(part % 20)]);
+	}
+      }
+    }
+  }
+}
+
 static void drawArrays(VertexArray *va, GLint type, bool useColorArray, 
 		       bool useNormalArray, bool usePolygonOffset,
 		       unsigned int uniformColor, bool drawOutline=false)
@@ -115,62 +335,102 @@ static void drawArrays(VertexArray *va, GLint type, bool useColorArray,
   glDisableClientState(GL_NORMAL_ARRAY);
 }
 
-template<class T>
-static void drawLabels(GEntity *e, std::vector<T*> elements, int stepLabelsDisplayed,
-		       int &numLabelsDisplayed, int forceColor, unsigned int color)
-{
-  char str[256];
-  for(unsigned int i = 0; i < elements.size(); i++){
-    numLabelsDisplayed++;
-    if(numLabelsDisplayed % stepLabelsDisplayed == 0) {
-      unsigned col = getColor(e, forceColor, color);
-      glColor4ubv((GLubyte *) & col);
-      SPoint3 pc = elements[i]->barycenter();
-      if(CTX.mesh.label_type == 4)
-	sprintf(str, "(%g,%g,%g)", pc.x(), pc.y(), pc.z());
-      else if(CTX.mesh.label_type == 3)
-	sprintf(str, "%d", elements[i]->getPartition());
-      else if(CTX.mesh.label_type == 2){
-	int np = e->physicals.size();
-	int p = np ? e->physicals[np - 1] : 0;
-	sprintf(str, "%d", p);
-      }
-      else if(CTX.mesh.label_type == 1)
-	sprintf(str, "%d", e->tag());
-      else
-	sprintf(str, "%d", elements[i]->getNum());
-      glRasterPos3d(pc.x(), pc.y(), pc.z());
-      Draw_String(str);
+// GVertex drawing routines
+
+class drawMeshGVertex {
+ public:
+  void operator () (GVertex *v)
+  {  
+    if(!v->getVisibility())
+      return;
+    
+    if(CTX.render_mode == GMSH_SELECT) {
+      glPushName(0);
+      glPushName(v->tag());
+    }
+
+    if(CTX.mesh.points || CTX.mesh.points_num)
+      drawVertices(v);
+
+    if(CTX.render_mode == GMSH_SELECT) {
+      glPopName();
+      glPopName();
     }
   }
-}
+};
 
-template<class T>
-static void drawNormals(GEntity *e, std::vector<T*> elements)
-{
-  for(unsigned int i = 0; i < elements.size(); i++){
-    SVector3 n = elements[i]->getFace(0).normal();
-    for(int j = 0; j < 3; j++)
-      n[j] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[j];
-    SPoint3 pc = elements[i]->barycenter();
-    glColor4ubv((GLubyte *) & CTX.color.mesh.normals);
-    Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
-		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-		pc.x(), pc.y(), pc.z(), n[0], n[1], n[2], CTX.mesh.light);
+// GEdge drawing routines
+
+class initMeshGEdge {
+ public :
+  void operator () (GEdge *e)
+  {
+    if(!e->getVisibility())
+      return;
+
+    if(!e->meshRep)
+      e->meshRep = new MRepEdge(e);
+
+    if(CTX.mesh.lines){
+      if(e->meshRep->va_lines) delete e->meshRep->va_lines;
+      e->meshRep->va_lines = new VertexArray(2, e->lines.size());
+      addInArrays(e, e->meshRep->va_lines, e->lines);
+    }
   }
-}
+};
+
+class drawMeshGEdge {
+ public:
+  void operator () (GEdge *e)
+  {  
+    if(!e->getVisibility())
+      return;
+    
+    if(CTX.render_mode == GMSH_SELECT) {
+      glPushName(1);
+      glPushName(e->tag());
+    }
+
+    MRep *m = e->meshRep;
+
+    if(CTX.mesh.lines)
+      drawArrays(m->va_lines, GL_LINES, CTX.mesh.color_carousel == 3, 
+		 false, false,  getColor(e, false, CTX.color.mesh.line));
+
+    if(CTX.mesh.lines_num) {
+      const int labelStep = getLabelStep(e->lines.size());
+      int labelNum = 0;
+      drawLabels(e, e->lines, labelStep, labelNum, false, CTX.color.mesh.line);
+    }
+
+    if(CTX.mesh.points || CTX.mesh.points_num)
+      drawVertices(e);
+
+    if(CTX.mesh.tangents){
+      // TODO
+    }
+
+    if(CTX.render_mode == GMSH_SELECT) {
+      glPopName();
+      glPopName();
+    }
+  }
+};
+
+// GFace drawing routines
 
 class initSmoothNormalsGFace {
  private:
   template<class T>
-  void _addSmoothNormals(GFace *f, std::vector<T*> elements)
+  void _addSmoothNormals(GFace *f, std::vector<T*> &elements)
   {
     for(unsigned int i = 0; i < elements.size(); i++){
-      for(int j = 0; j < elements[i]->getNumFacesRep(); j++){
-	MFace fr = elements[i]->getFaceRep(j);
+      MElement *ele = elements[i];
+      for(int j = 0; j < ele->getNumFacesRep(); j++){
+	MFace fr = ele->getFaceRep(j);
 	SVector3 n = fr.normal();
 	SPoint3 pc;
-	if(CTX.mesh.explode != 1.) pc = elements[i]->barycenter();
+	if(CTX.mesh.explode != 1.) pc = ele->barycenter();
 	for(int k = 0; k < fr.getNumVertices(); k++){
 	  MVertex *v = fr.getVertex(k);
 	  SPoint3 p(v->x(), v->y(), v->z());
@@ -192,43 +452,6 @@ class initSmoothNormalsGFace {
 };
 
 class initMeshGFace {
- private:
-  template<class T>
-  void _addInArray(GFace *f, VertexArray *va, std::vector<T*> elements)
-  {
-    for(unsigned int i = 0; i < elements.size(); i++){
-      int part = elements[i]->getPartition();
-      if(CTX.mesh.quality_sup && CTX.mesh.quality_type == 2) {
-	double q = elements[i]->rhoShapeMeasure();
-	if(q < CTX.mesh.quality_inf || q > CTX.mesh.quality_sup) continue;
-      }
-      if(CTX.mesh.radius_sup) {
-	double r = elements[i]->maxEdge();
-	if(r < CTX.mesh.radius_inf || r > CTX.mesh.radius_sup) continue;
-      }
-      if(CTX.mesh.use_cut_plane && !CTX.mesh.cut_plane_only_volume){
-	if(intersectCutPlane(elements[i]) < 0) continue;
-      }
-      for(int j = 0; j < elements[i]->getNumFacesRep(); j++){
-	MFace fr = elements[i]->getFaceRep(j);
-	SVector3 n = fr.normal();
-	SPoint3 pc;
-	if(CTX.mesh.explode != 1.) pc = elements[i]->barycenter();
-	for(int k = 0; k < fr.getNumVertices(); k++){
-	  MVertex *v = fr.getVertex(k);
-	  SPoint3 p(v->x(), v->y(), v->z());
-	  if(CTX.mesh.explode != 1.){
-	    for(int l = 0; l < 3; l++)
-	      p[l] = pc[l] + CTX.mesh.explode * (p[l] - pc[l]);
-	  }
-	  if(CTX.mesh.smooth_normals)
-	    f->model()->normals->get(p[0], p[1], p[2], n[0], n[1], n[2]);
-	  va->add(p[0], p[1], p[2], n[0], n[1], n[2],
-		  CTX.color.mesh.carousel[abs(part % 20)]);
-	}
-      }
-    }
-  }
  public :
   void operator () (GFace *f)
   {
@@ -280,11 +503,11 @@ class initMeshGFace {
     if(CTX.mesh.surfaces_faces || (!useEdges && CTX.mesh.surfaces_edges)){
       if(f->meshRep->va_triangles) delete f->meshRep->va_triangles;
       f->meshRep->va_triangles = new VertexArray(3, f->triangles.size());
-      _addInArray(f, f->meshRep->va_triangles, f->triangles);
+      addInArrays(f, f->meshRep->va_triangles, f->triangles);
 
       if(f->meshRep->va_quads) delete f->meshRep->va_quads;
       f->meshRep->va_quads = new VertexArray(4, f->quadrangles.size());
-      _addInArray(f, f->meshRep->va_quads, f->quadrangles);
+      addInArrays(f, f->meshRep->va_quads, f->quadrangles);
     }
   }
 };
@@ -304,63 +527,50 @@ class drawMeshGFace {
     MRep *m = f->meshRep;
 
     if(CTX.mesh.surfaces_edges){
-      if(m->va_lines && m->va_lines->n())
+      if(m->va_lines && m->va_lines->n()){
 	drawArrays(m->va_lines, GL_LINES, CTX.mesh.color_carousel == 3, 
 		   CTX.mesh.light && CTX.mesh.light_lines, false, 
 		   getColor(f, CTX.mesh.surfaces_faces, CTX.color.mesh.line));
-      else
+      }
+      else{
 	drawArrays(m->va_triangles, GL_TRIANGLES, CTX.mesh.color_carousel == 3, 
 		   CTX.mesh.light && CTX.mesh.light_lines, false, 
 		   getColor(f, CTX.mesh.surfaces_faces, CTX.color.mesh.line), true);
+	drawArrays(m->va_quads, GL_QUADS, CTX.mesh.color_carousel == 3, 
+		   CTX.mesh.light && CTX.mesh.light_lines, false, 
+		   getColor(f, CTX.mesh.surfaces_faces, CTX.color.mesh.line), true);
+      }
     }
     
     if(CTX.mesh.surfaces_faces){
       drawArrays(m->va_triangles, GL_TRIANGLES, CTX.mesh.color_carousel == 3, 
 		 CTX.mesh.light, CTX.polygon_offset, 
 		 getColor(f, 0, CTX.color.mesh.triangle));
-      drawArrays(m->va_quads, GL_TRIANGLES, CTX.mesh.color_carousel == 3, 
+      drawArrays(m->va_quads, GL_QUADS, CTX.mesh.color_carousel == 3, 
 		 CTX.mesh.light, CTX.polygon_offset, 
 		 getColor(f, 0, CTX.color.mesh.quadrangle));
     }
 
     if(CTX.mesh.surfaces_num) {
-      int numLabels = f->triangles.size() + f->quadrangles.size();
-      int numLabelsDisplayed = 0;
-      int stepLabelsDisplayed;
-      if(CTX.mesh.label_frequency == 0.0) stepLabelsDisplayed = numLabels;
-      else stepLabelsDisplayed = (int)(100.0 / CTX.mesh.label_frequency);
-      if(stepLabelsDisplayed > numLabels) stepLabelsDisplayed = numLabels;
-      drawLabels(f, f->triangles, stepLabelsDisplayed, numLabelsDisplayed,
+      const int labelStep = getLabelStep(f->triangles.size() + f->quadrangles.size());
+      int labelNum = 0;
+      drawLabels(f, f->triangles, labelStep, labelNum,
 		 CTX.mesh.surfaces_faces, CTX.color.mesh.line);
-      drawLabels(f, f->quadrangles, stepLabelsDisplayed, numLabelsDisplayed,
+      drawLabels(f, f->quadrangles, labelStep, labelNum,
 		 CTX.mesh.surfaces_faces, CTX.color.mesh.line);
     }
+
+    if(CTX.mesh.points || CTX.mesh.points_num)
+      drawVertices(f);
 
     if(CTX.mesh.normals) {
-      drawNormals(f, f->triangles);
-      drawNormals(f, f->quadrangles);
-    }
-
-    if(CTX.mesh.points_per_element){
-      // TODO
+      drawNormals(f->triangles);
+      drawNormals(f->quadrangles);
     }
 
     if(CTX.mesh.dual) {
-      /* TODO
-      glColor4ubv((GLubyte *) & CTX.color.fg);
-      glEnable(GL_LINE_STIPPLE);
-      glLineStipple(1, 0x0F0F);
-      gl2psEnable(GL2PS_LINE_STIPPLE);
-      glBegin(GL_LINES);
-      for(int i = 0; i < 3; i++) {
-	int j = i ? (i - 1) : 2;
-	glVertex3d(Xc, Yc, Zc);
-	glVertex3d((X[i] + X[j]) / 2., (Y[i] + Y[j]) / 2., (Z[i] + Z[j]) / 2.);
-      }
-      glEnd();
-      glDisable(GL_LINE_STIPPLE);
-      gl2psDisable(GL2PS_LINE_STIPPLE);
-      */
+      drawBarycentricDual(f->triangles);
+      drawBarycentricDual(f->quadrangles);
     }
 
     if(CTX.render_mode == GMSH_SELECT) {
@@ -370,6 +580,8 @@ class drawMeshGFace {
   }
 };
 
+// GRegion drawing routines
+
 class initMeshGRegion {
  public :
   void operator () (GRegion *r)
@@ -378,7 +590,6 @@ class initMeshGRegion {
       r->meshRep = new MRepRegion(r);
     if(CTX.mesh.volumes_edges)
       r->meshRep->generateEdges();
-  
   }
 };
 
@@ -395,6 +606,7 @@ class drawMeshGRegion {
     }
 
     if(CTX.mesh.volumes_edges){
+      glColor4ubv((GLubyte *) & CTX.color.mesh.hexahedron);
       glBegin(GL_LINES);
       for(std::set<MEdge>::const_iterator it = r->meshRep->edges.begin(); 
 	  it != r->meshRep->edges.end(); ++it){
@@ -405,6 +617,30 @@ class drawMeshGRegion {
       glEnd();
     }
 
+    if(CTX.mesh.volumes_num) {
+      const int labelStep = getLabelStep(r->tetrahedra.size() + r->hexahedra.size() + 
+					 r->prisms.size() + r->pyramids.size());
+      int labelNum = 0;
+      drawLabels(r, r->tetrahedra, labelStep, labelNum,
+		 CTX.mesh.volumes_faces || CTX.mesh.surfaces_faces, CTX.color.mesh.line);
+      drawLabels(r, r->hexahedra, labelStep, labelNum,
+		 CTX.mesh.volumes_faces || CTX.mesh.surfaces_faces, CTX.color.mesh.line);
+      drawLabels(r, r->prisms, labelStep, labelNum,
+		 CTX.mesh.volumes_faces || CTX.mesh.surfaces_faces, CTX.color.mesh.line);
+      drawLabels(r, r->pyramids, labelStep, labelNum,
+		 CTX.mesh.volumes_faces || CTX.mesh.surfaces_faces, CTX.color.mesh.line);
+    }
+
+    if(CTX.mesh.points || CTX.mesh.points_num)
+      drawVertices(r);
+
+    if(CTX.mesh.dual) {
+      drawBarycentricDual(r->tetrahedra);
+      drawBarycentricDual(r->hexahedra);
+      drawBarycentricDual(r->prisms);
+      drawBarycentricDual(r->pyramids);
+    }
+
     if(CTX.render_mode == GMSH_SELECT) {
       glPopName();
       glPopName();
@@ -412,6 +648,8 @@ class drawMeshGRegion {
   }
 };
 
+
+// Main drawing routine
 
 void Draw_Mesh()
 {
@@ -436,28 +674,26 @@ void Draw_Mesh()
   
   if(!CTX.threads_lock){
     CTX.threads_lock = 1; 
-
     int status = GMODEL->getMeshStatus();
-
     if(CTX.mesh.changed) {
-      if(status > 1){
-	if(CTX.mesh.smooth_normals){
-	  if(GMODEL->normals) delete GMODEL->normals;
-	  GMODEL->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
-	  std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), initSmoothNormalsGFace());
-	}
+      if(status >= 1)
+	std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), initMeshGEdge());
+      if(status >= 2){
+	if(GMODEL->normals) delete GMODEL->normals;
+	GMODEL->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
 	std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), initMeshGFace());
       }
-      if(status > 2)
+      if(status >= 3)
 	std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), initMeshGRegion());
     }
-    
-    if(status > 1 && (CTX.mesh.surfaces_faces || CTX.mesh.surfaces_edges))
+    if(status >= 0)
+      std::for_each(GMODEL->firstVertex(), GMODEL->lastVertex(), drawMeshGVertex());
+    if(status >= 1)
+      std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), drawMeshGEdge());
+    if(status >= 2)
       std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), drawMeshGFace());
-    
-    if(status > 2 && (CTX.mesh.volumes_faces || CTX.mesh.volumes_edges))
+    if(status >= 3)
       std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), drawMeshGRegion());
-
     CTX.mesh.changed = 0;
     CTX.threads_lock = 0;
   }
@@ -465,4 +701,3 @@ void Draw_Mesh()
   for(int i = 0; i < 6; i++)
     glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 }
-

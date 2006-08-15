@@ -62,8 +62,14 @@ class MElement
   }
   virtual ~MElement(){}
 
+  // reset the global node number
+  static void resetGlobalNumber(){ _globalNum = 0; }
+
   // returns the tag of the element
   virtual int getNum(){ return _num; }
+
+  // returns the geometrical dimension of the element
+  virtual int getDim() = 0;
 
   // returns the polynomial order the element
   virtual int getPolynomialOrder(){ return 1; }
@@ -143,6 +149,7 @@ class MLine : public MElement {
     _v[0] = v0; _v[1] = v1;
   }
   ~MLine(){}
+  virtual int getDim(){ return 1; }
   inline int getNumVertices(){ return 2; }
   inline MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 1; }
@@ -193,6 +200,7 @@ class MTriangle : public MElement {
     _v[0] = v0; _v[1] = v1; _v[2] = v2;
   }
   ~MTriangle(){}
+  virtual int getDim(){ return 2; }
   inline int getNumVertices(){ return 3; }
   inline MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 3; }
@@ -268,6 +276,7 @@ class MQuadrangle : public MElement {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
   }
   ~MQuadrangle(){}
+  virtual int getDim(){ return 2; }
   inline int getNumVertices(){ return 4; }
   inline MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 4; }
@@ -314,6 +323,7 @@ class MTetrahedron : public MElement {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
   }
   ~MTetrahedron(){}
+  virtual int getDim(){ return 3; }
   inline int getNumVertices(){ return 4; }
   inline MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 4; }
@@ -400,6 +410,7 @@ class MHexahedron : public MElement {
     _v[4] = v4; _v[5] = v5; _v[6] = v6; _v[7] = v7;
   }
   ~MHexahedron(){}
+  virtual int getDim(){ return 3; }
   inline int getNumVertices(){ return 8; }
   inline MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 12; }
@@ -498,6 +509,7 @@ class MPrism : public MElement {
     _v[4] = v4; _v[5] = v5; 
   }
   ~MPrism(){}
+  virtual int getDim(){ return 3; }
   inline int getNumVertices(){ return 6; }
   inline MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 9; }
@@ -593,6 +605,7 @@ class MPyramid : public MElement {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3; _v[4] = v4;
   }
   ~MPyramid(){}
+  virtual int getDim(){ return 3; }
   inline int getNumVertices(){ return 5; }
   inline MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 8; }

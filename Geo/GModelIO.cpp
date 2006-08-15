@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.14 2006-08-15 06:26:52 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.15 2006-08-15 21:22:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -84,7 +84,7 @@ static void storeElementsInEntities(GModel *m, int type,
 	  m->add(f);
 	}
 	if(type == TRI1) copyElements(f->triangles, it->second);
-	else if(type == QUA1) copyElements(f->quadrangles, it->second);
+	else copyElements(f->quadrangles, it->second);
       }
       break;
     case TET1: case HEX1: case PRI1: case PYR1:
@@ -97,7 +97,7 @@ static void storeElementsInEntities(GModel *m, int type,
 	if(type == TET1) copyElements(r->tetrahedra, it->second);
 	else if(type == HEX1) copyElements(r->hexahedra, it->second);
 	else if(type == PRI1) copyElements(r->prisms, it->second);
-	else if(type == PYR1) copyElements(r->pyramids, it->second);
+	else copyElements(r->pyramids, it->second);
       }
       break;
     }
@@ -613,14 +613,14 @@ int GModel::readSTL(const std::string &name, double tolerance)
   std::vector<SPoint3> points;
   SBoundingBox3d bbox;
 
-  // "solid" or binary data header
+  // "solid", or binary data header
   char buffer[256];
   fgets(buffer, sizeof(buffer), fp);
 
   if(!strncmp(buffer, "solid", 5)) { 
     // ASCII STL
     while(!feof(fp)) {
-      // "facet normal x y z" or "endsolid"
+      // "facet normal x y z", or "endsolid"
       if(!fgets(buffer, sizeof(buffer), fp)) break;
       if(!strncmp(buffer, "endsolid", 8)) break;
       char s1[256], s2[256];
@@ -691,10 +691,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
   add(face);
 
   // create (unique) vertices and triangles
-  SPoint3 min = bbox.min();
-  SPoint3 max = bbox.max();
-  double dx = max.x() - min.x(), dy = max.y() - min.y(), dz = max.z() - min.z();
-  double lc = sqrt(dx * dx + dy * dy + dz * dz);
+  double lc = norm(SVector3(bbox.max(), bbox.min()));
   MVertexLessThanLexicographic::tolerance = lc * tolerance;
   std::set<MVertex*, MVertexLessThanLexicographic> vertices;
   for(unsigned int i = 0; i < points.size(); i += 3){

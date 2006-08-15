@@ -155,7 +155,7 @@ class GEntity {
   GModel *model() const {return _model;}
 
   // The tag of the entity
-  int tag () const {return _tag;}
+  int tag() const {return _tag;}
 
   // The bounding box
   virtual SBoundingBox3d bounds() const{throw;}
@@ -193,7 +193,7 @@ class GEntity {
   // The physical entitites (if any) that contain this entity
   std::vector<int> physicals;
 
-  // A representation of the mesh
+  // A representation of the mesh of the entity
   MRep *meshRep;
 };
 

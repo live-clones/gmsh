@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.10 2006-08-15 06:26:52 geuzaine Exp $
+// $Id: GModel.cpp,v 1.11 2006-08-15 21:22:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -31,8 +31,9 @@ GModel::~GModel()
     delete *it;
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     delete *it;
-
   delete normals; 
+  MVertex::resetGlobalNumber();
+  MElement::resetGlobalNumber();
 }
 
 GRegion * GModel::regionByTag(int n) const

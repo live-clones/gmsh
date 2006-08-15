@@ -163,7 +163,6 @@ public :
     double label_frequency;
     int point_type, line_type; // flat or 3D
     double point_size, line_width;
-    int points_per_element;
     int optimize;
     double quality;
     int quality_type, label_type;
@@ -231,7 +230,7 @@ public :
       unsigned int tangents, normals;
     } geom;
     struct{
-      unsigned int vertex, vertex_deg2, line, triangle, quadrangle;
+      unsigned int vertex, line, triangle, quadrangle;
       unsigned int tetrahedron, hexahedron, prism, pyramid;
       unsigned int carousel[20];
       unsigned int tangents, normals;

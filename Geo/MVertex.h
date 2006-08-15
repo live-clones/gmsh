@@ -48,6 +48,9 @@ class MVertex{
   }
   virtual ~MVertex(){}
 
+  // reset the global node number
+  static void resetGlobalNumber(){ _globalNum = 0; }
+
   // get/set the visibility flag
   virtual char getVisibility(){ return _visible; }
   virtual void setVisibility(char val){ _visible = val; }

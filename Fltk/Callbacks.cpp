@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.430 2006-08-13 20:46:54 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.431 2006-08-15 21:22:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -593,7 +593,7 @@ static char *file_types =
   "\tGmsh geometry (*.geo)"
   "\tGmsh mesh (*.msh)"
   "\tGmsh post-processing (*.pos)"
-  "\tSTL mesh (*.stl)"
+  "\tSTL surface mesh (*.stl)"
   "\tINRIA mesh (*.mesh)"
   "\tJPEG (*.jpg)"
   "\tPNG (*.png)"
@@ -787,7 +787,7 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"  ", _save_auto},
     {"I-DEAS universal mesh (*.unv)", _save_unv},
     {"INRIA mesh (*.mesh)", _save_mesh},
-    {"STL mesh (*.stl)", _save_stl},
+    {"STL surface mesh (*.stl)", _save_stl},
     {"VRML surface mesh (*.wrl)", _save_vrml},
     {"   ", _save_auto},
     {"Encapsulated PostScript (*.eps)", _save_eps},
@@ -1108,7 +1108,6 @@ void mesh_options_cb(CALLBACK_ARGS)
 
 void mesh_options_ok_cb(CALLBACK_ARGS)
 {
-  opt_mesh_points_per_element(0, GMSH_SET, WID->mesh_butt[0]->value());
   opt_mesh_optimize(0, GMSH_SET, WID->mesh_butt[2]->value());
   opt_mesh_order(0, GMSH_SET, WID->mesh_butt[3]->value()? 2 : 1);
   opt_mesh_constrained_bgmesh(0, GMSH_SET, WID->mesh_butt[5]->value());

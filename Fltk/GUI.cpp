@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.516 2006-08-15 05:40:23 geuzaine Exp $
+// $Id: GUI.cpp,v 1.517 2006-08-15 21:22:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2527,27 +2527,22 @@ void GUI::create_option_window()
       mesh_value[9]->step(0.01);
       mesh_value[9]->align(FL_ALIGN_RIGHT);
 
-      mesh_butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Draw nodes per element");
-      mesh_butt[0]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[0]->down_box(GMSH_TOGGLE_BOX);
-      mesh_butt[0]->selection_color(GMSH_TOGGLE_COLOR);
-
-      mesh_choice[0] = new Fl_Choice(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Point display");
+      mesh_choice[0] = new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Point display");
       mesh_choice[0]->menu(menu_point_display);
       mesh_choice[0]->align(FL_ALIGN_RIGHT);
 
-      mesh_value[10] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Point size");
+      mesh_value[10] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Point size");
       mesh_value[10]->minimum(0.1);
       mesh_value[10]->maximum(50);
       mesh_value[10]->step(0.1);
       mesh_value[10]->align(FL_ALIGN_RIGHT);
 
-      mesh_choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Line display");
+      mesh_choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display");
       mesh_choice[1]->menu(menu_line_display);
       mesh_choice[1]->align(FL_ALIGN_RIGHT);
       mesh_choice[1]->deactivate(); // don't give false hopes, as it's not used anywhere right now
 
-      mesh_value[11] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Line width");
+      mesh_value[11] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width");
       mesh_value[11]->minimum(0.1);
       mesh_value[11]->maximum(50);
       mesh_value[11]->step(0.1);

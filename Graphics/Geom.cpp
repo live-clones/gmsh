@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.113 2006-08-15 04:15:19 geuzaine Exp $
+// $Id: Geom.cpp,v 1.114 2006-08-15 21:22:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -221,8 +221,9 @@ class drawGFace {
   
   void _drawPlaneGFace(GFace *f)
   {
-    // we must lock this part to avoid it being called recursively
-    // when redraw events are fired in rapid succession
+    // We create data here and the routine is not designed to be
+    // reentrant, so we must lock it to avoid race conditions when
+    // redraw events are fired in rapid succession
     if(!f->cross.size() && !CTX.threads_lock) {
       CTX.threads_lock = 1; 
       std::list<GEdge*> edges = f->edges();
@@ -363,20 +364,17 @@ class drawGRegion {
       glPushName(r->tag());
     }
     
-    if(r->getFlag() > 0) {
+    if(r->getFlag() > 0)
       glColor4ubv((GLubyte *) & CTX.color.geom.volume_sel);
-    }
-    else {
+    else
       glColor4ubv((GLubyte *) & CTX.color.geom.volume);
-    }
     
     SBoundingBox3d bb = r->bounds();
     SPoint3 p = bb.center();
     const double size = 10.;
 
-    if(CTX.geom.volumes){
+    if(CTX.geom.volumes)
       Draw_Sphere(size, p.x(), p.y(), p.z(), CTX.geom.light);
-    }
 
     if(CTX.geom.volumes_num){
       char Num[100];
@@ -427,23 +425,8 @@ void Draw_Geom()
     glColor4ubv((GLubyte *) & CTX.color.fg);
     glLineWidth(CTX.line_width);
     gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
-    
     Draw_Box(CTX.min[0], CTX.min[1], CTX.min[2], 
 	     CTX.max[0], CTX.max[1], CTX.max[2]);
-    
-    char label[256];
-    double offset = 0.3 * CTX.gl_fontsize * CTX.pixel_equiv_x;
-    glRasterPos3d(CTX.min[0] + offset / CTX.s[0], 
-		  CTX.min[1] + offset / CTX.s[0], 
-		  CTX.min[2] + offset / CTX.s[0]);
-    sprintf(label, "(%g,%g,%g)", CTX.min[0], CTX.min[1], CTX.min[2]);
-    Draw_String(label);
-    glRasterPos3d(CTX.max[0] + offset / CTX.s[0], 
-		  CTX.max[1] + offset / CTX.s[0], 
-		  CTX.max[2] + offset / CTX.s[0]);
-    sprintf(label, "(%g,%g,%g)", CTX.max[0], CTX.max[1], CTX.max[2]);
-    Draw_String(label);
-
     glColor3d(1.,0.,0.);
     for(int i = 0; i < 6; i++)
       if(CTX.clip[i] & 1 || CTX.clip[i] & 2)

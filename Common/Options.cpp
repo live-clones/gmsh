@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.289 2006-08-15 02:17:25 geuzaine Exp $
+// $Id: Options.cpp,v 1.290 2006-08-15 21:22:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4302,18 +4302,6 @@ double opt_mesh_volumes_num(OPT_ARGS_NUM)
   return CTX.mesh.volumes_num;
 }
 
-double opt_mesh_points_per_element(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    CTX.mesh.points_per_element = (int)val;
-  }
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[0]->value(CTX.mesh.points_per_element);
-#endif
-  return CTX.mesh.points_per_element;
-}
-
 double opt_mesh_point_size(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -7037,24 +7025,13 @@ unsigned int opt_mesh_color_points(OPT_ARGS_COL)
   return CTX.color.mesh.vertex;
 }
 
-unsigned int opt_mesh_color_points_deg2(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET) {
-    CTX.color.mesh.vertex_deg2 = val;
-  }
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.vertex_deg2, WID->mesh_col[1]);
-#endif
-  return CTX.color.mesh.vertex_deg2;
-}
-
 unsigned int opt_mesh_color_lines(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
     CTX.color.mesh.line = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.line, WID->mesh_col[2]);
+  CCC(CTX.color.mesh.line, WID->mesh_col[1]);
 #endif
   return CTX.color.mesh.line;
 }
@@ -7065,7 +7042,7 @@ unsigned int opt_mesh_color_triangles(OPT_ARGS_COL)
     CTX.color.mesh.triangle = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.triangle, WID->mesh_col[3]);
+  CCC(CTX.color.mesh.triangle, WID->mesh_col[2]);
 #endif
   return CTX.color.mesh.triangle;
 }
@@ -7076,7 +7053,7 @@ unsigned int opt_mesh_color_quadrangles(OPT_ARGS_COL)
     CTX.color.mesh.quadrangle = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.quadrangle, WID->mesh_col[4]);
+  CCC(CTX.color.mesh.quadrangle, WID->mesh_col[3]);
 #endif
   return CTX.color.mesh.quadrangle;
 }
@@ -7087,7 +7064,7 @@ unsigned int opt_mesh_color_tetrahedra(OPT_ARGS_COL)
     CTX.color.mesh.tetrahedron = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.tetrahedron, WID->mesh_col[5]);
+  CCC(CTX.color.mesh.tetrahedron, WID->mesh_col[4]);
 #endif
   return CTX.color.mesh.tetrahedron;
 }
@@ -7098,7 +7075,7 @@ unsigned int opt_mesh_color_hexahedra(OPT_ARGS_COL)
     CTX.color.mesh.hexahedron = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.hexahedron, WID->mesh_col[6]);
+  CCC(CTX.color.mesh.hexahedron, WID->mesh_col[5]);
 #endif
   return CTX.color.mesh.hexahedron;
 }
@@ -7109,7 +7086,7 @@ unsigned int opt_mesh_color_prisms(OPT_ARGS_COL)
     CTX.color.mesh.prism = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.prism, WID->mesh_col[7]);
+  CCC(CTX.color.mesh.prism, WID->mesh_col[6]);
 #endif
   return CTX.color.mesh.prism;
 }
@@ -7120,7 +7097,7 @@ unsigned int opt_mesh_color_pyramid(OPT_ARGS_COL)
     CTX.color.mesh.pyramid = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.pyramid, WID->mesh_col[8]);
+  CCC(CTX.color.mesh.pyramid, WID->mesh_col[7]);
 #endif
   return CTX.color.mesh.pyramid;
 }
@@ -7131,7 +7108,7 @@ unsigned int opt_mesh_color_tangents(OPT_ARGS_COL)
     CTX.color.mesh.tangents = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.tangents, WID->mesh_col[9]);
+  CCC(CTX.color.mesh.tangents, WID->mesh_col[8]);
 #endif
   return CTX.color.mesh.tangents;
 }
@@ -7142,7 +7119,7 @@ unsigned int opt_mesh_color_normals(OPT_ARGS_COL)
     CTX.color.mesh.normals = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.normals, WID->mesh_col[10]);
+  CCC(CTX.color.mesh.normals, WID->mesh_col[9]);
 #endif
   return CTX.color.mesh.normals;
 }
@@ -7157,7 +7134,7 @@ unsigned int opt_mesh_color_(int i, OPT_ARGS_COL)
     CTX.color.mesh.carousel[i] = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.carousel[i], WID->mesh_col[11+i]);
+  CCC(CTX.color.mesh.carousel[i], WID->mesh_col[10+i]);
 #endif
   return CTX.color.mesh.carousel[i];
 }

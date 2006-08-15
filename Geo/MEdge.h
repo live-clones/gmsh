@@ -42,8 +42,15 @@ class MEdge {
   {
     _v[0] = v0; _v[1] = v1;
   }
+  inline int getNumVertices() const { return 2; }
   inline MVertex *getVertex(int i) const { return _v[i]; }
   inline MElement *getElement() const { return _element; }
+  SPoint3 barycenter()
+  {
+    return SPoint3(0.5 * (_v[0]->x() + _v[1]->x()), 
+		   0.5 * (_v[0]->y() + _v[1]->y()), 
+		   0.5 * (_v[0]->z() + _v[1]->z()));
+  }
 };
 
 class MEdgeLessThan {
