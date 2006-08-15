@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.515 2006-08-15 05:19:28 geuzaine Exp $
+// $Id: GUI.cpp,v 1.516 2006-08-15 05:40:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1426,10 +1426,14 @@ void GUI::create_graphic_window()
   }
 
   x += 2;
-  g_status_label[0] = new Fl_Box(x, glheight + 2, 
-				 (width - x) / 3 - 1, sht);
-  g_status_label[1] = new Fl_Box(x + (width - x) / 3, glheight + 2, 
-				 width - (width - x) / 3, sht);
+  int wleft = (width - x) / 3 - 1;
+  int wright = (width - x) - (width - x) / 3 - 1;
+#if defined(WIN32)
+  wright += 1; // go right up to the right edge of the window
+#endif
+
+  g_status_label[0] = new Fl_Box(x, glheight + 2, wleft, sht);
+  g_status_label[1] = new Fl_Box(x + (width - x) / 3, glheight + 2, wright, sht);
   for(int i = 0; i < 2; i++) {
     g_status_label[i]->box(FL_THIN_DOWN_BOX);
     g_status_label[i]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);

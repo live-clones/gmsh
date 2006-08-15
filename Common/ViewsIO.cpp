@@ -1,4 +1,4 @@
-// $Id: ViewsIO.cpp,v 1.7 2006-08-13 16:02:01 geuzaine Exp $
+// $Id: ViewsIO.cpp,v 1.8 2006-08-15 05:40:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -35,7 +35,7 @@ void UpdateViewsInGUI();
 
 int ReadView(char *filename)
 {
-  FILE *fp = fopen(filename, "r");
+  FILE *fp = fopen(filename, "rb");
   if(!fp){
     Msg(GERROR, "Unable to open file '%s'", filename);
     return 0;
