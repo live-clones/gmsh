@@ -956,7 +956,7 @@ StringXNumber MeshOptions_Number[] = {
     "Only display elements whose quality measure is greater than QualityInf" },
   { F|O, "QualitySup" , opt_mesh_quality_sup , 0.0 , 
     "Only display elements whose quality measure is smaller than QualitySup" },
-  { F|O, "QualityType" , opt_mesh_quality_type , 0. , 
+  { F|O, "QualityType" , opt_mesh_quality_type , 2. , 
     "Type of quality measure (0=gamma~vol/sum_face/max_edge, 1=eta~vol^(2/3)/sum_edge^2, 2=rho~min_edge/max_edge)" },
 
   { F|O, "RadiusInf" , opt_mesh_radius_inf , 0.0 , 

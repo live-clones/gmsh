@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.520 2006-08-16 22:43:56 geuzaine Exp $
+// $Id: GUI.cpp,v 1.521 2006-08-16 23:10:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2351,31 +2351,31 @@ void GUI::create_option_window()
       mesh_butt[6]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[6]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_butt[7] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Line elements");
+      mesh_butt[7] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Lines");
       mesh_butt[7]->tooltip("(Alt+Shift+l)");
       mesh_butt[7]->type(FL_TOGGLE_BUTTON);
       mesh_butt[7]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[7]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_butt[8] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface element edges");
+      mesh_butt[8] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface edges");
       mesh_butt[8]->tooltip("(Alt+Shift+s)");
       mesh_butt[8]->type(FL_TOGGLE_BUTTON);
       mesh_butt[8]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[8]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_butt[9] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Surface element faces");
+      mesh_butt[9] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Surface faces");
       mesh_butt[9]->tooltip("(Alt+Shift+d)");
       mesh_butt[9]->type(FL_TOGGLE_BUTTON);
       mesh_butt[9]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[9]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW / 2 - WB, BH, "Volume element edges");
+      mesh_butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW / 2 - WB, BH, "Volume edges");
       mesh_butt[10]->tooltip("(Alt+Shift+v)");
       mesh_butt[10]->type(FL_TOGGLE_BUTTON);
       mesh_butt[10]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[10]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_butt[11] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW / 2 - WB, BH, "Volume element faces");
+      mesh_butt[11] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW / 2 - WB, BH, "Volume faces");
       mesh_butt[11]->type(FL_TOGGLE_BUTTON);
       mesh_butt[11]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[11]->selection_color(GMSH_TOGGLE_COLOR);
@@ -2385,17 +2385,17 @@ void GUI::create_option_window()
       mesh_butt[12]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[12]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_butt[13] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Line element labels");
+      mesh_butt[13] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Line labels");
       mesh_butt[13]->type(FL_TOGGLE_BUTTON);
       mesh_butt[13]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[13]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_butt[14] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface element labels");
+      mesh_butt[14] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface labels");
       mesh_butt[14]->type(FL_TOGGLE_BUTTON);
       mesh_butt[14]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[14]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_butt[15] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volume element labels");
+      mesh_butt[15] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volume labels");
       mesh_butt[15]->type(FL_TOGGLE_BUTTON);
       mesh_butt[15]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[15]->selection_color(GMSH_TOGGLE_COLOR);
@@ -2436,23 +2436,23 @@ void GUI::create_option_window()
         {"Rho", 0, 0, 0},
         {0}
       };
-      mesh_choice[6] = new Fl_Choice(L + (3 * width)/4 - WB, 2 * WB + 7 * BH, width/4 - 2*WB, BH);
+      mesh_choice[6] = new Fl_Choice(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Element quality measure");
       mesh_choice[6]->menu(menu_quality_type);
-      mesh_choice[6]->align(FL_ALIGN_LEFT);
+      mesh_choice[6]->align(FL_ALIGN_RIGHT);
 
-      mesh_value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW / 2, BH);
+      mesh_value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
       mesh_value[6]->align(FL_ALIGN_RIGHT);
 
-      mesh_value[7] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 8 * BH, IW / 2, BH, "Element size range");
+      mesh_value[7] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "Element size range");
       mesh_value[7]->align(FL_ALIGN_RIGHT);
 
-      mesh_value[8] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Normals");
+      mesh_value[8] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Normals");
       mesh_value[8]->minimum(0);
       mesh_value[8]->maximum(500);
       mesh_value[8]->step(1);
       mesh_value[8]->align(FL_ALIGN_RIGHT);
 
-      mesh_value[13] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Tangents");
+      mesh_value[13] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tangents");
       mesh_value[13]->minimum(0);
       mesh_value[13]->maximum(200);
       mesh_value[13]->step(1.0);
