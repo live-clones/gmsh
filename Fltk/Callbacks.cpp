@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.432 2006-08-16 21:11:41 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.433 2006-08-16 21:55:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1641,7 +1641,6 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Alt+a         Loop through axes modes"); 
   Msg(DIRECT, "  Alt+b         Hide/show bounding boxes");
   Msg(DIRECT, "  Alt+c         Loop through predefined color schemes");
-  Msg(DIRECT, "  Alt+d         Change surface mesh display mode (solid/wireframe)");
   Msg(DIRECT, "  Alt+f         Change redraw mode (fast/full)"); 
   Msg(DIRECT, "  Alt+g         Loop through axes modes for visible post-processing views"); 
   Msg(DIRECT, "  Alt+h         Hide/show all post-processing views"); 
@@ -1660,11 +1659,13 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Alt+z         Set Z view"); 
   Msg(DIRECT, " ");
   Msg(DIRECT, "  Alt+Shift+a   Hide/show small axes"); 
-  Msg(DIRECT, "  Alt+Shift+l   Hide/show surface mesh edges");
+  Msg(DIRECT, "  Alt+Shift+b   Hide/show mesh volume faces");
+  Msg(DIRECT, "  Alt+Shift+d   Hide/show mesh surface faces");
+  Msg(DIRECT, "  Alt+Shift+l   Hide/show mesh lines");
   Msg(DIRECT, "  Alt+Shift+o   Adjust projection parameters");
   Msg(DIRECT, "  Alt+Shift+p   Hide/show mesh points");
-  Msg(DIRECT, "  Alt+Shift+s   Hide/show mesh surfaces");
-  Msg(DIRECT, "  Alt+Shift+v   Hide/show mesh volumes");
+  Msg(DIRECT, "  Alt+Shift+s   Hide/show mesh surface edges");
+  Msg(DIRECT, "  Alt+Shift+v   Hide/show mesh volume edges");
   Msg(DIRECT, "  Alt+Shift+x   Set -X view"); 
   Msg(DIRECT, "  Alt+Shift+y   Set -Y view"); 
   Msg(DIRECT, "  Alt+Shift+z   Set -Z view"); 

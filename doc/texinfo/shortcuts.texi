@@ -94,8 +94,6 @@ Loop through axes modes
 Hide/show bounding boxes
 @item Alt+c
 Loop through predefined color schemes
-@item Alt+d
-Change surface mesh display mode (solid/wireframe)
 @item Alt+f
 Change redraw mode (fast/full) 
 @item Alt+g
@@ -133,16 +131,20 @@ Set Z view
 
 @item Alt+Shift+a
 Hide/show small axes 
+@item Alt+Shift+b
+Hide/show mesh volume faces
+@item Alt+Shift+d
+Hide/show mesh surface faces
 @item Alt+Shift+l
-Hide/show surface mesh edges
+Hide/show mesh lines
 @item Alt+Shift+o
 Adjust projection parameters
 @item Alt+Shift+p
 Hide/show mesh points
 @item Alt+Shift+s
-Hide/show mesh surfaces
+Hide/show mesh surface edges
 @item Alt+Shift+v
-Hide/show mesh volumes
+Hide/show mesh volume edges
 @item Alt+Shift+x
 Set -X view 
 @item Alt+Shift+y

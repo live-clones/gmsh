@@ -295,7 +295,7 @@ component of the `TimeStep'-th time step in the
 view `iView' to the expression `Expression'.
 `Expression' can contain:
 
-- the usual mathematical functions (Log, Sqrt
+- the usual mathematical functions (Log, Sqrt,
 Sin, Cos, Fabs, ...) and operators (+, -, *, /, ^);
 
 - the symbols x, y and z, to retrieve the

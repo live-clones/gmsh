@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.518 2006-08-16 21:11:41 geuzaine Exp $
+// $Id: GUI.cpp,v 1.519 2006-08-16 21:55:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -645,12 +645,6 @@ int GUI::global_shortcuts(int event)
     redraw_opengl();
     return 1;
   }
-  else if(Fl::test_shortcut(FL_ALT + 'd')) {
-    opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI,
-			    !opt_mesh_surfaces_faces(0, GMSH_GET, 0));
-    redraw_opengl();
-    return 1;
-  }
   else if(Fl::test_shortcut(FL_ALT + 'w')) {
     opt_geometry_light(0, GMSH_SET | GMSH_GUI,
 		       !opt_geometry_light(0, GMSH_GET, 0));
@@ -739,6 +733,19 @@ int GUI::global_shortcuts(int event)
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'v')) {
     opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI,
 			   !opt_mesh_volumes_edges(0, GMSH_GET, 0));
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT + 'd') ||
+	  Fl::test_shortcut(FL_ALT + FL_SHIFT + 'd')) {
+    opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI,
+			    !opt_mesh_surfaces_faces(0, GMSH_GET, 0));
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'b')) {
+    opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI,
+			   !opt_mesh_volumes_faces(0, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }

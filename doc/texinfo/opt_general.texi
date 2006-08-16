@@ -386,12 +386,12 @@ Saved in: @code{General.SessionFileName}
 
 @item General.FontSize
 Size of the font in the user interface@*
-Default value: @code{12}@*
+Default value: @code{13}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsFontSize
 Size of the font in the graphic window@*
-Default value: @code{14}@*
+Default value: @code{16}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsHeight
@@ -614,6 +614,11 @@ Width (in pixels) of the message window@*
 Default value: @code{450}@*
 Saved in: @code{General.SessionFileName}
 
+@item General.MouseSelection
+Mouse selection mode (0=none, 1=no hover, 2=full)@*
+Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.NoPopup
 Disable interactive dialog windows in scripts (and use default values instead)@*
 Default value: @code{0}@*
@@ -832,11 +837,6 @@ Saved in: @code{General.OptionsFileName}
 @item General.Verbosity
 Level of information printed during processing (0=no information)@*
 Default value: @code{3}@*
-Saved in: @code{General.OptionsFileName}
-
-@item General.VisibilityMode
-Default mode for the visibility browser (0=Geometry+Mesh, 1=Geometry, 2=Mesh)@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.VisibilityPositionX

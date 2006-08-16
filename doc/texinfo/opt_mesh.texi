@@ -59,8 +59,8 @@ Enable mesh cut plane@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item Mesh.CutPlaneAsSurface
-Draw the intersection volume layer as a surface@*
+@item Mesh.CutPlaneDrawIntersect
+Draw only the volume elements that intersect with the cut plane@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
@@ -239,11 +239,6 @@ Display mesh vertices (nodes)?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.PointsPerElement
-Display mesh nodes per element (slower, but permits to visualize only a subset of the nodes)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.PointInsertion
 Point insertion method for isotropic 2D algorithm (1=center of circumscribed circle, 2=center of gravity)@*
 Default value: @code{1}@*
@@ -302,11 +297,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.RecombineAlgo
 Recombine algorithm (1=mixed triangles-quadrangles, 2=all quadrangles)@*
 Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.RenumberNodes
-Renumber nodes to remove holes in the numbering sequence@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveAll
@@ -397,11 +387,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Color.Points
 Mesh node color@*
 Default value: @code{@{0,255,0@}}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.Color.PointsSup
-Second order mesh node color@*
-Default value: @code{@{255,0,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Lines
