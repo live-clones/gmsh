@@ -43,7 +43,6 @@ class MRep {
   template<class T>
   void generateEdgeRep(std::vector<T*> &elements)
   {
-    if(edges.size()) return;
     for(unsigned int i = 0; i < elements.size(); i++){
       for(int j = 0; j < elements[i]->getNumEdgesRep(); j++){
 	MEdge e = elements[i]->getEdgeRep(j);
@@ -54,7 +53,7 @@ class MRep {
   }
 
  public:
-  MRep() : va_lines(0), va_triangles(0), va_quads(0) {}
+  MRep() : va_lines(0), va_triangles(0), va_quads(0), allElementsVisible(true) {}
   virtual ~MRep(){}
 
   // generates the edge representation
@@ -78,6 +77,9 @@ class MRep {
     if(va_quads) delete va_quads;
     va_quads = 0;
   }
+
+  // a flag telling if all the elements in the entity are visible
+  bool allElementsVisible;
 };
 
 class MRepEdge : public MRep {
@@ -89,6 +91,7 @@ class MRepEdge : public MRep {
   virtual ~MRepEdge(){}
   virtual void generateEdgeRep()
   {
+    if(edges.size()) return;
     MRep::generateEdgeRep(_e->lines);
   }
 };
@@ -102,6 +105,7 @@ class MRepFace : public MRep {
   virtual ~MRepFace(){}
   virtual void generateEdgeRep()
   {
+    if(edges.size()) return;
     double t = Cpu();    
     MRep::generateEdgeRep(_f->triangles);
     MRep::generateEdgeRep(_f->quadrangles);
@@ -119,6 +123,7 @@ class MRepRegion : public MRep {
   virtual ~MRepRegion(){}
   virtual void generateEdgeRep()
   {
+    if(edges.size()) return;
     double t = Cpu();    
     MRep::generateEdgeRep(_r->tetrahedra);
     MRep::generateEdgeRep(_r->hexahedra);

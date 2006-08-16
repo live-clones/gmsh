@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.517 2006-08-15 21:22:12 geuzaine Exp $
+// $Id: GUI.cpp,v 1.518 2006-08-16 21:11:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -725,24 +725,20 @@ int GUI::global_shortcuts(int event)
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'l')) {
-    opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, 
-			    !opt_mesh_surfaces_edges(0, GMSH_GET, 0));
+    opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 
+		   !opt_mesh_lines(0, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 's')) {
-    int old = opt_mesh_surfaces_edges(0, GMSH_GET, 0) ||
-      opt_mesh_surfaces_faces(0, GMSH_GET, 0);
-    opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, !old);
-    opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI, !old);
+    opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI,
+			    !opt_mesh_surfaces_edges(0, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'v')) {
-    int old = opt_mesh_volumes_edges(0, GMSH_GET, 0) || 
-      opt_mesh_volumes_faces(0, GMSH_GET, 0);
-    opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI, !old);
-    opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI, !old);
+    opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI,
+			   !opt_mesh_volumes_edges(0, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
@@ -2361,7 +2357,7 @@ void GUI::create_option_window()
       mesh_butt[8]->selection_color(GMSH_TOGGLE_COLOR);
 
       mesh_butt[9] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Surface element faces");
-      mesh_butt[9]->tooltip("(Alt+Shift+s, Alt+Shift+d)");
+      mesh_butt[9]->tooltip("(Alt+Shift+d)");
       mesh_butt[9]->type(FL_TOGGLE_BUTTON);
       mesh_butt[9]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[9]->selection_color(GMSH_TOGGLE_COLOR);
@@ -2373,7 +2369,6 @@ void GUI::create_option_window()
       mesh_butt[10]->selection_color(GMSH_TOGGLE_COLOR);
 
       mesh_butt[11] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW / 2 - WB, BH, "Volume element faces");
-      mesh_butt[11]->tooltip("(Alt+Shift+v)");
       mesh_butt[11]->type(FL_TOGGLE_BUTTON);
       mesh_butt[11]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[11]->selection_color(GMSH_TOGGLE_COLOR);
@@ -2503,7 +2498,7 @@ void GUI::create_option_window()
       mesh_value[17]->minimum(-1.0);
       mesh_value[17]->maximum(1.0);
 
-      mesh_butt[22] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Draw intersecting volume layer as surface");
+      mesh_butt[22] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Draw only intersecting volume layer");
       mesh_butt[22]->type(FL_TOGGLE_BUTTON);
       mesh_butt[22]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[22]->selection_color(GMSH_TOGGLE_COLOR);

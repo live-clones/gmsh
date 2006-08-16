@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.290 2006-08-15 21:22:12 geuzaine Exp $
+// $Id: Options.cpp,v 1.291 2006-08-16 21:11:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4722,17 +4722,17 @@ double opt_mesh_use_cut_plane(OPT_ARGS_NUM)
   return CTX.mesh.use_cut_plane;
 }
 
-double opt_mesh_cut_plane_as_surface(OPT_ARGS_NUM)
+double opt_mesh_cut_plane_draw_intersect(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
-    if(CTX.mesh.cut_plane_as_surface != (int)val) CTX.mesh.changed = 1;
-    CTX.mesh.cut_plane_as_surface = (int)val;
+    if(CTX.mesh.cut_plane_draw_intersect != (int)val) CTX.mesh.changed = 1;
+    CTX.mesh.cut_plane_draw_intersect = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[22]->value(CTX.mesh.cut_plane_as_surface);
+    WID->mesh_butt[22]->value(CTX.mesh.cut_plane_draw_intersect);
 #endif
-  return CTX.mesh.cut_plane_as_surface;
+  return CTX.mesh.cut_plane_draw_intersect;
 }
 
 double opt_mesh_cut_plane_only_volume(OPT_ARGS_NUM)
