@@ -29,22 +29,15 @@ class MEdge {
  private:
   MVertex *_v[2];
   
-  // Storing a pointer to (one of the) originating elements is a
-  // significant overhead, especially since I only use it to get a
-  // crude normal (for graphic purposes) or to know (one of) the
-  // adjacent mesh partitions. I will try to come up with something
-  // better later.
-  MElement *_element;
-  
  public:
   MEdge(MVertex *v0, MVertex *v1, MElement *e) 
-    : _element(e)
   {
     _v[0] = v0; _v[1] = v1;
   }
   inline int getNumVertices() const { return 2; }
   inline MVertex *getVertex(int i) const { return _v[i]; }
-  inline MElement *getElement() const { return _element; }
+  inline MVertex *getMinVertex() const { return std::min(_v[0], _v[1]); }
+  inline MVertex *getMaxVertex() const { return std::max(_v[0], _v[1]); }
   SVector3 tangent()
   {
     SVector3 t(_v[1]->x() - _v[0]->x(), 

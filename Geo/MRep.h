@@ -21,6 +21,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <set>
+#include <map>
 #include <algorithm>
 #include "GEdge.h"
 #include "GFace.h"
@@ -30,30 +31,65 @@
 #include "MElement.h"
 #include "VertexArray.h"
 #include "Message.h"
+#include "OS.h"
 
 class MRep {
+ protected:
+  // containedr for the edge representation (this 2x faster than
+  // std::set<MEdge, MEdgeLessThan>)
+  std::map<std::pair<MVertex*, MVertex*>, MElement*> edges;
+
+  // generates the edges from a bunch of elements
+  template<class T>
+  void generateEdgeRep(std::vector<T*> &elements)
+  {
+    if(edges.size()) return;
+    for(unsigned int i = 0; i < elements.size(); i++){
+      for(int j = 0; j < elements[i]->getNumEdgesRep(); j++){
+	MEdge e = elements[i]->getEdgeRep(j);
+	std::pair<MVertex*, MVertex*> p(e.getMinVertex(), e.getMaxVertex());
+	if(!edges.count(p)) edges[p] = elements[i];
+      }
+    }
+  }
+
  public:
   MRep() : va_lines(0), va_triangles(0), va_quads(0) {}
   virtual ~MRep(){}
-  virtual void generateEdges() = 0;
-  std::set<MEdge, MEdgeLessThan> edges;
+
+  // generates the edge representation
+  virtual void generateEdgeRep() = 0;
+
+  // acces the edge representation
+  typedef std::map<std::pair<MVertex*, MVertex*>, MElement*>::const_iterator eriter;
+  eriter firstEdgeRep() { return edges.begin(); }
+  eriter lastEdgeRep() { return edges.end(); }
+  int getNumEdgeRep() { return edges.size(); }
+
+  // the vertex arrays containing full elements
   VertexArray *va_lines, *va_triangles, *va_quads;
+
+  // destroys all the vertex arrays
+  void resetArrays(){
+    if(va_lines) delete va_lines;
+    va_lines = 0;
+    if(va_triangles) delete va_triangles;
+    va_triangles = 0;
+    if(va_quads) delete va_quads;
+    va_quads = 0;
+  }
 };
 
 class MRepEdge : public MRep {
  private:
   GEdge *_e;
 
-public:
+ public:
   MRepEdge(GEdge *e) : _e(e) {}
   virtual ~MRepEdge(){}
-  virtual void generateEdges()
+  virtual void generateEdgeRep()
   {
-    if(edges.size()) return;
-    for(unsigned int i = 0; i < _e->lines.size(); i++)
-      for(int j = 0; j < _e->lines[i]->getNumEdgesRep(); j++)
-	edges.insert(_e->lines[i]->getEdgeRep(j));
-    Msg(DEBUG, "%d edges in line %d", (int)edges.size(), _e->tag());
+    MRep::generateEdgeRep(_e->lines);
   }
 };
 
@@ -64,16 +100,13 @@ class MRepFace : public MRep {
  public:
   MRepFace(GFace *f) : _f(f) {}
   virtual ~MRepFace(){}
-  virtual void generateEdges()
+  virtual void generateEdgeRep()
   {
-    if(edges.size()) return;
-    for(unsigned int i = 0; i < _f->triangles.size(); i++)
-      for(int j = 0; j < _f->triangles[i]->getNumEdgesRep(); j++)
-	edges.insert(_f->triangles[i]->getEdgeRep(j));
-    for(unsigned int i = 0; i < _f->quadrangles.size(); i++)
-      for(int j = 0; j < _f->quadrangles[i]->getNumEdgesRep(); j++)
-	edges.insert(_f->quadrangles[i]->getEdgeRep(j));
-    Msg(DEBUG, "%d edges in surface %d", (int)edges.size(), _f->tag());
+    double t = Cpu();    
+    MRep::generateEdgeRep(_f->triangles);
+    MRep::generateEdgeRep(_f->quadrangles);
+    Msg(DEBUG, "Created %d edges in surface %d (%gs)",
+	(int)edges.size(), _f->tag(), Cpu()-t);
   }
 };
 
@@ -84,22 +117,15 @@ class MRepRegion : public MRep {
  public:
   MRepRegion(GRegion *r) : _r(r) {}
   virtual ~MRepRegion(){}
-  virtual void generateEdges()
+  virtual void generateEdgeRep()
   {
-    if(edges.size()) return;
-    for(unsigned int i = 0; i < _r->tetrahedra.size(); i++)
-      for(int j = 0; j < _r->tetrahedra[i]->getNumEdgesRep(); j++)
-	edges.insert(_r->tetrahedra[i]->getEdgeRep(j));
-    for(unsigned int i = 0; i < _r->hexahedra.size(); i++)
-      for(int j = 0; j < _r->hexahedra[i]->getNumEdgesRep(); j++)
-	edges.insert(_r->hexahedra[i]->getEdgeRep(j));
-    for(unsigned int i = 0; i < _r->prisms.size(); i++)
-      for(int j = 0; j < _r->prisms[i]->getNumEdgesRep(); j++)
-	edges.insert(_r->prisms[i]->getEdgeRep(j));
-    for(unsigned int i = 0; i < _r->pyramids.size(); i++)
-      for(int j = 0; j < _r->pyramids[i]->getNumEdgesRep(); j++)
-	edges.insert(_r->pyramids[i]->getEdgeRep(j));
-    Msg(DEBUG, "%d edges in volume %d", (int)edges.size(), _r->tag());
+    double t = Cpu();    
+    MRep::generateEdgeRep(_r->tetrahedra);
+    MRep::generateEdgeRep(_r->hexahedra);
+    MRep::generateEdgeRep(_r->prisms);
+    MRep::generateEdgeRep(_r->pyramids);
+    Msg(DEBUG, "Created %d edges in volume %d (%gs)",
+	(int)edges.size(), _r->tag(), Cpu()-t);
   }
 };
 

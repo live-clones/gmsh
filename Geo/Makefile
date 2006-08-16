@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.93 2006-08-15 02:17:25 geuzaine Exp $
+# $Id: Makefile,v 1.94 2006-08-16 17:14:57 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -126,7 +126,7 @@ GEntity.o: GEntity.cpp GEntity.h Range.h SPoint3.h SBoundingBox3d.h \
   ../Common/GmshDefines.h MRep.h GEdge.h GVertex.h MVertex.h GPoint.h \
   SVector3.h SPoint2.h MElement.h MEdge.h MFace.h ../Numeric/Numeric.h \
   GFace.h Pair.h GRegion.h ../Common/VertexArray.h ../DataStr/List.h \
-  ../Common/Message.h
+  ../Common/Message.h ../Common/OS.h ../Common/Context.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 GVertex.o: GVertex.cpp GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h
@@ -166,7 +166,7 @@ GModelIO.o: GModelIO.cpp ../Common/Message.h ../Common/GmshDefines.h \
 MVertex.o: MVertex.cpp MVertex.h SPoint3.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 MElement.o: MElement.cpp MElement.h ../Common/GmshDefines.h MVertex.h \
-  SPoint3.h MEdge.h MFace.h SVector3.h ../Numeric/Numeric.h GEntity.h \
+  SPoint3.h MEdge.h SVector3.h MFace.h ../Numeric/Numeric.h GEntity.h \
   Range.h SBoundingBox3d.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 gmshModel.o: gmshModel.cpp gmshModel.h GModel.h GVertex.h GEntity.h \

@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.169 2006-08-16 05:25:22 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.170 2006-08-16 17:14:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -245,7 +245,31 @@ static void drawBarycentricDual(std::vector<T*> &elements)
   gl2psDisable(GL2PS_LINE_STIPPLE);
 }
 
+template<class T>
+static bool allElementsVisible(std::vector<T*> &elements)
+{
+  for(unsigned int i = 0; i < elements.size(); i++)
+    if(!elements[i]->getVisibility()) return false;
+  return true;
+}
+
 // Routines for filling and drawing the vertex arrays
+
+static void addEdgesInArrays(GEntity *e, VertexArray *va, MRep *m)
+{
+  for(MRep::eriter it = m->firstEdgeRep(); it != m->lastEdgeRep(); ++it){
+    MVertex *v[2] = {it->first.first, it->first.second};
+    MElement *ele = it->second;
+    SVector3 n = ele->getFace(0).normal();
+    int part = ele->getPartition();
+    for(int i = 0; i < 2; i++){
+      if(CTX.mesh.smooth_normals)
+	e->model()->normals->get(v[i]->x(), v[i]->y(), v[i]->z(), n[0], n[1], n[2]);
+      va->add(v[i]->x(), v[i]->y(), v[i]->z(), n[0], n[1], n[2],
+	      CTX.color.mesh.carousel[abs(part % 20)]);
+    }
+  }
+}
 
 template<class T>
 static void addElementsInArrays(GEntity *e, VertexArray *va, std::vector<T*> &elements)
@@ -273,6 +297,7 @@ static void addElementsInArrays(GEntity *e, VertexArray *va, std::vector<T*> &el
     if(ele->getNumFacesRep()){
       for(int j = 0; j < ele->getNumFacesRep(); j++){
 	MFace fr = ele->getFaceRep(j);
+	if(fr.getNumVertices() != va->type) continue;
 	SVector3 n = fr.normal();
 	SPoint3 pc;
 	if(CTX.mesh.explode != 1.) pc = ele->barycenter();
@@ -356,8 +381,7 @@ class drawMeshGVertex {
  public:
   void operator () (GVertex *v)
   {  
-    if(!v->getVisibility())
-      return;
+    if(!v->getVisibility()) return;
     
     if(CTX.render_mode == GMSH_SELECT) {
       glPushName(0);
@@ -380,16 +404,16 @@ class initMeshGEdge {
  public :
   void operator () (GEdge *e)
   {
-    if(!e->getVisibility())
-      return;
+    if(!e->getVisibility()) return;
 
-    if(!e->meshRep)
-      e->meshRep = new MRepEdge(e);
+    if(!e->meshRep) e->meshRep = new MRepEdge(e);
+
+    MRep *m = e->meshRep;
+    m->resetArrays();
 
     if(CTX.mesh.lines){
-      if(e->meshRep->va_lines) delete e->meshRep->va_lines;
-      e->meshRep->va_lines = new VertexArray(2, e->lines.size());
-      addElementsInArrays(e, e->meshRep->va_lines, e->lines);
+      m->va_lines = new VertexArray(2, e->lines.size());
+      addElementsInArrays(e, m->va_lines, e->lines);
     }
   }
 };
@@ -398,8 +422,7 @@ class drawMeshGEdge {
  public:
   void operator () (GEdge *e)
   {  
-    if(!e->getVisibility())
-      return;
+    if(!e->getVisibility()) return;
     
     if(CTX.render_mode == GMSH_SELECT) {
       glPushName(1);
@@ -469,60 +492,37 @@ class initMeshGFace {
  public :
   void operator () (GFace *f)
   {
-    if(!f->getVisibility())
-      return;
+    if(!f->getVisibility()) return;
 
-    if(!f->meshRep)
-      f->meshRep = new MRepFace(f);
+    if(!f->meshRep) f->meshRep = new MRepFace(f);
 
-    //bool useEdges = true;
-    bool useEdges = false;
-
-    if(CTX.mesh.explode != 1. || CTX.mesh.quality_sup || CTX.mesh.radius_sup || 
-       CTX.mesh.use_cut_plane)
-      useEdges = false;
-
-    for(unsigned int i = 0; i < f->triangles.size(); i++){
-      if(!f->triangles[i]->getVisibility()){ useEdges = false; break; }
-    }
-    for(unsigned int i = 0; i < f->quadrangles.size(); i++){
-      if(!f->quadrangles[i]->getVisibility()){ useEdges = false; break; }
-    }
-    
-    if(useEdges) f->meshRep->generateEdges();
+    MRep *m = f->meshRep;
+    m->resetArrays();
 
     // TODO: further optimizations are possible when useEdges is true:
     //
-    // 1) store the unique vertices in the vertex array and
+    // 1) store the unique vertices in the vertex array and use
     //    glDrawElements() instead of glDrawArrays().
-    // 2) we can use tc to stripe the triangles to create strips
-
-    if(useEdges && CTX.mesh.surfaces_edges){
-      if(f->meshRep->va_lines) delete f->meshRep->va_lines;
-      f->meshRep->va_lines = new VertexArray(2, f->meshRep->edges.size());
-      std::set<MEdge>::const_iterator it = f->meshRep->edges.begin();
-      for(; it != f->meshRep->edges.end(); ++it){
-	for(int i = 0; i < 2; i++){
-	  MVertex *v = it->getVertex(i);
-	  MElement *ele = it->getElement();
-	  SVector3 n = ele->getFace(0).normal();
-	  int part = ele->getPartition();
-	  if(CTX.mesh.smooth_normals)
-	    f->model()->normals->get(v->x(), v->y(), v->z(), n[0], n[1], n[2]);
-	  f->meshRep->va_lines->add(v->x(), v->y(), v->z(), n[0], n[1], n[2],
-				    CTX.color.mesh.carousel[abs(part % 20)]);
-	}
-      }
+    // 2) use tc to stripe the triangles and draw strips instead of individual
+    //    triangles
+    bool useEdges = CTX.mesh.surfaces_edges ? true : false;
+    if(CTX.mesh.surfaces_faces /*this will change!*/ || CTX.mesh.explode != 1. || 
+       CTX.mesh.quality_sup || CTX.mesh.radius_sup || CTX.mesh.use_cut_plane ||
+       !allElementsVisible(f->triangles) || !allElementsVisible(f->quadrangles))
+      useEdges = false;
+    
+    if(useEdges){
+      Msg(DEBUG, "Using edges to draw surface %d", f->tag());
+      m->generateEdgeRep();
+      m->va_lines = new VertexArray(2, m->getNumEdgeRep());
+      addEdgesInArrays(f, m->va_lines, m);
     }
+    else if(CTX.mesh.surfaces_edges || CTX.mesh.surfaces_faces){
+      m->va_triangles = new VertexArray(3, f->triangles.size());
+      addElementsInArrays(f, m->va_triangles, f->triangles);
 
-    if((!useEdges && CTX.mesh.surfaces_edges) || CTX.mesh.surfaces_faces){
-      if(f->meshRep->va_triangles) delete f->meshRep->va_triangles;
-      f->meshRep->va_triangles = new VertexArray(3, f->triangles.size());
-      addElementsInArrays(f, f->meshRep->va_triangles, f->triangles);
-
-      if(f->meshRep->va_quads) delete f->meshRep->va_quads;
-      f->meshRep->va_quads = new VertexArray(4, f->quadrangles.size());
-      addElementsInArrays(f, f->meshRep->va_quads, f->quadrangles);
+      m->va_quads = new VertexArray(4, f->quadrangles.size());
+      addElementsInArrays(f, m->va_quads, f->quadrangles);
     }
   }
 };
@@ -531,8 +531,7 @@ class drawMeshGFace {
  public:
   void operator () (GFace *f)
   {  
-    if(!f->getVisibility())
-      return;
+    if(!f->getVisibility()) return;
     
     if(CTX.render_mode == GMSH_SELECT) {
       glPushName(2);
@@ -601,10 +600,41 @@ class initMeshGRegion {
  public :
   void operator () (GRegion *r)
   {  
-    if(!r->meshRep) 
-      r->meshRep = new MRepRegion(r);
-    if(CTX.mesh.volumes_edges)
-      r->meshRep->generateEdges();
+    if(!r->getVisibility()) return;
+
+    if(!r->meshRep) r->meshRep = new MRepRegion(r);
+
+    MRep *m = r->meshRep;
+    m->resetArrays();
+
+    bool useEdges = CTX.mesh.volumes_edges ? true : false;
+    if(CTX.mesh.volumes_faces /*this will change!*/ || CTX.mesh.explode != 1. || 
+       CTX.mesh.quality_sup || CTX.mesh.radius_sup || CTX.mesh.use_cut_plane ||
+       !allElementsVisible(r->tetrahedra) || !allElementsVisible(r->hexahedra) ||
+       !allElementsVisible(r->prisms) || !allElementsVisible(r->pyramids))
+      useEdges = false;
+
+    if(useEdges){
+      Msg(DEBUG, "Using edges to draw volume %d", r->tag());
+      m->generateEdgeRep();
+      m->va_lines = new VertexArray(2, m->getNumEdgeRep());
+      addEdgesInArrays(r, m->va_lines, m);
+    }
+    else if(CTX.mesh.volumes_edges || CTX.mesh.volumes_faces){
+      m->va_triangles = new VertexArray(3, 4 * r->tetrahedra.size() +
+					2 * r->prisms.size() + 
+					4 * r->pyramids.size());
+      addElementsInArrays(r, m->va_triangles, r->tetrahedra);
+      addElementsInArrays(r, m->va_triangles, r->prisms);
+      addElementsInArrays(r, m->va_triangles, r->pyramids);
+
+      m->va_quads = new VertexArray(4, 6 * r->hexahedra.size() +
+				    3 * r->prisms.size() +
+				    r->pyramids.size());
+      addElementsInArrays(r, m->va_quads, r->hexahedra);
+      addElementsInArrays(r, m->va_quads, r->prisms);
+      addElementsInArrays(r, m->va_quads, r->pyramids);
+    }
   }
 };
 
@@ -612,24 +642,38 @@ class drawMeshGRegion {
  public :
   void operator () (GRegion *r)
   {  
-    if(!r->getVisibility())
-      return;
+    if(!r->getVisibility()) return;
 
     if(CTX.render_mode == GMSH_SELECT) {
       glPushName(3);
       glPushName(r->tag());
     }
 
+    MRep *m = r->meshRep;
+
     if(CTX.mesh.volumes_edges){
-      glColor4ubv((GLubyte *) & CTX.color.mesh.hexahedron);
-      glBegin(GL_LINES);
-      for(std::set<MEdge>::const_iterator it = r->meshRep->edges.begin(); 
-	  it != r->meshRep->edges.end(); ++it){
-	MVertex *v0 = it->getVertex(0), *v1 = it->getVertex(1);
-	glVertex3d(v0->x(), v0->y(), v0->z());
-	glVertex3d(v1->x(), v1->y(), v1->z());
+      if(m->va_lines && m->va_lines->n()){
+	drawArrays(m->va_lines, GL_LINES, false, 
+		   CTX.mesh.color_carousel == 3, false, 
+		   getColor(r, CTX.mesh.volumes_faces, CTX.color.mesh.line));
       }
-      glEnd();
+      else{
+	drawArrays(m->va_triangles, GL_TRIANGLES, CTX.mesh.light && CTX.mesh.light_lines,
+		   CTX.mesh.color_carousel == 3, false, 
+		   getColor(r, CTX.mesh.volumes_faces, CTX.color.mesh.line), true);
+	drawArrays(m->va_quads, GL_QUADS, CTX.mesh.light && CTX.mesh.light_lines, 
+		   CTX.mesh.color_carousel == 3, false, 
+		   getColor(r, CTX.mesh.volumes_faces, CTX.color.mesh.line), true);
+      }
+    }
+    
+    if(CTX.mesh.volumes_faces){
+      drawArrays(m->va_triangles, GL_TRIANGLES, CTX.mesh.light, 
+		 CTX.mesh.color_carousel == 3, CTX.polygon_offset, 
+		 getColor(r, 0, CTX.color.mesh.tetrahedron));
+      drawArrays(m->va_quads, GL_QUADS, CTX.mesh.light, 
+		 CTX.mesh.color_carousel == 3, CTX.polygon_offset, 
+		 getColor(r, 0, CTX.color.mesh.hexahedron));
     }
 
     if(CTX.mesh.volumes_num) {
