@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.519 2006-08-16 21:55:26 geuzaine Exp $
+// $Id: GUI.cpp,v 1.520 2006-08-16 22:43:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2591,7 +2591,7 @@ void GUI::create_option_window()
       o->hide();
 
       static Fl_Menu_Item menu_mesh_color[] = {
-        {"By element type", 0, 0, 0},
+        {"By geometrical type", 0, 0, 0},
         {"By elementary entity", 0, 0, 0},
         {"By physical group", 0, 0, 0},
         {"By mesh partition", 0, 0, 0},

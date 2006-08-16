@@ -139,13 +139,12 @@ public :
 
   // geometry options 
   struct{
-    int vis_type;
     int points, lines, surfaces, volumes;
     int points_num, lines_num, surfaces_num, volumes_num;
     double point_size, line_width, point_sel_size, line_sel_width;
     int point_type, line_type; // flat or 3D
     int light;
-    int level, old_circle, circle_points;
+    int old_circle, circle_points;
     int extrude_spline_points, old_newreg;
     double normals, tangents;
     double scaling_factor;
@@ -156,8 +155,7 @@ public :
   // mesh options 
   struct {
     double msh_file_version;
-    int vis_type, changed, vertex_arrays;
-    int draw;
+    int changed, draw;
     int points, lines, surfaces_edges, surfaces_faces, volumes_edges, volumes_faces;
     int points_num, lines_num, surfaces_num, volumes_num;
     double label_frequency;
@@ -173,7 +171,7 @@ public :
     int format, nbPartitions, nb_smoothing, algo2d, algo3d, order, algo_recombine;
     int point_insertion, speed_max, min_circ_points;
     int bgmesh_type, constrained_bgmesh;
-    int histogram, initial_only;
+    int initial_only;
     double normals, tangents, explode;
     int color_carousel;
     int use_cut_plane, cut_plane_draw_intersect, cut_plane_only_volume;
@@ -182,14 +180,14 @@ public :
       double val = cut_planea * x + cut_planeb * y + cut_planec * z + cut_planed; 
       return val;
     }
-    int oldxtrude, oldxtrude_recombine, check_duplicates;
+    int oldxtrude, oldxtrude_recombine;
     int allow_degenerated_extrude, save_all;
     char *triangle_options;
     int smooth_normals;
     double angle_smooth_normals;
     double stl_distance_tol, dihedral_angle_tol;
     int edge_prolongation_threshold, do_not_coarsen;
-    double  nb_elem_per_rc ,   min_elem_size_fact , target_elem_size_fact, beta_smooth_metric;
+    double  nb_elem_per_rc, min_elem_size_fact, target_elem_size_fact, beta_smooth_metric;
   } mesh;
 
   // post processing options 
@@ -231,7 +229,6 @@ public :
     } geom;
     struct{
       unsigned int vertex, line, triangle, quadrangle;
-      unsigned int tetrahedron, hexahedron, prism, pyramid;
       unsigned int carousel[20];
       unsigned int tangents, normals;
     } mesh;

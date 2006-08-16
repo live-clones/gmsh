@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.76 2006-08-12 17:44:24 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.77 2006-08-16 22:43:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -231,14 +231,6 @@ void Get_Options(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "recombine")) { // old extrusion mesh generator
         CTX.mesh.oldxtrude_recombine = 1;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "dupli")) {
-        CTX.mesh.check_duplicates = 1;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "histogram")) {
-        CTX.mesh.histogram = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "optimize")) {

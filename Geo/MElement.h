@@ -520,15 +520,15 @@ class MPrism : public MElement {
   virtual int getNumFaces(){ return 5; }
   virtual MFace getFace(int num)
   {
-    if(num < 3)
+    if(num < 2)
       return MFace(_v[trifaces_prism[num][0]],
 		   _v[trifaces_prism[num][1]],
 		   _v[trifaces_prism[num][2]]);
     else
-      return MFace(_v[quadfaces_prism[num - 3][0]],
-		   _v[quadfaces_prism[num - 3][1]],
-		   _v[quadfaces_prism[num - 3][2]],
-		   _v[quadfaces_prism[num - 3][3]]);
+      return MFace(_v[quadfaces_prism[num - 2][0]],
+		   _v[quadfaces_prism[num - 2][1]],
+		   _v[quadfaces_prism[num - 2][2]],
+		   _v[quadfaces_prism[num - 2][3]]);
   }
   int getTypeForMSH(){ return PRI1; }
   int getTypeForUNV(){ return 112; } // WEDGE

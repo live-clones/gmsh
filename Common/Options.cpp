@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.291 2006-08-16 21:11:41 geuzaine Exp $
+// $Id: Options.cpp,v 1.292 2006-08-16 22:43:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -132,19 +132,14 @@ void Init_Options(int num)
   CTX.pixel_equiv_x = CTX.pixel_equiv_y = 0.;
   CTX.polygon_offset = 0;
   CTX.mesh_timer[0] = CTX.mesh_timer[1] = CTX.mesh_timer[2] = 0.;
-  CTX.geom.vis_type = 0;
-  CTX.geom.level = ELEMENTARY;
-  CTX.mesh.vis_type = 0;
   CTX.mesh.draw = 1;
   CTX.post.draw = 1;
   CTX.post.list = NULL;
   CTX.post.force_num = 0;
   CTX.print.gl_fonts = 1;
   CTX.threads_lock = 0; // very primitive locking
-  CTX.mesh.histogram = 0;
   CTX.mesh.changed = 1;
   CTX.mesh.oldxtrude = CTX.mesh.oldxtrude_recombine = 0; // old extrusion mesh generator
-  CTX.mesh.check_duplicates = 0; // check for duplicate nodes when loading a mesh
   CTX.mesh.bgmesh_type = WITHPOINTS;
   CTX.post.combine_time = 0; // try to combine_time views at startup
   CTX.post.plugin_draw_function = NULL;
@@ -4192,7 +4187,6 @@ double opt_mesh_points(OPT_ARGS_NUM)
 double opt_mesh_lines(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    if(CTX.mesh.lines != val) CTX.mesh.changed = 1;
     CTX.mesh.lines = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -4362,14 +4356,6 @@ double opt_mesh_line_type(OPT_ARGS_NUM)
   }
 #endif
   return CTX.mesh.line_type;
-}
-
-double opt_mesh_vertex_arrays(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    CTX.mesh.vertex_arrays = (int)val;
-  }
-  return CTX.mesh.vertex_arrays;
 }
 
 double opt_mesh_smooth_normals(OPT_ARGS_NUM)
@@ -7058,57 +7044,13 @@ unsigned int opt_mesh_color_quadrangles(OPT_ARGS_COL)
   return CTX.color.mesh.quadrangle;
 }
 
-unsigned int opt_mesh_color_tetrahedra(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET) {
-    CTX.color.mesh.tetrahedron = val;
-  }
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.tetrahedron, WID->mesh_col[4]);
-#endif
-  return CTX.color.mesh.tetrahedron;
-}
-
-unsigned int opt_mesh_color_hexahedra(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET) {
-    CTX.color.mesh.hexahedron = val;
-  }
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.hexahedron, WID->mesh_col[5]);
-#endif
-  return CTX.color.mesh.hexahedron;
-}
-
-unsigned int opt_mesh_color_prisms(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET) {
-    CTX.color.mesh.prism = val;
-  }
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.prism, WID->mesh_col[6]);
-#endif
-  return CTX.color.mesh.prism;
-}
-
-unsigned int opt_mesh_color_pyramid(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET) {
-    CTX.color.mesh.pyramid = val;
-  }
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.pyramid, WID->mesh_col[7]);
-#endif
-  return CTX.color.mesh.pyramid;
-}
-
 unsigned int opt_mesh_color_tangents(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
     CTX.color.mesh.tangents = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.tangents, WID->mesh_col[8]);
+  CCC(CTX.color.mesh.tangents, WID->mesh_col[4]);
 #endif
   return CTX.color.mesh.tangents;
 }
@@ -7119,7 +7061,7 @@ unsigned int opt_mesh_color_normals(OPT_ARGS_COL)
     CTX.color.mesh.normals = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.normals, WID->mesh_col[9]);
+  CCC(CTX.color.mesh.normals, WID->mesh_col[5]);
 #endif
   return CTX.color.mesh.normals;
 }
@@ -7134,7 +7076,7 @@ unsigned int opt_mesh_color_(int i, OPT_ARGS_COL)
     CTX.color.mesh.carousel[i] = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.mesh.carousel[i], WID->mesh_col[10+i]);
+  CCC(CTX.color.mesh.carousel[i], WID->mesh_col[6+i]);
 #endif
   return CTX.color.mesh.carousel[i];
 }

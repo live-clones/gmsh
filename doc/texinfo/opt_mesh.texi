@@ -359,11 +359,6 @@ Target element size factor in the Remesher@*
 Default value: @code{20}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.VertexArrays
-Use OpenGL vertex arrays to draw triangular meshes?@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.VolumeEdges
 Display edges of volume mesh?@*
 Default value: @code{1}@*
@@ -402,26 +397,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Color.Quadrangles
 Mesh quadrangle color (if Mesh.ColorCarousel=0)@*
 Default value: @code{@{130,120,225@}}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.Color.Tetrahedra
-Mesh tetrahedron color (if Mesh.ColorCarousel=0)@*
-Default value: @code{@{160,150,255@}}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.Color.Hexahedra
-Mesh hexahedron color (if Mesh.ColorCarousel=0)@*
-Default value: @code{@{130,120,225@}}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.Color.Prisms
-Mesh prism color (if Mesh.ColorCarousel=0)@*
-Default value: @code{@{232,210,23@}}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.Color.Pyramids
-Mesh pyramid color (if Mesh.ColorCarousel=0)@*
-Default value: @code{@{217,113,38@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Tangents

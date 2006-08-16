@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.171 2006-08-16 21:11:41 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.172 2006-08-16 22:43:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -725,16 +725,12 @@ class drawMeshGRegion {
     }
     
     if(CTX.mesh.volumes_faces){
-      // Note: color will be incorrect for mixed meshes when coloring
-      // by element type
-      unsigned int col3 = r->tetrahedra.size() ? CTX.color.mesh.tetrahedron :
-	r->prisms.size() ? CTX.color.mesh.prism : CTX.color.mesh.pyramid;
       drawArrays(m->va_triangles, GL_TRIANGLES, CTX.mesh.light, 
-		 CTX.mesh.color_carousel == 3, CTX.polygon_offset, getColor(r, 0, col3));
-      unsigned int col4 = r->hexahedra.size() ? CTX.color.mesh.hexahedron :
-	r->prisms.size() ? CTX.color.mesh.prism : CTX.color.mesh.pyramid;
+		 CTX.mesh.color_carousel == 3, CTX.polygon_offset, 
+		 getColor(r, 0, CTX.color.mesh.triangle));
       drawArrays(m->va_quads, GL_QUADS, CTX.mesh.light, 
-		 CTX.mesh.color_carousel == 3, CTX.polygon_offset, getColor(r, 0, col4));
+		 CTX.mesh.color_carousel == 3, CTX.polygon_offset, 
+		 getColor(r, 0, CTX.color.mesh.quadrangle));
     }
     
     if(CTX.mesh.volumes_num) {
