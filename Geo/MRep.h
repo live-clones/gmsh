@@ -35,7 +35,7 @@
 
 class MRep {
  protected:
-  // containedr for the edge representation (this 2x faster than
+  // container for the edge representation (this is 2x faster than
   // std::set<MEdge, MEdgeLessThan>)
   std::map<std::pair<MVertex*, MVertex*>, MElement*> edges;
 
@@ -65,7 +65,7 @@ class MRep {
   eriter lastEdgeRep() { return edges.end(); }
   int getNumEdgeRep() { return edges.size(); }
 
-  // the vertex arrays containing full elements
+  // the vertex arrays
   VertexArray *va_lines, *va_triangles, *va_quads;
 
   // destroys all the vertex arrays
