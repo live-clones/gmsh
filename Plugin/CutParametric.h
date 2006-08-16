@@ -37,7 +37,7 @@ private:
   static char *callbackStr(int num, int action, char *value, char **opt);
   static int fillXYZ();
   static int recompute;
-  static vector<double> x, y, z;
+  static std::vector<double> x, y, z;
 public:
   GMSH_CutParametricPlugin();
   void getName  (char *name) const;

@@ -1,4 +1,4 @@
-// $Id: SmoothNormals.cpp,v 1.6 2006-01-14 17:13:14 geuzaine Exp $
+// $Id: SmoothNormals.cpp,v 1.7 2006-08-16 05:25:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,14 +23,18 @@
 #include "Numeric.h"
 #include "SmoothNormals.h"
 
-double xyzn::eps = 1.e-12;
+float xyzn::eps = 1.e-6;
 
-float xyzn::angle(int i, float nx, float ny, float nz)
+float xyzn::angle(int i, char nx, char ny, char nz)
 {
   // returns the angle (in [-180,180]) between the ith normal stored
   // at point xyz and the new normal nx,ny,nz
-  double a[3] = {n[i].nx, n[i].ny, n[i].nz};
-  double b[3] = {nx, ny, nz};
+  double a[3] = {char2float(n[i].nx), 
+		 char2float(n[i].ny), 
+		 char2float(n[i].nz)};
+  double b[3] = {char2float(nx), 
+		 char2float(ny), 
+		 char2float(nz)};
   norme(a);
   norme(b);
   double c[3];
@@ -42,29 +46,28 @@ float xyzn::angle(int i, float nx, float ny, float nz)
   return (float)(angplan * 180. / Pi);
 }
 
-void xyzn::update(float nx, float ny, float nz, double tol)
+void xyzn::update(char nx, char ny, char nz, float tol)
 {
-  int N = n.size();
-
-  if(N > 100){
-    // just ignore it if we have more than 100 clusters (think "more
-    // than 100 elements touching a single vertex")
-    return;
-  }
+  // just ignore it if we have more than 100 clusters
+  if(n.size() > 100) return;
 
   // we average by clusters of normals separated by tol; the result of
   // the averaging depends on the order in which we average (since we
   // store the average value as the cluster center as we go), but it
   // seems to work very nicely in practice (and it's faster than
   // storing everyting and averaging at the end)
-  for(int i = 0; i < N; i++){
+  for(unsigned int i = 0; i < n.size(); i++){
     if(tol >= 180. || fabs(angle(i, nx, ny, nz)) < tol){
-      float c1 = (float)(n[i].nb) / (float)(n[i].nb + 1);
-      float c2 = 1. / (float)(n[i].nb + 1);
-      n[i].nx = (c1 * n[i].nx + c2 * nx);
-      n[i].ny = (c1 * n[i].ny + c2 * ny);
-      n[i].nz = (c1 * n[i].nz + c2 * nz);
-      n[i].nb++;
+      // just ignore it if we have more than 100 contributions to a
+      // single point...
+      if(n[i].nb < 100){
+	float c1 = (float)(n[i].nb) / (float)(n[i].nb + 1);
+	float c2 = 1. / (float)(n[i].nb + 1);
+	n[i].nx = (char)(c1 * n[i].nx + c2 * nx);
+	n[i].ny = (char)(c1 * n[i].ny + c2 * ny);
+	n[i].nz = (char)(c1 * n[i].nz + c2 * nz);
+	n[i].nb++;
+      }
       return;
     }
   }
@@ -78,31 +81,35 @@ void smooth_normals::add(double x, double y, double z,
 			 double nx, double ny, double nz)
 {
   xyzn xyz(x, y, z);
-  xyzn_iter it = c.find(xyz);
+
+  std::set<xyzn, lessthanxyzn>::const_iterator it = c.find(xyz);
   if(it == c.end()) {
-    xyz.update((float)nx, (float)ny, (float)nz, tol);
+    xyz.update(float2char(nx), 
+	       float2char(ny), 
+	       float2char(nz), tol);
     c.insert(xyz);
   }
   else {
     xyzn *p = (xyzn *) & (*it);
-    p->update((float)nx, (float)ny, (float)nz, tol);
+    p->update(float2char(nx), 
+	      float2char(ny), 
+	      float2char(nz), tol);
   }    
 }
 
 bool smooth_normals::get(double x, double y, double z,
 			 double &nx, double &ny, double &nz)
 {
-  xyzn xyz(x, y, z);
-  xyzn_iter it = c.find(xyz);
+  std::set<xyzn, lessthanxyzn>::const_iterator it = c.find(xyzn(x, y, z));
   if(it == c.end())
     return false;
 
   xyzn *p = (xyzn *) & (*it);
   for(unsigned int i = 0; i < p->n.size(); i++){
-    if(fabs(p->angle(i, (float)nx, (float)ny, (float)nz)) < tol) {
-      nx = p->n[i].nx;
-      ny = p->n[i].ny;
-      nz = p->n[i].nz;
+    if(fabs(p->angle(i, float2char(nx), float2char(ny), float2char(nz))) < tol) {
+      nx = char2float(p->n[i].nx);
+      ny = char2float(p->n[i].ny);
+      nz = char2float(p->n[i].nz);
       break;
     }
   }

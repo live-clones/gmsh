@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.109 2006-08-15 21:22:12 geuzaine Exp $
+// $Id: Post.cpp,v 1.110 2006-08-16 05:25:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -769,7 +769,7 @@ void Draw_Post(void)
 	}
 
 	glVertexPointer(3, GL_FLOAT, 0, v->TriVertexArray->vertices->array);
-	glNormalPointer(GL_FLOAT, 0, v->TriVertexArray->normals->array);
+	glNormalPointer(GL_BYTE, 0, v->TriVertexArray->normals->array);
 	glColorPointer(4, GL_UNSIGNED_BYTE, 0, v->TriVertexArray->colors->array);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -786,8 +786,8 @@ void Draw_Post(void)
 	glDisable(GL_LIGHTING);
       
 	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
+	glDisableClientState(GL_COLOR_ARRAY);
       }
 
       if(v->LinVertexArray && v->LinVertexArray->n()){

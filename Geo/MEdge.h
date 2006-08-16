@@ -20,8 +20,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <algorithm>
 #include "MVertex.h"
+#include "SVector3.h"
 
 class MElement;
 
@@ -45,6 +45,14 @@ class MEdge {
   inline int getNumVertices() const { return 2; }
   inline MVertex *getVertex(int i) const { return _v[i]; }
   inline MElement *getElement() const { return _element; }
+  SVector3 tangent()
+  {
+    SVector3 t(_v[1]->x() - _v[0]->x(), 
+	       _v[1]->y() - _v[0]->y(),
+	       _v[1]->z() - _v[0]->z());
+    t.normalize();
+    return t;
+  }
   SPoint3 barycenter()
   {
     return SPoint3(0.5 * (_v[0]->x() + _v[1]->x()), 

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.190 2006-08-08 04:35:22 geuzaine Exp $
+// $Id: Views.cpp,v 1.191 2006-08-16 05:25:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1001,7 +1001,7 @@ struct lessthanxyzv {
 };
 
 double xyzv::eps = 1.e-12;
-typedef set < xyzv, lessthanxyzv > xyzv_cont;
+typedef std::set < xyzv, lessthanxyzv > xyzv_cont;
 typedef xyzv_cont::const_iterator xyzv_iter;
 
 void generate_connectivities(List_T * list, int nbList, int nbTimeStep, int nbVert,

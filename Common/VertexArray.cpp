@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.11 2006-08-15 02:17:25 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.12 2006-08-16 05:25:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,7 @@ VertexArray::VertexArray(int numNodesPerElement, int numElements)
     numElements = 1;
   int nb = numElements * numNodesPerElement;
   vertices = List_Create(nb * 3, 3000, sizeof(float));
-  normals = List_Create(nb * 3, 3000, sizeof(float));
+  normals = List_Create(nb * 3, 3000, sizeof(char));
   colors = List_Create(nb * 4, 4000, sizeof(unsigned char));
 }
 
@@ -57,16 +57,21 @@ int VertexArray::n()
 void VertexArray::add(float x, float y, float z, 
 		      float n0, float n1, float n2, unsigned int col)
 {
+  List_Add(vertices, &x);
+  List_Add(vertices, &y);
+  List_Add(vertices, &z);
+
+  char c0 = float2char(n0);
+  char c1 = float2char(n1);
+  char c2 = float2char(n2);
+  List_Add(normals, &c0);
+  List_Add(normals, &c1);
+  List_Add(normals, &c2);
+
   unsigned char r = CTX.UNPACK_RED(col);
   unsigned char g = CTX.UNPACK_GREEN(col);
   unsigned char b = CTX.UNPACK_BLUE(col);
   unsigned char a = CTX.UNPACK_ALPHA(col);
-  List_Add(vertices, &x);
-  List_Add(vertices, &y);
-  List_Add(vertices, &z);
-  List_Add(normals, &n0);
-  List_Add(normals, &n1);
-  List_Add(normals, &n2);
   List_Add(colors, &r);
   List_Add(colors, &g);
   List_Add(colors, &b);
@@ -75,13 +80,14 @@ void VertexArray::add(float x, float y, float z,
 
 void VertexArray::add(float x, float y, float z, unsigned int col)
 {
+  List_Add(vertices, &x);
+  List_Add(vertices, &y);
+  List_Add(vertices, &z);
+
   unsigned char r = CTX.UNPACK_RED(col);
   unsigned char g = CTX.UNPACK_GREEN(col);
   unsigned char b = CTX.UNPACK_BLUE(col);
   unsigned char a = CTX.UNPACK_ALPHA(col);
-  List_Add(vertices, &x);
-  List_Add(vertices, &y);
-  List_Add(vertices, &z);
   List_Add(colors, &r);
   List_Add(colors, &g);
   List_Add(colors, &b);
@@ -115,13 +121,15 @@ int compareTriEye(const void *a, const void *b)
 
 void VertexArray::sort(double eye[3])
 {
+  // sort assumes that the all the arrays are filled
+  if(!List_Nbr(vertices) || !List_Nbr(normals) || !List_Nbr(colors))
+    return;
+
   if(type != 3){
     Msg(GERROR, "VertexArray sort only implemented for triangles");
     return;
   }
-
-  // FIXME this assumes that the color and normals are always filled!
-
+  
   theeye[0] = eye[0];
   theeye[1] = eye[1];
   theeye[2] = eye[2];

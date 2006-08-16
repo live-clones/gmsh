@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.26 2006-08-08 01:10:05 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.27 2006-08-16 05:25:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -297,6 +297,19 @@ double triangle_area(double p0[3], double p1[3], double p2[3])
   
   prodve(a, b, c);
   return (0.5 * sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]));
+}
+
+char float2char(float f)
+{
+  // f is supposed to be normalized in [-1, 1]
+  f = (f > 1.) ? 1. : (f < -1.) ? -1 : f;
+  // char is in [-128, 127]
+  return (char)(-128 + (f + 1.)/2. * 255);
+}
+
+float char2float(char c)
+{
+  return -1. + (float)(c + 128)/255. * 2.;
 }
 
 double InterpolateIso(double *X, double *Y, double *Z,

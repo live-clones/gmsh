@@ -1,4 +1,4 @@
-// $Id: FunctionManager.cpp,v 1.22 2006-01-06 00:34:27 geuzaine Exp $
+// $Id: FunctionManager.cpp,v 1.23 2006-08-16 05:25:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -24,8 +24,6 @@
 #include <stack>
 #include "FunctionManager.h"
 
-using namespace std;
-
 struct ltstr
 {
   bool operator() (const char *s1, const char *s2)const
@@ -49,12 +47,13 @@ class File_Position
 class mystack
 {
 public:
-  stack < File_Position > s;
+  std::stack < File_Position > s;
 };
 
 class mymap
 {
-  public: map < char *, File_Position, ltstr > m;
+public: 
+  std::map < char *, File_Position, ltstr > m;
 };
 
 FunctionManager *FunctionManager::instance = 0;

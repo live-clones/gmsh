@@ -24,23 +24,21 @@
 #include <vector>
 #include "Numeric.h"
 
-using namespace std;
-
 struct nnb
 {
-  float nx, ny, nz;
-  int nb;
+  char nx, ny, nz;
+  unsigned char nb;
 };
 
 struct xyzn
 {
-  double x, y, z;
-  vector<nnb> n;
-  static double eps;
-  xyzn(double xx, double yy, double zz) : x(xx), y(yy), z(zz){}
+  float x, y, z;
+  std::vector<nnb> n;
+  static float eps;
+  xyzn(float xx, float yy, float zz) : x(xx), y(yy), z(zz){}
   ~xyzn(){}
-  float angle(int i, float n0, float n1, float n2);
-  void update(float n0, float n1, float n2, double tol);
+  float angle(int i, char n0, char n1, char n2);
+  void update(char n0, char n1, char n2, float tol);
 };
 
 struct lessthanxyzn
@@ -61,13 +59,10 @@ struct lessthanxyzn
   }
 };
 
-typedef set < xyzn, lessthanxyzn > xyzn_cont;
-typedef xyzn_cont::const_iterator xyzn_iter;
-
 class smooth_normals{
  private:
-  double tol;
-  xyzn_cont c;  
+  float tol;
+  std::set<xyzn, lessthanxyzn> c;  
  public:
   smooth_normals(double angle) : tol(angle) {}
   void add(double x, double y, double z, double nx, double ny, double nz);

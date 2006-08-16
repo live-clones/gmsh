@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.168 2006-08-16 02:01:45 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.169 2006-08-16 05:25:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -129,13 +129,28 @@ static void drawNormals(std::vector<T*> &elements)
 {
   glColor4ubv((GLubyte *) & CTX.color.mesh.normals);
   for(unsigned int i = 0; i < elements.size(); i++){
-    SVector3 n = elements[i]->getFace(0).normal();
+    SVector3 n = elements[i]->getFaceRep(0).normal();
     for(int j = 0; j < 3; j++)
       n[j] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[j];
     SPoint3 pc = elements[i]->barycenter();
     Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
 		pc.x(), pc.y(), pc.z(), n[0], n[1], n[2], CTX.mesh.light);
+  }
+}
+
+template<class T>
+static void drawTangents(std::vector<T*> &elements)
+{
+  glColor4ubv((GLubyte *) & CTX.color.mesh.tangents);
+  for(unsigned int i = 0; i < elements.size(); i++){
+    SVector3 t = elements[i]->getEdgeRep(0).tangent();
+    for(int j = 0; j < 3; j++)
+      t[j] *= CTX.mesh.tangents * CTX.pixel_equiv_x / CTX.s[j];
+    SPoint3 pc = elements[i]->barycenter();
+    Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
+		pc.x(), pc.y(), pc.z(), t[0], t[1], t[2], CTX.mesh.light);
   }
 }
 
@@ -294,29 +309,29 @@ static void addElementsInArrays(GEntity *e, VertexArray *va, std::vector<T*> &el
   }
 }
 
-static void drawArrays(VertexArray *va, GLint type, bool useColorArray, 
-		       bool useNormalArray, bool usePolygonOffset,
+static void drawArrays(VertexArray *va, GLint type, bool useNormalArray, 
+		       bool useColorArray, bool usePolygonOffset,
 		       unsigned int uniformColor, bool drawOutline=false)
 {
   if(!va) return;
 
   glVertexPointer(3, GL_FLOAT, 0, va->vertices->array);
+  glNormalPointer(GL_BYTE, 0, va->normals->array);
   glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->colors->array);
-  glNormalPointer(GL_FLOAT, 0, va->normals->array);
   
   glEnableClientState(GL_VERTEX_ARRAY);
-  if(useColorArray)
-    glEnableClientState(GL_COLOR_ARRAY);
-  else{
-    glDisableClientState(GL_COLOR_ARRAY);
-    glColor4ubv((GLubyte *) & uniformColor);
-  }
   if(useNormalArray){
     glEnable(GL_LIGHTING);
     glEnableClientState(GL_NORMAL_ARRAY);
   }
   else
     glDisableClientState(GL_NORMAL_ARRAY);
+  if(useColorArray)
+    glEnableClientState(GL_COLOR_ARRAY);
+  else{
+    glDisableClientState(GL_COLOR_ARRAY);
+    glColor4ubv((GLubyte *) & uniformColor);
+  }
   
   if(usePolygonOffset) 
     glEnable(GL_POLYGON_OFFSET_FILL);
@@ -331,8 +346,8 @@ static void drawArrays(VertexArray *va, GLint type, bool useColorArray,
   glDisable(GL_LIGHTING);
   
   glDisableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_COLOR_ARRAY);
   glDisableClientState(GL_NORMAL_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
 }
 
 // GVertex drawing routines
@@ -394,8 +409,8 @@ class drawMeshGEdge {
     MRep *m = e->meshRep;
 
     if(CTX.mesh.lines)
-      drawArrays(m->va_lines, GL_LINES, CTX.mesh.color_carousel == 3, 
-		 false, false,  getColor(e, false, CTX.color.mesh.line));
+      drawArrays(m->va_lines, GL_LINES, false, CTX.mesh.color_carousel == 3, 
+		 false,  getColor(e, false, CTX.color.mesh.line));
 
     if(CTX.mesh.lines_num) {
       const int labelStep = getLabelStep(e->lines.size());
@@ -406,9 +421,8 @@ class drawMeshGEdge {
     if(CTX.mesh.points || CTX.mesh.points_num)
       drawVertices(e);
 
-    if(CTX.mesh.tangents){
-      // TODO
-    }
+    if(CTX.mesh.tangents)
+      drawTangents(e->lines);
 
     if(CTX.render_mode == GMSH_SELECT) {
       glPopName();
@@ -461,7 +475,8 @@ class initMeshGFace {
     if(!f->meshRep)
       f->meshRep = new MRepFace(f);
 
-    bool useEdges = true;
+    //bool useEdges = true;
+    bool useEdges = false;
 
     if(CTX.mesh.explode != 1. || CTX.mesh.quality_sup || CTX.mesh.radius_sup || 
        CTX.mesh.use_cut_plane)
@@ -528,26 +543,26 @@ class drawMeshGFace {
 
     if(CTX.mesh.surfaces_edges){
       if(m->va_lines && m->va_lines->n()){
-	drawArrays(m->va_lines, GL_LINES, CTX.mesh.color_carousel == 3, 
-		   CTX.mesh.light && CTX.mesh.light_lines, false, 
+	drawArrays(m->va_lines, GL_LINES, CTX.mesh.light && CTX.mesh.light_lines, 
+		   CTX.mesh.color_carousel == 3, false, 
 		   getColor(f, CTX.mesh.surfaces_faces, CTX.color.mesh.line));
       }
       else{
-	drawArrays(m->va_triangles, GL_TRIANGLES, CTX.mesh.color_carousel == 3, 
-		   CTX.mesh.light && CTX.mesh.light_lines, false, 
+	drawArrays(m->va_triangles, GL_TRIANGLES, CTX.mesh.light && CTX.mesh.light_lines,
+		   CTX.mesh.color_carousel == 3, false, 
 		   getColor(f, CTX.mesh.surfaces_faces, CTX.color.mesh.line), true);
-	drawArrays(m->va_quads, GL_QUADS, CTX.mesh.color_carousel == 3, 
-		   CTX.mesh.light && CTX.mesh.light_lines, false, 
+	drawArrays(m->va_quads, GL_QUADS, CTX.mesh.light && CTX.mesh.light_lines, 
+		   CTX.mesh.color_carousel == 3, false, 
 		   getColor(f, CTX.mesh.surfaces_faces, CTX.color.mesh.line), true);
       }
     }
     
     if(CTX.mesh.surfaces_faces){
-      drawArrays(m->va_triangles, GL_TRIANGLES, CTX.mesh.color_carousel == 3, 
-		 CTX.mesh.light, CTX.polygon_offset, 
+      drawArrays(m->va_triangles, GL_TRIANGLES, CTX.mesh.light, 
+		 CTX.mesh.color_carousel == 3, CTX.polygon_offset, 
 		 getColor(f, 0, CTX.color.mesh.triangle));
-      drawArrays(m->va_quads, GL_QUADS, CTX.mesh.color_carousel == 3, 
-		 CTX.mesh.light, CTX.polygon_offset, 
+      drawArrays(m->va_quads, GL_QUADS, CTX.mesh.light, 
+		 CTX.mesh.color_carousel == 3, CTX.polygon_offset, 
 		 getColor(f, 0, CTX.color.mesh.quadrangle));
     }
 

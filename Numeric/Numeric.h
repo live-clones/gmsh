@@ -77,6 +77,8 @@ double trace2 (double mat[3][3]);
 double inv3x3(double mat[3][3], double inv[3][3]);
 double angle_02pi(double A3);
 double triangle_area(double p0[3], double p1[3], double p2[3]);
+char float2char(float f);
+float char2float(char c);
 void eigenvalue(double mat[3][3], double re[3]);
 void FindCubicRoots(const double coeff[4], double re[3], double im[3]);
 void eigsort(double d[3]);

@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.16 2006-01-06 00:34:32 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.17 2006-08-16 05:25:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -77,9 +77,9 @@ static double getU(int i)
 }
 
 int GMSH_CutParametricPlugin::recompute = 1;
-vector<double> GMSH_CutParametricPlugin::x;
-vector<double> GMSH_CutParametricPlugin::y;
-vector<double> GMSH_CutParametricPlugin::z;
+std::vector<double> GMSH_CutParametricPlugin::x;
+std::vector<double> GMSH_CutParametricPlugin::y;
+std::vector<double> GMSH_CutParametricPlugin::z;
 
 int GMSH_CutParametricPlugin::fillXYZ()
 {
