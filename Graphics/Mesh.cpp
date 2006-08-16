@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.167 2006-08-15 21:22:12 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.168 2006-08-16 02:01:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -58,12 +58,12 @@ static unsigned int getColor(GEntity *e, int forceColor, unsigned int color)
   return color;
 }
 
-static double intersectCutPlane(MElement *e, int *edges=0, int *faces=0)
+static double intersectCutPlane(MElement *ele, int *edges=0, int *faces=0)
 {
-  MVertex *v = e->getVertex(0);
+  MVertex *v = ele->getVertex(0);
   double val = CTX.mesh.evalCutPlane(v->x(), v->y(), v->z());
-  for(int i = 1; i < e->getNumVertices(); i++){
-    v = e->getVertex(i);
+  for(int i = 1; i < ele->getNumVertices(); i++){
+    v = ele->getVertex(i);
     if(val * CTX.mesh.evalCutPlane(v->x(), v->y(), v->z()) <= 0){
       // the element intersects the cut plane
       if(CTX.mesh.cut_plane_as_surface){
@@ -233,7 +233,7 @@ static void drawBarycentricDual(std::vector<T*> &elements)
 // Routines for filling and drawing the vertex arrays
 
 template<class T>
-static void addInArrays(GEntity *e, VertexArray *va, std::vector<T*> &elements)
+static void addElementsInArrays(GEntity *e, VertexArray *va, std::vector<T*> &elements)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
     MElement *ele = elements[i];
@@ -374,7 +374,7 @@ class initMeshGEdge {
     if(CTX.mesh.lines){
       if(e->meshRep->va_lines) delete e->meshRep->va_lines;
       e->meshRep->va_lines = new VertexArray(2, e->lines.size());
-      addInArrays(e, e->meshRep->va_lines, e->lines);
+      addElementsInArrays(e, e->meshRep->va_lines, e->lines);
     }
   }
 };
@@ -489,9 +489,9 @@ class initMeshGFace {
       for(; it != f->meshRep->edges.end(); ++it){
 	for(int i = 0; i < 2; i++){
 	  MVertex *v = it->getVertex(i);
-	  MElement *e = it->getElement();
-	  SVector3 n = e->getFace(0).normal();
-	  int part = e->getPartition();
+	  MElement *ele = it->getElement();
+	  SVector3 n = ele->getFace(0).normal();
+	  int part = ele->getPartition();
 	  if(CTX.mesh.smooth_normals)
 	    f->model()->normals->get(v->x(), v->y(), v->z(), n[0], n[1], n[2]);
 	  f->meshRep->va_lines->add(v->x(), v->y(), v->z(), n[0], n[1], n[2],
@@ -500,14 +500,14 @@ class initMeshGFace {
       }
     }
 
-    if(CTX.mesh.surfaces_faces || (!useEdges && CTX.mesh.surfaces_edges)){
+    if((!useEdges && CTX.mesh.surfaces_edges) || CTX.mesh.surfaces_faces){
       if(f->meshRep->va_triangles) delete f->meshRep->va_triangles;
       f->meshRep->va_triangles = new VertexArray(3, f->triangles.size());
-      addInArrays(f, f->meshRep->va_triangles, f->triangles);
+      addElementsInArrays(f, f->meshRep->va_triangles, f->triangles);
 
       if(f->meshRep->va_quads) delete f->meshRep->va_quads;
       f->meshRep->va_quads = new VertexArray(4, f->quadrangles.size());
-      addInArrays(f, f->meshRep->va_quads, f->quadrangles);
+      addElementsInArrays(f, f->meshRep->va_quads, f->quadrangles);
     }
   }
 };
@@ -679,8 +679,11 @@ void Draw_Mesh()
       if(status >= 1)
 	std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), initMeshGEdge());
       if(status >= 2){
-	if(GMODEL->normals) delete GMODEL->normals;
+	if(GMODEL->normals) 
+	  delete GMODEL->normals;
 	GMODEL->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
+	if(CTX.mesh.smooth_normals)
+	  std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), initSmoothNormalsGFace());
 	std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), initMeshGFace());
       }
       if(status >= 3)
