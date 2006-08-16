@@ -7,7 +7,7 @@ extern Context_T CTX;
 GEntity::GEntity(GModel *m, int t)
   : _model(m), _tag(t), _visible(true), _flag(0), meshRep(0) 
 {
-  _color = CTX.PACK_COLOR(0, 0, 255, 255);
+  _color = CTX.PACK_COLOR(0, 0, 255, 0);
 }
 
 GEntity::~GEntity()
@@ -21,7 +21,7 @@ bool GEntity::useColor()
   int g = CTX.UNPACK_GREEN(_color);
   int b = CTX.UNPACK_BLUE(_color);
   int a = CTX.UNPACK_ALPHA(_color);
-  if(r == 0 && g == 0 && b == 255 && a == 255)
+  if(r == 0 && g == 0 && b == 255 && a == 0)
     return false;
   return true;
 }
