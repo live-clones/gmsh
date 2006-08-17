@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.16 2006-08-17 03:22:22 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.17 2006-08-17 05:10:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -142,6 +142,18 @@ static void storeVerticesInEntities(std::map<int, MVertex*> &vertices)
   std::map<int, MVertex*>::const_iterator ite = vertices.end();
   for(; it != ite; ++it){
     MVertex *v = it->second;
+    GEntity *ge = v->onWhat();
+    if(ge) 
+      ge->mesh_vertices.push_back(v);
+    else
+      delete v; // we delete all unused vertices
+  }
+}
+
+static void storeVerticesInEntities(std::vector<MVertex*> &vertices)
+{
+  for(unsigned int i = 0; i < vertices.size(); i++){
+    MVertex *v = vertices[i];
     GEntity *ge = v->onWhat();
     if(ge) 
       ge->mesh_vertices.push_back(v);
@@ -749,6 +761,71 @@ static int skipUntil(FILE *fp, char *key)
   return 1;
 }
 
+static int readVerticesVRML(FILE *fp, std::map<int, MVertex*> &vertices,
+			    std::vector<MVertex*> &allvertices)
+{
+  int num = 0;
+  double x, y, z;
+  char buffer[256];
+  if(!fgets(buffer, sizeof(buffer), fp)) return 0;
+  while(sscanf(buffer, "%lf %lf %lf", &x, &y, &z)){
+    vertices[num++] = new MVertex(x, y, z);
+    if(!fgets(buffer, sizeof(buffer), fp)) return 0;
+  }
+  for(unsigned int i = 0; i < vertices.size(); i++)
+    allvertices.push_back(vertices[i]);
+  Msg(INFO, "%d vertices", vertices.size());
+  return vertices.size();
+}
+
+static int readElementsVRML(FILE *fp, std::map<int, MVertex*> &vertices, 
+			    std::vector<MElement*> &elements)
+{
+  int i;
+  std::vector<int> idx;
+  if(!fscanf(fp, "%d", &i)) return 0;
+  idx.push_back(i);
+  while(fscanf(fp, " , %d", &i)){
+    if(i != -1){
+      idx.push_back(i);
+    }
+    else{
+      // check if all the indices are valid
+      for(unsigned int j = 0; j < idx.size(); j++){
+	if(!vertices.count(idx[j])){
+	  Msg(GERROR, "Bad vertex index in VRML file");
+	  return 0;
+	}
+      }
+      // create the elements
+      if(idx.size() == 2){
+	elements.push_back(new MLine(vertices[idx[0]], vertices[idx[1]]));
+      }
+      else if(idx.size() > 2){
+	// if there are more than 3 indices we assume that we have a
+	// triangle strip
+	for(unsigned int j = 2; j < idx.size(); j++){
+	  if(j % 2)
+	    elements.push_back(new MTriangle(vertices[idx[j]], 
+					     vertices[idx[j - 1]],
+					     vertices[idx[j - 2]]));
+	  else
+	    elements.push_back(new MTriangle(vertices[idx[j - 2]],
+					     vertices[idx[j - 1]],
+					     vertices[idx[j]]));
+	}
+      }
+      idx.clear();
+    }
+  }
+  if(idx.size()){
+    Msg(GERROR, "Premature end of VRML file");
+    return 0;
+  }
+  Msg(INFO, "%d elements", elements.size());
+  return elements.size();
+}
+
 int GModel::readVRML(const std::string &name)
 {
   FILE *fp = fopen(name.c_str(), "r");
@@ -757,11 +834,16 @@ int GModel::readVRML(const std::string &name)
     return 0;
   }
 
-  // Warning: this is by NO means a real VRML/Inventor parser: it just
-  // reads the special bunch of files I have to work with.
+  // This is by NO means a complete VRML/Inventor parser. It just
+  // reads a very limited subset of VRML/Inventor 1.0 and 2.1 by
+  // making plenty of bold assumptions on how the file is structured
+  // (for example, it assumes that all the tags are on separate
+  // lines).
 
   std::map<int, MVertex*> vertices;
-  std::map<int, std::vector<MElement*> > triangles;
+  std::vector<MVertex*> allvertices;
+  int elementTypes[2] = {LGN1, TRI1};
+  std::map<int, std::vector<MElement*> > elements[2];
   int region = 0;
   char buffer[256], str[256];
   while(!feof(fp)) {
@@ -770,51 +852,48 @@ int GModel::readVRML(const std::string &name)
       sscanf(buffer, "%s", str);
       if(!strcmp(str, "IndexedTriangleStripSet")){
 	region++;
-	Msg(INFO, "IndexedTriangleStripSet");
+	vertices.clear();
 	if(!skipUntil(fp, "vertex")) break;
-	int num = 0;
-	double x, y, z;
-	if(!fgets(buffer, sizeof(buffer), fp)) break;
-	while(sscanf(buffer, "%lf %lf %lf", &x, &y, &z)){
-	  vertices[num++] = new MVertex(x, y, z);
-	  if(!fgets(buffer, sizeof(buffer), fp)) break;
-	}
-	Msg(INFO, "%d vertices", vertices.size());
+	if(!readVerticesVRML(fp, vertices, allvertices)) break;
 	if(!skipUntil(fp, "coordIndex")) break;
-	int index;
-	if(!fscanf(fp, "%d", &index)) break;
-	std::vector<int> indices;
-	while(fscanf(fp, " , %d", &index)){
-	  if(index == -1){
-	    if(indices.size() < 3){
-	      Msg(GERROR, "Less than 3 indices in VRML triangle strip");
-	      break;
-	    }
-	    for(unsigned int i = 2; i < indices.size(); i++){
-	      triangles[region].push_back(new MTriangle(vertices[indices[i-2]], 
-							vertices[indices[i-1]], 
-							vertices[indices[i]]));
-	    }
-	    indices.clear();
-	  }
-	  else{
-	    indices.push_back(index);
-	  }
-	}
-	if(indices.size()){
-	  Msg(GERROR, "End of VRML triangle strip not found");
-	}
-	Msg(INFO, "%d triangles", triangles[region].size());
+	if(!readElementsVRML(fp, vertices, elements[1][region])) break;
       }
-      else{
-	// just ignore 
+      else if(!strcmp(str, "Coordinate3")){
+	vertices.clear();
+	if(!skipUntil(fp, "point")) break;
+	if(!readVerticesVRML(fp, vertices, allvertices)) break;
+      }
+      else if(!strcmp(str, "IndexedFaceSet")){
+	region++;
+	if(!skipUntil(fp, "coordIndex")) break;
+	if(!readElementsVRML(fp, vertices, elements[1][region])) break;
+      }
+      else if(!strcmp(str, "IndexedLineSet")){
+	region++;
+	if(!skipUntil(fp, "coordIndex")) break;
+	if(!readElementsVRML(fp, vertices, elements[0][region])) break;
+      }
+      else if(!strcmp(str, "DEF")){
+	char str1[256], str2[256];
+	if(!sscanf(buffer, "%s %s %s", str1, str2, str)) break;
+	if(!strcmp(str, "IndexedFaceSet")){
+	  region++;
+	  if(!skipUntil(fp, "coordIndex")) break;
+	  if(!readElementsVRML(fp, vertices, elements[1][region])) break;
+	}
+	else if(!strcmp(str, "IndexedLineSet")){
+	  region++;
+	  if(!skipUntil(fp, "coordIndex")) break;
+	  if(!readElementsVRML(fp, vertices, elements[0][region])) break;
+	}
       }
     }
   }
 
-  storeElementsInEntities(this, TRI1, triangles);
+  for(int i = 0; i < 2; i++)
+    storeElementsInEntities(this, elementTypes[i], elements[i]);
   associateEntityWithVertices(this);
-  storeVerticesInEntities(vertices);
+  storeVerticesInEntities(allvertices);
 
   fclose(fp);
   return 1;
