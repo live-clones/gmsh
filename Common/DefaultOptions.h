@@ -888,6 +888,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Format" , opt_mesh_format , FORMAT_MSH , 
     "Mesh output format (1=msh, 2=unv, 3=gref, 19=vrml)" },
 
+  { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. , 
+    "Display mesh hexahedra?" },
+
   { F|O, "InitialOnly" , opt_mesh_initial_only , 0. ,
     "Only contruct the n-dimensional initial mesh (no refinement)" },
   { F|O, "Interactive" , opt_mesh_interactive , 0. ,
@@ -949,7 +952,13 @@ StringXNumber MeshOptions_Number[] = {
     "Display size of mesh vertices (in pixels)" },
   { F|O, "PointType" , opt_mesh_point_type , 0. , 
     "Display mesh vertices as solid color dots (0) or 3D spheres (1)" },
+  { F|O, "Prisms" , opt_mesh_prisms , 1. , 
+    "Display mesh prisms?" },
+  { F|O, "Pyramids" , opt_mesh_pyramids , 1. , 
+    "Display mesh pyramids?" },
 
+  { F|O, "Quadrangles" , opt_mesh_quadrangles , 1. , 
+    "Display mesh quadrangles?" },
   { F|O, "Quality" , opt_mesh_quality , 1.0 ,
     "Target quality for tetrahedral elements (currently only used by Tetgen)" },
   { F|O, "QualityInf" , opt_mesh_quality_inf , 0.0 , 
@@ -993,6 +1002,10 @@ StringXNumber MeshOptions_Number[] = {
     "Display size of tangent vectors (in pixels)" }, 
   { F|O, "TargetElmentSizeFact" , opt_mesh_target_elem_size_fact, 20. ,
     "Target element size factor in the Remesher" },
+  { F|O, "Tetrahedra" , opt_mesh_tetrahedra , 1. , 
+    "Display mesh tetrahedra?" },
+  { F|O, "Triangles" , opt_mesh_triangles , 1. , 
+    "Display mesh triangles?" },
 
   { F|O, "VolumeEdges" , opt_mesh_volumes_edges , 1. , 
     "Display edges of volume mesh?" },
@@ -1278,7 +1291,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "ShowScale" , opt_view_show_scale , 1. ,
     "Show value scale?" },
   { F|O, "ShowTime" , opt_view_show_time , 3. ,
-    "Time display mode (0=hidden, 1=value if multiple, 2=value always, 3=step if multiple, 4=step always)" },
+    "Time display mode (0=hidden, 1=value if multi-step, 2=value always, 3=step if multi-step, 4=step always)" },
   { F|O, "SmoothNormals" , opt_view_smooth_normals , 0. ,
     "Smooth the normals?" },
   { F|O, "Stipple" , opt_view_use_stipple , 0. ,

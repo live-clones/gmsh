@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.435 2006-08-17 05:18:50 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.436 2006-08-17 17:08:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1113,6 +1113,12 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_constrained_bgmesh(0, GMSH_SET, WID->mesh_butt[5]->value());
   opt_mesh_points(0, GMSH_SET, WID->mesh_butt[6]->value());
   opt_mesh_lines(0, GMSH_SET, WID->mesh_butt[7]->value());
+  opt_mesh_triangles(0, GMSH_SET, WID->mesh_menu_butt->menu()[0].value());
+  opt_mesh_quadrangles(0, GMSH_SET, WID->mesh_menu_butt->menu()[1].value());
+  opt_mesh_tetrahedra(0, GMSH_SET, WID->mesh_menu_butt->menu()[2].value());
+  opt_mesh_hexahedra(0, GMSH_SET, WID->mesh_menu_butt->menu()[3].value());
+  opt_mesh_prisms(0, GMSH_SET, WID->mesh_menu_butt->menu()[4].value());
+  opt_mesh_pyramids(0, GMSH_SET, WID->mesh_menu_butt->menu()[5].value());
   opt_mesh_surfaces_edges(0, GMSH_SET, WID->mesh_butt[8]->value());
   opt_mesh_surfaces_faces(0, GMSH_SET, WID->mesh_butt[9]->value());
   opt_mesh_volumes_edges(0, GMSH_SET, WID->mesh_butt[10]->value());
@@ -3928,49 +3934,49 @@ void view_options_ok_cb(CALLBACK_ARGS)
       if(force || (val != smooth_normals))
         opt_view_smooth_normals(i, GMSH_SET, val);
 
-      val = WID->view_butt[13]->value();
-      if(force || (val != draw_points))
-        opt_view_draw_points(i, GMSH_SET, val);
-
-      val = WID->view_butt[14]->value();
-      if(force || (val != draw_lines))
-        opt_view_draw_lines(i, GMSH_SET, val);
-
-      val = WID->view_butt[15]->value();
-      if(force || (val != draw_triangles))
-        opt_view_draw_triangles(i, GMSH_SET, val);
-
-      val = WID->view_butt[16]->value();
-      if(force || (val != draw_quadrangles))
-        opt_view_draw_quadrangles(i, GMSH_SET, val);
-
-      val = WID->view_butt[17]->value();
-      if(force || (val != draw_tetrahedra))
-        opt_view_draw_tetrahedra(i, GMSH_SET, val);
-
-      val = WID->view_butt[18]->value();
-      if(force || (val != draw_hexahedra))
-        opt_view_draw_hexahedra(i, GMSH_SET, val);
-
-      val = WID->view_butt[19]->value();
-      if(force || (val != draw_prisms))
-        opt_view_draw_prisms(i, GMSH_SET, val);
-
-      val = WID->view_butt[20]->value();
-      if(force || (val != draw_pyramids))
-        opt_view_draw_pyramids(i, GMSH_SET, val);
-
-      val = WID->view_butt[21]->value();
+      val = WID->view_menu_butt[0]->menu()[0].value() ? 1 : 0;
       if(force || (val != draw_scalars))
         opt_view_draw_scalars(i, GMSH_SET, val);
 
-      val = WID->view_butt[22]->value();
+      val = WID->view_menu_butt[0]->menu()[1].value() ? 1 : 0;
       if(force || (val != draw_vectors))
         opt_view_draw_vectors(i, GMSH_SET, val);
 
-      val = WID->view_butt[23]->value();
+      val = WID->view_menu_butt[0]->menu()[2].value() ? 1 : 0;
       if(force || (val != draw_tensors))
         opt_view_draw_tensors(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[1]->menu()[0].value() ? 1 : 0;
+      if(force || (val != draw_points))
+        opt_view_draw_points(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[1]->menu()[1].value() ? 1 : 0;
+      if(force || (val != draw_lines))
+        opt_view_draw_lines(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[1]->menu()[2].value() ? 1 : 0;
+      if(force || (val != draw_triangles))
+        opt_view_draw_triangles(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[1]->menu()[3].value() ? 1 : 0;
+      if(force || (val != draw_quadrangles))
+        opt_view_draw_quadrangles(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[1]->menu()[4].value() ? 1 : 0;
+      if(force || (val != draw_tetrahedra))
+        opt_view_draw_tetrahedra(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[1]->menu()[5].value() ? 1 : 0;
+      if(force || (val != draw_hexahedra))
+        opt_view_draw_hexahedra(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[1]->menu()[6].value() ? 1 : 0;
+      if(force || (val != draw_prisms))
+        opt_view_draw_prisms(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[1]->menu()[7].value() ? 1 : 0;
+      if(force || (val != draw_pyramids))
+        opt_view_draw_pyramids(i, GMSH_SET, val);
 
       val = WID->view_butt[6]->value();
       if(force || (val != use_gen_raise))

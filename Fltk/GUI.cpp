@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.522 2006-08-17 00:25:01 geuzaine Exp $
+// $Id: GUI.cpp,v 1.523 2006-08-17 17:08:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -410,6 +410,7 @@ static Fl_Menu_Item menu_axes_mode[] = {
   {"Ruler", 0, 0, 0},
   {0}
 };
+
 
 #define NUM_FONTS 14
 
@@ -2418,16 +2419,29 @@ void GUI::create_option_window()
       mesh_value[12]->step(0.1);
       mesh_value[12]->align(FL_ALIGN_RIGHT);
 
-      mesh_value[4] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW / 2, BH);
+      static Fl_Menu_Item menu_mesh_element_types[] = {
+	{"Triangles",   0, 0, 0, FL_MENU_TOGGLE},
+	{"Quadrangles", 0, 0, 0, FL_MENU_TOGGLE},
+	{"Tetrahedra",  0, 0, 0, FL_MENU_TOGGLE},
+	{"Hexahedra",   0, 0, 0, FL_MENU_TOGGLE},
+	{"Prisms",      0, 0, 0, FL_MENU_TOGGLE},
+	{"Pyramids",    0, 0, 0, FL_MENU_TOGGLE},
+	{0}
+      };
+
+      mesh_menu_butt = new Fl_Menu_Button(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Elements");
+      mesh_menu_butt->menu(menu_mesh_element_types);
+
+      mesh_value[4] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW / 4, BH);
       mesh_value[4]->minimum(0);
       mesh_value[4]->maximum(1);
-      mesh_value[4]->step(0.001);
+      mesh_value[4]->step(0.01);
       mesh_value[4]->align(FL_ALIGN_RIGHT);
 
-      mesh_value[5] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 7 * BH, IW / 2, BH, "Element quality range");
+      mesh_value[5] = new Fl_Value_Input(L + 2 * WB + IW / 4, 2 * WB + 8 * BH, IW / 4, BH);
       mesh_value[5]->minimum(0);
       mesh_value[5]->maximum(1);
-      mesh_value[5]->step(0.001);
+      mesh_value[5]->step(0.01);
       mesh_value[5]->align(FL_ALIGN_RIGHT);
 
       static Fl_Menu_Item menu_quality_type[] = {
@@ -2436,14 +2450,14 @@ void GUI::create_option_window()
         {"Rho", 0, 0, 0},
         {0}
       };
-      mesh_choice[6] = new Fl_Choice(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Element quality measure");
+      mesh_choice[6] = new Fl_Choice(L + 2 * WB + IW / 2, 2 * WB + 8 * BH, IW/2, BH, "Quality range");
       mesh_choice[6]->menu(menu_quality_type);
       mesh_choice[6]->align(FL_ALIGN_RIGHT);
 
       mesh_value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
       mesh_value[6]->align(FL_ALIGN_RIGHT);
 
-      mesh_value[7] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "Element size range");
+      mesh_value[7] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "Size range");
       mesh_value[7]->align(FL_ALIGN_RIGHT);
 
       mesh_value[8] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Normals");
@@ -2817,87 +2831,50 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Visibility");
       o->hide();
 
-      view_butt[13] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Points");
-      view_butt[13]->type(FL_TOGGLE_BUTTON);
-      view_butt[13]->down_box(GMSH_TOGGLE_BOX);
-      view_butt[13]->selection_color(GMSH_TOGGLE_COLOR);
-
-      view_butt[14] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Lines");
-      view_butt[14]->type(FL_TOGGLE_BUTTON);
-      view_butt[14]->down_box(GMSH_TOGGLE_BOX);
-      view_butt[14]->selection_color(GMSH_TOGGLE_COLOR);
-
-      view_butt[15] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Triangles");
-      view_butt[15]->type(FL_TOGGLE_BUTTON);
-      view_butt[15]->down_box(GMSH_TOGGLE_BOX);
-      view_butt[15]->selection_color(GMSH_TOGGLE_COLOR);
-
-      view_butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Quadrangles");
-      view_butt[16]->type(FL_TOGGLE_BUTTON);
-      view_butt[16]->down_box(GMSH_TOGGLE_BOX);
-      view_butt[16]->selection_color(GMSH_TOGGLE_COLOR);
-
-      view_butt[17] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW / 2 - WB, BH, "Tetrahedra");
-      view_butt[17]->type(FL_TOGGLE_BUTTON);
-      view_butt[17]->down_box(GMSH_TOGGLE_BOX);
-      view_butt[17]->selection_color(GMSH_TOGGLE_COLOR);
-
-      view_butt[18] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW / 2 - WB, BH, "Hexahedra");
-      view_butt[18]->type(FL_TOGGLE_BUTTON);
-      view_butt[18]->down_box(GMSH_TOGGLE_BOX);
-      view_butt[18]->selection_color(GMSH_TOGGLE_COLOR);
-
-      view_butt[19] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW / 2 - WB, BH, "Prisms");
-      view_butt[19]->type(FL_TOGGLE_BUTTON);
-      view_butt[19]->down_box(GMSH_TOGGLE_BOX);
-      view_butt[19]->selection_color(GMSH_TOGGLE_COLOR);
-
-      view_butt[20] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW / 2 - WB, BH, "Pyramids");
-      view_butt[20]->type(FL_TOGGLE_BUTTON);
-      view_butt[20]->down_box(GMSH_TOGGLE_BOX);
-      view_butt[20]->selection_color(GMSH_TOGGLE_COLOR);
-
-      view_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Normals");
-      view_value[0]->minimum(0);
-      view_value[0]->maximum(500);
-      view_value[0]->step(1);
-      view_value[0]->align(FL_ALIGN_RIGHT);
-
-      view_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Tangents");
-      view_value[1]->minimum(0);
-      view_value[1]->maximum(500);
-      view_value[1]->step(1);
-      view_value[1]->align(FL_ALIGN_RIGHT);
-      
-      view_butt[4] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Scale");
+      view_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Show value scale");
       view_butt[4]->tooltip("(Alt+i)");
       view_butt[4]->type(FL_TOGGLE_BUTTON);
       view_butt[4]->down_box(GMSH_TOGGLE_BOX);
       view_butt[4]->selection_color(GMSH_TOGGLE_COLOR);
 
       static Fl_Menu_Item time_display[] = {
-	{"Hidden", 0, 0, 0},
-	{"Value if multiple", 0, 0, 0},
-	{"Value always", 0, 0, 0},
-	{"Step if multiple", 0, 0, 0},
-	{"Step always", 0, 0, 0},
+	{"None", 0, 0, 0},
+	{"Value if multi-step", 0, 0, 0},
+	{"Value", 0, 0, 0},
+	{"Step if multi-step", 0, 0, 0},
+	{"Step", 0, 0, 0},
 	{0}
       };
-      view_choice[12] = new Fl_Choice(L + width / 2, 2 * WB + 2 * BH, IW, BH, "Time");
+      view_choice[12] = new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Time display mode");
       view_choice[12]->menu(time_display);
       view_choice[12]->align(FL_ALIGN_RIGHT);
 
-      view_butt[5] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Annotations");
+      view_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Show annotations");
       view_butt[5]->tooltip("(Alt+n)");
       view_butt[5]->type(FL_TOGGLE_BUTTON);
       view_butt[5]->down_box(GMSH_TOGGLE_BOX);
       view_butt[5]->selection_color(GMSH_TOGGLE_COLOR);
 
-      view_butt[10] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Element edges");
+      view_butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Draw element outlines");
       view_butt[10]->type(FL_TOGGLE_BUTTON);
       view_butt[10]->down_box(GMSH_TOGGLE_BOX);
       view_butt[10]->selection_color(GMSH_TOGGLE_COLOR);
 
+      static Fl_Menu_Item menu_view_element_types[] = {
+	{"Points",      0, 0, 0, FL_MENU_TOGGLE},
+	{"Lines",       0, 0, 0, FL_MENU_TOGGLE},
+	{"Triangles",   0, 0, 0, FL_MENU_TOGGLE},
+	{"Quadrangles", 0, 0, 0, FL_MENU_TOGGLE},
+	{"Tetrahedra",  0, 0, 0, FL_MENU_TOGGLE},
+	{"Hexahedra",   0, 0, 0, FL_MENU_TOGGLE},
+	{"Prisms",      0, 0, 0, FL_MENU_TOGGLE},
+	{"Pyramids",    0, 0, 0, FL_MENU_TOGGLE},
+	{0}
+      };
+
+      view_menu_butt[1] = new Fl_Menu_Button(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Elements");
+      view_menu_butt[1]->menu(menu_view_element_types);
+      
       static Fl_Menu_Item menu_boundary[] = {
 	{"None", 0, 0, 0},
 	{"Dimension - 1", 0, 0, 0},
@@ -2905,25 +2882,33 @@ void GUI::create_option_window()
 	{"Dimension - 3", 0, 0, 0},
 	{0}
       };
-      view_choice[9] = new Fl_Choice(L + width / 2, 2 * WB + 5 * BH, IW, BH, "Boundary");
+      view_choice[9] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Element boundary mode");
       view_choice[9]->menu(menu_boundary);
       view_choice[9]->align(FL_ALIGN_RIGHT);
 
-      view_butt[21] = new Fl_Check_Button(L + width / 2, 2 * WB + 6 * BH, BW / 2 - WB, BH, "Scalar values");
-      view_butt[21]->type(FL_TOGGLE_BUTTON);
-      view_butt[21]->down_box(GMSH_TOGGLE_BOX);
-      view_butt[21]->selection_color(GMSH_TOGGLE_COLOR);
+      view_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Normals");
+      view_value[0]->minimum(0);
+      view_value[0]->maximum(500);
+      view_value[0]->step(1);
+      view_value[0]->align(FL_ALIGN_RIGHT);
 
-      view_butt[22] = new Fl_Check_Button(L + width / 2, 2 * WB + 7 * BH, BW / 2 - WB, BH, "Vector values");
-      view_butt[22]->type(FL_TOGGLE_BUTTON);
-      view_butt[22]->down_box(GMSH_TOGGLE_BOX);
-      view_butt[22]->selection_color(GMSH_TOGGLE_COLOR);
+      view_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Tangents");
+      view_value[1]->minimum(0);
+      view_value[1]->maximum(500);
+      view_value[1]->step(1);
+      view_value[1]->align(FL_ALIGN_RIGHT);
 
-      view_butt[23] = new Fl_Check_Button(L + width / 2, 2 * WB + 8 * BH, BW / 2 - WB, BH, "Tensor values");
-      view_butt[23]->type(FL_TOGGLE_BUTTON);
-      view_butt[23]->down_box(GMSH_TOGGLE_BOX);
-      view_butt[23]->selection_color(GMSH_TOGGLE_COLOR);
-      
+      static Fl_Menu_Item menu_view_field_types[] = {
+	{"Scalar", 0, 0, 0, FL_MENU_TOGGLE},
+	{"Vector", 0, 0, 0, FL_MENU_TOGGLE},
+	{"Tensor", 0, 0, 0, FL_MENU_TOGGLE},
+	{0}
+      };
+
+      view_menu_butt[0] = new Fl_Menu_Button(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Fields");
+      view_menu_butt[0]->menu(menu_view_field_types);
+
+
       o->end();
     }
     {

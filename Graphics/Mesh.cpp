@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.175 2006-08-17 14:09:38 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.176 2006-08-17 17:08:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -581,8 +581,8 @@ class initMeshGFace {
     MRep *m = f->meshRep;
     m->resetArrays();
     m->allElementsVisible = 
-      areAllElementsVisible(f->triangles) && 
-      areAllElementsVisible(f->quadrangles);
+      CTX.mesh.triangles && areAllElementsVisible(f->triangles) && 
+      CTX.mesh.quadrangles && areAllElementsVisible(f->quadrangles);
 
     bool useEdges = CTX.mesh.surfaces_edges ? true : false;
     if(CTX.mesh.surfaces_faces /*this will change!*/ || 
@@ -604,8 +604,8 @@ class initMeshGFace {
     else if(CTX.mesh.surfaces_edges || CTX.mesh.surfaces_faces){
       m->va_triangles = new VertexArray(3, f->triangles.size());
       m->va_quads = new VertexArray(4, f->quadrangles.size());
-      addElementsInArrays(f, f->triangles);
-      addElementsInArrays(f, f->quadrangles);
+      if(CTX.mesh.triangles) addElementsInArrays(f, f->triangles);
+      if(CTX.mesh.quadrangles) addElementsInArrays(f, f->quadrangles);
     }
   }
 };
@@ -642,27 +642,29 @@ class drawMeshGFace {
     }
 
     if(CTX.mesh.surfaces_num) {
-      drawElementLabels(f, f->triangles, CTX.mesh.surfaces_faces, CTX.color.mesh.line);
-      drawElementLabels(f, f->quadrangles, CTX.mesh.surfaces_faces, CTX.color.mesh.line);
+      if(CTX.mesh.triangles)
+	drawElementLabels(f, f->triangles, CTX.mesh.surfaces_faces, CTX.color.mesh.line);
+      if(CTX.mesh.quadrangles)
+	drawElementLabels(f, f->quadrangles, CTX.mesh.surfaces_faces, CTX.color.mesh.line);
     }
 
     if(CTX.mesh.points || CTX.mesh.points_num){
       if(m->allElementsVisible)
 	drawVerticesPerEntity(f);
       else{
-	drawVerticesPerElement(f, f->triangles);
-	drawVerticesPerElement(f, f->quadrangles);
+	if(CTX.mesh.triangles) drawVerticesPerElement(f, f->triangles);
+	if(CTX.mesh.quadrangles) drawVerticesPerElement(f, f->quadrangles);
       }
     }
 
     if(CTX.mesh.normals) {
-      drawNormals(f->triangles);
-      drawNormals(f->quadrangles);
+      if(CTX.mesh.triangles) drawNormals(f->triangles);
+      if(CTX.mesh.quadrangles) drawNormals(f->quadrangles);
     }
 
     if(CTX.mesh.dual) {
-      drawBarycentricDual(f->triangles);
-      drawBarycentricDual(f->quadrangles);
+      if(CTX.mesh.triangles) drawBarycentricDual(f->triangles);
+      if(CTX.mesh.quadrangles) drawBarycentricDual(f->quadrangles);
     }
 
     if(CTX.render_mode == GMSH_SELECT) {
@@ -685,10 +687,10 @@ class initMeshGRegion {
     MRep *m = r->meshRep;
     m->resetArrays();
     m->allElementsVisible = 
-      areAllElementsVisible(r->tetrahedra) &&
-      areAllElementsVisible(r->hexahedra) &&
-      areAllElementsVisible(r->prisms) &&
-      areAllElementsVisible(r->pyramids);
+      CTX.mesh.tetrahedra && areAllElementsVisible(r->tetrahedra) &&
+      CTX.mesh.hexahedra && areAllElementsVisible(r->hexahedra) &&
+      CTX.mesh.prisms && areAllElementsVisible(r->prisms) &&
+      CTX.mesh.pyramids && areAllElementsVisible(r->pyramids);
 
     bool useEdges = CTX.mesh.volumes_edges ? true : false;
     if(CTX.mesh.volumes_faces /*this will change!*/ || 
@@ -708,10 +710,10 @@ class initMeshGRegion {
       m->va_quads = new VertexArray(4, 6 * r->hexahedra.size() +
 				    3 * r->prisms.size() +
 				    r->pyramids.size());
-      addElementsInArrays(r, r->tetrahedra);
-      addElementsInArrays(r, r->hexahedra);
-      addElementsInArrays(r, r->prisms);
-      addElementsInArrays(r, r->pyramids);
+      if(CTX.mesh.tetrahedra) addElementsInArrays(r, r->tetrahedra);
+      if(CTX.mesh.hexahedra) addElementsInArrays(r, r->hexahedra);
+      if(CTX.mesh.prisms) addElementsInArrays(r, r->prisms);
+      if(CTX.mesh.pyramids) addElementsInArrays(r, r->pyramids);
     }
   }
 };
@@ -748,32 +750,36 @@ class drawMeshGRegion {
     }
     
     if(CTX.mesh.volumes_num) {
-      drawElementLabels(r, r->tetrahedra, CTX.mesh.volumes_faces || 
-			CTX.mesh.surfaces_faces, CTX.color.mesh.line);
-      drawElementLabels(r, r->hexahedra, CTX.mesh.volumes_faces || 
-			CTX.mesh.surfaces_faces, CTX.color.mesh.line);
-      drawElementLabels(r, r->prisms, CTX.mesh.volumes_faces || 
-			CTX.mesh.surfaces_faces, CTX.color.mesh.line);
-      drawElementLabels(r, r->pyramids, CTX.mesh.volumes_faces ||
-			CTX.mesh.surfaces_faces, CTX.color.mesh.line);
+      if(CTX.mesh.tetrahedra) 
+	drawElementLabels(r, r->tetrahedra, CTX.mesh.volumes_faces || 
+			  CTX.mesh.surfaces_faces, CTX.color.mesh.line);
+      if(CTX.mesh.hexahedra) 
+	drawElementLabels(r, r->hexahedra, CTX.mesh.volumes_faces || 
+			  CTX.mesh.surfaces_faces, CTX.color.mesh.line);
+      if(CTX.mesh.prisms) 
+	drawElementLabels(r, r->prisms, CTX.mesh.volumes_faces || 
+			  CTX.mesh.surfaces_faces, CTX.color.mesh.line);
+      if(CTX.mesh.pyramids) 
+	drawElementLabels(r, r->pyramids, CTX.mesh.volumes_faces ||
+			  CTX.mesh.surfaces_faces, CTX.color.mesh.line);
     }
 
     if(CTX.mesh.points || CTX.mesh.points_num){
       if(m->allElementsVisible)
 	drawVerticesPerEntity(r);
       else{
-	drawVerticesPerElement(r, r->tetrahedra);
-	drawVerticesPerElement(r, r->hexahedra);
-	drawVerticesPerElement(r, r->prisms);
-	drawVerticesPerElement(r, r->pyramids);
+	if(CTX.mesh.tetrahedra) drawVerticesPerElement(r, r->tetrahedra);
+	if(CTX.mesh.hexahedra) drawVerticesPerElement(r, r->hexahedra);
+	if(CTX.mesh.prisms) drawVerticesPerElement(r, r->prisms);
+	if(CTX.mesh.pyramids) drawVerticesPerElement(r, r->pyramids);
       }
     }
 
     if(CTX.mesh.dual) {
-      drawBarycentricDual(r->tetrahedra);
-      drawBarycentricDual(r->hexahedra);
-      drawBarycentricDual(r->prisms);
-      drawBarycentricDual(r->pyramids);
+      if(CTX.mesh.tetrahedra) drawBarycentricDual(r->tetrahedra);
+      if(CTX.mesh.hexahedra) drawBarycentricDual(r->hexahedra);
+      if(CTX.mesh.prisms) drawBarycentricDual(r->prisms);
+      if(CTX.mesh.pyramids) drawBarycentricDual(r->pyramids);
     }
 
     if(CTX.render_mode == GMSH_SELECT) {

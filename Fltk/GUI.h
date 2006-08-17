@@ -24,6 +24,7 @@
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Menu_Bar.H>
+#include <FL/Fl_Menu_Button.H>
 #include <FL/fl_draw.H>
 #include <FL/gl.h>
 #include <FL/Fl_Choice.H>
@@ -185,6 +186,7 @@ public:
   Fl_Value_Input   *mesh_value[50] ;
   Fl_Button        *mesh_col[50] ;
   Fl_Choice        *mesh_choice[20] ;
+  Fl_Menu_Button   *mesh_menu_butt;
 
   // solver options
   Fl_Group         *solver_group ;
@@ -211,6 +213,7 @@ public:
   Fl_Button        *view_col[50] ;
   Colorbar_Window  *view_colorbar_window ;
   Fl_Return_Button *view_ok ;
+  Fl_Menu_Button   *view_menu_butt[2];
 
   // statistics window
   Fl_Window        *stat_window ;

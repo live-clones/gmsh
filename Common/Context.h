@@ -156,7 +156,8 @@ public :
   struct {
     double msh_file_version;
     int changed, draw;
-    int points, lines, surfaces_edges, surfaces_faces, volumes_edges, volumes_faces;
+    int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms, pyramids;
+    int surfaces_edges, surfaces_faces, volumes_edges, volumes_faces;
     int points_num, lines_num, surfaces_num, volumes_num;
     double label_frequency;
     int point_type, line_type; // flat or 3D

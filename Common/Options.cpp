@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.295 2006-08-17 06:28:30 geuzaine Exp $
+// $Id: Options.cpp,v 1.296 2006-08-17 17:08:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4197,6 +4197,108 @@ double opt_mesh_lines(OPT_ARGS_NUM)
   return CTX.mesh.lines;
 }
 
+double opt_mesh_triangles(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX.mesh.triangles != val) CTX.mesh.changed = 1;
+    CTX.mesh.triangles = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)){
+    if(CTX.mesh.triangles)
+      ((Fl_Menu_Item*)WID->mesh_menu_butt->menu())[0].set();
+    else
+      ((Fl_Menu_Item*)WID->mesh_menu_butt->menu())[0].clear();
+  }
+#endif
+  return CTX.mesh.triangles;
+}
+
+double opt_mesh_quadrangles(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX.mesh.quadrangles != val) CTX.mesh.changed = 1;
+    CTX.mesh.quadrangles = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)){
+    if(CTX.mesh.quadrangles)
+      ((Fl_Menu_Item*)WID->mesh_menu_butt->menu())[1].set();
+    else
+      ((Fl_Menu_Item*)WID->mesh_menu_butt->menu())[1].clear();
+  }
+#endif
+  return CTX.mesh.quadrangles;
+}
+
+double opt_mesh_tetrahedra(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX.mesh.tetrahedra != val) CTX.mesh.changed = 1;
+    CTX.mesh.tetrahedra = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)){
+    if(CTX.mesh.tetrahedra)
+      ((Fl_Menu_Item*)WID->mesh_menu_butt->menu())[2].set();
+    else
+      ((Fl_Menu_Item*)WID->mesh_menu_butt->menu())[2].clear();
+  }
+#endif
+  return CTX.mesh.tetrahedra;
+}
+
+double opt_mesh_hexahedra(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX.mesh.hexahedra != val) CTX.mesh.changed = 1;
+    CTX.mesh.hexahedra = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)){
+    if(CTX.mesh.hexahedra)
+      ((Fl_Menu_Item*)WID->mesh_menu_butt->menu())[3].set();
+    else
+      ((Fl_Menu_Item*)WID->mesh_menu_butt->menu())[3].clear();
+  }
+#endif
+  return CTX.mesh.hexahedra;
+}
+
+double opt_mesh_prisms(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX.mesh.prisms != val) CTX.mesh.changed = 1;
+    CTX.mesh.prisms = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)){
+    if(CTX.mesh.prisms)
+      ((Fl_Menu_Item*)WID->mesh_menu_butt->menu())[4].set();
+    else
+      ((Fl_Menu_Item*)WID->mesh_menu_butt->menu())[4].clear();
+  }
+#endif
+  return CTX.mesh.prisms;
+}
+
+double opt_mesh_pyramids(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX.mesh.pyramids != val) CTX.mesh.changed = 1;
+    CTX.mesh.pyramids = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)){
+    if(CTX.mesh.pyramids)
+      ((Fl_Menu_Item*)WID->mesh_menu_butt->menu())[5].set();
+    else
+      ((Fl_Menu_Item*)WID->mesh_menu_butt->menu())[5].clear();
+  }
+#endif
+  return CTX.mesh.pyramids;
+}
+
 double opt_mesh_surfaces_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -6087,8 +6189,12 @@ double opt_view_draw_points(OPT_ARGS_NUM)
     v->DrawPoints = (int)val;
   }
 #if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    WID->view_butt[13]->value(v->DrawPoints);
+  if(_gui_action_valid(action, num)){
+    if(v->DrawPoints)
+      ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[0].set();
+    else
+      ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[0].clear();
+  }
 #endif
   return v->DrawPoints;
 }
@@ -6100,8 +6206,12 @@ double opt_view_draw_lines(OPT_ARGS_NUM)
     v->DrawLines = (int)val;
   }
 #if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    WID->view_butt[14]->value(v->DrawLines);
+  if(_gui_action_valid(action, num)){
+    if(v->DrawLines)
+      ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[1].set();
+    else
+      ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[1].clear();
+  }
 #endif
   return v->DrawLines;
 }
@@ -6114,8 +6224,12 @@ double opt_view_draw_triangles(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    WID->view_butt[15]->value(v->DrawTriangles);
+  if(_gui_action_valid(action, num)){
+    if(v->DrawTriangles)
+      ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[2].set();
+    else
+      ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[2].clear();
+  }
 #endif
   return v->DrawTriangles;
 }
@@ -6128,8 +6242,12 @@ double opt_view_draw_quadrangles(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    WID->view_butt[16]->value(v->DrawQuadrangles);
+  if(_gui_action_valid(action, num)){
+    if(v->DrawQuadrangles)
+      ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[3].set();
+    else
+      ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[3].clear();
+  }
 #endif
   return v->DrawQuadrangles;
 }
@@ -6142,8 +6260,12 @@ double opt_view_draw_tetrahedra(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    WID->view_butt[17]->value(v->DrawTetrahedra);
+  if(_gui_action_valid(action, num)){
+    if(v->DrawTetrahedra)
+      ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[4].set();
+    else
+      ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[4].clear();
+  }
 #endif
   return v->DrawTetrahedra;
 }
@@ -6156,8 +6278,12 @@ double opt_view_draw_hexahedra(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    WID->view_butt[18]->value(v->DrawHexahedra);
+  if(_gui_action_valid(action, num)){
+    if(v->DrawHexahedra)
+      ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[5].set();
+    else
+      ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[5].clear();
+  }
 #endif
   return v->DrawHexahedra;
 }
@@ -6170,8 +6296,12 @@ double opt_view_draw_prisms(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    WID->view_butt[19]->value(v->DrawPrisms);
+  if(_gui_action_valid(action, num)){
+    if(v->DrawPrisms)
+      ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[6].set();
+    else
+      ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[6].clear();
+  }
 #endif
   return v->DrawPrisms;
 }
@@ -6184,8 +6314,12 @@ double opt_view_draw_pyramids(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    WID->view_butt[20]->value(v->DrawPyramids);
+  if(_gui_action_valid(action, num)){
+    if(v->DrawPyramids)
+      ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[7].set();
+    else
+      ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[7].clear();
+  }
 #endif
   return v->DrawPyramids;
 }
@@ -6198,8 +6332,12 @@ double opt_view_draw_scalars(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    WID->view_butt[21]->value(v->DrawScalars);
+  if(_gui_action_valid(action, num)){
+    if(v->DrawScalars)
+      ((Fl_Menu_Item*)WID->view_menu_butt[0]->menu())[0].set();
+    else
+      ((Fl_Menu_Item*)WID->view_menu_butt[0]->menu())[0].clear();
+  }
 #endif
   return v->DrawScalars;
 }
@@ -6212,8 +6350,12 @@ double opt_view_draw_vectors(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    WID->view_butt[22]->value(v->DrawVectors);
+  if(_gui_action_valid(action, num)){
+    if(v->DrawVectors)
+      ((Fl_Menu_Item*)WID->view_menu_butt[0]->menu())[1].set();
+    else
+      ((Fl_Menu_Item*)WID->view_menu_butt[0]->menu())[1].clear();
+  }
 #endif
   return v->DrawVectors;
 }
@@ -6226,8 +6368,12 @@ double opt_view_draw_tensors(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    WID->view_butt[23]->value(v->DrawTensors);
+  if(_gui_action_valid(action, num)){
+    if(v->DrawTensors)
+      ((Fl_Menu_Item*)WID->view_menu_butt[0]->menu())[2].set();
+    else
+      ((Fl_Menu_Item*)WID->view_menu_butt[0]->menu())[2].clear();
+  }
 #endif
   return v->DrawTensors;
 }
