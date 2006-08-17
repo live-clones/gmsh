@@ -898,7 +898,7 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "LabelType" , opt_mesh_label_type , 0. , 
     "Type of element label (0=element number, 1=elementary entity number, 2=physical entity number, 3=partition number, 4=coordinates)" },
-  { F|O, "Light" , opt_mesh_light , 0. , 
+  { F|O, "Light" , opt_mesh_light , 1. , 
     "Enable lighting for the mesh" },
   { F|O, "LightLines" , opt_mesh_light_lines , 1. , 
     "Enable lighting for mesh lines (element edges)" },
