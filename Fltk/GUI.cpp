@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.526 2006-08-17 19:45:54 geuzaine Exp $
+// $Id: GUI.cpp,v 1.527 2006-08-17 21:28:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -655,6 +655,12 @@ int GUI::global_shortcuts(int event)
       if(opt_view_visible(i, GMSH_GET, 0))
 	opt_view_light(i, GMSH_SET | GMSH_GUI,
 		       !opt_view_light(i, GMSH_GET, 0));
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'w')) {
+    opt_mesh_reverse_all_normals(0, GMSH_SET | GMSH_GUI,
+				 !opt_mesh_reverse_all_normals(0, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
@@ -2587,12 +2593,17 @@ void GUI::create_option_window()
       mesh_butt[18]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[18]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_butt[19] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Smooth normals");
+      mesh_butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Reverse all normals");
+      mesh_butt[0]->type(FL_TOGGLE_BUTTON);
+      mesh_butt[0]->down_box(GMSH_TOGGLE_BOX);
+      mesh_butt[0]->selection_color(GMSH_TOGGLE_COLOR);
+
+      mesh_butt[19] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Smooth normals");
       mesh_butt[19]->type(FL_TOGGLE_BUTTON);
       mesh_butt[19]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[19]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_value[18] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Smoothing threshold angle");
+      mesh_value[18] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Smoothing threshold angle");
       mesh_value[18]->minimum(0.);
       mesh_value[18]->maximum(180.);
       mesh_value[18]->step(1.);

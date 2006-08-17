@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.437 2006-08-17 18:15:39 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.438 2006-08-17 21:28:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1132,6 +1132,7 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_cut_plane_only_volume(0, GMSH_SET, WID->mesh_butt[23]->value());
   opt_mesh_light(0, GMSH_SET, WID->mesh_butt[17]->value());
   opt_mesh_light_two_side(0, GMSH_SET, WID->mesh_butt[18]->value());
+  opt_mesh_reverse_all_normals(0, GMSH_SET, WID->mesh_butt[0]->value());
   opt_mesh_smooth_normals(0, GMSH_SET, WID->mesh_butt[19]->value());
   opt_mesh_light_lines(0, GMSH_SET, WID->mesh_butt[20]->value());
 
@@ -1672,6 +1673,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Alt+Shift+p   Hide/show mesh points");
   Msg(DIRECT, "  Alt+Shift+s   Hide/show mesh surface edges");
   Msg(DIRECT, "  Alt+Shift+v   Hide/show mesh volume edges");
+  Msg(DIRECT, "  Alt+Shift+w   Reverse all mesh normals");
   Msg(DIRECT, "  Alt+Shift+x   Set -X view"); 
   Msg(DIRECT, "  Alt+Shift+y   Set -Y view"); 
   Msg(DIRECT, "  Alt+Shift+z   Set -Z view"); 

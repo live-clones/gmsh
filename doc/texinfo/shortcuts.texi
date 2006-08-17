@@ -145,6 +145,8 @@ Hide/show mesh points
 Hide/show mesh surface edges
 @item Alt+Shift+v
 Hide/show mesh volume edges
+@item Alt+Shift+w
+Reverse all mesh normals
 @item Alt+Shift+x
 Set -X view 
 @item Alt+Shift+y

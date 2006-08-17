@@ -976,6 +976,8 @@ StringXNumber MeshOptions_Number[] = {
     "Random factor used in 2D and 3D meshing algorithm (test other values when the algorithm fails)" },
   { F|O, "RecombineAlgo" , opt_mesh_recombine_algo , 1 ,
     "Recombine algorithm (1=mixed triangles-quadrangles, 2=all quadrangles)" }, 
+  { F|O, "ReverseAllNormals" , opt_mesh_reverse_all_normals , 0. , 
+    "Reverse all the mesh normals (for display)" },
 
   { F,   "SaveAll" , opt_mesh_save_all , 0. , 
     "Ignore Physical definitions and save all elements" },

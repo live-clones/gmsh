@@ -23,6 +23,9 @@
 #include "MVertex.h"
 #include "SVector3.h"
 #include "Numeric.h"
+#include "Context.h"
+
+extern Context_T CTX;
 
 class MFace {
  private:
@@ -30,7 +33,20 @@ class MFace {
  public:
   MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3=0) 
   {
-    _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
+    if(CTX.mesh.reverse_all_normals){
+      // Note that we cannot simply change the normal computation,
+      // since OpenGL wants the normal to a polygon to be coherent
+      // with the ordering of its vertices
+      if(v3){
+	_v[0] = v0; _v[1] = v3; _v[2] = v2; _v[3] = v1;
+      }
+      else{
+	_v[0] = v0; _v[1] = v2; _v[2] = v1; _v[3] = v3;
+      }
+    }
+    else{
+      _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
+    }
   }
   inline int getNumVertices() const { return _v[3] ? 4 : 3; }
   inline MVertex *getVertex(int i) const { return _v[i]; }

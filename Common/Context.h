@@ -184,7 +184,7 @@ public :
     int oldxtrude, oldxtrude_recombine;
     int allow_degenerated_extrude, save_all;
     char *triangle_options;
-    int smooth_normals;
+    int smooth_normals, reverse_all_normals;
     double angle_smooth_normals;
     double stl_distance_tol, dihedral_angle_tol;
     int edge_prolongation_threshold, do_not_coarsen;

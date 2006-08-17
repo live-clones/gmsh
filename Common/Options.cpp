@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.297 2006-08-17 18:15:39 geuzaine Exp $
+// $Id: Options.cpp,v 1.298 2006-08-17 21:28:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4459,6 +4459,19 @@ double opt_mesh_line_type(OPT_ARGS_NUM)
   }
 #endif
   return CTX.mesh.line_type;
+}
+
+double opt_mesh_reverse_all_normals(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX.mesh.reverse_all_normals != val) CTX.mesh.changed = 1;
+    CTX.mesh.reverse_all_normals = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[0]->value(CTX.mesh.reverse_all_normals);
+#endif
+  return CTX.mesh.reverse_all_normals;
 }
 
 double opt_mesh_smooth_normals(OPT_ARGS_NUM)
