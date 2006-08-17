@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.524 2006-08-17 18:15:39 geuzaine Exp $
+// $Id: GUI.cpp,v 1.525 2006-08-17 18:40:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1671,7 +1671,7 @@ void GUI::reset_external_view_list()
 
 void GUI::create_option_window()
 {
-  int width = 42 * fontsize;
+  int width = 39 * fontsize;
   int height = 13 * BH + 5 * WB;
   int L = 105 + WB;
 
@@ -2293,7 +2293,7 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "STL");
       o->hide();
 
-      mesh_value[19] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Vertex distance tolerance");
+      mesh_value[19] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Vertex disance tolerance");
       mesh_value[19]->minimum(0);
       mesh_value[19]->maximum(1.e-3);
       mesh_value[19]->step(1.e-7);
@@ -2311,19 +2311,19 @@ void GUI::create_option_window()
       mesh_value[21]->step(1);
       mesh_value[21]->align(FL_ALIGN_RIGHT); 
 
-      mesh_value[22] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Number of elements per radius of curvature");
+      mesh_value[22] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Elements per radius of curvature");
       mesh_value[22]->minimum(1);
       mesh_value[22]->maximum(10);
       mesh_value[22]->step(.1);
       mesh_value[22]->align(FL_ALIGN_RIGHT); 
 
-      mesh_value[23] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "LC/Minimum element size");
+      mesh_value[23] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "LC / minimum element size");
       mesh_value[23]->minimum(10);
       mesh_value[23]->maximum(10000);
       mesh_value[23]->step(10);
       mesh_value[23]->align(FL_ALIGN_RIGHT); 
 
-      mesh_value[24] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "LC/Target element size");
+      mesh_value[24] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "LC / target element size");
       mesh_value[24]->minimum(1);
       mesh_value[24]->maximum(1000);
       mesh_value[24]->step(1);
@@ -2882,7 +2882,7 @@ void GUI::create_option_window()
       view_value[22]->minimum(0);
       view_value[22]->maximum(1024);
       view_value[22]->step(1);
-      view_value[23] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH, "3D axes size");
+      view_value[23] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH, "2D axes size");
       view_value[23]->align(FL_ALIGN_RIGHT);
       view_value[23]->minimum(0);
       view_value[23]->maximum(1024);
@@ -3019,13 +3019,16 @@ void GUI::create_option_window()
 	view_value[i]->align(FL_ALIGN_RIGHT);
       }
 
-      view_value[43] = new Fl_Value_Input(L + 2 * WB + 2 * IW-WB, 2 * WB + 2 * BH, 7*IW/10, BH, "X raise");
+      Fl_Box *b2 = new Fl_Box(FL_NO_BOX, L + 2 * WB + 2 * IW-WB, 2 * WB + 1 * BH, 7*IW/10, BH, "Raise:");
+      b2->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
+
+      view_value[43] = new Fl_Value_Input(L + 2 * WB + 2 * IW-WB, 2 * WB + 2 * BH, 7*IW/10, BH, "X");
       view_value[43]->align(FL_ALIGN_RIGHT);
 
-      view_value[44] = new Fl_Value_Input(L + 2 * WB + 2 * IW-WB, 2 * WB + 3 * BH, 7*IW/10, BH, "Y raise");
+      view_value[44] = new Fl_Value_Input(L + 2 * WB + 2 * IW-WB, 2 * WB + 3 * BH, 7*IW/10, BH, "Y");
       view_value[44]->align(FL_ALIGN_RIGHT);
 
-      view_value[45] = new Fl_Value_Input(L + 2 * WB + 2 * IW-WB, 2 * WB + 4 * BH, 7*IW/10, BH, "Z raise");
+      view_value[45] = new Fl_Value_Input(L + 2 * WB + 2 * IW-WB, 2 * WB + 4 * BH, 7*IW/10, BH, "Z");
       view_value[45]->align(FL_ALIGN_RIGHT);
 
       view_butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Use general transformation expressions");
