@@ -326,7 +326,7 @@ class MTetrahedron : public MElement {
   virtual int getDim(){ return 3; }
   inline int getNumVertices(){ return 4; }
   inline MVertex *getVertex(int num){ return _v[num]; }
-  virtual int getNumEdges(){ return 4; }
+  virtual int getNumEdges(){ return 6; }
   virtual MEdge getEdge(int num)
   {
     return MEdge(_v[edges_tetra[num][0]], _v[edges_tetra[num][1]], this);

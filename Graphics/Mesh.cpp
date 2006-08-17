@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.172 2006-08-16 22:43:56 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.173 2006-08-17 00:25:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -34,11 +34,31 @@ extern Context_T CTX;
 
 // General helper routines
 
-static unsigned int getColor(GEntity *e, int forceColor, unsigned int color)
+static unsigned int getColorByElement(MElement *ele)
 {
-  if(forceColor) return color;
-  
-  if(e->getFlag() > 0){
+  if(CTX.mesh.color_carousel == 0){ // by element type
+    switch(ele->getNumEdges()){
+    case 0: return CTX.color.mesh.line;
+    case 3: return CTX.color.mesh.triangle;
+    case 4: return CTX.color.mesh.quadrangle;
+    case 6: return CTX.color.mesh.tetrahedron;
+    case 12: return CTX.color.mesh.hexahedron;
+    case 9: return CTX.color.mesh.prism;
+    case 8: return CTX.color.mesh.pyramid;
+    default: return CTX.color.mesh.vertex;
+    }
+  }
+  else if(CTX.mesh.color_carousel == 3){ // by partition
+    return CTX.color.mesh.carousel[abs(ele->getPartition() % 20)];
+  }
+  else{
+    return CTX.color.fg;
+  }
+}
+
+static unsigned int getColorByEntity(GEntity *e)
+{
+  if(e->getFlag() > 0){ // selection
     switch(e->dim()){
     case 0: return CTX.color.geom.point_sel;
     case 1: return CTX.color.geom.line_sel;
@@ -46,16 +66,20 @@ static unsigned int getColor(GEntity *e, int forceColor, unsigned int color)
     default: return CTX.color.geom.volume_sel;
     }
   }
-  else if(e->useColor())
+  else if(e->useColor()){ // forced input files
     return e->getColor();
-  else if(CTX.mesh.color_carousel == 1)
+  }
+  else if(CTX.mesh.color_carousel == 1){ // by elementary entity
     return CTX.color.mesh.carousel[abs(e->tag() % 20)];
-  else if(CTX.mesh.color_carousel == 2){
+  }
+  else if(CTX.mesh.color_carousel == 2){ // by physical entity
     int np = e->physicals.size();
     int p = np ? e->physicals[np - 1] : 0;
     return CTX.color.mesh.carousel[abs(p % 20)];
   }
-  return color;
+  else{
+    return CTX.color.fg;
+  }
 }
 
 static double intersectCutPlane(MElement *ele)
@@ -115,9 +139,9 @@ static int getLabelStep(int total)
 
 template<class T>
 static void drawElementLabels(GEntity *e, std::vector<T*> &elements,
-			      int forceColor, unsigned int color)
+			      int forceColor=0, unsigned int color=0)
 {
-  unsigned col = getColor(e, forceColor, color);
+  unsigned col = forceColor ? color : getColorByEntity(e);
   glColor4ubv((GLubyte *) & col);
 
   int labelStep = getLabelStep(elements.size());
@@ -344,12 +368,11 @@ static void addEdgesInArrays(GEntity *e)
     MVertex *v[2] = {it->first.first, it->first.second};
     MElement *ele = it->second;
     SVector3 n = ele->getFace(0).normal();
-    int part = ele->getPartition();
+    unsigned int color = getColorByElement(ele);
     for(int i = 0; i < 2; i++){
       if(e->dim() == 2 && CTX.mesh.smooth_normals)
 	e->model()->normals->get(v[i]->x(), v[i]->y(), v[i]->z(), n[0], n[1], n[2]);
-      m->va_lines->add(v[i]->x(), v[i]->y(), v[i]->z(), n[0], n[1], n[2],
-		       CTX.color.mesh.carousel[abs(part % 20)]);
+      m->va_lines->add(v[i]->x(), v[i]->y(), v[i]->z(), n[0], n[1], n[2], color);
     }
   }
 }
@@ -364,7 +387,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements)
     if(CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_draw_intersect){
       if(e->dim() == 3 && intersectCutPlane(ele)) continue;
     }
-    int part = ele->getPartition();
+    unsigned int color = getColorByElement(ele);
     SPoint3 pc;
     if(CTX.mesh.explode != 1.) pc = ele->barycenter();
     if(ele->getNumFacesRep()){
@@ -382,11 +405,9 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements)
 	  if(e->dim() == 2 && CTX.mesh.smooth_normals)
 	    e->model()->normals->get(p[0], p[1], p[2], n[0], n[1], n[2]);
 	  if(numverts == 3)
-	    m->va_triangles->add(p[0], p[1], p[2], n[0], n[1], n[2],
-					  CTX.color.mesh.carousel[abs(part % 20)]);
+	    m->va_triangles->add(p[0], p[1], p[2], n[0], n[1], n[2], color);
 	  else if(numverts == 4)
-	    m->va_quads->add(p[0], p[1], p[2], n[0], n[1], n[2],
-				      CTX.color.mesh.carousel[abs(part % 20)]);
+	    m->va_quads->add(p[0], p[1], p[2], n[0], n[1], n[2], color);
 	}
       }
     }
@@ -402,16 +423,15 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements)
 	    for(int l = 0; l < 3; l++)
 	      p[l] = pc[l] + CTX.mesh.explode * (p[l] - pc[l]);
 	  }
-	  m->va_lines->add(p[0], p[1], p[2], CTX.color.mesh.carousel[abs(part % 20)]);
+	  m->va_lines->add(p[0], p[1], p[2], color);
 	}
       }
     }
   }
 }
 
-static void drawArrays(VertexArray *va, GLint type, bool useNormalArray, 
-		       bool useColorArray, bool usePolygonOffset,
-		       unsigned int uniformColor, bool drawOutline=false)
+static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalArray, 
+		       int forceColor=0, unsigned int color=0, bool drawOutline=false)
 {
   if(!va) return;
 
@@ -420,20 +440,28 @@ static void drawArrays(VertexArray *va, GLint type, bool useNormalArray,
   glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->colors->array);
   
   glEnableClientState(GL_VERTEX_ARRAY);
+
   if(useNormalArray){
     glEnable(GL_LIGHTING);
     glEnableClientState(GL_NORMAL_ARRAY);
   }
   else
     glDisableClientState(GL_NORMAL_ARRAY);
-  if(useColorArray)
+
+  if(forceColor){
+    glDisableClientState(GL_COLOR_ARRAY);
+    glColor4ubv((GLubyte *) & color);
+  }
+  else if(CTX.mesh.color_carousel == 0 || CTX.mesh.color_carousel == 3){
     glEnableClientState(GL_COLOR_ARRAY);
+  }
   else{
     glDisableClientState(GL_COLOR_ARRAY);
-    glColor4ubv((GLubyte *) & uniformColor);
+    color = getColorByEntity(e);
+    glColor4ubv((GLubyte *) & color);
   }
   
-  if(usePolygonOffset) 
+  if(va->type > 2 && !drawOutline && CTX.polygon_offset)
     glEnable(GL_POLYGON_OFFSET_FILL);
   
   if(drawOutline) 
@@ -508,11 +536,10 @@ class drawMeshGEdge {
     MRep *m = e->meshRep;
 
     if(CTX.mesh.lines)
-      drawArrays(m->va_lines, GL_LINES, false, CTX.mesh.color_carousel == 3, 
-		 false,  getColor(e, false, CTX.color.mesh.line));
+      drawArrays(e, m->va_lines, GL_LINES, false);
 
     if(CTX.mesh.lines_num)
-      drawElementLabels(e, e->lines, false, CTX.color.mesh.line);
+      drawElementLabels(e, e->lines);
 
     if(CTX.mesh.points || CTX.mesh.points_num){
       if(m->allElementsVisible)
@@ -597,27 +624,20 @@ class drawMeshGFace {
 
     if(CTX.mesh.surfaces_edges){
       if(m->va_lines && m->va_lines->n()){
-	drawArrays(m->va_lines, GL_LINES, CTX.mesh.light && CTX.mesh.light_lines, 
-		   CTX.mesh.color_carousel == 3, false, 
-		   getColor(f, CTX.mesh.surfaces_faces, CTX.color.mesh.line));
+	drawArrays(f, m->va_lines, GL_LINES, CTX.mesh.light && CTX.mesh.light_lines, 
+		   CTX.mesh.surfaces_faces, CTX.color.mesh.line);
       }
       else{
-	drawArrays(m->va_triangles, GL_TRIANGLES, CTX.mesh.light && CTX.mesh.light_lines,
-		   CTX.mesh.color_carousel == 3, false, 
-		   getColor(f, CTX.mesh.surfaces_faces, CTX.color.mesh.line), true);
-	drawArrays(m->va_quads, GL_QUADS, CTX.mesh.light && CTX.mesh.light_lines, 
-		   CTX.mesh.color_carousel == 3, false, 
-		   getColor(f, CTX.mesh.surfaces_faces, CTX.color.mesh.line), true);
+	drawArrays(f, m->va_triangles, GL_TRIANGLES, CTX.mesh.light && CTX.mesh.light_lines,
+		   CTX.mesh.surfaces_faces, CTX.color.mesh.line, true);
+	drawArrays(f, m->va_quads, GL_QUADS, CTX.mesh.light && CTX.mesh.light_lines, 
+		   CTX.mesh.surfaces_faces, CTX.color.mesh.line, true);
       }
     }
     
     if(CTX.mesh.surfaces_faces){
-      drawArrays(m->va_triangles, GL_TRIANGLES, CTX.mesh.light, 
-		 CTX.mesh.color_carousel == 3, CTX.polygon_offset, 
-		 getColor(f, 0, CTX.color.mesh.triangle));
-      drawArrays(m->va_quads, GL_QUADS, CTX.mesh.light, 
-		 CTX.mesh.color_carousel == 3, CTX.polygon_offset, 
-		 getColor(f, 0, CTX.color.mesh.quadrangle));
+      drawArrays(f, m->va_triangles, GL_TRIANGLES, CTX.mesh.light);
+      drawArrays(f, m->va_quads, GL_QUADS, CTX.mesh.light);
     }
 
     if(CTX.mesh.surfaces_num) {
@@ -710,27 +730,20 @@ class drawMeshGRegion {
 
     if(CTX.mesh.volumes_edges){
       if(m->va_lines && m->va_lines->n()){
-	drawArrays(m->va_lines, GL_LINES, CTX.mesh.light && CTX.mesh.light_lines, 
-		   CTX.mesh.color_carousel == 3, false, 
-		   getColor(r, CTX.mesh.volumes_faces, CTX.color.mesh.line));
+	drawArrays(r, m->va_lines, GL_LINES, CTX.mesh.light && CTX.mesh.light_lines, 
+		   CTX.mesh.volumes_faces, CTX.color.mesh.line);
       }
       else{
-	drawArrays(m->va_triangles, GL_TRIANGLES, CTX.mesh.light && CTX.mesh.light_lines,
-		   CTX.mesh.color_carousel == 3, false, 
-		   getColor(r, CTX.mesh.volumes_faces, CTX.color.mesh.line), true);
-	drawArrays(m->va_quads, GL_QUADS, CTX.mesh.light && CTX.mesh.light_lines, 
-		   CTX.mesh.color_carousel == 3, false, 
-		   getColor(r, CTX.mesh.volumes_faces, CTX.color.mesh.line), true);
+	drawArrays(r, m->va_triangles, GL_TRIANGLES, CTX.mesh.light && CTX.mesh.light_lines,
+		   CTX.mesh.volumes_faces, CTX.color.mesh.line, true);
+	drawArrays(r, m->va_quads, GL_QUADS, CTX.mesh.light && CTX.mesh.light_lines, 
+		   CTX.mesh.volumes_faces, CTX.color.mesh.line, true);
       }
     }
     
     if(CTX.mesh.volumes_faces){
-      drawArrays(m->va_triangles, GL_TRIANGLES, CTX.mesh.light, 
-		 CTX.mesh.color_carousel == 3, CTX.polygon_offset, 
-		 getColor(r, 0, CTX.color.mesh.triangle));
-      drawArrays(m->va_quads, GL_QUADS, CTX.mesh.light, 
-		 CTX.mesh.color_carousel == 3, CTX.polygon_offset, 
-		 getColor(r, 0, CTX.color.mesh.quadrangle));
+      drawArrays(r, m->va_triangles, GL_TRIANGLES, CTX.mesh.light);
+      drawArrays(r, m->va_quads, GL_QUADS, CTX.mesh.light);
     }
     
     if(CTX.mesh.volumes_num) {

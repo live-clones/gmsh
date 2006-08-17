@@ -276,7 +276,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.QualityType
 Type of quality measure (0=gamma~vol/sum_face/max_edge, 1=eta~vol^(2/3)/sum_edge^2, 2=rho~min_edge/max_edge)@*
-Default value: @code{0}@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RadiusInf
@@ -397,6 +397,26 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Color.Quadrangles
 Mesh quadrangle color (if Mesh.ColorCarousel=0)@*
 Default value: @code{@{130,120,225@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.Tetrahedra
+Mesh tetrahedron color (if Mesh.ColorCarousel=0)@*
+Default value: @code{@{160,150,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.Hexahedra
+Mesh hexahedron color (if Mesh.ColorCarousel=0)@*
+Default value: @code{@{130,120,225@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.Prisms
+Mesh prism color (if Mesh.ColorCarousel=0)@*
+Default value: @code{@{232,210,23@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.Pyramids
+Mesh pyramid color (if Mesh.ColorCarousel=0)@*
+Default value: @code{@{217,113,38@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Tangents

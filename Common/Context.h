@@ -229,6 +229,7 @@ public :
     } geom;
     struct{
       unsigned int vertex, line, triangle, quadrangle;
+      unsigned int tetrahedron, hexahedron, prism, pyramid;
       unsigned int carousel[20];
       unsigned int tangents, normals;
     } mesh;
