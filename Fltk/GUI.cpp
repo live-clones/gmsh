@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.527 2006-08-17 21:28:34 geuzaine Exp $
+// $Id: GUI.cpp,v 1.528 2006-08-17 21:46:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2594,6 +2594,7 @@ void GUI::create_option_window()
       mesh_butt[18]->selection_color(GMSH_TOGGLE_COLOR);
 
       mesh_butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Reverse all normals");
+      mesh_butt[0]->tooltip("(Alt+Shift+w)");
       mesh_butt[0]->type(FL_TOGGLE_BUTTON);
       mesh_butt[0]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[0]->selection_color(GMSH_TOGGLE_COLOR);
