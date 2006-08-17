@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.525 2006-08-17 18:40:13 geuzaine Exp $
+// $Id: GUI.cpp,v 1.526 2006-08-17 19:45:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1671,7 +1671,7 @@ void GUI::reset_external_view_list()
 
 void GUI::create_option_window()
 {
-  int width = 39 * fontsize;
+  int width = 40 * fontsize;
   int height = 13 * BH + 5 * WB;
   int L = 105 + WB;
 
