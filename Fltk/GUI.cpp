@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.528 2006-08-17 21:46:56 geuzaine Exp $
+// $Id: GUI.cpp,v 1.529 2006-08-17 21:54:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2444,7 +2444,7 @@ void GUI::create_option_window()
       mesh_value[4]->step(0.01);
       mesh_value[4]->align(FL_ALIGN_RIGHT);
 
-      mesh_value[5] = new Fl_Value_Input(L + 2 * WB + IW / 4, 2 * WB + 8 * BH, IW / 4, BH);
+      mesh_value[5] = new Fl_Value_Input(L + 2 * WB + IW / 4, 2 * WB + 8 * BH, IW / 2 - IW / 4, BH);
       mesh_value[5]->minimum(0);
       mesh_value[5]->maximum(1);
       mesh_value[5]->step(0.01);
