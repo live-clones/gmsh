@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.523 2006-08-17 17:08:51 geuzaine Exp $
+// $Id: GUI.cpp,v 1.524 2006-08-17 18:15:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2720,106 +2720,169 @@ void GUI::create_option_window()
     {
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "General");
 
-      view_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "3D plot");
-      view_butt[1]->type(FL_RADIO_BUTTON);
-      view_butt[1]->down_box(GMSH_RADIO_BOX);
-      view_butt[1]->selection_color(GMSH_RADIO_COLOR);
+      static Fl_Menu_Item menu_plot_type[] = {
+	{"3D", 0, 0, 0},
+	{"2D space", 0, 0, 0},
+	{"2D time", 0, 0, 0},
+	{0}
+      };
+      view_choice[13] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Plot type");
+      view_choice[13]->menu(menu_plot_type);
+      view_choice[13]->align(FL_ALIGN_RIGHT);
 
-      view_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "2D space plot");
-      view_butt[2]->type(FL_RADIO_BUTTON);
-      view_butt[2]->down_box(GMSH_RADIO_BOX);
-      view_butt[2]->selection_color(GMSH_RADIO_COLOR);
-
-      view_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "2D time plot");
-      view_butt[3]->type(FL_RADIO_BUTTON);
-      view_butt[3]->down_box(GMSH_RADIO_BOX);
-      view_butt[3]->selection_color(GMSH_RADIO_COLOR);
-
-      view_input[0] = new Fl_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Name");
+      view_input[0] = new Fl_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "View name");
       view_input[0]->align(FL_ALIGN_RIGHT);
 
       int sw = (int)(1.5 * fontsize);
-      view_butt_rep[0] = new Fl_Repeat_Button(L + 2 * WB, 2 * WB + 5 * BH, sw, BH, "-");
+      view_butt_rep[0] = new Fl_Repeat_Button(L + 2 * WB, 2 * WB + 3 * BH, sw, BH, "-");
       view_butt_rep[0]->callback(view_options_timestep_decr_cb);
-      view_butt_rep[1] = new Fl_Repeat_Button(L + 2 * WB + IW - sw, 2 * WB + 5 * BH, sw, BH, "+");
+      view_butt_rep[1] = new Fl_Repeat_Button(L + 2 * WB + IW - sw, 2 * WB + 3 * BH, sw, BH, "+");
       view_butt_rep[1]->callback(view_options_timestep_incr_cb);
-      view_value[50] = new Fl_Value_Input(L + 2 * WB + sw, 2 * WB + 5 * BH, IW - 2 * sw, BH);
+      view_value[50] = new Fl_Value_Input(L + 2 * WB + sw, 2 * WB + 3 * BH, IW - 2 * sw, BH);
       view_value[50]->callback(view_options_timestep_cb);
       view_value[50]->align(FL_ALIGN_RIGHT);
       view_value[50]->minimum(0);
       view_value[50]->maximum(0);
       view_value[50]->step(1);
-      Fl_Box *a = new Fl_Box(L + 2 * WB + IW, 2 * WB + 5 * BH, IW / 2, BH, "Step");
+      Fl_Box *a = new Fl_Box(L + 2 * WB + IW, 2 * WB + 3 * BH, IW / 2, BH, "Time step");
       a->box(FL_NO_BOX);
       a->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
-      view_choice[8] = new Fl_Choice(L + width / 2, 2 * WB + 1 * BH, IW, BH, "Axes");
+      view_range = new Fl_Group(L + 2 * WB, 2 * WB + 4 * BH, width - 4 * WB, 8 * BH);
+
+      view_value[30] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Number of intervals");
+      view_value[30]->align(FL_ALIGN_RIGHT);
+      view_value[30]->minimum(1);
+      view_value[30]->maximum(256);
+      view_value[30]->step(1);
+
+      static Fl_Menu_Item menu_iso[] = {
+        {"Iso-values", 0, 0, 0},
+        {"Filled iso-values", 0, 0, 0},
+        {"Continuous map", 0, 0, 0},
+        {"Numeric values", 0, 0, 0},
+        {0}
+      };
+      view_choice[0] = new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Intervals type");
+      view_choice[0]->menu(menu_iso);
+      view_choice[0]->align(FL_ALIGN_RIGHT);
+      view_choice[0]->tooltip("(Alt+t)");
+
+      static Fl_Menu_Item menu_range[] = {
+        {"Default", 0, 0, 0},
+        {"Per time step", 0, 0, 0},
+        {"Custom", 0, 0, 0},
+        {0}
+      };
+      view_choice[7] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Range mode");
+      view_choice[7]->menu(menu_range);
+      view_choice[7]->align(FL_ALIGN_RIGHT);
+      view_choice[7]->callback(activate_cb, (void*)"custom_range");
+
+      int sw2 = (int)(2.5 * fontsize);
+      view_push_butt[1] = new Fl_Button(L + 2 * WB, 2 * WB + 7 * BH, sw2, BH, "Min");
+      view_push_butt[1]->callback(view_options_custom_set_cb, (void*)"Min");
+      view_value[31] = new Fl_Value_Input(L + 2 * WB + sw2, 2 * WB + 7 * BH, IW - sw2, BH, "Custom minimum");
+      view_value[31]->align(FL_ALIGN_RIGHT);
+
+      view_push_butt[2] = new Fl_Button(L + 2 * WB, 2 * WB + 8 * BH, sw2, BH, "Max");
+      view_push_butt[2]->callback(view_options_custom_set_cb, (void*)"Max");
+      view_value[32] = new Fl_Value_Input(L + 2 * WB + sw2, 2 * WB + 8 * BH, IW - sw2, BH, "Custom maximum");
+      view_value[32]->align(FL_ALIGN_RIGHT);
+
+      view_butt[38] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Saturate out-of-range values");
+      view_butt[38]->type(FL_TOGGLE_BUTTON);
+      view_butt[38]->down_box(GMSH_TOGGLE_BOX);
+      view_butt[38]->selection_color(GMSH_TOGGLE_COLOR);
+
+      static Fl_Menu_Item menu_scale[] = {
+        {"Linear", 0, 0, 0},
+        {"Logarithmic", 0, 0, 0},
+        {"Double logarithmic", 0, 0, 0},
+        {0}
+      };
+      view_choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Value scale mode");
+      view_choice[1]->menu(menu_scale);
+      view_choice[1]->align(FL_ALIGN_RIGHT);
+
+      view_input[1] = new Fl_Input(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Number display format");
+      view_input[1]->align(FL_ALIGN_RIGHT);
+
+      view_range->end();
+
+      o->end();
+    }
+    {
+      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Axes");
+      o->hide();
+
+      view_choice[8] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Axes mode");
       view_choice[8]->menu(menu_axes_mode);
       view_choice[8]->align(FL_ALIGN_RIGHT);
       view_choice[8]->callback(activate_cb, (void*)"view_axes");
       view_choice[8]->tooltip("(Alt+g)");
 
-      view_value[3] = new Fl_Value_Input(L + width / 2, 2 * WB + 2 * BH, IW/3, BH);
+      view_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW/3, BH);
       view_value[3]->minimum(0.);
       view_value[3]->step(1);
       view_value[3]->maximum(100);
-      view_value[4] = new Fl_Value_Input(L + width / 2 + 1*IW/3, 2 * WB + 2 * BH, IW/3, BH);
+      view_value[4] = new Fl_Value_Input(L + 2 * WB + 1*IW/3, 2 * WB + 2 * BH, IW/3, BH);
       view_value[4]->minimum(0.);
       view_value[4]->step(1);
       view_value[4]->maximum(100);
-      view_value[5] = new Fl_Value_Input(L + width / 2 + 2*IW/3, 2 * WB + 2 * BH, IW/3, BH, "Tics");
+      view_value[5] = new Fl_Value_Input(L + 2 * WB + 2*IW/3, 2 * WB + 2 * BH, IW/3, BH, "Axes tics");
       view_value[5]->minimum(0.);
       view_value[5]->step(1);
       view_value[5]->maximum(100);
       view_value[5]->align(FL_ALIGN_RIGHT);
 
-      view_input[7] = new Fl_Input(L + width / 2, 2 * WB + 3 * BH, IW/3, BH);
-      view_input[8] = new Fl_Input(L + width / 2 + 1*IW/3, 2 * WB + 3 * BH, IW/3, BH);
-      view_input[9] = new Fl_Input(L + width / 2 + 2*IW/3, 2 * WB + 3 * BH, IW/3, BH, "Format");
+      view_input[7] = new Fl_Input(L + 2 * WB, 2 * WB + 3 * BH, IW/3, BH);
+      view_input[8] = new Fl_Input(L + 2 * WB + 1*IW/3, 2 * WB + 3 * BH, IW/3, BH);
+      view_input[9] = new Fl_Input(L + 2 * WB + 2*IW/3, 2 * WB + 3 * BH, IW/3, BH, "Axes format");
       view_input[9]->align(FL_ALIGN_RIGHT);
       
-      view_input[10] = new Fl_Input(L + width / 2, 2 * WB + 4 * BH, IW/3, BH);
-      view_input[11] = new Fl_Input(L + width / 2 + 1*IW/3, 2 * WB + 4 * BH, IW/3, BH);
-      view_input[12] = new Fl_Input(L + width / 2 + 2*IW/3, 2 * WB + 4 * BH, IW/3, BH, "Labels");
+      view_input[10] = new Fl_Input(L + 2 * WB, 2 * WB + 4 * BH, IW/3, BH);
+      view_input[11] = new Fl_Input(L + 2 * WB + 1*IW/3, 2 * WB + 4 * BH, IW/3, BH);
+      view_input[12] = new Fl_Input(L + 2 * WB + 2*IW/3, 2 * WB + 4 * BH, IW/3, BH, "Axes labels");
       view_input[12]->align(FL_ALIGN_RIGHT);
       
-      view_butt[25] = new Fl_Check_Button(L + width / 2, 2 * WB + 5 * BH, BW / 2 - WB, BH, "Automatic 3D positioning");
+      view_butt[25] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW / 2 - WB, BH, "Set position and size of 3D axes automatically");
       view_butt[25]->type(FL_TOGGLE_BUTTON);
       view_butt[25]->down_box(GMSH_TOGGLE_BOX);
       view_butt[25]->selection_color(GMSH_TOGGLE_COLOR);
       view_butt[25]->callback(activate_cb, (void*)"view_axes_auto_3d");
       
-      view_value[13] = new Fl_Value_Input(L + width / 2, 2 * WB + 6 * BH, IW / 3, BH);
-      view_value[14] = new Fl_Value_Input(L + width / 2 + IW / 3, 2 * WB + 6 * BH, IW / 3, BH);
-      view_value[15] = new Fl_Value_Input(L + width / 2 + 2 * IW / 3, 2 * WB + 6 * BH, IW / 3, BH, "Minimum");
+      view_value[13] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW / 3, BH);
+      view_value[14] = new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 6 * BH, IW / 3, BH);
+      view_value[15] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 6 * BH, IW / 3, BH, "3D Axes minimum");
       view_value[15]->align(FL_ALIGN_RIGHT);
 
-      view_value[16] = new Fl_Value_Input(L + width / 2, 2 * WB + 7 * BH, IW / 3, BH);
-      view_value[17] = new Fl_Value_Input(L + width / 2 + IW / 3, 2 * WB + 7 * BH, IW / 3, BH);
-      view_value[18] = new Fl_Value_Input(L + width / 2 + 2 * IW / 3, 2 * WB + 7 * BH, IW / 3, BH, "Maximum");
+      view_value[16] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW / 3, BH);
+      view_value[17] = new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 7 * BH, IW / 3, BH);
+      view_value[18] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 7 * BH, IW / 3, BH, "3D Axes maximum");
       view_value[18]->align(FL_ALIGN_RIGHT);
 
-      view_butt[7] = new Fl_Check_Button(L + width / 2, 2 * WB + 8 * BH, BW / 2 - WB, BH, "Automatic 2D positioning");
+      view_butt[7] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW / 2 - WB, BH, "Set position and size of 2D axes automatically");
       view_butt[7]->type(FL_TOGGLE_BUTTON);
       view_butt[7]->down_box(GMSH_TOGGLE_BOX);
       view_butt[7]->selection_color(GMSH_TOGGLE_COLOR);
       view_butt[7]->callback(activate_cb, (void*)"view_axes_auto_2d");
       
-      view_value[20] = new Fl_Value_Input(L + width / 2, 2 * WB + 9 * BH, IW / 2, BH);
+      view_value[20] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
       view_value[20]->minimum(-1024);
       view_value[20]->maximum(1024);
       view_value[20]->step(1);
-      view_value[21] = new Fl_Value_Input(L + width / 2 + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "Position");
+      view_value[21] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "2D axes position");
       view_value[21]->align(FL_ALIGN_RIGHT);
       view_value[21]->minimum(-1024);
       view_value[21]->maximum(1024);
       view_value[21]->step(1);
 
-      view_value[22] = new Fl_Value_Input(L + width / 2, 2 * WB + 10 * BH, IW / 2, BH);
+      view_value[22] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH);
       view_value[22]->minimum(0);
       view_value[22]->maximum(1024);
       view_value[22]->step(1);
-      view_value[23] = new Fl_Value_Input(L + width / 2 + IW / 2, 2 * WB + 10 * BH, IW / 2, BH, "Size");
+      view_value[23] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH, "3D axes size");
       view_value[23]->align(FL_ALIGN_RIGHT);
       view_value[23]->minimum(0);
       view_value[23]->maximum(1024);
@@ -2908,85 +2971,20 @@ void GUI::create_option_window()
       view_menu_butt[0] = new Fl_Menu_Button(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Fields");
       view_menu_butt[0]->menu(menu_view_field_types);
 
-
-      o->end();
-    }
-    {
-      view_range = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Range");
-      view_range->hide();
-
-      view_value[30] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Number of intervals");
-      view_value[30]->align(FL_ALIGN_RIGHT);
-      view_value[30]->minimum(1);
-      view_value[30]->maximum(256);
-      view_value[30]->step(1);
-
-      static Fl_Menu_Item menu_iso[] = {
-        {"Iso-values", 0, 0, 0},
-        {"Filled iso-values", 0, 0, 0},
-        {"Continuous map", 0, 0, 0},
-        {"Numeric values", 0, 0, 0},
-        {0}
-      };
-      view_choice[0] = new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Intervals type");
-      view_choice[0]->menu(menu_iso);
-      view_choice[0]->align(FL_ALIGN_RIGHT);
-      view_choice[0]->tooltip("(Alt+t)");
-
-      static Fl_Menu_Item menu_range[] = {
-        {"Default", 0, 0, 0},
-        {"Per time step", 0, 0, 0},
-        {"Custom", 0, 0, 0},
-        {0}
-      };
-      view_choice[7] = new Fl_Choice(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Range type");
-      view_choice[7]->menu(menu_range);
-      view_choice[7]->align(FL_ALIGN_RIGHT);
-      view_choice[7]->callback(activate_cb, (void*)"custom_range");
-
-      int sw = (int)(2.5 * fontsize);
-      view_push_butt[1] = new Fl_Button(L + 2 * WB, 2 * WB + 4 * BH, sw, BH, "Min");
-      view_push_butt[1]->callback(view_options_custom_set_cb, (void*)"Min");
-      view_value[31] = new Fl_Value_Input(L + 2 * WB + sw, 2 * WB + 4 * BH, IW - sw, BH, "Custom minimum");
-      view_value[31]->align(FL_ALIGN_RIGHT);
-
-      view_push_butt[2] = new Fl_Button(L + 2 * WB, 2 * WB + 5 * BH, sw, BH, "Max");
-      view_push_butt[2]->callback(view_options_custom_set_cb, (void*)"Max");
-      view_value[32] = new Fl_Value_Input(L + 2 * WB + sw, 2 * WB + 5 * BH, IW - sw, BH, "Custom maximum");
-      view_value[32]->align(FL_ALIGN_RIGHT);
-
-      static Fl_Menu_Item menu_scale[] = {
-        {"Linear", 0, 0, 0},
-        {"Logarithmic", 0, 0, 0},
-        {"Double logarithmic", 0, 0, 0},
-        {0}
-      };
-      view_choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Scale");
-      view_choice[1]->menu(menu_scale);
-      view_choice[1]->align(FL_ALIGN_RIGHT);
-
-      view_input[1] = new Fl_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Number format");
-      view_input[1]->align(FL_ALIGN_RIGHT);
-
-      view_butt[38] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Saturate values");
-      view_butt[38]->type(FL_TOGGLE_BUTTON);
-      view_butt[38]->down_box(GMSH_TOGGLE_BOX);
-      view_butt[38]->selection_color(GMSH_TOGGLE_COLOR);
-
-      view_value[33] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Maximum recursion level");
+      view_value[33] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Maximum recursion level");
       view_value[33]->align(FL_ALIGN_RIGHT);
       view_value[33]->minimum(0);
       view_value[33]->maximum(MAX_LEVEL_OF_ZOOM);
       view_value[33]->step(1);
       view_value[33]->value(0);
 
-      view_value[34] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Target error");
+      view_value[34] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Target error");
       view_value[34]->align(FL_ALIGN_RIGHT);
       view_value[34]->minimum(0);
       view_value[34]->maximum(1);
       view_value[34]->value(1.e-2);
 
-      view_range->end();
+      o->end();
     }
     {
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Offset");
@@ -3265,12 +3263,12 @@ void GUI::update_view_window(int num)
   }
 
   if(v->NbSP) {
-    view_butt[2]->activate();
-    view_butt[3]->activate();
+    ((Fl_Menu_Item*)view_choice[13]->menu())[1].activate();
+    ((Fl_Menu_Item*)view_choice[13]->menu())[2].activate();
   }
   else {
-    view_butt[2]->deactivate();
-    view_butt[3]->deactivate();
+    ((Fl_Menu_Item*)view_choice[13]->menu())[1].deactivate();
+    ((Fl_Menu_Item*)view_choice[13]->menu())[2].deactivate();
   }
 
   opt_view_auto_position(num, GMSH_GUI, 0);
@@ -3304,11 +3302,11 @@ void GUI::update_view_window(int num)
 
   if(v->TextOnly) {
     view_range->deactivate();
-    view_butt[1]->deactivate();
+    ((Fl_Menu_Item*)view_choice[13]->menu())[0].deactivate();
   }
   else {
     view_range->activate();
-    view_butt[1]->activate();
+    ((Fl_Menu_Item*)view_choice[13]->menu())[0].activate();
   }
   opt_view_show_element(num, GMSH_GUI, 0);
   opt_view_light(num, GMSH_GUI, 0);

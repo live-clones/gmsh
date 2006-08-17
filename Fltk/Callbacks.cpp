@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.436 2006-08-17 17:08:50 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.437 2006-08-17 18:15:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3742,32 +3742,18 @@ void view_options_ok_cb(CALLBACK_ARGS)
       // view_choice
 
       switch (WID->view_choice[1]->value()) {
-      case 0:
-	val = DRAW_POST_LINEAR;
-	break;
-      case 1:
-	val = DRAW_POST_LOGARITHMIC;
-	break;
-      default:
-	val = DRAW_POST_DOUBLELOGARITHMIC;
-	break;
+      case 0: val = DRAW_POST_LINEAR; break;
+      case 1: val = DRAW_POST_LOGARITHMIC; break;
+      default: val = DRAW_POST_DOUBLELOGARITHMIC; break; // 2
       }
       if(force || (val != scale_type))
         opt_view_scale_type(i, GMSH_SET, val);
 
       switch (WID->view_choice[0]->value()) {
-      case 0:
-	val = DRAW_POST_ISO;
-	break;
-      case 1:
-	val = DRAW_POST_DISCRETE;
-	break;
-      case 2:
-	val = DRAW_POST_CONTINUOUS;
-	break;
-      default:
-	val = DRAW_POST_NUMERIC;
-	break;
+      case 0: val = DRAW_POST_ISO; break;
+      case 1: val = DRAW_POST_DISCRETE; break;
+      case 2: val = DRAW_POST_CONTINUOUS; break;
+      default: val = DRAW_POST_NUMERIC; break; // 3
       }
       if(force || (val != intervals_type))
 	opt_view_intervals_type(i, GMSH_SET, val);
@@ -3781,84 +3767,42 @@ void view_options_ok_cb(CALLBACK_ARGS)
         opt_view_line_type(i, GMSH_SET, val);
 
       switch (WID->view_choice[2]->value()) {
-      case 0:
-	val = DRAW_POST_SEGMENT;
-	break;
-      case 1:
-	val = DRAW_POST_ARROW;
-	break;
-      case 2:
-	val = DRAW_POST_PYRAMID;
-	break;
-      case 4:
-	val = DRAW_POST_DISPLACEMENT;
-	break;
-      default: // 3
-	val = DRAW_POST_ARROW3D;
-	break;
+      case 0: val = DRAW_POST_SEGMENT; break;
+      case 1: val = DRAW_POST_ARROW; break;
+      case 2: val = DRAW_POST_PYRAMID; break;
+      case 4: val = DRAW_POST_DISPLACEMENT; break;
+      default: val = DRAW_POST_ARROW3D; break; // 3
       }
       if(force || (val != vector_type))
         opt_view_vector_type(i, GMSH_SET, val);
 
       switch (WID->view_choice[3]->value()) {
-      case 0:
-	val = DRAW_POST_LOCATE_COG;
-	break;
-      default:
-	val = DRAW_POST_LOCATE_VERTEX;
-	break;
+      case 0: val = DRAW_POST_LOCATE_COG; break;
+      default: val = DRAW_POST_LOCATE_VERTEX; break;
       }
       if(force || (val != glyph_location))
         opt_view_glyph_location(i, GMSH_SET, val);
 
      switch (WID->view_choice[4]->value()) {
-     case 0:
- 	val = DRAW_POST_VONMISES;
-      break;
-     case 2:
- 	val = DRAW_POST_LMGC90_TYPE;
-      break;
-     case 3:
- 	val = DRAW_POST_LMGC90_COORD;
-      break;
-     case 4:
- 	val = DRAW_POST_LMGC90_PRES;
-      break;
-     case 5:
- 	val = DRAW_POST_LMGC90_SN;
-      break;
-     case 6:
- 	val = DRAW_POST_LMGC90_DEPX;
-      break;
-     case 7:
- 	val = DRAW_POST_LMGC90_DEPY;
-      break;
-     case 8:
- 	val = DRAW_POST_LMGC90_DEPZ;
-      break;
-     case 9:
- 	val = DRAW_POST_LMGC90_DEPAV;
-      break;
-     case 10:
- 	val = DRAW_POST_LMGC90_DEPNORM;
-      break;
-     default:		//1
- 	val = DRAW_POST_LMGC90;
- 	break;
+     case 0: val = DRAW_POST_VONMISES; break;
+     case 2: val = DRAW_POST_LMGC90_TYPE; break;
+     case 3: val = DRAW_POST_LMGC90_COORD; break;
+     case 4: val = DRAW_POST_LMGC90_PRES; break;
+     case 5: val = DRAW_POST_LMGC90_SN; break;
+     case 6: val = DRAW_POST_LMGC90_DEPX; break;
+     case 7: val = DRAW_POST_LMGC90_DEPY; break;
+     case 8: val = DRAW_POST_LMGC90_DEPZ; break;
+     case 9: val = DRAW_POST_LMGC90_DEPAV; break;
+     case 10: val = DRAW_POST_LMGC90_DEPNORM; break;
+     default: val = DRAW_POST_LMGC90; break; // 1
      }
      if(force || (val != tensor_type))
        opt_view_tensor_type(i, GMSH_SET, val);
 
       switch (WID->view_choice[7]->value()) {
-      case 0:
-	val = DRAW_POST_RANGE_DEFAULT;
-	break;
-      case 1:
-	val = DRAW_POST_RANGE_PER_STEP;
-	break;
-      default:
-	val = DRAW_POST_RANGE_CUSTOM;
-	break;
+      case 0: val = DRAW_POST_RANGE_DEFAULT; break;
+      case 1: val = DRAW_POST_RANGE_PER_STEP; break;
+      default: val = DRAW_POST_RANGE_CUSTOM; break; // 2
       }
       if(force || (val != range_type))
         opt_view_range_type(i, GMSH_SET, val);
@@ -3882,17 +3826,20 @@ void view_options_ok_cb(CALLBACK_ARGS)
       val = WID->view_choice[12]->value();
       if(force || (val != show_time))
         opt_view_show_time(i, GMSH_SET, val);
+      
+      switch(WID->view_choice[13]->value()){
+      case 0: val = DRAW_POST_3D; break;
+      case 1: val = DRAW_POST_2D_SPACE; break;
+      default: val = DRAW_POST_2D_TIME; break; // 2
+      }
+      if(force || (val != type))
+        opt_view_type(i, GMSH_SET, val);
 
       // view_butts
 
       val = WID->view_butt[0]->value();
       if(force || (val != arrow_size_proportional))
         opt_view_arrow_size_proportional(i, GMSH_SET, val);
-
-      val = WID->view_butt[1]->value() ? DRAW_POST_3D :
-	WID->view_butt[2]->value() ? DRAW_POST_2D_SPACE : DRAW_POST_2D_TIME;
-      if(force || (val != type))
-        opt_view_type(i, GMSH_SET, val);
 
       val = WID->view_butt[38]->value();
       if(force || (val != saturate_values))

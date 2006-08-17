@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.18 2006-08-17 06:28:30 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.19 2006-08-17 18:15:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -761,9 +761,9 @@ static int skipUntil(FILE *fp, char *key)
 static int readVerticesVRML(FILE *fp, std::map<int, MVertex*> &vertices,
 			    std::vector<MVertex*> &allvertices)
 {
-  int num = 0;
   double x, y, z;
   if(fscanf(fp, " [ %lf %lf %lf", &x, &y, &z) != 3) return 0;
+  int num = 0;
   vertices[num++] = new MVertex(x, y, z);
   while(fscanf(fp, " , %lf %lf %lf", &x, &y, &z) == 3)
     vertices[num++] = new MVertex(x, y, z);
@@ -817,7 +817,7 @@ static int readElementsVRML(FILE *fp, std::map<int, MVertex*> &v, int region,
     }
   }
   if(idx.size()){
-    Msg(GERROR, "Premature end of VRML file");
+    Msg(GERROR, "Prematured end of VRML file");
     return 0;
   }
   Msg(INFO, "%d elements", elements[0][region].size() + 

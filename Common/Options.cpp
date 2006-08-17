@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.296 2006-08-17 17:08:50 geuzaine Exp $
+// $Id: Options.cpp,v 1.297 2006-08-17 18:15:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -5794,9 +5794,18 @@ double opt_view_type(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_butt[1]->value(v->Type == DRAW_POST_3D);
-    WID->view_butt[2]->value(v->Type == DRAW_POST_2D_SPACE);
-    WID->view_butt[3]->value(v->Type == DRAW_POST_2D_TIME);
+    switch (v->Type) {
+    case DRAW_POST_3D:
+      WID->view_choice[13]->value(0);
+      break;
+    case DRAW_POST_2D_SPACE:
+      WID->view_choice[13]->value(1);
+      break;
+    case DRAW_POST_2D_TIME:
+    default:
+      WID->view_choice[13]->value(2);
+      break;
+    }
   }
 #endif
   return v->Type;
