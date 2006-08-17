@@ -530,7 +530,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ShowTime
-Time display mode (0=hidden, 1=value if multiple, 2=value always, 3=step if multiple, 4=step always)@*
+Time display mode (0=hidden, 1=value if multi-step, 2=value always, 3=step if multi-step, 4=step always)@*
 Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
