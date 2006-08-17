@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.174 2006-08-17 03:22:22 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.175 2006-08-17 14:09:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -58,7 +58,7 @@ static unsigned int getColorByElement(MElement *ele)
 
 static unsigned int getColorByEntity(GEntity *e)
 {
-  if(e->getFlag() > 0){ // selection
+  if(e->getSelection()){ // selection
     switch(e->dim()){
     case 0: return CTX.color.geom.point_sel;
     case 1: return CTX.color.geom.line_sel;
@@ -367,7 +367,7 @@ static void addEdgesInArrays(GEntity *e)
   for(MRep::eriter it = m->firstEdgeRep(); it != m->lastEdgeRep(); ++it){
     MVertex *v[2] = {it->first.first, it->first.second};
     MElement *ele = it->second;
-    SVector3 n = ele->getFace(0).normal();
+    SVector3 n = ele->getFaceRep(0).normal();
     unsigned int color = getColorByElement(ele);
     for(int i = 0; i < 2; i++){
       if(e->dim() == 2 && CTX.mesh.smooth_normals)
@@ -452,7 +452,8 @@ static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalAr
     glDisableClientState(GL_COLOR_ARRAY);
     glColor4ubv((GLubyte *) & color);
   }
-  else if(CTX.mesh.color_carousel == 0 || CTX.mesh.color_carousel == 3){
+  else if(!e->getSelection() && (CTX.mesh.color_carousel == 0 || 
+				 CTX.mesh.color_carousel == 3)){
     glEnableClientState(GL_COLOR_ARRAY);
   }
   else{

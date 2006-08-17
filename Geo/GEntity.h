@@ -45,8 +45,8 @@ class GEntity {
   // The tag (the number) of this entity
   int _tag;
   
-  // The visibility and the general purpose flag
-  char _visible, _flag;
+  // The visibility and the selection flag
+  char _visible, _selection;
   
   // The color of the entity (ignored if set to transparent blue)
   unsigned int _color;
@@ -166,11 +166,11 @@ class GEntity {
   // Set the visibility flag
   virtual void setVisibility(char val, bool recursive=false){ _visible = val; }
 
-  // Get the multi-purpose flag
-  virtual char getFlag(){ return _flag; }
+  // Get the selection flag
+  virtual char getSelection(){ return _selection; }
 
-  // Set the multi-purpose flag
-  virtual void setFlag(char val){ _flag = val; }
+  // Set the selection flag
+  virtual void setSelection(char val){ _selection = val; }
 
   // Get the color
   virtual unsigned int getColor(){ return _color; }

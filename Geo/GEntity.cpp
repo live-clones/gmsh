@@ -5,7 +5,7 @@
 extern Context_T CTX;
 
 GEntity::GEntity(GModel *m, int t)
-  : _model(m), _tag(t), _visible(true), _flag(0), meshRep(0) 
+  : _model(m), _tag(t), _visible(true), _selection(0), meshRep(0) 
 {
   _color = CTX.PACK_COLOR(0, 0, 255, 0);
 }

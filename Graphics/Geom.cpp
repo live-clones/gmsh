@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.114 2006-08-15 21:22:12 geuzaine Exp $
+// $Id: Geom.cpp,v 1.115 2006-08-17 14:09:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -41,7 +41,7 @@ class drawGVertex {
       glPushName(v->tag());
     }
     
-    if(v->getFlag() > 0) {
+    if(v->getSelection()) {
       glPointSize(CTX.geom.point_sel_size);
       gl2psPointSize(CTX.geom.point_sel_size * CTX.print.eps_point_size_factor);
       glColor4ubv((GLubyte *) & CTX.color.geom.point_sel);
@@ -54,7 +54,7 @@ class drawGVertex {
     
     if(CTX.geom.points) {
       if(CTX.geom.point_type > 0) {
-	if(v->getFlag() > 0)
+	if(v->getSelection())
 	  Draw_Sphere(CTX.geom.point_sel_size, v->x(), v->y(), v->z(), 
 		      CTX.geom.light);
 	else
@@ -98,7 +98,7 @@ class drawGEdge {
       glPushName(e->tag());
     }
     
-    if(e->getFlag() > 0) {
+    if(e->getSelection()) {
       glLineWidth(CTX.geom.line_sel_width);
       gl2psLineWidth(CTX.geom.line_sel_width * CTX.print.eps_line_width_factor);
       glColor4ubv((GLubyte *) & CTX.color.geom.line_sel);
@@ -124,7 +124,7 @@ class drawGEdge {
 	  double x[2] = {p1.x(), p2.x()};
 	  double y[2] = {p1.y(), p2.y()};
 	  double z[2] = {p1.z(), p2.z()};
-	  Draw_Cylinder(e->getFlag() > 0 ? CTX.geom.line_sel_width : 
+	  Draw_Cylinder(e->getSelection() ? CTX.geom.line_sel_width : 
 			CTX.geom.line_width, x, y, z, CTX.geom.light);
 	}
       }
@@ -327,7 +327,7 @@ public :
       glPushName(f->tag());
     }
     
-    if(f->getFlag() > 0) {
+    if(f->getSelection()) {
       glLineWidth(CTX.geom.line_sel_width / 2.);
       gl2psLineWidth(CTX.geom.line_sel_width / 2. *
 		     CTX.print.eps_line_width_factor);
@@ -364,7 +364,7 @@ class drawGRegion {
       glPushName(r->tag());
     }
     
-    if(r->getFlag() > 0)
+    if(r->getSelection())
       glColor4ubv((GLubyte *) & CTX.color.geom.volume_sel);
     else
       glColor4ubv((GLubyte *) & CTX.color.geom.volume);
@@ -461,7 +461,7 @@ void Draw_Geom()
 void HighlightEntity(GEntity *e, int permanent)
 {
   if(permanent)
-    e->setFlag(2);
+    e->setSelection(1);
   else
     Msg(STATUS2N, "%s", e->getInfoString().c_str());
 }
@@ -497,7 +497,7 @@ void HighlightEntityNum(int v, int c, int s, int r, int permanent)
 
 void ZeroHighlightEntity(GEntity *e)
 {
-  e->setFlag(-2);
+  e->setSelection(0);
 }
 
 void ZeroHighlightEntity(GVertex *v, GEdge *c, GFace *s, GRegion *r)
