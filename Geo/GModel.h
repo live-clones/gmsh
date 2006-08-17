@@ -114,6 +114,7 @@ class GModel
   int writePOS(const std::string &name, double scalingFactor=1.0);
   int readSTL(const std::string &name, double tolerance=1.e-3);
   int writeSTL(const std::string &name, double scalingFactor=1.0);
+  int readVRML(const std::string &name);
   int writeVRML(const std::string &name, double scalingFactor=1.0);
   int writeUNV(const std::string &name, double scalingFactor=1.0);
   int readMESH(const std::string &name);

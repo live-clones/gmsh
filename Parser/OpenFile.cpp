@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.112 2006-08-15 06:16:43 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.113 2006-08-17 03:22:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -285,7 +285,12 @@ int MergeProblem(char *name, int warn_if_missing)
   if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL")){
     status = GMODEL->readSTL(name, CTX.mesh.stl_distance_tol);
   }
-  else if(!strcmp(ext, ".mesh")){
+  else if(!strcmp(ext, ".wrl") || !strcmp(ext, ".WRL") || 
+	  !strcmp(ext, ".vrml") || !strcmp(ext, ".VRML") ||
+	  !strcmp(ext, ".iv") || !strcmp(ext, ".IV")){
+    status = GMODEL->readVRML(name);
+  }
+  else if(!strcmp(ext, ".mesh") || !strcmp(ext, ".MESH")){
     status = GMODEL->readMESH(name);
   }
 #if defined(HAVE_FLTK)

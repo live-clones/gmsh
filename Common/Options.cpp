@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.293 2006-08-17 00:25:00 geuzaine Exp $
+// $Id: Options.cpp,v 1.294 2006-08-17 03:22:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4804,7 +4804,7 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     // vertex arrays need to be regenerated only when we color by
-    // partition or by element type
+    // element type or by partition
     if(CTX.mesh.color_carousel != (int)val && (val == 0. || val == 3.))
       CTX.mesh.changed = 1;
     CTX.mesh.color_carousel = (int)val;
@@ -7014,6 +7014,10 @@ unsigned int opt_mesh_color_points(OPT_ARGS_COL)
 unsigned int opt_mesh_color_lines(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    // vertex arrays need to be regenerated only when we color by
+    // element type
+    if(CTX.color.mesh.line != val && CTX.mesh.color_carousel == 0)
+      CTX.mesh.changed = 1;
     CTX.color.mesh.line = val;
   }
 #if defined(HAVE_FLTK)
@@ -7025,6 +7029,10 @@ unsigned int opt_mesh_color_lines(OPT_ARGS_COL)
 unsigned int opt_mesh_color_triangles(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    // vertex arrays need to be regenerated only when we color by
+    // element type
+    if(CTX.color.mesh.triangle != val && CTX.mesh.color_carousel == 0)
+      CTX.mesh.changed = 1;
     CTX.color.mesh.triangle = val;
   }
 #if defined(HAVE_FLTK)
@@ -7036,6 +7044,10 @@ unsigned int opt_mesh_color_triangles(OPT_ARGS_COL)
 unsigned int opt_mesh_color_quadrangles(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    // vertex arrays need to be regenerated only when we color by
+    // element type
+    if(CTX.color.mesh.quadrangle != val && CTX.mesh.color_carousel == 0)
+      CTX.mesh.changed = 1;
     CTX.color.mesh.quadrangle = val;
   }
 #if defined(HAVE_FLTK)
@@ -7047,7 +7059,10 @@ unsigned int opt_mesh_color_quadrangles(OPT_ARGS_COL)
 unsigned int opt_mesh_color_tetrahedra(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
-    if(CTX.color.mesh.tetrahedron != val) CTX.mesh.changed = 1;
+    // vertex arrays need to be regenerated only when we color by
+    // element type
+    if(CTX.color.mesh.tetrahedron != val && CTX.mesh.color_carousel == 0)
+      CTX.mesh.changed = 1;
     CTX.color.mesh.tetrahedron = val;
   }
 #if defined(HAVE_FLTK)
@@ -7059,7 +7074,10 @@ unsigned int opt_mesh_color_tetrahedra(OPT_ARGS_COL)
 unsigned int opt_mesh_color_hexahedra(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
-    if(CTX.color.mesh.hexahedron != val) CTX.mesh.changed = 1;
+    // vertex arrays need to be regenerated only when we color by
+    // element type
+    if(CTX.color.mesh.hexahedron != val && CTX.mesh.color_carousel == 0)
+      CTX.mesh.changed = 1;
     CTX.color.mesh.hexahedron = val;
   }
 #if defined(HAVE_FLTK)
@@ -7071,7 +7089,10 @@ unsigned int opt_mesh_color_hexahedra(OPT_ARGS_COL)
 unsigned int opt_mesh_color_prisms(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
-    if(CTX.color.mesh.prism != val) CTX.mesh.changed = 1;
+    // vertex arrays need to be regenerated only when we color by
+    // element type
+    if(CTX.color.mesh.prism != val && CTX.mesh.color_carousel == 0)
+      CTX.mesh.changed = 1;
     CTX.color.mesh.prism = val;
   }
 #if defined(HAVE_FLTK)
@@ -7083,7 +7104,10 @@ unsigned int opt_mesh_color_prisms(OPT_ARGS_COL)
 unsigned int opt_mesh_color_pyramid(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
-    if(CTX.color.mesh.pyramid != val) CTX.mesh.changed = 1;
+    // vertex arrays need to be regenerated only when we color by
+    // element type
+    if(CTX.color.mesh.pyramid != val && CTX.mesh.color_carousel == 0)
+      CTX.mesh.changed = 1;
     CTX.color.mesh.pyramid = val;
   }
 #if defined(HAVE_FLTK)
@@ -7118,9 +7142,8 @@ unsigned int opt_mesh_color_(int i, OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
     // vertex arrays need to be regenerated only when we color by
-    // partition or by element type
-    if(CTX.color.mesh.carousel[i] != val && 
-       (CTX.mesh.color_carousel == 0 || CTX.mesh.color_carousel == 3))
+    // partition
+    if(CTX.color.mesh.carousel[i] != val && CTX.mesh.color_carousel == 3)
       CTX.mesh.changed = 1;
     CTX.color.mesh.carousel[i] = val;
   }

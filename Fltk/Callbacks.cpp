@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.433 2006-08-16 21:55:26 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.434 2006-08-17 03:22:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -788,7 +788,7 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"I-DEAS universal mesh (*.unv)", _save_unv},
     {"INRIA mesh (*.mesh)", _save_mesh},
     {"STL surface mesh (*.stl)", _save_stl},
-    {"VRML surface mesh (*.wrl)", _save_vrml},
+    {"VRML 1.0 surface mesh (*.wrl)", _save_vrml},
     {"   ", _save_auto},
     {"Encapsulated PostScript (*.eps)", _save_eps},
     {"GIF (*.gif)", _save_gif},

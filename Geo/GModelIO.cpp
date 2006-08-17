@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.15 2006-08-15 21:22:12 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.16 2006-08-17 03:22:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -737,6 +737,89 @@ int GModel::writeSTL(const std::string &name, double scalingFactor)
   return 1;
 }
 
+static int skipUntil(FILE *fp, char *key)
+{
+  char buffer[256], str[256];
+  if(!fgets(buffer, sizeof(buffer), fp)) return 0;
+  sscanf(buffer, "%s", str);
+  while(strcmp(str, key)){
+    if(!fgets(buffer, sizeof(buffer), fp)) return 0;
+    sscanf(buffer, "%s", str);
+  }
+  return 1;
+}
+
+int GModel::readVRML(const std::string &name)
+{
+  FILE *fp = fopen(name.c_str(), "r");
+  if(!fp){
+    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  // Warning: this is by NO means a real VRML/Inventor parser: it just
+  // reads the special bunch of files I have to work with.
+
+  std::map<int, MVertex*> vertices;
+  std::map<int, std::vector<MElement*> > triangles;
+  int region = 0;
+  char buffer[256], str[256];
+  while(!feof(fp)) {
+    if(!fgets(buffer, sizeof(buffer), fp)) break;
+    if(buffer[0] != '#'){ // skip comments
+      sscanf(buffer, "%s", str);
+      if(!strcmp(str, "IndexedTriangleStripSet")){
+	region++;
+	Msg(INFO, "IndexedTriangleStripSet");
+	if(!skipUntil(fp, "vertex")) break;
+	int num = 0;
+	double x, y, z;
+	if(!fgets(buffer, sizeof(buffer), fp)) break;
+	while(sscanf(buffer, "%lf %lf %lf", &x, &y, &z)){
+	  vertices[num++] = new MVertex(x, y, z);
+	  if(!fgets(buffer, sizeof(buffer), fp)) break;
+	}
+	Msg(INFO, "%d vertices", vertices.size());
+	if(!skipUntil(fp, "coordIndex")) break;
+	int index;
+	if(!fscanf(fp, "%d", &index)) break;
+	std::vector<int> indices;
+	while(fscanf(fp, " , %d", &index)){
+	  if(index == -1){
+	    if(indices.size() < 3){
+	      Msg(GERROR, "Less than 3 indices in VRML triangle strip");
+	      break;
+	    }
+	    for(unsigned int i = 2; i < indices.size(); i++){
+	      triangles[region].push_back(new MTriangle(vertices[indices[i-2]], 
+							vertices[indices[i-1]], 
+							vertices[indices[i]]));
+	    }
+	    indices.clear();
+	  }
+	  else{
+	    indices.push_back(index);
+	  }
+	}
+	if(indices.size()){
+	  Msg(GERROR, "End of VRML triangle strip not found");
+	}
+	Msg(INFO, "%d triangles", triangles[region].size());
+      }
+      else{
+	// just ignore 
+      }
+    }
+  }
+
+  storeElementsInEntities(this, TRI1, triangles);
+  associateEntityWithVertices(this);
+  storeVerticesInEntities(vertices);
+
+  fclose(fp);
+  return 1;
+}
+
 int GModel::writeVRML(const std::string &name, double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
@@ -933,19 +1016,19 @@ int GModel::readMESH(const std::string &name)
   std::map<int, std::vector<MElement*> > elements[2];
 
   while(!feof(fp)) {
-    fgets(buffer, sizeof(buffer), fp);
+    if(!fgets(buffer, sizeof(buffer), fp)) break;
     if(buffer[0] != '#'){ // skip comments
       sscanf(buffer, "%s", str);
       if(!strcmp(str, "Dimension")){
-	fgets(buffer, sizeof(buffer), fp);
+	if(!fgets(buffer, sizeof(buffer), fp)) break;
       }
       else if(!strcmp(str, "Vertices")){
-	fgets(buffer, sizeof(buffer), fp);
+	if(!fgets(buffer, sizeof(buffer), fp)) break;
 	int nbv;
 	sscanf(buffer, "%d", &nbv);
 	Msg(INFO, "%d vertices", nbv);
 	for(int i = 0; i < nbv; i++) {
-	  fgets(buffer, sizeof(buffer), fp);
+	  if(!fgets(buffer, sizeof(buffer), fp)) break;
 	  int cl;
 	  double x, y, z;
 	  sscanf(buffer, "%lf %lf %lf %d", &x, &y, &z, &cl);
@@ -953,12 +1036,12 @@ int GModel::readMESH(const std::string &name)
 	}
       }
       else if(!strcmp(str, "Triangles")){
-	fgets(buffer, sizeof(buffer), fp);
+	if(!fgets(buffer, sizeof(buffer), fp)) break;
 	int nbt;
 	sscanf(buffer, "%d", &nbt);
 	Msg(INFO, "%d triangles", nbt);
 	for(int i = 0; i < nbt; i++) {
-	  fgets(buffer, sizeof(buffer), fp);
+	  if(!fgets(buffer, sizeof(buffer), fp)) break;
 	  int n1, n2, n3, cl;
 	  sscanf(buffer, "%d %d %d %d", &n1, &n2, &n3, &cl);
 	  elements[0][cl].push_back
@@ -966,12 +1049,12 @@ int GModel::readMESH(const std::string &name)
 	}
       }
       else if(!strcmp(str, "Quadrilaterals")) {
-	fgets(buffer, sizeof(buffer), fp);
+	if(!fgets(buffer, sizeof(buffer), fp)) break;
 	int nbq;
 	sscanf(buffer, "%d", &nbq);
 	Msg(INFO, "%d quadrangles", nbq);
 	for(int i = 0; i < nbq; i++) {
-	  fgets(buffer, sizeof(buffer), fp);
+	  if(!fgets(buffer, sizeof(buffer), fp)) break;
 	  int n1, n2, n3, n4, cl;
 	  sscanf(buffer, "%d %d %d %d %d", &n1, &n2, &n3, &n4, &cl);
 	  elements[1][cl].push_back

@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.173 2006-08-17 00:25:01 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.174 2006-08-17 03:22:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -810,6 +810,7 @@ void Draw_Mesh()
     CTX.threads_lock = 1; 
     int status = GMODEL->getMeshStatus();
     if(CTX.mesh.changed) {
+      Msg(DEBUG, "Mesh has changed: reinitializing drawing data");
       if(status >= 1)
 	std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), initMeshGEdge());
       if(status >= 2){
