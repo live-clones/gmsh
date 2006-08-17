@@ -1451,34 +1451,33 @@ StringXColor GeometryOptions_Color[] = {
 #define COLP  {232, 210, 23, 255}
 #define COLY  {217, 113, 38, 255}
 
-// dark blue to yellow:
-#define COL0  {9, 3, 103, 255}
-#define COL1  {35, 0, 111, 255}
-#define COL2  {60, 0, 114, 255}
-#define COL3  {83, 0, 114, 255}
-#define COL4  {105, 1, 109, 255}
-#define COL5  {126, 10, 102, 255}
-#define COL6  {145, 21, 93, 255}
-#define COL7  {163, 34, 82, 255}
-#define COL8  {179, 50, 69, 255}
-#define COL9  {193, 67, 57, 255}
-#define COL10 {207, 85, 44, 255}
-#define COL11 {219, 104, 32, 255}
-#define COL12 {229, 124, 22, 255}
-#define COL13 {238, 143, 13, 255}
-#define COL14 {246, 162, 8, 255}
-#define COL15 {252, 181, 5, 255}
-#define COL16 {255, 198, 6, 255}
-#define COL17 {255, 214, 11, 255}
-#define COL18 {255, 228, 22, 255}
-#define COL19 {255, 240, 38, 255}
+#define COL0  {255, 120, 0, 255}
+#define COL1  {255, 160, 0, 255}
+#define COL2  {255, 200, 0, 255}
+#define COL3  {255, 240, 0, 255}
+#define COL4  {228, 255, 0, 255}
+#define COL5  {188, 255, 0, 255}
+#define COL6  {148, 255, 0, 255}
+#define COL7  {108, 255, 0, 255}
+#define COL8  {68, 255, 0, 255}
+#define COL9  {0, 255, 52, 255}
+#define COL10 {0, 255, 132, 255}
+#define COL11 {0, 255, 192, 255}
+#define COL12 {0, 216, 255, 255}
+#define COL13 {0, 176, 255, 255}
+#define COL14 {0, 116, 255, 255}
+#define COL15 {0, 76, 255, 255}
+#define COL16 {24, 0, 255, 255}
+#define COL17 {84, 0, 255, 255}
+#define COL18 {104, 0, 255, 255}
+#define COL19 {184, 0, 255, 255}
 
 StringXColor MeshOptions_Color[] = {
   { F|O, "Points" , opt_mesh_color_points , 
-    {0, 255, 0, 255}, {0, 255, 0, 255}, {0, 0, 0, 255},
+    {0, 0, 128, 255}, {0, 0, 128, 255}, {0, 0, 0, 255},
     "Mesh node color" },
   { F|O, "Lines" , opt_mesh_color_lines , 
-    {0, 255, 0, 255}, {0, 255, 0, 255}, {0, 0, 0, 255},
+    {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},
     "Mesh line color" },
   { F|O, "Triangles" , opt_mesh_color_triangles , 
     COLT, COLT, COLW, 
@@ -1517,7 +1516,7 @@ StringXColor MeshOptions_Color[] = {
   { F|O, "Ten"      , opt_mesh_color_10, COL10, COL10, COLW, "Color 10 in color carousel" },
   { F|O, "Eleven"   , opt_mesh_color_11, COL11, COL11, COLW, "Color 11 in color carousel" },
   { F|O, "Twelve"   , opt_mesh_color_12, COL12, COL12, COLW, "Color 12 in color carousel" },
-  { F|O, "Thirtheen", opt_mesh_color_13, COL13, COL13, COLW, "Color 13 in color carousel" },
+  { F|O, "Thirteen" , opt_mesh_color_13, COL13, COL13, COLW, "Color 13 in color carousel" },
   { F|O, "Fourteen" , opt_mesh_color_14, COL14, COL14, COLW, "Color 14 in color carousel" },
   { F|O, "Fifteen"  , opt_mesh_color_15, COL15, COL15, COLW, "Color 15 in color carousel" },
   { F|O, "Sixteen"  , opt_mesh_color_16, COL16, COL16, COLW, "Color 16 in color carousel" },
