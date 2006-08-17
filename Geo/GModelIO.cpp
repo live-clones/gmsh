@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.17 2006-08-17 05:10:44 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.18 2006-08-17 06:28:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -751,14 +751,11 @@ int GModel::writeSTL(const std::string &name, double scalingFactor)
 
 static int skipUntil(FILE *fp, char *key)
 {
-  char buffer[256], str[256];
-  if(!fgets(buffer, sizeof(buffer), fp)) return 0;
-  sscanf(buffer, "%s", str);
-  while(strcmp(str, key)){
-    if(!fgets(buffer, sizeof(buffer), fp)) return 0;
-    sscanf(buffer, "%s", str);
+  char str[256];
+  while(fscanf(fp, "%s", str)){
+    if(!strcmp(str, key)) return 1;
   }
-  return 1;
+  return 0;
 }
 
 static int readVerticesVRML(FILE *fp, std::map<int, MVertex*> &vertices,
@@ -766,53 +763,54 @@ static int readVerticesVRML(FILE *fp, std::map<int, MVertex*> &vertices,
 {
   int num = 0;
   double x, y, z;
-  char buffer[256];
-  if(!fgets(buffer, sizeof(buffer), fp)) return 0;
-  while(sscanf(buffer, "%lf %lf %lf", &x, &y, &z)){
+  if(fscanf(fp, " [ %lf %lf %lf", &x, &y, &z) != 3) return 0;
+  vertices[num++] = new MVertex(x, y, z);
+  while(fscanf(fp, " , %lf %lf %lf", &x, &y, &z) == 3)
     vertices[num++] = new MVertex(x, y, z);
-    if(!fgets(buffer, sizeof(buffer), fp)) return 0;
-  }
   for(unsigned int i = 0; i < vertices.size(); i++)
     allvertices.push_back(vertices[i]);
   Msg(INFO, "%d vertices", vertices.size());
-  return vertices.size();
+  return 1;
 }
 
-static int readElementsVRML(FILE *fp, std::map<int, MVertex*> &vertices, 
-			    std::vector<MElement*> &elements)
+static int readElementsVRML(FILE *fp, std::map<int, MVertex*> &v, int region,
+			    std::map<int, std::vector<MElement*> > elements[3], 
+			    bool strips=false)
 {
   int i;
   std::vector<int> idx;
-  if(!fscanf(fp, "%d", &i)) return 0;
+  if(fscanf(fp, " [ %d", &i) != 1) return 0;
   idx.push_back(i);
-  while(fscanf(fp, " , %d", &i)){
+  while(fscanf(fp, " , %d", &i) == 1){
     if(i != -1){
       idx.push_back(i);
     }
     else{
-      // check if all the indices are valid
       for(unsigned int j = 0; j < idx.size(); j++){
-	if(!vertices.count(idx[j])){
+	if(!v.count(idx[j])){
 	  Msg(GERROR, "Bad vertex index in VRML file");
 	  return 0;
 	}
       }
-      // create the elements
       if(idx.size() == 2){
-	elements.push_back(new MLine(vertices[idx[0]], vertices[idx[1]]));
+	elements[0][region].push_back(new MLine(v[idx[0]], v[idx[1]]));
       }
-      else if(idx.size() > 2){
-	// if there are more than 3 indices we assume that we have a
-	// triangle strip
+      else if(idx.size() == 3){
+	elements[1][region].push_back
+	  (new MTriangle(v[idx[0]], v[idx[1]], v[idx[2]]));
+      }
+      else if(idx.size() == 4 && !strips){
+	elements[2][region].push_back
+	  (new MQuadrangle(v[idx[0]], v[idx[1]], v[idx[2]], v[idx[3]]));
+      }
+      else if(idx.size() > 2 && strips){
 	for(unsigned int j = 2; j < idx.size(); j++){
 	  if(j % 2)
-	    elements.push_back(new MTriangle(vertices[idx[j]], 
-					     vertices[idx[j - 1]],
-					     vertices[idx[j - 2]]));
+	    elements[1][region].push_back
+	      (new MTriangle(v[idx[j]], v[idx[j - 1]], v[idx[j - 2]]));
 	  else
-	    elements.push_back(new MTriangle(vertices[idx[j - 2]],
-					     vertices[idx[j - 1]],
-					     vertices[idx[j]]));
+	    elements[1][region].push_back
+	      (new MTriangle(v[idx[j - 2]], v[idx[j - 1]], v[idx[j]]));
 	}
       }
       idx.clear();
@@ -822,8 +820,9 @@ static int readElementsVRML(FILE *fp, std::map<int, MVertex*> &vertices,
     Msg(GERROR, "Premature end of VRML file");
     return 0;
   }
-  Msg(INFO, "%d elements", elements.size());
-  return elements.size();
+  Msg(INFO, "%d elements", elements[0][region].size() + 
+      elements[1][region].size() + elements[2][region].size());
+  return 1;
 }
 
 int GModel::readVRML(const std::string &name)
@@ -834,16 +833,14 @@ int GModel::readVRML(const std::string &name)
     return 0;
   }
 
-  // This is by NO means a complete VRML/Inventor parser. It just
-  // reads a very limited subset of VRML/Inventor 1.0 and 2.1 by
-  // making plenty of bold assumptions on how the file is structured
-  // (for example, it assumes that all the tags are on separate
-  // lines).
+  // This is by NO means a complete VRML/Inventor parser! (But it's
+  // sufficient for reading simple Inventor files... which is all I
+  // need)
 
   std::map<int, MVertex*> vertices;
   std::vector<MVertex*> allvertices;
-  int elementTypes[2] = {LGN1, TRI1};
-  std::map<int, std::vector<MElement*> > elements[2];
+  int elementTypes[3] = {LGN1, TRI1, QUA1};
+  std::map<int, std::vector<MElement*> > elements[3];
   int region = 0;
   char buffer[256], str[256];
   while(!feof(fp)) {
@@ -856,41 +853,31 @@ int GModel::readVRML(const std::string &name)
 	if(!skipUntil(fp, "vertex")) break;
 	if(!readVerticesVRML(fp, vertices, allvertices)) break;
 	if(!skipUntil(fp, "coordIndex")) break;
-	if(!readElementsVRML(fp, vertices, elements[1][region])) break;
+	if(!readElementsVRML(fp, vertices, region, elements, true)) break;
       }
       else if(!strcmp(str, "Coordinate3")){
 	vertices.clear();
 	if(!skipUntil(fp, "point")) break;
 	if(!readVerticesVRML(fp, vertices, allvertices)) break;
       }
-      else if(!strcmp(str, "IndexedFaceSet")){
+      else if(!strcmp(str, "IndexedFaceSet") || !strcmp(str, "IndexedLineSet")){
 	region++;
 	if(!skipUntil(fp, "coordIndex")) break;
-	if(!readElementsVRML(fp, vertices, elements[1][region])) break;
-      }
-      else if(!strcmp(str, "IndexedLineSet")){
-	region++;
-	if(!skipUntil(fp, "coordIndex")) break;
-	if(!readElementsVRML(fp, vertices, elements[0][region])) break;
+	if(!readElementsVRML(fp, vertices, region, elements)) break;
       }
       else if(!strcmp(str, "DEF")){
 	char str1[256], str2[256];
 	if(!sscanf(buffer, "%s %s %s", str1, str2, str)) break;
-	if(!strcmp(str, "IndexedFaceSet")){
+	if(!strcmp(str, "IndexedFaceSet") || !strcmp(str, "IndexedLineSet")){
 	  region++;
 	  if(!skipUntil(fp, "coordIndex")) break;
-	  if(!readElementsVRML(fp, vertices, elements[1][region])) break;
-	}
-	else if(!strcmp(str, "IndexedLineSet")){
-	  region++;
-	  if(!skipUntil(fp, "coordIndex")) break;
-	  if(!readElementsVRML(fp, vertices, elements[0][region])) break;
+	  if(!readElementsVRML(fp, vertices, region, elements)) break;
 	}
       }
     }
   }
 
-  for(int i = 0; i < 2; i++)
+  for(int i = 0; i < 3; i++)
     storeElementsInEntities(this, elementTypes[i], elements[i]);
   associateEntityWithVertices(this);
   storeVerticesInEntities(allvertices);

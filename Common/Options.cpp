@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.294 2006-08-17 03:22:21 geuzaine Exp $
+// $Id: Options.cpp,v 1.295 2006-08-17 06:28:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4187,6 +4187,7 @@ double opt_mesh_points(OPT_ARGS_NUM)
 double opt_mesh_lines(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
+    if(CTX.mesh.lines != val) CTX.mesh.changed = 1;
     CTX.mesh.lines = (int)val;
   }
 #if defined(HAVE_FLTK)
