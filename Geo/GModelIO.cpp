@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.19 2006-08-17 18:15:39 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.20 2006-08-17 19:19:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -792,18 +792,21 @@ static int readElementsVRML(FILE *fp, std::map<int, MVertex*> &v, int region,
 	  return 0;
 	}
       }
-      if(idx.size() == 2){
+      if(idx.size() < 2){
+	Msg(INFO, "Skipping %d-vertex element", (int)idx.size());
+      }
+      else if(idx.size() == 2){
 	elements[0][region].push_back(new MLine(v[idx[0]], v[idx[1]]));
       }
       else if(idx.size() == 3){
 	elements[1][region].push_back
 	  (new MTriangle(v[idx[0]], v[idx[1]], v[idx[2]]));
       }
-      else if(idx.size() == 4 && !strips){
+      else if(!strips && idx.size() == 4){
 	elements[2][region].push_back
 	  (new MQuadrangle(v[idx[0]], v[idx[1]], v[idx[2]], v[idx[3]]));
       }
-      else if(idx.size() > 2 && strips){
+      else if(strips){ // triangle strip
 	for(unsigned int j = 2; j < idx.size(); j++){
 	  if(j % 2)
 	    elements[1][region].push_back
@@ -811,6 +814,12 @@ static int readElementsVRML(FILE *fp, std::map<int, MVertex*> &v, int region,
 	  else
 	    elements[1][region].push_back
 	      (new MTriangle(v[idx[j - 2]], v[idx[j - 1]], v[idx[j]]));
+	}
+      }
+      else{ // import polygon as triangle fan
+	for(unsigned int j = 2; j < idx.size(); j++){
+	  elements[1][region].push_back
+	    (new MTriangle(v[idx[0]], v[idx[j-1]], v[idx[j]]));
 	}
       }
       idx.clear();
