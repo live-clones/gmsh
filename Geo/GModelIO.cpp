@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.21 2006-08-18 02:22:40 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.22 2006-08-18 04:27:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -545,6 +545,7 @@ int GModel::writeMSH(const std::string &name, double version, bool saveAll,
     fprintf(fp, "$ENDELM\n");
   }
 
+  fclose(fp);
   return 1;
 }
 
