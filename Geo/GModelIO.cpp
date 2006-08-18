@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.23 2006-08-18 15:13:34 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.24 2006-08-18 16:54:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -43,6 +43,7 @@ static void storeElementsInEntities(GModel *m,
   std::map<int, std::vector<MElement*> >::const_iterator it = map.begin();
   std::map<int, std::vector<MElement*> >::const_iterator ite = map.end();
   for(; it != ite; ++it){
+    if(!it->second.size()) continue;
     int numEdges = it->second[0]->getNumEdges();
     switch(numEdges){
     case 1: 
