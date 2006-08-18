@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.62 2006-08-13 20:46:54 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.63 2006-08-18 15:41:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -229,7 +229,7 @@ char SelectEntity(int type, int *n,
     }
     if(WID->try_selection) {
       bool add = (WID->try_selection > 0) ? true : false;
-      bool multi = (WID->try_selection > 1) ? true : false;
+      bool multi = (abs(WID->try_selection) > 1) ? true : false;
       WID->try_selection = 0;
       if(WID->selection == ENT_NONE){ // just report the mouse click
 	WID->g_opengl_window->SelectionMode = false;

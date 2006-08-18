@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.439 2006-08-18 02:22:40 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.440 2006-08-18 15:41:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1640,17 +1640,17 @@ void help_mouse_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Move                - Highlight the elementary geometrical entity");
   Msg(DIRECT, "                        currently under the mouse pointer and display");
   Msg(DIRECT, "                        its properties in the status bar");
-  Msg(DIRECT, "                      - Resize a lasso zoom/selection");
+  Msg(DIRECT, "                      - Resize a lasso zoom/(un)selection");
   Msg(DIRECT, "  Left button         - Rotate");
   Msg(DIRECT, "                      - Select an entity");
   Msg(DIRECT, "                      - Accept a lasso zoom/selection"); 
-  Msg(DIRECT, "  Ctrl+Left button    Start a lasso zoom/selection"); 
+  Msg(DIRECT, "  Ctrl+Left button    Start a lasso zoom/(un)selection"); 
   Msg(DIRECT, "  Middle button       - Zoom");
   Msg(DIRECT, "                      - Unselect an entity");
-  Msg(DIRECT, "                      - Cancel a lasso zoom/selection");
+  Msg(DIRECT, "                      - Accept a lasso zoom/unselection");
   Msg(DIRECT, "  Ctrl+Middle button  Orthogonalize display"); 
   Msg(DIRECT, "  Right button        - Pan");
-  Msg(DIRECT, "                      - Cancel a lasso zoom/selection");
+  Msg(DIRECT, "                      - Cancel a lasso zoom/(un)selection");
   Msg(DIRECT, "                      - Pop-up menu on post-processing view button");
   Msg(DIRECT, "  Ctrl+Right button   Reset to default viewpoint");   
   Msg(DIRECT, " ");   

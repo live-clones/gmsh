@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.210 2006-08-18 02:22:40 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.211 2006-08-18 15:41:58 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -2770,8 +2770,8 @@ In the following, for a 2 button mouse, @kbd{Middle button} =
 Highlight the elementary geometrical entity currently under the mouse
 pointer and display its properties in the status bar
 @item
-Resize a lasso zoom or a lasso selection started with @kbd{Ctrl+Left
-button}
+Resize a lasso zoom or a lasso selection/unselection started with
+@kbd{Ctrl+Left button}
 @end itemize
 
 @kbd{Left button}:
@@ -2785,7 +2785,7 @@ Accept a lasso zoom or a lasso selection started with @kbd{Ctrl+Left
 button}
 @end itemize
 
-@kbd{Ctrl+Left button}: Start a lasso zoom or a lasso selection
+@kbd{Ctrl+Left button}: Start a lasso zoom or a lasso selection/unselection
 
 @kbd{Middle button}:
 @itemize @bullet
@@ -2794,7 +2794,7 @@ Zoom
 @item
 Unselect an entity
 @item
-Cancel a lasso zoom or a lasso selection
+Accept a lasso zoom or a lasso unselection
 @end itemize
 
 @kbd{Ctrl+Middle button}: Orthogonalize display
@@ -2804,7 +2804,7 @@ Cancel a lasso zoom or a lasso selection
 @item
 Pan
 @item
-Cancel a lasso zoom or a lasso selection
+Cancel a lasso zoom or a lasso selection/unselection
 @item
 Pop-up menu on post-processing view button
 @end itemize

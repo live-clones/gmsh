@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.64 2006-08-13 20:46:54 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.65 2006-08-18 15:41:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -228,14 +228,24 @@ int Opengl_Window::handle(int event)
     }
     else if(Fl::event_button() == 2 || 
 	    (Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
-      if(Fl::event_state(FL_CTRL) && !LassoMode) {
+      if(!LassoMode && Fl::event_state(FL_CTRL)) {
 	// make zoom isotropic
         CTX.s[1] = CTX.s[0];
         CTX.s[2] = CTX.s[0];
         redraw();
       }
       else if(LassoMode) {
-        LassoMode = false;
+	LassoMode = false;
+	if(SelectionMode && CTX.enable_mouse_selection){
+	  WID->try_selection = -2; // will try to unselect multiple entities
+	  WID->try_selection_xywh[0] = (int)(click.win[0] + curr.win[0])/2;
+	  WID->try_selection_xywh[1] = (int)(click.win[1] + curr.win[1])/2;
+	  WID->try_selection_xywh[2] = (int)fabs(click.win[0] - curr.win[0]);
+	  WID->try_selection_xywh[3] = (int)fabs(click.win[1] - curr.win[1]);
+	}
+	else{
+	  lasso_zoom(click, curr);
+	}
       }
       else if(CTX.enable_mouse_selection){
         WID->try_selection = -1; // will try to unselect clicked entity
