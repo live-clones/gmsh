@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.55 2006-08-18 17:49:35 geuzaine Exp $
+// $Id: Geo.cpp,v 1.56 2006-08-18 18:00:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -77,7 +77,7 @@ double evaluate_scalarfunction(char *var, double val, char *funct)
   return *(double *)List_Pointer(TheSymbol_P->val, 0);
 }
 
-void add_infile(char *text, char *fich)
+void add_infile(char *text, char *fich, bool deleted_something)
 {
   FILE *file;
 
@@ -100,15 +100,17 @@ void add_infile(char *text, char *fich)
   fprintf(file, "%s\n", text);
   fclose(file);
 
-  // we need to start from scratch since the command just parsed could
-  // have deleted some entities
-  GMODEL->destroy();
+  if(deleted_something){
+    // we need to start from scratch since the command just parsed
+    // could have deleted some entities
+    GMODEL->destroy();
+  }
   GMODEL->import();
 }
 
 void coherence(char *fich)
 {
-  add_infile("Coherence;", fich);
+  add_infile("Coherence;", fich, true);
 }
 
 void strncat_list(char *text, List_T *list)
@@ -132,7 +134,7 @@ void delet(List_T *list, char *fich, char *what)
   snprintf(text, BUFFSIZE, "Delete {\n  %s{", what);
   strncat_list(text, list);
   strncat(text, "};\n}", BUFFSIZE-strlen(text));
-  add_infile(text, fich);
+  add_infile(text, fich, true);
 }
 
 void add_trsfellisurf(int type, int N, int *l, char *fich, char *dir)

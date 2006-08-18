@@ -86,7 +86,7 @@ double evaluate_scalarfunction (char *var, double val, char *funct);
 
 void coherence(char *fich);
 void delet(List_T *list, char *fich, char *what);
-void add_infile(char *text, char *fich);
+void add_infile(char *text, char *fich, bool deleted_something=false);
 void add_trsfline(int N, int *l, char *fich, char *type, char *typearg, char *pts);
 void add_trsfellisurf(int type, int N, int *l, char *fich, char *dir);
 void add_trsfvol(int N, int *l, char *fich);
