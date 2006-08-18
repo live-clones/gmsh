@@ -657,8 +657,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Height (in pixels) of the message window" }, 
   { F|S, "MessageWidth" , opt_general_message_size0 , 450. , 
     "Width (in pixels) of the message window" }, 
-  { F|O, "MouseSelection" , opt_general_mouse_selection , 2. ,
-    "Mouse selection mode (0=none, 1=no hover, 2=full)" },
+  { F|O, "MouseSelection" , opt_general_mouse_selection , 1. ,
+    "Mouse hover and selection mode (0=none, 1=hover and select geometry but only select mesh, 2=hover and select geometry and mesh)" },
 
   { F|O, "NoPopup" , opt_general_nopopup , 0. , 
     "Disable interactive dialog windows in scripts (and use default values instead)" },

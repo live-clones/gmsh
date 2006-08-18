@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.63 2006-08-18 15:41:58 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.64 2006-08-18 21:11:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -236,7 +236,7 @@ char SelectEntity(int type, int *n,
 	return 'c';
       }
       else{
-	*n = Process_SelectionBuffer(WID->selection, multi,
+	*n = Process_SelectionBuffer(WID->selection, multi, true,
 				     WID->try_selection_xywh[0],
 				     WID->try_selection_xywh[1], 
 				     WID->try_selection_xywh[2],

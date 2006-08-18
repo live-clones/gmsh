@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.103 2006-08-13 20:46:54 geuzaine Exp $
+// $Id: Draw.cpp,v 1.104 2006-08-18 21:11:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -357,7 +357,7 @@ int fcmp_hit_depth(const void *a, const void *b)
   return ((hit*)a)->depth - ((hit*)b)->depth;
 }
 
-int Process_SelectionBuffer(int type, bool multi,
+int Process_SelectionBuffer(int entityType, bool multi, bool selectMesh,
 			    int x, int y, int w, int h,
 			    GVertex *v[SELECTION_MAX_HITS],
 			    GEdge *c[SELECTION_MAX_HITS],
@@ -377,7 +377,7 @@ int Process_SelectionBuffer(int type, bool multi,
   InitProjection(x, y, w, h);
   InitPosition();
   Draw_Geom();
-  Draw_Mesh();
+  if(selectMesh) Draw_Mesh();
   glPopMatrix();
 
   GLint numhits = glRenderMode(GL_RENDER);
@@ -413,9 +413,10 @@ int Process_SelectionBuffer(int type, bool multi,
     return 0;
   }
 
-  // filter result: if type == ENT_NONE, return the closest entity of
-  // "lowest dimension" (point < line < surface < volume). Otherwise,
-  // return the closest entity of type "type"
+  // filter result: if entityType == ENT_NONE, return the closest
+  // entity of "lowest dimension" (point < line < surface <
+  // volume). Otherwise, return the closest entity of type
+  // "entityType"
 
   unsigned int typmin = 4;
   for(int i = 0; i < numentities; i++) {
@@ -428,11 +429,11 @@ int Process_SelectionBuffer(int type, bool multi,
   
   int j = 0;
   for(int i = 0; i < numentities; i++) {
-    if((type == ENT_NONE && hits[i].type == typmin) ||
-       (type == ENT_POINT && hits[i].type == 0) ||
-       (type == ENT_LINE && hits[i].type == 1) ||
-       (type == ENT_SURFACE && hits[i].type == 2) ||
-       (type == ENT_VOLUME && hits[i].type == 3)){
+    if((entityType == ENT_NONE && hits[i].type == typmin) ||
+       (entityType == ENT_POINT && hits[i].type == 0) ||
+       (entityType == ENT_LINE && hits[i].type == 1) ||
+       (entityType == ENT_SURFACE && hits[i].type == 2) ||
+       (entityType == ENT_VOLUME && hits[i].type == 3)){
       switch (hits[i].type) {
       case 0:
 	if(!(v[j] = GMODEL->vertexByTag(hits[i].ient))){

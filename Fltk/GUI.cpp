@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.531 2006-08-18 17:49:35 geuzaine Exp $
+// $Id: GUI.cpp,v 1.532 2006-08-18 21:11:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1405,7 +1405,7 @@ void GUI::create_graphic_window()
   g_status_butt[9] = new Fl_Button(x, glheight + 2, sw, sht, "S");
   x += sw;
   g_status_butt[9]->callback(status_xyz1p_cb, (void *)"S");
-  g_status_butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape)");
+  g_status_butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape or Shift+Escape)");
 
   g_status_butt[5] = new Fl_Button(x, glheight + 2, sw, sht, "?");
   x += sw;

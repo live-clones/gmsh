@@ -43,7 +43,7 @@ void InitProjection(int xpick=0, int ypick=0, int wpick=0, int hpick=0);
 void InitPosition(void);
 void InitRenderModel(void);
 
-int Process_SelectionBuffer(int type, bool multi, 
+int Process_SelectionBuffer(int entityType, bool multi, bool selectMesh,
 			    int x, int y, int w, int h, 
 			    GVertex *v[SELECTION_MAX_HITS], 
 			    GEdge *c[SELECTION_MAX_HITS], 

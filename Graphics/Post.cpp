@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.110 2006-08-16 05:25:22 geuzaine Exp $
+// $Id: Post.cpp,v 1.111 2006-08-18 21:11:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -471,9 +471,6 @@ void Draw_Post(void)
   // draw any plugin-specific stuff
   if(CTX.post.plugin_draw_function)
     (*CTX.post.plugin_draw_function)();
-
-  if(CTX.render_mode == GMSH_SELECT)
-    return;
 
   if(!CTX.post.list)
     return;

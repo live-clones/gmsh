@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.440 2006-08-18 15:41:58 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.441 2006-08-18 21:11:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -467,8 +467,8 @@ void status_xyz1p_cb(CALLBACK_ARGS)
   }
   else if(!strcmp(str, "S")){ // mouse selection
     if(Fl::event_state(FL_SHIFT)){
-      // mouse selection only (no hover)
-      opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
+      // full mouse hover and select for geometry and mesh
+      opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 2);
     }
     else if(CTX.enable_mouse_selection){
       // mouse does nothing
@@ -476,8 +476,9 @@ void status_xyz1p_cb(CALLBACK_ARGS)
       WID->g_opengl_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);      
     }
     else{
-      // mouse hover and select (default)
-      opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 2);
+      // mouse hover and select for geometry, but mouse select only
+      // for mesh (default)
+      opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
     }
   }
   WID->update_manip_window();
@@ -1577,6 +1578,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Shift+p       Show post-processing options");
   Msg(DIRECT, "  Shift+s       Show solver options"); 
   Msg(DIRECT, "  Shift+w       Show post-processing view options");
+  Msg(DIRECT, "  Shift+Escape  Enable full mouse selection");
   Msg(DIRECT, " ");
   Msg(DIRECT, "  " CC("i") "        Show statistics window"); 
   Msg(DIRECT, "  " CC("l") "        Show message console");

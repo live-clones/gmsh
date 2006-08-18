@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.298 2006-08-17 21:28:34 geuzaine Exp $
+// $Id: Options.cpp,v 1.299 2006-08-18 21:11:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2778,12 +2778,12 @@ double opt_general_mouse_selection(OPT_ARGS_NUM)
       WID->g_status_butt[9]->color(FL_RED);
     }
     else if(CTX.enable_mouse_selection == 1){
-      if(!CTX.batch) Msg(STATUS2N, "Mouse hover OFF");
-      WID->g_status_butt[9]->color(FL_GREEN);
-    }
-    else{
       if(!CTX.batch) Msg(STATUS2N, "Mouse selection ON");
       WID->g_status_butt[9]->color(FL_BACKGROUND_COLOR);
+    }
+    else{
+      if(!CTX.batch) Msg(STATUS2N, "Full mouse selection ON");
+      WID->g_status_butt[9]->color(FL_GREEN);
     }
     WID->g_status_butt[9]->redraw();
   }

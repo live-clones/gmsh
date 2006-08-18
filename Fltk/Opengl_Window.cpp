@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.65 2006-08-18 15:41:58 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.66 2006-08-18 21:11:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -360,11 +360,12 @@ int Opengl_Window::handle(int event)
       sprintf(str, "%g", point[2]); WID->context_geometry_input[4]->value(str);
       redraw();
     }
-    else if(CTX.enable_mouse_selection >= 2){ // hover mode
+    else{ // hover mode
       if(curr.win[0] != prev.win[0] || curr.win[1] != prev.win[1]){
 	WID->make_opengl_current();
 	v[0] = NULL; c[0] = NULL; s[0] = NULL; r[0] = NULL;
-	Process_SelectionBuffer(WID->selection, 0, 
+	Process_SelectionBuffer(WID->selection, false, 
+				CTX.enable_mouse_selection > 1,
 				(int)curr.win[0], (int)curr.win[1], 5, 5, 
 				v, c, s, r);
 	if((WID->selection == ENT_POINT && v[0]) ||
