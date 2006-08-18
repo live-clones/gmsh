@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.22 2006-08-18 04:27:56 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.23 2006-08-18 15:13:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -30,28 +30,6 @@
 #include "MElement.h"
 #include "SBoundingBox3d.h"
 
-static int getNumVerticesForElementTypeMSH(int type)
-{
-  switch (type) {
-  case PNT : return 1;
-  case LGN1: return 2;
-  case LGN2: return 2 + 1;
-  case TRI1: return 3;
-  case TRI2: return 3 + 3;
-  case QUA1: return 4;
-  case QUA2: return 4 + 4 + 1;
-  case TET1: return 4;
-  case TET2: return 4 + 6;
-  case HEX1: return 8;
-  case HEX2: return 8 + 12 + 6 + 1;
-  case PRI1: return 6;
-  case PRI2: return 6 + 9 + 3;
-  case PYR1: return 5;
-  case PYR2: return 5 + 8 + 1;
-  default: return 0;
-  }
-}
-
 template<class T>
 void copyElements(std::vector<T*> &dst, const std::vector<MElement*> &src)
 {
@@ -59,14 +37,15 @@ void copyElements(std::vector<T*> &dst, const std::vector<MElement*> &src)
   for(unsigned int i = 0; i < src.size(); i++) dst[i] = (T*)src[i];
 }
 
-static void storeElementsInEntities(GModel *m, int type, 
+static void storeElementsInEntities(GModel *m, 
 				    std::map<int, std::vector<MElement*> > &map)
 {
   std::map<int, std::vector<MElement*> >::const_iterator it = map.begin();
   std::map<int, std::vector<MElement*> >::const_iterator ite = map.end();
   for(; it != ite; ++it){
-    switch(type){
-    case LGN1: 
+    int numEdges = it->second[0]->getNumEdges();
+    switch(numEdges){
+    case 1: 
       {
 	GEdge *e = m->edgeByTag(it->first);
 	if(!e){
@@ -76,27 +55,27 @@ static void storeElementsInEntities(GModel *m, int type,
 	copyElements(e->lines, it->second);
       }
       break;
-    case TRI1: case QUA1: 
+    case 3: case 4: 
       {
 	GFace *f = m->faceByTag(it->first);
 	if(!f){
 	  f = new gmshFace(m, it->first);
 	  m->add(f);
 	}
-	if(type == TRI1) copyElements(f->triangles, it->second);
+	if(numEdges == 3) copyElements(f->triangles, it->second);
 	else copyElements(f->quadrangles, it->second);
       }
       break;
-    case TET1: case HEX1: case PRI1: case PYR1:
+    case 6: case 12: case 9: case 8:
       {
 	GRegion *r = m->regionByTag(it->first);
 	if(!r){
 	  r = new gmshRegion(m, it->first);
 	  m->add(r);
 	}
-	if(type == TET1) copyElements(r->tetrahedra, it->second);
-	else if(type == HEX1) copyElements(r->hexahedra, it->second);
-	else if(type == PRI1) copyElements(r->prisms, it->second);
+	if(numEdges == 6) copyElements(r->tetrahedra, it->second);
+	else if(numEdges == 12) copyElements(r->hexahedra, it->second);
+	else if(numEdges == 9) copyElements(r->prisms, it->second);
 	else copyElements(r->pyramids, it->second);
       }
       break;
@@ -184,6 +163,28 @@ static void storePhysicalTagsInEntities(GModel *m, int dim,
   }
 }
 
+static int getNumVerticesForElementTypeMSH(int type)
+{
+  switch (type) {
+  case PNT : return 1;
+  case LGN1: return 2;
+  case LGN2: return 2 + 1;
+  case TRI1: return 3;
+  case TRI2: return 3 + 3;
+  case QUA1: return 4;
+  case QUA2: return 4 + 4 + 1;
+  case TET1: return 4;
+  case TET2: return 4 + 6;
+  case HEX1: return 8;
+  case HEX2: return 8 + 12 + 6 + 1;
+  case PRI1: return 6;
+  case PRI2: return 6 + 9 + 3;
+  case PYR1: return 5;
+  case PYR2: return 5 + 8 + 1;
+  default: return 0;
+  }
+}
+
 int GModel::readMSH(const std::string &name)
 {
   FILE *fp = fopen(name.c_str(), "r");
@@ -192,7 +193,6 @@ int GModel::readMSH(const std::string &name)
     return 0;
   }
 
-  int elementTypes[7] = {LGN1, TRI1, QUA1, TET1, HEX1, PRI1, PYR1};
   double version = 1.0;
   char str[256];
   std::map<int, MVertex*> vertices;
@@ -395,8 +395,7 @@ int GModel::readMSH(const std::string &name)
 
   // store the elements in their associated elementary entity. If the
   // entity does not exist, create a new one.
-  for(int i = 0; i < 7; i++)
-    storeElementsInEntities(this, elementTypes[i], elements[i]);
+  for(int i = 0; i < 7; i++) storeElementsInEntities(this, elements[i]);
 
   // treat points separately
   {
@@ -843,13 +842,11 @@ int GModel::readVRML(const std::string &name)
     return 0;
   }
 
-  // This is by NO means a complete VRML/Inventor parser! (But it's
+  // This is by NO means a complete VRML/Inventor parser (but it's
   // sufficient for reading simple Inventor files... which is all I
   // need)
-
   std::map<int, MVertex*> vertices;
   std::vector<MVertex*> allvertices;
-  int elementTypes[3] = {LGN1, TRI1, QUA1};
   std::map<int, std::vector<MElement*> > elements[3];
   int region = 0;
   char buffer[256], str[256];
@@ -887,8 +884,7 @@ int GModel::readVRML(const std::string &name)
     }
   }
 
-  for(int i = 0; i < 3; i++)
-    storeElementsInEntities(this, elementTypes[i], elements[i]);
+  for(int i = 0; i < 3; i++) storeElementsInEntities(this, elements[i]);
   associateEntityWithVertices(this);
   storeVerticesInEntities(allvertices);
 
@@ -1088,7 +1084,6 @@ int GModel::readMESH(const std::string &name)
   }
 
   std::map<int, MVertex*> vertices;
-  int elementTypes[2] = {TRI1, QUA1};
   std::map<int, std::vector<MElement*> > elements[2];
 
   while(!feof(fp)) {
@@ -1142,8 +1137,7 @@ int GModel::readMESH(const std::string &name)
 
   // store the elements in their associated elementary entity. If the
   // entity does not exist, create a new one.
-  for(int i = 0; i < 2; i++)
-    storeElementsInEntities(this, elementTypes[i], elements[i]);
+  for(int i = 0; i < 2; i++) storeElementsInEntities(this, elements[i]);
 
   // associate the correct geometrical entity with each mesh vertex
   associateEntityWithVertices(this);

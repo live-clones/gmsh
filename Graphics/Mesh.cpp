@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.176 2006-08-17 17:08:51 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.177 2006-08-18 15:13:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,7 @@ static unsigned int getColorByElement(MElement *ele)
 {
   if(CTX.mesh.color_carousel == 0){ // by element type
     switch(ele->getNumEdges()){
-    case 0: return CTX.color.mesh.line;
+    case 1: return CTX.color.mesh.line;
     case 3: return CTX.color.mesh.triangle;
     case 4: return CTX.color.mesh.quadrangle;
     case 6: return CTX.color.mesh.tetrahedron;
@@ -66,7 +66,7 @@ static unsigned int getColorByEntity(GEntity *e)
     default: return CTX.color.geom.volume_sel;
     }
   }
-  else if(e->useColor()){ // forced input files
+  else if(e->useColor()){ // forced from a script
     return e->getColor();
   }
   else if(CTX.mesh.color_carousel == 1){ // by elementary entity
