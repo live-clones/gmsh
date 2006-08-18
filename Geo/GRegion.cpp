@@ -1,4 +1,4 @@
-// $Id: GRegion.cpp,v 1.8 2006-08-15 06:26:52 geuzaine Exp $
+// $Id: GRegion.cpp,v 1.9 2006-08-18 02:22:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -96,3 +96,14 @@ void GRegion::recomputeMeshPartitions()
   }
 }
 
+void GRegion::deleteMeshPartitions()
+{
+  for(unsigned int i = 0; i < tetrahedra.size(); i++)
+    tetrahedra[i]->setPartition(0);
+  for(unsigned int i = 0; i < hexahedra.size(); i++)
+    hexahedra[i]->setPartition(0);
+  for(unsigned int i = 0; i < prisms.size(); i++)
+    prisms[i]->setPartition(0);
+  for(unsigned int i = 0; i < pyramids.size(); i++)
+    pyramids[i]->setPartition(0);
+}

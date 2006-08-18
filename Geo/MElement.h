@@ -74,8 +74,9 @@ class MElement
   // returns the polynomial order the element
   virtual int getPolynomialOrder(){ return 1; }
 
-  // returns the partition to which the element belongs
+  // get/set the partition to which the element belongs
   virtual int getPartition(){ return _partition; }
+  virtual void setPartition(int num){ _partition = num; }
 
   // get/set the visibility flag
   virtual char getVisibility(){ return _visible; }

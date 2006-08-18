@@ -42,6 +42,9 @@ class GRegion : public GEntity {
   // Recompute the mesh partitions defined on this region.
   void recomputeMeshPartitions();
 
+  // Delete the mesh partitions defined on this region.
+  void deleteMeshPartitions();
+
   std::vector<MTetrahedron*> tetrahedra;
   std::vector<MHexahedron*> hexahedra;
   std::vector<MPrism*> prisms;

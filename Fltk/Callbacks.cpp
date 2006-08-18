@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.438 2006-08-17 21:28:34 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.439 2006-08-18 02:22:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1340,21 +1340,29 @@ void visibility_cb(CALLBACK_ARGS)
     if(VisibilityManager::instance()->getVisibility(i))
       WID->vis_browser->select(i + 1);
   }
+  // active the delete button for physicals and partitions only!
+  if(WID->vis_type->value() == 1 || WID->vis_type->value() == 2)
+    WID->vis_push_butt[0]->activate();
+  else
+    WID->vis_push_butt[0]->deactivate();
 }
 
 void visibility_ok_cb(CALLBACK_ARGS)
 {
-  // get the selections made in the browser and apply them into the model
-  CTX.mesh.changed = 1;
-  VisibilityManager::instance()->setAllInvisible(WID->vis_type->value());
-  for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++)
-    if(WID->vis_browser->selected(i + 1))
-      VisibilityManager::instance()->setVisibility(i, true, WID->vis_butt[0]->value());
-  // then refresh the browser to account for recursive selections
-  for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++)
-    if(VisibilityManager::instance()->getVisibility(i))
-      WID->vis_browser->select(i + 1);
-  Draw();
+  // if the browser is not empty, get the selections made in the
+  // browser and apply them into the model
+  if(VisibilityManager::instance()->getNumEntities()){
+    CTX.mesh.changed = 1;
+    VisibilityManager::instance()->setAllInvisible(WID->vis_type->value());
+    for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++)
+      if(WID->vis_browser->selected(i + 1))
+	VisibilityManager::instance()->setVisibility(i, true, WID->vis_butt[0]->value());
+    // then refresh the browser to account for recursive selections
+    for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++)
+      if(VisibilityManager::instance()->getVisibility(i))
+	WID->vis_browser->select(i + 1);
+    Draw();
+  }
 }
 
 void visibility_save_cb(CALLBACK_ARGS)
@@ -1362,6 +1370,15 @@ void visibility_save_cb(CALLBACK_ARGS)
   visibility_ok_cb(NULL, NULL);
   std::string str = VisibilityManager::instance()->getStringForGEO();
   add_infile((char*)str.c_str(), CTX.filename);
+}
+
+void visibility_delete_cb(CALLBACK_ARGS)
+{
+  if(WID->vis_type->value() == 1)
+    GMODEL->deletePhysicalGroups();
+  else if(WID->vis_type->value() == 2)
+    GMODEL->deleteMeshPartitions();
+  visibility_cb(NULL, NULL);
 }
 
 void visibility_sort_cb(CALLBACK_ARGS)
@@ -1438,73 +1455,7 @@ void visibility_number_cb(CALLBACK_ARGS)
   char *str = (char *)WID->vis_input[type]->value();  
   int all = !strcmp(str, "all") || !strcmp(str, "*");
   int num = all ? 0 : atoi(str); 
-  
-  switch(type){
-  case 0: // nodes
-    for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
-      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-	if(all || (*it)->mesh_vertices[i]->getNum() == num) 
-	  (*it)->mesh_vertices[i]->setVisibility(val);
-    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
-      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-	if(all || (*it)->mesh_vertices[i]->getNum() == num) 
-	  (*it)->mesh_vertices[i]->setVisibility(val);
-    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
-      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-	if(all || (*it)->mesh_vertices[i]->getNum() == num) 
-	  (*it)->mesh_vertices[i]->setVisibility(val);
-    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
-      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-	if(all || (*it)->mesh_vertices[i]->getNum() == num) 
-	  (*it)->mesh_vertices[i]->setVisibility(val);
-    break;
-  case 1: // elements
-    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++){
-      for(unsigned int i = 0; i < (*it)->lines.size(); i++)
-	if(all || (*it)->lines[i]->getNum() == num) 
-	  (*it)->lines[i]->setVisibility(val);
-    }
-    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++){
-      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-	if(all || (*it)->triangles[i]->getNum() == num) 
-	  (*it)->triangles[i]->setVisibility(val);
-      for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-	if(all || (*it)->quadrangles[i]->getNum() == num) 
-	  (*it)->quadrangles[i]->setVisibility(val);
-    }
-    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++){
-      for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
-	if(all || (*it)->tetrahedra[i]->getNum() == num) 
-	  (*it)->tetrahedra[i]->setVisibility(val);
-      for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
-	if(all || (*it)->hexahedra[i]->getNum() == num) 
-	  (*it)->hexahedra[i]->setVisibility(val);
-      for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
-	if(all || (*it)->prisms[i]->getNum() == num) 
-	  (*it)->prisms[i]->setVisibility(val);
-      for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
-	if(all || (*it)->pyramids[i]->getNum() == num) 
-	  (*it)->pyramids[i]->setVisibility(val);
-    }
-    break;
-  case 2: // point
-    for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
-      if(all || (*it)->tag() == num) (*it)->setVisibility(val);
-    break;
-  case 3: // line
-    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
-      if(all || (*it)->tag() == num) (*it)->setVisibility(val);
-    break;
-  case 4: // surface
-    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
-      if(all || (*it)->tag() == num) (*it)->setVisibility(val);
-    break;
-  case 5: // volume
-    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
-      if(all || (*it)->tag() == num) (*it)->setVisibility(val);
-    break;
-  }
-
+  VisibilityManager::instance()->setVisibilityByNumber(type, num, all, val);
   int pos = WID->vis_browser->position();
   visibility_cb(NULL, NULL);
   WID->vis_browser->position(pos);
@@ -1868,6 +1819,7 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
 		(char*)WID->context_geometry_input[3]->value(),
 		(char*)WID->context_geometry_input[4]->value(),
 		(char*)WID->context_geometry_input[5]->value());
+      WID->reset_visibility();
       Draw();
     }
     if(ib == 'q'){
@@ -1876,7 +1828,6 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
     }
   }
 
-  WID->reset_visibility();
   Msg(ONSCREEN, "");
 }
 
@@ -1925,6 +1876,7 @@ static void _new_multiline(int type)
           break;
         }
       }
+      WID->reset_visibility();
       ZeroHighlight();
       Draw();
       n = 0;
@@ -1943,7 +1895,6 @@ static void _new_multiline(int type)
     }
   }
 
-  WID->reset_visibility();
   Msg(ONSCREEN, "");
 }
 
@@ -1993,13 +1944,13 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
     }
     if(n == 2) {
       add_multline(2, p, CTX.filename);
+      WID->reset_visibility();
       ZeroHighlight();
       Draw();
       n = 0;
     }
   }
 
-  WID->reset_visibility();
   Msg(ONSCREEN, "");
 }
 
@@ -2057,13 +2008,13 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
     }
     if(n == 3) {
       add_circ(p[0], p[1], p[2], CTX.filename); // begin, center, end
+      WID->reset_visibility();
       ZeroHighlight();
       Draw();
       n = 0;
     }
   }
 
-  WID->reset_visibility();
   Msg(ONSCREEN, "");
 }
 
@@ -2114,13 +2065,13 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
     }
     if(n == 4) {
       add_ell(p[0], p[1], p[2], p[3], CTX.filename);
+      WID->reset_visibility();
       ZeroHighlight();
       Draw();
       n = 0;
     }
   }
 
-  WID->reset_visibility();
   Msg(ONSCREEN, "");
 }
 
@@ -2249,6 +2200,7 @@ static void _new_surface_volume(int mode)
 	    case 1: add_surf(List2, CTX.filename, 0, 1); break;
 	    case 2: add_vol(List2, CTX.filename); break;
 	    }
+	    WID->reset_visibility();
 	    ZeroHighlight();
 	    Draw();
 	    break;
@@ -2262,7 +2214,6 @@ stopall:;
   List_Delete(List1);
   List_Delete(List2);
 
-  WID->reset_visibility();
   Msg(ONSCREEN, "");
 }
 
@@ -2480,6 +2431,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	  break;
 	}
 	List_Reset(List1);
+	WID->reset_visibility();
 	ZeroHighlight();
 	if(action <= 6) SetBoundingBox();
 	Draw();
@@ -2496,7 +2448,6 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
   }
   List_Delete(List1);
 
-  WID->reset_visibility();
   Msg(ONSCREEN, "");
 }
   
@@ -4224,9 +4175,9 @@ void con_geometry_define_point_cb(CALLBACK_ARGS)
 	    (char*)WID->context_geometry_input[3]->value(),
 	    (char*)WID->context_geometry_input[4]->value(),
 	    (char*)WID->context_geometry_input[5]->value());
+  WID->reset_visibility();
   ZeroHighlight();
   SetBoundingBox();
-  WID->reset_visibility();
   Draw();
 }
 

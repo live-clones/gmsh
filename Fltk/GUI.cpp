@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.529 2006-08-17 21:54:57 geuzaine Exp $
+// $Id: GUI.cpp,v 1.530 2006-08-18 02:22:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3895,6 +3895,9 @@ void GUI::create_visibility_window()
       o->end();
       Fl_Group::current()->resizable(o);
     }
+
+    vis_push_butt[0] = new Fl_Button(width - 3 * BB - 4 * WB, height - 2 * BH - 3 * WB, BB, BH, "Delete");
+    vis_push_butt[0]->callback(visibility_delete_cb);
 
     Fl_Return_Button *b1 = new Fl_Return_Button(width - 2 * BB - 3 * WB, height - 2 * BH - 3 * WB, BB, BH, "Apply");
     b1->callback(visibility_ok_cb);

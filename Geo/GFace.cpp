@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.12 2006-08-15 06:26:52 geuzaine Exp $
+// $Id: GFace.cpp,v 1.13 2006-08-18 02:22:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -105,6 +105,14 @@ void GFace::recomputeMeshPartitions()
     int part = quadrangles[i]->getPartition();
     if(part) model()->getMeshPartitions().insert(part);
   }
+}
+
+void GFace::deleteMeshPartitions()
+{
+  for(unsigned int i = 0; i < triangles.size(); i++)
+    triangles[i]->setPartition(0);
+  for(unsigned int i = 0; i < quadrangles.size(); i++)
+    quadrangles[i]->setPartition(0);
 }
 
 void GFace::computeMeanPlane()

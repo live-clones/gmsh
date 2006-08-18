@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.20 2006-08-17 19:19:14 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.21 2006-08-18 02:22:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -440,7 +440,7 @@ static void writeElementsMSH(FILE *fp, const std::vector<T*> &ele, int saveAll,
 {
   for(unsigned int i = 0; i < ele.size(); i++)
     if(saveAll)
-      ele[i]->writeMSH(fp, version, ++num, elementary, elementary);
+      ele[i]->writeMSH(fp, version, ++num, elementary, 0);
     else
       for(unsigned int j = 0; j < physicals.size(); j++)
 	ele[i]->writeMSH(fp, version, ++num, elementary, physicals[j]);

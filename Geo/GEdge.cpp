@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.12 2006-08-15 06:26:52 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.13 2006-08-18 02:22:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -87,6 +87,12 @@ void GEdge::recomputeMeshPartitions()
     int part = lines[i]->getPartition();
     if(part) model()->getMeshPartitions().insert(part);
   }
+}
+
+void GEdge::deleteMeshPartitions()
+{
+  for(unsigned int i = 0; i < lines.size(); i++)
+    lines[i]->setPartition(0);
 }
 
 std::string GEdge::getAdditionalInfoString()

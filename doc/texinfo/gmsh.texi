@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.209 2006-06-24 08:06:25 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.210 2006-08-18 02:22:40 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -1879,9 +1879,13 @@ surface meshes they are based on.
 If only elementary geometrical entities are defined (or if the
 @code{Mesh.SaveAll} option is set; see @ref{Mesh options}), the grid
 produced by the mesh module will be saved ``as is''. That is, all the
-elements in the grid will be saved to disk using the identification number
-of the elementary entities they discretize as their region number
-(@pxref{Gmsh mesh file formats}). This can sometimes be inconvenient:
+elements in the grid will be saved to disk using the identification
+number of the elementary entities they discretize as their elementary
+region number (and 0 as their physical region number@footnote{This
+behaviour was introduced in Gmsh 2.0. In older versions, both the
+elementary and the physical region numbers would be set to the
+identification number of the elementary region.}; @ref{Gmsh mesh file
+formats}). This can sometimes be inconvenient:
 
 @itemize @bullet
 @item
@@ -1896,15 +1900,20 @@ being part of a larger group having a physical or mathematical meaning (like
 `Left wing', `Metallic part', `Dirichlet boundary condition', @dots{}).
 @end itemize
 
-To remedy these problems, the geometry module introduces the notion of
-``physical'' entities (@pxref{Geometry module}). The purpose of physical
-entities is to assemble elementary entities into larger, possibly
-overlapping groups, and to control the orientation of the elements in these
-groups. If physical entities are defined, the output mesh only contains
-those elements that belong to physical entities. The introduction of such
+To remedy these problems, the geometry module (@pxref{Geometry module})
+introduces the notion of ``physical'' entities (also called ``physical
+groups''). The purpose of physical entities is to assemble elementary
+entities into larger, possibly overlapping groups, and to control the
+orientation of the elements in these groups. The introduction of
 physical entities in large models usually greatly facilitates the
-manipulation of the model (e.g., using `Tools->Visibility' in the GUI) and
-the interfacing with external solvers.
+manipulation of the model (e.g., using `Tools->Visibility' in the GUI)
+and the interfacing with external solvers.  
+
+In the @file{.msh} file format (@pxref{Gmsh mesh file formats}), if
+physical entities are defined, the output mesh only contains those
+elements that belong to physical entities. Other file formats each treat
+physical entities in slightly different ways, depending on their
+capability to define groups.
 
 @c -------------------------------------------------------------------------
 @c Mesh commands

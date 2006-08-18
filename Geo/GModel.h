@@ -97,6 +97,9 @@ class GModel
   // Returns all physical groups (one map per dimension: 0-D to 3-D)
   void getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]);
 
+  // Deletes all physical groups in the model
+  void deletePhysicalGroups();
+
   // The bounding box
   virtual SBoundingBox3d bounds();
 
@@ -106,6 +109,9 @@ class GModel
   // The list of partitions
   virtual std::set<int> &getMeshPartitions() { return meshPartitions; }
   virtual std::set<int> &recomputeMeshPartitions();
+
+  // deletes all the partitions
+  virtual void deleteMeshPartitions();
 
   // IO routines
   int readMSH(const std::string &name);

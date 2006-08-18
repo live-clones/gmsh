@@ -228,7 +228,8 @@ public:
   Fl_Window        *vis_window ;
   Fl_Choice        *vis_type ;
   Fl_Browser       *vis_browser ;
-  Fl_Check_Button  *vis_butt[20] ;
+  Fl_Check_Button  *vis_butt[2] ;
+  Fl_Button        *vis_push_butt[2] ;
   Fl_Input         *vis_input[10];
 
   // clipping planes window

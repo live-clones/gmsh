@@ -76,6 +76,9 @@ class GEdge : public GEntity {
   // Recompute the mesh partitions defined on this edge.
   void recomputeMeshPartitions();
 
+  // Delete the mesh partitions defined on this edge.
+  void deleteMeshPartitions();
+
   // Returns the minimum number of segments used for meshing the edge
   virtual int minimumMeshSegments () const {return 1;}
 

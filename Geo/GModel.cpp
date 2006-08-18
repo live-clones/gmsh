@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.11 2006-08-15 21:22:12 geuzaine Exp $
+// $Id: GModel.cpp,v 1.12 2006-08-18 02:22:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -128,6 +128,18 @@ void GModel::getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4])
     addInGroup(*it, groups[3]);
 }
 
+void GModel::deletePhysicalGroups()
+{
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    (*it)->physicals.clear();
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    (*it)->physicals.clear();
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    (*it)->physicals.clear();
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    (*it)->physicals.clear();
+}
+
 SBoundingBox3d GModel::bounds()
 {
   SBoundingBox3d bb;
@@ -170,4 +182,15 @@ std::set<int> &GModel::recomputeMeshPartitions()
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     (*it)->recomputeMeshPartitions();
   return meshPartitions;
+}
+
+void GModel::deleteMeshPartitions()
+{
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    (*it)->deleteMeshPartitions();
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    (*it)->deleteMeshPartitions();
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    (*it)->deleteMeshPartitions();
+  meshPartitions.clear();
 }
