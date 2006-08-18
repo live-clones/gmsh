@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.24 2006-08-18 16:54:40 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.25 2006-08-18 17:21:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -31,10 +31,9 @@
 #include "SBoundingBox3d.h"
 
 template<class T>
-void copyElements(std::vector<T*> &dst, const std::vector<MElement*> &src)
+void addElements(std::vector<T*> &dst, const std::vector<MElement*> &src)
 {
-  dst.resize(src.size());
-  for(unsigned int i = 0; i < src.size(); i++) dst[i] = (T*)src[i];
+  for(unsigned int i = 0; i < src.size(); i++) dst.push_back((T*)src[i]);
 }
 
 static void storeElementsInEntities(GModel *m, 
@@ -53,7 +52,7 @@ static void storeElementsInEntities(GModel *m,
 	  e = new gmshEdge(m, it->first);
 	  m->add(e);
 	}
-	copyElements(e->lines, it->second);
+	addElements(e->lines, it->second);
       }
       break;
     case 3: case 4: 
@@ -63,8 +62,8 @@ static void storeElementsInEntities(GModel *m,
 	  f = new gmshFace(m, it->first);
 	  m->add(f);
 	}
-	if(numEdges == 3) copyElements(f->triangles, it->second);
-	else copyElements(f->quadrangles, it->second);
+	if(numEdges == 3) addElements(f->triangles, it->second);
+	else addElements(f->quadrangles, it->second);
       }
       break;
     case 6: case 12: case 9: case 8:
@@ -74,10 +73,10 @@ static void storeElementsInEntities(GModel *m,
 	  r = new gmshRegion(m, it->first);
 	  m->add(r);
 	}
-	if(numEdges == 6) copyElements(r->tetrahedra, it->second);
-	else if(numEdges == 12) copyElements(r->hexahedra, it->second);
-	else if(numEdges == 9) copyElements(r->prisms, it->second);
-	else copyElements(r->pyramids, it->second);
+	if(numEdges == 6) addElements(r->tetrahedra, it->second);
+	else if(numEdges == 12) addElements(r->hexahedra, it->second);
+	else if(numEdges == 9) addElements(r->prisms, it->second);
+	else addElements(r->pyramids, it->second);
       }
       break;
     }
