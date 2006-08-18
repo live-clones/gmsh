@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.113 2006-08-17 03:22:22 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.114 2006-08-18 17:49:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -344,9 +344,7 @@ void OpenProblem(char *name)
   }
   CTX.threads_lock = 1;
 
-  // recreate a brand new gmsh model
-  if(GMODEL) delete GMODEL;
-  GMODEL = new gmshModel;
+  GMODEL->destroy();
 
   Init_Mesh();
 

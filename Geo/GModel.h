@@ -44,14 +44,18 @@ class GModel
 
  public:
   GModel(const std::string &name) : modelName(name), normals(0) {}
-  virtual ~GModel();
-
-  virtual void import(){}
+  virtual ~GModel(){ destroy(); }
 
   typedef std::set<GRegion*, GEntityLessThan>::iterator riter;
   typedef std::set<GFace*, GEntityLessThan>::iterator fiter;
   typedef std::set<GEdge*, GEntityLessThan>::iterator eiter;
   typedef std::set<GVertex*, GEntityLessThan>::iterator viter;
+
+  // Deletes everything in a GModel 
+  virtual void destroy();
+
+  // Imports data into a GModel from an external source
+  virtual void import(){}
 
   // Returns the geometric tolerance for the entire model.
   virtual double tolerance() const { return 1.e-14; }

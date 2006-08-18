@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.12 2006-08-18 02:22:40 geuzaine Exp $
+// $Id: GModel.cpp,v 1.13 2006-08-18 17:49:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -21,17 +21,22 @@
 
 #include "GModel.h"
 
-GModel::~GModel()
-{ 
+void GModel::destroy()
+{
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     delete *it;
+  regions.clear();
   for(fiter it = firstFace(); it != lastFace(); ++it)
     delete *it;
+  faces.clear();
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     delete *it;
+  edges.clear();
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     delete *it;
-  delete normals; 
+  vertices.clear();
+  if(normals) delete normals;
+  normals = 0;
   MVertex::resetGlobalNumber();
   MElement::resetGlobalNumber();
 }

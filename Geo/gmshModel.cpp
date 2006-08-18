@@ -1,4 +1,4 @@
-// $Id: gmshModel.cpp,v 1.12 2006-08-15 06:26:53 geuzaine Exp $
+// $Id: gmshModel.cpp,v 1.13 2006-08-18 17:49:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -33,9 +33,6 @@ extern Mesh *THEM;
 
 void gmshModel::import()
 {
-  // When en entity that already exists is reimported, we don't do
-  // anything (except making it invisible if we are asked to)
-
   if(Tree_Nbr(THEM->Points)) {
     List_T *points = Tree2List(THEM->Points);
     for(int i = 0; i < List_Nbr(points); i++){

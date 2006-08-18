@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.54 2006-08-13 20:46:54 geuzaine Exp $
+// $Id: Geo.cpp,v 1.55 2006-08-18 17:49:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -100,6 +100,9 @@ void add_infile(char *text, char *fich)
   fprintf(file, "%s\n", text);
   fclose(file);
 
+  // we need to start from scratch since the command just parsed could
+  // have deleted some entities
+  GMODEL->destroy();
   GMODEL->import();
 }
 

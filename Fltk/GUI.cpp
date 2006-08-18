@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.530 2006-08-18 02:22:40 geuzaine Exp $
+// $Id: GUI.cpp,v 1.531 2006-08-18 17:49:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -190,13 +190,13 @@ Context_Item menu_geometry[] = {
     Context_Item menu_geometry_elementary[] = {
       {"0Geometry>Elementary", NULL} ,
       {"Add",       (Fl_Callback *)geometry_elementary_add_cb} ,
+      {"Delete",    (Fl_Callback *)geometry_elementary_delete_cb} ,
       {"Translate", (Fl_Callback *)geometry_elementary_translate_cb} ,
       {"Rotate",    (Fl_Callback *)geometry_elementary_rotate_cb} ,
       {"Scale",     (Fl_Callback *)geometry_elementary_scale_cb} ,
       {"Symmetry",  (Fl_Callback *)geometry_elementary_symmetry_cb} ,
       {"Extrude",   (Fl_Callback *)geometry_elementary_extrude_cb} ,
       {"Coherence", (Fl_Callback *)geometry_elementary_coherence_cb} ,
-      {"Delete",    (Fl_Callback *)geometry_elementary_delete_cb} ,
       {0} 
     };  
         Context_Item menu_geometry_elementary_add[] = {

@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.177 2006-08-18 15:13:34 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.178 2006-08-18 17:49:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -821,8 +821,7 @@ void Draw_Mesh()
       if(status >= 1)
 	std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), initMeshGEdge());
       if(status >= 2){
-	if(GMODEL->normals) 
-	  delete GMODEL->normals;
+	if(GMODEL->normals) delete GMODEL->normals;
 	GMODEL->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
 	if(CTX.mesh.smooth_normals)
 	  std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), initSmoothNormalsGFace());
