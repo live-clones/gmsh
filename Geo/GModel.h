@@ -30,7 +30,7 @@
 #include "SBoundingBox3d.h"
 #include "SmoothNormals.h"
 
-// A geometric model. The model is a non-manifold B-Rep.
+// A geometric model. The model is a "not yet" non-manifold B-Rep.
 
 class GModel  
 {

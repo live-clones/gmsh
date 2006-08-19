@@ -95,5 +95,7 @@ int DListInsert(DListRecord **dlist, MPoint center, PointNumero newPoint);
 int DListDelete(DListPeek *dlist,PointNumero oldPoint);
 int mesh_domain(ContourPeek * ListContours, int numcontours,
                 maillage * mai, int *numpoints, int OnlyTheInitialMesh);
+void Make_Mesh_With_Points(DocRecord * ptr, PointRecord * Liste,
+                           int Numpoints);
 
 #endif

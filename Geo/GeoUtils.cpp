@@ -1,4 +1,4 @@
-// $Id: GeoUtils.cpp,v 1.13 2006-04-16 18:55:18 geuzaine Exp $
+// $Id: GeoUtils.cpp,v 1.14 2006-08-19 08:26:47 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -98,6 +98,38 @@ void sortEdgesInLoop(int num, List_T *edges)
 
 // Fills in the generatrices for a given surface, given the indices of
 // edge loops
+
+void setSurfaceEmbeddedPoints(Surface *s, List_T *points)
+{
+  if (! s->EmbeddedPoints )
+    s->EmbeddedPoints = List_Create(4, 4, sizeof(Vertex *));
+  int nbPoints = List_Nbr(points);
+  for(int i = 0; i < nbPoints; i++) {
+    double iPoint;
+    List_Read(points, i, &iPoint);
+    Vertex *v = FindPoint((int)iPoint, THEM);
+    if(v)
+      List_Add (s->EmbeddedPoints,&v);
+    else
+      Msg(GERROR, "Unknown point %d", iPoint);
+  }
+}
+
+void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
+{
+  if (! s->EmbeddedCurves )
+    s->EmbeddedCurves = List_Create(4, 4, sizeof(Curve *));
+  int nbCurves = List_Nbr(curves);
+  for(int i = 0; i < nbCurves; i++) {
+    double iCurve;
+    List_Read(curves, i, &iCurve);
+    Curve *c = FindCurve((int)iCurve, THEM);
+    if(c)
+      List_Add (s->EmbeddedCurves,&c);
+    else
+      Msg(GERROR, "Unknown curve %d", iCurve);
+  }
+}
 
 void setSurfaceGeneratrices(Surface *s, List_T *loops)
 {

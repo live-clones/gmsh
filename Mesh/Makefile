@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.121 2006-08-17 21:28:34 geuzaine Exp $
+# $Id: Makefile,v 1.122 2006-08-19 08:26:47 remacle Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -28,7 +28,7 @@ INCLUDE = -I../Numeric -I../Common -I../DataStr -I../Geo -I../Mesh\
           -I../contrib/Netgen -I../contrib/Netgen/libsrc/include\
           -I../contrib/Netgen/libsrc/interface -I../contrib/ANN/include\
           -I../contrib/Metis
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
+CFLAGS  =  ${OPTIM} ${FLAGS} ${INCLUDE} 
 
 SRC = 1D_Mesh.cpp \
       2D_Mesh.cpp \

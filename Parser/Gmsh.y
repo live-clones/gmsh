@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.233 2006-08-12 16:16:36 geuzaine Exp $
+// $Id: Gmsh.y,v 1.234 2006-08-19 08:26:47 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -162,6 +162,7 @@ GeoFormatItem :
   | Visibility  { return 1; }
   | Extrude     { List_Delete($1); return 1; }
   | Transfinite { return 1; }
+  | Embedding   { return 1; }
   | Coherence   { return 1; }
   | Loop        { return 1; }
   | Command     { return 1; }
@@ -2613,7 +2614,29 @@ Transfinite :
     }
 ;
 
+//  E M B E D D I N G  C U R V E S   A N D  P O I N T S   I N T O   S U R F A C E S  
+//    A N D   V O L U M E S
 
+Embedding : 
+    tPoint ListOfDouble tIn tSurface FExpr tEND
+    { 
+      Surface *s = FindSurface((int)$5, THEM);
+      if(s)
+	setSurfaceEmbeddedPoints(s, $2);
+    }
+  | tLine ListOfDouble tIn tSurface FExpr tEND
+    {
+      Surface *s = FindSurface((int)$5, THEM);
+      if(s)
+	setSurfaceEmbeddedCurves(s, $2);
+    }
+  | tLine ListOfDouble tIn tVolume FExpr tEND
+    {
+    }
+  | tSurface ListOfDouble tIn tVolume FExpr tEND
+    {
+    }
+;
 //  C O H E R E N C E
 
 Coherence : 

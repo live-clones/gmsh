@@ -26,5 +26,7 @@
 void sortEdgesInLoop(int num, List_T *edges);
 void setSurfaceGeneratrices(Surface *s, List_T *loops);
 void setVolumeSurfaces(Volume *v, List_T * loops);
+void setSurfaceEmbeddedPoints(Surface *s, List_T *points);
+void setSurfaceEmbeddedCurves(Surface *s, List_T *curves);
 
 #endif

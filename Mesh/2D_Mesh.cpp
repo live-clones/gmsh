@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.86 2006-08-05 13:31:28 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.87 2006-08-19 08:26:47 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -706,8 +706,6 @@ void filldel(Delaunay * deladd, int aa, int bb, int cc,
   deladd->t.a = aa;
   deladd->t.b = bb;
   deladd->t.c = cc;
-  deladd->t.info = TOLINK;
-  deladd->t.info2 = 0;
   deladd->v.voisin1 = NULL;
   deladd->v.voisin2 = NULL;
   deladd->v.voisin3 = NULL;

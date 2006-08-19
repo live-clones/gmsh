@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.14 2006-08-15 06:26:53 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.15 2006-08-19 08:26:47 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "gmshModel.h"
+#include "gmshVertex.h"
 #include "gmshEdge.h"
 #include "gmshFace.h"
 #include "Interpolation.h"
@@ -48,6 +49,27 @@ gmshFace::gmshFace(GModel *m, Surface *face)
   // always compute and store the mean plane for plane surfaces
   // (simply using the bounding vertices)
   if(s->Typ == MSH_SURF_PLAN) computeMeanPlane();
+
+  if (s->EmbeddedCurves)
+    {
+      for(int i = 0 ; i < List_Nbr(s->EmbeddedCurves); i++){
+	Curve *c;
+	List_Read(s->EmbeddedCurves, i, &c);
+	GEdge *e = m->edgeByTag(abs(c->Num));
+	if(!e) throw;
+	embedded_edges.push_back(e);
+      }
+    }
+  if (s->EmbeddedPoints)
+    {
+      for(int i = 0 ; i < List_Nbr(s->EmbeddedPoints); i++){
+	Vertex *v;
+	List_Read(s->EmbeddedPoints, i, &v);
+	GVertex *gv = m->vertexByTag(v->Num);
+	if(!gv) throw;
+	embedded_vertices.push_back(gv);
+      }
+    }
 }
 
 gmshFace::gmshFace(GModel *m, int num)

@@ -44,6 +44,8 @@ class GFace : public GEntity
   std::list<int> l_dirs;
   GRegion *r1, *r2;
   mean_plane meanPlane;
+  std::list<GEdge *> embedded_edges;
+  std::list<GVertex *> embedded_vertices;
 
  public:
   GFace(GModel *model, int tag) : GEntity(model, tag), r1(0), r2(0) {}
@@ -56,6 +58,8 @@ class GFace : public GEntity
   virtual std::list<int> orientations() const{return l_dirs;}
   // Edges that bound this entity or that this entity bounds.
   virtual std::list<GEdge*> edges() const{return l_edges;}
+  // Edges that are embedded in this face.
+  virtual std::list<GEdge*> emb_edges() const{return embedded_edges;}
   // Edges that bound this entity or that this entity bounds.
   virtual std::list<GVertex*> vertices() const;
 

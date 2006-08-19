@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.13 2006-08-18 17:49:35 geuzaine Exp $
+// $Id: GModel.cpp,v 1.14 2006-08-19 08:26:47 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -167,10 +167,13 @@ SBoundingBox3d GModel::bounds()
 
 int GModel::getMeshStatus()
 {
+
+  // VERSION CG WAS WRONG
+  // A SURFACE CAN BE MESHESD WITHOUD INTERNAL VERTICES
   for(riter it = firstRegion(); it != lastRegion(); ++it)
-    if((*it)->mesh_vertices.size()) return 3;
+    if((*it)->tetrahedra.size() ||(*it)->hexahedra.size() || (*it)->prisms.size() || (*it)->pyramids.size()) return 3;
   for(fiter it = firstFace(); it != lastFace(); ++it)
-    if((*it)->mesh_vertices.size()) return 2;
+    if((*it)->triangles.size() || (*it)->quadrangles.size()) return 2;
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     if((*it)->mesh_vertices.size()) return 1;
   for(viter it = firstVertex(); it != lastVertex(); ++it)

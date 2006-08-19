@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.11 2006-08-15 06:26:53 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.12 2006-08-19 08:26:47 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -33,12 +33,28 @@ static GEdge * _myGEdge;
 static double  _myGEdgeLength, t_begin, t_end, lc_begin, lc_end;
 static Range<double> _myGEdgeBounds;
 
+double F_LC_ANALY (double xx, double yy, double zz)
+{
+  //  return 0.005 + 0.05*fabs (sin(5*xx) + sin(15*yy) + sin(15*zz));
+  //  return 0.02;
+  //  return 0.002 + 0.04*fabs (sin(6*xx) + sin(6*yy) + sin(6*zz));
+  return 0.003 + 0.05*fabs (sin(8*xx) + sin(8*yy) + sin(8*zz));
+  return 0.02 + 0.1*fabs (sin(3*xx) + sin(3*yy) + sin(3*zz));
+  return 0.01 + 0.1*fabs(sin((xx*xx+(zz-0.7)*(zz-0.7)-.25))) ; 
+  return 0.05 + .1*fabs(xx*yy) ;
+}
+
 double F_Lc_bis(double t)
 {
   const double fact = (t-t_begin)/(t_end-t_begin);
-  const double lc_here = lc_begin + fact * (lc_end-lc_begin);
+  double lc_here = lc_begin + fact * (lc_end-lc_begin);
   SVector3 der = _myGEdge -> firstDer(t) ;
   const double d = norm(der);
+
+  // TESTTTT
+  GPoint points = _myGEdge -> point(t) ;      
+  double l_bgm = F_LC_ANALY(points.x(),points.y(),points.z()) ;
+  lc_here = l_bgm;
 
   if(CTX.mesh.bgmesh_type == ONFILE) {
     GPoint point = _myGEdge -> point(t) ;      

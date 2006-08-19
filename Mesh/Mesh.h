@@ -41,7 +41,6 @@ typedef int PointNumero;
 
 struct _DOC{
   PointRecord *points;  // points to triangulate
-  List_T *hotpoints;    // hotpoints
   int numPoints;        // number of points
   int numTriangles;     // number of triangles
   Delaunay *delaunay;   // 2D results
@@ -55,8 +54,9 @@ typedef struct{
 struct _POINT{
   MPoint where;
   DListPeek adjacent;
-  int initial, permu, info, info2, numcontour;
-  double quality, qualityy, angle;
+  int initial, permu, numcontour;
+  double quality;
+  void *data;
 };
 
 typedef struct{
@@ -160,6 +160,8 @@ struct _Surf{
   int ipar[5];
   int Nu, Nv;
   List_T *Generatrices;
+  List_T *EmbeddedCurves;
+  List_T *EmbeddedPoints;
   List_T *Control_Points;
   List_T *TrsfPoints;
   double plan[3][3];
@@ -386,6 +388,7 @@ void ReOrientSurfaceMesh(Surface *s);
 void Move_SimplexBaseToSimplex(int dimension);
 
 double BGMXYZ(double X, double Y, double Z);
+int BGMExists();
 void ActionLiss(void *data, void *dummy);
 void ActionLissSurf(void *data, void *dummy);
 int Recombine(Tree_T *TreeAllVert, Tree_T *TreeAllSimp, Tree_T *TreeAllQuad,

@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.55 2006-07-25 13:00:07 remacle Exp $
+// $Id: BDS.cpp,v 1.56 2006-08-19 08:26:47 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,9 @@
 #include "GmshMatrix.h"
 #include "BDS.h"
 #include "Message.h"
+#include "GFace.h"
+
+bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS_Triangle *t);
 
 double BDS_Point::min_edge_length()
 {
@@ -52,8 +55,8 @@ void outputScalarField(std::list < BDS_Triangle * >t, const char *iii)
             pts[0]->X, pts[0]->Y, pts[0]->Z,
             pts[1]->X, pts[1]->Y, pts[1]->Z,
             pts[2]->X, pts[2]->Y, pts[2]->Z,
-            pts[0]->radius_of_curvature, pts[1]->radius_of_curvature,
-            pts[2]->radius_of_curvature);
+            pts[0]->radius(), pts[1]->radius(),
+            pts[2]->radius());
     ++tit;
   }
   fprintf(f, "};\n");
@@ -335,6 +338,14 @@ void vector_triangle(BDS_Point * p1, BDS_Point * p2, BDS_Point * p3,
   c[0] = a[1] * b[2] - a[2] * b[1];
 }
 
+void vector_triangle_parametric(BDS_Point * p1, BDS_Point * p2, BDS_Point * p3,
+				double &c)
+{
+  double a[2] = { p1->u - p2->u, p1->v - p2->v };
+  double b[2] = { p1->u - p3->u, p1->v - p3->v };
+  c = a[0] * b[1] - a[1] * b[0];
+}
+
 void normal_triangle(BDS_Point * p1, BDS_Point * p2, BDS_Point * p3,
                      double c[3])
 {
@@ -352,6 +363,13 @@ double surface_triangle(BDS_Point * p1, BDS_Point * p2, BDS_Point * p3)
   double c[3];
   vector_triangle(p1, p2, p3, c);
   return 0.5 * sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
+}
+
+double surface_triangle_param(BDS_Point * p1, BDS_Point * p2, BDS_Point * p3)
+{
+  double c;
+  vector_triangle_parametric (p1, p2, p3, c);
+  return (0.5 * c);
 }
 
 double quality_triangle(BDS_Point * p1, BDS_Point * p2, BDS_Point * p3)
@@ -403,6 +421,18 @@ BDS_Point *BDS_Mesh::add_point(int num, double x, double y, double z)
   return pp;
 }
 
+BDS_Point *BDS_Mesh::add_point(int num, double u, double v, GFace *gf)
+{
+  
+  GPoint gp = gf->point(u,v);  
+  BDS_Point *pp = new BDS_Point(num, gp.x(), gp.y(), gp.z());
+  pp->u = u;
+  pp->v = v;
+  points.insert(pp);
+  MAXPOINTNUMBER = (MAXPOINTNUMBER < num) ? num : MAXPOINTNUMBER;
+  return pp;
+}
+
 BDS_Point *BDS_Mesh::find_point(int p)
 {
   BDS_Point P(p);
@@ -424,6 +454,65 @@ BDS_Edge *BDS_Mesh::find_edge(int num1, int num2)
       return (*eit);
     ++eit;
   }
+  return 0;
+}
+
+int Intersect_Edges_2d(double x1, double y1, double x2, double y2,
+		       double x3, double y3, double x4, double y4)
+{
+  double mat[2][2];
+  double rhs[2], x[2];
+  mat[0][0] = (x2 - x1);
+  mat[0][1] = -(x4 - x3);
+  mat[1][0] = (y2 - y1);
+  mat[1][1] = -(y4 - y3);
+  rhs[0] = x3 - x1;
+  rhs[1] = y3 - y1;
+  if(!sys2x2(mat, rhs, x))
+    return 0;
+  if(x[0] > 0.0 && x[0] < 1.0 && x[1] > 0.0 && x[1] < 1.0)
+    return 1;
+  return 0;
+}
+
+BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2)
+{
+  BDS_Edge *e = find_edge (num1, num2);
+
+  if (e) return e;
+
+  BDS_Point *p1 = find_point(num1);
+  BDS_Point *p2 = find_point(num2);
+  
+  if (!p1 || !p2) throw;;
+
+  Msg(INFO," edge %d %d has to be recovered",num1,num2);
+  
+  int ix = 0;
+  while(1)
+    {
+      std::vector<BDS_Edge *> intersected;
+      std::list<BDS_Edge *>::iterator it = edges.begin();
+      while (it!=edges.end())
+	{
+	  e = (*it);
+	  if (!e->deleted && e->p1 != p1 && e->p1 != p2 && e->p2 != p1 && e->p2 != p2)
+	    if(Intersect_Edges_2d(e->p1->X, e->p1->Y,
+				  e->p2->X, e->p2->Y,
+				  p1->X, p1->Y,
+				  p2->X, p2->Y))
+	      intersected.push_back(e);	  
+	  ++it;
+	}
+
+      if (!intersected.size())
+	{
+	  return find_edge (num1, num2);
+	}
+      
+      int ichoice = ix++ % intersected.size();
+      swap_edge ( intersected[ichoice] , BDS_SwapEdgeTestPlanar () );	       
+    }
   return 0;
 }
 
@@ -844,8 +933,8 @@ void BDS_Mesh::createSearchStructures()
             (*it)->dataPts[I][2] = p1->Z + (p2->Z - p1->Z) * (u);
             (*it)->sE[I] = (*eit);
             (*it)->sR[I] =
-              p1->radius_of_curvature + (p2->radius_of_curvature -
-                                         p1->radius_of_curvature) * (u);;
+              p1->radius() + (p2->radius() -
+                                         p1->radius()) * (u);;
             I++;
           }
           eit++;
@@ -869,7 +958,7 @@ void BDS_Point::compute_curvature()
   // printf("curvature using %d triangles\n",t.size());
 
   if(g && g->classif_degree != 2) {
-    radius_of_curvature = 1.e22;
+    radius() = 1.e22;
     return;
   }
 
@@ -907,10 +996,10 @@ void BDS_Point::compute_curvature()
     double curvature = fabs(Cx(0)) + fabs(Cy(1)) + fabs(Cz(2));
 
     if(curvature != 0.0)
-      radius_of_curvature = fabs(1. / curvature);
+      radius() = fabs(1. / curvature);
     else
-      radius_of_curvature = 1.e22;
-    // printf(" R = %g\n",radius_of_curvature);
+      radius() = 1.e22;
+    // printf(" R = %g\n",radius());
   }
 }
 
@@ -921,8 +1010,8 @@ void compute_curvatures(std::list < BDS_Edge * >&edges)
     std::list < BDS_Edge * >::iterator ite = edges.end();
     while(it != ite) {
       (*it)->target_length = 1.e22;
-      (*it)->p1->radius_of_curvature = 1.e22;
-      (*it)->p2->radius_of_curvature = 1.e22;
+      (*it)->p1->radius() = 1.e22;
+      (*it)->p2->radius() = 1.e22;
       ++it;
     }
 
@@ -941,10 +1030,10 @@ void compute_curvatures(std::list < BDS_Edge * >&edges)
           BDS_Vector DIST = l1 + l2;
           double crv = 1. / sqrt((DIFFN * DIFFN) / (DIST * DIST));
 
-          if((*it)->p1->radius_of_curvature > crv)
-            (*it)->p1->radius_of_curvature = crv;
-          if((*it)->p2->radius_of_curvature > crv)
-            (*it)->p2->radius_of_curvature = crv;
+          if((*it)->p1->radius() > crv)
+            (*it)->p1->radius() = crv;
+          if((*it)->p2->radius() > crv)
+            (*it)->p2->radius() = crv;
         }
       }
       ++it;
@@ -1892,7 +1981,7 @@ BDS_Mesh ::~ BDS_Mesh ()
 }
 
 
-BDS_Point* BDS_Mesh::split_edge(BDS_Edge * e, double coord, BDS_Mesh * geom)
+void BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
 {
   /*
         p1
@@ -1909,10 +1998,6 @@ BDS_Point* BDS_Mesh::split_edge(BDS_Edge * e, double coord, BDS_Mesh * geom)
      //  p1,op2,mid +
   */
 
-  int nbFaces = e->numfaces();
-
-  if(nbFaces != 2)
-    return 0;
 
   BDS_Point *op[2];
   BDS_Point *p1 = e->p1;
@@ -1932,15 +2017,6 @@ BDS_Point* BDS_Mesh::split_edge(BDS_Edge * e, double coord, BDS_Mesh * geom)
       break;
     }
   }
-
-  MAXPOINTNUMBER++;
-  BDS_Point *mid = add_point(MAXPOINTNUMBER,
-                             coord * p1->X + (1 - coord) * p2->X,
-                             coord * p1->Y + (1 - coord) * p2->Y,
-                             coord * p1->Z + (1 - coord) * p2->Z);
-
-  mid->radius_of_curvature =
-    coord * p1->radius_of_curvature + (1 - coord) * p2->radius_of_curvature;
 
   // we should project 
   e->oppositeof(op);
@@ -2011,11 +2087,6 @@ BDS_Point* BDS_Mesh::split_edge(BDS_Edge * e, double coord, BDS_Mesh * geom)
   triangles.push_back(t2);
   triangles.push_back(t3);
   triangles.push_back(t4);
-
-  if(geom || (mid->g && mid->g->surf))
-      snap_point(mid, geom);
-
-  return mid;
 }
 
 bool BDS_SwapEdgeTestNonPlanar::operator () (BDS_Edge *e,
@@ -2043,6 +2114,8 @@ bool BDS_SwapEdgeTestPlanar::operator () (BDS_Edge *e,
 					  BDS_Point *p1,BDS_Point *p2,BDS_Point *p3,
 					  BDS_Point *q1,BDS_Point *q2,BDS_Point *q3) const
 {
+
+  
   double s1 = surface_triangle ( p1,p2,p3);
   double s2 = surface_triangle ( q1,q2,q3);  
   double n1 = e->faces(0)->S();
@@ -2055,11 +2128,31 @@ bool BDS_SwapEdgeTestPlanar::operator () (BDS_Edge *e,
   return true;
 }
 
+bool BDS_SwapEdgeTestParametric::operator () (BDS_Edge *e,
+					      BDS_Point *p1,BDS_Point *p2,BDS_Point *p3,
+					      BDS_Point *q1,BDS_Point *q2,BDS_Point *q3) const
+{
+  //  return false;
+  double s1 = fabs(surface_triangle_param ( p1,p2,p3));
+  double s2 = fabs(surface_triangle_param ( q1,q2,q3));  
+  BDS_Point * pf1[3];
+  BDS_Point * pf2[3];
+  e->faces(0)->getNodes(pf1);
+  e->faces(1)->getNodes(pf2);
+  double n1 = fabs(surface_triangle_param ( pf1[0],pf1[1],pf1[2]));					    
+  double n2 = fabs(surface_triangle_param ( pf2[0],pf2[1],pf2[2]));					    
+
+  if (s1 < 1.e-2 * (n1+n2))return false;
+  if (s2 < 1.e-2 * (n1+n2))return false;
+  if (fabs(s1+s2 - n1-n2) > 1.e-8 * (s1+s2))return false;
+
+  return true;
+}
+
 
 // This function does actually the swap without taking into account
 // the feasability of the operation. Those conditions have to be
 // taken into account before doing the edge swap
-
 bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
 {
 
@@ -2077,6 +2170,7 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
    */
 
   // we test if the edge is deleted
+  //  return false;
   if(e->deleted)
     return false;
 
@@ -2182,9 +2276,8 @@ bool BDS_Mesh::collapse_edge(BDS_Edge * e, BDS_Point * p, const double eps)
   if(o->g != p->g)
     return false;
 
-  double X = p->X;
-  double Y = p->Y;
-  double Z = p->Z;
+  double u = p->u;
+  double v = p->v;
 
   // printf("collapsing an edge :");
   // print_edge(e);
@@ -2192,47 +2285,21 @@ bool BDS_Mesh::collapse_edge(BDS_Edge * e, BDS_Point * p, const double eps)
   static int pt[3][1024];
   static BDS_GeomEntity *gs[1024];
   static int ept[2][1024];
-  static BDS_GeomEntity *egs[1024];
+  static BDS_GeomEntity *egs[1024]; 
   int nt = 0;
-
-  p->getTriangles(t);
   {
+    p->getTriangles(t);
     std::list < BDS_Triangle * >::iterator it = t.begin();
     std::list < BDS_Triangle * >::iterator ite = t.end();
-
     while(it != ite) {
       BDS_Triangle *t = *it;
       //          print_face(t);
       if(t->e1 != e && t->e2 != e && t->e3 != e) {
-        BDS_Vector n1, n2;
-        BDS_Point *pts[3];
-        t->getNodes(pts);
-        p->X = o->X;
-        p->Y = o->Y;
-        p->Z = o->Z;
-        double s_after = surface_triangle(pts[0], pts[1], pts[2]);
-        n1 = t->N_on_the_fly();
-        p->X = X;
-        p->Y = Y;
-        p->Z = Z;
-        n2 = t->N();
-
-	if(n1*n2 < 0) return false;
-	
-        double s_before = surface_triangle(pts[0], pts[1], pts[2]);
-        // normals should not be opposed or change too dramatically
-        // this does not concern the triangles with the small edge that
-        // are collapsed too
-        double angle = n1.angle(n2);
-        if(fabs(angle) > M_PI / 12)
-          return false;
-        if(s_after+s_before < 3.e-1 * fabs(s_before-s_after)) {
-          return false;
-        }
-        if(s_after < 1.e-1 * s_before) {
-          return false;
-        }
+	if (!test_move_point_parametric_triangle ( p, o->u, o-> v, t))
+	  return false;
         gs[nt] = t->g;
+	BDS_Point *pts[3];
+	t->getNodes(pts);
         pt[0][nt] = (pts[0] == p) ? o->iD : pts[0]->iD;
         pt[1][nt] = (pts[1] == p) ? o->iD : pts[1]->iD;
         pt[2][nt++] = (pts[2] == p) ? o->iD : pts[2]->iD;
@@ -2240,6 +2307,7 @@ bool BDS_Mesh::collapse_edge(BDS_Edge * e, BDS_Point * p, const double eps)
       ++it;
     }
   }
+
 
   {
     std::list < BDS_Triangle * >::iterator it = t.begin();
@@ -2397,7 +2465,7 @@ void BDS_Mesh::snap_point(BDS_Point * p, BDS_Mesh * geom_mesh)
     std::list < BDS_Triangle * >l;
     BDS_GeomEntity *gg =
       geom_mesh->get_geom(p->g->classif_tag, p->g->classif_degree);
-    gg->getClosestTriangles(p->X, p->Y, p->Z, l, p->radius_of_curvature, xx,
+    gg->getClosestTriangles(p->X, p->Y, p->Z, l, p->radius(), xx,
                             yy, zz);
 
     bool ok = project_point_on_a_list_of_triangles(p, l, X, Y, Z);
@@ -2460,6 +2528,74 @@ bool BDS_Mesh::smooth_point(BDS_Point * p, BDS_Mesh * geom_mesh)
   return true;
 }
 
+
+bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS_Triangle *t)
+{       
+  BDS_Point *pts[3];
+  t->getNodes(pts);
+  double U = p->u;
+  double V = p->v;
+  p->u = u;
+  p->v = v;
+  double s_after = surface_triangle_param(pts[0], pts[1], pts[2]);
+  p->u = U;
+  p->v = V;
+  double s_before = surface_triangle_param(pts[0], pts[1], pts[2]);
+  if(s_after*s_before <= 0) return false;
+  if(fabs(s_after) < 1.e-4 * fabs(s_before)) return false;
+  return true;
+}
+
+bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)
+{
+
+  if(p->g && p->g->classif_degree <= 1)
+    return false;
+
+  double U = 0;
+  double V = 0;
+
+  std::list < BDS_Edge * >::iterator eit = p->edges.begin();
+  while(eit != p->edges.end()) {
+    if ((*eit)->numfaces() == 1) return false;
+    BDS_Point *op = ((*eit)->p1 == p) ? (*eit)->p2 : (*eit)->p1;
+    U += op->u;
+    V += op->v;
+    ++eit;
+  }
+
+  U /= p->edges.size();
+  V /= p->edges.size();
+
+  std::list < BDS_Triangle * >ts;
+  p->getTriangles(ts);
+  std::list < BDS_Triangle * >::iterator it = ts.begin();
+  std::list < BDS_Triangle * >::iterator ite = ts.end();
+  while(it != ite) {
+    BDS_Triangle *t = *it;
+    if (!test_move_point_parametric_triangle ( p, U, V, t))
+      return false;
+    ++it;
+  }
+
+
+  GPoint gp = gf->point(U,V);
+  p->u = U;
+  p->v = V;
+  p->X = gp.x();
+  p->Y = gp.y();
+  p->Z = gp.z();
+
+  eit = p->edges.begin();
+  while(eit != p->edges.end()) {
+    (*eit)->update();
+    ++eit;
+  }
+
+
+  return true;
+}
+
 void BDS_Mesh::compute_metric_edge_lengths(const BDS_Metric & metric)
 {
   
@@ -2512,7 +2648,7 @@ void BDS_Mesh::compute_metric_edge_lengths(const BDS_Metric & metric)
       }
       else {
         double radius =
-          0.5 * (e->p1->radius_of_curvature + e->p2->radius_of_curvature);
+          0.5 * (e->p1->radius() + e->p2->radius());
         double target =
           3.14159 * radius / metric.nb_elements_per_radius_of_curvature;
         e->target_length =
@@ -2599,7 +2735,18 @@ int BDS_Mesh::adapt_mesh(const BDS_Metric & metric, bool smooth,
       if((*it)->numfaces() == 2) {
         double length = (*it)->length();
         if(!(*it)->deleted && length > (*it)->target_length / 0.7) {
-          split_edge(*it, 0.5, geom_mesh);
+	  MAXPOINTNUMBER++;
+	  BDS_Point *mid ;
+	  double coord = 0.5;
+	  mid  = add_point(MAXPOINTNUMBER,
+			   coord * (*it)->p1->X + (1 - coord) * (*it)->p2->X,
+			   coord * (*it)->p1->Y + (1 - coord) * (*it)->p2->Y,
+			   coord * (*it)->p1->Z + (1 - coord) * (*it)->p2->Z);
+	  mid->radius() =
+	    coord * (*it)->p1->radius() + (1 - coord) * (*it)->p2->radius();
+          split_edge(*it,mid);
+	  if(geom_mesh || (mid->g && mid->g->surf))
+	    snap_point(mid, geom_mesh);
           nb_modif++;
         }
       }
@@ -2713,7 +2860,7 @@ BDS_Mesh::BDS_Mesh(const BDS_Mesh & other)
     p->g =
       ((*it)->g) ? get_geom((*it)->g->classif_tag,
                             (*it)->g->classif_degree) : 0;
-    p->radius_of_curvature = (*it)->radius_of_curvature;
+    p->radius() = (*it)->radius();
     if(p->g->classif_degree == 0)
       p->g->p = p;
   }

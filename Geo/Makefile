@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.95 2006-08-17 21:28:34 geuzaine Exp $
+# $Id: Makefile,v 1.96 2006-08-19 08:26:47 remacle Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -26,7 +26,7 @@ LIB     = ../lib/libGmshGeo.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Numeric\
           -I../Parser -I../Fltk\
           -I../contrib/NR
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
+CFLAGS  = -pg ${OPTIM} ${FLAGS} ${INCLUDE} 
 
 SRC = CAD.cpp \
       ExtrudeParams.cpp \

@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.48 2006-08-05 13:31:28 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.49 2006-08-19 08:26:47 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -40,6 +40,11 @@ int BGMWithView(Post_View * ErrView)
   BGM_MAX = ErrView->Max;
   CTX.mesh.bgmesh_type = ONFILE;
   return 1 ;
+}
+
+int BGMExists()
+{
+  return BGM_OCTREE != 0;
 }
 
 double BGMXYZ(double X, double Y, double Z)

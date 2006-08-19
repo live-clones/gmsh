@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.84 2006-08-12 16:44:31 geuzaine Exp $
+// $Id: Create.cpp,v 1.85 2006-08-19 08:26:47 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -670,6 +670,8 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Support = pS;
   pS->Control_Points = List_Create(1, 10, sizeof(Vertex *));
   pS->Generatrices = NULL;
+  pS->EmbeddedPoints = NULL;
+  pS->EmbeddedCurves = NULL;
   pS->Edges = NULL;
   pS->Extrude = NULL;
   return (pS);
@@ -692,6 +694,8 @@ void Free_Surface(void *a, void *b)
     List_Delete(pS->Orientations);
     List_Delete(pS->Control_Points);
     List_Delete(pS->Generatrices);
+    List_Delete(pS->EmbeddedCurves);
+    List_Delete(pS->EmbeddedPoints);
     if(pS->Edges) {
       Tree_Action(pS->Edges, Free_Edge);
       Tree_Delete(pS->Edges);

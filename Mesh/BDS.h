@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <list>
 #include <math.h>
+#include "GFace.h"
 #include "Views.h"
 
 class BDS_Tet;
@@ -41,10 +42,12 @@ class BDS_Quad;
 class BDS_Mesh;
 class BDS_Point;
 class BDS_Vector;
+class GFace;
 
 void vector_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]); 
 void normal_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]); 
 double surface_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3); 
+double surface_triangle_param(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3); 
 double quality_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3);
 
 class BDS_Metric
@@ -218,23 +221,19 @@ public:
   static double t;
 };
 
-class BDS_Pos
+class BDS_Point 
 {
-public:
-  double X,Y,Z;    
-  BDS_Pos(double x=0,double y=0, double z=0)
-    : X(x),Y(y),Z(z)
-  {
-  }
-};
-
-class BDS_Point : public BDS_Pos
-{
-public:
-  int iD;
   double radius_of_curvature;
+public:
+  double X,Y,Z; // Real COORDINATES
+  double u,v;   // Parametric COORDINATES
+  int iD;
   BDS_GeomEntity *g;
   std::list<BDS_Edge*> edges;
+
+  // just a transition
+  double & radius () {return radius_of_curvature;}
+  double & lc     () {return radius_of_curvature;}
   
   BDS_Vector N() const;
   
@@ -258,13 +257,14 @@ public:
   void getTriangles(std::list<BDS_Triangle *> &t) const; 	
   void compute_curvature();
   BDS_Point(int id, double x=0, double y=0, double z=0)
-    : BDS_Pos(x,y,z),iD(id),radius_of_curvature(1.e22),g(0)
+    : X(x),Y(y),Z(z),u(0),v(0),iD(id),radius_of_curvature(1.e22),g(0)
   {	    
   }
 };
 
 class BDS_Edge
 {
+  double _length;
   std::vector <BDS_Triangle *> _faces;
 public:
   bool deleted;
@@ -279,7 +279,7 @@ public:
   }
   inline double length() const
   {
-    return sqrt((p1->X-p2->X)*(p1->X-p2->X)+(p1->Y-p2->Y)*(p1->Y-p2->Y)+(p1->Z-p2->Z)*(p1->Z-p2->Z));
+    return _length;
   }
   inline int numfaces() const 
   {
@@ -323,6 +323,11 @@ public:
   
   void oppositeof(BDS_Point * oface[2]) const; 
   
+  void update ()
+  {
+    _length = sqrt((p1->X-p2->X)*(p1->X-p2->X)+(p1->Y-p2->Y)*(p1->Y-p2->Y)+(p1->Z-p2->Z)*(p1->Z-p2->Z));
+  }
+
   BDS_Edge(BDS_Point *A, BDS_Point *B)
     : deleted(false), status(0),partition(0),target_length(-1.0),g(0)
   {	    
@@ -336,6 +341,7 @@ public:
     }
     p1->edges.push_back(this);
     p2->edges.push_back(this);
+    update();
   }
 };
 
@@ -641,6 +647,14 @@ class BDS_SwapEdgeTestPlanar : public BDS_SwapEdgeTest
 			   BDS_Point *q1,BDS_Point *q2,BDS_Point *q3) const;
 };
 
+class BDS_SwapEdgeTestParametric : public BDS_SwapEdgeTest
+{
+ public:
+  virtual bool operator() (BDS_Edge *e,
+			   BDS_Point *p1,BDS_Point *p2,BDS_Point *p3,
+			   BDS_Point *q1,BDS_Point *q2,BDS_Point *q3) const;
+};
+
 class BDS_SwapEdgeTestNonPlanar : public BDS_SwapEdgeTest
 {
  public:
@@ -649,12 +663,10 @@ class BDS_SwapEdgeTestNonPlanar : public BDS_SwapEdgeTest
 			   BDS_Point *q1,BDS_Point *q2,BDS_Point *q3) const;
 };
 
-
 class BDS_Mesh 
 {    
-  int MAXPOINTNUMBER,SNAP_SUCCESS,SNAP_FAILURE;
-  
 public:
+  int MAXPOINTNUMBER,SNAP_SUCCESS,SNAP_FAILURE;
   double Min[3],Max[3],LC;
   
   void projection(double &x, double &y, double &z);
@@ -669,6 +681,7 @@ public:
   std::list<BDS_Tet*>        tets; 
   // Points
   BDS_Point * add_point(int num , double x, double y,double z);
+  BDS_Point * add_point(int num , double u, double v , GFace *gf);
   void del_point(BDS_Point *p);
   BDS_Point *find_point(int num);
   // Edges
@@ -687,13 +700,16 @@ public:
   void add_geom(int degree, int tag);
   BDS_GeomEntity *get_geom(int p1, int p2);
   // 2D operators
+  BDS_Edge *recover_edge(int p1, int p2);
   bool swap_edge(BDS_Edge *, const BDS_SwapEdgeTest &theTest);
   bool collapse_edge(BDS_Edge *, BDS_Point*, const double eps);
   void snap_point(BDS_Point* , BDS_Mesh *geom = 0);
   bool smooth_point(BDS_Point* , BDS_Mesh *geom = 0);
-  bool smooth_point_b(BDS_Point*); 
+  bool smooth_point_parametric(BDS_Point * p, GFace *gf);
   bool move_point(BDS_Point *p , double X, double Y, double Z);
-  BDS_Point* split_edge(BDS_Edge *, double coord, BDS_Mesh *geom = 0);
+  void split_edge(BDS_Edge *, BDS_Point *);
+  bool delaunay_insertion ( int num , double x, double y,double z );
+  bool edge_constraint    ( BDS_Point *p1, BDS_Point *p2 );
   // Global operators
   void classify(double angle, int nb = -1); 
   void color_plane_surf(double eps , int nb);
@@ -714,5 +730,6 @@ public:
   void applyOptimizationPatterns();
 };
 
+void recur_tag(BDS_Triangle * t, BDS_GeomEntity * g);
 bool project_point_on_a_list_of_triangles(BDS_Point *p , const std::list<BDS_Triangle*> &t,
 					  double &X, double &Y, double &Z);	   

@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.5 2006-08-15 06:26:53 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.6 2006-08-19 08:26:47 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -215,20 +215,39 @@ void computeEdgeParameters ( double x1, double y1, double x2, double y2, GFace *
     }  
 }
 
-double computeEdgeLinearLength ( BDS_Edge*e, BDS_Point *p1,BDS_Point *p2, std::map<BDS_Point*,BDS_Pos> &realCoordinates)
-{
-  if (e && e->target_length > 0) return e->target_length;
+extern double F_LC_ANALY (double xx, double yy, double zz);
 
-  const BDS_Pos & x1 = realCoordinates [p1]; 
-  const BDS_Pos & x2 = realCoordinates [p2];
-  const double l = sqrt ((x1.X-x2.X)*(x1.X-x2.X) +(x1.Y-x2.Y)*(x1.Y-x2.Y) +(x1.Z-x2.Z)*(x1.Z-x2.Z));
-  if (e) e->target_length = l;
+double NewGetLc ( BDS_Point *p  )
+{
+  return  F_LC_ANALY(p->X,p->Y,p->Z);
+  if(BGMExists())
+    {	    
+      double l_bgm = BGMXYZ(p->X,p->Y,p->Z);
+      return l_bgm;
+    }
+}
+
+inline double computeEdgeLinearLength ( BDS_Point *p1, BDS_Point *p2)
+{
+  const double dx = p1->X-p2->X;
+  const double dy = p1->Y-p2->Y;
+  const double dz = p1->Z-p2->Z;
+  const double l = sqrt (dx*dx+dy*dy+dz*dz);
   return l;
 }
 
-bool edgeSwapTest(BDS_Edge *e, GFace *gf, std::map<BDS_Point*,BDS_Pos> &realCoordinates)
+double NewGetLc ( BDS_Edge *e  )
 {
-  BDS_Point *op[2];
+  double linearLength = e->length();
+  double l1 = NewGetLc ( e->p1  );
+  double l2 = NewGetLc ( e->p2  );
+  return 2*linearLength / (l1 + l2);
+}
+
+
+bool edgeSwapTest(BDS_Edge *e)
+{
+   BDS_Point *op[2];
 
   if (e->numfaces() != 2)return false;
 
@@ -236,212 +255,165 @@ bool edgeSwapTest(BDS_Edge *e, GFace *gf, std::map<BDS_Point*,BDS_Pos> &realCoor
   
   double edgeLength1, edgeLength2;
 
-  edgeLength1 = computeEdgeLinearLength ( e,e->p1,e->p2,realCoordinates);
-  edgeLength2 = computeEdgeLinearLength ( 0,op[0],op[1],realCoordinates);
-   /*
-  computeEdgeParameters ( e->p1->X,
-			  e->p1->Y,
-			  e->p2->X,
-			  e->p2->Y,
-			  gf , 2, coordMiddle, edgeLength1 );
+  edgeLength1 = e->length();
+  edgeLength2 = computeEdgeLinearLength ( op[0],op[1]);
+  double lp1 =  NewGetLc ( e->p1 );
+  double lp2 =  NewGetLc ( e->p1 );
+  double lo1 =  NewGetLc ( op[0] );
+  double lo2 =  NewGetLc ( op[1] );
 
-  computeEdgeParameters ( op[0]->X,
-			  op[0]->Y,
-			  op[1]->X,
-			  op[1]->Y,
-			  gf , 2, coordMiddle, edgeLength2 );
-   */
-  double el1 = 2*edgeLength1 / ( e->p1->radius_of_curvature +e->p2->radius_of_curvature );
-  double el2 = 2*edgeLength2 / ( op[0]->radius_of_curvature + op[1]->radius_of_curvature );
+
+  double el1 = 2*edgeLength1 / ( lp1 + lp2 );
+  double el2 = 2*edgeLength2 / ( lo1 + lo2 );
 
   double q1  = fabs (1-el1);
   double q2  = fabs (1-el2);
 
   return q2 < 0.5*q1;
+//  BDS_Point *op[2];
 
+//   if (e->numfaces() != 2)return false;
+
+//   e->oppositeof (op);
+
+//   double qa1 = quality_triangle ( e->p1 , e->p2 , op[0] );
+//   double qa2 = quality_triangle ( e->p1 , e->p2 , op[1] );
+//   double qb1 = quality_triangle ( e->p1 , op[0] , op[1] );
+//   double qb2 = quality_triangle ( e->p2 , op[0] , op[1] );
+//   double qa = (qa1<qa2)?qa1:qa2; 
+//   double qb = (qb1<qb2)?qb1:qb2; 
+  
+//   return (qb > 1.1*qa);
 }
 
 
-
-void NewMeshGenerator ( GFace *gf,
-			const std::vector<MVertex*> &points,
-			const std::vector<int> &indices)
+void RefineMesh ( GFace *gf, BDS_Mesh &m )
 {
-  BDS_Mesh m;
-  std::map<MVertex*,int> numPoints;
-  std::map<BDS_Point*,BDS_Pos> realCoordinates;
   int NUMP = 0;
-
-  // fill the initial BDS Structure
-
-  int nbEdgeLoops = indices.size()-1;
-  for(int i = 0; i < nbEdgeLoops; i++) {
-    for(int j = indices[i]; j < indices[i+1]; j++) {
-      MVertex *here     = points[j];
-      MVertex *previous = (j == indices[i])?points[indices[i+1]-1] : points[j-1]; 
-      MVertex *next     = (j == indices[i+1]-1)?points[indices[i]] : points[j+1];
-
-      double coordMiddle, edgeLength1, edgeLength2;
-      computeEdgeParameters ( here->x(),here->y(), previous->x(),previous->y() , gf , 2, coordMiddle, edgeLength1 );
-      computeEdgeParameters ( here->x(),here->y(), next->x(), next->y(), gf, 2, coordMiddle, edgeLength2 );
-      double lc = 0.5 * (edgeLength1+edgeLength2);
-      BDS_Point *bds_p = m.add_point ( NUMP, here->x(), here->y(), here->z());
-      GPoint gp = gf->point (here->x(), here->y());
-      realCoordinates[bds_p] = BDS_Pos(gp.x(),gp.y(),gp.z());
-      numPoints[here]=NUMP++;
-      bds_p->radius_of_curvature = lc;
-    }
-  }
-  // will not work correctly if points are present initially inside
-  // the domain.
-  for (unsigned int i=0;i<gf->mesh_vertices.size();++i)
-    {
-      MVertex *p = gf->mesh_vertices[i];
-      m.add_point ( NUMP, p->x(), p->y(), p->z());
-      numPoints[p]=NUMP++;
-    }
-  for (unsigned int i=0;i<gf->triangles.size();i++)
-    {
-      MVertex *p0 = gf->triangles[i]->getVertex(0);
-      MVertex *p1 = gf->triangles[i]->getVertex(1);
-      MVertex *p2 = gf->triangles[i]->getVertex(2);
-      m.add_triangle ( numPoints[p0], numPoints[p1], numPoints[p2] );
-    }
-
-  // add points to the surface ...
-  const double  errGeomTresh  = 0.02;
   int IT =0;
+
+  int MAXNP = m.MAXPOINTNUMBER;
+
   while (1)
     {
+      double stot = 0;
+      std::list<BDS_Triangle *>::iterator ittt = m.triangles.begin();
+      while (ittt!= m.triangles.end())
+	{
+	  if (!(*ittt)->deleted)
+	    {
+	      BDS_Point *pts[3];
+	      (*ittt)->getNodes(pts);
+	      stot += fabs( surface_triangle_param(pts[0], pts[1], pts[2]));
+	    }
+	  ++ittt;
+	}
+      
       std::list<BDS_Edge *> temp (m.edges);
       std::list<BDS_Edge*>::iterator it = temp.begin();
-      int NB_MODIF = 0;
+      int nb_split=0;
+      int nb_short=0;
+      int nb_collaps=0;
+      int nb_swap=0;
+
+      // split long edges
+
+      double minL=1.E22,maxL=0;
       while (it != temp.end())
 	{
-	  const int numberOfTestPoints = 8;
-	  double coordMiddle=0.5, trueLength,linearLength;
-	  /*	  computeEdgeParameters ( (*it)->p1->X,
-				  (*it)->p1->Y,
-				  (*it)->p2->X,
-				  (*it)->p2->Y,
-				  gf , numberOfTestPoints, coordMiddle, trueLength );*/
-	  linearLength = computeEdgeLinearLength ( (*it),(*it)->p1,
-						   (*it)->p2,realCoordinates);
-	  
-
-	  double l_wanted = 0.5*((*it)->p1->radius_of_curvature + (*it)->p2->radius_of_curvature);
-
-	  //double errGeom = fabs(trueLength - linearLength)/linearLength;
-	  double errGeom = 0;
-	  
-	  //	  Msg(INFO,"le = %g lex = %g err %g",linearLength,trueLength,errGeom);
-	  //	  if ((*it)->numfaces() == 2 && (  > 1000 || edgeLength > 1.4 * l_wanted))
-	  if ((*it)->numfaces() == 2 && (linearLength > 1.4 * l_wanted || errGeom > errGeomTresh *1.4))
+	  if (!(*it)->deleted)
 	    {
-	      BDS_Point *ppp = m.split_edge ( *it, coordMiddle );
-	      ppp->radius_of_curvature = l_wanted;
-	      GPoint gp = gf->point (ppp->X,ppp->Y);
-	      realCoordinates[ppp] = BDS_Pos(gp.x(),gp.y(),gp.z());	      
-	      if(linearLength > 2.4 * l_wanted) NB_MODIF++;	      
-	    } 
-	  ++it;
-	}
-
-
-      temp = m.edges;
-      it = temp.begin();
-      while (it != temp.end())
-	{
-	  const int numberOfTestPoints = 8;
-	  double coordMiddle=0.5, trueLength,linearLength;
-	  /*	  computeEdgeParameters ( (*it)->p1->X,
-				  (*it)->p1->Y,
-				  (*it)->p2->X,
-				  (*it)->p2->Y,
-				  gf ,numberOfTestPoints, coordMiddle, trueLength );*/
-	  linearLength = computeEdgeLinearLength ( (*it),(*it)->p1,
-						   (*it)->p2,realCoordinates);
-	  double l_wanted = 0.5*((*it)->p1->radius_of_curvature + (*it)->p2->radius_of_curvature);
-	  double errGeom = 0;
-	  //	  Msg(INFO,"colll le = %g lex = %g err %g",linearLength,trueLength,errGeom);
-
-
-	  if ((*it)->numfaces() == 2 && linearLength < 0.7 * l_wanted && errGeom < errGeomTresh * 0.7)
-	    {
-	      if ( (*it)->p1->iD >= (int)points.size() )
-		m.collapse_edge ( *it, (*it)->p1, 0);
-	      else if ( (*it)->p2->iD >= (int)points.size() )
-		m.collapse_edge ( *it, (*it)->p2, 0);
-	      if(linearLength < 0.35 * l_wanted) NB_MODIF++;	      
+	      double lone = NewGetLc ( *it);
+	      maxL = std::max(maxL,lone);
+	      minL = std::min(minL,lone);
 	    }
 	  ++it;
-
 	}
+
+      Msg(INFO,"stot %22.15E minL %g maxL %g",stot,minL,maxL);
+      if ((minL > 0.2 && maxL < 1.3) || IT > 7)break;
+
+
+      it = temp.begin();
+      while (it != temp.end())
+	{
+	  if (!(*it)->deleted)
+	    {
+	      double lone = NewGetLc ( *it);
+	      if ((*it)->numfaces() == 2 && (lone >  1.4))
+		{
+		  BDS_Point *mid ;
+		  double coord = 0.5;
+		  mid  = m.add_point(++m.MAXPOINTNUMBER,
+				     coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
+				     coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v,gf);
+		  m.split_edge ( *it, mid );
+		  nb_split++;
+		} 
+	    }
+	  ++it;
+	}
+
+      // collapse short edges
       temp = m.edges;
       it = temp.begin();
       while (it != temp.end())
 	{
-	  if (!(*it)->deleted && edgeSwapTest(*it,gf,realCoordinates))
-	    m.swap_edge ( *it , BDS_SwapEdgeTestPlanar()); 
+	  double lone = NewGetLc ( *it);
+	  if (!(*it)->deleted && (*it)->numfaces() == 2 && lone < 0.7 )
+	    {
+	      bool res = false;
+	      if ( (*it)->p1->iD > MAXNP )
+		res =m.collapse_edge ( *it, (*it)->p1, 0);
+	      else if ( (*it)->p2->iD > MAXNP )
+		res =m.collapse_edge ( *it, (*it)->p2, 0);
+
+	      if (res)
+		nb_collaps ++;
+	      else
+		nb_short++;
+	    }
 	  ++it;
 	}
 
-      std::set<BDS_Point*,PointLessThan> PTS (m.points);
-      std::set<BDS_Point*,PointLessThan>::iterator itp = PTS.begin();
-      while (itp != PTS.end())
+      // swap edges that provide a better configuration
+      temp = m.edges;
+      it = temp.begin();
+      while (it != temp.end())
 	{
-	  m.smooth_point(*itp);
-	  GPoint gp = gf->point ((*itp)->X,(*itp)->Y);
-	  realCoordinates[(*itp)] = BDS_Pos(gp.x(),gp.y(),gp.z());
-	  std::list < BDS_Triangle * >t;
-	  (*itp)->getTriangles(t);
-	  if ((t.size()==3 && (*itp)->edges.size() == 3)||
-	      (t.size()==4 && (*itp)->edges.size() == 4))
-	      m.collapse_edge ( *(*itp)->edges.begin(), (*itp), 0);
-	  ++itp;
+	  if (!(*it)->deleted && edgeSwapTest(*it))
+	    if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))
+	      nb_swap++;
+	  ++it;
 	}
-      Msg(INFO,"surf %d NB_MODIF = %d EDGES=%d",gf->tag(),NB_MODIF,m.edges.size());
-      if (IT++ > 25 || (double)(NB_MODIF) < .003*(double)m.edges.size())break;
+      // smooth resulting mesh
+      //      if (IT % 4 == 0 )
+	{
+	  std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
+	  while (itp != m.points.end())
+	    {
+	      m.smooth_point_parametric(*itp,gf);
+	      ++itp;
+	    }
+	}
+      IT++;
+      m.cleanup();  
     }
-  
-  for (unsigned int i=0;i<gf->mesh_vertices.size();++i)
-    {
-      MVertex *p = gf->mesh_vertices[i];
-      delete p;
-    }
-  gf->mesh_vertices.clear();
 
-  std::map<int,MVertex*> verts_;
+  // optimize
   {
-    std::set<BDS_Point*,PointLessThan>::iterator it = m.points.begin();
-    while (it != m.points.end())
+    std::set<BDS_Point*,PointLessThan> PTS (m.points);
+    std::set<BDS_Point*,PointLessThan>::iterator itp = PTS.begin();
+    while (itp != PTS.end())
       {
-	if ( (*it)->iD >= (int)points.size() )
-	  {
-	    MFaceVertex *v = new MFaceVertex ( (*it)->X,(*it)->Y, 0.0, gf, 0,0);           
-	    gf->mesh_vertices.push_back(v);
-	    verts_[(*it)->iD]  = v; 
-	  }
-	++it;
-      }
-  }
-  {
-    for (unsigned int i=0;i<gf->triangles.size();i++)
-      delete gf->triangles[i];
-    gf->triangles.clear();
-    std::list<BDS_Triangle*>::iterator it = m.triangles.begin();
-    while (it != m.triangles.end())
-      {
-	if (!(*it)->deleted)
-	  {
-	    BDS_Point *n[3];
-	    (*it)->getNodes (n);
-	    MVertex *v[3];
-	    for (int i=0;i<3;i++)
-	      v[i] = (n[i]->iD >= (int)points.size()) ? verts_[n[i]->iD] : points[n[i]->iD];
-	    gf->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
-	  }
-	++it;
+	std::list < BDS_Triangle * >t;
+	(*itp)->getTriangles(t);
+	if ((t.size()==3 && (*itp)->edges.size() == 3)||
+	    (t.size()==4 && (*itp)->edges.size() == 4))
+	  m.collapse_edge ( *(*itp)->edges.begin(), (*itp), 0);
+	else
+	  m.smooth_point_parametric(*itp,gf);
+	++itp;
       }
   }
 }
@@ -570,6 +542,329 @@ void OldMeshGenerator ( GFace *gf,
 }
 
 
+void recover_medge ( BDS_Mesh *m, GEdge *ge)
+{
+
+  m->add_geom (ge->tag(), 1);
+  BDS_GeomEntity *g = m->get_geom(ge->tag(),1);
+
+  if (ge->mesh_vertices.size() == 0)
+    {
+      MVertex *vstart = *(ge->getBeginVertex()->mesh_vertices.begin());
+      MVertex *vend   = *(ge->getEndVertex()->mesh_vertices.begin());
+      BDS_Point *pstart = m->find_point(vstart->getNum());
+      BDS_Point *pend = m->find_point(vend->getNum());
+      if(!pstart->g)
+	{
+	  m->add_geom (vstart->getNum(), 0);
+	  BDS_GeomEntity *g0 = m->get_geom(vstart->getNum(), 0);
+	  pstart->g = g0;
+	}
+      if(!pend->g)
+	{
+	  m->add_geom (vend->getNum(), 0);
+	  BDS_GeomEntity *g0 = m->get_geom(vend->getNum(), 0);
+	  pend->g = g0;
+	}
+      BDS_Edge * e = m->recover_edge ( vstart->getNum(), vend->getNum());
+      if (e)e->g = g;
+      else throw;
+      return;
+    }
+
+
+  MVertex *vstart = *(ge->getBeginVertex()->mesh_vertices.begin());
+  MVertex *vend   = *(ge->mesh_vertices.begin());
+
+  BDS_Point *pstart = m->find_point(vstart->getNum());
+  if(!pstart->g)
+    {
+      m->add_geom (vstart->getNum(), 0);
+      BDS_GeomEntity *g0 = m->get_geom(vstart->getNum(), 0);
+      pstart->g = g0;
+    }
+
+  BDS_Edge * e = m->recover_edge ( vstart->getNum(), vend->getNum());
+  if (e)e->g = g;
+  else throw;
+
+  for (int i=1;i<ge->mesh_vertices.size();i++)
+    {
+      vstart = ge->mesh_vertices[i-1];
+      vend   = ge->mesh_vertices[i];
+      e = m->recover_edge ( vstart->getNum(), vend->getNum());
+      if (e)e->g = g;
+      else throw;
+    }    
+  vstart = vend;
+  vend   = *(ge->getEndVertex()->mesh_vertices.begin());
+  e = m->recover_edge ( vstart->getNum(), vend->getNum());
+  if (e)e->g = g;
+  else throw;
+
+  BDS_Point *pend = m->find_point(vend->getNum());
+  if(!pend->g)
+    {
+      m->add_geom (vend->getNum(), 0);
+      BDS_GeomEntity *g0 = m->get_geom(vend->getNum(), 0);
+      pend->g = g0;
+    }
+
+}
+
+
+// Builds An initial triangular mesh
+// that respects the boundaries of the
+// domain, including embedded points 
+// and surfaces
+void gmsh2DMeshGenerator ( GFace *gf )
+{
+
+  std::set<MVertex*>all_vertices;
+  std::map<int, MVertex*>numbered_vertices;
+  std::list<GEdge*> edges = gf->edges();
+  std::list<GEdge*> emb_edges = gf->emb_edges();
+  std::list<GEdge*>::iterator it = edges.begin();
+  
+  // build a set with all points of the boundaries
+  while(it != edges.end())
+    {
+      all_vertices.insert ( (*it)->mesh_vertices.begin() , (*it)->mesh_vertices.end() );
+      all_vertices.insert ( (*it)->getBeginVertex()->mesh_vertices.begin() , (*it)->getBeginVertex()->mesh_vertices.end() );
+      all_vertices.insert ( (*it)->getEndVertex()->mesh_vertices.begin() , (*it)->getEndVertex()->mesh_vertices.end() );
+      ++it;
+    }
+  it = emb_edges.begin();
+  while(it != emb_edges.end())
+    {
+      all_vertices.insert ( (*it)->mesh_vertices.begin() , (*it)->mesh_vertices.end() );
+      all_vertices.insert ( (*it)->getBeginVertex()->mesh_vertices.begin() , (*it)->getBeginVertex()->mesh_vertices.end() );
+      all_vertices.insert ( (*it)->getEndVertex()->mesh_vertices.begin() , (*it)->getEndVertex()->mesh_vertices.end() );
+      ++it;
+    }
+
+  // mesh the domain in the parametric space -> 
+  // project all points in their parametric space
+  fromCartesianToParametric c2p ( gf );
+  std::for_each (all_vertices.begin(),all_vertices.end(),c2p);    
+
+  // compute the bounding box in parametric space
+  // I do not have SBoundingBox, so I use a 3D one...
+  // At the same time, number the vertices locally
+  SBoundingBox3d bbox;
+  std::set<MVertex*>::iterator itv = all_vertices.begin();
+  int NUM = 0;
+  while(itv != all_vertices.end())
+    {
+      bbox += SPoint3 ( (*itv)->x() , (*itv)->y() , 0);      
+      (*itv)->setNum(NUM++);
+      numbered_vertices[(*itv)->getNum()] = *itv;
+      ++itv;
+    }
+  SVector3 dd (bbox.max() ,bbox.min());
+  double LC2D = norm(dd);
+
+  // Use a divide & conquer type algorithm to create a triangulation
+  // We add to the triangulation a box with 4 points that encoses
+  // the domain.
+
+  /// Fill the DocRecord Data Structure with the points
+  DocRecord doc;
+  doc.points =  (PointRecord*)malloc((all_vertices.size()+4) * sizeof(PointRecord));
+  itv = all_vertices.begin();
+  int j = 0;
+  while(itv != all_vertices.end())
+    {
+      MVertex *here     = *itv;
+      double XX = CTX.mesh.rand_factor * LC2D *
+        (double)rand() / (double)RAND_MAX;
+      double YY = CTX.mesh.rand_factor * LC2D *
+        (double)rand() / (double)RAND_MAX;
+      doc.points[j].where.h = here->x() + XX;
+      doc.points[j].where.v = here->y() + YY;
+      doc.points[j].adjacent = NULL;
+      doc.points[j].data = here;      
+      j++;
+      ++itv;
+    }
+
+  /// Increase the size of the bounding box by 20 %
+  bbox *= 1.2;
+  /// add 4 points than encloses the domain
+  /// Use negative number to distinguish thos fake vertices
+  MVertex *bb[4];
+  bb[0] = new MVertex ( bbox.min().x(), bbox.min().y(), 0,0,-1);
+  bb[1] = new MVertex ( bbox.min().x(), bbox.max().y(), 0,0,-2);
+  bb[2] = new MVertex ( bbox.max().x(), bbox.min().y(), 0,0,-3);
+  bb[3] = new MVertex ( bbox.max().x(), bbox.max().y(), 0,0,-4);
+    
+  for ( int ip = 0 ; ip<4 ; ip++ )
+    {
+      doc.points[all_vertices.size()+ip].where.h  = bb[ip]->x();
+      doc.points[all_vertices.size()+ip].where.v  = bb[ip]->y();
+      doc.points[all_vertices.size()+ip].adjacent = 0;
+      doc.points[all_vertices.size()+ip].data = bb[ip];
+    }
+
+  /// Use "fast" inhouse recursive algo to generate the triangulation
+  /// At this stage the triangulation is not what we need
+  ///   -) It does not necessary recover the boundaries 
+  ///   -) It contains triangles outside the domain (the first edge loop is the outer one)
+  Make_Mesh_With_Points(&doc,doc.points,all_vertices.size()+4);
+
+  // Buid a BDS_Mesh structure that is convenient for doing the actual meshing procedure
+
+  BDS_Mesh *m = new BDS_Mesh;
+
+  for(int i = 0; i < doc.numPoints; i++) 
+    {
+      MVertex *here = (MVertex*)doc.points[i].data;      
+      BDS_Point *bds_p = m->add_point ( here->getNum(), here->x(), here->y(), gf);
+    }
+  for(int i = 0; i < doc.numTriangles; i++) 
+    {
+      MVertex *V1 = (MVertex*)doc.points[doc.delaunay[i].t.a].data;
+      MVertex *V2 = (MVertex*)doc.points[doc.delaunay[i].t.b].data;
+      MVertex *V3 = (MVertex*)doc.points[doc.delaunay[i].t.c].data;
+      m->add_triangle ( V1->getNum(), V2->getNum(), V3->getNum() );
+    }  
+  // Free stuff
+  free (doc.points);
+  free (doc.delaunay);
+  for ( int ip = 0 ; ip<4 ; ip++ ) delete bb[ip];
+
+  // Recover the boundary edges
+
+  it = edges.begin();
+  while(it != edges.end())
+    {
+      recover_medge ( m, *it);
+      ++it;
+    }
+  it = emb_edges.begin();
+  while(it != emb_edges.end())
+    {
+      recover_medge ( m, *it);
+      ++it;
+    }
+
+  Msg(INFO,"Boundary Edges recovered for surface %d",gf->tag());
+
+  // Look for an edge that is on the boundary for which one of the
+  // two neighbors has a negative number node. The other triangle
+  // is inside the domain and, because all edges were recovered, 
+  // triangles inside the domain can be recovered using a  simple
+  // recursive algorithm
+  BDS_GeomEntity CLASS_F (1,2);
+  {
+    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    while (ite != m->edges.end())
+      {
+	BDS_Edge *e = *ite;
+	if ( e->g  && e->numfaces () == 2)
+	  {
+	    BDS_Point *oface[2];
+	    e->oppositeof(oface);
+	    if (oface[0]->iD < 0) 
+	      {
+		recur_tag ( e->faces(1) , &CLASS_F); 
+		break;
+	      }
+	    else if (oface[1]->iD < 0) 
+	      {
+		recur_tag ( e->faces(0) , &CLASS_F); 
+		break;
+	      }
+	  }
+	++ite;
+      }
+  }
+  // delete useless stuff
+  {
+    std::list<BDS_Triangle*>::iterator itt = m->triangles.begin();
+    while (itt != m->triangles.end())
+      {
+	BDS_Triangle *t = *itt;
+	if (!t->g)
+	  m->del_triangle (t);
+	++itt;
+      }
+  }
+  m->cleanup();
+  {
+    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    while (ite != m->edges.end())
+      {
+	BDS_Edge *e = *ite;
+	if (e->numfaces() == 0)
+	  m->del_edge(e);
+	else
+	  { 
+	    if (!e->g)
+	      e->g = &CLASS_F;
+	    if (!e->p1->g || e->p1->g->classif_degree > e->g->classif_degree)e->p1->g = e->g;
+	    if (!e->p2->g || e->p2->g->classif_degree > e->g->classif_degree)e->p2->g = e->g;
+	  }
+	++ite;
+      }
+  }
+  m->cleanup();
+  m->del_point(m->find_point(-1));
+  m->del_point(m->find_point(-2));
+  m->del_point(m->find_point(-3));
+  m->del_point(m->find_point(-4));
+
+  // start mesh generation
+
+  RefineMesh (gf,*m);
+
+  // fill the small gmsh structures
+
+  {
+    std::set<BDS_Point*,PointLessThan>::iterator itp =  m->points.begin(); 
+    while (itp != m->points.end())
+      {
+	BDS_Point *p = *itp;
+	if (numbered_vertices.find(p->iD)  == numbered_vertices.end())
+	  {
+	    MVertex *v = new MFaceVertex (p->X,p->Y,p->Z,gf,p->u,p->v);
+	    numbered_vertices[p->iD]=v;
+	    gf->mesh_vertices.push_back(v);
+	  }
+	++itp;
+      }
+  }
+  {
+    std::list<BDS_Triangle*>::iterator itt = m->triangles.begin();
+    while (itt != m->triangles.end())
+      {
+	BDS_Triangle *t = *itt;
+	BDS_Point *n[3];
+	t->getNodes(n);
+	if (!t->deleted)
+	  {
+	    MVertex *v1 = numbered_vertices[n[0]->iD];
+	    MVertex *v2 = numbered_vertices[n[1]->iD];
+	    MVertex *v3 = numbered_vertices[n[2]->iD];
+	    gf->triangles.push_back(new MTriangle (v1,v2,v3) );	
+	  }
+	++itt;
+      }
+  }
+
+  // delete the mesh
+
+  delete m;
+
+  fromParametricToCartesian p2c ( gf );
+  std::for_each(all_vertices.begin(),all_vertices.end(),p2c);    
+  //  std::for_each(gf->mesh_vertices.begin(),gf->mesh_vertices.end(),p2c);    
+  
+ 
+}
+  
+
+
 
 
 void deMeshGFace :: operator() (GFace *gf) 
@@ -605,31 +900,14 @@ void meshGFace :: operator() (GFace *gf)
   // compute the mean plane, this is sometimes useful 
   gf->computeMeanPlane(points);
 
-  Msg(DEBUG1, "Face %d type %d with %d edge loops and %d points", 
-      gf->tag(),gf->geomType(),indices.size()-1,points.size());
-  fromCartesianToParametric c2p ( gf );
-  std::for_each (points.begin(),points.end(),c2p);    
   Msg(DEBUG1, "points were put in parametric coords ...");
 
 
-  if (gf->geomType() == GEntity::Plane )
-    {
-      OldMeshGenerator ( gf,
-			 points,
-			 indices,0);
-    }
-  else
-    {
-      OldMeshGenerator ( gf,
-			 points,
-			 indices,1);
-      NewMeshGenerator ( gf, points, indices );
-    }
+  gmsh2DMeshGenerator ( gf ) ;
+
+
 
   Msg(DEBUG1, "type %d %d triangles generated, %d internal vertices",
       gf->geomType(),gf->triangles.size(),gf->mesh_vertices.size());
 
-  fromParametricToCartesian p2c ( gf );
-  std::for_each(points.begin(),points.end(),p2c);    
-  std::for_each(gf->mesh_vertices.begin(),gf->mesh_vertices.end(),p2c);    
 }  
