@@ -1,4 +1,4 @@
-// $Id: MVertex.cpp,v 1.5 2006-08-15 06:26:52 geuzaine Exp $
+// $Id: MVertex.cpp,v 1.6 2006-08-19 18:48:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,21 +25,38 @@
 int MVertex::_globalNum = 0;
 double MVertexLessThanLexicographic::tolerance = 1.e-6;
 
-void MVertex::writeMSH(FILE *fp, double scalingFactor)
+void MVertex::writeMSH(FILE *fp, bool binary, double scalingFactor)
 {
-  fprintf(fp, "%d %.16g %.16g %.16g\n", _num, x() * scalingFactor, 
-	  y() * scalingFactor, z() * scalingFactor);
+  if(!binary){
+    fprintf(fp, "%d %.16g %.16g %.16g\n", _num, 
+	    x() * scalingFactor, 
+	    y() * scalingFactor,
+	    z() * scalingFactor);
+  }
+  else{
+    fwrite(&_num, sizeof(int), 1, fp);
+    double data[3] = {x() * scalingFactor, y() * scalingFactor, z() * scalingFactor};
+    fwrite(data, sizeof(double), 3, fp);
+  }
 }
 
-void MVertex::writeMSH(FILE *fp, double version, int num, 
+void MVertex::writeMSH(FILE *fp, double version, bool binary, int num, 
 		       int elementary, int physical)
 {
-  fprintf(fp, "%d 15", num);
-  if(version < 2.0)
-    fprintf(fp, " %d %d 1", physical, elementary);
-  else
-    fprintf(fp, " 2 %d %d", physical, elementary);
-  fprintf(fp, " %d\n", _num);
+  if(!binary){
+    fprintf(fp, "%d 15", num);
+    if(version < 2.0)
+      fprintf(fp, " %d %d 1", physical, elementary);
+    else
+      fprintf(fp, " 2 %d %d", physical, elementary);
+    fprintf(fp, " %d\n", _num);
+  }
+  else{
+    int tags[4] = {num, physical, elementary, 0};
+    fwrite(tags, sizeof(int), 4, fp);
+    int verts[1] = {_num};
+    fwrite(verts, sizeof(int), 1, fp);
+  }
 }
 
 void MVertex::writeVRML(FILE *fp, double scalingFactor)

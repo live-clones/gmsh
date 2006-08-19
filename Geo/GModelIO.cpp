@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.26 2006-08-19 04:24:03 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.27 2006-08-19 18:48:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -30,8 +30,20 @@
 #include "MElement.h"
 #include "SBoundingBox3d.h"
 
+static void swapBytes(char *array, int size, int n)
+{
+  char *x = new char[size];
+  for(int i = 0; i < n; i++) {
+    char *a = &array[i * size];
+    memcpy(x, a, size);
+    for(int c = 0; c < size; c++)
+      a[size - 1 - c] = x[c];
+  }
+  delete [] x;
+}
+
 template<class T>
-void addElements(std::vector<T*> &dst, const std::vector<MElement*> &src)
+static void addElements(std::vector<T*> &dst, const std::vector<MElement*> &src)
 {
   for(unsigned int i = 0; i < src.size(); i++) dst.push_back((T*)src[i]);
 }
@@ -40,8 +52,7 @@ static void storeElementsInEntities(GModel *m,
 				    std::map<int, std::vector<MElement*> > &map)
 {
   std::map<int, std::vector<MElement*> >::const_iterator it = map.begin();
-  std::map<int, std::vector<MElement*> >::const_iterator ite = map.end();
-  for(; it != ite; ++it){
+  for(; it != map.end(); ++it){
     if(!it->second.size()) continue;
     int numEdges = it->second[0]->getNumEdges();
     switch(numEdges){
@@ -118,8 +129,7 @@ static void associateEntityWithVertices(GModel *m)
 static void storeVerticesInEntities(std::map<int, MVertex*> &vertices)
 {
   std::map<int, MVertex*>::const_iterator it = vertices.begin();
-  std::map<int, MVertex*>::const_iterator ite = vertices.end();
-  for(; it != ite; ++it){
+  for(; it != vertices.end(); ++it){
     MVertex *v = it->second;
     GEntity *ge = v->onWhat();
     if(ge) 
@@ -133,11 +143,13 @@ static void storeVerticesInEntities(std::vector<MVertex*> &vertices)
 {
   for(unsigned int i = 0; i < vertices.size(); i++){
     MVertex *v = vertices[i];
-    GEntity *ge = v->onWhat();
-    if(ge) 
-      ge->mesh_vertices.push_back(v);
-    else
-      delete v; // we delete all unused vertices
+    if(v){ // the vector can have null entries (first or last element)
+      GEntity *ge = v->onWhat();
+      if(ge) 
+	ge->mesh_vertices.push_back(v);
+      else
+	delete v; // we delete all unused vertices
+    }
   }
 }
 
@@ -145,8 +157,7 @@ static void storePhysicalTagsInEntities(GModel *m, int dim,
 					std::map<int, std::map<int, std::string> > &map)
 {
   std::map<int, std::map<int, std::string> >::const_iterator it = map.begin();
-  std::map<int, std::map<int, std::string> >::const_iterator ite = map.end();
-  for(; it != ite; ++it){
+  for(; it != map.end(); ++it){
     GEntity *ge = 0;
     switch(dim){
     case 0: ge = m->vertexByTag(it->first); break;
@@ -156,8 +167,7 @@ static void storePhysicalTagsInEntities(GModel *m, int dim,
     }
     if(ge){
       std::map<int, std::string>::const_iterator it2 = it->second.begin();
-      std::map<int, std::string>::const_iterator ite2 = it->second.end();
-      for(; it2 != ite2; ++it2)
+      for(; it2 != it->second.end(); ++it2)
 	ge->physicals.push_back(it2->first);
     }
   }
@@ -181,8 +191,120 @@ static int getNumVerticesForElementTypeMSH(int type)
   case PRI2: return 6 + 9 + 3;
   case PYR1: return 5;
   case PYR2: return 5 + 8 + 1;
-  default: return 0;
+  default: 
+    Msg(GERROR, "Unknown type of element for MSH format");
+    return 0;
   }
+}
+
+template<class T>
+static void createElementMSH(GModel *m, int num, int type, int physical, 
+			     int elementary, int partition, int n[30], T &v, 
+			     std::map<int, std::vector<MVertex*> > &points,
+			     std::map<int, std::vector<MElement*> > elements[7],
+			     std::map<int, std::map<int, std::string> > physicals[4])
+{
+  int dim = 0;
+
+  switch (type) {
+  case PNT:
+    points[elementary].push_back(v[n[0]]);
+    dim = 0;
+    break;
+  case LGN1:
+    elements[0][elementary].push_back
+      (new MLine(v[n[0]], v[n[1]], num, partition));
+    dim = 1;
+    break;
+  case LGN2:
+    elements[0][elementary].push_back
+      (new MLine2(v[n[0]], v[n[1]], v[n[2]], num, partition));
+    dim = 1;
+    break;
+  case TRI1:
+    elements[1][elementary].push_back
+      (new MTriangle(v[n[0]], v[n[1]], v[n[2]], num, partition));
+    dim = 2;
+    break;
+  case TRI2:
+    elements[1][elementary].push_back
+      (new MTriangle2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+		      num, partition));
+    dim = 2;
+    break;
+  case QUA1:
+    elements[2][elementary].push_back
+      (new MQuadrangle(v[n[0]], v[n[1]], v[n[2]], v[n[3]], num, partition));
+    dim = 2;
+    break;
+  case QUA2:
+    elements[2][elementary].push_back
+      (new MQuadrangle2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+			v[n[6]], v[n[7]], v[n[8]], num, partition));
+    dim = 2;
+    break;
+  case TET1:
+    elements[3][elementary].push_back
+      (new MTetrahedron(v[n[0]], v[n[1]], v[n[2]], v[n[3]], num, partition));
+    dim = 3; 
+    break;
+  case TET2:
+    elements[3][elementary].push_back
+      (new MTetrahedron2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+			 v[n[6]], v[n[7]], v[n[8]], v[n[9]], num, partition));
+    dim = 3; 
+    break;
+  case HEX1:
+    elements[4][elementary].push_back
+      (new MHexahedron(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+		       v[n[6]], v[n[7]], num, partition));
+    dim = 3; 
+    break;
+  case HEX2:
+    elements[4][elementary].push_back
+      (new MHexahedron2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+			v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
+			v[n[12]], v[n[13]], v[n[14]], v[n[15]], v[n[16]], v[n[17]], 
+			v[n[18]], v[n[19]], v[n[20]], v[n[21]], v[n[22]], v[n[23]], 
+			v[n[24]], v[n[25]], v[n[26]], num, partition));
+    dim = 3; 
+    break;
+  case PRI1: 
+    elements[5][elementary].push_back
+      (new MPrism(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+		  num, partition));
+    dim = 3; 
+    break;
+  case PRI2: 
+    elements[5][elementary].push_back
+      (new MPrism2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+		   v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
+		   v[n[12]], v[n[13]], v[n[14]], v[n[15]], v[n[16]], v[n[17]], 
+		   num, partition));
+    dim = 3; 
+    break;
+  case PYR1: 
+    elements[6][elementary].push_back
+      (new MPyramid(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], num, partition));
+    dim = 3; 
+    break;
+  case PYR2: 
+    elements[6][elementary].push_back
+      (new MPyramid2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+		     v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
+		     v[n[12]], v[n[13]], num, partition));
+    dim = 3; 
+    break;
+  default:
+    Msg(GERROR, "Unknown type (%d) for element %d", type, num); 
+    break;
+  }
+  
+  if(physical && (!physicals[dim].count(elementary) || 
+		  !physicals[dim][elementary].count(physical)))
+    physicals[dim][elementary][physical] = "unnamed";
+  
+  if(partition) m->getMeshPartitions().insert(partition);
 }
 
 int GModel::readMSH(const std::string &name)
@@ -194,8 +316,10 @@ int GModel::readMSH(const std::string &name)
   }
 
   double version = 1.0;
+  bool binary = false, swap = false;
   char str[256];
-  std::map<int, MVertex*> vertices;
+  std::map<int, MVertex*> vertexMap;
+  std::vector<MVertex*> vertexVector;
   std::map<int, std::vector<MVertex*> > points;
   std::map<int, std::vector<MElement*> > elements[7];
   std::map<int, std::map<int, std::string> > physicals[4];
@@ -212,177 +336,145 @@ int GModel::readMSH(const std::string &name)
 
     if(!strncmp(&str[1], "MeshFormat", 10)) {
 
+      if(!fgets(str, sizeof(str), fp)) return 0;
       int format, size;
-      fscanf(fp, "%lf %d %d\n", &version, &format, &size);
+      if(sscanf(str, "%lf %d %d", &version, &format, &size) != 3) return 0;
+
+      if(format){
+	binary = true;
+	Msg(INFO, "Reading binary MSH file");
+	int one;
+	if(fread(&one, sizeof(int), 1, fp) != 1) return 0;
+	if(one != 1){
+	  swap = true;
+	  Msg(INFO, "Swapping bytes in binary file");
+	}
+      }
 
     }
     else if(!strncmp(&str[1], "NO", 2) || !strncmp(&str[1], "Nodes", 5)) {
 
+      if(!fgets(str, sizeof(str), fp)) return 0;
       int numVertices;
-      fscanf(fp, "%d", &numVertices);
+      if(sscanf(str, "%d", &numVertices) != 1) return 0;
       Msg(INFO, "%d vertices", numVertices);
 
       int progress = (numVertices > 100000) ? numVertices / 25 : 0;
+      int minVertex = numVertices + 1, maxVertex = -1;
       for(int i = 0; i < numVertices; i++) {
 	int num;
-	double x, y, z;
-        fscanf(fp, "%d %lf %lf %lf", &num, &x, &y, &z);
-	if(vertices.count(num))
+	double xyz[3];
+	if(!binary){
+	  if(fscanf(fp, "%d %lf %lf %lf", &num, &xyz[0], &xyz[1], &xyz[2]) != 4) return 0;
+	}
+	else{
+	  if(fread(&num, sizeof(int), 1, fp) != 1) return 0;
+	  if(swap) swapBytes((char*)&num, sizeof(int), 1);
+	  if(fread(xyz, sizeof(double), 3, fp) != 3) return 0;
+	  if(swap) swapBytes((char*)&xyz, sizeof(double), 3);
+	}
+	minVertex = std::min(minVertex, num);
+	maxVertex = std::max(maxVertex, num);
+	if(vertexMap.count(num))
 	  Msg(WARNING, "Skipping duplicate vertex %d", num);
 	else
-	  vertices[num] = new MVertex(x, y, z);
+	  vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2]);
 	if(progress && (i % progress == progress - 1))
 	  Msg(PROGRESS, "Read %d vertices", i + 1);
       }
-      Msg(PROGRESS, "");
+      if(progress) Msg(PROGRESS, "");
+      
+      // If the vertex numbering is dense, tranfer the map into a
+      // vector to speed up element creation
+      if((int)vertexMap.size() == numVertices && 
+	 ((minVertex == 1 && maxVertex == numVertices) ||
+	  (minVertex == 0 && maxVertex == numVertices - 1))){
+	Msg(INFO, "Vertex numbering is dense");
+	vertexVector.resize(vertexMap.size() + 1);
+	if(minVertex == 1) 
+	  vertexVector[0] = 0;
+	else
+	  vertexVector[numVertices] = 0;
+	std::map<int, MVertex*>::const_iterator it = vertexMap.begin();
+	for(; it != vertexMap.end(); ++it)
+	  vertexVector[it->first] = it->second;
+	vertexMap.clear();
+      }
 
     }
     else if(!strncmp(&str[1], "ELM", 3) || !strncmp(&str[1], "Elements", 8)) {
 
+      if(!fgets(str, sizeof(str), fp)) return 0;
       int numElements;
-      fscanf(fp, "%d", &numElements);
+      sscanf(str, "%d", &numElements);
       Msg(INFO, "%d elements", numElements);
 
       int progress = (numElements > 100000) ? numElements / 25 : 0;
-      for(int i = 0; i < numElements; i++) {
-	int num, type, physical = 0, elementary = 0, partition = 0, numVertices;
-	if(version <= 1.0){
-	  fscanf(fp, "%d %d %d %d %d", &num, &type, &physical, &elementary, &numVertices);
-	  int check = getNumVerticesForElementTypeMSH(type);
-	  if(!check){
-	    Msg(GERROR, "Unknown type for element %d", num); 
-	    continue;
+      if(!binary){
+	for(int i = 0; i < numElements; i++) {
+	  int num, type, physical = 0, elementary = 0, partition = 0, numVertices;
+	  if(version <= 1.0){
+	    fscanf(fp, "%d %d %d %d %d", &num, &type, &physical, &elementary, &numVertices);
+	    if(numVertices != getNumVerticesForElementTypeMSH(type)) return 0;
 	  }
-	  if(numVertices != check){
-	    Msg(GERROR, "Wrong number of vertices (%d) for element %d", numVertices, num);
-	    continue;
+	  else{
+	    int numTags;
+	    fscanf(fp, "%d %d %d", &num, &type, &numTags);
+	    for(int j = 0; j < numTags; j++){
+	      int tag;
+	      fscanf(fp, "%d", &tag);	    
+	      if(j == 0)      physical = tag;
+	      else if(j == 1) elementary = tag;
+	      else if(j == 2) partition = tag;
+	      // ignore any other tags for now
+	    }
+	    if(!(numVertices = getNumVerticesForElementTypeMSH(type))) return 0;
 	  }
+	  int indices[30];
+	  for(int j = 0; j < numVertices; j++) fscanf(fp, "%d", &indices[j]);
+	  if(vertexVector.size())
+	    createElementMSH(this, num, type, physical, elementary, partition, indices,
+			     vertexVector, points, elements, physicals);
+	  else
+	    createElementMSH(this, num, type, physical, elementary, partition, indices,
+			     vertexMap, points, elements, physicals);
+	  if(progress && (i % progress == progress - 1))
+	    Msg(PROGRESS, "Read %d elements", i + 1);
 	}
-	else{
-	  int numTags;
-	  fscanf(fp, "%d %d %d", &num, &type, &numTags);
-	  for(int j = 0; j < numTags; j++){
-	    int tag;
-	    fscanf(fp, "%d", &tag);	    
-	    if(j == 0)      physical = tag;
-	    else if(j == 1) elementary = tag;
-	    else if(j == 2) partition = tag;
-	    // ignore any other tags for now
-	  }
-	  numVertices = getNumVerticesForElementTypeMSH(type);
-	  if(!numVertices){
-	    Msg(GERROR, "Unknown type (%d) for element %d", type, num); 
-	    continue;
-	  }
-	}
-	int n[30];
-        for(int j = 0; j < numVertices; j++) fscanf(fp, "%d", &n[j]);
-	int dim = 0;
-	std::map<int, MVertex*> &v(vertices);
-        switch (type) {
-        case PNT:
-	  points[elementary].push_back(v[n[0]]);
-	  dim = 0;
-          break;
-        case LGN1:
-	  elements[0][elementary].push_back
-	    (new MLine(v[n[0]], v[n[1]], num, partition));
-	  dim = 1;
-          break;
-        case LGN2:
-	  elements[0][elementary].push_back
-	    (new MLine2(v[n[0]], v[n[1]], v[n[2]], num, partition));
-	  dim = 1;
-          break;
-        case TRI1:
-	  elements[1][elementary].push_back
-	    (new MTriangle(v[n[0]], v[n[1]], v[n[2]], num, partition));
-	  dim = 2;
-          break;
-        case TRI2:
-	  elements[1][elementary].push_back
-	    (new MTriangle2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-			    num, partition));
-	  dim = 2;
-          break;
-        case QUA1:
-	  elements[2][elementary].push_back
-	    (new MQuadrangle(v[n[0]], v[n[1]], v[n[2]], v[n[3]], num, partition));
-	  dim = 2;
-          break;
-        case QUA2:
-	  elements[2][elementary].push_back
-	    (new MQuadrangle2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-			      v[n[6]], v[n[7]], v[n[8]], num, partition));
-	  dim = 2;
-          break;
-	case TET1:
-	  elements[3][elementary].push_back
-	    (new MTetrahedron(v[n[0]], v[n[1]], v[n[2]], v[n[3]], num, partition));
-	  dim = 3; 
-	  break;
-	case TET2:
-	  elements[3][elementary].push_back
-	    (new MTetrahedron2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-			       v[n[6]], v[n[7]], v[n[8]], v[n[9]], num, partition));
-	  dim = 3; 
-	  break;
-	case HEX1:
-	  elements[4][elementary].push_back
-	    (new MHexahedron(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-			     v[n[6]], v[n[7]], num, partition));
-	  dim = 3; 
-	  break;
-	case HEX2:
-	  elements[4][elementary].push_back
-	    (new MHexahedron2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-			      v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
-			      v[n[12]], v[n[13]], v[n[14]], v[n[15]], v[n[16]], v[n[17]], 
-			      v[n[18]], v[n[19]], v[n[20]], v[n[21]], v[n[22]], v[n[23]], 
-			      v[n[24]], v[n[25]], v[n[26]], num, partition));
-	  dim = 3; 
-	  break;
-	case PRI1: 
-	  elements[5][elementary].push_back
-	    (new MPrism(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-			num, partition));
-	  dim = 3; 
-	  break;
-	case PRI2: 
-	  elements[5][elementary].push_back
-	    (new MPrism2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-			 v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
-			 v[n[12]], v[n[13]], v[n[14]], v[n[15]], v[n[16]], v[n[17]], 
-			 num, partition));
-	  dim = 3; 
-	  break;
-	case PYR1: 
-	  elements[6][elementary].push_back
-	    (new MPyramid(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], num, partition));
-	  dim = 3; 
-	  break;
-	case PYR2: 
-	  elements[6][elementary].push_back
-	    (new MPyramid2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-			   v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
-			   v[n[12]], v[n[13]], num, partition));
-	  dim = 3; 
-	  break;
-        default:
-	  Msg(GERROR, "Unknown type (%d) for element %d", type, num); 
-          break;
-        }
-
-	if(physical && (!physicals[dim].count(elementary) || 
-			!physicals[dim][elementary].count(physical)))
-	    physicals[dim][elementary][physical] = "unnamed";
-	
-	if(partition) meshPartitions.insert(partition);
-	
-	if(progress && (i % progress == progress - 1))
-	  Msg(PROGRESS, "Read %d elements", i + 1);
       }
-      Msg(PROGRESS, "");
+      else{
+	int numElementsPartial = 0;
+	while(numElementsPartial < numElements){
+	  int tags[3];
+	  if(fread(tags, sizeof(int), 3, fp) != 3) return 0;
+	  if(swap) swapBytes((char*)&tags, sizeof(int), 3);
+	  int type = tags[0];
+	  int numElms = tags[1];
+	  int numTags = tags[2];
+	  unsigned int n = 1 + numTags + getNumVerticesForElementTypeMSH(type);
+	  int *data = new int[n];
+	  for(int i = 0; i < numElms; i++) {
+	    if(fread(data, sizeof(int), n, fp) != n) return 0;
+	    if(swap) swapBytes((char*)&data, sizeof(int), n);
+	    int num = data[0];
+	    int physical = (numTags > 0) ? data[4 - numTags] : 0;
+	    int elementary = (numTags > 1) ? data[4 - numTags + 1] : 0;
+	    int partition = (numTags > 2) ? data[4 - numTags + 2] : 0;
+	    int *verts = &data[numTags + 1];
+	    if(vertexVector.size())
+	      createElementMSH(this, num, type, physical, elementary, partition,
+			       verts, vertexVector, points, elements, physicals);
+	    else
+	      createElementMSH(this, num, type, physical, elementary, partition, 
+			       verts, vertexMap, points, elements, physicals);
+	    if(progress && ((numElementsPartial + i) % progress == progress - 1))
+	      Msg(PROGRESS, "Read %d elements", i + 1);
+	  }
+	  delete [] data;
+	  numElementsPartial += numElms;
+	}
+      }
+      if(progress) Msg(PROGRESS, "");
 
     }
 
@@ -400,8 +492,7 @@ int GModel::readMSH(const std::string &name)
   // treat points separately
   {
     std::map<int, std::vector<MVertex*> >::const_iterator it = points.begin();
-    std::map<int, std::vector<MVertex*> >::const_iterator ite = points.end();
-    for(; it != ite; ++it){
+    for(; it != points.end(); ++it){
       GVertex *v = vertexByTag(it->first);
       if(!v){
 	v = new gmshVertex(this, it->first);
@@ -422,7 +513,10 @@ int GModel::readMSH(const std::string &name)
     (*it)->mesh_vertices.clear();
 
   // store the vertices in their associated geometrical entity
-  storeVerticesInEntities(vertices);
+  if(vertexVector.size())
+    storeVerticesInEntities(vertexVector);
+  else
+    storeVerticesInEntities(vertexMap);
 
   // store the physical tags
   for(int i = 0; i < 4; i++)  
@@ -432,27 +526,36 @@ int GModel::readMSH(const std::string &name)
   return 1;
 }
 
+static void writeTagMSH(FILE *fp, int type, int num, int numTags)
+{
+  int data[3] = {type, num, numTags};
+  fwrite(data, sizeof(int), 3, fp);
+}
+
 template<class T>
 static void writeElementsMSH(FILE *fp, const std::vector<T*> &ele, int saveAll, 
-			     double version, int &num, int elementary, 
+			     double version, bool binary, int &num, int elementary, 
 			     std::vector<int> &physicals)
 {
   for(unsigned int i = 0; i < ele.size(); i++)
     if(saveAll)
-      ele[i]->writeMSH(fp, version, ++num, elementary, 0);
+      ele[i]->writeMSH(fp, version, binary, ++num, elementary, 0);
     else
       for(unsigned int j = 0; j < physicals.size(); j++)
-	ele[i]->writeMSH(fp, version, ++num, elementary, physicals[j]);
+	ele[i]->writeMSH(fp, version, binary, ++num, elementary, physicals[j]);
 }
 
-int GModel::writeMSH(const std::string &name, double version, bool saveAll, 
-		     double scalingFactor)
+int GModel::writeMSH(const std::string &name, double version, bool binary, 
+		     bool saveAll, double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
     Msg(GERROR, "Unable to open file '%s'", name.c_str());
     return 0;
   }
+
+  // binary format exists only in version 2
+  if(binary) version = 2.0;
 
   // if there are no physicals we save all the elements
   if(noPhysicalGroups()) saveAll = true;
@@ -461,46 +564,75 @@ int GModel::writeMSH(const std::string &name, double version, bool saveAll,
   // continuous sequence
   int numVertices = renumberMeshVertices();
   
-  // get the number of elements
-  int numElements = 0;
-  for(viter it = firstVertex(); it != lastVertex(); ++it)
-    numElements += (saveAll ? 1 : (*it)->physicals.size()) * 
-      (*it)->mesh_vertices.size();
-  for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    numElements += (saveAll ? 1 : (*it)->physicals.size()) * 
-      (*it)->lines.size();
-  for(fiter it = firstFace(); it != lastFace(); ++it)
-    numElements += (saveAll ? 1 : (*it)->physicals.size()) * 
-      ((*it)->triangles.size() + (*it)->quadrangles.size());
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
-    numElements += (saveAll ? 1 : (*it)->physicals.size()) * 
-      ((*it)->tetrahedra.size() + (*it)->hexahedra.size() +
-       (*it)->prisms.size() + (*it)->pyramids.size());
+  // get the number of elements (we assume that all the elements in a
+  // list have the same type, i.e., they are all of the same
+  // polynomial order)
+  std::map<int,int> elements;
+  for(viter it = firstVertex(); it != lastVertex(); ++it){
+    int p = (saveAll ? 1 : (*it)->physicals.size());
+    int n = p * (*it)->mesh_vertices.size();
+    if(n) elements[PNT] += n;
+  }
+  for(eiter it = firstEdge(); it != lastEdge(); ++it){
+    int p = (saveAll ? 1 : (*it)->physicals.size());
+    int n = p * (*it)->lines.size();
+    if(n) elements[(*it)->lines[0]->getTypeForMSH()] += n;
+  }
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+    int p = (saveAll ? 1 : (*it)->physicals.size());
+    int n = p * (*it)->triangles.size();
+    if(n) elements[(*it)->triangles[0]->getTypeForMSH()] += n;
+    n = p * (*it)->quadrangles.size();
+    if(n) elements[(*it)->quadrangles[0]->getTypeForMSH()] += n;
+  }
+  for(riter it = firstRegion(); it != lastRegion(); ++it){
+    int p = (saveAll ? 1 : (*it)->physicals.size());
+    int n = p * (*it)->tetrahedra.size();
+    if(n) elements[(*it)->tetrahedra[0]->getTypeForMSH()] += n;
+    n = p * (*it)->hexahedra.size();
+    if(n) elements[(*it)->hexahedra[0]->getTypeForMSH()] += n;
+    n = p * (*it)->prisms.size();
+    if(n) elements[(*it)->prisms[0]->getTypeForMSH()] += n;
+    n = p * (*it)->pyramids.size();
+    if(n) elements[(*it)->pyramids[0]->getTypeForMSH()] += n;
+  }
 
-  if(version > 2.0){
+  int numElements = 0;
+  std::map<int,int>::const_iterator it = elements.begin();
+  for(; it != elements.end(); ++it)
+    numElements += it->second;
+
+  if(version >= 2.0){
     fprintf(fp, "$MeshFormat\n");
-    fprintf(fp, "%g %d %d\n", version, 0, (int)sizeof(double));
+    fprintf(fp, "%g %d %d\n", version, binary ? 1 : 0, (int)sizeof(double));
+    if(binary){
+      int one = 1;
+      fwrite(&one, sizeof(int), 1, fp);
+      fprintf(fp, "\n");
+    }
     fprintf(fp, "$EndMeshFormat\n");
     fprintf(fp, "$Nodes\n");
   }
   else
     fprintf(fp, "$NOD\n");
- 
+
   fprintf(fp, "%d\n", numVertices);
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
-      (*it)->mesh_vertices[i]->writeMSH(fp, scalingFactor);
+      (*it)->mesh_vertices[i]->writeMSH(fp, binary, scalingFactor);
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      (*it)->mesh_vertices[i]->writeMSH(fp, scalingFactor);
+      (*it)->mesh_vertices[i]->writeMSH(fp, binary, scalingFactor);
   for(fiter it = firstFace(); it != lastFace(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
-      (*it)->mesh_vertices[i]->writeMSH(fp, scalingFactor);
+      (*it)->mesh_vertices[i]->writeMSH(fp, binary, scalingFactor);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
-      (*it)->mesh_vertices[i]->writeMSH(fp, scalingFactor);
+      (*it)->mesh_vertices[i]->writeMSH(fp, binary, scalingFactor);
 
-  if(version > 2.0){
+  if(binary) fprintf(fp, "\n");
+
+  if(version >= 2.0){
     fprintf(fp, "$EndNodes\n");
     fprintf(fp, "$Elements\n");
   }
@@ -510,34 +642,58 @@ int GModel::writeMSH(const std::string &name, double version, bool saveAll,
   }
 
   fprintf(fp, "%d\n", numElements);
-  int num = 0;
+  int num = 0, numTags = 3;
 
-  for(viter it = firstVertex(); it != lastVertex(); ++it){
-    writeElementsMSH(fp, (*it)->mesh_vertices, saveAll, version, num,
+  if(binary && elements.count(PNT)) writeTagMSH(fp, PNT, elements[PNT], numTags);
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    writeElementsMSH(fp, (*it)->mesh_vertices, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-  }
-  for(eiter it = firstEdge(); it != lastEdge(); ++it){
-    writeElementsMSH(fp, (*it)->lines, saveAll, version, num,
+
+  if(binary && elements.count(LGN1)) writeTagMSH(fp, LGN1, elements[LGN1], numTags);
+  else if(binary && elements.count(LGN2)) writeTagMSH(fp, LGN2, elements[LGN2], numTags);
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    writeElementsMSH(fp, (*it)->lines, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-  }
-  for(fiter it = firstFace(); it != lastFace(); ++it){
-    writeElementsMSH(fp, (*it)->triangles, saveAll, version, num,
+
+  if(binary && elements.count(TRI1)) writeTagMSH(fp, TRI1, elements[TRI1], numTags);
+  else if(binary && elements.count(TRI2)) writeTagMSH(fp, TRI2, elements[TRI2], numTags);
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    writeElementsMSH(fp, (*it)->triangles, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-    writeElementsMSH(fp, (*it)->quadrangles, saveAll, version, num,
+
+  if(binary && elements.count(QUA1)) writeTagMSH(fp, QUA1, elements[QUA1], numTags);
+  else if(binary && elements.count(QUA2)) writeTagMSH(fp, QUA2, elements[QUA2], numTags);
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    writeElementsMSH(fp, (*it)->quadrangles, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-  }
-  for(riter it = firstRegion(); it != lastRegion(); ++it){
-    writeElementsMSH(fp, (*it)->tetrahedra, saveAll, version, num,
+
+  if(binary && elements.count(TET1)) writeTagMSH(fp, TET1, elements[TET1], numTags);
+  else if(binary && elements.count(TET2)) writeTagMSH(fp, TET2, elements[TET2], numTags);
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    writeElementsMSH(fp, (*it)->tetrahedra, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-    writeElementsMSH(fp, (*it)->hexahedra, saveAll, version, num,
+
+  if(binary && elements.count(HEX1)) writeTagMSH(fp, HEX1, elements[HEX1], numTags);
+  else if(binary && elements.count(HEX2)) writeTagMSH(fp, HEX2, elements[HEX2], numTags);
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    writeElementsMSH(fp, (*it)->hexahedra, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-    writeElementsMSH(fp, (*it)->prisms, saveAll, version, num,
+
+  if(binary && elements.count(PRI1)) writeTagMSH(fp, PRI1, elements[PRI1], numTags);
+  else if(binary && elements.count(PRI2)) writeTagMSH(fp, PRI2, elements[PRI2], numTags);
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    writeElementsMSH(fp, (*it)->prisms, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-    writeElementsMSH(fp, (*it)->pyramids, saveAll, version, num,
+
+  if(binary && elements.count(PYR1)) writeTagMSH(fp, PYR1, elements[PYR1], numTags);
+  else if(binary && elements.count(PYR2)) writeTagMSH(fp, PYR2, elements[PYR2], numTags);
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    writeElementsMSH(fp, (*it)->pyramids, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-  }
   
-  if(version > 2.0){
+  if(binary) fprintf(fp, "\n");
+
+  if(version >= 2.0){
     fprintf(fp, "$EndElements\n");
   }
   else{
@@ -599,18 +755,6 @@ int GModel::writePOS(const std::string &name, double scalingFactor)
 
   fclose(fp);
   return 1;
-}
-
-static void swapBytes(char *array, int size, int n)
-{
-  char *x = new char[size];
-  for(int i = 0; i < n; i++) {
-    char *a = &array[i * size];
-    memcpy(x, a, size);
-    for(int c = 0; c < size; c++)
-      a[size - 1 - c] = x[c];
-  }
-  delete [] x;
 }
 
 int GModel::readSTL(const std::string &name, double tolerance)
@@ -1035,8 +1179,7 @@ int GModel::writeUNV(const std::string &name, double scalingFactor)
 
   for(int dim = 0; dim < 4; dim++){
     std::map<int, std::vector<GEntity*> >::const_iterator it = physicals[dim].begin();
-    std::map<int, std::vector<GEntity*> >::const_iterator ite = physicals[dim].end();
-    for(; it != ite; ++it){
+    for(; it != physicals[dim].end(); ++it){
       // IDEAS GROUPOFNODES record
       fprintf(fp, "%6d\n", -1);
       fprintf(fp, "%6d\n", 790);

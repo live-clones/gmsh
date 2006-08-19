@@ -917,8 +917,10 @@ StringXNumber MeshOptions_Number[] = {
     "Minimum number of points used to mesh a circle" },
   { F|O, "MinimumElementSizeFact" , opt_mesh_min_elem_size_fact, 500. ,
     "Minimum element size factor in the Remesher" },
+  { F|O, "MshBinary" , opt_mesh_msh_binary , 0. , 
+    "Write MSH files in binary format?" },
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 1.0 , 
-    "Version of the `msh' file format to use" },
+    "Version of the MSH file format to use" },
 
   { F|O, "NbElemsPerRadiusOfCurv" , opt_mesh_nb_elem_per_rc, 5. ,
     "Number of elements per radius of curvature in the remesher" },

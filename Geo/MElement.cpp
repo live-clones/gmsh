@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.9 2006-08-19 04:24:03 geuzaine Exp $
+// $Id: MElement.cpp,v 1.10 2006-08-19 18:48:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -107,8 +107,8 @@ SPoint3 MElement::barycenter()
   return p;
 }
 
-void MElement::writeMSH(FILE *fp, double version, int num, int elementary, 
-			int physical)
+void MElement::writeMSH(FILE *fp, double version, bool binary, int num, 
+			int elementary, int physical)
 {
   // if necessary, change the ordering of the vertices to get positive
   // volume
@@ -117,32 +117,48 @@ void MElement::writeMSH(FILE *fp, double version, int num, int elementary,
   int n = getNumVertices();
   int type = getTypeForMSH();
 
-  fprintf(fp, "%d %d", num ? num : _num, type);
-  if(version < 2.0)
-    fprintf(fp, " %d %d %d", physical, elementary, n);
-  else
-    fprintf(fp, " 3 %d %d %d", physical, elementary, _partition);
-  
+  if(!binary){
+    fprintf(fp, "%d %d", num ? num : _num, type);
+    if(version < 2.0)
+      fprintf(fp, " %d %d %d", physical, elementary, n);
+    else
+      fprintf(fp, " 3 %d %d %d", physical, elementary, _partition);
+  }
+  else{
+    int tags[4] = {num ? num : _num, physical, elementary, _partition};
+    fwrite(tags, sizeof(int), 4, fp);
+  }
+
+  int verts[30];
+
   if(physical >= 0){
     for(int i = 0; i < n; i++)
-      fprintf(fp, " %d", getVertex(i)->getNum());
+      verts[i] = getVertex(i)->getNum();
   }
   else{
     int nn = n - getNumEdgeVertices() - getNumFaceVertices() - getNumVolumeVertices();
+    int j = 0;
     for(int i = 0; i < nn; i++)
-      fprintf(fp, " %d", getVertex(nn - i - 1)->getNum());
+      verts[j++] = getVertex(nn - i - 1)->getNum();
     int ne = getNumEdgeVertices();
     for(int i = 0; i < ne; i++)
-      fprintf(fp, " %d", getVertex(nn + ne - i - 1)->getNum());
+      verts[j++] = getVertex(nn + ne - i - 1)->getNum();
     int nf = getNumFaceVertices();
     for(int i = 0; i < nf; i++)
-      fprintf(fp, " %d", getVertex(nn + ne + nf - i - 1)->getNum());
+      verts[j++] = getVertex(nn + ne + nf - i - 1)->getNum();
     int nv = getNumVolumeVertices();
     for(int i = 0; i < nv; i++)
-      fprintf(fp, " %d", getVertex(n - i - 1)->getNum());
+      verts[j++] = getVertex(n - i - 1)->getNum();
   }
 
-  fprintf(fp, "\n");
+  if(!binary){
+    for(int i = 0; i < n; i++)
+      fprintf(fp, " %d", verts[i]);
+    fprintf(fp, "\n");
+  }
+  else{
+    fwrite(verts, sizeof(int), n, fp);
+  }
 }
 
 void MElement::writePOS(FILE *fp, double scalingFactor, int elementary)

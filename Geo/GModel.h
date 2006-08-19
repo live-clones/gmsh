@@ -119,8 +119,8 @@ class GModel
 
   // IO routines
   int readMSH(const std::string &name);
-  int writeMSH(const std::string &name, double version=1.0, bool saveAll=false,
-	       double scalingFactor=1.0);
+  int writeMSH(const std::string &name, double version=1.0, bool binary=false,
+	       bool saveAll=false, double scalingFactor=1.0);
   int writePOS(const std::string &name, double scalingFactor=1.0);
   int readSTL(const std::string &name, double tolerance=1.e-3);
   int writeSTL(const std::string &name, bool binary=false, double scalingFactor=1.0);

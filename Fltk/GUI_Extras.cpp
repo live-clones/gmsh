@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.19 2006-08-19 04:24:03 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.20 2006-08-19 18:48:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -531,9 +531,10 @@ int msh_dialog(char *name)
   };
   static _msh_dialog *dialog = NULL;
 
-  static Fl_Menu_Item versionmenu[] = {
+  static Fl_Menu_Item formatmenu[] = {
     {"Version 1.0", 0, 0, 0},
-    {"Version 2.0", 0, 0, 0},
+    {"Version 2.0 ASCII", 0, 0, 0},
+    {"Version 2.0 Binary", 0, 0, 0},
     {0}
   };
 
@@ -544,7 +545,7 @@ int msh_dialog(char *name)
     dialog->window = new Fl_Double_Window(200, h, "MSH Options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->c = new Fl_Choice(10, y, 130, 25, "Format"); y+= 25;
-    dialog->c->menu(versionmenu);
+    dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
     dialog->b = new Fl_Check_Button(10, y, 180, 25, "Save all (ignore physicals)"); y += 25;
     dialog->b->type(FL_TOGGLE_BUTTON);
@@ -557,7 +558,8 @@ int msh_dialog(char *name)
     dialog->window->hotspot(dialog->window);
   }
   
-  dialog->c->value((CTX.mesh.msh_file_version==1.0) ? 0 : 1);
+  dialog->c->value((CTX.mesh.msh_file_version == 1.0) ? 0 : 
+		   CTX.mesh.msh_binary ? 2 : 1);
   dialog->b->value(CTX.mesh.save_all);
   dialog->window->show();
 
@@ -567,7 +569,10 @@ int msh_dialog(char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI, dialog->c->value() + 1);
+	opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI, 
+				  (dialog->c->value() == 0) ? 1. : 2.);
+	opt_mesh_msh_binary(0, GMSH_SET | GMSH_GUI, 
+			    (dialog->c->value() == 2) ? 1 : 0);
 	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value());
 	CreateOutputFile(name, FORMAT_MSH);
 	dialog->window->hide();

@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.2 2006-08-19 04:24:03 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.3 2006-08-19 18:48:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -145,8 +145,8 @@ void CreateOutputFile(char *filename, int format)
     break;
 
   case FORMAT_MSH:
-    GMODEL->writeMSH(name, CTX.mesh.msh_file_version, CTX.mesh.save_all,
-		     CTX.mesh.scaling_factor);
+    GMODEL->writeMSH(name, CTX.mesh.msh_file_version, CTX.mesh.msh_binary, 
+		     CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_STL:

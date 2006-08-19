@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.179 2006-08-19 08:26:47 remacle Exp $
+// $Id: Mesh.cpp,v 1.180 2006-08-19 18:48:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -794,8 +794,6 @@ class drawMeshGRegion {
 
 void Draw_Mesh()
 {
-
-
   if(!CTX.mesh.draw) return;
   
   glPointSize(CTX.mesh.point_size);

@@ -127,8 +127,8 @@ class MElement
   virtual void setVolumePositive(){}
 
   // IO routines
-  virtual void writeMSH(FILE *fp, double version=1.0, int num=0, 
-			int elementary=1, int physical=1);
+  virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
+			int num=0, int elementary=1, int physical=1);
   virtual void writePOS(FILE *fp, double scalingFactor=1.0,
 			int elementary=1);
   virtual void writeSTL(FILE *fp, bool binary=false, double scalingFactor=1.0);
