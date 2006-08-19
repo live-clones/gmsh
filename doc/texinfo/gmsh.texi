@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.212 2006-08-19 18:48:06 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.213 2006-08-19 20:44:51 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -3151,8 +3151,11 @@ where
 @table @code
 @item @var{file-type}
 is an integer equal to 1.
+
 @item @var{data-size}
-has the same meaning as in the ASCII file format
+has the same meaning as in the ASCII file format. Currently only
+@var{data-size} = sizeof(double) is supported.
+
 @item @var{one-binary}
 is an integer of value 1 written in binary form. This integer is used
 for detecting if the computer on which the binary file was written and
@@ -3166,15 +3169,15 @@ fwrite(&one, sizeof(int), 1, file);
 @end example
 
 @item @var{number-of-nodes}
-has the same meaning as in the ASCII file format
+has the same meaning as in the ASCII file format.
 
 @item @var{nodes-binary}
 is the list of nodes in binary form, i.e., a array of
 @var{number-of-nodes} * (4 + 3 * @var{data-size}) bytes. For each node,
 the first 4 bytes contain the node number, the next (3 *
-@var{data-size}) bytes contain the three floating point coordinates
+@var{data-size}) bytes contain the three floating point coordinates.
 
-Here is a pseudo C to write @var{nodes-binary}:
+Here is a pseudo C code to write @var{nodes-binary}:
 @example
 for(i = 0; i < number_of_nodes; i++)@{
   fwrite(&num, sizeof(int), 1, file);
@@ -3184,14 +3187,14 @@ for(i = 0; i < number_of_nodes; i++)@{
 @end example
 
 @item @var{number-of-elements}
-has the same meaning as in the ASCII file format
+has the same meaning as in the ASCII file format.
 
 @item @var{element-header-binary}
 is a list of 3 integers in binary form, i.e., an array of (3 * 4) bytes:
-the first four contain the type of the elements that follow (same as
-@var{elm-type} in the ASCII format), the next four contain the number of
-elements that follow, and the last four contain the number of tags per
-element (same as @var{number-of-tags} in the ASCII format).
+the first four bytes contain the type of the elements that follow (same
+as @var{elm-type} in the ASCII format), the next four contain the number
+of elements that follow, and the last four contain the number of tags
+per element (same as @var{number-of-tags} in the ASCII format).
 
 Here is a pseudo C code to write @var{element-header-binary}:
 @example
@@ -3207,8 +3210,9 @@ bytes contain the element number, the next (@var{number-of-tags} * 4)
 contain the tags, and the last (#@var{node-number-list} * 4) contain the
 node indices.
 
-Here is a pseudo C to write @var{elements-binary} for triangles with 3
-tags:
+Here is a pseudo C code to write @var{elements-binary} for triangles
+with the 3 standard tags (the physical and elementary regions, and the
+mesh partition):
 @example
 for(i = 0; i < number_of_triangles; i++)@{
   int data[7] = @{num, physical, elementary, partition, 
