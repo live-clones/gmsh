@@ -359,6 +359,11 @@ Distance tolerance between two distinct vertices in STL meshes@*
 Default value: @code{5e-07}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.StlBinary
+Save STL files in binary format?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.SurfaceEdges
 Display edges of surface mesh?@*
 Default value: @code{1}@*

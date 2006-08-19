@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.299 2006-08-18 21:11:42 geuzaine Exp $
+// $Id: Options.cpp,v 1.300 2006-08-19 04:24:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4626,6 +4626,13 @@ double opt_mesh_msh_file_version(OPT_ARGS_NUM)
   return CTX.mesh.msh_file_version;
 }
 
+double opt_mesh_stl_binary(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.stl_binary = (int)val;
+  return CTX.mesh.stl_binary;
+}
+
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -4641,10 +4648,6 @@ double opt_mesh_nb_partitions(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.mesh.nbPartitions = (int)val;
-  //#if defined(HAVE_FLTK)
-  //  if(WID && (action & GMSH_GUI))
-  //    WID->mesh_value[0]->value(CTX.mesh.nb_smoothing);
-  //#endif
   return CTX.mesh.nbPartitions;
 }
 

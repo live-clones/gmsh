@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.8 2006-08-15 06:26:52 geuzaine Exp $
+// $Id: MElement.cpp,v 1.9 2006-08-19 04:24:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -176,40 +176,53 @@ void MElement::writePOS(FILE *fp, double scalingFactor, int elementary)
   fprintf(fp, "};\n");
 }
 
-void MElement::writeSTL(FILE *fp, double scalingFactor)
+void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
 {
-  int n = getNumVertices();
-  if(n < 3 || n > 4) return;
-
-  MVertex *v0 = getVertex(0);
-  MVertex *v1 = getVertex(1);
-  MVertex *v2 = getVertex(2);
-  double N[3];
-  normal3points(v0->x(), v0->y(), v0->z(), 
-		v1->x(), v1->y(), v1->z(), 
-		v2->x(), v2->y(), v2->z(), N);
-  fprintf(fp, "facet normal %g %g %g\n", N[0], N[1], N[2]);
-  fprintf(fp, "  outer loop\n");
-  fprintf(fp, "    vertex %g %g %g\n", v0->x() * scalingFactor, 
-	  v0->y() * scalingFactor, v0->z() * scalingFactor);
-  fprintf(fp, "    vertex %g %g %g\n", v1->x() * scalingFactor, 
-	  v1->y() * scalingFactor, v1->z() * scalingFactor);
-  fprintf(fp, "    vertex %g %g %g\n", v2->x() * scalingFactor, 
-	  v2->y() * scalingFactor, v2->z() * scalingFactor);
-  fprintf(fp, "  endloop\n");
-  fprintf(fp, "endfacet\n");
-  if(n == 4){
-    MVertex *v3 = getVertex(3);
-    fprintf(fp, "facet normal %g %g %g\n", N[0], N[1], N[2]);
+  if(getNumEdges() != 3 && getNumEdges() != 4) return;
+  int qid[3] = {0, 2, 3};
+  SVector3 n = getFace(0).normal();
+  if(!binary){
+    fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
     fprintf(fp, "  outer loop\n");
-    fprintf(fp, "    vertex %g %g %g\n", v0->x() * scalingFactor, 
-	    v0->y() * scalingFactor, v0->z() * scalingFactor);
-    fprintf(fp, "    vertex %g %g %g\n", v2->x() * scalingFactor, 
-	    v2->y() * scalingFactor, v2->z() * scalingFactor);
-    fprintf(fp, "    vertex %g %g %g\n", v3->x() * scalingFactor, 
-	    v3->y() * scalingFactor, v3->z() * scalingFactor);
+    for(int j = 0; j < 3; j++)
+      fprintf(fp, "    vertex %g %g %g\n", 
+	      getVertex(j)->x() * scalingFactor, 
+	      getVertex(j)->y() * scalingFactor, 
+	      getVertex(j)->z() * scalingFactor);
     fprintf(fp, "  endloop\n");
     fprintf(fp, "endfacet\n");
+    if(getNumVertices() == 4){
+      fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
+      fprintf(fp, "  outer loop\n");
+      for(int j = 0; j < 3; j++)
+	fprintf(fp, "    vertex %g %g %g\n", 
+		getVertex(qid[j])->x() * scalingFactor, 
+		getVertex(qid[j])->y() * scalingFactor, 
+		getVertex(qid[j])->z() * scalingFactor);
+      fprintf(fp, "  endloop\n");
+      fprintf(fp, "endfacet\n");
+    }
+  }
+  else{
+    char data[50];
+    float *coords = (float*)data;
+    coords[0] = n[0];
+    coords[1] = n[1];
+    coords[2] = n[2];
+    for(int j = 0; j < 3; j++){
+      coords[3 + 3 * j] = getVertex(j)->x() * scalingFactor;
+      coords[3 + 3 * j + 1] = getVertex(j)->y() * scalingFactor;
+      coords[3 + 3 * j + 2] = getVertex(j)->z() * scalingFactor;
+    }
+    fwrite(data, sizeof(char), 50, fp);
+    if(getNumVertices() == 4){
+      for(int j = 0; j < 3; j++){
+	coords[3 + 3 * j] = getVertex(qid[j])->x() * scalingFactor;
+	coords[3 + 3 * j + 1] = getVertex(qid[j])->y() * scalingFactor;
+	coords[3 + 3 * j + 2] = getVertex(qid[j])->z() * scalingFactor;
+      }
+      fwrite(data, sizeof(char), 50, fp);
+    }
   }
 }
 

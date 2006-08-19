@@ -615,8 +615,8 @@ Default value: @code{450}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.MouseSelection
-Mouse selection mode (0=none, 1=no hover, 2=full)@*
-Default value: @code{2}@*
+Mouse hover and selection mode (0=none, 1=hover and select geometry but only select mesh, 2=hover and select geometry and mesh)@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.NoPopup

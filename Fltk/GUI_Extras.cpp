@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.18 2006-08-08 04:42:43 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.19 2006-08-19 04:24:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -582,3 +582,58 @@ int msh_dialog(char *name)
   return 0;
 }
 
+// save stl dialog
+
+int stl_dialog(char *name)
+{
+  struct _stl_dialog{
+    Fl_Window *window;
+    Fl_Choice *c;
+    Fl_Button *ok, *cancel;
+  };
+  static _stl_dialog *dialog = NULL;
+
+  static Fl_Menu_Item formatmenu[] = {
+    {"ASCII", 0, 0, 0},
+    {"Binary", 0, 0, 0},
+    {0}
+  };
+
+  if(!dialog){
+    dialog = new _stl_dialog;
+    int h = 3*10 + 25 + 1*25, y = 0;
+    // not a "Dialog_Window" since it is modal 
+    dialog->window = new Fl_Double_Window(200, h, "STL Options"); y = 10;
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->c = new Fl_Choice(10, y, 130, 25, "Format"); y+= 25;
+    dialog->c->menu(formatmenu);
+    dialog->c->align(FL_ALIGN_RIGHT);
+    dialog->ok = new Fl_Return_Button(10, y+10, 85, 25, "OK");
+    dialog->cancel = new Fl_Button(105, y+10, 85, 25, "Cancel");
+    dialog->window->set_modal();
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+  
+  dialog->c->value(CTX.mesh.stl_binary ? 1 : 0);
+  dialog->window->show();
+
+  while(dialog->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == dialog->ok) {
+	opt_mesh_stl_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+	CreateOutputFile(name, FORMAT_STL);
+	dialog->window->hide();
+	return 1;
+      }
+      if (o == dialog->window || o == dialog->cancel){
+	dialog->window->hide();
+	return 0;
+      }
+    }
+  }
+  return 0;
+}

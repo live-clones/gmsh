@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.1 2006-08-12 19:34:16 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.2 2006-08-19 04:24:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -150,7 +150,7 @@ void CreateOutputFile(char *filename, int format)
     break;
 
   case FORMAT_STL:
-    GMODEL->writeSTL(name, CTX.mesh.scaling_factor);
+    GMODEL->writeSTL(name, CTX.mesh.stl_binary, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_VRML:

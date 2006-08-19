@@ -993,6 +993,8 @@ StringXNumber MeshOptions_Number[] = {
     "Disable dubious point insertion tests" },
   { F|O, "StlDistanceTol" , opt_mesh_stl_distance_tol, 5.e-7 ,
     "Distance tolerance between two distinct vertices in STL meshes" },
+  { F|O, "StlBinary" , opt_mesh_stl_binary , 0. , 
+    "Save STL files in binary format?" },
   { F|O, "SurfaceEdges" , opt_mesh_surfaces_edges , 1. , 
     "Display edges of surface mesh?" },
   { F|O, "SurfaceFaces" , opt_mesh_surfaces_faces , 0. , 

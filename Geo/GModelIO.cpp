@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.25 2006-08-18 17:21:39 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.26 2006-08-19 04:24:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -728,23 +728,36 @@ int GModel::readSTL(const std::string &name, double tolerance)
   return 1;
 }
 
-int GModel::writeSTL(const std::string &name, double scalingFactor)
+int GModel::writeSTL(const std::string &name, bool binary, double scalingFactor)
 {
-  FILE *fp = fopen(name.c_str(), "w");
+  FILE *fp = fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp){
     Msg(GERROR, "Unable to open file '%s'", name.c_str());
     return 0;
   }
 
-  fprintf(fp, "solid Created by Gmsh\n");
+  if(!binary)
+    fprintf(fp, "solid Created by Gmsh\n");
+  else{
+    char header[80];
+    strncpy(header, "Created by Gmsh", 80);
+    fwrite(header, sizeof(char), 80, fp);
+    unsigned int nfacets = 0;
+    for(fiter it = firstFace(); it != lastFace(); ++it)
+      nfacets += (*it)->triangles.size() + 2 * (*it)->quadrangles.size();
+    fwrite(&nfacets, sizeof(unsigned int), 1, fp);
+  }
+    
   for(fiter it = firstFace(); it != lastFace(); ++it) {
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-      (*it)->triangles[i]->writeSTL(fp, scalingFactor);
+      (*it)->triangles[i]->writeSTL(fp, binary, scalingFactor);
     for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-      (*it)->quadrangles[i]->writeSTL(fp, scalingFactor);
+      (*it)->quadrangles[i]->writeSTL(fp, binary, scalingFactor);
   }
-  fprintf(fp, "endsolid Created by Gmsh\n");
 
+  if(!binary)
+    fprintf(fp, "endsolid Created by Gmsh\n");
+  
   fclose(fp);
   return 1;
 }

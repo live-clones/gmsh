@@ -131,7 +131,7 @@ class MElement
 			int elementary=1, int physical=1);
   virtual void writePOS(FILE *fp, double scalingFactor=1.0,
 			int elementary=1);
-  virtual void writeSTL(FILE *fp, double scalingFactor=1.0);
+  virtual void writeSTL(FILE *fp, bool binary=false, double scalingFactor=1.0);
   virtual void writeVRML(FILE *fp);
   virtual void writeUNV(FILE *fp, int elementary);
   virtual void writeMESH(FILE *fp, int elementary);

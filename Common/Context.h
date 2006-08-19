@@ -182,7 +182,7 @@ public :
       return val;
     }
     int oldxtrude, oldxtrude_recombine;
-    int allow_degenerated_extrude, save_all;
+    int allow_degenerated_extrude, save_all, stl_binary;
     char *triangle_options;
     int smooth_normals, reverse_all_normals;
     double angle_smooth_normals;

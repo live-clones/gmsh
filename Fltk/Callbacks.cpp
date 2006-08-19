@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.442 2006-08-19 01:12:38 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.443 2006-08-19 04:24:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -650,26 +650,25 @@ int _save_pos(char *name)
 
 int _save_unv(char *name)
 {
-  CreateOutputFile(name, CTX.mesh.format = FORMAT_UNV);
+  CreateOutputFile(name, FORMAT_UNV);
   return 1;
 }
 
 int _save_mesh(char *name)
 {
-  CreateOutputFile(name, CTX.mesh.format = FORMAT_MESH);
+  CreateOutputFile(name, FORMAT_MESH);
   return 1;
 }
 
 int _save_vrml(char *name)
 {
-  CreateOutputFile(name, CTX.mesh.format = FORMAT_VRML);
+  CreateOutputFile(name, FORMAT_VRML);
   return 1;
 }
 
 int _save_stl(char *name)
 {
-  CreateOutputFile(name, CTX.mesh.format = FORMAT_STL);
-  return 1;
+  return stl_dialog(name);
 }
 
 int _save_ps(char *name)
@@ -752,6 +751,7 @@ int _save_auto(char *name)
   switch(GuessFileFormatFromFileName(name)){
   case FORMAT_OPT     : return _save_options(name);
   case FORMAT_MSH     : return _save_msh(name);
+  case FORMAT_STL     : return _save_stl(name);
   case FORMAT_PS      : return _save_ps(name);
   case FORMAT_EPS     : return _save_eps(name);
   case FORMAT_EPSTEX  : return _save_epstex(name);
