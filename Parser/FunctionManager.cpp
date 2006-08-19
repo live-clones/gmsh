@@ -1,4 +1,4 @@
-// $Id: FunctionManager.cpp,v 1.23 2006-08-16 05:25:22 geuzaine Exp $
+// $Id: FunctionManager.cpp,v 1.24 2006-08-19 01:12:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -34,26 +34,23 @@ struct ltstr
 
 class File_Position
 {
-  public:int lineno;
+ public:
+  int lineno;
   fpos_t position;
   FILE *file;
   char filename[256];
 };
 
-// Pour utiliser un namespace global sur SGI, il faut compiler avec
-// -LANG:std, et ajouter "using namespace std;". Dans tous les cas, il
-// FAUT creer les librairies avec 'CC -ar', et pas avec 'ar'.
-
 class mystack
 {
-public:
-  std::stack < File_Position > s;
+ public:
+  std::stack<File_Position> s;
 };
 
 class mymap
 {
-public: 
-  std::map < char *, File_Position, ltstr > m;
+ public: 
+  std::map<char*, File_Position, ltstr> m;
 };
 
 FunctionManager *FunctionManager::instance = 0;

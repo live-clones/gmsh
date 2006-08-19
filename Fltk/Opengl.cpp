@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.64 2006-08-18 21:11:43 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.65 2006-08-19 01:12:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -183,11 +183,11 @@ void Draw_OnScreenMessages()
 
 // Select entity routine
 
-char SelectEntity(int type, int *n,
-		  GVertex *v[SELECTION_MAX_HITS], 
-		  GEdge *c[SELECTION_MAX_HITS], 
-		  GFace *s[SELECTION_MAX_HITS],
-		  GRegion *r[SELECTION_MAX_HITS])
+char SelectEntity(int type,
+		  std::vector<GVertex*> &vertices,
+		  std::vector<GEdge*> &edges,
+		  std::vector<GFace*> &faces,
+		  std::vector<GRegion*> &regions)
 {
   if(!WID) return 'q';
 
@@ -201,14 +201,10 @@ char SelectEntity(int type, int *n,
   WID->undo_selection = 0;
 
   while(1) {
-    *n = 0;
-    for(int i = 0; i < SELECTION_MAX_HITS; i++){
-      v[i] = 0;
-      c[i] = 0;
-      s[i] = 0;
-      r[i] = 0;
-    }
-
+    vertices.clear();
+    edges.clear();
+    faces.clear();
+    regions.clear();
     WID->wait();
     if(WID->quit_selection) {
       WID->selection = ENT_NONE;
@@ -235,28 +231,31 @@ char SelectEntity(int type, int *n,
 	WID->g_opengl_window->SelectionMode = false;
 	return 'c';
       }
-      else{
-	*n = Process_SelectionBuffer(WID->selection, multi, true,
+      else if(ProcessSelectionBuffer(WID->selection, multi, true,
 				     WID->try_selection_xywh[0],
 				     WID->try_selection_xywh[1], 
 				     WID->try_selection_xywh[2],
 				     WID->try_selection_xywh[3], 
-				     v, c, s, r);
-	if(*n){
-	  if(add){
-	    for(int i = 0; i < *n; i++)
-	      HighlightEntity(v[i], c[i], s[i], r[i], 1);
-	    Draw();
-	  }
-	  // don't call ZeroHighlight here if we (try to) deselect:
+				     vertices, edges, faces, regions)){
+	WID->selection = ENT_NONE;
+	WID->g_opengl_window->SelectionMode = false;
+	if(add){
+	  for(unsigned int i = 0; i < vertices.size(); i++)
+	    HighlightEntity(vertices[i], true);
+	  for(unsigned int i = 0; i < edges.size(); i++)
+	    HighlightEntity(edges[i], true);
+	  for(unsigned int i = 0; i < faces.size(); i++)
+	    HighlightEntity(faces[i], true);
+	  for(unsigned int i = 0; i < regions.size(); i++)
+	    HighlightEntity(regions[i], true);
+	  Draw();
+	  return 'l';
+	}
+	else{
+	  // Don't call ZeroHighlight here if we try to deselect:
 	  // deselection is not supported in all cases, so it's better
-	  // to de-highlight the entities in the callback
-	  WID->selection = ENT_NONE;
-	  WID->g_opengl_window->SelectionMode = false;
-	  if(add)
-	    return 'l';
-	  else
-	    return 'r';
+	  // to de-highlight the entities in the callback later
+	  return 'r';
 	}
       }
     }

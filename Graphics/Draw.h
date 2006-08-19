@@ -22,19 +22,15 @@
 
 #include "List.h"
 #include "Views.h"
-
-class GVertex;
-class GEdge;
-class GFace;
-class GRegion;
+#include "GVertex.h"
+#include "GEdge.h"
+#include "GFace.h"
+#include "GRegion.h"
+#include <vector>
 
 #define GMSH_RENDER    1
 #define GMSH_SELECT    2
 #define GMSH_FEEDBACK  3
-
-// selection buffer size = 5 * number of hits (in our case)
-#define SELECTION_BUFFER_SIZE  50000
-#define SELECTION_MAX_HITS     10000
 
 void SetOpenglContext(void);
 void ClearOpengl(void);
@@ -43,19 +39,19 @@ void InitProjection(int xpick=0, int ypick=0, int wpick=0, int hpick=0);
 void InitPosition(void);
 void InitRenderModel(void);
 
-int Process_SelectionBuffer(int entityType, bool multi, bool selectMesh,
-			    int x, int y, int w, int h, 
-			    GVertex *v[SELECTION_MAX_HITS], 
-			    GEdge *c[SELECTION_MAX_HITS], 
-			    GFace *s[SELECTION_MAX_HITS],
-			    GRegion *r[SELECTION_MAX_HITS]);
-char SelectEntity(int type, int *n,
-		  GVertex *v[SELECTION_MAX_HITS], 
-		  GEdge *c[SELECTION_MAX_HITS], 
-		  GFace *s[SELECTION_MAX_HITS],
-		  GRegion *r[SELECTION_MAX_HITS]);
+bool ProcessSelectionBuffer(int entityType, bool multipleSelection,
+			    bool selectMesh, int x, int y, int w, int h, 
+			    std::vector<GVertex*> &vertices,
+			    std::vector<GEdge*> &edges,
+			    std::vector<GFace*> &faces,
+			    std::vector<GRegion*> &regions);
+char SelectEntity(int entityType,
+		  std::vector<GVertex*> &vertices,
+		  std::vector<GEdge*> &edges,
+		  std::vector<GFace*> &faces,
+		  std::vector<GRegion*> &regions);
 
-void unproject(double x, double y, double p[3], double d[3]);
+void Unproject(double x, double y, double p[3], double d[3]);
 void Viewport2World(double win[3], double xyz[3]);
 void World2Viewport(double xyz[3], double win[3]);
 
@@ -63,8 +59,9 @@ unsigned int PaletteContinuous(Post_View * View, double min, double max, double 
 unsigned int PaletteContinuousLinear(Post_View * v, double min, double max, double val);
 unsigned int PaletteDiscrete(Post_View * View, int nbi, int i);
 
-void HighlightEntity(GVertex *v, GEdge *c, GFace *s, GRegion *r, int permanent);
-void HighlightEntityNum(int v, int c, int s, int r, int permanant);
+void HighlightEntity(GEntity *e, bool permanent=false);
+void HighlightEntity(GVertex *v, GEdge *e, GFace *f, GRegion *r, bool permanent=false);
+void HighlightEntityNum(int v, int c, int s, int r, bool permanant=false);
 void ZeroHighlightEntity(GVertex *v, GEdge *c, GFace *s, GRegion *r);
 void ZeroHighlightEntityNum(int v, int c, int s, int r);
 void ZeroHighlight();

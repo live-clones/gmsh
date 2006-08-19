@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.115 2006-08-17 14:09:37 geuzaine Exp $
+// $Id: Geom.cpp,v 1.116 2006-08-19 01:12:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -458,7 +458,7 @@ void Draw_Geom()
   }
 }
 
-void HighlightEntity(GEntity *e, int permanent)
+void HighlightEntity(GEntity *e, bool permanent)
 {
   if(permanent)
     e->setSelection(1);
@@ -466,7 +466,7 @@ void HighlightEntity(GEntity *e, int permanent)
     Msg(STATUS2N, "%s", e->getInfoString().c_str());
 }
 
-void HighlightEntity(GVertex *v, GEdge *c, GFace *s, GRegion *r, int permanent)
+void HighlightEntity(GVertex *v, GEdge *c, GFace *s, GRegion *r, bool permanent)
 {
   if(v) HighlightEntity(v, permanent);
   else if(c) HighlightEntity(c, permanent);
@@ -475,7 +475,7 @@ void HighlightEntity(GVertex *v, GEdge *c, GFace *s, GRegion *r, int permanent)
   else if(!permanent) Msg(STATUS2N, " ");
 }
 
-void HighlightEntityNum(int v, int c, int s, int r, int permanent)
+void HighlightEntityNum(int v, int c, int s, int r, bool permanent)
 {
   if(v) {
     GVertex *pv = GMODEL->vertexByTag(v);

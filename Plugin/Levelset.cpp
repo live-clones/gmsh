@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.28 2006-01-06 00:34:33 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.29 2006-08-19 01:12:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -189,7 +189,7 @@ void GMSH_LevelsetPlugin::evalLevelset(int nbNod, int nbComp,
 
 void GMSH_LevelsetPlugin::addElement(int timeStep, int np, int nbEdg, int dNbComp,
 				     double xp[12], double yp[12], double zp[12],
-				     double valp[12][9], vector<Post_View *> out)
+				     double valp[12][9], std::vector<Post_View *> &out)
 {
   // select the output view
   Post_View *view = _valueIndependent ? out[0] : out[timeStep];
@@ -262,7 +262,7 @@ void GMSH_LevelsetPlugin::nonZeroLevelset(int timeStep,
 					  double *x, double *y, double *z, 
 					  double *iVal, int iNbComp,
 					  double *dVal, int dNbComp,
-					  vector<Post_View *> out)
+					  std::vector<Post_View *> &out)
 {
   double levels[8], scalarVal[8];
   
@@ -295,7 +295,7 @@ int GMSH_LevelsetPlugin::zeroLevelset(int timeStep,
 				      double *x, double *y, double *z, 
 				      double *iVal, int iNbComp,
 				      double *dVal, int dNbComp,
-				      vector<Post_View *> out)
+				      std::vector<Post_View *> &out)
 {
   double levels[8], scalarVal[8];
 
@@ -410,7 +410,7 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
 				      Post_View * dView, List_T * dList, 
 				      int dNbElm, int dNbComp,
 				      int nbNod, int nbEdg, int exn[12][2], 
-				      vector<Post_View *> out)
+				      std::vector<Post_View *> &out)
 {
   if(!iNbElm || !dNbElm) 
     return;
@@ -547,18 +547,18 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
 Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
 {
   Post_View *w;
-  vector<Post_View *> out;
+  std::vector<Post_View *> out;
 
   if(v->adaptive)
-      v->adaptive->setTolerance(_targetError);
-  if (v->adaptive && v->NbST)
-      v->setAdaptiveResolutionLevel ( _recurLevel , this );
-  if (v->adaptive && v->NbSS)
-      v->setAdaptiveResolutionLevel ( _recurLevel , this );
-  if (v->adaptive && v->NbSQ)
-      v->setAdaptiveResolutionLevel ( _recurLevel , this );
-  if (v->adaptive && v->NbSH)
-      v->setAdaptiveResolutionLevel ( _recurLevel , this );
+    v->adaptive->setTolerance(_targetError);
+  if(v->adaptive && v->NbST)
+    v->setAdaptiveResolutionLevel(_recurLevel, this);
+  if(v->adaptive && v->NbSS)
+    v->setAdaptiveResolutionLevel(_recurLevel, this);
+  if(v->adaptive && v->NbSQ)
+    v->setAdaptiveResolutionLevel(_recurLevel, this);
+  if(v->adaptive && v->NbSH)
+    v->setAdaptiveResolutionLevel(_recurLevel, this);
   
   if(_valueView < 0) {
     w = v;
@@ -755,187 +755,169 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   return 0;
 }
 
-/*
-  On high order maps, we draw only the elements that have a 
-  cut with the levelset, this is as accurate as it should be
-*/
+// On high order maps, we draw only the elements that have a cut with
+// the levelset, this is as accurate as it should be
 
-
-static bool recur_sign_change (adapt_triangle *t, double val, const GMSH_LevelsetPlugin *plug)
+static bool recur_sign_change(adapt_triangle *t, double val,
+			      const GMSH_LevelsetPlugin *plug)
 {
-
-  if (!t->e[0]|| t->visible)
-    {
-      double v1 = plug->levelset (t->p[0]->X,t->p[0]->Y,t->p[0]->Z,t->p[0]->val);
-      double v2 = plug->levelset (t->p[1]->X,t->p[1]->Y,t->p[1]->Z,t->p[1]->val);
-      double v3 = plug->levelset (t->p[2]->X,t->p[2]->Y,t->p[2]->Z,t->p[2]->val);
-      if ( v1 * v2 > 0 && v1 * v3 > 0)
-	t->visible = false;
-      else
-	t->visible = true;
-      return t->visible;
-    }
-  else
-    {
-      bool sc1= recur_sign_change(t->e[0],val,plug);
-      bool sc2= recur_sign_change(t->e[1],val,plug);
-      bool sc3= recur_sign_change(t->e[2],val,plug);
-      bool sc4= recur_sign_change(t->e[3],val,plug);
-      if (sc1 || sc2 || sc3 || sc4)
-	{
-	  if (!sc1) t->e[0]->visible = true;
-	  if (!sc2) t->e[1]->visible = true;
-	  if (!sc3) t->e[2]->visible = true;
-	  if (!sc4) t->e[3]->visible = true;
-	  return true;
-	}
+  if(!t->e[0] || t->visible){
+    double v1 = plug->levelset(t->p[0]->X, t->p[0]->Y, t->p[0]->Z, t->p[0]->val);
+    double v2 = plug->levelset(t->p[1]->X, t->p[1]->Y, t->p[1]->Z, t->p[1]->val);
+    double v3 = plug->levelset(t->p[2]->X, t->p[2]->Y, t->p[2]->Z, t->p[2]->val);
+    if(v1 * v2 > 0 && v1 * v3 > 0)
       t->visible = false;
-      return false;
-    }      
+    else
+      t->visible = true;
+    return t->visible;
+  }
+  else{
+    bool sc1 = recur_sign_change(t->e[0], val, plug);
+    bool sc2 = recur_sign_change(t->e[1], val, plug);
+    bool sc3 = recur_sign_change(t->e[2], val, plug);
+    bool sc4 = recur_sign_change(t->e[3], val, plug);
+    if(sc1 || sc2 || sc3 || sc4){
+      if (!sc1) t->e[0]->visible = true;
+      if (!sc2) t->e[1]->visible = true;
+      if (!sc3) t->e[2]->visible = true;
+      if (!sc4) t->e[3]->visible = true;
+      return true;
+    }
+    t->visible = false;
+    return false;
+  }      
 }
 
-static bool recur_sign_change (adapt_tet *t, double val, const GMSH_LevelsetPlugin *plug)
+static bool recur_sign_change(adapt_tet *t, double val, 
+			      const GMSH_LevelsetPlugin *plug)
 {
-
-  if (!t->e[0] || t->visible)
-    {
-      double v1 = plug->levelset (t->p[0]->X,t->p[0]->Y,t->p[0]->Z,t->p[0]->val);
-      double v2 = plug->levelset (t->p[1]->X,t->p[1]->Y,t->p[1]->Z,t->p[1]->val);
-      double v3 = plug->levelset (t->p[2]->X,t->p[2]->Y,t->p[2]->Z,t->p[2]->val);
-      double v4 = plug->levelset (t->p[3]->X,t->p[3]->Y,t->p[3]->Z,t->p[3]->val);
-      if ( v1 * v2 > 0 && v1 * v3 > 0 && v1 * v4 > 0)
-	t->visible = false;
-      else
-	t->visible = true;
-      return t->visible;
-    }
-  else
-    {
-      bool sc1 = recur_sign_change(t->e[0],val,plug);
-      bool sc2 = recur_sign_change(t->e[1],val,plug);
-      bool sc3 = recur_sign_change(t->e[2],val,plug);
-      bool sc4 = recur_sign_change(t->e[3],val,plug);
-      bool sc5 = recur_sign_change(t->e[4],val,plug);
-      bool sc6 = recur_sign_change(t->e[5],val,plug);
-      bool sc7 = recur_sign_change(t->e[6],val,plug);
-      bool sc8 = recur_sign_change(t->e[7],val,plug);
-      if (sc1 || sc2 || sc3 || sc4 || sc5 || sc6 || sc7 || sc8)
-	{
-	  if (!sc1) t->e[0]->visible = true;
-	  if (!sc2) t->e[1]->visible = true;
-	  if (!sc3) t->e[2]->visible = true;
-	  if (!sc4) t->e[3]->visible = true;
-	  if (!sc5) t->e[4]->visible = true;
-	  if (!sc6) t->e[5]->visible = true;
-	  if (!sc7) t->e[6]->visible = true;
-	  if (!sc8) t->e[7]->visible = true;
-	  return true;
-	}
+  if(!t->e[0] || t->visible){
+    double v1 = plug->levelset(t->p[0]->X, t->p[0]->Y, t->p[0]->Z, t->p[0]->val);
+    double v2 = plug->levelset(t->p[1]->X, t->p[1]->Y, t->p[1]->Z, t->p[1]->val);
+    double v3 = plug->levelset(t->p[2]->X, t->p[2]->Y, t->p[2]->Z, t->p[2]->val);
+    double v4 = plug->levelset(t->p[3]->X, t->p[3]->Y, t->p[3]->Z, t->p[3]->val);
+    if(v1 * v2 > 0 && v1 * v3 > 0 && v1 * v4 > 0)
       t->visible = false;
-      return false;
-    }      
+    else
+      t->visible = true;
+    return t->visible;
+  }
+  else{
+    bool sc1 = recur_sign_change(t->e[0], val, plug);
+    bool sc2 = recur_sign_change(t->e[1], val, plug);
+    bool sc3 = recur_sign_change(t->e[2], val, plug);
+    bool sc4 = recur_sign_change(t->e[3], val, plug);
+    bool sc5 = recur_sign_change(t->e[4], val, plug);
+    bool sc6 = recur_sign_change(t->e[5], val, plug);
+    bool sc7 = recur_sign_change(t->e[6], val, plug);
+    bool sc8 = recur_sign_change(t->e[7], val, plug);
+    if(sc1 || sc2 || sc3 || sc4 || sc5 || sc6 || sc7 || sc8){
+      if(!sc1) t->e[0]->visible = true;
+      if(!sc2) t->e[1]->visible = true;
+      if(!sc3) t->e[2]->visible = true;
+      if(!sc4) t->e[3]->visible = true;
+      if(!sc5) t->e[4]->visible = true;
+      if(!sc6) t->e[5]->visible = true;
+      if(!sc7) t->e[6]->visible = true;
+      if(!sc8) t->e[7]->visible = true;
+      return true;
+    }
+    t->visible = false;
+    return false;
+  }      
 }
 
-static bool recur_sign_change (adapt_hex *t, double val, const GMSH_LevelsetPlugin *plug)
+static bool recur_sign_change(adapt_hex *t, double val,
+			      const GMSH_LevelsetPlugin *plug)
 {
-
-  if (!t->e[0]|| t->visible)
-    {
-      double v1 = plug->levelset (t->p[0]->X,t->p[0]->Y,t->p[0]->Z,t->p[0]->val);
-      double v2 = plug->levelset (t->p[1]->X,t->p[1]->Y,t->p[1]->Z,t->p[1]->val);
-      double v3 = plug->levelset (t->p[2]->X,t->p[2]->Y,t->p[2]->Z,t->p[2]->val);
-      double v4 = plug->levelset (t->p[3]->X,t->p[3]->Y,t->p[3]->Z,t->p[3]->val);
-      double v5 = plug->levelset (t->p[4]->X,t->p[4]->Y,t->p[4]->Z,t->p[4]->val);
-      double v6 = plug->levelset (t->p[5]->X,t->p[5]->Y,t->p[5]->Z,t->p[5]->val);
-      double v7 = plug->levelset (t->p[6]->X,t->p[6]->Y,t->p[6]->Z,t->p[6]->val);
-      double v8 = plug->levelset (t->p[7]->X,t->p[7]->Y,t->p[7]->Z,t->p[7]->val);
-      if ( v1 * v2 > 0 && v1 * v3 > 0 && v1 * v4 > 0 && v1 * v5 > 0 && v1 * v6 > 0 && v1 * v7 > 0 && v1 * v8 > 0)
-	t->visible = false;
-      else
-	t->visible = true;
-      return t->visible;
-    }
-  else
-    {
-      bool sc1 = recur_sign_change(t->e[0],val,plug);
-      bool sc2 = recur_sign_change(t->e[1],val,plug);
-      bool sc3 = recur_sign_change(t->e[2],val,plug);
-      bool sc4 = recur_sign_change(t->e[3],val,plug);
-      bool sc5 = recur_sign_change(t->e[4],val,plug);
-      bool sc6 = recur_sign_change(t->e[5],val,plug);
-      bool sc7 = recur_sign_change(t->e[6],val,plug);
-      bool sc8 = recur_sign_change(t->e[7],val,plug);
-      if (sc1 || sc2 || sc3 || sc4 || sc5 || sc6 || sc7 || sc8)
-	{
-	  if (!sc1) t->e[0]->visible = true;
-	  if (!sc2) t->e[1]->visible = true;
-	  if (!sc3) t->e[2]->visible = true;
-	  if (!sc4) t->e[3]->visible = true;
-	  if (!sc5) t->e[4]->visible = true;
-	  if (!sc6) t->e[5]->visible = true;
-	  if (!sc7) t->e[6]->visible = true;
-	  if (!sc8) t->e[7]->visible = true;
-	  return true;
-	}
+  if (!t->e[0]|| t->visible){
+    double v1 = plug->levelset(t->p[0]->X, t->p[0]->Y, t->p[0]->Z, t->p[0]->val);
+    double v2 = plug->levelset(t->p[1]->X, t->p[1]->Y, t->p[1]->Z, t->p[1]->val);
+    double v3 = plug->levelset(t->p[2]->X, t->p[2]->Y, t->p[2]->Z, t->p[2]->val);
+    double v4 = plug->levelset(t->p[3]->X, t->p[3]->Y, t->p[3]->Z, t->p[3]->val);
+    double v5 = plug->levelset(t->p[4]->X, t->p[4]->Y, t->p[4]->Z, t->p[4]->val);
+    double v6 = plug->levelset(t->p[5]->X, t->p[5]->Y, t->p[5]->Z, t->p[5]->val);
+    double v7 = plug->levelset(t->p[6]->X, t->p[6]->Y, t->p[6]->Z, t->p[6]->val);
+    double v8 = plug->levelset(t->p[7]->X, t->p[7]->Y, t->p[7]->Z, t->p[7]->val);
+    if(v1 * v2 > 0 && v1 * v3 > 0 && v1 * v4 > 0 && v1 * v5 > 0 && 
+       v1 * v6 > 0 && v1 * v7 > 0 && v1 * v8 > 0)
       t->visible = false;
-      return false;
-    }      
+    else
+      t->visible = true;
+    return t->visible;
+  }
+  else{
+    bool sc1 = recur_sign_change(t->e[0], val, plug);
+    bool sc2 = recur_sign_change(t->e[1], val, plug);
+    bool sc3 = recur_sign_change(t->e[2], val, plug);
+    bool sc4 = recur_sign_change(t->e[3], val, plug);
+    bool sc5 = recur_sign_change(t->e[4], val, plug);
+    bool sc6 = recur_sign_change(t->e[5], val, plug);
+    bool sc7 = recur_sign_change(t->e[6], val, plug);
+    bool sc8 = recur_sign_change(t->e[7], val, plug);
+    if(sc1 || sc2 || sc3 || sc4 || sc5 || sc6 || sc7 || sc8){
+      if (!sc1) t->e[0]->visible = true;
+      if (!sc2) t->e[1]->visible = true;
+      if (!sc3) t->e[2]->visible = true;
+      if (!sc4) t->e[3]->visible = true;
+      if (!sc5) t->e[4]->visible = true;
+      if (!sc6) t->e[5]->visible = true;
+      if (!sc7) t->e[6]->visible = true;
+      if (!sc8) t->e[7]->visible = true;
+      return true;
+    }
+    t->visible = false;
+    return false;
+  }      
 }
 
-static bool recur_sign_change (adapt_quad *q, double val, const GMSH_LevelsetPlugin *plug)
+static bool recur_sign_change (adapt_quad *q, double val,
+			       const GMSH_LevelsetPlugin *plug)
 {
-
-  if (!q->e[0]|| q->visible)
-    {
-      double v1 = plug->levelset (q->p[0]->X,q->p[0]->Y,q->p[0]->Z,q->p[0]->val);
-      double v2 = plug->levelset (q->p[1]->X,q->p[1]->Y,q->p[1]->Z,q->p[1]->val);
-      double v3 = plug->levelset (q->p[2]->X,q->p[2]->Y,q->p[2]->Z,q->p[2]->val);
-      double v4 = plug->levelset (q->p[3]->X,q->p[3]->Y,q->p[3]->Z,q->p[3]->val);
-      if ( v1 * v2 > 0 && v1 * v3 > 0 && v1 * v4 > 0)
-	q->visible = false;
-      else
-	q->visible = true;
-      return q->visible;
-    }
-  else
-    {
-      bool sc1 = recur_sign_change(q->e[0],val,plug);
-      bool sc2 = recur_sign_change(q->e[1],val,plug);
-      bool sc3 = recur_sign_change(q->e[2],val,plug);
-      bool sc4 = recur_sign_change(q->e[3],val,plug);
-      if (sc1 || sc2 || sc3 || sc4 )
-	{
-	  if (!sc1) q->e[0]->visible = true;
-	  if (!sc2) q->e[1]->visible = true;
-	  if (!sc3) q->e[2]->visible = true;
-	  if (!sc4) q->e[3]->visible = true;
-	  return true;
-	}
+  if(!q->e[0]|| q->visible){
+    double v1 = plug->levelset(q->p[0]->X, q->p[0]->Y, q->p[0]->Z, q->p[0]->val);
+    double v2 = plug->levelset(q->p[1]->X, q->p[1]->Y, q->p[1]->Z, q->p[1]->val);
+    double v3 = plug->levelset(q->p[2]->X, q->p[2]->Y, q->p[2]->Z, q->p[2]->val);
+    double v4 = plug->levelset(q->p[3]->X, q->p[3]->Y, q->p[3]->Z, q->p[3]->val);
+    if(v1 * v2 > 0 && v1 * v3 > 0 && v1 * v4 > 0)
       q->visible = false;
-      return false;
-    }      
+    else
+      q->visible = true;
+    return q->visible;
+  }
+  else{
+    bool sc1 = recur_sign_change(q->e[0], val, plug);
+    bool sc2 = recur_sign_change(q->e[1], val, plug);
+    bool sc3 = recur_sign_change(q->e[2], val, plug);
+    bool sc4 = recur_sign_change(q->e[3], val, plug);
+    if(sc1 || sc2 || sc3 || sc4 ){
+      if(!sc1) q->e[0]->visible = true;
+      if(!sc2) q->e[1]->visible = true;
+      if(!sc3) q->e[2]->visible = true;
+      if(!sc4) q->e[3]->visible = true;
+      return true;
+    }
+    q->visible = false;
+    return false;
+  }      
 }
 
 void GMSH_LevelsetPlugin::assign_specific_visibility () const
 {
-  if (adapt_triangle::all_elems.size())
-    {
-      adapt_triangle *t  = *adapt_triangle::all_elems.begin();
-      if (!t->visible)t->visible = !recur_sign_change (t, _valueView, this);
-    }
-  if (adapt_tet::all_elems.size())
-    {
-      adapt_tet *te  = *adapt_tet::all_elems.begin();
-      if (!te->visible)te->visible = !recur_sign_change (te, _valueView, this);
-    }
-  if (adapt_quad::all_elems.size())
-    {
-      adapt_quad *qe  = *adapt_quad::all_elems.begin();
-      if (!qe->visible)if (!qe->visible)qe->visible = !recur_sign_change (qe, _valueView, this);
-    }
-  if (adapt_hex::all_elems.size())
-    {
-      adapt_hex *he  = *adapt_hex::all_elems.begin();
-      if (!he->visible)he->visible = !recur_sign_change (he, _valueView, this);
-    }
+  if(adapt_triangle::all_elems.size()){
+    adapt_triangle *t = *adapt_triangle::all_elems.begin();
+    if(!t->visible) t->visible = !recur_sign_change(t, _valueView, this);
+  }
+  if(adapt_tet::all_elems.size()){
+    adapt_tet *te = *adapt_tet::all_elems.begin();
+    if(!te->visible) te->visible = !recur_sign_change(te, _valueView, this);
+  }
+  if(adapt_quad::all_elems.size()){
+    adapt_quad *qe = *adapt_quad::all_elems.begin();
+    if(!qe->visible) qe->visible = !recur_sign_change(qe, _valueView, this);
+  }
+  if(adapt_hex::all_elems.size()){
+    adapt_hex *he = *adapt_hex::all_elems.begin();
+    if(!he->visible) he->visible = !recur_sign_change(he, _valueView, this);
+  }
 }

@@ -56,6 +56,7 @@
 #define ENT_LINE     2
 #define ENT_SURFACE  3
 #define ENT_VOLUME   4
+#define ENT_ALL      5
 
 #define ELEMENTARY 1
 #define PHYSICAL   2

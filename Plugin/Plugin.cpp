@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.83 2006-08-12 21:31:24 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.84 2006-08-19 01:12:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -61,8 +61,6 @@
 #include "Evaluate.h"
 #include "Probe.h"
 #include "Context.h"
-
-using namespace std;
 
 extern Context_T CTX;
 

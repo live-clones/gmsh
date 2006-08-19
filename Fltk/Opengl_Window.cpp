@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.66 2006-08-18 21:11:43 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.67 2006-08-19 01:12:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -177,10 +177,6 @@ void Opengl_Window::draw()
 
 int Opengl_Window::handle(int event)
 {
-  GVertex *v[SELECTION_MAX_HITS];
-  GEdge *c[SELECTION_MAX_HITS];
-  GFace *s[SELECTION_MAX_HITS];
-  GRegion *r[SELECTION_MAX_HITS];
   double dx, dy;
 
   switch (event) {
@@ -340,7 +336,7 @@ int Opengl_Window::handle(int event)
       WID->g_opengl_window->cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
       // find line in real space corresponding to current cursor position
       double p[3],d[3];
-      unproject(curr.win[0], curr.win[1], p, d);
+      Unproject(curr.win[0], curr.win[1], p, d);
       // fin closest point to the center of gravity
       double r[3] = {CTX.cg[0] - p[0], CTX.cg[1] - p[1], CTX.cg[2] - p[2]}, t;
       prosca(r, d, &t);
@@ -363,19 +359,25 @@ int Opengl_Window::handle(int event)
     else{ // hover mode
       if(curr.win[0] != prev.win[0] || curr.win[1] != prev.win[1]){
 	WID->make_opengl_current();
-	v[0] = NULL; c[0] = NULL; s[0] = NULL; r[0] = NULL;
-	Process_SelectionBuffer(WID->selection, false, 
-				CTX.enable_mouse_selection > 1,
-				(int)curr.win[0], (int)curr.win[1], 5, 5, 
-				v, c, s, r);
-	if((WID->selection == ENT_POINT && v[0]) ||
-	   (WID->selection == ENT_LINE && c[0]) || 
-	   (WID->selection == ENT_SURFACE && s[0]) ||
-	   (WID->selection == ENT_VOLUME && r[0]))
+	std::vector<GVertex*> vertices;
+	std::vector<GEdge*> edges;
+	std::vector<GFace*> faces;
+	std::vector<GRegion*> regions;
+	ProcessSelectionBuffer(WID->selection, false, 
+			       CTX.enable_mouse_selection > 1,
+			       (int)curr.win[0], (int)curr.win[1], 5, 5, 
+			       vertices, edges, faces, regions);
+	if((WID->selection == ENT_POINT && vertices.size()) ||
+	   (WID->selection == ENT_LINE && edges.size()) || 
+	   (WID->selection == ENT_SURFACE && faces.size()) ||
+	   (WID->selection == ENT_VOLUME && regions.size()))
 	  WID->g_window->cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
 	else
 	  WID->g_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
-	HighlightEntity(v[0], c[0], s[0], r[0], 0);
+	HighlightEntity(vertices.empty() ? 0 : vertices[0], 
+			edges.empty() ? 0 : edges[0],
+			faces.empty() ? 0 : faces[0],
+			regions.empty() ? 0 : regions[0]);
       }
     }
     prev.set();

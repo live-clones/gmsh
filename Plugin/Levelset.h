@@ -23,7 +23,6 @@
 #include "Plugin.h"
 
 #include <vector>
-using namespace std;
 
 class GMSH_LevelsetPlugin : public GMSH_Post_Plugin
 {
@@ -38,24 +37,24 @@ private:
   double _invert;
   void addElement(int timeStep, int np, int nbEdg, int dNbComp,
 		  double xp[12], double yp[12], double zp[12],
-		  double valp[12][9], vector<Post_View *> out);
+		  double valp[12][9], std::vector<Post_View *> &out);
   void evalLevelset(int nbNod, int nbComp,
 		    double *x, double *y, double *z, double *val,
 		    double *levels, double *scalarVal);
   void nonZeroLevelset(int timeStep, int nbVert, int nbEdg, int exn[12][2],
 		       double *x, double *y, double *z, 
 		       double *iVal, int iNbComp, double *dVal, int dNbComp,
-		       vector<Post_View*> out);
+		       std::vector<Post_View*> &out);
   int zeroLevelset(int timeStep, int nbVert, int nbEdg, int exn[12][2],
 		   double *x, double *y, double *z, 
 		   double *iVal, int iNbComp, double *dVal, int dNbComp,
-		   vector<Post_View*> out);
+		   std::vector<Post_View*> &out);
   void executeList(Post_View * iView, List_T * iList, 
 		   int iNbElm, int iNbComp,
 		   Post_View * dView, List_T * dList, 
 		   int dNbElm, int dNbComp,
 		   int nbVert, int nbEdg, int exn[12][2], 
-		   vector<Post_View *> out);
+		   std::vector<Post_View *> &out);
   virtual void assign_specific_visibility () const;
 public:
   GMSH_LevelsetPlugin();

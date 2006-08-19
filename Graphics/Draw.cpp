@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.104 2006-08-18 21:11:43 geuzaine Exp $
+// $Id: Draw.cpp,v 1.105 2006-08-19 01:12:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -348,26 +348,38 @@ void InitPosition(void)
 
 // Entity selection routines
 
-typedef struct{
-  unsigned int type, ient, depth;
-} hit;
+class hit{
+public:
+  GLuint type, ient, depth;
+  hit(GLuint t, GLuint i, GLuint d) : type(t), ient(i), depth(d) {}
+};
 
-int fcmp_hit_depth(const void *a, const void *b)
+class hitDepthLessThan{
+ public:
+  bool operator()(const hit &h1, const hit &h2) const
+  {
+    return h1.depth < h2.depth;
+  }
+};
+
+bool ProcessSelectionBuffer(int entityType, bool multipleSelection, 
+			    bool selectMesh, int x, int y, int w, int h,
+			    std::vector<GVertex*> &vertices,
+			    std::vector<GEdge*> &edges,
+			    std::vector<GFace*> &faces,
+			    std::vector<GRegion*> &regions)
 {
-  return ((hit*)a)->depth - ((hit*)b)->depth;
-}
+  vertices.clear();
+  edges.clear();
+  faces.clear();
+  regions.clear();
 
-int Process_SelectionBuffer(int entityType, bool multi, bool selectMesh,
-			    int x, int y, int w, int h,
-			    GVertex *v[SELECTION_MAX_HITS],
-			    GEdge *c[SELECTION_MAX_HITS],
-			    GFace *s[SELECTION_MAX_HITS],
-			    GRegion *r[SELECTION_MAX_HITS])
-{
-  hit hits[SELECTION_BUFFER_SIZE];
-  GLuint selectBuf[SELECTION_BUFFER_SIZE];
-
-  glSelectBuffer(SELECTION_BUFFER_SIZE, selectBuf);
+  // In our case the selection buffer size is equal to 5 x the maximum
+  // number of possible hits
+  int size = 5 * (GMODEL->numVertex() + GMODEL->numEdge() + 
+		  GMODEL->numFace() + GMODEL->numRegion()) + 100;
+  GLuint *selectionBuffer = new GLuint[size];
+  glSelectBuffer(size, selectionBuffer);
 
   glRenderMode(GL_SELECT);
   CTX.render_mode = GMSH_SELECT;
@@ -384,100 +396,113 @@ int Process_SelectionBuffer(int entityType, bool multi, bool selectMesh,
   CTX.render_mode = GMSH_RENDER;
 
   if(!numhits){ // no hits
-    return 0;
+    delete [] selectionBuffer;
+    return false;
   }
   else if(numhits < 0){ // overflow
+    delete [] selectionBuffer;
     Msg(WARNING, "Selection buffer size exceeded");
-    return 0;
+    return false;
   }
 
-  GLint *ptr = (GLint *) selectBuf;
-
-  int numentities = 0;
+  std::vector<hit> hits;
+  GLuint *ptr = selectionBuffer;
   for(int i = 0; i < numhits; i++) {
-    GLint names = *ptr++; 
-    GLint mindepth = *ptr++;
-    GLint maxdepth = *ptr++;
-    // in Gmsh 'names' should always be 2 (in which case the first is
-    // the type of the entity (0=point, 1=line, ...) and the second
-    // the entity number) or 0 (if there is nothing in the stack)
+    // in Gmsh 'names' should always be 2 or 0. If names is 2, the
+    // first name is the type of the entity (0 for point, 1 for line,
+    // etc.) and the second is the entity number; if names is 0 there
+    // is nothing on the stack.
+    GLuint names = *ptr++; 
+    GLuint mindepth = *ptr++;
+    *ptr++; // maxdepth
     if(names == 2){
-      hits[numentities].depth = (mindepth+maxdepth)/2;
-      hits[numentities].type = *ptr++; 
-      hits[numentities].ient = *ptr++;
-      numentities++;
+      GLuint depth = mindepth;
+      GLuint type = *ptr++; 
+      GLuint ient = *ptr++;
+      hits.push_back(hit(type, ient, depth));
     }
   }
 
-  if(!numentities){ // no entities
-    return 0;
+  delete [] selectionBuffer;
+  
+  if(!hits.size()){ // no entities
+    return false;
   }
+
+  // sort hits to get closest entities first
+  std::sort(hits.begin(), hits.end(), hitDepthLessThan());
 
   // filter result: if entityType == ENT_NONE, return the closest
   // entity of "lowest dimension" (point < line < surface <
   // volume). Otherwise, return the closest entity of type
   // "entityType"
+  GLuint typmin = 4;
+  for(unsigned int i = 0; i < hits.size(); i++)
+    typmin = std::min(typmin, hits[i].type);
 
-  unsigned int typmin = 4;
-  for(int i = 0; i < numentities; i++) {
-    if(hits[i].type < typmin)
-      typmin = hits[i].type;
-  }
-
-  // sort hits to get closest entities first
-  qsort(hits, numentities, sizeof(hit), fcmp_hit_depth);
-  
-  int j = 0;
-  for(int i = 0; i < numentities; i++) {
-    if((entityType == ENT_NONE && hits[i].type == typmin) ||
+  for(unsigned int i = 0; i < hits.size(); i++) {
+    if((entityType == ENT_ALL) ||
+       (entityType == ENT_NONE && hits[i].type == typmin) ||
        (entityType == ENT_POINT && hits[i].type == 0) ||
        (entityType == ENT_LINE && hits[i].type == 1) ||
        (entityType == ENT_SURFACE && hits[i].type == 2) ||
        (entityType == ENT_VOLUME && hits[i].type == 3)){
       switch (hits[i].type) {
       case 0:
-	if(!(v[j] = GMODEL->vertexByTag(hits[i].ient))){
-	  Msg(GERROR, "Problem in point selection processing");
-	  return j;
+	{
+	  GVertex *v = GMODEL->vertexByTag(hits[i].ient);
+	  if(!v){
+	    Msg(GERROR, "Problem in point selection processing");
+	    return false;
+	  }
+	  vertices.push_back(v);
+	  if(!multipleSelection) return true;
 	}
-	j++;
-	if(!multi) return 1;
 	break;
       case 1:
-	if(!(c[j] = GMODEL->edgeByTag(hits[i].ient))){
-	  Msg(GERROR, "Problem in line selection processing");
-	  return j;
+	{
+	  GEdge *e = GMODEL->edgeByTag(hits[i].ient);
+	  if(!e){
+	    Msg(GERROR, "Problem in line selection processing");
+	    return false;
+	  }
+	  edges.push_back(e);
+	  if(!multipleSelection) return true;
 	}
-	j++;
-	if(!multi) return 1;
 	break;
       case 2:
-	if(!(s[j] = GMODEL->faceByTag(hits[i].ient))){
-	  Msg(GERROR, "Problem in surface selection processing");
-	  return j;
+	{
+	  GFace *f = GMODEL->faceByTag(hits[i].ient);
+	  if(!f){
+	    Msg(GERROR, "Problem in surface selection processing");
+	    return false;
+	  }
+	  faces.push_back(f);
+	  if(!multipleSelection) return true;
 	}
-	j++;
-	if(!multi) return 1;
 	break;
       case 3:
-	if(!(r[j] = GMODEL->regionByTag(hits[i].ient))){
-	  Msg(GERROR, "Problem in volume selection processing");
-	  return j;
+	{
+	  GRegion *r = GMODEL->regionByTag(hits[i].ient);
+	  if(!r){
+	    Msg(GERROR, "Problem in volume selection processing");
+	    return false;
+	  }
+	  regions.push_back(r);
+	  if(!multipleSelection) return true;
 	}
-	j++;
-	if(!multi) return 1;
 	break;
       }
     }
   }
-  return j;
+  return true;
 }
 
 // Takes a cursor position in window coordinates and returns the line
 // (given by a point and a unit direction vector), in real space, that
 // corresponds to that cursor position
 
-void unproject(double x, double y, double p[3], double d[3])
+void Unproject(double x, double y, double p[3], double d[3])
 {
   GLint viewport[4];
   glGetIntegerv(GL_VIEWPORT, viewport);
