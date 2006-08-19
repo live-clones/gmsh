@@ -257,7 +257,7 @@ public:
   void getTriangles(std::list<BDS_Triangle *> &t) const; 	
   void compute_curvature();
   BDS_Point(int id, double x=0, double y=0, double z=0)
-    : X(x),Y(y),Z(z),u(0),v(0),iD(id),radius_of_curvature(1.e22),g(0)
+    : radius_of_curvature(1.e22),X(x),Y(y),Z(z),u(0),v(0),iD(id),g(0)
   {	    
   }
 };
@@ -720,13 +720,7 @@ public:
   void cleanup();
   bool extractVolumes();
   // io's 
-  // STL
-  bool read_stl(const char *filename, const double tolerance);
-  // INRIA MESH
-  bool read_mesh(const char *filename);
-  bool read_vrml(const char *filename);
   bool import_view(Post_View *view, const double tolerance);
-  void save_gmsh_format(const char *filename);
   void applyOptimizationPatterns();
 };
 
