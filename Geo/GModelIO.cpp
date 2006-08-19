@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.27 2006-08-19 18:48:06 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.28 2006-08-19 19:46:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -342,12 +342,12 @@ int GModel::readMSH(const std::string &name)
 
       if(format){
 	binary = true;
-	Msg(INFO, "Reading binary MSH file");
+	Msg(INFO, "Mesh is in binary format");
 	int one;
 	if(fread(&one, sizeof(int), 1, fp) != 1) return 0;
 	if(one != 1){
 	  swap = true;
-	  Msg(INFO, "Swapping bytes in binary file");
+	  Msg(INFO, "Swapping bytes from binary file");
 	}
       }
 
@@ -433,11 +433,11 @@ int GModel::readMSH(const std::string &name)
 	  int indices[30];
 	  for(int j = 0; j < numVertices; j++) fscanf(fp, "%d", &indices[j]);
 	  if(vertexVector.size())
-	    createElementMSH(this, num, type, physical, elementary, partition, indices,
-			     vertexVector, points, elements, physicals);
+	    createElementMSH(this, num, type, physical, elementary, partition, 
+			     indices, vertexVector, points, elements, physicals);
 	  else
-	    createElementMSH(this, num, type, physical, elementary, partition, indices,
-			     vertexMap, points, elements, physicals);
+	    createElementMSH(this, num, type, physical, elementary, partition, 
+			     indices, vertexMap, points, elements, physicals);
 	  if(progress && (i % progress == progress - 1))
 	    Msg(PROGRESS, "Read %d elements", i + 1);
 	}
@@ -445,13 +445,14 @@ int GModel::readMSH(const std::string &name)
       else{
 	int numElementsPartial = 0;
 	while(numElementsPartial < numElements){
-	  int tags[3];
-	  if(fread(tags, sizeof(int), 3, fp) != 3) return 0;
-	  if(swap) swapBytes((char*)&tags, sizeof(int), 3);
-	  int type = tags[0];
-	  int numElms = tags[1];
-	  int numTags = tags[2];
-	  unsigned int n = 1 + numTags + getNumVerticesForElementTypeMSH(type);
+	  int header[3];
+	  if(fread(header, sizeof(int), 3, fp) != 3) return 0;
+	  if(swap) swapBytes((char*)&header, sizeof(int), 3);
+	  int type = header[0];
+	  int numElms = header[1];
+	  int numTags = header[2];
+	  int numVertices = getNumVerticesForElementTypeMSH(type);
+	  unsigned int n = 1 + numTags + numVertices;
 	  int *data = new int[n];
 	  for(int i = 0; i < numElms; i++) {
 	    if(fread(data, sizeof(int), n, fp) != n) return 0;
@@ -460,13 +461,13 @@ int GModel::readMSH(const std::string &name)
 	    int physical = (numTags > 0) ? data[4 - numTags] : 0;
 	    int elementary = (numTags > 1) ? data[4 - numTags + 1] : 0;
 	    int partition = (numTags > 2) ? data[4 - numTags + 2] : 0;
-	    int *verts = &data[numTags + 1];
+	    int *indices = &data[numTags + 1];
 	    if(vertexVector.size())
 	      createElementMSH(this, num, type, physical, elementary, partition,
-			       verts, vertexVector, points, elements, physicals);
+			       indices, vertexVector, points, elements, physicals);
 	    else
 	      createElementMSH(this, num, type, physical, elementary, partition, 
-			       verts, vertexMap, points, elements, physicals);
+			       indices, vertexMap, points, elements, physicals);
 	    if(progress && ((numElementsPartial + i) % progress == progress - 1))
 	      Msg(PROGRESS, "Read %d elements", i + 1);
 	  }
@@ -800,6 +801,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
   }
   else{
     // Binary STL
+    Msg(INFO, "Mesh is in binary format");
     rewind(fp);
     char header[80];
     if(fread(header, sizeof(char), 80, fp)){

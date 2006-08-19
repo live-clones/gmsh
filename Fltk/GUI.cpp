@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.532 2006-08-18 21:11:42 geuzaine Exp $
+// $Id: GUI.cpp,v 1.533 2006-08-19 19:46:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3451,7 +3451,7 @@ void GUI::create_statistics_window()
 
   if(stat_window) {
     if(!stat_window->shown())
-      set_statistics();
+      set_statistics(false);
     for(i = 0; i < 3; i++)
       g[i]->hide();
     switch(get_context()){
@@ -3501,12 +3501,12 @@ void GUI::create_statistics_window()
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "Eta");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 16 * BH, IW, BH, "Rho");
 
-      Fl_Button *b0 = new Fl_Button(width - BB - 5 * WB, 2 * WB + 14 * BH, BB, BH, "Graph");
-      b0->callback(statistics_histogram_cb, (void *)"Gamma");
-      Fl_Button *b1 = new Fl_Button(width - BB - 5 * WB, 2 * WB + 15 * BH, BB, BH, "Graph");
-      b1->callback(statistics_histogram_cb, (void *)"Eta");
-      Fl_Button *b2 = new Fl_Button(width - BB - 5 * WB, 2 * WB + 16 * BH, BB, BH, "Graph");
-      b2->callback(statistics_histogram_cb, (void *)"Rho");
+      stat_butt[0] = new Fl_Button(width - BB - 5 * WB, 2 * WB + 14 * BH, BB, BH, "Graph");
+      stat_butt[0]->callback(statistics_histogram_cb, (void *)"Gamma");
+      stat_butt[1] = new Fl_Button(width - BB - 5 * WB, 2 * WB + 15 * BH, BB, BH, "Graph");
+      stat_butt[1]->callback(statistics_histogram_cb, (void *)"Eta");
+      stat_butt[2] = new Fl_Button(width - BB - 5 * WB, 2 * WB + 16 * BH, BB, BH, "Graph");
+      stat_butt[2]->callback(statistics_histogram_cb, (void *)"Rho");
 
       g[1]->end();
     }
@@ -3548,13 +3548,16 @@ void GUI::create_statistics_window()
 
 extern void GetStatistics(double s[50], double quality[3][100]=0);
 
-void GUI::set_statistics()
+void GUI::set_statistics(bool compute_quality)
 {
   int num = 0;
   static double s[50];
   static char label[50][256];
 
-  GetStatistics(s, quality);
+  if(compute_quality)
+    GetStatistics(s, quality);
+  else
+    GetStatistics(s);
 
   // geom
   sprintf(label[num], "%g", s[0]); stat_value[num]->value(label[num]); num++;
@@ -3579,12 +3582,30 @@ void GUI::set_statistics()
   sprintf(label[num], "%g", s[14]); stat_value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[15]); stat_value[num]->value(label[num]); num++;
 
-  sprintf(label[num], "%.4g (%.4g->%.4g)", s[17], s[18], s[19]);
-  stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%.4g (%.4g->%.4g)", s[20], s[21], s[22]);
-  stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%.4g (%.4g->%.4g)", s[23], s[24], s[25]);
-  stat_value[num]->value(label[num]); num++;
+  if(!compute_quality){
+    for(int i = 0; i < 3; i++) stat_butt[i]->deactivate();
+    sprintf(label[num], "Press Update");
+    stat_value[num]->deactivate();
+    stat_value[num]->value(label[num]); num++;
+    sprintf(label[num], "Press Update");
+    stat_value[num]->deactivate();
+    stat_value[num]->value(label[num]); num++;
+    sprintf(label[num], "Press Update");
+    stat_value[num]->deactivate();
+    stat_value[num]->value(label[num]); num++;
+  }
+  else{
+    for(int i = 0; i < 3; i++) stat_butt[i]->activate();
+    sprintf(label[num], "%.4g (%.4g->%.4g)", s[17], s[18], s[19]);
+    stat_value[num]->activate();
+    stat_value[num]->value(label[num]); num++;
+    sprintf(label[num], "%.4g (%.4g->%.4g)", s[20], s[21], s[22]);
+    stat_value[num]->activate();
+    stat_value[num]->value(label[num]); num++;
+    sprintf(label[num], "%.4g (%.4g->%.4g)", s[23], s[24], s[25]);
+    stat_value[num]->activate();
+    stat_value[num]->value(label[num]); num++;
+  }
 
   // post
   sprintf(label[num], "%g", s[26]); stat_value[num]->value(label[num]); num++;

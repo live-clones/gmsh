@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.443 2006-08-19 04:24:03 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.444 2006-08-19 19:46:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1257,7 +1257,7 @@ void statistics_cb(CALLBACK_ARGS)
 
 void statistics_update_cb(CALLBACK_ARGS)
 {
-  WID->set_statistics();
+  WID->set_statistics(true);
 }
 
 void statistics_histogram_cb(CALLBACK_ARGS)
