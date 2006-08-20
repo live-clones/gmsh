@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.15 2006-08-19 18:48:06 geuzaine Exp $
+// $Id: GModel.cpp,v 1.16 2006-08-20 03:54:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -173,7 +173,7 @@ int GModel::getMeshStatus()
   for(fiter it = firstFace(); it != lastFace(); ++it)
     if((*it)->triangles.size() || (*it)->quadrangles.size()) return 2;
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    if((*it)->mesh_vertices.size()) return 1;
+    if((*it)->lines.size()) return 1;
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     if((*it)->mesh_vertices.size()) return 0;
   return -1;
