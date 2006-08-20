@@ -398,7 +398,5 @@ void ApplyLcFactor();
 
 void Degre1();
 void Degre2(int dim);
-void Degre2_Curve(void *a, void *b);
-void Degre2_Surface(void *a, void *b);
 
 #endif

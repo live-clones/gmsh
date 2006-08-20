@@ -23,14 +23,12 @@
 #include "MVertex.h"
 #include "SVector3.h"
 
-class MElement;
-
 class MEdge {
  private:
   MVertex *_v[2];
   
  public:
-  MEdge(MVertex *v0, MVertex *v1, MElement *e) 
+  MEdge(MVertex *v0, MVertex *v1) 
   {
     _v[0] = v0; _v[1] = v1;
   }

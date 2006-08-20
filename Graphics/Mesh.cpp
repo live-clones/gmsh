@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.180 2006-08-19 18:48:06 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.181 2006-08-20 03:44:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -321,7 +321,7 @@ static void drawBarycentricDual(std::vector<T*> &elements)
 	glVertex3d(p.x(), p.y(), p.z());
 	for(int k = 0; k < f.getNumVertices(); k++){
 	  MEdge e(f.getVertex(k), (k == f.getNumVertices() - 1) ? 
-		  f.getVertex(0) : f.getVertex(k + 1), ele);
+		  f.getVertex(0) : f.getVertex(k + 1));
 	  SPoint3 pe = e.barycenter();
 	  glVertex3d(p.x(), p.y(), p.z());
 	  glVertex3d(pe.x(), pe.y(), pe.z());

@@ -154,7 +154,7 @@ class MLine : public MElement {
   inline int getNumVertices(){ return 2; }
   inline MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 1; }
-  virtual MEdge getEdge(int num){ return MEdge(_v[0], _v[1], this); }
+  virtual MEdge getEdge(int num){ return MEdge(_v[0], _v[1]); }
   virtual int getNumFaces(){ return 0; }
   virtual MFace getFace(int num){ throw; }
   int getTypeForMSH(){ return LGN1; }
@@ -184,7 +184,7 @@ class MLine2 : public MLine {
     };
     int i0 = edges_lin2[num][0];
     int i1 = edges_lin2[num][1];
-    return MEdge(i0 < 2 ? _v[i0] : _vs[i0 - 2], i1 < 2 ? _v[i1] : _vs[i1 - 2], this);
+    return MEdge(i0 < 2 ? _v[i0] : _vs[i0 - 2], i1 < 2 ? _v[i1] : _vs[i1 - 2]);
   }
   int getTypeForMSH(){ return LGN2; }
   int getTypeForUNV(){ return 24; } // BEAM2
@@ -207,7 +207,7 @@ class MTriangle : public MElement {
   virtual int getNumEdges(){ return 3; }
   virtual MEdge getEdge(int num)
   {
-    return MEdge(_v[edges_tetra[num][0]], _v[edges_tetra[num][1]], this);
+    return MEdge(_v[edges_tetra[num][0]], _v[edges_tetra[num][1]]);
   }
   virtual int getNumFaces(){ return 1; }
   virtual MFace getFace(int num)
@@ -244,7 +244,7 @@ class MTriangle2 : public MTriangle {
     };
     int i0 = edges_tri2[num][0];
     int i1 = edges_tri2[num][1];
-    return MEdge(i0 < 3 ? _v[i0] : _vs[i0 - 3], i1 < 3 ? _v[i1] : _vs[i1 - 3], this);
+    return MEdge(i0 < 3 ? _v[i0] : _vs[i0 - 3], i1 < 3 ? _v[i1] : _vs[i1 - 3]);
   }
   int getNumFacesRep(){ return 4; }
   MFace getFaceRep(int num)
@@ -283,7 +283,7 @@ class MQuadrangle : public MElement {
   virtual int getNumEdges(){ return 4; }
   virtual MEdge getEdge(int num)
   {
-    return MEdge(_v[edges_quad[num][0]], _v[edges_quad[num][1]], this);
+    return MEdge(_v[edges_quad[num][0]], _v[edges_quad[num][1]]);
   }
   virtual int getNumFaces(){ return 1; }
   virtual MFace getFace(int num){ return MFace(_v[0], _v[1], _v[2], _v[3]); }
@@ -330,7 +330,7 @@ class MTetrahedron : public MElement {
   virtual int getNumEdges(){ return 6; }
   virtual MEdge getEdge(int num)
   {
-    return MEdge(_v[edges_tetra[num][0]], _v[edges_tetra[num][1]], this);
+    return MEdge(_v[edges_tetra[num][0]], _v[edges_tetra[num][1]]);
   }
   virtual int getNumFaces(){ return 4; }
   virtual MFace getFace(int num)
@@ -417,7 +417,7 @@ class MHexahedron : public MElement {
   virtual int getNumEdges(){ return 12; }
   virtual MEdge getEdge(int num)
   {
-    return MEdge(_v[edges_hexa[num][0]], _v[edges_hexa[num][1]], this);
+    return MEdge(_v[edges_hexa[num][0]], _v[edges_hexa[num][1]]);
   }
   virtual int getNumFaces(){ return 6; }
   virtual MFace getFace(int num)
@@ -516,7 +516,7 @@ class MPrism : public MElement {
   virtual int getNumEdges(){ return 9; }
   virtual MEdge getEdge(int num)
   {
-    return MEdge(_v[edges_prism[num][0]], _v[edges_prism[num][1]], this);
+    return MEdge(_v[edges_prism[num][0]], _v[edges_prism[num][1]]);
   }
   virtual int getNumFaces(){ return 5; }
   virtual MFace getFace(int num)
@@ -612,7 +612,7 @@ class MPyramid : public MElement {
   virtual int getNumEdges(){ return 8; }
   virtual MEdge getEdge(int num)
   {
-    return MEdge(_v[edges_pyramid[num][0]], _v[edges_pyramid[num][1]], this);
+    return MEdge(_v[edges_pyramid[num][0]], _v[edges_pyramid[num][1]]);
   }
   virtual int getNumFaces(){ return 5; }
   virtual MFace getFace(int num)
