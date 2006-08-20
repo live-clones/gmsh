@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.123 2006-08-20 14:12:41 geuzaine Exp $
+# $Id: Makefile,v 1.124 2006-08-20 17:02:28 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -472,8 +472,10 @@ SecondOrder.o: SecondOrder.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Common/Context.h ../DataStr/List.h ../Geo/GFace.h ../Geo/GPoint.h \
   ../Geo/GEntity.h ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h \
-  ../Geo/SBoundingBox3d.h ../Common/SmoothNormals.h ../Common/Message.h \
-  ../Common/OS.h
+  ../Geo/SBoundingBox3d.h ../Common/SmoothNormals.h ../Geo/MRep.h \
+  ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h ../Geo/MVertex.h \
+  ../Geo/MEdge.h ../Geo/MElement.h ../Common/VertexArray.h \
+  ../Common/Message.h ../Common/OS.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 PartitionMesh.o: PartitionMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \

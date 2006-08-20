@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.445 2006-08-20 14:12:40 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.446 2006-08-20 17:02:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1112,12 +1112,12 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_constrained_bgmesh(0, GMSH_SET, WID->mesh_butt[5]->value());
   opt_mesh_points(0, GMSH_SET, WID->mesh_butt[6]->value());
   opt_mesh_lines(0, GMSH_SET, WID->mesh_butt[7]->value());
-  opt_mesh_triangles(0, GMSH_SET, WID->mesh_menu_butt->menu()[0].value());
-  opt_mesh_quadrangles(0, GMSH_SET, WID->mesh_menu_butt->menu()[1].value());
-  opt_mesh_tetrahedra(0, GMSH_SET, WID->mesh_menu_butt->menu()[2].value());
-  opt_mesh_hexahedra(0, GMSH_SET, WID->mesh_menu_butt->menu()[3].value());
-  opt_mesh_prisms(0, GMSH_SET, WID->mesh_menu_butt->menu()[4].value());
-  opt_mesh_pyramids(0, GMSH_SET, WID->mesh_menu_butt->menu()[5].value());
+  opt_mesh_triangles(0, GMSH_SET, WID->mesh_menu_butt->menu()[0].value() ? 1 : 0);
+  opt_mesh_quadrangles(0, GMSH_SET, WID->mesh_menu_butt->menu()[1].value() ? 1 : 0);
+  opt_mesh_tetrahedra(0, GMSH_SET, WID->mesh_menu_butt->menu()[2].value() ? 1 : 0);
+  opt_mesh_hexahedra(0, GMSH_SET, WID->mesh_menu_butt->menu()[3].value() ? 1 : 0);
+  opt_mesh_prisms(0, GMSH_SET, WID->mesh_menu_butt->menu()[4].value() ? 1 : 0);
+  opt_mesh_pyramids(0, GMSH_SET, WID->mesh_menu_butt->menu()[5].value() ? 1 : 0);
   opt_mesh_surfaces_edges(0, GMSH_SET, WID->mesh_butt[8]->value());
   opt_mesh_surfaces_faces(0, GMSH_SET, WID->mesh_butt[9]->value());
   opt_mesh_volumes_edges(0, GMSH_SET, WID->mesh_butt[10]->value());

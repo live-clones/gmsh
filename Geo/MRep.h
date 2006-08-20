@@ -54,7 +54,14 @@ class MRep {
 
  public:
   MRep() : va_lines(0), va_triangles(0), va_quads(0), allElementsVisible(true) {}
-  virtual ~MRep(){}
+  virtual ~MRep(){ destroy(); }
+
+  // destroy everything
+  void destroy(){
+    resetArrays();
+    edges.clear();
+    allElementsVisible = true;
+  }
 
   // generates the edge representation
   virtual void generateEdgeRep() = 0;
