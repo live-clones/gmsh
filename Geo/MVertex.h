@@ -73,7 +73,7 @@ class MVertex{
   inline void setNum(int num) { _num = num; }
 
   // Get ith parameter
-  bool getParameter(int i, double &par){ return false; }
+  virtual bool getParameter(int i, double &par){ return false; }
 
   // IO routines
   void writeMSH(FILE *fp, bool binary=false, double scalingFactor=1.0);
@@ -93,7 +93,7 @@ class MEdgeVertex : public MVertex{
   {
   }
   ~MEdgeVertex(){}
-  bool getParameter(int i, double &par){ par = _u; return true; }
+  virtual bool getParameter(int i, double &par){ par = _u; return true; }
 };
 
 class MFaceVertex : public MVertex{
@@ -105,7 +105,7 @@ class MFaceVertex : public MVertex{
   {
   }
   ~MFaceVertex(){}
-  bool getParameter(int i, double &par){ par = i ? _v : _u; return true; }
+  virtual bool getParameter(int i, double &par){ par = (i ? _v : _u); return true; }
 };
 
 class MVertexLessThanLexicographic{

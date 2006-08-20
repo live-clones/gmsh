@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.99 2006-08-17 21:28:34 geuzaine Exp $
+# $Id: Makefile,v 1.100 2006-08-20 14:12:42 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -130,9 +130,9 @@ OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Element.h ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h ../Graphics/ReadImg.h \
-  ../Common/OS.h ../Common/GmshUI.h ../Graphics/Draw.h ../Fltk/GUI.h \
-  ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
-  ../Fltk/Popup_Button.h
+  ../Common/OS.h ../Common/GmshUI.h ../Graphics/Draw.h \
+  ../Graphics/SelectBuffer.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
+  ../Fltk/Colorbar_Window.h ../Fltk/Popup_Button.h
 # 1 "/Users/geuzaine/.gmsh/Parser//"
 CreateFile.o: CreateFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \

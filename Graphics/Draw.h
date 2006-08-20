@@ -22,11 +22,6 @@
 
 #include "List.h"
 #include "Views.h"
-#include "GVertex.h"
-#include "GEdge.h"
-#include "GFace.h"
-#include "GRegion.h"
-#include <vector>
 
 #define GMSH_RENDER    1
 #define GMSH_SELECT    2
@@ -39,18 +34,6 @@ void InitProjection(int xpick=0, int ypick=0, int wpick=0, int hpick=0);
 void InitPosition(void);
 void InitRenderModel(void);
 
-bool ProcessSelectionBuffer(int entityType, bool multipleSelection,
-			    bool selectMesh, int x, int y, int w, int h, 
-			    std::vector<GVertex*> &vertices,
-			    std::vector<GEdge*> &edges,
-			    std::vector<GFace*> &faces,
-			    std::vector<GRegion*> &regions);
-char SelectEntity(int entityType,
-		  std::vector<GVertex*> &vertices,
-		  std::vector<GEdge*> &edges,
-		  std::vector<GFace*> &faces,
-		  std::vector<GRegion*> &regions);
-
 void Unproject(double x, double y, double p[3], double d[3]);
 void Viewport2World(double win[3], double xyz[3]);
 void World2Viewport(double xyz[3], double win[3]);
@@ -58,13 +41,6 @@ void World2Viewport(double xyz[3], double win[3]);
 unsigned int PaletteContinuous(Post_View * View, double min, double max, double val);
 unsigned int PaletteContinuousLinear(Post_View * v, double min, double max, double val);
 unsigned int PaletteDiscrete(Post_View * View, int nbi, int i);
-
-void HighlightEntity(GEntity *e, bool permanent=false);
-void HighlightEntity(GVertex *v, GEdge *e, GFace *f, GRegion *r, bool permanent=false);
-void HighlightEntityNum(int v, int c, int s, int r, bool permanant=false);
-void ZeroHighlightEntity(GVertex *v, GEdge *c, GFace *s, GRegion *r);
-void ZeroHighlightEntityNum(int v, int c, int s, int r);
-void ZeroHighlight();
 
 void Draw3d(void);
 void Draw2d(void);

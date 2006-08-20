@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.40 2006-08-20 03:44:15 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.41 2006-08-20 14:12:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -91,7 +91,6 @@ MVertex *addEdgeVertex(GFace *f, std::pair<MVertex* , MVertex*> &p, bool linear)
     GPoint pc = f->point(uc, vc);
     v = new MFaceVertex(pc.x(), pc.y(), pc.z(), f, uc, vc);
   }
-
   f->mesh_vertices.push_back(v);
   return v;
 }
@@ -108,13 +107,13 @@ MVertex *addEdgeVertex(GRegion *r, std::pair<MVertex* , MVertex*> &p, bool linea
 
 template<class T, class U>
 void addEdgeVertices(U *ge, std::vector<T*> &elements, bool linear,
-		     std::map<std::pair<MVertex*,MVertex*>, MVertex* > &edges)
+		     std::map<std::pair<MVertex*,MVertex*>, MVertex* > &edgeVertices)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
     for(int j = 0; j < elements[i]->getNumEdges(); j++){
       MEdge e = elements[i]->getEdge(j);
       std::pair<MVertex*, MVertex*> p(e.getMinVertex(), e.getMaxVertex());
-      if(!edges.count(p)) edges[p] = addEdgeVertex(ge, p, linear);
+      if(!edgeVertices.count(p)) edgeVertices[p] = addEdgeVertex(ge, p, linear);
     }
   }
 }
@@ -123,36 +122,40 @@ void addEdgeVertices(U *ge, std::vector<T*> &elements, bool linear,
 
 MVertex *addFaceVertex(GFace *f, std::vector<MVertex*> &p, bool linear)
 {
-  /*
-  MVertex *v;
-  if(linear || e->dim() == 3){
+  //MVertex *v;
+  if(linear){
     // just interpolate linear between the 4
   }
-  else if(e->dim() == 2){
-    xyz2uv();
-    xyz2uv();
-    xyz2uv();
-    xyz2uv();
+  else{
+    //xyz2uv();
     // interpolate
   }
-  e->mesh_vertices.push_back(v);
-  */
+  //f->mesh_vertices.push_back(v);
   return 0;
 }
 
-template<class T>
-void addFaceVertices(GEntity *e, std::vector<T*> &elements)
+MVertex *addFaceVertex(GRegion *r, std::vector<MVertex*> &p, bool linear)
 {
+  //MVertex *v;
+  // just interpolate linear between the 4
+  //r->mesh_vertices.push_back(v);
+  return 0;
 }
 
-// Creation of middle-volume vertices
-
-MVertex *addVolumeVertex(GEntity *ge, MElement *elem)
+template<class T, class U>
+void addFaceVertices(U *ge, std::vector<T*> &elements, bool linear,
+		     std::map<std::vector<MVertex*>, MVertex* > &faceVertices)
 {
-  SPoint3 pc = elem->barycenter();
-  MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
-  ge->mesh_vertices.push_back(v);
-  return v;
+  for(unsigned int i = 0; i < elements.size(); i++){
+    for(int j = 0; j < elements[i]->getNumFaces(); j++){
+      MFace f = elements[i]->getFace(j);
+      if(f.getNumVertices() == 4){
+	std::vector<MVertex*> p;
+	f.getOrderedVertices(p);
+	if(!faceVertices.count(p)) faceVertices[p] = addFaceVertex(ge, p, linear);
+      }
+    }
+  }
 }
 
 // Main routines
@@ -174,28 +177,30 @@ void Degre2(int dim)
 
   //bool linear = true;
   bool linear = false;
-  std::map<std::pair<MVertex*,MVertex*>, MVertex* > edges;
-  std::map<std::vector<MVertex*>, MVertex* > quadFaces;
+  std::map<std::pair<MVertex*,MVertex*>, MVertex* > edgeVertices;
+  std::map<std::vector<MVertex*>, MVertex* > faceVertices;
 
   // loop over all elements and create unique edges and faces and
   // their associated new vertices
   for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); ++it){
-    addEdgeVertices(*it, (*it)->lines, linear, edges);
+    addEdgeVertices(*it, (*it)->lines, linear, edgeVertices);
   }
   for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); ++it){
-    addEdgeVertices(*it, (*it)->triangles, linear, edges);
-    addEdgeVertices(*it, (*it)->quadrangles, linear, edges);
-    //addFaceVertices(*it, (*it)->quadrangles, linear);
+    addEdgeVertices(*it, (*it)->triangles, linear, edgeVertices);
+    addEdgeVertices(*it, (*it)->quadrangles, linear, edgeVertices);
+    addFaceVertices(*it, (*it)->quadrangles, linear, faceVertices);
   }
   for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); ++it){
-    addEdgeVertices(*it, (*it)->tetrahedra, linear, edges);
-    addEdgeVertices(*it, (*it)->hexahedra, linear, edges);
-    addEdgeVertices(*it, (*it)->prisms, linear, edges);
-    addEdgeVertices(*it, (*it)->pyramids, linear, edges);
-//     addFaceVertices(*it, (*it)->hexahedra, linear);
-//     addFaceVertices(*it, (*it)->prisms, linear);
-//     addFaceVertices(*it, (*it)->pyramids, linear);
+    addEdgeVertices(*it, (*it)->tetrahedra, linear, edgeVertices);
+    addEdgeVertices(*it, (*it)->hexahedra, linear, edgeVertices);
+    addEdgeVertices(*it, (*it)->prisms, linear, edgeVertices);
+    addEdgeVertices(*it, (*it)->pyramids, linear, edgeVertices);
+    addFaceVertices(*it, (*it)->hexahedra, linear, faceVertices);
+    addFaceVertices(*it, (*it)->prisms, linear, faceVertices);
+    addFaceVertices(*it, (*it)->pyramids, linear, faceVertices);
   }
+
+  printf("%d edges, %d faces\n", edgeVertices.size(), faceVertices.size());
   
   // loop on all elements again and create one new element from each
   // old one, querying the edge/face maps to get the extra vertices

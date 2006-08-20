@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.444 2006-08-19 19:46:07 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.445 2006-08-20 14:12:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -30,6 +30,7 @@
 #include "ExtractContour.h"
 #include "Mesh.h"
 #include "Draw.h"
+#include "SelectBuffer.h"
 #include "Views.h"
 #include "CreateFile.h"
 #include "OpenFile.h"

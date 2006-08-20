@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.97 2006-08-19 18:48:06 geuzaine Exp $
+# $Id: Makefile,v 1.98 2006-08-20 14:12:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -207,16 +207,16 @@ gmshFace.o: gmshFace.cpp gmshModel.h GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h \
   GEdge.h SVector3.h SPoint2.h MElement.h MEdge.h MFace.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h GFace.h \
-  Pair.h GRegion.h ../Common/SmoothNormals.h gmshEdge.h gmshVertex.h \
-  ../Mesh/Mesh.h ../DataStr/Tree.h ../DataStr/avl.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Edge.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h gmshFace.h \
-  ../Mesh/Interpolation.h ../Mesh/Vertex.h ../Mesh/Mesh.h CAD.h \
-  ExtrudeParams.h Geo.h ../Mesh/Create.h ../Mesh/Vertex.h ../Mesh/Mesh.h \
-  ../Mesh/Utils.h ../Mesh/Vertex.h ../Mesh/Mesh.h ../Common/Message.h
+  Pair.h GRegion.h ../Common/SmoothNormals.h gmshVertex.h ../Mesh/Mesh.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
+  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
+  ../Mesh/Matrix.h gmshEdge.h gmshFace.h ../Mesh/Interpolation.h \
+  ../Mesh/Vertex.h ../Mesh/Mesh.h CAD.h ExtrudeParams.h Geo.h \
+  ../Mesh/Create.h ../Mesh/Vertex.h ../Mesh/Mesh.h ../Mesh/Utils.h \
+  ../Mesh/Vertex.h ../Mesh/Mesh.h ../Common/Message.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 gmshRegion.o: gmshRegion.cpp gmshModel.h GModel.h GVertex.h GEntity.h \
   Range.h SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h \

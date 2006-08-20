@@ -20,6 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <vector>
 #include "MVertex.h"
 #include "SVector3.h"
 #include "Numeric.h"
@@ -50,6 +51,12 @@ class MFace {
   }
   inline int getNumVertices() const { return _v[3] ? 4 : 3; }
   inline MVertex *getVertex(int i) const { return _v[i]; }
+  void getOrderedVertices(std::vector<MVertex*> &verts)
+  {
+    for(int i = 0; i < getNumVertices(); i++)
+      verts.push_back(getVertex(i));
+    std::sort(verts.begin(), verts.end());
+  }
   SVector3 normal()
   {
     double n[3];

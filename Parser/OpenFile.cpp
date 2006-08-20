@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.114 2006-08-18 17:49:35 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.115 2006-08-20 14:12:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -38,6 +38,7 @@
 #if defined(HAVE_FLTK)
 #include "GmshUI.h"
 #include "Draw.h"
+#include "SelectBuffer.h"
 #include "GUI.h"
 extern GUI *WID;
 void UpdateViewsInGUI();
