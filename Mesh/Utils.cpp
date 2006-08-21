@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.32 2006-07-25 12:08:24 remacle Exp $
+// $Id: Utils.cpp,v 1.33 2006-08-21 13:32:42 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -418,12 +418,16 @@ void XYZtoUV(Surface * s, double X, double Y, double Z, double *U, double *V,
 	  (jac[0][1] * (X - P.Pos.X) + jac[1][1] * (Y - P.Pos.Y) +
 	   jac[2][1] * (Z - P.Pos.Z));
 	
-	err = DSQR(Unew - *U) + DSQR(Vnew - *V);
+	//	err = DSQR(Unew - *U) + DSQR(Vnew - *V);
+	// A BETTER TEST !! (JFR/AUG 2006)
+	err = DSQR(X - P.Pos.X) + DSQR(Y - P.Pos.Y) + + DSQR(Z - P.Pos.Z);
 	
 	iter++;
 	*U = Unew;
 	*V = Vnew;
       }
+
+
 
       if(iter < MaxIter && err <= Precision &&
 	 Unew <= umax && Vnew <= vmax && 

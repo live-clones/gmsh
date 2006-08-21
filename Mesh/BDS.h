@@ -227,6 +227,7 @@ class BDS_Point
 public:
   double X,Y,Z; // Real COORDINATES
   double u,v;   // Parametric COORDINATES
+  bool config_modified;
   int iD;
   BDS_GeomEntity *g;
   std::list<BDS_Edge*> edges;
@@ -257,7 +258,7 @@ public:
   void getTriangles(std::list<BDS_Triangle *> &t) const; 	
   void compute_curvature();
   BDS_Point(int id, double x=0, double y=0, double z=0)
-    : radius_of_curvature(1.e22),X(x),Y(y),Z(z),u(0),v(0),iD(id),g(0)
+    : radius_of_curvature(1.e22),X(x),Y(y),Z(z),u(0),v(0),config_modified(true),iD(id),g(0)
   {	    
   }
 };
@@ -702,13 +703,12 @@ public:
   // 2D operators
   BDS_Edge *recover_edge(int p1, int p2);
   bool swap_edge(BDS_Edge *, const BDS_SwapEdgeTest &theTest);
-  bool collapse_edge(BDS_Edge *, BDS_Point*, const double eps);
+  bool collapse_edge_parametric(BDS_Edge *, BDS_Point*);
   void snap_point(BDS_Point* , BDS_Mesh *geom = 0);
   bool smooth_point(BDS_Point* , BDS_Mesh *geom = 0);
   bool smooth_point_parametric(BDS_Point * p, GFace *gf);
   bool move_point(BDS_Point *p , double X, double Y, double Z);
   void split_edge(BDS_Edge *, BDS_Point *);
-  bool delaunay_insertion ( int num , double x, double y,double z );
   bool edge_constraint    ( BDS_Point *p1, BDS_Point *p2 );
   // Global operators
   void classify(double angle, int nb = -1); 
@@ -724,6 +724,7 @@ public:
   void applyOptimizationPatterns();
 };
 
+void outputScalarField(std::list < BDS_Triangle * >t, const char *fn);
 void recur_tag(BDS_Triangle * t, BDS_GeomEntity * g);
 bool project_point_on_a_list_of_triangles(BDS_Point *p , const std::list<BDS_Triangle*> &t,
 					  double &X, double &Y, double &Z);	   

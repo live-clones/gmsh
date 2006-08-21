@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.6 2006-08-19 08:26:47 remacle Exp $
+// $Id: meshGFace.cpp,v 1.7 2006-08-21 13:32:42 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -219,6 +219,7 @@ extern double F_LC_ANALY (double xx, double yy, double zz);
 
 double NewGetLc ( BDS_Point *p  )
 {
+  return p->lc();
   return  F_LC_ANALY(p->X,p->Y,p->Z);
   if(BGMExists())
     {	    
@@ -248,6 +249,8 @@ double NewGetLc ( BDS_Edge *e  )
 bool edgeSwapTest(BDS_Edge *e)
 {
    BDS_Point *op[2];
+
+   if (!e->p1->config_modified && ! e->p2->config_modified) return false;   
 
   if (e->numfaces() != 2)return false;
 
@@ -287,32 +290,94 @@ bool edgeSwapTest(BDS_Edge *e)
 }
 
 
-void RefineMesh ( GFace *gf, BDS_Mesh &m )
+void OptimizeMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
+{
+  // optimize
+  for(int i = 0 ; i < NIT ; i++){
+    {
+      std::set<BDS_Point*,PointLessThan> PTS (m.points);
+      std::set<BDS_Point*,PointLessThan>::iterator itp = PTS.begin();
+      while (itp != PTS.end())
+	{
+	  std::list < BDS_Triangle * >t;
+	  (*itp)->getTriangles(t);
+	  if ((t.size()==3 && (*itp)->edges.size() == 3)||
+	      (t.size()==4 && (*itp)->edges.size() == 4))
+	    m.collapse_edge_parametric ( *(*itp)->edges.begin(), (*itp));
+	  else
+	    m.smooth_point_parametric(*itp,gf);
+	  ++itp;
+	}
+    }
+    {
+      // swap edges that provide a better configuration
+      std::list<BDS_Edge *> temp (m.edges);
+      std::list<BDS_Edge*>::iterator it = temp.begin();
+      while (it != temp.end())
+	{
+	  if (!(*it)->deleted && (*it)->numfaces() == 2)
+	    {
+	      BDS_Point *op[2];
+	      (*it)->oppositeof(op);
+	      
+	      bool c1 = (op[0]-> edges.size() == 5 &&  op[1]-> edges.size() == 5 );
+	      bool c2 =  ((*it)->p1-> edges.size() == 7 &&  (*it)->p2-> edges.size() == 7); 
+	      if ( c1 &&  c2 ) 
+		m.swap_edge ( *it , BDS_SwapEdgeTestParametric());
+	    }	
+	  ++it;
+	}
+    }
+    m.cleanup();  
+  }
+}
+
+void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 {
   int NUMP = 0;
   int IT =0;
 
   int MAXNP = m.MAXPOINTNUMBER;
 
+  clock_t t1 = clock();
+
+  // computecharacteristic lengths using mesh edge spacing
+  
+  std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
+  while (itp != m.points.end())
+    {
+      std::list<BDS_Edge*>::iterator it  = (*itp)->edges.begin();
+      std::list<BDS_Edge*>::iterator ite = (*itp)->edges.end();
+      double L = 1.e245;
+      while(it!=ite){
+	double l = (*it)->length();
+	if (l<L && (*it)->g && (*it)->g->classif_degree == 1)L=l;
+	++it;
+      }
+      (*itp)->lc() = L;
+      ++itp;
+    }
+
+
   while (1)
     {
-      double stot = 0;
-      std::list<BDS_Triangle *>::iterator ittt = m.triangles.begin();
-      while (ittt!= m.triangles.end())
-	{
-	  if (!(*ittt)->deleted)
-	    {
-	      BDS_Point *pts[3];
-	      (*ittt)->getNodes(pts);
-	      stot += fabs( surface_triangle_param(pts[0], pts[1], pts[2]));
-	    }
-	  ++ittt;
-	}
+    //   double stot = 0;
+//       std::list<BDS_Triangle *>::iterator ittt = m.triangles.begin();
+//       while (ittt!= m.triangles.end())
+// 	{
+// 	  if (!(*ittt)->deleted)
+// 	    {
+// 	      BDS_Point *pts[3];
+// 	      (*ittt)->getNodes(pts);
+// 	      stot += fabs( surface_triangle_param(pts[0], pts[1], pts[2]));
+// 	    }
+// 	  ++ittt;
+// 	}
       
       std::list<BDS_Edge *> temp (m.edges);
       std::list<BDS_Edge*>::iterator it = temp.begin();
       int nb_split=0;
-      int nb_short=0;
+      int nb_smooth=0;
       int nb_collaps=0;
       int nb_swap=0;
 
@@ -323,6 +388,8 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m )
 	{
 	  if (!(*it)->deleted)
 	    {
+	      (*it)->p1->config_modified = false;
+	      (*it)->p2->config_modified = false;
 	      double lone = NewGetLc ( *it);
 	      maxL = std::max(maxL,lone);
 	      minL = std::min(minL,lone);
@@ -330,8 +397,8 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m )
 	  ++it;
 	}
 
-      Msg(INFO,"stot %22.15E minL %g maxL %g",stot,minL,maxL);
-      if ((minL > 0.2 && maxL < 1.3) || IT > 7)break;
+      Msg(STATUS2," %d triangles : conv %g -> %g (%g sec)",m.triangles.size(),maxL,1.5,(double)(clock()-t1)/CLOCKS_PER_SEC);
+      if ((minL > 0.2 && maxL < 1.5) || IT > NIT)break;
 
 
       it = temp.begin();
@@ -340,17 +407,29 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m )
 	  if (!(*it)->deleted)
 	    {
 	      double lone = NewGetLc ( *it);
-	      if ((*it)->numfaces() == 2 && (lone >  1.4))
+	      if ((*it)->numfaces() == 2 && (lone >  1.3))
 		{
 		  BDS_Point *mid ;
 		  double coord = 0.5;
 		  mid  = m.add_point(++m.MAXPOINTNUMBER,
 				     coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
 				     coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v,gf);
+		  mid->lc() = 0.5 * ( (*it)->p1->lc() +  (*it)->p2->lc() );
 		  m.split_edge ( *it, mid );
 		  nb_split++;
 		} 
 	    }
+	  ++it;
+	}
+
+      // swap edges that provide a better configuration
+      temp = m.edges;
+      it = temp.begin();
+      while (it != temp.end())
+	{
+	  if (!(*it)->deleted && edgeSwapTest(*it))
+	    if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))
+	      nb_swap++;
 	  ++it;
 	}
 
@@ -360,18 +439,15 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m )
       while (it != temp.end())
 	{
 	  double lone = NewGetLc ( *it);
-	  if (!(*it)->deleted && (*it)->numfaces() == 2 && lone < 0.7 )
+	  if (!(*it)->deleted && (*it)->numfaces() == 2 && lone < 0.6 )
 	    {
 	      bool res = false;
 	      if ( (*it)->p1->iD > MAXNP )
-		res =m.collapse_edge ( *it, (*it)->p1, 0);
+		res =m.collapse_edge_parametric ( *it, (*it)->p1);
 	      else if ( (*it)->p2->iD > MAXNP )
-		res =m.collapse_edge ( *it, (*it)->p2, 0);
-
+		res =m.collapse_edge_parametric ( *it, (*it)->p2);
 	      if (res)
 		nb_collaps ++;
-	      else
-		nb_short++;
 	    }
 	  ++it;
 	}
@@ -387,35 +463,21 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m )
 	  ++it;
 	}
       // smooth resulting mesh
-      //      if (IT % 4 == 0 )
+      //if (IT % 4 == 0 )
 	{
 	  std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
 	  while (itp != m.points.end())
 	    {
-	      m.smooth_point_parametric(*itp,gf);
+
+	      if(m.smooth_point_parametric(*itp,gf))
+		nb_smooth ++;
 	      ++itp;
 	    }
 	}
-      IT++;
-      m.cleanup();  
-    }
-
-  // optimize
-  {
-    std::set<BDS_Point*,PointLessThan> PTS (m.points);
-    std::set<BDS_Point*,PointLessThan>::iterator itp = PTS.begin();
-    while (itp != PTS.end())
-      {
-	std::list < BDS_Triangle * >t;
-	(*itp)->getTriangles(t);
-	if ((t.size()==3 && (*itp)->edges.size() == 3)||
-	    (t.size()==4 && (*itp)->edges.size() == 4))
-	  m.collapse_edge ( *(*itp)->edges.begin(), (*itp), 0);
-	else
-	  m.smooth_point_parametric(*itp,gf);
-	++itp;
-      }
-  }
+	IT++;
+	//	Msg(INFO," %d split %d swap %d collapse %d smooth",nb_split,nb_swap,nb_collaps,nb_smooth);
+	m.cleanup();  
+    }  
 }
 
 void OldMeshGenerator ( GFace *gf,
@@ -542,7 +604,7 @@ void OldMeshGenerator ( GFace *gf,
 }
 
 
-void recover_medge ( BDS_Mesh *m, GEdge *ge)
+bool recover_medge ( BDS_Mesh *m, GEdge *ge)
 {
 
   m->add_geom (ge->tag(), 1);
@@ -550,10 +612,12 @@ void recover_medge ( BDS_Mesh *m, GEdge *ge)
 
   if (ge->mesh_vertices.size() == 0)
     {
-      MVertex *vstart = *(ge->getBeginVertex()->mesh_vertices.begin());
-      MVertex *vend   = *(ge->getEndVertex()->mesh_vertices.begin());
+
+      MVertex   *vstart = *(ge->getBeginVertex()->mesh_vertices.begin());
+      MVertex   *vend   = *(ge->getEndVertex()->mesh_vertices.begin());
       BDS_Point *pstart = m->find_point(vstart->getNum());
-      BDS_Point *pend = m->find_point(vend->getNum());
+      BDS_Point *pend   = m->find_point(vend->getNum());
+
       if(!pstart->g)
 	{
 	  m->add_geom (vstart->getNum(), 0);
@@ -568,8 +632,12 @@ void recover_medge ( BDS_Mesh *m, GEdge *ge)
 	}
       BDS_Edge * e = m->recover_edge ( vstart->getNum(), vend->getNum());
       if (e)e->g = g;
-      else throw;
-      return;
+      else {
+	Msg(GERROR,"Unable to recover an edge %g %g && %g %g (size 0)",vstart->x(),vstart->y(), vend->x(),vend->y());
+	Msg(GERROR,"Mesh with %d triangles",m->triangles.size());
+	return false;
+      }
+      return true;
     }
 
 
@@ -594,13 +662,19 @@ void recover_medge ( BDS_Mesh *m, GEdge *ge)
       vend   = ge->mesh_vertices[i];
       e = m->recover_edge ( vstart->getNum(), vend->getNum());
       if (e)e->g = g;
-      else throw;
+      else {
+	Msg(GERROR,"Unable to recover an edge %g %g && %g %g (%d/*d)",vstart->x(),vstart->y(), vend->x(),vend->y(),i,ge->mesh_vertices.size());
+	return false;
+      }
     }    
   vstart = vend;
   vend   = *(ge->getEndVertex()->mesh_vertices.begin());
   e = m->recover_edge ( vstart->getNum(), vend->getNum());
   if (e)e->g = g;
-  else throw;
+  else {
+    Msg(GERROR,"Unable to recover an edge %g %g && %g %g",vstart->x(),vstart->y(), vend->x(),vend->y());
+    return false;
+  }
 
   BDS_Point *pend = m->find_point(vend->getNum());
   if(!pend->g)
@@ -609,7 +683,7 @@ void recover_medge ( BDS_Mesh *m, GEdge *ge)
       BDS_GeomEntity *g0 = m->get_geom(vend->getNum(), 0);
       pend->g = g0;
     }
-
+  return true;
 }
 
 
@@ -619,6 +693,8 @@ void recover_medge ( BDS_Mesh *m, GEdge *ge)
 // and surfaces
 void gmsh2DMeshGenerator ( GFace *gf )
 {
+
+  //  if(gf->tag() == 138|| gf->tag() == 196|| gf->tag() == 200|| gf->tag() == 262) return;
 
   std::set<MVertex*>all_vertices;
   std::map<int, MVertex*>numbered_vertices;
@@ -689,7 +765,7 @@ void gmsh2DMeshGenerator ( GFace *gf )
     }
 
   /// Increase the size of the bounding box by 20 %
-  bbox *= 1.2;
+  bbox *= 1.5;
   /// add 4 points than encloses the domain
   /// Use negative number to distinguish thos fake vertices
   MVertex *bb[4];
@@ -734,7 +810,10 @@ void gmsh2DMeshGenerator ( GFace *gf )
   for ( int ip = 0 ; ip<4 ; ip++ ) delete bb[ip];
 
   // Recover the boundary edges
+  // and compute characteristic lenghts using mesh edge spacing
 
+  BDS_GeomEntity CLASS_F (1,2);
+   
   it = edges.begin();
   while(it != edges.end())
     {
@@ -748,14 +827,12 @@ void gmsh2DMeshGenerator ( GFace *gf )
       ++it;
     }
 
-  Msg(INFO,"Boundary Edges recovered for surface %d",gf->tag());
-
+  //  Msg(INFO,"Boundary Edges recovered for surface %d",gf->tag());
   // Look for an edge that is on the boundary for which one of the
   // two neighbors has a negative number node. The other triangle
   // is inside the domain and, because all edges were recovered, 
   // triangles inside the domain can be recovered using a  simple
   // recursive algorithm
-  BDS_GeomEntity CLASS_F (1,2);
   {
     std::list<BDS_Edge*>::iterator ite = m->edges.begin();
     while (ite != m->edges.end())
@@ -814,9 +891,11 @@ void gmsh2DMeshGenerator ( GFace *gf )
   m->del_point(m->find_point(-3));
   m->del_point(m->find_point(-4));
 
-  // start mesh generation
+  // goto hhh;
+   // start mesh generation
 
-  RefineMesh (gf,*m);
+  RefineMesh (gf,*m,27);
+  OptimizeMesh (gf,*m,2);
 
   // fill the small gmsh structures
 
@@ -827,7 +906,8 @@ void gmsh2DMeshGenerator ( GFace *gf )
 	BDS_Point *p = *itp;
 	if (numbered_vertices.find(p->iD)  == numbered_vertices.end())
 	  {
-	    MVertex *v = new MFaceVertex (p->X,p->Y,p->Z,gf,p->u,p->v);
+	    //MVertex *v = new MFaceVertex (p->X,p->Y,p->Z,gf,p->u,p->v);
+	    MVertex *v = new MFaceVertex (p->u,p->v,0,gf,p->u,p->v);
 	    numbered_vertices[p->iD]=v;
 	    gf->mesh_vertices.push_back(v);
 	  }
@@ -854,13 +934,13 @@ void gmsh2DMeshGenerator ( GFace *gf )
 
   // delete the mesh
 
+  //  outputScalarField(m->triangles, "lc.pos");
   delete m;
+   
 
   fromParametricToCartesian p2c ( gf );
   std::for_each(all_vertices.begin(),all_vertices.end(),p2c);    
-  //  std::for_each(gf->mesh_vertices.begin(),gf->mesh_vertices.end(),p2c);    
-  
- 
+  std::for_each(gf->mesh_vertices.begin(),gf->mesh_vertices.end(),p2c);    
 }
   
 
@@ -881,7 +961,7 @@ void meshGFace :: operator() (GFace *gf)
   if(gf->geomType() == GEntity::DiscreteSurface) return;
 
   // Send a messsage to the GMSH environment
-  Msg(INFO, "Meshing surface %d", gf->tag());
+  Msg(STATUS2, "Meshing surface %d", gf->tag());
 
   // destroy the mesh if it exists
   deMeshGFace dem;
@@ -902,10 +982,13 @@ void meshGFace :: operator() (GFace *gf)
 
   Msg(DEBUG1, "points were put in parametric coords ...");
 
-
-  gmsh2DMeshGenerator ( gf ) ;
-
-
+  try
+    {
+      gmsh2DMeshGenerator ( gf ) ;
+    }
+  catch (...)
+    {
+    }
 
   Msg(DEBUG1, "type %d %d triangles generated, %d internal vertices",
       gf->geomType(),gf->triangles.size(),gf->mesh_vertices.size());

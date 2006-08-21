@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.57 2006-08-19 20:51:44 geuzaine Exp $
+// $Id: BDS.cpp,v 1.58 2006-08-21 13:32:42 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -470,7 +470,7 @@ int Intersect_Edges_2d(double x1, double y1, double x2, double y2,
   rhs[1] = y3 - y1;
   if(!sys2x2(mat, rhs, x))
     return 0;
-  if(x[0] > 0.0 && x[0] < 1.0 && x[1] > 0.0 && x[1] < 1.0)
+  if(x[0] >= 0.0 && x[0] <= 1.0 && x[1] >= 0.0 && x[1] <= 1.0)
     return 1;
   return 0;
 }
@@ -496,6 +496,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2)
       while (it!=edges.end())
 	{
 	  e = (*it);
+	  //	  if (e->p1->iD >= 0 && e->p2->iD >= 0)Msg(INFO," %d %d %g %g - %g %g",e->p1->iD,e->p2->iD,e->p1->u,e->p1->v,e->p2->u,e->p2->v);
 	  if (!e->deleted && e->p1 != p1 && e->p1 != p2 && e->p2 != p1 && e->p2 != p2)
 	    if(Intersect_Edges_2d(e->p1->X, e->p1->Y,
 				  e->p2->X, e->p2->Y,
@@ -1586,6 +1587,12 @@ void BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
   triangles.push_back(t2);
   triangles.push_back(t3);
   triangles.push_back(t4);
+
+  // config has changed
+  p1->config_modified = true;
+  p2->config_modified = true;
+  op[0]->config_modified = true;
+  op[1]->config_modified = true;
 }
 
 bool BDS_SwapEdgeTestNonPlanar::operator () (BDS_Edge *e,
@@ -1672,7 +1679,7 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
   //  return false;
   if(e->deleted)
     return false;
-
+  
   int nbFaces = e->numfaces();
   if(nbFaces != 2)
     return false;
@@ -1750,11 +1757,17 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
 
   triangles.push_back(t1);
   triangles.push_back(t2);
+
+  p1->config_modified = true;
+  p2->config_modified = true;
+  op[0]->config_modified = true;
+  op[1]->config_modified = true;
+
   return true;
 }
 
 
-bool BDS_Mesh::collapse_edge(BDS_Edge * e, BDS_Point * p, const double eps)
+bool BDS_Mesh::collapse_edge_parametric(BDS_Edge * e, BDS_Point * p)
 {
 
   if(e->numfaces() != 2)
@@ -1827,6 +1840,7 @@ bool BDS_Mesh::collapse_edge(BDS_Edge * e, BDS_Point * p, const double eps)
     std::list < BDS_Edge * >::iterator eit = edges.begin();
     std::list < BDS_Edge * >::iterator eite = edges.end();
     while(eit != eite) {
+      (*eit)->p1->config_modified = (*eit)->p2->config_modified = true; 
       ept[0][kk] = ((*eit)->p1 == p) ? o->iD : (*eit)->p1->iD;
       ept[1][kk] = ((*eit)->p2 == p) ? o->iD : (*eit)->p2->iD;
       egs[kk++] = (*eit)->g;
@@ -1994,6 +2008,8 @@ void BDS_Mesh::snap_point(BDS_Point * p, BDS_Mesh * geom_mesh)
 bool BDS_Mesh::smooth_point(BDS_Point * p, BDS_Mesh * geom_mesh)
 {
 
+
+
   if(p->g && p->g->classif_degree <= 1)
     return false;
   //  if(!p->g->surf)
@@ -2048,11 +2064,13 @@ bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS
 bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)
 {
 
+  if (!p->config_modified)return false;
   if(p->g && p->g->classif_degree <= 1)
     return false;
 
   double U = 0;
   double V = 0;
+  double LC = 0;
 
   std::list < BDS_Edge * >::iterator eit = p->edges.begin();
   while(eit != p->edges.end()) {
@@ -2060,11 +2078,13 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)
     BDS_Point *op = ((*eit)->p1 == p) ? (*eit)->p2 : (*eit)->p1;
     U += op->u;
     V += op->v;
+    LC += op->lc();
     ++eit;
   }
 
   U /= p->edges.size();
   V /= p->edges.size();
+  LC /= p->edges.size();
 
   std::list < BDS_Triangle * >ts;
   p->getTriangles(ts);
@@ -2081,6 +2101,7 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)
   GPoint gp = gf->point(U,V);
   p->u = U;
   p->v = V;
+  p->lc() = LC;
   p->X = gp.x();
   p->Y = gp.y();
   p->Z = gp.z();
@@ -2198,23 +2219,6 @@ void BDS_Mesh::compute_metric_edge_lengths(const BDS_Metric & metric)
   // printf("end computation of metric lengths\n");
 }
 
-
-void BDS_Mesh::applyOptimizationPatterns()
-{
-  std::set<BDS_Point*, PointLessThan>::iterator it   = points.begin();
-  std::set<BDS_Point*, PointLessThan>::iterator ite  = points.end();
-  while (it != ite)
-    {
-      if ((*it)->edges.size() == 3 && (*it)->g->classif_degree == 2)
-	{
-	  BDS_Edge *e = *((*it)->edges.begin());
-	  if (!e->deleted)collapse_edge ( e , *it , .1);
-	}
-      ++it;
-    }
-}
-
-
 int BDS_Mesh::adapt_mesh(const BDS_Metric & metric, bool smooth,
                          BDS_Mesh * geom_mesh)
 {
@@ -2265,16 +2269,16 @@ int BDS_Mesh::adapt_mesh(const BDS_Metric & metric, bool smooth,
       {
 	double length = (*it)->length();
 	if (!(*it)->deleted && length < (*it)->target_length * 0.7 ){
-	  if (nb_modif %2 )
-	    {
-	      if (collapse_edge (*it, (*it)->p1, 0.1 ))
-		nb_modif++;
-	    }
-	  else
-	    {
-	      if (collapse_edge (*it, (*it)->p2, 0.1 ))
-		nb_modif++;
-	    }
+// 	  if (nb_modif %2 )
+// 	    {
+// 	      if (collapse_edge (*it, (*it)->p1, 0.1 ))
+// 		nb_modif++;
+// 	    }
+// 	  else
+// 	    {
+// 	      if (collapse_edge (*it, (*it)->p2, 0.1 ))
+// 		nb_modif++;
+// 	    }
 	}
 	++it;
       }
@@ -2332,7 +2336,6 @@ int BDS_Mesh::adapt_mesh(const BDS_Metric & metric, bool smooth,
   
   Msg(INFO,"%d snaps have succeeded , %d have failed\n",SNAP_SUCCESS,SNAP_FAILURE);
   // outputScalarField (triangles,"b.pos");
-   applyOptimizationPatterns(); // FIXME: this is buggy
   cleanup();  
   return nb_modif;
 }

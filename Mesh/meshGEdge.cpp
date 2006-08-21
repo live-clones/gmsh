@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.12 2006-08-19 08:26:47 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.13 2006-08-21 13:32:42 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -49,12 +49,12 @@ double F_Lc_bis(double t)
   const double fact = (t-t_begin)/(t_end-t_begin);
   double lc_here = lc_begin + fact * (lc_end-lc_begin);
   SVector3 der = _myGEdge -> firstDer(t) ;
-  const double d = norm(der);
+  const double d = norm(der)/CTX.mesh.lc_factor;
 
   // TESTTTT
   GPoint points = _myGEdge -> point(t) ;      
-  double l_bgm = F_LC_ANALY(points.x(),points.y(),points.z()) ;
-  lc_here = l_bgm;
+  //  double l_bgm = F_LC_ANALY(points.x(),points.y(),points.z()) ;
+  //  lc_here = l_bgm;
 
   if(CTX.mesh.bgmesh_type == ONFILE) {
     GPoint point = _myGEdge -> point(t) ;      
