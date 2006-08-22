@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.213 2006-08-19 20:44:51 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.214 2006-08-22 17:40:54 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -3174,13 +3174,13 @@ has the same meaning as in the ASCII file format.
 @item @var{nodes-binary}
 is the list of nodes in binary form, i.e., a array of
 @var{number-of-nodes} * (4 + 3 * @var{data-size}) bytes. For each node,
-the first 4 bytes contain the node number, the next (3 *
+the first 4 bytes contain the node number and the next (3 *
 @var{data-size}) bytes contain the three floating point coordinates.
 
 Here is a pseudo C code to write @var{nodes-binary}:
 @example
 for(i = 0; i < number_of_nodes; i++)@{
-  fwrite(&num, sizeof(int), 1, file);
+  fwrite(&num_i, sizeof(int), 1, file);
   double xyz[3] = @{node_i_x, node_i_y, node_i_z@};
   fwrite(&xyz, sizeof(double), 3, file);
 @}
@@ -3215,8 +3215,8 @@ with the 3 standard tags (the physical and elementary regions, and the
 mesh partition):
 @example
 for(i = 0; i < number_of_triangles; i++)@{
-  int data[7] = @{num, physical, elementary, partition, 
-                 node_1, node_2, node_3@};
+  int data[7] = @{num_i, physical, elementary, partition, 
+                 node_i_1, node_i_2, node_i_3@};
   fwrite(data, sizeof(int), 7, file);
 @}
 @end example
