@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.181 2006-08-20 03:44:15 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.182 2006-08-22 01:58:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -818,16 +818,16 @@ void Draw_Mesh()
     int status = GMODEL->getMeshStatus();
     if(CTX.mesh.changed) {
       Msg(DEBUG, "Mesh has changed: reinitializing drawing data");
-      if(status >= 1)
+      if(status >= 1 && CTX.mesh.changed & ENT_LINE)
 	std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), initMeshGEdge());
-      if(status >= 2){
+      if(status >= 2 && CTX.mesh.changed & ENT_SURFACE){
 	if(GMODEL->normals) delete GMODEL->normals;
 	GMODEL->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
 	if(CTX.mesh.smooth_normals)
 	  std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), initSmoothNormalsGFace());
 	std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), initMeshGFace());
       }
-      if(status >= 3)
+      if(status >= 3 && CTX.mesh.changed & ENT_VOLUME)
 	std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), initMeshGRegion());
     }
     if(status >= 0)

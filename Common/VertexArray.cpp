@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.12 2006-08-16 05:25:22 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.13 2006-08-22 01:58:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -54,44 +54,62 @@ int VertexArray::n()
   return List_Nbr(vertices) / 3;
 }
 
+template<class T>
+inline void List_Add_3(List_T * liste, T *data1, T *data2, T *data3)
+{
+  liste->n += 3;
+  List_Realloc(liste, liste->n);
+  liste->isorder = 0;
+  T* dest1 = (T*)&liste->array[(liste->n - 3) * liste->size];
+  T* dest2 = (T*)&liste->array[(liste->n - 2) * liste->size];
+  T* dest3 = (T*)&liste->array[(liste->n - 1) * liste->size];
+  *dest1 = *data1;
+  *dest2 = *data2;
+  *dest3 = *data3;
+}
+
+template<class T>
+inline void List_Add_4(List_T * liste, T *data1, T *data2, T *data3, T *data4)
+{
+  liste->n += 4;
+  List_Realloc(liste, liste->n);
+  liste->isorder = 0;
+  T* dest1 = (T*)&liste->array[(liste->n - 4) * liste->size];
+  T* dest2 = (T*)&liste->array[(liste->n - 3) * liste->size];
+  T* dest3 = (T*)&liste->array[(liste->n - 2) * liste->size];
+  T* dest4 = (T*)&liste->array[(liste->n - 1) * liste->size];
+  *dest1 = *data1;
+  *dest2 = *data2;
+  *dest3 = *data3;
+  *dest4 = *data4;
+}
+
 void VertexArray::add(float x, float y, float z, 
 		      float n0, float n1, float n2, unsigned int col)
 {
-  List_Add(vertices, &x);
-  List_Add(vertices, &y);
-  List_Add(vertices, &z);
+  List_Add_3(vertices, &x, &y, &z);
 
   char c0 = float2char(n0);
   char c1 = float2char(n1);
   char c2 = float2char(n2);
-  List_Add(normals, &c0);
-  List_Add(normals, &c1);
-  List_Add(normals, &c2);
+  List_Add_3(normals, &c0, &c1, &c2);
 
   unsigned char r = CTX.UNPACK_RED(col);
   unsigned char g = CTX.UNPACK_GREEN(col);
   unsigned char b = CTX.UNPACK_BLUE(col);
   unsigned char a = CTX.UNPACK_ALPHA(col);
-  List_Add(colors, &r);
-  List_Add(colors, &g);
-  List_Add(colors, &b);
-  List_Add(colors, &a);
+  List_Add_4(colors, &r, &g, &b, &a);
 }
 
 void VertexArray::add(float x, float y, float z, unsigned int col)
 {
-  List_Add(vertices, &x);
-  List_Add(vertices, &y);
-  List_Add(vertices, &z);
+  List_Add_3(vertices, &x, &y, &z);
 
   unsigned char r = CTX.UNPACK_RED(col);
   unsigned char g = CTX.UNPACK_GREEN(col);
   unsigned char b = CTX.UNPACK_BLUE(col);
   unsigned char a = CTX.UNPACK_ALPHA(col);
-  List_Add(colors, &r);
-  List_Add(colors, &g);
-  List_Add(colors, &b);
-  List_Add(colors, &a);
+  List_Add_4(colors, &r, &g, &b, &a);
 }
 
 static double theeye[3];

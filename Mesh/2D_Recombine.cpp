@@ -1,4 +1,4 @@
-// $Id: 2D_Recombine.cpp,v 1.29 2006-08-05 10:05:45 geuzaine Exp $
+// $Id: 2D_Recombine.cpp,v 1.30 2006-08-22 01:58:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -181,7 +181,7 @@ int Recombine(Tree_T * Vertices, Tree_T * Simplexes, Tree_T * Quadrangles,
   -) Enhancements are performned on the quad mesh.
  */
 
-int Recombine_All (Mesh *M)
+int Recombine_All(Mesh *M)
 {
   if(!Tree_Nbr(M->Surfaces)) 
     return 0;
@@ -205,7 +205,7 @@ int Recombine_All (Mesh *M)
   }
   
   // add 2nd order nodes to all elements 
-  Degre2(2);
+  Degre2();
 
   Msg(STATUS2, "Splitting all elements");
 

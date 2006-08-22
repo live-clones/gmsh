@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.533 2006-08-19 19:46:07 geuzaine Exp $
+// $Id: GUI.cpp,v 1.534 2006-08-22 01:58:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -321,24 +321,25 @@ Context_Item menu_geometry[] = {
 
 Context_Item menu_mesh[] = {
   {"1Mesh", NULL} ,
-  {"Define", (Fl_Callback *)mesh_define_cb} ,
-  {"1D",     (Fl_Callback *)mesh_1d_cb} ,
-  {"2D",     (Fl_Callback *)mesh_2d_cb} , 
-  {"3D",     (Fl_Callback *)mesh_3d_cb} , 
-  {"STL",    (Fl_Callback *)mesh_stl_cb} , 
+  {"Define",       (Fl_Callback *)mesh_define_cb} ,
+  {"Edit",         (Fl_Callback *)mesh_edit_cb} , 
+  {"1D",           (Fl_Callback *)mesh_1d_cb} ,
+  {"2D",           (Fl_Callback *)mesh_2d_cb} , 
+  {"3D",           (Fl_Callback *)mesh_3d_cb} , 
   {"First order",  (Fl_Callback *)mesh_degree_cb, (void*)1 } , 
   {"Second order", (Fl_Callback *)mesh_degree_cb, (void*)2 } , 
 #if defined(HAVE_NETGEN)
   {"Optimize quality", (Fl_Callback *)mesh_optimize_cb} , 
 #endif
-  {"Save",   (Fl_Callback *)mesh_save_cb} ,
+  {"Save",         (Fl_Callback *)mesh_save_cb} ,
   {0} 
 };  
-    Context_Item menu_mesh_stl[] = {
-      {"1Mesh>STL", NULL} ,
-      {"Update edges", (Fl_Callback *)mesh_update_edges_cb} , 
+    Context_Item menu_mesh_edit[] = {
+      {"1Mesh>Edit", NULL} ,
+      {"Update edges",   (Fl_Callback *)mesh_update_edges_cb} ,
+      {"Reparameterize", (Fl_Callback *)mesh_reparam_cb} ,
       // {"Manually add edges", (Fl_Callback *)mesh_update_more_edges_cb} , 
-      {"Remesh", (Fl_Callback *)mesh_remesh_cb} , 
+      {"Remesh",         (Fl_Callback *)mesh_remesh_cb} , 
       {0} 
     };  
     Context_Item menu_mesh_define[] = {
@@ -346,7 +347,7 @@ Context_Item menu_mesh[] = {
       {"Characteristic length", (Fl_Callback *)mesh_define_length_cb  } ,
       {"Recombine",   (Fl_Callback *)mesh_define_recombine_cb  } ,
       {"Transfinite", (Fl_Callback *)mesh_define_transfinite_cb  } , 
-      {"Elliptic", (Fl_Callback *)mesh_define_elliptic_surface_cb  } , 
+      {"Elliptic",    (Fl_Callback *)mesh_define_elliptic_surface_cb  } , 
       {0} 
     };  
         Context_Item menu_mesh_define_transfinite[] = {

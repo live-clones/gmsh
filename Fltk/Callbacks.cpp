@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.446 2006-08-20 17:02:27 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.447 2006-08-22 01:58:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1351,7 +1351,7 @@ void visibility_ok_cb(CALLBACK_ARGS)
   // if the browser is not empty, get the selections made in the
   // browser and apply them into the model
   if(VisibilityManager::instance()->getNumEntities()){
-    CTX.mesh.changed = 1;
+    CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
     VisibilityManager::instance()->setAllInvisible(WID->vis_type->value());
     for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++)
       if(WID->vis_browser->selected(i + 1))
@@ -1439,7 +1439,7 @@ void visibility_sort_cb(CALLBACK_ARGS)
 
 void visibility_number_cb(CALLBACK_ARGS)
 {
-  CTX.mesh.changed = 1;
+  CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
 
   int type = (int)(long)data;
   bool val;
@@ -2793,23 +2793,23 @@ void mesh_3d_cb(CALLBACK_ARGS)
   Msg(STATUS2N, " ");
 }
 
-void mesh_stl_cb(CALLBACK_ARGS)
+void mesh_edit_cb(CALLBACK_ARGS)
 {
-  WID->set_context(menu_mesh_stl, 0);
+  WID->set_context(menu_mesh_edit, 0);
+}
+
+void mesh_reparam_cb(CALLBACK_ARGS)
+{
+  printf("LAUCH REPARAMETERIZATION BIGNOU HERE!\n");
 }
 
 void mesh_degree_cb(CALLBACK_ARGS)
 {
-  switch ((long)data) {
-  case 2: 
-    Degre2(GMODEL->getMeshStatus());
-    break;
-  case 1:
-  default:
+  if((long)data == 2)
+    Degre2();
+  else
     Degre1();
-    break;
-  }
-  CTX.mesh.changed = 1;
+  CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
   Draw();
   Msg(STATUS2N, " ");
 }
@@ -2824,7 +2824,7 @@ void mesh_optimize_cb(CALLBACK_ARGS)
   Optimize_Netgen();
   CTX.threads_lock = 0;
 
-  CTX.mesh.changed = 1;
+  CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
   Draw();
   Msg(STATUS2N, " ");
 }

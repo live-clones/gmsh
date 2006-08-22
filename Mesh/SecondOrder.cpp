@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.42 2006-08-20 17:02:28 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.43 2006-08-22 01:58:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -133,7 +133,6 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
 		     std::map<std::vector<MVertex*>, MVertex* > &faceVertices,
 		     bool linear)
 {
-  vf.clear();
   for(int i = 0; i < ele->getNumFaces(); i++){
     MFace face = ele->getFace(i);
     if(face.getNumVertices() != 4) continue;
@@ -169,7 +168,6 @@ void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
 		     std::map<std::vector<MVertex*>, MVertex* > &faceVertices,
 		     bool linear)
 {
-  vf.clear();
   for(int i = 0; i < ele->getNumFaces(); i++){
     MFace face = ele->getFace(i);
     if(face.getNumVertices() != 4) continue;
@@ -192,16 +190,17 @@ void setSecondOrder(GEdge *ge,
 		    std::map<std::pair<MVertex*,MVertex*>, MVertex* > &edgeVertices,
 		    bool linear)
 {
-  std::vector<MLine*> l2;
+  std::vector<MLine*> lines2;
   for(unsigned int i = 0; i < ge->lines.size(); i++){
     MLine *l = ge->lines[i];
     std::vector<MVertex*> ve;
     getEdgeVertices(ge, l, ve, edgeVertices, linear);
-    l2.push_back(new MLine2(l->getVertex(0), l->getVertex(1), ve[0]));
+    lines2.push_back(new MLine2(l->getVertex(0), l->getVertex(1), ve[0]));
     delete l;
   }
-  ge->lines = l2;
-  ge->meshRep->destroy();
+  ge->lines = lines2;
+
+  if(ge->meshRep) ge->meshRep->destroy();
 }
 
 void setSecondOrder(GFace *gf,
@@ -209,30 +208,32 @@ void setSecondOrder(GFace *gf,
 		    std::map<std::vector<MVertex*>, MVertex* > &faceVertices,
 		    bool linear)
 {
-  std::vector<MTriangle*> t2;
+  std::vector<MTriangle*> triangles2;
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
     MTriangle *t = gf->triangles[i];
     std::vector<MVertex*> ve;
     getEdgeVertices(gf, t, ve, edgeVertices, linear);
-    t2.push_back(new MTriangle2(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-				ve[0], ve[1], ve[2]));
+    triangles2.push_back
+      (new MTriangle2(t->getVertex(0), t->getVertex(1), t->getVertex(2),
+		      ve[0], ve[1], ve[2]));
     delete t;
   }
-  gf->triangles = t2;
+  gf->triangles = triangles2;
 
-  std::vector<MQuadrangle*> q2;
+  std::vector<MQuadrangle*> quadrangles2;
   for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
     MQuadrangle *q = gf->quadrangles[i];
     std::vector<MVertex*> ve, vf;
     getEdgeVertices(gf, q, ve, edgeVertices, linear);
     getFaceVertices(gf, q, vf, faceVertices, linear);
-    q2.push_back(new MQuadrangle2(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-				  q->getVertex(3), ve[0], ve[1], ve[2], ve[3], vf[0]));
+    quadrangles2.push_back
+      (new MQuadrangle2(q->getVertex(0), q->getVertex(1), q->getVertex(2),
+			q->getVertex(3), ve[0], ve[1], ve[2], ve[3], vf[0]));
     delete q;
   }
-  gf->quadrangles = q2;
+  gf->quadrangles = quadrangles2;
   
-  gf->meshRep->destroy();
+  if(gf->meshRep) gf->meshRep->destroy();
 }
 
 void setSecondOrder(GRegion *gr,
@@ -240,45 +241,147 @@ void setSecondOrder(GRegion *gr,
 		    std::map<std::vector<MVertex*>, MVertex* > &faceVertices,
 		    bool linear)
 {
-  std::vector<MTetrahedron*> t2;
+  std::vector<MTetrahedron*> tetrahedra2;
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
     MTetrahedron *t = gr->tetrahedra[i];
     std::vector<MVertex*> ve;
     getEdgeVertices(gr, t, ve, edgeVertices, linear);
-    t2.push_back(new MTetrahedron2(t->getVertex(0), t->getVertex(1), t->getVertex(2), 
-				   t->getVertex(3), 
-				   ve[0], ve[1], ve[2], ve[3], ve[4], ve[5]));
+    tetrahedra2.push_back
+      (new MTetrahedron2(t->getVertex(0), t->getVertex(1), t->getVertex(2), 
+			 t->getVertex(3), ve[0], ve[1], ve[2], ve[3], ve[4], ve[5]));
     delete t;
   }
-  gr->tetrahedra = t2;
+  gr->tetrahedra = tetrahedra2;
 
-  // hexa prisms pyr
+  std::vector<MHexahedron*> hexahedra2;
+  for(unsigned int i = 0; i < gr->hexahedra.size(); i++){
+    MHexahedron *h = gr->hexahedra[i];
+    std::vector<MVertex*> ve, vf;
+    getEdgeVertices(gr, h, ve, edgeVertices, linear);
+    getFaceVertices(gr, h, vf, faceVertices, linear);
+    SPoint3 pc = h->barycenter();
+    MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
+    gr->mesh_vertices.push_back(v);
+    hexahedra2.push_back
+      (new MHexahedron2(h->getVertex(0), h->getVertex(1), h->getVertex(2), 
+			h->getVertex(3), h->getVertex(4), h->getVertex(5), 
+			h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2], 
+			ve[3], ve[4], ve[5], ve[6], ve[7], ve[8], ve[9], ve[10], 
+			ve[11], vf[0], vf[1], vf[2], vf[3], vf[4], vf[5], v));
+    delete h;
+  }
+  gr->hexahedra = hexahedra2;
 
-  gr->meshRep->destroy();
+  std::vector<MPrism*> prisms2;
+  for(unsigned int i = 0; i < gr->prisms.size(); i++){
+    MPrism *p = gr->prisms[i];
+    std::vector<MVertex*> ve, vf;
+    getEdgeVertices(gr, p, ve, edgeVertices, linear);
+    getFaceVertices(gr, p, vf, faceVertices, linear);
+    prisms2.push_back
+      (new MPrism2(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
+		   p->getVertex(3), p->getVertex(4), p->getVertex(5), 
+		   ve[0], ve[1], ve[2], ve[3], ve[4], ve[5], ve[6], ve[7],
+		   ve[8], vf[0], vf[1], vf[2]));
+    delete p;
+  }
+  gr->prisms = prisms2;
+
+  std::vector<MPyramid*> pyramids2;
+  for(unsigned int i = 0; i < gr->pyramids.size(); i++){
+    MPyramid *p = gr->pyramids[i];
+    std::vector<MVertex*> ve, vf;
+    getEdgeVertices(gr, p, ve, edgeVertices, linear);
+    getFaceVertices(gr, p, vf, faceVertices, linear);
+    pyramids2.push_back
+      (new MPyramid2(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
+		     p->getVertex(3), p->getVertex(4), ve[0], ve[1], ve[2], 
+		     ve[3], ve[4], ve[5], ve[6], ve[7], vf[0]));
+    delete p;
+  }
+  gr->pyramids = pyramids2;
+
+  if(gr->meshRep) gr->meshRep->destroy();
 }
 
-// Main routines
+template<class T>
+void setFirstOrder(GEntity *e, std::vector<T*> &elements)
+{
+  std::vector<T*> elements1;
+  for(unsigned int i = 0; i < elements.size(); i++){
+    T *ele = elements[i];
+    int n = ele->getNumVertices() - ele->getNumEdgeVertices() - 
+      ele->getNumFaceVertices() - ele->getNumVolumeVertices();
+    std::vector<MVertex*> v1;
+    for(int j = 0; j < n; j++)
+      v1.push_back(ele->getVertex(j));
+    for(int j = n; j < ele->getNumVertices(); j++)
+      ele->getVertex(j)->setVisibility(-1);
+    elements1.push_back(new T(v1));
+    delete ele;
+  }
+  elements = elements1;
+  
+  if(e->meshRep) e->meshRep->destroy();
+}
+
+void removeSecondOrderVertices(GEntity *e)
+{
+  std::vector<MVertex*> v1;
+  for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
+    if(e->mesh_vertices[i]->getVisibility() < 0)
+      delete e->mesh_vertices[i];
+    else
+      v1.push_back(e->mesh_vertices[i]);
+  }
+  e->mesh_vertices = v1;
+}
 
 void Degre1()
 {
-  // loop on all elements 
-  // - if polynomialOrder() == 2
-  // - get their edge/face/volume vertices mark them with setVisibility(-1);
-  // - generate a first order element for each element
-  // - swap lists at the end
-  // loop on all vertices and delete all vertices marked (-1)
+  // replace all elements with first order elements and mark all
+  // unused nodes with a -1 visibility flag
+  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); ++it){
+    setFirstOrder(*it, (*it)->lines);
+  }
+  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); ++it){
+    setFirstOrder(*it, (*it)->triangles);
+    setFirstOrder(*it, (*it)->quadrangles);
+  }
+  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); ++it){
+    setFirstOrder(*it, (*it)->tetrahedra);
+    setFirstOrder(*it, (*it)->hexahedra);
+    setFirstOrder(*it, (*it)->prisms);
+    setFirstOrder(*it, (*it)->pyramids);
+  }
+
+  // remove all nodes with a -1 visibility flag
+  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); ++it)
+    removeSecondOrderVertices(*it);
+  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); ++it)
+    removeSecondOrderVertices(*it);
+  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); ++it)
+    removeSecondOrderVertices(*it);
 }
 
-void Degre2(int dim)
+void Degre2()
 {
-  Msg(STATUS1, "Mesh second order...");
+  Msg(STATUS1, "Meshing second order...");
   double t1 = Cpu();
 
   bool linear = true;
   //bool linear = false;
+
   std::map<std::pair<MVertex*,MVertex*>, MVertex* > edgeVertices;
   std::map<std::vector<MVertex*>, MVertex* > faceVertices;
 
+  // replace all elements with second order elements by creating
+  // unique nodes on the edges/faces of the mesh. (To generate nodes
+  // on the exact geometrical edges/faces this assumes that the
+  // geometrical edges/faces are discretized with 1D/2D
+  // elements. I.e., if there are only 3D elements in the mesh then
+  // any new nodes on the boundary will simply be added by linear
+  // interpolation.)
   for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); ++it)
     setSecondOrder(*it, edgeVertices, linear);
   for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); ++it)
@@ -287,5 +390,6 @@ void Degre2(int dim)
     setSecondOrder(*it, edgeVertices, faceVertices, linear);
 
   double t2 = Cpu();
-  Msg(STATUS1, "Mesh second order complete (%g s)", t2 - t1);
+  Msg(INFO, "Mesh second order complete (%g s)", t2 - t1);
+  Msg(STATUS1, "Mesh");
 }

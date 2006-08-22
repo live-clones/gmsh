@@ -149,6 +149,11 @@ class MLine : public MElement {
   {
     _v[0] = v0; _v[1] = v1;
   }
+  MLine(std::vector<MVertex*> &v, int num=0, int part=0) 
+    : MElement(num, part)
+  {
+    for(int i = 0; i < 2; i++) _v[i] = v[i];
+  }
   ~MLine(){}
   virtual int getDim(){ return 1; }
   inline int getNumVertices(){ return 2; }
@@ -170,6 +175,11 @@ class MLine2 : public MLine {
     : MLine(v0, v1, num, part)
   {
     _vs[0] = v2;
+  }
+  MLine2(std::vector<MVertex*> &v, int num=0, int part=0) 
+    : MLine(v, num, part)
+  {
+    _vs[0] = v[2];
   }
   ~MLine2(){}
   inline int getPolynomialOrder(){ return 2; }
@@ -200,6 +210,11 @@ class MTriangle : public MElement {
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2;
   }
+  MTriangle(std::vector<MVertex*> &v, int num=0, int part=0) 
+    : MElement(num, part)
+  {
+    for(int i = 0; i < 3; i++) _v[i] = v[i];
+  }
   ~MTriangle(){}
   virtual int getDim(){ return 2; }
   inline int getNumVertices(){ return 3; }
@@ -228,6 +243,11 @@ class MTriangle2 : public MTriangle {
     : MTriangle(v0, v1, v2, num, part)
   {
     _vs[0] = v3; _vs[1] = v4; _vs[2] = v5;
+  }
+  MTriangle2(std::vector<MVertex*> &v, int num=0, int part=0) 
+    : MTriangle(v, num, part)
+  {
+    for(int i = 0; i < 3; i++) _vs[i] = v[3 + i];
   }
   ~MTriangle2(){}
   inline int getPolynomialOrder(){ return 2; }
@@ -276,6 +296,11 @@ class MQuadrangle : public MElement {
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
   }
+  MQuadrangle(std::vector<MVertex*> &v, int num=0, int part=0) 
+    : MElement(num, part)
+  {
+    for(int i = 0; i < 4; i++) _v[i] = v[i];
+  }
   ~MQuadrangle(){}
   virtual int getDim(){ return 2; }
   inline int getNumVertices(){ return 4; }
@@ -302,6 +327,11 @@ class MQuadrangle2 : public MQuadrangle {
   {
     _vs[0] = v4; _v[1] = v5; _v[2] = v6; _v[3] = v7; _v[4] = v8;
   }
+  MQuadrangle2(std::vector<MVertex*> &v, int num=0, int part=0) 
+    : MQuadrangle(v, num, part)
+  {
+    for(int i = 0; i < 5; i++) _vs[i] = v[4 + i];
+  }
   ~MQuadrangle2(){}
   inline int getPolynomialOrder(){ return 2; }
   inline int getNumVertices(){ return 9; }
@@ -322,6 +352,11 @@ class MTetrahedron : public MElement {
     : MElement(num, part)
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
+  }
+  MTetrahedron(std::vector<MVertex*> &v, int num=0, int part=0) 
+    : MElement(num, part)
+  {
+    for(int i = 0; i < 4; i++) _v[i] = v[i];
   }
   ~MTetrahedron(){}
   virtual int getDim(){ return 3; }
@@ -379,6 +414,11 @@ class MTetrahedron2 : public MTetrahedron {
   {
     _vs[0] = v4; _vs[1] = v5; _vs[2] = v6; _vs[3] = v7; _vs[4] = v8; _vs[5] = v9;
   }
+  MTetrahedron2(std::vector<MVertex*> &v, int num=0, int part=0) 
+    : MTetrahedron(v, num, part)
+  {
+    for(int i = 0; i < 6; i++) _vs[i] = v[4 + i];
+  }
   ~MTetrahedron2(){}
   inline int getPolynomialOrder(){ return 2; }
   inline int getNumVertices(){ return 10; }
@@ -409,6 +449,11 @@ class MHexahedron : public MElement {
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
     _v[4] = v4; _v[5] = v5; _v[6] = v6; _v[7] = v7;
+  }
+  MHexahedron(std::vector<MVertex*> &v, int num=0, int part=0) 
+    : MElement(num, part)
+  {
+    for(int i = 0; i < 8; i++) _v[i] = v[i];
   }
   ~MHexahedron(){}
   virtual int getDim(){ return 3; }
@@ -471,6 +516,11 @@ class MHexahedron2 : public MHexahedron {
     _vs[10] = v18; _vs[11] = v19; _vs[12] = v20; _vs[13] = v21; _vs[14] = v22;
     _vs[15] = v23; _vs[16] = v24; _vs[17] = v25; _vs[18] = v26;
   }
+  MHexahedron2(std::vector<MVertex*> &v, int num=0, int part=0) 
+    : MHexahedron(v, num, part)
+  {
+    for(int i = 0; i < 19; i++) _vs[i] = v[8 + i];
+  }
   ~MHexahedron2(){}
   inline int getPolynomialOrder(){ return 2; }
   inline int getNumVertices(){ return 27; }
@@ -508,6 +558,11 @@ class MPrism : public MElement {
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
     _v[4] = v4; _v[5] = v5; 
+  }
+  MPrism(std::vector<MVertex*> &v, int num=0, int part=0) 
+    : MElement(num, part)
+  {
+    for(int i = 0; i < 6; i++) _v[i] = v[i];
   }
   ~MPrism(){}
   virtual int getDim(){ return 3; }
@@ -572,6 +627,11 @@ class MPrism2 : public MPrism {
     _vs[5] = v11; _vs[6] = v12; _vs[7] = v13; _vs[8] = v14; _vs[9] = v15; 
     _vs[10] = v16; _vs[11] = v17; 
   }
+  MPrism2(std::vector<MVertex*> &v, int num=0, int part=0) 
+    : MPrism(v, num, part)
+  {
+    for(int i = 0; i < 12; i++) _vs[i] = v[6 + i];
+  }
   ~MPrism2(){}
   inline int getPolynomialOrder(){ return 2; }
   inline int getNumVertices(){ return 18; }
@@ -604,6 +664,11 @@ class MPyramid : public MElement {
     : MElement(num, part)
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3; _v[4] = v4;
+  }
+  MPyramid(std::vector<MVertex*> &v, int num=0, int part=0) 
+    : MElement(num, part)
+  {
+    for(int i = 0; i < 5; i++) _v[i] = v[i];
   }
   ~MPyramid(){}
   virtual int getDim(){ return 3; }
@@ -665,6 +730,11 @@ class MPyramid2 : public MPyramid {
   {
     _vs[0] = v5; _vs[1] = v6; _vs[2] = v7; _vs[3] = v8; _vs[4] = v9; 
     _vs[5] = v10; _vs[6] = v11; _vs[7] = v12; _vs[8] = v13; 
+  }
+  MPyramid2(std::vector<MVertex*> &v, int num=0, int part=0) 
+    : MPyramid(v, num, part)
+  {
+    for(int i = 0; i < 9; i++) _vs[i] = v[5 + i];
   }
   ~MPyramid2(){}
   inline int getPolynomialOrder(){ return 2; }

@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.44 2006-08-12 16:16:30 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.45 2006-08-22 01:58:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -366,7 +366,7 @@ void BDS_To_Mesh(Mesh *M)
     ++it;
   }
 
-  CTX.mesh.changed = 1;
+  CTX.mesh.changed = ENT_SURFACE;
 }
 
 
@@ -410,7 +410,7 @@ int ReMesh()
 
   MeshDiscreteSurface((Surface *) 0);
   CreateVolumeWithAllSurfaces(THEM);
-  CTX.mesh.changed = 1;
+  CTX.mesh.changed = ENT_SURFACE;
   return 1;
 }
 
@@ -425,7 +425,7 @@ int MeshDiscreteSurface(Surface * s)
                       THEM->bds->LC,
                       CTX.mesh.beta_smooth_metric, CTX.mesh.nb_elem_per_rc);
     if(!THEM->bds_mesh) {
-      Msg(STATUS1, "Remesh 2D...");      
+      Msg(STATUS1, "Remeshing 2D...");      
       double t1 = Cpu();
 
       THEM->bds_mesh = new BDS_Mesh(*(THEM->bds));
@@ -440,7 +440,7 @@ int MeshDiscreteSurface(Surface * s)
       // THEM->bds_mesh->save_gmsh_format("3.msh");
 
       double t2 = Cpu();
-      Msg(STATUS1, "Remesh 2D complete (%g s)", t2 - t1);
+      Msg(INFO, "Remesh 2D complete (%g s)", t2 - t1);
       //      NITER++;
       return 1;
     }

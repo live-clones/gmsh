@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.93 2006-08-12 17:44:25 geuzaine Exp $
+// $Id: Generator.cpp,v 1.94 2006-08-22 01:58:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -458,7 +458,7 @@ void Init_Mesh()
   THEM->status = 0;
 
   CTX.mesh.bgmesh_type = WITHPOINTS;
-  CTX.mesh.changed = 1;
+  CTX.mesh.changed = ENT_ALL;
 }
 
 void mai3d(int ask)
@@ -482,30 +482,30 @@ void mai3d(int ask)
 
   // 1D mesh
   if((ask > old && ask > 0 && old < 1) || (ask < old && ask > 0)) {
-    Msg(STATUS1, "Mesh 1D...");
+    Msg(STATUS1, "Meshing 1D...");
     if(GMODEL->getMeshStatus() > 1){
       OpenProblem(CTX.filename);
     }
     Maillage_Dimension_1();
-    Msg(STATUS1, "Mesh 1D complete (%g s)", CTX.mesh_timer[0]);
+    Msg(INFO, "Mesh 1D complete (%g s)", CTX.mesh_timer[0]);
   }
 
   // 2D mesh
   if((ask > old && ask > 1 && old < 2) || (ask < old && ask > 1)) {
-    Msg(STATUS1, "Mesh 2D...");
+    Msg(STATUS1, "Meshing 2D...");
     if(GMODEL->getMeshStatus() > 2) {
       OpenProblem(CTX.filename);
       Maillage_Dimension_1();
     }
     Maillage_Dimension_2();
-    Msg(STATUS1, "Mesh 2D complete (%g s)", CTX.mesh_timer[1]);
+    Msg(INFO, "Mesh 2D complete (%g s)", CTX.mesh_timer[1]);
   }
 
   // 3D mesh
   if((ask > old && ask > 2 && old < 3) || (ask < old && ask > 2)) {
-    Msg(STATUS1, "Mesh 3D...");
+    Msg(STATUS1, "Meshing 3D...");
     Maillage_Dimension_3();
-    Msg(STATUS1, "Mesh 3D complete (%g s)", CTX.mesh_timer[2]);
+    Msg(INFO, "Mesh 3D complete (%g s)", CTX.mesh_timer[2]);
   }
 
   // Optimize quality
@@ -513,13 +513,14 @@ void mai3d(int ask)
     Optimize_Netgen();
 
   // Create second order elements
-  if(GMODEL->getMeshStatus() && CTX.mesh.order == 2)
-    Degre2(GMODEL->getMeshStatus());
+  if(GMODEL->getMeshStatus() && CTX.mesh.order == 2) 
+    Degre2();
 
   // Partition
   if(GMODEL->getMeshStatus() > 1 && CTX.mesh.nbPartitions != 1)
     PartitionMesh(THEM, CTX.mesh.nbPartitions);
 
+  Msg(STATUS1, "Mesh");
   CTX.threads_lock = 0;
-  CTX.mesh.changed = 1;
+  CTX.mesh.changed = ENT_ALL;
 }

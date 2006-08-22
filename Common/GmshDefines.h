@@ -52,11 +52,11 @@
 
 // Geometric entities
 #define ENT_NONE     0
-#define ENT_POINT    1
-#define ENT_LINE     2
-#define ENT_SURFACE  3
-#define ENT_VOLUME   4
-#define ENT_ALL      5
+#define ENT_POINT    (1<<0)
+#define ENT_LINE     (1<<1)
+#define ENT_SURFACE  (1<<2)
+#define ENT_VOLUME   (1<<3)
+#define ENT_ALL      (ENT_POINT | ENT_LINE | ENT_SURFACE | ENT_VOLUME)
 
 #define ELEMENTARY 1
 #define PHYSICAL   2

@@ -87,7 +87,7 @@ extern        Context_Item menu_geometry_elementary_delete[];
 extern    Context_Item menu_geometry_physical[]; 
 extern        Context_Item menu_geometry_physical_add[]; 
 extern Context_Item menu_mesh[]; 
-extern    Context_Item menu_mesh_stl[]; 
+extern    Context_Item menu_mesh_edit[]; 
 extern    Context_Item menu_mesh_define[]; 
 extern        Context_Item menu_mesh_define_transfinite[]; 
 extern Context_Item menu_solver[]; 

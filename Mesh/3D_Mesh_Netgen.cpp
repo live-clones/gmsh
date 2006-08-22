@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Netgen.cpp,v 1.25 2006-08-05 13:31:28 geuzaine Exp $
+// $Id: 3D_Mesh_Netgen.cpp,v 1.26 2006-08-22 01:58:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -285,7 +285,7 @@ int Mesh_Netgen(Volume * v)
     return 0;
   }
 
-  Msg(STATUS2, "Meshing volume %d", v->Num);
+  Msg(INFO, "Meshing volume %d", v->Num);
   Netgen ng(v);
   ng.MeshVolume();
   ng.TransferVolumeMesh();
@@ -302,7 +302,7 @@ void Optimize_Netgen(Volume * v)
      Extrude_Mesh(v) || !Tree_Nbr(v->Simplexes))
     return;
 
-  Msg(STATUS2, "Optimizing volume %d", v->Num);
+  Msg(INFO, "Optimizing volume %d", v->Num);
   Netgen ng(v, 1);
   ng.OptimizeVolume();
   ng.TransferVolumeMesh();
@@ -310,7 +310,7 @@ void Optimize_Netgen(Volume * v)
 
 void Optimize_Netgen()
 {
-  Msg(STATUS1, "Mesh optimize 3D...");
+  Msg(STATUS1, "Mesh optimize...");
   double t1 = Cpu();
 
   // cleanup 2nd order vertices, if any
@@ -329,7 +329,7 @@ void Optimize_Netgen()
   List_Delete(list);
 
   double t2 = Cpu();
-  Msg(STATUS1, "Mesh optimize 3D complete (%g s)", t2 - t1);
+  Msg(INFO, "Mesh optimize complete (%g s)", t2 - t1);
 }
 
 #endif // !HAVE_NETGEN
