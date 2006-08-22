@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.111 2006-08-18 21:11:43 geuzaine Exp $
+// $Id: Post.cpp,v 1.112 2006-08-22 15:34:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -749,25 +749,27 @@ void Draw_Post(void)
 
       pass_1:
 	if(v->TriVertexArray && v->TriVertexArray->fill){
-	  Msg(DEBUG, "View[%d]; %d tris in vertex array", v->Index, v->TriVertexArray->n()/3);
+	  Msg(DEBUG, "View[%d]; %d tris in vertex array", 
+	      v->Index, v->TriVertexArray->getNumVertices()/3);
 	  v->TriVertexArray->fill = 0;
 	}
 	if(v->LinVertexArray && v->LinVertexArray->fill){
-	  Msg(DEBUG, "View[%d]; %d segs in vertex array", v->Index, v->LinVertexArray->n()/2);
+	  Msg(DEBUG, "View[%d]; %d segs in vertex array",
+	      v->Index, v->LinVertexArray->getNumVertices()/2);
 	  v->LinVertexArray->fill = 0;
 	}
       }
 
-      if(v->TriVertexArray && v->TriVertexArray->n()){
+      if(v->TriVertexArray && v->TriVertexArray->getNumVertices()){
 	if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && !v->FakeTransparency &&
 	   (changedEye() || v->Changed)){
 	  Msg(DEBUG, "Sorting View[%d] for transparency (WITH vertex array)", v->Index);
 	  v->TriVertexArray->sort(storedEye);
 	}
 
-	glVertexPointer(3, GL_FLOAT, 0, v->TriVertexArray->vertices->array);
-	glNormalPointer(GL_BYTE, 0, v->TriVertexArray->normals->array);
-	glColorPointer(4, GL_UNSIGNED_BYTE, 0, v->TriVertexArray->colors->array);
+	glVertexPointer(3, GL_FLOAT, 0, v->TriVertexArray->getVertexArray());
+	glNormalPointer(GL_BYTE, 0, v->TriVertexArray->getNormalArray());
+	glColorPointer(4, GL_UNSIGNED_BYTE, 0, v->TriVertexArray->getColorArray());
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
@@ -778,7 +780,7 @@ void Draw_Post(void)
 	else
 	  glDisableClientState(GL_NORMAL_ARRAY);
 	if(CTX.polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
-	glDrawArrays(GL_TRIANGLES, 0, v->TriVertexArray->n());
+	glDrawArrays(GL_TRIANGLES, 0, v->TriVertexArray->getNumVertices());
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDisable(GL_LIGHTING);
       
@@ -787,12 +789,12 @@ void Draw_Post(void)
 	glDisableClientState(GL_COLOR_ARRAY);
       }
 
-      if(v->LinVertexArray && v->LinVertexArray->n()){
-	glVertexPointer(3, GL_FLOAT, 0, v->LinVertexArray->vertices->array);
-	glColorPointer(4, GL_UNSIGNED_BYTE, 0, v->LinVertexArray->colors->array);
+      if(v->LinVertexArray && v->LinVertexArray->getNumVertices()){
+	glVertexPointer(3, GL_FLOAT, 0, v->LinVertexArray->getVertexArray());
+	glColorPointer(4, GL_UNSIGNED_BYTE, 0, v->LinVertexArray->getColorArray());
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
-	glDrawArrays(GL_LINES, 0, v->LinVertexArray->n());
+	glDrawArrays(GL_LINES, 0, v->LinVertexArray->getNumVertices());
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
       }

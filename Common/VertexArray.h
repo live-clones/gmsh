@@ -20,21 +20,34 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "List.h"
+#include "vector"
 
 class VertexArray{
  public:
-  int type, fill;
-  List_T *vertices, *normals, *colors;
+  int fill; // this must/will be removed
+ private:
+  int _type;
+  std::vector<float> _vertices;
+  std::vector<char> _normals;
+  std::vector<unsigned char> _colors;
+ public:
   VertexArray(int numNodesPerElement, int numElements);
-  ~VertexArray();
-  // return the number of nodes in the array
-  int n();
-  // add a node in the array
+  ~VertexArray(){}
+  // returns the number of nodes in the array
+  int getNumVertices() { return _vertices.size() / 3; }
+  // returns the type of the array
+  int getType() { return _type; }
+  // returns a pointer to the raw vertex array
+  float *getVertexArray(){ return &_vertices[0]; }
+  // returns a pointer to the raw normal array
+  char *getNormalArray(){ return &_normals[0]; }
+  // returns a pointer to the raw color array
+  unsigned char *getColorArray(){ return &_colors[0]; }
+  // adds a vertex in the arrays
   void add(float x, float y, float z, 
 	   float n0, float n1, float n2, unsigned int col);
   void add(float x, float y, float z, unsigned int col);
-  // sort the elements back to fron wrt the eye position
+  // sorts the elements back to front wrt the eye position
   void sort(double eye[3]);
 };
 

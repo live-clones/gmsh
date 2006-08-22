@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.182 2006-08-22 01:58:34 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.183 2006-08-22 15:34:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -435,9 +435,9 @@ static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalAr
 {
   if(!va) return;
 
-  glVertexPointer(3, GL_FLOAT, 0, va->vertices->array);
-  glNormalPointer(GL_BYTE, 0, va->normals->array);
-  glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->colors->array);
+  glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
+  glNormalPointer(GL_BYTE, 0, va->getNormalArray());
+  glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
   
   glEnableClientState(GL_VERTEX_ARRAY);
 
@@ -462,13 +462,13 @@ static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalAr
     glColor4ubv((GLubyte *) & color);
   }
   
-  if(va->type > 2 && !drawOutline && CTX.polygon_offset)
+  if(va->getType() > 2 && !drawOutline && CTX.polygon_offset)
     glEnable(GL_POLYGON_OFFSET_FILL);
   
   if(drawOutline) 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   
-  glDrawArrays(type, 0, va->n());
+  glDrawArrays(type, 0, va->getNumVertices());
   
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glDisable(GL_POLYGON_OFFSET_FILL);
@@ -591,7 +591,9 @@ class initMeshGFace {
 
     // Further optimizations are possible when useEdges is true:
     // 1) store the unique vertices in the vertex array and use
-    //    glDrawElements() instead of glDrawArrays().
+    //    glDrawElements() instead of glDrawArrays(). Question:
+    //    which normal do you choose for each vertex, and so how 
+    //    can you achieve accurate "flat shading" rendering?
     // 2) use tc to stripe the triangles and draw strips instead of 
     //    individual triangles
     
@@ -624,7 +626,7 @@ class drawMeshGFace {
     MRep *m = f->meshRep;
 
     if(CTX.mesh.surfaces_edges){
-      if(m->va_lines && m->va_lines->n()){
+      if(m->va_lines && m->va_lines->getNumVertices()){
 	drawArrays(f, m->va_lines, GL_LINES, CTX.mesh.light && CTX.mesh.light_lines, 
 		   CTX.mesh.surfaces_faces, CTX.color.mesh.line);
       }
@@ -732,7 +734,7 @@ class drawMeshGRegion {
     MRep *m = r->meshRep;
 
     if(CTX.mesh.volumes_edges){
-      if(m->va_lines && m->va_lines->n()){
+      if(m->va_lines && m->va_lines->getNumVertices()){
 	drawArrays(r, m->va_lines, GL_LINES, CTX.mesh.light && CTX.mesh.light_lines, 
 		   CTX.mesh.volumes_faces, CTX.color.mesh.line);
       }

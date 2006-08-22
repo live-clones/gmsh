@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.13 2006-08-22 01:58:32 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.14 2006-08-22 15:34:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
+#include <algorithm>
 #include "VertexArray.h"
 #include "Context.h"
 #include "Numeric.h"
@@ -27,166 +27,142 @@
 extern Context_T CTX;
 
 VertexArray::VertexArray(int numNodesPerElement, int numElements) 
+  : fill(0), _type(numNodesPerElement)
 {
-  type = numNodesPerElement;
-  if(type < 1 || type > 4){
-    Msg(GERROR, "Vertex arrays not done for %d-node element", type);
-    type = 3;
-  }
-  fill = 0;
-  if(!numElements)
-    numElements = 1;
-  int nb = numElements * numNodesPerElement;
-  vertices = List_Create(nb * 3, 3000, sizeof(float));
-  normals = List_Create(nb * 3, 3000, sizeof(char));
-  colors = List_Create(nb * 4, 4000, sizeof(unsigned char));
-}
-
-VertexArray::~VertexArray()
-{
-  List_Delete(vertices);
-  List_Delete(normals);
-  List_Delete(colors);
-}
-
-int VertexArray::n()
-{
-  return List_Nbr(vertices) / 3;
-}
-
-template<class T>
-inline void List_Add_3(List_T * liste, T *data1, T *data2, T *data3)
-{
-  liste->n += 3;
-  List_Realloc(liste, liste->n);
-  liste->isorder = 0;
-  T* dest1 = (T*)&liste->array[(liste->n - 3) * liste->size];
-  T* dest2 = (T*)&liste->array[(liste->n - 2) * liste->size];
-  T* dest3 = (T*)&liste->array[(liste->n - 1) * liste->size];
-  *dest1 = *data1;
-  *dest2 = *data2;
-  *dest3 = *data3;
-}
-
-template<class T>
-inline void List_Add_4(List_T * liste, T *data1, T *data2, T *data3, T *data4)
-{
-  liste->n += 4;
-  List_Realloc(liste, liste->n);
-  liste->isorder = 0;
-  T* dest1 = (T*)&liste->array[(liste->n - 4) * liste->size];
-  T* dest2 = (T*)&liste->array[(liste->n - 3) * liste->size];
-  T* dest3 = (T*)&liste->array[(liste->n - 2) * liste->size];
-  T* dest4 = (T*)&liste->array[(liste->n - 1) * liste->size];
-  *dest1 = *data1;
-  *dest2 = *data2;
-  *dest3 = *data3;
-  *dest4 = *data4;
+  int nb = (numElements ? numElements : 1) * numNodesPerElement;
+  _vertices.reserve(nb * 3);
+  _normals.reserve(nb * 3);
+  _colors.reserve(nb *4);
 }
 
 void VertexArray::add(float x, float y, float z, 
 		      float n0, float n1, float n2, unsigned int col)
 {
-  List_Add_3(vertices, &x, &y, &z);
+  _vertices.push_back(x);
+  _vertices.push_back(y);
+  _vertices.push_back(z);
 
+  // Warning: storing the normals as bytes WILL hurt rendering
+  // performance... but it reduces significantly the memory footprint.
   char c0 = float2char(n0);
   char c1 = float2char(n1);
   char c2 = float2char(n2);
-  List_Add_3(normals, &c0, &c1, &c2);
+  _normals.push_back(c0);
+  _normals.push_back(c1);
+  _normals.push_back(c2);
 
   unsigned char r = CTX.UNPACK_RED(col);
   unsigned char g = CTX.UNPACK_GREEN(col);
   unsigned char b = CTX.UNPACK_BLUE(col);
   unsigned char a = CTX.UNPACK_ALPHA(col);
-  List_Add_4(colors, &r, &g, &b, &a);
+  _colors.push_back(r);
+  _colors.push_back(g);
+  _colors.push_back(b);
+  _colors.push_back(a);
 }
 
 void VertexArray::add(float x, float y, float z, unsigned int col)
 {
-  List_Add_3(vertices, &x, &y, &z);
+  _vertices.push_back(x);
+  _vertices.push_back(y);
+  _vertices.push_back(z);
 
   unsigned char r = CTX.UNPACK_RED(col);
   unsigned char g = CTX.UNPACK_GREEN(col);
   unsigned char b = CTX.UNPACK_BLUE(col);
   unsigned char a = CTX.UNPACK_ALPHA(col);
-  List_Add_4(colors, &r, &g, &b, &a);
+  _colors.push_back(r);
+  _colors.push_back(g);
+  _colors.push_back(b);
+  _colors.push_back(a);
 }
 
-static double theeye[3];
 
-int compareTriEye(const void *a, const void *b)
-{
-  float *q = (float*)a;
-  float *w = (float*)b;
-  double d, dq, dw, cgq[3] = { 0., 0., 0. }, cgw[3] = { 0., 0., 0.};
-  for(int i = 0; i < 3; i++) {
-    cgq[0] += q[3*i];
-    cgq[1] += q[3*i + 1];
-    cgq[2] += q[3*i + 2];
-    cgw[0] += w[3*i];
-    cgw[1] += w[3*i + 1];
-    cgw[2] += w[3*i + 2];
+class AlphaElement {
+public:
+  AlphaElement(float *vp, char *np, unsigned char *cp) : v(vp), n(np), c(cp) {}
+  float *v;
+  char *n;
+  unsigned char *c;
+};
+
+class AlphaElementLessThan {
+ public:
+  static int numVertices;
+  static double eye[3];
+  bool operator()(const AlphaElement &e1, const AlphaElement &e2) const
+  {
+    double cg1[3] = { 0., 0., 0. }, cg2[3] = { 0., 0., 0.};
+    for(int i = 0; i < numVertices; i++) {
+      cg1[0] += e1.v[3 * i];
+      cg1[1] += e1.v[3 * i + 1];
+      cg1[2] += e1.v[3 * i + 2];
+      cg2[0] += e2.v[3 * i];
+      cg2[1] += e2.v[3 * i + 1];
+      cg2[2] += e2.v[3 * i + 2];
+    }
+    double d1, d2;
+    prosca(eye, cg1, &d1);
+    prosca(eye, cg2, &d2);
+    if(d1 < d2)
+      return true;
+    return false;
   }
-  prosca(theeye, cgq, &dq);
-  prosca(theeye, cgw, &dw);
-  d = dq - dw;
-  if(d > 0)
-    return 1;
-  if(d < 0)
-    return -1;
-  return 0;
-}
+};
+
+int AlphaElementLessThan::numVertices = 0;
+double AlphaElementLessThan::eye[3] = {0., 0., 0.};
 
 void VertexArray::sort(double eye[3])
 {
-  // sort assumes that the all the arrays are filled
-  if(!List_Nbr(vertices) || !List_Nbr(normals) || !List_Nbr(colors))
-    return;
+  // This simplementation is pretty bad: it copies the whole data
+  // twice. We should think about a more efficient way to sort the
+  // three arrays in place.
 
-  if(type != 3){
-    Msg(GERROR, "VertexArray sort only implemented for triangles");
-    return;
-  }
-  
-  theeye[0] = eye[0];
-  theeye[1] = eye[1];
-  theeye[2] = eye[2];
+  AlphaElementLessThan::numVertices = getType();
+  AlphaElementLessThan::eye[0] = eye[0];
+  AlphaElementLessThan::eye[1] = eye[1];
+  AlphaElementLessThan::eye[2] = eye[2];
 
-  int num = n() / 3;
-  int nb = List_Nbr(vertices) + List_Nbr(normals) + List_Nbr(colors);
-  float *tmp = new float[nb];
+  int n = getNumVertices() / getType();
+
+  std::vector<AlphaElement> elements;
+  elements.reserve(n);
+  if(_normals.size())
+    for(int i = 0; i < n; i++)
+      elements.push_back(AlphaElement(&_vertices[3 * getType() * i], 
+				      &_normals[3 * getType() * i], 
+				      &_colors[4 * getType() * i]));
+  else
+    for(int i = 0; i < n; i++)
+      elements.push_back(AlphaElement(&_vertices[3 * getType() * i], 
+				      0, 
+				      &_colors[4 * getType() * i]));
   
-  int iv = 0, in = 0, ic = 0, k = 0;
-  for(int i = 0; i < num; i++){
-    for(int j = 0; j < 9; j++)
-      List_Read(vertices, iv++, &tmp[k++]);
-    for(int j = 0; j < 9; j++)
-      List_Read(normals, in++, &tmp[k++]);
-    for(int j = 0; j < 12; j++){
-      unsigned char c;
-      List_Read(colors, ic++, &c);
-      tmp[k++] = c;
+  std::sort(elements.begin(), elements.end(), AlphaElementLessThan());
+
+  std::vector<float> sortedVertices;
+  std::vector<char> sortedNormals;
+  std::vector<unsigned char> sortedColors;
+  sortedVertices.reserve(_vertices.size());
+  sortedNormals.reserve(_normals.size());
+  sortedColors.reserve(_colors.size());
+
+  for(int i = 0; i < n; i++){
+    for(int j = 0; j < getType(); j++){
+      for(int k = 0; k < 3; k++){
+	sortedVertices.push_back(elements[i].v[3 * j + k]);
+	if(elements[i].v)
+	  sortedNormals.push_back(elements[i].n[3 * j + k]);
+      }
+      for(int k = 0; k < 4; k++){
+	sortedColors.push_back(elements[i].c[4 * j + k]);
+      }
     }
   }
 
-  List_Reset(vertices);
-  List_Reset(normals);
-  List_Reset(colors);
-
-  qsort(tmp, num, (9+9+12)*sizeof(float), compareTriEye);
-
-  k = 0;
-  for(int i = 0; i < num; i++){
-    for(int j = 0; j < 9; j++)
-      List_Add(vertices, &tmp[k++]);
-    for(int j = 0; j < 9; j++)
-      List_Add(normals, &tmp[k++]);
-    for(int j = 0; j < 12; j++){
-      unsigned char c = (unsigned char)tmp[k++];
-      List_Add(colors, &c);
-    }
-  }  
-
-  delete [] tmp;
+  _vertices = sortedVertices;
+  _normals = sortedNormals;
+  _colors = sortedColors;
 }
 
