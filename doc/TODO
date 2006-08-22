@@ -1,4 +1,4 @@
-$Id: TODO,v 1.14 2006-06-24 08:06:25 geuzaine Exp $
+$Id: TODO,v 1.15 2006-08-22 17:47:08 geuzaine Exp $
 
 extrude along a given function (e.g. radius to extrude a sphere)
 
@@ -16,12 +16,6 @@ Plugin(CutMap) with "ExtractVolume" set to 1 (or -1): this will
 generate a new view with an actual "cut" on the front (an
 "iso-volume"). Then one could use Plugin(Skin) to extract the outer
 surface.)
-
-********************************************************************
-
-Degre2: add an option to simply subdivide the edges/faces instead of
-generating the new vertices on the geometry? (requested by Jacques
-Kools)
 
 ********************************************************************
 
@@ -114,11 +108,6 @@ add a mode to pick a mesh element with the mouse (a la medit)
 
 add option to cutmesh to cap the mesh instead of displaying "whole"
 elements
-
-********************************************************************
-
-read inria's mesh and solution file formats? ALMOST DONE with new BDS
-code.
 
 ********************************************************************
 
@@ -228,32 +217,11 @@ Memory leaks, memory leaks
 
 ********************************************************************
 
-Rewrite the geometry module in C++: we should have
-
-Point.cpp
-Curve.cpp
-Surface.cpp
-Volume.cpp
-
-It's much shorter than one may think. We could just keep a C interface
-like in Vertex.cpp and Simplex.cpp.
-
-********************************************************************
-
 Rewrite the View and ColorTable interface in C++
 
 ********************************************************************
 
 Include the 2D Netgen algorithms?
-
-********************************************************************
-
-All surface meshes are made in a mean plane. If your surface cannot be
-projected into a plane with a 1-to-1 correspondance between the nodes,
-then gmsh will fail. 
-
-We should definitely use a better projection algorithm
-(intrinstic parameterization?). See e.g. work by Desbrun et al.
 
 ********************************************************************
 
