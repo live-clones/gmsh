@@ -136,6 +136,7 @@ public :
   int enable_mouse_selection; // enable selection using the mouse
 
   int expert_mode; // to disable some warnings for beginners
+  int printing; // dynamic: equal to 1 while gmsh is printing
 
   // geometry options 
   struct{
@@ -216,7 +217,7 @@ public :
     double eps_line_width_factor, eps_point_size_factor;
     int jpeg_quality, jpeg_smoothing;
     int gif_dither, gif_sort, gif_interlace, gif_transparent;
-    int gl_fonts;
+    int text;
   } print;
 
   // color options

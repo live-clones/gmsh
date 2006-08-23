@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.447 2006-08-22 01:58:32 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.448 2006-08-23 19:53:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -299,12 +299,14 @@ void activate_cb(CALLBACK_ARGS)
       WID->mesh_butt[18]->activate();
       WID->mesh_butt[19]->activate();
       WID->mesh_butt[20]->activate();
+      WID->mesh_butt[0]->activate();
       WID->mesh_value[18]->activate();
     }
     else{
       WID->mesh_butt[18]->deactivate();
       WID->mesh_butt[19]->deactivate();
       WID->mesh_butt[20]->deactivate();
+      WID->mesh_butt[0]->deactivate();
       WID->mesh_value[18]->deactivate();
     }
   }
@@ -472,7 +474,7 @@ void status_xyz1p_cb(CALLBACK_ARGS)
     else if(CTX.enable_mouse_selection){
       // mouse does nothing
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 0);
-      WID->g_opengl_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);      
+      WID->g_opengl_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
     }
     else{
       // mouse hover and select for geometry, but mouse select only
@@ -674,43 +676,22 @@ int _save_stl(char *name)
 
 int _save_ps(char *name)
 {
-  return gl2ps_dialog(name, "PS Options", 0, 0);
+  return gl2ps_dialog(name, "PS Options", FORMAT_PS);
 }
 
 int _save_eps(char *name)
 {
-  return gl2ps_dialog(name, "EPS Options", 1, 0);
-}
-
-int _save_epstex(char *name)
-{
-  return gl2ps_dialog(name, "EPS Options", 1, 1);
+  return gl2ps_dialog(name, "EPS Options", FORMAT_EPS);
 }
 
 int _save_pdf(char *name)
 {
-  return gl2ps_dialog(name, "PDF Options", 2, 0);
-}
-
-int _save_pdftex(char *name)
-{
-  return gl2ps_dialog(name, "PDF Options", 2, 1);
+  return gl2ps_dialog(name, "PDF Options", FORMAT_PDF);
 }
 
 int _save_svg(char *name)
 {
-  return gl2ps_dialog(name, "SVG Options", 3, 0);
-}
-
-int _save_jpegtex(char *name)
-{
-  return jpeg_dialog(name, 1);
-}
-
-int _save_pngtex(char *name)
-{
-  CreateOutputFile(name, FORMAT_PNGTEX);
-  return 1;
+  return gl2ps_dialog(name, "SVG Options", FORMAT_SVG);
 }
 
 int _save_tex(char *name)
@@ -721,13 +702,12 @@ int _save_tex(char *name)
 
 int _save_jpeg(char *name)
 {
-  return jpeg_dialog(name, 0);
+  return jpeg_dialog(name);
 }
 
 int _save_png(char *name)
 {
-  CreateOutputFile(name, FORMAT_PNG);
-  return 1;
+  return generic_bitmap_dialog(name, "PNG Options", FORMAT_PNG);
 }
 
 int _save_gif(char *name)
@@ -737,14 +717,12 @@ int _save_gif(char *name)
 
 int _save_ppm(char *name)
 {
-  CreateOutputFile(name, FORMAT_PPM);
-  return 1;
+  return generic_bitmap_dialog(name, "PPM Options", FORMAT_PPM);
 }
 
 int _save_yuv(char *name)
 {
-  CreateOutputFile(name, FORMAT_YUV);
-  return 1;
+  return generic_bitmap_dialog(name, "YUV Options", FORMAT_YUV);
 }
 
 int _save_auto(char *name)
@@ -755,13 +733,13 @@ int _save_auto(char *name)
   case FORMAT_STL     : return _save_stl(name);
   case FORMAT_PS      : return _save_ps(name);
   case FORMAT_EPS     : return _save_eps(name);
-  case FORMAT_EPSTEX  : return _save_epstex(name);
   case FORMAT_PDF     : return _save_pdf(name);
-  case FORMAT_PDFTEX  : return _save_pdftex(name);
   case FORMAT_SVG     : return _save_svg(name);
-  case FORMAT_JPEGTEX : return _save_jpegtex(name);
   case FORMAT_JPEG    : return _save_jpeg(name);
+  case FORMAT_PNG     : return _save_png(name);
   case FORMAT_GIF     : return _save_gif(name);
+  case FORMAT_PPM     : return _save_ppm(name);
+  case FORMAT_YUV     : return _save_yuv(name);
   default :
     CreateOutputFile(name, FORMAT_AUTO); 
     return 1;
@@ -795,15 +773,7 @@ void file_save_as_cb(CALLBACK_ARGS)
 #if defined(HAVE_LIBJPEG)
     {"JPEG (*.jpg)", _save_jpeg},
 #endif
-    {"LaTeX EPS part without text (*.eps)", _save_epstex},
-#if defined(HAVE_LIBJPEG)
-    {"LaTeX JPEG part without text (*.jpg)", _save_jpegtex},
-#endif
-    {"LaTeX PDF part without text (*.pdf)", _save_pdftex},
-#if defined(HAVE_LIBPNG)
-    {"LaTeX PNG part without text (*.png)", _save_pngtex},
-#endif
-    {"LaTeX text part (*.tex)", _save_tex},
+    {"LaTeX (*.tex)", _save_tex},
     {"PDF (*.pdf)", _save_pdf},
 #if defined(HAVE_LIBPNG)
     {"PNG (*.png)", _save_png},
@@ -1600,7 +1570,6 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Alt+b         Hide/show bounding boxes");
   Msg(DIRECT, "  Alt+c         Loop through predefined color schemes");
   Msg(DIRECT, "  Alt+f         Change redraw mode (fast/full)"); 
-  Msg(DIRECT, "  Alt+g         Loop through axes modes for visible post-processing views"); 
   Msg(DIRECT, "  Alt+h         Hide/show all post-processing views"); 
   Msg(DIRECT, "  Alt+i         Hide/show all post-processing view scales");
   Msg(DIRECT, "  Alt+l         Hide/show geometry lines");

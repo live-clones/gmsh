@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.15 2006-08-19 08:26:47 remacle Exp $
+// $Id: gmshFace.cpp,v 1.16 2006-08-23 19:53:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -50,26 +50,24 @@ gmshFace::gmshFace(GModel *m, Surface *face)
   // (simply using the bounding vertices)
   if(s->Typ == MSH_SURF_PLAN) computeMeanPlane();
 
-  if (s->EmbeddedCurves)
-    {
-      for(int i = 0 ; i < List_Nbr(s->EmbeddedCurves); i++){
-	Curve *c;
-	List_Read(s->EmbeddedCurves, i, &c);
-	GEdge *e = m->edgeByTag(abs(c->Num));
-	if(!e) throw;
-	embedded_edges.push_back(e);
-      }
+  if(s->EmbeddedCurves){
+    for(int i = 0 ; i < List_Nbr(s->EmbeddedCurves); i++){
+      Curve *c;
+      List_Read(s->EmbeddedCurves, i, &c);
+      GEdge *e = m->edgeByTag(abs(c->Num));
+      if(!e) throw;
+      embedded_edges.push_back(e);
     }
-  if (s->EmbeddedPoints)
-    {
-      for(int i = 0 ; i < List_Nbr(s->EmbeddedPoints); i++){
-	Vertex *v;
-	List_Read(s->EmbeddedPoints, i, &v);
-	GVertex *gv = m->vertexByTag(v->Num);
-	if(!gv) throw;
-	embedded_vertices.push_back(gv);
-      }
+  }
+  if(s->EmbeddedPoints){
+    for(int i = 0 ; i < List_Nbr(s->EmbeddedPoints); i++){
+      Vertex *v;
+      List_Read(s->EmbeddedPoints, i, &v);
+      GVertex *gv = m->vertexByTag(v->Num);
+      if(!gv) throw;
+      embedded_vertices.push_back(gv);
     }
+  }
 }
 
 gmshFace::gmshFace(GModel *m, int num)

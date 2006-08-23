@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.534 2006-08-22 01:58:33 geuzaine Exp $
+// $Id: GUI.cpp,v 1.535 2006-08-23 19:53:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -688,6 +688,9 @@ int GUI::global_shortcuts(int event)
   else if(Fl::test_shortcut(FL_ALT + 'a')) {
     opt_general_axes(0, GMSH_SET | GMSH_GUI, 
 		     opt_general_axes(0, GMSH_GET, 0) + 1);
+    for(i = 0; i < List_Nbr(CTX.post.list); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_axes(i, GMSH_SET | GMSH_GUI, opt_view_axes(i, GMSH_GET, 0)+1);
     redraw_opengl();
     return 1;
   }
@@ -781,13 +784,6 @@ int GUI::global_shortcuts(int event)
                                 DRAW_POST_ISO);
       }
     }
-    redraw_opengl();
-    return 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'g')) {
-    for(i = 0; i < List_Nbr(CTX.post.list); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_axes(i, GMSH_SET | GMSH_GUI, opt_view_axes(i, GMSH_GET, 0)+1);
     redraw_opengl();
     return 1;
   }

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.302 2006-08-22 01:58:32 geuzaine Exp $
+// $Id: Options.cpp,v 1.303 2006-08-23 19:53:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -131,12 +131,12 @@ void Init_Options(int num)
   CTX.render_mode = GMSH_RENDER;
   CTX.pixel_equiv_x = CTX.pixel_equiv_y = 0.;
   CTX.polygon_offset = 0;
+  CTX.printing = 0;
   CTX.mesh_timer[0] = CTX.mesh_timer[1] = CTX.mesh_timer[2] = 0.;
   CTX.mesh.draw = 1;
   CTX.post.draw = 1;
   CTX.post.list = NULL;
   CTX.post.force_num = 0;
-  CTX.print.gl_fonts = 1;
   CTX.threads_lock = 0; // very primitive locking
   CTX.mesh.changed = 0;
   CTX.mesh.oldxtrude = CTX.mesh.oldxtrude_recombine = 0; // old extrusion mesh generator
@@ -6988,6 +6988,13 @@ double opt_print_gif_transparent(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.print.gif_transparent = (int)val;
   return CTX.print.gif_transparent;
+}
+
+double opt_print_text(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.print.text = (int)val;
+  return CTX.print.text;
 }
 
 // Color option routines

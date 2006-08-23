@@ -96,8 +96,6 @@ Hide/show bounding boxes
 Loop through predefined color schemes
 @item Alt+f
 Change redraw mode (fast/full) 
-@item Alt+g
-Loop through grid modes for visible post-processing views 
 @item Alt+h
 Hide/show all post-processing views 
 @item Alt+i

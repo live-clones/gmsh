@@ -1379,6 +1379,9 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "JpegSmoothing" , opt_print_jpeg_smoothing , 0. ,
     "JPEG smoothing (between 0 and 100)" },
 
+  { F|O, "Text" , opt_print_text , 1. ,
+    "Print text strings?" },
+
   { 0, NULL , NULL , 0. }
 } ;
 
@@ -1400,7 +1403,7 @@ StringXColor GeneralOptions_Color[] = {
     {255, 255, 255, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},
     "Text color" },
   { F|O, "Axes" , opt_general_color_axes ,
-    {255, 255, 255, 255}, {128, 128, 128, 255}, {0, 0, 0, 255},
+    {255, 255, 255, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},
     "Axes color" },
   { F|O, "SmallAxes" , opt_general_color_small_axes ,
     {255, 255, 255, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},

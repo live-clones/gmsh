@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.3 2006-08-19 18:48:06 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.4 2006-08-23 19:53:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -70,9 +70,6 @@ int GuessFileFormatFromFileName(char *name)
   else if(!strcmp(ext, ".eps"))     return FORMAT_EPS;
   else if(!strcmp(ext, ".pdf"))     return FORMAT_PDF;
   else if(!strcmp(ext, ".tex"))     return FORMAT_TEX;
-  else if(!strcmp(ext, ".epstex"))  return FORMAT_EPSTEX;
-  else if(!strcmp(ext, ".pdftex"))  return FORMAT_PDFTEX;
-  else if(!strcmp(ext, ".jpegtex")) return FORMAT_JPEGTEX;
   else if(!strcmp(ext, ".svg"))     return FORMAT_SVG;
   else if(!strcmp(ext, ".ppm"))     return FORMAT_PPM;
   else if(!strcmp(ext, ".yuv"))     return FORMAT_YUV;
@@ -118,6 +115,7 @@ void CreateOutputFile(char *filename, int format)
 
   int oldformat = CTX.print.format;
   CTX.print.format = format;
+  CTX.printing = 1;
 
 #if defined(HAVE_FLTK)
   GLint viewport[4];
@@ -174,14 +172,12 @@ void CreateOutputFile(char *filename, int format)
   case FORMAT_YUV:
   case FORMAT_GIF:  
   case FORMAT_JPEG:
-  case FORMAT_JPEGTEX:
   case FORMAT_PNG:
-  case FORMAT_PNGTEX:
     {
       FILE *fp;
       if(!(fp = fopen(name, "wb"))) {
 	Msg(GERROR, "Unable to open file '%s'", name);
-	return;
+	break;
       }
 
       PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
@@ -189,19 +185,16 @@ void CreateOutputFile(char *filename, int format)
       int old_bg_gradient = CTX.bg_gradient;
       if(format == FORMAT_GIF && CTX.print.gif_transparent)
 	CTX.bg_gradient = 0;
-      if(format == FORMAT_JPEGTEX || format == FORMAT_PNGTEX)
-	CTX.print.gl_fonts = 0;
       buffer.Fill(CTX.batch);
-      CTX.print.gl_fonts = 1;
       CTX.bg_gradient = old_bg_gradient;
 
       if(format == FORMAT_PPM){
 	create_ppm(fp, &buffer);
       }
-      else if (format == FORMAT_YUV){
+      else if(format == FORMAT_YUV){
 	create_yuv(fp, &buffer);
       }
-      else if (format == FORMAT_GIF){
+      else if(format == FORMAT_GIF){
 	create_gif(fp, &buffer,
 		   CTX.print.gif_dither,
 		   CTX.print.gif_sort,
@@ -211,7 +204,7 @@ void CreateOutputFile(char *filename, int format)
 		   CTX.UNPACK_GREEN(CTX.color.bg), 
 		   CTX.UNPACK_BLUE(CTX.color.bg));
       }
-      else if(format == FORMAT_JPEG || format == FORMAT_JPEGTEX){
+      else if(format == FORMAT_JPEG){
 	create_jpeg(fp, &buffer, CTX.print.jpeg_quality, CTX.print.jpeg_smoothing);
       }
       else{
@@ -223,21 +216,18 @@ void CreateOutputFile(char *filename, int format)
 
   case FORMAT_PS:
   case FORMAT_EPS:
-  case FORMAT_EPSTEX:
   case FORMAT_PDF:
-  case FORMAT_PDFTEX:
   case FORMAT_SVG:
     {
       FILE *fp;
       if(!(fp = fopen(name, "wb"))) {
 	Msg(GERROR, "Unable to open file '%s'", name);
-	return;
+	break;
       }
       
       int psformat;
       switch(format){
       case FORMAT_PDF:
-      case FORMAT_PDFTEX:
 	psformat = GL2PS_PDF;
 	break;
       case FORMAT_PS:
@@ -256,12 +246,8 @@ void CreateOutputFile(char *filename, int format)
       
       PixelBuffer buffer(width, height, GL_RGB, GL_FLOAT);
       
-      if(CTX.print.eps_quality == 0){
-	if(format == FORMAT_EPSTEX || format == FORMAT_PDFTEX)
-	  CTX.print.gl_fonts = 0;
+      if(CTX.print.eps_quality == 0)
 	buffer.Fill(CTX.batch);
-	CTX.print.gl_fonts = 1;
-      }
       
       int pssort = 
 	(CTX.print.eps_quality == 3) ? GL2PS_NO_SORT :
@@ -273,9 +259,7 @@ void CreateOutputFile(char *filename, int format)
 	(CTX.print.eps_best_root ? GL2PS_BEST_ROOT : 0) |
 	(CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0) |
 	(CTX.print.eps_compress ? GL2PS_COMPRESS : 0) |
-	(CTX.print.eps_ps3shading ? 0 : GL2PS_NO_PS3_SHADING) |
-	(format == FORMAT_EPSTEX ? GL2PS_NO_TEXT : 0) |
-	(format == FORMAT_PDFTEX ? GL2PS_NO_TEXT : 0);
+	(CTX.print.eps_ps3shading ? 0 : GL2PS_NO_PS3_SHADING);
       
       GLint buffsize = 0;
       int res = GL2PS_OVERFLOW;
@@ -302,9 +286,7 @@ void CreateOutputFile(char *filename, int format)
 	  glLoadMatrixd(modelview);
 	}
 	else{
-	  CTX.print.gl_fonts = 0;
 	  buffer.Fill(CTX.batch);
-	  CTX.print.gl_fonts = 1;
 	}
 	res = gl2psEndPage();
       }
@@ -319,7 +301,7 @@ void CreateOutputFile(char *filename, int format)
       FILE *fp;
       if(!(fp = fopen(name, "w"))) {
 	Msg(GERROR, "Unable to open file '%s'", name);
-	return;
+	break;
       }
       GLint buffsize = 0;
       int res = GL2PS_OVERFLOW;
@@ -329,9 +311,10 @@ void CreateOutputFile(char *filename, int format)
 		       GL2PS_TEX, GL2PS_NO_SORT, GL2PS_NONE, GL_RGBA, 0, NULL, 
 		       0, 0, 0, buffsize, fp, name);
 	PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
-	CTX.print.gl_fonts = 0;
+	int oldtext = CTX.print.text;
+	CTX.print.text = 1;
 	buffer.Fill(CTX.batch);
-	CTX.print.gl_fonts = 1;
+	CTX.print.text = oldtext;
 	res = gl2psEndPage();
       }
       fclose(fp);
@@ -348,6 +331,7 @@ void CreateOutputFile(char *filename, int format)
   if(printEndMessage) Msg(STATUS2, "Wrote '%s'", name);
 
   CTX.print.format = oldformat;
+  CTX.printing = 0;
 
 #if defined(HAVE_FLTK)
   Draw();

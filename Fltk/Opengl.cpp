@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.66 2006-08-20 14:12:40 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.67 2006-08-23 19:53:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -70,43 +70,40 @@ void SanitizeTeXString(char *in, char *out)
 
 void Draw_String(char *s, char *font_name, int font_enum, int font_size, int align)
 {
-  if(align > 0){
-    // change the raster position only if not creating TeX files
-    if(CTX.print.gl_fonts || (CTX.print.format != FORMAT_TEX)){
-      GLboolean valid;
-      glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
-      if(valid == GL_TRUE){
-	GLdouble pos[4];
-	glGetDoublev(GL_CURRENT_RASTER_POSITION, pos);
-	double x[3], w[3] = {pos[0], pos[1], pos[2]};
-	gl_font(font_enum, font_size);
-	float width = gl_width(s);
-	float height = gl_height();
-	switch(align){
-	case 1: w[0] -= width/2.;                     break; // bottom center
-	case 2: w[0] -= width;                        break; // bottom right
-	case 3:                    w[1] -= height;    break; // top left
-	case 4: w[0] -= width/2.;  w[1] -= height;    break; // top center
-	case 5: w[0] -= width;     w[1] -= height;    break; // top right
-	case 6:                    w[1] -= height/2.; break; // center left
-	case 7: w[0] -= width/2.;  w[1] -= height/2.; break; // center center
-	case 8: w[0] -= width;     w[1] -= height/2.; break; // center right
-	default: break;
-	}
-	Viewport2World(w, x);
-	glRasterPos3d(x[0], x[1], x[2]);
+  if(CTX.printing && !CTX.print.text) return;
+
+  // change the raster position only if not creating TeX files
+  if(align > 0 && (!CTX.printing || CTX.print.format != FORMAT_TEX)){
+    GLboolean valid;
+    glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
+    if(valid == GL_TRUE){
+      GLdouble pos[4];
+      glGetDoublev(GL_CURRENT_RASTER_POSITION, pos);
+      double x[3], w[3] = {pos[0], pos[1], pos[2]};
+      gl_font(font_enum, font_size);
+      float width = gl_width(s);
+      float height = gl_height();
+      switch(align){
+      case 1: w[0] -= width/2.;                     break; // bottom center
+      case 2: w[0] -= width;                        break; // bottom right
+      case 3:                    w[1] -= height;    break; // top left
+      case 4: w[0] -= width/2.;  w[1] -= height;    break; // top center
+      case 5: w[0] -= width;     w[1] -= height;    break; // top right
+      case 6:                    w[1] -= height/2.; break; // center left
+      case 7: w[0] -= width/2.;  w[1] -= height/2.; break; // center center
+      case 8: w[0] -= width;     w[1] -= height/2.; break; // center right
+      default: break;
       }
+      Viewport2World(w, x);
+      glRasterPos3d(x[0], x[1], x[2]);
     }
   }
   
-  if(CTX.print.gl_fonts) {
+  if(!CTX.printing){
     gl_font(font_enum, font_size);
     gl_draw(s);
   }
-  else { // ps, pdf or *tex output
-    if(CTX.print.format == FORMAT_JPEGTEX ||
-       CTX.print.format == FORMAT_PNGTEX)
-      return;
+  else{
     if(CTX.print.format == FORMAT_TEX){
       char tmp[1024];
       SanitizeTeXString(s, tmp);
@@ -124,8 +121,16 @@ void Draw_String(char *s, char *font_name, int font_enum, int font_size, int ali
       }
       gl2psTextOpt(tmp, font_name, font_size, opt, 0.);
     }
-    else
+    else if(CTX.print.eps_quality && (CTX.print.format == FORMAT_PS ||
+				      CTX.print.format == FORMAT_EPS ||
+				      CTX.print.format == FORMAT_PDF ||
+				      CTX.print.format == FORMAT_SVG)){
       gl2psText(s, font_name, font_size);
+    }
+    else{
+      gl_font(font_enum, font_size);
+      gl_draw(s);
+    }
   }
 }
 

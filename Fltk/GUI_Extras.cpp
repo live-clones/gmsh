@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.20 2006-08-19 18:48:06 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.21 2006-08-23 19:53:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -214,20 +214,21 @@ int perspective_editor()
   return 0;
 }
 
-// jpeg dialog
+// save jpeg dialog
 
-int jpeg_dialog(char *name, int TeX)
+int jpeg_dialog(char *name)
 {
   struct _jpeg_dialog{
     Fl_Window *window;
     Fl_Value_Slider *s[2];
+    Fl_Check_Button *b;
     Fl_Button *ok, *cancel;
   };
   static _jpeg_dialog *dialog = NULL;
 
   if(!dialog){
     dialog = new _jpeg_dialog;
-    int h = 3*10 + 25 + 2*25, y = 0;
+    int h = 3*10 + 25 + 3*25, y = 0;
     // not a "Dialog_Window" since it is modal 
     dialog->window = new Fl_Double_Window(200, h, "JPEG Options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
@@ -243,6 +244,10 @@ int jpeg_dialog(char *name, int TeX)
     dialog->s[1]->minimum(0);
     dialog->s[1]->maximum(100);
     dialog->s[1]->step(1);
+    dialog->b = new Fl_Check_Button(10, y, 180, 25, "Print text strings"); y += 25;
+    dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->b->down_box(GMSH_TOGGLE_BOX);
+    dialog->b->selection_color(GMSH_TOGGLE_COLOR);
     dialog->ok = new Fl_Return_Button(10, y+10, 85, 25, "OK");
     dialog->cancel = new Fl_Button(105, y+10, 85, 25, "Cancel");
     dialog->window->set_modal();
@@ -252,6 +257,7 @@ int jpeg_dialog(char *name, int TeX)
   
   dialog->s[0]->value(CTX.print.jpeg_quality);
   dialog->s[1]->value(CTX.print.jpeg_smoothing);
+  dialog->b->value(CTX.print.text);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -262,7 +268,8 @@ int jpeg_dialog(char *name, int TeX)
       if (o == dialog->ok) {
 	opt_print_jpeg_quality(0, GMSH_SET | GMSH_GUI, (int)dialog->s[0]->value());
 	opt_print_jpeg_smoothing(0, GMSH_SET | GMSH_GUI, (int)dialog->s[1]->value());
-	CreateOutputFile(name, TeX ? FORMAT_JPEGTEX : FORMAT_JPEG);
+	opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b->value());
+	CreateOutputFile(name, FORMAT_JPEG);
 	dialog->window->hide();
 	return 1;
       }
@@ -275,20 +282,72 @@ int jpeg_dialog(char *name, int TeX)
   return 0;
 }
 
-// gif dialog
+// save generic bitmap dialog
+
+int generic_bitmap_dialog(char *name, char *title, int format)
+{
+  struct _generic_bitmap_dialog{
+    Fl_Window *window;
+    Fl_Check_Button *b;
+    Fl_Button *ok, *cancel;
+  };
+  static _generic_bitmap_dialog *dialog = NULL;
+
+  if(!dialog){
+    dialog = new _generic_bitmap_dialog;
+    int h = 3*10 + 25 + 1*25, y = 0;
+    // not a "Dialog_Window" since it is modal 
+    dialog->window = new Fl_Double_Window(200, h); y = 10;
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->b = new Fl_Check_Button(10, y, 180, 25, "Print text strings"); y += 25;
+    dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->b->down_box(GMSH_TOGGLE_BOX);
+    dialog->b->selection_color(GMSH_TOGGLE_COLOR);
+    dialog->ok = new Fl_Return_Button(10, y+10, 85, 25, "OK");
+    dialog->cancel = new Fl_Button(105, y+10, 85, 25, "Cancel");
+    dialog->window->set_modal();
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+  
+  dialog->window->label(title);
+  dialog->b->value(CTX.print.text);
+  dialog->window->show();
+
+  while(dialog->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == dialog->ok) {
+	opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b->value());
+	CreateOutputFile(name, format);
+	dialog->window->hide();
+	return 1;
+      }
+      if (o == dialog->window || o == dialog->cancel){
+	dialog->window->hide();
+	return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+// save gif dialog
 
 int gif_dialog(char *name)
 {
   struct _gif_dialog{
     Fl_Window *window;
-    Fl_Check_Button *b[4];
+    Fl_Check_Button *b[5];
     Fl_Button *ok, *cancel;
   };
   static _gif_dialog *dialog = NULL;
 
   if(!dialog){
     dialog = new _gif_dialog;
-    int h = 3*10 + 25 + 4*25, y = 0;
+    int h = 3*10 + 25 + 5*25, y = 0;
     // not a "Dialog_Window" since it is modal 
     dialog->window = new Fl_Double_Window(200, h, "GIF Options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
@@ -296,7 +355,8 @@ int gif_dialog(char *name)
     dialog->b[1] = new Fl_Check_Button(10, y, 180, 25, "Interlace"); y += 25;
     dialog->b[2] = new Fl_Check_Button(10, y, 180, 25, "Sort colormap"); y += 25;
     dialog->b[3] = new Fl_Check_Button(10, y, 180, 25, "Transparent background"); y += 25;
-    for(int i = 0; i < 4; i++){
+    dialog->b[4] = new Fl_Check_Button(10, y, 180, 25, "Print text strings"); y += 25;
+    for(int i = 0; i < 5; i++){
       dialog->b[i]->type(FL_TOGGLE_BUTTON);
       dialog->b[i]->down_box(GMSH_TOGGLE_BOX);
       dialog->b[i]->selection_color(GMSH_TOGGLE_COLOR);
@@ -312,6 +372,7 @@ int gif_dialog(char *name)
   dialog->b[1]->value(CTX.print.gif_interlace);
   dialog->b[2]->value(CTX.print.gif_sort);
   dialog->b[3]->value(CTX.print.gif_transparent);
+  dialog->b[4]->value(CTX.print.text);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -324,6 +385,7 @@ int gif_dialog(char *name)
 	opt_print_gif_interlace(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value());
 	opt_print_gif_sort(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value());
 	opt_print_gif_transparent(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value());
+	opt_print_text(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value());
 	CreateOutputFile(name, FORMAT_GIF);
 	dialog->window->hide();
 	return 1;
@@ -337,7 +399,7 @@ int gif_dialog(char *name)
   return 0;
 }
 
-// ps/eps/pdf dialog
+// save ps/eps/pdf dialog
 
 static void activate_gl2ps_choices(int format, int quality, Fl_Check_Button *b[5])
 {
@@ -358,7 +420,7 @@ static void activate_gl2ps_choices(int format, int quality, Fl_Check_Button *b[5
     b[1]->activate();   
     b[2]->activate();
     b[3]->deactivate(); 
-    if(format == 2 || format == 3) // pdf or svg
+    if(format == FORMAT_PDF || format == FORMAT_SVG)
       b[4]->deactivate();
     else
       b[4]->activate();
@@ -367,7 +429,7 @@ static void activate_gl2ps_choices(int format, int quality, Fl_Check_Button *b[5
     b[1]->activate();   
     b[2]->activate();
     b[3]->activate();   
-    if(format == 2 || format == 3) // pdf or svg
+    if(format == FORMAT_PDF || format == FORMAT_SVG)
       b[4]->deactivate();
     else
       b[4]->activate();
@@ -375,11 +437,11 @@ static void activate_gl2ps_choices(int format, int quality, Fl_Check_Button *b[5
   }
 }
 
-int gl2ps_dialog(char *name, char *title, int format, int TeX)
+int gl2ps_dialog(char *name, char *title, int format)
 {
   struct _gl2ps_dialog{
     Fl_Window *window;
-    Fl_Check_Button *b[5];
+    Fl_Check_Button *b[6];
     Fl_Choice *c;
     Fl_Button *ok, *cancel;
   };
@@ -395,7 +457,7 @@ int gl2ps_dialog(char *name, char *title, int format, int TeX)
 
   if(!dialog){
     dialog = new _gl2ps_dialog;
-    int h = 3*10 + 25 + 6*25, y = 0;
+    int h = 3*10 + 25 + 7*25, y = 0;
     // not a "Dialog_Window" since it is modal 
     dialog->window = new Fl_Double_Window(200, h); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
@@ -407,7 +469,8 @@ int gl2ps_dialog(char *name, char *title, int format, int TeX)
     dialog->b[2] = new Fl_Check_Button(10, y, 180, 25, "Remove hidden primitives"); y += 25;
     dialog->b[3] = new Fl_Check_Button(10, y, 180, 25, "Optimize BSP tree"); y += 25;
     dialog->b[4] = new Fl_Check_Button(10, y, 180, 25, "Use level 3 shading"); y += 25;
-    for(int i = 0; i < 5; i++){
+    dialog->b[5] = new Fl_Check_Button(10, y, 180, 25, "Print text strings"); y += 25;
+    for(int i = 0; i < 6; i++){
       dialog->b[i]->type(FL_TOGGLE_BUTTON);
       dialog->b[i]->down_box(GMSH_TOGGLE_BOX);
       dialog->b[i]->selection_color(GMSH_TOGGLE_COLOR);
@@ -426,6 +489,7 @@ int gl2ps_dialog(char *name, char *title, int format, int TeX)
   dialog->b[2]->value(CTX.print.eps_occlusion_culling);
   dialog->b[3]->value(CTX.print.eps_best_root);
   dialog->b[4]->value(CTX.print.eps_ps3shading);
+  dialog->b[5]->value(CTX.print.text);
 
   activate_gl2ps_choices(format, CTX.print.eps_quality, dialog->b);
 
@@ -447,11 +511,8 @@ int gl2ps_dialog(char *name, char *title, int format, int TeX)
 	opt_print_eps_occlusion_culling(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value());
 	opt_print_eps_best_root(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value());
 	opt_print_eps_ps3shading(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value());
-	CreateOutputFile(name, 
-			 (format == 3) ? FORMAT_SVG :
-			 (format == 2) ? (TeX ? FORMAT_PDFTEX : FORMAT_PDF) : 
-			 (format == 1) ? (TeX ? FORMAT_EPSTEX : FORMAT_EPS) : 
-			 FORMAT_PS);
+	opt_print_text(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value());
+	CreateOutputFile(name, format);
 	dialog->window->hide();
 	return 1;
       }
@@ -464,7 +525,7 @@ int gl2ps_dialog(char *name, char *title, int format, int TeX)
   return 0;
 }
 
-// gmsh options dialog
+// save options dialog
 
 int options_dialog(char *name)
 {

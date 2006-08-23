@@ -18,15 +18,11 @@
 #define FORMAT_SMS           14
 #define FORMAT_OPT           15
 #define FORMAT_VTK           16
-#define FORMAT_JPEGTEX       17
 #define FORMAT_TEX           18
 #define FORMAT_VRML          19
 #define FORMAT_EPS           20
-#define FORMAT_EPSTEX        21
 #define FORMAT_PNG           22
-#define FORMAT_PNGTEX        23
 #define FORMAT_PDF           24
-#define FORMAT_PDFTEX        25
 #define FORMAT_POS           26
 #define FORMAT_STL           27
 #define FORMAT_P3D           28

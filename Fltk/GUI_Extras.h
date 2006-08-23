@@ -29,9 +29,10 @@ void file_chooser_get_position(int *x, int *y);
 int arrow_editor(char *title, double &a, double &b, double &c);
 int perspective_editor();
 
-int jpeg_dialog(char *filename, int TeX);
+int jpeg_dialog(char *filename);
 int gif_dialog(char *filename);
-int gl2ps_dialog(char *filename, char *title, int format, int TeX);
+int generic_bitmap_dialog(char *filename, char *title, int format);
+int gl2ps_dialog(char *filename, char *title, int format);
 int options_dialog(char *filename);
 int msh_dialog(char *filename);
 int stl_dialog(char *filename);
