@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.28 2006-08-19 19:46:07 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.29 2006-08-24 16:55:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -309,7 +309,7 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
 
 int GModel::readMSH(const std::string &name)
 {
-  FILE *fp = fopen(name.c_str(), "r");
+  FILE *fp = fopen(name.c_str(), "rb");
   if(!fp){
     Msg(GERROR, "Unable to open file '%s'", name.c_str());
     return 0;

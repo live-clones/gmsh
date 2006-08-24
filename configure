@@ -4129,6 +4129,35 @@ fi
     fi
   fi
 
+    echo "$as_me:$LINENO: checking for ./contrib/FourierModel/model.cpp" >&5
+echo $ECHO_N "checking for ./contrib/FourierModel/model.cpp... $ECHO_C" >&6
+if test "${ac_cv_file___contrib_FourierModel_model_cpp+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "./contrib/FourierModel/model.cpp"; then
+  ac_cv_file___contrib_FourierModel_model_cpp=yes
+else
+  ac_cv_file___contrib_FourierModel_model_cpp=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file___contrib_FourierModel_model_cpp" >&5
+echo "${ECHO_T}$ac_cv_file___contrib_FourierModel_model_cpp" >&6
+if test $ac_cv_file___contrib_FourierModel_model_cpp = yes; then
+  FOURIER="yes"
+else
+  FOURIER="no"
+fi
+
+  if test "x${FOURIER}" = "xyes"; then
+    GMSH_DIRS="${GMSH_DIRS} contrib/FourierModel"
+    GMSH_LIBS="${GMSH_LIBS} -Lcontrib/FourierModel -lFourierModel"
+    FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS}"
+  fi
+
 fi
 
 if test "x$enable_gsl" != "xno"; then

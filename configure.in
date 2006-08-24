@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.100 2006-08-12 19:34:14 geuzaine Exp $
+dnl $Id: configure.in,v 1.101 2006-08-24 16:55:28 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 dnl
@@ -455,6 +455,14 @@ if test "x$enable_contrib" != "xno"; then
        GMSH_LIBS="${GMSH_LIBS} -lGmshMathEval"
        FLAGS="-DHAVE_MATH_EVAL ${FLAGS}"
     fi
+  fi
+
+  dnl Check for FourierModel
+  AC_CHECK_FILE(./contrib/FourierModel/model.cpp, FOURIER="yes", FOURIER="no")
+  if test "x${FOURIER}" = "xyes"; then
+    GMSH_DIRS="${GMSH_DIRS} contrib/FourierModel"
+    GMSH_LIBS="${GMSH_LIBS} -Lcontrib/FourierModel -lFourierModel"
+    FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS}"
   fi
 
 fi
