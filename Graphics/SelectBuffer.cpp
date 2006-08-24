@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.2 2006-08-24 01:14:59 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.3 2006-08-24 15:09:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,6 @@
 #include "Context.h"
 #include "SelectBuffer.h"
 #include "GModel.h"
-#include "Melement.h"
 #include "MRep.h"
 
 extern Context_T CTX;
