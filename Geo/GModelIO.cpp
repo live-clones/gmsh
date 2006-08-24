@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.29 2006-08-24 16:55:28 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.30 2006-08-24 16:56:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -549,7 +549,7 @@ static void writeElementsMSH(FILE *fp, const std::vector<T*> &ele, int saveAll,
 int GModel::writeMSH(const std::string &name, double version, bool binary, 
 		     bool saveAll, double scalingFactor)
 {
-  FILE *fp = fopen(name.c_str(), "w");
+  FILE *fp = fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp){
     Msg(GERROR, "Unable to open file '%s'", name.c_str());
     return 0;
