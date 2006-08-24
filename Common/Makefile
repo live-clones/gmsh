@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.105 2006-08-17 21:28:34 geuzaine Exp $
+# $Id: Makefile,v 1.106 2006-08-24 01:14:55 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -157,9 +157,7 @@ Visibility.o: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \
 # 1 "/Users/geuzaine/.gmsh/Common//"
 Trackball.o: Trackball.cpp Trackball.h
 # 1 "/Users/geuzaine/.gmsh/Common//"
-VertexArray.o: VertexArray.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  ../DataStr/List.h ../DataStr/Tree.h VertexArray.h Context.h \
+VertexArray.o: VertexArray.cpp VertexArray.h Context.h ../DataStr/List.h \
   ../Numeric/Numeric.h
 # 1 "/Users/geuzaine/.gmsh/Common//"
 SmoothNormals.o: SmoothNormals.cpp Gmsh.h Message.h ../DataStr/Malloc.h \

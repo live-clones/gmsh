@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.99 2006-08-20 14:12:40 geuzaine Exp $
+# $Id: Makefile,v 1.100 2006-08-24 01:14:58 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -164,7 +164,9 @@ SelectBuffer.o: SelectBuffer.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/GEntity.h ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEdge.h ../Geo/GFace.h \
-  ../Geo/GRegion.h ../Geo/SBoundingBox3d.h
+  ../Geo/GRegion.h ../Geo/SBoundingBox3d.h ../Geo/Melement.h \
+  ../Geo/MRep.h ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h \
+  ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MElement.h ../Common/OS.h
 # 1 "/Users/geuzaine/.gmsh/Graphics//"
 Iso.o: Iso.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \

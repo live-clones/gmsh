@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.14 2006-08-22 15:34:34 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.15 2006-08-24 01:14:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -35,8 +35,8 @@ VertexArray::VertexArray(int numNodesPerElement, int numElements)
   _colors.reserve(nb *4);
 }
 
-void VertexArray::add(float x, float y, float z, 
-		      float n0, float n1, float n2, unsigned int col)
+void VertexArray::add(float x, float y, float z, float n0, float n1, float n2,
+		      unsigned int col, MElement *ele)
 {
   _vertices.push_back(x);
   _vertices.push_back(y);
@@ -59,9 +59,12 @@ void VertexArray::add(float x, float y, float z,
   _colors.push_back(g);
   _colors.push_back(b);
   _colors.push_back(a);
+
+  if(ele && CTX.enable_mouse_selection > 2)
+    _elements.push_back(ele);
 }
 
-void VertexArray::add(float x, float y, float z, unsigned int col)
+void VertexArray::add(float x, float y, float z, unsigned int col, MElement *ele)
 {
   _vertices.push_back(x);
   _vertices.push_back(y);
@@ -75,6 +78,9 @@ void VertexArray::add(float x, float y, float z, unsigned int col)
   _colors.push_back(g);
   _colors.push_back(b);
   _colors.push_back(a);
+
+  if(ele && CTX.enable_mouse_selection > 2)
+    _elements.push_back(ele);
 }
 
 

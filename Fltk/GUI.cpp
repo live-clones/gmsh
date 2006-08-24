@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.535 2006-08-23 19:53:37 geuzaine Exp $
+// $Id: GUI.cpp,v 1.536 2006-08-24 01:14:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -510,12 +510,6 @@ int GUI::global_shortcuts(int event)
   if(event != FL_SHORTCUT)
     return 0;
 
-  if(Fl::test_shortcut(FL_CTRL + FL_Escape) ||
-     Fl::test_shortcut(FL_META + FL_Escape) ||
-     Fl::test_shortcut(FL_ALT + FL_Escape)) {
-    return 1;
-  }
-
   if(Fl::test_shortcut('0')) {
     geometry_reload_cb(0, 0);
     mod_geometry_cb(0, 0);
@@ -579,7 +573,10 @@ int GUI::global_shortcuts(int event)
     return 0;   // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut(FL_Escape) ||
-	  Fl::test_shortcut(FL_SHIFT + FL_Escape)) {
+	  Fl::test_shortcut(FL_META + FL_Escape) ||
+	  Fl::test_shortcut(FL_SHIFT + FL_Escape) ||
+	  Fl::test_shortcut(FL_CTRL + FL_Escape) ||
+	  Fl::test_shortcut(FL_ALT + FL_Escape)) {
     if(g_opengl_window->LassoMode){
       g_opengl_window->LassoMode = false;
       redraw_opengl();

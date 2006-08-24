@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.183 2006-08-22 15:34:34 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.184 2006-08-24 01:14:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -372,7 +372,7 @@ static void addEdgesInArrays(GEntity *e)
     for(int i = 0; i < 2; i++){
       if(e->dim() == 2 && CTX.mesh.smooth_normals)
 	e->model()->normals->get(v[i]->x(), v[i]->y(), v[i]->z(), n[0], n[1], n[2]);
-      m->va_lines->add(v[i]->x(), v[i]->y(), v[i]->z(), n[0], n[1], n[2], color);
+      m->va_lines->add(v[i]->x(), v[i]->y(), v[i]->z(), n[0], n[1], n[2], color, ele);
     }
   }
 }
@@ -405,9 +405,9 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements)
 	  if(e->dim() == 2 && CTX.mesh.smooth_normals)
 	    e->model()->normals->get(p[0], p[1], p[2], n[0], n[1], n[2]);
 	  if(numverts == 3)
-	    m->va_triangles->add(p[0], p[1], p[2], n[0], n[1], n[2], color);
+	    m->va_triangles->add(p[0], p[1], p[2], n[0], n[1], n[2], color, ele);
 	  else if(numverts == 4)
-	    m->va_quads->add(p[0], p[1], p[2], n[0], n[1], n[2], color);
+	    m->va_quads->add(p[0], p[1], p[2], n[0], n[1], n[2], color, ele);
 	}
       }
     }
@@ -423,7 +423,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements)
 	    for(int l = 0; l < 3; l++)
 	      p[l] = pc[l] + CTX.mesh.explode * (p[l] - pc[l]);
 	  }
-	  m->va_lines->add(p[0], p[1], p[2], color);
+	  m->va_lines->add(p[0], p[1], p[2], color, ele);
 	}
       }
     }
@@ -434,6 +434,24 @@ static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalAr
 		       int forceColor=0, unsigned int color=0, bool drawOutline=false)
 {
   if(!va) return;
+
+  // If we want to be enable picking of individual elements we need to
+  // draw each one separately
+  if(CTX.render_mode == GMSH_SELECT && CTX.enable_mouse_selection > 2) {
+    if(va->getNumElementPointers() == va->getNumVertices()){
+      for(int i = 0; i < va->getNumVertices(); i += va->getType()){
+	glPushName(va->getType());
+	glPushName(i);
+	glBegin(type);
+	for(int j = 0; j < va->getType(); j++)
+	  glVertex3fv(va->getVertexArray(3 * (i + j)));
+	glEnd();
+	glPopName();
+	glPopName();
+      }
+      return;
+    }
+  }
 
   glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
   glNormalPointer(GL_BYTE, 0, va->getNormalArray());

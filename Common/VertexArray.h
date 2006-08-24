@@ -20,7 +20,9 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "vector"
+#include <vector>
+
+class MElement;
 
 class VertexArray{
  public:
@@ -30,6 +32,7 @@ class VertexArray{
   std::vector<float> _vertices;
   std::vector<char> _normals;
   std::vector<unsigned char> _colors;
+  std::vector<MElement*> _elements;
  public:
   VertexArray(int numNodesPerElement, int numElements);
   ~VertexArray(){}
@@ -37,16 +40,20 @@ class VertexArray{
   int getNumVertices() { return _vertices.size() / 3; }
   // returns the type of the array
   int getType() { return _type; }
+  // returns the number of element pointers
+  int getNumElementPointers() { return _elements.size(); }
   // returns a pointer to the raw vertex array
-  float *getVertexArray(){ return &_vertices[0]; }
+  float *getVertexArray(int i=0){ return &_vertices[i]; }
   // returns a pointer to the raw normal array
-  char *getNormalArray(){ return &_normals[0]; }
+  char *getNormalArray(int i=0){ return &_normals[i]; }
   // returns a pointer to the raw color array
-  unsigned char *getColorArray(){ return &_colors[0]; }
+  unsigned char *getColorArray(int i=0){ return &_colors[i]; }
+  // returns a pointer to the raw element array
+  MElement **getElementPointerArray(int i=0){ return &_elements[i]; }
   // adds a vertex in the arrays
-  void add(float x, float y, float z, 
-	   float n0, float n1, float n2, unsigned int col);
-  void add(float x, float y, float z, unsigned int col);
+  void add(float x, float y, float z, float n0, float n1, float n2, 
+	   unsigned int col, MElement *ele=0);
+  void add(float x, float y, float z, unsigned int col, MElement *ele=0);
   // sorts the elements back to front wrt the eye position
   void sort(double eye[3]);
 };

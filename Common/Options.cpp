@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.303 2006-08-23 19:53:37 geuzaine Exp $
+// $Id: Options.cpp,v 1.304 2006-08-24 01:14:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2773,17 +2773,24 @@ double opt_general_mouse_selection(OPT_ARGS_NUM)
     CTX.enable_mouse_selection = (int)val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
-    if(CTX.enable_mouse_selection == 0){
-      if(!CTX.batch) Msg(STATUS2N, "Mouse selection OFF");
-      WID->g_status_butt[9]->color(FL_RED);
-    }
-    else if(CTX.enable_mouse_selection == 1){
+    switch(CTX.enable_mouse_selection){
+    case 1:
       if(!CTX.batch) Msg(STATUS2N, "Mouse selection ON");
       WID->g_status_butt[9]->color(FL_BACKGROUND_COLOR);
-    }
-    else{
-      if(!CTX.batch) Msg(STATUS2N, "Full mouse selection ON");
+      break;
+    case 2:
+      if(!CTX.batch) Msg(STATUS2N, "Mouse selection ON (with mesh hover)");
       WID->g_status_butt[9]->color(FL_GREEN);
+      break;
+    case 3:
+      if(!CTX.batch) Msg(STATUS2N, "Mouse selection ON (with element hover)");
+      WID->g_status_butt[9]->color(FL_YELLOW);
+      break;
+    case 0:
+    default:
+      if(!CTX.batch) Msg(STATUS2N, "Mouse selection OFF");
+      WID->g_status_butt[9]->color(FL_RED);
+      break;
     }
     WID->g_status_butt[9]->redraw();
   }

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.448 2006-08-23 19:53:37 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.449 2006-08-24 01:14:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -470,6 +470,11 @@ void status_xyz1p_cb(CALLBACK_ARGS)
     if(Fl::event_state(FL_SHIFT)){
       // full mouse hover and select for geometry and mesh
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 2);
+    }
+    else if(Fl::event_state(FL_META)){
+      // full hover and select, even for mesh elements
+      opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 3);
+      CTX.mesh.changed = ENT_ALL; // need to regenerate the mesh reps
     }
     else if(CTX.enable_mouse_selection){
       // mouse does nothing

@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.1 2006-08-20 14:12:41 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.2 2006-08-24 01:14:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -26,14 +26,17 @@
 #include "Context.h"
 #include "SelectBuffer.h"
 #include "GModel.h"
+#include "Melement.h"
+#include "MRep.h"
 
 extern Context_T CTX;
 extern GModel *GMODEL;
 
 class hit{
 public:
-  GLuint type, ient, depth;
-  hit(GLuint t, GLuint i, GLuint d) : type(t), ient(i), depth(d) {}
+  GLuint type, ient, depth, type2, ient2;
+  hit(GLuint t, GLuint i, GLuint d, GLuint t2=0, GLuint i2=0) 
+    : type(t), ient(i), depth(d), type2(t2), ient2(i2) {}
 };
 
 class hitDepthLessThan{
@@ -56,10 +59,10 @@ bool ProcessSelectionBuffer(int entityType, bool multipleSelection,
   faces.clear();
   regions.clear();
 
-  // In our case the selection buffer size is equal to 5 x the maximum
-  // number of possible hits
+  // In our case the selection buffer size is equal to between 5 and 7
+  // times the maximum number of possible hits
   int size = 5 * (GMODEL->numVertex() + GMODEL->numEdge() + 
-		  GMODEL->numFace() + GMODEL->numRegion()) + 100;
+		  GMODEL->numFace() + GMODEL->numRegion()) + 1000;
   GLuint *selectionBuffer = new GLuint[size];
   glSelectBuffer(size, selectionBuffer);
 
@@ -90,10 +93,16 @@ bool ProcessSelectionBuffer(int entityType, bool multipleSelection,
   std::vector<hit> hits;
   GLuint *ptr = selectionBuffer;
   for(int i = 0; i < numhits; i++) {
-    // in Gmsh 'names' should always be 2 or 0. If names is 2, the
-    // first name is the type of the entity (0 for point, 1 for line,
-    // etc.) and the second is the entity number; if names is 0 there
-    // is nothing on the stack.
+    // in Gmsh 'names' should always be 0, 2 or 4:
+    // * names == 0 means that there is nothing on the stack
+    // * if names == 2, the first name is the type of the entity 
+    //   (0 for point, 1 for edge, 2 for face or 3 for volume) and
+    //   the second is the entity number;
+    // * if names == 4, the first name is the type of the entity,
+    //   the second is the entity number, the third is the type
+    //   of vertex array (2 for line, 3 for triangle, 4 for quad)
+    //   and the fourth is the index of the element in the vertex
+    //   array
     GLuint names = *ptr++; 
     GLuint mindepth = *ptr++;
     *ptr++; // maxdepth
@@ -102,6 +111,14 @@ bool ProcessSelectionBuffer(int entityType, bool multipleSelection,
       GLuint type = *ptr++; 
       GLuint ient = *ptr++;
       hits.push_back(hit(type, ient, depth));
+    }
+    else if(names == 4){
+      GLuint depth = mindepth;
+      GLuint type = *ptr++; 
+      GLuint ient = *ptr++;
+      GLuint type2 = *ptr++; 
+      GLuint ient2 = *ptr++;
+      hits.push_back(hit(type, ient, depth, type2, ient2));
     }
   }
 
@@ -118,7 +135,7 @@ bool ProcessSelectionBuffer(int entityType, bool multipleSelection,
   // entity of "lowest dimension" (point < line < surface <
   // volume). Otherwise, return the closest entity of type
   // "entityType"
-  GLuint typmin = 4;
+  GLuint typmin = 10;
   for(unsigned int i = 0; i < hits.size(); i++)
     typmin = std::min(typmin, hits[i].type);
 
@@ -148,6 +165,10 @@ bool ProcessSelectionBuffer(int entityType, bool multipleSelection,
 	    Msg(GERROR, "Problem in line selection processing");
 	    return false;
 	  }
+	  if(hits[i].type2 && e->meshRep){
+	    MElement *ele = e->meshRep->getElement(hits[i].type2, hits[i].ient2);
+	    if(ele) printf("element %d\n", ele->getNum());
+	  }
 	  edges.push_back(e);
 	  if(!multipleSelection) return true;
 	}
@@ -159,6 +180,10 @@ bool ProcessSelectionBuffer(int entityType, bool multipleSelection,
 	    Msg(GERROR, "Problem in surface selection processing");
 	    return false;
 	  }
+	  if(hits[i].type2 && f->meshRep){
+	    MElement *ele = f->meshRep->getElement(hits[i].type2, hits[i].ient2);
+	    if(ele) printf("element %d\n", ele->getNum());
+	  }
 	  faces.push_back(f);
 	  if(!multipleSelection) return true;
 	}
@@ -169,6 +194,10 @@ bool ProcessSelectionBuffer(int entityType, bool multipleSelection,
 	  if(!r){
 	    Msg(GERROR, "Problem in volume selection processing");
 	    return false;
+	  }
+	  if(hits[i].type2 && r->meshRep){
+	    MElement *ele = r->meshRep->getElement(hits[i].type2, hits[i].ient2);
+	    if(ele) printf("element %d\n", ele->getNum());
 	  }
 	  regions.push_back(r);
 	  if(!multipleSelection) return true;
