@@ -20,9 +20,9 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <list>
 #include "List.h"
 #include "GmshMatrix.h"
-#include <list>
 
 #define MAX_LEVEL_OF_ZOOM 8
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.106 2006-08-24 01:14:55 geuzaine Exp $
+# $Id: Makefile,v 1.107 2006-08-24 15:24:16 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -69,24 +69,24 @@ Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Context.h \
   DefaultOptions.h GmshDefines.h Options.h Views.h ColorTable.h \
-  VertexArray.h SmoothNormals.h GmshMatrix.h AdaptiveViews.h Trackball.h
+  VertexArray.h SmoothNormals.h AdaptiveViews.h GmshMatrix.h Trackball.h
 # 1 "/Users/geuzaine/.gmsh/Common//"
 AdaptiveViews.o: AdaptiveViews.cpp AdaptiveViews.h ../DataStr/List.h \
   GmshMatrix.h ../Plugin/Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h OS.h
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h OS.h
 # 1 "/Users/geuzaine/.gmsh/Common//"
 Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h ../Numeric/Numeric.h Views.h ColorTable.h \
-  VertexArray.h SmoothNormals.h GmshMatrix.h AdaptiveViews.h Context.h \
+  VertexArray.h SmoothNormals.h AdaptiveViews.h GmshMatrix.h Context.h \
   Options.h
 # 1 "/Users/geuzaine/.gmsh/Common//"
 ViewsIO.o: ViewsIO.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Views.h \
-  ColorTable.h VertexArray.h SmoothNormals.h GmshMatrix.h AdaptiveViews.h \
+  ColorTable.h VertexArray.h SmoothNormals.h AdaptiveViews.h GmshMatrix.h \
   Context.h
 # 1 "/Users/geuzaine/.gmsh/Common//"
 Octree.o: Octree.cpp Octree.h OctreeInternals.h
@@ -95,7 +95,7 @@ OctreeInternals.o: OctreeInternals.cpp Message.h OctreeInternals.h
 # 1 "/Users/geuzaine/.gmsh/Common//"
 OctreePost.o: OctreePost.cpp Octree.h OctreeInternals.h OctreePost.h \
   ../DataStr/List.h Views.h ColorTable.h VertexArray.h SmoothNormals.h \
-  ../Numeric/Numeric.h GmshMatrix.h AdaptiveViews.h Message.h \
+  ../Numeric/Numeric.h AdaptiveViews.h GmshMatrix.h Message.h \
   ShapeFunctions.h
 # 1 "/Users/geuzaine/.gmsh/Common//"
 Options.o: Options.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
@@ -103,9 +103,9 @@ Options.o: Options.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h GmshUI.h GmshDefines.h \
   ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
-  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
-  Context.h Options.h ../Plugin/PluginManager.h ../Plugin/Plugin.h \
-  ../Common/Options.h ../Common/Message.h ../Fltk/Solvers.h ../Fltk/GUI.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h Context.h Options.h \
+  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
+  ../Common/Message.h ../Fltk/Solvers.h ../Fltk/GUI.h \
   ../Fltk/Opengl_Window.h ../Mesh/Mesh.h ../Common/GmshDefines.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Face.h ../Mesh/Vertex.h \
@@ -119,7 +119,7 @@ CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h GmshUI.h GmshDefines.h \
   GmshVersion.h CommandLine.h ../Numeric/Numeric.h Context.h Options.h \
   ../Geo/Geo.h Views.h ColorTable.h VertexArray.h SmoothNormals.h \
-  GmshMatrix.h AdaptiveViews.h ../Parser/OpenFile.h \
+  AdaptiveViews.h GmshMatrix.h ../Parser/OpenFile.h \
   ../Parser/CreateFile.h ../Parser/Parser.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \

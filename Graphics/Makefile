@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.101 2006-08-24 15:09:30 geuzaine Exp $
+# $Id: Makefile,v 1.102 2006-08-24 15:24:16 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -81,17 +81,17 @@ Draw.o: Draw.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Geo/ExtrudeParams.h Draw.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
-  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
-  ../Common/Context.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
-  ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h \
-  ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h \
-  ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/GFace.h \
-  ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/MElement.h ../Geo/SPoint2.h \
-  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/MElement.h ../Geo/SBoundingBox3d.h
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h \
+  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
+  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h \
+  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/GFace.h ../Geo/GPoint.h \
+  ../Geo/GEntity.h ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h \
+  ../Geo/SBoundingBox3d.h
 # 1 "/Users/geuzaine/.gmsh/Graphics//"
 Mesh.o: Mesh.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
@@ -108,16 +108,16 @@ Mesh.o: Mesh.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h \
   ../Geo/SBoundingBox3d.h ../Common/SmoothNormals.h Draw.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Geo/MRep.h \
-  ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h ../Geo/MVertex.h \
-  ../Geo/MEdge.h ../Geo/MElement.h ../Common/OS.h gl2ps.h tc.h
+  ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
+  ../Common/GmshMatrix.h ../Geo/MRep.h ../Geo/GEdge.h ../Geo/GFace.h \
+  ../Geo/GRegion.h ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MElement.h \
+  ../Common/OS.h gl2ps.h tc.h
 # 1 "/Users/geuzaine/.gmsh/Graphics//"
 Geom.o: Geom.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Common/GmshUI.h Draw.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h \
   gl2ps.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
   ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
@@ -136,23 +136,23 @@ Post.o: Post.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Common/GmshUI.h \
   ../Numeric/Numeric.h Draw.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
-  ../Common/Context.h gl2ps.h
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h \
+  gl2ps.h
 # 1 "/Users/geuzaine/.gmsh/Graphics//"
 PostElement.o: PostElement.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Common/GmshUI.h Draw.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
-  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
-  Iso.h ../Common/Context.h
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h Iso.h \
+  ../Common/Context.h
 # 1 "/Users/geuzaine/.gmsh/Graphics//"
 SelectBuffer.o: SelectBuffer.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Common/GmshUI.h ../Common/GmshDefines.h Draw.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h \
   SelectBuffer.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
@@ -172,7 +172,7 @@ Iso.o: Iso.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Common/GmshUI.h Draw.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h
 # 1 "/Users/geuzaine/.gmsh/Graphics//"
 Entity.o: Entity.cpp ../Common/Gmsh.h ../Common/Message.h \
@@ -180,33 +180,31 @@ Entity.o: Entity.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Common/GmshUI.h ../Numeric/Numeric.h Draw.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h \
-  gl2ps.h
+  ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
+  ../Common/GmshMatrix.h ../Common/Context.h gl2ps.h
 # 1 "/Users/geuzaine/.gmsh/Graphics//"
 ReadImg.o: ReadImg.cpp ReadImg.h ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Common/GmshUI.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
-  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
 # 1 "/Users/geuzaine/.gmsh/Graphics//"
 Scale.o: Scale.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Common/GmshUI.h ../Numeric/Numeric.h Draw.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h \
-  gl2ps.h
+  ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
+  ../Common/GmshMatrix.h ../Common/Context.h gl2ps.h
 # 1 "/Users/geuzaine/.gmsh/Graphics//"
 Graph2D.o: Graph2D.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Common/GmshUI.h ../Common/Context.h ../Numeric/Numeric.h Draw.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h gl2ps.h
+  ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
+  ../Common/GmshMatrix.h gl2ps.h
 # 1 "/Users/geuzaine/.gmsh/Graphics//"
 gl2ps.o: gl2ps.cpp gl2ps.h
 # 1 "/Users/geuzaine/.gmsh/Graphics//"
@@ -215,7 +213,7 @@ gl2gif.o: gl2gif.cpp gl2gif.h PixelBuffer.h ../Common/Gmsh.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h ../Common/GmshUI.h Draw.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
 # 1 "/Users/geuzaine/.gmsh/Graphics//"
 gl2jpeg.o: gl2jpeg.cpp gl2jpeg.h PixelBuffer.h ../Common/Gmsh.h \
@@ -223,7 +221,7 @@ gl2jpeg.o: gl2jpeg.cpp gl2jpeg.h PixelBuffer.h ../Common/Gmsh.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h ../Common/GmshUI.h Draw.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
 # 1 "/Users/geuzaine/.gmsh/Graphics//"
 gl2png.o: gl2png.cpp gl2png.h PixelBuffer.h ../Common/Gmsh.h \
@@ -231,7 +229,7 @@ gl2png.o: gl2png.cpp gl2png.h PixelBuffer.h ../Common/Gmsh.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h ../Common/GmshUI.h Draw.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
 # 1 "/Users/geuzaine/.gmsh/Graphics//"
 gl2ppm.o: gl2ppm.cpp gl2ppm.h PixelBuffer.h ../Common/Gmsh.h \
@@ -239,7 +237,7 @@ gl2ppm.o: gl2ppm.cpp gl2ppm.h PixelBuffer.h ../Common/Gmsh.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h ../Common/GmshUI.h Draw.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
 # 1 "/Users/geuzaine/.gmsh/Graphics//"
 gl2yuv.o: gl2yuv.cpp gl2yuv.h PixelBuffer.h ../Common/Gmsh.h \
@@ -247,7 +245,7 @@ gl2yuv.o: gl2yuv.cpp gl2yuv.h PixelBuffer.h ../Common/Gmsh.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h ../Common/GmshUI.h Draw.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
 # 1 "/Users/geuzaine/.gmsh/Graphics//"
 tc.o: tc.cpp tc.h

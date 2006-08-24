@@ -25,7 +25,6 @@
 #include "List.h"
 #include "VertexArray.h"
 #include "SmoothNormals.h"
-#include "GmshMatrix.h"
 #include "AdaptiveViews.h"
 
 #define VIEW_NB_ELEMENT_TYPES  (8*3)

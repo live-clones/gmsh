@@ -22,7 +22,6 @@
 
 #include "GmshDefines.h"
 #include "Options.h"
-#include "Context.h"
 #include "Views.h"
 
 //          PLEASE RESPECT THE ALPHABETICAL ORDER WHEN 

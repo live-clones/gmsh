@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.124 2006-08-20 17:02:28 geuzaine Exp $
+# $Id: Makefile,v 1.125 2006-08-24 15:24:16 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -266,7 +266,7 @@ depend:
   Mesh.h ../Common/GmshDefines.h Vertex.h Element.h Simplex.h Face.h \
   Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Numeric/Numeric.h ../Common/GmshMatrix.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h \
   ../Common/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
@@ -330,8 +330,8 @@ BDS.o: BDS.cpp ../Numeric/Numeric.h ../Common/GmshMatrix.h BDS.h \
   ../Common/Context.h ../DataStr/List.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Message.h
+  ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
+  ../Common/GmshMatrix.h ../Common/Message.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 Create.o: Create.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -357,14 +357,13 @@ Generator.o: Generator.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Context.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h Create.h \
-  ../Parser/OpenFile.h PartitionMesh.h ../Common/OS.h meshGEdge.h \
-  meshGFace.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
-  ../Geo/MVertex.h ../Geo/GPoint.h ../Geo/GEdge.h ../Geo/GEntity.h \
-  ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/MElement.h ../Geo/GFace.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/MElement.h ../Geo/SBoundingBox3d.h
+  ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
+  ../Common/GmshMatrix.h Create.h ../Parser/OpenFile.h PartitionMesh.h \
+  ../Common/OS.h meshGEdge.h meshGFace.h ../Geo/GModel.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/MVertex.h ../Geo/GPoint.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/GFace.h ../Geo/GRegion.h \
+  ../Geo/GEntity.h ../Geo/MElement.h ../Geo/SBoundingBox3d.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 DiscreteSurface.o: DiscreteSurface.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
@@ -380,9 +379,8 @@ DiscreteSurface.o: DiscreteSurface.cpp ../Common/Gmsh.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/MFace.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h PartitionMesh.h \
-  ../Common/OS.h
+  ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
+  ../Common/GmshMatrix.h PartitionMesh.h ../Common/OS.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 SwapEdge.o: SwapEdge.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -442,8 +440,8 @@ meshGFace.o: meshGFace.cpp meshGFace.h ../Geo/SPoint2.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/Pair.h Utils.h ../Common/Message.h BDS.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
+  ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
+  ../Common/GmshMatrix.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 Nurbs.o: Nurbs.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -491,8 +489,8 @@ PartitionMesh.o: PartitionMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/Pair.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
-  PartitionMesh.h ../Parser/OpenFile.h
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h PartitionMesh.h \
+  ../Parser/OpenFile.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 Smoothing.o: Smoothing.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
