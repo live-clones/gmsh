@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.3 2006-08-24 15:09:30 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.4 2006-08-24 17:26:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -103,16 +103,16 @@ bool ProcessSelectionBuffer(int entityType, bool multipleSelection,
     //   and the fourth is the index of the element in the vertex
     //   array
     GLuint names = *ptr++; 
-    GLuint mindepth = *ptr++;
-    *ptr++; // maxdepth
+    *ptr++; // mindepth
+    GLuint maxdepth = *ptr++;
     if(names == 2){
-      GLuint depth = mindepth;
+      GLuint depth = maxdepth;
       GLuint type = *ptr++; 
       GLuint ient = *ptr++;
       hits.push_back(hit(type, ient, depth));
     }
     else if(names == 4){
-      GLuint depth = mindepth;
+      GLuint depth = maxdepth;
       GLuint type = *ptr++; 
       GLuint ient = *ptr++;
       GLuint type2 = *ptr++; 
