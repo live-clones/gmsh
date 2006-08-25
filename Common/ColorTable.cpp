@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.31 2006-01-06 00:34:20 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.32 2006-08-25 23:01:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -424,62 +424,41 @@ int ColorTable_IsAlpha(GmshColorTable * ct)
 
 // HSV/RBG conversion routines
 
-#define UNDEFINED   0
-
-// rgb on [0, 1], sv returned on [0, 1] and h on [0, 6]. 
-// Exception: h is returned UNDEFINED if S==0.
-
-#define RETURN_HSV(h,s,v) {*H=h; *S=s; *V=v; return;}
-
-void RGB_to_HSV(double R, double G, double B,
-		double *H, double *S, double *V)
+void HSV_to_RGB(double H, double S, double V, 
+		double *R, double *G, double *B) 
 {
-  double v, x, f;
-  int i;
-
-  x = DMIN(DMIN(R, G), B);
-  v = DMAX(DMAX(R, G), B);
-  if(v == x)
-    RETURN_HSV(UNDEFINED, 0, v);
-  f = (R == x) ? G - B : ((G == x) ? B - R : R - G);
-  i = (R == x) ? 3 : ((G == x) ? 5 : 1);
-  RETURN_HSV(i - f / (v - x), (v - x) / v, v);
-}
-
-// h given on [0, 6] or UNDEFINED. s and v given on [0, 1].      
-// rgb each returned on [0, 1].
-
-#define RETURN_RGB(r,g,b) {*R=r; *G=g; *B=b; return;}
-
-void HSV_to_RGB(double H, double S, double V,
-		double *R, double *G, double *B)
-{
-  double m, n, f;
-  int i;
-
-  if(H == UNDEFINED)
-    RETURN_RGB(V, V, V);
-  i = (int)floor(H);
-  f = H - i;
-  if(!(i & 1))
-    f = 1 - f;  // if i is even
-  m = V * (1 - S);
-  n = V * (1 - S * f);
-
-  switch (i) {
-  case 6:
-  case 0:
-    RETURN_RGB(V, n, m);
-  case 1:
-    RETURN_RGB(n, V, m);
-  case 2:
-    RETURN_RGB(m, V, n);
-  case 3:
-    RETURN_RGB(m, n, V);
-  case 4:
-    RETURN_RGB(n, m, V);
-  case 5:
-    RETURN_RGB(V, m, n);
+  if(S < 5.0e-6) {
+    *R = *G = *B = V;
+  }
+  else {
+    int i = (int)H;  
+    double f = H - (float)i;
+    double p1 = V*(1.0-S);
+    double p2 = V*(1.0-S*f);
+    double p3 = V*(1.0-S*(1.0-f));
+    switch(i){
+    case 0: *R = V;   *G = p3;  *B = p1;  break;
+    case 1: *R = p2;  *G = V;   *B = p1;  break;
+    case 2: *R = p1;  *G = V;   *B = p3;  break;
+    case 3: *R = p1;  *G = p2;  *B = V;   break;
+    case 4: *R = p3;  *G = p1;  *B = V;   break;
+    case 5: *R = V;   *G = p1;  *B = p2;  break;
+    }
   }
 }
 
+void RGB_to_HSV(double R, double G, double B, 
+		double *H, double *S, double *V) 
+{
+  double maxv = R > G ? R : G; if(B > maxv) maxv = B;
+  *V = maxv;
+  if(maxv>0){
+    double minv = R < G ? R : G; if(B < minv) minv = B;
+    *S = 1.0 - double(minv)/maxv;
+    if(maxv > minv){
+      if(maxv == R){ *H = (G-B)/double(maxv-minv); if (*H<0) *H += 6.0; }
+      else if(maxv == G) *H = 2.0+(B-R)/double(maxv-minv);
+      else *H = 4.0+(R-G)/double(maxv-minv);
+    }
+  }
+}
