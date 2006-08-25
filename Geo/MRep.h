@@ -33,6 +33,7 @@
 #include "Message.h"
 #include "OS.h"
 
+// A mesh representation.
 class MRep {
  protected:
   // container for the edge representation
