@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.68 2006-08-20 14:12:40 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.69 2006-08-25 23:52:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -364,11 +364,12 @@ int Opengl_Window::handle(int event)
 	std::vector<GEdge*> edges;
 	std::vector<GFace*> faces;
 	std::vector<GRegion*> regions;
-	ProcessSelectionBuffer(WID->selection, false, 
-			       CTX.enable_mouse_selection > 1,
-			       (int)curr.win[0], (int)curr.win[1], 5, 5, 
-			       vertices, edges, faces, regions);
-	if((WID->selection == ENT_POINT && vertices.size()) ||
+	bool something = ProcessSelectionBuffer(WID->selection, false, 
+						CTX.enable_mouse_selection > 1,
+						(int)curr.win[0], (int)curr.win[1], 5, 5, 
+						vertices, edges, faces, regions);
+	if((WID->selection == ENT_ALL && something) ||
+	   (WID->selection == ENT_POINT && vertices.size()) ||
 	   (WID->selection == ENT_LINE && edges.size()) || 
 	   (WID->selection == ENT_SURFACE && faces.size()) ||
 	   (WID->selection == ENT_VOLUME && regions.size()))

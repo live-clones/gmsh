@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.449 2006-08-24 01:14:56 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.450 2006-08-25 23:52:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -925,22 +925,22 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
   std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
 
-  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  Draw();
-
-  Msg(ONSCREEN, "Select point\n[Press 'q' to abort]");
-  char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions);
+  Msg(ONSCREEN, "Select entity\n[Press 'q' to abort]");
+  char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions);
   if(ib == 'l') {
-    // This would bypass the "Apply" button... Not necessarily bad,
-    // but it's not consistent with the rest of the GUI.
-    //opt_general_rotation_center0(0, GMSH_SET|GMSH_GUI, v->x());
-    //opt_general_rotation_center1(0, GMSH_SET|GMSH_GUI, v->y());
-    //opt_general_rotation_center2(0, GMSH_SET|GMSH_GUI, v->z());
-
-    // This is more conform to the way we do things elsewhere:
-    WID->gen_value[8]->value(vertices[0]->x());
-    WID->gen_value[9]->value(vertices[0]->y());
-    WID->gen_value[10]->value(vertices[0]->z());
+    SPoint3 pc(0., 0., 0.);
+    if(vertices.size())
+      pc.setPosition(vertices[0]->x(), vertices[0]->y(), vertices[0]->z());
+    else if(edges.size())
+      pc = edges[0]->bounds().center();
+    else if(faces.size())
+      pc = faces[0]->bounds().center();
+    else if(regions.size())
+      pc = regions[0]->bounds().center();
+    opt_general_rotation_center_cg(0, GMSH_SET, WID->gen_butt[15]->value());
+    opt_general_rotation_center0(0, GMSH_SET|GMSH_GUI, pc.x());
+    opt_general_rotation_center1(0, GMSH_SET|GMSH_GUI, pc.y());
+    opt_general_rotation_center2(0, GMSH_SET|GMSH_GUI, pc.z());
   }
   ZeroHighlight();
   Draw();
