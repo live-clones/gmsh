@@ -28,6 +28,7 @@
 
 extern Context_T CTX;
 
+// A mesh face.
 class MFace {
  private:
   MVertex *_v[4];

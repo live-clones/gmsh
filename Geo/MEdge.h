@@ -23,6 +23,7 @@
 #include "MVertex.h"
 #include "SVector3.h"
 
+// A mesh edge.
 class MEdge {
  private:
   MVertex *_v[2];
@@ -49,28 +50,6 @@ class MEdge {
     return SPoint3(0.5 * (_v[0]->x() + _v[1]->x()), 
 		   0.5 * (_v[0]->y() + _v[1]->y()), 
 		   0.5 * (_v[0]->z() + _v[1]->z()));
-  }
-};
-
-class MEdgeLessThan {
- public:
-  bool operator()(const MEdge &e1, const MEdge &e2) const
-  {
-    int e10 = e1.getVertex(0)->getNum();
-    int e11 = e1.getVertex(1)->getNum();
-    int e20 = e2.getVertex(0)->getNum();
-    int e21 = e2.getVertex(1)->getNum();
-    int i1 = std::min(e10, e11);
-    int i2 = std::min(e20, e21);
-    if(i1 < i2)
-      return true;
-    if(i1 > i2)
-      return false;
-    int j1 = std::max(e10, e11);
-    int j2 = std::max(e20, e21);
-    if(j1 < j2)
-      return true;
-    return false;
   }
 };
 

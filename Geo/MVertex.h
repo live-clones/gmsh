@@ -26,6 +26,7 @@
 
 class GEntity;
 
+// A mesh vertex.
 class MVertex{
  private:
   static int _globalNum;

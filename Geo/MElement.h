@@ -41,6 +41,7 @@ extern int quadfaces_hexa[6][4];
 extern int quadfaces_prism[3][4];
 extern int quadfaces_pyramid[1][4];
 
+// A mesh element.
 class MElement 
 {
  private:

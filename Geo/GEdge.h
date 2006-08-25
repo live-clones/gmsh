@@ -28,7 +28,6 @@
 #include "MElement.h"
 
 // A model edge.
-
 class GEdge : public GEntity {
  protected:
   GVertex *v0, *v1;

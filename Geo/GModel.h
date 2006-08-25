@@ -31,7 +31,6 @@
 #include "SmoothNormals.h"
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
-
 class GModel  
 {
  protected:
