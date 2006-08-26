@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.53 2006-08-26 17:39:47 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.54 2006-08-26 18:45:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -365,6 +365,7 @@ int Colorbar_Window::handle(int event)
 
   case FL_SHORTCUT:
   case FL_KEYBOARD:
+  case FL_KEYUP:
     if(Fl::test_shortcut('0')) {
       ColorTable_InitParam(0, ct);
       compute = 1;
@@ -544,11 +545,8 @@ int Colorbar_Window::handle(int event)
       ColorTable_Recompute(ct);
       draw();
       *viewchanged = 1;
+      if(event == FL_KEYUP) do_callback();
     }
-    return 1;
-
-  case FL_KEYUP:
-    if(*viewchanged) do_callback();
     return 1;
 
   case FL_PUSH:
