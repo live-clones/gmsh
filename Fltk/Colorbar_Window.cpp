@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.51 2006-08-26 17:00:25 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.52 2006-08-26 17:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -585,6 +585,7 @@ int Colorbar_Window::handle(int event)
     p2 = 0;
     p3 = 0;
     p4 = 0;
+    if(*viewchanged) do_callback();
     break;
 
   case FL_DRAG:
@@ -659,7 +660,6 @@ int Colorbar_Window::handle(int event)
       pentry = entry;
       *viewchanged = 1;
     }
-    if(*viewchanged) do_callback();
     return 1;
   }
 
