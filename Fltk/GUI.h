@@ -161,6 +161,7 @@ public:
   // Option window
   Fl_Window        *opt_window;
   Fl_Hold_Browser  *opt_browser;
+  Fl_Return_Button *opt_redraw;
 
   // general options
   Fl_Group         *gen_group;

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.451 2006-08-26 13:34:44 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.452 2006-08-26 17:00:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -188,9 +188,17 @@ void activate_cb(CALLBACK_ARGS)
   // this is a central callback to activate/deactivate parts of the
   // GUI depending on the user's choices (or the option settings)
 
+  if(!data) return;
+
   char *str = (char*)data;
 
-  if(!strcmp(str, "rotation_center")){
+  if(!strcmp(str, "fast_redraw")){
+    if(WID->gen_butt[2]->value())
+      WID->opt_redraw->show();
+    else
+      WID->opt_redraw->hide();
+  }
+  else if(!strcmp(str, "rotation_center")){
     if(WID->gen_butt[15]->value()) {
       WID->gen_push_butt[0]->deactivate();
       WID->gen_value[8]->deactivate();
@@ -202,36 +210,6 @@ void activate_cb(CALLBACK_ARGS)
       WID->gen_value[8]->activate();
       WID->gen_value[9]->activate();
       WID->gen_value[10]->activate();
-    }
-  }
-  else if(!strcmp(str, "custom_range")){
-    if(WID->view_choice[7]->value() == 2){
-      WID->view_value[31]->activate();
-      WID->view_value[32]->activate();
-      WID->view_push_butt[1]->activate();
-      WID->view_push_butt[2]->activate();
-    }
-    else {
-      WID->view_value[31]->deactivate();
-      WID->view_value[32]->deactivate();
-      WID->view_push_butt[1]->deactivate();
-      WID->view_push_butt[2]->deactivate();
-    }
-  }
-  else if(!strcmp(str, "general_transform")){
-    if(WID->view_butt[6]->value()){
-      WID->view_choice[11]->activate();
-      WID->view_value[2]->activate();
-      WID->view_input[4]->activate();
-      WID->view_input[5]->activate();
-      WID->view_input[6]->activate();
-    }
-    else{
-      WID->view_choice[11]->deactivate();
-      WID->view_value[2]->deactivate();
-      WID->view_input[4]->deactivate();
-      WID->view_input[5]->deactivate();
-      WID->view_input[6]->deactivate();
     }
   }
   else if(!strcmp(str, "general_axes")){
@@ -284,6 +262,36 @@ void activate_cb(CALLBACK_ARGS)
     else{
       WID->gen_value[26]->deactivate();
       WID->gen_value[27]->deactivate();
+    }
+  }
+  else if(!strcmp(str, "custom_range")){
+    if(WID->view_choice[7]->value() == 2){
+      WID->view_value[31]->activate();
+      WID->view_value[32]->activate();
+      WID->view_push_butt[1]->activate();
+      WID->view_push_butt[2]->activate();
+    }
+    else {
+      WID->view_value[31]->deactivate();
+      WID->view_value[32]->deactivate();
+      WID->view_push_butt[1]->deactivate();
+      WID->view_push_butt[2]->deactivate();
+    }
+  }
+  else if(!strcmp(str, "general_transform")){
+    if(WID->view_butt[6]->value()){
+      WID->view_choice[11]->activate();
+      WID->view_value[2]->activate();
+      WID->view_input[4]->activate();
+      WID->view_input[5]->activate();
+      WID->view_input[6]->activate();
+    }
+    else{
+      WID->view_choice[11]->deactivate();
+      WID->view_value[2]->deactivate();
+      WID->view_input[4]->deactivate();
+      WID->view_input[5]->deactivate();
+      WID->view_input[6]->deactivate();
     }
   }
   else if(!strcmp(str, "mesh_cut_plane")){
@@ -894,17 +902,6 @@ void options_restore_defaults_cb(CALLBACK_ARGS)
   Draw();
 }
 
-void options_ok_cb(CALLBACK_ARGS)
-{
-  general_options_ok_cb(w, data);
-  geometry_options_ok_cb(w, data);
-  mesh_options_ok_cb(w, data);
-  solver_options_ok_cb(w, data);
-  post_options_ok_cb(w, data);
-  view_options_ok_cb(w, (void *)WID->view_number);
-  Draw();
-}
-
 // General options
 
 void general_options_cb(CALLBACK_ARGS)
@@ -947,12 +944,11 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
   Msg(ONSCREEN, "");
 }
 
-void general_options_light_cb(CALLBACK_ARGS)
+void general_options_ok_cb(CALLBACK_ARGS)
 {
-  char *name = (char*)data;
-  double x, y, z;
-  static double lc = 0.;
+  activate_cb(NULL, data);
 
+  static double lc = 0.;
   if(lc != CTX.lc){
     lc = CTX.lc;
     for(int i = 2; i < 5; i++){
@@ -960,30 +956,24 @@ void general_options_light_cb(CALLBACK_ARGS)
       WID->gen_value[i]->maximum(5*CTX.lc);
     }
   }
-
-  if(!strcmp(name, "x") || !strcmp(name, "y") || !strcmp(name, "z")){
-    x = WID->gen_value[2]->value();
-    y = WID->gen_value[3]->value();
-    z = WID->gen_value[4]->value();
-    WID->gen_sphere->setValue(x, y, z);    
+  if(data){
+    char *name = (char*)data;
+    if(!strcmp(name, "light_value")){
+      double x, y, z;
+      x = WID->gen_value[2]->value();
+      y = WID->gen_value[3]->value();
+      z = WID->gen_value[4]->value();
+      WID->gen_sphere->setValue(x, y, z);    
+    }
+    else if(!strcmp(name, "light_sphere")){
+      double x, y, z;
+      WID->gen_sphere->getValue(x, y, z);
+      WID->gen_value[2]->value(x);
+      WID->gen_value[3]->value(y);
+      WID->gen_value[4]->value(z);
+    }
   }
-  else if(!strcmp(name, "xyz")){
-    WID->gen_sphere->getValue(x, y, z);
-    WID->gen_value[2]->value(x);
-    WID->gen_value[3]->value(y);
-    WID->gen_value[4]->value(z);
-  }
-  opt_general_shine(0, GMSH_SET, WID->gen_value[1]->value());
-  opt_general_shine_exponent(0, GMSH_SET, WID->gen_value[0]->value());
-  opt_general_light00(0, GMSH_SET, WID->gen_value[2]->value());
-  opt_general_light01(0, GMSH_SET, WID->gen_value[3]->value());
-  opt_general_light02(0, GMSH_SET, WID->gen_value[4]->value());
-  opt_general_light03(0, GMSH_SET, WID->gen_value[13]->value());
-  Draw();
-}
 
-void general_options_ok_cb(CALLBACK_ARGS)
-{
   opt_general_axes_auto_position(0, GMSH_SET, WID->gen_butt[0]->value());
   opt_general_small_axes(0, GMSH_SET, WID->gen_butt[1]->value());
   opt_general_fast_redraw(0, GMSH_SET, WID->gen_butt[2]->value());
@@ -1002,7 +992,13 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_rotation_center_cg(0, GMSH_SET, WID->gen_butt[15]->value());
   opt_general_draw_bounding_box(0, GMSH_SET, WID->gen_butt[6]->value());
   opt_general_polygon_offset_always(0, GMSH_SET, WID->gen_butt[4]->value());
-  
+
+  opt_general_shine_exponent(0, GMSH_SET, WID->gen_value[0]->value());  
+  opt_general_shine(0, GMSH_SET, WID->gen_value[1]->value());
+  opt_general_light00(0, GMSH_SET, WID->gen_value[2]->value());
+  opt_general_light01(0, GMSH_SET, WID->gen_value[3]->value());
+  opt_general_light02(0, GMSH_SET, WID->gen_value[4]->value());
+  opt_general_light03(0, GMSH_SET, WID->gen_value[13]->value());
   opt_general_verbosity(0, GMSH_SET, WID->gen_value[5]->value());
   opt_general_point_size(0, GMSH_SET, WID->gen_value[6]->value());
   opt_general_line_width(0, GMSH_SET, WID->gen_value[7]->value());
@@ -1038,24 +1034,21 @@ void general_options_ok_cb(CALLBACK_ARGS)
 
   int val;
   switch (WID->gen_choice[0]->value()) {
-  case 0:
-    val = DRAW_POST_SEGMENT;
-    break;
-  case 1:
-    val = DRAW_POST_ARROW;
-    break;
-  case 2:
-    val = DRAW_POST_PYRAMID;
-    break;
-  default:
-    val = DRAW_POST_ARROW3D;
-    break;
+  case 0: val = DRAW_POST_SEGMENT; break;
+  case 1: val = DRAW_POST_ARROW; break;
+  case 2: val = DRAW_POST_PYRAMID; break;
+  default: val = DRAW_POST_ARROW3D; break;
   }
   opt_general_vector_type(0, GMSH_SET, val);
   opt_general_graphics_font(0, GMSH_SET, (char *)WID->gen_choice[1]->text());
   opt_general_orthographic(0, GMSH_SET, !WID->gen_choice[2]->value());
   opt_general_axes(0, GMSH_SET, WID->gen_choice[4]->value());
   opt_general_background_gradient(0, GMSH_SET, WID->gen_choice[5]->value());
+
+  if(CTX.fast_redraw)
+    CTX.post.draw = CTX.mesh.draw = 0;
+  Draw();
+  CTX.post.draw = CTX.mesh.draw = 1;
 }
 
 void general_arrow_param_cb(CALLBACK_ARGS)
@@ -1080,6 +1073,8 @@ void geometry_options_cb(CALLBACK_ARGS)
 
 void geometry_options_ok_cb(CALLBACK_ARGS)
 {
+  activate_cb(NULL, data);
+
   opt_geometry_points(0, GMSH_SET, WID->geo_butt[0]->value());
   opt_geometry_lines(0, GMSH_SET, WID->geo_butt[1]->value());
   opt_geometry_surfaces(0, GMSH_SET, WID->geo_butt[2]->value());
@@ -1100,6 +1095,11 @@ void geometry_options_ok_cb(CALLBACK_ARGS)
 
   opt_geometry_point_type(0, GMSH_SET, WID->geo_choice[0]->value());
   opt_geometry_line_type(0, GMSH_SET, WID->geo_choice[1]->value());
+
+  if(CTX.fast_redraw)
+    CTX.post.draw = CTX.mesh.draw = 0;
+  Draw();
+  CTX.post.draw = CTX.mesh.draw = 1;
 }
 
 // Mesh options
@@ -1111,6 +1111,18 @@ void mesh_options_cb(CALLBACK_ARGS)
 
 void mesh_options_ok_cb(CALLBACK_ARGS)
 {
+  activate_cb(NULL, data);
+
+  if(data){
+    char *name = (char*)data;
+    if(!strcmp(name, "cut_plane_invert")){
+      WID->mesh_value[14]->value(-WID->mesh_value[14]->value());
+      WID->mesh_value[15]->value(-WID->mesh_value[15]->value());
+      WID->mesh_value[16]->value(-WID->mesh_value[16]->value());
+      WID->mesh_value[17]->value(-WID->mesh_value[17]->value());
+    }
+  }
+
   opt_mesh_optimize(0, GMSH_SET, WID->mesh_butt[2]->value());
   opt_mesh_order(0, GMSH_SET, WID->mesh_butt[3]->value()? 2 : 1);
   opt_mesh_constrained_bgmesh(0, GMSH_SET, WID->mesh_butt[5]->value());
@@ -1181,39 +1193,11 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_color_carousel(0, GMSH_SET, WID->mesh_choice[4]->value());
   opt_mesh_quality_type(0, GMSH_SET, WID->mesh_choice[6]->value());
   opt_mesh_label_type(0, GMSH_SET, WID->mesh_choice[7]->value());
-}
 
-void mesh_cut_plane_cb(CALLBACK_ARGS)
-{
-  if(!CTX.mesh.use_cut_plane)
-    return;
-
-  int old = CTX.draw_bbox;
-  CTX.draw_bbox = 1;
-  if(CTX.fast_redraw){
-    CTX.post.draw = 0;
-    CTX.mesh.draw = 0;
-  }
-
-  opt_mesh_cut_planea(0, GMSH_SET, WID->mesh_value[14]->value());
-  opt_mesh_cut_planeb(0, GMSH_SET, WID->mesh_value[15]->value());
-  opt_mesh_cut_planec(0, GMSH_SET, WID->mesh_value[16]->value());
-  opt_mesh_cut_planed(0, GMSH_SET, WID->mesh_value[17]->value());
-
+  if(CTX.fast_redraw)
+    CTX.post.draw = CTX.mesh.draw = 0;
   Draw();
-
-  CTX.draw_bbox = old;
-  CTX.post.draw = 1;
-  CTX.mesh.draw = 1;
-}
-
-void mesh_cut_plane_invert_cb(CALLBACK_ARGS)
-{
-  WID->mesh_value[14]->value(-WID->mesh_value[14]->value());
-  WID->mesh_value[15]->value(-WID->mesh_value[15]->value());
-  WID->mesh_value[16]->value(-WID->mesh_value[16]->value());
-  WID->mesh_value[17]->value(-WID->mesh_value[17]->value());
-  mesh_cut_plane_cb(NULL, NULL);
+  CTX.post.draw = CTX.mesh.draw = 1;
 }
 
 // Solver options
@@ -1225,6 +1209,8 @@ void solver_options_cb(CALLBACK_ARGS)
 
 void solver_options_ok_cb(CALLBACK_ARGS)
 {
+  activate_cb(NULL, data);
+
   int old_listen = (int)opt_solver_listen(0, GMSH_GET, WID->solver_butt[0]->value());
   opt_solver_listen(0, GMSH_SET, WID->solver_butt[0]->value());
   if(!old_listen && WID->solver_butt[0]->value())
@@ -1233,6 +1219,11 @@ void solver_options_ok_cb(CALLBACK_ARGS)
   opt_solver_max_delay(0, GMSH_SET, WID->solver_value[0]->value());
 
   opt_solver_socket_name(0, GMSH_SET, (char *)WID->solver_input[0]->value());
+
+  if(CTX.fast_redraw)
+    CTX.post.draw = CTX.mesh.draw = 0;
+  Draw();
+  CTX.post.draw = CTX.mesh.draw = 1;
 }
 
 // Post options
@@ -1244,6 +1235,8 @@ void post_options_cb(CALLBACK_ARGS)
 
 void post_options_ok_cb(CALLBACK_ARGS)
 {
+  activate_cb(NULL, data);
+
   opt_post_anim_cycle(0, GMSH_SET, WID->post_butt[0]->value());
   opt_post_combine_remove_orig(0, GMSH_SET, WID->post_butt[1]->value());
   opt_post_horizontal_scales(0, GMSH_SET, WID->post_butt[2]->value());
@@ -1251,6 +1244,659 @@ void post_options_ok_cb(CALLBACK_ARGS)
   opt_post_anim_delay(0, GMSH_SET, WID->post_value[0]->value());
 
   opt_post_link(0, GMSH_SET, WID->post_choice[0]->value());
+
+  if(CTX.fast_redraw)
+    CTX.post.draw = CTX.mesh.draw = 0;
+  Draw();
+  CTX.post.draw = CTX.mesh.draw = 1;
+}
+
+// View options
+
+void view_options_cb(CALLBACK_ARGS)
+{
+  WID->create_view_options_window((int)(long)data);
+}
+
+void view_options_timestep_cb(CALLBACK_ARGS)
+{
+  int links = (int)opt_post_link(0, GMSH_GET, 0);
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+    if((links == 2 || links == 4) ||
+       ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
+       (links == 0 && i == WID->view_number)) {
+      opt_view_timestep(i, GMSH_SET, ((Fl_Value_Input *) w)->value());
+    }
+  }
+  Draw();
+}
+
+void view_options_timestep_decr_cb(CALLBACK_ARGS)
+{
+  int links = (int)opt_post_link(0, GMSH_GET, 0);
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+    if((links == 2 || links == 4) ||
+       ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
+       (links == 0 && i == WID->view_number)) {
+      opt_view_timestep(i, GMSH_SET | GMSH_GUI,
+                        opt_view_timestep(i, GMSH_GET, 0) - 1);
+    }
+  }
+  Draw();
+}
+
+void view_options_timestep_incr_cb(CALLBACK_ARGS)
+{
+  int links = (int)opt_post_link(0, GMSH_GET, 0);
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+    if((links == 2 || links == 4) ||
+       ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
+       (links == 0 && i == WID->view_number)) {
+      opt_view_timestep(i, GMSH_SET | GMSH_GUI,
+                        opt_view_timestep(i, GMSH_GET, 0) + 1);
+    }
+  }
+  Draw();
+}
+
+void view_arrow_param_cb(CALLBACK_ARGS)
+{
+  double a = opt_view_arrow_head_radius(WID->view_number, GMSH_GET, 0);
+  double b = opt_view_arrow_stem_length(WID->view_number, GMSH_GET, 0);
+  double c = opt_view_arrow_stem_radius(WID->view_number, GMSH_GET, 0);
+  while(arrow_editor("Arrow Editor", a, b, c)){
+    opt_view_arrow_head_radius(WID->view_number, GMSH_SET, a);
+    opt_view_arrow_stem_length(WID->view_number, GMSH_SET, b);
+    opt_view_arrow_stem_radius(WID->view_number, GMSH_SET, c);
+    Draw();
+  }
+}
+
+void view_options_ok_cb(CALLBACK_ARGS)
+{
+  int current = WID->view_number;
+
+  if(current < 0)
+    return;
+
+  activate_cb(NULL, data);
+
+  if(data){
+    char *str = (char*)data;
+    if(!strcmp(str, "range_min")){
+      WID->view_value[31]->value(opt_view_min(WID->view_number, GMSH_GET, 0));
+    }
+    else if(!strcmp(str, "range_max")){
+      WID->view_value[32]->value(opt_view_max(WID->view_number, GMSH_GET, 0));
+    }
+  }
+  
+  int force = 0, links = (int)opt_post_link(0, GMSH_GET, 0);
+
+  // get the old values for the current view
+
+  double scale_type = opt_view_scale_type(current, GMSH_GET, 0);
+  double intervals_type = opt_view_intervals_type(current, GMSH_GET, 0);
+  double point_type = opt_view_point_type(current, GMSH_GET, 0);
+  double line_type = opt_view_line_type(current, GMSH_GET, 0);
+  double vector_type = opt_view_vector_type(current, GMSH_GET, 0);
+  double glyph_location = opt_view_glyph_location(current, GMSH_GET, 0);
+  double tensor_type = opt_view_tensor_type(current, GMSH_GET, 0);
+  double range_type = opt_view_range_type(current, GMSH_GET, 0);
+  double axes = opt_view_axes(current, GMSH_GET, 0);
+  double boundary = opt_view_boundary(current, GMSH_GET, 0);
+  double external_view = opt_view_external_view(current, GMSH_GET, 0);
+  double gen_raise_view = opt_view_gen_raise_view(current, GMSH_GET, 0);
+  double show_time = opt_view_show_time(current, GMSH_GET, 0);
+
+  double type = opt_view_type(current, GMSH_GET, 0);
+  double saturate_values = opt_view_saturate_values(current, GMSH_GET, 0);
+  double max_recursion_level = opt_view_max_recursion_level(current, GMSH_GET, 0);
+  double target_error = opt_view_target_error(current, GMSH_GET, 0);
+  double show_element = opt_view_show_element(current, GMSH_GET, 0);
+  double show_scale = opt_view_show_scale(current, GMSH_GET, 0);
+  double auto_position = opt_view_auto_position(current, GMSH_GET, 0);
+  double axes_auto_position = opt_view_axes_auto_position(current, GMSH_GET, 0);
+  double draw_strings = opt_view_draw_strings(current, GMSH_GET, 0);
+  double light = opt_view_light(current, GMSH_GET, 0);
+  double light_two_side = opt_view_light_two_side(current, GMSH_GET, 0);
+  double light_lines = opt_view_light_lines(current, GMSH_GET, 0);
+  double smooth_normals = opt_view_smooth_normals(current, GMSH_GET, 0);
+  double draw_points = opt_view_draw_points(current, GMSH_GET, 0);
+  double draw_lines = opt_view_draw_lines(current, GMSH_GET, 0);
+  double draw_triangles = opt_view_draw_triangles(current, GMSH_GET, 0);
+  double draw_quadrangles = opt_view_draw_quadrangles(current, GMSH_GET, 0);
+  double draw_tetrahedra = opt_view_draw_tetrahedra(current, GMSH_GET, 0);
+  double draw_hexahedra = opt_view_draw_hexahedra(current, GMSH_GET, 0);
+  double draw_prisms = opt_view_draw_prisms(current, GMSH_GET, 0);
+  double draw_pyramids = opt_view_draw_pyramids(current, GMSH_GET, 0);
+  double draw_scalars = opt_view_draw_scalars(current, GMSH_GET, 0);
+  double draw_vectors = opt_view_draw_vectors(current, GMSH_GET, 0);
+  double draw_tensors = opt_view_draw_tensors(current, GMSH_GET, 0);
+  double use_gen_raise = opt_view_use_gen_raise(current, GMSH_GET, 0);
+  double fake_transparency = opt_view_fake_transparency(current, GMSH_GET, 0);
+  double use_stipple = opt_view_use_stipple(current, GMSH_GET, 0);
+
+  double normals = opt_view_normals(current, GMSH_GET, 0);
+  double tangents = opt_view_tangents(current, GMSH_GET, 0);
+  double custom_min = opt_view_custom_min(current, GMSH_GET, 0);
+  double custom_max = opt_view_custom_max(current, GMSH_GET, 0);
+  double nb_iso = opt_view_nb_iso(current, GMSH_GET, 0);
+  double offset0 = opt_view_offset0(current, GMSH_GET, 0);
+  double offset1 = opt_view_offset1(current, GMSH_GET, 0);
+  double offset2 = opt_view_offset2(current, GMSH_GET, 0);
+  double transform00 = opt_view_transform00(current, GMSH_GET, 0);
+  double transform01 = opt_view_transform01(current, GMSH_GET, 0);
+  double transform02 = opt_view_transform02(current, GMSH_GET, 0);
+  double transform10 = opt_view_transform10(current, GMSH_GET, 0);
+  double transform11 = opt_view_transform11(current, GMSH_GET, 0);
+  double transform12 = opt_view_transform12(current, GMSH_GET, 0);
+  double transform20 = opt_view_transform20(current, GMSH_GET, 0);
+  double transform21 = opt_view_transform21(current, GMSH_GET, 0);
+  double transform22 = opt_view_transform22(current, GMSH_GET, 0);
+  double raise0 = opt_view_raise0(current, GMSH_GET, 0);
+  double raise1 = opt_view_raise1(current, GMSH_GET, 0);
+  double raise2 = opt_view_raise2(current, GMSH_GET, 0);
+  double timestep = opt_view_timestep(current, GMSH_GET, 0);
+  double arrow_size = opt_view_arrow_size(current, GMSH_GET, 0);
+  double arrow_size_proportional = opt_view_arrow_size_proportional(current, GMSH_GET, 0);
+  double displacement_factor = opt_view_displacement_factor(current, GMSH_GET, 0);
+  double point_size = opt_view_point_size(current, GMSH_GET, 0);
+  double line_width = opt_view_line_width(current, GMSH_GET, 0);
+  double explode = opt_view_explode(current, GMSH_GET, 0);
+  double angle_smooth_normals = opt_view_angle_smooth_normals(current, GMSH_GET, 0);
+  double position0 = opt_view_position0(current, GMSH_GET, 0);
+  double position1 = opt_view_position1(current, GMSH_GET, 0);
+  double size0 = opt_view_size0(current, GMSH_GET, 0);
+  double size1 = opt_view_size1(current, GMSH_GET, 0);
+  double axes_tics0 = opt_view_axes_tics0(current, GMSH_GET, 0);
+  double axes_tics1 = opt_view_axes_tics1(current, GMSH_GET, 0);
+  double axes_tics2 = opt_view_axes_tics2(current, GMSH_GET, 0);
+  double axes_xmin = opt_view_axes_xmin(current, GMSH_GET, 0);
+  double axes_ymin = opt_view_axes_ymin(current, GMSH_GET, 0);
+  double axes_zmin = opt_view_axes_zmin(current, GMSH_GET, 0);
+  double axes_xmax = opt_view_axes_xmax(current, GMSH_GET, 0);
+  double axes_ymax = opt_view_axes_ymax(current, GMSH_GET, 0);
+  double axes_zmax = opt_view_axes_zmax(current, GMSH_GET, 0);
+  double gen_raise_factor = opt_view_gen_raise_factor(current, GMSH_GET, 0);
+
+  char name[256]; strcpy(name, opt_view_name(current, GMSH_GET, NULL));
+  char format[256]; strcpy(format, opt_view_format(current, GMSH_GET, NULL));
+  char axes_label0[256]; strcpy(axes_label0, opt_view_axes_label0(current, GMSH_GET, NULL));
+  char axes_label1[256]; strcpy(axes_label1, opt_view_axes_label1(current, GMSH_GET, NULL));
+  char axes_label2[256]; strcpy(axes_label2, opt_view_axes_label2(current, GMSH_GET, NULL));
+  char axes_format0[256]; strcpy(axes_format0, opt_view_axes_format0(current, GMSH_GET, NULL));
+  char axes_format1[256]; strcpy(axes_format1, opt_view_axes_format1(current, GMSH_GET, NULL));
+  char axes_format2[256]; strcpy(axes_format2, opt_view_axes_format2(current, GMSH_GET, NULL));
+  char gen_raise0[256]; strcpy(gen_raise0, opt_view_gen_raise0(current, GMSH_GET, NULL));
+  char gen_raise1[256]; strcpy(gen_raise1, opt_view_gen_raise1(current, GMSH_GET, NULL));
+  char gen_raise2[256]; strcpy(gen_raise2, opt_view_gen_raise2(current, GMSH_GET, NULL));
+
+  // modify only the views that need to be updated
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+    if((links == 2 || links == 4) ||
+       ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
+       (links == 0 && i == current)) {
+
+      if(links == 3 || links == 4)
+        force = 1;
+
+      double val;
+
+      // view_choice
+
+      switch (WID->view_choice[1]->value()) {
+      case 0: val = DRAW_POST_LINEAR; break;
+      case 1: val = DRAW_POST_LOGARITHMIC; break;
+      default: val = DRAW_POST_DOUBLELOGARITHMIC; break; // 2
+      }
+      if(force || (val != scale_type))
+        opt_view_scale_type(i, GMSH_SET, val);
+
+      switch (WID->view_choice[0]->value()) {
+      case 0: val = DRAW_POST_ISO; break;
+      case 1: val = DRAW_POST_DISCRETE; break;
+      case 2: val = DRAW_POST_CONTINUOUS; break;
+      default: val = DRAW_POST_NUMERIC; break; // 3
+      }
+      if(force || (val != intervals_type))
+	opt_view_intervals_type(i, GMSH_SET, val);
+      
+      val = WID->view_choice[5]->value();
+      if(force || (val != point_type))
+	opt_view_point_type(i, GMSH_SET, val);
+      
+      val = WID->view_choice[6]->value();
+      if(force || (val != line_type))
+        opt_view_line_type(i, GMSH_SET, val);
+
+      switch (WID->view_choice[2]->value()) {
+      case 0: val = DRAW_POST_SEGMENT; break;
+      case 1: val = DRAW_POST_ARROW; break;
+      case 2: val = DRAW_POST_PYRAMID; break;
+      case 4: val = DRAW_POST_DISPLACEMENT; break;
+      default: val = DRAW_POST_ARROW3D; break; // 3
+      }
+      if(force || (val != vector_type))
+        opt_view_vector_type(i, GMSH_SET, val);
+
+      switch (WID->view_choice[3]->value()) {
+      case 0: val = DRAW_POST_LOCATE_COG; break;
+      default: val = DRAW_POST_LOCATE_VERTEX; break;
+      }
+      if(force || (val != glyph_location))
+        opt_view_glyph_location(i, GMSH_SET, val);
+
+     switch (WID->view_choice[4]->value()) {
+     case 0: val = DRAW_POST_VONMISES; break;
+     case 2: val = DRAW_POST_LMGC90_TYPE; break;
+     case 3: val = DRAW_POST_LMGC90_COORD; break;
+     case 4: val = DRAW_POST_LMGC90_PRES; break;
+     case 5: val = DRAW_POST_LMGC90_SN; break;
+     case 6: val = DRAW_POST_LMGC90_DEPX; break;
+     case 7: val = DRAW_POST_LMGC90_DEPY; break;
+     case 8: val = DRAW_POST_LMGC90_DEPZ; break;
+     case 9: val = DRAW_POST_LMGC90_DEPAV; break;
+     case 10: val = DRAW_POST_LMGC90_DEPNORM; break;
+     default: val = DRAW_POST_LMGC90; break; // 1
+     }
+     if(force || (val != tensor_type))
+       opt_view_tensor_type(i, GMSH_SET, val);
+
+      switch (WID->view_choice[7]->value()) {
+      case 0: val = DRAW_POST_RANGE_DEFAULT; break;
+      case 1: val = DRAW_POST_RANGE_PER_STEP; break;
+      default: val = DRAW_POST_RANGE_CUSTOM; break; // 2
+      }
+      if(force || (val != range_type))
+        opt_view_range_type(i, GMSH_SET, val);
+
+      val = WID->view_choice[8]->value();
+      if(force || (val != axes))
+        opt_view_axes(i, GMSH_SET, val);
+
+      val = WID->view_choice[9]->value();
+      if(force || (val != boundary))
+        opt_view_boundary(i, GMSH_SET, val);
+
+      val = WID->view_choice[10]->value() - 1;
+      if(force || (val != external_view))
+        opt_view_external_view(i, GMSH_SET, val);
+
+      val = WID->view_choice[11]->value() - 1;
+      if(force || (val != gen_raise_view))
+        opt_view_gen_raise_view(i, GMSH_SET, val);
+
+      val = WID->view_choice[12]->value();
+      if(force || (val != show_time))
+        opt_view_show_time(i, GMSH_SET, val);
+      
+      switch(WID->view_choice[13]->value()){
+      case 0: val = DRAW_POST_3D; break;
+      case 1: val = DRAW_POST_2D_SPACE; break;
+      default: val = DRAW_POST_2D_TIME; break; // 2
+      }
+      if(force || (val != type))
+        opt_view_type(i, GMSH_SET, val);
+
+      // view_butts
+
+      val = WID->view_butt[0]->value();
+      if(force || (val != arrow_size_proportional))
+        opt_view_arrow_size_proportional(i, GMSH_SET, val);
+
+      val = WID->view_butt[38]->value();
+      if(force || (val != saturate_values))
+        opt_view_saturate_values(i, GMSH_SET, val);
+
+      val = WID->view_butt[10]->value();
+      if(force || (val != show_element))
+        opt_view_show_element(i, GMSH_SET, val);
+
+      val = WID->view_butt[4]->value();
+      if(force || (val != show_scale))
+        opt_view_show_scale(i, GMSH_SET, val);
+
+      val = WID->view_butt[7]->value();
+      if(force || (val != auto_position))
+        opt_view_auto_position(i, GMSH_SET, val);
+
+      val = WID->view_butt[25]->value();
+      if(force || (val != axes_auto_position))
+        opt_view_axes_auto_position(i, GMSH_SET, val);
+
+      val = WID->view_butt[5]->value();
+      if(force || (val != draw_strings))
+        opt_view_draw_strings(i, GMSH_SET, val);
+
+      val = WID->view_butt[11]->value();
+      if(force || (val != light))
+        opt_view_light(i, GMSH_SET, val);
+
+      val = WID->view_butt[8]->value();
+      if(force || (val != light_lines))
+        opt_view_light_lines(i, GMSH_SET, val);
+
+      val = WID->view_butt[9]->value();
+      if(force || (val != light_two_side))
+        opt_view_light_two_side(i, GMSH_SET, val);
+
+      val = WID->view_butt[12]->value();
+      if(force || (val != smooth_normals))
+        opt_view_smooth_normals(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[0]->menu()[0].value() ? 1 : 0;
+      if(force || (val != draw_scalars))
+        opt_view_draw_scalars(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[0]->menu()[1].value() ? 1 : 0;
+      if(force || (val != draw_vectors))
+        opt_view_draw_vectors(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[0]->menu()[2].value() ? 1 : 0;
+      if(force || (val != draw_tensors))
+        opt_view_draw_tensors(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[1]->menu()[0].value() ? 1 : 0;
+      if(force || (val != draw_points))
+        opt_view_draw_points(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[1]->menu()[1].value() ? 1 : 0;
+      if(force || (val != draw_lines))
+        opt_view_draw_lines(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[1]->menu()[2].value() ? 1 : 0;
+      if(force || (val != draw_triangles))
+        opt_view_draw_triangles(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[1]->menu()[3].value() ? 1 : 0;
+      if(force || (val != draw_quadrangles))
+        opt_view_draw_quadrangles(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[1]->menu()[4].value() ? 1 : 0;
+      if(force || (val != draw_tetrahedra))
+        opt_view_draw_tetrahedra(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[1]->menu()[5].value() ? 1 : 0;
+      if(force || (val != draw_hexahedra))
+        opt_view_draw_hexahedra(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[1]->menu()[6].value() ? 1 : 0;
+      if(force || (val != draw_prisms))
+        opt_view_draw_prisms(i, GMSH_SET, val);
+
+      val = WID->view_menu_butt[1]->menu()[7].value() ? 1 : 0;
+      if(force || (val != draw_pyramids))
+        opt_view_draw_pyramids(i, GMSH_SET, val);
+
+      val = WID->view_butt[6]->value();
+      if(force || (val != use_gen_raise))
+        opt_view_use_gen_raise(i, GMSH_SET, val);
+
+      val = WID->view_butt[24]->value();
+      if(force || (val != fake_transparency))
+        opt_view_fake_transparency(i, GMSH_SET, val);
+
+      val = WID->view_butt[26]->value();
+      if(force || (val != use_stipple))
+        opt_view_use_stipple(i, GMSH_SET, val);
+
+      // view_values
+      
+      val = WID->view_value[0]->value();
+      if(force || (val != normals))
+        opt_view_normals(i, GMSH_SET, val);
+
+      val = WID->view_value[1]->value();
+      if(force || (val != tangents))
+        opt_view_tangents(i, GMSH_SET, val);
+
+      val = WID->view_value[31]->value();
+      if(force || (val != custom_min))
+        opt_view_custom_min(i, GMSH_SET, val);
+
+      val = WID->view_value[32]->value();
+      if(force || (val != custom_max))
+        opt_view_custom_max(i, GMSH_SET, val);
+
+      val = WID->view_value[33]->value();
+      if(force || (val != max_recursion_level))
+        opt_view_max_recursion_level(i, GMSH_SET, val);
+
+      val = WID->view_value[34]->value();
+      if(force || (val != target_error))
+        opt_view_target_error(i, GMSH_SET, val);
+
+      val = WID->view_value[30]->value();
+      if(force || (val != nb_iso))
+        opt_view_nb_iso(i, GMSH_SET, val);
+
+      val = WID->view_value[40]->value();
+      if(force || (val != offset0))
+        opt_view_offset0(i, GMSH_SET, val);
+
+      val = WID->view_value[41]->value();
+      if(force || (val != offset1))
+        opt_view_offset1(i, GMSH_SET, val);
+
+      val = WID->view_value[42]->value();
+      if(force || (val != offset2))
+        opt_view_offset2(i, GMSH_SET, val);
+
+      val = WID->view_value[51]->value();
+      if(force || (val != transform00))
+        opt_view_transform00(i, GMSH_SET, val);
+
+      val = WID->view_value[52]->value();
+      if(force || (val != transform01))
+        opt_view_transform01(i, GMSH_SET, val);
+
+      val = WID->view_value[53]->value();
+      if(force || (val != transform02))
+        opt_view_transform02(i, GMSH_SET, val);
+
+      val = WID->view_value[54]->value();
+      if(force || (val != transform10))
+        opt_view_transform10(i, GMSH_SET, val);
+
+      val = WID->view_value[55]->value();
+      if(force || (val != transform11))
+        opt_view_transform11(i, GMSH_SET, val);
+
+      val = WID->view_value[56]->value();
+      if(force || (val != transform12))
+        opt_view_transform12(i, GMSH_SET, val);
+
+      val = WID->view_value[57]->value();
+      if(force || (val != transform20))
+        opt_view_transform20(i, GMSH_SET, val);
+
+      val = WID->view_value[58]->value();
+      if(force || (val != transform21))
+        opt_view_transform21(i, GMSH_SET, val);
+
+      val = WID->view_value[59]->value();
+      if(force || (val != transform22))
+        opt_view_transform22(i, GMSH_SET, val);
+
+      val = WID->view_value[43]->value();
+      if(force || (val != raise0))
+        opt_view_raise0(i, GMSH_SET, val);
+
+      val = WID->view_value[44]->value();
+      if(force || (val != raise1))
+        opt_view_raise1(i, GMSH_SET, val);
+
+      val = WID->view_value[45]->value();
+      if(force || (val != raise2))
+        opt_view_raise2(i, GMSH_SET, val);
+
+      val = WID->view_value[50]->value();
+      if(force || (val != timestep))
+        opt_view_timestep(i, GMSH_SET, val);
+
+      val = WID->view_value[60]->value();
+      if(force || (val != arrow_size))
+        opt_view_arrow_size(i, GMSH_SET, val);
+
+      val = WID->view_value[63]->value();
+      if(force || (val != displacement_factor))
+        opt_view_displacement_factor(i, GMSH_SET, val);
+
+      val = WID->view_value[61]->value();
+      if(force || (val != point_size))
+        opt_view_point_size(i, GMSH_SET, val);
+
+      val = WID->view_value[62]->value();
+      if(force || (val != line_width))
+        opt_view_line_width(i, GMSH_SET, val);
+
+      val = WID->view_value[12]->value();
+      if(force || (val != explode))
+        opt_view_explode(i, GMSH_SET, val);
+
+      val = WID->view_value[10]->value();
+      if(force || (val != angle_smooth_normals))
+        opt_view_angle_smooth_normals(i, GMSH_SET, val);
+
+      val = WID->view_value[20]->value();
+      if(force || (val != position0))
+        opt_view_position0(i, GMSH_SET, val);
+
+      val = WID->view_value[21]->value();
+      if(force || (val != position1))
+        opt_view_position1(i, GMSH_SET, val);
+
+      val = WID->view_value[22]->value();
+      if(force || (val != size0))
+        opt_view_size0(i, GMSH_SET, val);
+      
+      val = WID->view_value[23]->value();
+      if(force || (val != size1))
+        opt_view_size1(i, GMSH_SET, val);
+
+      val = WID->view_value[13]->value();
+      if(force || (val != axes_xmin))
+        opt_view_axes_xmin(i, GMSH_SET, val);
+
+      val = WID->view_value[14]->value();
+      if(force || (val != axes_ymin))
+        opt_view_axes_ymin(i, GMSH_SET, val);
+
+      val = WID->view_value[15]->value();
+      if(force || (val != axes_zmin))
+        opt_view_axes_zmin(i, GMSH_SET, val);
+
+      val = WID->view_value[16]->value();
+      if(force || (val != axes_xmax))
+        opt_view_axes_xmax(i, GMSH_SET, val);
+
+      val = WID->view_value[17]->value();
+      if(force || (val != axes_ymax))
+        opt_view_axes_ymax(i, GMSH_SET, val);
+
+      val = WID->view_value[18]->value();
+      if(force || (val != axes_zmax))
+        opt_view_axes_zmax(i, GMSH_SET, val);
+
+      val = WID->view_value[2]->value();
+      if(force || (val != gen_raise_factor))
+        opt_view_gen_raise_factor(i, GMSH_SET, val);
+
+      val = WID->view_value[3]->value();
+      if(force || (val != axes_tics0))
+        opt_view_axes_tics0(i, GMSH_SET, val);
+
+      val = WID->view_value[4]->value();
+      if(force || (val != axes_tics1))
+        opt_view_axes_tics1(i, GMSH_SET, val);
+
+      val = WID->view_value[5]->value();
+      if(force || (val != axes_tics2))
+        opt_view_axes_tics2(i, GMSH_SET, val);
+
+      // view_inputs
+
+      char *str;
+
+      str = (char *)WID->view_input[0]->value();
+      if(force || strcmp(str, name))
+        opt_view_name(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[1]->value();
+      if(force || strcmp(str, format))
+        opt_view_format(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[10]->value();
+      if(force || strcmp(str, axes_label0))
+        opt_view_axes_label0(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[11]->value();
+      if(force || strcmp(str, axes_label1))
+        opt_view_axes_label1(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[12]->value();
+      if(force || strcmp(str, axes_label2))
+        opt_view_axes_label2(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[7]->value();
+      if(force || strcmp(str, axes_format0))
+        opt_view_axes_format0(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[8]->value();
+      if(force || strcmp(str, axes_format1))
+        opt_view_axes_format1(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[9]->value();
+      if(force || strcmp(str, axes_format2))
+        opt_view_axes_format2(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[4]->value();
+      if(force || strcmp(str, gen_raise0))
+        opt_view_gen_raise0(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[5]->value();
+      if(force || strcmp(str, gen_raise1))
+        opt_view_gen_raise1(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[6]->value();
+      if(force || strcmp(str, gen_raise2))
+        opt_view_gen_raise2(i, GMSH_SET, str);
+
+      // colors (since the color buttons modify the values directly
+      // through callbacks, we can use the opt_XXX routines directly)
+      if(force || (i != current)){
+        opt_view_color_points(i, GMSH_SET, opt_view_color_points(current, GMSH_GET, 0));
+	opt_view_color_lines(i, GMSH_SET, opt_view_color_lines(current, GMSH_GET, 0));
+	opt_view_color_triangles(i, GMSH_SET, opt_view_color_triangles(current, GMSH_GET, 0));
+	opt_view_color_quadrangles(i, GMSH_SET, opt_view_color_quadrangles(current, GMSH_GET, 0));
+        opt_view_color_tetrahedra(i, GMSH_SET, opt_view_color_tetrahedra(current, GMSH_GET, 0));
+        opt_view_color_hexahedra(i, GMSH_SET, opt_view_color_hexahedra(current, GMSH_GET, 0));
+        opt_view_color_prisms(i, GMSH_SET, opt_view_color_prisms(current, GMSH_GET, 0));
+        opt_view_color_pyramids(i, GMSH_SET, opt_view_color_pyramids(current, GMSH_GET, 0));
+        opt_view_color_tangents(i, GMSH_SET, opt_view_color_tangents(current, GMSH_GET, 0));
+        opt_view_color_normals(i, GMSH_SET, opt_view_color_normals(current, GMSH_GET, 0));
+        opt_view_color_text2d(i, GMSH_SET, opt_view_color_text2d(current, GMSH_GET, 0));
+        opt_view_color_text3d(i, GMSH_SET, opt_view_color_text3d(current, GMSH_GET, 0));
+        opt_view_color_axes(i, GMSH_SET, opt_view_color_axes(current, GMSH_GET, 0));
+      }
+
+      // colorbar window
+
+      if(force || (i != current)) {
+	Post_View *src = *(Post_View **)List_Pointer(CTX.post.list, current);
+	Post_View *dest = *(Post_View **)List_Pointer(CTX.post.list, i);
+        ColorTable_Copy(&src->CT);
+        ColorTable_Paste(&dest->CT);
+	dest->Changed = 1;
+      }
+    }
+  }
+
+  if(CTX.fast_redraw)
+    CTX.post.draw = CTX.mesh.draw = 0;
+  Draw();
+  CTX.post.draw = CTX.mesh.draw = 1;
 }
 
 // Statistics Menu
@@ -1479,13 +2125,6 @@ void clip_num_cb(CALLBACK_ARGS)
 
 void clip_update_cb(CALLBACK_ARGS)
 {
-  int old = CTX.draw_bbox;
-  CTX.draw_bbox = 1;
-  if(CTX.fast_redraw){
-    CTX.post.draw = 0;
-    CTX.mesh.draw = 0;
-  }
-
   int idx = WID->clip_choice->value();
   CTX.clip[idx] = 0;
   for(int i = 0; i < WID->clip_browser->size(); i++)
@@ -1493,11 +2132,14 @@ void clip_update_cb(CALLBACK_ARGS)
       CTX.clip[idx] += (1<<i);
   for(int i = 0; i < 4; i++)
     CTX.clip_plane[idx][i] = WID->clip_value[i]->value();
-  Draw();
 
+  int old = CTX.draw_bbox;
+  CTX.draw_bbox = 1;
+  if(CTX.fast_redraw)
+    CTX.post.draw = CTX.mesh.draw = 0;
+  Draw();
   CTX.draw_bbox = old;
-  CTX.post.draw = 1;
-  CTX.mesh.draw = 1;
+  CTX.post.draw = CTX.mesh.draw = 1;
 }
 
 void clip_invert_cb(CALLBACK_ARGS)
@@ -3414,11 +4056,6 @@ void view_applybgmesh_cb(CALLBACK_ARGS)
   BGMWithView(v);
 }
 
-void view_options_cb(CALLBACK_ARGS)
-{
-  WID->create_view_options_window((int)(long)data);
-}
-
 void view_plugin_cancel_cb(CALLBACK_ARGS)
 {
   if(data)
@@ -3521,656 +4158,6 @@ void view_plugin_options_cb(CALLBACK_ARGS)
   }
 
   p->dialogBox->main_window->show();
-}
-
-void view_options_timestep_cb(CALLBACK_ARGS)
-{
-  int links = (int)opt_post_link(0, GMSH_GET, 0);
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
-    if((links == 2 || links == 4) ||
-       ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
-       (links == 0 && i == WID->view_number)) {
-      opt_view_timestep(i, GMSH_SET, ((Fl_Value_Input *) w)->value());
-    }
-  }
-  Draw();
-}
-
-void view_options_timestep_decr_cb(CALLBACK_ARGS)
-{
-  int links = (int)opt_post_link(0, GMSH_GET, 0);
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
-    if((links == 2 || links == 4) ||
-       ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
-       (links == 0 && i == WID->view_number)) {
-      opt_view_timestep(i, GMSH_SET | GMSH_GUI,
-                        opt_view_timestep(i, GMSH_GET, 0) - 1);
-    }
-  }
-  Draw();
-}
-
-void view_options_timestep_incr_cb(CALLBACK_ARGS)
-{
-  int links = (int)opt_post_link(0, GMSH_GET, 0);
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
-    if((links == 2 || links == 4) ||
-       ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
-       (links == 0 && i == WID->view_number)) {
-      opt_view_timestep(i, GMSH_SET | GMSH_GUI,
-                        opt_view_timestep(i, GMSH_GET, 0) + 1);
-    }
-  }
-  Draw();
-}
-
-void view_options_custom_set_cb(CALLBACK_ARGS)
-{
-  char *str = (char*)data;
-
-  if(!strcmp(str, "Min")){
-    WID->view_value[31]->value(opt_view_min(WID->view_number, GMSH_GET, 0));
-  }
-  else if(!strcmp(str, "Max")){
-    WID->view_value[32]->value(opt_view_max(WID->view_number, GMSH_GET, 0));
-  }
-}
-
-void view_options_ok_cb(CALLBACK_ARGS)
-{
-  int current = (int)(long)data;
-
-  if(current < 0)
-    return;
-
-  int force = 0, links = (int)opt_post_link(0, GMSH_GET, 0);
-
-  // get the old values for the current view
-
-  double scale_type = opt_view_scale_type(current, GMSH_GET, 0);
-  double intervals_type = opt_view_intervals_type(current, GMSH_GET, 0);
-  double point_type = opt_view_point_type(current, GMSH_GET, 0);
-  double line_type = opt_view_line_type(current, GMSH_GET, 0);
-  double vector_type = opt_view_vector_type(current, GMSH_GET, 0);
-  double glyph_location = opt_view_glyph_location(current, GMSH_GET, 0);
-  double tensor_type = opt_view_tensor_type(current, GMSH_GET, 0);
-  double range_type = opt_view_range_type(current, GMSH_GET, 0);
-  double axes = opt_view_axes(current, GMSH_GET, 0);
-  double boundary = opt_view_boundary(current, GMSH_GET, 0);
-  double external_view = opt_view_external_view(current, GMSH_GET, 0);
-  double gen_raise_view = opt_view_gen_raise_view(current, GMSH_GET, 0);
-  double show_time = opt_view_show_time(current, GMSH_GET, 0);
-
-  double type = opt_view_type(current, GMSH_GET, 0);
-  double saturate_values = opt_view_saturate_values(current, GMSH_GET, 0);
-  double max_recursion_level = opt_view_max_recursion_level(current, GMSH_GET, 0);
-  double target_error = opt_view_target_error(current, GMSH_GET, 0);
-  double show_element = opt_view_show_element(current, GMSH_GET, 0);
-  double show_scale = opt_view_show_scale(current, GMSH_GET, 0);
-  double auto_position = opt_view_auto_position(current, GMSH_GET, 0);
-  double axes_auto_position = opt_view_axes_auto_position(current, GMSH_GET, 0);
-  double draw_strings = opt_view_draw_strings(current, GMSH_GET, 0);
-  double light = opt_view_light(current, GMSH_GET, 0);
-  double light_two_side = opt_view_light_two_side(current, GMSH_GET, 0);
-  double light_lines = opt_view_light_lines(current, GMSH_GET, 0);
-  double smooth_normals = opt_view_smooth_normals(current, GMSH_GET, 0);
-  double draw_points = opt_view_draw_points(current, GMSH_GET, 0);
-  double draw_lines = opt_view_draw_lines(current, GMSH_GET, 0);
-  double draw_triangles = opt_view_draw_triangles(current, GMSH_GET, 0);
-  double draw_quadrangles = opt_view_draw_quadrangles(current, GMSH_GET, 0);
-  double draw_tetrahedra = opt_view_draw_tetrahedra(current, GMSH_GET, 0);
-  double draw_hexahedra = opt_view_draw_hexahedra(current, GMSH_GET, 0);
-  double draw_prisms = opt_view_draw_prisms(current, GMSH_GET, 0);
-  double draw_pyramids = opt_view_draw_pyramids(current, GMSH_GET, 0);
-  double draw_scalars = opt_view_draw_scalars(current, GMSH_GET, 0);
-  double draw_vectors = opt_view_draw_vectors(current, GMSH_GET, 0);
-  double draw_tensors = opt_view_draw_tensors(current, GMSH_GET, 0);
-  double use_gen_raise = opt_view_use_gen_raise(current, GMSH_GET, 0);
-  double fake_transparency = opt_view_fake_transparency(current, GMSH_GET, 0);
-  double use_stipple = opt_view_use_stipple(current, GMSH_GET, 0);
-
-  double normals = opt_view_normals(current, GMSH_GET, 0);
-  double tangents = opt_view_tangents(current, GMSH_GET, 0);
-  double custom_min = opt_view_custom_min(current, GMSH_GET, 0);
-  double custom_max = opt_view_custom_max(current, GMSH_GET, 0);
-  double nb_iso = opt_view_nb_iso(current, GMSH_GET, 0);
-  double offset0 = opt_view_offset0(current, GMSH_GET, 0);
-  double offset1 = opt_view_offset1(current, GMSH_GET, 0);
-  double offset2 = opt_view_offset2(current, GMSH_GET, 0);
-  double transform00 = opt_view_transform00(current, GMSH_GET, 0);
-  double transform01 = opt_view_transform01(current, GMSH_GET, 0);
-  double transform02 = opt_view_transform02(current, GMSH_GET, 0);
-  double transform10 = opt_view_transform10(current, GMSH_GET, 0);
-  double transform11 = opt_view_transform11(current, GMSH_GET, 0);
-  double transform12 = opt_view_transform12(current, GMSH_GET, 0);
-  double transform20 = opt_view_transform20(current, GMSH_GET, 0);
-  double transform21 = opt_view_transform21(current, GMSH_GET, 0);
-  double transform22 = opt_view_transform22(current, GMSH_GET, 0);
-  double raise0 = opt_view_raise0(current, GMSH_GET, 0);
-  double raise1 = opt_view_raise1(current, GMSH_GET, 0);
-  double raise2 = opt_view_raise2(current, GMSH_GET, 0);
-  double timestep = opt_view_timestep(current, GMSH_GET, 0);
-  double arrow_size = opt_view_arrow_size(current, GMSH_GET, 0);
-  double arrow_size_proportional = opt_view_arrow_size_proportional(current, GMSH_GET, 0);
-  double displacement_factor = opt_view_displacement_factor(current, GMSH_GET, 0);
-  double point_size = opt_view_point_size(current, GMSH_GET, 0);
-  double line_width = opt_view_line_width(current, GMSH_GET, 0);
-  double explode = opt_view_explode(current, GMSH_GET, 0);
-  double angle_smooth_normals = opt_view_angle_smooth_normals(current, GMSH_GET, 0);
-  double position0 = opt_view_position0(current, GMSH_GET, 0);
-  double position1 = opt_view_position1(current, GMSH_GET, 0);
-  double size0 = opt_view_size0(current, GMSH_GET, 0);
-  double size1 = opt_view_size1(current, GMSH_GET, 0);
-  double axes_tics0 = opt_view_axes_tics0(current, GMSH_GET, 0);
-  double axes_tics1 = opt_view_axes_tics1(current, GMSH_GET, 0);
-  double axes_tics2 = opt_view_axes_tics2(current, GMSH_GET, 0);
-  double axes_xmin = opt_view_axes_xmin(current, GMSH_GET, 0);
-  double axes_ymin = opt_view_axes_ymin(current, GMSH_GET, 0);
-  double axes_zmin = opt_view_axes_zmin(current, GMSH_GET, 0);
-  double axes_xmax = opt_view_axes_xmax(current, GMSH_GET, 0);
-  double axes_ymax = opt_view_axes_ymax(current, GMSH_GET, 0);
-  double axes_zmax = opt_view_axes_zmax(current, GMSH_GET, 0);
-  double gen_raise_factor = opt_view_gen_raise_factor(current, GMSH_GET, 0);
-
-  char name[256];
-  strcpy(name, opt_view_name(current, GMSH_GET, NULL));
-  char format[256];
-  strcpy(format, opt_view_format(current, GMSH_GET, NULL));
-  char axes_label0[256];
-  strcpy(axes_label0, opt_view_axes_label0(current, GMSH_GET, NULL));
-  char axes_label1[256];
-  strcpy(axes_label1, opt_view_axes_label1(current, GMSH_GET, NULL));
-  char axes_label2[256];
-  strcpy(axes_label2, opt_view_axes_label2(current, GMSH_GET, NULL));
-  char axes_format0[256];
-  strcpy(axes_format0, opt_view_axes_format0(current, GMSH_GET, NULL));
-  char axes_format1[256];
-  strcpy(axes_format1, opt_view_axes_format1(current, GMSH_GET, NULL));
-  char axes_format2[256];
-  strcpy(axes_format2, opt_view_axes_format2(current, GMSH_GET, NULL));
-  char gen_raise0[256];
-  strcpy(gen_raise0, opt_view_gen_raise0(current, GMSH_GET, NULL));
-  char gen_raise1[256];
-  strcpy(gen_raise1, opt_view_gen_raise1(current, GMSH_GET, NULL));
-  char gen_raise2[256];
-  strcpy(gen_raise2, opt_view_gen_raise2(current, GMSH_GET, NULL));
-
-  // modify only the views that need to be updated
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
-    if((links == 2 || links == 4) ||
-       ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
-       (links == 0 && i == current)) {
-
-      if(links == 3 || links == 4)
-        force = 1;
-
-      double val;
-
-      // view_choice
-
-      switch (WID->view_choice[1]->value()) {
-      case 0: val = DRAW_POST_LINEAR; break;
-      case 1: val = DRAW_POST_LOGARITHMIC; break;
-      default: val = DRAW_POST_DOUBLELOGARITHMIC; break; // 2
-      }
-      if(force || (val != scale_type))
-        opt_view_scale_type(i, GMSH_SET, val);
-
-      switch (WID->view_choice[0]->value()) {
-      case 0: val = DRAW_POST_ISO; break;
-      case 1: val = DRAW_POST_DISCRETE; break;
-      case 2: val = DRAW_POST_CONTINUOUS; break;
-      default: val = DRAW_POST_NUMERIC; break; // 3
-      }
-      if(force || (val != intervals_type))
-	opt_view_intervals_type(i, GMSH_SET, val);
-      
-      val = WID->view_choice[5]->value();
-      if(force || (val != point_type))
-	opt_view_point_type(i, GMSH_SET, val);
-      
-      val = WID->view_choice[6]->value();
-      if(force || (val != line_type))
-        opt_view_line_type(i, GMSH_SET, val);
-
-      switch (WID->view_choice[2]->value()) {
-      case 0: val = DRAW_POST_SEGMENT; break;
-      case 1: val = DRAW_POST_ARROW; break;
-      case 2: val = DRAW_POST_PYRAMID; break;
-      case 4: val = DRAW_POST_DISPLACEMENT; break;
-      default: val = DRAW_POST_ARROW3D; break; // 3
-      }
-      if(force || (val != vector_type))
-        opt_view_vector_type(i, GMSH_SET, val);
-
-      switch (WID->view_choice[3]->value()) {
-      case 0: val = DRAW_POST_LOCATE_COG; break;
-      default: val = DRAW_POST_LOCATE_VERTEX; break;
-      }
-      if(force || (val != glyph_location))
-        opt_view_glyph_location(i, GMSH_SET, val);
-
-     switch (WID->view_choice[4]->value()) {
-     case 0: val = DRAW_POST_VONMISES; break;
-     case 2: val = DRAW_POST_LMGC90_TYPE; break;
-     case 3: val = DRAW_POST_LMGC90_COORD; break;
-     case 4: val = DRAW_POST_LMGC90_PRES; break;
-     case 5: val = DRAW_POST_LMGC90_SN; break;
-     case 6: val = DRAW_POST_LMGC90_DEPX; break;
-     case 7: val = DRAW_POST_LMGC90_DEPY; break;
-     case 8: val = DRAW_POST_LMGC90_DEPZ; break;
-     case 9: val = DRAW_POST_LMGC90_DEPAV; break;
-     case 10: val = DRAW_POST_LMGC90_DEPNORM; break;
-     default: val = DRAW_POST_LMGC90; break; // 1
-     }
-     if(force || (val != tensor_type))
-       opt_view_tensor_type(i, GMSH_SET, val);
-
-      switch (WID->view_choice[7]->value()) {
-      case 0: val = DRAW_POST_RANGE_DEFAULT; break;
-      case 1: val = DRAW_POST_RANGE_PER_STEP; break;
-      default: val = DRAW_POST_RANGE_CUSTOM; break; // 2
-      }
-      if(force || (val != range_type))
-        opt_view_range_type(i, GMSH_SET, val);
-
-      val = WID->view_choice[8]->value();
-      if(force || (val != axes))
-        opt_view_axes(i, GMSH_SET, val);
-
-      val = WID->view_choice[9]->value();
-      if(force || (val != boundary))
-        opt_view_boundary(i, GMSH_SET, val);
-
-      val = WID->view_choice[10]->value() - 1;
-      if(force || (val != external_view))
-        opt_view_external_view(i, GMSH_SET, val);
-
-      val = WID->view_choice[11]->value() - 1;
-      if(force || (val != gen_raise_view))
-        opt_view_gen_raise_view(i, GMSH_SET, val);
-
-      val = WID->view_choice[12]->value();
-      if(force || (val != show_time))
-        opt_view_show_time(i, GMSH_SET, val);
-      
-      switch(WID->view_choice[13]->value()){
-      case 0: val = DRAW_POST_3D; break;
-      case 1: val = DRAW_POST_2D_SPACE; break;
-      default: val = DRAW_POST_2D_TIME; break; // 2
-      }
-      if(force || (val != type))
-        opt_view_type(i, GMSH_SET, val);
-
-      // view_butts
-
-      val = WID->view_butt[0]->value();
-      if(force || (val != arrow_size_proportional))
-        opt_view_arrow_size_proportional(i, GMSH_SET, val);
-
-      val = WID->view_butt[38]->value();
-      if(force || (val != saturate_values))
-        opt_view_saturate_values(i, GMSH_SET, val);
-
-      val = WID->view_butt[10]->value();
-      if(force || (val != show_element))
-        opt_view_show_element(i, GMSH_SET, val);
-
-      val = WID->view_butt[4]->value();
-      if(force || (val != show_scale))
-        opt_view_show_scale(i, GMSH_SET, val);
-
-      val = WID->view_butt[7]->value();
-      if(force || (val != auto_position))
-        opt_view_auto_position(i, GMSH_SET, val);
-
-      val = WID->view_butt[25]->value();
-      if(force || (val != axes_auto_position))
-        opt_view_axes_auto_position(i, GMSH_SET, val);
-
-      val = WID->view_butt[5]->value();
-      if(force || (val != draw_strings))
-        opt_view_draw_strings(i, GMSH_SET, val);
-
-      val = WID->view_butt[11]->value();
-      if(force || (val != light))
-        opt_view_light(i, GMSH_SET, val);
-
-      val = WID->view_butt[8]->value();
-      if(force || (val != light_lines))
-        opt_view_light_lines(i, GMSH_SET, val);
-
-      val = WID->view_butt[9]->value();
-      if(force || (val != light_two_side))
-        opt_view_light_two_side(i, GMSH_SET, val);
-
-      val = WID->view_butt[12]->value();
-      if(force || (val != smooth_normals))
-        opt_view_smooth_normals(i, GMSH_SET, val);
-
-      val = WID->view_menu_butt[0]->menu()[0].value() ? 1 : 0;
-      if(force || (val != draw_scalars))
-        opt_view_draw_scalars(i, GMSH_SET, val);
-
-      val = WID->view_menu_butt[0]->menu()[1].value() ? 1 : 0;
-      if(force || (val != draw_vectors))
-        opt_view_draw_vectors(i, GMSH_SET, val);
-
-      val = WID->view_menu_butt[0]->menu()[2].value() ? 1 : 0;
-      if(force || (val != draw_tensors))
-        opt_view_draw_tensors(i, GMSH_SET, val);
-
-      val = WID->view_menu_butt[1]->menu()[0].value() ? 1 : 0;
-      if(force || (val != draw_points))
-        opt_view_draw_points(i, GMSH_SET, val);
-
-      val = WID->view_menu_butt[1]->menu()[1].value() ? 1 : 0;
-      if(force || (val != draw_lines))
-        opt_view_draw_lines(i, GMSH_SET, val);
-
-      val = WID->view_menu_butt[1]->menu()[2].value() ? 1 : 0;
-      if(force || (val != draw_triangles))
-        opt_view_draw_triangles(i, GMSH_SET, val);
-
-      val = WID->view_menu_butt[1]->menu()[3].value() ? 1 : 0;
-      if(force || (val != draw_quadrangles))
-        opt_view_draw_quadrangles(i, GMSH_SET, val);
-
-      val = WID->view_menu_butt[1]->menu()[4].value() ? 1 : 0;
-      if(force || (val != draw_tetrahedra))
-        opt_view_draw_tetrahedra(i, GMSH_SET, val);
-
-      val = WID->view_menu_butt[1]->menu()[5].value() ? 1 : 0;
-      if(force || (val != draw_hexahedra))
-        opt_view_draw_hexahedra(i, GMSH_SET, val);
-
-      val = WID->view_menu_butt[1]->menu()[6].value() ? 1 : 0;
-      if(force || (val != draw_prisms))
-        opt_view_draw_prisms(i, GMSH_SET, val);
-
-      val = WID->view_menu_butt[1]->menu()[7].value() ? 1 : 0;
-      if(force || (val != draw_pyramids))
-        opt_view_draw_pyramids(i, GMSH_SET, val);
-
-      val = WID->view_butt[6]->value();
-      if(force || (val != use_gen_raise))
-        opt_view_use_gen_raise(i, GMSH_SET, val);
-
-      val = WID->view_butt[24]->value();
-      if(force || (val != fake_transparency))
-        opt_view_fake_transparency(i, GMSH_SET, val);
-
-      val = WID->view_butt[26]->value();
-      if(force || (val != use_stipple))
-        opt_view_use_stipple(i, GMSH_SET, val);
-
-      // view_values
-      
-      val = WID->view_value[0]->value();
-      if(force || (val != normals))
-        opt_view_normals(i, GMSH_SET, val);
-
-      val = WID->view_value[1]->value();
-      if(force || (val != tangents))
-        opt_view_tangents(i, GMSH_SET, val);
-
-      val = WID->view_value[31]->value();
-      if(force || (val != custom_min))
-        opt_view_custom_min(i, GMSH_SET, val);
-
-      val = WID->view_value[32]->value();
-      if(force || (val != custom_max))
-        opt_view_custom_max(i, GMSH_SET, val);
-
-      val = WID->view_value[33]->value();
-      if(force || (val != max_recursion_level))
-        opt_view_max_recursion_level(i, GMSH_SET, val);
-
-      val = WID->view_value[34]->value();
-      if(force || (val != target_error))
-        opt_view_target_error(i, GMSH_SET, val);
-
-      val = WID->view_value[30]->value();
-      if(force || (val != nb_iso))
-        opt_view_nb_iso(i, GMSH_SET, val);
-
-      val = WID->view_value[40]->value();
-      if(force || (val != offset0))
-        opt_view_offset0(i, GMSH_SET, val);
-
-      val = WID->view_value[41]->value();
-      if(force || (val != offset1))
-        opt_view_offset1(i, GMSH_SET, val);
-
-      val = WID->view_value[42]->value();
-      if(force || (val != offset2))
-        opt_view_offset2(i, GMSH_SET, val);
-
-      val = WID->view_value[51]->value();
-      if(force || (val != transform00))
-        opt_view_transform00(i, GMSH_SET, val);
-
-      val = WID->view_value[52]->value();
-      if(force || (val != transform01))
-        opt_view_transform01(i, GMSH_SET, val);
-
-      val = WID->view_value[53]->value();
-      if(force || (val != transform02))
-        opt_view_transform02(i, GMSH_SET, val);
-
-      val = WID->view_value[54]->value();
-      if(force || (val != transform10))
-        opt_view_transform10(i, GMSH_SET, val);
-
-      val = WID->view_value[55]->value();
-      if(force || (val != transform11))
-        opt_view_transform11(i, GMSH_SET, val);
-
-      val = WID->view_value[56]->value();
-      if(force || (val != transform12))
-        opt_view_transform12(i, GMSH_SET, val);
-
-      val = WID->view_value[57]->value();
-      if(force || (val != transform20))
-        opt_view_transform20(i, GMSH_SET, val);
-
-      val = WID->view_value[58]->value();
-      if(force || (val != transform21))
-        opt_view_transform21(i, GMSH_SET, val);
-
-      val = WID->view_value[59]->value();
-      if(force || (val != transform22))
-        opt_view_transform22(i, GMSH_SET, val);
-
-      val = WID->view_value[43]->value();
-      if(force || (val != raise0))
-        opt_view_raise0(i, GMSH_SET, val);
-
-      val = WID->view_value[44]->value();
-      if(force || (val != raise1))
-        opt_view_raise1(i, GMSH_SET, val);
-
-      val = WID->view_value[45]->value();
-      if(force || (val != raise2))
-        opt_view_raise2(i, GMSH_SET, val);
-
-      val = WID->view_value[50]->value();
-      if(force || (val != timestep))
-        opt_view_timestep(i, GMSH_SET, val);
-
-      val = WID->view_value[60]->value();
-      if(force || (val != arrow_size))
-        opt_view_arrow_size(i, GMSH_SET, val);
-
-      val = WID->view_value[63]->value();
-      if(force || (val != displacement_factor))
-        opt_view_displacement_factor(i, GMSH_SET, val);
-
-      val = WID->view_value[61]->value();
-      if(force || (val != point_size))
-        opt_view_point_size(i, GMSH_SET, val);
-
-      val = WID->view_value[62]->value();
-      if(force || (val != line_width))
-        opt_view_line_width(i, GMSH_SET, val);
-
-      val = WID->view_value[12]->value();
-      if(force || (val != explode))
-        opt_view_explode(i, GMSH_SET, val);
-
-      val = WID->view_value[10]->value();
-      if(force || (val != angle_smooth_normals))
-        opt_view_angle_smooth_normals(i, GMSH_SET, val);
-
-      val = WID->view_value[20]->value();
-      if(force || (val != position0))
-        opt_view_position0(i, GMSH_SET, val);
-
-      val = WID->view_value[21]->value();
-      if(force || (val != position1))
-        opt_view_position1(i, GMSH_SET, val);
-
-      val = WID->view_value[22]->value();
-      if(force || (val != size0))
-        opt_view_size0(i, GMSH_SET, val);
-      
-      val = WID->view_value[23]->value();
-      if(force || (val != size1))
-        opt_view_size1(i, GMSH_SET, val);
-
-      val = WID->view_value[13]->value();
-      if(force || (val != axes_xmin))
-        opt_view_axes_xmin(i, GMSH_SET, val);
-
-      val = WID->view_value[14]->value();
-      if(force || (val != axes_ymin))
-        opt_view_axes_ymin(i, GMSH_SET, val);
-
-      val = WID->view_value[15]->value();
-      if(force || (val != axes_zmin))
-        opt_view_axes_zmin(i, GMSH_SET, val);
-
-      val = WID->view_value[16]->value();
-      if(force || (val != axes_xmax))
-        opt_view_axes_xmax(i, GMSH_SET, val);
-
-      val = WID->view_value[17]->value();
-      if(force || (val != axes_ymax))
-        opt_view_axes_ymax(i, GMSH_SET, val);
-
-      val = WID->view_value[18]->value();
-      if(force || (val != axes_zmax))
-        opt_view_axes_zmax(i, GMSH_SET, val);
-
-      val = WID->view_value[2]->value();
-      if(force || (val != gen_raise_factor))
-        opt_view_gen_raise_factor(i, GMSH_SET, val);
-
-      val = WID->view_value[3]->value();
-      if(force || (val != axes_tics0))
-        opt_view_axes_tics0(i, GMSH_SET, val);
-
-      val = WID->view_value[4]->value();
-      if(force || (val != axes_tics1))
-        opt_view_axes_tics1(i, GMSH_SET, val);
-
-      val = WID->view_value[5]->value();
-      if(force || (val != axes_tics2))
-        opt_view_axes_tics2(i, GMSH_SET, val);
-
-      // view_inputs
-
-      char *str;
-
-      str = (char *)WID->view_input[0]->value();
-      if(force || strcmp(str, name))
-        opt_view_name(i, GMSH_SET, str);
-
-      str = (char *)WID->view_input[1]->value();
-      if(force || strcmp(str, format))
-        opt_view_format(i, GMSH_SET, str);
-
-      str = (char *)WID->view_input[10]->value();
-      if(force || strcmp(str, axes_label0))
-        opt_view_axes_label0(i, GMSH_SET, str);
-
-      str = (char *)WID->view_input[11]->value();
-      if(force || strcmp(str, axes_label1))
-        opt_view_axes_label1(i, GMSH_SET, str);
-
-      str = (char *)WID->view_input[12]->value();
-      if(force || strcmp(str, axes_label2))
-        opt_view_axes_label2(i, GMSH_SET, str);
-
-      str = (char *)WID->view_input[7]->value();
-      if(force || strcmp(str, axes_format0))
-        opt_view_axes_format0(i, GMSH_SET, str);
-
-      str = (char *)WID->view_input[8]->value();
-      if(force || strcmp(str, axes_format1))
-        opt_view_axes_format1(i, GMSH_SET, str);
-
-      str = (char *)WID->view_input[9]->value();
-      if(force || strcmp(str, axes_format2))
-        opt_view_axes_format2(i, GMSH_SET, str);
-
-      str = (char *)WID->view_input[4]->value();
-      if(force || strcmp(str, gen_raise0))
-        opt_view_gen_raise0(i, GMSH_SET, str);
-
-      str = (char *)WID->view_input[5]->value();
-      if(force || strcmp(str, gen_raise1))
-        opt_view_gen_raise1(i, GMSH_SET, str);
-
-      str = (char *)WID->view_input[6]->value();
-      if(force || strcmp(str, gen_raise2))
-        opt_view_gen_raise2(i, GMSH_SET, str);
-
-      // colors (since the color buttons modify the values directly
-      // through callbacks, we can use the opt_XXX routines directly)
-      if(force || (i != current)){
-        opt_view_color_points(i, GMSH_SET, opt_view_color_points(current, GMSH_GET, 0));
-	opt_view_color_lines(i, GMSH_SET, opt_view_color_lines(current, GMSH_GET, 0));
-	opt_view_color_triangles(i, GMSH_SET, opt_view_color_triangles(current, GMSH_GET, 0));
-	opt_view_color_quadrangles(i, GMSH_SET, opt_view_color_quadrangles(current, GMSH_GET, 0));
-        opt_view_color_tetrahedra(i, GMSH_SET, opt_view_color_tetrahedra(current, GMSH_GET, 0));
-        opt_view_color_hexahedra(i, GMSH_SET, opt_view_color_hexahedra(current, GMSH_GET, 0));
-        opt_view_color_prisms(i, GMSH_SET, opt_view_color_prisms(current, GMSH_GET, 0));
-        opt_view_color_pyramids(i, GMSH_SET, opt_view_color_pyramids(current, GMSH_GET, 0));
-        opt_view_color_tangents(i, GMSH_SET, opt_view_color_tangents(current, GMSH_GET, 0));
-        opt_view_color_normals(i, GMSH_SET, opt_view_color_normals(current, GMSH_GET, 0));
-        opt_view_color_text2d(i, GMSH_SET, opt_view_color_text2d(current, GMSH_GET, 0));
-        opt_view_color_text3d(i, GMSH_SET, opt_view_color_text3d(current, GMSH_GET, 0));
-        opt_view_color_axes(i, GMSH_SET, opt_view_color_axes(current, GMSH_GET, 0));
-      }
-
-      // colorbar window
-
-      if(force || (WID->view_colorbar_window->changed() && i != current)) {
-	Post_View *src = *(Post_View **)List_Pointer(CTX.post.list, current);
-	Post_View *dest = *(Post_View **)List_Pointer(CTX.post.list, i);
-        ColorTable_Copy(&src->CT);
-        ColorTable_Paste(&dest->CT);
-	dest->Changed = 1;
-      }
-    }
-  }
-
-  // clear the changed flag on the colorbar
-  WID->view_colorbar_window->clear_changed();
-}
-
-void view_arrow_param_cb(CALLBACK_ARGS)
-{
-  double a = opt_view_arrow_head_radius(WID->view_number, GMSH_GET, 0);
-  double b = opt_view_arrow_stem_length(WID->view_number, GMSH_GET, 0);
-  double c = opt_view_arrow_stem_radius(WID->view_number, GMSH_GET, 0);
-  while(arrow_editor("Arrow Editor", a, b, c)){
-    opt_view_arrow_head_radius(WID->view_number, GMSH_SET, a);
-    opt_view_arrow_stem_length(WID->view_number, GMSH_SET, b);
-    opt_view_arrow_stem_radius(WID->view_number, GMSH_SET, c);
-    Draw();
-  }
 }
 
 // Contextual windows for geometry

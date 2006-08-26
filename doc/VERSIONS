@@ -1,10 +1,10 @@
-$Id: VERSIONS,v 1.363 2006-08-25 19:27:46 geuzaine Exp $
+$Id: VERSIONS,v 1.364 2006-08-26 17:00:25 geuzaine Exp $
 
 2.0: new geometry and mesh databases; complete rewrite of geometry and
 mesh drawing code; complete rewrite of the input/output code (new
 binary mesh format, improved support for STL, MESH, VRML and UNV
-formats); new 2D mesh algorithm; lots of small improvements all over
-the place.
+formats); new 2D mesh algorithm; option changes in the interface are
+now applied instantenously; lots of improvements all over the place.
 
 1.66: added support for offscreen rendering using OSMesa; added
 support for SVG output;

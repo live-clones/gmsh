@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.305 2006-08-26 13:34:44 geuzaine Exp $
+// $Id: Options.cpp,v 1.306 2006-08-26 17:00:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2803,8 +2803,10 @@ double opt_general_fast_redraw(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.fast_redraw = (int)val;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
+  if(WID && (action & GMSH_GUI)){
     WID->gen_butt[2]->value(CTX.fast_redraw);
+    activate_cb(NULL, (void*)"fast_redraw");
+  }
 #endif
   return CTX.fast_redraw;
 }

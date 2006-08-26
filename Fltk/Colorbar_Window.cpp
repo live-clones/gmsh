@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.50 2006-01-06 00:34:22 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.51 2006-08-26 17:00:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -544,8 +544,9 @@ int Colorbar_Window::handle(int event)
       ColorTable_Recompute(ct);
       draw();
       *viewchanged = 1;
-      set_changed();
     }
+
+    if(*viewchanged) do_callback();
     return 1;
 
   case FL_PUSH:
@@ -613,12 +614,7 @@ int Colorbar_Window::handle(int event)
     else {
       // changing color graph
       int a, b, value;
-
-      *viewchanged = 1;
-      set_changed();
-
       value = y_to_intensity(ypos);
-
       if(pentry <= entry) {
         a = pentry;
         b = entry;
@@ -627,64 +623,43 @@ int Colorbar_Window::handle(int event)
         a = entry;
         b = pentry;
       }
-
       // update entries from 'pentry' to 'entry'
       for(i = a; i <= b; i++) {
         int red, green, blue, alpha;
         double R, G, B, H, S, V;
-
         red = CTX.UNPACK_RED(ct->table[i]);
         green = CTX.UNPACK_GREEN(ct->table[i]);
         blue = CTX.UNPACK_BLUE(ct->table[i]);
         alpha = CTX.UNPACK_ALPHA(ct->table[i]);
-
         if(ct->ipar[COLORTABLE_MODE] == COLORTABLE_RGB) {
-          if(p1) {
-            red = value;
-          }
-          if(p2) {
-            green = value;
-          }
-          if(p3) {
-            blue = value;
-          }
-          if(p4) {
-            alpha = value;
-          }
+          if(p1) red = value;
+          if(p2) green = value;
+          if(p3) blue = value;
+          if(p4) alpha = value;
         }
         else if(ct->ipar[COLORTABLE_MODE] == COLORTABLE_HSV) {
           RGB_to_HSV((double)red / 255., (double)green / 255.,
                      (double)blue / 255., &H, &S, &V);
-          if(p1) {
-            H = 6. * (double)value / 255. + EPS;
-          }
-          if(p2) {
-            S = (double)value / 255.;
-          }
-          if(p3) {
-            V = (double)value / 255.;
-          }
-          if(p4) {
-            alpha = value;
-          }
+          if(p1) H = 6. * (double)value / 255. + EPS;
+          if(p2) S = (double)value / 255.;
+          if(p3) V = (double)value / 255.;
+          if(p4) alpha = value;
           HSV_to_RGB(H, S, V, &R, &G, &B);
           red = (int)(255 * R);
           green = (int)(255 * G);
           blue = (int)(255 * B);
         }
-
         ct->table[i] = CTX.PACK_COLOR(red, green, blue, alpha);
       }
-
       // redraw the color curves
       if(pentry < entry)
         redraw_range(pentry - 1, entry + 1);
       else
         redraw_range(entry - 1, pentry + 1);
-
       pentry = entry;
-
+      *viewchanged = 1;
     }
+    if(*viewchanged) do_callback();
     return 1;
   }
 

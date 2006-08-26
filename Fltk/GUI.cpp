@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.537 2006-08-26 13:34:44 geuzaine Exp $
+// $Id: GUI.cpp,v 1.538 2006-08-26 17:00:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -382,23 +382,9 @@ static Fl_Menu_Item menu_point_display[] = {
   {0}
 };
 
-static Fl_Menu_Item menu_point_display_with_plugin[] = {
-  {"Color dot",   0, 0, 0},
-  {"3D sphere",   0, 0, 0},
-  {"Use solver plugin",   0, 0, 0},
-  {0}
-};
-
 static Fl_Menu_Item menu_line_display[] = {
   {"Color segment", 0, 0, 0},
   {"3D cylinder",   0, 0, 0},
-  {0}
-};
-
-static Fl_Menu_Item menu_line_display_with_plugin[] = {
-  {"Color segment", 0, 0, 0},
-  {"3D cylinder",   0, 0, 0},
-  {"Use solver plugin",   0, 0, 0},
   {0}
 };
 
@@ -1686,8 +1672,8 @@ void GUI::create_option_window()
   // Buttons
 
   {
-    Fl_Return_Button *o = new Fl_Return_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Apply");
-    o->callback(options_ok_cb);
+    opt_redraw = new Fl_Return_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Redraw");
+    opt_redraw->callback(redraw_cb);
   }
   {
     Fl_Button *o = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Save");
@@ -1727,47 +1713,56 @@ void GUI::create_option_window()
       gen_butt[10]->type(FL_TOGGLE_BUTTON);
       gen_butt[10]->down_box(GMSH_TOGGLE_BOX);
       gen_butt[10]->selection_color(GMSH_TOGGLE_COLOR);
+      gen_butt[10]->callback(general_options_ok_cb);
 
       gen_butt[13] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Show tooltips");
       gen_butt[13]->type(FL_TOGGLE_BUTTON);
       gen_butt[13]->down_box(GMSH_TOGGLE_BOX);
       gen_butt[13]->selection_color(GMSH_TOGGLE_COLOR);
+      gen_butt[13]->callback(general_options_ok_cb);
 
       gen_butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Show bounding boxes");
       gen_butt[6]->tooltip("(Alt+b)");
       gen_butt[6]->type(FL_TOGGLE_BUTTON);
       gen_butt[6]->down_box(GMSH_TOGGLE_BOX);
       gen_butt[6]->selection_color(GMSH_TOGGLE_COLOR);
+      gen_butt[6]->callback(general_options_ok_cb);
 
       gen_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Draw simplified model during user interaction");
       gen_butt[2]->tooltip("(Alt+f)");
       gen_butt[2]->type(FL_TOGGLE_BUTTON);
       gen_butt[2]->down_box(GMSH_TOGGLE_BOX);
       gen_butt[2]->selection_color(GMSH_TOGGLE_COLOR);
+      gen_butt[2]->callback(general_options_ok_cb, (void*)"fast_redraw");
 
       gen_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Enable double buffering");
       gen_butt[3]->type(FL_TOGGLE_BUTTON);
       gen_butt[3]->down_box(GMSH_TOGGLE_BOX);
       gen_butt[3]->selection_color(GMSH_TOGGLE_COLOR);
+      gen_butt[3]->callback(general_options_ok_cb);
 
       gen_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Use trackball rotation mode instead of Euler angles");
       gen_butt[5]->type(FL_TOGGLE_BUTTON);
       gen_butt[5]->down_box(GMSH_TOGGLE_BOX);
       gen_butt[5]->selection_color(GMSH_TOGGLE_COLOR);
+      gen_butt[5]->callback(general_options_ok_cb);
 
       gen_butt[15] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Rotate around pseudo center of mass");
       gen_butt[15]->type(FL_TOGGLE_BUTTON);
       gen_butt[15]->down_box(GMSH_TOGGLE_BOX);
       gen_butt[15]->selection_color(GMSH_TOGGLE_COLOR);
-      gen_butt[15]->callback(activate_cb, (void*)"rotation_center");
+      gen_butt[15]->callback(general_options_ok_cb, (void*)"rotation_center");
 
       gen_push_butt[0] = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 8 * BH, BB, BH, "Select");
       gen_push_butt[0]->callback(general_options_rotation_center_select_cb);
 
       gen_value[8] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW / 3, BH);
+      gen_value[8]->callback(general_options_ok_cb);
       gen_value[9] = new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 8 * BH, IW / 3, BH);
+      gen_value[9]->callback(general_options_ok_cb);
       gen_value[10] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 8 * BH, IW / 3, BH, "Rotation center");
       gen_value[10]->align(FL_ALIGN_RIGHT);
+      gen_value[10]->callback(general_options_ok_cb);
 
       o->end();
     }
@@ -1777,65 +1772,82 @@ void GUI::create_option_window()
       gen_choice[4] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Axes mode");
       gen_choice[4]->menu(menu_axes_mode);
       gen_choice[4]->align(FL_ALIGN_RIGHT);
-      gen_choice[4]->callback(activate_cb, (void*)"general_axes");
       gen_choice[4]->tooltip("(Alt+a)");
+      gen_choice[4]->callback(general_options_ok_cb, (void*)"general_axes");
 
       gen_value[17] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW/3, BH);
       gen_value[17]->minimum(0.);
       gen_value[17]->step(1);
       gen_value[17]->maximum(100);
+      gen_value[17]->callback(general_options_ok_cb);
       gen_value[18] = new Fl_Value_Input(L + 2 * WB + 1*IW/3, 2 * WB + 2 * BH, IW/3, BH);
       gen_value[18]->minimum(0.);
       gen_value[18]->step(1);
       gen_value[18]->maximum(100);
+      gen_value[18]->callback(general_options_ok_cb);
       gen_value[19] = new Fl_Value_Input(L + 2 * WB + 2*IW/3, 2 * WB + 2 * BH, IW/3, BH, "Axes tics");
       gen_value[19]->minimum(0.);
       gen_value[19]->step(1);
       gen_value[19]->maximum(100);
       gen_value[19]->align(FL_ALIGN_RIGHT);
+      gen_value[19]->callback(general_options_ok_cb);
 
       gen_input[3] = new Fl_Input(L + 2 * WB, 2 * WB + 3 * BH, IW/3, BH);
+      gen_input[3]->callback(general_options_ok_cb);
       gen_input[4] = new Fl_Input(L + 2 * WB + 1*IW/3, 2 * WB + 3 * BH, IW/3, BH);
+      gen_input[4]->callback(general_options_ok_cb);
       gen_input[5] = new Fl_Input(L + 2 * WB + 2*IW/3, 2 * WB + 3 * BH, IW/3, BH, "Axes format");
       gen_input[5]->align(FL_ALIGN_RIGHT);
+      gen_input[5]->callback(general_options_ok_cb);
       
       gen_input[6] = new Fl_Input(L + 2 * WB, 2 * WB + 4 * BH, IW/3, BH);
+      gen_input[6]->callback(general_options_ok_cb);
       gen_input[7] = new Fl_Input(L + 2 * WB + 1*IW/3, 2 * WB + 4 * BH, IW/3, BH);
+      gen_input[7]->callback(general_options_ok_cb);
       gen_input[8] = new Fl_Input(L + 2 * WB + 2*IW/3, 2 * WB + 4 * BH, IW/3, BH, "Axes labels");
       gen_input[8]->align(FL_ALIGN_RIGHT);
+      gen_input[8]->callback(general_options_ok_cb);
 
       gen_butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Set position and size of axes automatically");
       gen_butt[0]->type(FL_TOGGLE_BUTTON);
       gen_butt[0]->down_box(GMSH_TOGGLE_BOX);
       gen_butt[0]->selection_color(GMSH_TOGGLE_COLOR);
-      gen_butt[0]->callback(activate_cb, (void*)"general_axes_auto");
+      gen_butt[0]->callback(general_options_ok_cb, (void*)"general_axes_auto");
       
       gen_value[20] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW / 3, BH);
+      gen_value[20]->callback(general_options_ok_cb);
       gen_value[21] = new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 6 * BH, IW / 3, BH);
+      gen_value[21]->callback(general_options_ok_cb);
       gen_value[22] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 6 * BH, IW / 3, BH, "Axes minimum");
       gen_value[22]->align(FL_ALIGN_RIGHT);
+      gen_value[22]->callback(general_options_ok_cb);
 
       gen_value[23] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW / 3, BH);
+      gen_value[23]->callback(general_options_ok_cb);
       gen_value[24] = new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 7 * BH, IW / 3, BH);
+      gen_value[24]->callback(general_options_ok_cb);
       gen_value[25] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 7 * BH, IW / 3, BH, "Axes maximum");
       gen_value[25]->align(FL_ALIGN_RIGHT);
+      gen_value[25]->callback(general_options_ok_cb);
 
       gen_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Show small axes");
       gen_butt[1]->tooltip("(Alt+Shift+a)");
       gen_butt[1]->type(FL_TOGGLE_BUTTON);
       gen_butt[1]->down_box(GMSH_TOGGLE_BOX);
       gen_butt[1]->selection_color(GMSH_TOGGLE_COLOR);
-      gen_butt[1]->callback(activate_cb, (void*)"general_small_axes");
+      gen_butt[1]->callback(general_options_ok_cb, (void*)"general_small_axes");
 
       gen_value[26] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
       gen_value[26]->minimum(-1024);
       gen_value[26]->maximum(1024);
       gen_value[26]->step(1);
+      gen_value[26]->callback(general_options_ok_cb);
       gen_value[27] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "Small axes position");
       gen_value[27]->align(FL_ALIGN_RIGHT);
       gen_value[27]->minimum(-1024);
       gen_value[27]->maximum(1024);
       gen_value[27]->step(1);
+      gen_value[27]->callback(general_options_ok_cb);
 
       o->end();
     }
@@ -1845,16 +1857,19 @@ void GUI::create_option_window()
       gen_butt[7]->type(FL_TOGGLE_BUTTON);
       gen_butt[7]->down_box(GMSH_TOGGLE_BOX);
       gen_butt[7]->selection_color(GMSH_TOGGLE_COLOR);
+      gen_butt[7]->callback(general_options_ok_cb);
 
       gen_butt[8] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Save session information on exit");
       gen_butt[8]->type(FL_TOGGLE_BUTTON);
       gen_butt[8]->down_box(GMSH_TOGGLE_BOX);
       gen_butt[8]->selection_color(GMSH_TOGGLE_COLOR);
+      gen_butt[8]->callback(general_options_ok_cb);
 
       gen_butt[9] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW/2-WB, BH, "Save options on exit");
       gen_butt[9]->type(FL_TOGGLE_BUTTON);
       gen_butt[9]->down_box(GMSH_TOGGLE_BOX);
       gen_butt[9]->selection_color(GMSH_TOGGLE_COLOR);
+      gen_butt[9]->callback(general_options_ok_cb);
 
       Fl_Button *b0 = new Fl_Button(L + width / 2, 2 * WB + 3 * BH, 2 * BB, BH, "Restore default options");
       b0->callback(options_restore_defaults_cb);
@@ -1863,15 +1878,18 @@ void GUI::create_option_window()
       gen_butt[14]->type(FL_TOGGLE_BUTTON);
       gen_butt[14]->down_box(GMSH_TOGGLE_BOX);
       gen_butt[14]->selection_color(GMSH_TOGGLE_COLOR);
+      gen_butt[14]->callback(general_options_ok_cb);
 
       gen_value[5] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Message verbosity");
       gen_value[5]->minimum(0);
       gen_value[5]->maximum(10);
       gen_value[5]->step(1);
       gen_value[5]->align(FL_ALIGN_RIGHT);
+      gen_value[5]->callback(general_options_ok_cb);
 
       gen_input[0] = new Fl_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Default file name");
       gen_input[0]->align(FL_ALIGN_RIGHT);
+      gen_input[0]->callback(general_options_ok_cb);
 
       o->end();
     }
@@ -1880,9 +1898,11 @@ void GUI::create_option_window()
 
       gen_input[1] = new Fl_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Text editor command");
       gen_input[1]->align(FL_ALIGN_RIGHT);
+      gen_input[1]->callback(general_options_ok_cb);
 
       gen_input[2] = new Fl_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Web browser command");
       gen_input[2]->align(FL_ALIGN_RIGHT);
+      gen_input[2]->callback(general_options_ok_cb);
 
       o->end();
     }
@@ -1899,48 +1919,56 @@ void GUI::create_option_window()
       gen_choice[2]->menu(menu_projection);
       gen_choice[2]->align(FL_ALIGN_RIGHT);
       gen_choice[2]->tooltip("(Alt+o)");
+      gen_choice[2]->callback(general_options_ok_cb);
 
       gen_value[14] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Z-clipping planes distance factor");
       gen_value[14]->minimum(0.1);
       gen_value[14]->maximum(10.);
       gen_value[14]->step(0.1);
       gen_value[14]->align(FL_ALIGN_RIGHT);
+      gen_value[14]->callback(general_options_ok_cb);
 
       gen_value[15] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW/2, BH);
       gen_value[15]->minimum(0.);
       gen_value[15]->maximum(10.);
       gen_value[15]->step(0.01);
       gen_value[15]->align(FL_ALIGN_RIGHT);
+      gen_value[15]->callback(general_options_ok_cb);
 
       gen_value[16] = new Fl_Value_Input(L + 2 * WB + IW/2, 2 * WB + 3 * BH, IW/2, BH, "Polygon offset factor and units");
       gen_value[16]->minimum(0.);
       gen_value[16]->maximum(10.);
       gen_value[16]->step(0.01);
       gen_value[16]->align(FL_ALIGN_RIGHT);
+      gen_value[16]->callback(general_options_ok_cb);
 
       gen_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Always apply polygon offset");
       gen_butt[4]->type(FL_TOGGLE_BUTTON);
       gen_butt[4]->down_box(GMSH_TOGGLE_BOX);
       gen_butt[4]->selection_color(GMSH_TOGGLE_COLOR);
+      gen_butt[4]->callback(general_options_ok_cb);
 
       gen_value[11] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Number of quadric subdivisions");
       gen_value[11]->minimum(3);
       gen_value[11]->maximum(30);
       gen_value[11]->step(1);
       gen_value[11]->align(FL_ALIGN_RIGHT);
+      gen_value[11]->callback(general_options_ok_cb);
 
       gen_value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Point size");
       gen_value[6]->minimum(0.1);
       gen_value[6]->maximum(50);
       gen_value[6]->step(0.1);
       gen_value[6]->align(FL_ALIGN_RIGHT);
+      gen_value[6]->callback(general_options_ok_cb);
 
       gen_value[7] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Line width");
       gen_value[7]->minimum(0.1);
       gen_value[7]->maximum(50);
       gen_value[7]->step(0.1);
       gen_value[7]->align(FL_ALIGN_RIGHT);
-
+      gen_value[7]->callback(general_options_ok_cb);
+      
       static Fl_Menu_Item menu_genvectype[] = {
 	{"Line", 0, 0, 0},
 	{"Arrow", 0, 0, 0},
@@ -1951,6 +1979,7 @@ void GUI::create_option_window()
       gen_choice[0] = new Fl_Choice(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Vector display");
       gen_choice[0]->menu(menu_genvectype);
       gen_choice[0]->align(FL_ALIGN_RIGHT);
+      gen_choice[0]->callback(general_options_ok_cb);
 
       Fl_Button *b = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 8 * BH, (int)(1.5*BB), BH, "Edit arrow shape");
       b->callback(general_arrow_param_cb);
@@ -1958,12 +1987,14 @@ void GUI::create_option_window()
       gen_choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Font");
       gen_choice[1]->menu(menu_font_names);
       gen_choice[1]->align(FL_ALIGN_RIGHT);
+      gen_choice[1]->callback(general_options_ok_cb);
 
       gen_value[12] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Font size");
       gen_value[12]->minimum(5);
       gen_value[12]->maximum(40);
       gen_value[12]->step(1);
       gen_value[12]->align(FL_ALIGN_RIGHT);
+      gen_value[12]->callback(general_options_ok_cb);
 
       o->end();
     }
@@ -1975,44 +2006,44 @@ void GUI::create_option_window()
       gen_value[2]->minimum(-1.);
       gen_value[2]->maximum(1.);
       gen_value[2]->step(0.01);
-      gen_value[2]->callback(general_options_light_cb, (void*)"x");
+      gen_value[2]->callback(general_options_ok_cb, (void*)"light_value");
 
       gen_value[3] = new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 1 * BH, IW/3, BH);
       gen_value[3]->minimum(-1.);
       gen_value[3]->maximum(1.);
       gen_value[3]->step(0.01);
-      gen_value[3]->callback(general_options_light_cb, (void*)"y");
+      gen_value[3]->callback(general_options_ok_cb, (void*)"light_value");
 
       gen_value[4] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 1 * BH, IW/3, BH, "Light position");
       gen_value[4]->minimum(-1.);
       gen_value[4]->maximum(1.);
       gen_value[4]->step(0.01);
       gen_value[4]->align(FL_ALIGN_RIGHT);
-      gen_value[4]->callback(general_options_light_cb, (void*)"z");
+      gen_value[4]->callback(general_options_ok_cb, (void*)"light_value");
 
       gen_value[13] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Light position divisor");
       gen_value[13]->minimum(0.);
       gen_value[13]->maximum(1.);
       gen_value[13]->step(0.01);
       gen_value[13]->align(FL_ALIGN_RIGHT);
-      gen_value[13]->callback(general_options_light_cb, (void*)"w");
+      gen_value[13]->callback(general_options_ok_cb);
 
       gen_sphere = new SpherePosition_Widget(L + 2 * WB + 2 * IW, 2 * WB + 1 * BH, 2 * BH);
-      gen_sphere->callback(general_options_light_cb, (void*)"xyz");
+      gen_sphere->callback(general_options_ok_cb, (void*)"light_sphere");
 
       gen_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Material shininess");
       gen_value[1]->minimum(0);
       gen_value[1]->maximum(10);
       gen_value[1]->step(0.1);
       gen_value[1]->align(FL_ALIGN_RIGHT);
-      gen_value[1]->callback(general_options_light_cb, (void*)"shine");
+      gen_value[1]->callback(general_options_ok_cb);
 
       gen_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Material shininess exponent");
       gen_value[0]->minimum(0);
       gen_value[0]->maximum(128);
       gen_value[0]->step(1);
       gen_value[0]->align(FL_ALIGN_RIGHT);
-      gen_value[0]->callback(general_options_light_cb, (void*)"shine_exponent");
+      gen_value[0]->callback(general_options_ok_cb);
 
       o->end();
     }
@@ -2029,9 +2060,9 @@ void GUI::create_option_window()
 
       gen_choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Predefined color scheme");
       gen_choice[3]->menu(menu_color_scheme);
-      gen_choice[3]->callback(general_options_color_scheme_cb);
       gen_choice[3]->align(FL_ALIGN_RIGHT);
       gen_choice[3]->tooltip("(Alt+c)");
+      gen_choice[3]->callback(general_options_color_scheme_cb);
 
       static Fl_Menu_Item menu_bg_grad[] = {
 	{"None", 0, 0, 0},
@@ -2044,6 +2075,7 @@ void GUI::create_option_window()
       gen_choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Background gradient");
       gen_choice[5]->menu(menu_bg_grad);
       gen_choice[5]->align(FL_ALIGN_RIGHT);
+      gen_choice[5]->callback(general_options_ok_cb);
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 3 * BH, IW + 20, height - 5 * WB - 3 * BH);
       int i = 0;
@@ -2073,6 +2105,7 @@ void GUI::create_option_window()
       geo_butt[8]->type(FL_TOGGLE_BUTTON);
       geo_butt[8]->down_box(GMSH_TOGGLE_BOX);
       geo_butt[8]->selection_color(GMSH_TOGGLE_COLOR);
+      geo_butt[8]->callback(geometry_options_ok_cb);
 
       o->end();
     }
@@ -2084,56 +2117,66 @@ void GUI::create_option_window()
       geo_butt[0]->type(FL_TOGGLE_BUTTON);
       geo_butt[0]->down_box(GMSH_TOGGLE_BOX);
       geo_butt[0]->selection_color(GMSH_TOGGLE_COLOR);
-
+      geo_butt[0]->callback(geometry_options_ok_cb);
+      
       geo_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Lines");
       geo_butt[1]->tooltip("(Alt+l)");
       geo_butt[1]->type(FL_TOGGLE_BUTTON);
       geo_butt[1]->down_box(GMSH_TOGGLE_BOX);
       geo_butt[1]->selection_color(GMSH_TOGGLE_COLOR);
+      geo_butt[1]->callback(geometry_options_ok_cb);
 
       geo_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surfaces");
       geo_butt[2]->tooltip("(Alt+s)");
       geo_butt[2]->type(FL_TOGGLE_BUTTON);
       geo_butt[2]->down_box(GMSH_TOGGLE_BOX);
       geo_butt[2]->selection_color(GMSH_TOGGLE_COLOR);
+      geo_butt[2]->callback(geometry_options_ok_cb);
 
       geo_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volumes");
       geo_butt[3]->tooltip("(Alt+v)");
       geo_butt[3]->type(FL_TOGGLE_BUTTON);
       geo_butt[3]->down_box(GMSH_TOGGLE_BOX);
       geo_butt[3]->selection_color(GMSH_TOGGLE_COLOR);
+      geo_butt[3]->callback(geometry_options_ok_cb);
 
       geo_butt[4] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Point numbers");
       geo_butt[4]->type(FL_TOGGLE_BUTTON);
       geo_butt[4]->down_box(GMSH_TOGGLE_BOX);
       geo_butt[4]->selection_color(GMSH_TOGGLE_COLOR);
+      geo_butt[4]->callback(geometry_options_ok_cb);
 
       geo_butt[5] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Line numbers");
       geo_butt[5]->type(FL_TOGGLE_BUTTON);
       geo_butt[5]->down_box(GMSH_TOGGLE_BOX);
       geo_butt[5]->selection_color(GMSH_TOGGLE_COLOR);
+      geo_butt[5]->callback(geometry_options_ok_cb);
 
       geo_butt[6] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface numbers");
       geo_butt[6]->type(FL_TOGGLE_BUTTON);
       geo_butt[6]->down_box(GMSH_TOGGLE_BOX);
       geo_butt[6]->selection_color(GMSH_TOGGLE_COLOR);
+      geo_butt[6]->callback(geometry_options_ok_cb);
 
       geo_butt[7] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volume numbers");
       geo_butt[7]->type(FL_TOGGLE_BUTTON);
       geo_butt[7]->down_box(GMSH_TOGGLE_BOX);
       geo_butt[7]->selection_color(GMSH_TOGGLE_COLOR);
+      geo_butt[7]->callback(geometry_options_ok_cb);
 
       geo_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Normals");
       geo_value[0]->minimum(0);
       geo_value[0]->maximum(500);
       geo_value[0]->step(1);
       geo_value[0]->align(FL_ALIGN_RIGHT);
+      geo_value[0]->callback(geometry_options_ok_cb);
 
       geo_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Tangents");
       geo_value[1]->minimum(0);
       geo_value[1]->maximum(500);
       geo_value[1]->step(1);
       geo_value[1]->align(FL_ALIGN_RIGHT);
+      geo_value[1]->callback(geometry_options_ok_cb);
 
       o->end();
     }
@@ -2142,43 +2185,42 @@ void GUI::create_option_window()
       o->hide();
 
       geo_choice[0] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Point display");
-      GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();   
-      if(sp)
-	geo_choice[0]->menu(menu_point_display_with_plugin);
-      else
-	geo_choice[0]->menu(menu_point_display);
+      geo_choice[0]->menu(menu_point_display);
       geo_choice[0]->align(FL_ALIGN_RIGHT);
+      geo_choice[0]->callback(geometry_options_ok_cb);
 
       geo_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Point size");
       geo_value[3]->minimum(0.1);
       geo_value[3]->maximum(50);
       geo_value[3]->step(0.1);
       geo_value[3]->align(FL_ALIGN_RIGHT);
+      geo_value[3]->callback(geometry_options_ok_cb);
 
       geo_value[5] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Selected point size");
       geo_value[5]->minimum(0.1);
       geo_value[5]->maximum(50);
       geo_value[5]->step(0.1);
       geo_value[5]->align(FL_ALIGN_RIGHT);
+      geo_value[5]->callback(geometry_options_ok_cb);
 
       geo_choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display");
-      if(sp)
-	geo_choice[1]->menu(menu_line_display_with_plugin);
-      else
-	geo_choice[1]->menu(menu_line_display);
+      geo_choice[1]->menu(menu_line_display);
       geo_choice[1]->align(FL_ALIGN_RIGHT);	
+      geo_choice[1]->callback(geometry_options_ok_cb);
 
       geo_value[4] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width");
       geo_value[4]->minimum(0.1);
       geo_value[4]->maximum(50);
       geo_value[4]->step(0.1);
       geo_value[4]->align(FL_ALIGN_RIGHT);
+      geo_value[4]->callback(geometry_options_ok_cb);
 
       geo_value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Selected line width");
       geo_value[6]->minimum(0.1);
       geo_value[6]->maximum(50);
       geo_value[6]->step(0.1);
       geo_value[6]->align(FL_ALIGN_RIGHT);
+      geo_value[6]->callback(geometry_options_ok_cb);
 
       o->end();
     }
@@ -2191,6 +2233,7 @@ void GUI::create_option_window()
       geo_butt[9]->down_box(GMSH_TOGGLE_BOX);
       geo_butt[9]->selection_color(GMSH_TOGGLE_COLOR);
       geo_butt[9]->tooltip("(Alt+w)");
+      geo_butt[9]->callback(geometry_options_ok_cb);
 
       o->end();
     }
@@ -2244,38 +2287,45 @@ void GUI::create_option_window()
       mesh_choice[2] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "2D algorithm");
       mesh_choice[2]->menu(menu_2d_algo);
       mesh_choice[2]->align(FL_ALIGN_RIGHT);
+      mesh_choice[2]->callback(mesh_options_ok_cb);
 
       mesh_choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "3D algorithm");
       mesh_choice[3]->menu(menu_3d_algo);
       mesh_choice[3]->align(FL_ALIGN_RIGHT);
+      mesh_choice[3]->callback(mesh_options_ok_cb);
 
       mesh_choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Recombine algorithm");
       mesh_choice[5]->menu(menu_recombine_algo);
       mesh_choice[5]->align(FL_ALIGN_RIGHT);
+      mesh_choice[5]->callback(mesh_options_ok_cb);
 
       mesh_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Number of smoothing steps");
       mesh_value[0]->minimum(0);
       mesh_value[0]->maximum(100);
       mesh_value[0]->step(1);
       mesh_value[0]->align(FL_ALIGN_RIGHT);
+      mesh_value[0]->callback(mesh_options_ok_cb);
 
       mesh_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Mesh scaling factor");
       mesh_value[1]->minimum(0.001);
       mesh_value[1]->maximum(1000);
       mesh_value[1]->step(0.001);
       mesh_value[1]->align(FL_ALIGN_RIGHT);
+      mesh_value[1]->callback(mesh_options_ok_cb);
 
       mesh_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Characteristic length factor");
       mesh_value[2]->minimum(0.001);
       mesh_value[2]->maximum(1000);
       mesh_value[2]->step(0.001);
       mesh_value[2]->align(FL_ALIGN_RIGHT);
+      mesh_value[2]->callback(mesh_options_ok_cb);
 
       mesh_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Random perturbation factor");
       mesh_value[3]->minimum(1.e-6);
       mesh_value[3]->maximum(1.e-1);
       mesh_value[3]->step(1.e-6);
       mesh_value[3]->align(FL_ALIGN_RIGHT);
+      mesh_value[3]->callback(mesh_options_ok_cb);
 
       mesh_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Optimize quality of tetrahedral elements");
       mesh_butt[2]->type(FL_TOGGLE_BUTTON);
@@ -2284,16 +2334,19 @@ void GUI::create_option_window()
 #if !defined(HAVE_NETGEN)
       mesh_butt[2]->deactivate();
 #endif
+      mesh_butt[2]->callback(mesh_options_ok_cb);
 
       mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Generate second order elements");
       mesh_butt[3]->type(FL_TOGGLE_BUTTON);
       mesh_butt[3]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[3]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[3]->callback(mesh_options_ok_cb);
 
       mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW, BH, "Constrain background mesh with characteristic length field");
       mesh_butt[5]->type(FL_TOGGLE_BUTTON);
       mesh_butt[5]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[5]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[5]->callback(mesh_options_ok_cb);
 
       o->end();
     }
@@ -2307,47 +2360,49 @@ void GUI::create_option_window()
       mesh_value[19]->maximum(1.e-3);
       mesh_value[19]->step(1.e-7);
       mesh_value[19]->align(FL_ALIGN_RIGHT);
+      mesh_value[19]->callback(mesh_options_ok_cb);
 
       mesh_value[20] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Dihedral angle threshold");
       mesh_value[20]->minimum(0);
       mesh_value[20]->maximum(90);
       mesh_value[20]->step(1);
       mesh_value[20]->align(FL_ALIGN_RIGHT);
+      mesh_value[20]->callback(mesh_options_ok_cb);
 
       mesh_value[21] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Edge prolongation threshold");
       mesh_value[21]->minimum(0);
       mesh_value[21]->maximum(100);
       mesh_value[21]->step(1);
       mesh_value[21]->align(FL_ALIGN_RIGHT); 
+      mesh_value[21]->callback(mesh_options_ok_cb);
 
       mesh_value[22] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Elements per radius of curvature");
       mesh_value[22]->minimum(1);
       mesh_value[22]->maximum(10);
       mesh_value[22]->step(.1);
       mesh_value[22]->align(FL_ALIGN_RIGHT); 
+      mesh_value[22]->callback(mesh_options_ok_cb);
 
       mesh_value[23] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "LC / minimum element size");
       mesh_value[23]->minimum(10);
       mesh_value[23]->maximum(10000);
       mesh_value[23]->step(10);
       mesh_value[23]->align(FL_ALIGN_RIGHT); 
+      mesh_value[23]->callback(mesh_options_ok_cb);
 
       mesh_value[24] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "LC / target element size");
       mesh_value[24]->minimum(1);
       mesh_value[24]->maximum(1000);
       mesh_value[24]->step(1);
       mesh_value[24]->align(FL_ALIGN_RIGHT); 
+      mesh_value[24]->callback(mesh_options_ok_cb);
 
       mesh_value[25] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Beta smoothing factor");
       mesh_value[25]->minimum(0);
       mesh_value[25]->maximum(1);
       mesh_value[25]->step(.01);
       mesh_value[25]->align(FL_ALIGN_RIGHT); 
-
-      //mesh_butt[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Allow coarsening of the initial mesh");
-      //mesh_butt[1]->type(FL_TOGGLE_BUTTON);
-      //mesh_butt[1]->down_box(GMSH_TOGGLE_BOX);
-      //mesh_butt[1]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_value[25]->callback(mesh_options_ok_cb);
 
       o->end();
     }
@@ -2360,55 +2415,65 @@ void GUI::create_option_window()
       mesh_butt[6]->type(FL_TOGGLE_BUTTON);
       mesh_butt[6]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[6]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[6]->callback(mesh_options_ok_cb);
 
       mesh_butt[7] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Lines");
       mesh_butt[7]->tooltip("(Alt+Shift+l)");
       mesh_butt[7]->type(FL_TOGGLE_BUTTON);
       mesh_butt[7]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[7]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[7]->callback(mesh_options_ok_cb);
 
       mesh_butt[8] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface edges");
       mesh_butt[8]->tooltip("(Alt+Shift+s)");
       mesh_butt[8]->type(FL_TOGGLE_BUTTON);
       mesh_butt[8]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[8]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[8]->callback(mesh_options_ok_cb);
 
       mesh_butt[9] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Surface faces");
       mesh_butt[9]->tooltip("(Alt+Shift+d)");
       mesh_butt[9]->type(FL_TOGGLE_BUTTON);
       mesh_butt[9]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[9]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[9]->callback(mesh_options_ok_cb);
 
       mesh_butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW / 2 - WB, BH, "Volume edges");
       mesh_butt[10]->tooltip("(Alt+Shift+v)");
       mesh_butt[10]->type(FL_TOGGLE_BUTTON);
       mesh_butt[10]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[10]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[10]->callback(mesh_options_ok_cb);
 
       mesh_butt[11] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW / 2 - WB, BH, "Volume faces");
       mesh_butt[11]->type(FL_TOGGLE_BUTTON);
       mesh_butt[11]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[11]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[11]->callback(mesh_options_ok_cb);
 
       mesh_butt[12] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Node labels");
       mesh_butt[12]->type(FL_TOGGLE_BUTTON);
       mesh_butt[12]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[12]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[12]->callback(mesh_options_ok_cb);
 
       mesh_butt[13] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Line labels");
       mesh_butt[13]->type(FL_TOGGLE_BUTTON);
       mesh_butt[13]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[13]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[13]->callback(mesh_options_ok_cb);
 
       mesh_butt[14] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface labels");
       mesh_butt[14]->type(FL_TOGGLE_BUTTON);
       mesh_butt[14]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[14]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[14]->callback(mesh_options_ok_cb);
 
       mesh_butt[15] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volume labels");
       mesh_butt[15]->type(FL_TOGGLE_BUTTON);
       mesh_butt[15]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[15]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[15]->callback(mesh_options_ok_cb);
 
       static Fl_Menu_Item menu_label_type[] = {
         {"Number", 0, 0, 0},
@@ -2421,12 +2486,14 @@ void GUI::create_option_window()
       mesh_choice[7] = new Fl_Choice(L + width / 2, 2 * WB + 5 * BH, width/4 - 2*WB, BH, "Label type");
       mesh_choice[7]->menu(menu_label_type);
       mesh_choice[7]->align(FL_ALIGN_RIGHT);
+      mesh_choice[7]->callback(mesh_options_ok_cb);
 
       mesh_value[12] = new Fl_Value_Input(L + width / 2, 2 * WB + 6 * BH, width/4 - 2*WB, BH, "Label frequency");
-      mesh_value[12]->minimum(0.0);
-      mesh_value[12]->maximum(100.0);
-      mesh_value[12]->step(0.1);
+      mesh_value[12]->minimum(0);
+      mesh_value[12]->maximum(100);
+      mesh_value[12]->step(1);
       mesh_value[12]->align(FL_ALIGN_RIGHT);
+      mesh_value[12]->callback(mesh_options_ok_cb);
 
       static Fl_Menu_Item menu_mesh_element_types[] = {
 	{"Triangles",   0, 0, 0, FL_MENU_TOGGLE},
@@ -2440,18 +2507,21 @@ void GUI::create_option_window()
 
       mesh_menu_butt = new Fl_Menu_Button(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Elements");
       mesh_menu_butt->menu(menu_mesh_element_types);
+      mesh_menu_butt->callback(mesh_options_ok_cb);
 
       mesh_value[4] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW / 4, BH);
       mesh_value[4]->minimum(0);
       mesh_value[4]->maximum(1);
       mesh_value[4]->step(0.01);
       mesh_value[4]->align(FL_ALIGN_RIGHT);
+      mesh_value[4]->callback(mesh_options_ok_cb);
 
       mesh_value[5] = new Fl_Value_Input(L + 2 * WB + IW / 4, 2 * WB + 8 * BH, IW / 2 - IW / 4, BH);
       mesh_value[5]->minimum(0);
       mesh_value[5]->maximum(1);
       mesh_value[5]->step(0.01);
       mesh_value[5]->align(FL_ALIGN_RIGHT);
+      mesh_value[5]->callback(mesh_options_ok_cb);
 
       static Fl_Menu_Item menu_quality_type[] = {
         {"Gamma", 0, 0, 0},
@@ -2462,24 +2532,29 @@ void GUI::create_option_window()
       mesh_choice[6] = new Fl_Choice(L + 2 * WB + IW / 2, 2 * WB + 8 * BH, IW/2, BH, "Quality range");
       mesh_choice[6]->menu(menu_quality_type);
       mesh_choice[6]->align(FL_ALIGN_RIGHT);
+      mesh_choice[6]->callback(mesh_options_ok_cb);
 
       mesh_value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
       mesh_value[6]->align(FL_ALIGN_RIGHT);
+      mesh_value[6]->callback(mesh_options_ok_cb);
 
       mesh_value[7] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "Size range");
       mesh_value[7]->align(FL_ALIGN_RIGHT);
+      mesh_value[7]->callback(mesh_options_ok_cb);
 
       mesh_value[8] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Normals");
       mesh_value[8]->minimum(0);
       mesh_value[8]->maximum(500);
       mesh_value[8]->step(1);
       mesh_value[8]->align(FL_ALIGN_RIGHT);
+      mesh_value[8]->callback(mesh_options_ok_cb);
 
       mesh_value[13] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tangents");
       mesh_value[13]->minimum(0);
       mesh_value[13]->maximum(200);
       mesh_value[13]->step(1.0);
       mesh_value[13]->align(FL_ALIGN_RIGHT);
+      mesh_value[13]->callback(mesh_options_ok_cb);
 
       o->end();
     }
@@ -2491,52 +2566,54 @@ void GUI::create_option_window()
       mesh_butt[16]->type(FL_TOGGLE_BUTTON);
       mesh_butt[16]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[16]->selection_color(GMSH_TOGGLE_COLOR);
-      mesh_butt[16]->callback(activate_cb, (void*)"mesh_cut_plane");
+      mesh_butt[16]->callback(mesh_options_ok_cb, (void*)"mesh_cut_plane");
 
       mesh_cut_plane = new Fl_Group(L + 2 * WB, 2 * WB + 2 * BH, width - 2 * WB, 6 * BH, 0);
 
       int ii = fontsize;
       Fl_Button *invert = new Fl_Button(L + 2 * WB, 2 * WB + 2 * BH, ii, 4*BH, "-");
-      invert->callback(mesh_cut_plane_invert_cb);
       invert->tooltip("Invert orientation");
+      invert->callback(mesh_options_ok_cb, (void*)"cut_plane_invert");
 
       mesh_value[14] = new Fl_Value_Input(L + 2 * WB + ii, 2 * WB + 2 * BH, IW - ii, BH, "A");
       mesh_value[14]->align(FL_ALIGN_RIGHT);
-      mesh_value[14]->callback(mesh_cut_plane_cb);
       mesh_value[14]->step(0.01);
       mesh_value[14]->minimum(-1.0);
       mesh_value[14]->maximum(1.0);
+      mesh_value[14]->callback(mesh_options_ok_cb);
 
       mesh_value[15] = new Fl_Value_Input(L + 2 * WB + ii, 2 * WB + 3 * BH, IW - ii, BH, "B");
       mesh_value[15]->align(FL_ALIGN_RIGHT);
-      mesh_value[15]->callback(mesh_cut_plane_cb);
       mesh_value[15]->step(0.01);
       mesh_value[15]->minimum(-1.0);
       mesh_value[15]->maximum(1.0);
+      mesh_value[15]->callback(mesh_options_ok_cb);
 
       mesh_value[16] = new Fl_Value_Input(L + 2 * WB + ii, 2 * WB + 4 * BH, IW - ii, BH, "C");
       mesh_value[16]->align(FL_ALIGN_RIGHT);
-      mesh_value[16]->callback(mesh_cut_plane_cb);
       mesh_value[16]->step(0.01);
       mesh_value[16]->minimum(-1.0);
       mesh_value[16]->maximum(1.0);
+      mesh_value[16]->callback(mesh_options_ok_cb);
 
       mesh_value[17] = new Fl_Value_Input(L + 2 * WB + ii, 2 * WB + 5 * BH, IW - ii, BH, "D");
       mesh_value[17]->align(FL_ALIGN_RIGHT);
-      mesh_value[17]->callback(mesh_cut_plane_cb);
       mesh_value[17]->step(0.01);
       mesh_value[17]->minimum(-1.0);
       mesh_value[17]->maximum(1.0);
+      mesh_value[17]->callback(mesh_options_ok_cb);
 
       mesh_butt[22] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Draw only intersecting volume layer");
       mesh_butt[22]->type(FL_TOGGLE_BUTTON);
       mesh_butt[22]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[22]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[22]->callback(mesh_options_ok_cb);
 
       mesh_butt[23] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Cut only volume elements");
       mesh_butt[23]->type(FL_TOGGLE_BUTTON);
       mesh_butt[23]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[23]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[23]->callback(mesh_options_ok_cb);
 
       mesh_cut_plane->end();
 
@@ -2551,27 +2628,32 @@ void GUI::create_option_window()
       mesh_value[9]->maximum(1);
       mesh_value[9]->step(0.01);
       mesh_value[9]->align(FL_ALIGN_RIGHT);
+      mesh_value[9]->callback(mesh_options_ok_cb);
 
       mesh_choice[0] = new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Point display");
       mesh_choice[0]->menu(menu_point_display);
       mesh_choice[0]->align(FL_ALIGN_RIGHT);
+      mesh_choice[0]->callback(mesh_options_ok_cb);
 
       mesh_value[10] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Point size");
       mesh_value[10]->minimum(0.1);
       mesh_value[10]->maximum(50);
       mesh_value[10]->step(0.1);
       mesh_value[10]->align(FL_ALIGN_RIGHT);
+      mesh_value[10]->callback(mesh_options_ok_cb);
 
       mesh_choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display");
       mesh_choice[1]->menu(menu_line_display);
       mesh_choice[1]->align(FL_ALIGN_RIGHT);
       mesh_choice[1]->deactivate(); // don't give false hopes, as it's not used anywhere right now
+      mesh_choice[1]->callback(mesh_options_ok_cb);
 
       mesh_value[11] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width");
       mesh_value[11]->minimum(0.1);
       mesh_value[11]->maximum(50);
       mesh_value[11]->step(0.1);
       mesh_value[11]->align(FL_ALIGN_RIGHT);
+      mesh_value[11]->callback(mesh_options_ok_cb);
 
       o->end();
     }
@@ -2584,34 +2666,39 @@ void GUI::create_option_window()
       mesh_butt[17]->type(FL_TOGGLE_BUTTON);
       mesh_butt[17]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[17]->selection_color(GMSH_TOGGLE_COLOR);
-      mesh_butt[17]->callback(activate_cb, (void*)"mesh_light");
+      mesh_butt[17]->callback(mesh_options_ok_cb, (void*)"mesh_light");
 
       mesh_butt[20] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Enable lighting of lines");
       mesh_butt[20]->type(FL_TOGGLE_BUTTON);
       mesh_butt[20]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[20]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[20]->callback(mesh_options_ok_cb);
 
       mesh_butt[18] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Use two-side lighting");
       mesh_butt[18]->type(FL_TOGGLE_BUTTON);
       mesh_butt[18]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[18]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[18]->callback(mesh_options_ok_cb);
 
       mesh_butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Reverse all normals");
       mesh_butt[0]->tooltip("(Alt+Shift+w)");
       mesh_butt[0]->type(FL_TOGGLE_BUTTON);
       mesh_butt[0]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[0]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[0]->callback(mesh_options_ok_cb);
 
       mesh_butt[19] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Smooth normals");
       mesh_butt[19]->type(FL_TOGGLE_BUTTON);
       mesh_butt[19]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[19]->selection_color(GMSH_TOGGLE_COLOR);
+      mesh_butt[19]->callback(mesh_options_ok_cb);
 
       mesh_value[18] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Smoothing threshold angle");
       mesh_value[18]->minimum(0.);
       mesh_value[18]->maximum(180.);
       mesh_value[18]->step(1.);
       mesh_value[18]->align(FL_ALIGN_RIGHT);
+      mesh_value[18]->callback(mesh_options_ok_cb);
 
       o->end();
     }
@@ -2629,6 +2716,7 @@ void GUI::create_option_window()
       mesh_choice[4] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Coloring mode");
       mesh_choice[4]->menu(menu_mesh_color);
       mesh_choice[4]->align(FL_ALIGN_RIGHT);
+      mesh_choice[4]->callback(mesh_options_ok_cb);
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 2 * BH, IW + 20, height - 5 * WB - 2 * BH);
       int i = 0;
@@ -2660,14 +2748,17 @@ void GUI::create_option_window()
 	solver_value[0]->maximum(10);
 	solver_value[0]->step(1);
 	solver_value[0]->align(FL_ALIGN_RIGHT);
+	solver_value[0]->callback(solver_options_ok_cb);
 
 	solver_input[0] = new Fl_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Socket name");
 	solver_input[0]->align(FL_ALIGN_RIGHT);
+	solver_input[0]->callback(solver_options_ok_cb);
 
 	solver_butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Always listen to incoming connection requests");
 	solver_butt[0]->type(FL_TOGGLE_BUTTON);
 	solver_butt[0]->down_box(GMSH_TOGGLE_BOX);
 	solver_butt[0]->selection_color(GMSH_TOGGLE_COLOR);
+	solver_butt[0]->callback(solver_options_ok_cb);
 	
 	o->end();
       }
@@ -2697,27 +2788,32 @@ void GUI::create_option_window()
       post_choice[0] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "View links");
       post_choice[0]->menu(menu_links);
       post_choice[0]->align(FL_ALIGN_RIGHT);
+      post_choice[0]->callback(post_options_ok_cb);
 
       post_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Animation delay");
       post_value[0]->minimum(0);
       post_value[0]->maximum(10);
       post_value[0]->step(0.01);
       post_value[0]->align(FL_ALIGN_RIGHT);
+      post_value[0]->callback(post_options_ok_cb);
 
       post_butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Cycle through views instead of time steps");
       post_butt[0]->type(FL_TOGGLE_BUTTON);
       post_butt[0]->down_box(GMSH_TOGGLE_BOX);
       post_butt[0]->selection_color(GMSH_TOGGLE_COLOR);
+      post_butt[0]->callback(post_options_ok_cb);
 
       post_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Remove original views after combination");
       post_butt[1]->type(FL_TOGGLE_BUTTON);
       post_butt[1]->down_box(GMSH_TOGGLE_BOX);
       post_butt[1]->selection_color(GMSH_TOGGLE_COLOR);
+      post_butt[1]->callback(post_options_ok_cb);
 
       post_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Draw value scales horizontally");
       post_butt[2]->type(FL_TOGGLE_BUTTON);
       post_butt[2]->down_box(GMSH_TOGGLE_BOX);
       post_butt[2]->selection_color(GMSH_TOGGLE_COLOR);
+      post_butt[2]->callback(post_options_ok_cb);
 
       o->end();
     }
@@ -2744,9 +2840,11 @@ void GUI::create_option_window()
       view_choice[13] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Plot type");
       view_choice[13]->menu(menu_plot_type);
       view_choice[13]->align(FL_ALIGN_RIGHT);
+      view_choice[13]->callback(view_options_ok_cb);
 
       view_input[0] = new Fl_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "View name");
       view_input[0]->align(FL_ALIGN_RIGHT);
+      view_input[0]->callback(view_options_ok_cb);
 
       int sw = (int)(1.5 * fontsize);
       view_butt_rep[0] = new Fl_Repeat_Button(L + 2 * WB, 2 * WB + 3 * BH, sw, BH, "-");
@@ -2770,6 +2868,7 @@ void GUI::create_option_window()
       view_value[30]->minimum(1);
       view_value[30]->maximum(256);
       view_value[30]->step(1);
+      view_value[30]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_iso[] = {
         {"Iso-values", 0, 0, 0},
@@ -2782,6 +2881,7 @@ void GUI::create_option_window()
       view_choice[0]->menu(menu_iso);
       view_choice[0]->align(FL_ALIGN_RIGHT);
       view_choice[0]->tooltip("(Alt+t)");
+      view_choice[0]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_range[] = {
         {"Default", 0, 0, 0},
@@ -2792,23 +2892,26 @@ void GUI::create_option_window()
       view_choice[7] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Range mode");
       view_choice[7]->menu(menu_range);
       view_choice[7]->align(FL_ALIGN_RIGHT);
-      view_choice[7]->callback(activate_cb, (void*)"custom_range");
+      view_choice[7]->callback(view_options_ok_cb, (void*)"custom_range");
 
       int sw2 = (int)(2.5 * fontsize);
       view_push_butt[1] = new Fl_Button(L + 2 * WB, 2 * WB + 7 * BH, sw2, BH, "Min");
-      view_push_butt[1]->callback(view_options_custom_set_cb, (void*)"Min");
+      view_push_butt[1]->callback(view_options_ok_cb, (void*)"range_min");
       view_value[31] = new Fl_Value_Input(L + 2 * WB + sw2, 2 * WB + 7 * BH, IW - sw2, BH, "Custom minimum");
       view_value[31]->align(FL_ALIGN_RIGHT);
+      view_value[31]->callback(view_options_ok_cb);
 
       view_push_butt[2] = new Fl_Button(L + 2 * WB, 2 * WB + 8 * BH, sw2, BH, "Max");
-      view_push_butt[2]->callback(view_options_custom_set_cb, (void*)"Max");
+      view_push_butt[2]->callback(view_options_ok_cb, (void*)"range_max");
       view_value[32] = new Fl_Value_Input(L + 2 * WB + sw2, 2 * WB + 8 * BH, IW - sw2, BH, "Custom maximum");
       view_value[32]->align(FL_ALIGN_RIGHT);
+      view_value[32]->callback(view_options_ok_cb);
 
       view_butt[38] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Saturate out-of-range values");
       view_butt[38]->type(FL_TOGGLE_BUTTON);
       view_butt[38]->down_box(GMSH_TOGGLE_BOX);
       view_butt[38]->selection_color(GMSH_TOGGLE_COLOR);
+      view_butt[38]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_scale[] = {
         {"Linear", 0, 0, 0},
@@ -2819,9 +2922,11 @@ void GUI::create_option_window()
       view_choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Value scale mode");
       view_choice[1]->menu(menu_scale);
       view_choice[1]->align(FL_ALIGN_RIGHT);
+      view_choice[1]->callback(view_options_ok_cb);
 
       view_input[1] = new Fl_Input(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Number display format");
       view_input[1]->align(FL_ALIGN_RIGHT);
+      view_input[1]->callback(view_options_ok_cb);
 
       view_range->end();
 
@@ -2834,74 +2939,93 @@ void GUI::create_option_window()
       view_choice[8] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Axes mode");
       view_choice[8]->menu(menu_axes_mode);
       view_choice[8]->align(FL_ALIGN_RIGHT);
-      view_choice[8]->callback(activate_cb, (void*)"view_axes");
       view_choice[8]->tooltip("(Alt+g)");
+      view_choice[8]->callback(view_options_ok_cb, (void*)"view_axes");
 
       view_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW/3, BH);
       view_value[3]->minimum(0.);
       view_value[3]->step(1);
       view_value[3]->maximum(100);
+      view_value[3]->callback(view_options_ok_cb);
       view_value[4] = new Fl_Value_Input(L + 2 * WB + 1*IW/3, 2 * WB + 2 * BH, IW/3, BH);
       view_value[4]->minimum(0.);
       view_value[4]->step(1);
       view_value[4]->maximum(100);
+      view_value[4]->callback(view_options_ok_cb);
       view_value[5] = new Fl_Value_Input(L + 2 * WB + 2*IW/3, 2 * WB + 2 * BH, IW/3, BH, "Axes tics");
       view_value[5]->minimum(0.);
       view_value[5]->step(1);
       view_value[5]->maximum(100);
       view_value[5]->align(FL_ALIGN_RIGHT);
+      view_value[5]->callback(view_options_ok_cb);
 
       view_input[7] = new Fl_Input(L + 2 * WB, 2 * WB + 3 * BH, IW/3, BH);
+      view_input[7]->callback(view_options_ok_cb);
       view_input[8] = new Fl_Input(L + 2 * WB + 1*IW/3, 2 * WB + 3 * BH, IW/3, BH);
+      view_input[8]->callback(view_options_ok_cb);
       view_input[9] = new Fl_Input(L + 2 * WB + 2*IW/3, 2 * WB + 3 * BH, IW/3, BH, "Axes format");
       view_input[9]->align(FL_ALIGN_RIGHT);
+      view_input[9]->callback(view_options_ok_cb);
       
       view_input[10] = new Fl_Input(L + 2 * WB, 2 * WB + 4 * BH, IW/3, BH);
+      view_input[10]->callback(view_options_ok_cb);
       view_input[11] = new Fl_Input(L + 2 * WB + 1*IW/3, 2 * WB + 4 * BH, IW/3, BH);
+      view_input[11]->callback(view_options_ok_cb);
       view_input[12] = new Fl_Input(L + 2 * WB + 2*IW/3, 2 * WB + 4 * BH, IW/3, BH, "Axes labels");
       view_input[12]->align(FL_ALIGN_RIGHT);
+      view_input[12]->callback(view_options_ok_cb);
       
-      view_butt[25] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW / 2 - WB, BH, "Set position and size of 3D axes automatically");
+      view_butt[25] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Set position and size of 3D axes automatically");
       view_butt[25]->type(FL_TOGGLE_BUTTON);
       view_butt[25]->down_box(GMSH_TOGGLE_BOX);
       view_butt[25]->selection_color(GMSH_TOGGLE_COLOR);
-      view_butt[25]->callback(activate_cb, (void*)"view_axes_auto_3d");
+      view_butt[25]->callback(view_options_ok_cb, (void*)"view_axes_auto_3d");
       
       view_value[13] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW / 3, BH);
+      view_value[13]->callback(view_options_ok_cb);
       view_value[14] = new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 6 * BH, IW / 3, BH);
+      view_value[14]->callback(view_options_ok_cb);
       view_value[15] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 6 * BH, IW / 3, BH, "3D Axes minimum");
       view_value[15]->align(FL_ALIGN_RIGHT);
+      view_value[15]->callback(view_options_ok_cb);
 
       view_value[16] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW / 3, BH);
+      view_value[16]->callback(view_options_ok_cb);
       view_value[17] = new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 7 * BH, IW / 3, BH);
+      view_value[17]->callback(view_options_ok_cb);
       view_value[18] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 7 * BH, IW / 3, BH, "3D Axes maximum");
       view_value[18]->align(FL_ALIGN_RIGHT);
+      view_value[18]->callback(view_options_ok_cb);
 
-      view_butt[7] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW / 2 - WB, BH, "Set position and size of 2D axes automatically");
+      view_butt[7] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Set position and size of 2D axes automatically");
       view_butt[7]->type(FL_TOGGLE_BUTTON);
       view_butt[7]->down_box(GMSH_TOGGLE_BOX);
       view_butt[7]->selection_color(GMSH_TOGGLE_COLOR);
-      view_butt[7]->callback(activate_cb, (void*)"view_axes_auto_2d");
+      view_butt[7]->callback(view_options_ok_cb, (void*)"view_axes_auto_2d");
       
       view_value[20] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
       view_value[20]->minimum(-1024);
       view_value[20]->maximum(1024);
       view_value[20]->step(1);
+      view_value[20]->callback(view_options_ok_cb);
       view_value[21] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "2D axes position");
       view_value[21]->align(FL_ALIGN_RIGHT);
       view_value[21]->minimum(-1024);
       view_value[21]->maximum(1024);
       view_value[21]->step(1);
+      view_value[21]->callback(view_options_ok_cb);
 
       view_value[22] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH);
       view_value[22]->minimum(0);
       view_value[22]->maximum(1024);
       view_value[22]->step(1);
+      view_value[22]->callback(view_options_ok_cb);
       view_value[23] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH, "2D axes size");
       view_value[23]->align(FL_ALIGN_RIGHT);
       view_value[23]->minimum(0);
       view_value[23]->maximum(1024);
       view_value[23]->step(1);
+      view_value[23]->callback(view_options_ok_cb);
 
       o->end();
     }
@@ -2909,11 +3033,12 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Visibility");
       o->hide();
 
-      view_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Show value scale");
+      view_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Show value scale");
       view_butt[4]->tooltip("(Alt+i)");
       view_butt[4]->type(FL_TOGGLE_BUTTON);
       view_butt[4]->down_box(GMSH_TOGGLE_BOX);
       view_butt[4]->selection_color(GMSH_TOGGLE_COLOR);
+      view_butt[4]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item time_display[] = {
 	{"None", 0, 0, 0},
@@ -2926,17 +3051,20 @@ void GUI::create_option_window()
       view_choice[12] = new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Time display mode");
       view_choice[12]->menu(time_display);
       view_choice[12]->align(FL_ALIGN_RIGHT);
+      view_choice[12]->callback(view_options_ok_cb);
 
-      view_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Show annotations");
+      view_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Show annotations");
       view_butt[5]->tooltip("(Alt+n)");
       view_butt[5]->type(FL_TOGGLE_BUTTON);
       view_butt[5]->down_box(GMSH_TOGGLE_BOX);
       view_butt[5]->selection_color(GMSH_TOGGLE_COLOR);
+      view_butt[5]->callback(view_options_ok_cb);
 
-      view_butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Draw element outlines");
+      view_butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Draw element outlines");
       view_butt[10]->type(FL_TOGGLE_BUTTON);
       view_butt[10]->down_box(GMSH_TOGGLE_BOX);
       view_butt[10]->selection_color(GMSH_TOGGLE_COLOR);
+      view_butt[10]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_view_element_types[] = {
 	{"Points",      0, 0, 0, FL_MENU_TOGGLE},
@@ -2952,6 +3080,7 @@ void GUI::create_option_window()
 
       view_menu_butt[1] = new Fl_Menu_Button(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Elements");
       view_menu_butt[1]->menu(menu_view_element_types);
+      view_menu_butt[1]->callback(view_options_ok_cb);
       
       static Fl_Menu_Item menu_boundary[] = {
 	{"None", 0, 0, 0},
@@ -2963,18 +3092,21 @@ void GUI::create_option_window()
       view_choice[9] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Element boundary mode");
       view_choice[9]->menu(menu_boundary);
       view_choice[9]->align(FL_ALIGN_RIGHT);
+      view_choice[9]->callback(view_options_ok_cb);
 
       view_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Normals");
       view_value[0]->minimum(0);
       view_value[0]->maximum(500);
       view_value[0]->step(1);
       view_value[0]->align(FL_ALIGN_RIGHT);
+      view_value[0]->callback(view_options_ok_cb);
 
       view_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Tangents");
       view_value[1]->minimum(0);
       view_value[1]->maximum(500);
       view_value[1]->step(1);
       view_value[1]->align(FL_ALIGN_RIGHT);
+      view_value[1]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_view_field_types[] = {
 	{"Scalar", 0, 0, 0, FL_MENU_TOGGLE},
@@ -2985,6 +3117,7 @@ void GUI::create_option_window()
 
       view_menu_butt[0] = new Fl_Menu_Button(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Fields");
       view_menu_butt[0]->menu(menu_view_field_types);
+      view_menu_butt[0]->callback(view_options_ok_cb);
 
       view_value[33] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Maximum recursion level");
       view_value[33]->align(FL_ALIGN_RIGHT);
@@ -2992,12 +3125,14 @@ void GUI::create_option_window()
       view_value[33]->maximum(MAX_LEVEL_OF_ZOOM);
       view_value[33]->step(1);
       view_value[33]->value(0);
+      view_value[33]->callback(view_options_ok_cb);
 
       view_value[34] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Target error");
       view_value[34]->align(FL_ALIGN_RIGHT);
       view_value[34]->minimum(0);
       view_value[34]->maximum(1);
       view_value[34]->value(1.e-2);
+      view_value[34]->callback(view_options_ok_cb);
 
       o->end();
     }
@@ -3011,22 +3146,34 @@ void GUI::create_option_window()
       int ss = 2*IW/3/3+4;
 
       view_value[51] = new Fl_Value_Input(L + 2 * WB       , 2 * WB + 2 * BH, ss, BH);
+      view_value[51]->callback(view_options_ok_cb);
       view_value[52] = new Fl_Value_Input(L + 2 * WB + ss  , 2 * WB + 2 * BH, ss, BH);
+      view_value[52]->callback(view_options_ok_cb);
       view_value[53] = new Fl_Value_Input(L + 2 * WB + 2*ss, 2 * WB + 2 * BH, ss, BH, " X");
+      view_value[53]->callback(view_options_ok_cb);
       view_value[40] = new Fl_Value_Input(L + 2 * WB + IW  , 2 * WB + 2 * BH, 7*IW/10, BH);
       view_value[40]->align(FL_ALIGN_RIGHT);
+      view_value[40]->callback(view_options_ok_cb);
 
       view_value[54] = new Fl_Value_Input(L + 2 * WB       , 2 * WB + 3 * BH, ss, BH);
+      view_value[54]->callback(view_options_ok_cb);
       view_value[55] = new Fl_Value_Input(L + 2 * WB + ss  , 2 * WB + 3 * BH, ss, BH);
+      view_value[55]->callback(view_options_ok_cb);
       view_value[56] = new Fl_Value_Input(L + 2 * WB + 2*ss, 2 * WB + 3 * BH, ss, BH, " Y +");
+      view_value[56]->callback(view_options_ok_cb);
       view_value[41] = new Fl_Value_Input(L + 2 * WB + IW  , 2 * WB + 3 * BH, 7*IW/10, BH);
       view_value[41]->align(FL_ALIGN_RIGHT);
+      view_value[41]->callback(view_options_ok_cb);
 
       view_value[57] = new Fl_Value_Input(L + 2 * WB       , 2 * WB + 4 * BH, ss, BH);
+      view_value[57]->callback(view_options_ok_cb);
       view_value[58] = new Fl_Value_Input(L + 2 * WB + ss  , 2 * WB + 4 * BH, ss, BH);
+      view_value[58]->callback(view_options_ok_cb);
       view_value[59] = new Fl_Value_Input(L + 2 * WB + 2*ss, 2 * WB + 4 * BH, ss, BH, " Z");
+      view_value[59]->callback(view_options_ok_cb);
       view_value[42] = new Fl_Value_Input(L + 2 * WB + IW  , 2 * WB + 4 * BH, 7*IW/10, BH);
       view_value[42]->align(FL_ALIGN_RIGHT);
+      view_value[59]->callback(view_options_ok_cb);
       for(int i = 51; i <= 59; i++){
 	view_value[i]->minimum(-1.);
 	view_value[i]->maximum(1.);
@@ -3039,34 +3186,43 @@ void GUI::create_option_window()
 
       view_value[43] = new Fl_Value_Input(L + 2 * WB + 2 * IW-WB, 2 * WB + 2 * BH, 7*IW/10, BH, "X");
       view_value[43]->align(FL_ALIGN_RIGHT);
+      view_value[43]->callback(view_options_ok_cb);
 
       view_value[44] = new Fl_Value_Input(L + 2 * WB + 2 * IW-WB, 2 * WB + 3 * BH, 7*IW/10, BH, "Y");
       view_value[44]->align(FL_ALIGN_RIGHT);
+      view_value[44]->callback(view_options_ok_cb);
 
       view_value[45] = new Fl_Value_Input(L + 2 * WB + 2 * IW-WB, 2 * WB + 4 * BH, 7*IW/10, BH, "Z");
       view_value[45]->align(FL_ALIGN_RIGHT);
+      view_value[45]->callback(view_options_ok_cb);
 
       view_butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Use general transformation expressions");
       view_butt[6]->type(FL_TOGGLE_BUTTON);
       view_butt[6]->down_box(GMSH_TOGGLE_BOX);
       view_butt[6]->selection_color(GMSH_TOGGLE_COLOR);
       view_butt[6]->callback(activate_cb, (void*)"general_transform");
+      view_butt[6]->callback(view_options_ok_cb);
 
       view_choice[11] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Data source");
       view_choice[11]->align(FL_ALIGN_RIGHT);
       view_choice[11]->add("Self");
+      view_choice[11]->callback(view_options_ok_cb);
 
       view_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Factor");
       view_value[2]->align(FL_ALIGN_RIGHT);
+      view_value[2]->callback(view_options_ok_cb);
 
       view_input[4] = new Fl_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "X expression");
       view_input[4]->align(FL_ALIGN_RIGHT);
+      view_input[4]->callback(view_options_ok_cb);
 
       view_input[5] = new Fl_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Y expression");
       view_input[5]->align(FL_ALIGN_RIGHT);
+      view_input[5]->callback(view_options_ok_cb);
 
       view_input[6] = new Fl_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Z expression");
       view_input[6]->align(FL_ALIGN_RIGHT);
+      view_input[6]->callback(view_options_ok_cb);
 
       o->end();
     }
@@ -3079,26 +3235,31 @@ void GUI::create_option_window()
       view_value[12]->step(0.01);
       view_value[12]->maximum(1.);
       view_value[12]->align(FL_ALIGN_RIGHT);
+      view_value[12]->callback(view_options_ok_cb);
 
       view_choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Point display");
       view_choice[5]->menu(menu_point_display);
       view_choice[5]->align(FL_ALIGN_RIGHT);
+      view_choice[5]->callback(view_options_ok_cb);
 
       view_value[61] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Point size");
       view_value[61]->minimum(0.1);
       view_value[61]->maximum(50);
       view_value[61]->step(0.1);
       view_value[61]->align(FL_ALIGN_RIGHT);
+      view_value[61]->callback(view_options_ok_cb);
 
       view_choice[6] = new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display");
       view_choice[6]->menu(menu_line_display);
       view_choice[6]->align(FL_ALIGN_RIGHT);
+      view_choice[6]->callback(view_options_ok_cb);
 
       view_value[62] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width");
       view_value[62]->minimum(0.1);
       view_value[62]->maximum(50);
       view_value[62]->step(0.1);
       view_value[62]->align(FL_ALIGN_RIGHT);
+      view_value[62]->callback(view_options_ok_cb);
 
       {
         view_vector = new Fl_Group(L + 2 * WB, 2 * WB + 6 * BH, width - 2 * WB, 4 * BH, 0);
@@ -3114,6 +3275,7 @@ void GUI::create_option_window()
         view_choice[2] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Vector display");
         view_choice[2]->menu(menu_vectype);
         view_choice[2]->align(FL_ALIGN_RIGHT);
+	view_choice[2]->callback(view_options_ok_cb);
 
 	view_push_butt[0] = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 6 * BH, (int)(1.5*BB), BH, "Edit arrow shape");
         view_push_butt[0]->callback(view_arrow_param_cb);
@@ -3123,54 +3285,57 @@ void GUI::create_option_window()
         view_value[60]->maximum(500);
         view_value[60]->step(1);
         view_value[60]->align(FL_ALIGN_RIGHT);
+	view_value[60]->callback(view_options_ok_cb);
 
 	view_butt[0] = new Fl_Check_Button(L + 2 * IW - 2 * WB, 2 * WB + 7 * BH, (int)(1.5*BB), BH, "Proportional");
 	view_butt[0]->type(FL_TOGGLE_BUTTON);
 	view_butt[0]->down_box(GMSH_TOGGLE_BOX);
 	view_butt[0]->selection_color(GMSH_TOGGLE_COLOR);
+	view_butt[0]->callback(view_options_ok_cb);
 
         view_value[63] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Displacement factor");
         view_value[63]->minimum(0.);
         view_value[63]->maximum(1.);
         view_value[63]->step(0.01);
         view_value[63]->align(FL_ALIGN_RIGHT);
+	view_value[63]->callback(view_options_ok_cb);
 
         view_choice[10] = new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Data source");
         view_choice[10]->align(FL_ALIGN_RIGHT);
 	view_choice[10]->add("Self");
-
-        
+	view_choice[10]->callback(view_options_ok_cb);
 
         view_vector->end();
-
-        static Fl_Menu_Item menu_vecloc[] = {
-          {"Barycenter", 0, 0, 0},
-          {"Vertex", 0, 0, 0},
-          {0}
-        };
-        view_choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Glyph location");
-        view_choice[3]->menu(menu_vecloc);
-        view_choice[3]->align(FL_ALIGN_RIGHT);
-
-	static Fl_Menu_Item menu_tensor[] = {
-	  {"Von-Mises", 0, 0, 0},
-          {"LMGC90", 0, 0, 0}, 
-          {"LMGC90 Type", 0, 0, 0}, 
-          {"LMGC90 Coordinance", 0, 0, 0}, 
-          {"LMGC90 Pression", 0, 0, 0}, 
-          {"LMGC90 Normal stress", 0, 0, 0}, 
-          {"LMGC90 X displacement", 0, 0, 0}, 
-          {"LMGC90 Y displacement", 0, 0, 0}, 
-          {"LMGC90 Z displacement", 0, 0, 0}, 
-          {"LMGC90 Average displacement", 0, 0, 0}, 
-          {"LMGC90 Norm of displacement", 0, 0, 0}, 
-          {0}
-        };
-        view_choice[4] = new Fl_Choice(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tensor display");
-        view_choice[4]->menu(menu_tensor);
-        view_choice[4]->align(FL_ALIGN_RIGHT);
-
       }
+
+      static Fl_Menu_Item menu_vecloc[] = {
+	{"Barycenter", 0, 0, 0},
+	{"Vertex", 0, 0, 0},
+	{0}
+      };
+      view_choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Glyph location");
+      view_choice[3]->menu(menu_vecloc);
+      view_choice[3]->align(FL_ALIGN_RIGHT);
+      view_choice[3]->callback(view_options_ok_cb);
+      
+      static Fl_Menu_Item menu_tensor[] = {
+	{"Von-Mises", 0, 0, 0},
+	{"LMGC90", 0, 0, 0}, 
+	{"LMGC90 Type", 0, 0, 0}, 
+	{"LMGC90 Coordinance", 0, 0, 0}, 
+	{"LMGC90 Pression", 0, 0, 0}, 
+	{"LMGC90 Normal stress", 0, 0, 0}, 
+	{"LMGC90 X displacement", 0, 0, 0}, 
+	{"LMGC90 Y displacement", 0, 0, 0}, 
+	{"LMGC90 Z displacement", 0, 0, 0}, 
+	{"LMGC90 Average displacement", 0, 0, 0}, 
+	{"LMGC90 Norm of displacement", 0, 0, 0}, 
+	{0}
+      };
+      view_choice[4] = new Fl_Choice(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tensor display");
+      view_choice[4]->menu(menu_tensor);
+      view_choice[4]->align(FL_ALIGN_RIGHT);
+      view_choice[4]->callback(view_options_ok_cb);
 
       o->end();
     }
@@ -3183,28 +3348,32 @@ void GUI::create_option_window()
       view_butt[11]->type(FL_TOGGLE_BUTTON);
       view_butt[11]->down_box(GMSH_TOGGLE_BOX);
       view_butt[11]->selection_color(GMSH_TOGGLE_COLOR);
-      view_butt[11]->callback(activate_cb, (void*)"view_light");
+      view_butt[11]->callback(view_options_ok_cb, (void*)"view_light");
 
       view_butt[8] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Enable lighting of lines");
       view_butt[8]->type(FL_TOGGLE_BUTTON);
       view_butt[8]->down_box(GMSH_TOGGLE_BOX);
       view_butt[8]->selection_color(GMSH_TOGGLE_COLOR);
+      view_butt[8]->callback(view_options_ok_cb);
 
       view_butt[9] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Use two-side lighting");
       view_butt[9]->type(FL_TOGGLE_BUTTON);
       view_butt[9]->down_box(GMSH_TOGGLE_BOX);
       view_butt[9]->selection_color(GMSH_TOGGLE_COLOR);
+      view_butt[9]->callback(view_options_ok_cb);
 
       view_butt[12] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Smooth normals");
       view_butt[12]->type(FL_TOGGLE_BUTTON);
       view_butt[12]->down_box(GMSH_TOGGLE_BOX);
       view_butt[12]->selection_color(GMSH_TOGGLE_COLOR);
+      view_butt[12]->callback(view_options_ok_cb);
 
       view_value[10] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Smoothing threshold angle");
       view_value[10]->minimum(0.);
       view_value[10]->step(1.);
       view_value[10]->maximum(180.);
       view_value[10]->align(FL_ALIGN_RIGHT);
+      view_value[10]->callback(view_options_ok_cb);
       
       o->end();
     }
@@ -3216,11 +3385,13 @@ void GUI::create_option_window()
       view_butt[24]->type(FL_TOGGLE_BUTTON);
       view_butt[24]->down_box(GMSH_TOGGLE_BOX);
       view_butt[24]->selection_color(GMSH_TOGGLE_COLOR);
+      view_butt[24]->callback(view_options_ok_cb);
 
       view_butt[26] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Stipple curves in 2D plots");
       view_butt[26]->type(FL_TOGGLE_BUTTON);
       view_butt[26]->down_box(GMSH_TOGGLE_BOX);
       view_butt[26]->selection_color(GMSH_TOGGLE_COLOR);
+      view_butt[26]->callback(view_options_ok_cb);
       
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 3 * BH, IW + 20, height - 5 * WB - 3 * BH);
       int i = 0;
@@ -3239,6 +3410,7 @@ void GUI::create_option_window()
 
       view_colorbar_window = new Colorbar_Window(L + 2 * WB, 2 * WB + BH, width - 4 * WB, height - 4 * WB - BH);
       view_colorbar_window->end();
+      view_colorbar_window->callback(view_options_ok_cb);
 
       o->end();
     }
@@ -3424,7 +3596,7 @@ void GUI::update_view_window(int num)
 
   opt_view_external_view(num, GMSH_GUI, 0);
   opt_view_glyph_location(num, GMSH_GUI, 0);
-  //opt_view_tensor_type(num, GMSH_GUI, 0);
+  opt_view_tensor_type(num, GMSH_GUI, 0);
 
   opt_view_fake_transparency(num, GMSH_GUI, 0);
   opt_view_use_stipple(num, GMSH_GUI, 0);
@@ -4563,24 +4735,23 @@ void GUI::create_solver_window(int num)
 
       solver[num].input[2] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, LL, BH, "Executable");
       solver[num].input[2]->align(FL_ALIGN_RIGHT);
+      solver[num].input[2]->callback(solver_ok_cb);
+
       Fl_Button *b = new Fl_Button(2 * WB, 3 * WB + 2 * BH, BB, BH, "Choose");
       b->callback(solver_choose_executable_cb, (void *)num);
 
       solver[num].butt[2] = new Fl_Check_Button(2 * WB, 4 * WB + 3 * BH, LL, BH, "Enable client-server connection");
+      solver[num].butt[2]->callback(solver_ok_cb);
       solver[num].butt[0] = new Fl_Check_Button(2 * WB, 4 * WB + 4 * BH, LL, BH, "Display client messages");
+      solver[num].butt[0]->callback(solver_ok_cb);
       solver[num].butt[1] = new Fl_Check_Button(2 * WB, 4 * WB + 5 * BH, LL, BH, "Merge views automatically");
+      solver[num].butt[1]->callback(solver_ok_cb);
       for(i = 0; i < 3; i++) {
         solver[num].butt[i]->type(FL_TOGGLE_BUTTON);
         solver[num].butt[i]->down_box(GMSH_TOGGLE_BOX);
         solver[num].butt[i]->selection_color(GMSH_TOGGLE_COLOR);
       }
 
-      {
-        Fl_Return_Button *o = new Fl_Return_Button(width - 2 * BB - 3 * WB, 
-						   height - (3 + newrow) * WB - (2 + newrow) * BH, 
-						   BB, BH, "Apply");
-        o->callback(solver_ok_cb, (void *)num);
-      }
       {
         Fl_Button *o = new Fl_Button(width - BB - 2 * WB,
                                      height - (3 + newrow) * WB - (2 + newrow) * BH,
