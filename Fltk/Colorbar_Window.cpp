@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.52 2006-08-26 17:31:16 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.53 2006-08-26 17:39:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -545,7 +545,9 @@ int Colorbar_Window::handle(int event)
       draw();
       *viewchanged = 1;
     }
+    return 1;
 
+  case FL_KEYUP:
     if(*viewchanged) do_callback();
     return 1;
 
