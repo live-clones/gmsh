@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.54 2006-08-26 18:45:37 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.55 2006-08-26 18:52:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -314,16 +314,16 @@ void Colorbar_Window::redraw_marker()
 
 void Colorbar_Window::draw()
 {
-  if(ct) {
-    label_y = h() - 5;
-    marker_y = label_y - marker_height - font_height;
-    wedge_y = marker_y - wedge_height;
-    color_bg = fl_color_cube(CTX.UNPACK_RED(CTX.color.bg) * FL_NUM_RED / 256,
-                             CTX.UNPACK_GREEN(CTX.color.bg) * FL_NUM_GREEN / 256,
-                             CTX.UNPACK_BLUE(CTX.color.bg) * FL_NUM_BLUE / 256);
-    redraw_range(0, ct->size - 1);
-    redraw_marker();
-  }
+  if(!ct) return;
+
+  label_y = h() - 5;
+  marker_y = label_y - marker_height - font_height;
+  wedge_y = marker_y - wedge_height;
+  color_bg = fl_color_cube(CTX.UNPACK_RED(CTX.color.bg) * FL_NUM_RED / 256,
+			   CTX.UNPACK_GREEN(CTX.color.bg) * FL_NUM_GREEN / 256,
+			   CTX.UNPACK_BLUE(CTX.color.bg) * FL_NUM_BLUE / 256);
+  redraw_range(0, ct->size - 1);
+  redraw_marker();
 }
 
 // Update
@@ -343,6 +343,8 @@ void Colorbar_Window::update(char *name, double min, double max,
 
 int Colorbar_Window::handle(int event)
 {
+  if(!ct) return Fl_Window::handle(event);
+
   static int p1 = 0, p2 = 0, p3 = 0, p4 = 0;
   static int pentry, move_marker;
   int i, ibut, xpos, ypos, modify, entry, compute;
