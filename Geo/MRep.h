@@ -33,11 +33,40 @@
 #include "Message.h"
 #include "OS.h"
 
+// #define HAVE_HASH_MAP
+
+#if defined(HAVE_HASH_MAP)
+#include <ext/hash_map>
+#endif
+
+struct equalEdge {
+  bool operator()(const std::pair<MVertex*, MVertex*> &p1, 
+		  const std::pair<MVertex*, MVertex*> &p2) const
+  {
+    return (p1.first == p2.first && p1.second == p2.second);
+  }
+};
+
+struct hashEdge {
+  size_t operator() (const std::pair<MVertex*, MVertex*> &p) const 
+  { 
+    return p.first->getNum() + p.second->getNum();
+  }
+};
+
 // A mesh representation.
 class MRep {
  protected:
+
   // container for the edge representation
-  std::map<std::pair<MVertex*, MVertex*>, MElement*> edges;
+#if defined(HAVE_HASH_MAP)
+  typedef __gnu_cxx::hash_map<std::pair<MVertex*, MVertex*>, MElement*, 
+			      hashEdge, equalEdge> ermap;
+#else
+  typedef std::map<std::pair<MVertex*, MVertex*>, MElement*> ermap;
+#endif
+
+  ermap edges;
 
   // generates the edges from a bunch of elements
   template<class T>
@@ -84,7 +113,7 @@ class MRep {
   virtual void generateEdgeRep() = 0;
 
   // accesses the edge representation
-  typedef std::map<std::pair<MVertex*, MVertex*>, MElement*>::const_iterator eriter;
+  typedef ermap::const_iterator eriter;
   eriter firstEdgeRep() { return edges.begin(); }
   eriter lastEdgeRep() { return edges.end(); }
   int getNumEdgeRep() { return edges.size(); }

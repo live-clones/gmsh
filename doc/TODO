@@ -1,9 +1,4 @@
-$Id: TODO,v 1.16 2006-08-25 23:01:16 geuzaine Exp $
-
-********************************************************************
-
-add a "Box" tab to the clipping plane dialog to create a clip 
-box in one step (instead of defining 6 planes)
+$Id: TODO,v 1.17 2006-08-26 22:30:06 geuzaine Exp $
 
 ********************************************************************
 

@@ -240,7 +240,8 @@ public:
   Fl_Window        *clip_window;
   Fl_Choice        *clip_choice;
   Fl_Multi_Browser *clip_browser;
-  Fl_Value_Input   *clip_value[4];
+  Fl_Value_Input   *clip_value[10];
+  Fl_Check_Button  *clip_butt[2];
 
   // manipulator window
   Fl_Window        *manip_window;

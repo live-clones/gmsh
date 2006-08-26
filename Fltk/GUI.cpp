@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.542 2006-08-26 18:56:58 geuzaine Exp $
+// $Id: GUI.cpp,v 1.543 2006-08-26 22:30:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2448,6 +2448,7 @@ void GUI::create_option_window()
       mesh_butt[10]->callback(mesh_options_ok_cb);
 
       mesh_butt[11] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW / 2 - WB, BH, "Volume faces");
+      mesh_butt[11]->tooltip("(Alt+Shift+b)");
       mesh_butt[11]->type(FL_TOGGLE_BUTTON);
       mesh_butt[11]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[11]->selection_color(GMSH_TOGGLE_COLOR);
@@ -4177,6 +4178,10 @@ void GUI::reset_clip_browser()
       clip_browser->select(i+1);
   for(int i = 0; i < 4; i++)
     clip_value[i]->value(CTX.clip_plane[idx][i]);
+  for(int i = 4; i < 7; i++)
+    clip_value[i]->value(0.);
+  for(int i = 7; i < 10; i++)
+    clip_value[i]->value(1.);
 
   for(int i = 0; i < 3; i++) {
     clip_value[i]->step(0.01);
@@ -4184,9 +4189,11 @@ void GUI::reset_clip_browser()
     clip_value[i]->maximum(1.0);
   }
   double val1 = CTX.lc;
-  clip_value[3]->step(val1/200.);
-  clip_value[3]->minimum(-val1);
-  clip_value[3]->maximum(val1);
+  for(int i = 3; i < 10; i++){
+    clip_value[i]->step(val1/200.);
+    clip_value[i]->minimum(-val1);
+    clip_value[i]->maximum(val1);
+  }
 }
 
 void GUI::create_clip_window()
@@ -4208,33 +4215,63 @@ void GUI::create_clip_window()
   };
 
   int width = 3 * BB + 4 * WB;
-  int height = 6 * BH + 3 * WB;
+  int height = 7 * BH + 5 * WB;
   int brw = 105;
   int BW = width - brw - 3 * WB - 2 * fontsize;
 
   clip_window = new Dialog_Window(width, height, "Clipping Planes");
   clip_window->box(GMSH_WINDOW_BOX);
 
-  clip_browser = new Fl_Multi_Browser(1 * WB, 1 * WB, brw, 5 * BH);
+  clip_browser = new Fl_Multi_Browser(1 * WB, 1 * WB, brw, height - BH - 3 * WB);
   clip_browser->callback(clip_update_cb);
 
-  clip_choice = new Fl_Choice(2 * WB + brw, 1 * WB + 0 * BH, BW, BH);
-  clip_choice->menu(plane_number);
-  clip_choice->callback(clip_num_cb);
+  Fl_Tabs *o = new Fl_Tabs(2 * WB + brw, WB, width - 3 * WB - brw, height - 3 * WB - BH);
+  {
+    Fl_Group *o = new Fl_Group(2 * WB + brw, WB + BH, width - 3 * WB - brw, height - 3 * WB - 2 * BH, "Planes");
 
-  int ii = fontsize;
-  Fl_Button *invert = new Fl_Button(2 * WB + brw, 1 * WB + 1 * BH, ii, 4*BH, "-");
-  invert->callback(clip_invert_cb);
-  invert->tooltip("Invert orientation");
+    int ii = fontsize;
+    Fl_Button *invert = new Fl_Button(3 * WB + brw, 2 * WB + 2 * BH, ii, 4*BH, "-");
+    invert->callback(clip_invert_cb);
+    invert->tooltip("Invert orientation");
 
-  clip_value[0] = new Fl_Value_Input(2 * WB + brw + ii, 1 * WB + 1 * BH, BW - ii, BH, "A");
-  clip_value[1] = new Fl_Value_Input(2 * WB + brw + ii, 1 * WB + 2 * BH, BW - ii, BH, "B");
-  clip_value[2] = new Fl_Value_Input(2 * WB + brw + ii, 1 * WB + 3 * BH, BW - ii, BH, "C");
-  clip_value[3] = new Fl_Value_Input(2 * WB + brw + ii, 1 * WB + 4 * BH, BW - ii, BH, "D");
-  for(int i = 0; i < 4; i++){
-    clip_value[i]->align(FL_ALIGN_RIGHT);
-    clip_value[i]->callback(clip_update_cb);
+    clip_choice = new Fl_Choice(3 * WB + brw, 2 * WB + 1 * BH, BW, BH);
+    clip_choice->menu(plane_number);
+    clip_choice->callback(clip_num_cb);
+    
+    clip_value[0] = new Fl_Value_Input(3 * WB + brw + ii, 2 * WB + 2 * BH, BW - ii, BH, "A");
+    clip_value[1] = new Fl_Value_Input(3 * WB + brw + ii, 2 * WB + 3 * BH, BW - ii, BH, "B");
+    clip_value[2] = new Fl_Value_Input(3 * WB + brw + ii, 2 * WB + 4 * BH, BW - ii, BH, "C");
+    clip_value[3] = new Fl_Value_Input(3 * WB + brw + ii, 2 * WB + 5 * BH, BW - ii, BH, "D");
+    for(int i = 0; i < 4; i++){
+      clip_value[i]->align(FL_ALIGN_RIGHT);
+      clip_value[i]->callback(clip_update_cb);
+    }
+
+    o->end();
   }
+  {
+    Fl_Group *o = new Fl_Group(2 * WB + brw, WB + BH, width - 3 * WB - brw, height - 3 * WB - 2 * BH, "Box");
+    o->hide();
+
+    Fl_Box *b1 = new Fl_Box(FL_NO_BOX, 3 * WB + brw, 2 * WB + 1 * BH, BW, BH, "Center:");
+    b1->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
+    Fl_Box *b2 = new Fl_Box(FL_NO_BOX, 3 * WB + brw, 2 * WB + 3 * BH, BW, BH, "Dimensions:");
+    b2->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
+
+    clip_value[4] = new Fl_Value_Input(3 * WB + brw, 2 * WB + 2 * BH, BW / 3, BH);
+    clip_value[5] = new Fl_Value_Input(3 * WB + brw + BW / 3, 2 * WB + 2 * BH, BW / 3, BH);
+    clip_value[6] = new Fl_Value_Input(3 * WB + brw + 2 * BW / 3, 2 * WB + 2 * BH, BW - 2 * BW / 3, BH);
+    clip_value[7] = new Fl_Value_Input(3 * WB + brw, 2 * WB + 4 * BH, BW / 3, BH);
+    clip_value[8] = new Fl_Value_Input(3 * WB + brw + BW / 3, 2 * WB + 4 * BH, BW / 3, BH);
+    clip_value[9] = new Fl_Value_Input(3 * WB + brw + 2 * BW / 3, 2 * WB + 4 * BH, BW - 2 * BW / 3, BH);
+    for(int i = 4; i < 10; i++){
+      clip_value[i]->callback(clip_update_box_cb);
+    }
+
+    o->end();
+  }
+  o->callback(clip_reset_cb);
+  o->end();
 
   reset_clip_browser();
 
