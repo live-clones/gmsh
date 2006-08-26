@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.125 2006-08-24 15:24:16 geuzaine Exp $
+# $Id: Makefile,v 1.126 2006-08-26 17:16:55 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -421,10 +421,12 @@ meshGEdge.o: meshGEdge.cpp meshGEdge.h ../Geo/GEdge.h ../Geo/GEntity.h \
   ../Geo/MElement.h ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
-  ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
-  ../DataStr/Tree.h Utils.h Vertex.h Mesh.h Element.h Simplex.h Face.h \
-  Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h
+  ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/MElement.h \
+  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Common/Gmsh.h \
+  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
+  Utils.h Vertex.h Mesh.h Element.h Simplex.h Face.h Edge.h \
+  ../Geo/ExtrudeParams.h Metric.h Matrix.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 meshGFace.o: meshGFace.cpp meshGFace.h ../Geo/SPoint2.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
