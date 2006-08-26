@@ -1,4 +1,4 @@
-// $Id: Interpolation.cpp,v 1.27 2006-01-06 00:34:26 geuzaine Exp $
+// $Id: Interpolation.cpp,v 1.28 2006-08-26 15:13:22 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -30,8 +30,9 @@
 
 extern Mesh *THEM;
 
-// Curves
+// X = X(u), Y = Y(u), Z = Z(u)
 
+// Curves
 Vertex InterpolateCurve(Curve * Curve, double u, int derivee)
 {
   int N, i, j;

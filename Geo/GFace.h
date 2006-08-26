@@ -95,6 +95,9 @@ class GFace : public GEntity
 
   // Return the first derivate of the face at the parameter location.
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const = 0;
+
+  // Return the curvature i.e. the divergence of the normal
+  virtual double curvature (const SPoint2 &param) const;
   
   // True if the surface underlying the face is periodic and we need
   // to worry about that.

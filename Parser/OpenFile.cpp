@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.117 2006-08-26 13:34:46 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.118 2006-08-26 15:13:22 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -205,8 +205,6 @@ int ParseFile(char *f, int close, int warn_if_missing)
   if(close)
     fclose(yyin);
 
-  GMODEL->import();
-
   strncpy(yyname, yyname_old, 255);
   yyin = yyin_old;
   yyerrorstate = yyerrorstate_old;
@@ -331,6 +329,8 @@ int MergeProblem(char *name, int warn_if_missing)
       status = ParseFile(name, 1);
     }
   }
+
+  GMODEL->import();
 
   SetBoundingBox();
   CTX.mesh.changed = ENT_ALL;

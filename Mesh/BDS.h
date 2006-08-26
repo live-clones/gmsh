@@ -223,7 +223,7 @@ public:
 
 class BDS_Point 
 {
-  double radius_of_curvature;
+  double radius_of_curvature,_lc;
 public:
   double X,Y,Z; // Real COORDINATES
   double u,v;   // Parametric COORDINATES
@@ -234,7 +234,7 @@ public:
 
   // just a transition
   double & radius () {return radius_of_curvature;}
-  double & lc     () {return radius_of_curvature;}
+  double & lc     () {return _lc;}
   
   BDS_Vector N() const;
   
@@ -258,7 +258,7 @@ public:
   void getTriangles(std::list<BDS_Triangle *> &t) const; 	
   void compute_curvature();
   BDS_Point(int id, double x=0, double y=0, double z=0)
-    : radius_of_curvature(1.e22),X(x),Y(y),Z(z),u(0),v(0),config_modified(true),iD(id),g(0)
+    : radius_of_curvature(1.e22),_lc(1.e22),X(x),Y(y),Z(z),u(0),v(0),config_modified(true),iD(id),g(0)
   {	    
   }
 };

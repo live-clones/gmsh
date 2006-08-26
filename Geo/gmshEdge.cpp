@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.15 2006-08-15 06:26:53 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.16 2006-08-26 15:13:22 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -34,6 +34,10 @@ extern Mesh *THEM;
 gmshEdge::gmshEdge(GModel *model, Curve *edge, GVertex *v1, GVertex *v2)
   : GEdge(model, edge->Num, v1, v2), c(edge)
 {
+  meshAttributes.Method = c->Method;
+  meshAttributes.nbPointsTransfinite = c->ipar[0];
+  meshAttributes.coeffTransfinite =  c->dpar[0];
+  meshAttributes.typeTransfinite = c->ipar[1];
 }
 
 gmshEdge::gmshEdge(GModel *model, int num)

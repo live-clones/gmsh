@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.14 2006-08-26 13:34:46 geuzaine Exp $
+// $Id: GFace.cpp,v 1.15 2006-08-26 15:13:22 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -340,4 +340,44 @@ void GFace::getMeanPlaneData(double VX[3], double VY[3],
   x = meanPlane.x;  
   y = meanPlane.y;  
   z = meanPlane.z;  
+}
+
+// X=X(u,v) Y=Y(u,v) Z=Z(u,v)
+// curv = div n = dnx/dx + dny/dy + dnz/dz
+ 
+// dnx/dx = dnx/du du/dx + dnx/dv dv/dx
+
+
+double GFace::curvature (const SPoint2 &param) const
+{
+
+  if (geomType() == Plane)return 0;
+
+  const double eps = 1.e-3;
+
+  Pair<SVector3,SVector3> der = firstDer(param) ;
+
+  SVector3 du = der.first();
+  SVector3 dv = der.second();
+  SVector3 nml  = crossprod(du,dv);
+
+  double detJ = norm ( nml );
+
+  du.normalize();
+  dv.normalize();
+
+  SVector3 n1 = normal(SPoint2(param.x() - eps ,  param.y()  )) ;
+  SVector3 n2 = normal(SPoint2(param.x() + eps ,  param.y()  )) ;
+  SVector3 n3 = normal(SPoint2(param.x() ,  param.y()  - eps )) ;
+  SVector3 n4 = normal(SPoint2(param.x() ,  param.y()  + eps )) ;
+
+  SVector3 dndu = 500 * ( n2-n1 );
+  SVector3 dndv = 500 * ( n4-n3 );
+
+  double c = fabs(dot(dndu,du) +  dot(dndv,dv)) / detJ; 
+
+  //  Msg (INFO,"c = %g detJ %g",c,detJ);
+
+  return  c;
+ 
 }

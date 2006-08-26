@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.33 2006-08-21 13:32:42 remacle Exp $
+// $Id: Utils.cpp,v 1.34 2006-08-26 15:13:22 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -246,7 +246,7 @@ end:
 }
 
 
-#define  Precision 1.e-10
+#define  Precision 1.e-8
 #define  MaxIter 25
 #define  NumInitGuess 11
 
@@ -369,7 +369,7 @@ void invert_singular_matrix3x3(double MM[3][3], double II[3][3])
 void XYZtoUV(Surface * s, double X, double Y, double Z, double *U, double *V,
              double relax)
 {
-  double Unew = 0., Vnew = 0., err;
+  double Unew = 0., Vnew = 0., err,err2;
   int iter;
   Vertex D_u, D_v, P;
   double mat[3][3], jac[3][3];
@@ -383,8 +383,8 @@ void XYZtoUV(Surface * s, double X, double Y, double Z, double *U, double *V,
     vmax = s->kv[s->OrderV + s->Nv];
   }
   else {
-    umin = vmin = 0.0-1.e-6;
-    umax = vmax = 1.0+1.e-6;
+    umin = vmin = 0.0-1.e-8;
+    umax = vmax = 1.0+1.e-8;
   }
 
   for(int i = 0; i < NumInitGuess; i++){
@@ -418,9 +418,9 @@ void XYZtoUV(Surface * s, double X, double Y, double Z, double *U, double *V,
 	  (jac[0][1] * (X - P.Pos.X) + jac[1][1] * (Y - P.Pos.Y) +
 	   jac[2][1] * (Z - P.Pos.Z));
 	
-	//	err = DSQR(Unew - *U) + DSQR(Vnew - *V);
+	err = DSQR(Unew - *U) + DSQR(Vnew - *V);
 	// A BETTER TEST !! (JFR/AUG 2006)
-	err = DSQR(X - P.Pos.X) + DSQR(Y - P.Pos.Y) + + DSQR(Z - P.Pos.Z);
+	err2 = DSQR(X - P.Pos.X) + DSQR(Y - P.Pos.Y) + DSQR(Z - P.Pos.Z);
 	
 	iter++;
 	*U = Unew;
@@ -429,10 +429,11 @@ void XYZtoUV(Surface * s, double X, double Y, double Z, double *U, double *V,
 
 
 
-      if(iter < MaxIter && err <= Precision &&
+      if(iter < MaxIter && err <= Precision && err2 <= 1.e-5 &&
 	 Unew <= umax && Vnew <= vmax && 
 	 Unew >= umin && Vnew >= vmin){
-	//printf("converged for i=%d j=%d (err=%g iter=%d)\n", i, j, err, iter);
+	if (err2 > Precision)
+	  Msg(WARNING,"converged for i=%d j=%d (err=%g iter=%d) BUT err2 = %g", i, j, err, iter,err2);
 	return;	
       }
     }

@@ -53,7 +53,7 @@ class SVector3 {
 
 double norm(const SVector3 &v);
 double dot(const SVector3 &a, const SVector3 &b);
-SVector3 cross(const SVector3 &a, const SVector3 &b);
+SVector3 crossprod(const SVector3 &a, const SVector3 &b);
 double angle(const SVector3 &a, const SVector3 &b, const SVector3 &n);
 SVector3 operator*(double m,const SVector3 &v);
 SVector3 operator*(const SVector3 &v, double m);

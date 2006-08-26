@@ -1,4 +1,4 @@
-// $Id: gmshModel.cpp,v 1.13 2006-08-18 17:49:35 geuzaine Exp $
+// $Id: gmshModel.cpp,v 1.14 2006-08-26 15:13:22 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -41,6 +41,8 @@ void gmshModel::import()
       GVertex *v = vertexByTag(p->Num);
       if(!v){
 	v = new gmshVertex(this, p);
+	MVertex *mv = *(v->mesh_vertices.begin());
+	//	Msg(INFO,"vertex %d %g %g %g -- %g %g %g",v->tag(),v->x(),v->y(),v->z(),mv->x(),mv->y(),mv->z());
 	add(v);
       }
       if(!p->Visible) v->setVisibility(0);

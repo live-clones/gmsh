@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.58 2006-08-21 13:32:42 remacle Exp $
+// $Id: BDS.cpp,v 1.59 2006-08-26 15:13:22 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -429,6 +429,9 @@ BDS_Point *BDS_Mesh::add_point(int num, double u, double v, GFace *gf)
   pp->u = u;
   pp->v = v;
   points.insert(pp);
+  double curvature = gf->curvature (SPoint2(u,v));
+  //  pp->radius() = (curvature ==0.0) ? 1.e22:1./curvature;
+  pp->radius() = curvature;
   MAXPOINTNUMBER = (MAXPOINTNUMBER < num) ? num : MAXPOINTNUMBER;
   return pp;
 }
@@ -2105,6 +2108,7 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)
   p->X = gp.x();
   p->Y = gp.y();
   p->Z = gp.z();
+  p->radius() = gf->curvature (SPoint2(U,V));
 
   eit = p->edges.begin();
   while(eit != p->edges.end()) {

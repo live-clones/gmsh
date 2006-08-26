@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.14 2006-08-26 13:34:46 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.15 2006-08-26 15:13:22 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -107,4 +107,14 @@ std::string GEdge::getAdditionalInfoString()
   char tmp[256];
   sprintf(tmp, "{%d,%d}", v0->tag(), v1->tag());
   return std::string(tmp);
+}
+
+
+/// use central differences
+SVector3 GEdge::secondDer(double par) const 
+{
+  const double eps = 1.e-3;
+  SVector3 x1 = firstDer(par-eps);
+  SVector3 x2 = firstDer(par+eps);
+  return 500*(x2-x1);
 }

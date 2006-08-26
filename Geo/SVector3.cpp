@@ -1,4 +1,4 @@
-// $Id: SVector3.cpp,v 1.3 2006-08-15 06:26:52 geuzaine Exp $
+// $Id: SVector3.cpp,v 1.4 2006-08-26 15:13:22 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,7 @@
 #include "math.h"
 
 
-SVector3 cross(const SVector3 &a, const SVector3 &b)
+SVector3 crossprod(const SVector3 &a, const SVector3 &b)
 {
   return SVector3(a.y()*b.z()-b.y()*a.z(),
 		 -(a.x()*b.z()-b.x()*a.z()),
@@ -44,7 +44,7 @@ double angle(const SVector3 &a, const SVector3 &b, const SVector3 &n)
     ddot = -1.0;
   double dang = acos(ddot);
   // check if we just found the angle or 2*PI-angle
-  SVector3 check = cross(a,b);
+  SVector3 check = crossprod(a,b);
   // ***** check this below ******
   if( norm(check) > 0.0000001*(norm(a)+norm(b))){  // check if a,b are colinear
     double dir = dot(check,n);

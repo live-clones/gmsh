@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.7 2006-08-21 13:32:42 remacle Exp $
+// $Id: meshGFace.cpp,v 1.8 2006-08-26 15:13:22 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -219,7 +219,11 @@ extern double F_LC_ANALY (double xx, double yy, double zz);
 
 double NewGetLc ( BDS_Point *p  )
 {
-  return p->lc();
+  //  const double curv = p->radius();
+  //  if (curv == 0.0)
+    return p->lc();
+    //  else
+    //    return std::min(p->lc(),1./(2*curv));
   return  F_LC_ANALY(p->X,p->Y,p->Z);
   if(BGMExists())
     {	    
@@ -311,10 +315,12 @@ void OptimizeMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
     }
     {
       // swap edges that provide a better configuration
-      std::list<BDS_Edge *> temp (m.edges);
-      std::list<BDS_Edge*>::iterator it = temp.begin();
-      while (it != temp.end())
+      int NN1 = m.edges.size();
+      int NN2 = 0;
+      std::list<BDS_Edge*>::iterator it = m.edges.begin();
+      while (1)
 	{
+	  if (NN2++ >= NN1)break;
 	  if (!(*it)->deleted && (*it)->numfaces() == 2)
 	    {
 	      BDS_Point *op[2];
@@ -374,8 +380,6 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 // 	  ++ittt;
 // 	}
       
-      std::list<BDS_Edge *> temp (m.edges);
-      std::list<BDS_Edge*>::iterator it = temp.begin();
       int nb_split=0;
       int nb_smooth=0;
       int nb_collaps=0;
@@ -384,8 +388,12 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
       // split long edges
 
       double minL=1.E22,maxL=0;
-      while (it != temp.end())
+      int NN1 = m.edges.size();
+      int NN2 = 0;
+      std::list<BDS_Edge*>::iterator it = m.edges.begin();
+      while (1)
 	{
+	  if (NN2++ >= NN1)break;
 	  if (!(*it)->deleted)
 	    {
 	      (*it)->p1->config_modified = false;
@@ -398,12 +406,15 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	}
 
       Msg(STATUS2," %d triangles : conv %g -> %g (%g sec)",m.triangles.size(),maxL,1.5,(double)(clock()-t1)/CLOCKS_PER_SEC);
-      if ((minL > 0.2 && maxL < 1.5) || IT > NIT)break;
+      if ((minL > 0.4 && maxL < 1.5) || IT > NIT)break;
 
 
-      it = temp.begin();
-      while (it != temp.end())
+      NN1 = m.edges.size();
+      NN2 = 0;
+      it = m.edges.begin();
+      while (1)
 	{
+	  if (NN2++ >= NN1)break;
 	  if (!(*it)->deleted)
 	    {
 	      double lone = NewGetLc ( *it);
@@ -423,10 +434,12 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	}
 
       // swap edges that provide a better configuration
-      temp = m.edges;
-      it = temp.begin();
-      while (it != temp.end())
+      NN1 = m.edges.size();
+      NN2 = 0;
+      it = m.edges.begin();
+      while (1)
 	{
+	  if (NN2++ >= NN1)break;
 	  if (!(*it)->deleted && edgeSwapTest(*it))
 	    if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))
 	      nb_swap++;
@@ -434,10 +447,12 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	}
 
       // collapse short edges
-      temp = m.edges;
-      it = temp.begin();
-      while (it != temp.end())
+      NN1 = m.edges.size();
+      NN2 = 0;
+      it = m.edges.begin();
+      while (1)
 	{
+	  if (NN2++ >= NN1)break;
 	  double lone = NewGetLc ( *it);
 	  if (!(*it)->deleted && (*it)->numfaces() == 2 && lone < 0.6 )
 	    {
@@ -453,10 +468,12 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	}
 
       // swap edges that provide a better configuration
-      temp = m.edges;
-      it = temp.begin();
-      while (it != temp.end())
+      NN1 = m.edges.size();
+      NN2 = 0;
+      it = m.edges.begin();
+      while (1)
 	{
+	  if (NN2++ >= NN1)break;
 	  if (!(*it)->deleted && edgeSwapTest(*it))
 	    if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))
 	      nb_swap++;
@@ -694,7 +711,7 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge)
 void gmsh2DMeshGenerator ( GFace *gf )
 {
 
-  //  if(gf->tag() == 138|| gf->tag() == 196|| gf->tag() == 200|| gf->tag() == 262) return;
+  //  if(gf->tag() != 136) return;
 
   std::set<MVertex*>all_vertices;
   std::map<int, MVertex*>numbered_vertices;
@@ -707,6 +724,12 @@ void gmsh2DMeshGenerator ( GFace *gf )
     {
       all_vertices.insert ( (*it)->mesh_vertices.begin() , (*it)->mesh_vertices.end() );
       all_vertices.insert ( (*it)->getBeginVertex()->mesh_vertices.begin() , (*it)->getBeginVertex()->mesh_vertices.end() );
+//       GVertex *v1 = (*it)->getBeginVertex();
+//       GVertex *v2 = (*it)->getEndVertex();
+//       MVertex *mv1 = *(v1->mesh_vertices.begin());
+//       MVertex *mv2 = *(v2->mesh_vertices.begin());
+//       Msg(INFO,"%d -> %d = %g %g %g -- %g %g %g",v1->tag(),v2->tag(),v1->x(),v1->y(),v1->z(),v2->x(),v2->y(),v2->z());
+//       Msg(INFO,"%g %g %g -- %g %g %g",mv1->x(),mv1->y(),mv1->z(),mv2->x(),mv2->y(),mv2->z());
       all_vertices.insert ( (*it)->getEndVertex()->mesh_vertices.begin() , (*it)->getEndVertex()->mesh_vertices.end() );
       ++it;
     }
@@ -719,6 +742,30 @@ void gmsh2DMeshGenerator ( GFace *gf )
       ++it;
     }
 
+
+  double * X_ = new double [all_vertices.size()];
+  double * Y_ = new double [all_vertices.size()];
+  double * Z_ = new double [all_vertices.size()];
+
+  std::set<MVertex*>::iterator itv = all_vertices.begin();
+
+  //  FILE *fdeb = fopen("debug.dat","w");
+  //  fprintf(fdeb,"surface %d\n" ,gf->tag());
+  int count = 0;
+  while(itv != all_vertices.end())
+    {
+      MVertex *here     = *itv;
+      //    fprintf(fdeb,"%d %g %g %g\n" ,here->getNum(),here->x(),here->y(),here->z());
+      X_[count] = here->x();
+      Y_[count] = here->y();
+      Z_[count] = here->z();
+      count ++;
+      ++itv;
+    }
+
+  //  fclose (fdeb);
+
+
   // mesh the domain in the parametric space -> 
   // project all points in their parametric space
   fromCartesianToParametric c2p ( gf );
@@ -728,7 +775,7 @@ void gmsh2DMeshGenerator ( GFace *gf )
   // I do not have SBoundingBox, so I use a 3D one...
   // At the same time, number the vertices locally
   SBoundingBox3d bbox;
-  std::set<MVertex*>::iterator itv = all_vertices.begin();
+  itv = all_vertices.begin();
   int NUM = 0;
   while(itv != all_vertices.end())
     {
@@ -746,6 +793,8 @@ void gmsh2DMeshGenerator ( GFace *gf )
 
   /// Fill the DocRecord Data Structure with the points
   DocRecord doc;
+
+
   doc.points =  (PointRecord*)malloc((all_vertices.size()+4) * sizeof(PointRecord));
   itv = all_vertices.begin();
   int j = 0;
@@ -763,6 +812,7 @@ void gmsh2DMeshGenerator ( GFace *gf )
       j++;
       ++itv;
     }
+
 
   /// Increase the size of the bounding box by 20 %
   bbox *= 1.5;
@@ -820,13 +870,6 @@ void gmsh2DMeshGenerator ( GFace *gf )
       recover_medge ( m, *it);
       ++it;
     }
-  it = emb_edges.begin();
-  while(it != emb_edges.end())
-    {
-      recover_medge ( m, *it);
-      ++it;
-    }
-
   //  Msg(INFO,"Boundary Edges recovered for surface %d",gf->tag());
   // Look for an edge that is on the boundary for which one of the
   // two neighbors has a negative number node. The other triangle
@@ -856,6 +899,16 @@ void gmsh2DMeshGenerator ( GFace *gf )
 	++ite;
       }
   }
+
+
+  it = emb_edges.begin();
+  while(it != emb_edges.end())
+    {
+      recover_medge ( m, *it);
+      ++it;
+    }
+
+
   // delete useless stuff
   {
     std::list<BDS_Triangle*>::iterator itt = m->triangles.begin();
@@ -894,7 +947,7 @@ void gmsh2DMeshGenerator ( GFace *gf )
   // goto hhh;
    // start mesh generation
 
-  RefineMesh (gf,*m,27);
+  RefineMesh (gf,*m,20);
   OptimizeMesh (gf,*m,2);
 
   // fill the small gmsh structures
@@ -934,15 +987,32 @@ void gmsh2DMeshGenerator ( GFace *gf )
 
   // delete the mesh
 
-  //  outputScalarField(m->triangles, "lc.pos");
+  //  char name[245];
+  //  sprintf(name,"s%d.pos",gf->tag());
+  //  outputScalarField(m->triangles, name);
   delete m;
-   
+
+
+  itv = all_vertices.begin();
+  count = 0;
+  while(itv != all_vertices.end())
+    {
+      MVertex *here     = *itv;
+      here->x() = X_[count]  ;
+      here->y() = Y_[count]  ;
+      here->z() = Z_[count]  ;
+      count ++;
+      ++itv;
+    }
+  delete [] X_;
+  delete [] Y_;
+  delete [] Z_;
 
   fromParametricToCartesian p2c ( gf );
-  std::for_each(all_vertices.begin(),all_vertices.end(),p2c);    
+  //  std::for_each(all_vertices.begin(),all_vertices.end(),p2c);    
   std::for_each(gf->mesh_vertices.begin(),gf->mesh_vertices.end(),p2c);    
 }
-  
+ 
 
 
 

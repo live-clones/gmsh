@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.13 2006-08-21 13:32:42 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.14 2006-08-26 15:13:22 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -21,6 +21,7 @@
 
 #include "meshGEdge.h"
 #include "GEdge.h"
+#include "GFace.h"
 #include "Gmsh.h"
 #include "Utils.h"
 #include "Mesh.h"
@@ -44,20 +45,34 @@ double F_LC_ANALY (double xx, double yy, double zz)
   return 0.05 + .1*fabs(xx*yy) ;
 }
 
+double max_surf_curvature ( GPoint & gp )
+{
+  std::list<GFace *> faces = _myGEdge->faces();
+  std::list<GFace *>::iterator it =  faces.begin();
+  double curv = 0;
+  while (it != faces.end())
+    {
+      SPoint2 par = (*it)->parFromPoint(SPoint3 (gp.x(),gp.y(),gp.z()));
+      curv = std::max(curv, (*it)->curvature ( par ) );					
+      ++it;
+    }  
+  return curv;
+}
+
 double F_Lc_bis(double t)
 {
+  //  const double nb_points_per_radius_of_curv = 2;
+  GPoint point = _myGEdge -> point(t) ;      
   const double fact = (t-t_begin)/(t_end-t_begin);
   double lc_here = lc_begin + fact * (lc_end-lc_begin);
-  SVector3 der = _myGEdge -> firstDer(t) ;
-  const double d = norm(der)/CTX.mesh.lc_factor;
+  SVector3 der  = _myGEdge -> firstDer(t) ;
+  const double d      = norm(der);
 
-  // TESTTTT
-  GPoint points = _myGEdge -> point(t) ;      
-  //  double l_bgm = F_LC_ANALY(points.x(),points.y(),points.z()) ;
-  //  lc_here = l_bgm;
+  //  double curv = max_surf_curvature ( point );
+  //  if (curv != 0)
+  //    lc_here = std::min( 1./(curv * nb_points_per_radius_of_curv),lc_here);
 
   if(CTX.mesh.bgmesh_type == ONFILE) {
-    GPoint point = _myGEdge -> point(t) ;      
     const double Lc = BGMXYZ(point.x(), point.y(), point.z());
     if(CTX.mesh.constrained_bgmesh)
       return std::max(d / Lc, d / lc_here);

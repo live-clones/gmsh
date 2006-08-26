@@ -54,6 +54,9 @@ class GEdge : public GEntity {
   // The bounding box
   SBoundingBox3d bounds() const;
 
+  // Faces that bound this entity or that this entity bounds.
+  virtual std::list<GFace*> faces() const{return l_faces;}
+
   // Get the parameter location for a point in space on the edge.
   virtual double parFromPoint(const SPoint3 &) const = 0;
 
@@ -68,6 +71,10 @@ class GEdge : public GEntity {
 
   // Get first derivative of edge at the given parameter.
   virtual SVector3 firstDer(double par) const = 0;
+
+  // Get second derivative of edge at the given parameter.
+  // Default implentation using central differences
+  virtual SVector3 secondDer(double par) const ;
 
   // Reparmaterize the point onto the given face.
   virtual SPoint2 reparamOnFace(GFace *face, double epar,int dir) const = 0;
