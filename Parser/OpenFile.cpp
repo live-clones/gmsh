@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.116 2006-08-22 01:58:35 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.117 2006-08-26 13:34:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 
 #include "Gmsh.h"
 #include "gmshModel.h"
+#include "fourierModel.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "Parser.h"
@@ -346,6 +347,14 @@ void OpenProblem(char *name)
   CTX.threads_lock = 1;
 
   GMODEL->destroy();
+
+#if defined(HAVE_FOURIER_MODEL)
+  if(!strcmp(name, "falcon")){
+    delete GMODEL;
+    GMODEL = new fourierModel(name);
+    SetBoundingBox();
+  }
+#endif
 
   Init_Mesh();
 

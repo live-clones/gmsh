@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.304 2006-08-24 01:14:55 geuzaine Exp $
+// $Id: Options.cpp,v 1.305 2006-08-26 13:34:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3523,8 +3523,12 @@ double opt_general_light00(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.light_position[0][0] = val;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
+  if(WID && (action & GMSH_GUI)){
     WID->gen_value[2]->value(CTX.light_position[0][0]);
+    WID->gen_sphere->setValue(CTX.light_position[0][0],
+			      CTX.light_position[0][1],
+			      CTX.light_position[0][2]);
+  }
 #endif
   return CTX.light_position[0][0];
 }
@@ -3534,8 +3538,12 @@ double opt_general_light01(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.light_position[0][1] = val;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
+  if(WID && (action & GMSH_GUI)){
     WID->gen_value[3]->value(CTX.light_position[0][1]);
+    WID->gen_sphere->setValue(CTX.light_position[0][0],
+			      CTX.light_position[0][1],
+			      CTX.light_position[0][2]);
+  }
 #endif
   return CTX.light_position[0][1];
 }
@@ -3545,8 +3553,12 @@ double opt_general_light02(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.light_position[0][2] = val;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
+  if(WID && (action & GMSH_GUI)){
     WID->gen_value[4]->value(CTX.light_position[0][2]);
+    WID->gen_sphere->setValue(CTX.light_position[0][0],
+			      CTX.light_position[0][1],
+			      CTX.light_position[0][2]);
+  }
 #endif
   return CTX.light_position[0][2];
 }

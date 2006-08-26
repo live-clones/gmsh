@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.450 2006-08-25 23:52:56 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.451 2006-08-26 13:34:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -947,6 +947,41 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
   Msg(ONSCREEN, "");
 }
 
+void general_options_light_cb(CALLBACK_ARGS)
+{
+  char *name = (char*)data;
+  double x, y, z;
+  static double lc = 0.;
+
+  if(lc != CTX.lc){
+    lc = CTX.lc;
+    for(int i = 2; i < 5; i++){
+      WID->gen_value[i]->minimum(-5*CTX.lc);
+      WID->gen_value[i]->maximum(5*CTX.lc);
+    }
+  }
+
+  if(!strcmp(name, "x") || !strcmp(name, "y") || !strcmp(name, "z")){
+    x = WID->gen_value[2]->value();
+    y = WID->gen_value[3]->value();
+    z = WID->gen_value[4]->value();
+    WID->gen_sphere->setValue(x, y, z);    
+  }
+  else if(!strcmp(name, "xyz")){
+    WID->gen_sphere->getValue(x, y, z);
+    WID->gen_value[2]->value(x);
+    WID->gen_value[3]->value(y);
+    WID->gen_value[4]->value(z);
+  }
+  opt_general_shine(0, GMSH_SET, WID->gen_value[1]->value());
+  opt_general_shine_exponent(0, GMSH_SET, WID->gen_value[0]->value());
+  opt_general_light00(0, GMSH_SET, WID->gen_value[2]->value());
+  opt_general_light01(0, GMSH_SET, WID->gen_value[3]->value());
+  opt_general_light02(0, GMSH_SET, WID->gen_value[4]->value());
+  opt_general_light03(0, GMSH_SET, WID->gen_value[13]->value());
+  Draw();
+}
+
 void general_options_ok_cb(CALLBACK_ARGS)
 {
   opt_general_axes_auto_position(0, GMSH_SET, WID->gen_butt[0]->value());
@@ -968,12 +1003,6 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_draw_bounding_box(0, GMSH_SET, WID->gen_butt[6]->value());
   opt_general_polygon_offset_always(0, GMSH_SET, WID->gen_butt[4]->value());
   
-  opt_general_shine(0, GMSH_SET, WID->gen_value[1]->value());
-  opt_general_shine_exponent(0, GMSH_SET, WID->gen_value[0]->value());
-  opt_general_light00(0, GMSH_SET, WID->gen_value[2]->value());
-  opt_general_light01(0, GMSH_SET, WID->gen_value[3]->value());
-  opt_general_light02(0, GMSH_SET, WID->gen_value[4]->value());
-  opt_general_light03(0, GMSH_SET, WID->gen_value[13]->value());
   opt_general_verbosity(0, GMSH_SET, WID->gen_value[5]->value());
   opt_general_point_size(0, GMSH_SET, WID->gen_value[6]->value());
   opt_general_line_width(0, GMSH_SET, WID->gen_value[7]->value());

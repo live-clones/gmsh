@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.536 2006-08-24 01:14:56 geuzaine Exp $
+// $Id: GUI.cpp,v 1.537 2006-08-26 13:34:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1972,38 +1972,47 @@ void GUI::create_option_window()
       o->hide();
 
       gen_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW/3, BH);
-      gen_value[2]->minimum(-1);
-      gen_value[2]->maximum(1);
+      gen_value[2]->minimum(-1.);
+      gen_value[2]->maximum(1.);
       gen_value[2]->step(0.01);
+      gen_value[2]->callback(general_options_light_cb, (void*)"x");
 
       gen_value[3] = new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 1 * BH, IW/3, BH);
-      gen_value[3]->minimum(-1);
-      gen_value[3]->maximum(1);
+      gen_value[3]->minimum(-1.);
+      gen_value[3]->maximum(1.);
       gen_value[3]->step(0.01);
+      gen_value[3]->callback(general_options_light_cb, (void*)"y");
 
       gen_value[4] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 1 * BH, IW/3, BH, "Light position");
-      gen_value[4]->minimum(-1);
-      gen_value[4]->maximum(1);
+      gen_value[4]->minimum(-1.);
+      gen_value[4]->maximum(1.);
       gen_value[4]->step(0.01);
       gen_value[4]->align(FL_ALIGN_RIGHT);
+      gen_value[4]->callback(general_options_light_cb, (void*)"z");
 
       gen_value[13] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Light position divisor");
       gen_value[13]->minimum(0.);
-      gen_value[13]->maximum(100.);
+      gen_value[13]->maximum(1.);
       gen_value[13]->step(0.01);
       gen_value[13]->align(FL_ALIGN_RIGHT);
+      gen_value[13]->callback(general_options_light_cb, (void*)"w");
+
+      gen_sphere = new SpherePosition_Widget(L + 2 * WB + 2 * IW, 2 * WB + 1 * BH, 2 * BH);
+      gen_sphere->callback(general_options_light_cb, (void*)"xyz");
 
       gen_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Material shininess");
       gen_value[1]->minimum(0);
       gen_value[1]->maximum(10);
       gen_value[1]->step(0.1);
       gen_value[1]->align(FL_ALIGN_RIGHT);
+      gen_value[1]->callback(general_options_light_cb, (void*)"shine");
 
       gen_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Material shininess exponent");
       gen_value[0]->minimum(0);
       gen_value[0]->maximum(128);
       gen_value[0]->step(1);
       gen_value[0]->align(FL_ALIGN_RIGHT);
+      gen_value[0]->callback(general_options_light_cb, (void*)"shine_exponent");
 
       o->end();
     }

@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.106 2006-08-20 14:12:40 geuzaine Exp $
+// $Id: Draw.cpp,v 1.107 2006-08-26 13:34:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -257,6 +257,11 @@ void InitRenderModel(void)
 {
   GLfloat r, g, b;
 
+  glPushMatrix();
+  glLoadIdentity();
+  glScaled(CTX.s[0], CTX.s[1], CTX.s[2]);
+  glTranslated(CTX.t[0], CTX.t[1], CTX.t[2]);
+  
   for(int i = 0; i < 6; i++) {
     if(CTX.light[i]) {
       GLfloat position[4] = {(GLfloat)CTX.light_position[i][0],
@@ -289,6 +294,8 @@ void InitRenderModel(void)
       glDisable((GLenum)(GL_LIGHT0 + i));
     }
   }
+
+  glPopMatrix();
 
   // ambient and diffuse material colors track glColor automatically
   glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);

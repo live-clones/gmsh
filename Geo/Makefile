@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.98 2006-08-20 14:12:40 geuzaine Exp $
+# $Id: Makefile,v 1.99 2006-08-26 13:34:46 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -24,8 +24,7 @@ include ../variables
 
 LIB     = ../lib/libGmshGeo.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Numeric\
-          -I../Parser -I../Fltk\
-          -I../contrib/NR
+          -I../Parser -I../Fltk -I../contrib/NR -I../contrib/FourierModel
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
 
 SRC = CAD.cpp \
@@ -45,6 +44,7 @@ SRC = CAD.cpp \
       gmshEdge.cpp\
       gmshFace.cpp\
       gmshRegion.cpp\
+      fourierModel.cpp\
       SVector3.cpp\
       SBoundingBox3d.cpp\
       ExtractContour.cpp \
@@ -230,6 +230,12 @@ gmshRegion.o: gmshRegion.cpp gmshModel.h GModel.h GVertex.h GEntity.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h gmshRegion.h Geo.h \
   ../Mesh/Create.h ../Mesh/Vertex.h ../Mesh/Mesh.h
+# 1 "/Users/geuzaine/.gmsh/Geo//"
+fourierModel.o: fourierModel.cpp fourierModel.h GModel.h GVertex.h \
+  GEntity.h Range.h SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h \
+  MVertex.h GPoint.h GEdge.h SVector3.h SPoint2.h MElement.h MEdge.h \
+  MFace.h ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
+  GFace.h Pair.h GRegion.h ../Common/SmoothNormals.h ../Common/Message.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 SVector3.o: SVector3.cpp SVector3.h SPoint3.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"

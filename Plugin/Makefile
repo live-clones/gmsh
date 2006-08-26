@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.108 2006-08-24 15:24:17 geuzaine Exp $
+# $Id: Makefile,v 1.109 2006-08-26 13:34:46 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -267,7 +267,7 @@ Annotate.o: Annotate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
   ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
   ../Mesh/Matrix.h ../Fltk/Colorbar_Window.h ../Fltk/Popup_Button.h \
-  ../Graphics/Draw.h
+  ../Fltk/SpherePosition_Widget.h ../Graphics/Draw.h
 # 1 "/Users/geuzaine/.gmsh/Plugin//"
 Remove.o: Remove.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \

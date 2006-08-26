@@ -86,6 +86,7 @@ void options_ok_cb(CALLBACK_ARGS);
 void general_options_cb(CALLBACK_ARGS);
 void general_options_color_scheme_cb(CALLBACK_ARGS);
 void general_options_rotation_center_select_cb(CALLBACK_ARGS);
+void general_options_light_cb(CALLBACK_ARGS);
 void general_options_ok_cb(CALLBACK_ARGS);
 void general_arrow_param_cb(CALLBACK_ARGS);
 

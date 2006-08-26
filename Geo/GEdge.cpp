@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.13 2006-08-18 02:22:40 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.14 2006-08-26 13:34:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -63,11 +63,17 @@ SBoundingBox3d GEdge::bounds() const
 {
   Range<double> tr = parBounds(0);
   SBoundingBox3d bbox;
-  const int N = 10;
-  for(int i = 0; i < N; i++){
-    double t = tr.low() + (double)i/(double)(N - 1) * (tr.high() - tr.low());
-    GPoint p = point(t);
-    bbox += SPoint3(p.x(), p.y(), p.z());
+  if(geomType() != DiscreteCurve){
+    const int N = 10;
+    for(int i = 0; i < N; i++){
+      double t = tr.low() + (double)i/(double)(N - 1) * (tr.high() - tr.low());
+      GPoint p = point(t);
+      bbox += SPoint3(p.x(), p.y(), p.z());
+    }
+  }
+  else{
+    for(unsigned int i = 0; i < mesh_vertices.size(); i++)
+      bbox += mesh_vertices[i]->point();
   }
   return bbox;
 }

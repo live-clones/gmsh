@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.13 2006-08-18 02:22:40 geuzaine Exp $
+// $Id: GFace.cpp,v 1.14 2006-08-26 13:34:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -57,12 +57,15 @@ GFace::~GFace ()
 
 SBoundingBox3d GFace::bounds() const
 {
-  std::list<GEdge*>::const_iterator it = l_edges.begin();
-  SBoundingBox3d res = (*it)->bounds();
-  ++it;
-  while(it != l_edges.end()){
-    res += (*it)->bounds();  
-    ++it;
+  SBoundingBox3d res;
+  if(geomType() != DiscreteSurface){
+    std::list<GEdge*>::const_iterator it = l_edges.begin();
+    for(; it != l_edges.end(); it++)
+      res += (*it)->bounds();
+  }
+  else{
+    for(unsigned int i = 0; i < mesh_vertices.size(); i++)
+      res += mesh_vertices[i]->point();
   }
   return res;
 }

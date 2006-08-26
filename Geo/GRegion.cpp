@@ -1,4 +1,4 @@
-// $Id: GRegion.cpp,v 1.9 2006-08-18 02:22:40 geuzaine Exp $
+// $Id: GRegion.cpp,v 1.10 2006-08-26 13:34:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -54,12 +54,15 @@ GRegion::~GRegion ()
 
 SBoundingBox3d GRegion::bounds() const
 {
-  std::list<GFace*>::const_iterator it = l_faces.begin();
-  SBoundingBox3d res = (*it)->bounds();
-  ++it;
-  while(it != l_faces.end()){
-    res += (*it)->bounds();  
-    ++it;
+  SBoundingBox3d res;
+  if(geomType() != DiscreteVolume){
+    std::list<GFace*>::const_iterator it = l_faces.begin();
+    for(; it != l_faces.end(); it++)
+      res += (*it)->bounds();  
+  }
+  else{
+    for(unsigned int i = 0; i < mesh_vertices.size(); i++)
+      res += mesh_vertices[i]->point();
   }
   return res;
 }

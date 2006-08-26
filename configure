@@ -4154,7 +4154,7 @@ fi
 
   if test "x${FOURIER}" = "xyes"; then
     GMSH_DIRS="${GMSH_DIRS} contrib/FourierModel"
-    GMSH_LIBS="${GMSH_LIBS} -Lcontrib/FourierModel -lFourierModel"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshFourierModel"
     FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS}"
   fi
 

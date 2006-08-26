@@ -59,6 +59,7 @@
 #include "Opengl_Window.h"
 #include "Colorbar_Window.h"
 #include "Popup_Button.h"
+#include "SpherePosition_Widget.h"
 
 // The dynamic contexts
 
@@ -169,6 +170,7 @@ public:
   Fl_Button        *gen_col[50];
   Fl_Input         *gen_input[20];
   Fl_Choice        *gen_choice[20];
+  SpherePosition_Widget *gen_sphere;
 
   // geometry options
   Fl_Group         *geo_group;
