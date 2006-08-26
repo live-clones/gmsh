@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.541 2006-08-26 18:55:39 geuzaine Exp $
+// $Id: GUI.cpp,v 1.542 2006-08-26 18:56:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2553,7 +2553,7 @@ void GUI::create_option_window()
       mesh_value[8]->maximum(500);
       mesh_value[8]->step(1);
       mesh_value[8]->align(FL_ALIGN_RIGHT);
-      mesh_value[0]->when(FL_WHEN_RELEASE);
+      mesh_value[8]->when(FL_WHEN_RELEASE);
       mesh_value[8]->callback(mesh_options_ok_cb);
 
       mesh_value[13] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tangents");
