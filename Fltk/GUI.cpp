@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.540 2006-08-26 18:26:07 geuzaine Exp $
+// $Id: GUI.cpp,v 1.541 2006-08-26 18:55:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2169,6 +2169,7 @@ void GUI::create_option_window()
       geo_value[0]->maximum(500);
       geo_value[0]->step(1);
       geo_value[0]->align(FL_ALIGN_RIGHT);
+      geo_value[0]->when(FL_WHEN_RELEASE);
       geo_value[0]->callback(geometry_options_ok_cb);
 
       geo_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Tangents");
@@ -2176,6 +2177,7 @@ void GUI::create_option_window()
       geo_value[1]->maximum(500);
       geo_value[1]->step(1);
       geo_value[1]->align(FL_ALIGN_RIGHT);
+      geo_value[1]->when(FL_WHEN_RELEASE);
       geo_value[1]->callback(geometry_options_ok_cb);
 
       o->end();
@@ -2514,7 +2516,7 @@ void GUI::create_option_window()
       mesh_value[4]->maximum(1);
       mesh_value[4]->step(0.01);
       mesh_value[4]->align(FL_ALIGN_RIGHT);
-      mesh_value[4]->when(FL_WHEN_RELEASE); // because this can be a slow operation
+      mesh_value[4]->when(FL_WHEN_RELEASE);
       mesh_value[4]->callback(mesh_options_ok_cb);
 
       mesh_value[5] = new Fl_Value_Input(L + 2 * WB + IW / 4, 2 * WB + 8 * BH, IW / 2 - IW / 4, BH);
@@ -2522,7 +2524,7 @@ void GUI::create_option_window()
       mesh_value[5]->maximum(1);
       mesh_value[5]->step(0.01);
       mesh_value[5]->align(FL_ALIGN_RIGHT);
-      mesh_value[5]->when(FL_WHEN_RELEASE); // because this can be a slow operation
+      mesh_value[5]->when(FL_WHEN_RELEASE);
       mesh_value[5]->callback(mesh_options_ok_cb);
 
       static Fl_Menu_Item menu_quality_type[] = {
@@ -2538,12 +2540,12 @@ void GUI::create_option_window()
 
       mesh_value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
       mesh_value[6]->align(FL_ALIGN_RIGHT);
-      mesh_value[6]->when(FL_WHEN_RELEASE); // because this can be a slow operation
+      mesh_value[6]->when(FL_WHEN_RELEASE);
       mesh_value[6]->callback(mesh_options_ok_cb);
 
       mesh_value[7] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "Size range");
       mesh_value[7]->align(FL_ALIGN_RIGHT);
-      mesh_value[7]->when(FL_WHEN_RELEASE); // because this can be a slow operation
+      mesh_value[7]->when(FL_WHEN_RELEASE);
       mesh_value[7]->callback(mesh_options_ok_cb);
 
       mesh_value[8] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Normals");
@@ -2551,6 +2553,7 @@ void GUI::create_option_window()
       mesh_value[8]->maximum(500);
       mesh_value[8]->step(1);
       mesh_value[8]->align(FL_ALIGN_RIGHT);
+      mesh_value[0]->when(FL_WHEN_RELEASE);
       mesh_value[8]->callback(mesh_options_ok_cb);
 
       mesh_value[13] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tangents");
@@ -2558,6 +2561,7 @@ void GUI::create_option_window()
       mesh_value[13]->maximum(200);
       mesh_value[13]->step(1.0);
       mesh_value[13]->align(FL_ALIGN_RIGHT);
+      mesh_value[13]->when(FL_WHEN_RELEASE);
       mesh_value[13]->callback(mesh_options_ok_cb);
 
       o->end();
@@ -2632,7 +2636,7 @@ void GUI::create_option_window()
       mesh_value[9]->maximum(1);
       mesh_value[9]->step(0.01);
       mesh_value[9]->align(FL_ALIGN_RIGHT);
-      mesh_value[9]->when(FL_WHEN_RELEASE); // because this can be a slow operation
+      mesh_value[9]->when(FL_WHEN_RELEASE);
       mesh_value[9]->callback(mesh_options_ok_cb);
 
       mesh_choice[0] = new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Point display");
@@ -2703,7 +2707,7 @@ void GUI::create_option_window()
       mesh_value[18]->maximum(180.);
       mesh_value[18]->step(1.);
       mesh_value[18]->align(FL_ALIGN_RIGHT);
-      mesh_value[18]->when(FL_WHEN_RELEASE); // because this can be a slow operation
+      mesh_value[18]->when(FL_WHEN_RELEASE);
       mesh_value[18]->callback(mesh_options_ok_cb);
 
       o->end();
@@ -2874,7 +2878,7 @@ void GUI::create_option_window()
       view_value[30]->minimum(1);
       view_value[30]->maximum(256);
       view_value[30]->step(1);
-      view_value[30]->when(FL_WHEN_RELEASE); // because this can be a slow operation
+      view_value[30]->when(FL_WHEN_RELEASE);
       view_value[30]->callback(view_options_ok_cb);
       
       static Fl_Menu_Item menu_iso[] = {
@@ -2906,14 +2910,14 @@ void GUI::create_option_window()
       view_push_butt[1]->callback(view_options_ok_cb, (void*)"range_min");
       view_value[31] = new Fl_Value_Input(L + 2 * WB + sw2, 2 * WB + 7 * BH, IW - sw2, BH, "Custom minimum");
       view_value[31]->align(FL_ALIGN_RIGHT);
-      view_value[31]->when(FL_WHEN_RELEASE); // because this can be a slow operation
+      view_value[31]->when(FL_WHEN_RELEASE);
       view_value[31]->callback(view_options_ok_cb);
 
       view_push_butt[2] = new Fl_Button(L + 2 * WB, 2 * WB + 8 * BH, sw2, BH, "Max");
       view_push_butt[2]->callback(view_options_ok_cb, (void*)"range_max");
       view_value[32] = new Fl_Value_Input(L + 2 * WB + sw2, 2 * WB + 8 * BH, IW - sw2, BH, "Custom maximum");
       view_value[32]->align(FL_ALIGN_RIGHT);
-      view_value[32]->when(FL_WHEN_RELEASE); // because this can be a slow operation
+      view_value[32]->when(FL_WHEN_RELEASE);
       view_value[32]->callback(view_options_ok_cb);
 
       view_butt[38] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Saturate out-of-range values");
@@ -3108,6 +3112,7 @@ void GUI::create_option_window()
       view_value[0]->maximum(500);
       view_value[0]->step(1);
       view_value[0]->align(FL_ALIGN_RIGHT);
+      view_value[0]->when(FL_WHEN_RELEASE);
       view_value[0]->callback(view_options_ok_cb);
 
       view_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Tangents");
@@ -3115,6 +3120,7 @@ void GUI::create_option_window()
       view_value[1]->maximum(500);
       view_value[1]->step(1);
       view_value[1]->align(FL_ALIGN_RIGHT);
+      view_value[1]->when(FL_WHEN_RELEASE);
       view_value[1]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_view_field_types[] = {
@@ -3134,7 +3140,7 @@ void GUI::create_option_window()
       view_value[33]->maximum(MAX_LEVEL_OF_ZOOM);
       view_value[33]->step(1);
       view_value[33]->value(0);
-      view_value[33]->when(FL_WHEN_RELEASE); // because this can be a slow operation
+      view_value[33]->when(FL_WHEN_RELEASE);
       view_value[33]->callback(view_options_ok_cb);
 
       view_value[34] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Target error");
@@ -3142,7 +3148,7 @@ void GUI::create_option_window()
       view_value[34]->minimum(0);
       view_value[34]->maximum(1);
       view_value[34]->value(1.e-2);
-      view_value[34]->when(FL_WHEN_RELEASE); // because this can be a slow operation
+      view_value[34]->when(FL_WHEN_RELEASE);
       view_value[34]->callback(view_options_ok_cb);
 
       o->end();
@@ -3179,7 +3185,7 @@ void GUI::create_option_window()
 
       for(int i = 40; i <= 45; i++){
 	view_value[i]->align(FL_ALIGN_RIGHT);
-	view_value[i]->when(FL_WHEN_RELEASE); // because this can be a slow operation
+	view_value[i]->when(FL_WHEN_RELEASE);
 	view_value[i]->callback(view_options_ok_cb);
       }
       for(int i = 51; i <= 59; i++){
@@ -3187,7 +3193,7 @@ void GUI::create_option_window()
 	view_value[i]->maximum(1.);
 	view_value[i]->step(0.1);
 	view_value[i]->align(FL_ALIGN_RIGHT);
-	view_value[i]->when(FL_WHEN_RELEASE); // because this can be a slow operation
+	view_value[i]->when(FL_WHEN_RELEASE);
 	view_value[i]->callback(view_options_ok_cb);
       }
 
@@ -3204,7 +3210,7 @@ void GUI::create_option_window()
 
       view_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Factor");
       view_value[2]->align(FL_ALIGN_RIGHT);
-      view_value[2]->when(FL_WHEN_RELEASE); // because this can be a slow operation
+      view_value[2]->when(FL_WHEN_RELEASE);
       view_value[2]->callback(view_options_ok_cb);
 
       view_input[4] = new Fl_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "X expression");
@@ -3230,7 +3236,7 @@ void GUI::create_option_window()
       view_value[12]->step(0.01);
       view_value[12]->maximum(1.);
       view_value[12]->align(FL_ALIGN_RIGHT);
-      view_value[12]->when(FL_WHEN_RELEASE); // because this can be a slow operation
+      view_value[12]->when(FL_WHEN_RELEASE);
       view_value[12]->callback(view_options_ok_cb);
 
       view_choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Point display");
@@ -3294,7 +3300,7 @@ void GUI::create_option_window()
         view_value[63]->maximum(1.);
         view_value[63]->step(0.01);
         view_value[63]->align(FL_ALIGN_RIGHT);
-	view_value[63]->when(FL_WHEN_RELEASE); // because this can be a slow operation
+	view_value[63]->when(FL_WHEN_RELEASE);
 	view_value[63]->callback(view_options_ok_cb);
 
         view_choice[10] = new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Data source");
@@ -3370,7 +3376,7 @@ void GUI::create_option_window()
       view_value[10]->step(1.);
       view_value[10]->maximum(180.);
       view_value[10]->align(FL_ALIGN_RIGHT);
-      view_value[10]->when(FL_WHEN_RELEASE); // because this can be a slow operation
+      view_value[10]->when(FL_WHEN_RELEASE);
       view_value[10]->callback(view_options_ok_cb);
       
       o->end();
