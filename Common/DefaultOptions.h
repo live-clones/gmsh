@@ -907,8 +907,6 @@ StringXNumber MeshOptions_Number[] = {
     "Display mesh lines (1D elements)?" },
   { F|O, "LineNumbers" , opt_mesh_lines_num , 0. , 
     "Display mesh line numbers?" },
-  { F|O, "LineType" , opt_mesh_line_type , 0. , 
-    "Display mesh lines as solid color segments (0) or 3D cylinders (1)" },
   { F|O, "LineWidth" , opt_mesh_line_width , 1.0 , 
     "Display width of mesh lines (in pixels)" },
 

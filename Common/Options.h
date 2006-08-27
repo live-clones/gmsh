@@ -437,7 +437,6 @@ double opt_mesh_volumes_num(OPT_ARGS_NUM);
 double opt_mesh_point_size(OPT_ARGS_NUM);
 double opt_mesh_point_type(OPT_ARGS_NUM);
 double opt_mesh_line_width(OPT_ARGS_NUM);
-double opt_mesh_line_type(OPT_ARGS_NUM);
 double opt_mesh_vertex_arrays(OPT_ARGS_NUM);
 double opt_mesh_reverse_all_normals(OPT_ARGS_NUM);
 double opt_mesh_smooth_normals(OPT_ARGS_NUM);

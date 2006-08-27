@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.306 2006-08-26 17:00:25 geuzaine Exp $
+// $Id: Options.cpp,v 1.307 2006-08-27 16:14:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4484,19 +4484,6 @@ double opt_mesh_label_frequency(OPT_ARGS_NUM)
     WID->mesh_value[12]->value(CTX.mesh.label_frequency);
 #endif
   return CTX.mesh.label_frequency;
-}
-
-double opt_mesh_line_type(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    CTX.mesh.line_type = (int)val;
-  }
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI)) {
-    WID->mesh_choice[1]->value(CTX.mesh.line_type ? 1 : 0);
-  }
-#endif
-  return CTX.mesh.line_type;
 }
 
 double opt_mesh_reverse_all_normals(OPT_ARGS_NUM)

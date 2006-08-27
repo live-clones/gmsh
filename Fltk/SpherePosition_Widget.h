@@ -36,9 +36,9 @@ class SpherePosition_Widget : public Fl_Widget {
     int h1 = h() - 6;
     fl_color(FL_FOREGROUND_COLOR);
     fl_arc(x1, y1, w1, h1, 0, 360);
-    int x = int(x1 + 0.5 * w1 * (1 + _x));
-    int y = int(y1 + 0.5 * h1 * (1 - _y));
-    draw_box(FL_UP_BOX, x - 3, y - 3, 6, 6, FL_FOREGROUND_COLOR);
+    int px = int(x1 + 0.5 * w1 * (1 + _x));
+    int py = int(y1 + 0.5 * h1 * (1 - _y));
+    draw_box(FL_UP_BOX, px - 3, py - 3, 6, 6, FL_FOREGROUND_COLOR);
   }
   int handle(int event)
   {
@@ -47,10 +47,10 @@ class SpherePosition_Widget : public Fl_Widget {
     case FL_DRAG:
     case FL_RELEASE: 
       {
-	int x1 = x() + Fl::box_dx(box());
-	int y1 = y() + Fl::box_dy(box());
-	int w1 = w() - Fl::box_dw(box());
-	int h1 = h() - Fl::box_dh(box());
+	int x1 = x() + 3;
+	int y1 = y() + 3;
+	int w1 = w() - 6;
+	int h1 = h() - 6;
 	double xx = (Fl::event_x() - x1) / (0.5 * w1) - 1.;
 	double yy = -((Fl::event_y() - y1) / (0.5 * h1) - 1.);
 	if(xx != _x || yy != _y) {

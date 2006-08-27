@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.543 2006-08-26 22:30:06 geuzaine Exp $
+// $Id: GUI.cpp,v 1.544 2006-08-27 16:14:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2496,6 +2496,7 @@ void GUI::create_option_window()
       mesh_value[12]->maximum(100);
       mesh_value[12]->step(1);
       mesh_value[12]->align(FL_ALIGN_RIGHT);
+      mesh_value[12]->when(FL_WHEN_RELEASE);
       mesh_value[12]->callback(mesh_options_ok_cb);
 
       static Fl_Menu_Item menu_mesh_element_types[] = {
@@ -2652,13 +2653,7 @@ void GUI::create_option_window()
       mesh_value[10]->align(FL_ALIGN_RIGHT);
       mesh_value[10]->callback(mesh_options_ok_cb);
 
-      mesh_choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display");
-      mesh_choice[1]->menu(menu_line_display);
-      mesh_choice[1]->align(FL_ALIGN_RIGHT);
-      mesh_choice[1]->deactivate(); // don't give false hopes, as it's not used anywhere right now
-      mesh_choice[1]->callback(mesh_options_ok_cb);
-
-      mesh_value[11] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width");
+      mesh_value[11] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Line width");
       mesh_value[11]->minimum(0.1);
       mesh_value[11]->maximum(50);
       mesh_value[11]->step(0.1);

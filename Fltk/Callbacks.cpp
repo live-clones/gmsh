@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.453 2006-08-26 22:30:06 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.454 2006-08-27 16:14:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1179,7 +1179,6 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_beta_smooth_metric(0, GMSH_SET, WID->mesh_value[25]->value());
 
   opt_mesh_point_type(0, GMSH_SET, WID->mesh_choice[0]->value());
-  opt_mesh_line_type(0, GMSH_SET, WID->mesh_choice[1]->value());
   opt_mesh_algo2d(0, GMSH_SET,
 		  (WID->mesh_choice[2]->value() == 0) ? DELAUNAY_ISO :
 		  (WID->mesh_choice[2]->value() == 1) ? DELAUNAY_ANISO :
