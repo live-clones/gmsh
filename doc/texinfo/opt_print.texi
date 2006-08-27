@@ -79,4 +79,9 @@ JPEG smoothing (between 0 and 100)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Print.Text
+Print text strings?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @end ftable

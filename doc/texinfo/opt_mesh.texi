@@ -164,11 +164,6 @@ Display mesh line numbers?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.LineType
-Display mesh lines as solid color segments (0) or 3D cylinders (1)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.LineWidth
 Display width of mesh lines (in pixels)@*
 Default value: @code{1}@*
@@ -184,8 +179,13 @@ Minimum element size factor in the Remesher@*
 Default value: @code{500}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.MshBinary
+Write MSH files in binary format?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.MshFileVersion
-Version of the `msh' file format to use@*
+Version of the MSH file format to use@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

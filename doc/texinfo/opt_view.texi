@@ -551,7 +551,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.TensorType
 Tensor Visualization Type@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.TimeStep
