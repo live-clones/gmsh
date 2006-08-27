@@ -1304,7 +1304,7 @@ StringXNumber ViewOptions_Number[] = {
 
   { F|O, "Tangents" , opt_view_tangents , 0. ,
     "Display size of tangent vectors (in pixels)" }, 
-  { F|O, "TensorType" , opt_view_tensor_type , 0. ,
+  { F|O, "TensorType" , opt_view_tensor_type , 1. ,
     "Tensor Visualization Type" },
   { F,   "TimeStep" , opt_view_timestep , 0. ,
     "Current time step displayed" },
