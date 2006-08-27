@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.117 2006-08-20 14:12:40 geuzaine Exp $
+// $Id: Geom.cpp,v 1.118 2006-08-27 23:10:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -445,16 +445,24 @@ void Draw_Geom()
     glColor4ubv((GLubyte *) & CTX.color.axes);
     glLineWidth(CTX.line_width);
     gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
-    if(!CTX.axes_auto_position){
+    if(CTX.axes_auto_position){
+      double bb[6] = {CTX.min[0], CTX.max[0], CTX.min[1], 
+		      CTX.max[1], CTX.min[2], CTX.max[2]};
+      Draw_Axes(CTX.axes, CTX.axes_tics, CTX.axes_format, CTX.axes_label, bb);
+    }
+    else{
       Draw_Axes(CTX.axes, CTX.axes_tics, CTX.axes_format, CTX.axes_label, 
 		CTX.axes_position);
     }
-    else if(geometryExists){
-      double bb[6] = {CTX.min[0], CTX.max[0],
-		      CTX.min[1], CTX.max[1],
-		      CTX.min[2], CTX.max[2]};
-      Draw_Axes(CTX.axes, CTX.axes_tics, CTX.axes_format, CTX.axes_label, bb);
-    }
   }
-}
 
+  if(CTX.draw_rotation_center){
+    glColor4ubv((GLubyte *) & CTX.color.fg);
+    if(CTX.rotation_center_cg)
+      Draw_Sphere(5, CTX.cg[0], CTX.cg[1], CTX.cg[2], CTX.geom.light);
+    else
+      Draw_Sphere(5, CTX.rotation_center[0], CTX.rotation_center[1], 
+		  CTX.rotation_center[2], CTX.geom.light);
+  }
+
+}

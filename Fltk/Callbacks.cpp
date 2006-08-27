@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.454 2006-08-27 16:14:46 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.455 2006-08-27 23:10:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -958,7 +958,10 @@ void general_options_ok_cb(CALLBACK_ARGS)
   }
   if(data){
     char *name = (char*)data;
-    if(!strcmp(name, "light_value")){
+    if(!strcmp(name, "rotation_center_coord")){
+      CTX.draw_rotation_center = 1;
+    }
+    else if(!strcmp(name, "light_value")){
       double x, y, z;
       x = WID->gen_value[2]->value();
       y = WID->gen_value[3]->value();
@@ -1049,6 +1052,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
     CTX.post.draw = CTX.mesh.draw = 0;
   Draw();
   CTX.post.draw = CTX.mesh.draw = 1;
+  CTX.draw_rotation_center = 0;
 }
 
 void general_arrow_param_cb(CALLBACK_ARGS)

@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.69 2006-08-25 23:52:56 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.70 2006-08-27 23:10:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -273,6 +273,7 @@ int Opengl_Window::handle(int event)
 
   case FL_RELEASE:
     curr.set();
+    CTX.draw_rotation_center = 0;
     if(!LassoMode) {
       CTX.mesh.draw = 1;
       CTX.post.draw = 1;
@@ -318,6 +319,7 @@ int Opengl_Window::handle(int event)
 	CTX.t[1] += (curr.wnr[1] - click.wnr[1]);
         CTX.t[2] = 0.;
       }
+      CTX.draw_rotation_center = 1;
       if(CTX.fast_redraw) {
         CTX.mesh.draw = 0;
         CTX.post.draw = 0;

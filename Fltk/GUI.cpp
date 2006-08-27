@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.544 2006-08-27 16:14:46 geuzaine Exp $
+// $Id: GUI.cpp,v 1.545 2006-08-27 23:10:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1757,12 +1757,12 @@ void GUI::create_option_window()
       gen_push_butt[0]->callback(general_options_rotation_center_select_cb);
 
       gen_value[8] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW / 3, BH);
-      gen_value[8]->callback(general_options_ok_cb);
+      gen_value[8]->callback(general_options_ok_cb, (void*)"rotation_center_coord");
       gen_value[9] = new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 8 * BH, IW / 3, BH);
-      gen_value[9]->callback(general_options_ok_cb);
+      gen_value[9]->callback(general_options_ok_cb, (void*)"rotation_center_coord");
       gen_value[10] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 8 * BH, IW / 3, BH, "Rotation center");
       gen_value[10]->align(FL_ALIGN_RIGHT);
-      gen_value[10]->callback(general_options_ok_cb);
+      gen_value[10]->callback(general_options_ok_cb, (void*)"rotation_center_coord");
 
       o->end();
     }

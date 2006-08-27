@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.307 2006-08-27 16:14:46 geuzaine Exp $
+// $Id: Options.cpp,v 1.308 2006-08-27 23:10:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -133,6 +133,7 @@ void Init_Options(int num)
   CTX.polygon_offset = 0;
   CTX.printing = 0;
   CTX.mesh_timer[0] = CTX.mesh_timer[1] = CTX.mesh_timer[2] = 0.;
+  CTX.draw_rotation_center = 0;
   CTX.mesh.draw = 1;
   CTX.post.draw = 1;
   CTX.post.list = NULL;

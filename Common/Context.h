@@ -91,8 +91,8 @@ public :
 
   int db;                     // double buffer? 
   int ortho;                  // orthogonal projection? 
-  int draw_bbox;              // always draw the bounding boxes?
-  int fast_redraw;            // only draw the bbox when rotating/panning the model?
+  int draw_bbox, draw_rotation_center; // draw the bounding boxes and the rot center?
+  int fast_redraw;            // draw simplified model during user interaction
   int small_axes, small_axes_size, small_axes_pos[2]; // small axes
   int axes, axes_auto_position, axes_tics[3]; // large axes
   double axes_position[6];  
