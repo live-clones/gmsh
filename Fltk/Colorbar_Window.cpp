@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.55 2006-08-26 18:52:02 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.56 2006-08-27 01:47:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -33,7 +33,7 @@
 
 extern Context_T CTX;
 
-#define EPS         1.e-10
+#define EPS 1.e-10
 
 // This file defines the Colorbar_Window class (subclass of Fl_Window)
 
@@ -367,7 +367,6 @@ int Colorbar_Window::handle(int event)
 
   case FL_SHORTCUT:
   case FL_KEYBOARD:
-  case FL_KEYUP:
     if(Fl::test_shortcut('0')) {
       ColorTable_InitParam(0, ct);
       compute = 1;
@@ -453,12 +452,12 @@ int Colorbar_Window::handle(int event)
     }
     else if(Fl::test_shortcut(FL_CTRL + 'v')) {
       ColorTable_Paste(ct);
-      draw();
+      redraw();
       *viewchanged = 1;
     }
     else if(Fl::test_shortcut('h')) {
       help_flag = !help_flag;
-      draw();
+      redraw();
     }
     else if(Fl::test_shortcut('r')) {
       ColorTable_InitParam(ct->ipar[COLORTABLE_NUMBER], ct);
@@ -469,7 +468,7 @@ int Colorbar_Window::handle(int event)
         ct->ipar[COLORTABLE_MODE] = COLORTABLE_HSV;
       else
         ct->ipar[COLORTABLE_MODE] = COLORTABLE_RGB;
-      draw();
+      redraw();
     }
     else if(Fl::test_shortcut('i')) {
       ct->ipar[COLORTABLE_SWAP] = !ct->ipar[COLORTABLE_SWAP];
@@ -545,9 +544,9 @@ int Colorbar_Window::handle(int event)
 
     if(compute) {
       ColorTable_Recompute(ct);
-      draw();
+      redraw();
       *viewchanged = 1;
-      if(event == FL_KEYUP) do_callback();
+      do_callback();
     }
     return 1;
 
@@ -557,7 +556,7 @@ int Colorbar_Window::handle(int event)
     ypos = Fl::event_y();
     if(help_flag) {
       help_flag = 0;
-      draw();
+      redraw();
     }
     // change color function or marker position
     if(ypos < wedge_y)
