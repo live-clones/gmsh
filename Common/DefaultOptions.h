@@ -1394,7 +1394,7 @@ StringXColor GeneralOptions_Color[] = {
     {0, 0, 125, 255}, {0, 0, 125, 255}, {125, 125, 125, 255}, 
     "Background gradient color" },
   { F|O, "Foreground" , opt_general_color_foreground ,
-    {255, 255, 255, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},
+    {170, 170, 170, 255}, {85, 85, 85, 255}, {128, 128, 128, 255},
     "Foreground color" },
   { F|O, "Text" , opt_general_color_text ,
     {255, 255, 255, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},

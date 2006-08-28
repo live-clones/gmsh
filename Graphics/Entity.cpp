@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.69 2006-08-15 21:22:12 geuzaine Exp $
+// $Id: Entity.cpp,v 1.70 2006-08-28 02:56:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -632,7 +632,7 @@ int Draw_Tics(int comp, int n, char *format, char *label,
   double t[3] = { p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2] };
   double l = norme(t);
   double w = 10 * CTX.pixel_equiv_x / CTX.s[0]; // big tics 10 pixels
-  double w2 = 4 * CTX.pixel_equiv_x / CTX.s[0]; // small tics 4 pixels
+  double w2 = 5 * CTX.pixel_equiv_x / CTX.s[0]; // small tics 5 pixels
 
   glRasterPos3d(p2[0]+t[0]*w*1.4, p2[1]+t[1]*w*1.4, p2[2]+t[2]*w*1.4);
   Draw_String(label);

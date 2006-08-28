@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.118 2006-08-27 23:10:36 geuzaine Exp $
+// $Id: Geom.cpp,v 1.119 2006-08-28 02:56:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -459,9 +459,9 @@ void Draw_Geom()
   if(CTX.draw_rotation_center){
     glColor4ubv((GLubyte *) & CTX.color.fg);
     if(CTX.rotation_center_cg)
-      Draw_Sphere(5, CTX.cg[0], CTX.cg[1], CTX.cg[2], CTX.geom.light);
+      Draw_Sphere(CTX.point_size, CTX.cg[0], CTX.cg[1], CTX.cg[2], CTX.geom.light);
     else
-      Draw_Sphere(5, CTX.rotation_center[0], CTX.rotation_center[1], 
+      Draw_Sphere(CTX.point_size, CTX.rotation_center[0], CTX.rotation_center[1], 
 		  CTX.rotation_center[2], CTX.geom.light);
   }
 
