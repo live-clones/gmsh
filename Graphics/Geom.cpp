@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.120 2006-08-28 04:03:54 geuzaine Exp $
+// $Id: Geom.cpp,v 1.121 2006-08-28 13:43:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -371,7 +371,7 @@ class drawGRegion {
     
     SBoundingBox3d bb = r->bounds();
     SPoint3 p = bb.center();
-    const double size = 10.;
+    const double size = 8.;
 
     if(CTX.geom.volumes)
       Draw_Sphere(size, p.x(), p.y(), p.z(), CTX.geom.light);
