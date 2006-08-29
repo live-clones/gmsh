@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.545 2006-08-27 23:10:35 geuzaine Exp $
+// $Id: GUI.cpp,v 1.546 2006-08-29 13:16:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3197,7 +3197,7 @@ void GUI::create_option_window()
       view_butt[6]->type(FL_TOGGLE_BUTTON);
       view_butt[6]->down_box(GMSH_TOGGLE_BOX);
       view_butt[6]->selection_color(GMSH_TOGGLE_COLOR);
-      view_butt[6]->callback(view_options_ok_cb);
+      view_butt[6]->callback(view_options_ok_cb, (void*)"general_transform");
 
       view_choice[11] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Data source");
       view_choice[11]->align(FL_ALIGN_RIGHT);
