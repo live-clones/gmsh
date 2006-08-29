@@ -12,10 +12,10 @@ Line Loop(10) = {1,-3,2};
 
 Function TubeHole
 
- p1 = newp; Point(p1) = {x,y,0,8};
- p2 = newp; Point(p2) = {x+r,y,0,8};
- p3 = newp; Point(p3) = {x,y+r,0,8};
- p4 = newp; Point(p4) = {x-0.71*r,y-0.71*r,0,8};
+ p1 = newp; Point(p1) = {x,y,0,1};
+ p2 = newp; Point(p2) = {x+r,y,0,1};
+ p3 = newp; Point(p3) = {x,y+r,0,1};
+ p4 = newp; Point(p4) = {x-0.71*r,y-0.71*r,0,1};
 
 c1 = newreg; Circle(c1) = {p2,p1,p3};
 c2 = newreg; Circle(c2) = {p3,p1,p4};

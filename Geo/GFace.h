@@ -48,7 +48,10 @@ class GFace : public GEntity
   std::list<GVertex *> embedded_vertices;
 
  public:
-  GFace(GModel *model, int tag) : GEntity(model, tag), r1(0), r2(0) {}
+  GFace(GModel *model, int tag) : GEntity(model, tag), r1(0), r2(0) 
+    {
+      meshAttributes.recombine = 0;
+    }
   virtual ~GFace();
 
   void addRegion(GRegion *r){ r1 ? r2 = r : r1 = r; }
@@ -126,6 +129,12 @@ class GFace : public GEntity
 
   std::vector<MTriangle*> triangles;
   std::vector<MQuadrangle*> quadrangles;
+
+  struct {
+    int    recombine;
+    double recombineAngle;
+  } meshAttributes ;
+
 };
 
 #endif

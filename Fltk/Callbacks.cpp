@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.455 2006-08-27 23:10:35 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.456 2006-08-29 10:39:48 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3521,9 +3521,7 @@ void mesh_optimize_cb(CALLBACK_ARGS)
 
 void mesh_remesh_cb(CALLBACK_ARGS)
 {
-  ReMesh();
-  Draw();
-  Msg(STATUS2N, " ");
+  Msg(GERROR, "Surface ReMeshing must be reinterfaced");
 }
 
 void mesh_update_edges_cb(CALLBACK_ARGS)

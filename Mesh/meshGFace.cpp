@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.8 2006-08-26 15:13:22 remacle Exp $
+// $Id: meshGFace.cpp,v 1.9 2006-08-29 10:39:49 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -172,49 +172,6 @@ void computeEdgeLoops (const GFace *gf,
 
 }
 
-
-
-void computeEdgeParameters ( double x1, double y1, double x2, double y2, GFace *gf , const int numberOfTestPoints, double &coordMiddle, double &edgeLength )
-{
-  std::vector<GPoint> pts;
-  for (int i=0;i<numberOfTestPoints;++i)
-    {
-      double xi = (double)i/(double)(numberOfTestPoints-1);
-      double u = x1 * (1-xi) + x2 * xi;
-      double v = y1 * (1-xi) + y2 * xi;
-      pts.push_back(gf->point(u,v));      
-    } 
-  edgeLength = 0;
-  for (int i=1;i<numberOfTestPoints;++i)
-    {
-      GPoint p1 = pts[i-1];
-      GPoint p2 = pts[i];
-      edgeLength += sqrt ( (p1.x() - p2.x())*(p1.x() - p2.x()) +
-			   (p1.y() - p2.y())*(p1.y() - p2.y()) +
-			   (p1.z() - p2.z())*(p1.z() - p2.z()) );			   
-    }
-  double ll = 0;
-  for (int i=1;i<numberOfTestPoints;++i)
-    {
-      double xi = (double)(i-1)/(double)(numberOfTestPoints-1);
-      GPoint p1 = pts[i-1];
-      GPoint p2 = pts[i];
-
-      double oldll = ll;
-
-      ll += sqrt ( (p1.x() - p2.x())*(p1.x() - p2.x()) +
-		   (p1.y() - p2.y())*(p1.y() - p2.y()) +
-		   (p1.z() - p2.z())*(p1.z() - p2.z()) );			   
-
-      if (oldll <= 0.5*edgeLength && ll >= 0.5*edgeLength)
-	{
-	  double xi2 = (0.5*edgeLength - oldll)/(ll-oldll);
-	  coordMiddle = xi + xi2/ (double)(numberOfTestPoints-1);
-	  return;
-	}  
-    }  
-}
-
 extern double F_LC_ANALY (double xx, double yy, double zz);
 
 double NewGetLc ( BDS_Point *p  )
@@ -303,7 +260,7 @@ void OptimizeMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
       std::set<BDS_Point*,PointLessThan>::iterator itp = PTS.begin();
       while (itp != PTS.end())
 	{
-	  std::list < BDS_Triangle * >t;
+	  std::list < BDS_Face * >t;
 	  (*itp)->getTriangles(t);
 	  if ((t.size()==3 && (*itp)->edges.size() == 3)||
 	      (t.size()==4 && (*itp)->edges.size() == 4))
@@ -368,12 +325,12 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
   while (1)
     {
     //   double stot = 0;
-//       std::list<BDS_Triangle *>::iterator ittt = m.triangles.begin();
+//       std::list<BDS_Face *>::iterator ittt = m.triangles.begin();
 //       while (ittt!= m.triangles.end())
 // 	{
 // 	  if (!(*ittt)->deleted)
 // 	    {
-// 	      BDS_Point *pts[3];
+// 	      BDS_Point *pts[4];
 // 	      (*ittt)->getNodes(pts);
 // 	      stot += fabs( surface_triangle_param(pts[0], pts[1], pts[2]));
 // 	    }
@@ -521,7 +478,6 @@ void OldMeshGenerator ( GFace *gf,
   }
 
   extern PointRecord *gPointArray;
-
 
   // FIX THAT !!
   double LC2D = 1;
@@ -710,8 +666,6 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge)
 // and surfaces
 void gmsh2DMeshGenerator ( GFace *gf )
 {
-
-  //  if(gf->tag() != 136) return;
 
   std::set<MVertex*>all_vertices;
   std::map<int, MVertex*>numbered_vertices;
@@ -911,10 +865,10 @@ void gmsh2DMeshGenerator ( GFace *gf )
 
   // delete useless stuff
   {
-    std::list<BDS_Triangle*>::iterator itt = m->triangles.begin();
+    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
     while (itt != m->triangles.end())
       {
-	BDS_Triangle *t = *itt;
+	BDS_Face *t = *itt;
 	if (!t->g)
 	  m->del_triangle (t);
 	++itt;
@@ -948,7 +902,13 @@ void gmsh2DMeshGenerator ( GFace *gf )
    // start mesh generation
 
   RefineMesh (gf,*m,20);
-  OptimizeMesh (gf,*m,2);
+  //  OptimizeMesh (gf,*m,2);
+
+
+  if (gf->meshAttributes.recombine)
+    {
+      m->recombineIntoQuads (gf->meshAttributes.recombineAngle,gf);
+    }
 
   // fill the small gmsh structures
 
@@ -959,31 +919,39 @@ void gmsh2DMeshGenerator ( GFace *gf )
 	BDS_Point *p = *itp;
 	if (numbered_vertices.find(p->iD)  == numbered_vertices.end())
 	  {
-	    //MVertex *v = new MFaceVertex (p->X,p->Y,p->Z,gf,p->u,p->v);
-	    MVertex *v = new MFaceVertex (p->u,p->v,0,gf,p->u,p->v);
+	    MVertex *v = new MFaceVertex (p->X,p->Y,p->Z,gf,p->u,p->v);
+	    //MVertex *v = new MFaceVertex (p->u,p->v,0,gf,p->u,p->v);
 	    numbered_vertices[p->iD]=v;
 	    gf->mesh_vertices.push_back(v);
 	  }
 	++itp;
       }
   }
+
   {
-    std::list<BDS_Triangle*>::iterator itt = m->triangles.begin();
+    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
     while (itt != m->triangles.end())
       {
-	BDS_Triangle *t = *itt;
-	BDS_Point *n[3];
-	t->getNodes(n);
+	BDS_Face *t = *itt;
 	if (!t->deleted)
 	  {
+	    BDS_Point *n[4];
+	    t->getNodes(n);
 	    MVertex *v1 = numbered_vertices[n[0]->iD];
 	    MVertex *v2 = numbered_vertices[n[1]->iD];
 	    MVertex *v3 = numbered_vertices[n[2]->iD];
-	    gf->triangles.push_back(new MTriangle (v1,v2,v3) );	
+	    if (!n[3])
+	      gf->triangles.push_back(new MTriangle (v1,v2,v3) );	
+	    else
+	      {
+		MVertex *v4 = numbered_vertices[n[3]->iD];
+		gf->quadrangles.push_back(new MQuadrangle (v1,v2,v3,v4) );	
+	      }
 	  }
 	++itt;
       }
   }
+
 
   // delete the mesh
 
@@ -1008,9 +976,9 @@ void gmsh2DMeshGenerator ( GFace *gf )
   delete [] Y_;
   delete [] Z_;
 
-  fromParametricToCartesian p2c ( gf );
+  //  fromParametricToCartesian p2c ( gf );
   //  std::for_each(all_vertices.begin(),all_vertices.end(),p2c);    
-  std::for_each(gf->mesh_vertices.begin(),gf->mesh_vertices.end(),p2c);    
+  //  std::for_each(gf->mesh_vertices.begin(),gf->mesh_vertices.end(),p2c);    
 }
  
 

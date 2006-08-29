@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.16 2006-08-23 19:53:39 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.17 2006-08-29 10:39:48 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -68,6 +68,9 @@ gmshFace::gmshFace(GModel *m, Surface *face)
       embedded_vertices.push_back(gv);
     }
   }
+
+  meshAttributes.recombine = s->Recombine;
+  meshAttributes.recombineAngle = s->RecombineAngle;
 }
 
 gmshFace::gmshFace(GModel *m, int num)

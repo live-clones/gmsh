@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.59 2006-08-26 15:13:22 remacle Exp $
+// $Id: BDS.cpp,v 1.60 2006-08-29 10:39:48 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,7 @@
 #include "Message.h"
 #include "GFace.h"
 
-bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS_Triangle *t);
+bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS_Face *t);
 
 double BDS_Point::min_edge_length()
 {
@@ -42,14 +42,14 @@ double BDS_Point::min_edge_length()
   return L;
 }
 
-void outputScalarField(std::list < BDS_Triangle * >t, const char *iii)
+void outputScalarField(std::list < BDS_Face * >t, const char *iii)
 {
   FILE *f = fopen(iii, "w");
   fprintf(f, "View \"scalar\" {\n");
-  std::list < BDS_Triangle * >::iterator tit = t.begin();
-  std::list < BDS_Triangle * >::iterator tite = t.end();
+  std::list < BDS_Face * >::iterator tit = t.begin();
+  std::list < BDS_Face * >::iterator tite = t.end();
   while(tit != tite) {
-    BDS_Point *pts[3];
+    BDS_Point *pts[4];
     (*tit)->getNodes(pts);
     fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
             pts[0]->X, pts[0]->Y, pts[0]->Z,
@@ -63,146 +63,9 @@ void outputScalarField(std::list < BDS_Triangle * >t, const char *iii)
   fclose(f);
 }
 
-double BDS_Quadric::normalCurv(double x, double y, double z) const
-{
-  // K = div n = div ( Grad(f) / ||Grad(f)||)
-  //   = Laplacian (f) /  ||Grad(f)|| - Grad^t(f) Hessian Grad(f) / ||Grad(f)||^3
-  BDS_Vector g = Gradient(x, y, z);
-  const double normG2 = 1. / (g.x * g.x + g.y * g.y + g.z * g.z);
-  double normG = sqrt(normG2);
-  double c1 = 2 * (a + b + c);
-  double c2 =
-    2 * a * g.x * g.x +
-    2 * b * g.y * g.y +
-    2 * c * g.z * g.z +
-    4 * d * g.x * g.y + 4 * e * g.x * g.z + 4 * f * g.y * g.z;
-
-  // printf("%g %g %g %g %g %g\n",a,b,c,normG,c1, c2 / (normG*normG*normG));
-  return fabs(c1 - c2 * (normG2)) * normG;
-}
-
-void BDS_Quadric::projection(double xa, double ya, double za,
-                             double &x, double &y, double &z) const
-{
-  x = xa;
-  y = ya;
-  z = za;
-  const double residual = signedDistanceTo(xa, ya, za);
-
-  int ITER = 0;
-  while(1) {
-    // the equation to solve is 
-    // X = XA + z * N (XA)
-    // N = Gradient F (XA)
-    // F(X) is the quadric :: X^t A X + X^t B + C
-    // z^2 ( N^t A N ) + z ( XA^t A N + N^t A XA + N^t B) + F ( XA )  
-    BDS_Vector grad = Gradient(x, y, z);
-    double coef1 =
-      a * grad.x * grad.x +
-      b * grad.y * grad.y +
-      c * grad.z * grad.z +
-      2 * d * grad.x * grad.y +
-      2 * e * grad.x * grad.z + 2 * f * grad.y * grad.z;
-    double coef2 =
-      2 * a * xa * grad.x +
-      2 * b * ya * grad.y +
-      2 * c * za * grad.z +
-      2 * d * (xa * grad.y + ya * grad.x) +
-      2 * e * (xa * grad.z + za * grad.x) +
-      2 * f * (za * grad.y + ya * grad.z) +
-      grad.x * g + grad.y * h + grad.z * i;
-    double delta = coef2 * coef2 - 4. * coef1 * residual;
-    if(delta < 0) {
-      // printf("aaargh error projection delta = %g\n",delta);
-    }
-    else {
-      double alpha;
-      double alpha1 = (-coef2 + sqrt(delta)) / (2 * coef1);
-      double alpha2 = (-coef2 - sqrt(delta)) / (2 * coef1);
-      if(fabs(alpha1) > fabs(alpha2))
-        alpha = alpha2;
-      else
-        alpha = alpha1;
-      x = xa + alpha * grad.x;
-      y = ya + alpha * grad.y;
-      z = za + alpha * grad.z;
-    }
-    // printf("point (%g,%g,%g) ==> (%g,%g,%g) dist %g\n",
-    //        xa,ya,za,x,y,z,signedDistanceTo(x,y,z));;
-    if(ITER++ == 0)
-      break;
-  }
-}
-
-void BDS_GeomEntity::getClosestTriangles(double x, double y, double z,
-                                         std::list < BDS_Triangle * >&l,
-                                         double &radius ,
-                                         double &X, double &Y, double &Z)
-{
-#ifdef HAVE_ANN_
-  l.clear();
-
-  if(kdTree == 0) {
-    l = t;
-    return;
-  }
-
-  queryPt[0] = x;
-  queryPt[1] = y;
-  queryPt[2] = z;
-
-  double eps = 0.;
-  kdTree->annkSearch(queryPt,  // query point
-		     nbK,      // number of near neighbors
-		     nnIdx,    // nearest neighbors (returned)
-		     dists,    // distance (returned)
-		     eps);     // error bound
-
-  std::list < BDS_Triangle * >l1, l2, l3;
-
-  X = kdTree->thePoints()[nnIdx[0]][0];
-  Y = kdTree->thePoints()[nnIdx[0]][1];
-  Z = kdTree->thePoints()[nnIdx[0]][2];
-
-  radius = sR[nnIdx[0]];
-
-  for(int K = 0; K < nbK; K++) {
-    BDS_Edge *e = sE[nnIdx[K]];
-    e->p1->getTriangles(l1);
-    e->p2->getTriangles(l2);
-    l.insert(l.begin(), l1.begin(), l1.end());
-    l.insert(l.begin(), l2.begin(), l2.end());
-    l.sort();
-    l.unique();
-  }
-
-#else
-  {
-    l = t;
-  }
-#endif
-}
-
-
 BDS_Vector::BDS_Vector(const BDS_Point & p2, const BDS_Point & p1)
   :x(p2.X - p1.X), y(p2.Y - p1.Y), z(p2.Z - p1.Z)
 {
-}
-
-BDS_Vector BDS_Point::N() const
-{
-  std::list < BDS_Triangle * >t;
-  getTriangles(t);
-  std::list < BDS_Triangle * >::iterator tit = t.begin();
-  std::list < BDS_Triangle * >::iterator tite = t.end();
-  BDS_Vector SumN;
-  while(tit != tite) {
-    SumN += (*tit)->N();
-    ++tit;
-  }
-  double NORM = sqrt(SumN * SumN);
-  SumN /= NORM;
-  return SumN;
 }
 
 double dist_droites_gauches(BDS_Point * p1, BDS_Point * p2,
@@ -226,7 +89,7 @@ double dist_droites_gauches(BDS_Point * p1, BDS_Point * p2,
 
 bool proj_point_triangle(double xa, double ya, double za,
                          const BDS_Vector & n,
-                         BDS_Triangle * t, double &x, double &y, double &z)
+                         BDS_Face * t, double &x, double &y, double &z)
 {
   const double eps_prec = 1.e-10;
   //  BDS_Vector n = t->N();
@@ -234,7 +97,7 @@ bool proj_point_triangle(double xa, double ya, double za,
   double b[3];
   double res[2];
   double det;
-  BDS_Point *pts[3];
+  BDS_Point *pts[4];
   t->getNodes(pts);
 
   mat[0][0] = pts[1]->X - pts[0]->X;
@@ -307,9 +170,9 @@ void proj_point_plane(double xa, double ya, double za,
   z = za + k * n[2];
 }
 
-void print_face(BDS_Triangle * t)
+void print_face(BDS_Face * t)
 {
-  BDS_Point *pts[3];
+  BDS_Point *pts[4];
   t->getNodes(pts);
   printf("face %p with nodes %d %d %d and edges %p (%d %d) %p (%d %d) %p (%d %d)\n",
 	 (void *)t, pts[0]->iD, pts[1]->iD, pts[2]->iD, (void *)t->e1,
@@ -387,7 +250,7 @@ double quality_triangle(BDS_Point * p1, BDS_Point * p2, BDS_Point * p3)
   return a / (e12 + e22 + e32);
 }
 
-void BDS_Point::getTriangles(std::list < BDS_Triangle * >&t) const
+void BDS_Point::getTriangles(std::list < BDS_Face * >&t) const
 {
   t.clear();
   std::list < BDS_Edge * >::const_iterator it = edges.begin();
@@ -395,10 +258,10 @@ void BDS_Point::getTriangles(std::list < BDS_Triangle * >&t) const
   while(it != ite) {
     int NF = (*it)->numfaces();
     for(int i = 0; i < NF; ++i) {
-      BDS_Triangle *tt = (*it)->faces(i);
+      BDS_Face *tt = (*it)->faces(i);
       if(tt) {
-        std::list < BDS_Triangle * >::iterator tit = t.begin();
-        std::list < BDS_Triangle * >::iterator tite = t.end();
+        std::list < BDS_Face * >::iterator tit = t.begin();
+        std::list < BDS_Face * >::iterator tite = t.end();
         int found = 0;
         while(tit != tite) {
           if(tt == *tit)
@@ -429,9 +292,9 @@ BDS_Point *BDS_Mesh::add_point(int num, double u, double v, GFace *gf)
   pp->u = u;
   pp->v = v;
   points.insert(pp);
-  double curvature = gf->curvature (SPoint2(u,v));
+  //  double curvature = gf->curvature (SPoint2(u,v));
   //  pp->radius() = (curvature ==0.0) ? 1.e22:1./curvature;
-  pp->radius() = curvature;
+  //  pp->radius() = curvature;
   MAXPOINTNUMBER = (MAXPOINTNUMBER < num) ? num : MAXPOINTNUMBER;
   return pp;
 }
@@ -515,13 +378,13 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2)
 	}
       
       int ichoice = ix++ % intersected.size();
-      swap_edge ( intersected[ichoice] , BDS_SwapEdgeTestPlanar () );	       
+      swap_edge ( intersected[ichoice] , BDS_SwapEdgeTestParametric () );	       
     }
   return 0;
 }
 
 BDS_Edge *BDS_Mesh::find_edge(BDS_Point * p1, BDS_Point * p2,
-                              BDS_Triangle * t) const
+                              BDS_Face * t) const
 {
   BDS_Point P1(p1->iD);
   BDS_Point P2(p2->iD);
@@ -535,12 +398,12 @@ BDS_Edge *BDS_Mesh::find_edge(BDS_Point * p1, BDS_Point * p2,
   return 0;
 }
 
-BDS_Triangle *BDS_Mesh::find_triangle(BDS_Edge * e1, BDS_Edge * e2,
+BDS_Face *BDS_Mesh::find_triangle(BDS_Edge * e1, BDS_Edge * e2,
                                       BDS_Edge * e3)
 {
   int i;
   for(i = 0; i < e1->numfaces(); i++) {
-    BDS_Triangle *t = e1->faces(i);
+    BDS_Face *t = e1->faces(i);
     BDS_Edge *o1 = t->e1;
     BDS_Edge *o2 = t->e2;
     BDS_Edge *o3 = t->e3;
@@ -553,7 +416,7 @@ BDS_Triangle *BDS_Mesh::find_triangle(BDS_Edge * e1, BDS_Edge * e2,
       return t;
   }
   for(i = 0; i < e2->numfaces(); i++) {
-    BDS_Triangle *t = e2->faces(i);
+    BDS_Face *t = e2->faces(i);
     BDS_Edge *o1 = t->e1;
     BDS_Edge *o2 = t->e2;
     BDS_Edge *o3 = t->e3;
@@ -566,7 +429,7 @@ BDS_Triangle *BDS_Mesh::find_triangle(BDS_Edge * e1, BDS_Edge * e2,
       return t;
   }
   for(i = 0; i < e3->numfaces(); i++) {
-    BDS_Triangle *t = e3->faces(i);
+    BDS_Face *t = e3->faces(i);
     BDS_Edge *o1 = t->e1;
     BDS_Edge *o2 = t->e2;
     BDS_Edge *o3 = t->e3;
@@ -596,7 +459,7 @@ BDS_Edge *BDS_Mesh::add_edge(int p1, int p2)
   return e;
 }
 
-BDS_Triangle *BDS_Mesh::add_triangle(int p1, int p2, int p3)
+BDS_Face *BDS_Mesh::add_triangle(int p1, int p2, int p3)
 {
   BDS_Edge *e1 = add_edge(p1, p2);
   BDS_Edge *e2 = add_edge(p2, p3);
@@ -604,42 +467,46 @@ BDS_Triangle *BDS_Mesh::add_triangle(int p1, int p2, int p3)
   return add_triangle(e1, e2, e3);
 }
 
-BDS_Triangle *BDS_Mesh::add_triangle(BDS_Edge * e1, BDS_Edge * e2,
+BDS_Face *BDS_Mesh::add_triangle(BDS_Edge * e1, BDS_Edge * e2,
                                      BDS_Edge * e3)
 {
 
-  BDS_Triangle *tfound = find_triangle(e1, e2, e3);
-  if(tfound)
-    return tfound;
-
-  try {
-    BDS_Triangle *t = new BDS_Triangle(e1, e2, e3);
-    triangles.push_back(t);
-    return t;
-  }
-  catch(...) {
-    return 0;
-  }
-}
-
-BDS_Tet *BDS_Mesh::add_tet(int p1, int p2, int p3, int p4)
-{
-  BDS_Edge *e1 = add_edge(p1, p2);
-  BDS_Edge *e2 = add_edge(p2, p3);
-  BDS_Edge *e3 = add_edge(p3, p1);
-  BDS_Edge *e4 = add_edge(p1, p4);
-  BDS_Edge *e5 = add_edge(p2, p4);
-  BDS_Edge *e6 = add_edge(p3, p4);
-  BDS_Triangle *t1 = add_triangle(e1, e2, e3);
-  BDS_Triangle *t2 = add_triangle(e1, e4, e5);
-  BDS_Triangle *t3 = add_triangle(e2, e6, e5);
-  BDS_Triangle *t4 = add_triangle(e3, e4, e6);
-  BDS_Tet *t = new BDS_Tet(t1, t2, t3, t4);
-  tets.push_back(t);
+  //BDS_Face *tfound = find_triangle(e1, e2, e3);
+  //  if(tfound)
+  //    return tfound;
+  
+  BDS_Face *t = new BDS_Face(e1, e2, e3);
+  triangles.push_back(t);
   return t;
 }
 
-void BDS_Mesh::del_triangle(BDS_Triangle * t)
+BDS_Face *BDS_Mesh::add_quadrangle(BDS_Edge * e1, BDS_Edge * e2,
+				   BDS_Edge * e3,BDS_Edge * e4 )
+{
+  BDS_Face *t = new BDS_Face(e1, e2, e3, e4);
+  triangles.push_back(t);
+  return t;
+}
+
+
+// BDS_Tet *BDS_Mesh::add_tet(int p1, int p2, int p3, int p4)
+// {
+//   BDS_Edge *e1 = add_edge(p1, p2);
+//   BDS_Edge *e2 = add_edge(p2, p3);
+//   BDS_Edge *e3 = add_edge(p3, p1);
+//   BDS_Edge *e4 = add_edge(p1, p4);
+//   BDS_Edge *e5 = add_edge(p2, p4);
+//   BDS_Edge *e6 = add_edge(p3, p4);
+//   BDS_Face *t1 = add_triangle(e1, e2, e3);
+//   BDS_Face *t2 = add_triangle(e1, e4, e5);
+//   BDS_Face *t3 = add_triangle(e2, e6, e5);
+//   BDS_Face *t4 = add_triangle(e3, e4, e6);
+//   BDS_Tet *t = new BDS_Tet(t1, t2, t3, t4);
+//   tets.push_back(t);
+//   return t;
+// }
+
+void BDS_Mesh::del_triangle(BDS_Face * t)
 {
   t->e1->del(t);
   t->e2->del(t);
@@ -671,7 +538,7 @@ void BDS_Edge::oppositeof(BDS_Point * oface[2]) const
 {
   oface[0] = oface[1] = 0;
   if(faces(0)) {
-    BDS_Point *pts[3];
+    BDS_Point *pts[4];
     faces(0)->getNodes(pts);
     if(pts[0] != p1 && pts[0] != p2)
       oface[0] = pts[0];
@@ -681,7 +548,7 @@ void BDS_Edge::oppositeof(BDS_Point * oface[2]) const
       oface[0] = pts[2];
   }
   if(faces(1)) {
-    BDS_Point *pts[3];
+    BDS_Point *pts[4];
     faces(1)->getNodes(pts);
     if(pts[0] != p1 && pts[0] != p2)
       oface[1] = pts[0];
@@ -701,11 +568,11 @@ BDS_GeomEntity *BDS_Mesh::get_geom(int p1, int p2)
   return (BDS_GeomEntity *) (*it);
 }
 
-void recur_tag(BDS_Triangle * t, BDS_GeomEntity * g)
+void recur_tag(BDS_Face * t, BDS_GeomEntity * g)
 {
   if(!t->g) {
     t->g = g;
-    g->t.push_back(t);
+    //    g->t.push_back(t);
     if(!t->e1->g && t->e1->numfaces() == 2) {
       recur_tag(t->e1->otherFace(t), g);
     }
@@ -718,664 +585,6 @@ void recur_tag(BDS_Triangle * t, BDS_GeomEntity * g)
   }
 }
 
-void BDS_Mesh::reverseEngineerCAD()
-{
-  for(std::set < BDS_GeomEntity *, GeomLessThan >::iterator it = geom.begin();
-      it != geom.end(); ++it) {
-    if((*it)->classif_degree == 2) {
-      std::set < BDS_Vector > pts;
-      std::list < BDS_Triangle * >::iterator tit = (*it)->t.begin();
-      std::list < BDS_Triangle * >::iterator tite = (*it)->t.end();
-      BDS_Vector::t = LC / 1.e6;
-      while(tit != tite) {
-        BDS_Point *nod[3];
-        (*tit)->getNodes(nod);
-        BDS_Vector p1 = BDS_Vector(nod[0]->X, nod[0]->Y, nod[0]->Z);
-        BDS_Vector p2 = BDS_Vector(nod[1]->X, nod[1]->Y, nod[1]->Z);
-        BDS_Vector p3 = BDS_Vector(nod[2]->X, nod[2]->Y, nod[2]->Z);
-        pts.insert(p1);
-        pts.insert(p2);
-        pts.insert(p3);
-        pts.insert((p1 + p2) * 0.5);
-        pts.insert((p1 + p3) * 0.5);
-        pts.insert((p2 + p3) * 0.5);
-        tit++;
-      }
-
-      // We consider the following implicit quadrics surface
-      // f(x) = x^T A x + b^T x + c = 0 
-      // A symmetric ( 6 coeffs ), b a vector ( 3 coeffs ) and c a scalar
-      // 10 coefficients
-      // we try to fit that using least squares
-      // we use both points and edges mid points for the fitting 
-
-      if(pts.size() > 3) {
-        // TEST PLANE (easier than quadrics...)
-        {
-          Double_Matrix PLANE(pts.size(), 3);
-          Double_Vector ONES(pts.size());
-          Double_Vector RSLT(3);
-          std::set < BDS_Vector >::iterator pit = pts.begin();
-          std::set < BDS_Vector >::iterator pite = pts.end();
-          int k = 0;
-          while(pit != pite) {
-            PLANE(k, 0) = (*pit).x + (rand() % 1000) * LC / 1.e12;
-            PLANE(k, 1) = (*pit).y + (rand() % 1000) * LC / 1.e12;
-            PLANE(k, 2) = (*pit).z + (rand() % 1000) * LC / 1.e12;
-            ONES(k) = -1;
-            k++;
-            ++pit;
-          }
-
-          PLANE.least_squares(ONES, RSLT);
-          // printf("%d points plane surface %d ?? : %g %g %g\n",
-	  //        pts.size(),(*it)->classif_tag,RSLT(0),RSLT(1),RSLT(2));
-
-          bool plane = true;
-          for(unsigned int i = 0; i < pts.size(); i++) {
-            const double dist = PLANE(i, 0) * RSLT(0) + PLANE(i, 1) * RSLT(1) +
-	      PLANE(i, 2) * RSLT(2) + 1;
-            if(fabs(dist) >
-               1.e-5 * LC * sqrt(RSLT(0) * RSLT(0) + RSLT(1) * RSLT(1) +
-                                 RSLT(2) * RSLT(2)))
-              plane = false;
-          }
-
-          if(plane) {
-            // printf("plane surface %d found : %g %g %g\n",
-	    //        (*it)->classif_tag,RSLT(0),RSLT(1),RSLT(2));
-            (*it)->surf = new BDS_Plane(RSLT(0), RSLT(1), RSLT(2));
-          }
-        }
-        if(!(*it)->surf && pts.size() > 20) {
-          Double_Matrix QUADRIC(pts.size(), 9);
-          Double_Vector ONES(pts.size());
-          Double_Vector RSLT(9);
-          std::set < BDS_Vector >::iterator pit = pts.begin();
-          std::set < BDS_Vector >::iterator pite = pts.end();
-          int k = 0;
-          while(pit != pite) {
-            QUADRIC(k, 0) = (*pit).x * (*pit).x;
-            QUADRIC(k, 1) = (*pit).y * (*pit).y;
-            QUADRIC(k, 2) = (*pit).z * (*pit).z;
-            QUADRIC(k, 3) = 2 * (*pit).x * (*pit).y;
-            QUADRIC(k, 4) = 2 * (*pit).x * (*pit).z;
-            QUADRIC(k, 5) = 2 * (*pit).y * (*pit).z;
-            QUADRIC(k, 6) = (*pit).x;
-            QUADRIC(k, 7) = (*pit).y;
-            QUADRIC(k, 8) = (*pit).z;
-            ONES(k) = 1;
-            k++;
-            ++pit;
-          }
-          QUADRIC.least_squares(ONES, RSLT);
-          bool quad = true;
-          BDS_Quadric temp(RSLT(0), RSLT(1), RSLT(2), RSLT(3), RSLT(4),
-                           RSLT(5), RSLT(6), RSLT(7), RSLT(8));
-          pit = pts.begin();
-          while(pit != pite) {
-            double x, y, z;
-            temp.projection((*pit).x, (*pit).y, (*pit).z, x, y, z);
-            const double dist = sqrt(((*pit).x - x) * ((*pit).x - x) +
-                                     ((*pit).y - y) * ((*pit).y - y) +
-                                     ((*pit).z - z) * ((*pit).z - z));
-            // printf("%g %g %g ... %g %g %g\n",(*pit).x , (*pit).y , (*pit).z ,x,y,z);
-
-            if(dist > 1.e-3 * LC)
-              quad = false;
-            ++pit;
-          }
-          if(quad) {
-            // printf("quadric surface %d found : %g %g %g %g %g %g %g %g %g\n",
-	    //       (*it)->classif_tag, RSLT(0),RSLT(1),RSLT(2),RSLT(3),RSLT(4),
-	    //       RSLT(5),RSLT(6),RSLT(7),RSLT(8));
-            (*it)->surf =
-              new BDS_Quadric(RSLT(0), RSLT(1), RSLT(2), RSLT(3), RSLT(4),
-                              RSLT(5), RSLT(6), RSLT(7), RSLT(8));
-            //test
-            /*
-               FILE *f = fopen ("QUADRIC.pos","w");
-               fprintf(f,"View \"quadric\" {\n");
-               const int NNN = 20;
-               for (int I=0;I<NNN;I++){
-               for (int J=0;J<NNN;J++){
-               for (int K=0;K<NNN;K++){
-               double u1 = (double)I/NNN;
-               double v1 = (double)J/NNN;
-               double w1 = (double)K/NNN;
-               double X1 = Min[0] + u1 * (Max[0]-Min[0]);
-               double Y1 = Min[1] + v1 * (Max[1]-Min[1]);
-               double Z1 = Min[2] + w1 * (Max[2]-Min[2]);
-               double u2 = (double)(I+1)/NNN;
-               double v2 = (double)(J+1)/NNN;
-               double w2 = (double)(K+1)/NNN;
-               double X2 = Min[0] + u2 * (Max[0]-Min[0]);
-               double Y2 = Min[1] + v2 * (Max[1]-Min[1]);
-               double Z2 = Min[2] + w2 * (Max[2]-Min[2]);
-               fprintf(f,"SH(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,"
-	                  "%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g};\n",
-			  X1,Y1,Z1,X2,Y1,Z1,X2,Y2,Z1,X1,Y2,Z1,X1,Y1,Z2,X2,
-			  Y1,Z2,X2,Y2,Z2,X1,Y2,Z2,
-			  (*it)->surf->signedDistanceTo (X1,Y1,Z1),
-			  (*it)->surf->signedDistanceTo (X2,Y1,Z1),
-			  (*it)->surf->signedDistanceTo (X2,Y2,Z1),
-			  (*it)->surf->signedDistanceTo (X1,Y2,Z1),
-			  (*it)->surf->signedDistanceTo (X1,Y1,Z2),
-			  (*it)->surf->signedDistanceTo (X2,Y1,Z2),
-			  (*it)->surf->signedDistanceTo (X2,Y2,Z2),
-			  (*it)->surf->signedDistanceTo (X1,Y2,Z2));
-               }
-               }
-               }
-               fprintf(f,"};\n");
-               fclose(f);                 
-             */
-          }
-        }
-      }
-    }
-  }
-}
-
-void BDS_Mesh::createSearchStructures()
-{
-#ifdef HAVE_ANN_
-
-  Msg(INFO, "Creating the ANN search structure");
-
-  const double LC_SEARCH = LC * 1e-3;
-
-  for(std::set < BDS_GeomEntity *, GeomLessThan >::iterator it = geom.begin();
-      it != geom.end(); ++it) {
-    if((*it)->classif_degree == 2 && !(*it)->surf) {
-      if((*it)->t.size() > 5) {
-        int maxPts = 0;
-	
-        std::set < BDS_Edge * >edg;
-
-        std::list < BDS_Triangle * >::iterator tit = (*it)->t.begin();
-        std::list < BDS_Triangle * >::iterator tite = (*it)->t.end();
-
-        while(tit != tite) {
-          edg.insert((*tit)->e1);
-          edg.insert((*tit)->e2);
-          edg.insert((*tit)->e3);
-          tit++;
-        }
-
-        std::set < BDS_Edge * >::iterator eit = edg.begin();
-        std::set < BDS_Edge * >::iterator eite = edg.end();
-        while(eit != eite) {
-          double l = (*eit)->length();
-          maxPts += (int)(l / (LC_SEARCH) + 2);
-          eit++;
-        }
-
-        // printf("%d pts found\n", maxPts);
-
-        const int dim = 3;
-        (*it)->queryPt = annAllocPt(dim);       // allocate query point
-        (*it)->dataPts = annAllocPts(maxPts, dim);      // allocate data points
-        (*it)->nnIdx = new ANNidx[(*it)->nbK];  // allocate near neigh indices
-        (*it)->dists = new ANNdist[(*it)->nbK]; // allocate near neighbor dists  
-        (*it)->sE.resize(maxPts);
-        (*it)->sR.resize(maxPts);
-        int I = 0;
-
-        eit = edg.begin();
-        eite = edg.end();
-        while(eit != eite) {
-          double l = (*eit)->length();
-          int N = (int)(l / (LC_SEARCH) + 2);
-          BDS_Point *p1 = (*eit)->p1;
-          BDS_Point *p2 = (*eit)->p2;
-
-          for(int i = 0; i < N; i++) {
-            double u = (double)i / (N - 1);
-            (*it)->dataPts[I][0] = p1->X + (p2->X - p1->X) * (u);
-            (*it)->dataPts[I][1] = p1->Y + (p2->Y - p1->Y) * (u);
-            (*it)->dataPts[I][2] = p1->Z + (p2->Z - p1->Z) * (u);
-            (*it)->sE[I] = (*eit);
-            (*it)->sR[I] =
-              p1->radius() + (p2->radius() -
-                                         p1->radius()) * (u);;
-            I++;
-          }
-          eit++;
-        }
-        // printf("building kd Tree for surface %d -- %d points\n",(*it)->classif_tag,maxPts);
-        (*it)->kdTree = new ANNkd_tree( // build search structure
-                                        (*it)->dataPts, // the data points
-                                        maxPts, // number of points
-                                        dim);
-      }
-    }
-  }
-#endif
-}
-
-void BDS_Point::compute_curvature()
-{
-  std::list < BDS_Triangle * >t;
-  getTriangles(t);
-
-  // printf("curvature using %d triangles\n",t.size());
-
-  if(g && g->classif_degree != 2) {
-    radius() = 1.e22;
-    return;
-  }
-
-  if(t.size() > 4) {
-    Double_Matrix M(t.size(), 4);
-    Double_Vector Nx(t.size());
-    Double_Vector Ny(t.size());
-    Double_Vector Nz(t.size());
-    Double_Vector Cx(4);
-    Double_Vector Cy(4);
-    Double_Vector Cz(4);
-
-    std::list < BDS_Triangle * >::iterator tit = t.begin();
-    std::list < BDS_Triangle * >::iterator tite = t.end();
-    int k = 0;
-    while(tit != tite) {
-      const BDS_Vector cog = (*tit)->cog();
-      M(k, 0) = X - cog.x;
-      M(k, 1) = Y - cog.y;
-      M(k, 2) = Z - cog.z;
-      M(k, 3) = 1.0;
-      BDS_Vector N = (*tit)->N();
-      Nx(k) = N.x;
-      Ny(k) = N.y;
-      Nz(k) = N.z;
-      k++;
-      ++tit;
-    }
-    M.least_squares(Nx, Cx);
-    M.least_squares(Ny, Cy);
-    M.least_squares(Nz, Cz);
-
-    // curvature = divergence of n
-
-    double curvature = fabs(Cx(0)) + fabs(Cy(1)) + fabs(Cz(2));
-
-    if(curvature != 0.0)
-      radius() = fabs(1. / curvature);
-    else
-      radius() = 1.e22;
-    // printf(" R = %g\n",radius());
-  }
-}
-
-void compute_curvatures(std::list < BDS_Edge * >&edges)
-{
-  {
-    std::list < BDS_Edge * >::iterator it = edges.begin();
-    std::list < BDS_Edge * >::iterator ite = edges.end();
-    while(it != ite) {
-      (*it)->target_length = 1.e22;
-      (*it)->p1->radius() = 1.e22;
-      (*it)->p2->radius() = 1.e22;
-      ++it;
-    }
-
-  }
-  {
-    std::list < BDS_Edge * >::iterator it = edges.begin();
-    std::list < BDS_Edge * >::iterator ite = edges.end();
-    while(it != ite) {
-      if((*it)->numfaces() == 2) {
-        if((*it)->faces(0)->g == (*it)->faces(1)->g) {
-          double l1 = 2 * (*it)->faces(0)->inscribed_radius();
-          double l2 = 2 * (*it)->faces(1)->inscribed_radius();
-          BDS_Vector N1 = (*it)->faces(0)->N();
-          BDS_Vector N2 = (*it)->faces(1)->N();
-          BDS_Vector DIFFN = N2 - N1;
-          BDS_Vector DIST = l1 + l2;
-          double crv = 1. / sqrt((DIFFN * DIFFN) / (DIST * DIST));
-
-          if((*it)->p1->radius() > crv)
-            (*it)->p1->radius() = crv;
-          if((*it)->p2->radius() > crv)
-            (*it)->p2->radius() = crv;
-        }
-      }
-      ++it;
-    }
-  }
-}
-
-
-void recur_color_plane_surf(const double eps,
-                            BDS_Triangle * t,
-                            const BDS_Vector & n,
-                            std::set < BDS_Triangle * >&all,
-                            std::list < BDS_Triangle * >&plane)
-{
-  if(all.find(t) == all.end()) {
-    BDS_Vector n2 = t->N();
-    double angle = fabs(n2.angle(n));
-    // printf("triangle %p angle %g\n",t,angle);
-    if(angle < eps) {
-      all.insert(t);
-      plane.push_back(t);
-      if(t->e1->numfaces() == 2)
-        recur_color_plane_surf(eps, t->e1->otherFace(t), n, all, plane);
-      if(t->e2->numfaces() == 2)
-        recur_color_plane_surf(eps, t->e2->otherFace(t), n, all, plane);
-      if(t->e3->numfaces() == 2)
-        recur_color_plane_surf(eps, t->e3->otherFace(t), n, all, plane);
-    }
-  }
-}
-
-
-
-
-void BDS_Mesh::color_plane_surf(double eps, int NB_T)
-{
-  int current_status = 100000;
-  std::set < BDS_Triangle * >all;
-  std::list < BDS_Triangle * >::iterator it = triangles.begin();
-  std::list < BDS_Triangle * >::iterator ite = triangles.end();
-  while(it != ite) 
-    {
-      if(all.find(*it) == all.end()) 
-	{
-	  std::list < BDS_Triangle * >plane;
-	  BDS_Triangle *start = (BDS_Triangle *) (*it);
-	  recur_color_plane_surf(eps, start, start->N(), all, plane);
-	  if((int)plane.size() > NB_T) 
-	    {
-	      // printf("plane surface found %d triangles\n",plane.size());
-	      std::list < BDS_Triangle * >::iterator xit = plane.begin();
-	      std::list < BDS_Triangle * >::iterator xite = plane.end();
-	      while(xit != xite) 
-		{
-		  (*xit)->status = current_status;
-		  ++xit;
-		}
-	      current_status++;
-	    }
-	}
-      ++it;
-    }
-}
-
-bool BDS_Mesh::extractVolumes()
-{
-  bool closed = true;
-  {
-    std::list < BDS_Edge * >::iterator it = edges.begin();
-    std::list < BDS_Edge * >::iterator ite = edges.end();
-    while(it != ite) 
-      {
-	if ( (*it)->numfaces() !=2 ) closed = false;	  
-	++it;
-      }    
-  }
-  
-  // printf("the domain is closed ? : %d\n",closed);
-  return closed;
-}
-
-
-void BDS_Mesh::classify(double angle, int NB_T)
-{
-  // printf("  classifying \n");
-
-  static BDS_GeomEntity EDGE_CLAS(0, 1);
-  // clear everything
-
-  {
-    {
-      std::set < BDS_Point *, PointLessThan >::iterator it = points.begin();
-      std::set < BDS_Point *, PointLessThan >::iterator ite = points.end();
-      while(it != ite) {
-        (*it)->g = 0;
-        ++it;
-      }
-    }
-    {
-      std::list < BDS_Edge * >::iterator it = edges.begin();
-      std::list < BDS_Edge * >::iterator ite = edges.end();
-      while(it != ite) {
-        (*it)->g = 0;
-        ++it;
-      }
-    }
-    {
-      std::list < BDS_Triangle * >::iterator it = triangles.begin();
-      std::list < BDS_Triangle * >::iterator ite = triangles.end();
-      while(it != ite) {
-        (*it)->g = 0;
-        if((*it)->status > 10000)
-          (*it)->status = 0;
-        ++it;
-      }
-    }
-    geom.clear();
-  }
-
-  color_plane_surf(3.1415/200, 40);
-
-  {
-    std::list < BDS_Edge * >::iterator it = edges.begin();
-    std::list < BDS_Edge * >::iterator ite = edges.end();
-    while(it != ite) {
-      BDS_Edge & e = *((BDS_Edge *) * it);
-      if(e.status == 1) {
-        e.g = &EDGE_CLAS;
-      }
-      else if(e.status == -1) {
-      }
-      else if(e.numfaces() == 1) {
-        e.g = &EDGE_CLAS;
-      }
-      else if(e.numfaces() == 2 && e.faces(0)->status != e.faces(1)->status) {
-        e.g = &EDGE_CLAS;
-      }
-      else if(e.numfaces() == 2) {
-        BDS_Vector N0 = e.faces(0)->N();
-        BDS_Vector N1 = e.faces(1)->N();
-        double ag = N0.angle(N1);
-        if(fabs(ag) > angle) {
-          e.g = &EDGE_CLAS;
-        }
-      }
-      else {
-        e.g = &EDGE_CLAS;
-      }
-      ++it;
-    }
-  }
-
-  /*
-     {
-     std::list<BDS_Triangle*>::iterator it  = triangles.begin();
-     std::list<BDS_Triangle*>::iterator ite = triangles.end();
-     while(it!=ite){
-     (*it)->g = 0;
-     ++it;
-     }
-     geom.clear();
-     }
-   */
-
-  // printf("  classifying faces\n");
-
-  {
-    int tag = 1;
-    while(1) {
-      std::list < BDS_Triangle * >::iterator it = triangles.begin();
-      std::list < BDS_Triangle * >::iterator ite = triangles.end();
-      BDS_Triangle *start = 0;
-      while(it != ite) {
-        if(!(*it)->deleted && !(*it)->g) {
-          start = (BDS_Triangle *) (*it);
-        }
-        if(start)
-          break;
-        ++it;
-      }
-      if(!start)
-        break;
-      add_geom(tag, 2);
-      BDS_GeomEntity *g = get_geom(tag, 2);
-      recur_tag(start, g);
-      tag++;
-    }
-    // printf("  classifying edges (%d face tags found)\n",tag-1);
-  }
-
-  int edgetag = 1;
-  {
-    std::map < std::pair < int, int >, int >edgetags;
-    std::list < BDS_Edge * >::iterator it = edges.begin();
-    std::list < BDS_Edge * >::iterator ite = edges.end();
-    while(it != ite) {
-      BDS_Edge & e = *((BDS_Edge *) * it);
-
-      if(e.g) {
-        int MIN_FAC = 100000;
-        int MAX_FAC = -100000;
-        std::map < std::pair < int, int >, int >::iterator found;
-        BDS_GeomEntity *g;
-        if(e.numfaces() == 1) {
-          found =
-            edgetags.find(std::make_pair(e.faces(0)->g->classif_tag, -1));
-        }
-        else if(e.numfaces() == 2) { // && e.faces(0)->g->classif_tag != e.faces(1)->g->classif_tag)
-          if(e.faces(0)->g->classif_tag > e.faces(1)->g->classif_tag)
-            found =
-              edgetags.
-              find(std::
-                   make_pair(e.faces(1)->g->classif_tag,
-                             e.faces(0)->g->classif_tag));
-          else
-            found =
-              edgetags.
-              find(std::
-                   make_pair(e.faces(0)->g->classif_tag,
-                             e.faces(1)->g->classif_tag));
-        }
-        else {
-          for(int K = 0; K < e.numfaces(); K++) {
-            if(MIN_FAC > e.faces(K)->g->classif_tag)
-              MIN_FAC = e.faces(K)->g->classif_tag;
-            if(MAX_FAC < e.faces(K)->g->classif_tag)
-              MAX_FAC = e.faces(K)->g->classif_tag;
-            found = edgetags.find(std::make_pair(MIN_FAC, MAX_FAC));
-          }
-        }
-
-        if(e.g) {
-          if(found == edgetags.end()) {
-            add_geom(edgetag, 1);
-            g = get_geom(edgetag, 1);
-            if(e.numfaces() == 1) {
-              edgetags[std::make_pair(e.faces(0)->g->classif_tag, -1)] = edgetag;
-            }
-            else if(e.numfaces() == 2) {
-              if(e.faces(0)->g->classif_tag > e.faces(1)->g->classif_tag)
-                edgetags[std::make_pair(e.faces(1)->g->classif_tag,
-					e.faces(0)->g->classif_tag)] = edgetag;
-              else
-                edgetags[std::make_pair(e.faces(0)->g->classif_tag,
-					e.faces(1)->g->classif_tag)] = edgetag;
-            }
-            else {
-              edgetags[std::make_pair(MIN_FAC, MAX_FAC)] = edgetag;
-            }
-            edgetag++;
-          }
-          else {
-            g = get_geom(found->second, 1);
-          }
-          e.g = g;
-          g->e.push_back(&e);
-        }
-      }
-      else {
-        e.g = e.faces(0)->g;
-        e.g->e.push_back(&e);
-      }
-      ++it;
-    }
-  }
-
-  // printf("  classifying points\n");
-
-  int vertextag = 1;
-  {
-    std::set < BDS_Point *, PointLessThan >::iterator it = points.begin();
-    std::set < BDS_Point *, PointLessThan >::iterator ite = points.end();
-    while(it != ite) {
-      std::list < BDS_Edge * >::iterator eit = (*it)->edges.begin();
-      std::list < BDS_Edge * >::iterator eite = (*it)->edges.end();
-      std::set < BDS_GeomEntity * >geoms;
-      BDS_GeomEntity *vg = 0;
-      while(eit != eite) {
-        if((*eit)->g && (*eit)->g->classif_degree == 1)
-          geoms.insert((*eit)->g);
-        else
-          vg = (*eit)->g;
-        ++eit;
-      }
-      if(geoms.size() == 0) {
-        (*it)->g = vg;
-      }
-      else if(geoms.size() == 1) {
-        (*it)->g = (*(geoms.begin()));
-      }
-      else {
-        add_geom(vertextag, 0);
-        (*it)->g = get_geom(vertextag++, 0);
-        (*it)->g->p = (*it);
-      }
-      if(!(*it)->g)
-        Msg(GERROR, "Error in BDS");
-      ++it;
-    }
-  }
-  {
-    std::set < BDS_Point *, PointLessThan >::iterator it = points.begin();
-    std::set < BDS_Point *, PointLessThan >::iterator ite = points.end();
-    while(it != ite) {
-      if((*it)->g->classif_degree > 1) {
-        std::list < BDS_Triangle * >t;
-        (*it)->getTriangles(t);
-        BDS_Vector SumN = (*it)->N();
-        std::list < BDS_Triangle * >::iterator tit = t.begin();
-        std::list < BDS_Triangle * >::iterator tite = t.end();
-        double max_angle = 0;
-        while(tit != tite) {
-          double ag = SumN.angle((*tit)->N());
-          if(fabs(ag) > max_angle)
-            max_angle = fabs(ag);
-          ++tit;
-        }
-        if(fabs(max_angle) > angle) {
-          add_geom(vertextag, 0);
-          (*it)->g = get_geom(vertextag++, 0);
-          (*it)->g->p = (*it);
-        }
-      }
-      ++it;
-    }
-  }
-
-  Msg(INFO, "Computing curvatures");
-  compute_curvatures(edges);
-  Msg(INFO, "Reverse engineering surfaces");
-
-  reverseEngineerCAD();
-  Msg(INFO, "Creating search structures");
-  createSearchStructures();
-  Msg(INFO, "End classifying %d edgetags %d vertextags", edgetag - 1, vertextag - 1);
-  //  outputScalarField (triangles,"R_curvature.pos");
-  extractVolumes();
-}
 
 double PointLessThanLexicographic::t = 0;
 double BDS_Vector::t = 0;
@@ -1448,7 +657,7 @@ template < class IT > void DESTROOOY(IT beg, IT end)
 void BDS_Mesh::cleanup()
 {
   {
-    for (std::list<BDS_Triangle*> :: iterator it = triangles.begin();
+    for (std::list<BDS_Face*> :: iterator it = triangles.begin();
 	 it != triangles.end();
 	 it++)
       {
@@ -1480,7 +689,6 @@ BDS_Mesh ::~ BDS_Mesh ()
    cleanup();
    DESTROOOY ( edges.begin(),edges.end());
    DESTROOOY ( triangles.begin(),triangles.end());
-   DESTROOOY ( tets.begin(),tets.end());
 }
 
 
@@ -1506,7 +714,7 @@ void BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
   BDS_Point *p1 = e->p1;
   BDS_Point *p2 = e->p2;
 
-  BDS_Point *pts1[3];
+  BDS_Point *pts1[4];
   e->faces(0)->getNodes(pts1);
 
   int orientation = 0;
@@ -1540,7 +748,7 @@ void BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
     del_triangle(e->faces(0));
   }
 
-  double t_l = e->target_length;
+  //  double t_l = e->target_length;
 
   del_edge(e);
 
@@ -1553,26 +761,26 @@ void BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
   BDS_Edge *mid_op2 = new BDS_Edge(mid, op[1]);
   edges.push_back(mid_op2);
 
-  p1_mid->target_length = t_l;
-  op1_mid->target_length = t_l;
-  mid_p2->target_length = t_l;
-  mid_op2->target_length = t_l;
+  //  p1_mid->target_length = t_l;
+  //  op1_mid->target_length = t_l;
+  //  mid_p2->target_length = t_l;
+  //  mid_op2->target_length = t_l;
 
   // printf("split ends 1 %d (%d %d) %d %d \n",
   //         p1_op1->numfaces(), p1->iD, op[0]->iD, 
   //         op1_mid->numfaces(),p1_mid->numfaces());
-  BDS_Triangle *t1, *t2, *t3, *t4;
+  BDS_Face *t1, *t2, *t3, *t4;
   if(orientation == 1) {
-    t1 = new BDS_Triangle(op1_mid, p1_op1, p1_mid);
-    t2 = new BDS_Triangle(mid_op2, op2_p2, mid_p2);
-    t3 = new BDS_Triangle(op1_p2, op1_mid, mid_p2);
-    t4 = new BDS_Triangle(p1_op2, mid_op2, p1_mid);
+    t1 = new BDS_Face(op1_mid, p1_op1, p1_mid);
+    t2 = new BDS_Face(mid_op2, op2_p2, mid_p2);
+    t3 = new BDS_Face(op1_p2, op1_mid, mid_p2);
+    t4 = new BDS_Face(p1_op2, mid_op2, p1_mid);
   }
   else {
-    t1 = new BDS_Triangle(p1_op1, op1_mid, p1_mid);
-    t2 = new BDS_Triangle(op2_p2, mid_op2, mid_p2);
-    t3 = new BDS_Triangle(op1_mid, op1_p2, mid_p2);
-    t4 = new BDS_Triangle(mid_op2, p1_op2, p1_mid);
+    t1 = new BDS_Face(p1_op1, op1_mid, p1_mid);
+    t2 = new BDS_Face(op2_p2, mid_op2, mid_p2);
+    t3 = new BDS_Face(op1_mid, op1_p2, mid_p2);
+    t4 = new BDS_Face(mid_op2, p1_op2, p1_mid);
   }
   t1->g = g1;
   t2->g = g2;
@@ -1598,45 +806,6 @@ void BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
   op[1]->config_modified = true;
 }
 
-bool BDS_SwapEdgeTestNonPlanar::operator () (BDS_Edge *e,
-					     BDS_Point *p1,BDS_Point *p2,BDS_Point *p3,
-					     BDS_Point *q1,BDS_Point *q2,BDS_Point *q3) const
-{
-  double cb1[3],cb2[3];
-  normal_triangle ( p1,p2,p3,cb1);
-  normal_triangle ( q1,q2,q3,cb2);  
-  BDS_Vector n1 = e->faces(0)->N();
-  BDS_Vector n2 = e->faces(1)->N();
-
-  double psc = n1.x * cb1[0] +n1.y * cb1[1] +n1.z * cb1[2];
-  if (psc < 0) return false;
-  psc = n2.x * cb1[0] +n2.y * cb1[1] +n2.z * cb1[2];
-  if (psc < 0) return false;
-  psc = n2.x * cb2[0] +n2.y * cb2[1] +n2.z * cb2[2];
-  if (psc < 0) return false;
-  psc = n1.x * cb2[0] +n1.y * cb2[1] +n1.z * cb2[2];
-  if (psc < 0) return false;
-  return true;
-}
-
-bool BDS_SwapEdgeTestPlanar::operator () (BDS_Edge *e,
-					  BDS_Point *p1,BDS_Point *p2,BDS_Point *p3,
-					  BDS_Point *q1,BDS_Point *q2,BDS_Point *q3) const
-{
-
-  
-  double s1 = surface_triangle ( p1,p2,p3);
-  double s2 = surface_triangle ( q1,q2,q3);  
-  double n1 = e->faces(0)->S();
-  double n2 = e->faces(1)->S();
-
-  if (s1 < 1.e-4 * (n1+n2))return false;
-  if (s2 < 1.e-4 * (n1+n2))return false;
-  if (fabs(s1+s2 - n1-n2) > 1.e-10 * (s1+s2))return false;
-
-  return true;
-}
-
 bool BDS_SwapEdgeTestParametric::operator () (BDS_Edge *e,
 					      BDS_Point *p1,BDS_Point *p2,BDS_Point *p3,
 					      BDS_Point *q1,BDS_Point *q2,BDS_Point *q3) const
@@ -1644,8 +813,8 @@ bool BDS_SwapEdgeTestParametric::operator () (BDS_Edge *e,
   //  return false;
   double s1 = fabs(surface_triangle_param ( p1,p2,p3));
   double s2 = fabs(surface_triangle_param ( q1,q2,q3));  
-  BDS_Point * pf1[3];
-  BDS_Point * pf2[3];
+  BDS_Point * pf1[4];
+  BDS_Point * pf2[4];
   e->faces(0)->getNodes(pf1);
   e->faces(1)->getNodes(pf2);
   double n1 = fabs(surface_triangle_param ( pf1[0],pf1[1],pf1[2]));					    
@@ -1697,7 +866,7 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
 
   BDS_GeomEntity *g1 = 0, *g2 = 0, *ge = e->g;
 
-  BDS_Point *pts1[3];
+  BDS_Point *pts1[4];
   e->faces(0)->getNodes(pts1);
 
 
@@ -1743,14 +912,14 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
   BDS_Edge *op1_op2 = new BDS_Edge(op[0], op[1]);
   edges.push_back(op1_op2);
 
-  BDS_Triangle *t1, *t2;
+  BDS_Face *t1, *t2;
   if(orientation == 1) {
-    t1 = new BDS_Triangle(p1_op1, p1_op2, op1_op2);
-    t2 = new BDS_Triangle(op1_op2, op2_p2, op1_p2);
+    t1 = new BDS_Face(p1_op1, p1_op2, op1_op2);
+    t2 = new BDS_Face(op1_op2, op2_p2, op1_p2);
   }
   else {
-    t1 = new BDS_Triangle(p1_op2, p1_op1, op1_op2);
-    t2 = new BDS_Triangle(op2_p2, op1_op2, op1_p2);
+    t1 = new BDS_Face(p1_op2, p1_op1, op1_op2);
+    t2 = new BDS_Face(op2_p2, op1_op2, op1_p2);
   }
 
   t1->g = g1;
@@ -1760,6 +929,77 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
 
   triangles.push_back(t1);
   triangles.push_back(t2);
+
+  p1->config_modified = true;
+  p2->config_modified = true;
+  op[0]->config_modified = true;
+  op[1]->config_modified = true;
+
+  return true;
+}
+
+int BDS_Edge :: numTriangles() const 
+{
+  int NT = 0;
+  for (int i=0;i<_faces.size();i++) 
+    if (faces (i)->numEdges() == 3) NT++ ;
+  return NT;
+}
+
+// This function does actually the swap without taking into account
+// the feasability of the operation. Those conditions have to be
+// taken into account before doing the edge swap
+bool BDS_Mesh::recombine_edge(BDS_Edge * e)
+{
+
+  /*
+        p1
+      / | \
+     /  |  \
+ op1/ 0 | 1 \op2
+    \   |   /
+     \  |  /
+      \ p2/
+
+     // op1 p1 op2
+     // op1 op2 p2
+   */
+
+  // we test if the edge is deleted
+  //  return false;
+  if(e->deleted)
+    return false;
+  if(e->numfaces() != 2 || e->numTriangles() != 2)
+    return false;
+  if(e->g && e->g->classif_degree == 1)
+    return false;
+
+  BDS_Point *op[2];
+  BDS_Point *p1 = e->p1;
+  BDS_Point *p2 = e->p2;
+  e->oppositeof(op);
+
+  BDS_Point *pts1[4];
+  e->faces(0)->getNodes(pts1);
+
+  BDS_Edge *p1_op1 = find_edge(p1, op[0], e->faces(0));
+  BDS_Edge *op1_p2 = find_edge(op[0], p2, e->faces(0));
+  BDS_Edge *p1_op2 = find_edge(p1, op[1], e->faces(1));
+  BDS_Edge *op2_p2 = find_edge(op[1], p2, e->faces(1));
+
+  BDS_GeomEntity *g=0;
+  if(e->faces(0)) {
+    g = e->faces(0)->g;
+    del_triangle(e->faces(0));
+  }
+  // not a bug !!!
+  if(e->faces(0)) {
+    del_triangle(e->faces(0));
+  }
+  del_edge(e);
+
+  BDS_Face *f = add_quadrangle (p1_op1, op1_p2, op2_p2, p1_op2);
+  f->g = g;
 
   p1->config_modified = true;
   p2->config_modified = true;
@@ -1785,7 +1025,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge * e, BDS_Point * p)
       return false;
   }
 
-  std::list < BDS_Triangle * >t;
+  std::list < BDS_Face * >t;
   BDS_Point *o = e->othervertex(p);
 
   if(o->g != p->g)
@@ -1804,16 +1044,16 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge * e, BDS_Point * p)
   int nt = 0;
   {
     p->getTriangles(t);
-    std::list < BDS_Triangle * >::iterator it = t.begin();
-    std::list < BDS_Triangle * >::iterator ite = t.end();
+    std::list < BDS_Face * >::iterator it = t.begin();
+    std::list < BDS_Face * >::iterator ite = t.end();
     while(it != ite) {
-      BDS_Triangle *t = *it;
+      BDS_Face *t = *it;
       //          print_face(t);
       if(t->e1 != e && t->e2 != e && t->e3 != e) {
 	if (!test_move_point_parametric_triangle ( p, o->u, o-> v, t))
 	  return false;
         gs[nt] = t->g;
-	BDS_Point *pts[3];
+	BDS_Point *pts[4];
 	t->getNodes(pts);
         pt[0][nt] = (pts[0] == p) ? o->iD : pts[0]->iD;
         pt[1][nt] = (pts[1] == p) ? o->iD : pts[1]->iD;
@@ -1825,11 +1065,11 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge * e, BDS_Point * p)
 
 
   {
-    std::list < BDS_Triangle * >::iterator it = t.begin();
-    std::list < BDS_Triangle * >::iterator ite = t.end();
+    std::list < BDS_Face * >::iterator it = t.begin();
+    std::list < BDS_Face * >::iterator ite = t.end();
 
     while(it != ite) {
-      BDS_Triangle *t = *it;
+      BDS_Face *t = *it;
       del_triangle(t);
       ++it;
     }
@@ -1856,7 +1096,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge * e, BDS_Point * p)
 
   {
     for(int k = 0; k < nt; k++) {
-      BDS_Triangle *t = add_triangle(pt[0][k], pt[1][k], pt[2][k]);
+      BDS_Face *t = add_triangle(pt[0][k], pt[1][k], pt[2][k]);
       t->g = gs[k];
     }
   }
@@ -1871,185 +1111,11 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge * e, BDS_Point * p)
   return true;
 }
 
-bool project_point_on_a_list_of_triangles(BDS_Point * p,
-                                          const std::list <
-                                          BDS_Triangle * >&t, double &X,
-                                          double &Y, double &Z)
-{
-  bool global_ok = false;
-
-  int p_classif = p->g->classif_tag;
-  std::list < BDS_Triangle * >::const_iterator it = t.begin();
-  std::list < BDS_Triangle * >::const_iterator ite = t.end();
-  double dist2 = 1.e22;
-  double XX = p->X;
-  double YY = p->Y;
-  double ZZ = p->Z;
-
-  while(it != ite) {
-    if((*it)->g->classif_tag == p_classif) {
-      {
-        double xp, yp, zp;
-        bool ok =
-          proj_point_triangle(p->X, p->Y, p->Z, (*it)->N(), *it, xp, yp, zp);
-        if(ok) {
-          global_ok = true;
-          double d2 =
-            ((xp - X) * (xp - X) + (yp - Y) * (yp - Y) + (zp - Z) * (zp - Z));
-          if(d2 < dist2) {
-            // printf("one found among %d\n",t.size());
-            XX = xp;
-            YY = yp;
-            ZZ = zp;
-            dist2 = d2;
-          }
-        }
-        // ok = proj_point_triangle ( p->X,p->Y,p->Z,p->N(),*it,xp,yp,zp);
-        // if(ok){
-        //     global_ok = true;
-        //     double d2 = ((xp-X)*(xp-X)+(yp-Y)*(yp-Y)+(zp-Z)*(zp-Z));
-        //     if(d2 < dist2 ){
-        //         //              printf("one found among %d\n",t.size());
-        //         XX = xp; YY = yp; ZZ = zp;
-        //         dist2 = d2;
-        //       }
-        //   }
-
-      }
-    }
-    ++it;
-  }
-
-  X = XX;
-  Y = YY;
-  Z = ZZ;
-  return global_ok;
-}
-
-bool BDS_Mesh::move_point(BDS_Point * p, double X, double Y, double Z)
-{
-  std::list < BDS_Triangle * >t;
-  p->getTriangles(t);
-  std::list < BDS_Triangle * >::iterator tit = t.begin();
-  std::list < BDS_Triangle * >::iterator tite = t.end();
-  const double oldx = p->X;
-  const double oldy = p->Y;
-  const double oldz = p->Z;
-  while(tit != tite) {
-    BDS_Vector n1 = (*tit)->N();
-    p->X = X;
-    p->Y = Y;
-    p->Z = Z;
-    BDS_Vector n2 = (*tit)->N_on_the_fly();
-    p->X = oldx;
-    p->Y = oldy;
-    p->Z = oldz;
-
-    if (n1*n2 < 0) return false;
-
-    double angle = n1.angle(n2);
-    if(fabs(angle) > M_PI / 3)
-      return false;
-    ++tit;
-  }
-  p->X = X;
-  p->Y = Y;
-  p->Z = Z;
-
-  tit = t.begin();
-  while(tit != tite) {
-    (*tit)->_update();
-    ++tit;
-  }
-  return true;
-}
-
-void BDS_Mesh::snap_point(BDS_Point * p, BDS_Mesh * geom_mesh)
-{
-  double X, Y, Z;
-  if(p->g && p->g->surf) {
-    p->g->surf->projection(p->X, p->Y, p->Z, X, Y, Z);
-    if(move_point(p, X, Y, Z)) {
-      SNAP_SUCCESS++;
-    }
-    else {
-      SNAP_FAILURE++;
-    }
-  }
-  else if(p->g && p->g->classif_degree == 2 && geom_mesh) {
-    double xx, yy, zz;
-    std::list < BDS_Triangle * >l;
-    BDS_GeomEntity *gg =
-      geom_mesh->get_geom(p->g->classif_tag, p->g->classif_degree);
-    gg->getClosestTriangles(p->X, p->Y, p->Z, l, p->radius(), xx,
-                            yy, zz);
-
-    bool ok = project_point_on_a_list_of_triangles(p, l, X, Y, Z);
-
-    if(!ok) {
-      if(move_point(p, xx, yy, zz)) {
-        SNAP_SUCCESS++;
-      }
-      else {
-        SNAP_FAILURE++;
-      }
-    }
-    else {
-      if(move_point(p, X, Y, Z)) {
-        SNAP_SUCCESS++;
-      }
-      else {
-        SNAP_FAILURE++;
-      }
-    }
-  }
-  else {
-    return;
-  }
-}
-
-bool BDS_Mesh::smooth_point(BDS_Point * p, BDS_Mesh * geom_mesh)
-{
 
 
-
-  if(p->g && p->g->classif_degree <= 1)
-    return false;
-  //  if(!p->g->surf)
-  //    return false;
-
-
-  double X = 0;
-  double Y = 0;
-  double Z = 0;
-
-  std::list < BDS_Edge * >::iterator eit = p->edges.begin();
-
-  while(eit != p->edges.end()) {
-    if ((*eit)->numfaces() == 1) return false;
-    BDS_Point *op = ((*eit)->p1 == p) ? (*eit)->p2 : (*eit)->p1;
-    X += op->X;
-    Y += op->Y;
-    Z += op->Z;
-    // lengths are wrong;
-    (*eit)->target_length = -1;
-    ++eit;
-  }
-
-  bool success =
-    move_point(p, X / p->edges.size(), Y / p->edges.size(),
-               Z / p->edges.size());
-
-  if(success)
-    snap_point(p, geom_mesh);
-
-  return true;
-}
-
-
-bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS_Triangle *t)
+bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS_Face *t)
 {       
-  BDS_Point *pts[3];
+  BDS_Point *pts[4];
   t->getNodes(pts);
   double U = p->u;
   double V = p->v;
@@ -2089,12 +1155,12 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)
   V /= p->edges.size();
   LC /= p->edges.size();
 
-  std::list < BDS_Triangle * >ts;
+  std::list < BDS_Face * >ts;
   p->getTriangles(ts);
-  std::list < BDS_Triangle * >::iterator it = ts.begin();
-  std::list < BDS_Triangle * >::iterator ite = ts.end();
+  std::list < BDS_Face * >::iterator it = ts.begin();
+  std::list < BDS_Face * >::iterator ite = ts.end();
   while(it != ite) {
-    BDS_Triangle *t = *it;
+    BDS_Face *t = *it;
     if (!test_move_point_parametric_triangle ( p, U, V, t))
       return false;
     ++it;
@@ -2108,7 +1174,7 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)
   p->X = gp.x();
   p->Y = gp.y();
   p->Z = gp.z();
-  p->radius() = gf->curvature (SPoint2(U,V));
+  //  p->radius() = gf->curvature (SPoint2(U,V));
 
   eit = p->edges.begin();
   while(eit != p->edges.end()) {
@@ -2120,304 +1186,70 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)
   return true;
 }
 
-void BDS_Mesh::compute_metric_edge_lengths(const BDS_Metric & metric)
+
+struct recombine_T
 {
-  
-
-  // printf("computation of metric lengths\n");
+  const BDS_Edge *e  ;
+  double angle ;
+  recombine_T (const BDS_Edge *_e ); 
+  bool operator < ( const recombine_T & other ) const
   {
-    std::list < BDS_Edge * >::iterator it = edges.begin();
-    std::list < BDS_Edge * >::iterator ite = edges.end();
-    while(it != ite) {
-      if(!(*it)->deleted) {
-        (*it)->target_length =
-          metric.target_length(0.5 * ((*it)->p2->X + (*it)->p1->X),
-                               0.5 * ((*it)->p2->Y + (*it)->p1->Y),
-                               0.5 * ((*it)->p2->Z + (*it)->p1->Z));
-	BDS_Edge *e = (*it);
-	BDS_GeomEntity *g = e->g;
-	if (g && g->classif_degree == 1)
-	  {
-	    double l = (*it)->length() * 1000;
-	    if (l < (*it)->target_length)
-	      (*it)->target_length =l;
-	  }   
-      }
-      ++it;
-    }
+    return angle < other.angle;
   }
+};
 
-  
-
-  {
-    std::list < BDS_Edge * >::iterator it = edges.begin();
-    std::list < BDS_Edge * >::iterator ite = edges.end();
-    while(it != ite) {
-      BDS_Edge *e = (*it);
-      BDS_GeomEntity *g = e->g;
-     
-      // do not unrefined curves
-      // minimal length is the actual length 
-   
-        if(g && g->surf) {
-        double curvature = g->surf->normalCurv(0.5 * (e->p1->X + e->p2->X),
-                                               0.5 * (e->p1->Y + e->p2->Y),
-                                               0.5 * (e->p1->Z + e->p2->Z));
-        double radius = 1. / curvature;
-        double target = radius / metric.nb_elements_per_radius_of_curvature;
-        e->target_length =
-          metric.update_target_length(target, e->target_length);
-        // printf("e1 radius %g target %g length %g mlp %g\n",
-	//        radius, target,e->length(),e->length()/target);
-      }
-      else {
-        double radius =
-          0.5 * (e->p1->radius() + e->p2->radius());
-        double target =
-          3.14159 * radius / metric.nb_elements_per_radius_of_curvature;
-        e->target_length =
-          metric.update_target_length(target, e->target_length);
-      }
-      ++it;
-    }
-  }
-  //  printf("smoothing\n");
-  const int NITER = 3;
-  const double BETA = metric.beta;
-
-  std::vector<BDS_Point *> temp(points.size());
-  std::copy( points.begin(),points.end(),temp.begin());
-
-  for(int I = 0; I < NITER; ++I) {
-
-    std::vector < BDS_Point * >::const_iterator it = temp.begin();
-    std::vector < BDS_Point * >::const_iterator ite = temp.end();
-
-    while(it != ite) {
-
-      std::list < BDS_Edge * >::iterator eit = (*it)->edges.begin();
-      std::list < BDS_Edge * >::iterator eite = (*it)->edges.end();
-
-      double l_min = metric._max;      
-
-      while(eit != eite) {
-	BDS_Edge *ee = (*eit);
-        if(l_min > ee->target_length)
-          l_min = ee->target_length;
-        ++eit;
-      }
-
-      l_min /= BETA;
-
-      eit = (*it)->edges.begin();
-      while(eit != eite) {
-	BDS_Edge *ee = (*eit);
-        if(ee->target_length > l_min)
-          ee->target_length = l_min;
-        ++eit;
-      }
-      ++it;
-    }
-  }
-
-  // printf("end computation of metric lengths\n");
+recombine_T::recombine_T (const BDS_Edge *_e )
+  : e(_e)
+{
+  BDS_Point *op[2];
+  BDS_Point *p1 = e->p1;
+  BDS_Point *p2 = e->p2;
+  e->oppositeof(op);
+  BDS_Vector v1 (*p1,*op[0]);
+  BDS_Vector v2 (*op[0],*p2);
+  BDS_Vector v3 (*p2,*op[1]);
+  BDS_Vector v4 (*op[1],*p1);
+  angle = fabs(90.-v1.angle_deg(v2));
+  angle = std::max(fabs(90.-v2.angle_deg(v3)),angle);
+  angle = std::max(fabs(90.-v3.angle_deg(v4)),angle);
+  angle = std::max(fabs(90.-v4.angle_deg(v1)),angle);
 }
 
-int BDS_Mesh::adapt_mesh(const BDS_Metric & metric, bool smooth,
-                         BDS_Mesh * geom_mesh)
+void BDS_Mesh::recombineIntoQuads (const double angle_limit, GFace *gf)
 {
-  int nb_modif = 0;
-  SNAP_SUCCESS = 0;
-  SNAP_FAILURE = 0;
-
-  std::list < BDS_Edge * >small_to_long(edges);
-
-  // split edges
-  for(int ii=0;ii<2;ii++){
-    std::list < BDS_Edge * >::iterator it = small_to_long.begin();
-    std::list < BDS_Edge * >::iterator ite = small_to_long.end();
-    compute_metric_edge_lengths(metric);
-
-    while(it != ite) {
-      if((*it)->numfaces() == 2) {
-        double length = (*it)->length();
-        if(!(*it)->deleted && length > (*it)->target_length / 0.7) {
-	  MAXPOINTNUMBER++;
-	  BDS_Point *mid ;
-	  double coord = 0.5;
-	  mid  = add_point(MAXPOINTNUMBER,
-			   coord * (*it)->p1->X + (1 - coord) * (*it)->p2->X,
-			   coord * (*it)->p1->Y + (1 - coord) * (*it)->p2->Y,
-			   coord * (*it)->p1->Z + (1 - coord) * (*it)->p2->Z);
-	  mid->radius() =
-	    coord * (*it)->p1->radius() + (1 - coord) * (*it)->p2->radius();
-          split_edge(*it,mid);
-	  if(geom_mesh || (mid->g && mid->g->surf))
-	    snap_point(mid, geom_mesh);
-          nb_modif++;
-        }
-      }
-      ++it;
-    }
-    cleanup();
-    small_to_long = edges;
-  }
   
-  // collapse 
-  for(int ii=0;ii<1;ii++){    	
-    std::list<BDS_Edge*>::iterator it = small_to_long.begin();
-    std::list<BDS_Edge*>::iterator ite  = small_to_long.end();
-    //	compute_metric_edge_lengths (metric);
+  Msg(INFO,"Recombining triangles for surface %d",gf->tag());  
+  for (int i=0;i<5;i++)
+  {
+    bool rec = false;
+    std::set<recombine_T> _pairs;
     
-    while (it != ite)
+    for(std::list < BDS_Edge * >::const_iterator it = edges.begin();
+	it != edges.end(); ++it) 
       {
-	double length = (*it)->length();
-	if (!(*it)->deleted && length < (*it)->target_length * 0.7 ){
-// 	  if (nb_modif %2 )
-// 	    {
-// 	      if (collapse_edge (*it, (*it)->p1, 0.1 ))
-// 		nb_modif++;
-// 	    }
-// 	  else
-// 	    {
-// 	      if (collapse_edge (*it, (*it)->p2, 0.1 ))
-// 		nb_modif++;
-// 	    }
-	}
-	++it;
-      }
-    cleanup();  
-    small_to_long = edges;
-  }
-  
-  {    
-    std::list<BDS_Edge*>::iterator it = small_to_long.begin();
-    std::list<BDS_Edge*>::iterator ite  = small_to_long.end();
-    while (it != ite)
+	if (!(*it)->deleted && (*it)->numfaces () == 2)
+	  _pairs.insert ( recombine_T ( *it ) );
+      }  
+    
+    std::set<recombine_T>::iterator itp =  _pairs.begin();
+
+    while (itp != _pairs.end())
       {
-	if (!(*it)->deleted && (*it)->numfaces()==2)
-	  {
-	    BDS_Point *op[2];
-	    (*it)->oppositeof (op);
-	    
-	    double qa1 = quality_triangle ( (*it)->p1 , (*it)->p2 , op[0] );
-	    double qa2 = quality_triangle ( (*it)->p1 , (*it)->p2 , op[1] );
-	    double qb1 = quality_triangle ( (*it)->p1 , op[0] , op[1] );
-	    double qb2 = quality_triangle ( (*it)->p2 , op[0] , op[1] );
-	    double qa = (qa1<qa2)?qa1:qa2; 
-	    double qb = (qb1<qb2)?qb1:qb2; 
-
-	    double dd = dist_droites_gauches((*it)->p1 , (*it)->p2,
-					     op[0],op[1]);
-	    
-	    double ll = (*it)->length();
-
-	    if ((qb > qa && dd < 0.1 * ll) || (qb > 5 * qa))	      
-	      {
-		nb_modif++;
-		swap_edge ( *it , BDS_SwapEdgeTestNonPlanar()) ;
-	      }
-	  }	
-	++it;
+	rec |= recombine_edge ((BDS_Edge*)itp->e);
+	++itp;
       }
-  }
 
-  cleanup();  
-  if (smooth ){
-    Msg(INFO,"smoothing %d points\n",points.size());
+    if (!rec) break;
 
-    std::vector <BDS_Point *> temp_l(points.size());
-    std::copy( points.begin(),points.end(),temp_l.begin());
-    std::vector < BDS_Point * >::iterator itx = temp_l.begin();
-    std::vector < BDS_Point * >::iterator itxe = temp_l.end();
-    while (itx != itxe)
+    std::set<BDS_Point*,PointLessThan>::iterator itpt = points.begin();
+    while (itpt != points.end())
       {
-	smooth_point(*itx,geom_mesh);
-	++itx;
+	
+	smooth_point_parametric(*itpt,gf);
+	++itpt;
       }
-    printf("coucouc1\n");
+
+
   }
-  
-  Msg(INFO,"%d snaps have succeeded , %d have failed\n",SNAP_SUCCESS,SNAP_FAILURE);
-  // outputScalarField (triangles,"b.pos");
-  cleanup();  
-  return nb_modif;
 }
 
-
-
-BDS_Mesh::BDS_Mesh(const BDS_Mesh & other)
-{
-  MAXPOINTNUMBER = other.MAXPOINTNUMBER;
-  LC = other.LC;
-  for(int i = 0; i < 3; i++) {
-    Min[i] = other.Min[i];
-    Max[i] = other.Max[i];
-  }
-  for(std::set < BDS_GeomEntity *, GeomLessThan >::const_iterator it =
-      other.geom.begin(); it != other.geom.end(); ++it) {
-    add_geom((*it)->classif_tag, (*it)->classif_degree);
-    BDS_GeomEntity *g = get_geom((*it)->classif_tag, (*it)->classif_degree);
-    g->surf = (*it)->surf;
-  }
-  for(std::set < BDS_Point *, PointLessThan >::const_iterator it =
-      other.points.begin(); it != other.points.end(); ++it) {
-    BDS_Point *p = add_point((*it)->iD, (*it)->X, (*it)->Y, (*it)->Z);
-    p->g =
-      ((*it)->g) ? get_geom((*it)->g->classif_tag,
-                            (*it)->g->classif_degree) : 0;
-    p->radius() = (*it)->radius();
-    if(p->g->classif_degree == 0)
-      p->g->p = p;
-  }
-  for(std::list < BDS_Edge * >::const_iterator it = other.edges.begin();
-      it != other.edges.end(); ++it) {
-    BDS_Edge *e = add_edge((*it)->p1->iD, (*it)->p2->iD);
-    e->g =
-      ((*it)->g) ? get_geom((*it)->g->classif_tag,
-                            (*it)->g->classif_degree) : 0;
-    if(e->g->classif_degree == 1)
-      e->g->e.push_back(e);
-    e->partition = (*it)->partition;
-  }
-  for(std::list < BDS_Triangle * >::const_iterator it =
-      other.triangles.begin(); it != other.triangles.end(); ++it) {
-    BDS_Point *n[3];
-    (*it)->getNodes(n);
-    BDS_Triangle *t = add_triangle(n[0]->iD, n[1]->iD, n[2]->iD);
-    t->g = get_geom((*it)->g->classif_tag, (*it)->g->classif_degree);
-    t->g->t.push_back(t);
-    t->partition = (*it)->partition;
-  }
-
-  for(std::list < BDS_Tet * >::const_iterator it = other.tets.begin();
-      it != other.tets.end(); ++it) {
-    BDS_Point *n[4];
-    (*it)->getNodes(n);
-    BDS_Tet *t = add_tet(n[0]->iD, n[1]->iD, n[2]->iD, n[3]->iD);
-    t->g = get_geom((*it)->g->classif_tag, (*it)->g->classif_degree);
-    // t->g->t.push_back(t);
-    t->partition = (*it)->partition;
-  }
-
-}
-
-/*
-void BDS_Mesh::recombineIntoQuads (const double angle)
-{
-  for(std::list < BDS_Edge * >::const_iterator it = edges.begin();
-      it != edges.end(); ++it) 
-    {
-      BDS_Edge *e = *it;
-      if (e->numfaces() == 2 
-	  && !e->faces(0)->q
-	  && !e->faces(1)->q)
-	{
-	  BDS_Point *op[2];
-	  e->oppositeof(op);
-
-	}
-    }
-  
-}
-*/

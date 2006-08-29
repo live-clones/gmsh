@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.234 2006-08-19 08:26:47 remacle Exp $
+// $Id: Gmsh.y,v 1.235 2006-08-29 10:39:54 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1887,7 +1887,8 @@ Command :
 	SleepInSeconds($2);
       }
       else if(!strcmp($1, "Remesh")){
-	ReMesh();
+	Msg(GERROR, "Surface ReMeshing must be reinterfaced");
+	//	ReMesh();
       }
       else if(!strcmp($1, "Mesh")){
 	yymsg(GERROR, "Mesh directives are not (yet) allowed in scripts");
