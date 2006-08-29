@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.10 2006-08-19 18:48:06 geuzaine Exp $
+// $Id: MElement.cpp,v 1.11 2006-08-29 21:19:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -230,6 +230,7 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
       coords[3 + 3 * j + 1] = getVertex(j)->y() * scalingFactor;
       coords[3 + 3 * j + 2] = getVertex(j)->z() * scalingFactor;
     }
+    data[48] = data[49] = 0;
     fwrite(data, sizeof(char), 50, fp);
     if(getNumVertices() == 4){
       for(int j = 0; j < 3; j++){
