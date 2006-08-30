@@ -46,12 +46,13 @@ class MElement
 {
  private:
   static int _globalNum;
-  int _num, _partition;
+  int _num;
+  short _partition;
   char _visible;
 
  public :
   MElement(int num=0, int part=0) 
-    : _partition(part), _visible(true) 
+    : _visible(true) 
   {
     if(num){
       _num = num;
@@ -60,6 +61,7 @@ class MElement
     else{
       _num = ++_globalNum;
     }
+    _partition = (short)part; 
   }
   virtual ~MElement(){}
 
@@ -77,7 +79,7 @@ class MElement
 
   // get/set the partition to which the element belongs
   virtual int getPartition(){ return _partition; }
-  virtual void setPartition(int num){ _partition = num; }
+  virtual void setPartition(int num){ _partition = (short)num; }
 
   // get/set the visibility flag
   virtual char getVisibility(){ return _visible; }
