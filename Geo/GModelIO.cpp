@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.30 2006-08-24 16:56:20 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.31 2006-08-31 14:15:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1237,7 +1237,7 @@ int GModel::readMESH(const std::string &name)
   sscanf(buffer, "%s %d", str, &format);
 
   if(format != 1){
-    Msg(GERROR, "Non-ASCII INRIA mesh import is not yet available");
+    Msg(GERROR, "Non-ASCII MEDIT mesh import is not yet available");
     return 0;
   }
 

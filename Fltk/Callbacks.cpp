@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.456 2006-08-29 10:39:48 remacle Exp $
+// $Id: Callbacks.cpp,v 1.457 2006-08-31 14:15:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -609,7 +609,7 @@ static char *file_types =
   "\tGmsh mesh (*.msh)"
   "\tGmsh post-processing (*.pos)"
   "\tSTL surface mesh (*.stl)"
-  "\tINRIA mesh (*.mesh)"
+  "\tMEDIT mesh (*.mesh)"
   "\tJPEG (*.jpg)"
   "\tPNG (*.png)"
   "\tBMP (*.bmp)"
@@ -777,7 +777,7 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"Gmsh unrolled geometry (*.geo)", _save_geo},
     {"  ", _save_auto},
     {"I-DEAS universal mesh (*.unv)", _save_unv},
-    {"INRIA mesh (*.mesh)", _save_mesh},
+    {"MEDIT mesh (*.mesh)", _save_mesh},
     {"STL surface mesh (*.stl)", _save_stl},
     {"VRML surface mesh (*.wrl)", _save_vrml},
     {"   ", _save_auto},

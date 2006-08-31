@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.4 2006-08-23 19:53:39 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.5 2006-08-31 14:15:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -81,7 +81,7 @@ void GetDefaultFileName(int format, char *name)
   char ext[32] = "";
   strcpy(name, CTX.base_filename);
   switch(format){
-  case FORMAT_GEO:  strcpy(ext, ".geof"); break; // flattened geo
+  case FORMAT_GEO:  strcpy(ext, ".geo_unrolled"); break;
   case FORMAT_MSH:  strcpy(ext, ".msh"); break;
   case FORMAT_POS:  strcpy(ext, ".pos"); break;
   case FORMAT_OPT:  strcpy(ext, ".opt"); break;
