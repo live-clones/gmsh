@@ -138,9 +138,11 @@ class MElement
   virtual void writeVRML(FILE *fp);
   virtual void writeUNV(FILE *fp, int elementary);
   virtual void writeMESH(FILE *fp, int elementary);
-  virtual char *getStringForPOS() = 0;
+  virtual void writeBDF(FILE *fp, int elementary);
   virtual int getTypeForMSH() = 0;
   virtual int getTypeForUNV() = 0;
+  virtual char *getStringForPOS() = 0;
+  virtual char *getStringForBDF() = 0;
 };
 
 class MLine : public MElement {
@@ -168,6 +170,7 @@ class MLine : public MElement {
   int getTypeForMSH(){ return LGN1; }
   int getTypeForUNV(){ return 21; } // BEAM
   char *getStringForPOS(){ return "SL"; }
+  char *getStringForBDF(){ return 0; }
 };
 
 class MLine2 : public MLine {
@@ -202,6 +205,7 @@ class MLine2 : public MLine {
   int getTypeForMSH(){ return LGN2; }
   int getTypeForUNV(){ return 24; } // BEAM2
   char *getStringForPOS(){ return "SL2"; }
+  char *getStringForBDF(){ return 0; }
 };
 
 class MTriangle : public MElement {
@@ -235,6 +239,7 @@ class MTriangle : public MElement {
   int getTypeForMSH(){ return TRI1; }
   int getTypeForUNV(){ return 91; } // THINSHLL
   char *getStringForPOS(){ return "ST"; }
+  char *getStringForBDF(){ return "CTRIA3"; }
 };
 
 class MTriangle2 : public MTriangle {
@@ -288,6 +293,7 @@ class MTriangle2 : public MTriangle {
   int getTypeForMSH(){ return TRI2; }
   int getTypeForUNV(){ return 92; } // THINSHLL2
   char *getStringForPOS(){ return "ST2"; }
+  char *getStringForBDF(){ return "CTRIA6"; }
 };
 
 class MQuadrangle : public MElement {
@@ -318,6 +324,7 @@ class MQuadrangle : public MElement {
   int getTypeForMSH(){ return QUA1; }
   int getTypeForUNV(){ return 94; } // QUAD
   char *getStringForPOS(){ return "SQ"; }
+  char *getStringForBDF(){ return "CQUAD4"; }
 };
 
 class MQuadrangle2 : public MQuadrangle {
@@ -345,6 +352,7 @@ class MQuadrangle2 : public MQuadrangle {
   int getTypeForMSH(){ return QUA2; }
   int getTypeForUNV(){ return 95; } // ???? QUAD2
   char *getStringForPOS(){ return "SQ2"; }
+  char *getStringForBDF(){ return 0; }
 };
 
 class MTetrahedron : public MElement {
@@ -380,6 +388,7 @@ class MTetrahedron : public MElement {
   int getTypeForMSH(){ return TET1; }
   int getTypeForUNV(){ return 111; } // SOLIDFEM
   char *getStringForPOS(){ return "SS"; }
+  char *getStringForBDF(){ return "CTETRA"; }
   virtual double getVolume()
   { 
     double mat[3][3];
@@ -431,6 +440,7 @@ class MTetrahedron2 : public MTetrahedron {
   int getTypeForMSH(){ return TET2; }
   int getTypeForUNV(){ return 118; } // SOLIDFEM2
   char *getStringForPOS(){ return "SS2"; }
+  char *getStringForBDF(){ return 0; }
   void setVolumePositive()
   {
     if(getVolumeSign() < 0){
@@ -478,6 +488,7 @@ class MHexahedron : public MElement {
   int getTypeForMSH(){ return HEX1; }
   int getTypeForUNV(){ return 115; } // BRICK
   char *getStringForPOS(){ return "SH"; }
+  char *getStringForBDF(){ return "CHEXA"; }
   virtual int getVolumeSign()
   { 
     double mat[3][3];
@@ -535,6 +546,7 @@ class MHexahedron2 : public MHexahedron {
   int getTypeForMSH(){ return HEX2; }
   int getTypeForUNV(){ return 116; } // ???? BRICK2
   char *getStringForPOS(){ return "SH2"; }
+  char *getStringForBDF(){ return 0; }
   void setVolumePositive()
   {
     if(getVolumeSign() < 0){
@@ -592,6 +604,7 @@ class MPrism : public MElement {
   int getTypeForMSH(){ return PRI1; }
   int getTypeForUNV(){ return 112; } // WEDGE
   char *getStringForPOS(){ return "SI"; }
+  char *getStringForBDF(){ return "CPENTA"; }
   virtual int getVolumeSign()
   { 
     double mat[3][3];
@@ -645,6 +658,7 @@ class MPrism2 : public MPrism {
   int getTypeForMSH(){ return PRI2; }
   int getTypeForUNV(){ return 113; } // ???? WEDGE2
   char *getStringForPOS(){ return "SI2"; }
+  char *getStringForBDF(){ return 0; }
   void setVolumePositive()
   {
     if(getVolumeSign() < 0){
@@ -698,6 +712,7 @@ class MPyramid : public MElement {
   int getTypeForMSH(){ return PYR1; }
   int getTypeForUNV(){ throw; }
   char *getStringForPOS(){ return "SY"; }
+  char *getStringForBDF(){ return 0; }
   virtual int getVolumeSign()
   { 
     double mat[3][3];
@@ -749,6 +764,7 @@ class MPyramid2 : public MPyramid {
   int getTypeForMSH(){ return PYR2; }
   int getTypeForUNV(){ throw; }
   char *getStringForPOS(){ return "SY2"; }
+  char *getStringForBDF(){ return 0; }
   void setVolumePositive()
   {
     if(getVolumeSign() < 0){

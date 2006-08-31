@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.31 2006-08-31 14:15:29 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.32 2006-08-31 21:29:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1136,7 +1136,7 @@ int GModel::writeUNV(const std::string &name, double scalingFactor)
 
   renumberMeshVertices();
 
-  // IDEAS NODES record
+  // Nodes
   fprintf(fp, "%6d\n", -1);
   fprintf(fp, "%6d\n", 2411);
   for(viter it = firstVertex(); it != lastVertex(); ++it)
@@ -1153,7 +1153,7 @@ int GModel::writeUNV(const std::string &name, double scalingFactor)
       (*it)->mesh_vertices[i]->writeUNV(fp, scalingFactor);
   fprintf(fp, "%6d\n", -1);  
 
-  // IDEAS ELEMENTS record
+  // Elements
   fprintf(fp, "%6d\n", -1);
   fprintf(fp, "%6d\n", 2412);
   for(eiter it = firstEdge(); it != lastEdge(); ++it){
@@ -1182,7 +1182,7 @@ int GModel::writeUNV(const std::string &name, double scalingFactor)
   for(int dim = 0; dim < 4; dim++){
     std::map<int, std::vector<GEntity*> >::const_iterator it = physicals[dim].begin();
     for(; it != physicals[dim].end(); ++it){
-      // IDEAS GROUPOFNODES record
+      // Group of nodes
       fprintf(fp, "%6d\n", -1);
       fprintf(fp, "%6d\n", 790);
       fprintf(fp, "%10d%10d\n", it->first, 1);
@@ -1237,12 +1237,12 @@ int GModel::readMESH(const std::string &name)
   sscanf(buffer, "%s %d", str, &format);
 
   if(format != 1){
-    Msg(GERROR, "Non-ASCII MEDIT mesh import is not yet available");
+    Msg(GERROR, "Medit mesh import only available for ASCII files");
     return 0;
   }
 
   std::map<int, MVertex*> vertices;
-  std::map<int, std::vector<MElement*> > elements[2];
+  std::map<int, std::vector<MElement*> > elements[3];
 
   while(!feof(fp)) {
     if(!fgets(buffer, sizeof(buffer), fp)) break;
@@ -1290,6 +1290,19 @@ int GModel::readMESH(const std::string &name)
 	    (new MQuadrangle(vertices[n1], vertices[n2], vertices[n3], vertices[n4]));
 	}
       }
+      else if(!strcmp(str, "Tetrahedra")) {
+	if(!fgets(buffer, sizeof(buffer), fp)) break;
+	int nbt;
+	sscanf(buffer, "%d", &nbt);
+	Msg(INFO, "%d tetrahedra", nbt);
+	for(int i = 0; i < nbt; i++) {
+	  if(!fgets(buffer, sizeof(buffer), fp)) break;
+	  int n1, n2, n3, n4, cl;
+	  sscanf(buffer, "%d %d %d %d %d", &n1, &n2, &n3, &n4, &cl);
+	  elements[2][cl].push_back
+	    (new MTetrahedron(vertices[n1], vertices[n2], vertices[n3], vertices[n4]));
+	}
+      }
     }
   }
 
@@ -1335,10 +1348,13 @@ int GModel::writeMESH(const std::string &name, double scalingFactor)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
       (*it)->mesh_vertices[i]->writeMESH(fp, scalingFactor);
   
-  int numTriangles = 0, numQuadrangles = 0;
+  int numTriangles = 0, numQuadrangles = 0, numTetrahedra = 0;
   for(fiter it = firstFace(); it != lastFace(); ++it){
     numTriangles += (*it)->triangles.size();
     numQuadrangles += (*it)->quadrangles.size();
+  }
+  for(riter it = firstRegion(); it != lastRegion(); ++it){
+    numTetrahedra += (*it)->tetrahedra.size();
   }
   if(numTriangles){
     fprintf(fp, " Triangles\n");
@@ -1354,9 +1370,173 @@ int GModel::writeMESH(const std::string &name, double scalingFactor)
       for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
 	(*it)->quadrangles[i]->writeMESH(fp, (*it)->tag());
   }
+  if(numTetrahedra){
+    fprintf(fp, " Tetrahedra\n");
+    fprintf(fp, " %d\n", numTetrahedra);
+    for(riter it = firstRegion(); it != lastRegion(); ++it)
+      for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
+	(*it)->tetrahedra[i]->writeMESH(fp, (*it)->tag());
+  }
 
   fprintf(fp, " End\n");
   
+  fclose(fp);
+  return 1;
+}
+
+static int readElementBDF(FILE *fp, char *buffer, unsigned int numNodes, 
+			  int *num, int *region, int *nodes)
+{
+  int newline = 0; 
+  std::vector<char*> vals;
+
+  for(unsigned int i = 0; i < strlen(buffer); i++){
+    if(buffer[i] == ',') vals.push_back(&buffer[i + 1]);
+    else if(buffer[i] == '+'){ // the data continues on the next line
+      vals.pop_back();
+      newline = 1;
+      break;
+    }
+  }
+  
+  if(newline){
+    char buffer2[256];
+    if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
+    for(unsigned int i = 0; i < strlen(buffer2); i++){
+      if(buffer2[i] == ',') vals.push_back(&buffer2[i + 1]);
+    }
+  }
+  
+  if(vals.size() != numNodes + 2){
+    Msg(GERROR, "Wrong number of nodes %d for element", vals.size() - 2);
+    return 0;
+  }
+  
+  sscanf(vals[0], "%d", num);
+  sscanf(vals[1], "%d", region);
+  for(unsigned int i = 0; i < numNodes; i++)
+    if(!sscanf(vals[i + 2], "%d", &nodes[i])) return 0;
+  return 1;
+}
+
+int GModel::readBDF(const std::string &name)
+{
+  FILE *fp = fopen(name.c_str(), "r");
+  if(!fp){
+    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  char buffer[256];
+  int num, dummy, region, n[30];
+  double x, y, z;
+
+  std::map<int, MVertex*> vertices;
+  std::map<int, std::vector<MElement*> > elements[5];
+
+  while(!feof(fp)) {
+    if(!fgets(buffer, sizeof(buffer), fp)) break;
+    if(!strncmp(buffer, "GRID", 4)){
+      sscanf(&buffer[5], "%d , %d , %lf, %lf , %lf", &num, &dummy, &x, &y, &z);
+      vertices[num] = new MVertex(x, y, z);
+    }
+    else if(!strncmp(buffer, "CTRIA3", 6)){
+      if(readElementBDF(fp, &buffer[6], 3, &num, &region, n))
+	elements[0][region].push_back
+	  (new MTriangle(vertices[n[0]], vertices[n[1]], vertices[n[2]], num));
+    }
+    else if(!strncmp(buffer, "CTRIA6", 6)){
+      if(readElementBDF(fp, &buffer[6], 6, &num, &region, n))
+	elements[0][region].push_back
+	  (new MTriangle2(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
+			  vertices[n[3]], vertices[n[4]], vertices[n[5]], num));
+    }
+    else if(!strncmp(buffer, "CQUAD4", 6)){
+      if(readElementBDF(fp, &buffer[6], 4, &num, &region, n))
+	elements[1][region].push_back
+	  (new MQuadrangle(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
+			   vertices[n[3]], num));
+    }
+    else if(!strncmp(buffer, "CTETRA", 6)){
+      if(readElementBDF(fp, &buffer[6], 4, &num, &region, n))
+	elements[2][region].push_back
+	  (new MTetrahedron(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
+			    vertices[n[3]], num));
+    }
+    else if(!strncmp(buffer, "CHEXA", 5)){
+      if(readElementBDF(fp, &buffer[5], 8, &num, &region, n))
+	elements[3][region].push_back
+	  (new MHexahedron(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
+			   vertices[n[3]], vertices[n[4]], vertices[n[5]], 
+			   vertices[n[6]], vertices[n[7]], num));
+    }
+    else if(!strncmp(buffer, "CPENTA", 6)){
+      if(readElementBDF(fp, &buffer[6], 6, &num, &region, n))
+	elements[4][region].push_back
+	  (new MPrism(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
+		      vertices[n[3]], vertices[n[4]], vertices[n[5]], num));
+    }
+  }
+  
+  // store the elements in their associated elementary entity. If the
+  // entity does not exist, create a new one.
+  for(int i = 0; i < 5; i++) storeElementsInEntities(this, elements[i]);
+
+  // associate the correct geometrical entity with each mesh vertex
+  associateEntityWithVertices(this);
+
+  // store the vertices in their associated geometrical entity
+  storeVerticesInEntities(vertices);
+
+  fclose(fp);
+  return 1;
+}
+
+int GModel::writeBDF(const std::string &name, double scalingFactor)
+{
+  FILE *fp = fopen(name.c_str(), "w");
+  if(!fp){
+    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  renumberMeshVertices();
+
+  // no idea if this header is necessary (or even what it means :-)
+  fprintf(fp, "$\n");
+  fprintf(fp, "MAT4,1,0.00000\n");
+  fprintf(fp, "PSOLID,1,1\n");
+
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
+      (*it)->mesh_vertices[i]->writeBDF(fp, scalingFactor);
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+      (*it)->mesh_vertices[i]->writeBDF(fp, scalingFactor);
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
+      (*it)->mesh_vertices[i]->writeBDF(fp, scalingFactor);
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
+      (*it)->mesh_vertices[i]->writeBDF(fp, scalingFactor);
+  
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+    for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+      (*it)->triangles[i]->writeBDF(fp, (*it)->tag());
+    for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
+      (*it)->quadrangles[i]->writeBDF(fp, (*it)->tag());
+  }
+  for(riter it = firstRegion(); it != lastRegion(); ++it){
+    for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
+      (*it)->tetrahedra[i]->writeBDF(fp, (*it)->tag());
+    for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
+      (*it)->hexahedra[i]->writeBDF(fp, (*it)->tag());
+    for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
+      (*it)->prisms[i]->writeBDF(fp, (*it)->tag());
+  }
+  
+  fprintf(fp, "ENDDATA\n");
+   
   fclose(fp);
   return 1;
 }

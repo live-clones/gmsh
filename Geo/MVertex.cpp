@@ -1,4 +1,4 @@
-// $Id: MVertex.cpp,v 1.6 2006-08-19 18:48:06 geuzaine Exp $
+// $Id: MVertex.cpp,v 1.7 2006-08-31 21:29:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -82,4 +82,10 @@ void MVertex::writeMESH(FILE *fp, double scalingFactor)
 {
   fprintf(fp, " %20.14E      %20.14E      %20.14E      %d\n", 
 	  x() * scalingFactor, y() * scalingFactor, z() * scalingFactor, 0);
+}
+
+void MVertex::writeBDF(FILE *fp, double scalingFactor)
+{
+  fprintf(fp, "GRID,%d,%d,%f,%f,%f\n", _num, 0,
+	  x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
 }

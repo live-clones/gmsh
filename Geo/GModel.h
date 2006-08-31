@@ -116,18 +116,32 @@ class GModel
   // deletes all the partitions
   virtual void deleteMeshPartitions();
 
-  // IO routines
+  // IO for native Gmsh mesh file format
   int readMSH(const std::string &name);
   int writeMSH(const std::string &name, double version=1.0, bool binary=false,
 	       bool saveAll=false, double scalingFactor=1.0);
+
+  // IO for mesh statistics (as Gmsh post-processing views)
   int writePOS(const std::string &name, double scalingFactor=1.0);
+
+  // IO for stereo lithography format
   int readSTL(const std::string &name, double tolerance=1.e-3);
   int writeSTL(const std::string &name, bool binary=false, double scalingFactor=1.0);
+
+  // IO for Inventor/VRML format
   int readVRML(const std::string &name);
   int writeVRML(const std::string &name, double scalingFactor=1.0);
+
+  // IO for I-deas universal mesh format
   int writeUNV(const std::string &name, double scalingFactor=1.0);
+
+  // IO for Medit (INRIA) mesh format
   int readMESH(const std::string &name);
   int writeMESH(const std::string &name, double scalingFactor=1.0);
+
+  // IO for Nastran Bulk Data File format
+  int readBDF(const std::string &name);
+  int writeBDF(const std::string &name, double scalingFactor=1.0);
 
   // FIXME: this will be removed (and rewritten)
   smooth_normals *normals;

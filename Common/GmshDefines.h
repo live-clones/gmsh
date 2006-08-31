@@ -28,6 +28,7 @@
 #define FORMAT_P3D           28
 #define FORMAT_SVG           29
 #define FORMAT_MESH          30
+#define FORMAT_BDF           31
 
 // Element types in .msh file format
 #define LGN1 1

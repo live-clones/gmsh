@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.11 2006-08-29 21:19:34 geuzaine Exp $
+// $Id: MElement.cpp,v 1.12 2006-08-31 21:29:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -277,4 +277,15 @@ void MElement::writeMESH(FILE *fp, int elementary)
   for(int i = 0; i < getNumVertices(); i++)
     fprintf(fp, " %d", getVertex(i)->getNum());
   fprintf(fp, " %d\n", elementary);
+}
+
+void MElement::writeBDF(FILE *fp, int elementary)
+{
+  char *str = getStringForBDF();
+  if(str){
+    fprintf(fp, "%s,%d,%d", str, _num, elementary);
+    for(int i = 0; i < getNumVertices(); i++)
+      fprintf(fp, ",%d", getVertex(i)->getNum());
+    fprintf(fp, "\n");
+  }
 }

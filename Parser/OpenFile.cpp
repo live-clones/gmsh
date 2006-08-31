@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.118 2006-08-26 15:13:22 remacle Exp $
+// $Id: OpenFile.cpp,v 1.119 2006-08-31 21:29:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -292,6 +292,9 @@ int MergeProblem(char *name, int warn_if_missing)
   }
   else if(!strcmp(ext, ".mesh") || !strcmp(ext, ".MESH")){
     status = GMODEL->readMESH(name);
+  }
+  else if(!strcmp(ext, ".bdf") || !strcmp(ext, ".BDF")){
+    status = GMODEL->readBDF(name);
   }
 #if defined(HAVE_FLTK)
   else if(!strcmp(ext, ".pnm") || !strcmp(ext, ".PNM") ||

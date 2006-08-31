@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.457 2006-08-31 14:15:29 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.458 2006-08-31 21:29:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -608,8 +608,9 @@ static char *file_types =
   "\tGmsh geometry (*.geo)"
   "\tGmsh mesh (*.msh)"
   "\tGmsh post-processing (*.pos)"
+  "\tMedit mesh (*.mesh)"
+  "\tNastran bulk data file (*.bdf)"
   "\tSTL surface mesh (*.stl)"
-  "\tMEDIT mesh (*.mesh)"
   "\tJPEG (*.jpg)"
   "\tPNG (*.png)"
   "\tBMP (*.bmp)"
@@ -673,6 +674,12 @@ int _save_unv(char *name)
 int _save_mesh(char *name)
 {
   CreateOutputFile(name, FORMAT_MESH);
+  return 1;
+}
+
+int _save_bdf(char *name)
+{
+  CreateOutputFile(name, FORMAT_BDF);
   return 1;
 }
 
@@ -776,8 +783,9 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"Gmsh options (*.opt)", _save_options},
     {"Gmsh unrolled geometry (*.geo)", _save_geo},
     {"  ", _save_auto},
-    {"I-DEAS universal mesh (*.unv)", _save_unv},
-    {"MEDIT mesh (*.mesh)", _save_mesh},
+    {"I-deas universal mesh (*.unv)", _save_unv},
+    {"Medit mesh (*.mesh)", _save_mesh},
+    {"Nastran bulk data file (*.bdf)", _save_bdf},
     {"STL surface mesh (*.stl)", _save_stl},
     {"VRML surface mesh (*.wrl)", _save_vrml},
     {"   ", _save_auto},
