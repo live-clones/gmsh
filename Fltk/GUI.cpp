@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.546 2006-08-29 13:16:18 geuzaine Exp $
+// $Id: GUI.cpp,v 1.547 2006-08-31 23:01:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -87,7 +87,7 @@
 #define IW (10*fontsize)  // input field width
 #define BB (7*fontsize)   // width of a button with internal label
 #define BH (2*fontsize+1) // button height
-#define WB (6)            // window border
+#define WB (7)            // window border
 
 extern Context_T CTX;
 

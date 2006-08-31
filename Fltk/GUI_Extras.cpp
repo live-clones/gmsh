@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.21 2006-08-23 19:53:38 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.22 2006-08-31 23:01:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -121,20 +121,24 @@ int arrow_editor(char *title, double &a, double &b, double &c)
   };
   static _editor *editor = NULL;
 
+  const int BH = 2 * CTX.fontsize + 1;
+  const int BB = 7 * CTX.fontsize;
+  const int WB = 7;
+
   if(!editor){
     editor = new _editor;
-    editor->window = new Dialog_Window(200, 140);
-    editor->sa = new Fl_Value_Slider(10, 10, 100, 25, "Head radius");
+    editor->window = new Dialog_Window(2 * BB + 3 * WB, 4 * BH + 3 * WB);
+    editor->sa = new Fl_Value_Slider(WB, WB, BB, BH, "Head radius");
     editor->sa->type(FL_HOR_SLIDER);
     editor->sa->align(FL_ALIGN_RIGHT);
-    editor->sb = new Fl_Value_Slider(10, 40, 100, 25, "Stem length");
+    editor->sb = new Fl_Value_Slider(WB, WB + BH, BB, BH, "Stem length");
     editor->sb->type(FL_HOR_SLIDER);
     editor->sb->align(FL_ALIGN_RIGHT);
-    editor->sc = new Fl_Value_Slider(10, 70, 100, 25, "Stem radius");
+    editor->sc = new Fl_Value_Slider(WB, WB + 2 * BH, BB, BH, "Stem radius");
     editor->sc->type(FL_HOR_SLIDER);
     editor->sc->align(FL_ALIGN_RIGHT);
-    editor->apply = new Fl_Return_Button(10, 105, 85, 25, "Apply");
-    editor->cancel = new Fl_Button(105, 105, 85, 25, "Cancel");
+    editor->apply = new Fl_Return_Button(WB, 2 * WB + 3 * BH, BB, BH, "Apply");
+    editor->cancel = new Fl_Button(2 * WB + BB, 2 * WB + 3 * BH, BB, BH, "Cancel");
     editor->window->end();
     editor->window->hotspot(editor->window);
   }
@@ -226,30 +230,34 @@ int jpeg_dialog(char *name)
   };
   static _jpeg_dialog *dialog = NULL;
 
+  const int BH = 2 * CTX.fontsize + 1;
+  const int BB = 7 * CTX.fontsize;
+  const int WB = 7;
+
   if(!dialog){
     dialog = new _jpeg_dialog;
-    int h = 3*10 + 25 + 3*25, y = 0;
+    int h = 3 * WB + 4 * BH, w = 2 * BB + 3 * WB, y = WB;
     // not a "Dialog_Window" since it is modal 
-    dialog->window = new Fl_Double_Window(200, h, "JPEG Options"); y = 10;
+    dialog->window = new Fl_Double_Window(w, h, "JPEG Options");
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->s[0] = new Fl_Value_Slider(10, y, 100, 25, "Quality"); y += 25;
+    dialog->s[0] = new Fl_Value_Slider(WB, y, BB, BH, "Quality"); y += BH;
     dialog->s[0]->type(FL_HOR_SLIDER);
     dialog->s[0]->align(FL_ALIGN_RIGHT);
     dialog->s[0]->minimum(1);
     dialog->s[0]->maximum(100);
     dialog->s[0]->step(1);
-    dialog->s[1] = new Fl_Value_Slider(10, y, 100, 25, "Smoothing"); y += 25;
+    dialog->s[1] = new Fl_Value_Slider(WB, y, BB, BH, "Smoothing"); y += BH;
     dialog->s[1]->type(FL_HOR_SLIDER);
     dialog->s[1]->align(FL_ALIGN_RIGHT);
     dialog->s[1]->minimum(0);
     dialog->s[1]->maximum(100);
     dialog->s[1]->step(1);
-    dialog->b = new Fl_Check_Button(10, y, 180, 25, "Print text strings"); y += 25;
+    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->b->down_box(GMSH_TOGGLE_BOX);
     dialog->b->selection_color(GMSH_TOGGLE_COLOR);
-    dialog->ok = new Fl_Return_Button(10, y+10, 85, 25, "OK");
-    dialog->cancel = new Fl_Button(105, y+10, 85, 25, "Cancel");
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
@@ -293,18 +301,22 @@ int generic_bitmap_dialog(char *name, char *title, int format)
   };
   static _generic_bitmap_dialog *dialog = NULL;
 
+  const int BH = 2 * CTX.fontsize + 1;
+  const int BB = 7 * CTX.fontsize;
+  const int WB = 7;
+
   if(!dialog){
     dialog = new _generic_bitmap_dialog;
-    int h = 3*10 + 25 + 1*25, y = 0;
+    int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
     // not a "Dialog_Window" since it is modal 
-    dialog->window = new Fl_Double_Window(200, h); y = 10;
+    dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->b = new Fl_Check_Button(10, y, 180, 25, "Print text strings"); y += 25;
+    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->b->down_box(GMSH_TOGGLE_BOX);
     dialog->b->selection_color(GMSH_TOGGLE_COLOR);
-    dialog->ok = new Fl_Return_Button(10, y+10, 85, 25, "OK");
-    dialog->cancel = new Fl_Button(105, y+10, 85, 25, "Cancel");
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
@@ -345,24 +357,28 @@ int gif_dialog(char *name)
   };
   static _gif_dialog *dialog = NULL;
 
+  const int BH = 2 * CTX.fontsize + 1;
+  const int BB = 7 * CTX.fontsize;
+  const int WB = 7;
+
   if(!dialog){
     dialog = new _gif_dialog;
-    int h = 3*10 + 25 + 5*25, y = 0;
+    int h = 3 * WB + 6 * BH, w = 2 * BB + 3 * WB, y = WB;
     // not a "Dialog_Window" since it is modal 
-    dialog->window = new Fl_Double_Window(200, h, "GIF Options"); y = 10;
+    dialog->window = new Fl_Double_Window(w, h, "GIF Options");
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->b[0] = new Fl_Check_Button(10, y, 180, 25, "Dither"); y += 25;
-    dialog->b[1] = new Fl_Check_Button(10, y, 180, 25, "Interlace"); y += 25;
-    dialog->b[2] = new Fl_Check_Button(10, y, 180, 25, "Sort colormap"); y += 25;
-    dialog->b[3] = new Fl_Check_Button(10, y, 180, 25, "Transparent background"); y += 25;
-    dialog->b[4] = new Fl_Check_Button(10, y, 180, 25, "Print text strings"); y += 25;
+    dialog->b[0] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Dither"); y += BH;
+    dialog->b[1] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Interlace"); y += BH;
+    dialog->b[2] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Sort colormap"); y += BH;
+    dialog->b[3] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Transparent background"); y += BH;
+    dialog->b[4] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
     for(int i = 0; i < 5; i++){
       dialog->b[i]->type(FL_TOGGLE_BUTTON);
       dialog->b[i]->down_box(GMSH_TOGGLE_BOX);
       dialog->b[i]->selection_color(GMSH_TOGGLE_COLOR);
     }
-    dialog->ok = new Fl_Return_Button(10, y+10, 85, 25, "OK");
-    dialog->cancel = new Fl_Button(105, y+10, 85, 25, "Cancel");
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
@@ -455,28 +471,32 @@ int gl2ps_dialog(char *name, char *title, int format)
     {0}
   };
 
+  const int BH = 2 * CTX.fontsize + 1;
+  const int BB = 7 * CTX.fontsize;
+  const int WB = 7;
+
   if(!dialog){
     dialog = new _gl2ps_dialog;
-    int h = 3*10 + 25 + 7*25, y = 0;
+    int h = 3 * WB + 8 * BH, w = 2 * BB + 3 * WB, y = WB;
     // not a "Dialog_Window" since it is modal 
-    dialog->window = new Fl_Double_Window(200, h); y = 10;
+    dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->c = new Fl_Choice(10, y, 145, 25, "Type"); y+= 25;
+    dialog->c = new Fl_Choice(WB, y, BB + WB + BB / 2, BH, "Type"); y += BH;
     dialog->c->menu(sortmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
-    dialog->b[0] = new Fl_Check_Button(10, y, 180, 25, "Compress"); y += 25;
-    dialog->b[1] = new Fl_Check_Button(10, y, 180, 25, "Print background"); y += 25;
-    dialog->b[2] = new Fl_Check_Button(10, y, 180, 25, "Remove hidden primitives"); y += 25;
-    dialog->b[3] = new Fl_Check_Button(10, y, 180, 25, "Optimize BSP tree"); y += 25;
-    dialog->b[4] = new Fl_Check_Button(10, y, 180, 25, "Use level 3 shading"); y += 25;
-    dialog->b[5] = new Fl_Check_Button(10, y, 180, 25, "Print text strings"); y += 25;
+    dialog->b[0] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Compress"); y += BH;
+    dialog->b[1] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print background"); y += BH;
+    dialog->b[2] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Remove hidden primitives"); y += BH;
+    dialog->b[3] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Optimize BSP tree"); y += BH;
+    dialog->b[4] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Use level 3 shading"); y += BH;
+    dialog->b[5] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
     for(int i = 0; i < 6; i++){
       dialog->b[i]->type(FL_TOGGLE_BUTTON);
       dialog->b[i]->down_box(GMSH_TOGGLE_BOX);
       dialog->b[i]->selection_color(GMSH_TOGGLE_COLOR);
     }
-    dialog->ok = new Fl_Return_Button(10, y+10, 85, 25, "OK");
-    dialog->cancel = new Fl_Button(105, y+10, 85, 25, "Cancel");
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
@@ -536,24 +556,28 @@ int options_dialog(char *name)
   };
   static _options_dialog *dialog = NULL;
 
+  const int BH = 2 * CTX.fontsize + 1;
+  const int BB = 7 * CTX.fontsize;
+  const int WB = 7;
+
   if(!dialog){
     dialog = new _options_dialog;
-    int h = 3*10 + 25 + 2*25, y = 0;
+    int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
     // not a "Dialog_Window" since it is modal 
-    dialog->window = new Fl_Double_Window(200, h, "Options"); y = 10;
+    dialog->window = new Fl_Double_Window(w, h, "Options");
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->b[0] = new Fl_Check_Button(10, y, 180, 25, "Save only modified options"); y += 25;
+    dialog->b[0] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save only modified options"); y += BH;
     dialog->b[0]->value(1);
     dialog->b[0]->type(FL_TOGGLE_BUTTON);
     dialog->b[0]->down_box(GMSH_TOGGLE_BOX);
     dialog->b[0]->selection_color(GMSH_TOGGLE_COLOR);
-    dialog->b[1] = new Fl_Check_Button(10, y, 180, 25, "Print help strings"); y += 25;
+    dialog->b[1] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print help strings"); y += BH;
     dialog->b[1]->value(1);
     dialog->b[1]->type(FL_TOGGLE_BUTTON);
     dialog->b[1]->down_box(GMSH_TOGGLE_BOX);
     dialog->b[1]->selection_color(GMSH_TOGGLE_COLOR);
-    dialog->ok = new Fl_Return_Button(10, y+10, 85, 25, "OK");
-    dialog->cancel = new Fl_Button(105, y+10, 85, 25, "Cancel");
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
@@ -599,21 +623,25 @@ int msh_dialog(char *name)
     {0}
   };
 
+  const int BH = 2 * CTX.fontsize + 1;
+  const int BB = 7 * CTX.fontsize;
+  const int WB = 7;
+
   if(!dialog){
     dialog = new _msh_dialog;
-    int h = 3*10 + 25 + 2*25, y = 0;
+    int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
     // not a "Dialog_Window" since it is modal 
-    dialog->window = new Fl_Double_Window(200, h, "MSH Options"); y = 10;
+    dialog->window = new Fl_Double_Window(w, h, "MSH Options");
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->c = new Fl_Choice(10, y, 130, 25, "Format"); y+= 25;
+    dialog->c = new Fl_Choice(WB, y, BB + BB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
-    dialog->b = new Fl_Check_Button(10, y, 180, 25, "Save all (ignore physicals)"); y += 25;
+    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physicals)"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->b->down_box(GMSH_TOGGLE_BOX);
     dialog->b->selection_color(GMSH_TOGGLE_COLOR);
-    dialog->ok = new Fl_Return_Button(10, y+10, 85, 25, "OK");
-    dialog->cancel = new Fl_Button(105, y+10, 85, 25, "Cancel");
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
@@ -665,17 +693,21 @@ int stl_dialog(char *name)
     {0}
   };
 
+  const int BH = 2 * CTX.fontsize + 1;
+  const int BB = 7 * CTX.fontsize;
+  const int WB = 7;
+
   if(!dialog){
     dialog = new _stl_dialog;
-    int h = 3*10 + 25 + 1*25, y = 0;
+    int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
     // not a "Dialog_Window" since it is modal 
-    dialog->window = new Fl_Double_Window(200, h, "STL Options"); y = 10;
+    dialog->window = new Fl_Double_Window(w, h, "STL Options");
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->c = new Fl_Choice(10, y, 130, 25, "Format"); y+= 25;
+    dialog->c = new Fl_Choice(WB, y, BB + BB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
-    dialog->ok = new Fl_Return_Button(10, y+10, 85, 25, "OK");
-    dialog->cancel = new Fl_Button(105, y+10, 85, 25, "Cancel");
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
