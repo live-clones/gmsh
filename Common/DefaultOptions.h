@@ -885,7 +885,7 @@ StringXNumber MeshOptions_Number[] = {
     "Explode elements (between 0=point and 1=non-transformed)" },
 
   { F|O, "Format" , opt_mesh_format , FORMAT_MSH , 
-    "Mesh output format (1=msh, 2=unv, 3=gref, 19=vrml)" },
+    "Mesh output format (1=msh, 2=unv, 19=vrml, 27=stl, 30=mesh, 31=bdf)" },
 
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. , 
     "Display mesh hexahedra?" },
@@ -916,7 +916,7 @@ StringXNumber MeshOptions_Number[] = {
     "Minimum element size factor in the Remesher" },
   { F|O, "MshBinary" , opt_mesh_msh_binary , 0. , 
     "Write MSH files in binary format?" },
-  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 1.0 , 
+  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 2.0 , 
     "Version of the MSH file format to use" },
 
   { F|O, "NbElemsPerRadiusOfCurv" , opt_mesh_nb_elem_per_rc, 5. ,
