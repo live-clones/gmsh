@@ -139,7 +139,7 @@ class GModel
   int readMESH(const std::string &name);
   int writeMESH(const std::string &name, double scalingFactor=1.0);
 
-  // IO for Nastran Bulk Data File format
+  // IO for Nastran Bulk Data File free format (with comma separator)
   int readBDF(const std::string &name);
   int writeBDF(const std::string &name, double scalingFactor=1.0);
 

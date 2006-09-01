@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.33 2006-09-01 00:36:15 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.34 2006-09-01 01:31:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1427,54 +1427,69 @@ int GModel::readBDF(const std::string &name)
   char buffer[256];
   int num, dummy, region, n[30];
   double x, y, z;
+  bool comma = false;
 
   std::map<int, MVertex*> vertices;
   std::map<int, std::vector<MElement*> > elements[5];
 
   while(!feof(fp)) {
     if(!fgets(buffer, sizeof(buffer), fp)) break;
-    if(!strncmp(buffer, "GRID", 4)){
-      sscanf(&buffer[5], "%d , %d , %lf, %lf , %lf", &num, &dummy, &x, &y, &z);
-      vertices[num] = new MVertex(x, y, z);
-    }
-    else if(!strncmp(buffer, "CTRIA3", 6)){
-      if(readElementBDF(fp, &buffer[6], 3, &num, &region, n))
-	elements[0][region].push_back
-	  (new MTriangle(vertices[n[0]], vertices[n[1]], vertices[n[2]], num));
-    }
-    else if(!strncmp(buffer, "CTRIA6", 6)){
-      if(readElementBDF(fp, &buffer[6], 6, &num, &region, n))
-	elements[0][region].push_back
-	  (new MTriangle2(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			  vertices[n[3]], vertices[n[4]], vertices[n[5]], num));
-    }
-    else if(!strncmp(buffer, "CQUAD4", 6)){
-      if(readElementBDF(fp, &buffer[6], 4, &num, &region, n))
-	elements[1][region].push_back
-	  (new MQuadrangle(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			   vertices[n[3]], num));
-    }
-    else if(!strncmp(buffer, "CTETRA", 6)){
-      if(readElementBDF(fp, &buffer[6], 4, &num, &region, n))
-	elements[2][region].push_back
-	  (new MTetrahedron(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			    vertices[n[3]], num));
-    }
-    else if(!strncmp(buffer, "CHEXA", 5)){
-      if(readElementBDF(fp, &buffer[5], 8, &num, &region, n))
-	elements[3][region].push_back
-	  (new MHexahedron(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			   vertices[n[3]], vertices[n[4]], vertices[n[5]], 
-			   vertices[n[6]], vertices[n[7]], num));
-    }
-    else if(!strncmp(buffer, "CPENTA", 6)){
-      if(readElementBDF(fp, &buffer[6], 6, &num, &region, n))
-	elements[4][region].push_back
-	  (new MPrism(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-		      vertices[n[3]], vertices[n[4]], vertices[n[5]], num));
+    if(buffer[0] != '$'){ // skip comments
+      if(!comma){ // check that we have a free format file with comma separator
+	for(unsigned int i = 0; i < strlen(buffer); i++){
+	  if(buffer[i] == ','){ 
+	    comma = true;
+	    break; 
+	  }
+	}
+	if(!comma){
+	  Msg(GERROR, "BDF reader only accepts comma-separated free format files");
+	  break;
+	}
+      }
+      if(!strncmp(buffer, "GRID", 4)){
+	sscanf(&buffer[5], "%d , %d , %lf, %lf , %lf", &num, &dummy, &x, &y, &z);
+	vertices[num] = new MVertex(x, y, z);
+      }
+      else if(!strncmp(buffer, "CTRIA3", 6)){
+	if(readElementBDF(fp, &buffer[6], 3, &num, &region, n))
+	  elements[0][region].push_back
+	    (new MTriangle(vertices[n[0]], vertices[n[1]], vertices[n[2]], num));
+      }
+      else if(!strncmp(buffer, "CTRIA6", 6)){
+	if(readElementBDF(fp, &buffer[6], 6, &num, &region, n))
+	  elements[0][region].push_back
+	    (new MTriangle2(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
+			    vertices[n[3]], vertices[n[4]], vertices[n[5]], num));
+      }
+      else if(!strncmp(buffer, "CQUAD4", 6)){
+	if(readElementBDF(fp, &buffer[6], 4, &num, &region, n))
+	  elements[1][region].push_back
+	    (new MQuadrangle(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
+			     vertices[n[3]], num));
+      }
+      else if(!strncmp(buffer, "CTETRA", 6)){
+	if(readElementBDF(fp, &buffer[6], 4, &num, &region, n))
+	  elements[2][region].push_back
+	    (new MTetrahedron(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
+			      vertices[n[3]], num));
+      }
+      else if(!strncmp(buffer, "CHEXA", 5)){
+	if(readElementBDF(fp, &buffer[5], 8, &num, &region, n))
+	  elements[3][region].push_back
+	    (new MHexahedron(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
+			     vertices[n[3]], vertices[n[4]], vertices[n[5]], 
+			     vertices[n[6]], vertices[n[7]], num));
+      }
+      else if(!strncmp(buffer, "CPENTA", 6)){
+	if(readElementBDF(fp, &buffer[6], 6, &num, &region, n))
+	  elements[4][region].push_back
+	    (new MPrism(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
+			vertices[n[3]], vertices[n[4]], vertices[n[5]], num));
+      }
     }
   }
-  
+
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
     storeElementsInEntities(this, elements[i]);
   associateEntityWithVertices(this);
@@ -1494,10 +1509,7 @@ int GModel::writeBDF(const std::string &name, double scalingFactor)
 
   renumberMeshVertices();
 
-  // no idea if this header is necessary (or even what it means :-)
-  fprintf(fp, "$\n");
-  fprintf(fp, "MAT4,1,0.00000\n");
-  fprintf(fp, "PSOLID,1,1\n");
+  fprintf(fp, "$ Created by Gmsh\n");
 
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
