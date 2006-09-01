@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.32 2006-08-31 21:29:18 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.33 2006-09-01 00:36:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -488,7 +488,8 @@ int GModel::readMSH(const std::string &name)
 
   // store the elements in their associated elementary entity. If the
   // entity does not exist, create a new one.
-  for(int i = 0; i < 7; i++) storeElementsInEntities(this, elements[i]);
+  for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
+    storeElementsInEntities(this, elements[i]);
 
   // treat points separately
   {
@@ -1043,7 +1044,8 @@ int GModel::readVRML(const std::string &name)
     }
   }
 
-  for(int i = 0; i < 3; i++) storeElementsInEntities(this, elements[i]);
+  for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
+    storeElementsInEntities(this, elements[i]);
   associateEntityWithVertices(this);
   storeVerticesInEntities(allvertices);
 
@@ -1306,14 +1308,9 @@ int GModel::readMESH(const std::string &name)
     }
   }
 
-  // store the elements in their associated elementary entity. If the
-  // entity does not exist, create a new one.
-  for(int i = 0; i < 2; i++) storeElementsInEntities(this, elements[i]);
-
-  // associate the correct geometrical entity with each mesh vertex
+  for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
+    storeElementsInEntities(this, elements[i]);
   associateEntityWithVertices(this);
-
-  // store the vertices in their associated geometrical entity
   storeVerticesInEntities(vertices);
 
   fclose(fp);
@@ -1478,14 +1475,9 @@ int GModel::readBDF(const std::string &name)
     }
   }
   
-  // store the elements in their associated elementary entity. If the
-  // entity does not exist, create a new one.
-  for(int i = 0; i < 5; i++) storeElementsInEntities(this, elements[i]);
-
-  // associate the correct geometrical entity with each mesh vertex
+  for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
+    storeElementsInEntities(this, elements[i]);
   associateEntityWithVertices(this);
-
-  // store the vertices in their associated geometrical entity
   storeVerticesInEntities(vertices);
 
   fclose(fp);
