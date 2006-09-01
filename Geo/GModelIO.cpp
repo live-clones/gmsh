@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.34 2006-09-01 01:31:52 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.35 2006-09-01 01:34:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1443,7 +1443,7 @@ int GModel::readBDF(const std::string &name)
 	  }
 	}
 	if(!comma){
-	  Msg(GERROR, "BDF reader only accepts comma-separated free format files");
+	  Msg(GERROR, "BDF reader only accepts free field format, comma separated");
 	  break;
 	}
       }
