@@ -170,7 +170,7 @@ class MLine : public MElement {
   int getTypeForMSH(){ return LGN1; }
   int getTypeForUNV(){ return 21; } // BEAM
   char *getStringForPOS(){ return "SL"; }
-  char *getStringForBDF(){ return 0; }
+  char *getStringForBDF(){ return "CBAR"; }
 };
 
 class MLine2 : public MLine {

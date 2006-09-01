@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.35 2006-09-01 01:34:27 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.36 2006-09-01 01:56:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1404,8 +1404,8 @@ static int readElementBDF(FILE *fp, char *buffer, unsigned int numNodes,
     }
   }
   
-  if(vals.size() != numNodes + 2){
-    Msg(GERROR, "Wrong number of nodes %d for element", vals.size() - 2);
+  if(vals.size() < numNodes + 2){
+    Msg(GERROR, "Missing nodes for element (%d < numNodes)", vals.size() - 2);
     return 0;
   }
   
@@ -1430,7 +1430,7 @@ int GModel::readBDF(const std::string &name)
   bool comma = false;
 
   std::map<int, MVertex*> vertices;
-  std::map<int, std::vector<MElement*> > elements[5];
+  std::map<int, std::vector<MElement*> > elements[6];
 
   while(!feof(fp)) {
     if(!fgets(buffer, sizeof(buffer), fp)) break;
@@ -1451,39 +1451,44 @@ int GModel::readBDF(const std::string &name)
 	sscanf(&buffer[5], "%d , %d , %lf, %lf , %lf", &num, &dummy, &x, &y, &z);
 	vertices[num] = new MVertex(x, y, z);
       }
+      else if(!strncmp(buffer, "CBAR", 4)){
+	if(readElementBDF(fp, &buffer[4], 2, &num, &region, n))
+	  elements[0][region].push_back
+	    (new MLine(vertices[n[0]], vertices[n[1]], num));
+      }
       else if(!strncmp(buffer, "CTRIA3", 6)){
 	if(readElementBDF(fp, &buffer[6], 3, &num, &region, n))
-	  elements[0][region].push_back
+	  elements[1][region].push_back
 	    (new MTriangle(vertices[n[0]], vertices[n[1]], vertices[n[2]], num));
       }
       else if(!strncmp(buffer, "CTRIA6", 6)){
 	if(readElementBDF(fp, &buffer[6], 6, &num, &region, n))
-	  elements[0][region].push_back
+	  elements[1][region].push_back
 	    (new MTriangle2(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
 			    vertices[n[3]], vertices[n[4]], vertices[n[5]], num));
       }
       else if(!strncmp(buffer, "CQUAD4", 6)){
 	if(readElementBDF(fp, &buffer[6], 4, &num, &region, n))
-	  elements[1][region].push_back
+	  elements[2][region].push_back
 	    (new MQuadrangle(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
 			     vertices[n[3]], num));
       }
       else if(!strncmp(buffer, "CTETRA", 6)){
 	if(readElementBDF(fp, &buffer[6], 4, &num, &region, n))
-	  elements[2][region].push_back
+	  elements[3][region].push_back
 	    (new MTetrahedron(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
 			      vertices[n[3]], num));
       }
       else if(!strncmp(buffer, "CHEXA", 5)){
 	if(readElementBDF(fp, &buffer[5], 8, &num, &region, n))
-	  elements[3][region].push_back
+	  elements[4][region].push_back
 	    (new MHexahedron(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
 			     vertices[n[3]], vertices[n[4]], vertices[n[5]], 
 			     vertices[n[6]], vertices[n[7]], num));
       }
       else if(!strncmp(buffer, "CPENTA", 6)){
 	if(readElementBDF(fp, &buffer[6], 6, &num, &region, n))
-	  elements[4][region].push_back
+	  elements[5][region].push_back
 	    (new MPrism(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
 			vertices[n[3]], vertices[n[4]], vertices[n[5]], num));
       }
@@ -1524,6 +1529,10 @@ int GModel::writeBDF(const std::string &name, double scalingFactor)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
       (*it)->mesh_vertices[i]->writeBDF(fp, scalingFactor);
   
+  for(eiter it = firstEdge(); it != lastEdge(); ++it){
+    for(unsigned int i = 0; i < (*it)->lines.size(); i++)
+      (*it)->lines[i]->writeBDF(fp, (*it)->tag());
+  }
   for(fiter it = firstFace(); it != lastFace(); ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
       (*it)->triangles[i]->writeBDF(fp, (*it)->tag());
