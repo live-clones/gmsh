@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.94 2006-08-22 01:58:35 geuzaine Exp $
+// $Id: Generator.cpp,v 1.95 2006-09-01 10:10:05 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -31,6 +31,7 @@
 #include "OS.h"
 #include "meshGEdge.h"
 #include "meshGFace.h"
+#include "meshGRegion.h"
 #include "GModel.h"
 
 extern Mesh *THEM;
@@ -266,8 +267,6 @@ void Maillage_Dimension_1()
 
   double t1 = Cpu();
 
-  //  Tree_Action(THEM->Curves, Maillage_Curve);
-
   std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), meshGEdge());
 
   double t2 = Cpu();
@@ -278,57 +277,15 @@ void Maillage_Dimension_2()
 {
   if(TooManyElements(2)) return;
 
-  double shortest = 1.e300;
-
   double t1 = Cpu();
-
-  // create reverse 1D meshes
-
-  List_T *Curves = Tree2List(THEM->Curves);
-  for(int i = 0; i < List_Nbr(Curves); i++) {
-    Curve *c;
-    List_Read(Curves, i, &c);
-    if(c->Num > 0) {
-      if(c->l < shortest)
-        shortest = c->l;
-      Curve C;
-      Curve *neew = &C;
-      neew->Num = -c->Num;
-      Tree_Query(THEM->Curves, &neew);
-      neew->Vertices =
-        List_Create(List_Nbr(c->Vertices), 1, sizeof(Vertex *));
-      List_Invert(c->Vertices, neew->Vertices);
-    }
-  }
-  List_Delete(Curves);
-
-  Msg(DEBUG, "Shortest curve has length %g", shortest);
-
-  // mesh 2D
-
-  //  Tree_Action(THEM->Surfaces, Maillage_Surface);
-
   std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), meshGFace());
 
-  // global "all-quad" recombine
-
-  if(CTX.mesh.algo_recombine == 2)
-    Recombine_All(THEM);
+  // 2 BE DONE
+  //  if(CTX.mesh.algo_recombine == 2)
+  //    Recombine_All(THEM);
 
   double t2 = Cpu();
   CTX.mesh_timer[1] = t2 - t1;
-}
-
-static Volume *IVOL;
-
-void TransferData(void *a, void *b)
-{
-  Simplex *s = *(Simplex**)a;
-  if(s->iEnt == IVOL->Num){
-    Tree_Add(IVOL->Simplexes, &s);
-    for(int i = 0; i < 4; i++)
-      Tree_Insert(IVOL->Vertices, &s->V[i]);
-  }
 }
 
 void Maillage_Dimension_3()
@@ -336,41 +293,7 @@ void Maillage_Dimension_3()
   if(TooManyElements(3)) return;
 
   double t1 = Cpu();
-
-  // merge all the delaunay parts in a single special volume
-  Volume *v = Create_Volume(99999, 99999);
-  List_T *list = Tree2List(THEM->Volumes);
-  for(int i = 0; i < List_Nbr(list); i++) {
-    Volume *vol;
-    List_Read(list, i, &vol);
-    if((!vol->Extrude || !vol->Extrude->mesh.ExtrudeMesh) &&
-       (vol->Method != TRANSFINI)) {
-      for(int j = 0; j < List_Nbr(vol->Surfaces); j++) {
-        List_Replace(v->Surfaces, List_Pointer(vol->Surfaces, j),
-                     compareSurface);
-      }
-    }
-  }
-  Tree_Insert(THEM->Volumes, &v);
-
-  if(CTX.mesh.oldxtrude) {
-    Extrude_Mesh_Old(); // old extrusion
-  }
-  else {
-    Extrude_Mesh(THEM->Volumes); // new extrusion
-    Tree_Action(THEM->Volumes, Maillage_Volume); // delaunay of remaining parts
-  }
-
-  // transfer data back to individual volumes and remove special volume
-  for(int i = 0; i < List_Nbr(list); i++){
-    List_Read(list, i, &IVOL);
-    Tree_Action(v->Simplexes, TransferData);
-  }
-  Tree_Suppress(THEM->Volumes, &v);
-  Free_Volume_But_Not_Elements(&v, NULL);
-
-  List_Delete(list);
-
+  std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), meshGRegion());
   double t2 = Cpu();
   CTX.mesh_timer[2] = t2 - t1;
 }

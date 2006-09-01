@@ -35,6 +35,7 @@ class GRegion : public GEntity {
 
   virtual int dim() const {return 3;}
   virtual void setVisibility(char val, bool recursive=false);
+  virtual std::list<GFace*> faces() const{return l_faces;}
 
   // The bounding box
   virtual SBoundingBox3d bounds() const; 

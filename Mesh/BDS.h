@@ -38,6 +38,8 @@ class BDS_Mesh;
 class BDS_Point;
 class BDS_Vector;
 class GFace;
+class GEdge;
+class GVertex;
 
 void vector_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]); 
 void normal_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]); 
@@ -186,9 +188,7 @@ public:
       ++it;
     }
   }
-  double min_edge_length();
   void getTriangles(std::list<BDS_Face *> &t) const; 	
-  void compute_curvature();
   BDS_Point(int id, double x=0, double y=0, double z=0)
     : _lc(1.e22),X(x),Y(y),Z(z),u(0),v(0),config_modified(true),iD(id),g(0)
   {	    
@@ -386,6 +386,9 @@ public:
   int MAXPOINTNUMBER,SNAP_SUCCESS,SNAP_FAILURE;
   double Min[3],Max[3],LC;
   BDS_Mesh(int _MAXX = 0) :  MAXPOINTNUMBER(_MAXX){}
+  void load(GVertex   *gv); // load in BDS all the meshes of the vertex 
+  void load(GEdge     *ge); // load in BDS all the meshes of the edge 
+  void load(GFace     *gf); // load in BDS all the meshes of the surface 
   virtual ~BDS_Mesh();
   BDS_Mesh(const BDS_Mesh &other);
   std::set<BDS_GeomEntity*,GeomLessThan> geom; 
@@ -407,7 +410,7 @@ public:
   BDS_Face *add_quadrangle(int p1, int p2, int p3,int p4); 
   BDS_Face *add_triangle(BDS_Edge *e1,BDS_Edge *e2,BDS_Edge *e3);
   BDS_Face *add_quadrangle(BDS_Edge *e1,BDS_Edge *e2,BDS_Edge *e3,BDS_Edge *e4);
-  void del_triangle(BDS_Face *t);
+  void del_face(BDS_Face *t);
   BDS_Face  *find_triangle(BDS_Edge *e1,BDS_Edge *e2,BDS_Edge *e3);
   BDS_Face  *find_quadrangle(BDS_Edge *e1,BDS_Edge *e2,BDS_Edge *e3,BDS_Edge *e4);
   // Geom entities

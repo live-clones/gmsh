@@ -1,5 +1,5 @@
-#ifndef _MESH_GFACE_H_
-#define _MESH_GFACE_H_
+#ifndef _MESH_GREGION_H_
+#define _MESH_GREGION_H_
 
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,19 +20,22 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-class GFace;
-// Create the mesh of the face
-class meshGFace 
+class GRegion;
+class GModel;
+// Create the mesh of the region
+class meshGRegion 
 {
-  public :
-  void operator () ( GFace * );
+public :
+  void operator () ( GRegion * );
 };
 
+void meshAllRegionsAtOnce ( GModel *gm );
+
 // destroy the mesh of the face
-class deMeshGFace 
+class deMeshGRegion 
 {
- public :
-  void operator () ( GFace * );
+public :
+  void operator () ( GRegion * );
 };
 
 #endif

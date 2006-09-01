@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.9 2006-08-29 10:39:49 remacle Exp $
+// $Id: meshGFace.cpp,v 1.10 2006-09-01 10:10:05 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -870,7 +870,7 @@ void gmsh2DMeshGenerator ( GFace *gf )
       {
 	BDS_Face *t = *itt;
 	if (!t->g)
-	  m->del_triangle (t);
+	  m->del_face (t);
 	++itt;
       }
   }
@@ -991,6 +991,8 @@ void deMeshGFace :: operator() (GFace *gf)
   gf->mesh_vertices.clear();
   for (unsigned int i=0;i<gf->triangles.size();i++) delete gf->triangles[i];
   gf->triangles.clear();
+  for (unsigned int i=0;i<gf->quadrangles.size();i++) delete gf->quadrangles[i];
+  gf->quadrangles.clear();
 }
 
 
@@ -1018,15 +1020,8 @@ void meshGFace :: operator() (GFace *gf)
   // compute the mean plane, this is sometimes useful 
   gf->computeMeanPlane(points);
 
-  Msg(DEBUG1, "points were put in parametric coords ...");
-
-  try
-    {
-      gmsh2DMeshGenerator ( gf ) ;
-    }
-  catch (...)
-    {
-    }
+  // mesh the face
+  gmsh2DMeshGenerator ( gf ) ;
 
   Msg(DEBUG1, "type %d %d triangles generated, %d internal vertices",
       gf->geomType(),gf->triangles.size(),gf->mesh_vertices.size());

@@ -226,6 +226,12 @@ class MTriangle : public MElement {
   virtual int getDim(){ return 2; }
   inline int getNumVertices(){ return 3; }
   inline MVertex *getVertex(int num){ return _v[num]; }
+  inline void revert () 
+    {
+      MVertex *vv = _v[0];
+      _v[0] = _v[1];
+      _v[1] = vv;
+    }
   virtual int getNumEdges(){ return 3; }
   virtual MEdge getEdge(int num)
   {

@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.60 2006-08-29 10:39:48 remacle Exp $
+// $Id: BDS.cpp,v 1.61 2006-09-01 10:10:05 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -28,19 +28,6 @@
 #include "GFace.h"
 
 bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS_Face *t);
-
-double BDS_Point::min_edge_length()
-{
-  std::list<BDS_Edge*>::iterator it  = edges.begin();
-  std::list<BDS_Edge*>::iterator ite = edges.end();
-  double L = 1.e245;
-  while(it!=ite){
-    double l = (*it)->length();
-    if (l<L)L=l;
-    ++it;
-  }
-  return L;
-}
 
 void outputScalarField(std::list < BDS_Face * >t, const char *iii)
 {
@@ -506,11 +493,12 @@ BDS_Face *BDS_Mesh::add_quadrangle(BDS_Edge * e1, BDS_Edge * e2,
 //   return t;
 // }
 
-void BDS_Mesh::del_triangle(BDS_Face * t)
+void BDS_Mesh::del_face(BDS_Face * t)
 {
   t->e1->del(t);
   t->e2->del(t);
   t->e3->del(t);
+  if(t->e4)t->e4->del(t);
   t->deleted = true;
 }
 
@@ -740,12 +728,12 @@ void BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
 
   if(e->faces(0)) {
     g1 = e->faces(0)->g;
-    del_triangle(e->faces(0));
+    del_face(e->faces(0));
   }
   // not a bug !!!
   if(e->faces(0)) {
     g2 = e->faces(0)->g;
-    del_triangle(e->faces(0));
+    del_face(e->faces(0));
   }
 
   //  double t_l = e->target_length;
@@ -899,12 +887,12 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
 
   if(e->faces(0)) {
     g1 = e->faces(0)->g;
-    del_triangle(e->faces(0));
+    del_face(e->faces(0));
   }
   // not a bug !!!
   if(e->faces(0)) {
     g2 = e->faces(0)->g;
-    del_triangle(e->faces(0));
+    del_face(e->faces(0));
   }
   del_edge(e);
 
@@ -990,11 +978,11 @@ bool BDS_Mesh::recombine_edge(BDS_Edge * e)
   BDS_GeomEntity *g=0;
   if(e->faces(0)) {
     g = e->faces(0)->g;
-    del_triangle(e->faces(0));
+    del_face(e->faces(0));
   }
   // not a bug !!!
   if(e->faces(0)) {
-    del_triangle(e->faces(0));
+    del_face(e->faces(0));
   }
   del_edge(e);
 
@@ -1070,7 +1058,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge * e, BDS_Point * p)
 
     while(it != ite) {
       BDS_Face *t = *it;
-      del_triangle(t);
+      del_face(t);
       ++it;
     }
   }
