@@ -1,4 +1,4 @@
-// $Id: MVertex.cpp,v 1.7 2006-08-31 21:29:18 geuzaine Exp $
+// $Id: MVertex.cpp,v 1.8 2006-09-02 22:24:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -67,7 +67,10 @@ void MVertex::writeVRML(FILE *fp, double scalingFactor)
 
 void MVertex::writeUNV(FILE *fp, double scalingFactor)
 {
-  fprintf(fp, "%10d%10d%10d%10d\n", _num, 1, 1, 11);
+  int coord_sys = 1;
+  int displacement_coord_sys = 1;
+  int color = 11;
+  fprintf(fp, "%10d%10d%10d%10d\n", _num, coord_sys, displacement_coord_sys, color);
   // hack to print the numbers with "D+XX" exponents
   char tmp[128];
   sprintf(tmp, "%25.16E%25.16E%25.16E\n", x() * scalingFactor, 

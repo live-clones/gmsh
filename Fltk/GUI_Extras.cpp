@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.22 2006-08-31 23:01:11 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.23 2006-09-02 22:24:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -664,6 +664,61 @@ int msh_dialog(char *name)
 			    (dialog->c->value() == 2) ? 1 : 0);
 	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value());
 	CreateOutputFile(name, FORMAT_MSH);
+	dialog->window->hide();
+	return 1;
+      }
+      if (o == dialog->window || o == dialog->cancel){
+	dialog->window->hide();
+	return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+// save unv dialog
+
+int unv_dialog(char *name)
+{
+  struct _unv_dialog{
+    Fl_Window *window;
+    Fl_Check_Button *b;
+    Fl_Button *ok, *cancel;
+  };
+  static _unv_dialog *dialog = NULL;
+
+  const int BH = 2 * CTX.fontsize + 1;
+  const int BB = 7 * CTX.fontsize;
+  const int WB = 7;
+
+  if(!dialog){
+    dialog = new _unv_dialog;
+    int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
+    // not a "Dialog_Window" since it is modal 
+    dialog->window = new Fl_Double_Window(w, h, "UNV Options");
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physicals)"); y += BH;
+    dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->b->down_box(GMSH_TOGGLE_BOX);
+    dialog->b->selection_color(GMSH_TOGGLE_COLOR);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
+    dialog->window->set_modal();
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+  
+  dialog->b->value(CTX.mesh.save_all);
+  dialog->window->show();
+
+  while(dialog->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == dialog->ok) {
+	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value());
+	CreateOutputFile(name, FORMAT_UNV);
 	dialog->window->hide();
 	return 1;
       }

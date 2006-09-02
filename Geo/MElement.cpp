@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.13 2006-09-01 01:56:26 geuzaine Exp $
+// $Id: MElement.cpp,v 1.14 2006-09-02 22:24:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -250,26 +250,27 @@ void MElement::writeVRML(FILE *fp)
   fprintf(fp, "-1,\n");
 }
 
-void MElement::writeUNV(FILE *fp, int elementary)
+void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
 {
-  // if necessary, change the ordering of the vertices to get positive
-  // volume
-  setVolumePositive();
-
-  int n = getNumVertices();
   int type = getTypeForUNV();
-
-  fprintf(fp, "%10d%10d%10d%10d%10d%10d\n",
-	  _num, type, elementary, elementary, 7, n);
-  if(type == 21 || type == 24) // BEAM or BEAM2
-    fprintf(fp, "%10d%10d%10d\n", 0, 0, 0);
-  for(int k = 0; k < n; k++) {
-    fprintf(fp, "%10d", getVertex(k)->getNum());
-    if(k % 8 == 7)
+  if(type){
+    setVolumePositive();
+    int n = getNumVertices();
+    int physical_property = elementary;
+    int material_property = physical;
+    int color = 7;
+    fprintf(fp, "%10d%10d%10d%10d%10d%10d\n",
+	    num ? num : _num, type, physical_property, material_property, color, n);
+    if(type == 21 || type == 24) // linear beam or parabolic beam
+      fprintf(fp, "%10d%10d%10d\n", 0, 0, 0);
+    for(int k = 0; k < n; k++) {
+      fprintf(fp, "%10d", getVertex(k)->getNum());
+      if(k % 8 == 7)
+	fprintf(fp, "\n");
+    }
+    if(n - 1 % 8 != 7)
       fprintf(fp, "\n");
   }
-  if(n - 1 % 8 != 7)
-    fprintf(fp, "\n");
 }
 
 void MElement::writeMESH(FILE *fp, int elementary)
@@ -288,7 +289,7 @@ void MElement::writeBDF(FILE *fp, int elementary)
     for(int i = 0; i < n; i++)
       fprintf(fp, ",%d", getVertex(i)->getNum());
     if(n == 2) // CBAR
-      fprintf(fp, ",1.,1.,1.");
+      fprintf(fp, ",0.,0.,0.");
     fprintf(fp, "\n");
   }
 }

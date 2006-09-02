@@ -133,7 +133,8 @@ class GModel
   int writeVRML(const std::string &name, double scalingFactor=1.0);
 
   // IO for I-deas universal mesh format
-  int writeUNV(const std::string &name, double scalingFactor=1.0);
+  int readUNV(const std::string &name);
+  int writeUNV(const std::string &name, bool saveAll=false, double scalingFactor=1.0);
 
   // IO for Medit (INRIA) mesh format
   int readMESH(const std::string &name);

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.458 2006-08-31 21:29:18 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.459 2006-09-02 22:24:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -608,6 +608,7 @@ static char *file_types =
   "\tGmsh geometry (*.geo)"
   "\tGmsh mesh (*.msh)"
   "\tGmsh post-processing (*.pos)"
+  "\tI-deas universal mesh (*.unv)"
   "\tMedit mesh (*.mesh)"
   "\tNastran bulk data file (*.bdf)"
   "\tSTL surface mesh (*.stl)"
@@ -667,8 +668,7 @@ int _save_pos(char *name)
 
 int _save_unv(char *name)
 {
-  CreateOutputFile(name, FORMAT_UNV);
-  return 1;
+  return unv_dialog(name);
 }
 
 int _save_mesh(char *name)
@@ -750,6 +750,7 @@ int _save_auto(char *name)
   switch(GuessFileFormatFromFileName(name)){
   case FORMAT_OPT     : return _save_options(name);
   case FORMAT_MSH     : return _save_msh(name);
+  case FORMAT_UNV     : return _save_unv(name);
   case FORMAT_STL     : return _save_stl(name);
   case FORMAT_PS      : return _save_ps(name);
   case FORMAT_EPS     : return _save_eps(name);

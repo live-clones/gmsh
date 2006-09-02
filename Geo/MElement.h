@@ -132,13 +132,12 @@ class MElement
   // IO routines
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
 			int num=0, int elementary=1, int physical=1);
-  virtual void writePOS(FILE *fp, double scalingFactor=1.0,
-			int elementary=1);
+  virtual void writePOS(FILE *fp, double scalingFactor=1.0, int elementary=1);
   virtual void writeSTL(FILE *fp, bool binary=false, double scalingFactor=1.0);
   virtual void writeVRML(FILE *fp);
-  virtual void writeUNV(FILE *fp, int elementary);
-  virtual void writeMESH(FILE *fp, int elementary);
-  virtual void writeBDF(FILE *fp, int elementary);
+  virtual void writeUNV(FILE *fp, int num=0, int elementary=1, int physical=1);
+  virtual void writeMESH(FILE *fp, int elementary=1);
+  virtual void writeBDF(FILE *fp, int elementary=1);
   virtual int getTypeForMSH() = 0;
   virtual int getTypeForUNV() = 0;
   virtual char *getStringForPOS() = 0;
@@ -168,7 +167,7 @@ class MLine : public MElement {
   virtual int getNumFaces(){ return 0; }
   virtual MFace getFace(int num){ throw; }
   int getTypeForMSH(){ return LGN1; }
-  int getTypeForUNV(){ return 21; } // BEAM
+  int getTypeForUNV(){ return 21; } // linear beam
   char *getStringForPOS(){ return "SL"; }
   char *getStringForBDF(){ return "CBAR"; }
 };
@@ -203,7 +202,7 @@ class MLine2 : public MLine {
     return MEdge(i0 < 2 ? _v[i0] : _vs[i0 - 2], i1 < 2 ? _v[i1] : _vs[i1 - 2]);
   }
   int getTypeForMSH(){ return LGN2; }
-  int getTypeForUNV(){ return 24; } // BEAM2
+  int getTypeForUNV(){ return 24; } // parabolic beam
   char *getStringForPOS(){ return "SL2"; }
   char *getStringForBDF(){ return 0; }
 };
@@ -243,7 +242,7 @@ class MTriangle : public MElement {
     return MFace(_v[0], _v[1], _v[2]); 
   }
   int getTypeForMSH(){ return TRI1; }
-  int getTypeForUNV(){ return 91; } // THINSHLL
+  int getTypeForUNV(){ return 91; } // thin shell linear triangle
   char *getStringForPOS(){ return "ST"; }
   char *getStringForBDF(){ return "CTRIA3"; }
 };
@@ -297,7 +296,7 @@ class MTriangle2 : public MTriangle {
 		 i2 < 3 ? _v[i2] : _vs[i2 - 3]);
   }
   int getTypeForMSH(){ return TRI2; }
-  int getTypeForUNV(){ return 92; } // THINSHLL2
+  int getTypeForUNV(){ return 92; } // thin shell parabolic triangle
   char *getStringForPOS(){ return "ST2"; }
   char *getStringForBDF(){ return "CTRIA6"; }
 };
@@ -328,7 +327,7 @@ class MQuadrangle : public MElement {
   virtual int getNumFaces(){ return 1; }
   virtual MFace getFace(int num){ return MFace(_v[0], _v[1], _v[2], _v[3]); }
   int getTypeForMSH(){ return QUA1; }
-  int getTypeForUNV(){ return 94; } // QUAD
+  int getTypeForUNV(){ return 94; } // thin shell linear quadrilateral
   char *getStringForPOS(){ return "SQ"; }
   char *getStringForBDF(){ return "CQUAD4"; }
 };
@@ -356,7 +355,7 @@ class MQuadrangle2 : public MQuadrangle {
   inline int getNumFaceVertices(){ return 1; }
   // TODO: edgeRep, faceRep
   int getTypeForMSH(){ return QUA2; }
-  int getTypeForUNV(){ return 95; } // ???? QUAD2
+  int getTypeForUNV(){ return 95; } // thin shell parabolic quadrilateral
   char *getStringForPOS(){ return "SQ2"; }
   char *getStringForBDF(){ return 0; }
 };
@@ -392,7 +391,7 @@ class MTetrahedron : public MElement {
 		 _v[trifaces_tetra[num][2]]);
   }
   int getTypeForMSH(){ return TET1; }
-  int getTypeForUNV(){ return 111; } // SOLIDFEM
+  int getTypeForUNV(){ return 111; } // solid linear tetrahedron
   char *getStringForPOS(){ return "SS"; }
   char *getStringForBDF(){ return "CTETRA"; }
   virtual double getVolume()
@@ -444,7 +443,7 @@ class MTetrahedron2 : public MTetrahedron {
   inline int getNumEdgeVertices(){ return 6; }
   // TODO: edgeRep, faceRep
   int getTypeForMSH(){ return TET2; }
-  int getTypeForUNV(){ return 118; } // SOLIDFEM2
+  int getTypeForUNV(){ return 118; } // solid parabolic tetrahedron
   char *getStringForPOS(){ return "SS2"; }
   char *getStringForBDF(){ return 0; }
   void setVolumePositive()
@@ -492,7 +491,7 @@ class MHexahedron : public MElement {
 		 _v[quadfaces_hexa[num][3]]);
   }
   int getTypeForMSH(){ return HEX1; }
-  int getTypeForUNV(){ return 115; } // BRICK
+  int getTypeForUNV(){ return 115; } // solid linear brick
   char *getStringForPOS(){ return "SH"; }
   char *getStringForBDF(){ return "CHEXA"; }
   virtual int getVolumeSign()
@@ -550,7 +549,7 @@ class MHexahedron2 : public MHexahedron {
   inline int getNumVolumeVertices(){ return 1; }
   // TODO: edgeRep, faceRep
   int getTypeForMSH(){ return HEX2; }
-  int getTypeForUNV(){ return 116; } // ???? BRICK2
+  int getTypeForUNV(){ return 116; } // solid parabolic brick
   char *getStringForPOS(){ return "SH2"; }
   char *getStringForBDF(){ return 0; }
   void setVolumePositive()
@@ -608,7 +607,7 @@ class MPrism : public MElement {
 		   _v[quadfaces_prism[num - 2][3]]);
   }
   int getTypeForMSH(){ return PRI1; }
-  int getTypeForUNV(){ return 112; } // WEDGE
+  int getTypeForUNV(){ return 112; } // solid linear wedge
   char *getStringForPOS(){ return "SI"; }
   char *getStringForBDF(){ return "CPENTA"; }
   virtual int getVolumeSign()
@@ -662,7 +661,7 @@ class MPrism2 : public MPrism {
   inline int getNumFaceVertices(){ return 3; }
   // TODO: edgeRep, faceRep
   int getTypeForMSH(){ return PRI2; }
-  int getTypeForUNV(){ return 113; } // ???? WEDGE2
+  int getTypeForUNV(){ return 113; } // solid parabolic wedge
   char *getStringForPOS(){ return "SI2"; }
   char *getStringForBDF(){ return 0; }
   void setVolumePositive()
@@ -716,7 +715,7 @@ class MPyramid : public MElement {
 		   _v[quadfaces_pyramid[num - 4][3]]);
   }
   int getTypeForMSH(){ return PYR1; }
-  int getTypeForUNV(){ throw; }
+  int getTypeForUNV(){ return 0; }
   char *getStringForPOS(){ return "SY"; }
   char *getStringForBDF(){ return 0; }
   virtual int getVolumeSign()
@@ -768,7 +767,7 @@ class MPyramid2 : public MPyramid {
   inline int getNumFaceVertices(){ return 1; }
   // TODO: edgeRep, faceRep
   int getTypeForMSH(){ return PYR2; }
-  int getTypeForUNV(){ throw; }
+  int getTypeForUNV(){ return 0; }
   char *getStringForPOS(){ return "SY2"; }
   char *getStringForBDF(){ return 0; }
   void setVolumePositive()
