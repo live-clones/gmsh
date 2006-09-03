@@ -448,6 +448,7 @@ double opt_mesh_format(OPT_ARGS_NUM);
 double opt_mesh_msh_file_version(OPT_ARGS_NUM);
 double opt_mesh_msh_binary(OPT_ARGS_NUM);
 double opt_mesh_stl_binary(OPT_ARGS_NUM);
+double opt_mesh_bdf_field_format(OPT_ARGS_NUM);
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM);
 double opt_mesh_stl_distance_tol(OPT_ARGS_NUM);
 double opt_mesh_nb_elem_per_rc(OPT_ARGS_NUM);

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.308 2006-08-27 23:10:35 geuzaine Exp $
+// $Id: Options.cpp,v 1.309 2006-09-03 07:44:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4667,6 +4667,17 @@ double opt_mesh_stl_binary(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.mesh.stl_binary = (int)val;
   return CTX.mesh.stl_binary;
+}
+
+double opt_mesh_bdf_field_format(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX.mesh.bdf_field_format = (int)val;
+    if(CTX.mesh.bdf_field_format < 0 ||
+       CTX.mesh.bdf_field_format > 2)
+      CTX.mesh.bdf_field_format = 1;
+  }
+  return CTX.mesh.bdf_field_format;
 }
 
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM)

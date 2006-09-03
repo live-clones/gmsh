@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.95 2006-09-01 10:10:05 remacle Exp $
+// $Id: Generator.cpp,v 1.96 2006-09-03 07:44:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -399,8 +399,7 @@ void mai3d(int ask)
 
   CTX.threads_lock = 1;
 
-  // Clean up all the 2nd order nodes and transfer all SimplexBase
-  // into "real" Simplexes
+  // Change any high order elements back into first order ones
   Degre1();
 
   // 1D mesh

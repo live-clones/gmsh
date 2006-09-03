@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.14 2006-09-02 22:24:24 geuzaine Exp $
+// $Id: MElement.cpp,v 1.15 2006-09-03 07:44:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -280,16 +280,32 @@ void MElement::writeMESH(FILE *fp, int elementary)
   fprintf(fp, " %d\n", elementary);
 }
 
-void MElement::writeBDF(FILE *fp, int elementary)
+void MElement::writeBDF(FILE *fp, int format, int elementary)
 {
   char *str = getStringForBDF();
   if(str){
-    fprintf(fp, "%s,%d,%d", str, _num, elementary);
     int n = getNumVertices();
-    for(int i = 0; i < n; i++)
-      fprintf(fp, ",%d", getVertex(i)->getNum());
-    if(n == 2) // CBAR
-      fprintf(fp, ",0.,0.,0.");
-    fprintf(fp, "\n");
+    if(format == 0){ // free field format
+      fprintf(fp, "%s,%d,%d", str, _num, elementary);
+      for(int i = 0; i < n; i++){
+	if(i != n - 1 && !((i + 3) % 9))
+	  fprintf(fp, ",+E%d\n+E%d", _num, _num);
+	fprintf(fp, ",%d", getVertex(i)->getNum());
+      }
+      if(n == 2) // CBAR
+	fprintf(fp, ",0.,0.,0.");
+      fprintf(fp, "\n");
+    }
+    else{ // small or large field format
+      fprintf(fp, "%-8s%-8d%-8d", str, _num, elementary);
+      for(int i = 0; i < n; i++){
+	if(i != n - 1 && !((i + 3) % 9))
+	  fprintf(fp, "+E%-6d\n+E%-6d", _num, _num);
+	fprintf(fp, "%-8d", getVertex(i)->getNum());
+      }
+      if(n == 2) // CBAR
+	fprintf(fp, "%-8s%-8s%-8s", "0.", "0.", "0.");
+      fprintf(fp, "\n");
+    }
   }
 }

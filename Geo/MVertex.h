@@ -83,7 +83,7 @@ class MVertex{
   void writeVRML(FILE *fp, double scalingFactor=1.0);
   void writeUNV(FILE *fp, double scalingFactor=1.0);
   void writeMESH(FILE *fp, double scalingFactor=1.0);
-  void writeBDF(FILE *fp, double scalingFactor=1.0);
+  void writeBDF(FILE *fp, int format=0, double scalingFactor=1.0);
 };
 
 class MEdgeVertex : public MVertex{

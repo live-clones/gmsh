@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.459 2006-09-02 22:24:23 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.460 2006-09-03 07:44:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -679,8 +679,7 @@ int _save_mesh(char *name)
 
 int _save_bdf(char *name)
 {
-  CreateOutputFile(name, FORMAT_BDF);
-  return 1;
+  return bdf_dialog(name);
 }
 
 int _save_vrml(char *name)
@@ -751,6 +750,7 @@ int _save_auto(char *name)
   case FORMAT_OPT     : return _save_options(name);
   case FORMAT_MSH     : return _save_msh(name);
   case FORMAT_UNV     : return _save_unv(name);
+  case FORMAT_BDF     : return _save_bdf(name);
   case FORMAT_STL     : return _save_stl(name);
   case FORMAT_PS      : return _save_ps(name);
   case FORMAT_EPS     : return _save_eps(name);

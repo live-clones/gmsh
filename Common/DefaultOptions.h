@@ -848,6 +848,8 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "BetaSmoothMetric" ,opt_mesh_beta_smooth_metric, 0.9 ,
     "Maximum ratio of two consecutive edge lengths" },
+  { F|O, "BdfFieldFormat" , opt_mesh_bdf_field_format , 1. , 
+    "Field format for Nastran BDF files (0=free, 1=small, 2=large)" },
 
   { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
     "Factor applied to all characteristic lengths (and background meshes)" },

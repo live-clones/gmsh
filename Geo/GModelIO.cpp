@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.37 2006-09-02 22:24:24 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.38 2006-09-03 07:44:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -171,6 +171,24 @@ static void storePhysicalTagsInEntities(GModel *m, int dim,
 	ge->physicals.push_back(it2->first);
     }
   }
+}
+
+static bool checkVertexIndex(int index, std::map<int, MVertex*> &map)
+{
+  if(!map.count(index)){
+    Msg(GERROR, "Wrong vertex index %d", index);
+    return false;
+  }
+  return true;
+}
+
+static bool checkVertexIndex(int index, std::vector<MVertex*> &vec)
+{
+  if(index < 0 || index > (int)(vec.size() - 1)){
+    Msg(GERROR, "Wrong vertex index %d", index);
+    return false;
+  }
+  return true;
 }
 
 static int getNumVerticesForElementTypeMSH(int type)
@@ -432,12 +450,18 @@ int GModel::readMSH(const std::string &name)
 	  }
 	  int indices[30];
 	  for(int j = 0; j < numVertices; j++) fscanf(fp, "%d", &indices[j]);
-	  if(vertexVector.size())
+	  if(vertexVector.size()){
+	    for(int j = 0; j < numVertices; j++)
+	      if(!checkVertexIndex(indices[j], vertexVector)) return 0;
 	    createElementMSH(this, num, type, physical, elementary, partition, 
 			     indices, vertexVector, points, elements, physicals);
-	  else
+	  }
+	  else{
+	    for(int j = 0; j < numVertices; j++)
+	      if(!checkVertexIndex(indices[j], vertexMap)) return 0;
 	    createElementMSH(this, num, type, physical, elementary, partition, 
 			     indices, vertexMap, points, elements, physicals);
+	  }
 	  if(progress && (i % progress == progress - 1))
 	    Msg(PROGRESS, "Read %d elements", i + 1);
 	}
@@ -462,12 +486,18 @@ int GModel::readMSH(const std::string &name)
 	    int elementary = (numTags > 1) ? data[4 - numTags + 1] : 0;
 	    int partition = (numTags > 2) ? data[4 - numTags + 2] : 0;
 	    int *indices = &data[numTags + 1];
-	    if(vertexVector.size())
+	    if(vertexVector.size()){
+	      for(int j = 0; j < numVertices; j++)
+		if(!checkVertexIndex(indices[j], vertexVector)) return 0;
 	      createElementMSH(this, num, type, physical, elementary, partition,
 			       indices, vertexVector, points, elements, physicals);
-	    else
+	    }
+	    else{
+	      for(int j = 0; j < numVertices; j++)
+		if(!checkVertexIndex(indices[j], vertexMap)) return 0;
 	      createElementMSH(this, num, type, physical, elementary, partition, 
 			       indices, vertexMap, points, elements, physicals);
+	    }
 	    if(progress && ((numElementsPartial + i) % progress == progress - 1))
 	      Msg(PROGRESS, "Read %d elements", i + 1);
 	  }
@@ -946,12 +976,9 @@ static int readElementsVRML(FILE *fp, std::map<int, MVertex*> &v, int region,
       idx.push_back(i);
     }
     else{
-      for(unsigned int j = 0; j < idx.size(); j++){
-	if(!v.count(idx[j])){
-	  Msg(GERROR, "Bad vertex index in VRML file");
-	  return 0;
-	}
-      }
+      for(unsigned int j = 0; j < idx.size(); j++)
+	if(!checkVertexIndex(idx[j], v)) return 0;
+      
       if(idx.size() < 2){
 	Msg(INFO, "Skipping %d-vertex element", (int)idx.size());
       }
@@ -1155,7 +1182,10 @@ int GModel::readUNV(const std::string &name)
 	    if(sscanf(buffer, "%d %d %d", &dum, &dum, &dum) != 3) break;
 	  }
 	  int n[30];
-	  for(int i = 0; i < numNodes; i++) if(!fscanf(fp, "%d", &n[i])) break;
+	  for(int i = 0; i < numNodes; i++){
+	    if(!fscanf(fp, "%d", &n[i])) return 0;
+	    if(!checkVertexIndex(n[i], vertices)) return 0;
+	  }
 	  int type_msh = 0;
 	  switch(type){
 	  case 11: case 21: case 22: case 31:                   type_msh = LGN1; break;
@@ -1274,8 +1304,10 @@ int GModel::readMESH(const std::string &name)
     return 0;
   }
 
-  std::map<int, MVertex*> vertices;
+  std::vector<MVertex*> vertices;
   std::map<int, std::vector<MElement*> > elements[3];
+
+  int nbv, nbe, n[30], cl;
 
   while(!feof(fp)) {
     if(!fgets(buffer, sizeof(buffer), fp)) break;
@@ -1286,54 +1318,55 @@ int GModel::readMESH(const std::string &name)
       }
       else if(!strcmp(str, "Vertices")){
 	if(!fgets(buffer, sizeof(buffer), fp)) break;
-	int nbv;
 	sscanf(buffer, "%d", &nbv);
 	Msg(INFO, "%d vertices", nbv);
+	vertices.resize(nbv);
 	for(int i = 0; i < nbv; i++) {
 	  if(!fgets(buffer, sizeof(buffer), fp)) break;
-	  int cl;
 	  double x, y, z;
 	  sscanf(buffer, "%lf %lf %lf %d", &x, &y, &z, &cl);
-	  vertices[i + 1] = new MVertex(x, y, z);
+	  vertices[i] = new MVertex(x, y, z);
 	}
       }
       else if(!strcmp(str, "Triangles")){
 	if(!fgets(buffer, sizeof(buffer), fp)) break;
-	int nbt;
-	sscanf(buffer, "%d", &nbt);
-	Msg(INFO, "%d triangles", nbt);
-	for(int i = 0; i < nbt; i++) {
+	sscanf(buffer, "%d", &nbe);
+	Msg(INFO, "%d triangles", nbe);
+	for(int i = 0; i < nbe; i++) {
 	  if(!fgets(buffer, sizeof(buffer), fp)) break;
-	  int n1, n2, n3, cl;
-	  sscanf(buffer, "%d %d %d %d", &n1, &n2, &n3, &cl);
+	  sscanf(buffer, "%d %d %d %d", &n[0], &n[1], &n[2], &cl);
+	  for(int j = 0; j < 3; j++)
+	    if(!checkVertexIndex(n[j] - 1, vertices)) return 0;
 	  elements[0][cl].push_back
-	    (new MTriangle(vertices[n1], vertices[n2], vertices[n3]));
+	    (new MTriangle(vertices[n[0] - 1], vertices[n[1] - 1], vertices[n[2] - 1]));
 	}
       }
       else if(!strcmp(str, "Quadrilaterals")) {
 	if(!fgets(buffer, sizeof(buffer), fp)) break;
-	int nbq;
-	sscanf(buffer, "%d", &nbq);
-	Msg(INFO, "%d quadrangles", nbq);
-	for(int i = 0; i < nbq; i++) {
+	sscanf(buffer, "%d", &nbe);
+	Msg(INFO, "%d quadrangles", nbe);
+	for(int i = 0; i < nbe; i++) {
 	  if(!fgets(buffer, sizeof(buffer), fp)) break;
-	  int n1, n2, n3, n4, cl;
-	  sscanf(buffer, "%d %d %d %d %d", &n1, &n2, &n3, &n4, &cl);
+	  sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
+	  for(int j = 0; j < 4; j++) 
+	    if(!checkVertexIndex(n[j] - 1, vertices)) return 0;
 	  elements[1][cl].push_back
-	    (new MQuadrangle(vertices[n1], vertices[n2], vertices[n3], vertices[n4]));
+	    (new MQuadrangle(vertices[n[0] - 1], vertices[n[1] - 1], 
+			     vertices[n[2] - 1], vertices[n[3] - 1]));
 	}
       }
       else if(!strcmp(str, "Tetrahedra")) {
 	if(!fgets(buffer, sizeof(buffer), fp)) break;
-	int nbt;
-	sscanf(buffer, "%d", &nbt);
-	Msg(INFO, "%d tetrahedra", nbt);
-	for(int i = 0; i < nbt; i++) {
+	sscanf(buffer, "%d", &nbe);
+	Msg(INFO, "%d tetrahedra", nbe);
+	for(int i = 0; i < nbe; i++) {
 	  if(!fgets(buffer, sizeof(buffer), fp)) break;
-	  int n1, n2, n3, n4, cl;
-	  sscanf(buffer, "%d %d %d %d %d", &n1, &n2, &n3, &n4, &cl);
+	  sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
+	  for(int j = 0; j < 4; j++) 
+	    if(!checkVertexIndex(n[j] - 1, vertices)) return 0;
 	  elements[2][cl].push_back
-	    (new MTetrahedron(vertices[n1], vertices[n2], vertices[n3], vertices[n4]));
+	    (new MTetrahedron(vertices[n[0] - 1], vertices[n[1] - 1], 
+			      vertices[n[2] - 1], vertices[n[3] - 1]));
 	}
       }
     }
@@ -1412,38 +1445,108 @@ int GModel::writeMESH(const std::string &name, double scalingFactor)
   return 1;
 }
 
-static int readElementBDF(FILE *fp, char *buffer, unsigned int numNodes, 
-			  int *num, int *region, int *nodes)
+static int getFormatBDF(char *buffer, int keySize)
 {
-  int newline = 0; 
-  std::vector<char*> vals;
+  if(buffer[keySize] == '*') return 2; // long fields
+  for(unsigned int i = 0; i < strlen(buffer); i++)
+    if(buffer[i] == ',') return 0; // free fields
+  return 1; // small fields;
+}
 
-  for(unsigned int i = 0; i < strlen(buffer); i++){
-    if(buffer[i] == ',') vals.push_back(&buffer[i + 1]);
-    else if(buffer[i] == '+'){ // the data continues on the next line
-      vals.pop_back();
-      newline = 1;
-      break;
-    }
-  }
-  
-  if(newline){
-    char buffer2[256];
+static int readVertexBDF(FILE *fp, char *buffer, int keySize, 
+			 int *num, double *x, double *y, double *z)
+{
+  int dum;
+  char tmp[32], buffer2[256];
+
+  switch(getFormatBDF(buffer, keySize)){
+  case 0: // free field
+    if(sscanf(&buffer[keySize + 1], "%d,%d,%lf,%lf,%lf", num, &dum, x, y, z) != 5) 
+      return 0;
+    break;
+  case 1: // small field
+    tmp[8] = '\0';
+    strncpy(tmp, &buffer[8], 8); if(!sscanf(tmp, "%d", num)) return 0;
+    strncpy(tmp, &buffer[24], 8); if(!sscanf(tmp, "%lf", x)) return 0;
+    strncpy(tmp, &buffer[32], 8); if(!sscanf(tmp, "%lf", y)) return 0;
+    strncpy(tmp, &buffer[40], 8); if(!sscanf(tmp, "%lf", z)) return 0;
+    break;
+  case 2: // long field
+    tmp[16] = '\0';
+    strncpy(tmp, &buffer[8], 16); if(!sscanf(tmp, "%d", num)) return 0;
+    strncpy(tmp, &buffer[40], 16); if(!sscanf(tmp, "%lf", x)) return 0;
+    strncpy(tmp, &buffer[56], 16); if(!sscanf(tmp, "%lf", y)) return 0;
+    for(unsigned int i = 0; i < sizeof(buffer2); i++) buffer2[i] = '\0';
     if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
-    for(unsigned int i = 0; i < strlen(buffer2); i++){
-      if(buffer2[i] == ',') vals.push_back(&buffer2[i + 1]);
+    // should check that continuation tags match
+    strncpy(tmp, &buffer2[8], 16); if(!sscanf(tmp, "%lf", z)) return 0;
+    break;
+  }
+  return 1;
+}
+
+static int readElementBDF(FILE *fp, char *buffer, int keySize, unsigned int numNodes, 
+			  int *num, int *region, std::vector<MVertex*> &vertices,
+			  std::map<int, MVertex*> &vertexMap)
+{
+  // This routine is not general: when there is a continuation tag we
+  // just parse the next line. To follow the spec,
+  // 1. we should parse the whole remainder of the file to find
+  //    the corresponding continuation tag
+  // 2. we should parse more than one continuation line for elements
+  //    with more than 14 nodes (since we don't import such elements at
+  //    the moment parsing just one continuation line is OK)
+
+  char buffer2[256];
+  std::vector<char*> vals;
+  int format = getFormatBDF(buffer, keySize);
+  int cmax = (format == 2) ? 16 : 8; // max char per (center) field
+  int nmax = (format == 2) ? 4 : 8; // max num of (center) fields per line
+
+  for(unsigned int i = 0; i < sizeof(buffer2); i++) buffer2[i] = '\0';
+
+  if(format == 0){ // free fields
+    for(unsigned int i = 0; i < strlen(buffer); i++){
+      if(buffer[i] == ',') vals.push_back(&buffer[i + 1]);
+      if(vals.size() == 9) vals.pop_back(); // continuation field
+    }
+    if(vals.size() < 2 + numNodes){
+      if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
+      for(unsigned int i = 0; i < strlen(buffer2); i++){
+	if(buffer2[i] == ',') vals.push_back(&buffer2[i + 1]);
+      }
     }
   }
+  else{ // small or long fields
+    for(int i = 0; i < nmax; i++){
+      if(vals.size() < 2 + numNodes) vals.push_back(&buffer[8 + cmax * i]);
+    }
+    if(vals.size() < 2 + numNodes){
+      if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
+      for(int i = 0; i < nmax; i++){
+	if(vals.size() < 2 + numNodes) vals.push_back(&buffer2[8 + cmax * i]);
+      }
+    }    
+  }
   
-  if(vals.size() < numNodes + 2){
+  if(vals.size() < 2 + numNodes){
     Msg(GERROR, "Missing nodes for element (%d < numNodes)", vals.size() - 2);
     return 0;
   }
-  
-  sscanf(vals[0], "%d", num);
-  sscanf(vals[1], "%d", region);
-  for(unsigned int i = 0; i < numNodes; i++)
-    if(!sscanf(vals[i + 2], "%d", &nodes[i])) return 0;
+
+  int n[30];
+  char tmp[32];
+  tmp[cmax] = '\0';
+  strncpy(tmp, vals[0], cmax); if(!sscanf(tmp, "%d", num)) *num = 0;
+  strncpy(tmp, vals[1], cmax); if(!sscanf(tmp, "%d", region)) *region = 0;
+  for(unsigned int i = 0; i < numNodes; i++){
+    strncpy(tmp, vals[i + 2], cmax); if(!sscanf(tmp, "%d", &n[i])) return 0;
+  }
+
+  for(unsigned int i = 0; i < numNodes; i++){
+    if(!checkVertexIndex(n[i], vertexMap)) return 0;
+    vertices.push_back(vertexMap[n[i]]);
+  }
   return 1;
 }
 
@@ -1456,76 +1559,63 @@ int GModel::readBDF(const std::string &name)
   }
 
   char buffer[256];
-  int num, dummy, region, n[30];
-  double x, y, z;
-  bool comma = false;
-
   std::map<int, MVertex*> vertices;
   std::map<int, std::vector<MElement*> > elements[6];
 
+  // nodes can be defined after elements, so parse the file twice
+
   while(!feof(fp)) {
+    for(unsigned int i = 0; i < sizeof(buffer); i++) buffer[i] = '\0';
     if(!fgets(buffer, sizeof(buffer), fp)) break;
     if(buffer[0] != '$'){ // skip comments
-      if(!comma){ // check that we have a free format file with comma separator
-	for(unsigned int i = 0; i < strlen(buffer); i++){
-	  if(buffer[i] == ','){ 
-	    comma = true;
-	    break; 
-	  }
-	}
-	if(!comma){
-	  Msg(GERROR, "BDF reader only accepts free field format, comma separated");
-	  break;
-	}
-      }
       if(!strncmp(buffer, "GRID", 4)){
-	sscanf(&buffer[5], "%d , %d , %lf, %lf , %lf", &num, &dummy, &x, &y, &z);
+	int num;
+	double x, y, z;
+	if(!readVertexBDF(fp, buffer, 4, &num, &x, &y, &z)) break;
 	vertices[num] = new MVertex(x, y, z);
-      }
-      else if(!strncmp(buffer, "CBAR", 4)){
-	if(readElementBDF(fp, &buffer[4], 2, &num, &region, n))
-	  elements[0][region].push_back
-	    (new MLine(vertices[n[0]], vertices[n[1]], num));
-      }
-      else if(!strncmp(buffer, "CTRIA3", 6)){
-	if(readElementBDF(fp, &buffer[6], 3, &num, &region, n))
-	  elements[1][region].push_back
-	    (new MTriangle(vertices[n[0]], vertices[n[1]], vertices[n[2]], num));
-      }
-      else if(!strncmp(buffer, "CTRIA6", 6)){
-	if(readElementBDF(fp, &buffer[6], 6, &num, &region, n))
-	  elements[1][region].push_back
-	    (new MTriangle2(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			    vertices[n[3]], vertices[n[4]], vertices[n[5]], num));
-      }
-      else if(!strncmp(buffer, "CQUAD4", 6)){
-	if(readElementBDF(fp, &buffer[6], 4, &num, &region, n))
-	  elements[2][region].push_back
-	    (new MQuadrangle(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			     vertices[n[3]], num));
-      }
-      else if(!strncmp(buffer, "CTETRA", 6)){
-	if(readElementBDF(fp, &buffer[6], 4, &num, &region, n))
-	  elements[3][region].push_back
-	    (new MTetrahedron(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			      vertices[n[3]], num));
-      }
-      else if(!strncmp(buffer, "CHEXA", 5)){
-	if(readElementBDF(fp, &buffer[5], 8, &num, &region, n))
-	  elements[4][region].push_back
-	    (new MHexahedron(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			     vertices[n[3]], vertices[n[4]], vertices[n[5]], 
-			     vertices[n[6]], vertices[n[7]], num));
-      }
-      else if(!strncmp(buffer, "CPENTA", 6)){
-	if(readElementBDF(fp, &buffer[6], 6, &num, &region, n))
-	  elements[5][region].push_back
-	    (new MPrism(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			vertices[n[3]], vertices[n[4]], vertices[n[5]], num));
       }
     }
   }
+  Msg(INFO, "%d vertices", vertices.size());
 
+  rewind(fp);
+  while(!feof(fp)) {
+    for(unsigned int i = 0; i < sizeof(buffer); i++) buffer[i] = '\0';
+    if(!fgets(buffer, sizeof(buffer), fp)) break;
+    if(buffer[0] != '$'){ // skip comments
+      int num, region;
+      std::vector<MVertex*> n;
+      if(!strncmp(buffer, "CBAR", 4)){
+	if(readElementBDF(fp, buffer, 4, 2, &num, &region, n, vertices))
+	  elements[0][region].push_back(new MLine(n, num));
+      }
+      else if(!strncmp(buffer, "CTRIA3", 6)){
+	if(readElementBDF(fp, buffer, 6, 3, &num, &region, n, vertices))
+	  elements[1][region].push_back(new MTriangle(n, num));
+      }
+      else if(!strncmp(buffer, "CTRIA6", 6)){
+	if(readElementBDF(fp, buffer, 6, 6, &num, &region, n, vertices))
+	  elements[1][region].push_back(new MTriangle2(n, num));
+      }
+      else if(!strncmp(buffer, "CQUAD4", 6)){
+	if(readElementBDF(fp, buffer, 6, 4, &num, &region, n, vertices))
+	  elements[2][region].push_back(new MQuadrangle(n, num));
+      }
+      else if(!strncmp(buffer, "CTETRA", 6)){
+	if(readElementBDF(fp, buffer, 6, 4, &num, &region, n, vertices))
+	  elements[3][region].push_back(new MTetrahedron(n, num));
+      }
+      else if(!strncmp(buffer, "CHEXA", 5)){
+	if(readElementBDF(fp, buffer, 5, 8, &num, &region, n, vertices))
+	  elements[4][region].push_back(new MHexahedron(n, num));
+      }
+      else if(!strncmp(buffer, "CPENTA", 6)){
+	if(readElementBDF(fp, buffer, 6, 6, &num, &region, n, vertices))
+	  elements[5][region].push_back(new MPrism(n, num));
+      }
+    }
+  }
+  
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
     storeElementsInEntities(this, elements[i]);
   associateEntityWithVertices(this);
@@ -1535,7 +1625,8 @@ int GModel::readBDF(const std::string &name)
   return 1;
 }
 
-int GModel::writeBDF(const std::string &name, double scalingFactor)
+int GModel::writeBDF(const std::string &name, int format, bool saveAll, 
+		     double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
@@ -1549,34 +1640,34 @@ int GModel::writeBDF(const std::string &name, double scalingFactor)
 
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
-      (*it)->mesh_vertices[i]->writeBDF(fp, scalingFactor);
+      (*it)->mesh_vertices[i]->writeBDF(fp, format, scalingFactor);
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      (*it)->mesh_vertices[i]->writeBDF(fp, scalingFactor);
+      (*it)->mesh_vertices[i]->writeBDF(fp, format, scalingFactor);
   for(fiter it = firstFace(); it != lastFace(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
-      (*it)->mesh_vertices[i]->writeBDF(fp, scalingFactor);
+      (*it)->mesh_vertices[i]->writeBDF(fp, format, scalingFactor);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
-      (*it)->mesh_vertices[i]->writeBDF(fp, scalingFactor);
+      (*it)->mesh_vertices[i]->writeBDF(fp, format, scalingFactor);
   
   for(eiter it = firstEdge(); it != lastEdge(); ++it){
     for(unsigned int i = 0; i < (*it)->lines.size(); i++)
-      (*it)->lines[i]->writeBDF(fp, (*it)->tag());
+      (*it)->lines[i]->writeBDF(fp, format, (*it)->tag());
   }
   for(fiter it = firstFace(); it != lastFace(); ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-      (*it)->triangles[i]->writeBDF(fp, (*it)->tag());
+      (*it)->triangles[i]->writeBDF(fp, format, (*it)->tag());
     for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-      (*it)->quadrangles[i]->writeBDF(fp, (*it)->tag());
+      (*it)->quadrangles[i]->writeBDF(fp, format, (*it)->tag());
   }
   for(riter it = firstRegion(); it != lastRegion(); ++it){
     for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
-      (*it)->tetrahedra[i]->writeBDF(fp, (*it)->tag());
+      (*it)->tetrahedra[i]->writeBDF(fp, format, (*it)->tag());
     for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
-      (*it)->hexahedra[i]->writeBDF(fp, (*it)->tag());
+      (*it)->hexahedra[i]->writeBDF(fp, format, (*it)->tag());
     for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
-      (*it)->prisms[i]->writeBDF(fp, (*it)->tag());
+      (*it)->prisms[i]->writeBDF(fp, format, (*it)->tag());
   }
   
   fprintf(fp, "ENDDATA\n");

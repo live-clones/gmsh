@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.7 2006-09-02 22:24:24 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.8 2006-09-03 07:44:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -61,6 +61,7 @@ int GuessFileFormatFromFileName(char *name)
   else if(!strcmp(ext, ".stl"))     return FORMAT_STL;
   else if(!strcmp(ext, ".mesh"))    return FORMAT_MESH;
   else if(!strcmp(ext, ".bdf"))     return FORMAT_BDF;
+  else if(!strcmp(ext, ".nas"))     return FORMAT_BDF;
   else if(!strcmp(ext, ".wrl"))     return FORMAT_VRML;
   else if(!strcmp(ext, ".vrml"))    return FORMAT_VRML;
   else if(!strcmp(ext, ".gif"))     return FORMAT_GIF;
@@ -166,7 +167,8 @@ void CreateOutputFile(char *filename, int format)
     break;
 
   case FORMAT_BDF:
-    GMODEL->writeBDF(name, CTX.mesh.scaling_factor);
+    GMODEL->writeBDF(name, CTX.mesh.bdf_field_format, CTX.mesh.save_all,
+		     CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_POS:

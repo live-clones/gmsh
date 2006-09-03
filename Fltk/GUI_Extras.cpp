@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.23 2006-09-02 22:24:23 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.24 2006-09-03 07:44:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -719,6 +719,67 @@ int unv_dialog(char *name)
       if (o == dialog->ok) {
 	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value());
 	CreateOutputFile(name, FORMAT_UNV);
+	dialog->window->hide();
+	return 1;
+      }
+      if (o == dialog->window || o == dialog->cancel){
+	dialog->window->hide();
+	return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+// save bdf dialog
+
+int bdf_dialog(char *name)
+{
+  struct _bdf_dialog{
+    Fl_Window *window;
+    Fl_Choice *c;
+    Fl_Button *ok, *cancel;
+  };
+  static _bdf_dialog *dialog = NULL;
+
+  static Fl_Menu_Item formatmenu[] = {
+    {"Free field", 0, 0, 0},
+    {"Small field", 0, 0, 0},
+    {"Long field", 0, 0, 0},
+    {0}
+  };
+
+  const int BH = 2 * CTX.fontsize + 1;
+  const int BB = 7 * CTX.fontsize;
+  const int WB = 7;
+
+  if(!dialog){
+    dialog = new _bdf_dialog;
+    int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
+    // not a "Dialog_Window" since it is modal 
+    dialog->window = new Fl_Double_Window(w, h, "BDF Options");
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->c = new Fl_Choice(WB, y, BB + BB / 2, BH, "Format"); y += BH;
+    dialog->c->menu(formatmenu);
+    dialog->c->align(FL_ALIGN_RIGHT);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
+    dialog->window->set_modal();
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+  
+  dialog->c->value(CTX.mesh.bdf_field_format);
+  dialog->window->show();
+
+  while(dialog->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == dialog->ok) {
+	opt_mesh_bdf_field_format(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+	CreateOutputFile(name, FORMAT_BDF);
 	dialog->window->hide();
 	return 1;
       }

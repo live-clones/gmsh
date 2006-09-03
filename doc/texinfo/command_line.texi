@@ -17,7 +17,7 @@ Save all elements (discard physical group definitions)
 @item -o file
 Specify mesh output file name
 @item -format string
-Set output mesh format (msh, unv, mesh, stl, vrml)
+Set output mesh format (msh, unv, bdf, mesh, stl, vrml)
 @item -algo string
 Select mesh algorithm (iso, tri, aniso, netgen, tetgen)
 @item -smooth int

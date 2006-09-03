@@ -1,4 +1,4 @@
-// $Id: MVertex.cpp,v 1.8 2006-09-02 22:24:24 geuzaine Exp $
+// $Id: MVertex.cpp,v 1.9 2006-09-03 07:44:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -83,12 +83,45 @@ void MVertex::writeUNV(FILE *fp, double scalingFactor)
 
 void MVertex::writeMESH(FILE *fp, double scalingFactor)
 {
-  fprintf(fp, " %20.14E      %20.14E      %20.14E      %d\n", 
+  fprintf(fp, " %20.14G      %20.14G      %20.14G      %d\n", 
 	  x() * scalingFactor, y() * scalingFactor, z() * scalingFactor, 0);
 }
 
-void MVertex::writeBDF(FILE *fp, double scalingFactor)
+static void double_to_char8(double val, char *str){
+  if(val >= 1.e6)
+    sprintf(str, "%.2E", val);
+  else if(val >= 1.e-3)
+    sprintf(str, "%f", val);
+  else if(val >= 0)
+    sprintf(str, "%.2E", val);
+  else if(val >= -1.e-3)
+    sprintf(str, "%.1E", val);
+  else if(val >= -1.e6)
+    sprintf(str, "%f", val);
+  else
+    sprintf(str, "%.1E", val);
+  str[8] = '\0';
+}
+
+void MVertex::writeBDF(FILE *fp, int format, double scalingFactor)
 {
-  fprintf(fp, "GRID,%d,%d,%f,%f,%f\n", _num, 0,
-	  x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
+  char xs[17], ys[17], zs[17];
+  double x1 = x() * scalingFactor;
+  double y1 = y() * scalingFactor;
+  double z1 = z() * scalingFactor;
+  if(format == 0){
+    // free field format (max 8 char per field, comma separated, 10 per line)
+    double_to_char8(x1, xs); double_to_char8(y1, ys); double_to_char8(z1, zs);
+    fprintf(fp, "GRID,%d,%d,%s,%s,%s\n", _num, 0, xs, ys, zs);
+  }
+  else if(format == 1){ 
+    // small field format (8 char par field, 10 per line)
+    double_to_char8(x1, xs); double_to_char8(y1, ys); double_to_char8(z1, zs);
+    fprintf(fp, "GRID    %-8d%-8d%-8s%-8s%-8s\n", _num, 0, xs, ys, zs);
+  }
+  else{ 
+    // large field format (8 char first/last field, 16 char middle, 6 per line)
+    fprintf(fp, "GRID*   %-16d%-16d%-16.9G%-16.9G*N%-6d\n", _num, 0, x1, y1, _num);
+    fprintf(fp, "*N%-6d%-16.9G\n", _num, z1);
+  }
 }

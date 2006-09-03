@@ -140,9 +140,10 @@ class GModel
   int readMESH(const std::string &name);
   int writeMESH(const std::string &name, double scalingFactor=1.0);
 
-  // IO for Nastran Bulk Data File format (free field with comma separator)
+  // IO for Nastran Bulk Data File format
   int readBDF(const std::string &name);
-  int writeBDF(const std::string &name, double scalingFactor=1.0);
+  int writeBDF(const std::string &name, int format=0, bool saveAll=false, 
+	       double scalingFactor=1.0);
 
   // FIXME: this will be removed (and rewritten)
   smooth_normals *normals;
