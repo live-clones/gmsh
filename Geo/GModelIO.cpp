@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.40 2006-09-03 16:39:44 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.41 2006-09-03 17:26:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1468,6 +1468,7 @@ static double atofBDF(char *str)
     if(str[i] == '+') tmp[j++] = 'E';
     tmp[j++] = str[i];
   }
+  tmp[j] = '\0';
   return atof(tmp);
 }
 
