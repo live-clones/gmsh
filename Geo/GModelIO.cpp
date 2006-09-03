@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.39 2006-09-03 09:38:17 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.40 2006-09-03 16:39:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1445,47 +1445,71 @@ int GModel::writeMESH(const std::string &name, double scalingFactor)
   return 1;
 }
 
-static int getFormatBDF(char *buffer, int keySize)
+static int getFormatBDF(char *buffer, int &keySize)
 {
-  if(buffer[keySize] == '*') return 2; // long fields
+  if(buffer[keySize] == '*'){ keySize++; return 2; } // long fields
   for(unsigned int i = 0; i < strlen(buffer); i++)
     if(buffer[i] == ',') return 0; // free fields
   return 1; // small fields;
 }
 
+static double atofBDF(char *str)
+{
+  int len = strlen(str);
+  for(int i = 0; i < len; i++)
+    if(str[i] == 'E') return atof(str);
+  // treat special Nastran floating point formats (e.g. "-7.-1"
+  // instead of "-7.E-01" or "2.3+2" instead of "2.3E+02")
+  char tmp[32];
+  int j = 0, leading_minus = 1;
+  for(int i = 0; i < len; i++){
+    if(leading_minus && str[i] != ' '  && str[i] != '-') leading_minus = 0;
+    if(!leading_minus && str[i] == '-') tmp[j++] = 'E';
+    if(str[i] == '+') tmp[j++] = 'E';
+    tmp[j++] = str[i];
+  }
+  return atof(tmp);
+}
+
 static int readVertexBDF(FILE *fp, char *buffer, int keySize, 
 			 int *num, double *x, double *y, double *z)
 {
-  // Note that this routine will fail when the floating point numbers
-  // are written in the special Nastran form (e.g. "-7.-1" instead of
-  // "-7.E-01", "2.3+2" instead of "2.3E+02", or "4E1" instead of
-  // "4E01")
-
-  int dum;
-  char tmp[32], buffer2[256];
+  char tmp[5][32];
+  int j = keySize;
 
   switch(getFormatBDF(buffer, keySize)){
   case 0: // free field
-    if(sscanf(&buffer[keySize + 1], "%d,%d,%lf,%lf,%lf", num, &dum, x, y, z) != 5) 
-      return 0;
+    for(int i = 0; i < 5; i++){
+      tmp[i][16] = '\0';
+      strncpy(tmp[i], &buffer[j + 1], 16);
+      for(int k = 0; k < 16; k++){ if(tmp[i][k] == ',') tmp[i][k] = '\0'; }
+      j++;
+      while(j < (int)strlen(buffer) && buffer[j] != ',') j++;
+    }
     break;
   case 1: // small field
-    tmp[8] = '\0';
-    strncpy(tmp, &buffer[8], 8); *num = atoi(tmp);
-    strncpy(tmp, &buffer[24], 8); *x = atof(tmp);
-    strncpy(tmp, &buffer[32], 8); *y = atof(tmp);
-    strncpy(tmp, &buffer[40], 8); *z = atof(tmp);
+    for(int i = 0; i < 5; i++) tmp[i][8] = '\0';
+    strncpy(tmp[0], &buffer[8], 8);
+    strncpy(tmp[2], &buffer[24], 8); 
+    strncpy(tmp[3], &buffer[32], 8); 
+    strncpy(tmp[4], &buffer[40], 8); 
     break;
   case 2: // long field
-    tmp[16] = '\0';
-    strncpy(tmp, &buffer[8], 16); *num = atoi(tmp);
-    strncpy(tmp, &buffer[40], 16); *x = atof(tmp);
-    strncpy(tmp, &buffer[56], 16); *y = atof(tmp);
+    for(int i = 0; i < 5; i++) tmp[i][16] = '\0';
+    strncpy(tmp[0], &buffer[8], 16);
+    strncpy(tmp[2], &buffer[40], 16);
+    strncpy(tmp[3], &buffer[56], 16);
+    char buffer2[256];
     for(unsigned int i = 0; i < sizeof(buffer2); i++) buffer2[i] = '\0';
     if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
-    strncpy(tmp, &buffer2[8], 16); *z = atof(tmp);
+    strncpy(tmp[4], &buffer2[8], 16);
     break;
   }
+
+  *num = atoi(tmp[0]);
+  *x = atofBDF(tmp[2]);
+  *y = atofBDF(tmp[3]);
+  *z = atofBDF(tmp[4]);
   return 1;
 }
 
@@ -1498,8 +1522,9 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, unsigned int numN
   // 1. we should parse the whole remainder of the file to find
   //    the corresponding continuation tag
   // 2. we should parse more than one continuation line for elements
-  //    with more than 14 nodes (since we don't import such elements at
-  //    the moment parsing just one continuation line is OK)
+  //    with more than 14 nodes (but since we don't import such
+  //    elements at the moment parsing just one continuation line is
+  //    OK)
 
   char buffer2[256];
   std::vector<char*> vals;
