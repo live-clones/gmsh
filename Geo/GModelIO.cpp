@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.38 2006-09-03 07:44:10 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.39 2006-09-03 09:38:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1456,6 +1456,11 @@ static int getFormatBDF(char *buffer, int keySize)
 static int readVertexBDF(FILE *fp, char *buffer, int keySize, 
 			 int *num, double *x, double *y, double *z)
 {
+  // Note that this routine will fail when the floating point numbers
+  // are written in the special Nastran form (e.g. "-7.-1" instead of
+  // "-7.E-01", "2.3+2" instead of "2.3E+02", or "4E1" instead of
+  // "4E01")
+
   int dum;
   char tmp[32], buffer2[256];
 
@@ -1466,20 +1471,19 @@ static int readVertexBDF(FILE *fp, char *buffer, int keySize,
     break;
   case 1: // small field
     tmp[8] = '\0';
-    strncpy(tmp, &buffer[8], 8); if(!sscanf(tmp, "%d", num)) return 0;
-    strncpy(tmp, &buffer[24], 8); if(!sscanf(tmp, "%lf", x)) return 0;
-    strncpy(tmp, &buffer[32], 8); if(!sscanf(tmp, "%lf", y)) return 0;
-    strncpy(tmp, &buffer[40], 8); if(!sscanf(tmp, "%lf", z)) return 0;
+    strncpy(tmp, &buffer[8], 8); *num = atoi(tmp);
+    strncpy(tmp, &buffer[24], 8); *x = atof(tmp);
+    strncpy(tmp, &buffer[32], 8); *y = atof(tmp);
+    strncpy(tmp, &buffer[40], 8); *z = atof(tmp);
     break;
   case 2: // long field
     tmp[16] = '\0';
-    strncpy(tmp, &buffer[8], 16); if(!sscanf(tmp, "%d", num)) return 0;
-    strncpy(tmp, &buffer[40], 16); if(!sscanf(tmp, "%lf", x)) return 0;
-    strncpy(tmp, &buffer[56], 16); if(!sscanf(tmp, "%lf", y)) return 0;
+    strncpy(tmp, &buffer[8], 16); *num = atoi(tmp);
+    strncpy(tmp, &buffer[40], 16); *x = atof(tmp);
+    strncpy(tmp, &buffer[56], 16); *y = atof(tmp);
     for(unsigned int i = 0; i < sizeof(buffer2); i++) buffer2[i] = '\0';
     if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
-    // should check that continuation tags match
-    strncpy(tmp, &buffer2[8], 16); if(!sscanf(tmp, "%lf", z)) return 0;
+    strncpy(tmp, &buffer2[8], 16); *z = atof(tmp);
     break;
   }
   return 1;
@@ -1489,8 +1493,8 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, unsigned int numN
 			  int *num, int *region, std::vector<MVertex*> &vertices,
 			  std::map<int, MVertex*> &vertexMap)
 {
-  // This routine is not general: when there is a continuation tag we
-  // just parse the next line. To follow the spec,
+  // This routine is not completely general: when there is a
+  // continuation tag we just parse the next line. To follow the spec:
   // 1. we should parse the whole remainder of the file to find
   //    the corresponding continuation tag
   // 2. we should parse more than one continuation line for elements
@@ -1537,10 +1541,10 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, unsigned int numN
   int n[30];
   char tmp[32];
   tmp[cmax] = '\0';
-  strncpy(tmp, vals[0], cmax); if(!sscanf(tmp, "%d", num)) *num = 0;
-  strncpy(tmp, vals[1], cmax); if(!sscanf(tmp, "%d", region)) *region = 0;
+  strncpy(tmp, vals[0], cmax); *num = atoi(tmp);
+  strncpy(tmp, vals[1], cmax); *region = atoi(tmp);
   for(unsigned int i = 0; i < numNodes; i++){
-    strncpy(tmp, vals[i + 2], cmax); if(!sscanf(tmp, "%d", &n[i])) return 0;
+    strncpy(tmp, vals[i + 2], cmax); n[i] = atoi(tmp);
   }
 
   for(unsigned int i = 0; i < numNodes; i++){
