@@ -247,22 +247,22 @@ class MTriangle : public MElement {
   virtual char *getStringForBDF(){ return "CTRIA3"; }
 };
 
-class MTriangle2 : public MTriangle {
+class MTriangle6 : public MTriangle {
  protected:
   MVertex *_vs[3];
  public :
-  MTriangle2(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
+  MTriangle6(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
 	     MVertex *v5, int num=0, int part=0) 
     : MTriangle(v0, v1, v2, num, part)
   {
     _vs[0] = v3; _vs[1] = v4; _vs[2] = v5;
   }
-  MTriangle2(std::vector<MVertex*> &v, int num=0, int part=0) 
+  MTriangle6(std::vector<MVertex*> &v, int num=0, int part=0) 
     : MTriangle(v, num, part)
   {
     for(int i = 0; i < 3; i++) _vs[i] = v[3 + i];
   }
-  ~MTriangle2(){}
+  ~MTriangle6(){}
   virtual int getPolynomialOrder(){ return 2; }
   virtual int getNumVertices(){ return 6; }
   virtual MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
@@ -332,22 +332,22 @@ class MQuadrangle : public MElement {
   virtual char *getStringForBDF(){ return "CQUAD4"; }
 };
 
-class MQuadrangle2 : public MQuadrangle {
+class MQuadrangle9 : public MQuadrangle {
  protected:
   MVertex *_vs[5];
  public :
-  MQuadrangle2(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
+  MQuadrangle9(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
 	       MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, int num=0, int part=0) 
     : MQuadrangle(v0, v1, v2, v3, num, part)
   {
     _vs[0] = v4; _vs[1] = v5; _vs[2] = v6; _vs[3] = v7; _vs[4] = v8;
   }
-  MQuadrangle2(std::vector<MVertex*> &v, int num=0, int part=0) 
+  MQuadrangle9(std::vector<MVertex*> &v, int num=0, int part=0) 
     : MQuadrangle(v, num, part)
   {
     for(int i = 0; i < 5; i++) _vs[i] = v[4 + i];
   }
-  ~MQuadrangle2(){}
+  ~MQuadrangle9(){}
   virtual int getPolynomialOrder(){ return 2; }
   virtual int getNumVertices(){ return 9; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
@@ -420,23 +420,23 @@ class MTetrahedron : public MElement {
   virtual double etaShapeMeasure();
 };
 
-class MTetrahedron2 : public MTetrahedron {
+class MTetrahedron10 : public MTetrahedron {
  protected:
   MVertex *_vs[6];
  public :
-  MTetrahedron2(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
-		MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-		int num=0, int part=0) 
+  MTetrahedron10(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
+		 MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
+		 int num=0, int part=0) 
     : MTetrahedron(v0, v1, v2, v3, num, part)
   {
     _vs[0] = v4; _vs[1] = v5; _vs[2] = v6; _vs[3] = v7; _vs[4] = v8; _vs[5] = v9;
   }
-  MTetrahedron2(std::vector<MVertex*> &v, int num=0, int part=0) 
+  MTetrahedron10(std::vector<MVertex*> &v, int num=0, int part=0) 
     : MTetrahedron(v, num, part)
   {
     for(int i = 0; i < 6; i++) _vs[i] = v[4 + i];
   }
-  ~MTetrahedron2(){}
+  ~MTetrahedron10(){}
   virtual int getPolynomialOrder(){ return 2; }
   virtual int getNumVertices(){ return 10; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
@@ -518,16 +518,16 @@ class MHexahedron : public MElement {
   }
 };
 
-class MHexahedron2 : public MHexahedron {
+class MHexahedron27 : public MHexahedron {
  protected:
   MVertex *_vs[19];
  public :
-  MHexahedron2(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
-	       MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-	       MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
-	       MVertex *v15, MVertex *v16, MVertex *v17, MVertex *v18, MVertex *v19,
-	       MVertex *v20, MVertex *v21, MVertex *v22, MVertex *v23, MVertex *v24,
-	       MVertex *v25, MVertex *v26, int num=0, int part=0) 
+  MHexahedron27(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
+		MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
+		MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
+		MVertex *v15, MVertex *v16, MVertex *v17, MVertex *v18, MVertex *v19,
+		MVertex *v20, MVertex *v21, MVertex *v22, MVertex *v23, MVertex *v24,
+		MVertex *v25, MVertex *v26, int num=0, int part=0) 
     : MHexahedron(v0, v1, v2, v3, v4, v5, v6, v7, num, part)
   {
     _vs[0] = v8; _vs[1] = v9; _vs[2] = v10; _vs[3] = v11; _vs[4] = v12; 
@@ -535,12 +535,12 @@ class MHexahedron2 : public MHexahedron {
     _vs[10] = v18; _vs[11] = v19; _vs[12] = v20; _vs[13] = v21; _vs[14] = v22;
     _vs[15] = v23; _vs[16] = v24; _vs[17] = v25; _vs[18] = v26;
   }
-  MHexahedron2(std::vector<MVertex*> &v, int num=0, int part=0) 
+  MHexahedron27(std::vector<MVertex*> &v, int num=0, int part=0) 
     : MHexahedron(v, num, part)
   {
     for(int i = 0; i < 19; i++) _vs[i] = v[8 + i];
   }
-  ~MHexahedron2(){}
+  ~MHexahedron27(){}
   virtual int getPolynomialOrder(){ return 2; }
   virtual int getNumVertices(){ return 27; }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
@@ -634,26 +634,26 @@ class MPrism : public MElement {
   }
 };
 
-class MPrism2 : public MPrism {
+class MPrism18 : public MPrism {
  protected:
   MVertex *_vs[12];
  public :
-  MPrism2(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
-	  MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-	  MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
-	  MVertex *v15, MVertex *v16, MVertex *v17, int num=0, int part=0) 
+  MPrism18(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
+	   MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
+	   MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
+	   MVertex *v15, MVertex *v16, MVertex *v17, int num=0, int part=0) 
     : MPrism(v0, v1, v2, v3, v4, v5, num, part)
   {
     _vs[0] = v6; _vs[1] = v7; _vs[2] = v8; _vs[3] = v9; _vs[4] = v10; 
     _vs[5] = v11; _vs[6] = v12; _vs[7] = v13; _vs[8] = v14; _vs[9] = v15; 
     _vs[10] = v16; _vs[11] = v17; 
   }
-  MPrism2(std::vector<MVertex*> &v, int num=0, int part=0) 
+  MPrism18(std::vector<MVertex*> &v, int num=0, int part=0) 
     : MPrism(v, num, part)
   {
     for(int i = 0; i < 12; i++) _vs[i] = v[6 + i];
   }
-  ~MPrism2(){}
+  ~MPrism18(){}
   virtual int getPolynomialOrder(){ return 2; }
   virtual int getNumVertices(){ return 18; }
   virtual MVertex *getVertex(int num){ return num < 6 ? _v[num] : _vs[num - 6]; }
@@ -741,25 +741,25 @@ class MPyramid : public MElement {
   }
 };
 
-class MPyramid2 : public MPyramid {
+class MPyramid14 : public MPyramid {
  protected:
   MVertex *_vs[9];
  public :
-  MPyramid2(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
-	    MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-	    MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, 
-	    int num=0, int part=0) 
+  MPyramid14(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
+	     MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
+	     MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, 
+	     int num=0, int part=0) 
     : MPyramid(v0, v1, v2, v3, v4, num, part)
   {
     _vs[0] = v5; _vs[1] = v6; _vs[2] = v7; _vs[3] = v8; _vs[4] = v9; 
     _vs[5] = v10; _vs[6] = v11; _vs[7] = v12; _vs[8] = v13; 
   }
-  MPyramid2(std::vector<MVertex*> &v, int num=0, int part=0) 
+  MPyramid14(std::vector<MVertex*> &v, int num=0, int part=0) 
     : MPyramid(v, num, part)
   {
     for(int i = 0; i < 9; i++) _vs[i] = v[5 + i];
   }
-  ~MPyramid2(){}
+  ~MPyramid14(){}
   virtual int getPolynomialOrder(){ return 2; }
   virtual int getNumVertices(){ return 14; }
   virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }

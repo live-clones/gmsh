@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.41 2006-09-03 17:26:07 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.42 2006-09-04 15:58:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -246,7 +246,7 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
     break;
   case TRI2:
     elements[1][elementary].push_back
-      (new MTriangle2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+      (new MTriangle6(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
 		      num, partition));
     dim = 2;
     break;
@@ -257,7 +257,7 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
     break;
   case QUA2:
     elements[2][elementary].push_back
-      (new MQuadrangle2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+      (new MQuadrangle9(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
 			v[n[6]], v[n[7]], v[n[8]], num, partition));
     dim = 2;
     break;
@@ -268,8 +268,8 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
     break;
   case TET2:
     elements[3][elementary].push_back
-      (new MTetrahedron2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-			 v[n[6]], v[n[7]], v[n[8]], v[n[9]], num, partition));
+      (new MTetrahedron10(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+			  v[n[6]], v[n[7]], v[n[8]], v[n[9]], num, partition));
     dim = 3; 
     break;
   case HEX1:
@@ -280,11 +280,11 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
     break;
   case HEX2:
     elements[4][elementary].push_back
-      (new MHexahedron2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-			v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
-			v[n[12]], v[n[13]], v[n[14]], v[n[15]], v[n[16]], v[n[17]], 
-			v[n[18]], v[n[19]], v[n[20]], v[n[21]], v[n[22]], v[n[23]], 
-			v[n[24]], v[n[25]], v[n[26]], num, partition));
+      (new MHexahedron27(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+			 v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
+			 v[n[12]], v[n[13]], v[n[14]], v[n[15]], v[n[16]], v[n[17]], 
+			 v[n[18]], v[n[19]], v[n[20]], v[n[21]], v[n[22]], v[n[23]], 
+			 v[n[24]], v[n[25]], v[n[26]], num, partition));
     dim = 3; 
     break;
   case PRI1: 
@@ -295,10 +295,10 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
     break;
   case PRI2: 
     elements[5][elementary].push_back
-      (new MPrism2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-		   v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
-		   v[n[12]], v[n[13]], v[n[14]], v[n[15]], v[n[16]], v[n[17]], 
-		   num, partition));
+      (new MPrism18(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+		    v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
+		    v[n[12]], v[n[13]], v[n[14]], v[n[15]], v[n[16]], v[n[17]], 
+		    num, partition));
     dim = 3; 
     break;
   case PYR1: 
@@ -308,9 +308,9 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
     break;
   case PYR2: 
     elements[6][elementary].push_back
-      (new MPyramid2(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-		     v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
-		     v[n[12]], v[n[13]], num, partition));
+      (new MPyramid14(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+		      v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
+		      v[n[12]], v[n[13]], num, partition));
     dim = 3; 
     break;
   default:
@@ -1625,7 +1625,7 @@ int GModel::readBDF(const std::string &name)
       }
       else if(!strncmp(buffer, "CTRIA6", 6)){
 	if(readElementBDF(fp, buffer, 6, 6, &num, &region, n, vertices))
-	  elements[1][region].push_back(new MTriangle2(n, num));
+	  elements[1][region].push_back(new MTriangle6(n, num));
       }
       else if(!strncmp(buffer, "CQUAD4", 6)){
 	if(readElementBDF(fp, buffer, 6, 4, &num, &region, n, vertices))

@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.43 2006-08-22 01:58:35 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.44 2006-09-04 15:58:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -214,7 +214,7 @@ void setSecondOrder(GFace *gf,
     std::vector<MVertex*> ve;
     getEdgeVertices(gf, t, ve, edgeVertices, linear);
     triangles2.push_back
-      (new MTriangle2(t->getVertex(0), t->getVertex(1), t->getVertex(2),
+      (new MTriangle6(t->getVertex(0), t->getVertex(1), t->getVertex(2),
 		      ve[0], ve[1], ve[2]));
     delete t;
   }
@@ -227,7 +227,7 @@ void setSecondOrder(GFace *gf,
     getEdgeVertices(gf, q, ve, edgeVertices, linear);
     getFaceVertices(gf, q, vf, faceVertices, linear);
     quadrangles2.push_back
-      (new MQuadrangle2(q->getVertex(0), q->getVertex(1), q->getVertex(2),
+      (new MQuadrangle9(q->getVertex(0), q->getVertex(1), q->getVertex(2),
 			q->getVertex(3), ve[0], ve[1], ve[2], ve[3], vf[0]));
     delete q;
   }
@@ -247,8 +247,8 @@ void setSecondOrder(GRegion *gr,
     std::vector<MVertex*> ve;
     getEdgeVertices(gr, t, ve, edgeVertices, linear);
     tetrahedra2.push_back
-      (new MTetrahedron2(t->getVertex(0), t->getVertex(1), t->getVertex(2), 
-			 t->getVertex(3), ve[0], ve[1], ve[2], ve[3], ve[4], ve[5]));
+      (new MTetrahedron10(t->getVertex(0), t->getVertex(1), t->getVertex(2), 
+			  t->getVertex(3), ve[0], ve[1], ve[2], ve[3], ve[4], ve[5]));
     delete t;
   }
   gr->tetrahedra = tetrahedra2;
@@ -263,11 +263,11 @@ void setSecondOrder(GRegion *gr,
     MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
     gr->mesh_vertices.push_back(v);
     hexahedra2.push_back
-      (new MHexahedron2(h->getVertex(0), h->getVertex(1), h->getVertex(2), 
-			h->getVertex(3), h->getVertex(4), h->getVertex(5), 
-			h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2], 
-			ve[3], ve[4], ve[5], ve[6], ve[7], ve[8], ve[9], ve[10], 
-			ve[11], vf[0], vf[1], vf[2], vf[3], vf[4], vf[5], v));
+      (new MHexahedron27(h->getVertex(0), h->getVertex(1), h->getVertex(2), 
+			 h->getVertex(3), h->getVertex(4), h->getVertex(5), 
+			 h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2], 
+			 ve[3], ve[4], ve[5], ve[6], ve[7], ve[8], ve[9], ve[10], 
+			 ve[11], vf[0], vf[1], vf[2], vf[3], vf[4], vf[5], v));
     delete h;
   }
   gr->hexahedra = hexahedra2;
@@ -279,10 +279,10 @@ void setSecondOrder(GRegion *gr,
     getEdgeVertices(gr, p, ve, edgeVertices, linear);
     getFaceVertices(gr, p, vf, faceVertices, linear);
     prisms2.push_back
-      (new MPrism2(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
-		   p->getVertex(3), p->getVertex(4), p->getVertex(5), 
-		   ve[0], ve[1], ve[2], ve[3], ve[4], ve[5], ve[6], ve[7],
-		   ve[8], vf[0], vf[1], vf[2]));
+      (new MPrism18(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
+		    p->getVertex(3), p->getVertex(4), p->getVertex(5), 
+		    ve[0], ve[1], ve[2], ve[3], ve[4], ve[5], ve[6], ve[7],
+		    ve[8], vf[0], vf[1], vf[2]));
     delete p;
   }
   gr->prisms = prisms2;
@@ -294,9 +294,9 @@ void setSecondOrder(GRegion *gr,
     getEdgeVertices(gr, p, ve, edgeVertices, linear);
     getFaceVertices(gr, p, vf, faceVertices, linear);
     pyramids2.push_back
-      (new MPyramid2(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
-		     p->getVertex(3), p->getVertex(4), ve[0], ve[1], ve[2], 
-		     ve[3], ve[4], ve[5], ve[6], ve[7], vf[0]));
+      (new MPyramid14(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
+		      p->getVertex(3), p->getVertex(4), ve[0], ve[1], ve[2], 
+		      ve[3], ve[4], ve[5], ve[6], ve[7], vf[0]));
     delete p;
   }
   gr->pyramids = pyramids2;
