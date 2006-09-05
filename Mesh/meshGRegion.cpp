@@ -204,6 +204,12 @@ void meshNormalsPointOutOfTheRegion (GRegion *gr)
 	  double v2[3] = {X[2]-X[1],Y[2]-Y[1],Z[2]-Z[1]};
 	  double N[3] ;
 	  prodve ( v1, v2 , N );
+	  norme (v1);
+	  norme (v2);
+	  norme(N);
+	  N[0]+= 0.05*v1[0]-0.05*v2[0];
+	  N[1]+= 0.03*v1[1]-0.15*v2[1];
+	  N[2]+= 0.05*v1[2]-0.05*v2[2];
 	  norme(N);
 	  std::list<GFace*>::iterator it_b = faces.begin();
 	  while (it_b != faces.end())

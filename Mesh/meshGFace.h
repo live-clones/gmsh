@@ -20,7 +20,25 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <vector>
+class MVertex;
 class GFace;
+// compute edge loops of the face, all_mvertices
+// are the vertices of the 
+void computeEdgeLoops (const GFace *gf,
+		       std::vector<MVertex*> & all_mvertices,
+		       std::vector<int> &indices);
+
+int MeshTransfiniteSurface( GFace *gf);
+
+class fromParametricToCartesian
+{
+  GFace *gf;
+public :
+  fromParametricToCartesian ( GFace *_gf ) ; 
+  void operator () (MVertex * v);
+};    
+
 // Create the mesh of the face
 class meshGFace 
 {

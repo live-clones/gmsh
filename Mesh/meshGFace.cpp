@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.10 2006-09-01 10:10:05 remacle Exp $
+// $Id: meshGFace.cpp,v 1.11 2006-09-05 21:37:59 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -103,21 +103,18 @@ public :
   }
 };
 
-class fromParametricToCartesian
+fromParametricToCartesian::fromParametricToCartesian ( GFace *_gf )  
+  : gf(_gf)
 {
-  GFace *gf;
-public :
-  fromParametricToCartesian ( GFace *_gf )  
-    : gf(_gf){}
-  void operator () (MVertex * v)
-  {
-    GPoint coords =  gf->point (SPoint2(v->x(),v->y()));
-    v->x() = coords.x();  
-    v->y() = coords.y();
-    v->z() = coords.z();
-  } 
-};
+}
 
+void fromParametricToCartesian::operator () (MVertex * v)
+{
+  GPoint coords =  gf->point (SPoint2(v->x(),v->y()));
+  v->x() = coords.x();  
+  v->y() = coords.y();
+  v->z() = coords.z();
+} 
 
 void computeEdgeLoops (const GFace *gf,
 		       std::vector<MVertex*> & all_mvertices,
@@ -362,7 +359,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	  ++it;
 	}
 
-      Msg(STATUS2," %d triangles : conv %g -> %g (%g sec)",m.triangles.size(),maxL,1.5,(double)(clock()-t1)/CLOCKS_PER_SEC);
+      //      Msg(STATUS2," %d triangles : conv %g -> %g (%g sec)",m.triangles.size(),maxL,1.5,(double)(clock()-t1)/CLOCKS_PER_SEC);
       if ((minL > 0.4 && maxL < 1.5) || IT > NIT)break;
 
 
@@ -1009,6 +1006,9 @@ void meshGFace :: operator() (GFace *gf)
 
   // Only apply this technique to unknown surfaces or planar surfaces
   // when it is unknown, try your best ...
+
+  if (MeshTransfiniteSurface(gf))return;
+
 
   std::vector<MVertex*> points;
   std::vector<int> indices;

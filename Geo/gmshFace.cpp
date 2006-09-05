@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.17 2006-08-29 10:39:48 remacle Exp $
+// $Id: gmshFace.cpp,v 1.18 2006-09-05 21:37:59 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -71,6 +71,20 @@ gmshFace::gmshFace(GModel *m, Surface *face)
 
   meshAttributes.recombine = s->Recombine;
   meshAttributes.recombineAngle = s->RecombineAngle;
+  meshAttributes.Method = s->Method;
+  if (s->Method == TRANSFINI)
+    {
+      meshAttributes.Method = s->Method;
+      meshAttributes.transfiniteArrangement = s->Recombine_Dir;
+      for (int i=0;i< List_Nbr(s->TrsfPoints);i++)
+	{
+	  Vertex *corn;
+	  List_Read(s->TrsfPoints, i, &corn);
+	  GVertex *gv = m->vertexByTag(corn->Num);
+	  if(!gv) throw;
+	  meshAttributes.corners.push_back(gv);
+	}
+    }
 }
 
 gmshFace::gmshFace(GModel *m, int num)

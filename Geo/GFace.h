@@ -131,8 +131,17 @@ class GFace : public GEntity
   std::vector<MQuadrangle*> quadrangles;
 
   struct {
+    // do we recombine the triangles of the mesh ?
     int    recombine;
+    // what is the treshold angle for recombination
     double recombineAngle;
+    // is this surface meshed using a transfinite interpolation
+    int   Method;
+    // these are the 3 corners of the interpolation
+    std::vector<GVertex* > corners;
+    // all diagonals of the triangulation are left (1), right (2)
+    // or alternated (3)
+    int    transfiniteArrangement;
   } meshAttributes ;
 
 };
