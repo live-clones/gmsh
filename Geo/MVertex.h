@@ -76,6 +76,9 @@ class MVertex{
   // Get ith parameter
   virtual bool getParameter(int i, double &par){ return false; }
 
+  // Get the data associated with this vertex
+  virtual void *getData(){ return 0; }
+
   // IO routines
   void writeMSH(FILE *fp, bool binary=false, double scalingFactor=1.0);
   void writeMSH(FILE *fp, double version, bool binary, int num, 
@@ -99,7 +102,7 @@ class MEdgeVertex : public MVertex{
 };
 
 class MFaceVertex : public MVertex{
- private:
+ protected:
   double _u, _v;
  public :
   MFaceVertex(double x, double y, double z, GEntity *ge, double u, double v) 
@@ -108,6 +111,20 @@ class MFaceVertex : public MVertex{
   }
   ~MFaceVertex(){}
   virtual bool getParameter(int i, double &par){ par = (i ? _v : _u); return true; }
+};
+
+template<class T>
+class MDataFaceVertex : public MFaceVertex{
+ private:
+  T _data;
+ public :
+  MDataFaceVertex(double x, double y, double z, GEntity *ge, double u, double v, T data) 
+    : MFaceVertex(x, y, z, ge, u, v), _data(data)
+  {
+  }
+  ~MDataFaceVertex(){}
+  virtual bool getData(T &data){ data = _data; return true; }
+  virtual void *getData(){ return (void*)&_data; }
 };
 
 class MVertexLessThanLexicographic{

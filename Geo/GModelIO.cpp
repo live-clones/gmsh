@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.42 2006-09-04 15:58:22 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.43 2006-09-06 18:42:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1590,7 +1590,7 @@ int GModel::readBDF(const std::string &name)
 
   char buffer[256];
   std::map<int, MVertex*> vertices;
-  std::map<int, std::vector<MElement*> > elements[6];
+  std::map<int, std::vector<MElement*> > elements[7];
 
   // nodes can be defined after elements, so parse the file twice
 
@@ -1642,6 +1642,10 @@ int GModel::readBDF(const std::string &name)
       else if(!strncmp(buffer, "CPENTA", 6)){
 	if(readElementBDF(fp, buffer, 6, 6, &num, &region, n, vertices))
 	  elements[5][region].push_back(new MPrism(n, num));
+      }
+      else if(!strncmp(buffer, "CPYRAM", 6)){
+	if(readElementBDF(fp, buffer, 6, 5, &num, &region, n, vertices))
+	  elements[6][region].push_back(new MPyramid(n, num));
       }
     }
   }
@@ -1698,6 +1702,8 @@ int GModel::writeBDF(const std::string &name, int format, bool saveAll,
       (*it)->hexahedra[i]->writeBDF(fp, format, (*it)->tag());
     for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
       (*it)->prisms[i]->writeBDF(fp, format, (*it)->tag());
+    for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
+      (*it)->pyramids[i]->writeBDF(fp, format, (*it)->tag());
   }
   
   fprintf(fp, "ENDDATA\n");

@@ -717,7 +717,7 @@ class MPyramid : public MElement {
   virtual int getTypeForMSH(){ return PYR1; }
   virtual int getTypeForUNV(){ return 0; } // not available
   virtual char *getStringForPOS(){ return "SY"; }
-  virtual char *getStringForBDF(){ return 0; } // not available
+  virtual char *getStringForBDF(){ return "CPYRAM"; }
   virtual int getVolumeSign()
   { 
     double mat[3][3];
