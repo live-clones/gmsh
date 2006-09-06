@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.1 2006-09-05 21:37:59 remacle Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.2 2006-09-06 10:25:24 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -176,22 +176,47 @@ int MeshTransfiniteSurface( GFace *gf)
 	}
     }
 
-
-  for (int IT = 0;IT< 5;IT++)
+  // elliptic smoother
+  for (int IT = 0;IT< 15;IT++)
     {
       for(int i = 1; i<L; i++) 
 	{
 	  for(int j = 1; j < H; j++) 
 	    {
-	      MVertex *v1 = tab[std::make_pair(i,j)];
-	      MVertex *v2 = tab[std::make_pair(i+1,j)];
-	      MVertex *v3 = tab[std::make_pair(i-1,j)];
-	      MVertex *v4 = tab[std::make_pair(i,j+1)];	  
-	      MVertex *v5 = tab[std::make_pair(i,j-1)];	  
+	      MVertex *v11 = tab[std::make_pair(i-1,j-1)];
+	      MVertex *v12 = tab[std::make_pair(i-1,j)];
+	      MVertex *v13 = tab[std::make_pair(i-1,j+1)];	      
+	      MVertex *v21 = tab[std::make_pair(i,j-1)];
+	      MVertex *v22 = tab[std::make_pair(i,j)];
+	      MVertex *v23 = tab[std::make_pair(i,j+1)];
+	      MVertex *v31 = tab[std::make_pair(i+1,j-1)];
+	      MVertex *v32 = tab[std::make_pair(i+1,j)];
+	      MVertex *v33 = tab[std::make_pair(i+1,j+1)];
 	      
-	      v1->x() = 0.25 * (v2->x() +v3->x() +v4->x() +v5->x());
-	      v1->y() = 0.25 * (v2->y() +v3->y() +v4->y() +v5->y());
-	      v1->z() = 0.25 * (v2->z() +v3->z() +v4->z() +v5->z());
+	      double alpha = 0.25 * (DSQR(v23->x() - v21->x()) +
+				     DSQR(v23->y() - v21->y()));
+	      double gamma = 0.25 * (DSQR(v32->x() - v12->x()) +
+				     DSQR(v32->y() - v12->y()));
+	      double beta = 0.0625 * ((v32->x() - v12->x()) *
+				      (v23->x() - v21->x()) +
+				      (v32->y() - v12->y()) *
+				      (v23->y() - v21->y()));
+	
+	      v22->x() = 0.5 * (alpha * (v32->x() + v12->x()) +
+				  gamma * (v23->x() + v21->x()) -
+				  2. * beta * (v33->x() - v13->x() -
+					       v31->x() + v11->x()))
+		/ (alpha + gamma);
+	      v22->y() = 0.5 * (alpha * (v32->y() + v12->y()) +
+                            gamma * (v23->y() + v21->y()) -
+				  2. * beta * (v33->y() - v13->y() -
+					       v31->y() + v11->y()))
+		/ (alpha + gamma);
+	      v22->z() = 0.5 * (alpha * (v32->z() + v12->z()) +
+				  gamma * (v23->z() + v21->z()) -
+				  2. * beta * (v33->z() - v13->z() -
+					       v31->z() + v11->z()))
+		/ (alpha + gamma);
 	    }
 	}
     }
