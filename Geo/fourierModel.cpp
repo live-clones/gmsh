@@ -69,8 +69,7 @@ public:
       std::vector<std::pair<GFace*, SPoint2> > param;
       getParamForPointInOverlaps(gf->model(), overlaps, v->x(), v->y(), v->z(), param);
       if(param.empty()){
-	Msg(GERROR, "Point (%g,%g,%g) does not belong to any patch", 
-	    v->x(), v->y(), v->z());
+      	Msg(GERROR, "Vertex %d does not belong to any patch", v->getNum());
       }
       else{
 	double allPou = 0.;
@@ -80,8 +79,30 @@ public:
 	  FM->GetPou(param[i].first->tag(), u2, v2, pou2);
 	  allPou += pou2;
 	}
-	double *pou = (double*)v->getData();
-	*pou = *pou / allPou;
+	if(v->getData()){
+	  double *pou = (double*)v->getData();
+	  *pou = *pou / allPou;
+	}
+	else{
+	  Msg(GERROR, "Vertex %d has no POU data", v->getNum());
+	}
+      }
+    }
+  }
+};
+
+class removeGrout{
+public:
+  void operator() (GFace *gf)
+  {  
+    for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
+      MElement *e = gf->quadrangles[i];
+      for(int j = 0; j < e->getNumVertices(); j++){
+	void *data = e->getVertex(j)->getData();
+	if(data){
+	  double pou = *(double*)data;
+	  if(pou < 0.51) e->setVisibility(0);
+	}
       }
     }
   }
@@ -94,6 +115,7 @@ public:
     Post_View *view = BeginView(1);
     for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
       MElement *e = gf->quadrangles[i];
+      //if(!e->getVisibility()) continue;
       double x[4], y[4], z[4], val[4];
       for(int j = 0; j < 4; j++){
 	MVertex *v = e->getVertex(j);
@@ -132,6 +154,10 @@ fourierModel::fourierModel(const std::string &name)
 
   // compute partition of unity
   std::for_each(firstFace(), lastFace(), computePartitionOfUnity());
+
+  // remove the grout
+  std::for_each(firstFace(), lastFace(), removeGrout());
+  
 
   // visualize as a post-pro view
   std::for_each(firstFace(), lastFace(), exportFourierFace());
