@@ -161,6 +161,8 @@ fourierModel::fourierModel(const std::string &name)
 
   // visualize as a post-pro view
   std::for_each(firstFace(), lastFace(), exportFourierFace());
+
+  CTX.mesh.changed = ENT_ALL;
 }
 
 

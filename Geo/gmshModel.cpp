@@ -1,4 +1,4 @@
-// $Id: gmshModel.cpp,v 1.16 2006-09-07 04:54:55 geuzaine Exp $
+// $Id: gmshModel.cpp,v 1.17 2006-09-07 05:04:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -24,14 +24,12 @@
 #include "Geo.h"
 #include "Tools.h"
 #include "Message.h"
-#include "Context.h"
 #include "gmshVertex.h"
 #include "gmshFace.h"
 #include "gmshEdge.h"
 #include "gmshRegion.h"
 
 extern Mesh *THEM;
-extern Context_T CTX;
 
 void gmshModel::import()
 {
@@ -122,6 +120,4 @@ void gmshModel::import()
   Msg(DEBUG, "%d Edges", edges.size());
   Msg(DEBUG, "%d Faces", faces.size());
   Msg(DEBUG, "%d Regions", regions.size());
-
-  CTX.mesh.changed = ENT_ALL;
 }
