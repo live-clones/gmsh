@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.15 2006-09-03 07:44:10 geuzaine Exp $
+// $Id: MElement.cpp,v 1.16 2006-09-07 19:45:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -264,7 +264,7 @@ void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
     if(type == 21 || type == 24) // linear beam or parabolic beam
       fprintf(fp, "%10d%10d%10d\n", 0, 0, 0);
     for(int k = 0; k < n; k++) {
-      fprintf(fp, "%10d", getVertex(k)->getNum());
+      fprintf(fp, "%10d", getVertexUNV(k)->getNum());
       if(k % 8 == 7)
 	fprintf(fp, "\n");
     }

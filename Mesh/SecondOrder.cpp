@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.44 2006-09-04 15:58:22 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.45 2006-09-07 19:45:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -195,7 +195,7 @@ void setSecondOrder(GEdge *ge,
     MLine *l = ge->lines[i];
     std::vector<MVertex*> ve;
     getEdgeVertices(ge, l, ve, edgeVertices, linear);
-    lines2.push_back(new MLine2(l->getVertex(0), l->getVertex(1), ve[0]));
+    lines2.push_back(new MLine3(l->getVertex(0), l->getVertex(1), ve[0]));
     delete l;
   }
   ge->lines = lines2;

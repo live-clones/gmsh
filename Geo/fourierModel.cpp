@@ -38,36 +38,29 @@ public:
   }
 };
 
-
-static void getParamForPointInOverlaps(GModel *m, std::vector<int> &overlaps, 
-				       double x, double y, double z, 
-				       std::vector<std::pair<GFace*, SPoint2> > &param)
-{
-  // we only loop on patches that are known a priori to overlap with
-  // the current patch (this way we don't normalize the POU across
-  // hard edges)
-  const double tol = 1.e-2; // need to adapt this w.r.t size of model
-  for(unsigned int i = 0; i < overlaps.size(); i++){
-    GFace *f = m->faceByTag(overlaps[i]);
-    SPoint2 uv = f->parFromPoint(SPoint3(x, y, z));
-    if(f->containsParam(uv)){
-      GPoint xyz = f->point(uv);
-      if(fabs(xyz.x() - x) < tol && fabs(xyz.y() - y) < tol && fabs(xyz.z() - z) < tol)
-	param.push_back(std::pair<GFace*, SPoint2>(f, uv));
-    }
-  }
-}
-
 class computePartitionOfUnity{
 public:
   void operator() (GFace *gf)
   {  
+    // we only normalize the partition of unity amongst patches that
+    // overlap; we don't normalize across hard edges
     std::vector<int> overlaps;
     FM->GetNeighbor(gf->tag(), overlaps);
     for(unsigned int i = 0; i < gf->mesh_vertices.size(); i++){
       MVertex *v = gf->mesh_vertices[i];
       std::vector<std::pair<GFace*, SPoint2> > param;
-      getParamForPointInOverlaps(gf->model(), overlaps, v->x(), v->y(), v->z(), param);
+      for(unsigned int j = 0; j < overlaps.size(); j++){
+	GFace *gf2 = gf->model()->faceByTag(overlaps[j]);
+	SPoint2 uv2 = gf2->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+	if(gf2->containsParam(uv2)){
+	  GPoint xyz2 = gf2->point(uv2);
+	  const double tol = 1.e-2; // need to adapt this w.r.t size of model
+	  if(fabs(xyz2.x() - v->x()) < tol && 
+	     fabs(xyz2.y() - v->y()) < tol && 
+	     fabs(xyz2.z() - v->z()) < tol)
+	    param.push_back(std::pair<GFace*, SPoint2>(gf2, uv2));
+	}
+      }
       if(param.empty()){
       	Msg(GERROR, "Vertex %d does not belong to any patch", v->getNum());
       }
@@ -91,7 +84,7 @@ public:
   }
 };
 
-class removeGrout{
+class createGrooves{
 public:
   void operator() (GFace *gf)
   {  
@@ -105,6 +98,27 @@ public:
 	}
       }
     }
+  }
+};
+
+class createGrout{
+public:
+  void operator() (GFace *gf)
+  {  
+    printf("processing grout for face %d\n", gf->tag());
+
+    std::vector<int> overlaps;
+    FM->GetNeighbor(gf->tag(), overlaps);
+
+    for(unsigned int j = 0; j < overlaps.size(); j++){
+      GFace *gf2 = gf->model()->faceByTag(overlaps[j]);
+      if(gf != gf2){
+	
+	
+      }
+
+    }
+    
   }
 };
 
@@ -155,9 +169,11 @@ fourierModel::fourierModel(const std::string &name)
   // compute partition of unity
   std::for_each(firstFace(), lastFace(), computePartitionOfUnity());
 
-  // remove the grout
-  std::for_each(firstFace(), lastFace(), removeGrout());
+  // create grooves
+  std::for_each(firstFace(), lastFace(), createGrooves());
   
+  // create grout
+  std::for_each(firstFace(), lastFace(), createGrout());
 
   // visualize as a post-pro view
   std::for_each(firstFace(), lastFace(), exportFourierFace());

@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.43 2006-09-06 18:42:24 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.44 2006-09-07 19:45:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -236,7 +236,7 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
     break;
   case LGN2:
     elements[0][elementary].push_back
-      (new MLine2(v[n[0]], v[n[1]], v[n[2]], num, partition));
+      (new MLine3(v[n[0]], v[n[1]], v[n[2]], num, partition));
     dim = 1;
     break;
   case TRI1:
@@ -1186,24 +1186,77 @@ int GModel::readUNV(const std::string &name)
 	    if(!fscanf(fp, "%d", &n[i])) return 0;
 	    if(!checkVertexIndex(n[i], vertices)) return 0;
 	  }
-	  int type_msh = 0;
+
+	  int dim = -1;
 	  switch(type){
-	  case 11: case 21: case 22: case 31:                   type_msh = LGN1; break;
-	  case 23: case 24: case 32:                            type_msh = LGN2; break;
-	  case 41: case 51: case 61: case 74: case 81: case 91: type_msh = TRI1; break;
-	  case 42: case 52: case 62: case 72: case 82: case 92: type_msh = TRI2; break;
-	  case 44: case 54: case 64: case 71: case 84: case 94: type_msh = QUA1; break;
-	  case 45: case 55: case 65: case 75: case 85: case 95: type_msh = QUA2; break;
-	  case 111:                                             type_msh = TET1; break;
-	  case 118:                                             type_msh = TET2; break;
-	  case 104: case 115:                                   type_msh = HEX1; break;
-	  case 105: case 116:                                   type_msh = HEX2; break;
-	  case 101: case 112:                                   type_msh = PRI1; break;
-	  case 102: case 113:                                   type_msh = PRI2; break;
+	  case 11: case 21: case 22: case 31:
+	    elements[0][elementary].push_back
+	      (new MLine(vertices[n[0]], vertices[n[1]], num));
+	    dim = 1;
+	    break;
+	  case 23: case 24: case 32:
+	    elements[0][elementary].push_back
+	      (new MLine3(vertices[n[0]], vertices[n[2]], vertices[n[1]], num));
+	    dim = 1;
+	    break;
+	  case 41: case 51: case 61: case 74: case 81: case 91: 
+	    elements[1][elementary].push_back
+	      (new MTriangle(vertices[n[0]], vertices[n[1]], vertices[n[2]], num));
+	    dim = 2;
+	    break;
+	  case 42: case 52: case 62: case 72: case 82: case 92: 
+	    elements[1][elementary].push_back
+	      (new MTriangle6(vertices[n[0]], vertices[n[2]], vertices[n[4]], 
+			      vertices[n[1]], vertices[n[3]], vertices[n[5]], num));
+	    dim = 2;
+	    break;
+	  case 44: case 54: case 64: case 71: case 84: case 94: 
+	    elements[2][elementary].push_back
+	      (new MQuadrangle(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
+			       vertices[n[3]], num));
+	    dim = 2;
+	    break;
+	  case 45: case 55: case 65: case 75: case 85: case 95:
+	    Msg(WARNING, "Quad8 is not implemented yet");
+	    break;
+	  case 111:
+	    elements[3][elementary].push_back
+	      (new MTetrahedron(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
+				vertices[n[3]], num));
+	    dim = 3; 
+	    break;
+	  case 118: 
+	    elements[3][elementary].push_back
+	      (new MTetrahedron10(vertices[n[0]], vertices[n[2]], vertices[n[4]], 
+				  vertices[n[9]], vertices[n[1]], vertices[n[3]], 
+				  vertices[n[5]], vertices[n[8]], vertices[n[6]], 
+				  vertices[n[7]], num));
+	    dim = 3;
+	    break;
+	  case 104: case 115:  
+	    elements[4][elementary].push_back
+	      (new MHexahedron(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
+			       vertices[n[3]], vertices[n[4]], vertices[n[5]], 
+			       vertices[n[6]], vertices[n[7]], num));
+	    dim = 3; 
+	    break;
+	  case 105: case 116:
+	    Msg(WARNING, "Hexa20 is not implemented yet");
+	    break;
+	  case 101: case 112:
+	    elements[5][elementary].push_back
+	      (new MPrism(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
+			  vertices[n[3]], vertices[n[4]], vertices[n[5]], num));
+	    dim = 3; 
+	    break;
+	  case 102: case 113:
+	    Msg(WARNING, "Prism15 is not implemented yet");
+	    break;
 	  }
-	  if(type_msh && getNumVerticesForElementTypeMSH(type_msh) == numNodes)
-	    createElementMSH(this, num, type_msh, physical, elementary, 0, 
-			     n, vertices, points, elements, physicals);
+  
+	  if(dim >= 0 && physical && (!physicals[dim].count(elementary) || 
+				      !physicals[dim][elementary].count(physical)))
+	    physicals[dim][elementary][physical] = "unnamed";
 	}
       }
     }
