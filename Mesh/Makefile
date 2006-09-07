@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.129 2006-09-05 21:37:59 remacle Exp $
+# $Id: Makefile,v 1.130 2006-09-07 04:54:55 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -434,6 +434,18 @@ meshGFace.o: meshGFace.cpp meshGFace.h ../Geo/GVertex.h ../Geo/GEntity.h \
   ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
   ../Common/GmshMatrix.h
+# 1 "/Users/geuzaine/.gmsh/Mesh//"
+meshGFaceTransfinite.o: meshGFaceTransfinite.cpp meshGFace.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
+  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h \
+  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Numeric/Numeric.h \
+  ../Common/Context.h ../DataStr/List.h ../Geo/GFace.h ../Geo/GPoint.h \
+  ../Geo/GEntity.h ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/Pair.h ../Common/Message.h
 # 1 "/Users/geuzaine/.gmsh/Mesh//"
 meshGRegion.o: meshGRegion.cpp meshGRegion.h ../Geo/GRegion.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \

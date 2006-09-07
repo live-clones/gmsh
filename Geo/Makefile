@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.99 2006-08-26 13:34:46 geuzaine Exp $
+# $Id: Makefile,v 1.100 2006-09-07 04:54:55 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -235,7 +235,10 @@ fourierModel.o: fourierModel.cpp fourierModel.h GModel.h GVertex.h \
   GEntity.h Range.h SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h \
   MVertex.h GPoint.h GEdge.h SVector3.h SPoint2.h MElement.h MEdge.h \
   MFace.h ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
-  GFace.h Pair.h GRegion.h ../Common/SmoothNormals.h ../Common/Message.h
+  GFace.h Pair.h GRegion.h ../Common/SmoothNormals.h ../Common/Message.h \
+  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
+  ../Common/GmshMatrix.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"
 SVector3.o: SVector3.cpp SVector3.h SPoint3.h
 # 1 "/Users/geuzaine/.gmsh/Geo//"

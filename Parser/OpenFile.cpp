@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.121 2006-09-03 07:44:10 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.122 2006-09-07 04:54:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -340,7 +340,7 @@ int MergeProblem(char *name, int warn_if_missing)
   GMODEL->import();
 
   SetBoundingBox();
-  CTX.mesh.changed = ENT_ALL;
+
   Msg(STATUS2, "Read '%s'", name);
   return status;
 }
