@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.2 2006-09-06 10:25:24 remacle Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.3 2006-09-07 16:03:32 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -86,6 +86,15 @@ int MeshTransfiniteSurface( GFace *gf)
   int L = N2-N1;
   int H = N3-N2;
 
+  int Lb = N4-N3;
+  int Hb = m_vertices.size()-N4;
+
+  if (Lb != L || Hb != H)
+    {
+      Msg(GERROR,"Surface %d cannot be meshed using the transfinite algo",gf->tag());
+      return 0;
+    }
+
   std::vector<double> lengths_i;
   std::vector<double> lengths_j;
 
@@ -155,6 +164,8 @@ int MeshTransfiniteSurface( GFace *gf)
   double VC3 = V[N3];
   double VC4 = V[N4];
 
+
+  //create points using transfinite interpolation
   for(int i = 1; i<L; i++) 
     {
       double u = lengths_i[i]/L_i;
@@ -168,7 +179,7 @@ int MeshTransfiniteSurface( GFace *gf)
 	  
 	  double Up = TRAN_QUA ( U[iP1], U[iP2], U[iP3], U[iP4] , UC1, UC2, UC3, UC4, u, v ); 
 	  double Vp = TRAN_QUA ( V[iP1], V[iP2], V[iP3], V[iP4] , VC1, VC2, VC3, VC4, u, v ); 
-
+	  
 	  GPoint gp = gf->point (SPoint2(Up,Vp));
 	  MFaceVertex *newv  = new MFaceVertex ( gp.x(),gp.y(),gp.z(), gf, Up, Vp );
 	  gf->mesh_vertices.push_back (newv);	  	  
@@ -176,51 +187,62 @@ int MeshTransfiniteSurface( GFace *gf)
 	}
     }
 
-  // elliptic smoother
-  for (int IT = 0;IT< 15;IT++)
+  if (gf->geomType() == GEntity::Plane) // some work 2 be done to smooth the stuff in parametric coords
+                                        // parametric coords are available (MFaceVertex) !
     {
-      for(int i = 1; i<L; i++) 
+      // elliptic smoother
+      for (int IT = 0;IT< 10;IT++)
 	{
-	  for(int j = 1; j < H; j++) 
+	  for(int i = 1; i<L; i++) 
 	    {
-	      MVertex *v11 = tab[std::make_pair(i-1,j-1)];
-	      MVertex *v12 = tab[std::make_pair(i-1,j)];
-	      MVertex *v13 = tab[std::make_pair(i-1,j+1)];	      
-	      MVertex *v21 = tab[std::make_pair(i,j-1)];
-	      MVertex *v22 = tab[std::make_pair(i,j)];
-	      MVertex *v23 = tab[std::make_pair(i,j+1)];
-	      MVertex *v31 = tab[std::make_pair(i+1,j-1)];
-	      MVertex *v32 = tab[std::make_pair(i+1,j)];
-	      MVertex *v33 = tab[std::make_pair(i+1,j+1)];
-	      
-	      double alpha = 0.25 * (DSQR(v23->x() - v21->x()) +
-				     DSQR(v23->y() - v21->y()));
-	      double gamma = 0.25 * (DSQR(v32->x() - v12->x()) +
-				     DSQR(v32->y() - v12->y()));
-	      double beta = 0.0625 * ((v32->x() - v12->x()) *
-				      (v23->x() - v21->x()) +
-				      (v32->y() - v12->y()) *
-				      (v23->y() - v21->y()));
-	
-	      v22->x() = 0.5 * (alpha * (v32->x() + v12->x()) +
-				  gamma * (v23->x() + v21->x()) -
-				  2. * beta * (v33->x() - v13->x() -
-					       v31->x() + v11->x()))
-		/ (alpha + gamma);
-	      v22->y() = 0.5 * (alpha * (v32->y() + v12->y()) +
-                            gamma * (v23->y() + v21->y()) -
-				  2. * beta * (v33->y() - v13->y() -
-					       v31->y() + v11->y()))
-		/ (alpha + gamma);
-	      v22->z() = 0.5 * (alpha * (v32->z() + v12->z()) +
-				  gamma * (v23->z() + v21->z()) -
-				  2. * beta * (v33->z() - v13->z() -
-					       v31->z() + v11->z()))
-		/ (alpha + gamma);
+	      for(int j = 1; j < H; j++) 
+		{
+		  MVertex *v11 = tab[std::make_pair(i-1,j-1)];
+		  MVertex *v12 = tab[std::make_pair(i-1,j)];
+		  MVertex *v13 = tab[std::make_pair(i-1,j+1)];	      
+		  MVertex *v21 = tab[std::make_pair(i,j-1)];
+		  MVertex *v22 = tab[std::make_pair(i,j)];
+		  MVertex *v23 = tab[std::make_pair(i,j+1)];
+		  MVertex *v31 = tab[std::make_pair(i+1,j-1)];
+		  MVertex *v32 = tab[std::make_pair(i+1,j)];
+		  MVertex *v33 = tab[std::make_pair(i+1,j+1)];
+		  
+		  double alpha = 0.25 * (DSQR(v23->x() - v21->x()) +
+					 DSQR(v23->y() - v21->y()) +
+					 DSQR(v23->z() - v21->z()) 
+					 );
+		  double gamma = 0.25 * (DSQR(v32->x() - v12->x()) +
+					 DSQR(v32->y() - v12->y()) +
+					 DSQR(v32->z() - v12->z())
+					 );
+		  double beta = 0.0625 * ((v32->x() - v12->x()) *
+					  (v23->x() - v21->x()) +
+					  (v32->y() - v12->y()) *
+					  (v23->y() - v21->y()) +
+					  (v32->z() - v12->z()) *
+					  (v23->z() - v21->z())
+					  );
+		  
+		  v22->x() = 0.5 * (alpha * (v32->x() + v12->x()) +
+				    gamma * (v23->x() + v21->x()) -
+				    2. * beta * (v33->x() - v13->x() -
+						 v31->x() + v11->x()))
+		    / (alpha + gamma);
+		  v22->y() = 0.5 * (alpha * (v32->y() + v12->y()) +
+				    gamma * (v23->y() + v21->y()) -
+				    2. * beta * (v33->y() - v13->y() -
+						 v31->y() + v11->y()))
+		    / (alpha + gamma);
+		  v22->z() = 0.5 * (alpha * (v32->z() + v12->z()) +
+				    gamma * (v23->z() + v21->z()) -
+				    2. * beta * (v33->z() - v13->z() -
+						 v31->z() + v11->z()))
+		    / (alpha + gamma);
+		}
 	    }
 	}
     }
-
+  // create elements
   for(int i = 0; i < L ; i++) 
     {
       for(int j = 0; j < H; j++) 

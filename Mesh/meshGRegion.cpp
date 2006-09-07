@@ -5,25 +5,14 @@
 #include "Message.h"
 #include <vector>
 
-#if defined(HAVE_NETGEN)
-namespace nglib {
-#include "nglib.h"
-#include "nglib_addon.h"
-}
-using namespace nglib;
-
-Ng_Mesh * buildNetgenStructure (GRegion *gr, int importVolumeMesh, std::vector<MVertex*> & numberedV)
+void getAllBoundingVertices (GRegion *gr, int importVolumeMesh, std::set<MVertex*> &allBoundingVertices )
 {
-  NgAddOn_Init();
-  Ng_Mesh *_ngmesh = Ng_NewMesh();
-
   std::list<GFace*> faces = gr->faces();
   std::list<GFace*>::iterator it = faces.begin();
-  std::set<MVertex*> allBoundingVertices;
-  
+
   if (importVolumeMesh)
     allBoundingVertices.insert ( gr->mesh_vertices.begin() , gr->mesh_vertices.end() );
-
+  
   while (it != faces.end())
     {
       GFace *gf = (*it);      
@@ -36,6 +25,121 @@ Ng_Mesh * buildNetgenStructure (GRegion *gr, int importVolumeMesh, std::vector<M
 	}
       ++it;
     }
+}
+
+
+#if defined(HAVE_TETGEN)
+#include "tetgen.h"
+void buildTetgenStructure (  GRegion *gr, tetgenio &in, std::vector<MVertex*> & numberedV)
+{
+
+  std::set<MVertex*> allBoundingVertices;
+  getAllBoundingVertices (gr, 0, allBoundingVertices );
+
+  in.mesh_dim = 3;
+  in.firstnumber = 1;
+  
+  in.numberofpoints = allBoundingVertices.size();
+  in.pointlist = new REAL[in.numberofpoints * 3];
+  in.pointmarkerlist = NULL;
+
+  std::set<MVertex*>::iterator itv =  allBoundingVertices.begin();
+  int I=1;
+  while (itv != allBoundingVertices.end())
+    {
+      in.pointlist[(I-1)*3 + 0] = (*itv)->x();
+      in.pointlist[(I-1)*3 + 1] = (*itv)->y();
+      in.pointlist[(I-1)*3 + 2] = (*itv)->z();
+      (*itv)->setNum(I++);
+      numberedV.push_back(*itv);
+      ++itv;
+    }
+  
+  int nbFace = 0;
+
+  std::list<GFace*> faces = gr->faces();
+  std::list<GFace*>::iterator it = faces.begin();
+  while (it != faces.end())
+    {
+      GFace *gf = (*it);
+      nbFace += gf->triangles.size();
+      ++it;
+    }
+
+  Msg(INFO,"%d model faces -- NumFaces = %d",nbFace,faces.size());
+
+  in.numberoffacets = nbFace;
+  in.facetlist = new tetgenio::facet[in.numberoffacets];
+  in.facetmarkerlist = new int[in.numberoffacets];
+
+  it = faces.begin();
+  I= 0;
+  while (it != faces.end())
+    {
+      GFace *gf = (*it);
+      for (int i = 0; i< gf->triangles.size(); i++)
+	{
+	  MTriangle *t = gf->triangles[i];
+	  tetgenio::facet *f = &in.facetlist[I];
+	  tetgenio::init(f);    
+	  f->numberofholes = 0;
+	  f->numberofpolygons = 1;
+	  tetgenio::polygon *p = f->polygonlist = new tetgenio::polygon[f->numberofpolygons];
+	  tetgenio::init(p);    
+	  p->numberofvertices = 3;
+	  p->vertexlist = new int[p->numberofvertices];
+	  p->vertexlist[0] = t->getVertex(0)->getNum();
+	  p->vertexlist[1] = t->getVertex(1)->getNum();
+	  p->vertexlist[2] = t->getVertex(2)->getNum();
+	  //	  Msg(INFO,"Faces %d = %d %d %d",I,p->vertexlist[0] ,p->vertexlist[1] ,p->vertexlist[2] );
+	  in.facetmarkerlist[I] = gf->tag();	  
+	  ++I;
+	}
+      ++it;
+    }   
+}
+
+void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out, std::vector<MVertex*> & numberedV)
+{
+  int I = numberedV.size() + 1;
+  for (int i = 0; i < out.numberofpoints; i++) 
+    {
+      MVertex *v = new MVertex (out.pointlist[i * 3 + 0],out.pointlist[i * 3 + 1],out.pointlist[i * 3 + 2]); 
+      gr->mesh_vertices.push_back(v);
+      numberedV.push_back(v);
+    }
+ 
+  for (int i = 0; i < out.numberoftetrahedra; i++) {
+    MVertex *v1 = numberedV[out.tetrahedronlist[i * 4 + 0] -1];
+    MVertex *v2 = numberedV[out.tetrahedronlist[i * 4 + 1] -1];
+    MVertex *v3 = numberedV[out.tetrahedronlist[i * 4 + 2] -1];
+    MVertex *v4 = numberedV[out.tetrahedronlist[i * 4 + 3] -1];
+    MTetrahedron *t = new  MTetrahedron(v1,v2,v3,v4);
+    gr->tetrahedra.push_back(t);
+  }
+
+ 
+}
+  
+
+#endif
+
+
+#if defined(HAVE_NETGEN)
+namespace nglib {
+#include "nglib.h"
+#include "nglib_addon.h"
+}
+using namespace nglib;
+
+Ng_Mesh * buildNetgenStructure (GRegion *gr, int importVolumeMesh, std::vector<MVertex*> & numberedV)
+{
+  NgAddOn_Init();
+  Ng_Mesh *_ngmesh = Ng_NewMesh();
+
+  std::set<MVertex*> allBoundingVertices;
+  getAllBoundingVertices (gr, importVolumeMesh, allBoundingVertices );
+  
   std::set<MVertex*>::iterator itv =  allBoundingVertices.begin();
   int I=1;
   while (itv != allBoundingVertices.end())
@@ -50,7 +154,8 @@ Ng_Mesh * buildNetgenStructure (GRegion *gr, int importVolumeMesh, std::vector<M
       ++itv;
     }
   
-  it = faces.begin();
+  std::list<GFace*> faces = gr->faces();
+  std::list<GFace*>::iterator it = faces.begin();
   while (it != faces.end())
     {
       GFace *gf = (*it);      
@@ -261,6 +366,23 @@ void meshGRegion :: operator() (GRegion *gr)
   // orient the triangles of with respect to this region
   meshNormalsPointOutOfTheRegion (gr); 
   
+  if(CTX.mesh.algo3d == DELAUNAY_TETGEN)
+    {
+#if !defined(HAVE_TETGEN)
+    Msg(GERROR, "Tetgen is not compiled in this version of Gmsh");
+#else
+    tetgenio in, out;
+    std::vector<MVertex*> numberedV;
+    char opts[128];
+    buildTetgenStructure (  gr, in, numberedV);
+    sprintf(opts, "pq1.4Ya%f%c", (float)CTX.mesh.quality, 
+	    (CTX.verbosity < 3)? 'Q': (CTX.verbosity > 6)? 'V': '\0');
+    Msg(STATUS2, "Meshing with volume constraint %f", (float)CTX.mesh.quality);
+    tetrahedralize(opts, &in, &out);
+    TransferTetgenMesh(gr, in, out, numberedV);
+#endif
+    }
+
   if(CTX.mesh.algo3d == FRONTAL_NETGEN)
     {
 #if !defined(HAVE_NETGEN)

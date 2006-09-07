@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.79 2006-09-03 07:44:09 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.80 2006-09-07 16:03:32 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -428,7 +428,9 @@ void Get_Options(int argc, char *argv[])
           else if(!strncmp(argv[i], "netgen", 6))
             CTX.mesh.algo3d = FRONTAL_NETGEN;
           else if(!strncmp(argv[i], "tetgen", 6))
-            CTX.mesh.algo3d = DELAUNAY_TETGEN;
+	    {
+	      CTX.mesh.algo3d = DELAUNAY_TETGEN;
+	    }
           else {
             fprintf(stderr, ERROR_STR "Unknown mesh algorithm\n");
             exit(1);
