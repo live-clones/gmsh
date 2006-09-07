@@ -1,6 +1,5 @@
 This is Gmsh, an automatic three-dimensional finite element mesh
-generator, primarily Delaunay, with built-in pre- and post-processing
-facilities.
+generator with built-in pre- and post-processing facilities.
 
 To install Gmsh, type
 
