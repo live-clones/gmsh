@@ -375,7 +375,7 @@ void meshGRegion :: operator() (GRegion *gr)
     std::vector<MVertex*> numberedV;
     char opts[128];
     buildTetgenStructure (  gr, in, numberedV);
-    sprintf(opts, "pq1.4Ya%f%c", (float)CTX.mesh.quality, 
+    sprintf(opts, "pqa%f%c", (float)CTX.mesh.quality,
 	    (CTX.verbosity < 3)? 'Q': (CTX.verbosity > 6)? 'V': '\0');
     Msg(STATUS2, "Meshing with volume constraint %f", (float)CTX.mesh.quality);
     tetrahedralize(opts, &in, &out);
