@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.45 2006-09-08 02:39:43 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.46 2006-09-08 04:30:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -173,20 +173,30 @@ static void storePhysicalTagsInEntities(GModel *m, int dim,
   }
 }
 
-static bool checkVertexIndex(int index, std::map<int, MVertex*> &map)
+static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map, 
+			std::vector<MVertex*> &vertices)
 {
-  if(!map.count(index)){
-    Msg(GERROR, "Wrong vertex index %d", index);
-    return false;
+  for(int i = 0; i < num; i++){
+    if(!map.count(indices[i])){
+      Msg(GERROR, "Wrong vertex index %d", indices[i]);
+      return false;
+    }
+    else
+      vertices.push_back(map[indices[i]]);
   }
   return true;
 }
 
-static bool checkVertexIndex(int index, std::vector<MVertex*> &vec)
+static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
+			std::vector<MVertex*> &vertices)
 {
-  if(index < 0 || index > (int)(vec.size() - 1)){
-    Msg(GERROR, "Wrong vertex index %d", index);
-    return false;
+  for(int i = 0; i < num; i++){
+    if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)){
+      Msg(GERROR, "Wrong vertex index %d", indices[i]);
+      return false;
+    }
+    else
+      vertices.push_back(vec[indices[i]]);
   }
   return true;
 }
@@ -219,142 +229,42 @@ static int getNumVerticesForElementTypeMSH(int type)
   }
 }
 
-template<class T>
 static void createElementMSH(GModel *m, int num, int type, int physical, 
-			     int elementary, int partition, int n[30], T &v, 
+			     int reg, int part, std::vector<MVertex*> &v, 
 			     std::map<int, std::vector<MVertex*> > &points,
-			     std::map<int, std::vector<MElement*> > elements[7],
+			     std::map<int, std::vector<MElement*> > elem[7],
 			     std::map<int, std::map<int, std::string> > physicals[4])
 {
   int dim = 0;
 
   switch (type) {
-  case PNT_1:
-    points[elementary].push_back(v[n[0]]);
-    dim = 0;
-    break;
-  case LIN_2:
-    elements[0][elementary].push_back
-      (new MLine(v[n[0]], v[n[1]], num, partition));
-    dim = 1;
-    break;
-  case LIN_3:
-    elements[0][elementary].push_back
-      (new MLine3(v[n[0]], v[n[1]], v[n[2]], num, partition));
-    dim = 1;
-    break;
-  case TRI_3:
-    elements[1][elementary].push_back
-      (new MTriangle(v[n[0]], v[n[1]], v[n[2]], num, partition));
-    dim = 2;
-    break;
-  case TRI_6:
-    elements[1][elementary].push_back
-      (new MTriangle6(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-		      num, partition));
-    dim = 2;
-    break;
-  case QUA_4:
-    elements[2][elementary].push_back
-      (new MQuadrangle(v[n[0]], v[n[1]], v[n[2]], v[n[3]], num, partition));
-    dim = 2;
-    break;
-  case QUA_8:
-    elements[2][elementary].push_back
-      (new MQuadrangle8(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-			v[n[6]], v[n[7]], num, partition));
-    dim = 2;
-    break;
-  case QUA_9:
-    elements[2][elementary].push_back
-      (new MQuadrangle9(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-			v[n[6]], v[n[7]], v[n[8]], num, partition));
-    dim = 2;
-    break;
-  case TET_4:
-    elements[3][elementary].push_back
-      (new MTetrahedron(v[n[0]], v[n[1]], v[n[2]], v[n[3]], num, partition));
-    dim = 3; 
-    break;
-  case TET_10:
-    elements[3][elementary].push_back
-      (new MTetrahedron10(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-			  v[n[6]], v[n[7]], v[n[8]], v[n[9]], num, partition));
-    dim = 3; 
-    break;
-  case HEX_8:
-    elements[4][elementary].push_back
-      (new MHexahedron(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-		       v[n[6]], v[n[7]], num, partition));
-    dim = 3; 
-    break;
-  case HEX_20:
-    elements[4][elementary].push_back
-      (new MHexahedron20(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-			 v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
-			 v[n[12]], v[n[13]], v[n[14]], v[n[15]], v[n[16]], v[n[17]], 
-			 v[n[18]], v[n[19]], num, partition));
-    dim = 3; 
-    break;
-  case HEX_27:
-    elements[4][elementary].push_back
-      (new MHexahedron27(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-			 v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
-			 v[n[12]], v[n[13]], v[n[14]], v[n[15]], v[n[16]], v[n[17]], 
-			 v[n[18]], v[n[19]], v[n[20]], v[n[21]], v[n[22]], v[n[23]], 
-			 v[n[24]], v[n[25]], v[n[26]], num, partition));
-    dim = 3; 
-    break;
-  case PRI_6: 
-    elements[5][elementary].push_back
-      (new MPrism(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-		  num, partition));
-    dim = 3; 
-    break;
-  case PRI_15: 
-    elements[5][elementary].push_back
-      (new MPrism15(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-		    v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
-		    v[n[12]], v[n[13]], v[n[14]], num, partition));
-    dim = 3; 
-    break;
-  case PRI_18: 
-    elements[5][elementary].push_back
-      (new MPrism18(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-		    v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
-		    v[n[12]], v[n[13]], v[n[14]], v[n[15]], v[n[16]], v[n[17]], 
-		    num, partition));
-    dim = 3; 
-    break;
-  case PYR_5: 
-    elements[6][elementary].push_back
-      (new MPyramid(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], num, partition));
-    dim = 3; 
-    break;
-  case PYR_13: 
-    elements[6][elementary].push_back
-      (new MPyramid13(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-		      v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
-		      v[n[12]], num, partition));
-    dim = 3; 
-    break;
-  case PYR_14: 
-    elements[6][elementary].push_back
-      (new MPyramid14(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
-		      v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
-		      v[n[12]], v[n[13]], num, partition));
-    dim = 3; 
-    break;
-  default:
-    Msg(GERROR, "Unknown type (%d) for element %d", type, num); 
-    break;
+  case PNT_1:  points[reg].push_back(v[0]); dim = 0; break;
+  case LIN_2:  elem[0][reg].push_back(new MLine(v, num, part)); dim = 1; break;
+  case LIN_3:  elem[0][reg].push_back(new MLine3(v, num, part)); dim = 1; break;
+  case TRI_3:  elem[1][reg].push_back(new MTriangle(v, num, part)); dim = 2; break;
+  case TRI_6:  elem[1][reg].push_back(new MTriangle6(v, num, part)); dim = 2; break;
+  case QUA_4:  elem[2][reg].push_back(new MQuadrangle(v, num, part)); dim = 2; break;
+  case QUA_8:  elem[2][reg].push_back(new MQuadrangle8(v, num, part)); dim = 2; break;
+  case QUA_9:  elem[2][reg].push_back(new MQuadrangle9(v, num, part)); dim = 2; break;
+  case TET_4:  elem[3][reg].push_back(new MTetrahedron(v, num, part)); dim = 3; break;
+  case TET_10: elem[3][reg].push_back(new MTetrahedron10(v, num, part)); dim = 3; break;
+  case HEX_8:  elem[4][reg].push_back(new MHexahedron(v, num, part)); dim = 3; break;
+  case HEX_20: elem[4][reg].push_back(new MHexahedron20(v, num, part)); dim = 3; break;
+  case HEX_27: elem[4][reg].push_back(new MHexahedron27(v, num, part)); dim = 3; break;
+  case PRI_6:  elem[5][reg].push_back(new MPrism(v, num, part)); dim = 3; break;
+  case PRI_15: elem[5][reg].push_back(new MPrism15(v, num, part)); dim = 3; break;
+  case PRI_18: elem[5][reg].push_back(new MPrism18(v, num, part)); dim = 3; break;
+  case PYR_5:  elem[6][reg].push_back(new MPyramid(v, num, part)); dim = 3; break;
+  case PYR_13: elem[6][reg].push_back(new MPyramid13(v, num, part)); dim = 3; break;
+  case PYR_14: elem[6][reg].push_back(new MPyramid14(v, num, part)); dim = 3; break;
+  default: Msg(GERROR, "Unknown type (%d) for element %d", type, num); break;
   }
   
-  if(physical && (!physicals[dim].count(elementary) || 
-		  !physicals[dim][elementary].count(physical)))
-    physicals[dim][elementary][physical] = "unnamed";
+  if(physical && (!physicals[dim].count(reg) || 
+		  !physicals[dim][reg].count(physical)))
+    physicals[dim][reg][physical] = "unnamed";
   
-  if(partition) m->getMeshPartitions().insert(partition);
+  if(part) m->getMeshPartitions().insert(part);
 }
 
 int GModel::readMSH(const std::string &name)
@@ -482,18 +392,15 @@ int GModel::readMSH(const std::string &name)
 	  }
 	  int indices[30];
 	  for(int j = 0; j < numVertices; j++) fscanf(fp, "%d", &indices[j]);
+	  std::vector<MVertex*> vertices;
 	  if(vertexVector.size()){
-	    for(int j = 0; j < numVertices; j++)
-	      if(!checkVertexIndex(indices[j], vertexVector)) return 0;
-	    createElementMSH(this, num, type, physical, elementary, partition, 
-			     indices, vertexVector, points, elements, physicals);
+	    if(!getVertices(numVertices, indices, vertexVector, vertices)) return 0;
 	  }
 	  else{
-	    for(int j = 0; j < numVertices; j++)
-	      if(!checkVertexIndex(indices[j], vertexMap)) return 0;
-	    createElementMSH(this, num, type, physical, elementary, partition, 
-			     indices, vertexMap, points, elements, physicals);
+	    if(!getVertices(numVertices, indices, vertexMap, vertices)) return 0;
 	  }
+	  createElementMSH(this, num, type, physical, elementary, partition, 
+			   vertices, points, elements, physicals);
 	  if(progress && (i % progress == progress - 1))
 	    Msg(PROGRESS, "Read %d elements", i + 1);
 	}
@@ -518,18 +425,15 @@ int GModel::readMSH(const std::string &name)
 	    int elementary = (numTags > 1) ? data[4 - numTags + 1] : 0;
 	    int partition = (numTags > 2) ? data[4 - numTags + 2] : 0;
 	    int *indices = &data[numTags + 1];
+	    std::vector<MVertex*> vertices;
 	    if(vertexVector.size()){
-	      for(int j = 0; j < numVertices; j++)
-		if(!checkVertexIndex(indices[j], vertexVector)) return 0;
-	      createElementMSH(this, num, type, physical, elementary, partition,
-			       indices, vertexVector, points, elements, physicals);
+	      if(!getVertices(numVertices, indices, vertexVector, vertices)) return 0;
 	    }
 	    else{
-	      for(int j = 0; j < numVertices; j++)
-		if(!checkVertexIndex(indices[j], vertexMap)) return 0;
-	      createElementMSH(this, num, type, physical, elementary, partition, 
-			       indices, vertexMap, points, elements, physicals);
+	      if(!getVertices(numVertices, indices, vertexMap, vertices)) return 0;
 	    }
+	    createElementMSH(this, num, type, physical, elementary, partition, 
+			     vertices, points, elements, physicals);
 	    if(progress && ((numElementsPartial + i) % progress == progress - 1))
 	      Msg(PROGRESS, "Read %d elements", i + 1);
 	  }
@@ -981,22 +885,21 @@ static int skipUntil(FILE *fp, char *key)
   return 0;
 }
 
-static int readVerticesVRML(FILE *fp, std::map<int, MVertex*> &vertices,
-			    std::vector<MVertex*> &allvertices)
+static int readVerticesVRML(FILE *fp, std::vector<MVertex*> &vertexVector,
+			    std::vector<MVertex*> &allVertexVector)
 {
   double x, y, z;
   if(fscanf(fp, " [ %lf %lf %lf", &x, &y, &z) != 3) return 0;
-  int num = 0;
-  vertices[num++] = new MVertex(x, y, z);
+  vertexVector.push_back(new MVertex(x, y, z));
   while(fscanf(fp, " , %lf %lf %lf", &x, &y, &z) == 3)
-    vertices[num++] = new MVertex(x, y, z);
-  for(unsigned int i = 0; i < vertices.size(); i++)
-    allvertices.push_back(vertices[i]);
-  Msg(INFO, "%d vertices", vertices.size());
+    vertexVector.push_back(new MVertex(x, y, z));
+  for(unsigned int i = 0; i < vertexVector.size(); i++)
+    allVertexVector.push_back(vertexVector[i]);
+  Msg(INFO, "%d vertices", vertexVector.size());
   return 1;
 }
 
-static int readElementsVRML(FILE *fp, std::map<int, MVertex*> &v, int region,
+static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int region,
 			    std::map<int, std::vector<MElement*> > elements[3], 
 			    bool strips=false)
 {
@@ -1009,40 +912,37 @@ static int readElementsVRML(FILE *fp, std::map<int, MVertex*> &v, int region,
       idx.push_back(i);
     }
     else{
-      for(unsigned int j = 0; j < idx.size(); j++)
-	if(!checkVertexIndex(idx[j], v)) return 0;
-      
-      if(idx.size() < 2){
-	Msg(INFO, "Skipping %d-vertex element", (int)idx.size());
+      std::vector<MVertex*> vertices;
+      if(!getVertices(idx.size(), &idx[0], vertexVector, vertices)) return 0;
+      idx.clear();
+      if(vertices.size() < 2){
+	Msg(INFO, "Skipping %d-vertex element", (int)vertices.size());
       }
-      else if(idx.size() == 2){
-	elements[0][region].push_back(new MLine(v[idx[0]], v[idx[1]]));
+      else if(vertices.size() == 2){
+	elements[0][region].push_back(new MLine(vertices));
       }
-      else if(idx.size() == 3){
-	elements[1][region].push_back
-	  (new MTriangle(v[idx[0]], v[idx[1]], v[idx[2]]));
+      else if(vertices.size() == 3){
+	elements[1][region].push_back(new MTriangle(vertices));
       }
-      else if(!strips && idx.size() == 4){
-	elements[2][region].push_back
-	  (new MQuadrangle(v[idx[0]], v[idx[1]], v[idx[2]], v[idx[3]]));
+      else if(!strips && vertices.size() == 4){
+	elements[2][region].push_back(new MQuadrangle(vertices));
       }
       else if(strips){ // triangle strip
-	for(unsigned int j = 2; j < idx.size(); j++){
+	for(unsigned int j = 2; j < vertices.size(); j++){
 	  if(j % 2)
 	    elements[1][region].push_back
-	      (new MTriangle(v[idx[j]], v[idx[j - 1]], v[idx[j - 2]]));
+	      (new MTriangle(vertices[j], vertices[j - 1], vertices[j - 2]));
 	  else
 	    elements[1][region].push_back
-	      (new MTriangle(v[idx[j - 2]], v[idx[j - 1]], v[idx[j]]));
+	      (new MTriangle(vertices[j - 2], vertices[j - 1], vertices[j]));
 	}
       }
       else{ // import polygon as triangle fan
-	for(unsigned int j = 2; j < idx.size(); j++){
+	for(unsigned int j = 2; j < vertices.size(); j++){
 	  elements[1][region].push_back
-	    (new MTriangle(v[idx[0]], v[idx[j-1]], v[idx[j]]));
+	    (new MTriangle(vertices[0], vertices[j-1], vertices[j]));
 	}
       }
-      idx.clear();
     }
   }
   if(idx.size()){
@@ -1065,8 +965,7 @@ int GModel::readVRML(const std::string &name)
   // This is by NO means a complete VRML/Inventor parser (but it's
   // sufficient for reading simple Inventor files... which is all I
   // need)
-  std::map<int, MVertex*> vertices;
-  std::vector<MVertex*> allvertices;
+  std::vector<MVertex*> vertexVector, allVertexVector;
   std::map<int, std::vector<MElement*> > elements[3];
   int region = 0;
   char buffer[256], str[256];
@@ -1076,21 +975,21 @@ int GModel::readVRML(const std::string &name)
       sscanf(buffer, "%s", str);
       if(!strcmp(str, "IndexedTriangleStripSet")){
 	region++;
-	vertices.clear();
+	vertexVector.clear();
 	if(!skipUntil(fp, "vertex")) break;
-	if(!readVerticesVRML(fp, vertices, allvertices)) break;
+	if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
 	if(!skipUntil(fp, "coordIndex")) break;
-	if(!readElementsVRML(fp, vertices, region, elements, true)) break;
+	if(!readElementsVRML(fp, vertexVector, region, elements, true)) break;
       }
       else if(!strcmp(str, "Coordinate3")){
-	vertices.clear();
+	vertexVector.clear();
 	if(!skipUntil(fp, "point")) break;
-	if(!readVerticesVRML(fp, vertices, allvertices)) break;
+	if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
       }
       else if(!strcmp(str, "IndexedFaceSet") || !strcmp(str, "IndexedLineSet")){
 	region++;
 	if(!skipUntil(fp, "coordIndex")) break;
-	if(!readElementsVRML(fp, vertices, region, elements)) break;
+	if(!readElementsVRML(fp, vertexVector, region, elements)) break;
       }
       else if(!strcmp(str, "DEF")){
 	char str1[256], str2[256];
@@ -1098,7 +997,7 @@ int GModel::readVRML(const std::string &name)
 	if(!strcmp(str, "IndexedFaceSet") || !strcmp(str, "IndexedLineSet")){
 	  region++;
 	  if(!skipUntil(fp, "coordIndex")) break;
-	  if(!readElementsVRML(fp, vertices, region, elements)) break;
+	  if(!readElementsVRML(fp, vertexVector, region, elements)) break;
 	}
       }
     }
@@ -1107,7 +1006,7 @@ int GModel::readVRML(const std::string &name)
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
     storeElementsInEntities(this, elements[i]);
   associateEntityWithVertices(this);
-  storeVerticesInEntities(allvertices);
+  storeVerticesInEntities(allVertexVector);
 
   fclose(fp);
   return 1;
@@ -1174,7 +1073,7 @@ int GModel::readUNV(const std::string &name)
   }
 
   char buffer[256];
-  std::map<int, MVertex*> vertices;
+  std::map<int, MVertex*> vertexMap;
   std::map<int, std::vector<MVertex*> > points;
   std::map<int, std::vector<MElement*> > elements[7];
   std::map<int, std::map<int, std::string> > physicals[4];
@@ -1197,7 +1096,7 @@ int GModel::readUNV(const std::string &name)
 	  for(unsigned int i = 0; i < strlen(buffer); i++)
 	    if(buffer[i] == 'D') buffer[i] = 'E';
 	  if(sscanf(buffer, "%lf %lf %lf", &x, &y, &z) != 3) break;
-	  vertices[num] = new MVertex(x, y, z);
+	  vertexMap[num] = new MVertex(x, y, z);
 	}
       }
       else if(record == 2412){ // elements
@@ -1215,92 +1114,77 @@ int GModel::readUNV(const std::string &name)
 	    if(sscanf(buffer, "%d %d %d", &dum, &dum, &dum) != 3) break;
 	  }
 	  int n[30];
-	  for(int i = 0; i < numNodes; i++){
-	    if(!fscanf(fp, "%d", &n[i])) return 0;
-	    if(!checkVertexIndex(n[i], vertices)) return 0;
-	  }
+	  for(int i = 0; i < numNodes; i++) if(!fscanf(fp, "%d", &n[i])) return 0;
+	  std::vector<MVertex*> vertices;
+	  if(!getVertices(numNodes, n, vertexMap, vertices)) return 0;
 
 	  int dim = -1;
 	  switch(type){
 	  case 11: case 21: case 22: case 31:
-	    elements[0][elementary].push_back
-	      (new MLine(vertices[n[0]], vertices[n[1]], num));
+	    elements[0][elementary].push_back(new MLine(vertices, num));
 	    dim = 1;
 	    break;
 	  case 23: case 24: case 32:
 	    elements[0][elementary].push_back
-	      (new MLine3(vertices[n[0]], vertices[n[2]], vertices[n[1]], num));
+	      (new MLine3(vertices[0], vertices[2], vertices[1], num));
 	    dim = 1;
 	    break;
 	  case 41: case 51: case 61: case 74: case 81: case 91: 
-	    elements[1][elementary].push_back
-	      (new MTriangle(vertices[n[0]], vertices[n[1]], vertices[n[2]], num));
+	    elements[1][elementary].push_back(new MTriangle(vertices, num));
 	    dim = 2;
 	    break;
 	  case 42: case 52: case 62: case 72: case 82: case 92: 
 	    elements[1][elementary].push_back
-	      (new MTriangle6(vertices[n[0]], vertices[n[2]], vertices[n[4]], 
-			      vertices[n[1]], vertices[n[3]], vertices[n[5]], num));
+	      (new MTriangle6(vertices[0], vertices[2], vertices[4], vertices[1], 
+			      vertices[3], vertices[5], num));
 	    dim = 2;
 	    break;
 	  case 44: case 54: case 64: case 71: case 84: case 94: 
-	    elements[2][elementary].push_back
-	      (new MQuadrangle(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			       vertices[n[3]], num));
+	    elements[2][elementary].push_back(new MQuadrangle(vertices, num));
 	    dim = 2;
 	    break;
 	  case 45: case 55: case 65: case 75: case 85: case 95:
 	    elements[2][elementary].push_back
-	      (new MQuadrangle8(vertices[n[0]], vertices[n[2]], vertices[n[4]], 
-				vertices[n[6]], vertices[n[1]], vertices[n[3]], 
-				vertices[n[5]], vertices[n[7]], num));
+	      (new MQuadrangle8(vertices[0], vertices[2], vertices[4], vertices[6], 
+				vertices[1], vertices[3], vertices[5], vertices[7],
+				num));
 	    dim = 2;
 	    break;
 	  case 111:
-	    elements[3][elementary].push_back
-	      (new MTetrahedron(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-				vertices[n[3]], num));
+	    elements[3][elementary].push_back(new MTetrahedron(vertices, num));
 	    dim = 3; 
 	    break;
 	  case 118: 
 	    elements[3][elementary].push_back
-	      (new MTetrahedron10(vertices[n[0]], vertices[n[2]], vertices[n[4]], 
-				  vertices[n[9]], vertices[n[1]], vertices[n[3]], 
-				  vertices[n[5]], vertices[n[8]], vertices[n[6]], 
-				  vertices[n[7]], num));
+	      (new MTetrahedron10(vertices[0], vertices[2], vertices[4], vertices[9], 
+				  vertices[1], vertices[3], vertices[5], vertices[8],
+				  vertices[6], vertices[7], num));
 	    dim = 3;
 	    break;
 	  case 104: case 115:  
-	    elements[4][elementary].push_back
-	      (new MHexahedron(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			       vertices[n[3]], vertices[n[4]], vertices[n[5]], 
-			       vertices[n[6]], vertices[n[7]], num));
+	    elements[4][elementary].push_back(new MHexahedron(vertices, num));
 	    dim = 3; 
 	    break;
 	  case 105: case 116:
 	    elements[4][elementary].push_back
-	      (new MHexahedron20(vertices[n[0]], vertices[n[2]], vertices[n[4]],  
-				 vertices[n[6]], vertices[n[12]], vertices[n[14]], 
-				 vertices[n[16]], vertices[n[18]], vertices[n[1]],  
-				 vertices[n[7]], vertices[n[8]], vertices[n[3]],  
-				 vertices[n[9]], vertices[n[5]], vertices[n[10]], 
-				 vertices[n[11]], vertices[n[13]], vertices[n[19]], 
-				 vertices[n[15]], vertices[n[17]], num));
+	      (new MHexahedron20(vertices[0], vertices[2], vertices[4], vertices[6], 
+				 vertices[12], vertices[14], vertices[16], vertices[18],
+				 vertices[1], vertices[7], vertices[8], vertices[3],  
+				 vertices[9], vertices[5], vertices[10], vertices[11], 
+				 vertices[13], vertices[19], vertices[15], vertices[17], 
+				 num));
 	    dim = 3; 
 	    break;
 	  case 101: case 112:
-	    elements[5][elementary].push_back
-	      (new MPrism(vertices[n[0]], vertices[n[1]], vertices[n[2]], 
-			  vertices[n[3]], vertices[n[4]], vertices[n[5]], num));
+	    elements[5][elementary].push_back(new MPrism(vertices, num));
 	    dim = 3; 
 	    break;
 	  case 102: case 113:
 	    elements[5][elementary].push_back
-	      (new MPrism15(vertices[n[0]], vertices[n[2]], vertices[n[4]], 
-			    vertices[n[9]], vertices[n[11]], vertices[n[13]], 
-			    vertices[n[1]], vertices[n[5]], vertices[n[6]],  
-			    vertices[n[3]], vertices[n[7]], vertices[n[8]],  
-			    vertices[n[10]], vertices[n[14]], vertices[n[12]], num));
+	      (new MPrism15(vertices[0], vertices[2], vertices[4], vertices[9], 
+			    vertices[11], vertices[13], vertices[1], vertices[5], 
+			    vertices[6], vertices[3], vertices[7], vertices[8],
+			    vertices[10], vertices[14], vertices[12], num));
 	    dim = 3;
 	    break;
 	  }
@@ -1316,7 +1200,7 @@ int GModel::readUNV(const std::string &name)
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
     storeElementsInEntities(this, elements[i]);
   associateEntityWithVertices(this);
-  storeVerticesInEntities(vertices);
+  storeVerticesInEntities(vertexMap);
   for(int i = 0; i < 4; i++)  
     storePhysicalTagsInEntities(this, i, physicals[i]);
 
@@ -1408,7 +1292,7 @@ int GModel::readMESH(const std::string &name)
     return 0;
   }
 
-  std::vector<MVertex*> vertices;
+  std::vector<MVertex*> vertexVector;
   std::map<int, std::vector<MElement*> > elements[3];
 
   int nbv, nbe, n[30], cl;
@@ -1424,12 +1308,12 @@ int GModel::readMESH(const std::string &name)
 	if(!fgets(buffer, sizeof(buffer), fp)) break;
 	sscanf(buffer, "%d", &nbv);
 	Msg(INFO, "%d vertices", nbv);
-	vertices.resize(nbv);
+	vertexVector.resize(nbv);
 	for(int i = 0; i < nbv; i++) {
 	  if(!fgets(buffer, sizeof(buffer), fp)) break;
 	  double x, y, z;
 	  sscanf(buffer, "%lf %lf %lf %d", &x, &y, &z, &cl);
-	  vertices[i] = new MVertex(x, y, z);
+	  vertexVector[i] = new MVertex(x, y, z);
 	}
       }
       else if(!strcmp(str, "Triangles")){
@@ -1439,10 +1323,10 @@ int GModel::readMESH(const std::string &name)
 	for(int i = 0; i < nbe; i++) {
 	  if(!fgets(buffer, sizeof(buffer), fp)) break;
 	  sscanf(buffer, "%d %d %d %d", &n[0], &n[1], &n[2], &cl);
-	  for(int j = 0; j < 3; j++)
-	    if(!checkVertexIndex(n[j] - 1, vertices)) return 0;
-	  elements[0][cl].push_back
-	    (new MTriangle(vertices[n[0] - 1], vertices[n[1] - 1], vertices[n[2] - 1]));
+	  for(int j = 0; j < 3; j++) n[j]--;
+	  std::vector<MVertex*> vertices;
+	  if(!getVertices(3, n, vertexVector, vertices)) return 0;
+	  elements[0][cl].push_back(new MTriangle(vertices));
 	}
       }
       else if(!strcmp(str, "Quadrilaterals")) {
@@ -1452,11 +1336,10 @@ int GModel::readMESH(const std::string &name)
 	for(int i = 0; i < nbe; i++) {
 	  if(!fgets(buffer, sizeof(buffer), fp)) break;
 	  sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
-	  for(int j = 0; j < 4; j++) 
-	    if(!checkVertexIndex(n[j] - 1, vertices)) return 0;
-	  elements[1][cl].push_back
-	    (new MQuadrangle(vertices[n[0] - 1], vertices[n[1] - 1], 
-			     vertices[n[2] - 1], vertices[n[3] - 1]));
+	  for(int j = 0; j < 4; j++) n[j]--;
+	  std::vector<MVertex*> vertices;
+	  if(!getVertices(4, n, vertexVector, vertices)) return 0;
+	  elements[1][cl].push_back(new MQuadrangle(vertices));
 	}
       }
       else if(!strcmp(str, "Tetrahedra")) {
@@ -1466,11 +1349,10 @@ int GModel::readMESH(const std::string &name)
 	for(int i = 0; i < nbe; i++) {
 	  if(!fgets(buffer, sizeof(buffer), fp)) break;
 	  sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
-	  for(int j = 0; j < 4; j++) 
-	    if(!checkVertexIndex(n[j] - 1, vertices)) return 0;
-	  elements[2][cl].push_back
-	    (new MTetrahedron(vertices[n[0] - 1], vertices[n[1] - 1], 
-			      vertices[n[2] - 1], vertices[n[3] - 1]));
+	  for(int j = 0; j < 4; j++) n[j]--;
+	  std::vector<MVertex*> vertices;
+	  if(!getVertices(4, n, vertexVector, vertices)) return 0;
+	  elements[2][cl].push_back(new MTetrahedron(vertices));
 	}
       }
     }
@@ -1479,7 +1361,7 @@ int GModel::readMESH(const std::string &name)
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
     storeElementsInEntities(this, elements[i]);
   associateEntityWithVertices(this);
-  storeVerticesInEntities(vertices);
+  storeVerticesInEntities(vertexVector);
 
   fclose(fp);
   return 1;
@@ -1677,10 +1559,7 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, unsigned int numN
     strncpy(tmp, vals[i + 2], cmax); n[i] = atoi(tmp);
   }
 
-  for(unsigned int i = 0; i < numNodes; i++){
-    if(!checkVertexIndex(n[i], vertexMap)) return 0;
-    vertices.push_back(vertexMap[n[i]]);
-  }
+  if(!getVertices(numNodes, n, vertexMap, vertices)) return 0;
   return 1;
 }
 
@@ -1693,7 +1572,7 @@ int GModel::readBDF(const std::string &name)
   }
 
   char buffer[256];
-  std::map<int, MVertex*> vertices;
+  std::map<int, MVertex*> vertexMap;
   std::map<int, std::vector<MElement*> > elements[7];
 
   // nodes can be defined after elements, so parse the file twice
@@ -1706,11 +1585,11 @@ int GModel::readBDF(const std::string &name)
 	int num;
 	double x, y, z;
 	if(!readVertexBDF(fp, buffer, 4, &num, &x, &y, &z)) break;
-	vertices[num] = new MVertex(x, y, z);
+	vertexMap[num] = new MVertex(x, y, z);
       }
     }
   }
-  Msg(INFO, "%d vertices", vertices.size());
+  Msg(INFO, "%d vertices", vertexMap.size());
 
   rewind(fp);
   while(!feof(fp)) {
@@ -1720,41 +1599,41 @@ int GModel::readBDF(const std::string &name)
       int num, region;
       std::vector<MVertex*> n;
       if(!strncmp(buffer, "CBAR", 4)){
-	if(readElementBDF(fp, buffer, 4, 2, &num, &region, n, vertices))
+	if(readElementBDF(fp, buffer, 4, 2, &num, &region, n, vertexMap))
 	  elements[0][region].push_back(new MLine(n, num));
       }
       else if(!strncmp(buffer, "CTRIA3", 6)){
-	if(readElementBDF(fp, buffer, 6, 3, &num, &region, n, vertices))
+	if(readElementBDF(fp, buffer, 6, 3, &num, &region, n, vertexMap))
 	  elements[1][region].push_back(new MTriangle(n, num));
       }
       else if(!strncmp(buffer, "CTRIA6", 6)){
 	// not sure about the node ordering
-	if(readElementBDF(fp, buffer, 6, 6, &num, &region, n, vertices))
+	if(readElementBDF(fp, buffer, 6, 6, &num, &region, n, vertexMap))
 	  elements[1][region].push_back(new MTriangle6(n, num));
       }
       else if(!strncmp(buffer, "CQUAD4", 6)){
-	if(readElementBDF(fp, buffer, 6, 4, &num, &region, n, vertices))
+	if(readElementBDF(fp, buffer, 6, 4, &num, &region, n, vertexMap))
 	  elements[2][region].push_back(new MQuadrangle(n, num));
       }
       else if(!strncmp(buffer, "CQUAD8", 6)){
 	// not sure about the node ordering
-	if(readElementBDF(fp, buffer, 6, 8, &num, &region, n, vertices))
+	if(readElementBDF(fp, buffer, 6, 8, &num, &region, n, vertexMap))
 	  elements[2][region].push_back(new MQuadrangle8(n, num));
       }
       else if(!strncmp(buffer, "CTETRA", 6)){
-	if(readElementBDF(fp, buffer, 6, 4, &num, &region, n, vertices))
+	if(readElementBDF(fp, buffer, 6, 4, &num, &region, n, vertexMap))
 	  elements[3][region].push_back(new MTetrahedron(n, num));
       }
       else if(!strncmp(buffer, "CHEXA", 5)){
-	if(readElementBDF(fp, buffer, 5, 8, &num, &region, n, vertices))
+	if(readElementBDF(fp, buffer, 5, 8, &num, &region, n, vertexMap))
 	  elements[4][region].push_back(new MHexahedron(n, num));
       }
       else if(!strncmp(buffer, "CPENTA", 6)){
-	if(readElementBDF(fp, buffer, 6, 6, &num, &region, n, vertices))
+	if(readElementBDF(fp, buffer, 6, 6, &num, &region, n, vertexMap))
 	  elements[5][region].push_back(new MPrism(n, num));
       }
       else if(!strncmp(buffer, "CPYRAM", 6)){
-	if(readElementBDF(fp, buffer, 6, 5, &num, &region, n, vertices))
+	if(readElementBDF(fp, buffer, 6, 5, &num, &region, n, vertexMap))
 	  elements[6][region].push_back(new MPyramid(n, num));
       }
     }
@@ -1763,7 +1642,7 @@ int GModel::readBDF(const std::string &name)
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
     storeElementsInEntities(this, elements[i]);
   associateEntityWithVertices(this);
-  storeVerticesInEntities(vertices);
+  storeVerticesInEntities(vertexMap);
 
   fclose(fp);
   return 1;
