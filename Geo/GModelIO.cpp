@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.47 2006-09-08 13:54:27 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.48 2006-09-08 17:45:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1596,44 +1596,45 @@ int GModel::readBDF(const std::string &name)
     if(!fgets(buffer, sizeof(buffer), fp)) break;
     if(buffer[0] != '$'){ // skip comments
       int num, region;
-      std::vector<MVertex*> n;
+      std::vector<MVertex*> vertices;
       if(!strncmp(buffer, "CBAR", 4)){
-	if(readElementBDF(fp, buffer, 4, 2, &num, &region, n, vertexMap))
-	  elements[0][region].push_back(new MLine(n, num));
+	if(readElementBDF(fp, buffer, 4, 2, &num, &region, vertices, vertexMap))
+	  elements[0][region].push_back(new MLine(vertices, num));
       }
       else if(!strncmp(buffer, "CTRIA3", 6)){
-	if(readElementBDF(fp, buffer, 6, 3, &num, &region, n, vertexMap))
-	  elements[1][region].push_back(new MTriangle(n, num));
+	if(readElementBDF(fp, buffer, 6, 3, &num, &region, vertices, vertexMap))
+	  elements[1][region].push_back(new MTriangle(vertices, num));
       }
       else if(!strncmp(buffer, "CTRIA6", 6)){
-	// not sure about the node ordering
-	if(readElementBDF(fp, buffer, 6, 6, &num, &region, n, vertexMap))
-	  elements[1][region].push_back(new MTriangle6(n, num));
+	if(readElementBDF(fp, buffer, 6, 6, &num, &region, vertices, vertexMap))
+	  elements[1][region].push_back(new MTriangle6(vertices, num));
       }
       else if(!strncmp(buffer, "CQUAD4", 6)){
-	if(readElementBDF(fp, buffer, 6, 4, &num, &region, n, vertexMap))
-	  elements[2][region].push_back(new MQuadrangle(n, num));
+	if(readElementBDF(fp, buffer, 6, 4, &num, &region, vertices, vertexMap))
+	  elements[2][region].push_back(new MQuadrangle(vertices, num));
       }
       else if(!strncmp(buffer, "CQUAD8", 6)){
-	// not sure about the node ordering
-	if(readElementBDF(fp, buffer, 6, 8, &num, &region, n, vertexMap))
-	  elements[2][region].push_back(new MQuadrangle8(n, num));
+	if(readElementBDF(fp, buffer, 6, 8, &num, &region, vertices, vertexMap))
+	  elements[2][region].push_back(new MQuadrangle8(vertices, num));
       }
       else if(!strncmp(buffer, "CTETRA", 6)){
-	if(readElementBDF(fp, buffer, 6, 4, &num, &region, n, vertexMap))
-	  elements[3][region].push_back(new MTetrahedron(n, num));
+	// should be generalized to also read 10-node tets
+	if(readElementBDF(fp, buffer, 6, 4, &num, &region, vertices, vertexMap))
+	  elements[3][region].push_back(new MTetrahedron(vertices, num));
       }
       else if(!strncmp(buffer, "CHEXA", 5)){
-	if(readElementBDF(fp, buffer, 5, 8, &num, &region, n, vertexMap))
-	  elements[4][region].push_back(new MHexahedron(n, num));
+	// should be generalized to also read 20-node hexas
+	if(readElementBDF(fp, buffer, 5, 8, &num, &region, vertices, vertexMap))
+	  elements[4][region].push_back(new MHexahedron(vertices, num));
       }
       else if(!strncmp(buffer, "CPENTA", 6)){
-	if(readElementBDF(fp, buffer, 6, 6, &num, &region, n, vertexMap))
-	  elements[5][region].push_back(new MPrism(n, num));
+	// should be generalized to also read 15-node prisms
+	if(readElementBDF(fp, buffer, 6, 6, &num, &region, vertices, vertexMap))
+	  elements[5][region].push_back(new MPrism(vertices, num));
       }
       else if(!strncmp(buffer, "CPYRAM", 6)){
-	if(readElementBDF(fp, buffer, 6, 5, &num, &region, n, vertexMap))
-	  elements[6][region].push_back(new MPyramid(n, num));
+	if(readElementBDF(fp, buffer, 6, 5, &num, &region, vertices, vertexMap))
+	  elements[6][region].push_back(new MPyramid(vertices, num));
       }
     }
   }

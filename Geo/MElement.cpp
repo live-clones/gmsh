@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.17 2006-09-08 02:39:43 geuzaine Exp $
+// $Id: MElement.cpp,v 1.18 2006-09-08 17:45:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -110,12 +110,13 @@ SPoint3 MElement::barycenter()
 void MElement::writeMSH(FILE *fp, double version, bool binary, int num, 
 			int elementary, int physical)
 {
+  int type = getTypeForMSH();
+  if(!type) return;
+
   // if necessary, change the ordering of the vertices to get positive
   // volume
   setVolumePositive();
-
   int n = getNumVertices();
-  int type = getTypeForMSH();
 
   if(!binary){
     fprintf(fp, "%d %d", num ? num : _num, type);
@@ -164,34 +165,34 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
 void MElement::writePOS(FILE *fp, double scalingFactor, int elementary)
 {
   char *str = getStringForPOS();
-  if(str){
-    int n = getNumVertices();
-    double gamma = gammaShapeMeasure();
-    double eta = etaShapeMeasure();
-    double rho = rhoShapeMeasure();
-    fprintf(fp, "%s(", str);
-    for(int i = 0; i < n; i++){
-      if(i) fprintf(fp, ",");
-      fprintf(fp, "%g,%g,%g", getVertex(i)->x() * scalingFactor, 
-	      getVertex(i)->y() * scalingFactor, getVertex(i)->z() * scalingFactor);
-    }
-    fprintf(fp, "){");
-    for(int i = 0; i < n; i++)
-      fprintf(fp, "%d,", elementary);
-    for(int i = 0; i < n; i++)
-      fprintf(fp, "%d,", getNum());
-    for(int i = 0; i < n; i++)
-      fprintf(fp, "%g,", gamma);
-    for(int i = 0; i < n; i++)
-      fprintf(fp, "%g,", eta);
-    for(int i = 0; i < n; i++){
-      if(i == n - 1)
-	fprintf(fp, "%g", rho);
-      else
-	fprintf(fp, "%g,", rho);
-    }
-    fprintf(fp, "};\n");
+  if(!str) return;
+
+  int n = getNumVertices();
+  double gamma = gammaShapeMeasure();
+  double eta = etaShapeMeasure();
+  double rho = rhoShapeMeasure();
+  fprintf(fp, "%s(", str);
+  for(int i = 0; i < n; i++){
+    if(i) fprintf(fp, ",");
+    fprintf(fp, "%g,%g,%g", getVertex(i)->x() * scalingFactor, 
+	    getVertex(i)->y() * scalingFactor, getVertex(i)->z() * scalingFactor);
   }
+  fprintf(fp, "){");
+  for(int i = 0; i < n; i++)
+    fprintf(fp, "%d,", elementary);
+  for(int i = 0; i < n; i++)
+    fprintf(fp, "%d,", getNum());
+  for(int i = 0; i < n; i++)
+    fprintf(fp, "%g,", gamma);
+  for(int i = 0; i < n; i++)
+    fprintf(fp, "%g,", eta);
+  for(int i = 0; i < n; i++){
+    if(i == n - 1)
+      fprintf(fp, "%g", rho);
+    else
+      fprintf(fp, "%g,", rho);
+  }
+  fprintf(fp, "};\n");
 }
 
 void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
@@ -255,24 +256,24 @@ void MElement::writeVRML(FILE *fp)
 void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
 {
   int type = getTypeForUNV();
-  if(type){
-    setVolumePositive();
-    int n = getNumVertices();
-    int physical_property = elementary;
-    int material_property = physical;
-    int color = 7;
-    fprintf(fp, "%10d%10d%10d%10d%10d%10d\n",
-	    num ? num : _num, type, physical_property, material_property, color, n);
-    if(type == 21 || type == 24) // linear beam or parabolic beam
-      fprintf(fp, "%10d%10d%10d\n", 0, 0, 0);
-    for(int k = 0; k < n; k++) {
-      fprintf(fp, "%10d", getVertexUNV(k)->getNum());
-      if(k % 8 == 7)
-	fprintf(fp, "\n");
-    }
-    if(n - 1 % 8 != 7)
+  if(!type) return;
+
+  setVolumePositive();
+  int n = getNumVertices();
+  int physical_property = elementary;
+  int material_property = physical;
+  int color = 7;
+  fprintf(fp, "%10d%10d%10d%10d%10d%10d\n",
+	  num ? num : _num, type, physical_property, material_property, color, n);
+  if(type == 21 || type == 24) // linear beam or parabolic beam
+    fprintf(fp, "%10d%10d%10d\n", 0, 0, 0);
+  for(int k = 0; k < n; k++) {
+    fprintf(fp, "%10d", getVertexUNV(k)->getNum());
+    if(k % 8 == 7)
       fprintf(fp, "\n");
   }
+  if(n - 1 % 8 != 7)
+    fprintf(fp, "\n");
 }
 
 void MElement::writeMESH(FILE *fp, int elementary)
@@ -285,29 +286,37 @@ void MElement::writeMESH(FILE *fp, int elementary)
 void MElement::writeBDF(FILE *fp, int format, int elementary)
 {
   char *str = getStringForBDF();
-  if(str){
-    int n = getNumVertices();
-    if(format == 0){ // free field format
-      fprintf(fp, "%s,%d,%d", str, _num, elementary);
-      for(int i = 0; i < n; i++){
-	if(i != n - 1 && !((i + 3) % 9))
-	  fprintf(fp, ",+E%d\n+E%d", _num, _num);
-	fprintf(fp, ",%d", getVertex(i)->getNum());
+  if(!str) return;
+
+  setVolumePositive();
+  int n = getNumVertices();
+  const char *cont[4] = {"E", "F", "G", "H"};
+  int ncont = 0;
+  
+  if(format == 0){ // free field format
+    fprintf(fp, "%s,%d,%d", str, _num, elementary);
+    for(int i = 0; i < n; i++){
+      fprintf(fp, ",%d", getVertex(i)->getNum());
+      if(i != n - 1 && !((i + 3) % 8)){
+	fprintf(fp, ",+%s%d\n+%s%d", cont[ncont], _num, cont[ncont], _num);
+	ncont++;
       }
-      if(n == 2) // CBAR
-	fprintf(fp, ",0.,0.,0.");
-      fprintf(fp, "\n");
     }
-    else{ // small or large field format
-      fprintf(fp, "%-8s%-8d%-8d", str, _num, elementary);
-      for(int i = 0; i < n; i++){
-	if(i != n - 1 && !((i + 3) % 9))
-	  fprintf(fp, "+E%-6d\n+E%-6d", _num, _num);
-	fprintf(fp, "%-8d", getVertex(i)->getNum());
+    if(n == 2) // CBAR
+      fprintf(fp, ",0.,0.,0.");
+    fprintf(fp, "\n");
+  }
+  else{ // small or large field format
+    fprintf(fp, "%-8s%-8d%-8d", str, _num, elementary);
+    for(int i = 0; i < n; i++){
+      fprintf(fp, "%-8d", getVertex(i)->getNum());
+      if(i != n - 1 && !((i + 3) % 8)){
+	fprintf(fp, "+%s%-6d\n+%s%-6d", cont[ncont], _num, cont[ncont], _num);
+	ncont++;
       }
-      if(n == 2) // CBAR
-	fprintf(fp, "%-8s%-8s%-8s", "0.", "0.", "0.");
-      fprintf(fp, "\n");
     }
+    if(n == 2) // CBAR
+      fprintf(fp, "%-8s%-8s%-8s", "0.", "0.", "0.");
+    fprintf(fp, "\n");
   }
 }
