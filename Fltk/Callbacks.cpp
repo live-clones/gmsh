@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.460 2006-09-03 07:44:10 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.461 2006-09-08 02:39:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3505,7 +3505,7 @@ void mesh_reparam_cb(CALLBACK_ARGS)
 void mesh_degree_cb(CALLBACK_ARGS)
 {
   if((long)data == 2)
-    Degre2();
+    Degre2(CTX.mesh.second_order_linear, CTX.mesh.second_order_incomplete);
   else
     Degre1();
   CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;

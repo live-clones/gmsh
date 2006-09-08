@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.547 2006-08-31 23:01:11 geuzaine Exp $
+// $Id: GUI.cpp,v 1.548 2006-09-08 02:39:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3640,7 +3640,7 @@ void GUI::create_statistics_window()
   }
 
   int width = 26 * fontsize;
-  int height = 5 * WB + 18 * BH;
+  int height = 5 * WB + 17 * BH;
 
   stat_window = new Dialog_Window(width, height, "Statistics");
   stat_window->box(GMSH_WINDOW_BOX);
@@ -3660,27 +3660,26 @@ void GUI::create_statistics_window()
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Nodes on Lines");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Nodes on surfaces");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Nodes in volumes");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 4 * BH, IW, BH, "Second order nodes");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 5 * BH, IW, BH, "Triangles");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 6 * BH, IW, BH, "Quadrangles");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 7 * BH, IW, BH, "Tetrahedra");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 8 * BH, IW, BH, "Hexahedra");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 9 * BH, IW, BH, "Prisms");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 10 * BH, IW, BH, "Pyramids");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 4 * BH, IW, BH, "Triangles");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 5 * BH, IW, BH, "Quadrangles");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 6 * BH, IW, BH, "Tetrahedra");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 7 * BH, IW, BH, "Hexahedra");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 8 * BH, IW, BH, "Prisms");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 9 * BH, IW, BH, "Pyramids");
 
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 11 * BH, IW, BH, "Time for 1D mesh");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 12 * BH, IW, BH, "Time for 2D mesh");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 13 * BH, IW, BH, "Time for 3D mesh");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 10 * BH, IW, BH, "Time for 1D mesh");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 11 * BH, IW, BH, "Time for 2D mesh");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 12 * BH, IW, BH, "Time for 3D mesh");
 
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 14 * BH, IW, BH, "Gamma");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "Eta");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 16 * BH, IW, BH, "Rho");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 13 * BH, IW, BH, "Gamma");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 14 * BH, IW, BH, "Eta");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "Rho");
 
-      stat_butt[0] = new Fl_Button(width - BB - 5 * WB, 2 * WB + 14 * BH, BB, BH, "Graph");
+      stat_butt[0] = new Fl_Button(width - BB - 5 * WB, 2 * WB + 13 * BH, BB, BH, "Graph");
       stat_butt[0]->callback(statistics_histogram_cb, (void *)"Gamma");
-      stat_butt[1] = new Fl_Button(width - BB - 5 * WB, 2 * WB + 15 * BH, BB, BH, "Graph");
+      stat_butt[1] = new Fl_Button(width - BB - 5 * WB, 2 * WB + 14 * BH, BB, BH, "Graph");
       stat_butt[1]->callback(statistics_histogram_cb, (void *)"Eta");
-      stat_butt[2] = new Fl_Button(width - BB - 5 * WB, 2 * WB + 16 * BH, BB, BH, "Graph");
+      stat_butt[2] = new Fl_Button(width - BB - 5 * WB, 2 * WB + 15 * BH, BB, BH, "Graph");
       stat_butt[2]->callback(statistics_histogram_cb, (void *)"Rho");
 
       g[1]->end();
@@ -3716,7 +3715,6 @@ void GUI::create_statistics_window()
     o->callback(cancel_cb, (void *)stat_window);
   }
 
-
   stat_window->position(CTX.stat_position[0], CTX.stat_position[1]);
   stat_window->end();
 }
@@ -3745,7 +3743,6 @@ void GUI::set_statistics(bool compute_quality)
   sprintf(label[num], "%g", s[4]); stat_value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[5]); stat_value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[6]); stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%g", s[16]); stat_value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[7]); stat_value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[8]); stat_value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[9]); stat_value[num]->value(label[num]); num++;

@@ -1,11 +1,12 @@
-$Id: VERSIONS,v 1.365 2006-09-03 07:44:11 geuzaine Exp $
+$Id: VERSIONS,v 1.366 2006-09-08 02:39:43 geuzaine Exp $
 
 2.0: new geometry and mesh databases; complete rewrite of geometry and
 mesh drawing code; complete rewrite of the input/output code (with new
 native binary MSH format and full support for import/export of I-deas
-UNV, Nastran BDF, STL, Medit MESH and VRML 1.0 files); new 2D mesh
-algorithm; option changes in the interface are now applied
-instantenously; lots of improvements all over the place.
+UNV, Nastran BDF, STL, Medit MESH and VRML 1.0 files); added support
+for incomplete second order elements; new 2D mesh algorithm; option
+changes in the interface are now applied instantenously; lots of
+improvements all over the place.
 
 1.66: added support for offscreen rendering using OSMesa; added
 support for SVG output;

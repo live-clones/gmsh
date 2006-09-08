@@ -16,7 +16,7 @@ void getAllBoundingVertices (GRegion *gr, int importVolumeMesh, std::set<MVertex
   while (it != faces.end())
     {
       GFace *gf = (*it);      
-      for (int i = 0; i< gf->triangles.size(); i++)
+      for (unsigned int i = 0; i< gf->triangles.size(); i++)
 	{
 	  MTriangle *t = gf->triangles[i];
 	  allBoundingVertices.insert (t->getVertex(0));
@@ -77,7 +77,7 @@ void buildTetgenStructure (  GRegion *gr, tetgenio &in, std::vector<MVertex*> & 
   while (it != faces.end())
     {
       GFace *gf = (*it);
-      for (int i = 0; i< gf->triangles.size(); i++)
+      for (unsigned int i = 0; i< gf->triangles.size(); i++)
 	{
 	  MTriangle *t = gf->triangles[i];
 	  tetgenio::facet *f = &in.facetlist[I];
@@ -101,7 +101,6 @@ void buildTetgenStructure (  GRegion *gr, tetgenio &in, std::vector<MVertex*> & 
 
 void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out, std::vector<MVertex*> & numberedV)
 {
-  int I = numberedV.size() + 1;
   for (int i = 0; i < out.numberofpoints; i++) 
     {
       MVertex *v = new MVertex (out.pointlist[i * 3 + 0],out.pointlist[i * 3 + 1],out.pointlist[i * 3 + 2]); 
@@ -159,7 +158,7 @@ Ng_Mesh * buildNetgenStructure (GRegion *gr, int importVolumeMesh, std::vector<M
   while (it != faces.end())
     {
       GFace *gf = (*it);      
-      for (int i = 0; i< gf->triangles.size(); i++)
+      for (unsigned int i = 0; i< gf->triangles.size(); i++)
 	{
 	  MTriangle *t = gf->triangles[i];
 	  int tmp[3];
@@ -173,7 +172,7 @@ Ng_Mesh * buildNetgenStructure (GRegion *gr, int importVolumeMesh, std::vector<M
 
   if (importVolumeMesh)
     {
-      for (int i = 0; i< gr->tetrahedra.size(); i++)
+      for (unsigned int i = 0; i< gr->tetrahedra.size(); i++)
 	{
 	  MTetrahedron *t = gr->tetrahedra[i];
 	  int tmp[4];
@@ -298,7 +297,7 @@ void meshNormalsPointOutOfTheRegion (GRegion *gr)
     {
       GFace *gf = (*it);      
       int nb_intersect = 0;
-      for (int i = 0; i< gf->triangles.size(); i++)
+      for (unsigned int i = 0; i< gf->triangles.size(); i++)
 	{
 	  MTriangle *t = gf->triangles[i];
 	  double X[3] = {t->getVertex(0)->x(),t->getVertex(1)->x(),t->getVertex(2)->x()};
@@ -320,7 +319,7 @@ void meshNormalsPointOutOfTheRegion (GRegion *gr)
 	  while (it_b != faces.end())
 	    {
 	      GFace *gf_b = (*it_b);
-	      for (int i_b = 0; i_b< gf_b->triangles.size(); i_b++)
+	      for (unsigned int i_b = 0; i_b< gf_b->triangles.size(); i_b++)
 		{
 		  MTriangle *t_b = gf_b->triangles[i_b];
 		  if (t_b != t)
@@ -341,7 +340,7 @@ void meshNormalsPointOutOfTheRegion (GRegion *gr)
 
       if (nb_intersect % 2 == 1) // odd nb of intersections: the normal points inside the region 
 	{
-	  for (int i = 0; i< gf->triangles.size(); i++)
+	  for (unsigned int i = 0; i< gf->triangles.size(); i++)
 	    {
 	      gf->triangles[i]->revert();
 	    }

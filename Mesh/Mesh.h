@@ -397,6 +397,6 @@ int Recombine_All(Mesh *M);
 void ApplyLcFactor();
 
 void Degre1();
-void Degre2();
+void Degre2(bool linear=true, bool incomplete=false);
 
 #endif

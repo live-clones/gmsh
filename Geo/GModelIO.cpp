@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.44 2006-09-07 19:45:15 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.45 2006-09-08 02:39:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -194,21 +194,25 @@ static bool checkVertexIndex(int index, std::vector<MVertex*> &vec)
 static int getNumVerticesForElementTypeMSH(int type)
 {
   switch (type) {
-  case PNT  : return 1;
-  case LGN1 : return 2;
-  case LGN2 : return 2 + 1;
-  case TRI1 : return 3;
-  case TRI2 : return 3 + 3;
-  case QUA1 : return 4;
-  case QUA2 : return 4 + 4 + 1;
-  case TET1 : return 4;
-  case TET2 : return 4 + 6;
-  case HEX1 : return 8;
-  case HEX2 : return 8 + 12 + 6 + 1;
-  case PRI1 : return 6;
-  case PRI2 : return 6 + 9 + 3;
-  case PYR1 : return 5;
-  case PYR2 : return 5 + 8 + 1;
+  case PNT_1  : return 1;
+  case LIN_2  : return 2;
+  case LIN_3  : return 2 + 1;
+  case TRI_3  : return 3;
+  case TRI_6  : return 3 + 3;
+  case QUA_4  : return 4;
+  case QUA_8  : return 4 + 4;
+  case QUA_9  : return 4 + 4 + 1;
+  case TET_4  : return 4;
+  case TET_10 : return 4 + 6;
+  case HEX_8  : return 8;
+  case HEX_20 : return 8 + 12;
+  case HEX_27 : return 8 + 12 + 6 + 1;
+  case PRI_6  : return 6;
+  case PRI_15 : return 6 + 9;
+  case PRI_18 : return 6 + 9 + 3;
+  case PYR_5  : return 5;
+  case PYR_13 : return 5 + 8;
+  case PYR_14 : return 5 + 8 + 1;
   default: 
     Msg(GERROR, "Unknown type of element %d", type);
     return 0;
@@ -225,60 +229,74 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
   int dim = 0;
 
   switch (type) {
-  case PNT:
+  case PNT_1:
     points[elementary].push_back(v[n[0]]);
     dim = 0;
     break;
-  case LGN1:
+  case LIN_2:
     elements[0][elementary].push_back
       (new MLine(v[n[0]], v[n[1]], num, partition));
     dim = 1;
     break;
-  case LGN2:
+  case LIN_3:
     elements[0][elementary].push_back
       (new MLine3(v[n[0]], v[n[1]], v[n[2]], num, partition));
     dim = 1;
     break;
-  case TRI1:
+  case TRI_3:
     elements[1][elementary].push_back
       (new MTriangle(v[n[0]], v[n[1]], v[n[2]], num, partition));
     dim = 2;
     break;
-  case TRI2:
+  case TRI_6:
     elements[1][elementary].push_back
       (new MTriangle6(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
 		      num, partition));
     dim = 2;
     break;
-  case QUA1:
+  case QUA_4:
     elements[2][elementary].push_back
       (new MQuadrangle(v[n[0]], v[n[1]], v[n[2]], v[n[3]], num, partition));
     dim = 2;
     break;
-  case QUA2:
+  case QUA_8:
+    elements[2][elementary].push_back
+      (new MQuadrangle8(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+			v[n[6]], v[n[7]], num, partition));
+    dim = 2;
+    break;
+  case QUA_9:
     elements[2][elementary].push_back
       (new MQuadrangle9(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
 			v[n[6]], v[n[7]], v[n[8]], num, partition));
     dim = 2;
     break;
-  case TET1:
+  case TET_4:
     elements[3][elementary].push_back
       (new MTetrahedron(v[n[0]], v[n[1]], v[n[2]], v[n[3]], num, partition));
     dim = 3; 
     break;
-  case TET2:
+  case TET_10:
     elements[3][elementary].push_back
       (new MTetrahedron10(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
 			  v[n[6]], v[n[7]], v[n[8]], v[n[9]], num, partition));
     dim = 3; 
     break;
-  case HEX1:
+  case HEX_8:
     elements[4][elementary].push_back
       (new MHexahedron(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
 		       v[n[6]], v[n[7]], num, partition));
     dim = 3; 
     break;
-  case HEX2:
+  case HEX_20:
+    elements[4][elementary].push_back
+      (new MHexahedron20(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+			 v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
+			 v[n[12]], v[n[13]], v[n[14]], v[n[15]], v[n[16]], v[n[17]], 
+			 v[n[18]], v[n[19]], num, partition));
+    dim = 3; 
+    break;
+  case HEX_27:
     elements[4][elementary].push_back
       (new MHexahedron27(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
 			 v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
@@ -287,13 +305,20 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
 			 v[n[24]], v[n[25]], v[n[26]], num, partition));
     dim = 3; 
     break;
-  case PRI1: 
+  case PRI_6: 
     elements[5][elementary].push_back
       (new MPrism(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
 		  num, partition));
     dim = 3; 
     break;
-  case PRI2: 
+  case PRI_15: 
+    elements[5][elementary].push_back
+      (new MPrism15(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+		    v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
+		    v[n[12]], v[n[13]], v[n[14]], num, partition));
+    dim = 3; 
+    break;
+  case PRI_18: 
     elements[5][elementary].push_back
       (new MPrism18(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
 		    v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
@@ -301,12 +326,19 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
 		    num, partition));
     dim = 3; 
     break;
-  case PYR1: 
+  case PYR_5: 
     elements[6][elementary].push_back
       (new MPyramid(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], num, partition));
     dim = 3; 
     break;
-  case PYR2: 
+  case PYR_13: 
+    elements[6][elementary].push_back
+      (new MPyramid13(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
+		      v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
+		      v[n[12]], num, partition));
+    dim = 3; 
+    break;
+  case PYR_14: 
     elements[6][elementary].push_back
       (new MPyramid14(v[n[0]], v[n[1]], v[n[2]], v[n[3]], v[n[4]], v[n[5]], 
 		      v[n[6]], v[n[7]], v[n[8]], v[n[9]], v[n[10]], v[n[11]], 
@@ -558,10 +590,25 @@ int GModel::readMSH(const std::string &name)
   return 1;
 }
 
-static void writeTagMSH(FILE *fp, int type, int num, int numTags)
+static void writeElementHeaderMSH(bool binary, FILE *fp, std::map<int,int> &elements,
+				  int t1, int t2=0, int t3=0)
 {
-  int data[3] = {type, num, numTags};
-  fwrite(data, sizeof(int), 3, fp);
+  if(!binary) return;
+
+  int numTags = 3;
+  int data[3];
+  if(elements.count(t1)){
+    data[0] = t1;  data[1] = elements[t1];  data[2] = numTags;
+    fwrite(data, sizeof(int), 3, fp);
+  }
+  else if(t2 && elements.count(t2)){
+    data[0] = t2;  data[1] = elements[t2];  data[2] = numTags;
+    fwrite(data, sizeof(int), 3, fp);
+  }
+  else if(t3 && elements.count(t3)){
+    data[0] = t3;  data[1] = elements[t3];  data[2] = numTags;
+    fwrite(data, sizeof(int), 3, fp);
+  }
 }
 
 template<class T>
@@ -603,7 +650,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(viter it = firstVertex(); it != lastVertex(); ++it){
     int p = (saveAll ? 1 : (*it)->physicals.size());
     int n = p * (*it)->mesh_vertices.size();
-    if(n) elements[PNT] += n;
+    if(n) elements[PNT_1] += n;
   }
   for(eiter it = firstEdge(); it != lastEdge(); ++it){
     int p = (saveAll ? 1 : (*it)->physicals.size());
@@ -674,51 +721,37 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   }
 
   fprintf(fp, "%d\n", numElements);
-  int num = 0, numTags = 3;
+  int num = 0;
 
-  if(binary && elements.count(PNT)) writeTagMSH(fp, PNT, elements[PNT], numTags);
+  writeElementHeaderMSH(binary, fp, elements, PNT_1);
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     writeElementsMSH(fp, (*it)->mesh_vertices, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-
-  if(binary && elements.count(LGN1)) writeTagMSH(fp, LGN1, elements[LGN1], numTags);
-  else if(binary && elements.count(LGN2)) writeTagMSH(fp, LGN2, elements[LGN2], numTags);
+  writeElementHeaderMSH(binary, fp, elements, LIN_2, LIN_3);
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     writeElementsMSH(fp, (*it)->lines, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-
-  if(binary && elements.count(TRI1)) writeTagMSH(fp, TRI1, elements[TRI1], numTags);
-  else if(binary && elements.count(TRI2)) writeTagMSH(fp, TRI2, elements[TRI2], numTags);
+  writeElementHeaderMSH(binary, fp, elements, TRI_3, TRI_6);
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->triangles, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-
-  if(binary && elements.count(QUA1)) writeTagMSH(fp, QUA1, elements[QUA1], numTags);
-  else if(binary && elements.count(QUA2)) writeTagMSH(fp, QUA2, elements[QUA2], numTags);
+  writeElementHeaderMSH(binary, fp, elements, QUA_4, QUA_9, QUA_8);
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->quadrangles, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-
-  if(binary && elements.count(TET1)) writeTagMSH(fp, TET1, elements[TET1], numTags);
-  else if(binary && elements.count(TET2)) writeTagMSH(fp, TET2, elements[TET2], numTags);
+  writeElementHeaderMSH(binary, fp, elements, TET_4, TET_10);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->tetrahedra, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-
-  if(binary && elements.count(HEX1)) writeTagMSH(fp, HEX1, elements[HEX1], numTags);
-  else if(binary && elements.count(HEX2)) writeTagMSH(fp, HEX2, elements[HEX2], numTags);
+  writeElementHeaderMSH(binary, fp, elements, HEX_8, HEX_27, HEX_20);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->hexahedra, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-
-  if(binary && elements.count(PRI1)) writeTagMSH(fp, PRI1, elements[PRI1], numTags);
-  else if(binary && elements.count(PRI2)) writeTagMSH(fp, PRI2, elements[PRI2], numTags);
+  writeElementHeaderMSH(binary, fp, elements, PRI_6, PRI_18, PRI_15);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->prisms, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-
-  if(binary && elements.count(PYR1)) writeTagMSH(fp, PYR1, elements[PYR1], numTags);
-  else if(binary && elements.count(PYR2)) writeTagMSH(fp, PYR2, elements[PYR2], numTags);
+  writeElementHeaderMSH(binary, fp, elements, PYR_5, PYR_14, PYR_13);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->pyramids, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
@@ -1217,7 +1250,11 @@ int GModel::readUNV(const std::string &name)
 	    dim = 2;
 	    break;
 	  case 45: case 55: case 65: case 75: case 85: case 95:
-	    Msg(WARNING, "Quad8 is not implemented yet");
+	    elements[2][elementary].push_back
+	      (new MQuadrangle8(vertices[n[0]], vertices[n[2]], vertices[n[4]], 
+				vertices[n[6]], vertices[n[1]], vertices[n[3]], 
+				vertices[n[5]], vertices[n[7]], num));
+	    dim = 2;
 	    break;
 	  case 111:
 	    elements[3][elementary].push_back
@@ -1241,7 +1278,15 @@ int GModel::readUNV(const std::string &name)
 	    dim = 3; 
 	    break;
 	  case 105: case 116:
-	    Msg(WARNING, "Hexa20 is not implemented yet");
+	    elements[4][elementary].push_back
+	      (new MHexahedron20(vertices[n[0]], vertices[n[2]], vertices[n[4]],  
+				 vertices[n[6]], vertices[n[12]], vertices[n[14]], 
+				 vertices[n[16]], vertices[n[18]], vertices[n[1]],  
+				 vertices[n[7]], vertices[n[8]], vertices[n[3]],  
+				 vertices[n[9]], vertices[n[5]], vertices[n[10]], 
+				 vertices[n[11]], vertices[n[13]], vertices[n[19]], 
+				 vertices[n[15]], vertices[n[17]], num));
+	    dim = 3; 
 	    break;
 	  case 101: case 112:
 	    elements[5][elementary].push_back
@@ -1250,7 +1295,13 @@ int GModel::readUNV(const std::string &name)
 	    dim = 3; 
 	    break;
 	  case 102: case 113:
-	    Msg(WARNING, "Prism15 is not implemented yet");
+	    elements[5][elementary].push_back
+	      (new MPrism15(vertices[n[0]], vertices[n[2]], vertices[n[4]], 
+			    vertices[n[9]], vertices[n[11]], vertices[n[13]], 
+			    vertices[n[1]], vertices[n[5]], vertices[n[6]],  
+			    vertices[n[3]], vertices[n[7]], vertices[n[8]],  
+			    vertices[n[10]], vertices[n[14]], vertices[n[12]], num));
+	    dim = 3;
 	    break;
 	  }
   
@@ -1677,12 +1728,18 @@ int GModel::readBDF(const std::string &name)
 	  elements[1][region].push_back(new MTriangle(n, num));
       }
       else if(!strncmp(buffer, "CTRIA6", 6)){
+	// not sure about the node ordering
 	if(readElementBDF(fp, buffer, 6, 6, &num, &region, n, vertices))
 	  elements[1][region].push_back(new MTriangle6(n, num));
       }
       else if(!strncmp(buffer, "CQUAD4", 6)){
 	if(readElementBDF(fp, buffer, 6, 4, &num, &region, n, vertices))
 	  elements[2][region].push_back(new MQuadrangle(n, num));
+      }
+      else if(!strncmp(buffer, "CQUAD8", 6)){
+	// not sure about the node ordering
+	if(readElementBDF(fp, buffer, 6, 8, &num, &region, n, vertices))
+	  elements[2][region].push_back(new MQuadrangle8(n, num));
       }
       else if(!strncmp(buffer, "CTETRA", 6)){
 	if(readElementBDF(fp, buffer, 6, 4, &num, &region, n, vertices))

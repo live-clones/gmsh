@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.96 2006-09-03 07:44:10 geuzaine Exp $
+// $Id: Generator.cpp,v 1.97 2006-09-08 02:39:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -100,9 +100,6 @@ void GetStatistics(double stat[50], double quality[3][100])
   stat[13] = CTX.mesh_timer[0];
   stat[14] = CTX.mesh_timer[1];
   stat[15] = CTX.mesh_timer[2];
-  
-  // FIXME:
-  //stat[16] = numOrder2Vertices; 
   
   if(quality){
     for(int i = 0; i < 3; i++)
@@ -436,7 +433,7 @@ void mai3d(int ask)
 
   // Create second order elements
   if(GMODEL->getMeshStatus() && CTX.mesh.order == 2) 
-    Degre2();
+    Degre2(CTX.mesh.second_order_linear, CTX.mesh.second_order_incomplete);
 
   // Partition
   if(GMODEL->getMeshStatus() > 1 && CTX.mesh.nbPartitions != 1)

@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.3 2006-09-07 16:03:32 remacle Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.4 2006-09-08 02:39:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -40,7 +40,7 @@ int MeshTransfiniteSurface( GFace *gf)
   std::vector <MVertex *> d_vertices;
   std::vector <int> indices;
 
-  for (int i=0;i<gf->meshAttributes.corners.size();i++)
+  for (unsigned int i=0;i<gf->meshAttributes.corners.size();i++)
     corners.push_back(gf->meshAttributes.corners[i]->mesh_vertices[0]);
 
   computeEdgeLoops (gf,d_vertices, indices);
@@ -51,10 +51,10 @@ int MeshTransfiniteSurface( GFace *gf)
     Msg (GERROR,"Surface %d is transfinite but has %d holes",gf->tag(),indices.size()-2);
 
   std::vector <MVertex *> m_vertices;
-  int I;
+  unsigned int I;
   for (I=0;I<d_vertices.size();I++)
     if(d_vertices[I] == corners[0])break;
-  for (int j=0;j<d_vertices.size();j++)
+  for (unsigned int j=0;j<d_vertices.size();j++)
     m_vertices.push_back(d_vertices[(I+j)%d_vertices.size()]);
   
   int iCorner = 0;
@@ -64,7 +64,7 @@ int MeshTransfiniteSurface( GFace *gf)
 
   std::map<std::pair<int,int> , MVertex*> tab;
 
-  for (int i=0;i<m_vertices.size();i++)
+  for (unsigned int i=0;i<m_vertices.size();i++)
     {
       MVertex *v = m_vertices[i];
       if (v==corners[0]||v==corners[1]||v==corners[2]|| (corners.size()==4 && v==corners[3]))

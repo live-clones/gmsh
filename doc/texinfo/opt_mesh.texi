@@ -34,6 +34,11 @@ Maximum ratio of two consecutive edge lengths@*
 Default value: @code{0.9}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.BdfFieldFormat
+Field format for Nastran BDF files (0=free, 1=small, 2=large)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.CharacteristicLengthFactor
 Factor applied to all characteristic lengths (and background meshes)@*
 Default value: @code{1}@*
@@ -115,7 +120,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Format
-Mesh output format (1=msh, 2=unv, 3=gref, 19=vrml)@*
+Mesh output format (1=msh, 2=unv, 19=vrml, 27=stl, 30=mesh, 31=bdf)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -186,7 +191,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFileVersion
 Version of the MSH file format to use@*
-Default value: @code{1}@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NbElemsPerRadiusOfCurv
@@ -237,6 +242,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Optimize
 Optimize the mesh using Netgen to improve the quality of tetrahedral elements@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Partitioning
+Number of partitions applied to the final mesh@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Points
@@ -334,13 +344,18 @@ Global scaling factor applied to the saved mesh@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Smoothing
-Number of smoothing steps applied to the final mesh@*
+@item Mesh.SecondOrderIncomplete
+Create incomplete second order elements? (8-node quads, 20-node hexas, etc.)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Partitioning
-Number of partitions applied to the final mesh@*
+@item Mesh.SecondOrderLinear
+Should second order vertices simply be created by linear interpolation?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Smoothing
+Number of smoothing steps applied to the final mesh@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

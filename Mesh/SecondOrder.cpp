@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.45 2006-09-07 19:45:15 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.46 2006-09-08 02:39:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -206,7 +206,7 @@ void setSecondOrder(GEdge *ge,
 void setSecondOrder(GFace *gf,
 		    std::map<std::pair<MVertex*,MVertex*>, MVertex* > &edgeVertices,
 		    std::map<std::vector<MVertex*>, MVertex* > &faceVertices,
-		    bool linear)
+		    bool linear, bool incomplete)
 {
   std::vector<MTriangle*> triangles2;
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
@@ -225,10 +225,17 @@ void setSecondOrder(GFace *gf,
     MQuadrangle *q = gf->quadrangles[i];
     std::vector<MVertex*> ve, vf;
     getEdgeVertices(gf, q, ve, edgeVertices, linear);
-    getFaceVertices(gf, q, vf, faceVertices, linear);
-    quadrangles2.push_back
-      (new MQuadrangle9(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-			q->getVertex(3), ve[0], ve[1], ve[2], ve[3], vf[0]));
+    if(incomplete){
+      quadrangles2.push_back
+	(new MQuadrangle8(q->getVertex(0), q->getVertex(1), q->getVertex(2),
+			  q->getVertex(3), ve[0], ve[1], ve[2], ve[3]));
+    }
+    else{
+      getFaceVertices(gf, q, vf, faceVertices, linear);
+      quadrangles2.push_back
+	(new MQuadrangle9(q->getVertex(0), q->getVertex(1), q->getVertex(2),
+			  q->getVertex(3), ve[0], ve[1], ve[2], ve[3], vf[0]));
+    }
     delete q;
   }
   gf->quadrangles = quadrangles2;
@@ -239,7 +246,7 @@ void setSecondOrder(GFace *gf,
 void setSecondOrder(GRegion *gr,
 		    std::map<std::pair<MVertex*,MVertex*>, MVertex* > &edgeVertices,
 		    std::map<std::vector<MVertex*>, MVertex* > &faceVertices,
-		    bool linear)
+		    bool linear, bool incomplete)
 {
   std::vector<MTetrahedron*> tetrahedra2;
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
@@ -258,16 +265,26 @@ void setSecondOrder(GRegion *gr,
     MHexahedron *h = gr->hexahedra[i];
     std::vector<MVertex*> ve, vf;
     getEdgeVertices(gr, h, ve, edgeVertices, linear);
-    getFaceVertices(gr, h, vf, faceVertices, linear);
-    SPoint3 pc = h->barycenter();
-    MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
-    gr->mesh_vertices.push_back(v);
-    hexahedra2.push_back
-      (new MHexahedron27(h->getVertex(0), h->getVertex(1), h->getVertex(2), 
-			 h->getVertex(3), h->getVertex(4), h->getVertex(5), 
-			 h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2], 
-			 ve[3], ve[4], ve[5], ve[6], ve[7], ve[8], ve[9], ve[10], 
-			 ve[11], vf[0], vf[1], vf[2], vf[3], vf[4], vf[5], v));
+    if(incomplete){
+      hexahedra2.push_back
+	(new MHexahedron20(h->getVertex(0), h->getVertex(1), h->getVertex(2), 
+			   h->getVertex(3), h->getVertex(4), h->getVertex(5), 
+			   h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2], 
+			   ve[3], ve[4], ve[5], ve[6], ve[7], ve[8], ve[9], ve[10], 
+			   ve[11]));
+    }
+    else{
+      getFaceVertices(gr, h, vf, faceVertices, linear);
+      SPoint3 pc = h->barycenter();
+      MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
+      gr->mesh_vertices.push_back(v);
+      hexahedra2.push_back
+	(new MHexahedron27(h->getVertex(0), h->getVertex(1), h->getVertex(2), 
+			   h->getVertex(3), h->getVertex(4), h->getVertex(5), 
+			   h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2], 
+			   ve[3], ve[4], ve[5], ve[6], ve[7], ve[8], ve[9], ve[10], 
+			   ve[11], vf[0], vf[1], vf[2], vf[3], vf[4], vf[5], v));
+    }
     delete h;
   }
   gr->hexahedra = hexahedra2;
@@ -277,12 +294,20 @@ void setSecondOrder(GRegion *gr,
     MPrism *p = gr->prisms[i];
     std::vector<MVertex*> ve, vf;
     getEdgeVertices(gr, p, ve, edgeVertices, linear);
-    getFaceVertices(gr, p, vf, faceVertices, linear);
-    prisms2.push_back
-      (new MPrism18(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
-		    p->getVertex(3), p->getVertex(4), p->getVertex(5), 
-		    ve[0], ve[1], ve[2], ve[3], ve[4], ve[5], ve[6], ve[7],
-		    ve[8], vf[0], vf[1], vf[2]));
+    if(incomplete){
+      prisms2.push_back
+	(new MPrism15(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
+		      p->getVertex(3), p->getVertex(4), p->getVertex(5), 
+		      ve[0], ve[1], ve[2], ve[3], ve[4], ve[5], ve[6], ve[7], ve[8]));
+    }
+    else{
+      getFaceVertices(gr, p, vf, faceVertices, linear);
+      prisms2.push_back
+	(new MPrism18(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
+		      p->getVertex(3), p->getVertex(4), p->getVertex(5), 
+		      ve[0], ve[1], ve[2], ve[3], ve[4], ve[5], ve[6], ve[7], ve[8],
+		      vf[0], vf[1], vf[2]));
+    }
     delete p;
   }
   gr->prisms = prisms2;
@@ -292,11 +317,19 @@ void setSecondOrder(GRegion *gr,
     MPyramid *p = gr->pyramids[i];
     std::vector<MVertex*> ve, vf;
     getEdgeVertices(gr, p, ve, edgeVertices, linear);
-    getFaceVertices(gr, p, vf, faceVertices, linear);
-    pyramids2.push_back
-      (new MPyramid14(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
-		      p->getVertex(3), p->getVertex(4), ve[0], ve[1], ve[2], 
-		      ve[3], ve[4], ve[5], ve[6], ve[7], vf[0]));
+    if(incomplete){
+      pyramids2.push_back
+	(new MPyramid13(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
+			p->getVertex(3), p->getVertex(4), ve[0], ve[1], ve[2], 
+			ve[3], ve[4], ve[5], ve[6], ve[7]));
+    }
+    else{
+      getFaceVertices(gr, p, vf, faceVertices, linear);
+      pyramids2.push_back
+	(new MPyramid14(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
+			p->getVertex(3), p->getVertex(4), ve[0], ve[1], ve[2], 
+			ve[3], ve[4], ve[5], ve[6], ve[7], vf[0]));
+    }
     delete p;
   }
   gr->pyramids = pyramids2;
@@ -364,30 +397,34 @@ void Degre1()
     removeSecondOrderVertices(*it);
 }
 
-void Degre2()
+void Degre2(bool linear, bool incomplete)
 {
   Msg(STATUS1, "Meshing second order...");
   double t1 = Cpu();
 
-  bool linear = true;
-  //bool linear = false;
+  // This routine replaces all the elements in the mesh with second
+  // order elements by creating unique nodes on the edges/faces of the
+  // mesh:
+  // - If linear is set to true, new vertices are created by linear
+  //   interpolation between existing ones. If not, new vertices are
+  //   created on the exact geometry, provided that the geometrical
+  //   edges/faces are discretized with 1D/2D elements. (I.e., if
+  //   there are only 3D elements in the mesh then any new nodes on
+  //   the boundary will always be created by linear interpolation,
+  //   whether linear is set or not.)
+  // - If incomplete is set to true, we only create new vertices on 
+  //   edges (creating 8-node quads, 20-node hexas, etc., instead of
+  //   9-node quads, 27-node hexas, etc.)
 
   std::map<std::pair<MVertex*,MVertex*>, MVertex* > edgeVertices;
   std::map<std::vector<MVertex*>, MVertex* > faceVertices;
 
-  // replace all elements with second order elements by creating
-  // unique nodes on the edges/faces of the mesh. (To generate nodes
-  // on the exact geometrical edges/faces this assumes that the
-  // geometrical edges/faces are discretized with 1D/2D
-  // elements. I.e., if there are only 3D elements in the mesh then
-  // any new nodes on the boundary will simply be added by linear
-  // interpolation.)
   for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); ++it)
     setSecondOrder(*it, edgeVertices, linear);
   for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); ++it)
-    setSecondOrder(*it, edgeVertices, faceVertices, linear);
+    setSecondOrder(*it, edgeVertices, faceVertices, linear, incomplete);
   for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); ++it)
-    setSecondOrder(*it, edgeVertices, faceVertices, linear);
+    setSecondOrder(*it, edgeVertices, faceVertices, linear, incomplete);
 
   double t2 = Cpu();
   Msg(INFO, "Mesh second order complete (%g s)", t2 - t1);

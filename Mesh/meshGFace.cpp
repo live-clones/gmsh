@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.11 2006-09-05 21:37:59 remacle Exp $
+// $Id: meshGFace.cpp,v 1.12 2006-09-08 02:39:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -294,12 +294,9 @@ void OptimizeMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 
 void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 {
-  int NUMP = 0;
   int IT =0;
 
   int MAXNP = m.MAXPOINTNUMBER;
-
-  clock_t t1 = clock();
 
   // computecharacteristic lengths using mesh edge spacing
   
@@ -359,7 +356,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	  ++it;
 	}
 
-      //      Msg(STATUS2," %d triangles : conv %g -> %g (%g sec)",m.triangles.size(),maxL,1.5,(double)(clock()-t1)/CLOCKS_PER_SEC);
+
       if ((minL > 0.4 && maxL < 1.5) || IT > NIT)break;
 
 
@@ -626,7 +623,7 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge)
   if (e)e->g = g;
   else throw;
 
-  for (int i=1;i<ge->mesh_vertices.size();i++)
+  for (unsigned int i=1;i<ge->mesh_vertices.size();i++)
     {
       vstart = ge->mesh_vertices[i-1];
       vend   = ge->mesh_vertices[i];
@@ -796,7 +793,7 @@ void gmsh2DMeshGenerator ( GFace *gf )
   for(int i = 0; i < doc.numPoints; i++) 
     {
       MVertex *here = (MVertex*)doc.points[i].data;      
-      BDS_Point *bds_p = m->add_point ( here->getNum(), here->x(), here->y(), gf);
+      m->add_point ( here->getNum(), here->x(), here->y(), gf);
     }
   for(int i = 0; i < doc.numTriangles; i++) 
     {

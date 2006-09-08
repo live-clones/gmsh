@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.309 2006-09-03 07:44:09 geuzaine Exp $
+// $Id: Options.cpp,v 1.310 2006-09-08 02:39:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4827,6 +4827,20 @@ double opt_mesh_order(OPT_ARGS_NUM)
     WID->mesh_butt[3]->value(CTX.mesh.order == 2);
 #endif
   return CTX.mesh.order;
+}
+
+double opt_mesh_second_order_linear(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.second_order_linear = (int)val;
+  return CTX.mesh.second_order_linear;
+}
+
+double opt_mesh_second_order_incomplete(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.second_order_incomplete = (int)val;
+  return CTX.mesh.second_order_incomplete;
 }
 
 double opt_mesh_dual(OPT_ARGS_NUM)

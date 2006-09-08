@@ -866,7 +866,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.Color.Foreground
 Foreground color@*
-Default value: @code{@{255,255,255@}}@*
+Default value: @code{@{170,170,170@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Color.Text

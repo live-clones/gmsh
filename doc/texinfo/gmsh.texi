@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.215 2006-09-07 02:56:53 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.216 2006-09-08 02:39:43 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -2929,42 +2929,54 @@ ordered) way.
 defines the geometrical type of the @var{n}-th element:
 @table @code
 @item 1
-Line (2 nodes).
+2-node line.
 @item 2
-Triangle (3 nodes).
+3-node triangle.
 @item 3
-Quadrangle (4 nodes).
+4-node quadrangle.
 @item 4
-Tetrahedron (4 nodes).
+4-node tetrahedron.
 @item 5
-Hexahedron (8 nodes).
+8-node hexahedron.
 @item 6
-Prism (6 nodes).
+6-node prism.
 @item 7
-Pyramid (5 nodes).
+5-node pyramid.
 @item 8
-Second order line (3 nodes: 2 associated with the vertices and 1 with the
-edge).
+3-node second order line (2 nodes associated with the vertices and 1
+with the edge).
 @item 9
-Second order triangle (6 nodes: 3 associated with the vertices and 3 with
-the edges).
-@item 10
-Second order quadrangle (9 nodes: 4 associated with the vertices, 4 with the
-edges and 1 with the face).
-@item 11
-Second order tetrahedron (10 nodes: 4 associated with the vertices and 6
+6-node second order triangle (3 nodes associated with the vertices and 3
 with the edges).
+@item 10
+9-node second order quadrangle (4 nodes associated with the vertices, 4
+with the edges and 1 with the face).
+@item 11
+10-node second order tetrahedron (4 nodes associated with the vertices
+and 6 with the edges).
 @item 12
-Second order hexahedron (27 nodes: 8 associated with the vertices, 12 with
-the edges, 6 with the faces and 1 with the volume).
+27-node second order hexahedron (8 nodes associated with the vertices,
+12 with the edges, 6 with the faces and 1 with the volume).
 @item 13
-Second order prism (18 nodes: 6 associated with the vertices, 9 with the
-edges and 3 with the quadrangular faces).
+18-node second order prism (6 nodes associated with the vertices, 9 with
+the edges and 3 with the quadrangular faces).
 @item 14
-Second order pyramid (14 nodes: 5 associated with the vertices, 8 with the
-edges and 1 with the quadrangular face).
+14-node second order pyramid (5 nodes associated with the vertices, 8
+with the edges and 1 with the quadrangular face).
 @item 15
-Point (1 node).
+1-node point.
+@item 16
+8-node second order quadrangle (4 nodes associated with the vertices and
+4 with the edges).
+@item 17
+20-node second order hexahedron (8 nodes associated with the vertices
+and 12 with the edges).
+@item 18
+15-node second order prism (6 nodes associated with the vertices and 9
+with the edges).
+@item 19
+13-node second order pyramid (5 nodes associated with the vertices and 8
+with the edges).
 @end table
 See below for the ordering of the nodes.
 
@@ -3056,42 +3068,54 @@ ordered) way.
 defines the geometrical type of the @var{n}-th element:
 @table @code
 @item 1
-Line (2 nodes).
+2-node line.
 @item 2
-Triangle (3 nodes).
+3-node triangle.
 @item 3
-Quadrangle (4 nodes).
+4-node quadrangle.
 @item 4
-Tetrahedron (4 nodes).
+4-node tetrahedron.
 @item 5
-Hexahedron (8 nodes).
+8-node hexahedron.
 @item 6
-Prism (6 nodes).
+6-node prism.
 @item 7
-Pyramid (5 nodes).
+5-node pyramid.
 @item 8
-Second order line (3 nodes: 2 associated with the vertices and 1 with the
-edge).
+3-node second order line (2 nodes associated with the vertices and 1
+with the edge).
 @item 9
-Second order triangle (6 nodes: 3 associated with the vertices and 3 with
-the edges).
-@item 10
-Second order quadrangle (9 nodes: 4 associated with the vertices, 4 with the
-edges and 1 with the face).
-@item 11
-Second order tetrahedron (10 nodes: 4 associated with the vertices and 6
+6-node second order triangle (3 nodes associated with the vertices and 3
 with the edges).
+@item 10
+9-node second order quadrangle (4 nodes associated with the vertices, 4
+with the edges and 1 with the face).
+@item 11
+10-node second order tetrahedron (4 nodes associated with the vertices
+and 6 with the edges).
 @item 12
-Second order hexahedron (27 nodes: 8 associated with the vertices, 12 with
-the edges, 6 with the faces and 1 with the volume).
+27-node second order hexahedron (8 nodes associated with the vertices,
+12 with the edges, 6 with the faces and 1 with the volume).
 @item 13
-Second order prism (18 nodes: 6 associated with the vertices, 9 with the
-edges and 3 with the quadrangular faces).
+18-node second order prism (6 nodes associated with the vertices, 9 with
+the edges and 3 with the quadrangular faces).
 @item 14
-Second order pyramid (14 nodes: 5 associated with the vertices, 8 with the
-edges and 1 with the quadrangular face).
+14-node second order pyramid (5 nodes associated with the vertices, 8
+with the edges and 1 with the quadrangular face).
 @item 15
-Point (1 node).
+1-node point.
+@item 16
+8-node second order quadrangle (4 nodes associated with the vertices and
+4 with the edges).
+@item 17
+20-node second order hexahedron (8 nodes associated with the vertices
+and 12 with the edges).
+@item 18
+15-node second order prism (6 nodes associated with the vertices and 9
+with the edges).
+@item 19
+13-node second order pyramid (5 nodes associated with the vertices and 8
+with the edges).
 @end table
 See below for the ordering of the nodes.
 

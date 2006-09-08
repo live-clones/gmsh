@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.16 2006-09-07 19:45:15 geuzaine Exp $
+// $Id: MElement.cpp,v 1.17 2006-09-08 02:39:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -163,33 +163,35 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
 
 void MElement::writePOS(FILE *fp, double scalingFactor, int elementary)
 {
-  int n = getNumVertices();
-  double gamma = gammaShapeMeasure();
-  double eta = etaShapeMeasure();
-  double rho = rhoShapeMeasure();
-
-  fprintf(fp, "%s(", getStringForPOS());
-  for(int i = 0; i < n; i++){
-    if(i) fprintf(fp, ",");
-    fprintf(fp, "%g,%g,%g", getVertex(i)->x() * scalingFactor, 
-	    getVertex(i)->y() * scalingFactor, getVertex(i)->z() * scalingFactor);
+  char *str = getStringForPOS();
+  if(str){
+    int n = getNumVertices();
+    double gamma = gammaShapeMeasure();
+    double eta = etaShapeMeasure();
+    double rho = rhoShapeMeasure();
+    fprintf(fp, "%s(", str);
+    for(int i = 0; i < n; i++){
+      if(i) fprintf(fp, ",");
+      fprintf(fp, "%g,%g,%g", getVertex(i)->x() * scalingFactor, 
+	      getVertex(i)->y() * scalingFactor, getVertex(i)->z() * scalingFactor);
+    }
+    fprintf(fp, "){");
+    for(int i = 0; i < n; i++)
+      fprintf(fp, "%d,", elementary);
+    for(int i = 0; i < n; i++)
+      fprintf(fp, "%d,", getNum());
+    for(int i = 0; i < n; i++)
+      fprintf(fp, "%g,", gamma);
+    for(int i = 0; i < n; i++)
+      fprintf(fp, "%g,", eta);
+    for(int i = 0; i < n; i++){
+      if(i == n - 1)
+	fprintf(fp, "%g", rho);
+      else
+	fprintf(fp, "%g,", rho);
+    }
+    fprintf(fp, "};\n");
   }
-  fprintf(fp, "){");
-  for(int i = 0; i < n; i++)
-    fprintf(fp, "%d,", elementary);
-  for(int i = 0; i < n; i++)
-    fprintf(fp, "%d,", getNum());
-  for(int i = 0; i < n; i++)
-    fprintf(fp, "%g,", gamma);
-  for(int i = 0; i < n; i++)
-    fprintf(fp, "%g,", eta);
-  for(int i = 0; i < n; i++){
-    if(i == n - 1)
-      fprintf(fp, "%g", rho);
-    else
-      fprintf(fp, "%g,", rho);
-  }
-  fprintf(fp, "};\n");
 }
 
 void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)

@@ -31,21 +31,25 @@
 #define FORMAT_BDF           31
 
 // Element types in .msh file format
-#define LGN1 1
-#define TRI1 2
-#define QUA1 3
-#define TET1 4
-#define HEX1 5
-#define PRI1 6
-#define PYR1 7
-#define LGN2 8
-#define TRI2 9
-#define QUA2 10
-#define TET2 11
-#define HEX2 12
-#define PRI2 13
-#define PYR2 14
-#define PNT  15
+#define LIN_2  1
+#define TRI_3  2
+#define QUA_4  3
+#define TET_4  4
+#define HEX_8  5
+#define PRI_6  6
+#define PYR_5  7
+#define LIN_3  8
+#define TRI_6  9
+#define QUA_9  10
+#define TET_10 11
+#define HEX_27 12
+#define PRI_18 13
+#define PYR_14 14
+#define PNT_1  15
+#define QUA_8  16
+#define HEX_20 17
+#define PRI_15 18
+#define PYR_13 19
 
 // Geometric entities
 #define ENT_NONE     0
