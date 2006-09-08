@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.46 2006-09-08 02:39:43 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.47 2006-09-08 04:52:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -373,7 +373,7 @@ void removeSecondOrderVertices(GEntity *e)
 void Degre1()
 {
   // replace all elements with first order elements and mark all
-  // unused nodes with a -1 visibility flag
+  // unused vertices with a -1 visibility flag
   for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); ++it){
     setFirstOrder(*it, (*it)->lines);
   }
@@ -388,7 +388,7 @@ void Degre1()
     setFirstOrder(*it, (*it)->pyramids);
   }
 
-  // remove all nodes with a -1 visibility flag
+  // remove all vertices with a -1 visibility flag
   for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); ++it)
     removeSecondOrderVertices(*it);
   for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); ++it)
@@ -399,22 +399,23 @@ void Degre1()
 
 void Degre2(bool linear, bool incomplete)
 {
-  Msg(STATUS1, "Meshing second order...");
-  double t1 = Cpu();
-
-  // This routine replaces all the elements in the mesh with second
-  // order elements by creating unique nodes on the edges/faces of the
-  // mesh:
-  // - If linear is set to true, new vertices are created by linear
+  // replace all the elements in the mesh with second order elements
+  // by creating unique vertices on the edges/faces of the mesh:
+  //
+  // - if linear is set to true, new vertices are created by linear
   //   interpolation between existing ones. If not, new vertices are
   //   created on the exact geometry, provided that the geometrical
   //   edges/faces are discretized with 1D/2D elements. (I.e., if
-  //   there are only 3D elements in the mesh then any new nodes on
+  //   there are only 3D elements in the mesh then any new vertices on
   //   the boundary will always be created by linear interpolation,
   //   whether linear is set or not.)
-  // - If incomplete is set to true, we only create new vertices on 
+  //
+  // - if incomplete is set to true, we only create new vertices on 
   //   edges (creating 8-node quads, 20-node hexas, etc., instead of
   //   9-node quads, 27-node hexas, etc.)
+
+  Msg(STATUS1, "Meshing second order...");
+  double t1 = Cpu();
 
   std::map<std::pair<MVertex*,MVertex*>, MVertex* > edgeVertices;
   std::map<std::vector<MVertex*>, MVertex* > faceVertices;
