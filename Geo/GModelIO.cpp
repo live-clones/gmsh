@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.46 2006-09-08 04:30:06 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.47 2006-09-08 13:54:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -260,8 +260,7 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
   default: Msg(GERROR, "Unknown type (%d) for element %d", type, num); break;
   }
   
-  if(physical && (!physicals[dim].count(reg) || 
-		  !physicals[dim][reg].count(physical)))
+  if(physical && (!physicals[dim].count(reg) || !physicals[dim][reg].count(physical)))
     physicals[dim][reg][physical] = "unnamed";
   
   if(part) m->getMeshPartitions().insert(part);
