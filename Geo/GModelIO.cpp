@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.48 2006-09-08 17:45:51 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.49 2006-09-09 01:10:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1499,66 +1499,74 @@ static int readVertexBDF(FILE *fp, char *buffer, int keySize,
   return 1;
 }
 
-static int readElementBDF(FILE *fp, char *buffer, int keySize, unsigned int numNodes, 
-			  int *num, int *region, std::vector<MVertex*> &vertices,
-			  std::map<int, MVertex*> &vertexMap)
+static bool emptyFieldBDF(char *field, int length)
 {
-  // This routine is not completely general: when there is a
-  // continuation tag we just parse the next line. To follow the spec:
-  // 1. we should parse the whole remainder of the file to find
-  //    the corresponding continuation tag
-  // 2. we should parse more than one continuation line for elements
-  //    with more than 14 nodes (but since we don't import such
-  //    elements at the moment parsing just one continuation line is
-  //    OK)
+  for(int i = 0; i < length; i++)
+    if(field[i] != '\0' && field[i] != ' ' && field[i] != '\n' && field[i] != '\r')
+      return false;
+  return true;
+}
 
-  char buffer2[256];
-  std::vector<char*> vals;
-  int format = getFormatBDF(buffer, keySize);
+static void readLineBDF(char *buffer, int format, std::vector<char*> &fields)
+{
   int cmax = (format == 2) ? 16 : 8; // max char per (center) field
   int nmax = (format == 2) ? 4 : 8; // max num of (center) fields per line
 
-  for(unsigned int i = 0; i < sizeof(buffer2); i++) buffer2[i] = '\0';
-
   if(format == 0){ // free fields
     for(unsigned int i = 0; i < strlen(buffer); i++){
-      if(buffer[i] == ',') vals.push_back(&buffer[i + 1]);
-      if(vals.size() == 9) vals.pop_back(); // continuation field
-    }
-    if(vals.size() < 2 + numNodes){
-      if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
-      for(unsigned int i = 0; i < strlen(buffer2); i++){
-	if(buffer2[i] == ',') vals.push_back(&buffer2[i + 1]);
-      }
+      if(buffer[i] == ',') fields.push_back(&buffer[i + 1]);
     }
   }
   else{ // small or long fields
-    for(int i = 0; i < nmax; i++){
-      if(vals.size() < 2 + numNodes) vals.push_back(&buffer[8 + cmax * i]);
+    for(int i = 0; i < nmax + 1; i++){
+      if(!emptyFieldBDF(&buffer[8 + cmax * i], cmax))
+	fields.push_back(&buffer[8 + cmax * i]);
     }
-    if(vals.size() < 2 + numNodes){
-      if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
-      for(int i = 0; i < nmax; i++){
-	if(vals.size() < 2 + numNodes) vals.push_back(&buffer2[8 + cmax * i]);
-      }
-    }    
   }
-  
-  if(vals.size() < 2 + numNodes){
-    Msg(GERROR, "Missing nodes for element (%d < numNodes)", vals.size() - 2);
+}
+
+static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices, 
+			  int &num, int &region, std::vector<MVertex*> &vertices,
+			  std::map<int, MVertex*> &vertexMap)
+{
+  char buffer2[256], buffer3[256];
+  std::vector<char*> fields;
+  int format = getFormatBDF(buffer, keySize);
+
+  for(unsigned int i = 0; i < sizeof(buffer2); i++) buffer2[i] = buffer3[i] = '\0';
+
+  readLineBDF(buffer, format, fields);
+
+  if((fields.size() - 2 < abs(numVertices)) || (numVertices < 0 && (fields.size() == 9))){
+    if(fields.size() == 9) fields.pop_back();
+    if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
+    readLineBDF(buffer2, format, fields);
+  }
+
+  if((fields.size() - 2 < abs(numVertices)) || (numVertices < 0 && (fields.size() == 17))){
+    if(fields.size() == 17) fields.pop_back();
+    if(!fgets(buffer3, sizeof(buffer3), fp)) return 0;
+    readLineBDF(buffer3, format, fields);
+  }
+
+  // negative 'numVertices' gives the minimum required number of vertices
+  if(fields.size() - 2 < abs(numVertices)){
+    Msg(GERROR, "Wrong number of vertices %d for element", fields.size() - 2);
     return 0;
   }
 
-  int n[30];
+  int n[30], cmax = (format == 2) ? 16 : 8; // max char per (center) field
   char tmp[32];
   tmp[cmax] = '\0';
-  strncpy(tmp, vals[0], cmax); *num = atoi(tmp);
-  strncpy(tmp, vals[1], cmax); *region = atoi(tmp);
-  for(unsigned int i = 0; i < numNodes; i++){
-    strncpy(tmp, vals[i + 2], cmax); n[i] = atoi(tmp);
+  strncpy(tmp, fields[0], cmax); num = atoi(tmp);
+  strncpy(tmp, fields[1], cmax); region = atoi(tmp);
+  for(unsigned int i = 2; i < fields.size(); i++){
+    strncpy(tmp, fields[i], cmax); n[i - 2] = atoi(tmp);
   }
 
-  if(!getVertices(numNodes, n, vertexMap, vertices)) return 0;
+  // ignore the extra fields when we now how many vertices we need
+  int numCheck = (numVertices > 0) ? numVertices : fields.size() - 2;
+  if(!getVertices(numCheck, n, vertexMap, vertices)) return 0;
   return 1;
 }
 
@@ -1598,42 +1606,61 @@ int GModel::readBDF(const std::string &name)
       int num, region;
       std::vector<MVertex*> vertices;
       if(!strncmp(buffer, "CBAR", 4)){
-	if(readElementBDF(fp, buffer, 4, 2, &num, &region, vertices, vertexMap))
+	if(readElementBDF(fp, buffer, 4, 2, num, region, vertices, vertexMap))
+	  elements[0][region].push_back(new MLine(vertices, num));
+      }
+      else if(!strncmp(buffer, "CBEAM", 5)){
+	if(readElementBDF(fp, buffer, 5, 2, num, region, vertices, vertexMap))
 	  elements[0][region].push_back(new MLine(vertices, num));
       }
       else if(!strncmp(buffer, "CTRIA3", 6)){
-	if(readElementBDF(fp, buffer, 6, 3, &num, &region, vertices, vertexMap))
+	if(readElementBDF(fp, buffer, 6, 3, num, region, vertices, vertexMap))
 	  elements[1][region].push_back(new MTriangle(vertices, num));
       }
       else if(!strncmp(buffer, "CTRIA6", 6)){
-	if(readElementBDF(fp, buffer, 6, 6, &num, &region, vertices, vertexMap))
+	if(readElementBDF(fp, buffer, 6, 6, num, region, vertices, vertexMap))
 	  elements[1][region].push_back(new MTriangle6(vertices, num));
       }
       else if(!strncmp(buffer, "CQUAD4", 6)){
-	if(readElementBDF(fp, buffer, 6, 4, &num, &region, vertices, vertexMap))
+	if(readElementBDF(fp, buffer, 6, 4, num, region, vertices, vertexMap))
 	  elements[2][region].push_back(new MQuadrangle(vertices, num));
       }
       else if(!strncmp(buffer, "CQUAD8", 6)){
-	if(readElementBDF(fp, buffer, 6, 8, &num, &region, vertices, vertexMap))
+	if(readElementBDF(fp, buffer, 6, 8, num, region, vertices, vertexMap))
 	  elements[2][region].push_back(new MQuadrangle8(vertices, num));
       }
+      else if(!strncmp(buffer, "CQUAD", 5)){
+	if(readElementBDF(fp, buffer, 5, -4, num, region, vertices, vertexMap))
+	  if(vertices.size() == 9)
+	    elements[2][region].push_back(new MQuadrangle9(vertices, num));
+	  else if(vertices.size() == 8)
+	    elements[2][region].push_back(new MQuadrangle8(vertices, num));
+	  else
+	    elements[2][region].push_back(new MQuadrangle(vertices, num));
+      }
       else if(!strncmp(buffer, "CTETRA", 6)){
-	// should be generalized to also read 10-node tets
-	if(readElementBDF(fp, buffer, 6, 4, &num, &region, vertices, vertexMap))
-	  elements[3][region].push_back(new MTetrahedron(vertices, num));
+	if(readElementBDF(fp, buffer, 6, -4, num, region, vertices, vertexMap))
+	  if(vertices.size() == 10)
+	    elements[3][region].push_back(new MTetrahedron10(vertices, num));
+	  else
+	    elements[3][region].push_back(new MTetrahedron(vertices, num));
       }
       else if(!strncmp(buffer, "CHEXA", 5)){
-	// should be generalized to also read 20-node hexas
-	if(readElementBDF(fp, buffer, 5, 8, &num, &region, vertices, vertexMap))
-	  elements[4][region].push_back(new MHexahedron(vertices, num));
+	if(readElementBDF(fp, buffer, 5, -8, num, region, vertices, vertexMap))
+	  if(vertices.size() == 20)
+	    elements[4][region].push_back(new MHexahedron20(vertices, num));
+	  else
+	    elements[4][region].push_back(new MHexahedron(vertices, num));
       }
       else if(!strncmp(buffer, "CPENTA", 6)){
-	// should be generalized to also read 15-node prisms
-	if(readElementBDF(fp, buffer, 6, 6, &num, &region, vertices, vertexMap))
-	  elements[5][region].push_back(new MPrism(vertices, num));
+	if(readElementBDF(fp, buffer, 6, -6, num, region, vertices, vertexMap))
+	  if(vertices.size() == 15)
+	    elements[5][region].push_back(new MPrism15(vertices, num));
+	  else
+	    elements[5][region].push_back(new MPrism(vertices, num));
       }
       else if(!strncmp(buffer, "CPYRAM", 6)){
-	if(readElementBDF(fp, buffer, 6, 5, &num, &region, vertices, vertexMap))
+	if(readElementBDF(fp, buffer, 6, 5, num, region, vertices, vertexMap))
 	  elements[6][region].push_back(new MPyramid(vertices, num));
       }
     }

@@ -109,16 +109,9 @@ public:
 
     std::vector<int> overlaps;
     FM->GetNeighbor(gf->tag(), overlaps);
-
-    for(unsigned int j = 0; j < overlaps.size(); j++){
-      GFace *gf2 = gf->model()->faceByTag(overlaps[j]);
-      if(gf != gf2){
-	
-	
-      }
-
+    for(unsigned int i = 0; i < overlaps.size(); i++){
+      GFace *gf2 = gf->model()->faceByTag(overlaps[i]);
     }
-    
   }
 };
 
