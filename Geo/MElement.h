@@ -129,11 +129,14 @@ class MElement
   // computes the barycenter
   virtual SPoint3 barycenter();
 
+  // revert the orientation of the element
+  virtual void revert() = 0;
+
   // compute and change the orientation of 3D elements to get
   // positive volume
   virtual double getVolume(){ return 0.; }
   virtual int getVolumeSign(){ return 1; }
-  virtual void setVolumePositive(){}
+  virtual void setVolumePositive(){ if(getVolumeSign() < 0) revert(); }
 
   // IO routines
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
@@ -178,6 +181,10 @@ class MLine : public MElement {
   virtual int getTypeForUNV(){ return 21; } // linear beam
   virtual char *getStringForPOS(){ return "SL"; }
   virtual char *getStringForBDF(){ return "CBAR"; }
+  virtual void revert() 
+  {
+    MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
+  }
 };
 
 class MLine3 : public MLine {
@@ -254,9 +261,7 @@ class MTriangle : public MElement {
   virtual char *getStringForBDF(){ return "CTRIA3"; }
   virtual void revert() 
   {
-    MVertex *vv = _v[0];
-    _v[0] = _v[1];
-    _v[1] = vv;
+    MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
 };
 
@@ -317,6 +322,12 @@ class MTriangle6 : public MTriangle {
   virtual int getTypeForUNV(){ return 92; } // thin shell parabolic triangle
   virtual char *getStringForPOS(){ return "ST2"; }
   virtual char *getStringForBDF(){ return "CTRIA6"; }
+  virtual void revert() 
+  {
+    MVertex *tmp;
+    tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
+    tmp = _vs[0]; _vs[0] = _vs[2]; _vs[2] = tmp;
+  }
 };
 
 class MQuadrangle : public MElement {
@@ -350,9 +361,7 @@ class MQuadrangle : public MElement {
   virtual char *getStringForBDF(){ return "CQUAD4"; }
   virtual void revert() 
   {
-    MVertex *vv = _v[1];
-    _v[1] = _v[3];
-    _v[3] = vv;
+    MVertex *tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
   }
 };
 
@@ -386,6 +395,13 @@ class MQuadrangle8 : public MQuadrangle {
   virtual int getTypeForUNV(){ return 95; } // shell parabolic quadrilateral
   virtual char *getStringForPOS(){ return 0; } // not available
   virtual char *getStringForBDF(){ return "CQUAD8"; }
+  virtual void revert() 
+  {
+    MVertex *tmp;
+    tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
+    tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
+    tmp = _vs[1]; _vs[1] = _vs[2]; _vs[2] = tmp;
+  }
 };
 
 class MQuadrangle9 : public MQuadrangle {
@@ -414,6 +430,13 @@ class MQuadrangle9 : public MQuadrangle {
   virtual int getTypeForUNV(){ return 0; } // not available
   virtual char *getStringForPOS(){ return "SQ2"; }
   virtual char *getStringForBDF(){ return 0; } // not available
+  virtual void revert() 
+  {
+    MVertex *tmp;
+    tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
+    tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
+    tmp = _vs[1]; _vs[1] = _vs[2]; _vs[2] = tmp;
+  }
 };
 
 class MTetrahedron : public MElement {
@@ -450,6 +473,10 @@ class MTetrahedron : public MElement {
   virtual int getTypeForUNV(){ return 111; } // solid linear tetrahedron
   virtual char *getStringForPOS(){ return "SS"; }
   virtual char *getStringForBDF(){ return "CTETRA"; }
+  virtual void revert()
+  {
+    MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
+  }
   virtual double getVolume()
   { 
     double mat[3][3];
@@ -465,13 +492,6 @@ class MTetrahedron : public MElement {
     return det3x3(mat) / 6.;
   }
   virtual int getVolumeSign(){ return sign(getVolume()); }
-  virtual void setVolumePositive()
-  {
-    if(getVolumeSign() < 0){
-      MVertex *tmp;
-      tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
-    }
-  }
   virtual double gammaShapeMeasure();
   virtual double etaShapeMeasure();
 };
@@ -512,14 +532,12 @@ class MTetrahedron10 : public MTetrahedron {
   virtual int getTypeForUNV(){ return 118; } // solid parabolic tetrahedron
   virtual char *getStringForPOS(){ return "SS2"; }
   virtual char *getStringForBDF(){ return "CTETRA"; }
-  virtual void setVolumePositive()
+  virtual void revert()
   {
-    if(getVolumeSign() < 0){
-      MVertex *tmp;
-      tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
-      tmp = _vs[1]; _vs[1] = _vs[2]; _vs[2] = tmp;
-      tmp = _vs[5]; _vs[5] = _vs[3]; _vs[3] = tmp;
-    }
+    MVertex *tmp;
+    tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
+    tmp = _vs[1]; _vs[1] = _vs[2]; _vs[2] = tmp;
+    tmp = _vs[5]; _vs[5] = _vs[3]; _vs[3] = tmp;
   }
 };
 
@@ -560,6 +578,12 @@ class MHexahedron : public MElement {
   virtual int getTypeForUNV(){ return 115; } // solid linear brick
   virtual char *getStringForPOS(){ return "SH"; }
   virtual char *getStringForBDF(){ return "CHEXA"; }
+  virtual void revert()
+  {
+    MVertex *tmp;
+    tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
+    tmp = _v[4]; _v[4] = _v[6]; _v[6] = tmp;
+  }
   virtual int getVolumeSign()
   { 
     double mat[3][3];
@@ -573,14 +597,6 @@ class MHexahedron : public MElement {
     mat[2][1] = _v[3]->z() - _v[0]->z();
     mat[2][2] = _v[4]->z() - _v[0]->z();
     return sign(det3x3(mat));
-  }
-  virtual void setVolumePositive()
-  {
-    if(getVolumeSign() < 0){
-      MVertex *tmp;
-      tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
-      tmp = _v[4]; _v[4] = _v[6]; _v[6] = tmp;
-    }
   }
 };
 
@@ -626,19 +642,17 @@ class MHexahedron20 : public MHexahedron {
   virtual int getTypeForUNV(){ return 116; } // solid parabolic brick
   virtual char *getStringForPOS(){ return 0; } // not available
   virtual char *getStringForBDF(){ return "CHEXA"; }
-  virtual void setVolumePositive()
+  virtual void revert()
   {
-    if(getVolumeSign() < 0){
-      MVertex *tmp;
-      tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
-      tmp = _v[4]; _v[4] = _v[6]; _v[6] = tmp;
-      MVertex *old[12];
-      for(int i = 0; i < 12; i++) old[i] = _vs[i];
-      _vs[0] = old[3]; _vs[1] = old[5]; _vs[2] = old[6];
-      _vs[3] = old[0]; _vs[4] = old[4]; _vs[5] = old[1];
-      _vs[6] = old[2]; _vs[7] = old[7]; _vs[8] = old[10];
-      _vs[9] = old[11]; _vs[10] = old[8]; _vs[11] = old[9];
-    }
+    MVertex *tmp;
+    tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
+    tmp = _v[4]; _v[4] = _v[6]; _v[6] = tmp;
+    MVertex *old[12];
+    for(int i = 0; i < 12; i++) old[i] = _vs[i];
+    _vs[0] = old[3]; _vs[1] = old[5]; _vs[2] = old[6];
+    _vs[3] = old[0]; _vs[4] = old[4]; _vs[5] = old[1];
+    _vs[6] = old[2]; _vs[7] = old[7]; _vs[8] = old[10];
+    _vs[9] = old[11]; _vs[10] = old[8]; _vs[11] = old[9];
   }
 };
 
@@ -676,19 +690,17 @@ class MHexahedron27 : public MHexahedron {
   virtual int getTypeForUNV(){ return 0; } // not available
   virtual char *getStringForPOS(){ return "SH2"; }
   virtual char *getStringForBDF(){ return 0; } // not available
-  virtual void setVolumePositive()
+  virtual void revert()
   {
-    if(getVolumeSign() < 0){
-      MVertex *tmp;
-      tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
-      tmp = _v[4]; _v[4] = _v[6]; _v[6] = tmp;
-      MVertex *old[12];
-      for(int i = 0; i < 12; i++) old[i] = _vs[i];
-      _vs[0] = old[3]; _vs[1] = old[5]; _vs[2] = old[6];
-      _vs[3] = old[0]; _vs[4] = old[4]; _vs[5] = old[1];
-      _vs[6] = old[2]; _vs[7] = old[7]; _vs[8] = old[10];
-      _vs[9] = old[11]; _vs[10] = old[8]; _vs[11] = old[9];
-    }
+    MVertex *tmp;
+    tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
+    tmp = _v[4]; _v[4] = _v[6]; _v[6] = tmp;
+    MVertex *old[12];
+    for(int i = 0; i < 12; i++) old[i] = _vs[i];
+    _vs[0] = old[3]; _vs[1] = old[5]; _vs[2] = old[6];
+    _vs[3] = old[0]; _vs[4] = old[4]; _vs[5] = old[1];
+    _vs[6] = old[2]; _vs[7] = old[7]; _vs[8] = old[10];
+    _vs[9] = old[11]; _vs[10] = old[8]; _vs[11] = old[9];
   }
 };
 
@@ -734,6 +746,12 @@ class MPrism : public MElement {
   virtual int getTypeForUNV(){ return 112; } // solid linear wedge
   virtual char *getStringForPOS(){ return "SI"; }
   virtual char *getStringForBDF(){ return "CPENTA"; }
+  virtual void revert()
+  {
+    MVertex *tmp;
+    tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
+    tmp = _v[3]; _v[3] = _v[4]; _v[4] = tmp;
+  }
   virtual int getVolumeSign()
   { 
     double mat[3][3];
@@ -747,14 +765,6 @@ class MPrism : public MElement {
     mat[2][1] = _v[2]->z() - _v[0]->z();
     mat[2][2] = _v[3]->z() - _v[0]->z();
     return sign(det3x3(mat));
-  }
-  virtual void setVolumePositive()
-  {
-    if(getVolumeSign() < 0){
-      MVertex *tmp;
-      tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
-      tmp = _v[3]; _v[3] = _v[4]; _v[4] = tmp;
-    }
   }
 };
 
@@ -796,16 +806,14 @@ class MPrism15 : public MPrism {
   virtual int getTypeForUNV(){ return 113; } // solid parabolic wedge
   virtual char *getStringForPOS(){ return 0; } // not available
   virtual char *getStringForBDF(){ return "CPENTA"; }
-  virtual void setVolumePositive()
+  virtual void revert()
   {
-    if(getVolumeSign() < 0){
-      MVertex *tmp;
-      tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
-      tmp = _v[3]; _v[3] = _v[4]; _v[4] = tmp;
-      tmp = _vs[1]; _vs[1] = _vs[3]; _vs[3] = tmp;
-      tmp = _vs[2]; _vs[2] = _vs[4]; _vs[4] = tmp;
-      tmp = _vs[7]; _vs[7] = _vs[8]; _vs[8] = tmp;
-    }
+    MVertex *tmp;
+    tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
+    tmp = _v[3]; _v[3] = _v[4]; _v[4] = tmp;
+    tmp = _vs[1]; _vs[1] = _vs[3]; _vs[3] = tmp;
+    tmp = _vs[2]; _vs[2] = _vs[4]; _vs[4] = tmp;
+    tmp = _vs[7]; _vs[7] = _vs[8]; _vs[8] = tmp;
   }
 };
 
@@ -839,16 +847,14 @@ class MPrism18 : public MPrism {
   virtual int getTypeForUNV(){ return 0; } // not available
   virtual char *getStringForPOS(){ return "SI2"; }
   virtual char *getStringForBDF(){ return 0; } // not available
-  virtual void setVolumePositive()
+  virtual void revert()
   {
-    if(getVolumeSign() < 0){
-      MVertex *tmp;
-      tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
-      tmp = _v[3]; _v[3] = _v[4]; _v[4] = tmp;
-      tmp = _vs[1]; _vs[1] = _vs[3]; _vs[3] = tmp;
-      tmp = _vs[2]; _vs[2] = _vs[4]; _vs[4] = tmp;
-      tmp = _vs[7]; _vs[7] = _vs[8]; _vs[8] = tmp;
-    }
+    MVertex *tmp;
+    tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
+    tmp = _v[3]; _v[3] = _v[4]; _v[4] = tmp;
+    tmp = _vs[1]; _vs[1] = _vs[3]; _vs[3] = tmp;
+    tmp = _vs[2]; _vs[2] = _vs[4]; _vs[4] = tmp;
+    tmp = _vs[7]; _vs[7] = _vs[8]; _vs[8] = tmp;
   }
 };
 
@@ -893,6 +899,10 @@ class MPyramid : public MElement {
   virtual int getTypeForUNV(){ return 0; } // not available
   virtual char *getStringForPOS(){ return "SY"; }
   virtual char *getStringForBDF(){ return "CPYRAM"; }
+  virtual void revert()
+  {
+    MVertex *tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
+  }
   virtual int getVolumeSign()
   { 
     double mat[3][3];
@@ -906,13 +916,6 @@ class MPyramid : public MElement {
     mat[2][1] = _v[3]->z() - _v[0]->z();
     mat[2][2] = _v[4]->z() - _v[0]->z();
     return sign(det3x3(mat));
-  }
-  virtual void setVolumePositive()
-  {
-    if(getVolumeSign() < 0){
-      MVertex *tmp;
-      tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
-    }
   }
 };
 
@@ -943,15 +946,13 @@ class MPyramid13 : public MPyramid {
   virtual int getTypeForUNV(){ return 0; } // not available
   virtual char *getStringForPOS(){ return 0; } // not available
   virtual char *getStringForBDF(){ return 0; } // not available
-  virtual void setVolumePositive()
+  virtual void revert()
   {
-    if(getVolumeSign() < 0){
-      MVertex *tmp;
-      tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
-      tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
-      tmp = _vs[1]; _vs[1] = _vs[5]; _vs[5] = tmp;
-      tmp = _vs[2]; _vs[2] = _vs[6]; _vs[6] = tmp;
-    }
+    MVertex *tmp;
+    tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
+    tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
+    tmp = _vs[1]; _vs[1] = _vs[5]; _vs[5] = tmp;
+    tmp = _vs[2]; _vs[2] = _vs[6]; _vs[6] = tmp;
   }
 };
 
@@ -984,15 +985,13 @@ class MPyramid14 : public MPyramid {
   virtual int getTypeForUNV(){ return 0; } // not available
   virtual char *getStringForPOS(){ return "SY2"; }
   virtual char *getStringForBDF(){ return 0; } // not available
-  virtual void setVolumePositive()
+  virtual void revert()
   {
-    if(getVolumeSign() < 0){
-      MVertex *tmp;
-      tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
-      tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
-      tmp = _vs[1]; _vs[1] = _vs[5]; _vs[5] = tmp;
-      tmp = _vs[2]; _vs[2] = _vs[6]; _vs[6] = tmp;
-    }
+    MVertex *tmp;
+    tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
+    tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
+    tmp = _vs[1]; _vs[1] = _vs[5]; _vs[5] = tmp;
+    tmp = _vs[2]; _vs[2] = _vs[6]; _vs[6] = tmp;
   }
 };
 
