@@ -1,4 +1,4 @@
-// $Id: gmshModel.cpp,v 1.18 2006-09-10 15:34:12 geuzaine Exp $
+// $Id: gmshModel.cpp,v 1.19 2006-09-10 16:10:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -110,9 +110,10 @@ void gmshModel::import()
       case MSH_PHYSICAL_SURFACE: ge = faceByTag(abs(num)); break;
       case MSH_PHYSICAL_VOLUME:  ge = regionByTag(abs(num)); break;
       }
-      if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), p->Num) == 
+      int pnum = sign(num) * p->Num;
+      if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) == 
 	 ge->physicals.end())
-	ge->physicals.push_back(sign(num) * p->Num);
+	ge->physicals.push_back(pnum);
     }
   }
   
