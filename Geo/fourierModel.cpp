@@ -102,6 +102,14 @@ public:
 	}
       }
     }
+    std::vector<MQuadrangle*> remaining;
+    for(unsigned int i = 0; i < gf->quadrangles.size(); i++)
+      if(gf->quadrangles[i]->getVisibility()) 
+	remaining.push_back(gf->quadrangles[i]);
+      else
+	delete gf->quadrangles[i];
+    gf->quadrangles.clear();
+    gf->quadrangles = remaining;
   }
 };
 
@@ -111,13 +119,11 @@ void getOrderedBoundaryVertices(std::vector<MElement*> &elements,
   typedef std::pair<MVertex*, MVertex*> vpair;
   std::map<vpair, vpair> edges;
   for(unsigned int i = 0; i < elements.size(); i++){
-    if(elements[i]->getVisibility() > 0){
-      for(int j = 0; j < elements[i]->getNumEdges(); j++){
-	MEdge e = elements[i]->getEdge(j);
-	vpair p(e.getMinVertex(), e.getMaxVertex());
-	if(edges.count(p)) edges.erase(p);
-	else edges[p] = vpair(e.getVertex(0), e.getVertex(1));
-      }
+    for(int j = 0; j < elements[i]->getNumEdges(); j++){
+      MEdge e = elements[i]->getEdge(j);
+      vpair p(e.getMinVertex(), e.getMaxVertex());
+      if(edges.count(p)) edges.erase(p);
+      else edges[p] = vpair(e.getVertex(0), e.getVertex(1));
     }
   }
   std::map<MVertex*, MVertex*> connect;
@@ -155,11 +161,44 @@ bool isConnected(GFace *gf1, GFace *gf2)
   return false;
 }
 
+void getIntersectingBoundaryParts(GFace *gf, std::vector<MElement*> &elements, int &start,
+				  std::map<int, std::vector<MVertex*> > &parts)
+{
+  bool newpart = true;
+  std::vector<MVertex*> vertices;
+  getOrderedBoundaryVertices(elements, vertices);
+  for(unsigned int i = 0; i < vertices.size() - 1; i++){
+    MVertex *v = vertices[i];
+    SPoint2 uv = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+    if(gf->containsParam(uv)){
+      GPoint xyz = gf->point(uv);
+      const double tol = 1.e-2; // need to adapt this w.r.t size of model
+      if(fabs(xyz.x() - v->x()) < tol && 
+	 fabs(xyz.y() - v->y()) < tol && 
+	 fabs(xyz.z() - v->z()) < tol){
+	if(newpart){
+	  start++;
+	  newpart = false;
+	}
+	v->setParameter(0, uv[0]);
+	v->setParameter(1, uv[1]);
+	parts[start].push_back(v);
+      }
+      else{
+	newpart = true;
+      }
+    }
+    else{
+      newpart = true;
+    }
+  }
+}
+
 class createGrout{
 public:
   void operator() (GFace *gf)
   {  
-    if(gf->tag() > 0) return;
+    if(gf->tag() > 1) return;
     printf("processing grout for face %d\n", gf->tag());
 
     GModel *m = gf->model();
@@ -173,88 +212,84 @@ public:
     // - patch with hard edges or connections: we don't have a hole, but
     //   we might have non-connected parts
     std::vector<MElement*> elements;
+
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
-      GFace *gf2 = *it;
-      if(isConnected(gf, gf2))
-	addElements(gf2, elements);
+      if(isConnected(gf, *it)){
+	printf("face %d: mesh connected to %d\n", gf->tag(), (*it)->tag());
+	addElements(*it, elements);
+      }
     }
-    std::vector<MVertex*> inside;
-    getOrderedBoundaryVertices(elements, inside);
+    int numinside = 0;
+    std::map<int, std::vector<MVertex*> > inside;
+    getIntersectingBoundaryParts(gf, elements, numinside, inside);
 
+    printf("numinside = %d\n", numinside);
 
-    std::map<int, std::vector<MVertex*> > outsidePart;
-    int part = 0;
+    int numoutside = 0;
+    std::map<int, std::vector<MVertex*> > outside;
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
-      GFace *gf2 = *it;
-      bool newpart = true;
-      if(!isConnected(gf, gf2)){
+      if(!isConnected(gf, *it)){
 	elements.clear();
-	addElements(gf2, elements);
-	std::vector<MVertex*> vertices;
-	getOrderedBoundaryVertices(elements, vertices);
-	for(unsigned int i = 0; i < vertices.size() - 1; i++){
-	  MVertex *v = vertices[i];
-	  SPoint2 uv = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
-	  if(gf->containsParam(uv)){
-	    GPoint xyz = gf->point(uv);
-	    const double tol = 1.e-2; // need to adapt this w.r.t size of model
-	    if(fabs(xyz.x() - v->x()) < tol && 
-	       fabs(xyz.y() - v->y()) < tol && 
-	       fabs(xyz.z() - v->z()) < tol){
-	      if(newpart){
-		part++;
-		newpart = false;
-	      }
-	      v->setParameter(0, uv[0]);
-	      v->setParameter(1, uv[1]);
-	      outsidePart[part].push_back(v);
-	    }
-	    else{
-	      newpart = true;
-	    }
-	  }
-	  else{
-	    newpart = true;
-	  }
-	}
+	addElements(*it, elements);
+	getIntersectingBoundaryParts(gf, elements, numoutside, outside);
       }
     }
 
-    // order exterior parts
-    std::vector<std::pair<double, int> > angle;
-    for(std::map<int, std::vector<MVertex*> >::iterator it = outsidePart.begin();
-	it != outsidePart.end(); it++){
-      SPoint2 barycenter(0., 0.);
-      for(unsigned int i = 0; i < it->second.size(); i++){
+    printf("numoutside = %d\n", numoutside);
+
+    std::vector<MVertex*> hole, loop;
+    
+    if(numinside == 1){
+      // create hole
+      SPoint2 ic(0., 0.);
+      for(unsigned int i = 0; i < inside[1].size(); i++){
+	hole.push_back(inside[1][i]);
 	double u, v;
-	it->second[i]->getParameter(0, u);
-	it->second[i]->getParameter(1, v);
-	barycenter += SPoint2(u, v);
+	inside[1][i]->getParameter(0, u);
+	inside[1][i]->getParameter(1, v);
+	ic += SPoint2(u, v);
       }
-      barycenter *= 1. / (double)it->second.size();
-      double a = atan2(barycenter[1] - 0.5, barycenter[0] - 0.5);
-      angle.push_back(std::make_pair(a, it->first));
+      ic *= 1. / (double) inside[1].size(); 
+      hole.push_back(hole[0]);
+
+      // order exterior parts
+      std::vector<std::pair<double, int> > angle;
+      std::map<int, std::vector<MVertex*> >::iterator it = outside.begin();
+      for(; it != outside.end(); it++){
+	SPoint2 oc(0., 0.);
+	for(unsigned int i = 0; i < it->second.size(); i++){
+	  double u, v;
+	  it->second[i]->getParameter(0, u);
+	  it->second[i]->getParameter(1, v);
+	  oc += SPoint2(u, v);
+	}
+	oc *= 1. / (double)it->second.size();
+	double a = atan2(oc[1] - ic[1], oc[0] - ic[0]);
+	angle.push_back(std::make_pair(a, it->first));
+      }
+      std::sort(angle.begin(), angle.end());
+      
+      // create exterior loop
+      for(unsigned int i = 0; i < angle.size(); i++){
+	for(unsigned int j = 0; j < outside[angle[i].second].size(); j++)
+	  loop.push_back(outside[angle[i].second][j]);
+      }
+      loop.push_back(hole[0]);
+
+      // mesh the grout
+      fourierFace *grout = new fourierFace(gf, loop, hole);
+      meshGFace mesh; 
+      mesh(grout);
+      for(unsigned int i = 0; i < grout->triangles.size(); i++)
+	gf->triangles.push_back(grout->triangles[i]);
+      for(unsigned int i = 0; i < grout->mesh_vertices.size(); i++)
+	gf->mesh_vertices.push_back(grout->mesh_vertices[i]);
+      delete grout;
     }
-    std::sort(angle.begin(), angle.end());
+    else{
 
-    std::vector<MVertex*> outside;
-    for(unsigned int i = 0; i < angle.size(); i++){
-      for(unsigned int j = 0; j < outsidePart[angle[i].second].size(); j++)
-	outside.push_back(outsidePart[angle[i].second][j]);
-    }
-    outside.push_back(outside[0]);
+      Msg(WARNING, "Faces with no holes not implemented yet!");
 
-
-    if(gf->tag() == 0){
-    // mesh the grout
-    fourierFace *grout = new fourierFace(gf, outside, inside);
-    meshGFace mesh; 
-    mesh(grout);
-    for(unsigned int i = 0; i < grout->triangles.size(); i++)
-      gf->triangles.push_back(grout->triangles[i]);
-    for(unsigned int i = 0; i < grout->mesh_vertices.size(); i++)
-      gf->mesh_vertices.push_back(grout->mesh_vertices[i]);
-    delete grout;
     }
 
     // debug
@@ -262,16 +297,16 @@ public:
     sprintf(name, "aa%d.pos", gf->tag());
     FILE *fp = fopen(name, "w");
     fprintf(fp, "View \"aa\"{\n");
-    for(unsigned int i = 0; i < inside.size(); i++){
-      double x = inside[i]->x(), y = inside[i]->y(), z = inside[i]->z();
+    for(unsigned int i = 0; i < hole.size(); i++){
+      double x = hole[i]->x(), y = hole[i]->y(), z = hole[i]->z();
       // plot in parametric space:
-      inside[i]->getParameter(0, x); inside[i]->getParameter(1, y); z = 0;
+      hole[i]->getParameter(0, x); hole[i]->getParameter(1, y); z = 0;
       fprintf(fp, "SP(%g,%g,%g){0};\n", x, y, z);
     }
-    for(unsigned int i = 0; i < outside.size(); i++){
-      double x = outside[i]->x(), y = outside[i]->y(), z = outside[i]->z();
+    for(unsigned int i = 0; i < loop.size(); i++){
+      double x = loop[i]->x(), y = loop[i]->y(), z = loop[i]->z();
       // plot in parametric space:
-      outside[i]->getParameter(0, x); outside[i]->getParameter(1, y); z = 0;
+      loop[i]->getParameter(0, x); loop[i]->getParameter(1, y); z = 0;
       fprintf(fp, "SP(%g,%g,%g){%d};\n", x, y, z, i);
     }
     fprintf(fp, "};\n");    
@@ -286,7 +321,6 @@ public:
     Post_View *view = BeginView(1);
     for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
       MElement *e = gf->quadrangles[i];
-      //if(!e->getVisibility()) continue;
       double x[4], y[4], z[4], val[4];
       for(int j = 0; j < 4; j++){
 	MVertex *v = e->getVertex(j);
