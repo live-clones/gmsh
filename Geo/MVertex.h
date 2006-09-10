@@ -73,8 +73,9 @@ class MVertex{
   inline int getNum() const {return _num;}
   inline void setNum(int num) { _num = num; }
 
-  // Get ith parameter
+  // get/set ith parameter
   virtual bool getParameter(int i, double &par){ return false; }
+  virtual bool setParameter(int i, double par){ return false; }
 
   // Get the data associated with this vertex
   virtual void *getData(){ return 0; }
@@ -99,6 +100,7 @@ class MEdgeVertex : public MVertex{
   }
   ~MEdgeVertex(){}
   virtual bool getParameter(int i, double &par){ par = _u; return true; }
+  virtual bool setParameter(int i, double par){ _u = par; return true; }
 };
 
 class MFaceVertex : public MVertex{
@@ -111,6 +113,7 @@ class MFaceVertex : public MVertex{
   }
   ~MFaceVertex(){}
   virtual bool getParameter(int i, double &par){ par = (i ? _v : _u); return true; }
+  virtual bool setParameter(int i, double par){ if(!i) _u = par; else _v = par; return true; }
 };
 
 template<class T>

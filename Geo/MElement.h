@@ -238,12 +238,6 @@ class MTriangle : public MElement {
   virtual int getDim(){ return 2; }
   virtual int getNumVertices(){ return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
-  virtual void revert () 
-    {
-      MVertex *vv = _v[0];
-      _v[0] = _v[1];
-      _v[1] = vv;
-    }
   virtual int getNumEdges(){ return 3; }
   virtual MEdge getEdge(int num)
   {
@@ -258,6 +252,12 @@ class MTriangle : public MElement {
   virtual int getTypeForUNV(){ return 91; } // thin shell linear triangle
   virtual char *getStringForPOS(){ return "ST"; }
   virtual char *getStringForBDF(){ return "CTRIA3"; }
+  virtual void revert() 
+  {
+    MVertex *vv = _v[0];
+    _v[0] = _v[1];
+    _v[1] = vv;
+  }
 };
 
 class MTriangle6 : public MTriangle {
@@ -348,6 +348,12 @@ class MQuadrangle : public MElement {
   virtual int getTypeForUNV(){ return 94; } // thin shell linear quadrilateral
   virtual char *getStringForPOS(){ return "SQ"; }
   virtual char *getStringForBDF(){ return "CQUAD4"; }
+  virtual void revert() 
+  {
+    MVertex *vv = _v[1];
+    _v[1] = _v[3];
+    _v[3] = vv;
+  }
 };
 
 class MQuadrangle8 : public MQuadrangle {

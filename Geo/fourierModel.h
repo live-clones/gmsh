@@ -11,15 +11,58 @@ class fourierModel : public GModel {
   virtual ~fourierModel();
 };
 
+#include "GVertex.h"
+#include "GEdge.h"
 #include "GFace.h"
 #include "Range.h"
+
+class fourierVertex : public GVertex {
+ private:
+  MVertex *_v;
+ public:
+  fourierVertex(GModel *m, MVertex *v) : GVertex(m, v->getNum()), _v(v)
+  {
+    mesh_vertices.push_back(v);
+  }
+  virtual ~fourierVertex() {}
+  virtual GPoint point() const { return GPoint(_v->x(), _v->y(), _v->z(), this); }
+  virtual double x() const { return _v->x(); }
+  virtual double y() const { return _v->y(); }
+  virtual double z() const { return _v->z(); }
+    virtual double prescribedMeshSizeAtVertex() const { return 0.1; }
+};
+
+class fourierEdge : public GEdge {
+ private:
+  GVertex *v0, *v1;
+ public:
+  fourierEdge(GModel *m, int num, GVertex *v1, GVertex *v2);
+  virtual ~fourierEdge() {}
+  double period() const { throw ; }
+  virtual bool periodic(int dim=0) const { return false; }
+  virtual Range<double> parBounds(int i) const { throw; }
+  virtual GeomType geomType() const { throw; }
+  virtual bool degenerate(int) const { return false; }
+  virtual bool continuous(int dim) const { return true; }
+  virtual GPoint point(double p) const { throw; }
+  virtual GPoint closestPoint(const SPoint3 & queryPoint) { throw; }
+  virtual int containsPoint(const SPoint3 &pt) const { throw; }
+  virtual int containsParam(double pt) const { throw; }
+  virtual SVector3 firstDer(double par) const { throw; }
+  virtual SPoint2 reparamOnFace(GFace * face, double epar, int dir) const { throw; }
+  virtual double parFromPoint(const SPoint3 &pt) const { throw; }
+  virtual int minimumMeshSegments () const { throw; }
+  virtual int minimumDrawSegments () const { throw; }
+};
 
 class fourierFace : public GFace {
  private:
   int _num;
+  int _discrete;
  public:
   fourierFace(GModel *m, int num);
-  virtual ~fourierFace(){}
+  fourierFace(GFace *f, std::vector<MVertex*> &loop, std::vector<MVertex*> &hole);
+  virtual ~fourierFace();
   Range<double> parBounds(int i) const; 
   virtual int paramDegeneracies(int dir, double *par) { return 0; }
   

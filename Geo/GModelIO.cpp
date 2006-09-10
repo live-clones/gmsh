@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.49 2006-09-09 01:10:05 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.50 2006-09-10 01:49:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1073,7 +1073,6 @@ int GModel::readUNV(const std::string &name)
 
   char buffer[256];
   std::map<int, MVertex*> vertexMap;
-  std::map<int, std::vector<MVertex*> > points;
   std::map<int, std::vector<MElement*> > elements[7];
   std::map<int, std::map<int, std::string> > physicals[4];
 
@@ -1294,8 +1293,6 @@ int GModel::readMESH(const std::string &name)
   std::vector<MVertex*> vertexVector;
   std::map<int, std::vector<MElement*> > elements[3];
 
-  int nbv, nbe, n[30], cl;
-
   while(!feof(fp)) {
     if(!fgets(buffer, sizeof(buffer), fp)) break;
     if(buffer[0] != '#'){ // skip comments
@@ -1305,22 +1302,26 @@ int GModel::readMESH(const std::string &name)
       }
       else if(!strcmp(str, "Vertices")){
 	if(!fgets(buffer, sizeof(buffer), fp)) break;
+	int nbv;
 	sscanf(buffer, "%d", &nbv);
 	Msg(INFO, "%d vertices", nbv);
 	vertexVector.resize(nbv);
 	for(int i = 0; i < nbv; i++) {
 	  if(!fgets(buffer, sizeof(buffer), fp)) break;
+	  int dum;
 	  double x, y, z;
-	  sscanf(buffer, "%lf %lf %lf %d", &x, &y, &z, &cl);
+	  sscanf(buffer, "%lf %lf %lf %d", &x, &y, &z, &dum);
 	  vertexVector[i] = new MVertex(x, y, z);
 	}
       }
       else if(!strcmp(str, "Triangles")){
 	if(!fgets(buffer, sizeof(buffer), fp)) break;
+	int nbe;
 	sscanf(buffer, "%d", &nbe);
 	Msg(INFO, "%d triangles", nbe);
 	for(int i = 0; i < nbe; i++) {
 	  if(!fgets(buffer, sizeof(buffer), fp)) break;
+	  int n[3], cl;
 	  sscanf(buffer, "%d %d %d %d", &n[0], &n[1], &n[2], &cl);
 	  for(int j = 0; j < 3; j++) n[j]--;
 	  std::vector<MVertex*> vertices;
@@ -1330,10 +1331,12 @@ int GModel::readMESH(const std::string &name)
       }
       else if(!strcmp(str, "Quadrilaterals")) {
 	if(!fgets(buffer, sizeof(buffer), fp)) break;
+	int nbe;
 	sscanf(buffer, "%d", &nbe);
 	Msg(INFO, "%d quadrangles", nbe);
 	for(int i = 0; i < nbe; i++) {
 	  if(!fgets(buffer, sizeof(buffer), fp)) break;
+	  int n[4], cl;
 	  sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
 	  for(int j = 0; j < 4; j++) n[j]--;
 	  std::vector<MVertex*> vertices;
@@ -1343,10 +1346,12 @@ int GModel::readMESH(const std::string &name)
       }
       else if(!strcmp(str, "Tetrahedra")) {
 	if(!fgets(buffer, sizeof(buffer), fp)) break;
+	int nbe;
 	sscanf(buffer, "%d", &nbe);
 	Msg(INFO, "%d tetrahedra", nbe);
 	for(int i = 0; i < nbe; i++) {
 	  if(!fgets(buffer, sizeof(buffer), fp)) break;
+	  int n[4], cl;
 	  sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
 	  for(int j = 0; j < 4; j++) n[j]--;
 	  std::vector<MVertex*> vertices;
@@ -1564,7 +1569,7 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
     strncpy(tmp, fields[i], cmax); n[i - 2] = atoi(tmp);
   }
 
-  // ignore the extra fields when we now how many vertices we need
+  // ignore the extra fields when we know how many vertices we need
   int numCheck = (numVertices > 0) ? numVertices : fields.size() - 2;
   if(!getVertices(numCheck, n, vertexMap, vertices)) return 0;
   return 1;
