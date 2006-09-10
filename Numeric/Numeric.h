@@ -31,7 +31,6 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)<(b))?(b):(a))
 #define SQR(a)   ((a)*(a))
-#define SIGN(a,b)((b) >= 0.0 ? fabs(a) : -fabs(a))
 
 #define IMIN MIN
 #define LMIN MIN

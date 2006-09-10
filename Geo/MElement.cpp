@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.18 2006-09-08 17:45:51 geuzaine Exp $
+// $Id: MElement.cpp,v 1.19 2006-09-10 15:34:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -121,36 +121,20 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
   if(!binary){
     fprintf(fp, "%d %d", num ? num : _num, type);
     if(version < 2.0)
-      fprintf(fp, " %d %d %d", physical, elementary, n);
+      fprintf(fp, " %d %d %d", abs(physical), elementary, n);
     else
-      fprintf(fp, " 3 %d %d %d", physical, elementary, _partition);
+      fprintf(fp, " 3 %d %d %d", abs(physical), elementary, _partition);
   }
   else{
-    int tags[4] = {num ? num : _num, physical, elementary, _partition};
+    int tags[4] = {num ? num : _num, abs(physical), elementary, _partition};
     fwrite(tags, sizeof(int), 4, fp);
   }
 
-  int verts[30];
+  if(physical < 0) revert();
 
-  if(physical >= 0){
-    for(int i = 0; i < n; i++)
-      verts[i] = getVertex(i)->getNum();
-  }
-  else{
-    int nn = n - getNumEdgeVertices() - getNumFaceVertices() - getNumVolumeVertices();
-    int j = 0;
-    for(int i = 0; i < nn; i++)
-      verts[j++] = getVertex(nn - i - 1)->getNum();
-    int ne = getNumEdgeVertices();
-    for(int i = 0; i < ne; i++)
-      verts[j++] = getVertex(nn + ne - i - 1)->getNum();
-    int nf = getNumFaceVertices();
-    for(int i = 0; i < nf; i++)
-      verts[j++] = getVertex(nn + ne + nf - i - 1)->getNum();
-    int nv = getNumVolumeVertices();
-    for(int i = 0; i < nv; i++)
-      verts[j++] = getVertex(n - i - 1)->getNum();
-  }
+  int verts[30];
+  for(int i = 0; i < n; i++)
+    verts[i] = getVertex(i)->getNum();
 
   if(!binary){
     for(int i = 0; i < n; i++)
@@ -160,6 +144,8 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
   else{
     fwrite(verts, sizeof(int), n, fp);
   }
+
+  if(physical < 0) revert();
 }
 
 void MElement::writePOS(FILE *fp, double scalingFactor, int elementary)
@@ -261,7 +247,7 @@ void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
   setVolumePositive();
   int n = getNumVertices();
   int physical_property = elementary;
-  int material_property = physical;
+  int material_property = abs(physical);
   int color = 7;
   fprintf(fp, "%10d%10d%10d%10d%10d%10d\n",
 	  num ? num : _num, type, physical_property, material_property, color, n);

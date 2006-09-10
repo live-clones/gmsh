@@ -33,8 +33,6 @@ class fourierVertex : public GVertex {
 };
 
 class fourierEdge : public GEdge {
- private:
-  GVertex *v0, *v1;
  public:
   fourierEdge(GModel *m, int num, GVertex *v1, GVertex *v2);
   virtual ~fourierEdge() {}
@@ -57,8 +55,11 @@ class fourierEdge : public GEdge {
 
 class fourierFace : public GFace {
  private:
-  int _num;
+  // flag to know if is the face is already meshed
   int _discrete;
+  // vertices and edges purely local to the face (not shared with the model)
+  GVertex *_v[4];
+  GEdge *_e[4];
  public:
   fourierFace(GModel *m, int num);
   fourierFace(GFace *f, std::vector<MVertex*> &loop, std::vector<MVertex*> &hole);

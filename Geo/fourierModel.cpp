@@ -12,11 +12,11 @@ extern Context_T CTX;
 
 static model *FM = 0;
 
-class meshFourierFace{
+class meshCartesian{
 public:
   void operator() (GFace *gf)
   {  
-    int M = 30, N = 30;
+    int M = (int)(30. / CTX.mesh.lc_factor), N = (int)(30. / CTX.mesh.lc_factor);
     for(int i = 0; i < M; i++){
       for(int j = 0; j < N; j++){
 	double u = i/(double)(M - 1);
@@ -159,26 +159,33 @@ class createGrout{
 public:
   void operator() (GFace *gf)
   {  
-    if(gf->tag() != 0) return;
+    if(gf->tag() > 0) return;
     printf("processing grout for face %d\n", gf->tag());
 
-    std::vector<int> overlaps;
-    FM->GetNeighbor(gf->tag(), overlaps);
+    GModel *m = gf->model();
 
+    // need to find the disconnected parts in inside too!!!  then
+    // we'll pair them with disconnected parts in outside (by looking
+    // at the value of the POU)
+    // Distinguish 2 cases: 
+    // - patch with no hard edges and and no connections: we have a hole
+    //   THIS IS WHAT WE ASSUME NOW
+    // - patch with hard edges or connections: we don't have a hole, but
+    //   we might have non-connected parts
     std::vector<MElement*> elements;
-    for(unsigned int i = 0; i < overlaps.size(); i++){
-      GFace *gf2 = gf->model()->faceByTag(overlaps[i]);
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
+      GFace *gf2 = *it;
       if(isConnected(gf, gf2))
 	addElements(gf2, elements);
     }
-
     std::vector<MVertex*> inside;
     getOrderedBoundaryVertices(elements, inside);
 
+
     std::map<int, std::vector<MVertex*> > outsidePart;
     int part = 0;
-    for(unsigned int i = 0; i < overlaps.size(); i++){
-      GFace *gf2 = gf->model()->faceByTag(overlaps[i]);
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
+      GFace *gf2 = *it;
       bool newpart = true;
       if(!isConnected(gf, gf2)){
 	elements.clear();
@@ -237,15 +244,20 @@ public:
     }
     outside.push_back(outside[0]);
 
+
+    if(gf->tag() == 0){
     // mesh the grout
-    fourierFace *tmp = new fourierFace(gf, outside, inside);
+    fourierFace *grout = new fourierFace(gf, outside, inside);
     meshGFace mesh; 
-    mesh(tmp);
-    for(unsigned int i = 0; i < tmp->triangles.size(); i++)
-      gf->triangles.push_back(tmp->triangles[i]);
+    mesh(grout);
+    for(unsigned int i = 0; i < grout->triangles.size(); i++)
+      gf->triangles.push_back(grout->triangles[i]);
+    for(unsigned int i = 0; i < grout->mesh_vertices.size(); i++)
+      gf->mesh_vertices.push_back(grout->mesh_vertices[i]);
+    delete grout;
+    }
 
-    // mesh and store elements in gf
-
+    // debug
     char name[256];
     sprintf(name, "aa%d.pos", gf->tag());
     FILE *fp = fopen(name, "w");
@@ -323,8 +335,8 @@ fourierModel::fourierModel(const std::string &name)
   for(int i = 0; i < FM->GetNumPatches(); i++)
     add(new fourierFace(this, i));
 
-  // mesh each face
-  std::for_each(firstFace(), lastFace(), meshFourierFace());
+  // mesh each face with quads
+  std::for_each(firstFace(), lastFace(), meshCartesian());
 
   // compute partition of unity
   std::for_each(firstFace(), lastFace(), computePartitionOfUnity());
@@ -356,12 +368,14 @@ fourierEdge::fourierEdge(GModel *model, int num, GVertex *v1, GVertex *v2)
 fourierFace::fourierFace(GModel *m, int num)
   : GFace(m, num)
 {
+  for(int i = 0; i < 4; i++){ _v[i] = 0; _e[i] = 0; }
   _discrete = 1;
 }
 
 fourierFace::fourierFace(GFace *f, std::vector<MVertex*> &loop, std::vector<MVertex*> &hole)
   : GFace(f->model(), f->tag())
 {
+  for(int i = 0; i < 4; i++){ _v[i] = 0; _e[i] = 0; }
   _discrete = 0;
 
   if(!loop.size()){
@@ -369,39 +383,56 @@ fourierFace::fourierFace(GFace *f, std::vector<MVertex*> &loop, std::vector<MVer
     return; 
   }
   
-  fourierVertex *v1 = new fourierVertex(f->model(), loop[0]);
-  fourierVertex *v2 = new fourierVertex(f->model(), loop[loop.size() - 2]);
-
-  fourierEdge *e1 = new fourierEdge(f->model(), 1, v1, v2);
-  e1->addFace(this);
+  _v[0] = new fourierVertex(f->model(), loop[0]);
+  _v[1] = new fourierVertex(f->model(), loop[loop.size() - 2]);
+  _e[0] = new fourierEdge(f->model(), 1, _v[0], _v[1]);
+  _e[0]->addFace(this);
+  _e[1] = new fourierEdge(f->model(), 2, _v[1], _v[0]);
+  _e[1]->addFace(this);
   for(unsigned int i = 1; i < loop.size() - 2; i++)
-    e1->mesh_vertices.push_back(loop[i]);
+    _e[0]->mesh_vertices.push_back(loop[i]);
 
-  fourierEdge *e2 = new fourierEdge(f->model(), 2, v2, v1);
-  e2->addFace(this);
-
-  l_edges.push_back(e1); l_dirs.push_back(1);
-  l_edges.push_back(e2); l_dirs.push_back(1);
+  l_edges.push_back(_e[0]); l_dirs.push_back(1);
+  l_edges.push_back(_e[1]); l_dirs.push_back(1);
 
   if(hole.size()){
-    fourierVertex *v3 = new fourierVertex(f->model(), hole[0]);
-    fourierVertex *v4 = new fourierVertex(f->model(), hole[hole.size() - 2]);
-
-    fourierEdge *e3 = new fourierEdge(f->model(), 3, v3, v4);
-    e3->addFace(this);
+    _v[2] = new fourierVertex(f->model(), hole[0]);
+    _v[3] = new fourierVertex(f->model(), hole[hole.size() - 2]);
+    _e[2] = new fourierEdge(f->model(), 3, _v[2], _v[3]);
+    _e[2]->addFace(this);
+    _e[3] = new fourierEdge(f->model(), 4, _v[3], _v[2]);
+    _e[3]->addFace(this);
     for(unsigned int i = 1; i < hole.size() - 2; i++)
-      e3->mesh_vertices.push_back(hole[i]);
-    
-    fourierEdge *e4 = new fourierEdge(f->model(), 4, v4, v3);
-    e3->addFace(this);
+      _e[2]->mesh_vertices.push_back(hole[i]);
 
-    l_edges.push_back(e3); l_dirs.push_back(1);
-    l_edges.push_back(e4); l_dirs.push_back(1);
+    l_edges.push_back(_e[2]); l_dirs.push_back(1);
+    l_edges.push_back(_e[3]); l_dirs.push_back(1);
   }
 }
 
 fourierFace::~fourierFace()
 {
+  if(!_discrete){
+    // this face was just used temporarily for meshing, so don't
+    // delete the mesh vertices or the mesh elements: they have been
+    // transferred elsewhere
+    for(int i = 0; i < 4; i++){ 
+      if(_e[i]){
+	_e[i]->mesh_vertices.clear();
+	delete _e[i];
+      }
+    }
+    for(int i = 0; i < 4; i++){ 
+      if(_v[i]){
+	_v[i]->mesh_vertices.clear();
+	delete _v[i];
+      }
+    }
+    triangles.clear();
+    quadrangles.clear();
+    mesh_vertices.clear();
+    l_edges.clear();
+  }
 }
 
 Range<double> fourierFace::parBounds(int i) const

@@ -1,4 +1,4 @@
-// $Id: gsl_brent.cpp,v 1.13 2006-01-06 00:34:27 geuzaine Exp $
+// $Id: gsl_brent.cpp,v 1.14 2006-09-10 15:34:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -109,6 +109,7 @@ double brent(double ax, double bx, double cx,
 #define MYGOLD_  1.618034
 #define MYLIMIT_ 100.0
 #define MYTINY_  1.0e-20
+#define SIGN(a,b)((b) >= 0.0 ? fabs(a) : -fabs(a))
 
 void mnbrak(double *ax, double *bx, double *cx, 
 	    double *fa_dummy, double *fb_dummy, double *fc_dummy, 

@@ -1,4 +1,4 @@
-// $Id: gmshModel.cpp,v 1.17 2006-09-07 05:04:38 geuzaine Exp $
+// $Id: gmshModel.cpp,v 1.18 2006-09-10 15:34:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 #include "Mesh.h"
 #include "Geo.h"
 #include "Tools.h"
+#include "Numeric.h"
 #include "Message.h"
 #include "gmshVertex.h"
 #include "gmshFace.h"
@@ -104,14 +105,14 @@ void gmshModel::import()
       List_Read(p->Entities, j, &num);
       GEntity *ge = 0;
       switch(p->Typ){
-      case MSH_PHYSICAL_POINT:   ge = vertexByTag(num); break;
-      case MSH_PHYSICAL_LINE:    ge = edgeByTag(num); break;
-      case MSH_PHYSICAL_SURFACE: ge = faceByTag(num); break;
-      case MSH_PHYSICAL_VOLUME:  ge = regionByTag(num); break;
+      case MSH_PHYSICAL_POINT:   ge = vertexByTag(abs(num)); break;
+      case MSH_PHYSICAL_LINE:    ge = edgeByTag(abs(num)); break;
+      case MSH_PHYSICAL_SURFACE: ge = faceByTag(abs(num)); break;
+      case MSH_PHYSICAL_VOLUME:  ge = regionByTag(abs(num)); break;
       }
       if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), p->Num) == 
 	 ge->physicals.end())
-	ge->physicals.push_back(p->Num);
+	ge->physicals.push_back(sign(num) * p->Num);
     }
   }
   
