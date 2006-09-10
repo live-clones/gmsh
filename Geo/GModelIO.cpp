@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.50 2006-09-10 01:49:31 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.51 2006-09-10 03:25:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1446,10 +1446,18 @@ static int getFormatBDF(char *buffer, int &keySize)
 static double atofBDF(char *str)
 {
   int len = strlen(str);
-  for(int i = 0; i < len; i++)
-    if(str[i] == 'E') return atof(str);
-  // treat special Nastran floating point formats (e.g. "-7.-1"
-  // instead of "-7.E-01" or "2.3+2" instead of "2.3E+02")
+  // classic numbers with E or D exponent notation
+  for(int i = 0; i < len; i++){
+    if(str[i] == 'E') {
+      return atof(str);
+    }
+    else if(str[i] == 'D'){ 
+      str[i] = 'E'; 
+      return atof(str);
+    }
+  }
+  // special Nastran floating point format (e.g. "-7.-1" instead of
+  // "-7.E-01" or "2.3+2" instead of "2.3E+02")
   char tmp[32];
   int j = 0, leading_minus = 1;
   for(int i = 0; i < len; i++){
