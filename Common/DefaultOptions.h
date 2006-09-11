@@ -975,7 +975,7 @@ StringXNumber MeshOptions_Number[] = {
     "Only display elements whose longest edge is greater than RadiusInf" },
   { F|O, "RadiusSup" , opt_mesh_radius_sup , 0.0 , 
     "Only display elements whose longest edge is smaller than RadiusSup" },
-  { F|O, "RandomFactor" , opt_mesh_rand_factor , 1.e-4 ,
+  { F|O, "RandomFactor" , opt_mesh_rand_factor , 1.e-10 ,
     "Random factor used in 2D and 3D meshing algorithm (test other values when the algorithm fails)" },
   { F|O, "RecombineAlgo" , opt_mesh_recombine_algo , 1 ,
     "Recombine algorithm (1=mixed triangles-quadrangles, 2=all quadrangles)" }, 

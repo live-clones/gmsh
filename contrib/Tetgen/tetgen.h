@@ -520,7 +520,9 @@ class tetgenbehavior {
 ///////////////////////////////////////////////////////////////////////////////
 
 REAL exactinit();
+REAL incircle(REAL *pa, REAL *pb, REAL *pc, REAL *pd);
 REAL orient3d(REAL *pa, REAL *pb, REAL *pc, REAL *pd);
+REAL orient2d(REAL *pa, REAL *pb, REAL *pc);
 REAL insphere(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe);
 
 ///////////////////////////////////////////////////////////////////////////////

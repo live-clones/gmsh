@@ -1,4 +1,4 @@
-// $Id: 2D_DivAndConq.cpp,v 1.21 2006-01-06 00:34:25 geuzaine Exp $
+// $Id: 2D_DivAndConq.cpp,v 1.22 2006-09-11 15:23:54 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -183,7 +183,7 @@ Segment UpperCommonTangent(DT vl, DT vr)
 
 /* return 1 if the point k is NOT in the circumcircle of
    triangle hij */
-
+#ifndef HAVE_TETGEN
 int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
 {
   double xc, yc, rcarre, distca;
@@ -209,6 +209,28 @@ int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
   else
     return (0); /* point not in circle, because no circle !     */
 }
+#else 
+#include "tetgen.h"
+int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
+{
+  exactinit() ;
+  if((h == i) && (h == j) && (h == k)) {
+    Msg(GERROR, "3 identical points in Qtest");
+    return (0); /* returning 1 will cause looping for ever */
+  }
+  
+  REAL pa[2] = {(REAL)pPointArray[h].where.h,(REAL)pPointArray[h].where.v};
+  REAL pb[2] = {(REAL)pPointArray[i].where.h,(REAL)pPointArray[i].where.v};
+  REAL pc[2] = {(REAL)pPointArray[j].where.h,(REAL)pPointArray[j].where.v};
+  REAL pd[2] = {(REAL)pPointArray[k].where.h,(REAL)pPointArray[k].where.v};
+  
+  REAL result = incircle ( pa, pb, pc, pd ) * orient2d (pa,pb,pc);
+  //  Msg(INFO, "Qtest %12.5E",result);
+  
+  return (result < 0)?1:0;
+}
+#endif
+
 
 int merge(DT vl, DT vr)
 {

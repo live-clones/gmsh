@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.12 2006-09-08 02:39:43 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.13 2006-09-11 15:23:54 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -443,7 +443,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	    }
 	}
 	IT++;
-	//	Msg(INFO," %d split %d swap %d collapse %d smooth",nb_split,nb_swap,nb_collaps,nb_smooth);
+	Msg(INFO," iter %d minL %g maxL %g %d split %d swap %d collapse %d smooth",IT,minL,maxL,nb_split,nb_swap,nb_collaps,nb_smooth);
 	m.cleanup();  
     }  
 }
@@ -895,7 +895,7 @@ void gmsh2DMeshGenerator ( GFace *gf )
   // goto hhh;
    // start mesh generation
 
-  RefineMesh (gf,*m,20);
+  RefineMesh (gf,*m,15);
   //  OptimizeMesh (gf,*m,2);
 
 

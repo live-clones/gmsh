@@ -1,9 +1,14 @@
 #include "meshGRegion.h"
+#include "GModel.h"
 #include "GRegion.h"
 #include "GFace.h"
+#include "GEdge.h"
 #include "BDS.h"
 #include "Message.h"
 #include <vector>
+
+
+
 
 void getAllBoundingVertices (GRegion *gr, int importVolumeMesh, std::set<MVertex*> &allBoundingVertices )
 {
@@ -19,9 +24,9 @@ void getAllBoundingVertices (GRegion *gr, int importVolumeMesh, std::set<MVertex
       for (unsigned int i = 0; i< gf->triangles.size(); i++)
 	{
 	  MTriangle *t = gf->triangles[i];
-	  allBoundingVertices.insert (t->getVertex(0));
-	  allBoundingVertices.insert (t->getVertex(1));
-	  allBoundingVertices.insert (t->getVertex(2));
+	  for (int k=0;k<3;k++)
+	    if (allBoundingVertices.find(t->getVertex(k)) ==  allBoundingVertices.end())
+	      allBoundingVertices.insert (t->getVertex(k));
 	}
       ++it;
     }
@@ -66,8 +71,6 @@ void buildTetgenStructure (  GRegion *gr, tetgenio &in, std::vector<MVertex*> & 
       ++it;
     }
 
-  Msg(INFO,"%d model faces -- NumFaces = %d",nbFace,faces.size());
-
   in.numberoffacets = nbFace;
   in.facetlist = new tetgenio::facet[in.numberoffacets];
   in.facetmarkerlist = new int[in.numberoffacets];
@@ -84,7 +87,8 @@ void buildTetgenStructure (  GRegion *gr, tetgenio &in, std::vector<MVertex*> & 
 	  tetgenio::init(f);    
 	  f->numberofholes = 0;
 	  f->numberofpolygons = 1;
-	  tetgenio::polygon *p = f->polygonlist = new tetgenio::polygon[f->numberofpolygons];
+	  f->polygonlist = new tetgenio::polygon[f->numberofpolygons];
+          tetgenio::polygon *p = &f->polygonlist[0];
 	  tetgenio::init(p);    
 	  p->numberofvertices = 3;
 	  p->vertexlist = new int[p->numberofvertices];
@@ -97,17 +101,75 @@ void buildTetgenStructure (  GRegion *gr, tetgenio &in, std::vector<MVertex*> & 
 	}
       ++it;
     }   
+
+
 }
 
 void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out, std::vector<MVertex*> & numberedV)
 {
-  for (int i = 0; i < out.numberofpoints; i++) 
+  int I = numberedV.size() + 1;
+  for (int i = numberedV.size(); i < out.numberofpoints; i++) 
     {
-      MVertex *v = new MVertex (out.pointlist[i * 3 + 0],out.pointlist[i * 3 + 1],out.pointlist[i * 3 + 2]); 
+      MVertex *v = new MVertex (out.pointlist[i * 3 + 0],
+				out.pointlist[i * 3 + 1],
+				out.pointlist[i * 3 + 2], gr); 
       gr->mesh_vertices.push_back(v);
       numberedV.push_back(v);
     }
  
+  Msg(INFO,"%d points %d edges and %d faces in the final mesh",out.numberofpoints,out.numberofedges,out.numberoftrifaces);
+  // Tetgen modifies both surface & edge mesh. So, we recreate all mes
+
+  {
+    std::list<GFace*> faces = gr->faces();
+    std::list<GFace*>::iterator it = faces.begin();
+    while (it != faces.end())
+      {
+	GFace *gf = (*it); 
+	for (int i=0;i<gf->triangles.size();i++)
+	  {
+	    delete gf->triangles[i];
+	  }
+	gf->triangles.clear();
+	++it;
+      }    
+  }    
+  
+  // re create 1D mesh 
+  // 2 be done ...
+  for (int i = 0; i < out.numberofedges; i++) 
+    {
+      MVertex *v[2];
+      v[0] = numberedV[out.edgelist[i * 2 + 0] -1];
+      v[1] = numberedV[out.edgelist[i * 2 + 1] -1];
+    }
+
+  // re-create the triangular meshes
+  for (int i = 0; i < out.numberoftrifaces; i++) 
+    {
+      MVertex *v[3];
+      v[0] = numberedV[out.trifacelist[i * 3 + 0] -1];
+      v[1] = numberedV[out.trifacelist[i * 3 + 1] -1];
+      v[2] = numberedV[out.trifacelist[i * 3 + 2] -1];
+      GFace *gf = gr->model()->faceByTag ( out.trifacemarkerlist[i] );
+      for (int j=0;j<3;j++)
+	{	  
+	  if ( v[j]->onWhat()->dim() == 3 )
+	    {
+	      v[j]->onWhat()->mesh_vertices.erase(std::find(v[j]->onWhat()->mesh_vertices.begin(),
+							    v[j]->onWhat()->mesh_vertices.end(),
+							    v[j]));
+	      //	      SPoint2 pp = gf->parFromPoint(SPoint3 (v[j]->x(),v[j]->y(),v[j]->z()));
+	      SPoint2 pp (0,0);
+	      MFaceVertex *v1b = new MFaceVertex (v[j]->x(),v[j]->y(),v[j]->z(),gf,pp.x(),pp.y() );
+	      numberedV[out.trifacelist[i * 3 + j] -1] = v1b;
+	      delete v[j];
+	      v[j] = v1b;
+	    }
+	}
+      MTriangle *t = new  MTriangle(v[0],v[1],v[2]);
+      gf->triangles.push_back(t);	  
+    }
   for (int i = 0; i < out.numberoftetrahedra; i++) {
     MVertex *v1 = numberedV[out.tetrahedronlist[i * 4 + 0] -1];
     MVertex *v2 = numberedV[out.tetrahedronlist[i * 4 + 1] -1];
@@ -116,10 +178,10 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out, std::vector<MV
     MTetrahedron *t = new  MTetrahedron(v1,v2,v3,v4);
     gr->tetrahedra.push_back(t);
   }
-
- 
-}
   
+  
+}
+
 
 #endif
 
@@ -200,7 +262,7 @@ void TransferVolumeMesh(GRegion *gr, Ng_Mesh * _ngmesh, std::vector<MVertex*> &n
     {
       double tmp[3];
       Ng_GetPoint(_ngmesh, i+1, tmp);
-      MVertex *v = new MVertex (tmp[0],tmp[1],tmp[2]);
+      MVertex *v = new MVertex (tmp[0],tmp[1],tmp[2],gr);
       numberedV.push_back(v);
       gr->mesh_vertices.push_back(v);
     }
@@ -243,7 +305,7 @@ int intersect_line_triangle ( double X[3],
 {
   double mat[3][3], det;
   double b[3], res[3];
-  const double eps_prec = 1.e-5;
+  const double eps_prec = 1.e-9;
 
   mat[0][0] = X[1] - X[0];
   mat[0][1] = X[2] - X[0];
@@ -362,23 +424,35 @@ void meshGRegion :: operator() (GRegion *gr)
   // Send a messsage to the GMSH environment
   Msg(STATUS2, "Meshing volume %d", gr->tag());
 
-  // orient the triangles of with respect to this region
-  meshNormalsPointOutOfTheRegion (gr); 
-  
   if(CTX.mesh.algo3d == DELAUNAY_TETGEN)
     {
 #if !defined(HAVE_TETGEN)
     Msg(GERROR, "Tetgen is not compiled in this version of Gmsh");
 #else
+    // put all the faces in the same model
+    GModel::riter rit = gr->model()->firstRegion() ;
+    if (gr != *rit)return;    
+    std::list<GFace*> faces = gr->faces();
+    std::list<GFace*> allFaces;
+    GModel::fiter fit = gr->model()->firstFace() ;
+    while (fit != gr->model()->lastFace())
+      {
+	allFaces.push_back(*fit);
+	++fit;
+      }
+    gr->set ( allFaces );
+    // mesh with tetgen, possibly changing the mesh on boundaries
     tetgenio in, out;
     std::vector<MVertex*> numberedV;
     char opts[128];
     buildTetgenStructure (  gr, in, numberedV);
-    sprintf(opts, "pqa%f%c", (float)CTX.mesh.quality,
+    sprintf(opts, "pe%c",
 	    (CTX.verbosity < 3)? 'Q': (CTX.verbosity > 6)? 'V': '\0');
-    Msg(STATUS2, "Meshing with volume constraint %f", (float)CTX.mesh.quality);
     tetrahedralize(opts, &in, &out);
     TransferTetgenMesh(gr, in, out, numberedV);
+    // restore the initial set of faces
+    gr->set ( faces );
+
 #endif
     }
 
@@ -387,6 +461,8 @@ void meshGRegion :: operator() (GRegion *gr)
 #if !defined(HAVE_NETGEN)
     Msg(GERROR, "Netgen is not compiled in this version of Gmsh");
 #else
+    // orient the triangles of with respect to this region
+    meshNormalsPointOutOfTheRegion (gr);     
     std::vector<MVertex*> numberedV;
     Ng_Mesh * _ngmesh = buildNetgenStructure (gr, 0, numberedV);
     Ng_Meshing_Parameters mp;
