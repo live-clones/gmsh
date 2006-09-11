@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.131 2006-09-11 15:23:54 remacle Exp $
+# $Id: Makefile,v 1.132 2006-09-11 18:16:19 remacle Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -66,7 +66,7 @@ SRC = 1D_Mesh.cpp \
       meshGEdge.cpp \
       meshGFace.cpp \
       meshGFaceTransfinite.cpp \
-      meshGFaceDelaunayInstertion.cpp \
+      meshGRegionDelaunayInsertion.cpp \
       meshGRegion.cpp \
       Nurbs.cpp \
       Interpolation.cpp \
