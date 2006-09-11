@@ -1,7 +1,7 @@
 scale = 1 ;
 
-lc1 = 1 * scale ;
-lc2 = 1 * scale ;
+lc1 = .004 * scale ;
+lc2 = .004 * scale ;
 lc3 = 10 * scale ;
 
 Point(3895) = {1.177410e-02*scale,-2.768003e-03*scale,0,lc1};
@@ -612,5 +612,15 @@ Line Loop(404) = {2,1};
 Line Loop(405) = {10,11,12};
 Plane Surface(406) = {403,404,401,405};
 
-Mesh.Algorithm = 2;
-Attractor Line{1,2,3,4,5,6,10,11,12} = {.005,.005,2};
+lc4 = lc1 * 4;
+
+Point(4351) = {0.4,-0,0,lc4};
+Point(4352) = {1.4,0,0,lc4};
+Point(4353) = {0.4,-1,0,lc4};
+Point(4354) = {-0.6,-0,0,lc4};
+Point(4355) = {0.4,1,0,lc4};
+Circle(407) = {4352,4351,4355};
+Circle(408) = {4355,4351,4354};
+Circle(409) = {4354,4351,4353};
+Circle(410) = {4353,4351,4352};
+Line {407,408,409,410} In Surface 406;
