@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.51 2006-09-10 03:25:11 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.52 2006-09-11 20:18:23 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -330,7 +330,7 @@ int GModel::readMSH(const std::string &name)
 	  if(fread(&num, sizeof(int), 1, fp) != 1) return 0;
 	  if(swap) swapBytes((char*)&num, sizeof(int), 1);
 	  if(fread(xyz, sizeof(double), 3, fp) != 3) return 0;
-	  if(swap) swapBytes((char*)&xyz, sizeof(double), 3);
+	  if(swap) swapBytes((char*)xyz, sizeof(double), 3);
 	}
 	minVertex = std::min(minVertex, num);
 	maxVertex = std::max(maxVertex, num);
@@ -409,7 +409,7 @@ int GModel::readMSH(const std::string &name)
 	while(numElementsPartial < numElements){
 	  int header[3];
 	  if(fread(header, sizeof(int), 3, fp) != 3) return 0;
-	  if(swap) swapBytes((char*)&header, sizeof(int), 3);
+	  if(swap) swapBytes((char*)header, sizeof(int), 3);
 	  int type = header[0];
 	  int numElms = header[1];
 	  int numTags = header[2];
@@ -418,7 +418,7 @@ int GModel::readMSH(const std::string &name)
 	  int *data = new int[n];
 	  for(int i = 0; i < numElms; i++) {
 	    if(fread(data, sizeof(int), n, fp) != n) return 0;
-	    if(swap) swapBytes((char*)&data, sizeof(int), n);
+	    if(swap) swapBytes((char*)data, sizeof(int), n);
 	    int num = data[0];
 	    int physical = (numTags > 0) ? data[4 - numTags] : 0;
 	    int elementary = (numTags > 1) ? data[4 - numTags + 1] : 0;
