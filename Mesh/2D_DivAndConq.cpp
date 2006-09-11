@@ -1,4 +1,4 @@
-// $Id: 2D_DivAndConq.cpp,v 1.22 2006-09-11 15:23:54 remacle Exp $
+// $Id: 2D_DivAndConq.cpp,v 1.23 2006-09-11 17:58:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -183,53 +183,22 @@ Segment UpperCommonTangent(DT vl, DT vr)
 
 /* return 1 if the point k is NOT in the circumcircle of
    triangle hij */
-#ifndef HAVE_TETGEN
 int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
 {
-  double xc, yc, rcarre, distca;
-
-  if((h == i) && (h == j) && (h == k)) {
-    Msg(GERROR, "3 identical points in Qtest");
-    return (0); /* returning 1 will cause looping for ever */
-  }
-  if(CircumCircle((double)pPointArray[h].where.h,
-                  (double)pPointArray[h].where.v,
-                  (double)pPointArray[i].where.h,
-                  (double)pPointArray[i].where.v,
-                  (double)pPointArray[j].where.h,
-                  (double)pPointArray[j].where.v, &xc, &yc)) {
-    rcarre = square(xc - (double)pPointArray[i].where.h) +
-      square(yc - (double)pPointArray[i].where.v);
-
-    distca = square(xc - (double)pPointArray[k].where.h) +
-      square(yc - (double)pPointArray[k].where.v);
-
-    return (distca > rcarre);
-  }
-  else
-    return (0); /* point not in circle, because no circle !     */
-}
-#else 
-#include "tetgen.h"
-int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
-{
-  exactinit() ;
   if((h == i) && (h == j) && (h == k)) {
     Msg(GERROR, "3 identical points in Qtest");
     return (0); /* returning 1 will cause looping for ever */
   }
   
-  REAL pa[2] = {(REAL)pPointArray[h].where.h,(REAL)pPointArray[h].where.v};
-  REAL pb[2] = {(REAL)pPointArray[i].where.h,(REAL)pPointArray[i].where.v};
-  REAL pc[2] = {(REAL)pPointArray[j].where.h,(REAL)pPointArray[j].where.v};
-  REAL pd[2] = {(REAL)pPointArray[k].where.h,(REAL)pPointArray[k].where.v};
+  double pa[2] = {(double)pPointArray[h].where.h, (double)pPointArray[h].where.v};
+  double pb[2] = {(double)pPointArray[i].where.h, (double)pPointArray[i].where.v};
+  double pc[2] = {(double)pPointArray[j].where.h, (double)pPointArray[j].where.v};
+  double pd[2] = {(double)pPointArray[k].where.h, (double)pPointArray[k].where.v};
   
-  REAL result = incircle ( pa, pb, pc, pd ) * orient2d (pa,pb,pc);
-  //  Msg(INFO, "Qtest %12.5E",result);
+  double result = gmsh::incircle(pa, pb, pc, pd) * gmsh::orient2d(pa, pb, pc);
   
-  return (result < 0)?1:0;
+  return (result < 0) ? 1 : 0;
 }
-#endif
 
 
 int merge(DT vl, DT vr)

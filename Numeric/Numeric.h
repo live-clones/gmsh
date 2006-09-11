@@ -97,4 +97,13 @@ void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb,
 void newt(double x[], int n, int *check,
 	  void (*vecfunc)(int, double [], double []));
 
+/* Robust geometrical predicates */
+namespace gmsh{
+double exactinit();
+double incircle(double *pa, double *pb, double *pc, double *pd);
+double insphere(double *pa, double *pb, double *pc, double *pd, double *pe);
+double orient2d(double *pa, double *pb, double *pc);
+double orient3d(double *pa, double *pb, double *pc, double *pd);
+}
+
 #endif

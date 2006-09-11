@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.27 2006-08-16 05:25:22 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.28 2006-09-11 17:58:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -58,6 +58,11 @@ int check_gsl()
   }
   // set new error handler
   gsl_set_error_handler(&new_handler);
+
+  
+  // initilize robust geometric predicates
+  gmsh::exactinit() ;
+
   return 1;
 }
 
@@ -65,6 +70,10 @@ int check_gsl()
 
 int check_gsl()
 {
+
+  // initilize robust geometric predicates
+  gmsh::exactinit() ;
+
   return 1;
 }
 

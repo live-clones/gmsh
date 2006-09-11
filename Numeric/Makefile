@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.28 2006-08-04 14:28:03 geuzaine Exp $
+# $Id: Makefile,v 1.29 2006-09-11 17:58:19 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -27,6 +27,7 @@ CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Numeric.cpp\
       EigSolve.cpp\
+      predicates.cpp\
       gsl_newt.cpp\
       gsl_brent.cpp
 
