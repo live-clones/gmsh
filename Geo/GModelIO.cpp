@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.52 2006-09-11 20:18:23 remacle Exp $
+// $Id: GModelIO.cpp,v 1.53 2006-09-11 23:11:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1448,10 +1448,10 @@ static double atofBDF(char *str)
   int len = strlen(str);
   // classic numbers with E or D exponent notation
   for(int i = 0; i < len; i++){
-    if(str[i] == 'E') {
+    if(str[i] == 'E' || str[i] == 'e') {
       return atof(str);
     }
-    else if(str[i] == 'D'){ 
+    else if(str[i] == 'D' || str[i] == 'd'){ 
       str[i] = 'E'; 
       return atof(str);
     }
@@ -1619,6 +1619,10 @@ int GModel::readBDF(const std::string &name)
       int num, region;
       std::vector<MVertex*> vertices;
       if(!strncmp(buffer, "CBAR", 4)){
+	if(readElementBDF(fp, buffer, 4, 2, num, region, vertices, vertexMap))
+	  elements[0][region].push_back(new MLine(vertices, num));
+      }
+      else if(!strncmp(buffer, "CROD", 4)){
 	if(readElementBDF(fp, buffer, 4, 2, num, region, vertices, vertexMap))
 	  elements[0][region].push_back(new MLine(vertices, num));
       }
