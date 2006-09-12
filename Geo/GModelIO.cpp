@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.53 2006-09-11 23:11:08 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.54 2006-09-12 01:24:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -906,7 +906,19 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
   std::vector<int> idx;
   if(fscanf(fp, " [ %d", &i) != 1) return 0;
   idx.push_back(i);
-  while(fscanf(fp, " , %d", &i) == 1){
+
+  // check if vertex indices are separated by commas
+  char tmp[256], *format;
+  fpos_t position;
+  fgetpos(fp, &position);
+  fgets(tmp, sizeof(tmp), fp);
+  fsetpos(fp, &position);
+  if(strstr(tmp, ","))
+    format = " , %d";
+  else
+    format = " %d";
+
+  while(fscanf(fp, format, &i) == 1){
     if(i != -1){
       idx.push_back(i);
     }
@@ -972,18 +984,18 @@ int GModel::readVRML(const std::string &name)
     if(!fgets(buffer, sizeof(buffer), fp)) break;
     if(buffer[0] != '#'){ // skip comments
       sscanf(buffer, "%s", str);
-      if(!strcmp(str, "IndexedTriangleStripSet")){
+      if(!strcmp(str, "Coordinate3")){
+	vertexVector.clear();
+	if(!skipUntil(fp, "point")) break;
+	if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
+      }
+      else if(!strcmp(str, "IndexedTriangleStripSet")){
 	region++;
 	vertexVector.clear();
 	if(!skipUntil(fp, "vertex")) break;
 	if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
 	if(!skipUntil(fp, "coordIndex")) break;
 	if(!readElementsVRML(fp, vertexVector, region, elements, true)) break;
-      }
-      else if(!strcmp(str, "Coordinate3")){
-	vertexVector.clear();
-	if(!skipUntil(fp, "point")) break;
-	if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
       }
       else if(!strcmp(str, "IndexedFaceSet") || !strcmp(str, "IndexedLineSet")){
 	region++;
@@ -993,7 +1005,12 @@ int GModel::readVRML(const std::string &name)
       else if(!strcmp(str, "DEF")){
 	char str1[256], str2[256];
 	if(!sscanf(buffer, "%s %s %s", str1, str2, str)) break;
-	if(!strcmp(str, "IndexedFaceSet") || !strcmp(str, "IndexedLineSet")){
+	if(!strcmp(str, "Coordinate")){
+	  vertexVector.clear();
+	  if(!skipUntil(fp, "point")) break;
+	  if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
+	}
+	else if(!strcmp(str, "IndexedFaceSet") || !strcmp(str, "IndexedLineSet")){
 	  region++;
 	  if(!skipUntil(fp, "coordIndex")) break;
 	  if(!readElementsVRML(fp, vertexVector, region, elements)) break;
