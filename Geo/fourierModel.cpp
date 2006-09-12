@@ -3,6 +3,23 @@
 #include "Context.h"
 #include "Views.h"
 
+/*
+  Investigate the following approach:
+
+  compute and store the pou of each overlapping patch in the nodes of
+  all the patches
+
+  for each pair of overlapping patches, find the line pou1=pou2 by
+  interpolation on the overlapping grids
+
+  compute the intersections of these lines
+
+  this should define a non-overlapping partitioning of the grid, which
+  could be used as the boundary constrain for the unstructured algo
+
+  Would that work??
+*/
+
 extern Context_T CTX;
 
 #if defined(HAVE_FOURIER_MODEL)
@@ -12,8 +29,55 @@ extern Context_T CTX;
 
 static model *FM = 0;
 
+void debugVertices(std::vector<MVertex*> &vertices, std::string file, 
+		   bool parametric, int num=0)
+{
+  char name[256];
+  sprintf(name, "%s_%d.pos", file.c_str(), num);
+  FILE *fp = fopen(name, "w");
+  fprintf(fp, "View \"debug\"{\n");
+  for(unsigned int i = 0; i < vertices.size(); i++){
+    double x, y, z;
+    if(parametric){
+      vertices[i]->getParameter(0, x); 
+      vertices[i]->getParameter(1, y); 
+      z = 0;
+    }
+    else{
+      x = vertices[i]->x(); 
+      y = vertices[i]->y(); 
+      z = vertices[i]->z();
+    }
+    fprintf(fp, "SP(%g,%g,%g){%d};\n", x, y, z, i);
+  }
+  fprintf(fp, "};\n");    
+  fclose(fp);
+}
+
+void debugElements(std::vector<MElement*> &elements, std::string file, 
+		   bool parametric, int num=0)
+{
+  char name[256];
+  sprintf(name, "%s_%d.pos", file.c_str(), num);
+  FILE *fp = fopen(name, "w");
+  fprintf(fp, "View \"debug\"{\n");
+  for(unsigned int i = 0; i < elements.size(); i++)
+    elements[i]->writePOS(fp);
+  fprintf(fp, "};\n");    
+  fclose(fp);
+}
+
 class meshCartesian{
 public:
+  typedef MDataFaceVertex<double> DVertex;
+  static std::set<DVertex*, MVertexLessThanLexicographic> vPosition;
+  static std::set<MVertex*> vDelete;
+  static void deleteUnusedVertices()
+  {
+    for(std::set<MVertex*>::iterator it = vDelete.begin(); it != vDelete.end(); it++)
+      delete *it;
+    vDelete.clear();
+  }
   void operator() (GFace *gf)
   {  
     int M = (int)(30. / CTX.mesh.lc_factor), N = (int)(30. / CTX.mesh.lc_factor);
@@ -24,8 +88,17 @@ public:
 	GPoint p = gf->point(u, v);
 	double pou;
 	FM->GetPou(gf->tag(), u, v, pou);
-	gf->mesh_vertices.push_back
-	  (new MDataFaceVertex<double>(p.x(), p.y(), p.z(), gf, u, v, pou));
+	DVertex *w = new DVertex(p.x(), p.y(), p.z(), gf, u, v, pou);
+	// eliminate duplicate vertices on hard edges
+	std::set<DVertex*, MVertexLessThanLexicographic>::iterator it = vPosition.find(w);
+	if(it != vPosition.end()){
+	  delete w;
+	  gf->mesh_vertices.push_back(*it);
+	}
+	else{
+	  vPosition.insert(w);
+	  gf->mesh_vertices.push_back(w);
+	}
       }
     }
     for(int i = 0; i < M - 1; i++){
@@ -40,6 +113,9 @@ public:
     }
   }
 };
+
+std::set<meshCartesian::DVertex*, MVertexLessThanLexicographic> meshCartesian::vPosition;
+std::set<MVertex*> meshCartesian::vDelete;
 
 class computePartitionOfUnity{
 public:
@@ -57,7 +133,7 @@ public:
 	SPoint2 uv2 = gf2->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
 	if(gf2->containsParam(uv2)){
 	  GPoint xyz2 = gf2->point(uv2);
-	  const double tol = 1.e-2; // need to adapt this w.r.t size of model
+	  const double tol = 1.e-2; // Warning: tolerance
 	  if(fabs(xyz2.x() - v->x()) < tol && 
 	     fabs(xyz2.y() - v->y()) < tol && 
 	     fabs(xyz2.z() - v->z()) < tol)
@@ -87,10 +163,11 @@ public:
   }
 };
 
-class createGrooves{
+class createGroove{
 public:
   void operator() (GFace *gf)
   {  
+    // mark elements in the groove with '-1' visibility tag
     for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
       MElement *e = gf->quadrangles[i];
       for(int j = 0; j < e->getNumVertices(); j++){
@@ -98,23 +175,39 @@ public:
 	if(data){
 	  double pou = *(double*)data;
 	  if(pou < 0.51)
-	    e->setVisibility(0);
+	    e->setVisibility(-1);
 	}
       }
     }
-    std::vector<MQuadrangle*> remaining;
+
+    // remove elements in the groove
+    std::vector<MQuadrangle*> newq;
     for(unsigned int i = 0; i < gf->quadrangles.size(); i++)
-      if(gf->quadrangles[i]->getVisibility()) 
-	remaining.push_back(gf->quadrangles[i]);
-      else
+      if(gf->quadrangles[i]->getVisibility() < 0) 
 	delete gf->quadrangles[i];
-    gf->quadrangles.clear();
-    gf->quadrangles = remaining;
+      else
+	newq.push_back(gf->quadrangles[i]);
+    gf->quadrangles = newq;
+
+    // remove vertices in the groove (we cannot delete them right away
+    // since some can be shared between faces on hard edges)
+    std::vector<MVertex*> newv;
+    for(unsigned int i = 0; i < gf->mesh_vertices.size(); i++)
+      gf->mesh_vertices[i]->setVisibility(-1);
+    for(unsigned int i = 0; i < gf->quadrangles.size(); i++)
+      for(int j = 0; j < gf->quadrangles[i]->getNumVertices(); j++)
+	gf->quadrangles[i]->getVertex(j)->setVisibility(1);
+    for(unsigned int i = 0; i < gf->mesh_vertices.size(); i++)
+      if(gf->mesh_vertices[i]->getVisibility() < 0) 
+	meshCartesian::vDelete.insert(gf->mesh_vertices[i]);
+      else
+	newv.push_back(gf->mesh_vertices[i]);
+    gf->mesh_vertices = newv;
   }
 };
 
-void getOrderedBoundaryVertices(std::vector<MElement*> &elements, 
-				std::vector<MVertex*> &boundary)
+void getOrderedBoundaryLoops(std::vector<MElement*> &elements, 
+			     std::vector<std::vector<MVertex*> > &loops)
 {
   typedef std::pair<MVertex*, MVertex*> vpair;
   std::map<vpair, vpair> edges;
@@ -126,12 +219,27 @@ void getOrderedBoundaryVertices(std::vector<MElement*> &elements,
       else edges[p] = vpair(e.getVertex(0), e.getVertex(1));
     }
   }
+
   std::map<MVertex*, MVertex*> connect;
   for(std::map<vpair, vpair>::iterator it = edges.begin(); it != edges.end(); it++)
     connect[it->second.first] = it->second.second;
-  boundary.push_back(connect.begin()->first);
-  for(unsigned int i = 0; i < connect.size(); i++)
-    boundary.push_back(connect[boundary[boundary.size() - 1]]);
+
+  loops.resize(1);
+  while(connect.size()){
+    if(loops[loops.size() - 1].empty()) 
+      loops[loops.size() - 1].push_back(connect.begin()->first);
+    MVertex *prev = loops[loops.size() - 1][loops[loops.size() - 1].size() - 1];
+    MVertex *next = connect[prev];
+    connect.erase(prev);
+    loops[loops.size() - 1].push_back(next);
+    if(next == loops[loops.size() - 1][0])
+      loops.resize(loops.size() + 1);
+  }
+
+  if(loops[loops.size() - 1].empty())
+    loops.pop_back();
+  
+  Msg(INFO, "Found %d loop(s) in boundary", loops.size());
 }
 
 void addElements(GFace *gf, std::vector<MElement*> &elements)
@@ -142,54 +250,77 @@ void addElements(GFace *gf, std::vector<MElement*> &elements)
     elements.push_back(gf->quadrangles[i]);
 }
 
-bool isConnected(GFace *gf1, GFace *gf2)
+void classifyFaces(GFace *gf, std::set<GFace*> &connected, std::set<GFace*> &other)
 {
-  std::set<MVertex*> set;
-  std::vector<MElement*> elements1, elements2;
-  std::vector<MVertex*> boundary1, boundary2;
-  addElements(gf1, elements1);
-  addElements(gf2, elements2);
-  getOrderedBoundaryVertices(elements1, boundary1);
-  getOrderedBoundaryVertices(elements2, boundary2);
+  connected.insert(gf); 
+  std::set<MVertex*> verts;
+  for(unsigned int i = 0; i < gf->mesh_vertices.size(); i++)
+    verts.insert(gf->mesh_vertices[i]);
 
-  for(unsigned int i = 0; i < boundary1.size(); i++)
-    set.insert(boundary1[i]);
-  for(unsigned int i = 0; i < boundary2.size(); i++){
-    std::set<MVertex*>::iterator it = set.find(boundary2[i]);
-    if(it != set.end()) return true;
+  for(int i = 0; i < gf->model()->numFace() - 1; i++){ // worst case
+    for(GModel::fiter it = gf->model()->firstFace(); it != gf->model()->lastFace(); it++){
+      if(connected.find(*it) == connected.end()){
+	for(unsigned int j = 0; j < (*it)->mesh_vertices.size(); j++){
+	  if(std::find(verts.begin(), verts.end(), (*it)->mesh_vertices[j]) != verts.end()){
+	    connected.insert(*it);
+	    for(unsigned int k = 0; k < (*it)->mesh_vertices.size(); k++)
+	      verts.insert((*it)->mesh_vertices[k]);
+	    break;
+	  }
+	}
+      }
+    }
   }
-  return false;
+
+  for(GModel::fiter it = gf->model()->firstFace(); it != gf->model()->lastFace(); it++)
+    if(connected.find(*it) == connected.end()) 
+      other.insert(*it);
+
+  Msg(INFO, "Found %d face(s) connected to face %d", (int)connected.size(), gf->tag());
+  for(std::set<GFace*>::iterator it = connected.begin(); it != connected.end(); it++)
+    Msg(INFO, "   %d", (*it)->tag());
 }
 
-void getIntersectingBoundaryParts(GFace *gf, std::vector<MElement*> &elements, int &start,
-				  std::map<int, std::vector<MVertex*> > &parts)
+void getIntersectingBoundaryParts(GFace *gf, std::vector<MElement*> &elements,
+				  std::vector<std::vector<std::vector<MVertex*> > > &parts)
 {
-  bool newpart = true;
-  std::vector<MVertex*> vertices;
-  getOrderedBoundaryVertices(elements, vertices);
-  for(unsigned int i = 0; i < vertices.size() - 1; i++){
-    MVertex *v = vertices[i];
-    SPoint2 uv = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
-    if(gf->containsParam(uv)){
-      GPoint xyz = gf->point(uv);
-      const double tol = 1.e-2; // need to adapt this w.r.t size of model
-      if(fabs(xyz.x() - v->x()) < tol && 
-	 fabs(xyz.y() - v->y()) < tol && 
-	 fabs(xyz.z() - v->z()) < tol){
-	if(newpart){
-	  start++;
-	  newpart = false;
+  std::vector<std::vector<MVertex*> > loops;
+  getOrderedBoundaryLoops(elements, loops);
+  parts.resize(loops.size());
+
+  if(gf->tag() == 0){
+    debugElements(elements, "elements", false);
+    for(unsigned int i = 0; i < loops.size(); i++)
+      debugVertices(loops[i], "boundary", false, i);
+  }
+
+  for(unsigned int i = 0; i < loops.size(); i++){
+    // last vertex in loop is equal to the firt vertex
+    bool newpart = true;
+    for(unsigned int j = 0; j < loops[i].size() - 1; j++){
+      MVertex *v = loops[i][j];
+      SPoint2 uv = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+      if(gf->containsParam(uv)){
+	GPoint xyz = gf->point(uv);
+	const double tol = 1.e-2; // Warning: tolerance
+	if(fabs(xyz.x() - v->x()) < tol && 
+	   fabs(xyz.y() - v->y()) < tol && 
+	   fabs(xyz.z() - v->z()) < tol){
+	  if(newpart){
+	    parts[i].resize(parts[i].size() + 1);
+	    newpart = false;
+	  }
+	  v->setParameter(0, uv[0]);
+	  v->setParameter(1, uv[1]);
+	  parts[i][parts[i].size() - 1].push_back(v);
 	}
-	v->setParameter(0, uv[0]);
-	v->setParameter(1, uv[1]);
-	parts[start].push_back(v);
+	else{
+	  newpart = true;
+	}
       }
       else{
 	newpart = true;
       }
-    }
-    else{
-      newpart = true;
     }
   }
 }
@@ -199,175 +330,131 @@ public:
   void operator() (GFace *gf)
   {  
     if(gf->tag() > 1) return;
-    printf("processing grout for face %d\n", gf->tag());
 
-    GModel *m = gf->model();
+    Msg(INFO, "Processing grout for face %d", gf->tag());
 
-    // need to find the disconnected parts in inside too!!!  then
-    // we'll pair them with disconnected parts in outside (by looking
-    // at the value of the POU)
-    // Distinguish 2 cases: 
-    // - patch with no hard edges and and no connections: we have a hole
-    //   THIS IS WHAT WE ASSUME NOW
-    // - patch with hard edges or connections: we don't have a hole, but
-    //   we might have non-connected parts
-    std::vector<MElement*> elements;
+    std::set<GFace*> connected, other;
+    classifyFaces(gf, connected, other);
 
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
-      if(isConnected(gf, *it)){
-	printf("face %d: mesh connected to %d\n", gf->tag(), (*it)->tag());
-	addElements(*it, elements);
-      }
-    }
-    int numinside = 0;
-    std::map<int, std::vector<MVertex*> > inside;
-    getIntersectingBoundaryParts(gf, elements, numinside, inside);
+    std::vector<MElement*> connectedElements, otherElements;
+    for(std::set<GFace*>::iterator it = connected.begin(); it != connected.end(); it++)
+      addElements(*it, connectedElements);
+    for(std::set<GFace*>::iterator it = other.begin(); it != other.end(); it++)
+      addElements(*it, otherElements);
 
-    printf("numinside = %d\n", numinside);
+    std::vector<std::vector<std::vector<MVertex*> > > inside;
+    getIntersectingBoundaryParts(gf, connectedElements, inside);
+    Msg(INFO, "%d inside loop(s)", (int)inside.size());
+    for(unsigned int i = 0; i < inside.size(); i++)
+      Msg(INFO, "   inside loop %d intersect has %d part(s)", i, (int)inside[i].size());
 
-    int numoutside = 0;
-    std::map<int, std::vector<MVertex*> > outside;
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
-      if(!isConnected(gf, *it)){
-	elements.clear();
-	addElements(*it, elements);
-	getIntersectingBoundaryParts(gf, elements, numoutside, outside);
-      }
-    }
-
-    printf("numoutside = %d\n", numoutside);
+    std::vector<std::vector<std::vector<MVertex*> > > outside;
+    getIntersectingBoundaryParts(gf, otherElements, outside);
+    Msg(INFO, "%d outside loop(s)", (int)outside.size());
+    for(unsigned int i = 0; i < outside.size(); i++)
+      Msg(INFO, "   outside loop %d intersect has %d part(s)", i, (int)outside[i].size());
 
     std::vector<MVertex*> hole, loop;
     
-    if(numinside == 1){
+    if(inside.size() == 1 && inside[0].size() == 1){
       // create hole
       SPoint2 ic(0., 0.);
-      for(unsigned int i = 0; i < inside[1].size(); i++){
-	hole.push_back(inside[1][i]);
-	double u, v;
-	inside[1][i]->getParameter(0, u);
-	inside[1][i]->getParameter(1, v);
-	ic += SPoint2(u, v);
-      }
-      ic *= 1. / (double) inside[1].size(); 
-      hole.push_back(hole[0]);
-
-      // order exterior parts
-      std::vector<std::pair<double, int> > angle;
-      std::map<int, std::vector<MVertex*> >::iterator it = outside.begin();
-      for(; it != outside.end(); it++){
-	SPoint2 oc(0., 0.);
-	for(unsigned int i = 0; i < it->second.size(); i++){
+      {
+	for(unsigned int i = 0; i < inside[0][0].size(); i++){
+	  hole.push_back(inside[0][0][i]);
 	  double u, v;
-	  it->second[i]->getParameter(0, u);
-	  it->second[i]->getParameter(1, v);
-	  oc += SPoint2(u, v);
+	  inside[0][0][i]->getParameter(0, u);
+	  inside[0][0][i]->getParameter(1, v);
+	  ic += SPoint2(u, v);
 	}
-	oc *= 1. / (double)it->second.size();
-	double a = atan2(oc[1] - ic[1], oc[0] - ic[0]);
-	angle.push_back(std::make_pair(a, it->first));
+	ic *= 1. / (double)inside[0][0].size();
+	hole.push_back(hole[0]);
       }
-      std::sort(angle.begin(), angle.end());
-      
-      // create exterior loop
-      for(unsigned int i = 0; i < angle.size(); i++){
-	for(unsigned int j = 0; j < outside[angle[i].second].size(); j++)
-	  loop.push_back(outside[angle[i].second][j]);
+      // order exterior parts and create exterior loop
+      {
+	std::vector<std::pair<double, int> > angle;
+	std::map<int, std::vector<MVertex*> > outside_flat;
+	int part = 0;
+	for(unsigned int i = 0; i < outside.size(); i++){
+	  for(unsigned int j = 0; j < outside[i].size(); j++){
+	    for(unsigned int k = 0; k < outside[i][j].size(); k++){
+	      outside_flat[part].push_back(outside[i][j][k]);
+	    }
+	    part++;
+	  }
+	}
+	std::map<int, std::vector<MVertex*> >::iterator it = outside_flat.begin();
+	for(; it != outside_flat.end(); it++){
+	  SPoint2 oc(0., 0.);
+	  for(unsigned int i = 0; i < it->second.size(); i++){
+	    double u, v;
+	    it->second[i]->getParameter(0, u);
+	    it->second[i]->getParameter(1, v);
+	    oc += SPoint2(u, v);
+	  }
+	  oc *= 1. / (double)it->second.size();
+	  double a = atan2(oc[1] - ic[1], oc[0] - ic[0]);
+	  angle.push_back(std::make_pair(a, it->first));
+	}
+	std::sort(angle.begin(), angle.end());
+	for(unsigned int i = 0; i < angle.size(); i++){
+	  for(unsigned int j = 0; j < outside_flat[angle[i].second].size(); j++)
+	    loop.push_back(outside_flat[angle[i].second][j]);
+	}
+	loop.push_back(hole[0]);
       }
-      loop.push_back(hole[0]);
-
       // mesh the grout
       fourierFace *grout = new fourierFace(gf, loop, hole);
       meshGFace mesh; 
       mesh(grout);
       for(unsigned int i = 0; i < grout->triangles.size(); i++)
 	gf->triangles.push_back(grout->triangles[i]);
+      for(unsigned int i = 0; i < loop.size(); i++)
+	gf->mesh_vertices.push_back(loop[i]);
+      for(unsigned int i = 0; i < hole.size(); i++)
+	gf->mesh_vertices.push_back(hole[i]);
       for(unsigned int i = 0; i < grout->mesh_vertices.size(); i++)
 	gf->mesh_vertices.push_back(grout->mesh_vertices[i]);
       delete grout;
     }
     else{
-
       Msg(WARNING, "Faces with no holes not implemented yet!");
 
-    }
+      // num individual meshes = num parts with onWhat() == gf!
 
-    // debug
-    char name[256];
-    sprintf(name, "aa%d.pos", gf->tag());
-    FILE *fp = fopen(name, "w");
-    fprintf(fp, "View \"aa\"{\n");
-    for(unsigned int i = 0; i < hole.size(); i++){
-      double x = hole[i]->x(), y = hole[i]->y(), z = hole[i]->z();
-      // plot in parametric space:
-      hole[i]->getParameter(0, x); hole[i]->getParameter(1, y); z = 0;
-      fprintf(fp, "SP(%g,%g,%g){0};\n", x, y, z);
-    }
-    for(unsigned int i = 0; i < loop.size(); i++){
-      double x = loop[i]->x(), y = loop[i]->y(), z = loop[i]->z();
-      // plot in parametric space:
-      loop[i]->getParameter(0, x); loop[i]->getParameter(1, y); z = 0;
-      fprintf(fp, "SP(%g,%g,%g){%d};\n", x, y, z, i);
-    }
-    fprintf(fp, "};\n");    
-    fclose(fp);
-  }
-};
+      // for each one
+      //   - find other parts that are "close" (using POUs?)
+      //   - sort parts w.r.t barycenter of each group      
 
-class exportFourierFace{
-public:
-  void operator() (GFace *gf)
-  {  
-    Post_View *view = BeginView(1);
-    for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
-      MElement *e = gf->quadrangles[i];
-      double x[4], y[4], z[4], val[4];
-      for(int j = 0; j < 4; j++){
-	MVertex *v = e->getVertex(j);
-	x[j] = v->x();
-	y[j] = v->y();
-	z[j] = v->z();
-	val[j] = *(double*)v->getData();
+      for(unsigned int i = 0; i < inside.size(); i++){
+	for(unsigned int j = 0; j < inside[i].size(); j++){
+	  for(unsigned int k = 0; k < inside[i][j].size(); k++){
+	    loop.push_back(inside[i][j][k]);
+	  }
+	}
       }
-      for(int j = 0; j < 4; j++) List_Add(view->SQ, &x[j]);
-      for(int j = 0; j < 4; j++) List_Add(view->SQ, &y[j]);
-      for(int j = 0; j < 4; j++) List_Add(view->SQ, &z[j]);
-      for(int j = 0; j < 4; j++) List_Add(view->SQ, &val[j]);
-      view->NbSQ++;
     }
-    std::vector<MElement*> elements;
-    std::vector<MVertex*> vertices;
-    addElements(gf, elements);
-    getOrderedBoundaryVertices(elements, vertices);
-    for(unsigned int i = 0; i < vertices.size() - 1; i++){
-      double x[2] = {vertices[i]->x(), vertices[i + 1]->x()};
-      double y[2] = {vertices[i]->y(), vertices[i + 1]->y()};
-      double z[2] = {vertices[i]->z(), vertices[i + 1]->z()};
-      double val[2] = {10, 10};
-      for(int j = 0; j < 2; j++) List_Add(view->SL, &x[j]);
-      for(int j = 0; j < 2; j++) List_Add(view->SL, &y[j]);
-      for(int j = 0; j < 2; j++) List_Add(view->SL, &z[j]);
-      for(int j = 0; j < 2; j++) List_Add(view->SL, &val[j]);
-      view->NbSL++;
-    }
-    char name[1024], filename[1024];
-    sprintf(name, "patch%d", gf->tag());
-    sprintf(filename, "patch%d", gf->tag());
-    EndView(view, 1, filename, name);
+    
+    debugVertices(hole, "hole", false, gf->tag());
+    debugVertices(loop, "loop", false, gf->tag());
   }
 };
-
 
 fourierModel::fourierModel(const std::string &name)
   : GModel(name)
 {
   FM = new model(name);
+
+  CTX.terminal = 1;
   
   Msg(INFO, "Fourier model created: %d patches", FM->GetNumPatches());
 
   // create one face per patch
   for(int i = 0; i < FM->GetNumPatches(); i++)
     add(new fourierFace(this, i));
+
+  meshCartesian::vPosition.clear();
+  MVertexLessThanLexicographic::tolerance = 1.e-12; // Warning: tolerance
 
   // mesh each face with quads
   std::for_each(firstFace(), lastFace(), meshCartesian());
@@ -376,13 +463,12 @@ fourierModel::fourierModel(const std::string &name)
   std::for_each(firstFace(), lastFace(), computePartitionOfUnity());
 
   // create grooves
-  std::for_each(firstFace(), lastFace(), createGrooves());
+  meshCartesian::vDelete.clear();
+  std::for_each(firstFace(), lastFace(), createGroove());
+  meshCartesian::deleteUnusedVertices();
   
   // create grout
   std::for_each(firstFace(), lastFace(), createGrout());
-
-  // visualize as a post-pro view
-  //std::for_each(firstFace(), lastFace(), exportFourierFace());
 
   CTX.mesh.changed = ENT_ALL;
 }
