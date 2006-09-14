@@ -1,4 +1,4 @@
-$Id: TODO,v 1.18 2006-08-27 23:10:36 geuzaine Exp $
+$Id: TODO,v 1.19 2006-09-14 15:48:35 geuzaine Exp $
 
 ********************************************************************
 
@@ -49,45 +49,6 @@ element to element in a single surface? (TO BE CONFIRMED)
 
 ********************************************************************
 
-recompute bbox/axes depending on what is which entities are
-visible. (For meshes with no geometry: either store a bbox for each
-curve/surface/volume or loop over all elements.)
-
-********************************************************************
-
-- Fix nodes of surface elements in Tetgen (easy)
-- Extend Tetgen to multiple-volume geometries (hard)
-- Tetgen+partitions -> crash in BDS transfer
-
-********************************************************************
-
-allow mixed 1st/2nd order meshes (2nd order only where the geometry
-requires it). Add this as an advanced option since it will create
-meshes with hanging nodes.
-
-From: Julian Swartz <swartzjp@gmail.com>
-> I think that the feature may also fit under:
-> 
-> menu: Tool -> Options
-> select "Mesh"
-> tab "General"
-> then perhaps under "Generate second order elements" there could be an 
-> additional check box for "Generate second order elements only along 
-> curved boundaries".
->
-
-********************************************************************
-
-automatic exterior orientation of boundary surfaces (would greatly
-enhance Netgen/Frontal integration). One way is to compute the solid
-angle using the discretized surface. Another (probably more efficient
-way) is to select one element per surface loop, shoot a ray in both
-normal directions, and count the intersections with all other elements
-in the same surface: if we get 0 or an even number, the normal points
-outside. If we get an even number, it points inside.
-
-********************************************************************
-
 add an interactive way to choose the orientation of surfaces in
 surface loops and lines in line loops?
 
@@ -106,10 +67,6 @@ into cone)
 
 fill TrsfPoint list in surfaces in 3D_Extrude, so that we can use 
 extruded+recombined surfaces to create Transfinite Volumes
-
-********************************************************************
-
-add a mode to pick a mesh element with the mouse (a la medit)
 
 ********************************************************************
 
@@ -167,10 +124,6 @@ index-based format)
 
 ********************************************************************
 
-Test and reintroduce the cylindrical surfaces (cylinder, cone, torus)
-
-********************************************************************
-
 add parameter to transformation operations to copy the meshes
 
 ********************************************************************
@@ -195,11 +148,6 @@ precision...). Rescale?
 
 find a better way to display the time/timestep in the scale... (would
 be solved if we had dynamic labels?)
-
-********************************************************************
-
-make Recombine work the same as "Second order"? (i.e., allow for
-interactive use?)
 
 ********************************************************************
 

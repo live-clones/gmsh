@@ -54,30 +54,50 @@ void debugVertices(std::vector<MVertex*> &vertices, std::string file,
   fclose(fp);
 }
 
-void debugElements(std::vector<MElement*> &elements, std::string file, 
+template<class T>
+void debugElements(std::vector<T*> &elements, std::string file, 
 		   bool parametric, int num=0)
 {
   char name[256];
   sprintf(name, "%s_%d.pos", file.c_str(), num);
   FILE *fp = fopen(name, "w");
   fprintf(fp, "View \"debug\"{\n");
-  for(unsigned int i = 0; i < elements.size(); i++)
-    elements[i]->writePOS(fp);
-  fprintf(fp, "};\n");    
+  for(unsigned int i = 0; i < elements.size(); i++){
+    fprintf(fp, "%s(", elements[i]->getStringForPOS());
+    for(int j = 0; j < elements[i]->getNumVertices(); j++){
+      MVertex *v = elements[i]->getVertex(j);
+      if(j) fprintf(fp, ",");
+      double x, y, z;
+      if(parametric){
+	v->getParameter(0, x);
+	v->getParameter(1, y);
+	z = 0;
+      }
+      else{
+	x = v->x(); y = v->y(); z = v->z();
+      }
+      fprintf(fp, "%g,%g,%g", x, y, z);
+    }
+    fprintf(fp, "){");
+    for(int j = 0; j < elements[i]->getNumVertices(); j++){
+      MVertex *v = elements[i]->getVertex(j);
+      if(j) fprintf(fp, ",");
+      if(v->getData()){
+	double pou = *(double*)v->getData();
+	fprintf(fp, "%g", pou);
+      }
+      else{
+	fprintf(fp, "%d", v->onWhat()->tag());
+      }
+    }
+    fprintf(fp, "};\n");
+  }
+  fprintf(fp, "};\n");
   fclose(fp);
 }
 
 class meshCartesian{
 public:
-  typedef MDataFaceVertex<double> DVertex;
-  static std::set<DVertex*, MVertexLessThanLexicographic> vPosition;
-  static std::set<MVertex*> vDelete;
-  static void deleteUnusedVertices()
-  {
-    for(std::set<MVertex*>::iterator it = vDelete.begin(); it != vDelete.end(); it++)
-      delete *it;
-    vDelete.clear();
-  }
   void operator() (GFace *gf)
   {  
     int M = (int)(30. / CTX.mesh.lc_factor), N = (int)(30. / CTX.mesh.lc_factor);
@@ -88,17 +108,8 @@ public:
 	GPoint p = gf->point(u, v);
 	double pou;
 	FM->GetPou(gf->tag(), u, v, pou);
-	DVertex *w = new DVertex(p.x(), p.y(), p.z(), gf, u, v, pou);
-	// eliminate duplicate vertices on hard edges
-	std::set<DVertex*, MVertexLessThanLexicographic>::iterator it = vPosition.find(w);
-	if(it != vPosition.end()){
-	  delete w;
-	  gf->mesh_vertices.push_back(*it);
-	}
-	else{
-	  vPosition.insert(w);
-	  gf->mesh_vertices.push_back(w);
-	}
+	gf->mesh_vertices.push_back
+	  (new MDataFaceVertex<double>(p.x(), p.y(), p.z(), gf, u, v, pou));
       }
     }
     for(int i = 0; i < M - 1; i++){
@@ -113,9 +124,6 @@ public:
     }
   }
 };
-
-std::set<meshCartesian::DVertex*, MVertexLessThanLexicographic> meshCartesian::vPosition;
-std::set<MVertex*> meshCartesian::vDelete;
 
 class computePartitionOfUnity{
 public:
@@ -160,6 +168,8 @@ public:
 	}
       }
     }
+
+    //debugElements(gf->quadrangles, "pou", false, gf->tag());
   }
 };
 
@@ -189,8 +199,7 @@ public:
 	newq.push_back(gf->quadrangles[i]);
     gf->quadrangles = newq;
 
-    // remove vertices in the groove (we cannot delete them right away
-    // since some can be shared between faces on hard edges)
+    // remove vertices in the groove
     std::vector<MVertex*> newv;
     for(unsigned int i = 0; i < gf->mesh_vertices.size(); i++)
       gf->mesh_vertices[i]->setVisibility(-1);
@@ -199,7 +208,7 @@ public:
 	gf->quadrangles[i]->getVertex(j)->setVisibility(1);
     for(unsigned int i = 0; i < gf->mesh_vertices.size(); i++)
       if(gf->mesh_vertices[i]->getVisibility() < 0) 
-	meshCartesian::vDelete.insert(gf->mesh_vertices[i]);
+	delete gf->mesh_vertices[i];
       else
 	newv.push_back(gf->mesh_vertices[i]);
     gf->mesh_vertices = newv;
@@ -224,6 +233,11 @@ void getOrderedBoundaryLoops(std::vector<MElement*> &elements,
   for(std::map<vpair, vpair>::iterator it = edges.begin(); it != edges.end(); it++)
     connect[it->second.first] = it->second.second;
 
+  std::vector<MVertex*> debug;
+  for(std::map<MVertex*, MVertex*>::iterator it = connect.begin(); it != connect.end(); it++)
+    debug.push_back(it->first);
+  debugVertices(debug, "xxxx", false, 0);
+
   loops.resize(1);
   while(connect.size()){
     if(loops[loops.size() - 1].empty()) 
@@ -240,14 +254,6 @@ void getOrderedBoundaryLoops(std::vector<MElement*> &elements,
     loops.pop_back();
   
   Msg(INFO, "Found %d loop(s) in boundary", loops.size());
-}
-
-void addElements(GFace *gf, std::vector<MElement*> &elements)
-{
-  for(unsigned int i = 0; i < gf->triangles.size(); i++)
-    elements.push_back(gf->triangles[i]);
-  for(unsigned int i = 0; i < gf->quadrangles.size(); i++)
-    elements.push_back(gf->quadrangles[i]);
 }
 
 void classifyFaces(GFace *gf, std::set<GFace*> &connected, std::set<GFace*> &other)
@@ -288,7 +294,7 @@ void getIntersectingBoundaryParts(GFace *gf, std::vector<MElement*> &elements,
   getOrderedBoundaryLoops(elements, loops);
   parts.resize(loops.size());
 
-  if(gf->tag() == 0){
+  if(0){
     debugElements(elements, "elements", false);
     for(unsigned int i = 0; i < loops.size(); i++)
       debugVertices(loops[i], "boundary", false, i);
@@ -325,22 +331,49 @@ void getIntersectingBoundaryParts(GFace *gf, std::vector<MElement*> &elements,
   }
 }
 
+void meshGrout(GFace *gf, std::vector<MVertex*> &loop, std::vector<MVertex*> &hole)
+{ 
+  fourierFace *grout = new fourierFace(gf, loop, hole);
+  meshGFace mesh; 
+  mesh(grout);
+  //debugElements(grout->triangles, "grout", true);
+  for(unsigned int i = 0; i < grout->triangles.size(); i++)
+    gf->triangles.push_back(grout->triangles[i]);
+  for(unsigned int i = 0; i < loop.size(); i++)
+    gf->mesh_vertices.push_back(loop[i]);
+  for(unsigned int i = 0; i < hole.size(); i++)
+    gf->mesh_vertices.push_back(hole[i]);
+  for(unsigned int i = 0; i < grout->mesh_vertices.size(); i++)
+    gf->mesh_vertices.push_back(grout->mesh_vertices[i]);
+  delete grout;
+}
+
 class createGrout{
 public:
   void operator() (GFace *gf)
   {  
-    if(gf->tag() > 1) return;
+    if(gf->tag() > 2) return;
 
     Msg(INFO, "Processing grout for face %d", gf->tag());
 
     std::set<GFace*> connected, other;
     classifyFaces(gf, connected, other);
 
-    std::vector<MElement*> connectedElements, otherElements;
-    for(std::set<GFace*>::iterator it = connected.begin(); it != connected.end(); it++)
-      addElements(*it, connectedElements);
-    for(std::set<GFace*>::iterator it = other.begin(); it != other.end(); it++)
-      addElements(*it, otherElements);
+    std::vector<MElement*> connectedElements;
+    for(std::set<GFace*>::iterator it = connected.begin(); it != connected.end(); it++){
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+	connectedElements.push_back((*it)->triangles[i]);
+      for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
+	connectedElements.push_back((*it)->quadrangles[i]);
+    }
+
+    std::vector<MElement*> otherElements;
+    for(std::set<GFace*>::iterator it = other.begin(); it != other.end(); it++){
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+	otherElements.push_back((*it)->triangles[i]);
+      for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
+	otherElements.push_back((*it)->quadrangles[i]);
+    }
 
     std::vector<std::vector<std::vector<MVertex*> > > inside;
     getIntersectingBoundaryParts(gf, connectedElements, inside);
@@ -357,6 +390,7 @@ public:
     std::vector<MVertex*> hole, loop;
     
     if(inside.size() == 1 && inside[0].size() == 1){
+      Msg(INFO, "CASE 1: MESH AROUND ONE-PART HOLE");
       // create hole
       SPoint2 ic(0., 0.);
       {
@@ -404,39 +438,31 @@ public:
 	loop.push_back(hole[0]);
       }
       // mesh the grout
-      fourierFace *grout = new fourierFace(gf, loop, hole);
-      meshGFace mesh; 
-      mesh(grout);
-      for(unsigned int i = 0; i < grout->triangles.size(); i++)
-	gf->triangles.push_back(grout->triangles[i]);
-      for(unsigned int i = 0; i < loop.size(); i++)
-	gf->mesh_vertices.push_back(loop[i]);
-      for(unsigned int i = 0; i < hole.size(); i++)
-	gf->mesh_vertices.push_back(hole[i]);
-      for(unsigned int i = 0; i < grout->mesh_vertices.size(); i++)
-	gf->mesh_vertices.push_back(grout->mesh_vertices[i]);
-      delete grout;
+      meshGrout(gf, loop, hole);
     }
-    else{
-      Msg(WARNING, "Faces with no holes not implemented yet!");
-
-      // num individual meshes = num parts with onWhat() == gf!
-
-      // for each one
-      //   - find other parts that are "close" (using POUs?)
-      //   - sort parts w.r.t barycenter of each group      
-
+    else if(!outside.size()){
+      Msg(INFO, "CASE 2: MESH SIMPLE HOLES");
+      hole.clear();
       for(unsigned int i = 0; i < inside.size(); i++){
+	loop.clear();
 	for(unsigned int j = 0; j < inside[i].size(); j++){
 	  for(unsigned int k = 0; k < inside[i][j].size(); k++){
 	    loop.push_back(inside[i][j][k]);
 	  }
 	}
+	loop.push_back(loop[0]);
+	meshGrout(gf, loop, hole);
       }
     }
-    
-    debugVertices(hole, "hole", false, gf->tag());
-    debugVertices(loop, "loop", false, gf->tag());
+    else{
+      // num individual meshes = num parts with onWhat() == gf!
+      // for each one
+      //   - find other parts that are "close" (using POUs?)
+      //   - sort parts w.r.t barycenter of each group      
+      Msg(GERROR, "This case is not implemented yet");
+    }
+    debugVertices(hole, "hole", true, gf->tag());
+    debugVertices(loop, "loop", true, gf->tag());
   }
 };
 
@@ -453,9 +479,6 @@ fourierModel::fourierModel(const std::string &name)
   for(int i = 0; i < FM->GetNumPatches(); i++)
     add(new fourierFace(this, i));
 
-  meshCartesian::vPosition.clear();
-  MVertexLessThanLexicographic::tolerance = 1.e-12; // Warning: tolerance
-
   // mesh each face with quads
   std::for_each(firstFace(), lastFace(), meshCartesian());
 
@@ -463,12 +486,12 @@ fourierModel::fourierModel(const std::string &name)
   std::for_each(firstFace(), lastFace(), computePartitionOfUnity());
 
   // create grooves
-  meshCartesian::vDelete.clear();
   std::for_each(firstFace(), lastFace(), createGroove());
-  meshCartesian::deleteUnusedVertices();
-  
+
   // create grout
   std::for_each(firstFace(), lastFace(), createGrout());
+
+  // remove any duplicate vertices on hard edges
 
   CTX.mesh.changed = ENT_ALL;
 }

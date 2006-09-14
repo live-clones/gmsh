@@ -45,9 +45,9 @@ static int imaxarg1,imaxarg2;
 static int iminarg1,iminarg2;
 #define IMIN(a,b) (iminarg1=(a),iminarg2=(b),(iminarg1) < (iminarg2) ?\
         (iminarg1) : (iminarg2))
+*/
 
 #define SIGN(a,b) ((b) >= 0.0 ? fabs(a) : -fabs(a))
-*/
 
 #if defined(__STDC__) || defined(ANSI) || defined(NRANSI) /* ANSI */
 
