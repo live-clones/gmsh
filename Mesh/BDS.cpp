@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.61 2006-09-01 10:10:05 remacle Exp $
+// $Id: BDS.cpp,v 1.62 2006-09-14 15:23:29 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -53,129 +53,6 @@ void outputScalarField(std::list < BDS_Face * >t, const char *iii)
 BDS_Vector::BDS_Vector(const BDS_Point & p2, const BDS_Point & p1)
   :x(p2.X - p1.X), y(p2.Y - p1.Y), z(p2.Z - p1.Z)
 {
-}
-
-double dist_droites_gauches(BDS_Point * p1, BDS_Point * p2,
-                            BDS_Point * p3, BDS_Point * p4)
-{
-  BDS_Vector u1(*p2, *p1);
-  BDS_Vector u2(*p4, *p3);
-  BDS_Vector a(*p2, *p4);
-  BDS_Vector u1xu2 = u1 % u2;
-  double x = sqrt(u1xu2 * u1xu2);
-  // les droites sont paralleles
-  if(x == 0) {
-    return 1.e18;
-  }
-  // les droites sont gauches
-  else {
-    double y = fabs((a % u1) * u2);
-    return y / x;
-  }
-}
-
-bool proj_point_triangle(double xa, double ya, double za,
-                         const BDS_Vector & n,
-                         BDS_Face * t, double &x, double &y, double &z)
-{
-  const double eps_prec = 1.e-10;
-  //  BDS_Vector n = t->N();
-  double mat[3][3];
-  double b[3];
-  double res[2];
-  double det;
-  BDS_Point *pts[4];
-  t->getNodes(pts);
-
-  mat[0][0] = pts[1]->X - pts[0]->X;
-  mat[0][1] = pts[2]->X - pts[0]->X;
-  mat[0][2] = -n.x;
-
-  mat[1][0] = pts[1]->Y - pts[0]->Y;
-  mat[1][1] = pts[2]->Y - pts[0]->Y;
-  mat[1][2] = -n.y;
-
-  mat[2][0] = pts[1]->Z - pts[0]->Z;
-  mat[2][1] = pts[2]->Z - pts[0]->Z;
-  mat[2][2] = -n.z;
-
-  b[0] = xa - pts[0]->X;
-  b[1] = ya - pts[0]->Y;
-  b[2] = za - pts[0]->Z;
-  if(!sys3x3(mat, b, res, &det))
-    return false;
-
-  // coordonnees dans la face
-  if(res[0] >= 1.0 + eps_prec || res[0] <= -eps_prec)
-    return false;
-  if(res[1] >= 1.0 + eps_prec || res[1] <= -eps_prec)
-    return false;
-  if(res[1] >= 1. + eps_prec - res[0])
-    return false;
-
-  x = xa + res[2] * n.x;
-  y = ya + res[2] * n.y;
-  z = za + res[2] * n.z;
-  return true;
-}
-
-void proj_point_plane(double xa, double ya, double za,
-                      BDS_Point * p1, BDS_Point * p2, BDS_Point * p3,
-                      double &x, double &y, double &z)
-{
-  // plane ax+by+cz+1 = 0;
-
-  double mat[3][3];
-  mat[0][0] = p1->X;
-  mat[0][1] = p1->Y;
-  mat[0][2] = p1->Z;
-  mat[1][0] = p2->X;
-  mat[1][1] = p2->Y;
-  mat[1][2] = p2->Z;
-  mat[2][0] = p3->X;
-  mat[2][1] = p3->Y;
-  mat[2][2] = p3->Z;
-  double b[3] = { -1, -1, -1 };
-  double pl[3], det;
-  sys3x3(mat, b, pl, &det);
-  double n[3] = { pl[0], pl[1], pl[2] };
-  //    norme(n);
-  // pp(x,y,z) = p + k n
-  // pp belongs to the plane
-  // a x + b y + c z + 1 = 0
-  // x = xa + k nx
-  // y = ya + k ny
-  // z = za + k nz
-  // a(xa + k nx) + b( ya + k ny ) + c(  za + k nz ) + 1 = 0
-  // k = - ( a xa + b ya + c za + 1) / (a nx + b ny + c nz )
-  double k =
-    -(pl[0] * xa + pl[1] * ya + pl[2] * za + 1) / (pl[0] * n[0] +
-                                                   pl[1] * n[1] +
-                                                   pl[2] * n[2]);
-  x = xa + k * n[0];
-  y = ya + k * n[1];
-  z = za + k * n[2];
-}
-
-void print_face(BDS_Face * t)
-{
-  BDS_Point *pts[4];
-  t->getNodes(pts);
-  printf("face %p with nodes %d %d %d and edges %p (%d %d) %p (%d %d) %p (%d %d)\n",
-	 (void *)t, pts[0]->iD, pts[1]->iD, pts[2]->iD, (void *)t->e1,
-	 t->e1->p1->iD, t->e1->p2->iD, (void *)t->e2, t->e2->p1->iD,
-	 t->e2->p2->iD, (void *)t->e3, t->e3->p1->iD, t->e3->p2->iD);
-}
-
-void print_edge(BDS_Edge * e)
-{
-  printf("edge %p with nodes %d %d ------------------\n", (void *)e,
-         e->p1->iD, e->p2->iD);
-  printf("faces : \n ");
-  for(int i = 0; i < e->numfaces(); ++i)
-    print_face(e->faces(i));
-
-  printf("----------------------------------------------\n ");
 }
 
 void vector_triangle(BDS_Point * p1, BDS_Point * p2, BDS_Point * p3,
@@ -279,9 +156,6 @@ BDS_Point *BDS_Mesh::add_point(int num, double u, double v, GFace *gf)
   pp->u = u;
   pp->v = v;
   points.insert(pp);
-  //  double curvature = gf->curvature (SPoint2(u,v));
-  //  pp->radius() = (curvature ==0.0) ? 1.e22:1./curvature;
-  //  pp->radius() = curvature;
   MAXPOINTNUMBER = (MAXPOINTNUMBER < num) ? num : MAXPOINTNUMBER;
   return pp;
 }
@@ -794,31 +668,26 @@ void BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
   op[1]->config_modified = true;
 }
 
-bool BDS_SwapEdgeTestParametric::operator () (BDS_Edge *e,
-					      BDS_Point *p1,BDS_Point *p2,BDS_Point *p3,
-					      BDS_Point *q1,BDS_Point *q2,BDS_Point *q3) const
-{
-  //  return false;
-  double s1 = fabs(surface_triangle_param ( p1,p2,p3));
-  double s2 = fabs(surface_triangle_param ( q1,q2,q3));  
-  BDS_Point * pf1[4];
-  BDS_Point * pf2[4];
-  e->faces(0)->getNodes(pf1);
-  e->faces(1)->getNodes(pf2);
-  double n1 = fabs(surface_triangle_param ( pf1[0],pf1[1],pf1[2]));					    
-  double n2 = fabs(surface_triangle_param ( pf2[0],pf2[1],pf2[2]));					    
-
-  if (s1 < 1.e-2 * (n1+n2))return false;
-  if (s2 < 1.e-2 * (n1+n2))return false;
-  if (fabs(s1+s2 - n1-n2) > 1.e-8 * (s1+s2))return false;
-
-  return true;
-}
 
 
 // This function does actually the swap without taking into account
 // the feasability of the operation. Those conditions have to be
 // taken into account before doing the edge swap
+
+bool BDS_SwapEdgeTestParametric::operator () (BDS_Point *_p1,BDS_Point *_p2,
+					      BDS_Point *_q1,BDS_Point *_q2) const
+{
+  double p1[2] =  {_p1->u,_p1->v};
+  double p2[2] =  {_p2->u,_p2->v};
+  double op1[2] = {_q1->u,_q1->v};
+  double op2[2] = {_q2->u,_q2->v};
+
+  double ori_t1 = gmsh::orient2d(op1, p1, op2);
+  double ori_t2 = gmsh::orient2d(op1,op2, p2);
+
+  return (ori_t1 * ori_t2 > 0);
+}
+
 bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
 {
 
@@ -871,14 +740,8 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
     }
   }
 
-  if(orientation == 1) {
-    if (!theTest ( e, p1, op[1], op[0] , op[1], p2, op[0]))
-      return false;
-  }
-  else {
-    if (!theTest ( e, p1, op[0], op[1] , op[1], op[0], p2))
-      return false;
-  }
+  if (!theTest ( p1, p2, op[0],op[1]))
+    return false;
 
   BDS_Edge *p1_op1 = find_edge(p1, op[0], e->faces(0));
   BDS_Edge *op1_p2 = find_edge(op[0], p2, e->faces(0));
@@ -1100,22 +963,37 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge * e, BDS_Point * p)
 }
 
 
-
+// use robust predicates for not allowing to revert a triangle
+// by moving one of its vertices 
 bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS_Face *t)
 {       
   BDS_Point *pts[4];
   t->getNodes(pts);
-  double U = p->u;
-  double V = p->v;
-  p->u = u;
-  p->v = v;
-  double s_after = surface_triangle_param(pts[0], pts[1], pts[2]);
-  p->u = U;
-  p->v = V;
-  double s_before = surface_triangle_param(pts[0], pts[1], pts[2]);
-  if(s_after*s_before <= 0) return false;
-  if(fabs(s_after) < 1.e-4 * fabs(s_before)) return false;
-  return true;
+
+  double pa[2] = { pts[0]->u,pts[0]->v};
+  double pb[2] = { pts[1]->u,pts[1]->v};
+  double pc[2] = { pts[2]->u,pts[2]->v};
+
+  double a[2] = {pb[0]-pa[0],pb[1]-pa[1]};
+  double b[2] = {pc[0]-pa[0],pc[1]-pa[1]};
+
+  double area_init = fabs(a[1] * b[2] - a[2] * b[1]);
+  double ori_init = gmsh::orient2d(pa, pb, pc);
+
+  if (p == pts[0])
+    {pa[0]=u;pa[1]=v;}
+  else if (p == pts[1])
+    {pb[0]=u;pb[1]=v;}
+  else if (p == pts[2])
+    {pc[0]=u;pc[1]=v;}
+  else
+    throw;
+
+  double area_final = fabs(a[1] * b[2] - a[2] * b[1]);
+  if (area_final < 0.1 * area_init)return false;
+  double ori_final = gmsh::orient2d(pa, pb, pc);
+
+  return ori_init*ori_final > 0;
 }
 
 bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)

@@ -2,48 +2,78 @@
 #define _DELAUNAYINSERTION_H_
 #include "MElement.h"
 #include <list>
+#include <set>
+class GRegion;
+
 class MTet4
 {
   bool deleted;
-  double size;
+  double circum_radius;
   MTetrahedron *base;
   MTet4 *neigh[4];
  public :
+  
+  bool isDeleted () const {return deleted;}
+  void   forceRadius (double r){circum_radius=r;}
+  double getRadius ()const {return circum_radius;}
+  
   MTet4 ( MTetrahedron * t) : deleted(false), base (t)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
+    double center[3];
+    base->circumcenter(center);
+    const double dx = base->getVertex(0)->x() - center[0];
+    const double dy = base->getVertex(0)->y() - center[1];
+    const double dz = base->getVertex(0)->z() - center[2];
+    circum_radius = sqrt ( dx*dx + dy*dy + dz*dz);
   } 
+
   inline MTetrahedron * tet() const {return base;}
   inline void  setNeigh (int iN , MTet4 *n) {neigh[iN]=n;}
   inline MTet4 *getNeigh (int iN ) const {return neigh[iN];}
-  double inCircumSphere ( const double *p ) const; 
-  inline double inCircumSphere ( double x, double y, double z ) const 
+  int inCircumSphere ( const double *p ) const; 
+  inline int inCircumSphere ( double x, double y, double z ) const 
   {
     const double p[3] = {x,y,z};
     return inCircumSphere ( p );
   }
-  inline double inCircumSphere ( const MVertex * v) const
+  inline int inCircumSphere ( const MVertex * v) const
   {
     return inCircumSphere ( v->x(), v->y(), v->z() );
   }
 
   double getVolume () const { return base -> getVolume() ; };
-  inline bool operator < ( const MTet4 & other) const {return size < other.size;}
-  inline void remove ()
+  inline void setDeleted (bool d)
   {
-    deleted = true;
-    for (int i=0;i<4;i++)
-      if (neigh[i])neigh[i]->remove (this); 
+    deleted = d;
   }
-  inline void remove (MTet4 *t)
+  inline bool assertNeigh() const 
+    {
+      if (deleted) return true;
+      for (int i=0;i<4;i++)
+	if (neigh[i] && (neigh[i]->isNeigh(this)==false))return false;
+      return true;
+    }
+
+  inline bool isNeigh  (const MTet4 *t) const
   {
     for (int i=0;i<4;i++)
-      if (neigh[i]==t)neigh[i]=0;
+      if (neigh[i]==t) return true;
+    return false;
   }
 
 };
 void connectTets ( std::list<MTet4*> & );
-bool insertVertex ( MVertex *v  , MTet4 *t);
+void insertVerticesInRegion (GRegion *gr) ;
 
-
+class compareTet4Ptr
+{
+ public:
+  inline bool operator () (  const MTet4 *a, const MTet4 *b ) 
+    { 
+      if (a->getRadius() > b->getRadius())return true;
+      if (a->getRadius() < b->getRadius())return false;
+      return a<b;
+   }
+};
 #endif

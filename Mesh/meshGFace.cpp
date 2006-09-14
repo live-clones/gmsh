@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.13 2006-09-11 15:23:54 remacle Exp $
+// $Id: meshGFace.cpp,v 1.14 2006-09-14 15:23:29 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -248,6 +248,31 @@ bool edgeSwapTest(BDS_Edge *e)
 }
 
 
+
+int edgeSwapTestQuality(BDS_Edge *e, double fact = 1.1)
+{
+   BDS_Point *op[2];
+
+   if (!e->p1->config_modified && ! e->p2->config_modified) return false;   
+   
+   if (e->numfaces() != 2)return false;
+
+   e->oppositeof (op);
+  
+   double qa1 = quality_triangle ( e->p1 , e->p2 , op[0] );
+   double qa2 = quality_triangle ( e->p1 , e->p2 , op[1] );
+   double qb1 = quality_triangle ( e->p1 , op[0] , op[1] );
+   double qb2 = quality_triangle ( e->p2 , op[0] , op[1] );
+   double qa = (qa1<qa2)?qa1:qa2; 
+   double qb = (qb1<qb2)?qb1:qb2;   
+   if (qb > fact*qa) return 1;
+   if (qb < qa/fact) return -1;
+   return 0;
+   
+}
+
+
+
 void OptimizeMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 {
   // optimize
@@ -278,11 +303,8 @@ void OptimizeMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	  if (!(*it)->deleted && (*it)->numfaces() == 2)
 	    {
 	      BDS_Point *op[2];
-	      (*it)->oppositeof(op);
-	      
-	      bool c1 = (op[0]-> edges.size() == 5 &&  op[1]-> edges.size() == 5 );
-	      bool c2 =  ((*it)->p1-> edges.size() == 7 &&  (*it)->p2-> edges.size() == 7); 
-	      if ( c1 &&  c2 ) 
+	      (*it)->oppositeof(op);	      
+	      if ( edgeSwapTestQuality(*it) == 1) 
 		m.swap_edge ( *it , BDS_SwapEdgeTestParametric());
 	    }	
 	  ++it;
@@ -391,10 +413,18 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
       while (1)
 	{
 	  if (NN2++ >= NN1)break;
-	  if (!(*it)->deleted && edgeSwapTest(*it))
-	    if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))
-	      nb_swap++;
-	  ++it;
+	  // result = -1 => forbid swap because too badly shaped elements
+	  // result = 0  => whatever
+	  // result = 1  => oblige to swap because the quality is greatly improved
+	  if (!(*it)->deleted)
+	    {
+	      int result = edgeSwapTestQuality(*it,3);
+	      if (result >= 0)
+		if(edgeSwapTest(*it) || result > 0)
+		  if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))
+		    nb_swap++;
+	      ++it;
+	    }
 	}
 
       // collapse short edges
@@ -425,10 +455,15 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
       while (1)
 	{
 	  if (NN2++ >= NN1)break;
-	  if (!(*it)->deleted && edgeSwapTest(*it))
-	    if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))
-	      nb_swap++;
-	  ++it;
+	  if (!(*it)->deleted)
+	    {
+	      int result = edgeSwapTestQuality(*it,3);
+	      if (result >= 0)
+		if(edgeSwapTest(*it) || result > 0)
+		  if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))
+		    nb_swap++;
+	      ++it;
+	    }
 	}
       // smooth resulting mesh
       //if (IT % 4 == 0 )

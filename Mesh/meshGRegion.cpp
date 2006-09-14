@@ -350,11 +350,21 @@ int intersect_line_triangle ( double X[3],
 
 }
 
+void setRand (double r[6])
+{
+  for (int i=0;i<6;i++)
+    r[i]= 0.0001*((double)rand() / (double)RAND_MAX);
+}
+
 
 void meshNormalsPointOutOfTheRegion (GRegion *gr) 
 {
   std::list<GFace*> faces = gr->faces();
   std::list<GFace*>::iterator it = faces.begin();
+
+  double rrr[6];
+  setRand(rrr);
+		   
   while (it != faces.end())
     {
       GFace *gf = (*it);      
@@ -373,9 +383,9 @@ void meshNormalsPointOutOfTheRegion (GRegion *gr)
 	  norme (v1);
 	  norme (v2);
 	  norme(N);
-	  N[0]+= 0.05*v1[0]-0.05*v2[0];
-	  N[1]+= 0.03*v1[1]-0.15*v2[1];
-	  N[2]+= 0.05*v1[2]-0.05*v2[2];
+	  N[0]+= rrr[0]*v1[0]+rrr[1]*v2[0];
+	  N[1]+= rrr[2]*v1[1]+rrr[3]*v2[1];
+	  N[2]+= rrr[4]*v1[2]+rrr[5]*v2[2];
 	  norme(N);
 	  std::list<GFace*>::iterator it_b = faces.begin();
 	  while (it_b != faces.end())
@@ -400,14 +410,21 @@ void meshNormalsPointOutOfTheRegion (GRegion *gr)
 	}
 
 
-      if (nb_intersect % 2 == 1) // odd nb of intersections: the normal points inside the region 
+      if (nb_intersect < 0) 
 	{
-	  for (unsigned int i = 0; i< gf->triangles.size(); i++)
-	    {
-	      gf->triangles[i]->revert();
-	    }
+	  setRand(rrr);
 	}
-      ++it;
+      else
+	{
+	  if (nb_intersect % 2 == 1) // odd nb of intersections: the normal points inside the region 
+	    {
+	      for (unsigned int i = 0; i< gf->triangles.size(); i++)
+		{
+		  gf->triangles[i]->revert();
+		}
+	    }
+	  ++it;
+	}
     }
 }
 
@@ -450,6 +467,9 @@ void meshGRegion :: operator() (GRegion *gr)
 	    (CTX.verbosity < 3)? 'Q': (CTX.verbosity > 6)? 'V': '\0');
     tetrahedralize(opts, &in, &out);
     TransferTetgenMesh(gr, in, out, numberedV);
+    // now do insertion of points
+    void insertVerticesInRegion (GRegion *gr) ;
+    insertVerticesInRegion (gr); 
     // restore the initial set of faces
     gr->set ( faces );
 

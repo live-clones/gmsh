@@ -359,25 +359,15 @@ public:
 class BDS_SwapEdgeTest
 {
  public:
-  virtual bool operator() (BDS_Edge *e,
-			   BDS_Point *p1,BDS_Point *p2,BDS_Point *p3,
-			   BDS_Point *q1,BDS_Point *q2,BDS_Point *q3) const = 0; 
-};
-
-class BDS_SwapEdgeTestPlanar : public BDS_SwapEdgeTest
-{
- public:
-  virtual bool operator() (BDS_Edge *e,
-			   BDS_Point *p1,BDS_Point *p2,BDS_Point *p3,
-			   BDS_Point *q1,BDS_Point *q2,BDS_Point *q3) const;
+  virtual bool operator() (BDS_Point *p1,BDS_Point *p2,
+			   BDS_Point *q1,BDS_Point *q2) const = 0; 
 };
 
 class BDS_SwapEdgeTestParametric : public BDS_SwapEdgeTest
 {
  public:
-  virtual bool operator() (BDS_Edge *e,
-			   BDS_Point *p1,BDS_Point *p2,BDS_Point *p3,
-			   BDS_Point *q1,BDS_Point *q2,BDS_Point *q3) const;
+  virtual bool operator() (BDS_Point *p1,BDS_Point *p2,
+			   BDS_Point *q1,BDS_Point *q2) const ; 
 };
 
 class BDS_Mesh 

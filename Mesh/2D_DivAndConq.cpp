@@ -1,4 +1,4 @@
-// $Id: 2D_DivAndConq.cpp,v 1.24 2006-09-11 20:18:23 remacle Exp $
+// $Id: 2D_DivAndConq.cpp,v 1.25 2006-09-14 15:23:29 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -394,7 +394,7 @@ int CircumCircle(double x1, double y1, double x2, double y2, double x3,
   return (1);
 }
 
-// we should use robust predicates here, let's give it at try...
+// Again, we use robust predicates here
 
 
 int Is_right_of(PointNumero x, PointNumero y, PointNumero check)
@@ -404,28 +404,11 @@ int Is_right_of(PointNumero x, PointNumero y, PointNumero check)
 
 int Is_left_of(PointNumero x, PointNumero y, PointNumero check)
 {
-
-  //  double pa[2] = {(double)pPointArray[x].where.h, (double)pPointArray[x].where.v};
-  //  double pb[2] = {(double)pPointArray[y].where.h, (double)pPointArray[y].where.v};
-  //  double pc[2] = {(double)pPointArray[check].where.h, (double)pPointArray[check].where.v};
-
-  //  double result gmsh::orient2d(pa, pb, pc);
-
-  //  return result > 0;
-
-  static double xx, yy, alpha, beta;
-
-  yy = (double)(pPointArray[y].where.v - pPointArray[x].where.v);
-  xx = (double)(pPointArray[y].where.h - pPointArray[x].where.h);
-  alpha = atan2(yy, xx);
-
-  yy = (double)(pPointArray[check].where.v - pPointArray[x].where.v);
-  xx = (double)(pPointArray[check].where.h - pPointArray[x].where.h);
-  beta = atan2(yy, xx) - alpha;
-  if(beta <= 0)
-    beta += Deux_Pi;
-
-  return ((beta >= 0) && (beta <= Pi));
+  double pa[2] = {(double)pPointArray[x].where.h, (double)pPointArray[x].where.v};
+  double pb[2] = {(double)pPointArray[y].where.h, (double)pPointArray[y].where.v};
+  double pc[2] = {(double)pPointArray[check].where.h, (double)pPointArray[check].where.v};
+  double result = gmsh::orient2d(pa, pb, pc);
+  return result > 0;
 }
 
 /* This routine insert the point 'newPoint' in the list dlist,
