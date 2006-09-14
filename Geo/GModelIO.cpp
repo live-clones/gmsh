@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.54 2006-09-12 01:24:21 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.55 2006-09-14 19:38:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -337,7 +337,7 @@ int GModel::readMSH(const std::string &name)
 	if(vertexMap.count(num))
 	  Msg(WARNING, "Skipping duplicate vertex %d", num);
 	else
-	  vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2]);
+	  vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
 	if(progress && (i % progress == progress - 1))
 	  Msg(PROGRESS, "Read %d vertices", i + 1);
       }
@@ -1111,7 +1111,7 @@ int GModel::readUNV(const std::string &name)
 	  for(unsigned int i = 0; i < strlen(buffer); i++)
 	    if(buffer[i] == 'D') buffer[i] = 'E';
 	  if(sscanf(buffer, "%lf %lf %lf", &x, &y, &z) != 3) break;
-	  vertexMap[num] = new MVertex(x, y, z);
+	  vertexMap[num] = new MVertex(x, y, z, 0, num);
 	}
       }
       else if(record == 2412){ // elements
@@ -1622,7 +1622,7 @@ int GModel::readBDF(const std::string &name)
 	int num;
 	double x, y, z;
 	if(!readVertexBDF(fp, buffer, 4, &num, &x, &y, &z)) break;
-	vertexMap[num] = new MVertex(x, y, z);
+	vertexMap[num] = new MVertex(x, y, z, 0, num);
       }
     }
   }

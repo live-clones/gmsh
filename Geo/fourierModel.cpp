@@ -352,7 +352,7 @@ class createGrout{
 public:
   void operator() (GFace *gf)
   {  
-    if(gf->tag() > 2) return;
+    if(gf->tag() > 1) return;
 
     Msg(INFO, "Processing grout for face %d", gf->tag());
 
