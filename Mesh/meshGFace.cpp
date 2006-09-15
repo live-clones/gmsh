@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.15 2006-09-15 00:55:40 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.16 2006-09-15 02:54:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1077,6 +1077,7 @@ bool shouldRevert(MEdge &reference, std::vector<T*> &elements)
 
 void orientMeshGFace::operator()(GFace *gf)
 {
+  // orients the mesh to match the orientation of the first edge
   std::list<GEdge*> edges = gf->edges();
   std::list<int> ori = gf->orientations();
   if(edges.empty() || ori.empty()) return;
