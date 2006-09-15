@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.97 2006-09-08 02:39:43 geuzaine Exp $
+// $Id: Generator.cpp,v 1.98 2006-09-15 00:55:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -426,6 +426,10 @@ void mai3d(int ask)
     Maillage_Dimension_3();
     Msg(INFO, "Mesh 3D complete (%g s)", CTX.mesh_timer[2]);
   }
+
+  // Orient the surface mesh so that it matches the geometry
+  if(GMODEL->getMeshStatus() >= 2)
+    std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), orientMeshGFace());
 
   // Optimize quality
   if(GMODEL->getMeshStatus() == 3 && CTX.mesh.optimize)

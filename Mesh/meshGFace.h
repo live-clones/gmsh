@@ -53,4 +53,15 @@ class deMeshGFace
   void operator () ( GFace * );
 };
 
+// Orient the mesh of a face to match the orientation of the
+// underlying geometry (this is doubly useful: 1) some surface mesh
+// algorithms do not respect the original geometrical orientation and
+// 2) some volume algorithms need to change the surface mesh
+// orientation)
+class orientMeshGFace 
+{
+  public :
+  void operator () ( GFace * );
+};
+
 #endif

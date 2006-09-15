@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.14 2006-09-14 15:23:29 remacle Exp $
+// $Id: meshGFace.cpp,v 1.15 2006-09-15 00:55:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1009,10 +1009,6 @@ void gmsh2DMeshGenerator ( GFace *gf )
   //  std::for_each(all_vertices.begin(),all_vertices.end(),p2c);    
   //  std::for_each(gf->mesh_vertices.begin(),gf->mesh_vertices.end(),p2c);    
 }
- 
-
-
-
 
 void deMeshGFace :: operator() (GFace *gf) 
 {
@@ -1059,3 +1055,44 @@ void meshGFace :: operator() (GFace *gf)
       gf->geomType(),gf->triangles.size(),gf->mesh_vertices.size());
 
 }  
+
+template<class T>
+bool shouldRevert(MEdge &reference, std::vector<T*> &elements)
+{
+  for(unsigned int i = 0; i < elements.size(); i++){
+    for(int j = 0; j < elements[i]->getNumEdges(); j++){
+      MEdge e = elements[i]->getEdge(j);
+      if(e.getVertex(0) == reference.getVertex(0) &&
+	 e.getVertex(1) == reference.getVertex(1)){
+	return false;
+      }
+      else if(e.getVertex(1) == reference.getVertex(0) && 
+	      e.getVertex(0) == reference.getVertex(1)){
+	return true;
+      }
+    }
+  }
+  return false;
+}
+
+void orientMeshGFace::operator()(GFace *gf)
+{
+  std::list<GEdge*> edges = gf->edges();
+  std::list<int> ori = gf->orientations();
+  if(edges.empty() || ori.empty()) return;
+  GEdge *ge = *edges.begin();
+  GVertex *beg = ge->getBeginVertex();
+  GVertex *end = ge->getEndVertex();
+  if(!beg || beg->mesh_vertices.empty() || !end || end->mesh_vertices.empty()) return;
+  MVertex *v1 = beg->mesh_vertices[0];
+  MVertex *v2 = ge->mesh_vertices.empty() ? end->mesh_vertices[0] : ge->mesh_vertices[0];
+  int sign = *ori.begin();
+  MEdge ref(sign > 0 ? v1 : v2, sign > 0 ? v2 : v1);
+  if(shouldRevert(ref, gf->triangles) || shouldRevert(ref, gf->quadrangles)){
+    Msg(DEBUG, "Reverting orientation of mesh in face %d", gf->tag());
+    for(unsigned int i = 0; i < gf->triangles.size(); i++)
+      gf->triangles[i]->revert();
+    for(unsigned int i = 0; i < gf->quadrangles.size(); i++)
+      gf->quadrangles[i]->revert();
+  }
+}

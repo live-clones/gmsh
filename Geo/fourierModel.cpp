@@ -333,9 +333,14 @@ void getIntersectingBoundaryParts(GFace *gf, std::vector<MElement*> &elements,
 
 void meshGrout(GFace *gf, std::vector<MVertex*> &loop, std::vector<MVertex*> &hole)
 { 
+  debugVertices(hole, "hole", true, gf->tag());
+  debugVertices(loop, "loop", true, gf->tag());
+
   fourierFace *grout = new fourierFace(gf, loop, hole);
   meshGFace mesh; 
   mesh(grout);
+  orientMeshGFace orient; 
+  orient(grout);
   //debugElements(grout->triangles, "grout", true);
   for(unsigned int i = 0; i < grout->triangles.size(); i++)
     gf->triangles.push_back(grout->triangles[i]);
@@ -352,7 +357,7 @@ class createGrout{
 public:
   void operator() (GFace *gf)
   {  
-    if(gf->tag() > 1) return;
+    if(gf->tag() > 2) return;
 
     Msg(INFO, "Processing grout for face %d", gf->tag());
 
@@ -461,8 +466,6 @@ public:
       //   - sort parts w.r.t barycenter of each group      
       Msg(GERROR, "This case is not implemented yet");
     }
-    debugVertices(hole, "hole", true, gf->tag());
-    debugVertices(loop, "loop", true, gf->tag());
   }
 };
 
@@ -535,8 +538,8 @@ fourierFace::fourierFace(GFace *f, std::vector<MVertex*> &loop, std::vector<MVer
   for(unsigned int i = 1; i < loop.size() - 2; i++)
     _e[0]->mesh_vertices.push_back(loop[i]);
 
-  l_edges.push_back(_e[0]); l_dirs.push_back(1);
-  l_edges.push_back(_e[1]); l_dirs.push_back(1);
+  l_edges.push_back(_e[0]); l_dirs.push_back(-1);
+  l_edges.push_back(_e[1]); l_dirs.push_back(-1);
 
   if(hole.size()){
     _v[2] = new fourierVertex(f->model(), hole[0]);
