@@ -3,6 +3,7 @@
 #include "Numeric.h"
 #include "Message.h"
 #include <set>
+#include <map>
 #include <algorithm>
 
 int MTet4::inCircumSphere ( const double *p ) const
@@ -104,11 +105,10 @@ void recurFindCavity ( std::list<faceXtet> & shell,
     }
 }
 
-int III;
-
 bool insertVertex (MVertex *v , 
 		   MTet4   *t ,
-		   std::set<MTet4*,compareTet4Ptr> &allTets)
+		   std::set<MTet4*,compareTet4Ptr> &allTets,
+		   std::vector<double> & vSizes)
 {
   std::list<faceXtet>  shell;
   std::list<MTet4*>  cavity; 
@@ -132,7 +132,6 @@ bool insertVertex (MVertex *v ,
   double oldVolume = 0;
 
   //  char name2[245];
-  //  sprintf(name2,"testv%d.pos",III);
   //  FILE *ff2 = fopen (name2,"w");
   //  fprintf(ff2,"View\"test\"{\n");
 
@@ -198,7 +197,7 @@ bool insertVertex (MVertex *v ,
 // 		   it->v[2]->y(),
 // 		   it->v[2]->z());
       
-      MTet4 *t4 = new MTet4 ( t ); 
+      MTet4 *t4 = new MTet4 ( t , vSizes); 
       newTets[k++]=t4;
       // all new tets are pushed front in order to
       // ba able to destroy them if the cavity is not
@@ -242,45 +241,58 @@ bool insertVertex (MVertex *v ,
       return false;
     }
 }
+
+static void setLcs ( MTetrahedron *t, std::map<MVertex*,double> &vSizes)
+{
+  for (int i=0;i<4;i++)
+    {
+      for (int j=i+1;j<4;j++)
+	{
+	  MVertex *vi = t->getVertex(i);
+	  MVertex *vj = t->getVertex(j);
+	  double dx = vi->x()-vj->x();
+	  double dy = vi->y()-vj->y();
+	  double dz = vi->z()-vj->z();
+	  double l = sqrt(dx*dx+dy*dy+dz*dz);
+	  std::map<MVertex*,double>::iterator iti = vSizes.find(vi);	  
+	  std::map<MVertex*,double>::iterator itj = vSizes.find(vj);	  
+	  if (iti==vSizes.end() || iti->second > l)vSizes[vi] = l;
+	  if (itj==vSizes.end() || itj->second > l)vSizes[vj] = l;
+	}
+    }
+}
+
+
 void insertVerticesInRegion (GRegion *gr) 
 {
 
   std::set<MTet4*,compareTet4Ptr> allTets;
+  std::map<MVertex*,double> vSizesMap;
+  std::vector<double> vSizes;
+
+  for (int i=0;i<gr->tetrahedra.size();i++)setLcs ( gr->tetrahedra[i] , vSizesMap);
+  
+  int NUM=0;
+  for (std::map<MVertex*,double>::iterator it = vSizesMap.begin();it!=vSizesMap.end();++it)
+    {
+      it->first->setNum(NUM++);
+      vSizes.push_back(it->second);
+    }
 
   for (int i=0;i<gr->tetrahedra.size();i++)
-    {
-      allTets.insert ( new MTet4 ( gr->tetrahedra[i] ) );
-    }
+    allTets.insert ( new MTet4 ( gr->tetrahedra[i] ,vSizes ) );
+
   gr->tetrahedra.clear();
   connectTets ( allTets.begin(), allTets.end() );      
-
-//   for (std::set<MTet4*,compareTet4Ptr>::iterator it = allTets.begin();it!=allTets.end();++it)
-//     {
-//       printf("tet %d %d %d %d neigh %p %p %p %p\n",
-// 	     (*it)->tet()->getVertex(0)->getNum(),
-// 	     (*it)->tet()->getVertex(1)->getNum(),
-// 	     (*it)->tet()->getVertex(2)->getNum(),
-// 	     (*it)->tet()->getVertex(3)->getNum(),
-// 	     (*it)->getNeigh(0),(*it)->getNeigh(1),(*it)->getNeigh(2),(*it)->getNeigh(3));
-//     }
-  
 
   Msg(INFO,"All %d tets were connected",allTets.size());
 
   // here the classification should be done
 
-  III = 0;
+  int ITER = 0;
 
   while (1)
     {
-      //      connectTets ( allTets.begin(), allTets.end() );      
-      //       for (std::set<MTet4*,compareTet4Ptr>::iterator tit =  allTets.begin();tit != allTets.end();++tit)
-      // 	if(!(*tit)->assertNeigh())throw;
-      //      double vv = 0;
-      //      for (std::set<MTet4*,compareTet4Ptr>::iterator tit =  allTets.begin();tit != allTets.end();++tit)
-      //	if (!(*tit)->isDeleted())vv+=fabs((*tit)->getVolume());      
-
-
       MTet4 *worst = *allTets.begin();
 
       if (worst->isDeleted())
@@ -292,8 +304,9 @@ void insertVerticesInRegion (GRegion *gr)
 	}
       else
 	{
-	  if(III%1000 ==0)Msg(INFO,"%d points created -- Worst tet radius is %g",gr->mesh_vertices.size(),worst->getRadius());
-	  if (worst->getRadius() < .015) break;
+	  if(ITER++%5000 ==0)
+	    Msg(INFO,"%d points created -- Worst tet radius is %g",vSizes.size(),worst->getRadius());
+	  if (worst->getRadius() < 1) break;
 	  double center[3];
 	  worst->tet()->circumcenter(center);
 	  double uvw[3];
@@ -301,19 +314,25 @@ void insertVerticesInRegion (GRegion *gr)
 	  if (inside)
 	    {
 	      MVertex *v = new MVertex (center[0],center[1],center[2]);
+	      v->setNum(NUM++);
+	      double lc = 
+		(1-uvw[0]-uvw[1]-uvw[2])*vSizes[worst->tet()->getVertex(0)->getNum()] +
+		(uvw[0])*vSizes[worst->tet()->getVertex(1)->getNum()] +
+		(uvw[1])*vSizes[worst->tet()->getVertex(2)->getNum()] +
+		(uvw[2])*vSizes[worst->tet()->getVertex(3)->getNum()];
+	      vSizes.push_back(lc);
 	      // compute mesh spacing there
-	      III++;
-	      if (!insertVertex ( v  , worst, allTets))
+	      if (!insertVertex ( v  , worst, allTets,vSizes))
 		{
-		  // this one does not work
-		  //		  Msg(INFO,"Point is %g %g %g %d",uvw[0], uvw[1], uvw[2],worst->inCircumSphere ( v ));
 		  allTets.erase(allTets.begin());
 		  worst->forceRadius(0);
 		  allTets.insert(worst);		  
 		  delete v;
 		}
-	      else gr->mesh_vertices.push_back(v);
-	      //	      if(III == 15)  break;
+	      else 
+		{
+		  gr->mesh_vertices.push_back(v);
+		}
 	    }
 	  else
 	    {

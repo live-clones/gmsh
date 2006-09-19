@@ -7,7 +7,7 @@ Extrude Point {1, {1,0.0,0} };
 Extrude Line {1, {0.0,0.0,1} };    
 aa[] = Extrude Surface {5, {0,1,0} };;
   
-Point(100) = {0.3,0.3,0.3,.02};              
+Point(100) = {0.3,0.3,0.3,.1};              
 Extrude Point {100, {.4,0.0,0} };                   
 Extrude Line {28, {0,0.4,0} };   
 Coherence;   

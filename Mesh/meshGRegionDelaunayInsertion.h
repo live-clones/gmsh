@@ -17,7 +17,7 @@ class MTet4
   void   forceRadius (double r){circum_radius=r;}
   double getRadius ()const {return circum_radius;}
   
-  MTet4 ( MTetrahedron * t) : deleted(false), base (t)
+  MTet4 ( MTetrahedron * t, std::vector<double> & sizes) : deleted(false), base (t)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
     double center[3];
@@ -26,6 +26,12 @@ class MTet4
     const double dy = base->getVertex(0)->y() - center[1];
     const double dz = base->getVertex(0)->z() - center[2];
     circum_radius = sqrt ( dx*dx + dy*dy + dz*dz);
+
+    double lc = 0.25*(sizes [base->getVertex(0)->getNum()]+
+		      sizes [base->getVertex(1)->getNum()]+
+		      sizes [base->getVertex(2)->getNum()]+
+		      sizes [base->getVertex(3)->getNum()]);
+    circum_radius /= lc;
   } 
 
   inline MTetrahedron * tet() const {return base;}

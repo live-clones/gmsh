@@ -162,6 +162,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out, std::vector<MV
 	      //	      SPoint2 pp = gf->parFromPoint(SPoint3 (v[j]->x(),v[j]->y(),v[j]->z()));
 	      SPoint2 pp (0,0);
 	      MFaceVertex *v1b = new MFaceVertex (v[j]->x(),v[j]->y(),v[j]->z(),gf,pp.x(),pp.y() );
+	      gf->mesh_vertices.push_back(v1b);
 	      numberedV[out.trifacelist[i * 3 + j] -1] = v1b;
 	      delete v[j];
 	      v[j] = v1b;
