@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.310 2006-09-08 02:39:42 geuzaine Exp $
+// $Id: Options.cpp,v 1.311 2006-09-22 19:28:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4873,7 +4873,10 @@ double opt_mesh_use_cut_plane(OPT_ARGS_NUM)
     CTX.mesh.use_cut_plane = (int)val;
 #if defined(HAVE_FLTK)
     if(WID){
-      double val1 = CTX.lc;
+      double val1 = 0;
+      for(int i = 0; i < 3; i++)
+	val1 = std::max(val1, std::max(fabs(CTX.min[i]), fabs(CTX.max[i])));
+      val1 *= 1.5;
       WID->mesh_value[17]->step(val1/200.);
       WID->mesh_value[17]->minimum(-val1);
       WID->mesh_value[17]->maximum(val1);

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.548 2006-09-08 02:39:42 geuzaine Exp $
+// $Id: GUI.cpp,v 1.549 2006-09-22 19:28:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4180,7 +4180,10 @@ void GUI::reset_clip_browser()
     clip_value[i]->minimum(-1.0);
     clip_value[i]->maximum(1.0);
   }
-  double val1 = CTX.lc;
+  double val1 = 0;
+  for(int i = 0; i < 3; i++)
+    val1 = std::max(val1, std::max(fabs(CTX.min[i]), fabs(CTX.max[i])));
+  val1 *= 1.5;
   for(int i = 3; i < 10; i++){
     clip_value[i]->step(val1/200.);
     clip_value[i]->minimum(-val1);

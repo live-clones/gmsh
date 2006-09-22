@@ -77,6 +77,15 @@ class MVertex{
   virtual bool getParameter(int i, double &par){ return false; }
   virtual bool setParameter(int i, double par){ return false; }
 
+  // measure distance to another vertex
+  double distance(MVertex *v)
+  {
+    double dx = _x - v->x();
+    double dy = _y - v->y();
+    double dz = _z - v->z();
+    return sqrt(dx * dx + dy * dy + dz * dz);
+  }
+
   // Get the data associated with this vertex
   virtual void *getData(){ return 0; }
 

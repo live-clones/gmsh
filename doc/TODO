@@ -1,4 +1,9 @@
-$Id: TODO,v 1.19 2006-09-14 15:48:35 geuzaine Exp $
+$Id: TODO,v 1.20 2006-09-22 19:28:51 geuzaine Exp $
+
+********************************************************************
+
+- option to fl_beep() when mesh is done
+- warning+error counter (display counters on Exit())
 
 ********************************************************************
 

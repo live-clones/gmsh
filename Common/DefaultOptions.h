@@ -988,7 +988,7 @@ StringXNumber MeshOptions_Number[] = {
     "Global scaling factor applied to the saved mesh" },
   { F|O, "SecondOrderIncomplete" , opt_mesh_second_order_incomplete , 1. ,
     "Create incomplete second order elements? (8-node quads, 20-node hexas, etc.)" },
-  { F|O, "SecondOrderLinear" , opt_mesh_second_order_linear , 1. ,
+  { F|O, "SecondOrderLinear" , opt_mesh_second_order_linear , 0. ,
     "Should second order vertices simply be created by linear interpolation?" },
   { F|O, "Smoothing" , opt_mesh_nb_smoothing , 1. ,
     "Number of smoothing steps applied to the final mesh" },
@@ -1486,7 +1486,7 @@ StringXColor GeometryOptions_Color[] = {
 
 StringXColor MeshOptions_Color[] = {
   { F|O, "Points" , opt_mesh_color_points , 
-    {0, 0, 128, 255}, {0, 0, 128, 255}, {0, 0, 0, 255},
+    {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255},
     "Mesh node color" },
   { F|O, "Lines" , opt_mesh_color_lines , 
     {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},

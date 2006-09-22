@@ -3,23 +3,6 @@
 #include "Context.h"
 #include "Views.h"
 
-/*
-  Investigate the following approach:
-
-  compute and store the pou of each overlapping patch in the nodes of
-  all the patches
-
-  for each pair of overlapping patches, find the line pou1=pou2 by
-  interpolation on the overlapping grids
-
-  compute the intersections of these lines
-
-  this should define a non-overlapping partitioning of the grid, which
-  could be used as the boundary constrain for the unstructured algo
-
-  Would that work??
-*/
-
 extern Context_T CTX;
 
 #if defined(HAVE_FOURIER_MODEL)
@@ -353,6 +336,183 @@ void meshGrout(GFace *gf, std::vector<MVertex*> &loop, std::vector<MVertex*> &ho
   delete grout;
 }
 
+void meshGroutWithHole(GFace *gf,
+		       std::vector<std::vector<std::vector<MVertex*> > > &inside,
+		       std::vector<std::vector<std::vector<MVertex*> > > &outside)
+{		       
+  std::vector<MVertex*> hole, loop;
+
+  // create hole
+  SPoint2 ic(0., 0.);
+  for(unsigned int i = 0; i < inside[0][0].size(); i++){
+    hole.push_back(inside[0][0][i]);
+    double u, v;
+    inside[0][0][i]->getParameter(0, u);
+    inside[0][0][i]->getParameter(1, v);
+    ic += SPoint2(u, v);
+  }
+  ic *= 1. / (double)inside[0][0].size();
+  hole.push_back(hole[0]);
+
+  // order exterior parts and create exterior loop
+  std::vector<std::pair<double, int> > angle;
+  std::map<int, std::vector<MVertex*> > outside_flat;
+  int part = 0;
+  for(unsigned int i = 0; i < outside.size(); i++){
+    for(unsigned int j = 0; j < outside[i].size(); j++){
+      for(unsigned int k = 0; k < outside[i][j].size(); k++){
+	outside_flat[part].push_back(outside[i][j][k]);
+      }
+      part++;
+    }
+  }
+  std::map<int, std::vector<MVertex*> >::iterator it = outside_flat.begin();
+  for(; it != outside_flat.end(); it++){
+    SPoint2 oc(0., 0.);
+    for(unsigned int i = 0; i < it->second.size(); i++){
+      double u, v;
+      it->second[i]->getParameter(0, u);
+      it->second[i]->getParameter(1, v);
+      oc += SPoint2(u, v);
+    }
+    oc *= 1. / (double)it->second.size();
+    double a = atan2(oc[1] - ic[1], oc[0] - ic[0]);
+    angle.push_back(std::make_pair(a, it->first));
+  }
+  std::sort(angle.begin(), angle.end());
+  for(unsigned int i = 0; i < angle.size(); i++){
+    for(unsigned int j = 0; j < outside_flat[angle[i].second].size(); j++)
+      loop.push_back(outside_flat[angle[i].second][j]);
+  }
+  loop.push_back(hole[0]);
+
+  // mesh the grout
+  meshGrout(gf, loop, hole);
+}
+
+bool onHardEdge(GFace *gf, MVertex *vertex)
+{
+  std::vector<int> edges;
+  FM->GetEdge(gf->tag(), edges);
+  if(edges.empty()) return false;
+  double u, v;
+  vertex->getParameter(0, u);
+  vertex->getParameter(1, v);
+  for(unsigned int i = 0; i < edges.size(); i++){
+    switch(edges[i]){
+    case 0: if(u == 0.) return true;
+    case 1: if(u == 1.) return true;
+    case 2: if(v == 0.) return true;
+    case 3: if(v == 1.) return true;
+    }
+  }
+  return false;
+}
+
+bool removeHardEdges(GFace *gf, std::vector<MVertex*> &loop,
+		     std::vector<std::vector<MVertex*> > &subloops)
+{
+  std::vector<MVertex*> tmp;
+  tmp.push_back(loop[0]);
+  for(unsigned int i = 1; i < loop.size() - 1; i++){
+    if(onHardEdge(gf, loop[i - 1]) && 
+       onHardEdge(gf, loop[i]) &&
+       onHardEdge(gf, loop[i + 1])){
+      // skip + create new path
+    }
+    else{
+      tmp.push_back(loop[i]);
+    }
+  }
+  tmp.push_back(loop[0]);
+  if(tmp.size() != loop.size()){
+    Msg(INFO, "Generating subloops");
+    
+
+    return true;
+  }
+  return false;
+}
+
+/*
+  std::vector<std::vector<MVertex*> > self, other;
+  
+  self.resize(1);
+  for(unsigned int i = 0; i < input.size(); i++){
+    if(input[i]->onWhat() == gf){
+      if(i && input[i]->onWhat() != input[i - 1]->onWhat())
+	self.resize(self.size() + 1);
+      self[self.size() - 1].push_back(input[i]);
+    }
+  }
+
+  other.resize(1);
+  for(unsigned int i = 0; i < input.size(); i++){
+    if(input[i]->onWhat() != gf){
+      if(i && input[i]->onWhat() != input[i - 1]->onWhat())
+	other.resize(other.size() + 1);
+      other[other.size() - 1].push_back(input[i]);
+    }
+  }
+
+  if(self.size() == 1 || other.size() == 0){
+    // nothing special to do
+    output.resize(1);
+    for(unsigned int i = 0; i < input.size(); i++){
+      output[0].push_back(input[i]);
+    }
+  }
+  else if(self.size() == other.size()){
+
+    for(unsigned int i = 0; i < self.size(); i++)
+      debugVertices(self[i], "self", false, i);
+    for(unsigned int i = 0; i < other.size(); i++)
+      debugVertices(other[i], "other", false, i);
+
+
+    output.resize(self.size());
+    for(unsigned int i = 0; i < self.size(); i++){
+      // add self pnts
+      for(unsigned int j = 0; j < self[i].size(); j++)
+	output[i].push_back(self[i][j]);
+      // check which other is closest
+      int which = 0;
+      double dist = 1e20;
+      for(unsigned int j = 0; j < other.size(); j++){
+	if(output[i][output[i].size() - 1]->distance(other[j][0]) < dist)
+	  which = j;
+      }
+      for(unsigned int j = 0; j < other[which].size(); j++)
+	output[i].push_back(other[which][j]);
+      output[i].push_back(output[i][0]);
+    }
+  }
+  else{
+    Msg(GERROR, "General subloop creation not implemented yet");
+  }
+}
+*/
+
+void meshGroutWithoutHole(GFace *gf,
+			  std::vector<std::vector<MVertex*> > &inside)
+{
+  std::vector<MVertex*> hole, tmp;
+  std::vector<std::vector<MVertex*> > loops;
+
+  for(unsigned int i = 0; i < inside.size(); i++)
+    for(unsigned int j = 0; j < inside[i].size(); j++)
+      tmp.push_back(inside[i][j]);
+  tmp.push_back(tmp[0]);
+
+  if(removeHardEdges(gf, tmp, loops)){
+    for(unsigned int i = 0; i < loops.size(); i++)
+      meshGrout(gf, loops[i], hole);
+  }
+  else{
+    meshGrout(gf, tmp, hole);
+  }
+}
+
 class createGrout{
 public:
   void operator() (GFace *gf)
@@ -392,79 +552,17 @@ public:
     for(unsigned int i = 0; i < outside.size(); i++)
       Msg(INFO, "   outside loop %d intersect has %d part(s)", i, (int)outside[i].size());
 
-    std::vector<MVertex*> hole, loop;
-    
     if(inside.size() == 1 && inside[0].size() == 1){
-      Msg(INFO, "CASE 1: MESH AROUND ONE-PART HOLE");
-      // create hole
-      SPoint2 ic(0., 0.);
-      {
-	for(unsigned int i = 0; i < inside[0][0].size(); i++){
-	  hole.push_back(inside[0][0][i]);
-	  double u, v;
-	  inside[0][0][i]->getParameter(0, u);
-	  inside[0][0][i]->getParameter(1, v);
-	  ic += SPoint2(u, v);
-	}
-	ic *= 1. / (double)inside[0][0].size();
-	hole.push_back(hole[0]);
-      }
-      // order exterior parts and create exterior loop
-      {
-	std::vector<std::pair<double, int> > angle;
-	std::map<int, std::vector<MVertex*> > outside_flat;
-	int part = 0;
-	for(unsigned int i = 0; i < outside.size(); i++){
-	  for(unsigned int j = 0; j < outside[i].size(); j++){
-	    for(unsigned int k = 0; k < outside[i][j].size(); k++){
-	      outside_flat[part].push_back(outside[i][j][k]);
-	    }
-	    part++;
-	  }
-	}
-	std::map<int, std::vector<MVertex*> >::iterator it = outside_flat.begin();
-	for(; it != outside_flat.end(); it++){
-	  SPoint2 oc(0., 0.);
-	  for(unsigned int i = 0; i < it->second.size(); i++){
-	    double u, v;
-	    it->second[i]->getParameter(0, u);
-	    it->second[i]->getParameter(1, v);
-	    oc += SPoint2(u, v);
-	  }
-	  oc *= 1. / (double)it->second.size();
-	  double a = atan2(oc[1] - ic[1], oc[0] - ic[0]);
-	  angle.push_back(std::make_pair(a, it->first));
-	}
-	std::sort(angle.begin(), angle.end());
-	for(unsigned int i = 0; i < angle.size(); i++){
-	  for(unsigned int j = 0; j < outside_flat[angle[i].second].size(); j++)
-	    loop.push_back(outside_flat[angle[i].second][j]);
-	}
-	loop.push_back(hole[0]);
-      }
-      // mesh the grout
-      meshGrout(gf, loop, hole);
+      Msg(INFO, "*** CASE 1: grout has a single hole in one part ***");
+      meshGroutWithHole(gf, inside, outside);
     }
     else if(!outside.size()){
-      Msg(INFO, "CASE 2: MESH SIMPLE HOLES");
-      hole.clear();
-      for(unsigned int i = 0; i < inside.size(); i++){
-	loop.clear();
-	for(unsigned int j = 0; j < inside[i].size(); j++){
-	  for(unsigned int k = 0; k < inside[i][j].size(); k++){
-	    loop.push_back(inside[i][j][k]);
-	  }
-	}
-	loop.push_back(loop[0]);
-	meshGrout(gf, loop, hole);
-      }
+      Msg(INFO, "*** CASE 2: grout has no outside contributions ***");
+      for(unsigned int i = 0; i < inside.size(); i++)
+	meshGroutWithoutHole(gf, inside[i]);
     }
     else{
-      // num individual meshes = num parts with onWhat() == gf!
-      // for each one
-      //   - find other parts that are "close" (using POUs?)
-      //   - sort parts w.r.t barycenter of each group      
-      Msg(GERROR, "This case is not implemented yet");
+      Msg(WARNING, "*** TODO: UNKNOWN CASE ***");
     }
   }
 };
@@ -495,6 +593,15 @@ fourierModel::fourierModel(const std::string &name)
   std::for_each(firstFace(), lastFace(), createGrout());
 
   // remove any duplicate vertices on hard edges
+
+  // Here's an alternative approach that might be worth investigating:
+  // - compute and store the pou of each overlapping patch in the nodes of
+  //   all the patches
+  // - for each pair of overlapping patches, find the line pou1=pou2 by
+  //   interpolation on the overlapping grids
+  // - compute the intersections of these lines
+  // This should define a non-overlapping partitioning of the grid, which
+  // could be used as the boundary constrain for the unstructured algo
 
   CTX.mesh.changed = ENT_ALL;
 }
