@@ -70,9 +70,9 @@
 #define STATUS_STR         "Info    : "
 
 void   Signal(int signum);
-void   Msg(int level, char *fmt, ...);
+void   Msg(int level, const char *fmt, ...);
 void   Exit(int);
-double GetValue(char *text, double defaultval);
+double GetValue(const char *text, double defaultval);
 bool   GetBinaryAnswer(const char *question, const char *yes, const char *no, 
 		       bool defaultval=true);
 

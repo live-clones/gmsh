@@ -31,25 +31,25 @@
 #define FORMAT_BDF           31
 
 // Element types in .msh file format
-#define LIN_2  1
-#define TRI_3  2
-#define QUA_4  3
-#define TET_4  4
-#define HEX_8  5
-#define PRI_6  6
-#define PYR_5  7
-#define LIN_3  8
-#define TRI_6  9
-#define QUA_9  10
-#define TET_10 11
-#define HEX_27 12
-#define PRI_18 13
-#define PYR_14 14
-#define PNT_1  15
-#define QUA_8  16
-#define HEX_20 17
-#define PRI_15 18
-#define PYR_13 19
+#define MSH_LIN_2  1
+#define MSH_TRI_3  2
+#define MSH_QUA_4  3
+#define MSH_TET_4  4
+#define MSH_HEX_8  5
+#define MSH_PRI_6  6
+#define MSH_PYR_5  7
+#define MSH_LIN_3  8
+#define MSH_TRI_6  9
+#define MSH_QUA_9  10
+#define MSH_TET_10 11
+#define MSH_HEX_27 12
+#define MSH_PRI_18 13
+#define MSH_PYR_14 14
+#define MSH_PNT    15
+#define MSH_QUA_8  16
+#define MSH_HEX_20 17
+#define MSH_PRI_15 18
+#define MSH_PYR_13 19
 
 // Geometric entities
 #define ENT_NONE     0
@@ -58,10 +58,6 @@
 #define ENT_SURFACE  (1<<2)
 #define ENT_VOLUME   (1<<3)
 #define ENT_ALL      (ENT_POINT | ENT_LINE | ENT_SURFACE | ENT_VOLUME)
-
-#define ELEMENTARY 1
-#define PHYSICAL   2
-#define PARTITION  3
 
 // Mesh algorithms
 #define QUALITY_EDGES_BASED 1

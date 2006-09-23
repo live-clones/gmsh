@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.55 2006-09-14 19:38:16 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.56 2006-09-23 02:48:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -204,25 +204,25 @@ static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
 static int getNumVerticesForElementTypeMSH(int type)
 {
   switch (type) {
-  case PNT_1  : return 1;
-  case LIN_2  : return 2;
-  case LIN_3  : return 2 + 1;
-  case TRI_3  : return 3;
-  case TRI_6  : return 3 + 3;
-  case QUA_4  : return 4;
-  case QUA_8  : return 4 + 4;
-  case QUA_9  : return 4 + 4 + 1;
-  case TET_4  : return 4;
-  case TET_10 : return 4 + 6;
-  case HEX_8  : return 8;
-  case HEX_20 : return 8 + 12;
-  case HEX_27 : return 8 + 12 + 6 + 1;
-  case PRI_6  : return 6;
-  case PRI_15 : return 6 + 9;
-  case PRI_18 : return 6 + 9 + 3;
-  case PYR_5  : return 5;
-  case PYR_13 : return 5 + 8;
-  case PYR_14 : return 5 + 8 + 1;
+  case MSH_PNT    : return 1;
+  case MSH_LIN_2  : return 2;
+  case MSH_LIN_3  : return 2 + 1;
+  case MSH_TRI_3  : return 3;
+  case MSH_TRI_6  : return 3 + 3;
+  case MSH_QUA_4  : return 4;
+  case MSH_QUA_8  : return 4 + 4;
+  case MSH_QUA_9  : return 4 + 4 + 1;
+  case MSH_TET_4  : return 4;
+  case MSH_TET_10 : return 4 + 6;
+  case MSH_HEX_8  : return 8;
+  case MSH_HEX_20 : return 8 + 12;
+  case MSH_HEX_27 : return 8 + 12 + 6 + 1;
+  case MSH_PRI_6  : return 6;
+  case MSH_PRI_15 : return 6 + 9;
+  case MSH_PRI_18 : return 6 + 9 + 3;
+  case MSH_PYR_5  : return 5;
+  case MSH_PYR_13 : return 5 + 8;
+  case MSH_PYR_14 : return 5 + 8 + 1;
   default: 
     Msg(GERROR, "Unknown type of element %d", type);
     return 0;
@@ -238,25 +238,25 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
   int dim = 0;
 
   switch (type) {
-  case PNT_1:  points[reg].push_back(v[0]); dim = 0; break;
-  case LIN_2:  elem[0][reg].push_back(new MLine(v, num, part)); dim = 1; break;
-  case LIN_3:  elem[0][reg].push_back(new MLine3(v, num, part)); dim = 1; break;
-  case TRI_3:  elem[1][reg].push_back(new MTriangle(v, num, part)); dim = 2; break;
-  case TRI_6:  elem[1][reg].push_back(new MTriangle6(v, num, part)); dim = 2; break;
-  case QUA_4:  elem[2][reg].push_back(new MQuadrangle(v, num, part)); dim = 2; break;
-  case QUA_8:  elem[2][reg].push_back(new MQuadrangle8(v, num, part)); dim = 2; break;
-  case QUA_9:  elem[2][reg].push_back(new MQuadrangle9(v, num, part)); dim = 2; break;
-  case TET_4:  elem[3][reg].push_back(new MTetrahedron(v, num, part)); dim = 3; break;
-  case TET_10: elem[3][reg].push_back(new MTetrahedron10(v, num, part)); dim = 3; break;
-  case HEX_8:  elem[4][reg].push_back(new MHexahedron(v, num, part)); dim = 3; break;
-  case HEX_20: elem[4][reg].push_back(new MHexahedron20(v, num, part)); dim = 3; break;
-  case HEX_27: elem[4][reg].push_back(new MHexahedron27(v, num, part)); dim = 3; break;
-  case PRI_6:  elem[5][reg].push_back(new MPrism(v, num, part)); dim = 3; break;
-  case PRI_15: elem[5][reg].push_back(new MPrism15(v, num, part)); dim = 3; break;
-  case PRI_18: elem[5][reg].push_back(new MPrism18(v, num, part)); dim = 3; break;
-  case PYR_5:  elem[6][reg].push_back(new MPyramid(v, num, part)); dim = 3; break;
-  case PYR_13: elem[6][reg].push_back(new MPyramid13(v, num, part)); dim = 3; break;
-  case PYR_14: elem[6][reg].push_back(new MPyramid14(v, num, part)); dim = 3; break;
+  case MSH_PNT:    points[reg].push_back(v[0]); dim = 0; break;
+  case MSH_LIN_2:  elem[0][reg].push_back(new MLine(v, num, part)); dim = 1; break;
+  case MSH_LIN_3:  elem[0][reg].push_back(new MLine3(v, num, part)); dim = 1; break;
+  case MSH_TRI_3:  elem[1][reg].push_back(new MTriangle(v, num, part)); dim = 2; break;
+  case MSH_TRI_6:  elem[1][reg].push_back(new MTriangle6(v, num, part)); dim = 2; break;
+  case MSH_QUA_4:  elem[2][reg].push_back(new MQuadrangle(v, num, part)); dim = 2; break;
+  case MSH_QUA_8:  elem[2][reg].push_back(new MQuadrangle8(v, num, part)); dim = 2; break;
+  case MSH_QUA_9:  elem[2][reg].push_back(new MQuadrangle9(v, num, part)); dim = 2; break;
+  case MSH_TET_4:  elem[3][reg].push_back(new MTetrahedron(v, num, part)); dim = 3; break;
+  case MSH_TET_10: elem[3][reg].push_back(new MTetrahedron10(v, num, part)); dim = 3; break;
+  case MSH_HEX_8:  elem[4][reg].push_back(new MHexahedron(v, num, part)); dim = 3; break;
+  case MSH_HEX_20: elem[4][reg].push_back(new MHexahedron20(v, num, part)); dim = 3; break;
+  case MSH_HEX_27: elem[4][reg].push_back(new MHexahedron27(v, num, part)); dim = 3; break;
+  case MSH_PRI_6:  elem[5][reg].push_back(new MPrism(v, num, part)); dim = 3; break;
+  case MSH_PRI_15: elem[5][reg].push_back(new MPrism15(v, num, part)); dim = 3; break;
+  case MSH_PRI_18: elem[5][reg].push_back(new MPrism18(v, num, part)); dim = 3; break;
+  case MSH_PYR_5:  elem[6][reg].push_back(new MPyramid(v, num, part)); dim = 3; break;
+  case MSH_PYR_13: elem[6][reg].push_back(new MPyramid13(v, num, part)); dim = 3; break;
+  case MSH_PYR_14: elem[6][reg].push_back(new MPyramid14(v, num, part)); dim = 3; break;
   default: Msg(GERROR, "Unknown type (%d) for element %d", type, num); break;
   }
   
@@ -553,7 +553,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(viter it = firstVertex(); it != lastVertex(); ++it){
     int p = (saveAll ? 1 : (*it)->physicals.size());
     int n = p * (*it)->mesh_vertices.size();
-    if(n) elements[PNT_1] += n;
+    if(n) elements[MSH_PNT] += n;
   }
   for(eiter it = firstEdge(); it != lastEdge(); ++it){
     int p = (saveAll ? 1 : (*it)->physicals.size());
@@ -626,35 +626,35 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   fprintf(fp, "%d\n", numElements);
   int num = 0;
 
-  writeElementHeaderMSH(binary, fp, elements, PNT_1);
+  writeElementHeaderMSH(binary, fp, elements, MSH_PNT);
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     writeElementsMSH(fp, (*it)->mesh_vertices, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-  writeElementHeaderMSH(binary, fp, elements, LIN_2, LIN_3);
+  writeElementHeaderMSH(binary, fp, elements, MSH_LIN_2, MSH_LIN_3);
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     writeElementsMSH(fp, (*it)->lines, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-  writeElementHeaderMSH(binary, fp, elements, TRI_3, TRI_6);
+  writeElementHeaderMSH(binary, fp, elements, MSH_TRI_3, MSH_TRI_6);
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->triangles, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-  writeElementHeaderMSH(binary, fp, elements, QUA_4, QUA_9, QUA_8);
+  writeElementHeaderMSH(binary, fp, elements, MSH_QUA_4, MSH_QUA_9, MSH_QUA_8);
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->quadrangles, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-  writeElementHeaderMSH(binary, fp, elements, TET_4, TET_10);
+  writeElementHeaderMSH(binary, fp, elements, MSH_TET_4, MSH_TET_10);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->tetrahedra, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-  writeElementHeaderMSH(binary, fp, elements, HEX_8, HEX_27, HEX_20);
+  writeElementHeaderMSH(binary, fp, elements, MSH_HEX_8, MSH_HEX_27, MSH_HEX_20);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->hexahedra, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-  writeElementHeaderMSH(binary, fp, elements, PRI_6, PRI_18, PRI_15);
+  writeElementHeaderMSH(binary, fp, elements, MSH_PRI_6, MSH_PRI_18, MSH_PRI_15);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->prisms, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-  writeElementHeaderMSH(binary, fp, elements, PYR_5, PYR_14, PYR_13);
+  writeElementHeaderMSH(binary, fp, elements, MSH_PYR_5, MSH_PYR_14, MSH_PYR_13);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->pyramids, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);

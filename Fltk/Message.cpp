@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.75 2006-08-06 22:58:49 geuzaine Exp $
+// $Id: Message.cpp,v 1.76 2006-09-23 02:48:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -64,7 +64,7 @@ void Debug()
   printf("debug!\n");
 }
 
-void Msg(int level, char *fmt, ...)
+void Msg(int level, const char *fmt, ...)
 {
   va_list args;
   int abort = 0, verb = 0, window = -1, log = 1, color = 0;
@@ -249,7 +249,7 @@ void Exit(int level)
   exit(0);
 }
 
-double GetValue(char *text, double defaultval)
+double GetValue(const char *text, double defaultval)
 {
   if(CTX.nopopup)
     return defaultval;

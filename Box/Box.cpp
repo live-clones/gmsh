@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.26 2006-08-12 19:34:14 geuzaine Exp $
+// $Id: Box.cpp,v 1.27 2006-09-23 02:48:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -150,7 +150,7 @@ void Signal(int sig_num)
 
 // General purpose message routine
 
-void Msg(int level, char *fmt, ...)
+void Msg(int level, const char *fmt, ...)
 {
   va_list args;
   int abort = 0;
@@ -231,7 +231,7 @@ void Msg(int level, char *fmt, ...)
 
 // interactive value dialog
 
-double GetValue(char *text, double defaultval)
+double GetValue(const char *text, double defaultval)
 {
   if(CTX.nopopup)
     return defaultval;
