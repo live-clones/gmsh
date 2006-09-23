@@ -38,11 +38,9 @@
 #  else
 #    include <GL/glu.h>
 #  endif
-# define GMSH_WINDOW_BOX   FL_FLAT_BOX
-# define GMSH_TOGGLE_BOX   FL_DOWN_BOX
-# define GMSH_TOGGLE_COLOR FL_BLACK
-# define GMSH_RADIO_BOX    FL_ROUND_DOWN_BOX
-# define GMSH_RADIO_COLOR  FL_BLACK
+# define GMSH_WINDOW_BOX FL_FLAT_BOX
+// fixes the antialiasing problem with default box type (FL_NO_BOX)
+# define GMSH_CHECK_BUTTON_BOX FL_FLAT_BOX 
 #endif
 
 #endif
