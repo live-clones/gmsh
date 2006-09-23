@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.25 2006-09-23 15:39:13 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.26 2006-09-23 15:54:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -254,7 +254,6 @@ int jpeg_dialog(char *name)
     dialog->s[1]->step(1);
     dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
-    dialog->b->box(GMSH_CHECK_BUTTON_BOX);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->set_modal();
@@ -312,7 +311,6 @@ int generic_bitmap_dialog(char *name, char *title, int format)
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
-    dialog->b->box(GMSH_CHECK_BUTTON_BOX);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->set_modal();
@@ -372,7 +370,6 @@ int gif_dialog(char *name)
     dialog->b[4] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
     for(int i = 0; i < 5; i++){
       dialog->b[i]->type(FL_TOGGLE_BUTTON);
-      dialog->b[i]->box(GMSH_CHECK_BUTTON_BOX);
     }
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
@@ -489,7 +486,6 @@ int gl2ps_dialog(char *name, char *title, int format)
     dialog->b[5] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
     for(int i = 0; i < 6; i++){
       dialog->b[i]->type(FL_TOGGLE_BUTTON);
-      dialog->b[i]->box(GMSH_CHECK_BUTTON_BOX);
     }
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
@@ -565,11 +561,9 @@ int options_dialog(char *name)
     dialog->b[0] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save only modified options"); y += BH;
     dialog->b[0]->value(1);
     dialog->b[0]->type(FL_TOGGLE_BUTTON);
-    dialog->b[0]->box(GMSH_CHECK_BUTTON_BOX);
     dialog->b[1] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print help strings"); y += BH;
     dialog->b[1]->value(1);
     dialog->b[1]->type(FL_TOGGLE_BUTTON);
-    dialog->b[1]->box(GMSH_CHECK_BUTTON_BOX);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->set_modal();
@@ -632,7 +626,6 @@ int msh_dialog(char *name)
     dialog->c->align(FL_ALIGN_RIGHT);
     dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physicals)"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
-    dialog->b->box(GMSH_CHECK_BUTTON_BOX);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->set_modal();
@@ -692,7 +685,6 @@ int unv_dialog(char *name)
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physicals)"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
-    dialog->b->box(GMSH_CHECK_BUTTON_BOX);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->set_modal();

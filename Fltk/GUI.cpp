@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.550 2006-09-23 15:39:12 geuzaine Exp $
+// $Id: GUI.cpp,v 1.551 2006-09-23 15:54:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1711,39 +1711,32 @@ void GUI::create_option_window()
 
       gen_butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable expert mode");
       gen_butt[10]->type(FL_TOGGLE_BUTTON);
-      gen_butt[10]->box(GMSH_CHECK_BUTTON_BOX);
       gen_butt[10]->callback(general_options_ok_cb);
 
       gen_butt[13] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Show tooltips");
       gen_butt[13]->type(FL_TOGGLE_BUTTON);
-      gen_butt[13]->box(GMSH_CHECK_BUTTON_BOX);
       gen_butt[13]->callback(general_options_ok_cb);
 
       gen_butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Show bounding boxes");
       gen_butt[6]->tooltip("(Alt+b)");
       gen_butt[6]->type(FL_TOGGLE_BUTTON);
-      gen_butt[6]->box(FL_FLAT_BOX);
       gen_butt[6]->callback(general_options_ok_cb);
 
       gen_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Draw simplified model during user interaction");
       gen_butt[2]->tooltip("(Alt+f)");
       gen_butt[2]->type(FL_TOGGLE_BUTTON);
-      gen_butt[2]->box(GMSH_CHECK_BUTTON_BOX);
       gen_butt[2]->callback(general_options_ok_cb, (void*)"fast_redraw");
 
       gen_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Enable double buffering");
       gen_butt[3]->type(FL_TOGGLE_BUTTON);
-      gen_butt[3]->box(GMSH_CHECK_BUTTON_BOX);
       gen_butt[3]->callback(general_options_ok_cb);
 
       gen_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Use trackball rotation mode instead of Euler angles");
       gen_butt[5]->type(FL_TOGGLE_BUTTON);
-      gen_butt[5]->box(GMSH_CHECK_BUTTON_BOX);
       gen_butt[5]->callback(general_options_ok_cb);
 
       gen_butt[15] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Rotate around pseudo center of mass");
       gen_butt[15]->type(FL_TOGGLE_BUTTON);
-      gen_butt[15]->box(GMSH_CHECK_BUTTON_BOX);
       gen_butt[15]->callback(general_options_ok_cb, (void*)"rotation_center");
 
       gen_push_butt[0] = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 8 * BH, BB, BH, "Select");
@@ -1803,7 +1796,6 @@ void GUI::create_option_window()
 
       gen_butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Set position and size of axes automatically");
       gen_butt[0]->type(FL_TOGGLE_BUTTON);
-      gen_butt[0]->box(GMSH_CHECK_BUTTON_BOX);
       gen_butt[0]->callback(general_options_ok_cb, (void*)"general_axes_auto");
       
       gen_value[20] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW / 3, BH);
@@ -1825,7 +1817,6 @@ void GUI::create_option_window()
       gen_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Show small axes");
       gen_butt[1]->tooltip("(Alt+Shift+a)");
       gen_butt[1]->type(FL_TOGGLE_BUTTON);
-      gen_butt[1]->box(GMSH_CHECK_BUTTON_BOX);
       gen_butt[1]->callback(general_options_ok_cb, (void*)"general_small_axes");
 
       gen_value[26] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
@@ -1846,17 +1837,14 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Output");
       gen_butt[7] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Print messages on terminal");
       gen_butt[7]->type(FL_TOGGLE_BUTTON);
-      gen_butt[7]->box(GMSH_CHECK_BUTTON_BOX);
       gen_butt[7]->callback(general_options_ok_cb);
 
       gen_butt[8] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Save session information on exit");
       gen_butt[8]->type(FL_TOGGLE_BUTTON);
-      gen_butt[8]->box(GMSH_CHECK_BUTTON_BOX);
       gen_butt[8]->callback(general_options_ok_cb);
 
       gen_butt[9] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW/2-WB, BH, "Save options on exit");
       gen_butt[9]->type(FL_TOGGLE_BUTTON);
-      gen_butt[9]->box(GMSH_CHECK_BUTTON_BOX);
       gen_butt[9]->callback(general_options_ok_cb);
 
       Fl_Button *b0 = new Fl_Button(L + width / 2, 2 * WB + 3 * BH, 2 * BB, BH, "Restore default options");
@@ -1864,7 +1852,6 @@ void GUI::create_option_window()
 
       gen_butt[14] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Ask confirmation before overwriting files");
       gen_butt[14]->type(FL_TOGGLE_BUTTON);
-      gen_butt[14]->box(GMSH_CHECK_BUTTON_BOX);
       gen_butt[14]->callback(general_options_ok_cb);
 
       gen_value[5] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Message verbosity");
@@ -1931,7 +1918,6 @@ void GUI::create_option_window()
 
       gen_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Always apply polygon offset");
       gen_butt[4]->type(FL_TOGGLE_BUTTON);
-      gen_butt[4]->box(GMSH_CHECK_BUTTON_BOX);
       gen_butt[4]->callback(general_options_ok_cb);
 
       gen_value[11] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Number of quadric subdivisions");
@@ -2089,7 +2075,6 @@ void GUI::create_option_window()
       o->hide();
       geo_butt[8] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Remove duplicate entities automatically");
       geo_butt[8]->type(FL_TOGGLE_BUTTON);
-      geo_butt[8]->box(GMSH_CHECK_BUTTON_BOX);
       geo_butt[8]->callback(geometry_options_ok_cb);
 
       o->end();
@@ -2100,45 +2085,37 @@ void GUI::create_option_window()
       geo_butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Points");
       geo_butt[0]->tooltip("(Alt+p)");
       geo_butt[0]->type(FL_TOGGLE_BUTTON);
-      geo_butt[0]->box(GMSH_CHECK_BUTTON_BOX);
       geo_butt[0]->callback(geometry_options_ok_cb);
       
       geo_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Lines");
       geo_butt[1]->tooltip("(Alt+l)");
       geo_butt[1]->type(FL_TOGGLE_BUTTON);
-      geo_butt[1]->box(GMSH_CHECK_BUTTON_BOX);
       geo_butt[1]->callback(geometry_options_ok_cb);
 
       geo_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surfaces");
       geo_butt[2]->tooltip("(Alt+s)");
       geo_butt[2]->type(FL_TOGGLE_BUTTON);
-      geo_butt[2]->box(GMSH_CHECK_BUTTON_BOX);
       geo_butt[2]->callback(geometry_options_ok_cb);
 
       geo_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volumes");
       geo_butt[3]->tooltip("(Alt+v)");
       geo_butt[3]->type(FL_TOGGLE_BUTTON);
-      geo_butt[3]->box(GMSH_CHECK_BUTTON_BOX);
       geo_butt[3]->callback(geometry_options_ok_cb);
 
       geo_butt[4] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Point numbers");
       geo_butt[4]->type(FL_TOGGLE_BUTTON);
-      geo_butt[4]->box(GMSH_CHECK_BUTTON_BOX);
       geo_butt[4]->callback(geometry_options_ok_cb);
 
       geo_butt[5] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Line numbers");
       geo_butt[5]->type(FL_TOGGLE_BUTTON);
-      geo_butt[5]->box(GMSH_CHECK_BUTTON_BOX);
       geo_butt[5]->callback(geometry_options_ok_cb);
 
       geo_butt[6] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface numbers");
       geo_butt[6]->type(FL_TOGGLE_BUTTON);
-      geo_butt[6]->box(GMSH_CHECK_BUTTON_BOX);
       geo_butt[6]->callback(geometry_options_ok_cb);
 
       geo_butt[7] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volume numbers");
       geo_butt[7]->type(FL_TOGGLE_BUTTON);
-      geo_butt[7]->box(GMSH_CHECK_BUTTON_BOX);
       geo_butt[7]->callback(geometry_options_ok_cb);
 
       geo_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Normals");
@@ -2209,7 +2186,6 @@ void GUI::create_option_window()
 
       geo_butt[9] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable lighting");
       geo_butt[9]->type(FL_TOGGLE_BUTTON);
-      geo_butt[9]->box(GMSH_CHECK_BUTTON_BOX);
       geo_butt[9]->tooltip("(Alt+w)");
       geo_butt[9]->callback(geometry_options_ok_cb);
 
@@ -2307,7 +2283,6 @@ void GUI::create_option_window()
 
       mesh_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Optimize quality of tetrahedral elements");
       mesh_butt[2]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[2]->box(GMSH_CHECK_BUTTON_BOX);
 #if !defined(HAVE_NETGEN)
       mesh_butt[2]->deactivate();
 #endif
@@ -2315,12 +2290,10 @@ void GUI::create_option_window()
 
       mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Generate second order elements");
       mesh_butt[3]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[3]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[3]->callback(mesh_options_ok_cb);
 
       mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW, BH, "Constrain background mesh with characteristic length field");
       mesh_butt[5]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[5]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[5]->callback(mesh_options_ok_cb);
 
       o->end();
@@ -2388,57 +2361,47 @@ void GUI::create_option_window()
       mesh_butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Nodes");
       mesh_butt[6]->tooltip("(Alt+Shift+p)");
       mesh_butt[6]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[6]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[6]->callback(mesh_options_ok_cb);
 
       mesh_butt[7] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Lines");
       mesh_butt[7]->tooltip("(Alt+Shift+l)");
       mesh_butt[7]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[7]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[7]->callback(mesh_options_ok_cb);
 
       mesh_butt[8] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface edges");
       mesh_butt[8]->tooltip("(Alt+Shift+s)");
       mesh_butt[8]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[8]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[8]->callback(mesh_options_ok_cb);
 
       mesh_butt[9] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Surface faces");
       mesh_butt[9]->tooltip("(Alt+Shift+d)");
       mesh_butt[9]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[9]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[9]->callback(mesh_options_ok_cb);
 
       mesh_butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW / 2 - WB, BH, "Volume edges");
       mesh_butt[10]->tooltip("(Alt+Shift+v)");
       mesh_butt[10]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[10]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[10]->callback(mesh_options_ok_cb);
 
       mesh_butt[11] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW / 2 - WB, BH, "Volume faces");
       mesh_butt[11]->tooltip("(Alt+Shift+b)");
       mesh_butt[11]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[11]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[11]->callback(mesh_options_ok_cb);
 
       mesh_butt[12] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Node labels");
       mesh_butt[12]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[12]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[12]->callback(mesh_options_ok_cb);
 
       mesh_butt[13] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Line labels");
       mesh_butt[13]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[13]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[13]->callback(mesh_options_ok_cb);
 
       mesh_butt[14] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface labels");
       mesh_butt[14]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[14]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[14]->callback(mesh_options_ok_cb);
 
       mesh_butt[15] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volume labels");
       mesh_butt[15]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[15]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[15]->callback(mesh_options_ok_cb);
 
       static Fl_Menu_Item menu_label_type[] = {
@@ -2537,7 +2500,6 @@ void GUI::create_option_window()
 
       mesh_butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable");
       mesh_butt[16]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[16]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[16]->callback(mesh_options_ok_cb, (void*)"mesh_cut_plane");
 
       mesh_cut_plane = new Fl_Group(L + 2 * WB, 2 * WB + 2 * BH, width - 2 * WB, 6 * BH, 0);
@@ -2577,12 +2539,10 @@ void GUI::create_option_window()
 
       mesh_butt[22] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Draw only intersecting volume layer");
       mesh_butt[22]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[22]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[22]->callback(mesh_options_ok_cb);
 
       mesh_butt[23] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Cut only volume elements");
       mesh_butt[23]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[23]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[23]->callback(mesh_options_ok_cb);
 
       mesh_cut_plane->end();
@@ -2629,28 +2589,23 @@ void GUI::create_option_window()
       mesh_butt[17] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable lighting");
       mesh_butt[17]->tooltip("(Alt+w)");
       mesh_butt[17]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[17]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[17]->callback(mesh_options_ok_cb, (void*)"mesh_light");
 
       mesh_butt[20] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Enable lighting of lines");
       mesh_butt[20]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[20]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[20]->callback(mesh_options_ok_cb);
 
       mesh_butt[18] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Use two-side lighting");
       mesh_butt[18]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[18]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[18]->callback(mesh_options_ok_cb);
 
       mesh_butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Reverse all normals");
       mesh_butt[0]->tooltip("(Alt+Shift+w)");
       mesh_butt[0]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[0]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[0]->callback(mesh_options_ok_cb);
 
       mesh_butt[19] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Smooth normals");
       mesh_butt[19]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[19]->box(GMSH_CHECK_BUTTON_BOX);
       mesh_butt[19]->callback(mesh_options_ok_cb);
 
       mesh_value[18] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Smoothing threshold angle");
@@ -2717,7 +2672,6 @@ void GUI::create_option_window()
 
 	solver_butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Always listen to incoming connection requests");
 	solver_butt[0]->type(FL_TOGGLE_BUTTON);
-	solver_butt[0]->box(GMSH_CHECK_BUTTON_BOX);
 	solver_butt[0]->callback(solver_options_ok_cb);
 	
 	o->end();
@@ -2759,17 +2713,14 @@ void GUI::create_option_window()
 
       post_butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Cycle through views instead of time steps");
       post_butt[0]->type(FL_TOGGLE_BUTTON);
-      post_butt[0]->box(GMSH_CHECK_BUTTON_BOX);
       post_butt[0]->callback(post_options_ok_cb);
 
       post_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Remove original views after combination");
       post_butt[1]->type(FL_TOGGLE_BUTTON);
-      post_butt[1]->box(GMSH_CHECK_BUTTON_BOX);
       post_butt[1]->callback(post_options_ok_cb);
 
       post_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Draw value scales horizontally");
       post_butt[2]->type(FL_TOGGLE_BUTTON);
-      post_butt[2]->box(GMSH_CHECK_BUTTON_BOX);
       post_butt[2]->callback(post_options_ok_cb);
 
       o->end();
@@ -2869,7 +2820,6 @@ void GUI::create_option_window()
 
       view_butt[38] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Saturate out-of-range values");
       view_butt[38]->type(FL_TOGGLE_BUTTON);
-      view_butt[38]->box(GMSH_CHECK_BUTTON_BOX);
       view_butt[38]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_scale[] = {
@@ -2936,7 +2886,6 @@ void GUI::create_option_window()
       
       view_butt[25] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Set position and size of 3D axes automatically");
       view_butt[25]->type(FL_TOGGLE_BUTTON);
-      view_butt[25]->box(GMSH_CHECK_BUTTON_BOX);
       view_butt[25]->callback(view_options_ok_cb, (void*)"view_axes_auto_3d");
       
       view_value[13] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW / 3, BH);
@@ -2957,7 +2906,6 @@ void GUI::create_option_window()
 
       view_butt[7] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Set position and size of 2D axes automatically");
       view_butt[7]->type(FL_TOGGLE_BUTTON);
-      view_butt[7]->box(GMSH_CHECK_BUTTON_BOX);
       view_butt[7]->callback(view_options_ok_cb, (void*)"view_axes_auto_2d");
       
       view_value[20] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
@@ -2993,7 +2941,6 @@ void GUI::create_option_window()
       view_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Show value scale");
       view_butt[4]->tooltip("(Alt+i)");
       view_butt[4]->type(FL_TOGGLE_BUTTON);
-      view_butt[4]->box(GMSH_CHECK_BUTTON_BOX);
       view_butt[4]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item time_display[] = {
@@ -3012,12 +2959,10 @@ void GUI::create_option_window()
       view_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Show annotations");
       view_butt[5]->tooltip("(Alt+n)");
       view_butt[5]->type(FL_TOGGLE_BUTTON);
-      view_butt[5]->box(GMSH_CHECK_BUTTON_BOX);
       view_butt[5]->callback(view_options_ok_cb);
 
       view_butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Draw element outlines");
       view_butt[10]->type(FL_TOGGLE_BUTTON);
-      view_butt[10]->box(GMSH_CHECK_BUTTON_BOX);
       view_butt[10]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_view_element_types[] = {
@@ -3140,7 +3085,6 @@ void GUI::create_option_window()
 
       view_butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Use general transformation expressions");
       view_butt[6]->type(FL_TOGGLE_BUTTON);
-      view_butt[6]->box(GMSH_CHECK_BUTTON_BOX);
       view_butt[6]->callback(view_options_ok_cb, (void*)"general_transform");
 
       view_choice[11] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Data source");
@@ -3231,7 +3175,6 @@ void GUI::create_option_window()
 
 	view_butt[0] = new Fl_Check_Button(L + 2 * IW - 2 * WB, 2 * WB + 7 * BH, (int)(1.5*BB), BH, "Proportional");
 	view_butt[0]->type(FL_TOGGLE_BUTTON);
-	view_butt[0]->box(GMSH_CHECK_BUTTON_BOX);
 	view_butt[0]->callback(view_options_ok_cb);
 
         view_value[63] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Displacement factor");
@@ -3288,22 +3231,18 @@ void GUI::create_option_window()
       view_butt[11] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable lighting");
       view_butt[11]->tooltip("(Alt+w)");
       view_butt[11]->type(FL_TOGGLE_BUTTON);
-      view_butt[11]->box(GMSH_CHECK_BUTTON_BOX);
       view_butt[11]->callback(view_options_ok_cb, (void*)"view_light");
 
       view_butt[8] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Enable lighting of lines");
       view_butt[8]->type(FL_TOGGLE_BUTTON);
-      view_butt[8]->box(GMSH_CHECK_BUTTON_BOX);
       view_butt[8]->callback(view_options_ok_cb);
 
       view_butt[9] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Use two-side lighting");
       view_butt[9]->type(FL_TOGGLE_BUTTON);
-      view_butt[9]->box(GMSH_CHECK_BUTTON_BOX);
       view_butt[9]->callback(view_options_ok_cb);
 
       view_butt[12] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Smooth normals");
       view_butt[12]->type(FL_TOGGLE_BUTTON);
-      view_butt[12]->box(GMSH_CHECK_BUTTON_BOX);
       view_butt[12]->callback(view_options_ok_cb);
 
       view_value[10] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Smoothing threshold angle");
@@ -3322,12 +3261,10 @@ void GUI::create_option_window()
 
       view_butt[24] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Use fake transparency mode");
       view_butt[24]->type(FL_TOGGLE_BUTTON);
-      view_butt[24]->box(GMSH_CHECK_BUTTON_BOX);
       view_butt[24]->callback(view_options_ok_cb);
 
       view_butt[26] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Stipple curves in 2D plots");
       view_butt[26]->type(FL_TOGGLE_BUTTON);
-      view_butt[26]->box(GMSH_CHECK_BUTTON_BOX);
       view_butt[26]->callback(view_options_ok_cb);
       
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 3 * BH, IW + 20, height - 5 * WB - 3 * BH);
@@ -3983,7 +3920,6 @@ void GUI::create_visibility_window()
     vis_butt[0] = new Fl_Check_Button(2 * WB + buw + WB, 2 * WB + 1 * BH, width - 5 * WB - buw, BH, 
 				      "Set visibility recursively");
     vis_butt[0]->type(FL_TOGGLE_BUTTON);
-    vis_butt[0]->box(GMSH_CHECK_BUTTON_BOX);
     vis_butt[0]->value(1);
 
     Fl_Button *o0 = new Fl_Button(2 * WB, 3 * WB + 2 * BH, cols[0], BH/2, "*");
@@ -4713,15 +4649,14 @@ void GUI::create_solver_window(int num)
       b->callback(solver_choose_executable_cb, (void *)num);
 
       solver[num].butt[2] = new Fl_Check_Button(2 * WB, 4 * WB + 3 * BH, LL, BH, "Enable client-server connection");
+      solver[num].butt[2]->type(FL_TOGGLE_BUTTON);
       solver[num].butt[2]->callback(solver_ok_cb);
       solver[num].butt[0] = new Fl_Check_Button(2 * WB, 4 * WB + 4 * BH, LL, BH, "Display client messages");
+      solver[num].butt[0]->type(FL_TOGGLE_BUTTON);
       solver[num].butt[0]->callback(solver_ok_cb);
       solver[num].butt[1] = new Fl_Check_Button(2 * WB, 4 * WB + 5 * BH, LL, BH, "Merge views automatically");
+      solver[num].butt[1]->type(FL_TOGGLE_BUTTON);
       solver[num].butt[1]->callback(solver_ok_cb);
-      for(i = 0; i < 3; i++) {
-        solver[num].butt[i]->type(FL_TOGGLE_BUTTON);
-        solver[num].butt[i]->box(GMSH_CHECK_BUTTON_BOX);
-      }
 
       {
         Fl_Button *o = new Fl_Button(width - BB - 2 * WB,
