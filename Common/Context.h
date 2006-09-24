@@ -52,7 +52,7 @@ public :
   char *editor;               // text editor command (with included '%s')
   char *web_browser;          // web browser command (with included '%s')
   char home_dir[256];         // the home directory
-  char *scheme;               // FLTK GUI theme
+  char *gui_theme;            // FLTK GUI theme
   int  tooltips;              // show tootips in GUI?
 
   int position[2];            // position of the menu window on the screen

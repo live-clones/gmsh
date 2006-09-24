@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.551 2006-09-23 15:54:20 geuzaine Exp $
+// $Id: GUI.cpp,v 1.552 2006-09-24 05:59:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -860,8 +860,8 @@ GUI::GUI(int argc, char **argv)
   FL_NORMAL_SIZE = fontsize;
 
   // handle themes and tooltip font size
-  if(strlen(CTX.scheme))
-    Fl::scheme(CTX.scheme);
+  if(strlen(CTX.gui_theme))
+    Fl::scheme(CTX.gui_theme);
   Fl_Tooltip::size(fontsize);
 
   // register image formats not in core fltk library (jpeg/png)
@@ -2848,7 +2848,7 @@ void GUI::create_option_window()
       view_choice[8] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Axes mode");
       view_choice[8]->menu(menu_axes_mode);
       view_choice[8]->align(FL_ALIGN_RIGHT);
-      view_choice[8]->tooltip("(Alt+g)");
+      view_choice[8]->tooltip("(Alt+a)");
       view_choice[8]->callback(view_options_ok_cb, (void*)"view_axes");
 
       view_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW/3, BH);

@@ -321,7 +321,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RandomFactor
 Random factor used in 2D and 3D meshing algorithm (test other values when the algorithm fails)@*
-Default value: @code{0.0001}@*
+Default value: @code{1e-10}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombineAlgo
@@ -351,7 +351,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SecondOrderLinear
 Should second order vertices simply be created by linear interpolation?@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Smoothing
@@ -436,7 +436,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Points
 Mesh node color@*
-Default value: @code{@{0,0,128@}}@*
+Default value: @code{@{0,0,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Lines

@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.80 2006-09-07 16:03:32 remacle Exp $
+// $Id: CommandLine.cpp,v 1.81 2006-09-24 05:59:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -103,7 +103,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "Display options:");    
   Msg(DIRECT, "  -nodb                 Disable double buffering");
   Msg(DIRECT, "  -fontsize int         Specify the font size for the GUI");
-  Msg(DIRECT, "  -scheme string        Specify FLTK GUI scheme");
+  Msg(DIRECT, "  -theme string         Specify FLTK GUI theme");
   Msg(DIRECT, "  -display string       Specify display");
 #endif
   Msg(DIRECT, "Other options:");      
@@ -533,10 +533,10 @@ void Get_Options(int argc, char *argv[])
           exit(1);
         }
       }
-      else if(!strcmp(argv[i] + 1, "scheme")) {
+      else if(!strcmp(argv[i] + 1, "theme") || !strcmp(argv[i] + 1, "scheme")) {
         i++;
         if(argv[i] != NULL) {
-          CTX.scheme = argv[i];
+          CTX.gui_theme = argv[i];
           i++;
         }
         else {

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.311 2006-09-22 19:28:49 geuzaine Exp $
+// $Id: Options.cpp,v 1.312 2006-09-24 05:59:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -969,11 +969,11 @@ char *opt_general_web_browser(OPT_ARGS_STR)
   return CTX.web_browser;
 }
 
-char *opt_general_scheme(OPT_ARGS_STR)
+char *opt_general_gui_theme(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    CTX.scheme = val;
-  return CTX.scheme;
+    CTX.gui_theme = val;
+  return CTX.gui_theme;
 }
 
 char *opt_general_graphics_font(OPT_ARGS_STR)

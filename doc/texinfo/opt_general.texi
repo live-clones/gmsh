@@ -69,8 +69,8 @@ Option file into which session specific information is saved; automatically read
 Default value: @code{".gmshrc"}@*
 Saved in: @code{-}
 
-@item General.Scheme
-FLTK user interface scheme (try e.g. plastic)@*
+@item General.FltkTheme
+FLTK user interface theme (try e.g. plastic or gtk+)@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 

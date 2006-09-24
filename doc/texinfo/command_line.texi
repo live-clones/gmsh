@@ -70,8 +70,8 @@ Combine views having identical names into multi-time-step views
 Disable double buffering
 @item -fontsize int
 Specify the font size for the GUI
-@item -scheme string
-Specify FLTK GUI scheme
+@item -theme string
+Specify FLTK GUI theme
 @item -display string
 Specify display
 @end ftable

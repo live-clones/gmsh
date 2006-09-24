@@ -71,8 +71,8 @@ StringXString GeneralOptions_String[] = {
 
   { 0,   "SessionFileName" , opt_general_session_filename , ".gmshrc" ,
     "Option file into which session specific information is saved; automatically read on startup" },
-  { F|O, "Scheme" , opt_general_scheme , "" ,
-    "FLTK user interface scheme (try e.g. plastic)" },
+  { F|O, "FltkTheme" , opt_general_gui_theme , "" ,
+    "FLTK user interface theme (try e.g. plastic or gtk+)" },
 
   { F|O, "TextEditor" , opt_general_editor , 
 #if defined(WIN32)
