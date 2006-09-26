@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.56 2006-09-23 02:48:09 geuzaine Exp $
+// $Id: GModelIO.cpp,v 1.57 2006-09-26 01:05:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -680,7 +680,9 @@ int GModel::writePOS(const std::string &name, double scalingFactor)
     return 0;
   }
 
-  if(numRegion()){
+  int status = getMeshStatus();
+
+  if(status >= 3){
     fprintf(fp, "View \"Volumes\" {\n");
     fprintf(fp, "T2(1.e5,30,%d){\"Elementary Entity\", \"Element Number\", "
 	    "\"Gamma\", \"Eta\", \"Rho\"};\n", (1<<16)|(4<<8));
@@ -697,7 +699,7 @@ int GModel::writePOS(const std::string &name, double scalingFactor)
     fprintf(fp, "};\n");
   }
   
-  if(numFace()){
+  if(status >= 2){
     fprintf(fp, "View \"Surfaces\" {\n");
     fprintf(fp, "T2(1.e5,30,%d){\"Elementary Entity\", \"Element Number\", "
 	    "\"Gamma\", \"Eta\", \"Rho\"};\n", (1<<16)|(4<<8));
@@ -710,7 +712,7 @@ int GModel::writePOS(const std::string &name, double scalingFactor)
     fprintf(fp, "};\n");
   }
 
-  if(numEdge()){
+  if(status >= 1){
     fprintf(fp, "View \"Lines\" {\n");
     fprintf(fp, "T2(1.e5,30,%d){\"Elementary Entity\", \"Element Number\", "
 	    "\"Gamma\", \"Eta\", \"Rho\"};\n", (1<<16)|(4<<8));

@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.20 2006-09-10 15:36:15 geuzaine Exp $
+// $Id: MElement.cpp,v 1.21 2006-09-26 01:05:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -26,20 +26,12 @@
 
 int MElement::_globalNum = 0;
 
-static double dist(MVertex *v1, MVertex *v2)
-{
-  double dx = v1->x() - v2->x();
-  double dy = v1->y() - v2->y();
-  double dz = v1->z() - v2->z();
-  return sqrt(dx * dx + dy * dy + dz * dz);
-}
-
 double MElement::minEdge()
 {
   double m = 1.e25;
   for(int i = 0; i < getNumEdges(); i++){
     MEdge e = getEdge(i);
-    m = std::min(m, dist(e.getVertex(0), e.getVertex(1)));
+    m = std::min(m, e.getVertex(0)->distance(e.getVertex(1)));
   }
   return m;
 }
@@ -49,7 +41,7 @@ double MElement::maxEdge()
   double m = 0.;
   for(int i = 0; i < getNumEdges(); i++){
     MEdge e = getEdge(i);
-    m = std::max(m, dist(e.getVertex(0), e.getVertex(1)));
+    m = std::max(m, e.getVertex(0)->distance(e.getVertex(1)));
   }
   return m;
 }
@@ -83,7 +75,7 @@ double MTetrahedron::etaShapeMeasure()
   double lij2 = 0.;
   for(int i = 0; i <= 3; i++) {
     for(int j = i + 1; j <= 3; j++) {
-      double lij = dist(_v[i], _v[j]);
+      double lij = _v[i]->distance(_v[j]);
       lij2 += lij * lij;
     }
   }
