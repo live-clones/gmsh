@@ -1,7 +1,7 @@
-$Id: README.cvs,v 1.5 2005-06-25 18:11:45 geuzaine Exp $
+$Id: README.cvs,v 1.6 2006-09-26 20:12:17 guzik Exp $
 
-0) Set the variable CVS_RHS to ssh ('export CVS_RHS=ssh' with bash, or
-   'setenv CVS_RHS ssh' with tcsh)
+0) Set the variable CVS_RSH to ssh ('export CVS_RSH=ssh' with bash, or
+   'setenv CVS_RSH ssh' with tcsh)
    
 1) The first time you want to download the latest full source by
    CVS, type:
