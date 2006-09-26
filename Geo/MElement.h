@@ -477,7 +477,6 @@ class MTetrahedron : public MElement {
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
   }
-
   virtual void  getMat(double mat[3][3])
   {
     mat[0][0] = _v[1]->x() - _v[0]->x();
@@ -499,47 +498,37 @@ class MTetrahedron : public MElement {
   virtual int getVolumeSign(){ return sign(getVolume()); }
   virtual double gammaShapeMeasure();
   virtual double etaShapeMeasure();
-
   // returns true if the point lies inside the tet
-  inline bool invertmapping ( double *p, double *uvw, double tol = 1.e-8 )
-    {
-      double mat[3][3];
-      double b[3], dum;
-      
-      getMat(mat);
-
-      b[0] = p[0] - getVertex(0)->x();
-      b[1] = p[1] - getVertex(0)->y();
-      b[2] = p[2] - getVertex(0)->z();
-      
-      sys3x3(mat, b, uvw, &dum);
-      if(uvw[0] >= -tol && uvw[1] >= -tol && uvw[2] >= -tol &&
-	 uvw[0] <= 1. + tol && uvw[1] <= 1. + tol && uvw[2] <= 1. + tol &&
-	 1. - uvw[0] - uvw[1] - uvw[2] > -tol) {
-	return true;
-      }
-      return false;
-    }
-
-  inline void circumcenter ( double *res )
+  inline bool invertmapping(double *p, double *uvw, double tol = 1.e-8)
   {
-    double mat[3][3], b[3], dum;
-    int i;
-
-    double X[4] = {_v[0]->x(),_v[1]->x(),_v[2]->x(),_v[3]->x()};
-    double Y[4] = {_v[0]->y(),_v[1]->y(),_v[2]->y(),_v[3]->y()};
-    double Z[4] = {_v[0]->z(),_v[1]->z(),_v[2]->z(),_v[3]->z()};
-    
+    double mat[3][3];
+    double b[3], dum;
+    getMat(mat);
+    b[0] = p[0] - getVertex(0)->x();
+    b[1] = p[1] - getVertex(0)->y();
+    b[2] = p[2] - getVertex(0)->z();
+    sys3x3(mat, b, uvw, &dum);
+    if(uvw[0] >= -tol && uvw[1] >= -tol && uvw[2] >= -tol &&
+       uvw[0] <= 1. + tol && uvw[1] <= 1. + tol && uvw[2] <= 1. + tol &&
+       1. - uvw[0] - uvw[1] - uvw[2] > -tol) {
+      return true;
+    }
+    return false;
+  }
+  inline void circumcenter(double *res)
+  {
+    double X[4] = {_v[0]->x(), _v[1]->x(), _v[2]->x(), _v[3]->x()};
+    double Y[4] = {_v[0]->y(), _v[1]->y(), _v[2]->y(), _v[3]->y()};
+    double Z[4] = {_v[0]->z(), _v[1]->z(), _v[2]->z(), _v[3]->z()};
+    double mat[3][3], b[3], dum;    
     b[0] = X[1] * X[1] - X[0] * X[0] +
       Y[1] * Y[1] - Y[0] * Y[0] + Z[1] * Z[1] - Z[0] * Z[0];
     b[1] = X[2] * X[2] - X[1] * X[1] +
       Y[2] * Y[2] - Y[1] * Y[1] + Z[2] * Z[2] - Z[1] * Z[1];
     b[2] = X[3] * X[3] - X[2] * X[2] +
       Y[3] * Y[3] - Y[2] * Y[2] + Z[3] * Z[3] - Z[2] * Z[2];
-    
-    for(i = 0; i < 3; i++)
+    for(int i = 0; i < 3; i++)
       b[i] *= 0.5;
-
     mat[0][0] = X[1] - X[0];
     mat[0][1] = Y[1] - Y[0];
     mat[0][2] = Z[1] - Z[0];
@@ -549,7 +538,6 @@ class MTetrahedron : public MElement {
     mat[2][0] = X[3] - X[2];
     mat[2][1] = Y[3] - Y[2];
     mat[2][2] = Z[3] - Z[2];
-   
     if(!sys3x3(mat, b, res, &dum)) {
       res[0] = res[1] = res[2] = 10.0e10;
     }
