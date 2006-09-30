@@ -20,24 +20,36 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <functional>
 #include "MVertex.h"
 #include "SVector3.h"
+#include "Hash.h"
 
 // A mesh edge.
 class MEdge {
  private:
   MVertex *_v[2];
-  
+  char _si[2];                          // sorted indices
+
  public:
-  MEdge(MVertex *v0, MVertex *v1) 
+  MEdge(MVertex *v0, MVertex *v1)
   {
     _v[0] = v0; _v[1] = v1;
+    if(_v[1] < _v[0]) {
+      _si[0] = 1;
+      _si[1] = 0;
+    }
+    else {
+      _si[0] = 0;
+      _si[1] = 1;
+    }
   }
   inline int getNumVertices() const { return 2; }
-  inline MVertex *getVertex(int i) const { return _v[i]; }
-  inline MVertex *getMinVertex() const { return std::min(_v[0], _v[1]); }
-  inline MVertex *getMaxVertex() const { return std::max(_v[0], _v[1]); }
-  SVector3 tangent()
+  inline MVertex *getVertex(const int i) const { return _v[i]; }
+  inline MVertex *getSortedVertex(const int i) const { return _v[int(_si[i])]; }
+  inline MVertex *getMinVertex() const { return _v[int(_si[0])]; }
+  inline MVertex *getMaxVertex() const { return _v[int(_si[1])]; }
+  SVector3 tangent() const
   {
     SVector3 t(_v[1]->x() - _v[0]->x(), 
 	       _v[1]->y() - _v[0]->y(),
@@ -45,11 +57,70 @@ class MEdge {
     t.normalize();
     return t;
   }
-  SPoint3 barycenter()
+  SPoint3 barycenter() const
   {
     return SPoint3(0.5 * (_v[0]->x() + _v[1]->x()), 
 		   0.5 * (_v[0]->y() + _v[1]->y()), 
 		   0.5 * (_v[0]->z() + _v[1]->z()));
+  }
+};
+
+//--The following function objects compare the addresses of the mesh vertices.
+//--Equal, Less, and a Hash are defined.
+
+struct Equal_Edge : public std::binary_function<MEdge, MEdge, bool> {
+  bool operator()(const MEdge &e1, const MEdge &e2) const
+  {
+    return (e1.getMinVertex() == e2.getMinVertex() &&
+            e1.getMaxVertex() == e2.getMaxVertex());
+  }
+};
+
+struct Equal_EdgePtr : public std::binary_function<MEdge*, MEdge*, bool> {
+  bool operator()(const MEdge *const e1, const MEdge *const e2) const
+  {
+    return (e1->getMinVertex() == e2->getMinVertex() &&
+            e1->getMaxVertex() == e2->getMaxVertex());
+  }
+};
+
+struct Less_Edge : public std::binary_function<MEdge, MEdge, bool> {
+  bool operator()(const MEdge &e1, const MEdge &e2) const
+  {
+    if(e1.getMinVertex() < e2.getMinVertex()) return true;
+    if(e1.getMinVertex() > e2.getMinVertex()) return false;
+    if(e1.getMaxVertex() < e2.getMaxVertex()) return true;
+    return false;
+  }
+};
+
+struct Less_EdgePtr : public std::binary_function<MEdge*, MEdge*, bool> {
+  bool operator()(const MEdge *const e1, const MEdge *const e2) const
+  {
+    if(e1->getMinVertex() < e2->getMinVertex()) return true;
+    if(e1->getMinVertex() > e2->getMinVertex()) return false;
+    if(e1->getMaxVertex() < e2->getMaxVertex()) return true;
+    return false;
+  }
+};
+
+struct Hash_Edge : public std::unary_function<MEdge, size_t> {
+  size_t operator()(const MEdge &e) const
+  {
+    const MVertex *v[2];
+    v[0] = e.getMinVertex();
+    v[1] = e.getMaxVertex();
+    return HashFNV1a<sizeof(MVertex*[2])>::eval(v);
+  }
+};
+
+struct Hash_EdgePtr : public std::unary_function<MEdge*, size_t> {
+  size_t operator()(const MEdge *const e) const
+  {
+    const MVertex *v[2];
+    v[0] = e->getMinVertex();
+    v[1] = e->getMaxVertex();
+    return HashFNV1a<sizeof(MVertex*[2])>::eval(v);
   }
 };
 
