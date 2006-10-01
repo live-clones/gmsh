@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.103 2006-09-30 02:38:04 guzik Exp $
+dnl $Id: configure.in,v 1.104 2006-10-01 02:48:16 guzik Exp $
 dnl
 dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 dnl
@@ -532,6 +532,7 @@ if test "x$enable_cgns" = "xyes"; then
   if test "x${CGNS}" = "xyes"; then
     if test "x${CGNS_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lcgns"
+      FLAGS="${FLAGS} -DHAVE_LIBCGNS"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${CGNS_PREFIX}/lib -lcgns"
       FLAGS="${FLAGS} -DHAVE_LIBCGNS -I${CGNS_PREFIX}/include"
