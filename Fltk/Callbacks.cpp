@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.461 2006-09-08 02:39:42 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.462 2006-10-09 13:26:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3497,9 +3497,14 @@ void mesh_edit_cb(CALLBACK_ARGS)
   WID->set_context(menu_mesh_edit, 0);
 }
 
-void mesh_reparam_cb(CALLBACK_ARGS)
+void mesh_parameterize_cb(CALLBACK_ARGS)
 {
-  printf("LAUCH REPARAMETERIZATION BIGNOU HERE!\n");
+  printf("LAUNCH REPARAMETERIZATION WINDOW!\n");
+}
+
+void mesh_cut_parts_cb(CALLBACK_ARGS)
+{
+  printf("LAUNCH CUTTING TOOL!\n");
 }
 
 void mesh_degree_cb(CALLBACK_ARGS)

@@ -216,11 +216,6 @@ void getOrderedBoundaryLoops(std::vector<MElement*> &elements,
   for(std::map<vpair, vpair>::iterator it = edges.begin(); it != edges.end(); it++)
     connect[it->second.first] = it->second.second;
 
-  std::vector<MVertex*> debug;
-  for(std::map<MVertex*, MVertex*>::iterator it = connect.begin(); it != connect.end(); it++)
-    debug.push_back(it->first);
-  debugVertices(debug, "xxxx", false, 0);
-
   loops.resize(1);
   while(connect.size()){
     if(loops[loops.size() - 1].empty()) 
@@ -277,14 +272,8 @@ void getIntersectingBoundaryParts(GFace *gf, std::vector<MElement*> &elements,
   getOrderedBoundaryLoops(elements, loops);
   parts.resize(loops.size());
 
-  if(0){
-    debugElements(elements, "elements", false);
-    for(unsigned int i = 0; i < loops.size(); i++)
-      debugVertices(loops[i], "boundary", false, i);
-  }
-
   for(unsigned int i = 0; i < loops.size(); i++){
-    // last vertex in loop is equal to the firt vertex
+    // last vertex in loop is equal to the first vertex
     bool newpart = true;
     for(unsigned int j = 0; j < loops[i].size() - 1; j++){
       MVertex *v = loops[i][j];
@@ -312,6 +301,16 @@ void getIntersectingBoundaryParts(GFace *gf, std::vector<MElement*> &elements,
       }
     }
   }
+
+#if 0
+  static int nn = 0;
+  debugElements(elements, "elements", false, nn++);
+  for(unsigned int i = 0; i < loops.size(); i++)
+    debugVertices(loops[i], "loops", false, nn++);
+  for(unsigned int i = 0; i < parts.size(); i++)
+    for(unsigned int j = 0; j < parts[i].size(); j++)
+      debugVertices(parts[i][j], "parts", false, nn++);
+#endif
 }
 
 void meshGrout(GFace *gf, std::vector<MVertex*> &loop, std::vector<MVertex*> &hole)
@@ -412,86 +411,30 @@ bool onHardEdge(GFace *gf, MVertex *vertex)
 bool removeHardEdges(GFace *gf, std::vector<MVertex*> &loop,
 		     std::vector<std::vector<MVertex*> > &subloops)
 {
-  std::vector<MVertex*> tmp;
-  tmp.push_back(loop[0]);
+  subloops.resize(1);
+  subloops[0].push_back(loop[0]);
   for(unsigned int i = 1; i < loop.size() - 1; i++){
     if(onHardEdge(gf, loop[i - 1]) && 
        onHardEdge(gf, loop[i]) &&
        onHardEdge(gf, loop[i + 1])){
       // skip + create new path
+      subloops.resize(subloops.size() + 1);
     }
     else{
-      tmp.push_back(loop[i]);
+      subloops[subloops.size() - 1].push_back(loop[i]);
     }
   }
-  tmp.push_back(loop[0]);
-  if(tmp.size() != loop.size()){
-    Msg(INFO, "Generating subloops");
-    
+  subloops[subloops.size() - 1].push_back(loop[loop.size() - 1]);
 
+  if(subloops.size() > 1){
+    for(unsigned int i = 0; i < subloops.size(); i++){
+      //if(subloops[i].size()) debugVertices(subloops[i], "x", false, i);
+    }
+    Msg(INFO, "HAVE SUBLOOPS!");
     return true;
   }
   return false;
 }
-
-/*
-  std::vector<std::vector<MVertex*> > self, other;
-  
-  self.resize(1);
-  for(unsigned int i = 0; i < input.size(); i++){
-    if(input[i]->onWhat() == gf){
-      if(i && input[i]->onWhat() != input[i - 1]->onWhat())
-	self.resize(self.size() + 1);
-      self[self.size() - 1].push_back(input[i]);
-    }
-  }
-
-  other.resize(1);
-  for(unsigned int i = 0; i < input.size(); i++){
-    if(input[i]->onWhat() != gf){
-      if(i && input[i]->onWhat() != input[i - 1]->onWhat())
-	other.resize(other.size() + 1);
-      other[other.size() - 1].push_back(input[i]);
-    }
-  }
-
-  if(self.size() == 1 || other.size() == 0){
-    // nothing special to do
-    output.resize(1);
-    for(unsigned int i = 0; i < input.size(); i++){
-      output[0].push_back(input[i]);
-    }
-  }
-  else if(self.size() == other.size()){
-
-    for(unsigned int i = 0; i < self.size(); i++)
-      debugVertices(self[i], "self", false, i);
-    for(unsigned int i = 0; i < other.size(); i++)
-      debugVertices(other[i], "other", false, i);
-
-
-    output.resize(self.size());
-    for(unsigned int i = 0; i < self.size(); i++){
-      // add self pnts
-      for(unsigned int j = 0; j < self[i].size(); j++)
-	output[i].push_back(self[i][j]);
-      // check which other is closest
-      int which = 0;
-      double dist = 1e20;
-      for(unsigned int j = 0; j < other.size(); j++){
-	if(output[i][output[i].size() - 1]->distance(other[j][0]) < dist)
-	  which = j;
-      }
-      for(unsigned int j = 0; j < other[which].size(); j++)
-	output[i].push_back(other[which][j]);
-      output[i].push_back(output[i][0]);
-    }
-  }
-  else{
-    Msg(GERROR, "General subloop creation not implemented yet");
-  }
-}
-*/
 
 void meshGroutWithoutHole(GFace *gf,
 			  std::vector<std::vector<MVertex*> > &inside)
@@ -505,8 +448,8 @@ void meshGroutWithoutHole(GFace *gf,
   tmp.push_back(tmp[0]);
 
   if(removeHardEdges(gf, tmp, loops)){
-    for(unsigned int i = 0; i < loops.size(); i++)
-      meshGrout(gf, loops[i], hole);
+    //for(unsigned int i = 0; i < loops.size(); i++)
+      //meshGrout(gf, loops[i], hole);
   }
   else{
     meshGrout(gf, tmp, hole);
@@ -602,6 +545,8 @@ fourierModel::fourierModel(const std::string &name)
   // - compute the intersections of these lines
   // This should define a non-overlapping partitioning of the grid, which
   // could be used as the boundary constrain for the unstructured algo
+
+  CTX.terminal = 0;
 
   CTX.mesh.changed = ENT_ALL;
 }

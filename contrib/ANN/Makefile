@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2006-09-14 15:48:35 geuzaine Exp $
+# $Id: Makefile,v 1.12 2006-10-09 13:26:28 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -22,7 +22,7 @@
 include ../../variables
 
 LIB     = ../../lib/libGmshANN.a
-INCLUDE = -I../../Common -I./include/
+INCLUDE = -I../../Common -I./include
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = src/ANN.cpp\
