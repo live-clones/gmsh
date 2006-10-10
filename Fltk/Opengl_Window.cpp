@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.71 2006-10-10 01:33:26 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.72 2006-10-10 13:57:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -281,22 +281,14 @@ int Opengl_Window::handle(int event)
     return 1;
 
   case FL_MOUSEWHEEL:
-    curr.set();
     {
       double dy = Fl::event_dy();
       double fact = (5. * CTX.zoom_factor * fabs(dy) + h()) / (double)h();
       CTX.s[0] *= ((dy > 0) ? fact : 1./fact);
       CTX.s[1] = CTX.s[0];
       CTX.s[2] = CTX.s[0];
-      click.recenter();
-      CTX.draw_rotation_center = 1;
-      if(CTX.fast_redraw) {
-	CTX.mesh.draw = 0;
-	CTX.post.draw = 0;
-      }
       redraw();
     }
-    prev.set();
     WID->update_manip_window();
     return 1;
 
