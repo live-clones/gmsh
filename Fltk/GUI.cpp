@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.553 2006-10-09 13:26:27 geuzaine Exp $
+// $Id: GUI.cpp,v 1.554 2006-10-10 14:04:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -322,6 +322,7 @@ Context_Item menu_geometry[] = {
 Context_Item menu_mesh[] = {
   {"1Mesh", NULL} ,
   {"Define",       (Fl_Callback *)mesh_define_cb} ,
+  {"Edit",         (Fl_Callback *)mesh_edit_cb} , 
   {"1D",           (Fl_Callback *)mesh_1d_cb} ,
   {"2D",           (Fl_Callback *)mesh_2d_cb} , 
   {"3D",           (Fl_Callback *)mesh_3d_cb} , 
@@ -330,7 +331,6 @@ Context_Item menu_mesh[] = {
 #if defined(HAVE_NETGEN)
   {"Optimize quality", (Fl_Callback *)mesh_optimize_cb} , 
 #endif
-  {"Edit",         (Fl_Callback *)mesh_edit_cb} , 
   {"Save",         (Fl_Callback *)mesh_save_cb} ,
   {0} 
 };  

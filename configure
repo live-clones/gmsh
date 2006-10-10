@@ -5219,10 +5219,11 @@ _ACEOF
 
 
 if test $ac_cv_sizeof_size_t != 4; then
-  FLAGS="$FLAGS -DHAVE_64BIT_SIZE_T"
   if test $ac_cv_sizeof_size_t != 8; then
     { echo "$as_me:$LINENO: WARNING: Unsupported size of size_t - this may affect FNV hashing." >&5
 echo "$as_me: WARNING: Unsupported size of size_t - this may affect FNV hashing." >&2;}
+  else
+    FLAGS="$FLAGS -DHAVE_64BIT_SIZE_T"
   fi
 fi
 
