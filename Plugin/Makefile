@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.109 2006-08-26 13:34:46 geuzaine Exp $
+# $Id: Makefile,v 1.110 2006-10-10 00:44:42 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -213,9 +213,9 @@ ExtractEdges.o: ExtractEdges.cpp Plugin.h ../Common/Options.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
   ../Geo/MElement.h ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/MFace.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Common/Hash.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h
 # 1 "/Users/geuzaine/.gmsh/Plugin//"
 DecomposeInSimplex.o: DecomposeInSimplex.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \

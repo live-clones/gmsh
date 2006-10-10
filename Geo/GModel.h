@@ -145,6 +145,9 @@ class GModel
   int writeBDF(const std::string &name, int format=0, bool saveAll=false, 
 	       double scalingFactor=1.0);
 
+  // Export flat Gmsh geo model (only implemented for gmshModel at the moment)
+  virtual int writeGEO(const std::string &name){ return 0; }
+
   // FIXME: this will be removed (and rewritten)
   smooth_normals *normals;
 };

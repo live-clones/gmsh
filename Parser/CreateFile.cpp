@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.8 2006-09-03 07:44:10 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.9 2006-10-10 00:44:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -137,10 +137,6 @@ void CreateOutputFile(char *filename, int format)
     printEndMessage = false;
     break;
     
-  case FORMAT_GEO:
-    Print_Geo(name);
-    break;
-
   case FORMAT_OPT:
     Print_Options(0, GMSH_FULLRC, 1, 1, name);
     break;
@@ -173,6 +169,10 @@ void CreateOutputFile(char *filename, int format)
 
   case FORMAT_POS:
     GMODEL->writePOS(name);
+    break;
+
+  case FORMAT_GEO:
+    GMODEL->writeGEO(name);
     break;
 
 #if defined(HAVE_FLTK)

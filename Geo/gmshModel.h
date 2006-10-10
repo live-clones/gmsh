@@ -29,6 +29,7 @@ class gmshModel : public GModel {
 
   // import data from the old Gmsh database ("THEM")
   virtual void import();
+  virtual int writeGEO(const std::string &name);
 };
 
 #endif
