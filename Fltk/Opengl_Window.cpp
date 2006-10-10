@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.70 2006-08-27 23:10:36 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.71 2006-10-10 01:33:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -178,8 +178,6 @@ void Opengl_Window::draw()
 
 int Opengl_Window::handle(int event)
 {
-  double dx, dy;
-
   switch (event) {
 
   case FL_FOCUS: // accept the focus when I'm asked if I want it
@@ -282,49 +280,71 @@ int Opengl_Window::handle(int event)
     prev.set();
     return 1;
 
-  case FL_DRAG:
+  case FL_MOUSEWHEEL:
     curr.set();
-    dx = curr.win[0] - prev.win[0];
-    dy = curr.win[1] - prev.win[1];
-    if(LassoMode) {
-      redraw();
-    }
-    else {
-      if(Fl::event_button() == 1 && 
-	 !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
-        if(CTX.useTrackball)
-          CTX.addQuaternion((2. * prev.win[0] - w()) / w(),
-                            (h() - 2. * prev.win[1]) / h(),
-                            (2. * curr.win[0] - w()) / w(),
-                            (h() - 2. * curr.win[1]) / h());
-        else {
-          CTX.r[1] += ((fabs(dx) > fabs(dy)) ? 180. * dx / (double)w() : 0.);
-	  CTX.r[0] += ((fabs(dx) > fabs(dy)) ? 0. : 180. * dy / (double)h());
-        }
-      }
-      else if(Fl::event_button() == 2 ||
-	      (Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
-        if(fabs(dy) > fabs(dx)) {
-	  double fact = (CTX.zoom_factor * fabs(dy) + h()) / (double)h();
-	  CTX.s[0] *= ((dy > 0) ? fact : 1./fact);
-	  CTX.s[1] = CTX.s[0];
-	  CTX.s[2] = CTX.s[0];
-	  click.recenter();
-	}
-	else if(!CTX.useTrackball)
-          CTX.r[2] += -180. * dx / (double)w();
-      }
-      else {
-        CTX.t[0] += (curr.wnr[0] - click.wnr[0]);
-	CTX.t[1] += (curr.wnr[1] - click.wnr[1]);
-        CTX.t[2] = 0.;
-      }
+    {
+      double dy = Fl::event_dy();
+      double fact = (5. * CTX.zoom_factor * fabs(dy) + h()) / (double)h();
+      CTX.s[0] *= ((dy > 0) ? fact : 1./fact);
+      CTX.s[1] = CTX.s[0];
+      CTX.s[2] = CTX.s[0];
+      click.recenter();
       CTX.draw_rotation_center = 1;
       if(CTX.fast_redraw) {
-        CTX.mesh.draw = 0;
-        CTX.post.draw = 0;
+	CTX.mesh.draw = 0;
+	CTX.post.draw = 0;
       }
       redraw();
+    }
+    prev.set();
+    WID->update_manip_window();
+    return 1;
+
+  case FL_DRAG:
+    curr.set();
+    {
+      double dx = curr.win[0] - prev.win[0];
+      double dy = curr.win[1] - prev.win[1];
+      if(LassoMode) {
+	redraw();
+      }
+      else {
+	if(Fl::event_button() == 1 && 
+	   !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
+	  if(CTX.useTrackball)
+	    CTX.addQuaternion((2. * prev.win[0] - w()) / w(),
+			      (h() - 2. * prev.win[1]) / h(),
+			      (2. * curr.win[0] - w()) / w(),
+			      (h() - 2. * curr.win[1]) / h());
+	  else {
+	    CTX.r[1] += ((fabs(dx) > fabs(dy)) ? 180. * dx / (double)w() : 0.);
+	    CTX.r[0] += ((fabs(dx) > fabs(dy)) ? 0. : 180. * dy / (double)h());
+	  }
+	}
+	else if(Fl::event_button() == 2 ||
+		(Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
+	  if(fabs(dy) > fabs(dx)) {
+	    double fact = (CTX.zoom_factor * fabs(dy) + h()) / (double)h();
+	    CTX.s[0] *= ((dy > 0) ? fact : 1./fact);
+	    CTX.s[1] = CTX.s[0];
+	    CTX.s[2] = CTX.s[0];
+	    click.recenter();
+	  }
+	  else if(!CTX.useTrackball)
+	    CTX.r[2] += -180. * dx / (double)w();
+	}
+	else {
+	  CTX.t[0] += (curr.wnr[0] - click.wnr[0]);
+	  CTX.t[1] += (curr.wnr[1] - click.wnr[1]);
+	  CTX.t[2] = 0.;
+	}
+	CTX.draw_rotation_center = 1;
+	if(CTX.fast_redraw) {
+	  CTX.mesh.draw = 0;
+	  CTX.post.draw = 0;
+	}
+	redraw();
+      }
     }
     prev.set();
     WID->update_manip_window();
