@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.15 2006-08-26 15:13:22 remacle Exp $
+// $Id: GFace.cpp,v 1.16 2006-10-12 01:35:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -33,7 +33,16 @@
 void dsvdcmp(double **a, int m, int n, double w[], double **v);
 #endif
 
-GFace::~GFace ()
+GFace::GFace(GModel *model, int tag) : GEntity(model, tag), r1(0), r2(0) 
+{
+  meshAttributes.recombine = 0;
+  meshAttributes.recombineAngle = 0.;
+  meshAttributes.Method = LIBRE;
+  meshAttributes.transfiniteArrangement = 0;
+  meshAttributes.extrude = 0;
+}
+
+GFace::~GFace()
 { 
   std::list<GEdge*>::iterator it = l_edges.begin();
 
@@ -342,16 +351,13 @@ void GFace::getMeanPlaneData(double VX[3], double VY[3],
   z = meanPlane.z;  
 }
 
-// X=X(u,v) Y=Y(u,v) Z=Z(u,v)
-// curv = div n = dnx/dx + dny/dy + dnz/dz
- 
-// dnx/dx = dnx/du du/dx + dnx/dv dv/dx
-
-
 double GFace::curvature (const SPoint2 &param) const
 {
-
   if (geomType() == Plane)return 0;
+
+  // X=X(u,v) Y=Y(u,v) Z=Z(u,v)
+  // curv = div n = dnx/dx + dny/dy + dnz/dz
+  // dnx/dx = dnx/du du/dx + dnx/dv dv/dx
 
   const double eps = 1.e-3;
 
@@ -379,5 +385,4 @@ double GFace::curvature (const SPoint2 &param) const
   //  Msg (INFO,"c = %g detJ %g",c,detJ);
 
   return  c;
- 
 }

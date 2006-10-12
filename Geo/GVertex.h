@@ -31,8 +31,8 @@ class GVertex : public GEntity
   std::list<GEdge*> l_edges;
 
  public:
-  GVertex(GModel *m, int tag) : GEntity (m, tag) {}
-  virtual ~GVertex() ;
+  GVertex(GModel *m, int tag);
+  virtual ~GVertex();
   virtual GPoint point() const = 0;
   virtual double x() const = 0;
   virtual double y() const = 0;

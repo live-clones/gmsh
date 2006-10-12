@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.15 2006-08-26 15:13:22 remacle Exp $
+// $Id: GEdge.cpp,v 1.16 2006-10-12 01:35:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -24,25 +24,17 @@
 #include "GEdge.h"
 #include "GmshDefines.h"
 
-void GEdge::addFace(GFace *e)
-{ 
-  l_faces.push_back(e);  
-}
-
-void GEdge::delFace(GFace *e)
-{ 
-  l_faces.erase(std::find(l_faces.begin(), l_faces.end(), e));
-}
-
-GEdge::GEdge(GModel *model, 
-	     int tag, 
-	     GVertex *_v0, 
-	     GVertex *_v1)
+GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
   : GEntity(model, tag), v0(_v0), v1(_v1)
 {
   if(v0) v0->addEdge(this);
   if(v1) v1->addEdge(this);
+
   meshAttributes.Method = LIBRE; 
+  meshAttributes.coeffTransfinite = 0.;
+  meshAttributes.nbPointsTransfinite = 0;
+  meshAttributes.typeTransfinite = 0;
+  meshAttributes.extrude = 0;
 }
 
 GEdge::~GEdge() 
@@ -57,6 +49,16 @@ GEdge::~GEdge()
   for(unsigned int i = 0; i < lines.size(); i++) 
     delete lines[i];
   lines.clear();
+}
+
+void GEdge::addFace(GFace *e)
+{ 
+  l_faces.push_back(e);  
+}
+
+void GEdge::delFace(GFace *e)
+{ 
+  l_faces.erase(std::find(l_faces.begin(), l_faces.end(), e));
 }
 
 SBoundingBox3d GEdge::bounds() const
@@ -109,10 +111,9 @@ std::string GEdge::getAdditionalInfoString()
   return std::string(tmp);
 }
 
-
-/// use central differences
 SVector3 GEdge::secondDer(double par) const 
 {
+  // use central differences
   const double eps = 1.e-3;
   SVector3 x1 = firstDer(par-eps);
   SVector3 x2 = firstDer(par+eps);

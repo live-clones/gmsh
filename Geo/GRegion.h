@@ -22,6 +22,7 @@
 
 #include "GEntity.h"
 #include "MElement.h"
+#include "ExtrudeParams.h"
 
 // A model region.
 class GRegion : public GEntity {
@@ -30,7 +31,7 @@ class GRegion : public GEntity {
   std::list<int> l_dirs;
 
  public:
-  GRegion(GModel *model, int tag) : GEntity (model, tag) {}
+  GRegion(GModel *model, int tag);
   virtual ~GRegion();
 
   virtual int dim() const {return 3;}
@@ -38,7 +39,6 @@ class GRegion : public GEntity {
   virtual std::list<GFace*> faces() const{return l_faces;}
   virtual std::list<GEdge*> edges() const;
   void set(std::list<GFace*> &f) {l_faces= f;}
-  
 
   // The bounding box
   virtual SBoundingBox3d bounds() const; 
@@ -48,6 +48,12 @@ class GRegion : public GEntity {
 
   // Delete the mesh partitions defined on this region.
   void deleteMeshPartitions();
+
+  struct {
+    char   Method;
+    // the extrusion parameters (if any)
+    ExtrudeParams *extrude;
+  } meshAttributes ;
 
   std::vector<MTetrahedron*> tetrahedra;
   std::vector<MHexahedron*> hexahedra;

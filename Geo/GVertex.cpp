@@ -1,4 +1,4 @@
-// $Id: GVertex.cpp,v 1.5 2006-08-15 06:26:52 geuzaine Exp $
+// $Id: GVertex.cpp,v 1.6 2006-10-12 01:35:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -21,6 +21,10 @@
 
 #include "GVertex.h"
 #include <algorithm>
+
+GVertex::GVertex(GModel *m, int tag) : GEntity (m, tag) 
+{
+}
 
 GVertex::~GVertex()
 {

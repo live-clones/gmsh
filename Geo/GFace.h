@@ -26,6 +26,7 @@
 #include "SPoint2.h"
 #include "SVector3.h"
 #include "Pair.h"
+#include "ExtrudeParams.h"
 
 struct mean_plane
 {
@@ -48,10 +49,7 @@ class GFace : public GEntity
   std::list<GVertex *> embedded_vertices;
 
  public:
-  GFace(GModel *model, int tag) : GEntity(model, tag), r1(0), r2(0) 
-    {
-      meshAttributes.recombine = 0;
-    }
+  GFace(GModel *model, int tag);
   virtual ~GFace();
 
   void addRegion(GRegion *r){ r1 ? r2 = r : r1 = r; }
@@ -100,7 +98,7 @@ class GFace : public GEntity
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const = 0;
 
   // Return the curvature i.e. the divergence of the normal
-  virtual double curvature (const SPoint2 &param) const;
+  virtual double curvature(const SPoint2 &param) const;
   
   // True if the surface underlying the face is periodic and we need
   // to worry about that.
@@ -132,16 +130,18 @@ class GFace : public GEntity
 
   struct {
     // do we recombine the triangles of the mesh ?
-    int    recombine;
+    int recombine;
     // what is the treshold angle for recombination
     double recombineAngle;
     // is this surface meshed using a transfinite interpolation
-    int   Method;
+    int Method;
     // these are the 3 corners of the interpolation
-    std::vector<GVertex* > corners;
-    // all diagonals of the triangulation are left (1), right (2)
-    // or alternated (3)
-    int    transfiniteArrangement;
+    std::vector<GVertex*> corners;
+    // all diagonals of the triangulation are left (1), right (2) or
+    // alternated (3)
+    int transfiniteArrangement;
+    // the extrusion parameters (if any)
+    ExtrudeParams *extrude;
   } meshAttributes ;
 
 };

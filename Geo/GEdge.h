@@ -26,6 +26,7 @@
 #include "SPoint3.h"
 #include "SPoint2.h"
 #include "MElement.h"
+#include "ExtrudeParams.h"
 
 // A model edge.
 class GEdge : public GEntity {
@@ -34,14 +35,11 @@ class GEdge : public GEntity {
   std::list<GFace *> l_faces;
 
  public:
-  GEdge(GModel *model, 
-	int tag, 
-	GVertex *_v0, 
-	GVertex *_v1);
-  virtual ~GEdge() ;
+  GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
+  virtual ~GEdge();
 
-  GVertex *getBeginVertex () const { return v0; }
-  GVertex *getEndVertex () const { return v1; }
+  GVertex *getBeginVertex() const { return v0; }
+  GVertex *getEndVertex() const { return v1; }
 
   void addFace(GFace *f);
   void delFace(GFace *f);
@@ -86,10 +84,10 @@ class GEdge : public GEntity {
   void deleteMeshPartitions();
 
   // Returns the minimum number of segments used for meshing the edge
-  virtual int minimumMeshSegments () const {return 1;}
+  virtual int minimumMeshSegments() const {return 1;}
 
   // Returns the minimum number of segments used for drawing the edge
-  virtual int minimumDrawSegments () const {return 1;}
+  virtual int minimumDrawSegments() const {return 1;}
 
   // Returns a type-specific additional information string
   virtual std::string getAdditionalInfoString();
@@ -99,6 +97,8 @@ class GEdge : public GEntity {
     double coeffTransfinite;
     int    nbPointsTransfinite;
     int    typeTransfinite;
+    // the extrusion parameters (if any)
+    ExtrudeParams *extrude;
   } meshAttributes ;
 
   std::vector<MLine*> lines;

@@ -1,4 +1,4 @@
-// $Id: GRegion.cpp,v 1.11 2006-09-11 15:23:54 remacle Exp $
+// $Id: GRegion.cpp,v 1.12 2006-10-12 01:35:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,13 @@
 #include "GRegion.h"
 #include "GFace.h"
 
-GRegion::~GRegion ()
+GRegion::GRegion(GModel *model, int tag) : GEntity (model, tag)
+{
+  meshAttributes.Method = LIBRE; 
+  meshAttributes.extrude = 0;
+}
+
+GRegion::~GRegion()
 { 
   std::list<GFace*>::iterator it = l_faces.begin();
   while(it != l_faces.end()){
@@ -110,22 +116,21 @@ void GRegion::deleteMeshPartitions()
   for(unsigned int i = 0; i < pyramids.size(); i++)
     pyramids[i]->setPartition(0);
 }
-std::list<GEdge*>  GRegion::edges() const
+
+std::list<GEdge*> GRegion::edges() const
 {
   std::list<GEdge*> e;
   std::list<GFace *>::const_iterator it =  l_faces.begin();
-  while (it != l_faces.end())
-    {
-      std::list<GEdge*> e2;
-      e2 = (*it)->edges();
-      std::list<GEdge*>::const_iterator it2 = e2.begin();
-      while (it2 != e2.end())
-	{
-	  if (std::find(e.begin(),e.end(),*it2) == e.end())
-	    e.push_back(*it2);
-	  ++it2;
-	}
-      ++it;
+  while(it != l_faces.end()){
+    std::list<GEdge*> e2;
+    e2 = (*it)->edges();
+    std::list<GEdge*>::const_iterator it2 = e2.begin();
+    while (it2 != e2.end()){
+      if (std::find(e.begin(),e.end(),*it2) == e.end())
+	e.push_back(*it2);
+      ++it2;
     }
+    ++it;
+  }
   return e;
 }
