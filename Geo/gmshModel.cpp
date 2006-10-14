@@ -1,4 +1,4 @@
-// $Id: gmshModel.cpp,v 1.20 2006-10-10 00:44:41 geuzaine Exp $
+// $Id: gmshModel.cpp,v 1.21 2006-10-14 21:13:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -124,11 +124,12 @@ void gmshModel::import()
   Msg(DEBUG, "%d Regions", regions.size());
 }
 
-static FILE *geo = 0;
-
 class writeGVertexGEO {
+ private :
+  FILE *geo;
  public :
-  void operator () (GVertex *gv)
+  writeGVertexGEO(FILE *fp) { geo = fp ? fp : stdout; }
+  void operator() (GVertex *gv)
   {
     Vertex *v = (Vertex*)gv->getNativePtr();
     fprintf(geo, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n",
@@ -137,7 +138,10 @@ class writeGVertexGEO {
 };
 
 class writeGEdgeGEO {
+ private :
+  FILE *geo;
  public :
+  writeGEdgeGEO(FILE *fp) { geo = fp ? fp : stdout; }
   void operator () (GEdge *ge)
   {
     Curve *c = (Curve *)ge->getNativePtr();
@@ -212,7 +216,10 @@ class writeGEdgeGEO {
 };
 
 class writeGFaceGEO {
+ private :
+  FILE *geo;
  public :
+  writeGFaceGEO(FILE *fp) { geo = fp ? fp : stdout; }
   void operator () (GFace *gf)
   {
     Surface *s = (Surface *)gf->getNativePtr();
@@ -290,7 +297,10 @@ class writeGFaceGEO {
 };
 
 class writeGRegionGEO {
+ private :
+  FILE *geo;
  public :
+  writeGRegionGEO(FILE *fp) { geo = fp ? fp : stdout; }
   void operator () (GRegion *gr)
   {
     Volume *vol = (Volume *)gr->getNativePtr();
@@ -320,51 +330,43 @@ class writeGRegionGEO {
   }
 };
 
-void writePhysicalGroupGEO(void *a, void *b)
-{
-  PhysicalGroup *pg = *(PhysicalGroup **) a;
-
-  switch (pg->Typ) {
-  case MSH_PHYSICAL_POINT:
-    fprintf(geo, "Physical Point (%d) = ", pg->Num);
-    break;
-  case MSH_PHYSICAL_LINE:
-    fprintf(geo, "Physical Line (%d) = ", pg->Num);
-    break;
-  case MSH_PHYSICAL_SURFACE:
-    fprintf(geo, "Physical Surface (%d) = ", pg->Num);
-    break;
-  case MSH_PHYSICAL_VOLUME:
-    fprintf(geo, "Physical Volume (%d) = ", pg->Num);
-    break;
+class writePhysicalGroupGEO {
+ private :
+  FILE *geo;
+  int dim;
+ public :
+  writePhysicalGroupGEO(FILE *fp, int i) : dim(i) { geo = fp ? fp : stdout; }
+  void operator () (std::pair<const int, std::vector<GEntity *> > &g)
+  {
+    switch (dim) {
+    case 0: fprintf(geo, "Physical Point"); break;
+    case 1: fprintf(geo, "Physical Line"); break;
+    case 2: fprintf(geo, "Physical Surface"); break;
+    case 3: fprintf(geo, "Physical Volume"); break;
+    }
+    fprintf(geo, " (%d) = {", g.first);
+    for(unsigned int i = 0; i < g.second.size(); i++) {
+      if(i) fprintf(geo, ", ");
+      fprintf(geo, "%d", g.second[i]->tag());
+    }
+    fprintf(geo, "};\n");
   }
-
-  for(int i = 0; i < List_Nbr(pg->Entities); i++) {
-    int j;
-    List_Read(pg->Entities, i, &j);
-    if(i)
-      fprintf(geo, ", %d", j);
-    else
-      fprintf(geo, "{%d", j);
-  }
-  fprintf(geo, "};\n");
-}
+};
 
 int gmshModel::writeGEO(const std::string &name)
 {
-  geo = fopen(name.c_str(), "w");
-  if(!geo){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
-    return 0;
-  }
+  FILE *fp = fopen(name.c_str(), "w");
 
-  std::for_each(firstVertex(), lastVertex(), writeGVertexGEO());
-  std::for_each(firstEdge(), lastEdge(), writeGEdgeGEO());
-  std::for_each(firstFace(), lastFace(), writeGFaceGEO());
-  std::for_each(firstRegion(), lastRegion(), writeGRegionGEO());
+  std::for_each(firstVertex(), lastVertex(), writeGVertexGEO(fp));
+  std::for_each(firstEdge(), lastEdge(), writeGEdgeGEO(fp));
+  std::for_each(firstFace(), lastFace(), writeGFaceGEO(fp));
+  std::for_each(firstRegion(), lastRegion(), writeGRegionGEO(fp));
 
-  List_Action(THEM->PhysicalGroups, writePhysicalGroupGEO);
+  std::map<int, std::vector<GEntity*> > groups[4];
+  getPhysicalGroups(groups);
+  for(int i = 0; i < 4; i++)
+    std::for_each(groups[i].begin(), groups[i].end(), writePhysicalGroupGEO(fp, i));
 
-  fclose(geo);
+  if(fp) fclose(fp);
   return 1;
 }
