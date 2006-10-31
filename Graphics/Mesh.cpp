@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.184 2006-08-24 01:14:59 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.185 2006-10-31 20:20:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -34,28 +34,6 @@ extern Context_T CTX;
 
 // General helper routines
 
-static unsigned int getColorByElement(MElement *ele)
-{
-  if(CTX.mesh.color_carousel == 0){ // by element type
-    switch(ele->getNumEdges()){
-    case 1: return CTX.color.mesh.line;
-    case 3: return CTX.color.mesh.triangle;
-    case 4: return CTX.color.mesh.quadrangle;
-    case 6: return CTX.color.mesh.tetrahedron;
-    case 12: return CTX.color.mesh.hexahedron;
-    case 9: return CTX.color.mesh.prism;
-    case 8: return CTX.color.mesh.pyramid;
-    default: return CTX.color.mesh.vertex;
-    }
-  }
-  else if(CTX.mesh.color_carousel == 3){ // by partition
-    return CTX.color.mesh.carousel[abs(ele->getPartition() % 20)];
-  }
-  else{
-    return CTX.color.fg;
-  }
-}
-
 static unsigned int getColorByEntity(GEntity *e)
 {
   if(e->getSelection()){ // selection
@@ -79,6 +57,33 @@ static unsigned int getColorByEntity(GEntity *e)
   }
   else{
     return CTX.color.fg;
+  }
+}
+
+static unsigned int getColorByElement(MElement *ele)
+{
+  if(ele->getVisibility() > 1){ // selection
+    switch(ele->getDim()){
+    case 0: return CTX.color.geom.point_sel;
+    case 1: return CTX.color.geom.line_sel;
+    case 2: return CTX.color.geom.surface_sel;
+    default: return CTX.color.geom.volume_sel;
+    }
+  }
+  else if(CTX.mesh.color_carousel == 3){ // by partition
+    return CTX.color.mesh.carousel[abs(ele->getPartition() % 20)];
+  }
+  else{ // by element type
+    switch(ele->getNumEdges()){
+    case 1: return CTX.color.mesh.line;
+    case 3: return CTX.color.mesh.triangle;
+    case 4: return CTX.color.mesh.quadrangle;
+    case 6: return CTX.color.mesh.tetrahedron;
+    case 12: return CTX.color.mesh.hexahedron;
+    case 9: return CTX.color.mesh.prism;
+    case 8: return CTX.color.mesh.pyramid;
+    default: return CTX.color.mesh.vertex;
+    }
   }
 }
 
@@ -470,6 +475,9 @@ static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalAr
     glDisableClientState(GL_COLOR_ARRAY);
     glColor4ubv((GLubyte *) & color);
   }
+  else if(CTX.enable_mouse_selection > 2){
+    glEnableClientState(GL_COLOR_ARRAY);
+  }
   else if(!e->getSelection() && (CTX.mesh.color_carousel == 0 || 
 				 CTX.mesh.color_carousel == 3)){
     glEnableClientState(GL_COLOR_ARRAY);
@@ -607,6 +615,10 @@ class initMeshGFace {
        CTX.mesh.explode != 1. || !m->allElementsVisible)
       useEdges = false;
 
+    // mouse selection of individual elements is complicated if we
+    // don't draw everything per element
+    if(CTX.enable_mouse_selection > 2) useEdges = false;
+
     // Further optimizations are possible when useEdges is true:
     // 1) store the unique vertices in the vertex array and use
     //    glDrawElements() instead of glDrawArrays(). Question:
@@ -635,13 +647,13 @@ class drawMeshGFace {
   void operator () (GFace *f)
   {  
     if(!f->getVisibility()) return;
+
+    MRep *m = f->meshRep;
     
     if(CTX.render_mode == GMSH_SELECT) {
       glPushName(2);
       glPushName(f->tag());
     }
-
-    MRep *m = f->meshRep;
 
     if(CTX.mesh.surfaces_edges){
       if(m->va_lines && m->va_lines->getNumVertices()){
@@ -717,6 +729,10 @@ class initMeshGRegion {
        CTX.mesh.explode != 1. || !m->allElementsVisible)
       useEdges = false;
     
+    // mouse selection of individual elements is complicated if we
+    // don't draw everything per element
+    if(CTX.enable_mouse_selection > 2) useEdges = false;
+
     if(useEdges){
       Msg(DEBUG, "Using edges to draw volume %d", r->tag());
       m->generateEdgeRep();

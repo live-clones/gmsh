@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.554 2006-10-10 14:04:13 geuzaine Exp $
+// $Id: GUI.cpp,v 1.555 2006-10-31 20:20:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -336,13 +336,18 @@ Context_Item menu_mesh[] = {
 };  
     Context_Item menu_mesh_edit[] = {
       {"1Mesh>Edit", NULL} ,
-      {"Cut parts", (Fl_Callback *)mesh_cut_parts_cb} ,
+      {"Delete", (Fl_Callback *)mesh_delete_cb} ,
       {"Parameterize", (Fl_Callback *)mesh_parameterize_cb} ,
       //{"Update edges",   (Fl_Callback *)mesh_update_edges_cb} ,
-      //{"Manually add edges", (Fl_Callback *)mesh_update_more_edges_cb} , 
       //{"Remesh",         (Fl_Callback *)mesh_remesh_cb} , 
       {0} 
     };  
+        Context_Item menu_mesh_delete[] = {
+          {"1Mesh>Edit>Delete", NULL} ,
+          {"Elements", (Fl_Callback *)mesh_delete_parts_cb, (void*)"elements"} ,
+          {"Surfaces", (Fl_Callback *)mesh_delete_parts_cb, (void*)"surfaces"} ,
+          {0} 
+        };  
     Context_Item menu_mesh_define[] = {
       {"1Mesh>Define", NULL} ,
       {"Characteristic length", (Fl_Callback *)mesh_define_length_cb  } ,

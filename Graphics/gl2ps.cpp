@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.109 2006-08-11 18:48:39 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.110 2006-10-31 20:20:22 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2006 Christophe Geuzaine <geuz@geuz.org>
@@ -48,7 +48,9 @@
  *   Shai Ayal <shaiay@gmail.com>
  *   Fabian Wenzel <wenzel@tu-harburg.de>
  *   Ian D. Gay <gay@sfu.ca>
- *   Cosmin Truta and Baiju Devani <cosmin@cs.toronto.edu>
+ *   Cosmin Truta <cosmin@cs.toronto.edu>
+ *   Baiju Devani <b.devani@gmail.com>
+ *   Alexander Danilov <danilov@lanl.gov>
  *
  * For the latest info about gl2ps, see http://www.geuz.org/gl2ps/.
  * Please report all bugs and problems to <gl2ps@geuz.org>.
@@ -1686,15 +1688,15 @@ static void gl2psRescaleAndOffset()
         (prim->verts[2].xyz[0] - prim->verts[1].xyz[0]) * 
         (prim->verts[1].xyz[1] - prim->verts[0].xyz[1]);
       dZdX = 
-        (prim->verts[2].xyz[1] - prim->verts[1].xyz[1]) *
-        (prim->verts[1].xyz[2] - prim->verts[0].xyz[2]) -
-        (prim->verts[1].xyz[1] - prim->verts[0].xyz[1]) *
-        (prim->verts[2].xyz[2] - prim->verts[1].xyz[2]) / area;
+        ((prim->verts[2].xyz[1] - prim->verts[1].xyz[1]) *
+         (prim->verts[1].xyz[2] - prim->verts[0].xyz[2]) -
+         (prim->verts[1].xyz[1] - prim->verts[0].xyz[1]) *
+         (prim->verts[2].xyz[2] - prim->verts[1].xyz[2])) / area;
       dZdY = 
-        (prim->verts[1].xyz[0] - prim->verts[0].xyz[0]) *
-        (prim->verts[2].xyz[2] - prim->verts[1].xyz[2]) -
-        (prim->verts[2].xyz[0] - prim->verts[1].xyz[0]) *
-        (prim->verts[1].xyz[2] - prim->verts[0].xyz[2]) / area;
+        ((prim->verts[1].xyz[0] - prim->verts[0].xyz[0]) *
+         (prim->verts[2].xyz[2] - prim->verts[1].xyz[2]) -
+         (prim->verts[2].xyz[0] - prim->verts[1].xyz[0]) *
+         (prim->verts[1].xyz[2] - prim->verts[0].xyz[2])) / area;
       maxdZ = (GLfloat)sqrt(dZdX * dZdX + dZdY * dZdY);
       dZ = factor * maxdZ + units;
       prim->verts[0].xyz[2] += dZ;
@@ -2904,7 +2906,9 @@ static void gl2psEndPostScriptLine(void)
 static void gl2psParseStipplePattern(GLushort pattern, GLint factor, 
                                      int *nb, int array[10])
 {
-  int i, n, on[5] = {0, 0, 0, 0, 0}, off[5] = {0, 0, 0, 0, 0};
+  int i, n;
+  int on[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  int off[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   char tmp[16];
 
   /* extract the 16 bits from the OpenGL stipple pattern */
@@ -2912,22 +2916,24 @@ static void gl2psParseStipplePattern(GLushort pattern, GLint factor,
     tmp[n] = (char)(pattern & 0x01);
     pattern >>= 1;
   }
-  /* compute the on/off pixel sequence (since the PostScript
-     specification allows for at most 11 elements in the on/off array,
-     we limit ourselves to 5 couples of on/off states) */
+  /* compute the on/off pixel sequence */
   n = 0;
-  for(i = 0; i < 5; i++){
+  for(i = 0; i < 8; i++){
     while(n < 16 && !tmp[n]){ off[i]++; n++; }
     while(n < 16 && tmp[n]){ on[i]++; n++; }
-    if(n >= 15) break;
+    if(n >= 15){ i++; break; }
   }
+
   /* store the on/off array from right to left, starting with off
-     pixels (the longest possible array is: [on4 off4 on3 off3 on2
-     off2 on1 off1 on0 off0]) */
+     pixels. The PostScript specification allows for at most 11
+     elements in the on/off array, so we limit ourselves to 5 on/off
+     couples (our longest possible array is thus [on4 off4 on3 off3
+     on2 off2 on1 off1 on0 off0]) */
   *nb = 0;
-  for(n = i; n >= 0; n--){
+  for(n = i - 1; n >= 0; n--){
     array[(*nb)++] = factor * on[n];
     array[(*nb)++] = factor * off[n];
+    if(*nb == 10) break;
   }
 }
 
@@ -4839,29 +4845,34 @@ static void gl2psSVGGetColorString(GL2PSrgba rgba, char str[32])
 
 static void gl2psPrintSVGHeader(void)
 {
+  int x, y, width, height;
   char col[32];
   time_t now;
-
+  
+  time(&now);
+  
+  if (gl2ps->options & GL2PS_LANDSCAPE){
+    x = (int)gl2ps->viewport[1];
+    y = (int)gl2ps->viewport[0];
+    width = (int)gl2ps->viewport[3];
+    height = (int)gl2ps->viewport[2];
+  }
+  else{
+    x = (int)gl2ps->viewport[0];
+    y = (int)gl2ps->viewport[1];
+    width = (int)gl2ps->viewport[2];
+    height = (int)gl2ps->viewport[3];
+  }
+  
   /* Compressed SVG files (.svgz) are simply gzipped SVG files */
   gl2psPrintGzipHeader();
-
-  time(&now);
-
+  
   gl2psPrintf("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n");
   gl2psPrintf("<svg xmlns=\"http://www.w3.org/2000/svg\"\n");
-  gl2psPrintf("     xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n");
-  gl2psPrintf("     viewBox=\"%d %d %d %d\">\n",
-              (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[1] : 
-              (int)gl2ps->viewport[0],
-              (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[0] :
-              (int)gl2ps->viewport[1],
-              (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[3] : 
-              (int)gl2ps->viewport[2],
-              (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[2] :
-              (int)gl2ps->viewport[3]);
-  gl2psPrintf("<title>\n");
-  gl2psPrintf("%s\n", gl2ps->title);
-  gl2psPrintf("</title>\n");
+  gl2psPrintf("     xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"
+	      "     width=\"%dpx\" height=\"%dpx\" viewBox=\"%d %d %d %d\">\n",
+	      width, height, x, y, width, height);
+  gl2psPrintf("<title>%s</title>\n", gl2ps->title);
   gl2psPrintf("<desc>\n");
   gl2psPrintf("Creator: GL2PS %d.%d.%d%s, %s\n"
               "For: %s\n"

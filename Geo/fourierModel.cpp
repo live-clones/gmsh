@@ -526,6 +526,8 @@ fourierModel::fourierModel(const std::string &name)
   // mesh each face with quads
   std::for_each(firstFace(), lastFace(), meshCartesian());
 
+  return;
+
   // compute partition of unity
   std::for_each(firstFace(), lastFace(), computePartitionOfUnity());
 

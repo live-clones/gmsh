@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.16 2006-08-20 03:54:54 geuzaine Exp $
+// $Id: GModel.cpp,v 1.17 2006-10-31 20:20:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -79,6 +79,11 @@ GVertex * GModel::vertexByTag(int n) const
     return *it;
   else
     return 0;
+}
+
+void GModel::removeInvisible()
+{
+  printf("deleting all invisible entities/elements\n");
 }
 
 int GModel::renumberMeshVertices()
@@ -177,6 +182,24 @@ int GModel::getMeshStatus()
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     if((*it)->mesh_vertices.size()) return 0;
   return -1;
+}
+
+int GModel::numElement()
+{
+  int n = 0;
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    n += (*it)->lines.size();
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+    n += (*it)->triangles.size();
+    n += (*it)->quadrangles.size();
+  }
+  for(riter it = firstRegion(); it != lastRegion(); ++it){
+    n += (*it)->tetrahedra.size();
+    n += (*it)->hexahedra.size();
+    n += (*it)->prisms.size();
+    n += (*it)->pyramids.size();
+  }
+  return n;
 }
 
 std::set<int> &GModel::recomputeMeshPartitions()

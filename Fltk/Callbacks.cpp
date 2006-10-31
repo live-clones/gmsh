@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.462 2006-10-09 13:26:26 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.463 2006-10-31 20:20:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -476,13 +476,13 @@ void status_xyz1p_cb(CALLBACK_ARGS)
   }
   else if(!strcmp(str, "S")){ // mouse selection
     if(Fl::event_state(FL_SHIFT)){
-      // full mouse hover and select for geometry and mesh
+      // mouse hover and select for geometry and mesh
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 2);
     }
     else if(Fl::event_state(FL_META)){
-      // full hover and select, even for mesh elements
+      // mouse hover and select for geometry and mesh, and mouse
+      // select for individual mesh elements
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 3);
-      CTX.mesh.changed = ENT_ALL; // need to regenerate the mesh reps
     }
     else if(CTX.enable_mouse_selection){
       // mouse does nothing
@@ -930,9 +930,10 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
   std::vector<GEdge*> edges;
   std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
 
   Msg(ONSCREEN, "Select entity\n[Press 'q' to abort]");
-  char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions);
+  char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, elements);
   if(ib == 'l') {
     SPoint3 pc(0., 0., 0.);
     if(vertices.size())
@@ -943,6 +944,8 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
       pc = faces[0]->bounds().center();
     else if(regions.size())
       pc = regions[0]->bounds().center();
+    else if(elements.size())
+      pc = elements[0]->barycenter();
     opt_general_rotation_center_cg(0, GMSH_SET, WID->gen_butt[15]->value());
     opt_general_rotation_center0(0, GMSH_SET|GMSH_GUI, pc.x());
     opt_general_rotation_center1(0, GMSH_SET|GMSH_GUI, pc.y());
@@ -2510,7 +2513,8 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
     std::vector<GEdge*> edges;
     std::vector<GFace*> faces;
     std::vector<GRegion*> regions;
-    char ib = SelectEntity(ENT_NONE, vertices, edges, faces, regions);
+    std::vector<MElement*> elements;
+    char ib = SelectEntity(ENT_NONE, vertices, edges, faces, regions, elements);
     if(ib == 'e'){
       add_point(CTX.filename,
 		(char*)WID->context_geometry_input[2]->value(),
@@ -2535,6 +2539,7 @@ static void _new_multiline(int type)
   std::vector<GEdge*> edges;
   std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
   int p[100];
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -2549,10 +2554,13 @@ static void _new_multiline(int type)
     else
       Msg(ONSCREEN, "Select control points\n"
 	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-    char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions);
+    char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
-      for(unsigned int i = 0; i < vertices.size(); i++)
+      for(unsigned int i = 0; i < vertices.size(); i++){
+	HighlightEntity(vertices[i], true);
 	p[n++] = vertices[i]->tag();
+      }
+      Draw();
     }
     if(ib == 'r') {
       Msg(WARNING, "Entity de-selection not supported yet during multi-line creation");
@@ -2607,6 +2615,7 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
   std::vector<GEdge*> edges;
   std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
   int p[100];
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -2621,8 +2630,10 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
     if(n == 1)
       Msg(ONSCREEN, "Select end point\n"
 	  "[Press 'u' to undo last selection or 'q' to abort]");
-    char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions);
+    char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
+      HighlightEntity(vertices[0], true);
+      Draw();
       p[n++] = vertices[0]->tag();
     }
     if(ib == 'r') {
@@ -2668,6 +2679,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
   std::vector<GEdge*> edges;
   std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
   int p[100];
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -2685,8 +2697,10 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
     if(n == 2)
       Msg(ONSCREEN, "Select end point\n"
 	  "[Press 'u' to undo last selection or 'q' to abort]");
-    char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions);
+    char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
+      HighlightEntity(vertices[0], true);
+      Draw();
       p[n++] = vertices[0]->tag();
     }
     if(ib == 'r') {
@@ -2722,6 +2736,7 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
   std::vector<GEdge*> edges;
   std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
   int p[100];
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -2742,8 +2757,10 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
     if(n == 3)
       Msg(ONSCREEN, "Select end point\n"
 	  "[Press 'u' to undo last selection or 'q' to abort]");
-    char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions);
+    char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
+      HighlightEntity(vertices[0], true);
+      Draw();
       p[n++] = vertices[0]->tag();
     }
     if(ib == 'r') {
@@ -2779,6 +2796,7 @@ static void _new_surface_volume(int mode)
   std::vector<GEdge*> edges;
   std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
   int type, num;
 
   List_T *List1 = List_Create(10, 10, sizeof(int));
@@ -2818,7 +2836,7 @@ static void _new_surface_volume(int mode)
 	      "[Press 'u' to undo last selection or 'q' to abort]");
       }
 
-      char ib = SelectEntity(type, vertices, edges, faces, regions);
+      char ib = SelectEntity(type, vertices, edges, faces, regions, elements);
       if(ib == 'q') {
         ZeroHighlight();
         Draw();
@@ -2854,7 +2872,7 @@ static void _new_surface_volume(int mode)
 	    else
 	      Msg(ONSCREEN, "Select hole boundaries\n"
 		  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-	    ib = SelectEntity(type, vertices, edges, faces, regions);
+	    ib = SelectEntity(type, vertices, edges, faces, regions, elements);
 	    if(ib == 'q') {
 	      ZeroHighlight();
 	      Draw();
@@ -2936,6 +2954,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
   std::vector<GEdge*> edges;
   std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
   int type;
   char *str;
 
@@ -2982,7 +3001,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
       Msg(ONSCREEN, "Select %s\n"
 	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
 
-    char ib = SelectEntity(type, vertices, edges, faces, regions);
+    char ib = SelectEntity(type, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
       // we don't use List_Insert in order to keep the original
       // ordering (this is slower, but this way undo works as
@@ -2991,6 +3010,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
       switch (type) {
       case ENT_POINT: 
 	for(unsigned int i = 0; i < vertices.size(); i++){
+	  HighlightEntity(vertices[i], true);
 	  tag = vertices[i]->tag();
 	  if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
 	    List_Add(List1, &tag);
@@ -2998,6 +3018,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	break;
       case ENT_LINE:
 	for(unsigned int i = 0; i < edges.size(); i++){
+	  HighlightEntity(edges[i], true);
 	  tag = edges[i]->tag();
 	  if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
 	    List_Add(List1, &tag);
@@ -3005,6 +3026,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	break;
       case ENT_SURFACE:
 	for(unsigned int i = 0; i < faces.size(); i++){
+	  HighlightEntity(faces[i], true);
 	  tag = faces[i]->tag();
 	  if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
 	    List_Add(List1, &tag);
@@ -3012,12 +3034,14 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	break;
       case ENT_VOLUME:
 	for(unsigned int i = 0; i < regions.size(); i++){
+	  HighlightEntity(regions[i], true);
 	  tag = regions[i]->tag();
 	  if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
 	    List_Add(List1, &tag);
 	}
 	break;
       }
+      Draw();
     }
     if(ib == 'r') {
       // we don't use List_Suppress in order to keep the original
@@ -3497,14 +3521,120 @@ void mesh_edit_cb(CALLBACK_ARGS)
   WID->set_context(menu_mesh_edit, 0);
 }
 
+void mesh_delete_cb(CALLBACK_ARGS)
+{
+  WID->set_context(menu_mesh_delete, 0);
+}
+
+void mesh_delete_parts_cb(CALLBACK_ARGS)
+{
+  char *str = (char*)data;
+  int meshSelection;
+
+  if(!strcmp(str, "elements")){
+    opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 3);
+    meshSelection = 2;
+  }
+  else if(!strcmp(str, "surfaces")){
+    opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 2);
+    meshSelection = 1;
+  }
+  else{
+    Msg(GERROR, "Unknown mesh edit action");
+    return;
+  }
+  CTX.mesh.changed = ENT_ALL;
+
+  std::vector<GVertex*> vertices;
+  std::vector<GEdge*> edges;
+  std::vector<GFace*> faces, fac;
+  std::vector<GRegion*> regions;
+  std::vector<MElement*> elements, ele;
+
+  while(1) {
+    CTX.mesh.changed = ENT_ALL;
+    Draw();
+
+    if(!ele.size())
+      Msg(ONSCREEN, "Select %s\n"
+	  "[Press 'e' to end selection or 'q' to abort]", str);
+    else
+      Msg(ONSCREEN, "Select %s\n"
+	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
+
+    char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, 
+			   elements, meshSelection);
+    if(ib == 'l') {
+      if(meshSelection == 2){
+	for(unsigned int i = 0; i < elements.size(); i++){
+	  if(elements[i]->getVisibility() != 2){
+	    elements[i]->setVisibility(2);
+	    ele.push_back(elements[i]);
+	  }
+	}
+      }
+      else{
+	for(unsigned int i = 0; i < faces.size(); i++){
+	  if(faces[i]->getSelection() != 1){
+	    faces[i]->setSelection(1);
+	    fac.push_back(faces[i]);
+	  }
+	}
+      }
+    }
+    if(ib == 'r') {
+      if(meshSelection == 2){
+	for(unsigned int i = 0; i < elements.size(); i++)
+	  elements[i]->setVisibility(1);
+      }
+      else{
+	for(unsigned int i = 0; i < faces.size(); i++)
+	  faces[i]->setSelection(0);
+      }
+    }
+    if(ib == 'u') {
+      if(meshSelection == 2){
+	if(ele.size()){
+	  ele[ele.size() - 1]->setVisibility(1);
+	  ele.pop_back();
+	}
+      }
+      else{
+	if(fac.size()){
+	  fac[fac.size() - 1]->setSelection(0);
+	  fac.pop_back();
+	}
+      }
+    }
+    if(ib == 'e') {
+      if(meshSelection == 2){
+	for(unsigned int i = 0; i < ele.size(); i++)
+	  if(ele[i]->getVisibility() == 2) ele[i]->setVisibility(0);
+      }
+      else{
+	for(unsigned int i = 0; i < fac.size(); i++)
+	  if(fac[i]->getSelection() == 1) fac[i]->setVisibility(0);
+      }
+      GMODEL->removeInvisible();
+      ele.clear();
+      fac.clear();
+    }
+    if(ib == 'q') {
+      for(unsigned int i = 0; i < ele.size(); i++)
+	if(ele[i]->getVisibility() == 2) ele[i]->setVisibility(1);
+      ZeroHighlight();
+      break;
+    }
+  }
+
+  CTX.mesh.changed = ENT_ALL;
+  Draw();  
+  Msg(ONSCREEN, "");
+}
+
 void mesh_parameterize_cb(CALLBACK_ARGS)
 {
   printf("LAUNCH REPARAMETERIZATION WINDOW!\n");
-}
-
-void mesh_cut_parts_cb(CALLBACK_ARGS)
-{
-  printf("LAUNCH CUTTING TOOL!\n");
 }
 
 void mesh_degree_cb(CALLBACK_ARGS)
@@ -3543,11 +3673,6 @@ void mesh_update_edges_cb(CALLBACK_ARGS)
   Msg(GERROR, "BDS->classify() must be reinterfaced");
 }
 
-void mesh_update_more_edges_cb(CALLBACK_ARGS)
-{
-  _action_point_line_surface_volume(10, 0, "Line");
-}
-
 void mesh_define_length_cb(CALLBACK_ARGS)
 {
   _action_point_line_surface_volume(8, 0, "Point");
@@ -3569,6 +3694,7 @@ static void _add_transfinite_elliptic(int type, int dim)
   std::vector<GEdge*> edges;
   std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
   char ib;
   int p[100];
 
@@ -3590,15 +3716,15 @@ static void _add_transfinite_elliptic(int type, int dim)
       else
 	Msg(ONSCREEN, "Select lines\n"
 	    "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-      ib = SelectEntity(ENT_LINE, vertices, edges, faces, regions);
+      ib = SelectEntity(ENT_LINE, vertices, edges, faces, regions, elements);
       break;
     case 2:
       Msg(ONSCREEN, "Select surface\n[Press 'q' to abort]");
-      ib = SelectEntity(ENT_SURFACE, vertices, edges, faces, regions);
+      ib = SelectEntity(ENT_SURFACE, vertices, edges, faces, regions, elements);
       break;
     case 3:
       Msg(ONSCREEN, "Select volume\n[Press 'q' to abort]");
-      ib = SelectEntity(ENT_VOLUME, vertices, edges, faces, regions);
+      ib = SelectEntity(ENT_VOLUME, vertices, edges, faces, regions, elements);
       break;
     default:
       ib = 'l';
@@ -3637,14 +3763,22 @@ static void _add_transfinite_elliptic(int type, int dim)
     if(ib == 'l') {
       switch (dim) {
       case 1:
+	HighlightEntity(edges[0], true);
+	Draw();
         p[n++] = edges[0]->tag();
         break;
       case 2:
       case 3:
-	if(dim == 2)
+	if(dim == 2){
+	  HighlightEntity(faces[0], true);
+	  Draw();
 	  p[n++] = faces[0]->tag(); 
-	else
+	}
+	else{
+	  HighlightEntity(regions[0], true);
+	  Draw();
 	  p[n++] = regions[0]->tag(); 
+	}
         while(1) {
 	  if(n == 1)
 	    Msg(ONSCREEN, "Select (ordered) boundary points\n"
@@ -3652,8 +3786,10 @@ static void _add_transfinite_elliptic(int type, int dim)
 	  else
 	    Msg(ONSCREEN, "Select (ordered) boundary points\n"
 		"[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-          ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions);
+          ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
           if(ib == 'l') {
+	    HighlightEntity(vertices[0], true);
+	    Draw();
             p[n++] = vertices[0]->tag();
           }
 	  if(ib == 'u') {

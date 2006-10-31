@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.4 2006-08-24 17:26:26 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.5 2006-10-31 20:20:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -47,21 +47,26 @@ class hitDepthLessThan{
 };
 
 bool ProcessSelectionBuffer(int entityType, bool multipleSelection, 
-			    bool selectMesh, int x, int y, int w, int h,
+			    int x, int y, int w, int h,
 			    std::vector<GVertex*> &vertices,
 			    std::vector<GEdge*> &edges,
 			    std::vector<GFace*> &faces,
-			    std::vector<GRegion*> &regions)
+			    std::vector<GRegion*> &regions,
+			    std::vector<MElement*> &elements,
+			    int meshSelection)
 {
   vertices.clear();
   edges.clear();
   faces.clear();
   regions.clear();
+  elements.clear();
 
   // In our case the selection buffer size is equal to between 5 and 7
   // times the maximum number of possible hits
-  int size = 5 * (GMODEL->numVertex() + GMODEL->numEdge() + 
-		  GMODEL->numFace() + GMODEL->numRegion()) + 1000;
+  int size = 
+    7 * (GMODEL->numVertex() + GMODEL->numEdge() + GMODEL->numFace() + 
+	 GMODEL->numRegion() + (meshSelection > 1 ? 3 * GMODEL->numElement() : 0)) ;
+
   GLuint *selectionBuffer = new GLuint[size];
   glSelectBuffer(size, selectionBuffer);
 
@@ -73,7 +78,7 @@ bool ProcessSelectionBuffer(int entityType, bool multipleSelection,
   InitProjection(x, y, w, h);
   InitPosition();
   Draw_Geom();
-  if(selectMesh) Draw_Mesh();
+  if(meshSelection) Draw_Mesh();
   glPopMatrix();
 
   GLint numhits = glRenderMode(GL_RENDER);
@@ -166,7 +171,7 @@ bool ProcessSelectionBuffer(int entityType, bool multipleSelection,
 	  }
 	  if(hits[i].type2 && e->meshRep){
 	    MElement *ele = e->meshRep->getElement(hits[i].type2, hits[i].ient2);
-	    if(ele) printf("element %d\n", ele->getNum());
+	    if(ele) elements.push_back(ele);
 	  }
 	  edges.push_back(e);
 	  if(!multipleSelection) return true;
@@ -181,7 +186,7 @@ bool ProcessSelectionBuffer(int entityType, bool multipleSelection,
 	  }
 	  if(hits[i].type2 && f->meshRep){
 	    MElement *ele = f->meshRep->getElement(hits[i].type2, hits[i].ient2);
-	    if(ele) printf("element %d\n", ele->getNum());
+	    if(ele) elements.push_back(ele);
 	  }
 	  faces.push_back(f);
 	  if(!multipleSelection) return true;
@@ -196,7 +201,7 @@ bool ProcessSelectionBuffer(int entityType, bool multipleSelection,
 	  }
 	  if(hits[i].type2 && r->meshRep){
 	    MElement *ele = r->meshRep->getElement(hits[i].type2, hits[i].ient2);
-	    if(ele) printf("element %d\n", ele->getNum());
+	    if(ele) elements.push_back(ele);
 	  }
 	  regions.push_back(r);
 	  if(!multipleSelection) return true;

@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.67 2006-08-23 19:53:38 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.68 2006-10-31 20:20:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -189,11 +189,13 @@ void Draw_OnScreenMessages()
 
 // Select entity routine
 
-char SelectEntity(int type,
+char SelectEntity(int type, 
 		  std::vector<GVertex*> &vertices,
 		  std::vector<GEdge*> &edges,
 		  std::vector<GFace*> &faces,
-		  std::vector<GRegion*> &regions)
+		  std::vector<GRegion*> &regions,
+		  std::vector<MElement*> &elements,
+		  int meshSelection)
 {
   if(!WID) return 'q';
 
@@ -211,6 +213,7 @@ char SelectEntity(int type,
     edges.clear();
     faces.clear();
     regions.clear();
+    elements.clear();
     WID->wait();
     if(WID->quit_selection) {
       WID->selection = ENT_NONE;
@@ -237,32 +240,19 @@ char SelectEntity(int type,
 	WID->g_opengl_window->SelectionMode = false;
 	return 'c';
       }
-      else if(ProcessSelectionBuffer(WID->selection, multi, true,
+      else if(ProcessSelectionBuffer(WID->selection, multi,
 				     WID->try_selection_xywh[0],
 				     WID->try_selection_xywh[1], 
 				     WID->try_selection_xywh[2],
 				     WID->try_selection_xywh[3], 
-				     vertices, edges, faces, regions)){
+				     vertices, edges, faces, regions,
+				     elements, meshSelection)){
 	WID->selection = ENT_NONE;
 	WID->g_opengl_window->SelectionMode = false;
-	if(add){
-	  for(unsigned int i = 0; i < vertices.size(); i++)
-	    HighlightEntity(vertices[i], true);
-	  for(unsigned int i = 0; i < edges.size(); i++)
-	    HighlightEntity(edges[i], true);
-	  for(unsigned int i = 0; i < faces.size(); i++)
-	    HighlightEntity(faces[i], true);
-	  for(unsigned int i = 0; i < regions.size(); i++)
-	    HighlightEntity(regions[i], true);
-	  Draw();
+	if(add)
 	  return 'l';
-	}
-	else{
-	  // Don't call ZeroHighlight here if we try to deselect:
-	  // deselection is not supported in all cases, so it's better
-	  // to de-highlight the entities in the callback later
+	else
 	  return 'r';
-	}
       }
     }
   }

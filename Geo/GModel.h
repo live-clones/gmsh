@@ -91,6 +91,9 @@ class GModel
   void remove(GEdge *e) { edges.erase(std::find(firstEdge(), lastEdge(), e)); }
   void remove(GVertex *v) { vertices.erase(std::find(firstVertex(), lastVertex(), v)); }
 
+  // Deletes all invisble stuff (entities and elements)
+  void removeInvisible();
+
   // Renumber all the mesh vertices in a continuous sequence
   int renumberMeshVertices();
 
@@ -108,6 +111,9 @@ class GModel
 
   // Returns the mesh status for the entire model.
   virtual int getMeshStatus();
+
+  // Returns the total number of elements in the mesh
+  virtual int numElement();
 
   // The list of partitions
   virtual std::set<int> &getMeshPartitions() { return meshPartitions; }
