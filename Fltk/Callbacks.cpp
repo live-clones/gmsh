@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.463 2006-10-31 20:20:21 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.464 2006-10-31 20:50:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3555,12 +3555,12 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
     CTX.mesh.changed = ENT_ALL;
     Draw();
 
-    if(!ele.size())
-      Msg(ONSCREEN, "Select %s\n"
-	  "[Press 'e' to end selection or 'q' to abort]", str);
-    else
+    if(ele.size() || fac.size())
       Msg(ONSCREEN, "Select %s\n"
 	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
+    else
+      Msg(ONSCREEN, "Select %s\n"
+	  "[Press 'e' to end selection or 'q' to abort]", str);
 
     char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, 
 			   elements, meshSelection);
