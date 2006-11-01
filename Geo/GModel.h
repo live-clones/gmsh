@@ -90,6 +90,7 @@ class GModel
   void remove(GFace *f) { faces.erase(std::find(firstFace(), lastFace(), f)); }
   void remove(GEdge *e) { edges.erase(std::find(firstEdge(), lastEdge(), e)); }
   void remove(GVertex *v) { vertices.erase(std::find(firstVertex(), lastVertex(), v)); }
+  bool remove(MElement *e);
 
   // Deletes all invisble stuff (entities and elements)
   void removeInvisible();
@@ -154,7 +155,7 @@ class GModel
   // Export flat Gmsh geo model (only implemented for gmshModel at the moment)
   virtual int writeGEO(const std::string &name){ return 0; }
 
-  // FIXME: this will be removed (and rewritten)
+  // A container for smooth normals
   smooth_normals *normals;
 };
 

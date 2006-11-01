@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.5 2006-10-31 20:20:22 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.6 2006-11-01 22:19:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -46,14 +46,14 @@ class hitDepthLessThan{
   }
 };
 
-bool ProcessSelectionBuffer(int entityType, bool multipleSelection, 
+bool ProcessSelectionBuffer(int entityType,
+			    bool multipleSelection, bool meshSelection,
 			    int x, int y, int w, int h,
 			    std::vector<GVertex*> &vertices,
 			    std::vector<GEdge*> &edges,
 			    std::vector<GFace*> &faces,
 			    std::vector<GRegion*> &regions,
-			    std::vector<MElement*> &elements,
-			    int meshSelection)
+			    std::vector<MElement*> &elements)
 {
   vertices.clear();
   edges.clear();
@@ -63,9 +63,9 @@ bool ProcessSelectionBuffer(int entityType, bool multipleSelection,
 
   // In our case the selection buffer size is equal to between 5 and 7
   // times the maximum number of possible hits
-  int size = 
-    7 * (GMODEL->numVertex() + GMODEL->numEdge() + GMODEL->numFace() + 
-	 GMODEL->numRegion() + (meshSelection > 1 ? 3 * GMODEL->numElement() : 0)) ;
+  int eles = (meshSelection && CTX.pick_elements) ? 3 * GMODEL->numElement() : 0;
+  int size = 7 * (GMODEL->numVertex() + GMODEL->numEdge() + GMODEL->numFace() + 
+		  GMODEL->numRegion() + eles) ;
 
   GLuint *selectionBuffer = new GLuint[size];
   glSelectBuffer(size, selectionBuffer);

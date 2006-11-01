@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.68 2006-10-31 20:20:21 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.69 2006-11-01 22:19:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -194,8 +194,7 @@ char SelectEntity(int type,
 		  std::vector<GEdge*> &edges,
 		  std::vector<GFace*> &faces,
 		  std::vector<GRegion*> &regions,
-		  std::vector<MElement*> &elements,
-		  int meshSelection)
+		  std::vector<MElement*> &elements)
 {
   if(!WID) return 'q';
 
@@ -240,13 +239,13 @@ char SelectEntity(int type,
 	WID->g_opengl_window->SelectionMode = false;
 	return 'c';
       }
-      else if(ProcessSelectionBuffer(WID->selection, multi,
+      else if(ProcessSelectionBuffer(WID->selection, multi, true,
 				     WID->try_selection_xywh[0],
 				     WID->try_selection_xywh[1], 
 				     WID->try_selection_xywh[2],
 				     WID->try_selection_xywh[3], 
 				     vertices, edges, faces, regions,
-				     elements, meshSelection)){
+				     elements)){
 	WID->selection = ENT_NONE;
 	WID->g_opengl_window->SelectionMode = false;
 	if(add)

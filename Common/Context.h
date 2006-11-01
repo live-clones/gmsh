@@ -134,6 +134,7 @@ public :
   int forced_bbox; // dynamic variable tracking if the bbox is currently imposed
 
   int enable_mouse_selection; // enable selection using the mouse
+  int pick_elements; // allow individual element picking
 
   int expert_mode; // to disable some warnings for beginners
   int printing; // dynamic: equal to 1 while gmsh is printing

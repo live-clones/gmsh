@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.464 2006-10-31 20:50:35 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.465 2006-11-01 22:19:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -479,11 +479,6 @@ void status_xyz1p_cb(CALLBACK_ARGS)
       // mouse hover and select for geometry and mesh
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 2);
     }
-    else if(Fl::event_state(FL_META)){
-      // mouse hover and select for geometry and mesh, and mouse
-      // select for individual mesh elements
-      opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 3);
-    }
     else if(CTX.enable_mouse_selection){
       // mouse does nothing
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 0);
@@ -491,7 +486,7 @@ void status_xyz1p_cb(CALLBACK_ARGS)
     }
     else{
       // mouse hover and select for geometry, but mouse select only
-      // for mesh (default)
+      // for mesh (default, for performance reasons)
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
     }
   }
@@ -3529,20 +3524,11 @@ void mesh_delete_cb(CALLBACK_ARGS)
 void mesh_delete_parts_cb(CALLBACK_ARGS)
 {
   char *str = (char*)data;
-  int meshSelection;
 
-  if(!strcmp(str, "elements")){
-    opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 3);
-    meshSelection = 2;
-  }
-  else if(!strcmp(str, "surfaces")){
-    opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 2);
-    meshSelection = 1;
-  }
-  else{
-    Msg(GERROR, "Unknown mesh edit action");
-    return;
-  }
+  if(!strcmp(str, "elements"))
+    CTX.pick_elements = 1;
+  else
+    CTX.pick_elements = 0;
   CTX.mesh.changed = ENT_ALL;
 
   std::vector<GVertex*> vertices;
@@ -3552,7 +3538,7 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
   std::vector<MElement*> elements, ele;
 
   while(1) {
-    CTX.mesh.changed = ENT_ALL;
+    if(CTX.pick_elements) CTX.mesh.changed = ENT_ALL;
     Draw();
 
     if(ele.size() || fac.size())
@@ -3562,10 +3548,9 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
       Msg(ONSCREEN, "Select %s\n"
 	  "[Press 'e' to end selection or 'q' to abort]", str);
 
-    char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, 
-			   elements, meshSelection);
+    char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
-      if(meshSelection == 2){
+      if(CTX.pick_elements){
 	for(unsigned int i = 0; i < elements.size(); i++){
 	  if(elements[i]->getVisibility() != 2){
 	    elements[i]->setVisibility(2);
@@ -3583,7 +3568,7 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
       }
     }
     if(ib == 'r') {
-      if(meshSelection == 2){
+      if(CTX.pick_elements){
 	for(unsigned int i = 0; i < elements.size(); i++)
 	  elements[i]->setVisibility(1);
       }
@@ -3593,7 +3578,7 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
       }
     }
     if(ib == 'u') {
-      if(meshSelection == 2){
+      if(CTX.pick_elements){
 	if(ele.size()){
 	  ele[ele.size() - 1]->setVisibility(1);
 	  ele.pop_back();
@@ -3607,7 +3592,7 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
       }
     }
     if(ib == 'e') {
-      if(meshSelection == 2){
+      if(CTX.pick_elements){
 	for(unsigned int i = 0; i < ele.size(); i++)
 	  if(ele[i]->getVisibility() == 2) ele[i]->setVisibility(0);
       }
@@ -3627,6 +3612,7 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
     }
   }
 
+  CTX.pick_elements = 0;
   CTX.mesh.changed = ENT_ALL;
   Draw();  
   Msg(ONSCREEN, "");

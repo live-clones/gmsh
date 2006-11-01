@@ -35,21 +35,20 @@
 #include "GFace.h"
 #include "GRegion.h"
 
-bool ProcessSelectionBuffer(int entityType, bool multipleSelection,
+bool ProcessSelectionBuffer(int entityType, 
+			    bool multipleSelection, bool meshSelection,
 			    int x, int y, int w, int h, 
 			    std::vector<GVertex*> &vertices,
 			    std::vector<GEdge*> &edges,
 			    std::vector<GFace*> &faces,
 			    std::vector<GRegion*> &regions,
-			    std::vector<MElement*> &elements,
-			    int meshSelection);
+			    std::vector<MElement*> &elements);
 char SelectEntity(int entityType,
 		  std::vector<GVertex*> &vertices,
 		  std::vector<GEdge*> &edges,
 		  std::vector<GFace*> &faces,
 		  std::vector<GRegion*> &regions,
-		  std::vector<MElement*> &elements,
-		  int meshSelection=1);
+		  std::vector<MElement*> &elements);
 
 void HighlightEntity(GEntity *e, bool permanent=false);
 void HighlightEntity(GVertex *v, GEdge *e, GFace *f, GRegion *r, bool permanent=false);

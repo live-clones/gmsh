@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.185 2006-10-31 20:20:22 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.186 2006-11-01 22:19:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -442,7 +442,7 @@ static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalAr
 
   // If we want to be enable picking of individual elements we need to
   // draw each one separately
-  if(CTX.render_mode == GMSH_SELECT && CTX.enable_mouse_selection > 2) {
+  if(CTX.render_mode == GMSH_SELECT && CTX.pick_elements) {
     if(va->getNumElementPointers() == va->getNumVertices()){
       for(int i = 0; i < va->getNumVertices(); i += va->getType()){
 	glPushName(va->getType());
@@ -475,7 +475,7 @@ static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalAr
     glDisableClientState(GL_COLOR_ARRAY);
     glColor4ubv((GLubyte *) & color);
   }
-  else if(CTX.enable_mouse_selection > 2){
+  else if(CTX.pick_elements){
     glEnableClientState(GL_COLOR_ARRAY);
   }
   else if(!e->getSelection() && (CTX.mesh.color_carousel == 0 || 
@@ -617,7 +617,7 @@ class initMeshGFace {
 
     // mouse selection of individual elements is complicated if we
     // don't draw everything per element
-    if(CTX.enable_mouse_selection > 2) useEdges = false;
+    if(CTX.pick_elements) useEdges = false;
 
     // Further optimizations are possible when useEdges is true:
     // 1) store the unique vertices in the vertex array and use
@@ -731,7 +731,7 @@ class initMeshGRegion {
     
     // mouse selection of individual elements is complicated if we
     // don't draw everything per element
-    if(CTX.enable_mouse_selection > 2) useEdges = false;
+    if(CTX.pick_elements) useEdges = false;
 
     if(useEdges){
       Msg(DEBUG, "Using edges to draw volume %d", r->tag());

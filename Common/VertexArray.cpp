@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.15 2006-08-24 01:14:55 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.16 2006-11-01 22:19:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -60,8 +60,7 @@ void VertexArray::add(float x, float y, float z, float n0, float n1, float n2,
   _colors.push_back(b);
   _colors.push_back(a);
 
-  if(ele && CTX.enable_mouse_selection > 2)
-    _elements.push_back(ele);
+  if(ele && CTX.pick_elements) _elements.push_back(ele);
 }
 
 void VertexArray::add(float x, float y, float z, unsigned int col, MElement *ele)
@@ -79,10 +78,8 @@ void VertexArray::add(float x, float y, float z, unsigned int col, MElement *ele
   _colors.push_back(b);
   _colors.push_back(a);
 
-  if(ele && CTX.enable_mouse_selection > 2)
-    _elements.push_back(ele);
+  if(ele && CTX.pick_elements) _elements.push_back(ele);
 }
-
 
 class AlphaElement {
 public:

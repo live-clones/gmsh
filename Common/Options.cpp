@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.312 2006-09-24 05:59:13 geuzaine Exp $
+// $Id: Options.cpp,v 1.313 2006-11-01 22:19:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -134,6 +134,7 @@ void Init_Options(int num)
   CTX.printing = 0;
   CTX.mesh_timer[0] = CTX.mesh_timer[1] = CTX.mesh_timer[2] = 0.;
   CTX.draw_rotation_center = 0;
+  CTX.pick_elements = 0;
   CTX.mesh.draw = 1;
   CTX.post.draw = 1;
   CTX.post.list = NULL;
@@ -2782,10 +2783,6 @@ double opt_general_mouse_selection(OPT_ARGS_NUM)
     case 2:
       if(!CTX.batch) Msg(STATUS2N, "Mouse selection ON (with mesh hover)");
       WID->g_status_butt[9]->color(FL_GREEN);
-      break;
-    case 3:
-      if(!CTX.batch) Msg(STATUS2N, "Mouse selection ON (with element hover)");
-      WID->g_status_butt[9]->color(FL_YELLOW);
       break;
     case 0:
     default:
