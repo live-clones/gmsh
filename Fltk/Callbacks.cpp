@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.465 2006-11-01 22:19:26 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.466 2006-11-02 00:56:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2135,13 +2135,47 @@ void clip_num_cb(CALLBACK_ARGS)
 
 void clip_update_cb(CALLBACK_ARGS)
 {
-  int idx = WID->clip_choice->value();
-  CTX.clip[idx] = 0;
-  for(int i = 0; i < WID->clip_browser->size(); i++)
-    if(WID->clip_browser->selected(i+1))
-      CTX.clip[idx] += (1<<i);
-  for(int i = 0; i < 4; i++)
-    CTX.clip_plane[idx][i] = WID->clip_value[i]->value();
+  if(WID->clip_group[0]->visible()){ // clipping planes
+    int idx = WID->clip_choice->value();
+    CTX.clip[idx] = 0;
+    for(int i = 0; i < WID->clip_browser->size(); i++)
+      if(WID->clip_browser->selected(i+1))
+	CTX.clip[idx] += (1<<i);
+    for(int i = 0; i < 4; i++)
+      CTX.clip_plane[idx][i] = WID->clip_value[i]->value();
+  }
+  else{ // clipping box
+    for(int idx = 0; idx < 6; idx++){
+      CTX.clip[idx] = 0;
+      for(int i = 0; i < WID->clip_browser->size(); i++)
+	if(WID->clip_browser->selected(i+1))
+	  CTX.clip[idx] += (1<<i);
+    }
+    double c[3] = {WID->clip_value[4]->value(),
+		   WID->clip_value[5]->value(),
+		   WID->clip_value[6]->value()};
+    double d[3] = {WID->clip_value[7]->value(),
+		   WID->clip_value[8]->value(),
+		   WID->clip_value[9]->value()};
+    // left
+    CTX.clip_plane[0][0] = 1.;  CTX.clip_plane[0][1] = 0.;  CTX.clip_plane[0][2] = 0.;
+    CTX.clip_plane[0][3] = -(c[0] - d[0] / 2.);
+    // right
+    CTX.clip_plane[1][0] = -1.; CTX.clip_plane[1][1] = 0.; CTX.clip_plane[1][2] = 0.;
+    CTX.clip_plane[1][3] = (c[0] + d[0] / 2.);
+    // top
+    CTX.clip_plane[2][0] = 0.; CTX.clip_plane[2][1] = 1.; CTX.clip_plane[2][2] = 0.;
+    CTX.clip_plane[2][3] = -(c[1] - d[1] / 2.);
+    // bottom
+    CTX.clip_plane[3][0] = 0.; CTX.clip_plane[3][1] = -1.; CTX.clip_plane[3][2] = 0.;
+    CTX.clip_plane[3][3] = (c[1] + d[1] / 2.);
+    // near
+    CTX.clip_plane[4][0] = 0.; CTX.clip_plane[4][1] = 0.; CTX.clip_plane[4][2] = 1.;
+    CTX.clip_plane[4][3] = -(c[2] - d[2] / 2.);
+    // far
+    CTX.clip_plane[5][0] = 0.; CTX.clip_plane[5][1] = 0.; CTX.clip_plane[5][2] = -1.;
+    CTX.clip_plane[5][3] = (c[2] + d[2] / 2.);
+  }
 
   int old = CTX.draw_bbox;
   CTX.draw_bbox = 1;
@@ -2169,48 +2203,6 @@ void clip_reset_cb(CALLBACK_ARGS)
   }
   WID->reset_clip_browser();
   Draw();
-}
-
-void clip_update_box_cb(CALLBACK_ARGS)
-{
-  for(int idx = 0; idx < 6; idx++){
-    CTX.clip[idx] = 0;
-    for(int i = 0; i < WID->clip_browser->size(); i++)
-      if(WID->clip_browser->selected(i+1))
-	CTX.clip[idx] += (1<<i);
-  }
-  double c[3] = {WID->clip_value[4]->value(),
-		 WID->clip_value[5]->value(),
-		 WID->clip_value[6]->value()};
-  double d[3] = {WID->clip_value[7]->value(),
-		 WID->clip_value[8]->value(),
-		 WID->clip_value[9]->value()};
-  // left
-  CTX.clip_plane[0][0] = 1.;  CTX.clip_plane[0][1] = 0.;  CTX.clip_plane[0][2] = 0.;
-  CTX.clip_plane[0][3] = -(c[0] - d[0] / 2.);
-  // right
-  CTX.clip_plane[1][0] = -1.; CTX.clip_plane[1][1] = 0.; CTX.clip_plane[1][2] = 0.;
-  CTX.clip_plane[1][3] = (c[0] + d[0] / 2.);
-  // top
-  CTX.clip_plane[2][0] = 0.; CTX.clip_plane[2][1] = 1.; CTX.clip_plane[2][2] = 0.;
-  CTX.clip_plane[2][3] = -(c[1] - d[1] / 2.);
-  // bottom
-  CTX.clip_plane[3][0] = 0.; CTX.clip_plane[3][1] = -1.; CTX.clip_plane[3][2] = 0.;
-  CTX.clip_plane[3][3] = (c[1] + d[1] / 2.);
-  // near
-  CTX.clip_plane[4][0] = 0.; CTX.clip_plane[4][1] = 0.; CTX.clip_plane[4][2] = 1.;
-  CTX.clip_plane[4][3] = -(c[2] - d[2] / 2.);
-  // far
-  CTX.clip_plane[5][0] = 0.; CTX.clip_plane[5][1] = 0.; CTX.clip_plane[5][2] = -1.;
-  CTX.clip_plane[5][3] = (c[2] + d[2] / 2.);
-
-  int old = CTX.draw_bbox;
-  CTX.draw_bbox = 1;
-  if(CTX.fast_redraw)
-    CTX.post.draw = CTX.mesh.draw = 0;
-  Draw();
-  CTX.draw_bbox = old;
-  CTX.post.draw = CTX.mesh.draw = 1;
 }
 
 // Manipulator menu

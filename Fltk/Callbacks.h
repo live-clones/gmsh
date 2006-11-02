@@ -161,7 +161,6 @@ void visibility_delete_cb(CALLBACK_ARGS);
 
 void clip_cb(CALLBACK_ARGS);
 void clip_update_cb(CALLBACK_ARGS);
-void clip_update_box_cb(CALLBACK_ARGS);
 void clip_invert_cb(CALLBACK_ARGS);
 void clip_num_cb(CALLBACK_ARGS);
 void clip_reset_cb(CALLBACK_ARGS);

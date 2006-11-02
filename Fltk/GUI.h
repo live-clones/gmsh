@@ -243,6 +243,7 @@ public:
   Fl_Multi_Browser *clip_browser;
   Fl_Value_Input   *clip_value[10];
   Fl_Check_Button  *clip_butt[2];
+  Fl_Group         *clip_group[2];
 
   // manipulator window
   Fl_Window        *manip_window;
