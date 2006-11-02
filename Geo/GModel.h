@@ -90,9 +90,8 @@ class GModel
   void remove(GFace *f) { faces.erase(std::find(firstFace(), lastFace(), f)); }
   void remove(GEdge *e) { edges.erase(std::find(firstEdge(), lastEdge(), e)); }
   void remove(GVertex *v) { vertices.erase(std::find(firstVertex(), lastVertex(), v)); }
-  bool remove(MElement *e);
 
-  // Deletes all invisble stuff (entities and elements)
+  // Deletes all invisble entities and mesh elements
   void removeInvisible();
 
   // Renumber all the mesh vertices in a continuous sequence
