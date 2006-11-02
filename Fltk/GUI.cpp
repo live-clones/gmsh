@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.556 2006-11-02 00:56:31 geuzaine Exp $
+// $Id: GUI.cpp,v 1.557 2006-11-02 18:55:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2898,7 +2898,7 @@ void GUI::create_option_window()
       view_value[13]->callback(view_options_ok_cb);
       view_value[14] = new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 6 * BH, IW / 3, BH);
       view_value[14]->callback(view_options_ok_cb);
-      view_value[15] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 6 * BH, IW / 3, BH, "3D Axes minimum");
+      view_value[15] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 6 * BH, IW / 3, BH, "3D axes minimum");
       view_value[15]->align(FL_ALIGN_RIGHT);
       view_value[15]->callback(view_options_ok_cb);
 
@@ -2906,11 +2906,11 @@ void GUI::create_option_window()
       view_value[16]->callback(view_options_ok_cb);
       view_value[17] = new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 7 * BH, IW / 3, BH);
       view_value[17]->callback(view_options_ok_cb);
-      view_value[18] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 7 * BH, IW / 3, BH, "3D Axes maximum");
+      view_value[18] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 7 * BH, IW / 3, BH, "3D axes maximum");
       view_value[18]->align(FL_ALIGN_RIGHT);
       view_value[18]->callback(view_options_ok_cb);
 
-      view_butt[7] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Set position and size of 2D axes automatically");
+      view_butt[7] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Set position and size of 2D axes or value scale automatically");
       view_butt[7]->type(FL_TOGGLE_BUTTON);
       view_butt[7]->callback(view_options_ok_cb, (void*)"view_axes_auto_2d");
       
@@ -2919,7 +2919,7 @@ void GUI::create_option_window()
       view_value[20]->maximum(1024);
       view_value[20]->step(1);
       view_value[20]->callback(view_options_ok_cb);
-      view_value[21] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "2D axes position");
+      view_value[21] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "2D axes or value scale position");
       view_value[21]->align(FL_ALIGN_RIGHT);
       view_value[21]->minimum(-1024);
       view_value[21]->maximum(1024);
@@ -2931,7 +2931,7 @@ void GUI::create_option_window()
       view_value[22]->maximum(1024);
       view_value[22]->step(1);
       view_value[22]->callback(view_options_ok_cb);
-      view_value[23] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH, "2D axes size");
+      view_value[23] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH, "2D axes or value scale size");
       view_value[23]->align(FL_ALIGN_RIGHT);
       view_value[23]->minimum(0);
       view_value[23]->maximum(1024);
