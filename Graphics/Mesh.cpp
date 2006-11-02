@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.186 2006-11-01 22:19:26 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.187 2006-11-02 17:24:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -70,10 +70,7 @@ static unsigned int getColorByElement(MElement *ele)
     default: return CTX.color.geom.volume_sel;
     }
   }
-  else if(CTX.mesh.color_carousel == 3){ // by partition
-    return CTX.color.mesh.carousel[abs(ele->getPartition() % 20)];
-  }
-  else{ // by element type
+  else if(CTX.mesh.color_carousel == 0){ // by element type
     switch(ele->getNumEdges()){
     case 1: return CTX.color.mesh.line;
     case 3: return CTX.color.mesh.triangle;
@@ -85,6 +82,17 @@ static unsigned int getColorByElement(MElement *ele)
     default: return CTX.color.mesh.vertex;
     }
   }
+  else if(CTX.mesh.color_carousel == 3){ // by partition
+    return CTX.color.mesh.carousel[abs(ele->getPartition() % 20)];
+  }
+  else{ // by entity
+    for(int i = 0; i < ele->getNumVertices(); i++){
+      GEntity *e = ele->getVertex(i)->onWhat();
+      if(e->dim() == ele->getDim()) 
+	return getColorByEntity(e);
+    }
+  }
+  return CTX.color.fg;
 }
 
 static double intersectCutPlane(MElement *ele)

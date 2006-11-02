@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.313 2006-11-01 22:19:26 geuzaine Exp $
+// $Id: Options.cpp,v 1.314 2006-11-02 17:24:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4992,7 +4992,8 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     // vertex arrays need to be regenerated only when we color by
     // element type or by partition
-    if(CTX.mesh.color_carousel != (int)val && (val == 0. || val == 3.))
+    if(CTX.mesh.color_carousel != (int)val && 
+       ((val == 0. || val == 3.) || CTX.pick_elements))
       CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
     CTX.mesh.color_carousel = (int)val;
     if(CTX.mesh.color_carousel < 0 || CTX.mesh.color_carousel > 3)

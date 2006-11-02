@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.466 2006-11-02 00:56:31 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.467 2006-11-02 17:24:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3540,7 +3540,8 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
       Msg(ONSCREEN, "Select %s\n"
 	  "[Press 'e' to end selection or 'q' to abort]", str);
 
-    char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, elements);
+    char ib = SelectEntity(CTX.pick_elements ? ENT_ALL : ENT_SURFACE, 
+			   vertices, edges, faces, regions, elements);
     if(ib == 'l') {
       if(CTX.pick_elements){
 	for(unsigned int i = 0; i < elements.size(); i++){

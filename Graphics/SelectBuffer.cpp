@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.6 2006-11-01 22:19:27 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.7 2006-11-02 17:24:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -63,9 +63,9 @@ bool ProcessSelectionBuffer(int entityType,
 
   // In our case the selection buffer size is equal to between 5 and 7
   // times the maximum number of possible hits
-  int eles = (meshSelection && CTX.pick_elements) ? 3 * GMODEL->numElement() : 0;
+  int eles = (meshSelection && CTX.pick_elements) ? 4 * GMODEL->numElement() : 0;
   int size = 7 * (GMODEL->numVertex() + GMODEL->numEdge() + GMODEL->numFace() + 
-		  GMODEL->numRegion() + eles) ;
+		  GMODEL->numRegion() + eles) + 1000 ;
 
   GLuint *selectionBuffer = new GLuint[size];
   glSelectBuffer(size, selectionBuffer);
@@ -90,7 +90,7 @@ bool ProcessSelectionBuffer(int entityType,
   }
   else if(numhits < 0){ // overflow
     delete [] selectionBuffer;
-    Msg(WARNING, "Selection buffer size exceeded");
+    Msg(WARNING, "Too many entities selected");
     return false;
   }
 
