@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.19 2006-11-02 18:28:08 geuzaine Exp $
+// $Id: GModel.cpp,v 1.20 2006-11-03 00:41:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -91,8 +91,10 @@ static void removeInvisibleElements(std::vector<T*> &elements)
     else
       delete elements[i];
   }
-  elements.clear();
-  elements = tmp;
+  if(tmp.size() < elements.size()){
+    elements.clear();
+    elements = tmp;
+  }
 }
 
 void GModel::removeInvisible()
