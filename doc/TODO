@@ -1,4 +1,4 @@
-$Id: TODO,v 1.22 2006-11-04 00:17:09 geuzaine Exp $
+$Id: TODO,v 1.23 2006-11-04 15:28:02 geuzaine Exp $
 
 ********************************************************************
 
@@ -21,7 +21,8 @@ should implement a better algo to determine which axes to draw
 
 ********************************************************************
 
-extrude along a given function (e.g. radius to extrude a sphere)
+extrude along a given function (e.g. radius to extrude a sphere) or
+along a parametric curve
 
 ********************************************************************
 
@@ -86,10 +87,6 @@ extruded+recombined surfaces to create Transfinite Volumes
 
 add option to cutmesh to cap the mesh instead of displaying "whole"
 elements
-
-********************************************************************
-
-add general extrusion along parametric curve
 
 ********************************************************************
 
