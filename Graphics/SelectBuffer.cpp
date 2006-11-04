@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.8 2006-11-04 00:17:08 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.9 2006-11-04 15:12:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -281,4 +281,33 @@ void ZeroHighlight()
     ZeroHighlightEntity(*it);
   for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
     ZeroHighlightEntity(*it);
+
+  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++){
+    for(unsigned int i = 0; i < (*it)->lines.size(); i++)
+      if((*it)->lines[i]->getVisibility() == 2)
+	(*it)->lines[i]->setVisibility(1);
+  }
+  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++){
+    for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+      if((*it)->triangles[i]->getVisibility() == 2)
+	(*it)->triangles[i]->setVisibility(1);
+    for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
+      if((*it)->quadrangles[i]->getVisibility() == 2) 
+	(*it)->quadrangles[i]->setVisibility(1);
+  }
+  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++){
+    for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
+      if((*it)->tetrahedra[i]->getVisibility() == 2)
+	(*it)->tetrahedra[i]->setVisibility(1);
+    for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
+      if((*it)->hexahedra[i]->getVisibility() == 2)
+	(*it)->hexahedra[i]->setVisibility(1);
+    for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
+      if((*it)->prisms[i]->getVisibility() == 2)
+	(*it)->prisms[i]->setVisibility(1);
+    for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
+      if((*it)->pyramids[i]->getVisibility() == 2)
+	(*it)->pyramids[i]->setVisibility(1);
+  }
+  
 }

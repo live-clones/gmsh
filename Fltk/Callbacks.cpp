@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.469 2006-11-04 14:14:12 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.470 2006-11-04 15:12:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3598,8 +3598,6 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
       fac.clear();
     }
     if(ib == 'q') {
-      for(unsigned int i = 0; i < ele.size(); i++)
-	if(ele[i]->getVisibility() == 2) ele[i]->setVisibility(1);
       ZeroHighlight();
       break;
     }
@@ -3625,7 +3623,6 @@ void mesh_inspect_cb(CALLBACK_ARGS)
   std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
   std::vector<MElement*> elements;
-  MElement *ele = 0;
 
   CTX.pick_elements = 1;
   CTX.mesh.changed = ENT_ALL;
@@ -3635,34 +3632,33 @@ void mesh_inspect_cb(CALLBACK_ARGS)
     Msg(ONSCREEN, "Select element\n[Press 'q' to abort]");
     char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
-      if(ele) ele->setVisibility(1);
       if(elements.size()){
-	ele = elements[0];
-	ele->setVisibility(2);
-	Msg(DIRECT, "Element %d:", ele->getNum());
-	Msg(DIRECT, "  Type: %d", ele->getTypeForMSH()); 
-	Msg(DIRECT, "  Dimension: %d", ele->getDim());
-	Msg(DIRECT, "  Order: %d", ele->getPolynomialOrder()); 
-	Msg(DIRECT, "  Partition: %d", ele->getPartition()); 
+	ZeroHighlight();
+	elements[0]->setVisibility(2);
+	Msg(DIRECT, "Element %d:", elements[0]->getNum());
+	Msg(DIRECT, "  Type: %d", elements[0]->getTypeForMSH()); 
+	Msg(DIRECT, "  Dimension: %d", elements[0]->getDim());
+	Msg(DIRECT, "  Order: %d", elements[0]->getPolynomialOrder()); 
+	Msg(DIRECT, "  Partition: %d", elements[0]->getPartition()); 
 	char tmp1[256], tmp2[256];
 	sprintf(tmp2, "  Vertices:");
-	for(int i = 0; i < ele->getNumVertices(); i++){
-	  sprintf(tmp1, " %d", ele->getVertex(i)->getNum());
+	for(int i = 0; i < elements[0]->getNumVertices(); i++){
+	  sprintf(tmp1, " %d", elements[0]->getVertex(i)->getNum());
 	  strcat(tmp2, tmp1);
 	}
 	Msg(DIRECT, tmp2);
-	SPoint3 pt = ele->barycenter();
+	SPoint3 pt = elements[0]->barycenter();
 	Msg(DIRECT, "  Barycenter: (%g,%g,%g)", pt[0], pt[1], pt[2]);
-	Msg(DIRECT, "  Rho: %g", ele->rhoShapeMeasure());
-	Msg(DIRECT, "  Gamma: %g", ele->gammaShapeMeasure());
-	Msg(DIRECT, "  Eta: %g", ele->etaShapeMeasure());
+	Msg(DIRECT, "  Rho: %g", elements[0]->rhoShapeMeasure());
+	Msg(DIRECT, "  Gamma: %g", elements[0]->gammaShapeMeasure());
+	Msg(DIRECT, "  Eta: %g", elements[0]->etaShapeMeasure());
 	CTX.mesh.changed = ENT_ALL;
 	Draw();
 	WID->create_message_window();
       }
     }
     if(ib == 'q') {
-      if(ele) ele->setVisibility(1);
+      ZeroHighlight();
       break;
     }
   }
@@ -3693,7 +3689,6 @@ void mesh_optimize_cb(CALLBACK_ARGS)
   CTX.threads_lock = 1;
   Optimize_Netgen();
   CTX.threads_lock = 0;
-
   CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
   Draw();
   Msg(STATUS2N, " ");
