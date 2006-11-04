@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.21 2006-09-26 01:05:44 geuzaine Exp $
+// $Id: MElement.cpp,v 1.22 2006-11-04 00:17:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -97,6 +97,13 @@ SPoint3 MElement::barycenter()
   p[1] /= (double)n;
   p[2] /= (double)n;
   return p;
+}
+
+std::string MElement::getInfoString()
+{
+  char tmp[256];
+  sprintf(tmp, "Element %d", getNum());
+  return std::string(tmp);
 }
 
 void MElement::writeMSH(FILE *fp, double version, bool binary, int num, 

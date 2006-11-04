@@ -138,6 +138,9 @@ class MElement
   virtual int getVolumeSign(){ return 1; }
   virtual void setVolumePositive(){ if(getVolumeSign() < 0) revert(); }
 
+  // Returns an information string for the element
+  virtual std::string getInfoString();
+
   // IO routines
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
 			int num=0, int elementary=1, int physical=1);

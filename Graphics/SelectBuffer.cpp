@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.7 2006-11-02 17:24:54 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.8 2006-11-04 00:17:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -213,40 +213,28 @@ bool ProcessSelectionBuffer(int entityType,
   return true;
 }
 
-void HighlightEntity(GEntity *e, bool permanent)
+void HighlightEntity(GEntity *e)
 {
-  if(permanent)
-    e->setSelection(1);
-  else
-    Msg(STATUS2N, "%s", e->getInfoString().c_str());
+  e->setSelection(1);
 }
 
-void HighlightEntity(GVertex *v, GEdge *c, GFace *s, GRegion *r, bool permanent)
-{
-  if(v) HighlightEntity(v, permanent);
-  else if(c) HighlightEntity(c, permanent);
-  else if(s) HighlightEntity(s, permanent);
-  else if(r) HighlightEntity(r, permanent);
-  else if(!permanent) Msg(STATUS2N, " ");
-}
-
-void HighlightEntityNum(int v, int c, int s, int r, bool permanent)
+void HighlightEntityNum(int v, int c, int s, int r)
 {
   if(v) {
     GVertex *pv = GMODEL->vertexByTag(v);
-    if(pv) HighlightEntity(pv, permanent);
+    if(pv) HighlightEntity(pv);
   }
   if(c) {
     GEdge *pc = GMODEL->edgeByTag(c);
-    if(pc) HighlightEntity(pc, permanent);
+    if(pc) HighlightEntity(pc);
   }
   if(s) {
     GFace *ps = GMODEL->faceByTag(s);
-    if(ps) HighlightEntity(ps, permanent);
+    if(ps) HighlightEntity(ps);
   }
   if(r) {
     GRegion *pr = GMODEL->regionByTag(r);
-    if(pr) HighlightEntity(pr, permanent);
+    if(pr) HighlightEntity(pr);
   }
 }
 
@@ -261,18 +249,6 @@ void ZeroHighlightEntity(GVertex *v, GEdge *c, GFace *s, GRegion *r)
   if(c) ZeroHighlightEntity(c);
   if(s) ZeroHighlightEntity(s);
   if(r) ZeroHighlightEntity(r);
-}
-
-void ZeroHighlight()
-{
-  for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
-    ZeroHighlightEntity(*it);
-  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
-    ZeroHighlightEntity(*it);
-  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
-    ZeroHighlightEntity(*it);
-  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
-    ZeroHighlightEntity(*it);
 }
 
 void ZeroHighlightEntityNum(int v, int c, int s, int r)
@@ -293,4 +269,16 @@ void ZeroHighlightEntityNum(int v, int c, int s, int r)
     GRegion *pr = GMODEL->regionByTag(r);
     if(pr) ZeroHighlightEntity(pr);
   }
+}
+
+void ZeroHighlight()
+{
+  for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
+    ZeroHighlightEntity(*it);
+  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
+    ZeroHighlightEntity(*it);
+  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+    ZeroHighlightEntity(*it);
+  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
+    ZeroHighlightEntity(*it);
 }

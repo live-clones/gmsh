@@ -49,11 +49,9 @@ char SelectEntity(int entityType,
 		  std::vector<GFace*> &faces,
 		  std::vector<GRegion*> &regions,
 		  std::vector<MElement*> &elements);
-
-void HighlightEntity(GEntity *e, bool permanent=false);
-void HighlightEntity(GVertex *v, GEdge *e, GFace *f, GRegion *r, bool permanent=false);
-void HighlightEntityNum(int v, int c, int s, int r, bool permanant=false);
-void ZeroHighlightEntity(GVertex *v, GEdge *c, GFace *s, GRegion *r);
+void HighlightEntity(GEntity *e);
+void HighlightEntityNum(int v, int c, int s, int r);
+void ZeroHighlightEntity(GEntity *e);
 void ZeroHighlightEntityNum(int v, int c, int s, int r);
 void ZeroHighlight();
 

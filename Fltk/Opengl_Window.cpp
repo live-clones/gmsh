@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.74 2006-11-01 22:19:26 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.75 2006-11-04 00:17:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -392,10 +392,15 @@ int Opengl_Window::handle(int event)
 	  WID->g_window->cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
 	else
 	  WID->g_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
-	HighlightEntity(vertices.empty() ? 0 : vertices[0], 
-			edges.empty() ? 0 : edges[0],
-			faces.empty() ? 0 : faces[0],
-			regions.empty() ? 0 : regions[0]);
+	GEntity *ge = 0;
+	if(vertices.size()) ge = vertices[0];
+	else if(edges.size()) ge = edges[0];
+	else if(faces.size()) ge = faces[0];
+	else if(regions.size()) ge = regions[0];
+	MElement *me = elements.size() ? elements[0] : 0;
+	Msg(STATUS2N, "%s %s",
+	    ge ? ge->getInfoString().c_str() : "", 
+	    me ? me->getInfoString().c_str() : "");
       }
     }
     prev.set();

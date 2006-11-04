@@ -1,4 +1,9 @@
-$Id: TODO,v 1.21 2006-11-03 00:41:15 geuzaine Exp $
+$Id: TODO,v 1.22 2006-11-04 00:17:09 geuzaine Exp $
+
+********************************************************************
+
+add "lateral" curves (for Extrude Line) and surfaces (for Extrude
+Surface) in the return list for extrusions
 
 ********************************************************************
 

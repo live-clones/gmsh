@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.467 2006-11-02 17:24:53 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.468 2006-11-04 00:17:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -80,14 +80,14 @@ int SelectContour(int type, int num, List_T * List)
     k = allEdgesLinked(num, List);
     for(int i = 0; i < List_Nbr(List); i++) {
       List_Read(List, i, &ip);
-      HighlightEntityNum(0, abs(ip), 0, 0, true);
+      HighlightEntityNum(0, abs(ip), 0, 0);
     }
     break;
   case ENT_SURFACE:
     k = allFacesLinked(num, List);
     for(int i = 0; i < List_Nbr(List); i++) {
       List_Read(List, i, &ip);
-      HighlightEntityNum(0, 0, abs(ip), 0, true);
+      HighlightEntityNum(0, 0, abs(ip), 0);
     }
     break;
   }
@@ -2544,7 +2544,7 @@ static void _new_multiline(int type)
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
       for(unsigned int i = 0; i < vertices.size(); i++){
-	HighlightEntity(vertices[i], true);
+	HighlightEntity(vertices[i]);
 	p[n++] = vertices[i]->tag();
       }
       Draw();
@@ -2619,7 +2619,7 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
 	  "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
-      HighlightEntity(vertices[0], true);
+      HighlightEntity(vertices[0]);
       Draw();
       p[n++] = vertices[0]->tag();
     }
@@ -2686,7 +2686,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
 	  "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
-      HighlightEntity(vertices[0], true);
+      HighlightEntity(vertices[0]);
       Draw();
       p[n++] = vertices[0]->tag();
     }
@@ -2746,7 +2746,7 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
 	  "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
-      HighlightEntity(vertices[0], true);
+      HighlightEntity(vertices[0]);
       Draw();
       p[n++] = vertices[0]->tag();
     }
@@ -2997,7 +2997,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
       switch (type) {
       case ENT_POINT: 
 	for(unsigned int i = 0; i < vertices.size(); i++){
-	  HighlightEntity(vertices[i], true);
+	  HighlightEntity(vertices[i]);
 	  tag = vertices[i]->tag();
 	  if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
 	    List_Add(List1, &tag);
@@ -3005,7 +3005,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	break;
       case ENT_LINE:
 	for(unsigned int i = 0; i < edges.size(); i++){
-	  HighlightEntity(edges[i], true);
+	  HighlightEntity(edges[i]);
 	  tag = edges[i]->tag();
 	  if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
 	    List_Add(List1, &tag);
@@ -3013,7 +3013,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	break;
       case ENT_SURFACE:
 	for(unsigned int i = 0; i < faces.size(); i++){
-	  HighlightEntity(faces[i], true);
+	  HighlightEntity(faces[i]);
 	  tag = faces[i]->tag();
 	  if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
 	    List_Add(List1, &tag);
@@ -3021,7 +3021,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	break;
       case ENT_VOLUME:
 	for(unsigned int i = 0; i < regions.size(); i++){
-	  HighlightEntity(regions[i], true);
+	  HighlightEntity(regions[i]);
 	  tag = regions[i]->tag();
 	  if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
 	    List_Add(List1, &tag);
@@ -3742,19 +3742,19 @@ static void _add_transfinite_elliptic(int type, int dim)
     if(ib == 'l') {
       switch (dim) {
       case 1:
-	HighlightEntity(edges[0], true);
+	HighlightEntity(edges[0]);
 	Draw();
         p[n++] = edges[0]->tag();
         break;
       case 2:
       case 3:
 	if(dim == 2){
-	  HighlightEntity(faces[0], true);
+	  HighlightEntity(faces[0]);
 	  Draw();
 	  p[n++] = faces[0]->tag(); 
 	}
 	else{
-	  HighlightEntity(regions[0], true);
+	  HighlightEntity(regions[0]);
 	  Draw();
 	  p[n++] = regions[0]->tag(); 
 	}
@@ -3767,7 +3767,7 @@ static void _add_transfinite_elliptic(int type, int dim)
 		"[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
           ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
           if(ib == 'l') {
-	    HighlightEntity(vertices[0], true);
+	    HighlightEntity(vertices[0]);
 	    Draw();
             p[n++] = vertices[0]->tag();
           }
