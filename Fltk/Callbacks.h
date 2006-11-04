@@ -273,6 +273,7 @@ void mesh_3d_cb(CALLBACK_ARGS);
 void mesh_edit_cb(CALLBACK_ARGS);
 void mesh_delete_cb(CALLBACK_ARGS);
 void mesh_delete_parts_cb(CALLBACK_ARGS);
+void mesh_inspect_cb(CALLBACK_ARGS);
 void mesh_remesh_cb(CALLBACK_ARGS); 
 void mesh_update_edges_cb(CALLBACK_ARGS); 
 void mesh_parameterize_cb(CALLBACK_ARGS);

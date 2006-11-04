@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.557 2006-11-02 18:55:45 geuzaine Exp $
+// $Id: GUI.cpp,v 1.558 2006-11-04 14:14:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -322,6 +322,7 @@ Context_Item menu_geometry[] = {
 Context_Item menu_mesh[] = {
   {"1Mesh", NULL} ,
   {"Define",       (Fl_Callback *)mesh_define_cb} ,
+  {"Inspect",      (Fl_Callback *)mesh_inspect_cb} , 
   {"Edit",         (Fl_Callback *)mesh_edit_cb} , 
   {"1D",           (Fl_Callback *)mesh_1d_cb} ,
   {"2D",           (Fl_Callback *)mesh_2d_cb} , 

@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.75 2006-11-04 00:17:08 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.76 2006-11-04 14:14:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -301,8 +301,16 @@ int Opengl_Window::handle(int event)
 	redraw();
       }
       else {
-	if(Fl::event_button() == 1 && 
-	   !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
+	if(Fl::event_state(FL_META)) {
+	  // will try to select or unselect entities on the fly
+	  WID->try_selection = Fl::event_state(FL_SHIFT) ? -1 : 1; 
+	  WID->try_selection_xywh[0] = (int)curr.win[0];
+	  WID->try_selection_xywh[1] = (int)curr.win[1];
+	  WID->try_selection_xywh[2] = 5;
+	  WID->try_selection_xywh[3] = 5;
+	}
+	else if(Fl::event_button() == 1 && 
+		!Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
 	  if(CTX.useTrackball)
 	    CTX.addQuaternion((2. * prev.win[0] - w()) / w(),
 			      (h() - 2. * prev.win[1]) / h(),

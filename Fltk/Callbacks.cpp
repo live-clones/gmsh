@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.468 2006-11-04 00:17:07 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.469 2006-11-04 14:14:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3614,6 +3614,63 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
 void mesh_parameterize_cb(CALLBACK_ARGS)
 {
   printf("LAUNCH REPARAMETERIZATION WINDOW!\n");
+}
+
+void mesh_inspect_cb(CALLBACK_ARGS)
+{
+  char *str = (char*)data;
+
+  std::vector<GVertex*> vertices;
+  std::vector<GEdge*> edges;
+  std::vector<GFace*> faces;
+  std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
+  MElement *ele = 0;
+
+  CTX.pick_elements = 1;
+  CTX.mesh.changed = ENT_ALL;
+  Draw();
+
+  while(1) {
+    Msg(ONSCREEN, "Select element\n[Press 'q' to abort]");
+    char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, elements);
+    if(ib == 'l') {
+      if(ele) ele->setVisibility(1);
+      if(elements.size()){
+	ele = elements[0];
+	ele->setVisibility(2);
+	Msg(DIRECT, "Element %d:", ele->getNum());
+	Msg(DIRECT, "  Type: %d", ele->getTypeForMSH()); 
+	Msg(DIRECT, "  Dimension: %d", ele->getDim());
+	Msg(DIRECT, "  Order: %d", ele->getPolynomialOrder()); 
+	Msg(DIRECT, "  Partition: %d", ele->getPartition()); 
+	char tmp1[256], tmp2[256];
+	sprintf(tmp2, "  Vertices:");
+	for(int i = 0; i < ele->getNumVertices(); i++){
+	  sprintf(tmp1, " %d", ele->getVertex(i)->getNum());
+	  strcat(tmp2, tmp1);
+	}
+	Msg(DIRECT, tmp2);
+	SPoint3 pt = ele->barycenter();
+	Msg(DIRECT, "  Barycenter: (%g,%g,%g)", pt[0], pt[1], pt[2]);
+	Msg(DIRECT, "  Rho: %g", ele->rhoShapeMeasure());
+	Msg(DIRECT, "  Gamma: %g", ele->gammaShapeMeasure());
+	Msg(DIRECT, "  Eta: %g", ele->etaShapeMeasure());
+	CTX.mesh.changed = ENT_ALL;
+	Draw();
+	WID->create_message_window();
+      }
+    }
+    if(ib == 'q') {
+      if(ele) ele->setVisibility(1);
+      break;
+    }
+  }
+
+  CTX.pick_elements = 0;
+  CTX.mesh.changed = ENT_ALL;
+  Draw();
+  Msg(ONSCREEN, "");
 }
 
 void mesh_degree_cb(CALLBACK_ARGS)
