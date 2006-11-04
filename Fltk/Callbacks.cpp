@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.470 2006-11-04 15:12:50 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.471 2006-11-04 15:21:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3611,7 +3611,17 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
 
 void mesh_parameterize_cb(CALLBACK_ARGS)
 {
-  printf("LAUNCH REPARAMETERIZATION WINDOW!\n");
+  Msg(GERROR, "Reparameterize not implemented yet");
+}
+
+void mesh_update_edges_cb(CALLBACK_ARGS)
+{
+  Msg(GERROR, "Update edges not implemented yet");
+}
+
+void mesh_remesh_cb(CALLBACK_ARGS)
+{
+  Msg(GERROR, "Remesh not implemented yet");
 }
 
 void mesh_inspect_cb(CALLBACK_ARGS)
@@ -3640,7 +3650,7 @@ void mesh_inspect_cb(CALLBACK_ARGS)
 	Msg(DIRECT, "  Dimension: %d", elements[0]->getDim());
 	Msg(DIRECT, "  Order: %d", elements[0]->getPolynomialOrder()); 
 	Msg(DIRECT, "  Partition: %d", elements[0]->getPartition()); 
-	char tmp1[256], tmp2[256];
+	char tmp1[32], tmp2[512];
 	sprintf(tmp2, "  Vertices:");
 	for(int i = 0; i < elements[0]->getNumVertices(); i++){
 	  sprintf(tmp1, " %d", elements[0]->getVertex(i)->getNum());
@@ -3692,16 +3702,6 @@ void mesh_optimize_cb(CALLBACK_ARGS)
   CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
   Draw();
   Msg(STATUS2N, " ");
-}
-
-void mesh_remesh_cb(CALLBACK_ARGS)
-{
-  Msg(GERROR, "Surface ReMeshing must be reinterfaced");
-}
-
-void mesh_update_edges_cb(CALLBACK_ARGS)
-{
-  Msg(GERROR, "BDS->classify() must be reinterfaced");
 }
 
 void mesh_define_length_cb(CALLBACK_ARGS)

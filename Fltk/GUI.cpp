@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.558 2006-11-04 14:14:12 geuzaine Exp $
+// $Id: GUI.cpp,v 1.559 2006-11-04 15:21:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -338,8 +338,8 @@ Context_Item menu_mesh[] = {
     Context_Item menu_mesh_edit[] = {
       {"1Mesh>Edit", NULL} ,
       {"Delete", (Fl_Callback *)mesh_delete_cb} ,
-      {"Parameterize", (Fl_Callback *)mesh_parameterize_cb} ,
       //{"Update edges",   (Fl_Callback *)mesh_update_edges_cb} ,
+      //{"Reparameterize", (Fl_Callback *)mesh_parameterize_cb} ,
       //{"Remesh",         (Fl_Callback *)mesh_remesh_cb} , 
       {0} 
     };  
