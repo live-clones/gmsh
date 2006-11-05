@@ -91,11 +91,11 @@ class GModel
   void remove(GEdge *e) { edges.erase(std::find(firstEdge(), lastEdge(), e)); }
   void remove(GVertex *v) { vertices.erase(std::find(firstVertex(), lastVertex(), v)); }
 
-  // Deletes all invisble entities and mesh elements
-  void removeInvisible();
-
   // Renumber all the mesh vertices in a continuous sequence
   int renumberMeshVertices();
+
+  // Deletes all invisble mesh elements
+  void removeInvisibleElements();
 
   // Checks if there are no physical entities in the model
   bool noPhysicalGroups();

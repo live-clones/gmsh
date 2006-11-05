@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.471 2006-11-04 15:21:32 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.472 2006-11-05 18:02:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3516,46 +3516,70 @@ void mesh_delete_cb(CALLBACK_ARGS)
 void mesh_delete_parts_cb(CALLBACK_ARGS)
 {
   char *str = (char*)data;
+  int what;
 
-  if(!strcmp(str, "elements"))
+  if(!strcmp(str, "elements")){
     CTX.pick_elements = 1;
-  else
+    what = ENT_ALL;
+  }
+  else if(!strcmp(str, "lines")){
     CTX.pick_elements = 0;
-  CTX.mesh.changed = ENT_ALL;
+    what = ENT_LINE;
+  }
+  else if(!strcmp(str, "surfaces")){
+    CTX.pick_elements = 0;
+    what = ENT_SURFACE;
+  }
+  else if(!strcmp(str, "volumes")){
+    CTX.pick_elements = 0;
+    what = ENT_VOLUME;
+  }
+  else
+    return;
 
   std::vector<GVertex*> vertices;
   std::vector<GEdge*> edges;
-  std::vector<GFace*> faces, fac;
+  std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
-  std::vector<MElement*> elements, ele;
+  std::vector<MElement*> elements;
+
+  std::vector<MElement*> ele;
+  std::vector<GEntity*> ent;
 
   while(1) {
-    if(CTX.pick_elements) CTX.mesh.changed = ENT_ALL;
+    CTX.mesh.changed = ENT_ALL;
     Draw();
 
-    if(ele.size() || fac.size())
+    if(ele.size() || ent.size())
       Msg(ONSCREEN, "Select %s\n"
 	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
     else
       Msg(ONSCREEN, "Select %s\n"
 	  "[Press 'e' to end selection or 'q' to abort]", str);
 
-    char ib = SelectEntity(CTX.pick_elements ? ENT_ALL : ENT_SURFACE, 
-			   vertices, edges, faces, regions, elements);
+    char ib = SelectEntity(what, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
       if(CTX.pick_elements){
 	for(unsigned int i = 0; i < elements.size(); i++){
 	  if(elements[i]->getVisibility() != 2){
-	    elements[i]->setVisibility(2);
-	    ele.push_back(elements[i]);
+	    elements[i]->setVisibility(2); ele.push_back(elements[i]);
 	  }
 	}
       }
       else{
+	for(unsigned int i = 0; i < edges.size(); i++){
+	  if(edges[i]->getSelection() != 1){
+	    edges[i]->setSelection(1); ent.push_back(edges[i]);
+	  }
+	}
 	for(unsigned int i = 0; i < faces.size(); i++){
 	  if(faces[i]->getSelection() != 1){
-	    faces[i]->setSelection(1);
-	    fac.push_back(faces[i]);
+	    faces[i]->setSelection(1); ent.push_back(faces[i]);
+	  }
+	}
+	for(unsigned int i = 0; i < regions.size(); i++){
+	  if(regions[i]->getSelection() != 1){
+	    regions[i]->setSelection(1); ent.push_back(regions[i]);
 	  }
 	}
       }
@@ -3566,8 +3590,12 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
 	  elements[i]->setVisibility(1);
       }
       else{
+	for(unsigned int i = 0; i < edges.size(); i++)
+	  edges[i]->setSelection(0);
 	for(unsigned int i = 0; i < faces.size(); i++)
 	  faces[i]->setSelection(0);
+	for(unsigned int i = 0; i < regions.size(); i++)
+	  regions[i]->setSelection(0);
       }
     }
     if(ib == 'u') {
@@ -3578,9 +3606,9 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
 	}
       }
       else{
-	if(fac.size()){
-	  fac[fac.size() - 1]->setSelection(0);
-	  fac.pop_back();
+	if(ent.size()){
+	  ent[ent.size() - 1]->setSelection(0);
+	  ent.pop_back();
 	}
       }
     }
@@ -3590,12 +3618,12 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
 	  if(ele[i]->getVisibility() == 2) ele[i]->setVisibility(0);
       }
       else{
-	for(unsigned int i = 0; i < fac.size(); i++)
-	  if(fac[i]->getSelection() == 1) fac[i]->setVisibility(0);
+	for(unsigned int i = 0; i < ent.size(); i++)
+	  if(ent[i]->getSelection() == 1) ent[i]->setVisibility(0);
       }
-      GMODEL->removeInvisible();
+      GMODEL->removeInvisibleElements();
       ele.clear();
-      fac.clear();
+      ent.clear();
     }
     if(ib == 'q') {
       ZeroHighlight();
@@ -3603,8 +3631,8 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
     }
   }
 
-  CTX.pick_elements = 0;
   CTX.mesh.changed = ENT_ALL;
+  CTX.pick_elements = 0;
   Draw();  
   Msg(ONSCREEN, "");
 }

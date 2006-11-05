@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.559 2006-11-04 15:21:32 geuzaine Exp $
+// $Id: GUI.cpp,v 1.560 2006-11-05 18:02:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -346,7 +346,9 @@ Context_Item menu_mesh[] = {
         Context_Item menu_mesh_delete[] = {
           {"1Mesh>Edit>Delete", NULL} ,
           {"Elements", (Fl_Callback *)mesh_delete_parts_cb, (void*)"elements"} ,
+          {"Lines",    (Fl_Callback *)mesh_delete_parts_cb, (void*)"lines"} ,
           {"Surfaces", (Fl_Callback *)mesh_delete_parts_cb, (void*)"surfaces"} ,
+          {"Volumes",  (Fl_Callback *)mesh_delete_parts_cb, (void*)"volumes"} ,
           {0} 
         };  
     Context_Item menu_mesh_define[] = {

@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.20 2006-11-03 00:41:15 geuzaine Exp $
+// $Id: GModel.cpp,v 1.21 2006-11-05 18:03:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GModel.h"
+#include "MRep.h"
 
 void GModel::destroy()
 {
@@ -82,56 +83,40 @@ GVertex * GModel::vertexByTag(int n) const
 }
 
 template <class T>
-static void removeInvisibleElements(std::vector<T*> &elements)
+static void removeInvisible(std::vector<T*> &elements, bool all)
 {
   std::vector<T*> tmp;
   for(unsigned int i = 0; i < elements.size(); i++){
-    if(elements[i]->getVisibility()) 
-      tmp.push_back(elements[i]);
-    else
+    if(all || !elements[i]->getVisibility()) 
       delete elements[i];
+    else
+      tmp.push_back(elements[i]);
   }
-  if(tmp.size() < elements.size()){
-    elements.clear();
-    elements = tmp;
-  }
+  elements.clear();
+  elements = tmp;
 }
 
-void GModel::removeInvisible()
+void GModel::removeInvisibleElements()
 {
   for(riter it = firstRegion(); it != lastRegion(); ++it){
-    removeInvisibleElements((*it)->tetrahedra);
-    removeInvisibleElements((*it)->hexahedra);
-    removeInvisibleElements((*it)->prisms);
-    removeInvisibleElements((*it)->pyramids);
+    bool all = !(*it)->getVisibility(); 
+    removeInvisible((*it)->tetrahedra, all);
+    removeInvisible((*it)->hexahedra, all);
+    removeInvisible((*it)->prisms, all);
+    removeInvisible((*it)->pyramids, all);
+    if((*it)->meshRep) (*it)->meshRep->destroy();
   }
   for(fiter it = firstFace(); it != lastFace(); ++it){
-    removeInvisibleElements((*it)->triangles);
-    removeInvisibleElements((*it)->quadrangles);
+    bool all = !(*it)->getVisibility(); 
+    removeInvisible((*it)->triangles, all);
+    removeInvisible((*it)->quadrangles, all);
+    if((*it)->meshRep) (*it)->meshRep->destroy();
   }
   for(eiter it = firstEdge(); it != lastEdge(); ++it){
-    removeInvisibleElements((*it)->lines);
+    bool all = !(*it)->getVisibility(); 
+    removeInvisible((*it)->lines, all);
+    if((*it)->meshRep) (*it)->meshRep->destroy();
   }
-
-  std::vector<GRegion*> r;
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
-    if(!(*it)->getVisibility()) r.push_back(*it);
-  for(unsigned int i = 0; i < r.size(); i++){ remove(r[i]); delete r[i]; }
-
-  std::vector<GFace*> f;
-  for(fiter it = firstFace(); it != lastFace(); ++it)
-    if(!(*it)->getVisibility()) f.push_back(*it);
-  for(unsigned int i = 0; i < f.size(); i++){ remove(f[i]); delete f[i]; }
-
-  std::vector<GEdge*> e;
-  for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    if(!(*it)->getVisibility()) e.push_back(*it);
-  for(unsigned int i = 0; i < e.size(); i++){ remove(e[i]); delete e[i]; }
-
-  std::vector<GVertex*> v;
-  for(viter it = firstVertex(); it != lastVertex(); ++it)
-    if(!(*it)->getVisibility()) v.push_back(*it);
-  for(unsigned int i = 0; i < v.size(); i++){ remove(v[i]); delete v[i]; }
 }
 
 int GModel::renumberMeshVertices()
