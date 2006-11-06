@@ -28,7 +28,7 @@
  * - Templated traits classes are used extensively to define the characteristics
  *   of the elements and the entities.
  *
- * ****************************************************************************/
+ ******************************************************************************/
 
 #include <algorithm>
 #include <iterator>
@@ -50,13 +50,15 @@
  * File scope types
  *============================================================================*/
 
+namespace {
+
 typedef std::list<MElement*> Neighbours;
 typedef Neighbours::const_iterator NeighboursConstIterator;
 typedef Neighbours::iterator NeighboursIterator;
 
 struct Range_t
 {
-  unsigned int num;
+  int num;
   NeighboursIterator begin;
   Range_t() : num(0) { }
 };
@@ -209,7 +211,7 @@ template <> struct EntTr<GRegion> { enum { numElemTypes = 4 }; };
 //--This traits class gives iterator types and begin and end iterators for
 //--element type number N in entity Ent.
 
-template <typename Ent, unsigned int N> struct EntElemTr;
+template <typename Ent, int N> struct EntElemTr;
 template <> struct EntElemTr<GEdge, 1> {
   typedef MLine Elem;
   typedef std::vector<MLine*>::const_iterator ConstElementIterator;
@@ -313,8 +315,7 @@ template <> struct PolytopeTr<MVertex*> {
   typedef VertNRange PolytopeNRange;
   typedef VertNRangeConstIterator PNRConstIterator;
   template <typename Elem>
-  static MVertex *getPolytope(Elem *const element,
-                              const unsigned int nPolytope)
+  static MVertex *getPolytope(Elem *const element, const int nPolytope)
   {
     return element->getVertex(nPolytope);
   }
@@ -323,8 +324,7 @@ template <> struct PolytopeTr<MEdge> {
   typedef EdgeNRange PolytopeNRange;
   typedef EdgeNRangeConstIterator PNRConstIterator;
   template <typename Elem>
-  static MEdge getPolytope(Elem *const element,
-                           const unsigned int nPolytope)
+  static MEdge getPolytope(Elem *const element, const int nPolytope)
   {
     return element->getEdge(nPolytope);
   }
@@ -333,12 +333,13 @@ template <> struct PolytopeTr<MFace> {
   typedef FaceNRange PolytopeNRange;
   typedef FaceNRangeConstIterator PNRConstIterator;
   template <typename Elem>
-  static MFace getPolytope(Elem *const element,
-                           const unsigned int nPolytope)
+  static MFace getPolytope(Elem *const element, const int nPolytope)
   {
     return element->getFace(nPolytope);
   }
 };
+
+}  // End of unnamed namespace
 
 
 /*******************************************************************************
@@ -377,7 +378,7 @@ template <> struct PolytopeTr<MFace> {
  * Member Functions
  * ================
  *
- *   unsigned int num_neighbours()
+ *   int num_neighbours()
  *                     -- returns number of elements sharing the polytope
  *
  * Operators
@@ -468,7 +469,7 @@ class PolytopeIterator  // Actually only a const_iterator
 
 //--Special
 
-  unsigned int num_neighbours() { return baseIter->second.num; }
+  int num_neighbours() { return baseIter->second.num; }
 
  private:
   NeighboursConstIterator begin_neighbours() { return baseIter->second.begin; }
@@ -615,19 +616,24 @@ class PolytopeIterator  // Actually only a const_iterator
  *     pElem              (I) first element in the array
  *     n                  (I) number of elements in the array
  *
+ *   void clear()      -- clears the neighbours database.  Use this before
+ *                        constructing a new database of element neighbours.
+ *                        Otherwise, new elements are added to the existing
+ *                        database.
+ *
  * Routines for querying the neighbours database
  * ---------------------------------------------
  *
- *   unsigned int max_vertex_neighbours()
+ *   int max_vertex_neighbours()
  *                     -- returns max number of elements sharing a vertex.  This
  *                        is also the max number of elements sharing any
  *                        bounding polytope.
  *
- *   unsigned int max_edge_neighbours()
- *                     -- returns max number of elements sharing an edge
+ *   int max_edge_neighbours()
+ *                     -- returns max number of elements sharing an edge.
  *
- *   unsigned int max_face_neighbours()
- *                     -- returns max number of elements sharing a face
+ *   int max_face_neighbours()
+ *                     -- returns max number of elements sharing a face.
  *
  *   int vertex_neighbours(Vertex_const_iterator &itVert,
  *                          std::vector<MElement*> &vElem)
@@ -648,20 +654,20 @@ class PolytopeIterator  // Actually only a const_iterator
  *     vElem              (O) vector with elements loaded via push_back
  *     return             number of neighbour elements.  0 if vertex not found
  *
- *   int vertex_neighbours(MVertex *const vertex,  MElement **pElem)
+ *   int vertex_neighbours(MVertex *const vertex, MElement **pElem)
  *                     -- returns all elements sharing a vertex
  *     vertex             (I) pointer to vertex.  It must be found in (hash_)map
  *     pElem              (O) array with elements loaded starting at pElem[0]
  *     return             number of neighbour elements.  0 if vertex not found
  *
- *   void edge_neighbours(Edge_const_iterator &itEdge,
+ *   int edge_neighbours(Edge_const_iterator &itEdge,
  *                        std::vector<MElement*> &vElem)
  *                     -- return all elements sharing a edge
  *     itEdge             (I) iterator to a unique edge.  Avoids a find()
  *     vElem              (O) vector with elements loaded via push_back
  *     return             number of neighbour elements
  *
- *   void edge_neighbours(Edge_const_iterator &itEdge, MElement **pElem)
+ *   int edge_neighbours(Edge_const_iterator &itEdge, MElement **pElem)
  *                     -- return all elements sharing a edge
  *     itEdge             (I) iterator to a unique edge.  Avoids a find()
  *     pElem              (O) array with elements loaded starting at pElem[0]
@@ -673,20 +679,20 @@ class PolytopeIterator  // Actually only a const_iterator
  *     vElem              (O) vector with elements loaded via push_back
  *     return             number of neighbour elements.  0 if edge not found
  *
- *   int edge_neighbours(MEdge *const edge,  MElement **pElem)
+ *   int edge_neighbours(MEdge *const edge, MElement **pElem)
  *                     -- returns all elements sharing a edge
  *     edge               (I) pointer to edge.  It must be found in (hash_)map
  *     pElem              (O) array with elements loaded starting at pElem[0]
  *     return             number of neighbour elements.  0 if edge not found
  *
- *   void face_neighbours(Face_const_iterator &itFace,
+ *   int face_neighbours(Face_const_iterator &itFace,
  *                        std::vector<MElement*> &vElem)
  *                     -- return all elements sharing a face
  *     itFace             (I) iterator to a unique face.  Avoids a find()
  *     vElem              (O) vector with elements loaded via push_back
  *     return             number of neighbour elements
  *
- *   void face_neighbours(Face_const_iterator &itFace, MElement **pElem)
+ *   int face_neighbours(Face_const_iterator &itFace, MElement **pElem)
  *                     -- return all elements sharing a face
  *     itFace             (I) iterator to a unique face.  Avoids a find()
  *     pElem              (O) array with elements loaded starting at pElem[0]
@@ -698,35 +704,160 @@ class PolytopeIterator  // Actually only a const_iterator
  *     vElem              (O) vector with elements loaded via push_back
  *     return             number of neighbour elements.  0 if face not found
  *
- *   int face_neighbours(MFace *const face,  MElement **pElem)
+ *   int face_neighbours(MFace *const face, MElement **pElem)
  *                     -- returns all elements sharing a face
  *     face               (I) pointer to face.  It must be found in (hash_)map
  *     pElem              (O) array with elements loaded starting at pElem[0]
  *     return             number of neighbour elements.  0 if face not found
  *
- *   unsigned int vertex_num_neighbours(MVertex *const vertex) const
+ *   int vertex_num_neighbours(MVertex *const vertex)
  *                     -- returns the number of elements sharing a vertex
  *
- *   unsigned int edge_num_neighbours(const MEdge& edge) const
+ *   int edge_num_neighbours(const MEdge& edge)
  *                     -- returns the number of elements sharing an edge
  *
- *   unsigned int edge_num_neighbours(const MFace& face) const
+ *   int face_num_neighbours(const MFace& face)
  *                     -- returns the number of elements sharing a face
  *
- *   void clear()      -- clears the neighbours database.  Use this before
- *                        constructing a new database of element neighbours.
- *                        Otherwise, new elements are added to the existing
- *                        database.
+ *   template <typename Elem>
+ *   int all_element_neighbours(Elem *const element,
+ *                              std::vector<MElement*> &vElem,
+ *                              const bool exclusive = true)
+ *                     -- find all the elements connected to the given element
+ *     element            (I) element to find neighbours to
+ *     vElem              (O) vector with elements loaded via push_back
+ *     exclusive          (I) T - exclude the given element in vElem
+ *                            F - include the given element in vElem
+ *     return             number of elements added to vElem
+ *
+ *   template <typename Elem>
+ *   int all_element_neighbours(Elem *const element, MElement **pElem
+ *                              const bool exclusive = true)
+ *                     -- find all the elements connected to the given element
+ *     element            (I) element to find neighbours to
+ *     pElem              (O) array with elements loaded starting at pElem[0]
+ *     exclusive          (I) T - exclude the given element in vElem
+ *                            F - include the given element in vElem
+ *     return             number of elements added to pElem
+ *
+ *   template <typename Elem>
+ *   int all_element_edge_neighbours(Elem *const element,
+ *                                   std::vector<MElement*> &vElem,
+ *                                   const bool exclusive = true)
+ *                     -- find all the elements connected to the edges of a
+ *                        given element
+ *     element            (I) element to find neighbours to
+ *     vElem              (O) vector with elements loaded via push_back
+ *     exclusive          (I) T - exclude the given element in vElem
+ *                            F - include the given element in vElem
+ *     return             number of elements added to vElem
+ *
+ *   template <typename Elem>
+ *   int all_element_edge_neighbours(Elem *const element, MElement **pElem
+ *                                   const bool exclusive = true)
+ *                     -- find all the elements connected to the edges of a
+ *                        given element
+ *     element            (I) element to find neighbours to
+ *     pElem              (O) array with elements loaded starting at pElem[0]
+ *     exclusive          (I) T - exclude the given element in vElem
+ *                            F - include the given element in vElem
+ *     return             number of elements added to pElem
+ *
+ *   template <typename Elem>
+ *   int all_element_face_neighbours(Elem *const element,
+ *                                   std::vector<MElement*> &vElem,
+ *                                   const bool exclusive = true)
+ *                     -- find all the elements connected to the faces of a
+ *                        given element
+ *     element            (I) element to find neighbours to
+ *     vElem              (O) vector with elements loaded via push_back
+ *     exclusive          (I) T - exclude the given element in vElem
+ *                            F - include the given element in vElem
+ *     return             number of elements added to vElem
+ *
+ *   template <typename Elem>
+ *   int all_element_face_neighbours(Elem *const element, MElement **pElem
+ *                                   const bool exclusive = true)
+ *                     -- find all the elements connected to the faces of a
+ *                        given element
+ *     element            (I) element to find neighbours to
+ *     pElem              (O) array with elements loaded starting at pElem[0]
+ *     exclusive          (I) T - exclude the given element in vElem
+ *                            F - include the given element in vElem
+ *     return             number of elements added to pElem
+ *
+ *   int element_vertex_neighbours(const MElement *const element,
+ *                                 MVertex *const vertex,
+ *                                 std::vector<MElement*> &vElem)
+ *                     -- find all the elements connected to a vertex of a given
+ *                        element.  This is the same as routine
+ *                        vertex_neighbours except that the given element is
+ *                        excluded from the result.
+ *     element            (I) element to exclude
+ *     vertex             (I) vertex to find element neighbours to
+ *     vElem              (O) vector with elements loaded via push_back
+ *     return             number of elements added to vElem
+ *
+ *   int element_vertex_neighbours(const MElement *const element,
+ *                                 MVertex *const vertex, MElement **pElem)
+ *                     -- find all the elements connected to a vertex of a given
+ *                        element.  This is the same as routine
+ *                        vertex_neighbours except that the given element is
+ *                        excluded from the result.
+ *     element            (I) element to exclude
+ *     vertex             (I) vertex to find element neighbours to
+ *     pElem              (O) array with elements loaded starting at pElem[0]
+ *     return             number of elements added to pElem
+ *
+ *   int element_edge_neighbours(const MElement *const element,
+ *                               const MEdge &edge,
+ *                               std::vector<MElement*> &vElem)
+ *                     -- find all the elements connected to an edge of a given
+ *                        element.  This is the same as routine
+ *                        edge_neighbours except that the given element is
+ *                        excluded from the result.
+ *     element            (I) element to exclude
+ *     edge               (I) edge to find element neighbours to
+ *     vElem              (O) vector with elements loaded via push_back
+ *     return             number of elements added to vElem
+ *
+ *   int element_edge_neighbours(const MElement *const element,
+ *                               const MEdge &edge, MElement **pElem)
+ *                     -- find all the elements connected to an edge of a given
+ *                        element.  This is the same as routine
+ *                        edge_neighbours except that the given element is
+ *                        excluded from the result.
+ *     element            (I) element to exclude
+ *     edge               (I) edge to find element neighbours to
+ *     pElem              (O) array with elements loaded starting at pElem[0]
+ *     return             number of elements added to pElem
+ *
+ *   MElement *element_face_neighbour(const MElement *const element,
+ *                                    const MFace &face)
+ *                     -- find the element connected to the face of a given
+ *                        element.  Routine element_neighbour could also be
+ *                        used.
+ *     element            (I) element to find neighbour to
+ *     face               (I) face to find element neighbour across
+ *     return             the neighbour element or 0 if none found
  *
  *   MElement *element_neighbour(MElement *const element,
- *                               const unsigned int iPolytope) const
+ *                               const int iPolytope)
  *                     -- find the neighbour element across the d-1 bounding
  *                        polytope.  E.g., for a triangle, find an element
  *                        across an edge.
- *     element            (I) element to find
+ *     element            (I) element to find neighbour to
  *     iPolytope          (I) which polytope to find.  E.g., edge 1
- *     return             the neighbour element or 0 if polytope not found
- *                        in neighbours database.
+ *     return             the neighbour element or 0 if none found
+ *
+ * Notes
+ * =====
+ *
+ *   - Many of the query routines that have an element argument are specialized.
+ *     If a specific element pointer is given, static (compile-time)
+ *     polymorphism is used.  If a base element pointer is given, dynamic
+ *     (run-time) polymorphism is used.  This is mostly experimental and may not
+ *     have any tangible benefit.
  *
  * Example
  * =======
@@ -777,6 +908,15 @@ class MNeighbour
 
 
 /*==============================================================================
+ * Class scope types
+ *============================================================================*/
+
+ private:
+  typedef std::set<MElement*, std::less<MElement*> > ElemSet;
+  typedef ElemSet::const_iterator ElemSetConstIterator;
+
+
+/*==============================================================================
  * Iterators
  *============================================================================*/
 
@@ -820,14 +960,14 @@ class MNeighbour
 
  private:
 
-  template <typename Elem, typename Polytope, unsigned int NP>
+  template <typename Elem, typename Polytope, int NP>
   struct FindNeighbours;
-  template <typename Ent, unsigned int N = EntTr<Ent>::numElemTypes>
+  template <typename Ent, int N = EntTr<Ent>::numElemTypes>
   struct FindNeighboursInEntity;
 
 
 /*==============================================================================
- * Member functions and data
+ * Public member functions and data
  *============================================================================*/
 
  public:
@@ -862,7 +1002,9 @@ class MNeighbour
       FindNeighboursInEntity<Ent>::eval(entity, vertNRange, edgeNRange,
                                         faceNRange, neighbours);
     }
-    maxNeighbours();
+    maxVertNeighbours = -1;
+    maxEdgeNeighbours = -1;
+    maxFaceNeighbours = -1;
   }
 
 //--Same as the routine above except the arguments are pointers instead of
@@ -883,7 +1025,9 @@ class MNeighbour
       FindNeighboursInEntity<Ent>::eval(entity, vertNRange, edgeNRange,
                                         faceNRange, neighbours);
     }
-    maxNeighbours();
+    maxVertNeighbours = -1;
+    maxEdgeNeighbours = -1;
+    maxFaceNeighbours = -1;
   }
 
 //--Compute database of neighbour elements.  The entity pointers must be of a
@@ -905,7 +1049,9 @@ class MNeighbour
       FindNeighboursInEntity<Ent>::eval(*itEnt, vertNRange, edgeNRange,
                                         faceNRange, neighbours);
     }
-    maxNeighbours();
+    maxVertNeighbours = -1;
+    maxEdgeNeighbours = -1;
+    maxFaceNeighbours = -1;
   }
 
 //--Same as the routine above except the arguments are pointers instead of
@@ -924,7 +1070,9 @@ class MNeighbour
       FindNeighboursInEntity<Ent>::eval(*pEnt++, vertNRange, edgeNRange,
                                         faceNRange, neighbours);
     }
-    maxNeighbours();
+    maxVertNeighbours = -1;
+    maxEdgeNeighbours = -1;
+    maxFaceNeighbours = -1;
   }
 
 //--Find neighbours from the elements attached to a pointer to a single entity.
@@ -941,7 +1089,9 @@ class MNeighbour
     // Find the neighbours of each vertex, edge, and face
     FindNeighboursInEntity<Ent>::eval(entity, vertNRange, edgeNRange,
                                       faceNRange, neighbours);
-    maxNeighbours();
+    maxVertNeighbours = -1;
+    maxEdgeNeighbours = -1;
+    maxFaceNeighbours = -1;
   }
 
 /*--------------------------------------------------------------------*
@@ -985,152 +1135,8 @@ class MNeighbour
   }
 
 /*--------------------------------------------------------------------*
- * Query the database
+ * Reset the database
  *--------------------------------------------------------------------*/
-
-//--Get the max number of elements sharing a vertex, edge, or face
-
-  unsigned int max_vertex_neighbours() const { return maxVertNeighbours; }
-  unsigned int max_edge_neighbours() const { return maxEdgeNeighbours; }
-  unsigned int max_face_neighbours() const { return maxFaceNeighbours; }
-
-//--Return elements that share a vertex
-
-  // From a vertex iterator
-  int vertex_neighbours(Vertex_const_iterator &itVert,
-                        std::vector<MElement*> &vElem) const
-  {
-    NeighboursConstIterator itElem = itVert.begin_neighbours();
-    for(unsigned int n = itVert.num_neighbours(); n--;)
-       vElem.push_back(*itElem++);
-    return itVert.num_neighbours();
-  }
-  int vertex_neighbours(Vertex_const_iterator &itVert, MElement **pElem) const
-  {
-    NeighboursConstIterator itElem = itVert.begin_neighbours();
-    for(unsigned int n = itVert.num_neighbours(); n--;)
-       *pElem++ = *itElem++;
-    return itVert.num_neighbours();
-  }
-  // From a vertex
-  int vertex_neighbours(MVertex *const vertex,
-                        std::vector<MElement*> &vElem) const
-  {
-    VertNRangeConstIterator itVert = vertNRange.find(vertex);
-    if(itVert == vertNRange.end()) return 0;  // Vertex not found
-    NeighboursConstIterator itElem = itVert->second.begin;
-    for(unsigned int n = itVert->second.num; n--;) vElem.push_back(*itElem++);
-    return itVert->second.num;
-  }
-  int vertex_neighbours(MVertex *const vertex, MElement **pElem) const
-  {
-    VertNRangeConstIterator itVert = vertNRange.find(vertex);
-    if(itVert == vertNRange.end()) return 0;  // Vertex not found
-    NeighboursConstIterator itElem = itVert->second.begin;
-    for(unsigned int n = itVert->second.num; n--;) *pElem++ = *itElem++;
-    return itVert->second.num;
-  }
-
-//--Return elements that share an edge
-
-  // From an edge iterator
-  int edge_neighbours(Edge_const_iterator &itEdge,
-                      std::vector<MElement*> &vElem) const 
-  {
-    NeighboursConstIterator itElem = itEdge.begin_neighbours();
-    for(unsigned int n = itEdge.num_neighbours(); n--;)
-       vElem.push_back(*itElem++);
-    return itEdge.num_neighbours();
-  }
-  int edge_neighbours(Edge_const_iterator &itEdge, MElement **pElem) const
-  {
-    NeighboursConstIterator itElem = itEdge.begin_neighbours();
-    for(unsigned int n = itEdge.num_neighbours(); n--;)
-       *pElem++ = *itElem++;
-    return itEdge.num_neighbours();
-  }
-  // From an edge
-  int edge_neighbours(const MEdge& edge, std::vector<MElement*> &vElem) const
-  {
-    EdgeNRangeConstIterator itEdge = edgeNRange.find(edge);
-    if(itEdge == edgeNRange.end()) return 0;  // Edge not found
-    NeighboursConstIterator itElem = itEdge->second.begin;
-    for(unsigned int n = itEdge->second.num; n--;) vElem.push_back(*itElem++);
-    return itEdge->second.num;
-  }
-  int edge_neighbours(const MEdge& edge, MElement **pElem) const
-  {
-    EdgeNRangeConstIterator itEdge = edgeNRange.find(edge);
-    if(itEdge == edgeNRange.end()) return 0;  // Edge not found
-    NeighboursConstIterator itElem = itEdge->second.begin;
-    for(unsigned int n = itEdge->second.num; n--;) *pElem++ = *itElem++;
-    return itEdge->second.num;
-  }
-
-//--Return elements that share a face
-
-  // From a face iterator
-  int face_neighbours(Face_const_iterator &itFace,
-                      std::vector<MElement*> &vElem) const 
-  {
-    NeighboursConstIterator itElem = itFace.begin_neighbours();
-    for(unsigned int n = itFace.num_neighbours(); n--;)
-       vElem.push_back(*itElem++);
-    return itFace.num_neighbours();
-  }
-  int face_neighbours(Face_const_iterator &itFace, MElement **pElem) const
-  {
-    NeighboursConstIterator itElem = itFace.begin_neighbours();
-    for(unsigned int n = itFace.num_neighbours(); n--;)
-       *pElem++ = *itElem++;
-    return itFace.num_neighbours();
-  }
-  // From a face
-  int face_neighbours(const MFace& face, std::vector<MElement*> &vElem) const
-  {
-    FaceNRangeConstIterator itFace = faceNRange.find(face);
-    if(itFace == faceNRange.end()) return 0;  // Face not found
-    NeighboursConstIterator itElem = itFace->second.begin;
-    for(unsigned int n = itFace->second.num; n--;) vElem.push_back(*itElem++);
-    return itFace->second.num;
-  }
-  int face_neighbours(const MFace& face, MElement **pElem) const
-  {
-    FaceNRangeConstIterator itFace = faceNRange.find(face);
-    if(itFace == faceNRange.end()) return 0;  // Face not found
-    NeighboursConstIterator itElem = itFace->second.begin;
-    for(unsigned int n = itFace->second.num; n--;) *pElem++ = *itElem++;
-    return itFace->second.num;
-  }
-
-//--Return the number of elements that share a vertex
-
-  unsigned int vertex_num_neighbours(MVertex *const vertex) const
-  {
-    VertNRangeConstIterator itVert = vertNRange.find(vertex);
-    if(itVert == vertNRange.end()) return 0;  // Vertex not found
-    return itVert->second.num;
-  }
-
-//--Return the number of elements that share an edge
-
-  unsigned int edge_num_neighbours(const MEdge& edge) const
-  {
-    EdgeNRangeConstIterator itEdge = edgeNRange.find(edge);
-    if(itEdge == edgeNRange.end()) return 0;  // Edge not found
-    return itEdge->second.num;
-  }
-
-//--Return the number of elements that share a face
-
-  unsigned int face_num_neighbours(const MFace& face) const
-  {
-    FaceNRangeConstIterator itFace = faceNRange.find(face);
-    if(itFace == faceNRange.end()) return 0;  // Face not found
-    return itFace->second.num;
-  }
-
-//--Clear the containers
 
   void clear() 
   {
@@ -1143,12 +1149,374 @@ class MNeighbour
     maxFaceNeighbours = 0;
   }
 
+/*--------------------------------------------------------------------*
+ * Query the database
+ *--------------------------------------------------------------------*/
+
+//--Get the max number of elements sharing a vertex, edge, or face
+
+  int max_vertex_neighbours()
+  {
+     if ( maxVertNeighbours < 0 ) compute_max_vert_neighbours();
+     return maxVertNeighbours;
+  }
+  int max_edge_neighbours()
+  {
+     if ( maxEdgeNeighbours < 0 ) compute_max_edge_neighbours();
+     return maxEdgeNeighbours;
+  }
+  int max_face_neighbours()
+  {
+     if ( maxFaceNeighbours < 0 ) compute_max_face_neighbours();
+     return maxFaceNeighbours;
+  }
+
+//--Return elements that share a vertex
+
+  // From a vertex iterator
+  int vertex_neighbours(Vertex_const_iterator &itVert,
+                        std::vector<MElement*> &vElem) const
+  {
+    NeighboursConstIterator itElem = itVert.begin_neighbours();
+    for(int n = itVert.num_neighbours(); n--;) vElem.push_back(*itElem++);
+    return itVert.num_neighbours();
+  }
+
+  int vertex_neighbours(Vertex_const_iterator &itVert, MElement **pElem) const
+  {
+    NeighboursConstIterator itElem = itVert.begin_neighbours();
+    for(int n = itVert.num_neighbours(); n--;) *pElem++ = *itElem++;
+    return itVert.num_neighbours();
+  }
+
+  // From a vertex
+  int vertex_neighbours(MVertex *const vertex,
+                        std::vector<MElement*> &vElem) const
+  {
+    VertNRangeConstIterator itVert = vertNRange.find(vertex);
+    if(itVert == vertNRange.end()) return 0;  // Vertex not found
+    NeighboursConstIterator itElem = itVert->second.begin;
+    for(int n = itVert->second.num; n--;) vElem.push_back(*itElem++);
+    return itVert->second.num;
+  }
+
+  int vertex_neighbours(MVertex *const vertex, MElement **pElem) const
+  {
+    VertNRangeConstIterator itVert = vertNRange.find(vertex);
+    if(itVert == vertNRange.end()) return 0;  // Vertex not found
+    NeighboursConstIterator itElem = itVert->second.begin;
+    for(int n = itVert->second.num; n--;) *pElem++ = *itElem++;
+    return itVert->second.num;
+  }
+
+//--Return elements that share an edge
+
+  // From an edge iterator
+  int edge_neighbours(Edge_const_iterator &itEdge,
+                      std::vector<MElement*> &vElem) const 
+  {
+    NeighboursConstIterator itElem = itEdge.begin_neighbours();
+    for(int n = itEdge.num_neighbours(); n--;)
+       vElem.push_back(*itElem++);
+    return itEdge.num_neighbours();
+  }
+
+  int edge_neighbours(Edge_const_iterator &itEdge, MElement **pElem) const
+  {
+    NeighboursConstIterator itElem = itEdge.begin_neighbours();
+    for(int n = itEdge.num_neighbours(); n--;)
+       *pElem++ = *itElem++;
+    return itEdge.num_neighbours();
+  }
+
+  // From an edge
+  int edge_neighbours(const MEdge &edge, std::vector<MElement*> &vElem) const
+  {
+    EdgeNRangeConstIterator itEdge = edgeNRange.find(edge);
+    if(itEdge == edgeNRange.end()) return 0;  // Edge not found
+    NeighboursConstIterator itElem = itEdge->second.begin;
+    for(int n = itEdge->second.num; n--;) vElem.push_back(*itElem++);
+    return itEdge->second.num;
+  }
+
+  int edge_neighbours(const MEdge &edge, MElement **pElem) const
+  {
+    EdgeNRangeConstIterator itEdge = edgeNRange.find(edge);
+    if(itEdge == edgeNRange.end()) return 0;  // Edge not found
+    NeighboursConstIterator itElem = itEdge->second.begin;
+    for(int n = itEdge->second.num; n--;) *pElem++ = *itElem++;
+    return itEdge->second.num;
+  }
+
+//--Return elements that share a face
+
+  // From a face iterator
+  int face_neighbours(Face_const_iterator &itFace,
+                      std::vector<MElement*> &vElem) const 
+  {
+    NeighboursConstIterator itElem = itFace.begin_neighbours();
+    for(int n = itFace.num_neighbours(); n--;)
+       vElem.push_back(*itElem++);
+    return itFace.num_neighbours();
+  }
+
+  int face_neighbours(Face_const_iterator &itFace, MElement **pElem) const
+  {
+    NeighboursConstIterator itElem = itFace.begin_neighbours();
+    for(int n = itFace.num_neighbours(); n--;)
+       *pElem++ = *itElem++;
+    return itFace.num_neighbours();
+  }
+
+  // From a face
+  int face_neighbours(const MFace &face, std::vector<MElement*> &vElem) const
+  {
+    FaceNRangeConstIterator itFace = faceNRange.find(face);
+    if(itFace == faceNRange.end()) return 0;  // Face not found
+    NeighboursConstIterator itElem = itFace->second.begin;
+    for(int n = itFace->second.num; n--;) vElem.push_back(*itElem++);
+    return itFace->second.num;
+  }
+
+  int face_neighbours(const MFace &face, MElement **pElem) const
+  {
+    FaceNRangeConstIterator itFace = faceNRange.find(face);
+    if(itFace == faceNRange.end()) return 0;  // Face not found
+    NeighboursConstIterator itElem = itFace->second.begin;
+    for(int n = itFace->second.num; n--;) *pElem++ = *itElem++;
+    return itFace->second.num;
+  }
+
+//--Return the number of elements that share a vertex
+
+  int vertex_num_neighbours(MVertex *const vertex) const
+  {
+    VertNRangeConstIterator itVert = vertNRange.find(vertex);
+    if(itVert == vertNRange.end()) return 0;  // Vertex not found
+    return itVert->second.num;
+  }
+
+//--Return the number of elements that share an edge
+
+  int edge_num_neighbours(const MEdge& edge) const
+  {
+    EdgeNRangeConstIterator itEdge = edgeNRange.find(edge);
+    if(itEdge == edgeNRange.end()) return 0;  // Edge not found
+    return itEdge->second.num;
+  }
+
+//--Return the number of elements that share a face
+
+  int face_num_neighbours(const MFace& face) const
+  {
+    FaceNRangeConstIterator itFace = faceNRange.find(face);
+    if(itFace == faceNRange.end()) return 0;  // Face not found
+    return itFace->second.num;
+  }
+
+//--Return all the elements connected to a given element (Note: these routines
+//--have specializations - they are defined following the class)
+
+  template <typename Elem>
+  int all_element_neighbours(Elem *const element, std::vector<MElement*> &vElem,
+                             const bool exclusive = true)
+  {
+    typedef typename ElemBaseOrder<Elem>::Order1 Elem_1o;
+    element_neighbours1<Elem, MVertex*>(static_cast<Elem_1o*>(element),
+                                        vertNRange, ElemTr<Elem_1o>::numVertex);
+    if(exclusive) elemSet.erase(element);
+    const ElemSetConstIterator itElemEnd = elemSet.end();
+    for(ElemSetConstIterator itElem = elemSet.begin(); itElem != itElemEnd;
+        ++itElem) vElem.push_back(*itElem);
+    const int nElem = elemSet.size();
+    elemSet.clear();
+    return nElem;
+  }
+
+  template <typename Elem>
+  int all_element_neighbours(Elem *const element, MElement **pElem,
+                             const bool exclusive = true)
+  {
+    typedef typename ElemBaseOrder<Elem>::Order1 Elem_1o;
+    element_neighbours1<Elem, MVertex*>(static_cast<Elem_1o*>(element),
+                                        vertNRange, ElemTr<Elem_1o>::numVertex);
+    if(exclusive) elemSet.erase(element);
+    const ElemSetConstIterator itElemEnd = elemSet.end();
+    for(ElemSetConstIterator itElem = elemSet.begin(); itElem != itElemEnd;
+        ++itElem) *pElem++ = *itElem;
+    const int nElem = elemSet.size();
+    elemSet.clear();
+    return nElem;
+  }
+
+//--Return all the elements connected to the edges of a given element (Note:
+//--these routines have specializations - they are defined following the class)
+
+  template <typename Elem>
+  int all_element_edge_neighbours(Elem *const element,
+                                  std::vector<MElement*> &vElem,
+                                  const bool exclusive = true)
+  {
+    typedef typename ElemBaseOrder<Elem>::Order1 Elem_1o;
+    element_neighbours1<Elem, MEdge>(static_cast<Elem_1o*>(element),
+                                     edgeNRange, ElemTr<Elem_1o>::numEdge);
+    if(exclusive) elemSet.erase(element);
+    const ElemSetConstIterator itElemEnd = elemSet.end();
+    for(ElemSetConstIterator itElem = elemSet.begin(); itElem != itElemEnd;
+        ++itElem) vElem.push_back(*itElem);
+    const int nElem = elemSet.size();
+    elemSet.clear();
+    return nElem;
+  }
+
+  template <typename Elem>
+  int all_element_edge_neighbours(Elem *const element, MElement **pElem,
+                                  const bool exclusive = true)
+  {
+    typedef typename ElemBaseOrder<Elem>::Order1 Elem_1o;
+    element_neighbours1<Elem, MEdge>(static_cast<Elem_1o*>(element),
+                                     edgeNRange, ElemTr<Elem_1o>::numEdge);
+    if(exclusive) elemSet.erase(element);
+    const ElemSetConstIterator itElemEnd = elemSet.end();
+    for(ElemSetConstIterator itElem = elemSet.begin(); itElem != itElemEnd;
+        ++itElem) *pElem++ = *itElem;
+    const int nElem = elemSet.size();
+    elemSet.clear();
+    return nElem;
+  }
+
+//--Return all the elements connected to the faces of a given element (Note:
+//--these routines have specializations - they are defined following the class)
+
+  template <typename Elem>
+  int all_element_face_neighbours(Elem *const element,
+                                  std::vector<MElement*> &vElem,
+                                  const bool exclusive = true)
+  {
+    typedef typename ElemBaseOrder<Elem>::Order1 Elem_1o;
+    element_neighbours1<Elem, MFace>(static_cast<Elem_1o*>(element),
+                                     faceNRange, ElemTr<Elem_1o>::numFace);
+    if(exclusive) elemSet.erase(element);
+    const ElemSetConstIterator itElemEnd = elemSet.end();
+    for(ElemSetConstIterator itElem = elemSet.begin(); itElem != itElemEnd;
+        ++itElem) vElem.push_back(*itElem);
+    const int nElem = elemSet.size();
+    elemSet.clear();
+    return nElem;
+  }
+
+  template <typename Elem>
+  int all_element_face_neighbours(Elem *const element, MElement **pElem,
+                                  const bool exclusive = true)
+  {
+    typedef typename ElemBaseOrder<Elem>::Order1 Elem_1o;
+    element_neighbours1<Elem, MFace>(static_cast<Elem_1o*>(element),
+                                     faceNRange, ElemTr<Elem_1o>::numFace);
+    if(exclusive) elemSet.erase(element);
+    const ElemSetConstIterator itElemEnd = elemSet.end();
+    for(ElemSetConstIterator itElem = elemSet.begin(); itElem != itElemEnd;
+        ++itElem) *pElem++ = *itElem;
+    const int nElem = elemSet.size();
+    elemSet.clear();
+    return nElem;
+  }
+
+//--Return elements connected to a specific vertex of a given element (Note:
+//--these routines are the same as vertex_neighbours() except that the given
+//--element is excluded)
+
+  int element_vertex_neighbours(const MElement *const element,
+                                MVertex *const vertex,
+                                std::vector<MElement*> &vElem) const
+  {
+    VertNRangeConstIterator itVert = vertNRange.find(vertex);
+    if(itVert == vertNRange.end()) return 0;  // Vertex not found
+    NeighboursConstIterator itElem = itVert->second.begin;
+    int n = itVert->second.num;
+    while(*itElem != element) {
+      vElem.push_back(*itElem++);
+      --n;
+    }
+    ++itElem;
+    for(--n; n--;) vElem.push_back(*itElem++);
+    return itVert->second.num - 1;
+  }
+
+  int element_vertex_neighbours(const MElement *const element,
+                                MVertex *const vertex, MElement **pElem) const
+  {
+    VertNRangeConstIterator itVert = vertNRange.find(vertex);
+    if(itVert == vertNRange.end()) return 0;  // Vertex not found
+    NeighboursConstIterator itElem = itVert->second.begin;
+    int n = itVert->second.num;
+    while(*itElem != element) {
+      *pElem++ = *itElem++;
+      --n;
+    }
+    ++itElem;
+    for(--n; n--;) *pElem++ = *itElem++;
+    return itVert->second.num - 1;
+  }
+
+//--Return elements connected to a specific edge of a given element (Note: these
+//--routines are the same as edge_neighbours except that the given element is
+//--excluded)
+
+  int element_edge_neighbours(const MElement *const element, const MEdge &edge,
+                              std::vector<MElement*> &vElem) const
+  {
+    EdgeNRangeConstIterator itEdge = edgeNRange.find(edge);
+    if(itEdge == edgeNRange.end()) return 0;  // Edge not found
+    NeighboursConstIterator itElem = itEdge->second.begin;
+    int n = itEdge->second.num;
+    while(*itElem != element) {
+      vElem.push_back(*itElem++);
+      --n;
+    }
+    ++itElem;
+    for(--n; n--;) vElem.push_back(*itElem++);
+    return itEdge->second.num - 1;
+  }
+
+  int element_edge_neighbours(const MElement *const element, const MEdge &edge,
+                              MElement **pElem) const
+  {
+    EdgeNRangeConstIterator itEdge = edgeNRange.find(edge);
+    if(itEdge == edgeNRange.end()) return 0;  // Edge not found
+    NeighboursConstIterator itElem = itEdge->second.begin;
+    int n = itEdge->second.num;
+    while(*itElem != element) {
+      *pElem++ = *itElem++;
+      --n;
+    }
+    ++itElem;
+    for(--n; n--;) *pElem++ = *itElem++;
+    return itEdge->second.num - 1;
+  }
+
+//--Return the element connected to a specific face of a given element (Note:
+//--this routine is similar to element_neighbour except less general)
+
+  MElement *element_face_neighbour(const MElement *const element,
+                                   const MFace &face) const
+  {
+    FaceNRangeConstIterator itFace = faceNRange.find(face);
+    if(itFace == faceNRange.end()) return 0;  // Face not found
+    NeighboursConstIterator itElem = itFace->second.begin;
+    if(*itElem != element) return *itElem;
+    if(itFace->second.num > 1) {
+      ++itElem;
+      if(*itElem != element) return *itElem;
+    }
+    return 0;
+  }
+
 //--Return the element neighbour across a d-1 polytope
 
   MElement *element_neighbour(MElement *const element,
-                              const unsigned int iPolytope) const
+                              const int iPolytope) const
   {
-    unsigned int num;
+    int num;
     NeighboursConstIterator itElem;
     switch(element->getTypeForMSH()) {
     case MSH_LIN_2:
@@ -1201,19 +1569,27 @@ class MNeighbour
     return 0;
   }
 
+
+/*==============================================================================
+ * Private member functions and data
+ *============================================================================*/
+
 private:
 
 //--Data members
 
-  VertNRange vertNRange;
-  EdgeNRange edgeNRange;
-  FaceNRange faceNRange;
-  Neighbours neighbours;
-  unsigned int maxVertNeighbours;
-  unsigned int maxEdgeNeighbours;
-  unsigned int maxFaceNeighbours;
+  VertNRange vertNRange;                // Map of Vert. to indexes in neighbours
+  EdgeNRange edgeNRange;                // Map of edge to indexes in neighbours
+  FaceNRange faceNRange;                // Map of face to indexes in neighbours
+  Neighbours neighbours;                // List of element neighbours
+  ElemSet elemSet;                      // Buffer for finding unique elements
+  int maxVertNeighbours;
+  int maxEdgeNeighbours;
+  int maxFaceNeighbours;
 
-//--Working routine to determine the neighbours from elements
+//--Working routine to determine the neighbours from elements (Note: Ideally
+//--this class would use a specialization for MElement but partial
+//--specialization is not currently permitted for member functions)
 
   template <typename Elem, typename ElemIter>
   void add_elements1(ElemIter begin, ElemIter end)
@@ -1221,17 +1597,8 @@ private:
     // Test if the type of element is known
     if(ElemTr<Elem>::numVertex) {  // 0 only for MElement
       // Find the neighbours of each vertex, edge, and face
-      for(ElemIter itElem = begin; itElem != end; ++itElem) {
-        // Find neighbours for vertices
-        FindNeighbours<Elem, MVertex*, ElemTr<Elem>::numVertex>::
-          eval(*itElem, vertNRange, neighbours);
-        // Find neighbours for edges
-        FindNeighbours<Elem, MEdge, ElemTr<Elem>::numEdge>::
-          eval(*itElem, edgeNRange, neighbours);
-        // Find neighbours for faces
-        FindNeighbours<Elem, MFace, ElemTr<Elem>::numFace>::
-          eval(*itElem, faceNRange, neighbours);
-      }
+      for(ElemIter itElem = begin; itElem != end; ++itElem)
+        find_polytope_neighbours<Elem>(*itElem);
     }
     else {
       // We only have an iterator to an MElement* and have to check the type in
@@ -1273,7 +1640,9 @@ private:
         }
       }
     }
-    maxNeighbours();
+    maxVertNeighbours = -1;
+    maxEdgeNeighbours = -1;
+    maxFaceNeighbours = -1;
   }
 
 //--Find the neighbours sharing each polytope
@@ -1294,20 +1663,45 @@ private:
 
 //--Compute max neighbours
 
-  void maxNeighbours() 
+  void compute_max_vert_neighbours()
   {
     maxVertNeighbours = 0;
     for(VertNRangeConstIterator itVert = vertNRange.begin();
         itVert != vertNRange.end(); ++itVert)
       maxVertNeighbours = std::max(maxVertNeighbours, itVert->second.num);
+  }
+  void compute_max_edge_neighbours()
+  {
     maxEdgeNeighbours = 0;
     for(EdgeNRangeConstIterator itEdge = edgeNRange.begin();
         itEdge != edgeNRange.end(); ++itEdge)
       maxEdgeNeighbours = std::max(maxEdgeNeighbours, itEdge->second.num);
+  }
+  void compute_max_face_neighbours()
+  {
     maxFaceNeighbours = 0;
     for(FaceNRangeConstIterator itFace = faceNRange.begin();
         itFace != faceNRange.end(); ++itFace)
       maxFaceNeighbours = std::max(maxFaceNeighbours, itFace->second.num);
+  }
+
+//--Work routine for finding all the element neighbours
+
+  template <typename Elem, typename Polytope>
+  void element_neighbours1(Elem *const element,
+                           typename PolytopeTr<Polytope>::PolytopeNRange
+                           &polytopeNRange, const int nVPE)
+  {
+    for(int iVPE = 0; iVPE != nVPE; ++iVPE) {
+      Polytope polytope = PolytopeTr<Polytope>::getPolytope(element, iVPE);
+      typename PolytopeTr<Polytope>::PNRConstIterator itPoly =
+        polytopeNRange.find(polytope);
+      if(itPoly != polytopeNRange.end()) {
+        NeighboursConstIterator itElem = itPoly->second.begin;
+        for(int n = itPoly->second.num; n--;)
+          elemSet.insert(*itElem++);
+      }
+    }
   }
 
 };
@@ -1333,7 +1727,7 @@ template <typename Elem,                // Elem is the type of element
                                         // MFace) of the element.  We want to
                                         // find the elements sharing a given
                                         // Polytope.
-          unsigned int NP>              // NP is an index through the number
+          int NP>                       // NP is an index through the number
                                         // of Polytope in the element (e.g.,
                                         // number of vertices)
 struct MNeighbour::FindNeighbours
@@ -1391,7 +1785,7 @@ struct MNeighbour::FindNeighbours<Elem, Polytope, 0>
 
 //--Entry point
 
-template <typename Ent, unsigned int N>
+template <typename Ent, int N>
 struct MNeighbour::FindNeighboursInEntity {
   typedef typename EntElemTr<Ent, N>::Elem Elem;
   static void eval(const Ent *const entity, VertNRange &vertNRange,
@@ -1440,5 +1834,106 @@ struct MNeighbour::FindNeighboursInEntity<Ent, 1> {
     }
   }
 };
+
+
+/*==============================================================================
+ * Specializations for base elements - dynamic polymorphism
+ *============================================================================*/
+
+//--Return all the elements connected to a given element
+
+template <>
+inline int MNeighbour::all_element_neighbours<MElement>
+(MElement *const element, std::vector<MElement*> &vElem, const bool exclusive)
+{
+  element_neighbours1<MElement, MVertex*>(element, vertNRange,
+                                          element->getNumPrimaryVertices());
+  if(exclusive) elemSet.erase(element);
+  const ElemSetConstIterator itElemEnd = elemSet.end();
+  for(ElemSetConstIterator itElem = elemSet.begin(); itElem != itElemEnd;
+      ++itElem) vElem.push_back(*itElem);
+  const int nElem = elemSet.size();
+  elemSet.clear();
+  return nElem;
+}
+
+template <>
+inline int MNeighbour::all_element_neighbours<MElement>
+(MElement *const element, MElement **pElem, const bool exclusive)
+{
+  element_neighbours1<MElement, MVertex*>(element, vertNRange,
+                                          element->getNumPrimaryVertices());
+  if(exclusive) elemSet.erase(element);
+  const ElemSetConstIterator itElemEnd = elemSet.end();
+  for(ElemSetConstIterator itElem = elemSet.begin(); itElem != itElemEnd;
+      ++itElem) *pElem++ = *itElem;
+  const int nElem = elemSet.size();
+  elemSet.clear();
+  return nElem;
+}
+
+//--Return all the elements connected to the edges of a given element
+
+template <>
+inline int MNeighbour::all_element_edge_neighbours<MElement>
+(MElement *const element, std::vector<MElement*> &vElem, const bool exclusive)
+{
+  element_neighbours1<MElement, MEdge>(element, edgeNRange,
+                                       element->getNumEdges());
+  if(exclusive) elemSet.erase(element);
+  const ElemSetConstIterator itElemEnd = elemSet.end();
+  for(ElemSetConstIterator itElem = elemSet.begin(); itElem != itElemEnd;
+      ++itElem) vElem.push_back(*itElem);
+  const int nElem = elemSet.size();
+  elemSet.clear();
+  return nElem;
+}
+
+template <>
+inline int MNeighbour::all_element_edge_neighbours<MElement>
+(MElement *const element, MElement **pElem, const bool exclusive)
+{
+  element_neighbours1<MElement, MEdge>(element, edgeNRange,
+                                       element->getNumEdges());
+  if(exclusive) elemSet.erase(element);
+  const ElemSetConstIterator itElemEnd = elemSet.end();
+  for(ElemSetConstIterator itElem = elemSet.begin(); itElem != itElemEnd;
+      ++itElem) *pElem++ = *itElem;
+  const int nElem = elemSet.size();
+  elemSet.clear();
+  return nElem;
+}
+
+//--Return all the elements connected to the faces of a given element
+
+template <>
+inline int MNeighbour::all_element_face_neighbours<MElement>
+(MElement *const element, std::vector<MElement*> &vElem, const bool exclusive)
+{
+  element_neighbours1<MElement, MFace>(element, faceNRange,
+                                       element->getNumFaces());
+  if(exclusive) elemSet.erase(element);
+  const ElemSetConstIterator itElemEnd = elemSet.end();
+  for(ElemSetConstIterator itElem = elemSet.begin(); itElem != itElemEnd;
+      ++itElem) vElem.push_back(*itElem);
+  const int nElem = elemSet.size();
+  elemSet.clear();
+  return nElem;
+}
+
+template <>
+inline int MNeighbour::all_element_face_neighbours<MElement>
+(MElement *const element, MElement **pElem, const bool exclusive)
+{
+  element_neighbours1<MElement, MFace>(element, faceNRange,
+                                       element->getNumFaces());
+  if(exclusive) elemSet.erase(element);
+  const ElemSetConstIterator itElemEnd = elemSet.end();
+  for(ElemSetConstIterator itElem = elemSet.begin(); itElem != itElemEnd;
+      ++itElem) *pElem++ = *itElem;
+  const int nElem = elemSet.size();
+  elemSet.clear();
+  return nElem;
+}
 
 #endif
