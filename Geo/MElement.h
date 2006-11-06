@@ -95,6 +95,9 @@ class MElement
   // get the vertex using the Nastran BDF ordering
   virtual MVertex *getVertexBDF(int num){ return getVertex(num); }
 
+  // get the number of primary vertices (first-order element)
+  virtual int getNumPrimaryVertices() = 0;
+
   // get the number of vertices associated with edges, faces and
   // volumes (nonzero only for higher order elements)
   virtual int getNumEdgeVertices(){ return 0; }
@@ -175,6 +178,7 @@ class MLine : public MElement {
   ~MLine(){}
   virtual int getDim(){ return 1; }
   virtual int getNumVertices(){ return 2; }
+  virtual int getNumPrimaryVertices(){ return 2; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 1; }
   virtual MEdge getEdge(int num){ return MEdge(_v[0], _v[1]); }
@@ -247,6 +251,7 @@ class MTriangle : public MElement {
   ~MTriangle(){}
   virtual int getDim(){ return 2; }
   virtual int getNumVertices(){ return 3; }
+  virtual int getNumPrimaryVertices(){ return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 3; }
   virtual MEdge getEdge(int num)
@@ -350,6 +355,7 @@ class MQuadrangle : public MElement {
   ~MQuadrangle(){}
   virtual int getDim(){ return 2; }
   virtual int getNumVertices(){ return 4; }
+  virtual int getNumPrimaryVertices(){ return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 4; }
   virtual MEdge getEdge(int num)
@@ -459,6 +465,7 @@ class MTetrahedron : public MElement {
   ~MTetrahedron(){}
   virtual int getDim(){ return 3; }
   virtual int getNumVertices(){ return 4; }
+  virtual int getNumPrimaryVertices(){ return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 6; }
   virtual MEdge getEdge(int num)
@@ -611,6 +618,7 @@ class MHexahedron : public MElement {
   ~MHexahedron(){}
   virtual int getDim(){ return 3; }
   virtual int getNumVertices(){ return 8; }
+  virtual int getNumPrimaryVertices(){ return 8; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 12; }
   virtual MEdge getEdge(int num)
@@ -774,6 +782,7 @@ class MPrism : public MElement {
   ~MPrism(){}
   virtual int getDim(){ return 3; }
   virtual int getNumVertices(){ return 6; }
+  virtual int getNumPrimaryVertices(){ return 6; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 9; }
   virtual MEdge getEdge(int num)
@@ -927,6 +936,7 @@ class MPyramid : public MElement {
   ~MPyramid(){}
   virtual int getDim(){ return 3; }
   virtual int getNumVertices(){ return 5; }
+  virtual int getNumPrimaryVertices(){ return 5; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 8; }
   virtual MEdge getEdge(int num)
