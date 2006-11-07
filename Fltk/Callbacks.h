@@ -153,6 +153,7 @@ void message_save_cb(CALLBACK_ARGS);
 void visibility_cb(CALLBACK_ARGS);
 void visibility_sort_cb(CALLBACK_ARGS);
 void visibility_number_cb(CALLBACK_ARGS);
+void visibility_hide_cb(CALLBACK_ARGS);
 void visibility_ok_cb(CALLBACK_ARGS);
 void visibility_save_cb(CALLBACK_ARGS);
 void visibility_delete_cb(CALLBACK_ARGS);

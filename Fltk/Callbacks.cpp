@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.472 2006-11-05 18:02:59 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.473 2006-11-07 19:47:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2119,6 +2119,75 @@ void visibility_number_cb(CALLBACK_ARGS)
   visibility_cb(NULL, NULL);
   WID->vis_browser->position(pos);
   Draw();
+}
+
+void visibility_hide_cb(CALLBACK_ARGS)
+{
+  char *str = (char*)data;
+  int what;
+
+  if(!strcmp(str, "elements")){
+    CTX.pick_elements = 1;
+    what = ENT_ALL;
+  }
+  else if(!strcmp(str, "points")){
+    CTX.pick_elements = 0;
+    what = ENT_POINT;
+  }
+  else if(!strcmp(str, "lines")){
+    CTX.pick_elements = 0;
+    what = ENT_LINE;
+  }
+  else if(!strcmp(str, "surfaces")){
+    CTX.pick_elements = 0;
+    what = ENT_SURFACE;
+  }
+  else if(!strcmp(str, "volumes")){
+    CTX.pick_elements = 0;
+    what = ENT_VOLUME;
+  }
+  else
+    return;
+
+  std::vector<GVertex*> vertices;
+  std::vector<GEdge*> edges;
+  std::vector<GFace*> faces;
+  std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
+
+  while(1) {
+    CTX.mesh.changed = ENT_ALL;
+    Draw();
+    Msg(ONSCREEN, "Select %s\n[Press 'q' to abort]", str);
+    char ib = SelectEntity(what, vertices, edges, faces, regions, elements);
+    if(ib == 'l') {
+      if(CTX.pick_elements){
+	for(unsigned int i = 0; i < elements.size(); i++)
+	  elements[i]->setVisibility(0);
+      }
+      else{
+	for(unsigned int i = 0; i < vertices.size(); i++)
+	  vertices[i]->setVisibility(0);
+	for(unsigned int i = 0; i < edges.size(); i++)
+	  edges[i]->setVisibility(0);
+	for(unsigned int i = 0; i < faces.size(); i++)
+	  faces[i]->setVisibility(0);
+	for(unsigned int i = 0; i < regions.size(); i++)
+	  regions[i]->setVisibility(0);
+      }
+      int pos = WID->vis_browser->position();
+      visibility_cb(NULL, NULL);
+      WID->vis_browser->position(pos);
+    }
+    if(ib == 'q'){
+      break;
+    }
+  }
+
+  CTX.mesh.changed = ENT_ALL;
+  CTX.pick_elements = 0;
+  Draw();  
+  Msg(ONSCREEN, "");
 }
 
 // Clipping planes menu
