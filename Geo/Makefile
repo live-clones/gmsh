@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.102 2006-11-04 00:17:08 geuzaine Exp $
+# $Id: Makefile,v 1.103 2006-11-08 22:04:14 jacob Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -47,6 +47,7 @@ SRC = CAD.cpp \
       fourierModel.cpp\
       SVector3.cpp\
       SBoundingBox3d.cpp\
+      projectionFace.cpp\
       ExtractContour.cpp
 
 OBJ = ${SRC:.cpp=.o}
