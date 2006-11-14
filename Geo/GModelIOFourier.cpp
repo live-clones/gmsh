@@ -605,7 +605,7 @@ GPoint fourierFace::point(const SPoint2 &pt) const
   return point(pt[0], pt[1]);
 }
 
-GPoint fourierFace::closestPoint(const SPoint3 & queryPoint)
+GPoint fourierFace::closestPoint(const SPoint3 & queryPoint) const
 {
   throw;
 }
