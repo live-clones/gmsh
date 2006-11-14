@@ -687,4 +687,12 @@ int GModel::readFourier(const std::string &name)
   return 1;
 }
 
+#else
+
+int GModel::readFourier(const std::string &name)
+{
+  Msg(GERROR, "Fourier model is not compiled in this version of Gmsh");
+  return 1;
+}
+
 #endif
