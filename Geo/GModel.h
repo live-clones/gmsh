@@ -30,9 +30,13 @@
 #include "SBoundingBox3d.h"
 #include "SmoothNormals.h"
 
+// OCC Internals have to be stored in the model
+class OCC_Internals;
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel  
 {
+  void deleteOCCInternals();
+  OCC_Internals *occ_internals;
  protected:
   std::string modelName;
   std::set<GRegion*, GEntityLessThan> regions;
@@ -40,12 +44,11 @@ class GModel
   std::set<GEdge*, GEntityLessThan> edges;
   std::set<GVertex*, GEntityLessThan> vertices;
   std::set<int> meshPartitions;
-
  public:
   GModel() : modelName("Untitled"), normals(0) {}
   GModel(const std::string &name) : modelName(name), normals(0) {}
-  virtual ~GModel(){ destroy(); }
-
+  virtual ~GModel(){ deleteOCCInternals();destroy(); }
+  
   typedef std::set<GRegion*, GEntityLessThan>::iterator riter;
   typedef std::set<GFace*, GEntityLessThan>::iterator fiter;
   typedef std::set<GEdge*, GEntityLessThan>::iterator eiter;
@@ -133,6 +136,11 @@ class GModel
 
   // Fourier model
   virtual int readFourier(const std::string &name);
+
+  // OCC model
+  int readOCCIGES(const std::string &name);
+  int readOCCSTEP(const std::string &name);
+  void deleleOCCInternals();
 
 
   // Mesh IO

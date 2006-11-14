@@ -1,5 +1,5 @@
-#ifndef _GPOINT_H_
-#define _GPOINT_H_
+#ifndef _OCC_VERTEX_H_
+#define _OCC_VERTEX_H_
 
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,34 +20,43 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-class GEntity;
 
-class GPoint 
-{
- private:
-  double X, Y, Z;
-  const GEntity *e;  
-  double par[2];
+#include "Mesh.h"
+#include "GModel.h"
+#include "OCCIncludes.h"
+#include "GVertex.h"
+
+class OCCVertex : public GVertex {
+ protected:
+  TopoDS_Vertex v;
+
  public:
-  inline double x() const {return X;}
-  inline double y() const {return Y;}
-  inline double z() const {return Z;}
-  inline double u() const {return par[0];}
-  inline double v() const {return par[1];}
-  GPoint (double _x=0, double _y=0, double _z=0, const GEntity *onwhat=0)
-    : X(_x), Y(_y), Z(_z), e(onwhat){
-  }
-  GPoint (double _x, double _y, double _z, const GEntity *onwhat, double p)
-    : X(_x), Y(_y), Z(_z), e(onwhat)
+  OCCVertex(GModel *m, int num, TopoDS_Vertex _v) : GVertex(m, num), v(_v)
   {
-    par[0] = p;
+    mesh_vertices.push_back(new MVertex(x(), y(), z(), this));
   }
-  GPoint (double _x, double _y, double _z, const GEntity *onwhat, double p[2])
-    : X(_x), Y(_y), Z(_z), e(onwhat)
+  virtual ~OCCVertex() {}
+  virtual GPoint point() const 
   {
-    par[0] = p[0];
-    par[1] = p[1];
+    return GPoint(x(),y(),z());
   }
+  virtual double x() const 
+  {
+    gp_Pnt pnt = BRep_Tool::Pnt (v);
+    return pnt.X();
+  }
+  virtual double y() const 
+  {
+    gp_Pnt pnt = BRep_Tool::Pnt (v);
+    return pnt.Y();
+  }
+  virtual double z() const 
+  {
+    gp_Pnt pnt = BRep_Tool::Pnt (v);
+    return pnt.Z();
+  }
+  void * getNativePtr() const { return (void*) &v; }
+  virtual double prescribedMeshSizeAtVertex() const { return  350; }
 };
 
 #endif

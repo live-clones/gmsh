@@ -1,5 +1,5 @@
-#ifndef _GMSH_FACE_H_
-#define _GMSH_FACE_H_
+#ifndef _OCC_FACE_H_
+#define _OCC_FACE_H_
 
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -21,18 +21,21 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GFace.h"
-#include "gmshVertex.h"
-#include "Mesh.h"
+#include "GModel.h"
+#include "OCCVertex.h"
+#include "OCCEdge.h"
 #include "Range.h"
 
-class gmshFace : public GFace {
+class OCCFace : public GFace {
  protected:
-  Surface *s;
+  TopoDS_Face s;
+  Handle(Geom_Surface) occface;
+  double umin, umax, vmin, vmax;
 
  public:
-  gmshFace(GModel *m, Surface *face);
-  gmshFace(GModel *m, int num);
-  virtual ~gmshFace(){}
+  OCCFace(GModel *m, TopoDS_Face s, int num, TopTools_IndexedMapOfShape &emap);
+
+  virtual ~OCCFace(){}
   Range<double> parBounds(int i) const; 
   virtual int paramDegeneracies(int dir, double *par) { return 0; }
   
@@ -55,8 +58,7 @@ class gmshFace : public GFace {
   virtual bool periodic(int dim) const { return false; }
   virtual bool degenerate(int dim) const { return false; }
   virtual double period(int dir) const {throw;}
-  ModelType getNativeType() const { return GmshModel; }
-  void * getNativePtr() const { return s; }
+  void * getNativePtr() const { return (void*)&s; }
   virtual bool surfPeriodic(int dim) const {throw;}
   virtual SPoint2 parFromPoint(const SPoint3 &) const;
 };

@@ -47,6 +47,7 @@ class GFace : public GEntity
   mean_plane meanPlane;
   std::list<GEdge *> embedded_edges;
   std::list<GVertex *> embedded_vertices;
+  void computeDirs ();
 
  public:
   GFace(GModel *model, int tag);
@@ -89,7 +90,7 @@ class GFace : public GEntity
   virtual double period(int dir) const = 0;
 
   // Return the point on the face closest to the given point.
-  virtual GPoint closestPoint(const SPoint3 & queryPoint) = 0;
+  virtual GPoint closestPoint(const SPoint3 & queryPoint) const = 0;
 
   // Return the normal to the face at the given parameter location.
   virtual SVector3 normal(const SPoint2 &param) const = 0;

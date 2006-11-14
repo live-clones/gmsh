@@ -234,7 +234,7 @@ void OCCSurface :: Project (Point<3> & p, PointGeomInfo & gi)
   //   static int cnt = 0;
   //  if (cnt++ % 1000 == 0) cout << "********************************************** OCCSurfce :: Project, cnt = " << cnt << endl;
   
-  gp_Pnt pnt(p(0), p(1), p(2));
+ gp_Pnt pnt(p(0), p(1), p(2));
 
   //  cout << "pnt = " << pnt.X() << ", " << pnt.Y() << ", " << pnt.Z() << endl;
 

@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.16 2006-10-12 01:35:32 geuzaine Exp $
+// $Id: GFace.cpp,v 1.17 2006-11-14 17:11:33 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -385,4 +385,11 @@ double GFace::curvature (const SPoint2 &param) const
   //  Msg (INFO,"c = %g detJ %g",c,detJ);
 
   return  c;
+}
+
+// edges are given, compute their orientation
+// i.e. two following edges should 
+void GFace :: computeDirs ()
+{
+  throw;
 }

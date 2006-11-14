@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.16 2006-09-15 02:54:47 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.17 2006-11-14 17:11:33 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1027,6 +1027,9 @@ void meshGFace :: operator() (GFace *gf)
 
   // Send a messsage to the GMSH environment
   Msg(STATUS2, "Meshing surface %d", gf->tag());
+
+  // TEST TEST 
+  // if (gf->tag() > 5) return;
 
   // destroy the mesh if it exists
   deMeshGFace dem;

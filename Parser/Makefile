@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.105 2006-11-14 15:21:04 geuzaine Exp $
+# $Id: Makefile,v 1.106 2006-11-14 17:11:33 remacle Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -24,7 +24,7 @@ include ../variables
 LIB     = ../lib/libGmshParser.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics\
           -I../Mesh -I../Numeric -I../Fltk -I../Plugin -I../Parallel\
-          -I../contrib/ANN/include
+          -I../contrib/ANN/include 
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Gmsh.tab.cpp\

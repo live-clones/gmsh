@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.19 2006-11-14 15:21:03 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.20 2006-11-14 17:11:33 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -176,7 +176,7 @@ GPoint gmshFace::point(double par1, double par2) const
   }
 }
 
-GPoint gmshFace::closestPoint(const SPoint3 & qp)
+GPoint gmshFace::closestPoint(const SPoint3 & qp) const
 {
   Vertex v;
   v.Pos.X = qp.x();

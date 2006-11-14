@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.121 2006-08-28 13:43:03 geuzaine Exp $
+// $Id: Geom.cpp,v 1.122 2006-11-14 17:11:33 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -181,14 +181,23 @@ class drawGFace {
       gl2psEnable(GL2PS_LINE_STIPPLE);
       int N = 20;
       glBegin(GL_LINE_STRIP);
+
+      Range<double> ubounds = f->parBounds ( 0 );
+      Range<double> vbounds = f->parBounds ( 1 );
+
+      const double uav = 0.5 * ( ubounds.high() + ubounds.low());
+      const double vav = 0.5 * ( vbounds.high() + vbounds.low());
+      const double ud =  ( ubounds.high() - ubounds.low());
+      const double vd =  ( vbounds.high() - vbounds.low());
+
       for(int i = 0; i < N; i++) {
-	GPoint p = f->point((double)i / (double)(N - 1), 0.5);
+	GPoint p = f->point(ubounds.low() + ud * (double)i / (double)(N - 1), vav);
 	glVertex3d(p.x(), p.y(), p.z());
       }
       glEnd();
       glBegin(GL_LINE_STRIP);
       for(int i = 0; i < N; i++) {
-	GPoint p = f->point(0.5, (double)i / (double)(N - 1));
+	GPoint p = f->point(uav, vbounds.low() + vd * (double)i / (double)(N - 1));
 	glVertex3d(p.x(), p.y(), p.z());
       }
       glEnd();
