@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.188 2006-11-14 15:21:03 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.189 2006-11-14 17:04:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -88,7 +88,7 @@ static unsigned int getColorByElement(MElement *ele)
   else{ // by entity
     for(int i = 0; i < ele->getNumVertices(); i++){
       GEntity *e = ele->getVertex(i)->onWhat();
-      if(e->dim() == ele->getDim()) 
+      if(e && (e->dim() == ele->getDim()))
 	return getColorByEntity(e);
     }
   }
