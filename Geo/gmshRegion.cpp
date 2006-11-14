@@ -1,4 +1,4 @@
-// $Id: gmshRegion.cpp,v 1.6 2006-08-15 06:26:53 geuzaine Exp $
+// $Id: gmshRegion.cpp,v 1.7 2006-11-14 15:21:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "gmshModel.h"
+#include "GModel.h"
 #include "gmshFace.h"
 #include "gmshRegion.h"
 #include "Geo.h"

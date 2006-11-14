@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.18 2006-09-05 21:37:59 remacle Exp $
+// $Id: gmshFace.cpp,v 1.19 2006-11-14 15:21:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "gmshModel.h"
+#include "GModel.h"
 #include "gmshVertex.h"
 #include "gmshEdge.h"
 #include "gmshFace.h"

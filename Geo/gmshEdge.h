@@ -21,7 +21,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GEdge.h"
-#include "gmshModel.h"
 #include "gmshVertex.h"
 #include "Mesh.h"
 #include "Range.h"
@@ -46,6 +45,7 @@ class gmshEdge : public GEdge {
   virtual int containsParam(double pt) const;
   virtual SVector3 firstDer(double par) const;
   virtual SPoint2 reparamOnFace(GFace * face, double epar, int dir) const { throw; }
+  ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return c; }
   virtual double parFromPoint(const SPoint3 &pt) const;
   virtual int minimumMeshSegments () const;

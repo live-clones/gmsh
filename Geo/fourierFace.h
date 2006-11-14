@@ -5,12 +5,6 @@
 
 #if defined(HAVE_FOURIER_MODEL)
 
-class fourierModel : public GModel {
- public:
-  fourierModel(const std::string &name);
-  virtual ~fourierModel();
-};
-
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -29,7 +23,8 @@ class fourierVertex : public GVertex {
   virtual double x() const { return _v->x(); }
   virtual double y() const { return _v->y(); }
   virtual double z() const { return _v->z(); }
-    virtual double prescribedMeshSizeAtVertex() const { return 0.1; }
+  virtual double prescribedMeshSizeAtVertex() const { return 0.1; }
+  ModelType getNativeType() const { return FourierModel; }
 };
 
 class fourierEdge : public GEdge {
@@ -51,6 +46,7 @@ class fourierEdge : public GEdge {
   virtual double parFromPoint(const SPoint3 &pt) const { throw; }
   virtual int minimumMeshSegments () const { throw; }
   virtual int minimumDrawSegments () const { throw; }
+  ModelType getNativeType() const { return FourierModel; }
 };
 
 class fourierFace : public GFace {
@@ -86,6 +82,7 @@ class fourierFace : public GFace {
   virtual bool periodic(int dim) const { return false; }
   virtual bool degenerate(int dim) const { return false; }
   virtual double period(int dir) const {throw;}
+  ModelType getNativeType() const { return FourierModel; }
   void * getNativePtr() const {throw;} 
   virtual bool surfPeriodic(int dim) const {throw;}
   virtual SPoint2 parFromPoint(const SPoint3 &) const;

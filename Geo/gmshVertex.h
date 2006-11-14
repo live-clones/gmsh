@@ -21,7 +21,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Mesh.h"
-#include "gmshModel.h"
 #include "GVertex.h"
 
 class gmshVertex : public GVertex {
@@ -60,6 +59,7 @@ class gmshVertex : public GVertex {
   {
     return v ? v->Pos.Z : mesh_vertices.size() ? mesh_vertices[0]->z() : 0.;
   }
+  ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return v; }
   virtual double prescribedMeshSizeAtVertex() const { return v ? v->lc : 0.; }
 };

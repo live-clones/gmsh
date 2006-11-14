@@ -65,8 +65,10 @@ class MRep {
 #else
   typedef std::map<std::pair<MVertex*, MVertex*>, MElement*> ermap;
 #endif
+  typedef std::map<MFace, MElement*, Equal_Face> frmap;
 
   ermap edges;
+  frmap faces;
 
   // generates the edges from a bunch of elements
   template<class T>
@@ -77,6 +79,24 @@ class MRep {
 	MEdge e = elements[i]->getEdgeRep(j);
 	std::pair<MVertex*, MVertex*> p(e.getMinVertex(), e.getMaxVertex());
 	if(!edges.count(p)) edges[p] = elements[i];
+      }
+    }
+  }
+
+  // generates the boundary faces from a bunch of elements
+  template<class T>
+  void generateBoundaryFaceRep(std::vector<T*> &elements)
+  {
+    // FIXME: TODO
+    
+    for(unsigned int i = 0; i < elements.size(); i++){
+      for(int j = 0; j < elements[i]->getNumFacesRep(); j++){
+	MFace f = elements[i]->getFaceRep(j);
+	frmap::iterator it = faces.find(f);
+	if(it == faces.end()) 
+	  faces[f] = elements[i];
+	else
+	  faces.erase(it);
       }
     }
   }
@@ -96,6 +116,7 @@ class MRep {
   void destroy(){
     resetArrays();
     edges.clear();
+    faces.clear();
     allElementsVisible = true;
   }
 
@@ -117,6 +138,15 @@ class MRep {
   eriter firstEdgeRep() { return edges.begin(); }
   eriter lastEdgeRep() { return edges.end(); }
   int getNumEdgeRep() { return edges.size(); }
+
+  // generates the boundary face representation
+  virtual void generateBoundaryFaceRep(){}
+
+  // accesses the face representation
+  typedef frmap::const_iterator friter;
+  friter firstFaceRep() { return faces.begin(); }
+  friter lastFaceRep() { return faces.end(); }
+  int getNumFaceRep() { return faces.size(); }
 
   // returns the element at a given position in a vertex array
   // (element pointers are not always stored: returning 0 is not an
@@ -190,6 +220,17 @@ class MRepRegion : public MRep {
     MRep::generateEdgeRep(_r->pyramids);
     Msg(DEBUG, "Created %d edges in volume %d (%gs)",
 	(int)edges.size(), _r->tag(), Cpu()-t);
+  }
+  virtual void generateBoundaryFaceRep()
+  {
+    if(faces.size()) return;
+    double t = Cpu();    
+    MRep::generateBoundaryFaceRep(_r->tetrahedra);
+    MRep::generateBoundaryFaceRep(_r->hexahedra);
+    MRep::generateBoundaryFaceRep(_r->prisms);
+    MRep::generateBoundaryFaceRep(_r->pyramids);
+    Msg(DEBUG, "Created %d boundary faces in volume %d (%gs)",
+	(int)faces.size(), _r->tag(), Cpu()-t);
   }
 };
 

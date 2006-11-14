@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.57 2006-09-07 05:04:38 geuzaine Exp $
+// $Id: Geo.cpp,v 1.58 2006-11-14 15:21:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,7 +25,7 @@
 #include "CAD.h"
 #include "Parser.h"
 #include "Context.h"
-#include "gmshModel.h"
+#include "GModel.h"
 
 extern Context_T CTX;
 extern GModel *GMODEL;
@@ -105,7 +105,7 @@ void add_infile(char *text, char *fich, bool deleted_something)
     // could have deleted some entities
     GMODEL->destroy();
   }
-  GMODEL->import();
+  GMODEL->importTHEM();
   CTX.mesh.changed = ENT_ALL;
 }
 

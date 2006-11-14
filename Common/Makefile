@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.112 2006-11-04 00:17:07 geuzaine Exp $
+# $Id: Makefile,v 1.113 2006-11-14 15:21:02 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -64,40 +64,32 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-# 1 "/Users/geuzaine/.gmsh/Common//"
 Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Context.h \
   DefaultOptions.h GmshDefines.h Options.h Views.h ColorTable.h \
   VertexArray.h SmoothNormals.h AdaptiveViews.h GmshMatrix.h Trackball.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 AdaptiveViews.o: AdaptiveViews.cpp AdaptiveViews.h ../DataStr/List.h \
   GmshMatrix.h ../Plugin/Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h OS.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h ../Numeric/Numeric.h Views.h ColorTable.h \
   VertexArray.h SmoothNormals.h AdaptiveViews.h GmshMatrix.h Context.h \
   Options.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 ViewsIO.o: ViewsIO.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Views.h \
   ColorTable.h VertexArray.h SmoothNormals.h AdaptiveViews.h GmshMatrix.h \
   Context.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 Octree.o: Octree.cpp Octree.h OctreeInternals.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 OctreeInternals.o: OctreeInternals.cpp Message.h OctreeInternals.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 OctreePost.o: OctreePost.cpp Octree.h OctreeInternals.h OctreePost.h \
   ../DataStr/List.h Views.h ColorTable.h VertexArray.h SmoothNormals.h \
   ../Numeric/Numeric.h AdaptiveViews.h GmshMatrix.h Message.h \
   ShapeFunctions.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 Options.o: Options.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h GmshUI.h GmshDefines.h \
@@ -114,7 +106,6 @@ Options.o: Options.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../Mesh/Simplex.h ../Mesh/Mesh.h ../Mesh/Matrix.h \
   ../Fltk/Colorbar_Window.h ../Common/GmshUI.h ../Fltk/Popup_Button.h \
   ../Fltk/SpherePosition_Widget.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h GmshUI.h GmshDefines.h \
@@ -134,14 +125,11 @@ CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../Geo/ExtrudeParams.h ../Geo/GRegion.h ../Geo/GEntity.h \
   ../Geo/MElement.h ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h \
   ../Common/SmoothNormals.h OS.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 OS.o: OS.cpp Message.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 ColorTable.o: ColorTable.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ColorTable.h Context.h \
   ../Numeric/Numeric.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 Visibility.o: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
@@ -158,17 +146,13 @@ Visibility.o: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \
   ../Geo/GFace.h ../Geo/GRegion.h ../Geo/SBoundingBox3d.h \
   ../Common/SmoothNormals.h ../Parser/Parser.h ../DataStr/Tree.h \
   ../DataStr/avl.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 Trackball.o: Trackball.cpp Trackball.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 VertexArray.o: VertexArray.cpp VertexArray.h Context.h ../DataStr/List.h \
   ../Numeric/Numeric.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 SmoothNormals.o: SmoothNormals.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h \
   SmoothNormals.h
-# 1 "/Users/geuzaine/.gmsh/Common//"
 License.o: License.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.97 2006-08-12 17:44:24 geuzaine Exp $
+// $Id: Main.cpp,v 1.98 2006-11-14 15:21:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,7 @@
 #include "Numeric.h"
 #include "Solvers.h"
 #include "PluginManager.h"
-#include "gmshModel.h"
+#include "GModel.h"
 
 Context_T CTX;
 Mesh M, *THEM = &M;
@@ -67,8 +67,8 @@ int main(int argc, char *argv[])
     strcat(cmdline, " ");
   }
 
-  // Create a new gmsh model
-  GMODEL = new gmshModel;
+  // Create a new model
+  GMODEL = new GModel;
 
   // Initialize the symbol tree that will hold variable names
   

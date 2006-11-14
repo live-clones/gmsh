@@ -21,7 +21,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GFace.h"
-#include "gmshModel.h"
 #include "gmshVertex.h"
 #include "Mesh.h"
 #include "Range.h"
@@ -56,6 +55,7 @@ class gmshFace : public GFace {
   virtual bool periodic(int dim) const { return false; }
   virtual bool degenerate(int dim) const { return false; }
   virtual double period(int dir) const {throw;}
+  ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return s; }
   virtual bool surfPeriodic(int dim) const {throw;}
   virtual SPoint2 parFromPoint(const SPoint3 &) const;

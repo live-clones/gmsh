@@ -1,4 +1,4 @@
-// $Id: GModelIO.cpp,v 1.57 2006-09-26 01:05:43 geuzaine Exp $
+// $Id: GModelIOMesh.cpp,v 1.1 2006-11-14 15:21:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,7 @@
 
 #include "Message.h"
 #include "GmshDefines.h"
+#include "GModel.h"
 #include "gmshRegion.h"
 #include "gmshFace.h"
 #include "gmshEdge.h"

@@ -21,7 +21,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Mesh.h"
-#include "gmshModel.h"
 #include "GRegion.h"
 
 class gmshRegion : public GRegion {
@@ -33,6 +32,7 @@ class gmshRegion : public GRegion {
   gmshRegion(GModel *m, int num);
   virtual ~gmshRegion() {}
   virtual GeomType geomType() const;
+  ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return v; }
 };
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2006-09-14 15:48:35 geuzaine Exp $
+# $Id: Makefile,v 1.12 2006-11-14 15:21:04 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -101,117 +101,65 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 balance.o: balance.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 fm.o: fm.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 kwayfm.o: kwayfm.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 mcoarsen.o: mcoarsen.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 minitpart2.o: minitpart2.c metis.h defs.h struct.h macros.h rename.h \
   proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 mpmetis.o: mpmetis.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 pmetis.o: pmetis.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 subdomains.o: subdomains.c metis.h defs.h struct.h macros.h rename.h \
   proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 bucketsort.o: bucketsort.c metis.h defs.h struct.h macros.h rename.h \
   proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 fortran.o: fortran.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 kwayrefine.o: kwayrefine.c metis.h defs.h struct.h macros.h rename.h \
   proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 memory.o: memory.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 minitpart.o: minitpart.c metis.h defs.h struct.h macros.h rename.h \
   proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 mrefine2.o: mrefine2.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 pqueue.o: pqueue.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 timing.o: timing.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 ccgraph.o: ccgraph.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 frename.o: frename.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 kwayvolfm.o: kwayvolfm.c metis.h defs.h struct.h macros.h rename.h \
   proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 mesh.o: mesh.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 mkmetis.o: mkmetis.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 mrefine.o: mrefine.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 refine.o: refine.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 util.o: util.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 coarsen.o: coarsen.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 graph.o: graph.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 kwayvolrefine.o: kwayvolrefine.c metis.h defs.h struct.h macros.h \
   rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 meshpart.o: meshpart.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 mkwayfmh.o: mkwayfmh.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 mutil.o: mutil.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 separator.o: separator.c metis.h defs.h struct.h macros.h rename.h \
   proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 compress.o: compress.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 initpart.o: initpart.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 match.o: match.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 mfm2.o: mfm2.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 mkwayrefine.o: mkwayrefine.c metis.h defs.h struct.h macros.h rename.h \
   proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 myqsort.o: myqsort.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 sfm.o: sfm.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 debug.o: debug.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 kmetis.o: kmetis.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 mbalance2.o: mbalance2.c metis.h defs.h struct.h macros.h rename.h \
   proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 mfm.o: mfm.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 mmatch.o: mmatch.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 ometis.o: ometis.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 srefine.o: srefine.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 estmem.o: estmem.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 kvmetis.o: kvmetis.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 mbalance.o: mbalance.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 mincover.o: mincover.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 mmd.o: mmd.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 parmetis.o: parmetis.c metis.h defs.h struct.h macros.h rename.h proto.h
-# 1 "/Users/geuzaine/.gmsh/contrib/Metis//"
 stat.o: stat.c metis.h defs.h struct.h macros.h rename.h proto.h

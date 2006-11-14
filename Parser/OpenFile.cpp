@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.123 2006-09-07 05:04:38 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.124 2006-11-14 15:21:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -24,8 +24,7 @@
 #endif
 
 #include "Gmsh.h"
-#include "gmshModel.h"
-#include "fourierModel.h"
+#include "GModel.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "Parser.h"
@@ -246,6 +245,15 @@ void SetProjectName(char *name)
 
 int MergeProblem(char *name, int warn_if_missing)
 {
+#if defined(HAVE_FOURIER_MODEL)
+  if(!strcmp(name, "falcon")){
+    GMODEL->readFourier(name);
+    SetBoundingBox();
+    CTX.mesh.changed = ENT_ALL;
+    return 1;
+  }
+#endif
+
   // added 'b' for pure Windows programs, since some of these files
   // contain binary data
   FILE *fp = fopen(name, "rb");
@@ -333,11 +341,9 @@ int MergeProblem(char *name, int warn_if_missing)
       status = ReadView(name);
     }
     else {
-      status = ParseFile(name, 1);
+      status = GMODEL->readGEO(name);
     }
   }
-
-  GMODEL->import();
 
   SetBoundingBox();
 
@@ -356,14 +362,6 @@ void OpenProblem(char *name)
   CTX.threads_lock = 1;
 
   GMODEL->destroy();
-
-#if defined(HAVE_FOURIER_MODEL)
-  if(!strcmp(name, "falcon")){
-    delete GMODEL;
-    GMODEL = new fourierModel(name);
-    SetBoundingBox();
-  }
-#endif
 
   Init_Mesh();
 

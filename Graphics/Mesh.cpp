@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.187 2006-11-02 17:24:54 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.188 2006-11-14 15:21:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -390,6 +390,26 @@ static void addEdgesInArrays(GEntity *e)
   }
 }
 
+static void addFacesInArrays(GEntity *e)
+{
+  MRep *m = e->meshRep;
+  for(MRep::friter it = m->firstFaceRep(); it != m->lastFaceRep(); ++it){
+    MFace f = it->first;
+    MElement *ele = it->second;
+    SVector3 n = f.normal();
+    unsigned int color = getColorByElement(ele);
+    for(int i = 0; i < f.getNumVertices(); i++){
+      MVertex *v = f.getVertex(i);
+      if(CTX.mesh.smooth_normals)
+	e->model()->normals->get(v->x(), v->y(), v->z(), n[0], n[1], n[2]);
+      if(f.getNumVertices() == 3)
+	m->va_triangles->add(v->x(), v->y(), v->z(), n[0], n[1], n[2], color, ele);
+      else if(f.getNumVertices() == 4)
+	m->va_quads->add(v->x(), v->y(), v->z(), n[0], n[1], n[2], color, ele);
+    }
+  }
+}
+
 template<class T>
 static void addElementsInArrays(GEntity *e, std::vector<T*> &elements)
 {
@@ -741,7 +761,21 @@ class initMeshGRegion {
     // don't draw everything per element
     if(CTX.pick_elements) useEdges = false;
 
-    if(useEdges){
+    bool useSkin = CTX.mesh.volumes_faces ? true : false;
+    if(CTX.mesh.explode != 1. || !m->allElementsVisible)
+      useSkin = false;
+
+    // TODO
+    useSkin = false;
+    
+    if(useSkin){ 
+      Msg(DEBUG, "Using boundary faces to draw volume %d", r->tag());
+      m->generateBoundaryFaceRep(); 
+      m->va_triangles = new VertexArray(3, m->getNumFaceRep());
+      m->va_quads = new VertexArray(4, m->getNumFaceRep());
+      addFacesInArrays(r);
+    }
+    else if(useEdges){
       Msg(DEBUG, "Using edges to draw volume %d", r->tag());
       m->generateEdgeRep();
       m->va_lines = new VertexArray(2, m->getNumEdgeRep());

@@ -1,4 +1,5 @@
-#include "fourierModel.h"
+#include "GModel.h"
+#include "fourierFace.h"
 #include "Message.h"
 #include "Context.h"
 #include "Views.h"
@@ -510,56 +511,6 @@ public:
   }
 };
 
-fourierModel::fourierModel(const std::string &name)
-  : GModel(name)
-{
-  FM = new model(name);
-
-  CTX.terminal = 1;
-  
-  Msg(INFO, "Fourier model created: %d patches", FM->GetNumPatches());
-
-  // create one face per patch
-  for(int i = 0; i < FM->GetNumPatches(); i++)
-    add(new fourierFace(this, i));
-
-  // mesh each face with quads
-  std::for_each(firstFace(), lastFace(), meshCartesian());
-
-  return;
-
-  // compute partition of unity
-  std::for_each(firstFace(), lastFace(), computePartitionOfUnity());
-
-  // create grooves
-  std::for_each(firstFace(), lastFace(), createGroove());
-
-  // create grout
-  std::for_each(firstFace(), lastFace(), createGrout());
-
-  // remove any duplicate vertices on hard edges
-
-  // Here's an alternative approach that might be worth investigating:
-  // - compute and store the pou of each overlapping patch in the nodes of
-  //   all the patches
-  // - for each pair of overlapping patches, find the line pou1=pou2 by
-  //   interpolation on the overlapping grids
-  // - compute the intersections of these lines
-  // This should define a non-overlapping partitioning of the grid, which
-  // could be used as the boundary constrain for the unstructured algo
-
-  CTX.terminal = 0;
-
-  CTX.mesh.changed = ENT_ALL;
-}
-
-
-fourierModel::~fourierModel()
-{
-  delete FM;
-  FM = 0;
-}
-
 fourierEdge::fourierEdge(GModel *model, int num, GVertex *v1, GVertex *v2)
   : GEdge(model, num, v1, v2)
 {
@@ -690,6 +641,50 @@ SPoint2 fourierFace::parFromPoint(const SPoint3 &p) const
   double u, v;
   FM->GetParamFromPoint(tag(), p.x(), p.y(), p.z(), u, v);
   return SPoint2(u, v);
+}
+
+int GModel::readFourier(const std::string &name)
+{
+  FM = new model(name);
+
+  CTX.terminal = 1;
+  
+  Msg(INFO, "Fourier model created: %d patches", FM->GetNumPatches());
+
+  // create one face per patch
+  for(int i = 0; i < FM->GetNumPatches(); i++)
+    add(new fourierFace(this, i));
+
+  // mesh each face with quads
+  std::for_each(firstFace(), lastFace(), meshCartesian());
+
+  return 1;
+
+  // compute partition of unity
+  std::for_each(firstFace(), lastFace(), computePartitionOfUnity());
+
+  // create grooves
+  std::for_each(firstFace(), lastFace(), createGroove());
+
+  // create grout
+  std::for_each(firstFace(), lastFace(), createGrout());
+
+  // remove any duplicate vertices on hard edges
+
+  // Here's an alternative approach that might be worth investigating:
+  // - compute and store the pou of each overlapping patch in the nodes of
+  //   all the patches
+  // - for each pair of overlapping patches, find the line pou1=pou2 by
+  //   interpolation on the overlapping grids
+  // - compute the intersections of these lines
+  // This should define a non-overlapping partitioning of the grid, which
+  // could be used as the boundary constrain for the unstructured algo
+
+  CTX.terminal = 0;
+
+  CTX.mesh.changed = ENT_ALL;
+
+  return 1;
 }
 
 #endif

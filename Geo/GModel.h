@@ -42,6 +42,7 @@ class GModel
   std::set<int> meshPartitions;
 
  public:
+  GModel() : modelName("Untitled"), normals(0) {}
   GModel(const std::string &name) : modelName(name), normals(0) {}
   virtual ~GModel(){ destroy(); }
 
@@ -52,9 +53,6 @@ class GModel
 
   // Deletes everything in a GModel 
   virtual void destroy();
-
-  // Imports data into a GModel from an external source
-  virtual void import(){}
 
   // Returns the geometric tolerance for the entire model.
   virtual double tolerance() const { return 1.e-14; }
@@ -122,40 +120,52 @@ class GModel
   // deletes all the partitions
   virtual void deleteMeshPartitions();
 
-  // IO for native Gmsh mesh file format
+  // A container for smooth normals
+  smooth_normals *normals;
+
+  // CAD IO
+  // =========================================
+
+  // Gmsh native CAD format
+  virtual int importTHEM();
+  virtual int readGEO(const std::string &name);
+  virtual int writeGEO(const std::string &name);
+
+  // Fourier model
+  virtual int readFourier(const std::string &name);
+
+
+  // Mesh IO
+  // =========================================
+
+  // Gmsh mesh file format
   int readMSH(const std::string &name);
   int writeMSH(const std::string &name, double version=1.0, bool binary=false,
 	       bool saveAll=false, double scalingFactor=1.0);
 
-  // IO for mesh statistics (as Gmsh post-processing views)
+  // Mesh statistics (as Gmsh post-processing views)
   int writePOS(const std::string &name, double scalingFactor=1.0);
 
-  // IO for stereo lithography format
+  // Stereo lithography format
   int readSTL(const std::string &name, double tolerance=1.e-3);
   int writeSTL(const std::string &name, bool binary=false, double scalingFactor=1.0);
 
-  // IO for Inventor/VRML format
+  // Inventor/VRML format
   int readVRML(const std::string &name);
   int writeVRML(const std::string &name, double scalingFactor=1.0);
 
-  // IO for I-deas universal mesh format
+  // I-deas universal mesh format
   int readUNV(const std::string &name);
   int writeUNV(const std::string &name, bool saveAll=false, double scalingFactor=1.0);
 
-  // IO for Medit (INRIA) mesh format
+  // Medit (INRIA) mesh format
   int readMESH(const std::string &name);
   int writeMESH(const std::string &name, double scalingFactor=1.0);
 
-  // IO for Nastran Bulk Data File format
+  // Nastran Bulk Data File format
   int readBDF(const std::string &name);
   int writeBDF(const std::string &name, int format=0, bool saveAll=false, 
 	       double scalingFactor=1.0);
-
-  // Export flat Gmsh geo model (only implemented for gmshModel at the moment)
-  virtual int writeGEO(const std::string &name){ return 0; }
-
-  // A container for smooth normals
-  smooth_normals *normals;
 };
 
 #endif

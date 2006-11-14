@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.16 2006-08-26 15:13:22 remacle Exp $
+// $Id: gmshEdge.cpp,v 1.17 2006-11-14 15:21:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,6 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "gmshModel.h"
 #include "gmshEdge.h"
 #include "Interpolation.h"
 #include "CAD.h"

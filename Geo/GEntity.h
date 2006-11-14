@@ -52,7 +52,15 @@ class GEntity {
   unsigned int _color;
   
  public:
-  
+
+  // All known native model types
+  enum ModelType {
+    UnknownModel,
+    GmshModel,
+    FourierModel,
+    OpenCascadeModel
+  };
+
   // All known entity types
   enum GeomType {
     Unknown,
@@ -147,6 +155,9 @@ class GEntity {
 
   // True if the entity contains the given point to within tolerance.
   virtual int containsPoint(const SPoint3 &pt) const{throw;}
+
+  // Get the native type of the particular representation
+  virtual ModelType getNativeType() const { return UnknownModel;}
 
   // Get the native pointer of the particular representation
   virtual void * getNativePtr() const {throw;}

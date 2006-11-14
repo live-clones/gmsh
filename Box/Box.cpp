@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.27 2006-09-23 02:48:09 geuzaine Exp $
+// $Id: Box.cpp,v 1.28 2006-11-14 15:21:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -33,7 +33,7 @@
 #include "CreateFile.h"
 #include "ParUtil.h"
 #include "PluginManager.h"
-#include "gmshModel.h"
+#include "GModel.h"
 
 Context_T CTX;
 Mesh M, *THEM = &M;
@@ -77,7 +77,7 @@ int GMSHBOX(int argc, char *argv[])
 {
   ParUtil::Instance()->init(argc, argv);
 
-  GMODEL = new gmshModel;
+  GMODEL = new GModel;
 
   InitSymbols();
   Init_Mesh0();
