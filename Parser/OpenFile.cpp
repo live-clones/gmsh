@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.125 2006-11-14 17:11:33 remacle Exp $
+// $Id: OpenFile.cpp,v 1.126 2006-11-14 20:20:18 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -293,7 +293,8 @@ int MergeProblem(char *name, int warn_if_missing)
   if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL")){
     status = GMODEL->readSTL(name, CTX.mesh.stl_distance_tol);
   }
-  else if(!strcmp(ext, ".iges") || !strcmp(ext, ".IGES")){
+  else if(!strcmp(ext, ".iges") || !strcmp(ext, ".IGES") ||
+	  !strcmp(ext, ".igs") || !strcmp(ext, ".IGS")){
     GMODEL->readOCCIGES(std::string(name));
   }
   else if(!strcmp(ext, ".step") || !strcmp(ext, ".STEP")){

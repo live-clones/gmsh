@@ -24,6 +24,7 @@
 #include "Vertex.h"
 #include "Mesh.h"
 
+void invert_singular_matrix3x3(double MM[3][3], double II[3][3]);
 void direction (Vertex * v1, Vertex * v2, double d[3]);
 void Projette (Vertex * v, double mat[3][3]);
 void MeanPlane(List_T *point, Surface *s);

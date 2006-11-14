@@ -25,6 +25,7 @@
 #include "GModel.h"
 #include "OCCIncludes.h"
 #include "GVertex.h"
+#include "Context.h"
 
 class OCCVertex : public GVertex {
  protected:
@@ -56,7 +57,11 @@ class OCCVertex : public GVertex {
     return pnt.Z();
   }
   void * getNativePtr() const { return (void*) &v; }
-  virtual double prescribedMeshSizeAtVertex() const { return  350; }
+  virtual double prescribedMeshSizeAtVertex() const { 
+    SBoundingBox3d b = model()->bounds();
+    double lc = norm ( SVector3 ( b.max() , b.min() ) );
+    return lc*CTX.mesh.lc_factor; 
+  }
 };
 
 #endif

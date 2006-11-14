@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.1 2006-11-14 17:11:33 remacle Exp $
+// $Id: OCCFace.cpp,v 1.2 2006-11-14 20:20:18 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -91,14 +91,23 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
 
   Msg(INFO,"OCC Face %d with %d edges",num,l_edges.size());
   ShapeAnalysis::GetFaceUVBounds (s, umin, umax, vmin, vmax);
+  // we do that for the projections to converge on the 
+  // borders of the surface
+  umin -= fabs(umax-umin)/100.0;
+  vmin -= fabs(vmax-vmin)/100.0;
+  umax += fabs(umax-umin)/100.0;
+  vmax += fabs(vmax-vmin)/100.0;
   occface = BRep_Tool::Surface(s);
 }
 
 Range<double> OCCFace::parBounds(int i) const
-{ 
+{  
+  double umin2, umax2, vmin2, vmax2;
+
+  ShapeAnalysis::GetFaceUVBounds (s, umin2, umax2, vmin2, vmax2);
   if (i==0)
-    return Range<double>(umin, umax);
-  return Range<double>(vmin, vmax);
+    return Range<double>(umin2, umax2);
+  return Range<double>(vmin2, vmax2);
 }
 
 SVector3 OCCFace::normal(const SPoint2 &param) const
@@ -164,9 +173,17 @@ int OCCFace::containsParam(const SPoint2 &pt) const
 
 SPoint2 OCCFace::parFromPoint(const SPoint3 &qp) const
 {
-
-  GPoint gp = closestPoint(qp);
-  return SPoint2(gp.u(), gp.v()); 
+  gp_Pnt pnt(qp.x(),qp.y(),qp.z());
+  GeomAPI_ProjectPointOnSurf proj(pnt, occface, umin, umax, vmin, vmax);
+  if (!proj.NbPoints())
+    {
+      Msg(GERROR,"OCC Project Point on Surface FAIL");
+      return GFace::parFromPoint(qp);
+    } 
+  pnt = proj.NearestPoint();
+  double pp[2];
+  proj.LowerDistanceParameters (pp[0], pp[1]);
+  return SPoint2(pp[0],pp[1]);
 }
 
 GEntity::GeomType OCCFace::geomType() const

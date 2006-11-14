@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.20 2006-11-14 17:11:33 remacle Exp $
+// $Id: gmshFace.cpp,v 1.21 2006-11-14 20:20:18 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -201,18 +201,19 @@ int gmshFace::containsParam(const SPoint2 &pt) const
 
 SPoint2 gmshFace::parFromPoint(const SPoint3 &qp) const
 {
-  double u,v;
   if(s->Typ == MSH_SURF_PLAN){
+    double u,v;
     double x,y,z,VX[3],VY[3];
     getMeanPlaneData(VX, VY, x, y, z);
     double vec[3] = {qp.x()-x,qp.y()-y,qp.z()-z};
     prosca(vec,VX,&u);
     prosca(vec,VY,&v);
+    return SPoint2(u, v); 
   }
   else{
-    XYZtoUV(s, qp.x(), qp.y(), qp.z(), &u, &v, 1.0);
+    //    XYZtoUV(s, qp.x(), qp.y(), qp.z(), &u, &v, 1.0);
+    return GFace::parFromPoint(qp);
   }
-  return SPoint2(u, v); 
 }
 
 GEntity::GeomType gmshFace::geomType() const

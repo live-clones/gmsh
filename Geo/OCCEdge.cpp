@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.1 2006-11-14 17:11:33 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.2 2006-11-14 20:20:18 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -75,7 +75,7 @@ GEntity::GeomType OCCEdge::geomType() const
 
 int OCCEdge::minimumMeshSegments () const
 {
-  return GEdge::minimumMeshSegments () ;
+  return CTX.mesh.min_circ_points; ;
 }
 
 int OCCEdge::minimumDrawSegments () const

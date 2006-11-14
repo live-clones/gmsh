@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.17 2006-11-14 17:11:33 remacle Exp $
+// $Id: GFace.cpp,v 1.18 2006-11-14 20:20:18 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 #include "GFace.h"
 #include "GEdge.h"
 #include "Message.h"
+#include "Utils.h"
 
 #if defined(HAVE_GSL)
 #include <gsl/gsl_vector.h>
@@ -392,4 +393,91 @@ double GFace::curvature (const SPoint2 &param) const
 void GFace :: computeDirs ()
 {
   throw;
+}
+
+void GFace::XYZtoUV(const double X, const double Y, const double Z, 
+		    double &U, double &V,
+		    const double relax) const
+{
+  const double Precision = 1.e-8;
+  const int MaxIter = 25;
+  const int NumInitGuess = 11;
+
+  double Unew = 0., Vnew = 0., err,err2;
+  int iter;
+  double mat[3][3], jac[3][3];
+  double umin, umax, vmin, vmax;
+  double init[NumInitGuess] = {0.487, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0.9, 0.1,0,1};
+  
+  Range<double> ru = parBounds(0);
+  Range<double> rv = parBounds(1);
+  umin = ru.low();
+  umax = ru.high();
+  vmin = rv.low();
+  vmax = rv.high();
+
+  for(int i = 0; i < NumInitGuess; i++){
+    for(int j = 0; j < NumInitGuess; j++){
+    
+      U = init[i];
+      V = init[j];
+      err = 1.0;
+      iter = 1;
+      
+      while(err > Precision && iter < MaxIter) {
+	GPoint P = point(U,V);
+	Pair<SVector3,SVector3> der = firstDer(SPoint2(U,V)); 
+	mat[0][0] = der.left().x();
+	mat[0][1] = der.left().y();
+	mat[0][2] = der.left().z();
+	mat[1][0] = der.right().x();
+	mat[1][1] = der.right().y();
+	mat[1][2] = der.right().z();
+	mat[2][0] = 0.;
+	mat[2][1] = 0.;
+	mat[2][2] = 0.;
+	invert_singular_matrix3x3(mat, jac);
+	
+	Unew = U + relax *
+	  (jac[0][0] * (X - P.x()) + jac[1][0] * (Y - P.y()) +
+	   jac[2][0] * (Z - P.z()));
+	Vnew = V + relax * 
+	  (jac[0][1] * (X - P.x()) + jac[1][1] * (Y - P.y()) +
+	   jac[2][1] * (Z - P.z()));
+	
+	err = DSQR(Unew - U) + DSQR(Vnew - V);
+	// A BETTER TEST !! (JFR/AUG 2006)
+	err2 = DSQR(X - P.x()) + DSQR(Y - P.y()) + DSQR(Z - P.z());	
+	iter++;
+	U = Unew;
+	V = Vnew;
+      }
+      
+      
+      if(iter < MaxIter && err <= Precision && err2 <= 1.e-5 &&
+	 Unew <= umax && Vnew <= vmax && 
+	 Unew >= umin && Vnew >= vmin){
+	if (err2 > Precision)
+	  Msg(WARNING,"converged for i=%d j=%d (err=%g iter=%d) BUT err2 = %g", i, j, err, iter,err2);
+	return;	
+      }
+    }
+  }
+  
+  if(relax < 1.e-6)
+    Msg(GERROR, "Could not converge: surface mesh will be wrong");
+  else {
+    Msg(INFO, "Relaxation factor = %g", 0.75 * relax);
+    XYZtoUV(X, Y, Z, U, V, 0.75 * relax);
+  }  
+}
+
+
+SPoint2 GFace::parFromPoint(const SPoint3 &p) const
+{
+  double U,V;
+  
+  XYZtoUV(p.x(),p.y(),p.z(),U,V,1.0);
+
+  return SPoint2(U,V);
 }
