@@ -30,6 +30,7 @@ using std::iostream;
 #include "TopoDS_Solid.hxx"
 #include "TopExp_Explorer.hxx"
 #include "BRep_Tool.hxx"
+#include "BRep_Builder.hxx"
 #include "Geom_Curve.hxx"
 #include "Geom2d_Curve.hxx"
 #include "Geom_Surface.hxx"

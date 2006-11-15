@@ -1,4 +1,4 @@
-  // $Id: GModelIO_OCC.cpp,v 1.3 2006-11-15 15:06:45 geuzaine Exp $
+  // $Id: GModelIO_OCC.cpp,v 1.4 2006-11-15 21:53:31 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -265,7 +265,8 @@ void OCC_Internals :: buildLists ()
 
 void OCC_Internals :: loadBREP (const char *fn)
 {
-  throw;
+  BRep_Builder aBuilder;
+  Standard_Boolean result = BRepTools::Read( shape, (char*)fn, aBuilder );
 }
 
 void OCC_Internals :: loadSTEP (const char *fn)
@@ -338,6 +339,14 @@ int GModel::readOCCIGES(const std::string &fn)
 {
   occ_internals = new OCC_Internals;
   occ_internals->loadIGES (fn.c_str());
+  occ_internals->buildLists ();
+  occ_internals->buildGModel (this);
+  return 1;
+}
+int GModel::readOCCBREP(const std::string &fn)
+{
+  occ_internals = new OCC_Internals;
+  occ_internals->loadBREP (fn.c_str());
   occ_internals->buildLists ();
   occ_internals->buildGModel (this);
   return 1;

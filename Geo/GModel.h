@@ -138,6 +138,7 @@ class GModel
   virtual int readFourier(const std::string &name);
 
   // OCC model
+  int readOCCBREP(const std::string &name);
   int readOCCIGES(const std::string &name);
   int readOCCSTEP(const std::string &name);
   void deleleOCCInternals();
