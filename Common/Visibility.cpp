@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.18 2006-11-14 22:47:11 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.19 2006-11-15 15:19:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -60,8 +60,9 @@ static void setLabels(void *a, void *b){
 void VisibilityManager::update(int type)
 {
   _labels.clear();
-  //Tree_Action(Symbol_T, setLabels);
 
+  // FIXME: this sometimes leads to crashes -- investigate
+  //Tree_Action(Symbol_T, setLabels);
   //printf("updating vis man\n");
 
   for(unsigned int i = 0; i < _entities.size(); i++)
