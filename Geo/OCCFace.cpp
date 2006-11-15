@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.2 2006-11-14 20:20:18 remacle Exp $
+// $Id: OCCFace.cpp,v 1.3 2006-11-15 14:35:03 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -195,4 +195,15 @@ int OCCFace::containsPoint(const SPoint3 &pt) const
 { 
   Msg(GERROR,"Not Done Yet ...");
 }
+// void OCCFace::buildVisTriangulation ();
+// {
+//   TopLoc_Location loc;
+//   Handle(Poly_Triangulation) triangulation = BRep_Tool::Triangulation (occface, loc);
+//   int ntriangles = triangulation -> NbTriangles();
+//   for (int j = 1; j <= ntriangles; j++)
+//     {
+//       Poly_Triangle triangle = (triangulation -> Triangles())(j);
+//     }  
+// }
+
 #endif

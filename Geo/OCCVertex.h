@@ -56,6 +56,7 @@ class OCCVertex : public GVertex {
     gp_Pnt pnt = BRep_Tool::Pnt (v);
     return pnt.Z();
   }
+  ModelType getNativeType() const { return OpenCascadeModel; }
   void * getNativePtr() const { return (void*) &v; }
   virtual double prescribedMeshSizeAtVertex() const { 
     SBoundingBox3d b = model()->bounds();

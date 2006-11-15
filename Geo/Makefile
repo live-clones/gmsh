@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.107 2006-11-15 13:19:56 geuzaine Exp $
+# $Id: Makefile,v 1.108 2006-11-15 14:35:03 remacle Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -38,15 +38,16 @@ SRC = CAD.cpp \
       MVertex.cpp \
       MElement.cpp \
       GModel.cpp\
-        GModelIO_Mesh.cpp\
-        GModelIO_Geo.cpp\
-        GModelIO_Fourier.cpp\
-        GModelIO_OCC.cpp\
+      GModelIO_Mesh.cpp\
+      GModelIO_Geo.cpp\
+      GModelIO_Fourier.cpp\
+      GModelIO_OCC.cpp\
       gmshEdge.cpp\
       gmshFace.cpp\
       gmshRegion.cpp\
       OCCEdge.cpp\
       OCCFace.cpp\
+      OCCRegion.cpp\
       SVector3.cpp\
       SBoundingBox3d.cpp\
       projectionFace.cpp\

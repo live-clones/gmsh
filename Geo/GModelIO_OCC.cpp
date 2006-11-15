@@ -1,4 +1,4 @@
-  // $Id: GModelIO_OCC.cpp,v 1.1 2006-11-15 13:19:56 geuzaine Exp $
+  // $Id: GModelIO_OCC.cpp,v 1.2 2006-11-15 14:35:03 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #include "OCCVertex.h"
 #include "OCCEdge.h"
 #include "OCCFace.h"
+#include "OCCRegion.h"
 
 class OCC_Internals
 {
@@ -312,6 +313,14 @@ void OCC_Internals :: buildGModel (GModel *model)
       TopoDS_Face face = TopoDS::Face(fmap(i));
       OCCFace *f = new OCCFace (model, face, i, emap);
       model->add(f);
+    }
+  // building geom regions
+  int nvolumes = somap.Extent();
+  for (int i = 1; i <= nvolumes; i++)
+    {
+      TopoDS_Solid solid = TopoDS::Solid(somap(i));
+      OCCRegion *r = new OCCRegion (model, solid, i, fmap);
+      model->add(r);
     }
 
 }

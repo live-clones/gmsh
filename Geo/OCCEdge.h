@@ -46,6 +46,7 @@ class OCCEdge : public GEdge {
   virtual int containsParam(double pt) const;
   virtual SVector3 firstDer(double par) const;
   virtual SPoint2 reparamOnFace(GFace * face, double epar, int dir) const { throw; }
+  ModelType getNativeType() const { return OpenCascadeModel; }
   void * getNativePtr() const { return (void*) &c; }
   virtual double parFromPoint(const SPoint3 &pt) const;
   virtual int minimumMeshSegments () const;
