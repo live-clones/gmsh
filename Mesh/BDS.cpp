@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.62 2006-09-14 15:23:29 remacle Exp $
+// $Id: BDS.cpp,v 1.63 2006-11-15 20:46:46 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -39,11 +39,9 @@ void outputScalarField(std::list < BDS_Face * >t, const char *iii)
     BDS_Point *pts[4];
     (*tit)->getNodes(pts);
     fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-            pts[0]->X, pts[0]->Y, pts[0]->Z,
-            pts[1]->X, pts[1]->Y, pts[1]->Z,
-            pts[2]->X, pts[2]->Y, pts[2]->Z,
-            pts[0]->radius(), pts[1]->radius(),
-            pts[2]->radius());
+            pts[0]->u, pts[0]->v, 0.0,
+            pts[1]->u, pts[1]->v, 0.0,
+            pts[2]->u, pts[2]->v, 0.0,(double)pts[0]->iD,(double)pts[1]->iD,(double)pts[2]->iD);
     ++tit;
   }
   fprintf(f, "};\n");
@@ -225,17 +223,23 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2)
 	  e = (*it);
 	  //	  if (e->p1->iD >= 0 && e->p2->iD >= 0)Msg(INFO," %d %d %g %g - %g %g",e->p1->iD,e->p2->iD,e->p1->u,e->p1->v,e->p2->u,e->p2->v);
 	  if (!e->deleted && e->p1 != p1 && e->p1 != p2 && e->p2 != p1 && e->p2 != p2)
-	    if(Intersect_Edges_2d(e->p1->X, e->p1->Y,
-				  e->p2->X, e->p2->Y,
-				  p1->X, p1->Y,
-				  p2->X, p2->Y))
+	    if(Intersect_Edges_2d(e->p1->u, e->p1->v,
+				  e->p2->u, e->p2->v,
+				  p1->u, p1->v,
+				  p2->u, p2->v))
 	      intersected.push_back(e);	  
 	  ++it;
 	}
 
-      if (!intersected.size())
+      if (!intersected.size() || ix > 10000)
 	{
-	  return find_edge (num1, num2);
+	  BDS_Edge *eee = find_edge (num1, num2);
+	  if (!eee)
+	    {
+	      outputScalarField(triangles, "debug.pos");
+	      throw;
+	    }
+	  return eee;
 	}
       
       int ichoice = ix++ % intersected.size();

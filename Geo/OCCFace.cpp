@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.4 2006-11-15 15:06:45 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.5 2006-11-15 20:46:46 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,7 @@
 #include "Message.h"
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape &emap)
-  : GFace(m, num), s(_s)
+  : GFace(m, num), s(_s),_periodic(false)
 {
   TopExp_Explorer exp0, exp01, exp1, exp2, exp3;
   for (exp2.Init (s, TopAbs_WIRE); exp2.More(); exp2.Next())
@@ -35,22 +35,28 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
       TopoDS_Shape wire = exp2.Current();
       Msg(INFO,"OCC Face %d - New Wire",num);
       std::list<GEdge*> l_wire;
+      std::set<GEdge*> testPeriodic;
       for (exp3.Init (wire, TopAbs_EDGE); exp3.More(); exp3.Next())
 	{	  
 	  TopoDS_Edge edge = TopoDS::Edge (exp3.Current());
 	  int index = emap.FindIndex(edge);
 	  GEdge *e = m->edgeByTag(index);
 	  if(!e) throw;
+	  if (testPeriodic.find(e) !=testPeriodic.end()){
+	    _periodic = true;
+	    edges_taken_twice.insert(e);
+	  }
+	  else testPeriodic.insert(e);
 	  l_edges.push_back(e);
 	  l_wire.push_back(e);
 	  e->addFace(this);
 	}      
       if (l_wire.size() == 1)l_dirs.push_back(1);
-      else
+      else if (!_periodic)
 	{
 	  GVertex *last;
 	  std::list<GEdge*>::iterator it = l_wire.begin();
-	  GEdge *e1 = *it;
+	  GEdge *e1 = *it;	  
 	  ++it;
 	  GEdge *e2 = *it;
 
@@ -83,7 +89,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
 		}
 	      else
 		{
-		  Msg(GERROR,"Incoherent surface %d",num);
+		  Msg(GERROR,"Incoherent surface %d Edge %d (%d,%d) ",num,e->tag(),e->getBeginVertex()->tag(),e->getEndVertex()->tag());
 		}
 	    }
 	}      
@@ -179,17 +185,56 @@ SPoint2 OCCFace::parFromPoint(const SPoint3 &qp) const
     {
       Msg(GERROR,"OCC Project Point on Surface FAIL");
       return GFace::parFromPoint(qp);
-    } 
-  pnt = proj.NearestPoint();
-  double pp[2];
-  proj.LowerDistanceParameters (pp[0], pp[1]);
-  return SPoint2(pp[0],pp[1]);
+    }   
+//   if (proj.NbPoints() != 1)
+//     {
+//       Msg(WARNING,"More than one points match the projection (%d) ", proj.NbPoints());
+//     }
+
+  double U,V;
+  proj.LowerDistanceParameters (U, V);
+  //  proj.Parameters (1,U,V);
+  return SPoint2(U,V);
+}
+
+void OCCFace::parFromPoint(const SPoint3 &qp, std::list<double> &u, std::list<double> &v ) const
+{
+  gp_Pnt pnt(qp.x(),qp.y(),qp.z());
+  GeomAPI_ProjectPointOnSurf proj(pnt, occface, umin, umax, vmin, vmax);
+  if (!proj.NbPoints())
+    {
+      Msg(GERROR,"OCC Project Point on Surface FAIL");
+      GFace::parFromPoint(qp,u,v);
+      return;
+    }   
+
+  for (int i = 1;i <= proj.NbPoints();i++)
+    {
+      double U,V;
+      proj.Parameters (i,U,V);
+      u.push_back(U);
+      v.push_back(V);
+    }
 }
 
 GEntity::GeomType OCCFace::geomType() const
 {
   return Unknown;
 }
+
+double OCCFace::curvature (const SPoint2 &param) const
+{
+  BRepAdaptor_Surface sf(s, Standard_True);
+  BRepLProp_SLProps prop(sf, 2, 1e-5);
+  prop.SetParameters (param.x(),param.y());
+
+  if (!prop.IsCurvatureDefined())
+    {
+      return GFace::curvature (param);
+    }
+  return std::max(fabs(prop.MinCurvature()), fabs(prop.MaxCurvature()));
+}
+
 
 int OCCFace::containsPoint(const SPoint3 &pt) const
 { 

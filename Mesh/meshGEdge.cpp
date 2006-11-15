@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.14 2006-08-26 15:13:22 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.15 2006-11-15 20:46:46 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -45,32 +45,14 @@ double F_LC_ANALY (double xx, double yy, double zz)
   return 0.05 + .1*fabs(xx*yy) ;
 }
 
-double max_surf_curvature ( GPoint & gp )
-{
-  std::list<GFace *> faces = _myGEdge->faces();
-  std::list<GFace *>::iterator it =  faces.begin();
-  double curv = 0;
-  while (it != faces.end())
-    {
-      SPoint2 par = (*it)->parFromPoint(SPoint3 (gp.x(),gp.y(),gp.z()));
-      curv = std::max(curv, (*it)->curvature ( par ) );					
-      ++it;
-    }  
-  return curv;
-}
-
 double F_Lc_bis(double t)
 {
   //  const double nb_points_per_radius_of_curv = 2;
   GPoint point = _myGEdge -> point(t) ;      
   const double fact = (t-t_begin)/(t_end-t_begin);
-  double lc_here = lc_begin + fact * (lc_end-lc_begin);
+  double lc_here   = lc_begin + fact * (lc_end-lc_begin);
   SVector3 der  = _myGEdge -> firstDer(t) ;
   const double d      = norm(der);
-
-  //  double curv = max_surf_curvature ( point );
-  //  if (curv != 0)
-  //    lc_here = std::min( 1./(curv * nb_points_per_radius_of_curv),lc_here);
 
   if(CTX.mesh.bgmesh_type == ONFILE) {
     const double Lc = BGMXYZ(point.x(), point.y(), point.z());
@@ -172,8 +154,13 @@ void meshGEdge :: operator() (GEdge *ge)
   // to pass an extra argument... 
   _myGEdge = ge;
     
-  // first compute the length of the curve by integrating one
+
+  // compute bounds
   _myGEdgeBounds = ge->parBounds(0) ;
+  t_begin = _myGEdgeBounds.low();
+  t_end   = _myGEdgeBounds.high();
+  
+  // first compute the length of the curve by integrating one
   _myGEdgeLength = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), 
 			       F_One_bis, Points, 1.e-4);
   List_Reset(Points);
@@ -181,9 +168,6 @@ void meshGEdge :: operator() (GEdge *ge)
   lc_begin  =  _myGEdge->getBeginVertex()->prescribedMeshSizeAtVertex();
   lc_end    =  _myGEdge->getEndVertex()->prescribedMeshSizeAtVertex();
     
-  t_begin = _myGEdgeBounds.low();
-  t_end   = _myGEdgeBounds.high();
-
   // Integrate detJ/lc du 
   double a;
   int N;

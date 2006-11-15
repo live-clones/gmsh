@@ -30,10 +30,12 @@
 class OCCVertex : public GVertex {
  protected:
   TopoDS_Vertex v;
-
+  mutable double max_curvature;
+  double max_curvature_of_surfaces() const;
  public:
   OCCVertex(GModel *m, int num, TopoDS_Vertex _v) : GVertex(m, num), v(_v)
   {
+    max_curvature = -1;
     mesh_vertices.push_back(new MVertex(x(), y(), z(), this));
   }
   virtual ~OCCVertex() {}
@@ -60,8 +62,11 @@ class OCCVertex : public GVertex {
   void * getNativePtr() const { return (void*) &v; }
   virtual double prescribedMeshSizeAtVertex() const { 
     SBoundingBox3d b = model()->bounds();
-    double lc = norm ( SVector3 ( b.max() , b.min() ) );
-    return lc*CTX.mesh.lc_factor; 
+    double lc = 0.1*norm ( SVector3 ( b.max() , b.min() ) ) * CTX.mesh.lc_factor;
+    double maxc = max_curvature_of_surfaces();
+    if (maxc !=0)       
+      lc = std::min (lc,6.28/(CTX.mesh.min_circ_points*maxc));
+    return lc;
   }
 };
 

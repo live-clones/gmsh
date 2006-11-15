@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.18 2006-11-14 20:20:18 remacle Exp $
+// $Id: GFace.cpp,v 1.19 2006-11-15 20:46:46 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -480,4 +480,12 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p) const
   XYZtoUV(p.x(),p.y(),p.z(),U,V,1.0);
 
   return SPoint2(U,V);
+}
+
+void GFace::parFromPoint(const SPoint3 &p, std::list<double> &u, std::list<double> &v ) const
+{
+  double U,V;  
+  XYZtoUV(p.x(),p.y(),p.z(),U,V,1.0);
+  u.push_back(U);
+  v.push_back(V);
 }

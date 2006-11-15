@@ -45,6 +45,7 @@ class OCCEdge : public GEdge {
   virtual int containsPoint(const SPoint3 &pt) const { throw; }
   virtual int containsParam(double pt) const;
   virtual SVector3 firstDer(double par) const;
+  virtual double curvature (double par) const;
   virtual SPoint2 reparamOnFace(GFace * face, double epar, int dir) const { throw; }
   ModelType getNativeType() const { return OpenCascadeModel; }
   void * getNativePtr() const { return (void*) &c; }

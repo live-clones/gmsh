@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.3 2006-11-15 15:06:45 geuzaine Exp $
+// $Id: OCCEdge.cpp,v 1.4 2006-11-15 20:46:46 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -75,11 +75,21 @@ GEntity::GeomType OCCEdge::geomType() const
 
 int OCCEdge::minimumMeshSegments () const
 {
-  return CTX.mesh.min_circ_points; ;
+  return 2 ;
 }
 
 int OCCEdge::minimumDrawSegments () const
 {
   return CTX.geom.circle_points;
+}
+
+double OCCEdge::curvature(double par) const 
+{
+  return GEdge::curvature(par);
+  BRepAdaptor_Curve brepc(c);
+  BRepLProp_CLProps prop(brepc, 1, 1e-5);
+  prop.SetParameter (par); 
+  printf("curvature = %12.5E\n",prop.Curvature()); 
+  return fabs(prop.Curvature());
 }
 #endif

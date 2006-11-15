@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.17 2006-11-14 17:11:33 remacle Exp $
+// $Id: meshGFace.cpp,v 1.18 2006-11-15 20:46:46 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -751,12 +751,15 @@ void gmsh2DMeshGenerator ( GFace *gf )
 
   // mesh the domain in the parametric space -> 
   // project all points in their parametric space
+
+  Msg(DEBUG1,"Calculation of local coordinates");
   fromCartesianToParametric c2p ( gf );
   std::for_each (all_vertices.begin(),all_vertices.end(),c2p);    
 
   // compute the bounding box in parametric space
   // I do not have SBoundingBox, so I use a 3D one...
   // At the same time, number the vertices locally
+  Msg(DEBUG1,"Calculation of the bounding box");
   SBoundingBox3d bbox;
   itv = all_vertices.begin();
   int NUM = 0;
@@ -819,6 +822,7 @@ void gmsh2DMeshGenerator ( GFace *gf )
   /// At this stage the triangulation is not what we need
   ///   -) It does not necessary recover the boundaries 
   ///   -) It contains triangles outside the domain (the first edge loop is the outer one)
+  Msg(DEBUG1,"Meshing of the convex hull (%d points)",all_vertices.size());
   Make_Mesh_With_Points(&doc,doc.points,all_vertices.size()+4);
 
   // Buid a BDS_Mesh structure that is convenient for doing the actual meshing procedure
@@ -1029,7 +1033,7 @@ void meshGFace :: operator() (GFace *gf)
   Msg(STATUS2, "Meshing surface %d", gf->tag());
 
   // TEST TEST 
-  // if (gf->tag() > 5) return;
+  if (gf->surfPeriodic(2)) return;
 
   // destroy the mesh if it exists
   deMeshGFace dem;
@@ -1046,11 +1050,16 @@ void meshGFace :: operator() (GFace *gf)
   // compute loops on the fly
   // indices indicate start and end points of a loop
   // loops are not yet oriented
+  Msg(DEBUG1, "Computing edge loops");
   computeEdgeLoops(gf, points, indices);
+  Msg(DEBUG1, "Computing mean plane");
+
+
 
   // compute the mean plane, this is sometimes useful 
   gf->computeMeanPlane(points);
 
+  Msg(DEBUG1, "Generating the mesh");
   // mesh the face
   gmsh2DMeshGenerator ( gf ) ;
 
@@ -1093,7 +1102,7 @@ void orientMeshGFace::operator()(GFace *gf)
   int sign = *ori.begin();
   MEdge ref(sign > 0 ? v1 : v2, sign > 0 ? v2 : v1);
   if(shouldRevert(ref, gf->triangles) || shouldRevert(ref, gf->quadrangles)){
-    Msg(DEBUG, "Reverting orientation of mesh in face %d", gf->tag());
+    Msg(DEBUG1, "Reverting orientation of mesh in face %d", gf->tag());
     for(unsigned int i = 0; i < gf->triangles.size(); i++)
       gf->triangles[i]->revert();
     for(unsigned int i = 0; i < gf->quadrangles.size(); i++)

@@ -28,6 +28,8 @@
 #include "Pair.h"
 #include "ExtrudeParams.h"
 
+#include <set>
+
 struct mean_plane
 {
   double plan[3][3];
@@ -41,6 +43,11 @@ class GRegion;
 class GFace : public GEntity 
 {
  protected: 
+  // in a manifold representation, edges can
+  // be taken twice in the topology in order 
+  // to represent the periodicity of the surface
+  std::set<GEdge *> edges_taken_twice;
+  // list of al the edges of the face
   std::list<GEdge *> l_edges;
   std::list<int> l_dirs;
   GRegion *r1, *r2;
@@ -86,7 +93,8 @@ class GFace : public GEntity
 
   // Return the parmater location on the face given a point in space
   // that is on the face.
-  virtual SPoint2 parFromPoint(const SPoint3 &) const;
+  virtual SPoint2            parFromPoint(const SPoint3 &) const;
+  virtual void               parFromPoint(const SPoint3 &, std::list<double> &u, std::list<double> &v ) const;
 
   // True if the parameter value is interior to the face.
   virtual int containsParam(const SPoint2 &pt) const = 0;

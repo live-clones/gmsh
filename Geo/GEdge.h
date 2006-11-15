@@ -73,6 +73,7 @@ class GEdge : public GEntity {
   // Get second derivative of edge at the given parameter.
   // Default implentation using central differences
   virtual SVector3 secondDer(double par) const ;
+  virtual double curvature (double par) const;  
 
   // Reparmaterize the point onto the given face.
   virtual SPoint2 reparamOnFace(GFace *face, double epar,int dir) const = 0;
