@@ -1,4 +1,4 @@
-// $Id: GModelIOMesh.cpp,v 1.1 2006-11-14 15:21:03 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.1 2006-11-15 13:19:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //

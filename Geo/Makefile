@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.106 2006-11-14 22:47:11 geuzaine Exp $
+# $Id: Makefile,v 1.107 2006-11-15 13:19:56 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -35,18 +35,18 @@ SRC = CAD.cpp \
       GEdge.cpp\
       GFace.cpp\
       GRegion.cpp\
-      GModel.cpp\
-      GModelIOMesh.cpp\
-      GModelIOGeo.cpp\
-      GModelIOFourier.cpp\
       MVertex.cpp \
       MElement.cpp \
+      GModel.cpp\
+        GModelIO_Mesh.cpp\
+        GModelIO_Geo.cpp\
+        GModelIO_Fourier.cpp\
+        GModelIO_OCC.cpp\
       gmshEdge.cpp\
       gmshFace.cpp\
       gmshRegion.cpp\
       OCCEdge.cpp\
       OCCFace.cpp\
-      OCCModel.cpp\
       SVector3.cpp\
       SBoundingBox3d.cpp\
       projectionFace.cpp\
@@ -149,13 +149,18 @@ GRegion.o: GRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SVector3.h SPoint2.h MElement.h MEdge.h ../Common/Hash.h MFace.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
   ExtrudeParams.h GFace.h Pair.h GRegion.h ../Common/SmoothNormals.h
+MVertex.o: MVertex.cpp MVertex.h SPoint3.h
+MElement.o: MElement.cpp MElement.h ../Common/GmshDefines.h MVertex.h \
+  SPoint3.h MEdge.h SVector3.h ../Common/Hash.h MFace.h \
+  ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h GEntity.h \
+  Range.h SBoundingBox3d.h
 GModel.o: GModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h GEdge.h \
   SVector3.h SPoint2.h MElement.h MEdge.h ../Common/Hash.h MFace.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
   ExtrudeParams.h GFace.h Pair.h GRegion.h ../Common/SmoothNormals.h \
   MRep.h ../Common/VertexArray.h ../Common/Message.h ../Common/OS.h
-GModelIOMesh.o: GModelIOMesh.cpp ../Common/Message.h \
+GModelIO_Mesh.o: GModelIO_Mesh.cpp ../Common/Message.h \
   ../Common/GmshDefines.h GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h MVertex.h GPoint.h GEdge.h SVector3.h SPoint2.h \
   MElement.h MEdge.h ../Common/Hash.h MFace.h ../Numeric/Numeric.h \
@@ -167,7 +172,7 @@ GModelIOMesh.o: GModelIOMesh.cpp ../Common/Message.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
   ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
   ../Mesh/Matrix.h gmshFace.h gmshVertex.h gmshEdge.h
-GModelIOGeo.o: GModelIOGeo.cpp GModel.h GVertex.h GEntity.h Range.h \
+GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h \
   GEdge.h SVector3.h SPoint2.h MElement.h MEdge.h ../Common/Hash.h \
   MFace.h ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
@@ -181,7 +186,7 @@ GModelIOGeo.o: GModelIOGeo.cpp GModel.h GVertex.h GEntity.h Range.h \
   ../Parser/OpenFile.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h ../Common/Message.h gmshVertex.h gmshFace.h \
   gmshEdge.h gmshRegion.h
-GModelIOFourier.o: GModelIOFourier.cpp GModel.h GVertex.h GEntity.h \
+GModelIO_Fourier.o: GModelIO_Fourier.cpp GModel.h GVertex.h GEntity.h \
   Range.h SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h \
   GPoint.h GEdge.h SVector3.h SPoint2.h MElement.h MEdge.h \
   ../Common/Hash.h MFace.h ../Numeric/Numeric.h ../Common/Context.h \
@@ -190,11 +195,12 @@ GModelIOFourier.o: GModelIOFourier.cpp GModel.h GVertex.h GEntity.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
   ../Common/GmshMatrix.h
-MVertex.o: MVertex.cpp MVertex.h SPoint3.h
-MElement.o: MElement.cpp MElement.h ../Common/GmshDefines.h MVertex.h \
-  SPoint3.h MEdge.h SVector3.h ../Common/Hash.h MFace.h \
-  ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h GEntity.h \
-  Range.h SBoundingBox3d.h
+GModelIO_OCC.o: GModelIO_OCC.cpp GModel.h GVertex.h GEntity.h Range.h \
+  SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h \
+  GEdge.h SVector3.h SPoint2.h MElement.h MEdge.h ../Common/Hash.h \
+  MFace.h ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
+  ExtrudeParams.h GFace.h Pair.h GRegion.h ../Common/SmoothNormals.h \
+  ../Common/Message.h
 gmshEdge.o: gmshEdge.cpp gmshEdge.h GEdge.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h ../Common/GmshDefines.h GVertex.h MVertex.h GPoint.h \
   SVector3.h SPoint2.h MElement.h MEdge.h ../Common/Hash.h MFace.h \
@@ -235,12 +241,6 @@ gmshRegion.o: gmshRegion.cpp GModel.h GVertex.h GEntity.h Range.h \
   gmshRegion.h Geo.h ../Mesh/Create.h ../Mesh/Vertex.h ../Mesh/Mesh.h
 OCCEdge.o: OCCEdge.cpp
 OCCFace.o: OCCFace.cpp
-OCCModel.o: OCCModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
-  SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h GEdge.h \
-  SVector3.h SPoint2.h MElement.h MEdge.h ../Common/Hash.h MFace.h \
-  ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
-  ExtrudeParams.h GFace.h Pair.h GRegion.h ../Common/SmoothNormals.h \
-  ../Common/Message.h
 SVector3.o: SVector3.cpp SVector3.h SPoint3.h
 SBoundingBox3d.o: SBoundingBox3d.cpp SBoundingBox3d.h SPoint3.h
 projectionFace.o: projectionFace.cpp projectionFace.h GFace.h GPoint.h \
