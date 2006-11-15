@@ -57,7 +57,7 @@ class gmshFace : public GFace {
   virtual double period(int dir) const {throw;}
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return s; }
-  virtual bool surfPeriodic(int dim) const {throw;}
+  virtual bool surfPeriodic(int dim) const { return false;}
   virtual SPoint2 parFromPoint(const SPoint3 &) const;
 };
 
