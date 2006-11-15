@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.2 2006-11-14 20:20:18 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.3 2006-11-15 15:06:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#ifdef _HAVE_OCC_
+#if defined(HAVE_OCC)
 #include "GModel.h"
 #include "OCCEdge.h"
 

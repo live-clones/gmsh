@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.81 2006-09-24 05:59:13 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.82 2006-11-15 15:06:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -158,6 +158,12 @@ char *Get_BuildOptions(void)
 #endif
 #if defined(HAVE_ANN_)
     strcat(opt, "ANN ");
+#endif
+#if defined(HAVE_CGNS)
+    strcat(opt, "CGNS ");
+#endif
+#if defined(HAVE_OCC)
+    strcat(opt, "OCC ");
 #endif
     first = 0;
   }

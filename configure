@@ -864,6 +864,7 @@ Optional Features:
   --enable-matheval       compile MathEval if available (default=yes)
   --enable-osmesa         use OSMesa for offscreen rendering (default=no)
   --enable-cgns           enable CGNS output (default=no)
+  --enable-occ            enable OpenCascade support (default=no)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -879,6 +880,7 @@ Optional Packages:
   --with-osmesa-prefix=PFX
                           prefix where OSMesa is installed
   --with-cgns-prefix=PFX  prefix where CGNS is installed
+  --with-occ-prefix=PFX   prefix where OpenCascade is installed
 
 Some influential environment variables:
   CC          C compiler command
@@ -1373,6 +1375,12 @@ if test "${with_cgns_prefix+set}" = set; then
   CGNS_PREFIX=$withval
 fi;
 
+# Check whether --with-occ-prefix or --without-occ-prefix was given.
+if test "${with_occ_prefix+set}" = set; then
+  withval="$with_occ_prefix"
+  OCC_PREFIX=$withval
+fi;
+
 # Check whether --enable-gsl or --disable-gsl was given.
 if test "${enable_gsl+set}" = set; then
   enableval="$enable_gsl"
@@ -1451,6 +1459,11 @@ fi;
 # Check whether --enable-cgns or --disable-cgns was given.
 if test "${enable_cgns+set}" = set; then
   enableval="$enable_cgns"
+
+fi;
+# Check whether --enable-occ or --disable-occ was given.
+if test "${enable_occ+set}" = set; then
+  enableval="$enable_occ"
 
 fi;
 
@@ -4486,6 +4499,94 @@ fi
     else
       GMSH_LIBS="${GMSH_LIBS} -L${CGNS_PREFIX}/lib -lcgns"
       FLAGS="${FLAGS} -DHAVE_LIBCGNS -I${CGNS_PREFIX}/include"
+    fi
+  fi
+fi
+
+if test "x${OCC_PREFIX}" != "x"; then
+  enable_occ="yes"
+fi
+if test "x$enable_occ" = "xyes"; then
+  if test "x${OCC_PREFIX}" != "x"; then
+    LDFLAGS="-L${OCC_PREFIX}/lib ${LDFLAGS}"
+  fi
+  echo "$as_me:$LINENO: checking for main in -lTKernel" >&5
+echo $ECHO_N "checking for main in -lTKernel... $ECHO_C" >&6
+if test "${ac_cv_lib_TKernel_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lTKernel  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_TKernel_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_TKernel_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_TKernel_main" >&5
+echo "${ECHO_T}$ac_cv_lib_TKernel_main" >&6
+if test $ac_cv_lib_TKernel_main = yes; then
+  OCC="yes"
+else
+  OCC="no"
+fi
+
+  if test "x${OCC}" = "xyes"; then
+    OCC_LIBS="-lTKIGES -lTKPrim  -lTKTopAlgo -lTKXDESTEP -lTKStdSchema"
+    OCC_LIBS="${OCC_LIBS} -lTKGeomAlgo -lTKSTEP -lTKStdLSchema -lTKV3d -lTKBRep"
+    OCC_LIBS="${OCC_LIBS} -lTKBool -lTKXDEIGES  -lTKV2d -lTKGeomBase -lTKSTEP209"
+    OCC_LIBS="${OCC_LIBS} -lTKG3d -lTKSTEPAttr -lTKG2d -lTKIGES -lTKSTEPBase"
+    OCC_LIBS="${OCC_LIBS} -lTKMath -lTKernel -lTKShHealing -lTKMesh -lTKXSBase"
+    OCC_LIBS="${OCC_LIBS} -lTKXDESTEP -lTKSTEP"
+    if test "x${OCC_PREFIX}" = "x"; then
+      GMSH_LIBS="${GMSH_LIBS} ${OCC_LIBS}"
+      FLAGS="${FLAGS} -DHAVE_OCC"
+    else
+      GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib ${OCC_LIBS}"
+      FLAGS="${FLAGS} -DHAVE_OCC -I${OCC_PREFIX}/include -I${OCC_PREFIX}/inc"
     fi
   fi
 fi
