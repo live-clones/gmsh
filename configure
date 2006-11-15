@@ -4575,12 +4575,11 @@ else
 fi
 
   if test "x${OCC}" = "xyes"; then
-    OCC_LIBS="-lTKIGES -lTKPrim  -lTKTopAlgo -lTKXDESTEP -lTKStdSchema"
-    OCC_LIBS="${OCC_LIBS} -lTKGeomAlgo -lTKSTEP -lTKStdLSchema -lTKV3d -lTKBRep"
-    OCC_LIBS="${OCC_LIBS} -lTKBool -lTKXDEIGES  -lTKV2d -lTKGeomBase -lTKSTEP209"
-    OCC_LIBS="${OCC_LIBS} -lTKG3d -lTKSTEPAttr -lTKG2d -lTKIGES -lTKSTEPBase"
-    OCC_LIBS="${OCC_LIBS} -lTKMath -lTKernel -lTKShHealing -lTKMesh -lTKXSBase"
-    OCC_LIBS="${OCC_LIBS} -lTKXDESTEP -lTKSTEP"
+    OCC_LIBS="-lTKSTEP  -lTKXDESTEP -lTKSTEP209 -lTKSTEPAttr -lTKSTEPBase"
+    OCC_LIBS="${OCC_LIBS} -lTKXDEIGES -lTKIGES -lTKXSBase -lTKStdSchema -lTKStdLSchema"
+    OCC_LIBS="${OCC_LIBS} -lTKV3d -lTKV2d -lTKBool -lTKShHealing -lTKMesh -lTKPrim"
+    OCC_LIBS="${OCC_LIBS} -lTKTopAlgo -lTKBRep -lTKGeomAlgo -lTKGeomBase -lTKG3d -lTKG2d"
+    OCC_LIBS="${OCC_LIBS} -lTKMath -lTKernel"
     if test "x${OCC_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} ${OCC_LIBS}"
       FLAGS="${FLAGS} -DHAVE_OCC"
