@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.4 2006-11-15 20:46:46 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.5 2006-11-16 18:32:41 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -21,12 +21,17 @@
 
 #if defined(HAVE_OCC)
 #include "GModel.h"
+#include "Message.h"
 #include "OCCEdge.h"
 
 OCCEdge::OCCEdge(GModel *model, TopoDS_Edge edge, int num, GVertex *v1, GVertex *v2)
   : GEdge(model, num, v1, v2), c(edge)
 {
-  curve = BRep_Tool::Curve(edge, s0, s1);
+  curve = BRep_Tool::Curve(c, s0, s1);
+  if (curve.IsNull())
+    {
+      Msg(WARNING,"OCC Curve %d is not a 3D curve",tag());
+    }
 }
 
 Range<double> OCCEdge::parBounds(int i) const
@@ -38,8 +43,16 @@ Range<double> OCCEdge::parBounds(int i) const
 
 GPoint OCCEdge::point(double par) const
 {
-  gp_Pnt pnt = curve->Value (par);
-  return GPoint(pnt.X(),pnt.Y(),pnt.Z());
+  double s0,s1;  
+  if (!curve.IsNull())
+    {
+      gp_Pnt pnt = curve->Value (par);
+      return GPoint(pnt.X(),pnt.Y(),pnt.Z());
+    }
+  else
+    {
+      return GPoint(0,0,0);
+    }
 }
 
 GPoint OCCEdge::closestPoint(const SPoint3 & qp)
@@ -54,8 +67,7 @@ int OCCEdge::containsParam(double pt) const
 }
 
 SVector3 OCCEdge::firstDer(double par) const
-{
-  
+{  
   BRepAdaptor_Curve brepc(c);
   BRepLProp_CLProps prop(brepc, 1, 1e-5);
   prop.SetParameter (par);

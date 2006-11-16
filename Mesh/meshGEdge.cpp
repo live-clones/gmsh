@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.15 2006-11-15 20:46:46 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.16 2006-11-16 18:32:41 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -139,6 +139,7 @@ void deMeshGEdge :: operator() (GEdge *ge)
 void meshGEdge :: operator() (GEdge *ge) 
 {  
   if(ge->geomType() == GEntity::DiscreteCurve) return;
+  if(!ge->is3D()) return;
 
   // Send a messsage to the GMSH environment
   Msg(INFO, "Meshing curve %d", ge->tag());

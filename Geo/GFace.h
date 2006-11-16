@@ -22,13 +22,13 @@
 
 #include "GPoint.h"
 #include "GEntity.h"
+#include "GEdgeLoop.h"
 #include "MElement.h"
 #include "SPoint2.h"
 #include "SVector3.h"
 #include "Pair.h"
 #include "ExtrudeParams.h"
 
-#include <set>
 
 struct mean_plane
 {
@@ -43,10 +43,8 @@ class GRegion;
 class GFace : public GEntity 
 {
  protected: 
-  // in a manifold representation, edges can
-  // be taken twice in the topology in order 
-  // to represent the periodicity of the surface
-  std::set<GEdge *> edges_taken_twice;
+  // edge loops, will replace what follows
+  std::list<GEdgeLoop> edgeLoops;
   // list of al the edges of the face
   std::list<GEdge *> l_edges;
   std::list<int> l_dirs;
@@ -54,7 +52,11 @@ class GFace : public GEntity
   mean_plane meanPlane;
   std::list<GEdge *> embedded_edges;
   std::list<GVertex *> embedded_vertices;
-  void computeDirs ();
+  // given a list of GEdges, the function builds a 
+  // list of wires, i.e. closed edge loops.
+  // the first wire is the one that is the
+  // outer contour of the face. 
+  void resolveWires ();
 
  public:
   GFace(GModel *model, int tag);

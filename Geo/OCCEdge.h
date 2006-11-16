@@ -28,8 +28,9 @@
 class OCCEdge : public GEdge {
  protected:
   TopoDS_Edge c;
-  Handle(Geom_Curve) curve;
   double s0,s1;
+  Handle(Geom_Curve) curve;
+  Handle(Geom2d_Curve) curve2d;
 
  public:
   OCCEdge(GModel *model, TopoDS_Edge _e, int num, GVertex *v1, GVertex *v2);
@@ -52,6 +53,7 @@ class OCCEdge : public GEdge {
   virtual double parFromPoint(const SPoint3 &pt) const;
   virtual int minimumMeshSegments () const;
   virtual int minimumDrawSegments () const;
+  bool is3D() const {return !curve.IsNull();}
 };
 
 #endif

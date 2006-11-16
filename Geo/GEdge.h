@@ -93,6 +93,9 @@ class GEdge : public GEntity {
   // Returns a type-specific additional information string
   virtual std::string getAdditionalInfoString();
 
+  // tells if the edge is a 3D edge (in opposition with a trimmed curve on a surface)
+  virtual bool is3D () const {return true;}
+
   struct {
     char   Method;
     double coeffTransfinite;

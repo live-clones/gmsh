@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.5 2006-11-15 20:46:46 remacle Exp $
+// $Id: OCCFace.cpp,v 1.6 2006-11-16 18:32:41 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -17,10 +17,11 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to <OCC@geuz.org>.
+// Please report all bugs and problems to <gmsh@geuz.org>.
 
 #if defined(HAVE_OCC)
 #include "GModel.h"
+#include "GEdgeLoop.h"
 #include "OCCVertex.h"
 #include "OCCEdge.h"
 #include "OCCFace.h"
@@ -35,64 +36,27 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
       TopoDS_Shape wire = exp2.Current();
       Msg(INFO,"OCC Face %d - New Wire",num);
       std::list<GEdge*> l_wire;
-      std::set<GEdge*> testPeriodic;
       for (exp3.Init (wire, TopAbs_EDGE); exp3.More(); exp3.Next())
 	{	  
 	  TopoDS_Edge edge = TopoDS::Edge (exp3.Current());
 	  int index = emap.FindIndex(edge);
 	  GEdge *e = m->edgeByTag(index);
 	  if(!e) throw;
-	  if (testPeriodic.find(e) !=testPeriodic.end()){
-	    _periodic = true;
-	    edges_taken_twice.insert(e);
-	  }
-	  else testPeriodic.insert(e);
-	  l_edges.push_back(e);
 	  l_wire.push_back(e);
 	  e->addFace(this);
 	}      
-      if (l_wire.size() == 1)l_dirs.push_back(1);
-      else if (!_periodic)
-	{
-	  GVertex *last;
-	  std::list<GEdge*>::iterator it = l_wire.begin();
-	  GEdge *e1 = *it;	  
-	  ++it;
-	  GEdge *e2 = *it;
 
-	  if (e1->getEndVertex() == e2->getEndVertex() ||e1->getEndVertex() == e2->getBeginVertex())
-	    {
-	      last = e1->getEndVertex();
-	      l_dirs.push_back(1);
-	      Msg(INFO,"OCC Face %d - Edge %d (%d,%d) dir 1",num,e1->tag(),e1->getBeginVertex()->tag(),e1->getEndVertex()->tag());
-	    }
-	  else if (e1->getBeginVertex() == e2->getEndVertex() ||e1->getBeginVertex() == e2->getBeginVertex())
-	    {
-	      last = e1->getBeginVertex();
-	      l_dirs.push_back(-1);
-	      Msg(INFO,"OCC Face %d - Edge %d (%d,%d) dir -1",num,e1->tag(),e1->getBeginVertex()->tag(),e1->getEndVertex()->tag());
-	    }
-	  for ( ; it != l_wire.end() ; ++it)
-	    {
-	      GEdge *e = *it;
-	      if ( last == e->getBeginVertex())
-		{
-		  l_dirs.push_back(1);
-		  last = e->getEndVertex();
-		  Msg(INFO,"OCC Face %d - Edge %d (%d,%d) dir 1",num,e->tag(),e->getBeginVertex()->tag(),e->getEndVertex()->tag());
-		}
-	      else if (last == e->getEndVertex())
-		{
-		  l_dirs.push_back(-1);
-		  last = e->getBeginVertex();
-		  Msg(INFO,"OCC Face %d - Edge %d (%d,%d) dir -1",num,e->tag(),e->getBeginVertex()->tag(),e->getEndVertex()->tag());
-		}
-	      else
-		{
-		  Msg(GERROR,"Incoherent surface %d Edge %d (%d,%d) ",num,e->tag(),e->getBeginVertex()->tag(),e->getEndVertex()->tag());
-		}
-	    }
-	}      
+      GEdgeLoop el (l_wire);
+
+      for (GEdgeLoop::citer it = el.begin() ; it != el.end() ; ++it)
+	{
+	  if(!it->ge->is3D())_periodic = true;
+	  if (el.count (it->ge) > 1)_periodic = true;
+	  l_edges.push_back(it->ge);
+	  l_dirs.push_back(it->_sign);
+	}
+      
+      edgeLoops.push_back(el);
     }
 
   Msg(INFO,"OCC Face %d with %d edges",num,l_edges.size());
