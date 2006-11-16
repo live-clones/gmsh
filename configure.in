@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.107 2006-11-15 20:46:36 geuzaine Exp $
+dnl $Id: configure.in,v 1.108 2006-11-16 01:56:51 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 dnl
@@ -557,7 +557,7 @@ if test "x$enable_occ" = "xyes"; then
   fi
   AC_CHECK_LIB(TKernel,main,OCC="yes",OCC="no")
   if test "x${OCC}" = "xyes"; then
-    OCC_LIBS="-lTKSTEP  -lTKXDESTEP -lTKSTEP209 -lTKSTEPAttr -lTKSTEPBase"
+    OCC_LIBS="-lTKSTEP -lTKXDESTEP -lTKSTEP209 -lTKSTEPAttr -lTKSTEPBase"
     OCC_LIBS="${OCC_LIBS} -lTKXDEIGES -lTKIGES -lTKXSBase -lTKStdSchema -lTKStdLSchema"
     OCC_LIBS="${OCC_LIBS} -lTKV3d -lTKV2d -lTKBool -lTKShHealing -lTKMesh -lTKPrim"
     OCC_LIBS="${OCC_LIBS} -lTKTopAlgo -lTKBRep -lTKGeomAlgo -lTKGeomBase -lTKG3d -lTKG2d"

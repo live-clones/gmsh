@@ -4575,7 +4575,7 @@ else
 fi
 
   if test "x${OCC}" = "xyes"; then
-    OCC_LIBS="-lTKSTEP  -lTKXDESTEP -lTKSTEP209 -lTKSTEPAttr -lTKSTEPBase"
+    OCC_LIBS="-lTKSTEP -lTKXDESTEP -lTKSTEP209 -lTKSTEPAttr -lTKSTEPBase"
     OCC_LIBS="${OCC_LIBS} -lTKXDEIGES -lTKIGES -lTKXSBase -lTKStdSchema -lTKStdLSchema"
     OCC_LIBS="${OCC_LIBS} -lTKV3d -lTKV2d -lTKBool -lTKShHealing -lTKMesh -lTKPrim"
     OCC_LIBS="${OCC_LIBS} -lTKTopAlgo -lTKBRep -lTKGeomAlgo -lTKGeomBase -lTKG3d -lTKG2d"
