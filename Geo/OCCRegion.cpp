@@ -1,4 +1,4 @@
-// $Id: OCCRegion.cpp,v 1.2 2006-11-15 15:06:45 geuzaine Exp $
+// $Id: OCCRegion.cpp,v 1.3 2006-11-16 18:48:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,13 +19,14 @@
 // 
 // Please report all bugs and problems to <OCC@geuz.org>.
 
-#if defined(HAVE_OCC)
 #include "GModel.h"
 #include "OCCVertex.h"
 #include "OCCEdge.h"
 #include "OCCFace.h"
 #include "OCCRegion.h"
 #include "Message.h"
+
+#if defined(HAVE_OCC)
 
 OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num, TopTools_IndexedMapOfShape &fmap)
   : GRegion(m, num), s(_s)

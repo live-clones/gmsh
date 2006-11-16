@@ -1,5 +1,8 @@
 #ifndef _OCC_INCLUDES_
 #define _OCC_INCLUDES_
+
+#if defined(HAVE_OCC)
+
 #include <iostream>
 using std::iostream;
 #include "config.h"
@@ -87,4 +90,8 @@ using std::iostream;
 #include "ShapeBuild_ReShape.hxx"
 #include "ShapeFix.hxx"
 #include "ShapeFix_FixSmallFace.hxx"
+
 #endif
+
+#endif
+

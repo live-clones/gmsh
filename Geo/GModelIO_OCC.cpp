@@ -1,4 +1,4 @@
-  // $Id: GModelIO_OCC.cpp,v 1.6 2006-11-16 18:32:41 remacle Exp $
+  // $Id: GModelIO_OCC.cpp,v 1.7 2006-11-16 18:48:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -21,13 +21,13 @@
 
 #include "GModel.h"
 #include "Message.h"
-
-#if defined(HAVE_OCC)
 #include "OCCIncludes.h"
 #include "OCCVertex.h"
 #include "OCCEdge.h"
 #include "OCCFace.h"
 #include "OCCRegion.h"
+
+#if defined(HAVE_OCC)
 
 #include "ShapeAnalysis_ShapeTolerance.hxx"
 #include "ShapeAnalysis_ShapeContents.hxx"
@@ -39,7 +39,6 @@
 #include "ShapeBuild_ReShape.hxx"
 #include "ShapeFix.hxx"
 #include "ShapeFix_FixSmallFace.hxx"
-
 
 class OCC_Internals
 {

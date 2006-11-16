@@ -26,6 +26,8 @@
 #include "OCCEdge.h"
 #include "Range.h"
 
+#if defined(HAVE_OCC)
+
 class OCCFace : public GFace {
  protected:
   TopoDS_Face s;
@@ -64,5 +66,7 @@ class OCCFace : public GFace {
   virtual void parFromPoint(const SPoint3 &, std::list<double> &u, std::list<double> &v ) const;
   virtual double curvature(const SPoint2 &param) const;
 };
+
+#endif
 
 #endif

@@ -19,11 +19,14 @@
 // USA.
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
+
 #include "GEdge.h"
 #include "GModel.h"
 #include "OCCVertex.h"
 #include "Mesh.h"
 #include "Range.h"
+
+#if defined(HAVE_OCC)
 
 class OCCEdge : public GEdge {
  protected:
@@ -55,5 +58,7 @@ class OCCEdge : public GEdge {
   virtual int minimumDrawSegments () const;
   bool is3D() const {return !curve.IsNull();}
 };
+
+#endif
 
 #endif

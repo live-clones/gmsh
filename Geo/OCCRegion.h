@@ -23,6 +23,8 @@
 #include "Mesh.h"
 #include "GRegion.h"
 
+#if defined(HAVE_OCC)
+
 class OCCRegion : public GRegion {
  protected:
   TopoDS_Solid s;
@@ -33,5 +35,7 @@ class OCCRegion : public GRegion {
   ModelType getNativeType() const { return OpenCascadeModel; }
   void * getNativePtr() const { return (void*)&s; }
 };
+
+#endif
 
 #endif

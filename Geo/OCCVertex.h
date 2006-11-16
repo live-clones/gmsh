@@ -20,12 +20,13 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-
 #include "Mesh.h"
 #include "GModel.h"
 #include "OCCIncludes.h"
 #include "GVertex.h"
 #include "Context.h"
+
+#if defined(HAVE_OCC)
 
 class OCCVertex : public GVertex {
  protected:
@@ -69,5 +70,7 @@ class OCCVertex : public GVertex {
     return lc;
   }
 };
+
+#endif
 
 #endif

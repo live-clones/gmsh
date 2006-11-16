@@ -1,4 +1,4 @@
-// $Id: OCCVertex.cpp,v 1.1 2006-11-15 20:52:57 remacle Exp $
+// $Id: OCCVertex.cpp,v 1.2 2006-11-16 18:48:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,11 +19,12 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#if defined(HAVE_OCC)
 #include "GModel.h"
 #include "OCCVertex.h"
 #include "OCCEdge.h"
 #include "OCCFace.h"
+
+#if defined(HAVE_OCC)
 
 double max_surf_curvature ( double x, double y, double z , const GEdge *_myGEdge)
 {
@@ -39,7 +40,6 @@ double max_surf_curvature ( double x, double y, double z , const GEdge *_myGEdge
     }  
   return curv;
 }
-
 
 double OCCVertex::max_curvature_of_surfaces() const
 {  

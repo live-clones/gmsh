@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.5 2006-11-16 18:32:41 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.6 2006-11-16 18:48:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,10 +19,11 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#if defined(HAVE_OCC)
 #include "GModel.h"
 #include "Message.h"
 #include "OCCEdge.h"
+
+#if defined(HAVE_OCC)
 
 OCCEdge::OCCEdge(GModel *model, TopoDS_Edge edge, int num, GVertex *v1, GVertex *v2)
   : GEdge(model, num, v1, v2), c(edge)
