@@ -26,6 +26,8 @@
 #include "Mesh.h"
 #include "Range.h"
 
+class OCCFace;
+
 #if defined(HAVE_OCC)
 
 class OCCEdge : public GEdge {
@@ -33,8 +35,8 @@ class OCCEdge : public GEdge {
   TopoDS_Edge c;
   double s0,s1;
   Handle(Geom_Curve) curve;
-  Handle(Geom2d_Curve) curve2d;
-
+  mutable Handle(Geom2d_Curve) curve2d;
+  mutable GFace *trimmed;
  public:
   OCCEdge(GModel *model, TopoDS_Edge _e, int num, GVertex *v1, GVertex *v2);
   virtual ~OCCEdge() {}
@@ -50,13 +52,14 @@ class OCCEdge : public GEdge {
   virtual int containsParam(double pt) const;
   virtual SVector3 firstDer(double par) const;
   virtual double curvature (double par) const;
-  virtual SPoint2 reparamOnFace(GFace * face, double epar, int dir) const { throw; }
+  virtual SPoint2 reparamOnFace(GFace * face, double epar, int dir) const ;
   ModelType getNativeType() const { return OpenCascadeModel; }
   void * getNativePtr() const { return (void*) &c; }
   virtual double parFromPoint(const SPoint3 &pt) const;
   virtual int minimumMeshSegments () const;
   virtual int minimumDrawSegments () const;
   bool is3D() const {return !curve.IsNull();}
+  void setTrimmed (OCCFace *);
 };
 
 #endif

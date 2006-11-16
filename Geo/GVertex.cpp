@@ -1,4 +1,4 @@
-// $Id: GVertex.cpp,v 1.6 2006-10-12 01:35:32 geuzaine Exp $
+// $Id: GVertex.cpp,v 1.7 2006-11-16 21:14:10 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GVertex.h"
+#include "GFace.h"
 #include <algorithm>
 
 GVertex::GVertex(GModel *m, int tag) : GEntity (m, tag) 
@@ -42,6 +43,13 @@ void GVertex::delEdge(GEdge *e)
 { 
   l_edges.erase(std::find(l_edges.begin(), l_edges.end(), e));
 }
+
+
+SPoint2 GVertex::reparamOnFace ( GFace *gf ) const
+{
+  return gf->parFromPoint ( SPoint3(x(),y(),z() ));
+}
+
 
 std::string GVertex::getAdditionalInfoString()
 {

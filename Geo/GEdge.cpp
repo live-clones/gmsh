@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.17 2006-11-15 20:46:46 remacle Exp $
+// $Id: GEdge.cpp,v 1.18 2006-11-16 21:14:10 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,7 @@
 #include <algorithm>
 #include "GModel.h"
 #include "GEdge.h"
+#include "GFace.h"
 #include "GmshDefines.h"
 
 GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
@@ -119,6 +120,15 @@ SVector3 GEdge::secondDer(double par) const
   SVector3 x2 = firstDer(par+eps);
   return 500*(x2-x1);
 }
+
+// Reparmaterize the point onto the given face.
+SPoint2 GEdge::reparamOnFace(GFace *face, double epar,int dir) const
+{
+  const GPoint p3 = point (epar);
+  SPoint3 sp3(p3.x(),p3.y(),p3.z());
+  return face->parFromPoint(sp3);
+}
+
 
 double GEdge::curvature(double par) const 
 {

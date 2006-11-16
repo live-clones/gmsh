@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.7 2006-11-16 18:48:00 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.8 2006-11-16 21:14:10 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -45,6 +45,11 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
 	  if(!e) throw;
 	  l_wire.push_back(e);
 	  e->addFace(this);
+	  if (!e->is3D())
+	    {
+	      OCCEdge *occe = (OCCEdge*)e;
+	      occe->setTrimmed(this);
+	    }
 	}      
 
       GEdgeLoop el (l_wire);

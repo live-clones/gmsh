@@ -1,4 +1,4 @@
-  // $Id: GModelIO_OCC.cpp,v 1.7 2006-11-16 18:48:00 geuzaine Exp $
+  // $Id: GModelIO_OCC.cpp,v 1.8 2006-11-16 21:14:10 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -67,6 +67,12 @@ public:
 void OCC_Internals :: buildLists ()
 {
   TopExp_Explorer exp0, exp1, exp2, exp3, exp4, exp5;
+  somap.Clear();
+  shmap.Clear();
+  fmap.Clear();
+  wmap.Clear();
+  emap.Clear();
+  vmap.Clear();
   
   for (exp0.Init(shape, TopAbs_SOLID);
        exp0.More(); exp0.Next())
@@ -485,7 +491,7 @@ void OCC_Internals :: loadBREP (const char *fn)
   Standard_Boolean result = BRepTools::Read( shape, (char*)fn, aBuilder );
   BRepTools::Clean (shape);
   buildLists();
-  //  HealGeometry();
+  HealGeometry();
   BRepTools::Clean (shape);
 }
 
@@ -497,7 +503,11 @@ void OCC_Internals :: loadSTEP (const char *fn)
   reader.TransferRoots (); 
   shape = reader.OneShape();  
   BRepTools::Clean (shape);
+  buildLists();
+  HealGeometry();
+  BRepTools::Clean (shape);
 }
+
 
 void OCC_Internals :: loadIGES (const char *fn)
 {
@@ -506,6 +516,9 @@ void OCC_Internals :: loadIGES (const char *fn)
   Standard_Integer nb = reader.NbRootsForTransfer();
   reader.TransferRoots (); 
   shape = reader.OneShape();  
+  BRepTools::Clean (shape);
+  buildLists();
+  HealGeometry();
   BRepTools::Clean (shape);
 }
 

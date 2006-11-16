@@ -76,7 +76,7 @@ class GEdge : public GEntity {
   virtual double curvature (double par) const;  
 
   // Reparmaterize the point onto the given face.
-  virtual SPoint2 reparamOnFace(GFace *face, double epar,int dir) const = 0;
+  virtual SPoint2 reparamOnFace(GFace *face, double epar,int dir) const ;
 
   // Recompute the mesh partitions defined on this edge.
   void recomputeMeshPartitions();

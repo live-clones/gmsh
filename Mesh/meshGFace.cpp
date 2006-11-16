@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.18 2006-11-15 20:46:46 remacle Exp $
+// $Id: meshGFace.cpp,v 1.19 2006-11-16 21:14:10 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -96,10 +96,39 @@ public :
     : gf(_gf){}
   void operator () (MVertex * v)
   {
-    SPoint2 param =  gf->parFromPoint (SPoint3(v->x(),v->y(),v->z()));
-    v->x() = param.x();  
-    v->y() = param.y();
-    v->z() = 0.0;
+
+    GEntity *ge = v->onWhat();
+
+    // here, the point is classified on a model edge. So
+    // it is possible that the CAD can easily compute
+    // parametric coordinates of the point on the face using the
+    // parametric coordinate of the point on the edge. By default,
+    // the model will use parFromPoint
+    if (ge->dim() == 0)
+      {
+	GVertex *gve = (GVertex*)ge;
+	SPoint2 param = gve->reparamOnFace(gf);
+	v->x() = param.x();  
+	v->y() = param.y();
+	v->z() = 0.0;
+      }
+    else if (ge->dim() == 1)
+      {
+	GEdge *ged = (GEdge*)ge;
+	double u;
+	v->getParameter(0,u);
+	SPoint2 param = ged->reparamOnFace(gf,u,1);
+	v->x() = param.x();  
+	v->y() = param.y();
+	v->z() = 0.0;
+      }
+    else
+      {
+	SPoint2 param =  gf->parFromPoint (SPoint3(v->x(),v->y(),v->z()));
+	v->x() = param.x();  
+	v->y() = param.y();
+	v->z() = 0.0;
+      }
   }
 };
 
@@ -656,7 +685,7 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge)
 
   BDS_Edge * e = m->recover_edge ( vstart->getNum(), vend->getNum());
   if (e)e->g = g;
-  else throw;
+  else return false;
 
   for (unsigned int i=1;i<ge->mesh_vertices.size();i++)
     {
@@ -854,7 +883,11 @@ void gmsh2DMeshGenerator ( GFace *gf )
   it = edges.begin();
   while(it != edges.end())
     {
-      recover_medge ( m, *it);
+      if (!recover_medge ( m, *it))
+	{
+	  Msg(WARNING,"Face not meshed");
+	  return;
+	}
       ++it;
     }
   //  Msg(INFO,"Boundary Edges recovered for surface %d",gf->tag());

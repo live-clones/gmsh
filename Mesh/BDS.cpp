@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.63 2006-11-15 20:46:46 remacle Exp $
+// $Id: BDS.cpp,v 1.64 2006-11-16 21:14:10 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -237,7 +237,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2)
 	  if (!eee)
 	    {
 	      outputScalarField(triangles, "debug.pos");
-	      throw;
+	      return 0;
 	    }
 	  return eee;
 	}

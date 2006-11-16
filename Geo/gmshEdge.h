@@ -44,7 +44,6 @@ class gmshEdge : public GEdge {
   virtual int containsPoint(const SPoint3 &pt) const { throw; }
   virtual int containsParam(double pt) const;
   virtual SVector3 firstDer(double par) const;
-  virtual SPoint2 reparamOnFace(GFace * face, double epar, int dir) const { throw; }
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return c; }
   virtual double parFromPoint(const SPoint3 &pt) const;

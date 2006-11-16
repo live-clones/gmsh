@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.6 2006-11-16 18:48:00 geuzaine Exp $
+// $Id: OCCEdge.cpp,v 1.7 2006-11-16 21:14:10 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -22,25 +22,48 @@
 #include "GModel.h"
 #include "Message.h"
 #include "OCCEdge.h"
+#include "OCCFace.h"
 
 #if defined(HAVE_OCC)
 
 OCCEdge::OCCEdge(GModel *model, TopoDS_Edge edge, int num, GVertex *v1, GVertex *v2)
-  : GEdge(model, num, v1, v2), c(edge)
+  : GEdge(model, num, v1, v2), trimmed(0),c(edge)
 {
   curve = BRep_Tool::Curve(c, s0, s1);
-  if (curve.IsNull())
-    {
-      Msg(WARNING,"OCC Curve %d is not a 3D curve",tag());
-    }
 }
 
 Range<double> OCCEdge::parBounds(int i) const
 { 
-  double a,b;
-  BRep_Tool::Range (c,a,b); 
-  return(Range<double>(a,b));
+  //  double a,b;
+  //  BRep_Tool::Range (c,a,b); 
+  return(Range<double>(s0,s1));
 }
+
+void OCCEdge::setTrimmed (OCCFace *f)
+{
+  if (!trimmed)
+    {
+      trimmed = f;
+      const TopoDS_Face *s = (TopoDS_Face*) trimmed->getNativePtr();
+      curve2d = BRep_Tool::CurveOnSurface(c, *s, s0, s1);
+      if (curve2d.IsNull())  trimmed = 0;
+    }
+}
+
+SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar,int dir) const
+{
+  double t0,t1;
+  const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
+  Handle(Geom2d_Curve) c2d = BRep_Tool::CurveOnSurface(c, *s, t0, t1);
+  if (c2d.IsNull())
+    return GEdge::reparamOnFace(face, epar,dir);
+
+  double u,v;
+  c2d->Value(epar).Coord(u,v);
+  return SPoint2 (u,v);
+}
+
+
 
 GPoint OCCEdge::point(double par) const
 {
@@ -50,9 +73,16 @@ GPoint OCCEdge::point(double par) const
       gp_Pnt pnt = curve->Value (par);
       return GPoint(pnt.X(),pnt.Y(),pnt.Z());
     }
+  else if (trimmed)
+    {
+      double u,v;
+      curve2d->Value(par).Coord(u,v);
+      return trimmed->point(u,v);
+    }
   else
     {
-      return GPoint(0,0,0);
+      Msg(WARNING,"OCC Curve %d is neither a 3D curve not a trimmed curve",tag());
+      return GPoint (0,0,0);
     }
 }
 
