@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.108 2006-11-16 01:56:51 geuzaine Exp $
+dnl $Id: configure.in,v 1.109 2006-11-19 02:23:49 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 dnl
@@ -557,11 +557,15 @@ if test "x$enable_occ" = "xyes"; then
   fi
   AC_CHECK_LIB(TKernel,main,OCC="yes",OCC="no")
   if test "x${OCC}" = "xyes"; then
-    OCC_LIBS="-lTKSTEP -lTKXDESTEP -lTKSTEP209 -lTKSTEPAttr -lTKSTEPBase"
-    OCC_LIBS="${OCC_LIBS} -lTKXDEIGES -lTKIGES -lTKXSBase -lTKStdSchema -lTKStdLSchema"
-    OCC_LIBS="${OCC_LIBS} -lTKV3d -lTKV2d -lTKBool -lTKShHealing -lTKMesh -lTKPrim"
-    OCC_LIBS="${OCC_LIBS} -lTKTopAlgo -lTKBRep -lTKGeomAlgo -lTKGeomBase -lTKG3d -lTKG2d"
-    OCC_LIBS="${OCC_LIBS} -lTKMath -lTKernel"
+    # data exchange (see occ/ros/adm/make/Makefile for more info)
+    OCC_LIBS="-lTKSTEP -lTKSTEPBase -lTKIGES -lTKXSBase"
+    # modeling algorithms
+    OCC_LIBS="${OCC_LIBS} -lTKOffset -lTKFeat -lTKFillet -lTKBool -lTKShHealing"
+    OCC_LIBS="${OCC_LIBS} -lTKMesh -lTKHLR -lTKBO -lTKPrim -lTKTopAlgo -lTKGeomAlgo"
+    # modeling data
+    OCC_LIBS="${OCC_LIBS} -lTKBRep -lTKGeomBase -lTKG3d -lTKG2d"
+    # foundation classes
+    OCC_LIBS="${OCC_LIBS} -lTKAdvTools -lTKMath -lTKernel"
     if test "x${OCC_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} ${OCC_LIBS}"
       FLAGS="${FLAGS} -DHAVE_OCC"

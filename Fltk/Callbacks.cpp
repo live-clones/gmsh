@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.473 2006-11-07 19:47:12 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.474 2006-11-19 02:23:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -607,6 +607,11 @@ static char *file_types =
   "\tMedit mesh (*.mesh)"
   "\tNastran bulk data file (*.bdf)"
   "\tSTL surface mesh (*.stl)"
+#if defined(HAVE_OCC)
+  "\tSTEP model (*.step)"
+  "\tIGES model (*.iges)"
+  "\tOpenCascade model (*.brep)"
+#endif
   "\tJPEG (*.jpg)"
   "\tPNG (*.png)"
   "\tBMP (*.bmp)"
