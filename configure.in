@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.110 2006-11-20 05:04:44 geuzaine Exp $
+dnl $Id: configure.in,v 1.111 2006-11-20 20:41:11 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 dnl
@@ -558,7 +558,7 @@ if test "x$enable_occ" = "xyes"; then
   AC_CHECK_LIB(TKernel,main,OCC="yes",OCC="no")
   if test "x${OCC}" = "xyes"; then
     # DataExchange (subset; see occ/ros/adm/make/Makefile for more info)
-    OCC_LIBS="-lTKSTEP -lTKSTEP209 -lTKSTEPBase -lTKSTEPAttr -lTKIGES -lTKXSBase"
+    OCC_LIBS="-lTKSTEP -lTKSTEP209 -lTKSTEPAttr -lTKSTEPBase -lTKIGES -lTKXSBase"
     # ModelingAlgorithms
     OCC_LIBS="${OCC_LIBS} -lTKOffset -lTKFeat -lTKFillet -lTKBool -lTKShHealing"
     OCC_LIBS="${OCC_LIBS} -lTKMesh -lTKHLR -lTKBO -lTKPrim -lTKTopAlgo -lTKGeomAlgo"

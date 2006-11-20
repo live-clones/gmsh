@@ -4576,7 +4576,7 @@ fi
 
   if test "x${OCC}" = "xyes"; then
     # DataExchange (subset; see occ/ros/adm/make/Makefile for more info)
-    OCC_LIBS="-lTKSTEP -lTKSTEP209 -lTKSTEPBase -lTKSTEPAttr -lTKIGES -lTKXSBase"
+    OCC_LIBS="-lTKSTEP -lTKSTEP209 -lTKSTEPAttr -lTKSTEPBase -lTKIGES -lTKXSBase"
     # ModelingAlgorithms
     OCC_LIBS="${OCC_LIBS} -lTKOffset -lTKFeat -lTKFillet -lTKBool -lTKShHealing"
     OCC_LIBS="${OCC_LIBS} -lTKMesh -lTKHLR -lTKBO -lTKPrim -lTKTopAlgo -lTKGeomAlgo"
