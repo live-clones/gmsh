@@ -44,7 +44,6 @@ class GFace : public GEntity
 {
  protected: 
   // edge loops, will replace what follows
-  std::list<GEdgeLoop> edgeLoops;
   // list of al the edges of the face
   std::list<GEdge *> l_edges;
   std::list<int> l_dirs;
@@ -96,7 +95,6 @@ class GFace : public GEntity
   // Return the parmater location on the face given a point in space
   // that is on the face.
   virtual SPoint2            parFromPoint(const SPoint3 &) const;
-  virtual void               parFromPoint(const SPoint3 &, std::list<double> &u, std::list<double> &v ) const;
 
   // True if the parameter value is interior to the face.
   virtual int containsParam(const SPoint2 &pt) const = 0;
@@ -143,6 +141,7 @@ class GFace : public GEntity
 
   std::vector<MTriangle*> triangles;
   std::vector<MQuadrangle*> quadrangles;
+  std::list<GEdgeLoop> edgeLoops;
 
   struct {
     // do we recombine the triangles of the mesh ?
@@ -158,6 +157,7 @@ class GFace : public GEntity
     int transfiniteArrangement;
     // the extrusion parameters (if any)
     ExtrudeParams *extrude;
+    // edge loops
   } meshAttributes ;
 
 };

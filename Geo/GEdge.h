@@ -49,6 +49,9 @@ class GEdge : public GEntity {
   virtual bool continuous(int dim=0) const = 0;
   virtual void setVisibility(char val, bool recursive=false);
 
+  /** True if the edge is a seam for the given face. */
+  virtual int isSeam(GFace *face) const {return 0;}
+
   // The bounding box
   SBoundingBox3d bounds() const;
 

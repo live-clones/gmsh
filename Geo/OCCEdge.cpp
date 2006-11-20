@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.7 2006-11-16 21:14:10 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.8 2006-11-20 12:44:09 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -52,17 +52,57 @@ void OCCEdge::setTrimmed (OCCFace *f)
 
 SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar,int dir) const
 {
-  double t0,t1;
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
+  double t0,t1;
   Handle(Geom2d_Curve) c2d = BRep_Tool::CurveOnSurface(c, *s, t0, t1);
   if (c2d.IsNull())
     return GEdge::reparamOnFace(face, epar,dir);
-
   double u,v;
   c2d->Value(epar).Coord(u,v);
-  return SPoint2 (u,v);
+  if (! isSeam ( face ) )
+    {
+      return SPoint2 (u,v);
+    }
+  else
+    {
+      BRepAdaptor_Surface surface( *s );
+
+//       printf ("surface %d (%d %d) firstu %g lastu %g firstv %g lastv %g\n",
+// 	      surface.IsUPeriodic() ,
+// 	      surface.IsVPeriodic() ,
+// 	      face->tag(),
+// 	      surface.FirstUParameter(),
+// 	      surface.LastUParameter(),
+// 	      surface.FirstVParameter(),
+// 	      surface.LastVParameter());
+
+      if ( surface.IsUPeriodic() )
+	{
+	  if (dir == -1) 
+	    return SPoint2(surface.FirstUParameter(), v);
+	  else
+	    return SPoint2(surface.LastUParameter(), v);
+	}
+      else {
+	if (dir == -1) 
+	  return SPoint2(u , surface.FirstVParameter());
+	else
+	  return SPoint2(u , surface.LastVParameter());
+      }
+    }
 }
 
+/** True if the edge is a seam for the given face. */
+int OCCEdge::isSeam(GFace *face) const
+{
+  const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
+  BRepAdaptor_Surface surface( *s );
+  if ( surface.IsUPeriodic() || surface.IsVPeriodic() )
+    {
+      return BRep_Tool::IsClosed( c, *s );
+    }
+  return 0;
+}
 
 
 GPoint OCCEdge::point(double par) const

@@ -44,7 +44,7 @@ class GVertex : public GEntity
   virtual GeomType geomType() const {return Point;}
   virtual double prescribedMeshSizeAtVertex() const {return 0;}
   virtual SBoundingBox3d bounds(){ return SBoundingBox3d(SPoint3(x(), y(), z())); }
-  virtual SPoint2 reparamOnFace ( GFace *gf ) const;
+  virtual SPoint2 reparamOnFace ( GFace *gf , int) const;
   virtual std::string getAdditionalInfoString();
 };
 

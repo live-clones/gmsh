@@ -1,4 +1,4 @@
-// $Id: OCCVertex.cpp,v 1.3 2006-11-16 21:14:10 remacle Exp $
+// $Id: OCCVertex.cpp,v 1.4 2006-11-20 12:44:09 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -33,7 +33,7 @@ double max_surf_curvature ( const GVertex *gv, double x, double y, double z , co
   double curv = 0;
   while (it != faces.end())
     {
-      SPoint2 par = gv->reparamOnFace((*it));
+      SPoint2 par = gv->reparamOnFace((*it),1);
       double cc = (*it)->curvature ( par );
       if (cc < 1.e2) curv = std::max(curv, cc );					
       ++it;
@@ -55,13 +55,32 @@ double OCCVertex::max_curvature_of_surfaces() const
   return max_curvature;
 }
 
-SPoint2 OCCVertex::reparamOnFace ( GFace *gf ) const
+SPoint2 OCCVertex::reparamOnFace ( GFace *gf , int dir) const
 {
   std::list<GEdge*>::const_iterator it = l_edges.begin();
   while (it != l_edges.end())
     {
       std::list<GEdge*> l_edges = gf->edges();
-      
+      if (std::find(l_edges.begin(),l_edges.end(),*it) != l_edges.end())
+	{
+	  if ((*it)->isSeam(gf))
+	    {
+	      const TopoDS_Face *s = (TopoDS_Face*) gf->getNativePtr();
+	      const TopoDS_Edge *c = (TopoDS_Edge*) (*it)->getNativePtr();
+	      double s1,s0;
+	      Handle(Geom2d_Curve) curve2d = BRep_Tool::CurveOnSurface(*c, *s, s0, s1);
+	      if ((*it)->getBeginVertex() == this)
+		return (*it)->reparamOnFace(gf,s0,dir);
+	      else if ((*it)->getEndVertex() == this)
+		return (*it)->reparamOnFace(gf,s1,dir);
+	    }
+	}
+      ++it;
+    }  
+  it = l_edges.begin();
+  while (it != l_edges.end())
+    {
+      std::list<GEdge*> l_edges = gf->edges();
       if (std::find(l_edges.begin(),l_edges.end(),*it) != l_edges.end())
 	{
 	  const TopoDS_Face *s = (TopoDS_Face*) gf->getNativePtr();
@@ -69,9 +88,9 @@ SPoint2 OCCVertex::reparamOnFace ( GFace *gf ) const
 	  double s1,s0;
 	  Handle(Geom2d_Curve) curve2d = BRep_Tool::CurveOnSurface(*c, *s, s0, s1);
 	  if ((*it)->getBeginVertex() == this)
-	    return (*it)->reparamOnFace(gf,s0,1);
+	    return (*it)->reparamOnFace(gf,s0,dir);
 	  else if ((*it)->getEndVertex() == this)
-	    return (*it)->reparamOnFace(gf,s1,1);
+	    return (*it)->reparamOnFace(gf,s1,dir);
 	}
       ++it;
     }

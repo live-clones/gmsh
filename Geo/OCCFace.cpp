@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.8 2006-11-16 21:14:10 remacle Exp $
+// $Id: OCCFace.cpp,v 1.9 2006-11-20 12:44:09 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,8 +25,12 @@
 #include "OCCEdge.h"
 #include "OCCFace.h"
 #include "Message.h"
+#include "Utils.h"
 
 #if defined(HAVE_OCC)
+#include "Geom_CylindricalSurface.hxx"
+#include "Geom_Plane.hxx"
+#include "gp_Pln.hxx"
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape &emap)
   : GFace(m, num), s(_s),_periodic(false)
@@ -156,39 +160,17 @@ SPoint2 OCCFace::parFromPoint(const SPoint3 &qp) const
       Msg(GERROR,"OCC Project Point on Surface FAIL");
       return GFace::parFromPoint(qp);
     }   
-//   if (proj.NbPoints() != 1)
-//     {
-//       Msg(WARNING,"More than one points match the projection (%d) ", proj.NbPoints());
-//     }
-
   double U,V;
   proj.LowerDistanceParameters (U, V);
-  //  proj.Parameters (1,U,V);
   return SPoint2(U,V);
-}
-
-void OCCFace::parFromPoint(const SPoint3 &qp, std::list<double> &u, std::list<double> &v ) const
-{
-  gp_Pnt pnt(qp.x(),qp.y(),qp.z());
-  GeomAPI_ProjectPointOnSurf proj(pnt, occface, umin, umax, vmin, vmax);
-  if (!proj.NbPoints())
-    {
-      Msg(GERROR,"OCC Project Point on Surface FAIL");
-      GFace::parFromPoint(qp,u,v);
-      return;
-    }   
-
-  for (int i = 1;i <= proj.NbPoints();i++)
-    {
-      double U,V;
-      proj.Parameters (i,U,V);
-      u.push_back(U);
-      v.push_back(V);
-    }
 }
 
 GEntity::GeomType OCCFace::geomType() const
 {
+  if (occface->DynamicType() == STANDARD_TYPE(Geom_Plane))
+    return Plane;
+  else if (occface->DynamicType() == STANDARD_TYPE(Geom_CylindricalSurface))
+    return Cylinder;
   return Unknown;
 }
 
@@ -208,7 +190,45 @@ double OCCFace::curvature (const SPoint2 &param) const
 
 int OCCFace::containsPoint(const SPoint3 &pt) const
 { 
-  Msg(GERROR,"Not Done Yet ...");
+  if(geomType() == Plane)
+    {
+      gp_Pln pl = Handle(Geom_Plane)::DownCast(occface)->Pln();
+
+      // OK to use the normal from the mean plane here: we compensate
+      // for the (possibly wrong) orientation at the end
+      double n[3] , c;
+      pl.Coefficients ( n[0], n[1], n[2], c );
+      norme(n);
+      double angle = 0.;
+      Vertex v,v1,v2;
+      v.Pos.X = pt.x();
+      v.Pos.Y = pt.y();
+      v.Pos.Z = pt.z();
+      for(std::list<GEdge*>::const_iterator  it = l_edges.begin(); it != l_edges.end(); it++) {
+	GEdge *c = *it;
+	int N=10;
+	Range<double> range = c->parBounds(0);
+	for(int j = 0; j < N ; j++) {
+	  double u1 = (double)j / (double)N;
+	  double u2 = (double)(j + 1) / (double)N;
+	  GPoint pp1 = c->point(range.low() + u1 * (range.high() - range.low() ));
+	  GPoint pp2 = c->point(range.low() + u2 * (range.high() - range.low() ));
+	  v1.Pos.X = pp1.x();
+	  v1.Pos.Y = pp1.y();
+	  v1.Pos.Z = pp1.z();
+	  v2.Pos.X = pp2.x();
+	  v2.Pos.Y = pp2.y();
+	  v2.Pos.Z = pp2.z();	  
+	  angle += angle_plan(&v, &v1, &v2, n);
+	}
+      }
+      // we're inside if angle equals 2 * pi
+      if(fabs(angle) > 2 * M_PI - 0.5 && fabs(angle) < 2 * M_PI + 0.5) 
+	return true;
+      return false;
+    }
+  else
+    Msg(GERROR,"Not Done Yet ...");
 }
 // void OCCFace::buildVisTriangulation ();
 // {

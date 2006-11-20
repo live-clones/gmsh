@@ -63,7 +63,6 @@ class OCCFace : public GFace {
   void * getNativePtr() const { return (void*)&s; }
   virtual bool surfPeriodic(int dim) const {return _periodic;}
   virtual SPoint2 parFromPoint(const SPoint3 &) const;
-  virtual void parFromPoint(const SPoint3 &, std::list<double> &u, std::list<double> &v ) const;
   virtual double curvature(const SPoint2 &param) const;
 };
 

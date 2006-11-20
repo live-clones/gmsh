@@ -69,7 +69,7 @@ class OCCVertex : public GVertex {
       lc = std::min (lc,6.28/(CTX.mesh.min_circ_points*maxc));
     return lc;
   }
-  virtual SPoint2 reparamOnFace ( GFace *gf ) const;
+  virtual SPoint2 reparamOnFace ( GFace *gf , int) const;
 };
 
 #endif

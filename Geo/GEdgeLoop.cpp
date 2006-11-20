@@ -105,6 +105,7 @@ GEdgeLoop::GEdgeLoop ( const std::list<GEdge*> & cwire )
   while (wire.size())
     {
       ges = nextOne ( prevOne , wire );
+      
       prevOne = &ges;
       ges.print();
       loop.push_back(ges);
