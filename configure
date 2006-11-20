@@ -4575,14 +4575,14 @@ else
 fi
 
   if test "x${OCC}" = "xyes"; then
-    # data exchange (see occ/ros/adm/make/Makefile for more info)
-    OCC_LIBS="-lTKSTEP -lTKSTEPBase -lTKIGES -lTKXSBase"
-    # modeling algorithms
+    # DataExchange (subset; see occ/ros/adm/make/Makefile for more info)
+    OCC_LIBS="-lTKSTEP -lTKSTEP209 -lTKSTEPBase -lTKSTEPAttr -lTKIGES -lTKXSBase"
+    # ModelingAlgorithms
     OCC_LIBS="${OCC_LIBS} -lTKOffset -lTKFeat -lTKFillet -lTKBool -lTKShHealing"
     OCC_LIBS="${OCC_LIBS} -lTKMesh -lTKHLR -lTKBO -lTKPrim -lTKTopAlgo -lTKGeomAlgo"
-    # modeling data
+    # ModelingData
     OCC_LIBS="${OCC_LIBS} -lTKBRep -lTKGeomBase -lTKG3d -lTKG2d"
-    # foundation classes
+    # FoundationClasses
     OCC_LIBS="${OCC_LIBS} -lTKAdvTools -lTKMath -lTKernel"
     if test "x${OCC_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} ${OCC_LIBS}"
