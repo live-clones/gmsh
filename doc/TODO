@@ -1,4 +1,16 @@
-$Id: TODO,v 1.23 2006-11-04 15:28:02 geuzaine Exp $
+$Id: TODO,v 1.24 2006-11-21 15:15:05 geuzaine Exp $
+
+********************************************************************
+
+Add Physical ("string") in parser and GModel.
+
+Pour Aster:
+
+Les restrictions sont les suivantes :
+- commencer par une lettre et non un chiffre
+- pas d'accent ni d'espace
+- moins de 8 caractères (mais dans le cas contraire, c'est pas très
+  grave : on tronque et on vérifie qu'aucune confusion n'est possible)
 
 ********************************************************************
 
