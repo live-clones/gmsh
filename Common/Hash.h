@@ -1,6 +1,8 @@
 #ifndef _HASH_H_
 #define _HASH_H_
 
+//--FNV hashing parameters
+
 #if defined(HAVE_64BIT_SIZE_T)
 #define FNV_PRIME        1099511628211UL
 #define FNV_OFFSET_BASIS 14695981039346656037UL
