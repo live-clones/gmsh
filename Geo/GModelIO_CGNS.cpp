@@ -1,5 +1,3 @@
-#if defined(HAVE_LIBCGNS)
-
 // Copyright (C) 2006 S. Guzik, C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
@@ -32,6 +30,8 @@
 #include "MElement.h"
 #include "MNeighbour.h"
 #include "MVertex.h"
+
+#if defined(HAVE_LIBCGNS)
 
 #include "cgnslib.h"
 
@@ -558,4 +558,19 @@ int GModel::writeCGNS(const std::string &name, double scalingFactor)
   return 1;
 }
 
+#else
+
+int GModel::readCGNS(const std::string &name)
+{
+  Msg(GERROR, "This version of Gmsh was compiled without CGNS support");
+  return 0;
+}
+
+int GModel::writeCGNS(const std::string &name, double scalingFactor)
+{
+  Msg(GERROR, "This version of Gmsh was compiled without CGNS support");
+  return 0;
+}
+
 #endif
+

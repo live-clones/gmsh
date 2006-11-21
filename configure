@@ -4607,6 +4607,9 @@ case "$UNAME" in
     if test "x$enable_cygwin" != "xyes"; then
       FLAGS="${FLAGS} -DHAVE_NO_DLL"
     fi
+    if test "x${OCC}" = "xyes"; then
+      GMSH_LIBS="${GMSH_LIBS} -lwinspool"
+    fi
     if test "x$enable_gui" != "xno"; then
       GMSH_LIBS="${GMSH_LIBS} Fltk/Win32Icon.res"
     fi

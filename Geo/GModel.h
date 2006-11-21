@@ -177,10 +177,8 @@ class GModel
 	       double scalingFactor=1.0);
 
   // IO for CGNS files
-#if defined(HAVE_LIBCGNS)
   int readCGNS(const std::string &name);
   int writeCGNS(const std::string &name, double scalingFactor=1.0);
-#endif
 };
 
 #endif
