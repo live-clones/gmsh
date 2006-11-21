@@ -61,14 +61,7 @@ class OCCVertex : public GVertex {
   }
   ModelType getNativeType() const { return OpenCascadeModel; }
   void * getNativePtr() const { return (void*) &v; }
-  virtual double prescribedMeshSizeAtVertex() const { 
-    SBoundingBox3d b = model()->bounds();
-    double lc = 0.1*norm ( SVector3 ( b.max() , b.min() ) ) * CTX.mesh.lc_factor;
-    double maxc = max_curvature_of_surfaces();
-    if (maxc !=0)       
-      lc = std::min (lc,6.28/(CTX.mesh.min_circ_points*maxc));
-    return lc;
-  }
+  virtual double prescribedMeshSizeAtVertex() const;
   virtual SPoint2 reparamOnFace ( GFace *gf , int) const;
 };
 

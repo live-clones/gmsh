@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.9 2006-11-20 12:44:09 remacle Exp $
+// $Id: OCCFace.cpp,v 1.10 2006-11-21 23:52:59 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -33,7 +33,7 @@
 #include "gp_Pln.hxx"
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape &emap)
-  : GFace(m, num), s(_s),_periodic(false)
+  : GFace(m, num), s(_s)
 {
   TopExp_Explorer exp0, exp01, exp1, exp2, exp3;
   for (exp2.Init (s, TopAbs_WIRE); exp2.More(); exp2.Next())
@@ -60,14 +60,16 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
 
       for (GEdgeLoop::citer it = el.begin() ; it != el.end() ; ++it)
 	{
-	  if(!it->ge->is3D())_periodic = true;
-	  if (el.count (it->ge) > 1)_periodic = true;
 	  l_edges.push_back(it->ge);
 	  l_dirs.push_back(it->_sign);
 	}
       
       edgeLoops.push_back(el);
     }
+  BRepAdaptor_Surface surface( s );
+  _periodic[0] = surface.IsUPeriodic();
+  _periodic[1] = surface.IsVPeriodic();
+// 	      surface.IsVPeriodic()
 
   Msg(INFO,"OCC Face %d with %d edges",num,l_edges.size());
   ShapeAnalysis::GetFaceUVBounds (s, umin, umax, vmin, vmax);
@@ -171,8 +173,11 @@ GEntity::GeomType OCCFace::geomType() const
     return Plane;
   else if (occface->DynamicType() == STANDARD_TYPE(Geom_CylindricalSurface))
     return Cylinder;
+//   else if (occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
+//     return Cone;
   return Unknown;
 }
+
 
 double OCCFace::curvature (const SPoint2 &param) const
 {

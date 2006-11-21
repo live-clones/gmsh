@@ -424,5 +424,5 @@ public:
   bool import_view(Post_View *view, const double tolerance);
 };
 
-void outputScalarField(std::list < BDS_Face * >t, const char *fn);
+void outputScalarField(std::list < BDS_Face * >t, const char *fn, int param);
 void recur_tag(BDS_Face * t, BDS_GeomEntity * g);

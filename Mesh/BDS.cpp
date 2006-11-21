@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.64 2006-11-16 21:14:10 remacle Exp $
+// $Id: BDS.cpp,v 1.65 2006-11-21 23:52:59 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@
 
 bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS_Face *t);
 
-void outputScalarField(std::list < BDS_Face * >t, const char *iii)
+void outputScalarField(std::list < BDS_Face * >t, const char *iii, int param)
 {
   FILE *f = fopen(iii, "w");
   fprintf(f, "View \"scalar\" {\n");
@@ -38,10 +38,16 @@ void outputScalarField(std::list < BDS_Face * >t, const char *iii)
   while(tit != tite) {
     BDS_Point *pts[4];
     (*tit)->getNodes(pts);
-    fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-            pts[0]->u, pts[0]->v, 0.0,
-            pts[1]->u, pts[1]->v, 0.0,
-            pts[2]->u, pts[2]->v, 0.0,(double)pts[0]->iD,(double)pts[1]->iD,(double)pts[2]->iD);
+    if (param)
+      fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+	      pts[0]->u, pts[0]->v, 0.0,
+	      pts[1]->u, pts[1]->v, 0.0,
+	      pts[2]->u, pts[2]->v, 0.0,(double)pts[0]->iD,(double)pts[1]->iD,(double)pts[2]->iD);
+    else
+      fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+	      pts[0]->X, pts[0]->Y, pts[0]->Z,
+	      pts[1]->X, pts[1]->Y, pts[1]->Z,
+	      pts[2]->X, pts[2]->Y, pts[2]->Z,(double)pts[0]->iD,(double)pts[1]->iD,(double)pts[2]->iD);
     ++tit;
   }
   fprintf(f, "};\n");
@@ -236,7 +242,8 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2)
 	  BDS_Edge *eee = find_edge (num1, num2);
 	  if (!eee)
 	    {
-	      outputScalarField(triangles, "debug.pos");
+	      outputScalarField(triangles, "debugp.pos",1);
+	      outputScalarField(triangles, "debugr.pos",0);
 	      return 0;
 	    }
 	  return eee;

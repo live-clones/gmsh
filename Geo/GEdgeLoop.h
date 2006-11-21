@@ -52,6 +52,7 @@ public:
   inline citer begin () const {return loop.begin();}
   inline citer end   () const {return loop.end();}
   int  count (GEdge*) const;
+  int  count () const {return loop.size();}
 private:
   std::list< GEdgeSigned > loop ;
 };

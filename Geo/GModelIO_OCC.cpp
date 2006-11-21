@@ -1,4 +1,4 @@
-  // $Id: GModelIO_OCC.cpp,v 1.8 2006-11-16 21:14:10 remacle Exp $
+  // $Id: GModelIO_OCC.cpp,v 1.9 2006-11-21 23:52:59 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -502,9 +502,9 @@ void OCC_Internals :: loadSTEP (const char *fn)
   Standard_Integer nb = reader.NbRootsForTransfer();
   reader.TransferRoots (); 
   shape = reader.OneShape();  
-  BRepTools::Clean (shape);
-  buildLists();
-  HealGeometry();
+//    BRepTools::Clean (shape);
+//    buildLists();
+//    HealGeometry();
   BRepTools::Clean (shape);
 }
 
@@ -516,9 +516,9 @@ void OCC_Internals :: loadIGES (const char *fn)
   Standard_Integer nb = reader.NbRootsForTransfer();
   reader.TransferRoots (); 
   shape = reader.OneShape();  
-  BRepTools::Clean (shape);
-  buildLists();
-  HealGeometry();
+//   BRepTools::Clean (shape);
+//   buildLists();
+//   HealGeometry();
   BRepTools::Clean (shape);
 }
 

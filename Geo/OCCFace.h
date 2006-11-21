@@ -33,7 +33,7 @@ class OCCFace : public GFace {
   TopoDS_Face s;
   Handle(Geom_Surface) occface;
   double umin, umax, vmin, vmax;
-  bool _periodic;
+  bool _periodic[2];
  public:
   OCCFace(GModel *m, TopoDS_Face s, int num, TopTools_IndexedMapOfShape &emap);
 
@@ -58,10 +58,13 @@ class OCCFace : public GFace {
   
   virtual bool continuous(int dim) const { return true; }
   virtual bool degenerate(int dim) const { return false; }
-  virtual double period(int dir) const {throw;}
+  virtual double period(int dir) const 
+  {
+    return (dir)? vmax-vmin:umax-umin;
+  }
   ModelType getNativeType() const { return OpenCascadeModel; }
   void * getNativePtr() const { return (void*)&s; }
-  virtual bool surfPeriodic(int dim) const {return _periodic;}
+  virtual bool surfPeriodic(int dim) const {return _periodic[dim];}
   virtual SPoint2 parFromPoint(const SPoint3 &) const;
   virtual double curvature(const SPoint2 &param) const;
 };

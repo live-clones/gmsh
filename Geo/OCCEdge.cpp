@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.8 2006-11-20 12:44:09 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.9 2006-11-21 23:52:59 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,9 @@
 #include "OCCFace.h"
 
 #if defined(HAVE_OCC)
+#include "Geom_Ellipse.hxx"
+#include "Geom_Circle.hxx"
+#include "Geom_Line.hxx"
 
 OCCEdge::OCCEdge(GModel *model, TopoDS_Edge edge, int num, GVertex *v1, GVertex *v2)
   : GEdge(model, num, v1, v2), trimmed(0),c(edge)
@@ -153,18 +156,53 @@ double OCCEdge::parFromPoint(const SPoint3 &pt) const
 
 GEntity::GeomType OCCEdge::geomType() const
 {
-  return Unknown;
+  if (curve.IsNull())
+    {
+      if (curve2d->DynamicType() == STANDARD_TYPE(Geom_Circle))
+	return Circle;
+      else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_Line))
+	return Line;
+      else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_Ellipse))
+	return Ellipse;
+      //   else if (occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
+      //     return Cone;
+      return Unknown;
+    }
+  else
+    {
+      if (curve->DynamicType() == STANDARD_TYPE(Geom_Circle))
+	return Circle;
+      else if (curve->DynamicType() == STANDARD_TYPE(Geom_Line))
+	return Line;
+      else if (curve->DynamicType() == STANDARD_TYPE(Geom_Ellipse))
+	return Ellipse;
+      //   else if (occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
+      //     return Cone;
+      return Unknown;
+    }
 }
 
 int OCCEdge::minimumMeshSegments () const
 {
-  return 2 ;
+  if(geomType() == Circle || geomType() == Ellipse)
+    return (int)(fabs(s1 - s0) *
+		 (double)CTX.mesh.min_circ_points / Pi) - 1;
+  else
+    return GEdge::minimumMeshSegments () ;
 }
 
 int OCCEdge::minimumDrawSegments () const
 {
-  return CTX.geom.circle_points;
+  int n = GEdge::minimumDrawSegments();
+
+  if(geomType() == Line)
+    return n;
+  else if(geomType() == Circle || geomType() == Ellipse)
+    return CTX.geom.circle_points;
+  else
+    return 10 * n;
 }
+
 
 double OCCEdge::curvature(double par) const 
 {
