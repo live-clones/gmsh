@@ -144,16 +144,6 @@ struct Equal_Face : public std::binary_function<MFace, MFace, bool> {
   }
 };
 
-struct Equal_FacePtr : public std::binary_function<MFace*, MFace*, bool> {
-  bool operator()(const MFace *const f1, const MFace *const f2) const
-  {
-    return (f1->getSortedVertex(0) == f2->getSortedVertex(0) &&
-            f1->getSortedVertex(1) == f2->getSortedVertex(1) &&
-            f1->getSortedVertex(2) == f2->getSortedVertex(2) &&
-            f1->getSortedVertex(3) == f2->getSortedVertex(3));
-  }
-};
-
 struct Less_Face : public std::binary_function<MFace, MFace, bool> {
   bool operator()(const MFace &f1, const MFace &f2) const
   {
@@ -168,34 +158,11 @@ struct Less_Face : public std::binary_function<MFace, MFace, bool> {
   }
 };
 
-struct Less_FacePtr : public std::binary_function<MFace*, MFace*, bool> {
-  bool operator()(const MFace *const f1, const MFace *const f2) const
-  {
-    if(f1->getSortedVertex(0) < f2->getSortedVertex(0)) return true;
-    if(f1->getSortedVertex(0) > f2->getSortedVertex(0)) return false;
-    if(f1->getSortedVertex(1) < f2->getSortedVertex(1)) return true;
-    if(f1->getSortedVertex(1) > f2->getSortedVertex(1)) return false;
-    if(f1->getSortedVertex(2) < f2->getSortedVertex(2)) return true;
-    if(f1->getSortedVertex(2) > f2->getSortedVertex(2)) return false;
-    if(f1->getSortedVertex(3) < f2->getSortedVertex(3)) return true;
-    return false;
-  }
-};
-
 struct Hash_Face : public std::unary_function<MFace, size_t> {
   size_t operator()(const MFace &f) const
   {
     const MVertex *v[4];
     f.getOrderedVertices(v);
-    return HashFNV1a<sizeof(MVertex*[4])>::eval(v);
-  }
-};
-
-struct Hash_FacePtr : public std::unary_function<MFace*, size_t> {
-  size_t operator()(const MFace *const f) const
-  {
-    const MVertex *v[4];
-    f->getOrderedVertices(v);
     return HashFNV1a<sizeof(MVertex*[4])>::eval(v);
   }
 };
