@@ -1,0 +1,75 @@
+
+How to build OpenCascade 6.1 for Gmsh:
+
+- get the linux distribution of occ
+
+- uncompress and apply patches (see below)
+
+- go to the ros/ subdir and 
+
+    ./configure --prefix=/usr/local/opencascade --enable-debug=no 
+        --enable-production=yes --enable-static=yes --enable-shared=no
+
+    make FoundationClasses
+    make ModelingData
+    make ModelingAlgorithms
+    make DataExchange
+    
+    (or just go into each dr occ/ros/adm/make/XXX and type 'make')
+
+- then
+
+    make install 
+
+    (or just go into each dir occ/ros/adm/make/XXX and type 'make install')
+
+
+*************************************************************************
+
+MINGW: too many patches to list here: 
+
+1) export CC="gcc -mno-cygwin -DWNT=1 -DWIN32"
+   export CXX="g++ -mno-cygwin -DWNT=1 -DWIN32"
+
+2) fix all OSD_* routines that throw MSVC-specific expcetions (__try, 
+   __finally, etc.) using #defines
+
+3) fix dllimport/dllexport #defines on the fly when the compiler complains
+
+I will try to consolidate all these patches in a single one and submit
+it to the OCC folks, but it's not easy: we must first find a way to
+uniquelyidentify gcc on mingw
+
+*************************************************************************
+
+APPLE: 
+
+1) add dummy "malloc.h" in inc/
+
+2) comment out 'uname' stuff in OSD/OSD_Path.cxx
+
+#else
+/*
+  struct utsname info;
+  uname(&info);
+  cout << info.sysname << endl;
+  cout << info.nodename << endl;
+  cout << info.release << endl;
+  cout << info.version << endl;
+  cout << info.machine << endl;
+*/
+  return OSD_Default;
+}
+
+3) IMPORTANT (mmap crashes): add this in Standard/Standard.cxx
+
+#if defined(__APPLE__)
+  bMMap       = atoi("0");
+#else
+  bMMap       = atoi((var = getenv("MMGT_MMAP"     )) ? var : "1"    ); 
+#endif
+
+
+*************************************************************************
+
+PS: to strip static libaries of debug symbols, use "strip -S *.a"
