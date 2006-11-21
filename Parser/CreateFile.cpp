@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.9 2006-10-10 00:44:42 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.10 2006-11-21 08:00:30 guzik Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -59,6 +59,7 @@ int GuessFileFormatFromFileName(char *name)
   else if(!strcmp(ext, ".opt"))     return FORMAT_OPT;
   else if(!strcmp(ext, ".unv"))     return FORMAT_UNV;
   else if(!strcmp(ext, ".stl"))     return FORMAT_STL;
+  else if(!strcmp(ext, ".cgns"))    return FORMAT_CGNS;
   else if(!strcmp(ext, ".mesh"))    return FORMAT_MESH;
   else if(!strcmp(ext, ".bdf"))     return FORMAT_BDF;
   else if(!strcmp(ext, ".nas"))     return FORMAT_BDF;
@@ -89,6 +90,7 @@ void GetDefaultFileName(int format, char *name)
   case FORMAT_OPT:  strcpy(ext, ".opt"); break;
   case FORMAT_UNV:  strcpy(ext, ".unv"); break;
   case FORMAT_STL:  strcpy(ext, ".stl"); break;
+  case FORMAT_CGNS: strcpy(ext, ".cgns"); break;
   case FORMAT_MESH: strcpy(ext, ".mesh"); break;
   case FORMAT_BDF:  strcpy(ext, ".bdf"); break;
   case FORMAT_VRML: strcpy(ext, ".wrl"); break;
@@ -165,6 +167,10 @@ void CreateOutputFile(char *filename, int format)
   case FORMAT_BDF:
     GMODEL->writeBDF(name, CTX.mesh.bdf_field_format, CTX.mesh.save_all,
 		     CTX.mesh.scaling_factor);
+    break;
+
+  case FORMAT_CGNS:
+    GMODEL->writeCGNS(name, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_POS:

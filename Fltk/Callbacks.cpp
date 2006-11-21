@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.474 2006-11-19 02:23:49 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.475 2006-11-21 08:01:05 guzik Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -693,6 +693,12 @@ int _save_stl(char *name)
   return stl_dialog(name);
 }
 
+int _save_cgns(char *name)
+{
+  CreateOutputFile(name, FORMAT_CGNS);
+  return 1;
+}
+
 int _save_ps(char *name)
 {
   return gl2ps_dialog(name, "PS Options", FORMAT_PS);
@@ -752,6 +758,7 @@ int _save_auto(char *name)
   case FORMAT_UNV     : return _save_unv(name);
   case FORMAT_BDF     : return _save_bdf(name);
   case FORMAT_STL     : return _save_stl(name);
+  case FORMAT_CGNS    : return _save_cgns(name);
   case FORMAT_PS      : return _save_ps(name);
   case FORMAT_EPS     : return _save_eps(name);
   case FORMAT_PDF     : return _save_pdf(name);
@@ -789,6 +796,9 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"Nastran bulk data file (*.bdf)", _save_bdf},
     {"STL surface mesh (*.stl)", _save_stl},
     {"VRML surface mesh (*.wrl)", _save_vrml},
+#if defined(HAVE_LIBCGNS)
+    {"CGNS (*.cgns)", _save_cgns},
+#endif
     {"   ", _save_auto},
     {"Encapsulated PostScript (*.eps)", _save_eps},
     {"GIF (*.gif)", _save_gif},
