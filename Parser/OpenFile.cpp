@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.127 2006-11-15 21:53:31 remacle Exp $
+// $Id: OpenFile.cpp,v 1.128 2006-11-21 23:03:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -301,7 +301,8 @@ int MergeProblem(char *name, int warn_if_missing)
 	  !strcmp(ext, ".igs") || !strcmp(ext, ".IGS")){
     GMODEL->readOCCIGES(std::string(name));
   }
-  else if(!strcmp(ext, ".step") || !strcmp(ext, ".STEP")){
+  else if(!strcmp(ext, ".step") || !strcmp(ext, ".STEP") ||
+	  !strcmp(ext, ".stp") || !strcmp(ext, ".STP")){
     GMODEL->readOCCSTEP(std::string(name));
   }
   else if(!strcmp(ext, ".unv") || !strcmp(ext, ".UNV")){
