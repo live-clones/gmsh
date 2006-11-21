@@ -175,6 +175,12 @@ class GModel
   int readBDF(const std::string &name);
   int writeBDF(const std::string &name, int format=0, bool saveAll=false, 
 	       double scalingFactor=1.0);
+
+  // IO for CGNS files
+#if defined(HAVE_LIBCGNS)
+  int readCGNS(const std::string &name);
+  int writeCGNS(const std::string &name, double scalingFactor=1.0);
+#endif
 };
 
 #endif
