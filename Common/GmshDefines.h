@@ -29,6 +29,7 @@
 #define FORMAT_SVG           29
 #define FORMAT_MESH          30
 #define FORMAT_BDF           31
+#define FORMAT_CGNS          32
 
 // Element types in .msh file format
 #define MSH_LIN_2  1
