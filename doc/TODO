@@ -1,4 +1,11 @@
-$Id: TODO,v 1.24 2006-11-21 15:15:05 geuzaine Exp $
+$Id: TODO,v 1.25 2006-11-22 03:01:48 geuzaine Exp $
+
+********************************************************************
+
+BDF todo: 
+- parse CORDxx entries to get coordinate system definitions
+- use them when reading GRID
+- parse GRIDxx for axisym points
 
 ********************************************************************
 
