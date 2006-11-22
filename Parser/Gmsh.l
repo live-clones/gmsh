@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.78 2006-03-09 07:56:34 remacle Exp $
+// $Id: Gmsh.l,v 1.79 2006-11-22 15:01:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -69,7 +69,6 @@ special	[\.]
 digit	[0-9]
 exp	[Ee][-+]?{digit}+
 string	{alpha}({alpha}|{digit})*
-stepid  {dieze}({digit})+
 
 %e       2000
 %p       7000
