@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.128 2006-11-21 23:03:13 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.129 2006-11-22 02:39:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -289,6 +289,7 @@ int MergeProblem(char *name, int warn_if_missing)
   }
 #endif
 
+  CTX.geom.draw = 0; // don't try to draw the model while reading
   int status = 0;
   if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL")){
     status = GMODEL->readSTL(name, CTX.mesh.stl_distance_tol);
@@ -343,6 +344,7 @@ int MergeProblem(char *name, int warn_if_missing)
 #endif
 #endif
   else {
+    CTX.geom.draw = 1;
     if(!strncmp(header, "$PTS", 4) || !strncmp(header, "$NO", 3) || 
        !strncmp(header, "$PARA", 5) || !strncmp(header, "$ELM", 4) ||
        !strncmp(header, "$MeshFormat", 11)) {
@@ -359,6 +361,7 @@ int MergeProblem(char *name, int warn_if_missing)
 
   SetBoundingBox();
 
+  CTX.geom.draw = 1;
   CTX.mesh.changed = ENT_ALL;
 
   Msg(STATUS2, "Read '%s'", name);

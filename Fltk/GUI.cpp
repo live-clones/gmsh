@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.561 2006-11-07 19:47:12 geuzaine Exp $
+// $Id: GUI.cpp,v 1.562 2006-11-22 02:39:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1351,11 +1351,7 @@ void GUI::create_graphic_window()
   bottom->box(FL_FLAT_BOX);
 
   int x = 2;
-#if defined(WIN32)
-  int sht = sh - 2; // go all the way to the bottom of the window
-#else
   int sht = sh - 4; // leave a 2 pixel border at the bottom
-#endif
 
   g_status_butt[0] = new Fl_Button(x, glheight + 2, sw, sht, "X");
   x += sw;
@@ -1427,9 +1423,6 @@ void GUI::create_graphic_window()
   x += 2;
   int wleft = (width - x) / 3 - 1;
   int wright = (width - x) - (width - x) / 3 - 1;
-#if defined(WIN32)
-  wright += 1; // go right up to the right edge of the window
-#endif
 
   g_status_label[0] = new Fl_Box(x, glheight + 2, wleft, sht);
   g_status_label[1] = new Fl_Box(x + (width - x) / 3, glheight + 2, wright, sht);

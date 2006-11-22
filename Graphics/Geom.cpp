@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.122 2006-11-14 17:11:33 remacle Exp $
+// $Id: Geom.cpp,v 1.123 2006-11-22 02:39:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -404,6 +404,8 @@ class drawGRegion {
 
 void Draw_Geom()
 {
+  if(!CTX.geom.draw) return;
+
   glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
   
   for(int i = 0; i < 6; i++)

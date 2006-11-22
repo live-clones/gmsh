@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.314 2006-11-02 17:24:53 geuzaine Exp $
+// $Id: Options.cpp,v 1.315 2006-11-22 02:39:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -135,6 +135,7 @@ void Init_Options(int num)
   CTX.mesh_timer[0] = CTX.mesh_timer[1] = CTX.mesh_timer[2] = 0.;
   CTX.draw_rotation_center = 0;
   CTX.pick_elements = 0;
+  CTX.geom.draw = 1;
   CTX.mesh.draw = 1;
   CTX.post.draw = 1;
   CTX.post.list = NULL;
