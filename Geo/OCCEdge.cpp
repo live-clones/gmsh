@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.9 2006-11-21 23:52:59 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.10 2006-11-22 13:57:25 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,8 @@
 #include "OCCFace.h"
 
 #if defined(HAVE_OCC)
+#include "Geom_BSplineCurve.hxx"
+#include "Geom_BezierCurve.hxx"
 #include "Geom_Ellipse.hxx"
 #include "Geom_Circle.hxx"
 #include "Geom_Line.hxx"
@@ -164,6 +166,10 @@ GEntity::GeomType OCCEdge::geomType() const
 	return Line;
       else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_Ellipse))
 	return Ellipse;
+      else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve))
+	return BSpline;
+      else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
+	return Bezier;
       //   else if (occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
       //     return Cone;
       return Unknown;
@@ -176,6 +182,10 @@ GEntity::GeomType OCCEdge::geomType() const
 	return Line;
       else if (curve->DynamicType() == STANDARD_TYPE(Geom_Ellipse))
 	return Ellipse;
+      else if (curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve))
+	return BSpline;
+      else if (curve->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
+	return Bezier;
       //   else if (occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
       //     return Cone;
       return Unknown;

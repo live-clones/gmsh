@@ -1,4 +1,4 @@
-  // $Id: GModelIO_OCC.cpp,v 1.9 2006-11-21 23:52:59 remacle Exp $
+  // $Id: GModelIO_OCC.cpp,v 1.10 2006-11-22 13:57:25 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -502,9 +502,9 @@ void OCC_Internals :: loadSTEP (const char *fn)
   Standard_Integer nb = reader.NbRootsForTransfer();
   reader.TransferRoots (); 
   shape = reader.OneShape();  
-//    BRepTools::Clean (shape);
-//    buildLists();
-//    HealGeometry();
+  BRepTools::Clean (shape);
+  buildLists();
+  HealGeometry();
   BRepTools::Clean (shape);
 }
 
@@ -583,7 +583,6 @@ int GModel::readOCCBREP(const std::string &fn)
   occ_internals = new OCC_Internals;
   occ_internals->loadBREP (fn.c_str());
   occ_internals->buildLists ();
-  //  occ_internals->HealGeometry();
   occ_internals->buildGModel (this);
   return 1;
 }

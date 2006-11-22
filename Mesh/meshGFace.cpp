@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.21 2006-11-21 23:52:59 remacle Exp $
+// $Id: meshGFace.cpp,v 1.22 2006-11-22 13:57:25 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -428,7 +428,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	    {
 	      double lone = NewGetLc ( *it);
 
-	      if (lone < 1.e-10 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-4) lone = 2;
+	      if (lone < 1.e-8 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
 
 	      if ((*it)->numfaces() == 2 && (lone >  1.3))
 		{
@@ -474,7 +474,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	{
 	  if (NN2++ >= NN1)break;
 	  double lone = NewGetLc ( *it);
-	  if (lone < 1.e-10 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-4) lone = 2;
+	  if (lone < 1.e-8 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
 	  if (!(*it)->deleted && (*it)->numfaces() == 2 && lone < 0.6 )
 	    {
 	      bool res = false;
@@ -518,7 +518,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	    }
 	}
 	IT++;
-	Msg(INFO," iter %d minL %g maxL %g %d split %d swap %d collapse %d smooth",IT,minL,maxL,nb_split,nb_swap,nb_collaps,nb_smooth);
+	Msg(DEBUG1," iter %d minL %g maxL %g %d split %d swap %d collapse %d smooth",IT,minL,maxL,nb_split,nb_swap,nb_collaps,nb_smooth);
 	m.cleanup();  
     }  
 }
@@ -1068,7 +1068,7 @@ inline double dist2 (const SPoint2 &p1,const SPoint2 &p2)
   return dx*dx+dy*dy;
 }
 
-void buildConsecutiveListOfVertices (  GFace *gf,
+bool buildConsecutiveListOfVertices (  GFace *gf,
 				       GEdgeLoop  &gel , 
 				       std::vector<BDS_Point*> &result,
 				       SBoundingBox3d &bbox,
@@ -1159,24 +1159,25 @@ void buildConsecutiveListOfVertices (  GFace *gf,
 	     SPoint2 first_coord         = mesh1d[0];
 	     double d = dist2(last_coord,first_coord);
 	     //	     printf("d = %12.5E %d\n",d, coords.size());
-	     if (d < 1.e-8) 
+	     if (d < 1.e-6) 
 	       {
 		 coords.clear();
 		 coords = mesh1d;
 		 found = GEdgeSigned(1,ge);
 		 unordered.erase(it);
-		 break;
+		 goto Finalize;
 	       }
 	     SPoint2 first_coord_reversed = mesh1d_reversed[0];
 	     double d_reversed = dist2(last_coord,first_coord_reversed);
 	     //	     printf("d_r = %12.5E\n",d_reversed);
-	     if (d_reversed < 1.e-8) 
+	     if (d_reversed < 1.e-6) 
 	       {
+		 //		 printf("d_r = %12.5E\n",d_reversed);
 		 coords.clear();
 		 coords = mesh1d_reversed;
 		 found = (GEdgeSigned(-1,ge));
 		 unordered.erase(it);
-		 break;
+		 goto Finalize;
 	       }
 	     if (seam)
 	       {
@@ -1184,29 +1185,33 @@ void buildConsecutiveListOfVertices (  GFace *gf,
 		 SPoint2 first_coord_seam_reversed = mesh1d_seam_reversed[0];
 		 double d_seam = dist2(last_coord,first_coord_seam);
 		 //		 printf("d_seam = %12.5E\n",d_seam);
-		 if (d_seam < 1.e-8)
+		 if (d_seam < 1.e-6)
 		   {
 		     coords.clear();
 		     coords = mesh1d_seam;
 		     found = (GEdgeSigned(1,ge));
 		     unordered.erase(it);
-		     break;
+		     goto Finalize;
 		   }
 		 double d_seam_reversed = dist2(last_coord,first_coord_seam_reversed);
 		 //		 printf("d_seam_reversed = %12.5E\n",d_seam_reversed);
-		 if (d_seam_reversed < 1.e-8)
+		 if (d_seam_reversed < 1.e-6)
 		   {
 		     coords.clear();
 		     coords = mesh1d_seam_reversed;
 		     found = (GEdgeSigned(-1,ge));
 		     unordered.erase(it);
 		     break;
+		     goto Finalize;
 		   }
 	       }
 	   }
 	 ++it;
        }
+   Finalize:
 
+     if (coords.size() == 0)return false;
+     
      std::vector<MVertex*>    edgeLoop;
      if ( found._sign == 1)
        {
@@ -1230,8 +1235,8 @@ void buildConsecutiveListOfVertices (  GFace *gf,
 	 GEntity *ge       = here->onWhat();    
 	 double U,V;
 	 SPoint2 param = coords [i];
-	 U = param.x();
-	 V = param.y();
+	 U = param.x() / m->scalingU ;
+	 V = param.y() / m->scalingV;
 	 BDS_Point *pp;
 	 pp = m->add_point ( count, U,V,gf );
 	 m->add_geom (ge->tag(), ge->dim());
@@ -1253,10 +1258,11 @@ void buildConsecutiveListOfVertices (  GFace *gf,
 //        printf("point %3d (%8.5f %8.5f) (%2d,%2d)\n",i,result[i]->u,result[i]->v,result[i]->g->classif_tag,result[i]->g->classif_degree);
 //      }
 
+  return true;
 }
 
 
-void gmsh2DMeshGeneratorPeriodic ( GFace *gf )
+bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
 {
 
   std::map<BDS_Point*,MVertex*> recover_map;
@@ -1266,6 +1272,7 @@ void gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   
   const double du = rangeU.high() -rangeU.low();
   const double dv = rangeV.high() -rangeV.low();
+  
 
   const double LC2D = sqrt ( du*du + dv*dv ); 
 
@@ -1273,6 +1280,8 @@ void gmsh2DMeshGeneratorPeriodic ( GFace *gf )
 
   // Buid a BDS_Mesh structure that is convenient for doing the actual meshing procedure    
   BDS_Mesh *m = new BDS_Mesh;
+  m->scalingU = fabs(du);
+  m->scalingV = fabs(dv);
   std::vector< std::vector<BDS_Point* > > edgeLoops_BDS;
   SBoundingBox3d bbox;
   int nbPointsTotal = 0;
@@ -1280,7 +1289,7 @@ void gmsh2DMeshGeneratorPeriodic ( GFace *gf )
     for (std::list<GEdgeLoop>::iterator it = gf->edgeLoops.begin() ; it != gf->edgeLoops.end() ; it++)
       {
 	std::vector<BDS_Point* > edgeLoop_BDS;
-	buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsTotal);
+	if(buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsTotal)==false)return false;
 	edgeLoops_BDS.push_back(edgeLoop_BDS);
       }
   }
@@ -1311,7 +1320,7 @@ void gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   /// Increase the size of the bounding box by 20 %
   /// add 4 points than encloses the domain
   /// Use negative number to distinguish thos fake vertices
-  bbox *= 1.5;
+  bbox *= 3.5;
 
   MVertex *bb[4];
   bb[0] = new MVertex ( bbox.min().x(), bbox.min().y(), 0,0,-1);
@@ -1363,7 +1372,11 @@ void gmsh2DMeshGeneratorPeriodic ( GFace *gf )
       for ( int j=0;j<edgeLoop_BDS.size();j++)
 	{
 	  BDS_Edge * e = m->recover_edge ( edgeLoop_BDS[j]->iD,edgeLoop_BDS[(j+1)%edgeLoop_BDS.size()]->iD);	  
-	  if (!e)Msg(GERROR,"impossible to recover the edge %d %d\n",edgeLoop_BDS[j]->iD,edgeLoop_BDS[(j+1)%edgeLoop_BDS.size()]->iD);
+	  if (!e)
+	    {
+	      Msg(GERROR,"impossible to recover the edge %d %d\n",edgeLoop_BDS[j]->iD,edgeLoop_BDS[(j+1)%edgeLoop_BDS.size()]->iD);
+	      return false;
+	    }
 	  else e->g = &CLASS_E;
 	}
     }	  
@@ -1554,9 +1567,9 @@ void meshGFace :: operator() (GFace *gf)
 
   Msg(DEBUG1, "Generating the mesh");
   // mesh the face
-  gmsh2DMeshGeneratorPeriodic ( gf ) ;
+    gmsh2DMeshGeneratorPeriodic ( gf ) ;
       //  else
-  //gmsh2DMeshGenerator ( gf ) ;
+    //gmsh2DMeshGenerator ( gf ) ;
 
 
   Msg(DEBUG1, "type %d %d triangles generated, %d internal vertices",

@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.65 2006-11-21 23:52:59 remacle Exp $
+// $Id: BDS.cpp,v 1.66 2006-11-22 13:57:25 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -153,9 +153,8 @@ BDS_Point *BDS_Mesh::add_point(int num, double x, double y, double z)
 }
 
 BDS_Point *BDS_Mesh::add_point(int num, double u, double v, GFace *gf)
-{
-  
-  GPoint gp = gf->point(u,v);  
+{  
+  GPoint gp = gf->point(u*scalingU,v*scalingV);  
   BDS_Point *pp = new BDS_Point(num, gp.x(), gp.y(), gp.z());
   pp->u = u;
   pp->v = v;
@@ -1044,7 +1043,7 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)
   }
 
 
-  GPoint gp = gf->point(U,V);
+  GPoint gp = gf->point(U*scalingU,V*scalingV);
   p->u = U;
   p->v = V;
   p->lc() = LC;

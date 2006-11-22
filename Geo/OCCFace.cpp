@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.10 2006-11-21 23:52:59 remacle Exp $
+// $Id: OCCFace.cpp,v 1.11 2006-11-22 13:57:25 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,7 @@
 
 #if defined(HAVE_OCC)
 #include "Geom_CylindricalSurface.hxx"
+#include "Geom_ConicalSurface.hxx"
 #include "Geom_Plane.hxx"
 #include "gp_Pln.hxx"
 
@@ -173,6 +174,8 @@ GEntity::GeomType OCCFace::geomType() const
     return Plane;
   else if (occface->DynamicType() == STANDARD_TYPE(Geom_CylindricalSurface))
     return Cylinder;
+  else if (occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
+    return Cone;
 //   else if (occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
 //     return Cone;
   return Unknown;
