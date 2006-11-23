@@ -1,4 +1,4 @@
-// $Id: OCCVertex.cpp,v 1.6 2006-11-22 13:57:25 remacle Exp $
+// $Id: OCCVertex.cpp,v 1.7 2006-11-23 16:23:13 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -30,12 +30,12 @@ double max_surf_curvature ( const GVertex *gv, double x, double y, double z , co
 {
   std::list<GFace *> faces = _myGEdge->faces();
   std::list<GFace *>::iterator it =  faces.begin();
-  double curv = 0;
+  double curv = 1.e-22;
   while (it != faces.end())
     {
       SPoint2 par = gv->reparamOnFace((*it),1);
       double cc = (*it)->curvature ( par );
-      if (cc < 1.e2)curv = std::max(curv, cc );					      
+      if (cc > 0)curv = std::max(curv, cc );					      
       ++it;
     }  
   return curv;
@@ -99,10 +99,10 @@ SPoint2 OCCVertex::reparamOnFace ( GFace *gf , int dir) const
 double OCCVertex::prescribedMeshSizeAtVertex() const { 
   SBoundingBox3d b = model()->bounds();
   double lc     = 0.1 * norm( SVector3 ( b.max() , b.min() ) ) * CTX.mesh.lc_factor;
-  //  double lc_min = 0.004 * norm(SVector3 ( b.max() , b.min() ) ) * CTX.mesh.lc_factor;
-  //  double maxc = max_curvature_of_surfaces();
-  //  if (maxc !=0)       
-  //    lc = std::max(lc_min,std::min (lc,6.28/(CTX.mesh.min_circ_points*maxc)));
+  double lc_min = 0.004 * norm(SVector3 ( b.max() , b.min() ) ) * CTX.mesh.lc_factor;
+  double maxc = max_curvature_of_surfaces();
+  if (maxc !=0)       
+    lc = std::max(lc_min,std::min (lc,6.28/(CTX.mesh.min_circ_points*maxc)));
   return lc;
 }
 

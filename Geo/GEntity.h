@@ -80,6 +80,7 @@ class GEntity {
     Torus,
     RuledSurface,
     ParametricSurface,
+    BSplineSurface,
     DiscreteSurface,
     Volume,
     DiscreteVolume
@@ -106,6 +107,7 @@ class GEntity {
       "Torus",
       "Ruled surface",
       "Parametric surface",
+      "BSpline surface",
       "Discrete surface",
       "Volume",
       "Discrete volume"

@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.22 2006-11-22 13:57:25 remacle Exp $
+// $Id: meshGFace.cpp,v 1.23 2006-11-23 16:23:13 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1536,7 +1536,7 @@ void meshGFace :: operator() (GFace *gf)
   if(gf->geomType() == GEntity::DiscreteSurface) return;
 
   // Send a messsage to the GMSH environment
-  Msg(STATUS2, "Meshing surface %d", gf->tag());
+  Msg(STATUS2, "Meshing surface %d (%s)", gf->tag(),gf->getTypeString().c_str());
 
   // TEST TEST 
   //  if (gf->surfPeriodic(2)) return;

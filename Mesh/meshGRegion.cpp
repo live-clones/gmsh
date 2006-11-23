@@ -442,7 +442,7 @@ void meshGRegion :: operator() (GRegion *gr)
   // Send a messsage to the GMSH environment
   Msg(STATUS2, "Meshing volume %d", gr->tag());
 
-  if(CTX.mesh.algo3d == DELAUNAY_TETGEN)
+  if(CTX.mesh.algo3d == DELAUNAY_TETGEN || CTX.mesh.algo3d == DELAUNAY_ISO)
     {
 #if !defined(HAVE_TETGEN)
     Msg(GERROR, "Tetgen is not compiled in this version of Gmsh");

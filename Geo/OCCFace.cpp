@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.11 2006-11-22 13:57:25 remacle Exp $
+// $Id: OCCFace.cpp,v 1.12 2006-11-23 16:23:13 remacle Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -30,6 +30,8 @@
 #if defined(HAVE_OCC)
 #include "Geom_CylindricalSurface.hxx"
 #include "Geom_ConicalSurface.hxx"
+#include "Geom_BSplineSurface.hxx"
+#include "Geom_SphericalSurface.hxx"
 #include "Geom_Plane.hxx"
 #include "gp_Pln.hxx"
 
@@ -176,8 +178,10 @@ GEntity::GeomType OCCFace::geomType() const
     return Cylinder;
   else if (occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
     return Cone;
-//   else if (occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
-//     return Cone;
+   else if (occface->DynamicType() == STANDARD_TYPE(Geom_SphericalSurface))
+     return Sphere;
+   else if (occface->DynamicType() == STANDARD_TYPE(Geom_BSplineSurface))
+     return BSplineSurface;
   return Unknown;
 }
 
@@ -190,7 +194,8 @@ double OCCFace::curvature (const SPoint2 &param) const
 
   if (!prop.IsCurvatureDefined())
     {
-      return GFace::curvature (param);
+      Msg(GERROR,"Curvature not defined for face %d",tag());
+      return -1;
     }
   return std::max(fabs(prop.MinCurvature()), fabs(prop.MaxCurvature()));
 }
