@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.23 2006-11-23 16:23:13 remacle Exp $
+// $Id: meshGFace.cpp,v 1.24 2006-11-24 20:07:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1566,11 +1566,12 @@ void meshGFace :: operator() (GFace *gf)
   gf->computeMeanPlane(points);
 
   Msg(DEBUG1, "Generating the mesh");
-  // mesh the face
-    gmsh2DMeshGeneratorPeriodic ( gf ) ;
-      //  else
-    //gmsh2DMeshGenerator ( gf ) ;
 
+  // temp fix until we create MEdgeLoops in gmshFace:
+  if(gf->edgeLoops.empty())
+    gmsh2DMeshGenerator ( gf ) ;
+  else
+    gmsh2DMeshGeneratorPeriodic ( gf ) ;
 
   Msg(DEBUG1, "type %d %d triangles generated, %d internal vertices",
       gf->geomType(),gf->triangles.size(),gf->mesh_vertices.size());
