@@ -34,16 +34,16 @@ int NEWVOLUME(void);
 int NEWPHYSICAL(void);
 int NEWREG(void);
 
-Vertex *FindPoint(int inum, Mesh *M);
-Vertex *FindVertex(int inum, Mesh *M);
-Curve *FindCurve(int inum, Mesh *M);
-Surface *FindSurface(int inum, Mesh *M);
-Volume *FindVolume(int inum, Mesh *M);
-EdgeLoop *FindEdgeLoop(int inum, Mesh *M);
-SurfaceLoop *FindSurfaceLoop(int inum, Mesh *M);
-PhysicalGroup *FindPhysicalGroup(int inum, int type, Mesh *M);
+Vertex *FindPoint(int inum);
+Vertex *FindVertex(int inum);
+Curve *FindCurve(int inum);
+Surface *FindSurface(int inum);
+Volume *FindVolume(int inum);
+EdgeLoop *FindEdgeLoop(int inum);
+SurfaceLoop *FindSurfaceLoop(int inum);
+PhysicalGroup *FindPhysicalGroup(int inum, int type);
 
-Curve *CreateReversedCurve(Mesh *M, Curve *c);
+Curve *CreateReversedCurve(Curve *c);
 void ModifyLcPoint(int ip, double lc);
 
 void TranslateShapes(double X,double Y,double Z,
@@ -75,7 +75,7 @@ void ExtrudeShapes(int extrude_type, List_T *in,
 
 void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e);
 
-void ReplaceAllDuplicates(Mesh *m);
+void ReplaceAllDuplicates();
 
 bool ProjectPointOnCurve(Curve *c, Vertex *v, Vertex *RES, Vertex *DER);
 bool ProjectPointOnSurface(Surface *s, Vertex &p);

@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.99 2006-08-12 16:16:29 geuzaine Exp $
+// $Id: CAD.cpp,v 1.100 2006-11-25 00:44:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -135,90 +135,90 @@ int compare2Lists(List_T * List1, List_T * List2,
   return 0;
 }
 
-Vertex *FindPoint(int inum, Mesh * M)
+Vertex *FindPoint(int inum)
 {
   Vertex C, *pc;
   pc = &C;
   pc->Num = inum;
-  if(Tree_Query(M->Points, &pc)) {
+  if(Tree_Query(THEM->Points, &pc)) {
     return pc;
   }
   return NULL;
 }
 
-Vertex *FindVertex(int inum, Mesh * M)
+Vertex *FindVertex(int inum)
 {
   Vertex C, *pc;
   pc = &C;
   pc->Num = inum;
-  if(Tree_Query(M->Vertices, &pc)) {
+  if(Tree_Query(THEM->Vertices, &pc)) {
     return pc;
   }
   return NULL;
 }
 
-Curve *FindCurve(int inum, Mesh * M)
+Curve *FindCurve(int inum)
 {
   Curve C, *pc;
   pc = &C;
   pc->Num = inum;
-  if(Tree_Query(M->Curves, &pc)) {
+  if(Tree_Query(THEM->Curves, &pc)) {
     return pc;
   }
   return NULL;
 }
 
-Surface *FindSurface(int inum, Mesh * M)
+Surface *FindSurface(int inum)
 {
   Surface S, *ps;
   ps = &S;
   ps->Num = inum;
-  if(Tree_Query(M->Surfaces, &ps)) {
+  if(Tree_Query(THEM->Surfaces, &ps)) {
     return ps;
   }
   return NULL;
 }
 
-Volume *FindVolume(int inum, Mesh * M)
+Volume *FindVolume(int inum)
 {
   Volume V, *pv;
   pv = &V;
   pv->Num = inum;
-  if(Tree_Query(M->Volumes, &pv)) {
+  if(Tree_Query(THEM->Volumes, &pv)) {
     return pv;
   }
   return NULL;
 }
 
-EdgeLoop *FindEdgeLoop(int inum, Mesh * M)
+EdgeLoop *FindEdgeLoop(int inum)
 {
   EdgeLoop S, *ps;
   ps = &S;
   ps->Num = inum;
-  if(Tree_Query(M->EdgeLoops, &ps)) {
+  if(Tree_Query(THEM->EdgeLoops, &ps)) {
     return ps;
   }
   return NULL;
 }
 
-SurfaceLoop *FindSurfaceLoop(int inum, Mesh * M)
+SurfaceLoop *FindSurfaceLoop(int inum)
 {
   SurfaceLoop S, *ps;
   ps = &S;
   ps->Num = inum;
-  if(Tree_Query(M->SurfaceLoops, &ps)) {
+  if(Tree_Query(THEM->SurfaceLoops, &ps)) {
     return ps;
   }
   return NULL;
 }
 
-PhysicalGroup *FindPhysicalGroup(int num, int type, Mesh * M)
+PhysicalGroup *FindPhysicalGroup(int num, int type)
 {
   PhysicalGroup P, *pp, **ppp;
   pp = &P;
   pp->Num = num;
   pp->Typ = type;
-  if((ppp = (PhysicalGroup **) List_PQuery(M->PhysicalGroups, &pp,
+  if((ppp = (PhysicalGroup **) List_PQuery(THEM->PhysicalGroups, &pp,
                                            comparePhysicalGroup))) {
     return *ppp;
   }
@@ -300,7 +300,7 @@ Curve *DuplicateCurve(Curve * c)
   }
   pc->beg = DuplicateVertex(c->beg);
   pc->end = DuplicateVertex(c->end);
-  CreateReversedCurve(THEM, pc);
+  CreateReversedCurve(pc);
 
   return pc;
 }
@@ -373,7 +373,7 @@ void CopyShape(int Type, int Num, int *New)
 
   switch (Type) {
   case MSH_POINT:
-    if(!(v = FindPoint(Num, THEM))) {
+    if(!(v = FindPoint(Num))) {
       Msg(GERROR, "Unknown vertex %d", Num);
       return;
     }
@@ -390,7 +390,7 @@ void CopyShape(int Type, int Num, int *New)
   case MSH_SEGM_ELLI_INV:
   case MSH_SEGM_NURBS:
   case MSH_SEGM_PARAMETRIC:
-    if(!(c = FindCurve(Num, THEM))) {
+    if(!(c = FindCurve(Num))) {
       Msg(GERROR, "Unknown curve %d", Num);
       return;
     }
@@ -401,7 +401,7 @@ void CopyShape(int Type, int Num, int *New)
   case MSH_SURF_TRIC:
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
-    if(!(s = FindSurface(Num, THEM))) {
+    if(!(s = FindSurface(Num))) {
       Msg(GERROR, "Unknown surface %d", Num);
       return;
     }
@@ -416,7 +416,7 @@ void CopyShape(int Type, int Num, int *New)
 
 void DeletePoint(int ip)
 {
-  Vertex *v = FindPoint(ip, THEM);
+  Vertex *v = FindPoint(ip);
   if(!v)
     return;
   List_T *Curves = Tree2List(THEM->Curves);
@@ -439,7 +439,7 @@ void DeletePoint(int ip)
 
 void DeleteCurve(int ip)
 {
-  Curve *c = FindCurve(ip, THEM);
+  Curve *c = FindCurve(ip);
   if(!c)
     return;
   List_T *Surfs = Tree2List(THEM->Surfaces);
@@ -462,7 +462,7 @@ void DeleteCurve(int ip)
 
 void DeleteSurface(int is)
 {
-  Surface *s = FindSurface(is, THEM);
+  Surface *s = FindSurface(is);
   if(!s)
     return;
   List_T *Vols = Tree2List(THEM->Volumes);
@@ -485,7 +485,7 @@ void DeleteSurface(int is)
 
 void DeleteVolume(int iv)
 {
-  Volume *v = FindVolume(iv, THEM);
+  Volume *v = FindVolume(iv);
   if(!v)
     return;
   if(v->Num == THEM->MaxVolumeNum)
@@ -530,7 +530,7 @@ void DeleteShape(int Type, int Num)
 
 void ColorCurve(int ip, unsigned int col)
 {
-  Curve *c = FindCurve(ip, THEM);
+  Curve *c = FindCurve(ip);
   if(!c)
     return;
   c->Color.type = 1;
@@ -539,7 +539,7 @@ void ColorCurve(int ip, unsigned int col)
 
 void ColorSurface(int is, unsigned int col)
 {
-  Surface *s = FindSurface(is, THEM);
+  Surface *s = FindSurface(is);
   if(!s)
     return;
   s->Color.type = 1;
@@ -548,7 +548,7 @@ void ColorSurface(int is, unsigned int col)
 
 void ColorVolume(int iv, unsigned int col)
 {
-  Volume *v = FindVolume(iv, THEM);
+  Volume *v = FindVolume(iv);
   if(!v)
     return;
   v->Color.type = 1;
@@ -598,7 +598,7 @@ void VisibilityShape(int Type, int Num, int Mode)
 
   switch (Type) {
   case MSH_POINT:
-    if((v = FindPoint(Num, THEM)))
+    if((v = FindPoint(Num)))
       v->Visible = Mode;
     else
       Msg(WARNING, "Unknown point %d (use '*' to hide/show all points)", Num);
@@ -614,7 +614,7 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_SEGM_NURBS:
   case MSH_SEGM_PARAMETRIC:
   case MSH_SEGM_DISCRETE:
-    if((c = FindCurve(Num, THEM)))
+    if((c = FindCurve(Num)))
       c->Visible = Mode;
     else
       Msg(WARNING, "Unknown line %d (use '*' to hide/show all lines)", Num);
@@ -624,14 +624,14 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
   case MSH_SURF_DISCRETE:
-    if((s = FindSurface(Num, THEM)))
+    if((s = FindSurface(Num)))
       s->Visible = Mode;
     else
       Msg(WARNING, "Unknown surface %d (use '*' to hide/show all surfaces)", Num);
     break;
   case MSH_VOLUME:
   case MSH_VOLUME_DISCRETE:
-    if((V = FindVolume(Num, THEM)))
+    if((V = FindVolume(Num)))
       V->Visible = Mode;
     else
       Msg(WARNING, "Unknown volume %d (use '*' to hide/show all volumes)", Num);
@@ -664,7 +664,7 @@ void VisibilityShape(char *str, int Type, int Mode)
   }
 }
 
-Curve *CreateReversedCurve(Mesh * M, Curve * c)
+Curve *CreateReversedCurve(Curve * c)
 {
   Curve *newc;
   Vertex *e1, *e2, *e3, *e4;
@@ -714,19 +714,19 @@ Curve *CreateReversedCurve(Mesh * M, Curve * c)
 
   Curve **pc;
 
-  if((pc = (Curve **) Tree_PQuery(M->Curves, &newc))) {
+  if((pc = (Curve **) Tree_PQuery(THEM->Curves, &newc))) {
     Free_Curve(&newc, NULL);
     return *pc;
   }
   else{
-    Tree_Add(M->Curves, &newc);
+    Tree_Add(THEM->Curves, &newc);
     return newc;
   }
 }
 
 void ModifyLcPoint(int ip, double lc)
 {
-  Vertex *v = FindPoint(ip, THEM);
+  Vertex *v = FindPoint(ip);
   if(v)
     v->lc = lc;
 }
@@ -1055,7 +1055,7 @@ void ApplyTransformationToSurface(double matrix[4][4], Surface * s)
     // FIXME: this fixes benchmarks/bug/transfo_neg_curves.geo, but is
     // it the correct fix?
     //ApplyTransformationToCurve(matrix, c);
-    Curve *cc = FindCurve(abs(c->Num), THEM);
+    Curve *cc = FindCurve(abs(c->Num));
     ApplyTransformationToCurve(matrix, cc);
   }
   for(i = 0; i < List_Nbr(s->Control_Points); i++) {
@@ -1079,7 +1079,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T * ListShapes)
     List_Read(ListShapes, i, &O);
     switch (O.Type) {
     case MSH_POINT:
-      v = FindPoint(O.Num, THEM);
+      v = FindPoint(O.Num);
       if(v)
         ApplyTransformationToPoint(matrix, v, true);
       else
@@ -1095,7 +1095,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T * ListShapes)
     case MSH_SEGM_ELLI_INV:
     case MSH_SEGM_NURBS:
     case MSH_SEGM_PARAMETRIC:
-      c = FindCurve(O.Num, THEM);
+      c = FindCurve(O.Num);
       if(c)
         ApplyTransformationToCurve(matrix, c);
       else
@@ -1105,7 +1105,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T * ListShapes)
     case MSH_SURF_REGL:
     case MSH_SURF_TRIC:
     case MSH_SURF_PLAN:
-      s = FindSurface(O.Num, THEM);
+      s = FindSurface(O.Num);
       if(s)
         ApplyTransformationToSurface(matrix, s);
       else
@@ -1133,7 +1133,7 @@ void TranslateShapes(double X, double Y, double Z,
   ApplicationOnShapes(matrix, ListShapes);
 
   if(CTX.geom.auto_coherence && final)
-    ReplaceAllDuplicates(THEM);
+    ReplaceAllDuplicates();
 }
 
 void DilatShapes(double X, double Y, double Z, double A,
@@ -1148,7 +1148,7 @@ void DilatShapes(double X, double Y, double Z, double A,
   ApplicationOnShapes(matrix, ListShapes);
 
   if(CTX.geom.auto_coherence && final)
-    ReplaceAllDuplicates(THEM);
+    ReplaceAllDuplicates();
 }
 
 void RotateShapes(double Ax, double Ay, double Az,
@@ -1176,7 +1176,7 @@ void RotateShapes(double Ax, double Ay, double Az,
   ApplicationOnShapes(matrix, ListShapes);
 
   if(CTX.geom.auto_coherence && final)
-    ReplaceAllDuplicates(THEM);
+    ReplaceAllDuplicates();
 }
 
 void SymmetryShapes(double A, double B, double C,
@@ -1188,7 +1188,7 @@ void SymmetryShapes(double A, double B, double C,
   ApplicationOnShapes(matrix, ListShapes);
 
   if(CTX.geom.auto_coherence && final)
-    ReplaceAllDuplicates(THEM);
+    ReplaceAllDuplicates();
 }
 
 
@@ -1379,14 +1379,14 @@ int Extrude_ProtudePoint(int type, int ip,
 
   End_Curve(c);
   Tree_Add(THEM->Curves, &c);
-  CreateReversedCurve(THEM, c);
+  CreateReversedCurve(c);
   *pc = c;
-  *prc = FindCurve(-c->Num, THEM);
+  *prc = FindCurve(-c->Num);
 
   List_Reset(ListOfTransformedPoints);
 
   if(CTX.geom.auto_coherence && final)
-    ReplaceAllDuplicates(THEM);
+    ReplaceAllDuplicates();
 
   return chapeau->Num;
 }
@@ -1404,8 +1404,8 @@ int Extrude_ProtudeCurve(int type, int ic,
   Curve *pc, *revpc, *chapeau;
   Surface *s;
 
-  pc = FindCurve(ic, THEM);
-  revpc = FindCurve(-ic, THEM);
+  pc = FindCurve(ic);
+  revpc = FindCurve(-ic);
   *ps = NULL;
 
   if(!pc || !revpc){
@@ -1516,7 +1516,7 @@ int Extrude_ProtudeCurve(int type, int ic,
   if(e)
     s->Extrude->mesh = e->mesh;
 
-  ReverseChapeau = FindCurve(-chapeau->Num, THEM);
+  ReverseChapeau = FindCurve(-chapeau->Num);
 
   if(!CurveBeg) {
     List_Add(s->Generatrices, &pc);
@@ -1543,7 +1543,7 @@ int Extrude_ProtudeCurve(int type, int ic,
   *ps = s;
 
   if(CTX.geom.auto_coherence && final)
-    ReplaceAllDuplicates(THEM);
+    ReplaceAllDuplicates();
 
   return chapeau->Num;
 }
@@ -1561,7 +1561,7 @@ int Extrude_ProtudeSurface(int type, int is,
 
   *pv = NULL;
 
-  if(!(ps = FindSurface(is, THEM)))
+  if(!(ps = FindSurface(is)))
     return 0;
 
   Msg(DEBUG, "Extrude Surface %d", is);
@@ -1578,7 +1578,7 @@ int Extrude_ProtudeSurface(int type, int is,
     List_Read(ps->Generatrices, i, &c2);
     List_Read(chapeau->Generatrices, i, &c);
     if(c->Num < 0)
-      if(!(c = FindCurve(-c->Num, THEM))) {
+      if(!(c = FindCurve(-c->Num))) {
         Msg(GERROR, "Unknown curve %d", -c->Num);
         return ps->Num;
       }
@@ -1706,7 +1706,7 @@ int Extrude_ProtudeSurface(int type, int is,
   *pv = v;
 
   if(CTX.geom.auto_coherence)
-    ReplaceAllDuplicates(THEM);
+    ReplaceAllDuplicates();
 
   List_Reset(ListOfTransformedPoints);
 
@@ -1774,7 +1774,7 @@ void ExtrudeShapes(int type, List_T *in,
       TheShape.Num = Extrude_ProtudeCurve(type, O.Num, T0, T1, T2,
 					  A0, A1, A2, X0, X1, X2, alpha,
 					  &ps, 1, e);
-      pc = FindCurve(TheShape.Num, THEM);
+      pc = FindCurve(TheShape.Num);
       if(!pc){
 	//Msg(WARNING, "Unknown curve %d", TheShape.Num);
 	TheShape.Type = 0;
@@ -1796,7 +1796,7 @@ void ExtrudeShapes(int type, List_T *in,
       TheShape.Num = Extrude_ProtudeSurface(type, O.Num, T0, T1, T2,
 					    A0, A1, A2, X0, X1, X2, alpha,
 					    &pv, e);
-      ps = FindSurface(TheShape.Num, THEM);
+      ps = FindSurface(TheShape.Num);
       if(!ps){
 	//Msg(WARNING, "Unknown surface %d", TheShape.Num);
 	TheShape.Type = 0;
@@ -1892,7 +1892,7 @@ void MaxNumSurface(void *a, void *b)
   THEM->MaxSurfaceNum = MAX(THEM->MaxSurfaceNum, s->Num);
 }
 
-void ReplaceDuplicatePoints(Mesh * m)
+void ReplaceDuplicatePoints()
 {
   List_T *All;
   Tree_T *allNonDuplicatedPoints;
@@ -1906,9 +1906,9 @@ void ReplaceDuplicatePoints(Mesh * m)
 
   // Create unique points
 
-  start = Tree_Nbr(m->Points);
+  start = Tree_Nbr(THEM->Points);
 
-  All = Tree2List(m->Points);
+  All = Tree2List(THEM->Points);
   allNonDuplicatedPoints = Tree_Create(sizeof(Vertex *), comparePosition);
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &v);
@@ -1916,14 +1916,14 @@ void ReplaceDuplicatePoints(Mesh * m)
       Tree_Insert(allNonDuplicatedPoints, &v);
     }
     else {
-      Tree_Suppress(m->Points, &v);
-      Tree_Suppress(m->Vertices, &v);
+      Tree_Suppress(THEM->Points, &v);
+      Tree_Suppress(THEM->Vertices, &v);
       //List_Add(points2delete,&v);      
     }
   }
   List_Delete(All);
 
-  end = Tree_Nbr(m->Points);
+  end = Tree_Nbr(THEM->Points);
 
   if(start == end) {
     Tree_Delete(allNonDuplicatedPoints);
@@ -1934,14 +1934,14 @@ void ReplaceDuplicatePoints(Mesh * m)
   Msg(DEBUG, "Removed %d duplicate points", start - end);
 
   if(CTX.geom.old_newreg) {
-    m->MaxPointNum = 0;
-    Tree_Action(m->Points, MaxNumPoint);
-    Tree_Action(m->Vertices, MaxNumPoint);
+    THEM->MaxPointNum = 0;
+    Tree_Action(THEM->Points, MaxNumPoint);
+    Tree_Action(THEM->Vertices, MaxNumPoint);
   }
 
   // Replace old points in curves
 
-  All = Tree2List(m->Curves);
+  All = Tree2List(THEM->Curves);
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &c);
     if(!Tree_Query(allNonDuplicatedPoints, &c->beg))
@@ -1960,7 +1960,7 @@ void ReplaceDuplicatePoints(Mesh * m)
 
   // Replace old points in surfaces
 
-  All = Tree2List(m->Surfaces);
+  All = Tree2List(THEM->Surfaces);
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &s);
     for(j = 0; j < List_Nbr(s->Control_Points); j++) {
@@ -1982,7 +1982,7 @@ void ReplaceDuplicatePoints(Mesh * m)
   
   // Replace old points in volumes
 
-  All = Tree2List(m->Volumes);
+  All = Tree2List(THEM->Volumes);
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &vol);
     for(j = 0; j < List_Nbr(vol->TrsfPoints); j++){
@@ -2005,7 +2005,7 @@ void ReplaceDuplicatePoints(Mesh * m)
 
 }
 
-void ReplaceDuplicateCurves(Mesh * m)
+void ReplaceDuplicateCurves()
 {
   List_T *All;
   Tree_T *allNonDuplicatedCurves;
@@ -2015,16 +2015,16 @@ void ReplaceDuplicateCurves(Mesh * m)
 
   // Create unique curves
 
-  start = Tree_Nbr(m->Curves);
+  start = Tree_Nbr(THEM->Curves);
 
-  All = Tree2List(m->Curves);
+  All = Tree2List(THEM->Curves);
   allNonDuplicatedCurves = Tree_Create(sizeof(Curve *), compareTwoCurves);
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &c);
     if(c->Num > 0) {
       if(!Tree_Search(allNonDuplicatedCurves, &c)) {
         Tree_Insert(allNonDuplicatedCurves, &c);
-        if(!(c2 = FindCurve(-c->Num, m))) {
+        if(!(c2 = FindCurve(-c->Num))) {
           Msg(GERROR, "Unknown curve %d", -c->Num);
           List_Delete(All);
           return;
@@ -2032,19 +2032,19 @@ void ReplaceDuplicateCurves(Mesh * m)
         Tree_Insert(allNonDuplicatedCurves, &c2);
       }
       else {
-        Tree_Suppress(m->Curves, &c);
-        if(!(c2 = FindCurve(-c->Num, m))) {
+        Tree_Suppress(THEM->Curves, &c);
+        if(!(c2 = FindCurve(-c->Num))) {
           Msg(GERROR, "Unknown curve %d", -c->Num);
           List_Delete(All);
           return;
         }
-        Tree_Suppress(m->Curves, &c2);
+        Tree_Suppress(THEM->Curves, &c2);
       }
     }
   }
   List_Delete(All);
 
-  end = Tree_Nbr(m->Curves);
+  end = Tree_Nbr(THEM->Curves);
 
   if(start == end) {
     Tree_Delete(allNonDuplicatedCurves);
@@ -2054,13 +2054,13 @@ void ReplaceDuplicateCurves(Mesh * m)
   Msg(DEBUG, "Removed %d duplicate curves", start - end);
 
   if(CTX.geom.old_newreg) {
-    m->MaxLineNum = 0;
-    Tree_Action(m->Curves, MaxNumCurve);
+    THEM->MaxLineNum = 0;
+    Tree_Action(THEM->Curves, MaxNumCurve);
   }
 
   // Replace old curves in surfaces
 
-  All = Tree2List(m->Surfaces);
+  All = Tree2List(THEM->Surfaces);
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &s);
     for(j = 0; j < List_Nbr(s->Generatrices); j++) {
@@ -2079,7 +2079,7 @@ void ReplaceDuplicateCurves(Mesh * m)
   Tree_Delete(allNonDuplicatedCurves);
 }
 
-void ReplaceDuplicateSurfaces(Mesh * m)
+void ReplaceDuplicateSurfaces()
 {
   List_T *All;
   Tree_T *allNonDuplicatedSurfaces;
@@ -2089,9 +2089,9 @@ void ReplaceDuplicateSurfaces(Mesh * m)
 
   // Create unique surfaces
 
-  start = Tree_Nbr(m->Surfaces);
+  start = Tree_Nbr(THEM->Surfaces);
 
-  All = Tree2List(m->Surfaces);
+  All = Tree2List(THEM->Surfaces);
   allNonDuplicatedSurfaces = Tree_Create(sizeof(Curve *), compareTwoSurfaces);
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &s);
@@ -2100,13 +2100,13 @@ void ReplaceDuplicateSurfaces(Mesh * m)
         Tree_Insert(allNonDuplicatedSurfaces, &s);
       }
       else {
-        Tree_Suppress(m->Surfaces, &s);
+        Tree_Suppress(THEM->Surfaces, &s);
       }
     }
   }
   List_Delete(All);
 
-  end = Tree_Nbr(m->Surfaces);
+  end = Tree_Nbr(THEM->Surfaces);
 
   if(start == end) {
     Tree_Delete(allNonDuplicatedSurfaces);
@@ -2116,13 +2116,13 @@ void ReplaceDuplicateSurfaces(Mesh * m)
   Msg(DEBUG, "Removed %d duplicate surfaces", start - end);
 
   if(CTX.geom.old_newreg) {
-    m->MaxSurfaceNum = 0;
-    Tree_Action(m->Surfaces, MaxNumSurface);
+    THEM->MaxSurfaceNum = 0;
+    Tree_Action(THEM->Surfaces, MaxNumSurface);
   } 
 
   // Replace old surfaces in volumes
 
-  All = Tree2List(m->Volumes);
+  All = Tree2List(THEM->Volumes);
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &vol);
     for(j = 0; j < List_Nbr(vol->Surfaces); j++) {
@@ -2138,11 +2138,11 @@ void ReplaceDuplicateSurfaces(Mesh * m)
   Tree_Delete(allNonDuplicatedSurfaces);
 }
 
-void ReplaceAllDuplicates(Mesh * m)
+void ReplaceAllDuplicates()
 {
-  ReplaceDuplicatePoints(m);
-  ReplaceDuplicateCurves(m);
-  ReplaceDuplicateSurfaces(m);
+  ReplaceDuplicatePoints();
+  ReplaceDuplicateCurves();
+  ReplaceDuplicateSurfaces();
 }
 
 
@@ -2552,10 +2552,10 @@ bool IntersectAllSegmentsTogether(void)
             Tree_Add(THEM->Curves, &c21);
             Tree_Add(THEM->Curves, &c22);
 
-            CreateReversedCurve(THEM, c11);
-            CreateReversedCurve(THEM, c12);
-            CreateReversedCurve(THEM, c21);
-            CreateReversedCurve(THEM, c22);
+            CreateReversedCurve(c11);
+            CreateReversedCurve(c12);
+            CreateReversedCurve(c21);
+            CreateReversedCurve(c22);
             return true;
           }
         }

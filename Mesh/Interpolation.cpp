@@ -1,4 +1,4 @@
-// $Id: Interpolation.cpp,v 1.28 2006-08-26 15:13:22 remacle Exp $
+// $Id: Interpolation.cpp,v 1.29 2006-11-25 00:44:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -387,7 +387,7 @@ Vertex InterpolateSurface(Surface * s, double u, double v,
 
   if(s->Extrude && s->Extrude->geo.Mode == EXTRUDED_ENTITY &&
      s->Typ != MSH_SURF_PLAN) {
-    Curve *c = FindCurve(s->Extrude->geo.Source, THEM);
+    Curve *c = FindCurve(s->Extrude->geo.Source);
     Vertex v1 = InterpolateCurve(c, u, 0);
     s->Extrude->Extrude(v, v1.Pos.X, v1.Pos.Y, v1.Pos.Z);
     return v1;

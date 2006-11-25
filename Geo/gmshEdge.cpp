@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.17 2006-11-14 15:21:03 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.18 2006-11-25 00:44:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -44,7 +44,7 @@ gmshEdge::gmshEdge(GModel *model, int num)
 {
   c = Create_Curve(num, MSH_SEGM_DISCRETE, 0, NULL, NULL, -1, -1, 0., 1.);
   Tree_Add(THEM->Curves, &c);
-  CreateReversedCurve(THEM, c);
+  CreateReversedCurve(c);
 }
 
 Range<double> gmshEdge::parBounds(int i) const

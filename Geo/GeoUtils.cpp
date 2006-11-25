@@ -1,4 +1,4 @@
-// $Id: GeoUtils.cpp,v 1.14 2006-08-19 08:26:47 remacle Exp $
+// $Id: GeoUtils.cpp,v 1.15 2006-11-25 00:44:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -41,12 +41,12 @@ void sortEdgesInLoop(int num, List_T *edges)
   for(int i = 0; i < nbEdges; i++) {
     int j;
     List_Read(edges, i, &j);
-    if((c = FindCurve(j, THEM))){
+    if((c = FindCurve(j))){
       List_Add(temp, &c);
       if(c->Typ == MSH_SEGM_DISCRETE){
 	// fill-in vertices in reverse discrete curves
 	if(c->Num < 0 && !List_Nbr(c->Vertices)){
-	  Curve *rc = FindCurve(-c->Num, THEM);
+	  Curve *rc = FindCurve(-c->Num);
 	  if(rc)
 	    for(int k = List_Nbr(rc->Vertices) - 1; k >= 0; k--)
 	      List_Add(c->Vertices, List_Pointer(rc->Vertices, k));
@@ -55,8 +55,8 @@ void sortEdgesInLoop(int num, List_T *edges)
 	if(!c->beg && !c->end && List_Nbr(c->Vertices)){
 	  Vertex *first = *(Vertex**)List_Pointer(c->Vertices, 0);
 	  Vertex *last = *(Vertex**)List_Pointer(c->Vertices, List_Nbr(c->Vertices) - 1);
-	  c->beg = FindPoint(first->Num, THEM);
-	  c->end = FindPoint(last->Num, THEM);
+	  c->beg = FindPoint(first->Num);
+	  c->end = FindPoint(last->Num);
 	}
       }
     }
@@ -107,7 +107,7 @@ void setSurfaceEmbeddedPoints(Surface *s, List_T *points)
   for(int i = 0; i < nbPoints; i++) {
     double iPoint;
     List_Read(points, i, &iPoint);
-    Vertex *v = FindPoint((int)iPoint, THEM);
+    Vertex *v = FindPoint((int)iPoint);
     if(v)
       List_Add (s->EmbeddedPoints,&v);
     else
@@ -123,7 +123,7 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
   for(int i = 0; i < nbCurves; i++) {
     double iCurve;
     List_Read(curves, i, &iCurve);
-    Curve *c = FindCurve((int)iCurve, THEM);
+    Curve *c = FindCurve((int)iCurve);
     if(c)
       List_Add (s->EmbeddedCurves,&c);
     else
@@ -139,7 +139,7 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
     int iLoop;
     List_Read(loops, i, &iLoop);
     EdgeLoop *el;
-    if(!(el = FindEdgeLoop(abs(iLoop), THEM))) {
+    if(!(el = FindEdgeLoop(abs(iLoop)))) {
       Msg(GERROR, "Unknown line loop %d", iLoop);
       List_Delete(s->Generatrices);
       s->Generatrices = NULL;
@@ -154,7 +154,7 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
 	  List_Read(el->Curves, j, &ic);
 	  ic *= sign(iLoop);
 	  if(i != 0) ic *= -1; // hole
-	  if(!(c = FindCurve(ic, THEM))) {
+	  if(!(c = FindCurve(ic))) {
 	    Msg(GERROR, "Unknown curve %d", ic);
 	    List_Delete(s->Generatrices);
 	    s->Generatrices = NULL;
@@ -169,7 +169,7 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
 	  List_Read(el->Curves, j, &ic);
 	  ic *= sign(iLoop);
 	  if(i != 0) ic *= -1; // hole
-	  if(!(c = FindCurve(ic, THEM))) {
+	  if(!(c = FindCurve(ic))) {
 	    Msg(GERROR, "Unknown curve %d", ic);
 	    List_Delete(s->Generatrices);
 	    s->Generatrices = NULL;
@@ -194,7 +194,7 @@ void setVolumeSurfaces(Volume *v, List_T * loops)
     int il;
     List_Read(loops, i, &il);
     SurfaceLoop *sl;
-    if(!(sl = FindSurfaceLoop(abs(il), THEM))) {
+    if(!(sl = FindSurfaceLoop(abs(il)))) {
       Msg(GERROR, "Unknown surface loop %d", il);
       return;
     }
@@ -207,7 +207,7 @@ void setVolumeSurfaces(Volume *v, List_T * loops)
 	// edge loops, we don't actually create "negative"
 	// surfaces. So we just store the signs in another list
 	// (beeerk...)
-        if(!(s = FindSurface(abs(is), THEM))) {
+        if(!(s = FindSurface(abs(is)))) {
           Msg(GERROR, "Unknown surface %d", is);
           return;
         }

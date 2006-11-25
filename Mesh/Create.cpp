@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.85 2006-08-19 08:26:47 remacle Exp $
+// $Id: Create.cpp,v 1.86 2006-11-25 00:44:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -586,7 +586,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
       int iPnt;
       List_Read(Liste, j, &iPnt);
       Vertex *v;
-      if((v = FindPoint(iPnt, THEM)))
+      if((v = FindPoint(iPnt)))
         List_Add(pC->Control_Points, &v);
       else{
         Msg(GERROR, "Unknown control point %d in Curve %d", iPnt, pC->Num);
@@ -606,14 +606,14 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
   }
   else {
     Vertex *v;
-    if((v = FindPoint(p1, THEM))) {
+    if((v = FindPoint(p1))) {
       Msg(INFO, "Curve %d first control point %d ", pC->Num, v->Num);
       pC->beg = v;
     }
     else {
       Msg(GERROR, "Unknown control point %d in Curve %d", p1, pC->Num);
     }
-    if((v = FindPoint(p2, THEM))) {
+    if((v = FindPoint(p2))) {
       Msg(INFO, "Curve %d first control point %d ", pC->Num, v->Num);
       pC->end = v;
     }

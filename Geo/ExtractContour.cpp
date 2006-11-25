@@ -1,4 +1,4 @@
-// $Id: ExtractContour.cpp,v 1.8 2006-01-06 00:34:24 geuzaine Exp $
+// $Id: ExtractContour.cpp,v 1.9 2006-11-25 00:44:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -56,7 +56,7 @@ void recurFindLinkedEdges(int ed, List_T * edges, Tree_T * points, Tree_T * link
   lnk lk;
   nxa na;
   int ip[2];
-  Curve *c = FindCurve(ed, THEM);
+  Curve *c = FindCurve(ed);
   if(!c){
     Msg(GERROR, "Unknown curve %d", ed);
     return;
@@ -138,7 +138,7 @@ void orientAndSortEdges(List_T *edges, Tree_T *links)
   
   List_Read(temp, 0, &num);
   List_Add(edges, &num);
-  Curve *c0 = FindCurve(abs(num), THEM);
+  Curve *c0 = FindCurve(abs(num));
   if(!c0){
     Msg(GERROR, "Unknown curve %d", abs(num));
     return;
@@ -154,7 +154,7 @@ void orientAndSortEdges(List_T *edges, Tree_T *links)
     for(int j = 0; j < List_Nbr(lk.l); j++){
       List_Read(lk.l, j, &na);
       if(c0->Num != na.a && List_Search(temp, &na.a, fcmp_absint)){
-	Curve *c1 = FindCurve(abs(na.a), THEM);
+	Curve *c1 = FindCurve(abs(na.a));
 	if(!c1){
 	  Msg(GERROR, "Unknown curve %d", abs(na.a));
 	  return;
@@ -189,7 +189,7 @@ int allEdgesLinked(int ed, List_T * edges)
   for(int i = 0; i < List_Nbr(edges); i++){
     int num;
     List_Read(edges, i, &num);
-    Curve *c = FindCurve(abs(num), THEM);
+    Curve *c = FindCurve(abs(num));
     if(!c){
       Msg(GERROR, "Unknown curve %d", abs(num));
       return 0;
@@ -232,7 +232,7 @@ void recurFindLinkedFaces(int fac, List_T * faces, Tree_T * edges, Tree_T * link
   lnk lk;
   nxa na;
   Curve *c;
-  Surface *s = FindSurface(abs(fac), THEM);
+  Surface *s = FindSurface(abs(fac));
   if(!s){
     Msg(GERROR, "Unknown surface %d", abs(fac));
     return;
@@ -292,7 +292,7 @@ void createFaceLinks(Tree_T * links)
 
 void recurOrientFace(int face, List_T *faces, List_T *available, Tree_T *links)
 {
-  Surface *s = FindSurface(abs(face), THEM);
+  Surface *s = FindSurface(abs(face));
   if(!s){
     Msg(GERROR, "Unknown surface %d", abs(face));
     return;
@@ -311,7 +311,7 @@ void recurOrientFace(int face, List_T *faces, List_T *available, Tree_T *links)
       int num = abs(na.a);
       if(num != abs(s->Num) && List_Search(available, &num, fcmp_absint) &&
 	 List_ISearchSeq(faces, &num, fcmp_absint) < 0){
-	Surface *s2 = FindSurface(num, THEM);
+	Surface *s2 = FindSurface(num);
 	if(!s2){
 	  Msg(GERROR, "Unknown surface %d", num);
 	  return;
@@ -363,7 +363,7 @@ int allFacesLinked(int fac, List_T * faces)
   for(int i = 0; i < List_Nbr(faces); i++){
     int num;
     List_Read(faces, i, &num);
-    Surface *s = FindSurface(abs(num), THEM);
+    Surface *s = FindSurface(abs(num));
     if(!s){
       Msg(GERROR, "Unknown surface %d", abs(num));
       return 0;

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.235 2006-08-29 10:39:54 remacle Exp $
+// $Id: Gmsh.y,v 1.236 2006-11-25 00:44:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -44,6 +44,13 @@
 #include "ColorTable.h"
 #include "OS.h"
 #include "CreateFile.h"
+
+#include "GModel.h"
+#include "gmshVertex.h"
+#include "gmshEdge.h"
+#include "gmshFace.h"
+#include "gmshRegion.h"
+extern GModel *GMODEL;
 
 Tree_T *Symbol_T = NULL;
 
@@ -1014,7 +1021,7 @@ Shape :
     tPoint '(' FExpr ')' tAFFECT VExpr tEND
     {
       int num = (int)$3;
-      if(FindPoint(num, THEM)){
+      if(FindPoint(num)){
 	yymsg(GERROR, "Point %d already exists", num);
       }
       else{
@@ -1030,7 +1037,7 @@ Shape :
   | tPhysical tPoint '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindPhysicalGroup(num, MSH_PHYSICAL_POINT, THEM)){
+      if(FindPhysicalGroup(num, MSH_PHYSICAL_POINT)){
 	yymsg(GERROR, "Physical point %d already exists", num);
       }
       else{
@@ -1048,7 +1055,7 @@ Shape :
       for(int i = 0; i < List_Nbr($3); i++){
 	double p;
       	List_Read($3, i, &p);
-        Vertex *v = FindPoint((int)p, THEM);
+        Vertex *v = FindPoint((int)p);
         if(!v)
 	  yymsg(WARNING, "Unknown point %d", (int)p);
 	else{
@@ -1067,7 +1074,7 @@ Shape :
       for(int i = 0; i < List_Nbr($3); i++){
 	double d;
 	List_Read($3, i, &d);
-	Vertex *v = FindPoint((int)d, THEM);
+	Vertex *v = FindPoint((int)d);
 	if(!v)
 	  yymsg(WARNING, "Unknown point %d", (int)d);
 	else
@@ -1084,7 +1091,7 @@ Shape :
   | tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(FindCurve(num, THEM)){
+      if(FindCurve(num)){
 	yymsg(GERROR, "Curve %d already exists", num);
       }
       else{
@@ -1092,7 +1099,7 @@ Shape :
 	Curve *c = Create_Curve(num, MSH_SEGM_LINE, 1, temp, NULL,
 				-1, -1, 0., 1.);
 	Tree_Add(THEM->Curves, &c);
-	CreateReversedCurve(THEM, c);
+	CreateReversedCurve(c);
 	List_Delete(temp);
       }
       List_Delete($6);
@@ -1102,7 +1109,7 @@ Shape :
   | tSpline '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(FindCurve(num, THEM)){
+      if(FindCurve(num)){
 	yymsg(GERROR, "Curve %d already exists", num);
       }
       else{
@@ -1110,7 +1117,7 @@ Shape :
 	Curve *c = Create_Curve(num, MSH_SEGM_SPLN, 3, temp, NULL,
 				-1, -1, 0., 1.);
 	Tree_Add(THEM->Curves, &c);
-	CreateReversedCurve(THEM, c);
+	CreateReversedCurve(c);
 	List_Delete(temp);
       }
       List_Delete($6);
@@ -1120,7 +1127,7 @@ Shape :
   | tCircle '(' FExpr ')'  tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(FindCurve(num, THEM)){
+      if(FindCurve(num)){
 	yymsg(GERROR, "Curve %d already exists", num);
       }
       else{
@@ -1128,7 +1135,7 @@ Shape :
 	Curve *c = Create_Curve(num, MSH_SEGM_CIRC, 2, temp, NULL,
 				-1, -1, 0., 1.);
 	Tree_Add(THEM->Curves, &c);
-	CreateReversedCurve(THEM, c);
+	CreateReversedCurve(c);
 	List_Delete(temp);
       }
       List_Delete($6);
@@ -1138,7 +1145,7 @@ Shape :
   | tCircle '(' FExpr ')'  tAFFECT ListOfDouble tPlane VExpr tEND
     {
       int num = (int)$3;
-      if(FindCurve(num, THEM)){
+      if(FindCurve(num)){
 	yymsg(GERROR, "Curve %d already exists", num);
       }
       else{
@@ -1150,7 +1157,7 @@ Shape :
 	c->Circle.n[2] = $8[2];
 	End_Curve(c);
 	Tree_Add(THEM->Curves, &c);
-	Curve *rc = CreateReversedCurve(THEM, c);
+	Curve *rc = CreateReversedCurve(c);
 	rc->Circle.n[0] = $8[0];
 	rc->Circle.n[1] = $8[1];
 	rc->Circle.n[2] = $8[2];
@@ -1164,7 +1171,7 @@ Shape :
   | tEllipse '(' FExpr ')'  tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(FindCurve(num, THEM)){
+      if(FindCurve(num)){
 	yymsg(GERROR, "Curve %d already exists", num);
       }
       else{
@@ -1172,7 +1179,7 @@ Shape :
 	Curve *c = Create_Curve(num, MSH_SEGM_ELLI, 2, temp, NULL,
 				-1, -1, 0., 1.);
 	Tree_Add(THEM->Curves, &c);
-	CreateReversedCurve(THEM, c);
+	CreateReversedCurve(c);
 	List_Delete(temp);
       }
       List_Delete($6);
@@ -1182,7 +1189,7 @@ Shape :
   | tEllipse '(' FExpr ')'  tAFFECT ListOfDouble tPlane VExpr tEND
     {
       int num = (int)$3;
-      if(FindCurve(num, THEM)){
+      if(FindCurve(num)){
 	yymsg(GERROR, "Curve %d already exists", num);
       }
       else{
@@ -1194,7 +1201,7 @@ Shape :
 	c->Circle.n[2] = $8[2];
 	End_Curve(c);
 	Tree_Add(THEM->Curves, &c);
-	Curve *rc = CreateReversedCurve(THEM, c);
+	Curve *rc = CreateReversedCurve(c);
 	rc->Circle.n[0] = $8[0];
 	rc->Circle.n[1] = $8[1];
 	rc->Circle.n[2] = $8[2];
@@ -1209,7 +1216,7 @@ Shape :
       '{' FExpr ',' FExpr ',' tBIGSTR ',' tBIGSTR ',' tBIGSTR '}' tEND
     {
       int num = (int)$3;
-      if(FindCurve(num, THEM)){
+      if(FindCurve(num)){
 	yymsg(GERROR, "Curve %d already exists", num);
       }
       else{
@@ -1219,7 +1226,7 @@ Shape :
 	strcpy(c->functv, $13);
 	strcpy(c->functw, $15);
 	Tree_Add(THEM->Curves, &c);
-	CreateReversedCurve(THEM, c);
+	CreateReversedCurve(c);
       }
       Free($11); Free($13); Free($15);
       $$.Type = MSH_SEGM_PARAMETRIC;
@@ -1233,7 +1240,7 @@ Shape :
 	      List_Nbr($6));
       }
       else{
-	if(FindCurve(num, THEM)){
+	if(FindCurve(num)){
 	  yymsg(GERROR, "Curve %d already exists", num);
 	}
 	else{
@@ -1241,7 +1248,7 @@ Shape :
 	  Curve *c = Create_Curve(num, MSH_SEGM_BSPLN, 2, temp, NULL,
 				  -1, -1, 0., 1.);
 	  Tree_Add(THEM->Curves, &c);
-	  CreateReversedCurve(THEM, c);
+	  CreateReversedCurve(c);
 	  List_Delete(temp);
 	}
       }
@@ -1257,7 +1264,7 @@ Shape :
 	      List_Nbr($6));
       }
       else{
-	if(FindCurve(num, THEM)){
+	if(FindCurve(num)){
 	  yymsg(GERROR, "Curve %d already exists", num);
 	}
 	else{
@@ -1265,7 +1272,7 @@ Shape :
 	  Curve *c = Create_Curve(num, MSH_SEGM_BEZIER, 2, temp, NULL,
 				  -1, -1, 0., 1.);
 	  Tree_Add(THEM->Curves, &c);
-	  CreateReversedCurve(THEM, c);
+	  CreateReversedCurve(c);
 	  List_Delete(temp);
 	}
       }
@@ -1282,7 +1289,7 @@ Shape :
 	      (int)$3, List_Nbr($8), List_Nbr($6), (int)$10, List_Nbr($6) + (int)$10 + 1);
       }
       else{
-	if(FindCurve(num, THEM)){
+	if(FindCurve(num)){
 	  yymsg(GERROR, "Curve %d already exists", num);
 	}
 	else{
@@ -1290,7 +1297,7 @@ Shape :
 	  Curve *c = Create_Curve(num, MSH_SEGM_NURBS, (int)$10, temp, $8,
 				  -1, -1, 0., 1.);
 	  Tree_Add(THEM->Curves, &c);
-	  CreateReversedCurve(THEM, c);
+	  CreateReversedCurve(c);
 	  List_Delete(temp);
 	}
       }
@@ -1302,7 +1309,7 @@ Shape :
   | tLine tLoop '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindEdgeLoop(num, THEM)){
+      if(FindEdgeLoop(num)){
 	yymsg(GERROR, "Line loop %d already exists", num);
       }
       else{
@@ -1321,7 +1328,7 @@ Shape :
       for(int i = 0; i < List_Nbr($3); i++){
 	double p;
       	List_Read($3, i, &p);
-	Curve *c = FindCurve((int)p, THEM);
+	Curve *c = FindCurve((int)p);
         if(!c)
 	  yymsg(WARNING, "Unknown curve %d", (int)p);
 	else{
@@ -1337,7 +1344,7 @@ Shape :
   | tPhysical tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindPhysicalGroup(num, MSH_PHYSICAL_LINE, THEM)){
+      if(FindPhysicalGroup(num, MSH_PHYSICAL_LINE)){
 	yymsg(GERROR, "Physical line %d already exists", num);
       }
       else{
@@ -1356,7 +1363,7 @@ Shape :
   | tPlane tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindSurface(num, THEM)){
+      if(FindSurface(num)){
 	yymsg(GERROR, "Surface %d already exists", num);
       }
       else{
@@ -1375,13 +1382,13 @@ Shape :
   | tRuled tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4, type = 0;
-      if(FindSurface(num, THEM)){
+      if(FindSurface(num)){
 	yymsg(GERROR, "Surface %d already exists", num);
       }
       else{
 	double d;
 	List_Read($7, 0, &d);
-	EdgeLoop *el = FindEdgeLoop((int)fabs(d), THEM);
+	EdgeLoop *el = FindEdgeLoop((int)fabs(d));
 	if(!el){
 	  yymsg(GERROR, "Unknown line loop %d", (int)d);
 	}
@@ -1414,12 +1421,12 @@ Shape :
   | tTrimmed tSurface '(' FExpr ')' tAFFECT '{' FExpr ',' ListOfDouble '}' tEND
     {
       int num = (int)$4;
-      Surface *support = FindSurface((int)$8, THEM);
+      Surface *support = FindSurface((int)$8);
       if(!support){
 	yymsg(GERROR, "Unknown support surface %d", (int)$8);
       }
       else{
-	if(FindSurface(num, THEM)){
+	if(FindSurface(num)){
 	  yymsg(GERROR, "Surface %d already exists", num);
 	}
 	else{
@@ -1441,7 +1448,7 @@ Shape :
        tOrder '{' FExpr ',' FExpr '}' tEND
     {
       int num = (int)$6;
-      if(FindSurface(num, THEM)){
+      if(FindSurface(num)){
 	yymsg(GERROR, "Surface %d already exists", num);
       }
       else{
@@ -1460,7 +1467,7 @@ Shape :
        tOrder '{' FExpr ',' FExpr '}' tEND
     {
       int num = (int)$4;
-      if(FindSurface(num, THEM)){
+      if(FindSurface(num)){
 	yymsg(GERROR, "Surface %d already exists", num);
       }
       else{
@@ -1477,7 +1484,7 @@ Shape :
   | tSurface tLoop '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindSurfaceLoop(num, THEM)){
+      if(FindSurfaceLoop(num)){
 	yymsg(GERROR, "Surface loop %d already exists", num);
       }
       else{
@@ -1493,7 +1500,7 @@ Shape :
   | tPhysical tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE, THEM)){
+      if(FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE)){
 	yymsg(GERROR, "Physical surface %d already exists", num);
       }
       else{
@@ -1513,7 +1520,7 @@ Shape :
   | tComplex tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindVolume(num, THEM)){
+      if(FindVolume(num)){
 	yymsg(GERROR, "Volume %d already exists", num);
       }
       else{
@@ -1530,7 +1537,7 @@ Shape :
   | tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(FindVolume(num, THEM)){
+      if(FindVolume(num)){
 	yymsg(GERROR, "Volume %d already exists", num);
       }
       else{
@@ -1547,7 +1554,7 @@ Shape :
   | tPhysical tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindPhysicalGroup(num, MSH_PHYSICAL_VOLUME, THEM)){
+      if(FindPhysicalGroup(num, MSH_PHYSICAL_VOLUME)){
 	yymsg(GERROR, "Physical volume %d already exists", num);
       }
       else{
@@ -1609,7 +1616,7 @@ ListOfShapes :
 	List_Read($4, i, &d);
 	Shape TheShape;
 	TheShape.Num = (int)d;
-	Vertex *v = FindPoint(TheShape.Num, THEM);
+	Vertex *v = FindPoint(TheShape.Num);
 	if(!v)
 	  yymsg(WARNING, "Unknown point %d", TheShape.Num);
 	else{
@@ -1625,7 +1632,7 @@ ListOfShapes :
 	List_Read($4, i, &d);
 	Shape TheShape;
 	TheShape.Num = (int)d;
-	Curve *c = FindCurve(TheShape.Num, THEM);
+	Curve *c = FindCurve(TheShape.Num);
 	if(!c)
 	  yymsg(WARNING, "Unknown curve %d", TheShape.Num);
 	else{
@@ -1641,7 +1648,7 @@ ListOfShapes :
 	List_Read($4, i, &d);
 	Shape TheShape;
 	TheShape.Num = (int)d;
-	Surface *s = FindSurface(TheShape.Num, THEM);
+	Surface *s = FindSurface(TheShape.Num);
 	if(!s)
 	  yymsg(WARNING, "Unknown surface %d", TheShape.Num);
 	else{
@@ -1657,7 +1664,7 @@ ListOfShapes :
 	List_Read($4, i, &d);
 	Shape TheShape;
 	TheShape.Num = (int)d;
-	Volume *v = FindVolume(TheShape.Num, THEM);
+	Volume *v = FindVolume(TheShape.Num);
 	if(!v)
 	  yymsg(WARNING, "Unknown volume %d", TheShape.Num);
 	else{
@@ -2420,7 +2427,7 @@ Transfinite :
 	double d;
 	List_Read($3, i, &d);
 	int j = (int)fabs(d);
-        Curve *c = FindCurve(j, THEM);
+        Curve *c = FindCurve(j);
 	if(!c)
 	  yymsg(WARNING, "Unknown curve %d", j);
 	else{
@@ -2438,7 +2445,7 @@ Transfinite :
 	double d;
 	List_Read($3, i, &d);
 	int j = (int)fabs(d);
-        Curve *c = FindCurve(j, THEM);
+        Curve *c = FindCurve(j);
 	if(!c)
 	  yymsg(WARNING, "Unknown curve %d", j);
 	else{
@@ -2456,7 +2463,7 @@ Transfinite :
 	double d;
 	List_Read($3, i, &d);
 	int j = (int)fabs(d);
-        Curve *c = FindCurve(j, THEM);
+        Curve *c = FindCurve(j);
 	if(!c)
 	  yymsg(WARNING, "Unknown curve %d", j);
 	else{
@@ -2470,7 +2477,7 @@ Transfinite :
     }
   | tTransfinite tSurface '{' FExpr '}' tAFFECT ListOfDouble tEND
     {
-      Surface *s = FindSurface((int)$4, THEM);
+      Surface *s = FindSurface((int)$4);
       if(!s)
 	yymsg(WARNING, "Unknown surface %d", (int)$4);
       else{
@@ -2487,7 +2494,7 @@ Transfinite :
 	    double d;
 	    List_Read($7, i, &d);
 	    int j = (int)fabs(d);
-	    Vertex *v = FindPoint(j, THEM);
+	    Vertex *v = FindPoint(j);
 	    if(!v)
 	      yymsg(WARNING, "Unknown point %d", j);
 	    else
@@ -2499,7 +2506,7 @@ Transfinite :
     }
   | tTransfinite tSurface '{' FExpr '}' tAFFECT ListOfDouble tSTRING tEND
     {
-      Surface *s = FindSurface((int)$4, THEM);
+      Surface *s = FindSurface((int)$4);
       if(!s)
 	yymsg(WARNING, "Unknown surface %d", (int)$4);
       else{
@@ -2521,7 +2528,7 @@ Transfinite :
 	    double d;
 	    List_Read($7, i, &d);
 	    int j = (int)fabs(d);
-	    Vertex *v = FindPoint(j, THEM);
+	    Vertex *v = FindPoint(j);
 	    if(!v)
 	      yymsg(WARNING, "Unknown point %d", j);
 	    else
@@ -2534,7 +2541,7 @@ Transfinite :
     }
   | tElliptic tSurface '{' FExpr '}' tAFFECT ListOfDouble tEND
     {
-      Surface *s = FindSurface((int)$4, THEM);
+      Surface *s = FindSurface((int)$4);
       if(!s)
 	yymsg(WARNING, "Unknown surface %d", (int)$4);
       else{
@@ -2549,7 +2556,7 @@ Transfinite :
 	    double d;
 	    List_Read($7, i, &d);
 	    int j = (int)fabs(d);
-	    Vertex *v = FindPoint(j, THEM);
+	    Vertex *v = FindPoint(j);
 	    if(!v)
 	      yymsg(WARNING, "Unknown point %d", j);
 	    else
@@ -2561,7 +2568,7 @@ Transfinite :
     }
   | tTransfinite tVolume '{' FExpr '}' tAFFECT ListOfDouble tEND
     {
-      Volume *v = FindVolume((int)$4, THEM);
+      Volume *v = FindVolume((int)$4);
       if(!v)
 	yymsg(WARNING, "Unknown volume %d", (int)$4);
       else{
@@ -2576,7 +2583,7 @@ Transfinite :
 	    double d;
 	    List_Read($7, i, &d);
 	    int j = (int)fabs(d);
-	    Vertex *vert = FindPoint(j, THEM);
+	    Vertex *vert = FindPoint(j);
 	    if(!vert)
 	      yymsg(WARNING, "Unknown point %d", j);
 	    else
@@ -2592,7 +2599,7 @@ Transfinite :
 	double d;
 	List_Read($3, i, &d);
 	int j = (int)d;
-	Surface *s = FindSurface(j, THEM);
+	Surface *s = FindSurface(j);
 	if(s){
 	  s->Recombine = 1;
 	  s->RecombineAngle = ($5 > 0 && $5 < 90) ? $5 : 90;
@@ -2606,7 +2613,7 @@ Transfinite :
 	double d;
 	List_Read($3, i, &d);
 	int j = (int)d;
-        Surface *s = FindSurface(j, THEM);
+        Surface *s = FindSurface(j);
 	if(s){
 	  s->Recombine = 1;
         }
@@ -2621,13 +2628,13 @@ Transfinite :
 Embedding : 
     tPoint ListOfDouble tIn tSurface FExpr tEND
     { 
-      Surface *s = FindSurface((int)$5, THEM);
+      Surface *s = FindSurface((int)$5);
       if(s)
 	setSurfaceEmbeddedPoints(s, $2);
     }
   | tLine ListOfDouble tIn tSurface FExpr tEND
     {
-      Surface *s = FindSurface((int)$5, THEM);
+      Surface *s = FindSurface((int)$5);
       if(s)
 	setSurfaceEmbeddedCurves(s, $2);
     }
@@ -2643,7 +2650,7 @@ Embedding :
 Coherence : 
     tCoherence tEND
     { 
-      ReplaceAllDuplicates(THEM);
+      ReplaceAllDuplicates();
     }
   | tIntersect tEND
     { 
@@ -3044,7 +3051,7 @@ FExpr_Multi :
       // Returns the coordinates of a point and fills a list with it.
       // This allows to ensure e.g. that relative point positions are
       // always conserved
-      Vertex *v = FindPoint((int)$3, THEM);
+      Vertex *v = FindPoint((int)$3);
       $$ = List_Create(3, 1, sizeof(double));      
       if(!v) {
 	yymsg(GERROR, "Unknown point '%d'", (int) $3);

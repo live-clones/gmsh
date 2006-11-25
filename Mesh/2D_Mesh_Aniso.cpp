@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.56 2006-08-15 03:43:38 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.57 2006-11-25 00:44:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -337,9 +337,9 @@ void Recover_Edge(Surface * s, Edge * e, EdgesContainer & Edges)
 
 void constraint_the_edge(int isurf, int iv1, int iv2)
 {
-  Vertex *v1 = FindVertex(iv1, THEM);
-  Vertex *v2 = FindVertex(iv2, THEM);
-  Surface *s = FindSurface(isurf, THEM);
+  Vertex *v1 = FindVertex(iv1);
+  Vertex *v2 = FindVertex(iv2);
+  Surface *s = FindSurface(isurf);
   Edge e;
 
   if(!v1 || !v2)
@@ -1077,7 +1077,7 @@ int AlgorithmeMaillage2DAnisotropeModeJF(Surface * s)
   FacesTree = Tree_Create(sizeof(Simplex *), compareSimpSurf);
   for(i = 0; i < List_Nbr(s->Generatrices); i++) {
     List_Read(s->Generatrices, i, &cur);
-    curinv = FindCurve(abs(cur->Num), THEM);
+    curinv = FindCurve(abs(cur->Num));
     List_T *temp = Tree2List(curinv->Simplexes);
     for(j = 0; j < List_Nbr(temp); j++) {
       Tree_Add(FacesTree, List_Pointer(temp, j));

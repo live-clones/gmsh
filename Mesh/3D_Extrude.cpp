@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.93 2006-08-05 10:05:45 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.94 2006-11-25 00:44:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -891,7 +891,7 @@ int Extrude_Mesh(Curve * c)
 
   }
   else {
-    Curve *cc = FindCurve(abs(ep->geo.Source), THEM);
+    Curve *cc = FindCurve(abs(ep->geo.Source));
     if(!cc)
       return false;
     copy_mesh(cc, c, sign(ep->geo.Source));
@@ -1014,7 +1014,7 @@ int Extrude_Mesh(Surface * s)
   FACE_DIMENSION = 2;
 
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
-    c = FindCurve(abs(ep->geo.Source), THEM);
+    c = FindCurve(abs(ep->geo.Source));
     if(!c)
       return false;
     for(int i = 0; i < List_Nbr(c->Vertices); i++) {
@@ -1024,7 +1024,7 @@ int Extrude_Mesh(Surface * s)
     Extrude_Curve(&c, NULL);
   }
   else {
-    Surface *ss = FindSurface(ep->geo.Source, THEM);
+    Surface *ss = FindSurface(ep->geo.Source);
     if(!ss)
       return false;
     copy_mesh(ss, s);
@@ -1090,7 +1090,7 @@ int Extrude_Mesh(Tree_T * Volumes)
     ep = THEV->Extrude;
     NUM = THEV->Num;
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) {
-      s = FindSurface(ep->geo.Source, THEM);
+      s = FindSurface(ep->geo.Source);
       if(s) {
         Msg(STATUS2, "Meshing volume %d", NUM);
         Extrude_Surface1(s);
@@ -1107,7 +1107,7 @@ int Extrude_Mesh(Tree_T * Volumes)
       NUM = THEV->Num;
       if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY &&
          !ep->mesh.Recombine) {
-        s = FindSurface(ep->geo.Source, THEM);
+        s = FindSurface(ep->geo.Source);
         if(s)
           Extrude_Surface2(s);
       }
@@ -1127,7 +1127,7 @@ int Extrude_Mesh(Tree_T * Volumes)
     ep = THEV->Extrude;
     NUM = THEV->Num;
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) {
-      s = FindSurface(ep->geo.Source, THEM);
+      s = FindSurface(ep->geo.Source);
       if(s) {
         Msg(STATUS2, "Meshing volume %d", NUM);
         Extrude_Surface3(s);

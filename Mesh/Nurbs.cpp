@@ -1,4 +1,4 @@
-// $Id: Nurbs.cpp,v 1.18 2006-01-07 16:12:32 geuzaine Exp $
+// $Id: Nurbs.cpp,v 1.19 2006-11-25 00:44:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -272,7 +272,7 @@ void CreateNurbsSurfaceSupport(int Num, int Order1, int Order2,
   for(int i = 0; i < List_Nbr(ListCP); i++) {
     int j;
     List_Read(ListCP, i, &j);
-    Vertex *v = FindPoint(j, THEM);
+    Vertex *v = FindPoint(j);
     if(v){
       List_Add(s->Control_Points, &v);
     }
@@ -344,7 +344,7 @@ void CreateNurbsSurface(int Num, int Order1, int Order2, List_T * List,
     Curve *c = Create_Curve(Loop[0], MSH_SEGM_NURBS, Order1, Listint, NULL, 
 			    -1, -1, kumin, kumax);
     Tree_Add(THEM->Curves, &c);
-    CreateReversedCurve(THEM, c);
+    CreateReversedCurve(c);
     c->k = (float *)malloc(4 * List_Nbr(ku) * sizeof(float));
     for(int i = 0; i < List_Nbr(ku); i++) {
       double d;
@@ -363,7 +363,7 @@ void CreateNurbsSurface(int Num, int Order1, int Order2, List_T * List,
     Curve *c = Create_Curve(Loop[2], MSH_SEGM_NURBS, Order1, Listint, NULL, 
 			    -1, -1, kumin, kumax);
     Tree_Add(THEM->Curves, &c);
-    CreateReversedCurve(THEM, c);
+    CreateReversedCurve(c);
     c->k = (float *)malloc(4 * List_Nbr(ku) * sizeof(float));
     for(int i = 0; i < List_Nbr(ku); i++) {
       double d;
@@ -390,7 +390,7 @@ void CreateNurbsSurface(int Num, int Order1, int Order2, List_T * List,
     Curve *c = Create_Curve(Loop[1], MSH_SEGM_NURBS, Order2, Listint, NULL, 
 			    -1, -1, kumin, kumax);
     Tree_Add(THEM->Curves, &c);
-    CreateReversedCurve(THEM, c);
+    CreateReversedCurve(c);
     c->k = (float *)malloc(4 * List_Nbr(kv) * sizeof(float));
     for(int i = 0; i < List_Nbr(kv); i++) {
       double d;
@@ -408,7 +408,7 @@ void CreateNurbsSurface(int Num, int Order1, int Order2, List_T * List,
     Curve *c = Create_Curve(Loop[3], MSH_SEGM_NURBS, Order2, Listint, NULL,
 			    -1, -1, kumin, kumax);
     Tree_Add(THEM->Curves, &c);
-    CreateReversedCurve(THEM, c);
+    CreateReversedCurve(c);
     c->k = (float *)malloc(4 * List_Nbr(kv) * sizeof(float));
     for(int i = 0; i < List_Nbr(kv); i++) {
       double d;
