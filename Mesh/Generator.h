@@ -20,12 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-void mai3d(int Asked);
-void Init_Mesh0();
-void Init_Mesh();
-void Maillage_Dimension_1();
-void Maillage_Dimension_2();
-void Maillage_Dimension_3();
-void ApplyLcFactor();
+void GetStatistics(double stat[50], double quality[3][100]=0);
+void GenerateMesh(int dimension);
 
 #endif

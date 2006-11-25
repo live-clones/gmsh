@@ -140,8 +140,6 @@ typedef struct {
   DrawingColor Color;
 }Volume;
 
-typedef struct _Mesh Mesh;
-
 struct Coord{
   double X,Y,Z;
 };
@@ -214,7 +212,8 @@ typedef struct{
   DrawingColor Color;
 }Curve;
 
-struct _Mesh{
+class Mesh{
+public:
   Tree_T *Points;
   Tree_T *Curves;
   Tree_T *Surfaces;
@@ -224,6 +223,11 @@ struct _Mesh{
   List_T *PhysicalGroups;
   int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
+  Mesh(){ alloc_all(); }
+  ~Mesh(){ free_all(); }
+  void alloc_all();
+  void free_all();
+  void destroy(){ free_all(); alloc_all(); }
 };
 
 typedef struct {
@@ -246,8 +250,6 @@ int compareCurve(const void *a, const void *b);
 int compareSurface(const void *a, const void *b);
 int compareVolume(const void *a, const void *b);
 int compareSxF(const void *a, const void *b);
-int compareMeshPartitionNum(const void *a, const void *b);
-int compareMeshPartitionIndex(const void *a, const void *b);
 int comparePhysicalGroup(const void *a, const void *b);
 
 Vertex        *Create_Vertex (int Num, double X, double Y, double Z, double lc, double u);
@@ -261,7 +263,6 @@ SurfaceLoop   *Create_SurfaceLoop(int Num, List_T * intlist);
 
 void Free_Vertex (void *a, void *b);
 void Free_PhysicalGroup(void *a, void *b);
-void Free_MeshPartition(void *a, void *b);
 void Free_Surface(void *a, void *b);
 void Free_Volume(void *a, void *b);
 void Free_Volume_But_Not_Elements(void *a, void *b);

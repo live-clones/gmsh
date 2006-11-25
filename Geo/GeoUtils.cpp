@@ -1,4 +1,4 @@
-// $Id: GeoUtils.cpp,v 1.16 2006-11-25 16:52:43 geuzaine Exp $
+// $Id: GeoUtils.cpp,v 1.17 2006-11-25 20:08:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -22,8 +22,6 @@
 #include "Gmsh.h"
 #include "Geo.h"
 #include "Numeric.h"
-
-extern Mesh *THEM;
 
 // This function sorts the edges in an EdgeLoop and detects any
 // subloops. Warning: the input edges are supposed to be *oriented*

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.113 2006-11-25 16:52:43 geuzaine Exp $
+# $Id: Makefile,v 1.114 2006-11-25 20:08:39 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -102,8 +102,9 @@ GUI.o: GUI.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
   ../Common/GmshMatrix.h GUI.h Opengl_Window.h Colorbar_Window.h \
   Popup_Button.h SpherePosition_Widget.h Callbacks.h Bitmaps.h \
-  Win32Icon.h ../Parser/OpenFile.h ../Common/CommandLine.h Solvers.h \
-  ../Plugin/PluginManager.h ../Plugin/Plugin.h Shortcut_Window.h
+  Win32Icon.h ../Parser/OpenFile.h ../Common/CommandLine.h \
+  ../Mesh/Generator.h Solvers.h ../Plugin/PluginManager.h \
+  ../Plugin/Plugin.h Shortcut_Window.h
 GUI_Extras.o: GUI_Extras.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \

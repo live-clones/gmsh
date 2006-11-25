@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.30 2006-11-25 18:55:50 geuzaine Exp $
+// $Id: Box.cpp,v 1.31 2006-11-25 20:08:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -36,7 +36,7 @@
 #include "GModel.h"
 
 Context_T CTX;
-Mesh M, *THEM = &M;
+Mesh *THEM = 0;
 GModel *GMODEL = 0;
 
 // Print some help/info messages
@@ -78,9 +78,9 @@ int GMSHBOX(int argc, char *argv[])
   ParUtil::Instance()->init(argc, argv);
 
   GMODEL = new GModel;
+  THEM = new Mesh;
 
   InitSymbols();
-  Init_Mesh0();
   Init_Options(0);
 
   if(argc < 2)
@@ -116,7 +116,7 @@ int GMSHBOX(int argc, char *argv[])
       }
     }
     if(CTX.batch > 0) {
-      mai3d(CTX.batch);
+      GenerateMesh(CTX.batch);
       CreateOutputFile(CTX.output_filename, CTX.mesh.format);
     }
     else if(CTX.batch == -1)

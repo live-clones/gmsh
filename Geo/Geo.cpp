@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.61 2006-11-25 18:03:49 geuzaine Exp $
+// $Id: Geo.cpp,v 1.62 2006-11-25 20:08:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,32 @@ extern Mesh *THEM;
 extern Context_T CTX;
 
 static List_T *ListOfTransformedPoints = NULL;
+
+void Mesh::alloc_all()
+{
+  MaxPointNum = MaxLineNum = MaxLineLoopNum = MaxSurfaceNum = 0;
+  MaxSurfaceLoopNum = MaxVolumeNum = MaxPhysicalNum = 0;
+  Points = Tree_Create(sizeof(Vertex *), compareVertex);
+  Curves = Tree_Create(sizeof(Curve *), compareCurve);
+  EdgeLoops = Tree_Create(sizeof(EdgeLoop *), compareEdgeLoop);
+  Surfaces = Tree_Create(sizeof(Surface *), compareSurface);
+  SurfaceLoops = Tree_Create(sizeof(SurfaceLoop *), compareSurfaceLoop);
+  Volumes = Tree_Create(sizeof(Volume *), compareVolume);
+  PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
+}
+
+void Mesh::free_all()
+{
+  MaxPointNum = MaxLineNum = MaxLineLoopNum = MaxSurfaceNum = 0;
+  MaxSurfaceLoopNum = MaxVolumeNum = MaxPhysicalNum = 0;
+  Tree_Action(THEM->Points, Free_Vertex); Tree_Delete(THEM->Points);
+  Tree_Action(THEM->Curves, Free_Curve); Tree_Delete(THEM->Curves);
+  Tree_Action(THEM->EdgeLoops, Free_EdgeLoop); Tree_Delete(THEM->EdgeLoops);
+  Tree_Action(THEM->Surfaces, Free_Surface); Tree_Delete(THEM->Surfaces);
+  Tree_Action(THEM->SurfaceLoops, Free_SurfaceLoop); Tree_Delete(THEM->SurfaceLoops);
+  Tree_Action(THEM->Volumes, Free_Volume); Tree_Delete(THEM->Volumes);
+  List_Action(THEM->PhysicalGroups, Free_PhysicalGroup); List_Delete(THEM->PhysicalGroups);
+}
 
 // Comparison routines
 

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.239 2006-11-25 16:52:53 geuzaine Exp $
+// $Id: Gmsh.y,v 1.240 2006-11-25 20:08:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -27,6 +27,7 @@
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Context.h"
+#include "GModel.h"
 #include "Geo.h"
 #include "GeoInterpolation.h"
 #include "GeoUtils.h"
@@ -47,6 +48,7 @@ Tree_T *Symbol_T = NULL;
 
 extern Context_T CTX;
 extern Mesh *THEM;
+extern GModel *GMODEL;
 
 static ExtrudeParams extr;
 
@@ -1706,7 +1708,8 @@ Delete :
   | tDelete tSTRING tEND
     {
       if(!strcmp($2, "Meshes") || !strcmp($2, "All")){
-	Init_Mesh();
+	GMODEL->destroy();
+	THEM->destroy();
       }
       else if(!strcmp($2, "Physicals")){
 	List_Action(THEM->PhysicalGroups, Free_PhysicalGroup);

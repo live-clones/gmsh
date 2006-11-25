@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.99 2006-11-25 16:52:43 geuzaine Exp $
+// $Id: Main.cpp,v 1.100 2006-11-25 20:08:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -41,7 +41,7 @@
 #include "GModel.h"
 
 Context_T CTX;
-Mesh M, *THEM = &M;
+Mesh *THEM = 0;
 GUI *WID = 0;
 GModel *GMODEL = 0;
 
@@ -69,14 +69,11 @@ int main(int argc, char *argv[])
 
   // Create a new model
   GMODEL = new GModel;
+  THEM = new Mesh;
 
   // Initialize the symbol tree that will hold variable names
   
   InitSymbols();
-
-  // Initialize the static Mesh
-  
-  Init_Mesh0();
 
   // Gmsh default options
 
@@ -136,7 +133,7 @@ int main(int argc, char *argv[])
           Msg(GERROR, "Invalid background mesh (no view)");
       }
       if(CTX.batch > 0) {
-        mai3d(CTX.batch);
+        GenerateMesh(CTX.batch);
         CreateOutputFile(CTX.output_filename, CTX.mesh.format);
       }
       else if(CTX.batch == -1)

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.477 2006-11-25 16:52:41 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.478 2006-11-25 20:08:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3569,21 +3569,21 @@ void mesh_define_cb(CALLBACK_ARGS)
 
 void mesh_1d_cb(CALLBACK_ARGS)
 {
-  mai3d(1);
+  GenerateMesh(1);
   Draw();
   Msg(STATUS2N, " ");
 }
 
 void mesh_2d_cb(CALLBACK_ARGS)
 {
-  mai3d(2);
+  GenerateMesh(2);
   Draw();
   Msg(STATUS2N, " ");
 }
 
 void mesh_3d_cb(CALLBACK_ARGS)
 {
-  mai3d(3);
+  GenerateMesh(3);
   Draw();
   Msg(STATUS2N, " ");
 }

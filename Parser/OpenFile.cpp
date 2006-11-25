@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.130 2006-11-25 16:52:53 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.131 2006-11-25 20:08:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,7 @@
 #endif
 
 #include "Gmsh.h"
+#include "Geo.h"
 #include "GModel.h"
 #include "Numeric.h"
 #include "Context.h"
@@ -44,6 +45,7 @@ extern GUI *WID;
 void UpdateViewsInGUI();
 #endif
 
+extern Mesh *THEM;
 extern GModel *GMODEL;
 extern Context_T CTX;
 
@@ -377,15 +379,13 @@ void OpenProblem(char *name)
   CTX.threads_lock = 1;
 
   GMODEL->destroy();
-
-  Init_Mesh();
+  THEM->destroy();
 
   // Initialize pseudo random mesh generator to the same seed
   srand(1);
 
   SetProjectName(name);
   MergeProblem(name);
-  ApplyLcFactor();
 
   CTX.threads_lock = 0;
 

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.563 2006-11-25 16:52:42 geuzaine Exp $
+// $Id: GUI.cpp,v 1.564 2006-11-25 20:08:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -78,6 +78,7 @@
 #include "Win32Icon.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
+#include "Generator.h"
 #include "Solvers.h"
 #include "PluginManager.h"
 #include "Shortcut_Window.h"
@@ -3595,8 +3596,6 @@ void GUI::create_statistics_window()
   stat_window->position(CTX.stat_position[0], CTX.stat_position[1]);
   stat_window->end();
 }
-
-extern void GetStatistics(double s[50], double quality[3][100]=0);
 
 void GUI::set_statistics(bool compute_quality)
 {

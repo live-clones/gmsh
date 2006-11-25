@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.101 2006-11-25 16:52:44 geuzaine Exp $
+// $Id: Generator.cpp,v 1.102 2006-11-25 20:08:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,7 +20,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Gmsh.h"
-#include "Geo.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "OpenFile.h"
@@ -33,7 +32,6 @@
 #include "BackgroundMesh.h"
 #include "SecondOrder.h"
 
-extern Mesh *THEM;
 extern Context_T CTX;
 extern GModel *GMODEL;
 
@@ -181,23 +179,6 @@ void GetStatistics(double stat[50], double quality[3][100])
 
 }
 
-void ApplyLcFactor_Point(void *a, void *b)
-{
-  Vertex *v = *(Vertex **) a;
-  if(v->lc <= 0.0) {
-    Msg(GERROR, 
-	"Wrong characteristic length (%g <= 0) for Point %d, defaulting to 1.0",
-        v->lc, v->Num);
-    v->lc = 1.0;
-  }
-  v->lc *= CTX.mesh.lc_factor;
-}
-
-void ApplyLcFactor()
-{
-  Tree_Action(THEM->Points, ApplyLcFactor_Point);
-}
-
 bool TooManyElements(int dim){
   if(CTX.expert_mode || !GMODEL->numVertex()) return false;
 
@@ -216,7 +197,7 @@ bool TooManyElements(int dim){
 			  "Continue", "Cancel");
 }
 
-void Maillage_Dimension_1()
+void Mesh1D()
 {
   if(TooManyElements(1)) return;
 
@@ -228,22 +209,17 @@ void Maillage_Dimension_1()
   CTX.mesh_timer[0] = t2 - t1;
 }
 
-void Maillage_Dimension_2()
+void Mesh2D()
 {
   if(TooManyElements(2)) return;
 
   double t1 = Cpu();
   std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), meshGFace());
-
-  // 2 BE DONE
-  //  if(CTX.mesh.algo_recombine == 2)
-  //    Recombine_All(THEM);
-
   double t2 = Cpu();
   CTX.mesh_timer[1] = t2 - t1;
 }
 
-void Maillage_Dimension_3()
+void Mesh3D()
 {
   if(TooManyElements(3)) return;
 
@@ -253,61 +229,7 @@ void Maillage_Dimension_3()
   CTX.mesh_timer[2] = t2 - t1;
 }
 
-void Init_Mesh0()
-{
-  THEM->Points = NULL;
-  THEM->Curves = NULL;
-  THEM->SurfaceLoops = NULL;
-  THEM->EdgeLoops = NULL;
-  THEM->Surfaces = NULL;
-  THEM->Volumes = NULL;
-  THEM->PhysicalGroups = NULL;
-}
-
-void Init_Mesh()
-{
-  THEM->MaxPointNum = 0;
-  THEM->MaxLineNum = 0;
-  THEM->MaxLineLoopNum = 0;
-  THEM->MaxSurfaceNum = 0;
-  THEM->MaxSurfaceLoopNum = 0;
-  THEM->MaxVolumeNum = 0;
-  THEM->MaxPhysicalNum = 0;
-
-  Tree_Action(THEM->Points, Free_Vertex);  
-  Tree_Delete(THEM->Points);
-
-  Tree_Action(THEM->Curves, Free_Curve);
-  Tree_Delete(THEM->Curves);
-
-  Tree_Action(THEM->SurfaceLoops, Free_SurfaceLoop);
-  Tree_Delete(THEM->SurfaceLoops);
-
-  Tree_Action(THEM->EdgeLoops, Free_EdgeLoop);
-  Tree_Delete(THEM->EdgeLoops);
-
-  Tree_Action(THEM->Surfaces, Free_Surface);
-  Tree_Delete(THEM->Surfaces);
-
-  Tree_Action(THEM->Volumes, Free_Volume);
-  Tree_Delete(THEM->Volumes);
-
-  List_Action(THEM->PhysicalGroups, Free_PhysicalGroup);
-  List_Delete(THEM->PhysicalGroups);
-
-  THEM->Points = Tree_Create(sizeof(Vertex *), compareVertex);
-  THEM->Curves = Tree_Create(sizeof(Curve *), compareCurve);
-  THEM->SurfaceLoops = Tree_Create(sizeof(SurfaceLoop *), compareSurfaceLoop);
-  THEM->EdgeLoops = Tree_Create(sizeof(EdgeLoop *), compareEdgeLoop);
-  THEM->Surfaces = Tree_Create(sizeof(Surface *), compareSurface);
-  THEM->Volumes = Tree_Create(sizeof(Volume *), compareVolume);
-  THEM->PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
-
-  CTX.mesh.bgmesh_type = WITHPOINTS;
-  CTX.mesh.changed = ENT_ALL;
-}
-
-void mai3d(int ask)
+void GenerateMesh(int ask)
 {
   if(CTX.threads_lock) {
     Msg(INFO, "I'm busy! Ask me that later...");
@@ -331,7 +253,7 @@ void mai3d(int ask)
     if(GMODEL->getMeshStatus() > 1){
       OpenProblem(CTX.filename);
     }
-    Maillage_Dimension_1();
+    Mesh1D();
     Msg(INFO, "Mesh 1D complete (%g s)", CTX.mesh_timer[0]);
   }
 
@@ -340,16 +262,16 @@ void mai3d(int ask)
     Msg(STATUS1, "Meshing 2D...");
     if(GMODEL->getMeshStatus() > 2) {
       OpenProblem(CTX.filename);
-      Maillage_Dimension_1();
+      Mesh1D();
     }
-    Maillage_Dimension_2();
+    Mesh2D();
     Msg(INFO, "Mesh 2D complete (%g s)", CTX.mesh_timer[1]);
   }
 
   // 3D mesh
   if((ask > old && ask > 2 && old < 3) || (ask < old && ask > 2)) {
     Msg(STATUS1, "Meshing 3D...");
-    Maillage_Dimension_3();
+    Mesh3D();
     Msg(INFO, "Mesh 3D complete (%g s)", CTX.mesh_timer[2]);
   }
 

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.316 2006-11-25 16:52:41 geuzaine Exp $
+// $Id: Options.cpp,v 1.317 2006-11-25 20:08:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "Draw.h"
+#include "Generator.h"
 #include "Context.h"
 #include "Options.h"
 #include "BackgroundMesh.h"
@@ -5008,8 +5009,6 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
 #endif
   return CTX.mesh.color_carousel;
 }
-
-extern void GetStatistics(double s[50], double quality[3][100]=0);
 
 double opt_mesh_nb_nodes(OPT_ARGS_NUM)
 {
