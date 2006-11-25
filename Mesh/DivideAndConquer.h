@@ -21,10 +21,8 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 typedef struct _POINT PointRecord, *PointPeek;
-typedef struct _CONTOUR ContourRecord, *ContourPeek;
 typedef struct _DOC DocRecord, *DocPeek;
 typedef struct _CDLIST DListRecord, *DListPeek;
-typedef struct _MAILLAGE maillage, *maipeek;
 typedef struct _DELAUNAY Delaunay, *delpeek;
 typedef int PointNumero;
 
@@ -43,7 +41,6 @@ typedef struct{
 struct _POINT{
   MPoint where;
   DListPeek adjacent;
-  int initial, permu, numcontour;
   double quality;
   void *data;
 };
@@ -63,13 +60,6 @@ typedef struct{
   PointNumero *t;
   int t_length, info_length;
 }Striangle;
-
-typedef struct {
-  PointNumero from;
-  PointNumero to;
-  int num;
-  int seg;
-}edge;
 
 typedef struct{
   PointNumero begin;
@@ -95,20 +85,6 @@ typedef struct {
 struct _DELAUNAY{
   Triangle t;
   Voronoi v;
-};
-
-struct _CONTOUR{
-  PointRecord *oriented_points;
-  MPoint *perturbations;
-  int numpoints, numerocontour, numerozon, info;
-};
-
-struct _MAILLAGE{
-  PointRecord *points;
-  delpeek *listdel;
-  edge *listedges;
-  int numedges, numtriangles, numpoints;
-  int zone;
 };
 
 void Make_Mesh_With_Points(DocRecord * ptr, PointRecord * Liste, int Numpoints);

@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.2 2006-11-25 16:52:44 geuzaine Exp $
+// $Id: DivideAndConquer.cpp,v 1.3 2006-11-25 21:33:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -55,16 +55,6 @@ static PointRecord *pPointArray;
 int Insert(PointNumero a, PointNumero b);
 int Delete(PointNumero a, PointNumero b);
 
-void PushgPointArray(PointRecord * ptr)
-{
-  pPointArray = ptr;
-}
-
-PointRecord *PopgPointArray(void)
-{
-  return pPointArray;
-}
-
 PointNumero Predecessor(PointNumero a, PointNumero b)
 {
   DListPeek p = pPointArray[a].adjacent;
@@ -119,13 +109,12 @@ PointNumero First(PointNumero x)
   return (pPointArray[x].adjacent)->point_num;
 }
 
-// we use robust predicates here
-
 int Is_left_of(PointNumero x, PointNumero y, PointNumero check)
 {
   double pa[2] = {(double)pPointArray[x].where.h, (double)pPointArray[x].where.v};
   double pb[2] = {(double)pPointArray[y].where.h, (double)pPointArray[y].where.v};
   double pc[2] = {(double)pPointArray[check].where.h, (double)pPointArray[check].where.v};
+  // we use robust predicates here
   double result = gmsh::orient2d(pa, pb, pc);
   return result > 0;
 }
@@ -206,7 +195,8 @@ int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
   double pb[2] = {(double)pPointArray[i].where.h, (double)pPointArray[i].where.v};
   double pc[2] = {(double)pPointArray[j].where.h, (double)pPointArray[j].where.v};
   double pd[2] = {(double)pPointArray[k].where.h, (double)pPointArray[k].where.v};
-  
+
+  // we use robust predicates here  
   double result = gmsh::incircle(pa, pb, pc, pd) * gmsh::orient2d(pa, pb, pc);
   
   return (result < 0) ? 1 : 0;
@@ -361,7 +351,7 @@ int comparePoints(const void *i, const void *j)
     for a window. All error handling is done here. */
 int DelaunayAndVoronoi(DocPeek doc)
 {
-  PushgPointArray(doc->points);
+  pPointArray = doc->points;
 
   if(doc->numPoints < 2)
     return 1;
@@ -474,8 +464,6 @@ int Insert(PointNumero a, PointNumero b)
   return rslt;
 }
 
-
-
 int DListDelete(DListPeek * dlist, PointNumero oldPoint)
 {
   DListPeek p;
@@ -507,7 +495,6 @@ int DListDelete(DListPeek * dlist, PointNumero oldPoint)
 
   return 0;
 }
-
 
 /* This routine removes the point 'a' in the adjency list of 'b' and
    the point 'b' in the adjency list of 'a'.          */
