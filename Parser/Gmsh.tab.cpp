@@ -126,7 +126,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.277 2006-11-25 02:47:40 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.278 2006-11-25 03:30:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4659,7 +4659,7 @@ case 136:
 	yymsg(GERROR, "Mesh directives are not (yet) allowed in scripts");
       }
       else if(!strcmp(yyvsp[-2].c, "Status")){
-	THEM->status = (int)yyvsp[-1].d;
+	yymsg(GERROR, "Mesh directives are not (yet) allowed in scripts");
       }
       else{
 	yymsg(GERROR, "Unknown command '%s'", yyvsp[-2].c);

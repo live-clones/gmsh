@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.87 2006-11-25 02:47:39 geuzaine Exp $
+// $Id: Create.cpp,v 1.88 2006-11-25 03:30:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -95,22 +95,6 @@ int comparePhysicalGroup(const void *a, const void *b)
     return (q->Num - w->Num);
 }
 
-int compareMeshPartitionNum(const void *a, const void *b)
-{
-  MeshPartition *q, *w;
-  q = *(MeshPartition **) a;
-  w = *(MeshPartition **) b;
-  return (q->Num - w->Num);
-}
-
-int compareMeshPartitionIndex(const void *a, const void *b)
-{
-  MeshPartition *q, *w;
-  q = *(MeshPartition **) a;
-  w = *(MeshPartition **) b;
-  return (q->Index - w->Index);
-}
-
 PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T * intlist)
 {
   PhysicalGroup *p = (PhysicalGroup *) Malloc(sizeof(PhysicalGroup));
@@ -132,33 +116,6 @@ void Free_PhysicalGroup(void *a, void *b)
   PhysicalGroup *p = *(PhysicalGroup **) a;
   if(p) {
     List_Delete(p->Entities);
-    Free(p);
-    p = NULL;
-  }
-}
-
-int Add_MeshPartition(int Num, Mesh * M)
-{
-  MeshPartition P, *p, **pp;
-  p = &P;
-  p->Num = Num;
-  if((pp = (MeshPartition**)List_PQuery(M->Partitions, &p, compareMeshPartitionNum))){
-    return (*pp)->Index;
-  }
-  else{
-    p = (MeshPartition*)Malloc(sizeof(MeshPartition));
-    p->Num = Num;
-    p->Visible = 1;
-    p->Index = List_Nbr(M->Partitions);
-    List_Add(M->Partitions, &p);
-    return p->Index;
-  }
-}
-
-void Free_MeshPartition(void *a, void *b)
-{
-  MeshPartition *p = *(MeshPartition **) a;
-  if(p) {
     Free(p);
     p = NULL;
   }
@@ -586,7 +543,6 @@ Surface *Create_Surface(int Num, int Typ)
   pS->RecombineAngle = 75;
   pS->TrsfPoints = List_Create(4, 4, sizeof(Vertex *));
   pS->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
-  pS->TrsfVertices = List_Create(1, 10, sizeof(Vertex *));
   pS->Contours = List_Create(1, 1, sizeof(List_T *));
   pS->Orientations = List_Create(20, 2, sizeof(Vertex));
   pS->Support = pS;
@@ -604,7 +560,6 @@ void Free_Surface(void *a, void *b)
   if(pS) {
     List_Delete(pS->TrsfPoints);
     Tree_Delete(pS->Vertices);
-    List_Delete(pS->TrsfVertices);
     List_Delete(pS->Contours);
     List_Delete(pS->Orientations);
     List_Delete(pS->Control_Points);

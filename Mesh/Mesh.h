@@ -26,8 +26,6 @@
 #include "Vertex.h"
 #include "ExtrudeParams.h"
 
-class BDS_Mesh;
-
 typedef struct _POINT PointRecord, *PointPeek;
 typedef struct _CONTOUR ContourRecord, *ContourPeek;
 typedef struct _DOC DocRecord, *DocPeek;
@@ -124,14 +122,6 @@ struct _MAILLAGE{
   int zone;
 };
 
-typedef struct{
-  double zaxis[3];
-  double radius1;
-  double radius2;
-  double xaxis[3];
-  double center[3];
-}CylParam;
-
 class DrawingColor{
  public:
   int type;
@@ -159,11 +149,9 @@ struct _Surf{
   List_T *Orientations;
   List_T *Contours;
   Tree_T *Vertices;
-  List_T *TrsfVertices;
   int OrderU, OrderV;
   float *ku, *kv, *cp;
   struct _Surf *Support;
-  CylParam Cyl;
   ExtrudeParams *Extrude;
   DrawingColor Color;
 };
@@ -186,12 +174,6 @@ typedef struct{
   char Visible;
   List_T *Entities;
 }PhysicalGroup;
-
-typedef struct{
-  int Index;
-  int Num;
-  char Visible;
-}MeshPartition;
 
 typedef struct {
   int Num;
@@ -238,8 +220,6 @@ typedef struct{
 }Curve;
 
 struct _Mesh{
-  char name[256];
-  int status; // current state of the mesh
   Tree_T *Points;
   Tree_T *Vertices;
   Tree_T *Curves;
@@ -248,9 +228,6 @@ struct _Mesh{
   Tree_T *SurfaceLoops;
   Tree_T *EdgeLoops;
   List_T *PhysicalGroups;
-  List_T *Partitions;
-  BDS_Mesh *bds;
-  BDS_Mesh *bds_mesh;
   int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
 };

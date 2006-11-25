@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.99 2006-11-25 02:47:40 geuzaine Exp $
+// $Id: Generator.cpp,v 1.100 2006-11-25 03:30:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -262,7 +262,6 @@ void Init_Mesh0()
   THEM->Surfaces = NULL;
   THEM->Volumes = NULL;
   THEM->PhysicalGroups = NULL;
-  THEM->Partitions = NULL;
 }
 
 void Init_Mesh()
@@ -299,9 +298,6 @@ void Init_Mesh()
   List_Action(THEM->PhysicalGroups, Free_PhysicalGroup);
   List_Delete(THEM->PhysicalGroups);
 
-  List_Action(THEM->Partitions, Free_MeshPartition);
-  List_Delete(THEM->Partitions);
-
   THEM->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
   THEM->Points = Tree_Create(sizeof(Vertex *), compareVertex);
   THEM->Curves = Tree_Create(sizeof(Curve *), compareCurve);
@@ -310,8 +306,6 @@ void Init_Mesh()
   THEM->Surfaces = Tree_Create(sizeof(Surface *), compareSurface);
   THEM->Volumes = Tree_Create(sizeof(Volume *), compareVolume);
   THEM->PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
-  THEM->Partitions = List_Create(5, 5, sizeof(MeshPartition *));
-  THEM->status = 0;
 
   CTX.mesh.bgmesh_type = WITHPOINTS;
   CTX.mesh.changed = ENT_ALL;
