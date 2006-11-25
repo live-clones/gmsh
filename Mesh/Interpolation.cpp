@@ -1,4 +1,4 @@
-// $Id: Interpolation.cpp,v 1.29 2006-11-25 00:44:25 geuzaine Exp $
+// $Id: Interpolation.cpp,v 1.30 2006-11-25 02:47:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -324,6 +324,27 @@ void TransfiniteSph(Vertex S, Vertex center, Vertex * T)
   T->Pos.Z = center.Pos.Z + r * dirz;
 }
 
+void Calcule_Z_Plan(void *data, Surface *THESURFACE)
+{
+  Vertex **pv, *v;
+  Vertex V;
+
+  V.Pos.X = THESURFACE->a;
+  V.Pos.Y = THESURFACE->b;
+  V.Pos.Z = THESURFACE->c;
+
+  Projette(&V, THESURFACE->plan);
+
+  pv = (Vertex **) data;
+  v = *pv;
+  if(V.Pos.Z != 0.0)
+    v->Pos.Z = (THESURFACE->d - V.Pos.X * v->Pos.X - V.Pos.Y * v->Pos.Y)
+      / V.Pos.Z;
+  else
+    v->Pos.Z = 0.0;
+}
+
+
 Vertex InterpolateSurface(Surface * s, double u, double v,
                           int derivee, int u_v)
 {
@@ -397,7 +418,7 @@ Vertex InterpolateSurface(Surface * s, double u, double v,
 
   case MSH_SURF_PLAN:
 
-    Calcule_Z_Plan(&xx, &dum);
+    Calcule_Z_Plan(&xx, s);
     //Projette_Inverse(&xx, &dum);
     return x;
 

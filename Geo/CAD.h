@@ -80,7 +80,6 @@ void ReplaceAllDuplicates();
 bool ProjectPointOnCurve(Curve *c, Vertex *v, Vertex *RES, Vertex *DER);
 bool ProjectPointOnSurface(Surface *s, Vertex &p);
 bool ProjectPointOnSurface(Surface *s, Vertex *p,double *u, double *v);
-bool IntersectAllSegmentsTogether(void);
 
 int recognize_seg(int typ, List_T *liste, int *seg);
 int recognize_loop(List_T *liste, int *loop);

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.137 2006-11-16 18:48:01 geuzaine Exp $
+# $Id: Makefile,v 1.138 2006-11-25 02:47:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -30,39 +30,12 @@ INCLUDE = -I../Numeric -I../Common -I../DataStr -I../Geo -I../Mesh\
           -I../contrib/Metis
 CFLAGS  =  ${OPTIM} ${FLAGS} ${INCLUDE} 
 
-SRC = 1D_Mesh.cpp \
-      2D_Mesh.cpp \
-        2D_Transfinite.cpp \
-        2D_Elliptic.cpp \
-        2D_BGMesh.cpp \
-        2D_Recombine.cpp \
-        2D_InitMesh.cpp \
-        2D_Bowyer.cpp \
-        2D_Bricks.cpp \
-        2D_DivAndConq.cpp \
-        2D_Util.cpp \
-        2D_Links.cpp \
-        2D_Tree.cpp \
-        2D_Cylindrical.cpp \
-        2D_Parametric.cpp \
-        2D_Mesh_Aniso.cpp \
-        2D_Mesh_Triangle.cpp \
-        3D_Mesh.cpp \
-        3D_Transfinite.cpp \
-        3D_BGMesh.cpp \
-        3D_Extrude.cpp \
-        3D_Extrude_Old.cpp \
-        3D_Coherence.cpp \
-        3D_Divide.cpp \
-        3D_Mesh_Netgen.cpp \
-        3D_Mesh_Tetgen.cpp \
+SRC = DivideAndConquer.cpp \
+      BackgroundMesh.cpp \
       BDS.cpp \
       Create.cpp \
       Generator.cpp \
-      DiscreteSurface.cpp \
-      SwapEdge.cpp \
       Utils.cpp \
-      Metric.cpp \
       meshGEdge.cpp \
       meshGFace.cpp \
       meshGFaceTransfinite.cpp \
@@ -71,14 +44,7 @@ SRC = 1D_Mesh.cpp \
       Nurbs.cpp \
       Interpolation.cpp \
       SecondOrder.cpp \
-      PartitionMesh.cpp\
-      Smoothing.cpp \
-      CrossData.cpp \
-      Vertex.cpp \
-      Edge.cpp \
-      Face.cpp \
-      Element.cpp \
-      Simplex.cpp 
+      Vertex.cpp
 
 OBJ = ${SRC:.cpp=.o}
 
@@ -110,227 +76,49 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-1D_Mesh.o: 1D_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h ../Geo/Geo.h Mesh.h ../Common/GmshDefines.h \
-  Vertex.h Element.h Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h \
-  Metric.h Matrix.h Utils.h ../Common/Context.h Interpolation.h
-2D_Mesh.o: 2D_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
-  ../Common/GmshDefines.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
-  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
-  ../Mesh/Matrix.h ../Geo/ExtrudeParams.h Mesh.h Utils.h Vertex.h \
-  Create.h 2D_Mesh.h ../Common/Context.h Interpolation.h
-2D_Transfinite.o: 2D_Transfinite.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Geo/Geo.h Mesh.h ../Common/GmshDefines.h Vertex.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \
-  ../Numeric/Numeric.h Interpolation.h
-2D_Elliptic.o: 2D_Elliptic.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
-  ../Common/GmshDefines.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
-  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
-  ../Mesh/Matrix.h ../Geo/ExtrudeParams.h Mesh.h
-2D_BGMesh.o: 2D_BGMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Mesh.h ../Common/GmshDefines.h Vertex.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \
-  2D_Mesh.h
-2D_Recombine.o: 2D_Recombine.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h ../Geo/Geo.h Mesh.h ../Common/GmshDefines.h \
-  Vertex.h Element.h Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h \
-  Metric.h Matrix.h Interpolation.h Utils.h 2D_Mesh.h Create.h \
-  ../Common/Context.h
-2D_InitMesh.o: 2D_InitMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Mesh.h ../Common/GmshDefines.h Vertex.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \
-  2D_Mesh.h
-2D_Bowyer.o: 2D_Bowyer.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Mesh.h ../Common/GmshDefines.h Vertex.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \
-  2D_Mesh.h
-2D_Bricks.o: 2D_Bricks.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Mesh.h ../Common/GmshDefines.h Vertex.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \
-  2D_Mesh.h
-2D_DivAndConq.o: 2D_DivAndConq.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Mesh.h ../Common/GmshDefines.h Vertex.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \
-  2D_Mesh.h
-2D_Util.o: 2D_Util.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Mesh.h ../Common/GmshDefines.h Vertex.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \
-  2D_Mesh.h ../Common/Context.h
-2D_Links.o: 2D_Links.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Mesh.h ../Common/GmshDefines.h Vertex.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \
-  2D_Mesh.h ../Common/Context.h
-2D_Tree.o: 2D_Tree.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Mesh.h ../Common/GmshDefines.h Vertex.h Element.h Simplex.h Face.h \
-  Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h 2D_Mesh.h
-2D_Cylindrical.o: 2D_Cylindrical.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Mesh.h ../Common/GmshDefines.h Vertex.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \
-  ../Common/Context.h
-2D_Parametric.o: 2D_Parametric.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
-  ../Common/GmshDefines.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
-  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
-  ../Mesh/Matrix.h ../Geo/ExtrudeParams.h Interpolation.h Vertex.h Mesh.h \
-  2D_Mesh.h Create.h ../Common/Context.h
-2D_Mesh_Aniso.o: 2D_Mesh_Aniso.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
-  ../Common/GmshDefines.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
-  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
-  ../Mesh/Matrix.h ../Geo/ExtrudeParams.h Mesh.h Interpolation.h Vertex.h \
-  Create.h ../Common/Context.h
-2D_Mesh_Triangle.o: 2D_Mesh_Triangle.cpp ../Common/Gmsh.h \
+DivideAndConquer.o: DivideAndConquer.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
-  ../DataStr/Tree.h Mesh.h ../Common/GmshDefines.h Vertex.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \
-  ../Numeric/Numeric.h ../Common/Context.h
-3D_Mesh.o: 3D_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Tree.h ../Numeric/Numeric.h Mesh.h ../Common/GmshDefines.h \
+  Vertex.h ../Geo/ExtrudeParams.h ../Common/Context.h
+BackgroundMesh.o: BackgroundMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h ../Geo/Geo.h Mesh.h ../Common/GmshDefines.h \
-  Vertex.h Element.h Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h \
-  Metric.h Matrix.h 3D_Mesh.h Create.h ../Common/Context.h
-3D_Transfinite.o: 3D_Transfinite.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Mesh.h ../Common/GmshDefines.h Vertex.h Element.h Simplex.h Face.h \
-  Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h Interpolation.h \
-  Create.h
-3D_BGMesh.o: 3D_BGMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Mesh.h ../Common/GmshDefines.h Vertex.h Element.h Simplex.h Face.h \
-  Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Common/VertexArray.h \
+  Mesh.h ../Common/GmshDefines.h Vertex.h ../Geo/ExtrudeParams.h \
+  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h \
   ../Common/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h
-3D_Extrude.o: 3D_Extrude.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
-  ../Common/GmshDefines.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
-  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
-  ../Mesh/Matrix.h ../Geo/ExtrudeParams.h Mesh.h ../Common/Context.h \
-  Create.h Vertex.h
-3D_Extrude_Old.o: 3D_Extrude_Old.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
-  ../Common/GmshDefines.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
-  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
-  ../Mesh/Matrix.h ../Geo/ExtrudeParams.h Mesh.h ../Common/Context.h \
-  Create.h Vertex.h
-3D_Coherence.o: 3D_Coherence.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h ../Geo/Geo.h Mesh.h ../Common/GmshDefines.h \
-  Vertex.h Element.h Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h \
-  Metric.h Matrix.h 3D_Mesh.h Create.h
-3D_Divide.o: 3D_Divide.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Mesh.h ../Common/GmshDefines.h Vertex.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h
-3D_Mesh_Netgen.o: 3D_Mesh_Netgen.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Geo/Geo.h Mesh.h ../Common/GmshDefines.h Vertex.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \
-  Create.h ../Numeric/Numeric.h ../Common/Context.h ../Common/OS.h
-3D_Mesh_Tetgen.o: 3D_Mesh_Tetgen.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Mesh.h ../Common/GmshDefines.h Vertex.h Element.h Simplex.h Face.h \
-  Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h Create.h \
-  ../Numeric/Numeric.h ../Common/Context.h
 BDS.o: BDS.cpp ../Numeric/Numeric.h ../Common/GmshMatrix.h BDS.h \
   ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/Range.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Common/GmshDefines.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
   ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/MVertex.h \
-  ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h \
-  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Hash.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Context.h \
-  ../DataStr/List.h ../Geo/ExtrudeParams.h ../Geo/MElement.h \
-  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h \
-  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
-  ../Common/GmshMatrix.h ../Common/Message.h
+  ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h \
+  ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/Context.h ../DataStr/List.h ../Geo/ExtrudeParams.h \
+  ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/ExtrudeParams.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Message.h
 Create.o: Create.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Numeric/Numeric.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
-  ../Common/GmshDefines.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
-  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
-  ../Mesh/Matrix.h ../Geo/ExtrudeParams.h Mesh.h Utils.h Vertex.h \
-  ../Common/Context.h Create.h
+  ../Common/GmshDefines.h ../Mesh/Vertex.h ../Geo/ExtrudeParams.h \
+  ../Geo/ExtrudeParams.h Mesh.h Utils.h Vertex.h ../Common/Context.h \
+  Create.h
 Generator.o: Generator.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Mesh.h ../Common/GmshDefines.h Vertex.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h BDS.h \
-  ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/Range.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h \
+  ../Numeric/Numeric.h Mesh.h ../Common/GmshDefines.h Vertex.h \
+  ../Geo/ExtrudeParams.h BDS.h ../Geo/GFace.h ../Geo/GPoint.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GEdgeLoop.h \
+  ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/GEntity.h \
+  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
   ../Geo/MElement.h ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h \
@@ -339,77 +127,36 @@ Generator.o: Generator.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/ExtrudeParams.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h Create.h \
-  ../Parser/OpenFile.h PartitionMesh.h ../Common/OS.h meshGEdge.h \
-  meshGFace.h meshGRegion.h ../Geo/GModel.h ../Geo/GVertex.h \
-  ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/MElement.h ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h
-DiscreteSurface.o: DiscreteSurface.cpp Mesh.h ../Common/GmshDefines.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h Vertex.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h
-SwapEdge.o: SwapEdge.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Mesh.h ../Common/GmshDefines.h Vertex.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \
-  SwapPatterns.h
+  ../Parser/OpenFile.h ../Common/OS.h meshGEdge.h meshGFace.h \
+  meshGRegion.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEdge.h \
+  ../Geo/GFace.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h \
+  ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h
 Utils.o: Utils.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Numeric/Numeric.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
-  ../Common/GmshDefines.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
-  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
-  ../Mesh/Matrix.h ../Geo/ExtrudeParams.h Mesh.h Interpolation.h Vertex.h \
+  ../Common/GmshDefines.h ../Mesh/Vertex.h ../Geo/ExtrudeParams.h \
+  ../Geo/ExtrudeParams.h Mesh.h Interpolation.h Vertex.h \
   ../Common/Context.h
-Metric.o: Metric.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
-  ../Common/GmshDefines.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Face.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Edge.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Geo/ExtrudeParams.h \
-  ../Mesh/Metric.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Mesh.h \
-  ../Mesh/Matrix.h ../Geo/ExtrudeParams.h Mesh.h Matrix.h Interpolation.h \
-  Vertex.h
 meshGEdge.o: meshGEdge.cpp meshGEdge.h ../Geo/GEdge.h ../Geo/GEntity.h \
   ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Common/GmshDefines.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/MElement.h ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Numeric/Numeric.h ../Common/Context.h \
-  ../DataStr/List.h ../Geo/ExtrudeParams.h ../Geo/GFace.h ../Geo/GPoint.h \
-  ../Geo/GEntity.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h \
-  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h \
-  ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
-  ../DataStr/Tree.h Utils.h Vertex.h Mesh.h Element.h Simplex.h Face.h \
-  Edge.h Metric.h Matrix.h
+  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h ../Geo/MEdge.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Hash.h ../Geo/MFace.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Numeric/Numeric.h \
+  ../Common/Context.h ../DataStr/List.h ../Geo/ExtrudeParams.h \
+  ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/GEdgeLoop.h \
+  ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Common/Gmsh.h \
+  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
+  Utils.h Vertex.h Mesh.h
 meshGFace.o: meshGFace.cpp meshGFace.h ../Geo/GVertex.h ../Geo/GEntity.h \
   ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Common/GmshDefines.h ../Geo/MVertex.h \
-  ../Geo/SPoint3.h ../Geo/GPoint.h 2D_Mesh.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h Mesh.h Vertex.h Element.h Simplex.h \
-  Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h ../Geo/GEdge.h \
-  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h \
-  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Hash.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h ../Numeric/Numeric.h \
-  ../Common/Context.h ../Geo/ExtrudeParams.h ../Geo/GFace.h \
-  ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
-  ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/ExtrudeParams.h Utils.h ../Common/Message.h BDS.h \
-  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
-  ../Common/GmshMatrix.h
-meshGFaceTransfinite.o: meshGFaceTransfinite.cpp meshGFace.h \
-  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/GEdge.h \
+  ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
   ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
   ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h \
   ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Hash.h \
@@ -417,7 +164,24 @@ meshGFaceTransfinite.o: meshGFaceTransfinite.cpp meshGFace.h \
   ../Common/Context.h ../DataStr/List.h ../Geo/ExtrudeParams.h \
   ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Common/Message.h
+  ../Geo/Pair.h ../Geo/ExtrudeParams.h Utils.h Vertex.h Mesh.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../Common/Message.h BDS.h \
+  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
+  ../Common/GmshMatrix.h
+meshGFaceTransfinite.o: meshGFaceTransfinite.cpp meshGFace.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
+  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h \
+  ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h \
+  ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
+  ../Geo/ExtrudeParams.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
+  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h \
+  ../Common/Message.h
 meshGRegionDelaunayInsertion.o: meshGRegionDelaunayInsertion.cpp \
   meshGRegionDelaunayInsertion.h ../Geo/MElement.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint3.h \
@@ -430,88 +194,52 @@ meshGRegionDelaunayInsertion.o: meshGRegionDelaunayInsertion.cpp \
 meshGRegion.o: meshGRegion.cpp meshGRegion.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/GEdge.h \
-  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h \
-  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Hash.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h ../Numeric/Numeric.h \
-  ../Common/Context.h ../DataStr/List.h ../Geo/ExtrudeParams.h \
-  ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/MElement.h ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h \
-  ../Common/SmoothNormals.h BDS.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Common/VertexArray.h \
+  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h \
+  ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h \
+  ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
+  ../Geo/ExtrudeParams.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
+  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GRegion.h \
+  ../Geo/GEntity.h ../Geo/MElement.h ../Geo/ExtrudeParams.h \
+  ../Geo/SBoundingBox3d.h ../Common/SmoothNormals.h BDS.h \
+  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
   ../Common/GmshMatrix.h ../Common/Message.h
 Nurbs.o: Nurbs.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Nurbs.h Vertex.h Mesh.h ../Common/GmshDefines.h Element.h Simplex.h \
-  Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h ../Geo/Geo.h \
-  ../Geo/GeoUtils.h ../Mesh/Mesh.h Create.h ../Geo/CAD.h ../Mesh/Vertex.h \
-  ../Geo/ExtrudeParams.h
+  Nurbs.h Vertex.h Mesh.h ../Common/GmshDefines.h ../Geo/ExtrudeParams.h \
+  ../Geo/Geo.h ../Geo/GeoUtils.h ../Mesh/Mesh.h Create.h ../Geo/CAD.h \
+  ../Mesh/Vertex.h ../Geo/ExtrudeParams.h
 Interpolation.o: Interpolation.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Numeric/Numeric.h ../Geo/Geo.h Nurbs.h Vertex.h Mesh.h \
-  ../Common/GmshDefines.h Element.h Simplex.h Face.h Edge.h \
-  ../Geo/ExtrudeParams.h Metric.h Matrix.h ../Geo/CAD.h ../Mesh/Mesh.h \
-  ../Mesh/Vertex.h ../Geo/ExtrudeParams.h Utils.h Interpolation.h
+  ../Common/GmshDefines.h ../Geo/ExtrudeParams.h ../Geo/CAD.h \
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Geo/ExtrudeParams.h Utils.h \
+  Interpolation.h
 SecondOrder.o: SecondOrder.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/GEdge.h \
-  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h \
-  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Hash.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h ../Numeric/Numeric.h \
-  ../Common/Context.h ../DataStr/List.h ../Geo/ExtrudeParams.h \
-  ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/MElement.h ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h \
-  ../Common/SmoothNormals.h ../Geo/MRep.h ../Geo/GEdge.h ../Geo/GFace.h \
-  ../Geo/GRegion.h ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MElement.h \
-  ../Common/VertexArray.h ../Common/Message.h ../Common/OS.h
-PartitionMesh.o: PartitionMesh.cpp Mesh.h ../Common/GmshDefines.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h Vertex.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \
-  PartitionMesh.h
-Smoothing.o: Smoothing.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Mesh.h ../Common/GmshDefines.h Vertex.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h
-CrossData.o: CrossData.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Mesh.h ../Common/GmshDefines.h Vertex.h Element.h Simplex.h Face.h \
-  Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h
+  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h \
+  ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h \
+  ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
+  ../Geo/ExtrudeParams.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
+  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GRegion.h \
+  ../Geo/GEntity.h ../Geo/MElement.h ../Geo/ExtrudeParams.h \
+  ../Geo/SBoundingBox3d.h ../Common/SmoothNormals.h ../Geo/MRep.h \
+  ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h ../Geo/MVertex.h \
+  ../Geo/MEdge.h ../Geo/MElement.h ../Common/VertexArray.h \
+  ../Common/Message.h ../Common/OS.h
 Vertex.o: Vertex.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Vertex.h Mesh.h ../Common/GmshDefines.h Element.h \
-  Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \
-  ../Common/Context.h
-Edge.o: Edge.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Mesh.h \
-  ../Common/GmshDefines.h Vertex.h Element.h Simplex.h Face.h Edge.h \
-  ../Geo/ExtrudeParams.h Metric.h Matrix.h
-Face.o: Face.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Mesh.h \
-  ../Common/GmshDefines.h Vertex.h Element.h Simplex.h Face.h Edge.h \
-  ../Geo/ExtrudeParams.h Metric.h Matrix.h
-Element.o: Element.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Mesh.h ../Common/GmshDefines.h Vertex.h Element.h Simplex.h Face.h \
-  Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h ../Numeric/Numeric.h
-Simplex.o: Simplex.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h ../Geo/Geo.h Mesh.h ../Common/GmshDefines.h \
-  Vertex.h Element.h Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h \
-  Metric.h Matrix.h ../Common/Context.h
+  ../Numeric/Numeric.h Vertex.h Mesh.h ../Common/GmshDefines.h \
+  ../Geo/ExtrudeParams.h ../Common/Context.h

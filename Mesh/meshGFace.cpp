@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.24 2006-11-24 20:07:48 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.25 2006-11-25 02:47:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,6 @@
 
 #include "meshGFace.h"
 #include "GVertex.h"
-#include "2D_Mesh.h"
 #include "GEdge.h"
 #include "GFace.h"
 #include "MVertex.h"
@@ -523,127 +522,6 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
     }  
 }
 
-void OldMeshGenerator ( GFace *gf,
-			std::vector<MVertex*> &points,
-			std::vector<int> &indices, int initialOnly)
-{
-
-
-  // put the loops on the right sense, cause this stupid cannot
-  // handle non oriented loops
-  int nbEdgeLoops = indices.size()-1;
-
-  for(int i = 0; i < nbEdgeLoops; i++) {
-    int nbPtsOnEdgeLoop = indices[i+1] -indices[i];
-    std::vector<MVertex*> loop;
-    for(int j = indices[i]; j < indices[i+1]; j++)loop.push_back(points[j]);
-    //    Msg(INFO, " %d %d %d %d",i,indices[i],indices[i+1],Orientation(loop));
-    int k = 0;
-    int ori = Orientation(loop);
-    if (i == 0 && !ori)
-      for(int j = indices[i]; j < indices[i+1]; j++)points[j] = loop [nbPtsOnEdgeLoop-k++-1];
-    else if (i != 0 && ori)
-      for(int j = indices[i]; j < indices[i+1]; j++)points[j] = loop [nbPtsOnEdgeLoop-k++-1];
-  }
-
-  extern PointRecord *gPointArray;
-
-  // FIX THAT !!
-  double LC2D = 1;
-  if (gf->geomType () == GEntity::Plane)
-    {
-      SBoundingBox3d bb = gf->bounds();
-      SPoint3 _min = bb.min();
-      SPoint3 _max = bb.max();
-      
-      SVector3 diam (_min,_max);
-      LC2D = norm(diam);
-    }
-
-  //  Msg(INFO, "LC = %g",LC2D);
-
-  maillage M;
-  ContourRecord *cp, **liste;
-  liste = (ContourPeek *) malloc(nbEdgeLoops * sizeof(ContourPeek));
-  for(int i = 0; i < nbEdgeLoops; i++) {
-    cp = (ContourRecord *) malloc(sizeof(ContourRecord));
-    int nbPtsOnEdgeLoop = indices[i+1] -indices[i];
-    cp->oriented_points =
-      (PointRecord *) malloc(nbPtsOnEdgeLoop * sizeof(PointRecord));
-    cp->perturbations = (MPoint *) malloc( nbPtsOnEdgeLoop * sizeof(MPoint));
-    cp->numerocontour = i;
-    int k=0;
-    //    Msg(INFO, " %d %d %d ",i,indices[i],indices[i+1]);
-    for(int j = indices[i]; j < indices[i+1]; j++) {
-      MVertex *here     = points[j];
-      cp->oriented_points[k].where.h = here->x();
-      cp->oriented_points[k].where.v = here->y();
-      cp->perturbations[k].h = CTX.mesh.rand_factor * LC2D *
-        (double)rand() / (double)RAND_MAX;
-      cp->perturbations[k].v = CTX.mesh.rand_factor * LC2D *
-        (double)rand() / (double)RAND_MAX;      
-      cp->oriented_points[k].numcontour = i;
-
-      MVertex *previous = (j == indices[i])?points[indices[i+1]-1] : points[j-1]; 
-      MVertex *next     = (j == indices[i+1]-1)?points[indices[i]] : points[j+1];
-
-      double lc = 0.5 * ( sqrt ( (here->x() - previous->x())*(here->x() - previous->x()) +
-				 (here->y() - previous->y())*(here->y() - previous->y()) ) +
-			  sqrt ( (here->x() - next->x())*(here->x() - next->x()) +
-				 (here->y() - next->y())*(here->y() - next->y()) ) );		   
-      
-      //            Msg(INFO, " %g %g %g ",here->x(),here->y(),lc);
-      cp->oriented_points[k].quality = lc;
-      cp->oriented_points[k].permu = j;
-      cp->oriented_points[k].initial = j;
-      k++;
-    }
-    cp->numpoints = nbPtsOnEdgeLoop;
-    liste[i] = cp;
-  }
-
-  int N;
-  int res_mesh_domain = mesh_domain(liste, nbEdgeLoops, &M, &N,initialOnly);
-
-  //  Msg(INFO, "result is %d",res_mesh_domain);
-    
-  MVertex ** verts_ = new MVertex* [M.numpoints];
-  for(int i = 0; i < M.numpoints; i++) {
-    //    Msg(INFO, "gpa[%d] = %g %g",i,gPointArray[i].where.h,gPointArray[i].where.v);
-    if(gPointArray[i].initial < 0) {
-   
-      verts_[i]  = new MFaceVertex ( gPointArray[i].where.h,
-				     gPointArray[i].where.v, 0.0, gf, 
-				     0,0);           
-      gf->mesh_vertices.push_back(verts_[i]);
-    }
-    else
-      {
-	verts_[i]  = points[gPointArray[i].initial];
-      }
-  }  
-  
-  for(int i = 0; i < M.numtriangles; i++) 
-    {
-      int a = M.listdel[i]->t.a;
-      int b = M.listdel[i]->t.b;
-      int c = M.listdel[i]->t.c;
-      //      Msg(INFO, "tri[%d] = %d %d %d",i,a,b,c);
-      gf->triangles.push_back(new MTriangle(verts_[a], verts_[b], verts_[c]));
-    }
-  
-  delete [] verts_;
-  if(res_mesh_domain >= 0)
-    free(M.listdel);
-  free(gPointArray);
-  
-  for(int i = 0; i < nbEdgeLoops; i++) {
-    free(liste[i]->perturbations);
-    free(liste[i]->oriented_points);
-    free(liste[i]);
-  }
-  free(liste);
-}
 
 
 bool recover_medge ( BDS_Mesh *m, GEdge *ge)

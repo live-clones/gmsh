@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.86 2006-11-25 00:44:25 geuzaine Exp $
+// $Id: Create.cpp,v 1.87 2006-11-25 02:47:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -35,24 +35,6 @@
 extern Mesh *THEM;
 extern Context_T CTX;
 
-int compareNXE(const void *a, const void *b)
-{
-  NXE *q, *w;
-
-  q = (NXE *) a;
-  w = (NXE *) b;
-  return compareVertex(&q->v, &w->v);
-}
-
-int compareFxE(const void *a, const void *b)
-{
-  FxE *q, *w;
-
-  q = (FxE *) a;
-  w = (FxE *) b;
-  return compareFace(&q->Sorted, &w->Sorted);
-}
-
 int compareSurfaceLoop(const void *a, const void *b)
 {
   SurfaceLoop **q, **w;
@@ -71,37 +53,12 @@ int compareEdgeLoop(const void *a, const void *b)
   return ((*q)->Num - (*w)->Num);
 }
 
-int compareQuality(const void *a, const void *b)
-{
-  double d;
-  Simplex **q, **w;
-
-  q = (Simplex **) a;
-  w = (Simplex **) b;
-  d = (*q)->Quality - (*w)->Quality;
-
-  if(d > 0)
-    return (1);
-  if(d < 0)
-    return (-1);
-  return ((*q)->Num - (*w)->Num);
-}
-
 int compareCurve(const void *a, const void *b)
 {
   Curve **q, **w;
 
   q = (Curve **) a;
   w = (Curve **) b;
-  return ((*q)->Num - (*w)->Num);
-}
-
-int compareAttractor(const void *a, const void *b)
-{
-  Attractor **q, **w;
-
-  q = (Attractor **) a;
-  w = (Attractor **) b;
   return ((*q)->Num - (*w)->Num);
 }
 
@@ -121,15 +78,6 @@ int compareVolume(const void *a, const void *b)
   q = (Volume **) a;
   w = (Volume **) b;
   return ((*q)->Num - (*w)->Num);
-}
-
-int compareSxF(const void *a, const void *b)
-{
-  SxF *q, *w;
-
-  q = (SxF *) a;
-  w = (SxF *) b;
-  return compareFace(&q->F, &w->F);
 }
 
 int comparePhysicalGroup(const void *a, const void *b)
@@ -161,21 +109,6 @@ int compareMeshPartitionIndex(const void *a, const void *b)
   q = *(MeshPartition **) a;
   w = *(MeshPartition **) b;
   return (q->Index - w->Index);
-}
-
-Attractor *Create_Attractor(int Num, double lc1, double lc2, double Radius,
-                            Vertex * v, Curve * c, Surface * s)
-{
-  Attractor *pA;
-
-  pA = (Attractor *) Malloc(sizeof(Attractor));
-  pA->v = v;
-  pA->c = c;
-  pA->s = s;
-  pA->lc1 = lc1;
-  pA->lc2 = lc2;
-  pA->Radius = Radius;
-  return pA;
 }
 
 PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T * intlist)
@@ -524,7 +457,6 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
 			  {1, 0, 0, 0.0} };
 
   Curve *pC = (Curve *) Malloc(sizeof(Curve));
-  //  pC->bds = 0;
   pC->Color.type = 0;
   pC->Visible = 1;
   pC->cp = NULL;
@@ -533,8 +465,6 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
   pC->Typ = Typ;
   pC->Num = Num;
   THEM->MaxLineNum = IMAX(THEM->MaxLineNum, Num);
-  pC->Simplexes = Tree_Create(sizeof(Simplex *), compareSimplex);
-  pC->SimplexesBase = Tree_Create(sizeof(SimplexBase *), compareSimplexBase);
   pC->Method = LIBRE;
   pC->degre = Order;
   pC->Circle.n[0] = 0.0;
@@ -632,10 +562,6 @@ void Free_Curve(void *a, void *b)
   Curve *pC = *(Curve **) a;
   if(pC) {
     List_Delete(pC->Vertices);
-    Tree_Action(pC->Simplexes, Free_Simplex);
-    Tree_Delete(pC->Simplexes);
-    Tree_Action(pC->SimplexesBase, Free_SimplexBase);
-    Tree_Delete(pC->SimplexesBase);
     Free(pC->k);
     List_Delete(pC->Control_Points);
     Free(pC->cp);
@@ -647,7 +573,6 @@ void Free_Curve(void *a, void *b)
 Surface *Create_Surface(int Num, int Typ)
 {
   Surface *pS = (Surface *) Malloc(sizeof(Surface));
-  //  pS->bds = 0;
   pS->Color.type = 0;
   pS->Visible = 1;
   pS->Num = Num;
@@ -660,9 +585,6 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Recombine_Dir = 1;
   pS->RecombineAngle = 75;
   pS->TrsfPoints = List_Create(4, 4, sizeof(Vertex *));
-  pS->Simplexes = Tree_Create(sizeof(Simplex *), compareQuality);
-  pS->SimplexesBase = Tree_Create(sizeof(SimplexBase *), compareSimplexBase);
-  pS->Quadrangles = Tree_Create(sizeof(Quadrangle *), compareQuadrangle);
   pS->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
   pS->TrsfVertices = List_Create(1, 10, sizeof(Vertex *));
   pS->Contours = List_Create(1, 1, sizeof(List_T *));
@@ -672,7 +594,6 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Generatrices = NULL;
   pS->EmbeddedPoints = NULL;
   pS->EmbeddedCurves = NULL;
-  pS->Edges = NULL;
   pS->Extrude = NULL;
   return (pS);
 }
@@ -682,12 +603,6 @@ void Free_Surface(void *a, void *b)
   Surface *pS = *(Surface **) a;
   if(pS) {
     List_Delete(pS->TrsfPoints);
-    Tree_Action(pS->Simplexes, Free_Simplex);
-    Tree_Delete(pS->Simplexes);
-    Tree_Action(pS->SimplexesBase, Free_SimplexBase);
-    Tree_Delete(pS->SimplexesBase);
-    Tree_Action(pS->Quadrangles, Free_Quadrangle);
-    Tree_Delete(pS->Quadrangles);
     Tree_Delete(pS->Vertices);
     List_Delete(pS->TrsfVertices);
     List_Delete(pS->Contours);
@@ -696,10 +611,6 @@ void Free_Surface(void *a, void *b)
     List_Delete(pS->Generatrices);
     List_Delete(pS->EmbeddedCurves);
     List_Delete(pS->EmbeddedPoints);
-    if(pS->Edges) {
-      Tree_Action(pS->Edges, Free_Edge);
-      Tree_Delete(pS->Edges);
-    }
     Free(pS);
     pS = NULL;
   }
@@ -719,33 +630,14 @@ Volume *Create_Volume(int Num, int Typ)
   pV->TrsfPoints = List_Create(6, 6, sizeof(Vertex *));
   pV->Surfaces = List_Create(1, 2, sizeof(Surface *));
   pV->SurfacesOrientations = List_Create(1, 2, sizeof(int));
-  pV->Simplexes = Tree_Create(sizeof(Simplex *), compareQuality);
-  pV->SimplexesBase = Tree_Create(sizeof(Simplex *), compareSimplexBase);
   pV->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
-  pV->Hexahedra = Tree_Create(sizeof(Hexahedron *), compareHexahedron);
-  pV->Prisms = Tree_Create(sizeof(Prism *), comparePrism);
-  pV->Pyramids = Tree_Create(sizeof(Pyramid *), comparePyramid);
   pV->Extrude = NULL;
-  pV->Edges = NULL;
-  pV->Faces = NULL;
-  // for old extrusion mesh generator
-  pV->Lin_Surf = Tree_Create(sizeof(Simplex *), compareSimplex);
-  pV->Simp_Surf = Tree_Create(sizeof(Simplex *), compareSimplex);
-  pV->Quad_Surf = Tree_Create(sizeof(Simplex *), compareQuadrangle);
   return pV;
 }
 
 void Free_Volume(void *a, void *b)
 {
   Volume *pV = *(Volume **) a;
-  if(pV) {
-    Tree_Action(pV->Simplexes, Free_Simplex);
-    Tree_Action(pV->SimplexesBase, Free_SimplexBase);
-    Tree_Action(pV->Hexahedra, Free_Hexahedron);
-    Tree_Action(pV->Prisms, Free_Prism);
-    Tree_Action(pV->Pyramids, Free_Pyramid);
-    Tree_Action(pV->Edges, Free_Edge);
-  }
   Free_Volume_But_Not_Elements(a, b);
 }
 
@@ -756,17 +648,7 @@ void Free_Volume_But_Not_Elements(void *a, void *b)
     List_Delete(pV->TrsfPoints);
     List_Delete(pV->Surfaces);  // surfaces freed elsewhere
     List_Delete(pV->SurfacesOrientations);
-    Tree_Delete(pV->Simplexes);
-    Tree_Delete(pV->SimplexesBase);
-    Tree_Delete(pV->Lin_Surf); // for old extrusion mesh generator
-    Tree_Delete(pV->Simp_Surf); // for old extrusion mesh generator
-    Tree_Delete(pV->Quad_Surf); // for old extrusion mesh generator
     Tree_Delete(pV->Vertices);  // vertices freed elsewhere
-    Tree_Delete(pV->Hexahedra);
-    Tree_Delete(pV->Prisms);
-    Tree_Delete(pV->Pyramids);
-    Tree_Delete(pV->Edges);
-    Tree_Delete(pV->Faces);
     Free(pV);
     pV = NULL;
   }

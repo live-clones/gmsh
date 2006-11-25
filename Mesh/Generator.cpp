@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.98 2006-09-15 00:55:40 geuzaine Exp $
+// $Id: Generator.cpp,v 1.99 2006-11-25 02:47:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -22,12 +22,10 @@
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Mesh.h"
-#include "BDS.h"
 #include "Create.h"
 #include "Context.h"
 #include "OpenFile.h"
 #include "Views.h"
-#include "PartitionMesh.h"
 #include "OS.h"
 #include "meshGEdge.h"
 #include "meshGFace.h"
@@ -194,50 +192,9 @@ void ApplyLcFactor_Point(void *a, void *b)
   v->lc *= CTX.mesh.lc_factor;
 }
 
-void ApplyLcFactor_Attractor(void *a, void *b)
-{
-  Attractor *v = *(Attractor **) a;
-  v->lc1 *= CTX.mesh.lc_factor;
-  v->lc2 *= CTX.mesh.lc_factor;
-}
-
 void ApplyLcFactor()
 {
   Tree_Action(THEM->Points, ApplyLcFactor_Point);
-  List_Action(THEM->Metric->Attractors, ApplyLcFactor_Attractor);
-}
-
-void Move_SimplexBaseToSimplex(int dimension)
-{
-  if(dimension >= 1){
-    List_T *Curves = Tree2List(THEM->Curves);
-    for(int i = 0; i < List_Nbr(Curves); i++) {
-      Curve *c;
-      List_Read(Curves, i, &c);
-      Move_SimplexBaseToSimplex(&c->SimplexesBase, c->Simplexes);
-    }
-    List_Delete(Curves);
-  }
-
-  if(dimension >= 2){
-    List_T *Surfaces = Tree2List(THEM->Surfaces);
-    for(int i = 0; i < List_Nbr(Surfaces); i++){
-      Surface *s;
-      List_Read(Surfaces, i, &s);
-      Move_SimplexBaseToSimplex(&s->SimplexesBase, s->Simplexes);
-    }
-    List_Delete(Surfaces);
-  }
-  
-  if(dimension >= 3){
-    List_T *Volumes = Tree2List(THEM->Volumes);
-    for(int i = 0; i < List_Nbr(Volumes); i++){
-      Volume *v;
-      List_Read(Volumes, i, &v);
-      Move_SimplexBaseToSimplex(&v->SimplexesBase, v->Simplexes);
-    }
-    List_Delete(Volumes);
-  }
 }
 
 bool TooManyElements(int dim){
@@ -297,10 +254,7 @@ void Maillage_Dimension_3()
 
 void Init_Mesh0()
 {
-  THEM->bds = 0;
-  THEM->bds_mesh = 0;
   THEM->Vertices = NULL;
-  THEM->Simplexes = NULL;
   THEM->Points = NULL;
   THEM->Curves = NULL;
   THEM->SurfaceLoops = NULL;
@@ -309,7 +263,6 @@ void Init_Mesh0()
   THEM->Volumes = NULL;
   THEM->PhysicalGroups = NULL;
   THEM->Partitions = NULL;
-  THEM->Metric = NULL;
 }
 
 void Init_Mesh()
@@ -322,23 +275,11 @@ void Init_Mesh()
   THEM->MaxVolumeNum = 0;
   THEM->MaxPhysicalNum = 0;
 
-  Element::TotalNumber = 0;
-
-  ExitExtrude();
-
-  if(THEM->bds) delete THEM->bds;
-  THEM->bds = 0;
-
   Tree_Action(THEM->Vertices, Free_Vertex);  
   Tree_Delete(THEM->Vertices);
 
   Tree_Action(THEM->Points, Free_Vertex);  
   Tree_Delete(THEM->Points);
-
-  // Note: don't free the simplices here (with Tree_Action
-  // (THEM->Simplexes, Free_Simplex)): we free them in each curve,
-  // surface, volume
-  Tree_Delete(THEM->Simplexes);
 
   Tree_Action(THEM->Curves, Free_Curve);
   Tree_Delete(THEM->Curves);
@@ -361,11 +302,7 @@ void Init_Mesh()
   List_Action(THEM->Partitions, Free_MeshPartition);
   List_Delete(THEM->Partitions);
 
-  if(THEM->Metric)
-    delete THEM->Metric;
-
   THEM->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
-  THEM->Simplexes = Tree_Create(sizeof(Simplex *), compareSimplex);
   THEM->Points = Tree_Create(sizeof(Vertex *), compareVertex);
   THEM->Curves = Tree_Create(sizeof(Curve *), compareCurve);
   THEM->SurfaceLoops = Tree_Create(sizeof(SurfaceLoop *), compareSurfaceLoop);
@@ -374,7 +311,6 @@ void Init_Mesh()
   THEM->Volumes = Tree_Create(sizeof(Volume *), compareVolume);
   THEM->PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
   THEM->Partitions = List_Create(5, 5, sizeof(MeshPartition *));
-  THEM->Metric = new GMSHMetric;
   THEM->status = 0;
 
   CTX.mesh.bgmesh_type = WITHPOINTS;
@@ -433,15 +369,12 @@ void mai3d(int ask)
 
   // Optimize quality
   if(GMODEL->getMeshStatus() == 3 && CTX.mesh.optimize)
-    Optimize_Netgen();
+    Msg(GERROR, "Mesh optimize has yet to be reinterfaced");
+  //Optimize_Netgen();
 
   // Create second order elements
   if(GMODEL->getMeshStatus() && CTX.mesh.order == 2) 
     Degre2(CTX.mesh.second_order_linear, CTX.mesh.second_order_incomplete);
-
-  // Partition
-  if(GMODEL->getMeshStatus() > 1 && CTX.mesh.nbPartitions != 1)
-    PartitionMesh(THEM, CTX.mesh.nbPartitions);
 
   Msg(STATUS1, "Mesh");
   CTX.threads_lock = 0;

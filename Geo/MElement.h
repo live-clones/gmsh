@@ -28,7 +28,6 @@
 #include "MFace.h"
 #include "Numeric.h"
 
-// the reference topology is defined in Mesh/{Edge,Face}.cpp
 extern int edges_tetra[6][2];
 extern int edges_quad[4][2];
 extern int edges_hexa[12][2];

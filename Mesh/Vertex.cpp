@@ -1,4 +1,4 @@
-// $Id: Vertex.cpp,v 1.30 2006-08-12 16:16:30 geuzaine Exp $
+// $Id: Vertex.cpp,v 1.31 2006-11-25 02:47:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -41,7 +41,6 @@ Vertex::Vertex()
   Mov = NULL;
   ListSurf = NULL;
   ListCurves = NULL;
-  Extruded_Points = NULL;
 }
 
 Vertex::Vertex(double X, double Y, double Z, double l, double W)
@@ -57,7 +56,6 @@ Vertex::Vertex(double X, double Y, double Z, double l, double W)
   Mov = NULL;
   ListSurf = NULL;
   ListCurves = NULL;
-  Extruded_Points = NULL;
 }
 
 void Vertex::norme()
@@ -123,12 +121,6 @@ void Delete_Vertex(Vertex * pV)
   if(pV) {
     List_Delete(pV->ListSurf);
     List_Delete(pV->ListCurves);
-    if(CTX.mesh.oldxtrude) {    //old automatic extrusion algorithm
-      List_Delete(pV->Extruded_Points);
-    }
-    else {
-      Free_ExtrudedPoints(pV->Extruded_Points);
-    }
     delete pV;
   }
 }

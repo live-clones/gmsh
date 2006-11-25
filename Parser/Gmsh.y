@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.236 2006-11-25 00:44:29 geuzaine Exp $
+// $Id: Gmsh.y,v 1.237 2006-11-25 02:47:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -1052,20 +1052,8 @@ Shape :
     }
   | tAttractor tPoint ListOfDouble tAFFECT '{' FExpr ',' FExpr ',' FExpr '}'  tEND
     {
-      for(int i = 0; i < List_Nbr($3); i++){
-	double p;
-      	List_Read($3, i, &p);
-        Vertex *v = FindPoint((int)p);
-        if(!v)
-	  yymsg(WARNING, "Unknown point %d", (int)p);
-	else{
-	  Attractor *a = Create_Attractor(List_Nbr(THEM->Metric->Attractors)+1,
-					  $6, $8, $10, v, NULL, NULL);
-	  List_Add(THEM->Metric->Attractors, &a);
-        }
-      }
+      yymsg(GERROR, "Attractors are deprecated");
       List_Delete($3);
-      // dummy values
       $$.Type = 0;
       $$.Num = 0;
     }
@@ -1325,19 +1313,8 @@ Shape :
     }
   | tAttractor tLine ListOfDouble tAFFECT '{' FExpr ',' FExpr ',' FExpr '}'  tEND
     {
-      for(int i = 0; i < List_Nbr($3); i++){
-	double p;
-      	List_Read($3, i, &p);
-	Curve *c = FindCurve((int)p);
-        if(!c)
-	  yymsg(WARNING, "Unknown curve %d", (int)p);
-	else{
-	  Attractor *a = Create_Attractor(List_Nbr(THEM->Metric->Attractors)+1,
-					  $6, $8, $10, NULL, c, NULL);
-	  List_Add(THEM->Metric->Attractors, &a);
-        }
-      }
-      // dummy values
+      yymsg(GERROR, "Attractors are deprecated");
+      List_Delete($3);
       $$.Type = 0;
       $$.Num = 0;
     }
@@ -2654,7 +2631,7 @@ Coherence :
     }
   | tIntersect tEND
     { 
-      IntersectAllSegmentsTogether();
+      yymsg(GERROR, "Intersect is deprecated");
     }
 ;
 

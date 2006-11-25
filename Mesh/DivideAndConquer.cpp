@@ -1,4 +1,4 @@
-// $Id: 2D_DivAndConq.cpp,v 1.25 2006-09-14 15:23:29 remacle Exp $
+// $Id: DivideAndConquer.cpp,v 1.1 2006-11-25 02:47:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -40,9 +40,9 @@
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Mesh.h"
-#include "2D_Mesh.h"
+#include "Context.h"
 
-extern double LC2D;
+extern Context_T CTX;
 
 static PointRecord *pPointArray;
 
@@ -56,55 +56,47 @@ void PushgPointArray(PointRecord * ptr)
 
 PointRecord *PopgPointArray(void)
 {
-  return (pPointArray);
+  return pPointArray;
 }
 
 PointNumero Predecessor(PointNumero a, PointNumero b)
 {
-  DListPeek p;
-
-  p = pPointArray[a].adjacent;
+  DListPeek p = pPointArray[a].adjacent;
   if(p == NULL)
     return -1;
 
   do {
     if(p->point_num == b)
-      return (Pred(p)->point_num);
+      return Pred(p)->point_num;
     p = Pred(p);
   } while(p != pPointArray[a].adjacent);
 
   return -1;
-
 }
-
 
 PointNumero Successor(PointNumero a, PointNumero b)
 {
-  DListPeek p;
-
-  p = pPointArray[a].adjacent;
+  DListPeek p = pPointArray[a].adjacent;
   if(p == NULL)
     return -1;
 
   do {
     if(p->point_num == b)
-      return (Succ(p)->point_num);
+      return Succ(p)->point_num;
     p = Succ(p);
   } while(p != pPointArray[a].adjacent);
 
   return -1;
-
 }
 
 int FixFirst(PointNumero x, PointNumero f)
 {
-  DListPeek p, copy;
-  int out = 0;
-
-  p = pPointArray[x].adjacent;
+  DListPeek p = pPointArray[x].adjacent;
   if(p == NULL)
-    return (0);
-  copy = p;
+    return 0;
+
+  int out = 0;
+  DListPeek copy = p;
   do {
     if(p->point_num == f) {
       pPointArray[x].adjacent = p;
@@ -119,6 +111,22 @@ int FixFirst(PointNumero x, PointNumero f)
 PointNumero First(PointNumero x)
 {
   return (pPointArray[x].adjacent)->point_num;
+}
+
+// we use robust predicates here
+
+int Is_left_of(PointNumero x, PointNumero y, PointNumero check)
+{
+  double pa[2] = {(double)pPointArray[x].where.h, (double)pPointArray[x].where.v};
+  double pb[2] = {(double)pPointArray[y].where.h, (double)pPointArray[y].where.v};
+  double pc[2] = {(double)pPointArray[check].where.h, (double)pPointArray[check].where.v};
+  double result = gmsh::orient2d(pa, pb, pc);
+  return result > 0;
+}
+
+int Is_right_of(PointNumero x, PointNumero y, PointNumero check)
+{
+  return Is_left_of(y, x, check);
 }
 
 Segment LowerCommonTangent(DT vl, DT vr)
@@ -150,7 +158,6 @@ Segment LowerCommonTangent(DT vl, DT vr)
   }
 }
 
-
 Segment UpperCommonTangent(DT vl, DT vr)
 {
   PointNumero x, y, z, z1, z2, temp;
@@ -180,14 +187,13 @@ Segment UpperCommonTangent(DT vl, DT vr)
   }
 }
 
-
-/* return 1 if the point k is NOT in the circumcircle of
-   triangle hij */
+/* return 1 if the point k is NOT in the circumcircle of triangle
+   hij */
 int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
 {
   if((h == i) && (h == j) && (h == k)) {
     Msg(GERROR, "3 identical points in Qtest");
-    return (0); /* returning 1 will cause looping for ever */
+    return 0; /* returning 1 will cause looping for ever */
   }
   
   double pa[2] = {(double)pPointArray[h].where.h, (double)pPointArray[h].where.v};
@@ -199,7 +205,6 @@ int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
   
   return (result < 0) ? 1 : 0;
 }
-
 
 int merge(DT vl, DT vr)
 {
@@ -215,11 +220,11 @@ int merge(DT vl, DT vr)
   while((l != ut.from) || (r != ut.to)) {
     a = b = 0;
     if(!Insert(l, r))
-      return (0);
+      return 0;
 
     r1 = Predecessor(r, l);
     if(r1 == -1)
-      return (0);
+      return 0;
     if(Is_right_of(l, r, r1))
       a = 1;
     else {
@@ -227,14 +232,14 @@ int merge(DT vl, DT vr)
       while(!out) {
         r2 = Predecessor(r, r1);
         if(r2 == -1)
-          return (0);
+          return 0;
         if(r2 < vr.begin)
           out = 1;
         else if(Qtest(l, r, r1, r2))
           out = 1;
         else {
           if(!Delete(r, r1))
-            return (0);
+            return 0;
           r1 = r2;
           if(Is_right_of(l, r, r1))
             out = a = 1;
@@ -244,7 +249,7 @@ int merge(DT vl, DT vr)
 
     l1 = Successor(l, r);
     if(l1 == -1)
-      return (0);
+      return 0;
     if(Is_left_of(r, l, l1))
       b = 1;
     else {
@@ -252,14 +257,14 @@ int merge(DT vl, DT vr)
       while(!out) {
         l2 = Successor(l, l1);
         if(l2 == -1)
-          return (0);
+          return 0;
         if(l2 > vl.end)
           out = 1;
         else if(Qtest(r, l, l1, l2))
           out = 1;
         else {
           if(!Delete(l, l1))
-            return (0);
+            return 0;
           l1 = l2;
           if(Is_left_of(r, l, l1))
             out = b = 1;
@@ -279,15 +284,14 @@ int merge(DT vl, DT vr)
     }
   }
   if(!Insert(l, r))
-    return (0);
+    return 0;
 
   if(!FixFirst(ut.to, ut.from))
-    return (0);
+    return 0;
   if(!FixFirst(bt.from, bt.to))
-    return (0);
-  return (1);
+    return 0;
+  return 1;
 }
-
 
 DT recur_trig(PointNumero left, PointNumero right)
 {
@@ -341,22 +345,20 @@ int comparePoints(const void *i, const void *j)
   x = ((PointRecord *) i)->where.h - ((PointRecord *) j)->where.h;
   if(x == 0.) {
     y = ((PointRecord *) i)->where.v - ((PointRecord *) j)->where.v;
-    return ((y < 0.) ? -1 : 1);
+    return (y < 0.) ? -1 : 1;
   }
   else
-    return ((x < 0.) ? -1 : 1);
+    return (x < 0.) ? -1 : 1;
 }
 
-
-/*  this fonction builds the delaunay triangulation and the voronoi for a
-    window. All error handling is done here. */
-
+/*  this fonction builds the delaunay triangulation and the voronoi
+    for a window. All error handling is done here. */
 int DelaunayAndVoronoi(DocPeek doc)
 {
   PushgPointArray(doc->points);
 
   if(doc->numPoints < 2)
-    return (1);
+    return 1;
 
   qsort(doc->points, doc->numPoints, sizeof(PointRecord), comparePoints);
   recur_trig(0, doc->numPoints - 1);
@@ -364,21 +366,18 @@ int DelaunayAndVoronoi(DocPeek doc)
   return 1;
 }
 
-
 /* this routine puts in xc and yc the coord of the center
    of the circumcircle of triangle (x1,y1),(x2,y2),(x3,y3)  */
-
 int CircumCircle(double x1, double y1, double x2, double y2, double x3,
                  double y3, double *xc, double *yc)
 {
   double d, a1, a2, a3;
 
-
   d = 2. * (double)(y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
   if(d == 0.0) {
     Msg(WARNING, "Colinear points in circum circle computation");
     *xc = *yc = -99999.;
-    return (0);
+    return 0;
   }
 
   a1 = x1 * x1 + y1 * y1;
@@ -387,33 +386,15 @@ int CircumCircle(double x1, double y1, double x2, double y2, double x3,
   *xc = (double)((a1 * (y3 - y2) + a2 * (y1 - y3) + a3 * (y2 - y1)) / d);
   *yc = (double)((a1 * (x2 - x3) + a2 * (x3 - x1) + a3 * (x1 - x2)) / d);
 
-  if(fabs(d) < 1.e-12 * DSQR(LC2D))
+  if(fabs(d) < 1.e-12 * DSQR(CTX.lc))
     Msg(WARNING,
         "Almost colinear points in circum circle computation (d = %g)", d);
 
-  return (1);
-}
-
-// Again, we use robust predicates here
-
-
-int Is_right_of(PointNumero x, PointNumero y, PointNumero check)
-{
-  return Is_left_of(y, x, check);
-}
-
-int Is_left_of(PointNumero x, PointNumero y, PointNumero check)
-{
-  double pa[2] = {(double)pPointArray[x].where.h, (double)pPointArray[x].where.v};
-  double pb[2] = {(double)pPointArray[y].where.h, (double)pPointArray[y].where.v};
-  double pc[2] = {(double)pPointArray[check].where.h, (double)pPointArray[check].where.v};
-  double result = gmsh::orient2d(pa, pb, pc);
-  return result > 0;
+  return 1;
 }
 
 /* This routine insert the point 'newPoint' in the list dlist,
-   respecting the clock-wise orientation.                              */
-
+   respecting the clock-wise orientation. */
 int DListInsert(DListRecord ** dlist, MPoint center, PointNumero newPoint)
 {
   DListRecord *p, *newp;
@@ -427,22 +408,22 @@ int DListInsert(DListRecord ** dlist, MPoint center, PointNumero newPoint)
     *dlist = newp;
     Pred(*dlist) = newp;
     Succ(*dlist) = newp;
-    return (1);
+    return 1;
   }
   if(Succ(*dlist) == *dlist) {
     Pred(*dlist) = newp;
     Succ(*dlist) = newp;
     Pred(newp) = *dlist;
     Succ(newp) = *dlist;
-    return (1);
+    return 1;
   }
   /*  If we are here, the double-linked circular list has 2 or more
-     elements, so we have to calculate where to put the new one.          */
+     elements, so we have to calculate where to put the new one. */
 
   p = *dlist;
   first = p->point_num;
 
-  /* first, compute polar coord. of the first point.     */
+  /* first, compute polar coord. of the first point. */
   yy = (double)(pPointArray[first].where.v - center.v);
   xx = (double)(pPointArray[first].where.h - center.h);
   alpha1 = atan2(yy, xx);
@@ -465,13 +446,13 @@ int DListInsert(DListRecord ** dlist, MPoint center, PointNumero newPoint)
       Succ(p) = newp;
       Pred(newp) = p;
       Pred(Succ(newp)) = newp;
-      return (1);
+      return 1;
     }
     p = Succ(p);
   } while(p != *dlist);
 
-  /*** ON NE DOIT JAMAIS ARRIVER ICI ***/
-  return (0);
+  /* never here! */
+  return 0;
 }
 
 int Insert(PointNumero a, PointNumero b)
@@ -494,15 +475,15 @@ int DListDelete(DListPeek * dlist, PointNumero oldPoint)
   DListPeek p;
 
   if(*dlist == NULL)
-    return (0);
+    return 0;
   if(Succ(*dlist) == *dlist) {
     if((*dlist)->point_num == oldPoint) {
       Free(*dlist);
       *dlist = NULL;
-      return (1);
+      return 1;
     }
     else
-      return (0);
+      return 0;
   }
   p = *dlist;
   do {
@@ -513,12 +494,12 @@ int DListDelete(DListPeek * dlist, PointNumero oldPoint)
         *dlist = Succ(p);
       }
       Free(p);
-      return (1);
+      return 1;
     }
     p = Succ(p);
   } while(p != *dlist);
 
-  return (0);
+  return 0;
 }
 
 
@@ -533,6 +514,145 @@ int Delete(PointNumero a, PointNumero b)
   rslt &= DListDelete(&pPointArray[b].adjacent, a);
 
   return rslt;
+}
+
+/* compte les points sur le polygone convexe */
+
+int CountPointsOnHull(int n, PointRecord * pPointArray)
+{
+  PointNumero p, p2, temp;
+  int i;
+
+  if(pPointArray[0].adjacent == NULL)
+    return 0;
+  i = 1;
+  p = 0;
+  p2 = First(0);
+  while((p2 != 0) && (i < n)) {
+    i++;
+    temp = p2;
+    p2 = Successor(p2, p);
+    p = temp;
+  }
+  return (i <= n) ? i : -1;
+}
+
+PointNumero *ConvertDlistToArray(DListPeek * dlist, int *n)
+{
+  DListPeek p, temp;
+  int i, max = 0;
+  PointNumero *ptr;
+
+  p = *dlist;
+  do {
+    max++;
+    p = Pred(p);
+  } while(p != *dlist);
+  ptr = (PointNumero *) Malloc((max + 1) * sizeof(PointNumero));
+  if(ptr == NULL)
+    return NULL;
+  p = *dlist;
+  for(i = 0; i < max; i++) {
+    ptr[i] = p->point_num;
+    temp = p;
+    p = Pred(p);
+    Free(temp);
+  }
+  ptr[max] = ptr[0];
+  *dlist = NULL;
+  *n = max;
+  return ptr;
+}
+
+void filldel(Delaunay * deladd, int aa, int bb, int cc,
+             PointRecord * points)
+{
+  double qual, newqual;
+  MPoint pt2;
+  Vertex *v, *dum;
+
+  deladd->t.a = aa;
+  deladd->t.b = bb;
+  deladd->t.c = cc;
+  deladd->t.info = TOLINK;
+  deladd->t.info2 = 0;
+  deladd->v.voisin1 = NULL;
+  deladd->v.voisin2 = NULL;
+  deladd->v.voisin3 = NULL;
+
+  CircumCircle(points[aa].where.h, points[aa].where.v,
+               points[bb].where.h, points[bb].where.v,
+               points[cc].where.h, points[cc].where.v, 
+	       &deladd->t.xc, &deladd->t.yc);
+
+  pt2.h = deladd->t.xc;
+  pt2.v = deladd->t.yc;
+
+  newqual = (points[aa].quality + points[bb].quality + points[cc].quality) / 3.;
+
+  deladd->t.quality_value =
+    sqrt((deladd->t.xc - points[cc].where.h) * (deladd->t.xc -
+						points[cc].where.h) +
+	 (deladd->t.yc - points[cc].where.v) * (deladd->t.yc -
+						points[cc].where.v)
+	 ) / newqual;
+  deladd->t.position = INTERN;
+}
+
+/* Convertir les listes d'adjacence en triangles */
+
+int Conversion(DocPeek doc)
+{
+  /* on suppose que n >= 3      gPointArray est suppose OK. */
+
+  Striangle *striangle;
+  int n, i, j;
+  int count = 0, count2 = 0;
+  PointNumero aa, bb, cc;
+  PointRecord *ptemp;
+
+  PointRecord *gPointArray = doc->points;
+
+  n = doc->numPoints;
+  striangle = (Striangle *) Malloc(n * sizeof(Striangle));
+  count2 = (int)CountPointsOnHull(n, doc->points);
+
+  /* nombre de triangles que l'on doit obtenir */
+  count2 = 2 * (n - 1) - count2;
+
+  if(doc->delaunay)
+    Free(doc->delaunay);
+
+  doc->delaunay = (Delaunay *) Malloc(2 * count2 * sizeof(Delaunay));
+
+  for(i = 0; i < n; i++) {
+    /* on cree une liste de points connectes au point i (t) + nombre de points (t_length) */
+    striangle[i].t =
+      ConvertDlistToArray(&gPointArray[i].adjacent, &striangle[i].t_length);
+    striangle[i].info = NULL;
+    striangle[i].info_length = 0;
+  }
+
+  /* on balaye les noeuds de gauche a droite -> on cree les triangles  */
+  count = 0;
+  for(i = 0; i < n; i++) {
+    for(j = 0; j < striangle[i].t_length; j++) {
+      if((striangle[i].t[j] > i) && (striangle[i].t[j + 1] > i) &&
+         (Is_right_of(i, striangle[i].t[j], striangle[i].t[j + 1]))) {
+        aa = i;
+        bb = striangle[i].t[j];
+        cc = striangle[i].t[j + 1];
+        filldel(&doc->delaunay[count], aa, bb, cc, gPointArray);
+        count++;
+      }
+    }
+  }
+  for(i = 0; i < n; i++)
+    Free(striangle[i].t);
+  Free(striangle);
+  doc->numTriangles = count2;
+
+  return 1;
 }
 
 /*  Cette routine efface toutes les listes d'adjacence du pPointArray. */
@@ -552,4 +672,16 @@ void remove_all_dlist(int n, PointRecord * pPointArray)
       } while(p != pPointArray[i].adjacent);
       pPointArray[i].adjacent = NULL;
     }
+}
+
+void Make_Mesh_With_Points(DocRecord * ptr, PointRecord * Liste,
+                           int Numpoints)
+{
+  ptr->numTriangles = 0;
+  ptr->points = Liste;
+  ptr->numPoints = Numpoints;
+  ptr->delaunay = 0;
+  DelaunayAndVoronoi(ptr);
+  Conversion(ptr);
+  remove_all_dlist(ptr->numPoints, ptr->points);
 }

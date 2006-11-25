@@ -24,9 +24,6 @@
 #include "List.h"
 #include "Tree.h"
 #include "Vertex.h"
-#include "Element.h"
-#include "Simplex.h"
-#include "Edge.h"
 #include "ExtrudeParams.h"
 
 class BDS_Mesh;
@@ -127,14 +124,6 @@ struct _MAILLAGE{
   int zone;
 };
 
-class NXE{
- public :
-  Vertex *v;
-  List_T *Liste;
-  ~NXE();
-  NXE();
-};
-
 typedef struct{
   double zaxis[3];
   double radius1;
@@ -169,11 +158,8 @@ struct _Surf{
   double a, b, c, d;
   List_T *Orientations;
   List_T *Contours;
-  Tree_T *Simplexes, *SimplexesBase;
-  Tree_T *Quadrangles;
   Tree_T *Vertices;
   List_T *TrsfVertices;
-  Tree_T *Edges;
   int OrderU, OrderV;
   float *ku, *kv, *cp;
   struct _Surf *Support;
@@ -207,13 +193,6 @@ typedef struct{
   char Visible;
 }MeshPartition;
 
-typedef struct{
-  Face F;
-  Face Sorted;
-  Simplex *S[2];
-  int N;
-}FxE;
-
 typedef struct {
   int Num;
   int Typ;
@@ -225,41 +204,8 @@ typedef struct {
   List_T *Surfaces;
   List_T *SurfacesOrientations;
   Tree_T *Vertices;
-  Tree_T *Edges;
-  Tree_T *Faces;
-  Tree_T *Simplexes, *SimplexesBase;
-  Tree_T *Lin_Surf; // for old extrusion mesh generator
-  Tree_T *Simp_Surf; // for old extrusion mesh generator
-  Tree_T *Quad_Surf; // for old extrusion mesh generator
-  Tree_T *Hexahedra;
-  Tree_T *Prisms;
-  Tree_T *Pyramids;
   DrawingColor Color;
 }Volume;
-
-typedef struct {
-  Edge e1, e2;
-  int iFac;
-}exf_T;
-
-// Edge-Simplex intersections
-
-typedef struct{
-  int NbIntersect;      // nombre total d'intersections
-  Edge *e;              // arete
-  Simplex *s;           // simplexe
-  Face *f;              // face
-  int NbVertex;         // nombre de noeuds du simplexe que coupe l'arete
-  Vertex *V[12];        // noeuds du simplexe que coupe l'arete
-  int iV[12];           // noeuds du simplexe que coupe l'arete
-  int NbEdge;           // nombre d'intersections arete-arete
-  int E[12];            // aretes
-  Vertex *VE[12];       // noeuds d'intersection
-  int NbFace;           // nombre d'intersections face-arete
-  Face *F[12];          // faces
-  int iF[12];           // faces
-  Vertex *VF[12];       // position des points d'intersections face-arete
-}Intersection;
 
 typedef struct _Mesh Mesh;
 
@@ -283,7 +229,6 @@ typedef struct{
   double ubeg, uend;
   List_T *Control_Points;
   List_T *Vertices;
-  Tree_T *Simplexes, *SimplexesBase;
   ExtrudeParams *Extrude;
   float *k, *cp;
   int degre;
@@ -292,24 +237,11 @@ typedef struct{
   DrawingColor Color;
 }Curve;
 
-typedef struct{
-  int Num;
-  int Typ;
-  Vertex *v;
-  Curve *c;
-  Surface *s;
-  double lc1, lc2;
-  double Radius;
-}Attractor;
-
-#include "Metric.h"
-
 struct _Mesh{
   char name[256];
   int status; // current state of the mesh
   Tree_T *Points;
   Tree_T *Vertices;
-  Tree_T *Simplexes;
   Tree_T *Curves;
   Tree_T *Surfaces;
   Tree_T *Volumes;
@@ -317,85 +249,24 @@ struct _Mesh{
   Tree_T *EdgeLoops;
   List_T *PhysicalGroups;
   List_T *Partitions;
-  GMSHMetric *Metric;
   BDS_Mesh *bds;
   BDS_Mesh *bds_mesh;
   int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
 };
 
-typedef struct {
-  Simplex *S;
-  Face F;
-  int NumFaceSimpl;
-}SxF;
-
-struct Map{
-  int Num;
-  List_T *List;
-};
-
-
 // public functions
 
 void mai3d(int Asked);
-
 void Init_Mesh0();
 void Init_Mesh();
-
 void Maillage_Dimension_1();
 void Maillage_Dimension_2();
 void Maillage_Dimension_3();
-
-void Maillage_Curve(void *data, void *dummy);
-void Maillage_Surface(void *data, void *dum);
-void Maillage_Volume(void *data, void *dum);
-
-int Extrude_Mesh(Curve *c);
-int Extrude_Mesh(Surface *s);
-int Extrude_Mesh(Volume *v);
-int Extrude_Mesh(Tree_T *Volumes);
-void ExitExtrude();
-void Extrude_Mesh_Old();
-
-int MeshTransfiniteSurface(Surface *sur);
-int MeshTransfiniteVolume(Volume *vol);
-int MeshCylindricalSurface(Surface *s);
-int MeshParametricSurface(Surface *s);
-int MeshEllipticSurface(Surface *sur);
-int MeshDiscreteSurface(Surface *sur);
-int MeshDiscreteCurve(Curve *c);
-int ReMesh();
-
-int AlgorithmeMaillage2DAnisotropeModeJF(Surface *s);
-void Maillage_Automatique_VieuxCode(Surface *pS, int ori);
-int Mesh_Triangle(Surface *s);
-int Mesh_Netgen(Volume *v);
-int Mesh_Tetgen(Volume *v);
-void Optimize_Netgen(Volume *v);
-void Optimize_Netgen();
-
-int Calcule_Contours(Surface *s);
-void Link_Simplexes(List_T *Sim, Tree_T *Tim);
-void Calcule_Z(void *data, void *dum);
-void Calcule_Z_Plan(void *data, void *dum);
-void Projette_Plan_Moyen(void *a, void *b);
-void Projette_Inverse(void *a, void *b);
-void Freeze_Vertex(void *a, void *b);
-void deFreeze_Vertex(void *a, void *b);
-void ReOrientSurfaceMesh(Surface *s);
-
-void Move_SimplexBaseToSimplex(int dimension);
-
+void Make_Mesh_With_Points(DocRecord * ptr, PointRecord * Liste, int Numpoints);
 double BGMXYZ(double X, double Y, double Z);
 int BGMExists();
-void ActionLiss(void *data, void *dummy);
-void ActionLissSurf(void *data, void *dummy);
-int Recombine(Tree_T *TreeAllVert, Tree_T *TreeAllSimp, Tree_T *TreeAllQuad,
-		double a);
-int Recombine_All(Mesh *M);
 void ApplyLcFactor();
-
 void Degre1();
 void Degre2(bool linear=true, bool incomplete=false);
 

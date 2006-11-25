@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.49 2006-08-19 08:26:47 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.1 2006-11-25 02:47:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //

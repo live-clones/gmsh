@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.100 2006-11-25 00:44:25 geuzaine Exp $
+// $Id: CAD.cpp,v 1.101 2006-11-25 02:47:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,6 @@
 #include "Interpolation.h"
 #include "Create.h"
 #include "CAD.h"
-#include "Edge.h"
 #include "Context.h"
 
 extern Mesh *THEM;
@@ -2161,27 +2160,6 @@ double min1d(double (*funct) (double), double *xmin)
   return (brent(ax, bx, cx, funct, tol, xmin));
 }
 
-static void intersectCS(int N, double x[], double res[])
-{
-  //x[1] = u x[2] = v x[3] = w
-  Vertex s, c;
-  s = InterpolateSurface(SURFACE, x[1], x[2], 0, 0);
-  c = InterpolateCurve(CURVE, x[3], 0);
-  res[1] = s.Pos.X - c.Pos.X;
-  res[2] = s.Pos.Y - c.Pos.Y;
-  res[3] = s.Pos.Z - c.Pos.Z;
-}
-
-static void intersectCC(int N, double x[], double res[])
-{
-  //x[1] = u x[2] = v
-  Vertex c2, c;
-  c2 = InterpolateCurve(CURVE_2, x[2], 0);
-  c = InterpolateCurve(CURVE, x[1], 0);
-  res[1] = c2.Pos.X - c.Pos.X;
-  res[2] = c2.Pos.Y - c.Pos.Y;
-}
-
 static void projectPS(int N, double x[], double res[])
 {
   //x[1] = u x[2] = v
@@ -2449,127 +2427,3 @@ bool ProjectPointOnSurface(Surface * s, Vertex * p, double *u, double *v)
   return true;
 }
 
-// Intersection of curves/surfaces (FIXME: this code is full of crap)
-
-// S = (sx(u,v),sy(u,v),sz(u,v))  C = (cx(w),cy(w),cz(w))
-// sx - cx = 0
-// sy - cy = 0
-// sz - cz = 0
-// 3eqs 3unk
-
-bool IntersectCurveSurface(Curve * c, Surface * s)
-{
-  double x[4];
-  int check;
-  SURFACE = s;
-  CURVE = c;
-  newt(x, 3, &check, intersectCS);
-  if(!check)
-    return false;
-  return true;
-}
-
-void DivideCurve(Curve * c, double u, Vertex * v, Curve ** c1, Curve ** c2)
-{
-  (*c1) = Create_Curve(NEWLINE(), c->Typ, 1, NULL, NULL, -1, -1, 0., 1.);
-  (*c2) = Create_Curve(NEWLINE(), c->Typ, 1, NULL, NULL, -1, -1, 0., 1.);
-  CopyCurve(c, *c1);
-  CopyCurve(c, *c2);
-  (*c1)->uend = u;
-  (*c2)->ubeg = u;
-  (*c1)->end = v;
-  (*c2)->beg = v;
-}
-
-bool IntersectCurves(Curve * c1, Curve * c2,
-                     Curve ** c11, Curve ** c12,
-                     Curve ** c21, Curve ** c22, Vertex ** v)
-{
-  double x[3];
-  Vertex v1, v2;
-  int check;
-
-  if(!compareVertex(&c1->beg, &c2->beg))
-    return false;
-  if(!compareVertex(&c1->end, &c2->end))
-    return false;
-  if(!compareVertex(&c1->beg, &c2->end))
-    return false;
-  if(!compareVertex(&c2->beg, &c1->end))
-    return false;
-
-  CURVE_2 = c2;
-  CURVE = c1;
-  x[1] = x[2] = 0.0;
-  newt(x, 2, &check, intersectCC);
-  if(check)
-    return false;
-  v1 = InterpolateCurve(c1, x[1], 0);
-  v2 = InterpolateCurve(c2, x[2], 0);
-  //  Msg(INFO, "success : %lf %lf,%lf,%lf\n",v1.Pos.X,v1.Pos.Y,x[1],x[2]);
-  if(x[1] <= c1->ubeg)
-    return false;
-  if(x[1] >= c1->uend)
-    return false;
-  if(x[2] <= c2->ubeg)
-    return false;
-  if(x[2] >= c2->uend)
-    return false;
-  if(fabs(v1.Pos.Z - v2.Pos.Z) > 1.e-08 * CTX.lc)
-    return false;
-  *v = Create_Vertex(NEWPOINT(), v1.Pos.X, v1.Pos.Y, v1.Pos.Z, v1.lc, x[1]);
-  Tree_Insert(THEM->Points, v);
-  DivideCurve(c1, x[1], *v, c11, c12);
-  DivideCurve(c2, x[2], *v, c21, c22);
-  return true;
-}
-
-bool IntersectAllSegmentsTogether(void)
-{
-  bool intersectionfound = true;
-  List_T *TempList;
-  Curve *c1, *c2, *c11, *c12, *c21, *c22;
-  Vertex *v;
-  int i, j;
-
-  while(intersectionfound) {
-    TempList = Tree2List(THEM->Curves);
-    if(!List_Nbr(TempList))
-      return true;
-    for(i = 0; i < List_Nbr(TempList); i++) {
-      List_Read(TempList, i, &c1);
-      intersectionfound = false;
-      for(j = 0; j < List_Nbr(TempList); j++) {
-        List_Read(TempList, j, &c2);
-        if(c1->Num > 0 && c2->Num > 0 && i != j && intersectionfound == false) {
-          if(IntersectCurves(c1, c2, &c11, &c12, &c21, &c22, &v)) {
-            Msg(INFO, "Intersection Curve %d->%d", c1->Num, c2->Num);
-            intersectionfound = true;
-            DeleteCurve(c1->Num);
-            DeleteCurve(c2->Num);
-            Tree_Add(THEM->Curves, &c11);
-            Tree_Add(THEM->Curves, &c12);
-            Tree_Add(THEM->Curves, &c21);
-            Tree_Add(THEM->Curves, &c22);
-
-            CreateReversedCurve(c11);
-            CreateReversedCurve(c12);
-            CreateReversedCurve(c21);
-            CreateReversedCurve(c22);
-            return true;
-          }
-        }
-      }
-      if(intersectionfound)
-        break;
-    }
-    List_Delete(TempList);
-  }
-  return false;
-
-}
-
-void IntersectSurfaces(Surface * s1, Surface * s2)
-{
-  ;
-}

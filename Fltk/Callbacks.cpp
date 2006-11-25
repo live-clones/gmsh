@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.475 2006-11-21 08:01:05 guzik Exp $
+// $Id: Callbacks.cpp,v 1.476 2006-11-25 02:47:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3809,7 +3809,8 @@ void mesh_optimize_cb(CALLBACK_ARGS)
     return;
   }
   CTX.threads_lock = 1;
-  Optimize_Netgen();
+  Msg(GERROR, "Mesh optimize has yet to be reinterfaced");
+  //Optimize_Netgen();
   CTX.threads_lock = 0;
   CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
   Draw();

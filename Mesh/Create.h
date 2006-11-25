@@ -30,7 +30,6 @@ int compareSurfaceLoop(const void *a, const void *b);
 int compareEdgeLoop(const void *a, const void *b);
 int compareQuality(const void *a, const void *b);
 int compareCurve(const void *a, const void *b);
-int compareAttractor(const void *a, const void *b);
 int compareSurface(const void *a, const void *b);
 int compareVolume(const void *a, const void *b);
 int compareSxF(const void *a, const void *b);
@@ -38,8 +37,6 @@ int compareMeshPartitionNum(const void *a, const void *b);
 int compareMeshPartitionIndex(const void *a, const void *b);
 int comparePhysicalGroup(const void *a, const void *b);
 
-Attractor     *Create_Attractor(int Num, double lc1, double lc2, double Radius,
-				Vertex * v, Curve * c, Surface * s);
 PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T * intlist);
 Curve         *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
 			    List_T * Knots, int p1, int p2, double u1, double u2);
