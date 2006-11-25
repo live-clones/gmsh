@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.28 2006-09-11 17:58:19 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.29 2006-11-25 18:03:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -34,6 +34,8 @@
 
 #include <gsl/gsl_version.h>
 #include <gsl/gsl_errno.h>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_linalg.h>
 
 void new_handler(const char *reason, const char *file, int line,
                  int gsl_errno)
@@ -59,21 +61,20 @@ int check_gsl()
   // set new error handler
   gsl_set_error_handler(&new_handler);
 
-  
   // initilize robust geometric predicates
   gmsh::exactinit() ;
-
   return 1;
 }
 
 #else
 
+#define NRANSI
+#include "nrutil.h"
+void dsvdcmp(double **a, int m, int n, double w[], double **v);
 int check_gsl()
 {
-
   // initilize robust geometric predicates
   gmsh::exactinit() ;
-
   return 1;
 }
 
@@ -280,6 +281,79 @@ double inv3x3(double mat[3][3], double inv[3][3])
   return det;
 }
 
+void invert_singular_matrix3x3(double MM[3][3], double II[3][3])
+{
+  int i, j, k, n = 3;
+  double TT[3][3];
+
+  for(i = 1; i <= n; i++) {
+    for(j = 1; j <= n; j++) {
+      II[i - 1][j - 1] = 0.0;
+      TT[i - 1][j - 1] = 0.0;
+    }
+  }
+
+#if defined(HAVE_GSL)
+  gsl_matrix *M = gsl_matrix_alloc(3, 3);
+  gsl_matrix *V = gsl_matrix_alloc(3, 3);
+  gsl_vector *W = gsl_vector_alloc(3);
+  gsl_vector *TMPVEC = gsl_vector_alloc(3);
+  for(i = 1; i <= n; i++) {
+    for(j = 1; j <= n; j++) {
+      gsl_matrix_set(M, i - 1, j - 1, MM[i - 1][j - 1]);
+    }
+  }
+  gsl_linalg_SV_decomp(M, V, W, TMPVEC);
+  for(i = 1; i <= n; i++) {
+    for(j = 1; j <= n; j++) {
+      double ww = gsl_vector_get(W, i - 1);
+      if(fabs(ww) > 1.e-16) {   //singular value precision
+        TT[i - 1][j - 1] += gsl_matrix_get(M, j - 1, i - 1) / ww;
+      }
+    }
+  }
+  for(i = 1; i <= n; i++) {
+    for(j = 1; j <= n; j++) {
+      for(k = 1; k <= n; k++) {
+        II[i - 1][j - 1] +=
+          gsl_matrix_get(V, i - 1, k - 1) * TT[k - 1][j - 1];
+      }
+    }
+  }
+  gsl_matrix_free(M);
+  gsl_matrix_free(V);
+  gsl_vector_free(W);
+  gsl_vector_free(TMPVEC);
+#else
+  double **M = dmatrix(1, 3, 1, 3);
+  double **V = dmatrix(1, 3, 1, 3);
+  double *W = dvector(1, 3);
+  for(i = 1; i <= n; i++) {
+    for(j = 1; j <= n; j++) {
+      M[i][j] = MM[i - 1][j - 1];
+    }
+  }
+  dsvdcmp(M, n, n, W, V);
+  for(i = 1; i <= n; i++) {
+    for(j = 1; j <= n; j++) {
+      if(fabs(W[i]) > 1.e-16) { //singular value precision
+        TT[i - 1][j - 1] += M[j][i] / W[i];
+      }
+    }
+  }
+  for(i = 1; i <= n; i++) {
+    for(j = 1; j <= n; j++) {
+      for(k = 1; k <= n; k++) {
+        II[i - 1][j - 1] += V[i][k] * TT[k - 1][j - 1];
+      }
+    }
+  }
+  free_dmatrix(M, 1, n, 1, n);
+  free_dmatrix(V, 1, n, 1, n);
+  free_dvector(W, 1, n);
+#endif
+}
+
 double angle_02pi(double A3)
 {
   double DP = 2 * Pi;
@@ -290,6 +364,31 @@ double angle_02pi(double A3)
       A3 += DP;
   }
   return A3;
+}
+
+double angle_plan(double V[3], double P1[3], double P2[3], double n[3])
+{
+  double PA[3], PB[3], angplan;
+  double cosc, sinc, c[3];
+
+  PA[0] = P1[0] - V[0];
+  PA[1] = P1[1] - V[1];
+  PA[2] = P1[2] - V[2];
+
+  PB[0] = P2[0] - V[0];
+  PB[1] = P2[1] - V[1];
+  PB[2] = P2[2] - V[2];
+
+  norme(PA);
+  norme(PB);
+
+  prodve(PA, PB, c);
+
+  prosca(PA, PB, &cosc);
+  prosca(c, n, &sinc);
+  angplan = myatan2(sinc, cosc);
+
+  return angplan;
 }
 
 double triangle_area(double p0[3], double p1[3], double p2[3])

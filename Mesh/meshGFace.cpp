@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.27 2006-11-25 17:07:45 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.28 2006-11-25 18:03:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -28,7 +28,6 @@
 #include "MVertex.h"
 #include "MElement.h"
 #include "Context.h"
-#include "Utils.h"
 #include "GPoint.h"
 #include "Message.h"
 #include "Numeric.h"
@@ -86,8 +85,6 @@ int Orientation (std::vector<MVertex*> &cu)
   else
     return (0);
 }
-
-
 
 class fromCartesianToParametric
 {

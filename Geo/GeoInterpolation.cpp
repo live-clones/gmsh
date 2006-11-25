@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.2 2006-11-25 17:07:45 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.3 2006-11-25 18:03:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -24,7 +24,6 @@
 #include "GeoInterpolation.h"
 #include "GeoStringInterface.h"
 #include "GeoUtils.h"
-#include "Utils.h"
 #include "Numeric.h"
 
 extern Mesh *THEM;

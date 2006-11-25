@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.140 2006-11-25 16:52:44 geuzaine Exp $
+# $Id: Makefile,v 1.141 2006-11-25 18:03:49 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -34,7 +34,6 @@ SRC = DivideAndConquer.cpp \
       BackgroundMesh.cpp \
       BDS.cpp \
       Generator.cpp \
-      Utils.cpp \
       meshGEdge.cpp \
       meshGFace.cpp \
       meshGFaceTransfinite.cpp \
@@ -120,12 +119,6 @@ Generator.o: Generator.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h \
   ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h BackgroundMesh.h \
   SecondOrder.h
-Utils.o: Utils.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Geo/Geo.h ../Common/GmshDefines.h ../Geo/ExtrudeParams.h \
-  ../Geo/GeoInterpolation.h ../Geo/Geo.h Utils.h ../Numeric/Numeric.h \
-  ../Common/Context.h
 meshGEdge.o: meshGEdge.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -139,8 +132,7 @@ meshGEdge.o: meshGEdge.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/SVector3.h ../Numeric/Numeric.h ../Common/Context.h \
   ../Geo/ExtrudeParams.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h \
-  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h Utils.h \
-  ../Geo/Geo.h ../Geo/ExtrudeParams.h BackgroundMesh.h
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h BackgroundMesh.h
 meshGFace.o: meshGFace.cpp meshGFace.h DivideAndConquer.h \
   BackgroundMesh.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
@@ -153,11 +145,10 @@ meshGFace.o: meshGFace.cpp meshGFace.h DivideAndConquer.h \
   ../Common/Context.h ../DataStr/List.h ../Geo/ExtrudeParams.h \
   ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h ../Geo/ExtrudeParams.h Utils.h ../Geo/Geo.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../Geo/ExtrudeParams.h \
-  ../Common/Message.h BDS.h ../Common/Views.h ../Common/ColorTable.h \
-  ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
+  ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Common/Message.h BDS.h \
+  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
+  ../Common/GmshMatrix.h
 meshGFaceTransfinite.o: meshGFaceTransfinite.cpp meshGFace.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \

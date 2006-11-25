@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.13 2006-11-25 17:07:45 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.14 2006-11-25 18:03:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,7 +25,7 @@
 #include "OCCEdge.h"
 #include "OCCFace.h"
 #include "Message.h"
-#include "Utils.h"
+#include "Numeric.h"
 
 #if defined(HAVE_OCC)
 #include "Geom_CylindricalSurface.hxx"
@@ -213,10 +213,7 @@ int OCCFace::containsPoint(const SPoint3 &pt) const
       pl.Coefficients ( n[0], n[1], n[2], c );
       norme(n);
       double angle = 0.;
-      Vertex v,v1,v2;
-      v.Pos.X = pt.x();
-      v.Pos.Y = pt.y();
-      v.Pos.Z = pt.z();
+      double v[3] = {pt.x(), pt.y(), pt.z()};
       for(std::list<GEdge*>::const_iterator  it = l_edges.begin(); it != l_edges.end(); it++) {
 	GEdge *c = *it;
 	int N=10;
@@ -226,13 +223,9 @@ int OCCFace::containsPoint(const SPoint3 &pt) const
 	  double u2 = (double)(j + 1) / (double)N;
 	  GPoint pp1 = c->point(range.low() + u1 * (range.high() - range.low() ));
 	  GPoint pp2 = c->point(range.low() + u2 * (range.high() - range.low() ));
-	  v1.Pos.X = pp1.x();
-	  v1.Pos.Y = pp1.y();
-	  v1.Pos.Z = pp1.z();
-	  v2.Pos.X = pp2.x();
-	  v2.Pos.Y = pp2.y();
-	  v2.Pos.Z = pp2.z();	  
-	  angle += angle_plan(&v, &v1, &v2, n);
+	  double v1[3] = {pp1.x(), pp1.y(), pp1.z()};
+	  double v2[3] = {pp2.x(), pp2.y(), pp2.z()};
+	  angle += angle_plan(v, v1, v2, n);
 	}
       }
       // we're inside if angle equals 2 * pi

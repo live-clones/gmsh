@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.115 2006-11-25 16:52:43 geuzaine Exp $
+# $Id: Makefile,v 1.116 2006-11-25 18:03:49 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -96,8 +96,7 @@ GFace.o: GFace.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h MFace.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
   ExtrudeParams.h GFace.h GEdgeLoop.h Pair.h GRegion.h \
-  ../Common/SmoothNormals.h ../Common/Message.h ../Mesh/Utils.h \
-  ../Geo/Geo.h ../DataStr/Tree.h ../DataStr/avl.h ../Geo/ExtrudeParams.h
+  ../Common/SmoothNormals.h ../Common/Message.h
 GRegion.o: GRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h SPoint2.h \
   GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h MFace.h \
@@ -117,7 +116,7 @@ gmshFace.o: gmshFace.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   ExtrudeParams.h GFace.h GEdgeLoop.h Pair.h GRegion.h \
   ../Common/SmoothNormals.h gmshVertex.h Geo.h ../DataStr/Tree.h \
   ../DataStr/avl.h gmshEdge.h gmshFace.h GeoInterpolation.h \
-  ../Mesh/Utils.h ../Geo/Geo.h ../Common/Message.h
+  ../Common/Message.h
 gmshRegion.o: gmshRegion.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h \
   SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \
@@ -144,8 +143,7 @@ OCCFace.o: OCCFace.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
   ExtrudeParams.h GFace.h GEdgeLoop.h Pair.h GRegion.h \
   ../Common/SmoothNormals.h OCCVertex.h OCCIncludes.h OCCEdge.h OCCFace.h \
-  ../Common/Message.h ../Mesh/Utils.h ../Geo/Geo.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../Geo/ExtrudeParams.h
+  ../Common/Message.h
 OCCRegion.o: OCCRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h SPoint2.h \
   GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h MFace.h \
@@ -212,7 +210,7 @@ Geo.o: Geo.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Geo.h \
   ../Common/GmshDefines.h ExtrudeParams.h GeoInterpolation.h \
-  ../Mesh/Utils.h ../Geo/Geo.h ../Common/Context.h
+  ../Common/Context.h
 GeoStringInterface.o: GeoStringInterface.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
@@ -226,8 +224,7 @@ GeoInterpolation.o: GeoInterpolation.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h Geo.h ../Common/GmshDefines.h ExtrudeParams.h \
-  GeoInterpolation.h GeoStringInterface.h GeoUtils.h ../Mesh/Utils.h \
-  ../Geo/Geo.h ../Numeric/Numeric.h
+  GeoInterpolation.h GeoStringInterface.h GeoUtils.h ../Numeric/Numeric.h
 GeoUtils.o: GeoUtils.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \

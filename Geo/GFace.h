@@ -134,6 +134,7 @@ class GFace : public GEntity
   // Get the mean plane info
   void getMeanPlaneData(double VX[3], double VY[3], 
 			double &x, double &y, double &z) const;
+  void getMeanPlaneData(double plan[3][3]) const;
 
   // a crude graphical representation using a "cross" defined by pairs
   // of start/end points

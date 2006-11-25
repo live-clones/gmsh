@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.31 2006-11-25 16:52:53 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.32 2006-11-25 18:03:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,16 +19,15 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <vector>
 #include "Gmsh.h"
 #include "Plugin.h"
 #include "Triangulate.h"
-#include "List.h"
-#include "Tree.h"
 #include "Views.h"
 #include "Context.h"
 #include "Malloc.h"
-#include "Geo.h"
-#include "Utils.h"
+#include "MVertex.h"
+#include "gmshFace.h"
 
 extern Context_T CTX;
 
@@ -86,8 +85,8 @@ void GMSH_TriangulatePlugin::catchErrorMessage(char *errorMessage) const
 
 #if !defined(HAVE_TRIANGLE)
 
-void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
-		 int nbTimeStep, int nbComp)
+static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
+			int nbTimeStep, int nbComp)
 {
   Msg(GERROR, "Triangle is not compiled in this version of Gmsh");
 }
@@ -103,36 +102,42 @@ extern "C"
 #include "triangle.h"
 }
 
-void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
-		 int nbTimeStep, int nbComp)
+static void Project(MVertex *v, double mat[3][3])
+{
+  double X = v->x() * mat[0][0] + v->y() * mat[0][1] + v->z() * mat[0][2];
+  double Y = v->x() * mat[1][0] + v->y() * mat[1][1] + v->z() * mat[1][2];
+  double Z = v->x() * mat[2][0] + v->y() * mat[2][1] + v->z() * mat[2][2];
+  v->x() = X;
+  v->y() = Y;
+  v->z() = Z;
+}
+
+static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
+			int nbTimeStep, int nbComp)
 {
   if(nbIn < 3)
     return;
 
-  List_T *points = List_Create(nbIn, 1, sizeof(Vertex *));
+  std::vector<MVertex*> points;
+
   int nb = List_Nbr(inList) / nbIn;
   int j = 0;
-  for(int i = 0; i < List_Nbr(inList); i += nb) {
-    Vertex *v = Create_Vertex(j++,
-			      *(double *)List_Pointer_Fast(inList, i),
-			      *(double *)List_Pointer_Fast(inList, i + 1),
-			      *(double *)List_Pointer_Fast(inList, i + 2), 1., 0.);
-    List_Add(points, &v);
-  }
+  for(int i = 0; i < List_Nbr(inList); i += nb)
+    points.push_back(new MVertex(*(double *)List_Pointer_Fast(inList, i),
+				 *(double *)List_Pointer_Fast(inList, i + 1),
+				 *(double *)List_Pointer_Fast(inList, i + 2),
+				 0, j++));
 
-  Surface *s = Create_Surface(1, MSH_SURF_PLAN);
-  MeanPlane(points, s);
-
-  for(int i = 0; i < List_Nbr(points); i++) {
-    Vertex *v;
-    List_Read(points, i, &v);
-    Projette(v, s->plan);
-  }
-
-  Free_Surface(&s, NULL);
+  gmshFace *s = new gmshFace(0, 1);
+  s->computeMeanPlane(points);
+  double plan[3][3];
+  s->getMeanPlaneData(plan);
+  for(unsigned int i = 0; i < points.size(); i++)
+    Project(points[i], plan);
+  delete s;
 
   struct triangulateio in;
-  in.numberofpoints = List_Nbr(points);
+  in.numberofpoints = points.size();
   in.pointlist = (REAL *) Malloc(in.numberofpoints * 2 * sizeof(REAL));
   in.numberofpointattributes = 0;
   in.pointattributelist = NULL;
@@ -146,20 +151,14 @@ void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
   in.holelist = NULL;
 
   j = 0;
-  for(int i = 0; i < List_Nbr(points); i++) {
-    Vertex *v;
-    List_Read(points, i, &v);
-    in.pointlist[j] = v->Pos.X;
-    in.pointlist[j + 1] = v->Pos.Y;
+  for(int i = 0; i < points.size(); i++) {
+    in.pointlist[j] = points[i]->x();
+    in.pointlist[j + 1] = points[i]->y();
     j += 2;
   }
 
-  for(int i = 0; i < List_Nbr(points); i++) {
-    Vertex *v;
-    List_Read(points, i, &v);
-    Free_Vertex(&v, NULL);
-  }
-  List_Delete(points);
+  for(int i = 0; i < points.size(); i++) 
+    delete points[i];
 
   struct triangulateio out;
   out.pointlist = NULL;

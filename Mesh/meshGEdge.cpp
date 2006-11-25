@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.18 2006-11-25 16:52:44 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.19 2006-11-25 18:03:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,6 @@
 #include "meshGEdge.h"
 #include "GEdge.h"
 #include "GFace.h"
-#include "Utils.h"
 #include "BackgroundMesh.h"
 #include "Context.h"
 #include "Message.h"
@@ -126,6 +125,71 @@ double F_One_bis(double t)
 {
   SVector3 der = _myGEdge -> firstDer(t) ;
   return norm(der);
+}
+
+typedef struct{
+  int Num;
+  double t, lc, p;
+}IntPoint;
+
+double trapeze(IntPoint * P1, IntPoint * P2)
+{
+  return (0.5 * (P1->lc + P2->lc) * (P2->t - P1->t));
+}
+
+void RecursiveIntegration(IntPoint * from, IntPoint * to,
+                          double (*f) (double X), List_T * pPoints,
+                          double Prec, int *depth)
+{
+  IntPoint P, p1;
+  double err, val1, val2, val3;
+
+  (*depth)++;
+
+  P.t = 0.5 * (from->t + to->t);
+  P.lc = f(P.t);
+
+  val1 = trapeze(from, to);
+  val2 = trapeze(from, &P);
+  val3 = trapeze(&P, to);
+
+  err = fabs(val1 - val2 - val3);
+  //  Msg(INFO,"Int %22.15 E %22.15 E %22.15 E\n", val1,val2,val3);
+  if(((err < Prec) && (*depth > 1)) || (*depth > 25)) {
+    List_Read(pPoints, List_Nbr(pPoints) - 1, &p1);
+    P.p = p1.p + val2;
+    List_Add(pPoints, &P);
+
+    List_Read(pPoints, List_Nbr(pPoints) - 1, &p1);
+    to->p = p1.p + val3;
+    List_Add(pPoints, to);
+  }
+  else {
+    RecursiveIntegration(from, &P, f, pPoints, Prec, depth);
+    RecursiveIntegration(&P, to, f, pPoints, Prec, depth);
+  }
+  (*depth)--;
+}
+
+double Integration(double t1, double t2, double (*f) (double X),
+                   List_T * pPoints, double Prec)
+{
+  int depth;
+  IntPoint from, to;
+
+  depth = 0;
+
+  from.t = t1;
+  from.lc = f(from.t);
+  from.p = 0.0;
+  List_Add(pPoints, &from);
+
+  to.t = t2;
+  to.lc = f(to.t);
+  RecursiveIntegration(&from, &to, f, pPoints, Prec, &depth);
+
+  List_Read(pPoints, List_Nbr(pPoints) - 1, &to);
+  return (to.p);
 }
 
 void deMeshGEdge :: operator() (GEdge *ge) 

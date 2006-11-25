@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.60 2006-11-25 17:07:45 geuzaine Exp $
+// $Id: Geo.cpp,v 1.61 2006-11-25 18:03:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,6 @@
 #include "Numeric.h"
 #include "Geo.h"
 #include "GeoInterpolation.h"
-#include "Utils.h"
 #include "Context.h"
 
 extern Mesh *THEM;
@@ -3058,3 +3057,21 @@ bool ProjectPointOnSurface(Surface * s, Vertex * p, double *u, double *v)
   return true;
 }
 
+void direction(Vertex * v1, Vertex * v2, double d[3])
+{
+  d[0] = v2->Pos.X - v1->Pos.X;
+  d[1] = v2->Pos.Y - v1->Pos.Y;
+  d[2] = v2->Pos.Z - v1->Pos.Z;
+}
+
+void Projette(Vertex * v, double mat[3][3])
+{
+  double X, Y, Z;
+
+  X = v->Pos.X * mat[0][0] + v->Pos.Y * mat[0][1] + v->Pos.Z * mat[0][2];
+  Y = v->Pos.X * mat[1][0] + v->Pos.Y * mat[1][1] + v->Pos.Z * mat[1][2];
+  Z = v->Pos.X * mat[2][0] + v->Pos.Y * mat[2][1] + v->Pos.Z * mat[2][2];
+  v->Pos.X = X;
+  v->Pos.Y = Y;
+  v->Pos.Z = Z;
+}

@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.22 2006-11-25 16:52:43 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.23 2006-11-25 18:03:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,7 +25,7 @@
 #include "gmshFace.h"
 #include "Geo.h"
 #include "GeoInterpolation.h"
-#include "Utils.h"
+#include "Numeric.h"
 #include "Message.h"
 
 extern Mesh *THEM;
@@ -232,10 +232,7 @@ int gmshFace::containsPoint(const SPoint3 &pt) const
     // for the (possibly wrong) orientation at the end
     double n[3] = {meanPlane.a, meanPlane.b, meanPlane.c};
     double angle = 0.;
-    Vertex v;
-    v.Pos.X = pt.x();
-    v.Pos.Y = pt.y();
-    v.Pos.Z = pt.z();
+    double v[3] = {pt.x(), pt.y(), pt.z()};
     for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
       Curve *c;
       List_Read(s->Generatrices, i, &c);
@@ -245,7 +242,9 @@ int gmshFace::containsPoint(const SPoint3 &pt) const
 	double u2 = (double)(j + 1) / (double)N;
 	Vertex p1 = InterpolateCurve(c, u1, 0);
 	Vertex p2 = InterpolateCurve(c, u2, 0);
-	angle += angle_plan(&v, &p1, &p2, n);
+	double v1[3] = {p1.Pos.X, p1.Pos.Y, p1.Pos.Z};
+	double v2[3] = {p2.Pos.X, p2.Pos.Y, p2.Pos.Z};
+	angle += angle_plan(v, v1, v2, n);
       }
     }
     // we're inside if angle equals 2 * pi

@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.21 2006-11-20 12:44:09 remacle Exp $
+// $Id: GFace.cpp,v 1.22 2006-11-25 18:03:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,7 @@
 #include "GFace.h"
 #include "GEdge.h"
 #include "Message.h"
-#include "Utils.h"
+#include "Numeric.h"
 
 #if defined(HAVE_GSL)
 #include <gsl/gsl_vector.h>
@@ -232,7 +232,7 @@ void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
   double ex[3], t1[3], t2[3];
 
   // check coherence of results for non-plane surfaces
-  if(geomType() != GEntity::Plane) {
+  if(geomType() != GEntity::Plane && geomType() != GEntity::DiscreteSurface) {
     double res2[3], c[3], cosc, sinc, angplan;
     double eps = 1.e-3;
 
@@ -350,6 +350,13 @@ void GFace::getMeanPlaneData(double VX[3], double VY[3],
   x = meanPlane.x;  
   y = meanPlane.y;  
   z = meanPlane.z;  
+}
+
+void GFace::getMeanPlaneData(double plan[3][3]) const
+{
+  for(int i = 0; i < 3; i++)
+    for(int j = 0; j < 3; j++)
+      plan[i][j] = meanPlane.plan[i][j];
 }
 
 double GFace::curvature (const SPoint2 &param) const

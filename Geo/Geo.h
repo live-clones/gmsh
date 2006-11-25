@@ -331,4 +331,7 @@ int recognize_seg(int typ, List_T *liste, int *seg);
 int recognize_loop(List_T *liste, int *loop);
 int recognize_surfloop(List_T *liste, int *loop);
 
+void direction(Vertex * v1, Vertex * v2, double d[3]);
+void Projette(Vertex * v, double mat[3][3]);
+
 #endif
