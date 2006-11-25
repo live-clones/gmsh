@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.29 2006-11-25 18:20:04 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.30 2006-11-25 20:37:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -149,17 +149,20 @@ extern double F_LC_ANALY (double xx, double yy, double zz);
 
 double NewGetLc ( BDS_Point *p  )
 {
+  if(CTX.mesh.bgmesh_type == ONFILE) {
+    const double lc_bgm = BGMXYZ(p->X, p->Y, p->Z);
+    if(CTX.mesh.constrained_bgmesh)
+      return std::min(lc_bgm, p->lc());
+    else
+      return lc_bgm;
+  }
+
   //  const double curv = p->radius();
   //  if (curv == 0.0)
-    return p->lc();
+  return p->lc();
     //  else
     //    return std::min(p->lc(),1./(2*curv));
   return  F_LC_ANALY(p->X,p->Y,p->Z);
-  if(BGMExists())
-    {	    
-      double l_bgm = BGMXYZ(p->X,p->Y,p->Z);
-      return l_bgm;
-    }
 }
 
 inline double computeEdgeLinearLength ( BDS_Point *p1, BDS_Point *p2)
