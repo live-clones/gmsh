@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.11 2006-11-25 16:52:43 geuzaine Exp $
+// $Id: OCCEdge.cpp,v 1.12 2006-11-25 17:07:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -32,7 +32,7 @@
 #include "Geom_Line.hxx"
 
 OCCEdge::OCCEdge(GModel *model, TopoDS_Edge edge, int num, GVertex *v1, GVertex *v2)
-  : GEdge(model, num, v1, v2), trimmed(0),c(edge)
+  : GEdge(model, num, v1, v2), c(edge), trimmed(0)
 {
   curve = BRep_Tool::Curve(c, s0, s1);
 }
@@ -112,7 +112,6 @@ int OCCEdge::isSeam(GFace *face) const
 
 GPoint OCCEdge::point(double par) const
 {
-  double s0,s1;  
   if (!curve.IsNull())
     {
       gp_Pnt pnt = curve->Value (par);

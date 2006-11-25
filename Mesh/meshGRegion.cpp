@@ -107,7 +107,6 @@ void buildTetgenStructure (  GRegion *gr, tetgenio &in, std::vector<MVertex*> & 
 
 void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out, std::vector<MVertex*> & numberedV)
 {
-  int I = numberedV.size() + 1;
   for (int i = numberedV.size(); i < out.numberofpoints; i++) 
     {
       MVertex *v = new MVertex (out.pointlist[i * 3 + 0],
@@ -126,7 +125,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out, std::vector<MV
     while (it != faces.end())
       {
 	GFace *gf = (*it); 
-	for (int i=0;i<gf->triangles.size();i++)
+	for (unsigned int i=0;i<gf->triangles.size();i++)
 	  {
 	    delete gf->triangles[i];
 	  }

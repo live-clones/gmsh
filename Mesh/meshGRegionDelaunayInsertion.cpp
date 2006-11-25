@@ -229,7 +229,7 @@ bool insertVertex (MVertex *v ,
   // The cavity is NOT star shaped
   else
     {      
-      for (int i=0;i<shell.size();i++)delete newTets[i];
+      for (unsigned int i=0;i<shell.size();i++)delete newTets[i];
       delete [] newTets;      
       ittet = cavity.begin();
       ittete = cavity.end();  
@@ -270,7 +270,7 @@ void insertVerticesInRegion (GRegion *gr)
   std::map<MVertex*,double> vSizesMap;
   std::vector<double> vSizes;
 
-  for (int i=0;i<gr->tetrahedra.size();i++)setLcs ( gr->tetrahedra[i] , vSizesMap);
+  for (unsigned int i=0;i<gr->tetrahedra.size();i++)setLcs ( gr->tetrahedra[i] , vSizesMap);
   
   int NUM=0;
   for (std::map<MVertex*,double>::iterator it = vSizesMap.begin();it!=vSizesMap.end();++it)
@@ -279,7 +279,7 @@ void insertVerticesInRegion (GRegion *gr)
       vSizes.push_back(it->second);
     }
 
-  for (int i=0;i<gr->tetrahedra.size();i++)
+  for (unsigned int i=0;i<gr->tetrahedra.size();i++)
     allTets.insert ( new MTet4 ( gr->tetrahedra[i] ,vSizes ) );
 
   gr->tetrahedra.clear();

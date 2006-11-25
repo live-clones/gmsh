@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.59 2006-11-25 16:52:43 geuzaine Exp $
+// $Id: Geo.cpp,v 1.60 2006-11-25 17:07:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -667,7 +667,6 @@ Volume *Create_Volume(int Num, int Typ)
 
 void Free_Volume(void *a, void *b)
 {
-  Volume *pV = *(Volume **) a;
   Free_Volume_But_Not_Elements(a, b);
 }
 
@@ -2779,7 +2778,7 @@ void ReplaceAllDuplicates()
 
 // Projection of point on curve or surface
 
-static Curve *CURVE, *CURVE_2;
+static Curve *CURVE;
 static Surface *SURFACE;
 static Vertex *VERTEX;
 

@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.1 2006-11-25 16:52:43 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.2 2006-11-25 17:07:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -403,7 +403,7 @@ Vertex InterpolateSurface(Surface * s, double u, double v,
   }
 
   Vertex x(u, v, .0);
-  Vertex *xx = &x, *dum;
+  Vertex *xx = &x;
 
   if(s->Extrude && s->Extrude->geo.Mode == EXTRUDED_ENTITY &&
      s->Typ != MSH_SURF_PLAN) {

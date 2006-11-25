@@ -1,4 +1,4 @@
-  // $Id: GModelIO_OCC.cpp,v 1.10 2006-11-22 13:57:25 remacle Exp $
+  // $Id: GModelIO_OCC.cpp,v 1.11 2006-11-25 17:07:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -286,14 +286,7 @@ void OCC_Internals :: buildLists ()
 
 void OCC_Internals ::   HealGeometry (bool fixsmalledges , bool fixspotstripfaces, bool sewfaces, bool makesolids)
 {
-  int nrc = 0, nrcs = 0,
-    nrso = somap.Extent(),
-    nrsh = shmap.Extent(),
-    nrf = fmap.Extent(),
-    nrw = wmap.Extent(),
-    nre = emap.Extent(),
-    nrv = vmap.Extent();
-
+  int nrc = 0, nrcs = 0;
   TopExp_Explorer e;
   for (e.Init(shape, TopAbs_COMPOUND); e.More(); e.Next()) nrc++;
   for (e.Init(shape, TopAbs_COMPSOLID); e.More(); e.Next()) nrcs++;

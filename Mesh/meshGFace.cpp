@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.26 2006-11-25 16:52:44 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.27 2006-11-25 17:07:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -981,7 +981,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
      MVertex *here = ges.ge->getBeginVertex()->mesh_vertices[0];
      mesh1d.push_back(ges.ge->reparamOnFace(gf,range.low(),1));
      if ( seam ) mesh1d_seam.push_back(ges.ge->reparamOnFace(gf,range.low(),-1));
-     for (int i=0;i<ges.ge->mesh_vertices.size();i++)
+     for (unsigned int i=0;i<ges.ge->mesh_vertices.size();i++)
        {
 	 double u;
 	 here = ges.ge->mesh_vertices[i];
@@ -1006,7 +1006,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
   
   GEdgeSigned found(0,0);
 
-  SPoint2 last_coord;  
+  SPoint2 last_coord(0,0);  
   int counter = 0;
 
   while (unordered.size())
@@ -1096,20 +1096,20 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
      if ( found._sign == 1)
        {
 	 edgeLoop.push_back(found.ge->getBeginVertex()->mesh_vertices[0]);
-	 for (int i=0;i<found.ge->mesh_vertices.size();i++)
+	 for (unsigned int i=0;i<found.ge->mesh_vertices.size();i++)
 	   edgeLoop.push_back(found.ge->mesh_vertices[i]);
        }
      else
        {
 	 edgeLoop.push_back(found.ge->getEndVertex()->mesh_vertices[0]);
-	 for (int i=found.ge->mesh_vertices.size()-1;i>=0;i--)	    
+	 for (unsigned int i=found.ge->mesh_vertices.size()-1;i>=0;i--)	    
 	   edgeLoop.push_back(found.ge->mesh_vertices[i]);
        }
      
      //     printf("edge %d size %d size %d\n",found.ge->tag(),edgeLoop.size(), coords.size());
      
      std::vector<BDS_Point*>  edgeLoop_BDS;
-     for (int i=0;i<edgeLoop.size();i++)	    
+     for (unsigned int i=0;i<edgeLoop.size();i++)	    
        {
 	 MVertex *here     = edgeLoop[i];
 	 GEntity *ge       = here->onWhat();    
@@ -1178,10 +1178,10 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   DocRecord doc;  
   doc.points =  (PointRecord*)malloc((nbPointsTotal+4) * sizeof(PointRecord));
   int count = 0;
-  for ( int i=0;i<edgeLoops_BDS.size();i++)
+  for (unsigned int i=0;i<edgeLoops_BDS.size();i++)
     {
       std::vector<BDS_Point*> &edgeLoop_BDS = edgeLoops_BDS[i];
-      for ( int j=0;j<edgeLoop_BDS.size();j++)
+      for (unsigned int j=0;j<edgeLoop_BDS.size();j++)
 	{
 	  BDS_Point *pp = edgeLoop_BDS[j];
 	  const double U = pp->u;
@@ -1233,7 +1233,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
       BDS_Point *p1 = (BDS_Point*)doc.points[doc.delaunay[i].t.a].data;
       BDS_Point *p2 = (BDS_Point*)doc.points[doc.delaunay[i].t.b].data;
       BDS_Point *p3 = (BDS_Point*)doc.points[doc.delaunay[i].t.c].data;
-      BDS_Face *t = m->add_triangle ( p1->iD,p2->iD,p3->iD);
+      m->add_triangle ( p1->iD,p2->iD,p3->iD);
     }  
   // Free stuff
   free (doc.points);
@@ -1246,10 +1246,10 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   BDS_GeomEntity CLASS_E (1,1);
   
 
-  for ( int i=0;i<edgeLoops_BDS.size();i++)
+  for (unsigned int i=0;i<edgeLoops_BDS.size();i++)
     {
       std::vector<BDS_Point*> &edgeLoop_BDS = edgeLoops_BDS[i];
-      for ( int j=0;j<edgeLoop_BDS.size();j++)
+      for (unsigned int j=0;j<edgeLoop_BDS.size();j++)
 	{
 	  BDS_Edge * e = m->recover_edge ( edgeLoop_BDS[j]->iD,edgeLoop_BDS[(j+1)%edgeLoop_BDS.size()]->iD);	  
 	  if (!e)
@@ -1396,6 +1396,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
 //   sprintf(name,"real%d.pos",gf->tag());
 //   outputScalarField(m->triangles, name,0);
   delete m; 
+  return true;
 }
 
 

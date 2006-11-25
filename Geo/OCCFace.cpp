@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.12 2006-11-23 16:23:13 remacle Exp $
+// $Id: OCCFace.cpp,v 1.13 2006-11-25 17:07:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -242,6 +242,7 @@ int OCCFace::containsPoint(const SPoint3 &pt) const
     }
   else
     Msg(GERROR,"Not Done Yet ...");
+  return false;
 }
 // void OCCFace::buildVisTriangulation ();
 // {
