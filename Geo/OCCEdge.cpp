@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.10 2006-11-22 13:57:25 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.11 2006-11-25 16:52:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -210,7 +210,7 @@ int OCCEdge::minimumDrawSegments () const
   else if(geomType() == Circle || geomType() == Ellipse)
     return CTX.geom.circle_points;
   else
-    return 10 * n;
+    return 20 * n;
 }
 
 

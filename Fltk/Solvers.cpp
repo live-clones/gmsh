@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.52 2006-08-07 14:15:14 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.53 2006-11-25 16:52:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,7 +25,6 @@
 #include "OpenFile.h"
 #include "GmshUI.h"
 #include "GUI.h"
-#include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"
 

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.79 2006-11-22 15:01:28 geuzaine Exp $
+// $Id: Gmsh.l,v 1.80 2006-11-25 16:52:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -28,7 +28,6 @@
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Geo.h"
-#include "CAD.h"
 #include "Gmsh.tab.hpp"
 
 char yyname[256] = "";

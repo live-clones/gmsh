@@ -1,5 +1,5 @@
-#ifndef _NURBS_H_
-#define _NURBS_H_
+#ifndef _SECOND_ORDER_H_
+#define _SECOND_ORDER_H_
 
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,18 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Vertex.h"
-#include "Mesh.h"
-#include "List.h"
-
-Vertex InterpolateCubicSpline (Vertex * v[4], double t, double mat[4][4],
-                               int derivee, double t1, double t2);
-Vertex InterpolateUBS (Curve * Curve, double u, int derivee);
-Vertex InterpolateNurbs (Curve * Curve, double u, int derivee);
-Vertex InterpolateNurbsSurface (Surface * s, double u, double v);
-
-void CreateNurbsSurface (int Num, int Order1, int Order2, List_T *, List_T *, List_T *);
-void CreateNurbsSurfaceSupport (int Num, int Order2, int Order1, 
-                                List_T * List, List_T *, List_T *);
+void Degre1();
+void Degre2(bool linear=true, bool incomplete=false);
 
 #endif

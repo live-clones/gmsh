@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.238 2006-11-25 03:30:03 geuzaine Exp $
+// $Id: Gmsh.y,v 1.239 2006-11-25 16:52:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -28,12 +28,10 @@
 #include "Numeric.h"
 #include "Context.h"
 #include "Geo.h"
+#include "GeoInterpolation.h"
 #include "GeoUtils.h"
-#include "Nurbs.h"
-#include "CAD.h"
-#include "Mesh.h"
+#include "Generator.h"
 #include "Draw.h"
-#include "Create.h"
 #include "Views.h"
 #include "Options.h"
 #include "Colors.h"
@@ -44,13 +42,6 @@
 #include "ColorTable.h"
 #include "OS.h"
 #include "CreateFile.h"
-
-#include "GModel.h"
-#include "gmshVertex.h"
-#include "gmshEdge.h"
-#include "gmshFace.h"
-#include "gmshRegion.h"
-extern GModel *GMODEL;
 
 Tree_T *Symbol_T = NULL;
 

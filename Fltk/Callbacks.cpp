@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.476 2006-11-25 02:47:39 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.477 2006-11-25 16:52:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -26,9 +26,10 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Geo.h"
-#include "CAD.h"
-#include "ExtractContour.h"
-#include "Mesh.h"
+#include "GeoStringInterface.h"
+#include "GeoExtractContour.h"
+#include "Generator.h"
+#include "SecondOrder.h"
 #include "Draw.h"
 #include "SelectBuffer.h"
 #include "Views.h"

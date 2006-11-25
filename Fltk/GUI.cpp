@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.562 2006-11-22 02:39:17 geuzaine Exp $
+// $Id: GUI.cpp,v 1.563 2006-11-25 16:52:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -67,6 +67,7 @@
 
 #include "Gmsh.h"
 #include "GmshUI.h"
+#include "GmshDefines.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "Options.h"

@@ -1,5 +1,5 @@
-#ifndef _OCC_REGION_H_
-#define _OCC_REGION_H_
+#ifndef _GENERATOR_H_
+#define _GENERATOR_H_
 
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,21 +20,12 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "GRegion.h"
-
-#if defined(HAVE_OCC)
-
-class OCCRegion : public GRegion {
- protected:
-  TopoDS_Solid s;
- public:
-  OCCRegion(GModel *m, TopoDS_Solid s , int num,  TopTools_IndexedMapOfShape &fmap);
-  virtual ~OCCRegion() {}
-  virtual GeomType geomType() const;
-  ModelType getNativeType() const { return OpenCascadeModel; }
-  void * getNativePtr() const { return (void*)&s; }
-};
-
-#endif
+void mai3d(int Asked);
+void Init_Mesh0();
+void Init_Mesh();
+void Maillage_Dimension_1();
+void Maillage_Dimension_2();
+void Maillage_Dimension_3();
+void ApplyLcFactor();
 
 #endif

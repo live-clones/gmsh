@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.114 2006-11-25 02:47:41 geuzaine Exp $
+# $Id: Makefile,v 1.115 2006-11-25 16:52:53 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -156,10 +156,8 @@ Triangulate.o: Triangulate.cpp ../Common/Gmsh.h ../Common/Message.h \
   Plugin.h ../Common/Options.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h Triangulate.h \
-  ../Common/Context.h ../Geo/Geo.h ../Mesh/Mesh.h ../Common/GmshDefines.h \
-  ../Mesh/Vertex.h ../Geo/ExtrudeParams.h ../Mesh/Utils.h \
-  ../Mesh/Vertex.h ../Mesh/Mesh.h ../Mesh/Create.h ../Mesh/Vertex.h \
-  ../Mesh/Mesh.h
+  ../Common/Context.h ../Geo/Geo.h ../Common/GmshDefines.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Utils.h
 Warp.o: Warp.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
@@ -234,10 +232,9 @@ Annotate.o: Annotate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h Annotate.h \
   ../Common/Context.h ../Common/GmshUI.h ../Fltk/GUI.h \
-  ../Fltk/Opengl_Window.h ../Mesh/Mesh.h ../Common/GmshDefines.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../Mesh/Vertex.h \
-  ../Geo/ExtrudeParams.h ../Fltk/Colorbar_Window.h ../Fltk/Popup_Button.h \
-  ../Fltk/SpherePosition_Widget.h ../Graphics/Draw.h
+  ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
+  ../Fltk/Popup_Button.h ../Fltk/SpherePosition_Widget.h \
+  ../Graphics/Draw.h
 Remove.o: Remove.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \

@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.18 2006-11-25 00:44:25 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.19 2006-11-25 16:52:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,11 +20,8 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "gmshEdge.h"
-#include "Interpolation.h"
-#include "CAD.h"
 #include "Geo.h"
-#include "Mesh.h"
-#include "Create.h"
+#include "GeoInterpolation.h"
 #include "Context.h"
 
 extern Context_T CTX;

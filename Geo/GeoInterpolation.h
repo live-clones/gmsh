@@ -1,5 +1,5 @@
-#ifndef _INTERPOLATION_H_
-#define _INTERPOLATION_H_
+#ifndef _GEO_INTERPOLATION_H_
+#define _GEO_INTERPOLATION_H_
 
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,8 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Vertex.h"
-#include "Mesh.h"
+#include "Geo.h"
 
 Vertex InterpolateCurve (Curve * Curve, double u, int derivee);
 
@@ -47,6 +46,16 @@ Vertex TransfiniteHex
 void TransfiniteSph (Vertex S, Vertex center, Vertex * T);
 
 void Normal2Surface (Surface * s, double u, double v, double n[3]);
+
+Vertex InterpolateCubicSpline (Vertex * v[4], double t, double mat[4][4],
+                               int derivee, double t1, double t2);
+Vertex InterpolateUBS (Curve * Curve, double u, int derivee);
+Vertex InterpolateNurbs (Curve * Curve, double u, int derivee);
+Vertex InterpolateNurbsSurface (Surface * s, double u, double v);
+
+void CreateNurbsSurface (int Num, int Order1, int Order2, List_T *, List_T *, List_T *);
+void CreateNurbsSurfaceSupport (int Num, int Order2, int Order1, 
+                                List_T * List, List_T *, List_T *);
 
 #endif
 

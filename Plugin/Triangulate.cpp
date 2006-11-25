@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.30 2006-01-06 00:34:33 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.31 2006-11-25 16:52:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -28,9 +28,7 @@
 #include "Context.h"
 #include "Malloc.h"
 #include "Geo.h"
-#include "Mesh.h"
 #include "Utils.h"
-#include "Create.h"
 
 extern Context_T CTX;
 

@@ -20,7 +20,6 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Mesh.h"
 #include "GModel.h"
 #include "OCCIncludes.h"
 #include "GVertex.h"

@@ -1,5 +1,5 @@
-#ifndef _OCC_REGION_H_
-#define _OCC_REGION_H_
+#ifndef _BACKGROUND_MESH_H_
+#define _BACKGROUND_MESH_H_
 
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,21 +20,11 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "GRegion.h"
 
-#if defined(HAVE_OCC)
+#define ONFILE      2
+#define WITHPOINTS  3
 
-class OCCRegion : public GRegion {
- protected:
-  TopoDS_Solid s;
- public:
-  OCCRegion(GModel *m, TopoDS_Solid s , int num,  TopTools_IndexedMapOfShape &fmap);
-  virtual ~OCCRegion() {}
-  virtual GeomType geomType() const;
-  ModelType getNativeType() const { return OpenCascadeModel; }
-  void * getNativePtr() const { return (void*)&s; }
-};
-
-#endif
+double BGMXYZ(double X, double Y, double Z);
+int BGMExists();
 
 #endif

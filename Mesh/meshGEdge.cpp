@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.17 2006-11-21 23:52:59 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.18 2006-11-25 16:52:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,12 +19,12 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include "Gmsh.h"
 #include "meshGEdge.h"
 #include "GEdge.h"
 #include "GFace.h"
-#include "Gmsh.h"
 #include "Utils.h"
-#include "Mesh.h"
+#include "BackgroundMesh.h"
 #include "Context.h"
 #include "Message.h"
 

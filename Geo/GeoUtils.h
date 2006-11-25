@@ -20,7 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Mesh.h"
+#include "Geo.h"
 #include "List.h"
 
 void sortEdgesInLoop(int num, List_T *edges);

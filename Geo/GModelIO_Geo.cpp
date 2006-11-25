@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.1 2006-11-15 13:19:56 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.2 2006-11-25 16:52:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,7 +20,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GModel.h"
-#include "Mesh.h"
 #include "Geo.h"
 #include "OpenFile.h"
 #include "Tools.h"

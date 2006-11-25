@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.34 2006-08-26 15:13:22 remacle Exp $
+// $Id: Utils.cpp,v 1.35 2006-11-25 16:52:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -24,11 +24,10 @@
 //
 
 #include "Gmsh.h"
-#include "Numeric.h"
 #include "Geo.h"
-#include "CAD.h"
-#include "Mesh.h"
-#include "Interpolation.h"
+#include "GeoInterpolation.h"
+#include "Utils.h"
+#include "Numeric.h"
 #include "Context.h"
 
 #if defined(HAVE_GSL)

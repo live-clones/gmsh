@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.21 2006-11-14 20:20:18 remacle Exp $
+// $Id: gmshFace.cpp,v 1.22 2006-11-25 16:52:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,11 +23,8 @@
 #include "gmshVertex.h"
 #include "gmshEdge.h"
 #include "gmshFace.h"
-#include "Interpolation.h"
-#include "CAD.h"
 #include "Geo.h"
-#include "Mesh.h"
-#include "Create.h"
+#include "GeoInterpolation.h"
 #include "Utils.h"
 #include "Message.h"
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.117 2006-11-25 02:47:39 geuzaine Exp $
+# $Id: Makefile,v 1.118 2006-11-25 16:52:41 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -96,21 +96,19 @@ Options.o: Options.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h Context.h Options.h \
-  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
-  ../Common/Message.h ../Fltk/Solvers.h ../Fltk/GUI.h \
-  ../Fltk/Opengl_Window.h ../Mesh/Mesh.h ../Common/GmshDefines.h \
-  ../Mesh/Vertex.h ../Geo/ExtrudeParams.h ../Fltk/Colorbar_Window.h \
-  ../Common/GmshUI.h ../Fltk/Popup_Button.h \
-  ../Fltk/SpherePosition_Widget.h
+  ../Mesh/BackgroundMesh.h ../Plugin/PluginManager.h ../Plugin/Plugin.h \
+  ../Common/Options.h ../Common/Message.h ../Fltk/Solvers.h ../Fltk/GUI.h \
+  ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h ../Common/GmshUI.h \
+  ../Fltk/Popup_Button.h ../Fltk/SpherePosition_Widget.h
 CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h GmshUI.h GmshDefines.h \
   GmshVersion.h CommandLine.h ../Numeric/Numeric.h Context.h Options.h \
-  ../Geo/Geo.h Views.h ColorTable.h VertexArray.h SmoothNormals.h \
-  AdaptiveViews.h GmshMatrix.h ../Parser/OpenFile.h \
-  ../Parser/CreateFile.h ../Parser/Parser.h ../Geo/GModel.h \
-  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
+  ../Geo/Geo.h ../Common/GmshDefines.h ../Geo/ExtrudeParams.h Views.h \
+  ColorTable.h VertexArray.h SmoothNormals.h AdaptiveViews.h GmshMatrix.h \
+  ../Parser/OpenFile.h ../Parser/CreateFile.h ../Parser/Parser.h \
+  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h \
   ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h \

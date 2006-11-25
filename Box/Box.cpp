@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.28 2006-11-14 15:21:02 geuzaine Exp $
+// $Id: Box.cpp,v 1.29 2006-11-25 16:52:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,6 @@
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Geo.h"
-#include "Mesh.h"
 #include "Views.h"
 #include "Parser.h"
 #include "Context.h"

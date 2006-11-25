@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.25 2006-11-25 02:47:40 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.26 2006-11-25 16:52:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,8 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "meshGFace.h"
+#include "DivideAndConquer.h"
+#include "BackgroundMesh.h"
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"

@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.1 2006-11-25 02:47:39 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.2 2006-11-25 16:52:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,13 +20,12 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Gmsh.h"
-#include "Mesh.h"
 #include "Views.h"
+#include "BackgroundMesh.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "OctreePost.h"
 
-extern Mesh *THEM;
 extern Context_T CTX;
 
 static OctreePost *BGM_OCTREE = NULL;

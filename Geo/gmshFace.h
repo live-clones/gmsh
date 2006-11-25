@@ -20,9 +20,9 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include "Geo.h"
 #include "GFace.h"
 #include "gmshVertex.h"
-#include "Mesh.h"
 #include "Range.h"
 
 class gmshFace : public GFace {

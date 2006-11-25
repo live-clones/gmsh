@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.1 2006-11-25 02:47:39 geuzaine Exp $
+// $Id: DivideAndConquer.cpp,v 1.2 2006-11-25 16:52:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -39,8 +39,14 @@
 
 #include "Gmsh.h"
 #include "Numeric.h"
-#include "Mesh.h"
+#include "DivideAndConquer.h"
 #include "Context.h"
+
+#define EXTERN    1
+#define INTERN    2
+
+#define NOTTOLINK 1
+#define TOLINK    2
 
 extern Context_T CTX;
 
@@ -569,7 +575,6 @@ void filldel(Delaunay * deladd, int aa, int bb, int cc,
 {
   double qual, newqual;
   MPoint pt2;
-  Vertex *v, *dum;
 
   deladd->t.a = aa;
   deladd->t.b = bb;

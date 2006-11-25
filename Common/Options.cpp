@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.315 2006-11-22 02:39:17 geuzaine Exp $
+// $Id: Options.cpp,v 1.316 2006-11-25 16:52:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 #include "Draw.h"
 #include "Context.h"
 #include "Options.h"
+#include "BackgroundMesh.h"
 #include "PluginManager.h"
 
 extern Context_T CTX;

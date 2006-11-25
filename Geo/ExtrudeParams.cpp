@@ -1,4 +1,4 @@
-// $Id: ExtrudeParams.cpp,v 1.18 2006-01-06 00:34:24 geuzaine Exp $
+// $Id: ExtrudeParams.cpp,v 1.19 2006-11-25 16:52:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,6 @@
 
 #include "Gmsh.h"
 #include "Geo.h"
-#include "CAD.h"
 #include "ExtrudeParams.h"
 
 void Projette(double p[3], double mat[3][3])

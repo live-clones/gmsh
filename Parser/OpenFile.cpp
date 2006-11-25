@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.129 2006-11-22 02:39:18 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.130 2006-11-25 16:52:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -28,10 +28,10 @@
 #include "Numeric.h"
 #include "Context.h"
 #include "Parser.h"
+#include "Generator.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
 #include "Views.h"
-#include "Mesh.h"
 #include "ReadImg.h"
 #include "OS.h"
 

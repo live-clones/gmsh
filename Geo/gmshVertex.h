@@ -20,7 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Mesh.h"
+#include "Geo.h"
 #include "GVertex.h"
 
 class gmshVertex : public GVertex {

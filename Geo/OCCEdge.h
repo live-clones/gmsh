@@ -23,7 +23,6 @@
 #include "GEdge.h"
 #include "GModel.h"
 #include "OCCVertex.h"
-#include "Mesh.h"
 #include "Range.h"
 
 class OCCFace;

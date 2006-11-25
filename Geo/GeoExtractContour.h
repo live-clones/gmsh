@@ -1,5 +1,5 @@
-#ifndef _EXTRACT_CONTOUR_H_
-#define _EXTRACT_CONTOUR_H_
+#ifndef _GEO_EXTRACT_CONTOUR_H_
+#define _GEO_EXTRACT_CONTOUR_H_
 
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //

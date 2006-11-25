@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.100 2006-11-25 03:30:03 geuzaine Exp $
+// $Id: Generator.cpp,v 1.101 2006-11-25 16:52:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,9 +20,8 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Gmsh.h"
+#include "Geo.h"
 #include "Numeric.h"
-#include "Mesh.h"
-#include "Create.h"
 #include "Context.h"
 #include "OpenFile.h"
 #include "Views.h"
@@ -31,6 +30,8 @@
 #include "meshGFace.h"
 #include "meshGRegion.h"
 #include "GModel.h"
+#include "BackgroundMesh.h"
+#include "SecondOrder.h"
 
 extern Mesh *THEM;
 extern Context_T CTX;
@@ -254,7 +255,6 @@ void Maillage_Dimension_3()
 
 void Init_Mesh0()
 {
-  THEM->Vertices = NULL;
   THEM->Points = NULL;
   THEM->Curves = NULL;
   THEM->SurfaceLoops = NULL;
@@ -273,9 +273,6 @@ void Init_Mesh()
   THEM->MaxSurfaceLoopNum = 0;
   THEM->MaxVolumeNum = 0;
   THEM->MaxPhysicalNum = 0;
-
-  Tree_Action(THEM->Vertices, Free_Vertex);  
-  Tree_Delete(THEM->Vertices);
 
   Tree_Action(THEM->Points, Free_Vertex);  
   Tree_Delete(THEM->Points);
@@ -298,7 +295,6 @@ void Init_Mesh()
   List_Action(THEM->PhysicalGroups, Free_PhysicalGroup);
   List_Delete(THEM->PhysicalGroups);
 
-  THEM->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
   THEM->Points = Tree_Create(sizeof(Vertex *), compareVertex);
   THEM->Curves = Tree_Create(sizeof(Curve *), compareCurve);
   THEM->SurfaceLoops = Tree_Create(sizeof(SurfaceLoop *), compareSurfaceLoop);

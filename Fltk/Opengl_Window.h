@@ -22,7 +22,6 @@
 
 #include <FL/Fl_Gl_Window.H>
 #include <FL/Fl_Box.H>
-#include "Mesh.h"
 
 class MousePosition {
  public:

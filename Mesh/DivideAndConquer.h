@@ -1,5 +1,5 @@
-#ifndef _MESH_H_
-#define _MESH_H_
+#ifndef _DIVIDE_AND_CONQUER_H_
+#define _DIVIDE_AND_CONQUER_H_
 
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,12 +19,6 @@
 // USA.
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
-
-#include "GmshDefines.h"
-#include "List.h"
-#include "Tree.h"
-#include "Vertex.h"
-#include "ExtrudeParams.h"
 
 typedef struct _POINT PointRecord, *PointPeek;
 typedef struct _CONTOUR ContourRecord, *ContourPeek;
@@ -53,11 +47,6 @@ struct _POINT{
   double quality;
   void *data;
 };
-
-typedef struct{
-  int Num;
-  double t, lc, p;
-}IntPoint;
 
 struct _CDLIST{
   PointNumero point_num;
@@ -122,129 +111,6 @@ struct _MAILLAGE{
   int zone;
 };
 
-class DrawingColor{
- public:
-  int type;
-  unsigned int geom, mesh;
-};
-
-struct _Surf{
-  int Num;
-  int Typ;
-  char Visible;
-  int Method;
-  int Recombine;
-  int Recombine_Dir; // -1 is left, +1 is right, 0 is alternated
-  double RecombineAngle;
-  int ipar[5];
-  int Nu, Nv;
-  List_T *Generatrices;
-  List_T *EmbeddedCurves;
-  List_T *EmbeddedPoints;
-  List_T *Control_Points;
-  List_T *TrsfPoints;
-  double plan[3][3];
-  double invplan[3][3];
-  double a, b, c, d;
-  List_T *Orientations;
-  List_T *Contours;
-  Tree_T *Vertices;
-  int OrderU, OrderV;
-  float *ku, *kv, *cp;
-  struct _Surf *Support;
-  ExtrudeParams *Extrude;
-  DrawingColor Color;
-};
-
-typedef struct _Surf Surface;
-
-typedef struct{
-  int Num;
-  List_T *Curves;
-}EdgeLoop;
-
-typedef struct{
-  int Num;
-  List_T *Surfaces;
-}SurfaceLoop;
-
-typedef struct{
-  int Num;
-  int Typ;
-  char Visible;
-  List_T *Entities;
-}PhysicalGroup;
-
-typedef struct {
-  int Num;
-  int Typ;
-  char Visible;
-  int Method;
-  int ipar[8];
-  ExtrudeParams *Extrude;
-  List_T *TrsfPoints;
-  List_T *Surfaces;
-  List_T *SurfacesOrientations;
-  Tree_T *Vertices;
-  DrawingColor Color;
-}Volume;
-
-typedef struct _Mesh Mesh;
-
-typedef struct{
-  double t1, t2, f1, f2, incl;
-  Vertex *v[4];
-  double invmat[3][3];
-  double n[3];
-}CircParam;
-
-typedef struct{
-  int Num;
-  int Typ;
-  char Visible;
-  int Method;
-  int ipar[4];
-  double dpar[4];
-  double l;
-  double mat[4][4];
-  Vertex *beg, *end;
-  double ubeg, uend;
-  List_T *Control_Points;
-  List_T *Vertices;
-  ExtrudeParams *Extrude;
-  float *k, *cp;
-  int degre;
-  CircParam Circle;
-  char functu[256], functv[256], functw[256];
-  DrawingColor Color;
-}Curve;
-
-struct _Mesh{
-  Tree_T *Points;
-  Tree_T *Vertices;
-  Tree_T *Curves;
-  Tree_T *Surfaces;
-  Tree_T *Volumes;
-  Tree_T *SurfaceLoops;
-  Tree_T *EdgeLoops;
-  List_T *PhysicalGroups;
-  int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
-  int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
-};
-
-// public functions
-
-void mai3d(int Asked);
-void Init_Mesh0();
-void Init_Mesh();
-void Maillage_Dimension_1();
-void Maillage_Dimension_2();
-void Maillage_Dimension_3();
 void Make_Mesh_With_Points(DocRecord * ptr, PointRecord * Liste, int Numpoints);
-double BGMXYZ(double X, double Y, double Z);
-int BGMExists();
-void ApplyLcFactor();
-void Degre1();
-void Degre2(bool linear=true, bool incomplete=false);
 
 #endif

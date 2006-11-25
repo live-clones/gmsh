@@ -69,23 +69,6 @@
 #define FRONTAL_NETGEN 4
 #define DELAUNAY_TETGEN 5
 
-#define CONV_VALUE    0.8
-
-#define NOTTOLINK 1
-#define TOLINK    2
-
-#define BOF         1
-#define A_TOUT_PRIX 2
-
-#define CENTER_CIRCCIRC 1
-#define BARYCENTER      2
-
-#define EXTERN      1
-#define INTERN      2
-
-#define ONFILE      2
-#define WITHPOINTS  3
-
 #define TRANSFINI 1
 #define LIBRE     2
 #define ELLIPTIC  3

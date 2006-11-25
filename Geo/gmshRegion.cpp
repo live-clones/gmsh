@@ -1,4 +1,4 @@
-// $Id: gmshRegion.cpp,v 1.7 2006-11-14 15:21:03 geuzaine Exp $
+// $Id: gmshRegion.cpp,v 1.8 2006-11-25 16:52:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -23,8 +23,6 @@
 #include "gmshFace.h"
 #include "gmshRegion.h"
 #include "Geo.h"
-#include "Mesh.h"
-#include "Create.h"
 
 extern Mesh *THEM;
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.107 2006-11-25 02:47:39 geuzaine Exp $
+# $Id: Makefile,v 1.108 2006-11-25 16:52:43 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -72,10 +72,8 @@ depend:
 Draw.o: Draw.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Common/GmshUI.h \
-  ../Common/GmshDefines.h ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
-  ../Geo/ExtrudeParams.h ../Geo/ExtrudeParams.h Draw.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Numeric/Numeric.h \
+  ../Common/GmshDefines.h Draw.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \

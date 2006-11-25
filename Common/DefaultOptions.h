@@ -947,8 +947,6 @@ StringXNumber MeshOptions_Number[] = {
     "Number of partitions applied to the final mesh" },
   { F|O, "Points" , opt_mesh_points , 0. , 
     "Display mesh vertices (nodes)?" },
-  { F|O, "PointInsertion" , opt_mesh_point_insertion, CENTER_CIRCCIRC ,
-    "Point insertion method for isotropic 2D algorithm (1=center of circumscribed circle, 2=center of gravity)" },
   { F|O, "PointNumbers" , opt_mesh_points_num , 0. , 
     "Display mesh node numbers?" },
   { F|O, "PointSize" , opt_mesh_point_size , 4. , 

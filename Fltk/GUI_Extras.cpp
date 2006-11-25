@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.26 2006-09-23 15:54:20 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.27 2006-11-25 16:52:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,7 @@
 
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "Mesh.h"
+#include "GmshDefines.h"
 #include "File_Picker.h"
 #include "Shortcut_Window.h"
 #include "CreateFile.h"

@@ -1,4 +1,4 @@
-// $Id: GeoUtils.cpp,v 1.15 2006-11-25 00:44:25 geuzaine Exp $
+// $Id: GeoUtils.cpp,v 1.16 2006-11-25 16:52:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -21,8 +21,6 @@
 
 #include "Gmsh.h"
 #include "Geo.h"
-#include "CAD.h"
-#include "Mesh.h"
 #include "Numeric.h"
 
 extern Mesh *THEM;
@@ -41,25 +39,8 @@ void sortEdgesInLoop(int num, List_T *edges)
   for(int i = 0; i < nbEdges; i++) {
     int j;
     List_Read(edges, i, &j);
-    if((c = FindCurve(j))){
+    if((c = FindCurve(j)))
       List_Add(temp, &c);
-      if(c->Typ == MSH_SEGM_DISCRETE){
-	// fill-in vertices in reverse discrete curves
-	if(c->Num < 0 && !List_Nbr(c->Vertices)){
-	  Curve *rc = FindCurve(-c->Num);
-	  if(rc)
-	    for(int k = List_Nbr(rc->Vertices) - 1; k >= 0; k--)
-	      List_Add(c->Vertices, List_Pointer(rc->Vertices, k));
-	}
-	// set end points for discrete curves
-	if(!c->beg && !c->end && List_Nbr(c->Vertices)){
-	  Vertex *first = *(Vertex**)List_Pointer(c->Vertices, 0);
-	  Vertex *last = *(Vertex**)List_Pointer(c->Vertices, List_Nbr(c->Vertices) - 1);
-	  c->beg = FindPoint(first->Num);
-	  c->end = FindPoint(last->Num);
-	}
-      }
-    }
     else
       Msg(GERROR, "Unknown curve %d in line loop %d", j, num);
   }

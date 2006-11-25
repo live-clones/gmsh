@@ -20,9 +20,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include "Geo.h"
 #include "List.h"
-#include "Vertex.h"
-#include "Mesh.h"
 
 void invert_singular_matrix3x3(double MM[3][3], double II[3][3]);
 void direction (Vertex * v1, Vertex * v2, double d[3]);
@@ -38,6 +37,12 @@ int Oriente (List_T * cu, double n[3]);
 double angle_3p (Vertex * V, Vertex * P1, Vertex * P2);
 double angle_plan (Vertex * V, Vertex * P1, Vertex * P2, double n[3]);
 double angle_3pts (Vertex * a, Vertex * b, Vertex * c);
+
+typedef struct{
+  int Num;
+  double t, lc, p;
+}IntPoint;
+
 double trapeze (IntPoint * P1, IntPoint * P2);
 void RecursiveIntegration (IntPoint * from, IntPoint * to, double (*f) (double X),
                            List_T * pPoints, double Prec, int *depth);
