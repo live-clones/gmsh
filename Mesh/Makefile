@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.143 2006-11-25 21:56:46 geuzaine Exp $
+# $Id: Makefile,v 1.144 2006-11-25 23:06:08 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -30,15 +30,16 @@ INCLUDE = -I../Numeric -I../Common -I../DataStr -I../Geo -I../Mesh\
           -I../contrib/Metis
 CFLAGS  =  ${OPTIM} ${FLAGS} ${INCLUDE} 
 
-SRC = DivideAndConquer.cpp \
+SRC = Generator.cpp \
+        meshGEdge.cpp \
+        meshGFace.cpp \
+          meshGFaceTransfinite.cpp \
+        meshGRegion.cpp \
+          meshGRegionDelaunayInsertion.cpp \
+      DivideAndConquer.cpp \
       BackgroundMesh.cpp \
       BDS.cpp \
-      Generator.cpp \
-      meshGEdge.cpp \
-      meshGFace.cpp \
-      meshGFaceTransfinite.cpp \
-      meshGRegionDelaunayInsertion.cpp \
-      meshGRegion.cpp \
+      OptimizeMesh.cpp \
       SecondOrder.cpp
 
 OBJ = ${SRC:.cpp=.o}
@@ -64,33 +65,6 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-DivideAndConquer.o: DivideAndConquer.cpp ../Common/Gmsh.h \
-  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../Numeric/Numeric.h DivideAndConquer.h \
-  ../Common/Context.h
-BackgroundMesh.o: BackgroundMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Numeric/Numeric.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h BackgroundMesh.h \
-  ../Common/Context.h ../Common/OctreePost.h ../Common/Octree.h \
-  ../Common/OctreeInternals.h
-BDS.o: BDS.cpp ../Numeric/Numeric.h ../Common/GmshMatrix.h BDS.h \
-  ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/Range.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Common/GmshDefines.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
-  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/MVertex.h \
-  ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h \
-  ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Common/Context.h ../DataStr/List.h ../Geo/ExtrudeParams.h \
-  ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/ExtrudeParams.h ../Common/Views.h ../Common/ColorTable.h \
-  ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Message.h
 Generator.o: Generator.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -110,7 +84,7 @@ Generator.o: Generator.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GRegion.h \
   ../Geo/GEntity.h ../Geo/MElement.h ../Geo/ExtrudeParams.h \
-  ../Geo/SBoundingBox3d.h BackgroundMesh.h SecondOrder.h
+  ../Geo/SBoundingBox3d.h BackgroundMesh.h SecondOrder.h OptimizeMesh.h
 meshGEdge.o: meshGEdge.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -154,15 +128,6 @@ meshGFaceTransfinite.o: meshGFaceTransfinite.cpp meshGFace.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h \
   ../Common/Message.h
-meshGRegionDelaunayInsertion.o: meshGRegionDelaunayInsertion.cpp \
-  meshGRegionDelaunayInsertion.h ../Geo/MElement.h \
-  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint3.h \
-  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/MElement.h \
-  ../Geo/ExtrudeParams.h ../Common/Message.h
 meshGRegion.o: meshGRegion.cpp meshGRegion.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
@@ -180,6 +145,57 @@ meshGRegion.o: meshGRegion.cpp meshGRegion.h ../Geo/GModel.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
   ../Common/GmshMatrix.h ../Common/Message.h
+meshGRegionDelaunayInsertion.o: meshGRegionDelaunayInsertion.cpp \
+  meshGRegionDelaunayInsertion.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint3.h \
+  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/MElement.h \
+  ../Geo/ExtrudeParams.h ../Common/Message.h
+DivideAndConquer.o: DivideAndConquer.cpp ../Common/Gmsh.h \
+  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
+  ../DataStr/Tree.h ../Numeric/Numeric.h DivideAndConquer.h \
+  ../Common/Context.h
+BackgroundMesh.o: BackgroundMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Numeric/Numeric.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h BackgroundMesh.h \
+  ../Common/Context.h ../Common/OctreePost.h ../Common/Octree.h \
+  ../Common/OctreeInternals.h
+BDS.o: BDS.cpp ../Numeric/Numeric.h ../Common/GmshMatrix.h BDS.h \
+  ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/Range.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
+  ../Common/GmshDefines.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/MVertex.h \
+  ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h \
+  ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/Context.h ../DataStr/List.h ../Geo/ExtrudeParams.h \
+  ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/ExtrudeParams.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Message.h
+OptimizeMesh.o: OptimizeMesh.cpp ../Geo/GModel.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
+  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h \
+  ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h \
+  ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
+  ../Geo/ExtrudeParams.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
+  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GRegion.h \
+  ../Geo/GEntity.h ../Geo/MElement.h ../Geo/ExtrudeParams.h \
+  ../Geo/SBoundingBox3d.h ../Common/SmoothNormals.h ../Common/Message.h \
+  ../Common/OS.h
 SecondOrder.o: SecondOrder.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \

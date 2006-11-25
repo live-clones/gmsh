@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.478 2006-11-25 20:08:39 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.479 2006-11-25 23:06:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -30,6 +30,7 @@
 #include "GeoExtractContour.h"
 #include "Generator.h"
 #include "SecondOrder.h"
+#include "OptimizeMesh.h"
 #include "Draw.h"
 #include "SelectBuffer.h"
 #include "Views.h"
@@ -3810,8 +3811,7 @@ void mesh_optimize_cb(CALLBACK_ARGS)
     return;
   }
   CTX.threads_lock = 1;
-  Msg(GERROR, "Mesh optimize has yet to be reinterfaced");
-  //Optimize_Netgen();
+  OptimizeMesh();
   CTX.threads_lock = 0;
   CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
   Draw();

@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.102 2006-11-25 20:08:39 geuzaine Exp $
+// $Id: Generator.cpp,v 1.103 2006-11-25 23:06:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -31,6 +31,7 @@
 #include "GModel.h"
 #include "BackgroundMesh.h"
 #include "SecondOrder.h"
+#include "OptimizeMesh.h"
 
 extern Context_T CTX;
 extern GModel *GMODEL;
@@ -281,9 +282,8 @@ void GenerateMesh(int ask)
 
   // Optimize quality
   if(GMODEL->getMeshStatus() == 3 && CTX.mesh.optimize)
-    Msg(GERROR, "Mesh optimize has yet to be reinterfaced");
-  //Optimize_Netgen();
-
+    OptimizeMesh();
+  
   // Create second order elements
   if(GMODEL->getMeshStatus() && CTX.mesh.order == 2) 
     Degre2(CTX.mesh.second_order_linear, CTX.mesh.second_order_incomplete);

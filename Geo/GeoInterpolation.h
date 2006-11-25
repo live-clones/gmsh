@@ -53,10 +53,4 @@ Vertex InterpolateUBS (Curve * Curve, double u, int derivee);
 Vertex InterpolateNurbs (Curve * Curve, double u, int derivee);
 Vertex InterpolateNurbsSurface (Surface * s, double u, double v);
 
-void CreateNurbsSurface (int Num, int Order1, int Order2, List_T *, List_T *, List_T *);
-void CreateNurbsSurfaceSupport (int Num, int Order2, int Order1, 
-                                List_T * List, List_T *, List_T *);
-
 #endif
-
-

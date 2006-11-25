@@ -213,6 +213,9 @@ typedef struct{
 }Curve;
 
 class Mesh{
+private:
+  void alloc_all();
+  void free_all();
 public:
   Tree_T *Points;
   Tree_T *Curves;
@@ -225,8 +228,6 @@ public:
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
   Mesh(){ alloc_all(); }
   ~Mesh(){ free_all(); }
-  void alloc_all();
-  void free_all();
   void destroy(){ free_all(); alloc_all(); }
 };
 
@@ -260,6 +261,10 @@ Surface       *Create_Surface(int Num, int Typ);
 Volume        *Create_Volume(int Num, int Typ);
 EdgeLoop      *Create_EdgeLoop(int Num, List_T * intlist);
 SurfaceLoop   *Create_SurfaceLoop(int Num, List_T * intlist);
+
+void CreateNurbsSurface (int Num, int Order1, int Order2, List_T *, List_T *, List_T *);
+void CreateNurbsSurfaceSupport (int Num, int Order2, int Order1, 
+                                List_T * List, List_T *, List_T *);
 
 void Free_Vertex (void *a, void *b);
 void Free_PhysicalGroup(void *a, void *b);

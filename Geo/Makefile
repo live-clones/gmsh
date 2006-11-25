@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.116 2006-11-25 18:03:49 geuzaine Exp $
+# $Id: Makefile,v 1.117 2006-11-25 23:06:06 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -209,7 +209,7 @@ ExtrudeParams.o: ExtrudeParams.cpp ../Common/Gmsh.h ../Common/Message.h \
 Geo.o: Geo.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Geo.h \
-  ../Common/GmshDefines.h ExtrudeParams.h GeoInterpolation.h \
+  ../Common/GmshDefines.h ExtrudeParams.h GeoUtils.h GeoInterpolation.h \
   ../Common/Context.h
 GeoStringInterface.o: GeoStringInterface.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
