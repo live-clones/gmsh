@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.28 2006-11-25 18:03:49 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.29 2006-11-25 18:20:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -34,57 +34,6 @@
 #include "BDS.h"
 
 extern Context_T CTX;
-
-int Orientation (std::vector<MVertex*> &cu)
-{
-  int N, i, a, b, c;
-  double cosa, sina, sum, v[3], w[3], u[3];
-  MVertex *ver[3];
-  double n[3] = {0,0,1};
-
-  N = cu.size();
-
-  sum = 0.0;
-  for(i = 0; i < N; i++) {
-    if(i == N - 1) {
-      a = N - 1;
-      b = 1;
-      c = 2;
-    }
-    else if(i == N - 2) {
-      a = N - 2;
-      b = N - 1;
-      c = 1;
-    }
-    else {
-      a = i;
-      b = i + 1;
-      c = i + 2;
-    }
-    ver[0] = cu[a];
-    ver[1] = cu[b];
-    ver[2] = cu[c];
-
-    u[0] = ver[1]->x() - ver[0]->x();
-    u[1] = ver[1]->y() - ver[0]->y();
-    u[2] = ver[1]->z() - ver[0]->z();
-
-    v[0] = ver[2]->x() - ver[1]->x();
-    v[1] = ver[2]->y() - ver[1]->y();
-    v[2] = ver[2]->z() - ver[1]->z();
-    norme(u);
-    norme(v);
-    prodve(u, v, w);
-    prosca(w, n, &sina);
-    prosca(u, v, &cosa);
-    sum += myatan2(sina, cosa);
-  }
-
-  if(sum < 0)
-    return (1);
-  else
-    return (0);
-}
 
 class fromCartesianToParametric
 {
@@ -1099,7 +1048,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
      else
        {
 	 edgeLoop.push_back(found.ge->getEndVertex()->mesh_vertices[0]);
-	 for (unsigned int i=found.ge->mesh_vertices.size()-1;i>=0;i--)	    
+	 for (int i=found.ge->mesh_vertices.size()-1;i>=0;i--)	    
 	   edgeLoop.push_back(found.ge->mesh_vertices[i]);
        }
      
