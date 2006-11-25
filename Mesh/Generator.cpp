@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.103 2006-11-25 23:06:08 geuzaine Exp $
+// $Id: Generator.cpp,v 1.104 2006-11-25 23:29:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -31,7 +31,6 @@
 #include "GModel.h"
 #include "BackgroundMesh.h"
 #include "SecondOrder.h"
-#include "OptimizeMesh.h"
 
 extern Context_T CTX;
 extern GModel *GMODEL;
@@ -226,6 +225,14 @@ void Mesh3D()
 
   double t1 = Cpu();
   std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), meshGRegion());
+  double t2 = Cpu();
+  CTX.mesh_timer[2] = t2 - t1;
+}
+
+void OptimizeMesh()
+{
+  double t1 = Cpu();
+  std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), optimizeMeshGRegion());
   double t2 = Cpu();
   CTX.mesh_timer[2] = t2 - t1;
 }

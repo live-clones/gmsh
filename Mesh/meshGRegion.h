@@ -21,21 +21,23 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 class GRegion;
-class GModel;
+
 // Create the mesh of the region
-class meshGRegion 
-{
-public :
-  void operator () ( GRegion * );
+class meshGRegion {
+ public :
+  void operator () (GRegion *);
 };
 
-void meshAllRegionsAtOnce ( GModel *gm );
+// Optimize the mesh of the region
+class optimizeMeshGRegion {
+ public :
+  void operator () (GRegion *);
+};
 
 // destroy the mesh of the face
-class deMeshGRegion 
-{
+class deMeshGRegion {
 public :
-  void operator () ( GRegion * );
+  void operator () (GRegion *);
 };
 
 #endif

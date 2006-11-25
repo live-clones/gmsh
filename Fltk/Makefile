@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.115 2006-11-25 23:06:06 geuzaine Exp $
+# $Id: Makefile,v 1.116 2006-11-25 23:29:27 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -120,9 +120,8 @@ Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/GmshUI.h ../Geo/Geo.h ../Common/GmshDefines.h \
   ../Geo/ExtrudeParams.h ../Geo/GeoStringInterface.h ../Geo/Geo.h \
   ../Geo/GeoExtractContour.h ../Mesh/Generator.h ../Mesh/SecondOrder.h \
-  ../Mesh/OptimizeMesh.h ../Graphics/Draw.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Numeric/Numeric.h \
+  ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   ../Graphics/SelectBuffer.h ../Geo/GVertex.h ../Geo/GEntity.h \
   ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \

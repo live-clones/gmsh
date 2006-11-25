@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.479 2006-11-25 23:06:06 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.480 2006-11-25 23:29:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,6 @@
 #include "GeoExtractContour.h"
 #include "Generator.h"
 #include "SecondOrder.h"
-#include "OptimizeMesh.h"
 #include "Draw.h"
 #include "SelectBuffer.h"
 #include "Views.h"

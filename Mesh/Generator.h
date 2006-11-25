@@ -22,5 +22,6 @@
 
 void GetStatistics(double stat[50], double quality[3][100]=0);
 void GenerateMesh(int dimension);
+void OptimizeMesh();
 
 #endif

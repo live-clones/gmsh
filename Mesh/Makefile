@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.144 2006-11-25 23:06:08 geuzaine Exp $
+# $Id: Makefile,v 1.145 2006-11-25 23:29:27 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -39,7 +39,6 @@ SRC = Generator.cpp \
       DivideAndConquer.cpp \
       BackgroundMesh.cpp \
       BDS.cpp \
-      OptimizeMesh.cpp \
       SecondOrder.cpp
 
 OBJ = ${SRC:.cpp=.o}
@@ -84,7 +83,7 @@ Generator.o: Generator.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GRegion.h \
   ../Geo/GEntity.h ../Geo/MElement.h ../Geo/ExtrudeParams.h \
-  ../Geo/SBoundingBox3d.h BackgroundMesh.h SecondOrder.h OptimizeMesh.h
+  ../Geo/SBoundingBox3d.h BackgroundMesh.h SecondOrder.h
 meshGEdge.o: meshGEdge.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -181,21 +180,6 @@ BDS.o: BDS.cpp ../Numeric/Numeric.h ../Common/GmshMatrix.h BDS.h \
   ../Geo/ExtrudeParams.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Message.h
-OptimizeMesh.o: OptimizeMesh.cpp ../Geo/GModel.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h \
-  ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h \
-  ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
-  ../Geo/ExtrudeParams.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
-  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h \
-  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GRegion.h \
-  ../Geo/GEntity.h ../Geo/MElement.h ../Geo/ExtrudeParams.h \
-  ../Geo/SBoundingBox3d.h ../Common/SmoothNormals.h ../Common/Message.h \
-  ../Common/OS.h
 SecondOrder.o: SecondOrder.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \

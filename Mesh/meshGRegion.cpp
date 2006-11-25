@@ -496,3 +496,30 @@ void meshGRegion :: operator() (GRegion *gr)
 #endif
     }
 }
+
+void optimizeMeshGRegion :: operator() (GRegion *gr) 
+{  
+  if(gr->geomType() == GEntity::DiscreteVolume) return;
+
+#if !defined(HAVE_NETGEN)
+  Msg(GERROR, "Netgen is not compiled in this version of Gmsh");
+#else
+  Msg(GERROR, "FIXME -- DEBUG THIS");
+
+  // import mesh into netgen, including volume tets
+  std::vector<MVertex*> numberedV;
+  Ng_Mesh * _ngmesh = buildNetgenStructure (gr, 1, numberedV);
+  // delete volume vertices and tets
+  deMeshGRegion dem;
+  dem(gr);
+  // optimize mesh
+  Ng_Meshing_Parameters mp;
+  mp.maxh = 1;
+  mp.fineness = 1;
+  mp.secondorder = 0;
+  NgAddOn_OptimizeVolumeMesh(_ngmesh, &mp);
+  TransferVolumeMesh(gr, _ngmesh, numberedV);
+  Ng_DeleteMesh(_ngmesh);
+  Ng_Exit();
+#endif
+}
