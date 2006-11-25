@@ -20,6 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <math.h>
 #include <FL/Fl_Widget.H>
 
 // A small 2D widget to set the coordinates of a point on the unit
