@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.12 2006-11-26 01:03:17 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.13 2006-11-26 01:11:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -493,6 +493,7 @@ void optimizeMeshGRegion::operator() (GRegion *gr)
 #if !defined(HAVE_NETGEN)
   Msg(GERROR, "Netgen is not compiled in this version of Gmsh");
 #else
+  Msg(STATUS2, "Optimizing volume %d", gr->tag());
   // import mesh into netgen, including volume tets
   std::vector<MVertex*> numberedV;
   Ng_Mesh *ngmesh = buildNetgenStructure(gr, true, numberedV);

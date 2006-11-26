@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.104 2006-11-25 23:29:27 geuzaine Exp $
+// $Id: Generator.cpp,v 1.105 2006-11-26 01:11:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -231,10 +231,12 @@ void Mesh3D()
 
 void OptimizeMesh()
 {
+  Msg(STATUS1, "Optimizing 3D...");
   double t1 = Cpu();
   std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), optimizeMeshGRegion());
   double t2 = Cpu();
-  CTX.mesh_timer[2] = t2 - t1;
+  Msg(STATUS1, "Mesh");
+  Msg(INFO, "Mesh 3D optimization complete (%g s)", t2 - t1);
 }
 
 void GenerateMesh(int ask)
