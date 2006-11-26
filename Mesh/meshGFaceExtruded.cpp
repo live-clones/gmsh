@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.1 2006-11-26 04:36:46 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.2 2006-11-26 16:24:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,7 @@
 #include <map>
 #include "ExtrudeParams.h"
 #include "meshGFace.h"
+#include "GModel.h"
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -35,12 +36,15 @@ int MeshExtrudedSurface(GFace *gf)
   ExtrudeParams *ep = gf->meshAttributes.extrude;
 
   if(!ep || !ep->mesh.ExtrudeMesh)
-    return false;
-
-  Msg(GERROR, "Extrusion has yet to be reinterfaced!");
+    return 0;
 
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
     // extruded from a curve
+    GEdge *ge = gf->model()->edgeByTag(ep->geo.Source);
+    if(!ge) return 0;
+    for(unsigned int i = 0; i < ge->mesh_vertices.size(); i++) {
+      //printf("extruding vertex %d\n", i);
+    }
     /*
     c = FindCurve(abs(ep->geo.Source));
     if(!c)
@@ -53,7 +57,7 @@ int MeshExtrudedSurface(GFace *gf)
     */
   }
   else {
-    // this is the "hat" of an extruded surface
+    // copy of a surface ("chapeau")
     /*
     source = FindSurface(ep->geo.Source);
     if(!source)

@@ -858,8 +858,8 @@ Optional Features:
   --enable-contrib        enable contrib packages (default=yes)
   --enable-triangle       compile Triangle if available (default=yes)
   --enable-netgen         compile Netgen if available (default=yes)
-  --enable-ann            compile ANN if available (default=yes)
-  --enable-metis          compile METIS if available (default=yes)
+  --enable-ann            compile ANN if available (default=no)
+  --enable-metis          compile METIS if available (default=no)
   --enable-tetgen         compile Tetgen if available (default=yes)
   --enable-matheval       compile MathEval if available (default=yes)
   --enable-osmesa         use OSMesa for offscreen rendering (default=no)
@@ -3984,7 +3984,7 @@ else
 fi
 
   if test "x${ANN}" = "xyes"; then
-    if test "x$enable_ann" != "xno"; then
+    if test "x$enable_ann" = "xyes"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/ANN"
        GMSH_LIBS="${GMSH_LIBS} -lGmshANN"
        FLAGS="-DHAVE_ANN_ ${FLAGS}"
@@ -3998,7 +3998,7 @@ fi
        echo "********************************************************************"
     fi
   else
-    if test "x$enable_ann" != "xno"; then
+    if test "x$enable_ann" = "xyes"; then
        echo "********************************************************************"
        echo "If you want to use ANN for doing fast geometrical searchs in the"
        echo "STL mesher, please download ANN from the author's web site at"
@@ -4033,7 +4033,7 @@ else
 fi
 
   if test "x${METIS}" = "xyes"; then
-    if test "x$enable_metis" != "xno"; then
+    if test "x$enable_metis" = "xyes"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/Metis"
        GMSH_LIBS="${GMSH_LIBS} -lGmshMetis"
        FLAGS="-DHAVE_METIS ${FLAGS}"
@@ -4047,7 +4047,7 @@ fi
        echo "********************************************************************"
     fi
   else
-    if test "x$enable-metis" != "xno"; then
+    if test "x$enable-metis" = "xyes"; then
        echo "********************************************************************"
        echo "If you want to use METIS for doing mesh partitioning, please"
        echo "download METIS from the author's web site at"
@@ -4422,7 +4422,9 @@ echo "$as_me: error: Could not find GSL, aborting." >&2;}
 fi
 
 if test "x${CGNS_PREFIX}" != "x"; then
-  enable_cgns="yes"
+  if test "x$enable_cgns" != "xno"; then
+    enable_cgns="yes"
+  fi
 fi
 if test "x$enable_cgns" = "xyes"; then
   if test "x${CGNS_PREFIX}" != "x"; then
@@ -4504,7 +4506,9 @@ fi
 fi
 
 if test "x${OCC_PREFIX}" != "x"; then
-  enable_occ="yes"
+  if test "x$enable_occ" != "xno"; then
+    enable_occ="yes"
+  fi
 fi
 if test "x$enable_occ" = "xyes"; then
   if test "x${OCC_PREFIX}" != "x"; then

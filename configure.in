@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.113 2006-11-21 23:03:13 geuzaine Exp $
+dnl $Id: configure.in,v 1.114 2006-11-26 16:24:04 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 dnl
@@ -95,10 +95,10 @@ AC_ARG_ENABLE(netgen,
                              [compile Netgen if available (default=yes)]))
 AC_ARG_ENABLE(ann,
               AC_HELP_STRING([--enable-ann],
-                             [compile ANN if available (default=yes)]))
+                             [compile ANN if available (default=no)]))
 AC_ARG_ENABLE(metis,
               AC_HELP_STRING([--enable-metis],
-                             [compile METIS if available (default=yes)]))
+                             [compile METIS if available (default=no)]))
 AC_ARG_ENABLE(tetgen,
               AC_HELP_STRING([--enable-tetgen],
                              [compile Tetgen if available (default=yes)]))
@@ -347,7 +347,7 @@ if test "x$enable_contrib" != "xno"; then
   dnl Check for ANN
   AC_CHECK_FILE(./contrib/ANN/include/ANN/ANN.h, ANN="yes", ANN="no")
   if test "x${ANN}" = "xyes"; then
-    if test "x$enable_ann" != "xno"; then
+    if test "x$enable_ann" = "xyes"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/ANN"
        GMSH_LIBS="${GMSH_LIBS} -lGmshANN"
        FLAGS="-DHAVE_ANN_ ${FLAGS}"
@@ -361,7 +361,7 @@ if test "x$enable_contrib" != "xno"; then
        echo "********************************************************************"
     fi
   else
-    if test "x$enable_ann" != "xno"; then
+    if test "x$enable_ann" = "xyes"; then
        echo "********************************************************************"
        echo "If you want to use ANN for doing fast geometrical searchs in the"
        echo "STL mesher, please download ANN from the author's web site at"
@@ -375,7 +375,7 @@ if test "x$enable_contrib" != "xno"; then
   dnl Check for METIS
   AC_CHECK_FILE(./contrib/Metis/metis.h, METIS="yes", METIS="no")
   if test "x${METIS}" = "xyes"; then
-    if test "x$enable_metis" != "xno"; then
+    if test "x$enable_metis" = "xyes"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/Metis"
        GMSH_LIBS="${GMSH_LIBS} -lGmshMetis"
        FLAGS="-DHAVE_METIS ${FLAGS}"
@@ -389,7 +389,7 @@ if test "x$enable_contrib" != "xno"; then
        echo "********************************************************************"
     fi
   else
-    if test "x$enable-metis" != "xno"; then
+    if test "x$enable-metis" = "xyes"; then
        echo "********************************************************************"
        echo "If you want to use METIS for doing mesh partitioning, please"
        echo "download METIS from the author's web site at"
@@ -529,7 +529,9 @@ fi
 
 dnl Check for CGNS
 if test "x${CGNS_PREFIX}" != "x"; then
-  enable_cgns="yes"
+  if test "x$enable_cgns" != "xno"; then
+    enable_cgns="yes"
+  fi
 fi
 if test "x$enable_cgns" = "xyes"; then
   if test "x${CGNS_PREFIX}" != "x"; then
@@ -549,7 +551,9 @@ fi
 
 dnl Check for OpenCascade
 if test "x${OCC_PREFIX}" != "x"; then
-  enable_occ="yes"
+  if test "x$enable_occ" != "xno"; then
+    enable_occ="yes"
+  fi
 fi
 if test "x$enable_occ" = "xyes"; then
   if test "x${OCC_PREFIX}" != "x"; then
