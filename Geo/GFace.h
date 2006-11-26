@@ -29,7 +29,6 @@
 #include "Pair.h"
 #include "ExtrudeParams.h"
 
-
 struct mean_plane
 {
   double plan[3][3];

@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.31 2006-11-26 01:03:17 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.32 2006-11-26 04:36:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -79,19 +79,6 @@ public :
       }
   }
 };
-
-fromParametricToCartesian::fromParametricToCartesian ( GFace *_gf )  
-  : gf(_gf)
-{
-}
-
-void fromParametricToCartesian::operator () (MVertex * v)
-{
-  GPoint coords =  gf->point (SPoint2(v->x(),v->y()));
-  v->x() = coords.x();  
-  v->y() = coords.y();
-  v->z() = coords.z();
-} 
 
 void computeEdgeLoops (const GFace *gf,
 		       std::vector<MVertex*> & all_mvertices,
@@ -880,9 +867,6 @@ void gmsh2DMeshGenerator ( GFace *gf )
   delete [] Y_;
   delete [] Z_;
 
-  //  fromParametricToCartesian p2c ( gf );
-  //  std::for_each(all_vertices.begin(),all_vertices.end(),p2c);    
-  //  std::for_each(gf->mesh_vertices.begin(),gf->mesh_vertices.end(),p2c);    
 }
 
 // this function buils a list of vertices (BDS) that 
@@ -1366,21 +1350,14 @@ void meshGFace :: operator() (GFace *gf)
 {  
   if(gf->geomType() == GEntity::DiscreteSurface) return;
 
-  // Send a messsage to the GMSH environment
   Msg(STATUS2, "Meshing surface %d (%s)", gf->tag(),gf->getTypeString().c_str());
-
-  // TEST TEST 
-  //  if (gf->surfPeriodic(2)) return;
 
   // destroy the mesh if it exists
   deMeshGFace dem;
   dem(gf);
 
-  // Only apply this technique to unknown surfaces or planar surfaces
-  // when it is unknown, try your best ...
-
-  if (MeshTransfiniteSurface(gf))return;
-
+  if(MeshTransfiniteSurface(gf)) return;
+  if(MeshExtrudedSurface(gf)) return;
 
   std::vector<MVertex*> points;
   std::vector<int> indices;

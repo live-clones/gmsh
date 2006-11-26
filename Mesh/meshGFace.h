@@ -21,47 +21,40 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <vector>
+
 class MVertex;
 class GFace;
-// compute edge loops of the face, all_mvertices
-// are the vertices of the 
-void computeEdgeLoops (const GFace *gf,
-		       std::vector<MVertex*> & all_mvertices,
-		       std::vector<int> &indices);
-
-int MeshTransfiniteSurface( GFace *gf);
-
-class fromParametricToCartesian
-{
-  GFace *gf;
-public :
-  fromParametricToCartesian ( GFace *_gf ) ; 
-  void operator () (MVertex * v);
-};    
 
 // Create the mesh of the face
-class meshGFace 
-{
-  public :
-  void operator () ( GFace * );
+class meshGFace {
+ public :
+  void operator () (GFace *);
 };
 
-// destroy the mesh of the face
-class deMeshGFace 
-{
+// Destroy the mesh of the face
+class deMeshGFace {
  public :
-  void operator () ( GFace * );
+  void operator () (GFace *);
 };
 
 // Orient the mesh of a face to match the orientation of the
-// underlying geometry (this is doubly useful: 1) some surface mesh
-// algorithms do not respect the original geometrical orientation and
+// underlying geometry. This is doubly useful: 
+// 1) some surface mesh algorithms do not respect the original
+//    geometrical orientation and
 // 2) some volume algorithms need to change the surface mesh
-// orientation)
-class orientMeshGFace 
-{
+//    orientation
+class orientMeshGFace {
   public :
   void operator () ( GFace * );
 };
+
+// Compute edge loops of the face, all_mvertices are the vertices of
+// the
+void computeEdgeLoops(const GFace *gf,
+		      std::vector<MVertex*> &all_mvertices,
+		      std::vector<int> &indices);
+
+int MeshTransfiniteSurface(GFace *gf);
+int MeshExtrudedSurface(GFace *gf);
 
 #endif
