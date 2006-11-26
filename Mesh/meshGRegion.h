@@ -34,7 +34,7 @@ class optimizeMeshGRegion {
   void operator () (GRegion *);
 };
 
-// destroy the mesh of the face
+// destroy the mesh of the region
 class deMeshGRegion {
 public :
   void operator () (GRegion *);
