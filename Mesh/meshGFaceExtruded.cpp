@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.2 2006-11-26 16:24:04 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.3 2006-11-26 19:30:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -31,6 +31,30 @@
 #include "Context.h"
 #include "Message.h"
 
+int extrudeVertex(GFace *gf, MVertex *v)
+{
+  ExtrudeParams *ep = gf->meshAttributes.extrude;
+  for(int i = 0; i < ep->mesh.NbLayer; i++) {
+    for(int j = 1; j < ep->mesh.NbElmLayer[i]; j++) {
+      double x = v->x(), y = v->y(), z = v->z();
+      ep->Extrude(i, j, x, y, z);
+      gf->mesh_vertices.push_back(new MVertex(x, y, z, gf));
+    }
+  }
+}
+
+int copyMesh(GFace *gf, GFace *from)
+{
+  ExtrudeParams *ep = gf->meshAttributes.extrude;
+  for(unsigned int i = 0; i < from->mesh_vertices.size(); i++){
+    MVertex *v = from->mesh_vertices[i];
+    double x = v->x(), y = v->y(), z = v->z();
+    ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], 
+		x, y, z);
+    gf->mesh_vertices.push_back(new MVertex(x, y, z, gf));
+  }
+}
+
 int MeshExtrudedSurface(GFace *gf)
 {
   ExtrudeParams *ep = gf->meshAttributes.extrude;
@@ -40,32 +64,18 @@ int MeshExtrudedSurface(GFace *gf)
 
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
     // extruded from a curve
-    GEdge *ge = gf->model()->edgeByTag(ep->geo.Source);
-    if(!ge) return 0;
-    for(unsigned int i = 0; i < ge->mesh_vertices.size(); i++) {
-      //printf("extruding vertex %d\n", i);
-    }
-    /*
-    c = FindCurve(abs(ep->geo.Source));
-    if(!c)
-      return false;
-    for(int i = 0; i < List_Nbr(c->Vertices); i++) {
-      List_Read(c->Vertices, i, &v1);
-      Extrude_Vertex(&v1, NULL);
-    }
-    Extrude_Curve(&c, NULL);
-    */
+    GEdge *e = gf->model()->edgeByTag(std::abs(ep->geo.Source));
+    if(!e) return 0;
+    for(unsigned int i = 0; i < e->mesh_vertices.size(); i++)
+      extrudeVertex(gf, e->mesh_vertices[i]);
+    // get bounding edges and create quads/tris
   }
   else {
     // copy of a surface ("chapeau")
-    /*
-    source = FindSurface(ep->geo.Source);
-    if(!source)
-      return false;
-    copy_mesh(ss, s);
-    */
+    GFace *f = gf->model()->faceByTag(std::abs(ep->geo.Source));
+    if(!f) return 0;
+    copyMesh(gf, f);
   }
 
   return 1;
 }
-  

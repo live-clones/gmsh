@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.5 2006-11-26 16:24:04 geuzaine Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.6 2006-11-26 19:30:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -92,6 +92,8 @@ int MeshTransfiniteSurface( GFace *gf)
 
   int Lb = N4 - N3;
   int Hb = m_vertices.size() - N4;
+
+  // FIXME need to reimplement 3-side transfinite interpolation!
 
   if(Lb != L || Hb != H){
     Msg(GERROR,"Surface %d cannot be meshed using the transfinite algo", gf->tag());
