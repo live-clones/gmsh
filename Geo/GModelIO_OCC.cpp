@@ -1,4 +1,4 @@
-  // $Id: GModelIO_OCC.cpp,v 1.11 2006-11-25 17:07:45 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.12 2006-11-26 01:17:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.145 2006-11-25 23:29:27 geuzaine Exp $
+# $Id: Makefile,v 1.146 2006-11-26 01:17:13 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -110,10 +110,13 @@ meshGFace.o: meshGFace.cpp meshGFace.h DivideAndConquer.h \
   ../Common/Context.h ../DataStr/List.h ../Geo/ExtrudeParams.h \
   ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Common/Message.h BDS.h \
-  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
-  ../Common/GmshMatrix.h
+  ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/MRep.h ../Geo/GEdge.h \
+  ../Geo/GFace.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h \
+  ../Geo/ExtrudeParams.h ../Geo/MVertex.h ../Geo/MEdge.h \
+  ../Geo/MElement.h ../Common/VertexArray.h ../Common/Message.h \
+  ../Common/OS.h BDS.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
 meshGFaceTransfinite.o: meshGFaceTransfinite.cpp meshGFace.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
@@ -140,10 +143,13 @@ meshGRegion.o: meshGRegion.cpp meshGRegion.h ../Geo/GModel.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GRegion.h \
   ../Geo/GEntity.h ../Geo/MElement.h ../Geo/ExtrudeParams.h \
-  ../Geo/SBoundingBox3d.h ../Common/SmoothNormals.h BDS.h \
-  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
+  ../Geo/SBoundingBox3d.h ../Common/SmoothNormals.h ../Geo/MRep.h \
+  ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h ../Geo/MVertex.h \
+  ../Geo/MEdge.h ../Geo/MElement.h ../Common/VertexArray.h \
+  ../Common/Message.h ../Common/OS.h BDS.h ../Common/Views.h \
+  ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
-  ../Common/GmshMatrix.h ../Common/Message.h
+  ../Common/GmshMatrix.h
 meshGRegionDelaunayInsertion.o: meshGRegionDelaunayInsertion.cpp \
   meshGRegionDelaunayInsertion.h ../Geo/MElement.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint3.h \
