@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.30 2006-11-25 20:37:41 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.31 2006-11-26 01:03:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -27,6 +27,7 @@
 #include "GFace.h"
 #include "MVertex.h"
 #include "MElement.h"
+#include "MRep.h"
 #include "Context.h"
 #include "GPoint.h"
 #include "Message.h"
@@ -1358,8 +1359,8 @@ void deMeshGFace :: operator() (GFace *gf)
   gf->triangles.clear();
   for (unsigned int i=0;i<gf->quadrangles.size();i++) delete gf->quadrangles[i];
   gf->quadrangles.clear();
+  if(gf->meshRep) gf->meshRep->destroy();
 }
-
 
 void meshGFace :: operator() (GFace *gf) 
 {  

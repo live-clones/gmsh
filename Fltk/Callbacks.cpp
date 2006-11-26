@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.480 2006-11-25 23:29:26 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.481 2006-11-26 01:03:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3805,13 +3805,7 @@ void mesh_degree_cb(CALLBACK_ARGS)
 
 void mesh_optimize_cb(CALLBACK_ARGS)
 {
-  if(CTX.threads_lock) {
-    Msg(INFO, "I'm busy! Ask me that later...");
-    return;
-  }
-  CTX.threads_lock = 1;
   OptimizeMesh();
-  CTX.threads_lock = 0;
   CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
   Draw();
   Msg(STATUS2N, " ");
