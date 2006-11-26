@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.3 2006-11-26 19:30:23 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.4 2006-11-26 21:56:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,39 +19,91 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <map>
+#include <set>
 #include "ExtrudeParams.h"
-#include "meshGFace.h"
 #include "GModel.h"
-#include "GVertex.h"
-#include "GEdge.h"
-#include "GFace.h"
-#include "MVertex.h"
-#include "MElement.h"
-#include "Context.h"
 #include "Message.h"
 
-int extrudeVertex(GFace *gf, MVertex *v)
+int extrudeMesh(GEdge *from, GFace *to)
 {
-  ExtrudeParams *ep = gf->meshAttributes.extrude;
-  for(int i = 0; i < ep->mesh.NbLayer; i++) {
-    for(int j = 1; j < ep->mesh.NbElmLayer[i]; j++) {
-      double x = v->x(), y = v->y(), z = v->z();
-      ep->Extrude(i, j, x, y, z);
-      gf->mesh_vertices.push_back(new MVertex(x, y, z, gf));
+  ExtrudeParams *ep = to->meshAttributes.extrude;
+
+  // create vertices
+  for(unsigned int i = 0; i < from->mesh_vertices.size(); i++){
+    MVertex *v = from->mesh_vertices[i];
+    for(int j = 0; j < ep->mesh.NbLayer; j++) {
+      for(int k = 1; k < ep->mesh.NbElmLayer[j]; k++) {
+	double x = v->x(), y = v->y(), z = v->z();
+	ep->Extrude(j, k, x, y, z);
+	to->mesh_vertices.push_back(new MVertex(x, y, z, to));
+      }
     }
   }
+
+  // create elements
 }
 
-int copyMesh(GFace *gf, GFace *from)
+int copyMesh(GFace *from, GFace *to)
 {
-  ExtrudeParams *ep = gf->meshAttributes.extrude;
+  ExtrudeParams *ep = to->meshAttributes.extrude;
+
+  // build a set with all the vertices on the boundary of to
+  std::set<MVertex*, MVertexLessThanLexicographic> pos;
+  std::list<GEdge*> edges = to->edges();
+  std::list<GEdge*>::iterator it = edges.begin();
+  while(it != edges.end()){
+    pos.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
+    pos.insert((*it)->getBeginVertex()->mesh_vertices.begin(),
+	       (*it)->getBeginVertex()->mesh_vertices.end());
+    pos.insert((*it)->getEndVertex()->mesh_vertices.begin(),
+	       (*it)->getEndVertex()->mesh_vertices.end());
+    ++it;
+  }
+
+  // create new vertices
   for(unsigned int i = 0; i < from->mesh_vertices.size(); i++){
     MVertex *v = from->mesh_vertices[i];
     double x = v->x(), y = v->y(), z = v->z();
     ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], 
 		x, y, z);
-    gf->mesh_vertices.push_back(new MVertex(x, y, z, gf));
+    MVertex *newv = new MVertex(x, y, z, to);
+    to->mesh_vertices.push_back(newv);
+    pos.insert(newv);
+  }
+
+  // create new elements
+  std::set<MVertex*, MVertexLessThanLexicographic>::iterator itp;
+  for(unsigned int i = 0; i < from->triangles.size(); i++){
+    std::vector<MVertex*> verts;
+    for(int j = 0; j < 3; j++){
+      MVertex *v = from->triangles[i]->getVertex(j);
+      MVertex tmp(v->x(), v->y(), v->z(), 0, 0);
+      ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
+		  tmp.x(), tmp.y(), tmp.z());
+      itp = pos.find(&tmp);
+      if(itp == pos.end()) {
+	Msg(GERROR, "Could not find extruded vertex in surface %d", to->tag());
+	return 0;
+      }
+      verts.push_back(*itp);
+    }
+    to->triangles.push_back(new MTriangle(verts));
+  }
+  for(unsigned int i = 0; i < from->quadrangles.size(); i++){
+    std::vector<MVertex*> verts;
+    for(int j = 0; j < 4; j++){
+      MVertex *v = from->quadrangles[i]->getVertex(j);
+      MVertex tmp(v->x(), v->y(), v->z(), 0, 0);
+      ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
+		  tmp.x(), tmp.y(), tmp.z());
+      itp = pos.find(&tmp);
+      if(itp == pos.end()) {
+	Msg(GERROR, "Could not find extruded vertex in surface %d", to->tag());
+	return 0;
+      }
+      verts.push_back(*itp);
+    }
+    to->quadrangles.push_back(new MQuadrangle(verts));
   }
 }
 
@@ -63,18 +115,16 @@ int MeshExtrudedSurface(GFace *gf)
     return 0;
 
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
-    // extruded from a curve
-    GEdge *e = gf->model()->edgeByTag(std::abs(ep->geo.Source));
-    if(!e) return 0;
-    for(unsigned int i = 0; i < e->mesh_vertices.size(); i++)
-      extrudeVertex(gf, e->mesh_vertices[i]);
-    // get bounding edges and create quads/tris
+    // surface is extruded from a curve
+    GEdge *from = gf->model()->edgeByTag(std::abs(ep->geo.Source));
+    if(!from) return 0;
+    extrudeMesh(from, gf);
   }
   else {
-    // copy of a surface ("chapeau")
-    GFace *f = gf->model()->faceByTag(std::abs(ep->geo.Source));
-    if(!f) return 0;
-    copyMesh(gf, f);
+    // surface is a copy of another surface ("chapeau")
+    GFace *from = gf->model()->faceByTag(std::abs(ep->geo.Source));
+    if(!from) return 0;
+    copyMesh(from, gf);
   }
 
   return 1;
