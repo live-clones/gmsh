@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.13 2006-11-26 01:11:01 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.14 2006-11-26 02:14:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "meshGRegion.h"
+#include "meshGRegionDelaunayInsertion.h"
 #include "GModel.h"
 #include "GRegion.h"
 #include "GFace.h"
@@ -122,11 +123,10 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
   }
  
   Msg(INFO,"%d points %d edges and %d faces in the final mesh",
-      out.numberofpoints,out.numberofedges,out.numberoftrifaces);
+      out.numberofpoints, out.numberofedges, out.numberoftrifaces);
 
-  // Tetgen modifies both surface & edge mesh. So, we need to
-  // re-create everything
-
+  // Tetgen modifies both surface & edge mesh, so we need to re-create
+  // everything
   std::list<GFace*> faces = gr->faces();
   std::list<GFace*>::iterator it = faces.begin();
   while(it != faces.end()){
@@ -134,6 +134,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     for(unsigned int i = 0; i < gf->triangles.size(); i++)
       delete gf->triangles[i];
     gf->triangles.clear();
+    if(gf->meshRep) gf->meshRep->destroy();
     ++it;
   }    
   
@@ -147,9 +148,9 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
   // re-create the triangular meshes
   for (int i = 0; i < out.numberoftrifaces; i++){
     MVertex *v[3];
-    v[0] = numberedV[out.trifacelist[i * 3 + 0] -1];
-    v[1] = numberedV[out.trifacelist[i * 3 + 1] -1];
-    v[2] = numberedV[out.trifacelist[i * 3 + 2] -1];
+    v[0] = numberedV[out.trifacelist[i * 3 + 0] - 1];
+    v[1] = numberedV[out.trifacelist[i * 3 + 1] - 1];
+    v[2] = numberedV[out.trifacelist[i * 3 + 2] - 1];
     GFace *gf = gr->model()->faceByTag(out.trifacemarkerlist[i]);
     for(int j = 0; j < 3; j++){	  
       if(v[j]->onWhat()->dim() == 3){
@@ -160,7 +161,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 	MFaceVertex *v1b = new MFaceVertex(v[j]->x(), v[j]->y(), v[j]->z(), 
 					   gf, 0., 0.);
 	gf->mesh_vertices.push_back(v1b);
-	numberedV[out.trifacelist[i * 3 + j] -1] = v1b;
+	numberedV[out.trifacelist[i * 3 + j] - 1] = v1b;
 	delete v[j];
 	v[j] = v1b;
       }
@@ -169,11 +170,11 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     gf->triangles.push_back(t);	  
   }
   for(int i = 0; i < out.numberoftetrahedra; i++){
-    MVertex *v1 = numberedV[out.tetrahedronlist[i * 4 + 0] -1];
-    MVertex *v2 = numberedV[out.tetrahedronlist[i * 4 + 1] -1];
-    MVertex *v3 = numberedV[out.tetrahedronlist[i * 4 + 2] -1];
-    MVertex *v4 = numberedV[out.tetrahedronlist[i * 4 + 3] -1];
-    MTetrahedron *t = new  MTetrahedron(v1,v2,v3,v4);
+    MVertex *v1 = numberedV[out.tetrahedronlist[i * 4 + 0] - 1];
+    MVertex *v2 = numberedV[out.tetrahedronlist[i * 4 + 1] - 1];
+    MVertex *v3 = numberedV[out.tetrahedronlist[i * 4 + 2] - 1];
+    MVertex *v4 = numberedV[out.tetrahedronlist[i * 4 + 3] - 1];
+    MTetrahedron *t = new  MTetrahedron(v1, v2, v3, v4);
     gr->tetrahedra.push_back(t);
   }
 }
@@ -458,9 +459,12 @@ void meshGRegion::operator() (GRegion *gr)
     sprintf(opts, "pe%c", (CTX.verbosity < 3) ? 'Q': (CTX.verbosity > 6)? 'V': '\0');
     tetrahedralize(opts, &in, &out);
     TransferTetgenMesh(gr, in, out, numberedV);
+
+    // FIXME: all the volume nodes+tets now belong to the first
+    // region--we need to recategorize them into each separate region
+
     // now do insertion of points
-    void insertVerticesInRegion(GRegion *gr) ;
-    insertVerticesInRegion (gr); 
+    insertVerticesInRegion(gr); 
     // restore the initial set of faces
     gr->set(faces);
 #endif
