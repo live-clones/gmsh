@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.105 2006-11-26 01:11:01 geuzaine Exp $
+// $Id: Generator.cpp,v 1.106 2006-11-26 03:25:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -189,22 +189,20 @@ bool TooManyElements(int dim){
   for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); ++it)
     sumAllLc += (*it)->prescribedMeshSizeAtVertex();
   sumAllLc /= (double)GMODEL->numVertex();
-  if(pow(CTX.lc / sumAllLc, dim) < 1.e7) return false;
-  return !GetBinaryAnswer("Your choice of characteristic lengths will likely produce\n"
-			  "a very large mesh. Do you really want to continue?\n\n"
-			  "(To disable this warning in the future, select `Enable\n"
-			  "expert mode' in the option dialog.)",
-			  "Continue", "Cancel");
+  if(!sumAllLc || pow(CTX.lc / sumAllLc, dim) > 1.e7) 
+    return !GetBinaryAnswer("Your choice of characteristic lengths will likely produce\n"
+			    "a very large mesh. Do you really want to continue?\n\n"
+			    "(To disable this warning in the future, select `Enable\n"
+			    "expert mode' in the option dialog.)",
+			    "Continue", "Cancel");
+  return false;
 }
 
 void Mesh1D()
 {
   if(TooManyElements(1)) return;
-
   double t1 = Cpu();
-
   std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), meshGEdge());
-
   double t2 = Cpu();
   CTX.mesh_timer[0] = t2 - t1;
 }
@@ -212,7 +210,6 @@ void Mesh1D()
 void Mesh2D()
 {
   if(TooManyElements(2)) return;
-
   double t1 = Cpu();
   std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), meshGFace());
   double t2 = Cpu();
@@ -222,7 +219,6 @@ void Mesh2D()
 void Mesh3D()
 {
   if(TooManyElements(3)) return;
-
   double t1 = Cpu();
   std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), meshGRegion());
   double t2 = Cpu();
