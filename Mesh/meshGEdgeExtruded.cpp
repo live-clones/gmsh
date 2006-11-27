@@ -1,4 +1,4 @@
-// $Id: meshGEdgeExtruded.cpp,v 1.2 2006-11-27 02:35:38 geuzaine Exp $
+// $Id: meshGEdgeExtruded.cpp,v 1.3 2006-11-27 03:06:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -40,9 +40,11 @@ void extrudeMesh(GVertex *from, GEdge *to)
   }
 }
 
-void copyMesh(GEdge *from, GEdge *to, int direction)
+void copyMesh(GEdge *from, GEdge *to)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
+
+  int direction = (ep->geo.Source > 0) ? 1 : -1;
 
   Range<double> u_bounds = from->parBounds(0);
   double u_min = u_bounds.low();
@@ -77,7 +79,7 @@ int MeshExtrudedCurve(GEdge *ge)
     // curve is a copy of another curve ("chapeau")
     GEdge *from = ge->model()->edgeByTag(std::abs(ep->geo.Source));
     if(!from) return 0;
-    copyMesh(from, ge, (ep->geo.Source > 0) ? 1 : -1);
+    copyMesh(from, ge);
   }
 
   // create elements

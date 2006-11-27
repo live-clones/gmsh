@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.6 2006-11-27 02:35:38 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.7 2006-11-27 03:06:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -56,14 +56,12 @@ void extrudeMesh(GEdge *from, GFace *to,
     for(int j = 0; j < ep->mesh.NbLayer; j++) {
       for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
 	std::vector<MVertex*> verts;
-	double x[4], y[4], z[4];
-	x[0] = v0->x(); y[0] = v0->y(); z[0] = v0->z();
+	double x[4] = {v0->x(), v1->x(), v0->x(), v1->x()};
+	double y[4] = {v0->y(), v1->y(), v0->y(), v1->y()};
+	double z[4] = {v0->z(), v1->z(), v0->z(), v1->z()};
 	ep->Extrude(j, k, x[0], y[0], z[0]);
-	x[1] = v1->x(); y[1] = v1->y(); z[1] = v1->z();
 	ep->Extrude(j, k, x[1], y[1], z[1]);
-	x[2] = v0->x(); y[2] = v0->y(); z[2] = v0->z();
 	ep->Extrude(j, k + 1, x[2], y[2], z[2]);
-	x[3] = v1->x(); y[3] = v1->y(); z[3] = v1->z();
 	ep->Extrude(j, k + 1, x[3], y[3], z[3]);
 	for(int p = 0; p < 4; p++){
 	  MVertex tmp(x[p], y[p], z[p], 0, -1);
@@ -81,7 +79,7 @@ void extrudeMesh(GEdge *from, GFace *to,
 	  to->triangles.push_back(new MTriangle(verts[0], verts[1], verts[3]));
 	}
 	else if(verts[0] == verts[3] || verts[1] == verts[2]){
-          Msg(GERROR, "Uncoherent quadrangle in extrusion");
+          Msg(GERROR, "Uncoherent extruded quadrangle in surface %d", to->tag());
           return;
         }
         else{
