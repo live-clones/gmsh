@@ -1,4 +1,4 @@
-// $Id: meshGRegionExtruded.cpp,v 1.1 2006-11-27 17:45:07 geuzaine Exp $
+// $Id: meshGRegionExtruded.cpp,v 1.2 2006-11-27 18:46:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -177,7 +177,7 @@ int MeshExtrudedVolume(GRegion *gr)
 
   // build a set with all the vertices on the boundary of gr
   double old_tol = MVertexLessThanLexicographic::tolerance; 
-  MVertexLessThanLexicographic::tolerance = 1.e-8 * CTX.lc;
+  MVertexLessThanLexicographic::tolerance = 1.e-14;
   std::set<MVertex*, MVertexLessThanLexicographic> pos;
   std::list<GFace*> faces = gr->faces();
   std::list<GFace*>::iterator it = faces.begin();
