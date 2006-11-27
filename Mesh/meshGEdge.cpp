@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.19 2006-11-25 18:03:49 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.20 2006-11-27 01:33:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -38,20 +38,20 @@ double F_LC_ANALY (double xx, double yy, double zz)
   //  return 0.005 + 0.05*fabs (sin(5*xx) + sin(15*yy) + sin(15*zz));
   //  return 0.02;
   //  return 0.002 + 0.04*fabs (sin(6*xx) + sin(6*yy) + sin(6*zz));
-  return 0.003 + 0.05*fabs (sin(8*xx) + sin(8*yy) + sin(8*zz));
-  return 0.02 + 0.1*fabs (sin(3*xx) + sin(3*yy) + sin(3*zz));
-  return 0.01 + 0.1*fabs(sin((xx*xx+(zz-0.7)*(zz-0.7)-.25))) ; 
-  return 0.05 + .1*fabs(xx*yy) ;
+  return 0.003 + 0.05*fabs(sin(8*xx) + sin(8*yy) + sin(8*zz));
+  return 0.02 + 0.1*fabs(sin(3*xx) + sin(3*yy) + sin(3*zz));
+  return 0.01 + 0.1*fabs(sin((xx*xx+(zz-0.7)*(zz-0.7)-.25))); 
+  return 0.05 + 0.1*fabs(xx*yy);
 }
 
-double F_Lc_bis(double t)
+double F_Lc(double t)
 {
   //  const double nb_points_per_radius_of_curv = 2;
-  GPoint point = _myGEdge -> point(t) ;      
-  const double fact = (t-t_begin)/(t_end-t_begin);
-  double lc_here   = lc_begin + fact * (lc_end-lc_begin);
-  SVector3 der  = _myGEdge -> firstDer(t) ;
-  const double d      = norm(der);
+  GPoint point = _myGEdge->point(t) ;      
+  const double fact = (t - t_begin) / (t_end - t_begin);
+  double lc_here = lc_begin + fact * (lc_end - lc_begin);
+  SVector3 der = _myGEdge->firstDer(t) ;
+  const double d = norm(der);
 
   if(CTX.mesh.bgmesh_type == ONFILE) {
     const double Lc = BGMXYZ(point.x(), point.y(), point.z());
@@ -64,16 +64,16 @@ double F_Lc_bis(double t)
     return d/lc_here;
 }
 
-double F_Transfini_bis(double t)
+double F_Transfinite(double t)
 {
   double val, r;
 
-  SVector3 der = _myGEdge -> firstDer(t) ;
+  SVector3 der = _myGEdge->firstDer(t) ;
   double d = norm(der);
 
   double coef = _myGEdge->meshAttributes.coeffTransfinite;
-  int    type = _myGEdge->meshAttributes.typeTransfinite;
-  int    nbpt = _myGEdge->meshAttributes.nbPointsTransfinite;
+  int type = _myGEdge->meshAttributes.typeTransfinite;
+  int nbpt = _myGEdge->meshAttributes.nbPointsTransfinite;
 
   if(coef <= 0.0 || coef == 1.0) {
     // coef < 0 should never happen
@@ -121,9 +121,9 @@ double F_Transfini_bis(double t)
   return val;
 }
 
-double F_One_bis(double t)
+double F_One(double t)
 {
-  SVector3 der = _myGEdge -> firstDer(t) ;
+  SVector3 der = _myGEdge->firstDer(t) ;
   return norm(der);
 }
 
@@ -132,7 +132,7 @@ typedef struct{
   double t, lc, p;
 }IntPoint;
 
-double trapeze(IntPoint * P1, IntPoint * P2)
+double trapezoidal(IntPoint * P1, IntPoint * P2)
 {
   return (0.5 * (P1->lc + P2->lc) * (P2->t - P1->t));
 }
@@ -149,9 +149,9 @@ void RecursiveIntegration(IntPoint * from, IntPoint * to,
   P.t = 0.5 * (from->t + to->t);
   P.lc = f(P.t);
 
-  val1 = trapeze(from, to);
-  val2 = trapeze(from, &P);
-  val3 = trapeze(&P, to);
+  val1 = trapezoidal(from, to);
+  val2 = trapezoidal(from, &P);
+  val3 = trapezoidal(&P, to);
 
   err = fabs(val1 - val2 - val3);
   //  Msg(INFO,"Int %22.15 E %22.15 E %22.15 E\n", val1,val2,val3);
@@ -210,6 +210,8 @@ void meshGEdge :: operator() (GEdge *ge)
   deMeshGEdge dem;
   dem(ge);
 
+  if(MeshExtrudedCurve(ge)) return;
+
   // Create a list of integration points
   List_T *Points = List_Create(10, 10, sizeof(IntPoint));
 
@@ -218,31 +220,30 @@ void meshGEdge :: operator() (GEdge *ge)
   // to pass an extra argument... 
   _myGEdge = ge;
     
-
   // compute bounds
   _myGEdgeBounds = ge->parBounds(0) ;
   t_begin = _myGEdgeBounds.low();
-  t_end   = _myGEdgeBounds.high();
+  t_end = _myGEdgeBounds.high();
   
   // first compute the length of the curve by integrating one
   _myGEdgeLength = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), 
-			       F_One_bis, Points, 1.e-4);
+			       F_One, Points, 1.e-4);
   List_Reset(Points);
 
-  lc_begin  =  _myGEdge->getBeginVertex()->prescribedMeshSizeAtVertex();
-  lc_end    =  _myGEdge->getEndVertex()->prescribedMeshSizeAtVertex();
+  lc_begin = _myGEdge->getBeginVertex()->prescribedMeshSizeAtVertex();
+  lc_end = _myGEdge->getEndVertex()->prescribedMeshSizeAtVertex();
     
   // Integrate detJ/lc du 
   double a;
   int N;
   if(ge->meshAttributes.Method == TRANSFINI){
     a = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), 
-		    F_Transfini_bis, Points, 1.e-7);
+		    F_Transfinite, Points, 1.e-7);
     N = ge->meshAttributes.nbPointsTransfinite;
   }
   else{
     a = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), 
-		    F_Lc_bis, Points, 1.e-4);
+		    F_Lc, Points, 1.e-4);
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
   const double b = a / (double)(N - 1);
@@ -282,4 +283,3 @@ void meshGEdge :: operator() (GEdge *ge)
     ge->lines.push_back(new MLine(v0, v1));
   }
 }
-

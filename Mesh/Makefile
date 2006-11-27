@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.147 2006-11-26 04:36:46 geuzaine Exp $
+# $Id: Makefile,v 1.148 2006-11-27 01:33:28 geuzaine Exp $
 #
 # Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 #
@@ -32,6 +32,7 @@ CFLAGS  =  ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Generator.cpp \
         meshGEdge.cpp \
+          meshGEdgeExtruded.cpp \
         meshGFace.cpp \
           meshGFaceTransfinite.cpp \
           meshGFaceExtruded.cpp \

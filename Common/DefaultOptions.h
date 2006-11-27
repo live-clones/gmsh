@@ -841,8 +841,6 @@ StringXNumber MeshOptions_Number[] = {
     "2D mesh algorithm (1=isotropic, 2=anisotropic, 3=triangle)" }, 
   { F|O, "Algorithm3D" , opt_mesh_algo3d , DELAUNAY_ISO ,
     "3D mesh algorithm (1=isotropic, 4=netgen, 5=tetgen)" }, 
-  { F,   "AllowDegeneratedExtrude" , opt_mesh_allow_degenerated_extrude , 0. , 
-    "Allow the generation of degenerated hexahedra or prisms during extrusion" },
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" }, 
 

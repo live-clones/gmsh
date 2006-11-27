@@ -35,4 +35,6 @@ class deMeshGEdge
   void operator () ( GEdge * );
 };
 
+int MeshExtrudedCurve(GEdge *ge);
+
 #endif

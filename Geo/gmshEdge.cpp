@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.19 2006-11-25 16:52:43 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.20 2006-11-27 01:33:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -34,6 +34,7 @@ gmshEdge::gmshEdge(GModel *model, Curve *edge, GVertex *v1, GVertex *v2)
   meshAttributes.nbPointsTransfinite = c->ipar[0];
   meshAttributes.coeffTransfinite =  c->dpar[0];
   meshAttributes.typeTransfinite = c->ipar[1];
+  meshAttributes.extrude = c->Extrude;
 }
 
 gmshEdge::gmshEdge(GModel *model, int num)

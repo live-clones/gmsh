@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.317 2006-11-25 20:08:39 geuzaine Exp $
+// $Id: Options.cpp,v 1.318 2006-11-27 01:33:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -4974,13 +4974,6 @@ double opt_mesh_cut_planed(OPT_ARGS_NUM)
     WID->mesh_value[17]->value(CTX.mesh.cut_planed);
 #endif
   return CTX.mesh.cut_planed;
-}
-
-double opt_mesh_allow_degenerated_extrude(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.allow_degenerated_extrude = (int)val;
-  return CTX.mesh.allow_degenerated_extrude;
 }
 
 double opt_mesh_save_all(OPT_ARGS_NUM)

@@ -1,4 +1,4 @@
-// $Id: gmshRegion.cpp,v 1.8 2006-11-25 16:52:43 geuzaine Exp $
+// $Id: gmshRegion.cpp,v 1.9 2006-11-27 01:33:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -39,6 +39,7 @@ gmshRegion::gmshRegion(GModel *m, ::Volume * volume)
     l_faces.push_back(f);
     l_dirs.push_back(ori);
   }
+  meshAttributes.extrude = volume->Extrude;
 }
 
 gmshRegion::gmshRegion(GModel *m, int num)
