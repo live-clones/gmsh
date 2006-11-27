@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.216 2006-09-08 02:39:43 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.217 2006-11-27 03:22:25 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -460,9 +460,9 @@ tetrahedra) finite element meshes. The performance of the 1D and 2D
 algorithms is pretty good; the 3D algorithm is still experimental and slow
 (see @ref{Mesh module}, and @ref{Tutorial});
 @item
-specify target element sizes accurately. Gmsh provides several mechanisms to
-control the size of the elements in the final mesh: through interpolation
-from geometrical point characteristic lengths or geometrical attractors, or
+specify target element sizes accurately. Gmsh provides several
+mechanisms to control the size of the elements in the final mesh:
+through interpolation from geometrical point characteristic lengths or
 from user-defined background meshes (@pxref{Mesh commands});
 @item
 create simple extruded geometries and meshes (see @ref{Geometry commands},
@@ -524,10 +524,10 @@ transfinite or extruded meshes;
 Gmsh is not a multi-bloc generator: all meshes produced by Gmsh are
 conforming in the sense of finite element meshes;
 @item
-the 2D anisotropic and the 3D unstructured algorithms are still experimental
-and not very robust.  If these algorithms fail, try to change some
-characteristic lengths to generate meshes that better suit the geometrical
-details of the structures;
+the 3D unstructured algorithm is still experimental and not very robust.
+If this algorithm fail, try to change some characteristic lengths to
+generate meshes that better suit the geometrical details of the
+structures;
 @item
 Gmsh was designed to solve academic ``test cases'', not industrial-size
 problems. You may find that Gmsh is too slow for large problems (with
@@ -1972,13 +1972,6 @@ module. The final element sizes are of course constrained by the structured
 algorithms for which the element sizes are explicitly specified (e.g.,
 transfinite and extruded grids: see @ref{Structured grids}).
 @item
-You can use geometrical ``attractors'', an elaborate version of the method
-described in the preceding item: see the definition of the @code{Attractor}
-command below.
-
-Attractors only work with the 2D anisotropic algorithm (see the
-@code{Mesh.Algorithm} option in @ref{Mesh options}).
-@item
 You can give Gmsh an explicit background mesh in the form of a scalar
 post-processing view (see @ref{Post-processing commands}, and @ref{File
 formats}) in which the nodal values are the target element sizes.  This
@@ -2001,19 +1994,6 @@ Here are the mesh commands that are related to the specification of
 characteristic lengths:
 
 @ftable @code
-@item Attractor Point | Line @{ @var{expression-list} @} = @{ @var{expression}, @var{expression}, @var{expression} @};
-Specifies a characteristic length attractor. The @var{expression-list}
-should contain the identification numbers of the elementary points or lines
-to serve as attractors; the two first @w{@var{expression}s} prescribe
-refinement factors in a coordinate system local to the entities, and the
-last @var{expression} a decay factor. This feature is still experimental,
-and only works with the 2D anisotropic algorithm (see @code{Mesh.Algorithm}
-in @ref{Mesh options}).  An example of the use of attractors is given in
-@ref{t7.geo}.
-
-Please note that attractors are an @emph{experimental} feature (to be
-considered @emph{at most} alpha-quality...). Use at your own risk.
-
 @item Characteristic Length @{ @var{expression-list} @} = @var{expression};
 Modifies the characteristic length of the points whose identification
 numbers are listed in @var{expression-list}. The new value is given by
