@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.106 2006-11-26 03:25:09 geuzaine Exp $
+// $Id: Generator.cpp,v 1.107 2006-11-27 18:14:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -189,7 +189,7 @@ bool TooManyElements(int dim){
   for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); ++it)
     sumAllLc += (*it)->prescribedMeshSizeAtVertex();
   sumAllLc /= (double)GMODEL->numVertex();
-  if(!sumAllLc || pow(CTX.lc / sumAllLc, dim) > 1.e7) 
+  if(!sumAllLc || pow(CTX.lc / sumAllLc, dim) > 1.e10) 
     return !GetBinaryAnswer("Your choice of characteristic lengths will likely produce\n"
 			    "a very large mesh. Do you really want to continue?\n\n"
 			    "(To disable this warning in the future, select `Enable\n"
