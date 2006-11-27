@@ -1,6 +1,6 @@
-// $Id: ViewsIO.cpp,v 1.8 2006-08-15 05:40:23 geuzaine Exp $
+// $Id: ViewsIO.cpp,v 1.9 2006-11-27 22:22:08 geuzaine Exp $
 //
-// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

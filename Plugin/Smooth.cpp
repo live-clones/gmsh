@@ -1,6 +1,6 @@
-// $Id: Smooth.cpp,v 1.22 2006-01-06 00:34:33 geuzaine Exp $
+// $Id: Smooth.cpp,v 1.23 2006-11-27 22:22:32 geuzaine Exp $
 //
-// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

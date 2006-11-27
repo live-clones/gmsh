@@ -1,6 +1,6 @@
-// $Id: Opengl.cpp,v 1.70 2006-11-25 16:52:43 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.71 2006-11-27 22:22:10 geuzaine Exp $
 //
-// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

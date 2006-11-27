@@ -1,6 +1,6 @@
-// $Id: Visibility.cpp,v 1.19 2006-11-15 15:19:52 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.20 2006-11-27 22:22:08 geuzaine Exp $
 //
-// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

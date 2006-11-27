@@ -1,6 +1,6 @@
-// $Id: meshGEdge.cpp,v 1.20 2006-11-27 01:33:28 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.21 2006-11-27 22:22:17 geuzaine Exp $
 //
-// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

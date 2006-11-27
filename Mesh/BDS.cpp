@@ -1,6 +1,6 @@
-// $Id: BDS.cpp,v 1.66 2006-11-22 13:57:25 remacle Exp $
+// $Id: BDS.cpp,v 1.67 2006-11-27 22:22:16 geuzaine Exp $
 //
-// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

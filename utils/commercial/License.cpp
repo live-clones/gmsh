@@ -1,6 +1,6 @@
-// $Id: License.cpp,v 1.7 2006-01-06 00:34:34 geuzaine Exp $
+// $Id: License.cpp,v 1.8 2006-11-27 22:22:34 geuzaine Exp $
 //
-// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
 // Please report all bugs and problems to <gmsh@geuz.org>.
 

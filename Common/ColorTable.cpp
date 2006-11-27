@@ -1,6 +1,6 @@
-// $Id: ColorTable.cpp,v 1.32 2006-08-25 23:01:16 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.33 2006-11-27 22:22:07 geuzaine Exp $
 //
-// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

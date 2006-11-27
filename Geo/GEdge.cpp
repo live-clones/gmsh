@@ -1,6 +1,6 @@
-// $Id: GEdge.cpp,v 1.18 2006-11-16 21:14:10 remacle Exp $
+// $Id: GEdge.cpp,v 1.19 2006-11-27 22:22:11 geuzaine Exp $
 //
-// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

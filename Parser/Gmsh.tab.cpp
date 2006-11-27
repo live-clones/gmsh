@@ -126,9 +126,9 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.283 2006-11-27 19:22:57 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.284 2006-11-27 22:22:17 geuzaine Exp $
 //
-// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

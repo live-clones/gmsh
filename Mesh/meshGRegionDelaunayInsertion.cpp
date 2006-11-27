@@ -1,6 +1,6 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.5 2006-11-26 01:03:17 geuzaine Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.6 2006-11-27 22:22:17 geuzaine Exp $
 //
-// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

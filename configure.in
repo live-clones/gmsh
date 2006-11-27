@@ -1,6 +1,6 @@
-dnl $Id: configure.in,v 1.114 2006-11-26 16:24:04 geuzaine Exp $
+dnl $Id: configure.in,v 1.115 2006-11-27 22:22:06 geuzaine Exp $
 dnl
-dnl Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
+dnl Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 dnl
 dnl This program is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by

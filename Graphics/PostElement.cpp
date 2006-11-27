@@ -1,6 +1,6 @@
-// $Id: PostElement.cpp,v 1.76 2006-08-15 02:17:26 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.77 2006-11-27 22:22:16 geuzaine Exp $
 //
-// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

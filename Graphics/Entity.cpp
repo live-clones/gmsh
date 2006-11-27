@@ -1,6 +1,6 @@
-// $Id: Entity.cpp,v 1.70 2006-08-28 02:56:27 geuzaine Exp $
+// $Id: Entity.cpp,v 1.71 2006-11-27 22:22:14 geuzaine Exp $
 //
-// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

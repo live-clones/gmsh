@@ -1,6 +1,6 @@
-// $Id: CommandLine.cpp,v 1.83 2006-11-27 03:19:47 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.84 2006-11-27 22:22:07 geuzaine Exp $
 //
-// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ extern Context_T CTX;
 extern GModel *GMODEL;
 
 char gmsh_progname[]  = "Gmsh, a 3D mesh generator with pre- and post-processing facilities" ;
-char gmsh_copyright[] = "Copyright (C) 1997-2006 Christophe Geuzaine and Jean-Francois Remacle";
+char gmsh_copyright[] = "Copyright (C) 1997-2007 Christophe Geuzaine and Jean-Francois Remacle";
 char gmsh_version[]   = "Version        : " ;
 char gmsh_license[]   = "License        : " GMSH_SHORT_LICENSE;
 char gmsh_gui[]       = "GUI toolkit    : " ;

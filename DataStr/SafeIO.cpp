@@ -1,6 +1,6 @@
-// $Id: SafeIO.cpp,v 1.8 2006-02-26 16:33:50 geuzaine Exp $
+// $Id: SafeIO.cpp,v 1.9 2006-11-27 22:22:08 geuzaine Exp $
 //
-// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

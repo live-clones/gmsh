@@ -1,7 +1,7 @@
 #ifndef _GMSH_SERVER_H_
 #define _GMSH_SERVER_H_
 
-// Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
