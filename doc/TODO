@@ -1,4 +1,4 @@
-$Id: TODO,v 1.25 2006-11-22 03:01:48 geuzaine Exp $
+$Id: TODO,v 1.26 2006-11-27 05:16:31 geuzaine Exp $
 
 ********************************************************************
 
@@ -185,13 +185,7 @@ The "Symmetry" operation should be renamed "Reflection" (?)
 
 ********************************************************************
 
-Attractors in the 2D aniso algo are extremely buggy
-
-********************************************************************
-
-Memory leaks, memory leaks
-
-- in the old 2D code: mesh_domain()...
+Memory leaks:
 
 - check all calls to Tree_Replace: we shouldn't use it with trees of
   pointers, since we loose the original pointer when we actually do a

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.240 2006-11-25 20:08:40 geuzaine Exp $
+// $Id: Gmsh.y,v 1.241 2006-11-27 05:16:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2335,6 +2335,7 @@ ExtrudeParameters :
 ExtrudeParameter :
     tLayers '{' ListOfDouble ',' ListOfDouble ',' ListOfDouble '}' tEND
     {
+      yymsg(WARNING, "Explicit region numbers in layers are deprecated");
       double d;
       extr.mesh.ExtrudeMesh = true;
       extr.mesh.NbLayer = List_Nbr($3);

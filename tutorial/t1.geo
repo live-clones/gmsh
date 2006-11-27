@@ -3,7 +3,7 @@
  *  Gmsh tutorial 1
  * 
  *  Variables, elementary entities (points, lines, surfaces), physical
- *  entities (points, lines, surfaces), background mesh
+ *  entities (points, lines, surfaces)
  *
  *********************************************************************/
 
@@ -22,9 +22,8 @@ Point(1) = {0, 0, 0, 9.e-1 * lc};
 
 // The actual distribution of the mesh element sizes is then obtained
 // by interpolation of these characteristic lengths throughout the
-// geometry. There are also other possibilities to specify
-// characteristic lengths: attractors (see `t7.geo') and background
-// meshes (see `bgmesh.pos').
+// geometry. Another method to specify characteristic lengths is to use
+// a background mesh (see `t7.geo' and `bgmesh.pos').
 
 // As can be seen in the previous definition, more complex expressions
 // can be constructed from variables and floating point
