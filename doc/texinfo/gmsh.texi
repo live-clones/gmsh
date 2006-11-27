@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.218 2006-11-27 05:16:31 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.219 2006-11-27 19:23:04 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 @c
@@ -517,8 +517,8 @@ surfaces;
 @item
 Gmsh is not primarily a structured mesh generator: no automatic
 quadrilateral or hexahedral meshing algorithm is provided. If you want
-quadrangles, you have to use transfinite, elliptic or extruded meshes or
-recombine unstructured triangular meshes. For hexahedra, your only choice is
+quadrangles, you have to use transfinite or extruded meshes or recombine
+unstructured triangular meshes. For hexahedra, your only choice is
 transfinite or extruded meshes;
 @item
 Gmsh is not a multi-bloc generator: all meshes produced by Gmsh are
@@ -1853,12 +1853,12 @@ and quadrangles (when @code{Recombine Surface} is used: see
 @ref{Miscellaneous mesh commands}). The 3D unstructured algorithms only
 generate tetrahedra.
 
-The 2D @emph{structured} algorithms (transfinite, elliptic and extrusion)
-generate triangles by default, but quadrangles can be obtained by using the
+The 2D @emph{structured} algorithms (transfinite and extrusion) generate
+triangles by default, but quadrangles can be obtained by using the
 @code{Recombine} commands (see @ref{Structured grids}, and
-@ref{Miscellaneous mesh commands}). The 3D structured algorithms generate
-tetrahedra, hexahedra, prisms and pyramids, depending on the type of the
-surface meshes they are based on.
+@ref{Miscellaneous mesh commands}). The 3D structured algorithms
+generate tetrahedra, hexahedra, prisms and pyramids, depending on the
+type of the surface meshes they are based on.
 
 @c todo: explain what happens if we have a degenerate geometry (incorrect
 @c holes with surfaces in contact with the exterior shell, intersecting
@@ -2011,8 +2011,6 @@ numbers are listed in @var{expression-list}. The new value is given by
 @cindex Mesh, extrusion
 @cindex Transfinite, mesh
 @cindex Mesh, transfinite
-@cindex Elliptic, mesh
-@cindex Mesh, elliptic
 
 @ftable @code
 @item Extrude @{ @var{expression-list} @} @{ @var{extrude-list} @var{layers} @}
@@ -2081,14 +2079,6 @@ points on the boundary of the volume. The ordering of these point numbers
 defines the ordering and orientation of the mesh elements, and should thus
 follow the node ordering for prisms or hexahedra given in @ref{Gmsh node
 ordering}.
-
-@item Elliptic Surface @{ @var{expression} @} = @{ @var{expression-list} @};
-Selects the surface @var{expression} to be meshed with the 2D elliptic
-algorithm (the surface can only have four sides). The @var{expression-list}
-should contain the identification numbers of the points on the boundary of
-the surface. The ordering of these point numbers defines the ordering and
-orientation of the mesh elements, and should thus follow the node ordering
-for triangles or quadrangles given in @ref{Gmsh node ordering}.
 
 @end ftable
 

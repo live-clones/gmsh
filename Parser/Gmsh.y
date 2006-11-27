@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.242 2006-11-27 17:45:16 geuzaine Exp $
+// $Id: Gmsh.y,v 1.243 2006-11-27 19:23:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2508,29 +2508,7 @@ Transfinite :
     }
   | tElliptic tSurface '{' FExpr '}' tAFFECT ListOfDouble tEND
     {
-      Surface *s = FindSurface((int)$4);
-      if(!s)
-	yymsg(WARNING, "Unknown surface %d", (int)$4);
-      else{
-        s->Method = ELLIPTIC;
-        int k = List_Nbr($7);
-        if(k != 4)
-	  yymsg(GERROR, "Wrong definition of Elliptic Surface %d: "
-		"%d points instead of 4" , (int)$4, k);
-        else{
-	  List_Reset(s->TrsfPoints);
-	  for(int i = 0; i < k; i++){
-	    double d;
-	    List_Read($7, i, &d);
-	    int j = (int)fabs(d);
-	    Vertex *v = FindPoint(j);
-	    if(!v)
-	      yymsg(WARNING, "Unknown point %d", j);
-	    else
-	      List_Add(s->TrsfPoints, &v);
-	  }
-	}
-      }
+      yymsg(GERROR, "Elliptic Surface is deprecated: use smoothed Transfinite instead");
       List_Delete($7);
     }
   | tTransfinite tVolume '{' FExpr '}' tAFFECT ListOfDouble tEND

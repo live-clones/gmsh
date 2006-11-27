@@ -24,7 +24,9 @@ Translate {0.2,0.0,0.0} {
 Transfinite Line{8,10} = 30 ;
 Transfinite Line{9,11} = 30 Using Progression 1.08;
 
-Elliptic Surface{7} = {6,10,14,5};
+Transfinite Surface{7} = {6,10,14,5};
 Recombine Surface{7};
 
 Extrude Surface {7, {0.0,0.0,0.1}}{Layers{10,1,1};Recombine;};
+
+Mesh.Smoothing  = 30;

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.483 2006-11-27 03:19:47 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.484 2006-11-27 19:22:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -3997,11 +3997,6 @@ void mesh_define_transfinite_surface_cb(CALLBACK_ARGS)
 void mesh_define_transfinite_volume_cb(CALLBACK_ARGS)
 {
   _add_transfinite_elliptic(0, 3);
-}
-
-void mesh_define_elliptic_surface_cb(CALLBACK_ARGS)
-{
-  _add_transfinite_elliptic(1, 2);
 }
 
 // Dynamic Solver Menus

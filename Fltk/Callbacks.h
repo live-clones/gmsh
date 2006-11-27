@@ -286,7 +286,6 @@ void mesh_define_transfinite_cb (CALLBACK_ARGS);
 void mesh_define_transfinite_line_cb(CALLBACK_ARGS);
 void mesh_define_transfinite_surface_cb(CALLBACK_ARGS);
 void mesh_define_transfinite_volume_cb(CALLBACK_ARGS); 
-void mesh_define_elliptic_surface_cb(CALLBACK_ARGS);
 
 // Dynamic Solver Menus
 

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.565 2006-11-27 03:19:47 geuzaine Exp $
+// $Id: GUI.cpp,v 1.566 2006-11-27 19:22:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -358,7 +358,6 @@ Context_Item menu_mesh[] = {
       {"Characteristic length", (Fl_Callback *)mesh_define_length_cb  } ,
       {"Recombine",   (Fl_Callback *)mesh_define_recombine_cb  } ,
       {"Transfinite", (Fl_Callback *)mesh_define_transfinite_cb  } , 
-      {"Elliptic",    (Fl_Callback *)mesh_define_elliptic_surface_cb  } , 
       {0} 
     };  
         Context_Item menu_mesh_define_transfinite[] = {
