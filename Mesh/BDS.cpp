@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.67 2006-11-27 22:22:16 geuzaine Exp $
+// $Id: BDS.cpp,v 1.68 2006-11-27 22:35:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -997,7 +997,7 @@ bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS
   else if (p == pts[2])
     {pc[0]=u;pc[1]=v;}
   else
-    throw;
+    return false;
 
   double area_final = fabs(a[1] * b[2] - a[2] * b[1]);
   if (area_final < 0.1 * area_init)return false;
