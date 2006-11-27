@@ -1,4 +1,4 @@
-.\" $Id: gmsh.1,v 1.72 2006-09-07 02:56:53 geuzaine Exp $
+.\" $Id: gmsh.1,v 1.73 2006-11-27 03:19:48 geuzaine Exp $
 .TH Gmsh 1 "09 March 2006" "Gmsh 2.0" "Gmsh Manual Pages"
 .UC 4
 .\" ********************************************************************
@@ -49,7 +49,7 @@ specify mesh output file name.
 set output mesh format (msh, unv, gref, stl, p3d).
 .TP 4
 .B \-algo string
-select mesh algorithm (iso, tri, aniso, netgen).
+select mesh algorithm (iso, tri, netgen, tetgen).
 .TP 4
 .B \-smooth int
 set number of mesh smoothing steps.
@@ -82,16 +82,6 @@ model.
 .TP 4
 .B \-histogram
 print mesh quality histogram.
-.TP 4
-.B \-extrude
-use the old extrusion mesh generator.
-.TP 4
-.B \-recombine
-recombine meshes from the old extrusion mesh generator.
-.TP 4
-.B \-interactive
-display the 2D mesh construction interactively if the anisotropic mesh
-algorithm is selected.
 .\" ********************************************************************
 .SH POST-PROCESSING OPTIONS
 .TP 4

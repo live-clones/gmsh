@@ -169,7 +169,7 @@ public :
     int quality_type, label_type;
     double quality_inf, quality_sup, radius_inf, radius_sup;
     double scaling_factor, lc_factor, rand_factor;
-    int dual, interactive;
+    int dual;
     int light, light_two_side, light_lines;
     int format, nbPartitions, nb_smoothing, algo2d, algo3d, algo_recombine;
     int order, second_order_linear, second_order_incomplete;
@@ -184,7 +184,6 @@ public :
       double val = cut_planea * x + cut_planeb * y + cut_planec * z + cut_planed; 
       return val;
     }
-    int oldxtrude, oldxtrude_recombine;
     int save_all, stl_binary, msh_binary, bdf_field_format;
     char *triangle_options;
     int smooth_normals, reverse_all_normals;

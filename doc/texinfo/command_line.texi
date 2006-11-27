@@ -19,7 +19,7 @@ Specify mesh output file name
 @item -format string
 Set output mesh format (msh, unv, bdf, mesh, stl, vrml)
 @item -algo string
-Select mesh algorithm (iso, tri, aniso, netgen, tetgen)
+Select mesh algorithm (iso, tri, netgen, tetgen)
 @item -smooth int
 Set number of mesh smoothing steps
 @item -optimize
@@ -38,12 +38,6 @@ Set random perturbation factor
 Load background mesh from file
 @item -constrain
 Constrain background mesh with characteristic lengths
-@item -extrude
-Use old extrusion mesh generator
-@item -recombine
-Recombine meshes from old extrusion mesh generator
-@item -interactive
-Display 2D mesh construction interactively
 @end ftable
 
 @sp 1 

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.564 2006-11-25 20:08:39 geuzaine Exp $
+// $Id: GUI.cpp,v 1.565 2006-11-27 03:19:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2226,19 +2226,18 @@ void GUI::create_option_window()
 
       static Fl_Menu_Item menu_2d_algo[] = {
         {"Isotropic", 0, 0, 0},
-        {"Anisotropic", 0, 0, 0},
         {"Triangle", 0, 0, 0},
-        {0}
-      };
-      static Fl_Menu_Item menu_recombine_algo[] = {
-        {"Mixed Tri-Quads", 0, 0, 0},
-        {"All Quads", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Isotropic", 0, 0, 0},
         {"Netgen", 0, 0, 0},
         {"Tetgen", 0, 0, 0},
+        {0}
+      };
+      static Fl_Menu_Item menu_recombine_algo[] = {
+        {"Mixed Tri-Quads", 0, 0, 0},
+        {"All Quads", 0, 0, 0},
         {0}
       };
 

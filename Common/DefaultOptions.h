@@ -892,8 +892,6 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "InitialOnly" , opt_mesh_initial_only , 0. ,
     "Only contruct the n-dimensional initial mesh (no refinement)" },
-  { F|O, "Interactive" , opt_mesh_interactive , 0. ,
-    "Show the construction of 2D anisotropic mesh in real time" },
 
   { F|O, "LabelType" , opt_mesh_label_type , 0. , 
     "Type of element label (0=element number, 1=elementary entity number, 2=physical entity number, 3=partition number, 4=coordinates)" },

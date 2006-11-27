@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.82 2006-11-15 15:06:45 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.83 2006-11-27 03:19:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -81,7 +81,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -saveall              Save all elements (discard physical group definitions)");
   Msg(DIRECT, "  -o file               Specify mesh output file name");
   Msg(DIRECT, "  -format string        Set output mesh format (msh, unv, bdf, mesh, stl, vrml)");
-  Msg(DIRECT, "  -algo string          Select mesh algorithm (iso, tri, aniso, netgen, tetgen)");
+  Msg(DIRECT, "  -algo string          Select mesh algorithm (iso, tri, netgen, tetgen)");
   Msg(DIRECT, "  -smooth int           Set number of mesh smoothing steps");
   Msg(DIRECT, "  -optimize             Optimize quality of tetrahedral elements");
   Msg(DIRECT, "  -partition int        Load a mesh and partition it into $1 parts (METIS is required)");
@@ -92,10 +92,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -rand float           Set random perturbation factor");
   Msg(DIRECT, "  -bgm file             Load background mesh from file");
   Msg(DIRECT, "  -constrain            Constrain background mesh with characteristic lengths");
-  Msg(DIRECT, "  -extrude              Use old extrusion mesh generator");
-  Msg(DIRECT, "  -recombine            Recombine meshes from old extrusion mesh generator");
 #if defined(HAVE_FLTK)
-  Msg(DIRECT, "  -interactive          Display 2D mesh construction interactively");
   Msg(DIRECT, "Post-processing options:");
   Msg(DIRECT, "  -noview               Hide all views on startup");
   Msg(DIRECT, "  -link int             Select link mode between views (0, 1, 2, 3, 4)");
@@ -229,14 +226,6 @@ void Get_Options(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "saveall")) {
         CTX.mesh.save_all = 1;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "extrude")) { // old extrusion mesh generator
-        CTX.mesh.oldxtrude = 1;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "recombine")) { // old extrusion mesh generator
-        CTX.mesh.oldxtrude_recombine = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "optimize")) {
@@ -429,8 +418,6 @@ void Get_Options(int argc, char *argv[])
             CTX.mesh.algo2d = DELAUNAY_ISO;
           else if(!strncmp(argv[i], "tri", 3))
             CTX.mesh.algo2d = DELAUNAY_TRIANGLE;
-          else if(!strncmp(argv[i], "aniso", 5))
-            CTX.mesh.algo2d = DELAUNAY_ANISO;
           else if(!strncmp(argv[i], "netgen", 6))
             CTX.mesh.algo3d = FRONTAL_NETGEN;
           else if(!strncmp(argv[i], "tetgen", 6))
@@ -497,10 +484,6 @@ void Get_Options(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "dual")) {
         CTX.mesh.dual = 1;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "interactive")) {
-        CTX.mesh.interactive = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "noview")) {

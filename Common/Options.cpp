@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.318 2006-11-27 01:33:27 geuzaine Exp $
+// $Id: Options.cpp,v 1.319 2006-11-27 03:19:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -144,7 +144,6 @@ void Init_Options(int num)
   CTX.post.force_num = 0;
   CTX.threads_lock = 0; // very primitive locking
   CTX.mesh.changed = 0;
-  CTX.mesh.oldxtrude = CTX.mesh.oldxtrude_recombine = 0; // old extrusion mesh generator
   CTX.mesh.bgmesh_type = WITHPOINTS;
   CTX.post.combine_time = 0; // try to combine_time views at startup
   CTX.post.plugin_draw_function = NULL;
@@ -4703,8 +4702,7 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
   if(action & GMSH_SET){
     int algo = (int)val;
     if(algo != DELAUNAY_ISO &&
-       algo != DELAUNAY_TRIANGLE &&
-       algo != DELAUNAY_ANISO){
+       algo != DELAUNAY_TRIANGLE){
       Msg(WARNING, "Unknown mesh algorithm: keeping existing value");
     }
     else{
@@ -4714,15 +4712,12 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
     switch (CTX.mesh.algo2d) {
-    case DELAUNAY_ISO:
-      WID->mesh_choice[2]->value(0);
-      break;
-    case DELAUNAY_ANISO:
+    case DELAUNAY_TRIANGLE:
       WID->mesh_choice[2]->value(1);
       break;
-    case DELAUNAY_TRIANGLE:
+    case DELAUNAY_ISO:
     default:
-      WID->mesh_choice[2]->value(2);
+      WID->mesh_choice[2]->value(0);
       break;
     }
   }
@@ -4849,13 +4844,6 @@ double opt_mesh_dual(OPT_ARGS_NUM)
     CTX.mesh.dual = (int)val;
   }
   return CTX.mesh.dual;
-}
-
-double opt_mesh_interactive(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.interactive = (int)val;
-  return CTX.mesh.interactive;
 }
 
 double opt_mesh_initial_only(OPT_ARGS_NUM)
