@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.5 2006-11-27 01:33:28 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.6 2006-11-27 02:35:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -22,7 +22,10 @@
 #include <set>
 #include "ExtrudeParams.h"
 #include "GModel.h"
+#include "Context.h"
 #include "Message.h"
+
+extern Context_T CTX;
 
 void extrudeMesh(GEdge *from, GFace *to,
 		 std::set<MVertex*, MVertexLessThanLexicographic> &pos)
@@ -150,6 +153,8 @@ int MeshExtrudedSurface(GFace *gf)
     return 0;
 
   // build a set with all the vertices on the boundary of gf
+  double old_tol = MVertexLessThanLexicographic::tolerance; 
+  MVertexLessThanLexicographic::tolerance = 1.e-6 * CTX.lc;
   std::set<MVertex*, MVertexLessThanLexicographic> pos;
   std::list<GEdge*> edges = gf->edges();
   std::list<GEdge*>::iterator it = edges.begin();
@@ -174,6 +179,8 @@ int MeshExtrudedSurface(GFace *gf)
     if(!from) return 0;
     copyMesh(from, gf, pos);
   }
+
+  MVertexLessThanLexicographic::tolerance = old_tol; 
 
   return 1;
 }

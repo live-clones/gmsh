@@ -1,4 +1,4 @@
-// $Id: meshGEdgeExtruded.cpp,v 1.1 2006-11-27 01:34:59 geuzaine Exp $
+// $Id: meshGEdgeExtruded.cpp,v 1.2 2006-11-27 02:35:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -35,7 +35,7 @@ void extrudeMesh(GVertex *from, GEdge *to)
       double x = v->x(), y = v->y(), z = v->z();
       ep->Extrude(j, k + 1, x, y, z);
       if(j != ep->mesh.NbLayer - 1 || k != ep->mesh.NbElmLayer[j] - 1)
-	to->mesh_vertices.push_back(new MEdgeVertex(x, y, z, to, ep->u(j, k)));
+	to->mesh_vertices.push_back(new MEdgeVertex(x, y, z, to, ep->u(j, k + 1)));
     }
   }
 }
