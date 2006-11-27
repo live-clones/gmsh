@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.75 2006-09-07 02:56:53 geuzaine Exp $
+$Id: FAQ,v 1.76 2006-11-27 19:32:23 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -110,7 +110,7 @@ Section 4: Geometry module
 
 * 4.1 Does Gmsh support NURBS curves/surfaces?
 
-Not yet.
+Only via STEP, IGES or BREP models (not in GEO files).
 
 * 4.2 Gmsh is very slow when I use many transformations (Translate,
 Rotate, Symmetry, Extrude, etc. ). What's wrong?
@@ -152,13 +152,13 @@ boundary curves, as well as the boundaries of these curves (i.e.,
 points). If 'Recursive' is not set, only the surface (the dashed
 cross) would be shown.
 
-- In the 'Numeric Input' tab, you can choose to show or hide any
-entity or mesh element by giving its number. You can also use the "*"
-character to select all the entities/elements at once. For example, to
-show only the mesh element 13245 in the mesh, you would enter "*" in
-the 'Element' input field and click on 'Hide' (this will hide all the
-mesh elements); and then enter "13245" in the 'Element' input field
-and click on 'Show' (this will show the element 13245). To show other
+- In the 'Selector' tab, you can choose to show or hide any entity or
+mesh element by giving its number. You can also use the "*" character
+to select all the entities/elements at once. For example, to show only
+the mesh element 13245 in the mesh, you would enter "*" in the
+'Element' input field and click on 'Hide' (this will hide all the mesh
+elements); and then enter "13245" in the 'Element' input field and
+click on 'Show' (this will show the element 13245). To show other
 element, you would just enter another number in the input field, click
 on 'Show', etc.
 
@@ -223,14 +223,25 @@ hexahedra instead of tetrahedra.
 
 * 5.8 Tools->Visibility does not seem to work with extruded meshes.
 
-This is fixed in Gmsh >= 1.54. However, when region numbers are
-explicitly assigned to mesh entities in the extrude commands (which
-partially destroys the geometry/mesh relationship), the 'Visibility'
-tool will only work as expected when displaying elementary
-entities. In this particular case, the only solution to visualize
-extruded physical entities is to save the mesh, and to read it again.
+This is fixed in Gmsh >= 1.54. Note that in Gmsh < 2.0, when region
+numbers are explicitly assigned to mesh entities in the extrude
+commands (which partially destroys the geometry/mesh relationship),
+the 'Visibility' tool will only work as expected when displaying
+elementary entities. In this particular case, the only solution to
+visualize extruded physical entities is to save the mesh, and to read
+it again.
 
-* 5.9 Does Gmsh support curved elements?
+* 5.9 Can I explicitly assign region numbers to extruded layers?
+
+No, this feature has been removed in Gmsh 2.0. You must now use the
+standard entity number instead.
+
+* 5.10 Did you remove the elliptic mesh generator in Gmsh 2.0?
+
+Yes. You can achieve the same result by using the transfinite
+algorithm with smoothing (e.g., with "Mesh.Smoothing = 10").
+
+* 5.11 Does Gmsh support curved elements?
 
 Yes, Gmsh can generate both 1st order and 2nd order elements. To
 generate second order elements, click on 'Second order' in the mesh
@@ -238,16 +249,12 @@ menu after the mesh is completed. To always generate 2nd order
 elements, select 'Generate second order elements' in the mesh option
 panel. From the command line, you can also use '-order 2'.
 
-* 5.10 Can I import an existing surface mesh in Gmsh and use it to
+* 5.12 Can I import an existing surface mesh in Gmsh and use it to
 build a 3D mesh?
 
-Yes, see for example 'demos/sphere-discrete.geo'. You can either use
-the surface mesh "as-is" (for example to build a 3D mesh from an
-existing boundary mesh), or you can remesh the surfaces to respect
-certain constraints (see the STL menu in the mesh module). This is
-still an experimental feature as of this writing (version 2.0).
+Yes, see for example 'demos/sphere-discrete.geo'. 
 
-* 5.11 How do I define boundary conditions or material properties in
+* 5.13 How do I define boundary conditions or material properties in
 Gmsh?
 
 By design, Gmsh does not try to incorporate every possible definition
@@ -260,12 +267,12 @@ Lines, Physical Surfaces and Physical Volumes): see the reference
 manual as well as the tutorials (in particular 'tutorial/t1.geo') for
 a detailed description and some examples.
 
-* 5.12 How can I display only the mesh associated with selected
+* 5.14 How can I display only the mesh associated with selected
 geometrical entities?
 
 See question 4.3.
 
-* 5.13 How can I "explore" a mesh (for example, to see inside a
+* 5.15 How can I "explore" a mesh (for example, to see inside a
 complex structure)?
 
 You can use 'Tools->Clipping Planes' to extract the region of
@@ -279,7 +286,7 @@ fields. There is also one additional clipping plane available for
 "cutting" only the mesh (by keeping entire elements), in
 'Tools->Options->Mesh->Cut Plane'.
 
-* 5.14 What is the signification of Rho, Eta and Gamma in 
+* 5.16 What is the signification of Rho, Eta and Gamma in 
 Tools->Statistics?
 
 They measure the quality of the tetrahedra in a mesh:

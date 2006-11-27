@@ -19,11 +19,6 @@ Saved in: @code{General.OptionsFileName}
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.AllowDegeneratedExtrude
-Allow the generation of degenerated hexahedra or prisms during extrusion@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
 @item Mesh.AngleSmoothNormals
 Threshold angle below which normals are not smoothed@*
 Default value: @code{30}@*
@@ -131,11 +126,6 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.InitialOnly
 Only contruct the n-dimensional initial mesh (no refinement)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.Interactive
-Show the construction of 2D anisotropic mesh in real time@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -252,11 +242,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Points
 Display mesh vertices (nodes)?@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PointInsertion
-Point insertion method for isotropic 2D algorithm (1=center of circumscribed circle, 2=center of gravity)@*
-Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PointNumbers
