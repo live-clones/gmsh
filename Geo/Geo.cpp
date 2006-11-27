@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.63 2006-11-25 23:06:06 geuzaine Exp $
+// $Id: Geo.cpp,v 1.64 2006-11-27 17:45:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -185,18 +185,11 @@ Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc,
   return pV;
 }
 
-void Delete_Vertex(Vertex * pV)
-{
-  if(pV) {
-    delete pV;
-  }
-}
-
 void Free_Vertex(void *a, void *b)
 {
   Vertex *v = *(Vertex **) a;
   if(v) {
-    Delete_Vertex(v);
+    delete v;
     v = NULL;
   }
 }
@@ -908,7 +901,7 @@ void Free_Volume_But_Not_Elements(void *a, void *b)
   Volume *pV = *(Volume **) a;
   if(pV) {
     List_Delete(pV->TrsfPoints);
-    List_Delete(pV->Surfaces);  // surfaces freed elsewhere
+    List_Delete(pV->Surfaces);
     List_Delete(pV->SurfacesOrientations);
     Free(pV);
     pV = NULL;
@@ -2128,7 +2121,6 @@ int Extrude_ProtudePoint(int type, int ip,
     c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
-    c->Extrude->useZonLayer(final);
     if(e)
       c->Extrude->mesh = e->mesh;
 
@@ -2376,7 +2368,6 @@ int Extrude_ProtudeCurve(int type, int ic,
   s->Generatrices = List_Create(4, 1, sizeof(Curve *));
   s->Extrude = new ExtrudeParams;
   s->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
-  s->Extrude->useZonLayer(final);
   s->Extrude->geo.Source = pc->Num;
   if(e)
     s->Extrude->mesh = e->mesh;

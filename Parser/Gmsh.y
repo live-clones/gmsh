@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.241 2006-11-27 05:16:31 geuzaine Exp $
+// $Id: Gmsh.y,v 1.242 2006-11-27 17:45:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -2340,16 +2340,13 @@ ExtrudeParameter :
       extr.mesh.ExtrudeMesh = true;
       extr.mesh.NbLayer = List_Nbr($3);
       if(List_Nbr($3) == List_Nbr($5) && List_Nbr($3) == List_Nbr($7)){
-	extr.mesh.NbElmLayer = (int*)Malloc(extr.mesh.NbLayer*sizeof(int));
-	extr.mesh.ZonLayer = (int*)Malloc(extr.mesh.NbLayer*sizeof(int));
-	extr.mesh.hLayer = (double*)Malloc(extr.mesh.NbLayer*sizeof(double));
+	extr.mesh.NbElmLayer.clear();
+	extr.mesh.hLayer.clear();
 	for(int i = 0; i < List_Nbr($3); i++){
 	  List_Read($3, i, &d);
-	  extr.mesh.NbElmLayer[i] = (d>0)?(int)d:1;
-	  List_Read($5, i, &d);
-	  extr.mesh.ZonLayer[i] = (int)d;
+	  extr.mesh.NbElmLayer.push_back((d > 0) ? (int)d : 1);
 	  List_Read($7, i, &d);
-	  extr.mesh.hLayer[i] = d;
+	  extr.mesh.hLayer.push_back(d);
 	}
       }
       else{
@@ -2366,15 +2363,13 @@ ExtrudeParameter :
       extr.mesh.ExtrudeMesh = true;
       extr.mesh.NbLayer = List_Nbr($3);
       if(List_Nbr($3) == List_Nbr($5)){
-	extr.mesh.NbElmLayer = (int*)Malloc(extr.mesh.NbLayer*sizeof(int));
-	extr.mesh.ZonLayer = (int*)Malloc(extr.mesh.NbLayer*sizeof(int));
-	extr.mesh.hLayer = (double*)Malloc(extr.mesh.NbLayer*sizeof(double));
+	extr.mesh.NbElmLayer.clear();
+	extr.mesh.hLayer.clear();
 	for(int i = 0; i < List_Nbr($3); i++){
 	  List_Read($3, i, &d);
-	  extr.mesh.NbElmLayer[i] = (d>0)?(int)d:1;
-	  extr.mesh.ZonLayer[i] = 0;
+	  extr.mesh.NbElmLayer.push_back((d > 0) ? (int)d : 1);
 	  List_Read($5, i, &d);
-	  extr.mesh.hLayer[i] = d;
+	  extr.mesh.hLayer.push_back(d);
 	}
       }
       else{

@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.14 2006-11-26 02:14:24 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.15 2006-11-27 17:45:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -429,14 +429,16 @@ void meshGRegion::operator() (GRegion *gr)
 {  
   if(gr->geomType() == GEntity::DiscreteVolume) return;
 
+  // Send a messsage to the GMSH environment
+  Msg(STATUS2, "Meshing volume %d", gr->tag());
+
   // destroy the mesh if it exists
   deMeshGRegion dem;
   dem(gr);
 
-  // Send a messsage to the GMSH environment
-  Msg(STATUS2, "Meshing volume %d", gr->tag());
+  if(MeshExtrudedVolume(gr)) return;
 
-  if(CTX.mesh.algo3d == DELAUNAY_TETGEN || CTX.mesh.algo3d == DELAUNAY_ISO){
+  if(CTX.mesh.algo3d == DELAUNAY_TETGEN){
 #if !defined(HAVE_TETGEN)
     Msg(GERROR, "Tetgen is not compiled in this version of Gmsh");
 #else
@@ -470,7 +472,7 @@ void meshGRegion::operator() (GRegion *gr)
 #endif
   }
   
-  if(CTX.mesh.algo3d == FRONTAL_NETGEN){
+  if(CTX.mesh.algo3d == FRONTAL_NETGEN || CTX.mesh.algo3d == DELAUNAY_ISO){
 #if !defined(HAVE_NETGEN)
     Msg(GERROR, "Netgen is not compiled in this version of Gmsh");
 #else

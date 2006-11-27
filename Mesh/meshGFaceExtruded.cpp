@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.8 2006-11-27 05:16:30 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.9 2006-11-27 17:45:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -27,6 +27,18 @@
 
 extern Context_T CTX;
 
+void createQuaTri(std::vector<MVertex*> &v, GFace *to)
+{
+  if(v[0] == v[1] || v[1] == v[3])
+    to->triangles.push_back(new MTriangle(v[0], v[3], v[2]));
+  else if(v[0] == v[2] || v[2] == v[3])
+    to->triangles.push_back(new MTriangle(v[0], v[1], v[3]));
+  else if(v[0] == v[3] || v[1] == v[2])
+    Msg(GERROR, "Uncoherent extruded quadrangle in surface %d", to->tag());
+  else
+    to->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[3], v[2]));
+}
+
 void extrudeMesh(GEdge *from, GFace *to,
 		 std::set<MVertex*, MVertexLessThanLexicographic> &pos)
 {
@@ -48,7 +60,9 @@ void extrudeMesh(GEdge *from, GFace *to,
     }
   }
 
-  // create elements
+  // create elements (note that it would be faster to access the
+  // *interior* nodes by direct indexing, but it's just simpler to
+  // query everything by position)
   std::set<MVertex*, MVertexLessThanLexicographic>::iterator itp;
   for(unsigned int i = 0; i < from->lines.size(); i++){
     MVertex *v0 = from->lines[i]->getVertex(0);
@@ -59,10 +73,10 @@ void extrudeMesh(GEdge *from, GFace *to,
 	double x[4] = {v0->x(), v1->x(), v0->x(), v1->x()};
 	double y[4] = {v0->y(), v1->y(), v0->y(), v1->y()};
 	double z[4] = {v0->z(), v1->z(), v0->z(), v1->z()};
-	ep->Extrude(j, k, x[0], y[0], z[0]);
-	ep->Extrude(j, k, x[1], y[1], z[1]);
-	ep->Extrude(j, k + 1, x[2], y[2], z[2]);
-	ep->Extrude(j, k + 1, x[3], y[3], z[3]);
+	for(int p = 0; p < 2; p++){
+	  ep->Extrude(j, k, x[p], y[p], z[p]);
+	  ep->Extrude(j, k + 1, x[p + 2], y[p + 2], z[p + 2]);
+	}
 	for(int p = 0; p < 4; p++){
 	  MVertex tmp(x[p], y[p], z[p], 0, -1);
 	  itp = pos.find(&tmp);
@@ -72,20 +86,7 @@ void extrudeMesh(GEdge *from, GFace *to,
 	  }
 	  verts.push_back(*itp);
 	}
-	if(verts[0] == verts[1] || verts[1] == verts[3]){
-	  to->triangles.push_back(new MTriangle(verts[0], verts[3], verts[2]));
-	}
-	else if(verts[0] == verts[2] || verts[2] == verts[3]){
-	  to->triangles.push_back(new MTriangle(verts[0], verts[1], verts[3]));
-	}
-	else if(verts[0] == verts[3] || verts[1] == verts[2]){
-          Msg(GERROR, "Uncoherent extruded quadrangle in surface %d", to->tag());
-          return;
-        }
-        else{
-	  to->quadrangles.push_back(new MQuadrangle(verts[0], verts[1], 
-						    verts[3], verts[2]));
-	}
+	createQuaTri(verts, to);
       }
     }
   }
@@ -152,7 +153,7 @@ int MeshExtrudedSurface(GFace *gf)
 
   // build a set with all the vertices on the boundary of gf
   double old_tol = MVertexLessThanLexicographic::tolerance; 
-  MVertexLessThanLexicographic::tolerance = 1.e-8 * CTX.lc;
+  MVertexLessThanLexicographic::tolerance = 1.e-14;
   std::set<MVertex*, MVertexLessThanLexicographic> pos;
   std::list<GEdge*> edges = gf->edges();
   std::list<GEdge*>::iterator it = edges.begin();
@@ -172,7 +173,7 @@ int MeshExtrudedSurface(GFace *gf)
     extrudeMesh(from, gf, pos);
   }
   else {
-    // surface is a copy of another surface ("chapeau")
+    // surface is a copy of another surface (the "top" of the extrusion)
     GFace *from = gf->model()->faceByTag(std::abs(ep->geo.Source));
     if(!from) return 0;
     copyMesh(from, gf, pos);
