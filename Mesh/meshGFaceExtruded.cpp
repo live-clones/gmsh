@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.12 2006-11-28 03:12:38 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.13 2006-11-28 03:35:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -153,7 +153,7 @@ int MeshExtrudedSurface(GFace *gf)
 
   // build a set with all the vertices on the boundary of gf
   double old_tol = MVertexLessThanLexicographic::tolerance; 
-  MVertexLessThanLexicographic::tolerance = 1.e-8 * CTX.lc;
+  MVertexLessThanLexicographic::tolerance = 1.e-12 * CTX.lc;
   std::set<MVertex*, MVertexLessThanLexicographic> pos;
   std::list<GEdge*> edges = gf->edges();
   std::list<GEdge*>::iterator it = edges.begin();
