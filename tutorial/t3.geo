@@ -53,32 +53,20 @@ Physical Volume(101) = {1, 2, out[1]};
 
 // Let us now change some options... Since all interactive options are
 // accessible in Gmsh's scripting language, we can for example define
-// a global characteristic length factor, redefine some background
-// colors, disable the display of the axes, and select an initial
-// viewpoint in XYZ mode (disabling the interactive trackball-like
-// rotation mode) directly in the input file:
+// a global characteristic length factor or redefine some colors
+// directly in the input file:
 
 Mesh.CharacteristicLengthFactor = 4;
-General.Color.Background = {120,120,120};
-General.Color.Foreground = {255,255,255};
 General.Color.Text = White;
 Geometry.Color.Points = Orange;
-General.Axes = 0;
-General.Trackball = 0;
-General.RotationCenterGravity = 0;
-General.RotationCenterX = 0;
-General.RotationCenterY = 0;
-General.RotationCenterZ = 0;
-General.RotationX = 10;
-General.RotationY = 70;
-General.TranslationX = -0.2;
+Mesh.Color.Points = {255,0,0};
 
 // Note that all colors can be defined literally or numerically, i.e.
-// `General.Color.Background = Red' is equivalent to
-// `General.Color.Background = {255,0,0}'; and also note that, as with
-// user-defined variables, the options can be used either as right or
-// left hand sides, so that the following command will set the surface
-// color to the same color as the points:
+// `Mesh.Color.Points = Red' is equivalent to `Mesh.Color.Points =
+// {255,0,0}'; and also note that, as with user-defined variables, the
+// options can be used either as right or left hand sides, so that the
+// following command will set the surface color to the same color as
+// the points:
 
 Geometry.Color.Surfaces = Geometry.Color.Points;
 

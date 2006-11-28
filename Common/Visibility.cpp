@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.20 2006-11-27 22:22:08 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.21 2006-11-28 20:17:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -61,9 +61,7 @@ void VisibilityManager::update(int type)
 {
   _labels.clear();
 
-  // FIXME: this sometimes leads to crashes -- investigate
-  //Tree_Action(Symbol_T, setLabels);
-  //printf("updating vis man\n");
+  if(Tree_Nbr(Symbol_T)) Tree_Action(Symbol_T, setLabels);
 
   for(unsigned int i = 0; i < _entities.size(); i++)
     delete _entities[i];

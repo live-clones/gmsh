@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.422 2006-11-27 22:22:06 geuzaine Exp $
+# $Id: Makefile,v 1.423 2006-11-28 20:17:44 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -256,7 +256,7 @@ package-mac:
 	cp Fltk/MacIconsGeo.icns gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Resources/GmshGeo.icns
 	cp Fltk/MacIconsMsh.icns gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Resources/GmshMsh.icns
 	cp Fltk/MacIconsPos.icns gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Resources/GmshPos.icns
-	cp -R doc/gmsh.1 tutorial demos gmsh-${GMSH_VERSION}
+	cp -R tutorial demos gmsh-${GMSH_VERSION}
 	cp doc/VERSIONS gmsh-${GMSH_VERSION}/VERSIONS.txt
 	cp doc/FAQ gmsh-${GMSH_VERSION}/FAQ.txt
 	cp doc/CREDITS gmsh-${GMSH_VERSION}/CREDITS.txt

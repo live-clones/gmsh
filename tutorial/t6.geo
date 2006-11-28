@@ -6,8 +6,8 @@
  *
  *********************************************************************/
 
-// We use the geometry from the first tutorial as a basis for this
-// tutorial:
+// Let's use the geometry from the first tutorial as a basis for this
+// one
 Include "t1.geo";
 
 // Put 20 equidistant points on curve 4
@@ -24,11 +24,11 @@ Transfinite Line{-1,3} = 30 Using Progression 1.2;
 // of the transfinite interpolation
 Transfinite Surface{6} = {1,2,3,4};
 
-// Please note that the list on the right hand side refers to points,
-// not curves. The way triangles are generated can be controlled by
-// appending "Left", "Right" or "Alternate" after the list.
+// (Note that the list on the right hand side refers to points, not
+// curves. The way triangles are generated can be controlled by
+// appending "Left", "Right" or "Alternate" after the list.)
 
-// Recombine the transfinite mesh into quads
+// Recombine the triangles into quads
 Recombine Surface{6};
 
 // Apply an elliptic smoother to the grid
