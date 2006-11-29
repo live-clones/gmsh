@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.485 2006-11-27 22:22:08 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.486 2006-11-29 04:50:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2019,6 +2019,17 @@ void visibility_cb(CALLBACK_ARGS)
     WID->vis_push_butt[0]->activate();
   else
     WID->vis_push_butt[0]->deactivate();
+
+  // FIXME disable 2 other panes when not in elementary mode for now
+  // XXXXXX WILL CHANGE
+  if(WID->vis_type->value() != 0){
+    WID->vis_group[1]->deactivate();
+    WID->vis_group[2]->deactivate();
+  }
+  else{
+    WID->vis_group[1]->activate();
+    WID->vis_group[2]->activate();
+  }
 }
 
 void visibility_ok_cb(CALLBACK_ARGS)

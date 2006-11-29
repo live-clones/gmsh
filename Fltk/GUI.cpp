@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.567 2006-11-27 22:22:09 geuzaine Exp $
+// $Id: GUI.cpp,v 1.568 2006-11-29 04:50:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3903,24 +3903,22 @@ void GUI::create_visibility_window()
 
   int width = cols[0] + cols[1] + cols[2] + cols[3] + 6 * WB;
   int height = 18 * BH;
+  int brw = width - 4 * WB;
+  int buw = (brw - 2 * WB) / 2;
 
   vis_window = new Dialog_Window(width, height, "Visibility");
   vis_window->box(GMSH_WINDOW_BOX);
 
-  Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+  vis_type = new Fl_Choice(WB, WB, buw, BH);
+  vis_type->menu(type_table);
+  
+  vis_butt[0] = new Fl_Check_Button(WB + buw + WB, WB, width - 5 * WB - buw, BH, "Set visibility recursively");
+  vis_butt[0]->type(FL_TOGGLE_BUTTON);
+  vis_butt[0]->value(1);
+
+  Fl_Tabs *o = new Fl_Tabs(WB, 2 * WB + BH, width - 2 * WB, height - 4 * WB - 2 * BH);
   {
-    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Browser");
-
-    int brw = width - 4 * WB;
-    int buw = (brw - 2 * WB) / 2;
-
-    vis_type = new Fl_Choice(2 * WB, 2 * WB + 1 * BH, buw, BH);
-    vis_type->menu(type_table);
-
-    vis_butt[0] = new Fl_Check_Button(2 * WB + buw + WB, 2 * WB + 1 * BH, width - 5 * WB - buw, BH, 
-				      "Set visibility recursively");
-    vis_butt[0]->type(FL_TOGGLE_BUTTON);
-    vis_butt[0]->value(1);
+    vis_group[0] = new Fl_Group(WB, 2 * WB + 2 * BH, width - 2 * WB, height - 4 * WB - 3 * BH, "Browser");
 
     Fl_Button *o0 = new Fl_Button(2 * WB, 3 * WB + 2 * BH, cols[0], BH/2, "*");
     o0->align(FL_ALIGN_TOP | FL_ALIGN_INSIDE);
@@ -3970,25 +3968,22 @@ void GUI::create_visibility_window()
     Fl_Button *b2 = new Fl_Button(width - BB - 2 * WB, height - 2 * BH - 3 * WB, BB, BH, "Save");
     b2->callback(visibility_save_cb);
 
-    o->end();
+    vis_group[0] ->end();
     Fl_Group::current()->resizable(o);
   }
   {
-    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - BH, "Selector");
-    o->resizable(NULL);
-
-    Fl_Box *b1 = new Fl_Box(FL_NO_BOX, 2 * WB, 2 * WB + 1 * BH, IW, BH, "Show/hide by identification number:");
-    b1->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
+    vis_group[1] = new Fl_Group(WB, 2 * WB + 2 * BH, width - 2 * WB, height - 4 * WB - 2 * BH, "Numeric input");
+    vis_group[1]->resizable(NULL);
 
     for(int i = 0; i < 6; i++){
-      vis_input[i] = new Fl_Input(width/2-WB/2-IW, 2 * WB + (i+2) * BH, IW, BH);
+      vis_input[i] = new Fl_Input(width/2-WB/2-IW, 3 * WB + (i+2) * BH, IW, BH);
       vis_input[i]->align(FL_ALIGN_LEFT);
       vis_input[i]->value("*");
 
-      Fl_Button *o1 = new Fl_Button(width/2+WB/2, 2 * WB + (i+2) * BH, BB, BH, "Show");
+      Fl_Button *o1 = new Fl_Button(width/2+WB/2, 3 * WB + (i+2) * BH, BB, BH, "Show");
       o1->callback(visibility_number_cb, (void *)(100+i));
 
-      Fl_Button *o2 = new Fl_Button(width/2+WB/2+BB+WB, 2 * WB + (i+2) * BH, BB, BH, "Hide");
+      Fl_Button *o2 = new Fl_Button(width/2+WB/2+BB+WB, 3 * WB + (i+2) * BH, BB, BH, "Hide");
       o2->callback(visibility_number_cb, (void *)i);
     }
 
@@ -4010,26 +4005,32 @@ void GUI::create_visibility_window()
     vis_input[5]->label("Volume");
     vis_input[5]->tooltip("Enter volume number, or *");
 
-    Fl_Box *b2 = new Fl_Box(FL_NO_BOX, 2 * WB, 2 * WB + 9 * BH, IW, BH, "Hide with mouse:");
+    vis_group[1]->end();
+  }
+  {
+    vis_group[2] = new Fl_Group(WB, 2 * WB + 2 * BH, width - 2 * WB, height - 4 * WB - 2 * BH, "Interactive");
+    vis_group[2]->resizable(NULL);
+
+    Fl_Box *b2 = new Fl_Box(FL_NO_BOX, 2 * WB, 3 * WB + 2 * BH, brw, BH, "Select entities to hide with the mouse:");
     b2->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
 
-    Fl_Button *butt1 = new Fl_Button(width/2-WB/2-IW, 2 * WB + 10 * BH, IW, BH, "Elements");
+    Fl_Button *butt1 = new Fl_Button(2*WB, 3 * WB + 3 * BH, IW, BH, "Elements");
     butt1->callback(visibility_hide_cb, (void *)"elements");
-    Fl_Button *butt2 = new Fl_Button(width/2-WB/2-IW, 2 * WB + 11 * BH, IW, BH, "Points");
+    Fl_Button *butt2 = new Fl_Button(2*WB, 3 * WB + 4 * BH, IW, BH, "Points");
     butt2->callback(visibility_hide_cb, (void *)"points");
-    Fl_Button *butt3 = new Fl_Button(width/2-WB/2-IW, 2 * WB + 12 * BH, IW, BH, "Lines");
+    Fl_Button *butt3 = new Fl_Button(2*WB, 3 * WB + 5 * BH, IW, BH, "Lines");
     butt3->callback(visibility_hide_cb, (void *)"lines");
-    Fl_Button *butt4 = new Fl_Button(width/2-WB/2-IW, 2 * WB + 13 * BH, IW, BH, "Surfaces");
+    Fl_Button *butt4 = new Fl_Button(2*WB, 3 * WB + 6 * BH, IW, BH, "Surfaces");
     butt4->callback(visibility_hide_cb, (void *)"surfaces");
-    Fl_Button *butt5 = new Fl_Button(width/2-WB/2-IW, 2 * WB + 14 * BH, IW, BH, "Volumes");
+    Fl_Button *butt5 = new Fl_Button(2*WB, 3 * WB + 7 * BH, IW, BH, "Volumes");
     butt5->callback(visibility_hide_cb, (void *)"volumes");
     
-    o->end();
+    vis_group[2]->end();
   }
   o->end();
 
   vis_window->resizable(o);
-  vis_window->size_range(width, 16 * BH + 5 * WB, width);
+  vis_window->size_range(width, 9 * BH + 6 * WB, width);
 
   {
     Fl_Button *o = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");

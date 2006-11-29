@@ -231,6 +231,7 @@ public:
 
   // visibility window
   Fl_Window        *vis_window;
+  Fl_Group         *vis_group[5];
   Fl_Choice        *vis_type;
   Fl_Browser       *vis_browser;
   Fl_Check_Button  *vis_butt[2];
