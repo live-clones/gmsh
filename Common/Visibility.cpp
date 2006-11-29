@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.23 2006-11-29 16:11:26 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.24 2006-11-29 20:40:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -189,9 +189,10 @@ std::string VisibilityManager::getStringForGEO()
   return str;
 }
 
-void VisibilityManager::setVisibilityByNumber(int type, int num, int all, char val, 
-					      bool recursive)
+void VisibilityManager::setVisibilityByNumber(int type, int num, char val, bool recursive)
 {
+  bool all = (num < 0) ? true : false;
+
   switch(type){
   case 0: // nodes
     for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
@@ -255,6 +256,17 @@ void VisibilityManager::setVisibilityByNumber(int type, int num, int all, char v
   case 5: // volume
     for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
       if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
+    break;
+  case 6: // physical point
+    break;
+  case 7: // physical line
+    break;
+  case 8: // physical surface
+    break;
+  case 9: // physical volume
+    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
+      for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
+	if (all || (*it)->physicals[i] == num) (*it)->setVisibility(val, recursive);
     break;
   }
 }

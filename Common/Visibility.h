@@ -135,8 +135,9 @@ class VisibilityManager {
   void setAllInvisible(int type);
 
   // set the visibility of one or all entites of a given type (0=node,
-  // 1=element, 2=point, 3=line, 4=surface, 5=volume)
-  void setVisibilityByNumber(int type, int num, int all, char val, bool recursive=false);
+  // 1=element, 2=point, 3=line, 4=surface, 5=volume, 6=physical
+  // point, 7=physical line, 8=physical surface, 9=physical volume)
+  void setVisibilityByNumber(int type, int num, char val, bool recursive=false);
 
   // get the tag of the nth entity in the manager
   int getTag(int n){ return _entities[n]->getTag(); }

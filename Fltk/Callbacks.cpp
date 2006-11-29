@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.487 2006-11-29 16:11:26 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.488 2006-11-29 20:40:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2008,21 +2008,23 @@ void visibility_cb(CALLBACK_ARGS)
   // get the visibility info from the model, and update the browser accordingly
   WID->create_visibility_window();
   WID->vis_browser->clear();
-  VisibilityManager::instance()->update(WID->vis_type->value());
+
+  int type = WID->vis_type->value();
+
+  VisibilityManager::instance()->update(type);
   for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++){
     WID->vis_browser->add(VisibilityManager::instance()->getBrowserLine(i).c_str());
     if(VisibilityManager::instance()->getVisibility(i))
       WID->vis_browser->select(i + 1);
   }
   // active the delete button for physicals and partitions only!
-  if(WID->vis_type->value() == 1 || WID->vis_type->value() == 2)
+  if(type == 1 || type == 2)
     WID->vis_push_butt[0]->activate();
   else
     WID->vis_push_butt[0]->deactivate();
 
-  // FIXME disable 2 other panes when not in elementary mode for now
-  // XXXXXX WILL CHANGE
-  if(WID->vis_type->value() != 0){
+  // disable numeric and interactive selection for partitions
+  if(type == 2){
     WID->vis_group[1]->deactivate();
     WID->vis_group[2]->deactivate();
   }
@@ -2038,10 +2040,12 @@ void visibility_ok_cb(CALLBACK_ARGS)
   // browser and apply them into the model
   if(VisibilityManager::instance()->getNumEntities()){
     CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
-    VisibilityManager::instance()->setAllInvisible(WID->vis_type->value());
+    int recursive = WID->vis_butt[0]->value();
+    int type = WID->vis_type->value();
+    VisibilityManager::instance()->setAllInvisible(type);
     for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++)
       if(WID->vis_browser->selected(i + 1))
-	VisibilityManager::instance()->setVisibility(i, true, WID->vis_butt[0]->value());
+	VisibilityManager::instance()->setVisibility(i, true, recursive);
     // then refresh the browser to account for recursive selections
     for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++)
       if(VisibilityManager::instance()->getVisibility(i))
@@ -2059,9 +2063,10 @@ void visibility_save_cb(CALLBACK_ARGS)
 
 void visibility_delete_cb(CALLBACK_ARGS)
 {
-  if(WID->vis_type->value() == 1)
+  int type = WID->vis_type->value();
+  if(type == 1)
     GMODEL->deletePhysicalGroups();
-  else if(WID->vis_type->value() == 2)
+  else if(type == 2)
     GMODEL->deleteMeshPartitions();
   visibility_cb(NULL, NULL);
 }
@@ -2127,21 +2132,31 @@ void visibility_number_cb(CALLBACK_ARGS)
 {
   CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
 
-  int type = (int)(long)data;
+  // type = 0 for elementary, 1 for physical and 2 for partitions
+  int type = WID->vis_type->value();
+  if(type != 0 && type != 1) return;
+
+  // what = 0 for nodes, 1 for elements, 2 for points, 3 for lines, 4
+  // for surfaces, 5 for volumes, 6 for physical points, 7 for
+  // physical lines, 8 for physical surfaces and 9 for physical
+  // volumes
+  int what = (int)(long)data;
   bool val;
-  if(type >= 100){ // show
+  if(what >= 100){ // show
     val = true;
-    type -= 100;
+    what -= 100;
   }
   else{ // hide
     val = false;
   }
-  
-  char *str = (char *)WID->vis_input[type]->value();  
-  int all = !strcmp(str, "all") || !strcmp(str, "*");
-  int num = all ? 0 : atoi(str);
+  char *str = (char *)WID->vis_input[what]->value();
+  if(type == 1 && what >= 2 && what <= 5) what += 4;
+
+  int num = (!strcmp(str, "all") || !strcmp(str, "*")) ? -1 : atoi(str);
   int recursive = WID->vis_butt[0]->value();
-  VisibilityManager::instance()->setVisibilityByNumber(type, num, all, val, recursive);
+  
+  VisibilityManager::instance()->setVisibilityByNumber(what, num, val, recursive);
+
   int pos = WID->vis_browser->position();
   visibility_cb(NULL, NULL);
   WID->vis_browser->position(pos);
@@ -3737,11 +3752,6 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
   CTX.pick_elements = 0;
   Draw();  
   Msg(ONSCREEN, "");
-}
-
-void mesh_parameterize_cb(CALLBACK_ARGS)
-{
-  Msg(GERROR, "Reparameterize not implemented yet");
 }
 
 void mesh_update_edges_cb(CALLBACK_ARGS)

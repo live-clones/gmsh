@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.32 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: Transform.cpp,v 1.33 2006-11-29 20:40:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -37,9 +37,9 @@ StringXNumber TransformOptions_Number[] = {
   {GMSH_FULLRC, "A31", NULL, 0.},
   {GMSH_FULLRC, "A32", NULL, 0.},
   {GMSH_FULLRC, "A33", NULL, 1.},
-  {GMSH_FULLRC, "T1", NULL, 0.},
-  {GMSH_FULLRC, "T2", NULL, 0.},
-  {GMSH_FULLRC, "T3", NULL, 0.},
+  {GMSH_FULLRC, "Tx", NULL, 0.}, 
+  {GMSH_FULLRC, "Ty", NULL, 0.}, // cannot use T2 (reserve token in parser)
+  {GMSH_FULLRC, "Tz", NULL, 0.}, // cannot use T3 (reserve token in parser)
   {GMSH_FULLRC, "SwapOrientation", NULL, 0.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
@@ -72,9 +72,9 @@ void GMSH_TransformPlugin::getInfos(char *author, char *copyright,
          "Plugin(Transform) transforms the homogeneous\n"
 	 "node coordinates (x,y,z,1) of the elements in\n"
 	 "the view `iView' by the matrix\n"
-         "[`A11' `A12' `A13' `T1']\n"
-	 "[`A21' `A22' `A23' `T2']\n"
-	 "[`A31' `A32' `A33' `T3'].\n"
+         "[`A11' `A12' `A13' `Tx']\n"
+	 "[`A21' `A22' `A23' `Ty']\n"
+	 "[`A31' `A32' `A33' `Tz'].\n"
 	 "If `SwapOrientation' is set, the orientation of the\n"
 	 "elements is reversed. If `iView' < 0, the plugin\n"
 	 "is run on the current view.\n"
