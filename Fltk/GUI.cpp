@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.568 2006-11-29 04:50:42 geuzaine Exp $
+// $Id: GUI.cpp,v 1.569 2006-11-29 15:04:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4011,7 +4011,7 @@ void GUI::create_visibility_window()
     vis_group[2] = new Fl_Group(WB, 2 * WB + 2 * BH, width - 2 * WB, height - 4 * WB - 2 * BH, "Interactive");
     vis_group[2]->resizable(NULL);
 
-    Fl_Box *b2 = new Fl_Box(FL_NO_BOX, 2 * WB, 3 * WB + 2 * BH, brw, BH, "Select entities to hide with the mouse:");
+    Fl_Box *b2 = new Fl_Box(FL_NO_BOX, 2 * WB, 3 * WB + 2 * BH, brw, BH, "Hide with the mouse:");
     b2->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
 
     Fl_Button *butt1 = new Fl_Button(2*WB, 3 * WB + 3 * BH, IW, BH, "Elements");
