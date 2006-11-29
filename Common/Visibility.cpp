@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.22 2006-11-29 03:11:18 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.23 2006-11-29 16:11:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -189,7 +189,8 @@ std::string VisibilityManager::getStringForGEO()
   return str;
 }
 
-void VisibilityManager::setVisibilityByNumber(int type, int num, int all, bool val)
+void VisibilityManager::setVisibilityByNumber(int type, int num, int all, char val, 
+					      bool recursive)
 {
   switch(type){
   case 0: // nodes
@@ -241,19 +242,19 @@ void VisibilityManager::setVisibilityByNumber(int type, int num, int all, bool v
     break;
   case 2: // point
     for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
-      if(all || (*it)->tag() == num) (*it)->setVisibility(val);
+      if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
     break;
   case 3: // line
     for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
-      if(all || (*it)->tag() == num) (*it)->setVisibility(val);
+      if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
     break;
   case 4: // surface
     for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
-      if(all || (*it)->tag() == num) (*it)->setVisibility(val);
+      if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
     break;
   case 5: // volume
     for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
-      if(all || (*it)->tag() == num) (*it)->setVisibility(val);
+      if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
     break;
   }
 }

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.486 2006-11-29 04:50:42 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.487 2006-11-29 16:11:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2139,8 +2139,9 @@ void visibility_number_cb(CALLBACK_ARGS)
   
   char *str = (char *)WID->vis_input[type]->value();  
   int all = !strcmp(str, "all") || !strcmp(str, "*");
-  int num = all ? 0 : atoi(str); 
-  VisibilityManager::instance()->setVisibilityByNumber(type, num, all, val);
+  int num = all ? 0 : atoi(str);
+  int recursive = WID->vis_butt[0]->value();
+  VisibilityManager::instance()->setVisibilityByNumber(type, num, all, val, recursive);
   int pos = WID->vis_browser->position();
   visibility_cb(NULL, NULL);
   WID->vis_browser->position(pos);
@@ -2159,18 +2160,22 @@ void visibility_hide_cb(CALLBACK_ARGS)
   else if(!strcmp(str, "points")){
     CTX.pick_elements = 0;
     what = ENT_POINT;
+    opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(str, "lines")){
     CTX.pick_elements = 0;
     what = ENT_LINE;
+    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(str, "surfaces")){
     CTX.pick_elements = 0;
     what = ENT_SURFACE;
+    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(str, "volumes")){
     CTX.pick_elements = 0;
     what = ENT_VOLUME;
+    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
   }
   else
     return;
@@ -2180,6 +2185,8 @@ void visibility_hide_cb(CALLBACK_ARGS)
   std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
   std::vector<MElement*> elements;
+
+  int recursive = WID->vis_butt[0]->value();
 
   while(1) {
     CTX.mesh.changed = ENT_ALL;
@@ -2195,11 +2202,11 @@ void visibility_hide_cb(CALLBACK_ARGS)
 	for(unsigned int i = 0; i < vertices.size(); i++)
 	  vertices[i]->setVisibility(0);
 	for(unsigned int i = 0; i < edges.size(); i++)
-	  edges[i]->setVisibility(0);
+	  edges[i]->setVisibility(0, recursive);
 	for(unsigned int i = 0; i < faces.size(); i++)
-	  faces[i]->setVisibility(0);
+	  faces[i]->setVisibility(0, recursive);
 	for(unsigned int i = 0; i < regions.size(); i++)
-	  regions[i]->setVisibility(0);
+	  regions[i]->setVisibility(0, recursive);
       }
       int pos = WID->vis_browser->position();
       visibility_cb(NULL, NULL);
