@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.22 2006-11-27 22:22:13 geuzaine Exp $
+// $Id: GModel.cpp,v 1.23 2006-11-29 03:11:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -181,6 +181,43 @@ void GModel::deletePhysicalGroups()
     (*it)->physicals.clear();
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     (*it)->physicals.clear();
+}
+
+int GModel::maxPhysicalNumber()
+{
+  int num = 0;
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
+      num = std::max(num, (*it)->physicals[i]);
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
+      num = std::max(num, (*it)->physicals[i]);
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
+      num = std::max(num, (*it)->physicals[i]);
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
+      num = std::max(num, (*it)->physicals[i]);
+  return num;
+}
+
+int GModel::setPhysicalName(std::string name, int number)
+{
+  // check if the name is already used
+  std::map<int, std::string>::iterator it = physicalNames.begin();
+  while(it != physicalNames.end()){
+    if(it->second == name) return it->first;
+    ++it;
+  }
+  // if no number is given, find the next available one
+  if(!number) number = maxPhysicalNumber() + 1;
+  physicalNames[number] = name;
+  return number;
+}
+
+std::string GModel::getPhysicalName(int number)
+{
+  return physicalNames[number];
 }
 
 SBoundingBox3d GModel::bounds()

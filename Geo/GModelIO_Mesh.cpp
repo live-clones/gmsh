@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.2 2006-11-27 22:22:13 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.3 2006-11-29 03:11:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -312,6 +312,30 @@ int GModel::readMSH(const std::string &name)
       }
 
     }
+    else if(!strncmp(&str[1], "PhysicalNames", 13)) {
+
+      if(!fgets(str, sizeof(str), fp)) return 0;
+      int numNames;
+      if(sscanf(str, "%d", &numNames) != 1) return 0;
+      for(int i = 0; i < numNames; i++) {
+	int num;
+	if(fscanf(fp, "%d", &num) != 1) return 0;
+	if(!fgets(str, sizeof(str), fp)) return 0;
+	char *c = strstr(str, "\"");
+	if(c){
+	  char name[256];
+	  int i = 0;
+	  while (*(++c) != '"') {
+	    if(*c == EOF || *c == '\n' || *c == '\r') break;
+	    if(i > 255) break;
+	    name[i++] = *c;
+	  }
+	  name[i] = '\0';
+	  setPhysicalName(std::string(name), num);
+	}
+      }
+
+    }
     else if(!strncmp(&str[1], "NO", 2) || !strncmp(&str[1], "Nodes", 5)) {
 
       if(!fgets(str, sizeof(str), fp)) return 0;
@@ -594,6 +618,15 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
       fprintf(fp, "\n");
     }
     fprintf(fp, "$EndMeshFormat\n");
+
+    if(numPhysicalNames()){
+      fprintf(fp, "$PhysicalNames\n");
+      fprintf(fp, "%d\n", numPhysicalNames());
+      for(piter it = firstPhysicalName(); it != lastPhysicalName(); it++)
+	fprintf(fp, "%d \"%s\"\n", it->first, it->second.c_str());
+      fprintf(fp, "$EndPhysicalNames\n");
+    }
+
     fprintf(fp, "$Nodes\n");
   }
   else

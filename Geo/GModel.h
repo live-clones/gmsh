@@ -44,6 +44,7 @@ class GModel
   std::set<GEdge*, GEntityLessThan> edges;
   std::set<GVertex*, GEntityLessThan> vertices;
   std::set<int> meshPartitions;
+  std::map<int, std::string> physicalNames;
  public:
   GModel() : modelName("Untitled"), normals(0) {}
   GModel(const std::string &name) : modelName(name), normals(0) {}
@@ -53,6 +54,7 @@ class GModel
   typedef std::set<GFace*, GEntityLessThan>::iterator fiter;
   typedef std::set<GEdge*, GEntityLessThan>::iterator eiter;
   typedef std::set<GVertex*, GEntityLessThan>::iterator viter;
+  typedef std::map<int, std::string>::iterator piter;
 
   // Deletes everything in a GModel 
   virtual void destroy();
@@ -106,6 +108,22 @@ class GModel
 
   // Deletes all physical groups in the model
   void deletePhysicalGroups();
+
+  // Returns the highest number associated with a physical entity
+  int maxPhysicalNumber();
+
+  // Get an iterator on the physical name
+  piter firstPhysicalName() { return physicalNames.begin(); }
+  piter lastPhysicalName() { return physicalNames.end(); }
+
+  // Get the number of physical names
+  int numPhysicalNames(){ return physicalNames.size(); }
+
+  // Associate a name with a physical number (returns new id if number==0)
+  int setPhysicalName(std::string name, int number=0);
+
+  // create a new physical name and return the automatic associated number
+  std::string getPhysicalName(int number);
 
   // The bounding box
   virtual SBoundingBox3d bounds();

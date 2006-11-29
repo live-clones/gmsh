@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.244 2006-11-27 22:22:31 geuzaine Exp $
+// $Id: Gmsh.y,v 1.245 2006-11-29 03:11:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -107,7 +107,7 @@ int CheckViewErrorFlags(Post_View *v);
 
 %type <d> FExpr FExpr_Single 
 %type <v> VExpr VExpr_Single
-%type <i> NumericAffectation NumericIncrement
+%type <i> NumericAffectation NumericIncrement PhysicalId
 %type <u> ColorExpr
 %type <c> StringExpr SendToFile
 %type <l> FExpr_Multi ListOfDouble RecursiveListOfDouble
@@ -1004,8 +1004,19 @@ Affectation :
     }
 ;
 
-
 //  S H A P E
+
+PhysicalId :
+    FExpr
+    { 
+      $$ = $1; 
+    }
+  | StringExpr 
+    { 
+      $$ = GMODEL->setPhysicalName(std::string($1), ++THEM->MaxPhysicalNum);
+      Free($1);
+    }
+;
 
 Shape :
 
@@ -1027,7 +1038,7 @@ Shape :
       $$.Type = MSH_POINT;
       $$.Num = num;
     }
-  | tPhysical tPoint '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tPhysical tPoint '(' PhysicalId ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
       if(FindPhysicalGroup(num, MSH_PHYSICAL_POINT)){
@@ -1311,7 +1322,7 @@ Shape :
       $$.Type = 0;
       $$.Num = 0;
     }
-  | tPhysical tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tPhysical tLine '(' PhysicalId ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
       if(FindPhysicalGroup(num, MSH_PHYSICAL_LINE)){
@@ -1467,7 +1478,7 @@ Shape :
       $$.Type = MSH_SURF_LOOP;
       $$.Num = num;
     }
-  | tPhysical tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tPhysical tSurface '(' PhysicalId ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
       if(FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE)){
@@ -1521,7 +1532,7 @@ Shape :
       $$.Type = MSH_VOLUME;
       $$.Num = num;
     }
-  | tPhysical tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tPhysical tVolume '(' PhysicalId ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
       if(FindPhysicalGroup(num, MSH_PHYSICAL_VOLUME)){

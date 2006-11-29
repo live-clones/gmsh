@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.21 2006-11-28 20:17:44 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.22 2006-11-29 03:11:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -53,7 +53,7 @@ static void setLabels(void *a, void *b){
   for(int j = 0; j < List_Nbr(s->val); j++) {
     double tag;
     List_Read(s->val, j, &tag);
-    VisibilityManager::instance()->setLabel((int)tag, std::string(s->Name));
+    VisibilityManager::instance()->setLabel((int)tag, std::string(s->Name), 0);
   }
 }
 
@@ -61,7 +61,17 @@ void VisibilityManager::update(int type)
 {
   _labels.clear();
 
+  // get old labels from parser
   if(Tree_Nbr(Symbol_T)) Tree_Action(Symbol_T, setLabels);
+
+  // add new labels for physicals
+  if(type == 1){
+    GModel::piter it = GMODEL->firstPhysicalName();
+    while(it != GMODEL->lastPhysicalName()){
+      setLabel(it->first, it->second);
+      ++it;
+    }
+  }
 
   for(unsigned int i = 0; i < _entities.size(); i++)
     delete _entities[i];
@@ -116,8 +126,10 @@ std::string VisibilityManager::getBrowserLine(int n)
 {
   int tag = _entities[n]->getTag();
   char str[256];
-  sprintf(str, "\t%s\t%d\t%s", _entities[n]->getName().c_str(), tag, 
-	  _labels.count(tag) ? _labels[tag].c_str() : "");
+  bool label_exists = _labels.count(tag);
+  const char *label_color = (label_exists && _labels[tag].second) ? "@b" : "";
+  sprintf(str, "\t%s\t%d\t%s%s", _entities[n]->getName().c_str(), tag, 
+	  label_color, label_exists ? _labels[tag].first.c_str() : "");
   return std::string(str);
 }
 

@@ -77,15 +77,15 @@ Physical Point(1) = {1,2} ;
 // files, both with the region number 1. The mechanism is identical
 // for line or surface elements:
 
-Physical Line(10) = {1,2,4} ;
+MyLine = 99;
+Physical Line(MyLine) = {1,2,4} ;
 
-MySurface = 100;
-Physical Surface(MySurface) = {6} ;
+Physical Surface("My fancy surface label") = {6} ;
 
 // All the line elements created during the meshing of lines 1, 2 and
-// 4 will be saved in the output file with the region number 10; and
+// 4 will be saved in the output file with the region number 99; and
 // all the triangular elements resulting from the discretization of
-// surface 6 will be given the region number 100.
+// surface 6 will be given an automatic region number (100).
 
 // Note that, if no physical entities are defined, all the elements in
 // the mesh will be directly saved with their default orientation and

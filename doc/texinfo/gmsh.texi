@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.220 2006-11-27 22:22:33 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.221 2006-11-29 03:11:21 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 @c
@@ -1469,11 +1469,13 @@ coordinates of the point in the three-dimensional Euclidean space; the last
 @ref{Characteristic lengths}, for more information about how this
 characteristic length information is used in the meshing process.
 
-@item Physical Point ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a physical point. The @var{expression} inside the parentheses is the
-physical point's identification number; the @var{expression-list} on the
-right hand side should contain the identification numbers of all the
-elementary points that need to be grouped inside the physical point.
+@item Physical Point ( @var{expression} | @var{char-expression} ) = @{ @var{expression-list} @};
+Creates a physical point. The @var{expression} inside the parentheses is
+the physical point's identification number (if a @var{char-expression}
+is given instead, a unique identification number is automatically
+created); the @var{expression-list} on the right hand side should
+contain the identification numbers of all the elementary points that
+need to be grouped inside the physical point.
 @end ftable
 
 @c .........................................................................
@@ -1560,14 +1562,16 @@ supports it, it is not recommended to specify multiple line loops (or
 subloops) in a single @code{Line Loop} command. (Line loops are used to
 create surfaces: see @ref{Surfaces}.)
 
-@item Physical Line ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a physical line. The @var{expression} inside the parentheses is the
-physical line's identification number; the @var{expression-list} on the
-right hand side should contain the identification numbers of all the
-elementary lines that need to be grouped inside the physical
-line. Specifying negative identification numbers in the
-@var{expression-list} will reverse the orientation of the mesh elements
-belonging to the corresponding elementary lines in the saved mesh.
+@item Physical Line ( @var{expression} | @var{char-expression} ) = @{ @var{expression-list} @};
+Creates a physical line. The @var{expression} inside the parentheses is
+the physical line's identification number (if a @var{char-expression} is
+given instead, a unique identification number is automatically
+created); the @var{expression-list} on the right hand side should
+contain the identification numbers of all the elementary lines that need
+to be grouped inside the physical line. Specifying negative
+identification numbers in the @var{expression-list} will reverse the
+orientation of the mesh elements belonging to the corresponding
+elementary lines in the saved mesh.
 @end ftable
 
 @c .........................................................................
@@ -1621,14 +1625,16 @@ elementary surfaces should be oriented consistently (using negative
 identification numbers to specify reverse orientation). (Surface loops are
 used to create volumes: see @ref{Volumes}.)
 
-@item Physical Surface ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a physical surface. The @var{expression} inside the parentheses is
-the physical surface's identification number; the @var{expression-list} on
-the right hand side should contain the identification numbers of all the
-elementary surfaces that need to be grouped inside the physical
-surface. Specifying negative identification numbers in the
-@var{expression-list} will reverse the orientation of the mesh elements
-belonging to the corresponding elementary surfaces in the saved mesh.
+@item Physical Surface ( @var{expression} | @var{char-expression} ) = @{ @var{expression-list} @};
+Creates a physical surface. The @var{expression} inside the parentheses
+is the physical surface's identification number (if a
+@var{char-expression} is given instead, a unique identification number
+is automatically created); the @var{expression-list} on the right hand
+side should contain the identification numbers of all the elementary
+surfaces that need to be grouped inside the physical surface. Specifying
+negative identification numbers in the @var{expression-list} will
+reverse the orientation of the mesh elements belonging to the
+corresponding elementary surfaces in the saved mesh.
 @end ftable
 
 @c .........................................................................
@@ -1659,12 +1665,13 @@ combined).
 
 (A deprecated synonym for @code{Volume} is @code{Complex Volume}.)
 
-@item Physical Volume ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a physical volume. The @var{expression} inside the parentheses is
-the physical volume's identification number; the @var{expression-list} on
-the right hand side should contain the identification numbers of all the
-elementary volumes that need to be grouped inside the physical
-volume.
+@item Physical Volume ( @var{expression} | @var{char-expression} ) = @{ @var{expression-list} @};
+Creates a physical volume. The @var{expression} inside the parentheses
+is the physical volume's identification number (if a
+@var{char-expression} is given instead, a unique identification number
+is automatically created); the @var{expression-list} on the right hand
+side should contain the identification numbers of all the elementary
+volumes that need to be grouped inside the physical volume.
 @end ftable
 
 @c .........................................................................
@@ -2976,9 +2983,10 @@ but is more general: it contains information about itself and allows to
 associate an arbitrary number of integer tags with each element. Ialso
 exists in both ASCII and binary form.
 
-The @file{.msh} file format, version 2.0, is divided in three sections,
-defining the file format (@code{$MeshFormat}-@code{$EndMeshFormat}), the
-nodes (@code{$Nodes}-@code{$EndNodes}) and the elements
+The @file{.msh} file format, version 2.0, is divided in three main
+sections, defining the file format
+(@code{$MeshFormat}-@code{$EndMeshFormat}), the nodes
+(@code{$Nodes}-@code{$EndNodes}) and the elements
 (@code{$Elements}-@code{$EndElements}) in the mesh:
 
 @example
@@ -3104,6 +3112,17 @@ ordering of these additional nodes follows the ordering of the edges and
 quadrangular faces given in @ref{Gmsh node ordering}.
 @end table
 
+Additional sections can be present in the file, which an external parser
+can simply ignore. One such additional section
+(@code{$PhysicalNames}-@code{$EndPhysicalNames}) associates names with
+physical entity identification numbers:
+@example
+$PhysicalNames
+@var{number-of-names}
+@var{phyical-number} "@var{physical-name}"
+$EndPhysicalNames
+@end example
+
 @c .........................................................................
 @c Version 2.0 BINARY
 @c .........................................................................
@@ -3208,6 +3227,9 @@ for(i = 0; i < number_of_triangles; i++)@{
 @}
 @end example
 @end table
+
+The same additional sections as in the ASCII format can be present in
+the file.
 
 @c -------------------------------------------------------------------------
 @c Gmsh post-processing file formats

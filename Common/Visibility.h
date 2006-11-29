@@ -102,7 +102,7 @@ class VisPartition : public Vis {
 // Singleton, one visibility manager for the whole interface
 class VisibilityManager {
  private:
-  std::map<int, std::string> _labels;
+  std::map<int, std::pair<std::string, int> > _labels;
   std::vector<Vis*> _entities;
   int _sortMode;
   static VisibilityManager *manager;
@@ -153,11 +153,14 @@ class VisibilityManager {
   // get the sort mode
   int getSortMode(){ return _sortMode; }
 
-  // associate a label with a tag
-  void setLabel(int tag, std::string label){ _labels[tag] = label; }
+  // associate a label with a tag (quality=0 for "old-style" unreliable labels)
+  void setLabel(int tag, std::string label, int quality=1)
+  { 
+    _labels[tag] = std::make_pair(label, quality); 
+  }
 
   // get the label associated with a tag
-  std::string getLabel(int tag){ return _labels[tag]; }
+  std::string getLabel(int tag){ return _labels[tag].first; }
 };
 
 #endif
