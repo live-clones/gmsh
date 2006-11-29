@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.17 2006-11-29 16:57:01 remacle Exp $
+// $Id: meshGRegion.cpp,v 1.18 2006-11-29 23:44:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -240,6 +240,8 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
   if(importVolumeMesh){
     for(unsigned int i = 0; i< gr->tetrahedra.size(); i++){
       MTetrahedron *t = gr->tetrahedra[i];
+      // netgen expects tet with negative volume
+      if(t->getVolumeSign() > 0) t->revert();
       int tmp[4];
       tmp[0] = t->getVertex(0)->getNum();
       tmp[1] = t->getVertex(1)->getNum();
