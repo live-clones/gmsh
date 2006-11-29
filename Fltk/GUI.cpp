@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.569 2006-11-29 15:04:10 geuzaine Exp $
+// $Id: GUI.cpp,v 1.570 2006-11-29 15:11:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3968,8 +3968,8 @@ void GUI::create_visibility_window()
     Fl_Button *b2 = new Fl_Button(width - BB - 2 * WB, height - 2 * BH - 3 * WB, BB, BH, "Save");
     b2->callback(visibility_save_cb);
 
-    vis_group[0] ->end();
-    Fl_Group::current()->resizable(o);
+    vis_group[0]->end();
+    Fl_Group::current()->resizable(vis_group[0]);
   }
   {
     vis_group[1] = new Fl_Group(WB, 2 * WB + 2 * BH, width - 2 * WB, height - 4 * WB - 2 * BH, "Numeric input");
