@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.4 2006-11-29 16:57:01 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.5 2006-11-29 20:31:29 jacob Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -133,8 +133,10 @@ double LC_MVertex_PNTS ( GEntity *ge, double U, double V )
   switch (ge->dim ())
     {
     case 0:
+		{
       GVertex *gv = (GVertex *)ge;
       return gv->prescribedMeshSizeAtVertex();
+		}
     case 1:
       {
 	GEdge *ged = (GEdge *)ge;

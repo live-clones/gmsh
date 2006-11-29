@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.118 2006-11-27 22:22:14 geuzaine Exp $
+# $Id: Makefile,v 1.119 2006-11-29 20:31:29 jacob Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -44,6 +44,7 @@ SRC = GEntity.cpp\
       MVertex.cpp \
       MElement.cpp \
       SVector3.cpp\
+      projectionFace.cpp\
       SBoundingBox3d.cpp
 
 OBJ = ${SRC:.cpp=.o}
