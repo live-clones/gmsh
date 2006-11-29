@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.5 2006-11-29 20:31:29 jacob Exp $
+// $Id: BackgroundMesh.cpp,v 1.6 2006-11-29 23:26:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -155,18 +155,21 @@ double LC_MVertex_PNTS ( GEntity *ge, double U, double V )
 
 double BGM_MeshSize ( GEntity *ge, double U, double V , double X, double Y, double Z)
 {
-  double l1 = 1.e22;
-  double l2 = 1.e22;
-  //  if (ge->dim() < 3) l1 = LC_MVertex_CURV ( ge, U, V );
-  if (ge->dim() < 2) l2 = LC_MVertex_PNTS ( ge, U, V );
-  double l3 = ge->model()->getMeshSize();
-  double l = std::min(std::min(l1,l2),l3);
-  double l4 = LC_MVertex_BGM ( ge, X, Y , Z );
-  l = std::min(l,l4);
-  
-  //  printf("l = %12.5E\n",l);
-
-  return l * CTX.mesh.lc_factor ;
+  if(CTX.mesh.bgmesh_type == ONFILE && !CTX.mesh.constrained_bgmesh){
+    // unconstrained background mesh
+    return BGMXYZ(X,Y,Z) * CTX.mesh.lc_factor;
+  }
+  else{
+    double l1 = 1.e22;
+    double l2 = 1.e22;
+    //  if (ge->dim() < 3) l1 = LC_MVertex_CURV ( ge, U, V );
+    if (ge->dim() < 2) l2 = LC_MVertex_PNTS ( ge, U, V );
+    double l3 = ge->model()->getMeshSize();
+    double l = std::min(std::min(l1,l2),l3);
+    double l4 = LC_MVertex_BGM ( ge, X, Y , Z );
+    l = std::min(l,l4);
+    return l * CTX.mesh.lc_factor ;
+  }
 }
 
 int BGMWithView(Post_View * ErrView)
