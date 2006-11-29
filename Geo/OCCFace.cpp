@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.15 2006-11-27 22:22:14 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.16 2006-11-29 16:57:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -188,14 +188,14 @@ GEntity::GeomType OCCFace::geomType() const
 
 double OCCFace::curvature (const SPoint2 &param) const
 {
+  const double eps = 1.e-12;
   BRepAdaptor_Surface sf(s, Standard_True);
-  BRepLProp_SLProps prop(sf, 2, 1e-5);
+  BRepLProp_SLProps prop(sf, 2, eps);
   prop.SetParameters (param.x(),param.y());
 
   if (!prop.IsCurvatureDefined())
     {
-      Msg(GERROR,"Curvature not defined for face %d",tag());
-      return -1;
+      return eps;
     }
   return std::max(fabs(prop.MinCurvature()), fabs(prop.MaxCurvature()));
 }

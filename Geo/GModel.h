@@ -37,6 +37,7 @@ class GModel
 {
   void deleteOCCInternals();
   OCC_Internals *occ_internals;
+  double meshSize;
  protected:
   std::string modelName;
   std::set<GRegion*, GEntityLessThan> regions;
@@ -46,8 +47,8 @@ class GModel
   std::set<int> meshPartitions;
   std::map<int, std::string> physicalNames;
  public:
-  GModel() : modelName("Untitled"), normals(0) {}
-  GModel(const std::string &name) : modelName(name), normals(0) {}
+  GModel() : modelName("Untitled"), normals(0), meshSize(-1.) {}
+  GModel(const std::string &name) : modelName(name), normals(0), meshSize(-1.) {}
   virtual ~GModel(){ deleteOCCInternals();destroy(); }
   
   typedef std::set<GRegion*, GEntityLessThan>::iterator riter;
@@ -197,6 +198,12 @@ class GModel
   // IO for CGNS files
   int readCGNS(const std::string &name);
   int writeCGNS(const std::string &name, double scalingFactor=1.0);
+
+  // returns the global mesh size for the model
+  // default value is a tenth of the size of the domain  
+
+  double getMeshSize () ;
+  void  setMeshSize (const double s) {meshSize = s;}  
 };
 
 #endif

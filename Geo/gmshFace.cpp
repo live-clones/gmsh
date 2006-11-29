@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.25 2006-11-27 22:22:14 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.26 2006-11-29 16:57:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -161,6 +161,7 @@ GPoint gmshFace::point(double par1, double par2) const
   if(s->Typ == MSH_SURF_PLAN){
     double x, y, z, VX[3], VY[3];
     getMeanPlaneData(VX, VY, x, y, z);
+
     return GPoint(x + VX[0] * par1 + VY[0] * par2,
 		  y + VX[1] * par1 + VY[1] * par2,
 		  z + VX[2] * par1 + VY[2] * par2, this, pp);

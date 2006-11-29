@@ -60,7 +60,6 @@ class OCCVertex : public GVertex {
   }
   ModelType getNativeType() const { return OpenCascadeModel; }
   void * getNativePtr() const { return (void*) &v; }
-  virtual double prescribedMeshSizeAtVertex() const;
   virtual SPoint2 reparamOnFace ( GFace *gf , int) const;
 };
 

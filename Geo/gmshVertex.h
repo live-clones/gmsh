@@ -28,7 +28,7 @@ class gmshVertex : public GVertex {
   Vertex *v;
 
  public:
-  gmshVertex(GModel *m, Vertex *_v) : GVertex(m, _v->Num), v(_v)
+  gmshVertex(GModel *m, Vertex *_v) : GVertex(m, _v->Num,_v->lc), v(_v)
   {
     mesh_vertices.push_back(new MVertex(x(), y(), z(), this));
   }
@@ -61,11 +61,6 @@ class gmshVertex : public GVertex {
   }
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return v; }
-  virtual double prescribedMeshSizeAtVertex() const 
-  { 
-    double lc = v ? CTX.mesh.lc_factor * v->lc : 0.0;
-    return (lc <= 0) ? 1.0 : lc;
-  }
 };
 
 #endif

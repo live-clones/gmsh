@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.19 2006-11-27 22:22:11 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.20 2006-11-29 16:57:00 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -36,6 +36,7 @@ GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
   meshAttributes.nbPointsTransfinite = 0;
   meshAttributes.typeTransfinite = 0;
   meshAttributes.extrude = 0;
+  meshAttributes.meshSize = 1.e22;
 }
 
 GEdge::~GEdge() 

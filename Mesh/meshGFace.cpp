@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.33 2006-11-27 22:22:17 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.34 2006-11-29 16:57:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -47,36 +47,10 @@ public :
 
     GEntity *ge = v->onWhat();
 
-    // here, the point is classified on a model edge. So
-    // it is possible that the CAD can easily compute
-    // parametric coordinates of the point on the face using the
-    // parametric coordinate of the point on the edge. By default,
-    // the model will use parFromPoint
-    if (ge->dim() == 0)
-      {
-	GVertex *gve = (GVertex*)ge;
-	SPoint2 param = gve->reparamOnFace(gf,1);
-	v->x() = param.x();  
-	v->y() = param.y();
-	v->z() = 0.0;
-      }
-    else if (ge->dim() == 1)
-      {
-	GEdge *ged = (GEdge*)ge;
-	double u;
-	v->getParameter(0,u);
-	SPoint2 param = ged->reparamOnFace(gf,u,1);
-	v->x() = param.x();  
-	v->y() = param.y();
-	v->z() = 0.0;
-      }
-    else
-      {
-	SPoint2 param =  gf->parFromPoint (SPoint3(v->x(),v->y(),v->z()));
-	v->x() = param.x();  
-	v->y() = param.y();
-	v->z() = 0.0;
-      }
+    SPoint2 param =  gf->parFromPoint (SPoint3(v->x(),v->y(),v->z()));
+    v->x() = param.x();  
+    v->y() = param.y();
+    v->z() = 0.0;
   }
 };
 
@@ -137,20 +111,7 @@ extern double F_LC_ANALY (double xx, double yy, double zz);
 
 double NewGetLc ( BDS_Point *p  )
 {
-  if(CTX.mesh.bgmesh_type == ONFILE) {
-    const double lc_bgm = BGMXYZ(p->X, p->Y, p->Z);
-    if(CTX.mesh.constrained_bgmesh)
-      return std::min(lc_bgm, p->lc());
-    else
-      return lc_bgm;
-  }
-
-  //  const double curv = p->radius();
-  //  if (curv == 0.0)
   return p->lc();
-    //  else
-    //    return std::min(p->lc(),1./(2*curv));
-  return  F_LC_ANALY(p->X,p->Y,p->Z);
 }
 
 inline double computeEdgeLinearLength ( BDS_Point *p1, BDS_Point *p2)
@@ -307,7 +268,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	if (l<L && (*it)->g && (*it)->g->classif_degree == 1)L=l;
 	++it;
       }
-      (*itp)->lc() = L;
+      (*itp)->lc() = std::min(L,(*itp)->lc());
       ++itp;
     }
 
@@ -366,16 +327,20 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	    {
 	      double lone = NewGetLc ( *it);
 
-	      if (lone < 1.e-8 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
-
+	      const double coord = 0.5;
+	      if (lone < 1.e-12 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
 	      if ((*it)->numfaces() == 2 && (lone >  1.3))
 		{
 		  BDS_Point *mid ;
-		  double coord = 0.5;
 		  mid  = m.add_point(++m.MAXPOINTNUMBER,
 				     coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
 				     coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v,gf);
-		  mid->lc() = 0.5 * ( (*it)->p1->lc() +  (*it)->p2->lc() );
+		  double l1 = 0.5 * ( (*it)->p1->lc() +  (*it)->p2->lc() );
+		  double l2 = BGM_MeshSize(gf,
+ 					   (coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u)*m.scalingU,
+ 					   (coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v)*m.scalingV,
+					   mid->X,mid->Y,mid->Z);
+		  mid->lc() = std::min(l1,l2);
 		  m.split_edge ( *it, mid );
 		  nb_split++;
 		} 
@@ -384,7 +349,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	}
 
       // swap edges that provide a better configuration
-      NN1 = m.edges.size();
+//       NN1 = m.edges.size();
       NN2 = 0;
       it = m.edges.begin();
       while (1)
@@ -412,7 +377,8 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	{
 	  if (NN2++ >= NN1)break;
 	  double lone = NewGetLc ( *it);
-	  if (lone < 1.e-8 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
+	  if (lone < 1.e-12 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
+
 	  if (!(*it)->deleted && (*it)->numfaces() == 2 && lone < 0.6 )
 	    {
 	      bool res = false;
@@ -580,22 +546,25 @@ void gmsh2DMeshGenerator ( GFace *gf )
       ++it;
     }
 
-  double * X_ = new double [all_vertices.size()];
-  double * Y_ = new double [all_vertices.size()];
-  double * Z_ = new double [all_vertices.size()];
+  double * U_     = new double [all_vertices.size()];
+  double * V_     = new double [all_vertices.size()];
 
   v_container::iterator itv = all_vertices.begin();
 
   //  FILE *fdeb = fopen("debug.dat","w");
   //  fprintf(fdeb,"surface %d\n" ,gf->tag());
   int count = 0;
+  SBoundingBox3d bbox;
   while(itv != all_vertices.end())
     {
       MVertex *here     = *itv;
-      //    fprintf(fdeb,"%d %g %g %g\n" ,here->getNum(),here->x(),here->y(),here->z());
-      X_[count] = here->x();
-      Y_[count] = here->y();
-      Z_[count] = here->z();
+      SPoint2 param =  gf->parFromPoint (SPoint3(here->x(),here->y(),here->z()));
+       //    fprintf(fdeb,"%d %g %g %g\n" ,here->getNum(),here->x(),here->y(),here->z());
+      U_[count] = param.x();
+      V_[count] = param.y();
+      (*itv)->setNum(count);
+      numbered_vertices[(*itv)->getNum()] = *itv;
+      bbox += SPoint3 ( param.x(), param.y() , 0);      
       count ++;
       ++itv;
     }
@@ -603,27 +572,10 @@ void gmsh2DMeshGenerator ( GFace *gf )
   //  fclose (fdeb);
 
 
-  // mesh the domain in the parametric space -> 
-  // project all points in their parametric space
-
-  Msg(DEBUG1,"Calculation of local coordinates");
-  fromCartesianToParametric c2p ( gf );
-  std::for_each (all_vertices.begin(),all_vertices.end(),c2p);    
-
   // compute the bounding box in parametric space
   // I do not have SBoundingBox, so I use a 3D one...
   // At the same time, number the vertices locally
-  Msg(DEBUG1,"Calculation of the bounding box");
-  SBoundingBox3d bbox;
-  itv = all_vertices.begin();
-  int NUM = 0;
-  while(itv != all_vertices.end())
-    {
-      bbox += SPoint3 ( (*itv)->x() , (*itv)->y() , 0);      
-      (*itv)->setNum(NUM++);
-      numbered_vertices[(*itv)->getNum()] = *itv;
-      ++itv;
-    }
+
   SVector3 dd (bbox.max() ,bbox.min());
   double LC2D = norm(dd);
 
@@ -645,8 +597,8 @@ void gmsh2DMeshGenerator ( GFace *gf )
         (double)rand() / (double)RAND_MAX;
       double YY = CTX.mesh.rand_factor * LC2D *
         (double)rand() / (double)RAND_MAX;
-      doc.points[j].where.h = here->x() + XX;
-      doc.points[j].where.v = here->y() + YY;
+      doc.points[j].where.h = U_[j] + XX;
+      doc.points[j].where.v = V_[j] + YY;
       doc.points[j].adjacent = NULL;
       doc.points[j].data = here;      
       j++;
@@ -682,11 +634,17 @@ void gmsh2DMeshGenerator ( GFace *gf )
   // Buid a BDS_Mesh structure that is convenient for doing the actual meshing procedure
 
   BDS_Mesh *m = new BDS_Mesh;
+  m->scalingU = 1;
+  m->scalingV = 1;
 
   for(int i = 0; i < doc.numPoints; i++) 
     {
-      MVertex *here = (MVertex*)doc.points[i].data;      
-      m->add_point ( here->getNum(), here->x(), here->y(), gf);
+      MVertex *here = (MVertex *)doc.points[i].data;
+      int num = here->getNum();
+      double U = U_[num];      
+      double V = V_[num];      
+      BDS_Point *pp = m->add_point ( num, U,V, gf);
+      pp->lc() = BGM_MeshSize ( gf, U, V, here->x(),here->y(),here->z());
     }
   for(int i = 0; i < doc.numTriangles; i++) 
     {
@@ -783,6 +741,14 @@ void gmsh2DMeshGenerator ( GFace *gf )
 	++ite;
       }
   }
+
+   char name[245];
+   sprintf(name,"param%d.pos",gf->tag());
+   outputScalarField(m->triangles, name,1);
+//   sprintf(name,"real%d.pos",gf->tag());
+//   outputScalarField(m->triangles, name,0);
+
+
   m->cleanup();
   m->del_point(m->find_point(-1));
   m->del_point(m->find_point(-2));
@@ -851,21 +817,8 @@ void gmsh2DMeshGenerator ( GFace *gf )
   //  outputScalarField(m->triangles, name);
   delete m;
 
-
-  itv = all_vertices.begin();
-  count = 0;
-  while(itv != all_vertices.end())
-    {
-      MVertex *here     = *itv;
-      here->x() = X_[count]  ;
-      here->y() = Y_[count]  ;
-      here->z() = Z_[count]  ;
-      count ++;
-      ++itv;
-    }
-  delete [] X_;
-  delete [] Y_;
-  delete [] Z_;
+  delete [] U_;
+  delete [] V_;
 
 }
 
@@ -1053,6 +1006,17 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	 V = param.y() / m->scalingV;
 	 BDS_Point *pp;
 	 pp = m->add_point ( count, U,V,gf );
+	 if(ge->dim() == 1)
+	   {
+	     double t;
+	     here->getParameter(0,t);
+	     pp->lc() = BGM_MeshSize(ge,t,-12,here->x(),here->y(),here->z());
+	   }
+	 else
+	   {
+	     pp->lc() = BGM_MeshSize(ge,param.x(),param.y(),here->x(),here->y(),here->z());
+	   }
+
 	 m->add_geom (ge->tag(), ge->dim());
 	 BDS_GeomEntity *g = m->get_geom(ge->tag(),ge->dim());
 	 pp->g = g;
@@ -1087,7 +1051,6 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   const double du = rangeU.high() -rangeU.low();
   const double dv = rangeV.high() -rangeV.low();
   
-
   const double LC2D = sqrt ( du*du + dv*dv ); 
 
   //  printf("LC2D %g (%g,%g), (%g,%g)\n",LC2D,rangeU.high(),rangeU.low(),rangeV.high(),rangeV.low());
@@ -1376,7 +1339,7 @@ void meshGFace :: operator() (GFace *gf)
   Msg(DEBUG1, "Generating the mesh");
 
   // temp fix until we create MEdgeLoops in gmshFace:
-  if(gf->edgeLoops.empty())
+  if(gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty())
     gmsh2DMeshGenerator ( gf ) ;
   else
     gmsh2DMeshGeneratorPeriodic ( gf ) ;

@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.13 2006-11-27 22:22:13 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.14 2006-11-29 16:57:00 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -54,7 +54,7 @@ public:
     wmap.Clear();
     emap.Clear();
     vmap.Clear();
-    tolerance = 1.e-5;
+    tolerance = 1.e-3;
   }
   void HealGeometry (bool fixsmalledges = true, bool fixspotstripfaces = true, bool sewfaces = false, bool makesolids = false);
   void loadSTEP(const char *);
@@ -509,9 +509,12 @@ void OCC_Internals :: loadIGES (const char *fn)
   Standard_Integer nb = reader.NbRootsForTransfer();
   reader.TransferRoots (); 
   shape = reader.OneShape();  
-//   BRepTools::Clean (shape);
-//   buildLists();
-//   HealGeometry();
+   BRepTools::Clean (shape);
+   buildLists();
+   HealGeometry();
+   BRepTools::Clean (shape);
+   buildLists();
+   HealGeometry();
   BRepTools::Clean (shape);
 }
 

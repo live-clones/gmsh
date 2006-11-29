@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.21 2006-11-27 22:22:17 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.22 2006-11-29 16:57:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -46,22 +46,11 @@ double F_LC_ANALY (double xx, double yy, double zz)
 
 double F_Lc(double t)
 {
-  //  const double nb_points_per_radius_of_curv = 2;
-  GPoint point = _myGEdge->point(t) ;      
-  const double fact = (t - t_begin) / (t_end - t_begin);
-  double lc_here = lc_begin + fact * (lc_end - lc_begin);
-  SVector3 der = _myGEdge->firstDer(t) ;
-  const double d = norm(der);
-
-  if(CTX.mesh.bgmesh_type == ONFILE) {
-    const double Lc = BGMXYZ(point.x(), point.y(), point.z());
-    if(CTX.mesh.constrained_bgmesh)
-      return std::max(d / Lc, d / lc_here);
-    else
-      return d / Lc;
-  }
-  else
-    return d/lc_here;
+  GPoint p = _myGEdge -> point (t);
+  double lc_here    = BGM_MeshSize(_myGEdge, t , 0 , p.x(),p.y(),p.z());
+  SVector3 der      = _myGEdge -> firstDer(t) ;
+  const double d    = norm(der);  
+  return d/lc_here;
 }
 
 double F_Transfinite(double t)
@@ -228,6 +217,8 @@ void meshGEdge :: operator() (GEdge *ge)
   // first compute the length of the curve by integrating one
   _myGEdgeLength = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), 
 			       F_One, Points, 1.e-4);
+  ge->setLength (_myGEdgeLength);
+
   List_Reset(Points);
 
   lc_begin = _myGEdge->getBeginVertex()->prescribedMeshSizeAtVertex();

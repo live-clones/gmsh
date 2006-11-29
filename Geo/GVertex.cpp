@@ -1,4 +1,4 @@
-// $Id: GVertex.cpp,v 1.9 2006-11-27 22:22:13 geuzaine Exp $
+// $Id: GVertex.cpp,v 1.10 2006-11-29 16:57:00 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,7 @@
 #include "GFace.h"
 #include <algorithm>
 
-GVertex::GVertex(GModel *m, int tag) : GEntity (m, tag) 
+GVertex::GVertex(GModel *m, int tag, double ms) : GEntity (m, tag), meshSize (ms) 
 {
 }
 

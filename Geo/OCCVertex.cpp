@@ -1,4 +1,4 @@
-// $Id: OCCVertex.cpp,v 1.8 2006-11-27 22:22:14 geuzaine Exp $
+// $Id: OCCVertex.cpp,v 1.9 2006-11-29 16:57:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -96,15 +96,6 @@ SPoint2 OCCVertex::reparamOnFace ( GFace *gf , int dir) const
     }
 }
 
-double OCCVertex::prescribedMeshSizeAtVertex() const { 
-  SBoundingBox3d b = model()->bounds();
-  double lc     = 0.1 * norm( SVector3 ( b.max() , b.min() ) ) * CTX.mesh.lc_factor;
-  double lc_min = 0.004 * norm(SVector3 ( b.max() , b.min() ) ) * CTX.mesh.lc_factor;
-  double maxc = max_curvature_of_surfaces();
-  if (maxc !=0)       
-    lc = std::max(lc_min,std::min (lc,6.28/(CTX.mesh.min_circ_points*maxc)));
-  return lc;
-}
 
 
 #endif

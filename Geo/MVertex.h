@@ -112,19 +112,6 @@ class MEdgeVertex : public MVertex{
   virtual bool setParameter(int i, double par){ _u = par; return true; }
 };
 
-class MSeamEdgeVertex : public MEdgeVertex{
- private:
-  MEdgeVertex *_ev;
- public :
-  MSeamEdgeVertex(MEdgeVertex* ev) 
-    : MEdgeVertex(ev->x(), ev->y(), ev->z(), ev->onWhat(),0), _ev(ev)
-    {
-      _ev->getParameter(0, _u);
-    }
-  ~MSeamEdgeVertex(){}
-};
-
-
 class MFaceVertex : public MVertex{
  protected:
   double _u, _v;

@@ -455,6 +455,11 @@ class MTetrahedron : public MElement {
     : MElement(num, part)
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
+    if (getVolume() < 0)
+      {
+	_v[0] = v1; _v[1] = v0;
+      }
+
   }
   MTetrahedron(std::vector<MVertex*> &v, int num=0, int part=0) 
     : MElement(num, part)

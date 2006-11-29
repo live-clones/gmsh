@@ -30,9 +30,9 @@ class GVertex : public GEntity
 {
  protected:
   std::list<GEdge*> l_edges;
-
+  double meshSize;
  public:
-  GVertex(GModel *m, int tag);
+  GVertex(GModel *m, int tag, double ms=1.e22);
   virtual ~GVertex();
   virtual GPoint point() const = 0;
   virtual double x() const = 0;
@@ -42,10 +42,12 @@ class GVertex : public GEntity
   void delEdge(GEdge *e);
   virtual int dim() const {return 0;}
   virtual GeomType geomType() const {return Point;}
-  virtual double prescribedMeshSizeAtVertex() const {return 0;}
+  inline double prescribedMeshSizeAtVertex() const {return meshSize;}
   virtual SBoundingBox3d bounds(){ return SBoundingBox3d(SPoint3(x(), y(), z())); }
   virtual SPoint2 reparamOnFace ( GFace *gf , int) const;
   virtual std::string getAdditionalInfoString();
+  virtual std::list<GEdge*> edges() const{return l_edges;}
+
 };
 
 #endif

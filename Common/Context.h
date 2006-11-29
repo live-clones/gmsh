@@ -191,6 +191,7 @@ public :
     double stl_distance_tol, dihedral_angle_tol;
     int edge_prolongation_threshold, do_not_coarsen;
     double  nb_elem_per_rc, min_elem_size_fact, target_elem_size_fact, beta_smooth_metric;
+    //    int use_curvature_control_for_mesh_size;
   } mesh;
 
   // post processing options 

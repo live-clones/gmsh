@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.13 2006-11-27 22:22:14 geuzaine Exp $
+// $Id: OCCEdge.cpp,v 1.14 2006-11-29 16:57:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,7 +25,8 @@
 #include "OCCFace.h"
 
 #if defined(HAVE_OCC)
-#include "Geom_BSplineCurve.hxx"
+#include "Geom2dLProp_CLProps2d.hxx"
+#include "Geom_BezierCurve.hxx"
 #include "Geom_BezierCurve.hxx"
 #include "Geom_Ellipse.hxx"
 #include "Geom_Circle.hxx"
@@ -193,10 +194,10 @@ GEntity::GeomType OCCEdge::geomType() const
 
 int OCCEdge::minimumMeshSegments () const
 {
-  if(geomType() == Circle || geomType() == Ellipse)
-    return (int)(fabs(s1 - s0) *
-		 (double)CTX.mesh.min_circ_points / Pi) - 1;
-  else
+//   if(geomType() == Circle || geomType() == Ellipse)
+//     return (int)(fabs(s1 - s0) *
+// 		 (double)CTX.mesh.min_circ_points / Pi) - 1;
+//   else
     return GEdge::minimumMeshSegments () ;
 }
 
@@ -215,11 +216,40 @@ int OCCEdge::minimumDrawSegments () const
 
 double OCCEdge::curvature(double par) const 
 {
-  return GEdge::curvature(par);
-  BRepAdaptor_Curve brepc(c);
-  BRepLProp_CLProps prop(brepc, 1, 1e-5);
-  prop.SetParameter (par); 
-  printf("curvature = %12.5E\n",prop.Curvature()); 
-  return fabs(prop.Curvature());
+  const double eps = 1.e-15;
+  Standard_Real Crv;
+  if (curve.IsNull())
+    {
+      Geom2dLProp_CLProps2d aCLProps(curve2d, 2, eps);
+      aCLProps.SetParameter (par);
+      if(!aCLProps.IsTangentDefined())
+	Crv =eps;
+      else
+	Crv = aCLProps.Curvature();
+    }
+  else
+    {
+      BRepAdaptor_Curve brepc(c);
+      BRepLProp_CLProps prop(brepc, 2, eps);
+      prop.SetParameter (par); 
+      if (!prop.IsTangentDefined())
+	Crv = eps;
+      else
+	Crv = prop.Curvature();
+    }
+  if (Crv <= eps)Crv = eps;
+
+//   std::list<GFace*> ff = faces();
+//   std::list<GFace *>::iterator it =  ff.begin();
+//   while (it != ff.end())
+//     {
+//       SPoint2 par2 = reparamOnFace((*it),par,1);
+//       const double cc = (*it)->curvature ( par2 );
+//       if (cc > 0)
+//     Crv = std::max( Crv, cc);  
+//     ++it;
+// }  
+// printf("curvature = %12.5E\n",Crv); 
+return Crv;
 }
 #endif

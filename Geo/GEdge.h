@@ -33,6 +33,7 @@ class GEdge : public GEntity {
  protected:
   GVertex *v0, *v1;
   std::list<GFace *> l_faces;
+  double _length;
 
  public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
@@ -99,9 +100,18 @@ class GEdge : public GEntity {
   // tells if the edge is a 3D edge (in opposition with a trimmed curve on a surface)
   virtual bool is3D () const {return true;}
 
+  // the length of the model edge
+  inline double length () const {return _length;}
+  inline void   setLength (const double l) {_length = l;}
+
+  // onr can impose the mesh size at an edge
+  virtual double prescribedMeshSizeAtVertex() const {return meshAttributes.meshSize;}
+
+
   struct {
     char   Method;
     double coeffTransfinite;
+    double meshSize;
     int    nbPointsTransfinite;
     int    typeTransfinite;
     // the extrusion parameters (if any)
