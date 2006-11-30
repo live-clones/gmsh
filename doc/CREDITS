@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.39 2006-11-27 22:22:33 geuzaine Exp $
+$Id: CREDITS,v 1.40 2006-11-30 17:37:12 geuzaine Exp $
 
              Gmsh is copyright (C) 1997-2007
 
@@ -95,6 +95,8 @@ at matthiasm.com> and others for the Fast Light Tool Kit on which
 Gmsh's GUI is based. See http://www.fltk.org for more info on this
 excellent object-oriented, cross-platform toolkit.
 
+Special thanks also to EDF for funding the OpenCascade integration.
+
 Thanks to the following folks who have contributed by providing fresh
 ideas on theoretical or programming topics, who have sent patches,
 requests for changes or improvements, or who gave us access to exotic
@@ -118,4 +120,4 @@ Krishna Mohan Gundu <gkmohan at gmail.com>, Christopher Stott <C.Stott
 at surrey.ac.uk>, Timmy Schumacher <Tim.Schumacher at colorado.edu>,
 Carl Osterwisch <osterwischc at asme.org>, Bruno Frackowiak
 <bruno.frackowiak at onecert.fr>, Philip Kelleners <P.H.Kelleners at
-ctw.utwente.nl>,  Romuald Conty <conty@phimeca.com>.
+ctw.utwente.nl>, Romuald Conty <conty@phimeca.com>.
