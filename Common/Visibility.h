@@ -106,7 +106,7 @@ class VisibilityManager {
   std::vector<Vis*> _entities;
   int _sortMode;
   static VisibilityManager *manager;
-  VisibilityManager() : _sortMode(1) {}
+  VisibilityManager() : _sortMode(-1) {}
 
  public :
   // create the only instance of the manager

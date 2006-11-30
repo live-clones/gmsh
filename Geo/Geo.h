@@ -26,21 +26,8 @@
 #include "Tree.h"
 #include "ExtrudeParams.h"
 
-#define INFILE     1
-#define INSTRING   2
-#define STRINGMAX  1024
-
-#define NMAX_SPLINE   100
-
-#define MSH_TRSF_LINE        1
-#define MSH_TRSF_SURFACE     2
-#define MSH_TRSF_VOLUME      3
-
-#define MSH_ASSOCIATION      6
-
-#define MSH_RECOMBINE        5
-
 #define MSH_POINT            1
+#define MSH_POINT_DISCRETE   100
 
 #define MSH_SEGM_LINE        2
 #define MSH_SEGM_SPLN        3
@@ -49,26 +36,23 @@
 #define MSH_SEGM_ELLI        6
 #define MSH_SEGM_ELLI_INV    7
 #define MSH_SEGM_LOOP        8
-#define MSH_SEGM_PARAMETRIC  888
 #define MSH_SEGM_BSPLN       15
 #define MSH_SEGM_URBS        16
 #define MSH_SEGM_NURBS       17
 #define MSH_SEGM_BEZIER      18
-#define MSH_SEGM_DISCRETE    19
+#define MSH_SEGM_PARAMETRIC  19
+#define MSH_SEGM_DISCRETE    101
 
 #define MSH_SURF_PLAN        9
 #define MSH_SURF_REGL        10
 #define MSH_SURF_TRIC        11
 #define MSH_SURF_NURBS       12
 #define MSH_SURF_LOOP        13
-#define MSH_SURF_CYLNDR      1299
-#define MSH_SURF_TORUS       1399
-#define MSH_SURF_CONE        1499
-#define MSH_SURF_TRIMMED     1599
-#define MSH_SURF_DISCRETE    1799
+#define MSH_SURF_TRIMMED     21
+#define MSH_SURF_DISCRETE    102
 
 #define MSH_VOLUME           14
-#define MSH_VOLUME_DISCRETE  114
+#define MSH_VOLUME_DISCRETE  103
 
 #define MSH_PHYSICAL_POINT   300
 #define MSH_PHYSICAL_LINE    310
