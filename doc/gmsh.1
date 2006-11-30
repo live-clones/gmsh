@@ -1,4 +1,4 @@
-.\" $Id: gmsh.1,v 1.73 2006-11-27 03:19:48 geuzaine Exp $
+.\" $Id: gmsh.1,v 1.74 2006-11-30 14:09:07 geuzaine Exp $
 .TH Gmsh 1 "09 March 2006" "Gmsh 2.0" "Gmsh Manual Pages"
 .UC 4
 .\" ********************************************************************
@@ -60,15 +60,11 @@ optimize quality of tetrahedral elements.
 .B \-order int
 set mesh order (1, 2).
 .TP 4
-.B \-scale float
-set global scaling factor to the model.
-.TP 4
-.B \-meshscale float
-set global scaling factor to the mesh output.
-.TP 4
 .B \-clscale float
 set global scaling factor to the mesh characteristic lengths in the
 model.
+.B \-clcurv
+Compute characteristic lengths from curvatures
 .TP 4
 .B \-rand float
 set random perturbation factor.

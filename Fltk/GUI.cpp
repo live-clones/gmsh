@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.574 2006-11-30 13:55:20 geuzaine Exp $
+// $Id: GUI.cpp,v 1.575 2006-11-30 14:09:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2271,7 +2271,7 @@ void GUI::create_option_window()
       mesh_value[2]->align(FL_ALIGN_RIGHT);
       mesh_value[2]->callback(mesh_options_ok_cb);
 
-      mesh_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Compute characteritic lenghts automatically using curvature" );
+      mesh_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Compute characteritic lenghts automatically from curvatures" );
       mesh_butt[1]->type(FL_TOGGLE_BUTTON);
       mesh_butt[1]->callback(mesh_options_ok_cb);
 
@@ -2491,7 +2491,7 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Aspect");
       o->hide();
 
-      mesh_value[9] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Explosion factor");
+      mesh_value[9] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Element shrinking factor");
       mesh_value[9]->minimum(0);
       mesh_value[9]->maximum(1);
       mesh_value[9]->step(0.01);
@@ -3053,7 +3053,7 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Aspect");
       o->hide();
 
-      view_value[12] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Explosion factor");
+      view_value[12] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Element shrinking factor");
       view_value[12]->minimum(0.);
       view_value[12]->step(0.01);
       view_value[12]->maximum(1.);

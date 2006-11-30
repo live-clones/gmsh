@@ -24,19 +24,19 @@ Threshold angle below which normals are not smoothed@*
 Default value: @code{30}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.BetaSmoothMetric
-Maximum ratio of two consecutive edge lengths@*
-Default value: @code{0.9}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.BdfFieldFormat
 Field format for Nastran BDF files (0=free, 1=small, 2=large)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CharacteristicLengthFactor
-Factor applied to all characteristic lengths (and background meshes)@*
+Factor applied to all characteristic lengths@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CharacteristicLengthFromCurvature
+Compute characteritic lenghts automatically from curvatures@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ColorCarousel
@@ -89,19 +89,9 @@ Fourth cut plane equation coefficient (`D' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item Mesh.DihedralAngleTol
-Dihedral angle tolerance for edge creation in the remesher@*
-Default value: @code{22}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.Dual
 Display the dual mesh obtained by barycentric subdivision@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.EdgeProlongationThreshold
-Edge prolongation threshold in the remesher@*
-Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ElementOrder
@@ -169,11 +159,6 @@ Minimum number of points used to mesh a circle@*
 Default value: @code{7}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinimumElementSizeFact
-Minimum element size factor in the Remesher@*
-Default value: @code{500}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.MshBinary
 Write MSH files in binary format?@*
 Default value: @code{0}@*
@@ -182,11 +167,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.MshFileVersion
 Version of the MSH file format to use@*
 Default value: @code{2}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.NbElemsPerRadiusOfCurv
-Number of elements per radius of curvature in the remesher@*
-Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NbHexahedra
@@ -349,11 +329,6 @@ Smooth the mesh normals?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.SpeedMax
-Disable dubious point insertion tests@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.StlDistanceTol
 Distance tolerance between two distinct vertices in STL meshes@*
 Default value: @code{5e-07}@*
@@ -382,11 +357,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Tangents
 Display size of tangent vectors (in pixels)@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.TargetElmentSizeFact
-Target element size factor in the Remesher@*
-Default value: @code{20}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Tetrahedra

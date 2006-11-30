@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.85 2006-11-30 13:55:20 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.86 2006-11-30 14:09:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -85,9 +85,8 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -smooth int           Set number of mesh smoothing steps");
   Msg(DIRECT, "  -optimize             Optimize quality of tetrahedral elements");
   Msg(DIRECT, "  -order int            Set mesh order (1, 2)");
-  Msg(DIRECT, "  -scale float          Set global scaling factor");
-  Msg(DIRECT, "  -meshscale float      Set mesh scaling factor");
   Msg(DIRECT, "  -clscale float        Set characteristic length scaling factor");
+  Msg(DIRECT, "  -clcurv               Compute characteristic lengths from curvatures");
   Msg(DIRECT, "  -rand float           Set random perturbation factor");
   Msg(DIRECT, "  -bgm file             Load background mesh from file");
   Msg(DIRECT, "  -constrain            Constrain background mesh with characteristic lengths");
@@ -355,6 +354,10 @@ void Get_Options(int argc, char *argv[])
           fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
+      }
+      else if(!strcmp(argv[i] + 1, "clcurv")) {
+        CTX.mesh.lc_from_curvature = 1;
+        i++;
       }
       else if(!strcmp(argv[i] + 1, "smooth")) {
         i++;

@@ -26,12 +26,10 @@ Set number of mesh smoothing steps
 Optimize quality of tetrahedral elements
 @item -order int
 Set the order of the generated elements (1, 2)
-@item -scale float
-Set global scaling factor
-@item -meshscale float
-Set mesh scaling factor
 @item -clscale float
 Set characteristic length scaling factor
+@item -clcurv
+Compute characteristic lengths from curvatures
 @item -rand float
 Set random perturbation factor
 @item -bgm file

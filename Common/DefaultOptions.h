@@ -850,7 +850,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
     "Factor applied to all characteristic lengths" },
   { F|O, "CharacteristicLengthFromCurvature" , opt_mesh_lc_from_curvature , 0. ,
-    "Compute characteritic lenghts automatically using curvature information" },
+    "Compute characteritic lenghts automatically from curvatures" },
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
     "Mesh coloring (0=by element type, 1=by elementary entity, 2=by physical entity, 3=by partition)" },
   { F|O, "ConstrainedBackgroundMesh" , opt_mesh_constrained_bgmesh, 0. ,
