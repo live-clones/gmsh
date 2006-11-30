@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.572 2006-11-30 01:06:07 geuzaine Exp $
+// $Id: GUI.cpp,v 1.573 2006-11-30 01:43:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3904,15 +3904,15 @@ void GUI::create_visibility_window()
   int width = cols[0] + cols[1] + cols[2] + cols[3] + 6 * WB;
   int height = 18 * BH;
   int brw = width - 4 * WB;
-  int buw = (brw - 2 * WB) / 2;
 
   vis_window = new Dialog_Window(width, height, "Visibility");
   vis_window->box(GMSH_WINDOW_BOX);
 
-  vis_type = new Fl_Choice(WB, WB, buw, BH);
+  vis_type = new Fl_Choice(WB, WB, (width - 3 * WB) / 2, BH);
   vis_type->menu(type_table);
   
-  vis_butt[0] = new Fl_Check_Button(WB + buw + WB, WB, width - 5 * WB - buw, BH, "Set visibility recursively");
+  vis_butt[0] = new Fl_Check_Button(WB + (width - 3 * WB) / 2 + WB, WB, (width - 3 * WB) / 2, BH, 
+				    "Set visibility recursively");
   vis_butt[0]->type(FL_TOGGLE_BUTTON);
   vis_butt[0]->value(1);
 
