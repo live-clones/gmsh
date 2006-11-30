@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.3 2006-11-29 03:11:18 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.4 2006-11-30 15:14:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -865,7 +865,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
         v[j] = *it;
       }
       else {
-        v[j] = new MVertex(x, y, z);
+        v[j] = new MVertex(x, y, z, face);
 	vertices.insert(v[j]);
 	face->mesh_vertices.push_back(v[j]);
       }
