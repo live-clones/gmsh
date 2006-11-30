@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.575 2006-11-30 14:09:07 geuzaine Exp $
+// $Id: GUI.cpp,v 1.576 2006-11-30 14:10:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2275,7 +2275,7 @@ void GUI::create_option_window()
       mesh_butt[1]->type(FL_TOGGLE_BUTTON);
       mesh_butt[1]->callback(mesh_options_ok_cb);
 
-      mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Constrain background mesh with characteristic lengths");
+      mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Constrain background mesh with characteristic length field");
       mesh_butt[5]->type(FL_TOGGLE_BUTTON);
       mesh_butt[5]->callback(mesh_options_ok_cb);
 
