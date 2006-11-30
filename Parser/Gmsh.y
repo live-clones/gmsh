@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.246 2006-11-30 11:32:30 remacle Exp $
+// $Id: Gmsh.y,v 1.247 2006-11-30 13:55:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1066,12 +1066,14 @@ Shape :
       for(int i = 0; i < List_Nbr($3); i++){
 	double d;
 	List_Read($3, i, &d);
-	
-	GVertex *gv = GMODEL->vertexByTag((int)d);
-	if(!gv)
-	  yymsg(WARNING, "Unknown point %d", (int)d);
-	else
-	  gv->setPrescribedMeshSizeAtVertex($5);
+	Vertex *v = FindPoint((int)d); 	 
+	if(v)
+	  v->lc = $5;
+	else{
+	  GVertex *gv = GMODEL->vertexByTag((int)d);
+	  if(gv) 
+	    gv->setPrescribedMeshSizeAtVertex($5);
+	}
       }
       List_Delete($3);
       // dummy values

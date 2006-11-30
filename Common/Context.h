@@ -173,8 +173,8 @@ public :
     int light, light_two_side, light_lines;
     int format, nbPartitions, nb_smoothing, algo2d, algo3d, algo_recombine;
     int order, second_order_linear, second_order_incomplete;
-    int point_insertion, speed_max, min_circ_points;
-    int bgmesh_type, constrained_bgmesh;
+    int min_circ_points;
+    int bgmesh_type, constrained_bgmesh, lc_from_curvature;
     int initial_only;
     double normals, tangents, explode;
     int color_carousel;

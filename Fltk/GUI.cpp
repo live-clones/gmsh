@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.573 2006-11-30 01:43:44 geuzaine Exp $
+// $Id: GUI.cpp,v 1.574 2006-11-30 13:55:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2254,6 +2254,8 @@ void GUI::create_option_window()
       mesh_choice[5]->menu(menu_recombine_algo);
       mesh_choice[5]->align(FL_ALIGN_RIGHT);
       mesh_choice[5]->callback(mesh_options_ok_cb);
+      // not reimplemented yet
+      ((Fl_Menu_Item*)mesh_choice[5]->menu())[1].deactivate();
 
       mesh_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Number of smoothing steps");
       mesh_value[0]->minimum(0);
@@ -2262,28 +2264,22 @@ void GUI::create_option_window()
       mesh_value[0]->align(FL_ALIGN_RIGHT);
       mesh_value[0]->callback(mesh_options_ok_cb);
 
-      mesh_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Mesh scaling factor");
-      mesh_value[1]->minimum(0.001);
-      mesh_value[1]->maximum(1000);
-      mesh_value[1]->step(0.001);
-      mesh_value[1]->align(FL_ALIGN_RIGHT);
-      mesh_value[1]->callback(mesh_options_ok_cb);
-
-      mesh_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Characteristic length factor");
+      mesh_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Characteristic length factor");
       mesh_value[2]->minimum(0.001);
       mesh_value[2]->maximum(1000);
-      mesh_value[2]->step(0.001);
+      mesh_value[2]->step(0.01);
       mesh_value[2]->align(FL_ALIGN_RIGHT);
       mesh_value[2]->callback(mesh_options_ok_cb);
 
-      mesh_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Random perturbation factor");
-      mesh_value[3]->minimum(1.e-6);
-      mesh_value[3]->maximum(1.e-1);
-      mesh_value[3]->step(1.e-6);
-      mesh_value[3]->align(FL_ALIGN_RIGHT);
-      mesh_value[3]->callback(mesh_options_ok_cb);
+      mesh_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Compute characteritic lenghts automatically using curvature" );
+      mesh_butt[1]->type(FL_TOGGLE_BUTTON);
+      mesh_butt[1]->callback(mesh_options_ok_cb);
 
-      mesh_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Optimize quality of tetrahedral elements");
+      mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Constrain background mesh with characteristic lengths");
+      mesh_butt[5]->type(FL_TOGGLE_BUTTON);
+      mesh_butt[5]->callback(mesh_options_ok_cb);
+
+      mesh_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Optimize quality of tetrahedra");
       mesh_butt[2]->type(FL_TOGGLE_BUTTON);
 #if !defined(HAVE_NETGEN)
       mesh_butt[2]->deactivate();
@@ -2293,66 +2289,6 @@ void GUI::create_option_window()
       mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Generate second order elements");
       mesh_butt[3]->type(FL_TOGGLE_BUTTON);
       mesh_butt[3]->callback(mesh_options_ok_cb);
-
-      mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW, BH, "Constrain background mesh with characteristic length field");
-      mesh_butt[5]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[5]->callback(mesh_options_ok_cb);
-
-      o->end();
-    }
-
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "STL");
-      o->hide();
-
-      mesh_value[19] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Vertex disance tolerance");
-      mesh_value[19]->minimum(0);
-      mesh_value[19]->maximum(1.e-3);
-      mesh_value[19]->step(1.e-7);
-      mesh_value[19]->align(FL_ALIGN_RIGHT);
-      mesh_value[19]->callback(mesh_options_ok_cb);
-
-      mesh_value[20] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Dihedral angle threshold");
-      mesh_value[20]->minimum(0);
-      mesh_value[20]->maximum(90);
-      mesh_value[20]->step(1);
-      mesh_value[20]->align(FL_ALIGN_RIGHT);
-      mesh_value[20]->callback(mesh_options_ok_cb);
-
-      mesh_value[21] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Edge prolongation threshold");
-      mesh_value[21]->minimum(0);
-      mesh_value[21]->maximum(100);
-      mesh_value[21]->step(1);
-      mesh_value[21]->align(FL_ALIGN_RIGHT); 
-      mesh_value[21]->callback(mesh_options_ok_cb);
-
-      mesh_value[22] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Elements per radius of curvature");
-      mesh_value[22]->minimum(1);
-      mesh_value[22]->maximum(10);
-      mesh_value[22]->step(.1);
-      mesh_value[22]->align(FL_ALIGN_RIGHT); 
-      mesh_value[22]->callback(mesh_options_ok_cb);
-
-      mesh_value[23] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "LC / minimum element size");
-      mesh_value[23]->minimum(10);
-      mesh_value[23]->maximum(10000);
-      mesh_value[23]->step(10);
-      mesh_value[23]->align(FL_ALIGN_RIGHT); 
-      mesh_value[23]->callback(mesh_options_ok_cb);
-
-      mesh_value[24] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "LC / target element size");
-      mesh_value[24]->minimum(1);
-      mesh_value[24]->maximum(1000);
-      mesh_value[24]->step(1);
-      mesh_value[24]->align(FL_ALIGN_RIGHT); 
-      mesh_value[24]->callback(mesh_options_ok_cb);
-
-      mesh_value[25] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Beta smoothing factor");
-      mesh_value[25]->minimum(0);
-      mesh_value[25]->maximum(1);
-      mesh_value[25]->step(.01);
-      mesh_value[25]->align(FL_ALIGN_RIGHT); 
-      mesh_value[25]->callback(mesh_options_ok_cb);
 
       o->end();
     }

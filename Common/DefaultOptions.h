@@ -844,13 +844,13 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" }, 
 
-  { F|O, "BetaSmoothMetric" ,opt_mesh_beta_smooth_metric, 0.9 ,
-    "Maximum ratio of two consecutive edge lengths" },
   { F|O, "BdfFieldFormat" , opt_mesh_bdf_field_format , 1. , 
     "Field format for Nastran BDF files (0=free, 1=small, 2=large)" },
 
   { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
-    "Factor applied to all characteristic lengths (and background meshes)" },
+    "Factor applied to all characteristic lengths" },
+  { F|O, "CharacteristicLengthFromCurvature" , opt_mesh_lc_from_curvature , 0. ,
+    "Compute characteritic lenghts automatically using curvature information" },
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
     "Mesh coloring (0=by element type, 1=by elementary entity, 2=by physical entity, 3=by partition)" },
   { F|O, "ConstrainedBackgroundMesh" , opt_mesh_constrained_bgmesh, 0. ,
@@ -872,14 +872,10 @@ StringXNumber MeshOptions_Number[] = {
   { F,   "CutPlaneD" , opt_mesh_cut_planed , 0.0 , 
     "Fourth cut plane equation coefficient (`D' in `AX+BY+CZ+D=0')" },
 
-  { F|O, "DihedralAngleTol" , opt_mesh_dihedral_angle_tol, 22. ,
-    "Dihedral angle tolerance for edge creation in the remesher" },
   { F|O, "Dual" , opt_mesh_dual , 0. ,
     "Display the dual mesh obtained by barycentric subdivision" },
 
-  { F|O, "EdgeProlongationThreshold" , opt_mesh_edge_prolongation_threshold, 1. ,
-    "Edge prolongation threshold in the remesher" },
-  { F|O, "ElementOrder" , opt_mesh_order , 1. , // "Order" is already a lex token
+  { F|O, "ElementOrder" , opt_mesh_order , 1. , // "Order" is a reserved token in the parser
     "Element order (1=linear elements, 2=quadratic elements)" },
   { F|O, "Explode" , opt_mesh_explode , 1.0 ,
     "Explode elements (between 0=point and 1=non-transformed)" },
@@ -910,15 +906,11 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
     "Minimum number of points used to mesh a circle" },
-  { F|O, "MinimumElementSizeFact" , opt_mesh_min_elem_size_fact, 500. ,
-    "Minimum element size factor in the Remesher" },
   { F|O, "MshBinary" , opt_mesh_msh_binary , 0. , 
     "Write MSH files in binary format?" },
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 2.0 , 
     "Version of the MSH file format to use" },
 
-  { F|O, "NbElemsPerRadiusOfCurv" , opt_mesh_nb_elem_per_rc, 5. ,
-    "Number of elements per radius of curvature in the remesher" },
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. , 
     "Number of hexahedra in the current mesh (read-only)" },
   { F, "NbNodes" , opt_mesh_nb_nodes , 0. , 
@@ -988,8 +980,6 @@ StringXNumber MeshOptions_Number[] = {
     "Number of smoothing steps applied to the final mesh" },
   { F|O, "SmoothNormals" , opt_mesh_smooth_normals , 0. , 
     "Smooth the mesh normals?" },
-  { F|O, "SpeedMax" , opt_mesh_speed_max , 0. ,
-    "Disable dubious point insertion tests" },
   { F|O, "StlDistanceTol" , opt_mesh_stl_distance_tol, 5.e-7 ,
     "Distance tolerance between two distinct vertices in STL meshes" },
   { F|O, "StlBinary" , opt_mesh_stl_binary , 0. , 
@@ -1003,8 +993,6 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "Tangents" , opt_mesh_tangents , 0.0 , 
     "Display size of tangent vectors (in pixels)" }, 
-  { F|O, "TargetElmentSizeFact" , opt_mesh_target_elem_size_fact, 20. ,
-    "Target element size factor in the Remesher" },
   { F|O, "Tetrahedra" , opt_mesh_tetrahedra , 1. , 
     "Display mesh tetrahedra?" },
   { F|O, "Triangles" , opt_mesh_triangles , 1. , 

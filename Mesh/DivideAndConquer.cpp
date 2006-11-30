@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.5 2006-11-30 11:32:26 remacle Exp $
+// $Id: DivideAndConquer.cpp,v 1.6 2006-11-30 13:55:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -362,33 +362,6 @@ int DelaunayAndVoronoi(DocPeek doc)
   return 1;
 }
 
-/* this routine puts in xc and yc the coord of the center
-   of the circumcircle of triangle (x1,y1),(x2,y2),(x3,y3)  */
-int CircumCircle(double x1, double y1, double x2, double y2, double x3,
-                 double y3, double *xc, double *yc)
-{
-  double d, a1, a2, a3;
-
-  d = 2. * (double)(y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
-  if(d == 0.0) {
-    Msg(WARNING, "Colinear points in circum circle computation");
-    *xc = *yc = -99999.;
-    return 0;
-  }
-
-  a1 = x1 * x1 + y1 * y1;
-  a2 = x2 * x2 + y2 * y2;
-  a3 = x3 * x3 + y3 * y3;
-  *xc = (double)((a1 * (y3 - y2) + a2 * (y1 - y3) + a3 * (y2 - y1)) / d);
-  *yc = (double)((a1 * (x2 - x3) + a2 * (x3 - x1) + a3 * (x1 - x2)) / d);
-
-  if(fabs(d) < 1.e-12 * DSQR(CTX.lc))
-    Msg(WARNING,
-        "Almost colinear points in circum circle computation (d = %g)", d);
-
-  return 1;
-}
-
 /* This routine insert the point 'newPoint' in the list dlist,
    respecting the clock-wise orientation. */
 int DListInsert(DListRecord ** dlist, MPoint center, PointNumero newPoint)
@@ -566,29 +539,9 @@ void filldel(Delaunay * deladd, int aa, int bb, int cc,
   deladd->t.a = aa;
   deladd->t.b = bb;
   deladd->t.c = cc;
-  //  deladd->t.info = TOLINK;
-  //  deladd->t.info2 = 0;
   deladd->v.voisin1 = NULL;
   deladd->v.voisin2 = NULL;
   deladd->v.voisin3 = NULL;
-
-//   CircumCircle(points[aa].where.h, points[aa].where.v,
-//                points[bb].where.h, points[bb].where.v,
-//                points[cc].where.h, points[cc].where.v, 
-// 	       &deladd->t.xc, &deladd->t.yc);
-
-//   pt2.h = deladd->t.xc;
-//   pt2.v = deladd->t.yc;
-
-//   newqual = (points[aa].quality + points[bb].quality + points[cc].quality) / 3.;
-
-//   deladd->t.quality_value =
-//     sqrt((deladd->t.xc - points[cc].where.h) * (deladd->t.xc -
-// 						points[cc].where.h) +
-// 	 (deladd->t.yc - points[cc].where.v) * (deladd->t.yc -
-// 						points[cc].where.v)
-// 	 ) / newqual;
-//   deladd->t.position = INTERN;
 }
 
 /* Convertir les listes d'adjacence en triangles */

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.489 2006-11-30 01:06:07 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.490 2006-11-30 13:55:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1177,11 +1177,10 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_reverse_all_normals(0, GMSH_SET, WID->mesh_butt[0]->value());
   opt_mesh_smooth_normals(0, GMSH_SET, WID->mesh_butt[19]->value());
   opt_mesh_light_lines(0, GMSH_SET, WID->mesh_butt[20]->value());
+  opt_mesh_lc_from_curvature(0, GMSH_SET, WID->mesh_butt[1]->value());
 
   opt_mesh_nb_smoothing(0, GMSH_SET, WID->mesh_value[0]->value());
-  opt_mesh_scaling_factor(0, GMSH_SET, WID->mesh_value[1]->value());
   opt_mesh_lc_factor(0, GMSH_SET, WID->mesh_value[2]->value());
-  opt_mesh_rand_factor(0, GMSH_SET, WID->mesh_value[3]->value());
   opt_mesh_quality_inf(0, GMSH_SET, WID->mesh_value[4]->value());
   opt_mesh_quality_sup(0, GMSH_SET, WID->mesh_value[5]->value());
   opt_mesh_radius_inf(0, GMSH_SET, WID->mesh_value[6]->value());
@@ -1197,13 +1196,6 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_cut_planec(0, GMSH_SET, WID->mesh_value[16]->value());
   opt_mesh_cut_planed(0, GMSH_SET, WID->mesh_value[17]->value());
   opt_mesh_angle_smooth_normals(0, GMSH_SET, WID->mesh_value[18]->value());
-  opt_mesh_stl_distance_tol(0, GMSH_SET, WID->mesh_value[19]->value());
-  opt_mesh_dihedral_angle_tol(0, GMSH_SET, WID->mesh_value[20]->value());
-  opt_mesh_edge_prolongation_threshold(0, GMSH_SET, WID->mesh_value[21]->value());
-  opt_mesh_nb_elem_per_rc(0, GMSH_SET, WID->mesh_value[22]->value());
-  opt_mesh_min_elem_size_fact(0, GMSH_SET, WID->mesh_value[23]->value());
-  opt_mesh_target_elem_size_fact(0, GMSH_SET, WID->mesh_value[24]->value());
-  opt_mesh_beta_smooth_metric(0, GMSH_SET, WID->mesh_value[25]->value());
 
   opt_mesh_point_type(0, GMSH_SET, WID->mesh_choice[0]->value());
   opt_mesh_algo2d(0, GMSH_SET,
@@ -3115,9 +3107,6 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 
   if(action == 8){
     WID->create_mesh_context_window(0);
-  }
-  else if(action == 10){
-    Msg(GERROR, "BDS->classify(angle, edge_prolongation) must be reinterfaced");
   }
 
   Draw();

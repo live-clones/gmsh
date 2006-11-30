@@ -1,4 +1,4 @@
-// $Id: GEntity.cpp,v 1.9 2006-11-27 22:22:13 geuzaine Exp $
+// $Id: GEntity.cpp,v 1.10 2006-11-30 13:55:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -59,13 +59,13 @@ std::string GEntity::getInfoString()
     out += " " + info;
 
   if(physicals.size()){
-    out += " [";
+    out += " (Physical: ";
     for(unsigned int i = 0; i < physicals.size(); i++){
       if(i) out += " ";
       sprintf(tmp, "%d", physicals[i]);
       out += tmp;
     }
-    out += "]";
+    out += ")";
   }
 
   return out;

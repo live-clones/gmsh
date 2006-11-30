@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.7 2006-11-30 11:32:26 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.8 2006-11-30 13:55:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -162,7 +162,7 @@ double BGM_MeshSize ( GEntity *ge, double U, double V , double X, double Y, doub
 
   if(CTX.mesh.bgmesh_type == ONFILE && !CTX.mesh.constrained_bgmesh){
     // unconstrained background mesh
-    return BGMXYZ(X,Y,Z) ;
+    return CTX.mesh.lc_factor * BGMXYZ(X,Y,Z) ;
   }
 
   double l2 = 1.e22;
@@ -173,8 +173,9 @@ double BGM_MeshSize ( GEntity *ge, double U, double V , double X, double Y, doub
 
   l *= CTX.mesh.lc_factor ;
   double l1 = 1.e22;
- 
-  if (CTX.mesh.min_circ_points>0 && ge->dim() < 3) l1 = std::max(l3/300,LC_MVertex_CURV ( ge, U, V ));
+
+  if(CTX.mesh.lc_from_curvature && ge->dim() < 3)
+    l1 = std::max(l3/300,LC_MVertex_CURV ( ge, U, V ));
 
   return std::min(l,l1) ;
 }

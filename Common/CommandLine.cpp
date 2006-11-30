@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.84 2006-11-27 22:22:07 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.85 2006-11-30 13:55:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -84,7 +84,6 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -algo string          Select mesh algorithm (iso, tri, netgen, tetgen)");
   Msg(DIRECT, "  -smooth int           Set number of mesh smoothing steps");
   Msg(DIRECT, "  -optimize             Optimize quality of tetrahedral elements");
-  Msg(DIRECT, "  -partition int        Load a mesh and partition it into $1 parts (METIS is required)");
   Msg(DIRECT, "  -order int            Set mesh order (1, 2)");
   Msg(DIRECT, "  -scale float          Set global scaling factor");
   Msg(DIRECT, "  -meshscale float      Set mesh scaling factor");
@@ -351,16 +350,6 @@ void Get_Options(int argc, char *argv[])
                     "Characteristic length factor must be > 0\n");
             exit(1);
           }
-        }
-        else {
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
-      }
-      else if(!strcmp(argv[i] + 1, "partition")) {
-        i++;
-        if(argv[i] != NULL) {
-          CTX.mesh.nbPartitions = atoi(argv[i++]);
         }
         else {
           fprintf(stderr, ERROR_STR "Missing number\n");

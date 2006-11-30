@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.35 2006-11-30 11:32:26 remacle Exp $
+// $Id: meshGFace.cpp,v 1.36 2006-11-30 13:55:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -756,8 +756,8 @@ void gmsh2DMeshGenerator ( GFace *gf )
   }
 
    char name[245];
-   sprintf(name,"param%d.pos",gf->tag());
-   outputScalarField(m->triangles, name,1);
+   //sprintf(name,"param%d.pos",gf->tag());
+   //outputScalarField(m->triangles, name,1);
 //   sprintf(name,"real%d.pos",gf->tag());
 //   outputScalarField(m->triangles, name,0);
 

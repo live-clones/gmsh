@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.320 2006-11-27 22:22:07 geuzaine Exp $
+// $Id: Options.cpp,v 1.321 2006-11-30 13:55:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4082,10 +4082,6 @@ double opt_mesh_scaling_factor(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.mesh.scaling_factor = val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_value[1]->value(CTX.mesh.scaling_factor);
-#endif
   return CTX.mesh.scaling_factor;
 }
 
@@ -4100,14 +4096,21 @@ double opt_mesh_lc_factor(OPT_ARGS_NUM)
   return CTX.mesh.lc_factor;
 }
 
+double opt_mesh_lc_from_curvature(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.lc_from_curvature = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[1]->value(CTX.mesh.lc_from_curvature ? 1 : 0);
+#endif
+  return CTX.mesh.lc_from_curvature;
+}
+
 double opt_mesh_rand_factor(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.mesh.rand_factor = val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_value[3]->value(CTX.mesh.rand_factor);
-#endif
   return CTX.mesh.rand_factor;
 }
 
@@ -4574,77 +4577,7 @@ double opt_mesh_stl_distance_tol(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.mesh.stl_distance_tol = val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_value[19]->value(CTX.mesh.stl_distance_tol);
-#endif
   return CTX.mesh.stl_distance_tol;
-}
-
-double opt_mesh_dihedral_angle_tol(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.dihedral_angle_tol = val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_value[20]->value(CTX.mesh.dihedral_angle_tol);
-#endif
-  return CTX.mesh.dihedral_angle_tol;
-}
-
-double opt_mesh_edge_prolongation_threshold(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.edge_prolongation_threshold = (int)val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_value[21]->value(CTX.mesh.edge_prolongation_threshold);
-#endif
-  return CTX.mesh.edge_prolongation_threshold;
-}
-
-double opt_mesh_nb_elem_per_rc(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.nb_elem_per_rc = (int)val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_value[22]->value(CTX.mesh.nb_elem_per_rc);
-#endif
-  return CTX.mesh.nb_elem_per_rc;
-}
-
-double opt_mesh_min_elem_size_fact(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.min_elem_size_fact = val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_value[23]->value(CTX.mesh.min_elem_size_fact);
-#endif
-  return CTX.mesh.min_elem_size_fact;
-}
-
-double opt_mesh_target_elem_size_fact(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.target_elem_size_fact = val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_value[24]->value(CTX.mesh.target_elem_size_fact);
-#endif
-  return CTX.mesh.target_elem_size_fact;
-}
-
-double opt_mesh_beta_smooth_metric(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.beta_smooth_metric = val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_value[25]->value(CTX.mesh.beta_smooth_metric);
-#endif
-  return CTX.mesh.beta_smooth_metric;
 }
 
 double opt_mesh_msh_file_version(OPT_ARGS_NUM)
@@ -4779,20 +4712,6 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
   }
 #endif
   return CTX.mesh.algo3d;
-}
-
-double opt_mesh_point_insertion(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.point_insertion = (int)val;
-  return CTX.mesh.point_insertion;
-}
-
-double opt_mesh_speed_max(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.speed_max = (int)val;
-  return CTX.mesh.speed_max;
 }
 
 double opt_mesh_min_circ_points(OPT_ARGS_NUM)
