@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.6 2006-11-29 23:26:51 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.7 2006-11-30 11:32:26 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -96,6 +96,8 @@ double LC_MVertex_CURV ( GEntity *ge, double U, double V )
       Crv = max_surf_curvature ( (const GVertex *)ge);
       break;
     case 1:
+      GEdge *ged = (GEdge *)ge;
+      //Crv = ged->curvature(  U );
       Crv = max_surf_curvature ( (const GEdge *)ge, U);
       break;
     case 2:
@@ -155,21 +157,26 @@ double LC_MVertex_PNTS ( GEntity *ge, double U, double V )
 
 double BGM_MeshSize ( GEntity *ge, double U, double V , double X, double Y, double Z)
 {
+  // FIXME
+  // This should be controlled by the interface
+
   if(CTX.mesh.bgmesh_type == ONFILE && !CTX.mesh.constrained_bgmesh){
     // unconstrained background mesh
-    return BGMXYZ(X,Y,Z) * CTX.mesh.lc_factor;
+    return BGMXYZ(X,Y,Z) ;
   }
-  else{
-    double l1 = 1.e22;
-    double l2 = 1.e22;
-    //  if (ge->dim() < 3) l1 = LC_MVertex_CURV ( ge, U, V );
-    if (ge->dim() < 2) l2 = LC_MVertex_PNTS ( ge, U, V );
-    double l3 = ge->model()->getMeshSize();
-    double l = std::min(std::min(l1,l2),l3);
-    double l4 = LC_MVertex_BGM ( ge, X, Y , Z );
-    l = std::min(l,l4);
-    return l * CTX.mesh.lc_factor ;
-  }
+
+  double l2 = 1.e22;
+  double l3 = ge->model()->getMeshSize();
+  double l4 = LC_MVertex_BGM ( ge, X, Y , Z );
+  if (ge->dim() < 2) l2 = LC_MVertex_PNTS ( ge, U, V );
+  double l = std::min(std::min(l2,l4),l3);
+
+  l *= CTX.mesh.lc_factor ;
+  double l1 = 1.e22;
+ 
+  if (CTX.mesh.min_circ_points>0 && ge->dim() < 3) l1 = std::max(l3/300,LC_MVertex_CURV ( ge, U, V ));
+
+  return std::min(l,l1) ;
 }
 
 int BGMWithView(Post_View * ErrView)

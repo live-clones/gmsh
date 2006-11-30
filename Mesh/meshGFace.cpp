@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.34 2006-11-29 16:57:01 remacle Exp $
+// $Id: meshGFace.cpp,v 1.35 2006-11-30 11:32:26 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -262,13 +262,13 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
     {
       std::list<BDS_Edge*>::iterator it  = (*itp)->edges.begin();
       std::list<BDS_Edge*>::iterator ite = (*itp)->edges.end();
-      double L = 1.e245;
+      double L = 1.e22;
       while(it!=ite){
 	double l = (*it)->length();
 	if (l<L && (*it)->g && (*it)->g->classif_degree == 1)L=l;
 	++it;
       }
-      (*itp)->lc() = std::min(L,(*itp)->lc());
+      (*itp)->lc() = std::max(L,(*itp)->lc());
       ++itp;
     }
 
@@ -341,6 +341,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
  					   (coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v)*m.scalingV,
 					   mid->X,mid->Y,mid->Z);
 		  mid->lc() = std::min(l1,l2);
+		  //mid->lc() = l2;
 		  m.split_edge ( *it, mid );
 		  nb_split++;
 		} 
@@ -611,10 +612,10 @@ void gmsh2DMeshGenerator ( GFace *gf )
   /// add 4 points than encloses the domain
   /// Use negative number to distinguish thos fake vertices
   MVertex *bb[4];
-  bb[0] = new MVertex ( bbox.min().x(), bbox.min().y(), 0,0,-1);
-  bb[1] = new MVertex ( bbox.min().x(), bbox.max().y(), 0,0,-2);
-  bb[2] = new MVertex ( bbox.max().x(), bbox.min().y(), 0,0,-3);
-  bb[3] = new MVertex ( bbox.max().x(), bbox.max().y(), 0,0,-4);
+  bb[0] = new MVertex ( bbox.min().x(), bbox.min().y(), 0,gf,-1);
+  bb[1] = new MVertex ( bbox.min().x(), bbox.max().y(), 0,gf,-2);
+  bb[2] = new MVertex ( bbox.max().x(), bbox.min().y(), 0,gf,-3);
+  bb[3] = new MVertex ( bbox.max().x(), bbox.max().y(), 0,gf,-4);
     
   for ( int ip = 0 ; ip<4 ; ip++ )
     {
@@ -644,8 +645,20 @@ void gmsh2DMeshGenerator ( GFace *gf )
       double U = U_[num];      
       double V = V_[num];      
       BDS_Point *pp = m->add_point ( num, U,V, gf);
-      pp->lc() = BGM_MeshSize ( gf, U, V, here->x(),here->y(),here->z());
+      //      printf("here->onWhat = %p dim = %d\n",here->onWhat(),here->onWhat()->dim());
+
+       if (here->onWhat()->dim() == 1)
+ 	{
+ 	  double t;
+ 	  here->getParameter(0,t);
+ 	  pp->lc() = BGM_MeshSize ( here->onWhat(), t, 0, here->x(),here->y(),here->z());
+ 	}
+       else
+	 pp->lc() = BGM_MeshSize ( here->onWhat(), U, V, here->x(),here->y(),here->z());
     }
+
+  Msg(DEBUG1,"Meshing of the convex hull (%d points) done",all_vertices.size());
+
   for(int i = 0; i < doc.numTriangles; i++) 
     {
       MVertex *V1 = (MVertex*)doc.points[doc.delaunay[i].t.a].data;

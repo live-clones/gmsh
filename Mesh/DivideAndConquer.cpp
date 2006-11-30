@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.4 2006-11-27 22:22:16 geuzaine Exp $
+// $Id: DivideAndConquer.cpp,v 1.5 2006-11-30 11:32:26 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -566,29 +566,29 @@ void filldel(Delaunay * deladd, int aa, int bb, int cc,
   deladd->t.a = aa;
   deladd->t.b = bb;
   deladd->t.c = cc;
-  deladd->t.info = TOLINK;
-  deladd->t.info2 = 0;
+  //  deladd->t.info = TOLINK;
+  //  deladd->t.info2 = 0;
   deladd->v.voisin1 = NULL;
   deladd->v.voisin2 = NULL;
   deladd->v.voisin3 = NULL;
 
-  CircumCircle(points[aa].where.h, points[aa].where.v,
-               points[bb].where.h, points[bb].where.v,
-               points[cc].where.h, points[cc].where.v, 
-	       &deladd->t.xc, &deladd->t.yc);
+//   CircumCircle(points[aa].where.h, points[aa].where.v,
+//                points[bb].where.h, points[bb].where.v,
+//                points[cc].where.h, points[cc].where.v, 
+// 	       &deladd->t.xc, &deladd->t.yc);
 
-  pt2.h = deladd->t.xc;
-  pt2.v = deladd->t.yc;
+//   pt2.h = deladd->t.xc;
+//   pt2.v = deladd->t.yc;
 
-  newqual = (points[aa].quality + points[bb].quality + points[cc].quality) / 3.;
+//   newqual = (points[aa].quality + points[bb].quality + points[cc].quality) / 3.;
 
-  deladd->t.quality_value =
-    sqrt((deladd->t.xc - points[cc].where.h) * (deladd->t.xc -
-						points[cc].where.h) +
-	 (deladd->t.yc - points[cc].where.v) * (deladd->t.yc -
-						points[cc].where.v)
-	 ) / newqual;
-  deladd->t.position = INTERN;
+//   deladd->t.quality_value =
+//     sqrt((deladd->t.xc - points[cc].where.h) * (deladd->t.xc -
+// 						points[cc].where.h) +
+// 	 (deladd->t.yc - points[cc].where.v) * (deladd->t.yc -
+// 						points[cc].where.v)
+// 	 ) / newqual;
+//   deladd->t.position = INTERN;
 }
 
 /* Convertir les listes d'adjacence en triangles */

@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.22 2006-11-29 16:57:01 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.23 2006-11-30 11:32:26 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -47,7 +47,13 @@ double F_LC_ANALY (double xx, double yy, double zz)
 double F_Lc(double t)
 {
   GPoint p = _myGEdge -> point (t);
-  double lc_here    = BGM_MeshSize(_myGEdge, t , 0 , p.x(),p.y(),p.z());
+  double lc_here;
+  if (t == t_begin)
+    lc_here    = BGM_MeshSize(_myGEdge->getBeginVertex(), t , 0 , p.x(),p.y(),p.z());
+  else if (t == t_end)
+    lc_here    = BGM_MeshSize(_myGEdge->getEndVertex(), t , 0 , p.x(),p.y(),p.z());
+  else
+    lc_here    = BGM_MeshSize(_myGEdge, t , 0 , p.x(),p.y(),p.z());
   SVector3 der      = _myGEdge -> firstDer(t) ;
   const double d    = norm(der);  
   return d/lc_here;

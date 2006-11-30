@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.18 2006-11-29 23:44:40 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.19 2006-11-30 11:32:26 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -471,6 +471,7 @@ void meshGRegion::operator() (GRegion *gr)
     insertVerticesInRegion(gr); 
     // restore the initial set of faces
     gr->set(faces);
+    //    meshNormalsPointOutOfTheRegion(gr);
 #endif
   }
   

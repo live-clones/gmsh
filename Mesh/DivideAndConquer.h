@@ -41,7 +41,7 @@ typedef struct{
 struct _POINT{
   MPoint where;
   DListPeek adjacent;
-  double quality;
+  //  double quality;
   void *data;
 };
 
@@ -73,9 +73,9 @@ typedef struct{
 
 typedef struct{
   PointNumero a, b, c;
-  double xc, yc;
-  double quality_value;
-  int position, info, info2;
+  //  double xc, yc;
+  //  double quality_value;
+  //  int position, info, info2;
 }Triangle;
 
 typedef struct {

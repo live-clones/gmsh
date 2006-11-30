@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.245 2006-11-29 03:11:20 geuzaine Exp $
+// $Id: Gmsh.y,v 1.246 2006-11-30 11:32:30 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1062,15 +1062,16 @@ Shape :
       $$.Num = 0;
     }
   | tCharacteristic tLength ListOfDouble tAFFECT FExpr tEND
-    {
+    {      
       for(int i = 0; i < List_Nbr($3); i++){
 	double d;
 	List_Read($3, i, &d);
-	Vertex *v = FindPoint((int)d);
-	if(!v)
+	
+	GVertex *gv = GMODEL->vertexByTag((int)d);
+	if(!gv)
 	  yymsg(WARNING, "Unknown point %d", (int)d);
 	else
-	  v->lc = $5;
+	  gv->setPrescribedMeshSizeAtVertex($5);
       }
       List_Delete($3);
       // dummy values

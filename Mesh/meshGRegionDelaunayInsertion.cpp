@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.7 2006-11-29 16:57:01 remacle Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.8 2006-11-30 11:32:26 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -337,12 +337,12 @@ void insertVerticesInRegion (GRegion *gr)
 	    {
 	      MVertex *v = new MVertex (center[0],center[1],center[2]);
 	      v->setNum(NUM++);
-// 	      double lc = 
-// 		(1-uvw[0]-uvw[1]-uvw[2])*vSizes[worst->tet()->getVertex(0)->getNum()] +
-// 		(uvw[0])*vSizes[worst->tet()->getVertex(1)->getNum()] +
-// 		(uvw[1])*vSizes[worst->tet()->getVertex(2)->getNum()] +
-// 		(uvw[2])*vSizes[worst->tet()->getVertex(3)->getNum()];
-	      double lc = BGM_MeshSize(gr,0,0,center[0],center[1],center[2]);
+ 	      double lc1 = 
+ 		(1-uvw[0]-uvw[1]-uvw[2])*vSizes[worst->tet()->getVertex(0)->getNum()] +
+ 		(uvw[0])*vSizes[worst->tet()->getVertex(1)->getNum()] +
+ 		(uvw[1])*vSizes[worst->tet()->getVertex(2)->getNum()] +
+ 		(uvw[2])*vSizes[worst->tet()->getVertex(3)->getNum()];
+	      double lc = std::min(lc1,BGM_MeshSize(gr,0,0,center[0],center[1],center[2]));
 	      vSizes.push_back(lc);
 	      // compute mesh spacing there
 	      if (!insertVertex ( v  , worst, allTets,vSizes))
