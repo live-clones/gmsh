@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.571 2006-11-29 20:40:46 geuzaine Exp $
+// $Id: GUI.cpp,v 1.572 2006-11-30 01:06:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4015,15 +4015,15 @@ void GUI::create_visibility_window()
     b2->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
 
     Fl_Button *butt1 = new Fl_Button(2*WB, 3 * WB + 3 * BH, IW, BH, "Elements");
-    butt1->callback(visibility_hide_cb, (void *)"elements");
+    butt1->callback(visibility_interactive_cb, (void *)"elements");
     Fl_Button *butt2 = new Fl_Button(2*WB, 3 * WB + 4 * BH, IW, BH, "Points");
-    butt2->callback(visibility_hide_cb, (void *)"points");
+    butt2->callback(visibility_interactive_cb, (void *)"points");
     Fl_Button *butt3 = new Fl_Button(2*WB, 3 * WB + 5 * BH, IW, BH, "Lines");
-    butt3->callback(visibility_hide_cb, (void *)"lines");
+    butt3->callback(visibility_interactive_cb, (void *)"lines");
     Fl_Button *butt4 = new Fl_Button(2*WB, 3 * WB + 6 * BH, IW, BH, "Surfaces");
-    butt4->callback(visibility_hide_cb, (void *)"surfaces");
+    butt4->callback(visibility_interactive_cb, (void *)"surfaces");
     Fl_Button *butt5 = new Fl_Button(2*WB, 3 * WB + 7 * BH, IW, BH, "Volumes");
-    butt5->callback(visibility_hide_cb, (void *)"volumes");
+    butt5->callback(visibility_interactive_cb, (void *)"volumes");
     
     vis_group[2]->end();
   }

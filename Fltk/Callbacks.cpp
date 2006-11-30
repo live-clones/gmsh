@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.488 2006-11-29 20:40:46 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.489 2006-11-30 01:06:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2163,7 +2163,7 @@ void visibility_number_cb(CALLBACK_ARGS)
   Draw();
 }
 
-void visibility_hide_cb(CALLBACK_ARGS)
+void visibility_interactive_cb(CALLBACK_ARGS)
 {
   char *str = (char*)data;
   int what;
@@ -2201,27 +2201,53 @@ void visibility_hide_cb(CALLBACK_ARGS)
   std::vector<GRegion*> regions;
   std::vector<MElement*> elements;
 
-  int recursive = WID->vis_butt[0]->value();
-
   while(1) {
     CTX.mesh.changed = ENT_ALL;
     Draw();
     Msg(ONSCREEN, "Select %s\n[Press 'q' to abort]", str);
     char ib = SelectEntity(what, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
+      // type = 0 for elementary, 1 for physical and 2 for partitions
+      int type = WID->vis_type->value();
+      if(type != 0 && type != 1) break;
+      int recursive = WID->vis_butt[0]->value();
       if(CTX.pick_elements){
 	for(unsigned int i = 0; i < elements.size(); i++)
 	  elements[i]->setVisibility(0);
       }
       else{
-	for(unsigned int i = 0; i < vertices.size(); i++)
-	  vertices[i]->setVisibility(0);
-	for(unsigned int i = 0; i < edges.size(); i++)
-	  edges[i]->setVisibility(0, recursive);
-	for(unsigned int i = 0; i < faces.size(); i++)
-	  faces[i]->setVisibility(0, recursive);
-	for(unsigned int i = 0; i < regions.size(); i++)
-	  regions[i]->setVisibility(0, recursive);
+	for(unsigned int i = 0; i < vertices.size(); i++){
+	  if(type == 0) // hide elementary entity
+	    vertices[i]->setVisibility(0, recursive);
+	  else // hide physical entity
+	    for(unsigned int j = 0; j < vertices[i]->physicals.size(); j++)
+	      VisibilityManager::instance()->setVisibilityByNumber
+		(6, vertices[i]->physicals[j], 0, recursive);
+	}
+	for(unsigned int i = 0; i < edges.size(); i++){
+	  if(type == 0)
+	    edges[i]->setVisibility(0, recursive);
+	  else
+	    for(unsigned int j = 0; j < edges[i]->physicals.size(); j++)
+	      VisibilityManager::instance()->setVisibilityByNumber
+		(7, edges[i]->physicals[j], 0, recursive);
+	}
+	for(unsigned int i = 0; i < faces.size(); i++){
+	  if(type == 0)
+	    faces[i]->setVisibility(0, recursive);
+	  else
+	    for(unsigned int j = 0; j < faces[i]->physicals.size(); j++)
+	      VisibilityManager::instance()->setVisibilityByNumber
+		(8, faces[i]->physicals[j], 0, recursive);
+	}
+	for(unsigned int i = 0; i < regions.size(); i++){
+	  if(type == 0)
+	    regions[i]->setVisibility(0, recursive);
+	  else
+	    for(unsigned int j = 0; j < regions[i]->physicals.size(); j++)
+	      VisibilityManager::instance()->setVisibilityByNumber
+		(9, regions[i]->physicals[j], 0, recursive);
+	}
       }
       int pos = WID->vis_browser->position();
       visibility_cb(NULL, NULL);
