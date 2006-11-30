@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.8 2006-11-30 13:55:20 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.9 2006-11-30 18:06:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -96,13 +96,17 @@ double LC_MVertex_CURV ( GEntity *ge, double U, double V )
       Crv = max_surf_curvature ( (const GVertex *)ge);
       break;
     case 1:
-      GEdge *ged = (GEdge *)ge;
-      //Crv = ged->curvature(  U );
-      Crv = max_surf_curvature ( (const GEdge *)ge, U);
+      {
+	GEdge *ged = (GEdge *)ge;
+	//Crv = ged->curvature(  U );
+	Crv = max_surf_curvature ( (const GEdge *)ge, U);
+      }
       break;
     case 2:
-      GFace *gf = (GFace *)ge;
-      Crv = gf->curvature( SPoint2( U, V) );
+      {
+	GFace *gf = (GFace *)ge;
+	Crv = gf->curvature( SPoint2( U, V) );
+      }
       break;
     }
   
@@ -135,10 +139,10 @@ double LC_MVertex_PNTS ( GEntity *ge, double U, double V )
   switch (ge->dim ())
     {
     case 0:
-		{
-      GVertex *gv = (GVertex *)ge;
-      return gv->prescribedMeshSizeAtVertex();
-		}
+      {
+	GVertex *gv = (GVertex *)ge;
+	return gv->prescribedMeshSizeAtVertex();
+      }
     case 1:
       {
 	GEdge *ged = (GEdge *)ge;
