@@ -1,4 +1,8 @@
-$Id: TODO,v 1.27 2006-11-29 03:11:20 geuzaine Exp $
+$Id: TODO,v 1.28 2006-11-30 01:10:24 geuzaine Exp $
+
+********************************************************************
+
+bug: quads orientation is wrong afterrecombine
 
 ********************************************************************
 
@@ -63,11 +67,6 @@ the GPL for linking with these libraries as explained in the GPL FAQ would
 permit people to make distributions of the package and libraries, although
 without charging any fee with it.
 http://www.gnu.org/licenses/gpl-faq.html#GPLIncompatibleLibs
-
-********************************************************************
-
-bug: triangle orientations with the anisotropic algo can change from
-element to element in a single surface? (TO BE CONFIRMED)
 
 ********************************************************************
 
