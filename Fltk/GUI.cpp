@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.576 2006-11-30 14:10:49 geuzaine Exp $
+// $Id: GUI.cpp,v 1.577 2006-12-01 14:32:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3960,6 +3960,9 @@ void GUI::create_visibility_window()
     butt4->callback(visibility_interactive_cb, (void *)"surfaces");
     Fl_Button *butt5 = new Fl_Button(2*WB, 3 * WB + 7 * BH, IW, BH, "Volumes");
     butt5->callback(visibility_interactive_cb, (void *)"volumes");
+
+    Fl_Button *butt6 = new Fl_Button(3*WB + IW, 3 * WB + 3 * BH, 2 * BH, 5*BH, "Show\nAll");
+    butt6->callback(visibility_interactive_cb, (void *)"show_all");
     
     vis_group[2]->end();
   }

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.490 2006-11-30 13:55:20 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.491 2006-12-01 14:32:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2183,6 +2183,13 @@ void visibility_interactive_cb(CALLBACK_ARGS)
     CTX.pick_elements = 0;
     what = ENT_VOLUME;
     opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(!strcmp(str, "show_all")){
+    for(int i = 1; i <= 5; i++) // elements, points, lines, surfaces, volumes
+      VisibilityManager::instance()->setVisibilityByNumber(i, -1, true, false);
+    CTX.mesh.changed = ENT_ALL;
+    Draw();  
+    return;
   }
   else
     return;
