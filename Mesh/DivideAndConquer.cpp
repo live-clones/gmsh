@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.6 2006-11-30 13:55:20 geuzaine Exp $
+// $Id: DivideAndConquer.cpp,v 1.7 2006-12-01 16:16:50 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -533,9 +533,6 @@ PointNumero *ConvertDlistToArray(DListPeek * dlist, int *n)
 void filldel(Delaunay * deladd, int aa, int bb, int cc,
              PointRecord * points)
 {
-  double qual, newqual;
-  MPoint pt2;
-
   deladd->t.a = aa;
   deladd->t.b = bb;
   deladd->t.c = cc;

@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.8 2006-11-30 11:32:26 remacle Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.9 2006-12-01 16:16:50 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -284,6 +284,18 @@ static void setLcs ( MTetrahedron *t, std::map<MVertex*,double> &vSizes)
     }
 }
 
+// void recover_volumes( GRegion *gr , std::set<MTet4*,compareTet4Ptr> & allTets )
+// {
+//   std::set<MTet4*,compareTet4Ptr>::iterator it = allTets.begin();
+//   for ( ; it != allTets.end() ; ++it )
+//     {
+//       MTet4 *t = *allTets.begin();
+//       if (!t->isDeleted())
+// 	{
+// 	}
+//     }
+// }
+
 
 void insertVerticesInRegion (GRegion *gr) 
 {
@@ -366,7 +378,6 @@ void insertVerticesInRegion (GRegion *gr)
 	    }
 	}
     }
-  
 
   while (1)
     {

@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.68 2006-11-27 22:35:01 geuzaine Exp $
+// $Id: BDS.cpp,v 1.69 2006-12-01 16:16:50 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -843,6 +843,9 @@ bool BDS_Mesh::recombine_edge(BDS_Edge * e)
   BDS_Point *pts1[4];
   e->faces(0)->getNodes(pts1);
 
+  //  FIXME  !!!!!!!!!!!!!!!!!
+  //  should ensure that orientation is unchanged
+
   BDS_Edge *p1_op1 = find_edge(p1, op[0], e->faces(0));
   BDS_Edge *op1_p2 = find_edge(op[0], p2, e->faces(0));
   BDS_Edge *p1_op2 = find_edge(p1, op[1], e->faces(1));
@@ -1015,20 +1018,22 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)
 
   double U = 0;
   double V = 0;
+  //  double tot_length = 0;
   double LC = 0;
 
   std::list < BDS_Edge * >::iterator eit = p->edges.begin();
   while(eit != p->edges.end()) {
     if ((*eit)->numfaces() == 1) return false;
     BDS_Point *op = ((*eit)->p1 == p) ? (*eit)->p2 : (*eit)->p1;
-    U += op->u;
+    U += op->u; 
     V += op->v;
+    //    tot_length += (*eit)->length(); 
     LC += op->lc();
     ++eit;
   }
-
-  U /= p->edges.size();
-  V /= p->edges.size();
+  
+  U /= (p->edges.size());
+  V /= (p->edges.size());
   LC /= p->edges.size();
 
   std::list < BDS_Face * >ts;
@@ -1050,8 +1055,6 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)
   p->X = gp.x();
   p->Y = gp.y();
   p->Z = gp.z();
-  //  p->radius() = gf->curvature (SPoint2(U,V));
-
   eit = p->edges.begin();
   while(eit != p->edges.end()) {
     (*eit)->update();
