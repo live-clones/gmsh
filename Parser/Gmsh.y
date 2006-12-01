@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.247 2006-11-30 13:55:21 geuzaine Exp $
+// $Id: Gmsh.y,v 1.248 2006-12-01 13:50:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1009,7 +1009,7 @@ Affectation :
 PhysicalId :
     FExpr
     { 
-      $$ = $1; 
+      $$ = (int)$1; 
     }
   | StringExpr 
     { 

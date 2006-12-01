@@ -126,7 +126,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.289 2006-11-30 13:55:21 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.290 2006-12-01 13:50:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3710,7 +3710,7 @@ case 79:
 case 80:
 #line 1011 "Gmsh.y"
 { 
-      yyval.i = yyvsp[0].d; 
+      yyval.i = (int)yyvsp[0].d; 
     ;
     break;}
 case 81:
