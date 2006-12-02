@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.65 2006-11-27 22:22:13 geuzaine Exp $
+// $Id: Geo.cpp,v 1.66 2006-12-02 22:05:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -636,7 +636,7 @@ Surface *Create_Surface(int Num, int Typ)
   for(int i = 0; i < 5; i++)
     pS->ipar[i] = 0;
   pS->Recombine = 0;
-  pS->Recombine_Dir = 1;
+  pS->Recombine_Dir = -1;
   pS->RecombineAngle = 75;
   pS->TrsfPoints = List_Create(4, 4, sizeof(Vertex *));
   pS->Contours = List_Create(1, 1, sizeof(List_T *));

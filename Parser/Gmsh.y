@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.248 2006-12-01 13:50:13 geuzaine Exp $
+// $Id: Gmsh.y,v 1.249 2006-12-02 22:05:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2463,7 +2463,7 @@ Transfinite :
 	yymsg(WARNING, "Unknown surface %d", (int)$4);
       else{
 	s->Method = TRANSFINI;
-	s->Recombine_Dir = 1;
+	s->Recombine_Dir = -1;
 	int k = List_Nbr($7);
 	if(k != 3 && k != 4){
 	  yymsg(GERROR, "Wrong definition of Transfinite Surface %d: "
