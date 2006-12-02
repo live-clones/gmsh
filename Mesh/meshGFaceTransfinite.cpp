@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.9 2006-12-02 19:29:37 geuzaine Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.10 2006-12-02 22:48:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -42,17 +42,19 @@ int MeshTransfiniteSurface( GFace *gf)
   std::vector <MVertex *> d_vertices;
   std::vector <int> indices;
 
-  for(unsigned int i=0;i<gf->meshAttributes.corners.size();i++)
+  for(unsigned int i = 0; i < gf->meshAttributes.corners.size(); i++)
     corners.push_back(gf->meshAttributes.corners[i]->mesh_vertices[0]);
 
   computeEdgeLoops(gf, d_vertices, indices);
 
   if(corners.size () != 3 && corners.size () != 4){
-    Msg(GERROR,"Surface %d is transfinite but has %d corners", gf->tag(), corners.size());
+    Msg(GERROR,"Surface %d is transfinite but has %d corners",
+	gf->tag(), corners.size());
     return 0;
   }
   if(indices.size () != 2){
-    Msg(GERROR,"Surface %d is transfinite but has %d holes", gf->tag(), indices.size() - 2);
+    Msg(GERROR,"Surface %d is transfinite but has %d holes",
+	gf->tag(), indices.size() - 2);
     return 0;
   }
 
@@ -62,7 +64,7 @@ int MeshTransfiniteSurface( GFace *gf)
     if(d_vertices[I] == corners[0]) break;
   for(unsigned int j = 0; j < d_vertices.size(); j++)
     m_vertices.push_back(d_vertices[(I + j) % d_vertices.size()]);
-  
+
   int iCorner = 0;
   int N[4] = {0, 0, 0, 0};
   std::vector<double> U;
@@ -79,7 +81,7 @@ int MeshTransfiniteSurface( GFace *gf)
 	return 0;
       }
     }
-    SPoint2 param = gf->parFromPoint (SPoint3(v->x(),v->y(),v->z()));
+    SPoint2 param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
     U.push_back(param.x());
     V.push_back(param.y());
   }
@@ -88,22 +90,24 @@ int MeshTransfiniteSurface( GFace *gf)
   int N2 = N[1];
   int N3 = N[2];
   int N4 = N[3];
-  
+
   int L = N2 - N1;
   int H = N3 - N2;
 
-  if (corners.size () == 4){
+  if(corners.size () == 4){
     int Lb = N4 - N3;
     int Hb = m_vertices.size() - N4;
     if(Lb != L || Hb != H){
-      Msg(GERROR,"Surface %d cannot be meshed using the transfinite algo", gf->tag());
+      Msg(GERROR,"Surface %d cannot be meshed using the transfinite algo", 
+	  gf->tag());
       return 0;
     }
   }
   else{
     int Lb = m_vertices.size() - N3;      
     if(Lb != L){
-      Msg(GERROR,"Surface %d cannot be meshed using the transfinite algo %d != %d", gf->tag(),L,Lb);
+      Msg(GERROR,"Surface %d cannot be meshed using the transfinite algo %d != %d", 
+	  gf->tag(), L, Lb);
       return 0;
     }      
   }
@@ -155,14 +159,16 @@ int MeshTransfiniteSurface( GFace *gf)
     tab[std::make_pair(0,0)] = m_vertices[0];
     tab[std::make_pair(L,0)] = m_vertices[L];
     tab[std::make_pair(L,H)] = m_vertices[L+H];
-    tab[std::make_pair(0,H)] = m_vertices[0]; // duplicate
+    // degenerated, only necessary for transfinite volume algo
+    tab[std::make_pair(0,H)] = m_vertices[0]; 
     for (int i = 1; i < L; i++){
       tab[std::make_pair(i,0)] = m_vertices[i];
       tab[std::make_pair(i,H)] = m_vertices[2*L+H-i];
     }
     for(int i = 1; i < H;i++){
       tab[std::make_pair(L,i)] = m_vertices[L+i];
-      tab[std::make_pair(0,i)] = m_vertices[0]; // duplicate
+      // degenerated, only necessary for transfinite volume algo
+      tab[std::make_pair(0,i)] = m_vertices[0];
     }
   }
 
@@ -202,8 +208,23 @@ int MeshTransfiniteSurface( GFace *gf)
 	int iP1 = N1 + i;
 	int iP2 = N2 + j;
 	int iP3 = ((N3 + N2) - i) % m_vertices.size();
+#if 0 // FIXME: this is buggy, so let's just do it in real space instead
 	double Up = TRAN_TRI(U[iP1], U[iP2], U[iP3], UC1, UC2, UC3, u, v);
 	double Vp = TRAN_TRI(V[iP1], V[iP2], V[iP3], VC1, VC2, VC3, u, v);
+#else
+	double xp = TRAN_TRI(m_vertices[iP1]->x(), m_vertices[iP2]->x(), 
+			     m_vertices[iP3]->x(), m_vertices[N1]->x(),
+			     m_vertices[N2]->x(), m_vertices[N3]->x(), u, v);
+	double yp = TRAN_TRI(m_vertices[iP1]->y(), m_vertices[iP2]->y(), 
+			     m_vertices[iP3]->y(), m_vertices[N1]->y(),
+			     m_vertices[N2]->y(), m_vertices[N3]->y(), u, v);
+	double zp = TRAN_TRI(m_vertices[iP1]->z(), m_vertices[iP2]->z(), 
+			     m_vertices[iP3]->z(), m_vertices[N1]->z(),
+			     m_vertices[N2]->z(), m_vertices[N3]->z(), u, v);
+	SPoint2 param = gf->parFromPoint(SPoint3(xp, yp, zp));
+	double Up = param.x();
+	double Vp = param.y();
+#endif
 	GPoint gp = gf->point(SPoint2(Up, Vp));
 	MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
 	gf->mesh_vertices.push_back(newv);
