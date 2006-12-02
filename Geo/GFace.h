@@ -20,6 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <map>
 #include "GPoint.h"
 #include "GEntity.h"
 #include "GEdgeLoop.h"
@@ -139,6 +140,9 @@ class GFace : public GEntity
   // of start/end points
   std::vector<SPoint3> cross;
 
+  // a map for accessing the transfinite vertices using a pair of indices
+  std::map<std::pair<int, int>, MVertex*> transfinite_vertices;
+
   std::vector<MTriangle*> triangles;
   std::vector<MQuadrangle*> quadrangles;
   std::list<GEdgeLoop> edgeLoops;
@@ -150,7 +154,7 @@ class GFace : public GEntity
     double recombineAngle;
     // is this surface meshed using a transfinite interpolation
     int Method;
-    // these are the 3 corners of the interpolation
+    // corners of the transfinite interpolation
     std::vector<GVertex*> corners;
     // all diagonals of the triangulation are left (1), right (2) or
     // alternated (3)

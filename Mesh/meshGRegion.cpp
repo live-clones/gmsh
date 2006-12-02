@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.19 2006-11-30 11:32:26 remacle Exp $
+// $Id: meshGRegion.cpp,v 1.20 2006-12-02 19:29:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -438,6 +438,7 @@ void meshGRegion::operator() (GRegion *gr)
   deMeshGRegion dem;
   dem(gr);
 
+  if(MeshTransfiniteVolume(gr)) return;
   if(MeshExtrudedVolume(gr)) return;
 
   if(CTX.mesh.algo3d == DELAUNAY_TETGEN || CTX.mesh.algo3d == DELAUNAY_ISO){

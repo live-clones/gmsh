@@ -53,6 +53,8 @@ class GRegion : public GEntity {
     char   Method;
     // the extrusion parameters (if any)
     ExtrudeParams *extrude;
+    // corners of the transfinite interpolation
+    std::vector<GVertex*> corners;
   } meshAttributes ;
 
   std::vector<MTetrahedron*> tetrahedra;

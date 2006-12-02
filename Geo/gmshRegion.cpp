@@ -1,4 +1,4 @@
-// $Id: gmshRegion.cpp,v 1.10 2006-11-27 22:22:14 geuzaine Exp $
+// $Id: gmshRegion.cpp,v 1.11 2006-12-02 19:29:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -39,7 +39,18 @@ gmshRegion::gmshRegion(GModel *m, ::Volume * volume)
     l_faces.push_back(f);
     l_dirs.push_back(ori);
   }
+
+  meshAttributes.Method = volume->Method;
   meshAttributes.extrude = volume->Extrude;
+  if(meshAttributes.Method == TRANSFINI){
+    for(int i = 0; i < List_Nbr(volume->TrsfPoints); i++){
+      Vertex *corn;
+      List_Read(volume->TrsfPoints, i, &corn);
+      GVertex *gv = m->vertexByTag(corn->Num);
+      if(!gv) throw;
+      meshAttributes.corners.push_back(gv);
+    }
+  }
 }
 
 gmshRegion::gmshRegion(GModel *m, int num)

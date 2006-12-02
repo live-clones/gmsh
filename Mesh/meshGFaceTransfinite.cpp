@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.8 2006-12-01 16:16:50 remacle Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.9 2006-12-02 19:29:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@
 #include "Context.h"
 #include "Message.h"
 
-#define TRAN_TRI(c1,c2,c3,s1,s2,s3,u,v) u*c2+(1.-v)*c1+v*c3-(u*(1.-v)*s2+u*v*s3);
+#define TRAN_TRI(c1,c2,c3,s1,s2,s3,u,v) u*c2+(1.-v)*c1+v*c3-(u*(1.-v)*s2+u*v*s3)
 
 #define TRAN_QUA(c1,c2,c3,c4,s1,s2,s3,s4,u,v) \
    (1.-u)*c4+u*c2+(1.-v)*c1+v*c3-((1.-u)*(1.-v)*s1+u*(1.-v)*s2+u*v*s3+(1.-u)*v*s4)
@@ -64,22 +64,22 @@ int MeshTransfiniteSurface( GFace *gf)
     m_vertices.push_back(d_vertices[(I + j) % d_vertices.size()]);
   
   int iCorner = 0;
-  int N[4] = {0,0,0,0};
+  int N[4] = {0, 0, 0, 0};
   std::vector<double> U;
   std::vector<double> V;
-  std::map<std::pair<int,int> , MVertex*> tab;
+  std::map<std::pair<int,int>, MVertex*> &tab(gf->transfinite_vertices);
 
   for(unsigned int i = 0; i < m_vertices.size(); i++){
     MVertex *v = m_vertices[i];
     if(v == corners[0] || v == corners[1] || v == corners[2] || 
        (corners.size() == 4 && v == corners[3])){
       N[iCorner++] = i;	  
-      if (iCorner > 4){
-	Msg (GERROR,"Surface %d transfinite parameters are incoherent", gf->tag());
+      if(iCorner > 4){
+	Msg(GERROR,"Surface %d transfinite parameters are incoherent", gf->tag());
 	return 0;
       }
     }
-    SPoint2 param =  gf->parFromPoint (SPoint3(v->x(),v->y(),v->z()));      
+    SPoint2 param = gf->parFromPoint (SPoint3(v->x(),v->y(),v->z()));
     U.push_back(param.x());
     V.push_back(param.y());
   }
@@ -92,95 +92,79 @@ int MeshTransfiniteSurface( GFace *gf)
   int L = N2 - N1;
   int H = N3 - N2;
 
-  if (corners.size () == 4)
-    {
-      int Lb = N4 - N3;
-      int Hb = m_vertices.size() - N4;
-      
-      if(Lb != L || Hb != H){
-	Msg(GERROR,"Surface %d cannot be meshed using the transfinite algo", gf->tag());
-	return 0;
-      }
+  if (corners.size () == 4){
+    int Lb = N4 - N3;
+    int Hb = m_vertices.size() - N4;
+    if(Lb != L || Hb != H){
+      Msg(GERROR,"Surface %d cannot be meshed using the transfinite algo", gf->tag());
+      return 0;
     }
-  else
-    {
-      int Lb = m_vertices.size() - N3;      
-      //      printf("%d %d %d %d\n",N1,N2,N3,N4);
-      if(Lb != L){
-	Msg(GERROR,"Surface %d cannot be meshed using the transfinite algo %d != %d", gf->tag(),L,Lb);
-	return 0;
-      }      
-    }
-
+  }
+  else{
+    int Lb = m_vertices.size() - N3;      
+    if(Lb != L){
+      Msg(GERROR,"Surface %d cannot be meshed using the transfinite algo %d != %d", gf->tag(),L,Lb);
+      return 0;
+    }      
+  }
+  
   std::vector<double> lengths_i;
   std::vector<double> lengths_j;
-
   double L_i = 0;
   double L_j = 0;
-
   lengths_i.push_back(0.);
   lengths_j.push_back(0.);
   for(int i = 0; i < L; i++){
     MVertex *v1 = m_vertices[i];
     MVertex *v2 = m_vertices[i + 1];
-    double l = sqrt((v1->x() - v2->x()) * (v1->x() - v2->x()) +
-		    (v1->y() - v2->y()) * (v1->y() - v2->y()) +
-		    (v1->z() - v2->z()) * (v1->z() - v2->z()));
-    L_i += l;
+    L_i += v1->distance(v2);
     lengths_i.push_back(L_i);
   }
   for(int i = L; i < L + H; i++){
     MVertex *v1 = m_vertices[i];
     MVertex *v2 = m_vertices[i + 1];
-    double l = sqrt((v1->x() - v2->x()) * (v1->x() - v2->x()) +
-		    (v1->y() - v2->y()) * (v1->y() - v2->y()) +
-		    (v1->z() - v2->z()) * (v1->z() - v2->z()));
-    L_j += l;
+    L_j += v1->distance(v2);
     lengths_j.push_back(L_j);
   }
 
-
   /*
-       2L+H
-         +------------+ L+H
-         |            |
-         |            |
-         |            |
-2L+2H+2  |            |
-         +------------+
-         0             L
+      2L+H +------------+ L+H
+           |            |
+           |            |
+           |            |
+           |            |
+   2L+2H+2 +------------+
+           0            L
   */
 
-  if (corners.size () == 4)
-    {
-      tab[std::make_pair(0,0)] = m_vertices[0];
-      tab[std::make_pair(L,0)] = m_vertices[L];
-      tab[std::make_pair(L,H)] = m_vertices[L+H];
-      tab[std::make_pair(0,H)] = m_vertices[2*L+H];
-      
-      for (int i = 1; i < L; i++){
-	tab[std::make_pair(i,0)] = m_vertices[i];
-	tab[std::make_pair(i,H)] = m_vertices[2*L+H-i];
-      }
-      for(int i = 1; i < H;i++){
-	tab[std::make_pair(L,i)] = m_vertices[L+i];
-	tab[std::make_pair(0,i)] = m_vertices[2*L+2*H-i];
-      }
+  if(corners.size () == 4){
+    tab[std::make_pair(0,0)] = m_vertices[0];
+    tab[std::make_pair(L,0)] = m_vertices[L];
+    tab[std::make_pair(L,H)] = m_vertices[L+H];
+    tab[std::make_pair(0,H)] = m_vertices[2*L+H];
+    for (int i = 1; i < L; i++){
+      tab[std::make_pair(i,0)] = m_vertices[i];
+      tab[std::make_pair(i,H)] = m_vertices[2*L+H-i];
     }
-  else
-    {
-      tab[std::make_pair(0,0)] = m_vertices[0];
-      tab[std::make_pair(L,0)] = m_vertices[L];
-      tab[std::make_pair(L,H)] = m_vertices[L+H];
-      
-      for (int i = 1; i < L; i++){
-	tab[std::make_pair(i,0)] = m_vertices[i];
-	tab[std::make_pair(i,H)] = m_vertices[2*L+H-i];
-      }
-      for(int i = 1; i < H;i++){
-	tab[std::make_pair(L,i)] = m_vertices[L+i];
-      }
+    for(int i = 1; i < H; i++){
+      tab[std::make_pair(L,i)] = m_vertices[L+i];
+      tab[std::make_pair(0,i)] = m_vertices[2*L+2*H-i];
     }
+  }
+  else{
+    tab[std::make_pair(0,0)] = m_vertices[0];
+    tab[std::make_pair(L,0)] = m_vertices[L];
+    tab[std::make_pair(L,H)] = m_vertices[L+H];
+    tab[std::make_pair(0,H)] = m_vertices[0]; // duplicate
+    for (int i = 1; i < L; i++){
+      tab[std::make_pair(i,0)] = m_vertices[i];
+      tab[std::make_pair(i,H)] = m_vertices[2*L+H-i];
+    }
+    for(int i = 1; i < H;i++){
+      tab[std::make_pair(L,i)] = m_vertices[L+i];
+      tab[std::make_pair(0,i)] = m_vertices[0]; // duplicate
+    }
+  }
 
   double UC1 = U[N1];
   double UC2 = U[N2];
@@ -189,50 +173,44 @@ int MeshTransfiniteSurface( GFace *gf)
   double VC2 = V[N2];
   double VC3 = V[N3];
 
-  Msg(INFO,"L %d H %d -- %d -- %d %d %d %d", L, H, m_vertices.size(), N1, N2, N3, N4);
   //create points using transfinite interpolation
-  if (corners.size() == 4)
-    {
-      double UC4 = U[N4];
-      double VC4 = V[N4];
-      for(int i = 1; i < L; i++){
-	double u = lengths_i[i]/L_i;
-	for(int j = 1; j < H; j++){ 
-	  double v = lengths_j[j]/L_j;
-	  int iP1 = N1+i;
-	  int iP2 = N2+j;
-	  int iP3 = N4-i;
-	  int iP4 = (N4+(N3-N2)-j)%m_vertices.size();
-	  double Up = TRAN_QUA ( U[iP1], U[iP2], U[iP3], U[iP4] , UC1, UC2, UC3, UC4, u, v ); 
-	  double Vp = TRAN_QUA ( V[iP1], V[iP2], V[iP3], V[iP4] , VC1, VC2, VC3, VC4, u, v ); 
-	  GPoint gp = gf->point (SPoint2(Up,Vp));
-	  MFaceVertex *newv  = new MFaceVertex ( gp.x(),gp.y(),gp.z(), gf, Up, Vp );
-	  gf->mesh_vertices.push_back (newv);	  	  
-	  tab[std::make_pair(i,j)] = newv;
-	}
+  if(corners.size() == 4){
+    double UC4 = U[N4];
+    double VC4 = V[N4];
+    for(int i = 1; i < L; i++){
+      double u = lengths_i[i] / L_i;
+      for(int j = 1; j < H; j++){ 
+	double v = lengths_j[j] / L_j;
+	int iP1 = N1 + i;
+	int iP2 = N2 + j;
+	int iP3 = N4 - i;
+	int iP4 = (N4 + (N3 - N2) - j) % m_vertices.size();
+	double Up = TRAN_QUA(U[iP1], U[iP2], U[iP3], U[iP4], UC1, UC2, UC3, UC4, u, v); 
+	double Vp = TRAN_QUA(V[iP1], V[iP2], V[iP3], V[iP4], VC1, VC2, VC3, VC4, u, v); 
+	GPoint gp = gf->point(SPoint2(Up, Vp));
+	MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
+	gf->mesh_vertices.push_back(newv);
+	tab[std::make_pair(i,j)] = newv;
       }
     }
-  else
-    {
-      for(int i = 1; i < L; i++){
-	double u = lengths_i[i]/L_i;
-	for(int j = 1; j < H; j++){ 
-	  double v = lengths_j[j]/L_j;
-	  int iP1 = N1+i;
-	  int iP2 = N2+j;
-	  int iP3 = ((N3+N2)-i)%m_vertices.size();
-
-
-	  double Up = TRAN_TRI ( U[iP1], U[iP2], U[iP3] , UC1, UC2, UC3, u, v ); 
-	  double Vp = TRAN_TRI ( V[iP1], V[iP2], V[iP3] , VC1, VC2, VC3, u, v ); 
-
-	  GPoint gp = gf->point (SPoint2(Up,Vp));
-	  MFaceVertex *newv  = new MFaceVertex ( gp.x(),gp.y(),gp.z(), gf, Up, Vp );
-	  gf->mesh_vertices.push_back (newv);	  	  
-	  tab[std::make_pair(i,j)] = newv;
-	}
+  }
+  else{
+    for(int i = 1; i < L; i++){
+      double u = lengths_i[i] / L_i;
+      for(int j = 1; j < H; j++){ 
+	double v = lengths_j[j] / L_j;
+	int iP1 = N1 + i;
+	int iP2 = N2 + j;
+	int iP3 = ((N3 + N2) - i) % m_vertices.size();
+	double Up = TRAN_TRI(U[iP1], U[iP2], U[iP3], UC1, UC2, UC3, u, v);
+	double Vp = TRAN_TRI(V[iP1], V[iP2], V[iP3], VC1, VC2, VC3, u, v);
+	GPoint gp = gf->point(SPoint2(Up, Vp));
+	MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
+	gf->mesh_vertices.push_back(newv);
+	tab[std::make_pair(i,j)] = newv;
       }
-    }  
+    }
+  }  
 
   // elliptic smoother (don't apply this by default)
   if(corners.size() == 4 && CTX.mesh.nb_smoothing > 1 && gf->geomType() == GEntity::Plane){
@@ -275,61 +253,59 @@ int MeshTransfiniteSurface( GFace *gf)
     }
   }
 
-  if (corners.size() == 4)
-    { 
-      // create elements
-      for(int i = 0; i < L ; i++){
-	for(int j = 0; j < H; j++){
-	  MVertex *v1 = tab[std::make_pair(i,j)];
-	  MVertex *v2 = tab[std::make_pair(i+1,j)];
-	  MVertex *v3 = tab[std::make_pair(i+1,j+1)];
-	  MVertex *v4 = tab[std::make_pair(i,j+1)];
-	  if(gf->meshAttributes.recombine)
-	    gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
-	  else if(gf->meshAttributes.transfiniteArrangement == 1 ||
-		  (gf->meshAttributes.transfiniteArrangement == 0 && 
-		   ((i % 2 == 0 && j % 2 == 1) ||
-		    (i % 2 == 1 && j % 2 == 0)))){
-	    gf->triangles.push_back(new MTriangle(v1, v2, v3));
-	    gf->triangles.push_back(new MTriangle(v3, v4, v1));
-	  }	  
-	  else{
-	    gf->triangles.push_back(new MTriangle(v1, v2, v4));
-	    gf->triangles.push_back(new MTriangle(v4, v2, v3));
-	  }	  
-	}
-      }
-    }
-  else
-    {      
+  if(corners.size() == 4){ 
+    // create elements
+    for(int i = 0; i < L ; i++){
       for(int j = 0; j < H; j++){
-	MVertex *v1 = tab[std::make_pair(0,0)];
-	MVertex *v2 = tab[std::make_pair(1,j)];
-	MVertex *v3 = tab[std::make_pair(1,j+1)];
-	gf->triangles.push_back(new MTriangle(v1, v2, v3));
-      }
-
-      for(int i = 1; i < L ; i++){
-	for(int j = 0; j < H; j++){
-	  MVertex *v1 = tab[std::make_pair(i,j)];
-	  MVertex *v2 = tab[std::make_pair(i+1,j)];
-	  MVertex *v3 = tab[std::make_pair(i+1,j+1)];
-	  MVertex *v4 = tab[std::make_pair(i,j+1)];
-	  if(gf->meshAttributes.recombine)
-	    gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
-	  else if(gf->meshAttributes.transfiniteArrangement == 1 ||
-		  (gf->meshAttributes.transfiniteArrangement == 0 && 
-		   ((i % 2 == 0 && j % 2 == 1) ||
-		    (i % 2 == 1 && j % 2 == 0)))){
-	    gf->triangles.push_back(new MTriangle(v1, v2, v3));
-	    gf->triangles.push_back(new MTriangle(v3, v4, v1));
-	  }	  
-	  else{
-	    gf->triangles.push_back(new MTriangle(v1, v2, v4));
-	    gf->triangles.push_back(new MTriangle(v4, v2, v3));
-	  }	  
-	}
+	MVertex *v1 = tab[std::make_pair(i,j)];
+	MVertex *v2 = tab[std::make_pair(i+1,j)];
+	MVertex *v3 = tab[std::make_pair(i+1,j+1)];
+	MVertex *v4 = tab[std::make_pair(i,j+1)];
+	if(gf->meshAttributes.recombine)
+	  gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+	else if(gf->meshAttributes.transfiniteArrangement == 1 ||
+		(gf->meshAttributes.transfiniteArrangement == 0 && 
+		 ((i % 2 == 0 && j % 2 == 1) ||
+		  (i % 2 == 1 && j % 2 == 0)))){
+	  gf->triangles.push_back(new MTriangle(v1, v2, v3));
+	  gf->triangles.push_back(new MTriangle(v3, v4, v1));
+	}	  
+	else{
+	  gf->triangles.push_back(new MTriangle(v1, v2, v4));
+	  gf->triangles.push_back(new MTriangle(v4, v2, v3));
+	}	  
       }
     }
+  }
+  else{      
+    for(int j = 0; j < H; j++){
+      MVertex *v1 = tab[std::make_pair(0,0)];
+      MVertex *v2 = tab[std::make_pair(1,j)];
+      MVertex *v3 = tab[std::make_pair(1,j+1)];
+      gf->triangles.push_back(new MTriangle(v1, v2, v3));
+    }
+    for(int i = 1; i < L ; i++){
+      for(int j = 0; j < H; j++){
+	MVertex *v1 = tab[std::make_pair(i,j)];
+	MVertex *v2 = tab[std::make_pair(i+1,j)];
+	MVertex *v3 = tab[std::make_pair(i+1,j+1)];
+	MVertex *v4 = tab[std::make_pair(i,j+1)];
+	if(gf->meshAttributes.recombine)
+	  gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+	else if(gf->meshAttributes.transfiniteArrangement == 1 ||
+		(gf->meshAttributes.transfiniteArrangement == 0 && 
+		 ((i % 2 == 0 && j % 2 == 1) ||
+		  (i % 2 == 1 && j % 2 == 0)))){
+	  gf->triangles.push_back(new MTriangle(v1, v2, v3));
+	  gf->triangles.push_back(new MTriangle(v3, v4, v1));
+	}	  
+	else{
+	  gf->triangles.push_back(new MTriangle(v1, v2, v4));
+	  gf->triangles.push_back(new MTriangle(v4, v2, v3));
+	}	  
+      }
+    }
+  }
+
   return 1;
 }

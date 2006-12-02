@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.5 2006-11-27 22:22:13 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.6 2006-12-02 19:29:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -28,9 +28,8 @@
 
 extern Mesh *THEM;
 
-// X = X(u), Y = Y(u), Z = Z(u)
-
 // Curves
+
 Vertex InterpolateCurve(Curve * Curve, double u, int derivee)
 {
   int N, i, j;
@@ -342,7 +341,6 @@ void Calcule_Z_Plan(void *data, Surface *THESURFACE)
     v->Pos.Z = 0.0;
 }
 
-
 Vertex InterpolateSurface(Surface * s, double u, double v,
                           int derivee, int u_v)
 {
@@ -374,26 +372,6 @@ Vertex InterpolateSurface(Surface * s, double u, double v,
     }
     else {
       Msg(WARNING, "Arbitrary InterpolateSurface for derivative not done");
-      /*
-         double epsc = eps * cos (t);
-         double epss = eps * sin (t);
-         if (v - epss < 0.0 && u - epsc < 0.0){
-         D[0] = InterpolateSurface (s, u, v, 0, 0);
-         D[1] = InterpolateSurface (s, u + epsc, v + epss, 0, 0);
-         }
-         else if (v - epss < 0.0){
-         D[0] = InterpolateSurface (s, u - epsc, v, 0, 0);
-         D[1] = InterpolateSurface (s, u, v + epss, 0, 0);
-         }
-         else if (u - epsc < 0.0){
-         D[0] = InterpolateSurface (s, u, v - epss, 0, 0);
-         D[1] = InterpolateSurface (s, u + epsc, v, 0, 0);
-         }
-         else{
-         D[0] = InterpolateSurface (s, u - epsc, v - epss, 0, 0);
-         D[1] = InterpolateSurface (s, u, v, 0, 0);
-         }
-       */
     }
     T.Pos.X = (D[1].Pos.X - D[0].Pos.X) / eps;
     T.Pos.Y = (D[1].Pos.Y - D[0].Pos.Y) / eps;
@@ -495,93 +473,6 @@ Vertex InterpolateSurface(Surface * s, double u, double v,
     return T;
   }
 
-}
-
-// Volumes
-
-/* Interpolation transfinie sur un hexaedre 
-                                   prisme (avec s1=s4=a4, s5=s8=a8, a9=a12=f4) 
-   f(u,v) = (1-u) f4(v,w) + u f2(v,w) 
-          + (1-v) f1(u,w) + v f3(u,w) 
-          + (1-w) f5(u,v) + w f6(u,v) 
-          - [ (1-u)(1-v) c9(w) + (1-u)v c12(w) + u(1-v) c10(w) + uv c11(w) ]
-          - [ (1-v)(1-w) c1(u) + (1-v)w c5(u)  + v(1-w) c3(u)  + vw c7(u)  ]
-          - [ (1-u)(1-w) c4(v) + (1-w)u c2(v)  + w(1-u) c8(v)  + uw c6(v)  ]
-          + [ (1-u)(1-v)(1-w) s1 + u(1-v)(1-w) s2 + uv(1-w) s3 + (1-u)v(1-w) s4 + 
-	      (1-u)(1-v)w     s5 + u(1-v)w     s6 + uvw     s7 + (1-u)vw     s8 ]
-*/
-
-#define TRAN_HEX(f1,f2,f3,f4,f5,f6,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,s1,s2,s3,s4,s5,s6,s7,s8,u,v,w) (1-u)*f4+u*f2+(1-v)*f1+v*f3+(1-w)*f5+w*f6-((1-u)*(1-v)*c9+(1-u)*v*c12+u*(1-v)*c10+u*v*c11)-((1-v)*(1-w)*c1+(1-v)*w*c5+v*(1-w)*c3+v*w*c7)-((1-u)*(1-w)*c4+(1-w)*u*c2+w*(1-u)*c8+u*w*c6)+(1-u)*(1-v)*(1-w)*s1+u*(1-v)*(1-w)*s2+u*v*(1-w)*s3+(1-u)*v*(1-w)*s4+(1-u)*(1-v)*w*s5+u*(1-v)*w*s6+u*v*w*s7+(1-u)*v*w*s8
-
-Vertex TransfiniteHex(Vertex f1, Vertex f2, Vertex f3, Vertex f4, Vertex f5,
-                      Vertex f6, Vertex c1, Vertex c2, Vertex c3, Vertex c4,
-                      Vertex c5, Vertex c6, Vertex c7, Vertex c8, Vertex c9,
-                      Vertex c10, Vertex c11, Vertex c12, Vertex s1,
-                      Vertex s2, Vertex s3, Vertex s4, Vertex s5, Vertex s6,
-                      Vertex s7, Vertex s8, double u, double v, double w)
-{
-  Vertex V;
-
-  V.lc = TRAN_HEX(f1.lc, f2.lc, f3.lc, f4.lc, f5.lc, f6.lc,
-                  c1.lc, c2.lc, c3.lc, c4.lc, c5.lc, c6.lc,
-                  c7.lc, c8.lc, c9.lc, c10.lc, c11.lc, c12.lc,
-                  s1.lc, s2.lc, s3.lc, s4.lc, s5.lc, s6.lc, s7.lc, s8.lc,
-                  u, v, w);
-
-  V.Pos.X =
-    TRAN_HEX(f1.Pos.X, f2.Pos.X, f3.Pos.X, f4.Pos.X, f5.Pos.X, f6.Pos.X,
-             c1.Pos.X, c2.Pos.X, c3.Pos.X, c4.Pos.X, c5.Pos.X, c6.Pos.X,
-             c7.Pos.X, c8.Pos.X, c9.Pos.X, c10.Pos.X, c11.Pos.X, c12.Pos.X,
-             s1.Pos.X, s2.Pos.X, s3.Pos.X, s4.Pos.X, s5.Pos.X, s6.Pos.X,
-             s7.Pos.X, s8.Pos.X, u, v, w);
-
-  V.Pos.Y =
-    TRAN_HEX(f1.Pos.Y, f2.Pos.Y, f3.Pos.Y, f4.Pos.Y, f5.Pos.Y, f6.Pos.Y,
-             c1.Pos.Y, c2.Pos.Y, c3.Pos.Y, c4.Pos.Y, c5.Pos.Y, c6.Pos.Y,
-             c7.Pos.Y, c8.Pos.Y, c9.Pos.Y, c10.Pos.Y, c11.Pos.Y, c12.Pos.Y,
-             s1.Pos.Y, s2.Pos.Y, s3.Pos.Y, s4.Pos.Y, s5.Pos.Y, s6.Pos.Y,
-             s7.Pos.Y, s8.Pos.Y, u, v, w);
-
-  V.Pos.Z =
-    TRAN_HEX(f1.Pos.Z, f2.Pos.Z, f3.Pos.Z, f4.Pos.Z, f5.Pos.Z, f6.Pos.Z,
-             c1.Pos.Z, c2.Pos.Z, c3.Pos.Z, c4.Pos.Z, c5.Pos.Z, c6.Pos.Z,
-             c7.Pos.Z, c8.Pos.Z, c9.Pos.Z, c10.Pos.Z, c11.Pos.Z, c12.Pos.Z,
-             s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, s4.Pos.Z, s5.Pos.Z, s6.Pos.Z,
-             s7.Pos.Z, s8.Pos.Z, u, v, w);
-
-  return (V);
-}
-
-void Normal2Surface(Surface * s, double u, double v, double n[3])
-{
-  Vertex du, dv;
-  double t1[3], t2[3];
-  du = InterpolateSurface(s, u, v, 1, 1);
-  dv = InterpolateSurface(s, u, v, 1, 2);
-  t1[0] = du.Pos.X;
-  t1[1] = du.Pos.Y;
-  t1[2] = du.Pos.Z;
-  t2[0] = dv.Pos.X;
-  t2[1] = dv.Pos.Y;
-  t2[2] = dv.Pos.Z;
-  prodve(t1, t2, n);
-  norme(n);
-}
-
-void HessianNormal2Surface(Surface * s, double u, double v, double n[3])
-{
-  Vertex du, dv;
-  double t1[3], t2[3];
-  du = InterpolateSurface(s, u, v, 1, 1);
-  dv = InterpolateSurface(s, u, v, 1, 2);
-  t1[0] = du.Pos.X;
-  t1[1] = du.Pos.Y;
-  t1[2] = du.Pos.Z;
-  t2[0] = dv.Pos.X;
-  t2[1] = dv.Pos.Y;
-  t2[2] = dv.Pos.Z;
-  prodve(t1, t2, n);
-  norme(n);
 }
 
 // Cubic spline

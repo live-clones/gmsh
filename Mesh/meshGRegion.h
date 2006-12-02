@@ -40,6 +40,7 @@ public :
   void operator () (GRegion *);
 };
 
+int MeshTransfiniteVolume(GRegion *gr);
 int MeshExtrudedVolume(GRegion *gr);
 
 #endif
