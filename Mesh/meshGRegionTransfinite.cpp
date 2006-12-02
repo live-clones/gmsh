@@ -1,4 +1,4 @@
-// $Id: meshGRegionTransfinite.cpp,v 1.1 2006-12-02 19:29:37 geuzaine Exp $
+// $Id: meshGRegionTransfinite.cpp,v 1.2 2006-12-02 20:18:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -56,6 +56,59 @@
     produced with the 2D transfinite algorithm with 'Right' orientation
     (not 'left' or 'Alternate')
 */
+
+#define CREATE_HEX new MHexahedron(tab[(i)   + N_i*(j)   + N_i*N_j*(k)],   \
+				   tab[(i+1) + N_i*(j)   + N_i*N_j*(k)],   \
+				   tab[(i+1) + N_i*(j+1) + N_i*N_j*(k)],   \
+				   tab[(i)   + N_i*(j+1) + N_i*N_j*(k)],   \
+				   tab[(i)   + N_i*(j)   + N_i*N_j*(k+1)], \
+				   tab[(i+1) + N_i*(j)   + N_i*N_j*(k+1)], \
+				   tab[(i+1) + N_i*(j+1) + N_i*N_j*(k+1)], \
+				   tab[(i)   + N_i*(j+1) + N_i*N_j*(k+1)])
+
+#define CREATE_PRISM_1 new MPrism(tab[(i)   + N_i*(j)   + N_i*N_j*(k)],   \
+				  tab[(i+1) + N_i*(j)   + N_i*N_j*(k)],   \
+				  tab[(i)   + N_i*(j+1) + N_i*N_j*(k)],   \
+				  tab[(i)   + N_i*(j)   + N_i*N_j*(k+1)], \
+				  tab[(i+1) + N_i*(j)   + N_i*N_j*(k+1)], \
+				  tab[(i)   + N_i*(j+1) + N_i*N_j*(k+1)])
+
+#define CREATE_PRISM_2 new MPrism(tab[(i+1) + N_i*(j+1) + N_i*N_j*(k)],   \
+				  tab[(i)   + N_i*(j+1) + N_i*N_j*(k)],   \
+				  tab[(i+1) + N_i*(j)   + N_i*N_j*(k)],   \
+				  tab[(i+1) + N_i*(j+1) + N_i*N_j*(k+1)], \
+				  tab[(i)   + N_i*(j+1) + N_i*N_j*(k+1)], \
+				  tab[(i+1) + N_i*(j)   + N_i*N_j*(k+1)])
+
+#define CREATE_SIM_1 new MTetrahedron(tab[(i)   + N_i*(j)   + N_i*N_j*(k)], \
+				      tab[(i+1) + N_i*(j)   + N_i*N_j*(k)], \
+				      tab[(i)   + N_i*(j+1) + N_i*N_j*(k)], \
+				      tab[(i)   + N_i*(j)   + N_i*N_j*(k+1)])
+
+#define CREATE_SIM_2 new MTetrahedron(tab[(i+1) + N_i*(j)   + N_i*N_j*(k)],   \
+				      tab[(i)   + N_i*(j+1) + N_i*N_j*(k)],   \
+				      tab[(i)   + N_i*(j)   + N_i*N_j*(k+1)], \
+				      tab[(i+1) + N_i*(j)   + N_i*N_j*(k+1)])
+
+#define CREATE_SIM_3 new MTetrahedron(tab[(i)   + N_i*(j)   + N_i*N_j*(k+1)], \
+				      tab[(i+1) + N_i*(j)   + N_i*N_j*(k+1)], \
+				      tab[(i)   + N_i*(j+1) + N_i*N_j*(k)],   \
+				      tab[(i)   + N_i*(j+1) + N_i*N_j*(k+1)])
+
+#define CREATE_SIM_4 new MTetrahedron(tab[(i+1) + N_i*(j)   + N_i*N_j*(k)],   \
+				      tab[(i)   + N_i*(j+1) + N_i*N_j*(k)],   \
+				      tab[(i+1) + N_i*(j)   + N_i*N_j*(k+1)], \
+				      tab[(i+1) + N_i*(j+1) + N_i*N_j*(k)])
+
+#define CREATE_SIM_5 new MTetrahedron(tab[(i)   + N_i*(j+1) + N_i*N_j*(k)],   \
+				      tab[(i)   + N_i*(j+1) + N_i*N_j*(k+1)], \
+				      tab[(i+1) + N_i*(j)   + N_i*N_j*(k+1)], \
+				      tab[(i+1) + N_i*(j+1) + N_i*N_j*(k)])
+
+#define CREATE_SIM_6 new MTetrahedron(tab[(i+1) + N_i*(j)   + N_i*N_j*(k+1)], \
+				      tab[(i)   + N_i*(j+1) + N_i*N_j*(k+1)], \
+				      tab[(i+1) + N_i*(j+1) + N_i*N_j*(k+1)], \
+				      tab[(i+1) + N_i*(j+1) + N_i*N_j*(k)])
 
 double transfiniteHex(double f1, double f2, double f3, double f4, 
 		      double f5, double f6,
@@ -181,7 +234,7 @@ public:
         }
       }
     }
-    Msg(INFO, "Found face index %d  (permutation = %d)", _index, _permutation);
+    Msg(DEBUG, "Found face index %d  (permutation = %d)", _index, _permutation);
     for(int i = 0; i <= _L; i++)
       for(int j = 0; j <= _H; j++)
 	_list.push_back(_gf->transfinite_vertices[std::make_pair(i, j)]);
@@ -190,12 +243,15 @@ public:
   // returns the index of the face in the reference hexahedron
   int index() const { return _index; }
 
+  // returns true if the face is recombined
+  int recombined() const { return _gf->meshAttributes.recombine; }
+
   // returns the number or points in the transfinite mesh in both
   // parameter directions
   int getNumU(){ return (_permutation % 2) ? _H + 1: _L + 1; }
   int getNumV(){ return (_permutation % 2) ? _L + 1: _H + 1; }
 
-  // returns the (i,j) vertex in the face, i and j being defined along 
+  // returns the (i,j) vertex in the face, i and j being defined in
   // the coordinate system of the reference transfinite hexahedron
   MVertex *getVertex(int i, int j)
   {
@@ -213,20 +269,11 @@ public:
     MVertex *v = 0;
     if(index >= 0 && index < _list.size()) v = _list[index];
     if(index < 0 || index >= _list.size() || !v){
-      Msg(GERROR, "Wrong index in transfinite mesh of surface %d: m=%d n=%d M=%d N=%d perm=%d",
-	  _gf->tag(), m, n, M, N, _permutation);
+      Msg(GERROR, "Wrong index in transfinite mesh of surface %d: "
+	  "m=%d n=%d M=%d N=%d perm=%d", _gf->tag(), m, n, M, N, _permutation);
       return _list[0];
     }
     return v;
-  }
-};
-
-struct GOrientedTransfiniteFaceLessThan {
-  bool operator()(const GOrientedTransfiniteFace &f1, 
-		  const GOrientedTransfiniteFace &f2) const
-  {
-    if(f1.index() < f2.index()) return true;
-    return false;
   }
 };
 
@@ -256,7 +303,7 @@ int MeshTransfiniteVolume(GRegion *gr)
   int N_k = orientedFaces[1].getNumV();
 
   std::vector<double> lengths_i, lengths_j, lengths_k;
-  double L_i = 0, L_j = 0, L_k = 0;
+  double L_i = 0., L_j = 0., L_k = 0.;
   lengths_i.push_back(0.);
   lengths_j.push_back(0.);
   lengths_k.push_back(0.);
@@ -279,6 +326,8 @@ int MeshTransfiniteVolume(GRegion *gr)
     lengths_k.push_back(L_k);
   }
 
+  // create points using transfinite interpolation
+
   MVertex *s0 = orientedFaces[4].getVertex(0, 0);
   MVertex *s1 = orientedFaces[4].getVertex(N_i - 1, 0);
   MVertex *s2 = orientedFaces[4].getVertex(N_i - 1, N_j - 1);
@@ -288,6 +337,8 @@ int MeshTransfiniteVolume(GRegion *gr)
   MVertex *s5 = orientedFaces[5].getVertex(N_i - 1, 0);
   MVertex *s6 = orientedFaces[5].getVertex(N_i - 1, N_j - 1);
   MVertex *s7 = orientedFaces[5].getVertex(0, N_j - 1);
+
+  MVertex **tab = new MVertex*[N_i * N_j * N_k];
 
   for(int i = 0; i < N_i; i++) {
     double u = lengths_i[i] / L_i;
@@ -325,39 +376,179 @@ int MeshTransfiniteVolume(GRegion *gr)
 	else
           f3 = c8;
 
+	int index = i + N_i * j + N_i * N_j * k;
+
         if(i && j && k && i != N_i - 1 && j != N_j - 1 && k != N_k - 1) {
           MVertex *newv = transfiniteHex(f0, f1, f2, f3, f4, f5,
 					 c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11,
 					 s0, s1, s2, s3, s4, s5, s6, s7,
 					 u, v, w);
 	  gr->mesh_vertices.push_back(newv);
-	  gr->hexahedra.push_back(new MHexahedron(s0,s1,s2,s3,s4,s5,s6,s7));
-	  //tab[i,j,k] = newv;
+          tab[index] = newv;
         }
         else if(!i) {
-          //tab[i,j,k] = f3;
+          tab[index] = f3;
         }
         else if(!j) {
-          //tab[i,j,k] = f0;
+          tab[index] = f0;
         }
         else if(!k) {
-          //tab[i,j,k] = f4;
+          tab[index] = f4;
         }
         else if(i == N_i - 1) {
-          //tab[i,j,k] = f1;
+          tab[index] = f1;
         }
         else if(j == N_j - 1) {
-          //tab[i,j,k] = f2;
+          tab[index] = f2;
         }
         else if(k == N_k - 1) {
-          //tab[i,j,k] = f5;
+          tab[index] = f5;
         }
-	
       }
-
     }
-
   }
 
+  // create elements
+
+  if(faces.size() == 6) {
+    for(int i = 0; i < N_i - 1; i++) {
+      for(int j = 0; j < N_j - 1; j++) {
+        for(int k = 0; k < N_k - 1; k++) {
+          if(orientedFaces[0].recombined() && orientedFaces[1].recombined() && 
+	     orientedFaces[2].recombined() && orientedFaces[3].recombined() && 
+	     orientedFaces[4].recombined() && orientedFaces[5].recombined()) {
+            gr->hexahedra.push_back(CREATE_HEX);
+          }
+          else if(!orientedFaces[0].recombined() && orientedFaces[1].recombined() && 
+		  !orientedFaces[2].recombined() && orientedFaces[3].recombined() && 
+		  orientedFaces[4].recombined() && orientedFaces[5].recombined()) {
+            gr->prisms.push_back(new MPrism(tab[(i) + N_i * (j) + N_i * N_j * (k)],
+					    tab[(i + 1) + N_i * (j) + N_i * N_j * (k)],
+					    tab[(i) + N_i * (j) + N_i * N_j * (k + 1)],
+					    tab[(i) + N_i * (j + 1) + N_i * N_j * (k)],
+					    tab[(i + 1) + N_i * (j + 1) + N_i * N_j * (k)],
+					    tab[(i) + N_i * (j + 1) + N_i * N_j * (k + 1)]));
+	    gr->prisms.push_back(new MPrism(tab[(i + 1) + N_i * (j) + N_i * N_j * (k + 1)],
+					    tab[(i) + N_i * (j) + N_i * N_j * (k + 1)],
+					    tab[(i + 1) + N_i * (j) + N_i * N_j * (k)],
+					    tab[(i + 1) + N_i * (j + 1) + N_i * N_j * (k + 1)],
+					    tab[(i) + N_i * (j + 1) + N_i * N_j * (k + 1)],
+					    tab[(i + 1) + N_i * (j + 1) + N_i * N_j * (k)]));
+          }
+          else if(orientedFaces[0].recombined() && !orientedFaces[1].recombined() && 
+		  orientedFaces[2].recombined() && !orientedFaces[3].recombined() && 
+		  orientedFaces[4].recombined() && orientedFaces[5].recombined()) {
+            gr->prisms.push_back(new MPrism(tab[(i + 1) + N_i * (j) + N_i * N_j * (k)],
+					    tab[(i + 1) + N_i * (j + 1) + N_i * N_j * (k)],
+					    tab[(i + 1) + N_i * (j) + N_i * N_j * (k + 1)],
+					    tab[(i) + N_i * (j) + N_i * N_j * (k)],
+					    tab[(i) + N_i * (j + 1) + N_i * N_j * (k)],
+					    tab[(i) + N_i * (j) + N_i * N_j * (k + 1)]));
+            gr->prisms.push_back(new MPrism(tab[(i + 1) + N_i * (j + 1) + N_i * N_j * (k + 1)],
+					    tab[(i + 1) + N_i * (j) + N_i * N_j * (k + 1)],
+					    tab[(i + 1) + N_i * (j + 1) + N_i * N_j * (k)],
+					    tab[(i) + N_i * (j + 1) + N_i * N_j * (k + 1)],
+					    tab[(i) + N_i * (j) + N_i * N_j * (k + 1)],
+					    tab[(i) + N_i * (j + 1) + N_i * N_j * (k)]));
+          }
+          else if(orientedFaces[0].recombined() && orientedFaces[1].recombined() && 
+		  orientedFaces[2].recombined() && orientedFaces[3].recombined() && 
+		  !orientedFaces[4].recombined() && !orientedFaces[5].recombined()) {
+            gr->prisms.push_back(CREATE_PRISM_1);
+            gr->prisms.push_back(CREATE_PRISM_2);
+          }
+          else if(!orientedFaces[0].recombined() && !orientedFaces[1].recombined() &&
+		  !orientedFaces[2].recombined() && !orientedFaces[3].recombined() && 
+		  !orientedFaces[4].recombined() && !orientedFaces[5].recombined()) {
+            gr->tetrahedra.push_back(CREATE_SIM_1);
+            gr->tetrahedra.push_back(CREATE_SIM_2);
+            gr->tetrahedra.push_back(CREATE_SIM_3);
+            gr->tetrahedra.push_back(CREATE_SIM_4);
+            gr->tetrahedra.push_back(CREATE_SIM_5);
+            gr->tetrahedra.push_back(CREATE_SIM_6);
+          }
+          else {
+            Msg(GERROR, "Wrong surface recombination in transfinite volume %d", gr->tag());
+	    delete [] tab;
+            return 0;
+          }
+        }
+      }
+    }
+  }
+  else if(faces.size() == 5) {
+    for(int j = 0; j < N_j - 1; j++) {
+      for(int k = 0; k < N_k - 1; k++) {
+        if((orientedFaces[0].recombined() && orientedFaces[1].recombined() && 
+	    orientedFaces[2].recombined() && orientedFaces[4].recombined() && 
+	    orientedFaces[5].recombined()) ||
+           (orientedFaces[0].recombined() && orientedFaces[1].recombined() && 
+	    orientedFaces[2].recombined() && !orientedFaces[4].recombined() && 
+	    !orientedFaces[5].recombined())) {
+          gr->prisms.push_back(new MPrism(tab[N_i * (j) + N_i * N_j * (k)],
+					  tab[1 + N_i * (j) + N_i * N_j * (k)],
+					  tab[1 + N_i * (j + 1) + N_i * N_j * (k)],
+					  tab[N_i * (j) + N_i * N_j * (k + 1)],
+					  tab[1 + N_i * (j) + N_i * N_j * (k + 1)],
+					  tab[1 + N_i * (j + 1) + N_i * N_j * (k + 1)]));
+        }
+        else if(!orientedFaces[0].recombined() && !orientedFaces[1].recombined() && 
+		!orientedFaces[2].recombined() && !orientedFaces[4].recombined() && 
+		!orientedFaces[5].recombined()) {
+          gr->tetrahedra.push_back(new MTetrahedron(tab[+N_i * (j) + N_i * N_j * (k)],
+						    tab[1 + N_i * (j) + N_i * N_j * (k)],
+						    tab[1 + N_i * (j + 1) + N_i * N_j * (k)],
+						    tab[+N_i * (j) + N_i * N_j * (k + 1)]));
+          gr->tetrahedra.push_back(new MTetrahedron(tab[1 + N_i * (j) + N_i * N_j * (k)],
+						    tab[1 + N_i * (j + 1) + N_i * N_j * (k)],
+						    tab[+N_i * (j) + N_i * N_j * (k + 1)],
+						    tab[1 + N_i * (j) + N_i * N_j * (k + 1)]));
+          gr->tetrahedra.push_back(new MTetrahedron(tab[+N_i * (j) + N_i * N_j * (k + 1)],
+						    tab[1 + N_i * (j + 1) + N_i * N_j * (k + 1)],
+						    tab[1 + N_i * (j) + N_i * N_j * (k + 1)],
+						    tab[1 + N_i * (j + 1) + N_i * N_j * (k)]));
+        }
+        else {
+          Msg(GERROR, "Wrong surface recombination in transfinite volume %d", gr->tag());
+	  delete [] tab;
+          return 0;
+        }
+      }
+    }
+    for(int i = 1; i < N_i - 1; i++) {
+      for(int j = 0; j < N_j - 1; j++) {
+        for(int k = 0; k < N_k - 1; k++) {
+          if(orientedFaces[0].recombined() && orientedFaces[1].recombined() && 
+	     orientedFaces[2].recombined() && orientedFaces[4].recombined() &&
+	     orientedFaces[5].recombined()) {
+            gr->hexahedra.push_back(CREATE_HEX);
+          }
+          else if(orientedFaces[0].recombined() && orientedFaces[1].recombined() && 
+		  orientedFaces[2].recombined() && !orientedFaces[4].recombined() && 
+		  !orientedFaces[5].recombined()) {
+            gr->prisms.push_back(CREATE_PRISM_1);
+            gr->prisms.push_back(CREATE_PRISM_2);
+          }
+          else if(!orientedFaces[0].recombined() && !orientedFaces[1].recombined() && 
+		  !orientedFaces[2].recombined() && !orientedFaces[4].recombined() && 
+		  !orientedFaces[5].recombined()) {
+            gr->tetrahedra.push_back(CREATE_SIM_1);
+            gr->tetrahedra.push_back(CREATE_SIM_2);
+            gr->tetrahedra.push_back(CREATE_SIM_3);
+            gr->tetrahedra.push_back(CREATE_SIM_4);
+            gr->tetrahedra.push_back(CREATE_SIM_5);
+            gr->tetrahedra.push_back(CREATE_SIM_6);
+          }
+          else {
+            Msg(GERROR, "Wrong surface recombination in transfinite volume %d", gr->tag());
+	    delete [] tab;
+            return 0;
+          }
+        }
+      }
+    }
+  }
+
+  delete [] tab;
   return 1;
 }
