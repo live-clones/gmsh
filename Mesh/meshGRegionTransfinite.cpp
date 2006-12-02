@@ -1,4 +1,4 @@
-// $Id: meshGRegionTransfinite.cpp,v 1.2 2006-12-02 20:18:20 geuzaine Exp $
+// $Id: meshGRegionTransfinite.cpp,v 1.3 2006-12-02 21:16:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -48,13 +48,15 @@
 
   - only works with 5- or 6-face volumes
 
-  - the definition of a prismatic volume has to follow the ordering
-    given in the figure above (degenerescence has to be along s0,s4)
+  - the faces have to be meshed with the 2D transfinite algorithm
+
+  - the definition of a 5-face volume has to follow the ordering given
+    in the figure above (degenerescence has to be along s0,s4)
    
-  - meshing a hex volume with prisms or tetrahedra assumes that the
-    surface mesh 1) triangles on opposing faces match and 2) has been 
-    produced with the 2D transfinite algorithm with 'Right' orientation
-    (not 'left' or 'Alternate')
+  - meshing a volume with prisms or tetrahedra assumes that the
+    triangular mesh is consistent with the volume mesh: there is no
+    coherence check in the volume algorithm to ensure that edges will
+    match.
 */
 
 #define CREATE_HEX new MHexahedron(tab[(i)   + N_i*(j)   + N_i*N_j*(k)],   \
