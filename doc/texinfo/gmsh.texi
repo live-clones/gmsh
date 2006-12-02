@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.221 2006-11-29 03:11:21 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.222 2006-12-02 21:24:29 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 @c
@@ -2069,23 +2069,21 @@ line.
 (A deprecated synonym for @code{Progression} is @code{Power}.)
 
 @item Transfinite Surface @{ @var{expression} @} = @{ @var{expression-list} @} < Left | Right | Alternate > ;
-Selects the surface @var{expression} to be meshed with the 2D transfinite
-algorithm (the surface can only have three or four sides). The
-@var{expression-list} should contain the identification numbers of the
-points on the boundary of the surface. The ordering of these point numbers
-defines the ordering and orientation of the mesh elements, and should thus
-follow the node ordering for triangles or quadrangles given in @ref{Gmsh
-node ordering}. The optional argument specifies the way the triangles are
-oriented when the mesh is not recombined.
+Selects the surface @var{expression} to be meshed with the 2D
+transfinite algorithm. The @var{expression-list} should contain the
+identification numbers of three or four points on the boundary of the
+surface, defining the corners of the transfinite interpolation. The
+optional argument specifies the way the triangles are oriented when the
+mesh is not recombined.
 
 @item Transfinite Volume @{ @var{expression} @} = @{ @var{expression-list} @};
-Selects the volume @var{expression} to be meshed with the 3D transfinite
-algorithm (the volume can only have five or six faces).  The
-@var{expression-list} should contain the identification numbers of the
-points on the boundary of the volume. The ordering of these point numbers
-defines the ordering and orientation of the mesh elements, and should thus
-follow the node ordering for prisms or hexahedra given in @ref{Gmsh node
-ordering}.
+Selects a five- or six-face volume @var{expression} to be meshed with
+the 3D transfinite algorithm.  The @var{expression-list} should contain
+the identification numbers of the six or eight points on the boundary of
+the volume that define the corners of the transfinite interpolation. The
+ordering of these point numbers defines the ordering and orientation of
+the mesh elements, and should thus follow the node ordering for prisms
+or hexahedra given in @ref{Gmsh node ordering}.
 
 @end ftable
 
