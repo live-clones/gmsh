@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.580 2006-12-03 18:04:11 geuzaine Exp $
+// $Id: GUI.cpp,v 1.581 2006-12-03 18:41:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2442,7 +2442,7 @@ void GUI::create_option_window()
       mesh_butt[16]->type(FL_TOGGLE_BUTTON);
       mesh_butt[16]->callback(mesh_options_ok_cb, (void*)"mesh_cut_plane");
 
-      mesh_cut_plane = new Fl_Group(L + 2 * WB, 2 * WB + 2 * BH, width - 2 * WB, 6 * BH, 0);
+      mesh_cut_plane = new Fl_Group(L + 2 * WB, 2 * WB + 2 * BH, width - 2 * WB, 4 * BH, 0);
 
       int ii = fontsize;
       Fl_Button *invert = new Fl_Button(L + 2 * WB, 2 * WB + 2 * BH, ii, 4*BH, "-");
@@ -2477,6 +2477,8 @@ void GUI::create_option_window()
       mesh_value[17]->maximum(1.0);
       mesh_value[17]->callback(mesh_options_ok_cb);
 
+      mesh_cut_plane->end();
+
       mesh_butt[22] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Draw only intersecting volume layer");
       mesh_butt[22]->type(FL_TOGGLE_BUTTON);
       mesh_butt[22]->callback(mesh_options_ok_cb);
@@ -2484,8 +2486,6 @@ void GUI::create_option_window()
       mesh_butt[23] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Cut only volume elements");
       mesh_butt[23]->type(FL_TOGGLE_BUTTON);
       mesh_butt[23]->callback(mesh_options_ok_cb);
-
-      mesh_cut_plane->end();
 
       o->end();
     }
