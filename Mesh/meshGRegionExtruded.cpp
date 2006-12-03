@@ -1,4 +1,4 @@
-// $Id: meshGRegionExtruded.cpp,v 1.6 2006-11-28 03:35:29 geuzaine Exp $
+// $Id: meshGRegionExtruded.cpp,v 1.7 2006-12-03 02:05:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -174,6 +174,14 @@ int MeshExtrudedVolume(GRegion *gr)
 
   if(!ep || !ep->mesh.ExtrudeMesh || ep->geo.Mode != EXTRUDED_ENTITY)
     return 0;
+
+  // FIXME
+  static bool warn_recombine = 1;
+  if(!ep->mesh.Recombine && warn_recombine){
+    Msg(WARNING, "Non-recombined volume extrusion has not been reimplemented yet");
+    warn_recombine = false;
+  }
+
 
   // build a set with all the vertices on the boundary of gr
   double old_tol = MVertexLessThanLexicographic::tolerance; 

@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.13 2006-11-28 03:35:29 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.14 2006-12-03 02:05:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -150,6 +150,13 @@ int MeshExtrudedSurface(GFace *gf)
 
   if(!ep || !ep->mesh.ExtrudeMesh)
     return 0;
+
+  // FIXME
+  static bool warn_recombine = 1;
+  if(!ep->mesh.Recombine && warn_recombine){
+    Msg(WARNING, "Non-recombined surface extrusion has not been reimplemented yet");
+    warn_recombine = false;
+  }
 
   // build a set with all the vertices on the boundary of gf
   double old_tol = MVertexLessThanLexicographic::tolerance; 
