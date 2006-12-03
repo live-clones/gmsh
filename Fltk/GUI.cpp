@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.581 2006-12-03 18:41:08 geuzaine Exp $
+// $Id: GUI.cpp,v 1.582 2006-12-03 20:11:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1675,11 +1675,11 @@ void GUI::create_option_window()
   // Buttons
 
   {
-    opt_redraw = new Fl_Return_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Redraw");
+    opt_redraw = new Fl_Return_Button(width - 3.5 * BB - 3 * WB, height - BH - WB, BB, BH, "Redraw");
     opt_redraw->callback(redraw_cb);
   }
   {
-    Fl_Button *o = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Save");
+    Fl_Button *o = new Fl_Button(width - 2.5 * BB - 2 * WB, height - BH - WB, 1.5*BB, BH, "Save as defaults");
     o->callback(options_save_cb);
   }
   {
@@ -4298,21 +4298,17 @@ void GUI::create_about_window()
     o->add(" ");
     o->add("@c@.Visit http://www.geuz.org/gmsh/ for more information");
     o->add(" ");
+    o->callback(cancel_cb, (void *)about_window);
   }
 
   {
-    Fl_Button *o = new Fl_Button(width - 3*BB - 3*WB, height - BH - WB, BB, BH, "License");
+    Fl_Button *o = new Fl_Button(width - 2*BB - 2*WB, height - BH - WB, BB, BH, "License");
     o->callback(help_license_cb);
   }
 
   {
-    Fl_Button *o = new Fl_Button(width - 2*BB - 2*WB, height - BH - WB, BB, BH, "Credits");
+    Fl_Button *o = new Fl_Button(width - 1*BB - 1*WB, height - BH - WB, BB, BH, "Credits");
     o->callback(help_credits_cb);
-  }
-
-  {
-    Fl_Return_Button *o = new Fl_Return_Button(width - BB - WB, height - BH - WB, BB, BH, "OK");
-    o->callback(cancel_cb, (void *)about_window);
   }
 
   about_window->position(Fl::x() + Fl::w()/2 - width / 2,
