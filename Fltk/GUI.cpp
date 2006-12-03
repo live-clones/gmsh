@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.579 2006-12-03 17:45:37 geuzaine Exp $
+// $Id: GUI.cpp,v 1.580 2006-12-03 18:04:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2244,6 +2244,8 @@ void GUI::create_option_window()
       mesh_choice[2]->menu(menu_2d_algo);
       mesh_choice[2]->align(FL_ALIGN_RIGHT);
       mesh_choice[2]->callback(mesh_options_ok_cb);
+      // not reimplemented yet
+      ((Fl_Menu_Item*)mesh_choice[2]->menu())[1].deactivate();
 
       mesh_choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "3D algorithm");
       mesh_choice[3]->menu(menu_3d_algo);

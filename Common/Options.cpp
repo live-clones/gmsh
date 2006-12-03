@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.321 2006-11-30 13:55:20 geuzaine Exp $
+// $Id: Options.cpp,v 1.322 2006-12-03 18:04:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4634,13 +4634,9 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     int algo = (int)val;
-    if(algo != DELAUNAY_ISO &&
-       algo != DELAUNAY_TRIANGLE){
-      Msg(WARNING, "Unknown mesh algorithm: keeping existing value");
-    }
-    else{
-      CTX.mesh.algo2d = algo;
-    }
+    // at the moment the only 2d algo available is ours!
+    // CTX.mesh.algo2d = algo;
+    CTX.mesh.algo2d = DELAUNAY_ISO;
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
