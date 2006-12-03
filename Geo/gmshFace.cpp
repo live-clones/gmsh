@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.29 2006-12-03 03:19:55 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.30 2006-12-03 17:45:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -109,6 +109,9 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
     // We cannot use InterpolateSurface() for plane surfaces since it
     // relies on the mean plane, which does not respect the
     // orientation
+
+    // FIXME: move this test at the end of the MeanPlane computation
+    // routine--and store the correct normal, damn it!
     GPoint p = point(param);
     double n[3] = {meanPlane.a, meanPlane.b, meanPlane.c};
     norme(n);

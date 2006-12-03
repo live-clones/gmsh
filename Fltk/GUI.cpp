@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.578 2006-12-03 04:00:18 geuzaine Exp $
+// $Id: GUI.cpp,v 1.579 2006-12-03 17:45:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3947,37 +3947,41 @@ void GUI::create_visibility_window()
     vis_group[2] = new Fl_Group(WB, 2 * WB + 2 * BH, width - 2 * WB, height - 4 * WB - 2 * BH, "Interactive");
     vis_group[2]->resizable(NULL);
 
-    Fl_Box *b2 = new Fl_Box(FL_NO_BOX, 2 * WB, 3 * WB + 2 * BH, brw, BH, "Hide with the mouse:");
-    b2->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
+    int ll = width/2 - BH - WB - IW;
 
-    Fl_Button *butt1 = new Fl_Button(2*WB, 3 * WB + 3 * BH, IW, BH, "Elements");
+    Fl_Box *b2 = new Fl_Box(FL_NO_BOX, ll, 3 * WB + 2 * BH, IW, BH, 
+			    "Hide with the mouse:");
+    b2->align(FL_ALIGN_INSIDE|FL_ALIGN_CENTER);
+
+    Fl_Button *butt1 = new Fl_Button(ll, 3 * WB + 3 * BH, IW, BH, "Elements");
     butt1->callback(visibility_interactive_cb, (void *)"hide_elements");
-    Fl_Button *butt2 = new Fl_Button(2*WB, 3 * WB + 4 * BH, IW, BH, "Points");
+    Fl_Button *butt2 = new Fl_Button(ll, 3 * WB + 4 * BH, IW, BH, "Points");
     butt2->callback(visibility_interactive_cb, (void *)"hide_points");
-    Fl_Button *butt3 = new Fl_Button(2*WB, 3 * WB + 5 * BH, IW, BH, "Lines");
+    Fl_Button *butt3 = new Fl_Button(ll, 3 * WB + 5 * BH, IW, BH, "Lines");
     butt3->callback(visibility_interactive_cb, (void *)"hide_lines");
-    Fl_Button *butt4 = new Fl_Button(2*WB, 3 * WB + 6 * BH, IW, BH, "Surfaces");
+    Fl_Button *butt4 = new Fl_Button(ll, 3 * WB + 6 * BH, IW, BH, "Surfaces");
     butt4->callback(visibility_interactive_cb, (void *)"hide_surfaces");
-    Fl_Button *butt5 = new Fl_Button(2*WB, 3 * WB + 7 * BH, IW, BH, "Volumes");
+    Fl_Button *butt5 = new Fl_Button(ll, 3 * WB + 7 * BH, IW, BH, "Volumes");
     butt5->callback(visibility_interactive_cb, (void *)"hide_volumes");
 
-    Fl_Button *butt6 = new Fl_Button(3*WB + IW, 3 * WB + 3 * BH, 2 * BH, 5*BH, "Show\nAll");
+    Fl_Button *butt6 = new Fl_Button(ll + IW + WB, 3 * WB + 3 * BH, 2 * BH, 5*BH, "Show\nAll");
     butt6->callback(visibility_interactive_cb, (void *)"show_all");
 
-    int ww = 4*WB + IW + 2*BH;
+    int ll2 = ll + IW + WB + 2*BH + WB;
 
-    Fl_Box *b12 = new Fl_Box(FL_NO_BOX, ww, 3 * WB + 2 * BH, brw, BH, "Show with the mouse:");
-    b12->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
+    Fl_Box *b12 = new Fl_Box(FL_NO_BOX, ll2, 3 * WB + 2 * BH, IW, BH, 
+			     "Show with the mouse:");
+    b12->align(FL_ALIGN_INSIDE|FL_ALIGN_CENTER);
 
-    Fl_Button *butt11 = new Fl_Button(ww, 3 * WB + 3 * BH, IW, BH, "Elements");
+    Fl_Button *butt11 = new Fl_Button(ll2, 3 * WB + 3 * BH, IW, BH, "Elements");
     butt11->callback(visibility_interactive_cb, (void *)"show_elements");
-    Fl_Button *butt12 = new Fl_Button(ww, 3 * WB + 4 * BH, IW, BH, "Points");
+    Fl_Button *butt12 = new Fl_Button(ll2, 3 * WB + 4 * BH, IW, BH, "Points");
     butt12->callback(visibility_interactive_cb, (void *)"show_points");
-    Fl_Button *butt13 = new Fl_Button(ww, 3 * WB + 5 * BH, IW, BH, "Lines");
+    Fl_Button *butt13 = new Fl_Button(ll2, 3 * WB + 5 * BH, IW, BH, "Lines");
     butt13->callback(visibility_interactive_cb, (void *)"show_lines");
-    Fl_Button *butt14 = new Fl_Button(ww, 3 * WB + 6 * BH, IW, BH, "Surfaces");
+    Fl_Button *butt14 = new Fl_Button(ll2, 3 * WB + 6 * BH, IW, BH, "Surfaces");
     butt14->callback(visibility_interactive_cb, (void *)"show_surfaces");
-    Fl_Button *butt15 = new Fl_Button(ww, 3 * WB + 7 * BH, IW, BH, "Volumes");
+    Fl_Button *butt15 = new Fl_Button(ll2, 3 * WB + 7 * BH, IW, BH, "Volumes");
     butt15->callback(visibility_interactive_cb, (void *)"show_volumes");
     
     vis_group[2]->end();

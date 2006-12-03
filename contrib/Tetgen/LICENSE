@@ -27,9 +27,10 @@ For details, see http://tetgen.berlios.de
 
 TetGen
 A Quality Tetrahedral Mesh Generator and 3D Delaunay Triangulator
-Version 1.3 (Released on June 13, 2004).
+Version 1.4 (Released on January 14, 2006).
 
-Copyright 2002, 2004  Hang Si
+Copyright 2002, 2004, 2005, 2006 
+Hang Si
 Rathausstr. 9, 10178 Berlin, Germany
 si@wias-berlin.de
 
