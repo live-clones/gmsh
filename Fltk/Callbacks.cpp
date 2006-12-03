@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.492 2006-12-03 04:00:18 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.493 2006-12-03 04:07:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2157,7 +2157,7 @@ void visibility_number_cb(CALLBACK_ARGS)
 
 void visibility_interactive_cb(CALLBACK_ARGS)
 {
-  char *str = (char*)data;
+  char *str = (char*)data, *help;
   int what;
   char mode;
 
@@ -2165,58 +2165,68 @@ void visibility_interactive_cb(CALLBACK_ARGS)
     CTX.pick_elements = 1;
     what = ENT_ALL;
     mode = 0;
+    help = "elements to hide";
   }
   else if(!strcmp(str, "hide_points")){
     CTX.pick_elements = 0;
     what = ENT_POINT;
     mode = 0;
+    help = "points to hide";
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(str, "hide_lines")){
     CTX.pick_elements = 0;
     what = ENT_LINE;
     mode = 0;
+    help = "lines to hide";
     opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(str, "hide_surfaces")){
     CTX.pick_elements = 0;
     what = ENT_SURFACE;
     mode = 0;
+    help = "surfaces to hide";
     opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(str, "hide_volumes")){
     CTX.pick_elements = 0;
     what = ENT_VOLUME;
     mode = 0;
+    help = "volumes to hide";
     opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(str, "show_elements")){
     CTX.pick_elements = 1;
     what = ENT_ALL;
     mode = 1;
+    help = "elements to show";
   }
   else if(!strcmp(str, "show_points")){
     CTX.pick_elements = 0;
     what = ENT_POINT;
     mode = 1;
+    help = "points to show";
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(str, "show_lines")){
     CTX.pick_elements = 0;
     what = ENT_LINE;
     mode = 1;
+    help = "lines to show";
     opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(str, "show_surfaces")){
     CTX.pick_elements = 0;
     what = ENT_SURFACE;
     mode = 1;
+    help = "surfaces to show";
     opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(str, "show_volumes")){
     CTX.pick_elements = 0;
     what = ENT_VOLUME;
     mode = 1;
+    help = "volumes to show";
     opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(str, "show_all")){
@@ -2238,8 +2248,7 @@ void visibility_interactive_cb(CALLBACK_ARGS)
   while(1) {
     CTX.mesh.changed = ENT_ALL;
     Draw();
-    Msg(ONSCREEN, "Select %s to %s\n[Press 'q' to abort]", 
-	str, mode ? "show (exclusively)" : "hide");
+    Msg(ONSCREEN, "Select %s\n[Press 'q' to abort]", help);
 
     char ib = SelectEntity(what, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
