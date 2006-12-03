@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.222 2006-12-02 21:24:29 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.223 2006-12-03 20:41:46 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 @c
@@ -2028,16 +2028,19 @@ extruded and has the following syntax:
 @example
 @var{layers}:
 @group
+  Layers @{ @var{expression} @} | 
   Layers @{ @{ @var{expression-list} @}, @{ @var{expression-list} @} @} | 
   Recombine; @dots{}
 @end group
 @end example
 
-The first @var{expression-list} defines how many elements should be
-created in each extruded layer. The second @var{expression-list} gives
-the normalized height of each layer (the list should contain a sequence
-of @var{n} numbers 0 < @var{h1} < @var{h2} < @dots{} < @var{hn} <=
-1). See @ref{t3.geo}, for an example.
+In the first @code{Layer} form, @var{expression} gives the number of
+elements to be created in the (single) layer. In the second form, the
+first @var{expression-list} defines how many elements should be created
+in each extruded layer, and the second @var{expression-list} gives the
+normalized height of each layer (the list should contain a sequence of
+@var{n} numbers 0 < @var{h1} < @var{h2} < @dots{} < @var{hn} <= 1). See
+@ref{t3.geo}, for an example.
 
 For line extrusions, the @code{Recombine} option will recombine triangles
 into quadrangles when possible.  For surface extrusions, the

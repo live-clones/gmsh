@@ -63,20 +63,20 @@ Transfinite Line{51:54} = 5;
 Transfinite Surface{56} = {51,52,53,54};
 Recombine Surface{56};
 Extrude {0,0,1} {
-  Surface{56}; Layers{4,1}; Recombine;
+  Surface{56}; Layers{4}; Recombine;
 }
 
 // and the same by using only extrusions
 
 Point(100) = {2,0,0,lc};
 l[] = Extrude {1,0,0}{
-  Point{100}; Layers{4,1};
+  Point{100}; Layers{4};
 };
 s[] = Extrude {0,1,0}{
-  Line{l[1]}; Layers{4,1}; Recombine;
+  Line{l[1]}; Layers{4}; Recombine;
 };
 Extrude {0,0,1}{
-  Surface{s[1]}; Layers{4,1}; Recombine;
+  Surface{s[1]}; Layers{4}; Recombine;
 }
 
 // add some labels

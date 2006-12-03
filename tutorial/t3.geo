@@ -30,14 +30,14 @@ Extrude {0,0,h} {
 // ({-0.1,0,0.1}) and a rotation angle (-Pi/2):
 
 Extrude { {0,1,0} , {-0.1,0,0.1} , -Pi/2 } { 
-  Surface{122}; Layers { 7, 1 }; Recombine; 
+  Surface{122}; Layers{7}; Recombine; 
 }
 
 // Note that a translation ({-2*h,0,0}) and a rotation ({1,0,0},
 // {0,0.15,0.25}, Pi/2) can also be combined:
 
 out[] = Extrude { {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , Pi/2 } { 
-  Surface{news-1}; Layers{ 10, 1 }; Recombine; 
+  Surface{news-1}; Layers{10}; Recombine; 
 };
 
 // In this last extrusion command we retrieved the volume

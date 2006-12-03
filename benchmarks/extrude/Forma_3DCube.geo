@@ -13,27 +13,27 @@ Point(2) = {Rint, 0, 0, h};
 Line(1) = {1,2};
 
 Extrude Line {1,{0,1,0}, {0,0,0}, -Pi/2}
-             {Layers{10,1}; Recombine; };
+             {Layers{10}; Recombine; };
 
 Extrude Line {2,{0,1,0}, {0,0,0}, -Pi/2}
-             {Layers{10,1}; Recombine; };
+             {Layers{10}; Recombine; };
 
 
 Extrude Surface {5,{0,LG,0}}
-                {Layers{50,1}; Recombine;  };
+                {Layers{50}; Recombine;  };
 
 
 Extrude Surface {9,{0,LG,0}}
-                {Layers{50,1}; Recombine;  };
+                {Layers{50}; Recombine;  };
 
 
 
 Extrude Surface {31,{0,0,1}, {RC,LG,0}, -(Pi/2)}
-                {Recombine ; Layers {30,1}; };
+                {Recombine ; Layers{30}; };
 Extrude Surface {53,{0,0,1}, {RC,LG,0}, -(Pi/2)}
-                {Recombine ; Layers {30,1}; };
+                {Recombine ; Layers{30}; };
 
 Extrude Surface {75,{LG,0,0}}
-                {Recombine; Layers{50,1}; };
+                {Recombine; Layers{50}; };
 Extrude Surface {97,{LG,0,0}}
-                {Recombine; Layers{50,1}; };
+                {Recombine; Layers{50}; };

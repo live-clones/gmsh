@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.250 2006-12-03 04:53:48 geuzaine Exp $
+// $Id: Gmsh.y,v 1.251 2006-12-03 20:41:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2347,29 +2347,14 @@ ExtrudeParameters :
 ;
 
 ExtrudeParameter :
-    tLayers '{' ListOfDouble ',' ListOfDouble ',' ListOfDouble '}' tEND
+    tLayers '{' FExpr '}' tEND
     {
-      yymsg(WARNING, "Explicit region numbers in layers are deprecated");
-      double d;
       extr.mesh.ExtrudeMesh = true;
-      extr.mesh.NbLayer = List_Nbr($3);
-      if(List_Nbr($3) == List_Nbr($5) && List_Nbr($3) == List_Nbr($7)){
-	extr.mesh.NbElmLayer.clear();
-	extr.mesh.hLayer.clear();
-	for(int i = 0; i < List_Nbr($3); i++){
-	  List_Read($3, i, &d);
-	  extr.mesh.NbElmLayer.push_back((d > 0) ? (int)d : 1);
-	  List_Read($7, i, &d);
-	  extr.mesh.hLayer.push_back(d);
-	}
-      }
-      else{
-	yymsg(GERROR, "Wrong layer definition {%d, %d, %d}", 
-	      List_Nbr($3), List_Nbr($5), List_Nbr($7));
-      }
-      List_Delete($3);
-      List_Delete($5);
-      List_Delete($7);
+      extr.mesh.NbLayer = 1;
+      extr.mesh.NbElmLayer.clear();
+      extr.mesh.hLayer.clear();
+      extr.mesh.NbElmLayer.push_back((int)fabs($3));
+      extr.mesh.hLayer.push_back(1.);
     }
   | tLayers '{' ListOfDouble ',' ListOfDouble '}' tEND
     {
@@ -2392,6 +2377,30 @@ ExtrudeParameter :
       }
       List_Delete($3);
       List_Delete($5);
+    }
+  | tLayers '{' ListOfDouble ',' ListOfDouble ',' ListOfDouble '}' tEND
+    {
+      yymsg(WARNING, "Explicit region numbers in layers are deprecated");
+      double d;
+      extr.mesh.ExtrudeMesh = true;
+      extr.mesh.NbLayer = List_Nbr($3);
+      if(List_Nbr($3) == List_Nbr($5) && List_Nbr($3) == List_Nbr($7)){
+	extr.mesh.NbElmLayer.clear();
+	extr.mesh.hLayer.clear();
+	for(int i = 0; i < List_Nbr($3); i++){
+	  List_Read($3, i, &d);
+	  extr.mesh.NbElmLayer.push_back((d > 0) ? (int)d : 1);
+	  List_Read($7, i, &d);
+	  extr.mesh.hLayer.push_back(d);
+	}
+      }
+      else{
+	yymsg(GERROR, "Wrong layer definition {%d, %d, %d}", 
+	      List_Nbr($3), List_Nbr($5), List_Nbr($7));
+      }
+      List_Delete($3);
+      List_Delete($5);
+      List_Delete($7);
     }
   | tRecombine tEND
     {
