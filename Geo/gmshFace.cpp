@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.27 2006-12-03 00:04:31 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.28 2006-12-03 01:36:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -104,41 +104,33 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
     return SVector3(n.Pos.X, n.Pos.Y, n.Pos.Z);
   }
   else{
-    // We cannot use InterpolateSurface() for plane surfaces since
-    // InterpolateSurface() relies on the mean plane, which does *not*
-    // respect the orientation
+    // We cannot use InterpolateSurface() for plane surfaces since it
+    // relies on the mean plane, which does not respect the
+    // orientation
     GPoint p = point(param);
-    double t1[3], t2[3], n[3] = {0., 0., 0.};
-    Curve *c;
-    if(List_Nbr(s->Generatrices) > 1){
-      List_Read(s->Generatrices, 0, &c);
-      if(c->beg){
-	t1[0] = p.x() - c->beg->Pos.X;
-	t1[1] = p.y() - c->beg->Pos.Y;
-	t1[2] = p.z() - c->beg->Pos.Z;
-	// 1) try to get a point close to 'beg' on the same curve
-	// 2) if we are unlucky and these two points are aligned with
-	//    (x,y,z), which we know is inside or on the boundary of
-	//    the surface, then get a point from the next edge
-	// 3) repeat
-	for(int i = 0; i < List_Nbr(s->Generatrices); i++){
-	  List_Read(s->Generatrices, i, &c);
-	  Vertex v = InterpolateCurve(c, 0.1, 0);
-	  t2[0] = p.x() - v.Pos.X;
-	  t2[1] = p.y() - v.Pos.Y;
-	  t2[2] = p.z() - v.Pos.Z;
-	  prodve(t1, t2, n);
-	  if(norme(n))
-	    break;
-	}
+    double n[3] = {meanPlane.a, meanPlane.b, meanPlane.c};
+    norme(n);
+    double angle = 0.;
+    GPoint pt = point(param);
+    double v[3] = {pt.x(), pt.y(), pt.z()};
+    for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
+      Curve *c;
+      List_Read(s->Generatrices, i, &c);
+      int N = (c->Typ == MSH_SEGM_LINE) ? 1 : 3;
+      for(int j = 0; j < N; j++) {
+	double u1 = (double)j / (double)N;
+	double u2 = (double)(j + 1) / (double)N;
+	Vertex p1 = InterpolateCurve(c, u1, 0);
+	Vertex p2 = InterpolateCurve(c, u2, 0);
+	double v1[3] = {p1.Pos.X, p1.Pos.Y, p1.Pos.Z};
+	double v2[3] = {p2.Pos.X, p2.Pos.Y, p2.Pos.Z};
+	angle += angle_plan(v, v1, v2, n);
       }
     }
-    if(norme(n))
+    if(angle > 0)
       return SVector3(n[0], n[1], n[2]);
-    else{
-      Msg(WARNING, "Using mean plane normal for surface %d", s->Num);
-      return SVector3(meanPlane.a, meanPlane.b, meanPlane.c);
-    }
+    else
+      return SVector3(-n[0], -n[1], -n[2]);
   }
 }
 
@@ -228,6 +220,7 @@ int gmshFace::containsPoint(const SPoint3 &pt) const
     // OK to use the normal from the mean plane here: we compensate
     // for the (possibly wrong) orientation at the end
     double n[3] = {meanPlane.a, meanPlane.b, meanPlane.c};
+    norme(n);
     double angle = 0.;
     double v[3] = {pt.x(), pt.y(), pt.z()};
     for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
