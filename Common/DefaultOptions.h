@@ -878,7 +878,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "ElementOrder" , opt_mesh_order , 1. , // "Order" is a reserved token in the parser
     "Element order (1=linear elements, 2=quadratic elements)" },
   { F|O, "Explode" , opt_mesh_explode , 1.0 ,
-    "Explode elements (between 0=point and 1=non-transformed)" },
+    "Element shrinking factor (between 0 and 1)" },
 
   { F|O, "Format" , opt_mesh_format , FORMAT_MSH , 
     "Mesh output format (1=msh, 2=unv, 19=vrml, 27=stl, 30=mesh, 31=bdf)" },
@@ -1190,7 +1190,7 @@ StringXNumber ViewOptions_Number[] = {
     "Display vector values?" },
 
   { F|O, "Explode" , opt_view_explode , 1. , 
-    "Explode elements (between 0=point and 1=non-transformed)" },
+    "Element shrinking factor (between 0 and 1)" },
   { F|O, "ExternalView" , opt_view_external_view , -1. ,
     "Index of the view used to color vector fields (-1=self)" },
 
@@ -1203,9 +1203,6 @@ StringXNumber ViewOptions_Number[] = {
     "Index of the view used for generalized raise (-1=self)" },
   { F|O, "GlyphLocation" , opt_view_glyph_location , DRAW_POST_LOCATE_COG , 
     "Glyph (arrow, number, etc.) location (1=center of gravity, 2=node)" },
-  // for backward compatibility:
-  { F,   "Grid" , opt_view_axes , 0 ,
-    "Grid mode (this option is deprecated: use View.Axes instead)" },
 
   { F|O, "Height" , opt_view_size1 , 200. , 
     "Height (in pixels) of the scale or 2D plot" }, 
