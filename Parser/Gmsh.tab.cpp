@@ -126,7 +126,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.291 2006-12-02 22:05:15 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.292 2006-12-03 04:53:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3759,7 +3759,7 @@ case 83:
 case 84:
 #line 1058 "Gmsh.y"
 {
-      yymsg(GERROR, "Attractors are deprecated");
+      yymsg(WARNING, "Attractors are deprecated");
       List_Delete(yyvsp[-9].l);
       yyval.s.Type = 0;
       yyval.s.Num = 0;
@@ -4045,7 +4045,7 @@ case 96:
 case 97:
 #line 1322 "Gmsh.y"
 {
-      yymsg(GERROR, "Attractors are deprecated");
+      yymsg(WARNING, "Attractors are deprecated");
       List_Delete(yyvsp[-9].l);
       yyval.s.Type = 0;
       yyval.s.Num = 0;
@@ -5383,7 +5383,7 @@ case 200:
 case 201:
 #line 2524 "Gmsh.y"
 {
-      yymsg(GERROR, "Elliptic Surface is deprecated: use smoothed Transfinite instead");
+      yymsg(WARNING, "Elliptic Surface is deprecated: use Transfinite instead (with smoothing)");
       List_Delete(yyvsp[-1].l);
     ;
     break;}

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.249 2006-12-02 22:05:16 geuzaine Exp $
+// $Id: Gmsh.y,v 1.250 2006-12-03 04:53:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1056,7 +1056,7 @@ Shape :
     }
   | tAttractor tPoint ListOfDouble tAFFECT '{' FExpr ',' FExpr ',' FExpr '}'  tEND
     {
-      yymsg(GERROR, "Attractors are deprecated");
+      yymsg(WARNING, "Attractors are deprecated");
       List_Delete($3);
       $$.Type = 0;
       $$.Num = 0;
@@ -1320,7 +1320,7 @@ Shape :
     }
   | tAttractor tLine ListOfDouble tAFFECT '{' FExpr ',' FExpr ',' FExpr '}'  tEND
     {
-      yymsg(GERROR, "Attractors are deprecated");
+      yymsg(WARNING, "Attractors are deprecated");
       List_Delete($3);
       $$.Type = 0;
       $$.Num = 0;
@@ -2522,7 +2522,7 @@ Transfinite :
     }
   | tElliptic tSurface '{' FExpr '}' tAFFECT ListOfDouble tEND
     {
-      yymsg(GERROR, "Elliptic Surface is deprecated: use smoothed Transfinite instead");
+      yymsg(WARNING, "Elliptic Surface is deprecated: use Transfinite instead (with smoothing)");
       List_Delete($7);
     }
   | tTransfinite tVolume '{' FExpr '}' tAFFECT ListOfDouble tEND
