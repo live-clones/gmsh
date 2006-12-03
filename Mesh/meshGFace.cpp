@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.36 2006-11-30 13:55:20 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.37 2006-12-03 00:04:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1337,20 +1337,12 @@ void meshGFace :: operator() (GFace *gf)
 
   std::vector<MVertex*> points;
   std::vector<int> indices;
-  // compute loops on the fly
-// indices indicate start and end points of a loop
-  // loops are not yet oriented
+  // compute loops on the fly (indices indicate start and end points
+  // of a loop; loops are not yet oriented)
   Msg(DEBUG1, "Computing edge loops");
   computeEdgeLoops(gf, points, indices);
-  Msg(DEBUG1, "Computing mean plane");
-
-
-
-  // compute the mean plane, this is sometimes useful 
-  gf->computeMeanPlane(points);
 
   Msg(DEBUG1, "Generating the mesh");
-
   // temp fix until we create MEdgeLoops in gmshFace:
   if(gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty())
     gmsh2DMeshGenerator ( gf ) ;

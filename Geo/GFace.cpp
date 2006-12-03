@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.23 2006-11-27 22:22:13 geuzaine Exp $
+// $Id: GFace.cpp,v 1.24 2006-12-03 00:04:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,7 @@
 #include "GEdge.h"
 #include "Message.h"
 #include "Numeric.h"
+#include "Context.h"
 
 #if defined(HAVE_GSL)
 #include <gsl/gsl_vector.h>
@@ -33,6 +34,8 @@
 #include "nrutil.h"
 void dsvdcmp(double **a, int m, int n, double w[], double **v);
 #endif
+
+extern Context_T CTX;
 
 GFace::GFace(GModel *model, int tag) : GEntity(model, tag), r1(0), r2(0) 
 {
@@ -403,7 +406,7 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
   const int MaxIter = 25;
   const int NumInitGuess = 11;
 
-  double Unew = 0., Vnew = 0., err,err2;
+  double Unew = 0., Vnew = 0., err, err_xyz;
   int iter;
   double mat[3][3], jac[3][3];
   double umin, umax, vmin, vmax;
@@ -446,19 +449,18 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
 	   jac[2][1] * (Z - P.z()));
 	
 	err = DSQR(Unew - U) + DSQR(Vnew - V);
-	// A BETTER TEST !! (JFR/AUG 2006)
-	err2 = DSQR(X - P.x()) + DSQR(Y - P.y()) + DSQR(Z - P.z());	
+	err_xyz = DSQR(X - P.x()) + DSQR(Y - P.y()) + DSQR(Z - P.z());
 	iter++;
 	U = Unew;
 	V = Vnew;
       }
       
-      
-      if(iter < MaxIter && err <= Precision && err2 <= 1.e-5 &&
+      if(iter < MaxIter && err <= Precision &&
 	 Unew <= umax && Vnew <= vmax && 
 	 Unew >= umin && Vnew >= vmin){
-	if (err2 > Precision)
-	  Msg(WARNING,"converged for i=%d j=%d (err=%g iter=%d) BUT err2 = %g", i, j, err, iter,err2);
+	if(err_xyz > 1.e-5)
+	  Msg(WARNING,"converged for i=%d j=%d (err=%g iter=%d), but err_xyz = %g", 
+	      i, j, err, iter, err_xyz);
 	return;	
       }
     }
