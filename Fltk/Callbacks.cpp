@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.491 2006-12-01 14:32:29 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.492 2006-12-03 04:00:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2032,12 +2032,12 @@ void visibility_ok_cb(CALLBACK_ARGS)
   // browser and apply them into the model
   if(VisibilityManager::instance()->getNumEntities()){
     CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
-    int recursive = WID->vis_butt[0]->value();
+    bool recursive = WID->vis_butt[0]->value() ? true : false;
     int type = WID->vis_type->value();
     VisibilityManager::instance()->setAllInvisible(type);
     for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++)
       if(WID->vis_browser->selected(i + 1))
-	VisibilityManager::instance()->setVisibility(i, true, recursive);
+	VisibilityManager::instance()->setVisibility(i, 1, recursive);
     // then refresh the browser to account for recursive selections
     for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++)
       if(VisibilityManager::instance()->getVisibility(i))
@@ -2133,19 +2133,19 @@ void visibility_number_cb(CALLBACK_ARGS)
   // physical lines, 8 for physical surfaces and 9 for physical
   // volumes
   int what = (int)(long)data;
-  bool val;
+  char val;
   if(what >= 100){ // show
-    val = true;
+    val = 1;
     what -= 100;
   }
   else{ // hide
-    val = false;
+    val = 0;
   }
   char *str = (char *)WID->vis_input[what]->value();
   if(type == 1 && what >= 2 && what <= 5) what += 4;
 
   int num = (!strcmp(str, "all") || !strcmp(str, "*")) ? -1 : atoi(str);
-  int recursive = WID->vis_butt[0]->value();
+  bool recursive = WID->vis_butt[0]->value() ? true : false;
   
   VisibilityManager::instance()->setVisibilityByNumber(what, num, val, recursive);
 
@@ -2159,34 +2159,69 @@ void visibility_interactive_cb(CALLBACK_ARGS)
 {
   char *str = (char*)data;
   int what;
+  char mode;
 
-  if(!strcmp(str, "elements")){
+  if(!strcmp(str, "hide_elements")){
     CTX.pick_elements = 1;
     what = ENT_ALL;
+    mode = 0;
   }
-  else if(!strcmp(str, "points")){
+  else if(!strcmp(str, "hide_points")){
     CTX.pick_elements = 0;
     what = ENT_POINT;
+    mode = 0;
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   }
-  else if(!strcmp(str, "lines")){
+  else if(!strcmp(str, "hide_lines")){
     CTX.pick_elements = 0;
     what = ENT_LINE;
+    mode = 0;
     opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   }
-  else if(!strcmp(str, "surfaces")){
+  else if(!strcmp(str, "hide_surfaces")){
     CTX.pick_elements = 0;
     what = ENT_SURFACE;
+    mode = 0;
     opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
-  else if(!strcmp(str, "volumes")){
+  else if(!strcmp(str, "hide_volumes")){
     CTX.pick_elements = 0;
     what = ENT_VOLUME;
+    mode = 0;
+    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(!strcmp(str, "show_elements")){
+    CTX.pick_elements = 1;
+    what = ENT_ALL;
+    mode = 1;
+  }
+  else if(!strcmp(str, "show_points")){
+    CTX.pick_elements = 0;
+    what = ENT_POINT;
+    mode = 1;
+    opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(!strcmp(str, "show_lines")){
+    CTX.pick_elements = 0;
+    what = ENT_LINE;
+    mode = 1;
+    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(!strcmp(str, "show_surfaces")){
+    CTX.pick_elements = 0;
+    what = ENT_SURFACE;
+    mode = 1;
+    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(!strcmp(str, "show_volumes")){
+    CTX.pick_elements = 0;
+    what = ENT_VOLUME;
+    mode = 1;
     opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(str, "show_all")){
     for(int i = 1; i <= 5; i++) // elements, points, lines, surfaces, volumes
-      VisibilityManager::instance()->setVisibilityByNumber(i, -1, true, false);
+      VisibilityManager::instance()->setVisibilityByNumber(i, -1, 1, false);
     CTX.mesh.changed = ENT_ALL;
     Draw();  
     return;
@@ -2203,49 +2238,60 @@ void visibility_interactive_cb(CALLBACK_ARGS)
   while(1) {
     CTX.mesh.changed = ENT_ALL;
     Draw();
-    Msg(ONSCREEN, "Select %s\n[Press 'q' to abort]", str);
+    Msg(ONSCREEN, "Select %s to %s\n[Press 'q' to abort]", 
+	str, mode ? "show (exclusively)" : "hide");
+
     char ib = SelectEntity(what, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
       // type = 0 for elementary, 1 for physical and 2 for partitions
       int type = WID->vis_type->value();
       if(type != 0 && type != 1) break;
-      int recursive = WID->vis_butt[0]->value();
+      bool recursive = WID->vis_butt[0]->value() ? true : false;
+
+      if(mode == 1){ // first hide everything
+	if(CTX.pick_elements)
+	  VisibilityManager::instance()->setVisibilityByNumber(1, -1, 0, false);
+	else
+	  for(int i = 2; i <= 5; i++)
+	    VisibilityManager::instance()->setVisibilityByNumber(i, -1, 0, false);
+      }
+
       if(CTX.pick_elements){
 	for(unsigned int i = 0; i < elements.size(); i++)
-	  elements[i]->setVisibility(0);
+	  elements[i]->setVisibility(mode);
       }
       else{
 	for(unsigned int i = 0; i < vertices.size(); i++){
-	  if(type == 0) // hide elementary entity
-	    vertices[i]->setVisibility(0, recursive);
-	  else // hide physical entity
+	  if(type == 0)
+	    vertices[i]->setVisibility(mode, recursive);
+	  else
 	    for(unsigned int j = 0; j < vertices[i]->physicals.size(); j++)
 	      VisibilityManager::instance()->setVisibilityByNumber
-		(6, vertices[i]->physicals[j], 0, recursive);
+		(6, vertices[i]->physicals[j], mode, recursive);
 	}
 	for(unsigned int i = 0; i < edges.size(); i++){
 	  if(type == 0)
-	    edges[i]->setVisibility(0, recursive);
+	    edges[i]->setVisibility(mode, recursive);
 	  else
 	    for(unsigned int j = 0; j < edges[i]->physicals.size(); j++)
 	      VisibilityManager::instance()->setVisibilityByNumber
-		(7, edges[i]->physicals[j], 0, recursive);
+		(7, edges[i]->physicals[j], mode, recursive);
 	}
 	for(unsigned int i = 0; i < faces.size(); i++){
 	  if(type == 0)
-	    faces[i]->setVisibility(0, recursive);
+	    faces[i]->setVisibility(mode, recursive);
 	  else
 	    for(unsigned int j = 0; j < faces[i]->physicals.size(); j++)
 	      VisibilityManager::instance()->setVisibilityByNumber
-		(8, faces[i]->physicals[j], 0, recursive);
+		(8, faces[i]->physicals[j], mode, recursive);
 	}
 	for(unsigned int i = 0; i < regions.size(); i++){
 	  if(type == 0)
-	    regions[i]->setVisibility(0, recursive);
+	    regions[i]->setVisibility(mode, recursive);
 	  else
 	    for(unsigned int j = 0; j < regions[i]->physicals.size(); j++)
 	      VisibilityManager::instance()->setVisibilityByNumber
-		(9, regions[i]->physicals[j], 0, recursive);
+		(9, regions[i]->physicals[j], mode, recursive);
 	}
       }
       int pos = WID->vis_browser->position();
