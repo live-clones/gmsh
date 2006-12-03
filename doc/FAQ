@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.77 2006-12-01 15:07:12 geuzaine Exp $
+$Id: FAQ,v 1.78 2006-12-03 21:13:24 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -110,7 +110,7 @@ Section 4: Geometry module
 
 * 4.1 Does Gmsh support NURBS curves/surfaces?
 
-Only via STEP, IGES or BREP models (not in GEO files).
+Yes, but only via STEP, IGES or BREP model import (not in .geo files).
 
 * 4.2 Gmsh is very slow when I use many transformations (Translate,
 Rotate, Symmetry, Extrude, etc. ). What's wrong?
@@ -120,47 +120,35 @@ entities (points, lines and surfaces) each time a transformation
 command is issued. This can slow down things a lot if many
 transformations are performed. There are two solutions to this
 problem:
-- you may save the unrolled geometry in another file (e.g. with 
-  gmsh file.geo -0 > flat.geo), and use this new file for subsequent
-  computations;
-- you may set the 'Geometry.AutoCoherence' option to 0. This will
-  prevent any automatic duplicate check/replacement. If you still
-  need to remove the duplicates entities, simply add 'Coherence;' at 
+- you may save the unrolled geometry in another file (e.g. with gmsh
+  file.geo -0), and use this new file for subsequent computations;
+- or you may set the 'Geometry.AutoCoherence' option to 0. This will
+  prevent any automatic duplicate check/replacement. If you still need
+  to remove the duplicates entities, simply add 'Coherence;' at
   strategic locations in your geo files (e.g. before the creation of
   line loops, etc.).
 
 * 4.3 How can I display only selected parts of my model?
 
-By using 'Tool->Visibility':
+Use 'Tool->Visibility'.
 
-- In the 'Browser' tab, you can select which group of entities to show
-(several entities can be selected at once by dragging the mouse or by
-holding the Ctrl and Shift keys while clicking). There are three main
-modes: 'Elementary', in which the numbers in the list correspond to
-elementary geometrical entities; 'Physical', in which the numbers in
-the list correspond to physical entities; and 'Partitions', in which
-the numbers in the list correspond to indices of mesh partitions (for
-multi-domain meshes read from "new" .msh files). If 'Geometry+Mesh' is
-selected, the selection applies to both the geometrical entities and
-their associated meshes; if 'Mesh' is selected, the selection applies
-only to the mesh; if 'Geometry' is selected, the selection applies
-only to the geometry. If the 'Recursive' option is set, selecting an
-entity implies that all the entities that are used to construct it
-(all the "boundaries") are selected too, recursively. For example, if
-'Recursive' is set, selecting a surface will automatically select its
-boundary curves, as well as the boundaries of these curves (i.e.,
-points). If 'Recursive' is not set, only the surface (the dashed
-cross) would be shown.
+There are three main modes: 'Elementary entities', in which the
+selections will apply to elementary geometrical entities; 'Physical
+groups', in which the selections will apply to physical entities; and
+'Mesh partitions', in which the selections will apply to mesh
+partitions. 
 
-- In the 'Selector' tab, you can choose to show or hide any entity or
-mesh element by giving its number. You can also use the "*" character
-to select all the entities/elements at once. For example, to show only
-the mesh element 13245 in the mesh, you would enter "*" in the
-'Element' input field and click on 'Hide' (this will hide all the mesh
-elements); and then enter "13245" in the 'Element' input field and
-click on 'Show' (this will show the element 13245). To show other
-element, you would just enter another number in the input field, click
-on 'Show', etc.
+If the 'Recursive' option is set, selecting an entity also selects all
+its boundaries, recursively. For example, if 'Recursive' is set,
+selecting a surface will automatically select its boundary curves, as
+well as the boundaries of these curves (i.e., points).
+
+In the 'Browser' tab, you can select which entities to show or hide in
+a list (several entities can be selected at once by dragging the mouse
+or by holding the Ctrl or Shift keys while clicking). In the
+'Numerical input' tab, you can choose which entities to show or hide
+by explicitly specifying their identification tags. In the
+'Interactive' tab, you can hide/show entities using the mouse.
 
 4.4 When compiled with OpenCascade support, Gmsh crashes at startup
 
@@ -176,80 +164,42 @@ Section 5: Mesh module
 
 * 5.1 What should I do when the 2D unstructured algorithm fails?
 
-Try one of the other 2D algorithms, e.g.:
-- on the command line: 'gmsh -algo tri'
-- in the interface: 'Tools->Options->Mesh->2D->Isotropic algorithm (Triangle)'
-- in input files: 'Mesh.Algorithm = 3'
-The old 2D algorithm may disappear once all its features are
-integrated in the new ones, so please don't send bug reports on the
-old algorithm anymore.
+Send us a bug report (including your geometry).
 
-* 5.2 The new 2D unstructured algorithms also fail! Then what?
+* 5.2 What should I do when the 3D unstructured algorithm fails?
 
-Send us your geometry, and we will investigate. Please keep the
-following in mind though: 2D (surface) meshes are generated by
-projecting the 2D mesh in a "mean plane" of the surface. This gives
-nice results only if the surface curvature is small enough. Otherwise
-you must cut the surface into several pieces (patches). For example,
-using half circles to define a cylinder will fail with the
-unstructured algorithm: you should define arcs with angles smaller
-than Pi, and thus define the cylinder with at least three patches.
+Try to change some characteristic lengths in your input file to
+generate meshes that better suit the geometrical details of your
+structure.
 
-* 5.3 What should I do when the 3D unstructured algorithm fails?
-
-The 3D algorithm is still very experimental. Try to change some
-characteristic lengths in your input file to generate meshes that
-better suit the geometrical details of your structure.
-
-* 5.4 I changed the characteristic lengths, but the 3D algorithm still
+* 5.3 I changed the characteristic lengths, but the 3D algorithm still
 does not work. What should I do?
 
-Buy a professional mesh generator ;-) You can also try to use Netgen
-instead of the default algorithm for the 3D mesh. Note that all
-surface meshes have to be oriented with exterior normals in this case.
+Try one of the other algorithms (Tool->Options->Mesh->General->3D
+algorithm). If everything fails, buy a professional mesh generator ;-)
 
-* 5.5 The 3D algorithm is reaaaaally slow. Can you improve it?
-
-We are working on it. But since we have a (very) limited amount of
-time to spend on the development of Gmsh, this may take a while. For
-very big meshes, see the answer to the previous question...
-
-* 5.6 The quality of the elements generated by the 3D algorithm is
+* 5.4 The quality of the elements generated by the 3D algorithm is
 very bad.
 
-Upgrade to Gmsh >= 1.54 and use 'Optimize quality'. If badly shaped
-elements still exist due to the surface recovery step, you can try to
-use Netgen instead of the default algorithm for the 3D mesh. Note that
-all surface meshes have to be oriented with exterior normals in this
-case.
+Use 'Optimize quality' in the mesh menu. 
 
-* 5.7 Non-recombined 3D extruded meshes sometimes fail.
+* 5.5 Non-recombined 3D extruded meshes sometimes fail.
 
 The swapping algorithm is not very clever at the moment. Try to change
 the surface mesh a bit, or recombine your mesh to generate prisms or
 hexahedra instead of tetrahedra.
 
-* 5.8 Tools->Visibility does not seem to work with extruded meshes.
+* 5.6 Can I explicitly assign region numbers to extruded layers?
 
-This is fixed in Gmsh >= 1.54. Note that in Gmsh < 2.0, when region
-numbers are explicitly assigned to mesh entities in the extrude
-commands (which partially destroys the geometry/mesh relationship),
-the 'Visibility' tool will only work as expected when displaying
-elementary entities. In this particular case, the only solution to
-visualize extruded physical entities is to save the mesh, and to read
-it again.
-
-* 5.9 Can I explicitly assign region numbers to extruded layers?
-
-No, this feature has been removed in Gmsh 2.0. You must now use the
+No, this feature has been removed in Gmsh 2.0. You must use the
 standard entity number instead.
 
-* 5.10 Did you remove the elliptic mesh generator in Gmsh 2.0?
+* 5.7 Did you remove the elliptic mesh generator in Gmsh 2.0?
 
 Yes. You can achieve the same result by using the transfinite
 algorithm with smoothing (e.g., with "Mesh.Smoothing = 10").
 
-* 5.11 Does Gmsh support curved elements?
+* 5.8 Does Gmsh support curved elements?
 
 Yes, Gmsh can generate both 1st order and 2nd order elements. To
 generate second order elements, click on 'Second order' in the mesh
@@ -257,12 +207,14 @@ menu after the mesh is completed. To always generate 2nd order
 elements, select 'Generate second order elements' in the mesh option
 panel. From the command line, you can also use '-order 2'.
 
-* 5.12 Can I import an existing surface mesh in Gmsh and use it to
+* 5.9 Can I import an existing surface mesh in Gmsh and use it to
 build a 3D mesh?
 
-Yes, see for example 'demos/sphere-discrete.geo'. 
+Yes, you can import a surface mesh in any one of the supported mesh
+file formats, define a volume, and mesh it. For an example see
+'demos/sphere-discrete.geo'.
 
-* 5.13 How do I define boundary conditions or material properties in
+* 5.10 How do I define boundary conditions or material properties in
 Gmsh?
 
 By design, Gmsh does not try to incorporate every possible definition
@@ -271,19 +223,19 @@ to the solver. Instead, Gmsh provides a simple mechanism to tag groups
 of elements, and it is up to the solver to interpret these tags as
 boundary conditions, materials, etc. Associating tags with elements in
 Gmsh is done by defining Physical entities (Physical Points, Physical
-Lines, Physical Surfaces and Physical Volumes): see the reference
+Lines, Physical Surfaces and Physical Volumes). See the reference
 manual as well as the tutorials (in particular 'tutorial/t1.geo') for
 a detailed description and some examples.
 
-* 5.14 How can I display only the mesh associated with selected
+* 5.11 How can I display only the mesh associated with selected
 geometrical entities?
 
 See question 4.3.
 
-* 5.15 How can I "explore" a mesh (for example, to see inside a
+* 5.12 How can I "explore" a mesh (for example, to see inside a
 complex structure)?
 
-You can use 'Tools->Clipping Planes' to extract the region of
+You can use 'Tools->Clipping Planes' to clip the region of
 interest. You can define up to 6 clipping planes in Gmsh (i.e., enough
 to define a "cube" inside your model) and each plane can clip either
 the geometry, the mesh, the post-processing views, or any combination
@@ -294,7 +246,7 @@ fields. There is also one additional clipping plane available for
 "cutting" only the mesh (by keeping entire elements), in
 'Tools->Options->Mesh->Cut Plane'.
 
-* 5.16 What is the signification of Rho, Eta and Gamma in 
+* 5.13 What is the signification of Rho, Eta and Gamma in 
 Tools->Statistics?
 
 They measure the quality of the tetrahedra in a mesh:
@@ -303,10 +255,8 @@ Rho ~ min_edge_length / max_edge_length
 Eta ~ volume^(2/3) / sum_edge_length^2
 Gamma ~ volume / sum_face_area / max_edge_length 
 
-For the exact definitions, look at Mesh/Element.cpp and
-Mesh/Simplex.cpp.
-
-The graphs plot the the number of elements vs the quality measure.
+For the exact definitions, see Geo/MElement.cpp. The graphs plot the
+the number of elements vs the quality measure.
 
 ********************************************************************
 
@@ -486,7 +436,7 @@ line option.
 
 * 7.14 How can I see "inside" a complicated post-processing view?
 
-See question 5.13. 
+See question 5.12. 
 
 When viewing 3D scalar fields, you can also modify the colormap
 ('Tools->Options->View->Map') to make the iso-surfaces "transparent":
