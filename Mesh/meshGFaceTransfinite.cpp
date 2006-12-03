@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.12 2006-12-03 01:09:34 geuzaine Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.13 2006-12-03 03:12:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -58,6 +58,8 @@ int MeshTransfiniteSurface( GFace *gf)
     return 0;
   }
 
+  // create a list of all boundary vertices, starting at the first
+  // transfinite corner
   std::vector <MVertex *> m_vertices;
   unsigned int I;
   for(I = 0; I < d_vertices.size(); I++)
@@ -65,12 +67,32 @@ int MeshTransfiniteSurface( GFace *gf)
   for(unsigned int j = 0; j < d_vertices.size(); j++)
     m_vertices.push_back(d_vertices[(I + j) % d_vertices.size()]);
 
+  // make the ordering of the list consistent with the ordering of the
+  // first two corners (if the second found corner is not the second
+  // corner, just revert the list)
+  bool revert = false;
+  for(unsigned int i = 1; i < m_vertices.size(); i++){
+    MVertex *v = m_vertices[i];
+    if(v == corners[1] || v == corners[2] || 
+       (corners.size() == 4 && v == corners[3])){
+      if(v != corners[1]) revert = true;
+      break;
+    }
+  }
+  if(revert){
+    std::vector <MVertex *> tmp;
+    tmp.push_back(m_vertices[0]);
+    for(int i = m_vertices.size() - 1; i > 0; i--)
+      tmp.push_back(m_vertices[i]);
+    m_vertices = tmp;
+  }
+
+  // get the indices of the interpolation corners as well as the u,v
+  // coordinates of all the boundary vertices
   int iCorner = 0;
   int N[4] = {0, 0, 0, 0};
   std::vector<double> U;
   std::vector<double> V;
-  std::map<std::pair<int,int>, MVertex*> &tab(gf->transfinite_vertices);
-
   for(unsigned int i = 0; i < m_vertices.size(); i++){
     MVertex *v = m_vertices[i];
     if(v == corners[0] || v == corners[1] || v == corners[2] || 
@@ -140,6 +162,8 @@ int MeshTransfiniteSurface( GFace *gf)
    2L+2H+2 +------------+
            0            L
   */
+
+  std::map<std::pair<int,int>, MVertex*> &tab(gf->transfinite_vertices);
 
   if(corners.size () == 4){
     tab[std::make_pair(0,0)] = m_vertices[0];
