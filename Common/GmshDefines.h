@@ -61,8 +61,6 @@
 #define ENT_ALL      (ENT_POINT | ENT_LINE | ENT_SURFACE | ENT_VOLUME)
 
 // Mesh algorithms
-#define QUALITY_EDGES_BASED 1
-#define QUALITY_SIMPLEX_BASED 2
 #define DELAUNAY_ISO 1
 #define DELAUNAY_ANISO 2
 #define DELAUNAY_TRIANGLE 3
@@ -71,6 +69,5 @@
 
 #define TRANSFINI 1
 #define LIBRE     2
-#define ELLIPTIC  3
 
 #endif

@@ -839,7 +839,7 @@ StringXNumber GeometryOptions_Number[] = {
 StringXNumber MeshOptions_Number[] = {
   { F|O, "Algorithm" , opt_mesh_algo2d , DELAUNAY_ISO ,
     "2D mesh algorithm (1=isotropic, 2=anisotropic, 3=triangle)" }, 
-  { F|O, "Algorithm3D" , opt_mesh_algo3d , DELAUNAY_ISO ,
+  { F|O, "Algorithm3D" , opt_mesh_algo3d , DELAUNAY_ISO /* FRONTAL_NETGEN */ ,
     "3D mesh algorithm (1=isotropic, 4=netgen, 5=tetgen)" }, 
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" }, 
