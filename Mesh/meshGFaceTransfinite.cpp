@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.10 2006-12-02 22:48:25 geuzaine Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.11 2006-12-03 00:35:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -221,9 +221,8 @@ int MeshTransfiniteSurface( GFace *gf)
 	double zp = TRAN_TRI(m_vertices[iP1]->z(), m_vertices[iP2]->z(), 
 			     m_vertices[iP3]->z(), m_vertices[N1]->z(),
 			     m_vertices[N2]->z(), m_vertices[N3]->z(), u, v);
-	SPoint2 param = gf->parFromPoint(SPoint3(xp, yp, zp));
-	double Up = param.x();
-	double Vp = param.y();
+	double Up, Vp;
+	gf->XYZtoUV(xp, yp, zp, Up, Vp, 1.0, false);
 #endif
 	GPoint gp = gf->point(SPoint2(Up, Vp));
 	MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
