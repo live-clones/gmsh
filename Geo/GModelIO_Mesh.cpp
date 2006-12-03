@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.4 2006-11-30 15:14:29 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.5 2006-12-03 04:00:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -168,8 +168,11 @@ static void storePhysicalTagsInEntities(GModel *m, int dim,
     }
     if(ge){
       std::map<int, std::string>::const_iterator it2 = it->second.begin();
-      for(; it2 != it->second.end(); ++it2)
-	ge->physicals.push_back(it2->first);
+      for(; it2 != it->second.end(); ++it2){
+	if(std::find(ge->physicals.begin(), ge->physicals.end(), it2->first) == 
+	   ge->physicals.end())
+	  ge->physicals.push_back(it2->first);
+      }
     }
   }
 }
