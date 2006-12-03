@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.28 2006-12-03 01:36:20 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.29 2006-12-03 03:19:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -76,8 +76,10 @@ gmshFace::gmshFace(GModel *m, Surface *face)
       Vertex *corn;
       List_Read(s->TrsfPoints, i, &corn);
       GVertex *gv = m->vertexByTag(corn->Num);
-      if(!gv) throw;
-      meshAttributes.corners.push_back(gv);
+      if(gv)
+	meshAttributes.corners.push_back(gv);
+      else
+	Msg(GERROR, "Unknown vertex %d in transfinite attributes", corn->Num);
     }
   }
 }

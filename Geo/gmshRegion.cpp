@@ -1,4 +1,4 @@
-// $Id: gmshRegion.cpp,v 1.11 2006-12-02 19:29:36 geuzaine Exp $
+// $Id: gmshRegion.cpp,v 1.12 2006-12-03 03:19:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 #include "gmshFace.h"
 #include "gmshRegion.h"
 #include "Geo.h"
+#include "Message.h"
 
 extern Mesh *THEM;
 
@@ -47,8 +48,10 @@ gmshRegion::gmshRegion(GModel *m, ::Volume * volume)
       Vertex *corn;
       List_Read(volume->TrsfPoints, i, &corn);
       GVertex *gv = m->vertexByTag(corn->Num);
-      if(!gv) throw;
-      meshAttributes.corners.push_back(gv);
+      if(gv)
+	meshAttributes.corners.push_back(gv);
+      else
+	Msg(GERROR, "Unknown vertex %d in transfinite attributes", corn->Num);
     }
   }
 }
