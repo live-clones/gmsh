@@ -78,8 +78,8 @@ class GFace : public GEntity
 
   // compute the parameters UV from a point XYZ
   void XYZtoUV(const double X, const double Y, const double Z, 
-	       double &U, double &V, const double relax,
-	       bool onSurface=true) const;
+	       double &U, double &V, const double relax, 
+	       const bool onSurface=true) const;
 
   // The bounding box
   virtual SBoundingBox3d bounds() const; 

@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.11 2006-12-03 00:35:56 geuzaine Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.12 2006-12-03 01:09:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -208,7 +208,7 @@ int MeshTransfiniteSurface( GFace *gf)
 	int iP1 = N1 + i;
 	int iP2 = N2 + j;
 	int iP3 = ((N3 + N2) - i) % m_vertices.size();
-#if 0 // FIXME: this is buggy, so let's just do it in real space instead
+#if 0 // FIXME: this is buggy, so let's just do it in real space instead for now
 	double Up = TRAN_TRI(U[iP1], U[iP2], U[iP3], UC1, UC2, UC3, u, v);
 	double Vp = TRAN_TRI(V[iP1], V[iP2], V[iP3], VC1, VC2, VC3, u, v);
 #else
@@ -222,7 +222,14 @@ int MeshTransfiniteSurface( GFace *gf)
 			     m_vertices[iP3]->z(), m_vertices[N1]->z(),
 			     m_vertices[N2]->z(), m_vertices[N3]->z(), u, v);
 	double Up, Vp;
-	gf->XYZtoUV(xp, yp, zp, Up, Vp, 1.0, false);
+	if(gf->geomType() == GEntity::Plane){
+	  SPoint2 param = gf->parFromPoint(SPoint3(xp, yp, zp));
+	  Up = param.x();
+	  Vp = param.y();
+	}
+	else{ // xp, yp, zp is usually not on the surface
+	  gf->XYZtoUV(xp, yp, zp, Up, Vp, 1.0, false);
+	}
 #endif
 	GPoint gp = gf->point(SPoint2(Up, Vp));
 	MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);

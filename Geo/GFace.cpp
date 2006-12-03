@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.25 2006-12-03 00:35:56 geuzaine Exp $
+// $Id: GFace.cpp,v 1.26 2006-12-03 01:09:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -399,34 +399,37 @@ double GFace::curvature (const SPoint2 &param) const
 }
 
 void GFace::XYZtoUV(const double X, const double Y, const double Z, 
-		    double &U, double &V, const double relax, 
-		    bool onSurface) const
+		    double &U, double &V, const double relax,
+		    const bool onSurface) const
 {
   const double Precision = 1.e-8;
   const int MaxIter = 25;
   const int NumInitGuess = 11;
 
-  double Unew = 0., Vnew = 0.;
+  double Unew = 0., Vnew = 0., err, err2;
+  int iter;
   double mat[3][3], jac[3][3];
+  double umin, umax, vmin, vmax;
   double init[NumInitGuess] = {0.487, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0.9, 0.1, 0, 1};
+  
   Range<double> ru = parBounds(0);
   Range<double> rv = parBounds(1);
-  double umin = ru.low();
-  double umax = ru.high();
-  double vmin = rv.low();
-  double vmax = rv.high();
+  umin = ru.low();
+  umax = ru.high();
+  vmin = rv.low();
+  vmax = rv.high();
 
   for(int i = 0; i < NumInitGuess; i++){
     for(int j = 0; j < NumInitGuess; j++){
     
       U = init[i];
       V = init[j];
-      int err = 1.0, err_xyz = 0.;
-      int iter = 1;
+      err = 1.0;
+      iter = 1;
       
       while(err > Precision && iter < MaxIter) {
-	GPoint P = point(U, V);
-	Pair<SVector3, SVector3> der = firstDer(SPoint2(U, V)); 
+	GPoint P = point(U,V);
+	Pair<SVector3,SVector3> der = firstDer(SPoint2(U,V)); 
 	mat[0][0] = der.left().x();
 	mat[0][1] = der.left().y();
 	mat[0][2] = der.left().z();
@@ -446,38 +449,39 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
 	   jac[2][1] * (Z - P.z()));
 	
 	err = DSQR(Unew - U) + DSQR(Vnew - V);
-	if(onSurface)
-	  err_xyz = DSQR(X - P.x()) + DSQR(Y - P.y()) + DSQR(Z - P.z());
+	err2 = DSQR(X - P.x()) + DSQR(Y - P.y()) + DSQR(Z - P.z());	
 	iter++;
 	U = Unew;
 	V = Vnew;
       }
       
-      if(iter < MaxIter && err <= Precision &&
+      
+      if(iter < MaxIter && err <= Precision && 
 	 Unew <= umax && Vnew <= vmax && 
 	 Unew >= umin && Vnew >= vmin){
-	if(onSurface && err_xyz > Precision * CTX.lc)
-	  Msg(WARNING,"converged for i=%d j=%d (err=%g iter=%d), but err_xyz = %g", 
-	      i, j, err, iter, err_xyz);
+	if (onSurface && err2 > Precision * CTX.lc)
+	  Msg(WARNING,"Converged for i=%d j=%d (err=%g iter=%d) BUT xyz error = %g", 
+	      i, j, err, iter, err2);
 	return;	
       }
     }
   }
   
-  if(relax < 1.e-6){
+  if(relax < 1.e-6)
     Msg(GERROR, "Could not converge: surface mesh will be wrong");
-  }
   else {
     Msg(INFO, "Relaxation factor = %g", 0.75 * relax);
-    XYZtoUV(X, Y, Z, U, V, 0.75 * relax, onSurface);
+    XYZtoUV(X, Y, Z, U, V, 0.75 * relax);
   }  
 }
 
+
 SPoint2 GFace::parFromPoint(const SPoint3 &p) const
 {
-  double U, V;
+  double U,V;
   
-  XYZtoUV(p.x(), p.y(), p.z(), U, V, 1.0);
+  XYZtoUV(p.x(),p.y(),p.z(),U,V,1.0);
 
-  return SPoint2(U, V);
+  return SPoint2(U,V);
 }
+
