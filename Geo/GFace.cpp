@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.26 2006-12-03 01:09:34 geuzaine Exp $
+// $Id: GFace.cpp,v 1.27 2006-12-04 15:55:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -449,17 +449,16 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
 	   jac[2][1] * (Z - P.z()));
 	
 	err = DSQR(Unew - U) + DSQR(Vnew - V);
-	err2 = DSQR(X - P.x()) + DSQR(Y - P.y()) + DSQR(Z - P.z());	
+	err2 = sqrt(DSQR(X - P.x()) + DSQR(Y - P.y()) + DSQR(Z - P.z()));
 	iter++;
 	U = Unew;
 	V = Vnew;
       }
       
-      
       if(iter < MaxIter && err <= Precision && 
 	 Unew <= umax && Vnew <= vmax && 
 	 Unew >= umin && Vnew >= vmin){
-	if (onSurface && err2 > Precision * CTX.lc)
+	if (onSurface && err2 > 1.e-4 * CTX.lc)
 	  Msg(WARNING,"Converged for i=%d j=%d (err=%g iter=%d) BUT xyz error = %g", 
 	      i, j, err, iter, err2);
 	return;	
