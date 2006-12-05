@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.582 2006-12-03 20:11:13 geuzaine Exp $
+// $Id: GUI.cpp,v 1.583 2006-12-05 20:24:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1679,7 +1679,7 @@ void GUI::create_option_window()
     opt_redraw->callback(redraw_cb);
   }
   {
-    Fl_Button *o = new Fl_Button(width - 2.5 * BB - 2 * WB, height - BH - WB, 1.5*BB, BH, "Save as defaults");
+    Fl_Button *o = new Fl_Button(width - 2.5 * BB - 2 * WB, height - BH - WB, (int)(1.5 * BB), BH, "Save as defaults");
     o->callback(options_save_cb);
   }
   {
