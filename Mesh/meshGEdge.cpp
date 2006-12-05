@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.23 2006-11-30 11:32:26 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.24 2006-12-05 14:22:05 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -222,7 +222,7 @@ void meshGEdge :: operator() (GEdge *ge)
   
   // first compute the length of the curve by integrating one
   _myGEdgeLength = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), 
-			       F_One, Points, 1.e-4);
+			       F_One, Points, 1.e-8);
   ge->setLength (_myGEdgeLength);
 
   List_Reset(Points);
@@ -235,12 +235,12 @@ void meshGEdge :: operator() (GEdge *ge)
   int N;
   if(ge->meshAttributes.Method == TRANSFINI){
     a = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), 
-		    F_Transfinite, Points, 1.e-7);
+		    F_Transfinite, Points, 1.e-8);
     N = ge->meshAttributes.nbPointsTransfinite;
   }
   else{
     a = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), 
-		    F_Lc, Points, 1.e-4);
+		    F_Lc, Points, 1.e-8);
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
   const double b = a / (double)(N - 1);

@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.37 2006-12-03 00:04:31 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.38 2006-12-05 14:22:05 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -273,6 +273,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
     }
 
 
+  double OLDminL=1.E22,OLDmaxL=0;
   while (1)
     {
     //   double stot = 0;
@@ -313,8 +314,10 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	  ++it;
 	}
 
+      if (OLDminL == minL && OLDmaxL == maxL)break;
+      OLDminL = minL;OLDmaxL = maxL;
 
-      if ((minL > 0.4 && maxL < 1.5) || IT > NIT)break;
+      if ((minL > 1./sqrt(2.0) && maxL < sqrt(2.0)) || IT > NIT)break;
 
 
       NN1 = m.edges.size();
@@ -336,12 +339,12 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 				     coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
 				     coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v,gf);
 		  double l1 = 0.5 * ( (*it)->p1->lc() +  (*it)->p2->lc() );
-		  double l2 = BGM_MeshSize(gf,
- 					   (coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u)*m.scalingU,
- 					   (coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v)*m.scalingV,
-					   mid->X,mid->Y,mid->Z);
-		  mid->lc() = std::min(l1,l2);
-		  //mid->lc() = l2;
+// 		  double l2 = BGM_MeshSize(gf,
+//  					   (coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u)*m.scalingU,
+//  					   (coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v)*m.scalingV,
+// 					   mid->X,mid->Y,mid->Z);
+//		  mid->lc() = std::min(l1,l2);
+		  mid->lc() = l1;
 		  m.split_edge ( *it, mid );
 		  nb_split++;
 		} 
@@ -422,11 +425,46 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	      ++itp;
 	    }
 	}
-	IT++;
-	Msg(DEBUG1," iter %d minL %g maxL %g %d split %d swap %d collapse %d smooth",IT,minL,maxL,nb_split,nb_swap,nb_collaps,nb_smooth);
+	// recompute mesh sizes takin into account curvature , BGMESH & co
 	m.cleanup();  
+	if (IT % 5 == 0 && (CTX.mesh.lc_from_curvature || BGMExists()))
+	{
+	  std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
+	  while (itp != m.points.end())
+	    {
+	      BDS_Point *p = *itp;
+	      if(p->g->classif_degree == 2)
+		{
+		  double l2 = BGM_MeshSize(gf,p->u*m.scalingU,p->v*m.scalingV,p->X,p->Y,p->Z);
+		  p->config_modified = true;
+		  p->lc() = std::min(p->lc(),l2);
+		}
+	      ++itp;
+	    }
+	  for (int ITERA = 0;ITERA< 6; ITERA++);
+	  {
+	    it = m.edges.begin();
+	    while (it != m.edges.end())
+	      {
+		BDS_Edge *e = *it;
+		if (!e->deleted)
+		  {
+		    double l1 = e->p1->lc();
+		    double l2 = e->p2->lc();
+		    if (l1 > 1.3 *l2) e->p1->lc() = 1.5*l2;
+		    if (l2 > 1.3 *l1) e->p2->lc() = 1.5*l1;
+		  }
+		++it;
+	      }
+	  }
+	}
+	IT++;
+
+	Msg(DEBUG1," iter %3d minL %8.3f maxL %8.3f : %6d splits, %6d swaps, %6d collapses, %6d moves",IT,minL,maxL,nb_split,nb_swap,nb_collaps,nb_smooth);
+	if (nb_split==0 && nb_collaps == 0)break;
     }  
 }
+
 
 
 
@@ -771,7 +809,7 @@ void gmsh2DMeshGenerator ( GFace *gf )
   // goto hhh;
    // start mesh generation
 
-  RefineMesh (gf,*m,15);
+  RefineMesh (gf,*m,100);
   //  OptimizeMesh (gf,*m,2);
 
 
@@ -1246,7 +1284,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   // goto hhh;
   // start mesh generation
   
-  RefineMesh (gf,*m,15);
+  RefineMesh (gf,*m,100);
   //  OptimizeMesh (gf,*m,2);
 
 

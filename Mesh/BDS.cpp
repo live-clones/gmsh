@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.69 2006-12-01 16:16:50 remacle Exp $
+// $Id: BDS.cpp,v 1.70 2006-12-05 14:22:05 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1005,8 +1005,8 @@ bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS
   double area_final = fabs(a[1] * b[2] - a[2] * b[1]);
   if (area_final < 0.1 * area_init)return false;
   double ori_final = gmsh::orient2d(pa, pb, pc);
-
-  return ori_init*ori_final > 0;
+  // allow to move a point when a triangle was flat
+  return ori_init*ori_final >= 0;
 }
 
 bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)

@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.9 2006-11-30 18:06:58 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.10 2006-12-05 14:22:05 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -179,7 +179,7 @@ double BGM_MeshSize ( GEntity *ge, double U, double V , double X, double Y, doub
   double l1 = 1.e22;
 
   if(CTX.mesh.lc_from_curvature && ge->dim() < 3)
-    l1 = std::max(l3/300,LC_MVertex_CURV ( ge, U, V ));
+    l1 = std::max(l3/100,LC_MVertex_CURV ( ge, U, V ));
 
   return std::min(l,l1) ;
 }
