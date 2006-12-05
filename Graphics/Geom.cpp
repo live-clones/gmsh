@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.124 2006-11-27 22:22:14 geuzaine Exp $
+// $Id: Geom.cpp,v 1.125 2006-12-05 18:34:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -228,6 +228,27 @@ class drawGFace {
     }
   }
   
+  void _drawProjectionGFace(GFace *f)
+  {
+    Range<double> ubounds = f->parBounds(0);
+    Range<double> vbounds = f->parBounds(1);
+    const int N = 10;
+    
+    glBegin(GL_POINTS);
+    for(int i = 0; i < N; i++){
+      for(int j = 0; j < N; j++){
+	double u = ubounds.low() + (double)i/(double)(N-1) * 
+	  (ubounds.high() - ubounds.low());
+	double v = vbounds.low() + (double)j/(double)(N-1) * 
+	  (vbounds.high() - vbounds.low());
+	GPoint p = f->point(u, v);
+	printf("%g %g %g\n", p.x(), p.y(), p.z());
+	glVertex3d(p.x(), p.y(), p.z());
+      }
+    }
+    glEnd();
+  }
+
   void _drawPlaneGFace(GFace *f)
   {
     // We create data here and the routine is not designed to be
@@ -350,6 +371,8 @@ public :
     
     if(f->geomType() == GEntity::Plane)
       _drawPlaneGFace(f);
+    else if(f->geomType() == GEntity::ProjectionSurface)
+      _drawProjectionGFace(f);
     else
       _drawNonPlaneGFace(f);
     

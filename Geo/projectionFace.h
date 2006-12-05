@@ -52,7 +52,7 @@ class projectionFace : public GFace
   virtual double * nthDerivative(const SPoint2 &param, int n,  
  				 double *array) const {throw;}
   
-  virtual GEntity::GeomType geomType() const {throw;} 
+  virtual GEntity::GeomType geomType() const { return GEntity::ProjectionSurface; }
   virtual int geomDirection() const { return 1; }
   
   virtual bool continuous(int dim) const { return true; }

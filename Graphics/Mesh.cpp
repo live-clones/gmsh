@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.190 2006-11-27 22:22:16 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.191 2006-12-05 18:34:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -590,6 +590,8 @@ class drawMeshGEdge {
 
     MRep *m = e->meshRep;
 
+    if(!m) return;
+
     if(CTX.mesh.lines)
       drawArrays(e, m->va_lines, GL_LINES, false);
 
@@ -677,7 +679,9 @@ class drawMeshGFace {
     if(!f->getVisibility()) return;
 
     MRep *m = f->meshRep;
-    
+
+    if(!m) return;
+
     if(CTX.render_mode == GMSH_SELECT) {
       glPushName(2);
       glPushName(f->tag());
@@ -808,6 +812,8 @@ class drawMeshGRegion {
     }
 
     MRep *m = r->meshRep;
+
+    if(!m) return;
 
     if(CTX.mesh.volumes_edges){
       if(m->va_lines && m->va_lines->getNumVertices()){
