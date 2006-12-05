@@ -53,15 +53,36 @@ void projectionFace::scale(SVector3 sc)
 	scaleFactor[2] *= sc[2];
 }
 
-
-
-
-/*
-parabolicCylinder::parabolicCylinder(GModel *m, Surface *face) : projectionFace(m, face->Num), s(face)
+projectionFace::projectionFace(GModel *m,int num) : GFace(m,num)
 {
+  for(int j = 0; j<3; j++)
+  {
+    translation[j] = 0;
+    rotation[j] = 0;
+  }
+}
+projectionFace::~projectionFace()
+{
+}
+
+
+parabolicCylinder::parabolicCylinder(GModel *m, int num) : projectionFace(m,num)
+{
+  focalPoint = 1;
+  
+  scaleFactor[0] = 1;
+  scaleFactor[1] = 1;
+  scaleFactor[2] = 1;
+//  translation
+//  scaleFactor = new SVector3(1,1,1);
+//  rotation = new SVector3(0,0,0);  
 
 }
-*/
+
+
+parabolicCylinder::~parabolicCylinder()
+{
+}
 
 GPoint parabolicCylinder::point(double par1, double par2) const
 {
@@ -80,10 +101,10 @@ GPoint parabolicCylinder::point(double par1, double par2) const
 	p = rotatePoint(p,rotation);
 	p = translation + p;
 
-	//ok...how so you convert an SVector3 to a GPoint...?
-	GPoint gp;	
+	GPoint gp(p[0],p[1],p[2]);	
 	return gp;
 }
+
 GPoint parabolicCylinder::point(const SPoint2 &pt) const
 {
 	double par1 = pt[0];
@@ -108,6 +129,10 @@ SPoint2 parabolicCylinder::parFromPoint(const SPoint3 &p) const
 	pos = scalePoint(pos, scalar);
 
 	//since the y co-ordinate is completely dependent on u, I actually don't need it to compute the u-v point?
+  double u = pos[0] + .5;
+  double v = pos[1] + .5;
+
+
 	SPoint2 q(pos[0],pos[1]);	
 	return q;
 }
@@ -121,7 +146,7 @@ Pair<SVector3,SVector3> parabolicCylinder::firstDer(const SPoint2 &param) const
 	SVector3 dv;
 	
 	du[0] = 1;
-	du[1] = -(1/(2*focalPoint))*param[0];
+	du[1] = -(1/(2*focalPoint))*(param[0]-.5);
 	du[2] = 0;
 	
 	dv[0] = 0;
@@ -153,3 +178,34 @@ SVector3 parabolicCylinder::normal(const SPoint2 &param) const
 	n.normalize();
 	return n;
 }
+
+/*
+  COPIED DIRECTLY FROM GMODELIO_FOURIER.CPP
+*/
+
+
+Range<double> parabolicCylinder::parBounds(int i) const
+{
+  return Range<double>(0, 1);
+}
+
+/*
+GPoint parabolicCylinder::closestPoint(const SPoint3 & queryPoint) const
+{
+  throw;
+}  
+int parabolicCylinder::containsPoint(const SPoint3 &pt) const
+{
+  throw;
+}
+int parabolicCylinder::containsParam(const SPoint2 &pt) const
+{
+  return 1;
+}
+GEntity::GeomType parabolicCylinder::geomType() const
+{
+  return GEntity::DiscreteSurface;
+}
+*/
+
+
