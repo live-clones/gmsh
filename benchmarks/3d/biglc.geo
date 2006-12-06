@@ -1,6 +1,4 @@
-// The old 2D iso algo and the new 2D aniso algo generate flat
-// triangles in this case
-
+Mesh.CharacteristicLengthFactor = 1000;
 Point(1) = {0, 0, 0, 0.5};
 Point(2) = {1, 0, 0, 0.5};
 Point(3) = {1, 1, 0, 0.5};
