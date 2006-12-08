@@ -33,8 +33,9 @@ class projectionFace : public GFace
 	void rotate(SVector3 rot); //rotates the surface by the euler angles rot
 	void translate(SVector3 trans);	//translates the surface by trans
 	void scale(SVector3 sc);	//scales the surface along the (local?) x,y,z axes by sc
-
-
+  void setScale(SVector3 sc);
+  void setRotation(SVector3 r);
+  void setTranslation(SVector3 t);
 
   
   Range<double> parBounds(int i) const {throw;} 

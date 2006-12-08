@@ -52,6 +52,22 @@ void projectionFace::scale(SVector3 sc)
 	scaleFactor[1] *= sc[1];
 	scaleFactor[2] *= sc[2];
 }
+void projectionFace::setScale(SVector3 sc)
+{
+  scaleFactor[0] = sc[0];
+  scaleFactor[1] = sc[1];
+  scaleFactor[2] = sc[2];
+}
+void projectionFace::setRotation(SVector3 r)
+{
+  rotation[0] = r[0];
+  rotation[1] = r[1];
+  rotation[2] = r[2];  
+}
+void projectionFace::setTranslation(SVector3 t)
+{
+  translation = t;
+}
 
 projectionFace::projectionFace(GModel *m,int num) : GFace(m,num)
 {
