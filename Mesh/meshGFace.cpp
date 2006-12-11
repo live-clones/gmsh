@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.38 2006-12-05 14:22:05 remacle Exp $
+// $Id: meshGFace.cpp,v 1.39 2006-12-11 20:12:33 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -427,7 +427,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	}
 	// recompute mesh sizes takin into account curvature , BGMESH & co
 	m.cleanup();  
-	if (IT % 5 == 0 && (CTX.mesh.lc_from_curvature || BGMExists()))
+	if (IT == 5 && (CTX.mesh.lc_from_curvature || BGMExists()))
 	{
 	  std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
 	  while (itp != m.points.end())
@@ -441,7 +441,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 		}
 	      ++itp;
 	    }
-	  for (int ITERA = 0;ITERA< 6; ITERA++);
+	  for (int ITERA = 0;ITERA< 0; ITERA++);
 	  {
 	    it = m.edges.begin();
 	    while (it != m.edges.end())
@@ -556,7 +556,7 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge)
 // domain, including embedded points 
 // and surfaces
 
-void gmsh2DMeshGenerator ( GFace *gf )
+bool gmsh2DMeshGenerator ( GFace *gf )
 {
 
   typedef std::set<MVertex*> v_container ;
@@ -570,6 +570,8 @@ void gmsh2DMeshGenerator ( GFace *gf )
   it = edges.begin();
   while(it != edges.end())
     {
+      if ((*it)->isSeam(gf))return false;
+
       all_vertices.insert ( (*it)->mesh_vertices.begin() , (*it)->mesh_vertices.end() );
       all_vertices.insert ( (*it)->getBeginVertex()->mesh_vertices.begin() , (*it)->getBeginVertex()->mesh_vertices.end() );
       all_vertices.insert ( (*it)->getEndVertex()->mesh_vertices.begin() , (*it)->getEndVertex()->mesh_vertices.end() );
@@ -720,7 +722,7 @@ void gmsh2DMeshGenerator ( GFace *gf )
       if (!recover_medge ( m, *it))
 	{
 	  Msg(WARNING,"Face not meshed");
-	  return;
+	  return false;
 	}
       ++it;
     }
@@ -796,8 +798,8 @@ void gmsh2DMeshGenerator ( GFace *gf )
    char name[245];
    //sprintf(name,"param%d.pos",gf->tag());
    //outputScalarField(m->triangles, name,1);
-//   sprintf(name,"real%d.pos",gf->tag());
-//   outputScalarField(m->triangles, name,0);
+   //   sprintf(name,"real%d.pos",gf->tag());
+   //   outputScalarField(m->triangles, name,0);
 
 
   m->cleanup();
@@ -863,13 +865,12 @@ void gmsh2DMeshGenerator ( GFace *gf )
 
   // delete the mesh
 
-  //  char name[245];
-  //  sprintf(name,"s%d.pos",gf->tag());
-  //  outputScalarField(m->triangles, name);
   delete m;
 
   delete [] U_;
   delete [] V_;
+
+  return true;
 
 }
 
@@ -1082,10 +1083,11 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
      result.insert(result.end(),edgeLoop_BDS.begin(),edgeLoop_BDS.end());	         
    }
 
-//    for (int i=0;i<result.size();i++)
-//      {
-//        printf("point %3d (%8.5f %8.5f) (%2d,%2d)\n",i,result[i]->u,result[i]->v,result[i]->g->classif_tag,result[i]->g->classif_degree);
-//      }
+  if (gf->tag() == 280)
+    for (int i=0;i<result.size();i++)
+      {
+        printf("point %3d (%8.5f %8.5f) (%2d,%2d)\n",i,result[i]->u,result[i]->v,result[i]->g->classif_tag,result[i]->g->classif_degree);
+      }
 
   return true;
 }
@@ -1093,6 +1095,8 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 
 bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
 {
+  //  if(gf->tag() != 6)return true;
+
 
   std::map<BDS_Point*,MVertex*> recover_map;
 
@@ -1108,8 +1112,8 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
 
   // Buid a BDS_Mesh structure that is convenient for doing the actual meshing procedure    
   BDS_Mesh *m = new BDS_Mesh;
-  m->scalingU = fabs(du);
-  m->scalingV = fabs(dv);
+  //  m->scalingU = fabs(du);
+  //  m->scalingV = fabs(dv);
   std::vector< std::vector<BDS_Point* > > edgeLoops_BDS;
   SBoundingBox3d bbox;
   int nbPointsTotal = 0;
@@ -1186,6 +1190,8 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   // Free stuff
   free (doc.points);
   free (doc.delaunay);
+
+
  
   // Recover the boundary edges
   // and compute characteristic lenghts using mesh edge spacing
@@ -1281,6 +1287,8 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   m->del_point(m->find_point(-3));
   m->del_point(m->find_point(-4));
     
+
+
   // goto hhh;
   // start mesh generation
   
@@ -1337,12 +1345,12 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   
   
   // delete the mesh
+    char name[245];
+   sprintf(name,"param%d.pos",gf->tag());
+    outputScalarField(m->triangles, name,1);
+    sprintf(name,"real%d.pos",gf->tag());
+    outputScalarField(m->triangles, name,0);
   
-//   char name[245];
-//   sprintf(name,"param%d.pos",gf->tag());
-//   outputScalarField(m->triangles, name,1);
-//   sprintf(name,"real%d.pos",gf->tag());
-//   outputScalarField(m->triangles, name,0);
   delete m; 
   return true;
 }
@@ -1385,7 +1393,10 @@ void meshGFace :: operator() (GFace *gf)
   if(gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty())
     gmsh2DMeshGenerator ( gf ) ;
   else
-    gmsh2DMeshGeneratorPeriodic ( gf ) ;
+    {
+      if (!gmsh2DMeshGeneratorPeriodic ( gf ))
+	Msg(GERROR, "Impossible to mesh face %d",gf->tag());
+    }
 
   Msg(DEBUG1, "type %d %d triangles generated, %d internal vertices",
       gf->geomType(),gf->triangles.size(),gf->mesh_vertices.size());

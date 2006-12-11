@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.70 2006-12-05 14:22:05 remacle Exp $
+// $Id: BDS.cpp,v 1.71 2006-12-11 20:12:33 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -991,6 +991,9 @@ bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS
   double b[2] = {pc[0]-pa[0],pc[1]-pa[1]};
 
   double area_init = fabs(a[1] * b[2] - a[2] * b[1]);
+
+  if (area_init == 0.0) return true;
+
   double ori_init = gmsh::orient2d(pa, pb, pc);
 
   if (p == pts[0])
@@ -1006,7 +1009,7 @@ bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS
   if (area_final < 0.1 * area_init)return false;
   double ori_final = gmsh::orient2d(pa, pb, pc);
   // allow to move a point when a triangle was flat
-  return ori_init*ori_final >= 0;
+  return ori_init*ori_final > 0;
 }
 
 bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)
@@ -1025,15 +1028,18 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)
   while(eit != p->edges.end()) {
     if ((*eit)->numfaces() == 1) return false;
     BDS_Point *op = ((*eit)->p1 == p) ? (*eit)->p2 : (*eit)->p1;
+    //    const double l_e = (*eit)->length();     
     U += op->u; 
     V += op->v;
-    //    tot_length += (*eit)->length(); 
+    //    tot_length += l_e;
     LC += op->lc();
     ++eit;
   }
   
   U /= (p->edges.size());
   V /= (p->edges.size());
+  //  U /= tot_length;
+  //  V /= tot_length;
   LC /= p->edges.size();
 
   std::list < BDS_Face * >ts;

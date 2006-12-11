@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.14 2006-11-29 16:57:01 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.15 2006-12-11 20:12:33 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,8 @@
 #include "Message.h"
 #include "OCCEdge.h"
 #include "OCCFace.h"
+#include "Context.h"
+extern Context_T CTX;
 
 #if defined(HAVE_OCC)
 #include "Geom2dLProp_CLProps2d.hxx"
@@ -62,26 +64,31 @@ SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar,int dir) const
   double t0,t1;
   Handle(Geom2d_Curve) c2d = BRep_Tool::CurveOnSurface(c, *s, t0, t1);
   if (c2d.IsNull())
-    return GEdge::reparamOnFace(face, epar,dir);
+    {
+      Msg(GERROR,"Reparam on face failed : curve %d is not on surface %d\n",tag(),face->tag());
+      return GEdge::reparamOnFace(face, epar,dir);
+    }
   double u,v;
   c2d->Value(epar).Coord(u,v);
+
   if (! isSeam ( face ) )
     {
+      // sometimes OCC miserably fails ...
+      GPoint p1 = point(epar);
+      GPoint p2 = face->point(u,v);
+      const double dx = p1.x()-p2.x();
+      const double dy = p1.y()-p2.y();
+      const double dz = p1.z()-p2.z();
+      if (sqrt(dx*dx+dy*dy+dz*dz) > 1.e-7 * CTX.lc)
+	{
+	  GPoint ppp = face->closestPoint(SPoint3(p1.x(),p1.y(),p1.z()));
+	  return SPoint2(ppp.u(),ppp.v());
+	}
       return SPoint2 (u,v);
     }
   else
     {
       BRepAdaptor_Surface surface( *s );
-
-//       printf ("surface %d (%d %d) firstu %g lastu %g firstv %g lastv %g\n",
-// 	      surface.IsUPeriodic() ,
-// 	      surface.IsVPeriodic() ,
-// 	      face->tag(),
-// 	      surface.FirstUParameter(),
-// 	      surface.LastUParameter(),
-// 	      surface.FirstVParameter(),
-// 	      surface.LastVParameter());
-
       if ( surface.IsUPeriodic() )
 	{
 	  if (dir == -1) 
