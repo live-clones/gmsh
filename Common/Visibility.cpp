@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.25 2006-11-30 01:06:07 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.26 2006-12-12 18:16:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -260,22 +260,22 @@ void VisibilityManager::setVisibilityByNumber(int type, int num, char val, bool 
   case 6: // physical point
     for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
       for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
-	if (all || (*it)->physicals[i] == num) (*it)->setVisibility(val, recursive);
+	if (all || std::abs((*it)->physicals[i]) == num) (*it)->setVisibility(val, recursive);
     break;
   case 7: // physical line
     for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
       for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
-	if (all || (*it)->physicals[i] == num) (*it)->setVisibility(val, recursive);
+	if (all || std::abs((*it)->physicals[i]) == num) (*it)->setVisibility(val, recursive);
     break;
   case 8: // physical surface
     for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
       for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
-	if (all || (*it)->physicals[i] == num) (*it)->setVisibility(val, recursive);
+	if (all || std::abs((*it)->physicals[i]) == num) (*it)->setVisibility(val, recursive);
     break;
   case 9: // physical volume
     for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
       for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
-	if (all || (*it)->physicals[i] == num) (*it)->setVisibility(val, recursive);
+	if (all || std::abs((*it)->physicals[i]) == num) (*it)->setVisibility(val, recursive);
     break;
   }
 }

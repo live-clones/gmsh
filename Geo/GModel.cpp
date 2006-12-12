@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.24 2006-11-29 16:57:00 remacle Exp $
+// $Id: GModel.cpp,v 1.25 2006-12-12 18:16:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -153,7 +153,9 @@ bool GModel::noPhysicalGroups()
 static void addInGroup(GEntity* ge, std::map<int, std::vector<GEntity*> > &group)
 {
   for(unsigned int i = 0; i < ge->physicals.size(); i++){
-    int p = ge->physicals[i];
+    // phyicals can be stored with negative signs when the entity
+    // should be "reversed"
+    int p = std::abs(ge->physicals[i]);
     if(std::find(group[p].begin(), group[p].end(), ge) == group[p].end())
       group[p].push_back(ge);
   }
@@ -188,16 +190,16 @@ int GModel::maxPhysicalNumber()
   int num = 0;
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
-      num = std::max(num, (*it)->physicals[i]);
+      num = std::max(num, std::abs((*it)->physicals[i]));
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
-      num = std::max(num, (*it)->physicals[i]);
+      num = std::max(num, std::abs((*it)->physicals[i]));
   for(fiter it = firstFace(); it != lastFace(); ++it)
     for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
-      num = std::max(num, (*it)->physicals[i]);
+      num = std::max(num, std::abs((*it)->physicals[i]));
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
-      num = std::max(num, (*it)->physicals[i]);
+      num = std::max(num, std::abs((*it)->physicals[i]));
   return num;
 }
 

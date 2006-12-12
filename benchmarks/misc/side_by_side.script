@@ -1,7 +1,9 @@
 View[0].RangeType = 2 ; // custom
+View[0].CustomMin = View[0].Min ;
+View[0].CustomMax = View[0].Max ;
 
 View[1].OffsetX = 1.5 * View[0].MaxX ;
 View[1].RangeType = 2 ; // custom
-View[1].Min = View[0].Min ;
-View[1].Max = View[0].Max ;
+View[1].CustomMin = View[0].Min ;
+View[1].CustomMax = View[0].Max ;
 View[1].ShowScale = 0 ;

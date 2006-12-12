@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.40 2006-12-12 01:39:15 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.41 2006-12-12 18:16:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1424,6 +1424,10 @@ bool shouldRevert(MEdge &reference, std::vector<T*> &elements)
 
 void orientMeshGFace::operator()(GFace *gf)
 {
+  // in old versions we did not reorient transfinite surface meshes;
+  // we could add the following to provide backward compatibility:
+  // if(gf->meshAttributes.Method == TRANSFINI) return;
+
   // orients the mesh to match the orientation of the first edge
   std::list<GEdge*> edges = gf->edges();
   std::list<int> ori = gf->orientations();
