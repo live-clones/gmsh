@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.583 2006-12-05 20:24:09 geuzaine Exp $
+// $Id: GUI.cpp,v 1.584 2006-12-12 01:39:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -568,6 +568,10 @@ int GUI::global_shortcuts(int event)
     quit_selection = 1;
     return 0;   // trick: do as if we didn't use it
   }
+  else if(Fl::test_shortcut('-')) {
+    invert_selection = 1;
+    return 0;   // trick: do as if we didn't use it
+  }
   else if(Fl::test_shortcut(FL_Escape) ||
 	  Fl::test_shortcut(FL_META + FL_Escape) ||
 	  Fl::test_shortcut(FL_SHIFT + FL_Escape) ||
@@ -851,7 +855,8 @@ GUI::GUI(int argc, char **argv)
 
   // initialize selection bits
   selection = ENT_NONE;
-  try_selection = quit_selection = end_selection = undo_selection = 0;
+  try_selection = quit_selection = end_selection = 0;
+  undo_selection = invert_selection = 0;
   for(int i = 0; i < 4; i++) try_selection_xywh[i] = 0;
 
   // set X display

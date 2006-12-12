@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.39 2006-12-11 20:12:33 remacle Exp $
+// $Id: meshGFace.cpp,v 1.40 2006-12-12 01:39:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1347,9 +1347,9 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   // delete the mesh
     char name[245];
    sprintf(name,"param%d.pos",gf->tag());
-    outputScalarField(m->triangles, name,1);
+   //outputScalarField(m->triangles, name,1);
     sprintf(name,"real%d.pos",gf->tag());
-    outputScalarField(m->triangles, name,0);
+    //outputScalarField(m->triangles, name,0);
   
   delete m; 
   return true;

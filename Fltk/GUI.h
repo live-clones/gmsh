@@ -322,7 +322,8 @@ public:
   void reset_clip_browser();
   void update_manip_window(int force=0);
   void reset_external_view_list();
-  int  selection, try_selection, quit_selection, end_selection, undo_selection;
+  int  selection, try_selection, quit_selection, end_selection;
+  int  undo_selection, invert_selection;
   int  try_selection_xywh[4];
 };
 

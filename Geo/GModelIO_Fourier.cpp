@@ -90,8 +90,8 @@ public:
 	double u = i/(double)(M - 1);
 	double v = j/(double)(N - 1);
 	GPoint p = gf->point(u, v);
-	double pou;
-	FM->GetPou(gf->tag(), u, v, pou);
+	double pou=1;
+	//FM->GetPou(gf->tag(), u, v, pou);
 	gf->mesh_vertices.push_back
 	  (new MDataFaceVertex<double>(p.x(), p.y(), p.z(), gf, u, v, pou));
       }
@@ -102,7 +102,7 @@ public:
 					 gf->mesh_vertices[(i + 1) * N + j],
 					 gf->mesh_vertices[(i + 1) * N + (j + 1)],
 					 gf->mesh_vertices[i * N + (j + 1)]);
-	if(FM->GetOrientation(gf->tag()) < 0) q->revert();
+	//if(FM->GetOrientation(gf->tag()) < 0) q->revert();
 	gf->quadrangles.push_back(q);
       }
     }
@@ -139,8 +139,8 @@ public:
 	double allPou = 0.;
 	for(unsigned int i = 0; i < param.size(); i++){
 	  double u2 = param[i].second[0], v2 = param[i].second[1];
-	  double pou2;
-	  FM->GetPou(param[i].first->tag(), u2, v2, pou2);
+	  double pou2=1;
+	  //FM->GetPou(param[i].first->tag(), u2, v2, pou2);
 	  allPou += pou2;
 	}
 	if(v->getData()){

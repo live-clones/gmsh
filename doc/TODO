@@ -1,4 +1,8 @@
-$Id: TODO,v 1.32 2006-12-03 22:11:46 geuzaine Exp $
+$Id: TODO,v 1.33 2006-12-12 01:39:15 geuzaine Exp $
+
+********************************************************************
+
+introduce Right/Left/Alternate for extruded meshes
 
 ********************************************************************
 
@@ -16,6 +20,11 @@ bug: quads orientation is wrong after recombine
 
 return error when trying to mesh a volume with netgen/tetgen whose
 boundary contains quads
+
+********************************************************************
+
+physical groups->add->line/surface: pressing '-' after/while selecting 
+a surface should add it with reverse orientation?
 
 ********************************************************************
 

@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.71 2006-11-27 22:22:10 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.72 2006-12-12 01:39:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -205,6 +205,7 @@ char SelectEntity(int type,
   WID->quit_selection = 0;
   WID->end_selection = 0;
   WID->undo_selection = 0;
+  WID->invert_selection = 0;
 
   while(1) {
     vertices.clear();
