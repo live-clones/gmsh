@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.493 2006-12-03 04:07:19 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.494 2006-12-14 02:44:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1998,7 +1998,13 @@ void message_save_cb(CALLBACK_ARGS)
 void visibility_cb(CALLBACK_ARGS)
 {
   // get the visibility info from the model, and update the browser accordingly
-  WID->create_visibility_window();
+
+  char *str = (char*)data;
+  if(str && !strcmp(str, "redraw_only"))
+    WID->create_visibility_window(true);
+  else
+    WID->create_visibility_window();
+
   WID->vis_browser->clear();
 
   int type = WID->vis_type->value();
@@ -2060,7 +2066,7 @@ void visibility_delete_cb(CALLBACK_ARGS)
     GMODEL->deletePhysicalGroups();
   else if(type == 2)
     GMODEL->deleteMeshPartitions();
-  visibility_cb(NULL, NULL);
+  visibility_cb(NULL, (void*)"redraw_only");
 }
 
 void visibility_sort_cb(CALLBACK_ARGS)
@@ -2116,7 +2122,7 @@ void visibility_sort_cb(CALLBACK_ARGS)
   }
   else { // set new sorting mode
     VisibilityManager::instance()->setSortMode(val);
-    visibility_cb(NULL, NULL);
+    visibility_cb(NULL, (void*)"redraw_only");
   }
 }
 
@@ -2150,7 +2156,7 @@ void visibility_number_cb(CALLBACK_ARGS)
   VisibilityManager::instance()->setVisibilityByNumber(what, num, val, recursive);
 
   int pos = WID->vis_browser->position();
-  visibility_cb(NULL, NULL);
+  visibility_cb(NULL, (void*)"redraw_only");
   WID->vis_browser->position(pos);
   Draw();
 }
@@ -2304,7 +2310,7 @@ void visibility_interactive_cb(CALLBACK_ARGS)
 	}
       }
       int pos = WID->vis_browser->position();
-      visibility_cb(NULL, NULL);
+      visibility_cb(NULL, (void*)"redraw_only");
       WID->vis_browser->position(pos);
     }
     if(ib == 'q'){

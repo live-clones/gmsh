@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.584 2006-12-12 01:39:15 geuzaine Exp $
+// $Id: GUI.cpp,v 1.585 2006-12-14 02:44:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3828,11 +3828,13 @@ public:
     : Fl_Browser(x, y, w, h, c){}
 };
 
-void GUI::create_visibility_window()
+void GUI::create_visibility_window(bool redraw_only)
 {
-
   if(vis_window) {
-    vis_window->show();
+    if(vis_window->shown() && redraw_only)
+      vis_window->redraw();
+    else
+      vis_window->show();
     return;
   }
 

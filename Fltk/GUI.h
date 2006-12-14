@@ -284,7 +284,7 @@ public:
   void create_post_options_window();
   PluginDialogBox *create_plugin_window(GMSH_Plugin *p);
   void create_view_options_window(int numview);
-  void create_visibility_window();
+  void create_visibility_window(bool redraw_only=false);
   void create_clip_window();
   void create_manip_window();
   void create_statistics_window();
