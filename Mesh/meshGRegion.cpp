@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.20 2006-12-02 19:29:37 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.21 2006-12-15 16:06:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -441,6 +441,16 @@ void meshGRegion::operator() (GRegion *gr)
   if(MeshTransfiniteVolume(gr)) return;
   if(MeshExtrudedVolume(gr)) return;
 
+  std::list<GFace*> faces = gr->faces();
+
+  // sanity check
+  for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
+    if((*it)->quadrangles.size()){
+      Msg(GERROR, "Cannot tetrahedralize volume with quadrangles on boundary");
+      return;
+    }
+  }
+
   if(CTX.mesh.algo3d == DELAUNAY_TETGEN || CTX.mesh.algo3d == DELAUNAY_ISO){
 #if !defined(HAVE_TETGEN)
     Msg(GERROR, "Tetgen is not compiled in this version of Gmsh");
@@ -448,7 +458,6 @@ void meshGRegion::operator() (GRegion *gr)
     // put all the faces in the same model
     GModel::riter rit = gr->model()->firstRegion() ;
     if (gr != *rit)return;    
-    std::list<GFace*> faces = gr->faces();
     std::list<GFace*> allFaces;
     GModel::fiter fit = gr->model()->firstFace() ;
     while (fit != gr->model()->lastFace()){
