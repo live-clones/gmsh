@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.126 2006-12-08 16:54:02 jacob Exp $
+// $Id: Geom.cpp,v 1.127 2006-12-15 03:15:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -180,16 +180,13 @@ class drawGFace {
       glLineStipple(1, 0x1F1F);
       gl2psEnable(GL2PS_LINE_STIPPLE);
       int N = 20;
+      Range<double> ubounds = f->parBounds(0);
+      Range<double> vbounds = f->parBounds(1);
+      const double uav = 0.5 * (ubounds.high() + ubounds.low());
+      const double vav = 0.5 * (vbounds.high() + vbounds.low());
+      const double ud = (ubounds.high() - ubounds.low());
+      const double vd = (vbounds.high() - vbounds.low());
       glBegin(GL_LINE_STRIP);
-
-      Range<double> ubounds = f->parBounds ( 0 );
-      Range<double> vbounds = f->parBounds ( 1 );
-
-      const double uav = 0.5 * ( ubounds.high() + ubounds.low());
-      const double vav = 0.5 * ( vbounds.high() + vbounds.low());
-      const double ud =  ( ubounds.high() - ubounds.low());
-      const double vd =  ( vbounds.high() - vbounds.low());
-
       for(int i = 0; i < N; i++) {
 	GPoint p = f->point(ubounds.low() + ud * (double)i / (double)(N - 1), vav);
 	glVertex3d(p.x(), p.y(), p.z());
@@ -232,46 +229,42 @@ class drawGFace {
   {
     Range<double> ubounds = f->parBounds(0);
     Range<double> vbounds = f->parBounds(1);
+    double umin = ubounds.low(), umax = ubounds.high();
+    double vmin = vbounds.low(), vmax = vbounds.high();
     const int N = 15;
     
-    glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-    glColor3f(1.0f,0.5f,0.0f);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //glEnable(GL_LIGHTING);
+    //glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+    glColor4ubv((GLubyte *) & CTX.color.geom.surface_sel);
     glBegin(GL_QUADS);
-    for(int i = 1; i < N; i++)
-    {
-      for(int j = 1; j < N; j++)
-      {
-    	double u1 = ubounds.low() + (double)i/(double)(N-1) * 
-	      (ubounds.high() - ubounds.low());
-	    double v1 = vbounds.low() + (double)j/(double)(N-1) * 
-	      (vbounds.high() - vbounds.low());
-    	double u2 = ubounds.low() + (double)(i-1)/(double)(N-1) * 
-	      (ubounds.high() - ubounds.low());
-	    double v2 = vbounds.low() + (double)j/(double)(N-1) * 
-	      (vbounds.high() - vbounds.low());
-      double u3 = ubounds.low() + (double)(i-1)/(double)(N-1) * 
-	      (ubounds.high() - ubounds.low());
-	    double v3 = vbounds.low() + (double)(j-1)/(double)(N-1) * 
-	      (vbounds.high() - vbounds.low());
-     	double u4 = ubounds.low() + (double)i/(double)(N-1) * 
-	      (ubounds.high() - ubounds.low());
-	    double v4 = vbounds.low() + (double)(j-1)/(double)(N-1) * 
-	      (vbounds.high() - vbounds.low());
-	    GPoint p1 = f->point(u1, v1);
-      GPoint p2 = f->point(u2,v2);
-      GPoint p3 = f->point(u3,v3);
-      GPoint p4 = f->point(u4,v4);
-  //	printf("%g %g %g\n", p.x(), p.y(), p.z());	
-      glVertex3d(p1.x(), p1.y(), p1.z());
-      glVertex3d(p2.x(), p2.y(), p2.z());
-      glVertex3d(p3.x(), p3.y(), p3.z());
-      glVertex3d(p4.x(), p4.y(), p4.z());
-            
-
+    for(int i = 1; i < N; i++){
+      for(int j = 1; j < N; j++){
+    	double u1 = umin + (double)i/(double)(N-1) * (umax - umin);
+	double v1 = vmin + (double)j/(double)(N-1) * (vmax - vmin);
+    	double u2 = umin + (double)(i-1)/(double)(N-1) * (umax - umin);
+	double v2 = vmin + (double)(j-1)/(double)(N-1) * (vmax - vmin);
+	GPoint p1 = f->point(u1, v1);
+	GPoint p2 = f->point(u2, v1);
+	GPoint p3 = f->point(u2, v2);
+	GPoint p4 = f->point(u1, v2);
+	//SVector3 n1 = f->normal(SPoint2(u1, v1));
+	//SVector3 n2 = f->normal(SPoint2(u2, v1));
+	//SVector3 n3 = f->normal(SPoint2(u2, v2));
+	//SVector3 n4 = f->normal(SPoint2(u1, v2));
+	//glNormal3d(n1.x(), n1.y(), n1.z());
+	glVertex3d(p1.x(), p1.y(), p1.z());
+	//glNormal3d(n2.x(), n2.y(), n2.z());
+	glVertex3d(p2.x(), p2.y(), p2.z());
+	//glNormal3d(n3.x(), n3.y(), n3.z());
+	glVertex3d(p3.x(), p3.y(), p3.z());
+	//glNormal3d(n4.x(), n4.y(), n4.z());
+	glVertex3d(p4.x(), p4.y(), p4.z());
       }
     }
     glEnd();
-    glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+    //glDisable(GL_LIGHTING);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   }
 
   void _drawPlaneGFace(GFace *f)
