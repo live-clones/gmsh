@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.29 2006-12-16 01:25:58 geuzaine Exp $
+// $Id: GFace.cpp,v 1.30 2006-12-16 14:37:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -53,15 +53,12 @@ GFace::~GFace()
 
   for(unsigned int i = 0; i < mesh_vertices.size(); i++) 
     delete mesh_vertices[i];
-  mesh_vertices.clear();
 
   for(unsigned int i = 0; i < triangles.size(); i++) 
     delete triangles[i];
-  triangles.clear();
 
   for(unsigned int i = 0; i < quadrangles.size(); i++) 
     delete quadrangles[i];
-  quadrangles.clear();
 }
 
 void GFace::resetMeshAttributes()

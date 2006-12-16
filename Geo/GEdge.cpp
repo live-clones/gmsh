@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.21 2006-12-16 01:25:58 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.22 2006-12-16 14:37:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -40,11 +40,9 @@ GEdge::~GEdge()
 
   for(unsigned int i = 0; i < mesh_vertices.size(); i++) 
     delete mesh_vertices[i];
-  mesh_vertices.clear();
 
   for(unsigned int i = 0; i < lines.size(); i++) 
     delete lines[i];
-  lines.clear();
 }
 
 void GEdge::resetMeshAttributes() 
@@ -144,16 +142,15 @@ double GEdge::curvature(double par) const
   if (r.low() == par) eps2 = 0;
   if (r.high() == par) eps1 = 0;
 
+  SVector3 n1 = firstDer(par - eps1);
+  SVector3 n2 = firstDer(par + eps2);
 
-  SVector3 n1 = firstDer(par-eps1);
-  SVector3 n2 = firstDer(par+eps2);
+  GPoint P1 = point(par - eps1);
+  GPoint P2 = point(par + eps2);
 
-  GPoint P1 = point(par-eps1);
-  GPoint P2 = point(par+eps2);
-
-  double D = sqrt ( (P1.x()-P2.x())*(P1.x()-P2.x())+
-		    (P1.y()-P2.y())*(P1.y()-P2.y())+
-		    (P1.z()-P2.z())*(P1.z()-P2.z()));  
+  double D = sqrt ((P1.x() - P2.x()) * (P1.x() - P2.x()) +
+		   (P1.y() - P2.y()) * (P1.y() - P2.y()) +
+		   (P1.z() - P2.z()) * (P1.z() - P2.z()));
 
   n1.normalize();
   n2.normalize();

@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.109 2006-12-16 13:58:24 geuzaine Exp $
+// $Id: Generator.cpp,v 1.110 2006-12-16 14:37:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,10 +24,10 @@
 #include "Context.h"
 #include "Views.h"
 #include "OS.h"
+#include "GModel.h"
 #include "meshGEdge.h"
 #include "meshGFace.h"
 #include "meshGRegion.h"
-#include "GModel.h"
 #include "BackgroundMesh.h"
 #include "SecondOrder.h"
 
@@ -200,28 +200,37 @@ bool TooManyElements(int dim){
 void Mesh1D()
 {
   if(TooManyElements(1)) return;
+  Msg(STATUS1, "Meshing 1D...");
   double t1 = Cpu();
   std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), meshGEdge());
   double t2 = Cpu();
   CTX.mesh_timer[0] = t2 - t1;
+  Msg(INFO, "Mesh 1D complete (%g s)", CTX.mesh_timer[0]);
+  Msg(STATUS1, "Mesh");
 }
 
 void Mesh2D()
 {
   if(TooManyElements(2)) return;
+  Msg(STATUS1, "Meshing 2D...");
   double t1 = Cpu();
   std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), meshGFace());
   double t2 = Cpu();
   CTX.mesh_timer[1] = t2 - t1;
+  Msg(INFO, "Mesh 2D complete (%g s)", CTX.mesh_timer[1]);
+  Msg(STATUS1, "Mesh");
 }
 
 void Mesh3D()
 {
   if(TooManyElements(3)) return;
+  Msg(STATUS1, "Meshing 3D...");
   double t1 = Cpu();
   std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), meshGRegion());
   double t2 = Cpu();
   CTX.mesh_timer[2] = t2 - t1;
+  Msg(INFO, "Mesh 3D complete (%g s)", CTX.mesh_timer[2]);
+  Msg(STATUS1, "Mesh");
 }
 
 void OptimizeMesh()
@@ -230,8 +239,8 @@ void OptimizeMesh()
   double t1 = Cpu();
   std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), optimizeMeshGRegion());
   double t2 = Cpu();
-  Msg(STATUS1, "Mesh");
   Msg(INFO, "Mesh 3D optimization complete (%g s)", t2 - t1);
+  Msg(STATUS1, "Mesh");
 }
 
 void GenerateMesh(int ask)
@@ -249,26 +258,20 @@ void GenerateMesh(int ask)
 
   // 1D mesh
   if(ask == 1 || (ask > 1 && old < 1)) {
-    Msg(STATUS1, "Meshing 1D...");
     std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), deMeshGFace());
     std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), deMeshGRegion());
     Mesh1D();
-    Msg(INFO, "Mesh 1D complete (%g s)", CTX.mesh_timer[0]);
   }
 
   // 2D mesh
   if(ask == 2 || (ask > 2 && old < 2)) {
-    Msg(STATUS1, "Meshing 2D...");
     std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), deMeshGRegion());
     Mesh2D();
-    Msg(INFO, "Mesh 2D complete (%g s)", CTX.mesh_timer[1]);
   }
 
   // 3D mesh
   if(ask == 3) {
-    Msg(STATUS1, "Meshing 3D...");
     Mesh3D();
-    Msg(INFO, "Mesh 3D complete (%g s)", CTX.mesh_timer[2]);
   }
 
   // Orient the surface mesh so that it matches the geometry
@@ -283,7 +286,6 @@ void GenerateMesh(int ask)
   if(GMODEL->getMeshStatus() && CTX.mesh.order == 2) 
     Degre2(CTX.mesh.second_order_linear, CTX.mesh.second_order_incomplete);
 
-  Msg(STATUS1, "Mesh");
   CTX.threads_lock = 0;
   CTX.mesh.changed = ENT_ALL;
 }

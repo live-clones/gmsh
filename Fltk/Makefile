@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.119 2006-12-05 18:34:58 geuzaine Exp $
+# $Id: Makefile,v 1.120 2006-12-16 14:37:19 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -133,7 +133,8 @@ GUI_Projection.o: GUI_Projection.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/SmoothNormals.h ../Geo/projectionFace.h ../Geo/GFace.h \
   ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h Shortcut_Window.h
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Options.h \
+  Shortcut_Window.h
 Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \

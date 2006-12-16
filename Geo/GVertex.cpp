@@ -1,4 +1,4 @@
-// $Id: GVertex.cpp,v 1.10 2006-11-29 16:57:00 remacle Exp $
+// $Id: GVertex.cpp,v 1.11 2006-12-16 14:37:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -31,7 +31,6 @@ GVertex::~GVertex()
 {
   for(unsigned int i = 0; i < mesh_vertices.size(); i++)
     delete mesh_vertices[i];
-  mesh_vertices.clear();
 }
 
 void GVertex::addEdge(GEdge *e)
@@ -44,12 +43,10 @@ void GVertex::delEdge(GEdge *e)
   l_edges.erase(std::find(l_edges.begin(), l_edges.end(), e));
 }
 
-
 SPoint2 GVertex::reparamOnFace ( GFace *gf , int) const
 {
   return gf->parFromPoint ( SPoint3(x(),y(),z() ));
 }
-
 
 std::string GVertex::getAdditionalInfoString()
 {
