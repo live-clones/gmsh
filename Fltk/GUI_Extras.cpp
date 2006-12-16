@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.28 2006-11-27 22:22:10 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.29 2006-12-16 05:43:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -562,7 +562,7 @@ int options_dialog(char *name)
     dialog->b[0]->value(1);
     dialog->b[0]->type(FL_TOGGLE_BUTTON);
     dialog->b[1] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print help strings"); y += BH;
-    dialog->b[1]->value(1);
+    dialog->b[1]->value(0);
     dialog->b[1]->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");

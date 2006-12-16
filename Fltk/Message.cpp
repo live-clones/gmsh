@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.77 2006-11-27 22:22:10 geuzaine Exp $
+// $Id: Message.cpp,v 1.78 2006-12-16 05:43:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -240,10 +240,10 @@ void Exit(int level)
       CTX.solver_position[1] = WID->solver[0].window->y();
       file_chooser_get_position(&CTX.file_chooser_position[0],
 				&CTX.file_chooser_position[1]);
-      Print_Options(0, GMSH_SESSIONRC, 0, 1, CTX.session_filename_fullpath);
+      Print_Options(0, GMSH_SESSIONRC, 0, 0, CTX.session_filename_fullpath);
     }
     if(CTX.options_save)
-      Print_Options(0, GMSH_OPTIONSRC, 1, 1, CTX.options_filename_fullpath);
+      Print_Options(0, GMSH_OPTIONSRC, 1, 0, CTX.options_filename_fullpath);
   }
 
   exit(0);

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.322 2006-12-03 18:04:11 geuzaine Exp $
+// $Id: Options.cpp,v 1.323 2006-12-16 05:43:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -228,12 +228,11 @@ void Print_Options(int num, int level, int diff, int help, char *filename)
   if((level & GMSH_SESSIONRC) && file) {
     fprintf(file, "// Gmsh Session File\n");
     fprintf(file, "//\n");
-    fprintf(file, "// This file contains session specific info (that is info\n");
-    fprintf(file, "// you want to keep between two Gmsh sessions). You are\n");
-    fprintf(file, "// not supposed to edit it manually, but of course you\n");
-    fprintf(file, "// can. This file will be entirely rewritten every time\n");
-    fprintf(file, "// you quit Gmsh if the option 'General.SaveSession' is\n");
-    fprintf(file, "// set.\n");
+    fprintf(file, "// This file contains session specific info (that is info you\n");
+    fprintf(file, "// want to keep between two Gmsh sessions). You are not supposed\n");
+    fprintf(file, "// to edit it manually, but of course you can. This file will be\n");
+    fprintf(file, "// entirely rewritten every time you quit Gmsh if the option \n");
+    fprintf(file, "// 'General.SaveSession' is set.\n");
     fprintf(file, "//\n");
   }
 
@@ -243,9 +242,9 @@ void Print_Options(int num, int level, int diff, int help, char *filename)
     fprintf(file, "// This file contains configuration options (preferences) that\n");
     fprintf(file, "// are loaded each time Gmsh is launched. You can create this\n");
     fprintf(file, "// file by hand, or let Gmsh generate it for you (with\n");
-    fprintf(file, "// 'Tools->Options->Save'). This file can also be automatically\n");
-    fprintf(file, "// saved every time you quit Gmsh if the option 'General.SaveOptions'\n");
-    fprintf(file, "// is set.\n");
+    fprintf(file, "// 'Tools->Options->Save as default'). This file can also be\n");
+    fprintf(file, "// automatically saved every time you quit Gmsh if the option\n");
+    fprintf(file, "// 'General.SaveOptions' is set.\n");
     fprintf(file, "//\n");
   }
 
