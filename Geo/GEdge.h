@@ -104,9 +104,11 @@ class GEdge : public GEntity {
   inline double length () const {return _length;}
   inline void   setLength (const double l) {_length = l;}
 
-  // onr can impose the mesh size at an edge
+  // one can impose the mesh size at an edge
   virtual double prescribedMeshSizeAtVertex() const {return meshAttributes.meshSize;}
 
+  // Resets the mesh attributes to default values
+  virtual void resetMeshAttributes();
 
   struct {
     char   Method;

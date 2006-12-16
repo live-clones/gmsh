@@ -206,6 +206,9 @@ class GEntity {
   // Returns a type-specific additional information string
   virtual std::string getAdditionalInfoString() { return std::string(""); }
 
+  // Resets the mesh attributes to default values
+  virtual void resetMeshAttributes() { return; }
+
   // The mesh vertices uniquely owned by the entity
   std::vector<MVertex*> mesh_vertices;
 

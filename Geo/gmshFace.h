@@ -59,6 +59,7 @@ class gmshFace : public GFace {
   void * getNativePtr() const { return s; }
   virtual bool surfPeriodic(int dim) const { return false;}
   virtual SPoint2 parFromPoint(const SPoint3 &) const;
+  virtual void resetMeshAttributes();
 };
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.3 2006-11-27 22:22:13 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.4 2006-12-16 01:25:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -67,6 +67,8 @@ int GModel::importTHEM()
 			   vertexByTag(c->end->Num));
 	  add(e);
 	}
+	else
+	  e->resetMeshAttributes();
 	if(!c->Visible) e->setVisibility(0);
 	if(c->Color.type) e->setColor(c->Color.mesh);
       }
@@ -83,6 +85,8 @@ int GModel::importTHEM()
 	f = new gmshFace(this, s);
 	add(f);
       }
+      else
+	f->resetMeshAttributes();
       if(!s->Visible) f->setVisibility(0);
       if(s->Color.type) f->setColor(s->Color.mesh);
     }
@@ -98,6 +102,8 @@ int GModel::importTHEM()
 	r = new gmshRegion(this, v);
 	add(r);
       }
+      else
+	r->resetMeshAttributes();	
       if(!v->Visible) r->setVisibility(0);
       if(v->Color.type) r->setColor(v->Color.mesh);
     }

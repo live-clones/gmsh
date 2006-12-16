@@ -1,4 +1,4 @@
-$Id: TODO,v 1.33 2006-12-12 01:39:15 geuzaine Exp $
+$Id: TODO,v 1.34 2006-12-16 01:25:58 geuzaine Exp $
 
 ********************************************************************
 
@@ -15,11 +15,6 @@ reclassify volumes in new 3D mesh
 ********************************************************************
 
 bug: quads orientation is wrong after recombine
-
-********************************************************************
-
-return error when trying to mesh a volume with netgen/tetgen whose
-boundary contains quads
 
 ********************************************************************
 

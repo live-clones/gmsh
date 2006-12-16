@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.21 2006-11-27 22:22:14 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.22 2006-12-16 01:25:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -30,11 +30,7 @@ extern Mesh *THEM;
 gmshEdge::gmshEdge(GModel *model, Curve *edge, GVertex *v1, GVertex *v2)
   : GEdge(model, edge->Num, v1, v2), c(edge)
 {
-  meshAttributes.Method = c->Method;
-  meshAttributes.nbPointsTransfinite = c->ipar[0];
-  meshAttributes.coeffTransfinite =  c->dpar[0];
-  meshAttributes.typeTransfinite = c->ipar[1];
-  meshAttributes.extrude = c->Extrude;
+  resetMeshAttributes();
 }
 
 gmshEdge::gmshEdge(GModel *model, int num)
@@ -43,6 +39,15 @@ gmshEdge::gmshEdge(GModel *model, int num)
   c = Create_Curve(num, MSH_SEGM_DISCRETE, 0, NULL, NULL, -1, -1, 0., 1.);
   Tree_Add(THEM->Curves, &c);
   CreateReversedCurve(c);
+}
+
+void gmshEdge::resetMeshAttributes()
+{
+  meshAttributes.Method = c->Method;
+  meshAttributes.nbPointsTransfinite = c->ipar[0];
+  meshAttributes.coeffTransfinite = c->dpar[0];
+  meshAttributes.typeTransfinite = c->ipar[1];
+  meshAttributes.extrude = c->Extrude;
 }
 
 Range<double> gmshEdge::parBounds(int i) const

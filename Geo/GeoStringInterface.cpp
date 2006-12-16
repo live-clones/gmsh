@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.2 2006-11-27 22:22:13 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.3 2006-12-16 01:25:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -138,12 +138,11 @@ void delet(List_T *list, char *fich, char *what)
   add_infile(text, fich, true);
 }
 
-void add_trsfellisurf(int type, int N, int *l, char *fich, char *dir)
+void add_trsfsurf(int N, int *l, char *fich, char *dir)
 {
   char text[BUFFSIZE], text2[BUFFSIZE];
 
-  snprintf(text, BUFFSIZE, "%s Surface {%d} = {", 
-	   type ? "Elliptic" : "Transfinite", l[0]);
+  snprintf(text, BUFFSIZE, "Transfinite Surface {%d} = {", l[0]);
   for(int i = 1; i < N; i++) {
     if(i == 1)
       snprintf(text2, BUFFSIZE, "%d", l[i]);

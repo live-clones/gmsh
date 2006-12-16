@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.28 2006-12-04 16:41:39 geuzaine Exp $
+// $Id: GFace.cpp,v 1.29 2006-12-16 01:25:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -39,11 +39,7 @@ extern Context_T CTX;
 
 GFace::GFace(GModel *model, int tag) : GEntity(model, tag), r1(0), r2(0) 
 {
-  meshAttributes.recombine = 0;
-  meshAttributes.recombineAngle = 0.;
-  meshAttributes.Method = LIBRE;
-  meshAttributes.transfiniteArrangement = 0;
-  meshAttributes.extrude = 0;
+  resetMeshAttributes();
 }
 
 GFace::~GFace()
@@ -66,6 +62,15 @@ GFace::~GFace()
   for(unsigned int i = 0; i < quadrangles.size(); i++) 
     delete quadrangles[i];
   quadrangles.clear();
+}
+
+void GFace::resetMeshAttributes()
+{
+  meshAttributes.recombine = 0;
+  meshAttributes.recombineAngle = 0.;
+  meshAttributes.Method = LIBRE;
+  meshAttributes.transfiniteArrangement = 0;
+  meshAttributes.extrude = 0;
 }
 
 SBoundingBox3d GFace::bounds() const

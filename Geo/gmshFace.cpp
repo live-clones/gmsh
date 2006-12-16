@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.30 2006-12-03 17:45:37 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.31 2006-12-16 01:25:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -66,22 +66,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
     }
   }
 
-  meshAttributes.recombine = s->Recombine;
-  meshAttributes.recombineAngle = s->RecombineAngle;
-  meshAttributes.Method = s->Method;
-  meshAttributes.extrude = s->Extrude;
-  if(meshAttributes.Method == TRANSFINI){
-    meshAttributes.transfiniteArrangement = s->Recombine_Dir;
-    for(int i = 0; i < List_Nbr(s->TrsfPoints); i++){
-      Vertex *corn;
-      List_Read(s->TrsfPoints, i, &corn);
-      GVertex *gv = m->vertexByTag(corn->Num);
-      if(gv)
-	meshAttributes.corners.push_back(gv);
-      else
-	Msg(GERROR, "Unknown vertex %d in transfinite attributes", corn->Num);
-    }
-  }
+  resetMeshAttributes();
 }
 
 gmshFace::gmshFace(GModel *m, int num)
@@ -89,6 +74,27 @@ gmshFace::gmshFace(GModel *m, int num)
 {
   s = Create_Surface(num, MSH_SURF_DISCRETE);
   Tree_Add(THEM->Surfaces, &s);
+}
+
+void gmshFace::resetMeshAttributes()
+{
+  meshAttributes.recombine = s->Recombine;
+  meshAttributes.recombineAngle = s->RecombineAngle;
+  meshAttributes.Method = s->Method;
+  meshAttributes.extrude = s->Extrude;
+  if(meshAttributes.Method == TRANSFINI){
+    meshAttributes.transfiniteArrangement = s->Recombine_Dir;
+    meshAttributes.corners.clear();
+    for(int i = 0; i < List_Nbr(s->TrsfPoints); i++){
+      Vertex *corn;
+      List_Read(s->TrsfPoints, i, &corn);
+      GVertex *gv = model()->vertexByTag(corn->Num);
+      if(gv)
+	meshAttributes.corners.push_back(gv);
+      else
+	Msg(GERROR, "Unknown vertex %d in transfinite attributes", corn->Num);
+    }
+  }
 }
 
 Range<double> gmshFace::parBounds(int i) const

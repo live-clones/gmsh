@@ -1,4 +1,4 @@
-// $Id: gmshRegion.cpp,v 1.12 2006-12-03 03:19:55 geuzaine Exp $
+// $Id: gmshRegion.cpp,v 1.13 2006-12-16 01:25:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -41,19 +41,7 @@ gmshRegion::gmshRegion(GModel *m, ::Volume * volume)
     l_dirs.push_back(ori);
   }
 
-  meshAttributes.Method = volume->Method;
-  meshAttributes.extrude = volume->Extrude;
-  if(meshAttributes.Method == TRANSFINI){
-    for(int i = 0; i < List_Nbr(volume->TrsfPoints); i++){
-      Vertex *corn;
-      List_Read(volume->TrsfPoints, i, &corn);
-      GVertex *gv = m->vertexByTag(corn->Num);
-      if(gv)
-	meshAttributes.corners.push_back(gv);
-      else
-	Msg(GERROR, "Unknown vertex %d in transfinite attributes", corn->Num);
-    }
-  }
+  resetMeshAttributes();
 }
 
 gmshRegion::gmshRegion(GModel *m, int num)
@@ -61,6 +49,24 @@ gmshRegion::gmshRegion(GModel *m, int num)
 {
   v = Create_Volume(num, MSH_VOLUME_DISCRETE);
   Tree_Add(THEM->Volumes, &v);
+}
+
+void gmshRegion::resetMeshAttributes()
+{
+  meshAttributes.Method = v->Method;
+  meshAttributes.extrude = v->Extrude;
+  if(meshAttributes.Method == TRANSFINI){
+    meshAttributes.corners.clear();
+    for(int i = 0; i < List_Nbr(v->TrsfPoints); i++){
+      Vertex *corn;
+      List_Read(v->TrsfPoints, i, &corn);
+      GVertex *gv = model()->vertexByTag(corn->Num);
+      if(gv)
+	meshAttributes.corners.push_back(gv);
+      else
+	Msg(GERROR, "Unknown vertex %d in transfinite attributes", corn->Num);
+    }
+  }
 }
 
 GEntity::GeomType gmshRegion::geomType() const

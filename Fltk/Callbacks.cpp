@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.494 2006-12-14 02:44:01 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.495 2006-12-16 01:25:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3344,9 +3344,6 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	case 9:
 	  add_recosurf(List1, CTX.filename);
 	  break;
-	case 10:
-	  Msg(GERROR, "BDS->get_geom and set status must be reinterfaced");
-	  break;
 	default:
 	  Msg(GERROR, "Unknown action on selected entities");
 	  break;
@@ -3359,9 +3356,6 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
       }
     }
     if(ib == 'q') {
-      if(action == 10){
-	Msg(GERROR, "BDS->classify() must be reinterfaced");
-      }
       ZeroHighlight();
       Draw();
       break;
@@ -3942,7 +3936,7 @@ void mesh_define_transfinite_cb(CALLBACK_ARGS)
   WID->set_context(menu_mesh_define_transfinite, 0);
 }
 
-static void _add_transfinite_elliptic(int type, int dim)
+static void _add_transfinite(int dim)
 {
   std::vector<GVertex*> vertices;
   std::vector<GEdge*> edges;
@@ -4017,9 +4011,11 @@ static void _add_transfinite_elliptic(int type, int dim)
     if(ib == 'l') {
       switch (dim) {
       case 1:
-	HighlightEntity(edges[0]);
+	for(unsigned int i = 0; i < edges.size(); i++){
+	  HighlightEntity(edges[i]);
+	  p[n++] = edges[i]->tag();
+	}
 	Draw();
-        p[n++] = edges[0]->tag();
         break;
       case 2:
       case 3:
@@ -4060,11 +4056,10 @@ static void _add_transfinite_elliptic(int type, int dim)
             switch (dim) {
             case 2:
               if(n == 3 + 1 || n == 4 + 1)
-                add_trsfellisurf(type, n, p, CTX.filename,
-				 (char*)WID->context_mesh_choice[1]->text());
+                add_trsfsurf(n, p, CTX.filename,
+			     (char*)WID->context_mesh_choice[1]->text());
               else
-                Msg(GERROR, "Wrong number of points for %s surface",
-		    type ? "elliptic" : "transfinite");
+                Msg(GERROR, "Wrong number of points for transfinite surface");
               break;
             case 3:
               if(n == 6 + 1 || n == 8 + 1)
@@ -4096,18 +4091,18 @@ stopall:
 void mesh_define_transfinite_line_cb(CALLBACK_ARGS)
 {
   WID->create_mesh_context_window(1);
-  _add_transfinite_elliptic(0, 1);
+  _add_transfinite(1);
 }
 
 void mesh_define_transfinite_surface_cb(CALLBACK_ARGS)
 {
   WID->create_mesh_context_window(2);
-  _add_transfinite_elliptic(0, 2);
+  _add_transfinite(2);
 }
 
 void mesh_define_transfinite_volume_cb(CALLBACK_ARGS)
 {
-  _add_transfinite_elliptic(0, 3);
+  _add_transfinite(3);
 }
 
 // Dynamic Solver Menus

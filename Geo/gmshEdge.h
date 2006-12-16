@@ -49,6 +49,7 @@ class gmshEdge : public GEdge {
   virtual double parFromPoint(const SPoint3 &pt) const;
   virtual int minimumMeshSegments () const;
   virtual int minimumDrawSegments () const;
+  virtual void resetMeshAttributes ();
 };
 
 #endif

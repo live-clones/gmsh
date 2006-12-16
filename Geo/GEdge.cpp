@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.20 2006-11-29 16:57:00 remacle Exp $
+// $Id: GEdge.cpp,v 1.21 2006-12-16 01:25:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -30,13 +30,7 @@ GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
 {
   if(v0) v0->addEdge(this);
   if(v1) v1->addEdge(this);
-
-  meshAttributes.Method = LIBRE; 
-  meshAttributes.coeffTransfinite = 0.;
-  meshAttributes.nbPointsTransfinite = 0;
-  meshAttributes.typeTransfinite = 0;
-  meshAttributes.extrude = 0;
-  meshAttributes.meshSize = 1.e22;
+  resetMeshAttributes();
 }
 
 GEdge::~GEdge() 
@@ -51,6 +45,16 @@ GEdge::~GEdge()
   for(unsigned int i = 0; i < lines.size(); i++) 
     delete lines[i];
   lines.clear();
+}
+
+void GEdge::resetMeshAttributes() 
+{ 
+  meshAttributes.Method = LIBRE; 
+  meshAttributes.coeffTransfinite = 0.;
+  meshAttributes.nbPointsTransfinite = 0;
+  meshAttributes.typeTransfinite = 0;
+  meshAttributes.extrude = 0;
+  meshAttributes.meshSize = 1.e22;
 }
 
 void GEdge::addFace(GFace *e)

@@ -1,4 +1,4 @@
-// $Id: GRegion.cpp,v 1.13 2006-11-27 22:22:13 geuzaine Exp $
+// $Id: GRegion.cpp,v 1.14 2006-12-16 01:25:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,8 +25,7 @@
 
 GRegion::GRegion(GModel *model, int tag) : GEntity (model, tag)
 {
-  meshAttributes.Method = LIBRE; 
-  meshAttributes.extrude = 0;
+  resetMeshAttributes();
 }
 
 GRegion::~GRegion()
@@ -56,6 +55,12 @@ GRegion::~GRegion()
   for(unsigned int i = 0; i < pyramids.size(); i++) 
     delete pyramids[i];
   pyramids.clear();
+}
+
+void GRegion::resetMeshAttributes()
+{
+  meshAttributes.Method = LIBRE; 
+  meshAttributes.extrude = 0;
 }
 
 SBoundingBox3d GRegion::bounds() const

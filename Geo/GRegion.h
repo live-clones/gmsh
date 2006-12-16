@@ -49,8 +49,11 @@ class GRegion : public GEntity {
   // Delete the mesh partitions defined on this region.
   void deleteMeshPartitions();
 
+  // Resets the mesh attributes to default values
+  virtual void resetMeshAttributes();
+
   struct {
-    char   Method;
+    char Method;
     // the extrusion parameters (if any)
     ExtrudeParams *extrude;
     // corners of the transfinite interpolation

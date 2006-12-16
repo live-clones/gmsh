@@ -136,16 +136,8 @@ class GFace : public GEntity
 			double &x, double &y, double &z) const;
   void getMeanPlaneData(double plan[3][3]) const;
 
-  // a crude graphical representation using a "cross" defined by pairs
-  // of start/end points
-  std::vector<SPoint3> cross;
-
-  // a map for accessing the transfinite vertices using a pair of indices
-  std::map<std::pair<int, int>, MVertex*> transfinite_vertices;
-
-  std::vector<MTriangle*> triangles;
-  std::vector<MQuadrangle*> quadrangles;
-  std::list<GEdgeLoop> edgeLoops;
+  // Resets the mesh attributes to default values
+  virtual void resetMeshAttributes();
 
   struct {
     // do we recombine the triangles of the mesh ?
@@ -164,6 +156,16 @@ class GFace : public GEntity
     // edge loops
   } meshAttributes ;
 
+  // a crude graphical representation using a "cross" defined by pairs
+  // of start/end points
+  std::vector<SPoint3> cross;
+
+  // a map for accessing the transfinite vertices using a pair of indices
+  std::map<std::pair<int, int>, MVertex*> transfinite_vertices;
+
+  std::vector<MTriangle*> triangles;
+  std::vector<MQuadrangle*> quadrangles;
+  std::list<GEdgeLoop> edgeLoops;
 };
 
 #endif

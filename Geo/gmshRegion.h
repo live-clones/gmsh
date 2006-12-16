@@ -34,6 +34,7 @@ class gmshRegion : public GRegion {
   virtual GeomType geomType() const;
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return v; }
+  virtual void resetMeshAttributes();
 };
 
 #endif
