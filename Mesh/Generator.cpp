@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.108 2006-11-27 22:22:16 geuzaine Exp $
+// $Id: Generator.cpp,v 1.109 2006-12-16 13:58:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,7 +22,6 @@
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Context.h"
-#include "OpenFile.h"
 #include "Views.h"
 #include "OS.h"
 #include "meshGEdge.h"
@@ -241,41 +240,32 @@ void GenerateMesh(int ask)
     Msg(INFO, "I'm busy! Ask me that later...");
     return;
   }
+  CTX.threads_lock = 1;
 
   int old = GMODEL->getMeshStatus();
-
-  // Re-read data
-  if((ask > old && ask >= 0 && old < 0) || (ask < old))
-    OpenProblem(CTX.filename);
-
-  CTX.threads_lock = 1;
 
   // Change any high order elements back into first order ones
   Degre1();
 
   // 1D mesh
-  if((ask > old && ask > 0 && old < 1) || (ask < old && ask > 0)) {
+  if(ask == 1 || (ask > 1 && old < 1)) {
     Msg(STATUS1, "Meshing 1D...");
-    if(GMODEL->getMeshStatus() > 1){
-      OpenProblem(CTX.filename);
-    }
+    std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), deMeshGFace());
+    std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), deMeshGRegion());
     Mesh1D();
     Msg(INFO, "Mesh 1D complete (%g s)", CTX.mesh_timer[0]);
   }
 
   // 2D mesh
-  if((ask > old && ask > 1 && old < 2) || (ask < old && ask > 1)) {
+  if(ask == 2 || (ask > 2 && old < 2)) {
     Msg(STATUS1, "Meshing 2D...");
-    if(GMODEL->getMeshStatus() > 2) {
-      OpenProblem(CTX.filename);
-      Mesh1D();
-    }
+    std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), deMeshGRegion());
     Mesh2D();
     Msg(INFO, "Mesh 2D complete (%g s)", CTX.mesh_timer[1]);
   }
 
   // 3D mesh
-  if((ask > old && ask > 2 && old < 3) || (ask < old && ask > 2)) {
+  if(ask == 3) {
     Msg(STATUS1, "Meshing 3D...");
     Mesh3D();
     Msg(INFO, "Mesh 3D complete (%g s)", CTX.mesh_timer[2]);
