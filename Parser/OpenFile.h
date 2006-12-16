@@ -20,11 +20,11 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-int  ParseFile(char *filename, int close, int warn_if_missing=0);
+int ParseFile(char *filename, int close, int warn_if_missing=0);
 void ParseString(char *str);
-void OpenProblem(char *filename);
-void OpenProblemMacFinder(const char *filename);
-int MergeProblem(char *filename, int warn_if_missing=0);
+void OpenProject(char *filename);
+void OpenProjectMacFinder(const char *filename);
+int MergeFile(char *filename, int warn_if_missing=0);
 void FixRelativePath(char *in, char *out);
 void FixWindowsPath(char *in, char *out);
 void SetBoundingBox(double xmin, double xmax,

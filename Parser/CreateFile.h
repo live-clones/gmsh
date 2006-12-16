@@ -22,6 +22,6 @@
 
 int GuessFileFormatFromFileName(char *name);
 void GetDefaultFileName(int format, char *name);
-void CreateOutputFile (char *name, int format);
+void CreateOutputFile(char *name, int format);
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.54 2006-11-27 22:22:11 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.55 2006-12-16 15:44:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -228,7 +228,7 @@ int Solver(int num, char *args)
 	case GmshServer::CLIENT_MERGE_FILE:
 	  if(num < 0 || (num >= 0 && SINFO[num].merge_views)) {
 	    int n = List_Nbr(CTX.post.list);
-	    MergeProblem(message);
+	    MergeFile(message);
 	    Draw();
 	    if(n != List_Nbr(CTX.post.list))
 	      WID->set_context(menu_post, 0);

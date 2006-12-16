@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.496 2006-12-16 03:30:58 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.497 2006-12-16 15:44:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -594,7 +594,7 @@ void file_new_cb(CALLBACK_ARGS)
     time(&now);
     fprintf(fp, "// Gmsh project created on %s", ctime(&now));
     fclose(fp);
-    OpenProblem(name);
+    OpenProject(name);
     Draw();
   }
 }
@@ -625,7 +625,7 @@ void file_open_cb(CALLBACK_ARGS)
 {
   int n = List_Nbr(CTX.post.list);
   if(file_chooser(0, 0, "Open", file_types)) {
-    OpenProblem(file_chooser_get_name(1));
+    OpenProject(file_chooser_get_name(1));
     Draw();
   }
   if(n != List_Nbr(CTX.post.list))
@@ -638,7 +638,7 @@ void file_merge_cb(CALLBACK_ARGS)
   int f = file_chooser(1, 0, "Merge", file_types);
   if(f) {
     for(int i = 1; i <= f; i++)
-      MergeProblem(file_chooser_get_name(i));
+      MergeFile(file_chooser_get_name(i));
     Draw();
   }
   if(n != List_Nbr(CTX.post.list))
@@ -860,7 +860,7 @@ void file_rename_cb(CALLBACK_ARGS)
           goto test;
     }
     rename(CTX.filename, name);
-    OpenProblem(name);
+    OpenProject(name);
     Draw();
   }
 }
@@ -2692,7 +2692,7 @@ void geometry_edit_cb(CALLBACK_ARGS)
 
 void geometry_reload_cb(CALLBACK_ARGS)
 {
-  OpenProblem(CTX.filename);
+  OpenProject(CTX.filename);
   Draw();
 }
 
@@ -4310,7 +4310,7 @@ static void _view_reload(int num)
   }
 
   CTX.post.force_num = v->Num;
-  MergeProblem(v->FileName);
+  MergeFile(v->FileName);
   CTX.post.force_num = 0;
 
   Post_View *v2 = *(Post_View **) List_Pointer(CTX.post.list, num);

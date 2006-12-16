@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.101 2006-11-27 22:22:10 geuzaine Exp $
+// $Id: Main.cpp,v 1.102 2006-12-16 15:44:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -115,16 +115,16 @@ int main(int argc, char *argv[])
   if(CTX.batch) {
     check_gsl();
     Msg(INFO, "'%s' started on %s", cmdline, currtime);
-    OpenProblem(CTX.filename);
+    OpenProject(CTX.filename);
     if(yyerrorstate)
       exit(1);
     else {
       for(int i = 1; i < List_Nbr(CTX.files); i++)
-        MergeProblem(*(char**)List_Pointer(CTX.files, i));
+        MergeFile(*(char**)List_Pointer(CTX.files, i));
       if(CTX.post.combine_time)
 	CombineViews(1, 2, CTX.post.combine_remove_orig);
       if(CTX.bgm_filename) {
-        MergeProblem(CTX.bgm_filename);
+        MergeFile(CTX.bgm_filename);
         if(List_Nbr(CTX.post.list))
           BGMWithView(*(Post_View **)
                       List_Pointer(CTX.post.list,
@@ -190,9 +190,9 @@ int main(int argc, char *argv[])
 
   // Open project file and merge all other input files
 
-  OpenProblem(CTX.filename);
+  OpenProject(CTX.filename);
   for(int i = 1; i < List_Nbr(CTX.files); i++)
-    MergeProblem(*(char**)List_Pointer(CTX.files, i));
+    MergeFile(*(char**)List_Pointer(CTX.files, i));
   if(CTX.post.combine_time)
     CombineViews(1, 2, CTX.post.combine_remove_orig);
   
@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
   // Read background mesh on disk
 
   if(CTX.bgm_filename) {
-    MergeProblem(CTX.bgm_filename);
+    MergeFile(CTX.bgm_filename);
     if(List_Nbr(CTX.post.list))
       BGMWithView(*(Post_View **)
                   List_Pointer(CTX.post.list, List_Nbr(CTX.post.list) - 1));

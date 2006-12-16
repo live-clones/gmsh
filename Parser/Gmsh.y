@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.251 2006-12-03 20:41:46 geuzaine Exp $
+// $Id: Gmsh.y,v 1.252 2006-12-16 15:44:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1837,7 +1837,7 @@ Command :
 	// MergeWithBoundingBox is deprecated
 	char tmpstring[1024];
 	FixRelativePath($2, tmpstring);
-	MergeProblem(tmpstring, 1);
+	MergeFile(tmpstring, 1);
       }
       else if(!strcmp($1, "System")){
 	SystemCall($2);

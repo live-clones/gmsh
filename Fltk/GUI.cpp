@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.585 2006-12-14 02:44:01 geuzaine Exp $
+// $Id: GUI.cpp,v 1.586 2006-12-16 15:44:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -888,7 +888,7 @@ GUI::GUI(int argc, char **argv)
   // add callback to respond to the Mac Finder (when you click on a
   // document)
 #if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
-  fl_open_callback(OpenProblemMacFinder);
+  fl_open_callback(OpenProjectMacFinder);
 #endif
 
   // All static windows are contructed (even if some are not

@@ -126,7 +126,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.293 2006-12-03 20:41:45 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.294 2006-12-16 15:44:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4607,7 +4607,7 @@ case 135:
 	// MergeWithBoundingBox is deprecated
 	char tmpstring[1024];
 	FixRelativePath(yyvsp[-1].c, tmpstring);
-	MergeProblem(tmpstring, 1);
+	MergeFile(tmpstring, 1);
       }
       else if(!strcmp(yyvsp[-2].c, "System")){
 	SystemCall(yyvsp[-1].c);

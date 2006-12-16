@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.133 2006-11-29 16:57:03 remacle Exp $
+// $Id: OpenFile.cpp,v 1.134 2006-12-16 15:44:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -245,7 +245,7 @@ void SetProjectName(char *name)
 #endif
 }
 
-int MergeProblem(char *name, int warn_if_missing)
+int MergeFile(char *name, int warn_if_missing)
 {
 #if defined(HAVE_FOURIER_MODEL)
   if(!strcmp(name, "falcon")){
@@ -285,7 +285,7 @@ int MergeProblem(char *name, int warn_if_missing)
 	SystemCall(tmp);
 	if(!strcmp(CTX.filename, name)) // this is the project file
 	  SetProjectName(base);
-	return MergeProblem(base);
+	return MergeFile(base);
       }
     }
   }
@@ -375,7 +375,7 @@ int MergeProblem(char *name, int warn_if_missing)
   return status;
 }
 
-void OpenProblem(char *name)
+void OpenProject(char *name)
 {
   if(CTX.threads_lock) {
     Msg(INFO, "I'm busy! Ask me that later...");
@@ -390,7 +390,7 @@ void OpenProblem(char *name)
   srand(1);
 
   SetProjectName(name);
-  MergeProblem(name);
+  MergeFile(name);
 
   CTX.threads_lock = 0;
 
@@ -400,20 +400,20 @@ void OpenProblem(char *name)
 #endif
 }
 
-void OpenProblemMacFinder(const char *filename)
+void OpenProjectMacFinder(const char *filename)
 {
   static int first = 1;
   if(first){
     // just copy the filename: it will be opened when Gmsh is ready in
-    // main() (calling OpenProblem right now would be a bad idea: Gmsh
+    // main() (calling OpenProject right now would be a bad idea: Gmsh
     // is probably not completely initialized)
     strncpy(CTX.filename, filename, 255);
     first = 0;
   }
   else{
-    // should we do MergeProblem instead? not sure what's the most
+    // should we do MergeFile instead? not sure what's the most
     // intuitive
-    OpenProblem((char*)filename);
+    OpenProject((char*)filename);
 #if defined(HAVE_FLTK)
     Draw();
 #endif

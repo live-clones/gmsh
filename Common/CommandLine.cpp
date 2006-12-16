@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.86 2006-11-30 14:09:07 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.87 2006-12-16 15:44:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -279,7 +279,7 @@ void Get_Options(int argc, char *argv[])
         CTX.terminal = 1;
         CTX.batch = 1;
         if(argv[i] && argv[i + 1]) {
-          OpenProblem(argv[i]);
+          OpenProject(argv[i]);
 	  // convert post-processing views to latest (binary) format
           for(int j = 0; j < List_Nbr(CTX.post.list); j++)
             WriteView(*(Post_View **) List_Pointer(CTX.post.list, j),
