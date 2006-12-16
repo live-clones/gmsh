@@ -139,8 +139,13 @@ class GModel
   virtual std::set<int> &getMeshPartitions() { return meshPartitions; }
   virtual std::set<int> &recomputeMeshPartitions();
 
-  // deletes all the partitions
+  // Deletes all the partitions
   virtual void deleteMeshPartitions();
+
+  // Get or set the global mesh size for the model (default value is a
+  // tenth of the size of the domain)
+  double getMeshSize();
+  void setMeshSize(const double s) {meshSize = s;}
 
   // A container for smooth normals
   smooth_normals *normals;
@@ -161,7 +166,6 @@ class GModel
   int readOCCIGES(const std::string &name);
   int readOCCSTEP(const std::string &name);
   void deleleOCCInternals();
-
 
   // Mesh IO
   // =========================================
@@ -195,15 +199,9 @@ class GModel
   int writeBDF(const std::string &name, int format=0, bool saveAll=false, 
 	       double scalingFactor=1.0);
 
-  // IO for CGNS files
+  // CFD General Notation System files
   int readCGNS(const std::string &name);
   int writeCGNS(const std::string &name, double scalingFactor=1.0);
-
-  // returns the global mesh size for the model
-  // default value is a tenth of the size of the domain  
-
-  double getMeshSize () ;
-  void  setMeshSize (const double s) {meshSize = s;}  
 };
 
 #endif
