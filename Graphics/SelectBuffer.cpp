@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.10 2006-11-27 22:22:16 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.11 2006-12-16 20:52:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -210,7 +210,11 @@ bool ProcessSelectionBuffer(int entityType,
       }
     }
   }
-  return true;
+
+  if(vertices.size() || edges.size() || faces.size() || 
+     regions.size() || elements.size()) 
+    return true;
+  return false;
 }
 
 void HighlightEntity(GEntity *e)
