@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.495 2006-12-16 01:25:58 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.496 2006-12-16 03:30:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2161,6 +2161,71 @@ void visibility_number_cb(CALLBACK_ARGS)
   Draw();
 }
 
+static void _apply_visibility(char mode,
+			      std::vector<GVertex*> &vertices,
+			      std::vector<GEdge*> &edges,
+			      std::vector<GFace*> &faces,
+			      std::vector<GRegion*> &regions,
+			      std::vector<MElement*> &elements)
+{
+  // type = 0 for elementary, 1 for physical and 2 for partitions
+  int type = WID->vis_type->value();
+  if(type != 0 && type != 1) return;
+  bool recursive = WID->vis_butt[0]->value() ? true : false;
+
+  if(mode == 1){ // when showing a single entity, first hide everything
+    if(CTX.pick_elements)
+      VisibilityManager::instance()->setVisibilityByNumber(1, -1, 0, false);
+    else
+      for(int i = 2; i <= 5; i++)
+	VisibilityManager::instance()->setVisibilityByNumber(i, -1, 0, false);
+  }
+
+  if(mode == 2) mode = 1;
+  
+  if(CTX.pick_elements){
+    for(unsigned int i = 0; i < elements.size(); i++)
+      elements[i]->setVisibility(mode);
+  }
+  else{
+    for(unsigned int i = 0; i < vertices.size(); i++){
+      if(type == 0)
+	vertices[i]->setVisibility(mode, recursive);
+      else
+	for(unsigned int j = 0; j < vertices[i]->physicals.size(); j++)
+	  VisibilityManager::instance()->setVisibilityByNumber
+	    (6, vertices[i]->physicals[j], mode, recursive);
+    }
+    for(unsigned int i = 0; i < edges.size(); i++){
+      if(type == 0)
+	edges[i]->setVisibility(mode, recursive);
+      else
+	for(unsigned int j = 0; j < edges[i]->physicals.size(); j++)
+	  VisibilityManager::instance()->setVisibilityByNumber
+	    (7, edges[i]->physicals[j], mode, recursive);
+    }
+    for(unsigned int i = 0; i < faces.size(); i++){
+      if(type == 0)
+	faces[i]->setVisibility(mode, recursive);
+      else
+	for(unsigned int j = 0; j < faces[i]->physicals.size(); j++)
+	  VisibilityManager::instance()->setVisibilityByNumber
+	    (8, faces[i]->physicals[j], mode, recursive);
+    }
+    for(unsigned int i = 0; i < regions.size(); i++){
+      if(type == 0)
+	regions[i]->setVisibility(mode, recursive);
+      else
+	for(unsigned int j = 0; j < regions[i]->physicals.size(); j++)
+	  VisibilityManager::instance()->setVisibilityByNumber
+	    (9, regions[i]->physicals[j], mode, recursive);
+    }
+  }
+  int pos = WID->vis_browser->position();
+  visibility_cb(NULL, (void*)"redraw_only");
+  WID->vis_browser->position(pos);
+}
+
 void visibility_interactive_cb(CALLBACK_ARGS)
 {
   char *str = (char*)data, *help;
@@ -2245,73 +2310,31 @@ void visibility_interactive_cb(CALLBACK_ARGS)
   else
     return;
 
-  std::vector<GVertex*> vertices;
-  std::vector<GEdge*> edges;
-  std::vector<GFace*> faces;
-  std::vector<GRegion*> regions;
-  std::vector<MElement*> elements;
+  std::vector<GVertex*> vertices, vertices_old;
+  std::vector<GEdge*> edges, edges_old;
+  std::vector<GFace*> faces, faces_old;
+  std::vector<GRegion*> regions, regions_old;
+  std::vector<MElement*> elements, elements_old;
 
   while(1) {
     CTX.mesh.changed = ENT_ALL;
     Draw();
-    Msg(ONSCREEN, "Select %s\n[Press 'q' to abort]", help);
+    Msg(ONSCREEN, "Select %s\n[Press %s'q' to abort]", 
+	help, mode ? "" : "'u' to undo or ");
 
     char ib = SelectEntity(what, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
-      // type = 0 for elementary, 1 for physical and 2 for partitions
-      int type = WID->vis_type->value();
-      if(type != 0 && type != 1) break;
-      bool recursive = WID->vis_butt[0]->value() ? true : false;
-
-      if(mode == 1){ // first hide everything
-	if(CTX.pick_elements)
-	  VisibilityManager::instance()->setVisibilityByNumber(1, -1, 0, false);
-	else
-	  for(int i = 2; i <= 5; i++)
-	    VisibilityManager::instance()->setVisibilityByNumber(i, -1, 0, false);
-      }
-
-      if(CTX.pick_elements){
-	for(unsigned int i = 0; i < elements.size(); i++)
-	  elements[i]->setVisibility(mode);
-      }
-      else{
-	for(unsigned int i = 0; i < vertices.size(); i++){
-	  if(type == 0)
-	    vertices[i]->setVisibility(mode, recursive);
-	  else
-	    for(unsigned int j = 0; j < vertices[i]->physicals.size(); j++)
-	      VisibilityManager::instance()->setVisibilityByNumber
-		(6, vertices[i]->physicals[j], mode, recursive);
-	}
-	for(unsigned int i = 0; i < edges.size(); i++){
-	  if(type == 0)
-	    edges[i]->setVisibility(mode, recursive);
-	  else
-	    for(unsigned int j = 0; j < edges[i]->physicals.size(); j++)
-	      VisibilityManager::instance()->setVisibilityByNumber
-		(7, edges[i]->physicals[j], mode, recursive);
-	}
-	for(unsigned int i = 0; i < faces.size(); i++){
-	  if(type == 0)
-	    faces[i]->setVisibility(mode, recursive);
-	  else
-	    for(unsigned int j = 0; j < faces[i]->physicals.size(); j++)
-	      VisibilityManager::instance()->setVisibilityByNumber
-		(8, faces[i]->physicals[j], mode, recursive);
-	}
-	for(unsigned int i = 0; i < regions.size(); i++){
-	  if(type == 0)
-	    regions[i]->setVisibility(mode, recursive);
-	  else
-	    for(unsigned int j = 0; j < regions[i]->physicals.size(); j++)
-	      VisibilityManager::instance()->setVisibilityByNumber
-		(9, regions[i]->physicals[j], mode, recursive);
-	}
-      }
-      int pos = WID->vis_browser->position();
-      visibility_cb(NULL, (void*)"redraw_only");
-      WID->vis_browser->position(pos);
+      _apply_visibility(mode, vertices, edges, faces, regions, elements);
+      // store for possible undo later
+      vertices_old = vertices;
+      edges_old = edges;
+      faces_old = faces;
+      regions_old = regions;
+      elements_old = elements;
+    }
+    if(ib == 'u' && !mode){ // undo only in hide mode
+      _apply_visibility(2, vertices_old, edges_old, faces_old, 
+			regions_old, elements_old);
     }
     if(ib == 'q'){
       break;
