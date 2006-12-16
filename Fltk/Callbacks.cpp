@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.497 2006-12-16 15:44:28 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.498 2006-12-16 15:58:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -566,11 +566,6 @@ void status_rewind_cb(CALLBACK_ARGS)
   Draw();
 }
 
-void status_cancel_cb(CALLBACK_ARGS)
-{
-  ;
-}
-
 // File Menu
 
 void file_new_cb(CALLBACK_ARGS)
@@ -599,32 +594,10 @@ void file_new_cb(CALLBACK_ARGS)
   }
 }
 
-static char *file_types =
-  "*"
-  "\tGmsh geometry (*.geo)"
-  "\tGmsh mesh (*.msh)"
-  "\tGmsh post-processing (*.pos)"
-  "\tI-deas universal mesh (*.unv)"
-  "\tMedit mesh (*.mesh)"
-  "\tNastran bulk data file (*.bdf)"
-  "\tSTL surface mesh (*.stl)"
-#if defined(HAVE_OCC)
-  "\tSTEP model (*.step)"
-  "\tIGES model (*.iges)"
-  "\tOpenCascade model (*.brep)"
-#endif
-  "\tJPEG (*.jpg)"
-  "\tPNG (*.png)"
-  "\tBMP (*.bmp)"
-  "\tPPM (*.ppm)"
-  "\tPGM (*.pgm)"
-  "\tPBM (*.pbm)"
-  "\tPNM (*.pnm)";
-
 void file_open_cb(CALLBACK_ARGS)
 {
   int n = List_Nbr(CTX.post.list);
-  if(file_chooser(0, 0, "Open", file_types)) {
+  if(file_chooser(0, 0, "Open", "*")) {
     OpenProject(file_chooser_get_name(1));
     Draw();
   }
@@ -635,7 +608,7 @@ void file_open_cb(CALLBACK_ARGS)
 void file_merge_cb(CALLBACK_ARGS)
 {
   int n = List_Nbr(CTX.post.list);
-  int f = file_chooser(1, 0, "Merge", file_types);
+  int f = file_chooser(1, 0, "Merge", "*");
   if(f) {
     for(int i = 1; i <= f; i++)
       MergeFile(file_chooser_get_name(i));
