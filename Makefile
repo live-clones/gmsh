@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.423 2006-11-28 20:17:44 geuzaine Exp $
+# $Id: Makefile,v 1.424 2006-12-16 18:38:52 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -227,14 +227,23 @@ package-mac:
         "    <key>CFBundleDocumentTypes</key>\n"\
         "      <array>\n"\
         "        <dict>\n"\
-        "          <key>CFBundleTypeExtensions</key><array><string>geo</string></array>\n"\
+        "          <key>CFBundleTypeExtensions</key><array>\n"\
+        "            <string>geo</string>\n"\
+        "            <string>brep</string><string>brp</string><string>rle</string>\n"\
+        "            <string>igs</string><string>iges</string>\n"\
+        "            <string>stp</string><string>step</string></array>\n"\
         "          <key>CFBundleTypeIconFile</key><string>GmshGeo.icns</string>\n"\
         "          <key>CFBundleTypeName</key><string>Gmsh Geometry File</string>\n"\
         "          <key>CFBundleTypeOSTypes</key><array><string>GGEO</string></array>\n"\
         "          <key>CFBundleTypeRole</key><string>Editor</string>\n"\
         "        </dict>\n"\
         "        <dict>\n"\
-        "          <key>CFBundleTypeExtensions</key><array><string>msh</string></array>\n"\
+        "          <key>CFBundleTypeExtensions</key><array>\n"\
+        "            <string>msh</string>\n"\
+        "            <string>unv</string>\n"\
+        "            <string>vrml</string><string>wrl</string><string>iv</string>\n"\
+        "            <string>bdf</string><string>nas</string>\n"\
+        "            <string>mesh</string></array>\n"\
         "          <key>CFBundleTypeIconFile</key><string>GmshMsh.icns</string>\n"\
         "          <key>CFBundleTypeName</key><string>Gmsh Mesh File</string>\n"\
         "          <key>CFBundleTypeOSTypes</key><array><string>GMSH</string></array>\n"\

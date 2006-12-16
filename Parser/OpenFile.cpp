@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.134 2006-12-16 15:44:30 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.135 2006-12-16 18:38:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -403,16 +403,13 @@ void OpenProject(char *name)
 void OpenProjectMacFinder(const char *filename)
 {
   static int first = 1;
-  if(first){
-    // just copy the filename: it will be opened when Gmsh is ready in
-    // main() (calling OpenProject right now would be a bad idea: Gmsh
-    // is probably not completely initialized)
+  if(first || CTX.batch){
+    // just copy the filename: it will be opened when the GUI is ready
+    // in main()
     strncpy(CTX.filename, filename, 255);
     first = 0;
   }
   else{
-    // should we do MergeFile instead? not sure what's the most
-    // intuitive
     OpenProject((char*)filename);
 #if defined(HAVE_FLTK)
     Draw();
