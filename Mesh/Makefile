@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.155 2006-12-16 14:37:20 geuzaine Exp $
+# $Id: Makefile,v 1.156 2006-12-16 15:48:51 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -101,7 +101,11 @@ meshGEdge.o: meshGEdge.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/SVector3.h ../Numeric/Numeric.h ../Common/Context.h \
   ../Geo/ExtrudeParams.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h \
-  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h BackgroundMesh.h
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/MRep.h \
+  ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/MElement.h ../Geo/ExtrudeParams.h ../Geo/MVertex.h \
+  ../Geo/MEdge.h ../Geo/MElement.h ../Common/VertexArray.h ../Common/OS.h \
+  BackgroundMesh.h
 meshGEdgeExtruded.o: meshGEdgeExtruded.cpp ../Geo/ExtrudeParams.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
