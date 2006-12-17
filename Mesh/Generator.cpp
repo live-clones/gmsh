@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.110 2006-12-16 14:37:20 geuzaine Exp $
+// $Id: Generator.cpp,v 1.111 2006-12-17 12:44:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -258,8 +258,8 @@ void GenerateMesh(int ask)
 
   // 1D mesh
   if(ask == 1 || (ask > 1 && old < 1)) {
-    std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), deMeshGFace());
     std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), deMeshGRegion());
+    std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), deMeshGFace());
     Mesh1D();
   }
 
