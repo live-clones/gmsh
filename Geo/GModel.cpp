@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.25 2006-12-12 18:16:41 geuzaine Exp $
+// $Id: GModel.cpp,v 1.26 2006-12-17 22:23:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -298,10 +298,10 @@ void GModel::deleteMeshPartitions()
 
 double GModel::getMeshSize () 
 {
-  if (meshSize < 0)
-    {
-      SBoundingBox3d b = bounds();
-      return 0.1 * norm( SVector3 ( b.max() , b.min() ) );
-    }
-  else return meshSize;
+  if(meshSize < 0){
+    SBoundingBox3d b = bounds();
+    return 0.1 * norm(SVector3(b.max(), b.min()));
+  }
+  else
+    return meshSize;
 }

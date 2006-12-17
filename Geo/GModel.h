@@ -32,12 +32,15 @@
 
 // OCC Internals have to be stored in the model
 class OCC_Internals;
+
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel  
 {
+ private:
   void deleteOCCInternals();
   OCC_Internals *occ_internals;
   double meshSize;
+
  protected:
   std::string modelName;
   std::set<GRegion*, GEntityLessThan> regions;
@@ -46,10 +49,11 @@ class GModel
   std::set<GVertex*, GEntityLessThan> vertices;
   std::set<int> meshPartitions;
   std::map<int, std::string> physicalNames;
+
  public:
   GModel() : modelName("Untitled"), normals(0), meshSize(-1.) {}
   GModel(const std::string &name) : modelName(name), normals(0), meshSize(-1.) {}
-  virtual ~GModel(){ deleteOCCInternals();destroy(); }
+  virtual ~GModel(){ deleteOCCInternals(); destroy(); }
   
   typedef std::set<GRegion*, GEntityLessThan>::iterator riter;
   typedef std::set<GFace*, GEntityLessThan>::iterator fiter;

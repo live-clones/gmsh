@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.77 2006-11-27 22:22:10 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.78 2006-12-17 22:23:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -287,6 +287,7 @@ int Opengl_Window::handle(int event)
       CTX.s[0] *= ((dy > 0) ? fact : 1./fact);
       CTX.s[1] = CTX.s[0];
       CTX.s[2] = CTX.s[0];
+      prev.recenter();
       redraw();
     }
     WID->update_manip_window();
