@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.31 2006-12-18 20:12:49 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.32 2006-12-18 21:19:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -122,7 +122,7 @@ int arrow_editor(char *title, double &a, double &b, double &c)
   static _editor *editor = NULL;
 
   const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize;
+  const int BB = 7 * CTX.fontsize + 9;
   const int WB = 7;
 
   if(!editor){
@@ -230,7 +230,7 @@ int generic_bitmap_dialog(char *name, char *title, int format)
   static _generic_bitmap_dialog *dialog = NULL;
 
   const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize;
+  const int BB = 7 * CTX.fontsize + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -285,7 +285,7 @@ int jpeg_dialog(char *name)
   static _jpeg_dialog *dialog = NULL;
 
   const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize;
+  const int BB = 7 * CTX.fontsize + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -354,7 +354,7 @@ int gif_dialog(char *name)
   static _gif_dialog *dialog = NULL;
 
   const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize;
+  const int BB = 7 * CTX.fontsize + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -466,7 +466,7 @@ int gl2ps_dialog(char *name, char *title, int format)
   };
 
   const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize;
+  const int BB = 7 * CTX.fontsize + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -549,7 +549,7 @@ int options_dialog(char *name)
   static _options_dialog *dialog = NULL;
 
   const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize;
+  const int BB = 7 * CTX.fontsize + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -604,7 +604,7 @@ int generic_mesh_dialog(char *name, char *title, int format)
   static _generic_mesh_dialog *dialog = NULL;
 
   const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize;
+  const int BB = 7 * CTX.fontsize + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -613,7 +613,7 @@ int generic_mesh_dialog(char *name, char *title, int format)
     // not a "Dialog_Window" since it is modal 
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save only physical groups"); y += BH;
+    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
@@ -623,7 +623,7 @@ int generic_mesh_dialog(char *name, char *title, int format)
   }
   
   dialog->window->label(title);
-  dialog->b->value(CTX.mesh.save_all ? 0 : 1);
+  dialog->b->value(CTX.mesh.save_all ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -632,7 +632,7 @@ int generic_mesh_dialog(char *name, char *title, int format)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 0 : 1);
+	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
 	CreateOutputFile(name, format);
 	dialog->window->hide();
 	return 1;
@@ -666,7 +666,7 @@ int msh_dialog(char *name)
   };
 
   const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize;
+  const int BB = 7 * CTX.fontsize + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -678,7 +678,7 @@ int msh_dialog(char *name)
     dialog->c = new Fl_Choice(WB, y, BB + BB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
-    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save only physical groups"); y += BH;
+    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
@@ -689,7 +689,7 @@ int msh_dialog(char *name)
   
   dialog->c->value((CTX.mesh.msh_file_version == 1.0) ? 0 : 
 		   CTX.mesh.msh_binary ? 2 : 1);
-  dialog->b->value(CTX.mesh.save_all ? 0 : 1);
+  dialog->b->value(CTX.mesh.save_all ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -702,7 +702,7 @@ int msh_dialog(char *name)
 				  (dialog->c->value() == 0) ? 1. : 2.);
 	opt_mesh_msh_binary(0, GMSH_SET | GMSH_GUI, 
 			    (dialog->c->value() == 2) ? 1 : 0);
-	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 0 : 1);
+	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
 	CreateOutputFile(name, FORMAT_MSH);
 	dialog->window->hide();
 	return 1;
@@ -736,7 +736,7 @@ int bdf_dialog(char *name)
   };
 
   const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize;
+  const int BB = 7 * CTX.fontsize + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -748,7 +748,7 @@ int bdf_dialog(char *name)
     dialog->c = new Fl_Choice(WB, y, BB + BB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
-    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save only physical groups"); y += BH;
+    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
@@ -758,7 +758,7 @@ int bdf_dialog(char *name)
   }
   
   dialog->c->value(CTX.mesh.bdf_field_format);
-  dialog->b->value(CTX.mesh.save_all ? 0 : 1);
+  dialog->b->value(CTX.mesh.save_all ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -768,7 +768,7 @@ int bdf_dialog(char *name)
       if (!o) break;
       if (o == dialog->ok) {
 	opt_mesh_bdf_field_format(0, GMSH_SET | GMSH_GUI, dialog->c->value());
-	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 0 : 1);
+	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
 	CreateOutputFile(name, FORMAT_BDF);
 	dialog->window->hide();
 	return 1;
@@ -801,7 +801,7 @@ int stl_dialog(char *name)
   };
 
   const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize;
+  const int BB = 7 * CTX.fontsize + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -813,7 +813,7 @@ int stl_dialog(char *name)
     dialog->c = new Fl_Choice(WB, y, BB + BB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
-    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save only physical groups"); y += BH;
+    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
@@ -823,7 +823,7 @@ int stl_dialog(char *name)
   }
   
   dialog->c->value(CTX.mesh.stl_binary ? 1 : 0);
-  dialog->b->value(CTX.mesh.save_all ? 0 : 1);
+  dialog->b->value(CTX.mesh.save_all ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -833,7 +833,7 @@ int stl_dialog(char *name)
       if (!o) break;
       if (o == dialog->ok) {
 	opt_mesh_stl_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
-	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 0 : 1);
+	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
 	CreateOutputFile(name, FORMAT_STL);
 	dialog->window->hide();
 	return 1;
