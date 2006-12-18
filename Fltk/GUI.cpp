@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.586 2006-12-16 15:44:28 geuzaine Exp $
+// $Id: GUI.cpp,v 1.587 2006-12-18 13:19:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4309,12 +4309,12 @@ void GUI::create_about_window()
   }
 
   {
-    Fl_Button *o = new Fl_Button(width - 2*BB - 2*WB, height - BH - WB, BB, BH, "License");
+    Fl_Button *o = new Fl_Button(width/2 - BB - WB/2, height - BH - WB, BB, BH, "License");
     o->callback(help_license_cb);
   }
 
   {
-    Fl_Button *o = new Fl_Button(width - 1*BB - 1*WB, height - BH - WB, BB, BH, "Credits");
+    Fl_Button *o = new Fl_Button(width/2 + WB/2, height - BH - WB, BB, BH, "Credits");
     o->callback(help_credits_cb);
   }
 
