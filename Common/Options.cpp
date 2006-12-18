@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.323 2006-12-16 05:43:20 geuzaine Exp $
+// $Id: Options.cpp,v 1.324 2006-12-18 20:12:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4881,7 +4881,7 @@ double opt_mesh_cut_planed(OPT_ARGS_NUM)
 double opt_mesh_save_all(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.mesh.save_all = (int)val;
+    CTX.mesh.save_all = val ? 1 : 0;
   return CTX.mesh.save_all;
 }
 
