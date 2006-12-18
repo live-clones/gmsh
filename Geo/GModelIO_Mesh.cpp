@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.5 2006-12-03 04:00:58 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.6 2006-12-18 19:47:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -709,7 +709,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   return 1;
 }
 
-int GModel::writePOS(const std::string &name, double scalingFactor)
+int GModel::writePOS(const std::string &name, bool saveAll, double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
@@ -719,19 +719,23 @@ int GModel::writePOS(const std::string &name, double scalingFactor)
 
   int status = getMeshStatus();
 
+  if(noPhysicalGroups()) saveAll = true;
+
   if(status >= 3){
     fprintf(fp, "View \"Volumes\" {\n");
     fprintf(fp, "T2(1.e5,30,%d){\"Elementary Entity\", \"Element Number\", "
 	    "\"Gamma\", \"Eta\", \"Rho\"};\n", (1<<16)|(4<<8));
     for(riter it = firstRegion(); it != lastRegion(); ++it) {
-      for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
-	(*it)->tetrahedra[i]->writePOS(fp, scalingFactor, (*it)->tag());
-      for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
-	(*it)->hexahedra[i]->writePOS(fp, scalingFactor, (*it)->tag());
-      for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
-	(*it)->prisms[i]->writePOS(fp, scalingFactor, (*it)->tag());
-      for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
-	(*it)->pyramids[i]->writePOS(fp, scalingFactor, (*it)->tag());
+      if(saveAll || (*it)->physicals.size()){
+	for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
+	  (*it)->tetrahedra[i]->writePOS(fp, scalingFactor, (*it)->tag());
+	for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
+	  (*it)->hexahedra[i]->writePOS(fp, scalingFactor, (*it)->tag());
+	for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
+	  (*it)->prisms[i]->writePOS(fp, scalingFactor, (*it)->tag());
+	for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
+	  (*it)->pyramids[i]->writePOS(fp, scalingFactor, (*it)->tag());
+      }
     }
     fprintf(fp, "};\n");
   }
@@ -741,10 +745,12 @@ int GModel::writePOS(const std::string &name, double scalingFactor)
     fprintf(fp, "T2(1.e5,30,%d){\"Elementary Entity\", \"Element Number\", "
 	    "\"Gamma\", \"Eta\", \"Rho\"};\n", (1<<16)|(4<<8));
     for(fiter it = firstFace(); it != lastFace(); ++it) {
-      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-	(*it)->triangles[i]->writePOS(fp, scalingFactor, (*it)->tag());
-      for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-	(*it)->quadrangles[i]->writePOS(fp, scalingFactor, (*it)->tag());
+      if(saveAll || (*it)->physicals.size()){
+	for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+	  (*it)->triangles[i]->writePOS(fp, scalingFactor, (*it)->tag());
+	for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
+	  (*it)->quadrangles[i]->writePOS(fp, scalingFactor, (*it)->tag());
+      }
     }
     fprintf(fp, "};\n");
   }
@@ -754,8 +760,10 @@ int GModel::writePOS(const std::string &name, double scalingFactor)
     fprintf(fp, "T2(1.e5,30,%d){\"Elementary Entity\", \"Element Number\", "
 	    "\"Gamma\", \"Eta\", \"Rho\"};\n", (1<<16)|(4<<8));
     for(eiter it = firstEdge(); it != lastEdge(); ++it) {
-      for(unsigned int i = 0; i < (*it)->lines.size(); i++)
- 	(*it)->lines[i]->writePOS(fp, scalingFactor, (*it)->tag());
+      if(saveAll || (*it)->physicals.size()){
+	for(unsigned int i = 0; i < (*it)->lines.size(); i++)
+	  (*it)->lines[i]->writePOS(fp, scalingFactor, (*it)->tag());
+      }
     }
     fprintf(fp, "};\n");
   }
@@ -880,7 +888,8 @@ int GModel::readSTL(const std::string &name, double tolerance)
   return 1;
 }
 
-int GModel::writeSTL(const std::string &name, bool binary, double scalingFactor)
+int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
+		     double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp){
@@ -888,23 +897,31 @@ int GModel::writeSTL(const std::string &name, bool binary, double scalingFactor)
     return 0;
   }
 
-  if(!binary)
+  if(noPhysicalGroups()) saveAll = true;
+
+  if(!binary){
     fprintf(fp, "solid Created by Gmsh\n");
+  }
   else{
     char header[80];
     strncpy(header, "Created by Gmsh", 80);
     fwrite(header, sizeof(char), 80, fp);
     unsigned int nfacets = 0;
-    for(fiter it = firstFace(); it != lastFace(); ++it)
-      nfacets += (*it)->triangles.size() + 2 * (*it)->quadrangles.size();
+    for(fiter it = firstFace(); it != lastFace(); ++it){
+      if(saveAll || (*it)->physicals.size()){
+	nfacets += (*it)->triangles.size() + 2 * (*it)->quadrangles.size();
+      }
+    }
     fwrite(&nfacets, sizeof(unsigned int), 1, fp);
   }
     
   for(fiter it = firstFace(); it != lastFace(); ++it) {
-    for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-      (*it)->triangles[i]->writeSTL(fp, binary, scalingFactor);
-    for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-      (*it)->quadrangles[i]->writeSTL(fp, binary, scalingFactor);
+    if(saveAll || (*it)->physicals.size()){
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+	(*it)->triangles[i]->writeSTL(fp, binary, scalingFactor);
+      for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
+	(*it)->quadrangles[i]->writeSTL(fp, binary, scalingFactor);
+    }
   }
 
   if(!binary)
@@ -1067,13 +1084,15 @@ int GModel::readVRML(const std::string &name)
   return 1;
 }
 
-int GModel::writeVRML(const std::string &name, double scalingFactor)
+int GModel::writeVRML(const std::string &name, bool saveAll, double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
     Msg(GERROR, "Unable to open file '%s'", name.c_str());
     return 0;
   }
+
+  if(noPhysicalGroups()) saveAll = true;
 
   renumberMeshVertices();
 
@@ -1096,25 +1115,29 @@ int GModel::writeVRML(const std::string &name, double scalingFactor)
   fprintf(fp, "}\n");
 
   for(eiter it = firstEdge(); it != lastEdge(); ++it){
-    fprintf(fp, "DEF Curve%d IndexedLineSet {\n", (*it)->tag());
-    fprintf(fp, "  coordIndex [\n");
-    for(unsigned int i = 0; i < (*it)->lines.size(); i++)
-      (*it)->lines[i]->writeVRML(fp);
-    fprintf(fp, "  ]\n");
-    fprintf(fp, "}\n");
+    if(saveAll || (*it)->physicals.size()){
+      fprintf(fp, "DEF Curve%d IndexedLineSet {\n", (*it)->tag());
+      fprintf(fp, "  coordIndex [\n");
+      for(unsigned int i = 0; i < (*it)->lines.size(); i++)
+	(*it)->lines[i]->writeVRML(fp);
+      fprintf(fp, "  ]\n");
+      fprintf(fp, "}\n");
+    }
   }
 
   for(fiter it = firstFace(); it != lastFace(); ++it){
-    fprintf(fp, "DEF Surface%d IndexedFaceSet {\n", (*it)->tag());
-    fprintf(fp, "  coordIndex [\n");
-    for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-      (*it)->triangles[i]->writeVRML(fp);
-    for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-      (*it)->quadrangles[i]->writeVRML(fp);
-    fprintf(fp, "  ]\n");
-    fprintf(fp, "}\n");
+    if(saveAll || (*it)->physicals.size()){
+      fprintf(fp, "DEF Surface%d IndexedFaceSet {\n", (*it)->tag());
+      fprintf(fp, "  coordIndex [\n");
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+	(*it)->triangles[i]->writeVRML(fp);
+      for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
+	(*it)->quadrangles[i]->writeVRML(fp);
+      fprintf(fp, "  ]\n");
+      fprintf(fp, "}\n");
+    }
   }
-  
+
   fclose(fp);
   return 1;
 }
@@ -1282,7 +1305,6 @@ int GModel::writeUNV(const std::string &name, bool saveAll, double scalingFactor
     return 0;
   }
 
-  // if there are no physicals we save all the elements
   if(noPhysicalGroups()) saveAll = true;
 
   renumberMeshVertices();
@@ -1427,13 +1449,15 @@ int GModel::readMESH(const std::string &name)
   return 1;
 }
 
-int GModel::writeMESH(const std::string &name, double scalingFactor)
+int GModel::writeMESH(const std::string &name, bool saveAll, double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
     Msg(GERROR, "Unable to open file '%s'", name.c_str());
     return 0;
   }
+
+  if(noPhysicalGroups()) saveAll = true;
 
   fprintf(fp, " MeshVersionFormatted 1\n");
   fprintf(fp, " Dimension\n");
@@ -1457,32 +1481,46 @@ int GModel::writeMESH(const std::string &name, double scalingFactor)
   
   int numTriangles = 0, numQuadrangles = 0, numTetrahedra = 0;
   for(fiter it = firstFace(); it != lastFace(); ++it){
-    numTriangles += (*it)->triangles.size();
-    numQuadrangles += (*it)->quadrangles.size();
+    if(saveAll || (*it)->physicals.size()){
+      numTriangles += (*it)->triangles.size();
+      numQuadrangles += (*it)->quadrangles.size();
+    }
   }
   for(riter it = firstRegion(); it != lastRegion(); ++it){
-    numTetrahedra += (*it)->tetrahedra.size();
+    if(saveAll || (*it)->physicals.size()){
+      numTetrahedra += (*it)->tetrahedra.size();
+    }
   }
+
   if(numTriangles){
     fprintf(fp, " Triangles\n");
     fprintf(fp, " %d\n", numTriangles);
-    for(fiter it = firstFace(); it != lastFace(); ++it)
-      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-	(*it)->triangles[i]->writeMESH(fp, (*it)->tag());
+    for(fiter it = firstFace(); it != lastFace(); ++it){
+      if(saveAll || (*it)->physicals.size()){
+	for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+	  (*it)->triangles[i]->writeMESH(fp, (*it)->tag());
+      }
+    }
   }
   if(numQuadrangles){
     fprintf(fp, " Quadrilaterals\n");
     fprintf(fp, " %d\n", numQuadrangles);
-    for(fiter it = firstFace(); it != lastFace(); ++it)
-      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-	(*it)->quadrangles[i]->writeMESH(fp, (*it)->tag());
+    for(fiter it = firstFace(); it != lastFace(); ++it){
+      if(saveAll || (*it)->physicals.size()){
+	for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+	  (*it)->quadrangles[i]->writeMESH(fp, (*it)->tag());
+      }
+    }
   }
   if(numTetrahedra){
     fprintf(fp, " Tetrahedra\n");
     fprintf(fp, " %d\n", numTetrahedra);
-    for(riter it = firstRegion(); it != lastRegion(); ++it)
-      for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
-	(*it)->tetrahedra[i]->writeMESH(fp, (*it)->tag());
+    for(riter it = firstRegion(); it != lastRegion(); ++it){
+      if(saveAll || (*it)->physicals.size()){
+	for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
+	  (*it)->tetrahedra[i]->writeMESH(fp, (*it)->tag());
+      }
+    }
   }
 
   fprintf(fp, " End\n");
@@ -1757,6 +1795,8 @@ int GModel::writeBDF(const std::string &name, int format, bool saveAll,
     return 0;
   }
 
+  if(noPhysicalGroups()) saveAll = true;
+
   renumberMeshVertices();
 
   fprintf(fp, "$ Created by Gmsh\n");
@@ -1775,24 +1815,30 @@ int GModel::writeBDF(const std::string &name, int format, bool saveAll,
       (*it)->mesh_vertices[i]->writeBDF(fp, format, scalingFactor);
   
   for(eiter it = firstEdge(); it != lastEdge(); ++it){
-    for(unsigned int i = 0; i < (*it)->lines.size(); i++)
-      (*it)->lines[i]->writeBDF(fp, format, (*it)->tag());
+    if(saveAll || (*it)->physicals.size()){
+      for(unsigned int i = 0; i < (*it)->lines.size(); i++)
+	(*it)->lines[i]->writeBDF(fp, format, (*it)->tag());
+    }
   }
   for(fiter it = firstFace(); it != lastFace(); ++it){
-    for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-      (*it)->triangles[i]->writeBDF(fp, format, (*it)->tag());
-    for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-      (*it)->quadrangles[i]->writeBDF(fp, format, (*it)->tag());
+    if(saveAll || (*it)->physicals.size()){
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+	(*it)->triangles[i]->writeBDF(fp, format, (*it)->tag());
+      for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
+	(*it)->quadrangles[i]->writeBDF(fp, format, (*it)->tag());
+    }
   }
   for(riter it = firstRegion(); it != lastRegion(); ++it){
-    for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
-      (*it)->tetrahedra[i]->writeBDF(fp, format, (*it)->tag());
-    for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
-      (*it)->hexahedra[i]->writeBDF(fp, format, (*it)->tag());
-    for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
-      (*it)->prisms[i]->writeBDF(fp, format, (*it)->tag());
-    for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
-      (*it)->pyramids[i]->writeBDF(fp, format, (*it)->tag());
+    if(saveAll || (*it)->physicals.size()){
+      for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
+	(*it)->tetrahedra[i]->writeBDF(fp, format, (*it)->tag());
+      for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
+	(*it)->hexahedra[i]->writeBDF(fp, format, (*it)->tag());
+      for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
+	(*it)->prisms[i]->writeBDF(fp, format, (*it)->tag());
+      for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
+	(*it)->pyramids[i]->writeBDF(fp, format, (*it)->tag());
+    }
   }
   
   fprintf(fp, "ENDDATA\n");

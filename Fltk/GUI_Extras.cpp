@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.29 2006-12-16 05:43:20 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.30 2006-12-18 19:47:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -218,7 +218,61 @@ int perspective_editor()
   return 0;
 }
 
-// save jpeg dialog
+// Generic save bitmap dialog
+
+int generic_bitmap_dialog(char *name, char *title, int format)
+{
+  struct _generic_bitmap_dialog{
+    Fl_Window *window;
+    Fl_Check_Button *b;
+    Fl_Button *ok, *cancel;
+  };
+  static _generic_bitmap_dialog *dialog = NULL;
+
+  const int BH = 2 * CTX.fontsize + 1;
+  const int BB = 7 * CTX.fontsize;
+  const int WB = 7;
+
+  if(!dialog){
+    dialog = new _generic_bitmap_dialog;
+    int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
+    // not a "Dialog_Window" since it is modal 
+    dialog->window = new Fl_Double_Window(w, h);
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
+    dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
+    dialog->window->set_modal();
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+  
+  dialog->window->label(title);
+  dialog->b->value(CTX.print.text);
+  dialog->window->show();
+
+  while(dialog->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == dialog->ok) {
+	opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b->value());
+	CreateOutputFile(name, format);
+	dialog->window->hide();
+	return 1;
+      }
+      if (o == dialog->window || o == dialog->cancel){
+	dialog->window->hide();
+	return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+// Save jpeg dialog
 
 int jpeg_dialog(char *name)
 {
@@ -288,61 +342,7 @@ int jpeg_dialog(char *name)
   return 0;
 }
 
-// save generic bitmap dialog
-
-int generic_bitmap_dialog(char *name, char *title, int format)
-{
-  struct _generic_bitmap_dialog{
-    Fl_Window *window;
-    Fl_Check_Button *b;
-    Fl_Button *ok, *cancel;
-  };
-  static _generic_bitmap_dialog *dialog = NULL;
-
-  const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize;
-  const int WB = 7;
-
-  if(!dialog){
-    dialog = new _generic_bitmap_dialog;
-    int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "Dialog_Window" since it is modal 
-    dialog->window = new Fl_Double_Window(w, h);
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
-    dialog->b->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->set_modal();
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
-  }
-  
-  dialog->window->label(title);
-  dialog->b->value(CTX.print.text);
-  dialog->window->show();
-
-  while(dialog->window->shown()){
-    Fl::wait();
-    for (;;) {
-      Fl_Widget* o = Fl::readqueue();
-      if (!o) break;
-      if (o == dialog->ok) {
-	opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b->value());
-	CreateOutputFile(name, format);
-	dialog->window->hide();
-	return 1;
-      }
-      if (o == dialog->window || o == dialog->cancel){
-	dialog->window->hide();
-	return 0;
-      }
-    }
-  }
-  return 0;
-}
-
-// save gif dialog
+// Save gif dialog
 
 int gif_dialog(char *name)
 {
@@ -409,7 +409,7 @@ int gif_dialog(char *name)
   return 0;
 }
 
-// save ps/eps/pdf dialog
+// Save ps/eps/pdf dialog
 
 static void activate_gl2ps_choices(int format, int quality, Fl_Check_Button *b[5])
 {
@@ -537,7 +537,7 @@ int gl2ps_dialog(char *name, char *title, int format)
   return 0;
 }
 
-// save options dialog
+// Save options dialog
 
 int options_dialog(char *name)
 {
@@ -592,7 +592,61 @@ int options_dialog(char *name)
   return 0;
 }
 
-// save msh dialog
+// Generic save mesh dialog
+
+int generic_mesh_dialog(char *name, char *title, int format)
+{
+  struct _generic_mesh_dialog{
+    Fl_Window *window;
+    Fl_Check_Button *b;
+    Fl_Button *ok, *cancel;
+  };
+  static _generic_mesh_dialog *dialog = NULL;
+
+  const int BH = 2 * CTX.fontsize + 1;
+  const int BB = 7 * CTX.fontsize;
+  const int WB = 7;
+
+  if(!dialog){
+    dialog = new _generic_mesh_dialog;
+    int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
+    // not a "Dialog_Window" since it is modal 
+    dialog->window = new Fl_Double_Window(w, h);
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physicals)"); y += BH;
+    dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
+    dialog->window->set_modal();
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+  
+  dialog->window->label(title);
+  dialog->b->value(CTX.mesh.save_all);
+  dialog->window->show();
+
+  while(dialog->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == dialog->ok) {
+	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value());
+	CreateOutputFile(name, format);
+	dialog->window->hide();
+	return 1;
+      }
+      if (o == dialog->window || o == dialog->cancel){
+	dialog->window->hide();
+	return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+// Save msh dialog
 
 int msh_dialog(char *name)
 {
@@ -662,66 +716,14 @@ int msh_dialog(char *name)
   return 0;
 }
 
-// save unv dialog
-
-int unv_dialog(char *name)
-{
-  struct _unv_dialog{
-    Fl_Window *window;
-    Fl_Check_Button *b;
-    Fl_Button *ok, *cancel;
-  };
-  static _unv_dialog *dialog = NULL;
-
-  const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize;
-  const int WB = 7;
-
-  if(!dialog){
-    dialog = new _unv_dialog;
-    int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "Dialog_Window" since it is modal 
-    dialog->window = new Fl_Double_Window(w, h, "UNV Options");
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physicals)"); y += BH;
-    dialog->b->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->set_modal();
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
-  }
-  
-  dialog->b->value(CTX.mesh.save_all);
-  dialog->window->show();
-
-  while(dialog->window->shown()){
-    Fl::wait();
-    for (;;) {
-      Fl_Widget* o = Fl::readqueue();
-      if (!o) break;
-      if (o == dialog->ok) {
-	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value());
-	CreateOutputFile(name, FORMAT_UNV);
-	dialog->window->hide();
-	return 1;
-      }
-      if (o == dialog->window || o == dialog->cancel){
-	dialog->window->hide();
-	return 0;
-      }
-    }
-  }
-  return 0;
-}
-
-// save bdf dialog
+// Save bdf dialog
 
 int bdf_dialog(char *name)
 {
   struct _bdf_dialog{
     Fl_Window *window;
     Fl_Choice *c;
+    Fl_Check_Button *b;
     Fl_Button *ok, *cancel;
   };
   static _bdf_dialog *dialog = NULL;
@@ -739,13 +741,15 @@ int bdf_dialog(char *name)
 
   if(!dialog){
     dialog = new _bdf_dialog;
-    int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
     // not a "Dialog_Window" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "BDF Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->c = new Fl_Choice(WB, y, BB + BB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
+    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physicals)"); y += BH;
+    dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->set_modal();
@@ -754,6 +758,7 @@ int bdf_dialog(char *name)
   }
   
   dialog->c->value(CTX.mesh.bdf_field_format);
+  dialog->b->value(CTX.mesh.save_all);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -763,6 +768,7 @@ int bdf_dialog(char *name)
       if (!o) break;
       if (o == dialog->ok) {
 	opt_mesh_bdf_field_format(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value());
 	CreateOutputFile(name, FORMAT_BDF);
 	dialog->window->hide();
 	return 1;
@@ -776,13 +782,14 @@ int bdf_dialog(char *name)
   return 0;
 }
 
-// save stl dialog
+// Save stl dialog
 
 int stl_dialog(char *name)
 {
   struct _stl_dialog{
     Fl_Window *window;
     Fl_Choice *c;
+    Fl_Check_Button *b;
     Fl_Button *ok, *cancel;
   };
   static _stl_dialog *dialog = NULL;
@@ -799,13 +806,15 @@ int stl_dialog(char *name)
 
   if(!dialog){
     dialog = new _stl_dialog;
-    int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
     // not a "Dialog_Window" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "STL Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->c = new Fl_Choice(WB, y, BB + BB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
+    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physicals)"); y += BH;
+    dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->set_modal();
@@ -814,6 +823,7 @@ int stl_dialog(char *name)
   }
   
   dialog->c->value(CTX.mesh.stl_binary ? 1 : 0);
+  dialog->b->value(CTX.mesh.save_all);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -823,6 +833,7 @@ int stl_dialog(char *name)
       if (!o) break;
       if (o == dialog->ok) {
 	opt_mesh_stl_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value());
 	CreateOutputFile(name, FORMAT_STL);
 	dialog->window->hide();
 	return 1;

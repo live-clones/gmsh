@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.11 2006-11-27 22:22:17 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.12 2006-12-18 19:47:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -53,30 +53,30 @@ int GuessFileFormatFromFileName(char *name)
   if(len <= 0)
     strcpy(ext, "");
   
-  if     (!strcmp(ext, ".geo"))     return FORMAT_GEO;
-  else if(!strcmp(ext, ".msh"))     return FORMAT_MSH;
-  else if(!strcmp(ext, ".pos"))     return FORMAT_POS;
-  else if(!strcmp(ext, ".opt"))     return FORMAT_OPT;
-  else if(!strcmp(ext, ".unv"))     return FORMAT_UNV;
-  else if(!strcmp(ext, ".stl"))     return FORMAT_STL;
-  else if(!strcmp(ext, ".cgns"))    return FORMAT_CGNS;
-  else if(!strcmp(ext, ".mesh"))    return FORMAT_MESH;
-  else if(!strcmp(ext, ".bdf"))     return FORMAT_BDF;
-  else if(!strcmp(ext, ".nas"))     return FORMAT_BDF;
-  else if(!strcmp(ext, ".wrl"))     return FORMAT_VRML;
-  else if(!strcmp(ext, ".vrml"))    return FORMAT_VRML;
-  else if(!strcmp(ext, ".gif"))     return FORMAT_GIF;
-  else if(!strcmp(ext, ".jpg"))     return FORMAT_JPEG;
-  else if(!strcmp(ext, ".jpeg"))    return FORMAT_JPEG;
-  else if(!strcmp(ext, ".png"))     return FORMAT_PNG;
-  else if(!strcmp(ext, ".ps"))      return FORMAT_PS;
-  else if(!strcmp(ext, ".eps"))     return FORMAT_EPS;
-  else if(!strcmp(ext, ".pdf"))     return FORMAT_PDF;
-  else if(!strcmp(ext, ".tex"))     return FORMAT_TEX;
-  else if(!strcmp(ext, ".svg"))     return FORMAT_SVG;
-  else if(!strcmp(ext, ".ppm"))     return FORMAT_PPM;
-  else if(!strcmp(ext, ".yuv"))     return FORMAT_YUV;
-  else                              return -1;
+  if     (!strcmp(ext, ".geo"))  return FORMAT_GEO;
+  else if(!strcmp(ext, ".msh"))  return FORMAT_MSH;
+  else if(!strcmp(ext, ".pos"))  return FORMAT_POS;
+  else if(!strcmp(ext, ".opt"))  return FORMAT_OPT;
+  else if(!strcmp(ext, ".unv"))  return FORMAT_UNV;
+  else if(!strcmp(ext, ".stl"))  return FORMAT_STL;
+  else if(!strcmp(ext, ".cgns")) return FORMAT_CGNS;
+  else if(!strcmp(ext, ".mesh")) return FORMAT_MESH;
+  else if(!strcmp(ext, ".bdf"))  return FORMAT_BDF;
+  else if(!strcmp(ext, ".nas"))  return FORMAT_BDF;
+  else if(!strcmp(ext, ".wrl"))  return FORMAT_VRML;
+  else if(!strcmp(ext, ".vrml")) return FORMAT_VRML;
+  else if(!strcmp(ext, ".gif"))  return FORMAT_GIF;
+  else if(!strcmp(ext, ".jpg"))  return FORMAT_JPEG;
+  else if(!strcmp(ext, ".jpeg")) return FORMAT_JPEG;
+  else if(!strcmp(ext, ".png"))  return FORMAT_PNG;
+  else if(!strcmp(ext, ".ps"))   return FORMAT_PS;
+  else if(!strcmp(ext, ".eps"))  return FORMAT_EPS;
+  else if(!strcmp(ext, ".pdf"))  return FORMAT_PDF;
+  else if(!strcmp(ext, ".tex"))  return FORMAT_TEX;
+  else if(!strcmp(ext, ".svg"))  return FORMAT_SVG;
+  else if(!strcmp(ext, ".ppm"))  return FORMAT_PPM;
+  else if(!strcmp(ext, ".yuv"))  return FORMAT_YUV;
+  else                           return -1;
 }
 
 void GetDefaultFileName(int format, char *name)
@@ -149,11 +149,12 @@ void CreateOutputFile(char *filename, int format)
     break;
 
   case FORMAT_STL:
-    GMODEL->writeSTL(name, CTX.mesh.stl_binary, CTX.mesh.scaling_factor);
+    GMODEL->writeSTL(name, CTX.mesh.stl_binary,
+		     CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_VRML:
-    GMODEL->writeVRML(name, CTX.mesh.scaling_factor);
+    GMODEL->writeVRML(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_UNV:
@@ -161,12 +162,13 @@ void CreateOutputFile(char *filename, int format)
     break;
 
   case FORMAT_MESH:
-    GMODEL->writeMESH(name, CTX.mesh.scaling_factor);
+    GMODEL->writeMESH(name, 
+		      CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_BDF:
-    GMODEL->writeBDF(name, CTX.mesh.bdf_field_format, CTX.mesh.save_all,
-		     CTX.mesh.scaling_factor);
+    GMODEL->writeBDF(name, CTX.mesh.bdf_field_format, 
+		     CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_CGNS:
@@ -174,7 +176,7 @@ void CreateOutputFile(char *filename, int format)
     break;
 
   case FORMAT_POS:
-    GMODEL->writePOS(name);
+    GMODEL->writePOS(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_GEO:

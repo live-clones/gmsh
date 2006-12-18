@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.498 2006-12-16 15:58:19 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.499 2006-12-18 19:47:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -618,130 +618,50 @@ void file_merge_cb(CALLBACK_ARGS)
     WID->set_context(menu_post, 0);
 }
 
-int _save_options(char *name)
-{
-  return options_dialog(name);
-}
-
-int _save_geo(char *name)
-{
-  CreateOutputFile(name, FORMAT_GEO);
-  return 1;
-}
-
-int _save_msh(char *name)
-{
-  return msh_dialog(name);
-}
-
-int _save_pos(char *name)
-{
-  CreateOutputFile(name, FORMAT_POS);
-  return 1;
-}
-
-int _save_unv(char *name)
-{
-  return unv_dialog(name);
-}
-
-int _save_mesh(char *name)
-{
-  CreateOutputFile(name, FORMAT_MESH);
-  return 1;
-}
-
-int _save_bdf(char *name)
-{
-  return bdf_dialog(name);
-}
-
-int _save_vrml(char *name)
-{
-  CreateOutputFile(name, FORMAT_VRML);
-  return 1;
-}
-
-int _save_stl(char *name)
-{
-  return stl_dialog(name);
-}
-
-int _save_cgns(char *name)
-{
-  CreateOutputFile(name, FORMAT_CGNS);
-  return 1;
-}
-
-int _save_ps(char *name)
-{
-  return gl2ps_dialog(name, "PS Options", FORMAT_PS);
-}
-
-int _save_eps(char *name)
-{
-  return gl2ps_dialog(name, "EPS Options", FORMAT_EPS);
-}
-
-int _save_pdf(char *name)
-{
-  return gl2ps_dialog(name, "PDF Options", FORMAT_PDF);
-}
-
-int _save_svg(char *name)
-{
-  return gl2ps_dialog(name, "SVG Options", FORMAT_SVG);
-}
-
-int _save_tex(char *name)
-{
-  CreateOutputFile(name, FORMAT_TEX);
-  return 1;
-}
-
-int _save_jpeg(char *name)
-{
-  return jpeg_dialog(name);
-}
-
-int _save_png(char *name)
-{
-  return generic_bitmap_dialog(name, "PNG Options", FORMAT_PNG);
-}
-
-int _save_gif(char *name)
-{
-  return gif_dialog(name);
-}
-
-int _save_ppm(char *name)
-{
-  return generic_bitmap_dialog(name, "PPM Options", FORMAT_PPM);
-}
-
-int _save_yuv(char *name)
-{
-  return generic_bitmap_dialog(name, "YUV Options", FORMAT_YUV);
-}
+int _save_msh(char *name){ return msh_dialog(name); }
+int _save_pos(char *name){ return generic_mesh_dialog(name, "POS Options", FORMAT_POS); }
+int _save_options(char *name){ return options_dialog(name); }
+int _save_geo(char *name){ CreateOutputFile(name, FORMAT_GEO); return 1; }
+int _save_unv(char *name){ return generic_mesh_dialog(name, "UNV Options", FORMAT_UNV); }
+int _save_mesh(char *name){ return generic_mesh_dialog(name, "MESH Options", FORMAT_MESH); }
+int _save_bdf(char *name){ return bdf_dialog(name); }
+int _save_stl(char *name){ return stl_dialog(name); }
+int _save_vrml(char *name){ return generic_mesh_dialog(name, "VRML Options", FORMAT_VRML); }
+int _save_cgns(char *name){ CreateOutputFile(name, FORMAT_CGNS); return 1; }
+int _save_eps(char *name){ return gl2ps_dialog(name, "EPS Options", FORMAT_EPS); }
+int _save_gif(char *name){ return gif_dialog(name); }
+int _save_jpeg(char *name){ return jpeg_dialog(name); }
+int _save_tex(char *name){ CreateOutputFile(name, FORMAT_TEX); return 1; }
+int _save_pdf(char *name){ return gl2ps_dialog(name, "PDF Options", FORMAT_PDF); }
+int _save_png(char *name){ return generic_bitmap_dialog(name, "PNG Options", FORMAT_PNG); }
+int _save_ps(char *name){ return gl2ps_dialog(name, "PS Options", FORMAT_PS); }
+int _save_ppm(char *name){ return generic_bitmap_dialog(name, "PPM Options", FORMAT_PPM); }
+int _save_svg(char *name){ return gl2ps_dialog(name, "SVG Options", FORMAT_SVG); }
+int _save_yuv(char *name){ return generic_bitmap_dialog(name, "YUV Options", FORMAT_YUV); }
 
 int _save_auto(char *name)
 {
   switch(GuessFileFormatFromFileName(name)){
-  case FORMAT_OPT     : return _save_options(name);
-  case FORMAT_MSH     : return _save_msh(name);
-  case FORMAT_UNV     : return _save_unv(name);
-  case FORMAT_BDF     : return _save_bdf(name);
-  case FORMAT_STL     : return _save_stl(name);
-  case FORMAT_CGNS    : return _save_cgns(name);
-  case FORMAT_PS      : return _save_ps(name);
-  case FORMAT_EPS     : return _save_eps(name);
-  case FORMAT_PDF     : return _save_pdf(name);
-  case FORMAT_SVG     : return _save_svg(name);
-  case FORMAT_JPEG    : return _save_jpeg(name);
-  case FORMAT_PNG     : return _save_png(name);
-  case FORMAT_GIF     : return _save_gif(name);
-  case FORMAT_PPM     : return _save_ppm(name);
-  case FORMAT_YUV     : return _save_yuv(name);
+  case FORMAT_MSH  : return _save_msh(name);
+  case FORMAT_POS  : return _save_pos(name);
+  case FORMAT_OPT  : return _save_options(name);
+  case FORMAT_GEO  : return _save_geo(name);
+  case FORMAT_UNV  : return _save_unv(name);
+  case FORMAT_MESH : return _save_mesh(name);
+  case FORMAT_BDF  : return _save_bdf(name);
+  case FORMAT_STL  : return _save_stl(name);
+  case FORMAT_VRML : return _save_vrml(name);
+  case FORMAT_CGNS : return _save_cgns(name);
+  case FORMAT_EPS  : return _save_eps(name);
+  case FORMAT_GIF  : return _save_gif(name);
+  case FORMAT_JPEG : return _save_jpeg(name);
+  case FORMAT_TEX  : return _save_tex(name);
+  case FORMAT_PDF  : return _save_pdf(name);
+  case FORMAT_PNG  : return _save_png(name);
+  case FORMAT_PS   : return _save_ps(name);
+  case FORMAT_PPM  : return _save_ppm(name);
+  case FORMAT_SVG  : return _save_svg(name);
+  case FORMAT_YUV  : return _save_yuv(name);
   default :
     CreateOutputFile(name, FORMAT_AUTO); 
     return 1;
