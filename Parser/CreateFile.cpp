@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.12 2006-12-18 19:47:38 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.13 2006-12-19 05:22:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -162,8 +162,7 @@ void CreateOutputFile(char *filename, int format)
     break;
 
   case FORMAT_MESH:
-    GMODEL->writeMESH(name, 
-		      CTX.mesh.save_all, CTX.mesh.scaling_factor);
+    GMODEL->writeMESH(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_BDF:
@@ -339,7 +338,7 @@ void CreateOutputFile(char *filename, int format)
 #endif
 
   default:
-    Msg(GERROR, "Unknown output file format (%d)", format);
+    Msg(GERROR, "Unknown output file format");
     printEndMessage = false;
     break;
   }
