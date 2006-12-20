@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.121 2006-12-03 03:19:55 geuzaine Exp $
+# $Id: Makefile,v 1.122 2006-12-20 15:50:57 remacle Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -27,9 +27,9 @@ INCLUDE = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Numeric\
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
 
 SRC = GEntity.cpp\
-        GVertex.cpp GEdge.cpp GEdgeLoop.cpp GFace.cpp GRegion.cpp\
-        gmshEdge.cpp gmshFace.cpp gmshRegion.cpp\
-        OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp\
+      GVertex.cpp GEdge.cpp GEdgeLoop.cpp GFace.cpp GRegion.cpp\
+      gmshVertex.cpp gmshEdge.cpp gmshFace.cpp gmshRegion.cpp\
+      OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp\
         projectionFace.cpp\
       GModel.cpp\
         GModelIO_Geo.cpp\

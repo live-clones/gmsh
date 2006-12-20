@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.24 2006-11-27 22:22:13 geuzaine Exp $
+// $Id: MElement.cpp,v 1.25 2006-12-20 15:50:57 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 #include "MElement.h"
 #include "GEntity.h"
 #include "Numeric.h"
+#include "Message.h"
 
 int edges_tetra[6][2] = {
   {0, 1},
@@ -402,3 +403,67 @@ void MElement::writeBDF(FILE *fp, int format, int elementary)
     fprintf(fp, "\n");
   }
 }
+
+bool MTriangle::invertmappingXY(double *p, double *uv, double tol)
+{
+  double mat[2][2];
+  double b[2], dum;
+  getMat(mat);
+  b[0] = p[0] - getVertex(0)->x();
+  b[1] = p[1] - getVertex(0)->y();
+  sys2x2(mat, b, uv);
+  if(uv[0] >= -tol && 
+     uv[1] >= -tol && 
+     uv[0] <= 1. + tol && 
+     uv[1] <= 1. + tol && 
+     1. - uv[0] - uv[1] > -tol) {
+    return true;
+  }
+  return false; 
+}
+
+
+double MTriangle::getSurfaceXY() const
+{
+  const double x1 =_v[0]->x();
+  const double x2 =_v[1]->x();
+  const double x3 =_v[2]->x();
+  const double y1 =_v[0]->y();
+  const double y2 =_v[1]->y();
+  const double y3 =_v[2]->y();
+
+  const double v1 [2] = {x2-x1,y2-y1};
+  const double v2 [2] = {x3-x1,y3-y1};
+
+  double s = v1[0]*v2[1] - v1[1]*v2[0]; 
+  return s*0.5;
+  
+}
+
+void MTriangle::circumcenterXY(double *res) const
+{
+  double d, a1, a2, a3;
+
+  const double x1 =_v[0]->x();
+  const double x2 =_v[1]->x();
+  const double x3 =_v[2]->x();
+  const double y1 =_v[0]->y();
+  const double y2 =_v[1]->y();
+  const double y3 =_v[2]->y();
+
+  d = 2. * (double)(y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
+  if(d == 0.0) {
+    Msg(WARNING, "Colinear points in circum circle computation");
+    res[0] = res[1] = -99999.;
+    return ;
+  }
+
+  a1 = x1 * x1 + y1 * y1;
+  a2 = x2 * x2 + y2 * y2;
+  a3 = x3 * x3 + y3 * y3;
+  res[0] = (double)((a1 * (y3 - y2) + a2 * (y1 - y3) + a3 * (y2 - y1)) / d);
+  res[1] = (double)((a1 * (x2 - x3) + a2 * (x3 - x1) + a3 * (x1 - x2)) / d);
+
+  return ;
+}
+

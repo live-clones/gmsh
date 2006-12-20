@@ -62,6 +62,7 @@ class gmshVertex : public GVertex {
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return v; }
   virtual void setPrescribedMeshSizeAtVertex(double l) {meshSize = l;v->lc = meshSize;}
+  virtual SPoint2 reparamOnFace ( GFace *gf , int) const;
 };
 
 #endif

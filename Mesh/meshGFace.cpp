@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.42 2006-12-15 03:15:32 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.43 2006-12-20 15:50:57 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -35,24 +35,6 @@
 #include "BDS.h"
 
 extern Context_T CTX;
-
-class fromCartesianToParametric
-{
-  GFace *gf;
-public :
-  fromCartesianToParametric ( GFace *_gf )  
-    : gf(_gf){}
-  void operator () (MVertex * v)
-  {
-
-    GEntity *ge = v->onWhat();
-
-    SPoint2 param =  gf->parFromPoint (SPoint3(v->x(),v->y(),v->z()));
-    v->x() = param.x();  
-    v->y() = param.y();
-    v->z() = 0.0;
-  }
-};
 
 void computeEdgeLoops (const GFace *gf,
 		       std::vector<MVertex*> & all_mvertices,
@@ -559,6 +541,8 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge)
 bool gmsh2DMeshGenerator ( GFace *gf )
 {
 
+  //  if (gf->tag() != 575)return true;
+
   typedef std::set<MVertex*> v_container ;
   v_container all_vertices;
   std::map<int, MVertex*>numbered_vertices;
@@ -599,7 +583,21 @@ bool gmsh2DMeshGenerator ( GFace *gf )
   while(itv != all_vertices.end())
     {
       MVertex *here     = *itv;
-      SPoint2 param =  gf->parFromPoint (SPoint3(here->x(),here->y(),here->z()));
+      SPoint2 param;
+      if (here->onWhat()->dim() == 0)
+	{
+	  GVertex *gv = (GVertex*)here->onWhat();
+	  param=gv->reparamOnFace (gf,1);
+	}
+      else if (here->onWhat()->dim() == 1)
+	{
+	  GEdge *ge = (GEdge*)here->onWhat();
+	  double UU;
+	  here->getParameter(0,UU);
+	  param=ge->reparamOnFace (gf,UU,1);
+	}
+      else
+	param =  gf->parFromPoint (SPoint3(here->x(),here->y(),here->z()));
        //    fprintf(fdeb,"%d %g %g %g\n" ,here->getNum(),here->x(),here->y(),here->z());
       U_[count] = param.x();
       V_[count] = param.y();

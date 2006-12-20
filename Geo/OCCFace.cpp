@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.16 2006-11-29 16:57:01 remacle Exp $
+// $Id: OCCFace.cpp,v 1.17 2006-12-20 15:50:57 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -137,8 +137,10 @@ GPoint OCCFace::closestPoint(const SPoint3 & qp) const
   gp_Pnt pnt(qp.x(),qp.y(),qp.z());
   GeomAPI_ProjectPointOnSurf proj(pnt, occface, umin, umax, vmin, vmax);
   if (!proj.NbPoints())
-    Msg(GERROR,"OCC Project Point on Surface FAIL");
-
+    {
+      Msg(GERROR,"OCC Project Point on Surface FAIL");
+      return GPoint(0,0);
+    }
   pnt = proj.NearestPoint();
   double pp[2];
   proj.LowerDistanceParameters (pp[0], pp[1]);

@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.30 2006-12-16 14:37:19 geuzaine Exp $
+// $Id: GFace.cpp,v 1.31 2006-12-20 15:50:57 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -425,7 +425,8 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
   int iter;
   double mat[3][3], jac[3][3];
   double umin, umax, vmin, vmax;
-  double init[NumInitGuess] = {0.487, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0.9, 0.1, 0, 1};
+  double initu[NumInitGuess] = {0.487, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 1., 0., 0., 1.};
+  double initv[NumInitGuess] = {0.487, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0., 1., 0., 1.};
   
   Range<double> ru = parBounds(0);
   Range<double> rv = parBounds(1);
@@ -437,13 +438,18 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
   for(int i = 0; i < NumInitGuess; i++){
     for(int j = 0; j < NumInitGuess; j++){
     
-      U = init[i];
-      V = init[j];
+      U = initu[i];
+      V = initv[j];
       err = 1.0;
       iter = 1;
-      
+
+      GPoint P = point(U,V);
+      err2 = sqrt(DSQR(X - P.x()) + DSQR(Y - P.y()) + DSQR(Z - P.z()));
+      if (err2 < 1.e-8 * CTX.lc)return;
+
+
       while(err > Precision && iter < MaxIter) {
-	GPoint P = point(U,V);
+	P = point(U,V);
 	Pair<SVector3,SVector3> der = firstDer(SPoint2(U,V)); 
 	mat[0][0] = der.left().x();
 	mat[0][1] = der.left().y();
@@ -451,6 +457,12 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
 	mat[1][0] = der.right().x();
 	mat[1][1] = der.right().y();
 	mat[1][2] = der.right().z();
+
+// 	printf("X = %g Y = %g Z = %g U %g V %g deru = %g %g %g derv = %g %g %g\n",P.x(),P.y(),P.z(),U,V
+// 	       ,der.left().x(),der.left().y(),der.left().z()
+// 	       ,der.right().x(),der.right().y(),der.right().z());
+// 	getchar();
+
 	mat[2][0] = 0.;
 	mat[2][1] = 0.;
 	mat[2][2] = 0.;
@@ -484,7 +496,7 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
   if(relax < 1.e-6)
     Msg(GERROR, "Could not converge: surface mesh will be wrong");
   else {
-    Msg(INFO, "Relaxation factor = %g", 0.75 * relax);
+    Msg(INFO, "point %g %g %g : Relaxation factor = %g",X,Y,Z, 0.75 * relax);
     XYZtoUV(X, Y, Z, U, V, 0.75 * relax);
   }  
 }

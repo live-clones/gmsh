@@ -249,6 +249,16 @@ class MTriangle : public MElement {
   }
   ~MTriangle(){}
   virtual int getDim(){ return 2; }
+  virtual void  getMat(double mat[2][2])
+  {
+    mat[0][0] = _v[1]->x() - _v[0]->x();
+    mat[0][1] = _v[2]->x() - _v[0]->x();
+    mat[1][0] = _v[1]->y() - _v[0]->y();
+    mat[1][1] = _v[2]->y() - _v[0]->y();
+  }
+  void circumcenterXY(double *res) const;
+  double getSurfaceXY() const;
+  bool invertmappingXY(double *p, double *uv, double tol = 1.e-8);
   virtual int getNumVertices(){ return 3; }
   virtual int getNumPrimaryVertices(){ return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }

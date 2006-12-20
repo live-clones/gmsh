@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.156 2006-12-16 15:48:51 geuzaine Exp $
+# $Id: Makefile,v 1.157 2006-12-20 15:50:57 remacle Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -32,18 +32,19 @@ CFLAGS  =  ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Generator.cpp \
         meshGEdge.cpp \
-          meshGEdgeExtruded.cpp \
+        meshGEdgeExtruded.cpp \
         meshGFace.cpp \
-          meshGFaceTransfinite.cpp \
-          meshGFaceExtruded.cpp \
+        meshGFaceTransfinite.cpp \
+        meshGFaceExtruded.cpp \
         meshGRegion.cpp \
-          meshGRegionDelaunayInsertion.cpp \
-          meshGRegionTransfinite.cpp \
-          meshGRegionExtruded.cpp \
-      DivideAndConquer.cpp \
-      BackgroundMesh.cpp \
-      BDS.cpp \
-      SecondOrder.cpp
+        meshGRegionDelaunayInsertion.cpp \
+        meshGFaceDelaunayInsertion.cpp \
+        meshGRegionTransfinite.cpp \
+        meshGRegionExtruded.cpp \
+        DivideAndConquer.cpp \
+        BackgroundMesh.cpp \
+        BDS.cpp \
+        SecondOrder.cpp
 
 OBJ = ${SRC:.cpp=.o}
 

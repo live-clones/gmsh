@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.66 2006-12-02 22:05:15 geuzaine Exp $
+// $Id: Geo.cpp,v 1.67 2006-12-20 15:50:57 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1562,13 +1562,16 @@ Curve *CreateReversedCurve(Curve * c)
     newc->Typ = MSH_SEGM_ELLI_INV;
   if(c->Typ == MSH_SEGM_ELLI_INV)
     newc->Typ = MSH_SEGM_ELLI;
-  newc->Method = c->Method;
-  newc->degre = c->degre;
+
+
   newc->beg = c->end;
   newc->end = c->beg;
+  newc->Method = c->Method;
+  newc->degre = c->degre;
   newc->ubeg = 1. - c->uend;
   newc->uend = 1. - c->ubeg;
   End_Curve(newc);
+
 
   Curve **pc;
 
