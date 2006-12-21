@@ -553,6 +553,7 @@ fourierFace::fourierFace(GModel *m, int num)
 {
   for(int i = 0; i < 4; i++){ _v[i] = 0; _e[i] = 0; }
   _discrete = 1;
+  _plane = 0;
 }
 
 fourierFace::fourierFace(GFace *f, std::vector<MVertex*> &loop, std::vector<MVertex*> &hole)
@@ -560,6 +561,7 @@ fourierFace::fourierFace(GFace *f, std::vector<MVertex*> &loop, std::vector<MVer
 {
   for(int i = 0; i < 4; i++){ _v[i] = 0; _e[i] = 0; }
   _discrete = 0;
+  _plane = 0;
 
   if(!loop.size()){
     Msg(GERROR, "No vertices in exterior loop");
@@ -620,6 +622,8 @@ fourierFace::~fourierFace()
 
 void fourierFace::meshBoundary()
 {
+  const double tol = 1.e-6;
+
   _discrete = 0;
 
   int nu=0, nv=0;
@@ -629,7 +633,49 @@ void fourierFace::meshBoundary()
   FM->GetBoundary_Points(tag(), u, v);
 
   if(2*nu+2*nv != u.size()){
-    Msg(INFO, "Special patch from youngae: %d", tag());
+    Msg(INFO, "Special planar patch from YoungAe: %d", tag());
+#if 1 // transfinite, by hand -- WARNING
+    _plane = 1; // to enable smoothing of transfinite meshes
+    nu = 14;
+    nv = 9;
+    // remove duplicates
+    std::vector<MVertex*> verts;
+    for(unsigned int i = 0; i < u.size() - 1; i++){
+      if(!i || fabs(u[i]-u[i-1]) > tol || fabs(v[i]-v[i-1]) > tol){
+	GPoint p = point(u[i], v[i]);
+	verts.push_back(new MFaceVertex(p.x(), p.y(), p.z(), this, u[i], v[i]));
+      }
+    }
+    int corners[4] = {0, nu - 1, nu + nv - 2,  2 * nu + nv - 3};
+    for(int i = 0; i < 4; i++)
+      _v[i] = new fourierVertex(model(), verts[corners[i]]);
+    meshAttributes.Method = TRANSFINI;
+    meshAttributes.recombine = 1;
+    meshAttributes.transfiniteArrangement = 1;
+    meshAttributes.corners.clear();
+    for(int i = 0; i < 4; i++)
+      meshAttributes.corners.push_back(_v[i]);
+    _e[0] = new fourierEdge(model(), 1, _v[0], _v[1]);
+    _e[0]->addFace(this);
+    _e[1] = new fourierEdge(model(), 2, _v[1], _v[2]);
+    _e[1]->addFace(this);
+    _e[2] = new fourierEdge(model(), 3, _v[2], _v[3]);
+    _e[2]->addFace(this);
+    _e[3] = new fourierEdge(model(), 4, _v[3], _v[0]);
+    _e[3]->addFace(this);
+    for(unsigned int i = corners[0] + 1; i < corners[1]; i++)
+      _e[0]->mesh_vertices.push_back(verts[i]);
+    for(unsigned int i = corners[1] + 1; i < corners[2]; i++)
+      _e[1]->mesh_vertices.push_back(verts[i]);
+    for(unsigned int i = corners[2] + 1; i < corners[3]; i++)
+      _e[2]->mesh_vertices.push_back(verts[i]);
+    for(unsigned int i = corners[3] + 1; i < verts.size(); i++)
+      _e[3]->mesh_vertices.push_back(verts[i]);
+    l_edges.push_back(_e[0]); l_dirs.push_back(1);
+    l_edges.push_back(_e[1]); l_dirs.push_back(1);
+    l_edges.push_back(_e[2]); l_dirs.push_back(1);
+    l_edges.push_back(_e[3]); l_dirs.push_back(1);
+#else // unstructured
     GPoint p0 = point(u[0], v[0]);
     GPoint p1 = point(u[1], v[1]);
     MVertex *v0 = new MFaceVertex(p0.x(), p0.y(), p0.z(), this, u[0], v[0]);
@@ -641,7 +687,7 @@ void fourierFace::meshBoundary()
     _e[1] = new fourierEdge(model(), 2, _v[1], _v[0]);
     _e[1]->addFace(this);
     for(unsigned int i = 2; i < u.size() - 1; i++){
-      if(u[i] != u[i-1] || v[i] != v[i-1]){
+      if(fabs(u[i]-u[i-1]) > tol || fabs(v[i]-v[i-1]) > tol){
 	GPoint p = point(u[i], v[i]);
 	MVertex *vv = new MFaceVertex(p.x(), p.y(), p.z(), this, u[i], v[i]);
 	_e[1]->mesh_vertices.push_back(vv);
@@ -649,6 +695,7 @@ void fourierFace::meshBoundary()
     }
     l_edges.push_back(_e[0]); l_dirs.push_back(1);
     l_edges.push_back(_e[1]); l_dirs.push_back(1);
+#endif
     return;
   }
   
@@ -746,7 +793,12 @@ SVector3 fourierFace::normal(const SPoint2 &param) const
 
 GEntity::GeomType fourierFace::geomType() const
 {
-  return _discrete ? GEntity::DiscreteSurface : GEntity::Unknown;
+  if(_discrete)
+    return  GEntity::DiscreteSurface;
+  else if(_plane)
+    return  GEntity::Plane;
+  else
+    return GEntity::Unknown;
 }
 
 SPoint2 fourierFace::parFromPoint(const SPoint3 &p) const
@@ -773,7 +825,7 @@ int GModel::readFourier(const std::string &name)
   //return 1;
 
   // mesh each face using the standard gmsh algorithms
-  setMeshSize(0.1);
+  setMeshSize(0.05);
   std::for_each(firstFace(), lastFace(), meshGmsh());
   return 1;
 

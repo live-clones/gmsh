@@ -53,6 +53,8 @@ class fourierFace : public GFace {
  private:
   // flag to know if is the face is already meshed
   int _discrete;
+  // floag to know if the face is just a plane
+  int _plane;
   // vertices and edges purely local to the face (not shared with the model)
   GVertex *_v[4];
   GEdge *_e[4];
